@@ -23,9 +23,9 @@
 namespace Falcon {
 
 ExprValue::ExprValue( const Item& item ):
-      Expression( t_value ),
-      m_item(item)
+      Expression( t_value )
 {
+   m_item.copy(item); // silently copy
    apply = apply_;
 
    if ( item.isDeep() )

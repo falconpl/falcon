@@ -18,7 +18,7 @@
 #include <falcon/vm.h>
 #include <falcon/optoken.h>
 #include <falcon/class.h>
-#include <falcon/function.h>
+#include <falcon/pseudofunc.h>
 #include <falcon/module.h>
 
 #include <map>
@@ -94,7 +94,7 @@ namespace BOMH
 
 void len(VMachine* vm, const Class*, void*)
 {
-   static Function* lenFunc = Engine::instance()->getCore()->findFunction("len");
+   static Function* lenFunc = Engine::instance()->getPseudoFunction("len");
    fassert( lenFunc != 0 );
 
    Item &value = vm->currentContext()->topData();
@@ -235,7 +235,7 @@ void toString_(VMachine* vm, const Class* cls, void* data)
 
 void typeId(VMachine* vm, const Class* cls, void* data)
 {
-   static Function* func = Engine::instance()->getCore()->findFunction("typeId");
+   static Function* func = Engine::instance()->getPseudoFunction("typeId");
    fassert( func != 0 );
 
    Item &value = vm->currentContext()->topData();
@@ -263,7 +263,7 @@ void typeId_(VMachine* vm, const Class* cls, void* data)
 
 void compare(VMachine* vm, const Class* cls, void* data)
 {
-   static Function* func = Engine::instance()->getCore()->findFunction("compare");
+   static Function* func = Engine::instance()->getPseudoFunction("compare");
    fassert( func != 0 );
 
    Item &value = vm->currentContext()->topData();

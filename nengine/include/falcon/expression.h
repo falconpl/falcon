@@ -721,8 +721,18 @@ public:
 class FALCON_DYN_CLASS ExprDot: public UnaryExpression
 {
 public:
-   inline ExprDot( const String& prop, Expression* op1 ): UnaryExpression( t_obj_access, op1 ), m_prop(prop) {apply = apply_;} 
-   inline ExprDot( const ExprDot& other ): UnaryExpression( other ), m_prop(other.m_prop) {apply = apply_;} 
+   inline ExprDot( const String& prop, Expression* op1 ): 
+      UnaryExpression( t_obj_access, op1 ),
+         m_lvalue(false),
+         m_prop(prop)
+   {apply = apply_;}
+
+   inline ExprDot( const ExprDot& other ):
+      UnaryExpression( other ),
+      m_lvalue(other.m_lvalue),
+      m_prop(other.m_prop)
+   {apply = apply_;}
+
    inline virtual ExprDot* clone() const { return new ExprDot( *this ); } 
    inline virtual void setLValue() { m_lvalue = true; }
    inline virtual bool isLValue() const { return m_lvalue; }
@@ -733,7 +743,7 @@ public:
    inline String describe() const { return PStep::describe(); }
    inline String oneLiner() const { return PStep::oneLiner(); }
 protected:
-   inline ExprDot(): UnaryExpression( t_obj_access ), m_prop("") {}
+   inline ExprDot(): UnaryExpression( t_obj_access ), m_lvalue(false) {}
    bool m_lvalue;
    const String m_prop;
    friend class ExprFactory; 

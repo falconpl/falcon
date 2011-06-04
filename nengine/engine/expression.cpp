@@ -1046,14 +1046,15 @@ void ExprDot::apply_( const PStep* ps, VMachine* vm )
    TRACE2( "Apply \"%s\"", ((ExprDot*)ps)->describe().c_ize() );
 
    register VMContext* ctx = vm->currentContext();
+   const ExprDot* dot_expr = static_cast<const ExprDot*>(ps);
 
    Class* cls;
    void* self;
    // get prop name
-   const String& prop = ((ExprDot*)ps)->m_prop;
+   const String& prop = dot_expr->m_prop;
    //acquire the class
-   (&ctx->topData()-1)->forceClassInst(cls, self);
-   if ( ((ExprDot*)ps)->isLValue() )
+   ctx->topData().forceClassInst(cls, self);
+   if ( dot_expr->isLValue() )
    {
       cls->op_setProperty(vm, self, prop );
    }
