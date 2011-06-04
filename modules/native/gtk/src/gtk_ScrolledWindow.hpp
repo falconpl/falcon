@@ -1,7 +1,3 @@
-//
-//  gtk_ScrolledWindow.h
-
-
 #ifndef GTK_SCROLLED_WINDOW_HPP
 
 #define GTK_SCROLLED_WINDOW_HPP

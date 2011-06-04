@@ -113,7 +113,7 @@ FALCON_FUNC ScrolledWindow::init( VMARG ) {
         !i_v_adj || !( i_v_adj->isNil() || ( i_v_adj->isObject() && IS_DERIVED( i_v_adj, GtkAdjustment ) ) ) )
             throw_inv_params( "[GtkAdjustment],[GtkAdjustment]" );
     
-#endif // NO_PARAMETER_CHECK
+#endif // !NO_PARAMETER_CHECK
     
     GtkAdjustment *horizontal = i_h_adj->isNil() ? NULL : GET_ADJUSTMENT( *i_h_adj );
     GtkAdjustment *vertical   = i_v_adj->isNil() ? NULL : GET_ADJUSTMENT( *i_v_adj );
@@ -144,7 +144,7 @@ FALCON_FUNC ScrolledWindow::set_policy( VMARG ) {
         throw_inv_params("I,I");
     
     
-#endif // NO_PARAMETER_CHECK
+#endif // !NO_PARAMETER_CHECK
     
     MYSELF;
     
@@ -202,7 +202,7 @@ FALCON_FUNC ScrolledWindow::add_with_viewport( VMARG ) {
     if( !i_child || !( i_child->isObject() && IS_DERIVED( i_child, GtkWidget ) ) )
         throw_inv_params("GtkWidget");
 
-#endif //NO_PARAMETER_CHECK
+#endif // !NO_PARAMETER_CHECK
 
     MYSELF;
 
@@ -253,7 +253,7 @@ FALCON_FUNC ScrolledWindow::set_placement( VMARG ) {
     if( !i_window_placement || !i_window_placement->isInteger() )
         throw_inv_params("I");
 
-#endif //NO_PARAMETER_CHECK
+#endif // !NO_PARAMETER_CHECK
 
     MYSELF;
     GET_OBJ( self );
@@ -300,7 +300,7 @@ FALCON_FUNC ScrolledWindow::set_vadjustment( VMARG ) {
     if( !i_vadjustment || !( i_vadjustment->isClass() && IS_DERIVED( i_vadjustment, GtkAdjustment ) ) )
         throw_inv_params( "GtkAdjustment" );
 
-#endif //NO_PARAMETER_CHECK
+#endif // !NO_PARAMETER_CHECK
 
     GtkAdjustment *adj = GET_ADJUSTMENT( *i_vadjustment );
 
@@ -350,7 +350,7 @@ FALCON_FUNC ScrolledWindow::set_hadjustment( VMARG ) {
     if( !i_hadjustment || !( i_hadjustment->isClass() && IS_DERIVED( i_hadjustment, GtkAdjustment ) ) )
         throw_inv_params("GtkAdjustment");
 
-#endif //NO_PARAMETER_CHECK
+#endif // !NO_PARAMETER_CHECK
 
     GtkAdjustment *adj = GET_ADJUSTMENT( *i_hadjustment );
 
