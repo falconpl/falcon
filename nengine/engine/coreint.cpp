@@ -16,8 +16,8 @@
 #include <falcon/coreint.h>
 #include <falcon/itemid.h>
 #include <falcon/item.h>
-
-#include "falcon/vm.h"
+#include <falcon/optoken.h>
+#include <falcon/vm.h>
 
 namespace Falcon {
 
@@ -78,8 +78,8 @@ void CoreInt::describe( void* instance, String& target ) const
 void CoreInt::op_isTrue( VMachine *vm, void* self ) const
 {
    Item* iself;
-   vm->operands(iself);
-   vm->stackResult( 1, iself->asInteger() != 0 );
+   OpToken token( vm, iself);
+   token.exit( iself->asInteger() != 0 );
 }
 
 }

@@ -44,6 +44,8 @@
 		#else
 			# define fassert(expr) \
 				{if (!(expr)) _perform_FALCON_assert( __STRING(expr), __FILE__, __LINE__ );}
+			# define fassert2(expr, comment) \
+				{if (!(expr)) _perform_FALCON_assert( comment " " __STRING(expr), __FILE__, __LINE__ );}
 		#endif
    #endif
 #else

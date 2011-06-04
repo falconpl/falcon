@@ -78,6 +78,62 @@ class DataWriter;
  Falcon::Class instances take care of the creation of objects, of their serialization
  and of their disposal. It is also responsible to check for properties
 
+ You may wish to use the OpToken class to simplify the writing of operators in
+ subclasses.
+
+ \section implementing_operators Implementing operators
+
+ At Falcon language level, operator overload is performed by specializing
+ the operator methods in this class (the methods named op_*).
+
+ All this methods have a prototype modelled after the following:
+
+ @code
+ virtual void op_something( VMachine *vm, void* self );
+ @endcode
+
+ Each operator receives an instance of the real object that this Class
+ manipulates in the \b self pointer and the virtual machine that requested
+ the operation to be performed.
+
+ Other than this, operands have also some parameters that are Item instances
+ buried in the virtual machine stack in the moment they are called. Instead
+ of unrolling this stack and passing the operand items to the method,
+ it's safer and more efficient to keep them in the stack and let the operators
+ to access their operands.
+
+ There are several means to do that.
+
+ The operator implementor may use the
+ OpToken class that takes care of automaticly get the correct operand and
+ unroll the stack correctly at the end of the operation.
+
+ When maximum performance is needed, the VMachine::operands to get the operands
+ and VMachine::stackResult to set a result for this operation.
+
+ Finally, it is possible to access the operands directly from the current
+ context stack.
+
+ At low level, each operator MUST pop all its operands and MUST push exactly
+ one result (or, pop all its operands - 1 and set the operand left in the stack
+ as the result of the operation).
+
+ Operators may go deep, calling the VMachine or other code that may in turn
+ call the VMachine. In that case, the stack clean step should be performed
+ by the deep step, before exiting the code frame.
+
+ \note Usually the first operand is also the item holding the \b self instance.
+ However, self is always passed to the operands because the VM did already some
+ work in checking the kind of item stored as the first operand. However, the
+ callee may be interested in accessing the first operand as well, as the Item
+ in that place may hold some information (flags, out-of-band, copy marker and
+ so on) that the implementor may find useful.
+
+ Notice that \b self is set to 0 when the class is a flat item reflection core
+ class (as the Integer, Nil, Boolean and Numeric handlers). It receives a value
+ only if the first operand is a FLC_USER_ITEM or FLC_DEEP_ITEM.
+ 
+ \see OpToken
 */
 
 class FALCON_DYN_CLASS Class
@@ -189,106 +245,96 @@ public:
 
    /** Called back when the VM wants to negate an item.
      \param vm the virtual machine that will receive the result.
-     \param self the instance in op1 (or 0 on flat items)
-     \param op1 The original operand (where the instasnce was stored).
-     \param target where to place the result of the operation.
+     \param self the instance (or 0 on flat items)
+
+    \note The operand is unary -- requires OpToken with 1 parameter.
 
     */
    virtual void op_neg( VMachine *vm, void* self ) const;
 
    /** Called back when the VM wants to add something.
      \param vm the virtual machine that will receive the result.
-     \param self the instance in op1 (or 0 on flat items)
-     \param op1 The original first operand (where the instasnce was stored).
-     \param op2 The original second operand.
-     \param target where to place the result of the operation.
+     \param self the instance (or 0 on flat items)
+
+    \note The operand is binary -- requires OpToken with 2 parameters.
 
     */
    virtual void op_add( VMachine *vm, void* self ) const;
 
    /** Called back when the VM wants to subtract something.
      \param vm the virtual machine that will receive the result.
-     \param self the instance in op1 (or 0 on flat items)
-     \param op1 The original first operand (where the instasnce was stored).
-     \param op2 The original second operand.
-     \param target where to place the result of the operation.
+     \param self the instance (or 0 on flat items)
+
+    \note The operand is binary -- requires OpToken with 2 parameters.
 
     */
    virtual void op_sub( VMachine *vm, void* self ) const;
 
    /** Called back when the VM wants to multiply something.
      \param vm the virtual machine that will receive the result.
-     \param self the instance in op1 (or 0 on flat items)
-     \param op1 The original first operand (where the instasnce was stored).
-     \param op2 The original second operand.
-     \param target where to place the result of the operation.
+     \param self the instance (or 0 on flat items)
+
+    \note The operand is binary -- requires OpToken with 2 parameters.
 
     */
    virtual void op_mul( VMachine *vm, void* self ) const;
 
    /** Called back when the VM wants to divide something.
      \param vm the virtual machine that will receive the result.
-     \param self the instance in op1 (or 0 on flat items)
-     \param op1 The original first operand (where the instasnce was stored).
-     \param op2 The original second operand.
-     \param target where to place the result of the operation.
+     \param self the instance (or 0 on flat items)
+
+    \note The operand is binary -- requires OpToken with 2 parameters.
 
     */
    virtual void op_div( VMachine *vm, void* self ) const;
 
    /** Called back when the VM wants to apply the modulo operator.
      \param vm the virtual machine that will receive the result.
-     \param self the instance in op1 (or 0 on flat items)
-     \param op1 The original first operand (where the instasnce was stored).
-     \param op2 The original second operand.
-     \param target where to place the result of the operation.
+     \param self the instance (or 0 on flat items)
+
+    \note The operand is binary -- requires OpToken with 2 parameters.
 
     */
    virtual void op_mod( VMachine *vm, void* self ) const;
 
    /** Called back when the VM wants to apply the power operator on.
      \param vm the virtual machine that will receive the result.
-     \param self the instance in op1 (or 0 on flat items)
-     \param op1 The original first operand (where the instasnce was stored).
-     \param op2 The original second operand.
-     \param target where to place the result of the operation.
+     \param self the instance (or 0 on flat items)
+
+    \note The operand is binary -- requires OpToken with 2 parameters.
 
     */
    virtual void op_pow( VMachine *vm, void* self ) const;
 
    /** Called back when the VM wants to add something to an item.
      \param vm the virtual machine that will receive the result.
-     \param self the instance in op1 (or 0 on flat items)
-     \param op1 The original first operand (where the instasnce was stored),
-      that is also the place where to store the result.
-     \param op2 The original second operand.
+     \param self the instance (or 0 on flat items)
+
+    \note The operand is binary -- requires OpToken with 2 parameters.
     */
    virtual void op_aadd( VMachine *vm, void* self) const;
 
    /** Called back when the VM wants to subtract something to an item.
      \param vm the virtual machine that will receive the result.
-     \param self the instance in op1 (or 0 on flat items)
-     \param op1 The original first operand (where the instasnce was stored),
-      that is also the place where to store the result.
-     \param op2 The original second operand.
+     \param self the instance (or 0 on flat items)
+
+    \note The operand is binary -- requires OpToken with 2 parameters.
     */
    virtual void op_asub( VMachine *vm, void* self ) const;
 
    /** Called back when the VM wants to multiply something to an item.
      \param vm the virtual machine that will receive the result.
-     \param self the instance in op1 (or 0 on flat items)
-     \param op1 The original first operand (where the instasnce was stored),
-      that is also the place where to store the result.
-     \param op2 The original second operand.
+     \param self the instance (or 0 on flat items)
+
+    \note The operand is binary -- requires OpToken with 2 parameters.
     */
    virtual void op_amul( VMachine *vm, void* self ) const;
 
    /** Called back when the VM wants to divide something to an item.
      \param vm the virtual machine that will receive the result.
-     \param self the instance in op1 (or 0 on flat items)
-     \param op1 The original first operand (where the instasnce was stored),
-      that is also the place where to store the result.
-     \param op2 The original second operand.
+     \param self the instance (or 0 on flat items)
+
+    \note The operand is binary -- requires OpToken with 2 parameters.
     */
    virtual void op_adiv( VMachine *vm, void* self ) const;
 
@@ -303,105 +349,114 @@ public:
 
    /** Called back when the VM wants to apply get the power of an item.
      \param vm the virtual machine that will receive the result.
-     \param self the instance in op1 (or 0 on flat items)
-     \param op1 The original first operand (where the instasnce was stored),
-      that is also the place where to store the result.
-     \param op2 The original second operand.
+     \param self the instance (or 0 on flat items)
+
+    \note The operand is binary -- requires OpToken with 2 parameters.
    */
    virtual void op_apow( VMachine *vm, void* self ) const;
 
    /** Called back when the VM wants to increment (prefix) an item.
      \param vm the virtual machine that will receive the result.
      \param self the instance in op1 (or 0 on flat items)
-     \param operand The original first operand (where the instasnce was stored),
-      that is also the place where to store the result.
+     \param self the instance (or 0 on flat items)
+
+    \note The operand is unary -- requires OpToken with 1 parameter.
    */
    virtual void op_inc(VMachine *vm, void* self ) const;
 
    /* Called back when the VM wants to decrement (prefix) an item.
      \param vm the virtual machine that will receive the result.
      \param self the instance in op1 (or 0 on flat items)
-     \param operand The original first operand (where the instasnce was stored),
-      that is also the place where to store the result.
+     \param self the instance (or 0 on flat items)
+
+    \note The operand is unary -- requires OpToken with 1 parameter.
    */
    virtual void op_dec(VMachine *vm, void* self) const;
 
    /** Called back when the VM wants to increment (postfix) an item.
      \param vm the virtual machine that will receive the result.
      \param self the instance in op1 (or 0 on flat items)
-     \param operand The original first operand (where the instasnce was stored),
-      that is also the place where to store the result.
+     \param self the instance (or 0 on flat items)
+
+    \note The operand is unary -- requires OpToken with 1 parameter.
    */
    virtual void op_incpost(VMachine *vm, void* self ) const;
    
    /** Called back when the VM wants to decrement (postfix) an item.
      \param vm the virtual machine that will receive the result.
      \param self the instance in op1 (or 0 on flat items)
-     \param operand The original first operand (where the instasnce was stored),
-      that is also the place where to store the result.
+     \param self the instance (or 0 on flat items)
+
+    \note The operand is unary -- requires OpToken with 1 parameter.
    */
    virtual void op_decpost(VMachine *vm, void* self ) const;
 
    /** Called back when the VM wants to get an index out of an item.
      \param vm the virtual machine that will receive the result.
-     \param self the instance in op1 (or 0 on flat items)
-     \param op1 The original first operand (where the instasnce was stored).
-     \param op2 Index that must be accessed in op1.
-     \param target where to store the result of the operation.
+     \param self the instance (or 0 on flat items)
+
+    \note The operand is binary -- requires OpToken with 2 parameters.
+
+    The first operand is self, the second operand is the index to be accessed.
    */
    virtual void op_getIndex(VMachine *vm, void* self ) const;
    
    /** Called back when the VM wants to get an index out of an item.
      \param vm the virtual machine that will receive the result.
-     \param self the instance in op1 (or 0 on flat items)
-     \param op1 The original first operand (where the instasnce was stored).
-     \param op2 Index that must be accessed in op1.
-     \param target where to store the result of the operation.
-    
-     \note normally, the result of a setindex operation is the same value that
-    was set (op2).
+     \param self the instance (or 0 on flat items)
+
+    \note The operand is ternary -- requires OpToken with 3 parameters.
+
+    Operands are in order:
+    - The item holding this \b self instance
+    - The index being accessed (the value inside the [] brackets)
+    - The new value for the item.
+
+    Normally, the value of the operation should match with the value of the
+    new item stored at the required index. For instance, the value of the
+    following Falcon code:
+
+    @code
+    value = (array[10] = "something")
+    @endcode
+
+    is expected to be "something", but this method may set it to any sensible
+    value the implementor wants to pass back.
+
    */
    virtual void op_setIndex(VMachine *vm, void* self ) const;
 
    /** Called back when the VM wants to get the value of a property of an item
      \param vm the virtual machine that will receive the result.
-     \param self the instance in op1 (or 0 on flat items)
-     \param op1 The original first operand (where the instasnce was stored).
-     \param op2 Index that must be accessed in op1.
-     \param target where to store the result of the operation.
+     \param self the instance (or 0 on flat items)
+    \param prop The oroperty to be accessed.
 
-     \note normally, the result of a setindex operation is the same value that
-    was set (op2).
+    \note The operand is unary -- requires OpToken with 1 parameter.
    */
    virtual void op_getProperty( VMachine *vm, void* self, const String& prop) const;
 
    /** Called back when the VM wants to set a value of a property in an item.
      \param vm the virtual machine that will receive the result.
-     \param self the instance in op1 (or 0 on flat items)
-     \param op1 The original first operand (where the instasnce was stored).
-     \param op2 Index that must be accessed in op1.
-     \param target where to store the result of the operation.
+     \param self the instance (or 0 on flat items)
 
-     \note normally, the result of a property operation is the same value that
-    was set (op2).
+    \note The operand is binary -- requires OpToken with 2 parameters.
    */
    virtual void op_setProperty( VMachine *vm, void* self, const String& prop ) const;
 
    /** Called back when the VM wants to compare an item to this instance. 
      \param vm the virtual machine that will receive the result.
-     \param self the instance in op1 (or 0 on flat items)
-     \param op1 The original first operand (where the instasnce was stored).
-     \param op2 The compare paragon.
-     \param target The place where to store the result.
+     \param self the instance (or 0 on flat items)
 
+    \note The operand is binary -- requires OpToken with 2 parameters.
 
     This method is called back on any comparison operation, including the six
     basic comparison operators (<, >, <=, >=, == and !=) but also in other
     ordering operations thar involve the virtual machine.
 
-    The result placed in target should be
-    0 if the two items are considered identical, < 0 if op1 is smaller
-      than op2, > 0 if op1 is greater than op2.
+    The result of the operation should be
+    - 0 if the two items are considered identical,
+    - \< 0 if op1 is smaller than op2,
+    - \> 0 if op1 is greater than op2.
 
     All the subclasses should call the base class op_compare as a residual
     criterion.
@@ -410,9 +465,9 @@ public:
 
    /** Called back when the VM wants to know if an item is true.
      \param vm the virtual machine that will receive the result.
-     \param self the instance in op1 (or 0 on flat items)
-     \param op1 The original first operand (where the instasnce was stored).
-     \param target Where to store the result.
+     \param self the instance (or 0 on flat items)
+
+    \note The operand is unary -- requires OpToken with 1 parameter.
 
     This method is called back when the VM wants to know if an item can be
     considered true.
@@ -423,64 +478,68 @@ public:
 
    /** Called back when the VM wants to know if an item is true.
      \param vm the virtual machine that will receive the result.
-     \param self the instance in op1 (or 0 on flat items)
-     \param op1 The container (where the instasnce was stored).
-     \param op2 The the item that must be searched.
-     \param target Where to store the result.
+     \param self the instance (or 0 on flat items)
+
+    \note The operand is binary -- requires OpToken with 2 parameters.
 
     This method is called back when the VM wants to know if an item can be
     considered true.
 
-    The result placed in target should be a boolean true or false value.
+    The result should be a boolean true or false value.
     */
    virtual void op_in( VMachine *vm, void* self ) const;
    
    /** Called back when the vm wants to know if a certain item provides a certain property.
      \param vm the virtual machine that will receive the result.
-     \param self the instance in op1 (or 0 on flat items)
-     \param op1 The container (where the instasnce was stored).
-     \param op2 The the item that must be searched.
-     \param target Where to store the result.
+     \param self the instance (or 0 on flat items).
+     \param property The property that should be accessed.
 
-    This method is called back when the VM wants to know if an item can be
-    considered true.
+    \note The operand is unary -- requires OpToken with 1 parameter.
 
     The result placed in target should be a boolean true or false value.
     */
-   virtual void op_provides( VMachine *vm, void* self ) const;
+   virtual void op_provides( VMachine *vm, void* self, const String& property ) const;
 
    /** Call the instance.
     \param vm A virutal machine where the call is performed.
     \param self An instance of this class
     \param pcount the number of parameters in the call.
-    \param target The return value of the call.
 
-    In case calling the given instance can be immediately done and is granted to
-    be flat, this method can put the return value associated with this call in
-    the \b target parameter (which is usually the top of the stack in this
-    context.
+    This operation has variable count of parameters. They are placed in reverse
+    order on the stack. The item being called is always pushed before the
+    parameters.
+
+    When done, the operator should unroll the stack (VMContect::popData) of exactly
+    paramCount elements; this will leave the called item on top of the stack.
+    That item must be overwritten with the return value of this operation (might
+    be nil).
 
     \note The default operation associated with the base class is that to raise
     a non-callable exception.
-    \note The vm->self() item will always be the item where the self instance
-    is stored.
     */
-    virtual void op_call( VMachine *vm, int32 paramCount, void* self ) const;
+   virtual void op_call( VMachine *vm, int32 paramCount, void* self ) const;
 
 
    /** Implents textification operator for the Virtual Macine.
     \param vm the virtual machine that will receive the result.
     \param self the instance (or 0 on flat items)
-    \param op1 The original item (where the instasnce was stored).
-    \param target where to place the result of the operation.
+     \param self the instance (or 0 on flat items)
+
+    \note The operand is unary -- requires OpToken with 1 parameter.
 
     This method obtains immediately a textual value for the instance
     to be stored in the virtual machine, or prepares the call for the proper
     string geneartor code.
 
     The base class behavior is that of calling Class::describe() on the
-    instance passed as self in the virtual machine, and then store it in
-    VMachine::regA() as a garbageable string.
+    instance passed as self in the virtual machine and uses it as the
+    result of the operation.
+
+    Implementors not willing to use describe() or wishing to skip an extra
+    virtual function call should reimplement this class.
+
+    Also, describe() can never be deep, so this strategy is not adequate
+    for containers that want to be stringified by exposing all their contents.
     */
    virtual void op_toString( VMachine *vm, void* self ) const;
 

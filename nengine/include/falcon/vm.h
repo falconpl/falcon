@@ -454,16 +454,41 @@ public:
     */
    inline TextWriter* textErr() const { return m_textOut; }
 
+   /** Gets the operands from the top of the stack.
+    \param op1 The first operand.
+    \see Class
+
+    \note this method may be used also by pseudofunctions and generically
+    by any PStep in need to access the top of the stack.
+    */
    inline void operands( Item*& op1 ) const
    {
       op1 = &m_context->topData();
    }
+
+   /** Gets the operands from the top of the stack.
+    \param op1 The first operand.
+    \param op2 The second operand.
+    \see Class
+
+    \note this method may be used also by pseudofunctions and generically
+    by any PStep in need to access the top of the stack.
+    */
    inline void operands( Item*& op1, Item*& op2 ) const
    {
       op1 = &m_context->topData()-1;
       op2 = op1+1;
    }
 
+   /** Gets the operands from the top of the stack.
+    \param op1 The first operand.
+    \param op2 The second operand.
+    \param op3 The thrid operand.
+    \see Class
+
+    \note this method may be used also by pseudofunctions and generically
+    by any PStep in need to access the top of the stack.
+    */
    inline void operands( Item*& op1, Item*& op2, Item*& op3 ) const
    {
       op1 = &m_context->topData()-2;
@@ -471,6 +496,14 @@ public:
       op3 = op2+1;
    }
 
+   /** Pops the stack when leaving a PStep or operand, and sets an operation result.
+    \param count Number of operands accepted by this step
+    \param result The value of the operation result.
+    \see Class
+
+    \note this method may be used also by pseudofunctions and generically
+    by any PStep in need to access the top of the stack.
+    */
    inline void stackResult( int count, const Item& result )
    {
       if( count > 1 ) m_context->popData( count-1 );

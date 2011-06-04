@@ -263,7 +263,7 @@ void Class::op_in( VMachine *, void*) const
 }
 
 
-void Class::op_provides( VMachine *vm, void* self ) const
+void Class::op_provides( VMachine *vm, void*, const String& ) const
 {
    vm->stackResult(1, false);
 }
