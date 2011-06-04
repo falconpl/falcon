@@ -680,32 +680,33 @@ namespace Falcon {
         
         uint32
         getGCharArray( const Falcon::CoreArray* arr,
-                      gchar** strings,
-                      Falcon::AutoCString** temp )
+                      gchar**& strings,
+                      Falcon::AutoCString*& temp )
         {
             const uint32 num = arr->length();
-            
+
             if ( !num ) return 0;
-            
-            uint32 i = 0;
-            *strings = (gchar*) memAlloc( sizeof( gchar* ) * ( num + 1 ) );
-            *temp = (AutoCString*) memAlloc( sizeof( AutoCString ) * num );
+
+            strings = new gchar* [ num + 1 ];
             strings[ num ] = NULL;
+
+            temp = new AutoCString[ num ];
+
             Falcon::Item s;
-            
-            for ( ; i < num; ++i )
+            uint32 i = 0;
+            for ( i=0 ; i < num; ++i )
             {
                 s = arr->at( i );
 #ifndef NO_PARAMETER_CHECK
                 if ( !s.isString() )
                 {
-                    memFree( *strings );
-                    memFree( *temp );
+                    delete temp;
+                    delete strings;
                     throw_inv_params( "S" );
                 }
 #endif
-                (*temp)[i].set( s.asString() );
-                strings[i] = (gchar*) (*temp)[i].c_str();
+                temp[i].set( *s.asString() );
+                strings[i] = (gchar*)( temp[i].c_str() );
             }
             
             return num;
