@@ -452,15 +452,15 @@ FALCON_FUNC AboutDialog::set_authors( VMARG )
 #endif
     CoreArray* arr = i_arr->asArray();
     AutoCString* cstrings;
-    gchar* authors;
-    const uint32 num = Gtk::getGCharArray( arr, &authors, &cstrings );
+    gchar** authors;
+    const uint32 num = Gtk::getGCharArray( arr, authors, cstrings );
     MYSELF;
     GET_OBJ( self );
-    gtk_about_dialog_set_authors( (GtkAboutDialog*)_obj, (const gchar**)&authors );
+    gtk_about_dialog_set_authors( (GtkAboutDialog*)_obj, (const gchar**) authors );
     if ( num )
     {
-        memFree( authors );
-        memFree( cstrings );
+        delete[] cstrings;
+        delete[] authors;
     }
 }
 
@@ -501,15 +501,15 @@ FALCON_FUNC AboutDialog::set_artists( VMARG )
 #endif
     CoreArray* arr = i_arr->asArray();
     AutoCString* cstrings;
-    gchar* artists;
-    const uint32 num = Gtk::getGCharArray( arr, &artists, &cstrings );
+    gchar** artists;
+    const uint32 num = Gtk::getGCharArray( arr, artists, cstrings );
     MYSELF;
     GET_OBJ( self );
-    gtk_about_dialog_set_artists( (GtkAboutDialog*)_obj, (const gchar**)&artists );
+    gtk_about_dialog_set_artists( (GtkAboutDialog*)_obj, (const gchar**) artists );
     if ( num )
     {
-        memFree( artists );
-        memFree( cstrings );
+        delete[] cstrings;
+        delete[] artists;
     }
 }
 
@@ -550,15 +550,15 @@ FALCON_FUNC AboutDialog::set_documenters( VMARG )
 #endif
     CoreArray* arr = i_arr->asArray();
     AutoCString* cstrings;
-    gchar* documenters;
-    const uint32 num = Gtk::getGCharArray( arr, &documenters, &cstrings );
+    gchar** documenters;
+    const uint32 num = Gtk::getGCharArray( arr, documenters, cstrings );
     MYSELF;
     GET_OBJ( self );
-    gtk_about_dialog_set_documenters( (GtkAboutDialog*)_obj, (const gchar**)&documenters );
+    gtk_about_dialog_set_documenters( (GtkAboutDialog*)_obj, (const gchar**) documenters );
     if ( num )
     {
-        memFree( documenters );
-        memFree( cstrings );
+        delete[] cstrings;
+        delete[] documenters;
     }
 }
 

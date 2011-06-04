@@ -101,13 +101,14 @@ FALCON_FUNC ScaleButton::init( VMARG )
 
     if ( a_icons && a_icons->length() )
     {
-        gchar* cstr;
+        gchar** cstr;
         AutoCString* tmp;
-        getGCharArray( a_icons, &cstr, &tmp );
+        getGCharArray( a_icons, cstr, tmp );
         wdt = gtk_scale_button_new(
                 (GtkIconSize) size, min, max, step, (const gchar**) cstr );
-        memFree( cstr );
-        memFree( tmp );
+
+        delete[] tmp;
+        delete[] cstr;
     }
     else
         wdt = gtk_scale_button_new( (GtkIconSize) size, min, max, step, NULL );
@@ -235,12 +236,13 @@ FALCON_FUNC ScaleButton::set_icons( VMARG )
     GET_OBJ( self );
     if ( arr->length() )
     {
-        gchar* cstr;
+        gchar** cstr;
         AutoCString* tmp;
-        getGCharArray( arr, &cstr, &tmp );
-        gtk_scale_button_set_icons( (GtkScaleButton*)_obj, (const gchar**) &cstr );
-        memFree( cstr );
-        memFree( tmp );
+        getGCharArray( arr, cstr, tmp );
+        gtk_scale_button_set_icons( (GtkScaleButton*)_obj, (const gchar**) cstr );
+
+        delete[] tmp;
+        delete[] cstr;
     }
     else
         gtk_scale_button_set_icons( (GtkScaleButton*)_obj, NULL );

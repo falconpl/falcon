@@ -115,6 +115,7 @@ set( SRC_FILES
     gtk_Scale.cpp
     gtk_ScaleButton.cpp
     gtk_Scrollbar.cpp
+    gtk_ScrolledWindow.cpp
     gtk_SeparatorMenuItem.cpp
     gtk_SeparatorToolItem.cpp
     gtk_SpinButton.cpp
@@ -273,6 +274,7 @@ set( HDR_FILES
     gtk_Scale.hpp
     gtk_ScaleButton.hpp
     gtk_Scrollbar.hpp
+    gtk_ScrolledWindow.hpp
     gtk_SeparatorMenuItem.hpp
     gtk_SeparatorToolItem.hpp
     gtk_SpinButton.hpp

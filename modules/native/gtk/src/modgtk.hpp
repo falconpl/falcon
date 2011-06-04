@@ -602,12 +602,12 @@ typedef Falcon::Gtk::ArgCheck<9>    ArgCheck9;
  *  \param temp (out) The intermediate auto-C-strings.
  *  \return The length of the array.
  *
- *  \note If arr was non-empty, both strings and temp must be freed with memFree after use.
+ *  \note If arr was non-empty, both strings and temp must be freed with delete[] after use.
  */
 uint32
 getGCharArray( const Falcon::CoreArray* arr,
-        gchar** strings,
-        Falcon::AutoCString** temp );
+        gchar**& strings,
+        Falcon::AutoCString*& temp );
 
 
 /**
