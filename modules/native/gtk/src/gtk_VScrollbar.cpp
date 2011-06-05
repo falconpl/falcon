@@ -23,7 +23,7 @@ void VScrollbar::modInit( Falcon::Module* mod )
     Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "GtkScrollbar" ) );
     c_VScrollbar->getClassDef()->addInheritance( in );
 
-    //c_VScrollbar->setWKS( true );
+    c_VScrollbar->setWKS( true );
     c_VScrollbar->getClassDef()->factory( &VScrollbar::factory );
 
 }

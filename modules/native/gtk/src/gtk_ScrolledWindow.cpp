@@ -1,6 +1,6 @@
 /**
- * \file gtk_ScrolledWindow.cpp
- */
+* \file gtk_ScrolledWindow.cpp
+*/
 
 
 #include "gtk_ScrolledWindow.hpp"
@@ -9,12 +9,18 @@
 
 #include "gtk_Widget.hpp"
 
+#include "gtk_HScrollbar.hpp"
+
+#include "gtk_VScrollbar.hpp"
+
+#include "gtk_Buildable.hpp"
+
 /*#
- * @beginmodule gtk
- */
+* @beginmodule gtk
+*/
 
 namespace Falcon {
-    
+
 namespace Gtk {
 
 void ScrolledWindow::modInit( Falcon::Module *mod ) {
@@ -31,21 +37,43 @@ void ScrolledWindow::modInit( Falcon::Module *mod ) {
     
     Gtk::MethodTab methods[] = {
         
-        { "set_policy",         &ScrolledWindow::set_policy },
-        { "get_policy",         &ScrolledWindow::get_policy },
-        { "add_with_viewport",  &ScrolledWindow::add_with_viewport },
-        { "set_placement",      &ScrolledWindow::set_placement },
-        { "get_placement",      &ScrolledWindow::get_placement },
-        { "set_hadjustment",    &ScrolledWindow::set_hadjustment },
-        { "get_hadjustment",    &ScrolledWindow::get_hadjustment },
-        { "set_vadjustment",    &ScrolledWindow::set_vadjustment },
-        { "get_vadjustment",    &ScrolledWindow::get_vadjustment },
-        //{ "get_hscrollbar",     &ScrolledWindow::get_hscrollbar },
-        //{ "get_vscrollbar",     &ScrolledWindow::get_vscrollbar },
-        //{ "unset_placement",    &ScrolledWindow::unset_placement },
-        //{ "set_shadow_type",    &ScrolledWindow::set_shadow_type },
-        //{ "get_shadow_type",    &ScrolledWindow::get_shadow_type },
-        { NULL,                 NULL }
+        { "set_policy",             &ScrolledWindow::set_policy },
+        
+        { "get_policy",             &ScrolledWindow::get_policy },
+        
+        { "add_with_viewport",      &ScrolledWindow::add_with_viewport },
+        
+        { "set_placement",          &ScrolledWindow::set_placement },
+        
+        { "get_placement",          &ScrolledWindow::get_placement },
+        
+        { "set_hadjustment",        &ScrolledWindow::set_hadjustment },
+        
+        { "get_hadjustment",        &ScrolledWindow::get_hadjustment },
+        
+        { "set_vadjustment",        &ScrolledWindow::set_vadjustment },
+        
+        { "get_vadjustment",        &ScrolledWindow::get_vadjustment },
+        
+#if GTK_CHECK_VERSION(2, 8, 0)
+        { "get_hscrollbar",         &ScrolledWindow::get_hscrollbar },
+        
+        { "get_vscrollbar",         &ScrolledWindow::get_vscrollbar },
+#endif //GTK_CHECK_VERSION(2, 8, 0)
+        
+#if GTK_CHECK_VERSION(2, 10, 0)
+        { "unset_placement",        &ScrolledWindow::unset_placement },
+#endif //GTK_CHECK_VERSION(2, 10, 0)
+        
+        { "set_shadow_type",        &ScrolledWindow::set_shadow_type },
+        
+        { "get_shadow_type",        &ScrolledWindow::get_shadow_type },
+        
+        { "signal_move_focus_out",  &ScrolledWindow::signal_move_focus_out },
+        
+        { "signal_scroll_child",    &ScrolledWindow::signal_scroll_child },
+        
+        { NULL,                     NULL }
     };
     
     for( Gtk::MethodTab *currentMethod = methods; currentMethod->name; ++currentMethod ) {
@@ -53,6 +81,9 @@ void ScrolledWindow::modInit( Falcon::Module *mod ) {
         mod->addClassMethod( c_ScrolledWindow, currentMethod->name, currentMethod->cb );
         
     }
+    
+    Gtk::Buildable::clsInit(mod, c_ScrolledWindow);
+    //It should implement AtkImplementorIface too
     
 }
 
@@ -360,6 +391,178 @@ FALCON_FUNC ScrolledWindow::set_hadjustment( VMARG ) {
     gtk_scrolled_window_set_hadjustment( (GtkScrolledWindow*)_obj, adj );
     
 }
+
+#if GTK_CHECK_VERSION(2, 8, 0)
+
+/*#
+ 
+ @method get_hscrollbar GtkScrolledWindow
+ @brief Returns the horizontal scrollbar of scrolled_window. 
+ @return the horizontal scrollbar of the scrolled window, or NULL if it does not have one.
+ 
+ */
+FALCON_FUNC ScrolledWindow::get_hscrollbar( VMARG ) {
+    
+    NO_ARGS;
+    
+    MYSELF;
+    
+    GET_OBJ( self );
+    
+    GtkWidget *hscrollbar = gtk_scrolled_window_get_hscrollbar( (GtkScrolledWindow*) _obj );
+    
+    if( hscrollbar ) {
+        vm->retval( new Gtk::HScrollbar( vm->findWKI("GtkHScrollbar")->asClass(), (GtkHScrollbar*)hscrollbar ) );
+    } else {
+        vm->retnil();
+    }
+    
+}
+
+
+/*#
+ 
+ @method get_vscrollbar GtkScrolledWindow
+ @brief Returns the vertical scrollbar of scrolled_window. 
+ @return the vertical scrollbar of the scrolled window, or NULL if it does not have one.
+ 
+ */
+FALCON_FUNC ScrolledWindow::get_vscrollbar( VMARG ) {
+    
+    NO_ARGS;
+    
+    MYSELF;
+    
+    GET_OBJ( self );
+    
+    GtkWidget *vscrollbar = gtk_scrolled_window_get_vscrollbar( (GtkScrolledWindow*) _obj );
+    
+    
+    if( vscrollbar ) {
+        vm->retval( new Gtk::VScrollbar( vm->findWKI("GtkVScrollbar")->asClass(), (GtkVScrollbar*)vscrollbar ) );
+    } else {
+        vm->retnil();
+    }
+    
+}
+
+#endif //GTK_CHECK_VERSION(2, 8, 0)
+
+
+#if GTK_CHECK_VERSION(2, 10, 0)
+
+/*#
+ 
+ @method unset_placement GtkScrolledWindow
+ @brief Unsets the placement of the contents with respect to the scrollbars for the scrolled window.
+ If no window placement is set for a scrolled window, it obeys the "gtk-scrolled-window-placement" XSETTING. 
+ 
+ */
+FALCON_FUNC ScrolledWindow::unset_placement( VMARG ) {
+    
+    NO_ARGS;
+    
+    MYSELF;
+    
+    GET_OBJ( self );
+    
+    gtk_scrolled_window_unset_placement( (GtkScrolledWindow*)_obj );
+    
+}
+
+#endif //GTK_CHECK_VERSION(2, 10, 0)
+
+
+/*#
+ 
+ @method set_shadow_type GtkScrolledWindow
+ @brief Changes the type of shadow drawn around the contents of scrolled_window. 
+ @param type kind of shadow to draw around scrolled window contents
+ 
+ */
+FALCON_FUNC ScrolledWindow::set_shadow_type( VMARG ) {
+    
+    Item *i_shadow_type = vm->param( 0 );
+    
+#ifndef NO_PARAMETER_CHECK
+    
+    if( !i_shadow_type || !i_shadow_type->isInteger() )
+        throw_inv_params("I");
+    
+#endif //!NO_PARAMETER_CHECK
+    
+    MYSELF;
+    
+    GET_OBJ( self );
+    
+    gtk_scrolled_window_set_shadow_type( (GtkScrolledWindow*)_obj, (GtkShadowType)i_shadow_type->asInteger() );
+    
+}
+
+
+/*#
+ 
+ @method get_shadow_type GtkScrolledWindow
+ @brief Gets the shadow type of the scrolled window 
+ @return the current shadow type
+ 
+ */
+FALCON_FUNC ScrolledWindow::get_shadow_type( VMARG ) {
+    
+    NO_ARGS;
+    
+    MYSELF;
+    
+    GET_OBJ( self );
+    
+    GtkShadowType result = gtk_scrolled_window_get_shadow_type( (GtkScrolledWindow*)_obj );
+    
+    vm->retval( result );
+    
+}
+
+
+/*#
+ 
+ @method signal_move_focus_out GtkScrolledWindow
+ @brief ? 
+ 
+ */
+FALCON_FUNC ScrolledWindow::signal_move_focus_out( VMARG ) {
+    
+    NO_ARGS;
+    
+    CoreGObject::get_signal( "move_focus_out", (void*)&ScrolledWindow::on_move_focus_out, vm );
+    
+}
+
+void ScrolledWindow::on_move_focus_out(GtkScrolledWindow *obj, gpointer _vm) {
+    
+    CoreGObject::trigger_slot( (GObject*)obj, "move_focus_out", "on_move_focus_out", (VMachine*)_vm );
+    
+}
+
+
+/*#
+ 
+ @method signal_scroll_child GtkScrolledWindow
+ @brief ? 
+ 
+ */
+FALCON_FUNC ScrolledWindow::signal_scroll_child( VMARG ) {
+    
+    NO_ARGS;
+    
+    CoreGObject::get_signal( "scroll_child", (void*)&ScrolledWindow::on_scroll_child, vm );
+    
+}
+
+void ScrolledWindow::on_scroll_child(GtkScrolledWindow *obj, gpointer _vm) {
+    
+    CoreGObject::trigger_slot( (GObject*)obj, "scroll_child", "on_move_focus_out", (VMachine*)_vm );
+    
+}
+
 
 } //Gtk
 
