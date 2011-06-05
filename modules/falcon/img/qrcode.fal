@@ -146,7 +146,7 @@ class Maker
       if errorCorrectionLevel == nil: errorCorrectionLevel = qr.QrErrorCorrectionLevel.L
       if errorCorrectionLevel < qr.QrErrorCorrectionLevel.L \
          or errorCorrectionLevel > qr.QrErrorCorrectionLevel.H
-            raise qr.QrError(qr.QrError.invalid_error_correction_level, @i'$(errorCorrectionLevel) is not supported')
+         raise qr.QrError(qr.QrError.invalid_error_correction_level, @i'$(errorCorrectionLevel) is not supported')
       end
 
       return qr.QrInput(0, errorCorrectionLevel)
@@ -188,10 +188,10 @@ class Maker
          if self.find_best_mask
             masked = maskObj.mask(width, frame, input.errorCorrectionLevel)
          else
-            masked = maskObj.makeMask(width, frame, self.default_mask % 8, input.errorCorrectionLevel)
+            masked = maskObj.createMask(width, frame, self.default_mask % 8, input.errorCorrectionLevel)
          end
       else
-         masked = maskObj.makeMask(width, frame, mask, input.errorCorrectionLevel)
+         masked = maskObj.createMask(width, frame, mask, input.errorCorrectionLevel)
       end
 
       if masked == nil

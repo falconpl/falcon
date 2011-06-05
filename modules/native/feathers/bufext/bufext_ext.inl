@@ -225,10 +225,11 @@ template <> inline void SetEndianHelper<ByteBufManualEndian>(::Falcon::VMachine 
 */
 template <typename BUFTYPE> FALCON_FUNC Buf_setEndian( ::Falcon::VMachine *vm )
 {
-    BUFTYPE& buf = vmGetBuf<BUFTYPE>(vm);
-    if(vm->paramCount())
+    Item *param = vm->param(0);
+    if(param != NULL)
     {
-        uint32 endian = (uint32)vm->param(0)->forceInteger();
+        BUFTYPE& buf = vmGetBuf<BUFTYPE>(vm);
+        uint32 endian = (uint32)param->forceInteger();
         SetEndianHelper<BUFTYPE>(vm, buf, endian);
         vm->retval(vm->self());
         return;
@@ -295,10 +296,11 @@ if the buffer is made smaller and a position would point beyond the buffer size.
 */
 template <typename BUFTYPE> FALCON_FUNC Buf_resize( ::Falcon::VMachine *vm )
 {
-    BUFTYPE& buf = vmGetBuf<BUFTYPE>(vm);
-    if(vm->paramCount())
+    Item *param = vm->param(0);
+    if(param != NULL)
     {
-        uint32 newsize = (uint32)vm->param(0)->forceInteger();
+        BUFTYPE& buf = vmGetBuf<BUFTYPE>(vm);
+        uint32 newsize = (uint32)param->forceInteger();
         buf.resize(newsize);
         vm->retval(vm->self());
         return;
@@ -323,10 +325,11 @@ This does not change the actual read/write limit, and is safe to use.
 */
 template <typename BUFTYPE> FALCON_FUNC Buf_reserve( ::Falcon::VMachine *vm )
 {
-    BUFTYPE& buf = vmGetBuf<BUFTYPE>(vm);
-    if(vm->paramCount())
+    Item *param = vm->param(0);
+    if(param != NULL)
     {
-        uint32 newsize = (uint32)vm->param(0)->forceInteger();
+        BUFTYPE& buf = vmGetBuf<BUFTYPE>(vm);
+        uint32 newsize = (uint32)param->forceInteger();
         buf.reserve(newsize);
     }
 
@@ -450,8 +453,9 @@ Writes 64-bit doubles to the buffer at wpos(), and for each double the write pos
 #define MAKE_WRITE_FUNC(FUNC, TY, MTH) \
     template <typename BUFTYPE> FALCON_FUNC FUNC( ::Falcon::VMachine *vm ) \
     { \
+        uint32 paramCount = vm->paramCount(); \
         BUFTYPE& buf = vmGetBuf<BUFTYPE>(vm); \
-        for(uint32 i = 0; i < (uint32)vm->paramCount(); i++) \
+        for(uint32 i = 0; i < paramCount; i++) \
             buf.template append<TY>((TY)vm->param(i)->MTH()); \
         vm->retval(vm->self()); \
     }
@@ -540,8 +544,9 @@ Reads one double from the buffer at rpos(), and advances the read position by 8.
 #define MAKE_READ_FUNC(FUNC, TY, STY, RTY, SC) \
     template <typename BUFTYPE> FALCON_FUNC FUNC( ::Falcon::VMachine *vm ) \
     { \
+        Item *param = vm->param(0); \
         BUFTYPE& buf = vmGetBuf<BUFTYPE>(vm); \
-        if(SC && vm->paramCount() && vm->param(0)->isTrue()) \
+        if(SC && param != NULL && param->isTrue()) \
         { \
             RTY t = buf.template read<STY>(); \
             vm->retval(t); \
@@ -592,10 +597,10 @@ otherwise the MemBuf will be invalid and crash the VM!
 */
 template <typename BUFTYPE> FALCON_FUNC Buf_toMemBuf( ::Falcon::VMachine *vm )
 {
-    bool copy = vm->paramCount() && vm->param(0)->isTrue();
+    Item* param= vm->param(0);
     BUFTYPE& buf = vmGetBuf<BUFTYPE>(vm);
 
-    if(copy)
+    if(param != NULL && param->isTrue())
     {
         MemBuf_1 *mb = new MemBuf_1(buf.size());
         memcpy(mb->data(), buf.getBuf(), buf.size());
@@ -603,7 +608,7 @@ template <typename BUFTYPE> FALCON_FUNC Buf_toMemBuf( ::Falcon::VMachine *vm )
     }
     else
     {
-        MemBuf_1 *mb = new MemBuf_1((byte*)buf.getBuf(), buf.size());
+        MemBuf_1 *mb = new MemBuf_1((byte*)buf.getBuf(), buf.size(), 0);
         mb->dependant(vm->self().asObject()); // the MemBuf depends on us, this will prevent this buf from beeing deleted
         vm->retval(mb);                       // during the MemBuf's lifetime.
     }
@@ -645,17 +650,16 @@ template <typename BUFTYPE> FALCON_FUNC Buf_toString( ::Falcon::VMachine *vm )
 */
 template <typename BUFTYPE> FALCON_FUNC Buf_wpos( ::Falcon::VMachine *vm )
 {
+    Item *param = vm->param(0);
     BUFTYPE& buf = vmGetBuf<BUFTYPE>(vm);
-    if(vm->paramCount())
+    if(param != NULL)
     {
-        int64 wpos = vm->param(0)->forceInteger();
+        int64 wpos = (int64)param->forceInteger();
         buf.wpos((uint32)wpos);
         vm->retval(vm->self());
     }
     else
-    {
         vm->retval((int64)buf.wpos());
-    }
 }
 
 /*#
@@ -668,17 +672,16 @@ template <typename BUFTYPE> FALCON_FUNC Buf_wpos( ::Falcon::VMachine *vm )
 */
 template <typename BUFTYPE> FALCON_FUNC Buf_rpos( ::Falcon::VMachine *vm )
 {
+    Item *param = vm->param(0);
     BUFTYPE& buf = vmGetBuf<BUFTYPE>(vm);
-    if(vm->paramCount())
+    if(param != NULL)
     {
-        int64 rpos = vm->param(0)->forceInteger();
+        int64 rpos = (int64)param->forceInteger();
         buf.rpos((uint32)rpos);
         vm->retval(vm->self());
     }
     else
-    {
         vm->retval((int64)buf.rpos());
-    }
 }
 
 /*#
@@ -697,17 +700,16 @@ Setting growable to false will forbid any re-allocation and raise a BufferError 
 */
 template <typename BUFTYPE> FALCON_FUNC Buf_growable( ::Falcon::VMachine *vm )
 {
+    Item *param = vm->param(0);
     BUFTYPE& buf = vmGetBuf<BUFTYPE>(vm);
-    if(vm->paramCount())
+    if(param != NULL)
     {
-        bool g = vm->param(0)->isTrue();
-        buf.growable(g);
+        bool growable = param->isTrue();
+        buf.growable(growable);
         vm->retval(vm->self());
     }
     else
-    {
         vm->retval(buf.growable());
-    }
 }
 
 /*#
@@ -938,8 +940,9 @@ This method is functionally equivalent to @b write(), but does not append null t
 */
 template <typename BUFTYPE, bool NULL_TERM> FALCON_FUNC Buf_write( ::Falcon::VMachine *vm )
 {
+    uint32 paramCount = vm->paramCount();
     BUFTYPE& buf = vmGetBuf<BUFTYPE>(vm);
-    for(int32 i = 0; i < vm->paramCount(); i++)
+    for(int32 i = 0; i < paramCount; i++)
     {
         Item *itm = vm->param(i);
         BufWriteHelper<BUFTYPE, NULL_TERM>(vm, buf, itm, 0);
@@ -1179,15 +1182,16 @@ template <typename BUFTYPE> FALCON_FUNC Buf_readString( ::Falcon::VMachine *vm )
     uint32 cs = 1;
     uint32 maxchars = 0;
     uint32 prealloc = 0;
+    uint32 paramCount = vm->paramCount();
     String *str = NULL;
-    if(vm->paramCount())
+    if(paramCount)
     {
         // param 1
-        if(vm->paramCount() >= 2)
+        if(paramCount >= 2)
         {
             maxchars = (uint32)vm->param(1)->forceInteger();
             // param 2
-            if(vm->paramCount() >= 3)
+            if(paramCount >= 3)
                 prealloc = (uint32)vm->param(2)->forceInteger();
         }
 

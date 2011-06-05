@@ -266,4 +266,4 @@ FALCON_FUNC BufferError_init( ::Falcon::VMachine *vm )
 
 }} // namespace Falcon::Ext
 
-/* end of bufext_mod.cpp */
+/* end of bufext_ext.cpp */
