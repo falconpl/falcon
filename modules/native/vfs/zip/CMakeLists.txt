@@ -16,7 +16,8 @@ include_directories(
 )
 
 if(WIN32)
-   set(SYS_SPECIFIC zlib.rc)
+#   set(SYS_SPECIFIC zip.rc)
+   set(SYS_SPECIFIC )
 endif()
 
 
@@ -32,8 +33,7 @@ if(FALCON_WITH_INTERNAL_MINIZIP)
   inflate.c
   inftrees.c
   ioapi.c
-  iowin32.c
-  mztools.c 
+  iowin32.c 
   trees.c
   uncompr.c
   unzip.c
@@ -52,14 +52,14 @@ endif(FALCON_WITH_INTERNAL_MINIZIP)
 add_library(zip_fm MODULE
    ${MINIZIP_SOURCE}
    # ZLib module source
-   #zlib.cpp
-   #zlib_ext.cpp
-   #zlib_st.cpp
-   #zlibstream.cpp
+   #zip.cpp
+   #zip_ext.cpp
+   #zip_st.cpp
+   zipstream.cpp
 )
 
 target_link_libraries(zip_fm falcon_engine ${MINIZIP_LIBRARIES})
 
-falcon_install_module( zlib_fm )
+#falcon_install_module( zip_fm )
  
 set(_project_targets ${_project_targets} zip_fm PARENT_SCOPE)
