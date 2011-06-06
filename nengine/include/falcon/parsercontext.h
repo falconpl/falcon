@@ -314,6 +314,11 @@ public:
     */
    void undoVariable( const String& variable );
 
+   /** Clear all the temporarily undefined symbols.
+      Called back when we have an error.
+    */
+   void abandonSymbols();
+
    /** Defines the symbols that are declared in expressions as locally defined.
     \param expr The branch of the expressions where symbols are defined.
     \see checkSymbols()

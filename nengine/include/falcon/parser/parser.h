@@ -255,7 +255,7 @@ public:
 
       Once called, this method marks the current parsing as faulty, and parse() will return false.
     */
-   void addError( int code, const String& uri, int l, int c, int ctx, const String& extra );
+   virtual void addError( int code, const String& uri, int l, int c, int ctx, const String& extra );
 
    /** Adds an error for the parser.
 
@@ -267,7 +267,7 @@ public:
 
     Once called, this method marks the current parsing as faulty, and parse() will return false.
     */
-   void addError( int code, const String& uri, int l, int c=0, int ctx=0  );
+   virtual void addError( int code, const String& uri, int l, int c=0, int ctx=0  );
 
    /** Returns true if the parser should terminate asap.
       \return true on termination requested.

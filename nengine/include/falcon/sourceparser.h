@@ -41,6 +41,9 @@ public:
    /** Clears the source parser status. */
    virtual void reset();
 
+   virtual void addError( int code, const String& uri, int l, int c, int ctx, const String& extra );
+   virtual void addError( int code, const String& uri, int l, int c=0, int ctx=0  );
+
    //===============================================
    // Terminal tokens
    //

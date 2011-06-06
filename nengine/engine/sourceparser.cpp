@@ -570,6 +570,10 @@ static void apply_line_expr( const Rule& r, Parser& p )
 
 static void apply_autoexpr_list( const Rule& r, Parser& p )
 {
+   TokenInstance* ti = p.getNextToken();
+   Expression* expr = static_cast<Expression*>(ti->detachValue());
+   ParserContext* ctx = static_cast<ParserContext*>(p.context());
+   ctx->addStatement( new StmtAutoexpr( expr, ti->line(), ti->chr() ) );
    
    // clear the stack
    p.simplify(2);
@@ -604,29 +608,45 @@ static void apply_stmt_assign_list( const Rule& r, Parser& p )
    // do we have just one assignee?
    if( listLeft->size() == 1 )
    {
-      ExprUnpack* unpack = new ExprUnpack( listLeft->front(), true );
-      List::iterator iterRight = listRight->begin();
-      while( iterRight != listRight->end() )
+      if( listRight->size() == 1 )
       {
-         Expression* expr = *iterRight;
-         if( expr->type() != Expression::t_symbol )
-         {
-            p.addError(e_syn_unpack, p.currentSource(), v2->line(), v2->chr());
-            p.simplify(3, ti);
-            delete unpack;
-            return;
-         }
-
-         ctx->defineSymbols(expr);
-         unpack->addAssignand(static_cast<ExprSymbol*>(expr)->symbol());
-         ++iterRight;
+         // a simple assignment
+         ExprAssign* assign = new ExprAssign( listRight->front(), listLeft->front() );
+         listRight->clear();
+         ti->setValue( assign, expr_deletor );
       }
+      else
+      {
+         ExprUnpack* unpack = new ExprUnpack( listLeft->front(), true );
+         // save the unpack already. Even on error, it WAS a try to unpack.
+         ti->setValue( unpack, expr_deletor );
 
-      // don't clear the right side list, we got the symbols -- let the expr to die
-      ctx->addStatement( new StmtAutoexpr( unpack ) );
+         // we abandoned the data in the list
+         listLeft->clear();
+         List::iterator iterRight = listRight->begin();
+         while( iterRight != listRight->end() )
+         {
+            Expression* expr = *iterRight;
+            if( expr->type() != Expression::t_symbol )
+            {
+               p.addError(e_syn_unpack, p.currentSource(), v2->line(), v2->chr());
+               p.simplify(3, ti);
+               return;
+            }
+
+            // accept this item -- abandon it from the list
+            ctx->defineSymbols(expr);
+            unpack->addAssignand(static_cast<ExprSymbol*>(expr)->symbol());
+         }
+          // don't clear the right side list, we got the symbols -- let the expr to die
+      }
    }
    else
    {
+      // save the unpack already. Even on error, it WAS a try to unpack.
+      ExprMultiUnpack* unpack = new ExprMultiUnpack( true );
+      ti->setValue( unpack, expr_deletor );
+
       // multiple assignment
       if( listRight->size() != listLeft->size() )
       {
@@ -637,9 +657,7 @@ static void apply_stmt_assign_list( const Rule& r, Parser& p )
          return;
       }
 
-      ExprMultiUnpack* unpack = new ExprMultiUnpack( true );
       List::iterator iterRight = listRight->begin();
-      List::iterator iterLeft = listLeft->begin();
       while( iterRight != listRight->end() )
       {
          Expression* expr = *iterRight;
@@ -647,24 +665,23 @@ static void apply_stmt_assign_list( const Rule& r, Parser& p )
          {
             p.addError(e_syn_unpack, p.currentSource(), v2->line(), v2->chr());
             p.simplify(3, ti);
-            delete unpack;
             return;
          }
 
+         fassert( ! listLeft->empty() );
+         Expression* assignand = listLeft->front();         
+         listLeft->pop_front();
+
          ctx->defineSymbols(expr);
          unpack->addAssignment(
-            static_cast<ExprSymbol*>(expr)->symbol(), *iterLeft );
+            static_cast<ExprSymbol*>(expr)->symbol(), assignand );
          ++iterRight;
-         ++iterLeft;
+
       }
-      fassert( iterLeft == listLeft->end() );
+      fassert( listLeft->empty() );
 
       // let the simplify to kill the symbol expressions
-      ctx->addStatement( new StmtAutoexpr( unpack ) );
    }
-
-   // clear the list, so killing them won't destroy the expressions.
-   listLeft->clear();
 
    p.simplify(3, ti); // actually it has no value
 }
@@ -1868,6 +1885,24 @@ void SourceParser::reset()
    ParserContext* pc = static_cast<ParserContext*>(m_ctx);
    fassert( pc != 0 );
    pc->reset();
+}
+
+
+void SourceParser::addError( int code, const String& uri, int l, int c, int ctx, const String& extra )
+{
+   ParserContext* pc = static_cast<ParserContext*>(m_ctx);
+   fassert( pc != 0 );
+   pc->abandonSymbols();
+   Parser::addError( code, uri, l, c, ctx, extra );
+}
+
+
+void SourceParser::addError( int code, const String& uri, int l, int c, int ctx )
+{
+   ParserContext* pc = static_cast<ParserContext*>(m_ctx);
+   fassert( pc != 0 );
+   pc->abandonSymbols();
+   Parser::addError( code, uri, l, c, ctx );
 }
 
 
