@@ -119,7 +119,7 @@ public:
    /** Called back when parsing a "load" directive.
       \param path The load parameter
       \param isFsPath True if the path is a filesystem path, false if it's a logical module name.
-    
+
     */
    virtual void onLoad( const String& path, bool isFsPath ) = 0;
 
@@ -132,13 +132,13 @@ public:
                if not given.
       \param inName Name for the local namespace where the symbol is imported.
 
-    This directive imports one symbol (or asks for all the symbols to be 
+    This directive imports one symbol (or asks for all the symbols to be
     imported) from a given module. If a symName is given, it is possible to
     specify an asName, indicating an alias for a specific name. If an inName is
     given, then the symbol(s) will be put in the required namespace, otherwise
     they will be put in in a namespace determined using the import path.
-    
-    When using the grammar 
+
+    When using the grammar
     @code
       import sym1, sym2, ... symN from ...
     @endcode
@@ -153,7 +153,7 @@ public:
 
    /** Called back when parsing an "import symbol " directive.
       \param symName the name of the symbol to import.
-    
+
       Specify a symbol to import from the global namespace.
 
       When using the grammar
@@ -200,12 +200,12 @@ public:
    /** Notifies the creation of an external or undefined symbol.
     \param The name of the symbol that is currently undefined.
     \return A new symbol that can be used to form the sequence.
-    
+
     This method is called back when the parser finds an unreferenced symbol
     name. The subclass has here the chance to create a symbol that will need
     to be implicitly imported, and return the instance of the symbol created
     this way, or return a pre-defined symbol that it knows about.
-    
+
     It can also return 0; in that case, the parser will raise an undefined
     symbol error at current location, and onUnkownSymbol is called.
 
@@ -287,7 +287,7 @@ public:
 
     The compiler or the compiler owner should call this method before starting
     any parsing to set the place where new statements will be added.
-    
+
     \note Alternately, you could push the main() function context
     frame where appropriate by calling openFunc.
     */
@@ -363,7 +363,7 @@ public:
     end             // closeContext(); addStatement(while);
     @endcode
     */
-   
+
    bool checkSymbols();
 
    /** Adds a statement to the current context.
@@ -408,7 +408,7 @@ public:
     in the compiler context when the function is closed.
     */
    void openFunc( SynFunc *func, GlobalSymbol* gs = 0 );
-   
+
    /** Opens a new Class statement context.
     \param cls The class being created.
     \param gs An optional global symbol associated with the function.
@@ -435,7 +435,7 @@ public:
 
    /** Gets the current statement.
       \return The statement that is parent to this one, or 0 for nothing.
-    
+
       Zero is returned also for topmost-level statements inside functions.
       The returned value is non-zero only if a block statement has been opened.
     */
@@ -458,7 +458,7 @@ public:
     In this way, as the context is popped, the parser state is automatically
     popped as well.
     */
-   void onStatePushed();
+   void onStatePushed( bool isPushedState );
 
    /** Finds a symbol in one of the existing symbol table.
       \param name The name of a symbol to be searched.
@@ -472,7 +472,7 @@ public:
     as-is, while if it's found in an underlying table, it is returned as-is unless
     it's a LocalSymbol. In that case, a new ClosedSymbol is created and added
     to the topmost table before being returned.
-    
+
     */
    Symbol* findSymbol( const String& name );
 
@@ -493,9 +493,9 @@ public:
 
 private:
    class CCFrame; // forward decl for Context Frames.
-   
+
    SourceParser* m_parser;
-   
+
    // Pre-cached syntree for performance.
    SynTree* m_st;
 
@@ -510,7 +510,7 @@ private:
 
    // Current symbol table, precached for performance.
    SymbolTable* m_symtab;
-   
+
    class Private;
    Private* _p;
 };

@@ -109,7 +109,7 @@ void Parser::addState( State& state )
 }
 
 
-void Parser::pushState( const String& name )
+void Parser::pushState( const String& name, bool isPushedState )
 {
    TRACE( "Parser::pushState -- pushing state '%s'", name.c_ize() );
 
@@ -127,8 +127,7 @@ void Parser::pushState( const String& name )
       _p->m_tokenStack = &bf.m_tokenStack;
       _p->m_pframes = &bf.m_pframes;
       _p->m_pErrorFrames = &bf.m_pErrorFrames;
-      onPushState();
-
+      onPushState( isPushedState );
    }
    else
    {
@@ -655,7 +654,7 @@ void Parser::onNewToken()
          explorePaths();
       }
    }
-   
+
    // try to simplify the stack, if possible.
    applyPaths();
 }
@@ -787,7 +786,7 @@ bool Parser::applyPaths()
    while( ! _p->m_pframes->empty() )
    {
       bLooped = true;
-      
+
       // get the deepest rule in the deepest frame.
       Private::ParseFrame& frame = _p->m_pframes->back();
       if( frame.m_path.empty() )
@@ -864,7 +863,7 @@ bool Parser::applyPaths()
                {
                   frameDepth --;
                }
-               
+
                if( frameDepth == frame.m_nStackDepth ||
                      !(*_p->m_tokenStack)[frameDepth]->token().isNT() )
                {

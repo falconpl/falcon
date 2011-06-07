@@ -122,8 +122,8 @@ static void apply_expr_assign( const Rule& r, Parser& p )
    fassert( ! list->empty() );
    if( list->size() == 1 )
    {
-       ti->setValue( 
-         new ExprAssign( firstPart, list->front() ), 
+       ti->setValue(
+         new ExprAssign( firstPart, list->front() ),
          expr_deletor );
    }
    else
@@ -574,7 +574,7 @@ static void apply_autoexpr_list( const Rule& r, Parser& p )
    Expression* expr = static_cast<Expression*>(ti->detachValue());
    ParserContext* ctx = static_cast<ParserContext*>(p.context());
    ctx->addStatement( new StmtAutoexpr( expr, ti->line(), ti->chr() ) );
-   
+
    // clear the stack
    p.simplify(2);
 }
@@ -637,6 +637,7 @@ static void apply_stmt_assign_list( const Rule& r, Parser& p )
             // accept this item -- abandon it from the list
             ctx->defineSymbols(expr);
             unpack->addAssignand(static_cast<ExprSymbol*>(expr)->symbol());
+            //++iterRight;
          }
           // don't clear the right side list, we got the symbols -- let the expr to die
       }
@@ -653,7 +654,8 @@ static void apply_stmt_assign_list( const Rule& r, Parser& p )
          // Use second token position to signal the error
          // notice that ti value is now in listRight, so it will be destroyed
          p.addError( e_unpack_size, p.currentSource(), v2->line(), v2->chr() );
-         p.simplify(3, ti);
+         delete ti;
+         p.simplify(3);
          return;
       }
 
@@ -669,7 +671,7 @@ static void apply_stmt_assign_list( const Rule& r, Parser& p )
          }
 
          fassert( ! listLeft->empty() );
-         Expression* assignand = listLeft->front();         
+         Expression* assignand = listLeft->front();
          listLeft->pop_front();
 
          ctx->defineSymbols(expr);
@@ -1791,7 +1793,7 @@ SourceParser::SourceParser():
       << (r_NeListExpr_ungreed_first << "NeListExpr_ungreed_first" << apply_NeListExpr_ungreed_first << Expr )
       ;
       r_NeListExpr_ungreed_next.setGreedy(false);
-      
+
 
    ListExprOrPairs << "ListExprOrPairs"
       << (r_ListExprOrPairs_next_pair << "ListExprOrPairs_next_pair" << apply_ListExprOrPairs_next_pair << ListExprOrPairs << T_Comma << Expr << T_Arrow << Expr )
@@ -1862,10 +1864,10 @@ SourceParser::SourceParser():
    addState( s_InlineFunc );
 }
 
-void SourceParser::onPushState()
+void SourceParser::onPushState( bool isPushedState )
 {
    ParserContext* pc = static_cast<ParserContext*>(m_ctx);
-   pc->onStatePushed();
+   pc->onStatePushed( isPushedState );
 }
 
 bool SourceParser::parse()
@@ -1892,8 +1894,8 @@ void SourceParser::addError( int code, const String& uri, int l, int c, int ctx,
 {
    ParserContext* pc = static_cast<ParserContext*>(m_ctx);
    fassert( pc != 0 );
-   pc->abandonSymbols();
    Parser::addError( code, uri, l, c, ctx, extra );
+   pc->abandonSymbols();
 }
 
 
@@ -1901,8 +1903,8 @@ void SourceParser::addError( int code, const String& uri, int l, int c, int ctx 
 {
    ParserContext* pc = static_cast<ParserContext*>(m_ctx);
    fassert( pc != 0 );
-   pc->abandonSymbols();
    Parser::addError( code, uri, l, c, ctx );
+   pc->abandonSymbols();
 }
 
 

@@ -182,7 +182,7 @@ IntCompiler::IntCompiler( VMachine* vm ):
    m_stream = new StringStream;
    m_writer = new TextWriter( m_stream );
 
-   m_sp.pushLexer(new SourceLexer( "(interactive)", &m_sp, new TextReader( m_stream ) ) );   
+   m_sp.pushLexer(new SourceLexer( "(interactive)", &m_sp, new TextReader( m_stream ) ) );
 }
 
 
@@ -212,7 +212,7 @@ IntCompiler::compile_status IntCompiler::compileNext( const String& value )
    {
       m_currentTree = new SynTree;
       m_ctx->openMain( m_currentTree );
-      m_sp.pushState( "Main" );
+      m_sp.pushState( "Main", false );
    }
 
    // if there is a compilation error, throw it
@@ -290,7 +290,7 @@ void IntCompiler::throwCompileErrors() const
          SyntaxError* err = new SyntaxError( ErrorParam( def.nCode, def.nLine )
                .module(def.sUri)
                .extra(sExtra));
-         
+
          myError->appendSubError(err);
 
          if( bLast )
@@ -300,10 +300,10 @@ void IntCompiler::throwCompileErrors() const
 
          return true;
       }
-      
+
    private:
       Error* myError;
-   
+
    } rator;
 
    m_sp.enumerateErrors( rator );

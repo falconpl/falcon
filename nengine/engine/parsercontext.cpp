@@ -167,10 +167,10 @@ void ParserContext::openMain( SynTree* st )
    m_st = st;
 }
 
-void ParserContext::onStatePushed()
+void ParserContext::onStatePushed( bool isPushedState )
 {
    fassert( ! _p->m_frames.empty() );
-   _p->m_frames.back().m_bStatePushed = true;
+   _p->m_frames.back().m_bStatePushed = isPushedState;
    _p->m_unknown.push_back(Private::SymbolMap());
 }
 
@@ -219,6 +219,13 @@ void ParserContext::abandonSymbols()
    if( _p->m_unknown.empty() )
    {
       //todo error!
+   }
+
+   Private::SymbolMap& unknown = _p->m_unknown.back();
+
+   for( Private::SymbolMap::iterator it = unknown.begin(), end = unknown.end(); it != end ; ++it)
+   {
+      delete it->second;
    }
 
    _p->m_unknown.back().clear();
@@ -322,21 +329,25 @@ bool ParserContext::checkSymbols()
       }
       else
       {
-         // we know that the symbol is lost
-         m_parser->addError(e_undef_sym, m_parser->currentSource(), sym->declaredAt(),0, 0, sym->name() );
-         isOk = false;
-
-         // -- see if the callee wants to do something about that
          TRACE1("ParserContext::checkSymbols cannot define \"%s\"",
                   sym->name().c_ize() );
          onUnknownSymbol( sym );
+         // we know that the symbol is lost
+         // add error will clear unknown symbols. return immediately after this call, iterators are no longer valid.
+         m_parser->addError(e_undef_sym, m_parser->currentSource(), sym->declaredAt(),0, 0, sym->name() );
+         //isOk = false;
+         return false;
+
+         // -- see if the callee wants to do something about that
 
          // if this parser is interactive, the calling item is discarded,
          // as such the symbol is dead.
+         /*
          if( m_parser->interactive() )
          {
             delete sym;
          }
+         */
       }
       ++iter;
    }
@@ -506,7 +517,7 @@ void ParserContext::closeContext()
    // updating the syntactic tree
    Private::FrameVector::const_reverse_iterator riter = _p->m_frames.rbegin();
    m_symtab = 0; // if we don't find a parent context, the symtab is 0
-   while( riter != _p->m_frames.rbegin() )
+   while( riter != _p->m_frames.rend() )
    {
       const CCFrame& curFrame = *riter;
       switch( curFrame.m_type )
@@ -515,18 +526,19 @@ void ParserContext::closeContext()
          case CCFrame::t_class_type:
             // todo
             //m_symtab = curFrame.m_elem.cls;
-            riter = _p->m_frames.rbegin(); // we're done, froce break;
+            riter = _p->m_frames.rend(); // we're done, froce break;
             break;
 
          case CCFrame::t_func_type:
             m_symtab = &curFrame.m_elem.func->symbols();
-            riter = _p->m_frames.rbegin(); // we're done, froce break;
+            riter = _p->m_frames.rend(); // we're done, froce break;
             break;
 
          default:
             // keep the current symtab.
-            m_symtab = m_symtab; // to make compilers happy
+            //m_symtab = m_symtab; // to make compilers happy
             // continue the loop
+            riter++;
       }
    }
 

@@ -36,7 +36,7 @@ public:
    SourceParser();
    bool parse();
 
-   void onPushState();
+   void onPushState( bool isPushedState );
 
    /** Clears the source parser status. */
    virtual void reset();
@@ -143,7 +143,7 @@ public:
 
    Parsing::NonTerminal S_MultiAssign;
    Parsing::Rule r_Stmt_assign_list;
-   
+
    //================================================
    // Expression
    //

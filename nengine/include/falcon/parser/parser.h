@@ -83,7 +83,7 @@ public:
 
    /** Pushes a state.
     */
-   void pushState( const String& name );
+   void pushState( const String& name , bool notify = true);
 
    typedef void (*StateFrameFunc)(void*);
 
@@ -94,7 +94,7 @@ public:
    /** Method to be called from pushState. Must be overriden in a child class.
     */
 
-   virtual void onPushState()=0;
+   virtual void onPushState( bool isPushedState )=0;
 
    /** Re-enables previous state.
    */
