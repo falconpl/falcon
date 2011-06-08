@@ -568,7 +568,7 @@ FALCON_FUNC FileChooser::get_filename( VMARG )
         String *result = new String( nm, -1 );
 #ifdef FALCON_SYSTEM_WIN
         
-        Falcon::Path::winToUri( result );
+        Falcon::Path::winToUri( *result );
         
 #endif //FALCON_SYSTEM_WIN
         vm->retval( result );
