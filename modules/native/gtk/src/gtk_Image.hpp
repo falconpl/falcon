@@ -42,7 +42,7 @@ public:
 
     //static FALCON_FUNC get_storage_type( VMARG );
 
-    //static FALCON_FUNC new_from_file( VMARG );
+    static FALCON_FUNC new_from_file( VMARG );
 
     //static FALCON_FUNC new_from_icon_set( VMARG );
 

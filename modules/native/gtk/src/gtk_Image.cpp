@@ -40,7 +40,7 @@ void Image::modInit( Falcon::Module* mod )
     //{ "get_icon_name",        &Image::foo },
     //{ "get_gicon",        &Image::foo },
     //{ "get_storage_type",        &Image::foo },
-    //{ "new_from_file",        &Image::foo },
+    { "new_from_file",          &Image::new_from_file },
     //{ "new_from_icon_set",        &Image::foo },
     //{ "new_from_image",        &Image::foo },
     { "new_from_pixbuf",        &Image::new_from_pixbuf },
@@ -128,8 +128,6 @@ FALCON_FUNC Image::init( VMARG )
 
 //FALCON_FUNC Image::get_image( VMARG );
 
-//FALCON_FUNC Image::get_pixbuf( VMARG );
-
 //FALCON_FUNC Image::get_pixmap( VMARG );
 
 //FALCON_FUNC Image::get_stock( VMARG );
@@ -141,8 +139,6 @@ FALCON_FUNC Image::init( VMARG )
 //FALCON_FUNC Image::get_gicon( VMARG );
 
 //FALCON_FUNC Image::get_storage_type( VMARG );
-
-//FALCON_FUNC Image::new_from_file( VMARG );
 
 //FALCON_FUNC Image::new_from_icon_set( VMARG );
 
@@ -163,6 +159,40 @@ FALCON_FUNC Image::new_from_pixbuf( VMARG )
   GtkWidget* img = gtk_image_new_from_pixbuf( GET_PIXBUF( *i_pixbuf ) );
 
   vm->retval( new Image( vm->self().asClass(), (GtkImage*) img ) );
+}
+
+
+
+FALCON_FUNC Image::new_from_file( VMARG )
+{
+    Item* i_fnam = vm->param( 0 );
+
+#ifndef NO_PARAMETER_CHECK
+    if ( i_fnam == 0 || ! i_fnam->isString() )
+    {
+            throw_inv_params( "S|nil" );
+    }
+#endif
+    String* filename = i_fnam->asString();
+
+    Path path( *filename );
+#ifdef FALCON_SYSTEM_WIN
+    // if we are on windows, clear the path...
+    filename->size( 0 );
+    // and copy the winpath in it
+    path.getWinFormat( *filename );
+#else
+    // otherwise, we copy the path returned via get()
+    filename->copy( path.get() );
+#endif
+
+    AutoCString s( filename );
+    vm->retval(
+        new Image(
+            vm->findWKI("GtkImage")->asClass(),
+            GTK_IMAGE(gtk_image_new_from_file( s.c_str() ))
+        )
+    ); // vm->retval()
 }
 
 //FALCON_FUNC Image::new_from_pixmap( VMARG );
