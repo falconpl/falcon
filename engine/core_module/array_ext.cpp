@@ -928,7 +928,7 @@ FALCON_FUNC mth_arrayCopy( ::Falcon::VMachine *vm )
    int32 first = (int32) ( first_i->asInteger() );
    int32 amount = (int32) ( amount_i == 0 ? src->length() : amount_i->asInteger() );
 
-   if ( ! dest->copyOnto( from, *src, first, amount ) ) {
+   if ( ! dest->items().copyOnto( from, src->items(), first, amount ) ) {
       throw new AccessError( ErrorParam( e_arracc, __LINE__ )
          .origin( e_orig_runtime ) );
    }
