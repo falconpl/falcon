@@ -22,6 +22,7 @@
 #include <sys/poll.h>
 
 #include <falcon/fstream.h>
+#include <falcon/fstream_posix.h>
 #include <falcon/interrupt.h>
 #include <falcon/ioerror.h>
 #include <falcon/interruptederror.h>
@@ -41,28 +42,28 @@ FStream::FStream( void* data ):
 FStream::FStream( const FStream &other ):
    Stream( other )
 {
-   int fd = *(int*) other.m_fsData;
+
+   int fd = static_cast<PosixFStreamData*>(other.m_fsData)->fdFile;
    int fd2 = ::dup( fd );
    if ( fd2 < 0 )
    {
       throw new IOError (ErrorParam(e_io_dup, __LINE__, __FILE__ ).sysError(errno) );
    }
 
-   m_fsData = new int[1];
-   *((int*)m_fsData) = fd2;
+   m_fsData = new PosixFStreamData(fd2);
 }
 
 
 FStream::~FStream()
 {
    close();
-   delete[] (int*) m_fsData;
+   delete static_cast<PosixFStreamData*>(m_fsData);
 }
 
 
 bool FStream::close()
 {
-   int fd = *(int*) m_fsData;
+   int fd = static_cast<PosixFStreamData*>(m_fsData)->fdFile;
 
    if ( m_status & Stream::t_open ) {
       if( ::close( fd ) < 0 ) {
@@ -86,7 +87,7 @@ bool FStream::close()
 
 size_t FStream::read( void *buffer, size_t size )
 {
-   int fd = *(int*) m_fsData;
+   int fd = static_cast<PosixFStreamData*>(m_fsData)->fdFile;
 
    size_t result = ::read( fd, buffer, size );
    if ( result < 0 ) {
@@ -111,7 +112,7 @@ size_t FStream::read( void *buffer, size_t size )
 
 size_t FStream::write( const void *buffer, size_t size )
 {
-   int fd = *(int*) m_fsData;
+   int fd = static_cast<PosixFStreamData*>(m_fsData)->fdFile;
 
    size_t result = ::write( fd, buffer, size );
    if ( result < 0 ) {
@@ -132,7 +133,7 @@ size_t FStream::write( const void *buffer, size_t size )
 
 off_t FStream::seek( off_t pos, e_whence whence )
 {
-   int fd = *(int*) m_fsData;
+   int fd = static_cast<PosixFStreamData*>(m_fsData)->fdFile;
 
    int from;
    switch( whence ) {
@@ -165,7 +166,7 @@ off_t FStream::seek( off_t pos, e_whence whence )
 
 off_t FStream::tell()
 {
-   int fd = *(int*) m_fsData;
+   int fd = static_cast<PosixFStreamData*>(m_fsData)->fdFile;
 
    off_t pos = (off_t) ::lseek( fd, 0, SEEK_CUR );
 
@@ -188,7 +189,7 @@ off_t FStream::tell()
 
 bool FStream::truncate( off_t pos )
 {
-   int fd = *(int*) m_fsData;
+   int fd = static_cast<PosixFStreamData*>(m_fsData)->fdFile;
 
    if ( pos < 0 ) {
       pos = tell();
@@ -238,7 +239,7 @@ size_t FStream::readAvailable( int32 msec )
    return 0;
    */
 
-   int fd = *(int*) m_fsData;
+   int fd = static_cast<PosixFStreamData*>(m_fsData)->fdFile;
    struct timeval tv, *tvp;
    fd_set set;
    int last;
@@ -303,7 +304,7 @@ size_t FStream::readAvailable( int32 msec )
 
 size_t FStream::writeAvailable( int32 msec )
 {
-   int fd = *(int*) m_fsData;
+   int fd = static_cast<PosixFStreamData*>(m_fsData)->fdFile;
 
    struct pollfd poller[2];
    int fds;

@@ -18,8 +18,8 @@
 */
 
 #include <falcon/stdstreams.h>
+#include <falcon/fstream_posix.h>
 #include <unistd.h>
-
 #include <falcon/ioerror.h>
 
 namespace Falcon {
@@ -47,15 +47,15 @@ inline int make_fd( int origfd, bool bDup )
 
 
 StdInStream::StdInStream( bool bDup ):
-   ReadOnlyFStream(new int(make_fd(STDIN_FILENO, bDup )))
+   ReadOnlyFStream( new PosixFStreamData(make_fd(STDIN_FILENO, bDup )) )
 {}
 
 StdOutStream::StdOutStream( bool bDup ):
-   WriteOnlyFStream(new int(make_fd(STDOUT_FILENO, bDup )))
+   WriteOnlyFStream( new PosixFStreamData(make_fd(STDOUT_FILENO, bDup )) )
 {}
 
 StdErrStream::StdErrStream( bool bDup ):
-   WriteOnlyFStream(new int(make_fd(STDERR_FILENO, bDup )))
+   WriteOnlyFStream( new PosixFStreamData(make_fd(STDERR_FILENO, bDup )) )
 {}
 
 }

@@ -21,6 +21,7 @@
 #include <falcon/ioerror.h>
 #include <falcon/filestat.h>
 #include <falcon/directory.h>
+#include <falcon/fstream_posix.h>
 
 #include <sys/types.h>
 #include <dirent.h>
@@ -30,7 +31,6 @@
 #include <cstring>
 #include <stdio.h>
 #include <fcntl.h>
-
 
 #define DEFAULT_CREATE_MODE 0640
 
@@ -122,9 +122,7 @@ Stream *VFSFile::open( const URI& uri, const OParams &p )
    int handle = ::open( cfilename.c_str(), omode );
    if ( handle >= 0 )
    {
-      int* fsData = new int[1];
-      fsData[0] = handle;
-      FStream* fs = new FStream( fsData );
+      FStream* fs = new FStream( new PosixFStreamData(handle) );
       return fs;
    }
 
@@ -149,9 +147,7 @@ Stream *VFSFile::create( const URI& uri, const CParams &p )
    {
       if ( ! p.isNoStream() )
       {
-         int* fsData = new int[1];
-         fsData[0] = handle;
-         FStream* fs = new FStream( fsData );
+         FStream* fs = new FStream( new PosixFStreamData(handle) );
          return fs;
       }
       else
