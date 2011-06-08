@@ -41,7 +41,7 @@ FStream::FStream( void* data ):
 FStream::FStream( const FStream &other ):
    Stream( other )
 {
-   int fd = *(int*) m_fsData;
+   int fd = *(int*) other.m_fsData;
    int fd2 = ::dup( fd );
    if ( fd2 < 0 )
    {

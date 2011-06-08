@@ -122,7 +122,9 @@ Stream *VFSFile::open( const URI& uri, const OParams &p )
    int handle = ::open( cfilename.c_str(), omode );
    if ( handle >= 0 )
    {
-      FStream* fs = new FStream( &handle );
+      int* fsData = new int[1];
+      fsData[0] = handle;
+      FStream* fs = new FStream( fsData );
       return fs;
    }
 
@@ -147,7 +149,9 @@ Stream *VFSFile::create( const URI& uri, const CParams &p )
    {
       if ( ! p.isNoStream() )
       {
-         FStream* fs = new FStream( &handle );
+         int* fsData = new int[1];
+         fsData[0] = handle;
+         FStream* fs = new FStream( fsData );
          return fs;
       }
       else
