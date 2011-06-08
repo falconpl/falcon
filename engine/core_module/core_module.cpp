@@ -696,13 +696,14 @@ Module* core_module_init()
       addParam("source")->addParam("filter");
    self->addClassMethod( array_meta, "mcomp", &Falcon::core::Array_mcomp );
    self->addClassMethod( array_meta, "mfcomp", &Falcon::core::Array_mfcomp ).asSymbol()->
-         addParam("filter");
+      addParam("filter");
    
    self->addClassMethod( array_meta, "compact", &Falcon::core::mth_arrayCompact );
+   self->addClassMethod( array_meta, "copyFrom", &Falcon::core::mth_arrayCopy ).asSymbol()->
+      addParam("from")->addParam("src")->addParam("first")->addParam("amount");
    self->addClassMethod( array_meta, "NM", &Falcon::core::mth_arrayNM );
    self->addClassMethod( array_meta, "concat", &Falcon::core::Array_concat ).asSymbol()->
-   		addParam( "sep" );
-
+      addParam( "sep" );
 
    //==================================================================
    // Dict class
@@ -1452,6 +1453,8 @@ Module* core_module_init()
       addParam("array")->addParam("item");
    self->addExtFunc( "arrayCompact", &Falcon::core::mth_arrayCompact )->
       addParam("array");
+   self->addExtFunc( "arrayCopy", &Falcon::core::mth_arrayCopy )->
+      addParam("dest")->addParam("from")->addParam("src")->addParam("first")->addParam("amount");
    self->addExtFunc( "arrayNM", &Falcon::core::mth_arrayNM )->
       addParam("array");
 
