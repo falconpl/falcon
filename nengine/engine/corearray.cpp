@@ -195,7 +195,7 @@ void CoreArray::op_add( VMachine *vm, void* self ) const
       // it's an array!
       ItemArray* other = static_cast<ItemArray*>(inst);
       result->reserve( array->length() + other->length() );
-      result->merge(*array);
+      result->merge( *array );
       result->merge( *other );
    }
     
