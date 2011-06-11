@@ -156,7 +156,7 @@ FALCON_FUNC Frame::set_label_align( VMARG )
 #endif
     MYSELF;
     GET_OBJ( self );
-    gtk_frame_set_label_align( (GtkFrame*)_obj, i_xalign->asNumeric(), i_yalign->asNumeric() );
+    gtk_frame_set_label_align( (GtkFrame*)_obj, i_xalign->forceNumeric(), i_yalign->forceNumeric() );
 }
 
 

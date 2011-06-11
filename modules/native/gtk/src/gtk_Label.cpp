@@ -550,7 +550,7 @@ FALCON_FUNC Label::set_angle( VMARG )
 #endif
     MYSELF;
     GET_OBJ( self );
-    gtk_label_set_angle( (GtkLabel*)_obj, i_dbl->asNumeric() );
+    gtk_label_set_angle( (GtkLabel*)_obj, i_dbl->forceNumeric() );
 }
 
 #if GTK_VERSION_MINOR >= 18

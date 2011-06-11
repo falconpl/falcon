@@ -44,6 +44,26 @@ void Pixbuf::modInit( Falcon::Module* mod )
 
     for ( Gtk::MethodTab* meth = methods; meth->name; ++meth )
         mod->addClassMethod( c_Pixbuf, meth->name, meth->cb );
+
+    struct PixbufEnum
+    {
+        const char* name;
+        const int64 value;
+    };
+
+    const PixbufEnum enums[] =
+    {
+    { "GDK_INTERP_NEAREST",     GDK_INTERP_NEAREST },
+    { "GDK_INTERP_TILES",       GDK_INTERP_TILES },
+    { "GDK_INTERP_BILINEAR",    GDK_INTERP_BILINEAR },
+    { "GDK_INTERP_HYPER",       GDK_INTERP_HYPER },
+    { NULL,                     0 }
+    };
+
+    for( const PixbufEnum* e = enums; e->name; e++ )
+    {
+        mod->addConstant( e->name, e->value );
+    }
 }
 
 
@@ -312,16 +332,16 @@ FALCON_FUNC Pixbuf::scale_simple( VMARG )
     Item* i_dest_height = vm->param( 1 );
     Item* i_interp_type = vm->param( 2 );
 #ifndef NO_PARAMETER_CHECK
-    if ( !i_dest_width || !i_dest_width->isInteger()
-        || !i_dest_height || !i_dest_height->isInteger()
+    if ( !i_dest_width || !i_dest_width->isOrdinal()
+        || !i_dest_height || !i_dest_height->isOrdinal()
         || !i_interp_type || !i_interp_type->isInteger() )
         throw_inv_params( "[I,I,I]" );
 #endif
 	MYSELF;
 	vm->retval( new Gdk::Pixbuf( vm->findWKI( "GdkPixbuf" )->asClass(),
                 gdk_pixbuf_scale_simple( GET_PIXBUF( vm->self() ),
-                i_dest_width->asInteger(),
-                i_dest_height->asInteger(),
+                i_dest_width->forceInteger(),
+                i_dest_height->forceInteger(),
                 (GdkInterpType) i_interp_type->asInteger() ) ) );
 }
 

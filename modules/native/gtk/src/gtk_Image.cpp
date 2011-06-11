@@ -152,13 +152,24 @@ FALCON_FUNC Image::new_from_pixbuf( VMARG )
 {
   Item* i_pixbuf = vm->param( 0 );
 #ifndef NO_PARAMETER_CHECK
-  if ( !i_pixbuf || !( i_pixbuf->isNil() || ( i_pixbuf->isObject() && IS_DERIVED( i_pixbuf, GdkPixbuf ) ) ) )
+  if ( i_pixbuf == 0
+    || ( ! i_pixbuf->isNil() && !( i_pixbuf->isObject() && IS_DERIVED( i_pixbuf, GdkPixbuf ))) )
+  {
     throw_inv_params( "[GdkPixbuf]" );
+  }
 #endif
 
-  GtkWidget* img = gtk_image_new_from_pixbuf( GET_PIXBUF( *i_pixbuf ) );
+  GtkWidget* img;
+  if( i_pixbuf->isNil())
+  {
+    img = NULL;
+  }
+  else
+  {
+    img = gtk_image_new_from_pixbuf( GET_PIXBUF( *i_pixbuf ) );
+  }
 
-  vm->retval( new Image( vm->self().asClass(), (GtkImage*) img ) );
+  vm->retval( new Image( vm->self().asClass(), (GtkImage *)img ) );
 }
 
 
@@ -189,7 +200,7 @@ FALCON_FUNC Image::new_from_file( VMARG )
     AutoCString s( filename );
     vm->retval(
         new Image(
-            vm->findWKI("GtkImage")->asClass(),
+            vm->self().asClass(),
             GTK_IMAGE(gtk_image_new_from_file( s.c_str() ))
         )
     ); // vm->retval()
