@@ -29,6 +29,54 @@
 namespace Falcon
 {
 
+//========================================================
+// Inline utilities
+//
+inline Item* allocate( length_t size )
+{
+   return (Item*) malloc(sizeof(Item) * size);
+}
+
+inline void release( Item* data )
+{
+   if( data != 0 ) {
+      free( data );
+   }
+}
+
+
+class ItemArray::Helper
+{
+public:
+   ItemArray* m_master;
+
+   inline Helper( ItemArray* master ):
+      m_master(master)
+   {}
+
+   inline Item* reallocate( length_t size )
+   {
+      Item* newData = allocate( size );
+      memcpy( newData, m_master->m_data,m_master-> m_size );
+      return newData;
+   }
+
+   static inline void setCopied( const ItemArray& other )
+   {
+      register Item* data = other.m_data;
+      Item* end = data + other.m_size;
+      while( data < end )
+      {
+         data->copied(true);
+         ++data;
+      }
+   }
+};
+
+//========================================================
+// The item array
+//
+
 ItemArray::ItemArray():
    m_alloc(0),
    m_size(0),
@@ -43,21 +91,11 @@ ItemArray::ItemArray( const ItemArray& other ):
    {
       m_alloc = other.m_size;
       m_size = other.m_size;
-      m_data = new Item[other.m_size];
+
+      // set all the items in the source as copied.
+      Helper(this).setCopied( other );
+      m_data = allocate( m_size );
       memcpy( m_data, other.m_data, esize(other.m_size) );
-
-      // duplicate strings
-      /*
-      for ( uint32 i = 0; i < m_size; ++i )
-      {
-         Item& item = m_data[i];
-
-         if( item.isString() )
-         {
-            item = new CoreString( *item.asString() );
-         }         
-      }
-      */
    }
    else
    {
@@ -74,7 +112,7 @@ ItemArray::ItemArray( length_t prealloc ):
    if( m_growth < 4 )
       m_growth = 4;
 
-   m_data = new Item[m_growth];
+   m_data = allocate( m_growth );
    m_alloc = m_growth;
    m_size = 0;
 }
@@ -90,7 +128,7 @@ ItemArray::ItemArray( Item *buffer, length_t size, length_t alloc ):
 
 ItemArray::~ItemArray()
 {
-   delete[] m_data;
+   release( m_data );
 }
 
 void ItemArray::append( const Item &ndata )
@@ -99,14 +137,13 @@ void ItemArray::append( const Item &ndata )
    if ( m_alloc <= m_size )
    {
       m_alloc = m_size + m_growth;
-
-      Item* newData = new Item[m_alloc];
-      memcpy( newData, m_data, m_size );
+      Item* newData = Helper(this).reallocate( m_alloc );
 
       // ndata may come from m_data; delete it AFTER having assigned it.
+      // don't set the copied bit on ndata; in case of need, the caller will
       newData[ m_size ] = ndata;
 
-      delete[] m_data;
+      release( m_data );
       m_data = newData;
 
    }
@@ -124,12 +161,12 @@ void ItemArray::merge( const ItemArray &other )
    if ( other.m_size == 0 )
       return;
 
+   // set all the items in the source as copied.
+   Helper(this).setCopied( other );
+
    if ( m_alloc < m_size + other.m_size ) {
       m_alloc = m_size + other.m_size;
-
-      Item* newData = new Item[m_alloc];
-      memcpy( newData, m_data, m_size );
-      delete[] m_data;
+      Item* newData = Helper(this).reallocate( m_alloc );
       m_data = newData;
    }
 
@@ -137,32 +174,40 @@ void ItemArray::merge( const ItemArray &other )
    m_size += other.m_size;
 }
 
+
 void ItemArray::prepend( const Item &ndata )
 {
    // create enough space to hold the data
-   Item *mem = new Item[m_size + 1];
    m_alloc = m_size + 1;
+   Item *mem = allocate( m_alloc );
    if ( m_size != 0 )
+   {
       memcpy( mem + 1, m_data, esize( m_size ) );
+   }
+
    mem[0] = ndata;
-   if ( m_size != 0 )
-      delete[] m_data;
+   release( m_data );
    m_data = mem;
    m_size++;
 }
+
 
 void ItemArray::merge_front( const ItemArray &other )
 {
    if ( other.m_size == 0 )
       return;
 
-   if ( m_alloc < m_size + other.m_size ) {
+   // set all the items in the source as copied.
+   Helper(this).setCopied( other );
+
+   if ( m_alloc < m_size + other.m_size )
+   {
       m_alloc = m_size + other.m_size;
-      Item *mem = new Item [m_alloc];
+      Item *mem = allocate(m_alloc);
       memcpy( mem , other.m_data, esize( other.m_size ) );
       if ( m_size > 0 ) {
          memcpy( mem + other.m_size, m_data, esize( m_size ) );
-         delete[] m_data;
+         release(m_data);
       }
 
       m_size = m_alloc;
@@ -181,9 +226,10 @@ bool ItemArray::insert( const Item &ndata, length_t pos )
    if ( pos > m_size )
       return false;
 
-   if ( m_alloc <= m_size ) {
+   if ( m_alloc <= m_size )
+   {
       m_alloc = m_size + flc_ARRAY_GROWTH;
-      Item *mem = new Item[m_alloc];
+      Item *mem = allocate(m_alloc);
       if ( pos > 0 )
          memcpy( mem , m_data, esize( pos ) );
       if ( pos < (int32)m_size )
@@ -191,7 +237,7 @@ bool ItemArray::insert( const Item &ndata, length_t pos )
 
       mem[ pos ] = ndata;
       m_size++;
-      delete[] m_data;
+      free( m_data );
       m_data = mem;
    }
    else {
@@ -212,9 +258,11 @@ bool ItemArray::insert( const ItemArray &other, length_t pos )
    if ( pos > m_size )
       return false;
 
+   Helper(this).setCopied( other );
+   
    if ( m_alloc < m_size + other.m_size ) {
       m_alloc = m_size + other.m_size;
-      Item *mem = new Item[m_alloc];
+      Item *mem = allocate(m_alloc);
       if ( pos > 0 )
          memcpy( mem , m_data, esize( pos ) );
 
@@ -224,7 +272,7 @@ bool ItemArray::insert( const ItemArray &other, length_t pos )
       memcpy( mem + pos , other.m_data, esize( other.m_size ) );
 
       m_size = m_alloc;
-      delete[] m_data;
+      release(m_data);
       m_data = mem;
    }
    else {
@@ -260,7 +308,7 @@ bool ItemArray::remove( length_t first )
    if ( first >= m_size )
       return false;
 
-   if ( first < (int32)m_size - 1 )
+   if ( first + 1 < m_size )
       memmove( m_data + first, m_data + first + 1, esize(m_size - first) );
    m_size --;
 
@@ -286,12 +334,14 @@ bool ItemArray::change( const ItemArray &other, length_t begin, length_t rsize )
    if( end > m_size )
       return false;
 
+   Helper(this).setCopied( other );
+   
    // we're considering end as "included" from now on.
    // this considers also negative range which already includes their extreme.
    if ( m_size - rsize + other.m_size > m_alloc )
    {
       m_alloc =  m_size - rsize + other.m_size;
-      Item *mem = new Item[m_alloc];
+      Item *mem = allocate(m_alloc);
       if ( begin > 0 )
          memcpy( mem, m_data, esize( begin ) );
       if ( other.m_size > 0 )
@@ -300,7 +350,7 @@ bool ItemArray::change( const ItemArray &other, length_t begin, length_t rsize )
       if ( end < (int32) m_size )
          memcpy( mem + begin + other.m_size, m_data + end, esize(m_size - end) );
 
-      delete[] m_data;
+      release( m_data );
       m_data = mem;
       m_size = m_alloc;
    }
@@ -328,7 +378,7 @@ bool ItemArray::insertSpace( length_t pos, length_t size )
 
    if ( m_alloc < m_size + size ) {
       m_alloc = ((m_size + size)/m_growth+1)*m_growth;
-      Item *mem = new Item[ m_alloc ];
+      Item *mem = allocate( m_alloc );
       if ( pos > 0 )
          memcpy( mem , m_data, esize( pos ) );
 
@@ -336,17 +386,17 @@ bool ItemArray::insertSpace( length_t pos, length_t size )
          memcpy( mem + pos + size, m_data + pos , esize(m_size - pos) );
 
       for( length_t i = pos; i < pos + size; i ++ )
-         m_data[i] = Item();
-      delete[] m_data;
+         m_data[i].setNil();
+      release( m_data );
       m_data = mem;
-
+      
       m_size += size;
    }
    else {
       if ( pos < m_size )
          memmove( m_data + size + pos, m_data + pos, esize(m_size - pos) );
       for( length_t i = pos; i < pos + size; i ++ )
-         m_data[i] = Item();
+         m_data[i].setNil();
       
       m_size += size;
    }
@@ -365,14 +415,28 @@ ItemArray *ItemArray::partition( length_t start, length_t size, bool bReverse ) 
    }
 
    if( bReverse ) {
-      buffer = new Item [size];
+      buffer = allocate(size);
 
       for( length_t i = 0; i < size; i ++ )
-         buffer[i] = m_data[start - i];
+      {
+         // we need to set the original items as copied.
+         Item& item = m_data[start - i];
+         item.copied(true);
+         buffer[i] = item;
+      }
    }
    else
    {
-      buffer = new Item[size];
+      // set to copied all the interested items in this array
+      Item* bp = m_data + start;
+      Item* bend = bp + size;
+      while( bp < bend )
+      {
+         bp->copied(true);
+         ++bp;
+      }
+
+      buffer = allocate(size);
       memcpy( buffer, m_data + start, esize( size )  );
    }
 
@@ -386,11 +450,11 @@ void ItemArray::resize( length_t size )
    if ( size > m_alloc )
    {
       m_alloc = (size/m_growth + 1) *m_growth;
-      Item* newData = new Item[m_alloc];
+      Item* newData = allocate(m_alloc);
       memcpy( newData, m_data, esize( m_size ) );
       memset( newData + m_size, 0, esize( m_alloc - m_size ) );
 
-      delete[] m_data;
+      release( m_data );
       m_data = newData;
    }
    else if ( size > m_size )
@@ -408,44 +472,28 @@ void ItemArray::resize( length_t size )
 void ItemArray::compact()
 {
    if ( m_size == 0 ) {
-      if ( m_data != 0 ) {
-         delete[] m_data;
-         m_data = 0;
-      }
+      release(m_data);
+      m_data = 0;
       m_alloc = 0;
    }
    else if ( m_size < m_alloc )
    {
       m_alloc = m_size;
-      Item* newData = new Item[m_alloc];
+      Item* newData = allocate(m_alloc);
       memcpy( newData, m_data, esize( m_size ) );
-      memset( newData + m_size, 0, esize( m_alloc - m_size ) );
-
-      delete[] m_data;
+      // no need to zero beyond m_size
+      release( m_data );
       m_data = newData;
    }
 }
 
 void ItemArray::reserve( length_t size )
 {
-   if ( size == 0 )
+   if ( size > m_alloc )
    {
-      if ( m_data != 0 ) {
-         delete[] m_data;
-         m_data = 0;
-      }
-      m_alloc = 0;
-      m_size = 0;
-   }
-   else if ( size > m_alloc ) 
-   {
-      Item* newData = new Item[m_alloc];
-      memcpy( newData, m_data, esize( m_size ) );
-
-      delete[] m_data;
-      m_data = newData;
-
       m_alloc = size;
+      Item* newData = Helper(this).reallocate( m_alloc );
+      m_data = newData;
    }
 }
 

@@ -25,8 +25,6 @@
 #include <falcon/trace.h>
 #include <falcon/pseudofunc.h>
 
-#include <falcon/itemarray.h>
-
 namespace Falcon {
 
 Expression::Expression( const Expression &other ):

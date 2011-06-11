@@ -76,6 +76,7 @@ void* CoreArray::deserialize( DataReader* stream ) const
    return 0;
 }
 
+
 void CoreArray::describe( void* instance, String& target ) const
 {
    ItemArray* arr = static_cast<ItemArray*>(instance);
@@ -98,7 +99,7 @@ void CoreArray::op_getProperty( VMachine* vm, void* self, const String& property
 void CoreArray::op_getIndex( VMachine* vm, void* self ) const
 {
    Item *index, *arritem;
-   vm->operands( index, arritem );
+   vm->operands( arritem, index );
 
    ItemArray& array = *static_cast<ItemArray*>(self);
    if (index->isOrdinal())
@@ -117,10 +118,11 @@ void CoreArray::op_getIndex( VMachine* vm, void* self ) const
    }
 }
 
+
 void CoreArray::op_setIndex( VMachine* vm, void* self ) const
 {
    Item* value, *index, *arritem;
-   vm->operands( value, index, arritem );
+   vm->operands( value, arritem, index );
 
    ItemArray& array = *static_cast<ItemArray*>(self);
    if (index->isOrdinal())
@@ -131,6 +133,8 @@ void CoreArray::op_setIndex( VMachine* vm, void* self ) const
       {
          throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra("out of range") );
       }
+      // the value is copied here.
+      value->copied(true);
       array[v] = *value;
       vm->stackResult(3, *value);
    }
@@ -154,6 +158,7 @@ void CoreArray::gcMark( void* self, uint32 mark ) const
    }
 }
 
+
 void CoreArray::enumerateProperties( void* self, PropertyEnumerator& cb ) const
 {
    cb("len", true);
@@ -165,6 +170,8 @@ void CoreArray::enumerateProperties( void* self, PropertyEnumerator& cb ) const
 
 void CoreArray::op_add( VMachine *vm, void* self ) const
 {
+   static Class* arrayClass = Engine::instance()->arrayClass();
+   
    ItemArray* array = static_cast<ItemArray*>(self);
    Item* op1, *op2;
    vm->operands( op1, op2 );
@@ -179,22 +186,47 @@ void CoreArray::op_add( VMachine *vm, void* self ) const
    {
       op2->copied(true);
       result->append(*op2);
-       
-   } else {
-
+   }
+   else {
       // it's an array!
       ItemArray* other = static_cast<ItemArray*>(inst);
-      result->change( *other, result->length(), 0 );
-       
+      result->merge( *other );
    }
     
-   vm->stackResult( 2, other->garbage() );
+   vm->stackResult( 2, Item( arrayClass, result ) );
 }
+
+void CoreArray::op_aadd( VMachine *vm, void* self ) const
+{
+   ItemArray* array = static_cast<ItemArray*>(self);
+   Item* op1, *op2;
+   vm->operands( op1, op2 );
+
+   Class* cls;
+   void* inst;
+   
+   // a basic type?
+   if( ! op2->asClassInst( cls, inst ) || cls->typeID() != typeID() )
+   {
+      op2->copied(true);
+      array->append(*op2);
+   }
+   else {
+      // it's an array!
+      ItemArray* other = static_cast<ItemArray*>(inst);
+      array->merge( *other );
+   }
+
+   // just remove the topmost item,
+   vm->currentContext()->popData();
+}
+
 
 void CoreArray::op_isTrue( VMachine *vm, void* self) const
 {
    vm->stackResult(1, static_cast<ItemArray*>(self)->length() != 0 );
 }
+
 
 void CoreArray::op_toString( VMachine *vm, void* self ) const
 {
@@ -223,6 +255,7 @@ CoreArray::ToStringNextOp::ToStringNextOp()
 {
    apply = apply_;
 }
+
 
 void CoreArray::ToStringNextOp::apply_( const PStep* step, VMachine* vm )
 {

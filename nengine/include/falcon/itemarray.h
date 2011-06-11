@@ -45,13 +45,51 @@ public:
    void clear() { m_size = 0; }
    bool empty() const { return m_size == 0; }
 
+   /** Appends an item to the array.
+      \param ndata The item to be added.
+      \note The item in ndata will not have the Item::copied() bit set.
+    */
    void append( const Item &ndata );
+
+   /** Prepends an item to the array.
+      \param ndata The item to be added.
+      \note The item in ndata will not have the Item::copied() bit set.
+    */
    void prepend( const Item &ndata );
 
+   /** Apeends all the items in an array to this array.
+      \param other The other array.
+      \note All the merged items will have the Item::copied() bit set.
+    */
    void merge( const ItemArray &other );
+
+   /** Prepends all the items from an array to this array.
+      \param other The other array.
+      \note All the merged items will have the Item::copied() bit set.
+    */
    void merge_front( const ItemArray &other );
 
+   /** Inserts an item into the array.
+      \param ndata The item to be added.
+      \param pos The position at which the item will be inserted.
+      \return false if \b pos is out of range.
+    
+    If \b pos is 0, the item will be inserted at the beginning of the
+    array. If it's equal to length(), then the item will be appended at the end.
+
+      \note The item in ndata will not have the Item::copied() bit set.
+    */
    bool insert( const Item &ndata, length_t pos );
+   
+   /** Insert another array at a given position.
+      \param other the other array from which items will be copied
+      \param pos the position at which the array will be inserted.
+
+    If \b pos is 0, the items will be inserted at the beginning of the
+    target array. If it's equal to length(), then the items will be appended at the end.
+
+      \note  All the merged items will not have the Item::copied() bit set.
+    */
    bool insert( const ItemArray &other, length_t pos );
    bool remove( length_t pos );
    bool remove( length_t first, length_t count );
@@ -173,6 +211,9 @@ private:
    };
 
    int compare( const ItemArray& other, Parentship* parent ) const;
+
+   class Helper;
+   friend class Helper;
 };
 
 }
