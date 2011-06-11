@@ -30,12 +30,10 @@ if array[2] != 2: failure( "Smoke test" )
 array[2] = 100
 if  array[2] != 100: failure( "Minimal assign" )
 
-
 // range access
 subarr = array[3:4]
 if subarr[0] != 3: failure( "Range access 1" )
 if len( subarr ) != 1: failure( "Range access 1 - len" )
-
 
 subarr = array[3:5]
 if subarr[0] != 3 or subarr[1] != 4: failure( "Range access 2" )
@@ -60,6 +58,15 @@ if len( array ) != 8: failure( "Range insertion item - len" )
 array[6:6] = [1, 2, 3]
 if array[7] != 2: failure( "Range insertion array" )
 if len( array ) != 11: failure( "Range insertion array - len" )
+
+// array copying
+array1 = [1, 2, 3]
+array2 = [0, 0, 0]
+array2.copyFrom(0, array1, 0)
+array1[0] = 9
+array1[1] = 9
+array1[2] = 9
+if array2[0] != 1 or array2[1] != 2 or array2[2] != 3: failure( "Array copying" ) 
 
 // array changes are in another test ( arr_change.fal -- 11k)
 

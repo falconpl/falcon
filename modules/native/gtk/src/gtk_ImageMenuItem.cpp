@@ -252,3 +252,6 @@ FALCON_FUNC ImageMenuItem::set_always_show_image( VMARG )
 
 } // Gtk
 } // Falcon
+
+// vi: set ai et sw=4:
+// kate: replace-tabs on; shift-width 4;

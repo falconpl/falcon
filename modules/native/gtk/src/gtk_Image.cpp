@@ -3,8 +3,11 @@
  */
 
 #include "gtk_Image.hpp"
+#include "gdk_Pixbuf.hpp"
 
 #include <gtk/gtk.h>
+
+#include <falcon/path.h>
 
 /*#
    @beginmodule gtk
@@ -37,10 +40,10 @@ void Image::modInit( Falcon::Module* mod )
     //{ "get_icon_name",        &Image::foo },
     //{ "get_gicon",        &Image::foo },
     //{ "get_storage_type",        &Image::foo },
-    //{ "new_from_file",        &Image::foo },
+    { "new_from_file",          &Image::new_from_file },
     //{ "new_from_icon_set",        &Image::foo },
     //{ "new_from_image",        &Image::foo },
-    //{ "new_from_pixbuf",        &Image::foo },
+    { "new_from_pixbuf",        &Image::new_from_pixbuf },
     //{ "new_from_pixmap",        &Image::foo },
     { "new_from_stock",         &Image::new_from_stock },
     //{ "new_from_animation",        &Image::foo },
@@ -49,7 +52,7 @@ void Image::modInit( Falcon::Module* mod )
     { "set_from_file",          &Image::set_from_file },
     //{ "set_from_icon_set",        &Image::foo },
     //{ "set_from_image",        &Image::foo },
-    //{ "set_from_pixbuf",        &Image::foo },
+    { "set_from_pixbuf",        &Image::set_from_pixbuf },
     //{ "set_from_pixmap",        &Image::foo },
     { "set_from_stock",         &Image::set_from_stock },
     //{ "set_from_animation",        &Image::foo },
@@ -125,8 +128,6 @@ FALCON_FUNC Image::init( VMARG )
 
 //FALCON_FUNC Image::get_image( VMARG );
 
-//FALCON_FUNC Image::get_pixbuf( VMARG );
-
 //FALCON_FUNC Image::get_pixmap( VMARG );
 
 //FALCON_FUNC Image::get_stock( VMARG );
@@ -139,13 +140,60 @@ FALCON_FUNC Image::init( VMARG )
 
 //FALCON_FUNC Image::get_storage_type( VMARG );
 
-//FALCON_FUNC Image::new_from_file( VMARG );
-
 //FALCON_FUNC Image::new_from_icon_set( VMARG );
 
 //FALCON_FUNC Image::new_from_image( VMARG );
 
-//FALCON_FUNC Image::new_from_pixbuf( VMARG );
+/*#
+ *
+ */
+
+FALCON_FUNC Image::new_from_pixbuf( VMARG )
+{
+  Item* i_pixbuf = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
+  if ( !i_pixbuf || !( i_pixbuf->isNil() || ( i_pixbuf->isObject() && IS_DERIVED( i_pixbuf, GdkPixbuf ) ) ) )
+    throw_inv_params( "[GdkPixbuf]" );
+#endif
+
+  GtkWidget* img = gtk_image_new_from_pixbuf( GET_PIXBUF( *i_pixbuf ) );
+
+  vm->retval( new Image( vm->self().asClass(), (GtkImage*) img ) );
+}
+
+
+
+FALCON_FUNC Image::new_from_file( VMARG )
+{
+    Item* i_fnam = vm->param( 0 );
+
+#ifndef NO_PARAMETER_CHECK
+    if ( i_fnam == 0 || ! i_fnam->isString() )
+    {
+            throw_inv_params( "S|nil" );
+    }
+#endif
+    String* filename = i_fnam->asString();
+
+    Path path( *filename );
+#ifdef FALCON_SYSTEM_WIN
+    // if we are on windows, clear the path...
+    filename->size( 0 );
+    // and copy the winpath in it
+    path.getWinFormat( *filename );
+#else
+    // otherwise, we copy the path returned via get()
+    filename->copy( path.get() );
+#endif
+
+    AutoCString s( filename );
+    vm->retval(
+        new Image(
+            vm->findWKI("GtkImage")->asClass(),
+            GTK_IMAGE(gtk_image_new_from_file( s.c_str() ))
+        )
+    ); // vm->retval()
+}
 
 //FALCON_FUNC Image::new_from_pixmap( VMARG );
 
@@ -204,12 +252,48 @@ FALCON_FUNC Image::set_from_file( VMARG )
 #endif
         if ( i_fnam->isString() )
         {
-            AutoCString s( i_fnam->asString() );
+            // get the "raw" path
+            String* filename = i_fnam->asString();
+
+            Path path( *filename );
+#ifdef FALCON_SYSTEM_WIN
+            // if we are on windows, clear the path...
+            filename->size( 0 );
+            // and copy the winpath in it
+            path.getWinFormat( *filename );
+#else
+            // otherwise, we copy the path returned via get()
+            filename->copy( path.get() );
+#endif
+
+            AutoCString s( filename );
             gtk_image_set_from_file( (GtkImage*)_obj, s.c_str() );
             return;
         }
     }
     gtk_image_set_from_file( (GtkImage*)_obj, fnam );
+}
+
+
+/*#
+    @method set_from_file GtkImage
+    @brief Sets the image from a file.
+    @param a filename or nil
+ */
+FALCON_FUNC Image::set_from_pixbuf( VMARG )
+{
+    Item* i_pixbuf = vm->param( 0 );
+
+    MYSELF;
+    GET_OBJ( self );
+
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_pixbuf || !( i_pixbuf->isNil() || ( i_pixbuf->isObject() && IS_DERIVED( i_pixbuf, GdkPixbuf ) ) ) )
+      throw_inv_params( "[GdkPixbuf]" );
+#endif
+
+    //    gtk_image_set_from_pixbuf( GET_PIXBUF( *i_pixbuf ) );
+    gtk_image_set_from_pixbuf( (GtkImage*)_obj, GET_PIXBUF( *i_pixbuf ) );
 }
 
 
@@ -275,3 +359,6 @@ FALCON_FUNC Image::clear( VMARG )
 
 } // Gtk
 } // Falcon
+
+// vi: set ai et sw=4:
+// kate: replace-tabs on; shift-width 4;

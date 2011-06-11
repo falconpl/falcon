@@ -27,3 +27,6 @@ FALCON_FUNC set_orientation( VMARG );
 #endif // GTK_CHECK_VERSION( 2, 16, 0 )
 
 #endif // !GTK_ORIENTABLE_HPP
+
+// vi: set ai et sw=4:
+// kate: replace-tabs on; shift-width 4;

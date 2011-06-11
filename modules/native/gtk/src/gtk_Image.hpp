@@ -42,13 +42,13 @@ public:
 
     //static FALCON_FUNC get_storage_type( VMARG );
 
-    //static FALCON_FUNC new_from_file( VMARG );
+    static FALCON_FUNC new_from_file( VMARG );
 
     //static FALCON_FUNC new_from_icon_set( VMARG );
 
     //static FALCON_FUNC new_from_image( VMARG );
 
-    //static FALCON_FUNC new_from_pixbuf( VMARG );
+    static FALCON_FUNC new_from_pixbuf( VMARG );
 
     //static FALCON_FUNC new_from_pixmap( VMARG );
 
@@ -66,7 +66,7 @@ public:
 
     //static FALCON_FUNC set_from_image( VMARG );
 
-    //static FALCON_FUNC set_from_pixbuf( VMARG );
+    static FALCON_FUNC set_from_pixbuf( VMARG );
 
     //static FALCON_FUNC set_from_pixmap( VMARG );
 
@@ -95,3 +95,6 @@ public:
 } // Falcon
 
 #endif // !GTK_IMAGE_HPP
+
+// vi: set ai et sw=4:
+// kate: replace-tabs on; shift-width 4;

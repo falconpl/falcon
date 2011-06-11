@@ -69,20 +69,20 @@ FALCON_FUNC Main::init( VMARG )
     {
         CoreArray* arr = i_args->asArray();
         AutoCString* tmp = NULL;
-        char* cstr = NULL;
-        const int numargs = getGCharArray( arr, &cstr, &tmp );
-        check = gtk_init_check( (int*) &numargs, (char***) &cstr );
+        char** cstr = NULL;
+        int numargs = getGCharArray( arr, cstr, tmp );
+        check = gtk_init_check( &numargs, &cstr );
         if ( numargs )
         {
-            memFree( tmp );
-            memFree( cstr );
+            delete[] tmp;
+            delete[] cstr;
         }
     }
     else
     {
         int numargs = 0;
         char* cstr[] = { NULL };
-        check = gtk_init_check( (int*) &numargs, (char***) &cstr );
+        check = gtk_init_check( &numargs, (char***) &cstr );
     }
 
     if ( !check )
@@ -132,3 +132,6 @@ FALCON_FUNC Main::run( VMARG )
 
 } // Gtk
 } // Falcon
+
+// vi: set ai et sw=4:
+// kate: replace-tabs on; shift-width 4;

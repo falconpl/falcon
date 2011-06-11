@@ -32,7 +32,7 @@ public:
 
     static FALCON_FUNC add_button( VMARG );
 
-    //static FALCON_FUNC add_buttons( VMARG );
+    static FALCON_FUNC add_buttons( VMARG );
 
     static FALCON_FUNC add_action_widget( VMARG );
 
@@ -73,3 +73,6 @@ public:
 } // Falcon
 
 #endif // !GTK_DIALOG_HPP
+
+// vi: set ai et sw=4:
+// kate: replace-tabs on; shift-width 4;

@@ -6,6 +6,8 @@
 
 #include "gtk_Widget.hpp"
 
+#include <falcon/path.h>
+
 /*#
    @beginmodule gtk
 */
@@ -562,7 +564,14 @@ FALCON_FUNC FileChooser::get_filename( VMARG )
     char* nm = gtk_file_chooser_get_filename( (GtkFileChooser*)_obj );
     if ( nm )
     {
-        vm->retval( new String( nm ) );
+        
+        String *result = new String( nm, -1 );
+#ifdef FALCON_SYSTEM_WIN
+        
+        Falcon::Path::winToUri( *result );
+        
+#endif //FALCON_SYSTEM_WIN
+        vm->retval( result );
         g_free( nm );
     }
     else
@@ -588,11 +597,35 @@ FALCON_FUNC FileChooser::get_filename( VMARG )
  */
 FALCON_FUNC FileChooser::set_filename( VMARG )
 {
-    Gtk::ArgCheck1 args( vm, "S" );
-    char* nm = args.getCString( 0 );
+    Item* i_filename = vm->param( 0 );
+    
+#ifndef NO_PARAMETER_CHECK
+        
+    if ( !i_filename || !i_filename->isString() )
+        throw_inv_params( "S" );
+        
+#endif //NO_PARAMETER_CHECK
+        
+    String* filename = i_filename->asString();
+            
+    Path path( *filename );
+#ifdef FALCON_SYSTEM_WIN
+        
+    filename->size( 0 );
+    path.getWinFormat( *filename );
+        
+#else
+        
+    filename->copy( path.get() );
+        
+#endif //FALCON_SYSTEM_WIN
+            
+    AutoCString file( filename );
+        
     MYSELF;
     GET_OBJ( self );
-    vm->retval( (bool) gtk_file_chooser_set_filename( (GtkFileChooser*)_obj, nm ) );
+    
+    vm->retval( (bool) gtk_file_chooser_set_filename( (GtkFileChooser*) _obj, file.c_str() ) );
 }
 
 
@@ -607,11 +640,34 @@ FALCON_FUNC FileChooser::set_filename( VMARG )
  */
 FALCON_FUNC FileChooser::select_filename( VMARG )
 {
-    Gtk::ArgCheck1 args( vm, "S" );
-    char* nm = args.getCString( 0 );
+    
+    Item* i_filename = vm->param( 0 );
+    
+#ifndef NO_PARAMETER_CHECK
+    
+    if ( !i_filename || !i_filename->isString() )
+        throw_inv_params( "S" );
+    
+#endif //NO_PARAMETER_CHECK
+    
+    String* filename = i_filename->asString();
+    
+    Path path( *filename );
+#ifdef FALCON_SYSTEM_WIN
+    
+    filename->size( 0 );
+    path.getWinFormat( *filename );
+    
+#else
+    
+    filename->copy( path.get() );
+    
+#endif //FALCON_SYSTEM_WIN
+    
+    AutoCString file( filename );
     MYSELF;
     GET_OBJ( self );
-    vm->retval( (bool) gtk_file_chooser_select_filename( (GtkFileChooser*)_obj, nm ) );
+    vm->retval( (bool) gtk_file_chooser_select_filename( (GtkFileChooser*)_obj, file.c_str() ) );
 }
 
 
@@ -625,11 +681,34 @@ FALCON_FUNC FileChooser::select_filename( VMARG )
  */
 FALCON_FUNC FileChooser::unselect_filename( VMARG )
 {
-    Gtk::ArgCheck1 args( vm, "S" );
-    char* nm = args.getCString( 0 );
+    
+    Item* i_filename = vm->param( 0 );
+    
+#ifndef NO_PARAMETER_CHECK
+    
+    if ( !i_filename || !i_filename->isString() )
+        throw_inv_params( "S" );
+    
+#endif //NO_PARAMETER_CHECK
+    
+    String* filename = i_filename->asString();
+    
+    Path path( *filename );
+#ifdef FALCON_SYSTEM_WIN
+    
+    filename->size( 0 );
+    path.getWinFormat( *filename );
+    
+#else
+    
+    filename->copy( path.get() );
+    
+#endif //FALCON_SYSTEM_WIN
+    
+    AutoCString file( filename );
     MYSELF;
     GET_OBJ( self );
-    gtk_file_chooser_unselect_filename( (GtkFileChooser*)_obj, nm );
+    gtk_file_chooser_unselect_filename( (GtkFileChooser*)_obj, file.c_str() );
 }
 
 
@@ -674,8 +753,17 @@ FALCON_FUNC FileChooser::get_filenames( VMARG )
     GET_OBJ( self );
     GSList* sl = gtk_file_chooser_get_filenames( (GtkFileChooser*)_obj );
     CoreArray* arr = new CoreArray( g_slist_length( sl ) );
-    for( GSList* el = sl; el; el = el->next )
-        arr->append( new String( (char*) el->data ) );
+    for( GSList* el = sl; el; el = el->next ) {
+        String *filename = new String( (char*) el->data );
+        
+#ifdef FALCON_SYSTEM_WIN
+        
+        Falcon::Path::winToUri( *filename );
+        
+#endif //FALCON_SYSTEM_WIN
+        
+        arr->append( filename );
+    }
     vm->retval( arr );
 }
 
@@ -691,11 +779,34 @@ FALCON_FUNC FileChooser::get_filenames( VMARG )
  */
 FALCON_FUNC FileChooser::set_current_folder( VMARG )
 {
-    Gtk::ArgCheck1 args( vm, "S" );
-    char* nm = args.getCString( 0 );
+    
+    Item* i_filename = vm->param( 0 );
+    
+#ifndef NO_PARAMETER_CHECK
+    
+    if ( !i_filename || !i_filename->isString() )
+        throw_inv_params( "S" );
+    
+#endif //NO_PARAMETER_CHECK
+    
+    String* filename = i_filename->asString();
+    
+    Path path( *filename );
+#ifdef FALCON_SYSTEM_WIN
+    
+    filename->size( 0 );
+    path.getWinFormat( *filename );
+    
+#else
+    
+    filename->copy( path.get() );
+    
+#endif //FALCON_SYSTEM_WIN
+    
+    AutoCString folder( filename );
     MYSELF;
     GET_OBJ( self );
-    vm->retval( (bool) gtk_file_chooser_set_current_folder( (GtkFileChooser*)_obj, nm ) );
+    vm->retval( (bool) gtk_file_chooser_set_current_folder( (GtkFileChooser*)_obj, folder.c_str() ) );
 }
 
 
@@ -719,7 +830,15 @@ FALCON_FUNC FileChooser::get_current_folder( VMARG )
     char* folder = gtk_file_chooser_get_current_folder( (GtkFileChooser*)_obj );
     if ( folder )
     {
-        vm->retval( new String( folder ) );
+        
+        String *result = new String( folder, -1 );
+        
+#ifdef FALCON_SYSTEM_WIN
+        
+        Falcon::Path::winToUri( *result );
+        
+#endif //FALCON_SYSTEM_WIN
+        vm->retval( result );
         g_free( folder );
     }
     else
@@ -744,7 +863,7 @@ FALCON_FUNC FileChooser::get_uri( VMARG )
     char* uri = gtk_file_chooser_get_uri( (GtkFileChooser*)_obj );
     if ( uri )
     {
-        vm->retval( new String( uri ) );
+        vm->retval( new String( uri, -1 ));
         g_free( uri );
     }
     else
@@ -827,7 +946,11 @@ FALCON_FUNC FileChooser::get_uris( VMARG )
     GSList* sl = gtk_file_chooser_get_uris( (GtkFileChooser*)_obj );
     CoreArray* arr = new CoreArray( g_slist_length( sl ) );
     for( GSList* el = sl; el; el = el->next )
-        arr->append( new String( (char*) el->data ) );
+    {
+        arr->append( new String( (char*) el->data, -1 ) );
+        g_free( el->data );
+    }
+    g_slist_free( sl );
     vm->retval( arr );
 }
 
@@ -872,7 +995,7 @@ FALCON_FUNC FileChooser::get_current_folder_uri( VMARG )
     char* uri = gtk_file_chooser_get_current_folder_uri( (GtkFileChooser*)_obj );
     if ( uri )
     {
-        vm->retval( new String( uri ) );
+        vm->retval( new String( uri, -1 ) );
         g_free( uri );
     }
     else
@@ -1014,8 +1137,17 @@ FALCON_FUNC FileChooser::get_preview_filename( VMARG )
     char* nm = gtk_file_chooser_get_preview_filename( (GtkFileChooser*)_obj );
     if ( nm )
     {
-        vm->retval( new String( nm ) );
+        
+        String *result = new String( nm, -1 );
+#ifdef FALCON_SYSTEM_WIN
+        
+        Falcon::Path::winToUri( *result );
+        
+#endif //FALCON_SYSTEM_WIN
+        
+        vm->retval( result );
         g_free( nm );
+        
     }
     else
         vm->retnil();
@@ -1035,7 +1167,7 @@ FALCON_FUNC FileChooser::get_preview_uri( VMARG )
     char* uri = gtk_file_chooser_get_preview_uri( (GtkFileChooser*)_obj );
     if ( uri )
     {
-        vm->retval( new String( uri ) );
+        vm->retval( new String( uri, -1 ) );
         g_free( uri );
     }
     else
@@ -1107,3 +1239,6 @@ FALCON_FUNC FileChooser::unselect_file( VMARG );
 
 } // Gtk
 } // Falcon
+
+// vi: set ai et sw=4:
+// kate: replace-tabs on; shift-width 4;

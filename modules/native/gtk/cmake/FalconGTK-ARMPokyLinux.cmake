@@ -21,3 +21,6 @@ set( GTK2_LIBRARIES
     ${POKY_ROOT}/usr/lib/libcairo.so
     ${POKY_ROOT}/usr/lib/libpango-1.0.so
     ${POKY_ROOT}/usr/lib/libatk-1.0.so )
+
+# vi: set ai et sw=4:
+# kate: replace-tabs on; shift-width 4;

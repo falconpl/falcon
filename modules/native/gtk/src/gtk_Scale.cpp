@@ -35,9 +35,9 @@ void Scale::modInit( Falcon::Module* mod )
 #if 0
     { "get_layout",             &Scale::get_layout },
     { "get_layout_offsets",     &Scale::get_layout_offsets },
+#endif
     { "add_mark",               &Scale::add_mark },
     { "clear_marks",            &Scale::clear_marks },
-#endif
     { NULL, NULL }
     };
 
@@ -235,9 +235,52 @@ FALCON_FUNC Scale::get_value_pos( VMARG )
 #if 0
 FALCON_FUNC Scale::get_layout( VMARG );
 FALCON_FUNC Scale::get_layout_offsets( VMARG );
-FALCON_FUNC Scale::add_mark( VMARG );
-FALCON_FUNC Scale::clear_marks( VMARG );
 #endif
+
+/*#
+    @method add_mark  GtkScale
+	@brief Adds a mark at value. 
+	@param value the value at which the mark is placed, must be between the lower and upper limits of the scales' adjustment
+	@param position where to draw the mark. For a horizontal scale, GTK_POS_TOP is drawn above the scale, anything else below. For a vertical scale, GTK_POS_LEFT is drawn to the left of the scale, anything else to the right.
+    
+    @return nothing
+
+	A mark is indicated visually by drawing a tick mark next to the scale, and GTK+ makes it easy for the user to position the scale exactly at the marks value. 
+ */
+FALCON_FUNC Scale::add_mark( VMARG )
+{
+    Item* i_pos = vm->param( 0 );
+	Item* i_type = vm->param( 1 );
+
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_pos || !i_pos->isOrdinal()  || 
+		 !i_type || !i_type->isInteger()  )
+        throw_inv_params( "N, <GtkPositionType>" );
+#endif
+	MYSELF;
+    GET_OBJ( self );
+	gtk_scale_add_mark( (GtkScale*)_obj, i_pos->forceNumeric(), (GtkPositionType)i_type->asInteger(), 0);
+
+}
+
+
+/*#
+    @method clear_marks GtkScale
+    @brief Removes any marks that have been added with gtk_scale_add_mark().
+    @return nothing
+ */
+FALCON_FUNC Scale::clear_marks( VMARG )
+{
+	NO_ARGS
+    MYSELF;
+    GET_OBJ( self );
+	gtk_scale_clear_marks( (GtkScale*)_obj ) ;	
+
+}
+
 
 } // Gtk
 } // Falcon
+
+// vi: set ai et sw=4:
+// kate: replace-tabs on; shift-width 4;

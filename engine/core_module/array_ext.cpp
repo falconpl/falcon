@@ -857,6 +857,84 @@ FALCON_FUNC  mth_arrayCompact ( ::Falcon::VMachine *vm )
 }
 
 /*#
+   @function arrayCopy
+   @brief Copies an array into another array.
+   @param dest The destination array.
+   @param from Starting position in the destination array.
+   @param src The source array.
+   @param first Starting position in the source array.
+   @optparam amount Optional The number of items to be copied.
+   @raise AccessError @b from is greater than the length of the destination array
+      or @b first is greater than the length of the source array.
+
+   Copies the source array, starting from the specified position, to the specified
+   position of the destination array.
+*/
+
+/*#
+   @method copyFrom
+   @brief Copies an array into another array.
+   @param from Starting position in the array.
+   @param src The source array.
+   @param first Starting position in the source array.
+   @optparam amount Optional The number of items to be copied.
+   @raise AccessError @b from is greater than the length of the array or
+      @b first is greater than the length of the source array.
+
+   Copies the source array, starting from the specified position, to the specified
+   position of the array.
+*/
+FALCON_FUNC mth_arrayCopy( ::Falcon::VMachine *vm )
+{
+   Item *dest_i;
+   Item *from_i;
+   Item *src_i;
+   Item *first_i;
+   Item *amount_i;
+
+   if( vm->self().isMethodic() )
+   {
+      dest_i = &vm->self();
+      from_i = vm->param( 0 );
+      src_i = vm->param( 1 );
+      first_i = vm->param( 2 );
+      amount_i = vm->param( 3 );
+   }
+   else
+   {
+      dest_i = vm->param( 0 );
+      from_i = vm->param( 1 );
+      src_i = vm->param( 2 );
+      first_i = vm->param( 3 );
+      amount_i = vm->param( 4 );
+   }
+
+   if ( dest_i == 0 || !dest_i->isArray()
+        || from_i == 0 || !from_i->isOrdinal()
+        || src_i == 0 || !src_i->isArray()
+        || first_i == 0 || !first_i->isOrdinal()
+        || ( amount_i != 0 && !amount_i->isOrdinal() ) )
+   {
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+         .origin( e_orig_runtime )
+         .extra( vm->self().isMethodic() ? "N,A,N,[N]" : "A,N,A,N,[N]" ) );
+   }
+
+   CoreArray *src = src_i->asArray();
+   if ( src->length() == 0 ) return;
+
+   CoreArray *dest = dest_i->asArray();
+   int32 from = (int32) ( from_i->asInteger() );
+   int32 first = (int32) ( first_i->asInteger() );
+   int32 amount = (int32) ( amount_i == 0 ? src->length() : amount_i->asInteger() );
+
+   if ( ! dest->items().copyOnto( from, src->items(), first, amount ) ) {
+      throw new AccessError( ErrorParam( e_arracc, __LINE__ )
+         .origin( e_orig_runtime ) );
+   }
+}
+
+/*#
    @function arrayHead
    @brief Extracts the first element of an array and returns it.
    @param array The array that will be modified.
@@ -1091,7 +1169,7 @@ FALCON_FUNC  mth_arrayFind ( ::Falcon::VMachine *vm )
    @brief Searches an array for an item satisfying arbitrary criteria.
    @param func Function that verifies the criterion.
    @optparam start Optional first element to be searched.
-   @optparam end Optional upper end of the range..
+   @optparam end Optional upper end of the range.
    @return The position of the searched item in the array, or -1 if not found.
 
    @see arrayScan
