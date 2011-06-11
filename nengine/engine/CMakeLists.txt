@@ -68,6 +68,7 @@ add_library(falcon_engine SHARED
   corefunction.cpp
   corenil.cpp
   coreint.cpp
+  corenumeric.cpp
   corestring.cpp
   datareader.cpp
   datawriter.cpp

@@ -169,7 +169,7 @@ void CoreDict::op_isTrue( VMachine *vm, void* self ) const
 void CoreDict::op_toString( VMachine *vm, void* self ) const
 {
    String s;
-   s.A("[Dictionary of ").N(static_cast<ItemDictionary*>(self)->size()).A(" elements]");
+   s.A("[Dictionary of ").N((int64)static_cast<ItemDictionary*>(self)->size()).A(" elements]");
    vm->stackResult( 1, s );
 }
 

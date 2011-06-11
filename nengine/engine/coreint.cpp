@@ -35,7 +35,7 @@ CoreInt::~CoreInt()
 void* CoreInt::create(void* creationParams ) const
 {
    Item* ptr = new Item;
-   *ptr = int64(creationParams);
+   *ptr = *( (int64)creationParams );
    return ptr;
 }
 
