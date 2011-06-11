@@ -57,7 +57,7 @@ public:
    inline Item* reallocate( length_t size )
    {
       Item* newData = allocate( size );
-      memcpy( newData, m_master->m_data,m_master-> m_size );
+      memcpy( newData, m_master->m_data, ItemArray::esize( m_master->m_size ) );
       return newData;
    }
 
@@ -95,7 +95,7 @@ ItemArray::ItemArray( const ItemArray& other ):
       // set all the items in the source as copied.
       Helper(this).setCopied( other );
       m_data = allocate( m_size );
-      memcpy( m_data, other.m_data, esize(other.m_size) );
+      memcpy( m_data, other.m_data, esize(m_size) );
    }
    else
    {

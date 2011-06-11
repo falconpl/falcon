@@ -186,7 +186,7 @@ public:
     * @param count numbrer of elements
     * @return the amout of bytes needed to store the elements
     */
-   int32 esize( int32 count=1 ) const { return sizeof( Item ) * count; }
+   static int32 esize( int32 count=1 ) { return sizeof( Item ) * count; }
 
 
 private:

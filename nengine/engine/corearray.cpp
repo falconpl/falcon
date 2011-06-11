@@ -171,6 +171,7 @@ void CoreArray::enumerateProperties( void* self, PropertyEnumerator& cb ) const
 void CoreArray::op_add( VMachine *vm, void* self ) const
 {
    static Class* arrayClass = Engine::instance()->arrayClass();
+   static Collector* coll = Engine::instance()->collector();
    
    ItemArray* array = static_cast<ItemArray*>(self);
    Item* op1, *op2;
@@ -179,22 +180,28 @@ void CoreArray::op_add( VMachine *vm, void* self ) const
    Class* cls;
    void* inst;
    
-   ItemArray *result = new ItemArray(*array);
+   ItemArray *result = new ItemArray;
     
    // a basic type?
    if( ! op2->asClassInst( cls, inst ) || cls->typeID() != typeID() )
    {
+      result->reserve( array->length() + 1 );
+      result->merge(*array);
+      
       op2->copied(true);
       result->append(*op2);
    }
    else {
       // it's an array!
       ItemArray* other = static_cast<ItemArray*>(inst);
+      result->reserve( array->length() + other->length() );
+      result->merge(*array);
       result->merge( *other );
    }
     
-   vm->stackResult( 2, Item( arrayClass, result ) );
+   vm->stackResult( 2, Item( coll->store(arrayClass, result ) ) );
 }
+
 
 void CoreArray::op_aadd( VMachine *vm, void* self ) const
 {
