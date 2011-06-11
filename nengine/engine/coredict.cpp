@@ -79,10 +79,45 @@ void* CoreDict::deserialize( DataReader* stream ) const
    return 0;
 }
 
-void CoreDict::describe( void* instance, String& target ) const
+void CoreDict::describe( void* instance, String& target, int maxDepth, int maxLen ) const
 {
-   ItemDictionary* arr = static_cast<ItemDictionary*>(instance);
-   target = String("[Dict of ").N((int64)arr->size()).A(" elements]");
+   if( maxDepth == 0 )
+   {
+      target = "...";
+      return;
+   }
+   
+   ItemDictionary* dict = static_cast<ItemDictionary*>(instance);
+   target.size(0);
+   ItemDictionary::iterator iter = dict->begin();
+   String temp;
+   while( iter != dict->end() )
+   {
+      if( target.size() == 0 )
+      {
+         target += "[";
+      }
+      else
+      {
+         target += ", ";
+      }
+
+      Class* cls;
+      void* inst;
+
+      temp.size(0);
+      iter->first.forceClassInst(cls, inst);
+      cls->describe( inst, temp, maxDepth - 1, maxLen );
+      target += temp;
+      target += " => ";
+
+      temp.size(0);
+      iter->second.forceClassInst(cls, inst);
+      cls->describe( inst, temp, maxDepth - 1, maxLen );
+      target += temp;
+   }
+
+   target += "]";
 }
 
 
@@ -133,20 +168,15 @@ void CoreDict::op_isTrue( VMachine *vm, void* self ) const
 
 void CoreDict::op_toString( VMachine *vm, void* self ) const
 {
-   // todo
+   String s;
+   s.A("[Dictionary of ").N(static_cast<ItemDictionary*>(self)->size()).A(" elements]");
+   vm->stackResult( 1, s );
 }
 
 
 void CoreDict::op_getProperty( VMachine *vm, void* self, const String& property ) const
 {
-   if( property == "len" )
-   {
-      vm->stackResult( 1, (int64) static_cast<ItemDictionary*>(self)->size() );
-   }
-   else
-   {
-      throw new AccessError( ErrorParam( e_prop_acc, __LINE__, __FILE__ ).extra(property) );
-   }
+   Class::op_getProperty( vm, self, property );
 }
 
 void CoreDict::op_getIndex( VMachine* vm, void* self ) const
@@ -177,16 +207,6 @@ void CoreDict::op_setIndex( VMachine* vm, void* self ) const
    vm->stackResult(3, *value);
 }
 
-
-CoreDict::ToStringNextOp::ToStringNextOp()
-{
-   apply = apply_;
-}
-
-void CoreDict::ToStringNextOp::apply_( const PStep*step, VMachine* vm )
-{
-   //todo
-}
 
 }
 

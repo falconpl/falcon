@@ -1,11 +1,11 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: len.cpp
+   FILE: tostring.cpp
 
    Falcon core module -- len function/method
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
-   Begin: Sat, 04 Jun 2011 20:52:06 +0200
+   Begin: Sat, 11 Jun 2011 20:45:56 +0200
 
    -------------------------------------------------------------------
    (C) Copyright 2011: the FALCON developers (see list in AUTHORS file)
@@ -18,54 +18,73 @@
 #include <falcon/vmcontext.h>
 #include <falcon/itemid.h>
 
+#include "falcon/cm/tostring.h"
+
 namespace Falcon {
 namespace Ext {
 
-Len::Len():
-   PseudoFunction( "len", &m_invoke )
+ToString::ToString():
+   Function( "toString" )
 {
    setDeterm(true);
-   signature("X");
+   signature("X,[S]");
    addParam("item");
+   addParam("format");
 }
 
-Len::~Len()
+ToString::~ToString()
 {
 }
 
-void Len::apply( VMachine* vm, int32 nParams )
+void ToString::apply( VMachine* vm, int32 nParams )
 {
    register VMContext* ctx = vm->currentContext();
 
-   Item *elem;
+   Item *elem, *format;
+   
    if ( ctx->isMethodic() )
    {
       elem = &ctx->self();
-      vm->retval( elem->len() );
+      format = ctx->param( 0 );
    }
    else
    {
       elem = ctx->param( 0 );
+      format = ctx->param( 1 );
+
       if ( elem == 0 )
       {
          throw paramError();
       }
       else
       {
-         vm->retval( elem->len() );
+         
       }
    }
 
+   Class* cls;
+   void* data;
+   elem->forceClassInst( cls, data );
+
+   vm->ifDeep( &m_next );
+   ctx->pushData( *elem );
+   cls->op_toString( vm, data );
+   if( vm->wentDeep() )
+   {
+      return;
+   }
+
+   ctx->retval( ctx->topData() );
    vm->returnFrame();
 }
 
-void Len::Invoke::apply_( const PStep*, VMachine* vm  )
+void ToString::Next::apply_( const PStep*, VMachine* vm  )
 {
-   register Item& top = vm->currentContext()->topData();
-   top = top.len();
+   vm->retval( vm->currentContext()->topData() );
+   vm->returnFrame();
 }
 
 }
 }
 
-/* end of len.cpp */
+/* end of tostring.cpp */

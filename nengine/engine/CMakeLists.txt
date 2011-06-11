@@ -45,9 +45,11 @@ add_library(falcon_engine SHARED
   parser/tokeninstance.cpp
 
   core_module/compare.cpp
+  core_module/describe.cpp
   core_module/len.cpp
   core_module/minmax.cpp
   core_module/print.cpp
+  core_module/tostring.cpp
   core_module/typeid.cpp
   core_module/coremodule.cpp
 
@@ -76,6 +78,7 @@ add_library(falcon_engine SHARED
   error.cpp
   errorclass.cpp
   exprarray.cpp
+  exprcall.cpp
   exprcompare.cpp
   exprdict.cpp
   exprunpack.cpp

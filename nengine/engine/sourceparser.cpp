@@ -26,6 +26,7 @@
 #include <falcon/exprvalue.h>
 #include <falcon/exprsym.h>
 #include <falcon/exprarray.h>
+#include <falcon/exprcall.h>
 #include <falcon/exprdict.h>
 #include <falcon/exprcompare.h>
 #include <falcon/exprmath.h>

@@ -64,7 +64,7 @@ void* CoreFunction::deserialize( DataReader* stream ) const
    return 0;
 }
 
-void CoreFunction::describe( void* instance, String& target ) const
+void CoreFunction::describe( void* instance, String& target, int, int ) const
 {
    Function* func = static_cast<Function*>(instance);
    target = func->name() + "()";

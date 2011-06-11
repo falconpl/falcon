@@ -48,7 +48,7 @@ void Class::gcMark( void* self, uint32 mark ) const
 }
 
 
-void Class::describe( void* instance, String& target ) const
+void Class::describe( void*, String& target, int, int ) const
 {
    target = "<*?>";
 }

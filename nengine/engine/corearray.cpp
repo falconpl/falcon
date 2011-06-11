@@ -77,23 +77,35 @@ void* CoreArray::deserialize( DataReader* stream ) const
 }
 
 
-void CoreArray::describe( void* instance, String& target ) const
+void CoreArray::describe( void* instance, String& target, int maxDepth, int maxLen ) const
 {
    ItemArray* arr = static_cast<ItemArray*>(instance);
-   target = String("[Array of ").N(arr->length()).A(" elements]");
+   target += "[";
+
+   String temp;
+   for( length_t pos = 0; pos < arr->length(); ++ pos )
+   {
+      if( pos > 0 )
+      {
+         target += ", ";
+      }
+      
+      Class* cls;
+      void* inst;
+      arr->at(pos).forceClassInst(cls, inst);
+      temp.size(0);
+      cls->describe( inst, temp, maxDepth - 1, maxLen );
+
+      target += temp;
+   }
+
+   target += "]";
 }
 
 
 void CoreArray::op_getProperty( VMachine* vm, void* self, const String& property ) const
 {
-   if( property == "len" )
-   {
-      vm->stackResult(1, (int64) static_cast<ItemArray*>(self)->length() );
-   }
-   else
-   {
-      throw new AccessError( ErrorParam( e_prop_acc, __LINE__ ).extra(property) );
-   }
+   Class::op_getProperty( vm, self, property );
 }
 
 void CoreArray::op_getIndex( VMachine* vm, void* self ) const
@@ -237,6 +249,13 @@ void CoreArray::op_isTrue( VMachine *vm, void* self) const
 
 void CoreArray::op_toString( VMachine *vm, void* self ) const
 {
+   String s;
+   s.A("[Array of ").N(static_cast<ItemArray*>(self)->length()).A(" elements]");
+   vm->stackResult( 1, s );
+}
+
+#if 0
+void CoreArray::op_toString( VMachine *vm, void* self ) const
    // If we're long 0, surrender.
    ItemArray* array = static_cast<ItemArray*>(self);
 
@@ -324,6 +343,7 @@ void CoreArray::ToStringNextOp::apply_( const PStep* step, VMachine* vm )
    ctx->popData();
    ctx->topData() = myStr->garbage();
 }
+#endif
 
 }
 

@@ -20,6 +20,7 @@
 #include <falcon/class.h>
 #include <falcon/pseudofunc.h>
 #include <falcon/module.h>
+#include <falcon/class.h>
 
 #include <map>
 
@@ -166,15 +167,21 @@ void clone_(VMachine* vm, const Class* cls, void* data)
 
 void describe(VMachine* vm, const Class* cls, void* data)
 {
-   fassert2( false, "Not implemented" );
+   static Function* func = Engine::instance()->getCore()->getFunction( "describe");
+   fassert( func != 0 );
 
+   Item &value = vm->currentContext()->topData();
+   value.methodize(func);
 }
 
 
 void describe_(VMachine* vm, const Class* cls, void* data)
 {
-   fassert2( false, "Not implemented" );
+   String* target = new String;
+   cls->describe( data, *target );
 
+   Item& topData = vm->currentContext()->topData();
+   topData.setDeep( target->garbage() );
 }
 
 
@@ -221,15 +228,17 @@ void ptr_(VMachine* vm, const Class* cls, void* data)
 
 void toString(VMachine* vm, const Class* cls, void* data)
 {
-   fassert2( false, "Not implemented" );
+   static Function* func = Engine::instance()->getCore()->getFunction("toString");
+   fassert( func != 0 );
 
+   Item &value = vm->currentContext()->topData();
+   value.methodize(func);
 }
 
 
 void toString_(VMachine* vm, const Class* cls, void* data)
 {
-   fassert2( false, "Not implemented" );
-
+   cls->op_toString( vm, data );
 }
 
 

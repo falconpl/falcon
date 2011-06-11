@@ -245,13 +245,31 @@ public:
     */
    virtual bool hasProperty( void* self, const String& prop ) const;
 
-   /** Return a summary or description of an instance.
-    Differently from toString, this method ignores string rendering
-    that may involve the virtual machine (i.e. toString() overloads).
- 
-    \note To be considered a debug device.
+   /** Return a (possibly deep) summary or description of an instance.
+      \param instance The instance to be described.
+      \param target Where to place the rendered string.
+      \param depth Maximum depth in recursions.
+      \param maxlen Maximum length.
+    
+    This method returns a string containing a representation of this item. If
+    the item is deep (an array, an instance, a dictionary) the contents are
+    also passed through this function.
+
+    This method traverses arrays and items deeply; there isn't any protection
+    against circular references, which may cause endless loop. However, the
+    default maximum depth is 3, which is a good depth for debugging (goes deep,
+    but doesn't dig beyond average interesting points). Set to -1 to
+    have infinite depth.
+
+    By default, only the first 60 characters of strings and elements of membufs
+    are displayed. You may change this default by providing a maxLen parameter.
+
+    \note Differently from toString, this method ignores string rendering
+    that may involve the virtual machine. Even if describe() is defined as a
+    method that might be invoked by the VM, that will be ignored in
+    renderings of items in a container.
     */
-   virtual void describe( void* instance, String& target ) const;
+   virtual void describe( void* instance, String& target, int depth = 3, int maxlen = 60 ) const;
 
    //=========================================================
    // Operators.
@@ -545,15 +563,12 @@ public:
     to be stored in the virtual machine, or prepares the call for the proper
     string geneartor code.
 
-    The base class behavior is that of calling Class::describe() on the
-    instance passed as self in the virtual machine and uses it as the
-    result of the operation.
+    The base class behavior is that of calling Class::describe() with depth 1
+    and without maximum lenght on the instance passed as self in the virtual
+    machine and uses it as the result of the operation.
 
     Implementors not willing to use describe() or wishing to skip an extra
     virtual function call should reimplement this class.
-
-    Also, describe() can never be deep, so this strategy is not adequate
-    for containers that want to be stringified by exposing all their contents.
     */
    virtual void op_toString( VMachine *vm, void* self ) const;
 

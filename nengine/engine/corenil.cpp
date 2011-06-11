@@ -59,7 +59,7 @@ void* CoreNil::deserialize( DataReader* stream ) const
    return 0;
 }
 
-void CoreNil::describe( void* instance, String& target ) const
+void CoreNil::describe( void*, String& target, int, int ) const
 {
    target = "Nil";
 }

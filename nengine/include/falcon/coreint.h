@@ -39,11 +39,12 @@ public:
    virtual void serialize( DataWriter* stream, void* self ) const;
    virtual void* deserialize( DataReader* stream ) const;
 
-   virtual void describe( void* instance, String& target ) const;
+   virtual void describe( void* instance, String& target, int depth = 3, int maxlen = 60 ) const;
 
    //=============================================================
 
    virtual void op_isTrue( VMachine *vm, void* self ) const;
+   virtual void op_toString( VMachine *vm, void* self ) const;
 };
 
 }

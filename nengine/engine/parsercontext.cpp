@@ -19,17 +19,18 @@
 #include <falcon/synfunc.h>
 #include <falcon/unknownsymbol.h>
 #include <falcon/sourceparser.h>
+
+#include <falcon/globalsymbol.h>
+#include <falcon/compiler.h>
+#include <falcon/closedsymbol.h>
+#include <falcon/expression.h>
+#include <falcon/exprsym.h>
+#include <falcon/error.h>
+
 #include <vector>
 #include <map>
 #include <list>
-
-#include "falcon/globalsymbol.h"
-#include "falcon/compiler.h"
-#include "falcon/closedsymbol.h"
-#include "falcon/expression.h"
-#include "falcon/exprsym.h"
-#include "falcon/error.h"
-
+#include <deque>
 
 namespace Falcon {
 
@@ -303,6 +304,9 @@ bool ParserContext::checkSymbols()
    // try with all the undefined symbols.
    TRACE("ParserContext::checkSymbols on %d syms", (int) unknown.size() );
    Private::SymbolMap::iterator iter = unknown.begin();
+   typedef std::deque< std::pair<String, int> > UnkonwnList;
+   UnkonwnList unknownNames;
+
    while( iter != unknown.end() )
    {
       UnknownSymbol* sym = iter->second;
@@ -331,28 +335,30 @@ bool ParserContext::checkSymbols()
       {
          TRACE1("ParserContext::checkSymbols cannot define \"%s\"",
                   sym->name().c_ize() );
+         // record for later error generation
+         unknownNames.push_back( std::make_pair(sym->name(), sym->declaredAt()) );
+         // this will probably destroy the symbol.
          onUnknownSymbol( sym );
          // we know that the symbol is lost
          // add error will clear unknown symbols. return immediately after this call, iterators are no longer valid.
-         m_parser->addError(e_undef_sym, m_parser->currentSource(), sym->declaredAt(),0, 0, sym->name() );
-         //isOk = false;
-         return false;
+         isOk = false;
 
          // -- see if the callee wants to do something about that
-
-         // if this parser is interactive, the calling item is discarded,
-         // as such the symbol is dead.
-         /*
-         if( m_parser->interactive() )
-         {
-            delete sym;
-         }
-         */
       }
       ++iter;
    }
 
+   // we don't want addError to clear the unknown symbols stack.
    unknown.clear();
+
+   UnkonwnList::iterator un_iter = unknownNames.begin();
+   while( un_iter != unknownNames.end() )
+   {
+      m_parser->addError(e_undef_sym, m_parser->currentSource(), 
+         un_iter->second , 0, 0, un_iter->first );
+      ++un_iter;
+   }
+   
    return isOk;
 }
 

@@ -12,6 +12,7 @@
 #include <falcon/syntree.h>
 #include <falcon/localsymbol.h>
 #include <falcon/expression.h>
+#include <falcon/exprcall.h>
 #include <falcon/exprvalue.h>
 #include <falcon/exprsym.h>
 #include <falcon/exprcompare.h>
