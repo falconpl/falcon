@@ -44,6 +44,26 @@ void Pixbuf::modInit( Falcon::Module* mod )
 
     for ( Gtk::MethodTab* meth = methods; meth->name; ++meth )
         mod->addClassMethod( c_Pixbuf, meth->name, meth->cb );
+
+    struct PixbufEnum
+    {
+        const char* name;
+        const int64 value;
+    };
+
+    const PixbufEnum enums[] =
+    {
+    { "GDK_INTERP_NEAREST",     GDK_INTERP_NEAREST },
+    { "GDK_INTERP_TILES",       GDK_INTERP_TILES },
+    { "GDK_INTERP_BILINEAR",    GDK_INTERP_BILINEAR },
+    { "GDK_INTERP_HYPER",       GDK_INTERP_HYPER },
+    { NULL,                     0 }
+    };
+
+    for( const PixbufEnum* e = enums; e->name; e++ )
+    {
+        mod->addConstant( e->name, e->value );
+    }
 }
 
 
