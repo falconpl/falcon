@@ -322,11 +322,11 @@ public:
         while(pending)
         {
             NUMTYPE readable = _min<NUMTYPE>(VALBITS - _bitpos_r, pending);
-            NUMTYPE mask = (VAL_ALLBITS >> (VALBITS - readable));
+            NUMTYPE mask = (VAL_ALLBITS >> (VALBITS - _bitpos_r - readable));
 
             pending -= readable;
             ret <<= readable;
-            ret |= TY((_bufptr[_arraypos_r] & mask));
+            ret |= TY((_bufptr[_arraypos_r] & mask) >> _bitpos_r);
 
             if((_bitpos_r += readable) >= VALBITS)
             {
