@@ -171,16 +171,24 @@ void CoreArray::op_add( VMachine *vm, void* self ) const
 
    Class* cls;
    void* inst;
+   
+   ItemArray *result = new ItemArray(*array);
+    
    // a basic type?
    if( ! op2->asClassInst( cls, inst ) || cls->typeID() != typeID() )
    {
-      array->append(*op2);
-      return;
-   }
+      op2->copied(true);
+      result->append(*op2);
+       
+   } else {
 
-   // it's an array!
-   ItemArray* other = static_cast<ItemArray*>(inst);
-   array->change( *other, array->length(), 0 );
+      // it's an array!
+      ItemArray* other = static_cast<ItemArray*>(inst);
+      result->change( *other, result->length(), 0 );
+       
+   }
+    
+   vm->stackResult( 2, other->garbage() );
 }
 
 void CoreArray::op_isTrue( VMachine *vm, void* self) const
