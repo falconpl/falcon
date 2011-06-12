@@ -1005,12 +1005,19 @@ static inline void docopy(SRCTYPE& src, BitBuf& dst, uint32 bytes)
 }
 };
 
-// specialization for BitBuf (3) - to make the compiler happy and avoid ambigous template specialization
+// specialization for BitBuf (3) - to make the compiler happy and avoid ambiguous template specialization
 template <> struct BufReadToBufHelper_X<BitBuf, BitBuf> {
 static inline void docopy(BitBuf& src, BitBuf& dst, uint32 bytes)
 {
-    while(bytes--)
-        dst.append<uint8>(src.read<uint8>());
+    uint32 readable = (bytes << 3) + ((src.size_bits() - src.rpos_bits()) % 8);
+    uint32 bitCount;
+
+    while (readable)
+    {
+        bitCount = readable < 8 ? readable : 8;
+        readable -= bitCount;
+        dst.append<uint8>(src.read<uint8>(bitCount), bitCount);
+    }
 }
 };
 
@@ -1033,6 +1040,7 @@ template <typename SRCTYPE, typename DSTTYPE> uint32 BufReadToBufHelper(SRCTYPE&
         if(bytes > writable)
             bytes = writable;
     }
+
     BufReadToBufHelper_docopy<SRCTYPE, DSTTYPE>(src, dst, bytes); // give template args explicitly to reduce risk of wrong code
 
     return bytes;
