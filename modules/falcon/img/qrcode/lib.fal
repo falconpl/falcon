@@ -199,9 +199,9 @@ class QrInputItem(mode, size, data, bitBuf)
       bitBuf.bitCount(4).writeBits(0x4)
       bitBuf.bitCount(QrSpec.getLengthIndicator(QrMode.eight_bit, version)).writeBits(self._size)
 
-      bitBuf.bitCount(8)
+      funcWriteBits = bitBuf.bitCount(8).writeBits
       for i in [0:self._size]
-         bitBuf.writeBits(self._data[i][*0])
+         funcWriteBits(self._data[i][*0])
       end
       
       //dumpBitBuf(bitBuf)
