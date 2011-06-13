@@ -19,6 +19,31 @@
 import from gd2
 load bufext
 
+// -----------------------------------------------------------------------------
+// to be remvoed
+/*
+function dumpBitBuf(bitBuf)
+   size = bitBuf.sizeBits()
+   rpos = bitBuf.rposBits()
+   bitBuf.rposBits(0)
+
+   > 'size = ' + size
+   while (count = bitBuf.readableBits()) > 0
+      if count > 8: count = 8
+      bits = bitBuf.bitCount(count).readBits()
+      mask = 0x80
+      mask >>= (8 - count)
+      for i in [0:count]
+         if bits && mask; >> 1; else; >> 0; end
+         mask >>= 1
+      end
+   end
+   >
+   bitBuf.rposBits(rpos)
+end
+*/
+// -----------------------------------------------------------------------------
+
 //------------------------------------------------------------------------------
 
 const MaxInt = 2147483647
@@ -169,15 +194,17 @@ class QrInputItem(mode, size, data, bitBuf)
       self._bitBuf = bitBuf
    end
 
-   function encodeEightBit(version)
+   function encode8Bit(version)
       bitBuf = BitBuf()
       bitBuf.bitCount(4).writeBits(0x4)
       bitBuf.bitCount(QrSpec.getLengthIndicator(QrMode.eight_bit, version)).writeBits(self._size)
 
+      bitBuf.bitCount(8)
       for i in [0:self._size]
-         bitBuf.bitCount(8).writeBits(self._data[i][*0])
+         bitBuf.writeBits(self._data[i][*0])
       end
-
+      
+      //dumpBitBuf(bitBuf)
       self._bitBuf = bitBuf
    end
 
@@ -239,7 +266,7 @@ class QrInputItem(mode, size, data, bitBuf)
       elif self._mode == QrMode.an
          size = QrInput.estimateAnSize(self._size)
       elif self._mode == QrMode.eight_bit
-         size = QrInput.estimateEightBitSize(self._size)
+         size = QrInput.estimate8BitSize(self._size)
       elif self._mode == QrMode.kanji
          size = QrInput.estimateKanjiSize(self._size)
       elif self._mode == QrMode.structure
@@ -275,7 +302,7 @@ class QrInputItem(mode, size, data, bitBuf)
          elif self._mode == QrMode.an
             self.encodeAn(version)
          elif self._mode == QrMode.eight_bit
-            self.encodeEightBit(version)
+            self.encode8Bit(version)
          elif self._mode == QrMode.kanji
             self.encodeKanji(version)
          elif self._mode == QrMode.structure
@@ -359,7 +386,7 @@ class QrInput(version, errorCorrectionLevel)
       return size
    end
 
-   function estimateEightBitSize(run)
+   function estimate8BitSize(run)
       return run * 8
    end
 
@@ -390,7 +417,20 @@ class QrInput(version, errorCorrectionLevel)
    function getByteStream()
       bitBuf = self._mergeBitBuffer()
       self._appendPaddingBits(bitBuf)
-      return bitBuf.toMemBuf()
+      // return bitBuf.toMemBuf()
+
+      // The following piece of code  is a temporary workaround; it is going to
+      // be removed as soon as BitBuf.toMemBuf() works correctly.
+      size = bitBuf.size()
+      if size == 0: return []
+      data = arrayBuffer(size , 0)
+
+      bitBuf.rposBits(0)
+      i = 0; while bitBuf.readableBits() > 0
+         data[i++] = bitBuf.r8()
+      end
+
+      return data
    end
 
    /* Private part */
@@ -853,6 +893,7 @@ class QrRsItem(symSize, gfPoly, fcr, prim, nRoots, pad)
          self._genPoly[i] = self._indexOf[self._genPoly[i]]
       end
    end
+   
 
    function encodeChar(data)
       parity = arrayBuffer(self.nRoots, 0)
@@ -949,10 +990,10 @@ class QrSplit(data, input, mode)
             if self._mode == QrMode.kanji
                length = self._eatKanji()
             else
-               length = self._eatEightBit()
+               length = self._eat8Bit()
             end
          else
-            length = self._eatEightBit()
+            length = self._eat8Bit()
          end
 
          if length > 0: self._data = strBack(self._data, len(self._data) - length)
@@ -986,9 +1027,9 @@ class QrSplit(data, input, mode)
 
       if mode == QrMode.eight_bit
          if QrInput.estimateNumSize(run) + 4 + length \
-            + QrInput.estimateEightBitSize(1) \
-            - QrInput.estimateEightBitSize(run + 1) > 0
-            return self._eatEightBit()
+            + QrInput.estimate8BitSize(1) \
+            - QrInput.estimate8BitSize(run + 1) > 0
+            return self._eat8Bit()
          end
       end
 
@@ -1027,9 +1068,9 @@ class QrSplit(data, input, mode)
 
       if not self._isAlNumAt(self._data, run)
          if QrInput.estimateAnSize(run) + 4 + lengthAn \
-            + QrInput.estimateEightBitSize(1) \
-            - QrInput.estimateEightBitSize(run + 1) > 0
-            return self._eatEightBit()
+            + QrInput.estimate8BitSize(1) \
+            - QrInput.estimate8BitSize(run + 1) > 0
+            return self._eat8Bit()
          end
       end
 
@@ -1043,7 +1084,7 @@ class QrSplit(data, input, mode)
       return run
    end
 
-   function _eatEightBit()
+   function _eat8Bit()
       lengthAn = QrSpec.getLengthIndicator(QrMode.an, self._input.version)
       lengthNum = QrSpec.getLengthIndicator(QrMode.num, self._input.version)
 
@@ -1054,9 +1095,9 @@ class QrSplit(data, input, mode)
          if mode == QrMode.num
             q = run
             while self._isDigitAt(self._data, q); q++; end
-            if QrInput.estimateEightBitSize(run) \
+            if QrInput.estimate8BitSize(run) \
                + QrInput.estimateNumSize(q - run) + 4 + lengthNum \
-               - QrInput.estimateEightBitSize(q) < 0
+               - QrInput.estimate8BitSize(q) < 0
                break
             else
                run = q
@@ -1064,9 +1105,9 @@ class QrSplit(data, input, mode)
          elif mode == QrMode.an
             q = run
             while self._isAlNumAt(self._data, q); q++; end
-            if QrInput.estimateEightBitSize(run) \
+            if QrInput.estimate8BitSize(run) \
                + QrInput.estimateAnSize(q - run) + 4 + lengthAn \
-               - QrInput.estimateEightBitSize(q) < 0
+               - QrInput.estimate8BitSize(q) < 0
                break
             else
                run = q
@@ -1696,7 +1737,7 @@ class QrSpec
             end
 
             if fileType(filename) != FileStat.NOTFOUND
-               inputStream = InputStream(filename)                    
+               inputStream = InputStream(filename)
                deserialized = deserialize(inputStream)
                inputStream.close()
                self.frames[version] = deserialized

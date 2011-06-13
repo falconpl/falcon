@@ -112,8 +112,9 @@ To restore a negative number, use readBits(true).
 FALCON_FUNC BitBuf_writeBits( ::Falcon::VMachine *vm )
 {
     BitBuf& buf = vmGetBuf<BitBuf>(vm);
+    register uint32 size = uint32(vm->paramCount());
 
-    for(uint32 i = 0; i < uint32(vm->paramCount()); i++)
+    for(uint32 i = 0; i < size; i++)
     {
         Item *itm = vm->param(i);
         buf << itm->forceInteger(); // << operator makes it append with chosen bit size

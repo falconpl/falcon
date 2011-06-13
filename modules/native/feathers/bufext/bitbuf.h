@@ -543,6 +543,7 @@ protected:
             throw new BufferError( ErrorParam(e_io_error, __LINE__)
                 .desc(FAL_STR_bufext_buf_full) );
         }
+
         if(_heapbuf && _myheapbuf)
         {
             _bufptr = _heapbuf = (VALTYPE*)memRealloc(_heapbuf, (size_t)newsize);
@@ -554,6 +555,12 @@ protected:
             _bufptr = _heapbuf; // using the heap for read/write operations now
             _myheapbuf = true;
         }
+        
+        if( newsize > _maxbytes )
+        {
+           memset( _bufptr+_maxbytes, 0, newsize-_maxbytes );
+        }
+        
         _maxbytes = newsize;
     }
 
