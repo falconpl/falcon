@@ -19,31 +19,6 @@
 import from gd2
 load bufext
 
-// -----------------------------------------------------------------------------
-// to be remvoed
-/*
-function dumpBitBuf(bitBuf)
-   size = bitBuf.sizeBits()
-   rpos = bitBuf.rposBits()
-   bitBuf.rposBits(0)
-
-   > 'size = ' + size
-   while (count = bitBuf.readableBits()) > 0
-      if count > 8: count = 8
-      bits = bitBuf.bitCount(count).readBits()
-      mask = 0x80
-      mask >>= (8 - count)
-      for i in [0:count]
-         if bits && mask; >> 1; else; >> 0; end
-         mask >>= 1
-      end
-   end
-   >
-   bitBuf.rposBits(rpos)
-end
-*/
-// -----------------------------------------------------------------------------
-
 //------------------------------------------------------------------------------
 
 const MaxInt = 2147483647
@@ -204,7 +179,6 @@ class QrInputItem(mode, size, data, bitBuf)
          funcWriteBits(self._data[i][*0])
       end
       
-      //dumpBitBuf(bitBuf)
       self._bitBuf = bitBuf
    end
 
