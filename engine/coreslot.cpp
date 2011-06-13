@@ -20,6 +20,8 @@
 #include <falcon/vmmsg.h>
 #include <falcon/iterator.h>
 
+#include <stdio.h>
+
 namespace Falcon {
 
 bool coreslot_broadcast_internal( VMachine *vm )
@@ -117,7 +119,9 @@ bool coreslot_broadcast_internal( VMachine *vm )
          paramCount = vm->local(2)->asInteger();
          for( int32 i = 0; i < paramCount; i++ )
          {
-            Item cache = *vm->param( (int32)(i + pfirst) );
+            // we don't want to dereference the parameter, so we
+            // access it directly instead of use vm->param()
+            Item cache = vm->currentFrame()->m_params[ i + pfirst ];
             vm->pushParam( cache );
          }
       }
