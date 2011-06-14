@@ -48,6 +48,7 @@ public:
    // Terminal tokens
    //
    Parsing::Terminal T_Plus;
+   Parsing::Terminal T_PlusPlus;
    Parsing::Terminal T_Times;
    Parsing::Terminal T_Divide;
    Parsing::Terminal T_Minus;
@@ -169,6 +170,8 @@ public:
    Parsing::Rule r_Expr_array_decl2;
    Parsing::Rule r_Expr_dot;
    Parsing::Rule r_Expr_plus;
+   Parsing::Rule r_Expr_preinc;
+   Parsing::Rule r_Expr_postinc;
    Parsing::Rule r_Expr_minus;
    Parsing::Rule r_Expr_pars;
    Parsing::Rule r_Expr_pars2;

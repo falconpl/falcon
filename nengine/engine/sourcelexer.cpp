@@ -857,6 +857,11 @@ Parsing::TokenInstance* SourceLexer::checkOperator()
          break;
 
       case 2:
+         if( m_text == "++" )
+         {
+            m_hadOperator = false;
+            return parser->T_PlusPlus.makeInstance(m_sline, m_schr);
+         }
          if( m_text == "**" ) return parser->T_Power.makeInstance(m_sline, m_schr);
          if( m_text == "==" ) return parser->T_DblEq.makeInstance(m_sline, m_schr);
          if( m_text == "!=" ) return parser->T_NotEq.makeInstance(m_sline, m_schr);
@@ -869,7 +874,7 @@ Parsing::TokenInstance* SourceLexer::checkOperator()
    m_hadOperator = false;
    // in case of error
    addError( e_inv_token );
-   
+
    return 0;
 }
 

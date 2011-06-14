@@ -428,6 +428,32 @@ static void apply_expr_plus( const Rule& r, Parser& p )
    apply_expr_binary(r, p, new ExprPlus );
 }
 
+static void apply_expr_preinc(const Rule& r, Parser& p )
+{
+   SourceParser& sp = static_cast<SourceParser&>(p);
+
+   TokenInstance* plpl  = p.getNextToken();
+   TokenInstance* value = p.getNextToken();
+
+   TokenInstance* ti2 = new TokenInstance( value->line(), value->chr(), sp.Expr );
+   ti2->setValue( new ExprPreInc(static_cast<Expression*>(value->detachValue())), expr_deletor );
+
+   p.simplify(2,ti2);
+}
+
+static void apply_expr_postinc(const Rule& r, Parser& p )
+{
+   SourceParser& sp = static_cast<SourceParser&>(p);
+
+   TokenInstance* value = p.getNextToken();
+   TokenInstance* plpl  = p.getNextToken();
+
+   TokenInstance* ti2 = new TokenInstance( value->line(), value->chr(), sp.Expr );
+   ti2->setValue( new ExprPostInc(static_cast<Expression*>(value->detachValue())), expr_deletor );
+
+   p.simplify(2,ti2);
+}
+
 static void apply_expr_minus( const Rule& r, Parser& p )
 {
    apply_expr_binary(r, p, new ExprMinus );
@@ -1634,6 +1660,8 @@ SourceParser::SourceParser():
    T_Plus("+",50),
    T_Minus("-",50),
 
+   T_PlusPlus("++",210),
+
    T_DblEq("==", 70),
    T_NotEq("!=", 70),
    T_Less("<", 70),
@@ -1741,6 +1769,8 @@ SourceParser::SourceParser():
       << (r_Expr_array_decl2 << "Expr_array_decl2" << apply_expr_array_decl << T_DotSquare << SeqExprOrPairs << T_CloseSquare )
       << (r_Expr_dot << "Expr_dot" << apply_expr_dot << Expr << T_Dot << T_Name)
       << (r_Expr_plus << "Expr_plus" << apply_expr_plus << Expr << T_Plus << Expr)
+      << (r_Expr_preinc << "Expr_preinc" << apply_expr_preinc << T_PlusPlus << Expr)
+      << (r_Expr_postinc << "Expr_postinc" << apply_expr_postinc << Expr << T_PlusPlus)
       << (r_Expr_minus << "Expr_minus" << apply_expr_minus << Expr << T_Minus << Expr)
       << (r_Expr_pars << "Expr_pars" << apply_expr_pars << T_Openpar << Expr << T_Closepar)
       << (r_Expr_pars2 << "Expr_pars2" << apply_expr_pars << T_DotPar << Expr << T_Closepar)
