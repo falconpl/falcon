@@ -140,7 +140,7 @@ public:
     
     If the given name is present as a global symbol in the current module.
     */
-   GlobalSymbol* findGlobal( const String& name ) const;
+   GlobalSymbol* getGlobal( const String& name ) const;
 
    /** Finds a function.
     \param name The function name to be searched.
@@ -148,7 +148,7 @@ public:
 
     If the given name is present as a global function in the current module.
     */
-   Function* findFunction( const String& name ) const;
+   Function* getFunction( const String& name ) const;
 
    /** Enumerator receiving symbols in this module. */
    typedef Enumerator<GlobalSymbol*> SymbolEnumerator;

@@ -18,7 +18,7 @@ namespace Gtk {
  */
 void Menu::modInit( Falcon::Module* mod )
 {
-    Falcon::Symbol* c_Menu = mod->addClass( "GtkMenu", &Gtk::abstract_init );
+    Falcon::Symbol* c_Menu = mod->addClass( "GtkMenu", &Menu::init );
 
     Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "GtkMenuShell" ) );
     c_Menu->getClassDef()->addInheritance( in );
@@ -634,3 +634,6 @@ FALCON_FUNC Menu::get_for_attach_widget( VMARG )
 
 } // Gtk
 } // Falcon
+
+// vi: set ai et sw=4:
+// kate: replace-tabs on; shift-width 4;

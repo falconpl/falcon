@@ -32,7 +32,6 @@ under the License.
 
 #include <falcon/types.h>
 #include "buffererror.h"
-
 #if defined(__LP64__) || defined(_M_IA64) || defined(_M_X64) || defined(_WIN64)
 #  define BITBUF_64_BIT
 #endif
@@ -58,11 +57,11 @@ public:
     static const VALTYPE VAL_ONE = UI64LIT(1);
     static const VALTYPE VAL_ALLBITS = UI64LIT(0xFFFFFFFFFFFFFFFF);
 #else
-    typedef uint32 VALTYPE; // <- this can be used to specify the underlying integer type, which should be *unsigned*. (uint8...uint64)
+    typedef uint8 VALTYPE; // <- this can be used to specify the underlying integer type, which should be *unsigned*. (uint8...uint64)
     typedef uint32 NUMTYPE; // <- leave this at uint32 unless VALTYPE is uint64, then make this uint64 too.
                             // sizeof(NUMTYPE) *MUST* be >= sizeof(VALTYPE)
     static const VALTYPE VAL_ONE = 1; // used in shift operations (1 << X). must be always 1, and explicitly of type VALTYPE.
-    static const VALTYPE VAL_ALLBITS = 0xFFFFFFFF; // used in shift operations (VAL_ALLBITS >> X). must set all bits of VALTYPE.
+    static const VALTYPE VAL_ALLBITS = 0xFF; // used in shift operations (VAL_ALLBITS >> X). must set all bits of VALTYPE.
 #endif
 
     enum { VALBITS = sizeof(VALTYPE) * 8 };
@@ -317,41 +316,25 @@ public:
     // may throw a BitBufError if trying to read beyond the reserved space
     template <typename TY> inline TY _readUnchecked(NUMTYPE bits)
     {
-        TY ret;
+        TY ret = 0;
+        NUMTYPE pending = bits;
 
-        if(_bitpos_r + bits <= VALBITS) // enough space to read from?
+        while(pending)
         {
-            VALTYPE mask = (VAL_ALLBITS >> (VALBITS - bits)) << _bitpos_r;
-            ret = TY((_bufptr[_arraypos_r] & mask) >> _bitpos_r);
-            _bitpos_r += bits;
-            if(_bitpos_r >= VALBITS)
+            NUMTYPE readable = _min<NUMTYPE>(VALBITS - _bitpos_r, pending);
+            NUMTYPE mask = (VAL_ALLBITS >> (VALBITS - readable));
+
+            pending -= readable;
+            ret <<= readable;
+            ret |= TY((_bufptr[_arraypos_r] & mask));
+
+            if((_bitpos_r += readable) >= VALBITS)
             {
                 _bitpos_r = 0;
                 ++_arraypos_r;
             }
         }
-        else
-        {
-            // no, check how much we can read
-            NUMTYPE pending = bits;
-            NUMTYPE totalread = 0;
-            ret = 0;
-            do
-            {
-                NUMTYPE readable = _min<NUMTYPE>(VALBITS - _bitpos_r, pending);
-                VALTYPE mask = (VAL_ALLBITS >> (VALBITS - readable)) << _bitpos_r;
-                pending -= readable;
-                ret |= TY((_bufptr[_arraypos_r] & mask) >> _bitpos_r) << totalread;
-                _bitpos_r += readable;
-                if(_bitpos_r >= VALBITS)
-                {
-                    _bitpos_r = 0;
-                    ++_arraypos_r;
-                }
-                totalread += readable;
-            }
-            while(pending);
-        }
+
         return ret;
     }
 
@@ -442,42 +425,31 @@ public:
     {
 #ifdef BITBUF_64_BIT
         // in 64 bit mode, NUMTYPE is 64 bits, and we have to use a 64 bit variable to have true 64 bit shifts (32 bit shifts would truncate results)
-        NUMTYPE value = val;
+        NUMTYPE value, mask;
 #else
-        TY& value = val; // should be optimized out
+        TY value, mask;
 #endif
-        if(_bitpos_w + bits <= VALBITS) // enough space to write to?
+        VALTYPE writeable, bitpos;
+        NUMTYPE pending = bits;
+
+        writeable = _min<NUMTYPE>(VALBITS - _bitpos_w, bits);
+        if(_bitpos_w) _bufptr[_arraypos_w] <<= writeable;
+
+        mask = 1 << (bits - 1);
+        while(pending--)
         {
-            VALTYPE mask = (VAL_ALLBITS >> (VALBITS - bits)) << _bitpos_w;
-            _bufptr[_arraypos_w] &= ~mask; // clear bits
-            _bufptr[_arraypos_w] |= ((value << _bitpos_w) & mask); // overwrite
-            _bitpos_w += bits;
-            if(_bitpos_w >= VALBITS)
+            value = val & mask;
+            for(bitpos = 0; value; bitpos++, value >>= 1);
+
+            writeable = VALBITS - _bitpos_w;
+            _bufptr[_arraypos_w] |= ((val & mask) >> (bitpos > writeable ? bitpos - writeable : 0));
+            mask >>= 1;
+
+            if(++_bitpos_w == VALBITS)
             {
                 _bitpos_w = 0;
-                ++_arraypos_w;
+                _arraypos_w++;
             }
-        }
-        else
-        {
-            // check how much space we have, and switch to the next VALTYPE[] array slot if our current slot is completely filled
-            NUMTYPE pending = bits;
-            do
-            {
-                NUMTYPE writeable = _min<NUMTYPE>(VALBITS - _bitpos_w, pending);
-                VALTYPE mask = (VAL_ALLBITS >> (VALBITS - writeable)) << _bitpos_w;
-                _bufptr[_arraypos_w] &= ~mask; // clear bits
-                _bufptr[_arraypos_w] |= ((value << _bitpos_w) & mask); // overwrite
-                _bitpos_w += writeable;
-                if(_bitpos_w >= VALBITS) // check if we have to change the slot
-                {
-                    _bitpos_w = 0;
-                    ++_arraypos_w;
-                }
-                pending -= writeable;
-                value >>= writeable; // wrote some amount of the lowest bytes, shift to have more writable bytes at lowest position
-            }
-            while(pending);
         }
 
         NUMTYPE newpos = (_arraypos_w * VALBITS) + _bitpos_w;

@@ -128,3 +128,6 @@ Falcon::CoreObject* RecentFilterInfo::factory( const Falcon::CoreClass* gen, voi
 
 } // Gtk
 } // Falcon
+
+// vi: set ai et sw=4:
+// kate: replace-tabs on; shift-width 4;

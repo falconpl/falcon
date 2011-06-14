@@ -29,7 +29,6 @@
 
 #include <string.h>
 
-
 namespace Falcon
 {
 
@@ -547,7 +546,7 @@ bool ItemArray::copyOnto( uint32 from, const ItemArray& src, uint32 first, uint3
       resize( from + amount );
 
    memcpy( m_data + from, src.m_data + first, esize( amount ) );
-   
+
    if( m_iterList != 0 )
    {
       m_invalidPoint = from;

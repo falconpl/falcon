@@ -284,10 +284,6 @@ Engine::Engine()
    m_syntaxErrorClass = new SyntaxErrorClass;
    m_paramErrorClass = new ParamErrorClass;
 
-   //=====================================
-   // The Core Module
-   //
-   m_core  = 0;
    //m_core = new CoreModule;
    m_bom = new BOM;
 
@@ -309,6 +305,12 @@ Engine::Engine()
    addPseudoFunction(new Ext::Max);
    addPseudoFunction(new Ext::Min);
    addPseudoFunction(new Ext::TypeId);
+
+   //=====================================
+   // The Core Module
+   //
+   m_instance = this; // modules need the engine.
+   m_core  = new CoreModule;
 
    TRACE("Engine creation complete", 0 )
 }
@@ -486,7 +488,6 @@ Engine* Engine::instance()
    fassert( m_instance != 0 );
    return m_instance;
 }
-
 
  
 Collector* Engine::collector() const

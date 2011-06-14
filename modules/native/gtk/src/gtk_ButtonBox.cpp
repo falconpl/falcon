@@ -227,3 +227,6 @@ FALCON_FUNC ButtonBox::set_child_secondary( VMARG )
 
 } // Gtk
 } // Falcon
+
+// vi: set ai et sw=4:
+// kate: replace-tabs on; shift-width 4;

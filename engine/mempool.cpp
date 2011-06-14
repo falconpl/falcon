@@ -980,18 +980,20 @@ void MemPool::markLocked()
    // Lock root never changes.
    GarbageLock *rlock = this->m_lockRoot;
    GarbageLock *lock = rlock;
+   Item itm;
    do
    {
       // The root item never needs to be marked
       m_mtx_lockitem.lock();
       lock = lock->next();
+      itm = lock->item();
       m_mtx_lockitem.unlock();
 
       // if a new item is inserted now, NP:
       // it gets marked with current generation.
       // If it gets deleted, it will just get an extra mark
       // and live for an extra turn.
-      memPool->markItem( lock->item() );
+      memPool->markItem( itm );
 
    } while( lock != rlock );
 }

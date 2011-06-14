@@ -48,3 +48,6 @@ FALCON_FUNC rebuild_menu( VMARG );
 #endif // GTK_CHECK_VERSION( 2, 14, 0 )
 
 #endif // !GTK_TOOLSHELL_HPP
+
+// vi: set ai et sw=4:
+// kate: replace-tabs on; shift-width 4;

@@ -502,9 +502,13 @@ public:
     In case the item is deep, it will use the Class::describe() member to obtain
     a representation.
     */
-   void describe( String& target ) const;
+   void describe( String& target, int depth = 3, int maxLen = 60 ) const;
 
-   String describe() const { String t; describe(t); return t; }
+   String describe( int depth = 3, int maxLen = 60) const {
+      String t;
+      describe(t, depth, maxLen);
+      return t;
+   }
 
    /** Operator version of copy.
     \note This doesn't set the copy marker. Use assign() for that.
@@ -601,7 +605,7 @@ public:
     so this is consistent even when the handler class is expecting a something
     that's not necessarily an Item*).
    */
-   void forceClassInst( Class*& cls, void*& udata )
+   void forceClassInst( Class*& cls, void*& udata ) const
    {
       switch( type() )
       {
@@ -622,7 +626,7 @@ public:
 
       default:
          cls = Engine::instance()->getTypeClass(type());
-         udata = 0;
+         udata = (void*)this;
       }
    }
 

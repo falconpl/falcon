@@ -62,7 +62,7 @@ public:
    virtual void* clone( void* source ) const;
    virtual void serialize( DataWriter* stream, void* self ) const;
    virtual void* deserialize( DataReader* stream ) const;
-   virtual void describe( void* instance, String& target ) const;
+   virtual void describe( void* instance, String& target, int maxDepth = 3, int maxLength = 60 ) const;
 
    virtual void gcMark( void* self, uint32 mark ) const;
    virtual void enumerateProperties( void* self, PropertyEnumerator& cb ) const;
@@ -70,6 +70,7 @@ public:
    //=============================================================
 
    virtual void op_add( VMachine *vm, void* self ) const;
+   virtual void op_aadd( VMachine *vm, void* self ) const;
    virtual void op_isTrue( VMachine *vm, void* self ) const;
    virtual void op_toString( VMachine *vm, void* self ) const;
 
@@ -78,13 +79,14 @@ public:
    virtual void op_setIndex( VMachine *vm, void* self ) const;
 
 private:
-
+#if 0
    class FALCON_DYN_CLASS ToStringNextOp: public PStep {
    public:
       ToStringNextOp();
       static void apply_( const PStep*, VMachine* vm );
    } m_toStringNextOp;
-
+#endif
+   
 };
 
 }

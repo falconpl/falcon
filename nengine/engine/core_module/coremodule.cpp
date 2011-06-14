@@ -14,11 +14,13 @@
 */
 
 #include <falcon/cm/coremodule.h>
-#include <falcon/cm/print.h>
-#include <falcon/cm/len.h>
 #include <falcon/cm/compare.h>
-#include <falcon/cm/typeid.h>
+#include <falcon/cm/describe.h>
+#include <falcon/cm/len.h>
 #include <falcon/cm/minmax.h>
+#include <falcon/cm/print.h>
+#include <falcon/cm/tostring.h>
+#include <falcon/cm/typeid.h>
 
 namespace Falcon {
 
@@ -27,11 +29,13 @@ CoreModule::CoreModule():
 {
    *this
       << new Ext::Compare
-      << new Ext::Min
-      << new Ext::Max
+      << new Ext::Describe
       << new Ext::Len
       << new Ext::FuncPrintl
       << new Ext::FuncPrint
+      << new Ext::Min
+      << new Ext::Max
+      << new Ext::ToString
       << new Ext::TypeId
       ;
 }

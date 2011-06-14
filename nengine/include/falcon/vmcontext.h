@@ -65,16 +65,16 @@ public:
    }
 
    /** Return the nth parameter in the local context.
-    *
-    *TODO return 0 on parameter out of range.
     */
    inline const Item* param( int n ) const {
-	  fassert(m_dataStack+(n + m_topCall->m_stackBase) < m_maxData );
+      fassert(m_dataStack+(n + m_topCall->m_stackBase) < m_maxData );
+      if( m_topCall->m_paramCount <= n ) return 0;
       return &m_dataStack[ n + m_topCall->m_stackBase ];
    }
 
    inline Item* param( int n )  {
       fassert(m_dataStack+(n + m_topCall->m_stackBase) < m_maxData );
+      if( m_topCall->m_paramCount <= n ) return 0;
       return &m_dataStack[ n + m_topCall->m_stackBase ];
    }
 
@@ -87,7 +87,7 @@ public:
     *TODO use the local stack.
     */
    inline const Item* local( int n ) const {
-	  fassert(m_dataStack+(n + m_topCall->m_stackBase + m_topCall->m_paramCount) < m_maxData );
+      fassert(m_dataStack+(n + m_topCall->m_stackBase + m_topCall->m_paramCount) < m_maxData );
       return &m_dataStack[ n + m_topCall->m_stackBase + m_topCall->m_paramCount ];
    }
 
@@ -110,7 +110,7 @@ public:
     *
     */
    inline const Item& topData() const {
-	  fassert( m_topData >= m_dataStack && m_topData < m_maxData );
+      fassert( m_topData >= m_dataStack && m_topData < m_maxData );
       return *m_topData;
    }
 
@@ -382,7 +382,7 @@ public:
       topCall->m_initBase = topCall->m_stackBase = dataSize()-nparams;
       topCall->m_paramCount = nparams;
       topCall->m_self = self;
-      topCall->m_bMethodic = false;
+      topCall->m_bMethodic = true;
       topCall->m_bExpression = isExpr;
 
       return topCall;

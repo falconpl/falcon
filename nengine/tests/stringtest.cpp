@@ -15,6 +15,7 @@
 #include <falcon/expression.h>
 #include <falcon/exprvalue.h>
 #include <falcon/exprsym.h>
+#include <falcon/exprcall.h>
 #include <falcon/exprmath.h>
 #include <falcon/statement.h>
 #include <falcon/stmtrule.h>
@@ -69,7 +70,7 @@ void go()
    ExprCall* call_func = new ExprCall( new ExprValue(&string_add) );
    call_func->addParam( new ExprValue("A string") );
 
-   Symbol* printl = cm.findGlobal("printl");
+   Symbol* printl = cm.getGlobal("printl");
 
    // and the main
    SynFunc fmain( "__main__" );

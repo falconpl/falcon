@@ -80,10 +80,21 @@ void* CoreString::deserialize( DataReader* stream ) const
    return s;
 }
 
-void CoreString::describe( void* instance, String& target ) const
+void CoreString::describe( void* instance, String& target, int, int maxlen ) const
 {
+   String* self = static_cast<String*>(instance);
+   target.size(0);
    target.append('"');
-   target += *static_cast<String*>(instance);
+   if( self->length() > maxlen )
+   {
+      target += self->subString(0, maxlen);
+      target += "...";
+   }
+   else
+   {
+      target += *self;
+   }
+   
    target.append('"');
 }
 
@@ -248,6 +259,13 @@ void CoreString::op_compare( VMachine *vm, void* self ) const
       token.exit( typeID() - op2->type() );
    }
 }
+
+
+void CoreString::op_toString( VMachine *vm, void* self ) const
+{
+   // nothing to do -- the topmost item of the stack is already a string.
+}
+
 
 }
 

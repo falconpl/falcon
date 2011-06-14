@@ -2263,8 +2263,10 @@ void String::unescapeQuotes()
 
 GCToken* String::garbage()
 {
-   register Engine* eng = Engine::instance();
-   return eng->collector()->store( eng->stringClass(), this );
+   static Class* stringClass = Engine::instance()->stringClass();
+   static Collector* collector = Engine::instance()->collector();
+
+   return collector->store( stringClass, this );
 }
 
 }

@@ -115,7 +115,7 @@ void IntCompiler::Context::onGlobal( const String& name )
 Symbol* IntCompiler::Context::onUndefinedSymbol( const String& name )
 {
    // Is this a global symbol?
-   Symbol* gsym = m_owner->m_module->findGlobal( name );
+   Symbol* gsym = m_owner->m_module->getGlobal( name );
    if( gsym == 0 )
    {
       // try to find it in the exported symbols of the VM.
@@ -129,7 +129,7 @@ Symbol* IntCompiler::Context::onUndefinedSymbol( const String& name )
 
 GlobalSymbol* IntCompiler::Context::onGlobalDefined( const String& name, bool &adef )
 {
-   GlobalSymbol* sym = m_owner->m_module->findGlobal(name);
+   GlobalSymbol* sym = m_owner->m_module->getGlobal(name);
    if( sym == 0 )
    {
       adef = false;

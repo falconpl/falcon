@@ -698,3 +698,6 @@ FALCON_FUNC Button::get_image_position( VMARG )
 
 } // Gtk
 } // Falcon
+
+// vi: set ai et sw=4:
+// kate: replace-tabs on; shift-width 4;

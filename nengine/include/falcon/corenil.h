@@ -39,7 +39,7 @@ public:
    virtual void serialize( DataWriter* stream, void* self ) const;
    virtual void* deserialize( DataReader* stream ) const;
 
-   virtual void describe( void* instance, String& target ) const;
+   virtual void describe( void* instance, String& target, int maxDepth = 3, int maxLength = 60 ) const;
 
    //=============================================================
 

@@ -385,3 +385,6 @@ FALCON_FUNC Container::set_border_width( VMARG )
 
 } // Gtk
 } // Falcon
+
+// vi: set ai et sw=4:
+// kate: replace-tabs on; shift-width 4;

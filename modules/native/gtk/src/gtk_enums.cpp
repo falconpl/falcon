@@ -1004,6 +1004,14 @@ void Enums::modInit( Falcon::Module* mod )
     { "GDK_GRAVITY_SOUTH_EAST", GDK_GRAVITY_SOUTH_EAST },
     { "GDK_GRAVITY_STATIC",     GDK_GRAVITY_STATIC },
 
+	/*
+	 * GdkInterpType
+	 */
+    { "GDK_INTERP_NEAREST",     GDK_INTERP_NEAREST },
+    { "GDK_INTERP_TILES",       GDK_INTERP_TILES },
+    { "GDK_INTERP_BILINEAR",    GDK_INTERP_BILINEAR },
+    { "GDK_INTERP_HYPER",       GDK_INTERP_HYPER },
+
     /*
      *  GdkJoinStyle
      */
@@ -1156,6 +1164,14 @@ void Enums::modInit( Falcon::Module* mod )
     { "GDK_WINDOW_TYPE_HINT_COMBO",     GDK_WINDOW_TYPE_HINT_COMBO },
     { "GDK_WINDOW_TYPE_HINT_DND",       GDK_WINDOW_TYPE_HINT_DND },
 
+    /*
+     *  GdkPixbufRotation
+     */
+    { "GDK_PIXBUF_ROTATE_NONE",  GDK_PIXBUF_ROTATE_NONE },
+    { "GDK_PIXBUF_ROTATE_COUNTERCLOCKWISE", GDK_PIXBUF_ROTATE_COUNTERCLOCKWISE },
+    { "GDK_PIXBUF_ROTATE_UPSIDEDOWN", GDK_PIXBUF_ROTATE_UPSIDEDOWN },
+    { "GDK_PIXBUF_ROTATE_CLOCKWISE", GDK_PIXBUF_ROTATE_CLOCKWISE },
+
 
     // BEGIN PANGO ENUMS //
 
@@ -1178,3 +1194,6 @@ void Enums::modInit( Falcon::Module* mod )
 
 } // Gtk
 } // Falcon
+
+// vi: set ai et sw=4:
+// kate: replace-tabs on; shift-width 4;

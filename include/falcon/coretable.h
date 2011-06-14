@@ -54,7 +54,7 @@ public:
    virtual ~CoreTable();
 
    CoreArray *page( uint32 num ) const {
-      return *reinterpret_cast<CoreArray **>(m_pages.size() >= num ? m_pages.at(num) : 0);
+      return ( num >= m_pages.size() ) ? 0 : *reinterpret_cast<CoreArray **>( m_pages.at(num) );
    }
 
    uint32 pageCount() const { return m_pages.size(); }

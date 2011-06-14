@@ -602,15 +602,27 @@ typedef Falcon::Gtk::ArgCheck<9>    ArgCheck9;
  *  \param temp (out) The intermediate auto-C-strings.
  *  \return The length of the array.
  *
- *  \note If arr was non-empty, both strings and temp must be freed with memFree after use.
+ *  \note If arr was non-empty, both strings and temp must be freed with delete[] after use.
  */
 uint32
 getGCharArray( const Falcon::CoreArray* arr,
-        gchar** strings,
-        Falcon::AutoCString** temp );
+        gchar**& strings,
+        Falcon::AutoCString*& temp );
+
+
+/**
+ *  \brief Format a file path given from string.
+ *  \param filepath A string representing a filepath.
+ *  \return The modified string passed as argument.
+ */
+Falcon::String*
+formatPath( Falcon::String* filepath );
 
 
 } // Gtk
 } // Falcon
 
 #endif // !MODGTK_HPP
+
+// vi: set ai et sw=4:
+// kate: replace-tabs on; shift-width 4;

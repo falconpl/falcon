@@ -79,3 +79,6 @@ FALCON_FUNC Bin::get_child( VMARG )
 
 } // Gtk
 } // Falcon
+
+// vi: set ai et sw=4:
+// kate: replace-tabs on; shift-width 4;

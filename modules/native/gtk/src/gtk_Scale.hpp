@@ -41,11 +41,11 @@ public:
     static FALCON_FUNC get_layout( VMARG );
 
     static FALCON_FUNC get_layout_offsets( VMARG );
-
+#endif
     static FALCON_FUNC add_mark( VMARG );
 
     static FALCON_FUNC clear_marks( VMARG );
-#endif
+
 
 };
 
@@ -54,3 +54,6 @@ public:
 } // Falcon
 
 #endif // !GTK_SCALE_HPP
+
+// vi: set ai et sw=4:
+// kate: replace-tabs on; shift-width 4;

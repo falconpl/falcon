@@ -40,20 +40,20 @@ void Len::apply( VMachine* vm, int32 nParams )
    Item *elem;
    if ( ctx->isMethodic() )
    {
+      elem = &ctx->self();
+      vm->retval( elem->len() );
+   }
+   else
+   {
       elem = ctx->param( 0 );
       if ( elem == 0 )
       {
-         ctx->retval( (int64) 0 );
+         throw paramError();
       }
       else
       {
          vm->retval( elem->len() );
       }
-   }
-   else
-   {
-      elem = &ctx->self();
-      vm->retval( elem->len() );
    }
 
    vm->returnFrame();

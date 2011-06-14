@@ -361,6 +361,7 @@ FALCON_FUNC  mth_arrayFill ( ::Falcon::VMachine *vm );
 FALCON_FUNC  mth_arrayNM( ::Falcon::VMachine *vm );
 FALCON_FUNC  arrayBuffer ( ::Falcon::VMachine *vm );
 FALCON_FUNC  mth_arrayCompact ( ::Falcon::VMachine *vm );
+FALCON_FUNC  mth_arrayCopy ( ::Falcon::VMachine *vm );
 
 FALCON_FUNC  Array_comp ( ::Falcon::VMachine *vm );
 FALCON_FUNC  Array_mcomp ( ::Falcon::VMachine *vm );

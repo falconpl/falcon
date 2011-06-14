@@ -198,7 +198,7 @@ GlobalSymbol* Module::addVariable( const String& name, const Item& value, bool b
 }
 
 
-GlobalSymbol* Module::findGlobal( const String& name ) const
+GlobalSymbol* Module::getGlobal( const String& name ) const
 {
    const Private::GlobalsMap& syms = _p->m_gSyms;
    Private::GlobalsMap::const_iterator iter = syms.find(name);
@@ -212,7 +212,7 @@ GlobalSymbol* Module::findGlobal( const String& name ) const
 }
 
 
-Function* Module::findFunction( const String& name ) const
+Function* Module::getFunction( const String& name ) const
 {
    const Private::FunctionMap& funcs = _p->m_functions;
    Private::FunctionMap::const_iterator iter = funcs.find( name );

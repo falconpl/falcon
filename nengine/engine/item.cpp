@@ -126,7 +126,7 @@ numeric Item::forceNumeric() const
 }
 
 
-void Item::describe( String &target ) const
+void Item::describe( String &target, int maxDepth, int maxLength ) const
 {
    target.size(0);
 
@@ -153,19 +153,29 @@ void Item::describe( String &target ) const
 
       case FLC_ITEM_FUNC:
       {
-         Engine::instance()->functionClass()->describe( asFunction(), target );
+         Engine::instance()->functionClass()->describe( asFunction(), target, maxDepth, maxLength );
+      }
+      break;
+
+      case FLC_ITEM_METHOD:
+      {         
+         String temp;
+         target = "(Method ";         
+         Engine::instance()->functionClass()->describe( asMethodFunction(), temp, maxDepth, maxLength );
+         target += temp;
+         target += ")";
       }
       break;
 
       case FLC_ITEM_DEEP:
       {
-         asDeepClass()->describe( asDeepInst(), target );
+         asDeepClass()->describe( asDeepInst(), target, maxDepth, maxLength );
       }
       break;
 
       case FLC_ITEM_USER:
       {
-         asUserClass()->describe( asUserInst(), target );
+         asUserClass()->describe( asUserInst(), target, maxDepth, maxLength );
       }
       break;
 

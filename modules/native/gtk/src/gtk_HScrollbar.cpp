@@ -23,7 +23,7 @@ void HScrollbar::modInit( Falcon::Module* mod )
     Falcon::InheritDef* in = new Falcon::InheritDef( mod->findGlobalSymbol( "GtkScrollbar" ) );
     c_HScrollbar->getClassDef()->addInheritance( in );
 
-    //c_HScrollbar->setWKS( true );
+    c_HScrollbar->setWKS( true );
     c_HScrollbar->getClassDef()->factory( &HScrollbar::factory );
 
 }
@@ -69,3 +69,6 @@ FALCON_FUNC HScrollbar::init( VMARG )
 
 } // Gtk
 } // Falcon
+
+// vi: set ai et sw=4:
+// kate: replace-tabs on; shift-width 4;

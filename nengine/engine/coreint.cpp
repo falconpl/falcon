@@ -22,7 +22,7 @@
 namespace Falcon {
 
 CoreInt::CoreInt():
-   Class("Integer", FLC_ITEM_INT )
+   Class( "Integer", FLC_ITEM_INT )
 {
 }
 
@@ -35,7 +35,7 @@ CoreInt::~CoreInt()
 void* CoreInt::create(void* creationParams ) const
 {
    Item* ptr = new Item;
-   *ptr = int64(creationParams);
+   *ptr = *( (int64*)creationParams );
    return ptr;
 }
 
@@ -67,7 +67,7 @@ void* CoreInt::deserialize( DataReader* stream ) const
    return 0;
 }
 
-void CoreInt::describe( void* instance, String& target ) const
+void CoreInt::describe( void* instance, String& target, int, int ) const
 {
    target.N(((Item*) instance)->asInteger() );
 }
@@ -81,6 +81,15 @@ void CoreInt::op_isTrue( VMachine *vm, void* self ) const
    OpToken token( vm, iself );
    token.exit( iself->asInteger() != 0 );
 }
+
+void CoreInt::op_toString( VMachine *vm, void* self ) const
+{
+   Item* iself;
+   OpToken token( vm, iself );
+   String s;
+   token.exit( s.N(iself->asInteger()) );
+}
+
 
 }
 

@@ -41,8 +41,10 @@ void Screen::modInit( Falcon::Module* mod )
     { "get_root_window",        &Screen:: },
     { "get_display",        &Screen:: },
     { "get_number",        &Screen:: },
-    { "get_width",        &Screen:: },
-    { "get_height",        &Screen:: },
+#endif
+    { "get_width",        &Screen::get_width },
+    { "get_height",        &Screen::get_height },
+#if 0
     { "get_width_mm",        &Screen:: },
     { "get_height_mm",        &Screen:: },
     { "list_visuals",        &Screen:: },
@@ -97,6 +99,33 @@ Falcon::CoreObject* Screen::factory( const Falcon::CoreClass* gen, void* scrn, b
 
     Note that a screen may consist of multiple monitors which are merged to form a large screen area.
  */
+
+
+/*#
+    @method get_width numeric
+    @brief Gets the width of screen in pixels
+    @return the width of screen in pixels.
+ */
+FALCON_FUNC Screen::get_width( VMARG )
+{
+	NO_ARGS
+	MYSELF;
+	GET_OBJ( self );
+	vm->retval( (int64) gdk_screen_get_width( GET_SCREEN( vm->self() )));
+}
+
+/*#
+    @method get_height numeric
+    @brief Gets the height of screen in pixels
+    @return the height of screen in pixels.
+ */
+FALCON_FUNC Screen::get_height( VMARG )
+{
+	NO_ARGS
+	MYSELF;
+	GET_OBJ( self );
+	vm->retval( (int64) gdk_screen_get_height( GET_SCREEN( vm->self() )));
+}
 
 #if 0
 FALCON_FUNC Screen::signal_composited_changed( VMARG );
@@ -163,3 +192,6 @@ FALCON_FUNC Screen::get_window_stack( VMARG );
 
 } // Gdk
 } // Falcon
+
+// vi: set ai et sw=4:
+// kate: replace-tabs on; shift-width 4;

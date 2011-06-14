@@ -125,3 +125,6 @@ Falcon::CoreObject* ParamSpec::factory( const Falcon::CoreClass* gen, void* spec
 
 } // Glib
 } // Falcon
+
+// vi: set ai et sw=4:
+// kate: replace-tabs on; shift-width 4;
