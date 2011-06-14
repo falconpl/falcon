@@ -678,7 +678,7 @@ static void describe_internal( VMachine *vm, String &tgt, const Item *elem, int3
    You may create personalized inspect functions using forward bindings, like
    the following:
    @code
-   compactDescribe = .[inspect depth|1 maxLen|15]
+   compactDescribe = .[describe depth|1 maxLen|15]
    @endcode
 */
 

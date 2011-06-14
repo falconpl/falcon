@@ -1631,14 +1631,17 @@ bool String::deserialize( Stream *in, bool bStatic )
 }
 
 
-void String::c_ize()
+const char* String::c_ize()
 {
    if ( allocated() <= size() || getCharAt( length() ) != 0 )
    {
       append( 0 );
       size( size() - m_class->charSize() );
    }
+   
+   return (const char*) getRawStorage();
 }
+
 
 bool String::setCharSize( uint32 nsize, uint32 subst )
 {

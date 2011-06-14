@@ -29,6 +29,7 @@
 namespace Falcon {
 
 class Module;
+class Symbol;
 
 class StackFrame: public BaseAlloc
 {

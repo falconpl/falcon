@@ -354,6 +354,11 @@ int64 _getpid() {
    return (int64) GetCurrentProcessId();
 }
 
+long _getPageSize()
+{
+   return WIN_PAGE_SIZE;
+}
+
 }
 }
 

@@ -22,7 +22,7 @@
 
 #include <falcon/setup.h>
 #include <falcon/types.h>
-#include <falcon/falcondata.h>
+
 
 namespace Falcon {
 
@@ -31,7 +31,7 @@ class TimeStamp;
 class MemPool;
 
 /** Multiplatform statistics on files. */
-class FALCON_DYN_CLASS FileStat: public FalconData
+class FALCON_DYN_CLASS FileStat
 {
 public:
    typedef enum {

@@ -33,6 +33,7 @@ OPTION( FALCON_NATMODS_AUTO "Select automatically all the modules that have supp
 OPTION( FALCON_BUILD_DBI "Install DBI module" ON )
 OPTION( FALCON_BUILD_DYNLIB "Install DYNLIB module" OFF)
 OPTION( FALCON_BUILD_MONGODB "Install MongoDB module" ON )
+OPTION( FALCON_BUILD_VFS "Install VFS modules" ON )
 
 # Bindings -- native modules requiring external libraries.
 FalconMakeBinding( CURL CURL "Install CURL binding" )
@@ -134,4 +135,8 @@ endif()
 
 if ( FALCON_BUILD_CONIO )
     add_subdirectory( conio )
+endif()
+
+if ( FALCON_BUILD_VFS )
+    add_subdirectory( vfs )
 endif()

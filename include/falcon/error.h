@@ -385,8 +385,8 @@ public:
    bool catchable() const { return m_catchable; }
    const Item &raised() const { return m_raised; }
 
-   String toString() const { String temp; return toString( temp ); }
-   virtual String &toString( String &target ) const;
+   String describe() const { String temp; return describe( temp ); }
+   virtual String &describe( String &target ) const;
 
    /** Writes only the heading of the error to the target string.
       The error heading is everything of the error without the traceback.

@@ -89,10 +89,10 @@ install(
 #collect the include files in FALCON_HEADER
 add_subdirectory(include)
 #
-add_subdirectory(engine)
-add_subdirectory(clt)
+add_subdirectory(nengine)
+#add_subdirectory(clt)
 #
-add_subdirectory(devtools)
+#add_subdirectory(devtools)
 
 add_custom_target(falcon-core)
 
