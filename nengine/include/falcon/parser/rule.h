@@ -126,7 +126,7 @@ public:
     \return The number of tokens that are needed for this rule to match.
     */
    int arity() const;
-   Token* getTokenAt( int pos ) const;
+   Token* getTokenAt( uint32 pos ) const;
 
    bool isGreedy() const { return m_bGreedy; }
    bool isRecursive() const { return m_bRecursive; }

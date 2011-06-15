@@ -42,7 +42,7 @@ class Parser::Private
    LexerStack m_lLexers;
 
    // position of the next takeable token for getNextToken
-   int m_nextTokenPos;
+   size_t m_nextTokenPos;
 
    // Map of existing parsing states.
    typedef std::map<String, State*> StateMap;

@@ -51,7 +51,7 @@ public:
    inline virtual bool isLValue() const { return m_lvalue; }
 
    /** Symbols cannot be simplified. */
-   inline virtual bool simplify( Item& result ) const { return false; }
+   inline virtual bool simplify( Item& ) const { return false; }
    inline virtual bool isBinaryOperator() const { return false; }
    inline virtual bool isStatic() const { return false; }
 

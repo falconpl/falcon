@@ -276,10 +276,10 @@ void Collector::clearRing( GCToken *ringRoot )
    //TRACE( "Entering sweep %ld, allocated %ld", (long)gcMemAllocated(), (long)m_allocatedItems );
    // delete the garbage ring.
    int32 killed = 0;
-   GCToken *ring = m_garbageRoot->m_next;
+   GCToken *ring = ringRoot->m_next;
 
    // live modules must be killed after all their data. For this reason, we must put them aside.
-   while( ring != m_garbageRoot )
+   while( ring != ringRoot )
    {
       if ( ring->m_mark < m_mingen )
       {
@@ -485,7 +485,7 @@ void Collector::performGC()
 // MT functions
 //
 
-void Collector::idleVM( VMachine *vm, bool bPrio )
+void Collector::idleVM( VMachine *, bool )
 {
 #if 0
    // ok, we're givin the VM to the GC, so we reference it.
@@ -605,8 +605,8 @@ void Collector::stop()
 
 void* Collector::run()
 {
-   uint32 oldGeneration = m_generation;
-   uint32 oldMingen = m_mingen;
+   //uint32 oldGeneration = m_generation;
+   //uint32 oldMingen = m_mingen;
    bool bMoreWork;
 
    while( m_bLive )
@@ -835,7 +835,7 @@ void* Collector::run()
 
 
 // to be called with m_mtx_vms locked
-void Collector::advanceGeneration( VMachine* vm, uint32 oldGeneration )
+void Collector::advanceGeneration( VMachine*, uint32 oldGeneration )
 {
    uint32 curgen = ++m_generation;
 

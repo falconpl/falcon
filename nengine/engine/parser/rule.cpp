@@ -121,9 +121,9 @@ void Rule::apply( Parser& parser ) const
    m_apply(*this, parser);
 }
 
-Token* Rule::getTokenAt( int pos ) const
+Token* Rule::getTokenAt( uint32 pos ) const
 {
-   if( pos < 0 || pos >= _p->m_vTokens.size() )
+   if( pos >= _p->m_vTokens.size() )
    {
       return 0;
    }
@@ -202,7 +202,7 @@ bool Rule::match( Parser& parser, bool bIncremental ) const
          if( dpos != -1 )
          {
             TRACE1( "Rule::match(%s) -- actually descending '%s' found at %d%s",
-               m_name.c_ize(), descendable->name().c_ize(), dpos, dpos > begin ? " (adding stack)": "" );
+               m_name.c_ize(), descendable->name().c_ize(), dpos, dpos > (int) begin ? " (adding stack)": "" );
             
             parser.addParseFrame( descendable, dpos );
             return descendable->findPaths(parser);

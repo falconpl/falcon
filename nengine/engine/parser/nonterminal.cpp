@@ -44,8 +44,8 @@ class NonTerminal::Private
 NonTerminal::NonTerminal(const String& name,  bool bRightAssoc ):
    Token(name),
    m_maxArity(0),
-   m_bGreedy(false),
-   m_bRecursive(false)
+   m_bRecursive(false),
+   m_bGreedy(false)
 {
    m_eh = 0;
    m_bRightAssoc = bRightAssoc;
@@ -53,11 +53,12 @@ NonTerminal::NonTerminal(const String& name,  bool bRightAssoc ):
    _p = new Private;
 }
 
+
 NonTerminal::NonTerminal():
    Token("Unnamed NT"),
    m_maxArity(0),
-   m_bGreedy(false),
-   m_bRecursive(false)
+   m_bRecursive(false),
+   m_bGreedy(false)
 {
    m_bNonTerminal = true;
    m_eh = 0;

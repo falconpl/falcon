@@ -28,6 +28,7 @@
 namespace Falcon {
 
 Expression::Expression( const Expression &other ):
+   PStep(other),
    m_operator( other.m_operator ),
    m_sourceRef( other.m_sourceRef )
 {}
@@ -383,7 +384,7 @@ void ExprAssign::precompile( PCode* pcode ) const
 }
 
 
-bool ExprAssign::simplify( Item& value ) const
+bool ExprAssign::simplify( Item& ) const
 {
    // TODO Simplify for closed symbols
    return false;
@@ -520,13 +521,14 @@ void ExprPostInc::precompile( PCode* pcode ) const
    
 }
 
-void ExprPostInc::apply_( const PStep* self, VMachine* vm )
+void ExprPostInc::apply_( const PStep* self, VMachine* )
 {  
    TRACE2( "Apply \"%s\"", ((ExprPostInc*)self)->describe().c_ize() );
-   
+#if 0
    register VMContext* ctx = vm->currentContext();
    Item& item = ctx->topData();
-
+#endif
+   // TODO
    
 }
 
@@ -643,14 +645,15 @@ void ExprPostDec::precompile( PCode* pcode ) const
    pcode->pushStep( &m_gate );
 }
 
-void ExprPostDec::apply_( const PStep* self, VMachine* vm )
+void ExprPostDec::apply_( const PStep* self, VMachine* )
 {  
    TRACE2( "Apply \"%s\"", ((ExprPostDec*)self)->describe().c_ize() );
-   
+
+#if 0
    register VMContext* ctx = vm->currentContext();
    Item& item = ctx->topData();
-
-   
+#endif
+   //TODO
 }
 
 void ExprPostDec::describe( String& str ) const
@@ -749,8 +752,11 @@ bool ExprEEQ::simplify( Item& value ) const
    Item d1, d2;
    if( m_first->simplify(d1) && m_second->simplify(d2) )
    {
-      return d1.compare(d2) == 0;
+      value.setBoolean( d1.compare(d2) == 0 );
+      return true;
    }
+   
+   return false;
 }
 
 
@@ -838,7 +844,7 @@ void ExprIIF::Gate::apply_( const PStep* ps,  VMachine* vm )
 //=========================================================
 //Accessors
 
-bool ExprDot::simplify( Item& value ) const
+bool ExprDot::simplify( Item& ) const
 {
    //ToDo add simplification for known members at compiletime.
    return false;
@@ -874,7 +880,7 @@ void ExprDot::describe( String& ret ) const
    ret = "(" + m_first->describe() + "." + m_prop + ")";
 }
 
-bool ExprIndex::simplify( Item& value ) const
+bool ExprIndex::simplify( Item& ) const
 {
    //ToDo possibly add simplification for indexing.
    return false;
@@ -907,7 +913,7 @@ void ExprIndex::describe( String& ret ) const
    ret = "(" + m_first->describe() + "[" + m_second->describe() + "])";
 }
 
-bool ExprStarIndex::simplify( Item& value ) const
+bool ExprStarIndex::simplify( Item& ) const
 {
    //ToDo add simplification for static string star indexing.
    return false;

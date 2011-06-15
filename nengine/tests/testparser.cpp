@@ -105,7 +105,7 @@ void Context::onNewFunc( Function* function, GlobalSymbol*)
 }
 
 
-void Context::onNewClass( Class* cls, bool bIsObj, GlobalSymbol* gs )
+void Context::onNewClass( Class* cls, bool bIsObj, GlobalSymbol* )
 {
    std::cout<< "CALLBACK: New class "<< cls->name().c_ize()
       << (bIsObj ? " (object)":"") << std::endl;
@@ -160,7 +160,7 @@ Symbol* Context::onUndefinedSymbol( const String& name )
    return m_main.symbols().addLocal(name);
 }
 
-GlobalSymbol* Context::onGlobalDefined( const String& name, bool& bAdef )
+GlobalSymbol* Context::onGlobalDefined( const String& name, bool& )
 {
    std::cout << "CALLBACK: new global defined: " << name.c_ize() << std::endl;
    GlobalSymbol* sym = new GlobalSymbol(name,0);
@@ -223,7 +223,7 @@ void go()
 };
 
 // This is just a test.
-int main( int argc, char* argv[] )
+int main( int , char* [] )
 {
    std::cout << "Parser test!" << std::endl;
 

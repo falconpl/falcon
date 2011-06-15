@@ -42,7 +42,7 @@ Class::~Class()
 }
 
 
-void Class::gcMark( void* self, uint32 mark ) const
+void Class::gcMark( void*, uint32 ) const
 {
    // normally does nothing
 }
@@ -54,20 +54,20 @@ void Class::describe( void*, String& target, int, int ) const
 }
 
 
-void Class::enumerateProperties( void* self, Class::PropertyEnumerator& ) const
+void Class::enumerateProperties( void*, Class::PropertyEnumerator& ) const
 {
    // normally does nothing
 }
 
 
-bool Class::derivedFrom( Class* other ) const
+bool Class::derivedFrom( Class* ) const
 {
    // todo
    return false;
 }
 
 
-bool Class::hasProperty( void* self, const String& prop ) const
+bool Class::hasProperty( void*, const String& ) const
 {
    return false;
 }
@@ -221,7 +221,7 @@ void Class::op_decpost( VMachine *, void* ) const
 }
 
 
-void Class::op_call( VMachine *, int32, void* self ) const
+void Class::op_call( VMachine *, int32, void* ) const
 {
    throw new OperandError( ErrorParam(__LINE__, e_non_callable ) );
 }

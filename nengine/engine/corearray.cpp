@@ -64,13 +64,13 @@ void* CoreArray::clone( void* source ) const
 }
 
 
-void CoreArray::serialize( DataWriter* stream, void* self ) const
+void CoreArray::serialize( DataWriter*, void* ) const
 {
    // todo
 }
 
 
-void* CoreArray::deserialize( DataReader* stream ) const
+void* CoreArray::deserialize( DataReader* ) const
 {
    //todo
    return 0;
@@ -171,7 +171,7 @@ void CoreArray::gcMark( void* self, uint32 mark ) const
 }
 
 
-void CoreArray::enumerateProperties( void* self, PropertyEnumerator& cb ) const
+void CoreArray::enumerateProperties( void*, PropertyEnumerator& cb ) const
 {
    cb("len", true);
 }

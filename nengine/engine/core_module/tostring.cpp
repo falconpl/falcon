@@ -36,7 +36,7 @@ ToString::~ToString()
 {
 }
 
-void ToString::apply( VMachine* vm, int32 nParams )
+void ToString::apply( VMachine* vm, int32 )
 {
    register VMContext* ctx = vm->currentContext();
 

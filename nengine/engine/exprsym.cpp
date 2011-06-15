@@ -52,13 +52,13 @@ void ExprSymbol::describe( String& val ) const
 }
 
 
-void ExprSymbol::serialize( DataWriter* s ) const
+void ExprSymbol::serialize( DataWriter* ) const
 {
    // TODO
 }
 
 
-void ExprSymbol::deserialize( DataReader* s )
+void ExprSymbol::deserialize( DataReader* )
 {
    // TODO
 }

@@ -48,7 +48,7 @@ size_t InputOnlyFStream::write( const void*, size_t )
    return 0;
 }
 
-bool InputOnlyFStream::truncate(off_t pos)
+bool InputOnlyFStream::truncate(off_t)
 {
    throwUnsupported();
    return false;
@@ -71,7 +71,7 @@ size_t OutputOnlyFStream::readAvailable( int32 )
 }
 
 
-size_t OutputOnlyFStream::read( void *, size_t size )
+size_t OutputOnlyFStream::read( void *, size_t )
 {
    throwUnsupported();
    return 0;
@@ -88,7 +88,7 @@ OutputOnlyFStream* OutputOnlyFStream::clone() const
 // Read only FStream
 //
 
-off_t ReadOnlyFStream::seek( off_t pos, Stream::e_whence whence )
+off_t ReadOnlyFStream::seek( off_t, Stream::e_whence )
 {
    throwUnsupported();
    return 0;
@@ -112,7 +112,7 @@ ReadOnlyFStream* ReadOnlyFStream::clone() const
 //
 
 
-off_t WriteOnlyFStream::seek( off_t pos, Stream::e_whence whence )
+off_t WriteOnlyFStream::seek( off_t, Stream::e_whence )
 {
    throwUnsupported();
    return 0;
@@ -124,7 +124,7 @@ off_t WriteOnlyFStream::tell()
    return 0;
 }
 
-bool WriteOnlyFStream::truncate(off_t pos )
+bool WriteOnlyFStream::truncate(off_t )
 {
    throwUnsupported();
    return 0;

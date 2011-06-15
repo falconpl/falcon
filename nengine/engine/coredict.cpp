@@ -67,13 +67,13 @@ void* CoreDict::clone( void* source ) const
 }
 
 
-void CoreDict::serialize( DataWriter* stream, void* self ) const
+void CoreDict::serialize( DataWriter*, void* ) const
 {
    // todo
 }
 
 
-void* CoreDict::deserialize( DataReader* stream ) const
+void* CoreDict::deserialize( DataReader* ) const
 {
    //todo
    return 0;
@@ -148,7 +148,7 @@ void CoreDict::gcMark( void* self, uint32 mark ) const
    }
 }
 
-void CoreDict::enumerateProperties( void* self, PropertyEnumerator& cb ) const
+void CoreDict::enumerateProperties( void*, PropertyEnumerator& cb ) const
 {
    cb("len", true);
 }
@@ -156,7 +156,7 @@ void CoreDict::enumerateProperties( void* self, PropertyEnumerator& cb ) const
 //=======================================================================
 //
 
-void CoreDict::op_add( VMachine *vm, void* self ) const
+void CoreDict::op_add( VMachine *, void* ) const
 {
    //TODO
 }

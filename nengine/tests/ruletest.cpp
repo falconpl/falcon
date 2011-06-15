@@ -91,7 +91,7 @@ public:
 
    virtual ~FuncPrintl() {}
 
-   virtual void apply( VMachine* vm, int32 nParams )
+   virtual void apply( VMachine* vm, int32 )
    {
       m_nextStep.printNext( vm, 0 );
    }
@@ -178,7 +178,7 @@ void go()
 };
 
 // This is just a test.
-int main( int argc, char* argv[] )
+int main( int , char* [] )
 {
    std::cout << "Rule test!" << std::endl;
 

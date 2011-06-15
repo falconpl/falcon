@@ -64,7 +64,7 @@ ExprUnpack::~ExprUnpack()
    delete m_expander;
 }
 
-bool ExprUnpack::simplify( Item& value ) const
+bool ExprUnpack::simplify( Item& ) const
 {
    return false;
 }

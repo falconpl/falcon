@@ -144,7 +144,7 @@ bool _getEnv( const String &var, String &result )
 {
    static char convertBuf[512]; // system var names larger than 512 are crazy.
    // in unix system, we have at worst UTF-8 var names.
-   if ( var.toCString( convertBuf, 512 ) >= 0 )
+   if ( var.toCString( convertBuf, 512 ) != String::npos )
    {
       char *value = getenv( convertBuf );
       if ( value != 0 )

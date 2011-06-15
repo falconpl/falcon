@@ -53,14 +53,14 @@ void *CoreNumeric::clone( void *source ) const {
     
 }
 
-void CoreNumeric::serialize( DataWriter* stream, void* self ) const {
+void CoreNumeric::serialize( DataWriter*, void* ) const {
     
    //TODO
     
 }
 
 
-void* CoreNumeric::deserialize( DataReader* stream ) const {
+void* CoreNumeric::deserialize( DataReader* ) const {
     
    //TODO
    return 0;
@@ -75,110 +75,110 @@ void CoreNumeric::describe( void* instance, String& target, int, int  ) const {
 
 // ================================================================
 
-void CoreNumeric::op_add( VMachine *vm, void* self ) const {
+void CoreNumeric::op_add( VMachine *, void* ) const {
     
    // TODO
     
 }
 
-void CoreNumeric::op_sub( VMachine *vm, void* self ) const {
-    
-   // TODO
-    
-}
-
-
-void CoreNumeric::op_mul( VMachine *vm, void* self ) const {
+void CoreNumeric::op_sub( VMachine *, void* ) const {
     
    // TODO
     
 }
 
 
-void CoreNumeric::op_div( VMachine *vm, void* self ) const {
+void CoreNumeric::op_mul( VMachine *, void* ) const {
     
    // TODO
     
 }
 
 
-void CoreNumeric::op_mod( VMachine *vm, void* self ) const {
+void CoreNumeric::op_div( VMachine *, void* ) const {
     
    // TODO
     
 }
 
 
-void CoreNumeric::op_pow( VMachine *vm, void* self ) const {
+void CoreNumeric::op_mod( VMachine *, void* ) const {
     
    // TODO
     
 }
 
 
-void CoreNumeric::op_aadd( VMachine *vm, void* self) const {
-    
-   // TODO
-    
-}
-
-void CoreNumeric::op_asub( VMachine *vm, void* self ) const {
+void CoreNumeric::op_pow( VMachine *, void* ) const {
     
    // TODO
     
 }
 
 
-void CoreNumeric::op_amul( VMachine *vm, void* self ) const {
+void CoreNumeric::op_aadd( VMachine *, void*) const {
+    
+   // TODO
+    
+}
+
+void CoreNumeric::op_asub( VMachine *, void* ) const {
     
    // TODO
     
 }
 
 
-void CoreNumeric::op_adiv( VMachine *vm, void* self ) const {
+void CoreNumeric::op_amul( VMachine *, void* ) const {
     
    // TODO
     
 }
 
 
-void CoreNumeric::op_amod( VMachine *vm, void* self ) const {
+void CoreNumeric::op_adiv( VMachine *, void* ) const {
     
    // TODO
     
 }
 
 
-void CoreNumeric::op_apow( VMachine *vm, void* self ) const {
+void CoreNumeric::op_amod( VMachine *, void* ) const {
     
    // TODO
     
 }
 
 
-void CoreNumeric::op_inc(VMachine *vm, void* self ) const {
+void CoreNumeric::op_apow( VMachine *, void* ) const {
     
    // TODO
     
 }
 
 
-void CoreNumeric::op_dec(VMachine *vm, void* self) const {
+void CoreNumeric::op_inc(VMachine *, void* ) const {
     
    // TODO
     
 }
 
 
-void CoreNumeric::op_incpost(VMachine *vm, void* self ) const {
+void CoreNumeric::op_dec(VMachine *, void*) const {
     
    // TODO
     
 }
 
 
-void CoreNumeric::op_decpost(VMachine *vm, void* self ) const {
+void CoreNumeric::op_incpost(VMachine *, void* ) const {
+    
+   // TODO
+    
+}
+
+
+void CoreNumeric::op_decpost(VMachine *, void* ) const {
     
    // TODO
     

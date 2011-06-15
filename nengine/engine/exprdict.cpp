@@ -172,7 +172,7 @@ void ExprDict::precompile( PCode* pcd ) const
 }
 
 
-bool ExprDict::simplify( Item& result ) const
+bool ExprDict::simplify( Item& ) const
 {
    return false;
 }
@@ -180,12 +180,12 @@ bool ExprDict::simplify( Item& result ) const
 
 //=====================================================
 
-void ExprDict::serialize( DataWriter* s ) const
+void ExprDict::serialize( DataWriter* ) const
 {
    // TODO
 }
 
-void ExprDict::deserialize( DataReader* s )
+void ExprDict::deserialize( DataReader* )
 {
    // TODO
 }
@@ -193,14 +193,15 @@ void ExprDict::deserialize( DataReader* s )
 
 //=====================================================
 
-void ExprDict::apply_( const PStep* ps, VMachine* vm )
+void ExprDict::apply_( const PStep*, VMachine*)
 {
+#if 0
    static Class* cd_class = Engine::instance()->dictClass();
    static Collector* collector = Engine::instance()->collector();
 
    const ExprDict* ea = static_cast<const ExprDict*>(ps);
    Private::ExprVector& mye = ea->_p->m_exprs;
-
+#endif
    // TODO
 }
 

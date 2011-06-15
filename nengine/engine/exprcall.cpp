@@ -89,7 +89,7 @@ void ExprCall::precompile( PCode* pcode ) const
    }
 
    // precompile all parameters in order.
-   for( int i = 0; i < _p->m_params.size(); ++i )
+   for( uint32 i = 0; i < _p->m_params.size(); ++i )
    {
       _p->m_params[i]->precompile( pcode );
    }
@@ -107,10 +107,11 @@ void ExprCall::precompile( PCode* pcode ) const
 }
 
 
-bool ExprCall::simplify( Item& value ) const
+bool ExprCall::simplify( Item& ) const
 {
    return false;
 }
+
 
 void ExprCall::apply_dummy_( const PStep* v, VMachine* )
 {

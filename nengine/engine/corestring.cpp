@@ -85,7 +85,7 @@ void CoreString::describe( void* instance, String& target, int, int maxlen ) con
    String* self = static_cast<String*>(instance);
    target.size(0);
    target.append('"');
-   if( self->length() > maxlen )
+   if( (int) self->length() > maxlen )
    {
       target += self->subString(0, maxlen);
       target += "...";
@@ -128,8 +128,6 @@ void CoreString::op_add( VMachine *vm, void* self ) const
 
    // else we surrender, and we let the virtual system to find a way.
    vm->ifDeep( &m_nextOp );
-   // use a new slot to get the result
-   VMContext* ctx = vm->currentContext();
 
    // this will transform op2 slot into its string representation.
    cls->op_toString( vm, inst );
@@ -188,8 +186,6 @@ void CoreString::op_aadd( VMachine *vm, void* self ) const
 
    // else we surrender, and we let the virtual system to find a way.
    vm->ifDeep( &m_nextOp );
-   // use a new slot to get the result
-   VMContext* ctx = vm->currentContext();
 
    // this will transform op2 slot into its string representation.
    cls->op_toString( vm, inst );
@@ -261,7 +257,7 @@ void CoreString::op_compare( VMachine *vm, void* self ) const
 }
 
 
-void CoreString::op_toString( VMachine *vm, void* self ) const
+void CoreString::op_toString( VMachine *, void* ) const
 {
    // nothing to do -- the topmost item of the stack is already a string.
 }

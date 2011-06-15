@@ -37,7 +37,7 @@ Interrupt::Interrupt():
    // create the dup'd suspend pipe.
    if( ::pipe( fdes ) != 0 )
    {
-      TRACE( "Failed to create a pipe -- terminating", 0 );
+      MESSAGE( "Failed to create a pipe -- terminating" );
       fatal( "Falcon: fatal allocation error in creating pipe at %s:%d\n", __FILE__, __LINE__ );
    }
 }
@@ -60,7 +60,7 @@ void Interrupt::interrupt()
 
    if( ::write( fdes[1], "0", 1 ) != 1 )
    {
-      TRACE( "Failed to create a pipe -- terminating", 0 );
+      MESSAGE( "Failed to create a pipe -- terminating" );
       fatal( "Falcon: fatal write error in writing interrupt pipe at %s:%d\n", __FILE__, __LINE__ );
    }
 }
@@ -94,7 +94,7 @@ void Interrupt::reset()
          char dt;
          if( ::read( fdes[0], &dt, 1 ) < 0 )
          {
-            TRACE( "Failed to read the interrupt pipe", 0 );
+            MESSAGE( "Failed to read the interrupt pipe" );
             fatal( "Falcon: fatal error in reading from the interrupt pipe at %s:%d\n", __FILE__, __LINE__ );
          }
          continue;

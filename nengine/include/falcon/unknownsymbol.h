@@ -37,7 +37,7 @@ class PStep;
  The symbol may also be left unknown; if so, it will evaluate to nil under
  any circumnstance.
 
- \note unknown symbols are represented as "/* unknown *\/ symbol"
+ \note unknown symbols are represented as "/\* unknown *\/ symbol"
 
  \note unknown symbols are \b not "extern" or undefined symbols. They are just
  symbols whose status is unknown at compile time. Undefined symbols are usually

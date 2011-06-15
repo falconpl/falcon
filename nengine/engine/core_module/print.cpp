@@ -32,7 +32,7 @@ FuncPrintBase::FuncPrintBase( const String& name, bool ispl ):
 
 FuncPrintBase::~FuncPrintBase() {}
 
-void FuncPrintBase::apply( VMachine* vm, int32 nParams )
+void FuncPrintBase::apply( VMachine* vm, int32 )
 {
    TRACE1("Function print%s -- apply", m_nextStep.m_isPrintl ? "l" : "" );
    // [A]: create the space for op_toString

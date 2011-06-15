@@ -44,7 +44,7 @@ void CoreFunction::dispose( void* self ) const
 }
 
 
-void* CoreFunction::clone( void* source ) const
+void* CoreFunction::clone( void* ) const
 {
    //Function* f = static_cast<Function*>(self);
    //TODO
@@ -52,13 +52,13 @@ void* CoreFunction::clone( void* source ) const
 }
 
 
-void CoreFunction::serialize( DataWriter* stream, void* self ) const
+void CoreFunction::serialize( DataWriter*, void*  ) const
 {
    // TODO
 }
 
 
-void* CoreFunction::deserialize( DataReader* stream ) const
+void* CoreFunction::deserialize( DataReader* ) const
 {
    // TODO
    return 0;

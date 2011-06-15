@@ -55,13 +55,13 @@ void* CoreInt::clone( void* source ) const
 }
 
 
-void CoreInt::serialize( DataWriter* stream, void* self ) const
+void CoreInt::serialize( DataWriter*, void* ) const
 {
    //TODO
 }
 
 
-void* CoreInt::deserialize( DataReader* stream ) const
+void* CoreInt::deserialize( DataReader* ) const
 {
    //TODO
    return 0;
@@ -75,14 +75,14 @@ void CoreInt::describe( void* instance, String& target, int, int ) const
 //=======================================================================
 //
 
-void CoreInt::op_isTrue( VMachine *vm, void* self ) const
+void CoreInt::op_isTrue( VMachine *vm, void* ) const
 {
    Item* iself;
    OpToken token( vm, iself );
    token.exit( iself->asInteger() != 0 );
 }
 
-void CoreInt::op_toString( VMachine *vm, void* self ) const
+void CoreInt::op_toString( VMachine *vm, void* ) const
 {
    Item* iself;
    OpToken token( vm, iself );

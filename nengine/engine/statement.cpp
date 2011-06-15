@@ -295,13 +295,13 @@ void StmtIf::apply_( const PStep* s1,VMachine* vm )
          // we're out of elifs.
          if( self->m_ifFalse != 0 )
          {
-            TRACE1( "--Entering else", 0 );
+            MESSAGE1( "--Entering else" );
             ctx->resetCode(self->m_ifFalse);
          }
          else
          {
             // just pop
-            TRACE1( "--Failed", 0 );
+            MESSAGE1( "--Failed" );
             ctx->popCode();
          }
       }

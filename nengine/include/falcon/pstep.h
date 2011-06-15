@@ -92,12 +92,12 @@ public:
    /** Returns the line where this PStep was declared in source.
     If the PStep wasn't generated from source, the line will be 0.
     */
-   const int line() const { return m_sr.line(); }
+   int line() const { return m_sr.line(); }
 
    /** Returns the character where this PStep was declared in source.
     If the PStep wasn't generated from source, the character will be 0.
    */
-   const int chr() const { return m_sr.chr(); }
+   int chr() const { return m_sr.chr(); }
 
    virtual bool isComposed() const { return false; }
 private:

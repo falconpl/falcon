@@ -63,50 +63,50 @@ void IntCompiler::Context::onNewFunc( Function* function, GlobalSymbol* gs )
 }
 
 
-void IntCompiler::Context::onNewClass( Class* cls, bool bIsObj, GlobalSymbol* gs )
+void IntCompiler::Context::onNewClass( Class*, bool, GlobalSymbol* )
 {
    //TODO
 }
 
 
-void IntCompiler::Context::onNewStatement( Statement* stmt )
+void IntCompiler::Context::onNewStatement( Statement* )
 {
    // actually nothing to do
 }
 
 
-void IntCompiler::Context::onLoad( const String& path, bool isFsPath )
+void IntCompiler::Context::onLoad( const String&, bool )
 {
    // TODO
 }
 
 
-void IntCompiler::Context::onImportFrom( const String& path, bool isFsPath, const String& symName,
-         const String& asName, const String &inName )
+void IntCompiler::Context::onImportFrom( const String&, bool, const String&,
+         const String&, const String & )
 {
    // TODO
 }
 
 
-void IntCompiler::Context::onImport(const String& symName )
+void IntCompiler::Context::onImport(const String& )
 {
    // TODO
 }
 
 
-void IntCompiler::Context::onExport(const String& symName)
+void IntCompiler::Context::onExport(const String&)
 {
    // TODO
 }
 
 
-void IntCompiler::Context::onDirective(const String& name, const String& value)
+void IntCompiler::Context::onDirective(const String&, const String&)
 {
    // TODO
 }
 
 
-void IntCompiler::Context::onGlobal( const String& name )
+void IntCompiler::Context::onGlobal( const String& )
 {
    // TODO
 }
@@ -140,13 +140,13 @@ GlobalSymbol* IntCompiler::Context::onGlobalDefined( const String& name, bool &a
 }
 
 
-void IntCompiler::Context::onUnknownSymbol( UnknownSymbol* sym )
+void IntCompiler::Context::onUnknownSymbol( UnknownSymbol* )
 {
    // there's nothing useful we may want to do here (at least for now)
 }
 
 
-void IntCompiler::Context::onStaticData( Class* cls, void* data )
+void IntCompiler::Context::onStaticData( Class*, void* )
 {
  // TODO
 }

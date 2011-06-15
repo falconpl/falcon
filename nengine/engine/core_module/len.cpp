@@ -45,15 +45,13 @@ void Len::apply( VMachine* vm, int32 nParams )
    }
    else
    {
-      elem = ctx->param( 0 );
-      if ( elem == 0 )
+      if( nParams <= 0 )
       {
          throw paramError();
       }
-      else
-      {
-         vm->retval( elem->len() );
-      }
+
+      elem = ctx->params();
+      vm->retval( elem->len() );
    }
 
    vm->returnFrame();

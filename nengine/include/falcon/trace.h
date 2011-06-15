@@ -44,6 +44,7 @@
 #define TRACE_OFF  fclose(_falcon_trace_fp);  _falcon_trace_fp = 0;
 
 #define MESSAGE( fmt ) if( _falcon_trace_fp != 0 ) fprintf( _falcon_trace_fp, "%s:%d: " fmt "\n", __FILE__, __LINE__ ); fflush(_falcon_trace_fp);
+#define MESSAGE1( fmt ) if( _falcon_trace_level >= 1 && _falcon_trace_fp != 0 ) fprintf( _falcon_trace_fp, "%s:%d: " fmt "\n", __FILE__, __LINE__ ); fflush(_falcon_trace_fp);
 
 #define TRACE( fmt, ... ) if( _falcon_trace_fp != 0 ) fprintf( _falcon_trace_fp, "%s:%d: " fmt "\n", __FILE__, __LINE__, __VA_ARGS__ ); fflush(_falcon_trace_fp); fflush(_falcon_trace_fp);
 #define TRACE1( fmt, ... ) if( _falcon_trace_level >= 1 && _falcon_trace_fp != 0 ) fprintf( _falcon_trace_fp, "%s:%d: " fmt "\n", __FILE__, __LINE__, __VA_ARGS__ ); fflush(_falcon_trace_fp);

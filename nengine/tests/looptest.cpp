@@ -64,7 +64,7 @@ void go()
 };
 
 // This is just a test.
-int main( int argc, char* argv[] )
+int main( int , char* [] )
 {
    std::cout << "Hello world" << std::endl;
 

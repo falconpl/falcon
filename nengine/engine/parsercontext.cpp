@@ -215,7 +215,7 @@ void ParserContext::undoVariable( const String& variable )
 
 void ParserContext::abandonSymbols()
 {
-   TRACE("ParserContext::abandonSymbols", 0 );
+   MESSAGE( "ParserContext::abandonSymbols" );
 
    if( _p->m_unknown.empty() )
    {
@@ -457,7 +457,7 @@ void ParserContext::openBlock( Statement* parent, SynTree* branch )
 
 SynTree* ParserContext::changeBranch()
 {
-   TRACE("ParserContext::changeBranch", 0 );
+   MESSAGE( "ParserContext::changeBranch" );
 
    bool result = checkSymbols();
 

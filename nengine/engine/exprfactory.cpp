@@ -90,6 +90,8 @@ Expression* ExprFactory::make( Expression::operator_t type )
    case Expression::t_xoroob: return new ExprXorOob;
    case Expression::t_isoob: return new ExprIsOob;
    */
+      default:
+         return 0;
    }
    return 0;
 }

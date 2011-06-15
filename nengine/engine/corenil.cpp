@@ -32,7 +32,7 @@ CoreNil::~CoreNil()
 }
 
 
-void* CoreNil::create(void* creationParams ) const
+void* CoreNil::create(void* ) const
 {
    return 0;
 }
@@ -43,18 +43,18 @@ void CoreNil::dispose( void* ) const
 }
 
 
-void* CoreNil::clone( void* source ) const
+void* CoreNil::clone( void* ) const
 {
    return 0;
 }
 
 
-void CoreNil::serialize( DataWriter* stream, void* self ) const
+void CoreNil::serialize( DataWriter*, void* ) const
 {
 }
 
 
-void* CoreNil::deserialize( DataReader* stream ) const
+void* CoreNil::deserialize( DataReader* ) const
 {
    return 0;
 }

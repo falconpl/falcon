@@ -105,7 +105,7 @@ public:
    virtual StringStream *clone() const;
   
 protected:
-   uint32 m_pos;
+   int64 m_pos;
    virtual int64 seek( int64 pos, e_whence whence );
 
    void setBuffer( const String &source );

@@ -46,8 +46,8 @@ public:
 
    Statement( statement_t type, int32 line=0, int32 chr=0 ):
       PStep( line, chr ),
-      m_type(type),
-      m_step0(0), m_step1(0), m_step2(0), m_step3(0)
+      m_step0(0), m_step1(0), m_step2(0), m_step3(0),
+      m_type(type)
    {}
 
    inline virtual ~Statement() {}

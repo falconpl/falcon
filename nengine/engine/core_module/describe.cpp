@@ -37,7 +37,7 @@ Describe::~Describe()
 {
 }
 
-void Describe::apply( VMachine* vm, int32 nParams )
+void Describe::apply( VMachine* vm, int32 )
 {
    register VMContext* ctx = vm->currentContext();
 

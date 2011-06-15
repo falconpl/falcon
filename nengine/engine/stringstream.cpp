@@ -50,8 +50,8 @@ private:
 
 
 StringStream::StringStream( int32 size ):
-   m_b( new Buffer ),
-   m_pos(0)
+   m_pos(0),
+   m_b( new Buffer )
 {
    m_pos = 0;
    if ( size <= 0 )
@@ -62,8 +62,8 @@ StringStream::StringStream( int32 size ):
 
 
 StringStream::StringStream( const String &strbuf ):
-   m_b( new Buffer ),
-   m_pos(0)
+   m_pos(0),
+   m_b( new Buffer )
 {
    *m_b->m_str = strbuf;
    m_b->m_str->bufferize();
@@ -258,7 +258,7 @@ int64 StringStream::seek( int64 pos, Stream::e_whence w )
       m_pos = m_b->m_str->size();
       m_status = t_eof;
    }
-   else if ( m_pos < 0 )
+   else if ( m_pos < 0LL )
    {
       m_pos = 0;
       m_status = t_none;
@@ -304,13 +304,13 @@ bool StringStream::truncate( int64 pos )
    return true;
 }
 
-size_t StringStream::readAvailable( int32 msecs )
+size_t StringStream::readAvailable( int32 )
 {
    //TODO: Wait if empty till new data arrives ?.
    return 1;
 }
 
-size_t StringStream::writeAvailable( int32 msecs )
+size_t StringStream::writeAvailable( int32 )
 {
    return 1;
 }

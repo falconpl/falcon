@@ -102,8 +102,8 @@ static void name_list_deletor(void* data)
 // NonTerminal - Expr
 //==========================================================
 
-//typedef void(*Apply)( const Rule& r, Parser& p );
-static void apply_expr_assign( const Rule& r, Parser& p )
+//typedef void(*Apply)( const Rule&, Parser& p );
+static void apply_expr_assign( const Rule&, Parser& p )
 {
    // << (r_Expr_assign << "Expr_assign" << apply_expr_assign << Expr << T_EqSign << NeListExpr)
    SourceParser& sp = static_cast<SourceParser&>(p);
@@ -150,8 +150,9 @@ static void apply_expr_assign( const Rule& r, Parser& p )
    p.simplify(3,ti);
 }
 
-
-static void apply_expr_list( const Rule& r, Parser& p )
+#if 0
+//TODO Remove
+static void apply_expr_list( const Rule&, Parser& p )
 {
    //<< (r_Expr_list << "Expr_list" << apply_expr_list << ListExpr )
    SourceParser& sp = static_cast<SourceParser&>(p);
@@ -177,8 +178,9 @@ static void apply_expr_list( const Rule& r, Parser& p )
 
    p.simplify(1,ti);
 }
+#endif
 
-static void apply_expr_call( const Rule& r, Parser& p )
+static void apply_expr_call( const Rule&, Parser& p )
 {
    static Engine* einst = Engine::instance();
 
@@ -233,7 +235,7 @@ static void apply_expr_call( const Rule& r, Parser& p )
 }
 
 
-static void apply_expr_index( const Rule& r, Parser& p )
+static void apply_expr_index( const Rule&, Parser& p )
 {
    // << (r_Expr_index << "Expr_index" << apply_expr_index << Expr << T_OpenSquare << Expr << T_CloseSquare )
    SourceParser& sp = static_cast<SourceParser&>(p);
@@ -252,7 +254,7 @@ static void apply_expr_index( const Rule& r, Parser& p )
    p.simplify(4,ti);
 }
 
-static void apply_expr_star_index( const Rule& r, Parser& p )
+static void apply_expr_star_index( const Rule&, Parser& p )
 {
    // << (r_Expr_star_index << "Expr_star_index" << apply_expr_star_index << Expr << T_OpenSquare << T_Times << Expr << T_CloseSquare )
    SourceParser& sp = static_cast<SourceParser&>(p);
@@ -274,7 +276,7 @@ static void apply_expr_star_index( const Rule& r, Parser& p )
 }
 
 
-static void apply_expr_array_decl( const Rule& r, Parser& p )
+static void apply_expr_array_decl( const Rule&, Parser& p )
 {
    // << (r_Expr_index << "Expr_array_decl" << apply_expr_array_decl << T_OpenSquare << ListExprOrPairs << T_CloseSquare )
    SourceParser& sp = static_cast<SourceParser&>(p);
@@ -318,7 +320,7 @@ static void apply_expr_array_decl( const Rule& r, Parser& p )
    p.simplify(3,ti);
 }
 
-static void apply_expr_empty_dict( const Rule& r, Parser& p )
+static void apply_expr_empty_dict( const Rule&, Parser& p )
 {
    // << T_OpenSquare << T_Arrow << T_CloseSquare )
    SourceParser& sp = static_cast<SourceParser&>(p);
@@ -331,7 +333,7 @@ static void apply_expr_empty_dict( const Rule& r, Parser& p )
 }
 
 
-static void apply_expr_pars( const Rule& r, Parser& p )
+static void apply_expr_pars( const Rule&, Parser& p )
 {
    SourceParser& sp = static_cast<SourceParser&>(p);
 
@@ -344,7 +346,7 @@ static void apply_expr_pars( const Rule& r, Parser& p )
    p.simplify(3,ti2);
 }
 
-static void apply_expr_dot( const Rule& r, Parser& p )
+static void apply_expr_dot( const Rule&, Parser& p )
 {
    // << (r_Expr_dot << "Expr_dot" << apply_expr_dot << Expr << T_Dot << T_Name )
    SourceParser& sp = static_cast<SourceParser&>(p);
@@ -366,7 +368,7 @@ static void apply_expr_dot( const Rule& r, Parser& p )
 // Standard binary expressions
 //
 
-static void apply_expr_binary( const Rule& r, Parser& p, BinaryExpression* bexpr )
+static void apply_expr_binary( const Rule&, Parser& p, BinaryExpression* bexpr )
 {
    // << (r_Expr_equal << "Expr_equal" << apply_expr_equal << Expr << T_DblEq << Expr)
    SourceParser& sp = static_cast<SourceParser&>(p);
@@ -420,7 +422,7 @@ static void apply_expr_ge( const Rule& r, Parser& p )
 static void apply_expr_eeq( const Rule& r, Parser& p )
 {
   // << (r_Expr_eeq << "Expr_eeq" << apply_expr_eeq << Expr << T_eq << Expr)
-  apply_expr_binary(r, p, new ExprEEQ );
+  apply_expr_binary( r, p, new ExprEEQ );
 }
 
 
@@ -476,11 +478,11 @@ static void apply_expr_pow( const Rule& r, Parser& p )
    apply_expr_binary(r, p, new ExprPow );
 }
 
-static void apply_expr_neg( const Rule& r, Parser& p )
+static void apply_expr_neg( const Rule&, Parser& p )
 {
    SourceParser& sp = static_cast<SourceParser&>(p);
 
-   TokenInstance* minus = p.getNextToken();
+   (void) p.getNextToken();
    TokenInstance* value = p.getNextToken();
 
    TokenInstance* ti2 = new TokenInstance( value->line(), value->chr(), sp.Expr );
@@ -489,7 +491,7 @@ static void apply_expr_neg( const Rule& r, Parser& p )
    p.simplify(2,ti2);
 }
 
-static void apply_expr_atom( const Rule& r, Parser& p )
+static void apply_expr_atom( const Rule&, Parser& p )
 {
    SourceParser& sp = static_cast<SourceParser&>(p);
 
@@ -504,7 +506,7 @@ static void apply_expr_atom( const Rule& r, Parser& p )
 // NonTerminal - Atom
 //==========================================================
 
-static void apply_Atom_Int ( const Rule& r, Parser& p )
+static void apply_Atom_Int ( const Rule&, Parser& p )
 {
    // << (r_Atom_Int << "Atom_Int" << apply_Atom_Int << T_Int )
 
@@ -517,7 +519,7 @@ static void apply_Atom_Int ( const Rule& r, Parser& p )
    p.simplify(1,ti2);
 }
 
-static void apply_Atom_Float ( const Rule& r, Parser& p )
+static void apply_Atom_Float ( const Rule&, Parser& p )
 {
    // << (r_Atom_Float << "Atom_Float" << apply_Atom_Float << T_Float )
    SourceParser& sp = static_cast<SourceParser&>(p);
@@ -528,7 +530,7 @@ static void apply_Atom_Float ( const Rule& r, Parser& p )
    p.simplify(1,ti2);
 }
 
-static void apply_Atom_Name ( const Rule& r, Parser& p )
+static void apply_Atom_Name ( const Rule&, Parser& p )
 {
    // << (r_Atom_Name << "Atom_Name" << apply_Atom_Name << T_Name )
    SourceParser& sp = static_cast<SourceParser&>(p);
@@ -542,7 +544,7 @@ static void apply_Atom_Name ( const Rule& r, Parser& p )
    p.simplify(1,ti2);
 }
 
-static void apply_Atom_String ( const Rule& r, Parser& p )
+static void apply_Atom_String ( const Rule&, Parser& p )
 {
    // << (r_Atom_String << "Atom_String" << apply_Atom_String << T_String )
    SourceParser& sp = static_cast<SourceParser&>(p);
@@ -566,7 +568,7 @@ static void apply_Atom_String ( const Rule& r, Parser& p )
    p.simplify(1,ti2);
 }
 
-static void apply_Atom_Nil ( const Rule& r, Parser& p )
+static void apply_Atom_Nil ( const Rule&, Parser& p )
 {
    // << (r_Atom_Nil << "Atom_Nil" << apply_Atom_Nil << T_Nil )
    SourceParser& sp = static_cast<SourceParser&>(p);
@@ -582,7 +584,7 @@ static void apply_Atom_Nil ( const Rule& r, Parser& p )
 //==========================================================
 
 
-static void apply_line_expr( const Rule& r, Parser& p )
+static void apply_line_expr( const Rule&, Parser& p )
 {
    TokenInstance* ti = p.getNextToken();
    Expression* expr = static_cast<Expression*>(ti->detachValue());
@@ -595,7 +597,7 @@ static void apply_line_expr( const Rule& r, Parser& p )
    p.simplify(2);
 }
 
-static void apply_autoexpr_list( const Rule& r, Parser& p )
+static void apply_autoexpr_list( const Rule&, Parser& p )
 {
    TokenInstance* ti = p.getNextToken();
    Expression* expr = static_cast<Expression*>(ti->detachValue());
@@ -608,7 +610,7 @@ static void apply_autoexpr_list( const Rule& r, Parser& p )
 
 
 
-static void apply_stmt_assign_list( const Rule& r, Parser& p )
+static void apply_stmt_assign_list( const Rule&, Parser& p )
 {
    // << (r_Expr_assign << "Expr_assign" << apply_expr_assign << NeListExpr << T_EqSign << NeListExpr)
    SourceParser& sp = static_cast<SourceParser&>(p);
@@ -717,7 +719,7 @@ static void apply_stmt_assign_list( const Rule& r, Parser& p )
 
 
 
-static void apply_if_short( const Rule& r, Parser& p )
+static void apply_if_short( const Rule&, Parser& p )
 {
    // << (r_if_short << "if_short" << apply_if_short << T_if << Expr << T_Colon << S_Autoexpr << T_EOL )
 
@@ -740,7 +742,7 @@ static void apply_if_short( const Rule& r, Parser& p )
    p.simplify(5);
 }
 
-static void apply_if( const Rule& r, Parser& p )
+static void apply_if( const Rule&, Parser& p )
 {
    // << (r_if << "if" << apply_if << T_if << Expr << T_EOL )
    TokenInstance* tif = p.getNextToken();
@@ -758,7 +760,7 @@ static void apply_if( const Rule& r, Parser& p )
    p.simplify(3);
 }
 
-static void apply_elif( const Rule& r, Parser& p )
+static void apply_elif( const Rule&, Parser& p )
 {
    // << (r_elif << "elif" << apply_elif << T_elif << Expr << T_EOL )
    TokenInstance* tif = p.getNextToken();
@@ -788,7 +790,7 @@ static void apply_elif( const Rule& r, Parser& p )
    p.simplify(3);
 }
 
-static void apply_else( const Rule& r, Parser& p )
+static void apply_else( const Rule&, Parser& p )
 {
    // << (r_else << "else" << apply_else << T_else << T_EOL )
    TokenInstance* telse = p.getNextToken();
@@ -817,7 +819,7 @@ static void apply_else( const Rule& r, Parser& p )
 }
 
 
-static void apply_while_short( const Rule& r, Parser& p )
+static void apply_while_short( const Rule&, Parser& p )
 {
    // << (r_while_short << "while_short" << apply_while_short << T_while << Expr << T_Colon << Expr << T_EOL )
 
@@ -842,7 +844,7 @@ static void apply_while_short( const Rule& r, Parser& p )
 }
 
 
-static void apply_while( const Rule& r, Parser& p )
+static void apply_while( const Rule&, Parser& p )
 {
    // << (r_while << "while" << apply_while << T_while << Expr << T_EOL )
    TokenInstance* twhile = p.getNextToken();
@@ -862,7 +864,7 @@ static void apply_while( const Rule& r, Parser& p )
 }
 
 
-static void apply_rule( const Rule& r, Parser& p )
+static void apply_rule( const Rule&, Parser& p )
 {
    // << (r_rule << "rule" << apply_rule << T_rule << T_EOL )
    TokenInstance* trule = p.getNextToken();
@@ -877,7 +879,7 @@ static void apply_rule( const Rule& r, Parser& p )
    p.simplify(2);
 }
 
-static void apply_cut( const Rule& r, Parser& p )
+static void apply_cut( const Rule&, Parser& p )
 {
    // << (r_cut << "cut" << apply_cut << T_cut << T_EOL )
    TokenInstance* trule = p.getNextToken();
@@ -900,11 +902,11 @@ static void apply_cut( const Rule& r, Parser& p )
 }
 
 
-static void apply_end( const Rule& r, Parser& p )
+static void apply_end( const Rule&, Parser& p )
 {
    // << (r_end << "end" << apply_end << T_end  << T_EOL )
-   TokenInstance* tend = p.getNextToken();
-   p.getNextToken();
+   (void) p.getNextToken();
+   (void) p.getNextToken();
 
    ParserContext* st = static_cast<ParserContext*>(p.context());
    //Statement* current = st->currentStmt();
@@ -922,11 +924,11 @@ static void apply_end( const Rule& r, Parser& p )
    st->closeContext();
 }
 
-static void apply_end_small( const Rule& r, Parser& p )
+static void apply_end_small( const Rule&, Parser& p )
 {
    // << (r_end << "end" << apply_end << T_end  )
-   TokenInstance* tend = p.getNextToken();
-   p.getNextToken();
+   (void) p.getNextToken();
+   (void) p.getNextToken();
 
    ParserContext* st = static_cast<ParserContext*>(p.context());
    //Statement* current = st->currentStmt();
@@ -945,7 +947,7 @@ static void apply_end_small( const Rule& r, Parser& p )
 }
 
 
-static void apply_end_rich( const Rule& r, Parser& p )
+static void apply_end_rich( const Rule&, Parser& p )
 {
    // << (r_end_rich << "RichEnd" << apply_end_rich << T_end << Expr << T_EOL )
    TokenInstance* tend = p.getNextToken();
@@ -971,7 +973,7 @@ static void apply_end_rich( const Rule& r, Parser& p )
    p.simplify(3);
 }
 
-static void apply_dummy( const Rule& r, Parser& p )
+static void apply_dummy( const Rule&, Parser& p )
 {
    p.simplify(1);
 }
@@ -980,7 +982,7 @@ static void apply_dummy( const Rule& r, Parser& p )
 // Lists
 //==========================================================
 
-static void apply_ListExpr_next( const Rule& r, Parser& p )
+static void apply_ListExpr_next( const Rule&, Parser& p )
 {
    // << (r_ListExpr_next << "ListExpr_next" << apply_ListExpr_next << ListExpr << T_Comma << Expr )
    SourceParser& sp = static_cast<SourceParser&>(p);
@@ -999,7 +1001,7 @@ static void apply_ListExpr_next( const Rule& r, Parser& p )
 
 }
 
-static void apply_ListExpr_first( const Rule& r, Parser& p )
+static void apply_ListExpr_first( const Rule&, Parser& p )
 {
    // << (r_ListExpr_next << "ListExpr_next" << apply_ListExpr_next << Expr )
    SourceParser& sp = static_cast<SourceParser&>(p);
@@ -1018,7 +1020,7 @@ static void apply_ListExpr_first( const Rule& r, Parser& p )
    p.simplify( 1, ti_list );
 }
 
-static void apply_NeListExpr_next( const Rule& r, Parser& p )
+static void apply_NeListExpr_next( const Rule&, Parser& p )
 {
    // << (r_ListExpr_next << "ListExpr_next" << apply_ListExpr_next << ListExpr << T_Comma << Expr )
    SourceParser& sp = static_cast<SourceParser&>(p);
@@ -1037,7 +1039,7 @@ static void apply_NeListExpr_next( const Rule& r, Parser& p )
 
 }
 
-static void apply_NeListExpr_first( const Rule& r, Parser& p )
+static void apply_NeListExpr_first( const Rule&, Parser& p )
 {
    // << (r_ListExpr_next << "ListExpr_next" << apply_ListExpr_next << Expr )
    SourceParser& sp = static_cast<SourceParser&>(p);
@@ -1056,7 +1058,7 @@ static void apply_NeListExpr_first( const Rule& r, Parser& p )
    p.simplify( 1, ti_list );
 }
 
-static void apply_ListExpr_empty( const Rule& r, Parser& p )
+static void apply_ListExpr_empty( const Rule&, Parser& p )
 {
    // << (r_ListExpr_next << "ListExpr_next" << apply_ListExpr_next )
    SourceParser& sp = static_cast<SourceParser&>(p);
@@ -1071,7 +1073,7 @@ static void apply_ListExpr_empty( const Rule& r, Parser& p )
 }
 
 
-static void apply_NeListExpr_ungreed_next( const Rule& r, Parser& p )
+static void apply_NeListExpr_ungreed_next( const Rule&, Parser& p )
 {
    // << (r_ListExpr_next << "ListExpr_next" << apply_ListExpr_next << ListExpr << T_Comma << Expr )
    SourceParser& sp = static_cast<SourceParser&>(p);
@@ -1090,7 +1092,7 @@ static void apply_NeListExpr_ungreed_next( const Rule& r, Parser& p )
 
 }
 
-static void apply_NeListExpr_ungreed_first( const Rule& r, Parser& p )
+static void apply_NeListExpr_ungreed_first( const Rule&, Parser& p )
 {
    // << (r_ListExpr_next << "ListExpr_next" << apply_ListExpr_next << Expr )
    SourceParser& sp = static_cast<SourceParser&>(p);
@@ -1113,7 +1115,7 @@ static void apply_NeListExpr_ungreed_first( const Rule& r, Parser& p )
 // PairLists
 //==========================================================
 
-static void apply_ListExprOrPairs_next_pair( const Rule& r, Parser& p )
+static void apply_ListExprOrPairs_next_pair( const Rule&, Parser& p )
 {
    // << (r_ListExprOrPairs_next_pair << "ListExprOrPairs_next_pair" << apply_ListExprOrPairs_next_pair
    //  << ListExprOrPairs << T_Comma << Expr << T_Arrow << Expr )
@@ -1145,7 +1147,7 @@ static void apply_ListExprOrPairs_next_pair( const Rule& r, Parser& p )
 }
 
 
-static void apply_ListExprOrPairs_next( const Rule& r, Parser& p )
+static void apply_ListExprOrPairs_next( const Rule&, Parser& p )
 {
    // << (r_ListExprOrPairs_next << "ListExprOrPairs_next" << apply_ListExprOrPairs_next << ListExprOrPairs << T_Comma << Expr )
    SourceParser& sp = static_cast<SourceParser&>(p);
@@ -1177,7 +1179,7 @@ static void apply_ListExprOrPairs_next( const Rule& r, Parser& p )
 
 }
 
-static void apply_ListExprOrPairs_first_pair( const Rule& r, Parser& p )
+static void apply_ListExprOrPairs_first_pair( const Rule&, Parser& p )
 {
    // << (r_ListExprOrPairs_first_pair << "ListExprOrPairs_first_pair" << apply_ListExprOrPairs_first_pair << Expr << T_Arrow << Expr )
    SourceParser& sp = static_cast<SourceParser&>(p);
@@ -1201,7 +1203,7 @@ static void apply_ListExprOrPairs_first_pair( const Rule& r, Parser& p )
 }
 
 
-static void apply_ListExprOrPairs_first( const Rule& r, Parser& p )
+static void apply_ListExprOrPairs_first( const Rule&, Parser& p )
 {
    // << (r_ListExprOrPairs_first << "ListExprOrPairs_first" << apply_ListExprOrPairs_first << Expr )
    SourceParser& sp = static_cast<SourceParser&>(p);
@@ -1220,7 +1222,7 @@ static void apply_ListExprOrPairs_first( const Rule& r, Parser& p )
    p.simplify( 1, ti_list );
 }
 
-static void apply_ListExprOrPairs_empty( const Rule& r, Parser& p )
+static void apply_ListExprOrPairs_empty( const Rule&, Parser& p )
 {
    // << (r_ListExprOrPairs_empty << "ListExprOrPairs_empty" << apply_ListExprOrPairs_empty )
    SourceParser& sp = static_cast<SourceParser&>(p);
@@ -1239,7 +1241,7 @@ static void apply_ListExprOrPairs_empty( const Rule& r, Parser& p )
 // SeqPairList
 //==========================================================
 
-static void apply_SeqExprOrPairs_next_pair_cm( const Rule& r, Parser& p )
+static void apply_SeqExprOrPairs_next_pair_cm( const Rule&, Parser& p )
 {
    // << SeqExprOrPairs << T_Comma << Expr << T_Arrow << Expr
    SourceParser& sp = static_cast<SourceParser&>(p);
@@ -1269,7 +1271,7 @@ static void apply_SeqExprOrPairs_next_pair_cm( const Rule& r, Parser& p )
 
 }
 
-static void apply_SeqExprOrPairs_next_pair( const Rule& r, Parser& p )
+static void apply_SeqExprOrPairs_next_pair( const Rule&, Parser& p )
 {
    // << (r_ListExprOrPairs_next_pair << "ListExprOrPairs_next_pair" << apply_ListExprOrPairs_next_pair
    //  << ListExprOrPairs << Expr << T_Arrow << Expr )
@@ -1300,7 +1302,7 @@ static void apply_SeqExprOrPairs_next_pair( const Rule& r, Parser& p )
 }
 
 
-static void apply_SeqExprOrPairs_next( const Rule& r, Parser& p )
+static void apply_SeqExprOrPairs_next( const Rule&, Parser& p )
 {
    // << (r_ListExprOrPairs_next << "ListExprOrPairs_next" << apply_ListExprOrPairs_next << ListExprOrPairs << Expr )
    SourceParser& sp = static_cast<SourceParser&>(p);
@@ -1331,7 +1333,7 @@ static void apply_SeqExprOrPairs_next( const Rule& r, Parser& p )
 
 }
 
-static void apply_SeqExprOrPairs_next_cm( const Rule& r, Parser& p )
+static void apply_SeqExprOrPairs_next_cm( const Rule&, Parser& p )
 {
    // << (r_ListExprOrPairs_next << "ListExprOrPairs_next" << apply_ListExprOrPairs_next << SeqExprOrPairs << T_COMMA<< Expr )
    SourceParser& sp = static_cast<SourceParser&>(p);
@@ -1364,7 +1366,7 @@ static void apply_SeqExprOrPairs_next_cm( const Rule& r, Parser& p )
 }
 
 // Differs from apply_ListExprOrPairs_first_pair just for sp.SeqExprOrPairs as simplify type
-static void apply_SeqExprOrPairs_first_pair( const Rule& r, Parser& p )
+static void apply_SeqExprOrPairs_first_pair( const Rule&, Parser& p )
 {
    // << (r_ListExprOrPairs_first_pair << "ListExprOrPairs_first_pair" << apply_ListExprOrPairs_first_pair << Expr << T_Arrow << Expr )
    SourceParser& sp = static_cast<SourceParser&>(p);
@@ -1388,7 +1390,7 @@ static void apply_SeqExprOrPairs_first_pair( const Rule& r, Parser& p )
 }
 
 // Differs from apply_ListExprOrPairs_first just for sp.SeqExprOrPairs as simplify type
-static void apply_SeqExprOrPairs_first( const Rule& r, Parser& p )
+static void apply_SeqExprOrPairs_first( const Rule&, Parser& p )
 {
    // << (r_ListExprOrPairs_first << "ListExprOrPairs_first" << apply_ListExprOrPairs_first << Expr )
    SourceParser& sp = static_cast<SourceParser&>(p);
@@ -1408,7 +1410,7 @@ static void apply_SeqExprOrPairs_first( const Rule& r, Parser& p )
 }
 
 // Differs from apply_ListExprOrPairs_empty just for sp.SeqExprOrPairs as simplify type
-static void apply_SeqExprOrPairs_empty( const Rule& r, Parser& p )
+static void apply_SeqExprOrPairs_empty( const Rule&, Parser& p )
 {
    // << (r_ListExprOrPairs_empty << "ListExprOrPairs_empty" << apply_ListExprOrPairs_empty )
    SourceParser& sp = static_cast<SourceParser&>(p);
@@ -1422,7 +1424,7 @@ static void apply_SeqExprOrPairs_empty( const Rule& r, Parser& p )
    p.simplify( 0, ti_list );
 }
 
-static void apply_ListSymbol_first(const Rule& r,Parser& p)
+static void apply_ListSymbol_first(const Rule&,Parser& p)
 {
    // << (r_ListSymbol_first << "ListSymbol_first" << apply_ListSymbol_first << T_Name )
    SourceParser& sp = static_cast<SourceParser&>(p);
@@ -1437,7 +1439,7 @@ static void apply_ListSymbol_first(const Rule& r,Parser& p)
    p.simplify( 1, ti_list );
 }
 
-static void apply_ListSymbol_next(const Rule& r,Parser& p)
+static void apply_ListSymbol_next(const Rule&,Parser& p)
 {
    // << (r_ListSymbol_next << "ListSymbol_next" << apply_ListSymbol_next << ListSymbol << T_Comma << T_Name )
    SourceParser& sp = static_cast<SourceParser&>(p);
@@ -1454,7 +1456,7 @@ static void apply_ListSymbol_next(const Rule& r,Parser& p)
    p.simplify( 3, ti_list );
 }
 
-static void apply_ListSymbol_empty(const Rule& r,Parser& p)
+static void apply_ListSymbol_empty(const Rule&,Parser& p)
 {
    // << (r_ListSymbol_empty << "ListSymbol_empty" << apply_ListSymbol_empty )
 
@@ -1469,7 +1471,7 @@ static void apply_ListSymbol_empty(const Rule& r,Parser& p)
    p.simplify( 0, ti_list );
 }
 
-static void apply_NeListSymbol_first(const Rule& r,Parser& p)
+static void apply_NeListSymbol_first(const Rule&, Parser& p)
 {
    // << (r_ListSymbol_first << "ListSymbol_first" << apply_ListSymbol_first << T_Name )
    SourceParser& sp = static_cast<SourceParser&>(p);
@@ -1484,7 +1486,7 @@ static void apply_NeListSymbol_first(const Rule& r,Parser& p)
    p.simplify( 1, ti_list );
 }
 
-static void apply_NeListSymbol_next(const Rule& r,Parser& p)
+static void apply_NeListSymbol_next(const Rule&, Parser& p)
 {
    // << (r_ListSymbol_next << "ListSymbol_next" << apply_ListSymbol_next << ListSymbol << T_Comma << T_Name )
    SourceParser& sp = static_cast<SourceParser&>(p);
@@ -1501,7 +1503,7 @@ static void apply_NeListSymbol_next(const Rule& r,Parser& p)
    p.simplify( 3, ti_list );
 }
 
-static SynFunc* inner_apply_function( const Rule& r, Parser& p, bool bHasExpr )
+static SynFunc* inner_apply_function( const Rule&, Parser& p, bool bHasExpr )
 {
    //<< (r_Expr_function << "Expr_function" << apply_function << T_function << T_Name << T_Openpar << ListSymbol << T_Closepar << T_EOL )
    SourceParser& sp = static_cast<SourceParser&>(p);
@@ -1543,8 +1545,8 @@ static SynFunc* inner_apply_function( const Rule& r, Parser& p, bool bHasExpr )
    }
 
    // Ok, we took the symbol.
-   SynFunc* func=new SynFunc(*tname->asString(),0,tname->line());
-   NameList* list=static_cast<NameList*>(targs->asData());
+   SynFunc* func = new SynFunc(*tname->asString(),0,tname->line());
+   NameList* list = static_cast<NameList*>(targs->asData());
 
    for(NameList::const_iterator it=list->begin(),end=list->end();it!=end;++it)
    {
@@ -1562,6 +1564,7 @@ static SynFunc* inner_apply_function( const Rule& r, Parser& p, bool bHasExpr )
    }
 
    p.simplify(tcount);
+   return func;
 }
 
 static void apply_function(const Rule& r,Parser& p)
@@ -1569,13 +1572,15 @@ static void apply_function(const Rule& r,Parser& p)
    inner_apply_function( r, p, false );
 }
 
-
-static void apply_function_short(const Rule& r,Parser& p)
+/*
+//TODO Remove
+static void apply_function_short(const Rule& r, Parser& p)
 {
    inner_apply_function( r, p, true );
 }
+*/
 
-static void apply_return(const Rule& r,Parser& p)
+static void apply_return(const Rule&, Parser& p)
 {
    SourceParser& sp = static_cast<SourceParser&>(p);
    ParserContext* ctx = static_cast<ParserContext*>(p.context());
@@ -1589,16 +1594,17 @@ static void apply_return(const Rule& r,Parser& p)
 }
 
 
-static void on_close_function( void * thing )
+static void on_close_function( void* )
 {
+   // TODO: name the function
+   /*
    SourceParser& sp = *static_cast<SourceParser*>(thing);
    ParserContext* ctx = static_cast<ParserContext*>(sp.context());
-
-   // TODO: name the function
    SynFunc* func=ctx->currentFunc();
+   */
 }
 
-static void apply_expr_func(const Rule& r,Parser& p)
+static void apply_expr_func(const Rule&, Parser& p)
 {
    SourceParser& sp = static_cast<SourceParser&>(p);
    ParserContext* ctx = static_cast<ParserContext*>(p.context());

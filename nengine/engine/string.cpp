@@ -486,7 +486,7 @@ void Byte::reserve( String *str, length_t size, bool relative, bool block ) cons
 
 //============================================================0
 
-void Static::shrink( String *str ) const
+void Static::shrink( String * ) const
 {
 // do nothing
 }
@@ -1515,7 +1515,7 @@ const char* String::c_ize() const
    return (const char*) getRawStorage();
 }
 
-bool String::setCharSize( uint16 nsize, char_t subst )
+bool String::setCharSize( uint16 nsize )
 {
    // same size?
    if ( nsize == m_class->charSize() )

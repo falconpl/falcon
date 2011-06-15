@@ -82,8 +82,8 @@ public:
    */
    ErrorParam( int code, uint32 line = 0, const char* file = 0 ):
       m_errorCode( code ),
-      m_line( line ),
       m_module( file == 0 ? "" : file, String::npos ),    // force buffering
+      m_line( line ),
       m_sysError( 0 ),
       m_origin( e_orig_mod ),
       m_catchable( true )
@@ -91,8 +91,8 @@ public:
 
    ErrorParam( int code, uint32 line, const String& file ):
       m_errorCode( code ),
-      m_line( line ),
       m_module( file ),    // force buffering
+      m_line( line ),
       m_sysError( 0 ),
       m_origin( e_orig_mod ),
       m_catchable( true )

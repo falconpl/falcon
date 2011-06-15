@@ -156,17 +156,17 @@ void ExprArray::precompile( PCode* pcd ) const
 
 //=====================================================
 
-void ExprArray::serialize( DataWriter* s ) const
+void ExprArray::serialize( DataWriter* ) const
 {
    // TODO
 }
 
-void ExprArray::deserialize( DataReader* s )
+void ExprArray::deserialize( DataReader* )
 {
    // TODO
 }
 
-bool ExprArray::simplify( Item& result ) const
+bool ExprArray::simplify( Item& ) const
 {
    return false;
 }

@@ -41,10 +41,11 @@ public:
          m_other(0),
          m_bCopy(false)
       {}
+      
       cpars( ItemArray* other, bool bCopy ):
          m_prealloc( 0 ),
          m_other(other),
-         m_bCopy(false)
+         m_bCopy(bCopy)
       {}
 
       length_t m_prealloc;
