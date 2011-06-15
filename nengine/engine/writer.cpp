@@ -57,7 +57,7 @@ void Writer::delegate( Writer& target )
    {
       delete target.m_stream;
    }
-   
+
    delete[] target.m_buffer;
 
    target.m_stream = this->m_stream;
@@ -97,7 +97,7 @@ bool Writer::flush()
    {
       size_t nSize = m_stream->write( m_buffer + nDone, m_bufPos - nDone );
 
-      if ( nSize < (size_t) -1 )
+      if ( nSize == (size_t) -1 )
       {
          // if the stream wanted to throw, we wouldn't be here.
          return false;
@@ -123,7 +123,7 @@ bool Writer::write( byte* data, size_t size )
    if( size + m_bufPos <= m_bufSize )
    {
       memcpy( m_buffer + m_bufPos, data, size );
-      m_bufPos += size;      
+      m_bufPos += size;
    }
    else
    {
@@ -168,7 +168,7 @@ bool Writer::write( byte* data, size_t size )
     {
        flush();
     }
-    
+
     if ( m_bOwnStream )
     {
        delete s;

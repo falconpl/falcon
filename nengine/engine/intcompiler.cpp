@@ -191,15 +191,15 @@ IntCompiler::~IntCompiler()
    // TO be removed:
    delete m_module; // the vm being deleted will kill the module.
 
-   delete m_stream;
    delete m_writer;
+   delete m_stream;
    delete m_ctx;
 
    delete m_currentTree;
 }
 
 
-IntCompiler::compile_status IntCompiler::compileNext( const String& value )
+IntCompiler::compile_status IntCompiler::compileNext( const String& value)
 {
    // write the new data on the stream.
    int64 current = m_stream->seekCurrent(0);

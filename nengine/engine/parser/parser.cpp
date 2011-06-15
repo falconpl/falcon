@@ -54,13 +54,16 @@ Parser::Private::~Private()
 
 void Parser::Private::clearTokens()
 {
-   TokenStack::iterator iter = m_tokenStack->begin();
-   while( iter != m_tokenStack->end() )
+   if(m_tokenStack)
    {
-      delete *iter;
-      ++iter;
+      TokenStack::iterator iter = m_tokenStack->begin();
+      while( iter != m_tokenStack->end() )
+      {
+         delete *iter;
+         ++iter;
+      }
+      m_tokenStack->clear();
    }
-   m_tokenStack->clear();
 }
 
 
