@@ -16,5 +16,9 @@ configure_file(
   @ONLY
 )
 
+if(${CMAKE_SYSTEM_NAME} STREQUAL "SunOS")
+   add_definitions( -D_POSIX_PTHREAD_SEMANTICS )
+endif()
+
 add_subdirectory(engine)
 add_subdirectory(tests)

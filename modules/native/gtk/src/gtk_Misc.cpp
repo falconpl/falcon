@@ -82,8 +82,8 @@ FALCON_FUNC Misc::set_alignment( VMARG )
         || !i_y || i_y->isNil() || !i_y->isOrdinal() )
         throw_inv_params( "O,O" );
 #endif
-    gfloat x = i_x->asNumeric();
-    gfloat y = i_y->asNumeric();
+    gfloat x = i_x->forceNumeric();
+    gfloat y = i_y->forceNumeric();
 #ifndef NO_PARAMETER_CHECK
     if ( x < 0 || x > 1 || y < 0 || y > 1 )
         throw_inv_params( "0-1" );

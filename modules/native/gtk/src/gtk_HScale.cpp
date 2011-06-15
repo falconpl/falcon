@@ -90,9 +90,9 @@ FALCON_FUNC HScale::new_with_range( VMARG )
         || !i_step || !i_step->isOrdinal() )
         throw_inv_params( "O,O,O" );
 #endif
-    GtkWidget* wdt = gtk_hscale_new_with_range( i_min->asNumeric(),
-                                                i_max->asNumeric(),
-                                                i_step->asNumeric() );
+    GtkWidget* wdt = gtk_hscale_new_with_range( i_min->forceNumeric(),
+                                                i_max->forceNumeric(),
+                                                i_step->forceNumeric() );
     vm->retval( new Gtk::HScale( vm->findWKI( "GtkHScale" )->asClass(), (GtkHScale*) wdt ) );
 }
 

@@ -473,7 +473,7 @@ public:
             if ( wasNil )
                 *wasNil = false;
         }
-        return it->asNumeric();
+        return it->forceNumeric();
     }
 
     bool getBoolean( int index, bool mandatory = true, bool* wasNil = 0 ) const

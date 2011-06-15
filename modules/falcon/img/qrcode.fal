@@ -111,7 +111,6 @@ class Maker
       @see Maker.ECL
    */
    function text(text, ecl, encoding, caseSensitive)
-      input = self._getInput(ecl)
       if encoding == nil: encoding = self.encoding
       if caseSensitive == nil: caseSensitive = true
 
@@ -119,6 +118,7 @@ class Maker
          text = transcodeTo(text, encoding)
       end
 
+      input = self._getInput(ecl)
       qr.QrSplit.splitStringToInput(text, input, qr.QrMode.eight_bit, caseSensitive)
       return self._encodeInput(input)
    end
@@ -152,15 +152,16 @@ class Maker
       return qr.QrInput(0, errorCorrectionLevel)
    end
 
-   function _encodeMask(input, mask)
+   function _encodeInput(input, maskNo)
+      if maskNo == nil: maskNo = -1
+
       spec = qr.QrSpec()
       raw = qr.QrRawCode(input)
       version = raw.version
       width = spec.getWidth(version)
       frame = spec.createFrame(version, self.cache_dir)
 
-      filler = qr.QrFrameFiller(width, frame)
-      if filler == nil
+      if (filler = qr.QrFrameFiller(width, frame)) == nil
          raise qr.QrError(qr.QrError.encoding_error, i"error creating frame filler")
       end
 
@@ -172,9 +173,7 @@ class Maker
             filler.setFrameAt(addr, 0x02 || ((bit && code) != 0 ? 1 : 0))
             bit >>= 1
          end
-      end
-
-      raw = nil
+      end; raw = nil
 
       for i in [0:spec.getRemainder(version)]
          addr = filler.next()
@@ -184,14 +183,14 @@ class Maker
       frame = filler.frame
       maskObj = qr.QrMask(self)
 
-      if mask < 0
+      if maskNo < 0
          if self.find_best_mask
             masked = maskObj.mask(width, frame, input.errorCorrectionLevel)
          else
             masked = maskObj.createMask(width, frame, self.default_mask % 8, input.errorCorrectionLevel)
          end
       else
-         masked = maskObj.createMask(width, frame, mask, input.errorCorrectionLevel)
+         masked = maskObj.createMask(width, frame, maskNo, input.errorCorrectionLevel)
       end
 
       if masked == nil
@@ -199,10 +198,6 @@ class Maker
       end
 
       return Image(version, width, masked, self)
-   end
-
-   function _encodeInput(input)
-      return self._encodeMask(input, -1)
    end
 end
 
@@ -229,23 +224,23 @@ class Image(version, width, data, maker)
    _binarized = nil
 
    /*# Saves the image on the given file name as a JPG image.
-      @param fname The name/uri of the file where to save the image.
+      @param filename The name/uri of the file where to save the image.
       @optparam size Size of dots, in pixels.
       @optparam margin Size of the white margin around the image, in pixels.
       @raise IoError i/o on error.
    */
-   function saveJpg(fname, size, margin)
-      self._saveOn(qr.QrImage.jpg, fname, size, margin)
+   function saveJpg(filename, size, margin)
+      self._saveOn(qr.QrImage.jpg, filename, size, margin)
    end
 
    /*# Saves the image on the given file name as a PNG image.
-      @param fname The name/uri of the file where to save the image.
+      @param filename The name/uri of the file where to save the image.
       @optparam size Size of dots, in pixels.
       @optparam margin Size of the white margin around the image, in pixels.
       @raise IoError i/o on error.
    */
-   function savePng(fname, size, margin)
-      self._saveOn(qr.QrImage.png, fname, size, margin)
+   function savePng(filename, size, margin)
+      self._saveOn(qr.QrImage.png, filename, size, margin)
    end
 
    /*# Saves the image on the given open stream as a JPG image.
@@ -289,8 +284,8 @@ class Image(version, width, data, maker)
       fnmaker(binarized, outStream, min(max(1, size), maxSize), margin)
    end
 
-   function _saveOn(func, fname, size, margin)
-      stream = OutputStream(fname)
+   function _saveOn(func, filename, size, margin)
+      stream = OutputStream(filename)
 
       try
          self._makeImage(func, stream, size, margin)

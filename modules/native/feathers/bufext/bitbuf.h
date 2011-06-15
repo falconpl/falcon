@@ -317,16 +317,16 @@ public:
     template <typename TY> inline TY _readUnchecked(NUMTYPE bits)
     {
         TY ret = 0;
-        NUMTYPE pending = bits;
+        NUMTYPE readable, mask, pending = bits;
 
         while(pending)
         {
-            NUMTYPE readable = _min<NUMTYPE>(VALBITS - _bitpos_r, pending);
-            NUMTYPE mask = (VAL_ALLBITS >> (VALBITS - readable));
+            readable = _min<NUMTYPE>(VALBITS - _bitpos_r, pending);
+            mask = (VAL_ALLBITS >> (VALBITS - _bitpos_r - readable));
 
             pending -= readable;
             ret <<= readable;
-            ret |= TY((_bufptr[_arraypos_r] & mask));
+            ret |= TY((_bufptr[_arraypos_r] & mask) >> _bitpos_r);
 
             if((_bitpos_r += readable) >= VALBITS)
             {
@@ -432,20 +432,25 @@ public:
         VALTYPE writeable, bitpos;
         NUMTYPE pending = bits;
 
-        writeable = _min<NUMTYPE>(VALBITS - _bitpos_w, bits);
-        if(_bitpos_w) _bufptr[_arraypos_w] <<= writeable;
-
-        mask = 1 << (bits - 1);
-        while(pending--)
+        while(pending)
         {
-            value = val & mask;
-            for(bitpos = 0; value; bitpos++, value >>= 1);
+            value = val;
+            writeable = _min<NUMTYPE>(VALBITS - _bitpos_w, pending);
+            mask = (VAL_ALLBITS >> (VALBITS - writeable));
 
-            writeable = VALBITS - _bitpos_w;
-            _bufptr[_arraypos_w] |= ((val & mask) >> (bitpos > writeable ? bitpos - writeable : 0));
-            mask >>= 1;
+            if(_bitpos_w)
+            {
+                _bufptr[_arraypos_w] <<= writeable;
+                if(pending > writeable) value >>= writeable;
+            }
 
-            if(++_bitpos_w == VALBITS)
+            _bufptr[_arraypos_w] &= ~(mask);        // clear writing region
+            _bufptr[_arraypos_w] |= (value & mask); // write new value
+
+            pending -= writeable;
+            _bitpos_w += writeable;
+
+            if(_bitpos_w == VALBITS)
             {
                 _bitpos_w = 0;
                 _arraypos_w++;
@@ -543,6 +548,7 @@ protected:
             throw new BufferError( ErrorParam(e_io_error, __LINE__)
                 .desc(FAL_STR_bufext_buf_full) );
         }
+
         if(_heapbuf && _myheapbuf)
         {
             _bufptr = _heapbuf = (VALTYPE*)memRealloc(_heapbuf, (size_t)newsize);
@@ -554,6 +560,7 @@ protected:
             _bufptr = _heapbuf; // using the heap for read/write operations now
             _myheapbuf = true;
         }
+        
         _maxbytes = newsize;
     }
 

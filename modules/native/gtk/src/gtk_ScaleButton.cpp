@@ -267,7 +267,7 @@ FALCON_FUNC ScaleButton::set_value( VMARG )
 #endif
     MYSELF;
     GET_OBJ( self );
-    gtk_scale_button_set_value( (GtkScaleButton*)_obj, i_val->asNumeric() );
+    gtk_scale_button_set_value( (GtkScaleButton*)_obj, i_val->forceNumeric() );
 }
 
 
