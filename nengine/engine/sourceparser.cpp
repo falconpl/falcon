@@ -431,25 +431,25 @@ static void apply_expr_plus( const Rule& r, Parser& p )
    apply_expr_binary(r, p, new ExprPlus );
 }
 
-static void apply_expr_preinc(const Rule& r, Parser& p )
+static void apply_expr_preinc(const Rule&, Parser& p )
 {
    SourceParser& sp = static_cast<SourceParser&>(p);
 
    TokenInstance* plpl  = p.getNextToken();
    TokenInstance* value = p.getNextToken();
 
-   TokenInstance* ti2 = new TokenInstance( value->line(), value->chr(), sp.Expr );
+   TokenInstance* ti2 = new TokenInstance( plpl->line(), plpl->chr(), sp.Expr );
    ti2->setValue( new ExprPreInc(static_cast<Expression*>(value->detachValue())), expr_deletor );
 
    p.simplify(2,ti2);
 }
 
-static void apply_expr_postinc(const Rule& r, Parser& p )
+static void apply_expr_postinc(const Rule&, Parser& p )
 {
    SourceParser& sp = static_cast<SourceParser&>(p);
 
    TokenInstance* value = p.getNextToken();
-   TokenInstance* plpl  = p.getNextToken();
+   /*TokenInstance* plpl  =*/ p.getNextToken();
 
    TokenInstance* ti2 = new TokenInstance( value->line(), value->chr(), sp.Expr );
    ti2->setValue( new ExprPostInc(static_cast<Expression*>(value->detachValue())), expr_deletor );

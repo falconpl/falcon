@@ -354,11 +354,11 @@ bool ParserContext::checkSymbols()
    UnkonwnList::iterator un_iter = unknownNames.begin();
    while( un_iter != unknownNames.end() )
    {
-      m_parser->addError(e_undef_sym, m_parser->currentSource(), 
+      m_parser->addError(e_undef_sym, m_parser->currentSource(),
          un_iter->second , 0, 0, un_iter->first );
       ++un_iter;
    }
-   
+
    return isOk;
 }
 
@@ -491,7 +491,7 @@ void ParserContext::openFunc( SynFunc *func, GlobalSymbol *gs )
 
 void ParserContext::openClass( Class *cls, bool bIsObject, GlobalSymbol *gs )
 {
-   TRACE("ParserContext::openClass -- depth %d %s%s", _p->m_frames.size() + 1,
+   TRACE("ParserContext::openClass -- depth %d %s%s", (int)_p->m_frames.size() + 1,
             cls->name().c_ize(), bIsObject ? "":" (object)" );
    m_cclass = cls;
    m_cstatement = 0;
@@ -502,7 +502,7 @@ void ParserContext::openClass( Class *cls, bool bIsObject, GlobalSymbol *gs )
 
 void ParserContext::closeContext()
 {
-   TRACE("ParserContext::closeContext -- closing context on depth %d", _p->m_frames.size() );
+   TRACE("ParserContext::closeContext -- closing context on depth %d", (int)_p->m_frames.size() );
    fassert( !_p->m_frames.empty() );
 
    // copy by value

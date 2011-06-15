@@ -37,7 +37,7 @@ private:
 
    typedef std::vector<Token*> TokenVector;
    TokenVector m_vTokens;
-   
+
 };
 
 //=================================================================
@@ -69,7 +69,7 @@ Rule& Rule::t( Token& t )
    _p->m_vTokens.push_back( &t );
    if( t.isNT() )
    {
-      
+
       NonTerminal& nt = *static_cast<NonTerminal*>(&t);
       // check for greedness: the rule is greedy if it has ends with a recursive token.
       if( nt.isRecursive() )
@@ -94,7 +94,7 @@ Rule& Rule::t( Token& t )
 void Rule::parent( NonTerminal& nt )
 {
    m_parent = &nt;
-   
+
    m_bRecursive = false;
    Private::TokenVector::iterator riter = _p->m_vTokens.begin();
    Private::TokenVector::iterator riter_end = _p->m_vTokens.end();
@@ -135,7 +135,7 @@ bool Rule::match( Parser& parser, bool bIncremental ) const
 {
    TRACE( "Rule::match(%s) -- %s", m_name.c_ize(),
             bIncremental ? "incremental" : "full" );
-   
+
    Parser::Private* pp = parser._p;
    size_t begin = pp->m_pframes->back().m_nStackDepth;
    size_t ppos = bIncremental ? pp->m_tokenStack->size() - 1 : pp->m_pframes->back().m_nStackDepth;
@@ -179,17 +179,17 @@ bool Rule::match( Parser& parser, bool bIncremental ) const
    {
       Token* curTok = *riter;
       const Token* stackToken = &(*pp->m_tokenStack)[ppos]->token();
-      
+
       if( curTok->isNT() )
       {
          if( (ppos> begin || curTok->id() != m_parent->id()) )
          {
             TRACE1( "Rule::match(%s) -- descendable '%s' found at %d",
-               m_name.c_ize(), curTok->name().c_ize(), ppos );
+               m_name.c_ize(), curTok->name().c_ize(), (int)ppos );
             dpos = ppos;
             descendable = static_cast<NonTerminal*>(curTok);
          }
-      }     
+      }
 
       TRACE1( "Rule::match(%s) -- checking '%s' <-> '%s'",
                m_name.c_ize(), curTok->name().c_ize(), stackToken->name().c_ize()  );
@@ -203,13 +203,13 @@ bool Rule::match( Parser& parser, bool bIncremental ) const
          {
             TRACE1( "Rule::match(%s) -- actually descending '%s' found at %d%s",
                m_name.c_ize(), descendable->name().c_ize(), dpos, dpos > (int) begin ? " (adding stack)": "" );
-            
+
             parser.addParseFrame( descendable, dpos );
             return descendable->findPaths(parser);
          }
          // match failed
           TRACE1( "Rule::match(%s) -- failed at %d",
-               m_name.c_ize(), ppos );
+               m_name.c_ize(), (int)ppos );
          return false;
       }
       else
@@ -217,7 +217,7 @@ bool Rule::match( Parser& parser, bool bIncremental ) const
          // only terminal tokens can have priority, but we don't care.
          parser.setFramePriority(*curTok);
       }
-      
+
       ++ riter;
       ++ ppos;
    }

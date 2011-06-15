@@ -118,7 +118,7 @@ void Parser::pushState( const String& name, bool isPushedState )
    {
       if(!_p->m_lStates.empty())
       {
-         TRACE("Parser::pushState -- pframes.size()=%d",_p->m_pframes->size());
+         TRACE("Parser::pushState -- pframes.size()=%d",(int)_p->m_pframes->size());
       }
       _p->m_lStates.push_back( iter->second );
 
@@ -166,7 +166,7 @@ void Parser::popState()
    _p->m_tokenStack = &bf.m_tokenStack;
    _p->m_pframes = &bf.m_pframes;
    _p->m_pErrorFrames = &bf.m_pErrorFrames;
-   TRACE("Parser::popState -- pframes.size()=%d",_p->m_pframes->size());
+   TRACE("Parser::popState -- pframes.size()=%d",(int)_p->m_pframes->size());
 
    Private::TokenStack::iterator tsiter = ts.begin();
    while( tsiter != ts.end() )

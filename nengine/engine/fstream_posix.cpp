@@ -215,7 +215,7 @@ bool FStream::truncate( off_t pos )
 }
 
 size_t FStream::readAvailable( int32 msec )
-{   
+{
    /* Temporarily turned off because a darwin flaw
 
    struct pollfd poller;
@@ -325,7 +325,7 @@ size_t FStream::writeAvailable( int32 msec )
 
 
    int res;
-   while( ( res = poll( poller, fds, msec ) ) == EAGAIN );
+   while( ( res = poll( poller, fds, msec ) ) == EAGAIN ){};
 
    if ( res == 0 )
    {

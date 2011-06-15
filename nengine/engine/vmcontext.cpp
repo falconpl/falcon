@@ -55,7 +55,7 @@ void VMContext::moreData()
 {
    long distance = m_topData - m_dataStack;
    long newSize = m_maxData - m_dataStack + INCREMENT_STACK_ALLOC;
-   TRACE("Reallocating %p: %d -> %ld", m_dataStack, m_maxData - m_dataStack, newSize );
+   TRACE("Reallocating %p: %d -> %ld", m_dataStack, (int)(m_maxData - m_dataStack), newSize );
 
    m_dataStack = (Item*) realloc( m_dataStack, newSize * sizeof(Item) );
    m_topData = m_dataStack + distance;
@@ -86,7 +86,7 @@ void VMContext::moreCode()
    long distance = m_topCode - m_codeStack; // we don't want the size of the code,
 
    long newSize = m_maxCode - m_codeStack + INCREMENT_STACK_ALLOC;
-   TRACE("Reallocating %p: %d -> %ld", m_codeStack, m_maxCode - m_codeStack, newSize );
+   TRACE("Reallocating %p: %d -> %ld", m_codeStack, (int)(m_maxCode - m_codeStack), newSize );
 
    m_codeStack = (CodeFrame*) realloc( m_codeStack, newSize * sizeof(CodeFrame) );
    m_topCode = m_codeStack + distance;
@@ -98,7 +98,7 @@ void VMContext::moreCall()
 {
    long distance = m_topCall - m_callStack;
    long newSize = m_maxCall - m_callStack + INCREMENT_STACK_ALLOC;
-   TRACE("Reallocating %p: %d -> %ld", m_callStack, m_maxCall - m_callStack, newSize );
+   TRACE("Reallocating %p: %d -> %ld", m_callStack, (int)(m_maxCall - m_callStack), newSize );
 
    m_callStack = (CallFrame*) realloc( m_callStack, newSize * sizeof(CallFrame) );
    m_topCall = m_callStack + distance;

@@ -47,8 +47,6 @@ public:
    //===============================================
    // Terminal tokens
    //
-   Parsing::Terminal T_Plus;
-   Parsing::Terminal T_PlusPlus;
    Parsing::Terminal T_Openpar;
    Parsing::Terminal T_Closepar;
    Parsing::Terminal T_OpenSquare;
@@ -68,6 +66,7 @@ public:
    Parsing::Terminal T_Modulo;
    Parsing::Terminal T_Plus;
    Parsing::Terminal T_Minus;
+   Parsing::Terminal T_PlusPlus;
    Parsing::Terminal T_DblEq;
    Parsing::Terminal T_NotEq;
    Parsing::Terminal T_Less;

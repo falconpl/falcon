@@ -73,7 +73,7 @@ bool Interrupt::interrupted() const
    fds[0].events = POLLIN;
    fds[0].fd = fdes[0];
 
-   while( (res = poll( fds, 1, 0 ) ) == EAGAIN );
+   while( (res = poll( fds, 1, 0 ) ) == EAGAIN ){};
    // If we have one event, the we have to read...
    return res == 1;
 }
