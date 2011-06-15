@@ -162,7 +162,7 @@ public:
 
    const static int64 baseUserID = 100;
 
-   const int64 typeID() const { return m_typeID; }
+   int64 typeID() const { return m_typeID; }
    const String& name() const { return m_name; }
 
    /** Return true if this is a FalconClass instance.

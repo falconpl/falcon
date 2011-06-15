@@ -232,7 +232,7 @@ bool ItemArray::insert( const Item &ndata, length_t pos )
       Item *mem = allocate(m_alloc);
       if ( pos > 0 )
          memcpy( mem , m_data, esize( pos ) );
-      if ( pos < (int32)m_size )
+      if ( pos < m_size )
          memcpy( mem + pos + 1, m_data + pos , esize(m_size - pos) );
 
       mem[ pos ] = ndata;
@@ -241,7 +241,7 @@ bool ItemArray::insert( const Item &ndata, length_t pos )
       m_data = mem;
    }
    else {
-      if ( pos < (int32)m_size )
+      if ( pos < m_size )
          memmove( m_data + pos + 1, m_data+pos, esize( m_size - pos) );
       m_data[pos] = ndata;
       m_size ++;
@@ -266,7 +266,7 @@ bool ItemArray::insert( const ItemArray &other, length_t pos )
       if ( pos > 0 )
          memcpy( mem , m_data, esize( pos ) );
 
-      if ( pos < (int32)m_size )
+      if ( pos < m_size )
          memcpy( mem + pos + other.m_size, m_data + pos , esize(m_size - pos) );
 
       memcpy( mem + pos , other.m_data, esize( other.m_size ) );
@@ -276,7 +276,7 @@ bool ItemArray::insert( const ItemArray &other, length_t pos )
       m_data = mem;
    }
    else {
-      if ( pos < (int32)m_size )
+      if ( pos < m_size )
          memmove( m_data + other.m_size + pos, m_data + pos, esize(m_size - pos ) );
       memcpy( m_data + pos , other.m_data, esize( other.m_size ) );
       m_size += other.m_size;
@@ -347,7 +347,7 @@ bool ItemArray::change( const ItemArray &other, length_t begin, length_t rsize )
       if ( other.m_size > 0 )
          memcpy( mem + begin, other.m_data, esize( other.m_size ) );
 
-      if ( end < (int32) m_size )
+      if ( end < m_size )
          memcpy( mem + begin + other.m_size, m_data + end, esize(m_size - end) );
 
       release( m_data );
@@ -371,9 +371,7 @@ bool ItemArray::insertSpace( length_t pos, length_t size )
    if ( size == 0 )
       return true;
 
-   if ( pos < 0 )
-      pos = m_size + pos;
-   if ( pos < 0 || pos > m_size )
+   if ( pos > m_size )
       return false;
 
    if ( m_alloc < m_size + size ) {

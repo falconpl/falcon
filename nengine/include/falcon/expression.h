@@ -554,7 +554,7 @@ public:
    virtual bool isBinaryOperator() const { return false; }
 
    virtual bool isStatic() const { return false; }
-   bool isTop() const { m_bIsTop; }
+   bool isTop() const { return m_bIsTop; }
 
 protected:
    ExprUnpack();
@@ -594,7 +594,7 @@ public:
    virtual bool isBinaryOperator() const { return false; }
    virtual bool isStatic() const { return false; }
 
-   bool isTop() const { m_bIsTop; }
+   bool isTop() const { return m_bIsTop; }
 protected:
    ExprMultiUnpack();
    friend class ExprFactory;

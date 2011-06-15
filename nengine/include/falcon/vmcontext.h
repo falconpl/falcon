@@ -216,7 +216,7 @@ public:
          // roll back to previous state stack state.
          callf.m_stackBase = (int32) (vals >> 32);
 
-         int64 vals = param(-1)->asInteger();
+         vals = param(-1)->asInteger();
          // assert if we're not in a rule frame anymore!
          fassert( callf.m_stackBase > callf.m_initBase );
       }

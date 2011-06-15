@@ -47,7 +47,7 @@ VMachine::VMachine( Stream* stdIn, Stream* stdOut, Stream* stdErr ):
 
    if ( stdIn == 0 )
    {
-      TRACE1( "Virtual machine create -- loading duplicate standard input stream", 0 );
+      MESSAGE1( "Virtual machine create -- loading duplicate standard input stream" );
       m_stdIn = new StdInStream( true );
    }
    else
@@ -57,7 +57,7 @@ VMachine::VMachine( Stream* stdIn, Stream* stdOut, Stream* stdErr ):
 
    if ( stdOut == 0 )
    {
-      TRACE1( "Virtual machine create -- loading duplicate standard output stream", 0 );
+      MESSAGE1( "Virtual machine create -- loading duplicate standard output stream" );
       m_stdOut = new StdOutStream( true );
    }
    else
@@ -67,7 +67,7 @@ VMachine::VMachine( Stream* stdIn, Stream* stdOut, Stream* stdErr ):
 
    if ( stdErr == 0 )
    {
-      TRACE1( "Virtual machine create -- loading duplicate standard error stream", 0 );
+      MESSAGE1( "Virtual machine create -- loading duplicate standard error stream" );
       m_stdErr= new StdErrStream( true );
    }
    else
@@ -219,7 +219,7 @@ void VMachine::raiseError( Error* e )
 
 bool VMachine::run()
 {
-   TRACE( "Run called", 0 );
+   MESSAGE( "Run called" );
    m_event = eventNone;
    PARANOID( "Call stack empty", (currentContext()->callDepth() > 0) );
 
@@ -251,15 +251,15 @@ bool VMachine::run()
             return false;
 
          case eventComplete:
-            TRACE( "Run terminated because lower-level complete detected", 0 );
+            MESSAGE( "Run terminated because lower-level complete detected" );
             return true;
 
          case eventTerminate:
-            TRACE( "Terminating on explicit termination request", 0 );
+            MESSAGE( "Terminating on explicit termination request" );
             return true;
 
          case eventReturn:
-            TRACE( "Retnring on setReturn request", 0 );
+            MESSAGE( "Retnring on setReturn request" );
             m_event = eventNone;
             return false;
 
@@ -271,7 +271,7 @@ bool VMachine::run()
       // END STEP
    }
 
-   TRACE( "Run terminated because of code exaustion", 0 );
+   MESSAGE( "Run terminated because of code exaustion" );
    m_event = eventComplete;
    return true;
 }
@@ -279,7 +279,7 @@ bool VMachine::run()
 
 const PStep* VMachine::nextStep() const
 {
-   TRACE( "Next step", 0 );
+   MESSAGE( "Next step" );
    if( codeEmpty() )
    {
       return 0;
@@ -362,7 +362,7 @@ void VMachine::returnFrame()
    // -- in expressions we always have at least 1 element, that is the function item.
    if( topCall->m_bExpression )
    {
-      TRACE1( "-- Adding A register to stack", 1 );
+      MESSAGE1( "-- Adding A register to stack");
       *ctx->m_topData = ctx->m_regA;
    }
    // Return.
@@ -370,7 +370,7 @@ void VMachine::returnFrame()
    {
       // was this the topmost frame?
       m_event = eventComplete;
-      TRACE( "Returned from last frame -- declaring complete.", 0 );
+      MESSAGE( "Returned from last frame -- declaring complete." );
    }
 
    PARANOID( "Call stack underflow at return", (ctx->m_topCall >= ctx->m_callStack-1) );
@@ -489,7 +489,7 @@ bool VMachine::step()
 {
    if ( codeEmpty() )
    {
-      TRACE( "Step terminated", 0 );
+      MESSAGE( "Step terminated" );
       return true;
    }
 
@@ -524,15 +524,15 @@ bool VMachine::step()
          return false;
 
       case eventComplete:
-         TRACE( "Run terminated because lower-level complete detected", 0 );
+         MESSAGE( "Run terminated because lower-level complete detected" );
          return true;
 
       case eventTerminate:
-         TRACE( "Terminating on explicit termination request", 0 );
+         MESSAGE( "Terminating on explicit termination request" );
          return true;
 
       case eventReturn:
-         TRACE( "Retnring on setReturn request", 0 );
+         MESSAGE( "Retnring on setReturn request" );
          m_event = eventNone;
          return false;
 
@@ -547,7 +547,7 @@ bool VMachine::step()
 }
 
 
-Item* VMachine::findLocalItem( const String& name )
+Item* VMachine::findLocalItem( const String& )
 {
    //TODO
    return 0;
@@ -561,7 +561,7 @@ void VMachine::pushQuit()
       virtual ~QuitStep() {}
 
    private:
-      static void apply_( const PStep* ps, VMachine *vm )
+      static void apply_( const PStep*, VMachine *vm )
       {
          vm->currentContext()->popCode();
          vm->quit();
@@ -581,7 +581,7 @@ void VMachine::pushReturn()
       virtual ~Step() {}
 
    private:
-      static void apply_( const PStep* ps, VMachine *vm )
+      static void apply_( const PStep*, VMachine *vm )
       {
          vm->currentContext()->popCode();
          vm->setReturn();
@@ -600,7 +600,7 @@ void VMachine::pushBreak()
       virtual ~Step() {}
 
    private:
-      static void apply_( const PStep* ps, VMachine *vm )
+      static void apply_( const PStep*, VMachine *vm )
       {
          vm->currentContext()->popCode();
          vm->breakpoint();

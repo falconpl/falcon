@@ -33,7 +33,7 @@ length_t TranscoderUTF8::encodingSize( length_t charCount ) const
 }
 
 length_t TranscoderUTF8::encode( const String& source, byte* data, length_t size,
-            char_t undef, length_t start, length_t count ) const
+            char_t, length_t start, length_t count ) const
 {
    length_t end;
 
@@ -107,7 +107,7 @@ length_t TranscoderUTF8::encode( const String& source, byte* data, length_t size
    return (length_t)(tgt - data);
 }
 
-length_t TranscoderUTF8::decode( const byte* data, length_t size, String& target, length_t count, bool bThrow ) const
+length_t TranscoderUTF8::decode( const byte* data, length_t, String& target, length_t count, bool bThrow ) const
 {
    const byte* utf8 = data;
    const byte* limit = data+count;

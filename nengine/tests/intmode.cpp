@@ -117,7 +117,7 @@ void go()
                      m_wr(wr)
                   {}
 
-                  virtual bool operator()( const Error& e, bool bLast ){
+                  virtual bool operator()( const Error& e, bool  ){
                      m_wr->write(e.describe()+"\n");
                      return true;
                   }
@@ -145,7 +145,7 @@ void go()
 };
 
 // This is just a test.
-int main( int argc, char* argv[] )
+int main( int , char* [] )
 {
    std::cout << "Interactive mode test" << std::endl;
 

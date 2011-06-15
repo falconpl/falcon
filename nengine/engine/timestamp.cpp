@@ -800,10 +800,10 @@ void TimeStamp::getTZDisplacement( TimeZone tz, int16 &hours, int16 &minutes )
 void TimeStamp::toString( String &target ) const
 {
    // for now a fast thing
-   uint32 allocated = 23 > FALCON_STRING_ALLOCATION_BLOCK ? 24 : FALCON_STRING_ALLOCATION_BLOCK;
+   uint32 allocated = 24 >= FALCON_STRING_ALLOCATION_BLOCK ? 24 : FALCON_STRING_ALLOCATION_BLOCK;
    target.size(0);
    target.manipulator( &csh::handler_buffer );
-   target.reserve(24);
+   target.reserve(allocated);
    
    sprintf( (char *)target.getRawStorage(), "%04d-%02d-%02d %02d:%02d:%02d.%03d",
       m_year, m_month, m_day, m_hour, m_minute, m_second, m_msec );

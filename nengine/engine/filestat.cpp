@@ -24,7 +24,12 @@ FileStat::FileStat():
 }
 
 
-FileStat::FileStat( const FileStat &other )
+FileStat::FileStat( const FileStat &other ):
+   m_type( other.m_type ),
+   m_size( other.m_size ),
+   m_ctime( other.m_ctime ),
+   m_mtime( other.m_ctime ),
+   m_atime( other.m_ctime )
 {
 }
 

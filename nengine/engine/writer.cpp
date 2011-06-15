@@ -33,8 +33,8 @@ Writer::Writer():
 {}
 
 Writer::Writer( Stream* stream, bool bOwn ):
-   m_stream(stream),
-   m_bOwnStream(bOwn)
+   m_bOwnStream(bOwn),
+   m_stream(stream)
 {
    m_bufSize = Sys::_getPageSize();
    m_bufPos = 0;
@@ -97,7 +97,7 @@ bool Writer::flush()
    {
       size_t nSize = m_stream->write( m_buffer + nDone, m_bufPos - nDone );
 
-      if ( nSize < 0 )
+      if ( nSize < (size_t) -1 )
       {
          // if the stream wanted to throw, we wouldn't be here.
          return false;
@@ -140,7 +140,7 @@ bool Writer::write( byte* data, size_t size )
       while( nDone < toWrite )
       {
          size_t nWritten = m_stream->write( data + nDone, toWrite - nDone );
-         if( nWritten < 0 )
+         if( nWritten < (size_t)-1 )
          {
             return false;
          }

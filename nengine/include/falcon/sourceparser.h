@@ -47,44 +47,40 @@ public:
    //===============================================
    // Terminal tokens
    //
-   Parsing::Terminal T_Plus;
+   Parsing::Terminal T_Openpar;
+   Parsing::Terminal T_Closepar;
+   Parsing::Terminal T_OpenSquare;
+   Parsing::Terminal T_DotPar;
+   Parsing::Terminal T_DotSquare;
+   Parsing::Terminal T_CloseSquare;
+   Parsing::Terminal T_OpenGraph;
+   Parsing::Terminal T_CloseGraph;
+   Parsing::Terminal T_Dot;
+   Parsing::Terminal T_Arrow;
+   Parsing::Terminal T_Comma;
+   Parsing::Terminal T_Cut;
+   Parsing::Terminal T_UnaryMinus;
+   Parsing::Terminal T_Power;
    Parsing::Terminal T_Times;
    Parsing::Terminal T_Divide;
-   Parsing::Terminal T_Minus;
-   Parsing::Terminal T_UnaryMinus;
    Parsing::Terminal T_Modulo;
-   Parsing::Terminal T_Power;
-   Parsing::Terminal T_EqSign;
-   Parsing::Terminal T_EqSign2;
-   Parsing::Terminal T_Arrow;
+   Parsing::Terminal T_Plus;
+   Parsing::Terminal T_Minus;
    Parsing::Terminal T_DblEq;
    Parsing::Terminal T_NotEq;
    Parsing::Terminal T_Less;
    Parsing::Terminal T_Greater;
    Parsing::Terminal T_LE;
    Parsing::Terminal T_GE;
-
-   Parsing::Terminal T_Openpar;
-   Parsing::Terminal T_Closepar;
-   Parsing::Terminal T_OpenSquare;
-   Parsing::Terminal T_CloseSquare;
-   Parsing::Terminal T_OpenGraph;
-   Parsing::Terminal T_CloseGraph;
-
-   Parsing::Terminal T_Dot;
-   Parsing::Terminal T_DotPar;
-   Parsing::Terminal T_DotSquare;
-   Parsing::Terminal T_Comma;
    Parsing::Terminal T_Colon;
-   Parsing::Terminal T_Cut;
-
+   Parsing::Terminal T_EqSign;
+   Parsing::Terminal T_EqSign2;
    Parsing::Terminal T_as;
    Parsing::Terminal T_eq;
    Parsing::Terminal T_if;
    Parsing::Terminal T_in;
    Parsing::Terminal T_or;
    Parsing::Terminal T_to;
-
    Parsing::Terminal T_and;
    Parsing::Terminal T_def;
    Parsing::Terminal T_end;
@@ -92,13 +88,10 @@ public:
    Parsing::Terminal T_not;
    Parsing::Terminal T_nil;
    Parsing::Terminal T_try;
-
    Parsing::Terminal T_elif;
    Parsing::Terminal T_else;
-
-   Parsing::Terminal T_while;
    Parsing::Terminal T_rule;
-
+   Parsing::Terminal T_while;
    Parsing::Terminal T_function;
    Parsing::Terminal T_return;
 

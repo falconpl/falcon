@@ -35,8 +35,8 @@ Reader::Reader():
 {}
 
 Reader::Reader( Stream* stream, bool bOwn ):
-   m_stream(stream),
-   m_bOwnStream(bOwn)
+   m_bOwnStream(bOwn),
+   m_stream(stream)
 {
    m_readSize = Sys::_getPageSize();
 
@@ -146,7 +146,7 @@ bool Reader::refill()
    }
 
    size_t nSize = m_stream->read(m_buffer + m_bufLength, m_readSize );
-   if ( nSize < 0 )
+   if ( nSize == (size_t) -1 )
    {
       // if the stream wanted to throw, we wouldn't be here.
       return false;

@@ -65,9 +65,6 @@ void generic_apply_( const PStep* ps, VMachine* vm )
    Item *op1, *op2;
    vm->operands( op1, op2 );
 
-   int t1 = op1->type();
-   int t2 = op2->type();
-
    switch ( op1->type() << 8 | op2->type() )
    {
    case FLC_ITEM_INT << 8 | FLC_ITEM_INT:

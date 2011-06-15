@@ -86,7 +86,7 @@ public:
 
    virtual ~FuncPrintl() {}
 
-   virtual void apply( VMachine* vm, int32 nParams )
+   virtual void apply( VMachine* vm, int32)
    {
       m_nextStep.printNext( vm, 0 );
    }

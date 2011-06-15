@@ -79,8 +79,7 @@ private:
       state_float_exp,
 
       state_name,
-      state_operator,
-      state_operator_fail,
+      state_operator
    } t_state;
 
    t_state m_state;

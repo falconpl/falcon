@@ -68,7 +68,7 @@ void SynFunc::apply( VMachine* vm, int32 nparams )
 
    if( this->syntree().last()->type() != Statement::return_t )
    {
-      TRACE1( "-- Pushing extra return", 0 );
+      MESSAGE1( "-- Pushing extra return" );
       ctx->pushCode( &s_a_return );
    }
 

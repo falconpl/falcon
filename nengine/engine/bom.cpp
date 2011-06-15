@@ -110,23 +110,23 @@ void len_(VMachine* vm, const Class*, void*)
 }
 
 
-void bound(VMachine* vm, const Class* cls, void* data)
+void bound(VMachine*, const Class*, void*)
 {
    fassert2( false, "Not implemented" );
 }
 
-void bound_(VMachine* vm, const Class* cls, void* data)
+void bound_(VMachine*, const Class*, void*)
 {
    fassert2( false, "Not implemented" );
 }  
 
-void className(VMachine* vm, const Class* cls, void* data)
+void className(VMachine*, const Class*, void*)
 {
    fassert2( false, "Not implemented" );
 }
 
 
-void className_(VMachine* vm, const Class* cls, void* data)
+void className_(VMachine* vm, const Class*, void* data)
 {
    Item* pself;
    OpToken token( vm, pself );
@@ -137,13 +137,13 @@ void className_(VMachine* vm, const Class* cls, void* data)
    token.exit(cls1->name()); // garbage this string
 }
 
-void baseClass(VMachine* vm, const Class* cls, void* data)
+void baseClass(VMachine*, const Class*, void*)
 {
    fassert2( false, "Not implemented" );
 }
 
 
-void baseClass_(VMachine* vm, const Class* cls, void* data)
+void baseClass_(VMachine*, const Class*, void*)
 {
    fassert2( false, "Not implemented" );
 }
@@ -151,23 +151,23 @@ void baseClass_(VMachine* vm, const Class* cls, void* data)
 //======================================================
 // Clone
 
-void clone(VMachine* vm, const Class* cls, void* data)
+void clone(VMachine*, const Class*, void*)
 {
    fassert2( false, "Not implemented" );
 
 }
 
 
-void clone_(VMachine* vm, const Class* cls, void* data)
+void clone_(VMachine*, const Class*, void*)
 {
    fassert2( false, "Not implemented" );
 
 }
 
 
-void describe(VMachine* vm, const Class* cls, void* data)
+void describe(VMachine* vm, const Class*, void*)
 {
-   static Function* func = Engine::instance()->getCore()->getFunction( "describe");
+   static Function* func = Engine::instance()->getCore()->getFunction("describe");
    fassert( func != 0 );
 
    Item &value = vm->currentContext()->topData();
@@ -185,48 +185,48 @@ void describe_(VMachine* vm, const Class* cls, void* data)
 }
 
 
-void isCallable(VMachine* vm, const Class* cls, void* data)
+void isCallable(VMachine*, const Class*, void*)
 {
    fassert2( false, "Not implemented" );
 
 }
 
 
-void isCallable_(VMachine* vm, const Class* cls, void* data)
+void isCallable_(VMachine*, const Class*, void*)
 {
    fassert2( false, "Not implemented" );
 
 }
 
 
-void metaclass(VMachine* vm, const Class* cls, void* data)
+void metaclass(VMachine*, const Class*, void*)
 {
    fassert2( false, "Not implemented" );
 
 }
 
 
-void metaclass_(VMachine* vm, const Class* cls, void* data)
+void metaclass_(VMachine*, const Class*, void*)
 {
    fassert2( false, "Not implemented" );
 
 }
 
 
-void ptr(VMachine* vm, const Class* cls, void* data)
+void ptr(VMachine*, const Class*, void*)
 {
    fassert2( false, "Not implemented" );
 
 }
 
-void ptr_(VMachine* vm, const Class* cls, void* data)
+void ptr_(VMachine*, const Class*, void*)
 {
    fassert2( false, "Not implemented" );
 
 }
 
 
-void toString(VMachine* vm, const Class* cls, void* data)
+void toString(VMachine* vm, const Class*, void*)
 {
    static Function* func = Engine::instance()->getCore()->getFunction("toString");
    fassert( func != 0 );
@@ -242,7 +242,7 @@ void toString_(VMachine* vm, const Class* cls, void* data)
 }
 
 
-void typeId(VMachine* vm, const Class* cls, void* data)
+void typeId(VMachine* vm, const Class*, void*)
 {
    static Function* func = Engine::instance()->getPseudoFunction("typeId");
    fassert( func != 0 );
@@ -252,7 +252,7 @@ void typeId(VMachine* vm, const Class* cls, void* data)
 }
 
 
-void typeId_(VMachine* vm, const Class* cls, void* data)
+void typeId_(VMachine* vm, const Class*, void* data)
 {
    Item* pself;
    OpToken token( vm, pself );
@@ -270,7 +270,7 @@ void typeId_(VMachine* vm, const Class* cls, void* data)
 
 
 
-void compare(VMachine* vm, const Class* cls, void* data)
+void compare(VMachine* vm, const Class*, void*)
 {
    static Function* func = Engine::instance()->getPseudoFunction("compare");
    fassert( func != 0 );
@@ -280,7 +280,7 @@ void compare(VMachine* vm, const Class* cls, void* data)
 }
 
 
-void derivedFrom(VMachine* vm, const Class* cls, void* data)
+void derivedFrom(VMachine*, const Class*, void*)
 {
    fassert2( false, "Not implemented" );
 }

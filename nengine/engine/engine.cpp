@@ -233,7 +233,7 @@ Engine* Engine::m_instance = 0;
 
 Engine::Engine()
 {
-   TRACE("Engine creation started", 0 )
+   MESSAGE( "Engine creation started" );
    #ifdef FALCON_SYSTEM_WIN
    m_bWindowsNamesConversion = true;
    #else
@@ -312,13 +312,13 @@ Engine::Engine()
    m_instance = this; // modules need the engine.
    m_core  = new CoreModule;
 
-   TRACE("Engine creation complete", 0 )
+   MESSAGE( "Engine creation complete" );
 }
 
 
 Engine::~Engine()
 {
-   TRACE("Engine destruction started", 0 )
+   MESSAGE( "Engine destruction started" );
 
    delete m_mtx;
    delete m_collector;
@@ -368,12 +368,12 @@ Engine::~Engine()
    delete m_core;
    delete m_bom;
    
-   TRACE("Engine destroyed", 0 )
+   MESSAGE( "Engine destroyed" );
 }
 
 void Engine::init()
 {
-   TRACE("Engine init()", 0 )
+   MESSAGE( "Engine init()" );
    fassert( m_instance == 0 );
    if( m_instance == 0 )
    {
@@ -386,7 +386,7 @@ void Engine::init()
 
 void Engine::shutdown()
 {
-   TRACE("Engine shutdown started", 0 )
+   MESSAGE( "Engine shutdown started" );
    fassert( m_instance != 0 );
    if( m_instance != 0 )
    {
@@ -395,7 +395,7 @@ void Engine::shutdown()
 
       delete m_instance;
       m_instance = 0;
-      TRACE("Engine shutdown complete", 0 )
+      MESSAGE( "Engine shutdown complete" );
    }
 }
 

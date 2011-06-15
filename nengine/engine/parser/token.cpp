@@ -25,8 +25,8 @@ Token::Token(uint32 nID, const String& name, int prio, bool bRightAssoc ):
    m_bNonTerminal( false ),
    m_bRightAssoc( bRightAssoc ),
    m_prio(prio),
-   m_name( name ),
-   m_nID( nID )
+   m_nID( nID ),
+   m_name( name )
 {}
 
 Token::Token(const String& name, int prio, bool bRightAssoc):

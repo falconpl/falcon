@@ -41,7 +41,7 @@ public:
 
       cpars( void* other, bool bCopy ):
          m_other(other),
-         m_bCopy(false)
+         m_bCopy(bCopy)
       {}
 
       void* m_other;

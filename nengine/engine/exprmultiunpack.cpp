@@ -76,7 +76,7 @@ ExprMultiUnpack::~ExprMultiUnpack()
    }
 }
 
-bool ExprMultiUnpack::simplify( Item& value ) const
+bool ExprMultiUnpack::simplify( Item& ) const
 {
    return false;
 }

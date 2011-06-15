@@ -107,7 +107,7 @@ void StmtRule::apply_( const PStep*s1 , VMachine* vm )
    {
       // on first alternative -- or if previous alternative failed...
 
-      if( cf.m_seqId >= self->_p->m_altTrees.size() )
+      if( cf.m_seqId >= (int) self->_p->m_altTrees.size() )
       {
          // we failed, and we have no more alternatives.
          TRACE1( "Apply 'rule' at line %d -- rule failed", self->line() );

@@ -136,7 +136,7 @@ public:
     
       \param buffer the buffer where read data will be stored.
       \param size the amount of bytes to read.
-      \return Count of read data; 0 on stream end, -1 on error.
+      \return Count of read data; 0 on stream end, (size_t) -1 on error.
    */
    virtual size_t read( void *buffer, size_t size )=0;
 

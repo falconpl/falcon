@@ -33,7 +33,7 @@ TypeId::~TypeId()
 {
 }
 
-void TypeId::apply( VMachine* vm, int32 nParams )
+void TypeId::apply( VMachine* vm, int32 )
 {
    register VMContext* ctx = vm->currentContext();
 
@@ -69,7 +69,6 @@ void TypeId::apply( VMachine* vm, int32 nParams )
 void TypeId::Invoke::apply_( const PStep*, VMachine* vm  )
 {
    register Item& top = vm->currentContext()->topData();
-   top;
 
    Class* cls;
    void* data;

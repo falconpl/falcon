@@ -33,18 +33,18 @@ void ErrorClass::dispose( void* self ) const
    error->decref();
 }
 
-void* ErrorClass::clone( void* source ) const
+void* ErrorClass::clone( void* ) const
 {
    // errors are uncloneable for now
    return false;
 }
 
-void ErrorClass::serialize( DataWriter* stream, void* self ) const
+void ErrorClass::serialize( DataWriter*, void* ) const
 {
    // TODO
 }
 
-void* ErrorClass::deserialize( DataReader* stream ) const
+void* ErrorClass::deserialize( DataReader* ) const
 {
    //TODO
    return 0;

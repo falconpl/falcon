@@ -89,7 +89,7 @@ size_t FStream::read( void *buffer, size_t size )
 {
    int fd = static_cast<PosixFStreamData*>(m_fsData)->fdFile;
 
-   size_t result = ::read( fd, buffer, size );
+   int result = ::read( fd, buffer, size );
    if ( result < 0 ) {
       m_lastError = (size_t) errno;
       m_status = m_status | t_error;
@@ -114,7 +114,7 @@ size_t FStream::write( const void *buffer, size_t size )
 {
    int fd = static_cast<PosixFStreamData*>(m_fsData)->fdFile;
 
-   size_t result = ::write( fd, buffer, size );
+   int result = ::write( fd, buffer, size );
    if ( result < 0 ) {
       m_lastError = (size_t) errno;
       m_status = m_status | t_error;

@@ -225,7 +225,7 @@ bool DataReader::read( String& tgt )
       }
 
       if( !read(size) ) return false;
-      if( size < 0 || size % nCharCount != 0 )
+      if( size % nCharCount != 0 )
       {
          throw new IOError( ErrorParam(e_deser, __LINE__, __FILE__ ));
       }

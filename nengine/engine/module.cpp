@@ -177,7 +177,7 @@ GlobalSymbol* Module::addVariable( const String& name, bool bExport )
 }
 
 
-GlobalSymbol* Module::addVariable( const String& name, const Item& value, bool bExport )
+GlobalSymbol* Module::addVariable( const String& name, const Item& value, bool /* bExport */ )
 {
    // check if the name is free.
    Private::GlobalsMap& syms = _p->m_gSyms;
@@ -194,6 +194,7 @@ GlobalSymbol* Module::addVariable( const String& name, const Item& value, bool b
          &_p->m_globals.at(_p->m_globals.length()-1) );
    syms[name] = sym;
 
+   //TODO add export.
    return sym;
 }
 

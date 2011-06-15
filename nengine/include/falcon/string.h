@@ -1157,7 +1157,7 @@ public:
 
       This operator is provided as a candy grammar for getCharAt().
    */
-   const char_t operator []( length_t pos ) const { return getCharAt( pos ); }
+   char_t operator []( length_t pos ) const { return getCharAt( pos ); }
 
    /** Adds an extra '\0' terminator past the end of the string.
 
@@ -1206,22 +1206,14 @@ public:
        character in this string. The number of byte used can be
        1, 2 or 4.
 
-       If the new character size of this string is smaller than
-       the original one, characters that cannot be represented
-       are substituted with a \b subst value (by default, the
-       maximum value allowed for the given character size).
-
        If the original character size was different, the
        string is bufferized into a new memory area, otherwise
        the string is unchanged.
 
-       \note subst param is not currently implemented.
-
        @param nsize The new character size for the string.
-       @param subst The substitute character to be used when reducing size.
        @return True if the nsize value is valid, false otherwise.
    */
-   bool setCharSize( uint16 nsize, char_t subst=-1 );
+   bool setCharSize( uint16 nsize );
 
    /** Stores this string in the standard garbage collector.
 
