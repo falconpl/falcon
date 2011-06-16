@@ -60,6 +60,7 @@ set( SRC_FILES
     gtk_ComboBoxEntry.cpp
     gtk_Container.cpp
     gtk_Dialog.cpp
+    gtk_DrawingArea.cpp
     gtk_enums.cpp
     gtk_Editable.cpp
     gtk_Entry.cpp
@@ -119,6 +120,7 @@ set( SRC_FILES
     gtk_SeparatorMenuItem.cpp
     gtk_SeparatorToolItem.cpp
     gtk_SpinButton.cpp
+    gtk_Spinner.cpp
     gtk_Statusbar.cpp
     gtk_Stock.cpp
     gtk_Table.cpp
@@ -219,6 +221,7 @@ set( HDR_FILES
     gtk_ComboBoxEntry.hpp
     gtk_Container.hpp
     gtk_Dialog.hpp
+    gtk_DrawingArea.hpp
     gtk_enums.hpp
     gtk_Editable.hpp
     gtk_Entry.hpp
@@ -278,6 +281,7 @@ set( HDR_FILES
     gtk_SeparatorMenuItem.hpp
     gtk_SeparatorToolItem.hpp
     gtk_SpinButton.hpp
+    gtk_Spinner.hpp
     gtk_Statusbar.hpp
     gtk_Stock.hpp
     gtk_Table.hpp
