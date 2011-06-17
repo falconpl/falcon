@@ -4,6 +4,13 @@
 
 falcon_define_module( CURRENT_MODULE gtk )
 
+configure_file(
+  gtk_library.h.in  ${CMAKE_CURRENT_BINARY_DIR}/gtk_library.h
+  @ONLY
+)
+
+include_directories( ${CMAKE_CURRENT_BINARY_DIR} )
+
 ##
 #   Sources
 #
@@ -42,6 +49,7 @@ set( SRC_FILES
     gtk_ButtonBox.cpp
     gtk_Button.cpp
     gtk_Buildable.cpp
+    gtk_Builder.cpp
     gtk_CellEditable.cpp
     gtk_CellRenderer.cpp
     gtk_CellRendererAccel.cpp
@@ -203,6 +211,7 @@ set( HDR_FILES
     gtk_ButtonBox.hpp
     gtk_Button.hpp
     gtk_Buildable.hpp
+    gtk_Builder.hpp
     gtk_CellEditable.hpp
     gtk_CellRenderer.hpp
     gtk_CellRendererAccel.hpp
