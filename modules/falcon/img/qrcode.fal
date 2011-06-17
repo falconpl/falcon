@@ -60,7 +60,7 @@ ECL = qr.QrErrorCorrectionLevel
 
 /*# QRcode generator.
 
-   This class Is used to create QRCode images.
+   This class provides functionality for creating QRCode images.
 
    The class instance is used to generate one or more
    @a Image instances, which are the actual content
@@ -102,15 +102,15 @@ class Maker
    */
    png_max_size = 1024
 
-   /*# Encode a text oriented string.
+   /*# Encodes a text oriented string.
       @param text The text to be encoded.
-      @optparam ecl The error correction level (defaults to ECL.L).
+      @optparam errorCorrectionLevel The error correction level (defaults to ECL.L).
       @optparam encoding Optional text encoding for the final output.
       @optparam caseSensitive Set to false to create alphanumeric sequences.
 
       @see Maker.ECL
    */
-   function text(text, ecl, encoding, caseSensitive)
+   function text(text, errorCorrectionLevel, encoding, caseSensitive)
       if encoding == nil: encoding = self.encoding
       if caseSensitive == nil: caseSensitive = true
 
@@ -118,19 +118,19 @@ class Maker
          text = transcodeTo(text, encoding)
       end
 
-      input = self._getInput(ecl)
+      input = self._getInput(errorCorrectionLevel)
       qr.QrSplit.splitStringToInput(text, input, qr.QrMode.eight_bit, caseSensitive)
       return self._encodeInput(input)
    end
 
-   /*# Encode raw binary data.
+   /*# Encodes raw binary data.
       @param data The text to be encoded.
-      @optparam ecl The error correction level (defaults to ECL.L).
+      @optparam errorCorrectionLevel The error correction level (defaults to ECL.L).
 
       @see Maker.ECL
    */
-   function raw(data, ecl)
-      input = self._getInput(ecl)
+   function raw(data, errorCorrectionLevel)
+      input = self._getInput(errorCorrectionLevel)
       input.append(qr.QrMode.eight_bit, len(data), data)
       return self._encodeInput(input)
    end
@@ -140,7 +140,7 @@ class Maker
       // TODO
    end
 
-   /* Private part */
+   /* private part */
 
    function _getInput(errorCorrectionLevel)
       if errorCorrectionLevel == nil: errorCorrectionLevel = qr.QrErrorCorrectionLevel.L
@@ -165,19 +165,24 @@ class Maker
          raise qr.QrError(qr.QrError.encoding_error, i"error creating frame filler")
       end
 
+      // cache function references to improve performance 
+      funcGetCode = raw.getCode
+      funcNext = filler.next
+      funcSetFrameAt = filler.setFrameAt
+
       for i in [0:raw.dataLength + raw.eccLength]
-         code = raw.getCode()
+         code = funcGetCode()
          bit = 0x80
          for j in [0:8]
-            addr = filler.next()
-            filler.setFrameAt(addr, 0x02 || ((bit && code) != 0 ? 1 : 0))
+            addr = funcNext()
+            funcSetFrameAt(addr, 0x02 || ((bit && code) != 0 ? 1 : 0))
             bit >>= 1
          end
       end; raw = nil
 
       for i in [0:spec.getRemainder(version)]
-         addr = filler.next()
-         filler.setFrameAt(addr, 0x02)
+         addr = funcNext()
+         funcSetFrameAt(addr, 0x02)
       end
 
       frame = filler.frame
@@ -271,17 +276,12 @@ class Image(version, width, data, maker)
       return self._width
    end
 
-   /* Private part */
+   /* private part */
 
-   function _makeImage(fnmaker, outStream, size, margin)
-      if not self._binarized
-         binarized = self._binarized = qr.QrTools.binarize(self._code)
-      else
-         binarized = self._binarized
-      end
-
+   function _makeImage(func, outStream, size, margin)
+      if not self._binarized: self._binarized = qr.QrTools.binarize(self._code)
       maxSize = int(self._maker.png_max_size / (len(self._code) + 2 * margin))
-      fnmaker(binarized, outStream, min(max(1, size), maxSize), margin)
+      func(self._binarized, outStream, min(max(1, size), maxSize), margin)
    end
 
    function _saveOn(func, filename, size, margin)
