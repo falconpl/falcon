@@ -259,7 +259,7 @@ FALCON_MODULE_DECL
             Falcon::Gtk::Container::modInit( self );
                 Falcon::Gtk::Bin::modInit( self );
                     Falcon::Gtk::Alignment::modInit( self );
-		    Falcon::Gtk::ScrolledWindow::modInit( self );
+                    Falcon::Gtk::ScrolledWindow::modInit( self );
                     Falcon::Gtk::Button::modInit( self );
                         Falcon::Gtk::ColorButton::modInit( self );
                         Falcon::Gtk::FontButton::modInit( self );
