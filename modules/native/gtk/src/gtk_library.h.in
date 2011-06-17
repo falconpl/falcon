@@ -1,0 +1,8 @@
+/* This file is needed by the GtkBuilder */
+
+#ifndef MODGTK_GTK2_LIBRARY_H
+#define MODGTK_GTK2_LIBRARY_H
+
+#define GTK2_GTK_LIBRARY "@GTK2_GTK_LIBRARY@"
+
+#endif

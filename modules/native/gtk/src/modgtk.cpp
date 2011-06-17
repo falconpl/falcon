@@ -42,6 +42,7 @@
 #include "gtk_AspectFrame.hpp"
 #include "gtk_Bin.hpp"
 #include "gtk_Box.hpp"
+#include "gtk_Builder.hpp"
 #include "gtk_Button.hpp"
 #include "gtk_ButtonBox.hpp"
 #include "gtk_CellEditable.hpp"
@@ -252,6 +253,7 @@ FALCON_MODULE_DECL
     Falcon::Gtk::ListStore::modInit( self );
     Falcon::Gtk::Object::modInit( self );
         Falcon::Gtk::Adjustment::modInit( self );
+        Falcon::Gtk::Builder::modInit( self );
         Falcon::Gtk::FileFilter::modInit( self );
         Falcon::Gtk::RecentFilter::modInit( self );
         Falcon::Gtk::TreeViewColumn::modInit( self );
