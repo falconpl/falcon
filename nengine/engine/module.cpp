@@ -31,6 +31,7 @@ public:
    typedef std::map<String, GlobalSymbol*> GlobalsMap;
    GlobalsMap m_gSyms;
    GlobalsMap m_gExports;
+   GlobalsMap m_gImports;
 
    typedef std::map<String, Function*> FunctionMap;
    FunctionMap m_functions;
@@ -235,7 +236,7 @@ void Module::enumerateGlobals( SymbolEnumerator& rator ) const
    while( iter != syms.end() )
    {
       GlobalSymbol* sym = iter->second;
-      if( ! rator( sym, ++iter == syms.end()) )
+      if( ! rator( *sym, ++iter == syms.end()) )
          break;
    }
 }
@@ -249,7 +250,20 @@ void Module::enumerateExports( SymbolEnumerator& rator ) const
    while( iter != syms.end() )
    {
       GlobalSymbol* sym = iter->second;
-      if( ! rator( sym, ++iter == syms.end()) )
+      if( ! rator( *sym, ++iter == syms.end()) )
+         break;
+   }
+}
+
+void Module::enumerateImports( SymbolEnumerator& rator ) const
+{
+   const Private::GlobalsMap& syms = _p->m_gImports;
+   Private::GlobalsMap::const_iterator iter = syms.begin();
+
+   while( iter != syms.end() )
+   {
+      GlobalSymbol* sym = iter->second;
+      if( ! rator( *sym, ++iter == syms.end()) )
          break;
    }
 }

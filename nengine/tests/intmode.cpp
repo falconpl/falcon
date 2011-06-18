@@ -41,6 +41,7 @@
 #include <falcon/intcompiler.h>
 #include <falcon/globalsymbol.h>
 #include <falcon/genericerror.h>
+#include <falcon/cm/coremodule.h>
 
 using namespace Falcon;
 
@@ -67,6 +68,7 @@ public:
 void go()
 {
    VMachine vm;
+   vm.link( new CoreModule );
    IntCompiler intComp(&vm);
 
    String tgt;

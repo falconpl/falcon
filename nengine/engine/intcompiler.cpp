@@ -119,8 +119,7 @@ Symbol* IntCompiler::Context::onUndefinedSymbol( const String& name )
    if( gsym == 0 )
    {
       // try to find it in the exported symbols of the VM.
-      //TODO
-      // gsym = m_owner->m_vm->findPublicSymbol( sym->name() )
+      gsym = (Symbol*) m_owner->m_vm->findExportedSymbol( name );
    }
 
    return gsym;

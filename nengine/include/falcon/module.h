@@ -151,13 +151,16 @@ public:
    Function* getFunction( const String& name ) const;
 
    /** Enumerator receiving symbols in this module. */
-   typedef Enumerator<GlobalSymbol*> SymbolEnumerator;
+   typedef Enumerator<GlobalSymbol> SymbolEnumerator;
 
    /** Enumerate all the globals known by this module. */
    void enumerateGlobals( SymbolEnumerator& rator ) const;
 
    /** Enumerate all exported global values known by this module. */
    void enumerateExports( SymbolEnumerator& rator ) const;
+
+    /** Enumerate all imported global values required by this module. */
+   void enumerateImports( SymbolEnumerator& rator ) const;
 
    /** Candy grammar to add exported functions. */
    Module& operator <<( Function* f )
