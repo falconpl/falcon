@@ -56,7 +56,7 @@ QrMask = qr.QrMask
    - **Q**: Medium-high correction
    - **H**: High correction.
 */
-ECL = qr.QrErrorCorrectionLevel
+ECL = qr.QrEcl
 
 /*# QRcode generator.
 
@@ -69,7 +69,7 @@ ECL = qr.QrErrorCorrectionLevel
 */
 class Maker
    /*#
-   * Caching directory -- set to nil to disable cache.
+   * Cache directory -- set to nil to disable caching.
    */
    cache_dir = nil
 
@@ -86,7 +86,7 @@ class Maker
    find_best_mask = true
 
    /*#
-   * The number of masks to be checked - mask ids are generated randomly.
+   * The number of masks to be checked -- mask ids are generated randomly.
    */
    find_from_random = 0
 
@@ -102,15 +102,27 @@ class Maker
    */
    png_max_size = 1024
 
-   /*# Encodes a text oriented string.
+   /*# Encodes raw binary data.
+      @param data The text to be encoded.
+      @optparam ecl The error correction level (defaults to ECL.L).
+
+      @see Maker.ECL
+   */
+   function encodeBin(data, ecl)
+      input = self._getInput(ecl)
+      input.append(qr.QrMode.bin, len(data), data)
+      return self._encodeInput(input)
+   end
+
+   /*# Encodes a text string.
       @param text The text to be encoded.
-      @optparam errorCorrectionLevel The error correction level (defaults to ECL.L).
+      @optparam ecl The error correction level (defaults to ECL.L).
       @optparam encoding Optional text encoding for the final output.
       @optparam caseSensitive Set to false to create alphanumeric sequences.
 
       @see Maker.ECL
    */
-   function text(text, errorCorrectionLevel, encoding, caseSensitive)
+   function encodeText(text, ecl, encoding, caseSensitive)
       if encoding == nil: encoding = self.encoding
       if caseSensitive == nil: caseSensitive = true
 
@@ -118,38 +130,40 @@ class Maker
          text = transcodeTo(text, encoding)
       end
 
-      input = self._getInput(errorCorrectionLevel)
-      qr.QrSplit.splitStringToInput(text, input, qr.QrMode.eight_bit, caseSensitive)
-      return self._encodeInput(input)
-   end
-
-   /*# Encodes raw binary data.
-      @param data The text to be encoded.
-      @optparam errorCorrectionLevel The error correction level (defaults to ECL.L).
-
-      @see Maker.ECL
-   */
-   function raw(data, errorCorrectionLevel)
-      input = self._getInput(errorCorrectionLevel)
-      input.append(qr.QrMode.eight_bit, len(data), data)
+      input = self._getInput(ecl)
+      qr.QrSplit.splitStringToInput(text, input, qr.QrMode.bin, caseSensitive)
       return self._encodeInput(input)
    end
 
    //# @ignore
-   function encodeStruct(data, errorCorrectionLevel)
-      // TODO
+   function encodeNum(data, ecl)
+      raise qr.QrError(qr.QrError.functionality_not_supported, "encodeNum")
+   end
+
+   //# @ignore
+   function encodeAn(data, ecl)
+      raise qr.QrError(qr.QrError.functionality_not_supported, "encodeAn")
+   end
+
+   //# @ignore
+   function encodeKanji(data, ecl)
+      raise qr.QrError(qr.QrError.functionality_not_supported, "encodeKanji")
+   end
+
+   //# @ignore
+   function encodeStruct(data, ecl)
+      raise qr.QrError(qr.QrError.functionality_not_supported, "encodeStruct")
    end
 
    /* private part */
 
-   function _getInput(errorCorrectionLevel)
-      if errorCorrectionLevel == nil: errorCorrectionLevel = qr.QrErrorCorrectionLevel.L
-      if errorCorrectionLevel < qr.QrErrorCorrectionLevel.L \
-         or errorCorrectionLevel > qr.QrErrorCorrectionLevel.H
-         raise qr.QrError(qr.QrError.invalid_error_correction_level, @i'$(errorCorrectionLevel) is not supported')
+   function _getInput(ecl)
+      if ecl == nil: ecl = qr.QrEcl.L
+      if ecl < qr.QrEcl.L or ecl > qr.QrEcl.H
+         raise qr.QrError(qr.QrError.invalid_ecl, @i"$(ecl) is not supported")
       end
 
-      return qr.QrInput(0, errorCorrectionLevel)
+      return qr.QrInput(0, ecl)
    end
 
    function _encodeInput(input, maskNo)
@@ -190,12 +204,12 @@ class Maker
 
       if maskNo < 0
          if self.find_best_mask
-            masked = maskObj.mask(width, frame, input.errorCorrectionLevel)
+            masked = maskObj.mask(width, frame, input.ecl)
          else
-            masked = maskObj.createMask(width, frame, self.default_mask % 8, input.errorCorrectionLevel)
+            masked = maskObj.createMask(width, frame, self.default_mask % 8, input.ecl)
          end
       else
-         masked = maskObj.createMask(width, frame, maskNo, input.errorCorrectionLevel)
+         masked = maskObj.createMask(width, frame, maskNo, input.ecl)
       end
 
       if masked == nil
