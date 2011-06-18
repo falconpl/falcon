@@ -75,6 +75,8 @@ if ( WIN32 )
     set( GTK2_PANGO_INCLUDE_DIR "${GTK_DIR}/include/pango-1.0" )
     set( GTK2_PANGO_LIBRARY "${GTK_DIR}/lib/pango-1.0.lib" )
 
+    set( GTK2_GMODULE_LIBRARY "${GTK_DIR}/lib/gmodule-2.0.lib" )
+
     find_package( GTK2 2.12 REQUIRED )
 
     include_directories(
@@ -101,6 +103,7 @@ if ( WIN32 )
         ${GTK2_GTHREAD_LIBRARY}
         ${GTK2_GTK_LIBRARY}
         ${GTK2_PANGO_LIBRARY}
+        ${GTK2_GMODULE_LIBRARY}
         )
 
 else() # Linux
