@@ -22,7 +22,6 @@
 
 #include <map>
 
-
 namespace Falcon {
 
 class Module::Private
@@ -169,7 +168,6 @@ GlobalSymbol* Module::addFunction( const String &name, ext_func_t f, bool bExpor
    Function* extfunc = new ExtFunc( name, f, this );
    return addFunction( extfunc, bExport );
 }
-
 
 
 GlobalSymbol* Module::addVariable( const String& name, bool bExport )

@@ -61,6 +61,7 @@ public:
    
    virtual void op_compare( VMachine *vm, void* self ) const;
    virtual void op_toString( VMachine *vm, void* self ) const;
+   virtual void op_true( VMachine *vm, void* self ) const;
 
 private:
 

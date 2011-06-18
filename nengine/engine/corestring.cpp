@@ -2,7 +2,7 @@
    FALCON - The Falcon Programming Language.
    FILE: corestring.cpp
 
-   Function object handler.
+   String type handler.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: Sat, 15 Jan 2011 19:09:07 +0100
@@ -16,8 +16,7 @@
 #include <falcon/corestring.h>
 #include <falcon/itemid.h>
 #include <falcon/vm.h>
-
-#include "falcon/optoken.h"
+#include <falcon/optoken.h>
 
 namespace Falcon {
 
@@ -262,6 +261,12 @@ void CoreString::op_toString( VMachine *, void* ) const
    // nothing to do -- the topmost item of the stack is already a string.
 }
 
+void CoreString::op_true( VMachine * vm, void* str) const
+{
+   Item* op1;
+   OpToken token( vm, op1 );
+   token.exit( static_cast<String*>(str)->size() != 0 );
+}
 
 }
 

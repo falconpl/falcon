@@ -1660,6 +1660,12 @@ static void apply_expr_func(const Rule&, Parser& p)
    p.pushState( "InlineFunc", on_close_function , &p );
 }
 
+
+static void apply_class( const Rule&, Parser& p )
+{
+
+}
+
 //==========================================================
 // SourceParser
 //==========================================================
@@ -1728,6 +1734,7 @@ SourceParser::SourceParser():
 
    T_function("function"),
    T_return("return"),
+   T_class("class"),
 
    T_true( "true" ),
    T_false( "false" )
@@ -1784,39 +1791,39 @@ SourceParser::SourceParser():
    // Expression
    //
    Expr << "Expr";
-      Expr<< (r_Expr_assign << "Expr_assign" << apply_expr_assign << Expr << T_EqSign << NeListExpr );
+   Expr<< (r_Expr_assign << "Expr_assign" << apply_expr_assign << Expr << T_EqSign << NeListExpr );
 
-      Expr<< (r_Expr_equal << "Expr_equal" << apply_expr_equal << Expr << T_DblEq << Expr);
-      Expr<< (r_Expr_diff << "Expr_diff" << apply_expr_diff << Expr << T_NotEq << Expr);
-      Expr<< (r_Expr_less << "Expr_less" << apply_expr_less << Expr << T_Less << Expr);
-      Expr<< (r_Expr_greater << "Expr_greater" << apply_expr_greater << Expr << T_Greater << Expr);
-      Expr<< (r_Expr_le << "Expr_le" << apply_expr_le << Expr << T_LE << Expr);
-      Expr<< (r_Expr_ge << "Expr_ge" << apply_expr_ge << Expr << T_GE << Expr);
-      Expr<< (r_Expr_eeq << "Expr_eeq" << apply_expr_eeq << Expr << T_eq << Expr);
+   Expr<< (r_Expr_equal << "Expr_equal" << apply_expr_equal << Expr << T_DblEq << Expr);
+   Expr<< (r_Expr_diff << "Expr_diff" << apply_expr_diff << Expr << T_NotEq << Expr);
+   Expr<< (r_Expr_less << "Expr_less" << apply_expr_less << Expr << T_Less << Expr);
+   Expr<< (r_Expr_greater << "Expr_greater" << apply_expr_greater << Expr << T_Greater << Expr);
+   Expr<< (r_Expr_le << "Expr_le" << apply_expr_le << Expr << T_LE << Expr);
+   Expr<< (r_Expr_ge << "Expr_ge" << apply_expr_ge << Expr << T_GE << Expr);
+   Expr<< (r_Expr_eeq << "Expr_eeq" << apply_expr_eeq << Expr << T_eq << Expr);
 
-      Expr<< (r_Expr_call << "Expr_call" << apply_expr_call << Expr << T_Openpar << ListExpr << T_Closepar );
-      Expr<< (r_Expr_index << "Expr_index" << apply_expr_index << Expr << T_OpenSquare << Expr << T_CloseSquare );
-      Expr<< (r_Expr_star_index << "Expr_star_index" << apply_expr_star_index << Expr << T_OpenSquare << T_Times << Expr << T_CloseSquare );
-      Expr<< (r_Expr_empty_dict << "Expr_empty_dict" << apply_expr_empty_dict << T_OpenSquare << T_Arrow << T_CloseSquare );
-      Expr<< (r_Expr_array_decl << "Expr_array_decl" << apply_expr_array_decl << T_OpenSquare << ListExprOrPairs << T_CloseSquare );
-      Expr<< (r_Expr_empty_dict2 << "Expr_empty_dict2" << apply_expr_empty_dict << T_DotSquare << T_Arrow << T_CloseSquare );
-      Expr<< (r_Expr_array_decl2 << "Expr_array_decl2" << apply_expr_array_decl << T_DotSquare << SeqExprOrPairs << T_CloseSquare );
-      Expr<< (r_Expr_dot << "Expr_dot" << apply_expr_dot << Expr << T_Dot << T_Name);
-      Expr<< (r_Expr_plus << "Expr_plus" << apply_expr_plus << Expr << T_Plus << Expr);
-      Expr<< (r_Expr_preinc << "Expr_preinc" << apply_expr_preinc << T_PlusPlus << Expr);
-      Expr<< (r_Expr_postinc << "Expr_postinc" << apply_expr_postinc << Expr << T_PlusPlus);
-      Expr<< (r_Expr_minus << "Expr_minus" << apply_expr_minus << Expr << T_Minus << Expr);
-      Expr<< (r_Expr_pars << "Expr_pars" << apply_expr_pars << T_Openpar << Expr << T_Closepar);
-      Expr<< (r_Expr_pars2 << "Expr_pars2" << apply_expr_pars << T_DotPar << Expr << T_Closepar);
-      Expr<< (r_Expr_times << "Expr_times" << apply_expr_times << Expr << T_Times << Expr);
-      Expr<< (r_Expr_div   << "Expr_div"   << apply_expr_div   << Expr << T_Divide << Expr );
-      Expr<< (r_Expr_pow   << "Expr_pow"   << apply_expr_pow   << Expr << T_Power << Expr );
-      // the lexer may find a non-unary minus when parsing it not after an operator...;
-      Expr<< (r_Expr_neg   << "Expr_neg"   << apply_expr_neg << T_Minus << Expr );
-      // ... or find an unary minus when getting it after another operator.;
-      Expr<< (r_Expr_neg2   << "Expr_neg2"   << apply_expr_neg << T_UnaryMinus << Expr );
-      Expr<< (r_Expr_Atom << "Expr_atom" << apply_expr_atom << Atom);
-      Expr<< (r_Expr_function << "Expr_func" << apply_expr_func << T_function << T_Openpar << ListSymbol << T_Closepar << T_EOL);
+   Expr<< (r_Expr_call << "Expr_call" << apply_expr_call << Expr << T_Openpar << ListExpr << T_Closepar );
+   Expr<< (r_Expr_index << "Expr_index" << apply_expr_index << Expr << T_OpenSquare << Expr << T_CloseSquare );
+   Expr<< (r_Expr_star_index << "Expr_star_index" << apply_expr_star_index << Expr << T_OpenSquare << T_Times << Expr << T_CloseSquare );
+   Expr<< (r_Expr_empty_dict << "Expr_empty_dict" << apply_expr_empty_dict << T_OpenSquare << T_Arrow << T_CloseSquare );
+   Expr<< (r_Expr_array_decl << "Expr_array_decl" << apply_expr_array_decl << T_OpenSquare << ListExprOrPairs << T_CloseSquare );
+   Expr<< (r_Expr_empty_dict2 << "Expr_empty_dict2" << apply_expr_empty_dict << T_DotSquare << T_Arrow << T_CloseSquare );
+   Expr<< (r_Expr_array_decl2 << "Expr_array_decl2" << apply_expr_array_decl << T_DotSquare << SeqExprOrPairs << T_CloseSquare );
+   Expr<< (r_Expr_dot << "Expr_dot" << apply_expr_dot << Expr << T_Dot << T_Name);
+   Expr<< (r_Expr_plus << "Expr_plus" << apply_expr_plus << Expr << T_Plus << Expr);
+   Expr<< (r_Expr_preinc << "Expr_preinc" << apply_expr_preinc << T_PlusPlus << Expr);
+   Expr<< (r_Expr_postinc << "Expr_postinc" << apply_expr_postinc << Expr << T_PlusPlus);
+   Expr<< (r_Expr_minus << "Expr_minus" << apply_expr_minus << Expr << T_Minus << Expr);
+   Expr<< (r_Expr_pars << "Expr_pars" << apply_expr_pars << T_Openpar << Expr << T_Closepar);
+   Expr<< (r_Expr_pars2 << "Expr_pars2" << apply_expr_pars << T_DotPar << Expr << T_Closepar);
+   Expr<< (r_Expr_times << "Expr_times" << apply_expr_times << Expr << T_Times << Expr);
+   Expr<< (r_Expr_div   << "Expr_div"   << apply_expr_div   << Expr << T_Divide << Expr );
+   Expr<< (r_Expr_pow   << "Expr_pow"   << apply_expr_pow   << Expr << T_Power << Expr );
+   // the lexer may find a non-unary minus when parsing it not after an operator...;
+   Expr<< (r_Expr_neg   << "Expr_neg"   << apply_expr_neg << T_Minus << Expr );
+   // ... or find an unary minus when getting it after another operator.;
+   Expr<< (r_Expr_neg2   << "Expr_neg2"   << apply_expr_neg << T_UnaryMinus << Expr );
+   Expr<< (r_Expr_Atom << "Expr_atom" << apply_expr_atom << Atom);
+   Expr<< (r_Expr_function << "Expr_func" << apply_expr_func << T_function << T_Openpar << ListSymbol << T_Closepar << T_EOL);
       //Expr << (r_Expr_lambda << "Expr_lambda" << apply_expr_lambda << T_OpenGraph << ListSymbol << T_Arrow  );
 
    S_Function << "Function"
@@ -1824,9 +1831,10 @@ SourceParser::SourceParser():
             << T_function << T_Name << T_Openpar << ListSymbol << T_Closepar <<  T_Colon << Expr << T_EOL )
        */
       << (r_function << "Function decl" << apply_function
-            << T_function << T_Name << T_Openpar << ListSymbol << T_Closepar << T_EOL )
+             << T_function << T_Name << T_Openpar << ListSymbol << T_Closepar << T_EOL )
       ;
 
+      
    S_Return << "Return"
       << (r_return << "return" << apply_return << T_return << Expr << T_EOL)
       ;
@@ -1842,50 +1850,57 @@ SourceParser::SourceParser():
       ;
 
    ListExpr << "ListExpr";
-      ListExpr<< (r_ListExpr_next << "ListExpr_next" << apply_ListExpr_next << ListExpr << T_Comma << Expr );
-      ListExpr<< (r_ListExpr_first << "ListExpr_first" << apply_ListExpr_first << Expr );
-      ListExpr<< (r_ListExpr_empty << "ListExpr_empty" << apply_ListExpr_empty );
+   ListExpr<< (r_ListExpr_next << "ListExpr_next" << apply_ListExpr_next << ListExpr << T_Comma << Expr );
+   ListExpr<< (r_ListExpr_first << "ListExpr_first" << apply_ListExpr_first << Expr );
+   ListExpr<< (r_ListExpr_empty << "ListExpr_empty" << apply_ListExpr_empty );
 
    NeListExpr << "NeListExpr";
-      NeListExpr<< (r_NeListExpr_next << "NeListExpr_next" << apply_NeListExpr_next << NeListExpr << T_Comma << Expr );
-      NeListExpr<< (r_NeListExpr_first << "NeListExpr_first" << apply_NeListExpr_first << Expr );
+   NeListExpr<< (r_NeListExpr_next << "NeListExpr_next" << apply_NeListExpr_next << NeListExpr << T_Comma << Expr );
+   NeListExpr<< (r_NeListExpr_first << "NeListExpr_first" << apply_NeListExpr_first << Expr );
 
 
    NeListExpr_ungreed << "NeListExpr_ungreed";
-      NeListExpr_ungreed<< (r_NeListExpr_ungreed_next << "NeListExpr_ungreed_next" << apply_NeListExpr_ungreed_next << NeListExpr_ungreed << T_Comma << Expr );
-      NeListExpr_ungreed<< (r_NeListExpr_ungreed_first << "NeListExpr_ungreed_first" << apply_NeListExpr_ungreed_first << Expr );
-      r_NeListExpr_ungreed_next.setGreedy(false);
+   NeListExpr_ungreed<< (r_NeListExpr_ungreed_next << "NeListExpr_ungreed_next" << apply_NeListExpr_ungreed_next << NeListExpr_ungreed << T_Comma << Expr );
+   NeListExpr_ungreed<< (r_NeListExpr_ungreed_first << "NeListExpr_ungreed_first" << apply_NeListExpr_ungreed_first << Expr );
+   r_NeListExpr_ungreed_next.setGreedy(false);
 
 
    ListExprOrPairs << "ListExprOrPairs";
-      ListExprOrPairs<< (r_ListExprOrPairs_next_pair << "ListExprOrPairs_next_pair" << apply_ListExprOrPairs_next_pair << ListExprOrPairs << T_Comma << Expr << T_Arrow << Expr );
-      ListExprOrPairs<< (r_ListExprOrPairs_next << "ListExprOrPairs_next" << apply_ListExprOrPairs_next << ListExprOrPairs << T_Comma << Expr );
-      ListExprOrPairs<< (r_ListExprOrPairs_first_pair << "ListExprOrPairs_first_pair" << apply_ListExprOrPairs_first_pair << Expr << T_Arrow << Expr );
-      ListExprOrPairs<< (r_ListExprOrPairs_first << "ListExprOrPairs_first" << apply_ListExprOrPairs_first << Expr );
-      ListExprOrPairs<< (r_ListExprOrPairs_empty << "ListExprOrPairs_empty" << apply_ListExprOrPairs_empty );
+   ListExprOrPairs<< (r_ListExprOrPairs_next_pair << "ListExprOrPairs_next_pair" << apply_ListExprOrPairs_next_pair << ListExprOrPairs << T_Comma << Expr << T_Arrow << Expr );
+   ListExprOrPairs<< (r_ListExprOrPairs_next << "ListExprOrPairs_next" << apply_ListExprOrPairs_next << ListExprOrPairs << T_Comma << Expr );
+   ListExprOrPairs<< (r_ListExprOrPairs_first_pair << "ListExprOrPairs_first_pair" << apply_ListExprOrPairs_first_pair << Expr << T_Arrow << Expr );
+   ListExprOrPairs<< (r_ListExprOrPairs_first << "ListExprOrPairs_first" << apply_ListExprOrPairs_first << Expr );
+   ListExprOrPairs<< (r_ListExprOrPairs_empty << "ListExprOrPairs_empty" << apply_ListExprOrPairs_empty );
 
    SeqExprOrPairs << "SeqExprOrPairs";
-      SeqExprOrPairs<< (r_SeqExprOrPairs_next_pair_cm << "SeqExprOrPairs_next_pair_cm" << apply_SeqExprOrPairs_next_pair_cm
-            << SeqExprOrPairs << T_Comma << Expr << T_Arrow << Expr );
-      SeqExprOrPairs<< (r_SeqExprOrPairs_next_pair << "SeqExprOrPairs_next_pair" << apply_SeqExprOrPairs_next_pair
-            << SeqExprOrPairs << Expr << T_Arrow << Expr );
-      SeqExprOrPairs<< (r_SeqExprOrPairs_next << "SeqExprOrPairs_next" << apply_SeqExprOrPairs_next << SeqExprOrPairs << Expr );
-      SeqExprOrPairs<< (r_SeqExprOrPairs_next_cm << "SeqExprOrPairs_next_cm" << apply_SeqExprOrPairs_next_cm << SeqExprOrPairs << T_Comma << Expr );
-      SeqExprOrPairs<< (r_SeqExprOrPairs_first_pair << "SeqExprOrPairs_first_pair" << apply_SeqExprOrPairs_first_pair << Expr << T_Arrow << Expr );
-      SeqExprOrPairs<< (r_SeqExprOrPairs_first << "SeqExprOrPairs_first" << apply_SeqExprOrPairs_first << Expr );
-      SeqExprOrPairs<< (r_SeqExprOrPairs_empty << "SeqExprOrPairs_empty" << apply_SeqExprOrPairs_empty );
+   SeqExprOrPairs<< (r_SeqExprOrPairs_next_pair_cm << "SeqExprOrPairs_next_pair_cm" << apply_SeqExprOrPairs_next_pair_cm
+         << SeqExprOrPairs << T_Comma << Expr << T_Arrow << Expr );
+   SeqExprOrPairs<< (r_SeqExprOrPairs_next_pair << "SeqExprOrPairs_next_pair" << apply_SeqExprOrPairs_next_pair
+         << SeqExprOrPairs << Expr << T_Arrow << Expr );
+   SeqExprOrPairs<< (r_SeqExprOrPairs_next << "SeqExprOrPairs_next" << apply_SeqExprOrPairs_next << SeqExprOrPairs << Expr );
+   SeqExprOrPairs<< (r_SeqExprOrPairs_next_cm << "SeqExprOrPairs_next_cm" << apply_SeqExprOrPairs_next_cm << SeqExprOrPairs << T_Comma << Expr );
+   SeqExprOrPairs<< (r_SeqExprOrPairs_first_pair << "SeqExprOrPairs_first_pair" << apply_SeqExprOrPairs_first_pair << Expr << T_Arrow << Expr );
+   SeqExprOrPairs<< (r_SeqExprOrPairs_first << "SeqExprOrPairs_first" << apply_SeqExprOrPairs_first << Expr );
+   SeqExprOrPairs<< (r_SeqExprOrPairs_empty << "SeqExprOrPairs_empty" << apply_SeqExprOrPairs_empty );
 
    SeqExprOrPairs.prio(175);
 
    ListSymbol << "ListSymbol";
-     ListSymbol<< (r_ListSymbol_next << "ListSymbol_next" << apply_ListSymbol_next << ListSymbol << T_Comma << T_Name );
-      ListSymbol<< (r_ListSymbol_first << "ListSymbol_first" << apply_ListSymbol_first << T_Name );
-      ListSymbol<< (r_ListSymbol_empty << "ListSymbol_empty" << apply_ListSymbol_empty );
+   ListSymbol<< (r_ListSymbol_next << "ListSymbol_next" << apply_ListSymbol_next << ListSymbol << T_Comma << T_Name );
+   ListSymbol<< (r_ListSymbol_first << "ListSymbol_first" << apply_ListSymbol_first << T_Name );
+   ListSymbol<< (r_ListSymbol_empty << "ListSymbol_empty" << apply_ListSymbol_empty );
 
    NeListSymbol << "NeListSymbol";
-      NeListSymbol<< (r_NeListSymbol_next << "NeListSymbol_next" << apply_NeListSymbol_next << NeListSymbol << T_Comma << T_Name );
-      NeListSymbol<< (r_NeListSymbol_first << "NeListSymbol_first" << apply_NeListSymbol_first << T_Name );
+   NeListSymbol<< (r_NeListSymbol_next << "NeListSymbol_next" << apply_NeListSymbol_next << NeListSymbol << T_Comma << T_Name );
+   NeListSymbol<< (r_NeListSymbol_first << "NeListSymbol_first" << apply_NeListSymbol_first << T_Name );
 
+   //==================================
+   // Class
+   S_Class << "Class";
+   S_Class << (r_class << "Class decl" << apply_class << T_class << T_Name << T_EOL );
+   S_Class << (r_class_p << "Class decl with params" << apply_class_p
+             << T_class << T_Name << T_Openpar << ListSymbol << T_Closepar << T_EOL );
+   
    //==========================================================================
    //State declarations
    //

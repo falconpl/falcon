@@ -24,15 +24,11 @@ namespace Falcon
 
 /** Class defined by a Falcon script.
 
- This class implements a class as seen by a Falcon script. It stores the
- properties and the methods as declared by the script and has support to allow
- the script to re-define autonomously the operands by declaring special methods
- at script level.
-
- The CoreClass Class has meta-information about the objects it can create
- and about the basic, default properties it provides.
-
- Notice that it has also implicit properties as "name",
+ This class implements a class handler for classes a Falcon script. In other words,
+ it is a handler for the "class type". The content of this type is a FalconClass,
+ where properties and methods declared in a Falcon script class declaration
+ are stored.
+ 
  */
 class FALCON_DYN_CLASS CoreClass: public Class
 {
@@ -54,6 +50,7 @@ public:
    //=============================================================
 
    virtual void op_isTrue( VMachine *vm, void* self ) const;
+   virtual void op_call( VMachine *vm, int32 pcount, void* self ) const;
 };
 
 }

@@ -95,6 +95,7 @@ public:
    Parsing::Terminal T_while;
    Parsing::Terminal T_function;
    Parsing::Terminal T_return;
+   Parsing::Terminal T_class;
 
    Parsing::Terminal T_true;
    Parsing::Terminal T_false;
@@ -191,6 +192,9 @@ public:
    Parsing::NonTerminal S_Return;
    Parsing::Rule r_return;
 
+   Parsing::NonTerminal S_Class;
+   Parsing::Rule r_class;
+   Parsing::Rule r_class_p;
 
    //================================================
    // Atom

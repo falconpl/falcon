@@ -58,6 +58,7 @@
 #define FLC_CLASS_ID_ARRAY    10
 #define FLC_CLASS_ID_DICT     11
 #define FLC_CLASS_ID_RANGE    12
+#define FLC_CLASS_ID_CLASS    13
 
 // Other generic object
 #define FLC_CLASS_ID_OBJECT   20
