@@ -568,6 +568,30 @@ static void apply_Atom_String ( const Rule&, Parser& p )
    p.simplify(1,ti2);
 }
 
+static void apply_Atom_False ( const Rule&, Parser& p )
+{
+   // << (r_Atom_Nil << "Atom_Nil" << apply_Atom_Nil << T_Nil )
+   SourceParser& sp = static_cast<SourceParser&>(p);
+
+   TokenInstance* ti = p.getNextToken();
+   TokenInstance* ti2 = new TokenInstance(ti->line(), ti->chr(), sp.Atom );
+   ti2->setValue( new ExprValue(Item(false)), expr_deletor );
+   p.simplify(1,ti2);
+}
+
+
+static void apply_Atom_True ( const Rule&, Parser& p )
+{
+   // << (r_Atom_Nil << "Atom_Nil" << apply_Atom_Nil << T_Nil )
+   SourceParser& sp = static_cast<SourceParser&>(p);
+
+   TokenInstance* ti = p.getNextToken();
+   TokenInstance* ti2 = new TokenInstance(ti->line(), ti->chr(), sp.Atom );
+   ti2->setValue( new ExprValue(Item(true)), expr_deletor );
+   p.simplify(1,ti2);
+}
+
+
 static void apply_Atom_Nil ( const Rule&, Parser& p )
 {
    // << (r_Atom_Nil << "Atom_Nil" << apply_Atom_Nil << T_Nil )
@@ -1703,7 +1727,10 @@ SourceParser::SourceParser():
    T_while("while"),
 
    T_function("function"),
-   T_return("return")
+   T_return("return"),
+
+   T_true( "true" ),
+   T_false( "false" )
 {
    S_Autoexpr << "Autoexpr"
       << (r_line_autoexpr << "Autoexpr" << apply_line_expr << Expr << T_EOL)
@@ -1809,6 +1836,8 @@ SourceParser::SourceParser():
       << (r_Atom_Float << "Atom_Float" << apply_Atom_Float << T_Float )
       << (r_Atom_Name << "Atom_Name" << apply_Atom_Name << T_Name )
       << (r_Atom_String << "Atom_String" << apply_Atom_String << T_String )
+      << (r_Atom_False<< "Atom_False" << apply_Atom_False << T_false )
+      << (r_Atom_True<< "Atom_True" << apply_Atom_True << T_true )
       << (r_Atom_Nil<< "Atom_Nil" << apply_Atom_Nil << T_nil )
       ;
 

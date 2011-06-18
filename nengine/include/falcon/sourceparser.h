@@ -96,6 +96,9 @@ public:
    Parsing::Terminal T_function;
    Parsing::Terminal T_return;
 
+   Parsing::Terminal T_true;
+   Parsing::Terminal T_false;
+
    //================================================
    // Statements
    //
@@ -197,6 +200,8 @@ public:
    Parsing::Rule r_Atom_Float;
    Parsing::Rule r_Atom_Name;
    Parsing::Rule r_Atom_String;
+   Parsing::Rule r_Atom_False;
+   Parsing::Rule r_Atom_True;
    Parsing::Rule r_Atom_Nil;
 
    //================================================

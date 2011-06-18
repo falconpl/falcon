@@ -687,6 +687,8 @@ Parsing::TokenInstance* SourceLexer::checkWord()
          if( m_text == "elif" ) return parser->T_elif.makeInstance(m_sline, m_schr);
          if( m_text == "else" ) return parser->T_else.makeInstance(m_sline, m_schr);
          if( m_text == "rule" ) return parser->T_rule.makeInstance(m_sline, m_schr);
+         if( m_text == "true" ) return parser->T_true.makeInstance(m_sline, m_schr);
+
          /*
          if ( m_text == "load" )  // directive
          {
@@ -716,6 +718,7 @@ Parsing::TokenInstance* SourceLexer::checkWord()
 
       case 5:
           if ( m_text == "while" ) return parser->T_while.makeInstance(m_sline, m_schr);
+          if ( m_text == "false" ) return parser->T_false.makeInstance(m_sline, m_schr);
 
          /*
          if ( m_text == "catch" )
