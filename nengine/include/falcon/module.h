@@ -37,7 +37,7 @@ class Item;
  any stage of their lifetime.
 
  Modules are divided mainly in two categories: static modules and dynamic modules
- (not to be confused with the fact that the module @b contents is dynamic).
+ (not to be confused with the fact that the module @b content is dynamic).
 
  Static modules have a lifetime that is meant to be longer than that of the
  virtual machine they are attached to. They are injected into the virtual machine
@@ -54,7 +54,7 @@ class Item;
  are outside the scope of garbage collection. This has two effects: first,
  a program declaring a a static module and then feeding it in VM doesn't
  any special care about preventing that module to be destroyed by the garbage
- collector, and stays in control of its existence span. Second, the garbage
+ collector, and stays in control of its lifespan. Second, the garbage
  collector is not required to perform useless checks on the items declared by
  the module (mainly functions and classes), that will be considered always
  valid.
@@ -62,6 +62,13 @@ class Item;
  At VM level, items declared by static modules are considered UserItem instances,
  while items declared by dynamic modules are considered DeepItem instances.
 
+ \note Function class has support to gc-mark the modueles they come
+ from, so that dynamic modules that might be unloaded by the virtual machine
+ at process level stay alive as long as there is at least one function getting
+ CPU code directly from their memory space. SynFunction class owns its syntactic
+ tree and reference global variables, so they don't need to back-mark their
+ module -- however, they do because of meta-information held in the module
+ (module logical name, URI, attributes etc).
  */
 class FALCON_DYN_CLASS Module {
 public:
@@ -136,11 +143,13 @@ public:
 
    /** Finds a global symbol by name.
     \param name The symbol name to be searched.
-    \return A global symbol or 0 if not found.
+    \return A global symbol (either defined or undefined) or 0 if not found.
     
     If the given name is present as a global symbol in the current module.
+
+    \note The returned symbol might be a GlobalSymbol or an UnknownSymbol.
     */
-   GlobalSymbol* getGlobal( const String& name ) const;
+   Symbol* getGlobal( const String& name ) const;
 
    /** Finds a function.
     \param name The function name to be searched.
@@ -151,17 +160,26 @@ public:
    Function* getFunction( const String& name ) const;
 
    /** Enumerator receiving symbols in this module. */
-   typedef Enumerator<GlobalSymbol> SymbolEnumerator;
+   typedef Enumerator<Symbol> SymbolEnumerator;
+   
    /** Enumerator receiving symbols in this module. */
    typedef Enumerator<UnknownSymbol> USymbolEnumerator;
 
-   /** Enumerate all the globals known by this module. */
+   /** Enumerate all the globals known by this module.
+      \note The enumerated symbol might be a GlobalSymbol or an UnknownSymbol.
+    */
    void enumerateGlobals( SymbolEnumerator& rator ) const;
 
-   /** Enumerate all exported global values known by this module. */
+   /** Enumerate all exported global values known by this module.
+          \note The enumerated symbol might be a GlobalSymbol or an UnknownSymbol.
+    */
    void enumerateExports( SymbolEnumerator& rator ) const;
 
-    /** Enumerate all imported global values required by this module. */
+    /** Enumerate all imported global values required by this module.
+     \note this enumeration doesn't include symbols directly imported through
+     the import/from directive, just those symbols imported from the global
+     namespace.
+     */
    void enumerateImports( USymbolEnumerator& rator ) const;
 
    /** Candy grammar to add exported functions. */

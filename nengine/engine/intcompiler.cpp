@@ -128,14 +128,19 @@ Symbol* IntCompiler::Context::onUndefinedSymbol( const String& name )
 
 GlobalSymbol* IntCompiler::Context::onGlobalDefined( const String& name, bool &adef )
 {
-   GlobalSymbol* sym = m_owner->m_module->getGlobal(name);
+   Symbol* sym = m_owner->m_module->getGlobal(name);
    if( sym == 0 )
    {
       adef = false;
       return m_owner->m_module->addVariable( name );
    }
+   // The interactive compiler never adds an undefined symbol
+   // -- as it immediately reports error.
+   fassert2( sym->type() == Symbol::t_global_symbol,
+         "Undefined symbol in the global map of the interactive compiler." );
+
    adef = true;
-   return sym;
+   return static_cast<GlobalSymbol*>(sym);
 }
 
 
