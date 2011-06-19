@@ -60,13 +60,6 @@ void Class::enumerateProperties( void*, Class::PropertyEnumerator& ) const
 }
 
 
-bool Class::derivedFrom( Class* ) const
-{
-   // todo
-   return false;
-}
-
-
 bool Class::hasProperty( void*, const String& ) const
 {
    return false;

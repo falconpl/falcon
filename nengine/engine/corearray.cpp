@@ -160,20 +160,13 @@ void CoreArray::op_setIndex( VMachine* vm, void* self ) const
 void CoreArray::gcMark( void* self, uint32 mark ) const
 {
    ItemArray& array = *static_cast<ItemArray*>(self);
-   for ( size_t i = 0; i < array.length(); ++i )
-   {
-      Item& tgt = array.at(i);
-      if( tgt.isDeep() )
-      {
-         tgt.asDeepClass()->gcMark(tgt.asDeepInst(), mark);
-      }
-   }
+   array.gcMark( mark );
 }
 
 
-void CoreArray::enumerateProperties( void*, PropertyEnumerator& cb ) const
+void CoreArray::enumerateProperties( void*, PropertyEnumerator& ) const
 {
-   cb("len", true);
+   // TODO array bindings?
 }
 
 

@@ -49,12 +49,16 @@
 #include <falcon/corefunction.h>
 #include <falcon/corenil.h>
 #include <falcon/coreint.h>
+#include <falcon/corenumeric.h>
 #include <falcon/corestring.h>
 #include <falcon/corearray.h>
 #include <falcon/coredict.h>
+#include <falcon/coreclass.h>
+#include <falcon/coreinstance.h>
 
 //--- error headers ---
 #include <falcon/accesserror.h>
+#include <falcon/accesstypeerror.h>
 #include <falcon/errorclass.h>
 #include <falcon/codeerror.h>
 #include <falcon/genericerror.h>
@@ -67,6 +71,8 @@
 
 #include <falcon/paranoid.h>
 #include <map>
+
+#include "falcon/corenumeric.h"
 
 namespace Falcon
 {
@@ -99,6 +105,20 @@ public:
       return new AccessError( *static_cast<ErrorParam*>(creationParams) );
    }
 };
+
+class AccessTypeErrorClass: public ErrorClass
+{
+public:
+   AccessTypeErrorClass():
+      ErrorClass("AccessTypeError")
+   {}
+
+   virtual void* create(void* creationParams ) const
+   {
+      return new AccessTypeError( *static_cast<ErrorParam*>(creationParams) );
+   }
+};
+
 
 class CodeErrorClass: public ErrorClass
 {
@@ -257,15 +277,17 @@ Engine::Engine()
    m_stringClass = new CoreString;
    m_arrayClass = new CoreArray;
    m_dictClass = new CoreDict;
+   m_classClass = new CoreClass;
+   m_instanceClass = new CoreInstance;
 
    // Initialization of the class vector.
    m_classes[FLC_ITEM_NIL] = new CoreNil;
    m_classes[FLC_ITEM_BOOL] = new CoreNil;
    m_classes[FLC_ITEM_INT] = new CoreInt;
-   m_classes[FLC_ITEM_NUM] = new CoreNil;
+   m_classes[FLC_ITEM_NUM] = new CoreNumeric;
    m_classes[FLC_ITEM_USER] = 0;
    m_classes[FLC_ITEM_FRAMING] = 0;
-   m_classes[FLC_ITEM_FUNC] = m_functionClass;
+   m_classes[FLC_ITEM_FUNC] = new CoreFunction;
    m_classes[FLC_ITEM_METHOD] = new CoreNil;
    m_classes[FLC_ITEM_BASEMETHOD] = new CoreNil;
    m_classes[FLC_ITEM_DEEP] = 0;
@@ -274,6 +296,7 @@ Engine::Engine()
    // Initialization of standard errors.
    //
    m_accessErrorClass = new AccessErrorClass;
+   m_accessTypeErrorClass = new AccessTypeErrorClass;
    m_codeErrorClass = new CodeErrorClass;
    m_genericErrorClass = new GenericErrorClass;
    m_interruptedErrorClass = new InterruptedErrorClass;
@@ -325,11 +348,14 @@ Engine::~Engine()
    delete m_stringClass;
    delete m_arrayClass;
    delete m_dictClass;
+   delete m_classClass;
+   delete m_instanceClass;
 
    // ===============================
    // Delete standard error classes
    //
    delete m_accessErrorClass;
+   delete m_accessTypeErrorClass;
    delete m_codeErrorClass;
    delete m_genericErrorClass;
    delete m_ioErrorClass;
@@ -531,6 +557,18 @@ Class* Engine::dictClass() const
    return m_instance->m_dictClass;
 }
 
+Class* Engine::classClass() const
+{
+   fassert( m_instance != 0 );
+   return m_instance->m_classClass;
+}
+
+Class* Engine::instanceClass() const
+{
+   fassert( m_instance != 0 );
+   return m_instance->m_instanceClass;
+}
+
 
 //=====================================================
 // Error handlers
@@ -570,6 +608,12 @@ Class* Engine::accessErrorClass() const
 {
    fassert( m_instance != 0 );
    return m_instance->m_accessErrorClass;
+}
+
+Class* Engine::accessTypeErrorClass() const
+{
+   fassert( m_instance != 0 );
+   return m_instance->m_accessTypeErrorClass;
 }
 
 Class* Engine::syntaxErrorClass() const

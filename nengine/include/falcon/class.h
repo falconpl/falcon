@@ -24,39 +24,6 @@
 #include <falcon/string.h>
 #include <falcon/enumerator.h>
 
-#define OVERRIDE_OP_NEG       "__neg"
-
-#define OVERRIDE_OP_ADD       "__add"
-#define OVERRIDE_OP_SUB       "__sub"
-#define OVERRIDE_OP_MUL       "__mul"
-#define OVERRIDE_OP_DIV       "__div"
-#define OVERRIDE_OP_MOD       "__mod"
-#define OVERRIDE_OP_POW       "__pow"
-
-#define OVERRIDE_OP_AADD      "__aadd"
-#define OVERRIDE_OP_ASUB      "__asub"
-#define OVERRIDE_OP_AMUL      "__amul"
-#define OVERRIDE_OP_ADIV      "__adiv"
-#define OVERRIDE_OP_AMOD      "__amod"
-#define OVERRIDE_OP_APOW      "__apow"
-
-#define OVERRIDE_OP_INC       "__inc"
-#define OVERRIDE_OP_DEC       "__dec"
-#define OVERRIDE_OP_INCPOST   "__incpost"
-#define OVERRIDE_OP_DECPOST   "__decpost"
-
-#define OVERRIDE_OP_CALL      "__call"
-
-#define OVERRIDE_OP_GETINDEX  "__getIndex"
-#define OVERRIDE_OP_SETINDEX  "__setIndex"
-#define OVERRIDE_OP_GETPROP   "__getProperty"
-#define OVERRIDE_OP_SETPROP   "__setProperty"
-
-#define OVERRIDE_OP_COMPARE   "__compare"
-#define OVERRIDE_OP_ISTRUE    "__isTrue"
-#define OVERRIDE_OP_IN        "__in"
-#define OVERRIDE_OP_PROVIDES  "__provides"
-
 namespace Falcon {
 
 class VMachine;
@@ -225,18 +192,7 @@ public:
      @note This base class implementation does nothing.
     */
    virtual void enumerateProperties( void* self, PropertyEnumerator& cb ) const;
-
-
-   /** Returns true if the class is derived from the given class
-      \param className the name of a possibly parent class
-      \return true if the class is derived from a class having the given name
-
-      This function scans the property table of the class (template properties)
-      for an item with the given name, and if that item exists and it's a class
-      item, then this method returns true.
-   */
-   bool derivedFrom( Class* other ) const;
-
+   
    /** Return true if the class provides the given property.
       @param self The object for which the properties have been requested.
 

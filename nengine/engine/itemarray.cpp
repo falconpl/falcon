@@ -580,6 +580,22 @@ int ItemArray::compare( const ItemArray& other, ItemArray::Parentship* parent ) 
    return 0;
 }
 
+
+void ItemArray::gcMark( uint32 mark )
+{
+   Item* begin = m_data;
+   Item* end = m_data + m_size;
+   
+   while( begin < end )
+   {
+      if( begin->isDeep() )
+      {
+         begin->asDeepClass()->gcMark(begin->asDeepInst(), mark);
+      }
+      ++begin;
+   }
+}
+
 }
 
 /* end of itemarray.cpp */
