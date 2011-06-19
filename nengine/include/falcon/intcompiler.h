@@ -93,7 +93,7 @@ private:
       virtual void onGlobal( const String& name );
       virtual Symbol* onUndefinedSymbol( const String& name );
       virtual GlobalSymbol* onGlobalDefined( const String& name, bool& bUnique );
-      virtual void onUnknownSymbol( UnknownSymbol* sym );
+      virtual bool onUnknownSymbol( UnknownSymbol* sym );
       virtual void onStaticData( Class* cls, void* data );
 
    private:

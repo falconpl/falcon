@@ -230,6 +230,8 @@ public:
 
    /** Called back when any try to define a symbol fail.
     \param sym A symbol to be disposed of.
+    \return True if the symbol can be finally defined as an external import,
+      false if this is to be considered already an error.
 
     Unknown symbols are symbols that cannot be placed in any symbol table,
     because the resolution tries (joint effort of the SourceParser, this class,
@@ -241,17 +243,14 @@ public:
     through symbol tables, but this can't be done with unknown symbols as they
     cannot be placed in them.
 
-    The call of this method is always preceded by the queueing of an error
-    condition in the parser.
-
-    If the underlying parser is interactive the symbol will be immediately
-    destroyed after this method returns, and involved statements won't be
-    added to the forming structure. Otherwise, the callee should store
-    this symbol somewhere (i.e. in a global symbol table) so that the
-    created structure can still be inspected at a later stage.
+    If the implementation of this class knows that the symbol cannot be found
+    elsewhere (i.e. because implementing a dynamic compilation on top of
+    an already prepared VM) then the method should destroy the symbol (or 
+    record it for a later disposal) and return false. Otherwise, it should
+    mark it as "external" and publish it in its import table and then return true.
 
     */
-   virtual void onUnknownSymbol( UnknownSymbol* sym ) = 0;
+   virtual bool onUnknownSymbol( UnknownSymbol* sym ) = 0;
 
    /** Called back when the parser creates new static data.
     \param cls The Falcon::Class of the static data.

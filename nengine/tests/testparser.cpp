@@ -61,7 +61,7 @@ public:
    virtual void onGlobal( const String& name );
    virtual Symbol* onUndefinedSymbol( const String& name );
    virtual GlobalSymbol* onGlobalDefined( const String& name, bool& bUnique );
-   virtual void onUnknownSymbol( UnknownSymbol* sym );
+   virtual bool onUnknownSymbol( UnknownSymbol* sym );
    virtual void onStaticData( Class* cls, void* data );
 
 private:
@@ -168,10 +168,12 @@ GlobalSymbol* Context::onGlobalDefined( const String& name, bool& )
    return sym;
 }
 
-void Context::onUnknownSymbol( UnknownSymbol* sym )
+bool Context::onUnknownSymbol( UnknownSymbol* sym )
 {
    std::cout << "CALLBACK: unknwon symbol -- pretty impossible: " <<
          sym->name().c_ize() << std::endl;
+   delete sym;
+   return false;
 }
 
  void Context::onStaticData( Class* cls, void* data )

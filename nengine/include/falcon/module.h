@@ -20,12 +20,12 @@
 #include <falcon/setup.h>
 #include <falcon/string.h>
 #include <falcon/function.h>
-
-#include "enumerator.h"
+#include <falcon/enumerator.h>
 
 namespace Falcon {
 
 class GlobalSymbol;
+class UnknownSymbol;
 class Item;
 
 /** Standard Falcon Execution unit and library.
@@ -152,6 +152,8 @@ public:
 
    /** Enumerator receiving symbols in this module. */
    typedef Enumerator<GlobalSymbol> SymbolEnumerator;
+   /** Enumerator receiving symbols in this module. */
+   typedef Enumerator<UnknownSymbol> USymbolEnumerator;
 
    /** Enumerate all the globals known by this module. */
    void enumerateGlobals( SymbolEnumerator& rator ) const;
@@ -160,7 +162,7 @@ public:
    void enumerateExports( SymbolEnumerator& rator ) const;
 
     /** Enumerate all imported global values required by this module. */
-   void enumerateImports( SymbolEnumerator& rator ) const;
+   void enumerateImports( USymbolEnumerator& rator ) const;
 
    /** Candy grammar to add exported functions. */
    Module& operator <<( Function* f )

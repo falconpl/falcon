@@ -335,13 +335,18 @@ bool ParserContext::checkSymbols()
       {
          TRACE1("ParserContext::checkSymbols cannot define \"%s\"",
                   sym->name().c_ize() );
-         // record for later error generation
-         unknownNames.push_back( std::make_pair(sym->name(), sym->declaredAt()) );
+
+         String name = sym->name();
+         int dat = sym->declaredAt();
          // this will probably destroy the symbol.
-         onUnknownSymbol( sym );
-         // we know that the symbol is lost
-         // add error will clear unknown symbols. return immediately after this call, iterators are no longer valid.
-         isOk = false;
+         if( ! onUnknownSymbol( sym ) )
+         {
+            // record for later error generation
+            unknownNames.push_back( std::make_pair( name, dat ) );
+            // we know that the symbol is lost
+            // add error will clear unknown symbols. return immediately after this call, iterators are no longer valid.
+            isOk = false;
+         }
 
          // -- see if the callee wants to do something about that
       }

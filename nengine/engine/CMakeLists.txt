@@ -96,7 +96,6 @@ add_library(falcon_engine SHARED
   filestat.cpp
   function.cpp
   genericerror.cpp
-  globalsvector.cpp
   globalsymbol.cpp
   intcompiler.cpp
   item.cpp

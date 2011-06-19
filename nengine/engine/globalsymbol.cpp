@@ -21,16 +21,25 @@
 
 namespace Falcon {
 
-GlobalSymbol::GlobalSymbol( const String& name, Item* itemPtr ):
+GlobalSymbol::GlobalSymbol( const String& name, const Item& item ):
       Symbol( t_global_symbol, name ),
-      m_itemPtr( itemPtr )
+      m_item( item ),
+      m_nRefCount(1)
+{
+}
+
+GlobalSymbol::GlobalSymbol( const String& name ):
+      Symbol( t_global_symbol, name ),
+      m_nRefCount(1)
 {
 }
 
 
+
 GlobalSymbol::GlobalSymbol( const GlobalSymbol& other ):
       Symbol( other ),
-      m_itemPtr( other.m_itemPtr )
+      m_item( other.m_item ),
+      m_nRefCount(1)
 {
 }
 
@@ -40,20 +49,13 @@ GlobalSymbol::~GlobalSymbol()
 
 void GlobalSymbol::assign( VMachine*, const Item& value ) const
 {
-   if( m_itemPtr != 0 )
-   {
-      m_itemPtr->assign( value );
-   }
-   else
-   {
-      throw new CodeError( ErrorParam(e_assign_sym, __LINE__, __FILE__ ) );
-   }
+   const_cast<Item*>(&m_item)->assign( value );
 }
 
 void GlobalSymbol::apply_( const PStep* ps, VMachine* vm )
 {
    const ExprSymbol* self = static_cast<const ExprSymbol*>(ps);
-   GlobalSymbol* sym = static_cast<GlobalSymbol*>(self->symbol());
+   register GlobalSymbol* sym = static_cast<GlobalSymbol*>(self->symbol());
    register VMContext* ctx = vm->currentContext();
 #ifndef NDEBUG
    String name = sym->name();
@@ -63,14 +65,14 @@ void GlobalSymbol::apply_( const PStep* ps, VMachine* vm )
    if( self->m_lvalue )
    {
       TRACE2( "LValue apply to global '%s'", name.c_ize() );
-      sym->m_itemPtr->assign( ctx->topData() );
+      sym->m_item.assign( ctx->topData() );
       // topData is already the value of the l-value evaluation.
       // so we leave it alone.
    }
    else
    {
       TRACE2( "Apply global '%s'", name.c_ize() );
-      ctx->pushData( *sym->m_itemPtr );
+      ctx->pushData( sym->m_item );
    }
 }
 

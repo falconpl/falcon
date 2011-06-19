@@ -17,27 +17,25 @@
 #define FALCON_GLOBALSYMBOL_H
 
 #include <falcon/symbol.h>
+#include <falcon/item.h>
 
 namespace Falcon {
 
 class PStep;
 
 /** Global symbol class.
- *
- * This class references a value in the module symbol table.
- * Symbols may be imported from other modules as well. In that case,
- * they are marked as "external" and resolved by the VM at link time.
- *
- * The import process generates a common global reference for exported
- * or trans-module items, so that they get marked as long as there are
- * modules referencing them.
+
+ This class references a value in the module symbol table.
+ Symbols may be imported from other modules as well. In that case,
+ they are marked as "external" and resolved by the VM at link time.
+ 
  */
 class FALCON_DYN_CLASS GlobalSymbol: public Symbol
 {
 public:
-   GlobalSymbol( const String& name, Item* itemPtr );
-   GlobalSymbol( const GlobalSymbol& other );
-   virtual ~GlobalSymbol();
+   GlobalSymbol( const String& name );
+   GlobalSymbol( const String& name, const Item& initValue );
+   GlobalSymbol( const GlobalSymbol& other );   
 
    virtual GlobalSymbol* clone() const { return new GlobalSymbol(*this); }
    
@@ -46,12 +44,18 @@ public:
    static void apply_( const PStep* self, VMachine* vm );
    virtual Expression* makeExpression();
 
-   Item* itemPtr() const { return m_itemPtr; }
+   const Item& value() const { return m_item; }
+   Item& value() { return m_item; }
+
+   //TODO Mt compilace for this
+   void incref() { m_nRefCount ++; }
+   void decref() { if( --m_nRefCount == 0 ) delete this; }
 protected:
    GlobalSymbol();
+   Item m_item;
+   int m_nRefCount;
 
-   Item* m_itemPtr;
-
+   virtual ~GlobalSymbol();
    friend class ExprFactory;
 };
 

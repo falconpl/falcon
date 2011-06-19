@@ -139,9 +139,12 @@ GlobalSymbol* IntCompiler::Context::onGlobalDefined( const String& name, bool &a
 }
 
 
-void IntCompiler::Context::onUnknownSymbol( UnknownSymbol* )
+bool IntCompiler::Context::onUnknownSymbol( UnknownSymbol* sym )
 {
-   // there's nothing useful we may want to do here (at least for now)
+   // an interactive compiler knows that the target VM is ready.
+   // We can dispose of the symbol and signal error returning false.
+   delete sym;
+   return false;
 }
 
 

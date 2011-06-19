@@ -17,6 +17,7 @@
 #include <falcon/module.h>
 #include <falcon/itemarray.h>
 #include <falcon/globalsymbol.h>
+#include <falcon/unknownsymbol.h>
 #include <falcon/extfunc.h>
 #include <falcon/item.h>
 
@@ -30,7 +31,9 @@ public:
    typedef std::map<String, GlobalSymbol*> GlobalsMap;
    GlobalsMap m_gSyms;
    GlobalsMap m_gExports;
-   GlobalsMap m_gImports;
+
+   typedef std::map<String, UnknownSymbol*> UnknownMap;
+   UnknownMap m_gImports;
 
    typedef std::map<String, Function*> FunctionMap;
    FunctionMap m_functions;
@@ -48,7 +51,7 @@ public:
       GlobalsMap::iterator iter = m_gSyms.begin();
       while( iter != m_gSyms.end() )
       {
-         delete iter->second;
+         iter->second->decref();
          ++iter;
       }
 
@@ -116,7 +119,7 @@ GlobalSymbol* Module::addFunction( Function* f, bool bExport )
 
    // add the symbol to the symbol table.
    GlobalSymbol* sym = new GlobalSymbol( f->name(),
-         &_p->m_globals.at(_p->m_globals.length()-1) );
+         _p->m_globals.at(_p->m_globals.length()-1) );
    syms[f->name()] = sym;
 
    // Eventually export it.
@@ -150,7 +153,7 @@ void Module::addFunction( GlobalSymbol* gsym, Function* f )
 
    if(gsym)
    {
-      *gsym->itemPtr() = f;
+      gsym->value() = f;
    }
 }
 
@@ -176,7 +179,7 @@ GlobalSymbol* Module::addVariable( const String& name, bool bExport )
 }
 
 
-GlobalSymbol* Module::addVariable( const String& name, const Item& value, bool /* bExport */ )
+GlobalSymbol* Module::addVariable( const String& name, const Item& value, bool bExport )
 {
    // check if the name is free.
    Private::GlobalsMap& syms = _p->m_gSyms;
@@ -190,10 +193,13 @@ GlobalSymbol* Module::addVariable( const String& name, const Item& value, bool /
 
    // add the symbol to the symbol table.
    GlobalSymbol* sym = new GlobalSymbol( name,
-         &_p->m_globals.at(_p->m_globals.length()-1) );
+         _p->m_globals.at(_p->m_globals.length()-1) );
    syms[name] = sym;
 
-   //TODO add export.
+   if( bExport )
+   {
+      _p->m_gExports[name] = sym;
+   }
    return sym;
 }
 
@@ -253,14 +259,14 @@ void Module::enumerateExports( SymbolEnumerator& rator ) const
    }
 }
 
-void Module::enumerateImports( SymbolEnumerator& rator ) const
+void Module::enumerateImports( USymbolEnumerator& rator ) const
 {
-   const Private::GlobalsMap& syms = _p->m_gImports;
-   Private::GlobalsMap::const_iterator iter = syms.begin();
+   const Private::UnknownMap& syms = _p->m_gImports;
+   Private::UnknownMap::const_iterator iter = syms.begin();
 
    while( iter != syms.end() )
    {
-      GlobalSymbol* sym = iter->second;
+      UnknownSymbol* sym = iter->second;
       if( ! rator( *sym, ++iter == syms.end()) )
          break;
    }
