@@ -108,11 +108,13 @@ void UnknownSymbol::define( Symbol* def )
          af = 0;
    }
 
-   for( size_t i = 0; i < _p->m_owners.size(); ++i )
+   Private::ExprVector::iterator iter = _p->m_owners.begin();
+   while( iter != _p->m_owners.end() )
    {
-      ExprSymbol* expr = _p->m_owners[i];
+      ExprSymbol* expr = *iter;
       expr->apply = af;
       expr->symbol( def );
+      ++iter;
    }
 }
 
