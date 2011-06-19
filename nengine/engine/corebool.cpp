@@ -1,0 +1,106 @@
+/*
+   FALCON - The Falcon Programming Language.
+   FILE: corebool.cpp
+
+   Class defined by a Falcon script.
+   -------------------------------------------------------------------
+   Author: Francesco Magliocca
+   Begin: Sun, 19 Jun 2011 12:40:06 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2011: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+
+#include <falcon/corebool.h>
+
+#include <falcon/item.h>
+
+#include <falcon/itemid.h>
+
+#include <falcon/vm.h>
+
+#include <falcon/optoken.h>
+
+namespace Falcon {
+
+CoreBool::CoreBool() :
+   Class( "Bool", FLC_ITEM_BOOL ) 
+   
+{ 
+}
+
+CoreBool::~CoreBool()
+{
+}
+
+void* CoreBool::create(void *creationParams ) const
+{
+   Item *result = new Item;
+
+   *result = *static_cast<bool*>( creationParams ); 
+
+   return result;
+}
+
+
+void CoreBool::dispose( void *self ) const
+{
+
+   Item *data = static_cast<Item*>( self );
+
+   delete data;
+
+}
+
+
+void* CoreBool::clone( void *self ) const
+{
+   Item *result = new Item;
+
+   *result = *static_cast<Item*>( self );
+
+   return result;
+}
+
+
+void CoreBool::serialize( DataWriter*, void* ) const
+{
+
+   // TODO
+
+}
+
+
+void* CoreBool::deserialize( DataReader* ) const
+{
+   // TODO
+   return 0;
+}
+
+void CoreBool::describe( void *instance, String& target, int, int ) const
+{
+   target += static_cast<Item*>( instance )->asBoolean() ? "true" : "false";
+}
+
+// ===========================================================================
+
+void CoreBool::op_isTrue( VMachine *vm, void* ) const
+{
+   Item* iself;
+   OpToken token( vm, iself );
+   token.exit( iself->asBoolean() );
+}
+
+void CoreBool::op_toString( VMachine *vm, void* ) const
+{
+   Item* iself;
+   OpToken token( vm, iself );
+   String s;
+   token.exit( s.A( iself->asBoolean() ? "true" : "false" ) );
+} 
+
+
+}
