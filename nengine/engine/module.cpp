@@ -28,7 +28,7 @@ namespace Falcon {
 class Module::Private
 {
 public:
-   typedef std::map<String, GlobalSymbol*> GlobalsMap;
+   typedef std::map<String, Symbol*> GlobalsMap;
    GlobalsMap m_gSyms;
    GlobalsMap m_gExports;
 
@@ -51,7 +51,15 @@ public:
       GlobalsMap::iterator iter = m_gSyms.begin();
       while( iter != m_gSyms.end() )
       {
-         iter->second->decref();
+         Symbol* sym = iter->second;
+         if( sym->type() == Symbol::t_global_symbol )
+         {
+            static_cast<GlobalSymbol*>(sym)->decref();
+         }
+         else
+         {
+            delete sym;
+         }
          ++iter;
       }
 
@@ -78,6 +86,7 @@ Module::Module( const String& name, bool bIsStatic ):
       m_name( name ),
       m_bIsStatic(bIsStatic)
 {
+   m_uri = "internal:" + name;
    _p = new Private(bIsStatic);
 }
 
@@ -204,7 +213,7 @@ GlobalSymbol* Module::addVariable( const String& name, const Item& value, bool b
 }
 
 
-GlobalSymbol* Module::getGlobal( const String& name ) const
+Symbol* Module::getGlobal( const String& name ) const
 {
    const Private::GlobalsMap& syms = _p->m_gSyms;
    Private::GlobalsMap::const_iterator iter = syms.find(name);
@@ -239,7 +248,7 @@ void Module::enumerateGlobals( SymbolEnumerator& rator ) const
 
    while( iter != syms.end() )
    {
-      GlobalSymbol* sym = iter->second;
+      Symbol* sym = iter->second;
       if( ! rator( *sym, ++iter == syms.end()) )
          break;
    }
@@ -253,7 +262,7 @@ void Module::enumerateExports( SymbolEnumerator& rator ) const
 
    while( iter != syms.end() )
    {
-      GlobalSymbol* sym = iter->second;
+      Symbol* sym = iter->second;
       if( ! rator( *sym, ++iter == syms.end()) )
          break;
    }

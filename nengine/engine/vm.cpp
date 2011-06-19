@@ -705,7 +705,7 @@ void VMachine::link( Module* mod )
          m_mod( mod )
       {}
 
-      virtual bool operator()( const GlobalSymbol& sym, bool )
+      virtual bool operator()( const Symbol& sym, bool )
       {
          m_vm->addExportedSymbol( m_mod, &sym );
          return true;
@@ -787,8 +787,8 @@ const Symbol* VMachine::findExportedSymbol( const String& name ) const
       return sym;
    }
 
-   return 0;
    _p->m_csexport.unlock();
+   return 0;
 }
 
 

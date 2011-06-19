@@ -1,11 +1,11 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: accesserror.cpp
+   FILE: accesstypeerror.cpp
 
-   Error while accessing objects (with square or dot operator).
+    Error while accessing objects in read/write mode.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
-   Begin: Thu, 02 Jun 2011 20:59:01 +0200
+   Begin: Sun, 19 Jun 2011 15:56:13 +0200
 
    -------------------------------------------------------------------
    (C) Copyright 2011: the FALCON developers (see list in AUTHORS file)
@@ -14,20 +14,20 @@
 */
 
 #include <falcon/engine.h>
-#include <falcon/accesserror.h>
+#include <falcon/accesstypeerror.h>
 #include <falcon/errorclass.h>
 
 namespace Falcon {
 
-AccessError::AccessError( const ErrorParam &params ):
-   Error( Engine::instance()->accessErrorClass(), params )
+AccessTypeError::AccessTypeError( const ErrorParam &params ):
+   Error( Engine::instance()->accessTypeErrorClass(), params )
 {
 }
 
-AccessError::~AccessError()
+AccessTypeError::~AccessTypeError()
 {
 }
 
 }
 
-/* end of accesserror.cpp */
+/* end of accesstypeerror.cpp */

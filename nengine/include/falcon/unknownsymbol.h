@@ -43,6 +43,11 @@ class PStep;
  symbols whose status is unknown at compile time. Undefined symbols are usually
  globals which required special handling during module link.
 
+ \todo UnknownSymbols can be even exported (so-called symbol forwarding).
+ Must add a structure to keep track of the modules directly importing this
+ symbol via import/from directive, and be sure that the VM correctly propagates
+ the event of this symbol being defined at link time, if exported via the
+ export directive.
  */
 
 class FALCON_DYN_CLASS UnknownSymbol: public Symbol

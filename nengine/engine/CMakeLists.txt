@@ -55,6 +55,7 @@ add_library(falcon_engine SHARED
 
   memory.cpp
   accesserror.cpp
+  accesstypeerror.cpp
   application.cpp
   autocstring.cpp
   autowstring.cpp
@@ -64,9 +65,11 @@ add_library(falcon_engine SHARED
   codeerror.cpp
   collector.cpp
   corearray.cpp
+  coreclass.cpp
   coredict.cpp
   corefunction.cpp
   corenil.cpp
+  coreinstance.cpp
   coreint.cpp
   corenumeric.cpp
   corebool.cpp
@@ -87,6 +90,9 @@ add_library(falcon_engine SHARED
   exprmultiunpack.cpp
   extfunc.cpp
   fassert.cpp
+  falconclass.cpp
+  falconinstance.cpp
+  falconstate.cpp
   fatal.cpp
   fstream.cpp
   expression.cpp
@@ -98,6 +104,7 @@ add_library(falcon_engine SHARED
   function.cpp
   genericerror.cpp
   globalsymbol.cpp
+  inheritance.cpp
   intcompiler.cpp
   item.cpp
   item_util.cpp

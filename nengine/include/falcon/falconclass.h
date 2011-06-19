@@ -18,6 +18,7 @@
 
 #include <falcon/setup.h>
 #include <falcon/string.h>
+#include <falcon/enumerator.h>
 
 namespace Falcon
 {
@@ -29,6 +30,8 @@ class Function;
 class DataReader;
 class DataWriter;
 class FalconState;
+class Expression;
+class CoreClass;
 
 /** Class defined by a Falcon script.
 
@@ -56,12 +59,81 @@ class FalconState;
  is not a FalconClass is implemented by creating an HyperClass instance.
 
  \note It is possible to access "static" methods and base classes from a live
- script. Also, methods can be changed,
+ script.
+
+ \note Despite the fact that modules created from source Falcon scripts will
+ always create FalconClass instances, the VM may generate an HyperClass in
+ their place if one of their parent classes is found to be a non-FalconClass
+ instance during the link process, while resolving external symbols.
  
  */
 class FALCON_DYN_CLASS FalconClass
 {
 public:
+
+
+   class Property
+   {
+   public:
+      typedef union tag_cnt
+      {
+         size_t id;
+         Function* func;         
+         Inheritance* inh;
+         FalconState* state;
+      } Value;
+
+      typedef enum tag_proptype {
+         t_prop,
+         t_func,
+         t_expr,
+         t_inh,
+         t_state
+      } Type;
+
+      Type m_type;
+      Value m_value;
+
+      Expression* m_expr;
+
+      inline Property( size_t value ):
+         m_type(t_prop),
+         m_expr( 0 )
+      {
+         m_value.id = value;
+      }
+
+      inline Property( Function* value ):
+         m_type(t_func),
+         m_expr( 0 )
+      {
+         m_value.func = value;
+      }
+
+      inline Property( size_t value, Expression* expr ):
+         m_type( t_expr ),
+         m_expr( expr )
+      {
+         m_value.id = value;
+      }
+
+      inline Property( Inheritance* value ):
+         m_type(t_inh),
+         m_expr( 0 )
+      {
+         m_value.inh = value;
+      }
+
+      inline Property( FalconState* value ):
+         m_type(t_state),
+         m_expr( 0 )
+      {
+         m_value.state = value;
+      }
+
+      ~Property();
+   };
+
 
    FalconClass( const String& name );
    virtual ~FalconClass();
@@ -92,7 +164,7 @@ public:
     \note In case this need arises, consider adding a UserData
     to a FalconClass subclass, and passing it as initValue here.
     */
-   bool addProperty( const String& name, Item& initValue );
+   bool addProperty( const String& name, const Item& initValue );
 
    /** Adds a property.
     \param name The name of the property to be added.
@@ -143,15 +215,15 @@ public:
 
    /** Adds a parent and the parentship declaration.
     \param inh The inheritance declaration.
-
+    \return true If the init was not given, false if another init was already set.
     The parentship delcaration carries also declaration for the parameters
     and the expressions needed to create the instances.
 
     The ownership of the inheritance records is held by this FalconClass.
     */
-   void addParent( Inheritance* inh );
+   bool addParent( Inheritance* inh );
 
-   /** Gets a member of this class
+   /** Gets a member of this class.
     \param name The name of the member to be returned.
     \param target The item where the member will be stored.
     \return True if the member exists, false otherwise.
@@ -168,13 +240,23 @@ public:
     */
    bool getMember( const String& name, Item& target ) const;
 
+   /** Gets a member of this class -- as a definition.
+    \param name The name of the member to be returned.
+    \return A pointer to a property in this class or zero if not found.
+
+    This method is mainly used by FalconInstance to get the member
+    item in the class and then return a coherent data type to the VM
+    that has accessed the item.
+    */
+   const Property* getMember( const String& name ) const;
+
    /** Marks the items in this class (if considered necessary).
     \param mark The mark that is used by GC.
 
     This is used to mark the default values of the class, if
     there is one or more deep item in the class.
     */
-   void gcMark( uint32 mark );
+   void gcMark( uint32 mark ) const;
 
    /** Adds a state to this class.
       \param state The state to be added.
@@ -200,8 +282,27 @@ public:
     \param dr The reader
     This method is meant to be called.
     */
-   void deserialzie( DataReader* dr );
+   void deserialize( DataReader* dr );
 
+
+   /** Callback receiving all the properties in this class. */
+   typedef Enumerator<String> PropertyEnumerator;
+
+   /** List the members in this class having property semantics.
+     @param cb A callback function receiving one property at a time.
+    */
+   void enumerateProperties( PropertyEnumerator& cb ) const;
+
+   /** List all the properties in this class.
+     @param cb A callback function receiving one property at a time.
+    */
+   void enumerateMembers( PropertyEnumerator& cb ) const;
+
+   /** Check if this class has a given membeer.
+    \param name The name of the property to be searched.
+    \return true if the given property is present.
+    */
+   bool hasMember( const String& name ) const;
 
 private:
    // used in deserialization
@@ -209,14 +310,16 @@ private:
 
    class Private;
    Private* _p;
-   
-   const String& m_name;
+      
+   String m_name;
    bool m_shouldMark;
    Function* m_init;
+
+   friend class CoreClass;
 };
 
 }
 
-#endif /* _FALCON_CORECLASS_H_ */
+#endif /* _FALCON_FALCONCLASS_H_ */
 
-/* end of coreclass.h */
+/* end of falconclass.h */

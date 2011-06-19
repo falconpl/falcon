@@ -78,6 +78,13 @@ public:
    // Global Settings
    //
 
+   /** Return the class handing the base type reflected by this item type ID.
+    \param type The type of the items for which the handler class needs to be known.
+    \return The handler class, or 0 if the type ID is not defined or doesn't have an handler class.
+
+    This method returns the class that, if provided in a User or Deep item as
+    handler class, would cause the item to be treated correctly.
+    */
    Class* getTypeClass( int type );
 
    /** True when running on windows system.
@@ -141,6 +148,28 @@ public:
     return a null pointer.
     */
    Class* dictClass() const;
+
+   /** Returns the global instance of the CoreClass class.
+   \return the Engine instance of the FalconClass handler.
+
+    Method init() must have been called before.
+
+    @note This method will assert and terminate the program if compiled in debug mode
+    in case the engine has not been initialized. In release, it will just
+    return a null pointer.
+    */
+   Class* classClass() const;
+
+   /** Returns the global instance of the CoreInstance class.
+   \return the Engine instance of the FalconInstance handler.
+
+    Method init() must have been called before.
+
+    @note This method will assert and terminate the program if compiled in debug mode
+    in case the engine has not been initialized. In release, it will just
+    return a null pointer.
+    */
+   Class* instanceClass() const;
 
    //==========================================================================
    // Error handlers
@@ -225,6 +254,16 @@ public:
     return a null pointer.
     */
    Class* accessErrorClass() const;
+
+   /** Returns the global instance of the AccessTypeError class.
+
+    Method init() must have been called before.
+
+    @note This method will assert and terminate the program if compiled in debug mode
+    in case the engine has not been initialized. In release, it will just
+    return a null pointer.
+    */
+   Class* accessTypeErrorClass() const;
 
    /** Returns the global instance of the SyntaxError class.
 
@@ -334,11 +373,14 @@ protected:
    Class* m_stringClass;
    Class* m_arrayClass;
    Class* m_dictClass;
+   Class* m_classClass;
+   Class* m_instanceClass;
 
    //===============================================
    // Standard error handlers
    //
    Class* m_accessErrorClass;
+   Class* m_accessTypeErrorClass;
    Class* m_codeErrorClass;
    Class* m_genericErrorClass;
    Class* m_operandErrorClass;

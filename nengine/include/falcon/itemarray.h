@@ -188,7 +188,17 @@ public:
     */
    static int32 esize( int32 count=1 ) { return sizeof( Item ) * count; }
 
+   /** Performs a flat copy of this item array.
+    \return A newly allocated item array.
+    \note All the items in this array, if any, are marked as copied.
+    */
+   ItemArray* clone() const { return new ItemArray(*this); }
 
+   /** Marks all the items in this array.
+    \param mark
+    */
+   void gcMark( uint32 mark );
+   
 private:
    length_t m_alloc;
    length_t m_size;
