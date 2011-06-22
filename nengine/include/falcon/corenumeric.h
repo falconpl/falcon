@@ -13,8 +13,8 @@
  See LICENSE file for licensing details.
  */
 
-#ifndef _FALCON_COREINT_H_
-#define _FALCON_COREINT_H_
+#ifndef _FALCON_CORENUMERIC_H_
+#define _FALCON_CORENUMERIC_H_
 
 #include <falcon/setup.h>
 #include <falcon/class.h>
@@ -77,6 +77,6 @@ public:
 
 }
 
-#endif /* _FALCON_COREINT_H_ */
+#endif /* _FALCON_CORENUMERIC_H_ */
 
 /* end of corenumber.h */

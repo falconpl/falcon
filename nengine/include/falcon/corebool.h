@@ -13,8 +13,8 @@
    See LICENSE file for licensing details.
 */
 
-#ifndef _FALCON_CORECLASS_H_
-#define _FALCON_CORECLASS_H_
+#ifndef _FALCON_COREBOOL_H_
+#define _FALCON_COREBOOL_H_
 
 #include <falcon/setup.h>
 #include <falcon/class.h>
@@ -54,6 +54,6 @@ public:
 
 }
 
-#endif /* _FALCON_CORECLASS_H_ */
+#endif /* _FALCON_COREBOOL_H_ */
 
 /* end of coreclass.h */
