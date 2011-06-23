@@ -71,7 +71,7 @@ public:
 class ExprPow::ops
 {
 public:
-   static int64 operate( int64 a, int64 b ) { return pow(a,b); }
+   static int64 operate( int64 a, int64 b ) { return (int64)pow(a,(numeric)b); }
    static void operate( VMachine* vm, Class* cls, void* inst ) { cls->op_pow(vm, inst); }
    static numeric operaten( numeric a, numeric b ) { return pow(a,b); }
    static bool zeroCheck( const Item& ) { return false; }
