@@ -125,7 +125,7 @@ bool DataWriter::write( uint16 value )
       locBuf[0] = addr[1];
    }
 
-   return Writer::write( locBuf, 2 );
+   return Writer::writeRaw( locBuf, 2 );
 }
 
 bool DataWriter::write( uint32 value )
@@ -147,7 +147,7 @@ bool DataWriter::write( uint32 value )
       locBuf[0] = addr[3];
    }
 
-   return Writer::write( locBuf, 4 );
+   return Writer::writeRaw( locBuf, 4 );
 }
 
 
@@ -178,7 +178,7 @@ bool DataWriter::write( uint64 value )
       locBuf[0] = addr[7];
    }
 
-   return Writer::write( locBuf, 8 );
+   return Writer::writeRaw( locBuf, 8 );
 }
 
 
@@ -201,7 +201,7 @@ bool DataWriter::write( float value )
       locBuf[0] = addr[3];
    }
 
-   return Writer::write( locBuf, 4 );
+   return Writer::writeRaw( locBuf, 4 );
 }
 
 
@@ -232,7 +232,7 @@ bool DataWriter::write( double value )
       locBuf[0] = addr[7];
    }
 
-   return Writer::write( locBuf, 8 );
+   return Writer::writeRaw( locBuf, 8 );
 }
 
 
@@ -248,7 +248,7 @@ bool DataWriter::write( const String& tgt )
    {
       if( m_bIsSameEndianity || nCharCount == 1 )
       {
-         return Writer::write( tgt.getRawStorage(), size );
+         return Writer::writeRaw( tgt.getRawStorage(), size );
       }
       else
       {
@@ -267,7 +267,7 @@ bool DataWriter::write( const String& tgt )
             fassert( 0 );
          }
 
-         return Writer::write( tgt.getRawStorage(), size );
+         return Writer::writeRaw( tgt.getRawStorage(), size );
       }
    }
 

@@ -22,6 +22,8 @@
 #include <falcon/datareader.h>
 #include <falcon/datawriter.h>
 
+#include <math.h>
+
 namespace Falcon {
 
 CoreInt::CoreInt():

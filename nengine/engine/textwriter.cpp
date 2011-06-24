@@ -145,7 +145,7 @@ bool TextWriter::rawWrite( const String& str, length_t start, length_t count )
       }
 
       encSize = m_encoder->encode( str, m_twBuffer, m_twBufSize, '?', start, count );
-      return Writer::write( m_twBuffer, encSize );
+      return Writer::writeRaw( m_twBuffer, encSize );
    }
 
    return true;
@@ -185,7 +185,7 @@ bool TextWriter::putChar( char_t chr )
    }
 
    length_t rsize = m_encoder->encode( m_chrStr, buf, 16 );
-   if( ! Writer::write( buf, rsize ) ) return false;
+   if( ! Writer::writeRaw( buf, rsize ) ) return false;
 
    if( m_bLineFlush && chr == '\n' )
    {
