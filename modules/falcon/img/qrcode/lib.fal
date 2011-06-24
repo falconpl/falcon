@@ -19,13 +19,10 @@
 import from gd2
 load bufext
 
-/*# Global ordinal constants. */
 const MaxInt = 2147483647
 const MaxVersion = 40
 const MaxWidth = 177
 const StructHeaderSize = 20
-
-/*# Global alphanumeric constants. */
 const FrameBaseName = "frame"
 const MaskBaseName = "mask"
 
