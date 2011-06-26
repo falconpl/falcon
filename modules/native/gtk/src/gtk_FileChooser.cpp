@@ -1212,9 +1212,23 @@ FALCON_FUNC FileChooser::get_extra_widget( VMARG )
         vm->retnil();
 }
 
+FALCON_FUNC FileChooser::add_filter( VMARG )
+{
+	 Item* oFilter = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
+	if ( oFilter == 0 || ( ! oFilter->isNil() && !( oFilter->isObject() && IS_DERIVED( oFilter, GtkFileFilter ))) )
+		throw_inv_params( "[GtkFileFilter]" );
+#endif
+
+	MYSELF;
+    GET_OBJ( self );
+	
+	gtk_file_chooser_add_filter( (GtkFileChooser*)_obj, (GtkFileFilter*) oFilter); 
+
+}
 
 #if 0
-FALCON_FUNC FileChooser::add_filter( VMARG );
+
 FALCON_FUNC FileChooser::remove_filter( VMARG );
 FALCON_FUNC FileChooser::list_filters( VMARG );
 FALCON_FUNC FileChooser::set_filter( VMARG );

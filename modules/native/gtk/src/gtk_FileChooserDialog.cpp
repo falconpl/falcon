@@ -31,7 +31,7 @@ void FileChooserDialog::modInit( Falcon::Module* mod )
     mod->addClassMethod( c_FileChooserDialog, "get_color_selection",
                 &FileChooserDialog::get_color_selection );
 #endif
-
+   
     /*
      *  implements GtkFileChooser
      */
