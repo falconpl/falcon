@@ -69,8 +69,8 @@ void FileChooser::clsInit( Falcon::Module* mod, Falcon::Symbol* cls )
     { "get_preview_uri",        &FileChooser::get_preview_uri },
     { "set_extra_widget",       &FileChooser::set_extra_widget },
     { "get_extra_widget",       &FileChooser::get_extra_widget },
+    { "add_filter",             &FileChooser::add_filter },
 #if 0
-    { "add_filter",        &FileChooser:: },
     { "remove_filter",        &FileChooser:: },
     { "list_filters",        &FileChooser:: },
     { "set_filter",        &FileChooser:: },
@@ -1212,6 +1212,11 @@ FALCON_FUNC FileChooser::get_extra_widget( VMARG )
         vm->retnil();
 }
 
+/*#
+    @method add_filter GtkFileChooser
+    @brief Adds a filter to the list of filters that the user can select between
+    @param a GtkFileFilter object.
+ */
 FALCON_FUNC FileChooser::add_filter( VMARG )
 {
 	 Item* oFilter = vm->param( 0 );
@@ -1221,9 +1226,9 @@ FALCON_FUNC FileChooser::add_filter( VMARG )
 #endif
 
 	MYSELF;
-    GET_OBJ( self );
+        GET_OBJ( self );
 	
-	gtk_file_chooser_add_filter( (GtkFileChooser*)_obj, (GtkFileFilter*) oFilter); 
+	gtk_file_chooser_add_filter( (GtkFileChooser*)_obj, (GtkFileFilter*)((Gtk::FileFilter*)oFilter) ); 
 
 }
 

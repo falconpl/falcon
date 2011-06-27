@@ -1,6 +1,6 @@
 #ifndef GTK_FILECHOOSER_HPP
 #define GTK_FILECHOOSER_HPP
-
+#include "gtk_FileFilter.hpp"
 #include "modgtk.hpp"
 
 
