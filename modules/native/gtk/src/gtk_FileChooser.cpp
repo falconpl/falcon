@@ -70,10 +70,12 @@ void FileChooser::clsInit( Falcon::Module* mod, Falcon::Symbol* cls )
     { "set_extra_widget",       &FileChooser::set_extra_widget },
     { "get_extra_widget",       &FileChooser::get_extra_widget },
     { "add_filter",             &FileChooser::add_filter },
+	{ "remove_filter",			&FileChooser::remove_filter },
+	{ "set_filter",				&FileChooser::set_filter },
 #if 0
-    { "remove_filter",        &FileChooser:: },
+
     { "list_filters",        &FileChooser:: },
-    { "set_filter",        &FileChooser:: },
+    
     { "get_filter",        &FileChooser:: },
     { "add_shortcut_folder",        &FileChooser:: },
     { "remove_shortcut_folder",        &FileChooser:: },
@@ -1216,6 +1218,9 @@ FALCON_FUNC FileChooser::get_extra_widget( VMARG )
     @method add_filter GtkFileChooser
     @brief Adds a filter to the list of filters that the user can select between
     @param a GtkFileFilter object.
+
+	Adds filter to the list of filters that the user can select between. 
+	When a filter is selected, only files that are passed by that filter are displayed
  */
 FALCON_FUNC FileChooser::add_filter( VMARG )
 {
@@ -1226,17 +1231,61 @@ FALCON_FUNC FileChooser::add_filter( VMARG )
 #endif
 
 	MYSELF;
-        GET_OBJ( self );
+    GET_OBJ( self );
 	
-	gtk_file_chooser_add_filter( (GtkFileChooser*)_obj, (GtkFileFilter*)((Gtk::FileFilter*)oFilter) ); 
+	gtk_file_chooser_add_filter( (GtkFileChooser*)_obj, GET_FILEFILTER( *oFilter )); 
 
+}
+
+/*#
+    @method add_filter GtkFileChooser
+    @brief Adds a filter to the list of filters that the user can select between
+    @param a GtkFileFilter object.
+ */
+FALCON_FUNC FileChooser::remove_filter( VMARG )
+{
+	 Item* oFilter = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
+	if ( oFilter == 0 || ( ! oFilter->isNil() && !( oFilter->isObject() && IS_DERIVED( oFilter, GtkFileFilter ))) )
+		throw_inv_params( "[GtkFileFilter]" );
+#endif
+
+	MYSELF;
+    GET_OBJ( self );
+	
+	gtk_file_chooser_remove_filter( (GtkFileChooser*)_obj, GET_FILEFILTER( *oFilter )); 
+}
+
+/*#
+    @method add_filter GtkFileChooser
+    @brief Sets the current filter; only the files that pass the filter will be displayed.
+    @param a GtkFileFilter object.
+
+	Sets the current filter; only the files that pass the filter will be displayed. 
+	If the user-selectable list of filters is non-empty, then the filter should be one 
+	of the filters in that list. Setting the current filter when the list of filters is 
+	empty is useful if you want to restrict the displayed set of files without letting 
+	the user change it.
+ */
+FALCON_FUNC FileChooser::set_filter( VMARG )
+{
+	 Item* oFilter = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
+	if ( oFilter == 0 || ( ! oFilter->isNil() && !( oFilter->isObject() && IS_DERIVED( oFilter, GtkFileFilter ))) )
+		throw_inv_params( "[GtkFileFilter]" );
+#endif
+
+	MYSELF;
+    GET_OBJ( self );
+	
+	gtk_file_chooser_set_filter( (GtkFileChooser*)_obj, GET_FILEFILTER( *oFilter )); 
 }
 
 #if 0
 
-FALCON_FUNC FileChooser::remove_filter( VMARG );
+
 FALCON_FUNC FileChooser::list_filters( VMARG );
-FALCON_FUNC FileChooser::set_filter( VMARG );
+
 FALCON_FUNC FileChooser::get_filter( VMARG );
 FALCON_FUNC FileChooser::add_shortcut_folder( VMARG );
 FALCON_FUNC FileChooser::remove_shortcut_folder( VMARG );
