@@ -1,6 +1,6 @@
 #ifndef GTK_FILECHOOSER_HPP
 #define GTK_FILECHOOSER_HPP
-
+#include "gtk_FileFilter.hpp"
 #include "modgtk.hpp"
 
 
@@ -113,14 +113,16 @@ FALCON_FUNC get_preview_uri( VMARG );
 FALCON_FUNC set_extra_widget( VMARG );
 
 FALCON_FUNC get_extra_widget( VMARG );
-#if 0
+
 FALCON_FUNC add_filter( VMARG );
 
 FALCON_FUNC remove_filter( VMARG );
 
-FALCON_FUNC list_filters( VMARG );
-
 FALCON_FUNC set_filter( VMARG );
+#if 0
+
+
+FALCON_FUNC list_filters( VMARG );
 
 FALCON_FUNC get_filter( VMARG );
 

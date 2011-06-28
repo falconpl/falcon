@@ -179,16 +179,40 @@ FALCON_FUNC Complex_div__( ::Falcon::VMachine *vm )
 
 FALCON_FUNC Complex_compare( ::Falcon::VMachine *vm )
 {
-   Complex *one, two;
-   const CoreClass* gen;
-   s_operands( vm, one, two, gen );
+   Item* i_other = vm->param( 0 );
+   Item& i_self = vm->self();
 
-   if ( (*one) < two )
-      vm->retval( -1 );
-   else if ( (*one) > two )
-      vm->retval( 1 );
+   if( i_other == 0 || !( i_other->isOrdinal() || i_other->isOfClass( "Complex" ) ))
+   {
+       vm->retval( i_self.type() - i_other->type() );
+       return;
+   }
+
+   Complex& self = dyncast<CoreComplex*>(i_self.asObject())->complex();
+   Complex other;
+
+   if( i_other->isOrdinal() )
+   {
+      other.real( i_other->forceNumeric() );
+   }
    else
-      vm->retval( 0 );
+   {
+       other = (dyncast<CoreComplex *>( i_other->asObject() ))->complex();
+   }
+
+   if( self < other )
+   {
+       vm->retval( -1 );
+   }
+   else if( self > other )
+   {
+       vm->retval( 1 );
+   }
+   else
+   {
+       vm->retval( 0 );
+   }
+
 }
 
 FALCON_FUNC Complex_conj( ::Falcon::VMachine *vm )
