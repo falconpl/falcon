@@ -32,9 +32,9 @@ CoreNil::~CoreNil()
 }
 
 
-void* CoreNil::create(void* ) const
+void CoreNil::op_create( VMachine* vm, int pcount ) const
 {
-   return 0;
+   vm->stackResult( pcount + 1, Item( ) );
 }
 
 

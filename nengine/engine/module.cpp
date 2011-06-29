@@ -38,6 +38,9 @@ public:
    typedef std::map<String, Function*> FunctionMap;
    FunctionMap m_functions;
 
+   typedef std::map<String, Class*> ClassMap;
+   ClassMap m_classes;
+
    ItemArray m_globals;
    bool m_bIsStatic;
 
@@ -67,6 +70,16 @@ public:
       //     functions are destroyed.
       if( m_bIsStatic )
       {
+         // we can always delete the classes that have been assigned to us.
+         ClassMap::iterator cli = m_classes.begin();
+         while( cli != m_classes.end() )
+         {
+            // set the module to 0, so that we're not dec-reffed.
+            cli->second->module(0);
+            delete cli->second;
+            ++cli;
+         }
+
          FunctionMap::iterator vi = m_functions.begin();
          while( vi != m_functions.end() )
          {
@@ -185,6 +198,63 @@ GlobalSymbol* Module::addFunction( const String &name, ext_func_t f, bool bExpor
 GlobalSymbol* Module::addVariable( const String& name, bool bExport )
 {
    return addVariable( name, Item(), bExport );
+}
+
+
+void Module::addClass( GlobalSymbol* gsym, Class* fc, bool )
+{
+   static Class* ccls = Engine::instance()->classClass();
+
+   // finally add to the function vecotr so that we can account it.
+   _p->m_classes[fc->name()] = fc;
+   fc->module(this);
+
+   if(gsym)
+   {
+      gsym->value().setUser( ccls, fc );
+   }
+}
+
+
+GlobalSymbol* Module::addClass( Class* fc, bool, bool bExport )
+{
+   static Collector* coll = Engine::instance()->collector();
+   static Class* ccls = Engine::instance()->classClass();
+
+   Private::GlobalsMap& syms = _p->m_gSyms;
+   if( syms.find(fc->name()) != syms.end() )
+   {
+      return 0;
+   }
+
+   // If the module is not static, garbage-ize the class
+   if( ! m_bIsStatic  )
+   {
+      _p->m_globals.append( FALCON_GC_STORE( coll, ccls, fc ) );
+   }
+   else
+   {
+      _p->m_globals.append( Item(ccls, fc) ); // user data
+   }
+
+   // add a proper object in the global vector
+   // add the symbol to the symbol table.
+   GlobalSymbol* sym = new GlobalSymbol( fc->name(),
+         _p->m_globals.at(_p->m_globals.length()-1) );
+   syms[fc->name()] = sym;
+
+   // Eventually export it.
+   if( bExport )
+   {
+      // by hypotesis, we can't have a double here, already checked on m_gSyms
+      _p->m_gExports[fc->name()] = sym;
+   }
+
+   // finally add to the function vecotr so that we can account it.
+   _p->m_classes[fc->name()] = fc;
+   fc->module(this);
+
+   return sym;
 }
 
 

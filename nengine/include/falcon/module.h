@@ -27,6 +27,7 @@ namespace Falcon {
 class GlobalSymbol;
 class UnknownSymbol;
 class Item;
+class Class;
 
 /** Standard Falcon Execution unit and library.
 
@@ -116,6 +117,20 @@ public:
     */
    GlobalSymbol* addFunction( const String& name, ext_func_t f, bool bExport = true );
 
+   /** Adds a new class to this module.
+    
+    */
+   void addClass( GlobalSymbol* gsym, Class* fc, bool isObj );
+
+     /** Adds a global class, possibly exportable.
+    \param fc The class to be added
+    \param isObj If true, there's a singleton instance bound to this class.
+    \param bExport if true, the returned symbol will be exported.
+    \return A GlobalSymbol holding a pointer to the global variable where the
+            function is now stored, or 0 if the function name is already present.
+    */
+   GlobalSymbol* addClass( Class* fc, bool isObj, bool bExport = true );
+
    /** Adds a global variable, possibly exportable.
     \param name The name of the symbol referencing the variable.
     \param bExport if true, the returned symbol will be exported.
@@ -186,6 +201,13 @@ public:
    Module& operator <<( Function* f )
    {
       addFunction( f );
+      return *this;
+   }
+
+   /** Candy grammar to add exported classes. */
+   Module& operator <<( Class* f )
+   {
+      addClass( f, false );
       return *this;
    }
 

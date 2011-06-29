@@ -27,13 +27,15 @@ namespace Falcon {
 Class::Class( const String& name ):
    m_name( name ),
    m_typeID( FLC_CLASS_ID_OBJECT ),
-   m_falconClass( false )
+   m_falconClass( false ),
+   m_module(0)
 {}
 
 Class::Class( const String& name, int64 tid ):
    m_name( name ),
    m_typeID( tid ),
-   m_falconClass( false )
+   m_falconClass( false ),
+   m_module(0)
 {}
 
 
@@ -45,6 +47,12 @@ Class::~Class()
 void Class::gcMark( void*, uint32 ) const
 {
    // normally does nothing
+}
+
+void Class::gcMark( uint32 )
+{
+   // normally does nothing
+   //TODO Mark the module
 }
 
 
@@ -113,6 +121,12 @@ void Class::op_compare( VMachine *vm, void* self ) const
 //=====================================================================
 // VM Operator override.
 //
+
+void Class::op_create( VMachine *, int32 ) const
+{
+   throw new OperandError( ErrorParam(__LINE__, e_invop ).extra("create") );
+}
+
 
 void Class::op_neg( VMachine *, void* ) const
 {

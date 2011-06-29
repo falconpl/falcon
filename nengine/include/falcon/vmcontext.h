@@ -82,6 +82,12 @@ public:
       return &m_dataStack[ m_topCall->m_stackBase ];
    }
 
+
+   inline Item* opcodeParams( int count )
+   {
+      return m_topData - (count-1);
+   }
+
    /** Return the nth parameter in the local context.
     *
     *TODO use the local stack.

@@ -21,6 +21,7 @@
 #include <falcon/operanderror.h>
 #include <falcon/datareader.h>
 #include <falcon/datawriter.h>
+#include <falcon/paramerror.h>
 
 #include <math.h>
 
@@ -34,14 +35,6 @@ CoreInt::CoreInt():
 
 CoreInt::~CoreInt()
 {
-}
-
-
-void* CoreInt::create(void* creationParams ) const
-{
-   Item* ptr = new Item;
-   *ptr = *( (int64*)creationParams );
-   return ptr;
 }
 
 
@@ -88,6 +81,39 @@ void CoreInt::describe( void* instance, String& target, int, int ) const
 
 //=======================================================================
 //
+
+void CoreInt::op_create( VMachine *vm, int pcount ) const
+{
+   if( pcount > 0 )
+   {
+      Item* param = vm->currentContext()->opcodeParams(pcount);
+      if( param->isOrdinal() )
+      {
+         vm->stackResult( pcount + 1, param->forceInteger() );
+      }
+      else if( param->isString() )
+      {
+         int64 value;
+         if( ! param->asString()->parseInt( value ) )
+         {
+            throw new ParamError( ErrorParam( e_param_range, __LINE__, __FILE__ ).extra( "Not an integer" ) );
+         }
+         else
+         {
+            vm->stackResult( pcount + 1, value );
+         }
+      }
+      else
+      {
+         throw new ParamError( ErrorParam( e_param_range, __LINE__, __FILE__ ).extra( "(N|S)" ) );
+      }
+   }
+   else
+   {
+      vm->stackResult( pcount + 1, Item( (int64) 0 ) );
+   }
+}
+
 
 void CoreInt::op_isTrue( VMachine *vm, void* ) const
 {

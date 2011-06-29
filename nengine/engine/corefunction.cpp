@@ -29,14 +29,6 @@ CoreFunction::~CoreFunction()
 {
 }
 
-
-void* CoreFunction::create(void* creationParams ) const
-{
-   cpars* cp = static_cast<cpars*>(creationParams);
-   return new SynFunc( cp->m_name, cp->m_module );
-}
-
-
 void CoreFunction::dispose( void* self ) const
 {
    Function* f = static_cast<Function*>(self);

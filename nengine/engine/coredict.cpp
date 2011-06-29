@@ -36,23 +36,6 @@ CoreDict::~CoreDict()
 }
 
 
-void* CoreDict::create(void* creationParams ) const
-{
-   // Shall we copy a creator?
-   cpars* cp = static_cast<cpars*>(creationParams);
-   if( cp->m_other != 0 )
-   {
-      if ( cp->m_bCopy )
-         return new ItemDictionary( *static_cast<ItemDictionary*>(cp->m_other) );
-      else
-         return cp->m_other;
-   }
-
-   // -- or shall we just generate a new array?
-   return new ItemDictionary;
-}
-
-
 void CoreDict::dispose( void* self ) const
 {
    ItemDictionary* f = static_cast<ItemDictionary*>(self);
@@ -155,6 +138,11 @@ void CoreDict::enumerateProperties( void*, PropertyEnumerator& cb ) const
 
 //=======================================================================
 //
+void CoreDict::op_create( VMachine* vm, int pcount ) const
+{
+   static Collector* coll = Engine::instance()->collector();
+   vm->stackResult( pcount + 1, FALCON_GC_STORE( coll, this, new ItemDictionary ) );
+}
 
 void CoreDict::op_add( VMachine *, void* ) const
 {

@@ -395,10 +395,10 @@ void Collector::disposeToken(GCToken* token)
 }
 
 
-GCToken* Collector::store( Class* cls, void *data )
+GCToken* Collector::store( const Class* cls, void *data )
 {
    // do we have spare elements we could take?
-   GCToken* token = getToken( cls, data );
+   GCToken* token = getToken( const_cast<Class*>(cls), data );
 
    // put the element in the new list.
    m_mtx_newitem.lock();
@@ -413,10 +413,10 @@ GCToken* Collector::store( Class* cls, void *data )
 }
 
 
-GCLock* Collector::storeLocked( Class* cls, void *data )
+GCLock* Collector::storeLocked( const Class* cls, void *data )
 {
    // do we have spare elements we could take?
-   GCToken* token = getToken( cls, data );
+   GCToken* token = getToken( const_cast<Class*>(cls), data );
    
    GCLock* l = this->lock( token );
 
@@ -1090,7 +1090,7 @@ void Collector::unlock( GCLock* lock )
 
 #if FALCON_TRACE_GC
 
-GCToken* Collector::H_store( Class* cls, void *data, const String& fname, int line )
+GCToken* Collector::H_store( const Class* cls, void *data, const String& fname, int line )
 {
    GCToken* token = store( cls, data );
    if ( m_bTrace )
@@ -1101,7 +1101,7 @@ GCToken* Collector::H_store( Class* cls, void *data, const String& fname, int li
    return token;
 }
 
-GCLock* Collector::H_storeLocked( Class* cls, void *data, const String& file, int line )
+GCLock* Collector::H_storeLocked( const Class* cls, void *data, const String& file, int line )
 {
    GCLock* lock = storeLocked( cls, data );
    if ( m_bTrace )

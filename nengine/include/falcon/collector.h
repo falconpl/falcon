@@ -368,7 +368,7 @@ public:
      @param data An arbitrary data to be passed to the garbage collector.
      @return the token associated with this storage.
     */
-   GCToken* store( Class* cls, void* data );
+   GCToken* store( const Class* cls, void* data );
 
    /** Stores an entity in the garbage collector and immediately locks it.
 
@@ -390,7 +390,7 @@ public:
       @param data An arbitrary data to be passed to the garbage collector.
       @return A GCLock entity to control when the item becomes disposeable.
     */
-   GCLock* storeLocked( Class* cls, void* data );
+   GCLock* storeLocked( const Class* cls, void* data );
 
    /** Locks an item.
     * @see GCLock
@@ -415,7 +415,7 @@ public:
     @return the token associated with this storage.
 
     */
-   GCToken* H_store( Class* cls, void* data, const String& file, int line );
+   GCToken* H_store( const Class* cls, void* data, const String& file, int line );
 
   /** DebugVersion of storeLocked().
 
@@ -431,7 +431,7 @@ public:
     @return A GCLock entity to control when the item becomes disposeable.
 
     */
-   GCLock* H_storeLocked( Class* cls, void* data, const String& file, int line );
+   GCLock* H_storeLocked( const Class* cls, void* data, const String& file, int line );
 
    /** Returns true if activity tracing system is on.
     \return true if the tracing facility is active.
@@ -562,7 +562,6 @@ public:
 
     */
    void clearTrace();
-   
 #endif
 
 protected:

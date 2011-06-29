@@ -36,6 +36,8 @@
 #include <falcon/genericerror.h>
 #include <falcon/unknownsymbol.h>
 
+#include <falcon/falconclass.h>
+
 using namespace Falcon;
 
 //==============================================================

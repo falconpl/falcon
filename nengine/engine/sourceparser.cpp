@@ -44,6 +44,7 @@
 #include <stdio.h>
 
 #include "falcon/compiler.h"
+#include "falcon/falconclass.h"
 
 namespace Falcon {
 using namespace Parsing;
@@ -1550,7 +1551,7 @@ static SynFunc* inner_apply_function( const Rule&, Parser& p, bool bHasExpr )
    }
 
    // Are we already in a function?
-   if( ctx->currentFunc() != 0 )
+   if( ctx->currentFunc() != 0 || ctx->currentStmt() != 0)
    {
       p.addError( e_toplevel_func,  p.currentSource(), tname->line(), tname->chr() );
       p.simplify(tcount);
@@ -1662,14 +1663,52 @@ static void apply_expr_func(const Rule&, Parser& p)
 }
 
 
-static void apply_class( const Rule&, Parser&  )
+static void apply_class( const Rule&, Parser& p )
 {
+   // << T_class << T_Name << T_EOL
+   //static Class* cc = Engine::instance()->classClass();
+
+   SourceParser& sp = static_cast<SourceParser&>(p);
+   ParserContext* ctx = static_cast<ParserContext*>(p.context());
+
+   sp.getNextToken(); // T_class
+   TokenInstance* tname=sp.getNextToken();
+   sp.getNextToken();// 'EOL'
+
+   // Are we already in a function?
+   if( ctx->currentFunc() != 0 || ctx->currentClass() != 0 || ctx->currentStmt() != 0 )
+   {
+      p.addError( e_toplevel_class,  p.currentSource(), tname->line(), tname->chr() );
+      p.simplify(3);
+      return;
+   }
+
+   // check if the symbol is free -- defining an unique symbol
+   bool alreadyDef;
+   GlobalSymbol* symclass = ctx->onGlobalDefined( *tname->asString(), alreadyDef );
+   if( alreadyDef )
+   {
+      // not free!
+      p.addError( e_already_def,  p.currentSource(), tname->line(), tname->chr(), 0,
+         String("at line ").N(symclass->declaredAt()) );
+      p.simplify(3);
+   }
+
+   // Ok, we took the symbol.
+   /*Class* cls = new FalconClass( *tname->asString() );
    
+
+   ctx->openClass(cls, false, symclass);
+   */
+   // remove this stuff from the stack
+   p.simplify( 3 );
 }
 
 static void apply_class_p( const Rule&, Parser&  )
 {
+ // << T_class << T_Name << T_Openpar << ListSymbol << T_Closepar << T_EOL
 
+   //p.simplify( 6 );
 }
 
 //==========================================================

@@ -30,6 +30,7 @@ class VMachine;
 class Item;
 class DataReader;
 class DataWriter;
+class Module;
 
 /** Representation of classes, that is item types.
 
@@ -122,7 +123,17 @@ public:
     */
    Class( const String& name );
    
-   /** Creates a class defining a type ID*/
+   /** Creates a class defining a type ID
+    \param name The name of the class.
+    \param the Type ID of the items created by this class.
+
+    This constructor creates a class that is able to manage basic
+    Falcon types. The TID associated with this is the numeric type
+    ID of the datatype that are created as instances.
+
+    Strings, Arrays, Dictionaries, Ranges and even Integer or NIL are
+    all item types that have a class offering a TID.
+    */
    Class( const String& name, int64 tid );
    
    virtual ~Class();
@@ -132,6 +143,16 @@ public:
    int64 typeID() const { return m_typeID; }
    const String& name() const { return m_name; }
 
+   /** Sets the module of this class.
+    \param m The module where this class resides.
+    */
+   void module( Module* m ) { m_module = m; }
+   
+   /** Returns the module of this class.
+    \return The module where this class resides, or 0 if the class is module-less.
+    */
+   Module* module() const { return m_module; }
+   
    /** Return true if this is a FalconClass instance.
 
     A FalconClass is a specialization of class handling instances of classes declared at
@@ -149,13 +170,6 @@ public:
 
    //=========================================
    // Instance management
-
-   /** Creates an instance.
-        @param creationParams A void* to data that can be used by the subclasses to initialize the instances.
-    *   @return The instance pointer.
-    * The returned instance must be ready to be put in the target object.
-    */
-   virtual void* create(void* creationParams=0 ) const = 0;
 
    /** Disposes an instance */
    virtual void dispose( void* self ) const = 0;
@@ -176,9 +190,22 @@ public:
    //
 
    /** Marks an instance.
+    \parm self The intance of this class to be marked.
+    \param mark The gc mark to be applied.
+
     The base version does nothing.
     */
    virtual void gcMark( void* self, uint32 mark ) const;
+
+   /** Marks the class itself.
+
+    A class itself might be dynamic, as it might have been created
+    dynamically by a module.
+
+    Marking a class will keep alive its module, if it has one,
+    or all the dynamic functions it stores as methods.
+    */
+   virtual void gcMark( uint32 mark );
 
    /** Callback receiving all the properties in this class. */
    typedef Enumerator<String> PropertyEnumerator;
@@ -230,6 +257,26 @@ public:
    //=========================================================
    // Operators.
    //
+   
+   /** Invoked by the VM to create an instance.
+    \param VM a virtual machine invoking the object creation.
+    \param pcount Number of parameters passed in the init request.
+
+    This method is invoked by the VM when it requires an intance to be
+    created by this class.
+
+    The operator must reduce the stack of pcount elements and add the
+    nelwy created instance as a Falcon Item on the stack. The instance may
+    be either created as garbage sensible (DeepData) or as "static" UserData.
+
+    If the method is not able to perform one of this operations, it must
+    generate an exception.
+
+    If the method needs to invoke other VM operations, the method can
+    push a pstep to be called afterwards (see Context::ifDeep), and retard
+    the generation of the instance at a later moment.
+    */
+   virtual void op_create( VMachine *vm, int32 pcount ) const;
 
    /** Called back when the VM wants to negate an item.
      \param vm the virtual machine that will receive the result.
@@ -532,6 +579,8 @@ protected:
    String m_name;
    int64 m_typeID;
    bool m_falconClass;
+
+   Module* m_module;
 };
 
 }

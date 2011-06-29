@@ -35,55 +35,44 @@ CoreClass::~CoreClass()
 }
 
 
-void* CoreClass::create( void* ) const
-{
-   fassert2( false, "Cannot create a core class from creation parameters." );
-   return 0;
-}
+
 
 
 void CoreClass::dispose( void* self ) const
 {
-   delete static_cast<FalconClass*>(self);
+   delete static_cast<Class*>(self);
 }
 
 
 void* CoreClass::clone( void* source ) const
 {
-   return new FalconClass( *static_cast<FalconClass*>(source) );
+   return source;
 }
 
 
-void CoreClass::serialize( DataWriter* stream, void* self ) const
-{
-   static_cast<FalconClass*>(self)->serialize(stream);
-}
-
-
-void* CoreClass::deserialize( DataReader* stream ) const
+void CoreClass::serialize( DataWriter*, void*  ) const
 {
    // TODO
-   FalconClass* fi = new FalconClass;
-   try
-   {
-      fi->deserialize(stream);
-   }
-   catch( ... )
-   {
-      delete fi;
-      throw;
-   }
-   return fi;
+}
+
+
+void* CoreClass::deserialize( DataReader* ) const
+{
+   // TODO
+   return 0;
 }
 
 void CoreClass::describe( void* instance, String& target, int, int ) const
 {
-   FalconClass* fc = static_cast<FalconClass*>(instance);
+   Class* fc = static_cast<Class*>(instance);
    target = "Class " + fc->name();
 }
 
 //====================================================================
 // Operator overloads
+//
+
+
 void CoreClass::op_isTrue( VMachine *vm, void* ) const
 {
    // classes are always true
@@ -92,22 +81,17 @@ void CoreClass::op_isTrue( VMachine *vm, void* ) const
 
 void CoreClass::op_toString( VMachine *vm , void* item ) const
 {
-   FalconClass* fc = static_cast<FalconClass*>(item);
+   Class* fc = static_cast<Class*>(item);
    String* sret = new String( "Class " );
    sret->append(fc->name());
    vm->currentContext()->topData() = sret;
 }
 
 
-void CoreClass::op_call( VMachine *vm, int32 /* pcount */, void* self ) const
+void CoreClass::op_call( VMachine *vm, int32 pcount, void* self ) const
 {
-   static Collector* coll = Engine::instance()->collector();
-   static Class* clsInst = Engine::instance()->instanceClass();
-
-   FalconClass* fc = static_cast<FalconClass*>(self);
-   FalconInstance* fi = fc->createInstance();
-   // save the intance so that it's already garbage-marked
-   vm->currentContext()->topData().setDeep( FALCON_GC_STORE(coll, clsInst, fi) );
+   Class* fc = static_cast<Class*>(self);
+   fc->op_create( vm, pcount );
 }
 
 }

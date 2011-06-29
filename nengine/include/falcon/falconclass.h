@@ -35,7 +35,7 @@ class CoreClass;
 
 /** Class defined by a Falcon script.
 
- This class implements a script definition of a class in a falcon script.
+ This class implements a definition of a class in a falcon script.
 
  This structure is adequate to hold properties, methods, states, an init block
  and class parentship as they are declared in a script through the "class"
@@ -44,24 +44,30 @@ class CoreClass;
  Of course, it is possible to synthethize a FalconClass in a C++ extension or
  module; also, a method can be any Falcon function, including external
  functions. It is also possible to dynamically create new classes, or alter
- the methods and states of existing ones.
+ the methods and states of existing ones. However, extension code may find
+ more convenient do derive its own data handler directly from the Class base
+ class; multiple inheritance is anyhow possible also for direct Class
+ implementations. Using a FalconClass is meaningful only when there is the need
+ to create a class definition out of Falcon source code, or when the foreign
+ code wants to exploit some abilities of Falcon source code (as i.e. type
+ polimorphism, automatic content GC marking and so on).
 
- FalconClasses are handled by the engine through the CoreClass handler.
+ FalconClass instances are handled by the engine through the CoreClass handler.
 
  This class has also the necessary data to create "instances". A FalconInstance
  is an ordered array of values that match the properties in the class, and
  is handled through a CoreInstance handler, which reads the properties in the
  FalconClass that is associated with the instance.
 
- \note Falcon classes can have either an empty parentship or can be derived from
+ Falcon classes can have either an empty parentship or can be derived from
  other FalconClass entities. Deriving a script class from a parent which is not
  a FalconClass itself (or from multiple parents, where one of the parents
  is not a FalconClass is implemented by creating an HyperClass instance.
 
- \note It is possible to access "static" methods and base classes from a live
+ It is possible to access "static" methods and base classes from a live
  script.
 
- \note Despite the fact that modules created from source Falcon scripts will
+ Despite the fact that modules created from source Falcon scripts will
  always create FalconClass instances, the VM may generate an HyperClass in
  their place if one of their parent classes is found to be a non-FalconClass
  instance during the link process, while resolving external symbols.
@@ -70,7 +76,6 @@ class CoreClass;
 class FALCON_DYN_CLASS FalconClass
 {
 public:
-
 
    class Property
    {

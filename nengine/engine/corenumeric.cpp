@@ -21,6 +21,7 @@
 #include <falcon/operanderror.h>
 #include <falcon/datareader.h>
 #include <falcon/datawriter.h>
+#include <falcon/paramerror.h>
 
 #include <math.h>
 
@@ -31,14 +32,36 @@ CoreNumeric::CoreNumeric() : Class( "Numeric", FLC_ITEM_NUM ) { }
 
 CoreNumeric::~CoreNumeric() { }
 
-void *CoreNumeric::create( void *creationParams ) const {
-
-   Item *result = new Item;
-    
-   *result = *static_cast<numeric*>( creationParams );
-    
-   return result;
-    
+void CoreNumeric::op_create( VMachine *vm, int pcount ) const
+{
+   if( pcount > 0 )
+   {
+      Item* param = vm->currentContext()->opcodeParams(pcount);
+      if( param->isOrdinal() )
+      {
+         vm->stackResult( pcount + 1, param->forceNumeric() );
+      }
+      else if( param->isString() )
+      {
+         numeric value;
+         if( ! param->asString()->parseDouble( value ) )
+         {
+            throw new ParamError( ErrorParam( e_param_range, __LINE__, __FILE__ ).extra( "Not an integer" ) );
+         }
+         else
+         {
+            vm->stackResult( pcount + 1, value );
+         }
+      }
+      else
+      {
+         throw new ParamError( ErrorParam( e_param_range, __LINE__, __FILE__ ).extra( "(N|S)" ) );
+      }
+   }
+   else
+   {
+      vm->stackResult( pcount + 1, Item( 0.0 ) );
+   }
 }
 
 

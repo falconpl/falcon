@@ -35,16 +35,6 @@ CoreInstance::~CoreInstance()
 }
 
 
-//=========================================
-// Instance management
-
-void* CoreInstance::create( void* creationParams ) const
-{
-   FalconClass* cls = static_cast<cpars*>(creationParams)->flc;
-   return cls->createInstance();
-}
-
-
 void CoreInstance::dispose( void* self ) const
 {
    delete static_cast<FalconInstance*>(self);

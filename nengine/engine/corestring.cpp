@@ -33,18 +33,6 @@ CoreString::~CoreString()
 }
 
 
-void* CoreString::create(void* creationParams ) const
-{
-   cpars* cp = static_cast<cpars*>(creationParams);
-   String* res = new String( cp->m_other );
-   if ( cp->m_bufferize )
-   {
-      res->bufferize();
-   }
-   return res;
-}
-
-
 void CoreString::dispose( void* self ) const
 {
    String* f = static_cast<String*>(self);
@@ -144,6 +132,40 @@ void CoreString::op_add( VMachine *vm, void* self ) const
 //=======================================================================
 // Auto Addition
 //
+
+void CoreString::op_create( VMachine *vm, int pcount ) const
+{
+   // no param?
+   if( pcount == 0 )
+   {
+      // create a string.
+      String* s = new String;
+      vm->stackResult(1, s->garbage() );
+   }
+   else
+   {
+      // the parameter is a string?
+      Item* itm = vm->currentContext()->opcodeParams(pcount);
+      if( itm->isString() )
+      {
+         // copy it.
+         String* s = new String( *itm->asString() );
+         vm->stackResult( pcount + 1, s->garbage() );
+      }
+      else
+      {
+         // apply the op_toString on the item.
+         Item cpy = *itm;
+         vm->stackResult( pcount + 1, cpy );
+
+         Class* cls;
+         void* data;
+         cpy.forceClassInst( cls, data );
+         cls->op_toString( vm, data );
+      }
+   }
+}
+
 
 void CoreString::op_aadd( VMachine *vm, void* self ) const
 {

@@ -17,7 +17,7 @@
 #include <falcon/itemid.h>
 #include <falcon/vm.h>
 #include <falcon/accesserror.h>
-
+#include <falcon/paramerror.h>
 #include <falcon/itemarray.h>
 
 namespace Falcon {
@@ -30,23 +30,6 @@ CoreArray::CoreArray():
 
 CoreArray::~CoreArray()
 {
-}
-
-
-void* CoreArray::create(void* creationParams ) const
-{
-   // Shall we copy a creator?
-   cpars* cp = static_cast<cpars*>(creationParams);
-   if( cp->m_other != 0 )
-   {
-      if ( cp->m_bCopy )
-         return new ItemArray( *cp->m_other );
-      else
-         return cp->m_other;
-   }
-
-   // -- or shall we just generate a new array?
-   return new ItemArray( cp->m_prealloc );
 }
 
 
@@ -100,6 +83,26 @@ void CoreArray::describe( void* instance, String& target, int maxDepth, int maxL
    }
 
    target += "]";
+}
+
+
+void CoreArray::op_create( VMachine* vm, int pcount ) const
+{
+   static Collector* coll = Engine::instance()->collector();
+
+   length_t count = 0;
+
+   if ( pcount >= 1 )
+   {
+      Item* first = vm->currentContext()->opcodeParams(pcount);
+      if( ! first->isOrdinal() )
+      {
+         throw new ParamError( ErrorParam( e_inv_params, __LINE__,__FILE__ ).extra( "[N]" ) );
+      }
+      count = first->forceInteger();
+   }
+
+   vm->stackResult( pcount+1, FALCON_GC_STORE( coll, this, new ItemArray( count ) ) );
 }
 
 

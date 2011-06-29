@@ -34,31 +34,11 @@ class FALCON_DYN_CLASS CoreArray: public Class
 {
 public:
 
-   class cpars {
-   public:
-      cpars( length_t prealloc ):
-         m_prealloc( prealloc ),
-         m_other(0),
-         m_bCopy(false)
-      {}
-      
-      cpars( ItemArray* other, bool bCopy ):
-         m_prealloc( 0 ),
-         m_other(other),
-         m_bCopy(bCopy)
-      {}
-
-      length_t m_prealloc;
-      ItemArray* m_other;
-      bool m_bCopy;
-   };
-
    CoreArray();
    virtual ~CoreArray();
    
    //=============================================================
 
-   virtual void* create( void* creationParams ) const;
    virtual void dispose( void* self ) const;
    virtual void* clone( void* source ) const;
    virtual void serialize( DataWriter* stream, void* self ) const;
@@ -70,6 +50,7 @@ public:
 
    //=============================================================
 
+   virtual void op_create( VMachine *vm, int32 pcount ) const;
    virtual void op_add( VMachine *vm, void* self ) const;
    virtual void op_aadd( VMachine *vm, void* self ) const;
    virtual void op_isTrue( VMachine *vm, void* self ) const;

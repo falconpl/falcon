@@ -26,6 +26,7 @@
 #include <falcon/expression.h>
 #include <falcon/exprsym.h>
 #include <falcon/error.h>
+#include <falcon/class.h>
 
 #include <vector>
 #include <map>

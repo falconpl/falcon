@@ -63,9 +63,9 @@ void IntCompiler::Context::onNewFunc( Function* function, GlobalSymbol* gs )
 }
 
 
-void IntCompiler::Context::onNewClass( Class*, bool, GlobalSymbol* )
+void IntCompiler::Context::onNewClass( Class* cls, bool isObject, GlobalSymbol* gs )
 {
-   //TODO
+   m_owner->m_module->addClass( gs, cls, isObject );
 }
 
 

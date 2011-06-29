@@ -33,27 +33,22 @@ class FALCON_DYN_CLASS CoreFunction: public Class
 {
 public:
 
-   class cpars {
-   public:
-      cpars( const String& name, Module* mod ):
-         m_name( name ),
-         m_module( mod )
-         {}
-
-      const String& m_name;
-      Module* m_module;
-   };
-
    CoreFunction();
    virtual ~CoreFunction();
 
-   virtual void* create(void* creationParams ) const;
    virtual void dispose( void* self ) const;
    virtual void* clone( void* source ) const;
    virtual void serialize( DataWriter* stream, void* self ) const;
    virtual void* deserialize( DataReader* stream ) const;
 
    virtual void describe( void* instance, String& target, int maxDepth = 3, int maxLength = 60 ) const;
+
+   //=====================================================
+   // Operators.
+   //
+   // Can a function instance be created?
+   // virtual void op_create( VMachine *vm, int32 pcount ) const;
+
 };
 
 }

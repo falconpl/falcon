@@ -71,22 +71,9 @@ public:
    CoreInstance();
    virtual ~CoreInstance();
 
-   /** Creation params for core instances.
-      Require a FalconClass from where to originate the item.
-    */
-   class cpars {
-   public:
-      FalconClass* flc;
-
-      cpars( FalconClass* f ):
-         flc(f)
-         {}
-   };
-   
    //=========================================
    // Instance management
    
-   virtual void* create( void* creationParams=0 ) const;
    virtual void dispose( void* self ) const;
    virtual void* clone( void* source ) const;
    virtual void serialize( DataWriter* stream, void* self ) const;
@@ -105,6 +92,7 @@ public:
    // Operators.
    //
 
+   //virtual void op_create( VMachine *vm, int32 pcount ) const;
    virtual void op_neg( VMachine *vm, void* self ) const;
    virtual void op_add( VMachine *vm, void* self ) const;
    virtual void op_sub( VMachine *vm, void* self ) const;

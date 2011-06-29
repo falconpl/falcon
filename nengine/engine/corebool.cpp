@@ -15,13 +15,9 @@
 
 
 #include <falcon/corebool.h>
-
 #include <falcon/item.h>
-
 #include <falcon/itemid.h>
-
 #include <falcon/vm.h>
-
 #include <falcon/optoken.h>
 
 namespace Falcon {
@@ -36,15 +32,39 @@ CoreBool::~CoreBool()
 {
 }
 
-void* CoreBool::create(void *creationParams ) const
+
+void CoreBool::op_create( VMachine* vm, int pcount ) const
 {
-   Item *result = new Item;
-
-   *result = *static_cast<bool*>( creationParams ); 
-
-   return result;
+   if ( pcount >= 1 )
+   {
+      Class* cls;
+      void* inst;
+      Item* itm = vm->currentContext()->opcodeParams(pcount);
+      if( itm->asClassInst( cls, inst ) )
+      {
+         // put the item in the stack, just in case.
+         vm->stackResult( pcount+1, *itm );
+         cls->op_isTrue( vm, inst );
+         if( vm->wentDeep() )
+         {
+            return;
+         }
+         // if the item is not deep, then isTrue has already done what we want.
+         // but better be sure
+         vm->currentContext()->topData().setBoolean(vm->currentContext()->topData().isTrue());
+      }
+      else
+      {
+         vm->stackResult( pcount+1, Item( itm->isTrue() ) );
+      }
+   }
 }
 
+
+void CoreBool::NextOpCreate::apply_( const PStep*, VMachine* vm )
+{
+   vm->currentContext()->topData().setBoolean(vm->currentContext()->topData().isTrue());
+}
 
 void CoreBool::dispose( void *self ) const
 {
@@ -100,7 +120,7 @@ void CoreBool::op_toString( VMachine *vm, void* ) const
    OpToken token( vm, iself );
    String s;
    token.exit( s.A( iself->asBoolean() ? "true" : "false" ) );
-} 
+}
 
 
 }

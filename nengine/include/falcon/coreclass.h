@@ -37,7 +37,6 @@ public:
    CoreClass();
    virtual ~CoreClass();
 
-   virtual void* create( void* creationParams ) const;
    virtual void dispose( void* self ) const;
    virtual void* clone( void* source ) const;
    virtual void serialize( DataWriter* stream, void* self ) const;
@@ -47,6 +46,7 @@ public:
 
    //=============================================================
 
+   // virtual void op_create( VMachine *vm, int32 pcount ) const; -- let the default non-creable thing to work
    virtual void op_isTrue( VMachine *vm, void* self ) const;
    virtual void op_toString( VMachine *vm, void* self ) const;
    virtual void op_call( VMachine *vm, int32 pcount, void* self ) const;

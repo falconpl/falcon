@@ -32,28 +32,11 @@ class FALCON_DYN_CLASS CoreDict: public Class
 {
 public:
 
-   class cpars {
-   public:
-      cpars():
-         m_other(0),
-         m_bCopy(false)
-      {}
-
-      cpars( void* other, bool bCopy ):
-         m_other(other),
-         m_bCopy(bCopy)
-      {}
-
-      void* m_other;
-      bool m_bCopy;
-   };
-
    CoreDict();
    virtual ~CoreDict();
 
    //=============================================================
 
-   virtual void* create( void* creationParams ) const;
    virtual void dispose( void* self ) const;
    virtual void* clone( void* source ) const;
    virtual void serialize( DataWriter* stream, void* self ) const;
@@ -67,6 +50,7 @@ public:
 
    //=============================================================
 
+   virtual void op_create( VMachine *vm, int32 pcount ) const;
    virtual void op_add( VMachine *vm, void* self ) const;
    virtual void op_isTrue( VMachine *vm, void* self ) const;
    virtual void op_toString( VMachine *vm, void* self ) const;

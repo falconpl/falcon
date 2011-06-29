@@ -22,6 +22,14 @@
 #include <falcon/cm/tostring.h>
 #include <falcon/cm/typeid.h>
 
+#include <falcon/corestring.h>
+#include <falcon/corenil.h>
+#include <falcon/corebool.h>
+#include <falcon/coreint.h>
+#include <falcon/corenumeric.h>
+#include <falcon/coredict.h>
+#include <falcon/corearray.h>
+
 namespace Falcon {
 
 CoreModule::CoreModule():
@@ -37,6 +45,14 @@ CoreModule::CoreModule():
       << new Ext::Max
       << new Ext::ToString
       << new Ext::TypeId
+      
+      << new CoreNil
+      << new CoreBool
+      << new CoreInt
+      << new CoreNumeric
+      << new CoreArray
+      << new CoreDict
+      << new CoreString
       ;
 }
 

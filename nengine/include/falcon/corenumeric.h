@@ -33,7 +33,6 @@ public:
    CoreNumeric();
    virtual ~CoreNumeric();
 
-   virtual void* create( void* creationParams ) const;
    virtual void dispose( void* self ) const;
    virtual void* clone( void* source ) const;
    virtual void serialize( DataWriter* stream, void* self ) const;
@@ -42,6 +41,7 @@ public:
    virtual void describe( void* instance, String& target, int depth = 3, int maxlen = 60 ) const;
 
    //=============================================================
+   virtual void op_create( VMachine *vm, int32 pcount ) const;
 
    virtual void op_isTrue( VMachine *vm, void* self ) const;
    virtual void op_toString( VMachine *vm, void* self ) const;

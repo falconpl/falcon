@@ -32,7 +32,7 @@ class SourceParser;
 class SynFunc;
 class Expression;
 class Statement;
-class Class;
+class FalconClass;
 
 /** Compilation context for Falcon source file compiler (ABC).
 
