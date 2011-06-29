@@ -162,6 +162,8 @@ inline void override_unary( VMachine *vm, void* self, const String& op )
 {
    FalconInstance* inst = static_cast<FalconInstance*>(self);
    Item item;
+
+   // TODO -- use pre-caching of the desired method
    if( inst->origin()->getMember( op, item ) && item.isFunction() )
    {
       vm->call (item.asFunction(), 0, vm->currentContext()->topData(), true );
@@ -176,6 +178,8 @@ inline void override_binary( VMachine *vm, void* self, const String& op )
 {
    FalconInstance* inst = static_cast<FalconInstance*>(self);
    Item item;
+
+   // TODO -- use pre-caching of the desired method
    if( inst->origin()->getMember( op, item ) && item.isFunction() )
    {
       Item* first, *second;

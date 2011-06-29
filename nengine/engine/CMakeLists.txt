@@ -150,8 +150,6 @@ add_library(falcon_engine SHARED
   vm.cpp
   vmcontext.cpp
   writer.cpp
-
-  parser/token.cpp
 )
 
 set_target_properties(falcon_engine PROPERTIES
