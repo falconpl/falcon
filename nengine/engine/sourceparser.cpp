@@ -1661,7 +1661,7 @@ static void apply_expr_func(const Rule&, Parser& p)
 }
 
 
-static void apply_class( const Rule&, Parser& p )
+static void apply_class( const Rule&, Parser&  )
 {
    
 }

@@ -36,7 +36,7 @@ void ErrorClass::dispose( void* self ) const
 void* ErrorClass::clone( void* ) const
 {
    // errors are uncloneable for now
-   return false;
+   return 0;
 }
 
 void ErrorClass::serialize( DataWriter*, void* ) const
