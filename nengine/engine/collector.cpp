@@ -53,12 +53,19 @@ public:
    Private() {}
    ~Private()
    {
+      clearTrace();
+   }
+
+   void clearTrace()
+   {
+   #if FALCON_TRACE_GC
       HistoryMap::iterator hmi = m_hmap.begin();
       while( hmi != m_hmap.end() )
       {
          delete hmi->second;
          ++hmi;
       }
+   #endif
    }
 };
 
@@ -1118,8 +1125,26 @@ void Collector::trace( bool t )
 { 
    m_mtx_history.lock();
    m_bTrace = t;
+   m_bTraceMarks = t;
    m_mtx_history.unlock();
 }
+
+
+bool Collector::traceMark() const
+{
+   m_mtx_history.lock();
+   bool bTrace = m_bTraceMarks;
+   m_mtx_history.unlock();
+   return bTrace;
+}
+
+void Collector::traceMark( bool t )
+{
+   m_mtx_history.lock();
+   m_bTraceMarks = t;
+   m_mtx_history.unlock();
+}
+
 
 void Collector::onCreate( const Class* cls, void* data, const String& file, int line )
 {
@@ -1156,6 +1181,7 @@ void Collector::onCreate( const Class* cls, void* data, const String& file, int 
    }
 }
 
+
 void Collector::onMark( void* data )
 {
    m_mtx_history.lock();
@@ -1165,7 +1191,11 @@ void Collector::onMark( void* data )
       DataStatus& status = *iter->second;
       if( status.m_bAlive )
       {
-         status.addEntry( new HEMark() );
+         // record this check only if really required
+         if( m_bTraceMarks )
+         {
+            status.addEntry( new HEMark() );
+         }
          m_mtx_history.unlock();
       }
       else
@@ -1235,8 +1265,24 @@ void Collector::enumerateHistory( DataStatusEnumerator& r ) const
    while( iter != _p->m_hmap.end() )
    {
       DataStatus& status = *iter->second;
-      r( status, (iter == _p->m_hmap.end() ) );
+      if( ! r( status, (++iter == _p->m_hmap.end() ) ) )
+      {
+         break;
+      }
    }
+}
+
+
+Collector::DataStatus* Collector::getHistory( const void* pointer ) const
+{
+   Private::HistoryMap::const_iterator iter = _p->m_hmap.find( (void*)pointer );
+   if( iter != _p->m_hmap.end() ) return iter->second;
+   return 0;
+}
+
+void Collector::clearTrace()
+{
+   _p->clearTrace();
 }
 
 #endif

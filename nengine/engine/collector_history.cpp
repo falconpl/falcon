@@ -82,6 +82,20 @@ String Collector::DataStatus::dump()
    return s;
 }
 
+
+void Collector::DataStatus::enumerateEntries( EntryEnumerator& r ) const
+{
+   Private::EntryList::iterator iter = _p->m_entries.begin();
+   while( iter != _p->m_entries.end() )
+   {
+      Collector::HistoryEntry* he = *iter;
+      if( ! r( *he, (++iter != _p->m_entries.end()) ) )
+      {
+         break;
+      }
+   }
+}
+
 //================================================================
 // History entry
 //
@@ -89,7 +103,7 @@ String Collector::DataStatus::dump()
 Collector::HistoryEntry::HistoryEntry( action_t action ):
    m_action( action )
 {
-   m_ticks = clock() / (CLOCKS_PER_SEC / 1000);
+   m_ticks = (int64)( clock() / (CLOCKS_PER_SEC / 1000) );
 }
 
 
