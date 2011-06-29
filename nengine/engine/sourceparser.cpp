@@ -546,6 +546,8 @@ static void apply_Atom_Name ( const Rule&, Parser& p )
 
 static void apply_Atom_String ( const Rule&, Parser& p )
 {
+   static Class* sc = Engine::instance()->stringClass();
+
    // << (r_Atom_String << "Atom_String" << apply_Atom_String << T_String )
    SourceParser& sp = static_cast<SourceParser&>(p);
    ParserContext* ctx = static_cast<ParserContext*>(p.context());
@@ -555,13 +557,12 @@ static void apply_Atom_String ( const Rule&, Parser& p )
 
    // get the string and it's class, to generate a static UserValue
    String* s = ti->detachString();
-   Class* stringClass = Engine::instance()->stringClass();
    // tell the context that we have a new string around.
-   ctx->onStaticData( stringClass, s );
+   ctx->onStaticData( sc, s );
 
    // set it in the expression
    Item itm;
-   itm.setUser( stringClass, s );
+   itm.setUser( sc, s );
    ti2->setValue( new ExprValue(itm), expr_deletor );
 
    // remove the token in the stack.

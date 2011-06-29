@@ -187,7 +187,7 @@ void ExprArray::apply_( const PStep* ps, VMachine* vm )
    register VMContext* ctx = vm->currentContext();
    ctx->copyData( array->elements(), mye.size() );
    ctx->popData( mye.size() );
-   ctx->pushData( collector->store(ca_class, array) );
+   ctx->pushData( FALCON_GC_STORE( collector, ca_class, array ) );
 }
 
 

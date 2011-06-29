@@ -58,6 +58,9 @@ public:
 
    virtual void op_add( VMachine *vm, void* self ) const;
    virtual void op_aadd( VMachine *vm, void* self ) const;
+
+   // THIS IS A TODO!
+   virtual void op_getIndex( VMachine *vm, void* self ) const;
    
    virtual void op_compare( VMachine *vm, void* self ) const;
    virtual void op_toString( VMachine *vm, void* self ) const;

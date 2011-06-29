@@ -95,14 +95,16 @@ void Function::gcMark(int32 mark)
 GCToken* Function::garbage( Collector* c )
 {
    static Class* fclass = Engine::instance()->functionClass();
-   m_gcToken = c->store( fclass, this );
+   m_gcToken = FALCON_GC_STORE( c, fclass, this );
    return m_gcToken;
 }
 
 GCToken* Function::garbage()
 {
-   register Engine* inst = Engine::instance();
-   m_gcToken = inst->collector()->store( inst->functionClass(), this );
+   static Class* fclass = Engine::instance()->functionClass();
+   static Collector* coll = Engine::instance()->collector();
+
+   m_gcToken = FALCON_GC_STORE( coll, fclass, this );
    return m_gcToken;
 }
 

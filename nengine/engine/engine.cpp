@@ -14,6 +14,7 @@
 */
 
 #include <map>
+#include <stdio.h>
 
 #include <falcon/trace.h>
 #include <falcon/engine.h>
@@ -423,6 +424,14 @@ void Engine::shutdown()
       m_instance = 0;
       MESSAGE( "Engine shutdown complete" );
    }
+}
+
+
+void Engine::die( const String& msg )
+{
+   String res = msg;
+   fprintf( stderr, "%s\n", msg.c_ize() );
+   exit(1);
 }
 
 //=====================================================

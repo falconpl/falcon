@@ -73,6 +73,11 @@
    #define FALCON_DEFAULT_LOAD_PATH    ".;@CMAKE_INSTALL_PREFIX@/@FALCON_MOD_DIR@"
 #endif
 
+//=====================================================
+// Runtime differential options
+//
+#define  FALCON_TRACE_GC               @FALCON_TRACE_GC_VALUE@
+
 #endif
 
 /* end of config.h */

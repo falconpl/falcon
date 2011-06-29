@@ -19,6 +19,33 @@
 #include <falcon/setup.h>
 #include <falcon/mt.h>
 #include <falcon/rampmode.h>
+#include <falcon/string.h>
+#include <falcon/enumerator.h>
+
+#include <time.h>
+
+
+#if FALCON_TRACE_GC
+
+   #define FALCON_GC_STORE( coll, cls, data ) ( coll->trace() ?\
+         coll->H_store( cls, (void*) data, __FILE__, __LINE__ ): \
+         coll->store( cls, (void*) data ))
+   #define FALCON_GC_STORELOCKED( coll, cls, data ) ( coll->trace() ?\
+         coll->H_storeLocked( cls, (void*) data, __FILE__, __LINE__ ): \
+         coll->storeLocked( cls, (void*) data ))
+
+#else  //FALCON_TRACE_GC
+   /** This macro can be used to activate the history recording of GC entities.
+    See the main body class.
+    */
+   #define FALCON_GC_STORE( coll, cls, data ) (coll->store( cls, (void*) data ))
+
+   /** This macro can be used to activate the history recording of GC entities.
+    See the main body class.
+    */
+   #define FALCON_GC_STORELOCKED( coll, cls, data ) (coll->storeLocked( cls, (void*) data ))
+         
+#endif  //FALCON_TRACE_GC
 
 namespace Falcon {
 
@@ -27,28 +54,281 @@ class GCLock;
 class Item;
 class Class;
 class VMachine;
+class TextWriter;
 
 /** Falcon Garbage collector.
- *
- * @section coll_loop Collection mark-sweep loop thread.
- *
- * The mark-sweep loop has the follwing structure:
- * - The items currently locked are marked.
- * - The live modules are makred.
- * - The VMs registered with this collector are scanned for live items to be marked.
- * - The sweep loop reapes all the items that fall beyond the last live VM generation.
- * - The new items are marked with the CURRENT generation, and moved in the normal garbage.
- * - The generation is advanced.
- *
- * Items may be locked by active threads right after the first step, but they are
- * allocated in the new item list; so, they cannot be reaped during the current loop.
- *
+
+ @section coll_loop Collection mark-sweep loop thread.
+ The mark-sweep loop has the follwing structure:
+ - The items currently locked are marked.
+ - The live modules are makred.
+ - The VMs registered with this collector are scanned for live items to be marked.
+ - The sweep loop reapes all the items that fall beyond the last live VM generation.
+ - The new items are marked with the CURRENT generation, and moved in the normal garbage.
+ - The generation is advanced.
+
+   Items may be locked by active threads right after the first step, but they are
+   allocated in the new item list; so, they cannot be reaped during the current loop.
+ 
 */
 
 class FALCON_DYN_CLASS Collector: public Runnable
 {
 
+public:
+   enum constants {
+      MAX_GENERATION = 0xFFFFFFFE,
+      SWEEP_GENERATION = 0xFFFFFFFF
+   };
+
+   class HistoryEntry
+   {
+   public:
+      typedef enum tag_action_t {
+         ea_create,
+         ea_mark,
+         ea_destroy
+      } action_t;
+
+      action_t m_action;
+      clock_t m_ticks;
+
+      HistoryEntry( action_t action );
+      virtual ~HistoryEntry();
+      
+      virtual String dump() const = 0;
+   };
+
+
+   class HECreate: public HistoryEntry
+   {
+   public:
+      String m_file;
+      int m_line;
+      String m_class;
+
+      HECreate( const String& m_file, int line, const String& className );
+      virtual ~HECreate();
+      
+      virtual String dump() const;
+   };
+
+   class HEMark: public HistoryEntry
+   {
+   public:
+      HEMark();
+      virtual ~HEMark();
+
+      virtual String dump() const;
+   };
+
+   class HEDestroy: public HistoryEntry
+   {
+   public:
+      HEDestroy();
+      virtual ~HEDestroy();
+
+      virtual String dump() const;
+   };
+
+
+   class DataStatus
+   {
+   public:
+      DataStatus( void* data );
+      ~DataStatus();
+      
+      void* m_data;
+      bool m_bAlive;
+
+      void addEntry( HistoryEntry* e );
+      String dump();
+
+   private:
+      class Private;
+      Private* _p;
+   };
+
+
+   /** Builds a memory pool.
+      Initializes all element at 0 and set buffer sizes to the FALCON default.
+   */
+   Collector();
+
+   /** Destroys all the items.
+      Needless to say, this must be called outside any VM.
+   */
+   virtual ~Collector();
+
+   /** Called upon creation of a new VM.
+      This sets the current generation of the VM so that it is unique
+      among the currently living VMs.
+   */
+   void registerVM( VMachine *vm );
+
+   /** Called before destruction of a VM.
+      Takes also care to disengage the VM from idle VM list.
+   */
+   void unregisterVM( VMachine *vm );
+
+
+   /** Returns the number of elements managed by this collector. */
+   int32 allocatedItems() const;
+
+   /** Returns the current generation. */
+   uint32 generation() const { return m_generation; }
+
+   virtual void* run();
+
+   /** Starts the parallel garbage collector. */
+   void start();
+
+   /** Stops the collector.
+      The function synchronously wait for the thread to exit and sets it to 0.
+   */
+   void stop();
+   
+   /** Declares the given VM idle.
+
+      The VM may be sent to the the main memory pool garbage collector mark loop
+      if it is found outdated and in need of a new marking.
+
+      Set prio = true if the VM requests a priority GC. In that case, the VM
+      must present itself non-idle, and the idle-ship is taken implicitly by
+      the GC. The VM is notified with m_eGCPerformed being set after the complete
+      loop is performed.
+   */
+   void idleVM( VMachine *vm, bool bPrio = false );
+
+   /** Sets the normal threshold level. */
+   void thresholdNormal( size_t mem ) { m_thresholdNormal = mem; }
+
+   /** Sets the active threshold level. */
+   void thresholdActive( size_t mem ) { m_thresholdActive = mem; }
+
+   size_t thresholdNormal() const { return m_thresholdNormal; }
+
+   size_t thresholdActive() const { return m_thresholdActive; }
+
+   /** Sets the algorithm used to dynamically configure the collection levels.
+      Can be one of:
+      - RAMP_MODE_STRICT_ID
+      - RAMP_MODE_LOOSE_ID
+      - RAMP_MODE_SMOOTH_SLOW_ID
+      - RAMP_MODE_SMOOTH_FAST_ID
+
+      Or RAMP_MODE_OFF to disable dynamic auto-adjust of collection levels.
+      \param mode the mode to be set.
+      \return true if the mode can be set, false if it is an invalid value.
+   */
+   bool rampMode( int mode );
+   int rampMode() const;
+
+
+   /** Run a complete garbage collection.
+    *
+    * This method orders the GC to perform a complete garbage collection loop as soon as
+    * possible, and then waits for the completion of that loop.
+    *
+    */
+   void performGC();
+
+   /** Stores an entity in the garbage collector.
+    
+     The entity gets stored in the new items, and will become reclaimable
+     since the first scan loop that comes next.
+    
+     The data must be delivered to the garbage collection system with the
+     class that describes it. The collector will call Class::gcmark to
+     indicate that the item holding this object is alive. When the item
+     is found dead, the collector will call Class::dispose to inform
+     the class that the item is not needed by Falcon anymore.
+
+
+    
+     @param cls The class that manages the data.
+     @param data An arbitrary data to be passed to the garbage collector.
+     @return the token associated with this storage.
+    */
+   GCToken* store( Class* cls, void* data );
+
+   /** Stores an entity in the garbage collector and immediately locks it.
+    
+     This method stores an entity for garbage collecting, but adds an initial
+     lock so that the collector cannot reclaim it, nor any other data depending
+     from the stored entity.
+    
+     This is useful when the object is known to be needed by an external entity
+     that may be destroyed separately from Falcon activity. A locked entity
+     gets marked via Class::gcmark even if not referenced in any virtual machine,
+     and gets disposed only if found unreferenced after the garbage lock is
+     removed.
+    
+      @param cls The class that manages the data.
+      @param data An arbitrary data to be passed to the garbage collector.
+      @return A GCLock entity to control when the item becomes disposeable.
+    */
+   GCLock* storeLocked( Class* cls, void* data );
+
+   /** Locks an item.
+    * @see GCLock
+    */
+   GCLock* lock( const Item& item );
+
+   /** Unlocks a locked item. */
+   void unlock( GCLock* lock );
+
+#if FALCON_TRACE_GC
+   /** Debug version of store.
+
+      This specialization of store() saves an entry in the activity log of the
+      garbage collector.
+
+    Please refer to store() and to the class documentation for further details.
+
+     @param cls The class that manages the data.
+     @param data An arbitrary data to be passed to the garbage collector.
+     @param file The file where the storage was done.
+    @param line the line where the storage was done.
+    @return the token associated with this storage.
+
+    */
+   GCToken* H_store( Class* cls, void* data, const String& file, int line );
+
+    /** DebugVersion of storeLocked().
+
+      This specialization of storeLocked() saves an entry in the activity log of the
+      garbage collector.
+
+    Please refer to storeLocked() and to the class documentation for further details.
+
+     @param cls The class that manages the data.
+     @param data An arbitrary data to be passed to the garbage collector.
+    @param file The file where the storage was done.
+    @param line the line where the storage was done.
+    @return A GCLock entity to control when the item becomes disposeable.
+
+    */
+   GCLock* H_storeLocked( Class* cls, void* data, const String& file, int line );
+
+   /** Returns true if activity tracing system is on. */
+   bool trace() const;
+
+   /** Returns true if activity tracing system is off. */
+   void trace( bool t );
+   
+   /** Dumps all the history information on a selected device.
+    \param target The TextWriter where to write the informaton.
+    */
+   void dumpHistory( TextWriter* target ) const;
+   
+   typedef Enumerator<DataStatus> DataStatusEnumerator;
+   /** Enumerates all the data-status. */
+   void enumerateHistory( DataStatusEnumerator& r ) const;
+#endif
+
 protected:
+
    size_t m_thresholdNormal;
    size_t m_thresholdActive;
 
@@ -177,8 +457,6 @@ protected:
    void disposeLock( GCLock* lock );
    void disposeToken(GCToken* token);
 
-
-
    void addGarbageLock( GCLock* lock );
    void removeGarbageLock( GCLock* lock );
 
@@ -188,142 +466,19 @@ protected:
    // Marks the newly created items.
    void markNew();
 
-public:
-   enum constants {
-      MAX_GENERATION = 0xFFFFFFFE,
-      SWEEP_GENERATION = 0xFFFFFFFF
-   };
-
-   /** Builds a memory pool.
-      Initializes all element at 0 and set buffer sizes to the FALCON default.
-   */
-   Collector();
-
-   /** Destroys all the items.
-      Needless to say, this must be called outside any VM.
-   */
-   virtual ~Collector();
-
-   /** Called upon creation of a new VM.
-      This sets the current generation of the VM so that it is unique
-      among the currently living VMs.
-   */
-   void registerVM( VMachine *vm );
-
-   /** Called before destruction of a VM.
-      Takes also care to disengage the VM from idle VM list.
-   */
-   void unregisterVM( VMachine *vm );
-
-
-   /** Returns the number of elements managed by this collector. */
-   int32 allocatedItems() const;
-
-   /** Returns the current generation. */
-   uint32 generation() const { return m_generation; }
-
-   virtual void* run();
-
-   /** Starts the parallel garbage collector. */
-   void start();
-
-   /** Stops the collector.
-      The function synchronously wait for the thread to exit and sets it to 0.
-   */
-   void stop();
+   // True to activate runtime trace.
+   bool m_bTrace;
    
-   /** Declares the given VM idle.
+private:
 
-      The VM may be sent to the the main memory pool garbage collector mark loop
-      if it is found outdated and in need of a new marking.
+   mutable Mutex m_mtx_history;
+   
+   void onCreate( const Class* cls, void* data, const String& file, int line );
+   void onMark( void* data );
+   void onDestroy( void* data );
 
-      Set prio = true if the VM requests a priority GC. In that case, the VM
-      must present itself non-idle, and the idle-ship is taken implicitly by
-      the GC. The VM is notified with m_eGCPerformed being set after the complete
-      loop is performed.
-   */
-   void idleVM( VMachine *vm, bool bPrio = false );
-
-   /** Sets the normal threshold level. */
-   void thresholdNormal( size_t mem ) { m_thresholdNormal = mem; }
-
-   /** Sets the active threshold level. */
-   void thresholdActive( size_t mem ) { m_thresholdActive = mem; }
-
-   size_t thresholdNormal() const { return m_thresholdNormal; }
-
-   size_t thresholdActive() const { return m_thresholdActive; }
-
-   /** Sets the algorithm used to dynamically configure the collection levels.
-      Can be one of:
-      - RAMP_MODE_STRICT_ID
-      - RAMP_MODE_LOOSE_ID
-      - RAMP_MODE_SMOOTH_SLOW_ID
-      - RAMP_MODE_SMOOTH_FAST_ID
-
-      Or RAMP_MODE_OFF to disable dynamic auto-adjust of collection levels.
-      \param mode the mode to be set.
-      \return true if the mode can be set, false if it is an invalid value.
-   */
-   bool rampMode( int mode );
-   int rampMode() const;
-
-
-   /** Run a complete garbage collection.
-    *
-    * This method orders the GC to perform a complete garbage collection loop as soon as
-    * possible, and then waits for the completion of that loop.
-    *
-    */
-   void performGC();
-
-   /**
-    * Stores an entity in the garbage collector.
-    *
-    * The entity gets stored in the new items, and will become reclaimable
-    * since the first scan loop that comes next.
-    *
-    * The data must be delivered to the garbage collection system with the
-    * class that describes it. The collector will call Class::gcmark to
-    * indicate that the item holding this object is alive. When the item
-    * is found dead, the collector will call Class::dispose to inform
-    * the class that the item is not needed by Falcon anymore.
-    *
-    *
-    * @param cls The class that manages the data.
-    * @param data An arbitrary data to be passed to the garbage collector.
-    * @return the token associated with this storage.
-    */
-   GCToken* store( Class* cls, void* data );
-
-
-   /**
-    * Stores an entity in the garbage collector and immediately locks it.
-    *
-    * This method stores an entity for garbage collecting, but adds an initial
-    * lock so that the collector cannot reclaim it, nor any other data depending
-    * from the stored entity.
-    *
-    * This is useful when the object is known to be needed by an external entity
-    * that may be destroyed separately from Falcon activity. A locked entity
-    * gets marked via Class::gcmark even if not referenced in any virtual machine,
-    * and gets disposed only if found unreferenced after the garbage lock is
-    * removed.
-    *
-    * @param cls The class that manages the data.
-    * @param data An arbitrary data to be passed to the garbage collector.
-    */
-   GCLock* storeLocked( Class* cls, void* data );
-
-
-   /** Locks an item.
-    * @see GCLock
-    */
-   GCLock* lock( const Item& item );
-
-   /** Unlocks a locked item. */
-   void unlock( GCLock* lock );
-
+   class Private;
+   Private* _p;
 };
 
 }

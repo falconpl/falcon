@@ -63,12 +63,12 @@ void FalconInstance::getMember( const String& name, Item& target ) const
          break;
 
       case FalconClass::Property::t_func:
-         target.setDeep( coll->store( cinst, (void*) this ) );
+         target.setDeep( FALCON_GC_STORE( coll, cinst, this ) );
          target.methodize( prop->m_value.func );
          break;
 
       case FalconClass::Property::t_inh:
-         target.setDeep( coll->store( cinst, (void*) this ) );
+         target.setDeep( FALCON_GC_STORE( coll, cinst, this ) );
          //TODO
          //target.methodize( prop.m_value.inh. somethin );
          break;

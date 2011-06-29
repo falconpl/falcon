@@ -47,8 +47,10 @@ void Item::setString( String* str )
 
 void Item::setArray( ItemArray* array )
 {
-   Engine* eng = Engine::instance();
-   setDeep( eng->collector()->store(eng->arrayClass(), array) );
+   static Class* arrayClass = Engine::instance()->arrayClass();
+   static Collector* coll = Engine::instance()->collector();
+
+   setDeep( FALCON_GC_STORE( coll, arrayClass, array) );
 }
 
 /*

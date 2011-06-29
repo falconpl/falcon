@@ -67,6 +67,11 @@ public:
 
 void go()
 {
+   // prepare to trace the GC.
+#if FALCON_TRACE_GC
+   Engine::instance()->collector()->trace( true );
+#endif
+
    VMachine vm;
    vm.link( new CoreModule );
    IntCompiler intComp(&vm);
@@ -141,7 +146,12 @@ void go()
       }
       // else, it's ok to leave the prompt as it is.
    }
-      
+
+#if FALCON_TRACE_GC
+   vm.textOut()->write("\nGarbage data history:\n");
+   Engine::instance()->collector()->dumpHistory( vm.textOut() );
+#endif
+
 }
 
 };

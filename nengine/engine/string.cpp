@@ -13,6 +13,8 @@
    See LICENSE file for licensing details.
 */
 
+#line __LINE__ "engine/string.cpp"
+
 /** \file
    Implementation of Core Strings.
    \todo Add support for international strings.
@@ -2266,7 +2268,7 @@ GCToken* String::garbage()
    static Class* stringClass = Engine::instance()->stringClass();
    static Collector* collector = Engine::instance()->collector();
 
-   return collector->store( stringClass, this );
+   return FALCON_GC_STORE( collector, stringClass, this );
 }
 
 }

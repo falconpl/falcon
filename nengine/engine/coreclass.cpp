@@ -107,7 +107,7 @@ void CoreClass::op_call( VMachine *vm, int32 /* pcount */, void* self ) const
    FalconClass* fc = static_cast<FalconClass*>(self);
    FalconInstance* fi = fc->createInstance();
    // save the intance so that it's already garbage-marked
-   vm->currentContext()->topData().setDeep( coll->store(clsInst, fi) );
+   vm->currentContext()->topData().setDeep( FALCON_GC_STORE(coll, clsInst, fi) );
 }
 
 }

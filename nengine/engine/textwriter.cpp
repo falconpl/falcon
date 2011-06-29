@@ -126,6 +126,11 @@ bool TextWriter::write( const String& str, length_t start, length_t count )
 
 bool TextWriter::rawWrite( const String& str, length_t start, length_t count )
 {
+   if( count == String::npos )
+   {
+      count = str.length() - start;
+   }
+   
    length_t encSize = m_encoder->encodingSize(count);
    if( encSize < m_bufPos - m_bufSize )
    {

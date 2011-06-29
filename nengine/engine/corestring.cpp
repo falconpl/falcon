@@ -18,6 +18,8 @@
 #include <falcon/vm.h>
 #include <falcon/optoken.h>
 
+#include <falcon/accesserror.h>
+
 namespace Falcon {
 
 CoreString::CoreString():
@@ -222,6 +224,30 @@ void CoreString::NextOp::apply_( const PStep*, VMachine* vm )
    {
       vm->currentContext()->popData();
       self->append(*deep);
+   }
+}
+
+void CoreString::op_getIndex( VMachine* vm, void* self ) const
+{
+   Item *index, *stritem;
+   vm->operands( stritem, index );
+
+   String& str = *static_cast<String*>(self);
+   if (index->isOrdinal())
+   {
+      int64 v = index->forceInteger();
+      if( v < 0 ) v = str.length() + v;
+      if( v >= str.length() )
+      {
+         throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra("out of range") );
+      }
+      String *s = new String();
+      s->append(str.getCharAt(v));
+      vm->stackResult(2, s->garbage() );
+   }
+   else
+   {
+      throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra("N") );
    }
 }
 

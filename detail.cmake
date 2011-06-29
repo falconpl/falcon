@@ -9,6 +9,7 @@ option( FALCON_BUILD_NATMODS "Build native (binary) non-feather modules" ON )
 option( FALCON_BUILD_DOCS "Build automatic documentation" ON )
 option( FALCON_INSTALL_TESTS "Copy test files in the final installation (under share/)" OFF )
 option( FALCON_BUILD_DIST "Prepare distribution helper scripts in dist/" OFF )
+option( FALCON_TRACE_GC "Add support to trace GC operations at runtime" ON )
 
 if (WIN32)
 	set( FALCON_COMPILE_SOURCE_MODS OFF )

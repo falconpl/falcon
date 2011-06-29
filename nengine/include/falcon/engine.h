@@ -64,6 +64,11 @@ public:
    /** Terminates the Falcon subsystem. */
    static void shutdown();
 
+   /** Terminates the program NOW with an error message.
+    \param msg The message that will be displayed on termination.
+    */
+   static void die( const String& msg );
+
    /** Returns the current engine instance.
 
     Method init() must have been called before.

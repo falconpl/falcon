@@ -22,9 +22,13 @@
 #include <falcon/gctoken.h>
 #include <falcon/gclock.h>
 
-
 #include <string>
 #include <typeinfo>
+
+#if FALCON_TRACE_GC
+   #include <falcon/textwriter.h>
+   #include <map>
+#endif
 
 #define GC_IDLE_TIME 250
 // default 1M
@@ -38,6 +42,32 @@
 
 namespace Falcon {
 
+class Collector::Private
+{
+public:
+#if FALCON_TRACE_GC
+   typedef std::map<void*, Collector::DataStatus* > HistoryMap;
+   HistoryMap m_hmap;
+#endif
+
+   Private() {}
+   ~Private()
+   {
+      HistoryMap::iterator hmi = m_hmap.begin();
+      while( hmi != m_hmap.end() )
+      {
+         delete hmi->second;
+         ++hmi;
+      }
+   }
+};
+
+#include <time.h>
+
+//================================================================
+// History entry
+//
+
 Collector::Collector():
    m_mingen( 0 ),
    m_vmCount(0),
@@ -48,7 +78,9 @@ Collector::Collector():
    m_allocatedMem( 0 ),
    m_th(0),
    m_bLive(false),
-   m_bRequestSweep( false )
+   m_bRequestSweep( false ),
+   m_bTrace( false ),
+   _p( new Private )
 {
    // use a ring for garbage items.
    m_garbageRoot = new GCToken(this, 0,0);
@@ -127,6 +159,8 @@ Collector::~Collector()
    // VMs are not mine, and they should be already dead since long.
    for( uint32 ri = 0; ri < RAMP_MODE_COUNT; ri++ )
       delete m_ramp[ri];
+
+   delete _p;
 }
 
 
@@ -288,6 +322,12 @@ void Collector::clearRing( GCToken *ringRoot )
          GCToken *dropped = ring;
          ring = ring->m_next;
 
+#if FALCON_TRACE_GC
+         if( m_bTrace )
+         {
+            onDestroy( dropped->m_data );
+         }
+#endif
          dropped->m_cls->dispose(dropped->m_data);
          disposeToken( dropped );
          killed++;
@@ -384,6 +424,7 @@ GCLock* Collector::storeLocked( Class* cls, void *data )
 
    return l;
 }
+
 
 #if 0
 bool Collector::markVM( VMachine *vm )
@@ -1039,6 +1080,167 @@ void Collector::unlock( GCLock* lock )
 
    disposeLock( lock );
 }
+
+#if FALCON_TRACE_GC
+
+GCToken* Collector::H_store( Class* cls, void *data, const String& fname, int line )
+{
+   GCToken* token = store( cls, data );
+   if ( m_bTrace )
+   {
+      onCreate( cls, data, fname, line );
+   }
+   
+   return token;
+}
+
+GCLock* Collector::H_storeLocked( Class* cls, void *data, const String& file, int line )
+{
+   GCLock* lock = storeLocked( cls, data );
+   if ( m_bTrace )
+   {
+      onCreate( cls, data, file, line );
+   }
+   return lock;
+}
+
+
+bool Collector::trace() const
+{
+   m_mtx_history.lock();
+   bool bTrace = m_bTrace;
+   m_mtx_history.unlock();
+   return bTrace;
+}
+
+
+void Collector::trace( bool t )
+{ 
+   m_mtx_history.lock();
+   m_bTrace = t;
+   m_mtx_history.unlock();
+}
+
+void Collector::onCreate( const Class* cls, void* data, const String& file, int line )
+{
+   m_mtx_history.lock();
+   Private::HistoryMap::iterator iter = _p->m_hmap.find( data );
+   if( iter != _p->m_hmap.end() )
+   {
+      DataStatus& status = *iter->second;
+      if( status.m_bAlive )
+      {
+         m_mtx_history.unlock();
+         // ops, we lost the previous item.
+         String s;
+         s.A("While creating a GC token for 0x").H( (int64) data, true, 16)
+         .A(" of class ").A( cls->name() ).A( " from ").A( file ).A(":").N(line).A("\n");
+         s += "The item was already alive -- and we didn't reclaim it:\n";
+         s += status.dump();
+
+         Engine::die( s );
+      }
+      else
+      {
+         status.m_bAlive = true;
+         status.addEntry( new HECreate( file, line, cls->name() ) );
+         m_mtx_history.unlock();
+      }
+   }
+   else
+   {
+      DataStatus* status = new DataStatus(data);
+      _p->m_hmap[data] = status;
+      status->addEntry( new HECreate( file, line, cls->name() ) );
+      m_mtx_history.unlock();
+   }
+}
+
+void Collector::onMark( void* data )
+{
+   m_mtx_history.lock();
+   Private::HistoryMap::iterator iter = _p->m_hmap.find( data );
+   if( iter != _p->m_hmap.end() )
+   {
+      DataStatus& status = *iter->second;
+      if( status.m_bAlive )
+      {
+         status.addEntry( new HEMark() );
+         m_mtx_history.unlock();
+      }
+      else
+      {
+         // ops, we lost the previous item.
+         String s;
+         s.A("While marking a GC token for 0x").H( (int64) data, true, 16);
+         s += "The item is not alive -- crash ahead:\n";
+         s += status.dump();
+
+         Engine::die( s );
+      }
+   }
+   else
+   {
+      m_mtx_history.unlock();
+      // ops, we don't know about this item -- it might have been decalred before trace.
+   }
+}
+
+void Collector::onDestroy( void* data )
+{
+   m_mtx_history.lock();
+   Private::HistoryMap::iterator iter = _p->m_hmap.find( data );
+   if( iter != _p->m_hmap.end() )
+   {
+      DataStatus& status = *iter->second;
+      if( status.m_bAlive )
+      {
+         status.addEntry( new HEDestroy() );
+         status.m_bAlive = false;
+         m_mtx_history.unlock();
+      }
+      else
+      {
+         // ops, we lost the previous item.
+         String s;
+         s.A("While destroying a GC token for 0x").H( (int64) data, true, 16).A("\n");
+         s += "The item is not alive -- crash ahead:\n";
+         s += status.dump();
+
+         Engine::die( s );
+      }
+   }
+   else
+   {
+      m_mtx_history.unlock();
+      // ops, we don't know about this item -- it might have been decalred before trace.
+   }
+}
+
+
+void Collector::dumpHistory( TextWriter* target ) const
+{
+   Private::HistoryMap::iterator iter = _p->m_hmap.begin();
+   while( iter != _p->m_hmap.end() )
+   {
+      target->writeLine( iter->second->dump() );
+      ++iter;
+   }
+}
+
+void Collector::enumerateHistory( DataStatusEnumerator& r ) const
+{
+
+   Private::HistoryMap::iterator iter = _p->m_hmap.begin();
+   while( iter != _p->m_hmap.end() )
+   {
+      DataStatus& status = *iter->second;
+      r( status, (iter == _p->m_hmap.end() ) );
+   }
+}
+
+#endif
+
 
 }
 

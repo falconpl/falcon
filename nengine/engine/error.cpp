@@ -222,8 +222,9 @@ void Error::appendSubError( Error *error )
 
 void Error::scriptize( Item& tgt )
 {
+   static Collector* coll = Engine::instance()->collector();
    incref();
-   tgt.setDeep( Engine::instance()->collector()->store( m_handler, this ) );
+   tgt.setDeep( FALCON_GC_STORE( coll, m_handler, this ) );
 }
 
 void Error::enumerateSteps( Error::StepEnumerator &rator ) const

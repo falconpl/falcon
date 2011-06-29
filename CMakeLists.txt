@@ -26,6 +26,7 @@
 # FALCON_BUILD_APPS         - Turn ON to install installing Falcon applications.
 # FALCON_BUILD_FWKS         - Turn OFF to skip installing Falcon frameworks.
 # FALCON_BUILD_DOCS         - Build automatic documentation
+# FALCON_TRACE_GC           - Turn to ON to enabling GC tracing at runtime.
 #
 ##  Options For Native Modules
 #
@@ -55,6 +56,15 @@ list(APPEND Falcon_INCLUDE_DIRS
 
 include(detail.cmake)
 
+##################################################################
+# Configuration options.
+
+if( FALCON_TRACE_GC )
+   # This variable is set in configuration
+   set( FALCON_TRACE_GC_VALUE 1 )
+else()
+   set( FALCON_TRACE_GC_VALUE 0 )
+endif()
 
 ##################################################################
 # CMAKE environment setup

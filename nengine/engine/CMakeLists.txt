@@ -64,6 +64,7 @@ add_library(falcon_engine SHARED
   closedsymbol.cpp
   codeerror.cpp
   collector.cpp
+  collector_history.cpp
   corearray.cpp
   coreclass.cpp
   coredict.cpp

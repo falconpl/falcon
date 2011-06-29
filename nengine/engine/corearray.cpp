@@ -204,7 +204,7 @@ void CoreArray::op_add( VMachine *vm, void* self ) const
       result->merge( *other );
    }
     
-   vm->stackResult( 2, Item( coll->store(arrayClass, result ) ) );
+   vm->stackResult( 2, Item( FALCON_GC_STORE( coll, arrayClass, result ) ) );
 }
 
 
