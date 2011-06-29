@@ -1,16 +1,16 @@
 /*
-   FALCON - The Falcon Programming Language.
-   FILE: corenumeric.h
-
-   Int object handler.
-   -------------------------------------------------------------------
-   Author: Francesco Magliocca
-   Begin: Sat, 11 Jun 2011 21:45:01 +0200
-
-   -------------------------------------------------------------------
-   (C) Copyright 2011: the FALCON developers (see list in AUTHORS file)
-
-   See LICENSE file for licensing details.
+ FALCON - The Falcon Programming Language.
+ FILE: corenumeric.h
+ 
+ Int object handler.
+ -------------------------------------------------------------------
+ Author: Francesco Magliocca
+ Begin: Sat, 11 Jun 2011 21:45:01 +0200
+ 
+ -------------------------------------------------------------------
+ (C) Copyright 2011: the FALCON developers (see list in AUTHORS file)
+ 
+ See LICENSE file for licensing details.
  */
 
 #ifndef _FALCON_CORENUMERIC_H_
@@ -43,6 +43,9 @@ public:
 
    //=============================================================
 
+   virtual void op_isTrue( VMachine *vm, void* self ) const;
+   virtual void op_toString( VMachine *vm, void* self ) const;
+
    virtual void op_add( VMachine *vm, void* self ) const;
 
    virtual void op_sub( VMachine *vm, void* self ) const;
@@ -50,8 +53,6 @@ public:
    virtual void op_mul( VMachine *vm, void* self ) const;
 
    virtual void op_div( VMachine *vm, void* self ) const;
-
-   virtual void op_mod( VMachine *vm, void* self ) const;
 
    virtual void op_pow( VMachine *vm, void* self ) const;
 
@@ -62,8 +63,6 @@ public:
    virtual void op_amul( VMachine *vm, void* self ) const;
 
    virtual void op_adiv( VMachine *vm, void* self ) const;
-
-   virtual void op_amod( VMachine *vm, void* self ) const;
 
    virtual void op_apow( VMachine *vm, void* self ) const;
 
@@ -80,4 +79,4 @@ public:
 
 #endif /* _FALCON_CORENUMERIC_H_ */
 
-/* end of corenumeric.h */
+/* end of corenumber.h */

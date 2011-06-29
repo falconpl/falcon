@@ -118,7 +118,7 @@ void Writer::ensure( size_t size )
    }
 }
 
-bool Writer::write( byte* data, size_t size )
+bool Writer::writeRaw( byte* data, size_t size )
 {
    if( size + m_bufPos <= m_bufSize )
    {

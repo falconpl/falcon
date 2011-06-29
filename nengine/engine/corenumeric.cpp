@@ -16,6 +16,13 @@
 #include <falcon/corenumeric.h>
 #include <falcon/itemid.h>
 #include <falcon/item.h>
+#include <falcon/optoken.h>
+#include <falcon/vm.h>
+#include <falcon/operanderror.h>
+#include <falcon/datareader.h>
+#include <falcon/datawriter.h>
+
+#include <math.h>
 
 namespace Falcon {
     
@@ -53,17 +60,22 @@ void *CoreNumeric::clone( void *source ) const {
     
 }
 
-void CoreNumeric::serialize( DataWriter*, void* ) const {
+void CoreNumeric::serialize( DataWriter *stream, void *self ) const {
     
-   //TODO
+   numeric value = static_cast< Item* >( self )->asNumeric();
+
+   stream->write( value );
     
 }
 
 
-void* CoreNumeric::deserialize( DataReader* ) const {
+void* CoreNumeric::deserialize( DataReader *stream ) const {
     
-   //TODO
-   return 0;
+   numeric value;
+
+   stream->read( value );
+
+   return new Item( value );
     
 }
 
@@ -75,98 +87,232 @@ void CoreNumeric::describe( void* instance, String& target, int, int  ) const {
 
 // ================================================================
 
-void CoreNumeric::op_add( VMachine *, void* ) const {
+
+void CoreNumeric::op_isTrue( VMachine *vm, void* ) const
+{
+   Item* iself;
+   OpToken token( vm, iself );
+   token.exit( iself->asNumeric() != 0 );
+}
+
+void CoreNumeric::op_toString( VMachine *vm, void* ) const
+{
+   Item* iself;
+   OpToken token( vm, iself );
+   String s;
+   token.exit( s.N(iself->asNumeric()) );
+}
+
+void CoreNumeric::op_add( VMachine *vm, void* ) const {
     
-   // TODO
+   Item *self, *op2;
+
+   OpToken token( vm, self, op2 );
+
+   if( self->type() == op2->type() || op2->type() == FLC_ITEM_INT )
+   {
+
+      token.exit( self->asNumeric() + op2->forceNumeric() );
+
+   } 
+   else 
+      throw new OperandError( ErrorParam( e_invalid_op, __LINE__, __FILE__ ).origin( ErrorParam::e_orig_vm ).extra( "Invalid operand term" ) );
     
 }
 
-void CoreNumeric::op_sub( VMachine *, void* ) const {
+void CoreNumeric::op_sub( VMachine *vm, void* ) const {
     
-   // TODO
-    
-}
+   Item *self, *op2;
 
+   OpToken token( vm, self, op2 );
 
-void CoreNumeric::op_mul( VMachine *, void* ) const {
-    
-   // TODO
-    
-}
+   if( self->type() == op2->type() || op2->type() == FLC_ITEM_INT )
+   {
 
+      token.exit( self->asNumeric() - op2->forceNumeric() );
 
-void CoreNumeric::op_div( VMachine *, void* ) const {
-    
-   // TODO
-    
-}
-
-
-void CoreNumeric::op_mod( VMachine *, void* ) const {
-    
-   // TODO
-    
-}
-
-
-void CoreNumeric::op_pow( VMachine *, void* ) const {
-    
-   // TODO
-    
-}
-
-
-void CoreNumeric::op_aadd( VMachine *, void*) const {
-    
-   // TODO
-    
-}
-
-void CoreNumeric::op_asub( VMachine *, void* ) const {
-    
-   // TODO
+   } 
+   else 
+      throw new OperandError( ErrorParam( e_invalid_op, __LINE__, __FILE__ ).origin( ErrorParam::e_orig_vm ).extra( "Invalid operand term" ) );
     
 }
 
 
-void CoreNumeric::op_amul( VMachine *, void* ) const {
+void CoreNumeric::op_mul( VMachine *vm, void* ) const {
     
-   // TODO
+   Item *self, *op2;
+
+   OpToken token( vm, self, op2 );
+
+   if( self->type() == op2->type() || op2->type() == FLC_ITEM_INT )
+   {
+
+      token.exit( self->asNumeric() * op2->forceNumeric() );
+
+   } 
+   else 
+      throw new OperandError( ErrorParam( e_invalid_op, __LINE__, __FILE__ ).origin( ErrorParam::e_orig_vm ).extra( "Invalid operand term" ) );
     
 }
 
 
-void CoreNumeric::op_adiv( VMachine *, void* ) const {
+void CoreNumeric::op_div( VMachine *vm, void* ) const {
     
-   // TODO
+   Item *self, *op2;
+
+   OpToken token( vm, self, op2 );
+
+   if( self->type() == op2->type() || op2->type() == FLC_ITEM_INT )
+   {
+
+      token.exit( self->asNumeric() / op2->forceNumeric() );
+
+   } 
+   else 
+      throw new OperandError( ErrorParam( e_invalid_op, __LINE__, __FILE__ ).origin( ErrorParam::e_orig_vm ).extra( "Invalid operand term" ) );
     
 }
 
 
-void CoreNumeric::op_amod( VMachine *, void* ) const {
+void CoreNumeric::op_pow( VMachine *vm, void* ) const {
     
-   // TODO
+   Item *self, *op2;
+
+   OpToken token( vm, self, op2 );
+
+   if( self->type() == op2->type() || op2->type() == FLC_ITEM_INT )
+   {
+      token.exit( pow( self->asNumeric(), op2->forceNumeric() ) );
+
+   } 
+   else 
+      throw new OperandError( ErrorParam( e_invalid_op, __LINE__, __FILE__ ).origin( ErrorParam::e_orig_vm ).extra( "Invalid operand term" ) );
     
 }
 
 
-void CoreNumeric::op_apow( VMachine *, void* ) const {
+void CoreNumeric::op_aadd( VMachine *vm, void*) const {
     
-   // TODO
+   Item *self, *op2;
+
+   vm->operands( self, op2 );
+
+   if( self->type() == op2->type() || op2->type() == FLC_ITEM_INT ) 
+   {
+
+      self->setNumeric( self->asNumeric() + op2->forceNumeric() );
+
+   } 
+   else 
+      throw new OperandError( ErrorParam( e_invalid_op, __LINE__, __FILE__ ).origin( ErrorParam::e_orig_vm ).extra( "Invalid operand term" ) );
+    
+
+   vm->currentContext()->popData(); // Put self on the top of the stack
+    
+}
+
+void CoreNumeric::op_asub( VMachine *vm, void* ) const {
+    
+   Item *self, *op2;
+
+   vm->operands( self, op2 );
+
+   if( self->type() == op2->type() || op2->type() == FLC_ITEM_INT ) 
+   {
+
+      self->setNumeric( self->asNumeric() - op2->forceNumeric() );
+
+   } 
+   else 
+      throw new OperandError( ErrorParam( e_invalid_op, __LINE__, __FILE__ ).origin( ErrorParam::e_orig_vm ).extra( "Invalid operand term" ) );
+    
+
+   vm->currentContext()->popData(); // Put self on the top of the stack
     
 }
 
 
-void CoreNumeric::op_inc(VMachine *, void* ) const {
+void CoreNumeric::op_amul( VMachine *vm, void* ) const {
     
-   // TODO
+   Item *self, *op2;
+
+   vm->operands( self, op2 );
+
+   if( self->type() == op2->type() || op2->type() == FLC_ITEM_INT ) 
+   {
+
+      self->setNumeric( self->asNumeric() * op2->forceNumeric() );
+
+   } 
+   else 
+      throw new OperandError( ErrorParam( e_invalid_op, __LINE__, __FILE__ ).origin( ErrorParam::e_orig_vm ).extra( "Invalid operand term" ) );
+    
+
+   vm->currentContext()->popData(); // Put self on the top of the stack
     
 }
 
 
-void CoreNumeric::op_dec(VMachine *, void*) const {
+void CoreNumeric::op_adiv( VMachine *vm, void* ) const {
     
-   // TODO
+   Item *self, *op2;
+
+   vm->operands( self, op2 );
+
+   if( self->type() == op2->type() || op2->type() == FLC_ITEM_INT ) 
+   {
+
+      self->setNumeric( self->asNumeric() / op2->forceNumeric() );
+
+   } 
+   else 
+      throw new OperandError( ErrorParam( e_invalid_op, __LINE__, __FILE__ ).origin( ErrorParam::e_orig_vm ).extra( "Invalid operand term" ) );
+    
+
+   vm->currentContext()->popData(); // Put self on the top of the stack
+    
+}
+
+
+void CoreNumeric::op_apow( VMachine *vm, void* ) const {
+    
+   Item *self, *op2;
+
+   vm->operands( self, op2 );
+
+   if( self->type() == op2->type() || op2->type() == FLC_ITEM_INT ) 
+   {
+
+      self->setNumeric( pow( self->asNumeric(), op2->forceNumeric() ) );
+
+   } 
+   else 
+      throw new OperandError( ErrorParam( e_invalid_op, __LINE__, __FILE__ ).origin( ErrorParam::e_orig_vm ).extra( "Invalid operand term" ) );
+    
+
+   vm->currentContext()->popData(); // Put self on the top of the stack
+    
+}
+
+
+void CoreNumeric::op_inc(VMachine *vm, void* ) const {
+    
+   Item *self;
+
+   vm->operands( self );
+
+   self->setInteger( self->asInteger() + 1.0 );
+    
+}
+
+
+void CoreNumeric::op_dec(VMachine *vm, void*) const {
+    
+   Item *self;
+
+   vm->operands( self );
+
+   self->setInteger( self->asInteger() - 1.0 );
     
 }
 

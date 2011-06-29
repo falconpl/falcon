@@ -71,7 +71,7 @@ public:
    /** Writes to the internal buffer and eventually store what's written to a file.
 
    */
-   virtual bool write( byte* data, size_t dataSize );
+   virtual bool writeRaw( byte* data, size_t dataSize );
 
    /** Changes the underlying stream.
     \param s The new stream that this reader should read from.
