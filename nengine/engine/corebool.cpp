@@ -23,7 +23,7 @@
 namespace Falcon {
 
 CoreBool::CoreBool() :
-   Class( "Bool", FLC_ITEM_BOOL ) 
+   Class( "Boolean", FLC_ITEM_BOOL )
    
 { 
 }
@@ -88,9 +88,7 @@ void* CoreBool::clone( void *self ) const
 
 void CoreBool::serialize( DataWriter*, void* ) const
 {
-
    // TODO
-
 }
 
 

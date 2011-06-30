@@ -35,9 +35,6 @@ CoreClass::~CoreClass()
 }
 
 
-
-
-
 void CoreClass::dispose( void* self ) const
 {
    delete static_cast<Class*>(self);
