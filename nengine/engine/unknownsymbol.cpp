@@ -18,6 +18,7 @@
 #include <falcon/unknownsymbol.h>
 #include <falcon/exprsym.h>
 #include <falcon/trace.h>
+#include <falcon/codeerror.h>
 
 #include <vector>
 

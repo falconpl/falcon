@@ -18,6 +18,7 @@
 #include <falcon/vmcontext.h>
 #include <falcon/vm.h>
 #include <falcon/operanderror.h>
+#include <falcon/codeerror.h>
 
 #include <math.h>
 

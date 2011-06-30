@@ -20,6 +20,7 @@
 #include <falcon/statement.h>
 #include <falcon/item.h>
 #include <falcon/function.h>
+#include <falcon/codeerror.h>
 
 #include <falcon/stream.h>
 #include <falcon/stdstreams.h>

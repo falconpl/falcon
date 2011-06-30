@@ -23,6 +23,7 @@
 #define TRACE_OFF
 
 #define MESSAGE(...)
+#define MESSAGE1(...)
 
 #define TRACE(...)
 #define TRACE1(...)
