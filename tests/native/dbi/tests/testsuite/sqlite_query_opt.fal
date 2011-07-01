@@ -20,7 +20,9 @@ try
    conn = dbi.connect( "sqlite3:db=testsuite.db",
       "strings=on" )
       
-   rs = conn.query("select * from TestTable where key = 1")
+//   rs = conn.query("select * from TestTable where key = ?", 1)
+
+  rs = conn.query("select * from TestTable where tblob = ?", 'A textual blob')
 
    if rs.getColumnCount() != 4
       failure( "Can't get columns: " + rs.getColumnCount() )
