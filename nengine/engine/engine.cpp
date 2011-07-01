@@ -49,6 +49,7 @@
 //--- type headers ---
 #include <falcon/corefunction.h>
 #include <falcon/corenil.h>
+#include <falcon/corebool.h>
 #include <falcon/coreint.h>
 #include <falcon/corenumeric.h>
 #include <falcon/corestring.h>
@@ -283,7 +284,7 @@ Engine::Engine()
 
    // Initialization of the class vector.
    m_classes[FLC_ITEM_NIL] = new CoreNil;
-   m_classes[FLC_ITEM_BOOL] = new CoreNil;
+   m_classes[FLC_ITEM_BOOL] = new CoreBool;
    m_classes[FLC_ITEM_INT] = new CoreInt;
    m_classes[FLC_ITEM_NUM] = new CoreNumeric;
    m_classes[FLC_ITEM_USER] = 0;
@@ -308,7 +309,6 @@ Engine::Engine()
    m_syntaxErrorClass = new SyntaxErrorClass;
    m_paramErrorClass = new ParamErrorClass;
 
-   //m_core = new CoreModule;
    m_bom = new BOM;
 
    //=====================================

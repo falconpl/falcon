@@ -116,8 +116,8 @@ void CoreBool::op_toString( VMachine *vm, void* ) const
 {
    Item* iself;
    OpToken token( vm, iself );
-   String s;
-   token.exit( s.A( iself->asBoolean() ? "true" : "false" ) );
+   String* s = new String( iself->asBoolean() ? "true" : "false" );
+   token.exit( s );
 }
 
 
