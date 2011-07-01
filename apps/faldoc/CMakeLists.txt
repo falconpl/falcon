@@ -32,7 +32,7 @@ else()
    @ONLY
    )
 
-   install(FILES ${CMAKE_CURRENT_BINARY_DIR}/faldoc.bat.in DESTINATION 
+   install(FILES ${CMAKE_CURRENT_BINARY_DIR}/faldoc.bat DESTINATION 
 ${FALCON_BIN_DIR} )
 endif()
 
