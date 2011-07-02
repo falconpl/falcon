@@ -239,6 +239,27 @@ public:
     */
    virtual void describe( void* instance, String& target, int depth = 3, int maxlen = 60 ) const;
 
+   /** Sends this class to the garbage collector.
+    \return A GCToken that can be used to create deep items.
+
+    Dynamic class need to be accounted by the garbage collector,
+    exactly as dynamic functions. Classes created by non-static
+    modules or dynamically created by the scripts need to know
+    their token to be able to backtrack themselves when they are
+    back-referenced by their intances.
+
+    Calling this method multiple time will return the same GCToken.
+
+    \note This method is not thread-safe. Consider creating the token
+    before handling this object to the engine in case of MT programs, as
+    concurrent calls to this class might create multiple tokens for the same
+    entity, which would be very probably disastrous.
+
+    \note The returned GCToken has the engine-wide ClassClass handler and
+    points to this entity.
+    */
+   GCToken* garbage();
+
    //=========================================================
    // Operators.
    //
@@ -560,10 +581,13 @@ public:
     */
    virtual void op_toString( VMContext* ctx, void* self ) const;
 
+   
+
 protected:
    String m_name;
    int64 m_typeID;
 
+   GCToken* m_token;
    Module* m_module;
 };
 

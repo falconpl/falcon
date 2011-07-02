@@ -43,7 +43,7 @@ public:
    virtual void* deserialize( DataReader* stream ) const;
 
    virtual void describe( void* instance, String& target, int, int ) const;
-
+   virtual void gcMark( void* self, uint32 mark ) const;
    //=============================================================
 
    // virtual void op_create( VMContext* ctx, int32 pcount ) const; -- let the default non-creable thing to work

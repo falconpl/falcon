@@ -33,6 +33,10 @@ ClassClass::~ClassClass()
 {
 }
 
+void ClassClass::gcMark( void* self, uint32 mark ) const
+{
+   static_cast<Class*>(self)->gcMark( mark );
+}
 
 void ClassClass::dispose( void* self ) const
 {

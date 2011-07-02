@@ -27,12 +27,14 @@ namespace Falcon {
 Class::Class( const String& name ):
    m_name( name ),
    m_typeID( FLC_CLASS_ID_OBJECT ),
+   m_token(0),
    m_module(0)
 {}
 
 Class::Class( const String& name, int64 tid ):
    m_name( name ),
    m_typeID( tid ),
+   m_token(0),
    m_module(0)
 {}
 
@@ -47,10 +49,12 @@ void Class::gcMark( void*, uint32 ) const
    // normally does nothing
 }
 
-void Class::gcMark( uint32 ) const
+void Class::gcMark( uint32 mark ) const
 {
-   // normally does nothing
-   //TODO Mark the module
+   if( m_token != 0 )
+   {
+      m_token->mark( mark );
+   }
 }
 
 
@@ -115,6 +119,14 @@ void Class::op_compare( VMContext* ctx, void* self ) const
    ctx->stackResult(2, (int64) op1->type() - op2->type() );
 }
 
+
+GCToken* Class::garbage()
+{
+   static GCToken* token =
+         Engine::instance()->collector()->store( Engine::instance()->classClass(), this );
+
+   return token;
+}
 
 //=====================================================================
 // VM Operator override.
