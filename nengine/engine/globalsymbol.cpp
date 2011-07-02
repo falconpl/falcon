@@ -52,11 +52,11 @@ void GlobalSymbol::assign( VMachine*, const Item& value ) const
    const_cast<Item*>(&m_item)->assign( value );
 }
 
-void GlobalSymbol::apply_( const PStep* ps, VMachine* vm )
+void GlobalSymbol::apply_( const PStep* ps, VMContext* ctx )
 {
    const ExprSymbol* self = static_cast<const ExprSymbol*>(ps);
    register GlobalSymbol* sym = static_cast<GlobalSymbol*>(self->symbol());
-   register VMContext* ctx = vm->currentContext();
+
 #ifndef NDEBUG
    String name = sym->name();
 #endif

@@ -16,7 +16,7 @@
 
 #include <falcon/class.h>
 #include <falcon/itemid.h>
-#include <falcon/vm.h>
+#include <falcon/vmcontext.h>
 #include <falcon/operanderror.h>
 #include <falcon/error_messages.h>
 
@@ -72,25 +72,25 @@ bool Class::hasProperty( void*, const String& ) const
 }
 
 
-void Class::op_compare( VMachine *vm, void* self ) const
+void Class::op_compare( VMContext* ctx, void* self ) const
 {
    void* inst;
    Item *op1, *op2;
    
-   vm->operands( op1, op2 );
+   ctx->operands( op1, op2 );
    
    switch( op2->type() )
    {
       case FLC_ITEM_DEEP:
          if( (inst = op2->asDeepInst()) == self )
          {
-            vm->stackResult(2, (int64)0 );
+            ctx->stackResult(2, (int64)0 );
             return;
          }
 
          if( typeID() > 0 )
          {
-            vm->stackResult(2, (int64)  typeID() - op2->asDeepClass()->typeID() );
+            ctx->stackResult(2, (int64)  typeID() - op2->asDeepClass()->typeID() );
             return;
          }
          break;
@@ -98,13 +98,13 @@ void Class::op_compare( VMachine *vm, void* self ) const
       case FLC_ITEM_USER:
          if( (inst = op2->asUserInst()) == self )
          {
-            vm->stackResult(2, 0 );
+            ctx->stackResult(2, 0 );
             return;
          }
 
          if( typeID() > 0 )
          {
-            vm->stackResult(2, (int64)  typeID() - op2->asDeepClass()->typeID() );
+            ctx->stackResult(2, (int64)  typeID() - op2->asDeepClass()->typeID() );
             return;
          }
          break;
@@ -112,7 +112,7 @@ void Class::op_compare( VMachine *vm, void* self ) const
 
    // we have no information about what an item might be here, but we can
    // order the items by type
-   vm->stackResult(2, (int64) op1->type() - op2->type() );
+   ctx->stackResult(2, (int64) op1->type() - op2->type() );
 }
 
 
@@ -120,132 +120,132 @@ void Class::op_compare( VMachine *vm, void* self ) const
 // VM Operator override.
 //
 
-void Class::op_create( VMachine *, int32 ) const
+void Class::op_create( VMContext* , int32 ) const
 {
    throw new OperandError( ErrorParam(__LINE__, e_invop ).extra("create") );
 }
 
 
-void Class::op_neg( VMachine *, void* ) const
+void Class::op_neg( VMContext* , void* ) const
 {
    throw new OperandError( ErrorParam(__LINE__, e_invop ).extra("neg") );
 }
 
-void Class::op_add( VMachine *, void* ) const
+void Class::op_add( VMContext* , void* ) const
 {
    throw new OperandError( ErrorParam(__LINE__, e_invop ).extra("add") );
 }
 
-void Class::op_sub( VMachine *, void* ) const
+void Class::op_sub( VMContext* , void* ) const
 {
    throw new OperandError( ErrorParam(__LINE__, e_invop ).extra("sub") );
 }
 
 
-void Class::op_mul( VMachine *, void* ) const
+void Class::op_mul( VMContext* , void* ) const
 {
    throw new OperandError( ErrorParam(__LINE__, e_invop ).extra("mul") );
 }
 
 
-void Class::op_div( VMachine *, void* ) const
+void Class::op_div( VMContext* , void* ) const
 {
    throw new OperandError( ErrorParam(__LINE__, e_invop ).extra("div") );
 }
 
 
-void Class::op_mod( VMachine *, void* ) const
+void Class::op_mod( VMContext* , void* ) const
 {
    throw new OperandError( ErrorParam(__LINE__, e_invop ).extra("mod") );
 }
 
 
-void Class::op_pow( VMachine *, void* ) const
+void Class::op_pow( VMContext* , void* ) const
 {
    throw new OperandError( ErrorParam(__LINE__, e_invop ).extra("pow") );
 }
 
 
-void Class::op_aadd( VMachine *, void* ) const
+void Class::op_aadd( VMContext* , void* ) const
 {
    throw new OperandError( ErrorParam(__LINE__, e_invop ).extra("aadd") );
 }
 
 
-void Class::op_asub( VMachine *, void* ) const
+void Class::op_asub( VMContext* , void* ) const
 {
    throw new OperandError( ErrorParam(__LINE__, e_invop ).extra("asub") );
 }
 
 
-void Class::op_amul( VMachine *, void* ) const
+void Class::op_amul( VMContext* , void* ) const
 {
    throw new OperandError( ErrorParam(__LINE__, e_invop ).extra("amul") );
 }
 
 
-void Class::op_adiv( VMachine *, void* ) const
+void Class::op_adiv( VMContext* , void* ) const
 {
    throw new OperandError( ErrorParam(__LINE__, e_invop ).extra("/=") );
 }
 
 
-void Class::op_amod( VMachine *, void* ) const
+void Class::op_amod( VMContext* , void* ) const
 {
    throw new OperandError( ErrorParam(__LINE__, e_invop ).extra("%=") );
 }
 
 
-void Class::op_apow( VMachine *, void* ) const
+void Class::op_apow( VMContext* , void* ) const
 {
    throw new OperandError( ErrorParam(__LINE__, e_invop ).extra("**=") );
 }
 
 
-void Class::op_inc( VMachine *, void* ) const
+void Class::op_inc( VMContext* , void* ) const
 {
    throw new OperandError( ErrorParam(__LINE__, e_invop ).extra("++x") );
 }
 
 
-void Class::op_dec( VMachine *, void* ) const
+void Class::op_dec( VMContext* , void* ) const
 {
    throw new OperandError( ErrorParam(__LINE__, e_invop ).extra("--x") );
 }
 
 
-void Class::op_incpost( VMachine *, void*) const
+void Class::op_incpost( VMContext* , void*) const
 {
    throw new OperandError( ErrorParam(__LINE__, e_invop ).extra("x++") );
 }
 
 
-void Class::op_decpost( VMachine *, void* ) const
+void Class::op_decpost( VMContext* , void* ) const
 {
    throw new OperandError( ErrorParam(__LINE__, e_invop ).extra("x--") );
 }
 
 
-void Class::op_call( VMachine *, int32, void* ) const
+void Class::op_call( VMContext* , int32, void* ) const
 {
    throw new OperandError( ErrorParam(__LINE__, e_non_callable ) );
 }
 
 
-void Class::op_getIndex(VMachine *, void* ) const
+void Class::op_getIndex(VMContext* , void* ) const
 {
    throw new OperandError( ErrorParam(__LINE__, e_invop ).extra("[]") );
 }
 
 
-void Class::op_setIndex(VMachine *, void* ) const
+void Class::op_setIndex(VMContext* , void* ) const
 {
    // TODO: IS it worth to add more infos about self in the error?
    throw new OperandError( ErrorParam(__LINE__, e_invop ).extra("[]=") );
 }
 
 
-void Class::op_getProperty( VMachine* vm, void* data, const String& property ) const
+void Class::op_getProperty( VMContext* ctx, void* data, const String& property ) const
 {
    static BOM* bom = Engine::instance()->getBom();
 
@@ -253,7 +253,7 @@ void Class::op_getProperty( VMachine* vm, void* data, const String& property ) c
    BOM::handler handler = bom->get( property );
    if ( handler != 0  )
    {
-      handler( vm, this, data );
+      handler( ctx, this, data );
    }
    else
    {
@@ -262,35 +262,35 @@ void Class::op_getProperty( VMachine* vm, void* data, const String& property ) c
 }
 
 
-void Class::op_setProperty( VMachine *, void*, const String& ) const
+void Class::op_setProperty( VMContext* , void*, const String& ) const
 {
    // TODO: IS it worth to add more infos about self in the error?
    throw new OperandError( ErrorParam(__LINE__, e_invop ).extra(".=") );
 }
 
 
-void Class::op_isTrue( VMachine *vm, void* ) const
+void Class::op_isTrue( VMContext* ctx, void* ) const
 {
-   vm->stackResult(1, true);
+   ctx->stackResult(1, true);
 }
 
 
-void Class::op_in( VMachine *, void*) const
+void Class::op_in( VMContext* , void*) const
 {
    throw new OperandError( ErrorParam(__LINE__, e_invop ).extra("in") );
 }
 
 
-void Class::op_provides( VMachine *vm, void*, const String& ) const
+void Class::op_provides( VMContext* ctx, void*, const String& ) const
 {
-   vm->stackResult(1, false);
+   ctx->stackResult(1, false);
 }
 
-void Class::op_toString( VMachine *vm, void *self ) const
+void Class::op_toString( VMContext* ctx, void *self ) const
 {
    String *descr = new String();
    describe( self, *descr );
-   vm->stackResult(1, descr->garbage());
+   ctx->stackResult(1, descr->garbage());
 }
 
 }

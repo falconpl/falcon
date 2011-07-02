@@ -151,7 +151,7 @@ void ExprMultiUnpack::precompile( PCode* pcode ) const
 }
 
 
-void ExprMultiUnpack::apply_( const PStep* ps, VMachine* vm )
+void ExprMultiUnpack::apply_( const PStep* ps, VMContext* ctx )
 {
    TRACE3( "Apply multi unpack: %p (%s)", ps, ps->describe().c_ize() );
 
@@ -159,13 +159,12 @@ void ExprMultiUnpack::apply_( const PStep* ps, VMachine* vm )
    std::vector<Symbol*> &syms = self->_p->m_params;
 
    size_t pcount = syms.size();
-   VMContext* ctx = vm->currentContext();
 
    size_t i = 0;
    Item* topStack = &ctx->topData() - pcount+1;
    for( ; i < pcount; ++i, ++topStack )
    {
-      syms[i]->assign( vm, *topStack );
+      syms[i]->assign( ctx->vm(), *topStack );
    }
    
    if ( self->isTop() )

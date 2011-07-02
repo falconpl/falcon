@@ -23,7 +23,7 @@
 namespace Falcon {
 
 class String;
-class VMachine;
+class VMContext;
 class Class;
 
 /** Basic object model support.
@@ -45,7 +45,7 @@ public:
    BOM();
    virtual ~BOM();
 
-   typedef void (*handler)(VMachine* vm, const Class* cls, void* data);
+   typedef void (*handler)(VMContext* ctx, const Class* cls, void* data);
 
    /** Gets a BOM handler.
     The handler takes care of getting the op_getProperty parameters and
@@ -65,35 +65,34 @@ private:
  */
 namespace BOMH
 {
-void len(VMachine* vm, const Class* cls, void* data);
-void len_(VMachine* vm, const Class* cls, void* data);
+void len(VMContext* ctx, const Class* cls, void* data);
+void len_(VMContext* ctx, const Class* cls, void* data);
 
-void baseClass(VMachine* vm, const Class* cls, void* data);
-void baseClass_(VMachine* vm, const Class* cls, void* data);
-void bound(VMachine* vm, const Class* cls, void* data);
-void bound_(VMachine* vm, const Class* cls, void* data);
-void className(VMachine* vm, const Class* cls, void* data);
-void className_(VMachine* vm, const Class* cls, void* data);
-void clone(VMachine* vm, const Class* cls, void* data);
-void clone_(VMachine* vm, const Class* cls, void* data);
-void describe(VMachine* vm, const Class* cls, void* data);
-void describe_(VMachine* vm, const Class* cls, void* data);
-void isCallable(VMachine* vm, const Class* cls, void* data);
-void isCallable_(VMachine* vm, const Class* cls, void* data);
-void metaclass(VMachine* vm, const Class* cls, void* data);
-void metaclass_(VMachine* vm, const Class* cls, void* data);
-void ptr(VMachine* vm, const Class* cls, void* data);
-void ptr_(VMachine* vm, const Class* cls, void* data);
-void toString(VMachine* vm, const Class* cls, void* data);
-void toString_(VMachine* vm, const Class* cls, void* data);
-void typeId(VMachine* vm, const Class* cls, void* data);
-void typeId_(VMachine* vm, const Class* cls, void* data);
+void baseClass(VMContext* ctx, const Class* cls, void* data);
+void baseClass_(VMContext* ctx, const Class* cls, void* data);
+void bound(VMContext* ctx, const Class* cls, void* data);
+void bound_(VMContext* ctx, const Class* cls, void* data);
+void className(VMContext* ctx, const Class* cls, void* data);
+void className_(VMContext* ctx, const Class* cls, void* data);
+void clone(VMContext* ctx, const Class* cls, void* data);
+void clone_(VMContext* ctx, const Class* cls, void* data);
+void describe(VMContext* ctx, const Class* cls, void* data);
+void describe_(VMContext* ctx, const Class* cls, void* data);
+void isCallable(VMContext* ctx, const Class* cls, void* data);
+void isCallable_(VMContext* ctx, const Class* cls, void* data);
+void metaclass(VMContext* ctx, const Class* cls, void* data);
+void metaclass_(VMContext* ctx, const Class* cls, void* data);
+void ptr(VMContext* ctx, const Class* cls, void* data);
+void ptr_(VMContext* ctx, const Class* cls, void* data);
+void toString(VMContext* ctx, const Class* cls, void* data);
+void toString_(VMContext* ctx, const Class* cls, void* data);
+void typeId(VMContext* ctx, const Class* cls, void* data);
+void typeId_(VMContext* ctx, const Class* cls, void* data);
 
 // Theese are proper functions
-void compare(VMachine* vm, const Class* cls, void* data);
-void derivedFrom(VMachine* vm, const Class* cls, void* data);
+void compare(VMContext* ctx, const Class* cls, void* data);
+void derivedFrom(VMContext* ctx, const Class* cls, void* data);
 }
-
 
 }
 

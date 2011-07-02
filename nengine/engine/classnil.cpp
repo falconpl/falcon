@@ -16,8 +16,7 @@
 #include <falcon/classnil.h>
 #include <falcon/itemid.h>
 #include <falcon/item.h>
-
-#include "falcon/vm.h"
+#include <falcon/vmcontext.h>
 
 namespace Falcon {
 
@@ -32,9 +31,9 @@ ClassNil::~ClassNil()
 }
 
 
-void ClassNil::op_create( VMachine* vm, int pcount ) const
+void ClassNil::op_create( VMContext* ctx, int pcount ) const
 {
-   vm->stackResult( pcount + 1, Item( ) );
+   ctx->stackResult( pcount + 1, Item( ) );
 }
 
 
@@ -67,9 +66,9 @@ void ClassNil::describe( void*, String& target, int, int ) const
 //=======================================================================
 //
 
-void ClassNil::op_isTrue( VMachine *vm, void* ) const
+void ClassNil::op_isTrue( VMContext* ctx, void* ) const
 {
-   vm->stackResult( 1, false );
+   ctx->stackResult( 1, false );
 }
 }
 

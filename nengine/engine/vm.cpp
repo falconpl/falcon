@@ -113,7 +113,7 @@ VMachine::VMachine( Stream* stdIn, Stream* stdOut, Stream* stdErr ):
    // create the first context
    TRACE( "Virtual machine created at %p", this );
    _p = new Private;
-   m_context = new VMContext;
+   m_context = new VMContext(this);
 
    if ( stdIn == 0 )
    {
@@ -239,31 +239,6 @@ void VMachine::setStdEncoding( Transcoder* ts, bool bOwn )
 }
 
 
-void VMachine::ifDeep( const PStep* postcall )
-{
-   fassert( m_context->m_deepStep == 0 );
-   m_context->m_deepStep = postcall;
-}
-
-
-void VMachine::goingDeep()
-{
-   if( m_context->m_deepStep )
-   {
-      currentContext()->pushCode( currentContext()->m_deepStep );
-      m_context->m_deepStep = 0;
-   }
-}
-
-
-bool VMachine::wentDeep()
-{
-   bool bWent = m_context->m_deepStep == 0;
-   m_context->m_deepStep = 0;
-   return bWent;
-}
-
-
 void VMachine::onError( Error* e )
 {
    // for now, just raise.
@@ -303,6 +278,9 @@ bool VMachine::run()
    m_event = eventNone;
    PARANOID( "Call stack empty", (currentContext()->callDepth() > 0) );
 
+   // for now... then it will be a TLS variable.
+   VMContext* ctx = currentContext();
+   
    while( true )
    {
       // the code should never be empty.
@@ -310,11 +288,11 @@ bool VMachine::run()
       fassert( ! codeEmpty() );
 
       // BEGIN STEP
-      const PStep* ps = currentContext()->currentCode().m_step;
+      const PStep* ps = ctx->currentCode().m_step;
 
       try
       {
-         ps->apply( ps, this );
+         ps->apply( ps, ctx );
       }
       catch( Error* e )
       {
@@ -378,84 +356,6 @@ const PStep* VMachine::nextStep() const
    return ps;
 }
 
-
-void VMachine::call( Function* function, int nparams, const Item& self, bool isExpr )
-{
-   TRACE( "Entering function: %s", function->locate().c_ize() );
-   
-   register VMContext* ctx = m_context;
-   TRACE( "-- call frame code:%p, data:%p, call:%p", ctx->m_topCode, ctx->m_topData, ctx->m_topCall  );
-
-   CallFrame* topCall = ctx->makeCallFrame( function, nparams, self, isExpr );
-   TRACE1( "-- codebase:%d, stackBase:%d, self: %s ", \
-         topCall->m_codeBase, topCall->m_stackBase, self.isNil() ? "nil" : "value"  );
-
-   topCall->m_bExpression = isExpr;
-   // prepare for a return that won't touch regA
-   ctx->m_regA.setNil();
-   
-   // do the call
-   function->apply( this, nparams );
-}
-
-
-void VMachine::call( Function* function, int nparams, bool isExpr )
-{
-   TRACE( "Entering function: %s", function->locate().c_ize() );
-
-   VMContext* ctx = currentContext();
-   TRACE( "-- call frame code:%p, data:%p, call:%p", ctx->m_topCode, ctx->m_topData, ctx->m_topCall  );
-
-   CallFrame* topCall = ctx->makeCallFrame( function, nparams, isExpr );
-   TRACE1( "-- codebase:%d, stackBase:%d ", \
-         topCall->m_codeBase, topCall->m_stackBase );
-
-   // prepare for a return that won't touch regA
-   ctx->m_regA.setNil();
-
-   // do the call
-   function->apply( this, nparams );
-}
-
-
-void VMachine::returnFrame()
-{
-   register VMContext* ctx = m_context;
-   register CallFrame* topCall = ctx->m_topCall;
-
-   TRACE1( "Return frame from function %s", AutoCString(topCall->m_function->name()).c_str() );
-   
-   // set determinism context
-   if( ! topCall->m_function->isDeterm() )
-   {
-      ctx->SetNDContext();
-   }
-
-   // reset code and data
-   ctx->m_topCode = ctx->m_codeStack + topCall->m_codeBase-1;
-   PARANOID( "Code stack underflow at return", (ctx->m_topCode >= ctx->m_codeStack-1) );
-   // Use initBase as stackBase may have been moved -- but keep 1 parameter ...
-   ctx->m_topData = ctx->m_dataStack + topCall->m_initBase-1;
-   PARANOID( "Data stack underflow at return", (ctx->m_topData >= ctx->m_dataStack-1) );
-
-   // ... so that we can fill the stack with the function result.
-   // -- in expressions we always have at least 1 element, that is the function item.
-   if( topCall->m_bExpression )
-   {
-      MESSAGE1( "-- Adding A register to stack");
-      *ctx->m_topData = ctx->m_regA;
-   }
-   // Return.
-   if( ctx->m_topCall-- ==  ctx->m_callStack )
-   {
-      // was this the topmost frame?
-      m_event = eventComplete;
-      MESSAGE( "Returned from last frame -- declaring complete." );
-   }
-
-   PARANOID( "Call stack underflow at return", (ctx->m_topCall >= ctx->m_callStack-1) );
-   TRACE( "Return frame code:%p, data:%p, call:%p", ctx->m_topCode, ctx->m_topData, ctx->m_topCall  );
-}
 
 
 String VMachine::report()
@@ -587,7 +487,7 @@ bool VMachine::step()
    TRACE( "Step at %s", location().c_ize() );  // this is not in VM::Run
    try
    {
-      ps->apply( ps, this );
+      ps->apply( ps, currentContext() );
    }
    catch( Error* e )
    {
@@ -633,65 +533,6 @@ Item* VMachine::findLocalItem( const String& ) const
    return 0;
 }
 
-
-void VMachine::pushQuit()
-{
-   class QuitStep: public PStep {
-   public:
-      QuitStep() { apply = apply_; }
-      virtual ~QuitStep() {}
-
-   private:
-      static void apply_( const PStep*, VMachine *vm )
-      {
-         vm->currentContext()->popCode();
-         vm->quit();
-      }
-   };
-
-   static QuitStep qs;
-   currentContext()->pushCode( &qs );
-}
-
-
-void VMachine::pushReturn()
-{
-   class Step: public PStep {
-   public:
-      Step() { apply = apply_; }
-      virtual ~Step() {}
-
-   private:
-      static void apply_( const PStep*, VMachine *vm )
-      {
-         vm->currentContext()->popCode();
-         vm->setReturn();
-      }
-   };
-
-   static Step qs;
-   currentContext()->pushCode( &qs );
-}
-
-
-void VMachine::pushBreak()
-{
-   class Step: public PStep {
-   public:
-      Step() { apply = apply_; }
-      virtual ~Step() {}
-
-   private:
-      static void apply_( const PStep*, VMachine *vm )
-      {
-         vm->currentContext()->popCode();
-         vm->breakpoint();
-      }
-   };
-
-   static Step qs;
-   currentContext()->pushCode( &qs );
-}
 
 
 void VMachine::link( Module* mod )

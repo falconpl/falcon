@@ -43,10 +43,9 @@ void SynTree::describe( String& tgt ) const
    }
 }
 
-void SynTree::apply_( const PStep* ps, VMachine* vm )
+void SynTree::apply_( const PStep* ps, VMContext* ctx )
 {
    const SynTree* self = static_cast<const SynTree*>(ps);
-   register VMContext* ctx = vm->currentContext();
 
    // get the current step.
    CodeFrame& cf = ctx->currentCode();
@@ -58,7 +57,7 @@ void SynTree::apply_( const PStep* ps, VMachine* vm )
    }
 
    Statement* step = self->m_steps[ cf.m_seqId++ ];
-   step->prepare(vm);
+   step->prepare(ctx);
 }
 
 

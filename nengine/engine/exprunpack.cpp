@@ -114,14 +114,14 @@ void ExprUnpack::precompile( PCode* pcode ) const
 }
 
 
-void ExprUnpack::apply_( const PStep* ps, VMachine* vm )
+void ExprUnpack::apply_( const PStep* ps, VMContext* ctx )
 {
    TRACE3( "Apply unpack: %p (%s)", ps, ps->describe().c_ize() );
 
    ExprUnpack* self = (ExprUnpack*) ps;
    std::vector<Symbol*> &syms = self->_p->m_params;
    size_t pcount = syms.size();
-   VMContext* ctx = vm->currentContext();
+   
    register Item& expander = ctx->topData();
 
    if ( ! expander.isArray() )
@@ -142,7 +142,7 @@ void ExprUnpack::apply_( const PStep* ps, VMachine* vm )
 
    for( i = 0; i < pcount; ++i )
    {
-      syms[i]->assign( vm, array[i] );
+      syms[i]->assign( ctx->vm(), array[i] );
    }
 
    // leave the expander in the stack.

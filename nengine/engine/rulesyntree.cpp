@@ -30,16 +30,15 @@ RuleSynTree::~RuleSynTree()
 {
 }
 
-void RuleSynTree::apply_( const PStep* ps, VMachine* vm )
+void RuleSynTree::apply_( const PStep* ps, VMContext* ctx )
 {
    const RuleSynTree* self = static_cast<const RuleSynTree*>(ps);
-   register VMContext* ctx = vm->currentContext();
 
    // get the current step.
    CodeFrame& cf = ctx->currentCode();
 
    // Have the rule failed?
-   if( vm->regA().isBoolean() && vm->regA().asBoolean() == false )
+   if( ctx->regA().isBoolean() && ctx->regA().asBoolean() == false )
    {
       // have a we a traceback point?
       register uint32 tbpoint = ctx->unrollRuleFrame();
@@ -70,7 +69,7 @@ void RuleSynTree::apply_( const PStep* ps, VMachine* vm )
 
    // just proceed with next step
    Statement* step = self->m_steps[ cf.m_seqId++ ];
-   step->prepare(vm);
+   step->prepare(ctx);
 }
 
 }

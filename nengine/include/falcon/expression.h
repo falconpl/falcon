@@ -329,7 +329,7 @@ protected:
    inline class_name( const class_name& other ): UnaryExpression( other ) {apply = apply_;} \
    inline virtual class_name* clone() const { return new class_name( *this ); } \
    virtual bool simplify( Item& value ) const; \
-   static void apply_( const PStep*, VMachine* vm ); \
+   static void apply_( const PStep*, VMContext* ctx ); \
    virtual void describe( String& ) const;\
    virtual void oneLiner( String& s ) const { describe( s ); }\
    inline String describe() const { return PStep::describe(); }\
@@ -348,7 +348,7 @@ protected:
    inline class_name( const class_name& other ): BinaryExpression( other ) {apply = apply_; extended_constructor} \
    inline virtual class_name* clone() const { return new class_name( *this ); } \
    virtual bool simplify( Item& value ) const; \
-   static void apply_( const PStep*, VMachine* vm ); \
+   static void apply_( const PStep*, VMContext* ctx ); \
    virtual void describe( String& ) const;\
    virtual void oneLiner( String& s ) const { describe( s ); }\
    inline String describe() const { return PStep::describe(); }\
@@ -362,7 +362,7 @@ protected:
    inline class_name( const class_name& other ): TernaryExpression( other ) {apply = apply_;} \
    inline virtual class_name* clone() const { return new class_name( *this ); } \
    virtual bool simplify( Item& value ) const; \
-   static void apply_( const PStep*, VMachine* vm ); \
+   static void apply_( const PStep*, VMContext* ctx ); \
    virtual void describe( String& ) const;\
    virtual void oneLiner( String& s ) const { describe( s ); }\
    inline String describe() const { return PStep::describe(); }\
@@ -398,7 +398,7 @@ private:
    class FALCON_DYN_CLASS Gate: public PStep {
    public:
       Gate();
-      static void apply_( const PStep*, VMachine* vm );
+      static void apply_( const PStep*, VMContext* ctx );
       mutable int m_shortCircuitSeqId;
    } m_gate;
 };
@@ -423,7 +423,7 @@ private:
    class FALCON_DYN_CLASS Gate: public PStep {
    public:
       Gate();
-      static void apply_( const PStep*, VMachine* vm );
+      static void apply_( const PStep*, VMContext* ctx );
       mutable int m_shortCircuitSeqId;
    } m_gate;
 };
@@ -492,7 +492,7 @@ private:
    class FALCON_DYN_CLASS Gate: public PStep {
    public:
       Gate();
-      static void apply_( const PStep*, VMachine* vm );
+      static void apply_( const PStep*, VMContext* ctx );
    } m_gate;
 };
 
@@ -518,7 +518,7 @@ private:
    class FALCON_DYN_CLASS Gate: public PStep {
    public:
       Gate();
-      static void apply_( const PStep*, VMachine* vm );
+      static void apply_( const PStep*, VMContext* ctx );
    } m_gate;
 };
 
@@ -566,7 +566,7 @@ private:
    class Private;
    Private* _p;
 
-   static void apply_( const PStep*, VMachine* vm );
+   static void apply_( const PStep*, VMContext* ctx );
 };
 
 
@@ -604,7 +604,7 @@ private:
    class Private;
    Private* _p;
 
-   static void apply_( const PStep*, VMachine* vm );
+   static void apply_( const PStep*, VMContext* ctx );
 };
 
 #if 0
@@ -652,7 +652,7 @@ private:
    class FALCON_DYN_CLASS Gate: public PStep {
 public:
       Gate();
-      static void apply_( const PStep*, VMachine* vm );
+      static void apply_( const PStep*, VMContext* ctx );
       mutable int m_endSeqId;
    } m_gate;
 
@@ -678,7 +678,7 @@ public:
    inline virtual void setLValue() { m_lvalue = true; }
    inline virtual bool isLValue() const { return m_lvalue; }
    virtual bool simplify( Item& value ) const; 
-   static void apply_( const PStep*, VMachine* vm ); 
+   static void apply_( const PStep*, VMContext* ctx );
    virtual void describe( String& ) const;
    virtual void oneLiner( String& s ) const { describe( s ); }
    inline String describe() const { return PStep::describe(); }

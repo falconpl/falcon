@@ -50,13 +50,12 @@ void DynSymbol::assign( VMachine* vm, const Item& value ) const
 }
 
 
-void DynSymbol::apply_( const PStep* ps, VMachine* vm )
+void DynSymbol::apply_( const PStep* ps, VMContext* ctx )
 {
    const ExprSymbol* self = static_cast<const ExprSymbol*>(ps);
    DynSymbol* sym = static_cast<DynSymbol*>(self->symbol());
-   register VMContext* ctx = vm->currentContext();
 
-   Item* fval = vm->findLocalItem( sym->name() );
+   Item* fval = ctx->vm()->findLocalItem( sym->name() );
    if ( fval )
    {
       // l-value (assignment)?

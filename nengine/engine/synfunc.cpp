@@ -33,7 +33,7 @@ SynFunc::~SynFunc()
 {
 }
 
-void SynFunc::apply( VMachine* vm, int32 nparams )
+void SynFunc::apply( VMContext* ctx, int32 nparams )
 {
    // Used by the VM to insert this opcode if needed to exit SynFuncs.
    static StmtReturn s_a_return;
@@ -42,11 +42,9 @@ void SynFunc::apply( VMachine* vm, int32 nparams )
    if( syntree().empty() )
    {
       TRACE( "-- function %s is empty -- not calling it", locate().c_ize() );
-      vm->returnFrame();
+      ctx->returnFrame();
       return;
    }
-
-   register VMContext* ctx = vm->currentContext();
    
    // fill the parameters
    TRACE1( "-- filing parameters: %d/%d", nparams, this->paramCount() );

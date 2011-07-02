@@ -72,8 +72,8 @@ private:
    class Private;
    Private* _p;
 
-   static void apply_( const PStep*, VMachine* vm );
-   static void apply_dummy_( const PStep*, VMachine* vm );
+   static void apply_( const PStep*, VMContext* ctx );
+   static void apply_dummy_( const PStep*, VMContext* ctx );
 };
 
 }

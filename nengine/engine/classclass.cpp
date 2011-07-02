@@ -15,7 +15,7 @@
 
 #include <falcon/classclass.h>
 #include <falcon/itemid.h>
-#include <falcon/vm.h>
+#include <falcon/vmcontext.h>
 #include <falcon/optoken.h>
 #include <falcon/falconclass.h>
 #include <falcon/falconinstance.h>
@@ -69,25 +69,25 @@ void ClassClass::describe( void* instance, String& target, int, int ) const
 //
 
 
-void ClassClass::op_isTrue( VMachine *vm, void* ) const
+void ClassClass::op_isTrue( VMContext* ctx, void* ) const
 {
    // classes are always true
-   vm->currentContext()->topData().setBoolean(true);
+   ctx->topData().setBoolean(true);
 }
 
-void ClassClass::op_toString( VMachine *vm , void* item ) const
+void ClassClass::op_toString( VMContext* ctx , void* item ) const
 {
    Class* fc = static_cast<Class*>(item);
    String* sret = new String( "Class " );
    sret->append(fc->name());
-   vm->currentContext()->topData() = sret;
+   ctx->topData() = sret;
 }
 
 
-void ClassClass::op_call( VMachine *vm, int32 pcount, void* self ) const
+void ClassClass::op_call( VMContext* ctx, int32 pcount, void* self ) const
 {
    Class* fc = static_cast<Class*>(self);
-   fc->op_create( vm, pcount );
+   fc->op_create( ctx, pcount );
 }
 
 }

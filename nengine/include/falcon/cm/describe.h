@@ -77,7 +77,7 @@ class FALCON_DYN_CLASS Describe: public Function
 public:
    Describe();
    virtual ~Describe();
-   virtual void apply( VMachine* vm, int32 nParams );
+   virtual void apply( VMContext* ctx, int32 nParams );
 };
 
 }

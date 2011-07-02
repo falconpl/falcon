@@ -39,7 +39,7 @@ MinOrMax::~MinOrMax()
 {}
 
 // Direct function call.
-void MinOrMax::apply( VMachine* vm, int32 pCount )
+void MinOrMax::apply( VMContext* ctx, int32 pCount )
 {
    if( pCount != 2 )
    {
@@ -48,8 +48,7 @@ void MinOrMax::apply( VMachine* vm, int32 pCount )
 
    Class* cls;
    void* udata;
-   register VMContext* ctx = vm->currentContext();
-   register Item* params = vm->params();
+   register Item* params = ctx->params();
 
    Item* op1 = params;
    Item* op2 = params + 1;
@@ -63,18 +62,18 @@ void MinOrMax::apply( VMachine* vm, int32 pCount )
       ctx->pushData( temp );  // and pay attention to the stack
 
       // ... but at worst, we must be called back.
-      vm->ifDeep( &m_compareNext );
-      cls->op_compare( vm, udata );
-      if( vm->wentDeep() )
+      ctx->ifDeep( &m_compareNext );
+      cls->op_compare( ctx, udata );
+      if( ctx->wentDeep() )
       {
          return;
       }
 
-      fassert( vm->currentContext()->regA().isInteger() );
-      comp = vm->currentContext()->regA().forceInteger();
+      fassert( ctx->regA().isInteger() );
+      comp = ctx->regA().forceInteger();
 
       // refetch the stack
-      params = vm->params();
+      params = ctx->params();
       op1 = params;
       op2 = params + 1;
    }
@@ -92,7 +91,7 @@ void MinOrMax::apply( VMachine* vm, int32 pCount )
       ctx->retval( *(comp <= 0 ? op1 : op2) );
    }
 
-   vm->returnFrame();
+   ctx->returnFrame();
 }
 
 
@@ -104,16 +103,15 @@ MinOrMax::CompareNextStep::CompareNextStep( bool isMax ):
 }
 
 // Next step when called as a function
-void MinOrMax::CompareNextStep::apply_( const PStep* ps, VMachine* vm )
+void MinOrMax::CompareNextStep::apply_( const PStep* ps, VMContext* ctx )
 {
-   register VMContext* ctx = vm->currentContext();
    MinOrMax::InvokeStep* self = (MinOrMax::InvokeStep*) ps;
 
-   int comp = vm->regA().forceInteger();
+   int comp = ctx->regA().forceInteger();
    if( self->m_bIsMax ) comp = -comp;
-   vm->regA() = *(comp <= 0 ? ctx->param(0) : ctx->param(1) );
+   ctx->regA() = *(comp <= 0 ? ctx->param(0) : ctx->param(1) );
 
-   vm->returnFrame();
+   ctx->returnFrame();
 }
 
 
@@ -128,15 +126,14 @@ MinOrMax::InvokeStep::InvokeStep( bool isMax ):
 }
 
 // Apply when invoked as a pseudofunction
-void MinOrMax::InvokeStep::apply_( const PStep* ps, VMachine* vm )
+void MinOrMax::InvokeStep::apply_( const PStep* ps, VMContext* ctx )
 {
    Class* cls;
    void* udata;
    MinOrMax::InvokeStep* self = (MinOrMax::InvokeStep*) ps;
-   register VMContext* ctx = vm->currentContext();
    int comp;
    Item* op1, *op2;
-   vm->operands(op1,op2);
+   ctx->operands(op1,op2);
 
    if( op1->asClassInst( cls, udata ) )
    {
@@ -145,17 +142,17 @@ void MinOrMax::InvokeStep::apply_( const PStep* ps, VMachine* vm )
       ctx->pushData( *op1 );  // push the data...
       ctx->pushData( temp );  // and pay attention to the stack
 
-      vm->ifDeep( &self->m_compare );
-      cls->op_compare( vm, udata );
-      if( vm->wentDeep() )
+      ctx->ifDeep( &self->m_compare );
+      cls->op_compare( ctx, udata );
+      if( ctx->wentDeep() )
       {
          return;
       }
 
-      fassert( vm->currentContext()->topData().isInteger() );
-      comp = vm->currentContext()->topData().forceInteger();
+      fassert( ctx->topData().isInteger() );
+      comp = ctx->topData().forceInteger();
       ctx->popData();
-      vm->operands(op1,op2);  // refech the stack
+      ctx->operands(op1,op2);  // refech the stack
    }
    else
    {
@@ -165,11 +162,11 @@ void MinOrMax::InvokeStep::apply_( const PStep* ps, VMachine* vm )
    
    if( self->m_bIsMax )
    {
-      vm->stackResult(2, *(comp > 0 ? op1 : op2) );
+      ctx->stackResult(2, *(comp > 0 ? op1 : op2) );
    }
    else
    {
-      vm->stackResult(2, *(comp <= 0 ? op1 : op2) );
+      ctx->stackResult(2, *(comp <= 0 ? op1 : op2) );
    }
 }
 
@@ -180,9 +177,8 @@ MinOrMax::InvokeStep::CompareStep::CompareStep( bool isMax ):
 }
 
 // Next step invoked as a pseudofunction
-void MinOrMax::InvokeStep::CompareStep::apply_( const PStep* ps, VMachine* vm )
+void MinOrMax::InvokeStep::CompareStep::apply_( const PStep* ps, VMContext* ctx )
 {
-   register VMContext* ctx = vm->currentContext();
    MinOrMax::InvokeStep* self = (MinOrMax::InvokeStep*) ps;
 
    // get the result left by the operand.

@@ -36,10 +36,8 @@ ToString::~ToString()
 {
 }
 
-void ToString::apply( VMachine* vm, int32 )
+void ToString::apply( VMContext* ctx, int32 )
 {
-   register VMContext* ctx = vm->currentContext();
-
    Item *elem, *format;
    
    if ( ctx->isMethodic() )
@@ -66,22 +64,22 @@ void ToString::apply( VMachine* vm, int32 )
    void* data;
    elem->forceClassInst( cls, data );
 
-   vm->ifDeep( &m_next );
+   ctx->ifDeep( &m_next );
    ctx->pushData( *elem );
-   cls->op_toString( vm, data );
-   if( vm->wentDeep() )
+   cls->op_toString( ctx, data );
+   if( ctx->wentDeep() )
    {
       return;
    }
 
    ctx->retval( ctx->topData() );
-   vm->returnFrame();
+   ctx->returnFrame();
 }
 
-void ToString::Next::apply_( const PStep*, VMachine* vm  )
+void ToString::Next::apply_( const PStep*, VMContext* ctx  )
 {
-   vm->retval( vm->currentContext()->topData() );
-   vm->returnFrame();
+   ctx->retval( ctx->topData() );
+   ctx->returnFrame();
 }
 
 }

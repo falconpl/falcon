@@ -234,7 +234,7 @@ IntCompiler::compile_status IntCompiler::compileNext( const String& value)
       if( ! m_currentTree->empty() )
       {
          VMContext* ctx = m_vm->currentContext();
-         m_vm->pushReturn();
+         ctx->pushReturn();
          ctx->pushCode(m_currentTree);
          if ( m_currentTree->at(0)->type() == Statement::autoexpr_t )
          {

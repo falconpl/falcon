@@ -69,7 +69,7 @@ public:
       return *this;
    }
 
-   static void apply_( const PStep* ps, VMachine* vm );
+   static void apply_( const PStep* ps, VMContext* ctx );
    virtual void describe( String& tgt ) const;
    inline String describe() const { return PStep::describe(); }
 

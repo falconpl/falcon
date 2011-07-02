@@ -113,7 +113,7 @@ bool ExprCall::simplify( Item& ) const
 }
 
 
-void ExprCall::apply_dummy_( const PStep* v, VMachine* )
+void ExprCall::apply_dummy_( const PStep* v, VMContext* )
 {
    const ExprCall* self = static_cast<const ExprCall*>(v);
    TRACE2( "Apply CALL -- dummy! %s", self->describe().c_ize() );
@@ -121,13 +121,12 @@ void ExprCall::apply_dummy_( const PStep* v, VMachine* )
 }
 
 
-void ExprCall::apply_( const PStep* v, VMachine* vm )
+void ExprCall::apply_( const PStep* v, VMContext* ctx )
 {
    static Engine* eng = Engine::instance();
    const ExprCall* self = static_cast<const ExprCall*>(v);
    TRACE2( "Apply CALL %s", self->describe().c_ize() );
 
-   register VMContext* ctx = vm->currentContext();
    int pcount = self->_p->m_params.size();
    register Item& top = *(&ctx->topData()-pcount);
 
@@ -136,7 +135,7 @@ void ExprCall::apply_( const PStep* v, VMachine* vm )
       case FLC_ITEM_FUNC:
          {
             Function* f = top.asFunction();
-            vm->call( f, pcount, true );
+            ctx->call( f, pcount, true );
          }
          break;
 
@@ -145,7 +144,7 @@ void ExprCall::apply_( const PStep* v, VMachine* vm )
             Item old = top;
             Function* f = top.asMethodFunction();
             old.unmethodize();
-            vm->call( f, pcount, old, true );
+            ctx->call( f, pcount, old, true );
          }
          break;
 
@@ -155,7 +154,7 @@ void ExprCall::apply_( const PStep* v, VMachine* vm )
          {
             Class* cls = top.asUserClass();
             void* inst = top.asUserInst();
-            cls->op_call( vm, pcount, inst );
+            cls->op_call( ctx, pcount, inst );
          }
          break;
 
@@ -163,14 +162,14 @@ void ExprCall::apply_( const PStep* v, VMachine* vm )
          {
             Class* cls = top.asDeepClass();
             void* inst = top.asDeepInst();
-            cls->op_call( vm, pcount, inst );
+            cls->op_call( ctx, pcount, inst );
          }
          break;
 
       default:
          {
             Class* cls = eng->getTypeClass( top.type() );
-            cls->op_call( vm, pcount, 0 );
+            cls->op_call( ctx, pcount, 0 );
          }
    }
 

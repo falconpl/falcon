@@ -61,10 +61,8 @@ protected:
    PStep* m_step3;
 
 
-   inline void prepare( VMachine* vm ) const
+   inline void prepare( VMContext* ctx ) const
    {
-      register VMContext* ctx = vm->currentContext();
-
       if ( m_step0 )
       {
          ctx->pushCode(m_step0);
@@ -102,7 +100,7 @@ public:
 
    void describe( String& tgt ) const;
 
-   static void apply_( const PStep*, VMachine* vm );
+   static void apply_( const PStep*, VMContext* ctx );
 };
 
 
@@ -158,7 +156,7 @@ public:
    
 private:
    // apply is the same as PCODE, but it also checks ND requests.
-   static void apply_( const PStep* self, VMachine* vm );
+   static void apply_( const PStep* self, VMContext* ctx );
    
    Expression* m_expr;
    PCode m_pcExpr;
@@ -181,7 +179,7 @@ public:
 
    void describe( String& tgt ) const;
    inline String describe() const { return PStep::describe(); }
-   static void apply_( const PStep*, VMachine* vm );
+   static void apply_( const PStep*, VMContext* ctx );
 
 private:
    Expression* m_expr;
@@ -202,7 +200,7 @@ public:
    void describe( String& tgt ) const;
    inline String describe() const { return PStep::describe(); }
    void oneLiner( String& tgt ) const;
-   static void apply_( const PStep*, VMachine* vm );
+   static void apply_( const PStep*, VMContext* ctx );
 
 private:
    Expression* m_check;
@@ -226,7 +224,7 @@ public:
    void oneLiner( String& tgt ) const;
    inline String oneLiner() const { return PStep::oneLiner(); }
 
-   static void apply_( const PStep*, VMachine* vm );
+   static void apply_( const PStep*, VMContext* ctx );
 
    /** Adds an else-if branch to the if statement */
    StmtIf& addElif( Expression *check, SynTree* ifTrue, int32 line=0, int32 chr = 0 );

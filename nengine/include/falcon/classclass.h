@@ -46,10 +46,10 @@ public:
 
    //=============================================================
 
-   // virtual void op_create( VMachine *vm, int32 pcount ) const; -- let the default non-creable thing to work
-   virtual void op_isTrue( VMachine *vm, void* self ) const;
-   virtual void op_toString( VMachine *vm, void* self ) const;
-   virtual void op_call( VMachine *vm, int32 pcount, void* self ) const;
+   // virtual void op_create( VMContext* ctx, int32 pcount ) const; -- let the default non-creable thing to work
+   virtual void op_isTrue( VMContext* ctx, void* self ) const;
+   virtual void op_toString( VMContext* ctx, void* self ) const;
+   virtual void op_call( VMContext* ctx, int32 pcount, void* self ) const;
 };
 
 }

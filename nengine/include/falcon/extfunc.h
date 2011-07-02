@@ -52,7 +52,7 @@ public:
       m_func(func)
    {}
    virtual ~ExtFunc() {}
-   virtual void apply( VMachine* vm, int32 pCount = 0 );
+   virtual void apply( VMContext* ctx, int32 pCount = 0 );
 
 protected:
    ext_func_t m_func;

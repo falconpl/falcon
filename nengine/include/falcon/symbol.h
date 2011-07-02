@@ -90,6 +90,7 @@ public:
    void declaredAt( int32 l ) { m_declaredAt = l; }
 
    /** Assign a value to this symbol.
+    \param vm the VM where the symbol lives.
     \param value The value to be stored.
     This stores the value in the underlying item.
     Symbols not yet "living" in a virtual machine or in a readied module

@@ -38,7 +38,7 @@ public:
    void describe( String& tgt ) const;
    inline String describe() const { return PStep::describe(); }
 
-   static void apply_( const PStep*, VMachine* vm );
+   static void apply_( const PStep*, VMContext* ctx );
 
    SynTree& currentTree();
    const SynTree& currentTree() const;
@@ -60,7 +60,7 @@ public:
    void describe( String& tgt ) const;
    inline String describe() const { return PStep::describe(); }
 
-   static void apply_( const PStep*, VMachine* vm );
+   static void apply_( const PStep*, VMContext* ctx );
 };
 
 }

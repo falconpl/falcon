@@ -24,7 +24,7 @@ namespace Falcon
 {
 
 class Collector;
-class VMachine;
+class VMContext;
 class Error;
 
 /**
@@ -120,7 +120,9 @@ public:
    GCToken* garbage();
 
    /** Executes the call.
-
+    \param ctx The Virtual Machine context on which the function is executed.
+    \param pCount Number of parameters in the stack for this function.
+    
     The call execution may be either immediate or deferred; for example,
     the call may just leaves PSteps to be executed by the virtual machine.
 
@@ -128,10 +130,10 @@ public:
     In case of immediate calls, apply() must also perform the return frame
     code in the virtual machine by calling VMachine::returnFrame().
     */
-   virtual void apply( VMachine* vm, int32 pCount = 0 ) = 0;
+   virtual void apply( VMContext* ctx, int32 pCount = 0 ) = 0;
 
    /** Just candy grammar for this->apply(vm); */
-   void operator()( VMachine* vm ) { apply(vm); }
+   void operator()( VMContext* ctx ) { apply(ctx); }
 
    /** Return true if this function is deterministic.
     \return true if the function is deterministic.

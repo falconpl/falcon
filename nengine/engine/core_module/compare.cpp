@@ -36,12 +36,11 @@ Compare::~Compare()
 {
 }
 
-void Compare::apply( VMachine* vm, int32 nParams )
+void Compare::apply( VMContext* ctx, int32 nParams )
 {
    Item* item;
    Item* item2;
-   register VMContext* ctx = vm->currentContext();
-
+   
    // this is a methodic function.
    if( ctx->isMethodic() )
    {
@@ -74,9 +73,9 @@ void Compare::apply( VMachine* vm, int32 nParams )
       // else the stack is already ok.
       
       // I don't want to be called back.
-      vm->ifDeep( &m_next );
-      cls->op_compare( vm, udata );
-      if( vm->wentDeep() )
+      ctx->ifDeep( &m_next );
+      cls->op_compare( ctx, udata );
+      if( ctx->wentDeep() )
       {
          // wait for the return value.
          return;
@@ -91,21 +90,21 @@ void Compare::apply( VMachine* vm, int32 nParams )
    }
 
    // and we can return the frame.
-   vm->returnFrame();
+   ctx->returnFrame();
 }
 
-void Compare::NextStep::apply_( const PStep*, VMachine* vm )
+void Compare::NextStep::apply_( const PStep*, VMContext* ctx )
 {
    // pass forward the comparison result
-   vm->retval(vm->currentContext()->topData());
-   vm->returnFrame();
+   ctx->retval(ctx->topData());
+   ctx->returnFrame();
 }
 
 
-void Compare::Invoke::apply_( const PStep*, VMachine* vm )
+void Compare::Invoke::apply_( const PStep*, VMContext* ctx )
 {
    Item* first, *second;
-   OpToken token( vm, first, second );
+   OpToken token( ctx, first, second );
    
    // doing the real comparison.
    Class* cls;
@@ -114,7 +113,7 @@ void Compare::Invoke::apply_( const PStep*, VMachine* vm )
    {
       // abandon the tokens, let op_compare to do the stuff
       token.abandon();
-      cls->op_compare( vm, udata );
+      cls->op_compare( ctx, udata );
    }
    else
    {

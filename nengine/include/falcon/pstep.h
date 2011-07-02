@@ -77,7 +77,7 @@ public:
       return temp;
    }
 
-   typedef void (*apply_func)(const PStep* self, VMachine* vm);
+   typedef void (*apply_func)(const PStep* self, VMContext* ctx);
 
    apply_func apply;
 

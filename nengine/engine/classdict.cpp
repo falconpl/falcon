@@ -15,7 +15,7 @@
 
 #include <falcon/classdict.h>
 #include <falcon/itemid.h>
-#include <falcon/vm.h>
+#include <falcon/vmcontext.h>
 
 #include <map>
 
@@ -138,46 +138,46 @@ void ClassDict::enumerateProperties( void*, PropertyEnumerator& cb ) const
 
 //=======================================================================
 //
-void ClassDict::op_create( VMachine* vm, int pcount ) const
+void ClassDict::op_create( VMContext* ctx, int pcount ) const
 {
    static Collector* coll = Engine::instance()->collector();
-   vm->stackResult( pcount + 1, FALCON_GC_STORE( coll, this, new ItemDictionary ) );
+   ctx->stackResult( pcount + 1, FALCON_GC_STORE( coll, this, new ItemDictionary ) );
 }
 
-void ClassDict::op_add( VMachine *, void* ) const
+void ClassDict::op_add( VMContext*, void* ) const
 {
    //TODO
 }
 
-void ClassDict::op_isTrue( VMachine *vm, void* self ) const
+void ClassDict::op_isTrue( VMContext* ctx, void* self ) const
 {
-   vm->stackResult( 1, static_cast<ItemDictionary*>(self)->size() != 0 );
+   ctx->stackResult( 1, static_cast<ItemDictionary*>(self)->size() != 0 );
 }
 
-void ClassDict::op_toString( VMachine *vm, void* self ) const
+void ClassDict::op_toString( VMContext* ctx, void* self ) const
 {
    String s;
    s.A("[Dictionary of ").N((int64)static_cast<ItemDictionary*>(self)->size()).A(" elements]");
-   vm->stackResult( 1, s );
+   ctx->stackResult( 1, s );
 }
 
 
-void ClassDict::op_getProperty( VMachine *vm, void* self, const String& property ) const
+void ClassDict::op_getProperty( VMContext* ctx, void* self, const String& property ) const
 {
-   Class::op_getProperty( vm, self, property );
+   Class::op_getProperty( ctx, self, property );
 }
 
-void ClassDict::op_getIndex( VMachine* vm, void* self ) const
+void ClassDict::op_getIndex( VMContext* ctx, void* self ) const
 {
    Item *index, *dict_item;
-   vm->operands( index, dict_item );
+   ctx->operands( index, dict_item );
 
    ItemDictionary& dict = *static_cast<ItemDictionary*>(self);
    ItemDictionary::iterator pos = dict.find(*index);
    
    if( pos != dict.end() )
    {
-      vm->stackResult( 2, pos->second );
+      ctx->stackResult( 2, pos->second );
    }
    else
    {
@@ -185,14 +185,14 @@ void ClassDict::op_getIndex( VMachine* vm, void* self ) const
    }
 }
 
-void ClassDict::op_setIndex( VMachine* vm, void* self ) const
+void ClassDict::op_setIndex( VMContext* ctx, void* self ) const
 {
    Item *value, *index, *dict_item;
-   vm->operands( value, index, dict_item );
+   ctx->operands( value, index, dict_item );
 
    ItemDictionary& dict = *static_cast<ItemDictionary*>(self);
    dict[*index] = *value;
-   vm->stackResult(3, *value);
+   ctx->stackResult(3, *value);
 }
 
 

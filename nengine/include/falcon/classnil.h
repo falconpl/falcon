@@ -42,8 +42,8 @@ public:
 
    //=============================================================
 
-   virtual void op_create( VMachine *vm, int32 pcount ) const;
-   virtual void op_isTrue( VMachine *vm, void* self ) const;
+   virtual void op_create( VMContext* ctx, int32 pcount ) const;
+   virtual void op_isTrue( VMContext* ctx, void* self ) const;
 };
 
 }

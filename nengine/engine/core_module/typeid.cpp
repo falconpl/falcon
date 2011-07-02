@@ -33,10 +33,8 @@ TypeId::~TypeId()
 {
 }
 
-void TypeId::apply( VMachine* vm, int32 )
+void TypeId::apply( VMContext* ctx, int32 )
 {
-   register VMContext* ctx = vm->currentContext();
-
    Item *elem;
    if ( ctx->isMethodic() )
    {
@@ -56,19 +54,19 @@ void TypeId::apply( VMachine* vm, int32 )
    
    if( elem->asClassInst( cls, data ) )
    {
-      vm->retval( cls->typeID() );
+      ctx->retval( cls->typeID() );
    }
    else
    {
-      vm->retval( elem->type() );
+      ctx->retval( elem->type() );
    }
 
-   vm->returnFrame();
+   ctx->returnFrame();
 }
 
-void TypeId::Invoke::apply_( const PStep*, VMachine* vm  )
+void TypeId::Invoke::apply_( const PStep*, VMContext* ctx  )
 {
-   register Item& top = vm->currentContext()->topData();
+   register Item& top = ctx->topData();
 
    Class* cls;
    void* data;

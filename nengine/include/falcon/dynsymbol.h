@@ -22,6 +22,8 @@
 namespace Falcon {
 
 class PStep;
+class VMContext;
+class VMachine;
 
 /** Symbols that must be resolved at runtime.
  */
@@ -36,7 +38,7 @@ public:
 
    void assign( VMachine*, const Item& value ) const;
    
-   static void apply_( const PStep* self, VMachine* vm );
+   static void apply_( const PStep* self, VMContext* ctx );
    virtual Expression* makeExpression();
 
 protected:

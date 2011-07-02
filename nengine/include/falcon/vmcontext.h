@@ -40,9 +40,16 @@ public:
    static const int INITIAL_STACK_ALLOC = 512;
    static const int INCREMENT_STACK_ALLOC = 256;
 
-   VMContext();
+   VMContext( VMachine* owner = 0 );
    ~VMContext();
 
+   void assign( VMachine* vm )
+   {
+      m_vm = vm;
+   }
+
+   VMachine* vm() const { return m_vm; }
+   
    //=========================================================
    // Varaibles - stack management
    //=========================================================
@@ -414,6 +421,176 @@ public:
    
    void moreCall();
 
+//========================================================
+//
+
+
+   /** Gets the operands from the top of the stack.
+    \param op1 The first operand.
+    \see Class
+
+    \note this method may be used also by pseudofunctions and generically
+    by any PStep in need to access the top of the stack.
+    */
+   inline void operands( Item*& op1 )
+   {
+      op1 = &topData();
+   }
+
+   /** Gets the operands from the top of the stack.
+    \param op1 The first operand.
+    \param op2 The second operand.
+    \see Class
+
+    \note this method may be used also by pseudofunctions and generically
+    by any PStep in need to access the top of the stack.
+    */
+   inline void operands( Item*& op1, Item*& op2 )
+   {
+      op1 = &topData()-1;
+      op2 = op1+1;
+   }
+
+   /** Gets the operands from the top of the stack.
+    \param op1 The first operand.
+    \param op2 The second operand.
+    \param op3 The thrid operand.
+    \see Class
+
+    \note this method may be used also by pseudofunctions and generically
+    by any PStep in need to access the top of the stack.
+    */
+   inline void operands( Item*& op1, Item*& op2, Item*& op3 )
+   {
+      op1 = &topData()-2;
+      op2 = op1+1;
+      op3 = op2+1;
+   }
+
+   /** Pops the stack when leaving a PStep or operand, and sets an operation result.
+    \param count Number of operands accepted by this step
+    \param result The value of the operation result.
+    \see Class
+
+    \note this method may be used also by pseudofunctions and generically
+    by any PStep in need to access the top of the stack.
+    */
+   inline void stackResult( int count, const Item& result )
+   {
+      if( count > 1 ) popData( count-1 );
+      topData() = result;
+   }
+
+      /** Returns the parameter array in the current frame.
+    \return An array of items pointing to the top of the local frame data stack.
+
+    This method returns the values in the current topmost data frame.
+    This usually points to the first parameter of the currently executed function.
+    */
+   inline Item* params() const { return params(); }
+
+   /** Returns pseudo-parameters.
+    \param count Number of pseudo parameters.
+    \return An array of items pointing to the pseudo parameters.
+
+    This can be used to retrieve the parameters of pseudo functions.
+    */
+   inline Item* pseudoParams( int32 count ) {
+      return &topData() - count + 1;
+   }
+
+   //=========================================================
+   // Deep call protocol
+   //=========================================================
+
+   /** Deep calls operand protocol -- part 1.
+
+    The deep call protocol is used by falcon Function instances or other
+    PStep* operands that are called by the virtual machine, and that may then
+    call the virtual machine again.
+
+    Some functions called by the virtual machine then need to call other functions that
+    may or may not need the VM to perform other calculations.
+
+    If a calculation that involves the Virtual Machine terminates immediately,
+    the result is usually found in VMachine::topData(), and the caller can
+    progress immediately.
+
+    Otherwise, the caller needs to set a callback in the virtual machine so that
+    it will be called back by it after the frame added by the called is
+    entity is complete. Then, the result will be available in regA().
+
+    But, the step should be on top of the code stack before the underluing called
+    element has a chance to prepare its call frame. This means that normally a
+    caller calling an operand that may or may not request a call frame should
+    push its own callback on the code stack blindly, then eventually pop it if
+    the called entity didn't push a new call frame.
+
+    To avoid this on the most common situations where this may be required, a
+    set of three metods are used by the operand implementations and a set of
+    well defined functions known by the engine in the virtual machine.
+
+    The caller sets a (non-destructible) PStep through the ifDeep() method.
+    If the callee wants to add a frame, it calls goingDeep(), which does nothing
+    if the caller didn't need to have a result from the called, but will store the
+    PStep in the code stack otherwise.
+
+    Then, the caller must check if the result is ready in topData() or if the
+    processing must be delayed by calling wentDeep(); that method will also clear
+    the readied PStep.
+
+    To avoid this mechanism to be broken, ifDeep() raises an error if called
+    while another PStep was readied.
+
+    Of course, this mechanism cannot be used across context switches, but its
+    meant for tightly coupled functions.
+    */
+   void ifDeep( const PStep* postcall );
+
+   /** Called by a callee in a possibly deep call pair.
+    @see ifDeep.
+   */
+   void goingDeep();
+
+   /** Called by a calling method to know if the called sub-methdod required a deep operation.
+    \return true if the sub-method needed to go deep.
+    */
+   bool wentDeep();
+
+
+   /** Pushes a quit step at current position in the code stack.
+    This method should always be pushed in a VM before it is invoked
+    from unsafe code.
+    */
+   void pushQuit();
+
+   /** Pushes a breakpoint at current postition in the code stack.
+    */
+   void pushBreak();
+
+   /** Pushes a VM clear suspension request in the code stack.
+    @see setReturn
+    */
+   void pushReturn();
+
+
+   void call( Function* f, int np, bool bExpr = false );
+
+   /** Prepares the VM to execute a function (actually, a method).
+
+    The VM gets readied to execute the function from the next step,
+    which may be invoked via step(), run() or by returning from the caller
+    of this function in case the caller has been invoked by the VM itself.
+    @param function The function to be invoked.
+    @param np Number of parameters that must be already in the stack.
+    @param self The item on which this method is invoked. Pure functions are
+                considered methods of "nil".
+    */
+   virtual void call( Function* function, int np, const Item& self, bool bExpr = false );
+
+   /** Returns from the current frame */
+   void returnFrame();
+
 protected:
 
    // Inner constructor to create subclasses
@@ -432,6 +609,8 @@ protected:
    Item* m_maxData;
 
    Item m_regA;
+
+   VMachine* m_vm;
 
    friend class VMachine;
    friend class SynFunc;

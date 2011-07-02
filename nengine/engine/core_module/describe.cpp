@@ -37,10 +37,8 @@ Describe::~Describe()
 {
 }
 
-void Describe::apply( VMachine* vm, int32 )
+void Describe::apply( VMContext* ctx, int32 )
 {
-   register VMContext* ctx = vm->currentContext();
-
    Item* elem, *md, *ml;
    if ( ctx->isMethodic() )
    {
@@ -74,8 +72,8 @@ void Describe::apply( VMachine* vm, int32 )
 
    String* theString = new String;
    elem->describe( *theString, maxDepth, maxLen );
-   vm->retval( theString->garbage() );
-   vm->returnFrame();
+   ctx->retval( theString->garbage() );
+   ctx->returnFrame();
 }
 
 }

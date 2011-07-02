@@ -17,12 +17,11 @@
 #include <falcon/itemid.h>
 #include <falcon/item.h>
 #include <falcon/optoken.h>
-#include <falcon/vm.h>
+#include <falcon/vmcontext.h>
 #include <falcon/operanderror.h>
 #include <falcon/datareader.h>
 #include <falcon/datawriter.h>
 #include <falcon/paramerror.h>
-
 #include <math.h>
 
 namespace Falcon {
@@ -32,14 +31,15 @@ ClassNumeric::ClassNumeric() : Class( "Numeric", FLC_ITEM_NUM ) { }
 
 ClassNumeric::~ClassNumeric() { }
 
-void ClassNumeric::op_create( VMachine *vm, int pcount ) const
+void ClassNumeric::op_create( VMContext* ctx, int pcount ) const
 {
    if( pcount > 0 )
    {
-      Item* param = vm->currentContext()->opcodeParams(pcount);
+      Item* param = ctx->opcodeParams(pcount);
+      
       if( param->isOrdinal() )
       {
-         vm->stackResult( pcount + 1, param->forceNumeric() );
+         ctx->stackResult( pcount + 1, param->forceNumeric() );
       }
       else if( param->isString() )
       {
@@ -50,7 +50,7 @@ void ClassNumeric::op_create( VMachine *vm, int pcount ) const
          }
          else
          {
-            vm->stackResult( pcount + 1, value );
+            ctx->stackResult( pcount + 1, value );
          }
       }
       else
@@ -60,7 +60,7 @@ void ClassNumeric::op_create( VMachine *vm, int pcount ) const
    }
    else
    {
-      vm->stackResult( pcount + 1, Item( 0.0 ) );
+      ctx->stackResult( pcount + 1, Item( 0.0 ) );
    }
 }
 
@@ -111,26 +111,26 @@ void ClassNumeric::describe( void* instance, String& target, int, int  ) const {
 // ================================================================
 
 
-void ClassNumeric::op_isTrue( VMachine *vm, void* ) const
+void ClassNumeric::op_isTrue( VMContext* ctx, void* ) const
 {
    Item* iself;
-   OpToken token( vm, iself );
+   OpToken token( ctx, iself );
    token.exit( iself->asNumeric() != 0 );
 }
 
-void ClassNumeric::op_toString( VMachine *vm, void* ) const
+void ClassNumeric::op_toString( VMContext* ctx, void* ) const
 {
    Item* iself;
-   OpToken token( vm, iself );
+   OpToken token( ctx, iself );
    String s;
    token.exit( s.N(iself->asNumeric()) );
 }
 
-void ClassNumeric::op_add( VMachine *vm, void* ) const {
+void ClassNumeric::op_add( VMContext* ctx, void* ) const {
     
    Item *self, *op2;
 
-   OpToken token( vm, self, op2 );
+   OpToken token( ctx, self, op2 );
 
    if( self->type() == op2->type() || op2->type() == FLC_ITEM_INT )
    {
@@ -143,11 +143,11 @@ void ClassNumeric::op_add( VMachine *vm, void* ) const {
     
 }
 
-void ClassNumeric::op_sub( VMachine *vm, void* ) const {
+void ClassNumeric::op_sub( VMContext* ctx, void* ) const {
     
    Item *self, *op2;
 
-   OpToken token( vm, self, op2 );
+   OpToken token( ctx, self, op2 );
 
    if( self->type() == op2->type() || op2->type() == FLC_ITEM_INT )
    {
@@ -161,11 +161,11 @@ void ClassNumeric::op_sub( VMachine *vm, void* ) const {
 }
 
 
-void ClassNumeric::op_mul( VMachine *vm, void* ) const {
+void ClassNumeric::op_mul( VMContext* ctx, void* ) const {
     
    Item *self, *op2;
 
-   OpToken token( vm, self, op2 );
+   OpToken token( ctx, self, op2 );
 
    if( self->type() == op2->type() || op2->type() == FLC_ITEM_INT )
    {
@@ -179,11 +179,11 @@ void ClassNumeric::op_mul( VMachine *vm, void* ) const {
 }
 
 
-void ClassNumeric::op_div( VMachine *vm, void* ) const {
+void ClassNumeric::op_div( VMContext* ctx, void* ) const {
     
    Item *self, *op2;
 
-   OpToken token( vm, self, op2 );
+   OpToken token( ctx, self, op2 );
 
    if( self->type() == op2->type() || op2->type() == FLC_ITEM_INT )
    {
@@ -197,11 +197,11 @@ void ClassNumeric::op_div( VMachine *vm, void* ) const {
 }
 
 
-void ClassNumeric::op_pow( VMachine *vm, void* ) const {
+void ClassNumeric::op_pow( VMContext* ctx, void* ) const {
     
    Item *self, *op2;
 
-   OpToken token( vm, self, op2 );
+   OpToken token( ctx, self, op2 );
 
    if( self->type() == op2->type() || op2->type() == FLC_ITEM_INT )
    {
@@ -214,11 +214,11 @@ void ClassNumeric::op_pow( VMachine *vm, void* ) const {
 }
 
 
-void ClassNumeric::op_aadd( VMachine *vm, void*) const {
+void ClassNumeric::op_aadd( VMContext* ctx, void*) const {
     
    Item *self, *op2;
 
-   vm->operands( self, op2 );
+   ctx->operands( self, op2 );
 
    if( self->type() == op2->type() || op2->type() == FLC_ITEM_INT ) 
    {
@@ -230,15 +230,15 @@ void ClassNumeric::op_aadd( VMachine *vm, void*) const {
       throw new OperandError( ErrorParam( e_invalid_op, __LINE__, __FILE__ ).origin( ErrorParam::e_orig_vm ).extra( "Invalid operand term" ) );
     
 
-   vm->currentContext()->popData(); // Put self on the top of the stack
+   ctx->popData(); // Put self on the top of the stack
     
 }
 
-void ClassNumeric::op_asub( VMachine *vm, void* ) const {
+void ClassNumeric::op_asub( VMContext* ctx, void* ) const {
     
    Item *self, *op2;
 
-   vm->operands( self, op2 );
+   ctx->operands( self, op2 );
 
    if( self->type() == op2->type() || op2->type() == FLC_ITEM_INT ) 
    {
@@ -250,16 +250,16 @@ void ClassNumeric::op_asub( VMachine *vm, void* ) const {
       throw new OperandError( ErrorParam( e_invalid_op, __LINE__, __FILE__ ).origin( ErrorParam::e_orig_vm ).extra( "Invalid operand term" ) );
     
 
-   vm->currentContext()->popData(); // Put self on the top of the stack
+   ctx->popData(); // Put self on the top of the stack
     
 }
 
 
-void ClassNumeric::op_amul( VMachine *vm, void* ) const {
+void ClassNumeric::op_amul( VMContext* ctx, void* ) const {
     
    Item *self, *op2;
 
-   vm->operands( self, op2 );
+   ctx->operands( self, op2 );
 
    if( self->type() == op2->type() || op2->type() == FLC_ITEM_INT ) 
    {
@@ -271,16 +271,16 @@ void ClassNumeric::op_amul( VMachine *vm, void* ) const {
       throw new OperandError( ErrorParam( e_invalid_op, __LINE__, __FILE__ ).origin( ErrorParam::e_orig_vm ).extra( "Invalid operand term" ) );
     
 
-   vm->currentContext()->popData(); // Put self on the top of the stack
+   ctx->popData(); // Put self on the top of the stack
     
 }
 
 
-void ClassNumeric::op_adiv( VMachine *vm, void* ) const {
+void ClassNumeric::op_adiv( VMContext* ctx, void* ) const {
     
    Item *self, *op2;
 
-   vm->operands( self, op2 );
+   ctx->operands( self, op2 );
 
    if( self->type() == op2->type() || op2->type() == FLC_ITEM_INT ) 
    {
@@ -292,16 +292,16 @@ void ClassNumeric::op_adiv( VMachine *vm, void* ) const {
       throw new OperandError( ErrorParam( e_invalid_op, __LINE__, __FILE__ ).origin( ErrorParam::e_orig_vm ).extra( "Invalid operand term" ) );
     
 
-   vm->currentContext()->popData(); // Put self on the top of the stack
+   ctx->popData(); // Put self on the top of the stack
     
 }
 
 
-void ClassNumeric::op_apow( VMachine *vm, void* ) const {
+void ClassNumeric::op_apow( VMContext* ctx, void* ) const {
     
    Item *self, *op2;
 
-   vm->operands( self, op2 );
+   ctx->operands( self, op2 );
 
    if( self->type() == op2->type() || op2->type() == FLC_ITEM_INT ) 
    {
@@ -313,45 +313,39 @@ void ClassNumeric::op_apow( VMachine *vm, void* ) const {
       throw new OperandError( ErrorParam( e_invalid_op, __LINE__, __FILE__ ).origin( ErrorParam::e_orig_vm ).extra( "Invalid operand term" ) );
     
 
-   vm->currentContext()->popData(); // Put self on the top of the stack
+   ctx->popData(); // Put self on the top of the stack
     
 }
 
 
-void ClassNumeric::op_inc(VMachine *vm, void* ) const {
-    
+void ClassNumeric::op_inc(VMContext* ctx, void* ) const
+{
    Item *self;
-
-   vm->operands( self );
-
-   self->setInteger( self->asInteger() + 1.0 );
+   ctx->operands( self );
+   self->setNumeric( self->asNumeric() + 1.0 );
     
 }
 
 
-void ClassNumeric::op_dec(VMachine *vm, void*) const {
-    
+void ClassNumeric::op_dec(VMContext* ctx, void*) const
+{    
    Item *self;
-
-   vm->operands( self );
-
-   self->setInteger( self->asInteger() - 1.0 );
-    
+   ctx->operands( self );
+   self->setNumeric( self->asNumeric() - 1.0 );
 }
 
 
-void ClassNumeric::op_incpost(VMachine *, void* ) const {
-    
-   // TODO
-    
+void ClassNumeric::op_incpost(VMContext*, void* ) const
+{
+   // TODO   
 }
 
 
-void ClassNumeric::op_decpost(VMachine *, void* ) const {
-    
-   // TODO
-    
+void ClassNumeric::op_decpost(VMContext*, void* ) const
+{
+   // TODO   
 }
 
-
 }
+
+/* end of classnumeric.cpp */

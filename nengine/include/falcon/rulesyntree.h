@@ -34,7 +34,7 @@ public:
    RuleSynTree();
    virtual ~RuleSynTree();
 
-   static void apply_( const PStep* ps, VMachine* vm );
+   static void apply_( const PStep* ps, VMContext* ctx );
 };
 
 }

@@ -41,7 +41,7 @@ public:
    
    virtual void assign( VMachine* vm, const Item& value ) const;
 
-   static void apply_( const PStep* self, VMachine* vm );
+   static void apply_( const PStep* self, VMContext* ctx );
    virtual Expression* makeExpression();
 
    const Item& value() const { return m_item; }

@@ -75,7 +75,7 @@ private:
    typedef std::vector<const PStep*> StepList;
    StepList m_steps;
 
-   static void apply_( const PStep* ps, VMachine* vm );
+   static void apply_( const PStep* ps, VMContext* ctx );
 };
 
 }

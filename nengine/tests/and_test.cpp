@@ -41,17 +41,15 @@ public:
          apply = apply_;
       }
 
-      static void apply_( const PStep* ps, VMachine* vm )
+      static void apply_( const PStep* ps, VMContext* ctx )
       {
          const NextStep* nstep = static_cast<const NextStep*>(ps);
-         std::cout << *vm->regA().asString()->c_ize();
-         VMContext* ctx = vm->currentContext();
-         nstep->printNext( vm, ctx->currentCode().m_seqId );
+         std::cout << *ctx->regA().asString()->c_ize();
+         nstep->printNext( ctx, ctx->currentCode().m_seqId );
       }
 
-      void printNext( VMachine* vm, int count ) const
+      void printNext( VMContext* ctx, int count ) const
       {
-         VMContext* ctx = vm->currentContext();
          int nParams = ctx->currentFrame().m_paramCount;
 
          while( count < nParams )
@@ -62,10 +60,10 @@ public:
             ctx->param(count)->forceClassInst( cls, data );
             ++count;
 
-            vm->ifDeep(this);
+            ctx->ifDeep(this);
             ctx->pushData(*ctx->param(count));
-            cls->op_toString( vm, data );
-            if( vm->wentDeep() )
+            cls->op_toString( ctx, data );
+            if( ctx->wentDeep() )
             {
                ctx->currentCode().m_seqId = count;
                return;
@@ -76,7 +74,7 @@ public:
 
          std::cout << std::endl;
          // we're out of the function.
-         vm->returnFrame();
+         ctx->returnFrame();
       }
    } m_nextStep;
 
@@ -86,9 +84,9 @@ public:
 
    virtual ~FuncPrintl() {}
 
-   virtual void apply( VMachine* vm, int32)
+   virtual void apply( VMContext* ctx, int32)
    {
-      m_nextStep.printNext( vm, 0 );
+      m_nextStep.printNext( ctx, 0 );
    }
 } printl;
 
@@ -131,7 +129,7 @@ void go( int arg, bool bUseOr )
 
    // And now, run the code.
    Falcon::VMachine vm;
-   vm.call(&fmain,0);
+   vm.currentContext()->call(&fmain,0);
    vm.currentContext()->pushData(Falcon::Item());  // create an item -- local 0
 
    while( vm.nextStep() != 0 )

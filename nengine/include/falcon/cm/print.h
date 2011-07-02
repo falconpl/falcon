@@ -59,15 +59,15 @@ public:
 
    virtual ~FuncPrintBase();
 
-   virtual void apply( VMachine* vm, int32 nParams );
+   virtual void apply( VMContext* ctx, int32 nParams );
 
 private:
    class NextStep: public PStep
    {
    public:
       NextStep();
-      static void apply_( const PStep* ps, VMachine* vm );
-      void printNext( VMachine* vm, int count ) const;
+      static void apply_( const PStep* ps, VMContext* ctx );
+      void printNext( VMContext* ctx, int count ) const;
       bool m_isPrintl;
    };
 

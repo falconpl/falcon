@@ -27,7 +27,7 @@ class FALCON_DYN_CLASS MinOrMax: public PseudoFunction
 public:
    MinOrMax( const String& name, bool bIsMax );
    virtual ~MinOrMax();
-   virtual void apply( VMachine* vm, int32 pCount = 0 );
+   virtual void apply( VMContext* vm, int32 pCount = 0 );
 
 private:
    bool m_bIsMax;
@@ -37,7 +37,7 @@ private:
    {
    public:
       InvokeStep( bool isMax );
-      static void apply_( const PStep* ps, VMachine* vm );
+      static void apply_( const PStep* ps, VMContext* vm );
 
       bool m_bIsMax;
       // Step if the first item has a compare overload
@@ -45,7 +45,7 @@ private:
       {
       public:
          CompareStep( bool isMax );
-         static void apply_( const PStep* ps, VMachine* vm );
+         static void apply_( const PStep* ps, VMContext* vm );
 
          bool m_bIsMax;
       };
@@ -60,7 +60,7 @@ private:
    {
    public:
       CompareNextStep( bool isMax );
-      static void apply_( const PStep* ps, VMachine* vm );
+      static void apply_( const PStep* ps, VMContext* vm );
 
       bool m_bIsMax;
    };

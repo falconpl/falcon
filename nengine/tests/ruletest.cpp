@@ -45,17 +45,15 @@ public:
          apply = apply_;
       }
 
-      static void apply_( const PStep* ps, VMachine* vm )
+      static void apply_( const PStep* ps, VMContext* ctx )
       {
          const NextStep* nstep = static_cast<const NextStep*>(ps);
-         vm->textOut()->write( *vm->regA().asString() );
-         VMContext* ctx = vm->currentContext();
-         nstep->printNext( vm, ctx->currentCode().m_seqId );
+         ctx->vm()->textOut()->write( *ctx->regA().asString() );
+         nstep->printNext( ctx, ctx->currentCode().m_seqId );
       }
 
-      void printNext( VMachine* vm, int count ) const
+      void printNext( VMContext* ctx, int count ) const
       {
-         VMContext* ctx = vm->currentContext();
          int nParams = ctx->currentFrame().m_paramCount;
 
          while( count < nParams )
@@ -67,21 +65,21 @@ public:
             ++count;
 
             ctx->pushData(*ctx->param(count));
-            vm->ifDeep(this);
-            cls->op_toString( vm, data );
-            if( vm->wentDeep() )
+            ctx->ifDeep(this);
+            cls->op_toString( ctx, data );
+            if( ctx->wentDeep() )
             {
                ctx->currentCode().m_seqId = count;
                return;
             }
             
-            vm->textOut()->write( *ctx->topData().asString() );
+            ctx->vm()->textOut()->write( *ctx->topData().asString() );
             ctx->popData();
          }
 
-         vm->textOut()->write( "\n" );
+         ctx->vm()->textOut()->write( "\n" );
          // we're out of the function.
-         vm->returnFrame();
+         ctx->returnFrame();
       }
    } m_nextStep;
 
@@ -91,9 +89,9 @@ public:
 
    virtual ~FuncPrintl() {}
 
-   virtual void apply( VMachine* vm, int32 )
+   virtual void apply( VMContext* ctx, int32 )
    {
-      m_nextStep.printNext( vm, 0 );
+      m_nextStep.printNext( ctx, 0 );
    }
 } printl;
 
@@ -157,7 +155,7 @@ void go()
 
    // And now, run the code.
    Falcon::VMachine vm;
-   vm.call(&fmain,0);
+   vm.currentContext()->call(&fmain,0);
    vm.run();
 
 

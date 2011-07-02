@@ -93,43 +93,43 @@ namespace BOMH
 // Len method.
 //
 
-void len(VMachine* vm, const Class*, void*)
+void len(VMContext* ctx, const Class*, void*)
 {
    static Function* lenFunc = Engine::instance()->getPseudoFunction("len");
    fassert( lenFunc != 0 );
 
-   Item &value = vm->currentContext()->topData();
+   Item &value = ctx->topData();
    value.methodize(lenFunc);
 }
 
 
-void len_(VMachine* vm, const Class*, void*)
+void len_(VMContext* ctx, const Class*, void*)
 {
-   Item& topData = vm->currentContext()->topData();
+   Item& topData = ctx->topData();
    topData = topData.len();
 }
 
 
-void bound(VMachine*, const Class*, void*)
+void bound(VMContext*, const Class*, void*)
 {
    fassert2( false, "Not implemented" );
 }
 
-void bound_(VMachine*, const Class*, void*)
+void bound_(VMContext*, const Class*, void*)
 {
    fassert2( false, "Not implemented" );
 }  
 
-void className(VMachine*, const Class*, void*)
+void className(VMContext*, const Class*, void*)
 {
    fassert2( false, "Not implemented" );
 }
 
 
-void className_(VMachine* vm, const Class*, void* data)
+void className_(VMContext* ctx, const Class*, void* data)
 {
    Item* pself;
-   OpToken token( vm, pself );
+   OpToken token( ctx, pself );
 
    // which means using force class inst.
    Class* cls1;
@@ -137,13 +137,13 @@ void className_(VMachine* vm, const Class*, void* data)
    token.exit(cls1->name()); // garbage this string
 }
 
-void baseClass(VMachine*, const Class*, void*)
+void baseClass(VMContext*, const Class*, void*)
 {
    fassert2( false, "Not implemented" );
 }
 
 
-void baseClass_(VMachine*, const Class*, void*)
+void baseClass_(VMContext*, const Class*, void*)
 {
    fassert2( false, "Not implemented" );
 }
@@ -151,111 +151,111 @@ void baseClass_(VMachine*, const Class*, void*)
 //======================================================
 // Clone
 
-void clone(VMachine*, const Class*, void*)
+void clone(VMContext*, const Class*, void*)
 {
    fassert2( false, "Not implemented" );
 
 }
 
 
-void clone_(VMachine*, const Class*, void*)
+void clone_(VMContext*, const Class*, void*)
 {
    fassert2( false, "Not implemented" );
 
 }
 
 
-void describe(VMachine* vm, const Class*, void*)
+void describe( VMContext* ctx, const Class*, void* )
 {
    static Function* func = Engine::instance()->getCore()->getFunction("describe");
    fassert( func != 0 );
 
-   Item &value = vm->currentContext()->topData();
+   Item &value = ctx->topData();
    value.methodize(func);
 }
 
 
-void describe_(VMachine* vm, const Class* cls, void* data)
+void describe_(VMContext* ctx, const Class* cls, void* data)
 {
    String* target = new String;
    cls->describe( data, *target );
 
-   Item& topData = vm->currentContext()->topData();
+   Item& topData = ctx->topData();
    topData.setDeep( target->garbage() );
 }
 
 
-void isCallable(VMachine*, const Class*, void*)
+void isCallable(VMContext*, const Class*, void*)
 {
    fassert2( false, "Not implemented" );
 
 }
 
 
-void isCallable_(VMachine*, const Class*, void*)
+void isCallable_(VMContext*, const Class*, void*)
 {
    fassert2( false, "Not implemented" );
 
 }
 
 
-void metaclass(VMachine*, const Class*, void*)
+void metaclass(VMContext*, const Class*, void*)
 {
    fassert2( false, "Not implemented" );
 
 }
 
 
-void metaclass_(VMachine*, const Class*, void*)
+void metaclass_(VMContext*, const Class*, void*)
 {
    fassert2( false, "Not implemented" );
 
 }
 
 
-void ptr(VMachine*, const Class*, void*)
+void ptr(VMContext*, const Class*, void*)
 {
    fassert2( false, "Not implemented" );
 
 }
 
-void ptr_(VMachine*, const Class*, void*)
+void ptr_(VMContext*, const Class*, void*)
 {
    fassert2( false, "Not implemented" );
 
 }
 
 
-void toString(VMachine* vm, const Class*, void*)
+void toString(VMContext* ctx, const Class*, void*)
 {
    static Function* func = Engine::instance()->getCore()->getFunction("toString");
    fassert( func != 0 );
 
-   Item &value = vm->currentContext()->topData();
+   Item &value = ctx->topData();
    value.methodize(func);
 }
 
 
-void toString_(VMachine* vm, const Class* cls, void* data)
+void toString_(VMContext* ctx, const Class* cls, void* data)
 {
-   cls->op_toString( vm, data );
+   cls->op_toString( ctx, data );
 }
 
 
-void typeId(VMachine* vm, const Class*, void*)
+void typeId(VMContext* ctx, const Class*, void*)
 {
    static Function* func = Engine::instance()->getPseudoFunction("typeId");
    fassert( func != 0 );
 
-   Item &value = vm->currentContext()->topData();
+   Item &value = ctx->topData();
    value.methodize(func);
 }
 
 
-void typeId_(VMachine* vm, const Class*, void* data)
+void typeId_(VMContext* ctx, const Class*, void* data)
 {
    Item* pself;
-   OpToken token( vm, pself );
+   OpToken token( ctx, pself );
 
    Class* cls1;
    if ( pself->asClassInst( cls1, data) )
@@ -270,17 +270,17 @@ void typeId_(VMachine* vm, const Class*, void* data)
 
 
 
-void compare(VMachine* vm, const Class*, void*)
+void compare(VMContext* ctx, const Class*, void*)
 {
    static Function* func = Engine::instance()->getPseudoFunction("compare");
    fassert( func != 0 );
 
-   Item &value = vm->currentContext()->topData();
+   Item &value = ctx->topData();
    value.methodize(func);
 }
 
 
-void derivedFrom(VMachine*, const Class*, void*)
+void derivedFrom(VMContext*, const Class*, void*)
 {
    fassert2( false, "Not implemented" );
 }

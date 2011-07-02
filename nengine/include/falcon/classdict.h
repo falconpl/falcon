@@ -50,14 +50,14 @@ public:
 
    //=============================================================
 
-   virtual void op_create( VMachine *vm, int32 pcount ) const;
-   virtual void op_add( VMachine *vm, void* self ) const;
-   virtual void op_isTrue( VMachine *vm, void* self ) const;
-   virtual void op_toString( VMachine *vm, void* self ) const;
+   virtual void op_create( VMContext* ctx, int32 pcount ) const;
+   virtual void op_add( VMContext* ctx, void* self ) const;
+   virtual void op_isTrue( VMContext* ctx, void* self ) const;
+   virtual void op_toString( VMContext* ctx, void* self ) const;
 
-   virtual void op_getProperty( VMachine *vm, void* self, const String& prop) const;
-   virtual void op_getIndex(VMachine *vm, void* self ) const;
-   virtual void op_setIndex(VMachine *vm, void* self ) const;
+   virtual void op_getProperty( VMContext* ctx, void* self, const String& prop) const;
+   virtual void op_getIndex( VMContext* ctx, void* self ) const;
+   virtual void op_setIndex( VMContext* ctx, void* self ) const;
 
 private:
 };

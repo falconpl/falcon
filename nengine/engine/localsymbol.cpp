@@ -45,11 +45,11 @@ void LocalSymbol::assign( VMachine* vm, const Item& value ) const
 }
 
 
-void LocalSymbol::apply_( const PStep* s1, VMachine* vm )
+void LocalSymbol::apply_( const PStep* s1, VMContext* ctx )
 {
    const ExprSymbol* self = static_cast<const ExprSymbol *>(s1);
    LocalSymbol* sym = static_cast<LocalSymbol*>(self->symbol());
-   register VMContext* ctx = vm->currentContext();
+   
 #ifndef NDEBUG
    String name = sym->name();
 #endif

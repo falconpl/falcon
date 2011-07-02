@@ -59,11 +59,10 @@ void UnknownSymbol::assign( VMachine*, const Item&  ) const
 }
 
 
-void UnknownSymbol::apply_( const PStep* s, VMachine* vm )
+void UnknownSymbol::apply_( const PStep* s, VMContext* ctx )
 {
    const ExprSymbol* self = static_cast<const ExprSymbol*>(s);
    Symbol* sym = self->symbol();
-   register VMContext* ctx = vm->currentContext();
    
 #ifndef NDEBUG
    String name = "/* unknown */" + sym->name();

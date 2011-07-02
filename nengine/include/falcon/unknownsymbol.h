@@ -61,7 +61,7 @@ public:
 
    void assign( VMachine* vm, const Item& value ) const;
 
-   static void apply_( const PStep* self, VMachine* vm );
+   static void apply_( const PStep* self, VMContext* ctx );
    virtual Expression* makeExpression();
 
    /** Define this symbol using the incoming symbol.

@@ -15,9 +15,8 @@
 
 #include <falcon/classstring.h>
 #include <falcon/itemid.h>
-#include <falcon/vm.h>
+#include <falcon/vmcontext.h>
 #include <falcon/optoken.h>
-
 #include <falcon/accesserror.h>
 
 namespace Falcon {
@@ -90,11 +89,11 @@ void ClassString::describe( void* instance, String& target, int, int maxlen ) co
 //=======================================================================
 // Addition
 
-void ClassString::op_add( VMachine *vm, void* self ) const
+void ClassString::op_add( VMContext* ctx, void* self ) const
 {
    String* str = static_cast<String*>(self);
    Item* op1, *op2;
-   vm->operands(op1, op2);
+   ctx->operands(op1, op2);
 
    Class* cls;
    void* inst;
@@ -102,7 +101,7 @@ void ClassString::op_add( VMachine *vm, void* self ) const
    {
       String* copy = new String(*str);
       copy->append(op2->describe());
-      vm->stackResult(2, copy->garbage() );
+      ctx->stackResult(2, copy->garbage() );
       return;
    }
 
@@ -111,17 +110,17 @@ void ClassString::op_add( VMachine *vm, void* self ) const
       // it's a string!
       String *copy = new String(*str);
       copy->append( *static_cast<String*>(inst) );
-      vm->stackResult(2, copy->garbage() );
+      ctx->stackResult(2, copy->garbage() );
       return;
    }
 
    // else we surrender, and we let the virtual system to find a way.
-   vm->ifDeep( &m_nextOp );
+   ctx->ifDeep( &m_nextOp );
 
    // this will transform op2 slot into its string representation.
-   cls->op_toString( vm, inst );
+   cls->op_toString( ctx, inst );
    
-   if( ! vm->wentDeep() )
+   if( ! ctx->wentDeep() )
    {
       // op2 has been transformed
       String* deep = (String*)(op2->type() == FLC_ITEM_DEEP ? op2->asDeepInst() : op2->asUserInst());
@@ -133,45 +132,45 @@ void ClassString::op_add( VMachine *vm, void* self ) const
 // Auto Addition
 //
 
-void ClassString::op_create( VMachine *vm, int pcount ) const
+void ClassString::op_create( VMContext* ctx, int pcount ) const
 {
    // no param?
    if( pcount == 0 )
    {
       // create a string.
       String* s = new String;
-      vm->stackResult(1, s->garbage() );
+      ctx->stackResult(1, s->garbage() );
    }
    else
    {
       // the parameter is a string?
-      Item* itm = vm->currentContext()->opcodeParams(pcount);
+      Item* itm = ctx->opcodeParams(pcount);
       if( itm->isString() )
       {
          // copy it.
          String* s = new String( *itm->asString() );
-         vm->stackResult( pcount + 1, s->garbage() );
+         ctx->stackResult( pcount + 1, s->garbage() );
       }
       else
       {
          // apply the op_toString on the item.
          Item cpy = *itm;
-         vm->stackResult( pcount + 1, cpy );
+         ctx->stackResult( pcount + 1, cpy );
 
          Class* cls;
          void* data;
          cpy.forceClassInst( cls, data );
-         cls->op_toString( vm, data );
+         cls->op_toString( ctx, data );
       }
    }
 }
 
 
-void ClassString::op_aadd( VMachine *vm, void* self ) const
+void ClassString::op_aadd( VMContext* ctx, void* self ) const
 {
    String* str = static_cast<String*>(self);
    Item* op1, *op2;
-   vm->operands(op1, op2);
+   ctx->operands(op1, op2);
 
    Class* cls;
    void* inst;
@@ -181,7 +180,7 @@ void ClassString::op_aadd( VMachine *vm, void* self ) const
       {
          String* copy = new String(*str);
          copy->append(op2->describe());
-         vm->stackResult(2, copy->garbage() );
+         ctx->stackResult(2, copy->garbage() );
       }
       else
       {
@@ -198,7 +197,7 @@ void ClassString::op_aadd( VMachine *vm, void* self ) const
       {
          String *copy = new String(*str);
          copy->append( *static_cast<String*>(inst) );
-         vm->stackResult(2, copy->garbage() );
+         ctx->stackResult(2, copy->garbage() );
       }
       else
       {
@@ -208,12 +207,12 @@ void ClassString::op_aadd( VMachine *vm, void* self ) const
    }
 
    // else we surrender, and we let the virtual system to find a way.
-   vm->ifDeep( &m_nextOp );
+   ctx->ifDeep( &m_nextOp );
 
    // this will transform op2 slot into its string representation.
-   cls->op_toString( vm, inst );
+   cls->op_toString( ctx, inst );
 
-   if( ! vm->wentDeep() )
+   if( ! ctx->wentDeep() )
    {
       // op2 has been transformed
       String* deep = (String*)(op2->type() == FLC_ITEM_DEEP ? op2->asDeepInst() : op2->asUserInst());
@@ -227,32 +226,32 @@ ClassString::NextOp::NextOp()
 }
 
 
-void ClassString::NextOp::apply_( const PStep*, VMachine* vm )
+void ClassString::NextOp::apply_( const PStep*, VMContext* ctx )
 {
    // The result of a deep call is in A
    Item* op1, *op2;
-   vm->operands(op1, op2); // we'll discard op2
+   ctx->operands(op1, op2); // we'll discard op2
 
-   String* deep = vm->regA().asString();
+   String* deep = ctx->regA().asString();
    String* self = op1->asString();
 
    if( op1->copied() )
    {
       String* copy = new String(*self);
       copy->append( *deep );
-      vm->stackResult( 2, copy->garbage() );
+      ctx->stackResult( 2, copy->garbage() );
    }
    else
    {
-      vm->currentContext()->popData();
+      ctx->popData();
       self->append(*deep);
    }
 }
 
-void ClassString::op_getIndex( VMachine* vm, void* self ) const
+void ClassString::op_getIndex( VMContext* ctx, void* self ) const
 {
    Item *index, *stritem;
-   vm->operands( stritem, index );
+   ctx->operands( stritem, index );
 
    String& str = *static_cast<String*>(self);
    if (index->isOrdinal())
@@ -265,7 +264,7 @@ void ClassString::op_getIndex( VMachine* vm, void* self ) const
       }
       String *s = new String();
       s->append(str.getCharAt(v));
-      vm->stackResult(2, s->garbage() );
+      ctx->stackResult(2, s->garbage() );
    }
    else
    {
@@ -277,10 +276,10 @@ void ClassString::op_getIndex( VMachine* vm, void* self ) const
 // Comparation
 //
 
-void ClassString::op_compare( VMachine *vm, void* self ) const
+void ClassString::op_compare( VMContext* ctx, void* self ) const
 {
    Item* op1, *op2;
-   OpToken token( vm, op1, op2 );
+   OpToken token( ctx, op1, op2 );
    String* string = static_cast<String*>(self);
 
    Class* otherClass;
@@ -304,16 +303,14 @@ void ClassString::op_compare( VMachine *vm, void* self ) const
 }
 
 
-void ClassString::op_toString( VMachine *, void* ) const
+void ClassString::op_toString( VMContext*, void* ) const
 {
    // nothing to do -- the topmost item of the stack is already a string.
 }
 
-void ClassString::op_true( VMachine * vm, void* str) const
+void ClassString::op_true( VMContext* ctx, void* str) const
 {
-   Item* op1;
-   OpToken token( vm, op1 );
-   token.exit( static_cast<String*>(str)->size() != 0 );
+   ctx->topData() = static_cast<String*>(str)->size() != 0;
 }
 
 }

@@ -19,10 +19,10 @@
 namespace Falcon
 {
 
-void ExtFunc::apply( VMachine* vm, int32 )
+void ExtFunc::apply( VMContext* ctx, int32 )
 {
-   m_func(vm);
-   vm->returnFrame();
+   m_func(ctx->vm());
+   ctx->returnFrame();
 }
 
 }

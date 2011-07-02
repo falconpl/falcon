@@ -42,10 +42,8 @@ void PCode::describe( String& res ) const
 }
 
 
-void PCode::apply_( const PStep* self, VMachine* vm )
+void PCode::apply_( const PStep* self, VMContext* ctx )
 {
-   register VMContext* ctx = vm->currentContext();
-
    TRACE3( "PCode apply: %p (%s)", self, self->describe().c_ize() );
 
    const StepList& steps = static_cast<const PCode*>(self)->m_steps;
@@ -58,7 +56,7 @@ void PCode::apply_( const PStep* self, VMachine* vm )
    while ( cf.m_seqId < size )
    {
       const PStep* pstep = steps[ cf.m_seqId++ ];
-      pstep->apply(pstep,vm);
+      pstep->apply( pstep, ctx );
 
       if( ctx->codeDepth() != depth )
       {

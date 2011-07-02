@@ -39,9 +39,9 @@ void Breakpoint::describe( String& tgt ) const
    tgt = "(*)";
 }
 
-void Breakpoint::apply_( const PStep*, VMachine* vm )
+void Breakpoint::apply_( const PStep*, VMContext* ctx )
 {
-   vm->breakpoint();
+   ctx->vm()->breakpoint();
 }
 
 //====================================================================
@@ -100,9 +100,8 @@ void StmtAutoexpr::determ( bool mode )
    m_determ = mode;
 }
 
-void StmtAutoexpr::apply_( const PStep* self, VMachine* vm )
+void StmtAutoexpr::apply_( const PStep* self, VMContext* ctx )
 {
-   register VMContext* ctx = vm->currentContext();
    TRACE3( "StmtAutoexpr apply: %p (%s)", self, self->describe().c_ize() );
 
    const StmtAutoexpr* sae = static_cast<const StmtAutoexpr*>(self);
@@ -116,7 +115,7 @@ void StmtAutoexpr::apply_( const PStep* self, VMachine* vm )
    while ( cf.m_seqId < size )
    {
       const PStep* pstep = steps[ cf.m_seqId++ ];
-      pstep->apply(pstep,vm);
+      pstep->apply(pstep,ctx);
 
       // did we went down?
       if( ctx->codeDepth() != depth )
@@ -185,9 +184,8 @@ void StmtWhile::describe( String& tgt ) const
          "end\n";
 }
 
-void StmtWhile::apply_( const PStep* s1, VMachine* vm )
+void StmtWhile::apply_( const PStep* s1, VMContext* ctx )
 {
-   register VMContext* ctx = vm->currentContext();
    const StmtWhile* self = static_cast<const StmtWhile*>(s1);
    
    if ( ctx->regA().isTrue() )
@@ -267,9 +265,8 @@ void StmtIf::describe( String& tgt ) const
 }
 
 
-void StmtIf::apply_( const PStep* s1,VMachine* vm )
+void StmtIf::apply_( const PStep* s1, VMContext* ctx )
 {
-   register VMContext* ctx = vm->currentContext();
    const StmtIf* self = static_cast<const StmtIf*>(s1);
 
    TRACE1( "Apply 'if' at line %d ", self->line() );
@@ -361,7 +358,7 @@ void StmtReturn::describe( String& tgt ) const
 }
 
 
-void StmtReturn::apply_( const PStep*ps, VMachine* vm )
+void StmtReturn::apply_( const PStep*ps, VMContext* ctx )
 {
    const StmtReturn* stmt = static_cast<const StmtReturn*>(ps);
    TRACE1( "Apply 'return' at line %d ", stmt->line() );
@@ -369,10 +366,10 @@ void StmtReturn::apply_( const PStep*ps, VMachine* vm )
    // clear A if there wasn't any expression
    if ( stmt->m_expr == 0 )
    {
-      vm->regA().setNil();
+      ctx->regA().setNil();
    }
 
-   vm->returnFrame();
+   ctx->returnFrame();
    // Todo throw if we didn't have any frame
 }
 

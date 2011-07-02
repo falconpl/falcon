@@ -28,7 +28,7 @@ class ExprPlus::ops
 {
 public:
    static int64 operate( int64 a, int64 b ) { return a + b; }
-   static void operate( VMachine* vm, Class* cls, void* inst ) { cls->op_add(vm, inst); }
+   static void operate( VMContext* ctx, Class* cls, void* inst ) { cls->op_add(ctx, inst); }
    static numeric operaten( numeric a, numeric b ) { return a + b; }
    static bool zeroCheck( const Item& ) { return false; }
 };
@@ -37,7 +37,7 @@ class ExprMinus::ops
 {
 public:
    static int64 operate( int64 a, int64 b ) { return a - b; }
-   static void operate( VMachine* vm, Class* cls, void* inst ) { cls->op_sub(vm, inst); }
+   static void operate( VMContext* ctx, Class* cls, void* inst ) { cls->op_sub(ctx, inst); }
    static numeric operaten( numeric a, numeric b ) { return a - b; }
    static bool zeroCheck( const Item& ) { return false; }
 };
@@ -46,7 +46,7 @@ class ExprTimes::ops
 {
 public:
    static int64 operate( int64 a, int64 b ) { return a * b; }
-   static void operate( VMachine* vm, Class* cls, void* inst ) { cls->op_mul(vm, inst); }
+   static void operate( VMContext* ctx, Class* cls, void* inst ) { cls->op_mul(ctx, inst); }
    static numeric operaten( numeric a, numeric b ) { return a * b; }
    static bool zeroCheck( const Item& ) { return false; }
 };
@@ -55,7 +55,7 @@ class ExprDiv::ops
 {
 public:
    static int64 operate( int64 a, int64 b ) { return a / b; }
-   static void operate( VMachine* vm, Class* cls, void* inst ) { cls->op_div(vm, inst); }
+   static void operate( VMContext* ctx, Class* cls, void* inst ) { cls->op_div(ctx, inst); }
    static numeric operaten( numeric a, numeric b ) { return a / b; }
    static bool zeroCheck( const Item& n ) { return n.isOrdinal() && n.forceNumeric() == 0.0; }
 };
@@ -64,7 +64,7 @@ class ExprMod::ops
 {
 public:
    static int64 operate( int64 a, int64 b ) { return a % b; }
-   static void operate( VMachine* vm, Class* cls, void* inst ) { cls->op_mod(vm, inst); }
+   static void operate( VMContext* ctx, Class* cls, void* inst ) { cls->op_mod(ctx, inst); }
    static numeric operaten( numeric a, numeric b ) { return ((int64)a) % ((int64)b); }
    static bool zeroCheck( const Item& n ) { return n.isOrdinal() && n.forceNumeric() == 0.0; }
 };
@@ -73,7 +73,7 @@ class ExprPow::ops
 {
 public:
    static int64 operate( int64 a, int64 b ) { return (int64)pow(a,(numeric)b); }
-   static void operate( VMachine* vm, Class* cls, void* inst ) { cls->op_pow(vm, inst); }
+   static void operate( VMContext* ctx, Class* cls, void* inst ) { cls->op_pow(ctx, inst); }
    static numeric operaten( numeric a, numeric b ) { return pow(a,b); }
    static bool zeroCheck( const Item& ) { return false; }
 };
@@ -109,15 +109,13 @@ bool generic_simplify( Item& value, Expression* m_first, Expression* m_second )
 
 // Inline class to apply
 template <class __CPR >
-void generic_apply_( const PStep* ps, VMachine* vm )
+void generic_apply_( const PStep* ps, VMContext* ctx )
 {
    TRACE2( "Apply \"%s\"", ((ExprMath*)ps)->describe().c_ize() );
 
-   register VMContext* ctx = vm->currentContext();
-
    // No need to copy the second, we're not packing the stack now.
    Item *op1, *op2;
-   vm->operands( op1, op2 );
+   ctx->operands( op1, op2 );
 
    if ( __CPR::zeroCheck(*op2) )
    {
@@ -153,7 +151,7 @@ void generic_apply_( const PStep* ps, VMachine* vm )
    case FLC_ITEM_DEEP << 8 | FLC_ITEM_BASEMETHOD:
    case FLC_ITEM_DEEP << 8 | FLC_ITEM_DEEP:
    case FLC_ITEM_DEEP << 8 | FLC_ITEM_USER:
-      __CPR::operate( vm, op1->asDeepClass(), op1->asDeepInst() );
+      __CPR::operate( ctx, op1->asDeepClass(), op1->asDeepInst() );
       break;
 
    case FLC_ITEM_USER << 8 | FLC_ITEM_NIL:
@@ -165,7 +163,7 @@ void generic_apply_( const PStep* ps, VMachine* vm )
    case FLC_ITEM_USER << 8 | FLC_ITEM_BASEMETHOD:
    case FLC_ITEM_USER << 8 | FLC_ITEM_DEEP:
    case FLC_ITEM_USER << 8 | FLC_ITEM_USER:
-      __CPR::operate( vm, op1->asUserClass(), op1->asUserInst() );
+      __CPR::operate( ctx, op1->asUserClass(), op1->asUserInst() );
       break;
 
    default:
@@ -176,22 +174,22 @@ void generic_apply_( const PStep* ps, VMachine* vm )
 }
 
 template
-void generic_apply_<ExprPlus::ops>( const PStep* ps, VMachine* vm );
+void generic_apply_<ExprPlus::ops>( const PStep* ps, VMContext* ctx );
 
 template
-void generic_apply_<ExprMinus::ops>( const PStep* ps, VMachine* vm );
+void generic_apply_<ExprMinus::ops>( const PStep* ps, VMContext* ctx );
 
 template
-void generic_apply_<ExprTimes::ops>( const PStep* ps, VMachine* vm );
+void generic_apply_<ExprTimes::ops>( const PStep* ps, VMContext* ctx);
 
 template
-void generic_apply_<ExprDiv::ops>( const PStep* ps, VMachine* vm );
+void generic_apply_<ExprDiv::ops>( const PStep* ps, VMContext* ctx );
 
 template
-void generic_apply_<ExprMod::ops>( const PStep* ps, VMachine* vm );
+void generic_apply_<ExprMod::ops>( const PStep* ps, VMContext* ctx );
 
 template
-void generic_apply_<ExprPow::ops>( const PStep* ps, VMachine* vm );
+void generic_apply_<ExprPow::ops>( const PStep* ps, VMContext* ctx );
 
 //==========================================================
 

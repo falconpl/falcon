@@ -23,6 +23,8 @@ namespace Falcon {
 
 class PStep;
 class SymbolTable;
+class VMContext;
+class VMachine;
 
 class FALCON_DYN_CLASS LocalSymbol: public Symbol
 {
@@ -34,7 +36,7 @@ public:
    LocalSymbol* clone() const { return new LocalSymbol(*this); }
 
    void assign( VMachine* vm, const Item& item ) const;
-   static void apply_( const PStep* s1, VMachine* vm );
+   static void apply_( const PStep* s1, VMContext* ctx );
 
    virtual Expression* makeExpression();
 

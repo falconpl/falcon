@@ -17,7 +17,7 @@
 #include <falcon/itemid.h>
 #include <falcon/item.h>
 #include <falcon/optoken.h>
-#include <falcon/vm.h>
+#include <falcon/vmcontext.h>
 #include <falcon/operanderror.h>
 #include <falcon/datareader.h>
 #include <falcon/datawriter.h>
@@ -82,14 +82,14 @@ void ClassInt::describe( void* instance, String& target, int, int ) const
 //=======================================================================
 //
 
-void ClassInt::op_create( VMachine *vm, int pcount ) const
+void ClassInt::op_create( VMContext* ctx, int pcount ) const
 {
    if( pcount > 0 )
    {
-      Item* param = vm->currentContext()->opcodeParams(pcount);
+      Item* param = ctx->opcodeParams(pcount);
       if( param->isOrdinal() )
       {
-         vm->stackResult( pcount + 1, param->forceInteger() );
+         ctx->stackResult( pcount + 1, param->forceInteger() );
       }
       else if( param->isString() )
       {
@@ -100,7 +100,7 @@ void ClassInt::op_create( VMachine *vm, int pcount ) const
          }
          else
          {
-            vm->stackResult( pcount + 1, value );
+            ctx->stackResult( pcount + 1, value );
          }
       }
       else
@@ -110,31 +110,31 @@ void ClassInt::op_create( VMachine *vm, int pcount ) const
    }
    else
    {
-      vm->stackResult( pcount + 1, Item( (int64) 0 ) );
+      ctx->stackResult( pcount + 1, Item( (int64) 0 ) );
    }
 }
 
 
-void ClassInt::op_isTrue( VMachine *vm, void* ) const
+void ClassInt::op_isTrue( VMContext* ctx, void* ) const
 {
    Item* iself;
-   OpToken token( vm, iself );
+   OpToken token( ctx, iself );
    token.exit( iself->asInteger() != 0 );
 }
 
-void ClassInt::op_toString( VMachine *vm, void* ) const
+void ClassInt::op_toString( VMContext* ctx, void* ) const
 {
    Item* iself;
-   OpToken token( vm, iself );
+   OpToken token( ctx, iself );
    String s;
    token.exit( s.N(iself->asInteger()) );
 }
 
-void ClassInt::op_add( VMachine *vm, void* ) const {
+void ClassInt::op_add( VMContext* ctx, void* ) const {
     
    Item *self, *op2;
 
-   OpToken token( vm, self, op2 );
+   OpToken token( ctx, self, op2 );
 
    if( self->type() == op2->type() )
    {
@@ -154,11 +154,11 @@ void ClassInt::op_add( VMachine *vm, void* ) const {
     
 }
 
-void ClassInt::op_sub( VMachine *vm, void* ) const {
+void ClassInt::op_sub( VMContext* ctx, void* ) const {
     
    Item *self, *op2;
 
-   OpToken token( vm, self, op2 );
+   OpToken token( ctx, self, op2 );
 
    if( self->type() == op2->type() )
    {
@@ -179,11 +179,11 @@ void ClassInt::op_sub( VMachine *vm, void* ) const {
 }
 
 
-void ClassInt::op_mul( VMachine *vm, void* ) const {
+void ClassInt::op_mul( VMContext* ctx, void* ) const {
     
    Item *self, *op2;
 
-   OpToken token( vm, self, op2 );
+   OpToken token( ctx, self, op2 );
 
    if( self->type() == op2->type() )
    {
@@ -204,11 +204,11 @@ void ClassInt::op_mul( VMachine *vm, void* ) const {
 }
 
 
-void ClassInt::op_div( VMachine *vm, void* ) const {
+void ClassInt::op_div( VMContext* ctx, void* ) const {
     
    Item *self, *op2;
 
-   OpToken token( vm, self, op2 );
+   OpToken token( ctx, self, op2 );
 
    if( self->type() == op2->type() )
    {
@@ -229,11 +229,11 @@ void ClassInt::op_div( VMachine *vm, void* ) const {
 }
 
 
-void ClassInt::op_mod( VMachine *vm, void* ) const {
+void ClassInt::op_mod( VMContext* ctx, void* ) const {
     
    Item *self, *op2;
 
-   OpToken token( vm, self, op2 );
+   OpToken token( ctx, self, op2 );
 
    if( self->type() == op2->type() )
    {
@@ -248,11 +248,11 @@ void ClassInt::op_mod( VMachine *vm, void* ) const {
 }
 
 
-void ClassInt::op_pow( VMachine *vm, void* ) const {
+void ClassInt::op_pow( VMContext* ctx, void* ) const {
     
    Item *self, *op2;
 
-   OpToken token( vm, self, op2 );
+   OpToken token( ctx, self, op2 );
 
    if( self->type() == op2->type() || op2->type() == FLC_ITEM_NUM )
    {
@@ -266,11 +266,11 @@ void ClassInt::op_pow( VMachine *vm, void* ) const {
 }
 
 
-void ClassInt::op_aadd( VMachine *vm, void*) const {
+void ClassInt::op_aadd( VMContext* ctx, void*) const {
     
    Item *self, *op2;
 
-   vm->operands( self, op2 );
+   ctx->operands( self, op2 );
 
    if( self->type() == op2->type() ) 
    {
@@ -289,15 +289,15 @@ void ClassInt::op_aadd( VMachine *vm, void*) const {
       throw new OperandError( ErrorParam( e_invalid_op, __LINE__, __FILE__ ).origin( ErrorParam::e_orig_vm ).extra( "Invalid operand term" ) );
     
 
-   vm->currentContext()->popData(); // Put self on the top of the stack
+   ctx->popData(); // Put self on the top of the stack
     
 }
 
-void ClassInt::op_asub( VMachine *vm, void* ) const {
+void ClassInt::op_asub( VMContext* ctx, void* ) const {
     
    Item *self, *op2;
 
-   vm->operands( self, op2 );
+   ctx->operands( self, op2 );
 
    if( self->type() == op2->type() ) 
    {
@@ -316,16 +316,16 @@ void ClassInt::op_asub( VMachine *vm, void* ) const {
       throw new OperandError( ErrorParam( e_invalid_op, __LINE__, __FILE__ ).origin( ErrorParam::e_orig_vm ).extra( "Invalid operand term" ) );
     
 
-   vm->currentContext()->popData(); // Put self on the top of the stack
+   ctx->popData(); // Put self on the top of the stack
     
 }
 
 
-void ClassInt::op_amul( VMachine *vm, void* ) const {
+void ClassInt::op_amul( VMContext* ctx, void* ) const {
     
    Item *self, *op2;
 
-   vm->operands( self, op2 );
+   ctx->operands( self, op2 );
 
    if( self->type() == op2->type() ) 
    {
@@ -344,16 +344,16 @@ void ClassInt::op_amul( VMachine *vm, void* ) const {
       throw new OperandError( ErrorParam( e_invalid_op, __LINE__, __FILE__ ).origin( ErrorParam::e_orig_vm ).extra( "Invalid operand term" ) );
     
 
-   vm->currentContext()->popData(); // Put self on the top of the stack
+   ctx->popData(); // Put self on the top of the stack
     
 }
 
 
-void ClassInt::op_adiv( VMachine *vm, void* ) const {
+void ClassInt::op_adiv( VMContext* ctx, void* ) const {
     
    Item *self, *op2;
 
-   vm->operands( self, op2 );
+   ctx->operands( self, op2 );
 
    if( self->type() == op2->type() ) 
    {
@@ -372,16 +372,16 @@ void ClassInt::op_adiv( VMachine *vm, void* ) const {
       throw new OperandError( ErrorParam( e_invalid_op, __LINE__, __FILE__ ).origin( ErrorParam::e_orig_vm ).extra( "Invalid operand term" ) );
     
 
-   vm->currentContext()->popData(); // Put self on the top of the stack
+   ctx->popData(); // Put self on the top of the stack
     
 }
 
 
-void ClassInt::op_amod( VMachine *vm, void* ) const {
+void ClassInt::op_amod( VMContext* ctx, void* ) const {
     
    Item *self, *op2;
 
-   vm->operands( self, op2 );
+   ctx->operands( self, op2 );
 
    if( self->type() == op2->type() ) 
    {
@@ -393,16 +393,16 @@ void ClassInt::op_amod( VMachine *vm, void* ) const {
       throw new OperandError( ErrorParam( e_invalid_op, __LINE__, __FILE__ ).origin( ErrorParam::e_orig_vm ).extra( "Invalid operand term" ) );
     
 
-   vm->currentContext()->popData(); // Put self on the top of the stack
+   ctx->popData(); // Put self on the top of the stack
     
 }
 
 
-void ClassInt::op_apow( VMachine *vm, void* ) const {
+void ClassInt::op_apow( VMContext* ctx, void* ) const {
     
    Item *self, *op2;
 
-   vm->operands( self, op2 );
+   ctx->operands( self, op2 );
 
    if( self->type() == op2->type() || op2->type() == FLC_ITEM_NUM ) 
    {
@@ -414,44 +414,36 @@ void ClassInt::op_apow( VMachine *vm, void* ) const {
       throw new OperandError( ErrorParam( e_invalid_op, __LINE__, __FILE__ ).origin( ErrorParam::e_orig_vm ).extra( "Invalid operand term" ) );
     
 
-   vm->currentContext()->popData(); // Put self on the top of the stack
+   ctx->popData(); // Put self on the top of the stack
     
 }
 
 
-void ClassInt::op_inc(VMachine *vm, void* ) const {
-    
+void ClassInt::op_inc( VMContext* ctx, void* ) const
+{    
    Item *self;
-
-   vm->operands( self );
-
+   ctx->operands( self );
    self->setInteger( self->asInteger() + 1 );
-
 }
 
 
-void ClassInt::op_dec(VMachine *vm, void*) const {
-    
+void ClassInt::op_dec( VMContext* ctx, void*) const
+{    
    Item *self;
-
-   vm->operands( self );
-
+   ctx->operands( self );
    self->setInteger( self->asInteger() + 1 );
-    
 }
 
 
-void ClassInt::op_incpost(VMachine *, void* ) const {
-    
-   // TODO
-    
+void ClassInt::op_incpost( VMContext*, void* ) const
+{    
+   // TODO   
 }
 
 
-void ClassInt::op_decpost(VMachine *, void* ) const {
-    
-   // TODO
-    
+void ClassInt::op_decpost( VMContext*, void* ) const
+{    
+   // TODO   
 }
 
 }

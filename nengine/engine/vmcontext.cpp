@@ -16,12 +16,17 @@
 #include <falcon/vmcontext.h>
 #include <falcon/trace.h>
 #include <falcon/itemid.h>
+#include <falcon/function.h>
+#include <falcon/vm.h>
+
 #include <stdlib.h>
 #include <string.h>
 
+
 namespace Falcon {
 
-VMContext::VMContext()
+VMContext::VMContext( VMachine* vm ):
+   m_vm(vm)
 {
    m_codeStack = (CodeFrame *) malloc(INITIAL_STACK_ALLOC*sizeof(CodeFrame));
    m_topCode = m_codeStack-1;
@@ -39,7 +44,8 @@ VMContext::VMContext()
 }
 
 
-VMContext::VMContext( bool )
+VMContext::VMContext( bool ):
+   m_vm(0)
 {
 }
 
@@ -172,6 +178,173 @@ void VMContext::commitRule()
    // move forward the stack base.
    cf.m_stackBase = baseRuleTop;
    m_topData = m_dataStack + baseRuleTop + localCount - 1;
+}
+
+
+//===================================================================
+// Higher level management
+//
+
+void VMContext::ifDeep( const PStep* postcall )
+{
+   fassert( m_deepStep == 0 );
+   m_deepStep = postcall;
+}
+
+
+void VMContext::goingDeep()
+{
+   if( m_deepStep )
+   {
+      pushCode( m_deepStep );
+      m_deepStep = 0;
+   }
+}
+
+
+bool VMContext::wentDeep()
+{
+   bool bWent = m_deepStep == 0;
+   m_deepStep = 0;
+   return bWent;
+}
+
+
+void VMContext::pushQuit()
+{
+   class QuitStep: public PStep {
+   public:
+      QuitStep() { apply = apply_; }
+      virtual ~QuitStep() {}
+
+   private:
+      static void apply_( const PStep*, VMContext *ctx )
+      {
+         ctx->popCode();
+         ctx->vm()->quit();
+      }
+   };
+
+   static QuitStep qs;
+   pushCode( &qs );
+}
+
+
+void VMContext::pushReturn()
+{
+   class Step: public PStep {
+   public:
+      Step() { apply = apply_; }
+      virtual ~Step() {}
+
+   private:
+      static void apply_( const PStep*, VMContext *ctx )
+      {
+         ctx->popCode();
+         ctx->vm()->setReturn();
+      }
+   };
+
+   static Step qs;
+   pushCode( &qs );
+}
+
+
+void VMContext::pushBreak()
+{
+   class Step: public PStep {
+   public:
+      Step() { apply = apply_; }
+      virtual ~Step() {}
+
+   private:
+      static void apply_( const PStep*, VMContext *ctx )
+      {
+         ctx->popCode();
+         ctx->vm()->breakpoint();
+      }
+   };
+
+   static Step qs;
+   pushCode( &qs );
+}
+
+
+void VMContext::call( Function* function, int nparams, const Item& self, bool isExpr )
+{
+   TRACE( "Entering function: %s", function->locate().c_ize() );
+
+   TRACE( "-- call frame code:%p, data:%p, call:%p", m_topCode, m_topData, m_topCall  );
+
+   CallFrame* topCall = makeCallFrame( function, nparams, self, isExpr );
+   TRACE1( "-- codebase:%d, stackBase:%d, self: %s ", \
+         topCall->m_codeBase, topCall->m_stackBase, self.isNil() ? "nil" : "value"  );
+
+   topCall->m_bExpression = isExpr;
+   // prepare for a return that won't touch regA
+   m_regA.setNil();
+
+   // do the call
+   function->apply( this, nparams );
+}
+
+
+void VMContext::call( Function* function, int nparams, bool isExpr )
+{
+   TRACE( "Entering function: %s", function->locate().c_ize() );
+
+   TRACE( "-- call frame code:%p, data:%p, call:%p", m_topCode, m_topData, m_topCall  );
+
+   CallFrame* topCall = makeCallFrame( function, nparams, isExpr );
+   TRACE1( "-- codebase:%d, stackBase:%d ", \
+         topCall->m_codeBase, topCall->m_stackBase );
+
+   // prepare for a return that won't touch regA
+   m_regA.setNil();
+
+   // do the call
+   function->apply( this, nparams );
+}
+
+
+void VMContext::returnFrame()
+{
+   register CallFrame* topCall = m_topCall;
+
+   TRACE1( "Return frame from function %s", topCall->m_function->name().c_ize() );
+
+   // set determinism context
+   if( ! topCall->m_function->isDeterm() )
+   {
+      SetNDContext();
+   }
+
+   // reset code and data
+   m_topCode = m_codeStack + topCall->m_codeBase-1;
+   PARANOID( "Code stack underflow at return", (m_topCode >= m_codeStack-1) );
+   // Use initBase as stackBase may have been moved -- but keep 1 parameter ...
+
+   m_topData = m_dataStack + topCall->m_initBase-1;
+   PARANOID( "Data stack underflow at return", (m_topData >= m_dataStack-1) );
+
+   // ... so that we can fill the stack with the function result.
+   // -- in expressions we always have at least 1 element, that is the function item.
+   if( topCall->m_bExpression )
+   {
+      MESSAGE1( "-- Adding A register to stack");
+      *m_topData = m_regA;
+   }
+   // Return.
+   if( m_topCall-- ==  m_callStack )
+   {
+      //TODO: -- this is a context problem, not a VM problem.
+      // was this the topmost frame?
+      m_vm->setComplete();
+      MESSAGE( "Returned from last frame -- declaring complete." );
+   }
+
+   PARANOID( "Call stack underflow at return", (m_topCall >= m_callStack-1) );
+   TRACE( "Return frame code:%p, data:%p, call:%p", m_topCode, m_topData, m_topCall  );
 }
 
 }

@@ -26,7 +26,7 @@
 
 namespace Falcon {
 
-class VMachine;
+class VMContext;
 class Item;
 class DataReader;
 class DataWriter;
@@ -57,7 +57,7 @@ class Module;
  All this methods have a prototype modelled after the following:
 
  @code
- virtual void op_something( VMachine *vm, void* self );
+ virtual void op_something( VMContext* ctx, void* self );
  @endcode
 
  Each operator receives an instance of the real object that this Class
@@ -261,7 +261,7 @@ public:
     push a pstep to be called afterwards (see Context::ifDeep), and retard
     the generation of the instance at a later moment.
     */
-   virtual void op_create( VMachine *vm, int32 pcount ) const;
+   virtual void op_create( VMContext* ctx, int32 pcount ) const;
 
    /** Called back when the VM wants to negate an item.
      \param vm the virtual machine that will receive the result.
@@ -270,7 +270,7 @@ public:
     \note The operand is unary -- requires OpToken with 1 parameter.
 
     */
-   virtual void op_neg( VMachine *vm, void* self ) const;
+   virtual void op_neg( VMContext* ctx, void* self ) const;
 
    /** Called back when the VM wants to add something.
      \param vm the virtual machine that will receive the result.
@@ -279,7 +279,7 @@ public:
     \note The operand is binary -- requires OpToken with 2 parameters.
 
     */
-   virtual void op_add( VMachine *vm, void* self ) const;
+   virtual void op_add( VMContext* ctx, void* self ) const;
 
    /** Called back when the VM wants to subtract something.
      \param vm the virtual machine that will receive the result.
@@ -288,7 +288,7 @@ public:
     \note The operand is binary -- requires OpToken with 2 parameters.
 
     */
-   virtual void op_sub( VMachine *vm, void* self ) const;
+   virtual void op_sub( VMContext* ctx, void* self ) const;
 
    /** Called back when the VM wants to multiply something.
      \param vm the virtual machine that will receive the result.
@@ -297,7 +297,7 @@ public:
     \note The operand is binary -- requires OpToken with 2 parameters.
 
     */
-   virtual void op_mul( VMachine *vm, void* self ) const;
+   virtual void op_mul( VMContext* ctx, void* self ) const;
 
    /** Called back when the VM wants to divide something.
      \param vm the virtual machine that will receive the result.
@@ -306,7 +306,7 @@ public:
     \note The operand is binary -- requires OpToken with 2 parameters.
 
     */
-   virtual void op_div( VMachine *vm, void* self ) const;
+   virtual void op_div( VMContext* ctx, void* self ) const;
 
    /** Called back when the VM wants to apply the modulo operator.
      \param vm the virtual machine that will receive the result.
@@ -315,7 +315,7 @@ public:
     \note The operand is binary -- requires OpToken with 2 parameters.
 
     */
-   virtual void op_mod( VMachine *vm, void* self ) const;
+   virtual void op_mod( VMContext* ctx, void* self ) const;
 
    /** Called back when the VM wants to apply the power operator on.
      \param vm the virtual machine that will receive the result.
@@ -324,7 +324,7 @@ public:
     \note The operand is binary -- requires OpToken with 2 parameters.
 
     */
-   virtual void op_pow( VMachine *vm, void* self ) const;
+   virtual void op_pow( VMContext* ctx, void* self ) const;
 
    /** Called back when the VM wants to add something to an item.
      \param vm the virtual machine that will receive the result.
@@ -332,7 +332,7 @@ public:
 
     \note The operand is binary -- requires OpToken with 2 parameters.
     */
-   virtual void op_aadd( VMachine *vm, void* self) const;
+   virtual void op_aadd( VMContext* ctx, void* self) const;
 
    /** Called back when the VM wants to subtract something to an item.
      \param vm the virtual machine that will receive the result.
@@ -340,7 +340,7 @@ public:
 
     \note The operand is binary -- requires OpToken with 2 parameters.
     */
-   virtual void op_asub( VMachine *vm, void* self ) const;
+   virtual void op_asub( VMContext* ctx, void* self ) const;
 
    /** Called back when the VM wants to multiply something to an item.
      \param vm the virtual machine that will receive the result.
@@ -348,7 +348,7 @@ public:
 
     \note The operand is binary -- requires OpToken with 2 parameters.
     */
-   virtual void op_amul( VMachine *vm, void* self ) const;
+   virtual void op_amul( VMContext* ctx, void* self ) const;
 
    /** Called back when the VM wants to divide something to an item.
      \param vm the virtual machine that will receive the result.
@@ -356,7 +356,7 @@ public:
 
     \note The operand is binary -- requires OpToken with 2 parameters.
     */
-   virtual void op_adiv( VMachine *vm, void* self ) const;
+   virtual void op_adiv( VMContext* ctx, void* self ) const;
 
    /** Called back when the VM wants to apply the modulo something to an item.
      \param vm the virtual machine that will receive the result.
@@ -365,7 +365,7 @@ public:
       that is also the place where to store the result.
      \param op2 The original second operand.
     */
-   virtual void op_amod( VMachine *vm, void* self ) const;
+   virtual void op_amod( VMContext* ctx, void* self ) const;
 
    /** Called back when the VM wants to apply get the power of an item.
      \param vm the virtual machine that will receive the result.
@@ -373,7 +373,7 @@ public:
 
     \note The operand is binary -- requires OpToken with 2 parameters.
    */
-   virtual void op_apow( VMachine *vm, void* self ) const;
+   virtual void op_apow( VMContext* ctx, void* self ) const;
 
    /** Called back when the VM wants to increment (prefix) an item.
      \param vm the virtual machine that will receive the result.
@@ -382,7 +382,7 @@ public:
 
     \note The operand is unary -- requires OpToken with 1 parameter.
    */
-   virtual void op_inc(VMachine *vm, void* self ) const;
+   virtual void op_inc( VMContext* vm, void* self ) const;
 
    /* Called back when the VM wants to decrement (prefix) an item.
      \param vm the virtual machine that will receive the result.
@@ -391,7 +391,7 @@ public:
 
     \note The operand is unary -- requires OpToken with 1 parameter.
    */
-   virtual void op_dec(VMachine *vm, void* self) const;
+   virtual void op_dec(VMContext* vm, void* self) const;
 
    /** Called back when the VM wants to increment (postfix) an item.
      \param vm the virtual machine that will receive the result.
@@ -400,7 +400,7 @@ public:
 
     \note The operand is unary -- requires OpToken with 1 parameter.
    */
-   virtual void op_incpost(VMachine *vm, void* self ) const;
+   virtual void op_incpost(VMContext* vm, void* self ) const;
    
    /** Called back when the VM wants to decrement (postfix) an item.
      \param vm the virtual machine that will receive the result.
@@ -409,7 +409,7 @@ public:
 
     \note The operand is unary -- requires OpToken with 1 parameter.
    */
-   virtual void op_decpost(VMachine *vm, void* self ) const;
+   virtual void op_decpost(VMContext* vm, void* self ) const;
 
    /** Called back when the VM wants to get an index out of an item.
      \param vm the virtual machine that will receive the result.
@@ -419,7 +419,7 @@ public:
 
     The first operand is self, the second operand is the index to be accessed.
    */
-   virtual void op_getIndex(VMachine *vm, void* self ) const;
+   virtual void op_getIndex(VMContext* vm, void* self ) const;
    
    /** Called back when the VM wants to get an index out of an item.
      \param vm the virtual machine that will receive the result.
@@ -444,7 +444,7 @@ public:
     value the implementor wants to pass back.
 
    */
-   virtual void op_setIndex(VMachine *vm, void* self ) const;
+   virtual void op_setIndex(VMContext* vm, void* self ) const;
 
    /** Called back when the VM wants to get the value of a property of an item
      \param vm the virtual machine that will receive the result.
@@ -453,7 +453,7 @@ public:
 
     \note The operand is unary -- requires OpToken with 1 parameter.
    */
-   virtual void op_getProperty( VMachine *vm, void* self, const String& prop) const;
+   virtual void op_getProperty( VMContext* ctx, void* self, const String& prop) const;
 
    /** Called back when the VM wants to set a value of a property in an item.
      \param vm the virtual machine that will receive the result.
@@ -461,7 +461,7 @@ public:
 
     \note The operand is binary -- requires OpToken with 2 parameters.
    */
-   virtual void op_setProperty( VMachine *vm, void* self, const String& prop ) const;
+   virtual void op_setProperty( VMContext* ctx, void* self, const String& prop ) const;
 
    /** Called back when the VM wants to compare an item to this instance. 
      \param vm the virtual machine that will receive the result.
@@ -481,7 +481,7 @@ public:
     All the subclasses should call the base class op_compare as a residual
     criterion.
     */
-   virtual void op_compare( VMachine *vm, void* self ) const;
+   virtual void op_compare( VMContext* ctx, void* self ) const;
 
    /** Called back when the VM wants to know if an item is true.
      \param vm the virtual machine that will receive the result.
@@ -494,7 +494,7 @@ public:
 
     The result placed in target should be a boolean true or false value.
     */
-   virtual void op_isTrue( VMachine *vm, void* self ) const;
+   virtual void op_isTrue( VMContext* ctx, void* self ) const;
 
    /** Called back when the VM wants to know if an item is true.
      \param vm the virtual machine that will receive the result.
@@ -507,7 +507,7 @@ public:
 
     The result should be a boolean true or false value.
     */
-   virtual void op_in( VMachine *vm, void* self ) const;
+   virtual void op_in( VMContext* ctx, void* self ) const;
    
    /** Called back when the vm wants to know if a certain item provides a certain property.
      \param vm the virtual machine that will receive the result.
@@ -518,7 +518,7 @@ public:
 
     The result placed in target should be a boolean true or false value.
     */
-   virtual void op_provides( VMachine *vm, void* self, const String& property ) const;
+   virtual void op_provides( VMContext* ctx, void* self, const String& property ) const;
 
    /** Call the instance.
     \param vm A virutal machine where the call is performed.
@@ -537,7 +537,7 @@ public:
     \note The default operation associated with the base class is that to raise
     a non-callable exception.
     */
-   virtual void op_call( VMachine *vm, int32 paramCount, void* self ) const;
+   virtual void op_call( VMContext* ctx, int32 paramCount, void* self ) const;
 
 
    /** Implents textification operator for the Virtual Macine.
@@ -558,7 +558,7 @@ public:
     Implementors not willing to use describe() or wishing to skip an extra
     virtual function call should reimplement this class.
     */
-   virtual void op_toString( VMachine *vm, void* self ) const;
+   virtual void op_toString( VMContext* ctx, void* self ) const;
 
 protected:
    String m_name;

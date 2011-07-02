@@ -43,24 +43,24 @@ public:
    virtual void describe( void* instance, String& target, int, int ) const;
 
    //=============================================================
-   virtual void op_create( VMachine *vm, int32 pcount ) const;
+   virtual void op_create( VMContext* ctx, int32 pcount ) const;
 
-   virtual void op_add( VMachine *vm, void* self ) const;
-   virtual void op_aadd( VMachine *vm, void* self ) const;
+   virtual void op_add( VMContext* ctx, void* self ) const;
+   virtual void op_aadd( VMContext* ctx, void* self ) const;
 
    // THIS IS A TODO!
-   virtual void op_getIndex( VMachine *vm, void* self ) const;
+   virtual void op_getIndex( VMContext* ctx, void* self ) const;
    
-   virtual void op_compare( VMachine *vm, void* self ) const;
-   virtual void op_toString( VMachine *vm, void* self ) const;
-   virtual void op_true( VMachine *vm, void* self ) const;
+   virtual void op_compare( VMContext* ctx, void* self ) const;
+   virtual void op_toString( VMContext* ctx, void* self ) const;
+   virtual void op_true( VMContext* ctx, void* self ) const;
 
 private:
 
    class FALCON_DYN_CLASS NextOp: public PStep {
    public:
       NextOp();
-      static void apply_( const PStep*, VMachine* vm );
+      static void apply_( const PStep*, VMContext* vm );
    } m_nextOp;
 };
 

@@ -199,13 +199,11 @@ bool ExprNot::simplify( Item& value ) const
    return false;
 }
 
-void ExprNot::apply_( const PStep* self, VMachine* vm )
+void ExprNot::apply_( const PStep* self, VMContext* ctx )
 {
    TRACE2( "Apply \"%s\"", ((ExprNot*)self)->describe().c_ize() );
 
-   register VMContext* ctx = vm->currentContext();
    Item& operand = ctx->topData();
-
 
    //TODO: overload not
    operand.setBoolean( ! operand.isTrue() );
@@ -251,10 +249,9 @@ void ExprAnd::precompile( PCode* pcode ) const
    
 }
 
-void ExprAnd::apply_( const PStep* self, VMachine* vm )
+void ExprAnd::apply_( const PStep* self, VMContext* ctx )
 {
    TRACE2( "Apply \"%s\"", ((ExprAnd*)self)->describe().c_ize() );
-   register VMContext* ctx = vm->currentContext();
 
    // use the space left from us by the previous expression
    Item& operand = ctx->topData();
@@ -274,11 +271,9 @@ ExprAnd::Gate::Gate() {
 }
 
 
-void ExprAnd::Gate::apply_( const PStep* ps, VMachine* vm )
+void ExprAnd::Gate::apply_( const PStep* ps, VMContext* ctx )
 {
    TRACE2( "Apply GATE \"%s\"", ((ExprAnd::Gate*)ps)->describe().c_ize() );
-
-   register VMContext* ctx = vm->currentContext();
 
    // read and recycle the topmost data.
    Item& operand = ctx->topData();
@@ -327,11 +322,9 @@ void ExprOr::precompile( PCode* pcode ) const
 }
 
 
-void ExprOr::apply_( const PStep* self, VMachine* vm )
+void ExprOr::apply_( const PStep* self, VMContext* ctx )
 {
    TRACE2( "Apply \"%s\"", ((ExprOr*)self)->describe().c_ize() );
-
-   register VMContext* ctx = vm->currentContext();
    
    // reuse the operand left by the other expression
    Item& operand = ctx->topData();
@@ -350,11 +343,9 @@ ExprOr::Gate::Gate() {
 }
 
 
-void ExprOr::Gate::apply_( const PStep* ps,  VMachine* vm )
+void ExprOr::Gate::apply_( const PStep* ps,  VMContext* ctx )
 {
    TRACE2( "Apply GATE \"%s\"", ((ExprOr::Gate*)ps)->describe().c_ize() );
-
-   register VMContext* ctx = vm->currentContext();
 
    // read and recycle the topmost data.
    Item& operand = ctx->topData();
@@ -415,11 +406,10 @@ bool ExprNeg::simplify( Item& value ) const
    return false;
 }
 
-void ExprNeg::apply_( const PStep* self, VMachine* vm )
+void ExprNeg::apply_( const PStep* self, VMContext* ctx )
 {  
    TRACE2( "Apply \"%s\"", ((ExprNeg*)self)->describe().c_ize() );
    
-   register VMContext* ctx = vm->currentContext();
    Item& item = ctx->topData();
 
    switch( item.type() )
@@ -427,11 +417,11 @@ void ExprNeg::apply_( const PStep* self, VMachine* vm )
       case FLC_ITEM_INT: item.setInteger( -item.asInteger() ); break;
       case FLC_ITEM_NUM: item.setNumeric( -item.asNumeric() ); break;
       case FLC_ITEM_DEEP:
-         item.asDeepClass()->op_neg( vm, item.asDeepInst() );
+         item.asDeepClass()->op_neg( ctx, item.asDeepInst() );
          break;
 
       case FLC_ITEM_USER:
-         item.asUserClass()->op_neg( vm, item.asUserInst() );
+         item.asUserClass()->op_neg( ctx, item.asUserInst() );
          break;
 
       default:
@@ -463,11 +453,10 @@ bool ExprPreInc::simplify( Item& value ) const
    return false;
 }
 
-void ExprPreInc::apply_( const PStep* self, VMachine* vm )
+void ExprPreInc::apply_( const PStep* self, VMContext* ctx )
 {  
    TRACE2( "Apply \"%s\"", ((ExprPreInc*)self)->describe().c_ize() );
    
-   register VMContext* ctx = vm->currentContext();
    Item& item = ctx->topData();
 
    switch( item.type() )
@@ -475,11 +464,11 @@ void ExprPreInc::apply_( const PStep* self, VMachine* vm )
       case FLC_ITEM_INT: item.setInteger( item.asInteger()+1 ); break;
       case FLC_ITEM_NUM: item.setNumeric( item.asNumeric()+1 ); break;
       case FLC_ITEM_DEEP:
-         item.asDeepClass()->op_inc( vm, item.asDeepInst());
+         item.asDeepClass()->op_inc( ctx, item.asDeepInst());
          break;
 
       case FLC_ITEM_USER:
-         item.asUserClass()->op_inc( vm, item.asUserInst() );
+         item.asUserClass()->op_inc( ctx, item.asUserInst() );
          break;
 
       default:
@@ -521,11 +510,10 @@ void ExprPostInc::precompile( PCode* pcode ) const
    
 }
 
-void ExprPostInc::apply_( const PStep* self, VMachine* )
+void ExprPostInc::apply_( const PStep* self, VMContext* )
 {  
    TRACE2( "Apply \"%s\"", ((ExprPostInc*)self)->describe().c_ize() );
 #if 0
-   register VMContext* ctx = vm->currentContext();
    Item& item = ctx->topData();
 #endif
    // TODO
@@ -542,11 +530,9 @@ ExprPostInc::Gate::Gate() {
    apply = apply_;
 }
 
-void ExprPostInc::Gate::apply_( const PStep* ps,  VMachine* vm )
+void ExprPostInc::Gate::apply_( const PStep* ps,  VMContext* ctx )
 {
    TRACE2( "Apply GATE \"%s\"", ((ExprPostInc::Gate*)ps)->describe().c_ize() );
-
-   register VMContext* ctx = vm->currentContext();
 
    // read and recycle the topmost data.
    Item& operand = ctx->topData();
@@ -556,11 +542,11 @@ void ExprPostInc::Gate::apply_( const PStep* ps,  VMachine* vm )
       case FLC_ITEM_INT: operand.setInteger( operand.asInteger()+1 ); break;
       case FLC_ITEM_NUM: operand.setNumeric( operand.asNumeric()+1 ); break;
       case FLC_ITEM_DEEP:
-         operand.asDeepClass()->op_incpost( vm, operand.asDeepInst() );
+         operand.asDeepClass()->op_incpost( ctx, operand.asDeepInst() );
          break;
 
       case FLC_ITEM_USER:
-         operand.asUserClass()->op_incpost( vm, operand.asUserInst() );
+         operand.asUserClass()->op_incpost( ctx, operand.asUserInst() );
          break;
 
       default:
@@ -587,11 +573,10 @@ bool ExprPreDec::simplify( Item& value ) const
    return false;
 }
 
-void ExprPreDec::apply_( const PStep* self, VMachine* vm )
+void ExprPreDec::apply_( const PStep* self, VMContext* ctx )
 {  
    TRACE2( "Apply \"%s\"", ((ExprPreDec*)self)->describe().c_ize() );
    
-   register VMContext* ctx = vm->currentContext();
    Item& item = ctx->topData();
 
    switch( item.type() )
@@ -599,11 +584,11 @@ void ExprPreDec::apply_( const PStep* self, VMachine* vm )
       case FLC_ITEM_INT: item.setInteger( item.asInteger()-1 ); break;
       case FLC_ITEM_NUM: item.setNumeric( item.asNumeric()-1 ); break;
       case FLC_ITEM_DEEP:
-         item.asDeepClass()->op_dec( vm, item.asDeepInst() );
+         item.asDeepClass()->op_dec( ctx, item.asDeepInst() );
          break;
 
       case FLC_ITEM_USER:
-         item.asUserClass()->op_dec( vm, item.asUserInst() );
+         item.asUserClass()->op_dec( ctx, item.asUserInst() );
          break;
 
       default:
@@ -645,12 +630,11 @@ void ExprPostDec::precompile( PCode* pcode ) const
    pcode->pushStep( &m_gate );
 }
 
-void ExprPostDec::apply_( const PStep* self, VMachine* )
+void ExprPostDec::apply_( const PStep* self, VMContext* )
 {  
    TRACE2( "Apply \"%s\"", ((ExprPostDec*)self)->describe().c_ize() );
 
 #if 0
-   register VMContext* ctx = vm->currentContext();
    Item& item = ctx->topData();
 #endif
    //TODO
@@ -666,11 +650,9 @@ ExprPostDec::Gate::Gate() {
    apply = apply_;
 }
 
-void ExprPostDec::Gate::apply_( const PStep* ps,  VMachine* vm )
+void ExprPostDec::Gate::apply_( const PStep* ps,  VMContext* ctx )
 {
    TRACE2( "Apply GATE \"%s\"", ((ExprPostDec::Gate*)ps)->describe().c_ize() );
-
-   register VMContext* ctx = vm->currentContext();
 
    // read and recycle the topmost data.
    Item& operand = ctx->topData();
@@ -680,11 +662,11 @@ void ExprPostDec::Gate::apply_( const PStep* ps,  VMachine* vm )
       case FLC_ITEM_INT: operand.setInteger( operand.asInteger()-1 ); break;
       case FLC_ITEM_NUM: operand.setNumeric( operand.asNumeric()-1 ); break;
       case FLC_ITEM_DEEP:
-         operand.asDeepClass()->op_decpost( vm, operand.asDeepInst() );
+         operand.asDeepClass()->op_decpost( ctx, operand.asDeepInst() );
          break;
 
       case FLC_ITEM_USER:
-         operand.asUserClass()->op_decpost( vm, operand.asUserInst() );
+         operand.asUserClass()->op_decpost( ctx, operand.asUserInst() );
          break;
 
       default:
@@ -699,14 +681,12 @@ void ExprPostDec::Gate::apply_( const PStep* ps,  VMachine* vm )
 //=========================================================
 //Comparisons
 
-void ExprEEQ::apply_( const PStep* ps, VMachine* vm )
+void ExprEEQ::apply_( const PStep* ps, VMContext* ctx )
 {
    TRACE2( "Apply \"%s\"", ((ExprEEQ*)ps)->describe().c_ize() );
 
-   register VMContext* ctx = vm->currentContext();
-
    Item *op1, *op2;
-   vm->operands( op1, op2 );
+   ctx->operands( op1, op2 );
 
    switch ( op1->type() << 8 | op2->type() )
    {
@@ -803,11 +783,9 @@ void ExprIIF::precompile( PCode* pcode ) const
    
 }
 
-void ExprIIF::apply_( const PStep* self, VMachine* vm )
+void ExprIIF::apply_( const PStep* self, VMContext* ctx )
 {  
    TRACE2( "Apply \"%s\"", ((ExprIIF*)self)->describe().c_ize() );
-   
-   register VMContext* ctx = vm->currentContext();
    
    //get the value of the condition and pop it.
    Item cond = ctx->topData();
@@ -830,14 +808,11 @@ ExprIIF::Gate::Gate() {
    apply = apply_;
 }
 
-void ExprIIF::Gate::apply_( const PStep* ps,  VMachine* vm )
+void ExprIIF::Gate::apply_( const PStep* ps,  VMContext* ctx )
 {
    TRACE2( "Apply GATE \"%s\"", ((ExprIIF::Gate*)ps)->describe().c_ize() );
 
-   register VMContext* ctx = vm->currentContext();
-
    ctx->currentCode().m_seqId = ((ExprIIF::Gate*)ps)->m_endSeqId;
-
 }
 
 
@@ -851,11 +826,10 @@ bool ExprDot::simplify( Item& ) const
 }
 
 
-void ExprDot::apply_( const PStep* ps, VMachine* vm )
+void ExprDot::apply_( const PStep* ps, VMContext* ctx )
 {
    TRACE2( "Apply \"%s\"", ((ExprDot*)ps)->describe().c_ize() );
 
-   register VMContext* ctx = vm->currentContext();
    const ExprDot* dot_expr = static_cast<const ExprDot*>(ps);
 
    Class* cls;
@@ -866,11 +840,11 @@ void ExprDot::apply_( const PStep* ps, VMachine* vm )
    ctx->topData().forceClassInst(cls, self);
    if ( dot_expr->isLValue() )
    {
-      cls->op_setProperty(vm, self, prop );
+      cls->op_setProperty(ctx, self, prop );
    }
    else
    {
-      cls->op_getProperty(vm, self, prop );
+      cls->op_getProperty(ctx, self, prop );
    }
 }
 
@@ -887,11 +861,10 @@ bool ExprIndex::simplify( Item& ) const
 }
 
 
-void ExprIndex::apply_( const PStep* ps, VMachine* vm )
+void ExprIndex::apply_( const PStep* ps, VMContext* ctx )
 {
    TRACE2( "Apply \"%s\"", ((ExprIndex*)ps)->describe().c_ize() );
 
-   register VMContext* ctx = vm->currentContext();
    Class* cls;
    void* self;
    
@@ -899,11 +872,11 @@ void ExprIndex::apply_( const PStep* ps, VMachine* vm )
    (&ctx->topData()-1)->forceClassInst(cls, self);
    if ( ((ExprIndex*)ps)->isLValue() )
    {
-      cls->op_setIndex(vm, self );
+      cls->op_setIndex( ctx, self );
    }
    else
    {
-      cls->op_getIndex(vm, self );
+      cls->op_getIndex( ctx, self );
    }
 }
 
@@ -920,11 +893,9 @@ bool ExprStarIndex::simplify( Item& ) const
 }
 
 
-void ExprStarIndex::apply_( const PStep* ps, VMachine* vm )
+void ExprStarIndex::apply_( const PStep* ps, VMContext* ctx )
 {
    TRACE2( "Apply \"%s\"", ((ExprStarIndex*)ps)->describe().c_ize() );
-
-   register VMContext* ctx = vm->currentContext();
 
    Item str = ctx->topData();
    ctx->popData();
@@ -963,11 +934,10 @@ bool ExprOob::simplify( Item& value ) const
    return false;
 }
 
-void ExprOob::apply_( const PStep* self, VMachine* vm )
+void ExprOob::apply_( const PStep* self, VMContext* ctx )
 {  
    TRACE2( "Apply \"%s\"", ((ExprOob*)self)->describe().c_ize() );
    
-   register VMContext* ctx = vm->currentContext();
    ctx->topData().setOob();
 }
 
@@ -990,11 +960,10 @@ bool ExprDeoob::simplify( Item& value ) const
    return false;
 }
 
-void ExprDeoob::apply_( const PStep* self, VMachine* vm )
+void ExprDeoob::apply_( const PStep* self, VMContext* ctx )
 {  
    TRACE2( "Apply \"%s\"", ((ExprDeoob*)self)->describe().c_ize() );
    
-   register VMContext* ctx = vm->currentContext();
    ctx->topData().resetOob();
 }
 
@@ -1017,11 +986,10 @@ bool ExprXorOob::simplify( Item& value ) const
    return false;
 }
 
-void ExprXorOob::apply_( const PStep* self, VMachine* vm )
+void ExprXorOob::apply_( const PStep* self, VMContext* ctx )
 {  
    TRACE2( "Apply \"%s\"", ((ExprXorOob*)self)->describe().c_ize() );
    
-   register VMContext* ctx = vm->currentContext();
    ctx->topData().xorOob();
 }
 
@@ -1044,13 +1012,11 @@ bool ExprIsOob::simplify( Item& value ) const
    return false;
 }
 
-void ExprIsOob::apply_( const PStep* self, VMachine* vm )
+void ExprIsOob::apply_( const PStep* self, VMContext* ctx )
 {  
    TRACE2( "Apply \"%s\"", ((ExprXorOob*)self)->describe().c_ize() );
    
-   register VMContext* ctx = vm->currentContext();
    Item& item = ctx->topData();
-
    item.setBoolean(item.isOob());
 }
 

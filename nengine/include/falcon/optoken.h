@@ -63,7 +63,7 @@ namespace Falcon {
 
  An example usage:
  @code
- virtual void MyClasss::op_something( VMachine *vm, void* self )
+ virtual void MyClasss::op_something( VMContext* ctx, void* self )
  {
     // get the two operands of this class.
     Item *op1, op2;

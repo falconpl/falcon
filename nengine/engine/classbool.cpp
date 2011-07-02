@@ -17,7 +17,7 @@
 #include <falcon/classbool.h>
 #include <falcon/item.h>
 #include <falcon/itemid.h>
-#include <falcon/vm.h>
+#include <falcon/vmcontext.h>
 #include <falcon/optoken.h>
 
 namespace Falcon {
@@ -33,37 +33,37 @@ ClassBool::~ClassBool()
 }
 
 
-void ClassBool::op_create( VMachine* vm, int pcount ) const
+void ClassBool::op_create( VMContext* ctx, int pcount ) const
 {
    if ( pcount >= 1 )
    {
       Class* cls;
       void* inst;
-      Item* itm = vm->currentContext()->opcodeParams(pcount);
+      Item* itm = ctx->opcodeParams(pcount);
       if( itm->asClassInst( cls, inst ) )
       {
          // put the item in the stack, just in case.
-         vm->stackResult( pcount+1, *itm );
-         cls->op_isTrue( vm, inst );
-         if( vm->wentDeep() )
+         ctx->stackResult( pcount+1, *itm );
+         cls->op_isTrue( ctx, inst );
+         if( ctx->wentDeep() )
          {
             return;
          }
          // if the item is not deep, then isTrue has already done what we want.
          // but better be sure
-         vm->currentContext()->topData().setBoolean(vm->currentContext()->topData().isTrue());
+         ctx->topData().setBoolean(ctx->topData().isTrue());
       }
       else
       {
-         vm->stackResult( pcount+1, Item( itm->isTrue() ) );
+         ctx->stackResult( pcount+1, Item( itm->isTrue() ) );
       }
    }
 }
 
 
-void ClassBool::NextOpCreate::apply_( const PStep*, VMachine* vm )
+void ClassBool::NextOpCreate::apply_( const PStep*, VMContext* ctx )
 {
-   vm->currentContext()->topData().setBoolean(vm->currentContext()->topData().isTrue());
+   ctx->topData().setBoolean(ctx->topData().isTrue());
 }
 
 void ClassBool::dispose( void *self ) const
@@ -105,17 +105,17 @@ void ClassBool::describe( void *instance, String& target, int, int ) const
 
 // ===========================================================================
 
-void ClassBool::op_isTrue( VMachine *vm, void* ) const
+void ClassBool::op_isTrue( VMContext* ctx, void* ) const
 {
    Item* iself;
-   OpToken token( vm, iself );
+   OpToken token( ctx, iself );
    token.exit( iself->asBoolean() );
 }
 
-void ClassBool::op_toString( VMachine *vm, void* ) const
+void ClassBool::op_toString( VMContext* ctx, void* ) const
 {
    Item* iself;
-   OpToken token( vm, iself );
+   OpToken token( ctx, iself );
    String* s = new String( iself->asBoolean() ? "true" : "false" );
    token.exit( s );
 }

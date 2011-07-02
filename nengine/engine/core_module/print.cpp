@@ -32,31 +32,30 @@ FuncPrintBase::FuncPrintBase( const String& name, bool ispl ):
 
 FuncPrintBase::~FuncPrintBase() {}
 
-void FuncPrintBase::apply( VMachine* vm, int32 )
+void FuncPrintBase::apply( VMContext* ctx, int32 )
 {
    TRACE1("Function print%s -- apply", m_nextStep.m_isPrintl ? "l" : "" );
    // [A]: create the space for op_toString
-   vm->currentContext()->pushData(Item());
-   m_nextStep.printNext( vm, 0 );
+   ctx->pushData(Item());
+   m_nextStep.printNext( ctx, 0 );
 }
 
 //=====================================================================
 // next step
 //=====================================================================
 
-void FuncPrintBase::NextStep::apply_( const PStep* ps, VMachine* vm )
+void FuncPrintBase::NextStep::apply_( const PStep* ps, VMContext* ctx )
 {
-   fassert( vm->regA().isString() );
+   fassert( ctx->regA().isString() );
 
    // this is the return of a to-string deep call.
    const NextStep* nstep = static_cast<const NextStep*>(ps);
-   TextWriter* out = vm->textOut();
+   TextWriter* out = ctx->vm()->textOut();
    // write the result of the call.
-   out->write( *vm->regA().asString() );
-   VMContext* ctx = vm->currentContext();
+   out->write( *ctx->regA().asString() );
 
    // go on.
-   nstep->printNext( vm, ctx->currentCode().m_seqId );
+   nstep->printNext( ctx, ctx->currentCode().m_seqId );
 }
 
 
@@ -65,10 +64,9 @@ FuncPrintBase::NextStep::NextStep()
    apply = apply_;
 }
 
-void FuncPrintBase::NextStep::printNext( VMachine* vm, int count ) const
+void FuncPrintBase::NextStep::printNext( VMContext* ctx, int count ) const
 {
-   VMContext* ctx = vm->currentContext();
-   TextWriter* out = vm->textOut();
+   TextWriter* out = ctx->vm()->textOut();
    int nParams = ctx->currentFrame().m_paramCount;
 
    // we inherit an extra topData() space from our caller (see [A])
@@ -84,9 +82,9 @@ void FuncPrintBase::NextStep::printNext( VMachine* vm, int count ) const
       ctx->topData() = *item;
       ++count;
 
-      vm->ifDeep(this);
-      cls->op_toString( vm, data );
-      if( vm->wentDeep() )
+      ctx->ifDeep(this);
+      cls->op_toString( ctx, data );
+      if( ctx->wentDeep() )
       {
          ctx->currentCode().m_seqId = count;
          return;
@@ -102,7 +100,7 @@ void FuncPrintBase::NextStep::printNext( VMachine* vm, int count ) const
    }
 
    // we're out of the function.
-   vm->returnFrame();
+   ctx->returnFrame();
 }
 
 }

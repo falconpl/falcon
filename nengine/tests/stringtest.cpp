@@ -87,7 +87,7 @@ void go()
 
    // And now, run the code.
    Falcon::VMachine vm;
-   vm.call(&fmain,0);
+   vm.currentContext()->call(&fmain,0);
    vm.run();
 
 

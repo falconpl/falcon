@@ -76,7 +76,7 @@ class FALCON_DYN_CLASS ToString: public Function
 public:
    ToString();
    virtual ~ToString();
-   virtual void apply( VMachine* vm, int32 nParams );
+   virtual void apply( VMContext* ctx, int32 nParams );
 
 private:
 
@@ -84,7 +84,7 @@ private:
    {
    public:
       Next() { apply = apply_; }
-      static void apply_( const PStep* ps, VMachine* vm );
+      static void apply_( const PStep* ps, VMContext* ctx );
 
    };
 

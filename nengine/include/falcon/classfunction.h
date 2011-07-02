@@ -47,7 +47,7 @@ public:
    // Operators.
    //
    // Can a function instance be created?
-   // virtual void op_create( VMachine *vm, int32 pcount ) const;
+   // virtual void op_create( VMContext* ctx, int32 pcount ) const;
 
 };
 

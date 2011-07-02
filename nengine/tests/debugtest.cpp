@@ -60,7 +60,7 @@ void go()
 
    // And now, run the code.
    Falcon::VMachine vm;
-   vm.call(&fmain,0);
+   vm.currentContext()->call(&fmain,0);
    vm.currentContext()->pushData(Falcon::Item());  // create an item -- local 0
 
    while( vm.nextStep() != 0 )

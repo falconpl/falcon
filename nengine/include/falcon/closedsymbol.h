@@ -38,7 +38,7 @@ public:
    ClosedSymbol( const ClosedSymbol& other );
    virtual ~ClosedSymbol();
 
-   static void apply_( const PStep*, VMachine* vm );
+   static void apply_( const PStep*, VMContext* vm );
    ClosedSymbol* clone() const { return new ClosedSymbol(*this); }
 
    void assign( VMachine* vm, const Item& value ) const;

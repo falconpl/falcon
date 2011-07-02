@@ -42,41 +42,25 @@ public:
 
    //=============================================================
 
-   virtual void op_create( VMachine *vm, int32 pcount ) const;
-   virtual void op_isTrue( VMachine *vm, void* self ) const;
-   virtual void op_toString( VMachine *vm, void* self ) const;
-
-   virtual void op_add( VMachine *vm, void* self ) const;
-
-   virtual void op_sub( VMachine *vm, void* self ) const;
-
-   virtual void op_mul( VMachine *vm, void* self ) const;
-
-   virtual void op_div( VMachine *vm, void* self ) const;
-
-   virtual void op_mod( VMachine *vm, void* self ) const;
-
-   virtual void op_pow( VMachine *vm, void* self ) const;
-
-   virtual void op_aadd( VMachine *vm, void* self) const;
-
-   virtual void op_asub( VMachine *vm, void* self ) const;
-
-   virtual void op_amul( VMachine *vm, void* self ) const;
-
-   virtual void op_adiv( VMachine *vm, void* self ) const;
-
-   virtual void op_amod( VMachine *vm, void* self ) const;
-
-   virtual void op_apow( VMachine *vm, void* self ) const;
-
-   virtual void op_inc(VMachine *vm, void* self ) const;
-
-   virtual void op_dec(VMachine *vm, void* self) const;
-
-   virtual void op_incpost(VMachine *vm, void* self ) const;
-
-   virtual void op_decpost(VMachine *vm, void* self ) const;
+   virtual void op_create( VMContext* ctx, int32 pcount ) const;
+   virtual void op_isTrue( VMContext* ctx, void* self ) const;
+   virtual void op_toString( VMContext* ctx, void* self ) const;
+   virtual void op_add( VMContext* ctx, void* self ) const;
+   virtual void op_sub( VMContext* ctx, void* self ) const;
+   virtual void op_mul( VMContext* ctx, void* self ) const;
+   virtual void op_div( VMContext* ctx, void* self ) const;
+   virtual void op_mod( VMContext* ctx, void* self ) const;
+   virtual void op_pow( VMContext* ctx, void* self ) const;
+   virtual void op_aadd( VMContext* ctx, void* self) const;
+   virtual void op_asub( VMContext* ctx, void* self ) const;
+   virtual void op_amul( VMContext* ctx, void* self ) const;
+   virtual void op_adiv( VMContext* ctx, void* self ) const;
+   virtual void op_amod( VMContext* ctx, void* self ) const;
+   virtual void op_apow( VMContext* ctx, void* self ) const;
+   virtual void op_inc( VMContext* ctx, void* self ) const;
+   virtual void op_dec(VMContext* ctx, void* self) const;
+   virtual void op_incpost(VMContext* ctx, void* self ) const;
+   virtual void op_decpost(VMContext* ctx, void* self ) const;
 };
 
 }

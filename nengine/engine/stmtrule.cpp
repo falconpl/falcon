@@ -88,9 +88,8 @@ void StmtRule::describe( String& tgt ) const
 }
 
 
-void StmtRule::apply_( const PStep*s1 , VMachine* vm )
+void StmtRule::apply_( const PStep*s1 , VMContext* ctx )
 {
-   register VMContext* ctx = vm->currentContext();
    const StmtRule* self = static_cast<const StmtRule*>(s1);
    CodeFrame& cf = ctx->currentCode();
 
@@ -155,9 +154,9 @@ void StmtCut::describe( String& tgt ) const
    tgt += "!";
 }
 
-void StmtCut::apply_( const PStep*, VMachine* vm )
+void StmtCut::apply_( const PStep*, VMContext* ctx )
 {
-   vm->currentContext()->unrollRuleBranches();
+   ctx->unrollRuleBranches();
 }
 
 }

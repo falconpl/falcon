@@ -42,17 +42,16 @@ void ClosedSymbol::assign( VMachine*, const Item& value ) const
    const_cast<ClosedSymbol*>(this)->m_item.assign( value );
 }
 
-void ClosedSymbol::apply_( const PStep* ps, VMachine* vm )
+void ClosedSymbol::apply_( const PStep* ps, VMContext* ctx )
 {
    const ExprSymbol* self = static_cast<const ExprSymbol*>(ps);
    ClosedSymbol* sym = static_cast<ClosedSymbol*>(self->symbol());
-   register VMContext* ctx = vm->currentContext();
 
    // l-value (assignment)?
    if( self->m_lvalue )
    {
       TRACE2( "LValue apply to closed '%s'", sym->m_name .c_ize() );
-      sym->m_item.assign(  ctx->topData() );
+      sym->m_item.assign( ctx->topData() );
       // topData is already the value of the l-value evaluation.
       // so we leave it alone.
    }

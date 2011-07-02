@@ -33,15 +33,13 @@ Len::~Len()
 {
 }
 
-void Len::apply( VMachine* vm, int32 nParams )
+void Len::apply( VMContext* ctx, int32 nParams )
 {
-   register VMContext* ctx = vm->currentContext();
-
    Item *elem;
    if ( ctx->isMethodic() )
    {
       elem = &ctx->self();
-      vm->retval( elem->len() );
+      ctx->retval( elem->len() );
    }
    else
    {
@@ -51,15 +49,15 @@ void Len::apply( VMachine* vm, int32 nParams )
       }
 
       elem = ctx->params();
-      vm->retval( elem->len() );
+      ctx->retval( elem->len() );
    }
 
-   vm->returnFrame();
+   ctx->returnFrame();
 }
 
-void Len::Invoke::apply_( const PStep*, VMachine* vm  )
+void Len::Invoke::apply_( const PStep*, VMContext* ctx )
 {
-   register Item& top = vm->currentContext()->topData();
+   register Item& top = ctx->topData();
    top = top.len();
 }
 

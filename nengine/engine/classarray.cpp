@@ -15,7 +15,7 @@
 
 #include <falcon/classarray.h>
 #include <falcon/itemid.h>
-#include <falcon/vm.h>
+#include <falcon/vmcontext.h>
 #include <falcon/accesserror.h>
 #include <falcon/paramerror.h>
 #include <falcon/itemarray.h>
@@ -86,7 +86,7 @@ void ClassArray::describe( void* instance, String& target, int maxDepth, int max
 }
 
 
-void ClassArray::op_create( VMachine* vm, int pcount ) const
+void ClassArray::op_create( VMContext* ctx, int pcount ) const
 {
    static Collector* coll = Engine::instance()->collector();
 
@@ -94,7 +94,7 @@ void ClassArray::op_create( VMachine* vm, int pcount ) const
 
    if ( pcount >= 1 )
    {
-      Item* first = vm->currentContext()->opcodeParams(pcount);
+      Item* first = ctx->opcodeParams(pcount);
       if( ! first->isOrdinal() )
       {
          throw new ParamError( ErrorParam( e_inv_params, __LINE__,__FILE__ ).extra( "[N]" ) );
@@ -102,19 +102,20 @@ void ClassArray::op_create( VMachine* vm, int pcount ) const
       count = first->forceInteger();
    }
 
-   vm->stackResult( pcount+1, FALCON_GC_STORE( coll, this, new ItemArray( count ) ) );
+   ctx->stackResult( pcount+1, FALCON_GC_STORE( coll, this, new ItemArray( count ) ) );
 }
 
 
-void ClassArray::op_getProperty( VMachine* vm, void* self, const String& property ) const
+void ClassArray::op_getProperty( VMContext* ctx, void* self, const String& property ) const
 {
-   Class::op_getProperty( vm, self, property );
+   Class::op_getProperty( ctx, self, property );
 }
 
-void ClassArray::op_getIndex( VMachine* vm, void* self ) const
+
+void ClassArray::op_getIndex( VMContext* ctx, void* self ) const
 {
    Item *index, *arritem;
-   vm->operands( arritem, index );
+   ctx->operands( arritem, index );
 
    ItemArray& array = *static_cast<ItemArray*>(self);
    if (index->isOrdinal())
@@ -125,7 +126,7 @@ void ClassArray::op_getIndex( VMachine* vm, void* self ) const
       {
          throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra("out of range") );
       }
-      vm->stackResult(2, array[v]);
+      ctx->stackResult(2, array[v]);
    }
    else
    {
@@ -134,10 +135,10 @@ void ClassArray::op_getIndex( VMachine* vm, void* self ) const
 }
 
 
-void ClassArray::op_setIndex( VMachine* vm, void* self ) const
+void ClassArray::op_setIndex( VMContext* ctx, void* self ) const
 {
    Item* value, *index, *arritem;
-   vm->operands( value, arritem, index );
+   ctx->operands( value, arritem, index );
 
    ItemArray& array = *static_cast<ItemArray*>(self);
    if (index->isOrdinal())
@@ -151,7 +152,7 @@ void ClassArray::op_setIndex( VMachine* vm, void* self ) const
       // the value is copied here.
       value->copied(true);
       array[v] = *value;
-      vm->stackResult(3, *value);
+      ctx->stackResult(3, *value);
    }
    else
    {
@@ -176,14 +177,14 @@ void ClassArray::enumerateProperties( void*, PropertyEnumerator& ) const
 //=======================================================================
 //
 
-void ClassArray::op_add( VMachine *vm, void* self ) const
+void ClassArray::op_add( VMContext* ctx, void* self ) const
 {
    static Class* arrayClass = Engine::instance()->arrayClass();
    static Collector* coll = Engine::instance()->collector();
    
    ItemArray* array = static_cast<ItemArray*>(self);
    Item* op1, *op2;
-   vm->operands( op1, op2 );
+   ctx->operands( op1, op2 );
 
    Class* cls;
    void* inst;
@@ -207,15 +208,15 @@ void ClassArray::op_add( VMachine *vm, void* self ) const
       result->merge( *other );
    }
     
-   vm->stackResult( 2, Item( FALCON_GC_STORE( coll, arrayClass, result ) ) );
+   ctx->stackResult( 2, Item( FALCON_GC_STORE( coll, arrayClass, result ) ) );
 }
 
 
-void ClassArray::op_aadd( VMachine *vm, void* self ) const
+void ClassArray::op_aadd( VMContext* ctx, void* self ) const
 {
    ItemArray* array = static_cast<ItemArray*>(self);
    Item* op1, *op2;
-   vm->operands( op1, op2 );
+   ctx->operands( op1, op2 );
 
    Class* cls;
    void* inst;
@@ -233,34 +234,34 @@ void ClassArray::op_aadd( VMachine *vm, void* self ) const
    }
 
    // just remove the topmost item,
-   vm->currentContext()->popData();
+   ctx->popData();
 }
 
 
-void ClassArray::op_isTrue( VMachine *vm, void* self) const
+void ClassArray::op_isTrue( VMContext* ctx, void* self) const
 {
-   vm->stackResult(1, static_cast<ItemArray*>(self)->length() != 0 );
+   ctx->stackResult(1, static_cast<ItemArray*>(self)->length() != 0 );
 }
 
 
-void ClassArray::op_toString( VMachine *vm, void* self ) const
+void ClassArray::op_toString( VMContext* ctx, void* self ) const
 {
    String s;
    s.A("[Array of ").N(static_cast<ItemArray*>(self)->length()).A(" elements]");
-   vm->stackResult( 1, s );
+   ctx->stackResult( 1, s );
 }
 
 #if 0
-void ClassArray::op_toString( VMachine *vm, void* self ) const
+void ClassArray::op_toString( VMContext* ctx, void* self ) const
    // If we're long 0, surrender.
    ItemArray* array = static_cast<ItemArray*>(self);
 
    if( array->length() == 0 )
    {
-      vm->stackResult(1, "[]");
+      ctx->stackResult(1, "[]");
       return;
    }
-   VMContext* ctx = vm->currentContext();
+   VMContext* ctx = ctx->currentContext();
 
    // initialize the deep loop
    ctx->addDataSlot() = 0;  // local 0 -- counter
@@ -281,7 +282,7 @@ ClassArray::ToStringNextOp::ToStringNextOp()
 
 void ClassArray::ToStringNextOp::apply_( const PStep* step, VMachine* vm )
 {
-   VMContext* ctx = vm->currentContext();
+   VMContext* ctx = ctx->currentContext();
    
    // array in self
    ItemArray* array = static_cast<ItemArray*>(ctx->self().asInst());
@@ -324,9 +325,9 @@ void ClassArray::ToStringNextOp::apply_( const PStep* step, VMachine* vm )
          ctx->local(0)->setInteger(i+1);
          ctx->topData() = item;
          
-         vm->ifDeep( step );
+         ctx->ifDeep( step );
          cls->op_toString( vm, inst );
-         if( vm->wentDeep() ) return;
+         if( ctx->wentDeep() ) return;
 
          // pfew, not deep! just go on as usual
          fassert(ctx->topData().isString());

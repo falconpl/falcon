@@ -55,15 +55,13 @@ bool generic_simplify( Item& value, Expression* m_first, Expression* m_second )
 
 // Inline class to apply
 template <class __CPR >
-void generic_apply_( const PStep* ps, VMachine* vm )
+void generic_apply_( const PStep* ps, VMContext* ctx )
 {
    TRACE2( "Apply \"%s\"", ((ExprCompare*)ps)->describe().c_ize() );
 
-   register VMContext* ctx = vm->currentContext();
-
    // copy the second
    Item *op1, *op2;
-   vm->operands( op1, op2 );
+   ctx->operands( op1, op2 );
 
    switch ( op1->type() << 8 | op2->type() )
    {
@@ -96,7 +94,7 @@ void generic_apply_( const PStep* ps, VMachine* vm )
    case FLC_ITEM_DEEP << 8 | FLC_ITEM_BASEMETHOD:
    case FLC_ITEM_DEEP << 8 | FLC_ITEM_DEEP:
    case FLC_ITEM_DEEP << 8 | FLC_ITEM_USER:
-      op1->asDeepClass()->op_compare( vm, op1->asDeepInst() );
+      op1->asDeepClass()->op_compare( ctx, op1->asDeepInst() );
       // refetch, we may have gone deep
       op1 = &ctx->topData();
       fassert( op1->isInteger() );
@@ -112,7 +110,7 @@ void generic_apply_( const PStep* ps, VMachine* vm )
    case FLC_ITEM_USER << 8 | FLC_ITEM_BASEMETHOD:
    case FLC_ITEM_USER << 8 | FLC_ITEM_DEEP:
    case FLC_ITEM_USER << 8 | FLC_ITEM_USER:
-      op1->asUserClass()->op_compare( vm, op1->asUserInst() );
+      op1->asUserClass()->op_compare( ctx, op1->asUserInst() );
       // refetch, we may have gone deep
       op1 = &ctx->topData();
       fassert( op1->isInteger() );
@@ -126,22 +124,22 @@ void generic_apply_( const PStep* ps, VMachine* vm )
 }
 
 template
-void generic_apply_<ExprLT::comparer>( const PStep* ps, VMachine* vm );
+void generic_apply_<ExprLT::comparer>( const PStep* ps, VMContext* ctx );
 
 template
-void generic_apply_<ExprLE::comparer>( const PStep* ps, VMachine* vm );
+void generic_apply_<ExprLE::comparer>( const PStep* ps, VMContext* ctx );
 
 template
-void generic_apply_<ExprGT::comparer>( const PStep* ps, VMachine* vm );
+void generic_apply_<ExprGT::comparer>( const PStep* ps, VMContext* ctx );
 
 template
-void generic_apply_<ExprGE::comparer>( const PStep* ps, VMachine* vm );
+void generic_apply_<ExprGE::comparer>( const PStep* ps, VMContext* ctx );
 
 template
-void generic_apply_<ExprEQ::comparer>( const PStep* ps, VMachine* vm );
+void generic_apply_<ExprEQ::comparer>( const PStep* ps, VMContext* ctx );
 
 template
-void generic_apply_<ExprNE::comparer>( const PStep* ps, VMachine* vm );
+void generic_apply_<ExprNE::comparer>( const PStep* ps, VMContext* ctx );
 
 //==========================================================
 

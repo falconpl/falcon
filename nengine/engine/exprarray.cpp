@@ -173,7 +173,7 @@ bool ExprArray::simplify( Item& ) const
 
 //=====================================================
 
-void ExprArray::apply_( const PStep* ps, VMachine* vm )
+void ExprArray::apply_( const PStep* ps, VMContext* ctx )
 {
    static Class* ca_class = Engine::instance()->arrayClass();
    static Collector* collector = Engine::instance()->collector();
@@ -184,7 +184,6 @@ void ExprArray::apply_( const PStep* ps, VMachine* vm )
    ItemArray* array = new ItemArray( mye.size() );
    array->length(mye.size());
 
-   register VMContext* ctx = vm->currentContext();
    ctx->copyData( array->elements(), mye.size() );
    ctx->popData( mye.size() );
    ctx->pushData( FALCON_GC_STORE( collector, ca_class, array ) );
