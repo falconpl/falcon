@@ -1,6 +1,6 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: corearray.h
+   FILE: classarray.h
 
    Standard language array object handler.
    -------------------------------------------------------------------
@@ -13,8 +13,8 @@
    See LICENSE file for licensing details.
 */
 
-#ifndef _FALCON_COREARRAY_H_
-#define _FALCON_COREARRAY_H_
+#ifndef _FALCON_CLASSARRAY_H_
+#define _FALCON_CLASSARRAY_H_
 
 #include <falcon/setup.h>
 #include <falcon/class.h>
@@ -30,12 +30,12 @@ class ItemArray;
  Class handling an array as an item in a falcon script.
  */
 
-class FALCON_DYN_CLASS CoreArray: public Class
+class FALCON_DYN_CLASS ClassArray: public Class
 {
 public:
 
-   CoreArray();
-   virtual ~CoreArray();
+   ClassArray();
+   virtual ~ClassArray();
    
    //=============================================================
 
@@ -73,6 +73,6 @@ private:
 
 }
 
-#endif /* _FALCON_COREARRAY_H_ */
+#endif /* _FALCON_CLASSARRAY_H_ */
 
-/* end of corearray.h */
+/* end of classarray.h */

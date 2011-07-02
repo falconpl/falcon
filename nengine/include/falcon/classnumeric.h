@@ -1,37 +1,37 @@
 /*
-   FALCON - The Falcon Programming Language.
-   FILE: coreint.h
+ FALCON - The Falcon Programming Language.
+ FILE: classnumeric.h
+ 
+ Int object handler.
+ -------------------------------------------------------------------
+ Author: Francesco Magliocca
+ Begin: Sat, 11 Jun 2011 21:45:01 +0200
+ 
+ -------------------------------------------------------------------
+ (C) Copyright 2011: the FALCON developers (see list in AUTHORS file)
+ 
+ See LICENSE file for licensing details.
+ */
 
-   Int object handler.
-   -------------------------------------------------------------------
-   Author: Giancarlo Niccolai
-   Begin: Sun, 13 Feb 2011 15:11:01 +0100
-
-   -------------------------------------------------------------------
-   (C) Copyright 2011: the FALCON developers (see list in AUTHORS file)
-
-   See LICENSE file for licensing details.
-*/
-
-#ifndef _FALCON_COREINT_H_
-#define _FALCON_COREINT_H_
+#ifndef _FALCON_CLASSNUMERIC_H_
+#define _FALCON_CLASSNUMERIC_H_
 
 #include <falcon/setup.h>
 #include <falcon/class.h>
 
 namespace Falcon
 {
-
+    
 /**
- Class handling an int as an item in a falcon script.
- */
+Class handling a numeric as an item in a falcon script.
+*/
 
-class FALCON_DYN_CLASS CoreInt: public Class
+class FALCON_DYN_CLASS ClassNumeric: public Class
 {
 public:
 
-   CoreInt();
-   virtual ~CoreInt();
+   ClassNumeric();
+   virtual ~ClassNumeric();
 
    virtual void dispose( void* self ) const;
    virtual void* clone( void* source ) const;
@@ -41,8 +41,8 @@ public:
    virtual void describe( void* instance, String& target, int depth = 3, int maxlen = 60 ) const;
 
    //=============================================================
-
    virtual void op_create( VMachine *vm, int32 pcount ) const;
+
    virtual void op_isTrue( VMachine *vm, void* self ) const;
    virtual void op_toString( VMachine *vm, void* self ) const;
 
@@ -54,8 +54,6 @@ public:
 
    virtual void op_div( VMachine *vm, void* self ) const;
 
-   virtual void op_mod( VMachine *vm, void* self ) const;
-
    virtual void op_pow( VMachine *vm, void* self ) const;
 
    virtual void op_aadd( VMachine *vm, void* self) const;
@@ -65,8 +63,6 @@ public:
    virtual void op_amul( VMachine *vm, void* self ) const;
 
    virtual void op_adiv( VMachine *vm, void* self ) const;
-
-   virtual void op_amod( VMachine *vm, void* self ) const;
 
    virtual void op_apow( VMachine *vm, void* self ) const;
 
@@ -81,6 +77,6 @@ public:
 
 }
 
-#endif /* _FALCON_COREINT_H_ */
+#endif /* _FALCON_CLASSNUMERIC_H_ */
 
-/* end of coreint.h */
+/* end of corenumber.h */

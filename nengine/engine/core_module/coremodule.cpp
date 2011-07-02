@@ -22,14 +22,14 @@
 #include <falcon/cm/tostring.h>
 #include <falcon/cm/typeid.h>
 
-#include <falcon/corestring.h>
-#include <falcon/corenil.h>
-#include <falcon/corebool.h>
-#include <falcon/coreint.h>
-#include <falcon/corenumeric.h>
-#include <falcon/coredict.h>
-#include <falcon/corearray.h>
-#include <falcon/coreclass.h>
+#include <falcon/classstring.h>
+#include <falcon/classnil.h>
+#include <falcon/classbool.h>
+#include <falcon/classint.h>
+#include <falcon/classnumeric.h>
+#include <falcon/classdict.h>
+#include <falcon/classarray.h>
+#include <falcon/classclass.h>
 
 namespace Falcon {
 
@@ -47,14 +47,14 @@ CoreModule::CoreModule():
       << new Ext::ToString
       << new Ext::TypeId
       
-      << new CoreNil
-      << new CoreBool
-      << new CoreInt
-      << new CoreNumeric
-      << new CoreArray
-      << new CoreDict
-      << new CoreString
-      << new CoreClass
+      << new ClassNil
+      << new ClassBool
+      << new ClassInt
+      << new ClassNumeric
+      << new ClassArray
+      << new ClassDict
+      << new ClassString
+      << new ClassClass
       ;
 }
 

@@ -1,11 +1,11 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: coreclass.h
+   FILE: classbool.h
 
-   Handler for classes defined by a Falcon script.
+   Class defined by a Falcon script.
    -------------------------------------------------------------------
-   Author: Giancarlo Niccolai
-   Begin: Sat, 04 Jun 2011 16:04:20 +0200
+   Author: Francesco Magliocca
+   Begin: Sun, 19 Jun 2011 12:40:06 +0200
 
    -------------------------------------------------------------------
    (C) Copyright 2011: the FALCON developers (see list in AUTHORS file)
@@ -13,16 +13,17 @@
    See LICENSE file for licensing details.
 */
 
-#ifndef _FALCON_CORECLASS_H_
-#define _FALCON_CORECLASS_H_
+#ifndef _FALCON_CLASSBOOL_H_
+#define _FALCON_CLASSBOOL_H_
 
 #include <falcon/setup.h>
 #include <falcon/class.h>
+#include <falcon/pstep.h>
 
 namespace Falcon
 {
 
-/** Handler for classes defined by a Falcon script.
+/** Class defined by a Falcon script.
 
  This class implements a class handler for classes a Falcon script. In other words,
  it is a handler for the "class type". The content of this type is a FalconClass,
@@ -30,30 +31,37 @@ namespace Falcon
  are stored.
  
  */
-class FALCON_DYN_CLASS CoreClass: public Class
+class FALCON_DYN_CLASS ClassBool : public Class
 {
 public:
 
-   CoreClass();
-   virtual ~CoreClass();
+   ClassBool();
+   virtual ~ClassBool();
 
    virtual void dispose( void* self ) const;
    virtual void* clone( void* source ) const;
    virtual void serialize( DataWriter* stream, void* self ) const;
    virtual void* deserialize( DataReader* stream ) const;
 
-   virtual void describe( void* instance, String& target, int, int ) const;
+   virtual void describe( void* instance, String& target, int maxDepth = 3, int maxLength = 60 ) const;
 
    //=============================================================
 
-   // virtual void op_create( VMachine *vm, int32 pcount ) const; -- let the default non-creable thing to work
+   virtual void op_create( VMachine *vm, int32 pcount ) const;
    virtual void op_isTrue( VMachine *vm, void* self ) const;
    virtual void op_toString( VMachine *vm, void* self ) const;
-   virtual void op_call( VMachine *vm, int32 pcount, void* self ) const;
+
+private:
+
+   class FALCON_DYN_CLASS NextOpCreate: public PStep {
+   public:
+      NextOpCreate() { apply = apply_; }
+      static void apply_( const PStep*, VMachine* vm );
+   } m_OP_create_next;
 };
 
 }
 
-#endif /* _FALCON_CORECLASS_H_ */
+#endif /* _FALCON_CLASSBOOL_H_ */
 
 /* end of coreclass.h */

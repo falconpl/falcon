@@ -1,6 +1,6 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: coredict.h
+   FILE: classdict.h
 
    Standard language dictionary object handler
    -------------------------------------------------------------------
@@ -13,8 +13,8 @@
    See LICENSE file for licensing details.
 */
 
-#ifndef _FALCON_COREDICT_H_
-#define _FALCON_COREDICT_H_
+#ifndef _FALCON_CLASSDICT_H_
+#define _FALCON_CLASSDICT_H_
 
 #include <falcon/setup.h>
 #include <falcon/class.h>
@@ -28,12 +28,12 @@ namespace Falcon
  Class handling a dictionary as an item in a falcon script.
  */
 
-class FALCON_DYN_CLASS CoreDict: public Class
+class FALCON_DYN_CLASS ClassDict: public Class
 {
 public:
 
-   CoreDict();
-   virtual ~CoreDict();
+   ClassDict();
+   virtual ~ClassDict();
 
    //=============================================================
 
@@ -64,6 +64,6 @@ private:
 
 }
 
-#endif /* _FALCON_COREDICT_H_ */
+#endif /* _FALCON_CLASSDICT_H_ */
 
-/* end of coredict.h */
+/* end of classdict.h */

@@ -1,6 +1,6 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: corearray.cpp
+   FILE: classarray.cpp
 
    Function object handler.
    -------------------------------------------------------------------
@@ -13,7 +13,7 @@
    See LICENSE file for licensing details.
 */
 
-#include <falcon/corearray.h>
+#include <falcon/classarray.h>
 #include <falcon/itemid.h>
 #include <falcon/vm.h>
 #include <falcon/accesserror.h>
@@ -22,45 +22,45 @@
 
 namespace Falcon {
 
-CoreArray::CoreArray():
+ClassArray::ClassArray():
    Class("Array", FLC_CLASS_ID_ARRAY )
 {
 }
 
 
-CoreArray::~CoreArray()
+ClassArray::~ClassArray()
 {
 }
 
 
-void CoreArray::dispose( void* self ) const
+void ClassArray::dispose( void* self ) const
 {
    ItemArray* f = static_cast<ItemArray*>(self);
    delete f;
 }
 
 
-void* CoreArray::clone( void* source ) const
+void* ClassArray::clone( void* source ) const
 {
    ItemArray* array = static_cast<ItemArray*>(source);
    return new ItemArray(*array);
 }
 
 
-void CoreArray::serialize( DataWriter*, void* ) const
+void ClassArray::serialize( DataWriter*, void* ) const
 {
    // todo
 }
 
 
-void* CoreArray::deserialize( DataReader* ) const
+void* ClassArray::deserialize( DataReader* ) const
 {
    //todo
    return 0;
 }
 
 
-void CoreArray::describe( void* instance, String& target, int maxDepth, int maxLen ) const
+void ClassArray::describe( void* instance, String& target, int maxDepth, int maxLen ) const
 {
    ItemArray* arr = static_cast<ItemArray*>(instance);
    target += "[";
@@ -86,7 +86,7 @@ void CoreArray::describe( void* instance, String& target, int maxDepth, int maxL
 }
 
 
-void CoreArray::op_create( VMachine* vm, int pcount ) const
+void ClassArray::op_create( VMachine* vm, int pcount ) const
 {
    static Collector* coll = Engine::instance()->collector();
 
@@ -106,12 +106,12 @@ void CoreArray::op_create( VMachine* vm, int pcount ) const
 }
 
 
-void CoreArray::op_getProperty( VMachine* vm, void* self, const String& property ) const
+void ClassArray::op_getProperty( VMachine* vm, void* self, const String& property ) const
 {
    Class::op_getProperty( vm, self, property );
 }
 
-void CoreArray::op_getIndex( VMachine* vm, void* self ) const
+void ClassArray::op_getIndex( VMachine* vm, void* self ) const
 {
    Item *index, *arritem;
    vm->operands( arritem, index );
@@ -134,7 +134,7 @@ void CoreArray::op_getIndex( VMachine* vm, void* self ) const
 }
 
 
-void CoreArray::op_setIndex( VMachine* vm, void* self ) const
+void ClassArray::op_setIndex( VMachine* vm, void* self ) const
 {
    Item* value, *index, *arritem;
    vm->operands( value, arritem, index );
@@ -160,14 +160,14 @@ void CoreArray::op_setIndex( VMachine* vm, void* self ) const
 }
 
 
-void CoreArray::gcMark( void* self, uint32 mark ) const
+void ClassArray::gcMark( void* self, uint32 mark ) const
 {
    ItemArray& array = *static_cast<ItemArray*>(self);
    array.gcMark( mark );
 }
 
 
-void CoreArray::enumerateProperties( void*, PropertyEnumerator& ) const
+void ClassArray::enumerateProperties( void*, PropertyEnumerator& ) const
 {
    // TODO array bindings?
 }
@@ -176,7 +176,7 @@ void CoreArray::enumerateProperties( void*, PropertyEnumerator& ) const
 //=======================================================================
 //
 
-void CoreArray::op_add( VMachine *vm, void* self ) const
+void ClassArray::op_add( VMachine *vm, void* self ) const
 {
    static Class* arrayClass = Engine::instance()->arrayClass();
    static Collector* coll = Engine::instance()->collector();
@@ -211,7 +211,7 @@ void CoreArray::op_add( VMachine *vm, void* self ) const
 }
 
 
-void CoreArray::op_aadd( VMachine *vm, void* self ) const
+void ClassArray::op_aadd( VMachine *vm, void* self ) const
 {
    ItemArray* array = static_cast<ItemArray*>(self);
    Item* op1, *op2;
@@ -237,13 +237,13 @@ void CoreArray::op_aadd( VMachine *vm, void* self ) const
 }
 
 
-void CoreArray::op_isTrue( VMachine *vm, void* self) const
+void ClassArray::op_isTrue( VMachine *vm, void* self) const
 {
    vm->stackResult(1, static_cast<ItemArray*>(self)->length() != 0 );
 }
 
 
-void CoreArray::op_toString( VMachine *vm, void* self ) const
+void ClassArray::op_toString( VMachine *vm, void* self ) const
 {
    String s;
    s.A("[Array of ").N(static_cast<ItemArray*>(self)->length()).A(" elements]");
@@ -251,7 +251,7 @@ void CoreArray::op_toString( VMachine *vm, void* self ) const
 }
 
 #if 0
-void CoreArray::op_toString( VMachine *vm, void* self ) const
+void ClassArray::op_toString( VMachine *vm, void* self ) const
    // If we're long 0, surrender.
    ItemArray* array = static_cast<ItemArray*>(self);
 
@@ -273,13 +273,13 @@ void CoreArray::op_toString( VMachine *vm, void* self ) const
 }
 
 
-CoreArray::ToStringNextOp::ToStringNextOp()
+ClassArray::ToStringNextOp::ToStringNextOp()
 {
    apply = apply_;
 }
 
 
-void CoreArray::ToStringNextOp::apply_( const PStep* step, VMachine* vm )
+void ClassArray::ToStringNextOp::apply_( const PStep* step, VMachine* vm )
 {
    VMContext* ctx = vm->currentContext();
    
@@ -343,4 +343,4 @@ void CoreArray::ToStringNextOp::apply_( const PStep* step, VMachine* vm )
 
 }
 
-/* end of corearray.cpp */
+/* end of classarray.cpp */

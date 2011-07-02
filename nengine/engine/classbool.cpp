@@ -1,8 +1,8 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: corebool.cpp
+   FILE: classbool.cpp
 
-   Class defined by a Falcon script.
+   Class handler managing Boolean items.
    -------------------------------------------------------------------
    Author: Francesco Magliocca
    Begin: Sun, 19 Jun 2011 12:40:06 +0200
@@ -14,7 +14,7 @@
 */
 
 
-#include <falcon/corebool.h>
+#include <falcon/classbool.h>
 #include <falcon/item.h>
 #include <falcon/itemid.h>
 #include <falcon/vm.h>
@@ -22,18 +22,18 @@
 
 namespace Falcon {
 
-CoreBool::CoreBool() :
+ClassBool::ClassBool() :
    Class( "Boolean", FLC_ITEM_BOOL )
    
 { 
 }
 
-CoreBool::~CoreBool()
+ClassBool::~ClassBool()
 {
 }
 
 
-void CoreBool::op_create( VMachine* vm, int pcount ) const
+void ClassBool::op_create( VMachine* vm, int pcount ) const
 {
    if ( pcount >= 1 )
    {
@@ -61,12 +61,12 @@ void CoreBool::op_create( VMachine* vm, int pcount ) const
 }
 
 
-void CoreBool::NextOpCreate::apply_( const PStep*, VMachine* vm )
+void ClassBool::NextOpCreate::apply_( const PStep*, VMachine* vm )
 {
    vm->currentContext()->topData().setBoolean(vm->currentContext()->topData().isTrue());
 }
 
-void CoreBool::dispose( void *self ) const
+void ClassBool::dispose( void *self ) const
 {
 
    Item *data = static_cast<Item*>( self );
@@ -76,7 +76,7 @@ void CoreBool::dispose( void *self ) const
 }
 
 
-void* CoreBool::clone( void *self ) const
+void* ClassBool::clone( void *self ) const
 {
    Item *result = new Item;
 
@@ -86,33 +86,33 @@ void* CoreBool::clone( void *self ) const
 }
 
 
-void CoreBool::serialize( DataWriter*, void* ) const
+void ClassBool::serialize( DataWriter*, void* ) const
 {
    // TODO
 }
 
 
-void* CoreBool::deserialize( DataReader* ) const
+void* ClassBool::deserialize( DataReader* ) const
 {
    // TODO
    return 0;
 }
 
-void CoreBool::describe( void *instance, String& target, int, int ) const
+void ClassBool::describe( void *instance, String& target, int, int ) const
 {
    target += static_cast<Item*>( instance )->asBoolean() ? "true" : "false";
 }
 
 // ===========================================================================
 
-void CoreBool::op_isTrue( VMachine *vm, void* ) const
+void ClassBool::op_isTrue( VMachine *vm, void* ) const
 {
    Item* iself;
    OpToken token( vm, iself );
    token.exit( iself->asBoolean() );
 }
 
-void CoreBool::op_toString( VMachine *vm, void* ) const
+void ClassBool::op_toString( VMachine *vm, void* ) const
 {
    Item* iself;
    OpToken token( vm, iself );
@@ -120,5 +120,6 @@ void CoreBool::op_toString( VMachine *vm, void* ) const
    token.exit( s );
 }
 
-
 }
+
+/* end of classbool.cpp */

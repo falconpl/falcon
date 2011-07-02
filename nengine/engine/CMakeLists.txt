@@ -61,19 +61,19 @@ add_library(falcon_engine SHARED
   autowstring.cpp
   bom.cpp
   class.cpp
+  classarray.cpp
+  classbool.cpp
+  classclass.cpp
+  classdict.cpp
+  classfunction.cpp
+  classint.cpp
+  classnil.cpp
+  classnumeric.cpp
+  classstring.cpp
   closedsymbol.cpp
   codeerror.cpp
   collector.cpp
   collector_history.cpp
-  corearray.cpp
-  coreclass.cpp
-  coredict.cpp
-  corefunction.cpp
-  corenil.cpp
-  coreint.cpp
-  corenumeric.cpp
-  corebool.cpp
-  corestring.cpp
   datareader.cpp
   datawriter.cpp
   directory.cpp

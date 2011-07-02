@@ -1,6 +1,6 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: corestring.h
+   FILE: classstring.h
 
    String object handler.
    -------------------------------------------------------------------
@@ -13,8 +13,8 @@
    See LICENSE file for licensing details.
 */
 
-#ifndef _FALCON_CORESTRING_H_
-#define _FALCON_CORESTRING_H_
+#ifndef _FALCON_CLASSSTRING_H_
+#define _FALCON_CLASSSTRING_H_
 
 #include <falcon/setup.h>
 #include <falcon/class.h>
@@ -28,12 +28,12 @@ namespace Falcon
  Class handling a string as an item in a falcon script.
  */
 
-class FALCON_DYN_CLASS CoreString: public Class
+class FALCON_DYN_CLASS ClassString: public Class
 {
 public:
 
-   CoreString();
-   virtual ~CoreString();
+   ClassString();
+   virtual ~ClassString();
 
    virtual void dispose( void* self ) const;
    virtual void* clone( void* source ) const;
@@ -66,6 +66,6 @@ private:
 
 }
 
-#endif /* _FALCON_CORESTRING_H_ */
+#endif /* _FALCON_CLASSSTRING_H_ */
 
-/* end of corestring.h */
+/* end of classstring.h */

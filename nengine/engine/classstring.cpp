@@ -1,6 +1,6 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: corestring.cpp
+   FILE: classstring.cpp
 
    String type handler.
    -------------------------------------------------------------------
@@ -13,7 +13,7 @@
    See LICENSE file for licensing details.
 */
 
-#include <falcon/corestring.h>
+#include <falcon/classstring.h>
 #include <falcon/itemid.h>
 #include <falcon/vm.h>
 #include <falcon/optoken.h>
@@ -22,39 +22,39 @@
 
 namespace Falcon {
 
-CoreString::CoreString():
+ClassString::ClassString():
    Class("String", FLC_CLASS_ID_STRING )
 {
 }
 
 
-CoreString::~CoreString()
+ClassString::~ClassString()
 {
 }
 
 
-void CoreString::dispose( void* self ) const
+void ClassString::dispose( void* self ) const
 {
    String* f = static_cast<String*>(self);
    delete f;
 }
 
 
-void* CoreString::clone( void* source ) const
+void* ClassString::clone( void* source ) const
 {
    String* s = static_cast<String*>(source);
    return new String(*s);
 }
 
 
-void CoreString::serialize( DataWriter* stream, void* self ) const
+void ClassString::serialize( DataWriter* stream, void* self ) const
 {
    String* s = static_cast<String*>(self);
    s->serialize(stream);
 }
 
 
-void* CoreString::deserialize( DataReader* stream ) const
+void* ClassString::deserialize( DataReader* stream ) const
 {
    String* s = new String;
    try {
@@ -69,7 +69,7 @@ void* CoreString::deserialize( DataReader* stream ) const
    return s;
 }
 
-void CoreString::describe( void* instance, String& target, int, int maxlen ) const
+void ClassString::describe( void* instance, String& target, int, int maxlen ) const
 {
    String* self = static_cast<String*>(instance);
    target.size(0);
@@ -90,7 +90,7 @@ void CoreString::describe( void* instance, String& target, int, int maxlen ) con
 //=======================================================================
 // Addition
 
-void CoreString::op_add( VMachine *vm, void* self ) const
+void ClassString::op_add( VMachine *vm, void* self ) const
 {
    String* str = static_cast<String*>(self);
    Item* op1, *op2;
@@ -133,7 +133,7 @@ void CoreString::op_add( VMachine *vm, void* self ) const
 // Auto Addition
 //
 
-void CoreString::op_create( VMachine *vm, int pcount ) const
+void ClassString::op_create( VMachine *vm, int pcount ) const
 {
    // no param?
    if( pcount == 0 )
@@ -167,7 +167,7 @@ void CoreString::op_create( VMachine *vm, int pcount ) const
 }
 
 
-void CoreString::op_aadd( VMachine *vm, void* self ) const
+void ClassString::op_aadd( VMachine *vm, void* self ) const
 {
    String* str = static_cast<String*>(self);
    Item* op1, *op2;
@@ -221,13 +221,13 @@ void CoreString::op_aadd( VMachine *vm, void* self ) const
    }
 }
 
-CoreString::NextOp::NextOp()
+ClassString::NextOp::NextOp()
 {
    apply = apply_;
 }
 
 
-void CoreString::NextOp::apply_( const PStep*, VMachine* vm )
+void ClassString::NextOp::apply_( const PStep*, VMachine* vm )
 {
    // The result of a deep call is in A
    Item* op1, *op2;
@@ -249,7 +249,7 @@ void CoreString::NextOp::apply_( const PStep*, VMachine* vm )
    }
 }
 
-void CoreString::op_getIndex( VMachine* vm, void* self ) const
+void ClassString::op_getIndex( VMachine* vm, void* self ) const
 {
    Item *index, *stritem;
    vm->operands( stritem, index );
@@ -277,7 +277,7 @@ void CoreString::op_getIndex( VMachine* vm, void* self ) const
 // Comparation
 //
 
-void CoreString::op_compare( VMachine *vm, void* self ) const
+void ClassString::op_compare( VMachine *vm, void* self ) const
 {
    Item* op1, *op2;
    OpToken token( vm, op1, op2 );
@@ -304,12 +304,12 @@ void CoreString::op_compare( VMachine *vm, void* self ) const
 }
 
 
-void CoreString::op_toString( VMachine *, void* ) const
+void ClassString::op_toString( VMachine *, void* ) const
 {
    // nothing to do -- the topmost item of the stack is already a string.
 }
 
-void CoreString::op_true( VMachine * vm, void* str) const
+void ClassString::op_true( VMachine * vm, void* str) const
 {
    Item* op1;
    OpToken token( vm, op1 );
@@ -318,4 +318,4 @@ void CoreString::op_true( VMachine * vm, void* str) const
 
 }
 
-/* end of corestring.cpp */
+/* end of classstring.cpp */

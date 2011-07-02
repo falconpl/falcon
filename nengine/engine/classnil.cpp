@@ -1,6 +1,6 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: corenil.cpp
+   FILE: classnil.cpp
 
    Function object handler.
    -------------------------------------------------------------------
@@ -13,7 +13,7 @@
    See LICENSE file for licensing details.
 */
 
-#include <falcon/corenil.h>
+#include <falcon/classnil.h>
 #include <falcon/itemid.h>
 #include <falcon/item.h>
 
@@ -21,45 +21,45 @@
 
 namespace Falcon {
 
-CoreNil::CoreNil():
+ClassNil::ClassNil():
    Class("Nil", FLC_ITEM_NIL )
 {
 }
 
 
-CoreNil::~CoreNil()
+ClassNil::~ClassNil()
 {
 }
 
 
-void CoreNil::op_create( VMachine* vm, int pcount ) const
+void ClassNil::op_create( VMachine* vm, int pcount ) const
 {
    vm->stackResult( pcount + 1, Item( ) );
 }
 
 
-void CoreNil::dispose( void* ) const
+void ClassNil::dispose( void* ) const
 {
 }
 
 
-void* CoreNil::clone( void* ) const
-{
-   return 0;
-}
-
-
-void CoreNil::serialize( DataWriter*, void* ) const
-{
-}
-
-
-void* CoreNil::deserialize( DataReader* ) const
+void* ClassNil::clone( void* ) const
 {
    return 0;
 }
 
-void CoreNil::describe( void*, String& target, int, int ) const
+
+void ClassNil::serialize( DataWriter*, void* ) const
+{
+}
+
+
+void* ClassNil::deserialize( DataReader* ) const
+{
+   return 0;
+}
+
+void ClassNil::describe( void*, String& target, int, int ) const
 {
    target = "Nil";
 }
@@ -67,10 +67,10 @@ void CoreNil::describe( void*, String& target, int, int ) const
 //=======================================================================
 //
 
-void CoreNil::op_isTrue( VMachine *vm, void* ) const
+void ClassNil::op_isTrue( VMachine *vm, void* ) const
 {
    vm->stackResult( 1, false );
 }
 }
 
-/* end of CoreNil.cpp */
+/* end of ClassNil.cpp */

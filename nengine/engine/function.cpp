@@ -18,7 +18,7 @@
 #include <falcon/closedsymbol.h>
 #include <falcon/item.h>
 #include <falcon/collector.h>
-#include <falcon/corefunction.h>
+#include <falcon/classfunction.h>
 #include <falcon/module.h>
 
 #include <falcon/engine.h>

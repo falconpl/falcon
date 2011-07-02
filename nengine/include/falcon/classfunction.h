@@ -1,11 +1,11 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: corenil.h
+   FILE: classfunction.h
 
-   Nil object handler.
+   Function object handler.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
-   Begin: Sun, 13 Feb 2011 15:11:01 +0100
+   Begin: Sat, 15 Jan 2011 19:09:07 +0100
 
    -------------------------------------------------------------------
    (C) Copyright 2011: the FALCON developers (see list in AUTHORS file)
@@ -13,8 +13,8 @@
    See LICENSE file for licensing details.
 */
 
-#ifndef _FALCON_CORENIL_H_
-#define _FALCON_CORENIL_H_
+#ifndef FALCON_CLASSFUNCTION_H_
+#define FALCON_CLASSFUNCTION_H_
 
 #include <falcon/setup.h>
 #include <falcon/class.h>
@@ -22,16 +22,19 @@
 namespace Falcon
 {
 
+class Function;
+class Module;
+
 /**
- Class handling a string as an item in a falcon script.
+ Class handling a function as an item in a falcon script.
  */
 
-class FALCON_DYN_CLASS CoreNil: public Class
+class FALCON_DYN_CLASS ClassFunction: public Class
 {
 public:
 
-   CoreNil();
-   virtual ~CoreNil();
+   ClassFunction();
+   virtual ~ClassFunction();
 
    virtual void dispose( void* self ) const;
    virtual void* clone( void* source ) const;
@@ -40,14 +43,16 @@ public:
 
    virtual void describe( void* instance, String& target, int maxDepth = 3, int maxLength = 60 ) const;
 
-   //=============================================================
+   //=====================================================
+   // Operators.
+   //
+   // Can a function instance be created?
+   // virtual void op_create( VMachine *vm, int32 pcount ) const;
 
-   virtual void op_create( VMachine *vm, int32 pcount ) const;
-   virtual void op_isTrue( VMachine *vm, void* self ) const;
 };
 
 }
 
-#endif /* _FALCON_CORENIL_H_ */
+#endif /* FUNCTION_H_ */
 
-/* end of corenil.h */
+/* end of classfunction.h */

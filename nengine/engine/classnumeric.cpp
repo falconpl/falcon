@@ -1,6 +1,6 @@
 /*
  FALCON - The Falcon Programming Language.
- FILE: corenumeric.cpp
+ FILE: classnumeric.cpp
  
  Function object handler.
  -------------------------------------------------------------------
@@ -13,7 +13,7 @@
  See LICENSE file for licensing details.
  */
 
-#include <falcon/corenumeric.h>
+#include <falcon/classnumeric.h>
 #include <falcon/itemid.h>
 #include <falcon/item.h>
 #include <falcon/optoken.h>
@@ -28,11 +28,11 @@
 namespace Falcon {
     
 
-CoreNumeric::CoreNumeric() : Class( "Numeric", FLC_ITEM_NUM ) { }
+ClassNumeric::ClassNumeric() : Class( "Numeric", FLC_ITEM_NUM ) { }
 
-CoreNumeric::~CoreNumeric() { }
+ClassNumeric::~ClassNumeric() { }
 
-void CoreNumeric::op_create( VMachine *vm, int pcount ) const
+void ClassNumeric::op_create( VMachine *vm, int pcount ) const
 {
    if( pcount > 0 )
    {
@@ -65,7 +65,7 @@ void CoreNumeric::op_create( VMachine *vm, int pcount ) const
 }
 
 
-void CoreNumeric::dispose( void *self ) const {
+void ClassNumeric::dispose( void *self ) const {
     
    Item *data = (Item*)self;
     
@@ -73,7 +73,7 @@ void CoreNumeric::dispose( void *self ) const {
     
 }
 
-void *CoreNumeric::clone( void *source ) const {
+void *ClassNumeric::clone( void *source ) const {
     
    Item *result = new Item;
     
@@ -83,7 +83,7 @@ void *CoreNumeric::clone( void *source ) const {
     
 }
 
-void CoreNumeric::serialize( DataWriter *stream, void *self ) const {
+void ClassNumeric::serialize( DataWriter *stream, void *self ) const {
     
    numeric value = static_cast< Item* >( self )->asNumeric();
 
@@ -92,7 +92,7 @@ void CoreNumeric::serialize( DataWriter *stream, void *self ) const {
 }
 
 
-void* CoreNumeric::deserialize( DataReader *stream ) const {
+void* ClassNumeric::deserialize( DataReader *stream ) const {
     
    numeric value;
 
@@ -102,7 +102,7 @@ void* CoreNumeric::deserialize( DataReader *stream ) const {
     
 }
 
-void CoreNumeric::describe( void* instance, String& target, int, int  ) const {
+void ClassNumeric::describe( void* instance, String& target, int, int  ) const {
     
    target.N(((Item*) instance)->asNumeric() );
     
@@ -111,14 +111,14 @@ void CoreNumeric::describe( void* instance, String& target, int, int  ) const {
 // ================================================================
 
 
-void CoreNumeric::op_isTrue( VMachine *vm, void* ) const
+void ClassNumeric::op_isTrue( VMachine *vm, void* ) const
 {
    Item* iself;
    OpToken token( vm, iself );
    token.exit( iself->asNumeric() != 0 );
 }
 
-void CoreNumeric::op_toString( VMachine *vm, void* ) const
+void ClassNumeric::op_toString( VMachine *vm, void* ) const
 {
    Item* iself;
    OpToken token( vm, iself );
@@ -126,7 +126,7 @@ void CoreNumeric::op_toString( VMachine *vm, void* ) const
    token.exit( s.N(iself->asNumeric()) );
 }
 
-void CoreNumeric::op_add( VMachine *vm, void* ) const {
+void ClassNumeric::op_add( VMachine *vm, void* ) const {
     
    Item *self, *op2;
 
@@ -143,7 +143,7 @@ void CoreNumeric::op_add( VMachine *vm, void* ) const {
     
 }
 
-void CoreNumeric::op_sub( VMachine *vm, void* ) const {
+void ClassNumeric::op_sub( VMachine *vm, void* ) const {
     
    Item *self, *op2;
 
@@ -161,7 +161,7 @@ void CoreNumeric::op_sub( VMachine *vm, void* ) const {
 }
 
 
-void CoreNumeric::op_mul( VMachine *vm, void* ) const {
+void ClassNumeric::op_mul( VMachine *vm, void* ) const {
     
    Item *self, *op2;
 
@@ -179,7 +179,7 @@ void CoreNumeric::op_mul( VMachine *vm, void* ) const {
 }
 
 
-void CoreNumeric::op_div( VMachine *vm, void* ) const {
+void ClassNumeric::op_div( VMachine *vm, void* ) const {
     
    Item *self, *op2;
 
@@ -197,7 +197,7 @@ void CoreNumeric::op_div( VMachine *vm, void* ) const {
 }
 
 
-void CoreNumeric::op_pow( VMachine *vm, void* ) const {
+void ClassNumeric::op_pow( VMachine *vm, void* ) const {
     
    Item *self, *op2;
 
@@ -214,7 +214,7 @@ void CoreNumeric::op_pow( VMachine *vm, void* ) const {
 }
 
 
-void CoreNumeric::op_aadd( VMachine *vm, void*) const {
+void ClassNumeric::op_aadd( VMachine *vm, void*) const {
     
    Item *self, *op2;
 
@@ -234,7 +234,7 @@ void CoreNumeric::op_aadd( VMachine *vm, void*) const {
     
 }
 
-void CoreNumeric::op_asub( VMachine *vm, void* ) const {
+void ClassNumeric::op_asub( VMachine *vm, void* ) const {
     
    Item *self, *op2;
 
@@ -255,7 +255,7 @@ void CoreNumeric::op_asub( VMachine *vm, void* ) const {
 }
 
 
-void CoreNumeric::op_amul( VMachine *vm, void* ) const {
+void ClassNumeric::op_amul( VMachine *vm, void* ) const {
     
    Item *self, *op2;
 
@@ -276,7 +276,7 @@ void CoreNumeric::op_amul( VMachine *vm, void* ) const {
 }
 
 
-void CoreNumeric::op_adiv( VMachine *vm, void* ) const {
+void ClassNumeric::op_adiv( VMachine *vm, void* ) const {
     
    Item *self, *op2;
 
@@ -297,7 +297,7 @@ void CoreNumeric::op_adiv( VMachine *vm, void* ) const {
 }
 
 
-void CoreNumeric::op_apow( VMachine *vm, void* ) const {
+void ClassNumeric::op_apow( VMachine *vm, void* ) const {
     
    Item *self, *op2;
 
@@ -318,7 +318,7 @@ void CoreNumeric::op_apow( VMachine *vm, void* ) const {
 }
 
 
-void CoreNumeric::op_inc(VMachine *vm, void* ) const {
+void ClassNumeric::op_inc(VMachine *vm, void* ) const {
     
    Item *self;
 
@@ -329,7 +329,7 @@ void CoreNumeric::op_inc(VMachine *vm, void* ) const {
 }
 
 
-void CoreNumeric::op_dec(VMachine *vm, void*) const {
+void ClassNumeric::op_dec(VMachine *vm, void*) const {
     
    Item *self;
 
@@ -340,14 +340,14 @@ void CoreNumeric::op_dec(VMachine *vm, void*) const {
 }
 
 
-void CoreNumeric::op_incpost(VMachine *, void* ) const {
+void ClassNumeric::op_incpost(VMachine *, void* ) const {
     
    // TODO
     
 }
 
 
-void CoreNumeric::op_decpost(VMachine *, void* ) const {
+void ClassNumeric::op_decpost(VMachine *, void* ) const {
     
    // TODO
     

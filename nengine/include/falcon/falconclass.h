@@ -33,7 +33,7 @@ class DataReader;
 class DataWriter;
 class FalconState;
 class Expression;
-class CoreClass;
+class ClassClass;
 
 /** Class defined by a Falcon script.
 

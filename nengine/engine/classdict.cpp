@@ -1,6 +1,6 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: coredict.cpp
+   FILE: classdict.cpp
 
    Function object handler.
    -------------------------------------------------------------------
@@ -13,7 +13,7 @@
    See LICENSE file for licensing details.
 */
 
-#include <falcon/coredict.h>
+#include <falcon/classdict.h>
 #include <falcon/itemid.h>
 #include <falcon/vm.h>
 
@@ -25,44 +25,44 @@ namespace Falcon {
 
 typedef std::map<Item, Item> ItemDictionary;
 
-CoreDict::CoreDict():
+ClassDict::ClassDict():
    Class("Dictionary", FLC_CLASS_ID_DICT )
 {
 }
 
 
-CoreDict::~CoreDict()
+ClassDict::~ClassDict()
 {
 }
 
 
-void CoreDict::dispose( void* self ) const
+void ClassDict::dispose( void* self ) const
 {
    ItemDictionary* f = static_cast<ItemDictionary*>(self);
    delete f;
 }
 
 
-void* CoreDict::clone( void* source ) const
+void* ClassDict::clone( void* source ) const
 {
    ItemDictionary* array = static_cast<ItemDictionary*>(source);
    return new ItemDictionary(*array);
 }
 
 
-void CoreDict::serialize( DataWriter*, void* ) const
+void ClassDict::serialize( DataWriter*, void* ) const
 {
    // todo
 }
 
 
-void* CoreDict::deserialize( DataReader* ) const
+void* ClassDict::deserialize( DataReader* ) const
 {
    //todo
    return 0;
 }
 
-void CoreDict::describe( void* instance, String& target, int maxDepth, int maxLen ) const
+void ClassDict::describe( void* instance, String& target, int maxDepth, int maxLen ) const
 {
    if( maxDepth == 0 )
    {
@@ -105,7 +105,7 @@ void CoreDict::describe( void* instance, String& target, int maxDepth, int maxLe
 
 
 
-void CoreDict::gcMark( void* self, uint32 mark ) const
+void ClassDict::gcMark( void* self, uint32 mark ) const
 {
    ItemDictionary& dict = *static_cast<ItemDictionary*>(self);
    ItemDictionary::iterator pos = dict.begin();
@@ -131,30 +131,30 @@ void CoreDict::gcMark( void* self, uint32 mark ) const
    }
 }
 
-void CoreDict::enumerateProperties( void*, PropertyEnumerator& cb ) const
+void ClassDict::enumerateProperties( void*, PropertyEnumerator& cb ) const
 {
    cb("len", true);
 }
 
 //=======================================================================
 //
-void CoreDict::op_create( VMachine* vm, int pcount ) const
+void ClassDict::op_create( VMachine* vm, int pcount ) const
 {
    static Collector* coll = Engine::instance()->collector();
    vm->stackResult( pcount + 1, FALCON_GC_STORE( coll, this, new ItemDictionary ) );
 }
 
-void CoreDict::op_add( VMachine *, void* ) const
+void ClassDict::op_add( VMachine *, void* ) const
 {
    //TODO
 }
 
-void CoreDict::op_isTrue( VMachine *vm, void* self ) const
+void ClassDict::op_isTrue( VMachine *vm, void* self ) const
 {
    vm->stackResult( 1, static_cast<ItemDictionary*>(self)->size() != 0 );
 }
 
-void CoreDict::op_toString( VMachine *vm, void* self ) const
+void ClassDict::op_toString( VMachine *vm, void* self ) const
 {
    String s;
    s.A("[Dictionary of ").N((int64)static_cast<ItemDictionary*>(self)->size()).A(" elements]");
@@ -162,12 +162,12 @@ void CoreDict::op_toString( VMachine *vm, void* self ) const
 }
 
 
-void CoreDict::op_getProperty( VMachine *vm, void* self, const String& property ) const
+void ClassDict::op_getProperty( VMachine *vm, void* self, const String& property ) const
 {
    Class::op_getProperty( vm, self, property );
 }
 
-void CoreDict::op_getIndex( VMachine* vm, void* self ) const
+void ClassDict::op_getIndex( VMachine* vm, void* self ) const
 {
    Item *index, *dict_item;
    vm->operands( index, dict_item );
@@ -185,7 +185,7 @@ void CoreDict::op_getIndex( VMachine* vm, void* self ) const
    }
 }
 
-void CoreDict::op_setIndex( VMachine* vm, void* self ) const
+void ClassDict::op_setIndex( VMachine* vm, void* self ) const
 {
    Item *value, *index, *dict_item;
    vm->operands( value, index, dict_item );
@@ -198,4 +198,4 @@ void CoreDict::op_setIndex( VMachine* vm, void* self ) const
 
 }
 
-/* end of coredict.cpp */
+/* end of classdict.cpp */

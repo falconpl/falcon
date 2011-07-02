@@ -17,7 +17,7 @@
 
 #include <falcon/exprarray.h>
 #include <falcon/itemarray.h>
-#include <falcon/corearray.h>
+#include <falcon/classarray.h>
 
 #include <falcon/pcode.h>
 #include <falcon/vm.h>

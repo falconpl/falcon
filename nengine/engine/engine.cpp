@@ -47,15 +47,15 @@
 #include <falcon/collector.h>
 
 //--- type headers ---
-#include <falcon/corefunction.h>
-#include <falcon/corenil.h>
-#include <falcon/corebool.h>
-#include <falcon/coreint.h>
-#include <falcon/corenumeric.h>
-#include <falcon/corestring.h>
-#include <falcon/corearray.h>
-#include <falcon/coredict.h>
-#include <falcon/coreclass.h>
+#include <falcon/classfunction.h>
+#include <falcon/classnil.h>
+#include <falcon/classbool.h>
+#include <falcon/classint.h>
+#include <falcon/classnumeric.h>
+#include <falcon/classstring.h>
+#include <falcon/classarray.h>
+#include <falcon/classdict.h>
+#include <falcon/classclass.h>
 
 //--- error headers ---
 #include <falcon/accesserror.h>
@@ -73,7 +73,7 @@
 #include <falcon/paranoid.h>
 #include <map>
 
-#include "falcon/corenumeric.h"
+#include "falcon/classnumeric.h"
 
 namespace Falcon
 {
@@ -274,22 +274,22 @@ Engine::Engine()
    //=====================================
    // Initialization of standard deep types.
    //
-   m_functionClass = new CoreFunction;
-   m_stringClass = new CoreString;
-   m_arrayClass = new CoreArray;
-   m_dictClass = new CoreDict;
-   m_classClass = new CoreClass;
+   m_functionClass = new ClassFunction;
+   m_stringClass = new ClassString;
+   m_arrayClass = new ClassArray;
+   m_dictClass = new ClassDict;
+   m_classClass = new ClassClass;
 
    // Initialization of the class vector.
-   m_classes[FLC_ITEM_NIL] = new CoreNil;
-   m_classes[FLC_ITEM_BOOL] = new CoreBool;
-   m_classes[FLC_ITEM_INT] = new CoreInt;
-   m_classes[FLC_ITEM_NUM] = new CoreNumeric;
+   m_classes[FLC_ITEM_NIL] = new ClassNil;
+   m_classes[FLC_ITEM_BOOL] = new ClassBool;
+   m_classes[FLC_ITEM_INT] = new ClassInt;
+   m_classes[FLC_ITEM_NUM] = new ClassNumeric;
    m_classes[FLC_ITEM_USER] = 0;
    m_classes[FLC_ITEM_FRAMING] = 0;
-   m_classes[FLC_ITEM_FUNC] = new CoreFunction;
-   m_classes[FLC_ITEM_METHOD] = new CoreNil;
-   m_classes[FLC_ITEM_BASEMETHOD] = new CoreNil;
+   m_classes[FLC_ITEM_FUNC] = new ClassFunction;
+   m_classes[FLC_ITEM_METHOD] = new ClassNil;
+   m_classes[FLC_ITEM_BASEMETHOD] = new ClassNil;
    m_classes[FLC_ITEM_DEEP] = 0;
 
    //=====================================

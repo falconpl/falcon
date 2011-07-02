@@ -13,7 +13,7 @@
    See LICENSE file for licensing details.
 */
 
-#include <falcon/coreclass.h>
+#include <falcon/classclass.h>
 #include <falcon/itemid.h>
 #include <falcon/vm.h>
 #include <falcon/optoken.h>
@@ -23,42 +23,42 @@
 
 namespace Falcon {
 
-CoreClass::CoreClass():
+ClassClass::ClassClass():
    Class("Class", FLC_CLASS_ID_CLASS )
 {
 }
 
 
-CoreClass::~CoreClass()
+ClassClass::~ClassClass()
 {
 }
 
 
-void CoreClass::dispose( void* self ) const
+void ClassClass::dispose( void* self ) const
 {
    delete static_cast<Class*>(self);
 }
 
 
-void* CoreClass::clone( void* source ) const
+void* ClassClass::clone( void* source ) const
 {
    return source;
 }
 
 
-void CoreClass::serialize( DataWriter*, void*  ) const
+void ClassClass::serialize( DataWriter*, void*  ) const
 {
    // TODO
 }
 
 
-void* CoreClass::deserialize( DataReader* ) const
+void* ClassClass::deserialize( DataReader* ) const
 {
    // TODO
    return 0;
 }
 
-void CoreClass::describe( void* instance, String& target, int, int ) const
+void ClassClass::describe( void* instance, String& target, int, int ) const
 {
    Class* fc = static_cast<Class*>(instance);
    target = "Class " + fc->name();
@@ -69,13 +69,13 @@ void CoreClass::describe( void* instance, String& target, int, int ) const
 //
 
 
-void CoreClass::op_isTrue( VMachine *vm, void* ) const
+void ClassClass::op_isTrue( VMachine *vm, void* ) const
 {
    // classes are always true
    vm->currentContext()->topData().setBoolean(true);
 }
 
-void CoreClass::op_toString( VMachine *vm , void* item ) const
+void ClassClass::op_toString( VMachine *vm , void* item ) const
 {
    Class* fc = static_cast<Class*>(item);
    String* sret = new String( "Class " );
@@ -84,7 +84,7 @@ void CoreClass::op_toString( VMachine *vm , void* item ) const
 }
 
 
-void CoreClass::op_call( VMachine *vm, int32 pcount, void* self ) const
+void ClassClass::op_call( VMachine *vm, int32 pcount, void* self ) const
 {
    Class* fc = static_cast<Class*>(self);
    fc->op_create( vm, pcount );
