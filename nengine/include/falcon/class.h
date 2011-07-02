@@ -152,21 +152,6 @@ public:
     \return The module where this class resides, or 0 if the class is module-less.
     */
    Module* module() const { return m_module; }
-   
-   /** Return true if this is a FalconClass instance.
-
-    A FalconClass is a specialization of class handling instances of classes declared at
-    script level (or classes written in C++ following the same class model).
-
-    FalconClass instances are known to the engine as they expose a set of properties
-    that are used by the engine to create new classes deriving them from some parents.
-
-    While the engine can derive new classes automatically from user classes, creating
-    the so-called HyperClasses, when combining FalconClasses it is able to derive
-    new classes by just recombining them into a new FalconClass.
-    
-    */
-   bool isFalconClass() const { return m_falconClass; }
 
    //=========================================
    // Instance management
@@ -205,7 +190,7 @@ public:
     Marking a class will keep alive its module, if it has one,
     or all the dynamic functions it stores as methods.
     */
-   virtual void gcMark( uint32 mark );
+   virtual void gcMark( uint32 mark ) const;
 
    /** Callback receiving all the properties in this class. */
    typedef Enumerator<String> PropertyEnumerator;
@@ -578,7 +563,6 @@ public:
 protected:
    String m_name;
    int64 m_typeID;
-   bool m_falconClass;
 
    Module* m_module;
 };

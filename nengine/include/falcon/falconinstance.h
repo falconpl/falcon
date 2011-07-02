@@ -138,7 +138,7 @@ private:
    const FalconClass* m_origin;
    uint32 m_mark;
    
-   friend class CoreInstance;
+   friend class FalconClass;
 };
 
 }

@@ -70,7 +70,6 @@ add_library(falcon_engine SHARED
   coredict.cpp
   corefunction.cpp
   corenil.cpp
-  coreinstance.cpp
   coreint.cpp
   corenumeric.cpp
   corebool.cpp

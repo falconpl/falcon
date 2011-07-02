@@ -56,7 +56,6 @@
 #include <falcon/corearray.h>
 #include <falcon/coredict.h>
 #include <falcon/coreclass.h>
-#include <falcon/coreinstance.h>
 
 //--- error headers ---
 #include <falcon/accesserror.h>
@@ -280,7 +279,6 @@ Engine::Engine()
    m_arrayClass = new CoreArray;
    m_dictClass = new CoreDict;
    m_classClass = new CoreClass;
-   m_instanceClass = new CoreInstance;
 
    // Initialization of the class vector.
    m_classes[FLC_ITEM_NIL] = new CoreNil;
@@ -350,7 +348,6 @@ Engine::~Engine()
    delete m_arrayClass;
    delete m_dictClass;
    delete m_classClass;
-   delete m_instanceClass;
 
    // ===============================
    // Delete standard error classes
@@ -571,13 +568,6 @@ Class* Engine::classClass() const
    fassert( m_instance != 0 );
    return m_instance->m_classClass;
 }
-
-Class* Engine::instanceClass() const
-{
-   fassert( m_instance != 0 );
-   return m_instance->m_instanceClass;
-}
-
 
 //=====================================================
 // Error handlers

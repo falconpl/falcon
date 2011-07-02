@@ -19,6 +19,8 @@
 #include <falcon/setup.h>
 #include <falcon/string.h>
 #include <falcon/enumerator.h>
+#include <falcon/class.h>
+
 
 namespace Falcon
 {
@@ -73,7 +75,7 @@ class CoreClass;
  instance during the link process, while resolving external symbols.
  
  */
-class FALCON_DYN_CLASS FalconClass
+class FALCON_DYN_CLASS FalconClass: public Class
 {
 public:
 
@@ -91,7 +93,6 @@ public:
       typedef enum tag_proptype {
          t_prop,
          t_func,
-         t_expr,
          t_inh,
          t_state
       } Type;
@@ -99,46 +100,32 @@ public:
       Type m_type;
       Value m_value;
 
-      Expression* m_expr;
-
       inline Property( size_t value ):
-         m_type(t_prop),
-         m_expr( 0 )
+         m_type(t_prop)
       {
          m_value.id = value;
       }
 
       inline Property( Function* value ):
-         m_type(t_func),
-         m_expr( 0 )
+         m_type(t_func)
       {
          m_value.func = value;
       }
 
-      inline Property( size_t value, Expression* expr ):
-         m_type( t_expr ),
-         m_expr( expr )
-      {
-         m_value.id = value;
-      }
-
       inline Property( Inheritance* value ):
-         m_type(t_inh),
-         m_expr( 0 )
+         m_type(t_inh)
       {
          m_value.inh = value;
       }
 
       inline Property( FalconState* value ):
-         m_type(t_state),
-         m_expr( 0 )
+         m_type(t_state)
       {
          m_value.state = value;
       }
 
       ~Property();
    };
-
 
    FalconClass( const String& name );
    virtual ~FalconClass();
@@ -170,24 +157,6 @@ public:
     to a FalconClass subclass, and passing it as initValue here.
     */
    bool addProperty( const String& name, const Item& initValue );
-
-   /** Adds a property.
-    \param name The name of the property to be added.
-    \param initExpr The expression that is used to initialize the proeprty.
-    \return True if the property could be added, false if the name was already
-    used.
-
-    Properties added through this method will be initialized in the same order
-    they have been added. They could theretically refer other properties in
-    the "self" entities, so the initialization order is relevant.
-
-    The init method, if present, is invoked after all the expressions have been
-    evaluated.
-
-    \note The expression is property of this class and will be destroyed when the
-    class is destroyed.
-    */
-   bool addProperty( const String& name, Expression* initExpr );
 
     /** Adds a property.
     \param name The name of the property to be added.
@@ -243,7 +212,7 @@ public:
 
     If the name is not found, the method returns false.
     */
-   bool getMember( const String& name, Item& target ) const;
+   bool getProperty( const String& name, Item& target ) const;
 
    /** Gets a member of this class -- as a definition.
     \param name The name of the member to be returned.
@@ -253,15 +222,8 @@ public:
     item in the class and then return a coherent data type to the VM
     that has accessed the item.
     */
-   const Property* getMember( const String& name ) const;
+   const Property* getProperty( const String& name ) const;
 
-   /** Marks the items in this class (if considered necessary).
-    \param mark The mark that is used by GC.
-
-    This is used to mark the default values of the class, if
-    there is one or more deep item in the class.
-    */
-   void gcMark( uint32 mark ) const;
 
    /** Adds a state to this class.
       \param state The state to be added.
@@ -289,27 +251,88 @@ public:
     */
    void deserialize( DataReader* dr );
 
-
-   /** Callback receiving all the properties in this class. */
-   typedef Enumerator<String> PropertyEnumerator;
-
    /** List the members in this class having property semantics.
      @param cb A callback function receiving one property at a time.
+
+    This method enumerates the read-write items of this class. Some
+    properties may contain a function, becoming actually a method,
+    however they have a different semantic. They cannot be changed at
+    class level and they cannot be subject to state changes.
+    
     */
-   void enumerateProperties( PropertyEnumerator& cb ) const;
+   void enumeratePropertiesOnly( PropertyEnumerator& cb ) const;
+
+   
+   //====================================================================
+   // Overrides from Class
+   //
+
+   //=========================================
+   // Instance management
+
+   virtual void dispose( void* self ) const;
+   virtual void* clone( void* source ) const;
+   virtual void serialize( DataWriter* stream, void* self ) const;
+   virtual void* deserialize( DataReader* stream ) const;
+
+   //=========================================================
+   // Class management
+   //
+   
+   /** Marks the items in this class (if considered necessary).
+    \param mark The mark that is used by GC.
+
+    This is used to mark the default values of the class, if
+    there is one or more deep item in the class.
+    */
+   virtual void gcMark( uint32 mark ) const;
+
+   virtual void gcMark( void* self, uint32 mark ) const;
 
    /** List all the properties in this class.
+     @param self An instance (actually, it's unused as the class knows its properties).
      @param cb A callback function receiving one property at a time.
     */
-   void enumerateMembers( PropertyEnumerator& cb ) const;
+   virtual void enumerateProperties( void* self, PropertyEnumerator& cb ) const;
+   virtual bool hasProperty( void* self, const String& prop ) const;
+   virtual void describe( void* instance, String& target, int depth = 3, int maxlen = 60 ) const;
 
-   /** Check if this class has a given membeer.
-    \param name The name of the property to be searched.
-    \return true if the given property is present.
-    */
-   bool hasMember( const String& name ) const;
+   //=========================================================
+   // Operators.
+   //
+
+   virtual void op_create( VMachine *vm, int32 pcount ) const;
+   virtual void op_neg( VMachine *vm, void* self ) const;
+   virtual void op_add( VMachine *vm, void* self ) const;
+   virtual void op_sub( VMachine *vm, void* self ) const;
+   virtual void op_mul( VMachine *vm, void* self ) const;
+   virtual void op_div( VMachine *vm, void* self ) const;
+   virtual void op_mod( VMachine *vm, void* self ) const;
+   virtual void op_pow( VMachine *vm, void* self ) const;
+   virtual void op_aadd( VMachine *vm, void* self) const;
+   virtual void op_asub( VMachine *vm, void* self ) const;
+   virtual void op_amul( VMachine *vm, void* self ) const;
+   virtual void op_adiv( VMachine *vm, void* self ) const;
+   virtual void op_amod( VMachine *vm, void* self ) const;
+   virtual void op_apow( VMachine *vm, void* self ) const;
+   virtual void op_inc(VMachine *vm, void* self ) const;
+   virtual void op_dec(VMachine *vm, void* self) const;
+   virtual void op_incpost(VMachine *vm, void* self ) const;
+   virtual void op_decpost(VMachine *vm, void* self ) const;
+   virtual void op_getIndex(VMachine *vm, void* self ) const;
+   virtual void op_setIndex(VMachine *vm, void* self ) const;
+   virtual void op_getProperty( VMachine *vm, void* self, const String& prop) const;
+   virtual void op_setProperty( VMachine *vm, void* self, const String& prop ) const;
+   virtual void op_compare( VMachine *vm, void* self ) const;
+   virtual void op_isTrue( VMachine *vm, void* self ) const;
+   virtual void op_in( VMachine *vm, void* self ) const;
+   virtual void op_provides( VMachine *vm, void* self, const String& property ) const;
+   virtual void op_call( VMachine *vm, int32 paramCount, void* self ) const;
+   virtual void op_toString( VMachine *vm, void* self ) const;
 
 private:
+   inline void override_unary( VMachine *vm, void*, int op_id, const String& opName ) const;
+   inline void override_binary( VMachine *vm, void*, int op_id, const String& opName ) const;
    // used in deserialization
    FalconClass();
 
@@ -321,6 +344,8 @@ private:
    Function* m_init;
 
    friend class CoreClass;
+
+   Function** m_overrides;
 };
 
 }

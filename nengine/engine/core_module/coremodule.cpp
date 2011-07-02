@@ -29,6 +29,7 @@
 #include <falcon/corenumeric.h>
 #include <falcon/coredict.h>
 #include <falcon/corearray.h>
+#include <falcon/coreclass.h>
 
 namespace Falcon {
 
@@ -53,6 +54,7 @@ CoreModule::CoreModule():
       << new CoreArray
       << new CoreDict
       << new CoreString
+      << new CoreClass
       ;
 }
 

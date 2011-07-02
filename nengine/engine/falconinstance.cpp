@@ -46,10 +46,9 @@ FalconInstance::~FalconInstance()
 
 void FalconInstance::getMember( const String& name, Item& target ) const
 {
-   static Class* cinst = Engine::instance()->instanceClass();
    static Collector* coll = Engine::instance()->collector();
    
-   const FalconClass::Property* prop = m_origin->getMember( name );
+   const FalconClass::Property* prop = m_origin->getProperty( name );
    if( prop == 0 )
    {
       throw new AccessError( ErrorParam( e_prop_acc, __LINE__, __FILE__ ).extra( name ) );
@@ -58,17 +57,16 @@ void FalconInstance::getMember( const String& name, Item& target ) const
    switch( prop->m_type )
    {
       case FalconClass::Property::t_prop:
-      case FalconClass::Property::t_expr:
          target = m_data[ prop->m_value.id ];
          break;
 
       case FalconClass::Property::t_func:
-         target.setDeep( FALCON_GC_STORE( coll, cinst, this ) );
+         target.setDeep( FALCON_GC_STORE( coll, m_origin, this ) );
          target.methodize( prop->m_value.func );
          break;
 
       case FalconClass::Property::t_inh:
-         target.setDeep( FALCON_GC_STORE( coll, cinst, this ) );
+         target.setDeep( FALCON_GC_STORE( coll, m_origin, this ) );
          //TODO
          //target.methodize( prop.m_value.inh. somethin );
          break;
@@ -81,7 +79,7 @@ void FalconInstance::getMember( const String& name, Item& target ) const
 
 void FalconInstance::setProperty( const String& name, const Item& value )
 {
-   const FalconClass::Property* prop = m_origin->getMember( name );
+   const FalconClass::Property* prop = m_origin->getProperty( name );
    if( prop == 0 )
    {
       throw new AccessError( ErrorParam( e_prop_acc, __LINE__, __FILE__ ).extra( name ) );

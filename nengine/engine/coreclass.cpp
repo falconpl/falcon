@@ -14,7 +14,6 @@
 */
 
 #include <falcon/coreclass.h>
-#include <falcon/coreinstance.h>
 #include <falcon/itemid.h>
 #include <falcon/vm.h>
 #include <falcon/optoken.h>

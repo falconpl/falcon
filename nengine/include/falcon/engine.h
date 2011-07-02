@@ -165,17 +165,6 @@ public:
     */
    Class* classClass() const;
 
-   /** Returns the global instance of the CoreInstance class.
-   \return the Engine instance of the FalconInstance handler.
-
-    Method init() must have been called before.
-
-    @note This method will assert and terminate the program if compiled in debug mode
-    in case the engine has not been initialized. In release, it will just
-    return a null pointer.
-    */
-   Class* instanceClass() const;
-
    //==========================================================================
    // Error handlers
    //
@@ -379,7 +368,6 @@ protected:
    Class* m_arrayClass;
    Class* m_dictClass;
    Class* m_classClass;
-   Class* m_instanceClass;
 
    //===============================================
    // Standard error handlers
