@@ -21,6 +21,9 @@
 #include <falcon/enumerator.h>
 #include <falcon/class.h>
 
+#include "pstep.h"
+#include "vmcontext.h"
+
 
 namespace Falcon
 {
@@ -130,10 +133,10 @@ public:
    FalconClass( const String& name );
    virtual ~FalconClass();
 
-   /** Returns the name of this class.
+   /** Returns the name of the falcon class.
     \return the name of this class.
     */
-   const String& name() const { return m_name; }
+   const String& fc_name() const { return m_fc_name; }
 
    /** Creates a new instance.
     \return A new instance created out of this class.
@@ -339,13 +342,22 @@ private:
    class Private;
    Private* _p;
       
-   String m_name;
+   String m_fc_name;
    bool m_shouldMark;
    Function* m_init;
 
    friend class CoreClass;
 
    Function** m_overrides;
+
+   class RemoveSelf: public PStep
+   {
+   public:
+      RemoveSelf() { apply = apply_; }
+      static void apply_( const PStep*, VMContext* );
+   };
+   
+   RemoveSelf m_removeSelf;
 };
 
 }

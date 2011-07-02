@@ -124,7 +124,7 @@ FalconClass::Property::~Property()
 
 FalconClass::FalconClass( const String& name ):
    Class("Object" , FLC_CLASS_ID_OBJECT ),
-   m_name(name),
+   m_fc_name(name),
    m_shouldMark(false),
    m_init(0)
 {
@@ -448,13 +448,10 @@ void FalconClass::enumerateProperties( void* , PropertyEnumerator& cb ) const
    Private::MemberMap::iterator iter = members.begin();
    while( iter != members.end() )
    {
-      if( ! cb( iter->first, ++iter == members.end() ) )
+      const String& name = iter->first;
+      if( ! cb( name, ++iter == members.end() ) )
       {
          break;
-      }
-      else
-      {
-         ++iter;
       }
    }
 }
@@ -506,7 +503,7 @@ void FalconClass::describe( void* instance, String& target, int depth, int maxle
 
    Descriptor rator( inst, target, depth, maxlen );
 
-   target = "Instance of " + name() +"{" ;
+   target = "Instance of " + fc_name() +"{" ;
    enumerateProperties( instance, rator );
    target += "}";
 }
@@ -732,17 +729,21 @@ void FalconClass::op_setProperty( VMContext* ctx, void* self, const String& prop
    {
       Item* first, *second;
       OpToken token( ctx, first, second );
-      Item i_first = *first;
+      Item i_data = *first;
+      Item i_self = *second;
 
       ctx->pushData( (new String(propName))->garbage() );
+      ctx->pushData( i_data );
+      ctx->pushCode( &m_removeSelf );
 
-      // Second and the property string will be removed.
-      ctx->call( override, 2, i_first, true );
+      // Don't mangle the stack, we have to change it.
+      ctx->call( override, 2, i_self, false );
       token.abandon();
    }
    else
    {
-      inst->setProperty( propName, ctx->topData() );
+      inst->setProperty( propName, ctx->opcodeParam(1) );
+      ctx->popData();
    }
 }
 
@@ -822,6 +823,12 @@ void FalconClass::op_toString( VMContext* ctx, void* ) const
       str->append( name() );
       ctx->topData() = str;
    }
+}
+
+void FalconClass::RemoveSelf::apply_( const PStep*, VMContext* ctx)
+{
+   // use the return of the function as the thing to be put on top of the stack
+   ctx->stackResult( 2, ctx->regA() );
 }
 
 }

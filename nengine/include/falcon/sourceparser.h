@@ -196,6 +196,10 @@ public:
    Parsing::Rule r_class;
    Parsing::Rule r_class_p;
 
+   Parsing::NonTerminal S_PropDecl;
+   Parsing::Rule r_propdecl_expr;
+   Parsing::Rule r_propdecl_simple;
+
    //================================================
    // Atom
    //
@@ -259,6 +263,7 @@ public:
 
    Parsing::State s_Main;
    Parsing::State s_InlineFunc;
+   Parsing::State s_ClassBody;
 };
 
 }

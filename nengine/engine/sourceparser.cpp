@@ -1692,16 +1692,17 @@ static void apply_class( const Rule&, Parser& p )
       p.addError( e_already_def,  p.currentSource(), tname->line(), tname->chr(), 0,
          String("at line ").N(symclass->declaredAt()) );
       p.simplify(3);
+      return;
    }
 
    // Ok, we took the symbol.
-   /*Class* cls = new FalconClass( *tname->asString() );
-   
+   Class* cls = new FalconClass( *tname->asString() );
 
-   ctx->openClass(cls, false, symclass);
-   */
    // remove this stuff from the stack
    p.simplify( 3 );
+
+   ctx->openClass(cls, false, symclass);
+   p.pushState( "ClassBody", 0 , &p );
 }
 
 static void apply_class_p( const Rule&, Parser&  )
@@ -1709,6 +1710,37 @@ static void apply_class_p( const Rule&, Parser&  )
  // << T_class << T_Name << T_Openpar << ListSymbol << T_Closepar << T_EOL
 
    //p.simplify( 6 );
+}
+
+static void apply_pdecl_expr( const Rule&, Parser& p  )
+{
+   // << T_Name << T_EqSign << Expr << T_EOL;
+   SourceParser& sp = static_cast<SourceParser&>(p);
+   ParserContext* ctx = static_cast<ParserContext*>(p.context());
+
+   // we should be in class state.
+   FalconClass* cls = (FalconClass*) ctx->currentClass();
+   fassert( cls != 0 );
+
+   TokenInstance* tname = sp.getNextToken(); // T_Name
+   sp.getNextToken(); // =
+   TokenInstance* texpr = sp.getNextToken();
+   sp.getNextToken(); // 'EOL'
+
+   Expression* expr = (Expression*) texpr->detachValue();
+   if( expr->type() == Expression::t_value )
+   {
+      cls->addProperty( *tname->asString(), static_cast<ExprValue*>(expr)->item() );
+      // we don't need the expression anymore
+      delete expr;
+   }
+   else
+   {
+      cls->addProperty( *tname->asString(), Item() );
+      // todo -- add the expression to init
+   }
+   // remove this stuff from the stack
+   p.simplify( 4 );
 }
 
 //==========================================================
@@ -1945,12 +1977,17 @@ SourceParser::SourceParser():
    S_Class << (r_class << "Class decl" << apply_class << T_class << T_Name << T_EOL );
    S_Class << (r_class_p << "Class decl with params" << apply_class_p
              << T_class << T_Name << T_Openpar << ListSymbol << T_Closepar << T_EOL );
+
+   S_PropDecl << "Property declaration";
+   S_PropDecl << (r_propdecl_expr << "Expression Property" << apply_pdecl_expr
+                               << T_Name << T_EqSign << Expr << T_EOL );
    
    //==========================================================================
    //State declarations
    //
    s_Main << "Main"
       << S_Function
+      << S_Class
       << S_Autoexpr
       << S_If
       << S_Elif
@@ -1963,8 +2000,16 @@ SourceParser::SourceParser():
       << S_EmptyLine
       ;
 
+   s_ClassBody << "ClassBody"
+      << S_Function
+      << S_PropDecl
+      << S_End
+      << S_EmptyLine
+      ;
+
    s_InlineFunc << "InlineFunc"
       << S_Function
+      << S_Class
       << S_Autoexpr
       << S_If
       << S_Elif
@@ -1980,6 +2025,7 @@ SourceParser::SourceParser():
 
    addState( s_Main );
    addState( s_InlineFunc );
+   addState( s_ClassBody );
 }
 
 void SourceParser::onPushState( bool isPushedState )

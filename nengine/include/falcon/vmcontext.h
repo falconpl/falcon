@@ -95,6 +95,16 @@ public:
       return m_topData - (count-1);
    }
 
+   inline Item& opcodeParam( int count )
+   {
+      return *(m_topData - count);
+   }
+   
+   inline const Item& opcodeParam( int count ) const
+   {
+      return *(m_topData - count);
+   }
+
    /** Return the nth parameter in the local context.
     *
     *TODO use the local stack.
