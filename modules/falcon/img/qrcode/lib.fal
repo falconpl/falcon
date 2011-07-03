@@ -251,8 +251,8 @@ class QrInputItem(mode, size, data, bitBuf)
       end
 
       dataLength = len(data)
-      if size and size < dataLength
-         data[size:] = "\x0" * (size - dataLength)
+      if size and size > dataLength
+         data[dataLength:] = "\x0" * (size - dataLength)
       end
 
       if not QrInput.verifyMode(mode, size, data)
@@ -1328,9 +1328,9 @@ class QrSplit(data, input, mode)
       if pos >= len(self._data): return QrMode.Null
 
       if self._isDigitAt(self._data, pos)
-         return QrMode.Num;
+         return QrMode.Num
       elif self._isAlNumAt(self._data, pos)
-         return QrMode.An;
+         return QrMode.An
       elif self._mode == QrMode.Kanji
          if pos + 1 < len(self._data)
             word = self._data[*pos] << 8 || self._data[*(pos + 1)]
@@ -1654,6 +1654,26 @@ class QrTools
             mask.createMaskNo(maskNo, width, frame, $bitMask, true)
          end
       end
+   end
+
+   function dumpBitBuf(bitBuf)
+      size = bitBuf.sizeBits()
+      data = arrayBuffer(size , 0)
+      rpos = bitBuf.rposBits()
+      bitBuf.rposBits(0)
+
+      while (count = bitBuf.readableBits()) > 0
+         if count > 8: count = 8
+         bits = bitBuf.bitCount(count).readBits()
+         mask = 0x80
+         mask >>= (8 - count)
+         for i in [0:count]
+            if bits && mask; >> 1; else; >> 0; end
+            mask >>= 1
+         end
+      end
+      >
+      bitBuf.rposBits(rpos)
    end
 end
 
