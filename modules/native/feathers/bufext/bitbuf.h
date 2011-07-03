@@ -441,9 +441,9 @@ public:
             if(_bitpos_w)
             {
                 _bufptr[_arraypos_w] <<= writeable;
-                if(pending > writeable) value >>= writeable;
             }
 
+            value >>= (pending - writeable);
             _bufptr[_arraypos_w] &= ~(mask);        // clear writing region
             _bufptr[_arraypos_w] |= (value & mask); // write new value
 
