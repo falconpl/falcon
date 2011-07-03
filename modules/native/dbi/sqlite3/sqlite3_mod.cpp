@@ -60,16 +60,23 @@ void Sqlite3InBind::onItemChanged( int num )
       break;
 
    case DBIBindItem::t_string:
-      sqlite3_bind_text( m_stmt, num+1, item.asString(), item.asStringLen(), SQLITE_STATIC );
+      //TODO: Here, we could use SQLITE_STATIC for everything except for queries.
+      //That's because sqlite wants the variable binding to stay valid while it
+      //fetches each new record, as it doesn't create the recordset when the query
+      //is launched -- so, we must let SQLite to do its own copy in queries,
+      //but for everything else, the m_ibind storage would be enough. We should
+      //optimize this function so that it relies to SQLITE_TRANSIENT only in queries.
+
+      sqlite3_bind_text( m_stmt, num+1, item.asString(), item.asStringLen(), SQLITE_TRANSIENT );
       break;
 
    case DBIBindItem::t_buffer:
-      sqlite3_bind_blob( m_stmt, num+1, item.asBuffer(), item.asStringLen(), SQLITE_STATIC );
+      sqlite3_bind_blob( m_stmt, num+1, item.asBuffer(), item.asStringLen(), SQLITE_TRANSIENT );
       break;
 
    // the time has normally been decoded in the buffer
    case DBIBindItem::t_time:
-      sqlite3_bind_text( m_stmt, num+1, item.asString(), item.asStringLen(), SQLITE_STATIC );
+      sqlite3_bind_text( m_stmt, num+1, item.asString(), item.asStringLen(), SQLITE_TRANSIENT );
       break;
    }
 }

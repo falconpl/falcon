@@ -560,6 +560,8 @@ protected:
             _bufptr = _heapbuf; // using the heap for read/write operations now
             _myheapbuf = true;
         }
+
+        memset( _bufptr+_maxbytes, 0, newsize - _maxbytes );
         
         _maxbytes = newsize;
     }

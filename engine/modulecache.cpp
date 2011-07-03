@@ -74,10 +74,17 @@ Module* ModuleCache::add( const String& muri, Module* module )
    {
       CacheEntry* mod_cache = *(CacheEntry**) data;
 
-
       // New module?
       // -- if I can't get the stats, in doubt, change it
-      if( ! gotStats || fm.m_mtime->compare( mod_cache->m_ts ) > 0 )
+      if( ! gotStats )
+      {
+         // inserts a null timestamp so any future entry will change it.
+         mod_cache->change( module, TimeStamp() );
+         m_mtx.unlock();
+
+         return module;
+      }
+      else if( fm.m_mtime->compare( mod_cache->m_ts ) > 0 )
       {
          mod_cache->change( module, *fm.m_mtime );
          m_mtx.unlock();
@@ -96,7 +103,17 @@ Module* ModuleCache::add( const String& muri, Module* module )
    }
    else
    {
-      m_modMap.insert( &muri, new CacheEntry( module, *fm.m_mtime ) );
+      // had we been able to get the stats?
+      if( gotStats )
+      {
+         m_modMap.insert( &muri, new CacheEntry( module, *fm.m_mtime ) );
+      }
+      else
+      {
+         // insert the module with a null timestamp; any other timestamp
+         // read later from the system
+         m_modMap.insert( &muri, new CacheEntry( module, TimeStamp() ) );
+      }
       module->incref();
       m_mtx.unlock();
       return module;
