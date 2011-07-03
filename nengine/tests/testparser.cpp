@@ -27,11 +27,11 @@
 #include <falcon/trace.h>
 #include <falcon/application.h>
 
-#include <falcon/sourceparser.h>
-#include <falcon/textreader.h>
+#include <falcon/sp/sourceparser.h>
+#include <falcon/sp/sourcelexer.h>
+#include <falcon/sp/parsercontext.h>
 
-#include <falcon/sourcelexer.h>
-#include <falcon/parsercontext.h>
+#include <falcon/textreader.h>
 #include <falcon/globalsymbol.h>
 #include <falcon/genericerror.h>
 #include <falcon/unknownsymbol.h>

@@ -13,16 +13,18 @@
    See LICENSE file for licensing details.
 */
 
+#undef SRC
+#define SRC "engine/sp/sourcelexer.cpp"
+
 #include <falcon/setup.h>
 #include <falcon/error.h>
 #include <falcon/textreader.h>
-#include <falcon/sourcelexer.h>
-#include <falcon/sourceparser.h>
+#include <falcon/sp/sourcelexer.h>
+#include <falcon/parser/parser.h>
+#include <falcon/sp/sourceparser.h>
 #include <falcon/trace.h>
 
 #include <falcon/parser/tokeninstance.h>
-
-#include "falcon/parser/parser.h"
 
 
 namespace Falcon {

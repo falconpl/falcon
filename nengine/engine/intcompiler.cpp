@@ -27,7 +27,7 @@
 #include <falcon/statement.h>
 
 #include <falcon/parser/parser.h>
-#include <falcon/sourcelexer.h>
+#include <falcon/sp/sourcelexer.h>
 #include <falcon/genericerror.h>
 #include <falcon/syntaxerror.h>
 #include <falcon/codeerror.h>

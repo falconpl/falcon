@@ -18,9 +18,7 @@
 #define	_FALCON_SOURCELEXER_H
 
 #include <falcon/parser/lexer.h>
-
-#include "parser/tokeninstance.h"
-#include "textreader.h"
+#include <falcon/textreader.h>
 
 namespace Falcon {
 

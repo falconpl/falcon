@@ -1,0 +1,177 @@
+/*
+   FALCON - The Falcon Programming Language.
+   FILE: parser_function.cpp
+
+   Parser for Falcon source files -- function declarations handler
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Sun, 03 Jul 2011 18:13:22 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2011: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+#undef SRC
+#define SRC "engine/sp/parser_function.cpp"
+
+#include <falcon/setup.h>
+
+#include <falcon/expression.h>
+#include <falcon/exprvalue.h>
+#include <falcon/globalsymbol.h>
+
+#include <falcon/parser/rule.h>
+#include <falcon/parser/parser.h>
+
+#include <falcon/sp/sourceparser.h>
+#include <falcon/sp/parsercontext.h>
+#include <falcon/sp/parser_deletor.h>
+
+#include <falcon/sp/parser_function.h>
+
+#include "private_types.h"
+
+namespace Falcon {
+
+using namespace Parsing;
+
+static SynFunc* inner_apply_function( const Rule&, Parser& p, bool bHasExpr )
+{
+   //<< (r_Expr_function << "Expr_function" << apply_function << T_function << T_Name << T_Openpar << ListSymbol << T_Closepar << T_EOL )
+   SourceParser& sp = static_cast<SourceParser&>(p);
+   ParserContext* ctx = static_cast<ParserContext*>(p.context());
+
+   sp.getNextToken();//T_function
+   TokenInstance* tname=sp.getNextToken();
+   sp.getNextToken();// '('
+   TokenInstance* targs=sp.getNextToken();
+   sp.getNextToken();// ')'
+   sp.getNextToken();// '\n' or ':'
+
+   TokenInstance* tstatement = 0;
+   int tcount = bHasExpr ? 8 : 6;
+
+   if( bHasExpr )
+   {
+      tstatement = p.getNextToken();
+   }
+
+   // Are we already in a function?
+   if( ctx->currentFunc() != 0 || ctx->currentStmt() != 0)
+   {
+      p.addError( e_toplevel_func,  p.currentSource(), tname->line(), tname->chr() );
+      p.simplify(tcount);
+      return 0;
+   }
+
+   // check if the symbol is free -- defining an unique symbol
+   bool alreadyDef;
+   GlobalSymbol* symfunc = ctx->onGlobalDefined( *tname->asString(), alreadyDef );
+   if( alreadyDef )
+   {
+      // not free!
+      p.addError( e_already_def,  p.currentSource(), tname->line(), tname->chr(), 0,
+         String("at line ").N(symfunc->declaredAt()) );
+      p.simplify(tcount);
+      return 0;
+   }
+
+   // Ok, we took the symbol.
+   SynFunc* func = new SynFunc(*tname->asString(),0,tname->line());
+   NameList* list = static_cast<NameList*>(targs->asData());
+
+   for(NameList::const_iterator it=list->begin(),end=list->end();it!=end;++it)
+   {
+      func->addParam(*it);
+   }
+
+   if ( bHasExpr )
+   {
+      Expression* sa = static_cast<Expression*>(tstatement->detachValue());
+      func->syntree().append(new StmtReturn(sa));
+   }
+   else
+   {
+      ctx->openFunc(func, symfunc);
+   }
+
+   p.simplify(tcount);
+   return func;
+}
+
+void apply_function(const Rule& r,Parser& p)
+{
+   inner_apply_function( r, p, false );
+}
+
+/*
+//TODO Remove
+static void apply_function_short(const Rule& r, Parser& p)
+{
+   inner_apply_function( r, p, true );
+}
+*/
+
+
+void on_close_function( void* )
+{
+   // TODO: name the function
+   /*
+   SourceParser& sp = *static_cast<SourceParser*>(thing);
+   ParserContext* ctx = static_cast<ParserContext*>(sp.context());
+   SynFunc* func=ctx->currentFunc();
+   */
+}
+
+void apply_expr_func(const Rule&, Parser& p)
+{
+   SourceParser& sp = static_cast<SourceParser&>(p);
+   ParserContext* ctx = static_cast<ParserContext*>(p.context());
+
+   TokenInstance* tf=sp.getNextToken();//T_function
+   sp.getNextToken();// '('
+   TokenInstance* targs=sp.getNextToken();
+   sp.getNextToken();// ')'
+   sp.getNextToken();// '\n'
+
+   // todo: generate an anonymous name
+   SynFunc* func=new SynFunc("anonymous",0,tf->line());
+   NameList* list=static_cast<NameList*>(targs->asData());
+
+   for(NameList::const_iterator it=list->begin(),end=list->end();it!=end;++it)
+   {
+      func->addParam(*it);
+   }
+
+   TokenInstance* ti=new TokenInstance(tf->line(),tf->chr(),sp.Expr);
+   Expression* expr=new ExprValue(Item(func));
+   ti->setValue(expr,expr_deletor);
+
+   // remove this stuff from the stack
+   p.simplify(5,ti);
+
+   // open a new main state for the function
+   ctx->openFunc(func);
+   p.pushState( "InlineFunc", on_close_function , &p );
+}
+
+
+
+void apply_return(const Rule&, Parser& p)
+{
+   SourceParser& sp = static_cast<SourceParser&>(p);
+   ParserContext* ctx = static_cast<ParserContext*>(p.context());
+   sp.getNextToken();//T_function
+   TokenInstance* texpr=sp.getNextToken();
+   sp.getNextToken();//T_EOL
+
+   ctx->addStatement(new StmtReturn(static_cast<Expression*>(texpr->detachValue())));
+
+   p.simplify(3);
+}
+
+}
+
+/* end of parser_function.cpp */

@@ -1,6 +1,6 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: compcontext.cpp
+   FILE: parsercontext.cpp
 
    Compilation context for Falcon source file compilation.
    -------------------------------------------------------------------
@@ -13,12 +13,16 @@
    See LICENSE file for licensing details.
 */
 
+#undef SRC
+#define SRC "engine/sp/parsercontext.cpp"
+
 #include <falcon/trace.h>
 
-#include <falcon/parsercontext.h>
+#include <falcon/sp/parsercontext.h>
+#include <falcon/sp/sourceparser.h>
+
 #include <falcon/synfunc.h>
 #include <falcon/unknownsymbol.h>
-#include <falcon/sourceparser.h>
 
 #include <falcon/globalsymbol.h>
 #include <falcon/compiler.h>
@@ -651,5 +655,4 @@ void ParserContext::reset()
 
 }
 
-/* end of compcontext.cpp */
-
+/* end of parsercontext.cpp */

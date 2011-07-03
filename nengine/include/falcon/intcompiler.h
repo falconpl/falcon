@@ -17,8 +17,8 @@
 #define	FALCON_INTCOMPILER_H
 
 #include <falcon/setup.h>
-#include <falcon/sourceparser.h>
-#include <falcon/parsercontext.h>
+#include <falcon/sp/sourceparser.h>
+#include <falcon/sp/parsercontext.h>
 #include <falcon/syntree.h>
 
 namespace Falcon {

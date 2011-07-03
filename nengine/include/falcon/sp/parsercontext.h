@@ -17,9 +17,8 @@
 #define	_FALCON_PARSERCONTEXT_H
 
 #include <falcon/setup.h>
-
-#include "synfunc.h"
-#include "statement.h"
+#include <falcon/synfunc.h>
+#include <falcon/statement.h>
 
 namespace Falcon {
 

@@ -13,7 +13,8 @@
    See LICENSE file for licensing details.
 */
 
-#line __LINE__ "engine/string.cpp"
+#undef SRC
+#define SRC "engine/string.cpp"
 
 /** \file
    Implementation of Core Strings.

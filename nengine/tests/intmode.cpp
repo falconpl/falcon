@@ -35,7 +35,7 @@
 #include <falcon/trace.h>
 #include <falcon/application.h>
 
-#include <falcon/sourceparser.h>
+#include <falcon/sp/sourceparser.h>
 #include <falcon/textreader.h>
 
 #include <falcon/intcompiler.h>

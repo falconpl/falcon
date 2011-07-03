@@ -53,6 +53,25 @@ add_library(falcon_engine SHARED
   core_module/typeid.cpp
   core_module/coremodule.cpp
 
+  sp/parser_arraydecl.cpp
+  sp/parser_assign.cpp
+  sp/parser_atom.cpp
+  sp/parser_autoexpr.cpp
+  sp/parser_call.cpp
+  sp/parser_class.cpp
+  sp/parser_deletor.cpp
+  sp/parser_end.cpp
+  sp/parser_expr.cpp
+  sp/parser_function.cpp
+  sp/parser_if.cpp
+  sp/parser_index.cpp
+  sp/parser_list.cpp
+  sp/parser_rule.cpp
+  sp/parser_while.cpp
+  sp/parsercontext.cpp
+  sp/sourcelexer.cpp
+  sp/sourceparser.cpp
+
   memory.cpp
   accesserror.cpp
   accesstypeerror.cpp
@@ -115,15 +134,12 @@ add_library(falcon_engine SHARED
   module.cpp
   operanderror.cpp
   paramerror.cpp
-  parsercontext.cpp
   pseudofunc.cpp
   path.cpp
   pcode.cpp
   rampmode.cpp
   reader.cpp
   rulesyntree.cpp
-  sourcelexer.cpp
-  sourceparser.cpp
   sourceref.cpp
   statement.cpp
   stmtrule.cpp

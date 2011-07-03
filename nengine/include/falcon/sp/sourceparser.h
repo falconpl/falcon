@@ -1,16 +1,6 @@
 /*
- * File:   sourceparser.h
- * Author: gian
- *
- * Created on 11 aprile 2011, 0.40
- */
-
-#ifndef SOURCEPARSER_H
-#define	SOURCEPARSER_H
-
-/*
    FALCON - The Falcon Programming Language.
-   FILE: sourceparser.cpp
+   FILE: sourceparser.h
 
    Token for the parser subsystem.
    -------------------------------------------------------------------
@@ -23,6 +13,10 @@
    See LICENSE file for licensing details.
 */
 
+#ifndef SOURCEPARSER_H
+#define	SOURCEPARSER_H
+
+#include <falcon/setup.h>
 #include <falcon/parser/parser.h>
 
 namespace Falcon {
