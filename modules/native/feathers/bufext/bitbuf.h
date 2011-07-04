@@ -439,9 +439,7 @@ public:
             mask = (VAL_ALLBITS >> (VALBITS - writeable));
 
             if(_bitpos_w)
-            {
                 _bufptr[_arraypos_w] <<= writeable;
-            }
 
             value >>= (pending - writeable);
             _bufptr[_arraypos_w] &= ~(mask);        // clear writing region
