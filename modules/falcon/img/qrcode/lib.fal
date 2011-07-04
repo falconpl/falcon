@@ -13,7 +13,6 @@
    See LICENSE file for licensing details.
 */
 
-
 /*# @beginignore */
 
 import from gd2
@@ -570,7 +569,7 @@ class QrInput(version, ecl)
       self._appendPaddingBits(bitBuf)
       // return bitBuf.toMemBuf()
 
-      // The following piece of code  is a temporary workaround; it is going to
+      // The following piece of code is a temporary workaround; it is going to
       // be removed as soon as BitBuf.toMemBuf() works correctly.
 
       size = bitBuf.size()
