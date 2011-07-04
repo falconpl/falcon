@@ -45,6 +45,7 @@ void Pixbuf::modInit( Falcon::Module* mod )
     for ( Gtk::MethodTab* meth = methods; meth->name; ++meth )
         mod->addClassMethod( c_Pixbuf, meth->name, meth->cb );
 
+/*
     struct PixbufEnum
     {
         const char* name;
@@ -64,6 +65,9 @@ void Pixbuf::modInit( Falcon::Module* mod )
     {
         mod->addConstant( e->name, e->value );
     }
+
+*/
+
 }
 
 

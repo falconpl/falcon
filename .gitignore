@@ -12,6 +12,15 @@
 build
 build_*
 bld
+bin
+lib
 
 # OS X
 .DS_Store
+
+# CMake-generated Makefiles
+Makefile
+*.cmake
+CMakeFiles
+CMakeCache.txt
+install_manifest.txt

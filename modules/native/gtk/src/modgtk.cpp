@@ -42,6 +42,7 @@
 #include "gtk_AspectFrame.hpp"
 #include "gtk_Bin.hpp"
 #include "gtk_Box.hpp"
+#include "gtk_Builder.hpp"
 #include "gtk_Button.hpp"
 #include "gtk_ButtonBox.hpp"
 #include "gtk_CellEditable.hpp"
@@ -64,6 +65,7 @@
 #include "gtk_ComboBoxEntry.hpp"
 #include "gtk_Container.hpp"
 #include "gtk_Dialog.hpp"
+#include "gtk_DrawingArea.hpp"
 #include "gtk_Entry.hpp"
 #include "gtk_EntryBuffer.hpp"
 #include "gtk_EventBox.hpp"
@@ -121,6 +123,7 @@
 #include "gtk_SeparatorMenuItem.hpp"
 #include "gtk_SeparatorToolItem.hpp"
 #include "gtk_SpinButton.hpp"
+#include "gtk_Spinner.hpp"
 #include "gtk_Statusbar.hpp"
 #include "gtk_Stock.hpp"
 #include "gtk_Table.hpp"
@@ -201,11 +204,11 @@ FALCON_MODULE_DECL
     Falcon::Gdk::Display::modInit( self );
     Falcon::Gdk::DragContext::modInit( self );
     Falcon::Gdk::Drawable::modInit( self );
-    Falcon::Gdk::Bitmap::modInit( self );
-    Falcon::Gdk::Pixmap::modInit( self );
-    Falcon::Gdk::Window::modInit( self );
+        Falcon::Gdk::Bitmap::modInit( self );
+        Falcon::Gdk::Pixmap::modInit( self );
+        Falcon::Gdk::Window::modInit( self );
     Falcon::Gdk::Event::modInit( self );
-    Falcon::Gdk::EventButton::modInit( self );
+        Falcon::Gdk::EventButton::modInit( self );
     Falcon::Gdk::GC::modInit( self );
     Falcon::Gdk::GCValues::modInit( self );
     Falcon::Gdk::Geometry::modInit( self );
@@ -238,120 +241,123 @@ FALCON_MODULE_DECL
     Falcon::Gtk::TreeIter::modInit( self );
     Falcon::Gtk::TreePath::modInit( self );
     Falcon::Gtk::TreeRowReference::modInit( self );
-    
+
     // GObject based //
-    
+
     Falcon::Gtk::Action::modInit( self );
-    Falcon::Gtk::ToggleAction::modInit( self );
-    Falcon::Gtk::RadioAction::modInit( self );
+        Falcon::Gtk::ToggleAction::modInit( self );
+            Falcon::Gtk::RadioAction::modInit( self );
 #if GTK_VERSION_MINOR >= 18
     Falcon::Gtk::EntryBuffer::modInit( self );
 #endif
     Falcon::Gtk::ListStore::modInit( self );
     Falcon::Gtk::Object::modInit( self );
-    Falcon::Gtk::Adjustment::modInit( self );
-    Falcon::Gtk::FileFilter::modInit( self );
-    Falcon::Gtk::RecentFilter::modInit( self );
-    Falcon::Gtk::TreeViewColumn::modInit( self );
-    Falcon::Gtk::Widget::modInit( self );
-    Falcon::Gtk::Container::modInit( self );
-    Falcon::Gtk::Bin::modInit( self );
-    Falcon::Gtk::ScrolledWindow::modInit( self );
-    Falcon::Gtk::Alignment::modInit( self );
-    Falcon::Gtk::Button::modInit( self );
-    Falcon::Gtk::ColorButton::modInit( self );
-    Falcon::Gtk::FontButton::modInit( self );
-    Falcon::Gtk::LinkButton::modInit( self );
-    Falcon::Gtk::OptionMenu::modInit( self );
-    Falcon::Gtk::ScaleButton::modInit( self );
-    Falcon::Gtk::VolumeButton::modInit( self );
-    Falcon::Gtk::ToggleButton::modInit( self );
-    Falcon::Gtk::CheckButton::modInit( self );
-    Falcon::Gtk::RadioButton::modInit( self );
-    Falcon::Gtk::ComboBox::modInit( self );
-    Falcon::Gtk::ComboBoxEntry::modInit( self );
-    Falcon::Gtk::EventBox::modInit( self );
-    Falcon::Gtk::Expander::modInit( self );
-    Falcon::Gtk::Frame::modInit( self );
-    Falcon::Gtk::AspectFrame::modInit( self );
-    Falcon::Gtk::Item::modInit( self );
-    Falcon::Gtk::MenuItem::modInit( self );
-    Falcon::Gtk::CheckMenuItem::modInit( self );
-    Falcon::Gtk::RadioMenuItem::modInit( self );
-    Falcon::Gtk::ImageMenuItem::modInit( self );
-    Falcon::Gtk::SeparatorMenuItem::modInit( self );
-    Falcon::Gtk::TearoffMenuItem::modInit( self );
-    Falcon::Gtk::ToolItem::modInit( self );
-    Falcon::Gtk::ToolButton::modInit( self );
-    Falcon::Gtk::MenuToolButton::modInit( self );
-    Falcon::Gtk::ToggleToolButton::modInit( self );
-    Falcon::Gtk::RadioToolButton::modInit( self );
-    Falcon::Gtk::SeparatorToolItem::modInit( self );
-    Falcon::Gtk::Window::modInit( self );
-    Falcon::Gtk::Dialog::modInit( self );
+        Falcon::Gtk::Adjustment::modInit( self );
+        Falcon::Gtk::Builder::modInit( self );
+        Falcon::Gtk::FileFilter::modInit( self );
+        Falcon::Gtk::RecentFilter::modInit( self );
+        Falcon::Gtk::TreeViewColumn::modInit( self );
+        Falcon::Gtk::Widget::modInit( self );
+            Falcon::Gtk::Container::modInit( self );
+                Falcon::Gtk::Bin::modInit( self );
+                    Falcon::Gtk::Alignment::modInit( self );
+                    Falcon::Gtk::ScrolledWindow::modInit( self );
+                    Falcon::Gtk::Button::modInit( self );
+                        Falcon::Gtk::ColorButton::modInit( self );
+                        Falcon::Gtk::FontButton::modInit( self );
+                        Falcon::Gtk::LinkButton::modInit( self );
+                        Falcon::Gtk::OptionMenu::modInit( self );
+                        Falcon::Gtk::ScaleButton::modInit( self );
+                            Falcon::Gtk::VolumeButton::modInit( self );
+                        Falcon::Gtk::ToggleButton::modInit( self );
+                            Falcon::Gtk::CheckButton::modInit( self );
+                                Falcon::Gtk::RadioButton::modInit( self );
+                    Falcon::Gtk::ComboBox::modInit( self );
+                        Falcon::Gtk::ComboBoxEntry::modInit( self );
+                    Falcon::Gtk::EventBox::modInit( self );
+                    Falcon::Gtk::Expander::modInit( self );
+                    Falcon::Gtk::Frame::modInit( self );
+                        Falcon::Gtk::AspectFrame::modInit( self );
+                    Falcon::Gtk::Item::modInit( self );
+                        Falcon::Gtk::MenuItem::modInit( self );
+                            Falcon::Gtk::CheckMenuItem::modInit( self );
+                                Falcon::Gtk::RadioMenuItem::modInit( self );
+                            Falcon::Gtk::ImageMenuItem::modInit( self );
+                            Falcon::Gtk::SeparatorMenuItem::modInit( self );
+                            Falcon::Gtk::TearoffMenuItem::modInit( self );
+                    Falcon::Gtk::ToolItem::modInit( self );
+                        Falcon::Gtk::ToolButton::modInit( self );
+                            Falcon::Gtk::MenuToolButton::modInit( self );
+                            Falcon::Gtk::ToggleToolButton::modInit( self );
+                                Falcon::Gtk::RadioToolButton::modInit( self );
+                        Falcon::Gtk::SeparatorToolItem::modInit( self );
+                    Falcon::Gtk::Window::modInit( self );
+                        Falcon::Gtk::Dialog::modInit( self );
 #if GTK_CHECK_VERSION( 2, 6, 0 )
-    Falcon::Gtk::AboutDialog::modInit( self );
+                            Falcon::Gtk::AboutDialog::modInit( self );
 #endif
-    Falcon::Gtk::ColorSelectionDialog::modInit( self );
-    Falcon::Gtk::FileChooserDialog::modInit( self );
-    Falcon::Gtk::MessageDialog::modInit( self );
-    Falcon::Gtk::Box::modInit( self );
-    Falcon::Gtk::ButtonBox::modInit( self );
-    Falcon::Gtk::HButtonBox::modInit( self );
-    Falcon::Gtk::VButtonBox::modInit( self );
-    Falcon::Gtk::HBox::modInit( self );
-    Falcon::Gtk::FileChooserButton::modInit( self );
+                            Falcon::Gtk::ColorSelectionDialog::modInit( self );
+                            Falcon::Gtk::FileChooserDialog::modInit( self );
+                            Falcon::Gtk::MessageDialog::modInit( self );
+                Falcon::Gtk::Box::modInit( self );
+                    Falcon::Gtk::ButtonBox::modInit( self );
+                        Falcon::Gtk::HButtonBox::modInit( self );
+                        Falcon::Gtk::VButtonBox::modInit( self );
+                    Falcon::Gtk::HBox::modInit( self );
+                        Falcon::Gtk::FileChooserButton::modInit( self );
 #if GTK_CHECK_VERSION( 2, 18, 0 )
-    Falcon::Gtk::InfoBar::modInit( self );
+                        Falcon::Gtk::InfoBar::modInit( self );
 #endif
-    Falcon::Gtk::Statusbar::modInit( self );
-    Falcon::Gtk::VBox::modInit( self );
-    Falcon::Gtk::Fixed::modInit( self );
-    Falcon::Gtk::Layout::modInit( self );
-    Falcon::Gtk::MenuShell::modInit( self );
-    Falcon::Gtk::Menu::modInit( self );
-    Falcon::Gtk::MenuBar::modInit( self );
-    Falcon::Gtk::Paned::modInit( self );
-    Falcon::Gtk::HPaned::modInit( self );
-    Falcon::Gtk::VPaned::modInit( self );
-    Falcon::Gtk::Table::modInit( self );
-    Falcon::Gtk::TextView::modInit( self );
-    Falcon::Gtk::Toolbar::modInit( self );
+                        Falcon::Gtk::Statusbar::modInit( self );
+                    Falcon::Gtk::VBox::modInit( self );
+                Falcon::Gtk::Fixed::modInit( self );
+                Falcon::Gtk::Layout::modInit( self );
+                Falcon::Gtk::MenuShell::modInit( self );
+                    Falcon::Gtk::Menu::modInit( self );
+                    Falcon::Gtk::MenuBar::modInit( self );
+                Falcon::Gtk::Paned::modInit( self );
+                    Falcon::Gtk::HPaned::modInit( self );
+                    Falcon::Gtk::VPaned::modInit( self );
+                Falcon::Gtk::Table::modInit( self );
+                Falcon::Gtk::TextView::modInit( self );
+                Falcon::Gtk::Toolbar::modInit( self );
 #if GTK_CHECK_VERSION( 2, 20, 0 )
-    Falcon::Gtk::ToolItemGroup::modInit( self );
-    Falcon::Gtk::ToolPalette::modInit( self );
+                Falcon::Gtk::ToolItemGroup::modInit( self );
+                Falcon::Gtk::ToolPalette::modInit( self );
 #endif
-    Falcon::Gtk::TreeView::modInit( self );
-    Falcon::Gtk::CellRenderer::modInit( self );
-    Falcon::Gtk::CellRendererPixbuf::modInit( self );
-    Falcon::Gtk::CellRendererProgress::modInit( self );
+                Falcon::Gtk::TreeView::modInit( self );
+            Falcon::Gtk::CellRenderer::modInit( self );
+                Falcon::Gtk::CellRendererPixbuf::modInit( self );
+                Falcon::Gtk::CellRendererProgress::modInit( self );
 #if GTK_CHECK_VERSION( 2, 20, 0 )
-    Falcon::Gtk::CellRendererSpinner::modInit( self );
+                Falcon::Gtk::CellRendererSpinner::modInit( self );
 #endif
-    Falcon::Gtk::CellRendererText::modInit( self );
-    Falcon::Gtk::CellRendererAccel::modInit( self );
-    Falcon::Gtk::CellRendererCombo::modInit( self );
-    Falcon::Gtk::CellRendererSpin::modInit( self );
-    Falcon::Gtk::CellRendererToggle::modInit( self );
-    Falcon::Gtk::Entry::modInit( self );
-    Falcon::Gtk::SpinButton::modInit( self );
-    Falcon::Gtk::Invisible::modInit( self );
-    Falcon::Gtk::Misc::modInit( self );
-    Falcon::Gtk::Arrow::modInit( self );
-    Falcon::Gtk::Image::modInit( self );
-    Falcon::Gtk::Label::modInit( self );
-    Falcon::Gtk::Progress::modInit( self );
-    Falcon::Gtk::ProgressBar::modInit( self );
-    Falcon::Gtk::Range::modInit( self );
-    Falcon::Gtk::Scale::modInit( self );
-    Falcon::Gtk::HScale::modInit( self );
-    Falcon::Gtk::VScale::modInit( self );
-    Falcon::Gtk::Scrollbar::modInit( self );
-    Falcon::Gtk::HScrollbar::modInit( self );
-    Falcon::Gtk::VScrollbar::modInit( self );
-    Falcon::Gtk::Ruler::modInit( self );
-    Falcon::Gtk::HRuler::modInit( self );
-    Falcon::Gtk::VRuler::modInit( self );
+                Falcon::Gtk::CellRendererText::modInit( self );
+                    Falcon::Gtk::CellRendererAccel::modInit( self );
+                    Falcon::Gtk::CellRendererCombo::modInit( self );
+                    Falcon::Gtk::CellRendererSpin::modInit( self );
+                Falcon::Gtk::CellRendererToggle::modInit( self );
+            Falcon::Gtk::DrawingArea::modInit( self );
+                Falcon::Gtk::Spinner::modInit( self );
+            Falcon::Gtk::Entry::modInit( self );
+                Falcon::Gtk::SpinButton::modInit( self );
+            Falcon::Gtk::Invisible::modInit( self );
+            Falcon::Gtk::Misc::modInit( self );
+                Falcon::Gtk::Arrow::modInit( self );
+                Falcon::Gtk::Image::modInit( self );
+                Falcon::Gtk::Label::modInit( self );
+            Falcon::Gtk::Progress::modInit( self );
+                Falcon::Gtk::ProgressBar::modInit( self );
+            Falcon::Gtk::Range::modInit( self );
+                Falcon::Gtk::Scale::modInit( self );
+                    Falcon::Gtk::HScale::modInit( self );
+                    Falcon::Gtk::VScale::modInit( self );
+                Falcon::Gtk::Scrollbar::modInit( self );
+                    Falcon::Gtk::HScrollbar::modInit( self );
+                    Falcon::Gtk::VScrollbar::modInit( self );
+            Falcon::Gtk::Ruler::modInit( self );
+                Falcon::Gtk::HRuler::modInit( self );
+                Falcon::Gtk::VRuler::modInit( self );
     Falcon::Gtk::TextBuffer::modInit( self );
     Falcon::Gtk::TextMark::modInit( self );
     Falcon::Gtk::TextTag::modInit( self );
