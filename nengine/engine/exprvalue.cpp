@@ -25,12 +25,14 @@ namespace Falcon {
 ExprValue::ExprValue( const Item& item ):
       Expression( t_value )
 {
+   static Collector* coll = Engine::instance()->collector();
+
    m_item.copy(item); // silently copy
    apply = apply_;
 
-   if ( item.isDeep() )
+   if ( item.isGarbaged() )
    {
-      m_lock = m_item.asDeep()->collector()->lock(m_item);
+      m_lock = coll->lock(m_item);
    }
    else
    {
@@ -42,11 +44,13 @@ ExprValue::ExprValue( const ExprValue& other ):
    Expression( t_value ),
    m_item( other.m_item )
 {
+   static Collector* coll = Engine::instance()->collector();
+   
    apply = apply_;
 
-   if ( m_item.isDeep() )
+   if ( m_item.isGarbaged() )
    {
-     m_lock = m_item.asDeep()->collector()->lock(m_item);
+      m_lock = coll->lock(m_item);
    }
    else
    {
@@ -61,11 +65,14 @@ ExprValue::~ExprValue()
 
 void ExprValue::item( const Item& i )
 {
-   m_item  = i;
+   static Collector* coll = Engine::instance()->collector();
+   
+   m_item = i;
    if (m_lock) m_lock->dispose();
-   if ( m_item.isDeep() )
+
+   if ( m_item.isGarbaged() )
    {
-     m_lock = m_item.asDeep()->collector()->lock(m_item);
+      m_lock = coll->lock(m_item);
    }
    else
    {
@@ -119,11 +126,13 @@ void ExprValue::describe( String & str ) const
 
 void ExprValue::deserialize( DataReader* s )
 {
+   static Collector* coll = Engine::instance()->collector();
+
    Expression::deserialize(s);
    //m_item.deserialize();
-   if ( m_item.isDeep() )
+   if ( m_item.isGarbaged() )
    {
-     m_lock = m_item.asDeep()->collector()->lock(m_item);
+      m_lock = coll->lock(m_item);
    }
    else
    {

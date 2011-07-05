@@ -111,20 +111,16 @@ void ClassDict::gcMark( void* self, uint32 mark ) const
    ItemDictionary::iterator pos = dict.begin();
    while( pos != dict.end() )
    {
+      const Item& key = pos->first;
+      const Item& value = pos->second;
+      if( key.isUser() && key.isGarbaged() )
       {
-         const Item& tgt = pos->first;
-         if( tgt.isDeep() )
-         {
-            tgt.asDeepClass()->gcMark(tgt.asDeepInst(), mark);
-         }
+         key.asClass()->gcMark(key.asInst(), mark);
       }
 
+      if( value.isUser() && value.isGarbaged() )
       {
-         Item& tgt = pos->second;
-         if( tgt.isDeep() )
-         {
-            tgt.asDeepClass()->gcMark(tgt.asDeepInst(), mark);
-         }
+         value.asClass()->gcMark(value.asInst(), mark);
       }
 
       ++pos;

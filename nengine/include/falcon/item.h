@@ -46,8 +46,6 @@ public:
            Class *pClass;
         } ptr;
 
-        GCToken* pToken;
-
      } data;
 
      union {
@@ -71,16 +69,16 @@ public:
 
 #ifdef _MSC_VER
 	#if _MSC_VER < 1299
-	#define flagIsMethodic 0x02
+	#define flagIsGarbage 0x02
 	#define flagIsOob 0x04
 	#define flagLiteral 0x08
 	#else
-	   static const byte flagIsMethodic = 0x02;
+	   static const byte flagIsGarbage = 0x02;
 	   static const byte flagIsOob = 0x04;
 	   static const byte flagLiteral = 0x08;
 	#endif
 #else
-   static const byte flagIsMethodic = 0x02;
+   static const byte flagIsGarbage = 0x02;
    static const byte flagIsOob = 0x04;
    static const byte flagLiteral = 0x08;
 #endif
@@ -89,13 +87,11 @@ public:
    inline Item()
    {
       type( FLC_ITEM_NIL );
-      copied( false );
    }
 
    inline void setNil()
    {
       type( FLC_ITEM_NIL );
-      copied( false );
    }
 
    inline Item( const Item &other )
@@ -255,22 +251,36 @@ public:
        setUser( cls, inst );
    }
 
-   inline void setUser( Class* cls, void* inst )
+   inline void setUser( const Class* cls, void* inst )
    {
        type( FLC_ITEM_USER );
        content.data.ptr.pInst = inst;
-       content.data.ptr.pClass = cls;
+       content.data.ptr.pClass = (Class*) cls;
    }
 
    inline Item( GCToken* token )
    {
-      setDeep( token );
+      setUser( token );
    }
    
-   inline void setDeep( GCToken* token )
+   inline void setUser( GCToken* token )
    {
-       type( FLC_ITEM_DEEP );
-       content.data.pToken = token;
+       type( FLC_ITEM_USER );
+       content.base.bits.flags |= flagIsGarbage;
+       content.data.ptr.pInst = token->data();
+       content.data.ptr.pClass = token->cls();
+   }
+
+   /** Declare this item a garbage-sensible item.
+    This flags has effect only for USER type items.
+    */
+   inline void garbage() { content.base.bits.flags |= flagIsGarbage; }
+
+   /** Declare this item a garbage.
+    This flags has effect only for USER type items.
+    */
+   inline bool isGarbaged() const {
+      return (content.base.bits.flags & flagIsGarbage) != 0;
    }
 
    inline void methodize( Function* mthFunc )
@@ -439,12 +449,8 @@ public:
    Function* asMethodFunction() const { return content.mth.function; }
    Class* asMethodClass() const { return content.mth.base; }
 
-   void* asUserInst() const { return content.data.ptr.pInst; }
-   Class* asUserClass() const { return content.data.ptr.pClass; }
-
-   void* asDeepInst() const { return content.data.pToken->data(); }
-   Class* asDeepClass() const { return content.data.pToken->cls(); }
-   GCToken* asDeep() const { return content.data.pToken; }
+   void* asInst() const { return content.data.ptr.pInst; }
+   Class* asClass() const { return content.data.ptr.pClass; }
 
    /** Convert current object into an integer.
       This operations is usually done on integers, numeric and CoreStrings.
@@ -474,24 +480,18 @@ public:
    bool isMethod() const { return type() == FLC_ITEM_METHOD; }
    bool isBaseMethod() const { return type() == FLC_ITEM_BASEMETHOD; }
    bool isOrdinal() const { return type() == FLC_ITEM_INT || type() == FLC_ITEM_NUM; }
-   bool isDeep() const { return type() == FLC_ITEM_DEEP; }
+   bool isUser() const { return type() == FLC_ITEM_USER; }
 
    bool isString() const {
-      return
-        (type() == FLC_ITEM_DEEP && asDeepClass()->typeID() == FLC_CLASS_ID_STRING)
-        || (type() == FLC_ITEM_USER && asUserClass()->typeID() == FLC_CLASS_ID_STRING);
+      return (type() == FLC_ITEM_USER && asClass()->typeID() == FLC_CLASS_ID_STRING);
    }
 
    bool isArray() const {
-      return
-        (type() == FLC_ITEM_DEEP && asDeepClass()->typeID() == FLC_CLASS_ID_ARRAY)
-        || (type() == FLC_ITEM_USER && asUserClass()->typeID() == FLC_CLASS_ID_ARRAY);
+      return (type() == FLC_ITEM_USER && asClass()->typeID() == FLC_CLASS_ID_ARRAY);
    }
 
    bool isDict() const {
-      return
-        (type() == FLC_ITEM_DEEP && asDeepClass()->typeID() == FLC_CLASS_ID_DICT)
-        || (type() == FLC_ITEM_USER && asUserClass()->typeID() == FLC_CLASS_ID_DICT);
+      return (type() == FLC_ITEM_USER && asClass()->typeID() == FLC_CLASS_ID_DICT);
    }
 
    bool isTrue() const;
@@ -564,34 +564,13 @@ public:
    {
       switch( type() )
       {
-      case FLC_ITEM_DEEP:
-         cls = asDeepClass();
-         udata = asDeepInst();
-         return true;
-
       case FLC_ITEM_USER:
-         cls = asUserClass();
-         udata = asUserInst();
+         cls = asClass();
+         udata = asInst();
          return true;
       }
       return false;
    }
-
-   /** Gets the only the instance from a deep item.
-    \return The deep or user instance of an item.
-    */
-   void* asInst() const
-   {
-      switch( type() )
-      {
-      case FLC_ITEM_DEEP:
-         return asDeepInst();
-      case FLC_ITEM_USER:
-         return asUserInst();
-      }
-      return 0;
-   }
-
 
    
    /** Gets the class and instance from any item.
@@ -609,14 +588,9 @@ public:
    {
       switch( type() )
       {
-      case FLC_ITEM_DEEP:
-         cls = asDeepClass();
-         udata = asDeepInst();
-         break;
-
       case FLC_ITEM_USER:
-         cls = asUserClass();
-         udata = asUserInst();
+         cls = asClass();
+         udata = asInst();
          break;
 
       case FLC_ITEM_FUNC:

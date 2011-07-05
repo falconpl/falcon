@@ -13,10 +13,15 @@
    See LICENSE file for licensing details.
 */
 
+#undef SRC
+#define SRC "engine/falconclass.cpp"
+
 #include <falcon/falconclass.h>
 #include <falcon/falconinstance.h>
 #include <falcon/inheritance.h>
 #include <falcon/item.h>
+
+#include "falcon/synfunc.h"
 #include <falcon/function.h>
 #include <falcon/datareader.h>
 #include <falcon/datawriter.h>
@@ -24,11 +29,18 @@
 #include <falcon/expression.h>
 #include <falcon/operanderror.h>
 #include <falcon/optoken.h>
-#include <falcon/vm.h>
+#include <falcon/vmcontext.h>
 #include <falcon/ov_names.h>
+#include <falcon/expression.h>
+#include <falcon/pcode.h>
+#include <falcon/statement.h>
+
+#include <falcon/trace.h>
 
 #include <map>
 #include <list>
+#include <vector>
+
 
 
 #define OVERRIDE_OP_NEG_ID       0
@@ -80,7 +92,7 @@ class FalconClass::Private
 {
 public:
 
-   typedef std::map<String, Property> MemberMap;
+   typedef std::map<String, Property*> MemberMap;
    MemberMap m_members;
 
    typedef std::list<Inheritance*> ParentList;
@@ -88,6 +100,9 @@ public:
 
    typedef std::list<FalconState*> StateList;
    StateList m_states;
+
+   typedef std::vector<Property*> InitPropList;
+   InitPropList m_initExpr;
 
    ItemArray m_propDefaults;
 
@@ -110,12 +125,32 @@ public:
          ++si;
       }
 
+      MemberMap::iterator mi = m_members.begin();
+      while( mi != m_members.end() )
+      {
+         delete mi->second;
+         ++mi;
+      }
+
    }
 };
 
 
+
+FalconClass::Property::Property( size_t value, Expression* expr ):
+   m_type(t_prop),
+   m_expr( expr ),
+   m_preExpr(0)
+{
+   m_value.id = value;
+   m_preExpr = new PCode;
+   expr->precompile( m_preExpr );
+}
+
 FalconClass::Property::~Property()
 {
+   delete m_preExpr;
+   delete m_expr;
 }
 
 //=====================================================================
@@ -125,8 +160,12 @@ FalconClass::Property::~Property()
 FalconClass::FalconClass( const String& name ):
    Class("Object" , FLC_CLASS_ID_OBJECT ),
    m_fc_name(name),
+   m_init(0),
    m_shouldMark(false),
-   m_init(0)
+   m_hasInitExpr( false ),
+   m_hasInit( false ),
+   m_initExprStep( this ),
+   m_initFuncStep( this )
 {
    _p = new Private;
    m_overrides = new Function*[OVERRIDE_OP_COUNT_ID];
@@ -140,7 +179,7 @@ FalconClass::~FalconClass()
 }
 
 
-FalconInstance* FalconClass::createInstance() const
+FalconInstance* FalconClass::createInstance()
 {
    // we just need to copy the defaults.
    FalconInstance* inst = new FalconInstance(this);
@@ -162,12 +201,12 @@ bool FalconClass::addProperty( const String& name, const Item& initValue )
    }
 
    // insert a new property with the required ID
-   _p->m_members.insert( std::make_pair(name, Property( _p->m_propDefaults.length() ) ) );
+   _p->m_members[name] = new  Property( _p->m_propDefaults.length() );
    // the add the init value in the value lists.
    _p->m_propDefaults.append( initValue );
 
    // is this thing deep? -- if it is so, we should mark it
-   if( initValue.isDeep() )
+   if( initValue.isGarbaged() )
    {
       m_shouldMark = true;
    }
@@ -175,6 +214,37 @@ bool FalconClass::addProperty( const String& name, const Item& initValue )
    return true;
 }
 
+
+bool FalconClass::addProperty( const String& name, Expression* initExpr )
+{
+   Private::MemberMap& members = _p->m_members;
+
+   // first time around?
+   if ( members.find( name ) != members.end() )
+   {
+      return false;
+   }
+
+   // insert a new property -- and record its insertion
+   Property* prop = new Property( _p->m_propDefaults.length(), initExpr );
+   _p->m_members[name] = prop;
+
+   // expr properties have a default NIL item.
+   _p->m_propDefaults.append( Item() );
+
+   // declare that we need this expression to be initialized.   
+   _p->m_initExpr.push_back( prop );
+   m_hasInitExpr = true;
+
+   if ( m_init == 0 )
+   {
+      m_init = new SynFunc( "init" );
+      m_init->methodOf(this);
+      // but this won't modify the m_hasInit state.
+   }
+
+   return true;
+}
     
 bool FalconClass::addProperty( const String& name )
 {
@@ -187,7 +257,7 @@ bool FalconClass::addProperty( const String& name )
    }
 
    // insert a new property with the required ID
-   _p->m_members.insert( std::make_pair(name, Property( _p->m_propDefaults.length() ) ) );
+   _p->m_members[name] = new Property( _p->m_propDefaults.length() );
    // the add the init value in the value lists.
    _p->m_propDefaults.append( Item() );
 
@@ -208,7 +278,7 @@ bool FalconClass::addMethod( Function* mth )
    }
 
    // insert a new property with the required ID
-   _p->m_members.insert( std::make_pair( name, Property( mth ) ));
+   _p->m_members[name] = new Property( mth );
 
    // see if the method is an override.
    if( mth->name() == OVERRIDE_OP_NEG ) m_overrides[OVERRIDE_OP_NEG_ID] = mth;
@@ -249,11 +319,12 @@ bool FalconClass::addMethod( Function* mth )
 }
 
   
-bool FalconClass::addInit( Function* init )
+bool FalconClass::setInit( Function* init )
 {
    if( m_init == 0 )
    {
       m_init = init;
+      m_init->methodOf(this);
       return true;
    }
 
@@ -274,7 +345,7 @@ bool FalconClass::addParent( Inheritance* inh )
    }
 
    // insert a new property with the required ID
-   _p->m_members.insert( std::make_pair(name, Property( inh ) ) );
+   _p->m_members[name] = new Property( inh );
 
    return true;
 }
@@ -291,7 +362,7 @@ bool FalconClass::getProperty( const String& name, Item& target ) const
    }
 
    // determine what we have found
-   Property& prop = iter->second;
+   Property& prop = *iter->second;
    switch( prop.m_type )
    {
       case Property::t_prop:
@@ -326,7 +397,7 @@ const FalconClass::Property* FalconClass::getProperty( const String& name ) cons
    }
 
    // determine what we have found
-   return &iter->second;
+   return iter->second;
 }
 
 void FalconClass::gcMark( uint32 mark ) const
@@ -351,7 +422,7 @@ bool FalconClass::addState( FalconState* state )
    }
 
    // insert a new property with the required ID
-   _p->m_members.insert( std::make_pair(name, Property( state ) ) );
+   _p->m_members[name] = new Property( state );
 
    return true;
 }
@@ -375,7 +446,7 @@ void FalconClass::enumeratePropertiesOnly( PropertyEnumerator& cb ) const
    Private::MemberMap::iterator iter = members.begin();
    while( iter != members.end() )
    {
-      if( iter->second.m_type == Property::t_prop)
+      if( iter->second->m_type == Property::t_prop)
       {
          if( ! cb( iter->first, ++iter == members.end() ) )
          {
@@ -473,39 +544,45 @@ void FalconClass::describe( void* instance, String& target, int depth, int maxle
    class Descriptor: public PropertyEnumerator
    {
    public:
-      Descriptor( FalconInstance* inst, String& forming, int d, int l ):
+      Descriptor( const FalconClass* fc, FalconInstance* inst, String& forming, int d, int l ):
+         m_class(fc),
          m_inst(inst),
          m_target( forming ),
          m_depth( d ),
          m_maxlen( l )
       {}
 
-      virtual bool operator()( const String& name, bool bLast )
+      virtual bool operator()( const String& name, bool )
       {
          Item theItem;
-         m_inst->getMember( name, theItem );
-         String temp;
-         theItem.describe( temp, m_depth-1, m_maxlen );
-         m_target += name + "=" + temp;
-         if( ! bLast )
+         if( m_class->getProperty( name )->m_type == Property::t_prop )
          {
-            m_target += ", ";
+            m_inst->getMember( name, theItem );
+            String temp;
+            theItem.describe( temp, m_depth-1, m_maxlen );
+            if( m_target != "" )
+            {
+               m_target += ", ";
+            }
+            m_target += name + "=" + temp;
          }
          return true;
       }
 
    private:
+      const FalconClass* m_class;
       FalconInstance* m_inst;
       String& m_target;
       int m_depth;
       int m_maxlen;
    };
 
-   Descriptor rator( inst, target, depth, maxlen );
+   String temp;
+   Descriptor rator( this, inst, temp, depth, maxlen );
 
-   target = "Instance of " + fc_name() +"{" ;
+   target = fc_name() +"{" ;
    enumerateProperties( instance, rator );
-   target += "}";
+   target += temp + "}";
 }
 
 
@@ -551,21 +628,47 @@ inline void FalconClass::override_binary( VMContext* ctx, void*, int op, const S
 
 void FalconClass::op_create( VMContext* ctx, int32 pcount ) const
 {
+   static StmtReturn s_return;
    static Collector* coll = Engine::instance()->collector();
    
    // we just need to copy the defaults.
-   FalconInstance* inst = new FalconInstance(this);
+   FalconInstance* inst = new FalconInstance(const_cast<FalconClass*>(this));
    inst->data().merge(_p->m_propDefaults);
-
+   
    // we have to invoke the init method, if any
    if( m_init != 0 )
    {
-      Item self( FALCON_GC_STORE( coll, this, inst ) );
-      // use isExpr so the A register will be popped in the stack
-      ctx->call( m_init, pcount, self, true );
+      // prepare an init frame
+      CallFrame* frame = ctx->makeCallFrame(m_init, pcount, FALCON_GC_STORE( coll, this, inst ), true);
+      frame->m_bInit = true;
+      // always add a retunr opcode, just in case.
+      ctx->pushCode( &s_return );
+
+      // first, push the last thing to execute -- the init  or a standard return.
+      if( m_hasInit )
+      {
+         ctx->pushCode( &m_initFuncStep );
+      }
+      
+      // then push the init expr
+      if( m_hasInitExpr )
+      {
+         ctx->pushCode( &m_initExprStep );
+      }
+
+      // Finally, prepare the data stack to accept the functions
+      TRACE1( "-- filing parameters: %d/%d",
+            pcount, m_init->symbols().localCount() );
+
+      register int lc = (int) m_init->symbols().localCount();
+      if( lc > pcount )
+      {
+         ctx->addLocals( lc - pcount );
+      }
    }
    else
    {
+      // nothing to init; just send the self item in the proper stack return
       ctx->stackResult( pcount, FALCON_GC_STORE( coll, this, inst ) );
    }
 }
@@ -825,10 +928,74 @@ void FalconClass::op_toString( VMContext* ctx, void* ) const
    }
 }
 
+//==============================================================
+
 void FalconClass::RemoveSelf::apply_( const PStep*, VMContext* ctx)
 {
    // use the return of the function as the thing to be put on top of the stack
    ctx->stackResult( 2, ctx->regA() );
+}
+
+//==============================================================
+
+FalconClass::PStepInitExpr::PStepInitExpr( FalconClass* o ):
+   m_owner(o)
+{
+      apply = apply_;
+}
+
+void FalconClass::PStepInitExpr::apply_( const PStep* ps, VMContext* ctx )
+{
+   // supposedly, if we're here, we have been invited -- iexpr.size() > 0
+   const PStepInitExpr* step = static_cast<const PStepInitExpr*>(ps);
+   const FalconClass::Private::InitPropList& iprops = step->m_owner->_p->m_initExpr;
+   register CodeFrame& ccode = ctx->currentCode();
+   register int seqId = ccode.m_seqId;
+
+   TRACE( "In %s class pre-init step %d", step->m_owner->name().c_ize(), seqId );
+   
+   if( seqId > 0 )
+   {
+      CallFrame& frame = ctx->currentFrame();
+      // the top item is the value of the previous expression -- get it.
+      Property* previous = iprops[seqId-1];
+      fassert( previous->m_type == FalconClass::Property::t_prop );
+      fassert( previous->expression() != 0 );
+
+      FalconInstance* inst = static_cast<FalconInstance*>( frame.m_self.asInst() );
+      // at the exit of a pcode, the result is in A
+      inst->data()[previous->m_value.id] = ctx->regA();
+   }
+
+   if( ((size_t)seqId) >= iprops.size() )
+   {
+      // we're done. 
+      ctx->popCode();
+      return;
+   }
+
+   Property* current = iprops[seqId++];
+   ccode.m_seqId = seqId;
+   ctx->pushCode( current->pexpr() );
+}
+
+//==============================================================
+
+FalconClass::PStepInit::PStepInit( FalconClass* o ):
+   m_owner(o)
+{
+   apply = apply_;
+}
+
+
+void FalconClass::PStepInit::apply_( const PStep* ps, VMContext* ctx )
+{
+   const PStepInit* step = static_cast<const PStepInit*>(ps);
+   TRACE( "In %s class init step", step->m_owner->name().c_ize() );
+
+   // supposedly, if we're here, we have been invited -- m_init != 0.
+   CallFrame& frame = ctx->currentFrame();
+   step->m_owner->init()->apply( ctx, frame.m_paramCount );
 }
 
 }

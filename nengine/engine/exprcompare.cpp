@@ -85,22 +85,6 @@ void generic_apply_( const PStep* ps, VMContext* ctx )
       ctx->popData();
       break;
 
-   case FLC_ITEM_DEEP << 8 | FLC_ITEM_NIL:
-   case FLC_ITEM_DEEP << 8 | FLC_ITEM_BOOL:
-   case FLC_ITEM_DEEP << 8 | FLC_ITEM_INT:
-   case FLC_ITEM_DEEP << 8 | FLC_ITEM_NUM:
-   case FLC_ITEM_DEEP << 8 | FLC_ITEM_METHOD:
-   case FLC_ITEM_DEEP << 8 | FLC_ITEM_FUNC:
-   case FLC_ITEM_DEEP << 8 | FLC_ITEM_BASEMETHOD:
-   case FLC_ITEM_DEEP << 8 | FLC_ITEM_DEEP:
-   case FLC_ITEM_DEEP << 8 | FLC_ITEM_USER:
-      op1->asDeepClass()->op_compare( ctx, op1->asDeepInst() );
-      // refetch, we may have gone deep
-      op1 = &ctx->topData();
-      fassert( op1->isInteger() );
-      op1->setBoolean( __CPR::cmpCheck( op1->asInteger() ) );
-      break;
-
    case FLC_ITEM_USER << 8 | FLC_ITEM_NIL:
    case FLC_ITEM_USER << 8 | FLC_ITEM_BOOL:
    case FLC_ITEM_USER << 8 | FLC_ITEM_INT:
@@ -108,9 +92,8 @@ void generic_apply_( const PStep* ps, VMContext* ctx )
    case FLC_ITEM_USER << 8 | FLC_ITEM_METHOD:
    case FLC_ITEM_USER << 8 | FLC_ITEM_FUNC:
    case FLC_ITEM_USER << 8 | FLC_ITEM_BASEMETHOD:
-   case FLC_ITEM_USER << 8 | FLC_ITEM_DEEP:
    case FLC_ITEM_USER << 8 | FLC_ITEM_USER:
-      op1->asUserClass()->op_compare( ctx, op1->asUserInst() );
+      op1->asClass()->op_compare( ctx, op1->asInst() );
       // refetch, we may have gone deep
       op1 = &ctx->topData();
       fassert( op1->isInteger() );

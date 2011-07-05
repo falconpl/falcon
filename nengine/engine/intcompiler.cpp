@@ -263,6 +263,7 @@ IntCompiler::compile_status IntCompiler::compileNext( const String& value)
             throw;
          }
 
+         m_sp.reset();
          delete m_currentTree;
          m_currentTree = 0;
       }

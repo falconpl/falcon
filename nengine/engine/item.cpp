@@ -27,22 +27,22 @@ namespace Falcon
 
 void Item::setString( const char* str )
 {
-   setDeep( (new String(str))->garbage() );
+   setUser( (new String(str))->garbage() );
 }
 
 void Item::setString( const wchar_t* str )
 {
-   setDeep( (new String(str))->garbage() );
+   setUser( (new String(str))->garbage() );
 }
 
 void Item::setString( const String& str )
 {
-   setDeep( (new String(str))->garbage() );
+   setUser( (new String(str))->garbage() );
 }
 
 void Item::setString( String* str )
 {
-   setDeep( str->garbage() );
+   setUser( str->garbage() );
 }
 
 void Item::setArray( ItemArray* array )
@@ -50,7 +50,7 @@ void Item::setArray( ItemArray* array )
    static Class* arrayClass = Engine::instance()->arrayClass();
    static Collector* coll = Engine::instance()->collector();
 
-   setDeep( FALCON_GC_STORE( coll, arrayClass, array) );
+   setUser( FALCON_GC_STORE( coll, arrayClass, array) );
 }
 
 /*
@@ -162,22 +162,23 @@ void Item::describe( String &target, int maxDepth, int maxLength ) const
       case FLC_ITEM_METHOD:
       {         
          String temp;
-         target = "(Method ";         
-         Engine::instance()->functionClass()->describe( asMethodFunction(), temp, maxDepth, maxLength );
+         target = "(Method ";
+
+         Item old = *this;
+         old.unmethodize();
+         old.describe( temp, maxDepth-1, maxLength );
+         target += temp + ".";
+         temp = "";
+
+         Engine::instance()->functionClass()->describe( asMethodFunction(), temp, maxDepth-1, maxLength );
          target += temp;
          target += ")";
       }
       break;
 
-      case FLC_ITEM_DEEP:
-      {
-         asDeepClass()->describe( asDeepInst(), target, maxDepth, maxLength );
-      }
-      break;
-
       case FLC_ITEM_USER:
       {
-         asUserClass()->describe( asUserInst(), target, maxDepth, maxLength );
+         asClass()->describe( asInst(), target, maxDepth, maxLength );
       }
       break;
 
@@ -193,18 +194,14 @@ bool Item::clone( Item& target ) const
 
    switch ( type() )
    {
-   case FLC_ITEM_DEEP:
-     data = asDeepClass()->clone( asDeepInst() );
-     if ( data == 0 )
-        return false;
-     target.setDeep( content.data.pToken->collector()->store(asDeepClass(), data) );
-     break;
-
    case FLC_ITEM_USER:
-     data = asUserClass()->clone( asUserInst() );
+     data = asClass()->clone( asInst() );
      if ( data == 0 )
         return false;
-     target.setUser( asUserClass(), data );
+     target.setUser( asClass(), data );
+     // we suppose that the other instance is freshly allocated,
+     // -- if not, the class will know how to handle useless gcMarks
+     target.garbage();
      break;
 
    default:

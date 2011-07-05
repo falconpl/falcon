@@ -26,6 +26,7 @@ namespace Falcon
 class Collector;
 class VMContext;
 class Error;
+class Class;
 
 /**
  Falcon function.
@@ -66,6 +67,10 @@ public:
    */
    Module* module() const { return m_module; }
 
+   void methodOf( Class* cls ) { m_methodOf = cls; }
+   Class* methodOf() const { return m_methodOf; }
+
+
    /** Returns the name of this function. */
    const String& name() const { return m_name; }
 
@@ -103,21 +108,7 @@ public:
     */
    void paramCount( int32 pc ) { m_paramCount = pc; }
 
-   /** Mark this function for garbage collecting. */
-   void gcMark( int32 mark );
-
-   /** Store in a garbage collector. 
-    \param c A collector where to store this function.
-    
-    When this method is called, the function become subject to garbage
-    collection.
-    */
-   GCToken* garbage( Collector* c );
-
    Error* paramError( int line = 0, const char* modName = 0 ) const;
-
-   /** Garbage this function on the standard collector. */
-   GCToken* garbage();
 
    /** Executes the call.
     \param ctx The Virtual Machine context on which the function is executed.
@@ -250,14 +241,35 @@ public:
       return *this;
    }
 
+   /** GCMark this function.
+      
+    Virtual because some function subclasses having closed items
+      may need to mark their own items.
+
+    The base class version just saves the mark for gcCheck().
+    */
+   virtual void gcMark( uint32 mark );
+
+   /** GCMark this function.
+
+    Virtual because some function subclasses having closed items
+      may need to mark their own items.
+
+    The base class destroys itself and return false if the mark is
+    newer than the one seen in gcMark.
+    */
+   virtual bool gcCheck( uint32 mark );
+
 protected:
    String m_name;
    String m_signature;
    
    int32 m_paramCount;
 
-   GCToken* m_gcToken;   
+   uint32 m_lastGCMark;
+   
    Module* m_module;
+   Class* m_methodOf;
 
    int32 m_line;
 

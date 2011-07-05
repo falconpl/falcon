@@ -18,28 +18,49 @@
 #include <falcon/codeframe.h>
 #include <falcon/statement.h>
 
+#include <vector>
+
 namespace Falcon
 {
 
-SynTree::SynTree()
+class SynTree::Private
+{
+public:
+   typedef std::vector<Statement*> Steps;
+   Steps m_steps;
+
+   Private() {}
+
+   ~Private()
+   {
+      Steps::iterator iter = m_steps.begin();
+      while( iter != m_steps.end() )
+      {
+         delete *iter;
+         ++iter;
+      }
+   }
+};
+
+
+SynTree::SynTree():
+   _p( new Private )
 {
    apply = apply_;
 }
 
+
 SynTree::~SynTree()
 {
-   for( size_t i = 0; i < m_steps.size(); ++i )
-   {
-      delete m_steps[i];
-   }
+   delete _p;
 }
 
 
 void SynTree::describe( String& tgt ) const
 {
-   for( size_t i = 0; i < m_steps.size(); ++i )
+   for( size_t i = 0; i < _p->m_steps.size(); ++i )
    {
-      tgt += m_steps[i]->describe() + "\n";
+      tgt += _p->m_steps[i]->describe() + "\n";
    }
 }
 
@@ -49,29 +70,67 @@ void SynTree::apply_( const PStep* ps, VMContext* ctx )
 
    // get the current step.
    CodeFrame& cf = ctx->currentCode();
-   if (cf.m_seqId >= (int) self->m_steps.size() )
+   if (cf.m_seqId >= (int) self->_p->m_steps.size() )
    {
       // we're done.
       ctx->popCode();
       return;
    }
 
-   Statement* step = self->m_steps[ cf.m_seqId++ ];
+   Statement* step = self->_p->m_steps[ cf.m_seqId++ ];
    step->prepare(ctx);
 }
 
 
 void SynTree::set( int pos, Statement* p )  {
-   delete m_steps[pos];
-   m_steps[pos] = p;
+   delete _p->m_steps[pos];
+  _p->m_steps[pos] = p;
 }
 
 void SynTree::remove( int pos )
 {
-     Statement* p = m_steps[ pos ];
-     m_steps.erase( m_steps.begin()+pos );
+     Statement* p =_p->m_steps[ pos ];
+     _p->m_steps.erase( _p->m_steps.begin()+pos );
      delete p;
 }
+
+void SynTree::insert( int pos, Statement* step )
+{
+   _p->m_steps.insert( _p->m_steps.begin()+pos, step );
+}
+
+
+SynTree& SynTree::append( Statement* step )
+{
+   _p->m_steps.push_back( step );
+   return *this;
+}
+
+int SynTree::size() const
+{
+   return _p->m_steps.size();
+}
+
+bool SynTree::empty() const
+{
+   return _p->m_steps.empty();
+}
+
+Statement* SynTree::first() const
+{
+   return _p->m_steps.front();
+}
+
+Statement* SynTree::last() const
+{
+   return _p->m_steps.back();
+}
+
+Statement* SynTree::at( int pos ) const
+{ 
+   return _p->m_steps[pos];
+}
+
 }
 
 /* end of syntree.cpp */

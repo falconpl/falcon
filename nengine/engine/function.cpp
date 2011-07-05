@@ -36,8 +36,9 @@ Function::DetermSetter Function::determ;
 Function::Function( const String& name, Module* module, int32 line ):
    m_name( name ),
    m_paramCount(0),
-   m_gcToken( 0 ),
+   m_lastGCMark( 0 ),
    m_module( module ),
+   m_methodOf( 0 ),
    m_line( line ),
    m_bDeterm(false),
    m_bEta(false)
@@ -53,11 +54,13 @@ Function::~Function()
    }
 }
 
+
 void Function::module( Module* owner )
 {
    //TODO Proper referencing
    m_module = owner;
 }
+
 
 String Function::locate() const
 {
@@ -67,47 +70,28 @@ String Function::locate() const
       temp.A("(").N(m_line).A(")");
    }
 
-   if ( m_module != 0 )
+   Module* mod = m_module;
+
+   if( mod == 0 && m_methodOf != 0 )
    {
-      if( m_module->uri().size() )
+      mod = m_methodOf->module();
+   }
+
+
+   if ( mod != 0 )
+   {
+      if( mod->uri().size() )
       {
-         temp.A(" ").A( m_module->uri() );
+         temp.A(" ").A( mod->uri() );
       }
-      else if ( m_module->name().size() )
+      else if ( mod->name().size() )
       {
-         temp.A(" [").A( m_module->name() ).A("]");
+         temp.A(" [").A( mod->name() ).A("]");
       }
    }
 
    return temp;
 }
-
-
-void Function::gcMark(int32 mark)
-{
-   if (m_gcToken != 0 )
-   {
-      m_gcToken->mark(mark);
-   }
-}
-
-
-GCToken* Function::garbage( Collector* c )
-{
-   static Class* fclass = Engine::instance()->functionClass();
-   m_gcToken = FALCON_GC_STORE( c, fclass, this );
-   return m_gcToken;
-}
-
-GCToken* Function::garbage()
-{
-   static Class* fclass = Engine::instance()->functionClass();
-   static Collector* coll = Engine::instance()->collector();
-
-   m_gcToken = FALCON_GC_STORE( coll, fclass, this );
-   return m_gcToken;
-}
-
 
 Error* Function::paramError(int line, const char* place ) const
 {
@@ -116,6 +100,23 @@ Error* Function::paramError(int line, const char* place ) const
            ErrorParam(e_inv_params, line == 0 ? m_line: line, placeName)
            .extra(m_signature) );
    
+}
+
+void Function::gcMark( uint32 mark )
+{
+   m_lastGCMark = mark;
+}
+
+
+bool Function::gcCheck( uint32 mark )
+{
+   if( m_lastGCMark < mark )
+   {
+      delete this;
+      return false;
+   }
+
+   return true;
 }
 
 }

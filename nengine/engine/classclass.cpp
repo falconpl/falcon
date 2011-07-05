@@ -35,7 +35,12 @@ ClassClass::~ClassClass()
 
 void ClassClass::gcMark( void* self, uint32 mark ) const
 {
-   static_cast<Class*>(self)->gcMark( mark );
+   static_cast<Class*>(self)->gcMarkMyself( mark );
+}
+
+bool ClassClass::gcCheck( void* self, uint32 mark ) const
+{
+   return static_cast<Class*>(self)->gcCheckMyself( mark );
 }
 
 void ClassClass::dispose( void* self ) const

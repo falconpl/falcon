@@ -416,12 +416,8 @@ void ExprNeg::apply_( const PStep* self, VMContext* ctx )
    {
       case FLC_ITEM_INT: item.setInteger( -item.asInteger() ); break;
       case FLC_ITEM_NUM: item.setNumeric( -item.asNumeric() ); break;
-      case FLC_ITEM_DEEP:
-         item.asDeepClass()->op_neg( ctx, item.asDeepInst() );
-         break;
-
       case FLC_ITEM_USER:
-         item.asUserClass()->op_neg( ctx, item.asUserInst() );
+         item.asClass()->op_neg( ctx, item.asInst() );
          break;
 
       default:
@@ -463,12 +459,8 @@ void ExprPreInc::apply_( const PStep* self, VMContext* ctx )
    {
       case FLC_ITEM_INT: item.setInteger( item.asInteger()+1 ); break;
       case FLC_ITEM_NUM: item.setNumeric( item.asNumeric()+1 ); break;
-      case FLC_ITEM_DEEP:
-         item.asDeepClass()->op_inc( ctx, item.asDeepInst());
-         break;
-
       case FLC_ITEM_USER:
-         item.asUserClass()->op_inc( ctx, item.asUserInst() );
+         item.asClass()->op_inc( ctx, item.asInst() );
          break;
 
       default:
@@ -541,12 +533,8 @@ void ExprPostInc::Gate::apply_( const PStep* ps,  VMContext* ctx )
    {
       case FLC_ITEM_INT: operand.setInteger( operand.asInteger()+1 ); break;
       case FLC_ITEM_NUM: operand.setNumeric( operand.asNumeric()+1 ); break;
-      case FLC_ITEM_DEEP:
-         operand.asDeepClass()->op_incpost( ctx, operand.asDeepInst() );
-         break;
-
       case FLC_ITEM_USER:
-         operand.asUserClass()->op_incpost( ctx, operand.asUserInst() );
+         operand.asClass()->op_incpost( ctx, operand.asInst() );
          break;
 
       default:
@@ -583,12 +571,8 @@ void ExprPreDec::apply_( const PStep* self, VMContext* ctx )
    {
       case FLC_ITEM_INT: item.setInteger( item.asInteger()-1 ); break;
       case FLC_ITEM_NUM: item.setNumeric( item.asNumeric()-1 ); break;
-      case FLC_ITEM_DEEP:
-         item.asDeepClass()->op_dec( ctx, item.asDeepInst() );
-         break;
-
       case FLC_ITEM_USER:
-         item.asUserClass()->op_dec( ctx, item.asUserInst() );
+         item.asClass()->op_dec( ctx, item.asInst() );
          break;
 
       default:
@@ -661,12 +645,8 @@ void ExprPostDec::Gate::apply_( const PStep* ps,  VMContext* ctx )
    {
       case FLC_ITEM_INT: operand.setInteger( operand.asInteger()-1 ); break;
       case FLC_ITEM_NUM: operand.setNumeric( operand.asNumeric()-1 ); break;
-      case FLC_ITEM_DEEP:
-         operand.asDeepClass()->op_decpost( ctx, operand.asDeepInst() );
-         break;
-
       case FLC_ITEM_USER:
-         operand.asUserClass()->op_decpost( ctx, operand.asUserInst() );
+         operand.asClass()->op_decpost( ctx, operand.asInst() );
          break;
 
       default:
@@ -706,12 +686,8 @@ void ExprEEQ::apply_( const PStep* ps, VMContext* ctx )
       op1->setBoolean( op1->asNumeric() == op2->asNumeric() );
       break;
 
-   case FLC_ITEM_DEEP << 8 | FLC_ITEM_DEEP:
-      op1->setBoolean( op1->asDeepInst() == op2->asDeepInst() );
-      break;
-
    case FLC_ITEM_USER << 8 | FLC_ITEM_USER:
-      op1->setBoolean( op1->asUserInst() == op2->asUserInst() );
+      op1->setBoolean( op1->asInst() == op2->asInst() );
       break;
 
    default:
@@ -1026,6 +1002,53 @@ void ExprIsOob::describe( String& str ) const
    str += m_first->describe();
 }
 
+//================================================
+// Self
+//
+
+ExprSelf::ExprSelf():
+   Expression(Expression::t_self)
+{
+   apply = apply_;
+}
+
+ExprSelf::ExprSelf( const ExprSelf &other ):
+   Expression(other)
+{
+   apply = apply_;
+}
+
+ExprSelf::~ExprSelf() {}
+
+bool ExprSelf::isBinaryOperator() const
+{
+   return false;
+}
+
+bool ExprSelf::isStatic() const
+{
+   return false;
+}
+
+ExprSelf* ExprSelf::clone() const
+{
+   return new ExprSelf( *this );
+}
+
+bool ExprSelf::simplify( Item& ) const
+{
+   return false;
+}
+
+void ExprSelf::describe( String & str ) const
+{
+   str = "self";
+}
+
+void ExprSelf::apply_( const PStep*, VMContext* ctx )
+{
+   ctx->pushData(ctx->currentFrame().m_self);
+}
 
 }
 

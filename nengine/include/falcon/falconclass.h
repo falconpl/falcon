@@ -20,10 +20,7 @@
 #include <falcon/string.h>
 #include <falcon/enumerator.h>
 #include <falcon/class.h>
-
-#include "pstep.h"
-#include "vmcontext.h"
-
+#include <falcon/pstep.h>
 
 namespace Falcon
 {
@@ -37,6 +34,8 @@ class DataWriter;
 class FalconState;
 class Expression;
 class ClassClass;
+class VMContext;
+class PCode;
 
 /** Class defined by a Falcon script.
 
@@ -104,30 +103,54 @@ public:
       Value m_value;
 
       inline Property( size_t value ):
-         m_type(t_prop)
+         m_type(t_prop),
+         m_expr(0),
+         m_preExpr(0)
       {
          m_value.id = value;
       }
 
+      Property( size_t value, Expression* expr );
+
       inline Property( Function* value ):
-         m_type(t_func)
+         m_type(t_func),
+         m_expr(0),
+         m_preExpr(0)
       {
          m_value.func = value;
       }
 
       inline Property( Inheritance* value ):
-         m_type(t_inh)
+         m_type(t_inh),
+         m_expr(0),
+         m_preExpr(0)
       {
          m_value.inh = value;
       }
 
       inline Property( FalconState* value ):
-         m_type(t_state)
+         m_type(t_state),
+         m_expr(0),
+         m_preExpr(0)
       {
          m_value.state = value;
       }
 
       ~Property();
+
+      /** Returns associated pre-compiled expression (if this property holds an expression).
+       \return a valid PCode or 0 if this is not an expression.
+       */
+      PCode* pexpr() const { return m_preExpr; }
+      
+      /** Returns associated expression (if this property holds an expression).
+       \return a valid PCode or 0 if this is not an expression.
+       */
+      Expression* expression() const { return m_expr; }
+      
+   private:
+      Expression* m_expr;
+      PCode* m_preExpr;
    };
 
    FalconClass( const String& name );
@@ -143,7 +166,7 @@ public:
     The method will return 0 if the class is not completely resolved,
     i.e. if there is some parent that couldn't be found.
    */
-   FalconInstance* createInstance() const;
+   FalconInstance* createInstance();
 
    /** Adds a property.
     \param name The name of the property to be added.
@@ -160,6 +183,22 @@ public:
     to a FalconClass subclass, and passing it as initValue here.
     */
    bool addProperty( const String& name, const Item& initValue );
+
+   /** Adds a property.
+    \param name The name of the property to be added.
+    \param initExpr An expression that must be invoked to initialize the property.
+    \return True if the property could be added, false if the name was already
+    used.
+
+    The initial value could be a DeepData instance; in this case, the
+    class will provide GC support. However, it is preferable to store data
+    that will stay valid as long as the class exists (i.e. as long as the
+    module where the class is declared exists).
+
+    \note In case this need arises, consider adding a UserData
+    to a FalconClass subclass, and passing it as initValue here.
+    */
+   bool addProperty( const String& name, Expression* initExpr );
 
     /** Adds a property.
     \param name The name of the property to be added.
@@ -184,11 +223,21 @@ public:
    /** Adds an init handler.
       \param init The Function instance that will be used to initialize this class.
       \return true If the init was not given, false if another init was already set.
-    */
-   bool addInit( Function* init );
+    Notice that FalconClasses have usually initStatements, buy they can also
+    accpet an external init handler.
 
-   /** Returns the init handler of this class, if any. */
+    This method will return false (and do nothing) if hasInitStatements has
+    been set to true.
+    */
+   bool setInit( Function* init );
+
+   /** Returns the external init handler of this class, if any.
+    \return An external init handler
+    */
    Function* init() const { return m_init; }
+
+   bool hasInit() const { return m_hasInit; }
+   void hasInit( bool bMode ) { m_hasInit = bMode; }
 
    /** Adds a parent and the parentship declaration.
     \param inh The inheritance declaration.
@@ -226,7 +275,6 @@ public:
     that has accessed the item.
     */
    const Property* getProperty( const String& name ) const;
-
 
    /** Adds a state to this class.
       \param state The state to be added.
@@ -336,28 +384,54 @@ public:
 private:
    inline void override_unary( VMContext* ctx, void*, int op_id, const String& opName ) const;
    inline void override_binary( VMContext* ctx, void*, int op_id, const String& opName ) const;
-   // used in deserialization
-   FalconClass();
-
+   
    class Private;
    Private* _p;
       
    String m_fc_name;
-   bool m_shouldMark;
    Function* m_init;
-
-   friend class CoreClass;
-
    Function** m_overrides;
 
+   bool m_shouldMark;
+   bool m_hasInitExpr;
+   bool m_hasInit;
+
+   // This is used to remove the topmost stack data in some op_ operands
    class RemoveSelf: public PStep
    {
    public:
       RemoveSelf() { apply = apply_; }
       static void apply_( const PStep*, VMContext* );
+   };   
+   RemoveSelf m_removeSelf;   
+
+   // This is used to initialize the init expressions.
+   class PStepInitExpr: public PStep
+   {
+   public:
+      PStepInitExpr( FalconClass* o );
+      static void apply_( const PStep*, VMContext* );
+   private:
+      FalconClass* m_owner;
    };
-   
-   RemoveSelf m_removeSelf;
+
+   PStepInitExpr m_initExprStep;
+
+   // This is used to invoke 
+   class PStepInit: public PStep
+   {
+   public:
+      PStepInit( FalconClass* o );
+      static void apply_( const PStep*, VMContext* );
+      
+   private:
+      FalconClass* m_owner;
+   };
+
+   PStepInit m_initFuncStep;
+
+   friend class PStepInitExpr;
+   friend class CoreClass;
 };
 
 }

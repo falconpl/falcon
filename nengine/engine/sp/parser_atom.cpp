@@ -123,6 +123,16 @@ void apply_Atom_True ( const Rule&, Parser& p )
    p.simplify(1,ti2);
 }
 
+void apply_Atom_Self ( const Rule&, Parser& p )
+{
+   // << (r_Atom_Nil << "Atom_Self" << apply_Atom_Delf << T_Nil )
+   SourceParser& sp = static_cast<SourceParser&>(p);
+
+   TokenInstance* ti = p.getNextToken();
+   TokenInstance* ti2 = new TokenInstance(ti->line(), ti->chr(), sp.Atom );
+   ti2->setValue( new ExprSelf, expr_deletor );
+   p.simplify(1,ti2);
+}
 
 void apply_Atom_Nil ( const Rule&, Parser& p )
 {

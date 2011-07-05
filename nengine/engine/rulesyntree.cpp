@@ -52,7 +52,7 @@ void RuleSynTree::apply_( const PStep* ps, VMContext* ctx )
       // we have a traceback.
       cf.m_seqId = tbpoint;
    }
-   else if (cf.m_seqId >= (int) self->m_steps.size() )
+   else if (cf.m_seqId >= (int) self->size() )
    {
       // We have processed the rule up to the end -- SUCCESS
       
@@ -68,7 +68,7 @@ void RuleSynTree::apply_( const PStep* ps, VMContext* ctx )
    }
 
    // just proceed with next step
-   Statement* step = self->m_steps[ cf.m_seqId++ ];
+   Statement* step = self->at( cf.m_seqId++ );
    step->prepare(ctx);
 }
 

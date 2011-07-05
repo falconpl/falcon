@@ -27,15 +27,15 @@ namespace Falcon {
 Class::Class( const String& name ):
    m_name( name ),
    m_typeID( FLC_CLASS_ID_OBJECT ),
-   m_token(0),
-   m_module(0)
+   m_module(0),
+   m_lastGCMark(0)
 {}
 
 Class::Class( const String& name, int64 tid ):
    m_name( name ),
    m_typeID( tid ),
-   m_token(0),
-   m_module(0)
+   m_module(0),
+   m_lastGCMark(0)
 {}
 
 
@@ -49,12 +49,28 @@ void Class::gcMark( void*, uint32 ) const
    // normally does nothing
 }
 
-void Class::gcMark( uint32 mark ) const
+
+bool Class::gcCheck( void*, uint32 ) const
 {
-   if( m_token != 0 )
+   return true;
+}
+
+
+void Class::gcMarkMyself( uint32 mark )
+{
+   m_lastGCMark = mark;
+}
+
+
+bool Class::gcCheckMyself( uint32 mark )
+{
+   if( mark > m_lastGCMark )
    {
-      m_token->mark( mark );
+      delete this;
+      return false;
    }
+
+   return true;
 }
 
 
@@ -83,49 +99,24 @@ void Class::op_compare( VMContext* ctx, void* self ) const
    
    ctx->operands( op1, op2 );
    
-   switch( op2->type() )
+   if( op2->isUser() )
    {
-      case FLC_ITEM_DEEP:
-         if( (inst = op2->asDeepInst()) == self )
-         {
-            ctx->stackResult(2, (int64)0 );
-            return;
-         }
+      if( (inst = op2->asInst()) == self )
+      {
+         ctx->stackResult(2, 0 );
+         return;
+      }
 
-         if( typeID() > 0 )
-         {
-            ctx->stackResult(2, (int64)  typeID() - op2->asDeepClass()->typeID() );
-            return;
-         }
-         break;
-
-      case FLC_ITEM_USER:
-         if( (inst = op2->asUserInst()) == self )
-         {
-            ctx->stackResult(2, 0 );
-            return;
-         }
-
-         if( typeID() > 0 )
-         {
-            ctx->stackResult(2, (int64)  typeID() - op2->asDeepClass()->typeID() );
-            return;
-         }
-         break;
+      if( typeID() > 0 )
+      {
+         ctx->stackResult(2, (int64)  typeID() - op2->asClass()->typeID() );
+         return;
+      }
    }
 
    // we have no information about what an item might be here, but we can
    // order the items by type
    ctx->stackResult(2, (int64) op1->type() - op2->type() );
-}
-
-
-GCToken* Class::garbage()
-{
-   static GCToken* token =
-         Engine::instance()->collector()->store( Engine::instance()->classClass(), this );
-
-   return token;
 }
 
 //=====================================================================

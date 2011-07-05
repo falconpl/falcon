@@ -129,6 +129,25 @@ public:
       *m_topData = data;
    }
 
+   /** Add more variables on top of the stack.
+    \param count Number of variables to be added.
+    The resulting values will be nilled.
+    */
+   inline void addLocals( size_t count ) {
+      Item* base = m_topData+1;
+      m_topData += count;
+      if( m_topData >= m_maxData )
+      {
+         moreData();
+         base = m_topData - count;
+      }
+      while( base <= m_topData )
+      {
+         base->setNil();
+         ++base;
+      }
+   }
+
    /** Top data in the stack
     *
     */
@@ -177,6 +196,10 @@ public:
     */
    Item& addDataSlot() {
       ++m_topData;
+      if( m_topData >= m_maxData )
+      {
+         moreData();
+      }
       return *m_topData;
    }
 
@@ -407,6 +430,7 @@ public:
       topCall->m_self = self;
       topCall->m_bMethodic = true;
       topCall->m_bExpression = isExpr;
+      topCall->m_bInit = false;
 
       return topCall;
    }

@@ -62,6 +62,18 @@ void ClassFunction::describe( void* instance, String& target, int, int ) const
    target = func->name() + "()";
 }
 
+
+void ClassFunction::gcMark( void* self, uint32 mark ) const
+{
+   static_cast<Function*>(self)->gcMark(mark);
+}
+
+
+bool ClassFunction::gcCheck( void* self, uint32 mark ) const
+{
+   return static_cast<Function*>(self)->gcCheck(mark);
+}
+
 }
 
 /* end of classfunction.cpp */

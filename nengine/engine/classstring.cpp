@@ -123,7 +123,7 @@ void ClassString::op_add( VMContext* ctx, void* self ) const
    if( ! ctx->wentDeep() )
    {
       // op2 has been transformed
-      String* deep = (String*)(op2->type() == FLC_ITEM_DEEP ? op2->asDeepInst() : op2->asUserInst());
+      String* deep = (String*)op2->asInst();
       deep->prepend( *str );
    }
 }
@@ -215,7 +215,7 @@ void ClassString::op_aadd( VMContext* ctx, void* self ) const
    if( ! ctx->wentDeep() )
    {
       // op2 has been transformed
-      String* deep = (String*)(op2->type() == FLC_ITEM_DEEP ? op2->asDeepInst() : op2->asUserInst());
+      String* deep = (String*) op2->asInst();
       deep->prepend( *str );
    }
 }

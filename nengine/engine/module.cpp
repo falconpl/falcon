@@ -122,18 +122,12 @@ Module::~Module()
 
 GlobalSymbol* Module::addFunction( Function* f, bool bExport )
 {
-   static Engine* eng = Engine::instance();
+   //static Engine* eng = Engine::instance();
 
    Private::GlobalsMap& syms = _p->m_gSyms;
    if( syms.find(f->name()) != syms.end() )
    {
       return 0;
-   }
-
-   // If the module is not static, garbage-ize the function
-   if( ! m_bIsStatic && f->garbage() == 0 )
-   {
-      f->garbage( eng->collector() );
    }
 
    // add a proper object in the global vector
@@ -161,13 +155,7 @@ GlobalSymbol* Module::addFunction( Function* f, bool bExport )
 
 void Module::addFunction( GlobalSymbol* gsym, Function* f )
 {
-   static Engine* eng = Engine::instance();
-
-   // If the module is not static, garbage-ize the function
-   if( ! m_bIsStatic && f->garbage() == 0 )
-   {
-      f->garbage( eng->collector() );
-   }
+   //static Engine* eng = Engine::instance();
 
    // finally add to the function vecotr so that we can account it.
    _p->m_functions[f->name()] = f;

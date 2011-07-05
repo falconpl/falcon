@@ -686,10 +686,12 @@ Parsing::TokenInstance* SourceLexer::checkWord()
       break;
 
       case 4:
-         if( m_text == "elif" ) return parser->T_elif.makeInstance(m_sline, m_schr);
-         if( m_text == "else" ) return parser->T_else.makeInstance(m_sline, m_schr);
-         if( m_text == "rule" ) return parser->T_rule.makeInstance(m_sline, m_schr);
-         if( m_text == "true" ) return parser->T_true.makeInstance(m_sline, m_schr);
+         if ( m_text == "elif" ) return parser->T_elif.makeInstance(m_sline, m_schr);
+         if ( m_text == "else" ) return parser->T_else.makeInstance(m_sline, m_schr);
+         if ( m_text == "init" ) return parser->T_init.makeInstance(m_sline, m_schr);
+         if ( m_text == "rule" ) return parser->T_rule.makeInstance(m_sline, m_schr);
+         if ( m_text == "self" ) return parser->T_self.makeInstance(m_sline, m_schr);
+         if ( m_text == "true" ) return parser->T_true.makeInstance(m_sline, m_schr);
 
          /*
          if ( m_text == "load" )  // directive
@@ -697,8 +699,6 @@ Parsing::TokenInstance* SourceLexer::checkWord()
             m_bIsDirectiveLine = true;
             return LOAD;
          }
-         if ( m_text == "init" )
-            return INIT;
          if ( m_text == "else" )
             return ELSE;
          if ( m_text == "elif" )

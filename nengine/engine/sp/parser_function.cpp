@@ -40,15 +40,12 @@ using namespace Parsing;
 static SynFunc* inner_apply_function( const Rule&, Parser& p, bool bHasExpr )
 {
    //<< (r_Expr_function << "Expr_function" << apply_function << T_function << T_Name << T_Openpar << ListSymbol << T_Closepar << T_EOL )
-   SourceParser& sp = static_cast<SourceParser&>(p);
    ParserContext* ctx = static_cast<ParserContext*>(p.context());
 
-   sp.getNextToken();//T_function
-   TokenInstance* tname=sp.getNextToken();
-   sp.getNextToken();// '('
-   TokenInstance* targs=sp.getNextToken();
-   sp.getNextToken();// ')'
-   sp.getNextToken();// '\n' or ':'
+   p.getNextToken();//T_function
+   TokenInstance* tname = p.getNextToken();
+   p.getNextToken();// '('
+   TokenInstance* targs = p.getNextToken();
 
    TokenInstance* tstatement = 0;
    int tcount = bHasExpr ? 8 : 6;
@@ -91,13 +88,15 @@ static SynFunc* inner_apply_function( const Rule&, Parser& p, bool bHasExpr )
    {
       Expression* sa = static_cast<Expression*>(tstatement->detachValue());
       func->syntree().append(new StmtReturn(sa));
+      p.simplify(tcount);
    }
    else
    {
       ctx->openFunc(func, symfunc);
+      p.simplify(tcount);
+      p.pushState( "Main" );
    }
 
-   p.simplify(tcount);
    return func;
 }
 
@@ -127,14 +126,12 @@ void on_close_function( void* )
 
 void apply_expr_func(const Rule&, Parser& p)
 {
-   SourceParser& sp = static_cast<SourceParser&>(p);
+   SourceParser& sp = *static_cast<SourceParser*>(&p);
    ParserContext* ctx = static_cast<ParserContext*>(p.context());
 
-   TokenInstance* tf=sp.getNextToken();//T_function
-   sp.getNextToken();// '('
-   TokenInstance* targs=sp.getNextToken();
-   sp.getNextToken();// ')'
-   sp.getNextToken();// '\n'
+   TokenInstance* tf = p.getNextToken();//T_function
+   p.getNextToken();// '('
+   TokenInstance* targs = p.getNextToken();
 
    // todo: generate an anonymous name
    SynFunc* func=new SynFunc("anonymous",0,tf->line());
@@ -145,7 +142,7 @@ void apply_expr_func(const Rule&, Parser& p)
       func->addParam(*it);
    }
 
-   TokenInstance* ti=new TokenInstance(tf->line(),tf->chr(),sp.Expr);
+   TokenInstance* ti=new TokenInstance(tf->line(),tf->chr(), sp.Expr);
    Expression* expr=new ExprValue(Item(func));
    ti->setValue(expr,expr_deletor);
 

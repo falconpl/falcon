@@ -29,7 +29,8 @@ using namespace Parsing;
 
 void apply_class( const Rule&, Parser& p );
 void apply_class_p( const Rule&, Parser& p );
-void apply_pdecl_expr( const Rule&, Parser& p  );
+void apply_pdecl_expr( const Rule&, Parser& p );
+void apply_init_expr( const Rule&, Parser& p );
 
 }
 

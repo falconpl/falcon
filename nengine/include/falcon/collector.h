@@ -24,12 +24,15 @@
 
 
 #if FALCON_TRACE_GC
+#ifndef SRC
+#define SRC __FILE__
+#endif
 
    #define FALCON_GC_STORE( coll, cls, data ) ( coll->trace() ?\
-         coll->H_store( cls, (void*) data, __FILE__, __LINE__ ): \
+         coll->H_store( cls, (void*) data, SRC, __LINE__ ): \
          coll->store( cls, (void*) data ))
    #define FALCON_GC_STORELOCKED( coll, cls, data ) ( coll->trace() ?\
-         coll->H_storeLocked( cls, (void*) data, __FILE__, __LINE__ ): \
+         coll->H_storeLocked( cls, (void*) data, SRC, __LINE__ ): \
          coll->storeLocked( cls, (void*) data ))
 
 #else  //FALCON_TRACE_GC

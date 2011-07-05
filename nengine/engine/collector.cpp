@@ -1001,9 +1001,9 @@ void Collector::markLocked()
       else
       {
          const Item& item = lock->item();
-         if( item.isDeep() )
+         if( item.isGarbaged() )
          {
-            item.asDeepClass()->gcMark( item.asDeepInst(), mark );
+            item.asClass()->gcMark( item.asInst(), mark );
          }
          
          lock = lock->m_next;

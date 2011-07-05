@@ -114,9 +114,11 @@ SourceParser::SourceParser():
    T_function("function"),
    T_return("return"),
    T_class("class"),
+   T_init("init"),
 
    T_true( "true" ),
-   T_false( "false" )
+   T_false( "false" ),
+   T_self( "self" )
 {
    S_Autoexpr << "Autoexpr"
       << (r_line_autoexpr << "Autoexpr" << apply_line_expr << Expr << T_EOL)
@@ -225,6 +227,7 @@ SourceParser::SourceParser():
       << (r_Atom_String << "Atom_String" << apply_Atom_String << T_String )
       << (r_Atom_False<< "Atom_False" << apply_Atom_False << T_false )
       << (r_Atom_True<< "Atom_True" << apply_Atom_True << T_true )
+      << (r_Atom_self<< "Atom_Self" << apply_Atom_Self << T_self )
       << (r_Atom_Nil<< "Atom_Nil" << apply_Atom_Nil << T_nil )
       ;
 
@@ -283,6 +286,9 @@ SourceParser::SourceParser():
    S_PropDecl << "Property declaration";
    S_PropDecl << (r_propdecl_expr << "Expression Property" << apply_pdecl_expr
                                << T_Name << T_EqSign << Expr << T_EOL );
+
+   S_InitDecl << (r_init << "Init block" << apply_init_expr
+                               << T_init << T_EOL );
    
    //==========================================================================
    //State declarations
@@ -305,6 +311,7 @@ SourceParser::SourceParser():
    s_ClassBody << "ClassBody"
       << S_Function
       << S_PropDecl
+      << S_InitDecl
       << S_End
       << S_EmptyLine
       ;

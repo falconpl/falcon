@@ -22,6 +22,7 @@
 #include <falcon/sp/sourceparser.h>
 
 #include <falcon/synfunc.h>
+#include <falcon/falconclass.h>
 #include <falcon/unknownsymbol.h>
 
 #include <falcon/globalsymbol.h>
@@ -37,6 +38,8 @@
 #include <list>
 #include <deque>
 
+#include "falcon/falconclass.h"
+
 namespace Falcon {
 
 //==================================================================
@@ -46,7 +49,7 @@ namespace Falcon {
 class ParserContext::CCFrame
 {
    typedef union tag_elem {
-      Class* cls;
+      FalconClass* cls;
       SynFunc* func;
       Statement* stmt;
       void* raw;
@@ -62,7 +65,7 @@ class ParserContext::CCFrame
    } t_type;
 
    CCFrame();
-   CCFrame( Class* cls, bool bIsObject, GlobalSymbol* gs );
+   CCFrame( FalconClass* cls, bool bIsObject, GlobalSymbol* gs );
    CCFrame( SynFunc* func, GlobalSymbol* gs );
    CCFrame( Statement* stmt, SynTree* st );
    CCFrame( SynTree* st );
@@ -91,7 +94,7 @@ ParserContext::CCFrame::CCFrame():
 
 }
 
-ParserContext::CCFrame::CCFrame( Class* cls, bool bIsObject, GlobalSymbol* gs ):
+ParserContext::CCFrame::CCFrame( FalconClass* cls, bool bIsObject, GlobalSymbol* gs ):
    m_type( bIsObject ? t_object_type : t_class_type ),
    m_branch( 0 ),
    m_bStatePushed( false ),
@@ -499,13 +502,22 @@ void ParserContext::openFunc( SynFunc *func, GlobalSymbol *gs )
 }
 
 
-void ParserContext::openClass( Class *cls, bool bIsObject, GlobalSymbol *gs )
+void ParserContext::openClass( Class* cls, bool bIsObject, GlobalSymbol *gs )
 {
    TRACE("ParserContext::openClass -- depth %d %s%s", (int)_p->m_frames.size() + 1,
             cls->name().c_ize(), bIsObject ? "":" (object)" );
-   m_cclass = cls;
+   // we know we're compiling source classes.
+   FalconClass* fcls = static_cast<FalconClass*>(cls);
+
+   m_cclass = fcls;
    m_cstatement = 0;
-   _p->m_frames.push_back(CCFrame(cls, bIsObject, gs));
+   _p->m_frames.push_back(CCFrame(fcls, bIsObject, gs));
+
+   if( fcls->init() == 0 )
+   {
+      fcls->setInit( new SynFunc("init") );
+   }
+   m_symtab = &fcls->init()->symbols();
    // TODO: get the symbol table.
 }
 
@@ -540,8 +552,11 @@ void ParserContext::closeContext()
       {
          case CCFrame::t_object_type:
          case CCFrame::t_class_type:
-            // todo
-            //m_symtab = curFrame.m_elem.cls;
+            // Once closed the init method, the class has no symbol table.
+            m_symtab = 0;
+            // and of course, we have no function
+            m_cfunc = 0;
+            // and we know we don't have anything else to set.
             riter = _p->m_frames.rend(); // we're done, froce break;
             break;
 
@@ -609,7 +624,16 @@ void ParserContext::closeContext()
                ++riter;
             }
          }
-         onNewFunc( bframe.m_elem.func, bframe.m_sym );
+      
+         // is this a method?
+         if ( m_cclass != 0 )
+         {
+            m_cclass->addMethod( bframe.m_elem.func );
+         }
+         else
+         {
+            onNewFunc( bframe.m_elem.func, bframe.m_sym );
+         }
          break;
 
       case CCFrame::t_stmt_type:
@@ -640,6 +664,13 @@ void ParserContext::closeContext()
          break;
    }
 }
+
+
+bool ParserContext::isTopLevel() const
+{
+   return _p->m_frames.size() < 2;
+}
+
 
 void ParserContext::reset()
 {

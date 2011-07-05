@@ -18,7 +18,6 @@
 
 #include <falcon/setup.h>
 #include <falcon/pstep.h>
-#include <vector>
 
 namespace Falcon
 {
@@ -50,32 +49,26 @@ public:
    /** Mark this as a composed class.*/
    virtual bool isComposed() const { return true; }
 
-   int size() const { return m_steps.size(); }
-   bool empty() const { return m_steps.empty(); }
+   int size() const;
+   bool empty() const;
 
-   Statement* first() { return m_steps.front(); }
-   Statement* last()  { return m_steps.back(); }
-   Statement* at( int pos ) const { return m_steps[pos]; }
+   Statement* first() const;
+   Statement* last() const;
+   Statement* at( int pos ) const;
    void set( int pos, Statement* p );
 
-   void insert( int pos, Statement* step ) {
-      m_steps.insert( m_steps.begin()+pos, step );
-   }
-
+   void insert( int pos, Statement* step );
    void remove( int pos );
-
-   SynTree& append( Statement* step ) {
-      m_steps.push_back( step );
-      return *this;
-   }
+   SynTree& append( Statement* step );
 
    static void apply_( const PStep* ps, VMContext* ctx );
+
    virtual void describe( String& tgt ) const;
    inline String describe() const { return PStep::describe(); }
 
 protected:
-   typedef std::vector<Statement*> Steps;
-   Steps m_steps;
+   class Private;
+   Private* _p;
 };
 
 }

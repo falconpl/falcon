@@ -90,9 +90,11 @@ public:
    Parsing::Terminal T_function;
    Parsing::Terminal T_return;
    Parsing::Terminal T_class;
+   Parsing::Terminal T_init;
 
    Parsing::Terminal T_true;
    Parsing::Terminal T_false;
+   Parsing::Terminal T_self;
 
    //================================================
    // Statements
@@ -190,6 +192,9 @@ public:
    Parsing::Rule r_class;
    Parsing::Rule r_class_p;
 
+   Parsing::NonTerminal S_InitDecl;
+   Parsing::Rule r_init;
+
    Parsing::NonTerminal S_PropDecl;
    Parsing::Rule r_propdecl_expr;
    Parsing::Rule r_propdecl_simple;
@@ -204,6 +209,7 @@ public:
    Parsing::Rule r_Atom_String;
    Parsing::Rule r_Atom_False;
    Parsing::Rule r_Atom_True;
+   Parsing::Rule r_Atom_self;
    Parsing::Rule r_Atom_Nil;
 
    //================================================

@@ -142,18 +142,6 @@ void generic_apply_( const PStep* ps, VMContext* ctx )
       ctx->popData();
       break;
 
-   case FLC_ITEM_DEEP << 8 | FLC_ITEM_NIL:
-   case FLC_ITEM_DEEP << 8 | FLC_ITEM_BOOL:
-   case FLC_ITEM_DEEP << 8 | FLC_ITEM_INT:
-   case FLC_ITEM_DEEP << 8 | FLC_ITEM_NUM:
-   case FLC_ITEM_DEEP << 8 | FLC_ITEM_METHOD:
-   case FLC_ITEM_DEEP << 8 | FLC_ITEM_FUNC:
-   case FLC_ITEM_DEEP << 8 | FLC_ITEM_BASEMETHOD:
-   case FLC_ITEM_DEEP << 8 | FLC_ITEM_DEEP:
-   case FLC_ITEM_DEEP << 8 | FLC_ITEM_USER:
-      __CPR::operate( ctx, op1->asDeepClass(), op1->asDeepInst() );
-      break;
-
    case FLC_ITEM_USER << 8 | FLC_ITEM_NIL:
    case FLC_ITEM_USER << 8 | FLC_ITEM_BOOL:
    case FLC_ITEM_USER << 8 | FLC_ITEM_INT:
@@ -161,9 +149,8 @@ void generic_apply_( const PStep* ps, VMContext* ctx )
    case FLC_ITEM_USER << 8 | FLC_ITEM_METHOD:
    case FLC_ITEM_USER << 8 | FLC_ITEM_FUNC:
    case FLC_ITEM_USER << 8 | FLC_ITEM_BASEMETHOD:
-   case FLC_ITEM_USER << 8 | FLC_ITEM_DEEP:
    case FLC_ITEM_USER << 8 | FLC_ITEM_USER:
-      __CPR::operate( ctx, op1->asUserClass(), op1->asUserInst() );
+      __CPR::operate( ctx, op1->asClass(), op1->asInst() );
       break;
 
    default:

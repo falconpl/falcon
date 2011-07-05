@@ -447,7 +447,7 @@ public:
    /** Gets the current class.
       \return The current class, or 0 if the parser is not inside a class.
     */
-   Class* currentClass() const { return m_cclass; }
+   FalconClass* currentClass() const { return m_cclass; }
 
    /** To be called back by rules when the parser state needs to be pushed.
     Rules must call back this method after having pushed the new state in the
@@ -482,7 +482,7 @@ public:
     have been opened.
 
     */
-   bool isTopLevel() const { return m_symtab == 0; }
+   bool isTopLevel() const;
 
    bool isCompleteStatement() const { return isTopLevel() && m_cstatement == 0; }
 
@@ -504,7 +504,7 @@ private:
    SynFunc * m_cfunc;
 
    // Current class, precached for performance.
-   Class * m_cclass;
+   FalconClass * m_cclass;
 
    // Current symbol table, precached for performance.
    SymbolTable* m_symtab;

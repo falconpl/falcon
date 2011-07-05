@@ -22,43 +22,24 @@
 #define FLC_ITEM_BOOL         1
 #define FLC_ITEM_INT          2
 #define FLC_ITEM_NUM          3
+#define FLC_ITEM_FUNC         4
+#define FLC_ITEM_METHOD       5
+#define FLC_ITEM_BASEMETHOD   6
+#define FLC_ITEM_COUNT        7
 
-/* User items are ungarbaged items.
- */
-#define FLC_ITEM_USER         4
+/** User items are non-standard items. */
+#define FLC_ITEM_USER         8
+/** Framing items are special markers in data stack for rules. */
+#define FLC_ITEM_FRAMING      9
 
-/* Framing items. They are used as special markers in the item stack. */
-#define FLC_ITEM_FRAMING      5
-
-/* This marks the last flat item */
-
-#define FLC_ITEM_FLAT         5
-
-/*
- Theese are hybrid flat-deep items.
- They are flat with regards to the item system, that is, they are
- copied flat, while they are deep with regards to the GC, that is,
- they require ad-hoc marking.
-
- Function and methods keep their mark token inside their own structure,
- and declare themselves to the GC in case of need.
-*/
-#define FLC_ITEM_FUNC         6
-#define FLC_ITEM_METHOD       7
-#define FLC_ITEM_BASEMETHOD   8
-
-/* From this point on, we have deep items -- garbage controlled */
-#define FLC_ITEM_DEEP         9
-
-#define FLC_ITEM_COUNT       10
 
 // Theese are the class IDs, used to get the typeID of this item.
-#define FLC_CLASS_ID_STRING   8
-#define FLC_CLASS_ID_FUNCTION 9
-#define FLC_CLASS_ID_ARRAY    10
-#define FLC_CLASS_ID_DICT     11
-#define FLC_CLASS_ID_RANGE    12
-#define FLC_CLASS_ID_CLASS    13
+#define FLC_CLASS_ID_STRING   10
+#define FLC_CLASS_ID_FUNCTION 11
+#define FLC_CLASS_ID_ARRAY    12
+#define FLC_CLASS_ID_DICT     13
+#define FLC_CLASS_ID_RANGE    14
+#define FLC_CLASS_ID_CLASS    15
 
 // Other generic object
 #define FLC_CLASS_ID_OBJECT   20

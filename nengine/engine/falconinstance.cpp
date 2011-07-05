@@ -27,7 +27,7 @@ FalconInstance::FalconInstance():
 {
 }
 
-FalconInstance::FalconInstance( const FalconClass* origin ):
+FalconInstance::FalconInstance( FalconClass* origin ):
    m_origin(origin),
    m_mark(0)
 {
@@ -45,9 +45,7 @@ FalconInstance::~FalconInstance()
 }
 
 void FalconInstance::getMember( const String& name, Item& target ) const
-{
-   static Collector* coll = Engine::instance()->collector();
-   
+{   
    const FalconClass::Property* prop = m_origin->getProperty( name );
    if( prop == 0 )
    {
@@ -61,12 +59,13 @@ void FalconInstance::getMember( const String& name, Item& target ) const
          break;
 
       case FalconClass::Property::t_func:
-         target.setDeep( FALCON_GC_STORE( coll, m_origin, this ) );
+         target.setUser( m_origin, const_cast<FalconInstance*>(this) );
          target.methodize( prop->m_value.func );
+         target.garbage();  // just in case we're garbaged, enable marking on the method.
          break;
 
       case FalconClass::Property::t_inh:
-         target.setDeep( FALCON_GC_STORE( coll, m_origin, this ) );
+         target.setUser( m_origin, const_cast<FalconInstance*>(this) );
          //TODO
          //target.methodize( prop.m_value.inh. somethin );
          break;
@@ -108,7 +107,10 @@ void FalconInstance::gcMark( uint32 mark )
    {
       m_mark = mark;
       m_data.gcMark( mark );
-      m_origin->gcMark( mark );
+      // also, back-mark our class.
+      // possibly, it's our class that's marking ourselves,
+      // but we don't care. This will be a no-op in that case.
+      m_origin->gcMarkMyself( mark );
    }
 }
 

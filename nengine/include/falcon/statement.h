@@ -41,7 +41,8 @@ public:
       while_t,
       return_t,
       rule_t,
-      cut_t
+      cut_t,
+      custom_t
    } statement_t ;
 
    Statement( statement_t type, int32 line=0, int32 chr=0 ):

@@ -47,23 +47,16 @@ void SynFunc::apply( VMContext* ctx, int32 nparams )
    }
    
    // fill the parameters
-   TRACE1( "-- filing parameters: %d/%d", nparams, this->paramCount() );
-   while( nparams < this->paramCount() )
+   TRACE1( "-- filing parameters: %d/%d, and locals %d",
+         nparams, this->paramCount(),
+         this->symbols().localCount() - this->paramCount() );
+
+   register int lc = (int) this->symbols().localCount();
+   if( lc > nparams )
    {
-      (++ctx->m_topData)->setNil();
-      ++nparams;
+      ctx->addLocals( lc - nparams );
    }
-
-   // fill the locals
-   int locals = this->symbols().localCount() - this->paramCount();
-   TRACE1( "-- filing locals: %d", locals );
-   while( locals > 0 )
-   {
-      (++ctx->m_topData)->setNil();
-      --locals;
-   }
-
-
+   
    if( this->syntree().last()->type() != Statement::return_t )
    {
       MESSAGE1( "-- Pushing extra return" );

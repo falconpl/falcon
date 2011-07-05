@@ -181,7 +181,7 @@ void describe_(VMContext* ctx, const Class* cls, void* data)
    cls->describe( data, *target );
 
    Item& topData = ctx->topData();
-   topData.setDeep( target->garbage() );
+   topData.setUser( target->garbage() );
 }
 
 

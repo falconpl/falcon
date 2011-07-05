@@ -285,12 +285,9 @@ Engine::Engine()
    m_classes[FLC_ITEM_BOOL] = new ClassBool;
    m_classes[FLC_ITEM_INT] = new ClassInt;
    m_classes[FLC_ITEM_NUM] = new ClassNumeric;
-   m_classes[FLC_ITEM_USER] = 0;
-   m_classes[FLC_ITEM_FRAMING] = 0;
    m_classes[FLC_ITEM_FUNC] = new ClassFunction;
    m_classes[FLC_ITEM_METHOD] = new ClassNil;
    m_classes[FLC_ITEM_BASEMETHOD] = new ClassNil;
-   m_classes[FLC_ITEM_DEEP] = 0;
 
    //=====================================
    // Initialization of standard errors.
@@ -342,12 +339,13 @@ Engine::~Engine()
 {
    MESSAGE( "Engine destruction started" );
 
-   delete m_mtx;
-   delete m_collector;
+   m_collector->stop();
+
    delete m_stringClass;
    delete m_arrayClass;
    delete m_dictClass;
    delete m_classClass;
+   delete m_functionClass;
 
    // ===============================
    // Delete standard error classes
@@ -391,7 +389,10 @@ Engine::~Engine()
    //
    delete m_core;
    delete m_bom;
-   
+
+   delete m_collector;
+   delete m_mtx;
+
    MESSAGE( "Engine destroyed" );
 }
 
@@ -534,7 +535,7 @@ Collector* Engine::collector() const
 
 Class* Engine::getTypeClass( int type )
 {
-   PARANOID("type out of range", (type < FLC_ITEM_DEEP && type != FLC_ITEM_USER) );
+   PARANOID("type out of range", (type < FLC_ITEM_COUNT) );
    return m_classes[type];
 }
 

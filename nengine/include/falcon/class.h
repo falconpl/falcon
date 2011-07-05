@@ -156,7 +156,9 @@ public:
    //=========================================
    // Instance management
 
-   /** Disposes an instance */
+   /** Disposes an instance.
+
+    */
    virtual void dispose( void* self ) const = 0;
 
    /** Clones an instance */
@@ -178,19 +180,71 @@ public:
     \parm self The intance of this class to be marked.
     \param mark The gc mark to be applied.
 
-    The base version does nothing.
+    This method is called every time an item with mark sign is inspected.
+
+    The class has here the ability to set a mark flag on the self instance,
+    and eventually propagate the mark to other contents or data related
+    to the self instance.
+
+    \note The base version does nothing.
     */
    virtual void gcMark( void* self, uint32 mark ) const;
 
-   /** Marks the class itself.
+   /** Determines if an instance should be disposed of.
+    \parm self The intance of this class to be marked.
+    \param mark The current gc Mark.
+    \return True if the instance is alive, false if it can be disposed.
 
-    A class itself might be dynamic, as it might have been created
-    dynamically by a module.
+    This method is invoked when the garbage collector wants to check if
+    an instance is still alive or needs to be disposed. The class should
+    check the incoming mark against the last mark that has been applied
+    during a gcMark() call. If the \b mark parameter is bigger, then
+    the object has been left behind and can be disposed at class will.
 
-    Marking a class will keep alive its module, if it has one,
-    or all the dynamic functions it stores as methods.
+    Returning false, the garbage collector will free its own accounting
+    resources and won't call the gcCheck() method anymore. The class should
+    dispose the instance on its own will before returning (the garbage
+    collector will \b not call the dispose() method of this class after
+    a gcCheck).
+
+    Notice that disposing of the \b self parameter without returning false
+    might make the GC to present the same item again to this class, possibly
+    causing crashes (double free, illegal memory access etc.).
+
+    \note The base version does nothing.
     */
-   virtual void gcMark( uint32 mark ) const;
+   virtual bool gcCheck( void* self, uint32 mark ) const;
+
+
+   /** Called back when this class is subject to GC as a metaclass data.
+      \param The mark of this class.
+
+    Classes may themselves be data for other higher-level metaclasses
+    (i..e the ClassClass handler). Dynamic classes are subject to GC
+    as any other dynamic data.
+
+    This method is called by ClassClass and other
+    class-type handlers, as well as some deep instances that know that their
+    class could theoretically be dynamic.
+
+    The base class sets an hidden mark value in this class.
+    */
+   virtual void gcMarkMyself( uint32 mark );
+
+   /** Called back when this class is subject to GC as a metaclass data.
+      \param The mark of this class.
+
+    Classes may themselves be data for other higher-level metaclasses
+    (i..e the ClassClass handler). Dynamic classes are subject to GC
+    as any other dynamic data.
+
+    This method is called back by metaclass handlers when a GC-enabled data
+    is checked.
+
+    The base class behavior is that to destroy itself and return false if
+    \b mark is greater than the last mark seen in gcMarkMyself.
+    */
+   virtual bool gcCheckMyself( uint32 mark );
 
    /** Callback receiving all the properties in this class. */
    typedef Enumerator<String> PropertyEnumerator;
@@ -238,27 +292,6 @@ public:
     renderings of items in a container.
     */
    virtual void describe( void* instance, String& target, int depth = 3, int maxlen = 60 ) const;
-
-   /** Sends this class to the garbage collector.
-    \return A GCToken that can be used to create deep items.
-
-    Dynamic class need to be accounted by the garbage collector,
-    exactly as dynamic functions. Classes created by non-static
-    modules or dynamically created by the scripts need to know
-    their token to be able to backtrack themselves when they are
-    back-referenced by their intances.
-
-    Calling this method multiple time will return the same GCToken.
-
-    \note This method is not thread-safe. Consider creating the token
-    before handling this object to the engine in case of MT programs, as
-    concurrent calls to this class might create multiple tokens for the same
-    entity, which would be very probably disastrous.
-
-    \note The returned GCToken has the engine-wide ClassClass handler and
-    points to this entity.
-    */
-   GCToken* garbage();
 
    //=========================================================
    // Operators.
@@ -587,8 +620,8 @@ protected:
    String m_name;
    int64 m_typeID;
 
-   GCToken* m_token;
    Module* m_module;
+   uint32 m_lastGCMark;
 };
 
 }

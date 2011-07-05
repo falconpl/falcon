@@ -152,16 +152,8 @@ void ExprCall::apply_( const PStep* v, VMContext* ctx )
 
       case FLC_ITEM_USER:
          {
-            Class* cls = top.asUserClass();
-            void* inst = top.asUserInst();
-            cls->op_call( ctx, pcount, inst );
-         }
-         break;
-
-      case FLC_ITEM_DEEP:
-         {
-            Class* cls = top.asDeepClass();
-            void* inst = top.asDeepInst();
+            Class* cls = top.asClass();
+            void* inst = top.asInst();
             cls->op_call( ctx, pcount, inst );
          }
          break;

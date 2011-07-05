@@ -103,7 +103,9 @@ public:
       t_arrayDecl,
       t_dictDecl,
       t_unpack,
-      t_multiunpack
+      t_multiunpack,
+
+      t_self
    } operator_t;
 
    Expression( const Expression &other );
@@ -824,6 +826,29 @@ class FALCON_DYN_CLASS ExprIsOob: public UnaryExpression
 {
 public:
    FALCON_UNARY_EXPRESSION_CLASS_DECLARATOR( ExprIsOob, t_isoob );
+};
+
+//======================================
+// Self &c
+
+/** Class implementing Self atom value.
+ */
+class FALCON_DYN_CLASS ExprSelf: public Expression
+{
+public:
+   ExprSelf();
+   ExprSelf( const ExprSelf &other );
+   virtual ~ExprSelf();
+
+   virtual bool isBinaryOperator() const;
+   virtual bool isStatic() const;
+   virtual ExprSelf* clone() const;
+   virtual bool simplify( Item& result ) const;
+   virtual void describe( String & str ) const;
+
+private:
+   static void apply_( const PStep* s1, VMContext* ctx );
+
 };
 
 }
