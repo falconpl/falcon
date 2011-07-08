@@ -1,0 +1,11 @@
+import from nest.dm.cust.blog_data in blogDM
+
+export 
+
+_blgDM = blogDM.blog_data()
+_blgDM.openConn()
+
+a = _blgDM.getBySection( "Generale" )
+inspect(a)
+_blgDM.dispose()
+

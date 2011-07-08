@@ -1,0 +1,168 @@
+/***************************************************
+* Module Name :
+* Author      : Lucone
+* Create date : 2011-07-05
+* Edit by     : --        in date   : ....-..-..
+* Module Description -------------------------------
+*        <please insert a module description>
+***************************************************/
+/***************************************************
+--Classes, Object and functions:
+*	26	class BlogItem( fetchFN, execFN )
+*	48		function finalize()
+*	53	>> --- DML Methods----------------------------------------------------<<
+*	55	>>>> News data
+*	57		function getListBySection( section )
+*	62		function getListByTag( tag )
+*	67		function getListByLast( numRec )
+*	72		function getListByYearMonth( year, month )
+*	77	>> --- Output methods-------------------------------------------------<<
+*	78		function postedBy()
+*	97	>> --- DB methods-----------------------------------------------------<<
+*	100		function getByID( idBlog )
+*	109		function _getList( filter, numRec)
+***************************************************/
+
+class BlogItem( fetchFN, execFN )
+	ID		 = nil
+	Title  	 = nil
+	ShortCnt = nil
+	Content  = nil
+	Date 	 = nil
+	Author 	 = nil
+	Section  = nil
+	Tags     = nil
+	NComment = nil
+
+	_fields  = nil
+	_fetch   = nil
+	_execute = nil
+
+	init
+		self._fields = "d.IDBLOG, d.Title, IFNull(Content, '') as Content, d.Date, d.Author, s.Title as Section"
+		self._fetch = fetchFN
+		self._execute = execFN
+	end
+
+	/*	To free the resources used	*/
+	function finalize()
+		self._fetch = nil
+		self._execute = nil
+	end
+
+// Region: DML Methods
+
+// subRegion: News data
+	/*	Get the blog's into the given section	*/
+	function getListBySection( section )
+		return self._getList( [ "s.Title = '" + section.replace("'", "''") + "'" ], nil)
+	end
+
+	/*	Get the blog's with the given tag	*/
+	function getListByTag( tag )
+		return self._getList( [ "TAG = '" + tag.replace("'", "''") + "'" ], nil)
+	end
+
+	/*	Get the last numRec records 	*/
+	function getListByLast( numRec )
+		return self._getList( nil, numRec )
+	end
+
+	/*	Get the blog's in the year and month given	*/
+	function getListByYearMonth( year, month )
+		return self._getList( [ "year(d.Date) = " + year,  "month(d.date) = " + month], nil)
+	end
+
+
+// Region: Output methods
+	function postedBy()
+		h = "0" + self.Date.hour
+		m = "0" + self.Date.minute
+
+		h = h[-2:]
+		m = m[-2:]
+		sRet = @"Posted by $(self.Author) at $(h):$(m). Filed under: $(self.Section)</br>"
+		if self.NComment > 1
+			sRet += self.nComments + " comments"
+		elif self.NComment == 1
+			sRet += "One comment"
+		else
+			sRet += "No comments"
+		end
+
+		return sRet + " Permalink"
+
+	end
+
+// Region: DB methods
+	/* 	to retrieve just one BlogItem
+		with all the related info 		*/
+	function getByID( idBlog )
+		return self._getList( [@"WHERE d.IDBLOG = $(idBlog)"], nil)
+	end
+
+
+	/*	Given a filter and a number of records
+		an array with the records retrieved.
+		filter is an array [ "field=value", ....]
+		numRec is a number or a nil					*/
+	function _getList( filter, numRec)
+
+		sqlCmd  = @"SELECT DISTINCT " + self._fields
+		sqlCmd  += "FROM tBlogData d  LEFT JOIN tBlogSections s ON s.IDSection = d.IDSection "
+
+		sqlWhere   = ""
+		if filter
+			sqlWhere += "WHERE "
+			sqlWhere += " AND ".merge( filter )
+			if sqlWhere.find("TAG =") > -1
+				sqlCmd += "LEFT JOIN tBlogTags t ON t.IDBLOG = d.IDBLOG "
+			end
+		end
+		sqlCmd += sqlWhere
+
+		sqlCmd += " ORDER BY Date desc"
+		if numRec: sqlCmd  += @" LIMIT $(numRec);"
+
+		aRec = self._fetch( sqlCmd )
+		ret  = []
+
+		// Retrieving tags
+		for b in aRec
+
+			blog = BlogItem()
+			blog.ID       = b[ "IDBLOG" ]
+			blog.Title    = b[ "Title" ]
+			blog.Content  = b[ "Content" ].trim()
+			if blog.Content.len() > 100
+				blog.ShortCnt = blog.Content[0:101] + "..."
+			else
+				blog.ShortCnt = blog.Content
+			end
+			blog.Date 	  = b[ "Date" ]
+			blog.Author   = b[ "Author" ]
+			blog.Section  = b[ "Section" ]
+
+			aTag = self._fetch( "SELECT TAG FROM tBlogTags WHERE IDBLOG = ;", blog.ID)
+
+			sTags = ""
+			for s in aTag
+				sTags +=  s[ "TAG" ] + " "
+			end
+
+			blog.Tags = sTags.trim().clone()
+
+			aTag = self._fetch( "SELECT Count(*) as numHit FROM tBlogComments WHERE IDBLOG = ?;", blog.ID)
+
+			blog.NComment = aTag[0][ "numHit" ]
+
+			ret += blog
+
+		end
+
+		return ret
+
+	end
+
+
+end

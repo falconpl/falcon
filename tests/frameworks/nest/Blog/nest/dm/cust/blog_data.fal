@@ -1,0 +1,60 @@
+/***************************************************
+* Module Name :
+* Author      : Lucone
+* Create date : 2011-07-01
+* Edit by     : --        in date   : ....-..-..
+* Module Description -------------------------------
+* Object managing the whole blog data
+***************************************************/
+/***************************************************
+--Classes, Object and functions:
+*	38	class blogNew
+*	50	class blogComment
+*	60	class blog_data
+*	68	>> --- DML Methods----------------------------------------------------<<
+*	70	>>>> News data
+*	72		function getLastByNum( numRec )
+*	77		function getByYearMonth( year, month )
+*	81		function getBySection( section )
+*	85		function getByTag( tag )
+*	89	>>>> Section's data
+*	91		function getSectionList()
+*	95	>>>> Tag's data
+*	97		function getTagList()
+*	102	>> --- private methods------------------------------------------------<<
+*	107		function _getBlogs( filter, numRec)
+*	169		function _fetch( sqlCmd )
+*	184	>> --- Connection management------------------------------------------<<
+*	185		function openConn()
+*	192		function dispose()
+***************************************************/
+
+
+
+// b[ "Comments" ] = self._fetch("SELECT IDBLOGCOMMENTS, Content, Author, email, website, Date, IDBLOG " + \
+//											@"FROM tBlogComments WHERE IDBLOG = $(blog.ID) ORDER BY Date desc;"  )
+
+
+
+
+
+
+class blog_data
+
+
+	
+
+// subRegion: Section's data
+	/* Get the Section List	*/
+	function getSectionList()
+		return self._fetch( "SELECT IDSection, Title FROM tBlogSections ORDER BY Title;" )
+	end
+
+// subRegion: Tag's data
+	/* Get the Tag's List */
+	function getTagList()
+		return self._fetch( "SELECT Tag, count(*) as numHit FROM tBlogTags GROUP By Tag ORDER BY Tag;" )
+	end
+
+
+end

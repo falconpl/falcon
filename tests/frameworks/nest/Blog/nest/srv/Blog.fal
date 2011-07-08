@@ -1,0 +1,160 @@
+/***************************************************
+* Module Name :
+* Author      : Lucone
+* Create date : 2011-07-07
+* Edit by     : --        in date   : ....-..-..
+* Module Description -------------------------------
+*        <please insert a module description>
+***************************************************/
+/***************************************************
+--Classes, Object and functions:
+*	33	class Blog( instance ) from Service( instance )
+*	48	>> --- DML related to secondary objects-------------------------------<<
+*	49		function getTagList()
+*	56	>> --- Miscellaneous--------------------------------------------------<<
+*	60		function fetchDict( sqlCmd )
+*	78		function fetchArray( sqlCmd )
+*	96		function execute( sqlCmd )
+*	110		function finalize()
+*	124		function createStructure()
+*	129	>> --- private methods------------------------------------------------<<
+*	130		function _openConn()
+***************************************************/
+
+import Service from nest as Service
+import ServiceVar from nest as ServiceVar
+import NestError from nest as NestError
+import from nest.bindings in b
+import BlogItem 	from nest.dm.cust.BlogItem 	  as BlogItem
+import BlogComment  from nest.dm.cust.BlogComment as BlogComment
+import BlogComment  from nest.dm.cust.BlogSection as BlogSection
+import from dbi
+
+class Blog( instance ) from Service( instance )
+	_myConn  = nil
+	blogItem = nil
+	blogCmnt = nil
+	blogSect = nil
+
+	init
+
+		self._openConn()
+		self.blogItem = BlogItem( self.fetchDict, self.execute )
+		self.blogCmnt = BlogComment( self.fetchDict, self.execute )
+		self.blogSect = BlogSection( self.fetchArray, self.execute )
+
+	end
+
+// Region: DML related to secondary objects
+	function getTagList()
+
+		return self.fetchArray( "SELECT Tag, count(*) as numHits FROM tBlogTags GROUP BY Tag;" )
+
+	end
+
+
+// Region: Miscellaneous
+	/*	Given a select command, returns
+		an array with the records (as Dictionary)
+		retrieved.									*/
+	function fetchDict( sqlCmd, aParms )
+
+		try			
+			rs = self._exec( sqlCmd, aParms )
+		catch
+			bFeedback = false
+		end
+		
+		records = nil
+		
+		if rs
+			records = []	
+			while (a = rs.fetch([=>]))
+				records += a
+			end
+			rs.close()			
+		end 
+
+		return records
+
+	end
+
+	/*	Given a select command, returns
+		an array with the records (as Array)
+		retrieved.									*/
+	function fetchArray( sqlCmd, aParms )
+
+		try			
+			rs = self._exec( sqlCmd, aParms )
+		catch
+			bFeedback = false
+		end
+		
+		records = nil
+		
+		if rs
+			records = []	
+			while (a = rs.fetch([]))
+				records += a
+			end
+			rs.close()			
+		end 
+
+		return records
+
+	end
+
+	/*	Given a sql command, this function execute
+		it and return a flag with the result of the
+		execution of it								 */
+	function execute( sqlCmd, aParms )
+		
+		bFeedback = true
+		try
+			if not self._myConn: self._openConn()
+			self.exec( sqlCmd, aParms )
+		catch
+			bFeedback = false
+		end
+		return bFeedback
+		
+	end
+
+
+	/*	the True function getting the command and 
+		parameters (if any) and returning a recordset
+		If any exceptio is raised, it's up the calling
+		function to trap it								*/
+	function _exec( sqlCmd, aParms )
+
+		a = [ self._myConn.query, sqlCmd] 
+		if aParms: a += aParms
+		return a()
+		
+	end
+	/*	To close the connection and free
+		the resources used					*/
+	function finalize()
+
+		self.blogItem.finalize()
+		self.blogCmnt.finalize()
+		self.blogSect.finalize()
+
+		if self._myConn
+			self._myConn.close()
+			self._myConn = nil
+		end
+
+	end
+
+// Region: private methods
+	function _openConn()
+		if not self._myConn
+			/* BEWARE!!! temporary solution ??? */
+			self._myConn = dbi.connect("mysql:db=CKDB;uid=ckd;pwd=ckd;host=192.168.1.22")
+		end
+	end
+
+
+
+end

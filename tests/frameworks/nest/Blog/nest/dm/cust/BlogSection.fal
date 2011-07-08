@@ -1,0 +1,52 @@
+/***************************************************
+* Module Name :
+* Author      : Lucone
+* Create date : 2011-07-07
+* Edit by     : --        in date   : ....-..-..
+* Module Description -------------------------------
+*        <please insert a module description>
+***************************************************/
+/***************************************************
+--Classes, Object and functions:
+*	20	class BlogSection( fetchFN, execFN )
+*	30		function finalize()
+*	35	>> --- DML methods----------------------------------------------------<<
+*	36		function getList()
+*	40		function delete( id )
+*	44		function update( id, newTitle )
+*	48		function insert( newTitle )
+***************************************************/
+
+class BlogSection( fetchFN, execFN )
+	_fetch   = nil
+	_execute = nil
+
+	init
+		self._fetch = fetchFN
+		self._execute = nil
+	end
+
+	/*	To free the resources used	*/
+	function finalize()
+		self._fetch = nil
+		self._execute = nil
+	end
+
+// Region: DML methods
+	function getList()
+		return self._fetch( "SELECT IDSection, Title FROM tBlogSections ORDER BY Title;" )
+	end
+
+	function delete( id )
+		return self._execute( "DELETE FROM tBlogSections WHERE IDSection = ?;", id )
+	end
+
+	function update( id, newTitle )
+		return self._execute( "UPDATE tBlogSections SET Title = ? WHERE IDSection = ?;" [newTitle, id])
+	end
+
+	function insert( newTitle )
+		return self._execute( "INSERT INTO tBlogSection (Title) Values ( ? );", newTitle )
+	end
+
+end

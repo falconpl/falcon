@@ -1,0 +1,38 @@
+/***************************************************
+* Module Name : 
+* Author      : Lucone
+* Create date : 2011-07-02 
+* Edit by     : --        in date   : ....-..-..
+* Module Description -------------------------------
+*        <please insert a module description>
+***************************************************/
+
+GC.enable( false)
+
+load nest
+
+import from hash
+
+
+Nest.debug = true
+Nest.log_level = 3
+
+/*
+Nest.stylesheets += ["ckd_wiki.css"]
+Nest.extscripts += ["/js/ckd.ftd" ]
+*/
+Nest.addHook( "DBCheckUser" )
+Nest.frame = {=> include("frame.ftd") }
+
+Nest.onStartup = function()
+	dm = Nest.dm( "blog_db" )
+	
+	if dm.dbc == nil 
+		dm.create()
+	end
+	
+	login = Nest.service("Login")
+
+end
+
+Nest.route()
