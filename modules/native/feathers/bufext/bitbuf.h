@@ -439,11 +439,9 @@ public:
             mask = (VAL_ALLBITS >> (VALBITS - writeable));
 
             if(_bitpos_w)
-            {
                 _bufptr[_arraypos_w] <<= writeable;
-                if(pending > writeable) value >>= writeable;
-            }
 
+            value >>= (pending - writeable);
             _bufptr[_arraypos_w] &= ~(mask);        // clear writing region
             _bufptr[_arraypos_w] |= (value & mask); // write new value
 
@@ -560,6 +558,8 @@ protected:
             _bufptr = _heapbuf; // using the heap for read/write operations now
             _myheapbuf = true;
         }
+
+        memset( _bufptr+_maxbytes, 0, newsize - _maxbytes );
         
         _maxbytes = newsize;
     }
