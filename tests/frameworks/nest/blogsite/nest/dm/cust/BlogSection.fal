@@ -16,37 +16,36 @@
 *	44		function update( id, newTitle )
 *	48		function insert( newTitle )
 ***************************************************/
+load   nest.dm.cust.DBUtilities
 
-class BlogSection( fetchFN, execFN )
-	_fetch   = nil
-	_execute = nil
 
+class BlogSection( dbutility )
+	_dbuti = nil
+	
 	init
-		self._fetch = fetchFN
-		self._execute = nil
+		self._dbuti = dbutility
 	end
-
-	/*	To free the resources used	*/
-	function finalize()
-		self._fetch = nil
-		self._execute = nil
-	end
-
+	
 // Region: DML methods
 	function getList()
-		return self._fetch( "SELECT IDSection, Title FROM tBlogSections ORDER BY Title;" )
+		return self._dbuti.fetchArray( "SELECT IDSection, Title FROM tBlogSections ORDER BY Title;" )
 	end
 
 	function delete( id )
-		return self._execute( "DELETE FROM tBlogSections WHERE IDSection = ?;", id )
+		return self._dbuti.execute( "DELETE FROM tBlogSections WHERE IDSection = ?;", id )
 	end
 
 	function update( id, newTitle )
-		return self._execute( "UPDATE tBlogSections SET Title = ? WHERE IDSection = ?;" [newTitle, id])
+		return self._dbuti.execute( "UPDATE tBlogSections SET Title = ? WHERE IDSection = ?;", [newTitle, id] )
 	end
 
 	function insert( newTitle )
-		return self._execute( "INSERT INTO tBlogSection (Title) Values ( ? );", newTitle )
+		return self._dbuti.execute( "INSERT INTO tBlogSections (Title) Values ( ? );", newTitle )		
 	end
-
+	
+	/*	To close the connection and free
+	the resources used					*/
+	function finalize()
+		self._dbuti = nil
+	end
 end

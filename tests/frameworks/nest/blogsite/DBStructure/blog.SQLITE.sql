@@ -1,6 +1,6 @@
 CREATE TABLE tBlogSections  ( 
 	IDSection	INTEGER PRIMARY key,
-	Title    	TEXT NOT NULL
+	Title    	TEXT NOT NULL CONSTRAINT PK_BlogTag UNIQUE ON CONFLICT ABORT
 );
 
 CREATE TABLE tBlogData  ( 

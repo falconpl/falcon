@@ -18,7 +18,7 @@
 
 import NestError from .error as NestError
 
-/*# Abstraciton of target actions.
+/*# Abstraction of target actions.
    @optparam prompt A Textual prompt that should be rendered in skins. Works also
           as a logical name for this entity.
    @optparam al The authorization level needed to see this action. Pass @b nil to allow everyone to see.
@@ -29,7 +29,7 @@ import NestError from .error as NestError
    If the action is called back on a entity, then the mask function will receive an @b eid
    parameter.
 
-   Rendering actions when the Nest authorization level is less privileged than then
+   Rendering actions when the Nest authorization level is less privileged than
    required @b al will result in an empty string.
 
    The @b prompt parameter is a string that can be used as a title, or as a content

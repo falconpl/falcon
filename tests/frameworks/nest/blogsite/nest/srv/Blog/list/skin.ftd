@@ -1,7 +1,6 @@
 <?	function skin( data, srv ) 		
-		rec = srv.blogItem.getListByLast( 10 )
+		rec = srv.Item.getListByLast( 10 )
 ?> 
-
 		<div id="blogdiv" class="blogdiv">		
 
 <?		if rec.len() == 0 			?>

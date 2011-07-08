@@ -22,8 +22,12 @@
 *	100		function getByID( idBlog )
 *	109		function _getList( filter, numRec)
 ***************************************************/
+import BlogSection  from nest.dm.cust.BlogSection as BlogSection
 
-class BlogItem( fetchFN, execFN )
+class BlogItem( dbutility )
+	_dbuti 	 = nil
+	_fields  = nil
+	
 	ID		 = nil
 	Title  	 = nil
 	ShortCnt = nil
@@ -34,25 +38,19 @@ class BlogItem( fetchFN, execFN )
 	Tags     = nil
 	NComment = nil
 
-	_fields  = nil
-	_fetch   = nil
-	_execute = nil
-
 	init
 		self._fields = "d.IDBLOG, d.Title, IFNull(Content, '') as Content, d.Date, d.Author, s.Title as Section"
-		self._fetch = fetchFN
-		self._execute = execFN
+		self._dbuti = dbutility
 	end
 
 	/*	To free the resources used	*/
 	function finalize()
-		self._fetch = nil
-		self._execute = nil
+		self._dbuti = nil
 	end
 
 // Region: DML Methods
 
-// subRegion: News data
+// subRegion: List of Items
 	/*	Get the blog's into the given section	*/
 	function getListBySection( section )
 		return self._getList( [ "s.Title = '" + section.replace("'", "''") + "'" ], nil)
@@ -73,9 +71,93 @@ class BlogItem( fetchFN, execFN )
 		return self._getList( [ "year(d.Date) = " + year,  "month(d.date) = " + month], nil)
 	end
 
+	/* 	to retrieve just one BlogItem
+		with all the related info 		*/
+	function getByID( idBlog )
+		return self._getList( [@"d.IDBLOG = $(idBlog)"], nil)
+	end
+	
+// subRegion: Insert, Update and Delete
+
+	/*	Insert a new Item into the db	*/
+	function insert( Title, Content, Author, Section, Tags )
+
+		bFeedback = false
+		
+		IDSect = self._dbuti.getScalar( "SELECT IDSection FROM tBlogSections WHERE Title = ?;", Section )
+		if IDSect
+
+			if self._dbuti.execute("INSERT INTO tBlogData (Title, Content, Author, IDSection, Date) VALUES(?, ?, ?, ?, ?);", [Title, Content, Author, IDSect, CurrentTime().toLongFormat() ])
+
+				idBlog = self._dbuti.getScalar( "SELECT last_insert_rowid();" )
+				bFeedback = true 
+				
+				for t in Tags.replace(","," ").split(" ")
+
+					if not t.trim(): continue
+					if not self._dbuti.execute("INSERT INTO tBlogTags VALUES(?, ?);", [idBlog, t])
+
+						bFeedback = false
+						break		
+
+					end
+
+				end
+
+				
+			end
+
+		end
+		
+		return bFeedback
+
+	end
+		
+	function update( IDBlog, Title, Content, Author, Section, Tags )
+		sqlCMD = "
+					UPDATE tBlogData
+						SET 							
+						    Title = ?,
+						    Content = ?,
+						    Author = ?,
+						    IDSection = ?,
+						    Date = ?
+					WHERE 
+							IDBLOG = ? "
+
+		bFeedback = false
+
+		IDSect = self._dbuti.getScalar( "SELECT IDSection FROM tBlogSections WHERE Title = ?;", Section )
+		if IDSect                                                                                        
+
+			self._dbuti.execute( sqlCMD, [Title, Content, Author, IDSect, CurrentTime().toLongFormat(), IDBlog] )
+			self._dbuti.execute("DELETE FROM tBlogTags WHERE IDBLOG = ?;", IDBlog)
+			for t in Tags.replace(","," ").split(" ")
+
+				bFeedback = true 
+				
+				if not t.trim(): continue
+				if not self._dbuti.execute("INSERT INTO tBlogTags VALUES(?, ?);", [IDBlog, t])
+					bFeedback = false
+					break		
+				end
+			end
+		end
+
+		return bFeedback
+						
+	end
+	
+	function delete( IDBlog )
+		self._dbuti.execute("DELETE FROM tBlogTags WHERE IDBLOG = ?;", IDBlog)
+		self._dbuti.execute("DELETE FROM tBlogComments WHERE IDBLOG = ?;", IDBlog)
+		self._dbuti.execute("DELETE FROM tBlogData WHERE IDBLOG = ?;", IDBlog)
+		return true
+	end
 
 // Region: Output methods
 	function postedBy()
+		
 		h = "0" + self.Date.hour
 		m = "0" + self.Date.minute
 
@@ -94,22 +176,15 @@ class BlogItem( fetchFN, execFN )
 
 	end
 
-// Region: DB methods
-	/* 	to retrieve just one BlogItem
-		with all the related info 		*/
-	function getByID( idBlog )
-		return self._getList( [@"WHERE d.IDBLOG = $(idBlog)"], nil)
-	end
-
-
+// Region: Private methods
 	/*	Given a filter and a number of records
 		an array with the records retrieved.
 		filter is an array [ "field=value", ....]
 		numRec is a number or a nil					*/
 	function _getList( filter, numRec)
 
-		sqlCmd  = @"SELECT DISTINCT " + self._fields
-		sqlCmd  += "FROM tBlogData d  LEFT JOIN tBlogSections s ON s.IDSection = d.IDSection "
+		sqlCmd  = "SELECT DISTINCT " + self._fields
+		sqlCmd  += " FROM tBlogData d  LEFT JOIN tBlogSections s ON s.IDSection = d.IDSection "
 
 		sqlWhere   = ""
 		if filter
@@ -124,7 +199,7 @@ class BlogItem( fetchFN, execFN )
 		sqlCmd += " ORDER BY Date desc"
 		if numRec: sqlCmd  += @" LIMIT $(numRec);"
 
-		aRec = self._fetch( sqlCmd )
+		aRec = self._dbuti.fetchDict( sqlCmd )
 		ret  = []
 
 		// Retrieving tags
@@ -139,22 +214,27 @@ class BlogItem( fetchFN, execFN )
 			else
 				blog.ShortCnt = blog.Content
 			end
-			blog.Date 	  = b[ "Date" ]
+			t = TimeStamp()
+			t.fromLongFormat(b[ "Date" ])
+			blog.Date 	  = t
 			blog.Author   = b[ "Author" ]
 			blog.Section  = b[ "Section" ]
 
-			aTag = self._fetch( "SELECT TAG FROM tBlogTags WHERE IDBLOG = ;", blog.ID)
+			aTag = self._dbuti.fetchDict( "SELECT TAG FROM tBlogTags WHERE IDBLOG = ?;", blog.ID)
 
 			sTags = ""
 			for s in aTag
-				sTags +=  s[ "TAG" ] + " "
+				sTags +=  s[ "TAG" ]
+				formiddle
+					sTags += ", "
+				end
 			end
 
 			blog.Tags = sTags.trim().clone()
 
-			aTag = self._fetch( "SELECT Count(*) as numHit FROM tBlogComments WHERE IDBLOG = ?;", blog.ID)
+			aTag = self._dbuti.getScalar( "SELECT Count(*) as numHit FROM tBlogComments WHERE IDBLOG = ?;", blog.ID)
 
-			blog.NComment = aTag[0][ "numHit" ]
+			blog.NComment = aTag
 
 			ret += blog
 
