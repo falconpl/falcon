@@ -119,7 +119,11 @@ public:
       return &m_dataStack[ n + m_topCall->m_stackBase + m_topCall->m_paramCount ];
    }
 
-   /** Push data on top of the stack */
+   /** Push data on top of the stack.
+    \item data The data that must be pushed in the stack.
+    \note The data pushed is copied by-value in a new stack element, but it is
+          not colored.
+    */
    inline void pushData( const Item& data ) {
       ++m_topData;
       if( m_topData >= m_maxData )

@@ -29,8 +29,17 @@ using namespace Parsing;
 
 void apply_class( const Rule&, Parser& p );
 void apply_class_p( const Rule&, Parser& p );
+void apply_class_from( const Rule&, Parser& p );
+void apply_class_p_from( const Rule&, Parser& p );
+
 void apply_pdecl_expr( const Rule&, Parser& p );
 void apply_init_expr( const Rule&, Parser& p );
+
+void apply_FromClause_next( const Rule&, Parser& p );
+void apply_FromClause_first( const Rule&, Parser& p );
+
+void apply_FromClause_entry_with_expr( const Rule&, Parser& p );
+void apply_FromClause_entry( const Rule&, Parser& p );
 
 }
 

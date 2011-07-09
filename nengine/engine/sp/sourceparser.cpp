@@ -279,9 +279,23 @@ SourceParser::SourceParser():
    //==================================
    // Class
    S_Class << "Class";
+   S_Class << (r_class_from << "Class w/from" << apply_class_from << T_class << T_Name << FromClause << T_EOL );
    S_Class << (r_class << "Class decl" << apply_class << T_class << T_Name << T_EOL );
-   S_Class << (r_class_p << "Class decl with params" << apply_class_p
-             << T_class << T_Name << T_Openpar << ListSymbol << T_Closepar << T_EOL );
+   S_Class << (r_class_p_from << "Class w/params & from" << apply_class_p_from
+             << T_class << T_Name << T_Openpar << ListSymbol << T_Closepar << FromClause << T_EOL );
+   S_Class << (r_class_p << "Class w/params" << apply_class_p
+             << T_class << T_Name << T_Openpar << ListSymbol << T_Closepar  << T_EOL );
+
+   FromClause << "Class from clause";
+   FromClause << ( r_FromClause_next << "FromClause_next"
+              << apply_FromClause_next << FromClause << T_Comma << FromEntry );
+   FromClause << ( r_FromClause_first << "FromClause_first" << apply_FromClause_first << FromEntry );
+
+   FromEntry << "Class from entry";
+   FromEntry << ( r_FromClause_entry_with_expr << "FromEntry_with_expr"
+             << apply_FromClause_entry_with_expr << T_Name << T_Openpar << ListExpr << T_Closepar );
+   FromEntry << ( r_FromClause_entry << "FromEntry" << apply_FromClause_entry << T_Name );
+
 
    S_PropDecl << "Property declaration";
    S_PropDecl << (r_propdecl_expr << "Expression Property" << apply_pdecl_expr

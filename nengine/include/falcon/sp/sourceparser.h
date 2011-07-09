@@ -189,11 +189,22 @@ public:
    Parsing::Rule r_return;
 
    Parsing::NonTerminal S_Class;
+   Parsing::Rule r_class_from;
    Parsing::Rule r_class;
+   Parsing::Rule r_class_p_from;
    Parsing::Rule r_class_p;
 
    Parsing::NonTerminal S_InitDecl;
    Parsing::Rule r_init;
+
+   Parsing::NonTerminal FromClause;
+   Parsing::Rule r_FromClause_next;
+   Parsing::Rule r_FromClause_first;
+   Parsing::Rule r_FromClause_empty;
+
+   Parsing::NonTerminal FromEntry;
+   Parsing::Rule r_FromClause_entry_with_expr;
+   Parsing::Rule r_FromClause_entry;
 
    Parsing::NonTerminal S_PropDecl;
    Parsing::Rule r_propdecl_expr;

@@ -947,6 +947,8 @@ void Parser::applyCurrentRule()
    size_t statesDepth=_p->m_lStates.size();
 
    resetNextToken();
+   TRACE2( "Applying rule %s", currentRule->name().c_ize() );
+   
    currentRule->apply(*this);
    if(_p->m_lStates.size()<statesDepth)
    {

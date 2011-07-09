@@ -161,6 +161,7 @@ FalconClass::FalconClass( const String& name ):
    Class("Object" , FLC_CLASS_ID_OBJECT ),
    m_fc_name(name),
    m_init(0),
+   m_constructor(0),
    m_shouldMark(false),
    m_hasInitExpr( false ),
    m_hasInit( false ),
@@ -174,6 +175,7 @@ FalconClass::FalconClass( const String& name ):
 
 FalconClass::~FalconClass()
 {
+   delete m_constructor;
    delete[] m_overrides;
    delete _p;
 }
@@ -460,6 +462,36 @@ void FalconClass::enumeratePropertiesOnly( PropertyEnumerator& cb ) const
    }
 }
 
+
+SynFunc* FalconClass::makeConstructor()
+{
+   if ( m_constructor == 0 )
+   {
+      m_constructor = new SynFunc( name() + "#constructor" );
+      m_constructor->methodOf( this );
+   }
+   
+   return m_constructor;
+}
+
+
+void FalconClass::finalizeConstructor()
+{
+   SynFunc* ctr = makeConstructor();
+
+   if( m_hasInitExpr )
+   {
+      ctr->syntree().append( &m_initExprStep );
+   }
+
+   if( m_hasInit )
+   {
+      ctr->syntree().append( &m_initFuncStep );
+   }
+
+   ctr->syntree().append( new StmtReturn( new ExprSelf ) );
+}
+
 //========================================================================
 // Class override.
 //
@@ -628,43 +660,18 @@ inline void FalconClass::override_binary( VMContext* ctx, void*, int op, const S
 
 void FalconClass::op_create( VMContext* ctx, int32 pcount ) const
 {
-   static StmtReturn s_return;
+  
    static Collector* coll = Engine::instance()->collector();
    
    // we just need to copy the defaults.
-   FalconInstance* inst = new FalconInstance(const_cast<FalconClass*>(this));
+   FalconClass* cls = const_cast<FalconClass*>(this);
+   FalconInstance* inst = new FalconInstance(cls);
    inst->data().merge(_p->m_propDefaults);
-   
+
    // we have to invoke the init method, if any
-   if( m_init != 0 )
+   if( m_constructor != 0 )
    {
-      // prepare an init frame
-      CallFrame* frame = ctx->makeCallFrame(m_init, pcount, FALCON_GC_STORE( coll, this, inst ), true);
-      frame->m_bInit = true;
-      // always add a retunr opcode, just in case.
-      ctx->pushCode( &s_return );
-
-      // first, push the last thing to execute -- the init  or a standard return.
-      if( m_hasInit )
-      {
-         ctx->pushCode( &m_initFuncStep );
-      }
-      
-      // then push the init expr
-      if( m_hasInitExpr )
-      {
-         ctx->pushCode( &m_initExprStep );
-      }
-
-      // Finally, prepare the data stack to accept the functions
-      TRACE1( "-- filing parameters: %d/%d",
-            pcount, m_init->symbols().localCount() );
-
-      register int lc = (int) m_init->symbols().localCount();
-      if( lc > pcount )
-      {
-         ctx->addLocals( lc - pcount );
-      }
+      ctx->call( m_constructor, pcount, FALCON_GC_STORE( coll, this, inst ), true);
    }
    else
    {
@@ -939,9 +946,11 @@ void FalconClass::RemoveSelf::apply_( const PStep*, VMContext* ctx)
 //==============================================================
 
 FalconClass::PStepInitExpr::PStepInitExpr( FalconClass* o ):
+   Statement( Statement::custom_t ),
    m_owner(o)
 {
-      apply = apply_;
+   apply = apply_;
+   m_step0 = this;
 }
 
 void FalconClass::PStepInitExpr::apply_( const PStep* ps, VMContext* ctx )
@@ -982,9 +991,11 @@ void FalconClass::PStepInitExpr::apply_( const PStep* ps, VMContext* ctx )
 //==============================================================
 
 FalconClass::PStepInit::PStepInit( FalconClass* o ):
+   Statement( Statement::custom_t ),
    m_owner(o)
 {
    apply = apply_;
+   m_step0 = this;
 }
 
 
@@ -993,9 +1004,18 @@ void FalconClass::PStepInit::apply_( const PStep* ps, VMContext* ctx )
    const PStepInit* step = static_cast<const PStepInit*>(ps);
    TRACE( "In %s class init step", step->m_owner->name().c_ize() );
 
+   // we're done.
+   ctx->popCode();
+
    // supposedly, if we're here, we have been invited -- m_init != 0.
    CallFrame& frame = ctx->currentFrame();
-   step->m_owner->init()->apply( ctx, frame.m_paramCount );
+
+   for( int i = 0; i < frame.m_paramCount; ++i )
+   {
+      ctx->pushData( *ctx->param(i) );
+   }
+   // Finally, prepare the data stack to accept the functions
+   ctx->call( step->m_owner->init(), frame.m_paramCount, frame.m_self, false );
 }
 
 }

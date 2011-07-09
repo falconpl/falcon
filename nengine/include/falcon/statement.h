@@ -182,6 +182,8 @@ public:
    inline String describe() const { return PStep::describe(); }
    static void apply_( const PStep*, VMContext* ctx );
 
+   Expression* expression() const { return m_expr; }
+   void expression( Expression* expr );
 private:
    Expression* m_expr;
    PCode m_pcExpr;

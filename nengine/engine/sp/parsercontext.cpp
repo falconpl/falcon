@@ -511,13 +511,8 @@ void ParserContext::openClass( Class* cls, bool bIsObject, GlobalSymbol *gs )
 
    m_cclass = fcls;
    m_cstatement = 0;
-   _p->m_frames.push_back(CCFrame(fcls, bIsObject, gs));
-
-   if( fcls->init() == 0 )
-   {
-      fcls->setInit( new SynFunc("init") );
-   }
-   m_symtab = &fcls->init()->symbols();
+   _p->m_frames.push_back(CCFrame(fcls, bIsObject, gs));   
+   m_symtab = &fcls->makeConstructor()->symbols();
    // TODO: get the symbol table.
 }
 

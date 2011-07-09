@@ -20,7 +20,9 @@
 #include <falcon/string.h>
 #include <falcon/enumerator.h>
 #include <falcon/class.h>
-#include <falcon/pstep.h>
+#include <falcon/syntree.h>
+#include <falcon/statement.h>
+#include <falcon/synfunc.h>
 
 namespace Falcon
 {
@@ -381,15 +383,23 @@ public:
    virtual void op_call( VMContext* ctx, int32 paramCount, void* self ) const;
    virtual void op_toString( VMContext* ctx, void* self ) const;
 
+   /** Creates the constructor or returns it if it's already here. */
+   SynFunc* makeConstructor();
+   // Finalize the constructor after all the inheritance list is resolved.
+   void finalizeConstructor();
+
 private:
    inline void override_unary( VMContext* ctx, void*, int op_id, const String& opName ) const;
    inline void override_binary( VMContext* ctx, void*, int op_id, const String& opName ) const;
-   
+
+
    class Private;
    Private* _p;
       
    String m_fc_name;
    Function* m_init;
+   SynFunc* m_constructor;
+
    Function** m_overrides;
 
    bool m_shouldMark;
@@ -406,7 +416,7 @@ private:
    RemoveSelf m_removeSelf;   
 
    // This is used to initialize the init expressions.
-   class PStepInitExpr: public PStep
+   class PStepInitExpr: public Statement
    {
    public:
       PStepInitExpr( FalconClass* o );
@@ -418,7 +428,7 @@ private:
    PStepInitExpr m_initExprStep;
 
    // This is used to invoke 
-   class PStepInit: public PStep
+   class PStepInit: public Statement
    {
    public:
       PStepInit( FalconClass* o );
@@ -430,6 +440,8 @@ private:
 
    PStepInit m_initFuncStep;
 
+   SynTree m_initSynTree;
+   
    friend class PStepInitExpr;
    friend class CoreClass;
 };

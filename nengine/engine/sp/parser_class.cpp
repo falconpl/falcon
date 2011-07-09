@@ -34,6 +34,7 @@
 #include <falcon/sp/parser_class.h>
 
 #include "private_types.h"
+#include "falcon/localsymbol.h"
 
 namespace Falcon {
 
@@ -70,11 +71,11 @@ static void make_class( Parser& p, int tCount, TokenInstance* tname, TokenInstan
    if( tParams != 0 )
    {
       NameList* list = static_cast<NameList*>( tParams->asData() );
-      cls->setInit( new SynFunc( "init" ));
+      SymbolTable& symtab = cls->makeConstructor()->symbols();
 
       for(NameList::const_iterator it=list->begin(),end=list->end();it!=end;++it)
       {
-         cls->init()->symbols().addLocal( *it );
+         symtab.addLocal( *it );
       }
    }
 
@@ -88,14 +89,12 @@ static void make_class( Parser& p, int tCount, TokenInstance* tname, TokenInstan
 
 void apply_class( const Rule&, Parser& p )
 {
-   // << T_class << T_Name << T_EOL
+   // << T_class << T_Name << FromClause << T_EOL
    p.getNextToken(); // T_class
    TokenInstance* tname=p.getNextToken();
 
    make_class(p, 3, tname, 0 );
 }
-
-
 
 
 void apply_class_p( const Rule&, Parser& p )
@@ -107,6 +106,27 @@ void apply_class_p( const Rule&, Parser& p )
    TokenInstance* tparams = p.getNextToken(); // ListSymbol
 
    make_class( p, 6, tname, tparams );
+}
+
+void apply_class_from( const Rule&, Parser& p )
+{
+   // << T_class << T_Name << FromClause << FromClause << T_EOL
+   p.getNextToken(); // T_class
+   TokenInstance* tname=p.getNextToken();
+
+   make_class(p, 4, tname, 0 );
+}
+
+
+void apply_class_p_from( const Rule&, Parser& p )
+{
+   // << T_class << T_Name << T_Openpar << ListSymbol << T_Closepar << FromClause << T_EOL
+   p.getNextToken(); // T_class
+   TokenInstance* tname = p.getNextToken(); // T_Name
+   p.getNextToken(); // T_Openpar
+   TokenInstance* tparams = p.getNextToken(); // ListSymbol
+
+   make_class( p, 7, tname, tparams );
 }
 
 
@@ -144,6 +164,7 @@ void apply_pdecl_expr( const Rule&, Parser& p )
    p.simplify( 4 );
 }
 
+
 void apply_init_expr( const Rule&, Parser& p )
 {
    // T_init << EOL;
@@ -161,19 +182,55 @@ void apply_init_expr( const Rule&, Parser& p )
    else
    {
       cls->hasInit(true);
+      SynFunc* init = new SynFunc("init");
       // but.. we don't really know if the init funciton has been created
-      if( cls->init() == 0 )
+      if( (init = static_cast<SynFunc*>(cls->init())) == 0 )
       {
-         cls->setInit( new SynFunc("init") );
+         init = new SynFunc("init");
+         cls->setInit( init );
       }
 
+      // copy the symbols of the constructor in the function
+      SynFunc* constructor = cls->makeConstructor();
+      for(int pCount = 0; pCount < constructor->symbols().localCount(); ++pCount )
+      {
+         init->symbols().addLocal( constructor->symbols().getLocal( pCount )->clone() );
+      }
+      
       // the user can add a non-syntree function as init,
       // ... but we won't be here compiling it.
       ctx->openFunc( static_cast<SynFunc*>(cls->init()) );
       p.simplify( 2 );
       p.pushState("Main");
    }
+}
 
+
+void apply_FromClause_next( const Rule&, Parser& p  )
+{
+   // << FromClause << T_Comma << FromEntry
+   p.simplify(3);
+}
+
+
+void apply_FromClause_first( const Rule&, Parser& p )
+{
+   // << FromEntry
+   p.simplify(1);
+}
+
+
+void apply_FromClause_entry_with_expr( const Rule&, Parser& p )
+{
+   // << T_Name << T_Openpar << ListExpr << T_Closepar );
+   p.simplify( 4 );
+}
+
+
+void apply_FromClause_entry( const Rule&, Parser& p )
+{
+   // << T_Name );
+   p.simplify( 1 );
 }
 
 }

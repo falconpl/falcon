@@ -341,6 +341,12 @@ StmtReturn::~StmtReturn()
    delete m_expr;
 }
 
+void StmtReturn::expression( Expression* expr )
+{
+   delete m_expr;
+   m_expr = expr;
+}
+
 void StmtReturn::describe( String& tgt ) const
 {
    for( int32 i = 1; i < chr(); i++ ) {

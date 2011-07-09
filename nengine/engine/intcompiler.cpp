@@ -34,6 +34,7 @@
 #include <falcon/error_messages.h>
 
 #include <falcon/expression.h>
+#include <falcon/falconclass.h>
 
 namespace Falcon {
 
@@ -65,6 +66,8 @@ void IntCompiler::Context::onNewFunc( Function* function, GlobalSymbol* gs )
 
 void IntCompiler::Context::onNewClass( Class* cls, bool isObject, GlobalSymbol* gs )
 {
+   FalconClass* fcls = static_cast<FalconClass*>(cls);
+   fcls->finalizeConstructor();
    m_owner->m_module->addClass( gs, cls, isObject );
 }
 
