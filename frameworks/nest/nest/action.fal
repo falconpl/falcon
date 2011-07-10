@@ -5,7 +5,7 @@
 
    FILE: action.fal
 
-   Abstraciton of target actions.
+   Abstraction of target actions.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: Sat, 14 Aug 2010 19:41:05 +0200
@@ -127,7 +127,6 @@ end
 
    
 */
-
 class TextAction( prompt, al, authText, naText ) from Action( prompt, al )
    authText = authText
    naText = naText
@@ -171,7 +170,6 @@ end
 
    The @b content parameter can be any valid HTML text (it won't be escaped).
 */
-
 class ButtonAction( prompt, authLevel, content, onClick, extra ) from Action( prompt, authLevel )
    onClick = onClick
    extra = extra
@@ -461,8 +459,8 @@ end
 
 /*# Surrounds an action with arbitrary HTML code.
    @param action The action to be surrounded.
-   @optparam prefix XHTML code to be inserted before the aciton or nil for none.
-   @optparam postfix XHTML code to be inserted after the aciton or nil for none.
+   @optparam prefix XHTML code to be inserted before the action or nil for none.
+   @optparam postfix XHTML code to be inserted after the action or nil for none.
 
    This instance uses the authorization level and prompt of the given @b action.
 
@@ -502,8 +500,8 @@ end
 /*# Surrounds many actions with HTML text.
    @param prompt The name or prompt of this action group.
    @param actions An array of actions to be rendered.
-   @optparam prefix XHTML code to be inserted before the aciton group or nil for none.
-   @optparam prefix XHTML code to be inserted after the aciton group or nil for none.
+   @optparam prefix XHTML code to be inserted before the action group or nil for none.
+   @optparam prefix XHTML code to be inserted after the action group or nil for none.
    @optparam infix XHTML code to be inserted in between each action or nil for none.
 
    This instance assumes the @b lowest authorization level given to all the @b actions

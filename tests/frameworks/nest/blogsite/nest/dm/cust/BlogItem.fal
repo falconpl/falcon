@@ -20,9 +20,10 @@
 *	78		function postedBy()
 *	97	>> --- DB methods-----------------------------------------------------<<
 *	100		function getByID( idBlog )
-*	109		function _getList( filter, numRec)
+*	109		function getList( filter, numRec)
 ***************************************************/
 import BlogSection  from nest.dm.cust.BlogSection as BlogSection
+import from nest.dm.cust.DateTimeManagement in DateTime
 
 class BlogItem( dbutility )
 	_dbuti 	 = nil
@@ -36,7 +37,7 @@ class BlogItem( dbutility )
 	Author 	 = nil
 	Section  = nil
 	Tags     = nil
-	NComment = nil
+	NumOfComments = nil
 
 	init
 		self._fields = "d.IDBLOG, d.Title, IFNull(Content, '') as Content, d.Date, d.Author, s.Title as Section"
@@ -52,29 +53,12 @@ class BlogItem( dbutility )
 
 // subRegion: List of Items
 	/*	Get the blog's into the given section	*/
-	function getListBySection( section )
-		return self._getList( [ "s.Title = '" + section.replace("'", "''") + "'" ], nil)
-	end
 
-	/*	Get the blog's with the given tag	*/
-	function getListByTag( tag )
-		return self._getList( [ "TAG = '" + tag.replace("'", "''") + "'" ], nil)
-	end
-
-	/*	Get the last numRec records 	*/
-	function getListByLast( numRec )
-		return self._getList( nil, numRec )
-	end
-
-	/*	Get the blog's in the year and month given	*/
-	function getListByYearMonth( year, month )
-		return self._getList( [ "year(d.Date) = " + year,  "month(d.date) = " + month], nil)
-	end
 
 	/* 	to retrieve just one BlogItem
 		with all the related info 		*/
 	function getByID( idBlog )
-		return self._getList( [@"d.IDBLOG = $(idBlog)"], nil)
+		return self.getList( [@"d.IDBLOG = $(idBlog)"], nil)
 	end
 	
 // subRegion: Insert, Update and Delete
@@ -157,23 +141,57 @@ class BlogItem( dbutility )
 
 // Region: Output methods
 	function postedBy()
-		
+
+		format = i"Posted by <a href=\"?pid=home&type=author&id=$(self.Author)\">$(self.Author)</a> at $(h):$(m)"
 		h = "0" + self.Date.hour
 		m = "0" + self.Date.minute
 
 		h = h[-2:]
 		m = m[-2:]
-		sRet = @"Posted by $(self.Author) at $(h):$(m). Filed under: $(self.Section)</br>"
-		if self.NComment > 1
-			sRet += self.nComments + " comments"
-		elif self.NComment == 1
-			sRet += "One comment"
+		
+		return @format
+
+	end
+	
+	function filedUnder()
+		format = i"Filed under: <a href=\"?pid=home&type=section&id=$(self.Section)\">$(self.Section)</a>"
+		return @format
+	end
+	
+	function commentsNumber()
+		
+		if self.NumOfComments > 1
+			sRet = self.NumOfComments + " " + i"comments"
+		elif self.NumOfComments == 1
+			sRet = i"One comment"
 		else
-			sRet += "No comments"
+			sRet = i"No comments"
 		end
 
-		return sRet + " Permalink"
+		return sRet
 
+	end
+	
+	function tagList()
+		
+		s1 = "Tags: "
+		for a in self.Tags 
+			s1 += @"<a href=\"?pid=home&type=tag&id=$(a)\">$(a)</a>"
+			formiddle: s1+=", "
+		end
+		
+		return s1
+	end
+	
+	function DateFormatted()
+		
+		nameDay   = DateTime.dayNames[ self.Date.dayOfWeek() ]
+		numDay    = self.Date.day
+		nameMonth = DateTime.monthNames[ self.Date.month -1 ]
+		
+		format = "$(nameDay), $(nameMonth) $(numDay), $(self.Date.year)"
+		return @format
+		
 	end
 
 // Region: Private methods
@@ -181,7 +199,7 @@ class BlogItem( dbutility )
 		an array with the records retrieved.
 		filter is an array [ "field=value", ....]
 		numRec is a number or a nil					*/
-	function _getList( filter, numRec)
+	function getList( filter, numRec)
 
 		sqlCmd  = "SELECT DISTINCT " + self._fields
 		sqlCmd  += " FROM tBlogData d  LEFT JOIN tBlogSections s ON s.IDSection = d.IDSection "
@@ -222,19 +240,14 @@ class BlogItem( dbutility )
 
 			aTag = self._dbuti.fetchDict( "SELECT TAG FROM tBlogTags WHERE IDBLOG = ?;", blog.ID)
 
-			sTags = ""
+			sTags = []
 			for s in aTag
 				sTags +=  s[ "TAG" ]
-				formiddle
-					sTags += ", "
-				end
 			end
 
-			blog.Tags = sTags.trim().clone()
+			blog.Tags = sTags
 
-			aTag = self._dbuti.getScalar( "SELECT Count(*) as numHit FROM tBlogComments WHERE IDBLOG = ?;", blog.ID)
-
-			blog.NComment = aTag
+			blog.NumOfComments = self._dbuti.getScalar( "SELECT Count(*) as numHit FROM tBlogComments WHERE IDBLOG = ?;", blog.ID)			
 
 			ret += blog
 

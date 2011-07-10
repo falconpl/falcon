@@ -35,6 +35,7 @@ class Blog( instance ) from Service( instance )
 	Item = nil
 	Comment = nil
 	Section = nil
+		
 	_dbuti  = nil
 	
 	init
@@ -45,6 +46,30 @@ class Blog( instance ) from Service( instance )
 		self.Section = BlogSection( self._dbuti )		
 
 	end
+
+	function getItemList()
+		
+		type = Request.getField("type", "" ) 
+		id = Request.getField("id", "" ) 
+		
+			
+> "type=", type, "\id=", id
+
+
+		if type == "tag"
+			return self.Item.getList( [ "TAG = '" + id.replace("'", "''") + "'" ], nil )
+		elif type == "section"
+			return self.Item.getList( [ "s.Title = '" + id.replace("'", "''") + "'" ], nil)
+		elif type == "author"
+			return self.Item.getList( [ "s.author= '" + id.replace("'", "''") + "'" ], nil)
+		elif type == "yearmonth"
+			return ""
+		else
+			return self.Item.getList( nil, 10 )
+		end
+			
+	end
+
 
 // Region: DML related to secondary objects
 	function getTagList()

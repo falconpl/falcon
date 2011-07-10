@@ -1,34 +1,38 @@
 <?	function skin( data, srv ) 		
-		rec = srv.Item.getListByLast( 10 )
+		rec = srv.getItemList()
 ?> 
-		<div id="blogdiv" class="blogdiv">		
+		<div id="main" class="blogMain">
+			<div class="blogActions">
 
 <?		if rec.len() == 0 			?>
 			any NEWS FOund!!
 <?		else						?>		
-			<table style="width: 100%;">	
 
 <?			for news in rec			?>	
-	    		<tr><td id="blogDate" class="blogDate">
-	    			<?= news.Date ?>
-	    		</td></tr>
-	    		<tr><td id="blogTitle" class="blogTitle">
-	    			<?= news.Title ?>
-	    		</td></tr>
-	    		<tr><td id="blogContent" class="blogContent">
-	    			<?= news.ShortCnt	?>
-	    		</td></tr>
-<? if news.Content != news.ShortCnt ?>    		
-	    		<tr><td id="blogReadMore" class="blogReadMore">
-	    			[ Read More... ]
-	    		</td></tr>
-<? end ?>
-	    		<tr><td id="blogPostedBy" class="blogPostedBy"><?= news.postedBy() ?></td></tr>
-<?			end						?>
-			</table>
-<?		end							?>	
+				<div class="blogItem">
+					<div class="blogDate">
+						<?= news.DateFormatted() ?>
+					</div>
+					<div class="blogTitle">
+						<a href="/?pid=blogitem&id=<?= news.ID ?>"><?= news.Title ?></a>
+					</div>					
+		    		<div class="blogContent">
+		    			<?= news.ShortCnt	?>
+		    		</div>
+<? 				if news.Content != news.ShortCnt ?>    		
+		    		<div class="blogReadMore">
+		    			[ Read More... ]
+		    		</div>
+<? 				end ?>
+		    		<div class="blogInfo">
+		    			<?= news.postedBy()?> &nbsp; <?= news.commentsNumber() ?>
+		    			<br>
+		    			<?= news.filedUnder() ?>&nbsp;-&nbsp;<?= news.tagList()?>
+		    		</div>
+				</div>
+<? 			end	?>
+			
+<?		end	?>	
    		</div>
-<? 
-	end 
-?>
+<? end ?>
 

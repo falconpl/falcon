@@ -13,12 +13,13 @@ load nest
 
 import from hash
 
-
+/*
 Nest.debug = true
 Nest.log_level = 3
+*/
+Nest.stylesheets += ["blog_style.css"]
 
 /*
-Nest.stylesheets += ["ckd_wiki.css"]
 Nest.extscripts += ["/js/ckd.ftd" ]
 */
 Nest.addHook( "DBCheckUser" )

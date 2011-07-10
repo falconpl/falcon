@@ -1,0 +1,70 @@
+.blogMain 
+{
+    background: none repeat scroll 0 0 #FFFFFF;
+    float: left;
+    margin: 0;
+    padding: 0 0 30px;
+    width: 650px;        
+}
+
+.blogItem 
+{
+    margin: 20px 15px 40px;
+    padding: 0;
+}
+
+.blogDate, .blogReadMore, .blogInfo
+{
+    text-align: right; 
+}
+
+.blogDate, .blogInfo 
+{
+    font-size: 16px;
+}
+
+.blogReadMore, .blogReadMore a, .blogReadMore a:hover {
+	font-size: 20px;
+	
+}
+
+.blogContent,  
+{
+	text-align: left; 
+	font-size: 20px; 
+}
+
+.blogDate {
+    color: #008000;     
+}
+
+
+.blogTitle, .blogTitle a, .blogTitle a:hover
+{
+    color: #383828;
+    font-size: 28px;
+    padding-bottom: 20px;
+    border: medium none;    
+}
+
+.blogTitle a, .blogTitle a:hover, .blogInfo a, .blogInfo a:hover, .blogReadMore a, .blogReadMore a:hover {
+	text-decoration: none;
+}
+
+.blogInfo a, .blogInfo a:hover {
+	border-bottom: 1px dashed #DBBA8A;
+	color: #0F4002;
+}
+
+.blogTitle a:hover, .blogInfo a:hover, .blogReadMore a:hover {
+	color: #FF0000;
+}
+
+.blogInfo, .blogInfo a, .blogInfo a:hover {
+	color: #
+    border-top: 1px solid #CCCCCC;
+    line-height: 20px;        
+    padding: 0;
+    margin: 10px 0;
+}
+

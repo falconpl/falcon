@@ -4,24 +4,26 @@ import BlogSection  from nest.dm.cust.BlogSection as BlogSection
 import DBUtilities	from nest.dm.cust.DBUtilities as DBUtilities
 
 p = Blog()
-
 /*
-// Test on Sections!
-> p.Section.insert("General")
-> p.Section.insert("prova1")
-> p.Section.insert("Prova2")
+> "START SECTIONS TEST"
+> "Section Insert: ", p.Section.insert("General") ? "Ok" : "KO!"
+> "Section Insert: ", p.Section.insert("prova1") ? "Ok" : "KO!"
+> "Section Insert: ", p.Section.insert("Prova2") ? "Ok" : "KO!"
 
-> p.Section.insert("Prova3")
-> p.Section.update( 1, "New General" )
-> p.Section.delete( 4 )
+> "Section Insert: ", p.Section.insert("Prova3") ? "Ok" : "KO!"
+> "Section update: ", p.Section.update( 4, "New General" ) ? "Ok" : "KO!"
+> "Section delete: ", p.Section.delete( 4 ) ? "Ok" : "KO!"
 
 section = p.Section.getList()
 
+> "Section List"
 inspect(section)
-*/
 
-/*
+> "END SECTIONS TEST"
+> "--------------------------------------------------------------------------"
 // Test on Items
+> "START ITEMS TEST"
+
 content1 = "
 Lorem ipsum dolor sit amet, consectetur adipiscing elit. In in facilisis mi. Duis in enim ac mauris euismod imperdiet vitae eget neque. Proin ac diam ut nisl sagittis pharetra pellentesque in dolor. Vestibulum ut dui nisl. Maecenas sagittis lectus a magna rhoncus posuere. Duis id sapien nunc, non rutrum eros. Suspendisse mollis eros vel odio ornare eget aliquet libero euismod. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed ornare, purus sit amet malesuada ullamcorper, tellus elit dictum ipsum, quis venenatis orci risus sed ligula. Sed sem est, malesuada et rhoncus a, sodales vehicula est. Aenean posuere arcu eget arcu vulputate scelerisque. Nullam congue hendrerit massa quis tincidunt. Fusce rhoncus egestas ligula non vestibulum. Phasellus ornare ultrices posuere. Nulla ornare egestas metus, sed tempor erat interdum id. Praesent ante lorem, sagittis vel feugiat eget, gravida a mi. Nulla vitae tempus lorem. 
 "
@@ -31,15 +33,20 @@ Lorem ipsum dolor sit amet, consectetur adipiscing elit. In in facilisis mi.
 content3 = "
 Lorem ipsum dolor sit amet, consectetur adipiscing elit. In in facilisis mi. Duis in enim ac mauris euismod imperdiet vitae eget neque. Proin ac diam ut nisl sagittis pharetra pellentesque in dolor. Vestibulum ut dui nisl. Maecenas sagittis lectus a magna rhoncus posuere. Duis id sapien nunc, non rutrum eros. Suspendisse mollis eros vel odio ornare eget aliquet libero euismod. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed ornare, purus sit amet malesuada ullamcorper, tellus elit dictum ipsum, quis venenatis orci risus sed ligula. Sed sem est, malesuada et rhoncus a, sodales vehicula est. Aenean posuere arcu eget arcu vulputate scelerisque. Nullam congue hendrerit massa 
 "
-> p.Item.insert("titolo", content3, "Author", "General", "Tag1, Tag2, Tag3" )
-> p.Item.insert("titolo2", content1, "Author", "prova1", "Tag1, ttag2, tag5" )
-> p.Item.insert("titolo3", content2, "Author", "prova2", "Tag2, test2, otherTag1" )
+> "Item Insert: ",  p.Item.insert("titolo", content3, "Author", "General", "Tag1, Tag2, Tag3" )  ? "Ok" : "KO!"
+> "Item Insert: ",  p.Item.insert("titolo2", content1, "Author", "prova1", "Tag1, ttag2, tag5" )  ? "Ok" : "KO!"
+> "Item Insert: ",  p.Item.insert("titolo3", content2, "Author", "Prova2", "Tag2, test2, otherTag1" ) ? "Ok" : "KO!"
+> "Item Insert: ",  p.Item.insert("titolo4", content2, "Author", "Prova2", "Tag2, test2, otherTag1" ) ? "Ok" : "KO!"
 inspect( p.Item.getByID( 1 ) )
+
+> "Item update: ",  p.Item.update( 4, "titolo2a", "new content!", "Author1", "prova1", "Tag10, tag20, tag5" ) ? "Ok" : "KO!"
+> "Item delete: ",  p.Item.delete( 4 ) ? "Ok" : "KO!"
 
 */
 
-> p.Item.update( 3, "titolo2a", "new content!", "Author1", "prova1", "Tag10, tag20, tag5" )
-> p.Item.delete( 2 )
+
+b = p.Item.getByID( 1 )
+inspect( b )
 p.finalize()
 
 class Blog
