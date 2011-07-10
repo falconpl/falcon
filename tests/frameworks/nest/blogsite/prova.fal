@@ -42,11 +42,11 @@ inspect( p.Item.getByID( 1 ) )
 > "Item update: ",  p.Item.update( 4, "titolo2a", "new content!", "Author1", "prova1", "Tag10, tag20, tag5" ) ? "Ok" : "KO!"
 > "Item delete: ",  p.Item.delete( 4 ) ? "Ok" : "KO!"
 
-*/
-
-
 b = p.Item.getByID( 1 )
 inspect( b )
+*/
+b= p.Section.getList()
+> b
 p.finalize()
 
 class Blog

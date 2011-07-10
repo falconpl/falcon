@@ -70,8 +70,29 @@ class Blog( instance ) from Service( instance )
 // Region: DML related to secondary objects
 	function getTagList()
 
-		return self._dbuti.fetchArray( "SELECT Tag, count(*) as numHits FROM tBlogTags GROUP BY Tag;" )
-
+		aTags = self._dbuti.fetchArray( "SELECT Tag, count(*) as numHits FROM tBlogTags GROUP BY Tag;" )
+		ret = "<p class='blogNaviTitle'>" + i"Tags cloud" + "<p><p class='blogNaviItem'>"
+	
+		// First, get the total number of hit...
+		iTagTot = 0
+		for s in aTags
+			iTagTot += s[1]
+		end
+		
+		for s in aTags
+			fsize = ""
+			if s[1] >= iTagTot * 0.4 and s[1] < iTagTot * 0.6
+				fsize = "style='font-size: 24px'"
+			elif s[1] >= iTagTot * 0.6 and s[1] < iTagTot * 0.8
+				fsize = "style='font-size: 26px'"
+			elif s[1] >= iTagTot * 0.8
+				fsize = "style='font-size: 28px'"
+			end
+			ret += @"<a $(fsize) href=\"?pid=home&type=tag&id=$(s[0])\">$(s[0])</a>  "
+		end
+		
+		ret += "</p>"
+		return ret
 	end
 
 
