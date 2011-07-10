@@ -243,13 +243,35 @@ public:
 
    /** Adds a parent and the parentship declaration.
     \param inh The inheritance declaration.
-    \return true If the init was not given, false if another init was already set.
+    \return true If the name of the remote class is free, false if it was
+                 already assigned.
+
     The parentship delcaration carries also declaration for the parameters
     and the expressions needed to create the instances.
 
     The ownership of the inheritance records is held by this FalconClass.
+
+    Inheritances may be initially unresolved; this is accounted by this FalconClass.
+    When all the inheritances have been resolved through resolveInheritance,
+    the class is automatically finalized (it's components are setup).
     */
    bool addParent( Inheritance* inh );
+
+   /** Adds a parent and the parentship declaration.
+    \param name The name of the inheritance.
+    \param parent The parent of this class.
+    \return true If the init was not given, false if another init was already set.
+
+    The parentship delcaration carries also declaration for the parameters
+    and the expressions needed to create the instances.
+
+    The ownership of the inheritance records is held by this FalconClass.
+
+    Inheritances may be initially unresolved; this is accounted by this FalconClass.
+    When all the inheritances have been resolved through resolveInheritance,
+    the class is automatically finalized (it's components are setup).
+    */
+   bool resolveInheritance( const String& name, Class* parent );
 
    /** Gets a member of this class.
     \param name The name of the member to be returned.
@@ -338,7 +360,7 @@ public:
     This is used to mark the default values of the class, if
     there is one or more deep item in the class.
     */
-   virtual void gcMark( uint32 mark ) const;
+   virtual void gcMarkMyself( uint32 mark ) const;
 
    virtual void gcMark( void* self, uint32 mark ) const;
 

@@ -247,8 +247,13 @@ public:
       content.data.ptr.pInst = f;
    }
 
-   inline Item( Class* cls, void* inst ) {
+   inline Item( const Class* cls, void* inst ) {
        setUser( cls, inst );
+   }
+
+   inline Item( const Class* cls, void* inst, bool ) {
+       setUser( cls, inst );
+       content.base.bits.flags |= flagIsGarbage;
    }
 
    inline void setUser( const Class* cls, void* inst )

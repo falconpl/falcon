@@ -20,8 +20,7 @@
 #include <falcon/falconinstance.h>
 #include <falcon/inheritance.h>
 #include <falcon/item.h>
-
-#include "falcon/synfunc.h"
+#include <falcon/synfunc.h>
 #include <falcon/function.h>
 #include <falcon/datareader.h>
 #include <falcon/datawriter.h>
@@ -42,47 +41,6 @@
 #include <vector>
 
 
-
-#define OVERRIDE_OP_NEG_ID       0
-
-#define OVERRIDE_OP_ADD_ID       1
-#define OVERRIDE_OP_SUB_ID       2
-#define OVERRIDE_OP_MUL_ID       3
-#define OVERRIDE_OP_DIV_ID       4
-#define OVERRIDE_OP_MOD_ID       5
-#define OVERRIDE_OP_POW_ID       6
-
-#define OVERRIDE_OP_AADD_ID      7
-#define OVERRIDE_OP_ASUB_ID      8
-#define OVERRIDE_OP_AMUL_ID      9
-#define OVERRIDE_OP_ADIV_ID      10
-#define OVERRIDE_OP_AMOD_ID      11
-#define OVERRIDE_OP_APOW_ID      12
-
-#define OVERRIDE_OP_INC_ID       13
-#define OVERRIDE_OP_DEC_ID       14
-#define OVERRIDE_OP_INCPOST_ID   15
-#define OVERRIDE_OP_DECPOST_ID   16
-
-#define OVERRIDE_OP_CALL_ID      17
-
-#define OVERRIDE_OP_GETINDEX_ID  18
-#define OVERRIDE_OP_SETINDEX_ID  19
-#define OVERRIDE_OP_GETPROP_ID   20
-#define OVERRIDE_OP_SETPROP_ID   21
-
-#define OVERRIDE_OP_COMPARE_ID   22
-#define OVERRIDE_OP_ISTRUE_ID    23
-#define OVERRIDE_OP_IN_ID        24
-#define OVERRIDE_OP_PROVIDES_ID  25
-#define OVERRIDE_OP_TOSTRING_ID  27
-
-#define OVERRIDE_OP_COUNT_ID  27
-
-
-#if OVERRIDE_OP_COUNT_ID != OVERRIDE_OP_COUNT
-#error "Count of overrides was not the same of override name count"
-#endif
 
 namespace Falcon
 {
@@ -402,7 +360,7 @@ const FalconClass::Property* FalconClass::getProperty( const String& name ) cons
    return iter->second;
 }
 
-void FalconClass::gcMark( uint32 mark ) const
+void FalconClass::gcMarkMyself( uint32 mark ) const
 {
    if ( m_shouldMark )
    {
@@ -622,14 +580,14 @@ void FalconClass::describe( void* instance, String& target, int depth, int maxle
 // Operators.
 //
 
-inline void FalconClass::override_unary( VMContext* ctx, void*, int op, const String& opName ) const
+inline void FalconClass::override_unary( VMContext* ctx, void* self, int op, const String& opName ) const
 {
    Function* override = m_overrides[op];
 
    // TODO -- use pre-caching of the desired method
    if( override != 0 )
    {
-      ctx->call( override, 0, ctx->topData(), true );
+      ctx->call( override, 0, Item( this, self, true ), true );
    }
    else
    {
@@ -637,19 +595,19 @@ inline void FalconClass::override_unary( VMContext* ctx, void*, int op, const St
    }
 }
 
-inline void FalconClass::override_binary( VMContext* ctx, void*, int op, const String& opName ) const
+
+inline void FalconClass::override_binary( VMContext* ctx, void* self, int op, const String& opName ) const
 {
    Function* override = m_overrides[op];
    
    if( override )
    {
-      Item* first, *second;
-      OpToken token( ctx, first, second );
-
+      // we don't need the self in the stack.
+      ctx->popData();
+      
       // 1 parameter == second; which will be popped away,
       // while first will be substituted with the return value of the function.
-      ctx->call ( override, 1, *first, true );
-      token.abandon();
+      ctx->call( override, 1, Item( this, self, true ), true );
    }
    else
    {
@@ -816,7 +774,9 @@ void FalconClass::op_getProperty( VMContext* ctx, void* self, const String& prop
 
    if( override != 0 )
    {
-      Item i_first = ctx->topData();
+      // call will destroy the value, that is the parameters
+      Item i_first( this, self, true );
+      ctx->popData();
       // I prefer to go safe and push a new string here.
       ctx->pushData( (new String(propName))->garbage() );
 
@@ -837,18 +797,18 @@ void FalconClass::op_setProperty( VMContext* ctx, void* self, const String& prop
 
    if( override != 0 )
    {
-      Item* first, *second;
-      OpToken token( ctx, first, second );
-      Item i_data = *first;
-      Item i_self = *second;
-
-      ctx->pushData( (new String(propName))->garbage() );
+      // call will remove the extra parameter...
+      Item iSelf( this, self, true );
+      // remove "self" from the stack..
+      ctx->popData();
+      // exchange the property name and the data,
+      // as setProperty wants the propname first.
+      Item i_data = ctx->topData();
+      ctx->topData() = (new String(propName))->garbage();
       ctx->pushData( i_data );
-      ctx->pushCode( &m_removeSelf );
 
       // Don't mangle the stack, we have to change it.
-      ctx->call( override, 2, i_self, false );
-      token.abandon();
+      ctx->call( override, 2, iSelf, false );
    }
    else
    {
@@ -860,7 +820,33 @@ void FalconClass::op_setProperty( VMContext* ctx, void* self, const String& prop
 
 void FalconClass::op_compare( VMContext* ctx, void* self ) const
 {
-   override_binary( ctx, self, OVERRIDE_OP_COMPARE_ID, OVERRIDE_OP_SETINDEX );
+   Function* override = m_overrides[OVERRIDE_OP_COMPARE_ID];
+
+   if( override )
+   {
+      // call will remove the extra parameter...
+      Item iSelf( this, self, true );
+      // remove "self" from the stack..
+      ctx->popData();
+      ctx->call( override, 1, iSelf, true );
+   }
+   else
+   {
+      // we don't need the self object.
+      ctx->popData();
+      const Item& crand = ctx->topData();
+      if( crand.type() == typeID() )
+      {
+         // we're all object. Order by ptr.
+         ctx->topData() = (int64)
+            (self > crand.asInst() ? 1 : (self < crand.asInst() ? -1 : 0));
+      }
+      else
+      {
+         // order by type
+         ctx->topData() = (int64)( typeID() - crand.type() );
+      }
+   }
 }
 
 
@@ -889,12 +875,12 @@ void FalconClass::op_in( VMContext* ctx, void* self ) const
 
 void FalconClass::op_provides( VMContext* ctx, void* self, const String& propName ) const
 {
-   Function* override = m_overrides[OVERRIDE_OP_CALL_ID];
+   Function* override = m_overrides[OVERRIDE_OP_PROVIDES_ID];
 
    if( override != 0  )
    {
-      Item i_self = ctx->topData();
-      ctx->pushData( (new String(propName))->garbage() );
+      Item i_self( this, self, true );
+      ctx->topData() = (new String(propName))->garbage();
       ctx->call( override, 1, i_self, true );
    }
    else
@@ -904,13 +890,14 @@ void FalconClass::op_provides( VMContext* ctx, void* self, const String& propNam
 }
 
 
-void FalconClass::op_call( VMContext* ctx, int32 paramCount, void* ) const
+void FalconClass::op_call( VMContext* ctx, int32 paramCount, void* self ) const
 {
    Function* override = m_overrides[OVERRIDE_OP_CALL_ID];
 
-   if( override != 0  )
+   if( override != 0 )
    {
-      ctx->call( override, paramCount, ctx->topData(), true );
+      ctx->popData();
+      ctx->call( override, paramCount, Item( this, self, true ), true );
    }
    else
    {
@@ -919,13 +906,13 @@ void FalconClass::op_call( VMContext* ctx, int32 paramCount, void* ) const
 }
 
 
-void FalconClass::op_toString( VMContext* ctx, void* ) const
+void FalconClass::op_toString( VMContext* ctx, void* self ) const
 {
    Function* override = m_overrides[OVERRIDE_OP_TOSTRING_ID];
 
    if( override != 0 )
    {
-      ctx->call( override, 0, ctx->topData(), true );
+      ctx->call( override, 0, Item( this, self, true ), true );
    }
    else
    {

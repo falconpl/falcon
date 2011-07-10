@@ -123,6 +123,7 @@ add_library(falcon_engine SHARED
   function.cpp
   genericerror.cpp
   globalsymbol.cpp
+  hyperclass.cpp
   inheritance.cpp
   intcompiler.cpp
   item.cpp
