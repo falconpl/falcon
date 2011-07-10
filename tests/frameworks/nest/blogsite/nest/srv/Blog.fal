@@ -52,10 +52,6 @@ class Blog( instance ) from Service( instance )
 		type = Request.getField("type", "" ) 
 		id = Request.getField("id", "" ) 
 		
-			
-> "type=", type, "\id=", id
-
-
 		if type == "tag"
 			return self.Item.getList( [ "TAG = '" + id.replace("'", "''") + "'" ], nil )
 		elif type == "section"

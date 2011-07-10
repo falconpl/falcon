@@ -1,8 +1,8 @@
 <?	function skin( data, srv ) 		
 		rec = srv.getItemList()
 ?> 
+	<div id="container" class="blogContainer">
 		<div id="main" class="blogMain">
-			<div class="blogActions">
 
 <?		if rec.len() == 0 			?>
 			any NEWS FOund!!
@@ -34,5 +34,10 @@
 			
 <?		end	?>	
    		</div>
+   		<div id="navi" class="blogNavigation">
+			ciao
+		</div>
+   	</div>
+   	
 <? end ?>
 
