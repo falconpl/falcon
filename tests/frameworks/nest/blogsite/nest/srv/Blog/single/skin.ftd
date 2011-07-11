@@ -1,0 +1,63 @@
+<?	
+	function skin( data, srv ) 		
+		news = srv.getItem()					
+?> 
+	<div id="container" class="blogContainer">
+		<div id="navi" class="blogNavigation">
+			<div>
+				<?=	srv.getTagList( false ) ?>	
+			</div>
+		</div>
+		<div id="main" class="blogMain">
+			<div class="blogItem">
+				<div class="blogDate">
+					<?= news.DateFormatted() ?>
+				</div>
+				<div class="blogTitle">
+					<?= news.Title ?>
+				</div>					
+	    		<div class="blogContent">
+	    			<?= news.Content ?>
+	    		</div>
+	    		<div class="blogInfo">
+					<?= news.postedBy()?> &nbsp; <?= news.commentsNumber() ?>
+	    			<br>
+					<?= news.filedUnder() ?>&nbsp;-&nbsp;<?= news.tagList()?>
+	    		</div>
+			</div>
+			<br>Comments<br>			
+<?	 		aCmnts = srv.getRelatedComments()
+			for cmnt in aCmnts						?>
+				<div class="blogComment">
+					<div class="blogCommentText">
+					</div>
+					<div class="blogCommentInfo">
+					</div>
+				</div>
+<? 			end ?>
+			<br><br>
+			<form action="" method="post">
+				<div class="commentform">
+					<input type="hidden" value="addcomment" name="type">
+					<input type="hidden" value="<?= srv.getID() ?>" name="id">
+					<label for="cf_body">Your comment:</label>
+					<textarea id="cf_body" class="formfield" rows="10" cols="40" name="body"></textarea>
+					<br>
+					<label for="cf_name">Your Name:</label>
+					<input id="cf_name" class="formfield" value="" maxlength="40" size="40" name="user">
+					<br>
+					<label for="cf_mail">Website:</label>
+					<input id="cf_mail" class="formfield" value="" maxlength="60" size="40" name="userid">					
+					<label for="cf_email">E-mail:</label>
+					<input id="cf_email" class="formfield" value="" maxlength="100" size="40" name="email">		
+					<br>
+					<input id="cf_remember" type="checkbox" name="remember" value="1">
+					<label for="cf_remember">Remember me</label>
+					<br>
+					<input class="formbutton" type="submit" value="Add Comment" alt="Add Comment">
+				</div>
+			</form>
+   		</div>
+   	</div>
+   	
+<? end ?>
