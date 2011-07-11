@@ -1,0 +1,25 @@
+/***************************************************
+* Module Name : DateTimeManagement
+* Author      : Lucone
+* Create date : 2011-07-10 
+* Edit by     : --        in date   : ....-..-..
+* Module Description -------------------------------
+*  Some constants for Month and weekdate management
+***************************************************/
+export
+
+// Region: Months infos
+monthNames = [
+			      i"January", i"February", i"March",
+			      i"April",   i"May",  	   i"June",
+			      i"July",    i"August",   i"September",
+			      i"October", i"November", i"December"
+			 ]
+
+shortMonthNames = [i"Jan", i"Feb", i"Mar", i"Apr", i"May", i"Jun", i"Jul", i"Aug", i"Sep", i"Oct", i"Nov", i"Dec"]
+daysInMonth = [ 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 ]
+
+// Region: Weekdays
+dayNames = [ i"Monday", i"Tuesday", i"Wednesday", i"Thursday", i"Friday", i"Saturday", i"Sunday" ]
+shortDayNames = [ i"Mon", i"Tue", i"Wed", i"Thu", i"Fri", i"Sat", i"Sun" ]
+veryShortDayNames = [ i"M", i"Tu", i"W", i"Th", i"F", i"Sa", i"Su" ]

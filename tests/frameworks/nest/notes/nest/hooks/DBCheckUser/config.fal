@@ -3,6 +3,7 @@
 import from hash
 
 entity = Nest.dm("notes_db").entity("users")
+
 password_field = "pwd_md5"
 hash = hash.md5
 

@@ -3,7 +3,7 @@
 import MenuItem from nest.srv.Menu as MenuItem
 
 items = .[
-   MenuItem( "First seciton", "#first" )
-   MenuItem( "Second seciton", "#second" )
-   MenuItem( "Third seciton", "#third" )
+   MenuItem( "First section", "#first" )
+   MenuItem( "Second section", "#second" )
+   MenuItem( "Third section", "#third" )
 ]

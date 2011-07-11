@@ -23,6 +23,7 @@ import from hash
 Nest.debug = true
 Nest.log_level = 3
 Nest.pcheck = true
+GC.enable(false)
 */
 
 Nest.stylesheets += "notes.css"

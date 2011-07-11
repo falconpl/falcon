@@ -2,7 +2,7 @@ import from nest.dbentity in dbe
 import from hash
 
 if vmSystemType() == "WIN"
-   connectString = "sqlite3:db=C:\\Temp\\notes.db"
+   connectString = "sqlite3:db=C:\\temp\\notes.db"
 else
    connectString = "sqlite3:db=/tmp/notes.db"
 end

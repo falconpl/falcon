@@ -1,0 +1,24 @@
+// Nest - Notes test site
+// Configuration for the users entity
+
+import from nest.dbentity in dbe
+import from hash
+
+class users( dbm ) from dbe.DBEntity( dbm )
+
+   definition = .[
+      ^+ "user_id char(15) PRIMARY KEY"
+         "pwd_md5 varchar(30)"
+         "auth_type char(10)"
+   ]
+   
+   init_data = [
+      ["user_id" => "admin",   "pwd_md5" => hash.md5("admin"),   "auth_type" => "admin"],
+      ["user_id" => "staff",   "pwd_md5" => hash.md5("staff"),   "auth_type" => "staff"],
+      ["user_id" => "user1",    "pwd_md5" => hash.md5("user"),    "auth_type" => "user"],
+      ["user_id" => "user2",    "pwd_md5" => hash.md5("user"),    "auth_type" => "user"],
+      ["user_id" => "user3",    "pwd_md5" => hash.md5("user"),    "auth_type" => "user"],
+      ["user_id" => "user4",    "pwd_md5" => hash.md5("user"),    "auth_type" => "user"]
+   ]
+   
+end

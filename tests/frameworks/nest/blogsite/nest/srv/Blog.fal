@@ -1,0 +1,110 @@
+/***************************************************
+* Module Name :
+* Author      : Lucone
+* Create date : 2011-07-07
+* Edit by     : --        in date   : ....-..-..
+* Module Description -------------------------------
+*        <please insert a module description>
+***************************************************/
+/***************************************************
+--Classes, Object and functions:
+*	33	class Blog( instance ) from Service( instance )
+*	48	>> --- DML related to secondary objects-------------------------------<<
+*	49		function getTagList()
+*	56	>> --- Miscellaneous--------------------------------------------------<<
+*	60		function fetchDict( sqlCmd )
+*	78		function fetchArray( sqlCmd )
+*	96		function execute( sqlCmd )
+*	110		function finalize()
+*	124		function createStructure()
+*	129	>> --- private methods------------------------------------------------<<
+*	130		function _openConn()
+***************************************************/
+
+import Service from nest as Service
+import ServiceVar from nest as ServiceVar
+import NestError from nest as NestError
+import from nest.bindings in b
+import BlogItem 	from nest.dm.cust.BlogItem 	  as BlogItem
+import BlogComment  from nest.dm.cust.BlogComment as BlogComment
+import BlogSection  from nest.dm.cust.BlogSection as BlogSection
+import DBUtilities	from nest.dm.cust.DBUtilities as DBUtilities
+
+class Blog( instance ) from Service( instance )
+	
+	Item = nil
+	Comment = nil
+	Section = nil
+		
+	_dbuti  = nil
+	
+	init
+
+		self._dbuti = DBUtilities()
+		self.Item = BlogItem( self._dbuti )
+		self.Comment = BlogComment( self._dbuti )
+		self.Section = BlogSection( self._dbuti )		
+
+	end
+
+	function getItemList()
+		
+		type = Request.getField("type", "" ) 
+		id = Request.getField("id", "" ) 
+		
+		if type == "tag"
+			return self.Item.getList( [ "TAG = '" + id.replace("'", "''") + "'" ], nil )
+		elif type == "section"
+			return self.Item.getList( [ "s.Title = '" + id.replace("'", "''") + "'" ], nil)
+		elif type == "author"
+			return self.Item.getList( [ "s.author= '" + id.replace("'", "''") + "'" ], nil)
+		elif type == "yearmonth"
+			return ""
+		else
+			return self.Item.getList( nil, 10 )
+		end
+			
+	end
+
+
+// Region: DML related to secondary objects
+	function getTagList()
+
+		aTags = self._dbuti.fetchArray( "SELECT Tag, count(*) as numHits FROM tBlogTags GROUP BY Tag;" )
+		ret = "<p class='blogNaviTitle'>" + i"Tags cloud" + "<p><p class='blogNaviItem'>"
+	
+		// First, get the total number of hit...
+		iTagTot = 0
+		for s in aTags
+			iTagTot += s[1]
+		end
+		
+		for s in aTags
+			fsize = ""
+			if s[1] >= iTagTot * 0.4 and s[1] < iTagTot * 0.6
+				fsize = "style='font-size: 24px'"
+			elif s[1] >= iTagTot * 0.6 and s[1] < iTagTot * 0.8
+				fsize = "style='font-size: 26px'"
+			elif s[1] >= iTagTot * 0.8
+				fsize = "style='font-size: 28px'"
+			end
+			ret += @"<a $(fsize) href=\"?pid=home&type=tag&id=$(s[0])\">$(s[0])</a>  "
+		end
+		
+		ret += "</p>"
+		return ret
+	end
+
+
+	/*	To close the connection and free
+		the resources used					*/
+	function finalize()
+
+		self.Item.finalize()
+		self.Comment.finalize()
+		self.Section.finalize()
+		self._dbuti.finalize()
+
+	end
+
+end
