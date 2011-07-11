@@ -19,9 +19,7 @@ Nest.log_level = 3
 */
 Nest.stylesheets += ["blog_style.css"]
 
-/*
-Nest.extscripts += ["/js/ckd.ftd" ]
-*/
+
 Nest.addHook( "DBCheckUser" )
 Nest.frame = {=> include("frame.ftd") }
 

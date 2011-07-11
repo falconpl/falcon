@@ -1,0 +1,6 @@
+<?
+	import from nest.action in na	
+	service = Nest.service("Blog", "single")
+	service.render() 
+?>
+   

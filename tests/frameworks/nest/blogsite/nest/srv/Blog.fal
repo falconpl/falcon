@@ -35,8 +35,10 @@ class Blog( instance ) from Service( instance )
 	Item = nil
 	Comment = nil
 	Section = nil
-		
+	
 	_dbuti  = nil
+	_ID		= nil
+	_requestType = nil 
 	
 	init
 
@@ -44,21 +46,28 @@ class Blog( instance ) from Service( instance )
 		self.Item = BlogItem( self._dbuti )
 		self.Comment = BlogComment( self._dbuti )
 		self.Section = BlogSection( self._dbuti )		
-
+		self._ID = Request.getField("id", "" )
+		self._requestType = Request.getField("type", "" ) 
+		
 	end
 
+	function getID()
+		return self._ID
+	end
+
+	function getItem()
+		return ( self._ID ) ? self.Item.getByID( self._ID ) : nil
+	end
+	
 	function getItemList()
-		
-		type = Request.getField("type", "" ) 
-		id = Request.getField("id", "" ) 
-		
-		if type == "tag"
-			return self.Item.getList( [ "TAG = '" + id.replace("'", "''") + "'" ], nil )
-		elif type == "section"
-			return self.Item.getList( [ "s.Title = '" + id.replace("'", "''") + "'" ], nil)
-		elif type == "author"
-			return self.Item.getList( [ "s.author= '" + id.replace("'", "''") + "'" ], nil)
-		elif type == "yearmonth"
+				
+		if self._requestType == "tag"
+			return self.Item.getList( [ "TAG = '" + self._ID.replace("'", "''") + "'" ], nil )
+		elif self._requestType == "section"
+			return self.Item.getList( [ "s.Title = '" + self._ID.replace("'", "''") + "'" ], nil)
+		elif self._requestType == "author"
+			return self.Item.getList( [ "s.author= '" + self._ID.replace("'", "''") + "'" ], nil)
+		elif self._requestType == "yearmonth"
 			return ""
 		else
 			return self.Item.getList( nil, 10 )
@@ -66,6 +75,10 @@ class Blog( instance ) from Service( instance )
 			
 	end
 
+	function getRelatedComments()
+		return ( self._ID ) ? self.Comment.getListByBlog( self._ID ) : []
+	end
+		
 
 // Region: DML related to secondary objects
 	function getTagList()

@@ -4,7 +4,7 @@
 ?>
 <html>
 <head>
-   <title>CKD- <? Nest.defer('title') ?></title>
+   <title><? Nest.defer('title') ?></title>
    <? Nest.headings() ?>
 </head>
 <body>

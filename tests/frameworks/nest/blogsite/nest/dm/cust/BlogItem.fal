@@ -58,7 +58,7 @@ class BlogItem( dbutility )
 	/* 	to retrieve just one BlogItem
 		with all the related info 		*/
 	function getByID( idBlog )
-		return self.getList( [@"d.IDBLOG = $(idBlog)"], nil)
+		return self.getList( [@"d.IDBLOG = $(idBlog)"], nil)[0]
 	end
 	
 // subRegion: Insert, Update and Delete
