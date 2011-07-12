@@ -95,6 +95,7 @@ public:
    Parsing::Terminal T_true;
    Parsing::Terminal T_false;
    Parsing::Terminal T_self;
+   Parsing::Terminal T_from;
 
    //================================================
    // Statements

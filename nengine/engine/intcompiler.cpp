@@ -35,6 +35,9 @@
 
 #include <falcon/expression.h>
 #include <falcon/falconclass.h>
+#include <falcon/hyperclass.h>
+
+#include "falcon/inheritance.h"
 
 namespace Falcon {
 
@@ -67,8 +70,27 @@ void IntCompiler::Context::onNewFunc( Function* function, GlobalSymbol* gs )
 void IntCompiler::Context::onNewClass( Class* cls, bool isObject, GlobalSymbol* gs )
 {
    FalconClass* fcls = static_cast<FalconClass*>(cls);
-   fcls->finalizeConstructor();
-   m_owner->m_module->addClass( gs, cls, isObject );
+   // The interactive compiler won't call us here if we have some undefined class,
+   // as such, the construct can fail only if some class is not a falcon class.
+   if( !fcls->construct() )
+   {
+      // did we fail to construct because we're incomplete?
+      if( ! fcls->missingParents() )
+      {
+         // so, we have to generate an hyper class out of our falcon-class
+         // -- the hyperclass is also owning the FalconClass.
+         m_owner->m_module->addClass( gs, fcls->hyperConstruct(), isObject );
+      }
+      else
+      {
+         // we already detected the undefined symbol error.
+         delete cls;
+      }
+   }
+   else
+   {
+      m_owner->m_module->addClass( gs, cls, isObject );
+   }
 }
 
 
@@ -159,6 +181,44 @@ bool IntCompiler::Context::onUnknownSymbol( UnknownSymbol* sym )
 void IntCompiler::Context::onStaticData( Class*, void* )
 {
  // TODO
+}
+
+
+void IntCompiler::Context::onInheritance( Inheritance* inh  )
+{
+   // In the interactive compiler context, classes must have been already defined...
+   const Symbol* sym = m_owner->m_module->getGlobal(inh->className());
+   if( sym == 0 )
+   {
+      sym = m_owner->m_vm->findExportedSymbol( inh->className() );
+   }
+
+   // found?
+   if( sym != 0 )
+   {
+      Item itm;
+      if( ! sym->retrieve( itm, m_owner->m_vm->currentContext() ) )
+      {
+         //TODO: Add inheritance line number.
+         m_owner->m_sp.addError( e_undef_sym, m_owner->m_sp.currentSource(), 0, 0, 0, inh->className() );
+      }
+      // we want a class. A real class.
+      else if ( ! itm.isUser() || ! itm.asClass()->isMetaClass() )
+      {
+         m_owner->m_sp.addError( e_inv_inherit, m_owner->m_sp.currentSource(), 0, 0, 0, inh->className() );
+      }
+      else
+      {
+         inh->parent( static_cast<Class*>(itm.asInst()) );
+      }
+
+      // ok, now how to break away if we aren't complete?
+   }
+   else
+   {
+      // TODO -- add line
+      m_owner->m_sp.addError( e_undef_sym, m_owner->m_sp.currentSource(), 0, 0, 0, inh->className() );
+   }
 }
 
 //=======================================================================

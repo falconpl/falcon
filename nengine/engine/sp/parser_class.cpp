@@ -23,6 +23,8 @@
 #include <falcon/globalsymbol.h>
 #include <falcon/falconclass.h>
 #include <falcon/synfunc.h>
+#include <falcon/localsymbol.h>
+#include <falcon/inheritance.h>
 
 #include <falcon/parser/rule.h>
 #include <falcon/parser/parser.h>
@@ -34,13 +36,38 @@
 #include <falcon/sp/parser_class.h>
 
 #include "private_types.h"
-#include "falcon/localsymbol.h"
+
+#include <list>
 
 namespace Falcon {
 
+typedef std::list<Inheritance* > InhList;
+
+void inh_list_deletor(void* data)
+{
+   InhList* expr = static_cast<InhList*>(data);
+   InhList::iterator iter = expr->begin();
+   while( iter != expr->end() )
+   {
+      delete *iter;
+      ++iter;
+   }
+   delete expr;
+}
+
+
+void inh_deletor(void* data)
+{
+   delete static_cast<Inheritance*>(data);
+}
+
+
 using namespace Parsing;
 
-static void make_class( Parser& p, int tCount, TokenInstance* tname, TokenInstance* tParams )
+static void make_class( Parser& p, int tCount,
+         TokenInstance* tname,
+         TokenInstance* tParams,
+         TokenInstance* tfrom )
 {
    ParserContext* ctx = static_cast<ParserContext*>(p.context());
 
@@ -79,21 +106,43 @@ static void make_class( Parser& p, int tCount, TokenInstance* tname, TokenInstan
       }
    }
 
+   // some from clause to take care of?
+   if( tfrom != 0 )
+   {
+      InhList* flist = static_cast<InhList*>( tfrom->asData() );
+      InhList::iterator iter = flist->begin();
+      while( iter != flist->end() )
+      {
+         Inheritance* inh = *iter;
+         cls->addParent( inh );
+         ctx->onInheritance( inh );
+         ++iter;
+      }
+
+      // preserve the inheritances, but discard the list.
+      flist->clear();
+   }
+
+
    // remove this stuff from the stack
    p.simplify( tCount );
 
    ctx->openClass(cls, false, symclass);
+
+   // time to check the symbols.
+   ctx->checkSymbols();
+
    p.pushState( "ClassBody" );
 }
 
 
 void apply_class( const Rule&, Parser& p )
 {
-   // << T_class << T_Name << FromClause << T_EOL
+   // << T_class << T_Name << T_EOL
    p.getNextToken(); // T_class
    TokenInstance* tname=p.getNextToken();
 
-   make_class(p, 3, tname, 0 );
+   make_class(p, 3, tname, 0, 0 );
 }
 
 
@@ -105,28 +154,34 @@ void apply_class_p( const Rule&, Parser& p )
    p.getNextToken(); // T_Openpar
    TokenInstance* tparams = p.getNextToken(); // ListSymbol
 
-   make_class( p, 6, tname, tparams );
+   make_class( p, 6, tname, tparams, 0 );
 }
+
 
 void apply_class_from( const Rule&, Parser& p )
 {
-   // << T_class << T_Name << FromClause << FromClause << T_EOL
+   // << T_class << T_Name << T_from << FromClause << T_EOL
    p.getNextToken(); // T_class
-   TokenInstance* tname=p.getNextToken();
+   TokenInstance* tname=p.getNextToken(); // T_Name
+   (void) p.getNextToken();
+   TokenInstance* tfrom=p.getNextToken(); // FromClause
 
-   make_class(p, 4, tname, 0 );
+   make_class(p, 5, tname, 0, tfrom );
 }
 
 
 void apply_class_p_from( const Rule&, Parser& p )
 {
-   // << T_class << T_Name << T_Openpar << ListSymbol << T_Closepar << FromClause << T_EOL
+   // << T_class << T_Name << T_Openpar << ListSymbol << T_Closepar << T_from << FromClause << T_EOL
    p.getNextToken(); // T_class
    TokenInstance* tname = p.getNextToken(); // T_Name
    p.getNextToken(); // T_Openpar
    TokenInstance* tparams = p.getNextToken(); // ListSymbol
+   p.getNextToken(); // T_Closepar
+   p.getNextToken();
+   TokenInstance* tfrom=p.getNextToken(); // FromClause
 
-   make_class( p, 7, tname, tparams );
+   make_class( p, 8, tname, tparams, tfrom );
 }
 
 
@@ -209,28 +264,70 @@ void apply_init_expr( const Rule&, Parser& p )
 void apply_FromClause_next( const Rule&, Parser& p  )
 {
    // << FromClause << T_Comma << FromEntry
-   p.simplify(3);
+   TokenInstance* tInhList = p.getNextToken(); // FromClause
+   p.getNextToken(); // T_Comma
+   TokenInstance* tInh = p.getNextToken(); // FromEntry
+
+   // keep the list, but discard the comma and the entry.
+   InhList* inhList = static_cast<InhList*>( tInhList->asData() );
+   inhList->push_back( static_cast<Inheritance*>(tInh->detachValue()) );
+
+   p.simplify(2);
 }
 
 
 void apply_FromClause_first( const Rule&, Parser& p )
 {
    // << FromEntry
-   p.simplify(1);
+   SourceParser& sp = static_cast<SourceParser&>(p);
+
+   TokenInstance* tInh = p.getNextToken(); // ListExpr
+
+   TokenInstance* tlist = new TokenInstance(tInh->line(), tInh->chr(), sp.FromClause );
+   InhList* inh_list = new InhList;
+   inh_list->push_back( static_cast<Inheritance*>(tInh->detachValue()) );
+   tlist->setValue( inh_list, &inh_list_deletor );
+
+   p.simplify(1, tlist);
 }
 
 
 void apply_FromClause_entry_with_expr( const Rule&, Parser& p )
 {
    // << T_Name << T_Openpar << ListExpr << T_Closepar );
-   p.simplify( 4 );
+   SourceParser& sp = static_cast<SourceParser&>(p);
+
+   TokenInstance* tname = p.getNextToken(); // T_Name
+   p.getNextToken();
+   TokenInstance* tlistExpr = p.getNextToken(); // ListExpr
+
+   //TODO Save the token location
+   Inheritance* inh = new Inheritance(*tname->asString());
+   
+   List* list=static_cast<List*>(tlistExpr->asData());
+   for(List::const_iterator it=list->begin(),end=list->end();it!=end;++it)
+   {
+      inh->addParameter( *it );
+   }
+   list->clear();
+
+   TokenInstance* tInh = new TokenInstance(tname->line(), tname->chr(), sp.FromEntry );
+   tInh->setValue( inh, &inh_deletor );
+
+   p.simplify( 4, tInh );
 }
 
 
 void apply_FromClause_entry( const Rule&, Parser& p )
 {
    // << T_Name );
-   p.simplify( 1 );
+   SourceParser& sp = static_cast<SourceParser&>(p);
+
+   TokenInstance* tname = p.getNextToken(); // T_Name
+
+   TokenInstance* tInh = new TokenInstance(tname->line(), tname->chr(), sp.FromEntry );
+   tInh->setValue( new Inheritance(*tname->asString()), &inh_deletor );
+   p.simplify( 1, tInh );
 }
 
 }

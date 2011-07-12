@@ -33,9 +33,11 @@ public:
    LocalSymbol( const LocalSymbol& other );
    virtual ~LocalSymbol();
 
-   LocalSymbol* clone() const { return new LocalSymbol(*this); }
+   virtual LocalSymbol* clone() const { return new LocalSymbol(*this); }
 
-   void assign( VMachine* vm, const Item& item ) const;
+   virtual void assign( VMContext* ctx, const Item& item ) const;
+   virtual bool retrieve( Item& value, VMContext* ctx ) const;
+   
    static void apply_( const PStep* s1, VMContext* ctx );
 
    virtual Expression* makeExpression();

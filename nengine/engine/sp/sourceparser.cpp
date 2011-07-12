@@ -118,7 +118,8 @@ SourceParser::SourceParser():
 
    T_true( "true" ),
    T_false( "false" ),
-   T_self( "self" )
+   T_self( "self" ),
+   T_from( "from" )
 {
    S_Autoexpr << "Autoexpr"
       << (r_line_autoexpr << "Autoexpr" << apply_line_expr << Expr << T_EOL)
@@ -279,10 +280,11 @@ SourceParser::SourceParser():
    //==================================
    // Class
    S_Class << "Class";
-   S_Class << (r_class_from << "Class w/from" << apply_class_from << T_class << T_Name << FromClause << T_EOL );
+   S_Class << (r_class_from << "Class w/from" << apply_class_from 
+               << T_class << T_Name << T_from << FromClause << T_EOL );
    S_Class << (r_class << "Class decl" << apply_class << T_class << T_Name << T_EOL );
    S_Class << (r_class_p_from << "Class w/params & from" << apply_class_p_from
-             << T_class << T_Name << T_Openpar << ListSymbol << T_Closepar << FromClause << T_EOL );
+             << T_class << T_Name << T_Openpar << ListSymbol << T_Closepar << T_from << FromClause << T_EOL );
    S_Class << (r_class_p << "Class w/params" << apply_class_p
              << T_class << T_Name << T_Openpar << ListSymbol << T_Closepar  << T_EOL );
 

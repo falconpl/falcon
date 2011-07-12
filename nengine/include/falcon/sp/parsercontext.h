@@ -32,6 +32,7 @@ class SynFunc;
 class Expression;
 class Statement;
 class FalconClass;
+class Inheritance;
 
 /** Compilation context for Falcon source file compiler (ABC).
 
@@ -278,6 +279,12 @@ public:
 
     */
    virtual void onStaticData( Class* cls, void* data ) = 0;
+
+   /** Adds an inheritance record.
+    Inheritances are particular import structures
+    (more later).
+    */
+   virtual void onInheritance( Inheritance* inh  ) = 0;
 
    /** Opens the main context frame.
     This context frame (main or base context frame) refers to the topmost

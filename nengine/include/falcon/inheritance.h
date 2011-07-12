@@ -18,21 +18,36 @@
 
 #include <falcon/setup.h>
 #include <falcon/string.h>
+#include <falcon/pstep.h>
 
 namespace Falcon
 {
 
 class Class;
 class Expression;
+class PCode;
 
 /** Structure holding information about inheritance in a class.
-  
+ This structure holds the needed information to create automatic inheritance
+ structures. It holds possibly forward reference to the base class (parent)
+ and it owns the expressions that are needed to invoke their constructor.
+
+ This class is mainly used in the FalconClass to allow delayed resolutiuon of
+ parent classes, but it is also known by the HyperClass structure and can
+ be used by any user class requiring to have knowledge about "base classes",
+ and instruction on how to instantiate them.
+
+ \note The inheritance doesn't own the classes it refers to, but it owns
+ the expressions used to automatically invoke the base class constructors
+ ('parameters').
+ 
  */
 class FALCON_DYN_CLASS Inheritance
 {
 public:
    /** Creates the inheritance instance.
     \param name The logical name of the parent class.
+    \param parent The class corresponding to the inheritance name, if known
 
     The inheritance name is the name of the class as it's written
     after the "from" clause in the inheritance declarartion.
@@ -42,7 +57,7 @@ public:
     in the source module.
 
     */
-   Inheritance( const String& name );
+   Inheritance( const String& name, Class* parent=0, Class* owner=0 );
    ~Inheritance();
 
    /** The name of the class that we're searching.
@@ -65,7 +80,7 @@ public:
    /** Sets the parent actually reference by this inheritance.
     \param cls The class that the owner class derivates from.
     */
-   void parent( Class* cls ) { m_parent = cls; }
+   void parent( Class* cls );
 
    /** Adds a parameter declaration.
       \param expr The expression that must be evaluated to generate the paramter.
@@ -74,6 +89,30 @@ public:
     before invoking the init method of the subclass.
     */
    void addParameter( Expression* expr );
+
+   /** Returns the number of parameters required to construct this inheritance.
+    */
+   size_t paramCount() const;
+   
+   /** Return the nth parameter required to construct this inheritance.
+      \note The method will crash if n is out of range.
+    */
+   Expression* param( size_t n ) const;
+
+
+   /** Gets the PCode generating the expression call stack.
+    \return a PCode filled with the expressions building the initializatio parameters.
+
+    The returned pcode is filled (or will be filled) with the pre-compilation
+    of the expressions that shall be used as parameters for the call of the
+    class constructor.
+
+    It can be directly used in a syntree (or in a statement) to generate all
+    the parameters in the final call stack.
+
+    \note The returned entity is property of this class.
+    */
+   PCode* compiledExpr() const;
 
    /** Describes this inheritance.
       \param target A string where to place the description of this class.
@@ -89,10 +128,24 @@ public:
       return target;
    }
 
+   /** Sets the owner of this inheritance.
+    \param cls The class resolving this inheritance.
+    \see FalconClass::onInheritanceResolved
+    */
+   void owner( Class* cls ) { m_owner = cls; }
+
+   /** Returns the owner of this inheritance.
+    */
+   Class* owner() const { return m_owner; }
+
 private:
+
+   class Private;
+   Private* _p;
 
    String m_name;
    Class* m_parent;
+   Class* m_owner;
 };
 
 }

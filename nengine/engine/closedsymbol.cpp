@@ -37,10 +37,16 @@ ClosedSymbol::ClosedSymbol( const ClosedSymbol& other ):
 ClosedSymbol::~ClosedSymbol()
 {}
 
-void ClosedSymbol::assign( VMachine*, const Item& value ) const
+void ClosedSymbol::assign( VMContext*, const Item& value ) const
 {
    const_cast<ClosedSymbol*>(this)->m_item.assign( value );
 }
+
+ bool ClosedSymbol::retrieve( Item& value, VMContext* ) const
+ {
+    value = const_cast<ClosedSymbol*>(this)->m_item;
+    return true;
+ }
 
 void ClosedSymbol::apply_( const PStep* ps, VMContext* ctx )
 {

@@ -25,6 +25,9 @@
 namespace Falcon {
 
 Class::Class( const String& name ):
+   m_bIsfalconClass( false ),
+   m_bIsPrototype( false ),
+   m_userFlags(0),
    m_name( name ),
    m_typeID( FLC_CLASS_ID_OBJECT ),
    m_module(0),
@@ -32,6 +35,9 @@ Class::Class( const String& name ):
 {}
 
 Class::Class( const String& name, int64 tid ):
+   m_bIsfalconClass( false ),
+   m_bIsPrototype( false ),
+   m_userFlags(0),
    m_name( name ),
    m_typeID( tid ),
    m_module(0),
@@ -117,6 +123,12 @@ void Class::op_compare( VMContext* ctx, void* self ) const
    // we have no information about what an item might be here, but we can
    // order the items by type
    ctx->stackResult(2, (int64) op1->type() - op2->type() );
+}
+
+
+void Class::onInheritanceResolved( Inheritance* )
+{
+   // do nothing
 }
 
 //=====================================================================

@@ -20,7 +20,6 @@
 #include <falcon/string.h>
 #include <falcon/enumerator.h>
 #include <falcon/class.h>
-#include <falcon/syntree.h>
 #include <falcon/statement.h>
 #include <falcon/synfunc.h>
 
@@ -36,8 +35,10 @@ class DataWriter;
 class FalconState;
 class Expression;
 class ClassClass;
+class HyperClass;
 class VMContext;
 class PCode;
+
 
 /** Class defined by a Falcon script.
 
@@ -101,10 +102,14 @@ public:
          t_state
       } Type;
 
+      String m_name;
       Type m_type;
       Value m_value;
 
-      inline Property( size_t value ):
+      Property( const Property& other );
+      
+      inline Property( const String& name, size_t value ):
+         m_name( name ),
          m_type(t_prop),
          m_expr(0),
          m_preExpr(0)
@@ -112,31 +117,12 @@ public:
          m_value.id = value;
       }
 
-      Property( size_t value, Expression* expr );
+      Property( const String& name, size_t value, Expression* expr );
 
-      inline Property( Function* value ):
-         m_type(t_func),
-         m_expr(0),
-         m_preExpr(0)
-      {
-         m_value.func = value;
-      }
-
-      inline Property( Inheritance* value ):
-         m_type(t_inh),
-         m_expr(0),
-         m_preExpr(0)
-      {
-         m_value.inh = value;
-      }
-
-      inline Property( FalconState* value ):
-         m_type(t_state),
-         m_expr(0),
-         m_preExpr(0)
-      {
-         m_value.state = value;
-      }
+      Property( Function* value );
+      Property( Inheritance* value );
+      Property( FalconState* value );
+      
 
       ~Property();
 
@@ -149,7 +135,8 @@ public:
        \return a valid PCode or 0 if this is not an expression.
        */
       Expression* expression() const { return m_expr; }
-      
+
+      Property* clone() const { return new Property(*this); }
    private:
       Expression* m_expr;
       PCode* m_preExpr;
@@ -407,13 +394,77 @@ public:
 
    /** Creates the constructor or returns it if it's already here. */
    SynFunc* makeConstructor();
-   // Finalize the constructor after all the inheritance list is resolved.
-   void finalizeConstructor();
+
+   /** Return the constructor of this class. */
+   SynFunc* constructor() const { return m_constructor; }
+   
+   /** Create the class structure compiling it from its parents.
+    \param bHiddenParents If true, we have some parents that might not
+    be in our parent list.
+    \return false if there is still some unknown parent,
+            true if the construction process is complete.
+
+    This is called by the VM after all the missing parents have been
+    found, provided that all the parents are declared as FalconClass subclasses.
+
+    If some of the parents are not FalconClass, the engine must generate an
+    hyperclass out of this falcon class.
+    
+    This method may destroy the constructor (or return succesfully without
+    actually creating it) if it detects that we have no parents and we don't
+    have nothing to be initialized. If bHiddenParents If true, we have some
+    parents that might not be in our parent list. This means that the symbol
+    talbe of our constructor might be in use; so it means that the constructor
+    must not be disposed of if already existing.
+    */
+   bool construct( bool bHiddenParents = false );
+
+   /** Return the count of currently unknown parents.
+    \return The count of unresolved inheritances.
+    */
+   int missingParents() const { return m_missingParents; }
+
+   /** Check if all the declared inheritances are pure falcon classes.
+    \return True if this class can be generated as a Falcon Class.
+
+    To construct a Fa
+
+    */
+   bool isPureFalcon() const { return m_bPureFalcon; }
+
+   /** Construct this class as an hyperclass.
+    \return an HyperClass representing this FalconClass.
+    \note after this call, the returned hyperclass is the sole owner of this
+          FalconClass instance. Every other reference to this FalconClass
+          should be abandoned.
+    */
+   HyperClass* hyperConstruct();
+
+   /** Called back by an inheritance when it gets resolved.
+    \param inh The inheritance that has been just resolved.
+    
+    When a foreign inheritance of a class gets resolved during the link
+    phase, the parent need to know about this fact to prepare itself.
+
+    The inheritance determines if the owner is a falcon class, and in case
+    it is, it calls back this method.
+
+    \note The class hierarcy itself doesn't need to know about resovled
+    inheritances, as normally the classes can be formed only when all their
+    components are known. Third party user-classes must pre-load the
+    required components and pre-resolve their dependencies. Prototypes
+    are created at runtime when all the dependencies are known, and hyperclasses
+    follow the rules of third party classes. In short, the only class type that
+    supports forward definition of parentship is FalconClass.
+    
+    On a FalconClass instance, this determines if the class is a pure
+    FalconClass or needs to be transformed in an HyperClass.
+    */
+   virtual void onInheritanceResolved( Inheritance* inh );
 
 private:
    inline void override_unary( VMContext* ctx, void*, int op_id, const String& opName ) const;
    inline void override_binary( VMContext* ctx, void*, int op_id, const String& opName ) const;
-
 
    class Private;
    Private* _p;
@@ -427,15 +478,8 @@ private:
    bool m_shouldMark;
    bool m_hasInitExpr;
    bool m_hasInit;
-
-   // This is used to remove the topmost stack data in some op_ operands
-   class RemoveSelf: public PStep
-   {
-   public:
-      RemoveSelf() { apply = apply_; }
-      static void apply_( const PStep*, VMContext* );
-   };   
-   RemoveSelf m_removeSelf;   
+   int m_missingParents;
+   bool m_bPureFalcon;
 
    // This is used to initialize the init expressions.
    class PStepInitExpr: public Statement
@@ -461,8 +505,6 @@ private:
    };
 
    PStepInit m_initFuncStep;
-
-   SynTree m_initSynTree;
    
    friend class PStepInitExpr;
    friend class CoreClass;

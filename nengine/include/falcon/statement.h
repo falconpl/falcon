@@ -42,6 +42,7 @@ public:
       return_t,
       rule_t,
       cut_t,
+      init_t,
       custom_t
    } statement_t ;
 

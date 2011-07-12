@@ -23,6 +23,8 @@
 #include <falcon/setup.h>
 #include <falcon/string.h>
 #include <falcon/enumerator.h>
+#include <falcon/itemid.h>
+
 
 namespace Falcon {
 
@@ -31,6 +33,7 @@ class Item;
 class DataReader;
 class DataWriter;
 class Module;
+class Inheritance;
 
 /** Representation of classes, that is item types.
 
@@ -142,6 +145,32 @@ public:
 
    int64 typeID() const { return m_typeID; }
    const String& name() const { return m_name; }
+
+   /** Return true if this class can safely cast to a FalconClass class.
+    \return true if this is FalconClass.
+
+    Falcon classes have special significance to the engine, as they
+    implement the Falcon OOP model, and can be used to build inheritance directly
+    at syntactic level.
+
+    This flag is true for FalconClass instances and (eventually) derived classes.
+    */
+   bool isFalconClass() const { return m_bIsfalconClass; }
+
+   /** Flag to check for the metaclass.
+    The MetaClass is a special class that handle other classes.
+    This resolves in typeID() == FLC_CLASS_ID_CLASS
+    */
+   bool isMetaClass() const { return typeID() == FLC_CLASS_ID_CLASS; }
+
+   /** Return true if this class can safely cast to a Prototype class.
+    \return true if this is a Prototype.
+
+    Prototype classes have special significance to the engine.
+
+    This flag is true for Prototype instances and (eventually) derived classes.
+    */
+   bool isPrototype() const { return m_bIsPrototype; }
 
    /** Sets the module of this class.
     \param m The module where this class resides.
@@ -292,6 +321,21 @@ public:
     renderings of items in a container.
     */
    virtual void describe( void* instance, String& target, int depth = 3, int maxlen = 60 ) const;
+
+   /** Called back by an inheritance when it gets resolved.
+    \param inh The inheritance that has been just resolved.
+
+    When a foreign inheritance of a class gets resolved during the link
+    phase, the parent need to know about this fact to prepare itself.
+
+    The inheritance determines if the owner is a falcon class, and in case
+    it is, it calls back this method.
+
+    The default behavior of Class is empty. This is commonly used only in
+    FalconClass.
+    */
+   virtual void onInheritanceResolved( Inheritance* inh );
+
 
    //=========================================================
    // Operators.
@@ -614,9 +658,13 @@ public:
     */
    virtual void op_toString( VMContext* ctx, void* self ) const;
 
-   
-
 protected:
+   bool m_bIsfalconClass;
+   bool m_bIsPrototype;
+   
+   /** This flags are at disposal of subclasses for special purpose (i.e. cast conversions). */
+   int32 m_userFlags;
+
    String m_name;
    int64 m_typeID;
 

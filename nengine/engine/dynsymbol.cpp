@@ -38,9 +38,10 @@ DynSymbol::~DynSymbol()
 }
 
 
-void DynSymbol::assign( VMachine* vm, const Item& value ) const
+void DynSymbol::assign( VMContext* ctx, const Item& value ) const
 {
-   Item* fval = vm->findLocalItem( name() );
+   Item* fval = ctx->vm()->findLocalItem( name() );
+   
    if( fval == 0 )
    {
       throw new CodeError( ErrorParam( e_undef_sym, __LINE__, __FILE__).extra("Dyn:" + name()));
@@ -49,6 +50,22 @@ void DynSymbol::assign( VMachine* vm, const Item& value ) const
    fval->assign( value );
 }
 
+
+bool DynSymbol::retrieve( Item& value, VMContext* ctx ) const
+{
+   if( ctx == 0 )
+   {
+      return false;
+   }
+
+   Item* itm = ctx->vm()->findLocalItem( name() );
+   if( itm != 0 )
+   {
+      value = *itm;
+      return true;
+   }
+   return false;
+}
 
 void DynSymbol::apply_( const PStep* ps, VMContext* ctx )
 {

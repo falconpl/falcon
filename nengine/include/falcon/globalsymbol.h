@@ -39,8 +39,9 @@ public:
 
    virtual GlobalSymbol* clone() const { return new GlobalSymbol(*this); }
    
-   virtual void assign( VMachine* vm, const Item& value ) const;
-
+   virtual void assign( VMContext* ctx, const Item& value ) const;
+   virtual bool retrieve( Item& value, VMContext* ctx ) const;
+   
    static void apply_( const PStep* self, VMContext* ctx );
    virtual Expression* makeExpression();
 

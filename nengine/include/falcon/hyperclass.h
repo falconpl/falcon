@@ -29,6 +29,8 @@ class Function;
 class DataReader;
 class DataWriter;
 class VMContext;
+class Inheritance;
+
 
 /** Class holding more user-type classes.
 
@@ -83,7 +85,7 @@ public:
     \note The priority of the properties is first-to-last. This means you
           must add as parents classes with higher priority first.
     */
-   bool addParent( Class* cls );
+   bool addParent( Inheritance* cls );
 
    //=========================================
    // Instance management
@@ -93,11 +95,14 @@ public:
    virtual void serialize( DataWriter* stream, void* self ) const;
    virtual void* deserialize( DataReader* stream ) const;
 
+   Function* constructor() const { return m_constructor; }
+   void constructor( Function* c ) { m_constructor = c; }
+   
    //=========================================================
    // Class management
    //
 
-   virtual void gcMarkMyself( uint32 mark ) const;
+   virtual void gcMarkMyself( uint32 mark );
 
    virtual void gcMark( void* self, uint32 mark ) const;
 
@@ -160,26 +165,101 @@ private:
    };
 
    class Private;
+   friend class Private;
    Private* _p;
 
    Property** m_overrides;
    Class* m_master;
    int m_nParents;
+   Function* m_constructor;   
 
-   // This is used to initialize this class calling the op_create of all the members.
-   class PStepInit: public PStep
+   class FinishCreateStep: public PStep
    {
    public:
-      PStepInit( HyperClass* o );
-      static void apply_( const PStep*, VMContext* );
+      FinishCreateStep( HyperClass* o ): m_owner(o) { apply = apply_; }
+      static void apply_(const PStep* ps, VMContext* ctx );
+
    private:
       HyperClass* m_owner;
    };
 
-   PStepInit m_initStep;
+   class CreateMasterStep: public PStep
+   {
+   public:
+      CreateMasterStep( HyperClass* o ): m_owner(o) { apply = apply_; }
+      static void apply_(const PStep* ps, VMContext* ctx );
 
-   friend class PStepInit;
-   friend class Private;
+   private:
+      HyperClass* m_owner;
+   };
+
+   class ParentCreatedStep: public PStep
+   {
+   public:
+      ParentCreatedStep( HyperClass* o ): m_owner(o) { apply = apply_; }
+      static void apply_(const PStep* ps, VMContext* ctx );
+
+   private:
+      HyperClass* m_owner;
+   };
+
+   class CreateParentStep: public PStep
+   {
+   public:
+      CreateParentStep( HyperClass* o ): m_owner(o) { apply = apply_; }
+      static void apply_(const PStep* ps, VMContext* ctx );
+
+   private:
+      HyperClass* m_owner;
+   };
+
+   class FinishInvokeStep: public PStep
+   {
+   public:
+      FinishInvokeStep( HyperClass* o ): m_owner(o) { apply = apply_; }
+      static void apply_(const PStep* ps, VMContext* ctx );
+
+   private:
+      HyperClass* m_owner;
+   };
+
+   class InvokeMasterStep: public PStep
+   {
+   public:
+      InvokeMasterStep( HyperClass* o ): m_owner(o) { apply = apply_; }
+      static void apply_(const PStep* ps, VMContext* ctx );
+
+   private:
+      HyperClass* m_owner;
+   };
+
+   class CreateEmptyNext: public PStep
+   {
+   public:
+      CreateEmptyNext( HyperClass* o ): m_owner(o) { apply = apply_; }
+      static void apply_(const PStep* ps, VMContext* ctx );
+
+   private:
+      HyperClass* m_owner;
+   };
+
+   FinishCreateStep m_finishCreateStep;
+   CreateMasterStep m_createMasterStep;
+   ParentCreatedStep m_parentCreatedStep;
+   CreateParentStep m_createParentStep;
+
+   FinishInvokeStep m_finishInvokeStep;
+   InvokeMasterStep m_invokeMasterStep;
+   CreateEmptyNext m_createEmptyNext;
+
+   friend class FinishCreateStep;
+   friend class CreateMasterStep;
+   friend class ParentCreatedStep;
+   friend class CreateParentStep;
+
+   friend class FinishInvokeStep;
+   friend class InvokeMasterStep;
+   friend class CreateEmptyNext;
 
    inline bool get_override( void* self, int op, Class*& cls, void*& udata ) const;
    void addParentProperties( Class* cls );

@@ -25,9 +25,12 @@
 #include <falcon/vmcontext.h>
 #include <falcon/fassert.h>
 #include <falcon/trace.h>
+#include <falcon/inheritance.h>
+#include <falcon/pcode.h>
 
 #include <map>
 #include <vector>
+
 
 namespace Falcon
 {
@@ -35,14 +38,24 @@ namespace Falcon
 class HyperClass::Private
 {
 public:
-   Private() {}
-   ~Private() {}
-
    typedef std::map<String, Property> PropMap;
    PropMap m_props;
 
-   typedef std::vector<Class*> ParentVector;
+   typedef std::vector<Inheritance*> ParentVector;
    ParentVector m_parents;
+
+   Private() {}
+   ~Private()
+   {
+      // we own our inheritances.
+      ParentVector::iterator piter = m_parents.begin();
+      while( m_parents.end() != piter )
+      {
+         delete *piter;
+         ++piter;
+      }
+   }
+
 };
 
 
@@ -51,13 +64,21 @@ HyperClass::HyperClass( const String& name, Class* master ):
    _p( new Private ),
    m_master( master ),
    m_nParents(0),
-   m_initStep( this )
+   m_constructor(0),
+      
+   m_finishCreateStep(this),
+   m_createMasterStep(this),
+   m_parentCreatedStep(this),
+   m_createParentStep(this),
+
+   m_finishInvokeStep(this),
+   m_invokeMasterStep(this),
+   m_createEmptyNext(this)
 {
    m_overrides = new Property*[OVERRIDE_OP_COUNT];
-   addParentProperties( master );
-   _p->m_parents.push_back( master );
-   m_nParents++;
+   addParent( new Inheritance( master->name(), master ) );
 }
+
 
 HyperClass::~HyperClass()
 {
@@ -67,19 +88,26 @@ HyperClass::~HyperClass()
 }
 
   
-bool HyperClass::addParent( Class* cls )
+bool HyperClass::addParent( Inheritance* cls )
 {
-   // Is the class name shaded?
-   if( _p->m_props.find(cls->name()) !=  _p->m_props.end() )
+   // we accept only ready inheritances.
+   if( cls->parent() == 0 )
    {
       return false;
    }
-   _p->m_props[cls->name()] = Property( cls, -m_nParents );
-   addParentProperties( cls );
+   
+   // Is the class name shaded?
+   if( _p->m_props.find(cls->className()) !=  _p->m_props.end() )
+   {
+      return false;
+   }
+   _p->m_props[cls->className()] = Property( cls->parent(), -m_nParents );
+   addParentProperties( cls->parent() );
    m_nParents++;
    _p->m_parents.push_back( cls );
    return true;
 }
+
 
 void HyperClass::addParentProperties( Class* cls )
 {
@@ -106,6 +134,7 @@ void HyperClass::addParentProperties( Class* cls )
    
    cls->enumerateProperties( 0, cb );
 }
+
 
 void HyperClass::addParentProperty( Class* cls, const String& pname )
 {
@@ -141,22 +170,28 @@ void* HyperClass::deserialize( DataReader* ) const
 }
 
 
-void HyperClass::gcMarkMyself( uint32 mark ) const
+void HyperClass::gcMarkMyself( uint32 mark )
 {
-   Private::PropMap::iterator iter = _p->m_props.begin();
-   while( iter != _p->m_props.end() )
+   if( m_lastGCMark != mark )
    {
-      iter->second.m_provider->gcMarkMyself( mark );
-      ++ iter;
+      m_lastGCMark = mark;
+
+      Private::ParentVector::iterator iter = _p->m_parents.begin();
+      while( iter != _p->m_parents.end() )
+      {
+         (*iter)->parent()->gcMarkMyself( mark );
+         ++ iter;
+      }
    }
 }
+
 
 void HyperClass::gcMark( void* self, uint32 mark ) const
 {
    static_cast<ItemArray*>(self)->gcMark( mark );
 }
 
-   
+
 void HyperClass::enumerateProperties( void*, PropertyEnumerator& cb ) const
 {
    Private::PropMap::const_iterator iter = _p->m_props.begin();
@@ -166,8 +201,8 @@ void HyperClass::enumerateProperties( void*, PropertyEnumerator& cb ) const
       ++ iter;
       cb( prop, iter == _p->m_props.end() );
    }
-
 }
+
 
 bool HyperClass::hasProperty( void*, const String& prop ) const
 {
@@ -175,9 +210,10 @@ bool HyperClass::hasProperty( void*, const String& prop ) const
    return iter != _p->m_props.end();
 }
 
+
 Class* HyperClass::getParentAt( int pos ) const
 {
-   return _p->m_parents[pos];
+   return _p->m_parents[pos]->parent();
 }
 
 
@@ -194,6 +230,7 @@ void HyperClass::describe( void* instance, String& target, int depth, int maxlen
    target = str;
 
    Private::PropMap::const_iterator iter = _p->m_props.begin();
+   ++iter; // skip the master class
    while( iter != _p->m_props.end() )
    {
       const Property& prop = iter->second;
@@ -235,13 +272,74 @@ void HyperClass::op_create( VMContext* ctx, int32 pcount ) const
    ItemArray* mData = new ItemArray(m_nParents);
    mData->resize(m_nParents);
    
-   // push self
-   ctx->pushData( FALCON_GC_STORE( coll, this, mData ) );
-   // save the parameter counts
-   ctx->pushData( pcount );
+   // respect goingdeep protocol
+   ctx->goingDeep();
 
-   // have the VM to call init.
-   ctx->pushCode( &m_initStep );
+   // If we have a constructor in the main class, then we need to create a
+   // -- consistent frame (to find the parameters).
+   if( m_constructor )
+   {
+      ctx->makeCallFrame( m_constructor, pcount, FALCON_GC_STORE( coll, this, mData ), false );
+
+      // now we add a finalization step.
+      ctx->pushCode( &m_finishCreateStep );
+
+      // repeat the data as local for the master initialization.
+      for( int i = 0; i < pcount; ++i )
+      {
+         ctx->pushData( *ctx->param(i) );
+      }
+
+      // Add the master creation step.
+      ctx->pushCode( &m_createMasterStep );
+
+      if( _p->m_parents.size() > 1 )
+      {
+         // invoke the first creation step.
+         Inheritance* bottom = _p->m_parents.back();
+         ctx->pushCode( &m_parentCreatedStep );
+         ctx->currentCode().m_seqId = _p->m_parents.size() - 1;
+
+         if( bottom->paramCount() > 0 )
+         {
+            // ask to create the class...
+            ctx->pushCode( &m_createParentStep );
+            ctx->currentCode().m_seqId = _p->m_parents.size() - 1;
+            //... after having created the parameters.
+            ctx->pushCode( bottom->compiledExpr() );
+         }
+         else
+         {
+            // just invoke the creation of the class.
+            bottom->parent()->op_create( ctx, 0 );
+         }
+      }
+   }
+   else
+   {
+      // We have no constructor -- this is probably a prototype.
+      // all the subclasses must be invoked parameterless.
+
+      // push the required data:
+      ctx->pushData(FALCON_GC_STORE( coll, this, mData ));
+      ctx->pushData( (int64) pcount );
+      
+      // now we add a finalization step.
+      ctx->pushCode( &m_finishInvokeStep );
+
+      // Add the master creation step.
+      ctx->pushCode( &m_invokeMasterStep );
+
+      // and add the creation of sub-steps.
+      if( _p->m_parents.size() > 1 )
+      {
+         ctx->pushCode( &m_createEmptyNext );
+         ctx->currentCode().m_seqId = _p->m_parents.size() - 2;
+         // now invoke creation.
+         _p->m_parents.back()->parent()->op_create( ctx, 0 );
+      }
+      // let the VM to get the next entry
+   }
 }
 
 
@@ -740,93 +838,162 @@ void HyperClass::op_toString( VMContext* ctx, void* self ) const
 // Steps
 //
 
-// This is used to initialize this class calling the op_create of all the members.
-HyperClass::PStepInit::PStepInit( HyperClass* o ):
-   m_owner(o)
+void HyperClass::FinishCreateStep::apply_(const PStep*, VMContext* ctx )
 {
-   apply = apply_;
+   // we have to set the topmost data returned by create master step...
+   // copy it by value
+   Item self = ctx->currentFrame().m_self;
+   static_cast<ItemArray*>(self.asInst())->at(0) = ctx->topData();
+   // and then return the frame...
+   ctx->returnFrame();
+   // and push the self on top.
+   ctx->pushData( self );
 }
 
-void HyperClass::PStepInit::apply_( const PStep* ps, VMContext* ctx )
-{
-   const PStepInit* istep = static_cast<const PStepInit*>(ps);
-   HyperClass* owner = istep->m_owner;
-   TRACE("HyperClass init step for class %s", owner->name().c_ize() );
 
-   CodeFrame& frame = ctx->currentCode();
-   ItemArray* pia;
+void HyperClass::CreateMasterStep::apply_(const PStep* ps, VMContext* ctx )
+{
+   // we're around just once.
+   ctx->popCode();
+   // just invoke the creation. HyperClass::op_create has already pushed the params.
+   HyperClass* h = static_cast<const CreateMasterStep*>(ps)->m_owner;
+   h->m_master->op_create( ctx, ctx->currentFrame().m_paramCount );
+}
+
+
+void HyperClass::ParentCreatedStep::apply_(const PStep* ps, VMContext* ctx )
+{
+   // Save the created parent.
+   Item& self = ctx->currentFrame().m_self;
+   register CodeFrame& cf = ctx->currentCode();
+   static_cast<ItemArray*>(self.asInst())->at(cf.m_seqId) = ctx->topData();
    
-   // not the first time around?
-   if( frame.m_seqId > 0 )
+   // then see what's nest. Need to create more?
+   if( -- cf.m_seqId == 0 )
    {
-      // ...  we got things to save,
-      // ... and we have our array at third-last place instach
-      fassert( ctx->opcodeParam(-2).asClass() == owner );
-      pia = static_cast<ItemArray*>( ctx->opcodeParam(-2).asInst() );
-      pia->at(frame.m_seqId-1) = ctx->topData();
-      // remove the data that we have saved.
-      ctx->popData();
+      // we're done
+      ctx->popCode();
+      return;
+   }
+
+   // get the required parent.
+   HyperClass* h = static_cast<const ParentCreatedStep*>(ps)->m_owner;
+   Inheritance* inh = h->_p->m_parents[cf.m_seqId];
+   if( inh->paramCount() == 0 )
+   {
+      // just create.
+      inh->parent()->op_create( ctx, 0 );
    }
    else
    {
-      // Our array is second-last
-      fassert( ctx->opcodeParam(-1).asClass() == owner );
-      pia = static_cast<ItemArray*>( ctx->opcodeParam(-1).asInst() );
+      // save the needed steps.
+      int seqId = cf.m_seqId;
+      ctx->pushCode( &h->m_createParentStep );
+      ctx->currentCode().m_seqId = seqId;
+      ctx->pushCode( inh->compiledExpr() );
    }
-
-   ItemArray& ia = *pia;
-   int32 len = (int32) ia.length();
-
-   // count of parameters are in the topmost part of the stack.
-   fassert( ctx->opcodeParam(0).isInteger() );
-   int32 pcount = (int32) ctx->opcodeParam(0).asInteger();
-
-   // check that we're not leaving dirty things in the stack.
-#ifndef NDEBUG
-   size_t data_depth = (size_t) ctx->dataSize();
-#endif
-
-   // proceed to create new instances as long as needed.
-   // repeat until some base class needs to go deep.
-   while( frame.m_seqId < len )
-   {
-      int seqId = frame.m_seqId++;
-      Class* cls = owner->getParentAt( seqId );
-      // re-push all the parameters.
-      int count = pcount-1;
-      while( count >= 0 )
-      {
-         ctx->pushData( ctx->opcodeParam(count + 2) );
-         --count;
-      }
-      
-      cls->op_create( ctx, pcount );
-      // going deep?
-      if( &frame != &ctx->currentCode() )
-      {
-         // went deep! -- the data will be saved later.
-         TRACE1("Class %s went deep, suspending.", cls->name().c_ize() );
-         return;
-      }
-
-      // else, we can save our little data now.
-      ia[seqId] = ctx->topData();
-      ctx->popData();
-      
-      // at this point the depth of the stack must be the same.
-#ifndef NDEBUG
-      fassert( data_depth == (size_t) ctx->dataSize() );
-#endif
-   }
-  
-   // we're done
-   ctx->popCode();
-   // commit the data -- and remove the parameters.
-   ctx->popData( pcount + 2 - 1);
-   ctx->topData().setUser( owner, &ia );
-   ctx->topData().garbage();
+   // let the VM take care of the rest.
 }
 
+
+void HyperClass::CreateParentStep::apply_(const PStep* ps, VMContext* ctx )
+{
+   register CodeFrame& cf = ctx->currentCode();
+
+   // get the required parent.
+   HyperClass* h = static_cast<const CreateParentStep*>(ps)->m_owner;
+   Inheritance* inh = h->_p->m_parents[cf.m_seqId];
+
+   // remove ourselves, we just live once.
+   ctx->popCode();
+
+   // and invoke creation with the required parameters.
+   inh->parent()->op_create( ctx, inh->paramCount() );
+}
+
+
+
+void HyperClass::FinishInvokeStep::apply_(const PStep* ps, VMContext* ctx )
+{
+   // get the data created by the master
+   Item* pstep_params = ctx->opcodeParams(3);
+
+   // get self
+   fassert( pstep_params[0].type() == FLC_ITEM_USER );
+   ItemArray* inst = static_cast<ItemArray*>(pstep_params[0].asInst());
+   // save the data created by the master class
+   inst->at(0) = pstep_params[2];
+
+   // get the param count.
+   fassert( pstep_params[1].type() == FLC_ITEM_INT );
+   int pcount = (int) pstep_params[1].asInteger();
+
+
+   //remove the params and publish self.
+   HyperClass* h = static_cast<const FinishInvokeStep*>(ps)->m_owner;
+   ctx->stackResult( pcount+3, Item( h, inst ) );
+   // declare the data as in need of collection.
+   ctx->topData().garbage();
+
+}
+
+
+void HyperClass::InvokeMasterStep::apply_(const PStep* ps, VMContext* ctx )
+{
+   Item* pstep_params = ctx->opcodeParams(2);
+   fassert( pstep_params[0].isUser() );
+   fassert( pstep_params[1].isInteger() );
+
+   int pcount = (int) pstep_params[1].asInteger();
+
+   // replicate the parameters.
+   if( pcount > 0 )
+   {
+      // get the real parameters
+      ctx->addLocals(pcount);
+      Item* params = ctx->opcodeParams(2+pcount*2);
+      Item* pdest = ctx->opcodeParams(pcount);
+
+      for( int i = 0; i <= pcount; --i )
+      {
+         params[i] = pdest[i];
+      }
+   }
+
+   HyperClass* h = static_cast<const InvokeMasterStep*>(ps)->m_owner;
+   h->m_master->op_create( ctx, pcount );
+}
+
+   
+void HyperClass::CreateEmptyNext::apply_(const PStep* ps, VMContext* ctx )
+{
+   // we have the 2 pushed stuff plus our newly created item.
+   Item* pstep_params = ctx->opcodeParams(3);
+   fassert( pstep_params[0].isUser() );
+   fassert( pstep_params[1].isInteger() );
+
+   // get self and count
+   ItemArray* inst = static_cast<ItemArray*>(pstep_params[0].asInst());
+
+   // save the topmost item in our instance arrays.
+   register CodeFrame& cf = ctx->currentCode();
+   inst->at(cf.m_seqId) = ctx->topData();
+   ctx->popData();
+
+   // are we done?
+   if( -- cf.m_seqId == 0 )
+   {
+      // let the VM to finalize us.
+      ctx->popCode();
+   }
+   else
+   {
+      // invoke the next operator
+      HyperClass* h = static_cast<const CreateEmptyNext*>(ps)->m_owner;
+      h->_p->m_parents[cf.m_seqId]->parent()->op_create( ctx, 0 );
+   }
+}
+   
 }
 
 /* end of hyperclass.cpp */

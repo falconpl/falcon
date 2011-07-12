@@ -143,6 +143,7 @@ add_library(falcon_engine SHARED
   rulesyntree.cpp
   sourceref.cpp
   statement.cpp
+  stmt_init.cpp
   stmtrule.cpp
   string.cpp
   stringstream.cpp

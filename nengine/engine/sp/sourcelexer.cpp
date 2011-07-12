@@ -692,6 +692,7 @@ Parsing::TokenInstance* SourceLexer::checkWord()
          if ( m_text == "rule" ) return parser->T_rule.makeInstance(m_sline, m_schr);
          if ( m_text == "self" ) return parser->T_self.makeInstance(m_sline, m_schr);
          if ( m_text == "true" ) return parser->T_true.makeInstance(m_sline, m_schr);
+         if ( m_text == "from" ) return parser->T_from.makeInstance(m_sline, m_schr);
 
          /*
          if ( m_text == "load" )  // directive

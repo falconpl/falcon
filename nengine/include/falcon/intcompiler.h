@@ -95,6 +95,7 @@ private:
       virtual GlobalSymbol* onGlobalDefined( const String& name, bool& bUnique );
       virtual bool onUnknownSymbol( UnknownSymbol* sym );
       virtual void onStaticData( Class* cls, void* data );
+      virtual void onInheritance( Inheritance* inh  );
 
    private:
       IntCompiler* m_owner;

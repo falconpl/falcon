@@ -47,9 +47,15 @@ GlobalSymbol::GlobalSymbol( const GlobalSymbol& other ):
 GlobalSymbol::~GlobalSymbol()
 {}
 
-void GlobalSymbol::assign( VMachine*, const Item& value ) const
+void GlobalSymbol::assign( VMContext*, const Item& value ) const
 {
    const_cast<Item*>(&m_item)->assign( value );
+}
+
+bool GlobalSymbol::retrieve( Item& value, VMContext* ) const
+{
+   value = m_item;
+   return true;
 }
 
 void GlobalSymbol::apply_( const PStep* ps, VMContext* ctx )

@@ -152,7 +152,7 @@ void Parser::pushState( const String& name, Parser::StateFrameFunc cf, void* dat
 void Parser::popState()
 {
    MESSAGE( "Parser::popState -- popping state" );
-   if ( _p->m_lStates.empty() )
+   if ( _p->m_lStates.size() < 2 )
    {
       throw new CodeError( ErrorParam( e_underflow, __LINE__, __FILE__ ).extra("Parser::popState") );
    }
