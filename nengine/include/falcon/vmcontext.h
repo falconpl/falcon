@@ -434,7 +434,6 @@ public:
       topCall->m_self = self;
       topCall->m_bMethodic = true;
       topCall->m_bExpression = isExpr;
-      topCall->m_bInit = false;
 
       return topCall;
    }

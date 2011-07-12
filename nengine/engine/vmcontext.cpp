@@ -331,16 +331,8 @@ void VMContext::returnFrame()
    // -- in expressions we always have at least 1 element, that is the function item.
    if( topCall->m_bExpression )
    {
-      if ( topCall->m_bInit )
-      {
-         MESSAGE1( "-- Adding self register to stack");
-         *m_topData = topCall->m_self;
-      }
-      else
-      {
-         MESSAGE1( "-- Adding A register to stack");
-         *m_topData = m_regA;
-      }
+      MESSAGE1( "-- Adding A register to stack");
+      *m_topData = m_regA;
    }
 
    // Return.
