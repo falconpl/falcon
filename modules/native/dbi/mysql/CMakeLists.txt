@@ -20,7 +20,7 @@ SET(MYSQL_INCLUDE_SEARCH_PATH
 FIND_PATH(MYSQL_REAL_INCLUDE_DIR mysql.h ${MYSQL_INCLUDE_SEARCH_PATH})
 
 # Find MySQL Client Library
-SET(MYSQL_LIB_SEARCH_PATH ${MYSQL_LIB_DIR} /usr/lib /usr/local/lib /usr/local/lib/mysql)
+SET(MYSQL_LIB_SEARCH_PATH ${MYSQL_LIB_DIR} /usr/lib /usr/lib/mysql /usr/local/lib /usr/local/lib/mysql)
 SET(MYSQL_LIB_NAMES mysqlclient mysqlclient_r)
 FIND_LIBRARY(MYSQL_LIBRARY
   NAMES ${MYSQL_LIB_NAMES}
