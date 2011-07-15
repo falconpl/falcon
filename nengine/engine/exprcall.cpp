@@ -113,10 +113,9 @@ bool ExprCall::simplify( Item& ) const
 }
 
 
-void ExprCall::apply_dummy_( const PStep* v, VMContext* )
+void ExprCall::apply_dummy_( const PStep* DEBUG_ONLY(v), VMContext* )
 {
-   const ExprCall* self = static_cast<const ExprCall*>(v);
-   TRACE2( "Apply CALL -- dummy! %s", self->describe().c_ize() );
+   TRACE2( "Apply CALL -- dummy! %s", static_cast<const ExprCall*>(v)->describe().c_ize());
    // we should never be called
 }
 

@@ -18,7 +18,7 @@
 #include <falcon/itemid.h>
 #include <falcon/vmcontext.h>
 #include <falcon/operanderror.h>
-#include <falcon/error_messages.h>
+#include <falcon/error.h>
 
 #include <falcon/bom.h>
 

@@ -21,6 +21,7 @@
 #include <falcon/expression.h>
 #include <falcon/exprsym.h>
 #include <falcon/statement.h>
+#include <falcon/error.h>
 
 #include <falcon/parser/rule.h>
 #include <falcon/parser/parser.h>
@@ -28,9 +29,9 @@
 #include <falcon/sp/sourceparser.h>
 #include <falcon/sp/parsercontext.h>
 #include <falcon/sp/parser_deletor.h>
+#include <falcon/sp/parser_autoexpr.h>
 
 #include "private_types.h"
-#include <falcon/sp/parser_autoexpr.h>
 
 
 namespace Falcon {

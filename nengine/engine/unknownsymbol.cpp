@@ -67,9 +67,9 @@ bool UnknownSymbol::retrieve( Item&, VMContext* ) const
 void UnknownSymbol::apply_( const PStep* s, VMContext* ctx )
 {
    const ExprSymbol* self = static_cast<const ExprSymbol*>(s);
-   Symbol* sym = self->symbol();
    
 #ifndef NDEBUG
+   Symbol* sym = self->symbol();
    String name = "/* unknown */" + sym->name();
 #endif
 

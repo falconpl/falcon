@@ -292,12 +292,11 @@ void VMContext::call( Function* function, int nparams, const Item& self, bool is
 void VMContext::call( Function* function, int nparams, bool isExpr )
 {
    TRACE( "Entering function: %s", function->locate().c_ize() );
-
    TRACE( "-- call frame code:%p, data:%p, call:%p", m_topCode, m_topData, m_topCall  );
 
-   CallFrame* topCall = makeCallFrame( function, nparams, isExpr );
+   makeCallFrame( function, nparams, isExpr );
    TRACE1( "-- codebase:%d, stackBase:%d ", \
-         topCall->m_codeBase, topCall->m_stackBase );
+         m_topCall->m_codeBase, m_topCall->m_stackBase );
 
    // prepare for a return that won't touch regA
    m_regA.setNil();

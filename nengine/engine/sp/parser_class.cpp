@@ -19,6 +19,7 @@
 #include <falcon/setup.h>
 
 #include <falcon/expression.h>
+#include <falcon/error.h>
 #include <falcon/exprvalue.h>
 #include <falcon/globalsymbol.h>
 #include <falcon/falconclass.h>

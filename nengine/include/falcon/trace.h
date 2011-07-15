@@ -18,22 +18,31 @@
 
 #ifdef NDEBUG
 
+inline void trace_dummyfunc( const char* )
+{
+}
+
+inline void trace_dummyfunc( const char*, const void* )
+{
+}
+
 #define TRACE_ON()
 #define TRACE_ON_LEVEL(...)
 #define TRACE_OFF
 
-#define MESSAGE(...)
-#define MESSAGE1(...)
+#define MESSAGE( fmt )
+#define MESSAGE1( fmt )
 
-#define TRACE(...)
-#define TRACE1(...)
-#define TRACE2(...)
-#define TRACE3(...)
+#define TRACE( fmt, ... ) 
+#define TRACE1( fmt, ... )
+#define TRACE2( fmt, ... )
+#define TRACE3( fmt, ... )
 
-#define TRACEVAR(...)
-#define TRACEVAR1(...)
-#define TRACEVAR2(...)
-#define TRACEVAR3(...)
+#define TRACEVAR( type, var )
+#define TRACEVAR1( type, var )
+#define TRACEVAR2( type, var )
+#define TRACEVAR3( type, var )
+#define DEBUG_ONLY(x)
 
 #else
 
@@ -60,6 +69,8 @@
 #define TRACEVAR1( type, var ) if( _falcon_trace_level >= 1 && _falcon_trace_fp != 0 ) fprintf( _falcon_trace_fp, "%s:%d: %s=%" type "\n", SRC, __LINE__, #var, var ); fflush(_falcon_trace_fp);
 #define TRACEVAR2( type, var ) if( _falcon_trace_level >= 2 && _falcon_trace_fp != 0 ) fprintf( _falcon_trace_fp, "%s:%d: %s=%" type "\n", SRC, __LINE__, #var, var ); fflush(_falcon_trace_fp);
 #define TRACEVAR3( type, var ) if( _falcon_trace_level >= 3 &&_falcon_trace_fp != 0 ) fprintf( _falcon_trace_fp, "%s:%d: %s=%" type "\n", SRC, __LINE__, #var, var ); fflush(_falcon_trace_fp);
+
+#define DEBUG_ONLY(x) x
 
 extern FALCON_DYN_SYM FILE* _falcon_trace_fp;
 extern FALCON_DYN_SYM int _falcon_trace_level;

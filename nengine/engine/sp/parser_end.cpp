@@ -18,6 +18,7 @@
 
 #include <falcon/setup.h>
 #include <falcon/expression.h>
+#include <falcon/error.h>
 
 #include <falcon/parser/rule.h>
 #include <falcon/parser/parser.h>

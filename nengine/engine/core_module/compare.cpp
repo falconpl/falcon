@@ -16,8 +16,8 @@
 #include <falcon/cm/compare.h>
 #include <falcon/vm.h>
 #include <falcon/vmcontext.h>
-
-#include "falcon/optoken.h"
+#include <falcon/error.h>
+#include <falcon/optoken.h>
 
 namespace Falcon {
 namespace Ext {

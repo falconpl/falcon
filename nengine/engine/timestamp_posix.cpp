@@ -213,6 +213,7 @@ bool TimeStamp::relativeWait( const TimeStamp &ts, ref_ptr<Interrupt>& intr )
 {
    struct timeval tv;
    fd_set set;
+   FD_ZERO(&set);
 
    int* pipe_fds = (int*) intr->sysData();
    FD_SET( pipe_fds[0], &set );

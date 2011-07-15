@@ -17,6 +17,7 @@
 #include <falcon/vm.h>
 #include <falcon/vmcontext.h>
 #include <falcon/itemid.h>
+#include <falcon/error.h>
 
 namespace Falcon {
 namespace Ext {

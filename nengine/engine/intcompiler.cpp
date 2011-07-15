@@ -31,7 +31,7 @@
 #include <falcon/genericerror.h>
 #include <falcon/syntaxerror.h>
 #include <falcon/codeerror.h>
-#include <falcon/error_messages.h>
+#include <falcon/error.h>
 
 #include <falcon/expression.h>
 #include <falcon/falconclass.h>

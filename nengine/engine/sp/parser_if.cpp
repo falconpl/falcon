@@ -17,7 +17,7 @@
 #define SRC "engine/sp/parser_if.cpp"
 
 #include <falcon/setup.h>
-
+#include <falcon/error.h>
 #include <falcon/expression.h>
 #include <falcon/statement.h>
 

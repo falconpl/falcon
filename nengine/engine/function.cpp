@@ -23,7 +23,7 @@
 
 #include <falcon/engine.h>
 
-#include <falcon/error_messages.h>
+#include <falcon/error.h>
 #include <falcon/paramerror.h>
 
 namespace Falcon

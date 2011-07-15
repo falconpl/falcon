@@ -171,7 +171,7 @@ bool Rule::match( Parser& parser, bool bIncremental ) const
 
    // descendable position
    int dpos = -1;
-   NonTerminal* descendable;
+   NonTerminal* descendable = 0;
 
    // check if there is a match by scanning the current token stack in the parser
    // -- and matching it against our tokens.
@@ -199,7 +199,8 @@ bool Rule::match( Parser& parser, bool bIncremental ) const
          TRACE1( "Rule::match(%s) -- searching a path from '%s' path to '%s' ",
             m_name.c_ize(), curTok->name().c_ize(), stackToken->name().c_ize() );
 
-         if( dpos != -1 )
+         // actually, descendable should always be != 0 when dpos != -1, but just in case...
+         if( dpos != -1 && descendable != 0 )
          {
             TRACE1( "Rule::match(%s) -- actually descending '%s' found at %d%s",
                m_name.c_ize(), descendable->name().c_ize(), dpos, dpos > (int) begin ? " (adding stack)": "" );

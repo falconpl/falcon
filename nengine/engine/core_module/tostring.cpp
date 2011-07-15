@@ -17,8 +17,8 @@
 #include <falcon/vm.h>
 #include <falcon/vmcontext.h>
 #include <falcon/itemid.h>
-
-#include "falcon/cm/tostring.h"
+#include <falcon/error.h>
+#include <falcon/cm/tostring.h>
 
 namespace Falcon {
 namespace Ext {

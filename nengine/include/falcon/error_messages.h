@@ -23,7 +23,7 @@
    #ifdef FLC_MAKE_ERROR_MESSAGE_SELECTOR
       #define FAL_ERRORDECL( errid, code, str )       case code: return str;
    #else
-      #define FAL_ERRORDECL( errid, code, str )
+      #error "Cannot include <falcon/error_messages.h> directly. Please include <falcon/error.h>"
    #endif
 
 #endif

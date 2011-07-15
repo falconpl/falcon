@@ -21,7 +21,6 @@
 #include <falcon/sys.h>
 #include <falcon/class.h>
 #include <falcon/engine.h>
-#include <falcon/error_messages.h>
 
 #include <deque>
 
