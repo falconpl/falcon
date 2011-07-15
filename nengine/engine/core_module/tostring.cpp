@@ -38,25 +38,19 @@ ToString::~ToString()
 
 void ToString::apply( VMContext* ctx, int32 )
 {
-   Item *elem, *format;
+   Item *elem;
    
    if ( ctx->isMethodic() )
    {
       elem = &ctx->self();
-      format = ctx->param( 0 );
    }
    else
    {
       elem = ctx->param( 0 );
-      format = ctx->param( 1 );
 
       if ( elem == 0 )
       {
          throw paramError();
-      }
-      else
-      {
-         
       }
    }
 
