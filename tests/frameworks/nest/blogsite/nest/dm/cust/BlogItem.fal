@@ -160,12 +160,14 @@ class BlogItem( dbutility )
 	
 	function commentsNumber()
 		
-		if self.NumOfComments > 1
-			sRet = self.NumOfComments + " " + i"comments"
-		elif self.NumOfComments == 1
-			sRet = i"One comment"
-		else
+		sRet = ""
+		if self.NumOfComments == 0
 			sRet = i"No comments"
+		elif self.NumOfComments > 1			
+			sRet += self.NumOfComments
+			sRet += " comments"
+		else 
+			sRet = i"One comment"
 		end
 
 		return sRet

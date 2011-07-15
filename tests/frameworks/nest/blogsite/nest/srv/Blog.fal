@@ -49,10 +49,16 @@ class Blog( instance ) from Service( instance )
 		self._ID = Request.getField("id", "" )
 		self._requestType = Request.getField("type", "" ) 
 		
+		if self._requestType == "addcomment": self._saveComment()
+		
 	end
 
 	function getID()
 		return self._ID
+	end
+	
+	function getType()
+		return self._requestType
 	end
 
 	function getItem()
@@ -120,4 +126,14 @@ class Blog( instance ) from Service( instance )
 
 	end
 
+
+	function _saveComment()			
+		body = Request.getField("cf_body", "" ) 		
+		Author = Request.getField("cf_name", "" ) 
+		email = Request.getField("cf_email", "" ) 
+		website = Request.getField("cf_site", "" ) 
+
+		> self.Comment.insert( body, Author, email, website, self._ID ) ? "Registrato!" : "Cacca"
+		
+	end
 end

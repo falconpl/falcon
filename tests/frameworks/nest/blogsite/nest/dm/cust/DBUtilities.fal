@@ -92,8 +92,11 @@ class DBUtilities
 			if not self._myConn: self._openConn()
 			self._exec( sqlCmd, aParms )
 		catch in err
-			bFeedback = false
+inspect(sqlCmd)
+> "<br>"
+inspect( aParms )
 > err
+			bFeedback = false
 		end
 		return bFeedback
 

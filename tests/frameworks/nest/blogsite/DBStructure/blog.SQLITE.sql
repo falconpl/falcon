@@ -17,7 +17,7 @@ CREATE TABLE tBlogComments  (
 	IDBLOGCOMMENTS	INTEGER PRIMARY key,
 	Content       	TEXT NOT NULL,
 	Author        	TEXT NOT NULL,
-	email         	TEXT NULL,
+	Email         	TEXT NULL,
 	website       	TEXT NULL,
 	Date          	NUMERIC NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	IDBLOG        	INTEGER UNSIGNED NOT NULL,

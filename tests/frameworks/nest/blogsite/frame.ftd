@@ -12,10 +12,6 @@
 <h1 class="site_title"><? Nest.defer('title') ?> </h1>
 </div>
 <? login.render() ?>
-<? if Nest.auth_level > Nest.AL.USER ?>
-</body>
-</html>
-<? return; end ?>
 <? Nest.content() ?>
 </body>
 </html>
