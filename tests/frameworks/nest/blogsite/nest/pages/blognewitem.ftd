@@ -2,11 +2,11 @@
  	
 	import from nest.action in na	
 	Blog = Nest.service("Blog")
-/*	
+
 	if ( Blog.getType() == "addnews" ) or ( Nest.auth_level > Nest.AL.USER )
 		 Reply.redirect( Nest.pageLink("home") )
 	end
-*/
+
 ?>
 <form action="" method="post">
 
