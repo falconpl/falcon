@@ -5,6 +5,8 @@
 	<div id="container" class="blogContainer">
 		<div id="navi" class="blogNavigation">
 			<div>
+<?				noFilter = i"No Filter!" ?>
+<?= 			@"<p class='blogNaviTitle'><a href=\"?pid=home\">$(noFilter)</a></p>"
 				<?=	srv.getTagList( false ) ?>	
 			</div>
 		</div>
@@ -24,34 +26,34 @@
 					<br>
 					<?= news.filedUnder() ?>&nbsp;-&nbsp;<?= news.tagList()?>
 	    		</div>
-			</div>
-			<br>Comments<br>			
+			<div class="blogSectionHeader">Comments</div>
 <?	 		aCmnts = srv.getRelatedComments()
 			for cmnt in aCmnts						?>
 				<div class="blogComment">
 					<div class="blogCommentText">
 						<?= cmnt.Content ?>
 					</div>
-					<div class="blogCommentInfo">
+					<div class="blogInfo">
 						<?= cmnt.postedBy() 		?>
 					</div>
 				</div>
 <? 			end ?>
+			</div>
 			<br><br>
 			<form action="" method="post">
 				<div class="commentform">
 					<input type="hidden" value="addcomment" name="type">
 					<input type="hidden" value="<?= srv.getID() ?>" name="id">
-					<label for="cf_body">Your comment:</label>
-					<textarea name="cf_body" class="formfield" rows="10" cols="40" name="body" ></textarea>
+					<label for="txtContent">Your comment:</label>
+					<textarea name="txtContent" class="formfield" rows="10" cols="40" name="body" ></textarea>
 					<br>
-					<label for="cf_name">Your Name:</label>
-					<input id="cf_name" name="cf_name" class="formfield" value="<?= Nest.ambient("auth_user").value ? Nest.ambient("auth_user").value : "" ?>" maxlength="40" size="40">
+					<label for="txtAuthor">Your Name:</label>
+					<input id="txtAuthor" name="txtAuthor" class="formfield" value="<?= Nest.ambient("auth_user").value ? Nest.ambient("auth_user").value : "" ?>" maxlength="40" size="40">
 					<br>
-					<label for="cf_site">Web Site:</label>
-					<input id="cf_site" name="cf_site" class="formfield" value="" maxlength="60" size="40" >
-					<label for="cf_email">E-mail:</label>
-					<input id="cf_email"  name="cf_email" class="formfield" value="" maxlength="100" size="40">							
+					<label for="txtWebsite">Web Site:</label>
+					<input id="txtWebsite" name="txtWebsite" class="formfield" value="" maxlength="60" size="40" >
+					<label for="txtEmail">E-mail:</label>
+					<input id="txtEmail"  name="txtEmail" class="formfield" value="" maxlength="100" size="40">							
 					<br>
 					<input class="formbutton" type="submit" value="Add Comment" alt="Add Comment">
 				</div>

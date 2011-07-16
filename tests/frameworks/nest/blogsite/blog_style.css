@@ -59,12 +59,20 @@
 }
 
 
-.blogTitle, .blogTitle a, .blogTitle a:hover
+.blogTitle, .blogTitle a, .blogTitle a:hover, .blogSectionHeader
 {
     color: #383828;
     font-size: 28px;
     padding-bottom: 20px;
     border: medium none;    
+}
+
+.blogComment{
+}
+
+.blogSectionHeader{
+	font-size: 24px;
+	margin: 10px 0;
 }
 
 .blogTitle a, .blogTitle a:hover, .blogInfo a,  .blogNaviItem a,

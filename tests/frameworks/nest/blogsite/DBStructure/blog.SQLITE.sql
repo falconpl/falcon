@@ -10,6 +10,7 @@ CREATE TABLE tBlogData  (
 	Date     	NUMERIC NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	Author   	TEXT NOT NULL,
 	IDSection	INTEGER UNSIGNED NOT NULL,
+	YearMonth	Text,
 	FOREIGN KEY(IDSection) REFERENCES tBlogSections(IDSection)
 );
 
@@ -37,5 +38,6 @@ CREATE INDEX FK_tBlogComments_tBlog ON tBlogComments(IDBLOG);
 CREATE INDEX IDX_BlogComments_date 	ON tBlogComments(Date);
 CREATE INDEX FK_tBlogData_BlogSection  ON tBlogData(IDSection);
 CREATE INDEX IDX_blogdata_author 	ON tBlogData(Author);
-CREATE INDEX IDX_blogdata_date 	ON tBlogData(Date);
+CREATE INDEX IDX_blogdata_date 		ON tBlogData(Date);
+CREATE INDEX IDX_blogdata_yearmonth ON tBlogData(yearmonth);
 CREATE INDEX FK_blogtag_blogdata 	ON tBlogTags(IDBLOG);
