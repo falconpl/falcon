@@ -82,7 +82,6 @@ add_library(falcon_engine SHARED
   class.cpp
   classarray.cpp
   classbool.cpp
-  classclass.cpp
   classdict.cpp
   classfunction.cpp
   classint.cpp
@@ -132,6 +131,7 @@ add_library(falcon_engine SHARED
   interruptederror.cpp
   ioerror.cpp
   localsymbol.cpp
+  metaclass.cpp
   module.cpp
   operanderror.cpp
   paramerror.cpp

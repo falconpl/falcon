@@ -34,7 +34,7 @@ class DataReader;
 class DataWriter;
 class FalconState;
 class Expression;
-class ClassClass;
+class MetaClass;
 class HyperClass;
 class VMContext;
 class PCode;

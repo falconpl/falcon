@@ -55,7 +55,7 @@
 #include <falcon/classstring.h>
 #include <falcon/classarray.h>
 #include <falcon/classdict.h>
-#include <falcon/classclass.h>
+#include <falcon/metaclass.h>
 
 //--- error headers ---
 #include <falcon/accesserror.h>
@@ -278,7 +278,7 @@ Engine::Engine()
    m_stringClass = new ClassString;
    m_arrayClass = new ClassArray;
    m_dictClass = new ClassDict;
-   m_classClass = new ClassClass;
+   m_classClass = new MetaClass;
 
    // Initialization of the class vector.
    m_classes[FLC_ITEM_NIL] = new ClassNil;
