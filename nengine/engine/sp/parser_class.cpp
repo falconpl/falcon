@@ -265,15 +265,18 @@ void apply_init_expr( const Rule&, Parser& p )
 void apply_FromClause_next( const Rule&, Parser& p  )
 {
    // << FromClause << T_Comma << FromEntry
+   SourceParser& sp = static_cast<SourceParser&>(p);
    TokenInstance* tInhList = p.getNextToken(); // FromClause
    p.getNextToken(); // T_Comma
    TokenInstance* tInh = p.getNextToken(); // FromEntry
 
    // keep the list, but discard the comma and the entry.
-   InhList* inhList = static_cast<InhList*>( tInhList->asData() );
+   InhList* inhList = static_cast<InhList*>( tInhList->detachValue() );
    inhList->push_back( static_cast<Inheritance*>(tInh->detachValue()) );
 
-   p.simplify(2);
+   TokenInstance* tiNew = new TokenInstance(tInhList->line(), tInhList->chr(), sp.FromClause );
+   tiNew->setValue( inhList, &inh_list_deletor );
+   p.simplify(3, tiNew );
 }
 
 

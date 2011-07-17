@@ -40,7 +40,7 @@
 #include <list>
 #include <vector>
 
-
+#include <cstring>
 
 namespace Falcon
 {
@@ -176,6 +176,7 @@ FalconClass::FalconClass( const String& name ):
 {
    _p = new Private;
    m_overrides = new Function*[OVERRIDE_OP_COUNT_ID];
+   memset( m_overrides, 0, sizeof( Function* ) * OVERRIDE_OP_COUNT_ID );
    m_bIsfalconClass = true;
 }
 
@@ -326,6 +327,21 @@ bool FalconClass::addMethod( Function* mth )
    else if( mth->name() == OVERRIDE_OP_TOSTRING ) m_overrides[OVERRIDE_OP_TOSTRING_ID] = mth;
 
    return true;
+}
+
+
+Class* FalconClass::getParent( const String& name ) const
+{
+   Private::MemberMap::const_iterator iter = _p->m_members.find(name);
+   if( iter != _p->m_members.end() )
+   {
+      if( iter->second->m_type == Property::t_inh )
+      {
+         return iter->second->m_value.inh->parent();
+      }
+   }
+
+   return 0;
 }
 
   

@@ -329,9 +329,7 @@ public:
    // Overrides from Class
    //
 
-   //=========================================
-   // Instance management
-
+   virtual Class* getParent( const String& name ) const;
    virtual void dispose( void* self ) const;
    virtual void* clone( void* source ) const;
    virtual void serialize( DataWriter* stream, void* self ) const;

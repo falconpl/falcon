@@ -18,6 +18,8 @@
 #include <falcon/accesserror.h>
 #include <falcon/accesstypeerror.h>
 
+#include "falcon/inheritance.h"
+
 namespace Falcon
 {
 
@@ -65,9 +67,8 @@ void FalconInstance::getMember( const String& name, Item& target ) const
          break;
 
       case FalconClass::Property::t_inh:
-         target.setUser( m_origin, const_cast<FalconInstance*>(this) );
-         //TODO
-         //target.methodize( prop.m_value.inh. somethin );
+         target.setUser( prop->m_value.inh->parent(), const_cast<FalconInstance*>(this) );
+         target.garbage();
          break;
 
       case FalconClass::Property::t_state:

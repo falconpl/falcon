@@ -137,8 +137,7 @@ public:
     Strings, Arrays, Dictionaries, Ranges and even Integer or NIL are
     all item types that have a class offering a TID.
     */
-   Class( const String& name, int64 tid );
-   
+   Class( const String& name, int64 tid );   
    virtual ~Class();
 
    const static int64 baseUserID = 100;
@@ -171,6 +170,15 @@ public:
     This flag is true for Prototype instances and (eventually) derived classes.
     */
    bool isPrototype() const { return m_bIsPrototype; }
+
+   /** Gets a direct parent class of this class by name.
+    \param name The name of the direct parent class.
+    \return A class if the name represents a parent class, 0 otherwise.
+    If the given class is among the parent list, this method returns the parent.
+
+    The default behavior is that of always returning 0.
+    */
+   virtual Class* getParent( const String& name ) const;
 
    /** Sets the module of this class.
     \param m The module where this class resides.

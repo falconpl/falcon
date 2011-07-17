@@ -89,7 +89,7 @@ public:
 
    //=========================================
    // Instance management
-
+   virtual Class* getParent( const String& ) const;
    virtual void dispose( void* self ) const;
    virtual void* clone( void* source ) const;
    virtual void serialize( DataWriter* stream, void* self ) const;

@@ -30,7 +30,7 @@
 
 #include <map>
 #include <vector>
-
+#include <cstring>
 
 namespace Falcon
 {
@@ -76,6 +76,7 @@ HyperClass::HyperClass( const String& name, Class* master ):
    m_createEmptyNext(this)
 {
    m_overrides = new Property*[OVERRIDE_OP_COUNT];
+   memset( m_overrides, 0, OVERRIDE_OP_COUNT* sizeof( Property* ));
    addParent( new Inheritance( master->name(), master ) );
 }
 
@@ -90,24 +91,49 @@ HyperClass::~HyperClass()
   
 bool HyperClass::addParent( Inheritance* cls )
 {
-   // we accept only ready inheritances.
-   if( cls->parent() == 0 )
-   {
-      return false;
-   }
+   Class* parent = cls->parent();
    
-   // Is the class name shaded?
-   if( _p->m_props.find(cls->className()) !=  _p->m_props.end() )
+   // we accept only ready inheritances.
+   if( parent == 0 )
    {
       return false;
    }
-   _p->m_props[cls->className()] = Property( cls->parent(), -m_nParents );
-   addParentProperties( cls->parent() );
+
+   // Is the class name shaded?
+   if( _p->m_props.find(parent->name()) != _p->m_props.end() )
+   {
+      return false;
+   }
+
+   // The master class is added immediately, and has parent ID == 0
+   if( m_nParents > 0 )
+   {
+      // ... and it must not appare in the inheritance properties.
+      _p->m_props[parent->name()] = Property( parent, -m_nParents );
+   }
+
+   addParentProperties( parent );
    m_nParents++;
    _p->m_parents.push_back( cls );
    return true;
 }
 
+
+Class* HyperClass::getParent( const String& name ) const
+{
+   Private::ParentVector::const_iterator iter = _p->m_parents.begin();
+   while( iter != _p->m_parents.end() )
+   {
+      if( name == (*iter)->parent()->name() )
+      {
+         return (*iter)->parent();
+      }
+
+      ++iter;
+   }
+   
+   return 0;
+}
 
 void HyperClass::addParentProperties( Class* cls )
 {
@@ -121,7 +147,12 @@ void HyperClass::addParentProperties( Class* cls )
 
       virtual bool operator()( const String& pname, bool )
       {
-         m_owner->addParentProperty( m_cls, pname );
+         // ignore properties representing parent classes.
+         if( m_cls->getParent( pname ) == 0 )
+         {
+            m_owner->addParentProperty( m_cls, pname );
+         }
+         
          return true;
       }
 
@@ -230,7 +261,6 @@ void HyperClass::describe( void* instance, String& target, int depth, int maxlen
    target = str;
 
    Private::PropMap::const_iterator iter = _p->m_props.begin();
-   ++iter; // skip the master class
    while( iter != _p->m_props.end() )
    {
       const Property& prop = iter->second;
@@ -868,10 +898,13 @@ void HyperClass::ParentCreatedStep::apply_(const PStep* ps, VMContext* ctx )
    register CodeFrame& cf = ctx->currentCode();
    static_cast<ItemArray*>(self.asInst())->at(cf.m_seqId) = ctx->topData();
    
+   // and we don't need it anymore
+   ctx->popData();
+   
    // then see what's nest. Need to create more?
    if( -- cf.m_seqId == 0 )
    {
-      // we're done
+      // we're done -- parent[0] is the master class.
       ctx->popCode();
       return;
    }
@@ -928,7 +961,9 @@ void HyperClass::FinishInvokeStep::apply_(const PStep* ps, VMContext* ctx )
    fassert( pstep_params[1].type() == FLC_ITEM_INT );
    int pcount = (int) pstep_params[1].asInteger();
 
-
+   // we're not needed anymore
+   ctx->popCode();
+   
    //remove the params and publish self.
    HyperClass* h = static_cast<const FinishInvokeStep*>(ps)->m_owner;
    ctx->stackResult( pcount+3, Item( h, inst ) );
@@ -950,15 +985,20 @@ void HyperClass::InvokeMasterStep::apply_(const PStep* ps, VMContext* ctx )
    if( pcount > 0 )
    {
       // get the real parameters
-      ctx->addLocals(pcount);
+      ctx->addSpace(pcount);
       Item* params = ctx->opcodeParams(2+pcount*2);
       Item* pdest = ctx->opcodeParams(pcount);
-
-      for( int i = 0; i <= pcount; --i )
+      Item* pterm = pdest + pcount;
+      while( pdest < pterm )
       {
-         params[i] = pdest[i];
+         *pdest = *params;
+         ++pdest;
+         ++params;
       }
    }
+
+   // we're not needed anymore
+   ctx->popCode();
 
    HyperClass* h = static_cast<const InvokeMasterStep*>(ps)->m_owner;
    h->m_master->op_create( ctx, pcount );

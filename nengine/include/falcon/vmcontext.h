@@ -152,6 +152,21 @@ public:
       }
    }
 
+   /** Add more variables on top of the stack -- without initializing them to nil.
+    \param count Number of variables to be added.
+
+    This is like addLocals, but doesn't nil the newly created variables.
+    */
+   inline void addSpace( size_t count ) {
+      Item* base = m_topData+1;
+      m_topData += count;
+      if( m_topData >= m_maxData )
+      {
+         moreData();
+         base = m_topData - count;
+      }
+   }
+
    /** Top data in the stack
     *
     */
@@ -509,13 +524,24 @@ public:
     \param result The value of the operation result.
     \see Class
 
+    The effect of this function is that of popping \b count items from the
+    stack and then pushing the \b result. If \b count is 0, \b result is just
+    pushed at the end of the stack.
+    
     \note this method may be used also by pseudofunctions and generically
     by any PStep in need to access the top of the stack.
     */
    inline void stackResult( int count, const Item& result )
    {
-      if( count > 1 ) popData( count-1 );
-      topData() = result;
+      if( count > 0 )
+      {
+         popData( count-1 );
+         topData() = result;
+      }
+      else
+      {
+         pushData( result );
+      }
    }
 
       /** Returns the parameter array in the current frame.

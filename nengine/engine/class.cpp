@@ -50,6 +50,13 @@ Class::~Class()
 }
 
 
+Class* Class::getParent( const String& ) const
+{
+   // normally does nothing
+   return 0;
+}
+
+
 void Class::gcMark( void*, uint32 ) const
 {
    // normally does nothing
