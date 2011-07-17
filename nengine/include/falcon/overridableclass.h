@@ -5,7 +5,7 @@
    Base abstract class for classes providing an override system.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
-   Begin: Sat, 04 Jun 2011 16:04:20 +0200
+   Begin: Mon, 18 Jul 2011 01:55:55 +0200
 
    -------------------------------------------------------------------
    (C) Copyright 2011: the FALCON developers (see list in AUTHORS file)
