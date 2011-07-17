@@ -19,7 +19,7 @@
 #include <falcon/setup.h>
 #include <falcon/string.h>
 #include <falcon/enumerator.h>
-#include <falcon/class.h>
+#include <falcon/overridableclass.h>
 #include <falcon/statement.h>
 #include <falcon/synfunc.h>
 
@@ -80,7 +80,7 @@ class PCode;
  instance during the link process, while resolving external symbols.
  
  */
-class FALCON_DYN_CLASS FalconClass: public Class
+class FALCON_DYN_CLASS FalconClass: public OverridableClass
 {
 public:
 
@@ -357,39 +357,7 @@ public:
    virtual bool hasProperty( void* self, const String& prop ) const;
    virtual void describe( void* instance, String& target, int depth = 3, int maxlen = 60 ) const;
 
-   //=========================================================
-   // Operators.
-   //
-
-   virtual void op_create( VMContext* ctx, int32 pcount ) const;
-   virtual void op_neg( VMContext* ctx, void* self ) const;
-   virtual void op_add( VMContext* ctx, void* self ) const;
-   virtual void op_sub( VMContext* ctx, void* self ) const;
-   virtual void op_mul( VMContext* ctx, void* self ) const;
-   virtual void op_div( VMContext* ctx, void* self ) const;
-   virtual void op_mod( VMContext* ctx, void* self ) const;
-   virtual void op_pow( VMContext* ctx, void* self ) const;
-   virtual void op_aadd( VMContext* ctx, void* self) const;
-   virtual void op_asub( VMContext* ctx, void* self ) const;
-   virtual void op_amul( VMContext* ctx, void* self ) const;
-   virtual void op_adiv( VMContext* ctx, void* self ) const;
-   virtual void op_amod( VMContext* ctx, void* self ) const;
-   virtual void op_apow( VMContext* ctx, void* self ) const;
-   virtual void op_inc( VMContext* ctx, void* self ) const;
-   virtual void op_dec( VMContext* ctx, void* self) const;
-   virtual void op_incpost( VMContext* ctx, void* self ) const;
-   virtual void op_decpost( VMContext* ctx, void* self ) const;
-   virtual void op_getIndex( VMContext* ctx, void* self ) const;
-   virtual void op_setIndex( VMContext* ctx, void* self ) const;
-   virtual void op_getProperty( VMContext* ctx, void* self, const String& prop) const;
-   virtual void op_setProperty( VMContext* ctx, void* self, const String& prop ) const;
-   virtual void op_compare( VMContext* ctx, void* self ) const;
-   virtual void op_isTrue( VMContext* ctx, void* self ) const;
-   virtual void op_in( VMContext* ctx, void* self ) const;
-   virtual void op_provides( VMContext* ctx, void* self, const String& property ) const;
-   virtual void op_call( VMContext* ctx, int32 paramCount, void* self ) const;
-   virtual void op_toString( VMContext* ctx, void* self ) const;
-
+ 
    /** Creates the constructor or returns it if it's already here. */
    SynFunc* makeConstructor();
 
@@ -460,6 +428,14 @@ public:
     */
    virtual void onInheritanceResolved( Inheritance* inh );
 
+   //=========================================================
+   // Operators.
+   //
+
+   virtual void op_create( VMContext* ctx, int32 pcount ) const;
+   virtual void op_getProperty( VMContext* ctx, void* self, const String& prop) const;
+   virtual void op_setProperty( VMContext* ctx, void* self, const String& prop ) const;
+
 private:
    inline void override_unary( VMContext* ctx, void*, int op_id, const String& opName ) const;
    inline void override_binary( VMContext* ctx, void*, int op_id, const String& opName ) const;
@@ -505,7 +481,6 @@ private:
    PStepInit m_initFuncStep;
    
    friend class PStepInitExpr;
-   friend class CoreClass;
 };
 
 }

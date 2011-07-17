@@ -30,17 +30,16 @@
 #include <falcon/operanderror.h>
 #include <falcon/optoken.h>
 #include <falcon/vmcontext.h>
-#include <falcon/ov_names.h>
 #include <falcon/expression.h>
 #include <falcon/stmt_init.h>
+
+#include <falcon/ov_names.h>
 
 #include <falcon/trace.h>
 
 #include <map>
 #include <list>
 #include <vector>
-
-#include <cstring>
 
 namespace Falcon
 {
@@ -162,7 +161,7 @@ FalconClass::Property::Property( FalconState* value ):
 //
 
 FalconClass::FalconClass( const String& name ):
-   Class("Object" , FLC_CLASS_ID_OBJECT ),
+   OverridableClass("Object" , FLC_CLASS_ID_OBJECT ),
    m_fc_name(name),
    m_init(0),
    m_constructor(0),
@@ -174,9 +173,7 @@ FalconClass::FalconClass( const String& name ):
    m_initExprStep( this ),
    m_initFuncStep( this )
 {
-   _p = new Private;
-   m_overrides = new Function*[OVERRIDE_OP_COUNT_ID];
-   memset( m_overrides, 0, sizeof( Function* ) * OVERRIDE_OP_COUNT_ID );
+   _p = new Private;   
    m_bIsfalconClass = true;
 }
 
@@ -184,7 +181,6 @@ FalconClass::FalconClass( const String& name ):
 FalconClass::~FalconClass()
 {
    delete m_constructor;
-   delete[] m_overrides;
    delete _p;
 }
 
@@ -290,42 +286,7 @@ bool FalconClass::addMethod( Function* mth )
 
    // insert a new property with the required ID
    members[name] = new Property( mth );
-
-   // see if the method is an override.
-   if( mth->name() == OVERRIDE_OP_NEG ) m_overrides[OVERRIDE_OP_NEG_ID] = mth;
-   
-   else if( mth->name() == OVERRIDE_OP_ADD ) m_overrides[OVERRIDE_OP_ADD_ID] = mth;
-   else if( mth->name() == OVERRIDE_OP_SUB ) m_overrides[OVERRIDE_OP_SUB_ID] = mth;
-   else if( mth->name() == OVERRIDE_OP_MUL ) m_overrides[OVERRIDE_OP_MUL_ID] = mth;
-   else if( mth->name() == OVERRIDE_OP_DIV ) m_overrides[OVERRIDE_OP_DIV_ID] = mth;
-   else if( mth->name() == OVERRIDE_OP_MOD ) m_overrides[OVERRIDE_OP_MOD_ID] = mth;
-   else if( mth->name() == OVERRIDE_OP_POW ) m_overrides[OVERRIDE_OP_POW_ID] = mth;
-
-   else if( mth->name() == OVERRIDE_OP_AADD ) m_overrides[OVERRIDE_OP_AADD_ID] = mth;
-   else if( mth->name() == OVERRIDE_OP_ASUB ) m_overrides[OVERRIDE_OP_ASUB_ID] = mth;
-   else if( mth->name() == OVERRIDE_OP_AMUL ) m_overrides[OVERRIDE_OP_AMUL_ID] = mth;
-   else if( mth->name() == OVERRIDE_OP_ADIV ) m_overrides[OVERRIDE_OP_ADIV_ID] = mth;
-   else if( mth->name() == OVERRIDE_OP_AMOD ) m_overrides[OVERRIDE_OP_AMOD_ID] = mth;
-   else if( mth->name() == OVERRIDE_OP_APOW ) m_overrides[OVERRIDE_OP_APOW_ID] = mth;
-
-   else if( mth->name() == OVERRIDE_OP_INC ) m_overrides[OVERRIDE_OP_INC_ID] = mth;
-   else if( mth->name() == OVERRIDE_OP_DEC ) m_overrides[OVERRIDE_OP_DEC_ID] = mth;
-   else if( mth->name() == OVERRIDE_OP_INCPOST ) m_overrides[OVERRIDE_OP_INCPOST_ID] = mth;
-   else if( mth->name() == OVERRIDE_OP_DECPOST ) m_overrides[OVERRIDE_OP_DECPOST_ID] = mth;
-
-   else if( mth->name() == OVERRIDE_OP_CALL ) m_overrides[OVERRIDE_OP_CALL_ID] = mth;
-
-   else if( mth->name() == OVERRIDE_OP_GETINDEX ) m_overrides[OVERRIDE_OP_GETINDEX_ID] = mth;
-   else if( mth->name() == OVERRIDE_OP_SETINDEX ) m_overrides[OVERRIDE_OP_SETINDEX_ID] = mth;
-   else if( mth->name() == OVERRIDE_OP_GETPROP ) m_overrides[OVERRIDE_OP_GETPROP_ID] = mth;
-   else if( mth->name() == OVERRIDE_OP_SETPROP ) m_overrides[OVERRIDE_OP_SETPROP_ID] = mth;
-
-   else if( mth->name() == OVERRIDE_OP_COMPARE ) m_overrides[OVERRIDE_OP_COMPARE_ID] = mth;
-   else if( mth->name() == OVERRIDE_OP_ISTRUE ) m_overrides[OVERRIDE_OP_ISTRUE_ID] = mth;
-   else if( mth->name() == OVERRIDE_OP_IN ) m_overrides[OVERRIDE_OP_IN_ID] = mth;
-   else if( mth->name() == OVERRIDE_OP_PROVIDES ) m_overrides[OVERRIDE_OP_PROVIDES_ID] = mth;
-   else if( mth->name() == OVERRIDE_OP_TOSTRING ) m_overrides[OVERRIDE_OP_TOSTRING_ID] = mth;
-
+   overrideAddMethod( mth->name(), mth );
    return true;
 }
 
@@ -785,42 +746,6 @@ void FalconClass::describe( void* instance, String& target, int depth, int maxle
 // Operators.
 //
 
-inline void FalconClass::override_unary( VMContext* ctx, void* self, int op, const String& opName ) const
-{
-   Function* override = m_overrides[op];
-
-   // TODO -- use pre-caching of the desired method
-   if( override != 0 )
-   {
-      ctx->call( override, 0, Item( this, self, true ), true );
-   }
-   else
-   {
-      throw new OperandError( ErrorParam(__LINE__, e_invop ).extra(opName) );
-   }
-}
-
-
-inline void FalconClass::override_binary( VMContext* ctx, void* self, int op, const String& opName ) const
-{
-   Function* override = m_overrides[op];
-   
-   if( override )
-   {
-      // we don't need the self in the stack.
-      ctx->popData();
-      
-      // 1 parameter == second; which will be popped away,
-      // while first will be substituted with the return value of the function.
-      ctx->call( override, 1, Item( this, self, true ), true );
-   }
-   else
-   {
-      throw new OperandError( ErrorParam(__LINE__, e_invop ).extra(opName) );
-   }
-}
-
-
 void FalconClass::op_create( VMContext* ctx, int32 pcount ) const
 {
   
@@ -844,151 +769,11 @@ void FalconClass::op_create( VMContext* ctx, int32 pcount ) const
 }
 
 
-void FalconClass::op_neg( VMContext* ctx, void* self ) const
-{
-   override_unary( ctx, self, OVERRIDE_OP_NEG_ID, OVERRIDE_OP_NEG );
-}
-
-
-void FalconClass::op_add( VMContext* ctx, void* self ) const
-{
-   override_binary( ctx, self, OVERRIDE_OP_ADD_ID, OVERRIDE_OP_ADD );
-}
-
-
-void FalconClass::op_sub( VMContext* ctx, void* self ) const
-{
-   override_binary( ctx, self, OVERRIDE_OP_SUB_ID, OVERRIDE_OP_SUB );
-}
-
-
-void FalconClass::op_mul( VMContext* ctx, void* self ) const
-{
-   override_binary( ctx, self, OVERRIDE_OP_MUL_ID, OVERRIDE_OP_MUL );
-}
-
-
-void FalconClass::op_div( VMContext* ctx, void* self ) const
-{
-   override_binary( ctx, self, OVERRIDE_OP_DIV_ID, OVERRIDE_OP_DIV );
-}
-
-void FalconClass::op_mod( VMContext* ctx, void* self ) const
-{
-   override_binary( ctx, self, OVERRIDE_OP_MOD_ID, OVERRIDE_OP_MOD );
-}
-
-
-void FalconClass::op_pow( VMContext* ctx, void* self ) const
-{
-   override_binary( ctx, self, OVERRIDE_OP_POW_ID, OVERRIDE_OP_POW );
-}
-
-
-void FalconClass::op_aadd( VMContext* ctx, void* self) const
-{
-   override_binary( ctx, self, OVERRIDE_OP_AADD_ID, OVERRIDE_OP_AADD );
-}
-
-
-void FalconClass::op_asub( VMContext* ctx, void* self ) const
-{
-   override_binary( ctx, self, OVERRIDE_OP_ASUB_ID, OVERRIDE_OP_ASUB );
-}
-
-
-void FalconClass::op_amul( VMContext* ctx, void* self ) const
-{
-   override_binary( ctx, self, OVERRIDE_OP_AMUL_ID, OVERRIDE_OP_AMUL );
-}
-
-
-void FalconClass::op_adiv( VMContext* ctx, void* self ) const
-{
-   override_binary( ctx, self, OVERRIDE_OP_DIV_ID, OVERRIDE_OP_DIV );
-}
-
-
-void FalconClass::op_amod( VMContext* ctx, void* self ) const
-{
-   override_binary( ctx, self, OVERRIDE_OP_AMOD_ID, OVERRIDE_OP_AMOD );
-}
-
-
-void FalconClass::op_apow( VMContext* ctx, void* self ) const
-{
-   override_binary( ctx, self, OVERRIDE_OP_APOW_ID, OVERRIDE_OP_APOW );
-}
-
-
-void FalconClass::op_inc( VMContext* ctx, void* self ) const
-{
-   override_unary( ctx, self, OVERRIDE_OP_INC_ID, OVERRIDE_OP_INC );
-}
-
-
-void FalconClass::op_dec( VMContext* ctx, void* self) const
-{
-   override_unary( ctx, self, OVERRIDE_OP_DEC_ID, OVERRIDE_OP_DEC );
-}
-
-
-void FalconClass::op_incpost( VMContext* ctx, void* self ) const
-{
-   override_unary( ctx, self, OVERRIDE_OP_INCPOST_ID, OVERRIDE_OP_INCPOST );
-}
-
-
-void FalconClass::op_decpost( VMContext* ctx, void* self ) const
-{
-   override_unary( ctx, self, OVERRIDE_OP_DECPOST_ID, OVERRIDE_OP_DECPOST );
-}
-
-
-void FalconClass::op_getIndex( VMContext* ctx, void* self ) const
-{
-   override_binary( ctx, self, OVERRIDE_OP_GETINDEX_ID, OVERRIDE_OP_GETINDEX );
-}
-
-
-void FalconClass::op_setIndex( VMContext* ctx, void* ) const
-{
-   Function* override = m_overrides[OVERRIDE_OP_SETINDEX_ID];
-
-   if( override != 0 )
-   {
-      Item* first, *second, *third;
-      OpToken token( ctx, first, second, third );
-
-      // Two parameters (second and third) will be popped,
-      //  and first will be turned in the result.
-      ctx->call( override, 2, *first, true );
-      token.abandon();
-   }
-   else
-   {
-      throw new OperandError( ErrorParam(__LINE__, e_invop ).extra(OVERRIDE_OP_SETINDEX) );
-   }
-}
-
-
 void FalconClass::op_getProperty( VMContext* ctx, void* self, const String& propName ) const
 {   
    FalconInstance* inst = static_cast<FalconInstance*>(self);
-   Function* override = m_overrides[OVERRIDE_OP_GETPROP_ID];
-
-   if( override != 0 )
-   {
-      // call will destroy the value, that is the parameters
-      Item i_first( this, self, true );
-      ctx->popData();
-      // I prefer to go safe and push a new string here.
-      ctx->pushData( (new String(propName))->garbage() );
-
-      // use the instance we know, as first can be moved away.
-      ctx->call( override, 1, i_first, true );
-   }
-   else
+   
+   if( ! overrideGetProperty( ctx, self, propName ) )
    {
       inst->getMember( propName, ctx->topData() );
    }
@@ -998,134 +783,14 @@ void FalconClass::op_getProperty( VMContext* ctx, void* self, const String& prop
 void FalconClass::op_setProperty( VMContext* ctx, void* self, const String& propName ) const
 {
    FalconInstance* inst = static_cast<FalconInstance*>(self);
-   Function* override = m_overrides[OVERRIDE_OP_SETPROP_ID];
 
-   if( override != 0 )
-   {
-      // call will remove the extra parameter...
-      Item iSelf( this, self, true );
-      // remove "self" from the stack..
-      ctx->popData();
-      // exchange the property name and the data,
-      // as setProperty wants the propname first.
-      Item i_data = ctx->topData();
-      ctx->topData() = (new String(propName))->garbage();
-      ctx->pushData( i_data );
-
-      // Don't mangle the stack, we have to change it.
-      ctx->call( override, 2, iSelf, false );
-   }
-   else
+   if( ! overrideSetProperty( ctx, self, propName ) )
    {
       inst->setProperty( propName, ctx->opcodeParam(1) );
       ctx->popData();
    }
 }
 
-
-void FalconClass::op_compare( VMContext* ctx, void* self ) const
-{
-   Function* override = m_overrides[OVERRIDE_OP_COMPARE_ID];
-
-   if( override )
-   {
-      // call will remove the extra parameter...
-      Item iSelf( this, self, true );
-      // remove "self" from the stack..
-      ctx->popData();
-      ctx->call( override, 1, iSelf, true );
-   }
-   else
-   {
-      // we don't need the self object.
-      ctx->popData();
-      const Item& crand = ctx->topData();
-      if( crand.type() == typeID() )
-      {
-         // we're all object. Order by ptr.
-         ctx->topData() = (int64)
-            (self > crand.asInst() ? 1 : (self < crand.asInst() ? -1 : 0));
-      }
-      else
-      {
-         // order by type
-         ctx->topData() = (int64)( typeID() - crand.type() );
-      }
-   }
-}
-
-
-void FalconClass::op_isTrue( VMContext* ctx, void* ) const
-{
-   Function* override = m_overrides[OVERRIDE_OP_ISTRUE_ID];
-
-   if( override != 0 )
-   {
-      // use the instance we know, as first can be moved away.
-      ctx->call( override, 0, ctx->topData(), true );
-   }
-   else
-   {
-      // instances are always true.
-      ctx->topData().setBoolean(true);
-   }
-}
-
-
-void FalconClass::op_in( VMContext* ctx, void* self ) const
-{
-   override_binary( ctx, self, OVERRIDE_OP_IN_ID, OVERRIDE_OP_IN );
-}
-
-
-void FalconClass::op_provides( VMContext* ctx, void* self, const String& propName ) const
-{
-   Function* override = m_overrides[OVERRIDE_OP_PROVIDES_ID];
-
-   if( override != 0  )
-   {
-      Item i_self( this, self, true );
-      ctx->topData() = (new String(propName))->garbage();
-      ctx->call( override, 1, i_self, true );
-   }
-   else
-   {
-      ctx->topData().setBoolean( hasProperty( self, propName ) );
-   }
-}
-
-
-void FalconClass::op_call( VMContext* ctx, int32 paramCount, void* self ) const
-{
-   Function* override = m_overrides[OVERRIDE_OP_CALL_ID];
-
-   if( override != 0 )
-   {
-      ctx->popData();
-      ctx->call( override, paramCount, Item( this, self, true ), true );
-   }
-   else
-   {
-      throw new OperandError( ErrorParam(__LINE__, e_invop ).extra(OVERRIDE_OP_CALL) );
-   }
-}
-
-
-void FalconClass::op_toString( VMContext* ctx, void* self ) const
-{
-   Function* override = m_overrides[OVERRIDE_OP_TOSTRING_ID];
-
-   if( override != 0 )
-   {
-      ctx->call( override, 0, Item( this, self, true ), true );
-   }
-   else
-   {
-      String* str = new String("Instance of ");
-      str->append( name() );
-      ctx->topData() = str;
-   }
-}
 
 //==============================================================
 

@@ -134,6 +134,7 @@ add_library(falcon_engine SHARED
   metaclass.cpp
   module.cpp
   operanderror.cpp
+  overridableclass.cpp
   paramerror.cpp
   pseudofunc.cpp
   path.cpp
