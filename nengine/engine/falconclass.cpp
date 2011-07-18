@@ -438,18 +438,6 @@ bool FalconClass::addState( FalconState* state )
 }
 
 
-void FalconClass::serialize( DataWriter* ) const
-{
-   //TODO
-}
-
-
-void FalconClass::deserialize( DataReader* )
-{
-   //TODO
-}
-
-
 void FalconClass::enumeratePropertiesOnly( PropertyEnumerator& cb ) const
 {
    Private::MemberMap& members = _p->m_members;

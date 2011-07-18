@@ -18,7 +18,6 @@
 
 #include <falcon/setup.h>
 #include <falcon/string.h>
-#include <falcon/enumerator.h>
 #include <falcon/overridableclass.h>
 #include <falcon/statement.h>
 #include <falcon/synfunc.h>
@@ -304,15 +303,6 @@ public:
    */   
    bool addState( FalconState* state );
 
-   /** Serialize this class to a writers. */
-   void serialize( DataWriter* dw ) const;
-   
-   /** Deserialize this class from a reader.
-    \param dr The reader
-    This method is meant to be called.
-    */
-   void deserialize( DataReader* dr );
-
    /** List the members in this class having property semantics.
      @param cb A callback function receiving one property at a time.
 
@@ -437,8 +427,6 @@ public:
    virtual void op_setProperty( VMContext* ctx, void* self, const String& prop ) const;
 
 private:
-   inline void override_unary( VMContext* ctx, void*, int op_id, const String& opName ) const;
-   inline void override_binary( VMContext* ctx, void*, int op_id, const String& opName ) const;
 
    class Private;
    Private* _p;

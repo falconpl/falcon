@@ -64,7 +64,8 @@ BOM::BOM():
    hm["typeId_"] = BOMH::typeId_;
    
    hm["compare"] = BOMH::compare;
-   hm["baseClass"] = BOMH::derivedFrom;
+   hm["derivedFrom"] = BOMH::derivedFrom;
+
 }
 
 BOM::~BOM()

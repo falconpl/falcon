@@ -29,6 +29,7 @@
 #include <falcon/classnumeric.h>
 #include <falcon/classdict.h>
 #include <falcon/classarray.h>
+#include <falcon/flexyclass.h>
 #include <falcon/metaclass.h>
 
 namespace Falcon {
@@ -54,6 +55,7 @@ CoreModule::CoreModule():
       << new ClassArray
       << new ClassDict
       << new ClassString
+      << new FlexyClass
       << new MetaClass
       ;
 }

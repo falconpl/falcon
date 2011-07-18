@@ -119,6 +119,7 @@ add_library(falcon_engine SHARED
   exprsym.cpp
   exprvalue.cpp
   filestat.cpp
+  flexyclass.cpp
   function.cpp
   genericerror.cpp
   globalsymbol.cpp
@@ -128,6 +129,7 @@ add_library(falcon_engine SHARED
   item.cpp
   item_util.cpp
   itemarray.cpp
+  itemdict.cpp
   interruptederror.cpp
   ioerror.cpp
   localsymbol.cpp
