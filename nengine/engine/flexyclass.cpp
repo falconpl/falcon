@@ -197,9 +197,16 @@ bool FlexyClass::hasProperty( void* self, const String& prop ) const
 void FlexyClass::describe( void* self, String& target, int depth, int maxlen ) const
 {
    String tgt;
-   static_cast<FlexyDict*>(self)->describe( tgt, depth, maxlen );
-   target.size(0);
-   target += "Flexy{" + tgt + "}";
+   if( depth != 0 )
+   {
+      static_cast<FlexyDict*>(self)->describe( tgt, depth, maxlen );
+      target.size(0);
+      target += "Flexy{" + tgt + "}";
+   }
+   else
+   {
+      tgt = "Flexy{...}";
+   }
 }
 
 
@@ -222,9 +229,13 @@ void FlexyClass::op_create( VMContext* ctx, int32 pcount ) const
          class Enum: public ItemDict::Enumerator
          {
          public:
-            Enum(FlexyDict* self):
-               m_self(self)
-            {}
+            Enum( const FlexyClass* owner, FlexyDict* self):
+               m_owner(owner),
+               m_self(self),
+               m_fself( owner, self)
+            {
+               m_fself.garbage();
+            }
 
             virtual void operator()( const Item& key, Item& value )
             {
@@ -232,16 +243,28 @@ void FlexyClass::op_create( VMContext* ctx, int32 pcount ) const
                {
                   if( key.asString()->find( " " ) == String::npos )
                   {
-                     m_self->insert( *key.asString(), value );
+                     if( value.isFunction() )
+                     {
+                        Function* func = value.asFunction();
+                        Item temp = m_fself;
+                        temp.methodize( func );
+                        m_self->insert( *key.asString(), temp );
+                     }
+                     else
+                     {
+                        m_self->insert( *key.asString(), value );
+                     }
                   }
                }
             }
 
          private:
+            const FlexyClass* m_owner;
             FlexyDict* m_self;
+            Item m_fself;
          };
 
-         Enum rator( self );
+         Enum rator( this, self );
          ItemDict& id = *static_cast<ItemDict*>( data );
          id.enumerate( rator );
       }
@@ -250,20 +273,36 @@ void FlexyClass::op_create( VMContext* ctx, int32 pcount ) const
          class Enum: public Class::PVEnumerator
          {
          public:
-            Enum(FlexyDict* self):
-               m_self(self)
-            {}
+            Enum( const FlexyClass* owner, FlexyDict* self):
+               m_owner(owner),
+               m_self(self),
+               m_fself( owner, self)
+            {
+               m_fself.garbage();
+            }
 
             virtual void operator()( const String& data, Item& value )
             {
-               m_self->insert( data, value );
+               if( value.isFunction() )
+               {
+                  Function* func = value.asFunction();
+                  Item temp = m_fself;
+                  temp.methodize( func );
+                  m_self->insert( data, temp );
+               }
+               else
+               {
+                  m_self->insert( data, value );
+               }
             }
             
          private:
+            const FlexyClass* m_owner;
             FlexyDict* m_self;
+            Item m_fself;
          };
 
-         Enum rator( self );
+         Enum rator( this, self );
          cls->enumeratePV( data, rator );
       }
 
@@ -295,6 +334,13 @@ void FlexyClass::op_setProperty( VMContext* ctx, void* self, const String& prop 
 
    ctx->popData();
    Item& value = ctx->topData();
+   if ( value.isFunction() )
+   {
+      Function* func = value.asFunction();
+      value.setUser( this, &dict, true );
+      value.methodize( func );
+   }
+   
    dict.insert( prop, value );
 }
 

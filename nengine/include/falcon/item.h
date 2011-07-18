@@ -263,6 +263,14 @@ public:
        content.data.ptr.pClass = (Class*) cls;
    }
 
+   inline void setUser( const Class* cls, void* inst, bool )
+   {
+       type( FLC_ITEM_USER );
+       content.data.ptr.pInst = inst;
+       content.data.ptr.pClass = (Class*) cls;
+       garbage();
+   }
+
    inline Item( GCToken* token )
    {
       setUser( token );
