@@ -14,16 +14,127 @@
 */
 
 #include <falcon/flexyclass.h>
-#include <falcon/itemdict.h>
 #include <falcon/item.h>
+#include <falcon/itemdict.h>
 
 #include <falcon/vmcontext.h>
 #include <falcon/accesserror.h>
 #include <falcon/engine.h>
 
+#include <map>
+
+
 namespace Falcon
 {
 
+class FlexyDict
+{
+public:
+   typedef std::map<String, Item> ItemMap;
+   ItemMap m_im;
+
+   uint32 m_currentMark;
+   uint32 m_flags;
+
+   inline FlexyDict():
+      m_currentMark(0),
+      m_flags(0)
+   {}
+
+   inline FlexyDict( const FlexyDict& other ):
+      m_currentMark(other.m_currentMark),
+      m_flags(other.m_flags)
+   {
+      m_im = other.m_im;
+   }
+
+   inline ~FlexyDict()
+   {}
+
+   inline void gcMark( uint32 mark )
+   {
+      if( m_currentMark == mark )
+      {
+         return;
+      }
+
+      ItemMap::iterator pos = m_im.begin();
+      while( pos != m_im.end() )
+      {
+         const Item& value = pos->second;
+
+         if( value.isUser() && value.isGarbaged() )
+         {
+            value.asClass()->gcMark(value.asInst(), mark);
+         }
+
+         ++pos;
+      }
+   }
+
+   inline void enumerateProps( Class::PropertyEnumerator& e ) const
+   {
+      ItemMap::const_iterator pos = m_im.begin();
+      while( pos != m_im.end() )
+      {
+         const String& key = pos->first;
+         e( key, ++pos == m_im.end() );
+      }
+   }
+
+   inline void enumeratePV( Class::PVEnumerator& e )
+   {
+      ItemMap::iterator pos = m_im.begin();
+      while( pos != m_im.end() )
+      {
+         const String& key = pos->first;
+         e( key, pos->second );
+         ++pos;
+      }
+   }
+
+   inline bool hasProperty( const String& p ) const
+   {
+      return m_im.find(p) != m_im.end();
+   }
+
+   inline void describe( String& target, int depth, int maxlen ) const
+   {
+      String value;
+      ItemMap::const_iterator pos = m_im.begin();
+      while( pos != m_im.end() )
+      {
+         const String& key = pos->first;
+
+         if( target.size() > 1 )
+         {
+            target += ", ";
+         }
+
+         value.size(0);
+         pos->second.describe( value, depth-1, maxlen );
+         target += key + "=" + value;
+
+         ++pos;
+      }
+   }
+
+   inline Item* find( const String& value )
+   {
+      ItemMap::iterator pos = m_im.find( value );
+      if( pos != m_im.end() )
+      {
+         return &pos->second;
+      }
+      return 0;
+   }
+
+   inline void insert( const String& key, Item& value )
+   {
+      value.copied( true );
+      m_im[key] = value;
+   }
+};
 
 FlexyClass::FlexyClass():
    OverridableClass( "Flexy" )
@@ -38,13 +149,13 @@ FlexyClass::~FlexyClass()
 
 void FlexyClass::dispose( void* self ) const
 {
-   delete static_cast<ItemDict*>(self);
+   delete static_cast<FlexyDict*>(self);
 }
 
 
 void* FlexyClass::clone( void* self ) const
 {
-   return static_cast<ItemDict*>(self)->clone();
+   return new FlexyDict( *static_cast<FlexyDict*>(self));
 }
 
 
@@ -63,91 +174,30 @@ void* FlexyClass::deserialize( DataReader* ) const
 
 void FlexyClass::gcMark( void* self, uint32 mark ) const
 {
-   static_cast<ItemDict*>(self)->gcMark(mark);
+   static_cast<FlexyDict*>(self)->gcMark(mark);
 }
 
 
 void FlexyClass::enumerateProperties( void* self, PropertyEnumerator& cb ) const
 {
-   class Enum: public ItemDict::Enumerator
-   {
-   public:
-      Enum( Class::PropertyEnumerator& cb ):
-         m_cb(cb)
-      {}
-
-      virtual void operator()( const Item& key, Item& )
-      {
-         if( key.isString() )
-         {
-            const String* prop = const_cast<Item*>(&key)->asString();
-            if( prop->find(" ") == String::npos )
-            {
-               m_cb( *prop, false );
-            }
-         }
-
-      }
-      
-   private:
-      Class::PropertyEnumerator& m_cb;
-   };
-
-   Enum rator(cb);
-   static_cast<ItemDict*>(self)->enumerate( rator );
+   static_cast<FlexyDict*>(self)->enumerateProps( cb );
 }
 
+void FlexyClass::enumeratePV( void* self, PVEnumerator& cb ) const
+{
+   static_cast<FlexyDict*>(self)->enumeratePV( cb );
+}
 
 bool FlexyClass::hasProperty( void* self, const String& prop ) const
 {
-   static Class* scls = Engine::instance()->stringClass();
-   
-   Item key( scls, const_cast<String*>(&prop) );  // create a static string.
-   return static_cast<ItemDict*>(self)->find( key ) != 0;
+   return static_cast<FlexyDict*>(self)->hasProperty( prop );
 }
 
 
 void FlexyClass::describe( void* self, String& target, int depth, int maxlen ) const
 {
-   class Enum: public ItemDict::Enumerator
-   {
-   public:
-      Enum( String& target, int depth, int maxlen ):
-         m_depth(depth),
-         m_maxlen( maxlen ),
-         m_target( target )
-      {}
-
-      virtual void operator()( const Item& key, Item& value )
-      {
-         if( key.isString() )
-         {
-            const String* prop = const_cast<Item*>(&key)->asString();
-            if( prop->find(" ") == String::npos )
-            {
-               if( m_target.size() > 1 )
-               {
-                  m_target += ", ";
-               }
-
-               m_value.size(0);
-               value.describe( m_value, m_depth-1, m_maxlen );
-               m_target += *prop + " => " + m_value;
-            }
-         }
-
-      }
-
-   private:
-      int m_depth;
-      int m_maxlen;
-      String& m_target;
-      String m_value;
-   };
-
    String tgt;
-   Enum rator( tgt, depth, maxlen );
-   static_cast<ItemDict*>(self)->enumerate( rator );
+   static_cast<FlexyDict*>(self)->describe( tgt, depth, maxlen );
    target.size(0);
    target += "Flexy{" + tgt + "}";
 }
@@ -156,52 +206,81 @@ void FlexyClass::describe( void* self, String& target, int depth, int maxlen ) c
 void FlexyClass::op_create( VMContext* ctx, int32 pcount ) const
 {
    static Collector* coll = Engine::instance()->collector();
-   
-   ctx->stackResult( pcount, FALCON_GC_STORE(coll, this, new ItemDict) );
-}
 
-
-void FlexyClass::op_getIndex( VMContext* ctx, void* self ) const
-{
-   Item *index, *dict_item;
-   ctx->operands( index, dict_item );
-
-   ItemDict& dict = *static_cast<ItemDict*>(self);
-   Item* result = dict.find( *index );
-
-   if( result != 0 )
+   FlexyDict* self = new FlexyDict;
+   // In case of a single parameter...
+   if( pcount == 1 )
    {
-      ctx->stackResult( 2, *result );
+      //... it can be a dictionary or a generic class.
+      Item& param = ctx->opcodeParam(0);
+      Class* cls;
+      void* data;
+      param.forceClassInst( cls, data );
+
+      if( cls->typeID() == FLC_CLASS_ID_DICT )
+      {
+         class Enum: public ItemDict::Enumerator
+         {
+         public:
+            Enum(FlexyDict* self):
+               m_self(self)
+            {}
+
+            virtual void operator()( const Item& key, Item& value )
+            {
+               if( key.isString() )
+               {
+                  if( key.asString()->find( " " ) == String::npos )
+                  {
+                     m_self->insert( *key.asString(), value );
+                  }
+               }
+            }
+
+         private:
+            FlexyDict* m_self;
+         };
+
+         Enum rator( self );
+         ItemDict& id = *static_cast<ItemDict*>( data );
+         id.enumerate( rator );
+      }
+      else
+      {
+         class Enum: public Class::PVEnumerator
+         {
+         public:
+            Enum(FlexyDict* self):
+               m_self(self)
+            {}
+
+            virtual void operator()( const String& data, Item& value )
+            {
+               m_self->insert( data, value );
+            }
+            
+         private:
+            FlexyDict* m_self;
+         };
+
+         Enum rator( self );
+         cls->enumeratePV( data, rator );
+      }
+
    }
-   else
-   {
-      throw new AccessError( ErrorParam( e_arracc, __LINE__, __FILE__ ) );
-   }
-}
 
-
-void FlexyClass::op_setIndex( VMContext* ctx, void* self ) const
-{
-   Item *value, *index, *dict_item;
-   ctx->operands( value, index, dict_item );
-
-   ItemDict& dict = *static_cast<ItemDict*>(self);
-   dict.insert( *index, *value );
-   ctx->stackResult(3, *value);
+   ctx->stackResult( pcount, FALCON_GC_STORE(coll, this, self ) );
 }
 
 
 void FlexyClass::op_getProperty( VMContext* ctx, void* self, const String& prop) const
 {
-   static Class* scls = Engine::instance()->stringClass();
-
-   ItemDict& dict = *static_cast<ItemDict*>(self);
-   Item key( scls, const_cast<String*>(&prop) );  // create a static string.
-   Item* result = dict.find( key );
+   FlexyDict& dict = *static_cast<FlexyDict*>(self);
+   Item* result = dict.find( prop );
 
    if( result != 0 )
    {
-      ctx->stackResult( 2, *result );
+      ctx->topData() = *result; // should be already copied by insert
    }
    else
    {
@@ -212,10 +291,11 @@ void FlexyClass::op_getProperty( VMContext* ctx, void* self, const String& prop)
 
 void FlexyClass::op_setProperty( VMContext* ctx, void* self, const String& prop ) const
 {
-   ItemDict& dict = *static_cast<ItemDict*>(self);
-   Item key = new String(prop);  // create a static string.
-   dict.insert( key, ctx->opcodeParam(1) );
-   ctx->stackResult(2, ctx->opcodeParam(1) );
+   FlexyDict& dict = *static_cast<FlexyDict*>(self);
+
+   ctx->popData();
+   Item& value = ctx->topData();
+   dict.insert( prop, value );
 }
 
 }

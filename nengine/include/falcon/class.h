@@ -284,9 +284,9 @@ public:
    virtual bool gcCheckMyself( uint32 mark );
 
    /** Callback receiving all the properties in this class. */
-   typedef Enumerator<String> PropertyEnumerator;
+   typedef Enumerator<String> PropertyEnumerator;   
 
-   /** List the properties in this class.
+   /** Emnumerate the properties in this class.
      @param self The object for which the properties have been requested.
      @param cb A callback function receiving one property at a time.
 
@@ -296,6 +296,22 @@ public:
     */
    virtual void enumerateProperties( void* self, PropertyEnumerator& cb ) const;
    
+   /** Callback receiving all the properties with their values in this class. */
+   class PVEnumerator
+   {
+   public:
+      virtual void operator()( const String& property, Item& value ) = 0;
+   };
+
+   /** Emnumerate the properties in this class with their associated values.
+     @param self The object for which the properties have been requested.
+     @param cb A callback function receiving one property at a time.
+
+     @note This base class implementation does nothing.
+    */
+   virtual void enumeratePV( void* self, PVEnumerator& cb ) const;
+
+
    /** Return true if the class provides the given property.
       @param self The object for which the properties have been requested.
 

@@ -84,6 +84,11 @@ void ClassDict::enumerateProperties( void*, PropertyEnumerator& cb ) const
    cb("len", true);
 }
 
+void ClassDict::enumeratePV( void*, Class::PVEnumerator& ) const
+{
+   // EnumerateVP doesn't normally return static methods.
+}
+
 //=======================================================================
 //
 void ClassDict::op_create( VMContext* ctx, int pcount ) const

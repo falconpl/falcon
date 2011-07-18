@@ -613,7 +613,7 @@ public:
    // Is string?
    //
    
-   bool isString( String*& str )
+   bool isString( String*& str ) const
    {
       Class* cls;
       if ( asClassInst( cls, (void*&)str ) )
@@ -623,7 +623,7 @@ public:
       return false;
    }
 
-   String* asString()
+   String* asString() const
    {
       Class* cls;
       void* udata;

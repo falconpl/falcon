@@ -339,11 +339,8 @@ public:
 
    virtual void gcMark( void* self, uint32 mark ) const;
 
-   /** List all the properties in this class.
-     @param self An instance (actually, it's unused as the class knows its properties).
-     @param cb A callback function receiving one property at a time.
-    */
    virtual void enumerateProperties( void* self, PropertyEnumerator& cb ) const;
+   virtual void enumeratePV( void* self, PVEnumerator& cb ) const;
    virtual bool hasProperty( void* self, const String& prop ) const;
    virtual void describe( void* instance, String& target, int depth = 3, int maxlen = 60 ) const;
 

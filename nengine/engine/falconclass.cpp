@@ -672,6 +672,25 @@ void FalconClass::enumerateProperties( void* , PropertyEnumerator& cb ) const
 }
 
 
+void FalconClass::enumeratePV( void* self, PVEnumerator& cb ) const
+{
+   Private::MemberMap& members = _p->m_members;
+   Private::MemberMap::iterator iter = members.begin();
+
+   FalconInstance* inst = static_cast<FalconInstance*>(self);
+
+   while( iter != members.end() )
+   {
+      Property* prop = iter->second;
+      if( prop->m_type == Property::t_prop )
+      {
+         cb( iter->first, inst->m_data[prop->m_value.id] );
+         ++iter;
+      }
+   }
+}
+
+
 bool FalconClass::hasProperty( void*, const String& propName ) const
 {
    Private::MemberMap& members = _p->m_members;

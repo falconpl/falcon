@@ -235,6 +235,17 @@ void HyperClass::enumerateProperties( void*, PropertyEnumerator& cb ) const
 }
 
 
+void HyperClass::enumeratePV( void* self, PVEnumerator& cb ) const
+{
+   Private::ParentVector::const_reverse_iterator iter = _p->m_parents.rbegin();
+   while( iter != _p->m_parents.rend() )
+   {
+      (*iter)->parent()->enumeratePV( self, cb );
+      ++ iter;
+   }
+}
+
+
 bool HyperClass::hasProperty( void*, const String& prop ) const
 {
    Private::PropMap::iterator iter = _p->m_props.find( prop );

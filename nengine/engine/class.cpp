@@ -98,6 +98,11 @@ void Class::enumerateProperties( void*, Class::PropertyEnumerator& ) const
    // normally does nothing
 }
 
+void Class::enumeratePV( void*, Class::PVEnumerator& ) const
+{
+   // normally does nothing
+}
+
 
 bool Class::hasProperty( void*, const String& ) const
 {

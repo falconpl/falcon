@@ -168,11 +168,15 @@ void ClassArray::gcMark( void* self, uint32 mark ) const
 }
 
 
-void ClassArray::enumerateProperties( void*, PropertyEnumerator& ) const
+void ClassArray::enumerateProperties( void*, Class::PropertyEnumerator& ) const
 {
    // TODO array bindings?
 }
 
+void ClassArray::enumeratePV( void*, Class::PVEnumerator& ) const
+{
+   // TODO array bindings?
+}
 
 //=======================================================================
 //
