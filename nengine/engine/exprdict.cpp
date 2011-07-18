@@ -18,6 +18,7 @@
 #include <falcon/pcode.h>
 #include <falcon/vm.h>
 #include <falcon/engine.h>
+#include <falcon/itemdict.h>
 
 #include <vector>
 
@@ -48,6 +49,7 @@ ExprDict::ExprDict():
    Expression( t_dictDecl )
 {
    _p = new Private;
+   apply = apply_;
 }
 
 
@@ -55,6 +57,7 @@ ExprDict::ExprDict( const ExprDict& other ):
    Expression(other)
 {
    _p = new Private;
+   apply = apply_;
    Private::ExprVector& oe = other._p->m_exprs;
    Private::ExprVector& mye = _p->m_exprs;
 
@@ -193,16 +196,28 @@ void ExprDict::deserialize( DataReader* )
 
 //=====================================================
 
-void ExprDict::apply_( const PStep*, VMachine*)
+void ExprDict::apply_( const PStep*ps, VMContext* ctx )
 {
-#if 0
    static Class* cd_class = Engine::instance()->dictClass();
    static Collector* collector = Engine::instance()->collector();
 
    const ExprDict* ea = static_cast<const ExprDict*>(ps);
    Private::ExprVector& mye = ea->_p->m_exprs;
-#endif
-   // TODO
+   size_t size = mye.size() * 2;
+   Item* items = ctx->opcodeParams( size );
+   Item* end =  items + size;
+
+   ItemDict* nd = new ItemDict;
+   while( items < end )
+   {
+      Item* key = items++;
+      Item* value = items++;
+      // items are not marked as copied here.
+      nd->insert( *key, *value );
+   }
+   fassert( items == end );
+
+   ctx->stackResult(size, FALCON_GC_STORE(collector, cd_class, nd) );
 }
 
 

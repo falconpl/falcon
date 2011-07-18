@@ -50,6 +50,7 @@ void apply_expr_array_decl( const Rule&, Parser& p )
    PairList* list = static_cast<PairList*>(v1->detachValue());
    if( list->m_bHasPairs )
    {
+      // It's a dictionary declaration.
       ExprDict* dict = new ExprDict;
       PairList::iterator iter = list->begin();
       while( iter != list->end() )
@@ -62,8 +63,8 @@ void apply_expr_array_decl( const Rule&, Parser& p )
    }
    else
    {
+      // it's an array declaration
       ExprArray* array = new ExprArray;
-      // it's a dictionary declaration
       PairList::iterator iter = list->begin();
       while( iter != list->end() )
       {
