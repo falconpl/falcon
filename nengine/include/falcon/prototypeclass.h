@@ -50,7 +50,7 @@ public:
    virtual ~PrototypeClass();
 
    virtual bool hasProperty( void* self, const String& prop ) const;
-
+   
    //=========================================================
    // Operators.
    //

@@ -21,6 +21,7 @@
 #include <falcon/cm/print.h>
 #include <falcon/cm/tostring.h>
 #include <falcon/cm/typeid.h>
+#include <falcon/cm/clone.h>
 
 #include <falcon/classstring.h>
 #include <falcon/classnil.h>
@@ -49,6 +50,7 @@ CoreModule::CoreModule():
       << new Ext::Max
       << new Ext::ToString
       << new Ext::TypeId
+      << new Ext::Clone
       
       << new ClassNil
       << new ClassBool

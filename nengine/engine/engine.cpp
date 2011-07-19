@@ -39,6 +39,7 @@
 #include <falcon/cm/len.h>
 #include <falcon/cm/minmax.h>
 #include <falcon/cm/typeid.h>
+#include <falcon/cm/clone.h>
 
 #include <falcon/bom.h>
 
@@ -326,6 +327,7 @@ Engine::Engine()
    addPseudoFunction(new Ext::Max);
    addPseudoFunction(new Ext::Min);
    addPseudoFunction(new Ext::TypeId);
+   addPseudoFunction(new Ext::Clone);
 
    //=====================================
    // The Core Module

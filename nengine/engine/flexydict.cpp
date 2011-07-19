@@ -37,7 +37,8 @@ FlexyDict::FlexyDict():
 FlexyDict::FlexyDict( const FlexyDict& other ):
    _p( new Private ),
    m_currentMark(other.m_currentMark),
-   m_flags(other.m_flags)
+   m_flags(other.m_flags),
+   m_base(other.m_base)
 {
    _p->m_im = other._p->m_im;
 }

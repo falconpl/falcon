@@ -51,6 +51,7 @@ add_library(falcon_engine SHARED
   core_module/print.cpp
   core_module/tostring.cpp
   core_module/typeid.cpp
+  core_module/clone.cpp
   core_module/coremodule.cpp
 
   sp/parser_arraydecl.cpp
