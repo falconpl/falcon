@@ -465,6 +465,8 @@ public:
     */
    void onStatePushed( bool isPushedState );
 
+   virtual void onStatePopped();
+
    /** Finds a symbol in one of the existing symbol table.
       \param name The name of a symbol to be searched.
       \return A symbol that can be inserted in existing expressions, or
@@ -515,6 +517,9 @@ private:
 
    // Current symbol table, precached for performance.
    SymbolTable* m_symtab;
+
+   void saveStatus( CCFrame& cf ) const;
+   void restoreStatus( const CCFrame& cf );
 
    class Private;
    Private* _p;

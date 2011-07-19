@@ -13,6 +13,9 @@
    See LICENSE file for licensing details.
 */
 
+#define SRC "engine/flexyclass.cpp"
+#include <falcon/flexydict.h>
+
 #include <falcon/flexyclass.h>
 #include <falcon/item.h>
 #include <falcon/itemdict.h>
@@ -27,122 +30,16 @@
 namespace Falcon
 {
 
-class FlexyDict
-{
-public:
-   typedef std::map<String, Item> ItemMap;
-   ItemMap m_im;
-
-   uint32 m_currentMark;
-   uint32 m_flags;
-
-   inline FlexyDict():
-      m_currentMark(0),
-      m_flags(0)
-   {}
-
-   inline FlexyDict( const FlexyDict& other ):
-      m_currentMark(other.m_currentMark),
-      m_flags(other.m_flags)
-   {
-      m_im = other.m_im;
-   }
-
-   inline ~FlexyDict()
-   {}
-
-   inline void gcMark( uint32 mark )
-   {
-      if( m_currentMark == mark )
-      {
-         return;
-      }
-
-      ItemMap::iterator pos = m_im.begin();
-      while( pos != m_im.end() )
-      {
-         const Item& value = pos->second;
-
-         if( value.isUser() && value.isGarbaged() )
-         {
-            value.asClass()->gcMark(value.asInst(), mark);
-         }
-
-         ++pos;
-      }
-   }
-
-   inline void enumerateProps( Class::PropertyEnumerator& e ) const
-   {
-      ItemMap::const_iterator pos = m_im.begin();
-      while( pos != m_im.end() )
-      {
-         const String& key = pos->first;
-         e( key, ++pos == m_im.end() );
-      }
-   }
-
-   inline void enumeratePV( Class::PVEnumerator& e )
-   {
-      ItemMap::iterator pos = m_im.begin();
-      while( pos != m_im.end() )
-      {
-         const String& key = pos->first;
-         e( key, pos->second );
-         ++pos;
-      }
-   }
-
-
-   inline bool hasProperty( const String& p ) const
-   {
-      return m_im.find(p) != m_im.end();
-   }
-
-
-   inline void describe( String& target, int depth, int maxlen ) const
-   {
-      String value;
-      ItemMap::const_iterator pos = m_im.begin();
-      while( pos != m_im.end() )
-      {
-         const String& key = pos->first;
-
-         if( target.size() > 1 )
-         {
-            target += ", ";
-         }
-
-         value.size(0);
-         pos->second.describe( value, depth-1, maxlen );
-         target += key + "=" + value;
-
-         ++pos;
-      }
-   }
-
-
-   inline Item* find( const String& value )
-   {
-      ItemMap::iterator pos = m_im.find( value );
-      if( pos != m_im.end() )
-      {
-         return &pos->second;
-      }
-      return 0;
-   }
-
-   inline void insert( const String& key, Item& value )
-   {
-      value.copied( true );
-      m_im[key] = value;
-   }
-};
-
 FlexyClass::FlexyClass():
    OverridableClass( "Flexy" )
 {
 }
+
+FlexyClass::FlexyClass( const String& name ):
+   OverridableClass( name )
+{
+}
+
 
 
 FlexyClass::~FlexyClass()
@@ -204,11 +101,11 @@ void FlexyClass::describe( void* self, String& target, int depth, int maxlen ) c
    {
       static_cast<FlexyDict*>(self)->describe( tgt, depth, maxlen );
       target.size(0);
-      target += "Flexy{" + tgt + "}";
+      target += name() + "{" + tgt + "}";
    }
    else
    {
-      tgt = "Flexy{...}";
+      tgt = name() + "{...}";
    }
 }
 
@@ -326,7 +223,8 @@ void FlexyClass::op_getProperty( VMContext* ctx, void* self, const String& prop)
    }
    else
    {
-      throw new AccessError( ErrorParam( e_arracc, __LINE__, __FILE__ ) );
+      // fall back to the starndard system
+      Class::op_getProperty( ctx, self, prop );
    }
 }
 

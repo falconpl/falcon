@@ -22,13 +22,15 @@
 #include <falcon/function.h>
 #include <falcon/operanderror.h>
 
+#include <falcon/itemid.h>
+
 #include <cstring>
 
 namespace Falcon
 {
 
 OverridableClass::OverridableClass( const String& name ):
-   Class(name)
+   Class(name, FLC_CLASS_ID_PROTO )
 {
    m_overrides = new Function*[OVERRIDE_OP_COUNT_ID];
    memset( m_overrides, 0, sizeof( Function* ) * OVERRIDE_OP_COUNT_ID );

@@ -30,7 +30,8 @@ public:
    SourceParser();
    bool parse();
 
-   void onPushState( bool isPushedState );
+   virtual void onPushState( bool isPushedState );
+   virtual void onPopState();
 
    /** Clears the source parser status. */
    virtual void reset();
@@ -48,6 +49,7 @@ public:
    Parsing::Terminal T_DotSquare;
    Parsing::Terminal T_CloseSquare;
    Parsing::Terminal T_OpenGraph;
+   Parsing::Terminal T_OpenProto;
    Parsing::Terminal T_CloseGraph;
    Parsing::Terminal T_Dot;
    Parsing::Terminal T_Arrow;
@@ -178,6 +180,7 @@ public:
 
    Parsing::Rule r_Expr_function;
    Parsing::Rule r_Expr_lambda;
+   Parsing::Rule r_Expr_proto;
 
    //================================================
    // Function
@@ -273,6 +276,9 @@ public:
    Parsing::NonTerminal LambdaParams;
    Parsing::Rule r_lambda_params;
 
+   Parsing::NonTerminal S_ProtoProp;
+   Parsing::Rule r_proto_prop;
+
    //================================================
    // States
    //
@@ -281,6 +287,7 @@ public:
    Parsing::State s_InlineFunc;
    Parsing::State s_ClassBody;
    Parsing::State s_LambdaStart;
+   Parsing::State s_ProtoDecl;
 };
 
 }

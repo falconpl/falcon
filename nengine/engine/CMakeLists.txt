@@ -66,6 +66,7 @@ add_library(falcon_engine SHARED
   sp/parser_if.cpp
   sp/parser_index.cpp
   sp/parser_list.cpp
+  sp/parser_proto.cpp
   sp/parser_rule.cpp
   sp/parser_while.cpp
   sp/parsercontext.cpp
@@ -116,10 +117,12 @@ add_library(falcon_engine SHARED
   expression.cpp
   exprfactory.cpp
   exprmath.cpp
+  exprproto.cpp
   exprsym.cpp
   exprvalue.cpp
   filestat.cpp
   flexyclass.cpp
+  flexydict.cpp
   function.cpp
   genericerror.cpp
   globalsymbol.cpp
@@ -139,6 +142,7 @@ add_library(falcon_engine SHARED
   operanderror.cpp
   overridableclass.cpp
   paramerror.cpp
+  prototypeclass.cpp
   pseudofunc.cpp
   path.cpp
   pcode.cpp

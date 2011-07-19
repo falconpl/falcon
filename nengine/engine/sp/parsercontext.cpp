@@ -67,8 +67,9 @@ class ParserContext::CCFrame
    CCFrame();
    CCFrame( FalconClass* cls, bool bIsObject, GlobalSymbol* gs );
    CCFrame( SynFunc* func, GlobalSymbol* gs );
-   CCFrame( Statement* stmt, SynTree* st );
-   CCFrame( SynTree* st );
+   CCFrame( Statement* stmt );
+
+   void setup();
 
 public:
    friend class ParserContext;
@@ -79,57 +80,73 @@ public:
    /** Type of frame */
    t_type m_type;
 
-   /** Syntree where to add the incoming children */
-   SynTree* m_branch;
-
    /** True if a parser state was pushed at this frame */
    bool m_bStatePushed;
 
    GlobalSymbol* m_sym;
+
+   //===================================================
+
+   // Pre-cached syntree for performance.
+   SynTree* m_st;
+
+   // Current function, precached for performance.
+   Statement* m_cstatement;
+
+   // Current function, precached for performance.
+   SynFunc * m_cfunc;
+
+   // Current class, precached for performance.
+   FalconClass * m_cclass;
+
+   // Current symbol table, precached for performance.
+   SymbolTable* m_symtab;
 };
 
 ParserContext::CCFrame::CCFrame():
-   m_type( t_none_type )
+   m_type( t_none_type ),
+   m_bStatePushed( false ),
+   m_sym(0)
 {
-
+   setup();
 }
 
 ParserContext::CCFrame::CCFrame( FalconClass* cls, bool bIsObject, GlobalSymbol* gs ):
    m_type( bIsObject ? t_object_type : t_class_type ),
-   m_branch( 0 ),
    m_bStatePushed( false ),
    m_sym(gs)
 {
    m_elem.cls = cls;
+   setup();
 }
 
 ParserContext::CCFrame::CCFrame( SynFunc* func, GlobalSymbol* gs ):
    m_type( t_func_type ),
-   m_branch( &func->syntree() ),
    m_bStatePushed( false ),
    m_sym(gs)
 {
    m_elem.func = func;
+   setup();
 }
 
 
-ParserContext::CCFrame::CCFrame( Statement* stmt, SynTree* st ):
+ParserContext::CCFrame::CCFrame( Statement* stmt ):
    m_type( t_stmt_type ),
-   m_branch( st ),
-   m_bStatePushed( false )
+   m_bStatePushed( false ),
+   m_sym(0)
 {
    m_elem.stmt = stmt;
+   setup();
 }
 
-ParserContext::CCFrame::CCFrame( SynTree* st ):
-   m_type( t_base_type ),
-   m_branch( st ),
-   m_bStatePushed( false )
+void ParserContext::CCFrame::setup()
 {
-   m_elem.raw = 0;
+   m_st = 0;
+   m_cstatement = 0;
+   m_cfunc = 0;
+   m_cclass = 0;
+   m_symtab = 0;
 }
-
-
 //==================================================================
 // Main parser context class
 //
@@ -170,18 +187,49 @@ ParserContext::~ParserContext()
    delete _p;
 }
 
+
+void ParserContext::saveStatus( CCFrame& cf ) const
+{
+   cf.m_st = m_st;
+   cf.m_cstatement = m_cstatement;
+   cf.m_cfunc = m_cfunc;
+   cf.m_cclass = m_cclass;
+   cf.m_symtab = m_symtab;
+}
+
+
+void ParserContext::restoreStatus( const CCFrame& cf )
+{
+   m_st = cf.m_st;
+   m_cstatement = cf.m_cstatement;
+   m_cfunc = cf.m_cfunc;
+   m_cclass = cf.m_cclass;
+   m_symtab = cf.m_symtab;
+}
+
+
 void ParserContext::openMain( SynTree* st )
 {
-   _p->m_frames.push_back( CCFrame( st ) );
+   _p->m_frames.push_back( CCFrame() );
    m_st = st;
+   saveStatus( _p->m_frames.back() );
 }
 
 void ParserContext::onStatePushed( bool isPushedState )
 {
    fassert( ! _p->m_frames.empty() );
-   _p->m_frames.back().m_bStatePushed = isPushedState;
+   if( isPushedState )
+   {
+      _p->m_frames.back().m_bStatePushed = true;
+   }
    _p->m_unknown.push_back(Private::SymbolMap());
 }
+
+void ParserContext::onStatePopped()
+{
+   _p->m_unknown.pop_back();
+}
+
 
 
 Symbol* ParserContext::addVariable( const String& variable )
@@ -451,14 +499,16 @@ void ParserContext::openBlock( Statement* parent, SynTree* branch )
 {
    TRACE("ParserContext::openBlock type %d", (int) parent->type() );
 
-   bool result = checkSymbols();
+   saveStatus( _p->m_frames.back() );
+
+   bool result = parent->discardable() ? true : checkSymbols();
 
    // if the pareser is not interactive, append the statement even after undefined errors.
    if( result || ! m_parser->interactive() )
    {
+      _p->m_frames.push_back( CCFrame(parent) );
       m_cstatement = parent;
       m_st = branch;
-      _p->m_frames.push_back( CCFrame(parent, branch) );
    }
    else
    {
@@ -478,7 +528,6 @@ SynTree* ParserContext::changeBranch()
    if( result || ! m_parser->interactive() )
    {
       m_st = new SynTree;
-      _p->m_frames.back().m_branch = m_st;
       return m_st;
    }
    else
@@ -492,6 +541,9 @@ SynTree* ParserContext::changeBranch()
 void ParserContext::openFunc( SynFunc *func, GlobalSymbol *gs )
 {
    TRACE("ParserContext::openFunc -- %s", func->name().c_ize() );
+
+   saveStatus( _p->m_frames.back() );
+
    m_cfunc = func;
    m_st = &func->syntree();
    m_cstatement = 0;
@@ -506,6 +558,9 @@ void ParserContext::openClass( Class* cls, bool bIsObject, GlobalSymbol *gs )
 {
    TRACE("ParserContext::openClass -- depth %d %s%s", (int)_p->m_frames.size() + 1,
             cls->name().c_ize(), bIsObject ? "":" (object)" );
+
+   saveStatus( _p->m_frames.back() );
+
    // we know we're compiling source classes.
    FalconClass* fcls = static_cast<FalconClass*>(cls);
 
@@ -533,41 +588,14 @@ void ParserContext::closeContext()
    if( bframe.m_bStatePushed )
    {
       m_parser->popState();
-      _p->m_unknown.pop_back();
    }
 
-   m_st = _p->m_frames.back().m_branch;
+   // restore our previous status
+   restoreStatus(_p->m_frames.back());
+
    // updating the syntactic tree
    Private::FrameVector::const_reverse_iterator riter = _p->m_frames.rbegin();
-   m_symtab = 0; // if we don't find a parent context, the symtab is 0
-   while( riter != _p->m_frames.rend() )
-   {
-      const CCFrame& curFrame = *riter;
-      switch( curFrame.m_type )
-      {
-         case CCFrame::t_object_type:
-         case CCFrame::t_class_type:
-            // Once closed the init method, the class has no symbol table.
-            m_symtab = 0;
-            // and of course, we have no function
-            m_cfunc = 0;
-            // and we know we don't have anything else to set.
-            riter = _p->m_frames.rend(); // we're done, froce break;
-            break;
-
-         case CCFrame::t_func_type:
-            m_symtab = &curFrame.m_elem.func->symbols();
-            riter = _p->m_frames.rend(); // we're done, froce break;
-            break;
-
-         default:
-            // keep the current symtab.
-            //m_symtab = m_symtab; // to make compilers happy
-            // continue the loop
-            riter++;
-      }
-   }
-
+  
    // notify the new item.
    switch( bframe.m_type )
    {
@@ -579,47 +607,11 @@ void ParserContext::closeContext()
       // if it's a class...
       case CCFrame::t_object_type:
       case CCFrame::t_class_type:
-         {
-            Private::FrameVector::const_reverse_iterator riter = _p->m_frames.rbegin();
-            // find the new topmost class
-            m_cclass = 0;
-            while( riter != _p->m_frames.rend() )
-            {
-               if ( riter->m_type == CCFrame::t_class_type || riter->m_type == CCFrame::t_object_type )
-               {
-                  m_cclass = riter->m_elem.cls;
-                  break;
-               }
-
-               ++riter;
-            }
-         }
+         // TODO: allow nested classes.
          onNewClass( bframe.m_elem.cls, bframe.m_type == CCFrame::t_object_type, bframe.m_sym );
          break;
 
       case CCFrame::t_func_type:
-         {
-            Private::FrameVector::const_reverse_iterator riter = _p->m_frames.rbegin();
-            // find the new topmost class
-            m_cfunc = 0;
-            while( riter != _p->m_frames.rend() )
-            {
-               if( riter->m_type == CCFrame::t_class_type || riter->m_type == CCFrame::t_object_type )
-               {
-                  // classes before functions
-                  break;
-               }
-
-               if ( riter->m_type == CCFrame::t_func_type  )
-               {
-                  m_cfunc = riter->m_elem.func;
-                  break;
-               }
-
-               ++riter;
-            }
-         }
-      
          // is this a method?
          if ( m_cclass != 0 )
          {
@@ -632,30 +624,14 @@ void ParserContext::closeContext()
          break;
 
       case CCFrame::t_stmt_type:
+         if( ! bframe.m_elem.stmt->discardable() )
          {
-            Private::FrameVector::const_reverse_iterator riter = _p->m_frames.rbegin();
-            // find the new topmost class
-            m_cstatement = 0;
-            while( riter != _p->m_frames.rend() )
-            {
-               if( riter->m_type == CCFrame::t_class_type ||
-                   riter->m_type == CCFrame::t_object_type ||
-                   riter->m_type == CCFrame::t_func_type )
-               {
-                  // classes or functions before block statements.
-                  break;
-               }
-
-               if ( riter->m_type != CCFrame::t_func_type  )
-               {
-                  m_cstatement = riter->m_elem.stmt;
-                  break;
-               }
-
-               ++riter;
-            }
+            addStatement( bframe.m_elem.stmt ); // will also do onNewStatement
          }
-         addStatement( bframe.m_elem.stmt ); // will also do onNewStatement
+         else
+         {
+            delete bframe.m_elem.stmt;
+         }
          break;
    }
 }

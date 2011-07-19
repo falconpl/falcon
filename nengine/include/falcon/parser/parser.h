@@ -95,6 +95,7 @@ public:
     */
 
    virtual void onPushState( bool isPushedState )=0;
+   virtual void onPopState()=0;
 
    /** Re-enables previous state.
    */

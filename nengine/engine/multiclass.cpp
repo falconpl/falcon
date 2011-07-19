@@ -495,7 +495,7 @@ void MultiClass::op_getProperty( VMContext* ctx, void* self, const String& propN
       }
       else
       {
-         throw new AccessError( ErrorParam(e_prop_acc, __LINE__, SRC ).extra(propName) );
+         Class::op_getProperty( ctx, self, propName );
       }
    }
 }

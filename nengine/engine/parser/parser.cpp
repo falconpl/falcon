@@ -186,6 +186,8 @@ void Parser::popState()
    {
       func( cbdata );
    }
+
+   onPopState();
 }
 
 

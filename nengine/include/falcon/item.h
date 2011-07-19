@@ -585,6 +585,11 @@ public:
       return false;
    }
 
+   ItemArray* asArray() const
+   {
+      return (ItemArray*) asInst();
+   }
+
    
    /** Gets the class and instance from any item.
      \param cls The class of this deep or user item.

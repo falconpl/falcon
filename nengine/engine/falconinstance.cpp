@@ -46,12 +46,12 @@ FalconInstance::~FalconInstance()
 {
 }
 
-void FalconInstance::getMember( const String& name, Item& target ) const
+bool FalconInstance::getMember( const String& name, Item& target ) const
 {   
    const FalconClass::Property* prop = m_origin->getProperty( name );
    if( prop == 0 )
    {
-      throw new AccessError( ErrorParam( e_prop_acc, __LINE__, __FILE__ ).extra( name ) );
+      return false;
    }
 
    switch( prop->m_type )
@@ -75,6 +75,8 @@ void FalconInstance::getMember( const String& name, Item& target ) const
          //TODO
          break;
    }
+
+   return true;
 }
 
 void FalconInstance::setProperty( const String& name, const Item& value )

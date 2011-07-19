@@ -34,6 +34,7 @@
 #include <falcon/sp/parser_if.h>
 #include <falcon/sp/parser_index.h>
 #include <falcon/sp/parser_list.h>
+#include <falcon/sp/parser_proto.h>
 #include <falcon/sp/parser_rule.h>
 #include <falcon/sp/parser_while.h>
 
@@ -61,6 +62,7 @@ SourceParser::SourceParser():
    T_DotSquare(".["),
    T_CloseSquare("]"),
    T_OpenGraph("{"),
+   T_OpenProto("p{"),
    T_CloseGraph("}"),
 
    T_Dot("."),
@@ -209,7 +211,8 @@ SourceParser::SourceParser():
    Expr<< (r_Expr_Atom << "Expr_atom" << apply_expr_atom << Atom);
    Expr<< (r_Expr_function << "Expr_func" << apply_expr_func << T_function << T_Openpar << ListSymbol << T_Closepar << T_EOL);
    // Start of lambda expressions.
-   Expr<< (r_Expr_lambda << "Expr_lambda" << apply_expr_lambda << T_OpenGraph  );
+   Expr<< (r_Expr_lambda << "Expr_lambda" << apply_expr_lambda << T_OpenGraph );
+   Expr<< (r_Expr_proto << "Expr_proto" << apply_expr_proto << T_OpenProto );
 
    S_Function << "Function"
       /* This requires a bit of work << (r_function_short << "Function short" << apply_function_short
@@ -314,26 +317,16 @@ SourceParser::SourceParser():
    //
 
    LambdaParams << "LambdaParams";
-   LambdaParams << ( r_lambda_params << "Params in lambda" << apply_lambda_params <<
-                        ListSymbol << T_Arrow );
+   LambdaParams << ( r_lambda_params << "Params in lambda" << apply_lambda_params 
+                        << ListSymbol << T_Arrow );
 
-   /*
-   LambdaProps << "LambdaProps";
-   LambdaParams << ( r_lambda_props << "Props in lambda" << apply_lambda_props <<
-                        ListProps << T_CloseGraph );
+   //==========================================================================
+   // prototype
+   //
+   S_ProtoProp << "S_ProtoProp";
+   S_ProtoProp << ( r_proto_prop << "proto_prop" << apply_proto_prop
+                        << T_Name << T_EqSign << Expr << T_EOL );
 
-   ListProps << "ListProps";
-   ListProps << ( r_list_props_next << "list_props_next" << apply_list_props_next <<
-                        ListProps << T_EOL << S_LambdaPropDecl );
-   ListProps << ( r_list_props_first << "list_props_first" << apply_list_props_first <<
-                        S_LambdaPropDecl );
-   ListProps << ( r_list_props_epmty << "r_list_props_epmty" << apply_list_props_empty <<
-                        S_LambdaPropDecl );
-
-   S_LambdaPropDecl << "LambdaPropDecl";
-   S_PropDecl << ( r_lambda_pdecl << "lambdapropdecl_expr" << apply_lambda_pdecl
-                               << T_Name << T_EqSign << Expr );
-   */
    //==========================================================================
    //State declarations
    //
@@ -377,19 +370,33 @@ SourceParser::SourceParser():
 
    s_LambdaStart << "LambdaStart"
       << LambdaParams
-      //<< LambdaProps
+      << S_EmptyLine
+      ;
+   
+   s_ProtoDecl << "ProtoDecl"
+      << S_ProtoProp
+      << S_EmptyLine
+      << S_SmallEnd
       ;
 
    addState( s_Main );
    addState( s_InlineFunc );
    addState( s_ClassBody );
    addState( s_LambdaStart );
+   addState( s_ProtoDecl );
 }
 
 void SourceParser::onPushState( bool isPushedState )
 {
    ParserContext* pc = static_cast<ParserContext*>(m_ctx);
    pc->onStatePushed( isPushedState );
+}
+
+
+void SourceParser::onPopState()
+{
+   ParserContext* pc = static_cast<ParserContext*>(m_ctx);
+   pc->onStatePopped();
 }
 
 bool SourceParser::parse()

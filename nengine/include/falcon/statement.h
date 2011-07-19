@@ -49,11 +49,14 @@ public:
    Statement( statement_t type, int32 line=0, int32 chr=0 ):
       PStep( line, chr ),
       m_step0(0), m_step1(0), m_step2(0), m_step3(0),
+      m_discardable(false),
       m_type(type)
    {}
 
    inline virtual ~Statement() {}
    inline statement_t type() const { return m_type; }
+   /** Subclasses can set this to true to be discareded during parsing.*/
+   inline bool discardable() const { return m_discardable; }
 
 protected:
    /** Steps being prepared by the statement */
@@ -62,7 +65,8 @@ protected:
    PStep* m_step2;
    PStep* m_step3;
 
-
+   bool m_discardable;
+   
    inline void prepare( VMContext* ctx ) const
    {
       if ( m_step0 )

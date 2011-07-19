@@ -782,7 +782,10 @@ void FalconClass::op_getProperty( VMContext* ctx, void* self, const String& prop
    
    if( ! overrideGetProperty( ctx, self, propName ) )
    {
-      inst->getMember( propName, ctx->topData() );
+      if( ! inst->getMember( propName, ctx->topData() ) )
+      {
+         Class::op_getProperty( ctx, self, propName );
+      }
    }
 }
 

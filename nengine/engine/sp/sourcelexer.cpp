@@ -578,6 +578,15 @@ Parsing::TokenInstance* SourceLexer::nextToken()
          case state_name:
             if (isTokenLimit(chr))
             {
+               // special cases
+               if( m_text == "p" && chr == '{' )
+               {
+                  m_chr++;
+                  resetState();
+                  m_text.size(0);
+                  return parser->T_OpenProto.makeInstance( m_sline, m_schr );
+               }
+
                unget(chr);
                resetState();
                return checkWord();
@@ -605,7 +614,7 @@ Parsing::TokenInstance* SourceLexer::nextToken()
                      resetState();
                      return parser->T_DotPar.makeInstance(m_sline, m_schr );
                   }
-               }
+               }               
 
                unget(chr);
                // reset the state, but don't ignore previous had-operator
@@ -872,6 +881,7 @@ Parsing::TokenInstance* SourceLexer::checkOperator()
             m_hadOperator = false;
             return parser->T_PlusPlus.makeInstance(m_sline, m_schr);
          }
+         if( m_text == "**" ) return parser->T_Power.makeInstance(m_sline, m_schr);
          if( m_text == "**" ) return parser->T_Power.makeInstance(m_sline, m_schr);
          if( m_text == "==" ) return parser->T_DblEq.makeInstance(m_sline, m_schr);
          if( m_text == "!=" ) return parser->T_NotEq.makeInstance(m_sline, m_schr);

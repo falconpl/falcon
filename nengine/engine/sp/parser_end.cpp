@@ -63,6 +63,7 @@ void apply_end_small( const Rule&, Parser& p )
    //Statement* current = st->currentStmt();
    if( !st->currentStmt() && !st->currentFunc() && !st->currentClass())
    {
+      p.simplify(1);
       // can we close a state?
       p.popState();
 

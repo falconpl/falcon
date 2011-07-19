@@ -193,7 +193,7 @@ void apply_expr_lambda(const Rule&, Parser& p)
 {
    // T_OpenGraph
    p.simplify(1);
-   p.pushState( "LambdaStart" );
+   p.pushState( "LambdaStart", false );
 }
 
 
