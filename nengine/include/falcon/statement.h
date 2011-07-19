@@ -155,6 +155,18 @@ public:
     \return The held expression, or 0 if it was not set.
     */
    Expression* expr() const { return m_expr; }
+
+   /** Removes the expression stored in this AutoExpression.
+    \return The held expression, or 0 if it was not set.
+
+    This method can be used when the parser generated an autoexpression
+    that is actually used elsewhere.
+    */
+   Expression* detachExpr() {
+      Expression* expr = m_expr;
+      m_expr = 0;
+      return expr;
+   }
    
 private:
    // apply is the same as PCODE, but it also checks ND requests.

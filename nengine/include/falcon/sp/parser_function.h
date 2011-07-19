@@ -31,6 +31,8 @@ using namespace Parsing;
 void apply_function(const Rule& r,Parser& p);
 void apply_expr_func(const Rule&, Parser& p);
 void apply_return(const Rule&, Parser& p);
+void apply_expr_lambda(const Rule&, Parser& p);
+void apply_lambda_params(const Rule&, Parser& p);
 
 }
 

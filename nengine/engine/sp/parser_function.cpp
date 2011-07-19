@@ -125,6 +125,24 @@ void on_close_function( void* )
    */
 }
 
+void on_close_lambda( void* thing )
+{
+   // TODO: name the function
+
+   // ensure single expressions to be considered returns.
+   SourceParser& sp = *static_cast<SourceParser*>(thing);
+   ParserContext* ctx = static_cast<ParserContext*>(sp.context());
+   SynFunc* func=ctx->currentFunc();
+
+   int size = func->syntree().size();
+   if ( size == 1 && func->syntree().at(0)->type() == Statement::autoexpr_t )
+   {
+      StmtAutoexpr* aexpr = static_cast<StmtAutoexpr*>( func->syntree().at(0) );
+      StmtReturn* ret = new StmtReturn( aexpr->detachExpr() );
+      func->syntree().set(0, ret);
+   }
+}
+
 void apply_expr_func(const Rule&, Parser& p)
 {
    SourceParser& sp = *static_cast<SourceParser*>(&p);
@@ -169,6 +187,49 @@ void apply_return(const Rule&, Parser& p)
 
    p.simplify(3);
 }
+
+
+void apply_expr_lambda(const Rule&, Parser& p)
+{
+   // T_OpenGraph
+   p.simplify(1);
+   p.pushState( "LambdaStart" );
+}
+
+
+void apply_lambda_params(const Rule&, Parser& p)
+{
+   // ListSymbol << T_Arrow
+   SourceParser& sp = static_cast<SourceParser&>(p);
+
+   ParserContext* ctx = static_cast<ParserContext*>(p.context());
+   TokenInstance* lsym = sp.getNextToken();
+
+
+   // and add the function state.
+   SynFunc* func=new SynFunc("anonymous", 0, lsym->line());
+   NameList* list=static_cast<NameList*>(lsym->asData());
+
+   for(NameList::const_iterator it=list->begin(),end=list->end();it!=end;++it)
+   {
+      func->addParam(*it);
+   }
+
+   TokenInstance* ti = new TokenInstance(lsym->line(),lsym->chr(), sp.Expr);
+   Expression* expr = new ExprValue(Item(func));
+   ti->setValue(expr,expr_deletor);
+
+   // remove this stuff from the stack
+   p.simplify(2,ti);
+   // remove the lambdastart state
+   p.popState();
+
+   // open a new main state for the function
+   ctx->openFunc(func);
+   p.pushState( "InlineFunc", on_close_lambda , &p );
+}
+
+
 
 }
 

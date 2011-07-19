@@ -32,7 +32,8 @@ namespace Falcon {
 namespace Parsing {
 
 Parser::Private::Private():
-   m_nextTokenPos(0)
+   m_nextTokenPos(0),
+   m_stateFrameID(0)
 {
 }
 
@@ -130,6 +131,7 @@ void Parser::pushState( const String& name, bool isPushedState )
       _p->m_tokenStack = &bf.m_tokenStack;
       _p->m_pframes = &bf.m_pframes;
       _p->m_pErrorFrames = &bf.m_pErrorFrames;
+      bf.m_id = ++_p->m_stateFrameID;
       onPushState( isPushedState );
    }
    else
@@ -944,14 +946,16 @@ void Parser::applyCurrentRule()
    Private::ParseFrame& frame = stack->back();
    fassert( ! frame.m_path.empty() );
    const Rule* currentRule = frame.m_path.back();
-   size_t statesDepth=_p->m_lStates.size();
+   int frameId = _p->m_lStates.back().m_id;
 
    resetNextToken();
    TRACE2( "Applying rule %s", currentRule->name().c_ize() );
    
    currentRule->apply(*this);
-   if(_p->m_lStates.size()<statesDepth)
+   // did we changed state?
+   if( frameId != _p->m_lStates.back().m_id )
    {
+      TRACE2( "Rule %s returned on state change", currentRule->name().c_ize() );
       return;
    }
 

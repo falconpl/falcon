@@ -93,10 +93,12 @@ public:
       }
    }
 
+
    inline bool hasProperty( const String& p ) const
    {
       return m_im.find(p) != m_im.end();
    }
+
 
    inline void describe( String& target, int depth, int maxlen ) const
    {
@@ -118,6 +120,7 @@ public:
          ++pos;
       }
    }
+
 
    inline Item* find( const String& value )
    {
@@ -216,7 +219,7 @@ void FlexyClass::op_create( VMContext* ctx, int32 pcount ) const
 
    FlexyDict* self = new FlexyDict;
    // In case of a single parameter...
-   if( pcount == 1 )
+   if( pcount >= 1 )
    {
       //... it can be a dictionary or a generic class.
       Item& param = ctx->opcodeParam(0);
@@ -308,7 +311,7 @@ void FlexyClass::op_create( VMContext* ctx, int32 pcount ) const
 
    }
 
-   ctx->stackResult( pcount, FALCON_GC_STORE(coll, this, self ) );
+   ctx->stackResult( pcount+1, FALCON_GC_STORE(coll, this, self ) );
 }
 
 

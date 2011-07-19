@@ -94,11 +94,13 @@ class Parser::Private
 
       Parser::StateFrameFunc m_cbfunc;
       void* m_cbdata;
+      int m_id;
       
       StateFrame( State* s ):
          m_state( s ),
          m_cbfunc( 0 ),
-         m_cbdata( 0 )
+         m_cbdata( 0 ),
+         m_id(0)
       {
       }
    };
@@ -106,6 +108,7 @@ class Parser::Private
    // Currently active parsing states.
    typedef std::list<StateFrame> StateStack;
    StateStack m_lStates;
+   int m_stateFrameID;
 
 
    Private();

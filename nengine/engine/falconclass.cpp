@@ -771,7 +771,7 @@ void FalconClass::op_create( VMContext* ctx, int32 pcount ) const
    else
    {
       // nothing to init; just send the self item in the proper stack return
-      ctx->stackResult( pcount, FALCON_GC_STORE( coll, this, inst ) );
+      ctx->stackResult( pcount+1, FALCON_GC_STORE( coll, this, inst ) );
    }
 }
 

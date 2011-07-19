@@ -136,7 +136,10 @@ Parsing::TokenInstance* SourceLexer::nextToken()
                case '[': m_chr++; return parser->T_OpenSquare.makeInstance(m_line,m_chr); break;
                case ']': m_chr++; resetState(); return parser->T_CloseSquare.makeInstance(m_line,m_chr); break;
                case '{': m_chr++; return parser->T_OpenGraph.makeInstance(m_line,m_chr); break;
-               case '}': m_chr++; resetState(); return parser->T_CloseGraph.makeInstance(m_line,m_chr); break;
+               case '}': m_chr++;
+                  resetState();
+                  m_nextToken = parser->T_end.makeInstance(m_line,m_chr);
+                  return parser->T_EOL.makeInstance(m_line,m_chr);
 
                case '/': previousState = m_state; m_state = state_enterComment; break;
 

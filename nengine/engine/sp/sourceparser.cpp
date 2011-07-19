@@ -208,7 +208,8 @@ SourceParser::SourceParser():
    Expr<< (r_Expr_neg2   << "Expr_neg2"   << apply_expr_neg << T_UnaryMinus << Expr );
    Expr<< (r_Expr_Atom << "Expr_atom" << apply_expr_atom << Atom);
    Expr<< (r_Expr_function << "Expr_func" << apply_expr_func << T_function << T_Openpar << ListSymbol << T_Closepar << T_EOL);
-      //Expr << (r_Expr_lambda << "Expr_lambda" << apply_expr_lambda << T_OpenGraph << ListSymbol << T_Arrow  );
+   // Start of lambda expressions.
+   Expr<< (r_Expr_lambda << "Expr_lambda" << apply_expr_lambda << T_OpenGraph  );
 
    S_Function << "Function"
       /* This requires a bit of work << (r_function_short << "Function short" << apply_function_short
@@ -307,7 +308,32 @@ SourceParser::SourceParser():
 
    S_InitDecl << (r_init << "Init block" << apply_init_expr
                                << T_init << T_EOL );
-   
+
+   //==========================================================================
+   // Lambdas
+   //
+
+   LambdaParams << "LambdaParams";
+   LambdaParams << ( r_lambda_params << "Params in lambda" << apply_lambda_params <<
+                        ListSymbol << T_Arrow );
+
+   /*
+   LambdaProps << "LambdaProps";
+   LambdaParams << ( r_lambda_props << "Props in lambda" << apply_lambda_props <<
+                        ListProps << T_CloseGraph );
+
+   ListProps << "ListProps";
+   ListProps << ( r_list_props_next << "list_props_next" << apply_list_props_next <<
+                        ListProps << T_EOL << S_LambdaPropDecl );
+   ListProps << ( r_list_props_first << "list_props_first" << apply_list_props_first <<
+                        S_LambdaPropDecl );
+   ListProps << ( r_list_props_epmty << "r_list_props_epmty" << apply_list_props_empty <<
+                        S_LambdaPropDecl );
+
+   S_LambdaPropDecl << "LambdaPropDecl";
+   S_PropDecl << ( r_lambda_pdecl << "lambdapropdecl_expr" << apply_lambda_pdecl
+                               << T_Name << T_EqSign << Expr );
+   */
    //==========================================================================
    //State declarations
    //
@@ -349,10 +375,15 @@ SourceParser::SourceParser():
       << S_EmptyLine
       ;
 
+   s_LambdaStart << "LambdaStart"
+      << LambdaParams
+      //<< LambdaProps
+      ;
 
    addState( s_Main );
    addState( s_InlineFunc );
    addState( s_ClassBody );
+   addState( s_LambdaStart );
 }
 
 void SourceParser::onPushState( bool isPushedState )

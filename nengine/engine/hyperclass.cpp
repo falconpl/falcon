@@ -19,14 +19,13 @@
 #include <falcon/hyperclass.h>
 #include <falcon/itemarray.h>
 #include <falcon/function.h>
-#include <falcon/ov_names.h>
-#include <falcon/accesserror.h>
-#include <falcon/operanderror.h>
 #include <falcon/vmcontext.h>
 #include <falcon/fassert.h>
 #include <falcon/trace.h>
 #include <falcon/inheritance.h>
 #include <falcon/pcode.h>
+
+#include "multiclass_private.h"
 
 #include <map>
 #include <vector>
@@ -35,12 +34,10 @@
 namespace Falcon
 {
 
-class HyperClass::Private
+class HyperClass::Private: public MultiClass::Private_base
 {
 public:
-   typedef std::map<String, Property> PropMap;
-   PropMap m_props;
-
+   
    typedef std::vector<Inheritance*> ParentVector;
    ParentVector m_parents;
 
@@ -55,13 +52,11 @@ public:
          ++piter;
       }
    }
-
 };
 
 
 HyperClass::HyperClass( const String& name, Class* master ):
-   Class(name),
-   _p( new Private ),
+   MultiClass(name),   
    m_master( master ),
    m_nParents(0),
    m_constructor(0),
@@ -75,15 +70,14 @@ HyperClass::HyperClass( const String& name, Class* master ):
    m_invokeMasterStep(this),
    m_createEmptyNext(this)
 {
-   m_overrides = new Property*[OVERRIDE_OP_COUNT];
-   memset( m_overrides, 0, OVERRIDE_OP_COUNT* sizeof( Property* ));
-   addParent( new Inheritance( master->name(), master ) );
+   _p = new Private;
+   _p_base = _p;
+   addParent( new Inheritance( name, master ) );
 }
 
 
 HyperClass::~HyperClass()
 {
-   delete[] m_overrides;
    delete m_master;
    delete _p;
 }
@@ -100,7 +94,7 @@ bool HyperClass::addParent( Inheritance* cls )
    }
 
    // Is the class name shaded?
-   if( _p->m_props.find(parent->name()) != _p->m_props.end() )
+   if( _p->m_props.find(cls->className()) != _p->m_props.end() )
    {
       return false;
    }
@@ -109,7 +103,7 @@ bool HyperClass::addParent( Inheritance* cls )
    if( m_nParents > 0 )
    {
       // ... and it must not appare in the inheritance properties.
-      _p->m_props[parent->name()] = Property( parent, -m_nParents );
+      _p->m_props[cls->className()] = Property( parent, -m_nParents );
    }
 
    addParentProperties( parent );
@@ -171,7 +165,8 @@ void HyperClass::addParentProperty( Class* cls, const String& pname )
 {
    if( _p->m_props.find( pname ) == _p->m_props.end() )
    {
-      _p->m_props[pname] = Property( cls, m_nParents );
+      Property &p = (_p->m_props[pname] = Property( cls, m_nParents ));
+      checkAddOverride( pname, &p );
    }
    // else, the property is masked by an higher priority class.
 }
@@ -290,21 +285,6 @@ void HyperClass::describe( void* instance, String& target, int depth, int maxlen
 // Operators.
 //
 
-inline bool HyperClass::get_override( void* self, int op, Class*& cls, void*& udata ) const
-{
-   Property* override = m_overrides[op];
-
-   if( override != 0 && override->m_itemId >= 0 )
-   {
-      ItemArray& data = *static_cast<ItemArray*>(self);
-      data[override->m_itemId].forceClassInst(cls, udata);
-      return true;
-   }
-
-   return false;
-}
-
-
 void HyperClass::op_create( VMContext* ctx, int32 pcount ) const
 {
    Collector* coll = Engine::instance()->collector();
@@ -325,6 +305,8 @@ void HyperClass::op_create( VMContext* ctx, int32 pcount ) const
       // now we add a finalization step.
       ctx->pushCode( &m_finishCreateStep );
 
+      ctx->pushData(Item()); // create a space used for op_create() unary constance
+      
       // repeat the data as local for the master initialization.
       for( int i = 0; i < pcount; ++i )
       {
@@ -364,6 +346,7 @@ void HyperClass::op_create( VMContext* ctx, int32 pcount ) const
       // push the required data:
       ctx->pushData(FALCON_GC_STORE( coll, this, mData ));
       ctx->pushData( (int64) pcount );
+      ctx->pushData(Item()); // create a space used for op_create() unary constance
       
       // now we add a finalization step.
       ctx->pushCode( &m_finishInvokeStep );
@@ -375,7 +358,7 @@ void HyperClass::op_create( VMContext* ctx, int32 pcount ) const
       if( _p->m_parents.size() > 1 )
       {
          ctx->pushCode( &m_createEmptyNext );
-         ctx->currentCode().m_seqId = _p->m_parents.size() - 2;
+         ctx->currentCode().m_seqId = _p->m_parents.size() - 1;
          // now invoke creation.
          _p->m_parents.back()->parent()->op_create( ctx, 0 );
       }
@@ -384,496 +367,6 @@ void HyperClass::op_create( VMContext* ctx, int32 pcount ) const
 }
 
 
-void HyperClass::op_neg( VMContext* ctx, void* self ) const
-{
-   Class* cls;
-   void* udata;
-
-   if( get_override(  self, OVERRIDE_OP_NEG_ID, cls, udata ) )
-   {
-      cls->op_neg( ctx, udata );
-   }
-   else
-   {
-      throw new OperandError( ErrorParam(e_invop, __LINE__, SRC ).extra(OVERRIDE_OP_NEG) );
-   }
-}
-
-
-void HyperClass::op_add( VMContext* ctx, void* self ) const
-{
-   Class* cls;
-   void* udata;
-
-   if( get_override( self, OVERRIDE_OP_ADD_ID, cls, udata ) )
-   {
-      cls->op_add( ctx, udata );
-   }
-   else
-   {
-      throw new OperandError( ErrorParam(e_invop, __LINE__, SRC ).extra(OVERRIDE_OP_ADD) );
-   }
-}
-
-
-void HyperClass::op_sub( VMContext* ctx, void* self ) const
-{
-   Class* cls;
-   void* udata;
-
-   if( get_override( self, OVERRIDE_OP_SUB_ID, cls, udata ) )
-   {
-      cls->op_sub( ctx, udata );
-   }
-   else
-   {
-      throw new OperandError( ErrorParam(e_invop, __LINE__, SRC ).extra(OVERRIDE_OP_SUB) );
-   }
-}
-
-
-void HyperClass::op_mul( VMContext* ctx, void* self ) const
-{
-   Class* cls;
-   void* udata;
-
-   if( get_override( self, OVERRIDE_OP_MUL_ID, cls, udata ) )
-   {
-      cls->op_mul( ctx, udata );
-   }
-   else
-   {
-      throw new OperandError( ErrorParam(e_invop, __LINE__, SRC ).extra(OVERRIDE_OP_MUL) );
-   }
-}
-
-
-void HyperClass::op_div( VMContext* ctx, void* self ) const
-{
-   Class* cls;
-   void* udata;
-
-   if( get_override( self, OVERRIDE_OP_DIV_ID, cls, udata ) )
-   {
-      cls->op_div( ctx, udata );
-   }
-   else
-   {
-      throw new OperandError( ErrorParam(e_invop, __LINE__, SRC ).extra(OVERRIDE_OP_DIV) );
-   }
-}
-
-void HyperClass::op_mod( VMContext* ctx, void* self ) const
-{
-   Class* cls;
-   void* udata;
-
-   if( get_override( self, OVERRIDE_OP_MOD_ID, cls, udata ) )
-   {
-      cls->op_mod( ctx, udata );
-   }
-   else
-   {
-      throw new OperandError( ErrorParam(e_invop, __LINE__, SRC ).extra(OVERRIDE_OP_MOD) );
-   }
-}
-
-
-void HyperClass::op_pow( VMContext* ctx, void* self ) const
-{
-   Class* cls;
-   void* udata;
-
-   if( get_override( self, OVERRIDE_OP_POW_ID, cls, udata ) )
-   {
-      cls->op_pow( ctx, udata );
-   }
-   else
-   {
-      throw new OperandError( ErrorParam(e_invop, __LINE__, SRC ).extra(OVERRIDE_OP_POW) );
-   }
-}
-
-
-void HyperClass::op_aadd( VMContext* ctx, void* self) const
-{
-   Class* cls;
-   void* udata;
-
-   if( get_override( self, OVERRIDE_OP_AADD_ID, cls, udata ) )
-   {
-      cls->op_aadd( ctx, udata );
-   }
-   else
-   {
-      throw new OperandError( ErrorParam(e_invop, __LINE__, SRC ).extra(OVERRIDE_OP_AADD) );
-   }
-}
-
-
-void HyperClass::op_asub( VMContext* ctx, void* self ) const
-{
-   Class* cls;
-   void* udata;
-
-   if( get_override( self, OVERRIDE_OP_ASUB_ID, cls, udata ) )
-   {
-      cls->op_asub( ctx, udata );
-   }
-   else
-   {
-      throw new OperandError( ErrorParam(e_invop, __LINE__, SRC ).extra(OVERRIDE_OP_ASUB) );
-   }
-}
-
-
-void HyperClass::op_amul( VMContext* ctx, void* self ) const
-{
-   Class* cls;
-   void* udata;
-
-   if( get_override( self, OVERRIDE_OP_AMUL_ID, cls, udata ) )
-   {
-      cls->op_amul( ctx, udata );
-   }
-   else
-   {
-      throw new OperandError( ErrorParam(e_invop, __LINE__, SRC ).extra(OVERRIDE_OP_AMUL) );
-   }
-}
-
-
-void HyperClass::op_adiv( VMContext* ctx, void* self ) const
-{
-   Class* cls;
-   void* udata;
-
-   if( get_override( self, OVERRIDE_OP_DIV_ID, cls, udata ) )
-   {
-      cls->op_adiv( ctx, udata );
-   }
-   else
-   {
-      throw new OperandError( ErrorParam(e_invop, __LINE__, SRC ).extra(OVERRIDE_OP_DIV) );
-   }
-}
-
-
-void HyperClass::op_amod( VMContext* ctx, void* self ) const
-{
-   Class* cls;
-   void* udata;
-
-   if( get_override( self, OVERRIDE_OP_AMOD_ID, cls, udata ) )
-   {
-      cls->op_amod( ctx, udata );
-   }
-   else
-   {
-      throw new OperandError( ErrorParam( e_invop, __LINE__, SRC ).extra(OVERRIDE_OP_AMOD) );
-   }
-}
-
-
-void HyperClass::op_apow( VMContext* ctx, void* self ) const
-{
-   Class* cls;
-   void* udata;
-
-   if( get_override( self, OVERRIDE_OP_APOW_ID, cls, udata ) )
-   {
-      cls->op_apow( ctx, udata );
-   }
-   else
-   {
-      throw new OperandError( ErrorParam(e_invop, __LINE__, SRC ).extra(OVERRIDE_OP_APOW) );
-   }
-}
-
-
-void HyperClass::op_inc( VMContext* ctx, void* self ) const
-{
-   Class* cls;
-   void* udata;
-
-   if( get_override( self, OVERRIDE_OP_INC_ID, cls, udata ) )
-   {
-      cls->op_inc( ctx, udata );
-   }
-   else
-   {
-      throw new OperandError( ErrorParam(e_invop, __LINE__, SRC ).extra(OVERRIDE_OP_INC) );
-   }
-}
-
-
-void HyperClass::op_dec( VMContext* ctx, void* self) const
-{
-   Class* cls;
-   void* udata;
-
-   if( get_override( self, OVERRIDE_OP_DEC_ID, cls, udata ) )
-   {
-      cls->op_dec( ctx, udata );
-   }
-   else
-   {
-      throw new OperandError( ErrorParam(e_invop, __LINE__, SRC ).extra(OVERRIDE_OP_DEC) );
-   }
-}
-
-
-void HyperClass::op_incpost( VMContext* ctx, void* self ) const
-{
-   Class* cls;
-   void* udata;
-
-   if( get_override( self, OVERRIDE_OP_INCPOST_ID, cls, udata ) )
-   {
-      cls->op_incpost( ctx, udata );
-   }
-   else
-   {
-      throw new OperandError( ErrorParam(e_invop, __LINE__, SRC ).extra(OVERRIDE_OP_INCPOST) );
-   }
-}
-
-
-void HyperClass::op_decpost( VMContext* ctx, void* self ) const
-{
-   Class* cls;
-   void* udata;
-
-   if( get_override( self, OVERRIDE_OP_DECPOST_ID, cls, udata ) )
-   {
-      cls->op_decpost( ctx, udata );
-   }
-   else
-   {
-      throw new OperandError( ErrorParam(e_invop, __LINE__, SRC ).extra(OVERRIDE_OP_DECPOST) );
-   }
-}
-
-
-void HyperClass::op_getIndex( VMContext* ctx, void* self ) const
-{
-   Class* cls;
-   void* udata;
-
-   if( get_override( self, OVERRIDE_OP_GETINDEX_ID, cls, udata ) )
-   {
-      cls->op_getIndex( ctx, udata );
-   }
-   else
-   {
-      throw new OperandError( ErrorParam(e_invop, __LINE__, SRC ).extra(OVERRIDE_OP_GETINDEX) );
-   }
-}
-
-
-void HyperClass::op_setIndex( VMContext* ctx, void* self ) const
-{
-   Class* cls;
-   void* udata;
-
-   if( get_override( self, OVERRIDE_OP_SETINDEX_ID, cls, udata ) )
-   {
-      cls->op_setIndex( ctx, udata );
-   }
-   else
-   {
-      throw new OperandError( ErrorParam(e_invop, __LINE__, SRC ).extra(OVERRIDE_OP_SETINDEX) );
-   }
-}
-
-
-void HyperClass::op_getProperty( VMContext* ctx, void* self, const String& propName ) const
-{
-   Class* cls;
-   void* udata;
-
-   if( get_override( self, OVERRIDE_OP_GETPROP_ID, cls, udata ) )
-   {
-      cls->op_getProperty( ctx, udata, propName );
-   }
-   else
-   {
-      Private::PropMap::const_iterator iter = _p->m_props.find( propName );
-      if( iter != _p->m_props.end() )
-      {
-         const Property& prop = iter->second;
-         ItemArray* ia = static_cast<ItemArray*>(self);
-
-         // if < 0 it's a class.
-         if( prop.m_itemId < 0 )
-         {
-            // so, turn the thing in the "self" of the class.
-            ctx->topData() = ia->at(-prop.m_itemId);
-         }
-         else
-         {
-            Class* cls;
-            void* udata;
-            ia->at(prop.m_itemId).forceClassInst( cls, udata );
-            cls->op_getProperty( ctx, udata, propName );
-         }
-      }
-      else
-      {
-         throw new AccessError( ErrorParam(e_prop_acc, __LINE__, SRC ).extra(propName) );
-      }
-   }
-}
-
-
-void HyperClass::op_setProperty( VMContext* ctx, void* self, const String& propName ) const
-{
-   Class* cls;
-   void* udata;
-
-   if( get_override( self, OVERRIDE_OP_SETPROP_ID, cls, udata ) )
-   {
-      cls->op_setProperty( ctx, udata, propName );
-   }
-   else
-   {
-      Private::PropMap::const_iterator iter = _p->m_props.find( propName );
-      if( iter != _p->m_props.end() )
-      {
-         const Property& prop = iter->second;
-         ItemArray* ia = static_cast<ItemArray*>(self);
-
-         // if < 0 it's a class.
-         if( prop.m_itemId < 0 )
-         {
-            // you can't overwrite a base class.
-            throw new AccessError( ErrorParam(e_prop_ro, __LINE__, SRC ).extra(propName) );
-         }
-         else
-         {
-            Class* cls;
-            void* udata;
-            ia->at(prop.m_itemId).forceClassInst( cls, udata );
-            cls->op_setProperty( ctx, udata, propName );
-         }
-      }
-      else
-      {
-         throw new AccessError( ErrorParam(e_prop_acc, __LINE__, SRC ).extra(propName) );
-      }
-   }
-}
-
-
-void HyperClass::op_compare( VMContext* ctx, void* self ) const
-{
-   Class* cls;
-   void* udata;
-
-   if( get_override( self, OVERRIDE_OP_COMPARE_ID, cls, udata ) )
-   {
-      cls->op_compare( ctx, udata );
-   }
-   else
-   {
-      // we don't need the self object.
-      ctx->popData();
-      const Item& crand = ctx->topData();
-      if( crand.type() == typeID() )
-      {
-         // we're all object. Order by ptr.
-         ctx->topData() = (int64)(self > crand.asInst() ? 1 : (self < crand.asInst() ? -1 : 0));
-      }
-      else
-      {
-         // order by type
-         ctx->topData() = (int64)( typeID() - crand.type() );
-      }
-   }
-}
-
-
-void HyperClass::op_isTrue( VMContext* ctx, void* self ) const
-{
-   Class* cls;
-   void* udata;
-
-   if( get_override( self, OVERRIDE_OP_ISTRUE_ID, cls, udata ) )
-   {
-      cls->op_isTrue( ctx, udata );
-   }
-   else
-   {
-      // objects are always true.
-      ctx->topData() = true;
-   }
-}
-
-
-void HyperClass::op_in( VMContext* ctx, void* self ) const
-{
-   Class* cls;
-   void* udata;
-
-   if( get_override( self, OVERRIDE_OP_IN_ID, cls, udata ) )
-   {
-      cls->op_in( ctx, udata );
-   }
-   else
-   {
-      throw new OperandError( ErrorParam(e_invop, __LINE__, SRC ).extra(OVERRIDE_OP_IN) );
-   }
-}
-
-
-void HyperClass::op_provides( VMContext* ctx, void* self, const String& propName ) const
-{
-   Class* cls;
-   void* udata;
-
-   if( get_override( self, OVERRIDE_OP_PROVIDES_ID, cls, udata ) )
-   {
-      cls->op_provides( ctx, udata, propName );
-   }
-   else
-   {
-      ctx->topData().setBoolean( hasProperty( self, propName ) );
-   }
-}
-
-
-void HyperClass::op_call( VMContext* ctx, int32 paramCount, void* self ) const
-{
-   Class* cls;
-   void* udata;
-
-   if( get_override( self, OVERRIDE_OP_CALL_ID, cls, udata ) )
-   {
-      cls->op_call( ctx, paramCount, udata );
-   }
-   else
-   {
-      throw new OperandError( ErrorParam(e_invop, __LINE__, SRC ).extra(OVERRIDE_OP_CALL) );
-   }
-}
-
-
-void HyperClass::op_toString( VMContext* ctx, void* self ) const
-{
-   Class* cls;
-   void* udata;
-
-   if( get_override( self, OVERRIDE_OP_CALL_ID, cls, udata ) )
-   {
-      cls->op_toString( ctx, udata );
-   }
-   else
-   {
-      String* str = new String("Instance of ");
-      str->append( name() );
-      ctx->topData() = str;
-   }
-}
 
 //========================================================
 // Steps
@@ -986,8 +479,8 @@ void HyperClass::FinishInvokeStep::apply_(const PStep* ps, VMContext* ctx )
 
 void HyperClass::InvokeMasterStep::apply_(const PStep* ps, VMContext* ctx )
 {
-   Item* pstep_params = ctx->opcodeParams(2);
-   fassert( pstep_params[0].isUser() );
+   Item* pstep_params = ctx->opcodeParams(3);
+   fassert( pstep_params[0].asClass() == static_cast<const InvokeMasterStep*>(ps)->m_owner );
    fassert( pstep_params[1].isInteger() );
 
    int pcount = (int) pstep_params[1].asInteger();
@@ -1020,7 +513,7 @@ void HyperClass::CreateEmptyNext::apply_(const PStep* ps, VMContext* ctx )
 {
    // we have the 2 pushed stuff plus our newly created item.
    Item* pstep_params = ctx->opcodeParams(3);
-   fassert( pstep_params[0].isUser() );
+   fassert( pstep_params[0].asClass() == static_cast<const CreateEmptyNext*>(ps)->m_owner );
    fassert( pstep_params[1].isInteger() );
 
    // get self and count
@@ -1029,7 +522,7 @@ void HyperClass::CreateEmptyNext::apply_(const PStep* ps, VMContext* ctx )
    // save the topmost item in our instance arrays.
    register CodeFrame& cf = ctx->currentCode();
    inst->at(cf.m_seqId) = ctx->topData();
-   ctx->popData();
+   // the topmost data will be recycled as op_create unary operator item
 
    // are we done?
    if( -- cf.m_seqId == 0 )

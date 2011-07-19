@@ -135,6 +135,7 @@ add_library(falcon_engine SHARED
   localsymbol.cpp
   metaclass.cpp
   module.cpp
+  multiclass.cpp
   operanderror.cpp
   overridableclass.cpp
   paramerror.cpp

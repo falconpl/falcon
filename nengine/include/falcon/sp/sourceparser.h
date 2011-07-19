@@ -177,6 +177,7 @@ public:
    Parsing::Rule r_Expr_Atom;
 
    Parsing::Rule r_Expr_function;
+   Parsing::Rule r_Expr_lambda;
 
    //================================================
    // Function
@@ -269,6 +270,9 @@ public:
    Parsing::Rule r_NeListSymbol_next;
    Parsing::Rule r_NeListSymbol_first;
 
+   Parsing::NonTerminal LambdaParams;
+   Parsing::Rule r_lambda_params;
+
    //================================================
    // States
    //
@@ -276,6 +280,7 @@ public:
    Parsing::State s_Main;
    Parsing::State s_InlineFunc;
    Parsing::State s_ClassBody;
+   Parsing::State s_LambdaStart;
 };
 
 }
