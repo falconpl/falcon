@@ -13,6 +13,8 @@
    See LICENSE file for licensing details.
 */
 
+#define SRC "engine/parser/literal.cpp"
+
 #include <falcon/parser/lexer.h>
 #include <falcon/parser/parser.h>
 #include <falcon/textreader.h>

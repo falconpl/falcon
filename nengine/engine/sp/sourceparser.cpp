@@ -173,11 +173,12 @@ SourceParser::SourceParser():
       << (r_Stmt_assign_list << "STMT_assign_list" << apply_stmt_assign_list << NeListExpr_ungreed << T_EqSign << NeListExpr )
       ;
 
-   //==========================================================================
-   // Expression
-   //
-   Expr << "Expr";
-   Expr<< (r_Expr_assign << "Expr_assign" << apply_expr_assign << Expr << T_EqSign << NeListExpr );
+  //==========================================================================
+  // Expression
+  //
+  Expr << "Expr";
+  Expr << expr_errhand;
+  Expr << (r_Expr_assign << "Expr_assign" << apply_expr_assign << Expr << T_EqSign << NeListExpr );
 
    Expr<< (r_Expr_equal << "Expr_equal" << apply_expr_equal << Expr << T_DblEq << Expr);
    Expr<< (r_Expr_diff << "Expr_diff" << apply_expr_diff << Expr << T_NotEq << Expr);

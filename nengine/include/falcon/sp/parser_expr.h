@@ -30,6 +30,8 @@ class BinaryExpression;
 
 using namespace Parsing;
 
+void expr_errhand(const NonTerminal*, Parser* p);
+
 void apply_expr_equal( const Rule& r, Parser& p );
 void apply_expr_diff( const Rule& r, Parser& p );
 void apply_expr_less( const Rule& r, Parser& p );

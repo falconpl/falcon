@@ -161,7 +161,7 @@ int main( int , char* [] )
 {
    std::cout << "Interactive mode test" << std::endl;
 
-   TRACE_ON();
+   TRACE_ON_LEVEL( 1 );
 
    ParserApp app;
    app.guardAndGo();

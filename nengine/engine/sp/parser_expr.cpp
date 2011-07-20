@@ -32,6 +32,13 @@ namespace Falcon {
 
 using namespace Parsing;
 
+void expr_errhand(const NonTerminal*, Parser* p)
+{
+   TokenInstance* ti = p->getNextToken();
+   p->addError( e_syn_while, p->currentSource(), ti->line(), ti->chr() );
+   p->clearTokens();
+}
+
 //=======================================================
 // Standard binary expressions
 //

@@ -13,6 +13,8 @@
    See LICENSE file for licensing details.
 */
 
+#define SRC "engine/parser/literal.cpp"
+
 #include <falcon/parser/literal.h>
 
 namespace Falcon {

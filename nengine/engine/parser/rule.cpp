@@ -13,6 +13,8 @@
    See LICENSE file for licensing details.
 */
 
+#define SRC "engine/parser/rule.cpp"
+
 #include <falcon/parser/rule.h>
 #include <falcon/parser/parser.h>
 #include "./parser_private.h"
@@ -133,7 +135,7 @@ Token* Rule::getTokenAt( uint32 pos ) const
 
 bool Rule::match( Parser& parser, bool bIncremental ) const
 {
-   TRACE( "Rule::match(%s) -- %s", m_name.c_ize(),
+   TRACE2( "Rule::match(%s) -- %s", m_name.c_ize(),
             bIncremental ? "incremental" : "full" );
 
    Parser::Private* pp = parser._p;
@@ -145,12 +147,12 @@ bool Rule::match( Parser& parser, bool bIncremental ) const
    {
       if( ppos + 1 >= pp->m_tokenStack->size() )
       {
-         TRACE( "Rule::match(%s) -- always matching when at end", m_name.c_ize() );
+         TRACE1( "Rule::match(%s) -- always matching when at end", m_name.c_ize() );
          return true;
       }
       else
       {
-         TRACE( "Rule::match(%s) -- always failing when in the middle", m_name.c_ize() );
+         TRACE1( "Rule::match(%s) -- always failing when in the middle", m_name.c_ize() );
          return false;
       }
    }
@@ -184,19 +186,19 @@ bool Rule::match( Parser& parser, bool bIncremental ) const
       {
          if( (ppos> begin || curTok->id() != m_parent->id()) )
          {
-            TRACE1( "Rule::match(%s) -- descendable '%s' found at %d",
+            TRACE3( "Rule::match(%s) -- descendable '%s' found at %d",
                m_name.c_ize(), curTok->name().c_ize(), (int)ppos );
             dpos = ppos;
             descendable = static_cast<NonTerminal*>(curTok);
          }
       }
 
-      TRACE1( "Rule::match(%s) -- checking '%s' <-> '%s'",
+      TRACE2( "Rule::match(%s) -- checking '%s' <-> '%s'",
                m_name.c_ize(), curTok->name().c_ize(), stackToken->name().c_ize()  );
 
       if( curTok->id() != stackToken->id() )
       {
-         TRACE1( "Rule::match(%s) -- searching a path from '%s' path to '%s' ",
+         TRACE3( "Rule::match(%s) -- searching a path from '%s' path to '%s' ",
             m_name.c_ize(), curTok->name().c_ize(), stackToken->name().c_ize() );
 
          // actually, descendable should always be != 0 when dpos != -1, but just in case...
@@ -208,8 +210,9 @@ bool Rule::match( Parser& parser, bool bIncremental ) const
             parser.addParseFrame( descendable, dpos );
             return descendable->findPaths(parser);
          }
+
          // match failed
-          TRACE1( "Rule::match(%s) -- failed at %d",
+         TRACE2( "Rule::match(%s) -- failed at %d",
                m_name.c_ize(), (int)ppos );
          return false;
       }
@@ -223,7 +226,8 @@ bool Rule::match( Parser& parser, bool bIncremental ) const
       ++ ppos;
    }
 
-   TRACE( "Rule::match(%s) -- matching", m_name.c_ize() );
+   TRACE1( "Rule::match(%s) -- matched (mode %s) at %d", m_name.c_ize(),
+            bIncremental ? "incremental" : "full", ppos );
    return true;
 }
 

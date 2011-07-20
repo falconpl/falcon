@@ -13,6 +13,8 @@
    See LICENSE file for licensing details.
 */
 
+#define SRC "engine/parser/state.cpp"
+
 #include <falcon/parser/state.h>
 #include <falcon/parser/nonterminal.h>
 #include <falcon/trace.h>
@@ -59,21 +61,21 @@ State& State::n(NonTerminal& nt)
 
 bool State::findPaths( Parser& parser )
 {
-   TRACE("State::findPaths -- enter %s", name().c_ize() );
+   TRACE1("State::findPaths -- enter %s", name().c_ize() );
 
    // Process all the non terminals in this state
    Private::NTList::iterator iter = _p->m_nt.begin();
    while( iter != _p->m_nt.end() )
    {
       NonTerminal* nt = *iter;
-      TRACE1("State::findPaths -- checking %s", nt->name().c_ize() );
+      TRACE2("State::findPaths -- checking %s", nt->name().c_ize() );
 
       parser.addParseFrame(nt);
 
       // don't allow ambiguity
       if ( nt->findPaths( parser ) )
       {
-         TRACE("State::findPaths -- nt-token %s match",
+         TRACE2("State::findPaths -- nt-token %s match",
                nt->name().c_ize() );
          return true;
       }
@@ -83,7 +85,7 @@ bool State::findPaths( Parser& parser )
       ++iter;
    }
 
-   TRACE("State::findPaths -- exit without match %s", name().c_ize() );
+   TRACE1("State::findPaths -- exit without match %s", name().c_ize() );
    return false;
 }
 

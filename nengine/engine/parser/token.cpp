@@ -13,6 +13,8 @@
    See LICENSE file for licensing details.
 */
 
+#define SRC "engine/parser/token.cpp"
+
 #include <falcon/parser/token.h>
 #include <falcon/parser/tokeninstance.h>
 
