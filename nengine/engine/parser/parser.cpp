@@ -187,6 +187,20 @@ void Parser::popState()
       func( cbdata );
    }
 
+   // pop the last applied rule?
+   while( bf.m_appliedRules > 0 )
+   {
+      fassert( !  bf.m_pframes.back().m_path.empty() );
+      // the rule will be applied, so it's not in the path anymore.
+      bf.m_pframes.back().m_path.pop_back();
+      // eventually, pop the frame.
+      if( bf.m_pframes.back().m_path.empty() )
+      {
+         bf.m_pframes.pop_back();
+      }
+      bf.m_appliedRules--;
+   }
+
    onPopState();
 }
 
@@ -913,7 +927,7 @@ bool Parser::applyPaths()
       // now we must check if the effect of the reduction matches with the new
       // current rule, else we must either descend a find a matching rule or
       // declare failure.
-      if( ! _p->m_pframes->empty() )
+      if( ! _p->m_pframes->empty() && ! _p->m_tokenStack->empty() )
       {
          explorePaths();
       }
@@ -942,25 +956,38 @@ void Parser::explorePaths()
    _p->m_pErrorFrames->clear();
 }
 
+
 void Parser::applyCurrentRule()
 {
+   Private::StateFrame& state = _p->m_lStates.back();
    Private::FrameStack* stack = _p->m_pframes;
    Private::ParseFrame& frame = stack->back();
    fassert( ! frame.m_path.empty() );
    const Rule* currentRule = frame.m_path.back();
-   int frameId = _p->m_lStates.back().m_id;
+   int frameId = state.m_id;
 
    resetNextToken();
-   TRACE2( "Applying rule %s", currentRule->name().c_ize() );
-   
-   currentRule->apply(*this);
+   TRACE2( "Applying rule %s -- state depth %d -- state id %d",
+      currentRule->name().c_ize(),
+      _p->m_lStates.size(),
+      frameId );
+
+   state.m_appliedRules++;
+   currentRule->apply(*this);   
+
+   TRACE2( "Applied rule %s -- state depth %d -- state id %d",
+      currentRule->name().c_ize(),
+      _p->m_lStates.size(),
+      _p->m_lStates.back().m_id );
    // did we changed state?
    if( frameId != _p->m_lStates.back().m_id )
    {
-      TRACE2( "Rule %s returned on state change", currentRule->name().c_ize() );
+      TRACE2( "Rule %s detect pop-state", currentRule->name().c_ize() );
       return;
    }
 
+   state.m_appliedRules--;
+   // the rule will be applied, so it's not in the path anymore.
    frame.m_path.pop_back();
    // eventually, pop the frame.
    if( frame.m_path.empty() )

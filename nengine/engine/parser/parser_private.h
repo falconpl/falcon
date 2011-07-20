@@ -95,12 +95,14 @@ class Parser::Private
       Parser::StateFrameFunc m_cbfunc;
       void* m_cbdata;
       int m_id;
-      
+      int m_appliedRules;
+
       StateFrame( State* s ):
          m_state( s ),
          m_cbfunc( 0 ),
          m_cbdata( 0 ),
-         m_id(0)
+         m_id(0),
+         m_appliedRules(0)
       {
       }
    };
