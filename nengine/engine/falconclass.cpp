@@ -766,7 +766,7 @@ void FalconClass::op_create( VMContext* ctx, int32 pcount ) const
    // we have to invoke the init method, if any
    if( m_constructor != 0 )
    {
-      ctx->call( m_constructor, pcount, FALCON_GC_STORE( coll, this, inst ), true);
+      ctx->call( m_constructor, pcount, FALCON_GC_STORE( coll, this, inst ) );
    }
    else
    {
@@ -885,7 +885,7 @@ void FalconClass::PStepInit::apply_( const PStep* ps, VMContext* ctx )
       ctx->pushData( *ctx->param(i) );
    }
    // Finally, prepare the data stack to accept the functions
-   ctx->call( step->m_owner->init(), frame.m_paramCount, frame.m_self, false );
+   ctx->call( step->m_owner->init(), frame.m_paramCount, frame.m_self );
 }
 
 }

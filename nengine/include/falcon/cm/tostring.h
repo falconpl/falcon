@@ -76,7 +76,7 @@ class FALCON_DYN_CLASS ToString: public Function
 public:
    ToString();
    virtual ~ToString();
-   virtual void apply( VMContext* ctx, int32 nParams );
+   virtual void invoke( VMContext* ctx, int32 nParams );
 
 private:
 

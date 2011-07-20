@@ -84,7 +84,7 @@ public:
 
    virtual ~FuncPrintl() {}
 
-   virtual void apply( VMContext* ctx, int32)
+   virtual void invoke( VMContext* ctx, int32)
    {
       m_nextStep.printNext( ctx, 0 );
    }

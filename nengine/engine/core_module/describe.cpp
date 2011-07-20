@@ -37,7 +37,7 @@ Describe::~Describe()
 {
 }
 
-void Describe::apply( VMContext* ctx, int32 )
+void Describe::invoke( VMContext* ctx, int32 )
 {
    Item* elem, *md, *ml;
    if ( ctx->isMethodic() )

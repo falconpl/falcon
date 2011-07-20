@@ -34,7 +34,7 @@ Len::~Len()
 {
 }
 
-void Len::apply( VMContext* ctx, int32 nParams )
+void Len::invoke( VMContext* ctx, int32 nParams )
 {
    Item *elem;
    if ( ctx->isMethodic() )

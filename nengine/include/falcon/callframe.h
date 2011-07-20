@@ -68,9 +68,6 @@ public:
    /** True if self has been passed. */
    bool m_bMethodic;
 
-   /** True if the call frame is invoked by an expression. */
-   bool m_bExpression;
-
    // Actually never used, just used at compile time by vector.
    CallFrame()
    {}
@@ -82,8 +79,7 @@ public:
       m_initBase( sb ),
       m_codeBase( cb ),
       m_self(self),
-      m_bMethodic( true ),
-      m_bExpression( false )
+      m_bMethodic( true )
    {}
 
    CallFrame( Function* f, int pc, int sb, int cb):
@@ -92,8 +88,7 @@ public:
       m_stackBase( sb ),
       m_initBase( sb ),
       m_codeBase( cb ),
-      m_bMethodic( false ),
-      m_bExpression( false )
+      m_bMethodic( false )
    {}
 };
 

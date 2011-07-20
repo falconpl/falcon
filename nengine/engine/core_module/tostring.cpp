@@ -36,7 +36,7 @@ ToString::~ToString()
 {
 }
 
-void ToString::apply( VMContext* ctx, int32 )
+void ToString::invoke( VMContext* ctx, int32 )
 {
    Item *elem;
    

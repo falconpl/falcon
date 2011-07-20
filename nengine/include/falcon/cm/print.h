@@ -59,7 +59,7 @@ public:
 
    virtual ~FuncPrintBase();
 
-   virtual void apply( VMContext* ctx, int32 nParams );
+   virtual void invoke( VMContext* ctx, int32 nParams );
 
 private:
    class NextStep: public PStep

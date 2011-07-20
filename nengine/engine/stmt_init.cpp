@@ -55,7 +55,7 @@ void StmtInit::apply_( const PStep* ps, VMContext* ctx )
    class FalconClass* fcs = static_cast<FalconClass*>( init->m_inheritance->parent());
    register CallFrame& cf = ctx->currentFrame();
    ctx->call( fcs->constructor(),
-              init->m_inheritance->paramCount(), cf.m_self, false );
+              init->m_inheritance->paramCount(), cf.m_self );
 }
 
 }

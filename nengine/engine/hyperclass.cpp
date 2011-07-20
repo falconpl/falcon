@@ -300,7 +300,7 @@ void HyperClass::op_create( VMContext* ctx, int32 pcount ) const
    // -- consistent frame (to find the parameters).
    if( m_constructor )
    {
-      ctx->makeCallFrame( m_constructor, pcount, FALCON_GC_STORE( coll, this, mData ), false );
+      ctx->makeCallFrame( m_constructor, pcount, FALCON_GC_STORE( coll, this, mData ) );
 
       // now we add a finalization step.
       ctx->pushCode( &m_finishCreateStep );

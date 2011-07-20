@@ -34,7 +34,7 @@ TypeId::~TypeId()
 {
 }
 
-void TypeId::apply( VMContext* ctx, int32 )
+void TypeId::invoke( VMContext* ctx, int32 )
 {
    Item *elem;
    if ( ctx->isMethodic() )

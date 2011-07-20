@@ -19,6 +19,7 @@
 #include <falcon/exprmath.h>
 #include <falcon/statement.h>
 #include <falcon/synfunc.h>
+#include <falcon/error.h>
 
 #include <falcon/trace.h>
 #include <falcon/application.h>
@@ -79,8 +80,19 @@ void go( int fibSize )
    // And now, run the code.
    Falcon::VMachine vm;
    vm.currentContext()->call(&fmain,0);
-   vm.run();
+   try {
+      vm.run();
 
+      String res;
+      vm.currentContext()->topData().describe( res );
+      res.c_ize();
+      std::cout << "Top: " << (char*)res.getRawStorage() << std::endl;
+   }
+   catch( Error* e )
+   {
+      std::cout << "Error: " << e->describe().c_ize() << std::endl;
+      e->decref();
+   }
    /*
    while( ! vm.codeEmpty() )
    {
@@ -91,11 +103,6 @@ void go( int fibSize )
       vm.step();
    }
    */
-
-   String res;
-   vm.regA().describe( res );
-   res.c_ize();
-   std::cout << "Top: " << (char*)res.getRawStorage() << std::endl;
 }
 
 };

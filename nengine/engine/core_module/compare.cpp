@@ -36,7 +36,7 @@ Compare::~Compare()
 {
 }
 
-void Compare::apply( VMContext* ctx, int32 nParams )
+void Compare::invoke( VMContext* ctx, int32 nParams )
 {
    Item* item;
    Item* item2;

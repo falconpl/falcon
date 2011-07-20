@@ -189,7 +189,8 @@ public:
    /** Removes the last n elements from the stack */
    void popData( size_t size ) {
       m_topData-= size;
-      PARANOID( "Data stack underflow", (m_topData >= m_dataStack -1) );
+      // Notice: an empty data stack is an error.
+      PARANOID( "Data stack underflow", (m_topData >= m_dataStack) );
    }
 
    inline long dataSize() const {
@@ -438,7 +439,7 @@ public:
    }
 
    /** Prepares a new methodic call frame. */
-   inline CallFrame* makeCallFrame( Function* function, int nparams, const Item& self, bool isExpr )
+   inline CallFrame* makeCallFrame( Function* function, int nparams, const Item& self )
    {
       register CallFrame* topCall = addCallFrame();
       topCall->m_function = function;
@@ -448,13 +449,12 @@ public:
       topCall->m_paramCount = nparams;
       topCall->m_self = self;
       topCall->m_bMethodic = true;
-      topCall->m_bExpression = isExpr;
 
       return topCall;
    }
 
    /** Prepares a new non-methodic call frame. */
-   inline CallFrame* makeCallFrame( Function* function, int nparams, bool isExpr )
+   inline CallFrame* makeCallFrame( Function* function, int nparams )
    {
       register CallFrame* topCall = addCallFrame();
       topCall->m_function = function;
@@ -464,7 +464,6 @@ public:
       topCall->m_paramCount = nparams;
       topCall->m_self.setNil();
       topCall->m_bMethodic = false;
-      topCall->m_bExpression = isExpr;
 
       return topCall;
    }
@@ -636,8 +635,12 @@ public:
     */
    void pushReturn();
 
+   /** Pushes a "context complete" marker on the stack.
+    @see setComplete
+    */
+   void pushComplete();
 
-   void call( Function* f, int np, bool bExpr = false );
+   void call( Function* f, int np );
 
    /** Prepares the VM to execute a function (actually, a method).
 
@@ -649,10 +652,16 @@ public:
     @param self The item on which this method is invoked. Pure functions are
                 considered methods of "nil".
     */
-   virtual void call( Function* function, int np, const Item& self, bool bExpr = false );
+   virtual void call( Function* function, int np, const Item& self );
 
-   /** Returns from the current frame */
-   void returnFrame();
+   /** Returns from the current frame.
+    \param value The value considered as "exit value" of this frame.
+
+    This methods pops che call stack of 1 unit and resets the other stacks
+    to the values described in the call stack. Also, it sets the top data item
+    after stack reset to the "return value" passed as parameter.
+    */
+   void returnFrame( const Item& value = Item() );
 
 protected:
 

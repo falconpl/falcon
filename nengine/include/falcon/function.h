@@ -117,14 +117,18 @@ public:
     The call execution may be either immediate or deferred; for example,
     the call may just leaves PSteps to be executed by the virtual machine.
 
-    In case of deferred calls, apply must also push proper return PStep codes.
-    In case of immediate calls, apply() must also perform the return frame
-    code in the virtual machine by calling VMachine::returnFrame().
+    In case of deferred calls, invoke() must also push proper return PStep codes.
+    In case of immediate calls, invoke() must also perform the return frame
+    code in the virtual machine by calling VMcontext::returnFrame().
+
+    To "return" a value to the caller, set the value of the VMcontext::topData()
+    item after invoking the return frame, or use the 
+    VMcontext::returnFrame(const Item&) version.
     */
-   virtual void apply( VMContext* ctx, int32 pCount = 0 ) = 0;
+   virtual void invoke( VMContext* ctx, int32 pCount = 0 ) = 0;
 
    /** Just candy grammar for this->apply(vm); */
-   void operator()( VMContext* ctx ) { apply(ctx); }
+   void operator()( VMContext* ctx ) { invoke(ctx); }
 
    /** Return true if this function is deterministic.
     \return true if the function is deterministic.

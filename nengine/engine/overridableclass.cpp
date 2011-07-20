@@ -58,7 +58,7 @@ inline void OverridableClass::override_unary( VMContext* ctx, void* self, int op
    // TODO -- use pre-caching of the desired method
    if( override != 0 )
    {
-      ctx->call( override, 0, Item( this, self, true ), true );
+      ctx->call( override, 0, Item( this, self ) );
    }
    else
    {
@@ -77,7 +77,7 @@ inline void OverridableClass::override_binary( VMContext* ctx, void* self, int o
 
       // 1 parameter == second; which will be popped away,
       // while first == self will be substituted with the return value.
-      ctx->call( override, 1, Item( this, self, true ), true );
+      ctx->call( override, 1, Item( this, self, true ) );
    }
    else
    {
@@ -281,7 +281,7 @@ void OverridableClass::op_setIndex( VMContext* ctx, void* ) const
 
       // Two parameters (second and third) will be popped,
       //  and first will be turned in the result.
-      ctx->call( override, 2, *first, true );
+      ctx->call( override, 2, *first );
    }
    else
    {
@@ -303,7 +303,7 @@ bool OverridableClass::overrideGetProperty( VMContext* ctx, void* self, const St
       ctx->pushData( (new String(propName))->garbage() );
 
       // use the instance we know, as first can be moved away.
-      ctx->call( override, 1, i_first, true );
+      ctx->call( override, 1, i_first );
 
       return true;
    }
@@ -331,7 +331,7 @@ bool OverridableClass::overrideSetProperty( VMContext* ctx, void* self, const St
       ctx->pushData( i_data );
 
       // Don't mangle the stack, we have to change it.
-      ctx->call( override, 2, iSelf, false );
+      ctx->call( override, 2, iSelf );
 
       return true;
    }
@@ -352,7 +352,7 @@ void OverridableClass::op_compare( VMContext* ctx, void* self ) const
       Item iSelf( this, self, true );
       // remove "self" from the stack..
       ctx->popData();
-      ctx->call( override, 1, iSelf, true );
+      ctx->call( override, 1, iSelf );
    }
    else
    {
@@ -381,7 +381,7 @@ void OverridableClass::op_isTrue( VMContext* ctx, void* ) const
    if( override != 0 )
    {
       // use the instance we know, as first can be moved away.
-      ctx->call( override, 0, ctx->topData(), true );
+      ctx->call( override, 0, ctx->topData() );
    }
    else
    {
@@ -405,7 +405,7 @@ void OverridableClass::op_provides( VMContext* ctx, void* self, const String& pr
    {
       Item i_self( this, self, true );
       ctx->topData() = (new String(propName))->garbage();
-      ctx->call( override, 1, i_self, true );
+      ctx->call( override, 1, i_self );
    }
    else
    {
@@ -421,7 +421,7 @@ void OverridableClass::op_call( VMContext* ctx, int32 paramCount, void* self ) c
    if( override != 0 )
    {
       ctx->popData();
-      ctx->call( override, paramCount, Item( this, self, true ), true );
+      ctx->call( override, paramCount, Item( this, self, true ) );
    }
    else
    {
@@ -436,7 +436,7 @@ void OverridableClass::op_toString( VMContext* ctx, void* self ) const
 
    if( override != 0 )
    {
-      ctx->call( override, 0, Item( this, self, true ), true );
+      ctx->call( override, 0, Item( this, self, true ) );
    }
    else
    {

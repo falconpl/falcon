@@ -73,7 +73,7 @@ class FALCON_DYN_CLASS Compare: public PseudoFunction
 public:
    Compare();
    virtual ~Compare();
-   virtual void apply( VMContext* ctx, int32 nParams );
+   virtual void invoke( VMContext* ctx, int32 nParams );
 
 private:
    class NextStep: public PStep

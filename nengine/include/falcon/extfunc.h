@@ -35,10 +35,18 @@ typedef void (*ext_func_t)(VMachine*);
    This helper is a function just calling an immediate external function.
 
    The called function must not re-enter the virtual machine (i.e. call another
- Falcon script function via the VMachine::call method). The apply() method
- of this class automatically calls the VMachine::returnFrame() as soon as the
- extension function exits. This means that the extension function is considered
- terminated as soon as it returns.
+ Falcon script function via the VMachine::call method). The invoke() method
+ of this class automatically calls performs the following tasks:
+ 
+ - clears the A register on input.
+ - invokes the function
+ - calls the return frame
+ - stores the value of the A register on top of the stack, substituting the
+   item that was right before the parameters of the call.
+ 
+ This means that the extension function is considered terminated as soon as it
+ returns, and cannot re-enter the virtual machine or ask for further PSteps
+ to be executed.
 
  In case calls to other VM Functions are needed, it's adviasble to re-extend
  Function for a finer control of the execution process.
@@ -52,7 +60,7 @@ public:
       m_func(func)
    {}
    virtual ~ExtFunc() {}
-   virtual void apply( VMContext* ctx, int32 pCount = 0 );
+   virtual void invoke( VMContext* ctx, int32 pCount = 0 );
 
 protected:
    ext_func_t m_func;

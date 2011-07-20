@@ -19,10 +19,12 @@
 namespace Falcon
 {
 
-void ExtFunc::apply( VMContext* ctx, int32 )
+void ExtFunc::invoke( VMContext* ctx, int32 )
 {
+   ctx->regA().setNil();
    m_func(ctx->vm());
    ctx->returnFrame();
+   ctx->topData() = ctx->regA();
 }
 
 }

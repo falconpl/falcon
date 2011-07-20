@@ -238,7 +238,7 @@ IntCompiler::IntCompiler( VMachine* vm ):
    m_module->addFunction(m_main, false);
 
    // we'll never abandon the main frame in the virtual machine
-   m_vm->currentContext()->makeCallFrame( m_main, 0, Item(), false );
+   m_vm->currentContext()->makeCallFrame( m_main, 0, Item() );
 
    // Link the module so that the VM knows about it (and protects its global).
    //TODO: vm->link( m_module );

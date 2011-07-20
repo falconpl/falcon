@@ -39,7 +39,7 @@ MinOrMax::~MinOrMax()
 {}
 
 // Direct function call.
-void MinOrMax::apply( VMContext* ctx, int32 pCount )
+void MinOrMax::invoke( VMContext* ctx, int32 pCount )
 {
    if( pCount != 2 )
    {

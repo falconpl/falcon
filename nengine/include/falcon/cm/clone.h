@@ -37,7 +37,7 @@ class FALCON_DYN_CLASS Clone: public PseudoFunction
 public:
    Clone();
    virtual ~Clone();
-   virtual void apply( VMContext* vm, int32 nParams );
+   virtual void invoke( VMContext* vm, int32 nParams );
 
 private:
 

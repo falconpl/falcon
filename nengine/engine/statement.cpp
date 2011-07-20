@@ -376,19 +376,15 @@ void StmtReturn::apply_( const PStep*ps, VMContext* ctx )
    const StmtReturn* stmt = static_cast<const StmtReturn*>(ps);
    TRACE1( "Apply 'return' at line %d ", stmt->line() );
 
+   Item retval;
    // clear A if there wasn't any expression
-   if ( stmt->m_expr == 0 )
+   if ( stmt->m_expr != 0 )
    {
-      ctx->regA().setNil();
-   }
-   else
-   {
-      // TODO: Remove when we go full stack.
-      ctx->regA() = ctx->topData();
+      retval = ctx->topData();
       ctx->popData();
    }
 
-   ctx->returnFrame();
+   ctx->returnFrame(retval);
    // Todo throw if we didn't have any frame
 }
 

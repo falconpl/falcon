@@ -143,7 +143,7 @@ void ExprCall::apply_( const PStep* v, VMContext* ctx )
             Item old = top;
             Function* f = top.asMethodFunction();
             old.unmethodize();
-            ctx->call( f, pcount, old, true );
+            ctx->call( f, pcount, old );
          }
          break;
 

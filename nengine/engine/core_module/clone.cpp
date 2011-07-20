@@ -18,7 +18,7 @@
 #include <falcon/cm/clone.h>
 #include <falcon/vm.h>
 #include <falcon/vmcontext.h>
-#include <falcon/error.h>
+#include <falcon/codeerror.h>
 
 namespace Falcon {
 namespace Ext {
@@ -35,7 +35,7 @@ Clone::~Clone()
 {
 }
 
-void Clone::apply( VMContext* ctx, int32 nParams )
+void Clone::invoke( VMContext* ctx, int32 nParams )
 {
    Item *elem;
    if ( ctx->isMethodic() )
