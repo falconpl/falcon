@@ -60,6 +60,7 @@ Error::Error( Class* handler, const ErrorParam &params ):
    m_module( params.m_module ),
    m_handler( handler ),
    m_line( params.m_line ),
+   m_chr( params.m_chr ),
    m_sysError( params.m_sysError ),
    m_origin( params.m_origin ),
    m_catchable( params.m_catchable ),
@@ -97,26 +98,24 @@ void Error::decref()
 void Error::describe( String &target ) const
 {
    heading( target );
-   target += "\n";
 
    if ( ! _p->m_steps.empty() )
    {
-      target += "   Traceback:\n";
+      target += "\n   Traceback:";
 
       std::deque<TraceStep>::const_iterator iter = _p->m_steps.begin();
       while( iter != _p->m_steps.end() )
       {
-          target += "   ";
+          target += "\n   ";
           const TraceStep& step = *iter;
           step.toString( target );
-          target += "\n";
           ++iter;
       }
    }
 
    if (! _p->m_subErrors.empty() )
    {
-      target += "   Because of:\n";
+      target += "\n   Because of:\n";
       std::deque<Error*>::const_iterator iter = _p->m_subErrors.begin();
       while( iter != _p->m_subErrors.end() )
       {
@@ -182,6 +181,12 @@ String &Error::heading( String &target ) const
    if ( m_line != 0 )
       target.writeNumber( (int64) m_line );
 
+   if ( m_chr != 0 )
+   {
+      target += ":";
+      target.writeNumber( (int64) m_chr );
+   }
+
    if ( m_description.size() > 0 )
    {
       target += ": " + m_description;
@@ -237,6 +242,7 @@ void Error::enumerateSteps( Error::StepEnumerator &rator ) const
       if( ! rator( ts, last ) ) break;
    }
 }
+
 
 void Error::enumerateErrors( Error::ErrorEnumerator &rator ) const
 {

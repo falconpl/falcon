@@ -360,6 +360,8 @@ void IntCompiler::throwCompileErrors() const
          }
 
          SyntaxError* err = new SyntaxError( ErrorParam( def.nCode, def.nLine )
+               .origin( ErrorParam::e_orig_compiler )
+               .chr( def.nChar )
                .module(def.sUri)
                .extra(sExtra));
 

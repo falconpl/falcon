@@ -156,6 +156,7 @@ FAL_ERRORDECL( e_syn_loop, 149, "Syntax error in loop statement" );
 FAL_ERRORDECL( e_syn_end, 150, "Misplaced 'end' keyword" );
 FAL_ERRORDECL( e_compile, 151, "Dynamic compilation failed -- details in suberrors" );
 FAL_ERRORDECL( e_syn_unpack, 152, "Unpack-array assignment declaration error" );
+FAL_ERRORDECL( e_syn_expr, 153, "Error in expression syntax" );
 
 FAL_ERRORDECL( e_cmp_unprep, 161, "Compiler not prepared (still needs to be fed with a module)" );
 FAL_ERRORDECL( e_not_implemented, 162, "Feature not implemented/not available on this instance" );

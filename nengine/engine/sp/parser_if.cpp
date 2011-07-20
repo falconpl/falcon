@@ -19,6 +19,7 @@
 #include <falcon/setup.h>
 #include <falcon/error.h>
 #include <falcon/expression.h>
+#include <falcon/exprvalue.h>
 #include <falcon/statement.h>
 
 #include <falcon/parser/rule.h>
@@ -33,6 +34,31 @@
 namespace Falcon {
 
 using namespace Parsing;
+
+bool errhand_if(const NonTerminal*, Parser* p)
+{
+   TokenInstance* ti = p->getNextToken();
+   TokenInstance* ti2 = p->getLastToken();
+
+   if( p->lastErrorLine() != ti->line() )
+   {
+      // generate another error only if we didn't notice it already.
+      p->addError( e_syn_if, p->currentSource(), ti->line(), ti2->chr() );
+   }
+
+   if( ! p->interactive() )
+   {
+      // put in a fake if statement (else, subsequent else/elif/end would also cause errors).
+      SynTree* stIf = new SynTree;
+      StmtIf* fakeIf = new StmtIf( new ExprValue(1), stIf, 0, ti->line(), ti->chr() );
+      ParserContext* st = static_cast<ParserContext*>(p->context());
+      st->openBlock( fakeIf, stIf );
+   }
+   // on interactive parsers, let the whole instruction to be destroyed.
+
+   return false; // let the engine simplify.
+}
+
 
 void apply_if_short( const Rule&, Parser& p )
 {

@@ -84,6 +84,7 @@ public:
       m_errorCode( code ),
       m_module( file == 0 ? "" : file, String::npos ),    // force buffering
       m_line( line ),
+      m_chr( 0 ),
       m_sysError( 0 ),
       m_origin( e_orig_mod ),
       m_catchable( true )
@@ -93,6 +94,7 @@ public:
       m_errorCode( code ),
       m_module( file ),    // force buffering
       m_line( line ),
+      m_chr( 0 ),
       m_sysError( 0 ),
       m_origin( e_orig_mod ),
       m_catchable( true )
@@ -104,6 +106,7 @@ public:
    ErrorParam &symbol( const String &sym ) { m_symbol = sym; return *this; }
    ErrorParam &module( const String &mod ) { m_module = mod; return *this; }
    ErrorParam &line( uint32 line ) { m_line = line; return *this; }
+   ErrorParam &chr( uint32 chr ) { m_chr = chr; return *this; }
    ErrorParam &sysError( uint32 e ) { m_sysError = e; return *this; }
    ErrorParam &origin( t_origin orig ) { m_origin = orig; return *this; }
    ErrorParam &hard() { m_catchable = false; return *this; }
@@ -118,6 +121,7 @@ private:
    String m_module;
 
    uint32 m_line;
+   uint32 m_chr;
    uint32 m_sysError;
 
    t_origin m_origin;
@@ -187,6 +191,7 @@ public:
    void module( const String &moduleName ) { m_module = moduleName; }
    void symbol( const String &symbolName )  { m_symbol = symbolName; }
    void line( uint32 line ) { m_line = line; }
+   void chr( uint32 chr ) { m_chr = chr; }
    void origin( ErrorParam::t_origin o ) { m_origin = o; }
    void catchable( bool c ) { m_catchable = c; }
    void raised( const Item &itm ) { m_raised = itm; m_bHasRaised = true; }
@@ -198,6 +203,7 @@ public:
    const String &module() const { return m_module; }
    const String &symbol() const { return m_symbol; }
    uint32 line() const { return m_line; }
+   uint32 chr() const { return m_chr; }
    ErrorParam::t_origin origin() const { return m_origin; }
    bool catchable() const { return m_catchable; }
    const Item &raised() const { return m_raised; }
@@ -310,6 +316,7 @@ protected:
    Class* m_handler;
 
    uint32 m_line;
+   uint32 m_chr;
    uint32 m_sysError;
 
    ErrorParam::t_origin m_origin;

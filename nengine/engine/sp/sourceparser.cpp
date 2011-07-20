@@ -130,10 +130,9 @@ SourceParser::SourceParser():
       << (r_assign_list << "Autoexpr_list" << apply_autoexpr_list << S_MultiAssign << T_EOL )
       ;
 
-   S_If << "IF"
-      << (r_if_short << "if_short" << apply_if_short << T_if << Expr << T_Colon << Expr << T_EOL )
-      << (r_if << "if" << apply_if << T_if << Expr << T_EOL )
-      ;
+   S_If << "IF" << errhand_if;
+   S_If << (r_if_short << "if_short" << apply_if_short << T_if << Expr << T_Colon << Expr << T_EOL );
+   S_If << (r_if << "if" << apply_if << T_if << Expr << T_EOL );
 
    S_Elif << "ELIF"
       << (r_elif << "elif" << apply_elif << T_elif << Expr << T_EOL )

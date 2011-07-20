@@ -316,6 +316,8 @@ public:
     */
    TokenInstance* getNextToken();
 
+   TokenInstance* getLastToken();
+
    /** Reposition the token index for getNextToken at top.
     \see getNextToken
     */
@@ -406,6 +408,12 @@ public:
     */
    void interactive( bool mode ) { m_bInteractive = mode; }
 
+   /** Returns the last line at which an error was found.
+    \return a line number or 0 if no error is found yet.
+    
+    This method is useful to avoid raising extra errors in error handlers.
+    */
+   int32 lastErrorLine() const;
 
    //=======================================
    // To be documented

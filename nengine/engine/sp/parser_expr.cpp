@@ -25,6 +25,7 @@
 #include <falcon/parser/parser.h>
 
 #include <falcon/expression.h>
+#include <falcon/exprvalue.h>
 #include <falcon/exprcompare.h>
 #include <falcon/exprmath.h>
 
@@ -32,11 +33,14 @@ namespace Falcon {
 
 using namespace Parsing;
 
-void expr_errhand(const NonTerminal*, Parser* p)
+bool expr_errhand(const NonTerminal*, Parser* p)
 {
+   //SourceParser* sp = static_cast<SourceParser*>(p);
    TokenInstance* ti = p->getNextToken();
-   p->addError( e_syn_while, p->currentSource(), ti->line(), ti->chr() );
-   p->clearTokens();
+   TokenInstance* ti2 = p->getLastToken();
+   p->addError( e_syn_expr, p->currentSource(), ti2->line(), ti2->chr(), 
+                           ti->line() == ti2->line() ? 0 : ti->line() );
+   return false; // let the engine simplify.
 }
 
 //=======================================================

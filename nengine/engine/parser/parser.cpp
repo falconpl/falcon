@@ -322,6 +322,16 @@ TokenInstance* Parser::getNextToken()
    return (*_p->m_tokenStack)[_p->m_nextTokenPos++];
 }
 
+TokenInstance* Parser::getLastToken()
+{
+   if( _p->m_tokenStack->empty() )
+   {
+      return 0;
+   }
+
+   return _p->m_tokenStack->back();
+}
+
 void Parser::resetNextToken()
 {
    int nDepth = _p->m_pframes->empty() ? 0 : _p->m_pframes->back().m_nStackDepth;
@@ -339,6 +349,17 @@ void Parser::enumerateErrors( Parser::errorEnumerator& enumerator ) const
       if ( ! enumerator( def, ++iter == _p->m_lErrors.end() ) )
          break;
    }
+}
+
+
+int32 Parser::lastErrorLine() const
+{
+   if( _p->m_lErrors.empty() )
+   {
+      return 0;
+   }
+   
+   return _p->m_lErrors.back().nLine;
 }
 
 
@@ -777,10 +798,13 @@ void Parser::parseError()
                   rule->parent().name().c_ize() );
 
             resetNextToken();
-            rule->parent().errorHandler()( &rule->parent(), this );
             // we're done.
-            // unroll the tokens in the stack.
-            simplify( _p->m_tokenStack->size() - frame.m_nStackDepth, 0 );
+            if( ! rule->parent().errorHandler()( &rule->parent(), this ) )
+            {
+               // unroll the tokens in the stack.
+               simplify( _p->m_tokenStack->size() - frame.m_nStackDepth, 0 );
+            }
+            
             _p->m_pframes->pop_back();
             return;
          }
@@ -793,10 +817,12 @@ void Parser::parseError()
                   frame.m_owningToken->name().c_ize() );
 
          resetNextToken();
-         frame.m_owningToken->errorHandler()( frame.m_owningToken, this );
          // we're done.
-         // unroll the tokens in the stack.
-         simplify( _p->m_tokenStack->size() - frame.m_nStackDepth, 0 );
+         if( ! frame.m_owningToken->errorHandler()( frame.m_owningToken, this ) )
+         {
+            // unroll the tokens in the stack.
+            simplify( _p->m_tokenStack->size() - frame.m_nStackDepth, 0 );
+         }
          _p->m_pframes->pop_back();
          return;
       }
