@@ -244,22 +244,6 @@ public:
    Parsing::Rule r_NeListExpr_ungreed_next;
    Parsing::Rule r_NeListExpr_ungreed_first;
 
-   Parsing::NonTerminal ListExprOrPairs;
-   Parsing::Rule r_ListExprOrPairs_next_pair;
-   Parsing::Rule r_ListExprOrPairs_next;
-   Parsing::Rule r_ListExprOrPairs_first_pair;
-   Parsing::Rule r_ListExprOrPairs_first;
-   Parsing::Rule r_ListExprOrPairs_empty;
-
-   Parsing::NonTerminal SeqExprOrPairs;
-   Parsing::Rule r_SeqExprOrPairs_next_pair_cm;
-   Parsing::Rule r_SeqExprOrPairs_next_pair;
-   Parsing::Rule r_SeqExprOrPairs_next_cm;
-   Parsing::Rule r_SeqExprOrPairs_next;
-   Parsing::Rule r_SeqExprOrPairs_first_pair;
-   Parsing::Rule r_SeqExprOrPairs_first;
-   Parsing::Rule r_SeqExprOrPairs_empty;
-
    //================================================
    // Symbol list
    //
@@ -280,6 +264,25 @@ public:
    Parsing::Rule r_proto_prop;
 
    //================================================
+   // Arrays and dictionaries.
+   //
+
+   Parsing::NonTerminal ArrayEntry;
+   Parsing::Rule r_array_entry_expr2;
+   Parsing::Rule r_array_entry_expr1;
+   Parsing::Rule r_array_entry_comma;
+   Parsing::Rule r_array_entry_eol;
+   Parsing::Rule r_array_entry_arrow;
+   Parsing::Rule r_array_entry_close;
+   Parsing::Rule r_array_entry_runaway;
+
+   Parsing::NonTerminal UnboundKeyword;
+   Parsing::Rule r_uk_if;
+   Parsing::Rule r_uk_elif;
+   Parsing::Rule r_uk_else;
+   Parsing::Rule r_uk_while;
+   
+   //================================================
    // States
    //
 
@@ -288,6 +291,7 @@ public:
    Parsing::State s_ClassBody;
    Parsing::State s_LambdaStart;
    Parsing::State s_ProtoDecl;
+   Parsing::State s_ArrayDecl;
 };
 
 }

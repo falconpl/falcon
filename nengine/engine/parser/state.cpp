@@ -70,7 +70,7 @@ bool State::findPaths( Parser& parser )
       NonTerminal* nt = *iter;
       TRACE2("State::findPaths -- checking %s", nt->name().c_ize() );
 
-      parser.addParseFrame(nt);
+      parser.addParseFrame(nt,0);
 
       // don't allow ambiguity
       if ( nt->findPaths( parser ) )

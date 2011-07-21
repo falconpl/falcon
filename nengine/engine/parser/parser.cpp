@@ -171,7 +171,8 @@ void Parser::popState()
    _p->m_tokenStack = &bf.m_tokenStack;
    _p->m_pframes = &bf.m_pframes;
    _p->m_pErrorFrames = &bf.m_pErrorFrames;
-   TRACE1("Parser::popState -- pframes.size()=%d",(int)_p->m_pframes->size());
+   TRACE1("Parser::popState -- pframes.size()=%d, stack now: %s",
+      (int)_p->m_pframes->size(), dumpStack().c_ize());
 
    Private::TokenStack::iterator tsiter = ts.begin();
    while( tsiter != ts.end() )

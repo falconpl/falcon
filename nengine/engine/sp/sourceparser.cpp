@@ -191,10 +191,15 @@ SourceParser::SourceParser():
    Expr<< (r_Expr_index << "Expr_index" << apply_expr_index << Expr << T_OpenSquare << Expr << T_CloseSquare );
    Expr<< (r_Expr_star_index << "Expr_star_index" << apply_expr_star_index << Expr << T_OpenSquare << T_Times << Expr << T_CloseSquare );
 
-   Expr<< (r_Expr_empty_dict << "Expr_empty_dict" << apply_expr_empty_dict << T_OpenSquare << T_Arrow << T_CloseSquare );
-   Expr<< (r_Expr_array_decl << "Expr_array_decl" << apply_expr_array_decl << T_OpenSquare << ListExprOrPairs << T_CloseSquare );
-   Expr<< (r_Expr_empty_dict2 << "Expr_empty_dict2" << apply_expr_empty_dict << T_DotSquare << T_Arrow << T_CloseSquare );
-   Expr<< (r_Expr_array_decl2 << "Expr_array_decl2" << apply_expr_array_decl << T_DotSquare << SeqExprOrPairs << T_CloseSquare );
+   //Expr<< (r_Expr_empty_dict << "Expr_empty_dict" << apply_expr_empty_dict << T_OpenSquare << T_Arrow << T_CloseSquare );
+   //Expr<< (r_Expr_array_decl << "Expr_array_decl" << apply_expr_array_decl << T_OpenSquare << ListExprOrPairs << T_CloseSquare );
+   //Expr<< (r_Expr_empty_dict2 << "Expr_empty_dict2" << apply_expr_empty_dict << T_DotSquare << T_Arrow << T_CloseSquare );
+   //Expr<< (r_Expr_array_decl2 << "Expr_array_decl2" << apply_expr_array_decl << T_DotSquare << SeqExprOrPairs << T_CloseSquare );
+
+   Expr<< (r_Expr_array_decl << "Expr_array_decl" << apply_expr_array_decl << T_OpenSquare );
+   Expr<< (r_Expr_array_decl2 << "Expr_array_decl2" << apply_expr_array_decl2 << T_DotSquare );
+
+   //Expr<< (r_Expr_array_decl2 << "Expr_array_decl2" << apply_expr_array_decl << T_DotSquare << SeqExprOrPairs << T_CloseSquare );
 
    Expr<< (r_Expr_dot << "Expr_dot" << apply_expr_dot << Expr << T_Dot << T_Name);
    Expr<< (r_Expr_plus << "Expr_plus" << apply_expr_plus << Expr << T_Plus << Expr);
@@ -257,29 +262,6 @@ SourceParser::SourceParser():
    NeListExpr_ungreed<< (r_NeListExpr_ungreed_first << "NeListExpr_ungreed_first" << apply_NeListExpr_ungreed_first << Expr );
    r_NeListExpr_ungreed_next.setGreedy(false);
 
-
-   ListExprOrPairs << "ListExprOrPairs";
-   ListExprOrPairs << ListExpr_errhand;
-   ListExprOrPairs<< (r_ListExprOrPairs_next_pair << "ListExprOrPairs_next_pair" << apply_ListExprOrPairs_next_pair << ListExprOrPairs << T_Comma << Expr << T_Arrow << Expr );
-   ListExprOrPairs<< (r_ListExprOrPairs_next << "ListExprOrPairs_next" << apply_ListExprOrPairs_next << ListExprOrPairs << T_Comma << Expr );
-   ListExprOrPairs<< (r_ListExprOrPairs_first_pair << "ListExprOrPairs_first_pair" << apply_ListExprOrPairs_first_pair << Expr << T_Arrow << Expr );
-   ListExprOrPairs<< (r_ListExprOrPairs_first << "ListExprOrPairs_first" << apply_ListExprOrPairs_first << Expr );
-   ListExprOrPairs<< (r_ListExprOrPairs_empty << "ListExprOrPairs_empty" << apply_ListExprOrPairs_empty );
-
-   SeqExprOrPairs << "SeqExprOrPairs";
-   SeqExprOrPairs << ListExpr_errhand;
-   SeqExprOrPairs<< (r_SeqExprOrPairs_next_pair_cm << "SeqExprOrPairs_next_pair_cm" << apply_SeqExprOrPairs_next_pair_cm
-         << SeqExprOrPairs << T_Comma << Expr << T_Arrow << Expr );
-   SeqExprOrPairs<< (r_SeqExprOrPairs_next_pair << "SeqExprOrPairs_next_pair" << apply_SeqExprOrPairs_next_pair
-         << SeqExprOrPairs << Expr << T_Arrow << Expr );
-   SeqExprOrPairs<< (r_SeqExprOrPairs_next << "SeqExprOrPairs_next" << apply_SeqExprOrPairs_next << SeqExprOrPairs << Expr );
-   SeqExprOrPairs<< (r_SeqExprOrPairs_next_cm << "SeqExprOrPairs_next_cm" << apply_SeqExprOrPairs_next_cm << SeqExprOrPairs << T_Comma << Expr );
-   SeqExprOrPairs<< (r_SeqExprOrPairs_first_pair << "SeqExprOrPairs_first_pair" << apply_SeqExprOrPairs_first_pair << Expr << T_Arrow << Expr );
-   SeqExprOrPairs<< (r_SeqExprOrPairs_first << "SeqExprOrPairs_first" << apply_SeqExprOrPairs_first << Expr );
-   SeqExprOrPairs<< (r_SeqExprOrPairs_empty << "SeqExprOrPairs_empty" << apply_SeqExprOrPairs_empty );
-
-   SeqExprOrPairs.prio(175);
-
    ListSymbol << "ListSymbol";
    ListSymbol << ListExpr_errhand;
    ListSymbol<< (r_ListSymbol_next << "ListSymbol_next" << apply_ListSymbol_next << ListSymbol << T_Comma << T_Name );
@@ -336,6 +318,35 @@ SourceParser::SourceParser():
                         << T_Name << T_EqSign << Expr << T_EOL );
 
    //==========================================================================
+   // Array entries
+   //
+   ArrayEntry << "ArrayEntry";
+   ArrayEntry << ArrayEntry_errHand;
+   ArrayEntry << ( r_array_entry_comma << "array_entry_comma" << apply_array_entry_comma << T_Comma );
+   ArrayEntry << ( r_array_entry_eol << "array_entry_eol" << apply_array_entry_eol << T_EOL );
+   ArrayEntry << ( r_array_entry_arrow << "array_entry_arrow" << apply_array_entry_arrow << T_Arrow );
+   ArrayEntry << ( r_array_entry_close << "array_entry_close" << apply_array_entry_close << T_CloseSquare );
+   // a little trick; other than being ok, this Non terminal followed by a terminal raises the required arity
+   // otherwise, Expr would match early.
+   ArrayEntry << ( r_array_entry_expr2 << "array_entry_expr2" << apply_array_entry_expr << Expr << T_EOL );
+   ArrayEntry << ( r_array_entry_expr1 << "array_entry_expr1" << apply_array_entry_expr << Expr );
+
+   // Handle runaway errors.
+   ArrayEntry << (r_array_entry_runaway << "array_entry_runaway" << apply_array_entry_runaway << UnboundKeyword );
+
+   UnboundKeyword << "UnboundKeyword"
+                  << (r_uk_if << "UK_if" << T_if )
+                  << (r_uk_elif << "UK_elif" << T_elif )
+                  << (r_uk_else << "UK_else" << T_else )
+                  << (r_uk_while << "UK_while" << T_while )
+                  //... more to come
+                  ;
+   
+   //==========================================================================
+   // Array entries
+   //
+
+   //==========================================================================
    //State declarations
    //
    s_Main << "Main"
@@ -387,11 +398,16 @@ SourceParser::SourceParser():
       << S_SmallEnd
       ;
 
+    s_ArrayDecl << "ArrayDecl"
+      << ArrayEntry
+      ;
+
    addState( s_Main );
    addState( s_InlineFunc );
    addState( s_ClassBody );
    addState( s_LambdaStart );
    addState( s_ProtoDecl );
+   addState( s_ArrayDecl );
 }
 
 void SourceParser::onPushState( bool isPushedState )

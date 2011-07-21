@@ -31,7 +31,17 @@ class Parser;
 using namespace Parsing;
 
 void apply_expr_array_decl( const Rule&, Parser& p );
-void apply_expr_empty_dict( const Rule&, Parser& p );
+void apply_expr_array_decl2( const Rule&, Parser& p );
+
+bool ArrayEntry_errHand( const NonTerminal& nt, Parser& p );
+
+void apply_array_entry_expr( const Rule&, Parser& p );
+void apply_array_entry_comma( const Rule&, Parser& p );
+void apply_array_entry_eol( const Rule&, Parser& p );
+void apply_array_entry_arrow( const Rule&, Parser& p );
+void apply_array_entry_close( const Rule&, Parser& p );
+
+void apply_array_entry_runaway( const Rule&, Parser& p );
 
 }
 
