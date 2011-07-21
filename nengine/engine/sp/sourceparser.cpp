@@ -190,10 +190,12 @@ SourceParser::SourceParser():
    Expr<< (r_Expr_call << "Expr_call" << apply_expr_call << Expr << T_Openpar << ListExpr << T_Closepar );
    Expr<< (r_Expr_index << "Expr_index" << apply_expr_index << Expr << T_OpenSquare << Expr << T_CloseSquare );
    Expr<< (r_Expr_star_index << "Expr_star_index" << apply_expr_star_index << Expr << T_OpenSquare << T_Times << Expr << T_CloseSquare );
+
    Expr<< (r_Expr_empty_dict << "Expr_empty_dict" << apply_expr_empty_dict << T_OpenSquare << T_Arrow << T_CloseSquare );
    Expr<< (r_Expr_array_decl << "Expr_array_decl" << apply_expr_array_decl << T_OpenSquare << ListExprOrPairs << T_CloseSquare );
    Expr<< (r_Expr_empty_dict2 << "Expr_empty_dict2" << apply_expr_empty_dict << T_DotSquare << T_Arrow << T_CloseSquare );
    Expr<< (r_Expr_array_decl2 << "Expr_array_decl2" << apply_expr_array_decl << T_DotSquare << SeqExprOrPairs << T_CloseSquare );
+
    Expr<< (r_Expr_dot << "Expr_dot" << apply_expr_dot << Expr << T_Dot << T_Name);
    Expr<< (r_Expr_plus << "Expr_plus" << apply_expr_plus << Expr << T_Plus << Expr);
    Expr<< (r_Expr_preinc << "Expr_preinc" << apply_expr_preinc << T_PlusPlus << Expr);
@@ -221,7 +223,6 @@ SourceParser::SourceParser():
       << (r_function << "Function decl" << apply_function
              << T_function << T_Name << T_Openpar << ListSymbol << T_Closepar << T_EOL )
       ;
-
       
    S_Return << "Return"
       << (r_return << "return" << apply_return << T_return << Expr << T_EOL)
@@ -239,22 +240,26 @@ SourceParser::SourceParser():
       ;
 
    ListExpr << "ListExpr";
+   ListExpr << ListExpr_errhand;
    ListExpr<< (r_ListExpr_next << "ListExpr_next" << apply_ListExpr_next << ListExpr << T_Comma << Expr );
    ListExpr<< (r_ListExpr_first << "ListExpr_first" << apply_ListExpr_first << Expr );
    ListExpr<< (r_ListExpr_empty << "ListExpr_empty" << apply_ListExpr_empty );
 
    NeListExpr << "NeListExpr";
+   NeListExpr << ListExpr_errhand;
    NeListExpr<< (r_NeListExpr_next << "NeListExpr_next" << apply_NeListExpr_next << NeListExpr << T_Comma << Expr );
    NeListExpr<< (r_NeListExpr_first << "NeListExpr_first" << apply_NeListExpr_first << Expr );
 
 
    NeListExpr_ungreed << "NeListExpr_ungreed";
+   NeListExpr_ungreed << ListExpr_errhand;
    NeListExpr_ungreed<< (r_NeListExpr_ungreed_next << "NeListExpr_ungreed_next" << apply_NeListExpr_ungreed_next << NeListExpr_ungreed << T_Comma << Expr );
    NeListExpr_ungreed<< (r_NeListExpr_ungreed_first << "NeListExpr_ungreed_first" << apply_NeListExpr_ungreed_first << Expr );
    r_NeListExpr_ungreed_next.setGreedy(false);
 
 
    ListExprOrPairs << "ListExprOrPairs";
+   ListExprOrPairs << ListExpr_errhand;
    ListExprOrPairs<< (r_ListExprOrPairs_next_pair << "ListExprOrPairs_next_pair" << apply_ListExprOrPairs_next_pair << ListExprOrPairs << T_Comma << Expr << T_Arrow << Expr );
    ListExprOrPairs<< (r_ListExprOrPairs_next << "ListExprOrPairs_next" << apply_ListExprOrPairs_next << ListExprOrPairs << T_Comma << Expr );
    ListExprOrPairs<< (r_ListExprOrPairs_first_pair << "ListExprOrPairs_first_pair" << apply_ListExprOrPairs_first_pair << Expr << T_Arrow << Expr );
@@ -262,6 +267,7 @@ SourceParser::SourceParser():
    ListExprOrPairs<< (r_ListExprOrPairs_empty << "ListExprOrPairs_empty" << apply_ListExprOrPairs_empty );
 
    SeqExprOrPairs << "SeqExprOrPairs";
+   SeqExprOrPairs << ListExpr_errhand;
    SeqExprOrPairs<< (r_SeqExprOrPairs_next_pair_cm << "SeqExprOrPairs_next_pair_cm" << apply_SeqExprOrPairs_next_pair_cm
          << SeqExprOrPairs << T_Comma << Expr << T_Arrow << Expr );
    SeqExprOrPairs<< (r_SeqExprOrPairs_next_pair << "SeqExprOrPairs_next_pair" << apply_SeqExprOrPairs_next_pair
@@ -275,11 +281,13 @@ SourceParser::SourceParser():
    SeqExprOrPairs.prio(175);
 
    ListSymbol << "ListSymbol";
+   ListSymbol << ListExpr_errhand;
    ListSymbol<< (r_ListSymbol_next << "ListSymbol_next" << apply_ListSymbol_next << ListSymbol << T_Comma << T_Name );
    ListSymbol<< (r_ListSymbol_first << "ListSymbol_first" << apply_ListSymbol_first << T_Name );
    ListSymbol<< (r_ListSymbol_empty << "ListSymbol_empty" << apply_ListSymbol_empty );
 
    NeListSymbol << "NeListSymbol";
+   NeListSymbol << ListExpr_errhand;
    NeListSymbol<< (r_NeListSymbol_next << "NeListSymbol_next" << apply_NeListSymbol_next << NeListSymbol << T_Comma << T_Name );
    NeListSymbol<< (r_NeListSymbol_first << "NeListSymbol_first" << apply_NeListSymbol_first << T_Name );
 

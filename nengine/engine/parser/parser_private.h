@@ -52,7 +52,7 @@ class Parser::Private
    
    class ParseFrame {
    public:
-      NonTerminal* m_owningToken;
+      const NonTerminal* m_owningToken;
       // depth of the stack at this frame.
       int m_nStackDepth;
       // highest priority in this stack frame
@@ -65,7 +65,7 @@ class Parser::Private
       RulePath m_path;
       //Alternatives m_candidates;
 
-      ParseFrame( NonTerminal* nt=0, int nd=0 ):
+      ParseFrame( const NonTerminal* nt=0, int nd=0 ):
          m_owningToken(nt),
          m_nStackDepth(nd),
          m_nPriority(0),

@@ -28,6 +28,8 @@ class Parser;
 
 using namespace Parsing;
 
+bool ListExpr_errhand(const NonTerminal&, Parser& p);
+
 void apply_ListExpr_next( const Rule&, Parser& p );
 void apply_ListExpr_first( const Rule&, Parser& p );
 void apply_ListExpr_empty( const Rule&, Parser& p );

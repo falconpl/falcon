@@ -17,6 +17,8 @@
 #define SRC "engine/sp/parser_if.cpp"
 
 #include <falcon/setup.h>
+#include <falcon/trace.h>
+
 #include <falcon/error.h>
 #include <falcon/expression.h>
 #include <falcon/exprvalue.h>
@@ -35,50 +37,64 @@ namespace Falcon {
 
 using namespace Parsing;
 
-bool errhand_if(const NonTerminal*, Parser* p)
+bool errhand_if(const NonTerminal&, Parser& p)
 {
-   TokenInstance* ti = p->getNextToken();
-   TokenInstance* ti2 = p->getLastToken();
+   TokenInstance* ti = p.getNextToken();
+   TokenInstance* ti2 = p.getLastToken();
 
-   if( p->lastErrorLine() != ti->line() )
+   if( p.lastErrorLine() < ti->line() )
    {
       // generate another error only if we didn't notice it already.
-      p->addError( e_syn_if, p->currentSource(), ti->line(), ti2->chr() );
+      p.addError( e_syn_if, p.currentSource(), ti->line(), ti2->chr() );
    }
 
-   if( ! p->interactive() )
+   if( ! p.interactive() )
    {
       // put in a fake if statement (else, subsequent else/elif/end would also cause errors).
       SynTree* stIf = new SynTree;
       StmtIf* fakeIf = new StmtIf( new ExprValue(1), stIf, 0, ti->line(), ti->chr() );
-      ParserContext* st = static_cast<ParserContext*>(p->context());
+      ParserContext* st = static_cast<ParserContext*>(p.context());
       st->openBlock( fakeIf, stIf );
+   }
+   else
+   {
+      MESSAGE2( "errhand_if -- Ignoring IF in interactive mode." );
    }
    // on interactive parsers, let the whole instruction to be destroyed.
 
-   return false; // let the engine simplify.
+   p.resetNextToken();
+   p.simplify( p.availTokens() );
+   return true;
 }
 
 
 void apply_if_short( const Rule&, Parser& p )
 {
    // << (r_if_short << "if_short" << apply_if_short << T_if << Expr << T_Colon << S_Autoexpr << T_EOL )
-
    TokenInstance* tif = p.getNextToken();
-   TokenInstance* texpr = p.getNextToken();
-   p.getNextToken();
-   TokenInstance* tstatement = p.getNextToken();
 
-   Expression* expr = static_cast<Expression*>(texpr->detachValue());
-   Expression* sa = static_cast<Expression*>(tstatement->detachValue());
-   ParserContext* st = static_cast<ParserContext*>(p.context());
+   // don't open the if context if  we have an error in interactive mode.
+   if( !p.interactive() || p.lastErrorLine() < tif->line() )
+   {
+      TokenInstance* texpr = p.getNextToken();
+      p.getNextToken();
+      TokenInstance* tstatement = p.getNextToken();
 
-   SynTree* ifTrue = new SynTree;
-   ifTrue->append( new StmtAutoexpr(sa) );
+      Expression* expr = static_cast<Expression*>(texpr->detachValue());
+      Expression* sa = static_cast<Expression*>(tstatement->detachValue());
+      ParserContext* st = static_cast<ParserContext*>(p.context());
 
-   StmtIf* stmt_if = new StmtIf(expr, ifTrue, 0, tif->line(), tif->chr());
-   st->addStatement( stmt_if );
+      SynTree* ifTrue = new SynTree;
+      ifTrue->append( new StmtAutoexpr(sa) );
 
+      StmtIf* stmt_if = new StmtIf(expr, ifTrue, 0, tif->line(), tif->chr());
+      st->addStatement( stmt_if );
+   }
+   else
+   {
+      MESSAGE2( "apply_if_short -- Ignoring IF in interactive mode." );
+   }
+   
    // clear the stack
    p.simplify(5);
 }
@@ -88,15 +104,24 @@ void apply_if( const Rule&, Parser& p )
 {
    // << (r_if << "if" << apply_if << T_if << Expr << T_EOL )
    TokenInstance* tif = p.getNextToken();
-   TokenInstance* texpr = p.getNextToken();
-   p.getNextToken();
 
-   Expression* expr = static_cast<Expression*>(texpr->detachValue());
-   ParserContext* st = static_cast<ParserContext*>(p.context());
+   // don't open the if context if  we have an error in interactive mode.
+   if( !p.interactive() || p.lastErrorLine() < tif->line() )
+   {
+      TokenInstance* texpr = p.getNextToken();
+      p.getNextToken();
 
-   SynTree* ifTrue = new SynTree;
-   StmtIf* stmt_if = new StmtIf(expr, ifTrue, 0, tif->line(), tif->chr());
-   st->openBlock( stmt_if, ifTrue );
+      Expression* expr = static_cast<Expression*>(texpr->detachValue());
+      ParserContext* st = static_cast<ParserContext*>(p.context());
+
+      SynTree* ifTrue = new SynTree;
+      StmtIf* stmt_if = new StmtIf(expr, ifTrue, 0, tif->line(), tif->chr());
+      st->openBlock( stmt_if, ifTrue );
+   }
+   else
+   {
+      MESSAGE2( "apply_if -- Ignoring IF in interactive mode." );
+   }
 
    // clear the stack
    p.simplify(3);
@@ -107,28 +132,37 @@ void apply_elif( const Rule&, Parser& p )
 {
    // << (r_elif << "elif" << apply_elif << T_elif << Expr << T_EOL )
    TokenInstance* tif = p.getNextToken();
-   TokenInstance* texpr = p.getNextToken();
-   p.getNextToken();
 
-   Expression* expr = static_cast<Expression*>(texpr->detachValue());
-   ParserContext* st = static_cast<ParserContext*>(p.context());
-
-   Statement* current = st->currentStmt();
-   if( current == 0 || current->type() != Statement::if_t )
+   // don't open the if context if  we have an error in interactive mode.
+   if( !p.interactive() || p.lastErrorLine() < tif->line() )
    {
-      p.addError( e_syn_elif, p.currentSource(), tif->line(), tif->chr() );
-      delete expr;
+      TokenInstance* texpr = p.getNextToken();
+      p.getNextToken();
+
+      Expression* expr = static_cast<Expression*>(texpr->detachValue());
+      ParserContext* st = static_cast<ParserContext*>(p.context());
+
+      Statement* current = st->currentStmt();
+      if( current == 0 || current->type() != Statement::if_t )
+      {
+         p.addError( e_syn_elif, p.currentSource(), tif->line(), tif->chr() );
+         delete expr;
+      }
+      else
+      {
+         StmtIf* stmt_if = static_cast<StmtIf*>(current);
+         // can we really change branch now?
+         SynTree* ifElse = st->changeBranch();
+         if ( ifElse != 0 ) {
+            stmt_if->addElif( expr, ifElse, tif->line(), tif->chr() );
+         }
+      }
    }
    else
    {
-      StmtIf* stmt_if = static_cast<StmtIf*>(current);
-      // can we really change branch now?
-      SynTree* ifElse = st->changeBranch();
-      if ( ifElse != 0 ) {
-         stmt_if->addElif( expr, ifElse, tif->line(), tif->chr() );
-      }
+      MESSAGE2( "apply_elif -- Ignoring IF in interactive mode." );
    }
-
+   
    // clear the stack
    p.simplify(3);
 }
@@ -138,24 +172,33 @@ void apply_else( const Rule&, Parser& p )
 {
    // << (r_else << "else" << apply_else << T_else << T_EOL )
    TokenInstance* telse = p.getNextToken();
-   p.getNextToken();
 
-   ParserContext* st = static_cast<ParserContext*>(p.context());
-
-   Statement* current = st->currentStmt();
-   if( current == 0 || current->type() != Statement::if_t )
+   // don't open the if context if  we have an error in interactive mode.
+   if( !p.interactive() || p.lastErrorLine() < telse->line() )
    {
-      p.addError( e_syn_else, p.currentSource(), telse->line(), telse->chr() );
+      p.getNextToken();
+
+      ParserContext* st = static_cast<ParserContext*>(p.context());
+
+      Statement* current = st->currentStmt();
+      if( current == 0 || current->type() != Statement::if_t )
+      {
+         p.addError( e_syn_else, p.currentSource(), telse->line(), telse->chr() );
+      }
+      else
+      {
+         StmtIf* stmt_if = static_cast<StmtIf*>(current);
+
+         // can we really change branch?
+         SynTree* ifElse = st->changeBranch();
+         if( ifElse != 0 ) {
+            stmt_if->setElse( ifElse );
+         }
+      }
    }
    else
    {
-      StmtIf* stmt_if = static_cast<StmtIf*>(current);
-
-      // can we really change branch?
-      SynTree* ifElse = st->changeBranch();
-      if( ifElse != 0 ) {
-         stmt_if->setElse( ifElse );
-      }
+      MESSAGE2( "apply_else -- Ignoring IF in interactive mode." );
    }
 
    // clear the stack

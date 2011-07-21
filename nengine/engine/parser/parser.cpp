@@ -270,7 +270,7 @@ GenericError* Parser::makeError() const
       ErrorDef& def = *iter;
 
       String sExtra = def.sExtra;
-      if( def.nOpenContext != 0 )
+      if( def.nOpenContext != 0 && def.nOpenContext != def.nLine )
       {
          if( sExtra.size() != 0 )
             sExtra += " -- ";
@@ -330,6 +330,15 @@ TokenInstance* Parser::getLastToken()
    }
 
    return _p->m_tokenStack->back();
+}
+
+
+void Parser::trimFromCurrentToken()
+{
+   if ( _p->m_nextTokenPos <  _p->m_tokenStack->size() )
+   {
+      _p->m_tokenStack->resize( _p->m_nextTokenPos );
+   }
 }
 
 void Parser::resetNextToken()
@@ -559,7 +568,7 @@ String Parser::dumpStack() const
 }
 
 
-void Parser::addParseFrame( NonTerminal* token, int pos )
+void Parser::addParseFrame( const NonTerminal* token, int pos )
 {
    TRACE1("Parser::addParseFrame -- %s at %d",token->name().c_ize(),pos);
    if( pos < 0 )
@@ -779,19 +788,20 @@ void Parser::parseError()
       _p->m_pframes->push_back(_p->m_pErrorFrames->back());
       _p->m_pErrorFrames->pop_back();
    }
+   
+
+   //_p->m_pframes->clear();
 
    // find an error handler in the current rule frame.
    // if not present, unroll the frame and try again
    // -- fall back to syntax error.
    while( ! _p->m_pframes->empty() )
    {
-      Private::ParseFrame& frame = _p->m_pframes->back();
+      Private::ParseFrame& frame = _p->m_pframes->back();      
 
-      Private::RulePath::reverse_iterator iter = frame.m_path.rbegin();
-
-      while( iter != frame.m_path.rend() )
+      while( ! frame.m_path.empty() )
       {
-         const Rule* rule = *iter;
+         const Rule* rule = frame.m_path.back();
          if( rule->parent().errorHandler() != 0 )
          {
             TRACE2("Parser::parseError -- applying error handler for %s",
@@ -799,16 +809,13 @@ void Parser::parseError()
 
             resetNextToken();
             // we're done.
-            if( ! rule->parent().errorHandler()( &rule->parent(), this ) )
+            if( rule->parent().errorHandler()( rule->parent(), *this ) )
             {
-               // unroll the tokens in the stack.
-               simplify( _p->m_tokenStack->size() - frame.m_nStackDepth, 0 );
+               // handled?
+               return;
             }
-            
-            _p->m_pframes->pop_back();
-            return;
          }
-         ++iter;
+         frame.m_path.pop_back();
       }
 
       if( frame.m_owningToken->errorHandler() != 0 )
@@ -818,17 +825,46 @@ void Parser::parseError()
 
          resetNextToken();
          // we're done.
-         if( ! frame.m_owningToken->errorHandler()( frame.m_owningToken, this ) )
+         if( frame.m_owningToken->errorHandler()( *frame.m_owningToken, *this ) )
          {
-            // unroll the tokens in the stack.
-            simplify( _p->m_tokenStack->size() - frame.m_nStackDepth, 0 );
+            // handled?
+            //_p->m_pframes->pop_back();
+            return;
          }
-         _p->m_pframes->pop_back();
-         return;
       }
 
       MESSAGE2( "Parser::parseError -- error handler not found in current frame" );
       _p->m_pframes->pop_back();
+   }
+
+   // Then, scan the CURRENT STACK backward, and try to fix the latest error.
+   MESSAGE2( "Parser::parseError -- No handler frame found, trying on the stack." );
+   Private::TokenStack::reverse_iterator riter = _p->m_tokenStack->rbegin();
+   int pos = _p->m_tokenStack->size()-1;
+   while( riter != _p->m_tokenStack->rend() )
+   {
+      TokenInstance* ti = *riter;
+      if( ti->token().isNT() )
+      {
+         const NonTerminal* nt = static_cast<const NonTerminal*>( &ti->token() );
+         if( nt->errorHandler() != 0 )
+         {
+            // we found it.
+            addParseFrame( nt, pos );
+            TRACE1( "Parser::parseError -- stack now %s", dumpStack().c_ize() );
+            if( nt->errorHandler()( *nt, *this ) )
+            {
+               // handled
+               _p->m_pframes->pop_back();
+               return;
+            }
+            MESSAGE( "Parser::parseError -- handler refused to work" );
+            // nope, try again
+            _p->m_pframes->pop_back();
+         }
+      }
+      --pos;
+      ++riter;
    }
 
    MESSAGE2( "Parser::parseError -- error handler not found" );
@@ -980,8 +1016,10 @@ void Parser::explorePaths()
 
    while( ! _p->m_pframes->empty() && ! findPaths(false) )
    {
-      TRACE1( "Parser::explorePaths -- adding error frame %d; parser frames %d",
+      TRACE1( "Parser::explorePaths -- adding error frame %d(%s); parser frames %d",
          _p->m_pErrorFrames->size(),
+         //_p->m_pErrorFrames->empty() ? "none" : _p->m_pErrorFrames->back().m_path.back()->name().c_ize(),
+         _p->m_pErrorFrames->empty() ? "none" : _p->m_pErrorFrames->back().m_owningToken->name().c_ize(),
          _p->m_pframes->size()
          );
       // failed on the same rule?
@@ -1022,7 +1060,7 @@ void Parser::applyCurrentRule()
    // If we apply, we know we have cleared all errors.
    _p->m_pErrorFrames->clear();
    resetNextToken();
-   TRACE2( "Applying rule %s -- state depth %d -- state id %d",
+   TRACE1( "Applying rule %s -- state depth %d -- state id %d",
       currentRule->name().c_ize(),
       _p->m_lStates.size(),
       frameId );

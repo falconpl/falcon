@@ -28,8 +28,10 @@ class Rule;
 class Parser;
 }
 
-void apply_expr_array_decl( const Parsing::Rule&, Parsing::Parser& p );
-void apply_expr_empty_dict( const Parsing::Rule&, Parsing::Parser& p );
+using namespace Parsing;
+
+void apply_expr_array_decl( const Rule&, Parser& p );
+void apply_expr_empty_dict( const Rule&, Parser& p );
 
 }
 

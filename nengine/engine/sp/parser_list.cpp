@@ -18,6 +18,8 @@
 
 #include <falcon/setup.h>
 #include <falcon/error.h>
+#include <falcon/trace.h>
+
 #include <falcon/sp/sourceparser.h>
 #include <falcon/sp/parsercontext.h>
 #include <falcon/sp/parser_index.h>
@@ -34,6 +36,17 @@
 namespace Falcon {
 
 using namespace Parsing;
+
+bool ListExpr_errhand(const NonTerminal&, Parser& p)
+{
+   TRACE2( "ListExpr_errhand -- removing %d tokens", p.tokenCount() );
+   TokenInstance* t0 = p.getNextToken();
+   TokenInstance* t1 = p.getLastToken();
+
+   p.addError( e_syn_arraydecl, p.currentSource(), t1->line(), t1->chr(), t0->line() );
+   p.trimFromCurrentToken();
+   return true;
+}
 
 void apply_ListExpr_next( const Rule&, Parser& p )
 {

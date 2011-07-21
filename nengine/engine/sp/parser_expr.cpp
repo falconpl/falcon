@@ -33,14 +33,17 @@ namespace Falcon {
 
 using namespace Parsing;
 
-bool expr_errhand(const NonTerminal*, Parser* p)
+bool expr_errhand(const NonTerminal&, Parser& p)
 {
    //SourceParser* sp = static_cast<SourceParser*>(p);
-   TokenInstance* ti = p->getNextToken();
-   TokenInstance* ti2 = p->getLastToken();
-   p->addError( e_syn_expr, p->currentSource(), ti2->line(), ti2->chr(), 
-                           ti->line() == ti2->line() ? 0 : ti->line() );
-   return false; // let the engine simplify.
+   TokenInstance* ti = p.getNextToken();
+   TokenInstance* ti2 = p.getLastToken();
+   p.addError( e_syn_expr, p.currentSource(), ti2->line(), ti2->chr(), ti->line() );
+
+   // remove the whole expression.
+   p.resetNextToken();
+   p.simplify( p.availTokens() );
+   return true;
 }
 
 //=======================================================

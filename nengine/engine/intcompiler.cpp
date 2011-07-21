@@ -351,7 +351,7 @@ void IntCompiler::throwCompileErrors() const
       virtual bool operator()( const Parsing::Parser::ErrorDef& def, bool bLast ){
 
          String sExtra = def.sExtra;
-         if( def.nOpenContext != 0 )
+         if( def.nOpenContext != 0 && def.nLine != def.nOpenContext )
          {
             if( sExtra.size() != 0 )
                sExtra += " -- ";

@@ -94,7 +94,7 @@ NonTerminal& NonTerminal::r(Rule& rule)
 
 bool NonTerminal::findPaths( Parser& p ) const
 {
-   TRACE1( "NonTerminal::findPaths -- scanning '%s' ", name().c_ize() );
+   TRACE1( "NonTerminal::findPaths -- scanning '%s'", name().c_ize() );
 
    // initialize frame status
    int nBaseFrames = p.frameDepth();
@@ -125,6 +125,14 @@ bool NonTerminal::findPaths( Parser& p ) const
    return false;
 }
 
+void NonTerminal::addFirstRule( Parser& p ) const
+{
+   // loop through our rules.
+   Private::RuleList::iterator iter = _p->m_rules.begin();
+
+   TRACE1( "NonTerminal::addFirstRule -- adding '%s'", (*iter)->name().c_ize() );
+   p.addRuleToPath((*iter));
+}
 
 }
 }
