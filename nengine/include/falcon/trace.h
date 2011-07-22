@@ -32,6 +32,8 @@ inline void trace_dummyfunc( const char*, const void* )
 
 #define MESSAGE( fmt )
 #define MESSAGE1( fmt )
+#define MESSAGE2( fmt )
+#define MESSAGE3( fmt )
 
 #define TRACE( fmt, ... ) 
 #define TRACE1( fmt, ... )

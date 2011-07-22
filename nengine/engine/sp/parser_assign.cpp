@@ -17,6 +17,7 @@
 #define SRC "engine/sp/parser_assign.cpp"
 
 #include <falcon/setup.h>
+#include <falcon/error.h>
 
 #include <falcon/sp/sourceparser.h>
 #include <falcon/sp/parsercontext.h>

@@ -79,8 +79,8 @@ void IntCompiler::Context::onNewClass( Class* cls, bool isObject, GlobalSymbol* 
       {
          // so, we have to generate an hyper class out of our falcon-class
          // -- the hyperclass is also owning the FalconClass.
-         Class* hyper = fcls->hyperConstruct();
-         m_owner->m_module->addClass( gs, hyper, isObject );
+         Class* hyperclass = fcls->hyperConstruct();
+         m_owner->m_module->addClass( gs, hyperclass, isObject );
       }
       else
       {
