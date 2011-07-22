@@ -17,6 +17,7 @@
 #define SRC "engine/sp/parser_arraydecl.cpp"
 
 #include <falcon/setup.h>
+#include <falcon/error.h>
 
 #include <falcon/expression.h>
 #include <falcon/exprarray.h>
