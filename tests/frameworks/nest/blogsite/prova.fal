@@ -22,6 +22,7 @@ inspect(section)
 > "END SECTIONS TEST"
 > "--------------------------------------------------------------------------"
 // Test on Items
+*/
 > "START ITEMS TEST"
 
 content1 = "
@@ -43,7 +44,14 @@ inspect( p.Item.getByID( 1 ) )
 > "Item delete: ",  p.Item.delete( 4 ) ? "Ok" : "KO!"
 
 b = p.Item.getByID( 1 )
+inspect( b.NumOfComments )
 inspect( b )
+
+
+/*
+> "Start Comments Test"
+comment = "This is a comment"
+p.Comment.insert("comment", "Author", "email", "website", "1")
 */
 b= p.Section.getList()
 > b

@@ -12,6 +12,7 @@
 *	32		function finalize()
 *	37		function getByBlogID( IDBlog )
 ***************************************************/
+import from nest.dm.cust.DateTimeManagement in DateTime
 
 class BlogComment( dbutility  )
 	_dbuti 	 = nil
@@ -56,12 +57,39 @@ class BlogComment( dbutility  )
 			ret += comment
 
 		end
+		
+		return ret
 
+	end
+	
+	function postedBy()
+		sRet = i"Posted by "
+		
+		if self.Website
+			sRet += @"<a rel='nofollow' href='$(self.Website)' target='blank'>$(self.Author)</a>"
+		elif self.Email
+			sRet += @"<a rel='nofollow' href='mailto:$(self.Email)'>$(self.Author)</a>"
+		else
+			sRet += self.Author
+		end
+				
+		nameDay   = DateTime.dayNames[ self.Date.dayOfWeek() ]
+		numDay    = self.Date.day
+		nameMonth = DateTime.monthNames[ self.Date.month -1 ]
+		hour = "0" + self.Date.hour
+		minute = "0" + self.Date.minute
+		
+		hour = hour[-2:]
+		minute = minute[-2:]
+		sRet +=  @", $(nameDay), $(nameMonth) $(numDay), $(self.Date.year) at $(hour):$(minute)"
+			
+		
+		return sRet
 	end
 
 // subRegion: Insert, Update and Delete
-	function insert( Content, Author, email, website, IDBlog )
-		return self._dbuti.execute("INSERT INTO tBlogComments VALUES(?, ?, ?, ?, ?, ?);", \
+	function insert( Content, Author, email, website, IDBlog )		
+		return self._dbuti.execute("INSERT INTO tBlogComments (Content, Author, email, website, Date, IDBLOG) VALUES(?, ?, ?, ?, ?, ?);", \
 						[Content, Author, email, website, CurrentTime().toLongFormat(), IDBlog])
 
 	end

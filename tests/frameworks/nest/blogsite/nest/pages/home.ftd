@@ -3,6 +3,14 @@
 	bList = Nest.service("Blog", "list")
 ?>
 <h1>List of News</h1>
+<? 
+	if Nest.auth_level <= Nest.AL.USER
+		> "<a href=\"?pid=blognewitem\">"
+		> @"add topic"
+		> "</a>"
+	end
+?>
+
 <? bList.render() ?>
    
    

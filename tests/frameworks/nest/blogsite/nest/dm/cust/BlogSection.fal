@@ -28,18 +28,7 @@ class BlogSection( dbutility )
 	
 // Region: DML methods
 	function getList()
-		aSect = self._dbuti.fetchArray( "SELECT Title FROM tBlogSections ORDER BY Title;" )
-
-		noFilter = i"No Filter!"
-		ret = @"<p class='blogNaviTitle'><a href=\"?pid=home\">$(noFilter)</a></p>"	
-		
-		ret += "<p class='blogNaviTitle'>" + i"Sections" + "<p>"
-
-		for s in aSect
-			ret += @"<p class='blogNaviItem'><a href=\"?pid=home&type=section&id=$(s[0])\">$(s[0])</a></p>"
-		end
-			
-		return ret 
+		return self._dbuti.fetchArray( "SELECT Title, IDSection FROM tBlogSections ORDER BY Title;" )
 	end
 
 	function delete( id )

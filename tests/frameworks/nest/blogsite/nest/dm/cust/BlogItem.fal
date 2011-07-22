@@ -8,19 +8,23 @@
 ***************************************************/
 /***************************************************
 --Classes, Object and functions:
-*	26	class BlogItem( fetchFN, execFN )
-*	48		function finalize()
-*	53	>> --- DML Methods----------------------------------------------------<<
-*	55	>>>> News data
-*	57		function getListBySection( section )
-*	62		function getListByTag( tag )
-*	67		function getListByLast( numRec )
-*	72		function getListByYearMonth( year, month )
-*	77	>> --- Output methods-------------------------------------------------<<
-*	78		function postedBy()
-*	97	>> --- DB methods-----------------------------------------------------<<
-*	100		function getByID( idBlog )
-*	109		function getList( filter, numRec)
+*	32	class BlogItem( dbutility )
+*	52		function finalize()
+*	56	>> --- DML Methods----------------------------------------------------<<
+*	58	>>>> List of Items
+*	64		function getByID( idBlog )
+*	68	>>>> Insert, Update and Delete
+*	71		function insert( Title, Content, Author, Section, Tags )
+*	105		function update( IDBlog, Title, Content, Author, Section, Tags )
+*	140		function delete( IDBlog )
+*	147	>> --- Output methods-------------------------------------------------<<
+*	148		function postedBy()
+*	161		function filedUnder()
+*	166		function commentsNumber()
+*	182		function tagList()
+*	193		function DateFormatted()
+*	204	>> --- Private methods------------------------------------------------<<
+*	209		function getList( filter, numRec)
 ***************************************************/
 import BlogSection  from nest.dm.cust.BlogSection as BlogSection
 import from nest.dm.cust.DateTimeManagement in DateTime
@@ -28,7 +32,7 @@ import from nest.dm.cust.DateTimeManagement in DateTime
 class BlogItem( dbutility )
 	_dbuti 	 = nil
 	_fields  = nil
-	
+
 	ID		 = nil
 	Title  	 = nil
 	ShortCnt = nil
@@ -60,78 +64,81 @@ class BlogItem( dbutility )
 	function getByID( idBlog )
 		return self.getList( [@"d.IDBLOG = $(idBlog)"], nil)[0]
 	end
-	
+
 // subRegion: Insert, Update and Delete
 
 	/*	Insert a new Item into the db	*/
 	function insert( Title, Content, Author, Section, Tags )
 
 		bFeedback = false
-		
+
 		IDSect = self._dbuti.getScalar( "SELECT IDSection FROM tBlogSections WHERE Title = ?;", Section )
 		if IDSect
+			
+			month = "0" + CurrentTime().month
+			yearmonth = "" + CurrentTime().year + "" +  month[-2:]
 
-			if self._dbuti.execute("INSERT INTO tBlogData (Title, Content, Author, IDSection, Date) VALUES(?, ?, ?, ?, ?);", [Title, Content, Author, IDSect, CurrentTime().toLongFormat() ])
+			if self._dbuti.execute("INSERT INTO tBlogData (Title, Content, Author, IDSection, Date, yearmonth) VALUES(?, ?, ?, ?, ?, ?);", \
+					[Title, Content, Author, IDSect, CurrentTime().toLongFormat(), yearmonth])
 
 				idBlog = self._dbuti.getScalar( "SELECT last_insert_rowid();" )
-				bFeedback = true 
-				
+				bFeedback = true
+
 				for t in Tags.replace(","," ").split(" ")
 
 					if not t.trim(): continue
 					if not self._dbuti.execute("INSERT INTO tBlogTags VALUES(?, ?);", [idBlog, t])
 
 						bFeedback = false
-						break		
+						break
 
 					end
 
 				end
 
-				
 			end
 
 		end
-		
+
 		return bFeedback
 
 	end
-		
+
 	function update( IDBlog, Title, Content, Author, Section, Tags )
 		sqlCMD = "
 					UPDATE tBlogData
-						SET 							
+						SET
 						    Title = ?,
 						    Content = ?,
 						    Author = ?,
 						    IDSection = ?,
 						    Date = ?
-					WHERE 
+					WHERE
 							IDBLOG = ? "
 
 		bFeedback = false
 
 		IDSect = self._dbuti.getScalar( "SELECT IDSection FROM tBlogSections WHERE Title = ?;", Section )
-		if IDSect                                                                                        
+		if IDSect
 
 			self._dbuti.execute( sqlCMD, [Title, Content, Author, IDSect, CurrentTime().toLongFormat(), IDBlog] )
 			self._dbuti.execute("DELETE FROM tBlogTags WHERE IDBLOG = ?;", IDBlog)
 			for t in Tags.replace(","," ").split(" ")
 
-				bFeedback = true 
-				
+				bFeedback = true
+
 				if not t.trim(): continue
 				if not self._dbuti.execute("INSERT INTO tBlogTags VALUES(?, ?);", [IDBlog, t])
 					bFeedback = false
-					break		
+					break
 				end
 			end
 		end
 
 		return bFeedback
-						
+
 	end
-	
+
 	function delete( IDBlog )
 		self._dbuti.execute("DELETE FROM tBlogTags WHERE IDBLOG = ?;", IDBlog)
 		self._dbuti.execute("DELETE FROM tBlogComments WHERE IDBLOG = ?;", IDBlog)
@@ -148,50 +155,65 @@ class BlogItem( dbutility )
 
 		h = h[-2:]
 		m = m[-2:]
-		
+
 		return @format
 
 	end
-	
+
 	function filedUnder()
 		format = i"Filed under: <a href=\"?pid=home&type=section&id=$(self.Section)\">$(self.Section)</a>"
 		return @format
 	end
-	
+
 	function commentsNumber()
-		
-		if self.NumOfComments > 1
-			sRet = self.NumOfComments + " " + i"comments"
-		elif self.NumOfComments == 1
-			sRet = i"One comment"
-		else
+
+		sRet = ""
+		if self.NumOfComments == 0
 			sRet = i"No comments"
+		elif self.NumOfComments > 1
+			sRet += self.NumOfComments
+			sRet += " comments"
+		else
+			sRet = i"One comment"
 		end
 
 		return sRet
 
 	end
-	
+
 	function tagList()
-		
+
 		s1 = "Tags: "
-		for a in self.Tags 
+		for a in self.Tags
 			s1 += @"<a href=\"?pid=home&type=tag&id=$(a)\">$(a)</a>"
 			formiddle: s1+=", "
 		end
-		
+
 		return s1
 	end
-	
-	function DateFormatted()
+
+	function getCalendarList()
+		sqlCmd = "select distinct yearmonth from tblogdata order by 1 desc;"
+		aRec = self._dbuti.fetchArray( sqlCmd )
 		
+		ret = "<p class='blogNaviTitle'>" + i"By Date" + "<p>"
+		for a in aRec
+			s1 = "" + a[0][0:4] + " " + DateTime.monthNames[ int(a[0][4:]) - 1]
+			ret += @"<p class='blogNaviItem'><a href=\"?pid=home&type=date&id=$(a[0])\">$(s1)</a></p>"			
+		end
+
+		return ret
+				
+	end
+	function DateFormatted()
+
 		nameDay   = DateTime.dayNames[ self.Date.dayOfWeek() ]
 		numDay    = self.Date.day
 		nameMonth = DateTime.monthNames[ self.Date.month -1 ]
-		
+
 		format = "$(nameDay), $(nameMonth) $(numDay), $(self.Date.year)"
 		return @format
-		
+
 	end
 
 // Region: Private methods
@@ -247,7 +269,7 @@ class BlogItem( dbutility )
 
 			blog.Tags = sTags
 
-			blog.NumOfComments = self._dbuti.getScalar( "SELECT Count(*) as numHit FROM tBlogComments WHERE IDBLOG = ?;", blog.ID)			
+			blog.NumOfComments = self._dbuti.getScalar( "SELECT Count(*) as numHit FROM tBlogComments WHERE IDBLOG = ?;", blog.ID)
 
 			ret += blog
 

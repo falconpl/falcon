@@ -49,10 +49,17 @@ class Blog( instance ) from Service( instance )
 		self._ID = Request.getField("id", "" )
 		self._requestType = Request.getField("type", "" ) 
 		
+		if self._requestType == "addcomment": self._saveComment()
+		if self._requestType == "addnews": self._saveItem()
+		
 	end
 
 	function getID()
 		return self._ID
+	end
+	
+	function getType()
+		return self._requestType
 	end
 
 	function getItem()
@@ -66,9 +73,9 @@ class Blog( instance ) from Service( instance )
 		elif self._requestType == "section"
 			return self.Item.getList( [ "s.Title = '" + self._ID.replace("'", "''") + "'" ], nil)
 		elif self._requestType == "author"
-			return self.Item.getList( [ "s.author= '" + self._ID.replace("'", "''") + "'" ], nil)
+			return self.Item.getList( [ "author= '" + self._ID.replace("'", "''") + "'" ], nil)
 		elif self._requestType == "yearmonth"
-			return ""
+			return self.Item.getList( [ "yearmonth= '" + self._ID.replace("'", "''") + "'" ], nil)
 		else
 			return self.Item.getList( nil, 10 )
 		end
@@ -120,4 +127,23 @@ class Blog( instance ) from Service( instance )
 
 	end
 
+// Region: private methods
+	function _saveItem()
+		title = Request.getField("txtTitle", "" ) 
+		content = Request.getField("txtContent", "" )
+		section = Request.getField("idSection", "" )
+		tags = Request.getField("txtTags", "" )
+		
+> "self.Item.insert", self.Item.insert( title, content, Nest.ambient( "auth_user", b.SessionBinder ).value, section, tags )
+	end
+	
+	function _saveComment()			
+		body = Request.getField("txtContent", "" ) 		
+		Author = Request.getField("txtAuthor", "" ) 
+		email = Request.getField("txtEmail", "" ) 
+		website = Request.getField("txtWebsite", "" ) 
+
+		self.Comment.insert( body, Author, email, website, self._ID )
+		
+	end
 end

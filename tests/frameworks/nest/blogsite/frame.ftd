@@ -12,11 +12,10 @@
 <h1 class="site_title"><? Nest.defer('title') ?> </h1>
 </div>
 <? login.render() ?>
-<? if Nest.auth_level > Nest.AL.USER ?>
-</body>
-</html>
-<? return; end ?>
-<? Nest.content() ?>
+	<div id="container" class="blogContainer">
+		<? Nest.service("Blog", "menuv").render() ?>	
+		<? Nest.content() ?>
+	</div>
 </body>
 </html>
 

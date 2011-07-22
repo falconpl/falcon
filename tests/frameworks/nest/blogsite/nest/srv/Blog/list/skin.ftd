@@ -1,15 +1,6 @@
 <?	function skin( data, srv ) 		
-		rec = srv.getItemList()
-		
+		rec = srv.getItemList()		
 ?> 
-	<div id="container" class="blogContainer">
-		<div id="navi" class="blogNavigation">
-			<div>
-<?= 			srv.Section.getList() ?>
-			<br>
-<?=				srv.getTagList() ?>			
-			</div>
-		</div>
 		<div id="main" class="blogMain">
 <?		if rec.len() == 0 			?>
 			any NEWS FOund!!
@@ -40,8 +31,6 @@
 <? 			end	?>
 			
 <?		end	?>	
-   		</div>
-   	</div>
-   	
+   		</div>   	   	
 <? end ?>
 
