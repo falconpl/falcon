@@ -44,14 +44,9 @@ void ClassBool::op_create( VMContext* ctx, int pcount ) const
       {
          // put the item in the stack, just in case.
          ctx->stackResult( pcount+1, *itm );
+         ctx->pushCode( &m_OP_create_next );
          cls->op_isTrue( ctx, inst );
-         if( ctx->wentDeep() )
-         {
-            return;
-         }
-         // if the item is not deep, then isTrue has already done what we want.
-         // but better be sure
-         ctx->topData().setBoolean(ctx->topData().isTrue());
+         // let the vm call our next
       }
       else
       {

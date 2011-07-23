@@ -89,6 +89,11 @@ public:
       return &m_dataStack[ m_topCall->m_stackBase ];
    }
 
+   inline int paramCount() {
+      fassert( m_topCall >= m_callStack );
+      return m_topCall->m_paramCount;
+   }
+
 
    inline Item* opcodeParams( int count )
    {
@@ -401,6 +406,24 @@ public:
       m_topCode->m_seqId = 0;
    }
 
+   /** Push some code to be run in the execution stack, but only if not already at top.
+    \param step The step to be pushed.
+    
+    This methods checks if \b step is the PStep at top of the code stack, and
+    if not, it will push it.
+
+    \note The method will crash if called when the code stack is empty.
+
+     */
+   inline void condPushCode( const PStep* step )
+   {
+      fassert( m_topCode >= m_codeStack );
+      if( m_topCode->m_step != step )
+      {
+         pushCode( step );
+      }
+   }
+
    void moreCode();
 
    //=========================================================
@@ -422,10 +445,6 @@ public:
 
    const Item& regA() const { return m_regA; }
    Item& regA() { return m_regA; }
-
-   /** Sets a value as return value for the current function.
-    */
-   void retval( const Item& v ) { m_regA = v; }
 
    inline long callDepth() const { return (m_topCall - m_callStack) + 1; }
 
@@ -565,59 +584,38 @@ public:
    // Deep call protocol
    //=========================================================
 
-   /** Deep calls operand protocol -- part 1.
-
-    The deep call protocol is used by falcon Function instances or other
-    PStep* operands that are called by the virtual machine, and that may then
-    call the virtual machine again.
-
-    Some functions called by the virtual machine then need to call other functions that
-    may or may not need the VM to perform other calculations.
-
-    If a calculation that involves the Virtual Machine terminates immediately,
-    the result is usually found in VMachine::topData(), and the caller can
-    progress immediately.
-
-    Otherwise, the caller needs to set a callback in the virtual machine so that
-    it will be called back by it after the frame added by the called is
-    entity is complete. Then, the result will be available in regA().
-
-    But, the step should be on top of the code stack before the underluing called
-    element has a chance to prepare its call frame. This means that normally a
-    caller calling an operand that may or may not request a call frame should
-    push its own callback on the code stack blindly, then eventually pop it if
-    the called entity didn't push a new call frame.
-
-    To avoid this on the most common situations where this may be required, a
-    set of three metods are used by the operand implementations and a set of
-    well defined functions known by the engine in the virtual machine.
-
-    The caller sets a (non-destructible) PStep through the ifDeep() method.
-    If the callee wants to add a frame, it calls goingDeep(), which does nothing
-    if the caller didn't need to have a result from the called, but will store the
-    PStep in the code stack otherwise.
-
-    Then, the caller must check if the result is ready in topData() or if the
-    processing must be delayed by calling wentDeep(); that method will also clear
-    the readied PStep.
-
-    To avoid this mechanism to be broken, ifDeep() raises an error if called
-    while another PStep was readied.
-
-    Of course, this mechanism cannot be used across context switches, but its
-    meant for tightly coupled functions.
-    */
-   void ifDeep( const PStep* postcall );
-
-   /** Called by a callee in a possibly deep call pair.
-    @see ifDeep.
-   */
-   void goingDeep();
-
+   
    /** Called by a calling method to know if the called sub-methdod required a deep operation.
     \return true if the sub-method needed to go deep.
+
+    A function that calls some code which might eventually push some other
+    PStep and require virtual machine interaction need to check if this
+    actually happened after it gets in control again.
+
+    To cleanly support this operation, a caller should:
+    # Push its own callback-pstep
+    # Call the code that might push its own psteps
+    # Check if its PStep is still at top code frame. If not, return immediately
+    # When done, pop its PStep
+
+    For instance:
+    \code
+    void SomeClass::op_something( VMContex* ctx, ... )
+    {
+      ...
+       ctx->pushCode( &SomeClass::m_myNextStep );
+       someItem->op_somethingElse( ctx, .... );
+       if ( ctx->wentDeep( &SomeClass::m_myNextStep ) )
+       {
+         return;
+       }
+       ...
+       ctx->popCode();
+    }
+    \endcode
+
     */
-   bool wentDeep();
+   bool wentDeep( const PStep* top );
 
 
    /** Pushes a quit step at current position in the code stack.

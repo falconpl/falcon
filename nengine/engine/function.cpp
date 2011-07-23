@@ -43,21 +43,33 @@ Function::Function( const String& name, Module* module, int32 line ):
    m_bDeterm(false),
    m_bEta(false)
 {
+   if ( module != 0 )
+   {
+      module->rc.inc();
+   }
 }
 
 Function::~Function()
 {
    if ( m_module != 0 )
    {
-      //TODO: Properly decreference the module.
-      //m_module->decref();
+      m_module->rc.dec();
    }
 }
 
 
 void Function::module( Module* owner )
 {
-   //TODO Proper referencing
+   if( owner != 0 )
+   {
+      owner->rc.inc();
+   }
+
+   if ( m_module != 0 )
+   {
+      m_module->rc.dec();
+   }
+
    m_module = owner;
 }
 

@@ -115,13 +115,14 @@ void ClassString::op_add( VMContext* ctx, void* self ) const
    }
 
    // else we surrender, and we let the virtual system to find a way.
-   ctx->ifDeep( &m_nextOp );
+   ctx->pushCode( &m_nextOp );
 
    // this will transform op2 slot into its string representation.
    cls->op_toString( ctx, inst );
    
-   if( ! ctx->wentDeep() )
+   if( ! ctx->wentDeep( &m_nextOp ) )
    {
+      ctx->popCode();
       // op2 has been transformed
       String* deep = (String*)op2->asInst();
       deep->prepend( *str );
@@ -207,13 +208,14 @@ void ClassString::op_aadd( VMContext* ctx, void* self ) const
    }
 
    // else we surrender, and we let the virtual system to find a way.
-   ctx->ifDeep( &m_nextOp );
+   ctx->pushCode( &m_nextOp );
 
    // this will transform op2 slot into its string representation.
    cls->op_toString( ctx, inst );
 
-   if( ! ctx->wentDeep() )
+   if( ! ctx->wentDeep(&m_nextOp) )
    {
+      ctx->popCode();
       // op2 has been transformed
       String* deep = (String*) op2->asInst();
       deep->prepend( *str );

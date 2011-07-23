@@ -62,10 +62,7 @@ void Clone::invoke( VMContext* ctx, int32 nParams )
    }
 
    Item top( cls, inst, true );
-   ctx->retval( top );
-
-
-   ctx->returnFrame();
+   ctx->returnFrame( top );
 }
 
 void Clone::Invoke::apply_( const PStep*, VMContext* ctx )

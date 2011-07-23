@@ -189,28 +189,10 @@ void VMContext::commitRule()
 // Higher level management
 //
 
-void VMContext::ifDeep( const PStep* postcall )
+
+bool VMContext::wentDeep( const PStep* ps )
 {
-   fassert( m_deepStep == 0 );
-   m_deepStep = postcall;
-}
-
-
-void VMContext::goingDeep()
-{
-   if( m_deepStep )
-   {
-      pushCode( m_deepStep );
-      m_deepStep = 0;
-   }
-}
-
-
-bool VMContext::wentDeep()
-{
-   bool bWent = m_deepStep == 0;
-   m_deepStep = 0;
-   return bWent;
+   return m_topCode->m_step != ps;
 }
 
 
@@ -307,9 +289,6 @@ void VMContext::call( Function* function, int nparams, const Item& self )
    TRACE1( "-- codebase:%d, stackBase:%d, self: %s ", \
          m_topCall->m_codeBase, m_topCall->m_stackBase, self.isNil() ? "nil" : "value"  );
 
-   // prepare for a return that won't touch regA
-   m_regA.setNil();
-
    // do the call
    function->invoke( this, nparams );
 }
@@ -323,9 +302,6 @@ void VMContext::call( Function* function, int nparams )
    makeCallFrame( function, nparams );
    TRACE1( "-- codebase:%d, stackBase:%d ", \
          m_topCall->m_codeBase, m_topCall->m_stackBase );
-
-   // prepare for a return that won't touch regA
-   m_regA.setNil();
 
    // do the call
    function->invoke( this, nparams );

@@ -259,13 +259,18 @@ public:
     */
    inline bool codeEmpty() const { return m_context->codeEmpty(); }
 
-   /** Sets a value as return value for the current function.
+   /** Sets a value in the A register of the current context.
     \param v The return value.
+    \deprecated  Kept for compatibility with engine 0.9.x
 
-    This method is a proxy to VMContext::retval() applied to the current
-    context.
+    This method sets a value in the A register of the current context.
+    In the old vm 0.9.x this worked as a return value, and it is still
+    interpreted this way in the implementation of the ExtFunction 
+    class (which wraps the old functions).
+
+    New code should use VMContext::returnFrame().
     */
-   void retval( const Item& v ) { currentContext()->retval(v); }
+   void retval( const Item& v ) { currentContext()->regA() = v; }
 
 
    /** Access the current context accumulator. */

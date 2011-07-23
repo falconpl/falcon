@@ -58,22 +58,21 @@ void ToString::invoke( VMContext* ctx, int32 )
    void* data;
    elem->forceClassInst( cls, data );
 
-   ctx->ifDeep( &m_next );
+   ctx->pushCode( &m_next );
    ctx->pushData( *elem );
    cls->op_toString( ctx, data );
-   if( ctx->wentDeep() )
+   if( ctx->wentDeep( &m_next ) )
    {
       return;
    }
-
-   ctx->retval( ctx->topData() );
-   ctx->returnFrame();
+   ctx->popCode();
+   
+   ctx->returnFrame(ctx->topData());
 }
 
 void ToString::Next::apply_( const PStep*, VMContext* ctx  )
 {
-   ctx->retval( ctx->topData() );
-   ctx->returnFrame();
+   ctx->returnFrame(ctx->topData());
 }
 
 }

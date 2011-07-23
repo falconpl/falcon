@@ -37,10 +37,11 @@ Len::~Len()
 void Len::invoke( VMContext* ctx, int32 nParams )
 {
    Item *elem;
+   register length_t len;
    if ( ctx->isMethodic() )
    {
       elem = &ctx->self();
-      ctx->retval( elem->len() );
+      len = elem->len();
    }
    else
    {
@@ -50,10 +51,10 @@ void Len::invoke( VMContext* ctx, int32 nParams )
       }
 
       elem = ctx->params();
-      ctx->retval( elem->len() );
+      len = elem->len();
    }
 
-   ctx->returnFrame();
+   ctx->returnFrame((int64) len);
 }
 
 void Len::Invoke::apply_( const PStep*, VMContext* ctx )

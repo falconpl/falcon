@@ -32,7 +32,8 @@ public:
 ExprCall::ExprCall( Expression* op1 ):
    Expression( t_funcall ),
    m_func(0),
-   m_callExpr(op1)
+   m_callExpr(op1),
+   m_psPushFunc( 0 )
 {
    _p = new Private;
    apply = apply_;
@@ -42,14 +43,16 @@ ExprCall::ExprCall( Expression* op1 ):
 ExprCall::ExprCall( PseudoFunction* f ):
    Expression( t_funcall ),
    m_func(f),
-   m_callExpr(0)
+   m_callExpr(0),
+   m_psPushFunc(f)
 {
    _p = new Private;
    apply = apply_dummy_;
 }
 
 ExprCall::ExprCall( const ExprCall& other ):
-   Expression( other )
+   Expression( other ),
+   m_psPushFunc( other.m_func )
 {
    apply = other.apply;
    m_func = other.m_func;
@@ -87,6 +90,10 @@ void ExprCall::precompile( PCode* pcode ) const
    {
       m_callExpr->precompile( pcode );
    }
+   else if( _p->m_params.size() != (unsigned) m_func->paramCount() )
+   {
+      pcode->pushStep(&m_psPushFunc);
+   }
 
    // precompile all parameters in order.
    for( uint32 i = 0; i < _p->m_params.size(); ++i )
@@ -95,7 +102,7 @@ void ExprCall::precompile( PCode* pcode ) const
    }
 
    // and finally push the step to do the call.
-   if( m_callExpr != 0 )
+   if( m_callExpr != 0 || _p->m_params.size() != (unsigned) m_func->paramCount() )
    {
       pcode->pushStep( this );
    }
@@ -113,10 +120,11 @@ bool ExprCall::simplify( Item& ) const
 }
 
 
-void ExprCall::apply_dummy_( const PStep* DEBUG_ONLY(v), VMContext* )
+void ExprCall::apply_dummy_( const PStep* v, VMContext* ctx )
 {
-   TRACE2( "Apply CALL -- dummy! %s", static_cast<const ExprCall*>(v)->describe().c_ize());
-   // we should never be called
+   const ExprCall* self = static_cast<const ExprCall*>(v);
+   TRACE2( "Apply CALL -- dummy! %s", self->describe().c_ize());
+   ctx->call( self->m_func, self->_p->m_params.size() );
 }
 
 
@@ -134,7 +142,7 @@ void ExprCall::apply_( const PStep* v, VMContext* ctx )
       case FLC_ITEM_FUNC:
          {
             Function* f = top.asFunction();
-            ctx->call( f, pcount, true );
+            ctx->call( f, pcount );
          }
          break;
 
@@ -164,6 +172,19 @@ void ExprCall::apply_( const PStep* v, VMContext* ctx )
          }
    }
 
+}
+
+void ExprCall::PStepPushFunc::describe( String& txt ) const
+{
+   txt = "#PushFunc ";
+   txt += m_func->name();
+}
+
+
+void ExprCall::PStepPushFunc::apply_( const PStep* ps, VMContext* ctx )
+{
+   const PStepPushFunc* self = static_cast<const PStepPushFunc*>(ps);
+   ctx->pushData(self->m_func);
 }
 
 

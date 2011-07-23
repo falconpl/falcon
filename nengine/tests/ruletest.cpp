@@ -56,6 +56,7 @@ public:
       {
          int nParams = ctx->currentFrame().m_paramCount;
 
+         ctx->condPushCode( this );
          while( count < nParams )
          {
             Class* cls;
@@ -63,19 +64,19 @@ public:
 
             ctx->param(count)->forceClassInst( cls, data );
             ++count;
+            ctx->currentCode().m_seqId = count;
 
             ctx->pushData(*ctx->param(count));
-            ctx->ifDeep(this);
             cls->op_toString( ctx, data );
-            if( ctx->wentDeep() )
+            if( ctx->wentDeep( this ) )
             {
-               ctx->currentCode().m_seqId = count;
                return;
             }
             
             ctx->vm()->textOut()->write( *ctx->topData().asString() );
             ctx->popData();
          }
+         ctx->popCode();
 
          ctx->vm()->textOut()->write( "\n" );
          // we're out of the function.

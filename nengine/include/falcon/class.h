@@ -183,12 +183,17 @@ public:
    /** Sets the module of this class.
     \param m The module where this class resides.
     */
-   void module( Module* m ) { m_module = m; }
+   void module( Module* m );
    
    /** Returns the module of this class.
     \return The module where this class resides, or 0 if the class is module-less.
     */
    Module* module() const { return m_module; }
+
+   /** Removes the link between the class and its module.
+    This is used by static modules when explicitly destroying their contents.
+    */
+   void detachModule() { m_module = 0; }
 
    //=========================================
    // Instance management

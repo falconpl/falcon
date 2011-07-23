@@ -73,31 +73,30 @@ void Compare::invoke( VMContext* ctx, int32 nParams )
       // else the stack is already ok.
       
       // I don't want to be called back.
-      ctx->ifDeep( &m_next );
+      ctx->pushCode( &m_next );
       cls->op_compare( ctx, udata );
-      if( ctx->wentDeep() )
+      if( ctx->wentDeep( &m_next ) )
       {
          // wait for the return value.
          return;
       }
+      ctx->popCode();
+
       // pass forward the topmost data.
-      ctx->retval( ctx->topData() );
+      ctx->returnFrame( ctx->topData() );
 
    }
    else
    {
-      ctx->retval( item->compare(*item2) );
+      ctx->returnFrame( item->compare(*item2) );
    }
-
-   // and we can return the frame.
-   ctx->returnFrame();
 }
+
 
 void Compare::NextStep::apply_( const PStep*, VMContext* ctx )
 {
    // pass forward the comparison result
-   ctx->retval(ctx->topData());
-   ctx->returnFrame();
+   ctx->returnFrame(ctx->topData());
 }
 
 
@@ -124,4 +123,4 @@ void Compare::Invoke::apply_( const PStep*, VMContext* ctx )
 }
 }
 
-/* end of len.cpp */
+/* end of compare.cpp */

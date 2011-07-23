@@ -55,14 +55,12 @@ void TypeId::invoke( VMContext* ctx, int32 )
    
    if( elem->asClassInst( cls, data ) )
    {
-      ctx->retval( cls->typeID() );
+      ctx->returnFrame( cls->typeID() );
    }
    else
    {
-      ctx->retval( elem->type() );
+      ctx->returnFrame( elem->type() );
    }
-
-   ctx->returnFrame();
 }
 
 void TypeId::Invoke::apply_( const PStep*, VMContext* ctx  )

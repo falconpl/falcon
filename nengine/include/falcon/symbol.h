@@ -107,7 +107,7 @@ public:
 
     Gets the value associated with this symbol.
     
-    \note This method is used during the link phase or when qyerying an
+    \note This method is used during the link phase or when querying an
     exported symbol for the value that is being exported. The VM at run time
     uses a more sophisticated approach that obviates the need to call this
     virtual method. However, the result should be coherent.

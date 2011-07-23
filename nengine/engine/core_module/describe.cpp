@@ -72,8 +72,7 @@ void Describe::invoke( VMContext* ctx, int32 )
 
    String* theString = new String;
    elem->describe( *theString, maxDepth, maxLen );
-   ctx->retval( theString->garbage() );
-   ctx->returnFrame();
+   ctx->returnFrame( theString->garbage() );
 }
 
 }

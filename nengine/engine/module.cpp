@@ -13,7 +13,7 @@
    See LICENSE file for licensing details.
 */
 
-#include <falcon/module.h>
+#include <falcon/trace.h>
 #include <falcon/module.h>
 #include <falcon/itemarray.h>
 #include <falcon/globalsymbol.h>
@@ -75,7 +75,7 @@ public:
          while( cli != m_classes.end() )
          {
             // set the module to 0, so that we're not dec-reffed.
-            cli->second->module(0);
+            cli->second->detachModule();
             delete cli->second;
             ++cli;
          }
@@ -84,7 +84,7 @@ public:
          while( vi != m_functions.end() )
          {
             // set the module to 0, so that we're not dec-reffed.
-            vi->second->module(0);
+            vi->second->detachModule();
             // then delete the function.
             delete vi->second;
             ++vi;
@@ -96,27 +96,44 @@ public:
 
 
 Module::Module( const String& name, bool bIsStatic ):
-      m_name( name ),
-      m_bIsStatic(bIsStatic)
+   rc(this),
+   m_name( name ),
+   m_bIsStatic(bIsStatic)
 {
+   TRACE("Creating internal module '%s'%s",
+      name.c_ize(), bIsStatic ? " (static)" : " (dynamic)" );
    m_uri = "internal:" + name;
    _p = new Private(bIsStatic);
+
+   if( bIsStatic )
+   {
+      rc.inc();
+   }
 }
 
 
 Module::Module( const String& name, const String& uri, bool bIsStatic ):
-      m_name( name ),
-      m_uri(uri),
-      m_bIsStatic(bIsStatic)
+   rc(this),
+   m_name( name ),
+   m_uri(uri),
+   m_bIsStatic(bIsStatic)
 {
+   TRACE("Creating module '%s' from %s%s",
+      name.c_ize(), uri.c_ize(),
+      bIsStatic ? " (static)" : " (dynamic)" );
+   
    _p = new Private(bIsStatic);
 }
 
 
 Module::~Module()
 {
+   TRACE("Deleting module %s", m_name.c_ize() );
+
    // this is doing to do a bit of stuff; see ~Private()
    delete _p;
+
+   TRACE("Module '%s' deletion complete", m_name.c_ize() );
 }
 
 

@@ -67,6 +67,11 @@ public:
    */
    Module* module() const { return m_module; }
 
+   /** Removes the link between a function and a module.
+    Used by the module destructor do prevent de-referencing during destruction.
+   */
+   void detachModule() {m_module = 0;}
+
    void methodOf( Class* cls ) { m_methodOf = cls; }
    Class* methodOf() const { return m_methodOf; }
 

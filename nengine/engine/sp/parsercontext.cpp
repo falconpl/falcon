@@ -26,7 +26,6 @@
 #include <falcon/unknownsymbol.h>
 
 #include <falcon/globalsymbol.h>
-#include <falcon/compiler.h>
 #include <falcon/closedsymbol.h>
 #include <falcon/expression.h>
 #include <falcon/exprsym.h>

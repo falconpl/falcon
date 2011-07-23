@@ -293,9 +293,6 @@ void HyperClass::op_create( VMContext* ctx, int32 pcount ) const
    ItemArray* mData = new ItemArray(m_nParents);
    mData->resize(m_nParents);
    
-   // respect goingdeep protocol
-   ctx->goingDeep();
-
    // If we have a constructor in the main class, then we need to create a
    // -- consistent frame (to find the parameters).
    if( m_constructor )

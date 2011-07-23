@@ -14,6 +14,8 @@
 */
 
 
+#include <falcon/trace.h>
+#include <falcon/module.h>
 #include <falcon/class.h>
 #include <falcon/itemid.h>
 #include <falcon/vmcontext.h>
@@ -21,6 +23,7 @@
 #include <falcon/error.h>
 
 #include <falcon/bom.h>
+
 
 namespace Falcon {
 
@@ -47,6 +50,14 @@ Class::Class( const String& name, int64 tid ):
 
 Class::~Class()
 {
+   TRACE1( "Destroying class %s.%s",
+      m_module != 0 ? m_module->name().c_ize() : "<internal>",
+      m_name.c_ize() );
+   
+   if( m_module != 0 )
+   {
+      m_module->rc.dec();
+   }
 }
 
 
@@ -54,6 +65,21 @@ Class* Class::getParent( const String& ) const
 {
    // normally does nothing
    return 0;
+}
+
+
+void Class::module( Module* m )
+{
+   if( m != 0 )
+   {
+      m->rc.inc();
+   }
+   
+   if( m_module != 0 )
+   {
+      m_module->rc.dec();
+   }
+   m_module = m;
 }
 
 

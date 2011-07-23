@@ -380,12 +380,12 @@ void StmtReturn::apply_( const PStep*ps, VMContext* ctx )
    // clear A if there wasn't any expression
    if ( stmt->m_expr != 0 )
    {
-      retval = ctx->topData();
-      ctx->popData();
+      ctx->returnFrame( ctx->topData() );
    }
-
-   ctx->returnFrame(retval);
-   // Todo throw if we didn't have any frame
+   else
+   {
+      ctx->returnFrame();
+   }
 }
 
 

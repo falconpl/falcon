@@ -21,6 +21,7 @@
 #include <falcon/string.h>
 #include <falcon/function.h>
 #include <falcon/enumerator.h>
+#include <falcon/refcounter.h>
 
 namespace Falcon {
 
@@ -60,9 +61,6 @@ class Class;
  the module (mainly functions and classes), that will be considered always
  valid.
 
- At VM level, items declared by static modules are considered UserItem instances,
- while items declared by dynamic modules are considered DeepItem instances.
-
  \note Function class has support to gc-mark the modueles they come
  from, so that dynamic modules that might be unloaded by the virtual machine
  at process level stay alive as long as there is at least one function getting
@@ -70,9 +68,19 @@ class Class;
  tree and reference global variables, so they don't need to back-mark their
  module -- however, they do because of meta-information held in the module
  (module logical name, URI, attributes etc).
+
+ \note Static modules will keep a reference to themselves, so they will not 
+ possilby be destroyed by dereferencing them
+ (unless there are multiple de-reference errors around).
  */
 class FALCON_DYN_CLASS Module {
 public:
+   /** Reference counter for this module. 
+    References are held by all the items owned by this module,
+    as well as by other modules referencing this one.
+    */
+   RefCounter<Module> rc;
+
    /** Creates an internal module.
     \param name The symbolic name of this module.
     \param bStatic True if this module is created as static.
@@ -88,7 +96,10 @@ public:
 
    virtual ~Module();
 
+   /** Logical name of the module. */
    const String& name() const { return m_name; }
+
+   /** Physical world location of the module. */
    const String& uri() const {return m_uri;}
 
 
@@ -211,7 +222,7 @@ public:
       return *this;
    }
 
-public:
+private:
    String m_name;
    String m_uri;
    bool m_bIsStatic;
