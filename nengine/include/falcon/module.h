@@ -23,6 +23,9 @@
 #include <falcon/enumerator.h>
 #include <falcon/refcounter.h>
 
+#include "inheritance.h"
+#include "unknownsymbol.h"
+
 namespace Falcon {
 
 class GlobalSymbol;
@@ -68,18 +71,9 @@ class Class;
  tree and reference global variables, so they don't need to back-mark their
  module -- however, they do because of meta-information held in the module
  (module logical name, URI, attributes etc).
-
- \note Static modules will keep a reference to themselves, so they will not 
- possilby be destroyed by dereferencing them
- (unless there are multiple de-reference errors around).
  */
 class FALCON_DYN_CLASS Module {
 public:
-   /** Reference counter for this module. 
-    References are held by all the items owned by this module,
-    as well as by other modules referencing this one.
-    */
-   RefCounter<Module> rc;
 
    /** Creates an internal module.
     \param name The symbolic name of this module.
@@ -103,6 +97,24 @@ public:
    const String& uri() const {return m_uri;}
 
 
+   /** Add static data that must be removed when the module is destroyed.
+    \param cls Data class.
+    \param data Data entity.
+    
+    Strings, anonymous functions and classes and so on are to be destroyed
+    when the module is gone.
+    
+    Static data should not be added to dynamic module (where data must be
+    able to take care of itself.
+    
+    The source compiler will call addAnonFunciton or addAnonClass exactly
+    after having compiled a valid anonymous function or class. To prevent
+    leaks in case of compilation errors, they are first dispatched to this
+    method. The module will remove the anonymous elements from the static
+    data list when they are found at the back of the list.
+    */
+   void addStaticData( Class* cls, void* data );
+
    /** Adds a global function, possibly exportable.
     \param f The function to be added
     \param bExport if true, the returned symbol will be exported.
@@ -110,6 +122,14 @@ public:
             function is now stored, or 0 if the function name is already present.
     */
    GlobalSymbol* addFunction( Function* f, bool bExport = true );
+
+   /** Adds an anonymous function.
+    \param f The function to be added
+
+    The name of the function will be modified so that it is unique in case
+    it is already present in the module.
+    */
+   void addAnonFunction( Function* f );
 
    /** Storing it on an already defined symbol.
     \param sym The global symbol that is already stored on this module.
@@ -133,7 +153,7 @@ public:
     */
    void addClass( GlobalSymbol* gsym, Class* fc, bool isObj );
 
-     /** Adds a global class, possibly exportable.
+   /** Adds a global class, possibly exportable.
     \param fc The class to be added
     \param isObj If true, there's a singleton instance bound to this class.
     \param bExport if true, the returned symbol will be exported.
@@ -141,6 +161,14 @@ public:
             function is now stored, or 0 if the function name is already present.
     */
    GlobalSymbol* addClass( Class* fc, bool isObj, bool bExport = true );
+
+   /** Adds an anonymous class.
+    \param cls The class to be added
+
+    The name of the class will be modified so that it is unique in case
+    it is already present in the module.
+    */
+   void addAnonClass( Class* cls );
 
    /** Adds a global variable, possibly exportable.
     \param name The name of the symbol referencing the variable.
@@ -171,7 +199,8 @@ public:
     \param name The symbol name to be searched.
     \return A global symbol (either defined or undefined) or 0 if not found.
     
-    If the given name is present as a global symbol in the current module.
+    If the given name is not present as a global symbol in the current module,
+    an imported UnknownSymbol will be added.
 
     \note The returned symbol might be a GlobalSymbol or an UnknownSymbol.
     */
@@ -201,13 +230,6 @@ public:
     */
    void enumerateExports( SymbolEnumerator& rator ) const;
 
-    /** Enumerate all imported global values required by this module.
-     \note this enumeration doesn't include symbols directly imported through
-     the import/from directive, just those symbols imported from the global
-     namespace.
-     */
-   void enumerateImports( USymbolEnumerator& rator ) const;
-
    /** Candy grammar to add exported functions. */
    Module& operator <<( Function* f )
    {
@@ -222,13 +244,64 @@ public:
       return *this;
    }
 
+
+   /** Mark (dynamic) modules for Garbage Collecting.
+    \param mark the current GC mark.
+
+    This is used by ClassModule when the module is handed to the Virtual
+    Machine for dynamic collection.
+    */
+   void gcMark( uint32 mark ) { m_lastGCMark = mark; }
+
+   /** Determines if a module can be reclaimed.
+    \return last GC mark.
+
+    This is used by ClassModule when the module is handed to the Virtual
+    Machine for dynamic collection.
+    */
+
+   uint32 lastGCMark() const { return m_lastGCMark; }
+
+   /** Checks if this module is static.
+    \return True if this module is static.
+    */
+   bool isStatic() const { return m_bIsStatic; }
+
+   /** Sends dynamic data to the garbage. 
+    This method is invoked as a part of the link step. When a DYNAMIC module
+    is delivered to a virtual machine, it must send to the garbage collector
+    all the static data that it does not want to account for. For instance,
+    strings, ranges, and any deep data that may need collection but that is
+    not going to keep this module alive when held somewhere.
+    
+    This method loops on all the static data and crates a garbage token
+    for all those items that we don't want to keep.
+    
+    As classes and functions are bound to back-reference this module, and as
+    they are destroyed as this module is dereferenced and disposed of, we won't
+    create GC tokens for those entitites.
+    */
+   void sendDynamicToGarbage();
+
+   bool addLoad( const String& name, bool bIsUri=false );
+
+   UnknownSymbol* addImportFrom( const String& localName, const String& remoteName,
+                                           const String& source, bool bIsUri );
+
+   /** Explicitly generate an imported global symbol.
+    \return 0 if already existing, or a valid UnknownSymbol if not found.
+    */
+   UnknownSymbol* addImport( const String& name );
+
 private:
    String m_name;
    String m_uri;
    bool m_bIsStatic;
+   uint32 m_lastGCMark;
 
    class Private;
    Private* _p;
+   friend class Private;   
 };
 
 }

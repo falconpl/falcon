@@ -145,6 +145,8 @@ void on_close_lambda( void* thing )
 
 void apply_expr_func(const Rule&, Parser& p)
 {
+   static Class* fcls = Engine::instance()->functionClass();
+   
    SourceParser& sp = *static_cast<SourceParser*>(&p);
    ParserContext* ctx = static_cast<ParserContext*>(p.context());
 
@@ -153,7 +155,7 @@ void apply_expr_func(const Rule&, Parser& p)
    TokenInstance* targs = p.getNextToken();
 
    // todo: generate an anonymous name
-   SynFunc* func=new SynFunc("anonymous",0,tf->line());
+   SynFunc* func=new SynFunc( "anonymous", 0, tf->line() );
    NameList* list=static_cast<NameList*>(targs->asData());
 
    for(NameList::const_iterator it=list->begin(),end=list->end();it!=end;++it)
@@ -162,7 +164,9 @@ void apply_expr_func(const Rule&, Parser& p)
    }
 
    TokenInstance* ti=new TokenInstance(tf->line(),tf->chr(), sp.Expr);
-   Expression* expr=new ExprValue(Item(func));
+
+   // give the context the occasion to say something about this item
+   Expression* expr= ctx->onStaticData( fcls, func );
    ti->setValue(expr,expr_deletor);
 
    // remove this stuff from the stack

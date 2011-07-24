@@ -51,6 +51,8 @@ public:
     */
    const Item& item() const { return m_item; }
 
+   Item& item() { return m_item; }
+
    /** Changes the stored item.
     */
    void item( const Item& i );

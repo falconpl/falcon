@@ -42,34 +42,15 @@ Function::Function( const String& name, Module* module, int32 line ):
    m_line( line ),
    m_bDeterm(false),
    m_bEta(false)
-{
-   if ( module != 0 )
-   {
-      module->rc.inc();
-   }
-}
+{}
 
 Function::~Function()
 {
-   if ( m_module != 0 )
-   {
-      m_module->rc.dec();
-   }
 }
 
 
 void Function::module( Module* owner )
 {
-   if( owner != 0 )
-   {
-      owner->rc.inc();
-   }
-
-   if ( m_module != 0 )
-   {
-      m_module->rc.dec();
-   }
-
    m_module = owner;
 }
 
@@ -122,7 +103,9 @@ void Function::gcMark( uint32 mark )
 
 bool Function::gcCheck( uint32 mark )
 {
-   if( m_lastGCMark < mark )
+   // if we're residing in a module,
+   // ...let the module destroy us when it goes out of mark.
+   if( m_lastGCMark < mark && m_module != 0 )
    {
       delete this;
       return false;

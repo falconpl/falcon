@@ -65,7 +65,7 @@ public:
    virtual Symbol* onUndefinedSymbol( const String& name );
    virtual GlobalSymbol* onGlobalDefined( const String& name, bool& bUnique );
    virtual bool onUnknownSymbol( UnknownSymbol* sym );
-   virtual void onStaticData( Class* cls, void* data );
+   virtual Expression* onStaticData( Class* cls, void* data );
    virtual void onInheritance( Inheritance* );
 
 private:
@@ -180,14 +180,15 @@ bool Context::onUnknownSymbol( UnknownSymbol* sym )
    return false;
 }
 
- void Context::onStaticData( Class* cls, void* data )
+ Expression* Context::onStaticData( Class* cls, void* data )
  {
     String temp;
     cls->describe( data, temp );
 
     std::cout << "CALLBACK: static data : " <<
          temp.c_ize() << std::endl;
-    // for now, we'll let it leak.
+
+    return new ExprValue( Item( cls, data, true ) );
  }
 
 

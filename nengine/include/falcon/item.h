@@ -69,18 +69,27 @@ public:
 
 #ifdef _MSC_VER
 	#if _MSC_VER < 1299
+	#define flagLiteral 0x01
 	#define flagIsGarbage 0x02
 	#define flagIsOob 0x04
-	#define flagLiteral 0x08
+	#define flagLast 0x08
+	#define flagContinue 0x10
+	#define flagBreak 0x20
 	#else
+	   static const byte flagLiteral = 0x01;
 	   static const byte flagIsGarbage = 0x02;
 	   static const byte flagIsOob = 0x04;
-	   static const byte flagLiteral = 0x08;
+	   static const byte flagLast = 0x08;
+	   static const byte flagContinue = 0x10;
+	   static const byte flagBreak = 0x20;
 	#endif
 #else
+   static const byte flagLiteral = 0x01;
    static const byte flagIsGarbage = 0x02;
    static const byte flagIsOob = 0x04;
-   static const byte flagLiteral = 0x08;
+   static const byte flagLast = 0x08;
+   static const byte flagContinue = 0x10;
+   static const byte flagBreak = 0x20;
 #endif
 
 public:
@@ -542,6 +551,14 @@ public:
    void flags( byte b ) { content.base.bits.flags = b; }
    void flagsOn( byte b ) { content.base.bits.flags |= b; }
    void flagsOff( byte b ) { content.base.bits.flags &= ~b; }
+
+   bool isLast() const { return (content.base.bits.flags | flagLast ) != 0; }
+   bool isBreak() const { return (content.base.bits.flags | flagBreak ) != 0; }
+   bool isContinue() const { return (content.base.bits.flags | flagContinue ) != 0; }
+
+   void setLast() { content.base.bits.flags |= flagLast; }
+   void setBreak() { content.base.bits.flags |= flagBreak; }
+   void setContinue() { content.base.bits.flags |= flagContinue; }
 
 
    /** Clone the item.

@@ -22,18 +22,122 @@
 #include <falcon/item.h>
 
 #include <map>
+#include <deque>
 
 namespace Falcon {
 
 class Module::Private
 {
 public:
+   //============================================
+   // Requirements and dependencies
+   //============================================
+
+   class WaitingDep
+   {
+   public:
+      virtual void onSymbolLoaded( Module* mod, Symbol* sym ) = 0;
+   };
+
+   class WaitingSym: public WaitingDep
+   {
+   public:
+      UnknownSymbol* m_symbol;
+
+      WaitingSym( UnknownSymbol* sym ):
+         m_symbol( sym )
+      {}
+
+      virtual void onSymbolLoaded( Module*, Symbol* sym )
+      {
+         m_symbol->define( sym );
+      }
+   };
+
+   class WaitingInherit: public WaitingDep
+   {
+   public:
+      Inheritance* m_inh;
+
+      WaitingInherit( Inheritance* inh ):
+         m_inh( inh )
+      {}
+
+      virtual void onSymbolLoaded( Module*, Symbol* sym )
+      {
+         //TODO -- account error if not a class or not retriveable
+         Item value;
+         if( sym->retrieve( value, 0 ) )
+         {
+            //...
+         }
+
+      }
+   };
+
+   class Dependency
+   {
+   public:
+      String m_remoteName;
+      
+      typedef std::deque<WaitingDep*> WaitList;
+      WaitList m_waiting;
+
+      Dependency( const String& rname ):
+         m_remoteName( rname )
+      {}
+
+      ~Dependency()
+      {
+         // the symbol is owned by the global map.
+         WaitList::iterator wli = m_waiting.begin();
+         while( wli != m_waiting.end() )
+         {
+            delete *wli;
+            ++wli;
+         }
+      }
+   };
+
+   /** Record keeping track of needed modules (eventually already defined). */
+   class Requirement
+   {
+   public:
+      String m_uri;
+      bool m_bIsUri;
+      bool m_bIsLoad;
+      Module* m_module;
+
+      typedef std::map<String, Dependency*> DepMap;
+      DepMap m_deps;
+
+      Requirement( const String& name, bool bIsLoad, bool bIsUri=false, Module* mod = 0 ):
+         m_uri( name ),
+         m_bIsUri( bIsUri ),
+         m_bIsLoad( bIsLoad ),
+         m_module(mod)
+      {}
+
+      ~Requirement()
+      {
+         DepMap::iterator dep_i = m_deps.begin();
+         while( dep_i != m_deps.end() )
+         {
+            delete dep_i->second;
+            ++dep_i;
+         }
+      }
+   };
+
+   typedef std::map<String, Requirement*> ReqMap;
+   ReqMap m_reqs;
+
+   //============================================
+   // Main data
+   //============================================
    typedef std::map<String, Symbol*> GlobalsMap;
    GlobalsMap m_gSyms;
    GlobalsMap m_gExports;
-
-   typedef std::map<String, UnknownSymbol*> UnknownMap;
-   UnknownMap m_gImports;
 
    typedef std::map<String, Function*> FunctionMap;
    FunctionMap m_functions;
@@ -41,8 +145,10 @@ public:
    typedef std::map<String, Class*> ClassMap;
    ClassMap m_classes;
 
-   ItemArray m_globals;
    bool m_bIsStatic;
+
+   ItemArray m_staticdData;
+
 
    Private( bool bIsStatic ):
       m_bIsStatic( bIsStatic )
@@ -54,16 +160,24 @@ public:
       GlobalsMap::iterator iter = m_gSyms.begin();
       while( iter != m_gSyms.end() )
       {
-         Symbol* sym = iter->second;
-         if( sym->type() == Symbol::t_global_symbol )
-         {
-            static_cast<GlobalSymbol*>(sym)->decref();
-         }
-         else
-         {
-            delete sym;
-         }
+         Symbol* sym = iter->second;         
+         delete sym;
          ++iter;
+      }
+
+      // and get rid of the static data, if we have.
+      for ( length_t is = 0; is < m_staticdData.length(); ++ is )
+      {
+         Item& itm = m_staticdData[is];
+         itm.asClass()->dispose( itm.asInst() );
+      }
+
+      // destroy reqs and deps
+      ReqMap::iterator req_i = m_reqs.begin();
+      while( req_i != m_reqs.end() )
+      {
+         delete req_i->second;
+         ++req_i;
       }
 
       // ... But in case of dynamic modules, we're destroyed only after all our
@@ -89,34 +203,61 @@ public:
             delete vi->second;
             ++vi;
          }
+
       }
+   }
+
+   Dependency* getDep( const String& source, bool bIsUri, const String& name )
+   {
+      Requirement* req;
+      ReqMap::iterator ireq = m_reqs.find( name );
+      if( ireq != m_reqs.end() )
+      {
+         // already loaded?
+         req = ireq->second;
+         // it is legal to import symbols even from loaded modules.
+      }
+      else
+      {
+         req = new Requirement(source, false, bIsUri );
+         m_reqs[name] = req;
+      }
+
+      Dependency* dep;
+      Requirement::DepMap::iterator idep = req->m_deps.find( name );
+      if( idep != req->m_deps.end() )
+      {
+         dep = idep->second;
+      }
+      else
+      {
+         dep = new Private::Dependency( name );
+         req->m_deps[name] = dep;
+      }
+
+      return dep;
    }
 };
 
 
 
 Module::Module( const String& name, bool bIsStatic ):
-   rc(this),
    m_name( name ),
-   m_bIsStatic(bIsStatic)
+   m_bIsStatic(bIsStatic),
+   m_lastGCMark(0)
 {
    TRACE("Creating internal module '%s'%s",
       name.c_ize(), bIsStatic ? " (static)" : " (dynamic)" );
    m_uri = "internal:" + name;
    _p = new Private(bIsStatic);
-
-   if( bIsStatic )
-   {
-      rc.inc();
-   }
 }
 
 
 Module::Module( const String& name, const String& uri, bool bIsStatic ):
-   rc(this),
    m_name( name ),
    m_uri(uri),
-   m_bIsStatic(bIsStatic)
+   m_bIsStatic(bIsStatic),
+   m_lastGCMark(0)
 {
    TRACE("Creating module '%s' from %s%s",
       name.c_ize(), uri.c_ize(),
@@ -137,6 +278,69 @@ Module::~Module()
 }
 
 
+void Module::addStaticData( Class* cls, void* data )
+{
+   _p->m_staticdData.append( Item(cls, data) );
+}
+
+
+void Module::addAnonFunction( Function* f )
+{
+   // finally add to the function vecotr so that we can account it.
+   String name = f->name();
+   int count = 0;
+   while( _p->m_functions.find( name ) != _p->m_functions.end() )
+   {
+      name = f->name();
+      name.A("_").N(count++);
+   }
+
+   f->name(name);
+
+   _p->m_functions[name] = f;
+   f->module(this);
+
+   // if this anonymous function was temporarily added as static data, we can remove it.
+   if( ! _p->m_staticdData.empty()
+         && _p->m_staticdData.at(_p->m_staticdData.length()-1).asInst() == f )
+   {
+      _p->m_staticdData.length( _p->m_staticdData.length()-1 );
+   }
+
+}
+
+
+void Module::sendDynamicToGarbage()
+{
+   static Collector* coll = Engine::instance()->collector();
+
+   ItemArray& ia = _p->m_staticdData;
+   if( m_bIsStatic || ia.empty() )
+   {
+      return;
+   }
+
+   // and get rid of the static data, if we have.
+   length_t is = ia.length()-1;
+   
+   while( is < ia.length() )
+   {
+      Item& itm = ia[is];
+      Class* handler = itm.asClass();
+      if ( handler->typeID() != FLC_CLASS_ID_CLASS
+         || handler->typeID() != FLC_CLASS_ID_FUNCTION )
+      {
+         FALCON_GC_STORE( coll, handler, itm.asInst() );
+         ia.remove( is );
+      }
+      else
+      {
+         ++is;
+      }
+   }
+}
+
+
 GlobalSymbol* Module::addFunction( Function* f, bool bExport )
 {
    //static Engine* eng = Engine::instance();
@@ -147,13 +351,15 @@ GlobalSymbol* Module::addFunction( Function* f, bool bExport )
       return 0;
    }
 
-   // add a proper object in the global vector
-   _p->m_globals.append( f );
-
    // add the symbol to the symbol table.
-   GlobalSymbol* sym = new GlobalSymbol( f->name(),
-         _p->m_globals.at(_p->m_globals.length()-1) );
+   GlobalSymbol* sym = new GlobalSymbol( f->name(), f );
    syms[f->name()] = sym;
+
+   // if the module is dynamic, we want the GC to mark us when we generate the item.
+   if( ! m_bIsStatic )
+   {
+      sym->value().garbage();
+   }
 
    // Eventually export it.
    if( bExport )
@@ -223,7 +429,6 @@ void Module::addClass( GlobalSymbol* gsym, Class* fc, bool )
 
 GlobalSymbol* Module::addClass( Class* fc, bool, bool bExport )
 {
-   static Collector* coll = Engine::instance()->collector();
    static Class* ccls = Engine::instance()->classClass();
 
    Private::GlobalsMap& syms = _p->m_gSyms;
@@ -232,21 +437,16 @@ GlobalSymbol* Module::addClass( Class* fc, bool, bool bExport )
       return 0;
    }
 
+   // add a proper object in the global vector
+   // add the symbol to the symbol table.
+   GlobalSymbol* sym = new GlobalSymbol( fc->name(), Item(ccls, fc) );
+   syms[fc->name()] = sym;
+
    // If the module is not static, garbage-ize the class
    if( ! m_bIsStatic  )
    {
-      _p->m_globals.append( FALCON_GC_STORE( coll, ccls, fc ) );
+      sym->value().garbage();
    }
-   else
-   {
-      _p->m_globals.append( Item(ccls, fc) ); // user data
-   }
-
-   // add a proper object in the global vector
-   // add the symbol to the symbol table.
-   GlobalSymbol* sym = new GlobalSymbol( fc->name(),
-         _p->m_globals.at(_p->m_globals.length()-1) );
-   syms[fc->name()] = sym;
 
    // Eventually export it.
    if( bExport )
@@ -263,6 +463,31 @@ GlobalSymbol* Module::addClass( Class* fc, bool, bool bExport )
 }
 
 
+void Module::addAnonClass( Class* cls )
+{
+   // finally add to the function vecotr so that we can account it.
+   String name = cls->name();
+   int count = 0;
+   while( _p->m_classes.find( name ) != _p->m_classes.end() )
+   {
+      name = cls->name();
+      name.A("_").N(count++);
+   }
+
+   cls->name(name);
+
+   _p->m_classes[name] = cls;
+   cls->module(this);
+
+   // if this anonymous class was temporarily added as static data, we can remove it.
+   if( ! _p->m_staticdData.empty()
+         && _p->m_staticdData.at(_p->m_staticdData.length()-1).asInst() == cls )
+   {
+      _p->m_staticdData.length( _p->m_staticdData.length()-1 );
+   }
+}
+
+
 GlobalSymbol* Module::addVariable( const String& name, const Item& value, bool bExport )
 {
    // check if the name is free.
@@ -272,18 +497,18 @@ GlobalSymbol* Module::addVariable( const String& name, const Item& value, bool b
       return 0;
    }
 
-   // add a proper object in the global vector
-   _p->m_globals.append( value );
 
    // add the symbol to the symbol table.
-   GlobalSymbol* sym = new GlobalSymbol( name,
-         _p->m_globals.at(_p->m_globals.length()-1) );
+   GlobalSymbol* sym = new GlobalSymbol( name, value );
    syms[name] = sym;
 
    if( bExport )
    {
       _p->m_gExports[name] = sym;
    }
+   // we're not interested in having the GC to mark the item, as the item
+   // isn't referencing us.
+
    return sym;
 }
 
@@ -343,17 +568,66 @@ void Module::enumerateExports( SymbolEnumerator& rator ) const
    }
 }
 
-void Module::enumerateImports( USymbolEnumerator& rator ) const
+bool Module::addLoad( const String& name, bool bIsUri )
 {
-   const Private::UnknownMap& syms = _p->m_gImports;
-   Private::UnknownMap::const_iterator iter = syms.begin();
-
-   while( iter != syms.end() )
+   // do we have the recor?
+   Private::ReqMap::iterator ireq = _p->m_reqs.find( name );
+   if( ireq != _p->m_reqs.end() )
    {
-      UnknownSymbol* sym = iter->second;
-      if( ! rator( *sym, ++iter == syms.end()) )
-         break;
+      // already loaded?
+      Private::Requirement* r = ireq->second;
+      if( r->m_bIsLoad )
+      {
+         return false;
+      }
+      r->m_bIsLoad = true;
+      return true;
    }
+
+   // add a new record
+   Private::Requirement* r = new Private::Requirement(name, true, bIsUri );
+   _p->m_reqs[ name ] = r;
+   return true;
+}
+
+
+
+UnknownSymbol* Module::addImportFrom( const String& localName, const String& remoteName,
+                                        const String& source, bool bIsUri )
+{
+   // We can't be called if the symbol is alredy declared elsewhere.
+   if( _p->m_gSyms.find( localName ) != _p->m_gSyms.end() )
+   {
+      return 0;
+   }
+
+   Private::Dependency* dep = _p->getDep( source, bIsUri, remoteName );
+   UnknownSymbol* usym = new UnknownSymbol(localName);
+      // Record the fact that we have to save transform an unknown symbol...
+   dep->m_waiting.push_back( new Private::WaitingSym( usym ) );
+   // ... and save the dependency.
+   _p->m_gSyms[localName] = usym;
+
+   return usym;
+}
+
+
+UnknownSymbol* Module::addImport( const String& name )
+{
+   // We can't be called if the symbol is alredy declared elsewhere.
+   if( _p->m_gSyms.find( name ) != _p->m_gSyms.end() )
+   {
+      return 0;
+   }
+
+   Private::Dependency* dep = _p->getDep( "", false, name );
+   UnknownSymbol* usym = new UnknownSymbol(name);
+   // Record the fact that we have to save transform an unknown symbol...
+   dep->m_waiting.push_back( new Private::WaitingSym( usym ) );
+   // ... and save the dependency.
+   _p->m_gSyms[name] = usym;
+
+   return usym;
 }
 
 }

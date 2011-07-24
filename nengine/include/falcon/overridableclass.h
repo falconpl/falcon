@@ -69,6 +69,8 @@ public:
    virtual void op_provides( VMContext* ctx, void* self, const String& property ) const;
    virtual void op_call( VMContext* ctx, int32 paramCount, void* self ) const;
    virtual void op_toString( VMContext* ctx, void* self ) const;
+   virtual void op_first( VMContext* ctx, void* self ) const;
+   virtual void op_next( VMContext* ctx, void* self ) const;
 
 protected:
    /** Records the method if the name is that of an override method.

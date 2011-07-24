@@ -79,6 +79,12 @@ public:
    /** Returns the name of this function. */
    const String& name() const { return m_name; }
 
+   /** Renames the function.
+    \param n The new name of the function.
+    \note Will throw an assertion if already stored in a module.
+    */
+   void name( const String& n ) { m_name = n; }
+
    /** Sets the signature of the function.
     \param sign A string with the expected parameters of the function.
     */

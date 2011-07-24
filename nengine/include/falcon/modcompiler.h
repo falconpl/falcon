@@ -47,7 +47,22 @@ public:
    ModCompiler();
    virtual ~ModCompiler();
 
-   Module* compile( TextReader* input );
+   /** Compile the module read from the given TextReader.
+    \param input The TextReader where the input is stored.
+    \param uri The physical location of the module
+    \param name The logical name of the module.
+    */
+   Module* compile( TextReader* input, const String& uri, const String& name );
+
+   /** Enumerate received errors.
+    In case parse returned false, calling this method will provide detailed
+    error description for all the errors that have been found.
+      \see Enumerator
+    */
+   inline void enumerateErrors( SourceParser::errorEnumerator& e ) const
+   {
+      m_sp.enumerateErrors( e );
+   }
 
 private:
 
@@ -58,6 +73,7 @@ private:
       virtual ~Context();
 
       virtual void onInputOver();
+      virtual bool garbageDynData();
       virtual void onNewFunc( Function* function, GlobalSymbol* gs=0 );
       virtual void onNewClass( Class* cls, bool bIsObj, GlobalSymbol* gs=0 );
       virtual void onNewStatement( Statement* stmt );
@@ -71,7 +87,7 @@ private:
       virtual Symbol* onUndefinedSymbol( const String& name );
       virtual GlobalSymbol* onGlobalDefined( const String& name, bool& bUnique );
       virtual bool onUnknownSymbol( UnknownSymbol* sym );
-      virtual void onStaticData( Class* cls, void* data );
+      virtual Expression* onStaticData( Class* cls, void* data );
       virtual void onInheritance( Inheritance* inh  );
 
    private:
@@ -86,6 +102,12 @@ private:
    // better for the context to be a pointer, so we can control it's init order.
    Context* m_ctx;
    friend class Context;
+
+   // count of lambda functions
+   int m_nLambdaCount;
+
+   // count of anonymous classes
+   int m_nClsCount;
 };
 
 }

@@ -34,6 +34,7 @@
 #include <falcon/error.h>
 
 #include <falcon/expression.h>
+#include <falcon/exprvalue.h>
 #include <falcon/falconclass.h>
 #include <falcon/hyperclass.h>
 
@@ -60,6 +61,7 @@ void IntCompiler::Context::onInputOver()
 {
    //std::cout<< "CALLBACK: Input over"<<std::endl;
 }
+
 
 void IntCompiler::Context::onNewFunc( Function* function, GlobalSymbol* gs )
 {
@@ -179,9 +181,10 @@ bool IntCompiler::Context::onUnknownSymbol( UnknownSymbol* sym )
 }
 
 
-void IntCompiler::Context::onStaticData( Class*, void* )
+Expression* IntCompiler::Context::onStaticData( Class* cls, void* data )
 {
- // TODO
+   m_owner->m_module->addStaticData( cls, data );
+   return new ExprValue( Item( cls, data ) );
 }
 
 

@@ -86,6 +86,13 @@ void MultiClass::checkAddOverride( const String& name, Property* p )
    else if( name == OVERRIDE_OP_IN ) m_overrides[OVERRIDE_OP_IN_ID] = p;
    else if( name == OVERRIDE_OP_PROVIDES ) m_overrides[OVERRIDE_OP_PROVIDES_ID] = p;
    else if( name == OVERRIDE_OP_TOSTRING ) m_overrides[OVERRIDE_OP_TOSTRING_ID] = p;
+   else if( name == OVERRIDE_OP_FIRST ) m_overrides[OVERRIDE_OP_FIRST_ID] = p;
+   else if( name == OVERRIDE_OP_NEXT ) m_overrides[OVERRIDE_OP_NEXT_ID] = p;
+
+#if OVERRIDE_OP_NEXT_ID + 1 != OVERRIDE_OP_COUNT
+#error "You forgot to update the operator overrides in MultiClass::checkAddOverride"
+#endif
+
 }
 
 
@@ -124,6 +131,12 @@ void MultiClass::checkRemoveOverride( const String& name )
    else if( name == OVERRIDE_OP_IN ) m_overrides[OVERRIDE_OP_IN_ID] = 0;
    else if( name == OVERRIDE_OP_PROVIDES ) m_overrides[OVERRIDE_OP_PROVIDES_ID] = 0;
    else if( name == OVERRIDE_OP_TOSTRING ) m_overrides[OVERRIDE_OP_TOSTRING_ID] = 0;
+   else if( name == OVERRIDE_OP_FIRST ) m_overrides[OVERRIDE_OP_FIRST_ID] = 0;
+   else if( name == OVERRIDE_OP_NEXT ) m_overrides[OVERRIDE_OP_NEXT_ID] = 0;
+
+#if OVERRIDE_OP_NEXT_ID + 1 != OVERRIDE_OP_COUNT
+#error "You forgot to update the operator overrides in MultiClass::checkRemoveOverride"
+#endif
 }
 
 
@@ -647,6 +660,36 @@ void MultiClass::op_toString( VMContext* ctx, void* self ) const
       String* str = new String("Instance of ");
       str->append( name() );
       ctx->topData() = str;
+   }
+}
+
+void MultiClass::op_first( VMContext* ctx, void* self ) const
+{
+   Class* cls;
+   void* udata;
+
+   if( inl_get_override( self, OVERRIDE_OP_FIRST_ID, cls, udata ) )
+   {
+      cls->op_first( ctx, udata );
+   }
+   else
+   {
+      Class::op_first( ctx, self );
+   }
+}
+
+void MultiClass::op_next( VMContext* ctx, void* self ) const
+{
+   Class* cls;
+   void* udata;
+
+   if( inl_get_override( self, OVERRIDE_OP_NEXT_ID, cls, udata ) )
+   {
+      cls->op_next( ctx, udata );
+   }
+   else
+   {
+      Class::op_next( ctx, self );
    }
 }
 

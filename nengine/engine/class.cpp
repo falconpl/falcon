@@ -53,11 +53,6 @@ Class::~Class()
    TRACE1( "Destroying class %s.%s",
       m_module != 0 ? m_module->name().c_ize() : "<internal>",
       m_name.c_ize() );
-   
-   if( m_module != 0 )
-   {
-      m_module->rc.dec();
-   }
 }
 
 
@@ -70,15 +65,6 @@ Class* Class::getParent( const String& ) const
 
 void Class::module( Module* m )
 {
-   if( m != 0 )
-   {
-      m->rc.inc();
-   }
-   
-   if( m_module != 0 )
-   {
-      m_module->rc.dec();
-   }
    m_module = m;
 }
 
@@ -98,6 +84,10 @@ bool Class::gcCheck( void*, uint32 ) const
 void Class::gcMarkMyself( uint32 mark )
 {
    m_lastGCMark = mark;
+   if ( m_module != 0 )
+   {
+      m_module->gcMark( mark );
+   }
 }
 
 
@@ -345,6 +335,18 @@ void Class::op_toString( VMContext* ctx, void *self ) const
    describe( self, *descr );
    ctx->stackResult(1, descr->garbage());
 }
+
+
+void Class::op_first( VMContext* ctx, void* ) const
+{
+   ctx->topData().setBreak();
+}
+
+void Class::op_next( VMContext* ctx, void* ) const
+{
+   ctx->topData().setBreak();
+}
+
 
 }
 

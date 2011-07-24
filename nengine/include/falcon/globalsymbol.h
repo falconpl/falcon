@@ -48,13 +48,9 @@ public:
    const Item& value() const { return m_item; }
    Item& value() { return m_item; }
 
-   //TODO Mt compilace for this
-   void incref() const { m_nRefCount ++; }
-   void decref() { if( --m_nRefCount == 0 ) delete this; }
 protected:
    GlobalSymbol();
    Item m_item;
-   mutable int m_nRefCount;
 
    virtual ~GlobalSymbol();
    friend class ExprFactory;
