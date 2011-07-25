@@ -9,6 +9,7 @@
       </df>
       <df name="engine">
         <df name="core_module">
+          <in>clone.cpp</in>
           <in>compare.cpp</in>
           <in>coremodule.cpp</in>
           <in>describe.cpp</in>
@@ -44,6 +45,7 @@
           <in>parser_if.cpp</in>
           <in>parser_index.cpp</in>
           <in>parser_list.cpp</in>
+          <in>parser_proto.cpp</in>
           <in>parser_rule.cpp</in>
           <in>parser_while.cpp</in>
           <in>parsercontext.cpp</in>
@@ -61,7 +63,6 @@
         <in>class.cpp</in>
         <in>classarray.cpp</in>
         <in>classbool.cpp</in>
-        <in>classclass.cpp</in>
         <in>classdict.cpp</in>
         <in>classfunction.cpp</in>
         <in>classint.cpp</in>
@@ -88,6 +89,7 @@
         <in>exprfactory.cpp</in>
         <in>exprmath.cpp</in>
         <in>exprmultiunpack.cpp</in>
+        <in>exprproto.cpp</in>
         <in>exprsym.cpp</in>
         <in>exprunpack.cpp</in>
         <in>exprvalue.cpp</in>
@@ -98,12 +100,15 @@
         <in>fassert.cpp</in>
         <in>fatal.cpp</in>
         <in>filestat.cpp</in>
+        <in>flexyclass.cpp</in>
+        <in>flexydict.cpp</in>
         <in>fstream.cpp</in>
         <in>fstream_posix.cpp</in>
         <in>fstream_win.cpp</in>
         <in>function.cpp</in>
         <in>genericerror.cpp</in>
         <in>globalsymbol.cpp</in>
+        <in>hyperclass.cpp</in>
         <in>inheritance.cpp</in>
         <in>intcompiler.cpp</in>
         <in>interrupt_posix.cpp</in>
@@ -113,15 +118,22 @@
         <in>item.cpp</in>
         <in>item_util.cpp</in>
         <in>itemarray.cpp</in>
+        <in>itemdict.cpp</in>
         <in>localsymbol.cpp</in>
         <in>memory.cpp</in>
+        <in>metaclass.cpp</in>
+        <in>modcompiler.cpp</in>
         <in>module.cpp</in>
         <in>mt_posix.cpp</in>
         <in>mt_win.cpp</in>
+        <in>multiclass.cpp</in>
+        <in>multiclass_private.h</in>
         <in>operanderror.cpp</in>
+        <in>overridableclass.cpp</in>
         <in>paramerror.cpp</in>
         <in>path.cpp</in>
         <in>pcode.cpp</in>
+        <in>prototypeclass.cpp</in>
         <in>pseudofunc.cpp</in>
         <in>rampmode.cpp</in>
         <in>reader.cpp</in>
@@ -130,6 +142,7 @@
         <in>statement.cpp</in>
         <in>stdstreams_posix.cpp</in>
         <in>stdstreams_win.cpp</in>
+        <in>stmt_init.cpp</in>
         <in>stmtrule.cpp</in>
         <in>stream.cpp</in>
         <in>streambuffer.cpp</in>
@@ -166,6 +179,7 @@
       <df name="include">
         <df name="falcon">
           <df name="cm">
+            <in>clone.h</in>
             <in>compare.h</in>
             <in>coremodule.h</in>
             <in>describe.h</in>
@@ -201,6 +215,7 @@
             <in>parser_if.h</in>
             <in>parser_index.h</in>
             <in>parser_list.h</in>
+            <in>parser_proto.h</in>
             <in>parser_rule.h</in>
             <in>parser_while.h</in>
             <in>parsercontext.h</in>
@@ -218,7 +233,6 @@
           <in>class.h</in>
           <in>classarray.h</in>
           <in>classbool.h</in>
-          <in>classclass.h</in>
           <in>classdict.h</in>
           <in>classfunction.h</in>
           <in>classint.h</in>
@@ -230,7 +244,6 @@
           <in>codeframe.h</in>
           <in>collector.h</in>
           <in>common.h</in>
-          <in>compiler.h</in>
           <in>datareader.h</in>
           <in>datawriter.h</in>
           <in>directory.h</in>
@@ -249,15 +262,19 @@
           <in>expression.h</in>
           <in>exprfactory.h</in>
           <in>exprmath.h</in>
+          <in>exprproto.h</in>
           <in>exprsym.h</in>
           <in>exprvalue.h</in>
           <in>extfunc.h</in>
+          <in>falcon.h</in>
           <in>falconclass.h</in>
           <in>falconinstance.h</in>
           <in>falconstate.h</in>
           <in>fassert.h</in>
           <in>fatal.h</in>
           <in>filestat.h</in>
+          <in>flexyclass.h</in>
+          <in>flexydict.h</in>
           <in>fstream.h</in>
           <in>fstream_posix.h</in>
           <in>fstream_win.h</in>
@@ -266,6 +283,7 @@
           <in>gctoken.h</in>
           <in>genericerror.h</in>
           <in>globalsymbol.h</in>
+          <in>hyperclass.h</in>
           <in>inheritance.h</in>
           <in>intcompiler.h</in>
           <in>interrupt.h</in>
@@ -274,34 +292,39 @@
           <in>ioerror.h</in>
           <in>item.h</in>
           <in>itemarray.h</in>
+          <in>itemdict.h</in>
           <in>itemid.h</in>
           <in>localsymbol.h</in>
           <in>locationinfo.h</in>
           <in>memory.h</in>
+          <in>metaclass.h</in>
+          <in>modcompiler.h</in>
           <in>module.h</in>
           <in>mt.h</in>
           <in>mt_posix.h</in>
           <in>mt_win.h</in>
+          <in>multiclass.h</in>
           <in>operanderror.h</in>
           <in>optoken.h</in>
           <in>ov_names.h</in>
+          <in>overridableclass.h</in>
           <in>paramerror.h</in>
           <in>paranoid.h</in>
           <in>path.h</in>
           <in>pcode.h</in>
-          <in>property.h</in>
-          <in>propitem.h</in>
-          <in>propmethod.h</in>
+          <in>prototypeclass.h</in>
           <in>pseudofunc.h</in>
           <in>pstep.h</in>
           <in>rampmode.h</in>
           <in>reader.h</in>
+          <in>refcounter.h</in>
           <in>refpointer.h</in>
           <in>rulesyntree.h</in>
           <in>setup.h</in>
           <in>sourceref.h</in>
           <in>statement.h</in>
           <in>stdstreams.h</in>
+          <in>stmt_init.h</in>
           <in>stmtrule.h</in>
           <in>stream.h</in>
           <in>streambuffer.h</in>

@@ -19,6 +19,7 @@
 #include <falcon/setup.h>
 #include <falcon/string.h>
 #include <falcon/pstep.h>
+#include <falcon/sourceref.h>
 
 namespace Falcon
 {
@@ -138,6 +139,12 @@ public:
     */
    Class* owner() const { return m_owner; }
 
+   /** Add source line definition for this Inheritance. */
+   void defineAt( int32 line, int32 chr ) { m_sdef.line( line ); m_sdef.chr(chr); }
+   
+   /** sourceRef. */
+   const SourceRef& sourceRef() const { return m_sdef; }
+
 private:
 
    class Private;
@@ -146,6 +153,7 @@ private:
    String m_name;
    Class* m_parent;
    Class* m_owner;
+   SourceRef m_sdef;
 };
 
 }

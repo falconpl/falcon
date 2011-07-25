@@ -138,6 +138,7 @@ add_library(falcon_engine SHARED
   ioerror.cpp
   localsymbol.cpp
   metaclass.cpp
+  modcompiler.cpp
   module.cpp
   multiclass.cpp
   operanderror.cpp

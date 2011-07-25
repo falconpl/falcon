@@ -31,6 +31,7 @@ StmtInit::StmtInit( Inheritance* inh, int32 line, int32 chr  ):
    apply = apply_;
    m_step0 = this;
    m_step1 = inh->compiledExpr();
+   inh->defineAt(line, chr);
 }
 
 StmtInit::~StmtInit()
@@ -48,7 +49,7 @@ void StmtInit::apply_( const PStep* ps, VMContext* ctx )
    const StmtInit* init = static_cast<const StmtInit*>( ps );
    TRACE( "Initializing %s with %d params",
          init->m_inheritance->describe().c_ize(),
-         init->m_inheritance->paramCount() );
+         (int) init->m_inheritance->paramCount() );
 
    // we shall be around just once
    ctx->popCode();

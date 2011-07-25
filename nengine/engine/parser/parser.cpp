@@ -15,7 +15,7 @@
 
 #define SRC "engine/parser/parser.cpp"
 
-#include "falcon/syntaxerror.h"
+#include <falcon/syntaxerror.h>
 #include <falcon/parser/parser.h>
 #include <falcon/parser/lexer.h>
 #include <falcon/parser/tokeninstance.h>

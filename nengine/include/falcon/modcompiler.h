@@ -73,7 +73,6 @@ private:
       virtual ~Context();
 
       virtual void onInputOver();
-      virtual bool garbageDynData();
       virtual void onNewFunc( Function* function, GlobalSymbol* gs=0 );
       virtual void onNewClass( Class* cls, bool bIsObj, GlobalSymbol* gs=0 );
       virtual void onNewStatement( Statement* stmt );

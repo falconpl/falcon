@@ -23,15 +23,14 @@
 #include <falcon/enumerator.h>
 #include <falcon/refcounter.h>
 
-#include "inheritance.h"
-#include "unknownsymbol.h"
-
 namespace Falcon {
 
 class GlobalSymbol;
 class UnknownSymbol;
 class Item;
 class Class;
+class Inheritance;
+class UnknownSymbol;
 
 /** Standard Falcon Execution unit and library.
 
@@ -292,7 +291,20 @@ public:
     \return 0 if already existing, or a valid UnknownSymbol if not found.
     */
    UnknownSymbol* addImport( const String& name );
+   
+   /** Export a symbol.
+    \param name The name of the symbol to be exported.
+    \return The exported symbol
+    
+    If the symbol is still not defined, it is created as a global symbol
+    it is created now as a nil global.
+    
+    \note it is legal to export undefined symbols (symbol forwarding).
+    */
+   Symbol* addExport( const String& name );
 
+   void addImportInheritance( Inheritance* inh );
+   
 private:
    String m_name;
    String m_uri;

@@ -21,6 +21,8 @@
 #include <falcon/extfunc.h>
 #include <falcon/item.h>
 
+#include <falcon/inheritance.h>
+
 #include <map>
 #include <deque>
 
@@ -490,24 +492,25 @@ void Module::addAnonClass( Class* cls )
 
 GlobalSymbol* Module::addVariable( const String& name, const Item& value, bool bExport )
 {
+   GlobalSymbol* sym;
+   
    // check if the name is free.
    Private::GlobalsMap& syms = _p->m_gSyms;
-   if( syms.find(name) != syms.end() )
+   Private::GlobalsMap::iterator pos = syms.find(name);
+   if( pos != syms.end() )
    {
-      return 0;
+      sym = 0;
    }
-
-
-   // add the symbol to the symbol table.
-   GlobalSymbol* sym = new GlobalSymbol( name, value );
-   syms[name] = sym;
-
-   if( bExport )
+   else
    {
-      _p->m_gExports[name] = sym;
+      // add the symbol to the symbol table.
+      sym = new GlobalSymbol( name, value );
+      syms[name] = sym;
+      if( bExport )
+      {
+         _p->m_gExports[name] = sym;
+      }
    }
-   // we're not interested in having the GC to mark the item, as the item
-   // isn't referencing us.
 
    return sym;
 }
@@ -628,6 +631,47 @@ UnknownSymbol* Module::addImport( const String& name )
    _p->m_gSyms[name] = usym;
 
    return usym;
+}
+
+
+Symbol* Module::addExport( const String& name )
+{
+   Symbol* sym;
+   
+   // We can't be called if the symbol is alredy declared elsewhere.
+   Private::GlobalsMap::const_iterator iter = _p->m_gSyms.find( name );
+   if( iter != _p->m_gSyms.end() )
+   {
+      sym = iter->second;
+      
+      // ... and save the dependency.
+      _p->m_gExports[name] = sym;          
+   }
+   else
+   {
+      sym = addVariable( name, true );
+   }
+
+   return sym;
+}
+
+
+void Module::addImportInheritance( Inheritance* inh )
+{
+   // Inheritances with dots are dependent on the given module.
+   String ModName, inhName;
+   inhName = inh->className();
+   length_t pos = inhName.rfind(".");
+   if( pos != String::npos )
+   {
+      ModName = inhName.subString(0,pos);
+      inhName = inhName.subString(pos);
+   }
+   
+   Private::Dependency* dep = _p->getDep( ModName, false, inhName );
+   
+   // Record the fact that we have to save transform an unknown symbol...
+   dep->m_waiting.push_back( new Private::WaitingInherit( inh ) );
 }
 
 }

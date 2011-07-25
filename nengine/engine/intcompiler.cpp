@@ -204,12 +204,14 @@ void IntCompiler::Context::onInheritance( Inheritance* inh  )
       if( ! sym->retrieve( itm, m_owner->m_vm->currentContext() ) )
       {
          //TODO: Add inheritance line number.
-         m_owner->m_sp.addError( e_undef_sym, m_owner->m_sp.currentSource(), 0, 0, 0, inh->className() );
+         m_owner->m_sp.addError( e_undef_sym, m_owner->m_sp.currentSource(), 
+                 inh->sourceRef().line(), inh->sourceRef().chr(), 0, inh->className() );
       }
       // we want a class. A real class.
       else if ( ! itm.isUser() || ! itm.asClass()->isMetaClass() )
       {
-         m_owner->m_sp.addError( e_inv_inherit, m_owner->m_sp.currentSource(), 0, 0, 0, inh->className() );
+         m_owner->m_sp.addError( e_inv_inherit, m_owner->m_sp.currentSource(), 
+                 inh->sourceRef().line(), inh->sourceRef().chr(), 0, inh->className() );
       }
       else
       {
@@ -221,7 +223,8 @@ void IntCompiler::Context::onInheritance( Inheritance* inh  )
    else
    {
       // TODO -- add line
-      m_owner->m_sp.addError( e_undef_sym, m_owner->m_sp.currentSource(), 0, 0, 0, inh->className() );
+      m_owner->m_sp.addError( e_undef_sym, m_owner->m_sp.currentSource(), 
+              inh->sourceRef().line(), inh->sourceRef().chr(), 0, inh->className() );
    }
 }
 
