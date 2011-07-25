@@ -1,0 +1,22 @@
+<?
+   login = Nest.service("Login")
+   Nest.dtext('title', 'Blog Test' )
+?>
+<html>
+<head>
+   <title><? Nest.defer('title') ?></title>
+   <? Nest.headings() ?>
+</head>
+<body>
+<div class="site_title">
+<h1 class="site_title"><? Nest.defer('title') ?> </h1>
+</div>
+<? login.render() ?>
+	<div id="container" class="blogContainer">
+		<? Nest.service("Blog", "menuv").render() ?>	
+		<? Nest.content() ?>
+	</div>
+</body>
+</html>
+
+ 

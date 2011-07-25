@@ -1,0 +1,153 @@
+/***************************************************
+* Module Name :
+* Author      : Lucone
+* Create date : 2011-07-08
+* Edit by     : --        in date   : ....-..-..
+* Module Description -------------------------------
+*        <please insert a module description>
+***************************************************/
+/***************************************************
+--Classes, Object and functions:
+*	24	class DBUtilities
+*	32	>> --- Miscellaneous--------------------------------------------------<<
+*	37		function fetchDict( sqlCmd, aParms )
+*	62		function fetchArray( sqlCmd, aParms )
+*	88		function execute( sqlCmd, aParms )
+*	105		function getScalar( sqlCmd, aParms )
+*	117		function finalize()
+*	126	>> --- private methods------------------------------------------------<<
+*	128		function _openConn()
+*	142		function _exec( sqlCmd, aParms )
+***************************************************/
+import from dbi
+
+class DBUtilities
+	_myConn  = nil
+
+	init
+		self._openConn()
+	end
+
+
+// Region: Miscellaneous
+
+	/*	Given a select command, returns
+		an array with the records (as Dictionary)
+		retrieved.									*/
+	function fetchDict( sqlCmd, aParms )
+
+		try
+			rs = self._exec( sqlCmd, aParms )
+		catch
+			bFeedback = false
+		end
+
+		records = nil
+
+		if rs
+			records = []
+			while (a = rs.fetch([=>]))
+				records += a
+			end
+			rs.close()
+		end
+
+		return records
+
+	end
+
+	/*	Given a select command, returns
+		an array with the records (as Array)
+		retrieved.									*/
+	function fetchArray( sqlCmd, aParms )
+
+		try
+			rs = self._exec( sqlCmd, aParms )
+		catch
+			bFeedback = false
+		end
+
+		records = nil
+
+		if rs
+			records = []
+			while (a = rs.fetch([]))
+				records += nil
+				records[-1] = a
+			end
+			rs.close()
+		end
+
+		return records
+
+	end
+
+	/*	Given a sql command, this function execute
+		it and return a flag with the result of the
+		execution of it								 */
+	function execute( sqlCmd, aParms )
+
+		bFeedback = true
+		try
+			if not self._myConn: self._openConn()
+			self._exec( sqlCmd, aParms )
+		catch in err
+inspect(sqlCmd)
+> "<br>"
+inspect( aParms )
+> err
+			bFeedback = false
+		end
+		return bFeedback
+
+	end
+
+	/*	Given a sql command, this function execute
+		it and return the first field in the first
+		record only									*/
+	function getScalar( sqlCmd, aParms )
+
+		a = self._exec( sqlCmd, aParms )
+
+		b = a.fetch([])
+
+		return ( b ) ? b[0] : nil
+
+	end
+
+/*	To close the connection and free
+		the resources used					*/
+	function finalize()
+
+		if self._myConn
+			self._myConn.close()
+			self._myConn = nil
+		end
+
+	end
+
+// Region: private methods
+
+	function _openConn()
+
+		if not self._myConn
+			/* BEWARE!!! temporary solution ??? */
+			// self._myConn = dbi.connect("mysql:db=CKDB;uid=ckd;pwd=ckd;host=192.168.1.22")
+			self._myConn = dbi.connect(vmSystemType() == "WIN" ? "sqlite3:db=.\\blog.db" : "sqlite3:db=./blog.db")
+		end
+
+	end
+
+	/*	the True function getting the command and
+		parameters (if any) and returning a recordset
+		If any exceptio is raised, it's up the
+		calling function to trap it						*/
+	function _exec( sqlCmd, aParms )
+
+		a = [ self._myConn.query, sqlCmd]
+		if aParms: a += aParms
+		return a()
+
+	end
+
+end

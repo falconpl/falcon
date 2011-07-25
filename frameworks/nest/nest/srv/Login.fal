@@ -115,7 +115,7 @@ class Login( instance ) from Service( instance )
    function checkLogin( uid, pwd )
       Nest.logd( "Checking login for " + uid + ":" + pwd )
       
-      res = Nest.emit( "check_user", self.uid.value, self.pwd.value )
+      res = Nest.emit( "check_user", uid, uid )
 
       if res
          try

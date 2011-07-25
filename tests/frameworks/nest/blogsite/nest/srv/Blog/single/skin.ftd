@@ -1,0 +1,64 @@
+<?	
+	function skin( data, srv ) 	
+		news = srv.getItem()				
+?> 
+	<div id="container" class="blogContainer">
+		<div id="navi" class="blogNavigation">
+			<div>
+<?				noFilter = i"No Filter!" ?>
+<?= 			@"<p class='blogNaviTitle'><a href=\"?pid=home\">$(noFilter)</a></p>"
+				<?=	srv.getTagList( false ) ?>	
+			</div>
+		</div>
+		<div id="main" class="blogMain">
+			<div class="blogItem">
+				<div class="blogDate">
+					<?= news.DateFormatted() ?>
+				</div>
+				<div class="blogTitle">
+					<?= news.Title ?>
+				</div>					
+	    		<div class="blogContent">
+	    			<?= news.Content ?>
+	    		</div>
+	    		<div class="blogInfo">
+					<?= news.postedBy()?>
+					<br>
+					<?= news.filedUnder() ?>&nbsp;-&nbsp;<?= news.tagList()?>
+	    		</div>
+			<div class="blogSectionHeader">Comments</div>
+<?	 		aCmnts = srv.getRelatedComments()
+			for cmnt in aCmnts						?>
+				<div class="blogComment">
+					<div class="blogCommentText">
+						<?= cmnt.Content ?>
+					</div>
+					<div class="blogInfo">
+						<?= cmnt.postedBy() 		?>
+					</div>
+				</div>
+<? 			end ?>
+			</div>
+			<br><br>
+			<form action="" method="post">
+				<div class="commentform">
+					<input type="hidden" value="addcomment" name="type">
+					<input type="hidden" value="<?= srv.getID() ?>" name="id">
+					<label for="txtContent">Your comment:</label>
+					<textarea name="txtContent" class="formfield" rows="10" cols="40" name="body" ></textarea>
+					<br>
+					<label for="txtAuthor">Your Name:</label>
+					<input id="txtAuthor" name="txtAuthor" class="formfield" value="<?= Nest.ambient("auth_user").value ? Nest.ambient("auth_user").value : "" ?>" maxlength="40" size="40">
+					<br>
+					<label for="txtWebsite">Web Site:</label>
+					<input id="txtWebsite" name="txtWebsite" class="formfield" value="" maxlength="60" size="40" >
+					<label for="txtEmail">E-mail:</label>
+					<input id="txtEmail"  name="txtEmail" class="formfield" value="" maxlength="100" size="40">							
+					<br>
+					<input class="formbutton" type="submit" value="Add Comment" alt="Add Comment">
+				</div>
+			</form>
+   		</div>
+   	</div>
+   	
+<? end ?>

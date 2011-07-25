@@ -1,0 +1,51 @@
+/***************************************************
+* Module Name :
+* Author      : Lucone
+* Create date : 2011-07-07
+* Edit by     : --        in date   : ....-..-..
+* Module Description -------------------------------
+*        <please insert a module description>
+***************************************************/
+/***************************************************
+--Classes, Object and functions:
+*	20	class BlogSection( fetchFN, execFN )
+*	30		function finalize()
+*	35	>> --- DML methods----------------------------------------------------<<
+*	36		function getList()
+*	40		function delete( id )
+*	44		function update( id, newTitle )
+*	48		function insert( newTitle )
+***************************************************/
+load   nest.dm.cust.DBUtilities
+
+
+class BlogSection( dbutility )
+	_dbuti = nil
+	
+	init
+		self._dbuti = dbutility
+	end
+	
+// Region: DML methods
+	function getList()
+		return self._dbuti.fetchArray( "SELECT Title, IDSection FROM tBlogSections ORDER BY Title;" )
+	end
+
+	function delete( id )
+		return self._dbuti.execute( "DELETE FROM tBlogSections WHERE IDSection = ?;", id )
+	end
+
+	function update( id, newTitle )
+		return self._dbuti.execute( "UPDATE tBlogSections SET Title = ? WHERE IDSection = ?;", [newTitle, id] )
+	end
+
+	function insert( newTitle )
+		return self._dbuti.execute( "INSERT INTO tBlogSections (Title) Values ( ? );", newTitle )		
+	end
+	
+	/*	To close the connection and free
+	the resources used					*/
+	function finalize()
+		self._dbuti = nil
+	end
+end
