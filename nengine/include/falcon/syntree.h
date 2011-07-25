@@ -23,6 +23,7 @@ namespace Falcon
 {
 
 class Statement;
+class SymbolTable;
 
 /** Syntactic tree.
  *
@@ -66,9 +67,19 @@ public:
    virtual void describe( String& tgt ) const;
    inline String describe() const { return PStep::describe(); }
 
+   /** Returns the symbol table for this block.
+    \param bmake if true, generate a table if not already created.
+
+    This method returns (and eventually creates) a symbol table
+    that can be used to store variable names local to this block.
+    */
+   SymbolTable* locals( bool bmake = true );
+
 protected:
    class Private;
    Private* _p;
+   
+   SymbolTable* m_locals;
 };
 
 }

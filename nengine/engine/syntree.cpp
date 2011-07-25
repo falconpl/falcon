@@ -17,6 +17,7 @@
 #include <falcon/vm.h>
 #include <falcon/codeframe.h>
 #include <falcon/statement.h>
+#include <falcon/symboltable.h>
 
 #include <vector>
 
@@ -44,7 +45,8 @@ public:
 
 
 SynTree::SynTree():
-   _p( new Private )
+   _p( new Private ),
+   m_locals(0)
 {
    apply = apply_;
 }
@@ -53,6 +55,7 @@ SynTree::SynTree():
 SynTree::~SynTree()
 {
    delete _p;
+   delete m_locals;
 }
 
 
@@ -63,6 +66,18 @@ void SynTree::describe( String& tgt ) const
       tgt += _p->m_steps[i]->describe() + "\n";
    }
 }
+
+
+SymbolTable* SynTree::locals( bool bmake )
+{
+   if( m_locals == 0 && bmake )
+   {
+      m_locals = new SymbolTable();
+   }
+   
+   return m_locals;
+}
+
 
 void SynTree::apply_( const PStep* ps, VMContext* ctx )
 {
@@ -87,12 +102,14 @@ void SynTree::set( int pos, Statement* p )  {
   _p->m_steps[pos] = p;
 }
 
+
 void SynTree::remove( int pos )
 {
      Statement* p =_p->m_steps[ pos ];
      _p->m_steps.erase( _p->m_steps.begin()+pos );
      delete p;
 }
+
 
 void SynTree::insert( int pos, Statement* step )
 {
@@ -106,25 +123,30 @@ SynTree& SynTree::append( Statement* step )
    return *this;
 }
 
+
 int SynTree::size() const
 {
    return _p->m_steps.size();
 }
+
 
 bool SynTree::empty() const
 {
    return _p->m_steps.empty();
 }
 
+
 Statement* SynTree::first() const
 {
    return _p->m_steps.front();
 }
 
+
 Statement* SynTree::last() const
 {
    return _p->m_steps.back();
 }
+
 
 Statement* SynTree::at( int pos ) const
 { 
