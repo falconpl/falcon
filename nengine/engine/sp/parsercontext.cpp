@@ -593,7 +593,7 @@ void ParserContext::closeContext()
    restoreStatus(_p->m_frames.back());
 
    // updating the syntactic tree
-   Private::FrameVector::const_reverse_iterator riter = _p->m_frames.rbegin();
+   // Private::FrameVector::const_reverse_iterator riter = _p->m_frames.rbegin();
   
    // notify the new item.
    switch( bframe.m_type )

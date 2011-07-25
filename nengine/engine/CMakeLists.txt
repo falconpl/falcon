@@ -204,5 +204,5 @@ endif()
 
 install(TARGETS falcon_engine 
   EXPORT falcon-core-targets
-  ${FALCON_INSTALL_DESTINATIONS} 
+  DESTINATION ${FALCON_INSTALL_DESTINATIONS}
 )
