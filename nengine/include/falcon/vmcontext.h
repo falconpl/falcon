@@ -163,12 +163,10 @@ public:
     This is like addLocals, but doesn't nil the newly created variables.
     */
    inline void addSpace( size_t count ) {
-      Item* base = m_topData+1;
       m_topData += count;
       if( m_topData >= m_maxData )
       {
          moreData();
-         base = m_topData - count;
       }
    }
 
