@@ -33,3 +33,5 @@ endif()
 
 add_subdirectory(engine)
 add_subdirectory(tests)
+add_subdirectory(clt)
+

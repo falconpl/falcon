@@ -1018,10 +1018,10 @@ void Parser::explorePaths()
    while( ! _p->m_pframes->empty() && ! findPaths(false) )
    {
       TRACE1( "Parser::explorePaths -- adding error frame %d(%s); parser frames %d",
-         _p->m_pErrorFrames->size(),
+         (int) _p->m_pErrorFrames->size(),
          //_p->m_pErrorFrames->empty() ? "none" : _p->m_pErrorFrames->back().m_path.back()->name().c_ize(),
          _p->m_pErrorFrames->empty() ? "none" : _p->m_pErrorFrames->back().m_owningToken->name().c_ize(),
-         _p->m_pframes->size()
+         (int) _p->m_pframes->size()
          );
       // failed on the same rule?
       if( ! _p->m_pErrorFrames->empty() &&
@@ -1063,7 +1063,7 @@ void Parser::applyCurrentRule()
    resetNextToken();
    TRACE1( "Applying rule %s -- state depth %d -- state id %d",
       currentRule->name().c_ize(),
-      _p->m_lStates.size(),
+      (int) _p->m_lStates.size(),
       frameId );
 
    state.m_appliedRules++;
@@ -1071,7 +1071,7 @@ void Parser::applyCurrentRule()
 
    TRACE3( "Applied rule %s -- state depth %d -- state id %d",
       currentRule->name().c_ize(),
-      _p->m_lStates.size(),
+      (int) _p->m_lStates.size(),
       _p->m_lStates.back().m_id );
    // did we changed state?
    if( frameId != _p->m_lStates.back().m_id )

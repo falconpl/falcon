@@ -14,32 +14,8 @@
 */
 
 
-#include <falcon/vm.h>
-#include <falcon/syntree.h>
-#include <falcon/localsymbol.h>
-#include <falcon/error.h>
-#include <falcon/expression.h>
-#include <falcon/exprvalue.h>
-#include <falcon/exprsym.h>
-#include <falcon/statement.h>
-#include <falcon/stmtrule.h>
-#include <falcon/rulesyntree.h>
-#include <falcon/synfunc.h>
-#include <falcon/extfunc.h>
-
-#include <falcon/stdstreams.h>
-#include <falcon/textwriter.h>
-
+#include <falcon/falcon.h>
 #include <falcon/trace.h>
-#include <falcon/application.h>
-
-#include <falcon/sp/sourceparser.h>
-#include <falcon/textreader.h>
-
-#include <falcon/intcompiler.h>
-#include <falcon/globalsymbol.h>
-#include <falcon/genericerror.h>
-#include <falcon/cm/coremodule.h>
 
 using namespace Falcon;
 
@@ -53,12 +29,13 @@ class FalconApp: public Falcon::Application
 public:
    void guardAndGo()
    {
+      TextWriter out(new StdOutStream);
       try {
          go();
       }
       catch( Error* e )
       {
-         std::cout << "Caught: " << e->describe().c_ize() << std::endl;
+         out.write( "Caught: " + e->describe() +"\n");
          e->decref();
       }
    }
@@ -71,6 +48,8 @@ void go()
 #endif
 
    VMachine vm;
+   vm.textOut()->write( "Welcome to Falcon.\n" );
+   
    vm.link( new CoreModule );
    IntCompiler intComp(&vm);
 
@@ -157,7 +136,7 @@ void go()
 // This is just a test.
 int main( int , char* [] )
 {
-   std::cout << "Interactive mode test" << std::endl;
+   
 
    TRACE_ON();
 

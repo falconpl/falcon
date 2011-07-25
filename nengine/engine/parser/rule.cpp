@@ -227,7 +227,7 @@ bool Rule::match( Parser& parser, bool bIncremental ) const
    }
 
    TRACE1( "Rule::match(%s) -- matched (mode %s) at %d", m_name.c_ize(),
-            bIncremental ? "incremental" : "full", ppos );
+            bIncremental ? "incremental" : "full", (int) ppos );
    return true;
 }
 

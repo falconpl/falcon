@@ -1,0 +1,270 @@
+/home/gian/Progetti/Falcon/nengine/engine/engine.cpp:401: Engine init()
+/home/gian/Progetti/Falcon/nengine/engine/engine.cpp:257: Engine creation started
+/home/gian/Progetti/Falcon/nengine/engine/engine.cpp:334: Engine creation complete
+/home/gian/Progetti/Falcon/nengine/engine/vm.cpp:114: Virtual machine created at 0x7fff9b64fdf0
+/home/gian/Progetti/Falcon/nengine/engine/vm.cpp:120: Virtual machine create -- loading duplicate standard input stream
+/home/gian/Progetti/Falcon/nengine/engine/vm.cpp:130: Virtual machine create -- loading duplicate standard output stream
+/home/gian/Progetti/Falcon/nengine/engine/vm.cpp:140: Virtual machine create -- loading duplicate standard error stream
+/home/gian/Progetti/Falcon/nengine/engine/parser/parser.cpp:110: Parser::addState -- adding state 'Main'
+/home/gian/Progetti/Falcon/nengine/engine/parser/parser.cpp:110: Parser::addState -- adding state 'InlineFunc'
+/home/gian/Progetti/Falcon/nengine/engine/parser/parser.cpp:110: Parser::addState -- adding state 'ClassBody'
+/home/gian/Progetti/Falcon/nengine/tests/intmode.cpp:87: GO -- Read: "quit"
+/home/gian/Progetti/Falcon/nengine/engine/parser/parser.cpp:117: Parser::pushState -- pushing state 'Main'
+/home/gian/Progetti/Falcon/nengine/engine/parser/parser.cpp:405: Parser::step
+/home/gian/Progetti/Falcon/nengine/engine/parser/parser.cpp:420: Parser::step -- on state "Main" --  
+/home/gian/Progetti/Falcon/nengine/engine/parser/parser.cpp:576: Parser::parserLoop -- starting
+/home/gian/Progetti/Falcon/nengine/engine/parser/parser.cpp:621: Parser::parserLoop -- stack now: >> Name 
+/home/gian/Progetti/Falcon/nengine/engine/parser/parser.cpp:635: Parser::onNewToken -- starting new path finding
+/home/gian/Progetti/Falcon/nengine/engine/parser/state.cpp:62: State::findPaths -- enter Main
+/home/gian/Progetti/Falcon/nengine/engine/parser/state.cpp:69: State::findPaths -- checking Function
+/home/gian/Progetti/Falcon/nengine/engine/parser/parser.cpp:526: Parser::addParseFrame -- Function at -1
+/home/gian/Progetti/Falcon/nengine/engine/parser/parser.cpp:72: Destroying ParseFrame at 0x7fff9b64d210
+/home/gian/Progetti/Falcon/nengine/engine/parser/nonterminal.cpp:96: NonTerminal::findPaths Function -- scanning
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:137: Rule::match(Function decl) -- full
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:195: Rule::match(Function decl) -- checking 'function' <-> 'Name'
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:200: Rule::match(Function decl) -- searching a path from 'function' path to 'Name' 
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:212: Rule::match(Function decl) -- failed at 0
+/home/gian/Progetti/Falcon/nengine/engine/parser/parser.cpp:72: Destroying ParseFrame at 0x7fff9b64d190
+/home/gian/Progetti/Falcon/nengine/engine/parser/nonterminal.cpp:123: NonTerminal::findPaths(Function) -- no match
+/home/gian/Progetti/Falcon/nengine/engine/parser/parser.cpp:72: Destroying ParseFrame at 0x25b34e0
+/home/gian/Progetti/Falcon/nengine/engine/parser/parser.cpp:72: Destroying ParseFrame at 0x7fff9b64d210
+/home/gian/Progetti/Falcon/nengine/engine/parser/state.cpp:69: State::findPaths -- checking Class
+/home/gian/Progetti/Falcon/nengine/engine/parser/parser.cpp:526: Parser::addParseFrame -- Class at -1
+/home/gian/Progetti/Falcon/nengine/engine/parser/parser.cpp:72: Destroying ParseFrame at 0x7fff9b64d210
+/home/gian/Progetti/Falcon/nengine/engine/parser/nonterminal.cpp:96: NonTerminal::findPaths Class -- scanning
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:137: Rule::match(Class decl) -- full
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:195: Rule::match(Class decl) -- checking 'class' <-> 'Name'
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:200: Rule::match(Class decl) -- searching a path from 'class' path to 'Name' 
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:212: Rule::match(Class decl) -- failed at 0
+/home/gian/Progetti/Falcon/nengine/engine/parser/parser.cpp:72: Destroying ParseFrame at 0x7fff9b64d190
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:137: Rule::match(Class decl with params) -- full
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:195: Rule::match(Class decl with params) -- checking 'class' <-> 'Name'
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:200: Rule::match(Class decl with params) -- searching a path from 'class' path to 'Name' 
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:212: Rule::match(Class decl with params) -- failed at 0
+/home/gian/Progetti/Falcon/nengine/engine/parser/parser.cpp:72: Destroying ParseFrame at 0x7fff9b64d190
+/home/gian/Progetti/Falcon/nengine/engine/parser/nonterminal.cpp:123: NonTerminal::findPaths(Class) -- no match
+/home/gian/Progetti/Falcon/nengine/engine/parser/parser.cpp:72: Destroying ParseFrame at 0x25b3640
+/home/gian/Progetti/Falcon/nengine/engine/parser/parser.cpp:72: Destroying ParseFrame at 0x7fff9b64d210
+/home/gian/Progetti/Falcon/nengine/engine/parser/state.cpp:69: State::findPaths -- checking Autoexpr
+/home/gian/Progetti/Falcon/nengine/engine/parser/parser.cpp:526: Parser::addParseFrame -- Autoexpr at -1
+/home/gian/Progetti/Falcon/nengine/engine/parser/parser.cpp:72: Destroying ParseFrame at 0x7fff9b64d210
+/home/gian/Progetti/Falcon/nengine/engine/parser/nonterminal.cpp:96: NonTerminal::findPaths Autoexpr -- scanning
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:137: Rule::match(Autoexpr) -- full
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:188: Rule::match(Autoexpr) -- descendable 'Expr' found at 0
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:195: Rule::match(Autoexpr) -- checking 'Expr' <-> 'Name'
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:200: Rule::match(Autoexpr) -- searching a path from 'Expr' path to 'Name' 
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:205: Rule::match(Autoexpr) -- actually descending 'Expr' found at 0
+/home/gian/Progetti/Falcon/nengine/engine/parser/parser.cpp:526: Parser::addParseFrame -- Expr at 0
+/home/gian/Progetti/Falcon/nengine/engine/parser/parser.cpp:72: Destroying ParseFrame at 0x7fff9b64d0e0
+/home/gian/Progetti/Falcon/nengine/engine/parser/nonterminal.cpp:96: NonTerminal::findPaths Expr -- scanning
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:137: Rule::match(Expr_assign) -- full
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:195: Rule::match(Expr_assign) -- checking 'Expr' <-> 'Name'
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:200: Rule::match(Expr_assign) -- searching a path from 'Expr' path to 'Name' 
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:212: Rule::match(Expr_assign) -- failed at 0
+/home/gian/Progetti/Falcon/nengine/engine/parser/parser.cpp:72: Destroying ParseFrame at 0x7fff9b64d060
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:137: Rule::match(Expr_equal) -- full
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:195: Rule::match(Expr_equal) -- checking 'Expr' <-> 'Name'
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:200: Rule::match(Expr_equal) -- searching a path from 'Expr' path to 'Name' 
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:212: Rule::match(Expr_equal) -- failed at 0
+/home/gian/Progetti/Falcon/nengine/engine/parser/parser.cpp:72: Destroying ParseFrame at 0x7fff9b64d060
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:137: Rule::match(Expr_diff) -- full
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:195: Rule::match(Expr_diff) -- checking 'Expr' <-> 'Name'
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:200: Rule::match(Expr_diff) -- searching a path from 'Expr' path to 'Name' 
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:212: Rule::match(Expr_diff) -- failed at 0
+/home/gian/Progetti/Falcon/nengine/engine/parser/parser.cpp:72: Destroying ParseFrame at 0x7fff9b64d060
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:137: Rule::match(Expr_less) -- full
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:195: Rule::match(Expr_less) -- checking 'Expr' <-> 'Name'
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:200: Rule::match(Expr_less) -- searching a path from 'Expr' path to 'Name' 
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:212: Rule::match(Expr_less) -- failed at 0
+/home/gian/Progetti/Falcon/nengine/engine/parser/parser.cpp:72: Destroying ParseFrame at 0x7fff9b64d060
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:137: Rule::match(Expr_greater) -- full
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:195: Rule::match(Expr_greater) -- checking 'Expr' <-> 'Name'
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:200: Rule::match(Expr_greater) -- searching a path from 'Expr' path to 'Name' 
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:212: Rule::match(Expr_greater) -- failed at 0
+/home/gian/Progetti/Falcon/nengine/engine/parser/parser.cpp:72: Destroying ParseFrame at 0x7fff9b64d060
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:137: Rule::match(Expr_le) -- full
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:195: Rule::match(Expr_le) -- checking 'Expr' <-> 'Name'
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:200: Rule::match(Expr_le) -- searching a path from 'Expr' path to 'Name' 
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:212: Rule::match(Expr_le) -- failed at 0
+/home/gian/Progetti/Falcon/nengine/engine/parser/parser.cpp:72: Destroying ParseFrame at 0x7fff9b64d060
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:137: Rule::match(Expr_ge) -- full
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:195: Rule::match(Expr_ge) -- checking 'Expr' <-> 'Name'
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:200: Rule::match(Expr_ge) -- searching a path from 'Expr' path to 'Name' 
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:212: Rule::match(Expr_ge) -- failed at 0
+/home/gian/Progetti/Falcon/nengine/engine/parser/parser.cpp:72: Destroying ParseFrame at 0x7fff9b64d060
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:137: Rule::match(Expr_eeq) -- full
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:195: Rule::match(Expr_eeq) -- checking 'Expr' <-> 'Name'
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:200: Rule::match(Expr_eeq) -- searching a path from 'Expr' path to 'Name' 
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:212: Rule::match(Expr_eeq) -- failed at 0
+/home/gian/Progetti/Falcon/nengine/engine/parser/parser.cpp:72: Destroying ParseFrame at 0x7fff9b64d060
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:137: Rule::match(Expr_call) -- full
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:195: Rule::match(Expr_call) -- checking 'Expr' <-> 'Name'
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:200: Rule::match(Expr_call) -- searching a path from 'Expr' path to 'Name' 
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:212: Rule::match(Expr_call) -- failed at 0
+/home/gian/Progetti/Falcon/nengine/engine/parser/parser.cpp:72: Destroying ParseFrame at 0x7fff9b64d060
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:137: Rule::match(Expr_index) -- full
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:195: Rule::match(Expr_index) -- checking 'Expr' <-> 'Name'
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:200: Rule::match(Expr_index) -- searching a path from 'Expr' path to 'Name' 
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:212: Rule::match(Expr_index) -- failed at 0
+/home/gian/Progetti/Falcon/nengine/engine/parser/parser.cpp:72: Destroying ParseFrame at 0x7fff9b64d060
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:137: Rule::match(Expr_star_index) -- full
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:195: Rule::match(Expr_star_index) -- checking 'Expr' <-> 'Name'
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:200: Rule::match(Expr_star_index) -- searching a path from 'Expr' path to 'Name' 
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:212: Rule::match(Expr_star_index) -- failed at 0
+/home/gian/Progetti/Falcon/nengine/engine/parser/parser.cpp:72: Destroying ParseFrame at 0x7fff9b64d060
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:137: Rule::match(Expr_empty_dict) -- full
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:195: Rule::match(Expr_empty_dict) -- checking '[' <-> 'Name'
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:200: Rule::match(Expr_empty_dict) -- searching a path from '[' path to 'Name' 
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:212: Rule::match(Expr_empty_dict) -- failed at 0
+/home/gian/Progetti/Falcon/nengine/engine/parser/parser.cpp:72: Destroying ParseFrame at 0x7fff9b64d060
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:137: Rule::match(Expr_array_decl) -- full
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:195: Rule::match(Expr_array_decl) -- checking '[' <-> 'Name'
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:200: Rule::match(Expr_array_decl) -- searching a path from '[' path to 'Name' 
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:212: Rule::match(Expr_array_decl) -- failed at 0
+/home/gian/Progetti/Falcon/nengine/engine/parser/parser.cpp:72: Destroying ParseFrame at 0x7fff9b64d060
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:137: Rule::match(Expr_empty_dict2) -- full
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:195: Rule::match(Expr_empty_dict2) -- checking '.[' <-> 'Name'
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:200: Rule::match(Expr_empty_dict2) -- searching a path from '.[' path to 'Name' 
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:212: Rule::match(Expr_empty_dict2) -- failed at 0
+/home/gian/Progetti/Falcon/nengine/engine/parser/parser.cpp:72: Destroying ParseFrame at 0x7fff9b64d060
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:137: Rule::match(Expr_array_decl2) -- full
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:195: Rule::match(Expr_array_decl2) -- checking '.[' <-> 'Name'
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:200: Rule::match(Expr_array_decl2) -- searching a path from '.[' path to 'Name' 
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:212: Rule::match(Expr_array_decl2) -- failed at 0
+/home/gian/Progetti/Falcon/nengine/engine/parser/parser.cpp:72: Destroying ParseFrame at 0x7fff9b64d060
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:137: Rule::match(Expr_dot) -- full
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:195: Rule::match(Expr_dot) -- checking 'Expr' <-> 'Name'
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:200: Rule::match(Expr_dot) -- searching a path from 'Expr' path to 'Name' 
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:212: Rule::match(Expr_dot) -- failed at 0
+/home/gian/Progetti/Falcon/nengine/engine/parser/parser.cpp:72: Destroying ParseFrame at 0x7fff9b64d060
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:137: Rule::match(Expr_plus) -- full
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:195: Rule::match(Expr_plus) -- checking 'Expr' <-> 'Name'
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:200: Rule::match(Expr_plus) -- searching a path from 'Expr' path to 'Name' 
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:212: Rule::match(Expr_plus) -- failed at 0
+/home/gian/Progetti/Falcon/nengine/engine/parser/parser.cpp:72: Destroying ParseFrame at 0x7fff9b64d060
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:137: Rule::match(Expr_preinc) -- full
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:195: Rule::match(Expr_preinc) -- checking '++' <-> 'Name'
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:200: Rule::match(Expr_preinc) -- searching a path from '++' path to 'Name' 
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:212: Rule::match(Expr_preinc) -- failed at 0
+/home/gian/Progetti/Falcon/nengine/engine/parser/parser.cpp:72: Destroying ParseFrame at 0x7fff9b64d060
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:137: Rule::match(Expr_postinc) -- full
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:195: Rule::match(Expr_postinc) -- checking 'Expr' <-> 'Name'
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:200: Rule::match(Expr_postinc) -- searching a path from 'Expr' path to 'Name' 
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:212: Rule::match(Expr_postinc) -- failed at 0
+/home/gian/Progetti/Falcon/nengine/engine/parser/parser.cpp:72: Destroying ParseFrame at 0x7fff9b64d060
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:137: Rule::match(Expr_minus) -- full
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:195: Rule::match(Expr_minus) -- checking 'Expr' <-> 'Name'
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:200: Rule::match(Expr_minus) -- searching a path from 'Expr' path to 'Name' 
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:212: Rule::match(Expr_minus) -- failed at 0
+/home/gian/Progetti/Falcon/nengine/engine/parser/parser.cpp:72: Destroying ParseFrame at 0x7fff9b64d060
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:137: Rule::match(Expr_pars) -- full
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:195: Rule::match(Expr_pars) -- checking '(' <-> 'Name'
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:200: Rule::match(Expr_pars) -- searching a path from '(' path to 'Name' 
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:212: Rule::match(Expr_pars) -- failed at 0
+/home/gian/Progetti/Falcon/nengine/engine/parser/parser.cpp:72: Destroying ParseFrame at 0x7fff9b64d060
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:137: Rule::match(Expr_pars2) -- full
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:195: Rule::match(Expr_pars2) -- checking '.(' <-> 'Name'
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:200: Rule::match(Expr_pars2) -- searching a path from '.(' path to 'Name' 
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:212: Rule::match(Expr_pars2) -- failed at 0
+/home/gian/Progetti/Falcon/nengine/engine/parser/parser.cpp:72: Destroying ParseFrame at 0x7fff9b64d060
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:137: Rule::match(Expr_times) -- full
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:195: Rule::match(Expr_times) -- checking 'Expr' <-> 'Name'
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:200: Rule::match(Expr_times) -- searching a path from 'Expr' path to 'Name' 
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:212: Rule::match(Expr_times) -- failed at 0
+/home/gian/Progetti/Falcon/nengine/engine/parser/parser.cpp:72: Destroying ParseFrame at 0x7fff9b64d060
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:137: Rule::match(Expr_div) -- full
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:195: Rule::match(Expr_div) -- checking 'Expr' <-> 'Name'
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:200: Rule::match(Expr_div) -- searching a path from 'Expr' path to 'Name' 
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:212: Rule::match(Expr_div) -- failed at 0
+/home/gian/Progetti/Falcon/nengine/engine/parser/parser.cpp:72: Destroying ParseFrame at 0x7fff9b64d060
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:137: Rule::match(Expr_pow) -- full
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:195: Rule::match(Expr_pow) -- checking 'Expr' <-> 'Name'
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:200: Rule::match(Expr_pow) -- searching a path from 'Expr' path to 'Name' 
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:212: Rule::match(Expr_pow) -- failed at 0
+/home/gian/Progetti/Falcon/nengine/engine/parser/parser.cpp:72: Destroying ParseFrame at 0x7fff9b64d060
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:137: Rule::match(Expr_neg) -- full
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:195: Rule::match(Expr_neg) -- checking '-' <-> 'Name'
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:200: Rule::match(Expr_neg) -- searching a path from '-' path to 'Name' 
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:212: Rule::match(Expr_neg) -- failed at 0
+/home/gian/Progetti/Falcon/nengine/engine/parser/parser.cpp:72: Destroying ParseFrame at 0x7fff9b64d060
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:137: Rule::match(Expr_neg2) -- full
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:195: Rule::match(Expr_neg2) -- checking '(neg)' <-> 'Name'
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:200: Rule::match(Expr_neg2) -- searching a path from '(neg)' path to 'Name' 
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:212: Rule::match(Expr_neg2) -- failed at 0
+/home/gian/Progetti/Falcon/nengine/engine/parser/parser.cpp:72: Destroying ParseFrame at 0x7fff9b64d060
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:137: Rule::match(Expr_atom) -- full
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:188: Rule::match(Expr_atom) -- descendable 'Atom' found at 0
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:195: Rule::match(Expr_atom) -- checking 'Atom' <-> 'Name'
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:200: Rule::match(Expr_atom) -- searching a path from 'Atom' path to 'Name' 
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:205: Rule::match(Expr_atom) -- actually descending 'Atom' found at 0
+/home/gian/Progetti/Falcon/nengine/engine/parser/parser.cpp:526: Parser::addParseFrame -- Atom at 0
+/home/gian/Progetti/Falcon/nengine/engine/parser/parser.cpp:72: Destroying ParseFrame at 0x7fff9b64cfb0
+/home/gian/Progetti/Falcon/nengine/engine/parser/nonterminal.cpp:96: NonTerminal::findPaths Atom -- scanning
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:137: Rule::match(Atom_Int) -- full
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:195: Rule::match(Atom_Int) -- checking 'Int' <-> 'Name'
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:200: Rule::match(Atom_Int) -- searching a path from 'Int' path to 'Name' 
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:212: Rule::match(Atom_Int) -- failed at 0
+/home/gian/Progetti/Falcon/nengine/engine/parser/parser.cpp:72: Destroying ParseFrame at 0x7fff9b64cf30
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:137: Rule::match(Atom_Float) -- full
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:195: Rule::match(Atom_Float) -- checking 'Float' <-> 'Name'
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:200: Rule::match(Atom_Float) -- searching a path from 'Float' path to 'Name' 
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:212: Rule::match(Atom_Float) -- failed at 0
+/home/gian/Progetti/Falcon/nengine/engine/parser/parser.cpp:72: Destroying ParseFrame at 0x7fff9b64cf30
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:137: Rule::match(Atom_Name) -- full
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:195: Rule::match(Atom_Name) -- checking 'Name' <-> 'Name'
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:225: Rule::match(Atom_Name) -- matching
+/home/gian/Progetti/Falcon/nengine/engine/parser/nonterminal.cpp:113: NonTerminal::findPaths(Atom) -- match 'Atom_Name'
+/home/gian/Progetti/Falcon/nengine/engine/parser/nonterminal.cpp:113: NonTerminal::findPaths(Expr) -- match 'Expr_atom'
+/home/gian/Progetti/Falcon/nengine/engine/parser/nonterminal.cpp:113: NonTerminal::findPaths(Autoexpr) -- match 'Autoexpr'
+/home/gian/Progetti/Falcon/nengine/engine/parser/state.cpp:77: State::findPaths -- nt-token Autoexpr match
+/home/gian/Progetti/Falcon/nengine/engine/parser/parser.cpp:643: Parser::onNewToken -- path found in current state.
+/home/gian/Progetti/Falcon/nengine/engine/parser/parser.cpp:788: Parser::applyPaths -- begin
+engine/sp/parsercontext.cpp:189: ParserContext::addVariable quit
+/home/gian/Progetti/Falcon/nengine/engine/parser/parser.cpp:374: Parser::simplify -- 1 tokens -> Atom
+/home/gian/Progetti/Falcon/nengine/engine/parser/parser.cpp:72: Destroying ParseFrame at 0x25b4420
+/home/gian/Progetti/Falcon/nengine/engine/parser/parser.cpp:827: Parser::applyPaths -- Applied on same arity, stack: >> Atom
+/home/gian/Progetti/Falcon/nengine/engine/parser/parser.cpp:907: Parser::applyPaths -- Rule applied or added, looping again
+/home/gian/Progetti/Falcon/nengine/engine/parser/parser.cpp:697: Parser::findPaths -- continuing on existing path 'Expr_atom'
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:137: Rule::match(Expr_atom) -- full
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:188: Rule::match(Expr_atom) -- descendable 'Atom' found at 0
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:195: Rule::match(Expr_atom) -- checking 'Atom' <-> 'Atom'
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:225: Rule::match(Expr_atom) -- matching
+/home/gian/Progetti/Falcon/nengine/engine/parser/parser.cpp:374: Parser::simplify -- 1 tokens -> Expr
+/home/gian/Progetti/Falcon/nengine/engine/parser/parser.cpp:72: Destroying ParseFrame at 0x25b3870
+/home/gian/Progetti/Falcon/nengine/engine/parser/parser.cpp:827: Parser::applyPaths -- Applied on same arity, stack: >> Expr
+/home/gian/Progetti/Falcon/nengine/engine/parser/parser.cpp:907: Parser::applyPaths -- Rule applied or added, looping again
+/home/gian/Progetti/Falcon/nengine/engine/parser/parser.cpp:697: Parser::findPaths -- continuing on existing path 'Autoexpr'
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:137: Rule::match(Autoexpr) -- full
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:188: Rule::match(Autoexpr) -- descendable 'Expr' found at 0
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:195: Rule::match(Autoexpr) -- checking 'Expr' <-> 'Expr'
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:225: Rule::match(Autoexpr) -- matching
+/home/gian/Progetti/Falcon/nengine/engine/parser/parser.cpp:902: Parser::applyPaths -- Need more tokens (larger arity 2 > 1), returning.
+/home/gian/Progetti/Falcon/nengine/engine/parser/parser.cpp:621: Parser::parserLoop -- stack now: >> Expr, EOL 
+/home/gian/Progetti/Falcon/nengine/engine/parser/parser.cpp:697: Parser::findPaths -- continuing on existing path 'Autoexpr'
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:137: Rule::match(Autoexpr) -- incremental
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:195: Rule::match(Autoexpr) -- checking 'EOL' <-> 'EOL'
+/home/gian/Progetti/Falcon/nengine/engine/parser/rule.cpp:225: Rule::match(Autoexpr) -- matching
+/home/gian/Progetti/Falcon/nengine/engine/parser/parser.cpp:788: Parser::applyPaths -- begin
+engine/sp/parsercontext.cpp:431: ParserContext::addStatement type 1
+engine/sp/parsercontext.cpp:313: ParserContext::checkSymbols on 1 syms
+engine/sp/parsercontext.cpp:381: ParserContext::findSymbol "quit"
+engine/sp/parsercontext.cpp:326: ParserContext::checkSymbols "quit" is undefined, up-notifying
+engine/sp/parsercontext.cpp:332: ParserContext::checkSymbols "quit" leaving this symbol undefined
+engine/sp/parsercontext.cpp:345: ParserContext::checkSymbols cannot define "quit"
+/home/gian/Progetti/Falcon/nengine/engine/parser/parser.cpp:359: Parser::addError -- with current stack: >> Expr, EOL 
+engine/sp/parsercontext.cpp:226: ParserContext::abandonSymbols
+/home/gian/Progetti/Falcon/nengine/engine/parser/parser.cpp:374: Parser::simplify -- 2 tokens -> <nothing>
+/home/gian/Progetti/Falcon/nengine/engine/parser/parser.cpp:72: Destroying ParseFrame at 0x25b3780
+/home/gian/Progetti/Falcon/nengine/engine/parser/parser.cpp:827: Parser::applyPaths -- Applied on same arity, stack: 
+/home/gian/Progetti/Falcon/nengine/engine/parser/parser.cpp:907: Parser::applyPaths -- Rule applied or added, looping again
+/home/gian/Progetti/Falcon/nengine/engine/parser/parser.cpp:919: Parser::applyPaths -- frames completelty exausted (Having worked)
+/home/gian/Progetti/Falcon/nengine/engine/parser/parser.cpp:595: Parser::parserLoop -- done on interactive lexer token shortage
+/home/gian/Progetti/Falcon/nengine/tests/intmode.cpp:87: GO -- Read: ""
+/home/gian/Progetti/Falcon/nengine/engine/vm.cpp:169: Virtual machine being destroyed at 0x7fff9b64fdf0
+/home/gian/Progetti/Falcon/nengine/engine/vm.cpp:186: Virtual machine destroyed at 0x7fff9b64fdf0
+/home/gian/Progetti/Falcon/nengine/engine/engine.cpp:414: Engine shutdown started
+/home/gian/Progetti/Falcon/nengine/engine/engine.cpp:340: Engine destruction started
+/home/gian/Progetti/Falcon/nengine/engine/collector.cpp:354: Sweeping done, allocated 0 (killed 0)
+/home/gian/Progetti/Falcon/nengine/engine/collector.cpp:354: Sweeping done, allocated 0 (killed 0)
+/home/gian/Progetti/Falcon/nengine/engine/engine.cpp:396: Engine destroyed
+/home/gian/Progetti/Falcon/nengine/engine/engine.cpp:423: Engine shutdown complete
