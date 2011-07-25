@@ -17,6 +17,8 @@
 #define SRC "engine/sp/sourceparser.cpp"
 
 #include <falcon/setup.h>
+#include <falcon/error.h>
+#include <falcon/codeerror.h>
 #include <falcon/sp/sourceparser.h>
 #include <falcon/sp/parsercontext.h>
 
@@ -32,6 +34,7 @@
 #include <falcon/sp/parser_if.h>
 #include <falcon/sp/parser_index.h>
 #include <falcon/sp/parser_list.h>
+#include <falcon/sp/parser_proto.h>
 #include <falcon/sp/parser_rule.h>
 #include <falcon/sp/parser_while.h>
 
@@ -59,6 +62,7 @@ SourceParser::SourceParser():
    T_DotSquare(".["),
    T_CloseSquare("]"),
    T_OpenGraph("{"),
+   T_OpenProto("p{"),
    T_CloseGraph("}"),
 
    T_Dot("."),
@@ -118,17 +122,17 @@ SourceParser::SourceParser():
 
    T_true( "true" ),
    T_false( "false" ),
-   T_self( "self" )
+   T_self( "self" ),
+   T_from( "from" )
 {
    S_Autoexpr << "Autoexpr"
       << (r_line_autoexpr << "Autoexpr" << apply_line_expr << Expr << T_EOL)
       << (r_assign_list << "Autoexpr_list" << apply_autoexpr_list << S_MultiAssign << T_EOL )
       ;
 
-   S_If << "IF"
-      << (r_if_short << "if_short" << apply_if_short << T_if << Expr << T_Colon << Expr << T_EOL )
-      << (r_if << "if" << apply_if << T_if << Expr << T_EOL )
-      ;
+   S_If << "IF" << errhand_if;
+   S_If << (r_if_short << "if_short" << apply_if_short << T_if << Expr << T_Colon << Expr << T_EOL );
+   S_If << (r_if << "if" << apply_if << T_if << Expr << T_EOL );
 
    S_Elif << "ELIF"
       << (r_elif << "elif" << apply_elif << T_elif << Expr << T_EOL )
@@ -168,11 +172,12 @@ SourceParser::SourceParser():
       << (r_Stmt_assign_list << "STMT_assign_list" << apply_stmt_assign_list << NeListExpr_ungreed << T_EqSign << NeListExpr )
       ;
 
-   //==========================================================================
-   // Expression
-   //
-   Expr << "Expr";
-   Expr<< (r_Expr_assign << "Expr_assign" << apply_expr_assign << Expr << T_EqSign << NeListExpr );
+  //==========================================================================
+  // Expression
+  //
+  Expr << "Expr";
+  Expr << expr_errhand;
+  Expr << (r_Expr_assign << "Expr_assign" << apply_expr_assign << Expr << T_EqSign << NeListExpr );
 
    Expr<< (r_Expr_equal << "Expr_equal" << apply_expr_equal << Expr << T_DblEq << Expr);
    Expr<< (r_Expr_diff << "Expr_diff" << apply_expr_diff << Expr << T_NotEq << Expr);
@@ -185,10 +190,17 @@ SourceParser::SourceParser():
    Expr<< (r_Expr_call << "Expr_call" << apply_expr_call << Expr << T_Openpar << ListExpr << T_Closepar );
    Expr<< (r_Expr_index << "Expr_index" << apply_expr_index << Expr << T_OpenSquare << Expr << T_CloseSquare );
    Expr<< (r_Expr_star_index << "Expr_star_index" << apply_expr_star_index << Expr << T_OpenSquare << T_Times << Expr << T_CloseSquare );
-   Expr<< (r_Expr_empty_dict << "Expr_empty_dict" << apply_expr_empty_dict << T_OpenSquare << T_Arrow << T_CloseSquare );
-   Expr<< (r_Expr_array_decl << "Expr_array_decl" << apply_expr_array_decl << T_OpenSquare << ListExprOrPairs << T_CloseSquare );
-   Expr<< (r_Expr_empty_dict2 << "Expr_empty_dict2" << apply_expr_empty_dict << T_DotSquare << T_Arrow << T_CloseSquare );
-   Expr<< (r_Expr_array_decl2 << "Expr_array_decl2" << apply_expr_array_decl << T_DotSquare << SeqExprOrPairs << T_CloseSquare );
+
+   //Expr<< (r_Expr_empty_dict << "Expr_empty_dict" << apply_expr_empty_dict << T_OpenSquare << T_Arrow << T_CloseSquare );
+   //Expr<< (r_Expr_array_decl << "Expr_array_decl" << apply_expr_array_decl << T_OpenSquare << ListExprOrPairs << T_CloseSquare );
+   //Expr<< (r_Expr_empty_dict2 << "Expr_empty_dict2" << apply_expr_empty_dict << T_DotSquare << T_Arrow << T_CloseSquare );
+   //Expr<< (r_Expr_array_decl2 << "Expr_array_decl2" << apply_expr_array_decl << T_DotSquare << SeqExprOrPairs << T_CloseSquare );
+
+   Expr<< (r_Expr_array_decl << "Expr_array_decl" << apply_expr_array_decl << T_OpenSquare );
+   Expr<< (r_Expr_array_decl2 << "Expr_array_decl2" << apply_expr_array_decl2 << T_DotSquare );
+
+   //Expr<< (r_Expr_array_decl2 << "Expr_array_decl2" << apply_expr_array_decl << T_DotSquare << SeqExprOrPairs << T_CloseSquare );
+
    Expr<< (r_Expr_dot << "Expr_dot" << apply_expr_dot << Expr << T_Dot << T_Name);
    Expr<< (r_Expr_plus << "Expr_plus" << apply_expr_plus << Expr << T_Plus << Expr);
    Expr<< (r_Expr_preinc << "Expr_preinc" << apply_expr_preinc << T_PlusPlus << Expr);
@@ -205,7 +217,9 @@ SourceParser::SourceParser():
    Expr<< (r_Expr_neg2   << "Expr_neg2"   << apply_expr_neg << T_UnaryMinus << Expr );
    Expr<< (r_Expr_Atom << "Expr_atom" << apply_expr_atom << Atom);
    Expr<< (r_Expr_function << "Expr_func" << apply_expr_func << T_function << T_Openpar << ListSymbol << T_Closepar << T_EOL);
-      //Expr << (r_Expr_lambda << "Expr_lambda" << apply_expr_lambda << T_OpenGraph << ListSymbol << T_Arrow  );
+   // Start of lambda expressions.
+   Expr<< (r_Expr_lambda << "Expr_lambda" << apply_expr_lambda << T_OpenGraph );
+   Expr<< (r_Expr_proto << "Expr_proto" << apply_expr_proto << T_OpenProto );
 
    S_Function << "Function"
       /* This requires a bit of work << (r_function_short << "Function short" << apply_function_short
@@ -214,7 +228,6 @@ SourceParser::SourceParser():
       << (r_function << "Function decl" << apply_function
              << T_function << T_Name << T_Openpar << ListSymbol << T_Closepar << T_EOL )
       ;
-
       
    S_Return << "Return"
       << (r_return << "return" << apply_return << T_return << Expr << T_EOL)
@@ -232,56 +245,55 @@ SourceParser::SourceParser():
       ;
 
    ListExpr << "ListExpr";
+   ListExpr << ListExpr_errhand;
    ListExpr<< (r_ListExpr_next << "ListExpr_next" << apply_ListExpr_next << ListExpr << T_Comma << Expr );
    ListExpr<< (r_ListExpr_first << "ListExpr_first" << apply_ListExpr_first << Expr );
    ListExpr<< (r_ListExpr_empty << "ListExpr_empty" << apply_ListExpr_empty );
 
    NeListExpr << "NeListExpr";
+   NeListExpr << ListExpr_errhand;
    NeListExpr<< (r_NeListExpr_next << "NeListExpr_next" << apply_NeListExpr_next << NeListExpr << T_Comma << Expr );
    NeListExpr<< (r_NeListExpr_first << "NeListExpr_first" << apply_NeListExpr_first << Expr );
 
 
    NeListExpr_ungreed << "NeListExpr_ungreed";
+   NeListExpr_ungreed << ListExpr_errhand;
    NeListExpr_ungreed<< (r_NeListExpr_ungreed_next << "NeListExpr_ungreed_next" << apply_NeListExpr_ungreed_next << NeListExpr_ungreed << T_Comma << Expr );
    NeListExpr_ungreed<< (r_NeListExpr_ungreed_first << "NeListExpr_ungreed_first" << apply_NeListExpr_ungreed_first << Expr );
    r_NeListExpr_ungreed_next.setGreedy(false);
 
-
-   ListExprOrPairs << "ListExprOrPairs";
-   ListExprOrPairs<< (r_ListExprOrPairs_next_pair << "ListExprOrPairs_next_pair" << apply_ListExprOrPairs_next_pair << ListExprOrPairs << T_Comma << Expr << T_Arrow << Expr );
-   ListExprOrPairs<< (r_ListExprOrPairs_next << "ListExprOrPairs_next" << apply_ListExprOrPairs_next << ListExprOrPairs << T_Comma << Expr );
-   ListExprOrPairs<< (r_ListExprOrPairs_first_pair << "ListExprOrPairs_first_pair" << apply_ListExprOrPairs_first_pair << Expr << T_Arrow << Expr );
-   ListExprOrPairs<< (r_ListExprOrPairs_first << "ListExprOrPairs_first" << apply_ListExprOrPairs_first << Expr );
-   ListExprOrPairs<< (r_ListExprOrPairs_empty << "ListExprOrPairs_empty" << apply_ListExprOrPairs_empty );
-
-   SeqExprOrPairs << "SeqExprOrPairs";
-   SeqExprOrPairs<< (r_SeqExprOrPairs_next_pair_cm << "SeqExprOrPairs_next_pair_cm" << apply_SeqExprOrPairs_next_pair_cm
-         << SeqExprOrPairs << T_Comma << Expr << T_Arrow << Expr );
-   SeqExprOrPairs<< (r_SeqExprOrPairs_next_pair << "SeqExprOrPairs_next_pair" << apply_SeqExprOrPairs_next_pair
-         << SeqExprOrPairs << Expr << T_Arrow << Expr );
-   SeqExprOrPairs<< (r_SeqExprOrPairs_next << "SeqExprOrPairs_next" << apply_SeqExprOrPairs_next << SeqExprOrPairs << Expr );
-   SeqExprOrPairs<< (r_SeqExprOrPairs_next_cm << "SeqExprOrPairs_next_cm" << apply_SeqExprOrPairs_next_cm << SeqExprOrPairs << T_Comma << Expr );
-   SeqExprOrPairs<< (r_SeqExprOrPairs_first_pair << "SeqExprOrPairs_first_pair" << apply_SeqExprOrPairs_first_pair << Expr << T_Arrow << Expr );
-   SeqExprOrPairs<< (r_SeqExprOrPairs_first << "SeqExprOrPairs_first" << apply_SeqExprOrPairs_first << Expr );
-   SeqExprOrPairs<< (r_SeqExprOrPairs_empty << "SeqExprOrPairs_empty" << apply_SeqExprOrPairs_empty );
-
-   SeqExprOrPairs.prio(175);
-
    ListSymbol << "ListSymbol";
+   ListSymbol << ListExpr_errhand;
    ListSymbol<< (r_ListSymbol_next << "ListSymbol_next" << apply_ListSymbol_next << ListSymbol << T_Comma << T_Name );
    ListSymbol<< (r_ListSymbol_first << "ListSymbol_first" << apply_ListSymbol_first << T_Name );
    ListSymbol<< (r_ListSymbol_empty << "ListSymbol_empty" << apply_ListSymbol_empty );
 
    NeListSymbol << "NeListSymbol";
+   NeListSymbol << ListExpr_errhand;
    NeListSymbol<< (r_NeListSymbol_next << "NeListSymbol_next" << apply_NeListSymbol_next << NeListSymbol << T_Comma << T_Name );
    NeListSymbol<< (r_NeListSymbol_first << "NeListSymbol_first" << apply_NeListSymbol_first << T_Name );
 
    //==================================
    // Class
    S_Class << "Class";
+   S_Class << (r_class_from << "Class w/from" << apply_class_from 
+               << T_class << T_Name << T_from << FromClause << T_EOL );
    S_Class << (r_class << "Class decl" << apply_class << T_class << T_Name << T_EOL );
-   S_Class << (r_class_p << "Class decl with params" << apply_class_p
-             << T_class << T_Name << T_Openpar << ListSymbol << T_Closepar << T_EOL );
+   S_Class << (r_class_p_from << "Class w/params & from" << apply_class_p_from
+             << T_class << T_Name << T_Openpar << ListSymbol << T_Closepar << T_from << FromClause << T_EOL );
+   S_Class << (r_class_p << "Class w/params" << apply_class_p
+             << T_class << T_Name << T_Openpar << ListSymbol << T_Closepar  << T_EOL );
+
+   FromClause << "Class from clause";
+   FromClause << ( r_FromClause_next << "FromClause_next"
+              << apply_FromClause_next << FromClause << T_Comma << FromEntry );
+   FromClause << ( r_FromClause_first << "FromClause_first" << apply_FromClause_first << FromEntry );
+
+   FromEntry << "Class from entry";
+   FromEntry << ( r_FromClause_entry_with_expr << "FromEntry_with_expr"
+             << apply_FromClause_entry_with_expr << T_Name << T_Openpar << ListExpr << T_Closepar );
+   FromEntry << ( r_FromClause_entry << "FromEntry" << apply_FromClause_entry << T_Name );
+
 
    S_PropDecl << "Property declaration";
    S_PropDecl << (r_propdecl_expr << "Expression Property" << apply_pdecl_expr
@@ -289,7 +301,51 @@ SourceParser::SourceParser():
 
    S_InitDecl << (r_init << "Init block" << apply_init_expr
                                << T_init << T_EOL );
+
+   //==========================================================================
+   // Lambdas
+   //
+
+   LambdaParams << "LambdaParams";
+   LambdaParams << ( r_lambda_params << "Params in lambda" << apply_lambda_params 
+                        << ListSymbol << T_Arrow );
+
+   //==========================================================================
+   // prototype
+   //
+   S_ProtoProp << "S_ProtoProp";
+   S_ProtoProp << ( r_proto_prop << "proto_prop" << apply_proto_prop
+                        << T_Name << T_EqSign << Expr << T_EOL );
+
+   //==========================================================================
+   // Array entries
+   //
+   ArrayEntry << "ArrayEntry";
+   ArrayEntry << ArrayEntry_errHand;
+   ArrayEntry << ( r_array_entry_comma << "array_entry_comma" << apply_array_entry_comma << T_Comma );
+   ArrayEntry << ( r_array_entry_eol << "array_entry_eol" << apply_array_entry_eol << T_EOL );
+   ArrayEntry << ( r_array_entry_arrow << "array_entry_arrow" << apply_array_entry_arrow << T_Arrow );
+   ArrayEntry << ( r_array_entry_close << "array_entry_close" << apply_array_entry_close << T_CloseSquare );
+   // a little trick; other than being ok, this Non terminal followed by a terminal raises the required arity
+   // otherwise, Expr would match early.
+   ArrayEntry << ( r_array_entry_expr2 << "array_entry_expr2" << apply_array_entry_expr << Expr << T_EOL );
+   ArrayEntry << ( r_array_entry_expr1 << "array_entry_expr1" << apply_array_entry_expr << Expr );
+
+   // Handle runaway errors.
+   ArrayEntry << (r_array_entry_runaway << "array_entry_runaway" << apply_array_entry_runaway << UnboundKeyword );
+
+   UnboundKeyword << "UnboundKeyword"
+                  << (r_uk_if << "UK_if" << T_if )
+                  << (r_uk_elif << "UK_elif" << T_elif )
+                  << (r_uk_else << "UK_else" << T_else )
+                  << (r_uk_while << "UK_while" << T_while )
+                  //... more to come
+                  ;
    
+   //==========================================================================
+   // Array entries
+   //
+
    //==========================================================================
    //State declarations
    //
@@ -331,16 +387,40 @@ SourceParser::SourceParser():
       << S_EmptyLine
       ;
 
+   s_LambdaStart << "LambdaStart"
+      << LambdaParams
+      << S_EmptyLine
+      ;
+   
+   s_ProtoDecl << "ProtoDecl"
+      << S_ProtoProp
+      << S_EmptyLine
+      << S_SmallEnd
+      ;
+
+    s_ArrayDecl << "ArrayDecl"
+      << ArrayEntry
+      ;
 
    addState( s_Main );
    addState( s_InlineFunc );
    addState( s_ClassBody );
+   addState( s_LambdaStart );
+   addState( s_ProtoDecl );
+   addState( s_ArrayDecl );
 }
 
 void SourceParser::onPushState( bool isPushedState )
 {
    ParserContext* pc = static_cast<ParserContext*>(m_ctx);
    pc->onStatePushed( isPushedState );
+}
+
+
+void SourceParser::onPopState()
+{
+   ParserContext* pc = static_cast<ParserContext*>(m_ctx);
+   pc->onStatePopped();
 }
 
 bool SourceParser::parse()

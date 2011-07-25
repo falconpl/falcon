@@ -199,7 +199,7 @@ bool ExprNot::simplify( Item& value ) const
    return false;
 }
 
-void ExprNot::apply_( const PStep* self, VMContext* ctx )
+void ExprNot::apply_( const PStep* DEBUG_ONLY(self), VMContext* ctx )
 {
    TRACE2( "Apply \"%s\"", ((ExprNot*)self)->describe().c_ize() );
 
@@ -249,7 +249,7 @@ void ExprAnd::precompile( PCode* pcode ) const
    
 }
 
-void ExprAnd::apply_( const PStep* self, VMContext* ctx )
+void ExprAnd::apply_( const PStep* DEBUG_ONLY(self), VMContext* ctx )
 {
    TRACE2( "Apply \"%s\"", ((ExprAnd*)self)->describe().c_ize() );
 
@@ -322,7 +322,7 @@ void ExprOr::precompile( PCode* pcode ) const
 }
 
 
-void ExprOr::apply_( const PStep* self, VMContext* ctx )
+void ExprOr::apply_( const PStep* DEBUG_ONLY(self), VMContext* ctx )
 {
    TRACE2( "Apply \"%s\"", ((ExprOr*)self)->describe().c_ize() );
    
@@ -406,7 +406,7 @@ bool ExprNeg::simplify( Item& value ) const
    return false;
 }
 
-void ExprNeg::apply_( const PStep* self, VMContext* ctx )
+void ExprNeg::apply_( const PStep* DEBUG_ONLY(self), VMContext* ctx )
 {  
    TRACE2( "Apply \"%s\"", ((ExprNeg*)self)->describe().c_ize() );
    
@@ -449,7 +449,7 @@ bool ExprPreInc::simplify( Item& value ) const
    return false;
 }
 
-void ExprPreInc::apply_( const PStep* self, VMContext* ctx )
+void ExprPreInc::apply_( const PStep* DEBUG_ONLY(self), VMContext* ctx )
 {  
    TRACE2( "Apply \"%s\"", ((ExprPreInc*)self)->describe().c_ize() );
    
@@ -502,7 +502,7 @@ void ExprPostInc::precompile( PCode* pcode ) const
    
 }
 
-void ExprPostInc::apply_( const PStep* self, VMContext* )
+void ExprPostInc::apply_( const PStep* DEBUG_ONLY(self), VMContext* )
 {  
    TRACE2( "Apply \"%s\"", ((ExprPostInc*)self)->describe().c_ize() );
 #if 0
@@ -522,7 +522,7 @@ ExprPostInc::Gate::Gate() {
    apply = apply_;
 }
 
-void ExprPostInc::Gate::apply_( const PStep* ps,  VMContext* ctx )
+void ExprPostInc::Gate::apply_( const PStep* DEBUG_ONLY(ps),  VMContext* ctx )
 {
    TRACE2( "Apply GATE \"%s\"", ((ExprPostInc::Gate*)ps)->describe().c_ize() );
 
@@ -561,7 +561,7 @@ bool ExprPreDec::simplify( Item& value ) const
    return false;
 }
 
-void ExprPreDec::apply_( const PStep* self, VMContext* ctx )
+void ExprPreDec::apply_( const PStep* DEBUG_ONLY(self), VMContext* ctx )
 {  
    TRACE2( "Apply \"%s\"", ((ExprPreDec*)self)->describe().c_ize() );
    
@@ -614,7 +614,7 @@ void ExprPostDec::precompile( PCode* pcode ) const
    pcode->pushStep( &m_gate );
 }
 
-void ExprPostDec::apply_( const PStep* self, VMContext* )
+void ExprPostDec::apply_( const PStep* DEBUG_ONLY(self), VMContext* )
 {  
    TRACE2( "Apply \"%s\"", ((ExprPostDec*)self)->describe().c_ize() );
 
@@ -634,7 +634,7 @@ ExprPostDec::Gate::Gate() {
    apply = apply_;
 }
 
-void ExprPostDec::Gate::apply_( const PStep* ps,  VMContext* ctx )
+void ExprPostDec::Gate::apply_( const PStep* DEBUG_ONLY(ps),  VMContext* ctx )
 {
    TRACE2( "Apply GATE \"%s\"", ((ExprPostDec::Gate*)ps)->describe().c_ize() );
 
@@ -661,7 +661,7 @@ void ExprPostDec::Gate::apply_( const PStep* ps,  VMContext* ctx )
 //=========================================================
 //Comparisons
 
-void ExprEEQ::apply_( const PStep* ps, VMContext* ctx )
+void ExprEEQ::apply_( const PStep* DEBUG_ONLY(ps), VMContext* ctx )
 {
    TRACE2( "Apply \"%s\"", ((ExprEEQ*)ps)->describe().c_ize() );
 
@@ -869,7 +869,7 @@ bool ExprStarIndex::simplify( Item& ) const
 }
 
 
-void ExprStarIndex::apply_( const PStep* ps, VMContext* ctx )
+void ExprStarIndex::apply_( const PStep* DEBUG_ONLY(ps), VMContext* ctx )
 {
    TRACE2( "Apply \"%s\"", ((ExprStarIndex*)ps)->describe().c_ize() );
 
@@ -910,7 +910,7 @@ bool ExprOob::simplify( Item& value ) const
    return false;
 }
 
-void ExprOob::apply_( const PStep* self, VMContext* ctx )
+void ExprOob::apply_( const PStep* DEBUG_ONLY(self), VMContext* ctx )
 {  
    TRACE2( "Apply \"%s\"", ((ExprOob*)self)->describe().c_ize() );
    
@@ -936,7 +936,7 @@ bool ExprDeoob::simplify( Item& value ) const
    return false;
 }
 
-void ExprDeoob::apply_( const PStep* self, VMContext* ctx )
+void ExprDeoob::apply_( const PStep* DEBUG_ONLY(self), VMContext* ctx )
 {  
    TRACE2( "Apply \"%s\"", ((ExprDeoob*)self)->describe().c_ize() );
    
@@ -962,7 +962,7 @@ bool ExprXorOob::simplify( Item& value ) const
    return false;
 }
 
-void ExprXorOob::apply_( const PStep* self, VMContext* ctx )
+void ExprXorOob::apply_( const PStep* DEBUG_ONLY(self), VMContext* ctx )
 {  
    TRACE2( "Apply \"%s\"", ((ExprXorOob*)self)->describe().c_ize() );
    
@@ -988,7 +988,7 @@ bool ExprIsOob::simplify( Item& value ) const
    return false;
 }
 
-void ExprIsOob::apply_( const PStep* self, VMContext* ctx )
+void ExprIsOob::apply_( const PStep* DEBUG_ONLY(self), VMContext* ctx )
 {  
    TRACE2( "Apply \"%s\"", ((ExprXorOob*)self)->describe().c_ize() );
    

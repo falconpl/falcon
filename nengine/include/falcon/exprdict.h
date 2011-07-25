@@ -58,7 +58,7 @@ public:
    inline String describe() const { return PStep::describe(); }
    inline String oneLiner() const { return PStep::oneLiner(); }
    
-   static void apply_( const PStep*, VMachine* vm );
+   static void apply_( const PStep*, VMContext* vm );
 
    inline virtual ExprDict* clone() const { return new ExprDict( *this ); }
 

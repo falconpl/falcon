@@ -52,7 +52,7 @@ class Parser::Private
    
    class ParseFrame {
    public:
-      NonTerminal* m_owningToken;
+      const NonTerminal* m_owningToken;
       // depth of the stack at this frame.
       int m_nStackDepth;
       // highest priority in this stack frame
@@ -65,7 +65,7 @@ class Parser::Private
       RulePath m_path;
       //Alternatives m_candidates;
 
-      ParseFrame( NonTerminal* nt=0, int nd=0 ):
+      ParseFrame( const NonTerminal* nt=0, int nd=0 ):
          m_owningToken(nt),
          m_nStackDepth(nd),
          m_nPriority(0),
@@ -94,11 +94,15 @@ class Parser::Private
 
       Parser::StateFrameFunc m_cbfunc;
       void* m_cbdata;
-      
+      int m_id;
+      int m_appliedRules;
+
       StateFrame( State* s ):
          m_state( s ),
          m_cbfunc( 0 ),
-         m_cbdata( 0 )
+         m_cbdata( 0 ),
+         m_id(0),
+         m_appliedRules(0)
       {
       }
    };
@@ -106,6 +110,7 @@ class Parser::Private
    // Currently active parsing states.
    typedef std::list<StateFrame> StateStack;
    StateStack m_lStates;
+   int m_stateFrameID;
 
 
    Private();

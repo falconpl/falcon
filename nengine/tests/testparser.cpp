@@ -20,6 +20,7 @@
 #include <falcon/rulesyntree.h>
 #include <falcon/synfunc.h>
 #include <falcon/extfunc.h>
+#include <falcon/inheritance.h>
 
 #include <falcon/stdstreams.h>
 #include <falcon/textwriter.h>
@@ -64,7 +65,8 @@ public:
    virtual Symbol* onUndefinedSymbol( const String& name );
    virtual GlobalSymbol* onGlobalDefined( const String& name, bool& bUnique );
    virtual bool onUnknownSymbol( UnknownSymbol* sym );
-   virtual void onStaticData( Class* cls, void* data );
+   virtual Expression* onStaticData( Class* cls, void* data );
+   virtual void onInheritance( Inheritance* );
 
 private:
    SynFunc m_main;
@@ -178,12 +180,24 @@ bool Context::onUnknownSymbol( UnknownSymbol* sym )
    return false;
 }
 
- void Context::onStaticData( Class* cls, void* data )
+ Expression* Context::onStaticData( Class* cls, void* data )
  {
     String temp;
     cls->describe( data, temp );
 
     std::cout << "CALLBACK: static data : " <<
+         temp.c_ize() << std::endl;
+
+    return new ExprValue( Item( cls, data, true ) );
+ }
+
+
+ void Context::onInheritance( Inheritance* inh )
+ {
+    String temp;
+    inh->describe( temp );
+
+    std::cout << "CALLBACK: inheritance data : " <<
          temp.c_ize() << std::endl;
     // for now, we'll let it leak.
  }

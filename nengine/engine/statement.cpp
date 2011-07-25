@@ -188,7 +188,7 @@ void StmtWhile::apply_( const PStep* s1, VMContext* ctx )
 {
    const StmtWhile* self = static_cast<const StmtWhile*>(s1);
    
-   if ( ctx->regA().isTrue() )
+   if ( ctx->topData().isTrue() )
    {
       TRACE1( "Apply 'while' at line %d -- redo ", self->line() );
       // redo.
@@ -201,6 +201,9 @@ void StmtWhile::apply_( const PStep* s1, VMContext* ctx )
       //we're done
       ctx->popCode();
    }
+   
+   // in both cases, the data is used.
+   ctx->popData();
 }
 
 
@@ -272,14 +275,18 @@ void StmtIf::apply_( const PStep* s1, VMContext* ctx )
    TRACE1( "Apply 'if' at line %d ", self->line() );
 
    int sid = ctx->currentCode().m_seqId;
-   if ( ctx->regA().isTrue() )
+   if ( ctx->topData().isTrue() )
    {
+      ctx->popData(); // anyhow, we have consumed the data
+
       TRACE1( "--Entering elif %d", sid );
       // we're gone -- but we may use our frame.
       ctx->resetCode( self->m_elifs[sid]->m_ifTrue );
    }
    else
    {
+      ctx->popData(); // anyhow, we have consumed the data
+
       // try next else-if
       if( ++sid < (int) self->m_elifs.size() )
       {
@@ -341,6 +348,12 @@ StmtReturn::~StmtReturn()
    delete m_expr;
 }
 
+void StmtReturn::expression( Expression* expr )
+{
+   delete m_expr;
+   m_expr = expr;
+}
+
 void StmtReturn::describe( String& tgt ) const
 {
    for( int32 i = 1; i < chr(); i++ ) {
@@ -363,14 +376,16 @@ void StmtReturn::apply_( const PStep*ps, VMContext* ctx )
    const StmtReturn* stmt = static_cast<const StmtReturn*>(ps);
    TRACE1( "Apply 'return' at line %d ", stmt->line() );
 
+   Item retval;
    // clear A if there wasn't any expression
-   if ( stmt->m_expr == 0 )
+   if ( stmt->m_expr != 0 )
    {
-      ctx->regA().setNil();
+      ctx->returnFrame( ctx->topData() );
    }
-
-   ctx->returnFrame();
-   // Todo throw if we didn't have any frame
+   else
+   {
+      ctx->returnFrame();
+   }
 }
 
 

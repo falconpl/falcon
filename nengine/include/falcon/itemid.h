@@ -40,6 +40,7 @@
 #define FLC_CLASS_ID_DICT     13
 #define FLC_CLASS_ID_RANGE    14
 #define FLC_CLASS_ID_CLASS    15
+#define FLC_CLASS_ID_PROTO    16
 
 // Other generic object
 #define FLC_CLASS_ID_OBJECT   20

@@ -23,7 +23,7 @@
 
 #include <falcon/engine.h>
 
-#include <falcon/error_messages.h>
+#include <falcon/error.h>
 #include <falcon/paramerror.h>
 
 namespace Falcon
@@ -42,22 +42,15 @@ Function::Function( const String& name, Module* module, int32 line ):
    m_line( line ),
    m_bDeterm(false),
    m_bEta(false)
-{
-}
+{}
 
 Function::~Function()
 {
-   if ( m_module != 0 )
-   {
-      //TODO: Properly decreference the module.
-      //m_module->decref();
-   }
 }
 
 
 void Function::module( Module* owner )
 {
-   //TODO Proper referencing
    m_module = owner;
 }
 
@@ -110,7 +103,9 @@ void Function::gcMark( uint32 mark )
 
 bool Function::gcCheck( uint32 mark )
 {
-   if( m_lastGCMark < mark )
+   // if we're residing in a module,
+   // ...let the module destroy us when it goes out of mark.
+   if( m_lastGCMark < mark && m_module != 0 )
    {
       delete this;
       return false;

@@ -1,8 +1,8 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: coreclass.cpp
+   FILE: metaclass.cpp
 
-   Class type handler.
+   Handler for class instances.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: Sat, 18 Jun 2011 21:24:12 +0200
@@ -13,7 +13,7 @@
    See LICENSE file for licensing details.
 */
 
-#include <falcon/classclass.h>
+#include <falcon/metaclass.h>
 #include <falcon/itemid.h>
 #include <falcon/vmcontext.h>
 #include <falcon/optoken.h>
@@ -23,51 +23,51 @@
 
 namespace Falcon {
 
-ClassClass::ClassClass():
+MetaClass::MetaClass():
    Class("Class", FLC_CLASS_ID_CLASS )
 {
 }
 
 
-ClassClass::~ClassClass()
+MetaClass::~MetaClass()
 {
 }
 
-void ClassClass::gcMark( void* self, uint32 mark ) const
+void MetaClass::gcMark( void* self, uint32 mark ) const
 {
    static_cast<Class*>(self)->gcMarkMyself( mark );
 }
 
-bool ClassClass::gcCheck( void* self, uint32 mark ) const
+bool MetaClass::gcCheck( void* self, uint32 mark ) const
 {
    return static_cast<Class*>(self)->gcCheckMyself( mark );
 }
 
-void ClassClass::dispose( void* self ) const
+void MetaClass::dispose( void* self ) const
 {
    delete static_cast<Class*>(self);
 }
 
 
-void* ClassClass::clone( void* source ) const
+void* MetaClass::clone( void* source ) const
 {
    return source;
 }
 
 
-void ClassClass::serialize( DataWriter*, void*  ) const
+void MetaClass::serialize( DataWriter*, void*  ) const
 {
    // TODO
 }
 
 
-void* ClassClass::deserialize( DataReader* ) const
+void* MetaClass::deserialize( DataReader* ) const
 {
    // TODO
    return 0;
 }
 
-void ClassClass::describe( void* instance, String& target, int, int ) const
+void MetaClass::describe( void* instance, String& target, int, int ) const
 {
    Class* fc = static_cast<Class*>(instance);
    target = "Class " + fc->name();
@@ -78,13 +78,13 @@ void ClassClass::describe( void* instance, String& target, int, int ) const
 //
 
 
-void ClassClass::op_isTrue( VMContext* ctx, void* ) const
+void MetaClass::op_isTrue( VMContext* ctx, void* ) const
 {
    // classes are always true
    ctx->topData().setBoolean(true);
 }
 
-void ClassClass::op_toString( VMContext* ctx , void* item ) const
+void MetaClass::op_toString( VMContext* ctx , void* item ) const
 {
    Class* fc = static_cast<Class*>(item);
    String* sret = new String( "Class " );
@@ -93,7 +93,7 @@ void ClassClass::op_toString( VMContext* ctx , void* item ) const
 }
 
 
-void ClassClass::op_call( VMContext* ctx, int32 pcount, void* self ) const
+void MetaClass::op_call( VMContext* ctx, int32 pcount, void* self ) const
 {
    Class* fc = static_cast<Class*>(self);
    fc->op_create( ctx, pcount );
@@ -101,4 +101,4 @@ void ClassClass::op_call( VMContext* ctx, int32 pcount, void* self ) const
 
 }
 
-/* end of coreclass.cpp */
+/* end of metaclass.cpp */

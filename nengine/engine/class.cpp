@@ -14,17 +14,23 @@
 */
 
 
+#include <falcon/trace.h>
+#include <falcon/module.h>
 #include <falcon/class.h>
 #include <falcon/itemid.h>
 #include <falcon/vmcontext.h>
 #include <falcon/operanderror.h>
-#include <falcon/error_messages.h>
+#include <falcon/error.h>
 
 #include <falcon/bom.h>
+
 
 namespace Falcon {
 
 Class::Class( const String& name ):
+   m_bIsfalconClass( false ),
+   m_bIsPrototype( false ),
+   m_userFlags(0),
    m_name( name ),
    m_typeID( FLC_CLASS_ID_OBJECT ),
    m_module(0),
@@ -32,6 +38,9 @@ Class::Class( const String& name ):
 {}
 
 Class::Class( const String& name, int64 tid ):
+   m_bIsfalconClass( false ),
+   m_bIsPrototype( false ),
+   m_userFlags(0),
    m_name( name ),
    m_typeID( tid ),
    m_module(0),
@@ -41,6 +50,22 @@ Class::Class( const String& name, int64 tid ):
 
 Class::~Class()
 {
+   TRACE1( "Destroying class %s.%s",
+      m_module != 0 ? m_module->name().c_ize() : "<internal>",
+      m_name.c_ize() );
+}
+
+
+Class* Class::getParent( const String& ) const
+{
+   // normally does nothing
+   return 0;
+}
+
+
+void Class::module( Module* m )
+{
+   m_module = m;
 }
 
 
@@ -59,6 +84,10 @@ bool Class::gcCheck( void*, uint32 ) const
 void Class::gcMarkMyself( uint32 mark )
 {
    m_lastGCMark = mark;
+   if ( m_module != 0 )
+   {
+      m_module->gcMark( mark );
+   }
 }
 
 
@@ -81,6 +110,11 @@ void Class::describe( void*, String& target, int, int ) const
 
 
 void Class::enumerateProperties( void*, Class::PropertyEnumerator& ) const
+{
+   // normally does nothing
+}
+
+void Class::enumeratePV( void*, Class::PVEnumerator& ) const
 {
    // normally does nothing
 }
@@ -117,6 +151,12 @@ void Class::op_compare( VMContext* ctx, void* self ) const
    // we have no information about what an item might be here, but we can
    // order the items by type
    ctx->stackResult(2, (int64) op1->type() - op2->type() );
+}
+
+
+void Class::onInheritanceResolved( Inheritance* )
+{
+   // do nothing
 }
 
 //=====================================================================
@@ -295,6 +335,18 @@ void Class::op_toString( VMContext* ctx, void *self ) const
    describe( self, *descr );
    ctx->stackResult(1, descr->garbage());
 }
+
+
+void Class::op_first( VMContext* ctx, void* ) const
+{
+   ctx->topData().setBreak();
+}
+
+void Class::op_next( VMContext* ctx, void* ) const
+{
+   ctx->topData().setBreak();
+}
+
 
 }
 

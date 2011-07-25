@@ -26,6 +26,7 @@ namespace Falcon {
 class Stream;
 class Item;
 class Expression;
+class VMContext;
 
 /** Base symbol class.
  * A Falcon Symbol is a name indicating a value, possibly (usually) bound
@@ -90,13 +91,28 @@ public:
    void declaredAt( int32 l ) { m_declaredAt = l; }
 
    /** Assign a value to this symbol.
-    \param vm the VM where the symbol lives.
+    \param ctx the VM context where the symbol lives.
     \param value The value to be stored.
     This stores the value in the underlying item.
     Symbols not yet "living" in a virtual machine or in a readied module
     are not assignable; an exception would be raised in that case.
     */
-   virtual void assign( VMachine* vm, const Item& value ) const = 0;
+   virtual void assign( VMContext* ctx, const Item& value ) const = 0;
+
+   /** Assign a value to this symbol.
+    \param value The value to be stored.
+    \param ctx the VM context where the symbol lives.
+    \param Return true if the symbol can be retreived; false if the symbol
+    needs to live in context but the current context is not given.
+
+    Gets the value associated with this symbol.
+    
+    \note This method is used during the link phase or when querying an
+    exported symbol for the value that is being exported. The VM at run time
+    uses a more sophisticated approach that obviates the need to call this
+    virtual method. However, the result should be coherent.
+    */
+   virtual bool retrieve( Item& value, VMContext* ctx=0 ) const = 0;
 
 protected:
    Symbol( type_t t, const String& name );

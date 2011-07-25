@@ -53,18 +53,23 @@ UnknownSymbol::~UnknownSymbol()
    // nothing to do
 }
 
-void UnknownSymbol::assign( VMachine*, const Item&  ) const
+void UnknownSymbol::assign( VMContext*, const Item&  ) const
 {
    throw new CodeError( ErrorParam( e_assign_sym, __LINE__, __FILE__ ).extra(name()) );
 }
 
+bool UnknownSymbol::retrieve( Item&, VMContext* ) const
+{
+   throw new CodeError( ErrorParam( e_assign_sym, __LINE__, __FILE__ ).extra(name()) );
+   //return true;
+}
 
 void UnknownSymbol::apply_( const PStep* s, VMContext* ctx )
 {
    const ExprSymbol* self = static_cast<const ExprSymbol*>(s);
-   Symbol* sym = self->symbol();
    
 #ifndef NDEBUG
+   Symbol* sym = self->symbol();
    String name = "/* unknown */" + sym->name();
 #endif
 

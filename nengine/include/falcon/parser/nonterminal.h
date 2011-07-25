@@ -66,7 +66,7 @@ public:
    /** Callback for parsing error routine.
     \see setErrorHandler
     */
-   typedef void (*ErrorHandler)(const NonTerminal* nt, Parser* p);
+   typedef bool (*ErrorHandler)(const NonTerminal& nt, Parser& p);
 
    /** Sets the error handler for this routine.
    \param hr An handler routine that is invoked on syntax error.
@@ -99,6 +99,7 @@ public:
    inline NonTerminal& operator << ( ErrorHandler hr ) { return setErrorHandler(hr); }
 
    bool findPaths( Parser& p ) const;
+   void addFirstRule( Parser& p ) const;
    
    int maxArity() const { return m_maxArity; }
    bool isGreedy() const { return m_bGreedy; }

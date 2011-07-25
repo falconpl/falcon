@@ -18,6 +18,8 @@
 
 #include <falcon/expression.h>
 
+#include "pseudofunc.h"
+
 namespace Falcon {
 
 class FALCON_DYN_CLASS ExprCall: public Expression
@@ -71,6 +73,25 @@ protected:
 private:
    class Private;
    Private* _p;
+
+   // PStep used to push a pseudofunction when used in function mode.
+   class FALCON_DYN_CLASS PStepPushFunc: public PStep
+   {
+   public:
+      PStepPushFunc( PseudoFunction* func ):
+         m_func( func )
+      {
+         apply = apply_;
+      }
+
+      virtual void describe( String& txt ) const;
+      static void apply_( const PStep* ps, VMContext* ctx );
+
+   private:
+      PseudoFunction* m_func;
+   };
+
+   PStepPushFunc m_psPushFunc;
 
    static void apply_( const PStep*, VMContext* ctx );
    static void apply_dummy_( const PStep*, VMContext* ctx );

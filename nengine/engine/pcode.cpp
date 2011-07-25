@@ -44,21 +44,22 @@ void PCode::describe( String& res ) const
 
 void PCode::apply_( const PStep* self, VMContext* ctx )
 {
-   TRACE3( "PCode apply: %p (%s)", self, self->describe().c_ize() );
+   TRACE2( "PCode apply: %p (%s)", self, self->describe().c_ize() );
 
    const StepList& steps = static_cast<const PCode*>(self)->m_steps;
-   CodeFrame& cf = ctx->currentCode();
+   register CodeFrame& cf = ctx->currentCode();
 
    // TODO Check if all this loops are really performance wise
-   int depth = ctx->codeDepth();
    int size = steps.size();
+
+   TRACE2( "PCode apply: step %d/%d", cf.m_seqId, size );
 
    while ( cf.m_seqId < size )
    {
       const PStep* pstep = steps[ cf.m_seqId++ ];
       pstep->apply( pstep, ctx );
 
-      if( ctx->codeDepth() != depth )
+      if( &ctx->currentCode() != &cf )
       {
          return;
       }
@@ -66,9 +67,6 @@ void PCode::apply_( const PStep* self, VMContext* ctx )
 
    // when we're done...
    ctx->popCode();
-   // save the result in the A register
-   ctx->regA() = ctx->topData();
-   ctx->popData();
 }
 
 

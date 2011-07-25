@@ -33,7 +33,7 @@ SynFunc::~SynFunc()
 {
 }
 
-void SynFunc::apply( VMContext* ctx, int32 nparams )
+void SynFunc::invoke( VMContext* ctx, int32 nparams )
 {
    // Used by the VM to insert this opcode if needed to exit SynFuncs.
    static StmtReturn s_a_return;

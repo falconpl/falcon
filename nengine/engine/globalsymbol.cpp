@@ -23,14 +23,12 @@ namespace Falcon {
 
 GlobalSymbol::GlobalSymbol( const String& name, const Item& item ):
       Symbol( t_global_symbol, name ),
-      m_item( item ),
-      m_nRefCount(1)
+      m_item( item )
 {
 }
 
 GlobalSymbol::GlobalSymbol( const String& name ):
-      Symbol( t_global_symbol, name ),
-      m_nRefCount(1)
+      Symbol( t_global_symbol, name )
 {
 }
 
@@ -38,8 +36,7 @@ GlobalSymbol::GlobalSymbol( const String& name ):
 
 GlobalSymbol::GlobalSymbol( const GlobalSymbol& other ):
       Symbol( other ),
-      m_item( other.m_item ),
-      m_nRefCount(1)
+      m_item( other.m_item )
 {
 }
 
@@ -47,9 +44,15 @@ GlobalSymbol::GlobalSymbol( const GlobalSymbol& other ):
 GlobalSymbol::~GlobalSymbol()
 {}
 
-void GlobalSymbol::assign( VMachine*, const Item& value ) const
+void GlobalSymbol::assign( VMContext*, const Item& value ) const
 {
    const_cast<Item*>(&m_item)->assign( value );
+}
+
+bool GlobalSymbol::retrieve( Item& value, VMContext* ) const
+{
+   value = m_item;
+   return true;
 }
 
 void GlobalSymbol::apply_( const PStep* ps, VMContext* ctx )

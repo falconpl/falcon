@@ -21,6 +21,7 @@
 #include <falcon/pseudofunc.h>
 #include <falcon/module.h>
 #include <falcon/class.h>
+#include <falcon/codeerror.h>
 
 #include <map>
 
@@ -64,7 +65,8 @@ BOM::BOM():
    hm["typeId_"] = BOMH::typeId_;
    
    hm["compare"] = BOMH::compare;
-   hm["baseClass"] = BOMH::derivedFrom;
+   hm["derivedFrom"] = BOMH::derivedFrom;
+
 }
 
 BOM::~BOM()
@@ -151,16 +153,25 @@ void baseClass_(VMContext*, const Class*, void*)
 //======================================================
 // Clone
 
-void clone(VMContext*, const Class*, void*)
+void clone(VMContext *ctx, const Class*, void*)
 {
-   fassert2( false, "Not implemented" );
+   static Function* cloneFunc = Engine::instance()->getPseudoFunction("clone");
+   fassert( cloneFunc != 0 );
 
+   Item &value = ctx->topData();
+   value.methodize(cloneFunc);
 }
 
 
-void clone_(VMContext*, const Class*, void*)
+void clone_(VMContext* ctx, const Class* cls, void* data)
 {
-   fassert2( false, "Not implemented" );
+   void* clone = cls->clone(data);
+   if( clone == 0 )
+   {
+      throw new CodeError( ErrorParam(e_uncloneable, __LINE__, SRC ) );
+   }
+
+   ctx->topData().setUser( cls, clone, true );
 
 }
 

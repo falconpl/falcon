@@ -164,7 +164,7 @@ void ExprMultiUnpack::apply_( const PStep* ps, VMContext* ctx )
    Item* topStack = &ctx->topData() - pcount+1;
    for( ; i < pcount; ++i, ++topStack )
    {
-      syms[i]->assign( ctx->vm(), *topStack );
+      syms[i]->assign( ctx, *topStack );
    }
    
    if ( self->isTop() )

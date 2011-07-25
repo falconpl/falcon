@@ -34,10 +34,10 @@ public:
    DynSymbol( const DynSymbol& other );
    virtual ~DynSymbol();
 
-   DynSymbol* clone() const { return new DynSymbol(*this); }
+   virtual DynSymbol* clone() const { return new DynSymbol(*this); }
 
-   void assign( VMachine*, const Item& value ) const;
-   
+   virtual void assign( VMContext*, const Item& value ) const;
+   virtual bool retrieve( Item& value, VMContext* ctx ) const;
    static void apply_( const PStep* self, VMContext* ctx );
    virtual Expression* makeExpression();
 

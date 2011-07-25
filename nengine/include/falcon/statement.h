@@ -42,17 +42,21 @@ public:
       return_t,
       rule_t,
       cut_t,
+      init_t,
       custom_t
    } statement_t ;
 
    Statement( statement_t type, int32 line=0, int32 chr=0 ):
       PStep( line, chr ),
       m_step0(0), m_step1(0), m_step2(0), m_step3(0),
+      m_discardable(false),
       m_type(type)
    {}
 
    inline virtual ~Statement() {}
    inline statement_t type() const { return m_type; }
+   /** Subclasses can set this to true to be discareded during parsing.*/
+   inline bool discardable() const { return m_discardable; }
 
 protected:
    /** Steps being prepared by the statement */
@@ -61,7 +65,8 @@ protected:
    PStep* m_step2;
    PStep* m_step3;
 
-
+   bool m_discardable;
+   
    inline void prepare( VMContext* ctx ) const
    {
       if ( m_step0 )
@@ -154,6 +159,18 @@ public:
     \return The held expression, or 0 if it was not set.
     */
    Expression* expr() const { return m_expr; }
+
+   /** Removes the expression stored in this AutoExpression.
+    \return The held expression, or 0 if it was not set.
+
+    This method can be used when the parser generated an autoexpression
+    that is actually used elsewhere.
+    */
+   Expression* detachExpr() {
+      Expression* expr = m_expr;
+      m_expr = 0;
+      return expr;
+   }
    
 private:
    // apply is the same as PCODE, but it also checks ND requests.
@@ -182,6 +199,8 @@ public:
    inline String describe() const { return PStep::describe(); }
    static void apply_( const PStep*, VMContext* ctx );
 
+   Expression* expression() const { return m_expr; }
+   void expression( Expression* expr );
 private:
    Expression* m_expr;
    PCode m_pcExpr;

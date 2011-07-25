@@ -37,10 +37,14 @@ VMContext::VMContext( VMachine* vm ):
    m_maxCall = m_callStack + INITIAL_STACK_ALLOC;
 
    m_dataStack = (Item*) malloc(INITIAL_STACK_ALLOC*sizeof(Item));
-   m_topData = m_dataStack-1;
+   // the data stack can NEVER be empty. -- an empty data stack is an error.
+   m_topData = m_dataStack;
    m_maxData = m_dataStack + INITIAL_STACK_ALLOC;
 
    m_deepStep = 0;
+
+   // prepare a low-limit VM terminator request.
+   pushReturn();
 }
 
 
@@ -185,28 +189,10 @@ void VMContext::commitRule()
 // Higher level management
 //
 
-void VMContext::ifDeep( const PStep* postcall )
+
+bool VMContext::wentDeep( const PStep* ps )
 {
-   fassert( m_deepStep == 0 );
-   m_deepStep = postcall;
-}
-
-
-void VMContext::goingDeep()
-{
-   if( m_deepStep )
-   {
-      pushCode( m_deepStep );
-      m_deepStep = 0;
-   }
-}
-
-
-bool VMContext::wentDeep()
-{
-   bool bWent = m_deepStep == 0;
-   m_deepStep = 0;
-   return bWent;
+   return m_topCode->m_step != ps;
 }
 
 
@@ -217,6 +203,7 @@ void VMContext::pushQuit()
       QuitStep() { apply = apply_; }
       virtual ~QuitStep() {}
 
+      inline virtual void describe( String& s ) const { s= "#Quit"; }
    private:
       static void apply_( const PStep*, VMContext *ctx )
       {
@@ -230,6 +217,27 @@ void VMContext::pushQuit()
 }
 
 
+void VMContext::pushComplete()
+{
+   class CompleteStep: public PStep {
+   public:
+      CompleteStep() { apply = apply_; }
+      virtual ~CompleteStep() {}
+
+      inline virtual void describe( String& s ) const { s= "#Complete"; }
+   private:
+      static void apply_( const PStep*, VMContext *ctx )
+      {
+         ctx->popCode();
+         ctx->vm()->quit();
+      }
+   };
+
+   static CompleteStep qs;
+   pushCode( &qs );
+}
+
+
 void VMContext::pushReturn()
 {
    class Step: public PStep {
@@ -237,6 +245,7 @@ void VMContext::pushReturn()
       Step() { apply = apply_; }
       virtual ~Step() {}
 
+      inline virtual void describe( String& s ) const { s= "#Return"; }
    private:
       static void apply_( const PStep*, VMContext *ctx )
       {
@@ -257,6 +266,7 @@ void VMContext::pushBreak()
       Step() { apply = apply_; }
       virtual ~Step() {}
 
+      inline virtual void describe( String& s ) const { s= "#Break"; }
    private:
       static void apply_( const PStep*, VMContext *ctx )
       {
@@ -270,44 +280,35 @@ void VMContext::pushBreak()
 }
 
 
-void VMContext::call( Function* function, int nparams, const Item& self, bool isExpr )
+void VMContext::call( Function* function, int nparams, const Item& self )
 {
-   TRACE( "Entering function: %s", function->locate().c_ize() );
+   TRACE( "%s -- call frame code:%p, data:%p, call:%p",
+         function->locate().c_ize(),m_topCode, m_topData, m_topCall  );
 
-   TRACE( "-- call frame code:%p, data:%p, call:%p", m_topCode, m_topData, m_topCall  );
-
-   CallFrame* topCall = makeCallFrame( function, nparams, self, isExpr );
+   makeCallFrame( function, nparams, self );
    TRACE1( "-- codebase:%d, stackBase:%d, self: %s ", \
-         topCall->m_codeBase, topCall->m_stackBase, self.isNil() ? "nil" : "value"  );
-
-   topCall->m_bExpression = isExpr;
-   // prepare for a return that won't touch regA
-   m_regA.setNil();
+         m_topCall->m_codeBase, m_topCall->m_stackBase, self.isNil() ? "nil" : "value"  );
 
    // do the call
-   function->apply( this, nparams );
+   function->invoke( this, nparams );
 }
 
 
-void VMContext::call( Function* function, int nparams, bool isExpr )
+void VMContext::call( Function* function, int nparams )
 {
    TRACE( "Entering function: %s", function->locate().c_ize() );
-
    TRACE( "-- call frame code:%p, data:%p, call:%p", m_topCode, m_topData, m_topCall  );
 
-   CallFrame* topCall = makeCallFrame( function, nparams, isExpr );
+   makeCallFrame( function, nparams );
    TRACE1( "-- codebase:%d, stackBase:%d ", \
-         topCall->m_codeBase, topCall->m_stackBase );
-
-   // prepare for a return that won't touch regA
-   m_regA.setNil();
+         m_topCall->m_codeBase, m_topCall->m_stackBase );
 
    // do the call
-   function->apply( this, nparams );
+   function->invoke( this, nparams );
 }
 
 
-void VMContext::returnFrame()
+void VMContext::returnFrame( const Item& value )
 {
    register CallFrame* topCall = m_topCall;
 
@@ -325,23 +326,10 @@ void VMContext::returnFrame()
    // Use initBase as stackBase may have been moved -- but keep 1 parameter ...
 
    m_topData = m_dataStack + topCall->m_initBase-1;
-   PARANOID( "Data stack underflow at return", (m_topData >= m_dataStack-1) );
+   // notice: data stack can never be empty, an empty data stack is an errro.
+   PARANOID( "Data stack underflow at return", (m_topData >= m_dataStack) );
 
-   // ... so that we can fill the stack with the function result.
-   // -- in expressions we always have at least 1 element, that is the function item.
-   if( topCall->m_bExpression )
-   {
-      if ( topCall->m_bInit )
-      {
-         MESSAGE1( "-- Adding self register to stack");
-         *m_topData = topCall->m_self;
-      }
-      else
-      {
-         MESSAGE1( "-- Adding A register to stack");
-         *m_topData = m_regA;
-      }
-   }
+   *m_topData = value;
 
    // Return.
    if( m_topCall-- ==  m_callStack )

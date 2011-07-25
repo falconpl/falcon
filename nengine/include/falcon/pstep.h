@@ -83,6 +83,10 @@ public:
 
    const SourceRef& sr() const { return m_sr; }
 
+   /** Sets or changes the declaration position.
+    \param l line at which this PStep was created.
+    \param c character at which this PStep was created.
+    */
    PStep& decl( int line, int chr ) {
       m_sr.line(line);
       m_sr.chr(chr);

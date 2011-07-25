@@ -17,7 +17,7 @@
 #define SRC "engine/sp/parser_rule.cpp"
 
 #include <falcon/setup.h>
-
+#include <falcon/error.h>
 #include <falcon/statement.h>
 #include <falcon/stmtrule.h>
 

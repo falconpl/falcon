@@ -16,6 +16,9 @@
 #undef SRC
 #define SRC "engine/sp/parser_expr.cpp"
 
+#include <falcon/setup.h>
+#include <falcon/error.h>
+
 #include <falcon/sp/sourceparser.h>
 #include <falcon/sp/parsercontext.h>
 #include <falcon/sp/parser_expr.h>
@@ -25,12 +28,26 @@
 #include <falcon/parser/parser.h>
 
 #include <falcon/expression.h>
+#include <falcon/exprvalue.h>
 #include <falcon/exprcompare.h>
 #include <falcon/exprmath.h>
 
 namespace Falcon {
 
 using namespace Parsing;
+
+bool expr_errhand(const NonTerminal&, Parser& p)
+{
+   //SourceParser* sp = static_cast<SourceParser*>(p);
+   TokenInstance* ti = p.getNextToken();
+   TokenInstance* ti2 = p.getLastToken();
+   p.addError( e_syn_expr, p.currentSource(), ti2->line(), ti2->chr(), ti->line() );
+
+   // remove the whole expression.
+   p.resetNextToken();
+   p.simplify( p.availTokens() );
+   return true;
+}
 
 //=======================================================
 // Standard binary expressions

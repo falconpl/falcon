@@ -23,7 +23,7 @@
    #ifdef FLC_MAKE_ERROR_MESSAGE_SELECTOR
       #define FAL_ERRORDECL( errid, code, str )       case code: return str;
    #else
-      #define FAL_ERRORDECL( errid, code, str )
+      #error "Cannot include <falcon/error_messages.h> directly. Please include <falcon/error.h>"
    #endif
 
 #endif
@@ -41,7 +41,7 @@ FAL_ERRORDECL( e_div_by_zero, 5, "Division by zero" );
 FAL_ERRORDECL( e_mod_by_zero, 6, "Module by zero" );
 FAL_ERRORDECL( e_invalid_op, 7, "Invalid operator" );
 FAL_ERRORDECL( e_assign_const, 8, "Assignment to a constant" );
-FAL_ERRORDECL( e_assign_sym, 9, "Assignment to a non assignable symbol" );
+FAL_ERRORDECL( e_assign_sym, 9, "Assignment to a non assignable expression" );
 FAL_ERRORDECL( e_static_call, 10, "Non-static method called statically" );
 FAL_ERRORDECL( e_global_notin_func, 11, "Global statement not inside a function" );
 FAL_ERRORDECL( e_already_def, 12, "Symbol already defined" );
@@ -156,6 +156,7 @@ FAL_ERRORDECL( e_syn_loop, 149, "Syntax error in loop statement" );
 FAL_ERRORDECL( e_syn_end, 150, "Misplaced 'end' keyword" );
 FAL_ERRORDECL( e_compile, 151, "Dynamic compilation failed -- details in suberrors" );
 FAL_ERRORDECL( e_syn_unpack, 152, "Unpack-array assignment declaration error" );
+FAL_ERRORDECL( e_syn_expr, 153, "Error in expression syntax" );
 
 FAL_ERRORDECL( e_cmp_unprep, 161, "Compiler not prepared (still needs to be fed with a module)" );
 FAL_ERRORDECL( e_not_implemented, 162, "Feature not implemented/not available on this instance" );

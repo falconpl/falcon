@@ -51,6 +51,7 @@ add_library(falcon_engine SHARED
   core_module/print.cpp
   core_module/tostring.cpp
   core_module/typeid.cpp
+  core_module/clone.cpp
   core_module/coremodule.cpp
 
   sp/parser_arraydecl.cpp
@@ -66,6 +67,7 @@ add_library(falcon_engine SHARED
   sp/parser_if.cpp
   sp/parser_index.cpp
   sp/parser_list.cpp
+  sp/parser_proto.cpp
   sp/parser_rule.cpp
   sp/parser_while.cpp
   sp/parsercontext.cpp
@@ -82,7 +84,6 @@ add_library(falcon_engine SHARED
   class.cpp
   classarray.cpp
   classbool.cpp
-  classclass.cpp
   classdict.cpp
   classfunction.cpp
   classint.cpp
@@ -117,23 +118,32 @@ add_library(falcon_engine SHARED
   expression.cpp
   exprfactory.cpp
   exprmath.cpp
+  exprproto.cpp
   exprsym.cpp
   exprvalue.cpp
   filestat.cpp
+  flexyclass.cpp
+  flexydict.cpp
   function.cpp
   genericerror.cpp
   globalsymbol.cpp
+  hyperclass.cpp
   inheritance.cpp
   intcompiler.cpp
   item.cpp
   item_util.cpp
   itemarray.cpp
+  itemdict.cpp
   interruptederror.cpp
   ioerror.cpp
   localsymbol.cpp
+  metaclass.cpp
   module.cpp
+  multiclass.cpp
   operanderror.cpp
+  overridableclass.cpp
   paramerror.cpp
+  prototypeclass.cpp
   pseudofunc.cpp
   path.cpp
   pcode.cpp
@@ -142,6 +152,7 @@ add_library(falcon_engine SHARED
   rulesyntree.cpp
   sourceref.cpp
   statement.cpp
+  stmt_init.cpp
   stmtrule.cpp
   string.cpp
   stringstream.cpp

@@ -23,6 +23,8 @@
 #include <falcon/setup.h>
 #include <falcon/string.h>
 #include <falcon/enumerator.h>
+#include <falcon/itemid.h>
+
 
 namespace Falcon {
 
@@ -31,6 +33,7 @@ class Item;
 class DataReader;
 class DataWriter;
 class Module;
+class Inheritance;
 
 /** Representation of classes, that is item types.
 
@@ -134,30 +137,75 @@ public:
     Strings, Arrays, Dictionaries, Ranges and even Integer or NIL are
     all item types that have a class offering a TID.
     */
-   Class( const String& name, int64 tid );
-   
+   Class( const String& name, int64 tid );   
    virtual ~Class();
 
    const static int64 baseUserID = 100;
 
    int64 typeID() const { return m_typeID; }
    const String& name() const { return m_name; }
+   /** Renames the class
+    \param name The new name of the class.
+    \note Will throw an assert if alredy stored in a module.
+    */
+   void name( const String& n ) { m_name = n; }
+
+   /** Return true if this class can safely cast to a FalconClass class.
+    \return true if this is FalconClass.
+
+    Falcon classes have special significance to the engine, as they
+    implement the Falcon OOP model, and can be used to build inheritance directly
+    at syntactic level.
+
+    This flag is true for FalconClass instances and (eventually) derived classes.
+    */
+   bool isFalconClass() const { return m_bIsfalconClass; }
+
+   /** Flag to check for the metaclass.
+    The MetaClass is a special class that handle other classes.
+    This resolves in typeID() == FLC_CLASS_ID_CLASS
+    */
+   bool isMetaClass() const { return typeID() == FLC_CLASS_ID_CLASS; }
+
+   /** Return true if this class can safely cast to a Prototype class.
+    \return true if this is a Prototype.
+
+    Prototype classes have special significance to the engine.
+
+    This flag is true for Prototype instances and (eventually) derived classes.
+    */
+   bool isPrototype() const { return m_bIsPrototype; }
+
+   /** Gets a direct parent class of this class by name.
+    \param name The name of the direct parent class.
+    \return A class if the name represents a parent class, 0 otherwise.
+    If the given class is among the parent list, this method returns the parent.
+
+    The default behavior is that of always returning 0.
+    */
+   virtual Class* getParent( const String& name ) const;
 
    /** Sets the module of this class.
     \param m The module where this class resides.
     */
-   void module( Module* m ) { m_module = m; }
+   void module( Module* m );
    
    /** Returns the module of this class.
     \return The module where this class resides, or 0 if the class is module-less.
     */
    Module* module() const { return m_module; }
 
+   /** Removes the link between the class and its module.
+    This is used by static modules when explicitly destroying their contents.
+    */
+   void detachModule() { m_module = 0; }
+
+
    //=========================================
    // Instance management
 
    /** Disposes an instance.
-
+    \note Actually, the disposal might be a dereference if necessary.
     */
    virtual void dispose( void* self ) const = 0;
 
@@ -247,9 +295,9 @@ public:
    virtual bool gcCheckMyself( uint32 mark );
 
    /** Callback receiving all the properties in this class. */
-   typedef Enumerator<String> PropertyEnumerator;
+   typedef Enumerator<String> PropertyEnumerator;   
 
-   /** List the properties in this class.
+   /** Emnumerate the properties in this class.
      @param self The object for which the properties have been requested.
      @param cb A callback function receiving one property at a time.
 
@@ -259,6 +307,22 @@ public:
     */
    virtual void enumerateProperties( void* self, PropertyEnumerator& cb ) const;
    
+   /** Callback receiving all the properties with their values in this class. */
+   class PVEnumerator
+   {
+   public:
+      virtual void operator()( const String& property, Item& value ) = 0;
+   };
+
+   /** Emnumerate the properties in this class with their associated values.
+     @param self The object for which the properties have been requested.
+     @param cb A callback function receiving one property at a time.
+
+     @note This base class implementation does nothing.
+    */
+   virtual void enumeratePV( void* self, PVEnumerator& cb ) const;
+
+
    /** Return true if the class provides the given property.
       @param self The object for which the properties have been requested.
 
@@ -292,6 +356,21 @@ public:
     renderings of items in a container.
     */
    virtual void describe( void* instance, String& target, int depth = 3, int maxlen = 60 ) const;
+
+   /** Called back by an inheritance when it gets resolved.
+    \param inh The inheritance that has been just resolved.
+
+    When a foreign inheritance of a class gets resolved during the link
+    phase, the parent need to know about this fact to prepare itself.
+
+    The inheritance determines if the owner is a falcon class, and in case
+    it is, it calls back this method.
+
+    The default behavior of Class is empty. This is commonly used only in
+    FalconClass.
+    */
+   virtual void onInheritanceResolved( Inheritance* inh );
+
 
    //=========================================================
    // Operators.
@@ -594,11 +673,9 @@ public:
    virtual void op_call( VMContext* ctx, int32 paramCount, void* self ) const;
 
 
-   /** Implents textification operator for the Virtual Macine.
+   /** Implements textification operator for the Virtual Macine.
     \param vm the virtual machine that will receive the result.
-    \param self the instance (or 0 on flat items)
-     \param self the instance (or 0 on flat items)
-
+    \param self the instance.
     \note The operand is unary -- requires OpToken with 1 parameter.
 
     This method obtains immediately a textual value for the instance
@@ -614,9 +691,62 @@ public:
     */
    virtual void op_toString( VMContext* ctx, void* self ) const;
 
-   
+   /** Prepares iteration.
+    \param vm the virtual machine that will receive the result.
+    \param self the instance (or 0 on flat items)
+    \note The operand is unary -- requires OpToken with 1 parameter.
+
+    This method call is generated by the virtual machine when it
+    requires the start of an iteration on the contents this item.
+
+    The sublcasses reimplementing this method should prepare a value
+    that sould be stored somewhere in the stack or in the item itself.
+    It is advisable to make the operator re-entrant, so that it can be
+    called multiple times and interleaved with op_next even from the same
+    thread (a single thread might operate on different VMContext).
+    If this is not possible (or not easy), a per-VMContext iterator might
+    be used as well (but that may break in case of call/cc contexts).
+
+    The ideal behavior would that of pushing some extra local variable in the
+    local stack and use those as bases for the iteration process -- it is
+    guaranteed that op_next will be called at the same stack level of op_first,
+    unless the stack is corrupted.
+
+    However, the ability of supporting multiple iterations on the same
+    item is not required by the virtual machine and can be forfaited as
+    long as the user is aware of this fact.
+
+    The op_frist should leave an item from the collection on top of the stack.
+    In case the collection is not iterable, it should either raise an exception
+    or leave a Item with the break bit set (that's the default behavior).
+    */
+   virtual void op_first( VMContext* ctx, void* self ) const;
+
+   /** Continues iteration.
+    \param vm the virtual machine that will receive the result.
+    \param self the instance (or 0 on flat items)
+    \note The operand is unary -- requires OpToken with 1 parameter.
+
+    This method call is generated by the virtual machine when it
+    requires the start of an iteration on the contents this item.
+
+    This is always called after a sccessful op_first to get the nth (with n>1)
+    item in the collection.
+
+    If the class is able to know that, it should post an item with the last
+    bit set when the last nth item of a n-sized collection is retrieved. When
+    the collection is exausted, it should post a nil item with the break bit
+    set.
+    */
+   virtual void op_next( VMContext* ctx, void* self ) const;
 
 protected:
+   bool m_bIsfalconClass;
+   bool m_bIsPrototype;
+   
+   /** This flags are at disposal of subclasses for special purpose (i.e. cast conversions). */
+   int32 m_userFlags;
+
    String m_name;
    int64 m_typeID;
 

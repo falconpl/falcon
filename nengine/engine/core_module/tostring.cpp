@@ -17,8 +17,8 @@
 #include <falcon/vm.h>
 #include <falcon/vmcontext.h>
 #include <falcon/itemid.h>
-
-#include "falcon/cm/tostring.h"
+#include <falcon/error.h>
+#include <falcon/cm/tostring.h>
 
 namespace Falcon {
 namespace Ext {
@@ -36,27 +36,21 @@ ToString::~ToString()
 {
 }
 
-void ToString::apply( VMContext* ctx, int32 )
+void ToString::invoke( VMContext* ctx, int32 )
 {
-   Item *elem, *format;
+   Item *elem;
    
    if ( ctx->isMethodic() )
    {
       elem = &ctx->self();
-      format = ctx->param( 0 );
    }
    else
    {
       elem = ctx->param( 0 );
-      format = ctx->param( 1 );
 
       if ( elem == 0 )
       {
          throw paramError();
-      }
-      else
-      {
-         
       }
    }
 
@@ -64,22 +58,21 @@ void ToString::apply( VMContext* ctx, int32 )
    void* data;
    elem->forceClassInst( cls, data );
 
-   ctx->ifDeep( &m_next );
+   ctx->pushCode( &m_next );
    ctx->pushData( *elem );
    cls->op_toString( ctx, data );
-   if( ctx->wentDeep() )
+   if( ctx->wentDeep( &m_next ) )
    {
       return;
    }
-
-   ctx->retval( ctx->topData() );
-   ctx->returnFrame();
+   ctx->popCode();
+   
+   ctx->returnFrame(ctx->topData());
 }
 
 void ToString::Next::apply_( const PStep*, VMContext* ctx  )
 {
-   ctx->retval( ctx->topData() );
-   ctx->returnFrame();
+   ctx->returnFrame(ctx->topData());
 }
 
 }

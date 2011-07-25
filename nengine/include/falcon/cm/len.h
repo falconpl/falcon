@@ -51,7 +51,7 @@ class FALCON_DYN_CLASS Len: public PseudoFunction
 public:
    Len();
    virtual ~Len();
-   virtual void apply( VMContext* vm, int32 nParams );
+   virtual void invoke( VMContext* vm, int32 nParams );
 
 private:
    

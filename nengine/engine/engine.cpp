@@ -39,6 +39,7 @@
 #include <falcon/cm/len.h>
 #include <falcon/cm/minmax.h>
 #include <falcon/cm/typeid.h>
+#include <falcon/cm/clone.h>
 
 #include <falcon/bom.h>
 
@@ -55,7 +56,9 @@
 #include <falcon/classstring.h>
 #include <falcon/classarray.h>
 #include <falcon/classdict.h>
-#include <falcon/classclass.h>
+#include <falcon/classnumeric.h>
+#include <falcon/prototypeclass.h>
+#include <falcon/metaclass.h>
 
 //--- error headers ---
 #include <falcon/accesserror.h>
@@ -73,7 +76,6 @@
 #include <falcon/paranoid.h>
 #include <map>
 
-#include "falcon/classnumeric.h"
 
 namespace Falcon
 {
@@ -278,7 +280,8 @@ Engine::Engine()
    m_stringClass = new ClassString;
    m_arrayClass = new ClassArray;
    m_dictClass = new ClassDict;
-   m_classClass = new ClassClass;
+   m_protoClass = new PrototypeClass;
+   m_classClass = new MetaClass;
 
    // Initialization of the class vector.
    m_classes[FLC_ITEM_NIL] = new ClassNil;
@@ -324,6 +327,7 @@ Engine::Engine()
    addPseudoFunction(new Ext::Max);
    addPseudoFunction(new Ext::Min);
    addPseudoFunction(new Ext::TypeId);
+   addPseudoFunction(new Ext::Clone);
 
    //=====================================
    // The Core Module
@@ -344,6 +348,7 @@ Engine::~Engine()
    delete m_stringClass;
    delete m_arrayClass;
    delete m_dictClass;
+   delete m_protoClass;
    delete m_classClass;
    delete m_functionClass;
 
@@ -562,6 +567,12 @@ Class* Engine::dictClass() const
 {
    fassert( m_instance != 0 );
    return m_instance->m_dictClass;
+}
+
+Class* Engine::protoClass() const
+{
+   fassert( m_instance != 0 );
+   return m_instance->m_protoClass;
 }
 
 Class* Engine::classClass() const

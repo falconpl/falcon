@@ -17,6 +17,7 @@
 #define SRC "engine/sp/parser_assign.cpp"
 
 #include <falcon/setup.h>
+#include <falcon/error.h>
 
 #include <falcon/sp/sourceparser.h>
 #include <falcon/sp/parsercontext.h>
@@ -35,9 +36,7 @@ namespace Falcon {
 
 using namespace Parsing;
 
-//==========================================================
-// NonTerminal - Expr
-//==========================================================
+// error handler for expr_assing falls under the Expr token error handler
 
 void apply_expr_assign( const Rule&, Parser& p )
 {
@@ -50,8 +49,25 @@ void apply_expr_assign( const Rule&, Parser& p )
    TokenInstance* v2 = p.getNextToken();
 
    Expression* firstPart = static_cast<Expression*>(v1->detachValue());
-   ctx->defineSymbols(firstPart);
 
+   // assignable expressions are only:
+   // -- symbols
+   // -- accessors
+   // -- calls (i.e. if they return a reference).
+   Expression::operator_t type = firstPart->type();
+   if( type != Expression::t_symbol &&
+       type != Expression::t_array_access &&
+       type != Expression::t_obj_access &&
+       type != Expression::t_funcall
+     )
+   {
+      p.addError( e_assign_sym, p.currentSource(), v1->line(), v1->chr(), 0 );
+   }
+   else
+   {
+      ctx->defineSymbols(firstPart);
+   }
+   
    TokenInstance* ti = new TokenInstance(v1->line(), v1->chr(), sp.Expr);
 
    // do not detach, we don't care about the list

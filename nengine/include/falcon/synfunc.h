@@ -56,7 +56,7 @@ public:
    const SynTree& syntree() const { return m_syntree; }
    SynTree& syntree() { return m_syntree; }
 
-   virtual void apply( VMContext* ctx, int32 pCount = 0 );
+   virtual void invoke( VMContext* ctx, int32 pCount = 0 );
    
 protected:
    SynTree m_syntree;

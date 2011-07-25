@@ -89,6 +89,11 @@ public:
       return &m_dataStack[ m_topCall->m_stackBase ];
    }
 
+   inline int paramCount() {
+      fassert( m_topCall >= m_callStack );
+      return m_topCall->m_paramCount;
+   }
+
 
    inline Item* opcodeParams( int count )
    {
@@ -119,7 +124,11 @@ public:
       return &m_dataStack[ n + m_topCall->m_stackBase + m_topCall->m_paramCount ];
    }
 
-   /** Push data on top of the stack */
+   /** Push data on top of the stack.
+    \item data The data that must be pushed in the stack.
+    \note The data pushed is copied by-value in a new stack element, but it is
+          not colored.
+    */
    inline void pushData( const Item& data ) {
       ++m_topData;
       if( m_topData >= m_maxData )
@@ -148,6 +157,21 @@ public:
       }
    }
 
+   /** Add more variables on top of the stack -- without initializing them to nil.
+    \param count Number of variables to be added.
+
+    This is like addLocals, but doesn't nil the newly created variables.
+    */
+   inline void addSpace( size_t count ) {
+      Item* base = m_topData+1;
+      m_topData += count;
+      if( m_topData >= m_maxData )
+      {
+         moreData();
+         base = m_topData - count;
+      }
+   }
+
    /** Top data in the stack
     *
     */
@@ -170,7 +194,8 @@ public:
    /** Removes the last n elements from the stack */
    void popData( size_t size ) {
       m_topData-= size;
-      PARANOID( "Data stack underflow", (m_topData >= m_dataStack -1) );
+      // Notice: an empty data stack is an error.
+      PARANOID( "Data stack underflow", (m_topData >= m_dataStack) );
    }
 
    inline long dataSize() const {
@@ -381,6 +406,24 @@ public:
       m_topCode->m_seqId = 0;
    }
 
+   /** Push some code to be run in the execution stack, but only if not already at top.
+    \param step The step to be pushed.
+    
+    This methods checks if \b step is the PStep at top of the code stack, and
+    if not, it will push it.
+
+    \note The method will crash if called when the code stack is empty.
+
+     */
+   inline void condPushCode( const PStep* step )
+   {
+      fassert( m_topCode >= m_codeStack );
+      if( m_topCode->m_step != step )
+      {
+         pushCode( step );
+      }
+   }
+
    void moreCode();
 
    //=========================================================
@@ -403,10 +446,6 @@ public:
    const Item& regA() const { return m_regA; }
    Item& regA() { return m_regA; }
 
-   /** Sets a value as return value for the current function.
-    */
-   void retval( const Item& v ) { m_regA = v; }
-
    inline long callDepth() const { return (m_topCall - m_callStack) + 1; }
 
    inline CallFrame* addCallFrame()  {
@@ -419,7 +458,7 @@ public:
    }
 
    /** Prepares a new methodic call frame. */
-   inline CallFrame* makeCallFrame( Function* function, int nparams, const Item& self, bool isExpr )
+   inline CallFrame* makeCallFrame( Function* function, int nparams, const Item& self )
    {
       register CallFrame* topCall = addCallFrame();
       topCall->m_function = function;
@@ -429,14 +468,12 @@ public:
       topCall->m_paramCount = nparams;
       topCall->m_self = self;
       topCall->m_bMethodic = true;
-      topCall->m_bExpression = isExpr;
-      topCall->m_bInit = false;
 
       return topCall;
    }
 
    /** Prepares a new non-methodic call frame. */
-   inline CallFrame* makeCallFrame( Function* function, int nparams, bool isExpr )
+   inline CallFrame* makeCallFrame( Function* function, int nparams )
    {
       register CallFrame* topCall = addCallFrame();
       topCall->m_function = function;
@@ -446,7 +483,6 @@ public:
       topCall->m_paramCount = nparams;
       topCall->m_self.setNil();
       topCall->m_bMethodic = false;
-      topCall->m_bExpression = isExpr;
 
       return topCall;
    }
@@ -506,13 +542,24 @@ public:
     \param result The value of the operation result.
     \see Class
 
+    The effect of this function is that of popping \b count items from the
+    stack and then pushing the \b result. If \b count is 0, \b result is just
+    pushed at the end of the stack.
+    
     \note this method may be used also by pseudofunctions and generically
     by any PStep in need to access the top of the stack.
     */
    inline void stackResult( int count, const Item& result )
    {
-      if( count > 1 ) popData( count-1 );
-      topData() = result;
+      if( count > 0 )
+      {
+         popData( count-1 );
+         topData() = result;
+      }
+      else
+      {
+         pushData( result );
+      }
    }
 
       /** Returns the parameter array in the current frame.
@@ -537,59 +584,38 @@ public:
    // Deep call protocol
    //=========================================================
 
-   /** Deep calls operand protocol -- part 1.
-
-    The deep call protocol is used by falcon Function instances or other
-    PStep* operands that are called by the virtual machine, and that may then
-    call the virtual machine again.
-
-    Some functions called by the virtual machine then need to call other functions that
-    may or may not need the VM to perform other calculations.
-
-    If a calculation that involves the Virtual Machine terminates immediately,
-    the result is usually found in VMachine::topData(), and the caller can
-    progress immediately.
-
-    Otherwise, the caller needs to set a callback in the virtual machine so that
-    it will be called back by it after the frame added by the called is
-    entity is complete. Then, the result will be available in regA().
-
-    But, the step should be on top of the code stack before the underluing called
-    element has a chance to prepare its call frame. This means that normally a
-    caller calling an operand that may or may not request a call frame should
-    push its own callback on the code stack blindly, then eventually pop it if
-    the called entity didn't push a new call frame.
-
-    To avoid this on the most common situations where this may be required, a
-    set of three metods are used by the operand implementations and a set of
-    well defined functions known by the engine in the virtual machine.
-
-    The caller sets a (non-destructible) PStep through the ifDeep() method.
-    If the callee wants to add a frame, it calls goingDeep(), which does nothing
-    if the caller didn't need to have a result from the called, but will store the
-    PStep in the code stack otherwise.
-
-    Then, the caller must check if the result is ready in topData() or if the
-    processing must be delayed by calling wentDeep(); that method will also clear
-    the readied PStep.
-
-    To avoid this mechanism to be broken, ifDeep() raises an error if called
-    while another PStep was readied.
-
-    Of course, this mechanism cannot be used across context switches, but its
-    meant for tightly coupled functions.
-    */
-   void ifDeep( const PStep* postcall );
-
-   /** Called by a callee in a possibly deep call pair.
-    @see ifDeep.
-   */
-   void goingDeep();
-
+   
    /** Called by a calling method to know if the called sub-methdod required a deep operation.
     \return true if the sub-method needed to go deep.
+
+    A function that calls some code which might eventually push some other
+    PStep and require virtual machine interaction need to check if this
+    actually happened after it gets in control again.
+
+    To cleanly support this operation, a caller should:
+    # Push its own callback-pstep
+    # Call the code that might push its own psteps
+    # Check if its PStep is still at top code frame. If not, return immediately
+    # When done, pop its PStep
+
+    For instance:
+    \code
+    void SomeClass::op_something( VMContex* ctx, ... )
+    {
+      ...
+       ctx->pushCode( &SomeClass::m_myNextStep );
+       someItem->op_somethingElse( ctx, .... );
+       if ( ctx->wentDeep( &SomeClass::m_myNextStep ) )
+       {
+         return;
+       }
+       ...
+       ctx->popCode();
+    }
+    \endcode
+
     */
-   bool wentDeep();
+   bool wentDeep( const PStep* top );
 
 
    /** Pushes a quit step at current position in the code stack.
@@ -607,8 +633,12 @@ public:
     */
    void pushReturn();
 
+   /** Pushes a "context complete" marker on the stack.
+    @see setComplete
+    */
+   void pushComplete();
 
-   void call( Function* f, int np, bool bExpr = false );
+   void call( Function* f, int np );
 
    /** Prepares the VM to execute a function (actually, a method).
 
@@ -620,10 +650,16 @@ public:
     @param self The item on which this method is invoked. Pure functions are
                 considered methods of "nil".
     */
-   virtual void call( Function* function, int np, const Item& self, bool bExpr = false );
+   virtual void call( Function* function, int np, const Item& self );
 
-   /** Returns from the current frame */
-   void returnFrame();
+   /** Returns from the current frame.
+    \param value The value considered as "exit value" of this frame.
+
+    This methods pops che call stack of 1 unit and resets the other stacks
+    to the values described in the call stack. Also, it sets the top data item
+    after stack reset to the "return value" passed as parameter.
+    */
+   void returnFrame( const Item& value = Item() );
 
 protected:
 

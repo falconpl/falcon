@@ -104,6 +104,7 @@ public:
       t_dictDecl,
       t_unpack,
       t_multiunpack,
+      t_prototype,
 
       t_self
    } operator_t;

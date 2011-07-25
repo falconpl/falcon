@@ -58,26 +58,30 @@ ExprValue::ExprValue( const ExprValue& other ):
    }
 }
 
+
 ExprValue::~ExprValue()
 {
-   if (m_lock) m_lock->dispose();
+   if ( m_lock != 0 )
+   {
+      m_lock->dispose();
+   }   
 }
+
 
 void ExprValue::item( const Item& i )
 {
    static Collector* coll = Engine::instance()->collector();
    
-   m_item = i;
-   if (m_lock) m_lock->dispose();
+   if ( m_lock != 0 )
+   {
+      m_lock->dispose();
+   }   
 
+   m_item = i;
    if ( m_item.isGarbaged() )
    {
       m_lock = coll->lock(m_item);
-   }
-   else
-   {
-      m_lock = 0;
-   }
+   }   
 }
 
 

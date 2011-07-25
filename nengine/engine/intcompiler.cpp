@@ -31,9 +31,14 @@
 #include <falcon/genericerror.h>
 #include <falcon/syntaxerror.h>
 #include <falcon/codeerror.h>
-#include <falcon/error_messages.h>
+#include <falcon/error.h>
 
 #include <falcon/expression.h>
+#include <falcon/exprvalue.h>
+#include <falcon/falconclass.h>
+#include <falcon/hyperclass.h>
+
+#include "falcon/inheritance.h"
 
 namespace Falcon {
 
@@ -57,6 +62,7 @@ void IntCompiler::Context::onInputOver()
    //std::cout<< "CALLBACK: Input over"<<std::endl;
 }
 
+
 void IntCompiler::Context::onNewFunc( Function* function, GlobalSymbol* gs )
 {
    m_owner->m_module->addFunction( gs, function );
@@ -65,7 +71,29 @@ void IntCompiler::Context::onNewFunc( Function* function, GlobalSymbol* gs )
 
 void IntCompiler::Context::onNewClass( Class* cls, bool isObject, GlobalSymbol* gs )
 {
-   m_owner->m_module->addClass( gs, cls, isObject );
+   FalconClass* fcls = static_cast<FalconClass*>(cls);
+   // The interactive compiler won't call us here if we have some undefined class,
+   // as such, the construct can fail only if some class is not a falcon class.
+   if( !fcls->construct() )
+   {
+      // did we fail to construct because we're incomplete?
+      if( ! fcls->missingParents() )
+      {
+         // so, we have to generate an hyper class out of our falcon-class
+         // -- the hyperclass is also owning the FalconClass.
+         Class* hyperclass = fcls->hyperConstruct();
+         m_owner->m_module->addClass( gs, hyperclass, isObject );
+      }
+      else
+      {
+         // we already detected the undefined symbol error.
+         delete cls;
+      }
+   }
+   else
+   {
+      m_owner->m_module->addClass( gs, cls, isObject );
+   }
 }
 
 
@@ -153,9 +181,48 @@ bool IntCompiler::Context::onUnknownSymbol( UnknownSymbol* sym )
 }
 
 
-void IntCompiler::Context::onStaticData( Class*, void* )
+Expression* IntCompiler::Context::onStaticData( Class* cls, void* data )
 {
- // TODO
+   m_owner->m_module->addStaticData( cls, data );
+   return new ExprValue( Item( cls, data ) );
+}
+
+
+void IntCompiler::Context::onInheritance( Inheritance* inh  )
+{
+   // In the interactive compiler context, classes must have been already defined...
+   const Symbol* sym = m_owner->m_module->getGlobal(inh->className());
+   if( sym == 0 )
+   {
+      sym = m_owner->m_vm->findExportedSymbol( inh->className() );
+   }
+
+   // found?
+   if( sym != 0 )
+   {
+      Item itm;
+      if( ! sym->retrieve( itm, m_owner->m_vm->currentContext() ) )
+      {
+         //TODO: Add inheritance line number.
+         m_owner->m_sp.addError( e_undef_sym, m_owner->m_sp.currentSource(), 0, 0, 0, inh->className() );
+      }
+      // we want a class. A real class.
+      else if ( ! itm.isUser() || ! itm.asClass()->isMetaClass() )
+      {
+         m_owner->m_sp.addError( e_inv_inherit, m_owner->m_sp.currentSource(), 0, 0, 0, inh->className() );
+      }
+      else
+      {
+         inh->parent( static_cast<Class*>(itm.asInst()) );
+      }
+
+      // ok, now how to break away if we aren't complete?
+   }
+   else
+   {
+      // TODO -- add line
+      m_owner->m_sp.addError( e_undef_sym, m_owner->m_sp.currentSource(), 0, 0, 0, inh->className() );
+   }
 }
 
 //=======================================================================
@@ -174,7 +241,7 @@ IntCompiler::IntCompiler( VMachine* vm ):
    m_module->addFunction(m_main, false);
 
    // we'll never abandon the main frame in the virtual machine
-   m_vm->currentContext()->makeCallFrame( m_main, 0, Item(), false );
+   m_vm->currentContext()->makeCallFrame( m_main, 0, Item() );
 
    // Link the module so that the VM knows about it (and protects its global).
    //TODO: vm->link( m_module );
@@ -287,7 +354,7 @@ void IntCompiler::throwCompileErrors() const
       virtual bool operator()( const Parsing::Parser::ErrorDef& def, bool bLast ){
 
          String sExtra = def.sExtra;
-         if( def.nOpenContext != 0 )
+         if( def.nOpenContext != 0 && def.nLine != def.nOpenContext )
          {
             if( sExtra.size() != 0 )
                sExtra += " -- ";
@@ -296,6 +363,8 @@ void IntCompiler::throwCompileErrors() const
          }
 
          SyntaxError* err = new SyntaxError( ErrorParam( def.nCode, def.nLine )
+               .origin( ErrorParam::e_orig_compiler )
+               .chr( def.nChar )
                .module(def.sUri)
                .extra(sExtra));
 

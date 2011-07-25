@@ -52,6 +52,7 @@ public:
       {
          int nParams = ctx->currentFrame().m_paramCount;
 
+         ctx->condPushCode( this );
          while( count < nParams )
          {
             Class* cls;
@@ -59,19 +60,19 @@ public:
 
             ctx->param(count)->forceClassInst( cls, data );
             ++count;
+            ctx->currentCode().m_seqId = count;
 
-            ctx->ifDeep(this);
             ctx->pushData(*ctx->param(count));
             cls->op_toString( ctx, data );
-            if( ctx->wentDeep() )
-            {
-               ctx->currentCode().m_seqId = count;
+            if( ctx->wentDeep(this) )
+            {               
                return;
             }
             std::cout << ctx->topData().asString()->c_ize();
             ctx->popData();
          }
-
+         ctx->popCode();
+         
          std::cout << std::endl;
          // we're out of the function.
          ctx->returnFrame();
@@ -84,7 +85,7 @@ public:
 
    virtual ~FuncPrintl() {}
 
-   virtual void apply( VMContext* ctx, int32)
+   virtual void invoke( VMContext* ctx, int32)
    {
       m_nextStep.printNext( ctx, 0 );
    }

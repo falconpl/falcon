@@ -17,11 +17,11 @@
 #define SRC "engine/falconclass.cpp"
 
 #include <falcon/falconclass.h>
+#include <falcon/hyperclass.h>
 #include <falcon/falconinstance.h>
 #include <falcon/inheritance.h>
 #include <falcon/item.h>
-
-#include "falcon/synfunc.h"
+#include <falcon/synfunc.h>
 #include <falcon/function.h>
 #include <falcon/datareader.h>
 #include <falcon/datawriter.h>
@@ -30,59 +30,16 @@
 #include <falcon/operanderror.h>
 #include <falcon/optoken.h>
 #include <falcon/vmcontext.h>
-#include <falcon/ov_names.h>
 #include <falcon/expression.h>
-#include <falcon/pcode.h>
-#include <falcon/statement.h>
+#include <falcon/stmt_init.h>
+
+#include <falcon/ov_names.h>
 
 #include <falcon/trace.h>
 
 #include <map>
 #include <list>
 #include <vector>
-
-
-
-#define OVERRIDE_OP_NEG_ID       0
-
-#define OVERRIDE_OP_ADD_ID       1
-#define OVERRIDE_OP_SUB_ID       2
-#define OVERRIDE_OP_MUL_ID       3
-#define OVERRIDE_OP_DIV_ID       4
-#define OVERRIDE_OP_MOD_ID       5
-#define OVERRIDE_OP_POW_ID       6
-
-#define OVERRIDE_OP_AADD_ID      7
-#define OVERRIDE_OP_ASUB_ID      8
-#define OVERRIDE_OP_AMUL_ID      9
-#define OVERRIDE_OP_ADIV_ID      10
-#define OVERRIDE_OP_AMOD_ID      11
-#define OVERRIDE_OP_APOW_ID      12
-
-#define OVERRIDE_OP_INC_ID       13
-#define OVERRIDE_OP_DEC_ID       14
-#define OVERRIDE_OP_INCPOST_ID   15
-#define OVERRIDE_OP_DECPOST_ID   16
-
-#define OVERRIDE_OP_CALL_ID      17
-
-#define OVERRIDE_OP_GETINDEX_ID  18
-#define OVERRIDE_OP_SETINDEX_ID  19
-#define OVERRIDE_OP_GETPROP_ID   20
-#define OVERRIDE_OP_SETPROP_ID   21
-
-#define OVERRIDE_OP_COMPARE_ID   22
-#define OVERRIDE_OP_ISTRUE_ID    23
-#define OVERRIDE_OP_IN_ID        24
-#define OVERRIDE_OP_PROVIDES_ID  25
-#define OVERRIDE_OP_TOSTRING_ID  27
-
-#define OVERRIDE_OP_COUNT_ID  27
-
-
-#if OVERRIDE_OP_COUNT_ID != OVERRIDE_OP_COUNT
-#error "Count of overrides was not the same of override name count"
-#endif
 
 namespace Falcon
 {
@@ -137,7 +94,8 @@ public:
 
 
 
-FalconClass::Property::Property( size_t value, Expression* expr ):
+FalconClass::Property::Property( const String& name, size_t value, Expression* expr ):
+   m_name(name),
    m_type(t_prop),
    m_expr( expr ),
    m_preExpr(0)
@@ -147,34 +105,82 @@ FalconClass::Property::Property( size_t value, Expression* expr ):
    expr->precompile( m_preExpr );
 }
 
+
+FalconClass::Property::Property( const Property& other ):
+   m_type( other.m_type ),
+   m_value( other.m_value ),
+   m_expr( 0 ),
+   m_preExpr( 0 )
+{
+   if( other.m_expr != 0 )
+   {
+      m_expr = other.m_expr->clone();
+      m_preExpr = new PCode;
+      m_expr->precompile( m_preExpr );
+   }
+}
+
 FalconClass::Property::~Property()
 {
    delete m_preExpr;
    delete m_expr;
 }
 
+FalconClass::Property::Property( Inheritance* value ):
+   m_name(value->className()),
+   m_type(t_inh),
+   m_expr(0),
+   m_preExpr(0)
+{
+   m_value.inh = value;
+}
+
+
+FalconClass::Property::Property( Function* value ):
+   m_name( value->name() ),
+   m_type(t_func),
+   m_expr(0),
+   m_preExpr(0)
+{
+   m_value.func = value;
+}
+
+
+FalconClass::Property::Property( FalconState* value ):
+   m_name( "TODO" ),
+   m_type(t_state),
+   m_expr(0),
+   m_preExpr(0)
+{
+   m_value.state = value;
+}
+
+
 //=====================================================================
 // The class
 //
 
 FalconClass::FalconClass( const String& name ):
-   Class("Object" , FLC_CLASS_ID_OBJECT ),
+   OverridableClass("Object" , FLC_CLASS_ID_OBJECT ),
    m_fc_name(name),
    m_init(0),
+   m_constructor(0),
    m_shouldMark(false),
    m_hasInitExpr( false ),
    m_hasInit( false ),
+   m_missingParents( 0 ),
+   m_bPureFalcon( true ),
    m_initExprStep( this ),
    m_initFuncStep( this )
 {
-   _p = new Private;
-   m_overrides = new Function*[OVERRIDE_OP_COUNT_ID];
+   _p = new Private;   
+   m_bIsfalconClass = true;
 }
 
 
 FalconClass::~FalconClass()
 {
-   delete[] m_overrides;
+   delete m_constructor;
    delete _p;
 }
 
@@ -201,7 +207,7 @@ bool FalconClass::addProperty( const String& name, const Item& initValue )
    }
 
    // insert a new property with the required ID
-   _p->m_members[name] = new  Property( _p->m_propDefaults.length() );
+   members[name] = new  Property( name, _p->m_propDefaults.length() );
    // the add the init value in the value lists.
    _p->m_propDefaults.append( initValue );
 
@@ -226,8 +232,8 @@ bool FalconClass::addProperty( const String& name, Expression* initExpr )
    }
 
    // insert a new property -- and record its insertion
-   Property* prop = new Property( _p->m_propDefaults.length(), initExpr );
-   _p->m_members[name] = prop;
+   Property* prop = new Property( name, _p->m_propDefaults.length(), initExpr );
+   members[name] = prop;
 
    // expr properties have a default NIL item.
    _p->m_propDefaults.append( Item() );
@@ -245,7 +251,8 @@ bool FalconClass::addProperty( const String& name, Expression* initExpr )
 
    return true;
 }
-    
+
+
 bool FalconClass::addProperty( const String& name )
 {
      Private::MemberMap& members = _p->m_members;
@@ -257,14 +264,14 @@ bool FalconClass::addProperty( const String& name )
    }
 
    // insert a new property with the required ID
-   _p->m_members[name] = new Property( _p->m_propDefaults.length() );
+   members[name] = new Property( name, _p->m_propDefaults.length() );
    // the add the init value in the value lists.
    _p->m_propDefaults.append( Item() );
 
    return true;
 }
 
-   
+
 bool FalconClass::addMethod( Function* mth )
 {
    Private::MemberMap& members = _p->m_members;
@@ -278,44 +285,24 @@ bool FalconClass::addMethod( Function* mth )
    }
 
    // insert a new property with the required ID
-   _p->m_members[name] = new Property( mth );
-
-   // see if the method is an override.
-   if( mth->name() == OVERRIDE_OP_NEG ) m_overrides[OVERRIDE_OP_NEG_ID] = mth;
-   
-   else if( mth->name() == OVERRIDE_OP_ADD ) m_overrides[OVERRIDE_OP_ADD_ID] = mth;
-   else if( mth->name() == OVERRIDE_OP_SUB ) m_overrides[OVERRIDE_OP_SUB_ID] = mth;
-   else if( mth->name() == OVERRIDE_OP_MUL ) m_overrides[OVERRIDE_OP_MUL_ID] = mth;
-   else if( mth->name() == OVERRIDE_OP_DIV ) m_overrides[OVERRIDE_OP_DIV_ID] = mth;
-   else if( mth->name() == OVERRIDE_OP_MOD ) m_overrides[OVERRIDE_OP_MOD_ID] = mth;
-   else if( mth->name() == OVERRIDE_OP_POW ) m_overrides[OVERRIDE_OP_POW_ID] = mth;
-
-   else if( mth->name() == OVERRIDE_OP_AADD ) m_overrides[OVERRIDE_OP_AADD_ID] = mth;
-   else if( mth->name() == OVERRIDE_OP_ASUB ) m_overrides[OVERRIDE_OP_ASUB_ID] = mth;
-   else if( mth->name() == OVERRIDE_OP_AMUL ) m_overrides[OVERRIDE_OP_AMUL_ID] = mth;
-   else if( mth->name() == OVERRIDE_OP_ADIV ) m_overrides[OVERRIDE_OP_ADIV_ID] = mth;
-   else if( mth->name() == OVERRIDE_OP_AMOD ) m_overrides[OVERRIDE_OP_AMOD_ID] = mth;
-   else if( mth->name() == OVERRIDE_OP_APOW ) m_overrides[OVERRIDE_OP_APOW_ID] = mth;
-
-   else if( mth->name() == OVERRIDE_OP_INC ) m_overrides[OVERRIDE_OP_INC_ID] = mth;
-   else if( mth->name() == OVERRIDE_OP_DEC ) m_overrides[OVERRIDE_OP_DEC_ID] = mth;
-   else if( mth->name() == OVERRIDE_OP_INCPOST ) m_overrides[OVERRIDE_OP_INCPOST_ID] = mth;
-   else if( mth->name() == OVERRIDE_OP_DECPOST ) m_overrides[OVERRIDE_OP_DECPOST_ID] = mth;
-
-   else if( mth->name() == OVERRIDE_OP_CALL ) m_overrides[OVERRIDE_OP_CALL_ID] = mth;
-
-   else if( mth->name() == OVERRIDE_OP_GETINDEX ) m_overrides[OVERRIDE_OP_GETINDEX_ID] = mth;
-   else if( mth->name() == OVERRIDE_OP_SETINDEX ) m_overrides[OVERRIDE_OP_SETINDEX_ID] = mth;
-   else if( mth->name() == OVERRIDE_OP_GETPROP ) m_overrides[OVERRIDE_OP_GETPROP_ID] = mth;
-   else if( mth->name() == OVERRIDE_OP_SETPROP ) m_overrides[OVERRIDE_OP_SETPROP_ID] = mth;
-
-   else if( mth->name() == OVERRIDE_OP_COMPARE ) m_overrides[OVERRIDE_OP_COMPARE_ID] = mth;
-   else if( mth->name() == OVERRIDE_OP_ISTRUE ) m_overrides[OVERRIDE_OP_ISTRUE_ID] = mth;
-   else if( mth->name() == OVERRIDE_OP_IN ) m_overrides[OVERRIDE_OP_IN_ID] = mth;
-   else if( mth->name() == OVERRIDE_OP_PROVIDES ) m_overrides[OVERRIDE_OP_PROVIDES_ID] = mth;
-   else if( mth->name() == OVERRIDE_OP_TOSTRING ) m_overrides[OVERRIDE_OP_TOSTRING_ID] = mth;
-
+   members[name] = new Property( mth );
+   overrideAddMethod( mth->name(), mth );
    return true;
+}
+
+
+Class* FalconClass::getParent( const String& name ) const
+{
+   Private::MemberMap::const_iterator iter = _p->m_members.find(name);
+   if( iter != _p->m_members.end() )
+   {
+      if( iter->second->m_type == Property::t_inh )
+      {
+         return iter->second->m_value.inh->parent();
+      }
+   }
+
+   return 0;
 }
 
   
@@ -345,9 +332,32 @@ bool FalconClass::addParent( Inheritance* inh )
    }
 
    // insert a new property with the required ID
-   _p->m_members[name] = new Property( inh );
+   members[name] = new Property( inh );
+
+   // increase the number of unresolved parents?
+   if( inh->parent() == 0 )
+   {
+      m_missingParents ++;
+   }
+   else if( ! inh->parent()->isFalconClass() )
+   {
+      m_bPureFalcon = false;
+   }
+   
+   _p->m_inherit.push_back( inh );
+   inh->owner( this );
 
    return true;
+}
+
+void FalconClass::onInheritanceResolved( Inheritance* inh )
+{
+   m_missingParents--;
+
+   if( ! inh->parent()->isFalconClass() )
+   {
+      m_bPureFalcon = false;
+   }
 }
 
 
@@ -400,7 +410,7 @@ const FalconClass::Property* FalconClass::getProperty( const String& name ) cons
    return iter->second;
 }
 
-void FalconClass::gcMark( uint32 mark ) const
+void FalconClass::gcMarkMyself( uint32 mark ) const
 {
    if ( m_shouldMark )
    {
@@ -428,18 +438,6 @@ bool FalconClass::addState( FalconState* state )
 }
 
 
-void FalconClass::serialize( DataWriter* ) const
-{
-   //TODO
-}
-
-
-void FalconClass::deserialize( DataReader* )
-{
-   //TODO
-}
-
-
 void FalconClass::enumeratePropertiesOnly( PropertyEnumerator& cb ) const
 {
    Private::MemberMap& members = _p->m_members;
@@ -459,6 +457,152 @@ void FalconClass::enumeratePropertiesOnly( PropertyEnumerator& cb ) const
       }
    }
 }
+
+
+SynFunc* FalconClass::makeConstructor()
+{
+   if ( m_constructor == 0 )
+   {
+      m_constructor = new SynFunc( name() + "#constructor" );
+      m_constructor->methodOf( this );
+   }
+   
+   return m_constructor;
+}
+
+
+bool FalconClass::construct( bool bHiddenParents )
+{
+   if( m_bPureFalcon && m_missingParents == 0 )
+   {
+      // check if the class has really something to construct.
+      bool hasSomething = false;
+
+      TRACE( "Constructing FalconClass %s", name().c_ize() );
+      SynFunc* ctr = makeConstructor();
+      SynTree& st = ctr->syntree();
+
+      // add the inheritance members from last to first.
+      Private::ParentList::const_reverse_iterator riter = _p->m_inherit.rbegin();
+      while( riter != _p->m_inherit.rend() )
+      {
+         Inheritance* current = *riter;
+         fassert( current->parent() != 0 && current->parent()->isFalconClass() );
+         // we wouldn't be pure Falcon classes if all our parent were not FalconClass
+         FalconClass* parent = static_cast<FalconClass*>(current->parent());
+         // avoid initializing entities without constructors.
+         if( parent->constructor() != 0 )
+         {
+            st.append( new StmtInit( current ) );
+            hasSomething = true;
+         }
+
+         ++riter;
+      }
+
+      // add the properties first-to-last.
+      Private::ParentList::const_iterator iter = _p->m_inherit.begin();
+      while( iter != _p->m_inherit.end() )
+      {
+         Inheritance* current = *iter;
+         fassert( current->parent() != 0 && current->parent()->isFalconClass() );
+         // we wouldn't be pure Falcon classes if all our parent were not FalconClass
+         FalconClass* parent = static_cast<FalconClass*>(current->parent());
+         // avoid initializing entities without constructors.
+         Private::MemberMap::const_iterator miter = parent->_p->m_members.begin();
+         while( miter != parent->_p->m_members.end() )
+         {
+            // do not override newer properties
+            if (_p->m_members.find( miter->first ) == _p->m_members.end() )
+            {
+               // copy the property
+               Property* prop = miter->second->clone();
+               // if this was an index property, update the index.
+               if( prop->m_type == Property::t_prop )
+               {
+                  // copy the default property
+                  _p->m_propDefaults.append( parent->_p->m_propDefaults[ prop->m_value.id ] );
+                  // set the new id
+                  prop->m_value.id = _p->m_propDefaults.length()-1;
+                  if( prop->expression() != 0 )
+                  {
+                     _p->m_initExpr.push_back( prop );
+                  }
+               }
+               _p->m_members[miter->first] = prop;
+            }
+            ++miter;
+         }
+         ++iter;
+      }
+
+      if( m_hasInitExpr )
+      {
+         hasSomething = true;
+         st.append( &m_initExprStep );
+      }
+
+      if( m_hasInit )
+      {
+         hasSomething = true;
+         st.append( &m_initFuncStep );
+      }
+
+      //! We may destroy the constructor... or not.
+      st.append( new StmtReturn( new ExprSelf ) );
+      if( ! hasSomething )
+      {
+         // great, we don't really need a constructor.
+         if( ! bHiddenParents || ctr->paramCount() == 0 )
+         {
+            // ... unless we have some possible parent that we don't know about.
+            m_constructor = 0;
+            delete ctr;
+         }
+      }
+      
+      return true;
+   }
+
+   TRACE( "FalconClass %s cannot be constructed", name().c_ize() );
+
+   // no, we can't create this.
+   return false;
+}
+
+
+HyperClass* FalconClass::hyperConstruct()
+{
+   TRACE( "Creating an hyperclass from %s", name().c_ize() );
+   HyperClass* nself = new HyperClass( name(), this );
+
+   // pass all our parents to the hyperclass
+   Private::ParentList::iterator pi = _p->m_inherit.begin();
+   while( pi != _p->m_inherit.end() )
+   {
+      nself->addParent( *pi );
+      ++pi;
+   }
+
+   _p->m_inherit.clear();
+
+   // also, now we're complete and pure falcon...
+   m_missingParents = 0;
+   m_bPureFalcon = true;
+
+   //... so we can have our constructor.
+   (void) construct( true );
+
+   //... and tell it to our new self.
+   // Notice that this is ok even if the constructor is 0.
+   // -- if it is, we just don't need any frame.
+   nself->constructor( m_constructor );
+
+   // and give it to our
+
+   return nself;
+}
+
 
 //========================================================================
 // Class override.
@@ -528,6 +672,25 @@ void FalconClass::enumerateProperties( void* , PropertyEnumerator& cb ) const
 }
 
 
+void FalconClass::enumeratePV( void* self, PVEnumerator& cb ) const
+{
+   Private::MemberMap& members = _p->m_members;
+   Private::MemberMap::iterator iter = members.begin();
+
+   FalconInstance* inst = static_cast<FalconInstance*>(self);
+
+   while( iter != members.end() )
+   {
+      Property* prop = iter->second;
+      if( prop->m_type == Property::t_prop )
+      {
+         cb( iter->first, inst->m_data[prop->m_value.id] );
+         ++iter;
+      }
+   }
+}
+
+
 bool FalconClass::hasProperty( void*, const String& propName ) const
 {
    Private::MemberMap& members = _p->m_members;
@@ -590,214 +753,25 @@ void FalconClass::describe( void* instance, String& target, int depth, int maxle
 // Operators.
 //
 
-inline void FalconClass::override_unary( VMContext* ctx, void*, int op, const String& opName ) const
-{
-   Function* override = m_overrides[op];
-
-   // TODO -- use pre-caching of the desired method
-   if( override != 0 )
-   {
-      ctx->call( override, 0, ctx->topData(), true );
-   }
-   else
-   {
-      throw new OperandError( ErrorParam(__LINE__, e_invop ).extra(opName) );
-   }
-}
-
-inline void FalconClass::override_binary( VMContext* ctx, void*, int op, const String& opName ) const
-{
-   Function* override = m_overrides[op];
-   
-   if( override )
-   {
-      Item* first, *second;
-      OpToken token( ctx, first, second );
-
-      // 1 parameter == second; which will be popped away,
-      // while first will be substituted with the return value of the function.
-      ctx->call ( override, 1, *first, true );
-      token.abandon();
-   }
-   else
-   {
-      throw new OperandError( ErrorParam(__LINE__, e_invop ).extra(opName) );
-   }
-}
-
-
 void FalconClass::op_create( VMContext* ctx, int32 pcount ) const
 {
-   static StmtReturn s_return;
+  
    static Collector* coll = Engine::instance()->collector();
    
    // we just need to copy the defaults.
-   FalconInstance* inst = new FalconInstance(const_cast<FalconClass*>(this));
+   FalconClass* cls = const_cast<FalconClass*>(this);
+   FalconInstance* inst = new FalconInstance(cls);
    inst->data().merge(_p->m_propDefaults);
-   
+
    // we have to invoke the init method, if any
-   if( m_init != 0 )
+   if( m_constructor != 0 )
    {
-      // prepare an init frame
-      CallFrame* frame = ctx->makeCallFrame(m_init, pcount, FALCON_GC_STORE( coll, this, inst ), true);
-      frame->m_bInit = true;
-      // always add a retunr opcode, just in case.
-      ctx->pushCode( &s_return );
-
-      // first, push the last thing to execute -- the init  or a standard return.
-      if( m_hasInit )
-      {
-         ctx->pushCode( &m_initFuncStep );
-      }
-      
-      // then push the init expr
-      if( m_hasInitExpr )
-      {
-         ctx->pushCode( &m_initExprStep );
-      }
-
-      // Finally, prepare the data stack to accept the functions
-      TRACE1( "-- filing parameters: %d/%d",
-            pcount, m_init->symbols().localCount() );
-
-      register int lc = (int) m_init->symbols().localCount();
-      if( lc > pcount )
-      {
-         ctx->addLocals( lc - pcount );
-      }
+      ctx->call( m_constructor, pcount, FALCON_GC_STORE( coll, this, inst ) );
    }
    else
    {
       // nothing to init; just send the self item in the proper stack return
-      ctx->stackResult( pcount, FALCON_GC_STORE( coll, this, inst ) );
-   }
-}
-
-
-void FalconClass::op_neg( VMContext* ctx, void* self ) const
-{
-   override_unary( ctx, self, OVERRIDE_OP_NEG_ID, OVERRIDE_OP_NEG );
-}
-
-
-void FalconClass::op_add( VMContext* ctx, void* self ) const
-{
-   override_binary( ctx, self, OVERRIDE_OP_ADD_ID, OVERRIDE_OP_ADD );
-}
-
-
-void FalconClass::op_sub( VMContext* ctx, void* self ) const
-{
-   override_binary( ctx, self, OVERRIDE_OP_SUB_ID, OVERRIDE_OP_SUB );
-}
-
-
-void FalconClass::op_mul( VMContext* ctx, void* self ) const
-{
-   override_binary( ctx, self, OVERRIDE_OP_MUL_ID, OVERRIDE_OP_MUL );
-}
-
-
-void FalconClass::op_div( VMContext* ctx, void* self ) const
-{
-   override_binary( ctx, self, OVERRIDE_OP_DIV_ID, OVERRIDE_OP_DIV );
-}
-
-void FalconClass::op_mod( VMContext* ctx, void* self ) const
-{
-   override_binary( ctx, self, OVERRIDE_OP_MOD_ID, OVERRIDE_OP_MOD );
-}
-
-
-void FalconClass::op_pow( VMContext* ctx, void* self ) const
-{
-   override_binary( ctx, self, OVERRIDE_OP_POW_ID, OVERRIDE_OP_POW );
-}
-
-
-void FalconClass::op_aadd( VMContext* ctx, void* self) const
-{
-   override_binary( ctx, self, OVERRIDE_OP_AADD_ID, OVERRIDE_OP_AADD );
-}
-
-
-void FalconClass::op_asub( VMContext* ctx, void* self ) const
-{
-   override_binary( ctx, self, OVERRIDE_OP_ASUB_ID, OVERRIDE_OP_ASUB );
-}
-
-
-void FalconClass::op_amul( VMContext* ctx, void* self ) const
-{
-   override_binary( ctx, self, OVERRIDE_OP_AMUL_ID, OVERRIDE_OP_AMUL );
-}
-
-
-void FalconClass::op_adiv( VMContext* ctx, void* self ) const
-{
-   override_binary( ctx, self, OVERRIDE_OP_DIV_ID, OVERRIDE_OP_DIV );
-}
-
-
-void FalconClass::op_amod( VMContext* ctx, void* self ) const
-{
-   override_binary( ctx, self, OVERRIDE_OP_AMOD_ID, OVERRIDE_OP_AMOD );
-}
-
-
-void FalconClass::op_apow( VMContext* ctx, void* self ) const
-{
-   override_binary( ctx, self, OVERRIDE_OP_APOW_ID, OVERRIDE_OP_APOW );
-}
-
-
-void FalconClass::op_inc( VMContext* ctx, void* self ) const
-{
-   override_unary( ctx, self, OVERRIDE_OP_INC_ID, OVERRIDE_OP_INC );
-}
-
-
-void FalconClass::op_dec( VMContext* ctx, void* self) const
-{
-   override_unary( ctx, self, OVERRIDE_OP_DEC_ID, OVERRIDE_OP_DEC );
-}
-
-
-void FalconClass::op_incpost( VMContext* ctx, void* self ) const
-{
-   override_unary( ctx, self, OVERRIDE_OP_INCPOST_ID, OVERRIDE_OP_INCPOST );
-}
-
-
-void FalconClass::op_decpost( VMContext* ctx, void* self ) const
-{
-   override_unary( ctx, self, OVERRIDE_OP_DECPOST_ID, OVERRIDE_OP_DECPOST );
-}
-
-
-void FalconClass::op_getIndex( VMContext* ctx, void* self ) const
-{
-   override_binary( ctx, self, OVERRIDE_OP_GETINDEX_ID, OVERRIDE_OP_GETINDEX );
-}
-
-
-void FalconClass::op_setIndex( VMContext* ctx, void* ) const
-{
-   Function* override = m_overrides[OVERRIDE_OP_SETINDEX_ID];
-
-   if( override != 0 )
-   {
-      Item* first, *second, *third;
-      OpToken token( ctx, first, second, third );
-
-      // Two parameters (second and third) will be popped,
-      //  and first will be turned in the result.
-      ctx->call( override, 2, *first, true );
-      token.abandon();
-   }
-   else
-   {
-      throw new OperandError( ErrorParam(__LINE__, e_invop ).extra(OVERRIDE_OP_SETINDEX) );
+      ctx->stackResult( pcount+1, FALCON_GC_STORE( coll, this, inst ) );
    }
 }
 
@@ -805,20 +779,13 @@ void FalconClass::op_setIndex( VMContext* ctx, void* ) const
 void FalconClass::op_getProperty( VMContext* ctx, void* self, const String& propName ) const
 {   
    FalconInstance* inst = static_cast<FalconInstance*>(self);
-   Function* override = m_overrides[OVERRIDE_OP_GETPROP_ID];
-
-   if( override != 0 )
+   
+   if( ! overrideGetProperty( ctx, self, propName ) )
    {
-      Item i_first = ctx->topData();
-      // I prefer to go safe and push a new string here.
-      ctx->pushData( (new String(propName))->garbage() );
-
-      // use the instance we know, as first can be moved away.
-      ctx->call( override, 1, i_first, true );
-   }
-   else
-   {
-      inst->getMember( propName, ctx->topData() );
+      if( ! inst->getMember( propName, ctx->topData() ) )
+      {
+         Class::op_getProperty( ctx, self, propName );
+      }
    }
 }
 
@@ -826,24 +793,8 @@ void FalconClass::op_getProperty( VMContext* ctx, void* self, const String& prop
 void FalconClass::op_setProperty( VMContext* ctx, void* self, const String& propName ) const
 {
    FalconInstance* inst = static_cast<FalconInstance*>(self);
-   Function* override = m_overrides[OVERRIDE_OP_SETPROP_ID];
 
-   if( override != 0 )
-   {
-      Item* first, *second;
-      OpToken token( ctx, first, second );
-      Item i_data = *first;
-      Item i_self = *second;
-
-      ctx->pushData( (new String(propName))->garbage() );
-      ctx->pushData( i_data );
-      ctx->pushCode( &m_removeSelf );
-
-      // Don't mangle the stack, we have to change it.
-      ctx->call( override, 2, i_self, false );
-      token.abandon();
-   }
-   else
+   if( ! overrideSetProperty( ctx, self, propName ) )
    {
       inst->setProperty( propName, ctx->opcodeParam(1) );
       ctx->popData();
@@ -851,97 +802,14 @@ void FalconClass::op_setProperty( VMContext* ctx, void* self, const String& prop
 }
 
 
-void FalconClass::op_compare( VMContext* ctx, void* self ) const
-{
-   override_binary( ctx, self, OVERRIDE_OP_COMPARE_ID, OVERRIDE_OP_SETINDEX );
-}
-
-
-void FalconClass::op_isTrue( VMContext* ctx, void* ) const
-{
-   Function* override = m_overrides[OVERRIDE_OP_ISTRUE_ID];
-
-   if( override != 0 )
-   {
-      // use the instance we know, as first can be moved away.
-      ctx->call( override, 0, ctx->topData(), true );
-   }
-   else
-   {
-      // instances are always true.
-      ctx->topData().setBoolean(true);
-   }
-}
-
-
-void FalconClass::op_in( VMContext* ctx, void* self ) const
-{
-   override_binary( ctx, self, OVERRIDE_OP_IN_ID, OVERRIDE_OP_IN );
-}
-
-
-void FalconClass::op_provides( VMContext* ctx, void* self, const String& propName ) const
-{
-   Function* override = m_overrides[OVERRIDE_OP_CALL_ID];
-
-   if( override != 0  )
-   {
-      Item i_self = ctx->topData();
-      ctx->pushData( (new String(propName))->garbage() );
-      ctx->call( override, 1, i_self, true );
-   }
-   else
-   {
-      ctx->topData().setBoolean( hasProperty( self, propName ) );
-   }
-}
-
-
-void FalconClass::op_call( VMContext* ctx, int32 paramCount, void* ) const
-{
-   Function* override = m_overrides[OVERRIDE_OP_CALL_ID];
-
-   if( override != 0  )
-   {
-      ctx->call( override, paramCount, ctx->topData(), true );
-   }
-   else
-   {
-      throw new OperandError( ErrorParam(__LINE__, e_invop ).extra(OVERRIDE_OP_CALL) );
-   }
-}
-
-
-void FalconClass::op_toString( VMContext* ctx, void* ) const
-{
-   Function* override = m_overrides[OVERRIDE_OP_TOSTRING_ID];
-
-   if( override != 0 )
-   {
-      ctx->call( override, 0, ctx->topData(), true );
-   }
-   else
-   {
-      String* str = new String("Instance of ");
-      str->append( name() );
-      ctx->topData() = str;
-   }
-}
-
-//==============================================================
-
-void FalconClass::RemoveSelf::apply_( const PStep*, VMContext* ctx)
-{
-   // use the return of the function as the thing to be put on top of the stack
-   ctx->stackResult( 2, ctx->regA() );
-}
-
 //==============================================================
 
 FalconClass::PStepInitExpr::PStepInitExpr( FalconClass* o ):
+   Statement( Statement::custom_t ),
    m_owner(o)
 {
-      apply = apply_;
+   apply = apply_;
+   m_step0 = this;
 }
 
 void FalconClass::PStepInitExpr::apply_( const PStep* ps, VMContext* ctx )
@@ -962,9 +830,20 @@ void FalconClass::PStepInitExpr::apply_( const PStep* ps, VMContext* ctx )
       fassert( previous->m_type == FalconClass::Property::t_prop );
       fassert( previous->expression() != 0 );
 
+
       FalconInstance* inst = static_cast<FalconInstance*>( frame.m_self.asInst() );
-      // at the exit of a pcode, the result is in A
-      inst->data()[previous->m_value.id] = ctx->regA();
+      // if the class and the instance are the same, we can trust the ID
+      if( inst->origin() == step->m_owner )
+      {
+         // at the exit of a pcode, the result is in A
+         inst->data()[previous->m_value.id] = ctx->topData();
+      }
+      else
+      {
+         // otherwise we're sorry, but we must go by name
+         inst->setProperty( previous->m_name, ctx->topData() );
+      }
+      ctx->popData();
    }
 
    if( ((size_t)seqId) >= iprops.size() )
@@ -982,9 +861,11 @@ void FalconClass::PStepInitExpr::apply_( const PStep* ps, VMContext* ctx )
 //==============================================================
 
 FalconClass::PStepInit::PStepInit( FalconClass* o ):
+   Statement( Statement::custom_t ),
    m_owner(o)
 {
    apply = apply_;
+   m_step0 = this;
 }
 
 
@@ -993,9 +874,18 @@ void FalconClass::PStepInit::apply_( const PStep* ps, VMContext* ctx )
    const PStepInit* step = static_cast<const PStepInit*>(ps);
    TRACE( "In %s class init step", step->m_owner->name().c_ize() );
 
+   // we're done.
+   ctx->popCode();
+
    // supposedly, if we're here, we have been invited -- m_init != 0.
    CallFrame& frame = ctx->currentFrame();
-   step->m_owner->init()->apply( ctx, frame.m_paramCount );
+
+   for( int i = 0; i < frame.m_paramCount; ++i )
+   {
+      ctx->pushData( *ctx->param(i) );
+   }
+   // Finally, prepare the data stack to accept the functions
+   ctx->call( step->m_owner->init(), frame.m_paramCount, frame.m_self );
 }
 
 }

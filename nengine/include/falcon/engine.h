@@ -154,6 +154,17 @@ public:
     */
    Class* dictClass() const;
 
+   /** Returns the global instance of the Prototype class.
+   \return the Engine instance of the Prototype Class (handler).
+
+    Method init() must have been called before.
+
+    @note This method will assert and terminate the program if compiled in debug mode
+    in case the engine has not been initialized. In release, it will just
+    return a null pointer.
+    */
+   Class* protoClass() const;
+
    /** Returns the global instance of the CoreClass class.
    \return the Engine instance of the FalconClass handler.
 
@@ -367,6 +378,7 @@ protected:
    Class* m_stringClass;
    Class* m_arrayClass;
    Class* m_dictClass;
+   Class* m_protoClass;
    Class* m_classClass;
 
    //===============================================

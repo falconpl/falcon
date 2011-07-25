@@ -27,7 +27,7 @@ class FALCON_DYN_CLASS MinOrMax: public PseudoFunction
 public:
    MinOrMax( const String& name, bool bIsMax );
    virtual ~MinOrMax();
-   virtual void apply( VMContext* vm, int32 pCount = 0 );
+   virtual void invoke( VMContext* vm, int32 pCount = 0 );
 
 private:
    bool m_bIsMax;

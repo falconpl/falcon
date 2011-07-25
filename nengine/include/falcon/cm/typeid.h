@@ -26,7 +26,7 @@ class FALCON_DYN_CLASS TypeId: public PseudoFunction
 public:
    TypeId();
    virtual ~TypeId();
-   virtual void apply( VMContext* ctx, int32 nParams );
+   virtual void invoke( VMContext* ctx, int32 nParams );
 
 private:
 

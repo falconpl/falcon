@@ -95,6 +95,7 @@ public:
     */
 
    virtual void onPushState( bool isPushedState )=0;
+   virtual void onPopState()=0;
 
    /** Re-enables previous state.
    */
@@ -315,6 +316,25 @@ public:
     */
    TokenInstance* getNextToken();
 
+   /** Gets the last available token in the current rule.
+    \return The last available token, if any, or 0 if the stack is empty.
+
+    This method gets the last token that is currently available in the
+    rule parsing.
+
+    (Usually, as error are detected when a non-unified token is found,
+    this means that the last available token is very probably the one
+    having caused an error).
+    */
+   TokenInstance* getLastToken();
+
+   /** Keeps the token that have been read and discard the rest.
+
+    This method discards all the tokens that are currently available and
+    would be taken with subsequent calls to getNextToken();
+    */
+   void trimFromCurrentToken();
+
    /** Reposition the token index for getNextToken at top.
     \see getNextToken
     */
@@ -405,6 +425,12 @@ public:
     */
    void interactive( bool mode ) { m_bInteractive = mode; }
 
+   /** Returns the last line at which an error was found.
+    \return a line number or 0 if no error is found yet.
+    
+    This method is useful to avoid raising extra errors in error handlers.
+    */
+   int32 lastErrorLine() const;
 
    //=======================================
    // To be documented
@@ -419,7 +445,7 @@ public:
      // -----
 
    void addRuleToPath( const Rule* r ) const;
-   void addParseFrame( NonTerminal* token, int pos = -1);
+   void addParseFrame( const NonTerminal* token, int pos = -1);
 
    size_t rulesDepth() const;
    size_t frameDepth() const;

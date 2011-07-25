@@ -254,7 +254,7 @@ void VMachine::onRaise( const Item& item )
    Error* e = new GenericError( ErrorParam(e_uncaught,__LINE__)
          .module("VM") );
    e->raised( item );
-   throw e;
+   onError( e );
 }
 
 

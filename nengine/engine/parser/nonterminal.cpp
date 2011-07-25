@@ -12,6 +12,7 @@
 
    See LICENSE file for licensing details.
 */
+#define SRC "engine/parser/nonterminal.cpp"
 
 #include <falcon/parser/nonterminal.h>
 #include <falcon/parser/parser.h>
@@ -93,7 +94,7 @@ NonTerminal& NonTerminal::r(Rule& rule)
 
 bool NonTerminal::findPaths( Parser& p ) const
 {
-   TRACE( "NonTerminal::findPaths %s -- scanning", name().c_ize() );
+   TRACE1( "NonTerminal::findPaths -- scanning '%s'", name().c_ize() );
 
    // initialize frame status
    int nBaseFrames = p.frameDepth();
@@ -110,7 +111,7 @@ bool NonTerminal::findPaths( Parser& p ) const
       p.addRuleToPath(rule);
       if( rule->match( p, false ) )
       {
-         TRACE( "NonTerminal::findPaths(%s) -- match '%s'", name().c_ize(), rule->name().c_ize() );
+         TRACE1( "NonTerminal::findPaths(%s) -- match '%s'", name().c_ize(), rule->name().c_ize() );
          return true;
       }
       
@@ -120,10 +121,18 @@ bool NonTerminal::findPaths( Parser& p ) const
       ++iter;
    }
 
-   TRACE( "NonTerminal::findPaths(%s) -- no match", name().c_ize() );
+   TRACE1( "NonTerminal::findPaths(%s) -- no match", name().c_ize() );
    return false;
 }
 
+void NonTerminal::addFirstRule( Parser& p ) const
+{
+   // loop through our rules.
+   Private::RuleList::iterator iter = _p->m_rules.begin();
+
+   TRACE1( "NonTerminal::addFirstRule -- adding '%s'", (*iter)->name().c_ize() );
+   p.addRuleToPath((*iter));
+}
 
 }
 }

@@ -13,18 +13,17 @@
    See LICENSE file for licensing details.
 */
 
+#define SRC "engine/parser/parser.cpp"
+
 #include "falcon/syntaxerror.h"
-
-
 #include <falcon/parser/parser.h>
 #include <falcon/parser/lexer.h>
 #include <falcon/parser/tokeninstance.h>
 #include <falcon/parser/state.h>
 #include <falcon/codeerror.h>
 #include <falcon/trace.h>
-#include <falcon/genericerror.h>
-
 #include <falcon/error.h>
+#include <falcon/genericerror.h>
 
 #include "./parser_private.h"
 
@@ -32,7 +31,8 @@ namespace Falcon {
 namespace Parsing {
 
 Parser::Private::Private():
-   m_nextTokenPos(0)
+   m_nextTokenPos(0),
+   m_stateFrameID(0)
 {
 }
 
@@ -107,14 +107,14 @@ Parser::~Parser()
 
 void Parser::addState( State& state )
 {
-   TRACE( "Parser::addState -- adding state '%s'", state.name().c_ize() );
+   TRACE2( "Parser::addState -- adding state '%s'", state.name().c_ize() );
    _p->m_states[state.name()] = &state;
 }
 
 
 void Parser::pushState( const String& name, bool isPushedState )
 {
-   TRACE( "Parser::pushState -- pushing state '%s'", name.c_ize() );
+   TRACE1( "Parser::pushState -- pushing state '%s'", name.c_ize() );
 
    Private::StateMap::const_iterator iter = _p->m_states.find( name );
    if( iter != _p->m_states.end() )
@@ -130,6 +130,7 @@ void Parser::pushState( const String& name, bool isPushedState )
       _p->m_tokenStack = &bf.m_tokenStack;
       _p->m_pframes = &bf.m_pframes;
       _p->m_pErrorFrames = &bf.m_pErrorFrames;
+      bf.m_id = ++_p->m_stateFrameID;
       onPushState( isPushedState );
    }
    else
@@ -151,8 +152,8 @@ void Parser::pushState( const String& name, Parser::StateFrameFunc cf, void* dat
 
 void Parser::popState()
 {
-   MESSAGE( "Parser::popState -- popping state" );
-   if ( _p->m_lStates.empty() )
+   MESSAGE2( "Parser::popState -- popping state" );
+   if ( _p->m_lStates.size() < 2 )
    {
       throw new CodeError( ErrorParam( e_underflow, __LINE__, __FILE__ ).extra("Parser::popState") );
    }
@@ -170,7 +171,8 @@ void Parser::popState()
    _p->m_tokenStack = &bf.m_tokenStack;
    _p->m_pframes = &bf.m_pframes;
    _p->m_pErrorFrames = &bf.m_pErrorFrames;
-   TRACE("Parser::popState -- pframes.size()=%d",(int)_p->m_pframes->size());
+   TRACE1("Parser::popState -- pframes.size()=%d, stack now: %s",
+      (int)_p->m_pframes->size(), dumpStack().c_ize());
 
    Private::TokenStack::iterator tsiter = ts.begin();
    while( tsiter != ts.end() )
@@ -184,6 +186,22 @@ void Parser::popState()
    {
       func( cbdata );
    }
+
+   // pop the last applied rule?
+   while( bf.m_appliedRules > 0 )
+   {
+      fassert( !  bf.m_pframes.back().m_path.empty() );
+      // the rule will be applied, so it's not in the path anymore.
+      bf.m_pframes.back().m_path.pop_back();
+      // eventually, pop the frame.
+      if( bf.m_pframes.back().m_path.empty() )
+      {
+         bf.m_pframes.pop_back();
+      }
+      bf.m_appliedRules--;
+   }
+
+   onPopState();
 }
 
 
@@ -253,7 +271,7 @@ GenericError* Parser::makeError() const
       ErrorDef& def = *iter;
 
       String sExtra = def.sExtra;
-      if( def.nOpenContext != 0 )
+      if( def.nOpenContext != 0 && def.nOpenContext != def.nLine )
       {
          if( sExtra.size() != 0 )
             sExtra += " -- ";
@@ -305,6 +323,25 @@ TokenInstance* Parser::getNextToken()
    return (*_p->m_tokenStack)[_p->m_nextTokenPos++];
 }
 
+TokenInstance* Parser::getLastToken()
+{
+   if( _p->m_tokenStack->empty() )
+   {
+      return 0;
+   }
+
+   return _p->m_tokenStack->back();
+}
+
+
+void Parser::trimFromCurrentToken()
+{
+   if ( _p->m_nextTokenPos <  _p->m_tokenStack->size() )
+   {
+      _p->m_tokenStack->resize( _p->m_nextTokenPos );
+   }
+}
+
 void Parser::resetNextToken()
 {
    int nDepth = _p->m_pframes->empty() ? 0 : _p->m_pframes->back().m_nStackDepth;
@@ -322,6 +359,17 @@ void Parser::enumerateErrors( Parser::errorEnumerator& enumerator ) const
       if ( ! enumerator( def, ++iter == _p->m_lErrors.end() ) )
          break;
    }
+}
+
+
+int32 Parser::lastErrorLine() const
+{
+   if( _p->m_lErrors.empty() )
+   {
+      return 0;
+   }
+   
+   return _p->m_lErrors.back().nLine;
 }
 
 
@@ -370,7 +418,7 @@ void Parser::addError( int code, const String& uri, int l, int c, int ctx  )
 
 void Parser::simplify( int32 tcount, TokenInstance* newtoken )
 {
-   TRACE( "Parser::simplify -- %d tokens -> %s",
+   TRACE1( "Parser::simplify -- %d tokens -> %s",
          tcount, newtoken ? newtoken->token().name().c_ize() : "<nothing>" );
 
    int nDepth = _p->m_pframes->empty() ? 0 : _p->m_pframes->back().m_nStackDepth;
@@ -402,7 +450,7 @@ void Parser::simplify( int32 tcount, TokenInstance* newtoken )
 
 bool Parser::step()
 {
-   MESSAGE( "Parser::step" );
+   MESSAGE2( "Parser::step" );
 
    // Preliminary checks. We need a lexer and we need to have the required state.
    if( _p->m_lLexers.empty() )
@@ -416,7 +464,7 @@ bool Parser::step()
       throw new CodeError( ErrorParam( e_setup, __LINE__, __FILE__ ).extra("Parser::step - pushState") );
    }
 
-   TRACE( "Parser::step -- on state \"%s\" -- %s ",
+   TRACE1( "Parser::step -- on state \"%s\" -- %s ",
          _p->m_lStates.back().m_state->name().c_ize(), dumpStack().c_ize() );
 
    clearErrors();
@@ -430,7 +478,7 @@ bool Parser::step()
 
 void Parser::syntaxError()
 {
-   TRACE( "Parser::syntaxError -- with current stack: %s ", dumpStack().c_ize() );
+   TRACE1( "Parser::syntaxError -- with current stack: %s ", dumpStack().c_ize() );
 
    String uri;
    int line = 0;
@@ -521,9 +569,9 @@ String Parser::dumpStack() const
 }
 
 
-void Parser::addParseFrame( NonTerminal* token, int pos )
+void Parser::addParseFrame( const NonTerminal* token, int pos )
 {
-   TRACE("Parser::addParseFrame -- %s at %d",token->name().c_ize(),pos);
+   TRACE1("Parser::addParseFrame -- %s at %d",token->name().c_ize(),pos);
    if( pos < 0 )
    {
       pos = _p->m_tokenStack->size()-1;
@@ -573,7 +621,7 @@ void Parser::setFramePriority( const Token& t )
 
 void Parser::parserLoop()
 {
-   MESSAGE( "Parser::parserLoop -- starting" );
+   MESSAGE1( "Parser::parserLoop -- starting" );
 
    m_bIsDone = false;
 
@@ -583,7 +631,7 @@ void Parser::parserLoop()
       // we're done ?
       if( lexer == 0 )
       {
-         MESSAGE( "Parser::parserLoop -- done on lexer pop" );
+         MESSAGE2( "Parser::parserLoop -- done on lexer pop" );
          return;
       }
 
@@ -592,7 +640,7 @@ void Parser::parserLoop()
       {
          if( m_bInteractive )
          {
-            MESSAGE( "Parser::parserLoop -- done on interactive lexer token shortage" );
+            MESSAGE2( "Parser::parserLoop -- done on interactive lexer token shortage" );
             return;
          }
 
@@ -611,19 +659,19 @@ void Parser::parserLoop()
 
       if( ti == 0 )
       {
-         MESSAGE( "Parser::parserLoop -- Last loop with EOF as next" );
+         MESSAGE2( "Parser::parserLoop -- Last loop with EOF as next" );
          return;
          ti = new TokenInstance(0, 0, T_EOF );
       }
 
       _p->m_tokenStack->push_back(ti);
 
-      TRACE( "Parser::parserLoop -- stack now: %s ", dumpStack().c_ize() );
+      TRACE1( "Parser::parserLoop -- stack now: %s ", dumpStack().c_ize() );
 
       onNewToken();
    }
 
-   MESSAGE( "Parser::parserLoop -- done on request" );
+   MESSAGE2( "Parser::parserLoop -- done on request" );
 }
 
 
@@ -632,7 +680,7 @@ void Parser::onNewToken()
    // If we don't have parsing frames, try to build new ones from the current state.
    if( _p->m_pframes->empty() )
    {
-      MESSAGE( "Parser::onNewToken -- starting new path finding" );
+      MESSAGE1( "Parser::onNewToken -- starting new path finding" );
 
       //... let the current state to find a path for us.
       State* curState = _p->m_lStates.back().m_state;
@@ -640,11 +688,11 @@ void Parser::onNewToken()
       // still empty?
       if( curState->findPaths( *this ) )
       {
-         MESSAGE( "Parser::onNewToken -- path found in current state." );
+         MESSAGE2( "Parser::onNewToken -- path found in current state." );
       }
       else
       {
-         MESSAGE( "Parser::onNewToken -- path NOT found." );
+         MESSAGE2( "Parser::onNewToken -- path NOT found." );
          // then, we have a syntax error
          syntaxError();
          return;
@@ -655,7 +703,7 @@ void Parser::onNewToken()
       // process existing frames.
       if (! findPaths( true ) )
       {
-          MESSAGE( "Parser::onNewToken -- failed in incremental mode, exploring." );
+         MESSAGE2( "Parser::onNewToken -- failed in incremental mode, exploring." );
          // may fail if incremental, try again in full mode.
          explorePaths();
       }
@@ -670,7 +718,7 @@ TokenInstance* Parser::getCurrentToken( int& pos ) const
 {
    if ( _p->m_pframes->empty() || _p->m_tokenStack->empty() )
    {
-      MESSAGE( "Parser::getCurrentToken -- stack empty" );
+      MESSAGE2( "Parser::getCurrentToken -- stack empty" );
       return 0;
    }
 
@@ -682,7 +730,7 @@ TokenInstance* Parser::getCurrentToken( int& pos ) const
    TokenInstance* ret = (*_p->m_tokenStack)[pos];
    pos -= frame.m_nStackDepth;
    fassert( pos >= 0 );
-   TRACE("Parser::getCurrentToken -- current token is at %d: %s",
+   TRACE1("Parser::getCurrentToken -- current token is at %d: %s",
          pos, ret->token().name().c_ize() );
 
    return ret;
@@ -694,12 +742,13 @@ bool Parser::findPaths( bool bIncremental )
 
    if( !path.empty() )
    {
-      TRACE("Parser::findPaths -- continuing on existing path '%s'", path.back()->name().c_ize() );
+      TRACE2("Parser::findPaths -- continuing on existing path '%s'", path.back()->name().c_ize() );
       int nBaseFrames = frameDepth();
       int nBaseRules = rulesDepth();
 
       if( path.back()->match( *this, bIncremental ) )
       {
+         TRACE1("Parser::findPaths -- path '%s' match", path.back()->name().c_ize() );
          return true;
       }
 
@@ -707,17 +756,23 @@ bool Parser::findPaths( bool bIncremental )
 
       if ( ! bIncremental )
       {
-         TRACE("Parser::findPaths -- existing path failed, trying with full on %s",
+         TRACE1("Parser::findPaths -- existing path failed, trying with full on %s",
                _p->m_pframes->back().m_owningToken->name().c_ize() );
 
          path.clear();
-         return _p->m_pframes->back().m_owningToken->findPaths(*this);
+         bool bres = _p->m_pframes->back().m_owningToken->findPaths(*this);
+
+         TRACE1("Parser::findPaths -- '%s'->findPaths %s",
+               _p->m_pframes->back().m_owningToken->name().c_ize(), bres ? "success" : "failure" );
+         return bres;
       }
+
+      TRACE1("Parser::findPaths -- Existing path '%s' failed ", path.back()->name().c_ize() );
       return false;
    }
    else
    {
-      MESSAGE( "Parser::findPaths -- no existing path, trying with full" );
+      MESSAGE2( "Parser::findPaths -- no existing path, trying with full" );
       return _p->m_pframes->back().m_owningToken->findPaths(*this);
    }
 }
@@ -725,7 +780,7 @@ bool Parser::findPaths( bool bIncremental )
 
 void Parser::parseError()
 {
-   MESSAGE( "Parser::parseError -- raising now" );
+   MESSAGE1( "Parser::parseError -- raising now" );
 
    // reverse the error frames, in case this error was detected
    // after a reverse-unroll loop
@@ -734,58 +789,93 @@ void Parser::parseError()
       _p->m_pframes->push_back(_p->m_pErrorFrames->back());
       _p->m_pErrorFrames->pop_back();
    }
+   
+
+   //_p->m_pframes->clear();
 
    // find an error handler in the current rule frame.
    // if not present, unroll the frame and try again
    // -- fall back to syntax error.
    while( ! _p->m_pframes->empty() )
    {
-      Private::ParseFrame& frame = _p->m_pframes->back();
+      Private::ParseFrame& frame = _p->m_pframes->back();      
 
-      // unroll the tokens in the stack.
-      simplify( _p->m_tokenStack->size() - frame.m_nStackDepth, 0 );
-
-      Private::RulePath::reverse_iterator iter = frame.m_path.rbegin();
-
-      while( iter != frame.m_path.rend() )
+      while( ! frame.m_path.empty() )
       {
-         const Rule* rule = *iter;
+         const Rule* rule = frame.m_path.back();
          if( rule->parent().errorHandler() != 0 )
          {
-            _p->m_pframes->pop_back();
-            TRACE("Parser::parseError -- applying error handler for %s",
+            TRACE2("Parser::parseError -- applying error handler for %s",
                   rule->parent().name().c_ize() );
 
-            rule->parent().errorHandler()( &rule->parent(), this );
+            resetNextToken();
             // we're done.
-            return;
+            if( rule->parent().errorHandler()( rule->parent(), *this ) )
+            {
+               // handled?
+               return;
+            }
          }
-         ++iter;
+         frame.m_path.pop_back();
       }
 
       if( frame.m_owningToken->errorHandler() != 0 )
       {
-         _p->m_pframes->pop_back();
-         TRACE("Parser::parseError -- applying error handler for frame master '%s'",
+         TRACE2("Parser::parseError -- applying error handler for frame master '%s'",
                   frame.m_owningToken->name().c_ize() );
 
-         frame.m_owningToken->errorHandler()( frame.m_owningToken, this );
+         resetNextToken();
          // we're done.
-         return;
+         if( frame.m_owningToken->errorHandler()( *frame.m_owningToken, *this ) )
+         {
+            // handled?
+            //_p->m_pframes->pop_back();
+            return;
+         }
       }
 
-      MESSAGE1( "Parser::parseError -- error handler not found in current frame" );
+      MESSAGE2( "Parser::parseError -- error handler not found in current frame" );
       _p->m_pframes->pop_back();
    }
 
-   MESSAGE1( "Parser::parseError -- error handler not found" );
+   // Then, scan the CURRENT STACK backward, and try to fix the latest error.
+   MESSAGE2( "Parser::parseError -- No handler frame found, trying on the stack." );
+   Private::TokenStack::reverse_iterator riter = _p->m_tokenStack->rbegin();
+   int pos = _p->m_tokenStack->size()-1;
+   while( riter != _p->m_tokenStack->rend() )
+   {
+      TokenInstance* ti = *riter;
+      if( ti->token().isNT() )
+      {
+         const NonTerminal* nt = static_cast<const NonTerminal*>( &ti->token() );
+         if( nt->errorHandler() != 0 )
+         {
+            // we found it.
+            addParseFrame( nt, pos );
+            TRACE1( "Parser::parseError -- stack now %s", dumpStack().c_ize() );
+            if( nt->errorHandler()( *nt, *this ) )
+            {
+               // handled
+               _p->m_pframes->pop_back();
+               return;
+            }
+            MESSAGE( "Parser::parseError -- handler refused to work" );
+            // nope, try again
+            _p->m_pframes->pop_back();
+         }
+      }
+      --pos;
+      ++riter;
+   }
+
+   MESSAGE2( "Parser::parseError -- error handler not found" );
    syntaxError();
 }
 
 
 bool Parser::applyPaths()
 {
-   MESSAGE( "Parser::applyPaths -- begin" );
+   MESSAGE1( "Parser::applyPaths -- begin" );
 
    bool bLooped = false;
 
@@ -797,7 +887,7 @@ bool Parser::applyPaths()
       Private::ParseFrame& frame = _p->m_pframes->back();
       if( frame.m_path.empty() )
       {
-         MESSAGE( "Parser::applyPaths -- current frame path is empty, need more tokens." );
+         MESSAGE2( "Parser::applyPaths -- current frame path is empty, need more tokens." );
          return false;
       }
 
@@ -815,7 +905,7 @@ bool Parser::applyPaths()
             addParseFrame(const_cast<NonTerminal*>(nt), _p->m_tokenStack->size()-1);
 
             // greedy rules always end with non-terminals
-            TRACE("Parser::applyPaths -- same arity, descending on greedy rule '%s' in '%s' ",
+            TRACE2("Parser::applyPaths -- same arity, descending on greedy rule '%s' in '%s' ",
                   currentRule->name().c_ize(), nt->name().c_ize());
             return false;
          }
@@ -823,13 +913,13 @@ bool Parser::applyPaths()
             || !currentRule->getTokenAt(currentRule->arity()-1)->isNT() )
          {
             applyCurrentRule();
-            TRACE("Parser::applyPaths -- Applied on same arity, stack: %s",
+            TRACE2("Parser::applyPaths -- Applied on same arity, stack: %s",
                dumpStack().c_ize() );
          }
          else
          {
             // else, we must wait for more tokens.
-            MESSAGE( "Parser::applyPaths -- Need more tokens (same arity), returning." );
+            MESSAGE2( "Parser::applyPaths -- Need more tokens (same arity), returning." );
             return false;
          }
       }
@@ -848,12 +938,12 @@ bool Parser::applyPaths()
          {
             // we can simplify.
             applyCurrentRule();
-            TRACE("Parser::applyPaths -- Applied on small arity, stack: %s",
+            TRACE2("Parser::applyPaths -- Applied on small arity, stack: %s",
                dumpStack().c_ize() );
          }
          else
          {
-            MESSAGE( "Parser::applyPaths -- small arity but considering prio/assoc" );
+            MESSAGE2( "Parser::applyPaths -- small arity but considering prio/assoc" );
 
             int frameDepth = frame.m_prioFrame; // better to cache it now
             int frameTokenPos = frameDepth - frame.m_nStackDepth;
@@ -873,21 +963,21 @@ bool Parser::applyPaths()
                if( frameDepth == frame.m_nStackDepth ||
                      !(*_p->m_tokenStack)[frameDepth]->token().isNT() )
                {
-                  MESSAGE( "Parser::applyPaths -- rule exausted at a lower priority, but no alternative around." );
+                  MESSAGE2( "Parser::applyPaths -- rule exausted at a lower priority, but no alternative around." );
                   applyCurrentRule();
-                  TRACE("Parser::applyPaths -- stack now: %s", dumpStack().c_ize());
+                  TRACE1("Parser::applyPaths -- applied with no alternives; stack now: %s", dumpStack().c_ize());
                }
                else
                {
-                  MESSAGE( "Parser::applyPaths -- rule exausted at a lower priority, putting frames forward." );
+                  MESSAGE2( "Parser::applyPaths -- rule exausted at a lower priority, putting frames forward." );
                   const NonTerminal* nt = static_cast<const NonTerminal*>(&(*_p->m_tokenStack)[frameDepth]->token());
                   addParseFrame(const_cast<NonTerminal*>(nt), frameDepth);
-                  TRACE("Parser::applyPaths -- stack now: %s", dumpStack().c_ize());
+                  TRACE1("Parser::applyPaths -- applied with forward frame; stack now: %s", dumpStack().c_ize());
                }
             }
             else if ( tok != 0 && tok->isNT() )
             {
-               TRACE("Parser::applyPaths -- small arity, descending into next token: %s",
+               TRACE2("Parser::applyPaths -- small arity, descending into next token: %s",
                   tok->name().c_ize());
 
                NonTerminal* nt = static_cast<NonTerminal*>(tok);
@@ -899,23 +989,23 @@ bool Parser::applyPaths()
       else
       {
          // we simply don't have enough tokens.
-         TRACE("Parser::applyPaths -- Need more tokens (larger arity %d > %d), returning.", rsize, tcount);
+         TRACE1("Parser::applyPaths -- Need more tokens (larger arity %d > %d), returning.", rsize, tcount);
          return false;
       }
 
       // if we're here, it means we applied at least one rule.
-      MESSAGE( "Parser::applyPaths -- Rule applied or added, looping again" );
+      MESSAGE2( "Parser::applyPaths -- Rule applied or added, looping again" );
 
       // now we must check if the effect of the reduction matches with the new
       // current rule, else we must either descend a find a matching rule or
       // declare failure.
-      if( ! _p->m_pframes->empty() )
+      if( ! _p->m_pframes->empty() && ! _p->m_tokenStack->empty() )
       {
          explorePaths();
       }
    }
 
-   TRACE("Parser::applyPaths -- frames completelty exausted (%s)",
+   TRACE1("Parser::applyPaths -- frames completelty exausted (%s)",
          bLooped ? "Having worked" : "Did nothing" );
    return bLooped;
 }
@@ -923,8 +1013,27 @@ bool Parser::applyPaths()
 
 void Parser::explorePaths()
 {
+   MESSAGE1( "Parser::explorePaths -- starting full search mode." );
+
    while( ! _p->m_pframes->empty() && ! findPaths(false) )
    {
+      TRACE1( "Parser::explorePaths -- adding error frame %d(%s); parser frames %d",
+         _p->m_pErrorFrames->size(),
+         //_p->m_pErrorFrames->empty() ? "none" : _p->m_pErrorFrames->back().m_path.back()->name().c_ize(),
+         _p->m_pErrorFrames->empty() ? "none" : _p->m_pErrorFrames->back().m_owningToken->name().c_ize(),
+         _p->m_pframes->size()
+         );
+      // failed on the same rule?
+      if( ! _p->m_pErrorFrames->empty() &&
+          _p->m_pframes->back().m_owningToken == _p->m_pErrorFrames->back().m_owningToken )
+      {
+         // we did loop.
+         TRACE1( "Parser::explorePaths -- repeated error frame on '%s' -- aborting.",
+               _p->m_pframes->back().m_owningToken->name().c_ize() );
+         parseError();
+         return;
+      }
+
       _p->m_pErrorFrames->push_back(_p->m_pframes->back());
       _p->m_pframes->pop_back();
    }
@@ -935,24 +1044,44 @@ void Parser::explorePaths()
       return;
    }
 
-   _p->m_pErrorFrames->clear();
+   MESSAGE1( "Parser::explorePaths -- clearing errors." );
+   //_p->m_pErrorFrames->clear();
 }
+
 
 void Parser::applyCurrentRule()
 {
+   Private::StateFrame& state = _p->m_lStates.back();
    Private::FrameStack* stack = _p->m_pframes;
    Private::ParseFrame& frame = stack->back();
    fassert( ! frame.m_path.empty() );
    const Rule* currentRule = frame.m_path.back();
-   size_t statesDepth=_p->m_lStates.size();
+   int frameId = state.m_id;
 
+   // If we apply, we know we have cleared all errors.
+   _p->m_pErrorFrames->clear();
    resetNextToken();
-   currentRule->apply(*this);
-   if(_p->m_lStates.size()<statesDepth)
+   TRACE1( "Applying rule %s -- state depth %d -- state id %d",
+      currentRule->name().c_ize(),
+      _p->m_lStates.size(),
+      frameId );
+
+   state.m_appliedRules++;
+   currentRule->apply(*this);   
+
+   TRACE3( "Applied rule %s -- state depth %d -- state id %d",
+      currentRule->name().c_ize(),
+      _p->m_lStates.size(),
+      _p->m_lStates.back().m_id );
+   // did we changed state?
+   if( frameId != _p->m_lStates.back().m_id )
    {
+      TRACE3( "Rule %s detect pop-state", currentRule->name().c_ize() );
       return;
    }
 
+   state.m_appliedRules--;
+   // the rule will be applied, so it's not in the path anymore.
    frame.m_path.pop_back();
    // eventually, pop the frame.
    if( frame.m_path.empty() )

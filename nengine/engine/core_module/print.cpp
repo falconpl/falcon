@@ -32,7 +32,7 @@ FuncPrintBase::FuncPrintBase( const String& name, bool ispl ):
 
 FuncPrintBase::~FuncPrintBase() {}
 
-void FuncPrintBase::apply( VMContext* ctx, int32 )
+void FuncPrintBase::invoke( VMContext* ctx, int32 )
 {
    TRACE1("Function print%s -- apply", m_nextStep.m_isPrintl ? "l" : "" );
    // [A]: create the space for op_toString
@@ -70,7 +70,8 @@ void FuncPrintBase::NextStep::printNext( VMContext* ctx, int count ) const
    int nParams = ctx->currentFrame().m_paramCount;
 
    // we inherit an extra topData() space from our caller (see [A])
-
+   // push ourselves only if not already pushed and being called again.
+   ctx->condPushCode(this);
    while( count < nParams )
    {
       Item* item = ctx->param(count);
@@ -82,17 +83,17 @@ void FuncPrintBase::NextStep::printNext( VMContext* ctx, int count ) const
       ctx->topData() = *item;
       ++count;
 
-      ctx->ifDeep(this);
+      ctx->currentCode().m_seqId = count;
       cls->op_toString( ctx, data );
-      if( ctx->wentDeep() )
+      if( ctx->wentDeep(this) )
       {
-         ctx->currentCode().m_seqId = count;
          return;
       }
 
       TRACE3("Function print%s -- printNext", m_isPrintl ? "l" : "" );
       out->write(*ctx->topData().asString());
    }
+   ctx->popCode();
 
    if (m_isPrintl)
    {

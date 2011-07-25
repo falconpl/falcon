@@ -55,7 +55,7 @@ bool generic_simplify( Item& value, Expression* m_first, Expression* m_second )
 
 // Inline class to apply
 template <class __CPR >
-void generic_apply_( const PStep* ps, VMContext* ctx )
+void generic_apply_( const PStep* DEBUG_ONLY(ps), VMContext* ctx )
 {
    TRACE2( "Apply \"%s\"", ((ExprCompare*)ps)->describe().c_ize() );
 

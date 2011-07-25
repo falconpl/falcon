@@ -67,12 +67,23 @@ public:
    */
    Module* module() const { return m_module; }
 
+   /** Removes the link between a function and a module.
+    Used by the module destructor do prevent de-referencing during destruction.
+   */
+   void detachModule() {m_module = 0;}
+
    void methodOf( Class* cls ) { m_methodOf = cls; }
    Class* methodOf() const { return m_methodOf; }
 
 
    /** Returns the name of this function. */
    const String& name() const { return m_name; }
+
+   /** Renames the function.
+    \param n The new name of the function.
+    \note Will throw an assertion if already stored in a module.
+    */
+   void name( const String& n ) { m_name = n; }
 
    /** Sets the signature of the function.
     \param sign A string with the expected parameters of the function.
@@ -117,14 +128,18 @@ public:
     The call execution may be either immediate or deferred; for example,
     the call may just leaves PSteps to be executed by the virtual machine.
 
-    In case of deferred calls, apply must also push proper return PStep codes.
-    In case of immediate calls, apply() must also perform the return frame
-    code in the virtual machine by calling VMachine::returnFrame().
+    In case of deferred calls, invoke() must also push proper return PStep codes.
+    In case of immediate calls, invoke() must also perform the return frame
+    code in the virtual machine by calling VMcontext::returnFrame().
+
+    To "return" a value to the caller, set the value of the VMcontext::topData()
+    item after invoking the return frame, or use the 
+    VMcontext::returnFrame(const Item&) version.
     */
-   virtual void apply( VMContext* ctx, int32 pCount = 0 ) = 0;
+   virtual void invoke( VMContext* ctx, int32 pCount = 0 ) = 0;
 
    /** Just candy grammar for this->apply(vm); */
-   void operator()( VMContext* ctx ) { apply(ctx); }
+   void operator()( VMContext* ctx ) { invoke(ctx); }
 
    /** Return true if this function is deterministic.
     \return true if the function is deterministic.

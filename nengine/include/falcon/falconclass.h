@@ -18,9 +18,9 @@
 
 #include <falcon/setup.h>
 #include <falcon/string.h>
-#include <falcon/enumerator.h>
-#include <falcon/class.h>
-#include <falcon/pstep.h>
+#include <falcon/overridableclass.h>
+#include <falcon/statement.h>
+#include <falcon/synfunc.h>
 
 namespace Falcon
 {
@@ -33,9 +33,11 @@ class DataReader;
 class DataWriter;
 class FalconState;
 class Expression;
-class ClassClass;
+class MetaClass;
+class HyperClass;
 class VMContext;
 class PCode;
+
 
 /** Class defined by a Falcon script.
 
@@ -77,7 +79,7 @@ class PCode;
  instance during the link process, while resolving external symbols.
  
  */
-class FALCON_DYN_CLASS FalconClass: public Class
+class FALCON_DYN_CLASS FalconClass: public OverridableClass
 {
 public:
 
@@ -99,10 +101,14 @@ public:
          t_state
       } Type;
 
+      String m_name;
       Type m_type;
       Value m_value;
 
-      inline Property( size_t value ):
+      Property( const Property& other );
+      
+      inline Property( const String& name, size_t value ):
+         m_name( name ),
          m_type(t_prop),
          m_expr(0),
          m_preExpr(0)
@@ -110,31 +116,12 @@ public:
          m_value.id = value;
       }
 
-      Property( size_t value, Expression* expr );
+      Property( const String& name, size_t value, Expression* expr );
 
-      inline Property( Function* value ):
-         m_type(t_func),
-         m_expr(0),
-         m_preExpr(0)
-      {
-         m_value.func = value;
-      }
-
-      inline Property( Inheritance* value ):
-         m_type(t_inh),
-         m_expr(0),
-         m_preExpr(0)
-      {
-         m_value.inh = value;
-      }
-
-      inline Property( FalconState* value ):
-         m_type(t_state),
-         m_expr(0),
-         m_preExpr(0)
-      {
-         m_value.state = value;
-      }
+      Property( Function* value );
+      Property( Inheritance* value );
+      Property( FalconState* value );
+      
 
       ~Property();
 
@@ -147,7 +134,8 @@ public:
        \return a valid PCode or 0 if this is not an expression.
        */
       Expression* expression() const { return m_expr; }
-      
+
+      Property* clone() const { return new Property(*this); }
    private:
       Expression* m_expr;
       PCode* m_preExpr;
@@ -241,13 +229,35 @@ public:
 
    /** Adds a parent and the parentship declaration.
     \param inh The inheritance declaration.
-    \return true If the init was not given, false if another init was already set.
+    \return true If the name of the remote class is free, false if it was
+                 already assigned.
+
     The parentship delcaration carries also declaration for the parameters
     and the expressions needed to create the instances.
 
     The ownership of the inheritance records is held by this FalconClass.
+
+    Inheritances may be initially unresolved; this is accounted by this FalconClass.
+    When all the inheritances have been resolved through resolveInheritance,
+    the class is automatically finalized (it's components are setup).
     */
    bool addParent( Inheritance* inh );
+
+   /** Adds a parent and the parentship declaration.
+    \param name The name of the inheritance.
+    \param parent The parent of this class.
+    \return true If the init was not given, false if another init was already set.
+
+    The parentship delcaration carries also declaration for the parameters
+    and the expressions needed to create the instances.
+
+    The ownership of the inheritance records is held by this FalconClass.
+
+    Inheritances may be initially unresolved; this is accounted by this FalconClass.
+    When all the inheritances have been resolved through resolveInheritance,
+    the class is automatically finalized (it's components are setup).
+    */
+   bool resolveInheritance( const String& name, Class* parent );
 
    /** Gets a member of this class.
     \param name The name of the member to be returned.
@@ -293,15 +303,6 @@ public:
    */   
    bool addState( FalconState* state );
 
-   /** Serialize this class to a writers. */
-   void serialize( DataWriter* dw ) const;
-   
-   /** Deserialize this class from a reader.
-    \param dr The reader
-    This method is meant to be called.
-    */
-   void deserialize( DataReader* dr );
-
    /** List the members in this class having property semantics.
      @param cb A callback function receiving one property at a time.
 
@@ -318,9 +319,7 @@ public:
    // Overrides from Class
    //
 
-   //=========================================
-   // Instance management
-
+   virtual Class* getParent( const String& name ) const;
    virtual void dispose( void* self ) const;
    virtual void* clone( void* source ) const;
    virtual void serialize( DataWriter* stream, void* self ) const;
@@ -336,77 +335,113 @@ public:
     This is used to mark the default values of the class, if
     there is one or more deep item in the class.
     */
-   virtual void gcMark( uint32 mark ) const;
+   virtual void gcMarkMyself( uint32 mark ) const;
 
    virtual void gcMark( void* self, uint32 mark ) const;
 
-   /** List all the properties in this class.
-     @param self An instance (actually, it's unused as the class knows its properties).
-     @param cb A callback function receiving one property at a time.
-    */
    virtual void enumerateProperties( void* self, PropertyEnumerator& cb ) const;
+   virtual void enumeratePV( void* self, PVEnumerator& cb ) const;
    virtual bool hasProperty( void* self, const String& prop ) const;
    virtual void describe( void* instance, String& target, int depth = 3, int maxlen = 60 ) const;
+
+ 
+   /** Creates the constructor or returns it if it's already here. */
+   SynFunc* makeConstructor();
+
+   /** Return the constructor of this class. */
+   SynFunc* constructor() const { return m_constructor; }
+   
+   /** Create the class structure compiling it from its parents.
+    \param bHiddenParents If true, we have some parents that might not
+    be in our parent list.
+    \return false if there is still some unknown parent,
+            true if the construction process is complete.
+
+    This is called by the VM after all the missing parents have been
+    found, provided that all the parents are declared as FalconClass subclasses.
+
+    If some of the parents are not FalconClass, the engine must generate an
+    hyperclass out of this falcon class.
+    
+    This method may destroy the constructor (or return succesfully without
+    actually creating it) if it detects that we have no parents and we don't
+    have nothing to be initialized. If bHiddenParents If true, we have some
+    parents that might not be in our parent list. This means that the symbol
+    talbe of our constructor might be in use; so it means that the constructor
+    must not be disposed of if already existing.
+    */
+   bool construct( bool bHiddenParents = false );
+
+   /** Return the count of currently unknown parents.
+    \return The count of unresolved inheritances.
+    */
+   int missingParents() const { return m_missingParents; }
+
+   /** Check if all the declared inheritances are pure falcon classes.
+    \return True if this class can be generated as a Falcon Class.
+
+    To construct a Fa
+
+    */
+   bool isPureFalcon() const { return m_bPureFalcon; }
+
+   /** Construct this class as an hyperclass.
+    \return an HyperClass representing this FalconClass.
+    \note after this call, the returned hyperclass is the sole owner of this
+          FalconClass instance. Every other reference to this FalconClass
+          should be abandoned.
+    */
+   HyperClass* hyperConstruct();
+
+   /** Called back by an inheritance when it gets resolved.
+    \param inh The inheritance that has been just resolved.
+    
+    When a foreign inheritance of a class gets resolved during the link
+    phase, the parent need to know about this fact to prepare itself.
+
+    The inheritance determines if the owner is a falcon class, and in case
+    it is, it calls back this method.
+
+    \note The class hierarcy itself doesn't need to know about resovled
+    inheritances, as normally the classes can be formed only when all their
+    components are known. Third party user-classes must pre-load the
+    required components and pre-resolve their dependencies. Prototypes
+    are created at runtime when all the dependencies are known, and hyperclasses
+    follow the rules of third party classes. In short, the only class type that
+    supports forward definition of parentship is FalconClass.
+    
+    On a FalconClass instance, this determines if the class is a pure
+    FalconClass or needs to be transformed in an HyperClass.
+    */
+   virtual void onInheritanceResolved( Inheritance* inh );
 
    //=========================================================
    // Operators.
    //
 
    virtual void op_create( VMContext* ctx, int32 pcount ) const;
-   virtual void op_neg( VMContext* ctx, void* self ) const;
-   virtual void op_add( VMContext* ctx, void* self ) const;
-   virtual void op_sub( VMContext* ctx, void* self ) const;
-   virtual void op_mul( VMContext* ctx, void* self ) const;
-   virtual void op_div( VMContext* ctx, void* self ) const;
-   virtual void op_mod( VMContext* ctx, void* self ) const;
-   virtual void op_pow( VMContext* ctx, void* self ) const;
-   virtual void op_aadd( VMContext* ctx, void* self) const;
-   virtual void op_asub( VMContext* ctx, void* self ) const;
-   virtual void op_amul( VMContext* ctx, void* self ) const;
-   virtual void op_adiv( VMContext* ctx, void* self ) const;
-   virtual void op_amod( VMContext* ctx, void* self ) const;
-   virtual void op_apow( VMContext* ctx, void* self ) const;
-   virtual void op_inc( VMContext* ctx, void* self ) const;
-   virtual void op_dec( VMContext* ctx, void* self) const;
-   virtual void op_incpost( VMContext* ctx, void* self ) const;
-   virtual void op_decpost( VMContext* ctx, void* self ) const;
-   virtual void op_getIndex( VMContext* ctx, void* self ) const;
-   virtual void op_setIndex( VMContext* ctx, void* self ) const;
    virtual void op_getProperty( VMContext* ctx, void* self, const String& prop) const;
    virtual void op_setProperty( VMContext* ctx, void* self, const String& prop ) const;
-   virtual void op_compare( VMContext* ctx, void* self ) const;
-   virtual void op_isTrue( VMContext* ctx, void* self ) const;
-   virtual void op_in( VMContext* ctx, void* self ) const;
-   virtual void op_provides( VMContext* ctx, void* self, const String& property ) const;
-   virtual void op_call( VMContext* ctx, int32 paramCount, void* self ) const;
-   virtual void op_toString( VMContext* ctx, void* self ) const;
 
 private:
-   inline void override_unary( VMContext* ctx, void*, int op_id, const String& opName ) const;
-   inline void override_binary( VMContext* ctx, void*, int op_id, const String& opName ) const;
-   
+
    class Private;
    Private* _p;
       
    String m_fc_name;
    Function* m_init;
+   SynFunc* m_constructor;
+
    Function** m_overrides;
 
    bool m_shouldMark;
    bool m_hasInitExpr;
    bool m_hasInit;
-
-   // This is used to remove the topmost stack data in some op_ operands
-   class RemoveSelf: public PStep
-   {
-   public:
-      RemoveSelf() { apply = apply_; }
-      static void apply_( const PStep*, VMContext* );
-   };   
-   RemoveSelf m_removeSelf;   
+   int m_missingParents;
+   bool m_bPureFalcon;
 
    // This is used to initialize the init expressions.
-   class PStepInitExpr: public PStep
+   class PStepInitExpr: public Statement
    {
    public:
       PStepInitExpr( FalconClass* o );
@@ -418,7 +453,7 @@ private:
    PStepInitExpr m_initExprStep;
 
    // This is used to invoke 
-   class PStepInit: public PStep
+   class PStepInit: public Statement
    {
    public:
       PStepInit( FalconClass* o );
@@ -429,9 +464,8 @@ private:
    };
 
    PStepInit m_initFuncStep;
-
+   
    friend class PStepInitExpr;
-   friend class CoreClass;
 };
 
 }

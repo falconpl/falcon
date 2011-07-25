@@ -69,18 +69,27 @@ public:
 
 #ifdef _MSC_VER
 	#if _MSC_VER < 1299
+	#define flagLiteral 0x01
 	#define flagIsGarbage 0x02
 	#define flagIsOob 0x04
-	#define flagLiteral 0x08
+	#define flagLast 0x08
+	#define flagContinue 0x10
+	#define flagBreak 0x20
 	#else
+	   static const byte flagLiteral = 0x01;
 	   static const byte flagIsGarbage = 0x02;
 	   static const byte flagIsOob = 0x04;
-	   static const byte flagLiteral = 0x08;
+	   static const byte flagLast = 0x08;
+	   static const byte flagContinue = 0x10;
+	   static const byte flagBreak = 0x20;
 	#endif
 #else
+   static const byte flagLiteral = 0x01;
    static const byte flagIsGarbage = 0x02;
    static const byte flagIsOob = 0x04;
-   static const byte flagLiteral = 0x08;
+   static const byte flagLast = 0x08;
+   static const byte flagContinue = 0x10;
+   static const byte flagBreak = 0x20;
 #endif
 
 public:
@@ -247,8 +256,13 @@ public:
       content.data.ptr.pInst = f;
    }
 
-   inline Item( Class* cls, void* inst ) {
+   inline Item( const Class* cls, void* inst ) {
        setUser( cls, inst );
+   }
+
+   inline Item( const Class* cls, void* inst, bool ) {
+       setUser( cls, inst );
+       content.base.bits.flags |= flagIsGarbage;
    }
 
    inline void setUser( const Class* cls, void* inst )
@@ -256,6 +270,14 @@ public:
        type( FLC_ITEM_USER );
        content.data.ptr.pInst = inst;
        content.data.ptr.pClass = (Class*) cls;
+   }
+
+   inline void setUser( const Class* cls, void* inst, bool )
+   {
+       type( FLC_ITEM_USER );
+       content.data.ptr.pInst = inst;
+       content.data.ptr.pClass = (Class*) cls;
+       garbage();
    }
 
    inline Item( GCToken* token )
@@ -530,6 +552,14 @@ public:
    void flagsOn( byte b ) { content.base.bits.flags |= b; }
    void flagsOff( byte b ) { content.base.bits.flags &= ~b; }
 
+   bool isLast() const { return (content.base.bits.flags | flagLast ) != 0; }
+   bool isBreak() const { return (content.base.bits.flags | flagBreak ) != 0; }
+   bool isContinue() const { return (content.base.bits.flags | flagContinue ) != 0; }
+
+   void setLast() { content.base.bits.flags |= flagLast; }
+   void setBreak() { content.base.bits.flags |= flagBreak; }
+   void setContinue() { content.base.bits.flags |= flagContinue; }
+
 
    /** Clone the item.
       If the item is not cloneable, the method returns false. Is up to the caller to
@@ -572,6 +602,11 @@ public:
       return false;
    }
 
+   ItemArray* asArray() const
+   {
+      return (ItemArray*) asInst();
+   }
+
    
    /** Gets the class and instance from any item.
      \param cls The class of this deep or user item.
@@ -608,7 +643,7 @@ public:
    // Is string?
    //
    
-   bool isString( String*& str )
+   bool isString( String*& str ) const
    {
       Class* cls;
       if ( asClassInst( cls, (void*&)str ) )
@@ -618,7 +653,7 @@ public:
       return false;
    }
 
-   String* asString()
+   String* asString() const
    {
       Class* cls;
       void* udata;

@@ -17,6 +17,7 @@
 #include <falcon/vm.h>
 #include <falcon/vmcontext.h>
 #include <falcon/itemid.h>
+#include <falcon/error.h>
 
 namespace Falcon {
 namespace Ext {
@@ -33,7 +34,7 @@ TypeId::~TypeId()
 {
 }
 
-void TypeId::apply( VMContext* ctx, int32 )
+void TypeId::invoke( VMContext* ctx, int32 )
 {
    Item *elem;
    if ( ctx->isMethodic() )
@@ -54,14 +55,12 @@ void TypeId::apply( VMContext* ctx, int32 )
    
    if( elem->asClassInst( cls, data ) )
    {
-      ctx->retval( cls->typeID() );
+      ctx->returnFrame( cls->typeID() );
    }
    else
    {
-      ctx->retval( elem->type() );
+      ctx->returnFrame( elem->type() );
    }
-
-   ctx->returnFrame();
 }
 
 void TypeId::Invoke::apply_( const PStep*, VMContext* ctx  )

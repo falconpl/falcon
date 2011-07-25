@@ -47,6 +47,7 @@ public:
 
    virtual void gcMark( void* self, uint32 mark ) const;
    virtual void enumerateProperties( void* self, PropertyEnumerator& cb ) const;
+   virtual void enumeratePV( void* self, PVEnumerator& cb ) const;
 
    //=============================================================
 

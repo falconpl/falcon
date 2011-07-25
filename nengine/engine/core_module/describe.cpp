@@ -37,7 +37,7 @@ Describe::~Describe()
 {
 }
 
-void Describe::apply( VMContext* ctx, int32 )
+void Describe::invoke( VMContext* ctx, int32 )
 {
    Item* elem, *md, *ml;
    if ( ctx->isMethodic() )
@@ -72,8 +72,7 @@ void Describe::apply( VMContext* ctx, int32 )
 
    String* theString = new String;
    elem->describe( *theString, maxDepth, maxLen );
-   ctx->retval( theString->garbage() );
-   ctx->returnFrame();
+   ctx->returnFrame( theString->garbage() );
 }
 
 }

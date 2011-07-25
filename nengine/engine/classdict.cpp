@@ -16,14 +16,12 @@
 #include <falcon/classdict.h>
 #include <falcon/itemid.h>
 #include <falcon/vmcontext.h>
+#include <falcon/itemdict.h>
 
-#include <map>
 
 #include "falcon/accesserror.h"
 
 namespace Falcon {
-
-typedef std::map<Item, Item> ItemDictionary;
 
 ClassDict::ClassDict():
    Class("Dictionary", FLC_CLASS_ID_DICT )
@@ -38,15 +36,14 @@ ClassDict::~ClassDict()
 
 void ClassDict::dispose( void* self ) const
 {
-   ItemDictionary* f = static_cast<ItemDictionary*>(self);
+   ItemDict* f = static_cast<ItemDict*>(self);
    delete f;
 }
 
 
 void* ClassDict::clone( void* source ) const
 {
-   ItemDictionary* array = static_cast<ItemDictionary*>(source);
-   return new ItemDictionary(*array);
+   return static_cast<ItemDict*>(source)->clone();
 }
 
 
@@ -69,62 +66,17 @@ void ClassDict::describe( void* instance, String& target, int maxDepth, int maxL
       target = "...";
       return;
    }
-   
-   ItemDictionary* dict = static_cast<ItemDictionary*>(instance);
-   target.size(0);
-   ItemDictionary::iterator iter = dict->begin();
-   String temp;
-   while( iter != dict->end() )
-   {
-      if( target.size() == 0 )
-      {
-         target += "[";
-      }
-      else
-      {
-         target += ", ";
-      }
 
-      Class* cls;
-      void* inst;
-
-      temp.size(0);
-      iter->first.forceClassInst(cls, inst);
-      cls->describe( inst, temp, maxDepth - 1, maxLen );
-      target += temp;
-      target += " => ";
-
-      temp.size(0);
-      iter->second.forceClassInst(cls, inst);
-      cls->describe( inst, temp, maxDepth - 1, maxLen );
-      target += temp;
-   }
-
-   target += "]";
+   ItemDict* dict = static_cast<ItemDict*>(instance);
+   dict->describe(target, maxDepth, maxLen);
 }
 
 
 
 void ClassDict::gcMark( void* self, uint32 mark ) const
 {
-   ItemDictionary& dict = *static_cast<ItemDictionary*>(self);
-   ItemDictionary::iterator pos = dict.begin();
-   while( pos != dict.end() )
-   {
-      const Item& key = pos->first;
-      const Item& value = pos->second;
-      if( key.isUser() && key.isGarbaged() )
-      {
-         key.asClass()->gcMark(key.asInst(), mark);
-      }
-
-      if( value.isUser() && value.isGarbaged() )
-      {
-         value.asClass()->gcMark(value.asInst(), mark);
-      }
-
-      ++pos;
-   }
+   ItemDict& dict = *static_cast<ItemDict*>(self);
+   dict.gcMark( mark );
 }
 
 void ClassDict::enumerateProperties( void*, PropertyEnumerator& cb ) const
@@ -132,12 +84,17 @@ void ClassDict::enumerateProperties( void*, PropertyEnumerator& cb ) const
    cb("len", true);
 }
 
+void ClassDict::enumeratePV( void*, Class::PVEnumerator& ) const
+{
+   // EnumerateVP doesn't normally return static methods.
+}
+
 //=======================================================================
 //
 void ClassDict::op_create( VMContext* ctx, int pcount ) const
 {
    static Collector* coll = Engine::instance()->collector();
-   ctx->stackResult( pcount + 1, FALCON_GC_STORE( coll, this, new ItemDictionary ) );
+   ctx->stackResult( pcount + 1, FALCON_GC_STORE( coll, this, new ItemDict ) );
 }
 
 void ClassDict::op_add( VMContext*, void* ) const
@@ -147,13 +104,13 @@ void ClassDict::op_add( VMContext*, void* ) const
 
 void ClassDict::op_isTrue( VMContext* ctx, void* self ) const
 {
-   ctx->stackResult( 1, static_cast<ItemDictionary*>(self)->size() != 0 );
+   ctx->stackResult( 1, static_cast<ItemDict*>(self)->size() != 0 );
 }
 
 void ClassDict::op_toString( VMContext* ctx, void* self ) const
 {
    String s;
-   s.A("[Dictionary of ").N((int64)static_cast<ItemDictionary*>(self)->size()).A(" elements]");
+   s.A("[Dictionary of ").N((int64)static_cast<ItemDict*>(self)->size()).A(" elements]");
    ctx->stackResult( 1, s );
 }
 
@@ -168,12 +125,12 @@ void ClassDict::op_getIndex( VMContext* ctx, void* self ) const
    Item *index, *dict_item;
    ctx->operands( index, dict_item );
 
-   ItemDictionary& dict = *static_cast<ItemDictionary*>(self);
-   ItemDictionary::iterator pos = dict.find(*index);
-   
-   if( pos != dict.end() )
+   ItemDict& dict = *static_cast<ItemDict*>(self);
+   Item* result = dict.find( *index );
+
+   if( result != 0 )
    {
-      ctx->stackResult( 2, pos->second );
+      ctx->stackResult( 2, *result );
    }
    else
    {
@@ -186,8 +143,8 @@ void ClassDict::op_setIndex( VMContext* ctx, void* self ) const
    Item *value, *index, *dict_item;
    ctx->operands( value, index, dict_item );
 
-   ItemDictionary& dict = *static_cast<ItemDictionary*>(self);
-   dict[*index] = *value;
+   ItemDict& dict = *static_cast<ItemDict*>(self);
+   dict.insert( *index, *value );
    ctx->stackResult(3, *value);
 }
 

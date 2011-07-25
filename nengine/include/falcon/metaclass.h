@@ -1,8 +1,8 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: classclass.h
+   FILE: metaclass.h
 
-   Handler for classes defined by a Falcon script.
+   Handler for class instances.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: Sat, 04 Jun 2011 16:04:20 +0200
@@ -13,8 +13,8 @@
    See LICENSE file for licensing details.
 */
 
-#ifndef _FALCON_CLASSCLASS_H_
-#define _FALCON_CLASSCLASS_H_
+#ifndef _FALCON_METACLASS_H_
+#define _FALCON_METACLASS_H_
 
 #include <falcon/setup.h>
 #include <falcon/class.h>
@@ -30,12 +30,12 @@ namespace Falcon
  are stored.
  
  */
-class FALCON_DYN_CLASS ClassClass: public Class
+class FALCON_DYN_CLASS MetaClass: public Class
 {
 public:
 
-   ClassClass();
-   virtual ~ClassClass();
+   MetaClass();
+   virtual ~MetaClass();
 
    virtual void dispose( void* self ) const;
    virtual void* clone( void* source ) const;
@@ -56,6 +56,6 @@ public:
 
 }
 
-#endif /* _FALCON_CLASSCLASS_H_ */
+#endif /* _FALCON_METACLASS_H_ */
 
-/* end of coreclass.h */
+/* end of metaclass.h */

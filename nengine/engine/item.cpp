@@ -166,7 +166,7 @@ void Item::describe( String &target, int maxDepth, int maxLength ) const
 
          Item old = *this;
          old.unmethodize();
-         old.describe( temp, maxDepth-1, maxLength );
+         old.describe( temp, 0, maxLength );
          target += temp + ".";
          temp = "";
 

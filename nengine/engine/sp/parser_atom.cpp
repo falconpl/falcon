@@ -88,12 +88,8 @@ void apply_Atom_String ( const Rule&, Parser& p )
    // get the string and it's class, to generate a static UserValue
    String* s = ti->detachString();
    // tell the context that we have a new string around.
-   ctx->onStaticData( sc, s );
-
-   // set it in the expression
-   Item itm;
-   itm.setUser( sc, s );
-   ti2->setValue( new ExprValue(itm), expr_deletor );
+   Expression* res = ctx->onStaticData( sc, s );
+   ti2->setValue( res, expr_deletor );
 
    // remove the token in the stack.
    p.simplify(1,ti2);

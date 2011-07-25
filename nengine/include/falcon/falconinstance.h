@@ -66,7 +66,7 @@ public:
     \see FalconClass
 
     */
-   void getMember( const String& name, Item& target ) const;
+   bool getMember( const String& name, Item& target ) const;
 
    /** Sets the value of a property.
     \param name The name of the property to be queried.
