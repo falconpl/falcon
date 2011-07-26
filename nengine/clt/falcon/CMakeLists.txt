@@ -67,4 +67,4 @@ target_link_libraries(falcon
   ${READLINE_LIBRARY}
 )
 
-install( TARGETS falcon ${FALCON_INSTALL_DESTINATIONS})
+install( TARGETS falcon DESTINATION ${FALCON_INSTALL_DESTINATIONS})

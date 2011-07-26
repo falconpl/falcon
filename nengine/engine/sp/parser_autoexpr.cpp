@@ -143,7 +143,7 @@ void apply_stmt_assign_list( const Rule&, Parser& p )
             // accept this item -- abandon it from the list
             ctx->defineSymbols(expr);
             unpack->addAssignand(static_cast<ExprSymbol*>(expr)->symbol());
-            //++iterRight;
+            ++iterRight;
          }
           // don't clear the right side list, we got the symbols -- let the expr to die
       }
