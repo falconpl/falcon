@@ -18,7 +18,63 @@
 #include <histedit.h>
 #include <falcon/textreader.h>
 
+#include <set>
+#include <locale.h>
+
 using namespace Falcon;
+
+static wchar_t prompt_now[32];
+
+static wchar_t *
+prompt_func(EditLine *)
+{
+	return prompt_now;
+}
+
+
+static unsigned char
+complete_func(EditLine *el, int)
+{
+   static std::set<String> m_stdFunctions;
+   if ( m_stdFunctions.empty() )
+   {
+      m_stdFunctions.insert( "len" );
+      m_stdFunctions.insert( "toString" );
+      m_stdFunctions.insert( "clone" );
+   }
+   
+	const wchar_t *ptr;
+	const LineInfoW *lf = el_wline(el);
+	unsigned char res;
+
+	/* Find the last word */
+	for (ptr = lf->cursor -1; ptr > lf->buffer; --ptr)
+   {
+      if( String::isWhiteSpace(*ptr) || *ptr == '(' || *ptr == '.'  )
+      {
+         ++ptr;
+         break;
+      }
+   }
+   
+	/* Scan directory for matching name */
+   std::set<String>::iterator pos = m_stdFunctions.begin();
+   while( pos != m_stdFunctions.end() )
+   {
+		if (pos->find( ptr ) == 0 ) 
+      {
+         el_deletestr( el, lf->cursor - ptr );
+			if (el_insertstr(el, pos->c_ize()) == -1)
+				res = CC_ERROR;
+			else
+				res = CC_REFRESH;
+			break;
+		}
+      ++pos;
+	}
+
+	return res;
+}
 
 
 bool IntMode::read_line( const String& prompt, String &line )
@@ -28,15 +84,32 @@ bool IntMode::read_line( const String& prompt, String &line )
    static HistoryW *hist = 0;
    static HistEventW ev;
    
+   // create the history.
    if( el == 0 )
    {
-      el = el_init("falcon", stdin, stdout, stderr);
+      setlocale(LC_ALL, "");
+      el = el_init("falcon", stdin, stdout, stderr);      
       hist = history_winit();
+      history_w(hist, &ev, H_SETSIZE, 5000);
+      el_wset(el, EL_HIST, history_w, hist);
+      
+      el_wset(el, EL_EDITOR, L"emacs");
+      el_wset(el, EL_SIGNAL, 1);		/* Handle signals gracefully */
+      el_wset(el, EL_PROMPT_ESC, prompt_func, '\1'); /* Set the prompt function */
+
+      /* Add a user-defined function	*/
+      el_wset(el, EL_ADDFN, L"ed-complete", L"Complete argument", complete_func);
+
+		/* Bind <tab> to it */
+      el_wset(el, EL_BIND, L"^I", L"ed-complete", NULL);
+
+      /* Source the user's defaults file. */
+      el_source(el, NULL);
    }
 
-   m_vm.textOut()->write(prompt);
-   m_vm.textOut()->flush();
-   
+   // set the prompt.
+   prompt.toWideString( prompt_now, sizeof( prompt_now ) / sizeof(wchar_t) );   
+      
    int maxSize = 4096; 
    line.reserve( maxSize );
    line.size(0);   
@@ -45,10 +118,8 @@ bool IntMode::read_line( const String& prompt, String &line )
    {
      if (maxSize > 0 )
      { 
-        line += wline;
-        //add_history(buf);
-        history_w(hist, &ev, H_APPEND, wline);
-        
+        line += wline;        
+        history_w(hist, &ev, H_ENTER, wline);        
      }
      return true;
    }

@@ -31,7 +31,12 @@ class FalconApp: public Falcon::Application
 {
 
 public:
-   void guardAndGo();
+   int m_exitValue;
+   FalconOptions m_options;
+   
+   FalconApp();
+   
+   void guardAndGo( int argc, char* argv[] );
    void interactive();
 };
 

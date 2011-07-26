@@ -24,9 +24,19 @@ using namespace Falcon;
 //==============================================================
 // The application
 //
+FalconApp::FalconApp():
+   m_exitValue(0)
+{}
 
-void FalconApp::guardAndGo()
+void FalconApp::guardAndGo( int argc, char* argv[] )
 {
+   int scriptPos;
+   m_options.parse( argc, argv, scriptPos );
+   if( m_options.m_justinfo )
+   {
+      return;
+   }
+   
    TextWriter out(new StdOutStream);
    try {
       interactive();
@@ -46,14 +56,14 @@ void FalconApp::interactive()
 }
 
 
-int main( int , char* [] )
+int main( int argc, char* argv[] )
 {
    TRACE_ON();
 
    FalconApp app;
-   app.guardAndGo();
-
-   return 0;
+   app.guardAndGo( argc, argv );
+   
+   return app.m_exitValue;
 }
 
 /* end of falcon.cpp */
