@@ -17,7 +17,7 @@
 
 using namespace Falcon;
 
-void IntMode::read_line( const String& prompt, String &line )
+bool IntMode::read_line( const String& prompt, String &line )
 {
    m_vm.textOut()->write(prompt);
    m_vm.textOut()->flush();
@@ -26,7 +26,7 @@ void IntMode::read_line( const String& prompt, String &line )
    line.reserve( maxSize );
    line.size(0);
    uint32 chr;
-   while ( line.length() < maxSize && ( chr = m_vm->textIn()->getChar() ) != TextReader::NoChar )
+   while ( line.length() < maxSize && ( chr = m_vm.textIn()->getChar() ) != TextReader::NoChar )
    {
       if ( chr == '\r' )
          continue;
@@ -34,4 +34,6 @@ void IntMode::read_line( const String& prompt, String &line )
          break;
       line += chr;
    }
+
+   return true;
 }
