@@ -205,7 +205,7 @@ set(Falcon_CMAKE_DIR "${FALCON_CMAKE_DIR}")
 #########################################################################
 # RPATH(Linux) and install_name(OSX)
 #
-option(DISABLE_RPATH "http://wiki.debian.org/RpathIssue" on)
+option(DISABLE_RPATH "http://wiki.debian.org/RpathIssue" OFF)
 if(NOT DISABLE_RPATH)
   # Always find libfalcon_engine.so in build and install tree, without LD_LIBRARY_PATH.
   set(CMAKE_SKIP_BUILD_RPATH  false)

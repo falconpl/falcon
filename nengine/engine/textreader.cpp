@@ -384,10 +384,10 @@ int TextReader::findFirstToken( struct token* toks, int tcount, length_t& pos )
 
 char_t TextReader::getChar()
 {
-   if( m_pushedChr != (char_t)-1 )
+   if( m_pushedChr != NoChar )
    {
       char_t tmp = m_pushedChr;
-      m_pushedChr = (char_t)-1;
+      m_pushedChr = NoChar;
       return tmp;
    }
 

@@ -17,15 +17,16 @@
 
 using namespace Falcon;
 
-void IntMode::read_line(String &line, const char* prompt)
+void IntMode::read_line( const String& prompt, String &line )
 {
-   m_owner->m_stdOut->writeString(prompt);
-   m_owner->m_stdOut->flush();
-   uint32 maxSize = 1024; 
+   m_vm.textOut()->write(prompt);
+   m_vm.textOut()->flush();
+   
+   uint32 maxSize = 4096; 
    line.reserve( maxSize );
    line.size(0);
    uint32 chr;
-   while ( line.length() < maxSize && m_owner->m_stdIn->get( chr ) )
+   while ( line.length() < maxSize && ( chr = m_vm->textIn()->getChar() ) != TextReader::NoChar )
    {
       if ( chr == '\r' )
          continue;

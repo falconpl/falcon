@@ -17,126 +17,36 @@
 #include <falcon/falcon.h>
 #include <falcon/trace.h>
 
+#include "int_mode.h"
+
 using namespace Falcon;
 
 //==============================================================
 // The application
 //
 
-class FalconApp: public Falcon::Application
+void FalconApp::guardAndGo()
 {
-
-public:
-   void guardAndGo()
-   {
-      TextWriter out(new StdOutStream);
-      try {
-         go();
-      }
-      catch( Error* e )
-      {
-         out.write( "Caught: " + e->describe() +"\n");
-         e->decref();
-      }
+   TextWriter out(new StdOutStream);
+   try {
+      interactive();
    }
-
-   
-   
-void interactive()
-{
-   // prepare to trace the GC.
-#if FALCON_TRACE_GC
-   Engine::instance()->collector()->trace( true );
-#endif
-
-   VMachine vm;
-   vm.textOut()->write( "Welcome to Falcon.\n" );
-   
-   vm.link( new CoreModule );
-   IntCompiler intComp(&vm);
-
-   String tgt;
-   String prompt = ">>> ";
-   
-   while( ! vm.stdIn()->eof() )
+   catch( Error* e )
    {
-      vm.textOut()->write( prompt );
-      vm.textOut()->flush();
-      vm.textIn()->readLine(tgt, 4096);
-      TRACE("GO -- Read: \"%s\"", tgt.c_ize() );
-
-      // ignore empty lines.
-      if( tgt.size() != 0 )
-      {
-         try
-         {
-            IntCompiler::compile_status status = intComp.compileNext(tgt + "\n");
-            // is the compilation complete? -- display a result.
-            switch( status )
-            {
-               // in this case, always display the value of a.
-               case IntCompiler::eval_t:
-                  vm.textOut()->write(vm.regA().describe()+"\n");
-                  break;
-
-               // in this case we want to ignore nil
-               case IntCompiler::eval_direct_t:
-                  if( ! vm.regA().isNil() )
-                     vm.textOut()->write(vm.regA().describe()+"\n");
-                  break;
-
-               // we're waiting for more...
-               case IntCompiler::incomplete_t: break;
-               //... or we have nothing to do
-               case IntCompiler::ok_t: break;
-            }
-         }
-         catch( Error* e )
-         {
-            // display the error and continue
-            if( e->errorCode() == e_compile )
-            {
-               // in case of a compilation, discard the encapsulator.
-               class MyEnumerator: public Error::ErrorEnumerator {
-               public:
-                  MyEnumerator( TextWriter* wr ):
-                     m_wr(wr)
-                  {}
-
-                  virtual bool operator()( const Error& e, bool  ){
-                     m_wr->write(e.describe()+"\n");
-                     return true;
-                  }
-               private:
-                  TextWriter* m_wr;
-               } rator(vm.textOut());
-               
-               e->enumerateErrors( rator );
-            }
-            else {
-               vm.textOut()->write(e->describe()+"\n");
-            }
-            
-            e->decref();
-         }
-
-         // resets the prompt
-         prompt = intComp.isComplete() ? ">>> " : "... ";
-      }
-      // else, it's ok to leave the prompt as it is.
+      out.write( "Caught: " + e->describe() +"\n");
+      e->decref();
    }
-
-#if FALCON_TRACE_GC
-   vm.textOut()->write("\nGarbage data history:\n");
-   Engine::instance()->collector()->dumpHistory( vm.textOut() );
-#endif
-
 }
 
-};
+
+void FalconApp::interactive()
+{
+   IntMode intmode( this );
+   intmode.run();
+}
 
 
-int main( int argc, char* argv[] )
+int main( int , char* [] )
 {
    TRACE_ON();
 

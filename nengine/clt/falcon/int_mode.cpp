@@ -14,14 +14,12 @@
 */
 
 #include "int_mode.h"
-#include <falcon/intcomp.h>
-#include <falcon/src_lexer.h>
-
-#include <stdio.h>
+#include <falcon/string.h>
+#include <falcon/trace.h>
 
 using namespace Falcon;
 
-IntMode::IntMode( AppFalcon* owner ):
+IntMode::IntMode( FalconApp* owner ):
    m_owner( owner )
 {}
 
@@ -29,142 +27,96 @@ IntMode::IntMode( AppFalcon* owner ):
 
 void IntMode::run()
 {
-   ModuleLoader ml;
-   m_owner->prepareLoader( ml );
-
-   VMachineWrapper intcomp_vm;
-   Module* core_module = core_module_init();
-   intcomp_vm->link( core_module );
-   core_module->decref();
-
-   Item* describe = intcomp_vm->findGlobalItem("describe");
-   fassert( describe != 0 );
-   GarbageLock gl(*describe);
-
-   InteractiveCompiler comp( &ml, intcomp_vm.vm() );
-   comp.setInteractive( true );
-
-   Stream *stdOut = m_owner->m_stdOut;
-   Stream *stdIn = m_owner->m_stdIn;
-
-   stdOut->writeString("\n===NOTICE===\n" );
-   stdOut->writeString("Interactive mode is currently UNDER DEVELOPMENT.\n" );
-#ifdef FALCON_WITH_GPL_READLINE
-   stdOut->writeString("Built with GPLed GNU-Readline. Refer to the README for alternatives.\n" );
+      // prepare to trace the GC.
+#if FALCON_TRACE_GC
+   Engine::instance()->collector()->trace( true );
 #endif
+
+   VMachine& vm = m_vm;
    
-   stdOut->writeString("\nWelcome to Falcon interactive mode.\n" );
-   stdOut->writeString("Write statements directly at the prompt; when finished press " );
-   #ifdef FALCON_SYSTEM_WIN
-      stdOut->writeString("CTRL+Z" );
-   #else
-      stdOut->writeString("CTRL+D" );
-   #endif
+   vm.textOut()->write( "Welcome to Falcon.\n" );
+   
+   vm.link( new CoreModule );
+   IntCompiler intComp(&vm);
 
-   stdOut->writeString(" to exit\n" );
-   stdOut->flush();
-
-   InteractiveCompiler::t_ret_type lastRet = InteractiveCompiler::e_nothing;
-   String line, pline, codeSlice;
-   int linenum = 1;
-   while( stdIn->good() && ! stdIn->eof() )
+   String tgt;
+   String prompt = ">>> ";
+   
+   while( true )
    {
-      const char *prompt = (
-            lastRet == InteractiveCompiler::e_more
-            ||lastRet == InteractiveCompiler::e_incomplete
-            )
-         ? "... " : ">>> ";
-
-      read_line(pline, prompt);
-      if ( pline.size() > 0 )
+      if( ! read_line( prompt, tgt ) )
       {
-         if( pline.getCharAt( pline.length() -1 ) == '\\' )
-         {
-            lastRet = InteractiveCompiler::e_more;
-            pline.setCharAt( pline.length() - 1, ' ');
-            line += pline;
-            continue;
-         }
-         else
-            line += pline;
+         break;
+      }
+      
+      TRACE("GO -- Read: \"%s\"", tgt.c_ize() );
 
-         InteractiveCompiler::t_ret_type lastRet1 = InteractiveCompiler::e_nothing;
-         
+      // ignore empty lines.
+      if( tgt.size() != 0 )
+      {
          try
          {
-            comp.lexer()->line( linenum );
-            lastRet1 = comp.compileNext( codeSlice + line + "\n" );
-         }
-         catch( Error *err )
-         {
-            String temp = err->toString();
-            err->decref();
-            stdOut->writeString( temp );
-            stdOut->flush();
-            // in case of error detected at context end, close it.
-            line.trim();
-            if( line == "end" || line.endsWith( "]" )
-            		  || line.endsWith( "}" ) || line.endsWith( ")" ) )
+            IntCompiler::compile_status status = intComp.compileNext(tgt + "\n");
+            // is the compilation complete? -- display a result.
+            switch( status )
             {
-            	codeSlice.size( 0 );
-            	lastRet = InteractiveCompiler::e_nothing;
-            	linenum = 1;
-            }
-            line.size(0);
-            continue;
-         }
-
-         switch( lastRet1 )
-         {
-            case InteractiveCompiler::e_more:
-               codeSlice += line + "\n";
-               break;
-
-            case InteractiveCompiler::e_incomplete:
-               // is it incomplete because of '\\' at end?
-               if ( line.getCharAt( line.length()-1 ) == '\\' )
-                  line.setCharAt( line.length()-1, ' ' );
-               codeSlice += line + "\n";
-               break;
-           
-            case InteractiveCompiler::e_terminated:
-               stdOut->writeString( "falcon: Terminated\n\n");
-               stdOut->flush();
-               return;
-               
-            case InteractiveCompiler::e_call:
-               if ( comp.vm()->regA().isNil() )
-               {
-                  codeSlice.size(0);
+               // in this case, always display the value of a.
+               case IntCompiler::eval_t:
+                  vm.textOut()->write(vm.regA().describe()+"\n");
                   break;
-               }
-               // fallthrough
 
-            case InteractiveCompiler::e_expression:
-               {
-                  comp.vm()->pushParameter( comp.vm()->regA() );
-                  comp.vm()->callItem( *describe, 1 );
-                  stdOut->writeString( ": " + *comp.vm()->regA().asString() + "\n" );
-                  stdOut->flush();
-               }
-               // fallthrough
-               
-            default:
-               codeSlice.size(0);
-               linenum = 0;
+               // in this case we want to ignore nil
+               case IntCompiler::eval_direct_t:
+                  if( ! vm.regA().isNil() )
+                     vm.textOut()->write(vm.regA().describe()+"\n");
+                  break;
+
+               // we're waiting for more...
+               case IntCompiler::incomplete_t: break;
+               //... or we have nothing to do
+               case IntCompiler::ok_t: break;
+            }
          }
-         
+         catch( Error* e )
+         {
+            // display the error and continue
+            if( e->errorCode() == e_compile )
+            {
+               // in case of a compilation, discard the encapsulator.
+               class MyEnumerator: public Error::ErrorEnumerator {
+               public:
+                  MyEnumerator( TextWriter* wr ):
+                     m_wr(wr)
+                  {}
 
-         // maintain previous status if having a compilation error.
-         lastRet = lastRet1;
-         line.size( 0 );
-         linenum++;
+                  virtual bool operator()( const Error& e, bool  ){
+                     m_wr->write(e.describe()+"\n");
+                     return true;
+                  }
+               private:
+                  TextWriter* m_wr;
+               } rator(vm.textOut());
+               
+               e->enumerateErrors( rator );
+            }
+            else {
+               vm.textOut()->write(e->describe()+"\n");
+            }
+            
+            e->decref();
+         }
+
+         // resets the prompt
+         prompt = intComp.isComplete() ? ">>> " : "... ";
       }
-      // else just continue.
+      // else, it's ok to leave the prompt as it is.
    }
 
-   stdOut->writeString( "\r     \n\n");
-   stdOut->flush();
+#if FALCON_TRACE_GC
+   vm.textOut()->write("\nGarbage data history:\n");
+   Engine::instance()->collector()->dumpHistory( vm.textOut() );
+#endif
+
 }
 
 /* end of int_mode.cpp */

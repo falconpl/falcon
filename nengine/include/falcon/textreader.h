@@ -78,6 +78,8 @@ class Transcoder;
 class FALCON_DYN_CLASS TextReader: public Reader
 {
 public:
+   static const char_t NoChar = (char_t)-1;
+   
    /** Creates the text decoder using a standard "C" transcoder.
     \param stream The stream to be accessed.
     \param bOwn If true, the stream is closed and destroyed at reader destruction.
@@ -217,7 +219,7 @@ public:
    int readToken( String& target, const String* tokens, int32 tokenCount, length_t maxCount );
 
    /** Reads exactly one character.
-    \return -1 if hit EOF.
+    \return A character value or NoChar (-1 cast to char_t)  if hit EOF .
     \throw EncodingError if the input stream has encoding errors.
 
     Returns a single character read from the stream and decoded by the transcoder.

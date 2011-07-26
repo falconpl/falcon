@@ -25,8 +25,6 @@ using namespace Falcon;
 
 
 FalconOptions::FalconOptions():
-   m_modal( false ),
-   m_justinfo( false ),
    input( "" ),
    output( "" ),
    load_path( "" ),
@@ -50,7 +48,10 @@ FalconOptions::FalconOptions():
    compile_tltable( false ),
    interactive( false ),
    ignore_syspath( false ),
-   errOnStdout(false)
+   errOnStdout(false),
+   m_modal( false ),
+   m_justinfo( false )
+   
 {}
 
 

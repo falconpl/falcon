@@ -14,51 +14,47 @@
 */
 
 #include "int_mode.h"
-#include <cstdio> // FILE
-#ifdef FALCON_WITH_GPL_READLINE
-# include <readline/readline.h>
-# include <readline/history.h>
-#else
-# include <editline/readline.h>
-#endif
+#include "editline/src/histedit.h"
+#include <histedit.h>
+#include <falcon/textreader.h>
 
 using namespace Falcon;
 
 
-namespace { // anonymous
-
-Stream* s_in = 0;
-
-extern "C" int s_getc(FILE*)
+bool IntMode::read_line( const String& prompt, String &line )
 {
-  uint32 chr;
-  s_in->get(chr);
-  return chr;
-}
-
-} // anonymous
-
-
-void IntMode::read_line(String &line, const char* prompt)
-{
-//   if(!s_in)
-//   {
-//     s_in = m_owner->m_stdIn;
-//     rl_getc_function = s_getc;
-//   }
-           
-   line.reserve( 1024 );
-   line.size(0);
-
-   if( char* buf = readline(prompt) )
-   { 
-     if (buf[0] != 0)
-     { 
-       line += String(buf);
-       add_history(buf);
-     }
-     free(buf);
+   const wchar_t *wline;
+   static EditLine* el = 0;
+   static HistoryW *hist = 0;
+   static HistEventW ev;
+   
+   if( el == 0 )
+   {
+      el = el_init("falcon", stdin, stdout, stderr);
+      hist = history_winit();
    }
-   else // EOF (CTRL-D)
-     m_owner->m_stdIn->status(Stream::t_eof);
+
+   m_vm.textOut()->write(prompt);
+   m_vm.textOut()->flush();
+   
+   int maxSize = 4096; 
+   line.reserve( maxSize );
+   line.size(0);   
+      
+   if( (wline = el_wgets(el, &maxSize)) != 0 )
+   {
+     if (maxSize > 0 )
+     { 
+        line += wline;
+        //add_history(buf);
+        history_w(hist, &ev, H_APPEND, wline);
+        
+     }
+     return true;
+   }
+   else 
+   {
+      // EOF (CTRL-D)
+      return false;
+   }
 }
