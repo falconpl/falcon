@@ -176,9 +176,9 @@ public:
     copy (and eventual deep-copy) of the already created string is avoided.
     
     */
-   Item( String* str )
+   Item( String* str, bool bGarbage = false )
    {
-      setString(str);
+      setString(str,bGarbage);
    }
 
    /** Sets this item to a String item.
@@ -203,7 +203,7 @@ public:
     \param str A pointer to a Falcon String that must be adopted.
     \see Item( String* )
     */
-   void setString( String* str );
+   void setString( String* str, bool bGarbage = false );
 
    /** Creates a boolean item. */
    explicit inline Item( bool b ) {
@@ -341,7 +341,7 @@ public:
     For user-semantic (i.e. user-controlled) you must use directly the
     setUser() method.
     */
-   void setArray( ItemArray* array );
+   void setArray( ItemArray* array, bool bGarbage = false );
 
    /** Turn this item in to a dictionary (deep).
     \param dict The dictionary handled to the vm

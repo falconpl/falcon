@@ -40,17 +40,33 @@ void Item::setString( const String& str )
    setUser( (new String(str))->garbage() );
 }
 
-void Item::setString( String* str )
+void Item::setString( String* str, bool bGarbage )
 {
-   setUser( str->garbage() );
+   static Class* strClass = Engine::instance()->stringClass();
+   static Collector* coll = Engine::instance()->collector();
+   if( bGarbage )
+   {
+      setUser(FALCON_GC_STORE(coll, strClass, str));
+   }
+   else
+   {
+      setUser( strClass, str );
+   }
 }
 
-void Item::setArray( ItemArray* array )
+void Item::setArray( ItemArray* array, bool bGarbage )
 {
    static Class* arrayClass = Engine::instance()->arrayClass();
    static Collector* coll = Engine::instance()->collector();
 
-   setUser( FALCON_GC_STORE( coll, arrayClass, array) );
+   if( bGarbage )
+   {
+      setUser( FALCON_GC_STORE(coll, arrayClass, array) );
+   }
+   else
+   {
+      setUser(arrayClass, array);
+   }
 }
 
 /*
