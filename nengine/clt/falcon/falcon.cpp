@@ -40,7 +40,9 @@ public:
       }
    }
 
-void go()
+   
+   
+void interactive()
 {
    // prepare to trace the GC.
 #if FALCON_TRACE_GC
@@ -133,11 +135,9 @@ void go()
 
 };
 
-// This is just a test.
-int main( int , char* [] )
-{
-   
 
+int main( int argc, char* argv[] )
+{
    TRACE_ON();
 
    FalconApp app;

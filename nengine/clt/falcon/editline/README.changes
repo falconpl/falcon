@@ -1,0 +1,13 @@
+Modification with respect to the source EDITLINE library code.
+
+We have applied the following changes to the original source code:
+
+- Removed examples/ subdirectory.
+- Updated CMakeLists accordingly to the above change.
+- Added function rl_get_editline() in readline.c/h to get the 
+  static EditLine* used in readline compatibility functions.
+
+The original EDITLINE code can be fetched at:
+
+http://www.thrysoee.dk/editline/
+
