@@ -556,8 +556,8 @@ bool FalconClass::construct( bool bHiddenParents )
          if( ! bHiddenParents || ctr->paramCount() == 0 )
          {
             // ... unless we have some possible parent that we don't know about.
-            m_constructor = 0;
             delete ctr;
+            m_constructor = 0;
          }
       }
       
@@ -584,9 +584,8 @@ HyperClass* FalconClass::hyperConstruct()
       ++pi;
    }
 
+   // Now we're complete and pure falcon...
    _p->m_inherit.clear();
-
-   // also, now we're complete and pure falcon...
    m_missingParents = 0;
    m_bPureFalcon = true;
 
@@ -595,7 +594,7 @@ HyperClass* FalconClass::hyperConstruct()
 
    //... and tell it to our new self.
    // Notice that this is ok even if the constructor is 0.
-   // -- if it is, we just don't need any frame.
+   // -- if it is, we just don't need any frame.   
    nself->constructor( m_constructor );
 
    // and give it to our

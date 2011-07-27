@@ -112,7 +112,6 @@ bool HyperClass::addParent( Inheritance* cls )
    return true;
 }
 
-
 Class* HyperClass::getParent( const String& name ) const
 {
    Private::ParentVector::const_iterator iter = _p->m_parents.begin();

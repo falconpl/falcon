@@ -105,6 +105,7 @@ static void make_class( Parser& p, int tCount,
       {
          symtab.addLocal( *it );
       }
+      cls->makeConstructor()->paramCount( symtab.localCount() );
    }
 
    // some from clause to take care of?

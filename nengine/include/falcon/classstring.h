@@ -41,7 +41,10 @@ public:
    virtual void* deserialize( DataReader* stream ) const;
 
    virtual void describe( void* instance, String& target, int, int ) const;
-
+   virtual void enumerateProperties( void* self, PropertyEnumerator& cb ) const;
+   virtual void enumeratePV( void* self, PVEnumerator& cb ) const;
+   virtual bool hasProperty( void* self, const String& prop ) const;
+   
    //=============================================================
    virtual void op_create( VMContext* ctx, int32 pcount ) const;
 

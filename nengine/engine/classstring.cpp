@@ -86,6 +86,33 @@ void ClassString::describe( void* instance, String& target, int, int maxlen ) co
    target.append('"');
 }
 
+void ClassString::enumerateProperties( void*, Class::PropertyEnumerator& cb ) const
+{
+   // TODO: More
+   cb("len", false );
+   cb("len_", false );
+   cb("__add", true );
+}
+
+void ClassString::enumeratePV( void* self, Class::PVEnumerator& cb ) const
+{
+   // TODO: More
+   String* str = static_cast<String*>(self); 
+   Item temp;
+   
+   temp = ((int64)str->length());
+   cb("len_", temp );
+}
+
+bool ClassString::hasProperty( void*, const String& prop ) const
+{
+   // TODO: More
+   return 
+      prop == "len"
+      || prop == "len_"
+      || prop == "__add";
+}
+
 //=======================================================================
 // Addition
 
