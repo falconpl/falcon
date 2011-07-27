@@ -202,14 +202,14 @@ public:
 
    /** Callback functor receiving errors.
     */
-   typedef Enumerator<ErrorDef> errorEnumerator;
+   typedef Enumerator<ErrorDef> ErrorEnumerator;
 
    /** Enumerate received errors.
     In case parse returned false, calling this method will provide detailed
     error description for all the errors that have been found.
       \see Enumerator
     */
-   void enumerateErrors( errorEnumerator& e ) const;
+   void enumerateErrors( ErrorEnumerator& e ) const;
 
    /** Sets a context data.
     \param ctx User specific context data.

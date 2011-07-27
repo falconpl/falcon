@@ -50,8 +50,6 @@ public:
    inline virtual bool isStandAlone() const { return false; }
    void precompile( PCode* pcode ) const;
 
-   virtual bool isBinaryOperator() const { return false; }
-
    virtual bool isStatic() const { return false; }
 
 

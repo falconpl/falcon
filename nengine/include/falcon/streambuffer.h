@@ -78,10 +78,7 @@ public:
    virtual int32 read( void *buffer, int32 size );
    virtual int32 write( const void *buffer, int32 size );
 
-   virtual bool errorDescription( ::Falcon::String &description ) const {
-      return m_stream->errorDescription( description );
-   }
-   virtual int64 lastError() const { return m_stream->lastError(); }
+   virtual size_t lastError() const { return m_stream->lastError(); }
    virtual t_status status() const { return m_stream->status(); }
    virtual void status(t_status s) { return m_stream->status(s); }
    

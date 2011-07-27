@@ -62,7 +62,6 @@ public:
 
    inline virtual ExprDict* clone() const { return new ExprDict( *this ); }
 
-   virtual bool isBinaryOperator() const { return false; }
    virtual bool isStatic() const { return false; }
    virtual bool simplify( Item& result ) const;
 

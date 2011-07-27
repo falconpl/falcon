@@ -40,52 +40,55 @@ class UnknownSymbol;
  The contents of modules is dinamyc in the sense that it might be altered at
  any stage of their lifetime.
 
- Modules are divided mainly in two categories: static modules and dynamic modules
- (not to be confused with the fact that the module @b content is dynamic).
-
+ Modules can be linked in a virtual machine statically or dynamically.
+ 
  Static modules have a lifetime that is meant to be longer than that of the
  virtual machine they are attached to. They are injected into the virtual machine
  externally and cannot be explicitly referenced or unloaded by the owning VM.
 
  Dynamic modules can be loaded and unloaded multiple times during the lifetime
  of their own VM.
-
+ 
  The main differece between the two type of modules is that dynamic modules need
  to create entities that might surivive their own lifetime, and that need to be
  accounted separately for garbage reclaim.
-
- The advantage of declaring a module static is that all the items it declares
+ 
+ The advantage of statically link a module is that all the items it declares
  are outside the scope of garbage collection. This has two effects: first,
- a program declaring a a static module and then feeding it in VM doesn't
+ a program declaring linking a module statically doesn't need
  any special care about preventing that module to be destroyed by the garbage
  collector, and stays in control of its lifespan. Second, the garbage
  collector is not required to perform useless checks on the items declared by
  the module (mainly functions and classes), that will be considered always
  valid.
 
- \note Function class has support to gc-mark the modueles they come
+ The kind of a module is not stored in the module structure itself. Instead,
+ it's the link process that determines if a module should be considered static
+ or dynamic. Notice that the link process @b modifies the contents of the module
+ and it's not possible to link the same module twice (but it is possible to clone
+ a "model" module dispatching its clone for linkage any number of time).
+
+ \note Function and Class have support to gc-mark the modueles they come
  from, so that dynamic modules that might be unloaded by the virtual machine
- at process level stay alive as long as there is at least one function getting
- CPU code directly from their memory space. SynFunction class owns its syntactic
- tree and reference global variables, so they don't need to back-mark their
- module -- however, they do because of meta-information held in the module
+ at system process level stay alive as long as there is at least one function or
+ class getting CPU code directly from their memory space. SynFunction class owns 
+ its syntactic tree and reference global variables, so they don't need to back-mark 
+ their module -- however, they do because of meta-information held in the module
  (module logical name, URI, attributes etc).
  */
 class FALCON_DYN_CLASS Module {
 public:
 
    /** Creates an internal module.
-    \param name The symbolic name of this module.
-    \param bStatic True if this module is created as static.
+    \param name The symbolic name of this module..
     */
-   Module( const String& name, bool bStatic = true );
+   Module( const String& name );
 
    /** Creates an external module.
     \param name The symbolic name of this module.
     \param uri The uri from where this module was created.
-    \param bStatic True if this module is created as static.
     */
-   Module( const String& name, const String& uri, bool bStatic = true );
+   Module( const String& name, const String& uri );
 
    virtual ~Module();
 
@@ -261,11 +264,6 @@ public:
 
    uint32 lastGCMark() const { return m_lastGCMark; }
 
-   /** Checks if this module is static.
-    \return True if this module is static.
-    */
-   bool isStatic() const { return m_bIsStatic; }
-
    /** Sends dynamic data to the garbage. 
     This method is invoked as a part of the link step. When a DYNAMIC module
     is delivered to a virtual machine, it must send to the garbage collector
@@ -308,7 +306,6 @@ public:
 private:
    String m_name;
    String m_uri;
-   bool m_bIsStatic;
    uint32 m_lastGCMark;
 
    class Private;

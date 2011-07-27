@@ -20,6 +20,7 @@
 #include <falcon/exprvalue.h>
 #include <falcon/globalsymbol.h>
 #include <falcon/inheritance.h>
+#include <falcon/sp/sourcelexer.h>
 
 namespace Falcon {
 
@@ -173,16 +174,13 @@ bool ModCompiler::Context::onUnknownSymbol( UnknownSymbol* )
 
 Expression* ModCompiler::Context::onStaticData( Class* cls, void* data )
 {
+   // The data resides in the module...
    m_owner->m_module->addStaticData( cls, data );
 
-   if( m_owner->m_module->isStatic() )
-   {
-      return new ExprValue( Item( cls, data ) );
-   }
-   else
-   {
-      return new ExprValue( Item( cls, data, true ) );
-   }
+   //... which stays alive as long as all the expressions, residing in a function
+   // stay alive. The talk may be different for code snippets, but we're dealing
+   // with modules here. In short. we have no need for GC.
+   return new ExprValue( Item( cls, data ) );
 }
 
 
@@ -230,17 +228,40 @@ ModCompiler::ModCompiler():
    m_nClsCount(0)
 {
    m_ctx = new Context( this );
+   m_sp.setContext( m_ctx );
 }
 
 ModCompiler::~ModCompiler()
 {
    delete m_ctx;
+   delete m_module; // should normally be zero.
 }
 
 
-Module* compile( TextReader*, const String&, const String& )
+Module* ModCompiler::compile( TextReader* tr, const String& uri, const String& name )
 {
-   return 0;
+   m_module = new Module( name , uri );
+   
+   // create the main function that will be used by the compiler
+   SynFunc* main = new SynFunc("__main__");
+   m_module->addFunction( main, false );
+
+   // and prepare the parser to deal with the main state.
+   m_ctx->openMain( &main->syntree() );
+
+   // start parsing.
+   m_sp.pushLexer( new SourceLexer( uri, &m_sp, tr ) );      
+   if ( !m_sp.parse() )
+   {
+      // we failed.
+      delete m_module;
+      return 0;
+   }
+
+   // we're done.
+   Module* mod = m_module;
+   m_module = 0;
+   return mod;
 }
 
 }

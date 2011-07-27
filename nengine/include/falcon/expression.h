@@ -125,9 +125,6 @@ public:
    /** Returns true if the expression can be found alone in a statement. */
    inline virtual bool isStandAlone() const { return false; }
 
-   /** True for binary expressions */
-   virtual bool isBinaryOperator() const = 0;
-
    /** Returns true if the expression is composed of just constants.
     * When this method returns true, the expression can be simplified at compile time.
     */
@@ -213,8 +210,6 @@ public:
    virtual void serialize( DataWriter* s ) const;
    virtual bool isStatic() const;
 
-   inline virtual bool isBinaryOperator() const { return false; }
-
    Expression *first() const { return m_first; }
    void first( Expression *f ) { delete m_first; m_first= f; }
 
@@ -249,7 +244,6 @@ public:
    virtual ~BinaryExpression();
 
    virtual void serialize( DataWriter* s ) const;
-   inline virtual bool isBinaryOperator() const { return true; }
 
    Expression *first() const { return m_first; }
    void first( Expression *f ) { delete m_first; m_first= f; }
@@ -292,7 +286,6 @@ public:
 
    virtual ~TernaryExpression();
    virtual void serialize( DataWriter* s ) const;
-   inline virtual bool isBinaryOperator() const { return false; }
    virtual bool isStatic() const;
 
    Expression *first() const { return m_first; }
@@ -554,8 +547,6 @@ public:
    inline virtual bool isStandAlone() const { return false; }
    void precompile( PCode* pcode ) const;
 
-   virtual bool isBinaryOperator() const { return false; }
-
    virtual bool isStatic() const { return false; }
    bool isTop() const { return m_bIsTop; }
 
@@ -594,7 +585,6 @@ public:
 
    inline virtual bool isStandAlone() const { return false; }
    void precompile( PCode* pcode ) const;
-   virtual bool isBinaryOperator() const { return false; }
    virtual bool isStatic() const { return false; }
 
    bool isTop() const { return m_bIsTop; }
@@ -841,7 +831,6 @@ public:
    ExprSelf( const ExprSelf &other );
    virtual ~ExprSelf();
 
-   virtual bool isBinaryOperator() const;
    virtual bool isStatic() const;
    virtual ExprSelf* clone() const;
    virtual bool simplify( Item& result ) const;

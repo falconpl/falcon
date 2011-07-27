@@ -37,6 +37,7 @@ namespace Falcon {
 FStream::FStream( void* data ):
    m_fsData(data)
 {
+   m_status = t_open;
 }
 
 FStream::FStream( const FStream &other ):

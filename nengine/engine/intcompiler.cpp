@@ -237,23 +237,18 @@ IntCompiler::IntCompiler( VMachine* vm ):
 {
    // prepare the virtual machine.
    m_vm = vm;
-   // Used to keep non-transient data.
-   m_module = new Module( "Interactive", false );
+
+   m_module = new Module( "Interactive" );
    m_main = new SynFunc("__main__" );
-   // as the module is dynamic, m_main will be destroyed by m_module
    m_module->addFunction(m_main, false);
 
    // we'll never abandon the main frame in the virtual machine
    m_vm->currentContext()->makeCallFrame( m_main, 0, Item() );
 
-   // Link the module so that the VM knows about it (and protects its global).
-   //TODO: vm->link( m_module );
-
    // Prepare the compiler and the context.
    m_ctx = new Context( this );
    m_sp.setContext(m_ctx);
    m_sp.interactive(true);
-
 
    // create the streams we're using internally
    m_stream = new StringStream;
@@ -265,8 +260,7 @@ IntCompiler::IntCompiler( VMachine* vm ):
 
 IntCompiler::~IntCompiler()
 {
-   // TO be removed:
-   delete m_module; // the vm being deleted will kill the module.
+   delete m_module; 
 
    delete m_writer;
    delete m_stream;
@@ -347,7 +341,7 @@ IntCompiler::compile_status IntCompiler::compileNext( const String& value)
 
 void IntCompiler::throwCompileErrors() const
 {
-   class MyEnumerator: public Parsing::Parser::errorEnumerator
+   class MyEnumerator: public Parsing::Parser::ErrorEnumerator
    {
    public:
       MyEnumerator() {

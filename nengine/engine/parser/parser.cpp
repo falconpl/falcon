@@ -220,7 +220,7 @@ bool Parser::parse( const String& mainState )
    if( iter != _p->m_states.end() )
    {
       _p->m_lStates.clear();
-      _p->m_lStates.push_back( iter->second );
+      pushState( mainState, false );
    }
    else
    {
@@ -349,7 +349,7 @@ void Parser::resetNextToken()
 }
 
 
-void Parser::enumerateErrors( Parser::errorEnumerator& enumerator ) const
+void Parser::enumerateErrors( Parser::ErrorEnumerator& enumerator ) const
 {
    Private::ErrorList::const_iterator iter = _p->m_lErrors.begin();
    while( iter != _p->m_lErrors.end() )

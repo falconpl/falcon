@@ -37,6 +37,22 @@
 
 #include <falcon/cm/coremodule.h>
 
+#include <falcon/vfsprovider.h>
+
+
+//--- error headers ---
+#include <falcon/accesserror.h>
+#include <falcon/accesstypeerror.h>
+#include <falcon/errorclass.h>
+#include <falcon/codeerror.h>
+#include <falcon/genericerror.h>
+#include <falcon/interruptederror.h>
+#include <falcon/ioerror.h>
+#include <falcon/operanderror.h>
+#include <falcon/unsupportederror.h>
+#include <falcon/syntaxerror.h>
+#include <falcon/encodingerror.h>
+
 #endif	/* FALCON_H */
 
 /* end of falcon.h */

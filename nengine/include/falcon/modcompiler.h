@@ -59,9 +59,14 @@ public:
     error description for all the errors that have been found.
       \see Enumerator
     */
-   inline void enumerateErrors( SourceParser::errorEnumerator& e ) const
+   inline void enumerateErrors( SourceParser::ErrorEnumerator& e ) const
    {
       m_sp.enumerateErrors( e );
+   }
+   
+   inline GenericError* makeError() const 
+   {
+      return m_sp.makeError();
    }
 
 private:

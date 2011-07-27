@@ -63,7 +63,6 @@ public:
    inline virtual ExprProto* clone() const { return new ExprProto( *this ); }
    inline String describe() const { return PStep::describe(); }
 
-   virtual bool isBinaryOperator() const { return false; }
    virtual bool isStatic() const { return false; }
    virtual bool simplify( Item& result ) const;
 

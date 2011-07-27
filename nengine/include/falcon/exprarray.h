@@ -63,7 +63,6 @@ public:
    inline String describe() const { return PStep::describe(); }
    inline String oneLiner() const { return PStep::oneLiner(); }
 
-   virtual bool isBinaryOperator() const { return false; }
    virtual bool isStatic() const { return false; }
    virtual bool simplify( Item& result ) const;
 

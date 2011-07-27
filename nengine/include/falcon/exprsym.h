@@ -52,7 +52,6 @@ public:
 
    /** Symbols cannot be simplified. */
    inline virtual bool simplify( Item& ) const { return false; }
-   inline virtual bool isBinaryOperator() const { return false; }
    inline virtual bool isStatic() const { return false; }
 
    virtual void serialize( DataWriter* s ) const;

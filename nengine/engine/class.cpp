@@ -165,126 +165,126 @@ void Class::onInheritanceResolved( Inheritance* )
 
 void Class::op_create( VMContext* , int32 ) const
 {
-   throw new OperandError( ErrorParam(__LINE__, e_invop ).extra("create") );
+   throw new OperandError( ErrorParam( e_invop, __LINE__, SRC ).extra("create") );
 }
 
 
 void Class::op_neg( VMContext* , void* ) const
 {
-   throw new OperandError( ErrorParam(__LINE__, e_invop ).extra("neg") );
+   throw new OperandError( ErrorParam( e_invop, __LINE__, SRC ).extra("neg") );
 }
 
 void Class::op_add( VMContext* , void* ) const
 {
-   throw new OperandError( ErrorParam(__LINE__, e_invop ).extra("add") );
+   throw new OperandError( ErrorParam( e_invop, __LINE__, SRC ).extra("add") );
 }
 
 void Class::op_sub( VMContext* , void* ) const
 {
-   throw new OperandError( ErrorParam(__LINE__, e_invop ).extra("sub") );
+   throw new OperandError( ErrorParam( e_invop, __LINE__, SRC ).extra("sub") );
 }
 
 
 void Class::op_mul( VMContext* , void* ) const
 {
-   throw new OperandError( ErrorParam(__LINE__, e_invop ).extra("mul") );
+   throw new OperandError( ErrorParam( e_invop, __LINE__, SRC ).extra("mul") );
 }
 
 
 void Class::op_div( VMContext* , void* ) const
 {
-   throw new OperandError( ErrorParam(__LINE__, e_invop ).extra("div") );
+   throw new OperandError( ErrorParam( e_invop, __LINE__, SRC ).extra("div") );
 }
 
 
 void Class::op_mod( VMContext* , void* ) const
 {
-   throw new OperandError( ErrorParam(__LINE__, e_invop ).extra("mod") );
+   throw new OperandError( ErrorParam( e_invop, __LINE__, SRC ).extra("mod") );
 }
 
 
 void Class::op_pow( VMContext* , void* ) const
 {
-   throw new OperandError( ErrorParam(__LINE__, e_invop ).extra("pow") );
+   throw new OperandError( ErrorParam( e_invop, __LINE__, SRC ).extra("pow") );
 }
 
 
 void Class::op_aadd( VMContext* , void* ) const
 {
-   throw new OperandError( ErrorParam(__LINE__, e_invop ).extra("aadd") );
+   throw new OperandError( ErrorParam( e_invop, __LINE__, SRC ).extra("aadd") );
 }
 
 
 void Class::op_asub( VMContext* , void* ) const
 {
-   throw new OperandError( ErrorParam(__LINE__, e_invop ).extra("asub") );
+   throw new OperandError( ErrorParam( e_invop, __LINE__, SRC ).extra("asub") );
 }
 
 
 void Class::op_amul( VMContext* , void* ) const
 {
-   throw new OperandError( ErrorParam(__LINE__, e_invop ).extra("amul") );
+   throw new OperandError( ErrorParam( e_invop, __LINE__, SRC ).extra("amul") );
 }
 
 
 void Class::op_adiv( VMContext* , void* ) const
 {
-   throw new OperandError( ErrorParam(__LINE__, e_invop ).extra("/=") );
+   throw new OperandError( ErrorParam( e_invop, __LINE__, SRC ).extra("/=") );
 }
 
 
 void Class::op_amod( VMContext* , void* ) const
 {
-   throw new OperandError( ErrorParam(__LINE__, e_invop ).extra("%=") );
+   throw new OperandError( ErrorParam( e_invop, __LINE__, SRC ).extra("%=") );
 }
 
 
 void Class::op_apow( VMContext* , void* ) const
 {
-   throw new OperandError( ErrorParam(__LINE__, e_invop ).extra("**=") );
+   throw new OperandError( ErrorParam( e_invop, __LINE__, SRC ).extra("**=") );
 }
 
 
 void Class::op_inc( VMContext* , void* ) const
 {
-   throw new OperandError( ErrorParam(__LINE__, e_invop ).extra("++x") );
+   throw new OperandError( ErrorParam(e_invop, __LINE__, SRC ).extra("++x") );
 }
 
 
 void Class::op_dec( VMContext* , void* ) const
 {
-   throw new OperandError( ErrorParam(__LINE__, e_invop ).extra("--x") );
+   throw new OperandError( ErrorParam( e_invop, __LINE__, SRC ).extra("--x") );
 }
 
 
 void Class::op_incpost( VMContext* , void*) const
 {
-   throw new OperandError( ErrorParam(__LINE__, e_invop ).extra("x++") );
+   throw new OperandError( ErrorParam( e_invop, __LINE__, SRC ).extra("x++") );
 }
 
 
 void Class::op_decpost( VMContext* , void* ) const
 {
-   throw new OperandError( ErrorParam(__LINE__, e_invop ).extra("x--") );
+   throw new OperandError( ErrorParam( e_invop, __LINE__, SRC ).extra("x--") );
 }
 
 
 void Class::op_call( VMContext* , int32, void* ) const
 {
-   throw new OperandError( ErrorParam(__LINE__, e_non_callable ) );
+   throw new OperandError( ErrorParam( e_non_callable, __LINE__, SRC ) );
 }
 
 
 void Class::op_getIndex(VMContext* , void* ) const
 {
-   throw new OperandError( ErrorParam(__LINE__, e_invop ).extra("[]") );
+   throw new OperandError( ErrorParam( e_invop, __LINE__, SRC ).extra("[]") );
 }
 
 
 void Class::op_setIndex(VMContext* , void* ) const
 {
    // TODO: IS it worth to add more infos about self in the error?
-   throw new OperandError( ErrorParam(__LINE__, e_invop ).extra("[]=") );
+   throw new OperandError( ErrorParam( e_invop, __LINE__, SRC ).extra("[]=") );
 }
 
 
@@ -300,7 +300,7 @@ void Class::op_getProperty( VMContext* ctx, void* data, const String& property )
    }
    else
    {
-      throw new OperandError( ErrorParam(__LINE__, e_prop_acc ).extra(property) );
+      throw new OperandError( ErrorParam(e_prop_acc, __LINE__, SRC  ).extra(property) );
    }
 }
 
@@ -308,7 +308,7 @@ void Class::op_getProperty( VMContext* ctx, void* data, const String& property )
 void Class::op_setProperty( VMContext* , void*, const String& ) const
 {
    // TODO: IS it worth to add more infos about self in the error?
-   throw new OperandError( ErrorParam(__LINE__, e_invop ).extra(".=") );
+   throw new OperandError( ErrorParam( e_prop_acc, __LINE__, SRC ).extra(".=") );
 }
 
 
@@ -320,7 +320,7 @@ void Class::op_isTrue( VMContext* ctx, void* ) const
 
 void Class::op_in( VMContext* , void*) const
 {
-   throw new OperandError( ErrorParam(__LINE__, e_invop ).extra("in") );
+   throw new OperandError( ErrorParam( e_invop, __LINE__, SRC ).extra("in") );
 }
 
 

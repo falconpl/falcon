@@ -1020,10 +1020,6 @@ ExprSelf::ExprSelf( const ExprSelf &other ):
 
 ExprSelf::~ExprSelf() {}
 
-bool ExprSelf::isBinaryOperator() const
-{
-   return false;
-}
 
 bool ExprSelf::isStatic() const
 {

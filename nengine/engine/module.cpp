@@ -147,13 +147,10 @@ public:
    typedef std::map<String, Class*> ClassMap;
    ClassMap m_classes;
 
-   bool m_bIsStatic;
-
    ItemArray m_staticdData;
 
 
-   Private( bool bIsStatic ):
-      m_bIsStatic( bIsStatic )
+   Private()
    {}
 
    ~Private()
@@ -182,30 +179,24 @@ public:
          ++req_i;
       }
 
-      // ... But in case of dynamic modules, we're destroyed only after all our
-      //     functions are destroyed.
-      if( m_bIsStatic )
+      // we can always delete the classes that have been assigned to us.
+      ClassMap::iterator cli = m_classes.begin();
+      while( cli != m_classes.end() )
       {
-         // we can always delete the classes that have been assigned to us.
-         ClassMap::iterator cli = m_classes.begin();
-         while( cli != m_classes.end() )
-         {
-            // set the module to 0, so that we're not dec-reffed.
-            cli->second->detachModule();
-            delete cli->second;
-            ++cli;
-         }
+         // set the module to 0, so that we're not dec-reffed.
+         cli->second->detachModule();
+         delete cli->second;
+         ++cli;
+      }
 
-         FunctionMap::iterator vi = m_functions.begin();
-         while( vi != m_functions.end() )
-         {
-            // set the module to 0, so that we're not dec-reffed.
-            vi->second->detachModule();
-            // then delete the function.
-            delete vi->second;
-            ++vi;
-         }
-
+      FunctionMap::iterator vi = m_functions.begin();
+      while( vi != m_functions.end() )
+      {
+         // set the module to 0, so that we're not dec-reffed.
+         vi->second->detachModule();
+         // then delete the function.
+         delete vi->second;
+         ++vi;
       }
    }
 
@@ -243,29 +234,26 @@ public:
 
 
 
-Module::Module( const String& name, bool bIsStatic ):
+Module::Module( const String& name ):
    m_name( name ),
-   m_bIsStatic(bIsStatic),
    m_lastGCMark(0)
 {
-   TRACE("Creating internal module '%s'%s",
-      name.c_ize(), bIsStatic ? " (static)" : " (dynamic)" );
+   TRACE("Creating internal module '%s'",
+      name.c_ize() );
    m_uri = "internal:" + name;
-   _p = new Private(bIsStatic);
+   _p = new Private;
 }
 
 
-Module::Module( const String& name, const String& uri, bool bIsStatic ):
+Module::Module( const String& name, const String& uri ):
    m_name( name ),
    m_uri(uri),
-   m_bIsStatic(bIsStatic),
    m_lastGCMark(0)
 {
-   TRACE("Creating module '%s' from %s%s",
-      name.c_ize(), uri.c_ize(),
-      bIsStatic ? " (static)" : " (dynamic)" );
+   TRACE("Creating module '%s' from %s",
+      name.c_ize(), uri.c_ize() );
    
-   _p = new Private(bIsStatic);
+   _p = new Private;
 }
 
 
@@ -317,7 +305,7 @@ void Module::sendDynamicToGarbage()
    static Collector* coll = Engine::instance()->collector();
 
    ItemArray& ia = _p->m_staticdData;
-   if( m_bIsStatic || ia.empty() )
+   if( ia.empty() )
    {
       return;
    }
@@ -356,12 +344,6 @@ GlobalSymbol* Module::addFunction( Function* f, bool bExport )
    // add the symbol to the symbol table.
    GlobalSymbol* sym = new GlobalSymbol( f->name(), f );
    syms[f->name()] = sym;
-
-   // if the module is dynamic, we want the GC to mark us when we generate the item.
-   if( ! m_bIsStatic )
-   {
-      sym->value().garbage();
-   }
 
    // Eventually export it.
    if( bExport )
@@ -443,12 +425,6 @@ GlobalSymbol* Module::addClass( Class* fc, bool, bool bExport )
    // add the symbol to the symbol table.
    GlobalSymbol* sym = new GlobalSymbol( fc->name(), Item(ccls, fc) );
    syms[fc->name()] = sym;
-
-   // If the module is not static, garbage-ize the class
-   if( ! m_bIsStatic  )
-   {
-      sym->value().garbage();
-   }
 
    // Eventually export it.
    if( bExport )

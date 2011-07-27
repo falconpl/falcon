@@ -38,7 +38,7 @@
 namespace Falcon {
 
 CoreModule::CoreModule():
-   Module("core", true)
+   Module("core")
 {
    *this
       << new Ext::Compare

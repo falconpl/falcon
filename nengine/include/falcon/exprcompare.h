@@ -34,7 +34,6 @@ public:
    inline String oneLiner() const { return PStep::oneLiner(); }
 
    inline virtual bool isStandAlone() const { return false; }
-   virtual bool isBinaryOperator() const { return true; }
    virtual bool isStatic() const { return false; }
 
    const String& name() const { return m_name; }

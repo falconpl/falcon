@@ -118,11 +118,6 @@ bool ExprValue::isStatic() const
    return true;
 }
 
-bool ExprValue::isBinaryOperator() const
-{
-   return false;
-}
-
 void ExprValue::describe( String & str ) const
 {
    m_item.describe(str);

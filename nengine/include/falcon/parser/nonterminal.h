@@ -14,7 +14,7 @@
 */
 
 #ifndef _FALCON_PARSER_NONTERMINAL_H_
-#define	_FALCON_PARSER_NONTERMINAL_H_
+#define _FALCON_PARSER_NONTERMINAL_H_
 
 #include <falcon/setup.h>
 #include <falcon/parser/token.h>
