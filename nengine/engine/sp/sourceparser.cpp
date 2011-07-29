@@ -74,6 +74,7 @@ SourceParser::SourceParser():
    T_AutoDiv( "/=", 70 ),
    T_AutoMod( "%=", 70 ),
    T_AutoPow( "**=", 70 ),
+   T_EEQ( "===", 70 ),
    
    T_Comma( "," , 180 ),
    T_Cut("!"),

@@ -926,7 +926,7 @@ public:
     */
     void writeNumber( double number )
     {
-      writeNumber( number, "%e" );
+      writeNumber( number, "%E" );
     }
 
     /** Converts a number to a string and appends it to this string.

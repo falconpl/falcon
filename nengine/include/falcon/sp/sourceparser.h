@@ -59,6 +59,7 @@ public:
    Parsing::Terminal T_AutoDiv;
    Parsing::Terminal T_AutoMod;
    Parsing::Terminal T_AutoPow;
+   Parsing::Terminal T_EEQ;
    
    Parsing::Terminal T_Comma;
    Parsing::Terminal T_Cut;

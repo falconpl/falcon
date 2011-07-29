@@ -127,6 +127,7 @@ Parsing::TokenInstance* SourceLexer::nextToken()
                   break;
                }
 
+               case '.': m_text = "."; m_state = state_float_first; break;
                case ';': return m_parser->T_EOL.makeInstance(m_line, m_chr++);
                case '"':  m_stringML = false; m_stringStart = true; m_state = state_double_string; break;
                case '\'': m_stringML = false; m_stringStart = true; m_state = state_single_string; break;
@@ -514,13 +515,13 @@ Parsing::TokenInstance* SourceLexer::nextToken()
             {
                resetState();
                unget( chr );
-               int64 retval = 1; // to avoid stupid division by zero in case of errors
+               double retval = 1; // to avoid stupid division by zero in case of errors
                m_text.remove(m_text.length()-1,1);
-               if ( ! m_text.parseInt( retval ) )
+               if ( ! m_text.parseDouble( retval ) )
                   addError( e_inv_num_format );
 
                m_nextToken = parser->T_Dot.makeInstance(m_sline, m_schr);
-               return m_parser->T_Int.makeInstance(m_sline, m_schr, retval);
+               return m_parser->T_Float.makeInstance(m_sline, m_schr, retval);
             }
             else if ( chr != '_' )
             {
@@ -895,10 +896,14 @@ Parsing::TokenInstance* SourceLexer::checkOperator()
          if( m_text == "*=" ) return parser->T_AutoTimes.makeInstance(m_sline, m_schr);
          if( m_text == "/=" ) return parser->T_AutoDiv.makeInstance(m_sline, m_schr);
          if( m_text == "%=" ) return parser->T_AutoMod.makeInstance(m_sline, m_schr);
-         if( m_text == "**=" ) return parser->T_AutoPow.makeInstance(m_sline, m_schr);
+         break;
 
+      case 3:
+         if( m_text == "**=" ) return parser->T_AutoPow.makeInstance(m_sline, m_schr);
+         if( m_text == "===" ) return parser->T_EEQ.makeInstance(m_sline, m_schr);
          break;
    }
+
 
    m_hadOperator = false;
    // in case of error

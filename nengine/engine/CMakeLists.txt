@@ -162,6 +162,7 @@ add_library(falcon_engine SHARED
   string.cpp
   stringstream.cpp
   stream.cpp
+  sun_strtod.cpp
   symbol.cpp
   symboltable.cpp
   synfunc.cpp

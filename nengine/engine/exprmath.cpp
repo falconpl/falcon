@@ -34,6 +34,7 @@ public:
    static void operate( VMContext* ctx, Class* cls, void* inst ) { cls->op_add(ctx, inst); }
    static numeric operaten( numeric a, numeric b ) { return a + b; }
    static bool zeroCheck( const Item& ) { return false; }
+   static void swapper( Item& , Item&  ) {}   
 };
 
 class ExprMinus::ops
@@ -43,6 +44,7 @@ public:
    static void operate( VMContext* ctx, Class* cls, void* inst ) { cls->op_sub(ctx, inst); }
    static numeric operaten( numeric a, numeric b ) { return a - b; }
    static bool zeroCheck( const Item& ) { return false; }
+   static void swapper( Item&, Item&  ) {}   
 };
 
 class ExprTimes::ops
@@ -52,6 +54,7 @@ public:
    static void operate( VMContext* ctx, Class* cls, void* inst ) { cls->op_mul(ctx, inst); }
    static numeric operaten( numeric a, numeric b ) { return a * b; }
    static bool zeroCheck( const Item& ) { return false; }
+   static void swapper( Item&, Item& ) {}   
 };
 
 class ExprDiv::ops
@@ -61,6 +64,9 @@ public:
    static void operate( VMContext* ctx, Class* cls, void* inst ) { cls->op_div(ctx, inst); }
    static numeric operaten( numeric a, numeric b ) { return a / b; }
    static bool zeroCheck( const Item& n ) { return n.isOrdinal() && n.forceInteger() == 0; }
+   static void swapper( Item&, Item& op1) { 
+      if( op1.isInteger() ) {op1.setNumeric( op1.asInteger());} 
+   }   
 };
 
 class ExprMod::ops
@@ -70,6 +76,7 @@ public:
    static void operate( VMContext* ctx, Class* cls, void* inst ) { cls->op_mod(ctx, inst); }
    static numeric operaten( numeric a, numeric b ) { return ((int64)a) % ((int64)b); }
    static bool zeroCheck( const Item& n ) { return n.isOrdinal() && n.forceInteger() == 0; }
+   static void swapper( Item&, Item& ) {}   
 };
 
 class ExprPow::ops
@@ -79,6 +86,9 @@ public:
    static void operate( VMContext* ctx, Class* cls, void* inst ) { cls->op_pow(ctx, inst); }
    static numeric operaten( numeric a, numeric b ) { return pow(a,b); }
    static bool zeroCheck( const Item& ) { return false; }
+   static void swapper( Item&, Item& op1) { 
+      if( op1.isInteger() ) {op1.setNumeric( op1.asInteger());} 
+   }   
 };
 
 
@@ -90,6 +100,7 @@ public:
    static void operate( VMContext* ctx, Class* cls, void* inst ) { cls->op_aadd(ctx, inst); }
    static numeric operaten( numeric a, numeric b ) { return a + b; }
    static bool zeroCheck( const Item& ) { return false; }
+   static void swapper( Item& op1, Item& op2 ) { op1.swap(op2); }   
 };
 
 class ExprAutoMinus::ops
@@ -99,6 +110,7 @@ public:
    static void operate( VMContext* ctx, Class* cls, void* inst ) { cls->op_asub(ctx, inst); }
    static numeric operaten( numeric a, numeric b ) { return a - b; }
    static bool zeroCheck( const Item& ) { return false; }
+   static void swapper( Item& op1, Item& op2 ) { op1.swap(op2); }   
 };
 
 class ExprAutoTimes::ops
@@ -108,6 +120,7 @@ public:
    static void operate( VMContext* ctx, Class* cls, void* inst ) { cls->op_amul(ctx, inst); }
    static numeric operaten( numeric a, numeric b ) { return a * b; }
    static bool zeroCheck( const Item& ) { return false; }
+   static void swapper( Item& op1, Item& op2 ) { op1.swap(op2); }   
 };
 
 class ExprAutoDiv::ops
@@ -117,6 +130,10 @@ public:
    static void operate( VMContext* ctx, Class* cls, void* inst ) { cls->op_adiv(ctx, inst); }
    static numeric operaten( numeric a, numeric b ) { return a / b; }
    static bool zeroCheck( const Item& n ) { return n.isOrdinal() && n.forceInteger() == 0; }
+   static void swapper( Item& op1, Item& op2 ) { 
+      op1.swap(op2); 
+      if( op2.isInteger() ) {op2.setNumeric( op2.asInteger());} 
+   }   
 };
 
 class ExprAutoMod::ops
@@ -126,6 +143,7 @@ public:
    static void operate( VMContext* ctx, Class* cls, void* inst ) { cls->op_amod(ctx, inst); }
    static numeric operaten( numeric a, numeric b ) { return ((int64)a) % ((int64)b); }
    static bool zeroCheck( const Item& n ) { return n.isOrdinal() && n.forceInteger() == 0; }
+   static void swapper( Item& op1, Item& op2 ) { op1.swap(op2); }   
 };
 
 class ExprAutoPow::ops
@@ -135,6 +153,10 @@ public:
    static void operate( VMContext* ctx, Class* cls, void* inst ) { cls->op_apow(ctx, inst); }
    static numeric operaten( numeric a, numeric b ) { return pow(a,b); }
    static bool zeroCheck( const Item& ) { return false; }
+   static void swapper( Item& op1, Item& op2 ) { 
+      op1.swap(op2);
+      if( op2.isInteger() ) {op2.setNumeric( op2.asInteger());} 
+   }   
 };
 
 
@@ -175,6 +197,7 @@ void generic_apply_( const PStep* ps, VMContext* ctx )
    // No need to copy the second, we're not packing the stack now.
    Item *op1, *op2;
    ctx->operands( op1, op2 );
+   __CPR::swapper( *op1, *op2 );   
 
    if ( __CPR::zeroCheck(*op2) )
    {
@@ -407,6 +430,9 @@ ExprAuto::ExprAuto( Expression* op1, Expression* op2, Expression::operator_t t, 
 
 void ExprAuto::precompile( PCode* pc ) const
 {
+   // Warning; the order of resolution of auto-expression is the reverse.
+   // we want first the second (assignand) to be resolved.
+   // This means we'll have the wrong things in the stack...
    m_second->precompile( pc );
    m_first->precompileAutoLvalue( pc, this );
 }

@@ -28,14 +28,14 @@
 #include <falcon/common.h>
 #include <falcon/collector.h>
 #include <falcon/engine.h>
-
+#include <falcon/strtod.h>
+#include <falcon/datareader.h>
 
 #include <string.h>
 #include <cstring>
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "falcon/datareader.h"
 
 
 namespace Falcon {
@@ -1638,7 +1638,9 @@ bool String::parseDouble( double &target, length_t pos ) const
    }
 
    // then apply sscanf
-   if ( sscanf( buffer, "%lf", &target ) == 1 )
+   char* endbuf;
+   errno = 0;
+   if ( (target = strtod__( buffer, &endbuf )) != 0.0 || errno == 0 )
       return true;
    return false;
 }
@@ -1858,6 +1860,18 @@ void String::writeNumber( double number, const String &format )
       return;
 
    sprintf( buffer, bufFormat, number );
+   // correct locale
+   char* bufpos = buffer;
+   
+   while( *bufpos )
+   {
+      if( *bufpos == ',' )
+      {
+         *bufpos = '.';
+         break;
+      }
+      ++bufpos;
+   }
    append( buffer );
 }
 

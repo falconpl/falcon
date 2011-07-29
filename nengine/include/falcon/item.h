@@ -709,7 +709,7 @@ public:
    //
 
    int64 len() const;
-
+   void swap( Item& other ) { Item temp = *this; *this = other; other = temp; }
 };
 
 }
