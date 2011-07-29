@@ -50,16 +50,10 @@ void apply_expr_assign( const Rule&, Parser& p )
 
    Expression* firstPart = static_cast<Expression*>(v1->detachValue());
 
-   // assignable expressions are only:
+   // assignable expressions are only expressions having a lvalue pstep:
    // -- symbols
    // -- accessors
-   // -- calls (i.e. if they return a reference).
-   Expression::operator_t type = firstPart->type();
-   if( type != Expression::t_symbol &&
-       type != Expression::t_array_access &&
-       type != Expression::t_obj_access &&
-       type != Expression::t_funcall
-     )
+   if( firstPart->lvalueStep() == 0  )
    {
       p.addError( e_assign_sym, p.currentSource(), v1->line(), v1->chr(), 0 );
    }

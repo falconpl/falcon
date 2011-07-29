@@ -30,9 +30,11 @@
 #include <falcon/classnumeric.h>
 #include <falcon/classdict.h>
 #include <falcon/classarray.h>
+#include <falcon/classreference.h>
 #include <falcon/flexyclass.h>
 #include <falcon/prototypeclass.h>
 #include <falcon/metaclass.h>
+
 
 
 namespace Falcon {
@@ -56,6 +58,7 @@ CoreModule::CoreModule():
       << new ClassBool
       << new ClassInt
       << new ClassNumeric
+      << new ClassReference
       << new ClassArray
       << new ClassDict
       << new ClassString

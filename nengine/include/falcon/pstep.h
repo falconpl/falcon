@@ -62,12 +62,12 @@ public:
     * pstep that are not part of the syntactic tree, but just of the
     * VM code.
     * */
-   inline virtual void describe( String& ) const {};
+   virtual void describe( String& ) const;
 
    /** Convert into a string -- short version.
     To be used by diag functions.
     */
-   inline virtual void oneLiner( String& s ) const { describe(s); }
+   virtual void oneLiner( String& s ) const;
 
    /** Convert into a string -- short version. */
    inline String oneLiner() const

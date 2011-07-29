@@ -398,7 +398,7 @@ GlobalSymbol* Module::addVariable( const String& name, bool bExport )
 
 void Module::addClass( GlobalSymbol* gsym, Class* fc, bool )
 {
-   static Class* ccls = Engine::instance()->classClass();
+   static Class* ccls = Engine::instance()->metaClass();
 
    // finally add to the function vecotr so that we can account it.
    _p->m_classes[fc->name()] = fc;
@@ -413,7 +413,7 @@ void Module::addClass( GlobalSymbol* gsym, Class* fc, bool )
 
 GlobalSymbol* Module::addClass( Class* fc, bool, bool bExport )
 {
-   static Class* ccls = Engine::instance()->classClass();
+   static Class* ccls = Engine::instance()->metaClass();
 
    Private::GlobalsMap& syms = _p->m_gSyms;
    if( syms.find(fc->name()) != syms.end() )

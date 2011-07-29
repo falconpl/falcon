@@ -52,7 +52,14 @@ void FuncPrintBase::NextStep::apply_( const PStep* ps, VMContext* ctx )
    const NextStep* nstep = static_cast<const NextStep*>(ps);
    TextWriter* out = ctx->vm()->textOut();
    // write the result of the call.
-   out->write( *ctx->regA().asString() );
+   if( ctx->topData().isString() )
+   {
+      out->write(*ctx->topData().asString());
+   }
+   else
+   {
+      out->write( "<failed toString>" );
+   }
 
    // go on.
    nstep->printNext( ctx, ctx->currentCode().m_seqId );
@@ -91,7 +98,14 @@ void FuncPrintBase::NextStep::printNext( VMContext* ctx, int count ) const
       }
 
       TRACE3("Function print%s -- printNext", m_isPrintl ? "l" : "" );
-      out->write(*ctx->topData().asString());
+      if( ctx->topData().isString() )
+      {
+         out->write(*ctx->topData().asString());
+      }
+      else
+      {
+         out->write( "<class " + cls->name() +" failed toString>" );
+      }
    }
    ctx->popCode();
 

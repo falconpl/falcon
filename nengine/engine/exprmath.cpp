@@ -13,6 +13,9 @@
    See LICENSE file for licensing details.
 */
 
+#undef SRC
+#define SRC "engine/exprmath.cpp"
+
 #include <falcon/exprmath.h>
 #include <falcon/trace.h>
 #include <falcon/vmcontext.h>
@@ -57,7 +60,7 @@ public:
    static int64 operate( int64 a, int64 b ) { return a / b; }
    static void operate( VMContext* ctx, Class* cls, void* inst ) { cls->op_div(ctx, inst); }
    static numeric operaten( numeric a, numeric b ) { return a / b; }
-   static bool zeroCheck( const Item& n ) { return n.isOrdinal() && n.forceNumeric() == 0.0; }
+   static bool zeroCheck( const Item& n ) { return n.isOrdinal() && n.forceInteger() == 0; }
 };
 
 class ExprMod::ops
@@ -66,7 +69,7 @@ public:
    static int64 operate( int64 a, int64 b ) { return a % b; }
    static void operate( VMContext* ctx, Class* cls, void* inst ) { cls->op_mod(ctx, inst); }
    static numeric operaten( numeric a, numeric b ) { return ((int64)a) % ((int64)b); }
-   static bool zeroCheck( const Item& n ) { return n.isOrdinal() && n.forceNumeric() == 0.0; }
+   static bool zeroCheck( const Item& n ) { return n.isOrdinal() && n.forceInteger() == 0; }
 };
 
 class ExprPow::ops
@@ -74,6 +77,62 @@ class ExprPow::ops
 public:
    static int64 operate( int64 a, int64 b ) { return (int64)pow(a,(numeric)b); }
    static void operate( VMContext* ctx, Class* cls, void* inst ) { cls->op_pow(ctx, inst); }
+   static numeric operaten( numeric a, numeric b ) { return pow(a,b); }
+   static bool zeroCheck( const Item& ) { return false; }
+};
+
+
+
+class ExprAutoPlus::ops
+{
+public:
+   static int64 operate( int64 a, int64 b ) { return a + b; }
+   static void operate( VMContext* ctx, Class* cls, void* inst ) { cls->op_aadd(ctx, inst); }
+   static numeric operaten( numeric a, numeric b ) { return a + b; }
+   static bool zeroCheck( const Item& ) { return false; }
+};
+
+class ExprAutoMinus::ops
+{
+public:
+   static int64 operate( int64 a, int64 b ) { return a - b; }
+   static void operate( VMContext* ctx, Class* cls, void* inst ) { cls->op_asub(ctx, inst); }
+   static numeric operaten( numeric a, numeric b ) { return a - b; }
+   static bool zeroCheck( const Item& ) { return false; }
+};
+
+class ExprAutoTimes::ops
+{
+public:
+   static int64 operate( int64 a, int64 b ) { return a * b; }
+   static void operate( VMContext* ctx, Class* cls, void* inst ) { cls->op_amul(ctx, inst); }
+   static numeric operaten( numeric a, numeric b ) { return a * b; }
+   static bool zeroCheck( const Item& ) { return false; }
+};
+
+class ExprAutoDiv::ops
+{
+public:
+   static int64 operate( int64 a, int64 b ) { return a / b; }   
+   static void operate( VMContext* ctx, Class* cls, void* inst ) { cls->op_adiv(ctx, inst); }
+   static numeric operaten( numeric a, numeric b ) { return a / b; }
+   static bool zeroCheck( const Item& n ) { return n.isOrdinal() && n.forceInteger() == 0; }
+};
+
+class ExprAutoMod::ops
+{
+public:
+   static int64 operate( int64 a, int64 b ) { return a % b; }   
+   static void operate( VMContext* ctx, Class* cls, void* inst ) { cls->op_amod(ctx, inst); }
+   static numeric operaten( numeric a, numeric b ) { return ((int64)a) % ((int64)b); }
+   static bool zeroCheck( const Item& n ) { return n.isOrdinal() && n.forceInteger() == 0; }
+};
+
+class ExprAutoPow::ops
+{
+public:
+   static int64 operate( int64 a, int64 b ) { return (int64)pow(a,(numeric)b); }
+   static void operate( VMContext* ctx, Class* cls, void* inst ) { cls->op_apow(ctx, inst); }
    static numeric operaten( numeric a, numeric b ) { return pow(a,b); }
    static bool zeroCheck( const Item& ) { return false; }
 };
@@ -119,9 +178,21 @@ void generic_apply_( const PStep* ps, VMContext* ctx )
 
    if ( __CPR::zeroCheck(*op2) )
    {
-      throw new CodeError( ErrorParam(e_div_by_zero, __LINE__).origin(ErrorParam::e_orig_vm) );
+      throw new CodeError( ErrorParam(e_div_by_zero, __LINE__, SRC )
+         .origin(ErrorParam::e_orig_vm) );
    }
-
+   
+   // we dereference also op1 to help copy-on-write decisions from overrides
+   if( op1->isReference() )
+   {
+      *op1 = *op1->dereference();
+   }
+   
+   if( op2->isReference() )
+   {
+      *op2 = *op2->dereference();
+   }
+   
    switch ( op1->type() << 8 | op2->type() )
    {
    case FLC_ITEM_INT << 8 | FLC_ITEM_INT:
@@ -141,14 +212,13 @@ void generic_apply_( const PStep* ps, VMContext* ctx )
       op1->setNumeric( __CPR::operaten(op1->asNumeric(), op2->asNumeric()) );
       ctx->popData();
       break;
-
+      
    case FLC_ITEM_USER << 8 | FLC_ITEM_NIL:
    case FLC_ITEM_USER << 8 | FLC_ITEM_BOOL:
    case FLC_ITEM_USER << 8 | FLC_ITEM_INT:
    case FLC_ITEM_USER << 8 | FLC_ITEM_NUM:
    case FLC_ITEM_USER << 8 | FLC_ITEM_METHOD:
    case FLC_ITEM_USER << 8 | FLC_ITEM_FUNC:
-   case FLC_ITEM_USER << 8 | FLC_ITEM_BASEMETHOD:
    case FLC_ITEM_USER << 8 | FLC_ITEM_USER:
       __CPR::operate( ctx, op1->asClass(), op1->asInst() );
       break;
@@ -159,6 +229,7 @@ void generic_apply_( const PStep* ps, VMContext* ctx )
          new OperandError( ErrorParam(e_invalid_op, __LINE__ ).extra(((ExprMath*)ps)->name()) );
    }
 }
+
 
 template
 void generic_apply_<ExprPlus::ops>( const PStep* ps, VMContext* ctx );
@@ -177,6 +248,25 @@ void generic_apply_<ExprMod::ops>( const PStep* ps, VMContext* ctx );
 
 template
 void generic_apply_<ExprPow::ops>( const PStep* ps, VMContext* ctx );
+
+
+template
+void generic_apply_<ExprAutoPlus::ops>( const PStep* ps, VMContext* ctx );
+
+template
+void generic_apply_<ExprAutoMinus::ops>( const PStep* ps, VMContext* ctx );
+
+template
+void generic_apply_<ExprAutoTimes::ops>( const PStep* ps, VMContext* ctx);
+
+template
+void generic_apply_<ExprAutoDiv::ops>( const PStep* ps, VMContext* ctx );
+
+template
+void generic_apply_<ExprAutoMod::ops>( const PStep* ps, VMContext* ctx );
+
+template
+void generic_apply_<ExprAutoPow::ops>( const PStep* ps, VMContext* ctx );
 
 //==========================================================
 
@@ -307,6 +397,92 @@ bool ExprPow::simplify( Item& value ) const
    return generic_simplify<ops>( value, m_first, m_second );
 }
 
+//========================================================
+// Auto expressions AAdd
+//
+
+ExprAuto::ExprAuto( Expression* op1, Expression* op2, Expression::operator_t t, const String& name ):
+   ExprMath( op1, op2, t, name )
+{}
+
+void ExprAuto::precompile( PCode* pc ) const
+{
+   m_second->precompile( pc );
+   m_first->precompileAutoLvalue( pc, this );
+}
+
+//========================================================
+// EXPR AAdd
+//
+ExprAutoPlus::ExprAutoPlus( Expression* op1, Expression* op2 ):
+   ExprAuto( op1, op2, t_aadd, "+=" )
+{
+   apply = &generic_apply_<ops>;
+}
+
+ExprAutoPlus::~ExprAutoPlus()
+{}
+
+//========================================================
+// EXPR ASub
+//
+ExprAutoMinus::ExprAutoMinus( Expression* op1, Expression* op2 ):
+   ExprAuto( op1, op2, t_asub, "-=" )
+{
+   apply = &generic_apply_<ops>;
+}
+
+ExprAutoMinus::~ExprAutoMinus()
+{}
+
+
+//========================================================
+// EXPR ATimes
+//
+ExprAutoTimes::ExprAutoTimes( Expression* op1, Expression* op2 ):
+   ExprAuto( op1, op2, t_amul, "*=" )
+{
+   apply = &generic_apply_<ops>;
+}
+
+ExprAutoTimes::~ExprAutoTimes()
+{}
+
+//========================================================
+// EXPR ADiv
+//
+ExprAutoDiv::ExprAutoDiv( Expression* op1, Expression* op2 ):
+   ExprAuto( op1, op2, t_adiv, "/=" )
+{
+   apply = &generic_apply_<ops>;
+}
+
+ExprAutoDiv::~ExprAutoDiv()
+{}
+
+//========================================================
+// EXPR AMod
+//
+ExprAutoMod::ExprAutoMod( Expression* op1, Expression* op2 ):
+   ExprAuto( op1, op2, t_amod, "%=" )
+{
+   apply = &generic_apply_<ops>;
+}
+
+ExprAutoMod::~ExprAutoMod()
+{}
+
+//========================================================
+// EXPR AMod
+//
+ExprAutoPow::ExprAutoPow( Expression* op1, Expression* op2 ):
+   ExprAuto( op1, op2, t_apow, "**=" )
+{
+   apply = &generic_apply_<ops>;
+}
+
+ExprAutoPow::~ExprAutoPow()
+{}
 
 }
 

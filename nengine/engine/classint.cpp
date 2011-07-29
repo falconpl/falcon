@@ -55,23 +55,16 @@ void* ClassInt::clone( void* source ) const
 
 void ClassInt::serialize( DataWriter *stream, void *self ) const
 {
-   
    int64 value = static_cast< Item* >( self )->asInteger();
-
    stream->write( value );
-
 }
 
 
 void* ClassInt::deserialize( DataReader *stream ) const
 {
-   
    int64 value;
-
    stream->read( value );
-
    return new Item( value );
-
 }
 
 void ClassInt::describe( void* instance, String& target, int, int ) const
@@ -115,44 +108,52 @@ void ClassInt::op_create( VMContext* ctx, int pcount ) const
 }
 
 
-void ClassInt::op_isTrue( VMContext* ctx, void* ) const
+void ClassInt::op_isTrue( VMContext* ctx, void* self ) const
 {
-   Item* iself;
-   OpToken token( ctx, iself );
-   token.exit( iself->asInteger() != 0 );
+   Item* iself = static_cast<Item*>(self);
+   ctx->topData().setBoolean( iself->asInteger() != 0 );
 }
 
-void ClassInt::op_toString( VMContext* ctx, void* ) const
+void ClassInt::op_toString( VMContext* ctx, void* self ) const
 {
-   Item* iself;
-   OpToken token( ctx, iself );
-   String s;
-   token.exit( s.N(iself->asInteger()) );
+   Item* iself = static_cast<Item*>(self);
+   String* s = new String;
+   s->N( iself->asInteger() );   
+   ctx->topData() = s->garbage(); // will garbage S
 }
 
-void ClassInt::op_add( VMContext* ctx, void* ) const {
-    
-   Item *self, *op2;
 
-   OpToken token( ctx, self, op2 );
-
-   if( self->type() == op2->type() )
+void ClassInt::op_add( VMContext* ctx, void* self ) const 
+{    
+   Item *iself, *op2;   
+   iself = (Item*)self;
+   op2 = &ctx->topData();
+   
+   switch( typeID() )
    {
-
-      token.exit( self->asInteger() + op2->asInteger() );
-
+      case FLC_ITEM_INT:
+         ctx->stackResult(2, iself->asInteger() + op2->asInteger() );
+         break;
+   
+      case FLC_ITEM_NUM:
+         ctx->stackResult(2, iself->asInteger() + op2->asNumeric() );
+         break;
+         
+      case FLC_ITEM_USER:
+         if( ctx->topData().deuser() )
+         {
+            op_add( ctx, self );
+            break;
+         }
+         // else, fallthrough and raise the error.
+         
+      default:
+         throw new OperandError( ErrorParam( e_invalid_op, __LINE__, SRC )
+               .origin( ErrorParam::e_orig_vm )
+               .extra( "+" ) );
    }
-
-   else if( op2->type() == FLC_ITEM_NUM )
-   {
-
-      token.exit( self->forceNumeric() + op2->asNumeric() );
-
-   } 
-   else 
-      throw new OperandError( ErrorParam( e_invalid_op, __LINE__, __FILE__ ).origin( ErrorParam::e_orig_vm ).extra( "Invalid operand term" ) );
-    
 }
+
 
 void ClassInt::op_sub( VMContext* ctx, void* ) const {
     

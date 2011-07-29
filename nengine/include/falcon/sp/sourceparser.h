@@ -53,9 +53,17 @@ public:
    Parsing::Terminal T_CloseGraph;
    Parsing::Terminal T_Dot;
    Parsing::Terminal T_Arrow;
+   Parsing::Terminal T_AutoAdd;
+   Parsing::Terminal T_AutoSub;
+   Parsing::Terminal T_AutoTimes;
+   Parsing::Terminal T_AutoDiv;
+   Parsing::Terminal T_AutoMod;
+   Parsing::Terminal T_AutoPow;
+   
    Parsing::Terminal T_Comma;
    Parsing::Terminal T_Cut;
    Parsing::Terminal T_UnaryMinus;
+   Parsing::Terminal T_Dollar;
    Parsing::Terminal T_Power;
    Parsing::Terminal T_Times;
    Parsing::Terminal T_Divide;
@@ -164,6 +172,7 @@ public:
    Parsing::Rule r_Expr_array_decl;
    Parsing::Rule r_Expr_empty_dict2;
    Parsing::Rule r_Expr_array_decl2;
+   Parsing::Rule r_Expr_ref;
    Parsing::Rule r_Expr_dot;
    Parsing::Rule r_Expr_plus;
    Parsing::Rule r_Expr_preinc;
@@ -174,6 +183,13 @@ public:
    Parsing::Rule r_Expr_times;
    Parsing::Rule r_Expr_div;
    Parsing::Rule r_Expr_pow;
+   Parsing::Rule r_Expr_auto_add;
+   Parsing::Rule r_Expr_auto_sub;
+   Parsing::Rule r_Expr_auto_times;
+   Parsing::Rule r_Expr_auto_div;
+   Parsing::Rule r_Expr_auto_mod;
+   Parsing::Rule r_Expr_auto_pow;
+   
    Parsing::Rule r_Expr_neg;
    Parsing::Rule r_Expr_neg2;
    Parsing::Rule r_Expr_Atom;

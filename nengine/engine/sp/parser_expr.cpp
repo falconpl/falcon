@@ -159,10 +159,75 @@ void apply_expr_preinc(const Rule&, Parser& p )
 }
 
 
- void apply_expr_pow( const Rule& r, Parser& p )
+void apply_expr_pow( const Rule& r, Parser& p )
 {
    apply_expr_binary(r, p, new ExprPow );
 }
+ 
+
+void apply_expr_auto( const Rule&, Parser& p, BinaryExpression* aexpr )
+{
+   SourceParser& sp = static_cast<SourceParser&>(p);
+   
+   TokenInstance* tfirst = p.getNextToken();
+   (void) p.getNextToken();
+   TokenInstance* tsecond = p.getNextToken();
+   
+   Expression* firstPart = static_cast<Expression*>(tfirst->detachValue());
+   // assignable expressions are only expressions having a lvalue pstep:
+   // -- symbols
+   // -- accessors
+   if( firstPart->lvalueStep() == 0  )
+   {
+      p.addError( e_assign_sym, p.currentSource(), tfirst->line(), tfirst->chr(), 0 );
+   }
+   
+   Expression* secondPart = static_cast<Expression*>(tsecond->detachValue());
+   aexpr->first( firstPart );
+   aexpr->second( secondPart );
+   TokenInstance* ti = new TokenInstance(tfirst->line(), tfirst->chr(), sp.Expr);
+   ti->setValue( aexpr, expr_deletor );
+   p.simplify( 3, ti );
+}
+
+
+void apply_expr_auto_add( const Rule&r, Parser& p )
+{
+   BinaryExpression* aexpr = new ExprAutoPlus;
+   apply_expr_auto( r, p, aexpr );
+}
+
+
+void apply_expr_auto_sub( const Rule&r, Parser& p )
+{
+   BinaryExpression* aexpr = new ExprAutoMinus;
+   apply_expr_auto( r, p, aexpr );
+}
+
+void apply_expr_auto_times( const Rule&r, Parser& p )
+{
+   BinaryExpression* aexpr = new ExprAutoTimes;
+   apply_expr_auto( r, p, aexpr );
+}
+
+void apply_expr_auto_div( const Rule&r, Parser& p )
+{
+   BinaryExpression* aexpr = new ExprAutoDiv;
+   apply_expr_auto( r, p, aexpr );
+}
+
+void apply_expr_auto_mod( const Rule&r, Parser& p )
+{
+   BinaryExpression* aexpr = new ExprAutoMod;
+   apply_expr_auto( r, p, aexpr );
+}
+
+void apply_expr_auto_pow( const Rule&r, Parser& p )
+{
+   BinaryExpression* aexpr = new ExprAutoPow;
+   apply_expr_auto( r, p, aexpr );
+}
+
 
  void apply_expr_neg( const Rule&, Parser& p )
 {

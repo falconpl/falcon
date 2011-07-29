@@ -39,6 +39,7 @@ public:
    virtual void assign( VMContext*, const Item& value ) const;
    virtual bool retrieve( Item& value, VMContext* ctx ) const;
    static void apply_( const PStep* self, VMContext* ctx );
+   static void apply_lvalue_( const PStep* self, VMContext* ctx );
    virtual Expression* makeExpression();
 
 protected:

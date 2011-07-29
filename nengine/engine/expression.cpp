@@ -29,6 +29,7 @@ namespace Falcon {
 
 Expression::Expression( const Expression &other ):
    PStep(other),
+   m_pstep_lvalue(0),
    m_operator( other.m_operator ),
    m_sourceRef( other.m_sourceRef )
 {}
@@ -51,6 +52,22 @@ void Expression::deserialize( DataReader* s )
 void Expression::precompile( PCode* pcode ) const
 {
    pcode->pushStep( this );
+}
+
+void Expression::precompileLvalue( PCode* pcode ) const
+{
+   // We do this, but the parser should have blocked us...
+   pcode->pushStep( this );
+}
+
+void Expression::precompileAutoLvalue( PCode* pcode, const Expression* activity ) const
+{
+   // We do this, but the parser should have blocked us...
+   precompile( pcode );             // access -- prepare params
+   // no save
+   pcode->pushStep( activity );   // action
+   // no restore
+   precompileLvalue( pcode );       // storage -- if applicable.
 }
 
 //=============================================================
@@ -371,7 +388,7 @@ void ExprAssign::precompile( PCode* pcode ) const
    // just, evaluate the second, then evaluate the first,
    // but the first knows it's a lvalue.
    m_second->precompile(pcode);
-   m_first->precompile(pcode);
+   m_first->precompileLvalue(pcode);
 }
 
 
@@ -805,7 +822,6 @@ bool ExprDot::simplify( Item& ) const
 void ExprDot::apply_( const PStep* ps, VMContext* ctx )
 {
    TRACE2( "Apply \"%s\"", ((ExprDot*)ps)->describe().c_ize() );
-
    const ExprDot* dot_expr = static_cast<const ExprDot*>(ps);
 
    Class* cls;
@@ -814,14 +830,28 @@ void ExprDot::apply_( const PStep* ps, VMContext* ctx )
    const String& prop = dot_expr->m_prop;
    //acquire the class
    ctx->topData().forceClassInst(cls, self);
-   if ( dot_expr->isLValue() )
-   {
-      cls->op_setProperty(ctx, self, prop );
-   }
-   else
-   {
-      cls->op_getProperty(ctx, self, prop );
-   }
+   cls->op_getProperty(ctx, self, prop );
+}
+
+void ExprDot::PstepLValue::apply_( const PStep* ps, VMContext* ctx )
+{
+   const ExprDot::PstepLValue* dot_lv_expr = static_cast<const ExprDot::PstepLValue*>(ps);
+   TRACE2( "Apply lvalue \"%s\"", dot_lv_expr->m_owner->describe().c_ize() );
+
+   Class* cls;
+   void* self;
+   // get prop name
+   const String& prop = dot_lv_expr->m_owner->m_prop;
+   //acquire the class
+   ctx->topData().forceClassInst(cls, self);
+   cls->op_setProperty(ctx, self, prop );
+}
+
+
+void ExprDot::precompileLvalue( PCode* pcode ) const
+{
+   m_first->precompile( pcode );
+   pcode->pushStep( m_pstep_lvalue );
 }
 
 
@@ -836,6 +866,27 @@ bool ExprIndex::simplify( Item& ) const
    return false;
 }
 
+void ExprIndex::precompileLvalue( PCode* pcode ) const
+{
+   m_first->precompile( pcode );
+   m_second->precompile( pcode ); // preparation of the parameters  
+   pcode->pushStep( m_pstep_lvalue );  // storage
+}
+
+
+void ExprIndex::precompileAutoLvalue( PCode* pcode, Expression* activity ) const
+{
+   m_first->precompile( pcode );
+   m_second->precompile( pcode ); // preparation of the parameters
+   pcode->pushStep( &m_pstepCopyAccess ); // save
+   
+   activity->precompile( pcode ); // action
+   
+   pcode->pushStep( &m_pstepExchangeAccess ); // restore   
+   // storage step is done in exchange for performance.
+  // pcode->pushStep( m_pstep_lvalue );  
+}
+
 
 void ExprIndex::apply_( const PStep* ps, VMContext* ctx )
 {
@@ -846,16 +897,52 @@ void ExprIndex::apply_( const PStep* ps, VMContext* ctx )
    
    //acquire the class
    (&ctx->topData()-1)->forceClassInst(cls, self);
-   if ( ((ExprIndex*)ps)->isLValue() )
-   {
-      cls->op_setIndex( ctx, self );
-   }
-   else
-   {
-      cls->op_getIndex( ctx, self );
-   }
+   cls->op_getIndex( ctx, self );
 }
 
+
+void ExprIndex::PstepLValue::apply_( const PStep* ps, VMContext* ctx )
+{
+   TRACE2( "Apply lvalue \"%s\"", ((ExprIndex::PstepLValue*)ps)->describe().c_ize() );
+
+   Class* cls;
+   void* self;
+   
+   //acquire the class
+   (&ctx->topData()-1)->forceClassInst(cls, self);
+   cls->op_setIndex( ctx, self );
+}
+
+
+void ExprIndex::PstepCopyAccess::apply_( const PStep*, VMContext* ctx )
+{
+   // We just need to copy the stuff...
+   ctx->addSpace(2);
+   ctx->opcodeParam(1) = ctx->opcodeParam(3);
+   ctx->opcodeParam(0) = ctx->opcodeParam(2);
+}
+   
+void ExprIndex::PstepExchangeAccess::apply_( const PStep*, VMContext* ctx )
+{
+   // Here we need to move the value, that is at the bottom of the stack
+   // in front of the array and index items.
+   Item i_array = ctx->opcodeParam(2);
+   Item i_idx = ctx->opcodeParam(1);
+   Item i_val = ctx->opcodeParam(0);
+
+   ctx->opcodeParam(2) = i_val;
+   ctx->opcodeParam(1) = i_array;
+   ctx->opcodeParam(0) = i_idx;
+   
+   // now we're ready for the assign step
+   Class* cls;
+   void* self;
+   
+   //acquire the class
+   i_array.forceClassInst(cls, self);
+   cls->op_setIndex( ctx, self );
+}
+ 
 
 void ExprIndex::describe( String& ret ) const
 {

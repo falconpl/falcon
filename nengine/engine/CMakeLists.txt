@@ -68,6 +68,7 @@ add_library(falcon_engine SHARED
   sp/parser_index.cpp
   sp/parser_list.cpp
   sp/parser_proto.cpp
+  sp/parser_reference.cpp
   sp/parser_rule.cpp
   sp/parser_while.cpp
   sp/parsercontext.cpp
@@ -89,6 +90,7 @@ add_library(falcon_engine SHARED
   classint.cpp
   classnil.cpp
   classnumeric.cpp
+  classreference.cpp
   classstring.cpp
   closedsymbol.cpp
   codeerror.cpp
@@ -119,6 +121,7 @@ add_library(falcon_engine SHARED
   exprfactory.cpp
   exprmath.cpp
   exprproto.cpp
+  exprref.cpp
   exprsym.cpp
   exprvalue.cpp
   filestat.cpp
@@ -146,6 +149,7 @@ add_library(falcon_engine SHARED
   paramerror.cpp
   prototypeclass.cpp
   pseudofunc.cpp
+  pstep.cpp
   path.cpp
   pcode.cpp
   rampmode.cpp

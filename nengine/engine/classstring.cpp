@@ -332,9 +332,12 @@ void ClassString::op_compare( VMContext* ctx, void* self ) const
 }
 
 
-void ClassString::op_toString( VMContext*, void* ) const
+void ClassString::op_toString( VMContext* ctx, void* data ) const
 {
-   // nothing to do -- the topmost item of the stack is already a string.
+   // this op is generally called for temporary items,
+   // ... so, even if we shouldn't be marked,
+   // ... we won't be marked long if we're temporary.
+   ctx->topData().setUser( this, data, true ); 
 }
 
 void ClassString::op_true( VMContext* ctx, void* str) const

@@ -17,25 +17,32 @@
 
 #include <falcon/symbol.h>
 #include <falcon/exprsym.h>
+#include <falcon/pcode.h>
 
 namespace Falcon {
 
 ExprSymbol::ExprSymbol( const ExprSymbol& other ):
       Expression( other ),
-      m_symbol(other.m_symbol),
-      m_lvalue(false)
+      m_pslv(this),
+      m_symbol(other.m_symbol)
 {
-   // apply is created by symbols
-   // TODO raise error in debug if apply is not present.
+   apply = other.apply;
+   m_pstep_lvalue = &m_pslv;
+   m_pstep_lvalue->apply = other.m_pstep_lvalue->apply;
 }
 
 ExprSymbol::ExprSymbol( Symbol* target ):
    Expression( t_symbol ),
-   m_symbol( target ),
-   m_lvalue(false)
+   m_pslv(this),
+   m_symbol( target )
 {
-   // apply is created by symbols
-   // TODO raise error in debug if apply is not present.
+   m_pstep_lvalue = &m_pslv;
+}
+
+
+void ExprSymbol::precompileLvalue( PCode* pcode ) const
+{
+   pcode->pushStep( m_pstep_lvalue );
 }
 
 
@@ -61,6 +68,12 @@ void ExprSymbol::serialize( DataWriter* ) const
 void ExprSymbol::deserialize( DataReader* )
 {
    // TODO
+}
+
+
+void ExprSymbol::PStepLValue::describe( String& s ) const
+{
+   m_owner->describe( s );
 }
 
 }

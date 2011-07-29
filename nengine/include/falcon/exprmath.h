@@ -183,6 +183,146 @@ private:
    class ops;
 };
 
+//=====================================================================
+// Auto expressions
+//
+class FALCON_DYN_CLASS ExprAuto: public ExprMath
+{
+public:
+   ExprAuto( Expression* op1, Expression* op2, Expression::operator_t t, const String& name );
+
+   ExprAuto( const ExprAuto& other ):
+      ExprMath(other)
+   {}
+   
+   virtual bool simplify( Item& ) const { return false; } 
+   virtual void precompile( PCode* pc ) const;
+protected:
+   friend class ExprFactory;
+};
+
+/** Autp-Plus opertor. */
+class FALCON_DYN_CLASS ExprAutoPlus: public ExprAuto
+{
+public:
+   ExprAutoPlus( Expression* op1=0, Expression* op2=0 );
+
+   ExprAutoPlus( const ExprAutoPlus& other ):
+      ExprAuto(other)
+   {}
+   virtual ~ExprAutoPlus();
+   inline virtual ExprAutoPlus* clone() const { return new ExprAutoPlus( *this ); }
+protected:
+   friend class ExprFactory;
+
+private:
+   class ops;
+};
+
+/** Auto-Minus operator. */
+class FALCON_DYN_CLASS ExprAutoMinus: public ExprAuto
+{
+public:
+   ExprAutoMinus( Expression* op1=0, Expression* op2=0 );
+
+   ExprAutoMinus( const ExprAutoMinus& other ):
+      ExprAuto(other)
+   {}
+
+   virtual ~ExprAutoMinus();
+   inline virtual ExprAutoMinus* clone() const { return new ExprAutoMinus( *this ); }
+
+protected:
+   friend class ExprFactory;
+
+private:
+   class ops;
+};
+
+
+/** Auto-Times operator. */
+class FALCON_DYN_CLASS ExprAutoTimes: public ExprAuto
+{
+public:
+   ExprAutoTimes( Expression* op1=0, Expression* op2=0 );
+
+   ExprAutoTimes( const ExprAutoTimes& other ):
+      ExprAuto(other)
+   {}
+
+   virtual ~ExprAutoTimes();
+   inline virtual ExprAutoTimes* clone() const { return new ExprAutoTimes( *this ); }
+
+protected:
+   friend class ExprFactory;
+
+private:
+   class ops;
+};
+
+
+/** Auto-Division operator. */
+class FALCON_DYN_CLASS ExprAutoDiv: public ExprAuto
+{
+public:
+   ExprAutoDiv( Expression* op1=0, Expression* op2=0 );
+
+   ExprAutoDiv( const ExprAutoDiv& other ):
+      ExprAuto(other)
+   {}
+
+   virtual ~ExprAutoDiv();
+   inline virtual ExprAutoDiv* clone() const { return new ExprAutoDiv( *this ); }
+
+protected:
+   friend class ExprFactory;
+
+private:
+   class ops;
+};
+
+
+/** Auto-Power operator. */
+class FALCON_DYN_CLASS ExprAutoPow: public ExprAuto
+{
+public:
+   ExprAutoPow( Expression* op1=0, Expression* op2=0 );
+
+   ExprAutoPow( const ExprAutoPow& other ):
+      ExprAuto(other)
+   {}
+
+   virtual ~ExprAutoPow();
+   inline virtual ExprAutoPow* clone() const { return new ExprAutoPow( *this ); }
+
+protected:
+   friend class ExprFactory;
+
+private:
+   class ops;
+};
+
+
+/** Auto-modulo operator. */
+class FALCON_DYN_CLASS ExprAutoMod: public ExprAuto
+{
+public:
+   ExprAutoMod( Expression* op1=0, Expression* op2=0 );
+
+   ExprAutoMod( const ExprAutoMod& other ):
+      ExprAuto(other)
+   {}
+
+   virtual ~ExprAutoMod();
+   inline virtual ExprAutoMod* clone() const { return new ExprAutoMod( *this ); }
+
+protected:
+   friend class ExprFactory;
+
+private:
+   class ops;
+};
+
 }
 
 #endif	/* _FALCON_EXPRMATH_H */

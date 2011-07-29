@@ -39,6 +39,7 @@ public:
    virtual bool retrieve( Item& value, VMContext* ctx ) const;
    
    static void apply_( const PStep* s1, VMContext* ctx );
+   static void apply_lvalue_( const PStep* s1, VMContext* ctx );
 
    virtual Expression* makeExpression();
 

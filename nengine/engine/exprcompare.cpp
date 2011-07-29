@@ -91,7 +91,6 @@ void generic_apply_( const PStep* DEBUG_ONLY(ps), VMContext* ctx )
    case FLC_ITEM_USER << 8 | FLC_ITEM_NUM:
    case FLC_ITEM_USER << 8 | FLC_ITEM_METHOD:
    case FLC_ITEM_USER << 8 | FLC_ITEM_FUNC:
-   case FLC_ITEM_USER << 8 | FLC_ITEM_BASEMETHOD:
    case FLC_ITEM_USER << 8 | FLC_ITEM_USER:
       op1->asClass()->op_compare( ctx, op1->asInst() );
       // refetch, we may have gone deep

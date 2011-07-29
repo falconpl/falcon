@@ -192,6 +192,14 @@ void Item::describe( String &target, int maxDepth, int maxLength ) const
       }
       break;
 
+      case FLC_ITEM_REF:
+      {
+         asReference()->describe( target, maxDepth, maxLength );
+         target = "Ref {" + target + "}";
+      }
+      break;
+
+      
       case FLC_ITEM_USER:
       {
          asClass()->describe( asInst(), target, maxDepth, maxLength );

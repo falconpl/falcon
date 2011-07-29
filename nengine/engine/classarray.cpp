@@ -137,7 +137,7 @@ void ClassArray::op_getIndex( VMContext* ctx, void* self ) const
 
 void ClassArray::op_setIndex( VMContext* ctx, void* self ) const
 {
-   Item* value, *index, *arritem;
+   Item* value, *arritem, *index;
    ctx->operands( value, arritem, index );
 
    ItemArray& array = *static_cast<ItemArray*>(self);

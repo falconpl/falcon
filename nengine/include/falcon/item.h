@@ -51,6 +51,7 @@ public:
      union {
         Function *function;
         Class *base;
+        Item* ref;
         int32 ruleTop;
      } mth;
 
@@ -312,13 +313,6 @@ public:
        content.base.bits.type = FLC_ITEM_METHOD;
    }
 
-   inline void methodize( Class* mthClass )
-   {
-       content.mth.base = mthClass;
-       content.base.bits.oldType = content.base.bits.type;
-       content.base.bits.type = FLC_ITEM_BASEMETHOD;
-   }
-
    inline void unmethodize()
    {
        content.base.bits.type = content.base.bits.oldType;
@@ -460,7 +454,14 @@ public:
    void assign( const Item& other )
    {
       other.copied(true);
-      copy(other);
+      if( isReference() && ! other.isReference() )
+      {
+         dereference()->copy(other);
+      }
+      else
+      {
+         copy(other);
+      }
    }
 
    bool asBoolean() const { return content.data.val32 != 0; }
@@ -494,16 +495,22 @@ public:
    */
    numeric forceNumeric() const ;
 
+   Item* dereference() { 
+      return type() == FLC_ITEM_REF ? 
+            content.mth.ref :
+            this; 
+   }
+   
    bool isNil() const { return type() == FLC_ITEM_NIL; }
    bool isBoolean() const { return type() == FLC_ITEM_BOOL; }
    bool isInteger() const { return type() == FLC_ITEM_INT; }
    bool isNumeric() const { return type() == FLC_ITEM_NUM; }
    bool isFunction() const { return type() == FLC_ITEM_FUNC; }
    bool isMethod() const { return type() == FLC_ITEM_METHOD; }
-   bool isBaseMethod() const { return type() == FLC_ITEM_BASEMETHOD; }
    bool isOrdinal() const { return type() == FLC_ITEM_INT || type() == FLC_ITEM_NUM; }
    bool isUser() const { return type() == FLC_ITEM_USER; }
-
+   bool isReference() const { return type() == FLC_ITEM_REF; }
+   
    bool isString() const {
       return (type() == FLC_ITEM_USER && asClass()->typeID() == FLC_CLASS_ID_STRING);
    }
@@ -518,6 +525,31 @@ public:
 
    bool isTrue() const;
 
+   /** Turns an item into its non-user class form.
+    \return True if the item can be de-usered.
+    
+    Suppose a flat item has been turned into a pair of user-data entities
+    through a forceClassInst() call. It's sometimes useful to perform the
+    reverse operation, re-obtaining a flat item out of this pair.
+    \note Can be called only on items that have been already tested as being
+    FLC_ITEM_USER.
+    */
+   bool deuser()
+   {
+      fassert2(type() == FLC_ITEM_USER, 
+            "Item::deuser() must be called only on FLC_ITEM_USER items.");
+      int id = asClass()->typeID();
+      if( id < FLC_ITEM_COUNT )
+      {
+         *this = *static_cast<Item*>(asInst());
+         return true;
+      }
+      else
+      {
+         return false;
+      }
+   }
+   
    /** Turns the item into a string.
     This method turns the item into a string for a minimal external representation.
 
@@ -623,6 +655,7 @@ public:
    {
       switch( type() )
       {
+      case FLC_ITEM_REF:
       case FLC_ITEM_USER:
          cls = asClass();
          udata = asInst();
@@ -632,7 +665,7 @@ public:
          cls = Engine::instance()->getTypeClass(type());
          udata = asFunction();
          break;
-
+         
       default:
          cls = Engine::instance()->getTypeClass(type());
          udata = (void*)this;
@@ -664,6 +697,11 @@ public:
       }
 
       return 0;
+   }
+   
+   Item* asReference() const
+   {
+      return content.mth.ref;
    }
 
    //======================================================

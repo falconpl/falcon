@@ -13,6 +13,10 @@
    See LICENSE file for licensing details.
 */
 
+#undef SRC
+#define SRC "engine/classdict.cpp"
+
+
 #include <falcon/classdict.h>
 #include <falcon/itemid.h>
 #include <falcon/vmcontext.h>

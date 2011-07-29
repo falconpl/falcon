@@ -35,6 +35,7 @@
 #include <falcon/sp/parser_index.h>
 #include <falcon/sp/parser_list.h>
 #include <falcon/sp/parser_proto.h>
+#include <falcon/sp/parser_reference.h>
 #include <falcon/sp/parser_rule.h>
 #include <falcon/sp/parser_while.h>
 
@@ -67,10 +68,18 @@ SourceParser::SourceParser():
 
    T_Dot("."),
    T_Arrow("=>", 170 ),
+   T_AutoAdd( "+=", 70 ),
+   T_AutoSub( "-=", 70 ),
+   T_AutoTimes( "*=", 70 ),
+   T_AutoDiv( "/=", 70 ),
+   T_AutoMod( "%=", 70 ),
+   T_AutoPow( "**=", 70 ),
+   
    T_Comma( "," , 180 ),
    T_Cut("!"),
 
    T_UnaryMinus("(neg)",23),
+   T_Dollar("$",23),
    T_Power("**", 25),
 
    T_Times("*",30),
@@ -79,7 +88,6 @@ SourceParser::SourceParser():
 
    T_Plus("+",50),
    T_Minus("-",50),
-
    T_PlusPlus("++",210),
 
    T_DblEq("==", 70),
@@ -91,7 +99,6 @@ SourceParser::SourceParser():
    T_Colon( ":" ),
    T_EqSign("=", 200, false),
    T_EqSign2("=", 200 ),
-
 
 
    T_as("as"),
@@ -190,17 +197,12 @@ SourceParser::SourceParser():
    Expr<< (r_Expr_call << "Expr_call" << apply_expr_call << Expr << T_Openpar << ListExpr << T_Closepar );
    Expr<< (r_Expr_index << "Expr_index" << apply_expr_index << Expr << T_OpenSquare << Expr << T_CloseSquare );
    Expr<< (r_Expr_star_index << "Expr_star_index" << apply_expr_star_index << Expr << T_OpenSquare << T_Times << Expr << T_CloseSquare );
-
-   //Expr<< (r_Expr_empty_dict << "Expr_empty_dict" << apply_expr_empty_dict << T_OpenSquare << T_Arrow << T_CloseSquare );
-   //Expr<< (r_Expr_array_decl << "Expr_array_decl" << apply_expr_array_decl << T_OpenSquare << ListExprOrPairs << T_CloseSquare );
-   //Expr<< (r_Expr_empty_dict2 << "Expr_empty_dict2" << apply_expr_empty_dict << T_DotSquare << T_Arrow << T_CloseSquare );
-   //Expr<< (r_Expr_array_decl2 << "Expr_array_decl2" << apply_expr_array_decl << T_DotSquare << SeqExprOrPairs << T_CloseSquare );
-
+   
    Expr<< (r_Expr_array_decl << "Expr_array_decl" << apply_expr_array_decl << T_OpenSquare );
    Expr<< (r_Expr_array_decl2 << "Expr_array_decl2" << apply_expr_array_decl2 << T_DotSquare );
 
-   //Expr<< (r_Expr_array_decl2 << "Expr_array_decl2" << apply_expr_array_decl << T_DotSquare << SeqExprOrPairs << T_CloseSquare );
-
+   Expr<< (r_Expr_ref << "Expr_ref" << apply_expr_ref << T_Dollar << T_Name );
+   
    Expr<< (r_Expr_dot << "Expr_dot" << apply_expr_dot << Expr << T_Dot << T_Name);
    Expr<< (r_Expr_plus << "Expr_plus" << apply_expr_plus << Expr << T_Plus << Expr);
    Expr<< (r_Expr_preinc << "Expr_preinc" << apply_expr_preinc << T_PlusPlus << Expr);
@@ -211,6 +213,12 @@ SourceParser::SourceParser():
    Expr<< (r_Expr_times << "Expr_times" << apply_expr_times << Expr << T_Times << Expr);
    Expr<< (r_Expr_div   << "Expr_div"   << apply_expr_div   << Expr << T_Divide << Expr );
    Expr<< (r_Expr_pow   << "Expr_pow"   << apply_expr_pow   << Expr << T_Power << Expr );
+   Expr<< (r_Expr_auto_add << "Expr_auto_add"   << apply_expr_auto_add   << Expr << T_AutoAdd << Expr );
+   Expr<< (r_Expr_auto_sub << "Expr_auto_sub"   << apply_expr_auto_sub   << Expr << T_AutoSub << Expr );
+   Expr<< (r_Expr_auto_times << "Expr_auto_times"   << apply_expr_auto_times   << Expr << T_AutoTimes << Expr );
+   Expr<< (r_Expr_auto_div << "Expr_auto_div"   << apply_expr_auto_div   << Expr << T_AutoDiv << Expr );
+   Expr<< (r_Expr_auto_mod << "Expr_auto_mod"   << apply_expr_auto_mod   << Expr << T_AutoMod << Expr );
+   Expr<< (r_Expr_auto_pow << "Expr_auto_pow"   << apply_expr_auto_pow   << Expr << T_AutoPow << Expr );
    // the lexer may find a non-unary minus when parsing it not after an operator...;
    Expr<< (r_Expr_neg   << "Expr_neg"   << apply_expr_neg << T_Minus << Expr );
    // ... or find an unary minus when getting it after another operator.;

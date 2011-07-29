@@ -55,36 +55,34 @@ bool LocalSymbol::retrieve( Item& value, VMContext* ctx ) const
    return true;
 }
 
+
 void LocalSymbol::apply_( const PStep* s1, VMContext* ctx )
 {
    const ExprSymbol* self = static_cast<const ExprSymbol *>(s1);
    LocalSymbol* sym = static_cast<LocalSymbol*>(self->symbol());
    
-#ifndef NDEBUG
-   String name = sym->name();
-#endif
+   TRACE2( "Apply local '%s'", sym->m_name.c_ize() );
+   Item &i = ctx->localVar( sym->m_id );
+   ctx->pushData( i );
+}
 
-   // l-value (assignment)?
-   if( self->m_lvalue )
-   {
-      TRACE2( "LValue apply to local '%s'", name.c_ize() );
-      ctx->localVar( sym->m_id ).assign( ctx->topData() );
-      // topData is already the value of the l-value evaluation.
-      // so we leave it alone.
-   }
-   else
-   {
-      // try to load by reference.
-      TRACE2( "Apply local '%s'", name.c_ize() );
-      Item &i = ctx->localVar( sym->m_id );
-      ctx->pushData( i );
-   }
+
+void LocalSymbol::apply_lvalue_( const PStep* s1, VMContext* ctx )
+{
+   const ExprSymbol::PStepLValue* self = static_cast<const ExprSymbol::PStepLValue *>(s1);
+   LocalSymbol* sym = static_cast<LocalSymbol*>(self->m_owner->symbol());
+   
+   TRACE2( "LValue apply to local '%s'", sym->m_name.c_ize() );
+   ctx->localVar( sym->m_id ).assign( ctx->topData() );
+   // topData is already the value of the l-value evaluation.
+   // so we leave it alone.
 }
 
 Expression* LocalSymbol::makeExpression()
 {
    ExprSymbol* sym = new ExprSymbol(this);
    sym->setApply( apply_ );
+   sym->setApplyLvalue( apply_lvalue_ );
    return sym;
 }
 

@@ -36,6 +36,8 @@ class PseudoFunctionMap;
 class Module;
 class BOM;
 
+class ClassReference;
+
 /** Falcon application global data.
 
  This class stores the gloal items that must be known by the falcon engine
@@ -165,8 +167,8 @@ public:
     */
    Class* protoClass() const;
 
-   /** Returns the global instance of the CoreClass class.
-   \return the Engine instance of the FalconClass handler.
+   /** Returns the global instance of the MetaClass class.
+   \return the Engine instance of the MetaClass handler.
 
     Method init() must have been called before.
 
@@ -174,8 +176,19 @@ public:
     in case the engine has not been initialized. In release, it will just
     return a null pointer.
     */
-   Class* classClass() const;
+   Class* metaClass() const;
 
+   /** Returns the global instance of the ClassReference class.
+   \return the Engine instance of the ClassReference handler.
+
+    Method init() must have been called before.
+
+    @note This method will assert and terminate the program if compiled in debug mode
+    in case the engine has not been initialized. In release, it will just
+    return a null pointer.
+    */
+   ClassReference* referenceClass() const;
+   
    //==========================================================================
    // Error handlers
    //
@@ -379,8 +392,9 @@ protected:
    Class* m_arrayClass;
    Class* m_dictClass;
    Class* m_protoClass;
-   Class* m_classClass;
-
+   Class* m_metaClass;
+   ClassReference* m_referenceClass;
+   
    //===============================================
    // Standard error handlers
    //
@@ -395,7 +409,7 @@ protected:
    Class* m_encodingErrorClass;
    Class* m_syntaxErrorClass;
    Class* m_paramErrorClass;
-
+   
 
    //===============================================
    // Transcoders

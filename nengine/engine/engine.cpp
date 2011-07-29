@@ -59,6 +59,7 @@
 #include <falcon/classnumeric.h>
 #include <falcon/prototypeclass.h>
 #include <falcon/metaclass.h>
+#include <falcon/classreference.h>
 
 //--- error headers ---
 #include <falcon/accesserror.h>
@@ -281,7 +282,8 @@ Engine::Engine()
    m_arrayClass = new ClassArray;
    m_dictClass = new ClassDict;
    m_protoClass = new PrototypeClass;
-   m_classClass = new MetaClass;
+   m_metaClass = new MetaClass;
+   m_referenceClass = new ClassReference;
 
    // Initialization of the class vector.
    m_classes[FLC_ITEM_NIL] = new ClassNil;
@@ -290,8 +292,8 @@ Engine::Engine()
    m_classes[FLC_ITEM_NUM] = new ClassNumeric;
    m_classes[FLC_ITEM_FUNC] = new ClassFunction;
    m_classes[FLC_ITEM_METHOD] = new ClassNil;
-   m_classes[FLC_ITEM_BASEMETHOD] = new ClassNil;
-
+   m_classes[FLC_ITEM_REF] = new ClassReference;
+   
    //=====================================
    // Initialization of standard errors.
    //
@@ -349,8 +351,9 @@ Engine::~Engine()
    delete m_arrayClass;
    delete m_dictClass;
    delete m_protoClass;
-   delete m_classClass;
+   delete m_metaClass;
    delete m_functionClass;
+   delete m_referenceClass;
 
    // ===============================
    // Delete standard error classes
@@ -575,10 +578,16 @@ Class* Engine::protoClass() const
    return m_instance->m_protoClass;
 }
 
-Class* Engine::classClass() const
+Class* Engine::metaClass() const
 {
    fassert( m_instance != 0 );
-   return m_instance->m_classClass;
+   return m_instance->m_metaClass;
+}
+
+ClassReference* Engine::referenceClass() const
+{
+   fassert( m_instance != 0 );
+   return m_instance->m_referenceClass;
 }
 
 //=====================================================

@@ -19,6 +19,8 @@
 
 #include <falcon/trace.h>
 
+#include "falcon/accesserror.h"
+
 namespace Falcon {
 
 GlobalSymbol::GlobalSymbol( const String& name, const Item& item ):
@@ -59,30 +61,26 @@ void GlobalSymbol::apply_( const PStep* ps, VMContext* ctx )
 {
    const ExprSymbol* self = static_cast<const ExprSymbol*>(ps);
    register GlobalSymbol* sym = static_cast<GlobalSymbol*>(self->symbol());
+   TRACE2( "Apply global '%s'", sym->name().c_ize() );
+   ctx->pushData( sym->m_item );
+}
 
-#ifndef NDEBUG
-   String name = sym->name();
-#endif
 
-   // l-value (assignment)?
-   if( self->m_lvalue )
-   {
-      TRACE2( "LValue apply to global '%s'", name.c_ize() );
-      sym->m_item.assign( ctx->topData() );
-      // topData is already the value of the l-value evaluation.
-      // so we leave it alone.
-   }
-   else
-   {
-      TRACE2( "Apply global '%s'", name.c_ize() );
-      ctx->pushData( sym->m_item );
-   }
+void GlobalSymbol::apply_lvalue_( const PStep* ps, VMContext* ctx )
+{
+   const ExprSymbol::PStepLValue* self = static_cast<const ExprSymbol::PStepLValue*>(ps);
+   register GlobalSymbol* sym = static_cast<GlobalSymbol*>(self->m_owner->symbol());
+   TRACE2( "LValue apply to global '%s'", sym->name().c_ize() );
+   sym->m_item.assign( ctx->topData() );
+   // topData is already the value of the l-value evaluation.
+   // so we leave it alone.
 }
 
 Expression* GlobalSymbol::makeExpression()
 {
    ExprSymbol* sym = new ExprSymbol(this);
    sym->setApply( apply_ );
+   sym->setApplyLvalue( apply_lvalue_ );
    return sym;
 }
 

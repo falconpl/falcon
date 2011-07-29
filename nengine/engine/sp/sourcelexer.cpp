@@ -596,8 +596,9 @@ Parsing::TokenInstance* SourceLexer::nextToken()
 
          case state_operator:
             if( String::isWhiteSpace( chr ) ||
-               isParenthesis(chr) || chr == '\'' || chr == '"' ||
-               !isTokenLimit( chr ) )
+               isParenthesis(chr) || chr == '\'' || chr == '"' 
+               || chr == '$' || chr == '#'
+               || !isTokenLimit( chr ) )
             {
                // special case -- dot/square
                if( m_text == ".")
@@ -862,6 +863,7 @@ Parsing::TokenInstance* SourceLexer::checkOperator()
          if( m_text == "." ) return parser->T_Dot.makeInstance(m_sline, m_schr);
          if( m_text == ":" ) return parser->T_Colon.makeInstance(m_sline, m_schr);
          if( m_text == "," ) return parser->T_Comma.makeInstance(m_sline, m_schr);
+         if( m_text == "$" ) return parser->T_Dollar.makeInstance(m_sline, m_schr);
          // the cut operator is a statement.
          if( m_text == "!" )
          {
@@ -882,12 +884,19 @@ Parsing::TokenInstance* SourceLexer::checkOperator()
             return parser->T_PlusPlus.makeInstance(m_sline, m_schr);
          }
          if( m_text == "**" ) return parser->T_Power.makeInstance(m_sline, m_schr);
-         if( m_text == "**" ) return parser->T_Power.makeInstance(m_sline, m_schr);
          if( m_text == "==" ) return parser->T_DblEq.makeInstance(m_sline, m_schr);
          if( m_text == "!=" ) return parser->T_NotEq.makeInstance(m_sline, m_schr);
          if( m_text == "<=" ) return parser->T_LE.makeInstance(m_sline, m_schr);
          if( m_text == ">=" ) return parser->T_GE.makeInstance(m_sline, m_schr);
          if( m_text == "=>" ) return parser->T_Arrow.makeInstance(m_sline, m_schr);
+         
+         if( m_text == "+=" ) return parser->T_AutoAdd.makeInstance(m_sline, m_schr);
+         if( m_text == "-=" ) return parser->T_AutoSub.makeInstance(m_sline, m_schr);
+         if( m_text == "*=" ) return parser->T_AutoTimes.makeInstance(m_sline, m_schr);
+         if( m_text == "/=" ) return parser->T_AutoDiv.makeInstance(m_sline, m_schr);
+         if( m_text == "%=" ) return parser->T_AutoMod.makeInstance(m_sline, m_schr);
+         if( m_text == "**=" ) return parser->T_AutoPow.makeInstance(m_sline, m_schr);
+
          break;
    }
 

@@ -72,41 +72,65 @@ void UnknownSymbol::apply_( const PStep* s, VMContext* ctx )
    Symbol* sym = self->symbol();
    String name = "/* unknown */" + sym->name();
 #endif
-
-   // l-value (assignment)?
-   if( self->m_lvalue )
-   {
-      TRACE2( "LValue apply to unknown symbol '%s'", name.c_ize() );
-      // topData is already the value of the l-value evaluation.
-      // so we leave it alone.
-   }
-   else
-   {
-      TRACE2( "Apply unknown '%s'", name.c_ize() );
-      ctx->pushData( Item() ); // a nil
-   }
+   TRACE2( "Apply unknown '%s'", name.c_ize() );
+   ctx->pushData( Item() ); // a nil
 }
 
+#ifndef NDEBUG
+void UnknownSymbol::apply_lvalue_( const PStep* s, VMContext* )
+{   
+   const ExprSymbol::PStepLValue* self = static_cast<const ExprSymbol::PStepLValue*>(s);
+   Symbol* sym = self->m_owner->symbol();
+   String name = "/* unknown */" + sym->name();
+   TRACE2( "LValue apply to unknown symbol '%s'", name.c_ize() );
+   // topData is already the value of the l-value evaluation.
+   // so we leave it alone.
+}
+#else
+void UnknownSymbol::apply_lvalue_( const PStep*, VMContext* )
+{   
+}
+#endif
 
 Expression* UnknownSymbol::makeExpression()
 {
    ExprSymbol* expr = new ExprSymbol(this);
    _p->m_owners.push_back( expr );
    expr->apply = apply_;
+   expr->setApplyLvalue( apply_lvalue_ );
 
    return expr;
 }
 
 void UnknownSymbol::define( Symbol* def )
 {
-   Expression::apply_func af;
+   Expression::apply_func af, afl;
    switch(def->type())
    {
-      case t_closed_symbol: af = ClosedSymbol::apply_; break;
-      case t_dyn_symbol: af = DynSymbol::apply_; break;
-      case t_global_symbol: af = GlobalSymbol::apply_; break;
-      case t_local_symbol: af = LocalSymbol::apply_; break;
-      case t_unknown_symbol: af = UnknownSymbol::apply_; break;
+      case t_closed_symbol: 
+         af = ClosedSymbol::apply_; 
+         afl = ClosedSymbol::apply_lvalue_; 
+         break;
+         
+      case t_dyn_symbol: 
+         af = DynSymbol::apply_; 
+         afl = DynSymbol::apply_lvalue_; 
+         break;
+         
+      case t_global_symbol: 
+         af = GlobalSymbol::apply_; 
+         afl = GlobalSymbol::apply_lvalue_; 
+         break;
+         
+      case t_local_symbol: 
+         af = LocalSymbol::apply_; 
+         afl = LocalSymbol::apply_lvalue_; 
+         break;
+         
+      case t_unknown_symbol: 
+         af = UnknownSymbol::apply_; 
+         afl = UnknownSymbol::apply_lvalue_; 
+         break;
 
       default:
          fassert(0);
@@ -118,6 +142,7 @@ void UnknownSymbol::define( Symbol* def )
    {
       ExprSymbol* expr = *iter;
       expr->apply = af;
+      expr->setApplyLvalue( afl );
       expr->symbol( def );
       ++iter;
    }

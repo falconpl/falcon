@@ -24,7 +24,7 @@
 #define FLC_ITEM_NUM          3
 #define FLC_ITEM_FUNC         4
 #define FLC_ITEM_METHOD       5
-#define FLC_ITEM_BASEMETHOD   6
+#define FLC_ITEM_REF          6
 #define FLC_ITEM_COUNT        7
 
 /** User items are non-standard items. */

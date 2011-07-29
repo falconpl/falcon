@@ -75,19 +75,27 @@ void DynSymbol::apply_( const PStep* ps, VMContext* ctx )
    Item* fval = ctx->vm()->findLocalItem( sym->name() );
    if ( fval )
    {
-      // l-value (assignment)?
-      if( self->m_lvalue )
-      {
-         TRACE2( "LValue apply to dynsymbol '%s'", sym->m_name.c_ize() );
-         fval->assign( ctx->topData() );
-         // topData is already the value of the l-value evaluation.
-         // so we leave it alone.
-      }
-      else
-      {
-         TRACE2( "Apply dynsymbol '%s'", sym->m_name.c_ize() );
-         ctx->pushData( *fval );
-      }
+      TRACE2( "Apply dynsymbol '%s'", sym->m_name.c_ize() );
+      ctx->pushData( *fval );
+   }
+
+   //TODO Throw on not found
+   //TODO cache if possible.
+}
+
+
+void DynSymbol::apply_lvalue_( const PStep* ps, VMContext* ctx )
+{
+   const ExprSymbol::PStepLValue* self = static_cast<const ExprSymbol::PStepLValue*>(ps);
+   DynSymbol* sym = static_cast<DynSymbol*>(self->m_owner->symbol());
+
+   Item* fval = ctx->vm()->findLocalItem( sym->name() );
+   if ( fval )
+   {
+      TRACE2( "LValue apply to dynsymbol '%s'", sym->m_name.c_ize() );
+      fval->assign( ctx->topData() );
+      // topData is already the value of the l-value evaluation.
+      // so we leave it alone.
    }
 
    //TODO Throw on not found
@@ -99,6 +107,7 @@ Expression* DynSymbol::makeExpression()
 {
    ExprSymbol* sym = new ExprSymbol(this);
    sym->setApply( apply_ );
+   sym->setApplyLvalue( apply_lvalue_ );
    return sym;
 }
 

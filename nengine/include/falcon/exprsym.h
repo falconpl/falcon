@@ -47,9 +47,6 @@ public:
 
    inline virtual ExprSymbol* clone() const { return new ExprSymbol(*this); }
 
-   inline virtual void setLValue() { m_lvalue = true; }
-   inline virtual bool isLValue() const { return m_lvalue; }
-
    /** Symbols cannot be simplified. */
    inline virtual bool simplify( Item& ) const { return false; }
    inline virtual bool isStatic() const { return false; }
@@ -61,19 +58,39 @@ public:
    void symbol(Symbol* sym) { m_symbol = sym; }
 
 
+   /** Redefine precompile in lvalue context.
+    
+    */
+   void precompileLvalue( PCode* pcode ) const;
+
 protected:
+   
+   class PStepLValue: public PStep
+   {
+   public:
+      ExprSymbol* m_owner;
+      
+      PStepLValue( ExprSymbol* owner ): m_owner(owner) {}
+      virtual void describe( String& ) const;
+      
+   };   
+   PStepLValue m_pslv;
+   
    ExprSymbol( Symbol* target );
 
    virtual void deserialize( DataReader* s );
    inline ExprSymbol( operator_t type ):
-      Expression( type )
+      Expression( type ),
+      m_pslv(this)
    {}
 
    /** Used by the symbol classes to set the adequate handler function. */
    void setApply( apply_func func ) { apply = func; }
+   
+   /** Used by the symbol classes to set the adequate handler function. */
+   void setApplyLvalue( apply_func func ) { m_pslv.apply = func; }
 
    Symbol* m_symbol;
-   bool m_lvalue;
 
    friend class ExprFactory;
    friend class DynSymbol;

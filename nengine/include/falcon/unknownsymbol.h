@@ -63,6 +63,7 @@ public:
    virtual bool retrieve( Item& value, VMContext* ctx = 0 ) const;
 
    static void apply_( const PStep* self, VMContext* ctx );
+   static void apply_lvalue_( const PStep* self, VMContext* ctx );
    virtual Expression* makeExpression();
 
    /** Define this symbol using the incoming symbol.

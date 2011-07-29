@@ -106,7 +106,8 @@ public:
       t_multiunpack,
       t_prototype,
 
-      t_self
+      t_self,
+      t_reference
    } operator_t;
 
    Expression( const Expression &other );
@@ -130,22 +131,13 @@ public:
     */
    virtual bool isStatic() const = 0;
 
-   /** Sets the given expression as a target of an assignment.
-    *
-    * The base class implementation throws an error (assignment to non-lvalue).
-    * Only assignable expressions (symbols and accessors) can be set as lvalue.
-    *
-    * This is automatically done when adding the expression as first member of
-    * an assignment.
+   /** Step that should be performed if this expression is lvalue.    
+    @return A valid pstep if l-value is possible, 0 if this expression has no l-vaue.
+    
+    The PStep of an expression generates a value. The l-value pstep will use this
+    expression to set a value when an assignment is required.
     */
-   inline virtual void setLValue() {
-      //TODO Throw proper exception
-   }
-
-   /** Tells if this expression is subject to l-value.
-    * @return true if this expression is the left part of an assignment, false otherwise.
-    */
-   inline virtual bool isLValue() const { return false; }
+   inline PStep* lvalueStep() const { return m_pstep_lvalue; }
 
    /** Clone this expression.
     */
@@ -175,9 +167,24 @@ public:
     */
    virtual void precompile( PCode* pcd ) const;
 
+   /** Pre-compiles the expression on a PCode -- with lvalue.
+    Same as pre-compile, but this will push the lvalue pstep instead of
+    this pstep, if available.
+    */
+   virtual void precompileLvalue( PCode* pcd ) const;
+   
+   /** Pre-compiles the expression on a PCode -- with lvalue on X= operators.
+    When the setting of the value after some calculus in lvalue contexts
+    need other operations, this can help managing extra operations needed.
+    
+    \note By default, this calls precompileLvalue().
+    */
+   virtual void precompileAutoLvalue( PCode* pcode, const Expression* activity ) const;
+   
 protected:
 
    Expression( operator_t t ):
+      m_pstep_lvalue(0),
       m_operator( t )
    {}
 
@@ -188,6 +195,22 @@ protected:
 
    friend class ExprFactory;
 
+   /** Apply-modify function.
+    
+    Expression accepting a modify operator (i.e. ++, += *= etc.)
+    can declare this modify step that will be used by auto-expression
+    to perform the required modufy.
+    
+    If left uninitialized (to 0), this step won't be performed. This is the
+    case of read-only expressions, i.e, function calls. In this case, 
+    expressions like "call() += n" are legit, but they will be interpreted as
+    "call() + n" as there is noting to be l-valued in "call()".
+    
+    \note It's supposed that the subclass own this pstep and sets it via &pstep,
+    so that destruction of the pstep happens with the child class.
+    */
+   PStep* m_pstep_lvalue;
+   
 private:
    operator_t m_operator;
    SourceRef m_sourceRef;
@@ -431,7 +454,6 @@ public:
    inline ExprAssign( Expression* op1, Expression* op2 ):
       BinaryExpression( t_assign, op1, op2 )
    {
-      op1->setLValue();
    }
 
    inline ExprAssign( const ExprAssign& other ):
@@ -657,28 +679,47 @@ class FALCON_DYN_CLASS ExprDot: public UnaryExpression
 public:
    inline ExprDot( const String& prop, Expression* op1 ): 
       UnaryExpression( t_obj_access, op1 ),
-         m_lvalue(false),
-         m_prop(prop)
-   {apply = apply_;}
+      m_pslv(this),
+      m_prop(prop)
+   {
+      apply = apply_;
+      m_pstep_lvalue = &m_pslv;
+   }
 
    inline ExprDot( const ExprDot& other ):
       UnaryExpression( other ),
-      m_lvalue(other.m_lvalue),
+      m_pslv(this),
       m_prop(other.m_prop)
-   {apply = apply_;}
+   {
+      apply = apply_;
+      m_pstep_lvalue = &m_pslv;
+   }
 
+   void precompileLvalue( PCode* pcode ) const;
+   
    inline virtual ExprDot* clone() const { return new ExprDot( *this ); } 
-   inline virtual void setLValue() { m_lvalue = true; }
-   inline virtual bool isLValue() const { return m_lvalue; }
    virtual bool simplify( Item& value ) const; 
    static void apply_( const PStep*, VMContext* ctx );
    virtual void describe( String& ) const;
-   virtual void oneLiner( String& s ) const { describe( s ); }
    inline String describe() const { return PStep::describe(); }
-   inline String oneLiner() const { return PStep::oneLiner(); }
+   
 protected:
-   inline ExprDot(): UnaryExpression( t_obj_access ), m_lvalue(false) {}
-   bool m_lvalue;
+   class PstepLValue: public PStep
+   {
+   public:
+      PstepLValue( ExprDot* owner ): m_owner(owner) { apply = apply_; }
+      static void apply_( const PStep*, VMContext* ctx );
+   private:
+      ExprDot* m_owner;
+   };
+   PstepLValue m_pslv;
+   
+   inline ExprDot(): UnaryExpression( t_obj_access ), m_pslv(this)
+   { 
+      apply = apply_; 
+      m_pstep_lvalue = &m_pslv;
+   }
+   
    const String m_prop;
    friend class ExprFactory; 
 public:
@@ -690,13 +731,41 @@ public:
 class FALCON_DYN_CLASS ExprIndex: public BinaryExpression
 {
 public:
-   FALCON_BINARY_EXPRESSION_CLASS_DECLARATOR_EX( ExprIndex, t_array_access, m_IsLValue = false; );
+   FALCON_BINARY_EXPRESSION_CLASS_DECLARATOR_EX( ExprIndex, t_array_access, 
+         m_pstep_lvalue = &m_pslv; );
 
-   inline virtual void setLValue() { m_IsLValue = true; }
-   inline virtual bool isLValue() const { return m_IsLValue; }
-
+   void precompileLvalue( PCode* pcode ) const;
+   void precompileAutoLvalue( PCode* pcode, Expression* activity ) const;
+   
 private:
-   bool m_IsLValue;
+   
+   /** Step used to SET a value in the array.*/
+   class PstepLValue: public PStep
+   {
+   public:
+      PstepLValue() { apply = apply_; }
+      static void apply_( const PStep*, VMContext* ctx );
+   };
+
+   /** Step used copy the access values for a set after a get*/
+   class PstepCopyAccess: public PStep
+   {
+   public:
+      PstepCopyAccess() { apply = apply_; }
+      static void apply_( const PStep*, VMContext* ctx );
+   };
+   
+   /** Step used exchange set value and access values.*/
+   class PstepExchangeAccess: public PStep
+   {
+   public:
+      PstepExchangeAccess() { apply = apply_; }
+      static void apply_( const PStep*, VMContext* ctx );
+   };
+
+   PstepLValue m_pslv;
+   PstepCopyAccess m_pstepCopyAccess;
+   PstepExchangeAccess m_pstepExchangeAccess;
 };
 
 /** Special string Index accessor. */
@@ -727,56 +796,6 @@ class FALCON_DYN_CLASS ExprFbind: public BinaryExpression
 {
 public:
    FALCON_BINARY_EXPRESSION_CLASS_DECLARATOR( ExprFbind, t_fbind );
-};
-
-
-/** Auto-add operation. */
-class FALCON_DYN_CLASS ExprAutoAdd: public BinaryExpression
-{
-public:
-   FALCON_BINARY_EXPRESSION_CLASS_DECLARATOR( ExprAutoAdd, t_aadd );
-   inline virtual bool isStandAlone() const { return true; }
-};
-
-/** Auto-subtract operation. */
-class FALCON_DYN_CLASS ExprAutoSub: public BinaryExpression
-{
-public:
-   FALCON_BINARY_EXPRESSION_CLASS_DECLARATOR( ExprAutoSub, t_asub );
-   inline virtual bool isStandAlone() const { return true; }
-};
-
-/** Auto-multiply operation. */
-class FALCON_DYN_CLASS ExprAutoMul: public BinaryExpression
-{
-public:
-   FALCON_BINARY_EXPRESSION_CLASS_DECLARATOR( ExprAutoMul, t_amul );
-   inline virtual bool isStandAlone() const { return true; }
-};
-
-
-/** Auto-divide operation. */
-class FALCON_DYN_CLASS ExprAutoDiv: public BinaryExpression
-{
-public:
-   FALCON_BINARY_EXPRESSION_CLASS_DECLARATOR( ExprAutoDiv, t_adiv );
-   inline virtual bool isStandAlone() const { return true; }
-};
-
-/** Auto-modulo operation. */
-class FALCON_DYN_CLASS ExprAutoMod: public BinaryExpression
-{
-public:
-   FALCON_BINARY_EXPRESSION_CLASS_DECLARATOR( ExprAutoMod, t_amod );
-   inline virtual bool isStandAlone() const { return true; }
-};
-
-/** Auto-power operation. */
-class FALCON_DYN_CLASS ExprAutoPow: public BinaryExpression
-{
-public:
-   FALCON_BINARY_EXPRESSION_CLASS_DECLARATOR( ExprAutoPow, t_apow );
-   inline virtual bool isStandAlone() const { return true; }
 };
 
 
