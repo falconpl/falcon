@@ -10,7 +10,7 @@
    -------------------------------------------------------------------
    (C) Copyright 2011: the FALCON developers (see list in AUTHORS file)
 
-   See LICENSE file for licensing details.
+   See LICENSE file for licensing details.(1)
 */
 
 #undef SRC
@@ -434,7 +434,7 @@ void ExprAuto::precompile( PCode* pc ) const
    // we want first the second (assignand) to be resolved.
    // This means we'll have the wrong things in the stack...
    m_second->precompile( pc );
-   m_first->precompileAutoLvalue( pc, this );
+   m_first->precompileAutoLvalue( pc, this, true, false );
 }
 
 //========================================================
@@ -513,4 +513,3 @@ ExprAutoPow::~ExprAutoPow()
 }
 
 /* end of exprmath.cpp */
-

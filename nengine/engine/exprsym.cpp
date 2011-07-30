@@ -19,6 +19,8 @@
 #include <falcon/exprsym.h>
 #include <falcon/pcode.h>
 
+#include "falcon/vmcontext.h"
+
 namespace Falcon {
 
 ExprSymbol::ExprSymbol( const ExprSymbol& other ):
@@ -45,6 +47,27 @@ void ExprSymbol::precompileLvalue( PCode* pcode ) const
    pcode->pushStep( m_pstep_lvalue );
 }
 
+void ExprSymbol::precompileAutoLvalue( PCode* pcode, const PStep* activity, bool, bool bSave ) const
+{
+   // We do this, but the parser should have blocked us...
+   precompile( pcode );             // access -- prepare params
+   
+   // eventually save the value
+   if( bSave )
+   {
+      pcode->pushStep( &m_pstepSave );
+   }
+   
+   pcode->pushStep( activity );     // action
+   
+   // no restore
+
+   pcode->pushStep( m_pstep_lvalue );
+   if( bSave )
+   {     
+      pcode->pushStep( &m_pstepRemove );
+   }  
+}
 
 ExprSymbol::~ExprSymbol()
 {
@@ -75,6 +98,30 @@ void ExprSymbol::PStepLValue::describe( String& s ) const
 {
    m_owner->describe( s );
 }
+
+
+
+void ExprSymbol::PStepSave::describe( String& s ) const
+{
+   s = "Symbol internal save";
+}
+   
+void ExprSymbol::PStepSave::apply_( const PStep*, VMContext* ctx )
+{
+   ctx->opcodeParam(1) = ctx->opcodeParam(0);
+}
+
+
+void ExprSymbol::PStepRemove::describe( String& s ) const
+{
+   s += "Symbol internal remove";
+}
+
+void ExprSymbol::PStepRemove::apply_( const PStep*, VMContext* ctx )
+{
+   ctx->popData();
+}
+   
 
 }
 

@@ -108,8 +108,11 @@ add_library(falcon_engine SHARED
   exprcall.cpp
   exprcompare.cpp
   exprdict.cpp
-  exprunpack.cpp
+  exprdot.cpp
+  exprincdec.cpp
+  exprindex.cpp
   exprmultiunpack.cpp
+  exprunpack.cpp
   extfunc.cpp
   fassert.cpp
   falconclass.cpp
@@ -157,6 +160,8 @@ add_library(falcon_engine SHARED
   rulesyntree.cpp
   sourceref.cpp
   statement.cpp
+  stdsteps.cpp
+  stmtautoexpr.cpp
   stmt_init.cpp
   stmtrule.cpp
   string.cpp

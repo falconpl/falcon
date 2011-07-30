@@ -25,6 +25,7 @@
 #include <falcon/textreader.h>
 #include <falcon/textwriter.h>
 #include <falcon/statement.h>
+#include <falcon/stmtautoexpr.h>
 
 #include <falcon/parser/parser.h>
 #include <falcon/sp/sourcelexer.h>

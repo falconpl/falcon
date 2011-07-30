@@ -22,6 +22,7 @@
 #include <falcon/rulesyntree.h>
 #include <falcon/synfunc.h>
 #include <falcon/extfunc.h>
+#include <falcon/stmtautoexpr.h>
 
 #include <falcon/trace.h>
 #include <falcon/application.h>

@@ -23,6 +23,7 @@
 #include <falcon/rulesyntree.h>
 #include <falcon/synfunc.h>
 #include <falcon/extfunc.h>
+#include <falcon/stmtautoexpr.h>
 
 #include <falcon/stdstreams.h>
 #include <falcon/textwriter.h>

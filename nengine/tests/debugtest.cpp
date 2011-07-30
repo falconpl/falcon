@@ -17,6 +17,8 @@
 #include <falcon/exprcompare.h>
 #include <falcon/exprmath.h>
 #include <falcon/statement.h>
+#include <falcon/stmtautoexpr.h>
+
 
 #include <falcon/synfunc.h>
 #include <falcon/module.h>

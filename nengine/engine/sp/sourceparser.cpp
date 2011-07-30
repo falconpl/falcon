@@ -90,6 +90,7 @@ SourceParser::SourceParser():
    T_Plus("+",50),
    T_Minus("-",50),
    T_PlusPlus("++",210),
+   T_MinusMinus("--",210),
 
    T_DblEq("==", 70),
    T_NotEq("!=", 70),
@@ -208,6 +209,9 @@ SourceParser::SourceParser():
    Expr<< (r_Expr_plus << "Expr_plus" << apply_expr_plus << Expr << T_Plus << Expr);
    Expr<< (r_Expr_preinc << "Expr_preinc" << apply_expr_preinc << T_PlusPlus << Expr);
    Expr<< (r_Expr_postinc << "Expr_postinc" << apply_expr_postinc << Expr << T_PlusPlus);
+   Expr<< (r_Expr_predec << "Expr_predec" << apply_expr_predec << T_MinusMinus << Expr);
+   Expr<< (r_Expr_postdec << "Expr_postdec" << apply_expr_postdec << Expr << T_MinusMinus);
+   
    Expr<< (r_Expr_minus << "Expr_minus" << apply_expr_minus << Expr << T_Minus << Expr);
    Expr<< (r_Expr_pars << "Expr_pars" << apply_expr_pars << T_Openpar << Expr << T_Closepar);
    Expr<< (r_Expr_pars2 << "Expr_pars2" << apply_expr_pars << T_DotPar << Expr << T_Closepar);

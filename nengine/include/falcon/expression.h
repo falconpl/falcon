@@ -179,7 +179,7 @@ public:
     
     \note By default, this calls precompileLvalue().
     */
-   virtual void precompileAutoLvalue( PCode* pcode, const Expression* activity ) const;
+   virtual void precompileAutoLvalue( PCode* pcode, const PStep* activity, bool bIsBinary, bool bSaveOld ) const;
    
 protected:
 
@@ -488,57 +488,6 @@ public:
    FALCON_UNARY_EXPRESSION_CLASS_DECLARATOR( ExprNeg, t_neg );
 };
 
-/** Math unary increment prefix. */
-class FALCON_DYN_CLASS ExprPreInc: public UnaryExpression
-{
-public:
-   FALCON_UNARY_EXPRESSION_CLASS_DECLARATOR( ExprPreInc, t_pre_inc );
-   inline virtual bool isStandAlone() const { return true; }
-};
-
-/** Math unary increment postfix. */
-class FALCON_DYN_CLASS ExprPostInc: public UnaryExpression
-{
-public:
-   FALCON_UNARY_EXPRESSION_CLASS_DECLARATOR( ExprPostInc, t_post_inc );
-   inline virtual bool isStandAlone() const { return true; }
-
-   virtual void precompile( PCode* pcode ) const;
-
-private:
-
-   class FALCON_DYN_CLASS Gate: public PStep {
-   public:
-      Gate();
-      static void apply_( const PStep*, VMContext* ctx );
-   } m_gate;
-};
-
-/** Math unary decrement prefix. */
-class FALCON_DYN_CLASS ExprPreDec: public UnaryExpression
-{
-public:
-   FALCON_UNARY_EXPRESSION_CLASS_DECLARATOR( ExprPreDec, t_pre_dec );
-   inline virtual bool isStandAlone() const { return true; }
-};
-
-/** Math unary decrement postfix. */
-class FALCON_DYN_CLASS ExprPostDec: public UnaryExpression
-{
-public:
-   FALCON_UNARY_EXPRESSION_CLASS_DECLARATOR( ExprPostDec, t_post_dec );
-   inline virtual bool isStandAlone() const { return true; }
-
-   virtual void precompile( PCode* pcode ) const;
-
-private:
-
-   class FALCON_DYN_CLASS Gate: public PStep {
-   public:
-      Gate();
-      static void apply_( const PStep*, VMContext* ctx );
-   } m_gate;
-};
 
 /** Exactly equal to operator. */
 class FALCON_DYN_CLASS ExprEEQ: public BinaryExpression
@@ -673,100 +622,6 @@ public:
 
 };
 
-/** Dot accessor. */
-class FALCON_DYN_CLASS ExprDot: public UnaryExpression
-{
-public:
-   inline ExprDot( const String& prop, Expression* op1 ): 
-      UnaryExpression( t_obj_access, op1 ),
-      m_pslv(this),
-      m_prop(prop)
-   {
-      apply = apply_;
-      m_pstep_lvalue = &m_pslv;
-   }
-
-   inline ExprDot( const ExprDot& other ):
-      UnaryExpression( other ),
-      m_pslv(this),
-      m_prop(other.m_prop)
-   {
-      apply = apply_;
-      m_pstep_lvalue = &m_pslv;
-   }
-
-   void precompileLvalue( PCode* pcode ) const;
-   
-   inline virtual ExprDot* clone() const { return new ExprDot( *this ); } 
-   virtual bool simplify( Item& value ) const; 
-   static void apply_( const PStep*, VMContext* ctx );
-   virtual void describe( String& ) const;
-   inline String describe() const { return PStep::describe(); }
-   
-protected:
-   class PstepLValue: public PStep
-   {
-   public:
-      PstepLValue( ExprDot* owner ): m_owner(owner) { apply = apply_; }
-      static void apply_( const PStep*, VMContext* ctx );
-   private:
-      ExprDot* m_owner;
-   };
-   PstepLValue m_pslv;
-   
-   inline ExprDot(): UnaryExpression( t_obj_access ), m_pslv(this)
-   { 
-      apply = apply_; 
-      m_pstep_lvalue = &m_pslv;
-   }
-   
-   const String m_prop;
-   friend class ExprFactory; 
-public:
-};
-
-
-
-/** Index accessor. */
-class FALCON_DYN_CLASS ExprIndex: public BinaryExpression
-{
-public:
-   FALCON_BINARY_EXPRESSION_CLASS_DECLARATOR_EX( ExprIndex, t_array_access, 
-         m_pstep_lvalue = &m_pslv; );
-
-   void precompileLvalue( PCode* pcode ) const;
-   void precompileAutoLvalue( PCode* pcode, Expression* activity ) const;
-   
-private:
-   
-   /** Step used to SET a value in the array.*/
-   class PstepLValue: public PStep
-   {
-   public:
-      PstepLValue() { apply = apply_; }
-      static void apply_( const PStep*, VMContext* ctx );
-   };
-
-   /** Step used copy the access values for a set after a get*/
-   class PstepCopyAccess: public PStep
-   {
-   public:
-      PstepCopyAccess() { apply = apply_; }
-      static void apply_( const PStep*, VMContext* ctx );
-   };
-   
-   /** Step used exchange set value and access values.*/
-   class PstepExchangeAccess: public PStep
-   {
-   public:
-      PstepExchangeAccess() { apply = apply_; }
-      static void apply_( const PStep*, VMContext* ctx );
-   };
-
-   PstepLValue m_pslv;
-   PstepCopyAccess m_pstepCopyAccess;
-   PstepExchangeAccess m_pstepExchangeAccess;
-};
 
 /** Special string Index accessor. */
 class FALCON_DYN_CLASS ExprStarIndex: public BinaryExpression

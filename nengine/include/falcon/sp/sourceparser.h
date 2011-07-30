@@ -72,6 +72,7 @@ public:
    Parsing::Terminal T_Plus;
    Parsing::Terminal T_Minus;
    Parsing::Terminal T_PlusPlus;
+   Parsing::Terminal T_MinusMinus;
    Parsing::Terminal T_DblEq;
    Parsing::Terminal T_NotEq;
    Parsing::Terminal T_Less;
@@ -178,6 +179,8 @@ public:
    Parsing::Rule r_Expr_plus;
    Parsing::Rule r_Expr_preinc;
    Parsing::Rule r_Expr_postinc;
+   Parsing::Rule r_Expr_predec;
+   Parsing::Rule r_Expr_postdec;
    Parsing::Rule r_Expr_minus;
    Parsing::Rule r_Expr_pars;
    Parsing::Rule r_Expr_pars2;

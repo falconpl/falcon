@@ -126,8 +126,7 @@ Parsing::TokenInstance* SourceLexer::nextToken()
                   }
                   break;
                }
-
-               case '.': m_text = "."; m_state = state_float_first; break;
+               
                case ';': return m_parser->T_EOL.makeInstance(m_line, m_chr++);
                case '"':  m_stringML = false; m_stringStart = true; m_state = state_double_string; break;
                case '\'': m_stringML = false; m_stringStart = true; m_state = state_single_string; break;
@@ -883,6 +882,11 @@ Parsing::TokenInstance* SourceLexer::checkOperator()
          {
             m_hadOperator = false;
             return parser->T_PlusPlus.makeInstance(m_sline, m_schr);
+         }
+         if( m_text == "--" )
+         {
+            m_hadOperator = false;
+            return parser->T_MinusMinus.makeInstance(m_sline, m_schr);
          }
          if( m_text == "**" ) return parser->T_Power.makeInstance(m_sline, m_schr);
          if( m_text == "==" ) return parser->T_DblEq.makeInstance(m_sline, m_schr);

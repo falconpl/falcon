@@ -14,15 +14,14 @@
 */
 
 #ifndef _FALCON_ENGINE_H_
-#define	_FALCON_ENGINE_H_
+#define _FALCON_ENGINE_H_
 
 #include <falcon/setup.h>
 #include <falcon/itemid.h>
 #include <falcon/string.h>
 #include <falcon/vfsiface.h>
 
-#include "vfsprovider.h"
-#include "vfsiface.h"
+#include <falcon/vfsprovider.h>
 
 namespace Falcon
 {
@@ -35,8 +34,8 @@ class PseudoFunction;
 class PseudoFunctionMap;
 class Module;
 class BOM;
-
 class ClassReference;
+class StdSteps;
 
 /** Falcon application global data.
 
@@ -369,6 +368,9 @@ public:
    */
    BOM* getBom() const { return m_bom; }
 
+   /** Archive of standard steps. */
+   StdSteps* stdSteps() const { return m_stdSteps; }
+   
 protected:
    Engine();
    ~Engine();
@@ -423,6 +425,7 @@ protected:
    BOM* m_bom;
 
    PseudoFunctionMap* m_tpfuncs;
+   StdSteps* m_stdSteps;
 };
 
 }

@@ -21,6 +21,9 @@
 
 #include <falcon/expression.h>
 #include <falcon/statement.h>
+#include <falcon/stmtautoexpr.h>
+#include <falcon/stmtrule.h>
+#include <falcon/stmt_init.h>
 
 #include <falcon/stdstreams.h>
 #include <falcon/textwriter.h>

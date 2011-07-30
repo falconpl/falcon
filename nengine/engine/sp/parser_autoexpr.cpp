@@ -20,7 +20,7 @@
 
 #include <falcon/expression.h>
 #include <falcon/exprsym.h>
-#include <falcon/statement.h>
+#include <falcon/stmtautoexpr.h>
 #include <falcon/error.h>
 
 #include <falcon/parser/rule.h>

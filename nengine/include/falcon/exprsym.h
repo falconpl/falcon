@@ -63,6 +63,8 @@ public:
     */
    void precompileLvalue( PCode* pcode ) const;
 
+   virtual void precompileAutoLvalue( PCode* pcode, const PStep* activity, bool bIsBinary, bool bSaveOld ) const;
+
 protected:
    
    class PStepLValue: public PStep
@@ -74,7 +76,27 @@ protected:
       virtual void describe( String& ) const;
       
    };   
+   
+   class PStepSave: public PStep
+   {
+   public:
+      PStepSave(){ apply = apply_; }
+      virtual void describe( String& ) const;
+      static void apply_( const PStep* ps, VMContext* ctx );
+   };  
+   
+   class PStepRemove: public PStep
+   {
+   public:
+      PStepRemove() { apply = apply_; }
+      virtual void describe( String& ) const;
+      static void apply_( const PStep* ps, VMContext* ctx );
+   };  
+   
    PStepLValue m_pslv;
+   PStepSave m_pstepSave;        
+   PStepRemove m_pstepRemove;
+      
    
    ExprSymbol( Symbol* target );
 

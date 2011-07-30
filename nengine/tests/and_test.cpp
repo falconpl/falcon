@@ -21,6 +21,7 @@
 #include <falcon/statement.h>
 #include <falcon/synfunc.h>
 #include <falcon/extfunc.h>
+#include <falcon/stmtautoexpr.h>
 
 
 #include <falcon/synfunc.h>

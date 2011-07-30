@@ -27,10 +27,11 @@
 #include <falcon/parser/rule.h>
 #include <falcon/parser/parser.h>
 
-#include <falcon/expression.h>
+#include <falcon/exprincdec.h>
 #include <falcon/exprvalue.h>
 #include <falcon/exprcompare.h>
 #include <falcon/exprmath.h>
+#include <falcon/exprdot.h>
 
 namespace Falcon {
 
@@ -139,6 +140,32 @@ void apply_expr_preinc(const Rule&, Parser& p )
 
    TokenInstance* ti2 = new TokenInstance( value->line(), value->chr(), sp.Expr );
    ti2->setValue( new ExprPostInc(static_cast<Expression*>(value->detachValue())), expr_deletor );
+
+   p.simplify(2,ti2);
+}
+ 
+ void apply_expr_predec(const Rule&, Parser& p )
+{
+   SourceParser& sp = static_cast<SourceParser&>(p);
+
+   TokenInstance* plpl  = p.getNextToken();
+   TokenInstance* value = p.getNextToken();
+
+   TokenInstance* ti2 = new TokenInstance( plpl->line(), plpl->chr(), sp.Expr );
+   ti2->setValue( new ExprPreDec(static_cast<Expression*>(value->detachValue())), expr_deletor );
+
+   p.simplify(2,ti2);
+}
+
+ void apply_expr_postdec(const Rule&, Parser& p )
+{
+   SourceParser& sp = static_cast<SourceParser&>(p);
+
+   TokenInstance* value = p.getNextToken();
+   /*TokenInstance* plpl  =*/ p.getNextToken();
+
+   TokenInstance* ti2 = new TokenInstance( value->line(), value->chr(), sp.Expr );
+   ti2->setValue( new ExprPostDec(static_cast<Expression*>(value->detachValue())), expr_deletor );
 
    p.simplify(2,ti2);
 }

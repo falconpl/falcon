@@ -42,6 +42,7 @@
 #include <falcon/cm/clone.h>
 
 #include <falcon/bom.h>
+#include <falcon/stdsteps.h>
 
 //--- object headers ---
 #include <falcon/pseudofunc.h>
@@ -331,6 +332,7 @@ Engine::Engine()
    addPseudoFunction(new Ext::TypeId);
    addPseudoFunction(new Ext::Clone);
 
+   m_stdSteps = new StdSteps;
    //=====================================
    // The Core Module
    //
@@ -397,6 +399,7 @@ Engine::~Engine()
    //
    delete m_core;
    delete m_bom;
+   delete m_stdSteps;
 
    delete m_collector;
    delete m_mtx;
