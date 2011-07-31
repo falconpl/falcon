@@ -39,7 +39,7 @@
 #include <falcon/falconclass.h>
 #include <falcon/hyperclass.h>
 
-#include "falcon/inheritance.h"
+#include <falcon/inheritance.h>
 
 namespace Falcon {
 
