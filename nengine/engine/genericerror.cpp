@@ -17,10 +17,12 @@
 #include <falcon/genericerror.h>
 #include <falcon/errorclass.h>
 
+#include "falcon/stderrors.h"
+
 namespace Falcon {
 
 GenericError::GenericError( const ErrorParam &params ):
-   Error( Engine::instance()->genericErrorClass(), params )
+   Error( Engine::instance()->stdErrors()->generic(), params )
 {
 }
 

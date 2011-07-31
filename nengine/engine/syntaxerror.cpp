@@ -17,11 +17,12 @@
 #include <falcon/syntaxerror.h>
 #include <falcon/errorclass.h>
 #include <falcon/engine.h>
+#include <falcon/stderrors.h>
 
 namespace Falcon {
 
 SyntaxError::SyntaxError( const ErrorParam &params ):
-   Error( Engine::instance()->syntaxErrorClass(), params )
+   Error( Engine::instance()->stdErrors()->syntax(), params )
 {
 }
 

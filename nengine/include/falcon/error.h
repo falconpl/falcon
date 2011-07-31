@@ -99,6 +99,16 @@ public:
       m_origin( e_orig_mod ),
       m_catchable( true )
       {}
+   
+   ErrorParam():
+      m_errorCode( 0 ),
+      m_module( "" ),    // force buffering
+      m_line( 0 ),
+      m_chr( 0 ),
+      m_sysError( 0 ),
+      m_origin( e_orig_mod ),
+      m_catchable( true )
+      {}
 
    ErrorParam &code( int code ) { m_errorCode = code; return *this; }
    ErrorParam &desc( const String &d ) { m_description = d; return *this; }

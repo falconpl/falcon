@@ -36,6 +36,7 @@ class Module;
 class BOM;
 class ClassReference;
 class StdSteps;
+class StdErrors;
 
 /** Falcon application global data.
 
@@ -188,119 +189,9 @@ public:
     */
    ClassReference* referenceClass() const;
    
-   //==========================================================================
-   // Error handlers
-   //
-
-   /** Returns the global instance of the CodeError class.
-
-    Method init() must have been called before.
-
-    @note This method will assert and terminate the program if compiled in debug mode
-    in case the engine has not been initialized. In release, it will just
-    return a null pointer.
+   /** Returns the standard collection of error handlers.
     */
-   Class* codeErrorClass() const;
-
-   /** Returns the global instance of the GenericError class.
-
-    Method init() must have been called before.
-
-    @note This method will assert and terminate the program if compiled in debug mode
-    in case the engine has not been initialized. In release, it will just
-    return a null pointer.
-    */
-   Class* genericErrorClass() const;
-
-   /** Returns the global instance of the OperandError class.
-
-    Method init() must have been called before.
-
-    @note This method will assert and terminate the program if compiled in debug mode
-    in case the engine has not been initialized. In release, it will just
-    return a null pointer.
-    */
-   Class* operandErrorClass() const;
-
-   /** Returns the global instance of the UnsupportedError class.
-
-    Method init() must have been called before.
-
-    @note This method will assert and terminate the program if compiled in debug mode
-    in case the engine has not been initialized. In release, it will just
-    return a null pointer.
-    */
-   Class* unsupportedErrorClass() const;
-
-   /** Returns the global instance of the IOError class.
-
-    Method init() must have been called before.
-
-    @note This method will assert and terminate the program if compiled in debug mode
-    in case the engine has not been initialized. In release, it will just
-    return a null pointer.
-    */
-   Class* ioErrorClass() const;
-
-   /** Returns the global instance of the InterruptedError class.
-
-    Method init() must have been called before.
-
-    @note This method will assert and terminate the program if compiled in debug mode
-    in case the engine has not been initialized. In release, it will just
-    return a null pointer.
-    */
-   Class* interruptedErrorClass() const;
-
-   /** Returns the global instance of the EncodingError class.
-
-    Method init() must have been called before.
-
-    @note This method will assert and terminate the program if compiled in debug mode
-    in case the engine has not been initialized. In release, it will just
-    return a null pointer.
-    */
-   Class* encodingErrorClass() const;
-
-   /** Returns the global instance of the AccessError class.
-
-    Method init() must have been called before.
-
-    @note This method will assert and terminate the program if compiled in debug mode
-    in case the engine has not been initialized. In release, it will just
-    return a null pointer.
-    */
-   Class* accessErrorClass() const;
-
-   /** Returns the global instance of the AccessTypeError class.
-
-    Method init() must have been called before.
-
-    @note This method will assert and terminate the program if compiled in debug mode
-    in case the engine has not been initialized. In release, it will just
-    return a null pointer.
-    */
-   Class* accessTypeErrorClass() const;
-
-   /** Returns the global instance of the SyntaxError class.
-
-    Method init() must have been called before.
-
-    @note This method will assert and terminate the program if compiled in debug mode
-    in case the engine has not been initialized. In release, it will just
-    return a null pointer.
-    */
-   Class* syntaxErrorClass() const;
-
-   /** Returns the global instance of the ParamError class.
-
-    Method init() must have been called before.
-
-    @note This method will assert and terminate the program if compiled in debug mode
-    in case the engine has not been initialized. In release, it will just
-    return a null pointer.
-    */
-   Class* paramErrorClass() const;
+   StdErrors* stdErrors() const { return m_stdErrors; }
 
    /** Adds a transcoder to the engine.
     \param A new transcoder to be registered in the engine.
@@ -426,6 +317,7 @@ protected:
 
    PseudoFunctionMap* m_tpfuncs;
    StdSteps* m_stdSteps;
+   StdErrors* m_stdErrors;
 };
 
 }

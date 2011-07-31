@@ -16,11 +16,12 @@
 #include <falcon/engine.h>
 #include <falcon/accesstypeerror.h>
 #include <falcon/errorclass.h>
+#include <falcon/stderrors.h>
 
 namespace Falcon {
 
 AccessTypeError::AccessTypeError( const ErrorParam &params ):
-   Error( Engine::instance()->accessTypeErrorClass(), params )
+   Error( Engine::instance()->stdErrors()->accessType(), params )
 {
 }
 

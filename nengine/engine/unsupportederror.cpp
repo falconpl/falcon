@@ -17,11 +17,12 @@
 #include <falcon/unsupportederror.h>
 #include <falcon/errorclass.h>
 #include <falcon/engine.h>
+#include <falcon/stderrors.h>
 
 namespace Falcon {
 
 UnsupportedError::UnsupportedError( const ErrorParam &params ):
-   Error( Engine::instance()->unsupportedErrorClass(), params )
+   Error( Engine::instance()->stdErrors()->unsupported(), params )
 {
 }
 

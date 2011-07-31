@@ -16,11 +16,12 @@
 #include <falcon/engine.h>
 #include <falcon/encodingerror.h>
 #include <falcon/errorclass.h>
+#include <falcon/stderrors.h>
 
 namespace Falcon {
 
 EncodingError::EncodingError( const ErrorParam &params ):
-   Error( Engine::instance()->encodingErrorClass(), params )
+   Error( Engine::instance()->stdErrors()->encoding(), params )
 {
 }
 

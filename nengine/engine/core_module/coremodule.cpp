@@ -35,6 +35,9 @@
 #include <falcon/prototypeclass.h>
 #include <falcon/metaclass.h>
 
+// the standard error classes
+#include <falcon/errorclasses.h>
+
 
 
 namespace Falcon {
@@ -43,6 +46,7 @@ CoreModule::CoreModule():
    Module("core")
 {
    *this
+      // Standard functions
       << new Ext::Compare
       << new Ext::Describe
       << new Ext::Len
@@ -54,6 +58,7 @@ CoreModule::CoreModule():
       << new Ext::TypeId
       << new Ext::Clone
       
+      // Type reflection
       << new ClassNil
       << new ClassBool
       << new ClassInt
@@ -64,7 +69,21 @@ CoreModule::CoreModule():
       << new ClassString
       << new FlexyClass
       << new PrototypeClass
-      << new MetaClass
+      << new MetaClass  // ?
+      
+      // Error classes
+      << new AccessErrorClass
+      << new AccessTypeErrorClass
+      << new CodeErrorClass
+      << new GenericErrorClass
+      << new InterruptedErrorClass
+      << new IOErrorClass
+      << new LinkErrorClass
+      << new OperandErrorClass
+      << new UnsupportedErrorClass
+      << new EncodingErrorClass
+      << new SyntaxErrorClass
+      << new ParamErrorClass
       ;
 }
 

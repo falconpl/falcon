@@ -62,18 +62,7 @@
 #include <falcon/metaclass.h>
 #include <falcon/classreference.h>
 
-//--- error headers ---
-#include <falcon/accesserror.h>
-#include <falcon/accesstypeerror.h>
-#include <falcon/errorclass.h>
-#include <falcon/codeerror.h>
-#include <falcon/genericerror.h>
-#include <falcon/interruptederror.h>
-#include <falcon/ioerror.h>
-#include <falcon/operanderror.h>
-#include <falcon/unsupportederror.h>
-#include <falcon/syntaxerror.h>
-#include <falcon/encodingerror.h>
+#include <falcon/stderrors.h>
 
 #include <falcon/paranoid.h>
 #include <map>
@@ -93,157 +82,6 @@ class TranscoderMap: public std::map<String, Transcoder*>
 
 class PseudoFunctionMap: public std::map<String, PseudoFunction*>
 {
-};
-
-//=======================================================
-// Private classes known by the engine
-//
-class AccessErrorClass: public ErrorClass
-{
-public:
-   AccessErrorClass():
-      ErrorClass("AccessError")
-   {}
-
-   virtual void* create(void* creationParams ) const
-   {
-      return new AccessError( *static_cast<ErrorParam*>(creationParams) );
-   }
-};
-
-class AccessTypeErrorClass: public ErrorClass
-{
-public:
-   AccessTypeErrorClass():
-      ErrorClass("AccessTypeError")
-   {}
-
-   virtual void* create(void* creationParams ) const
-   {
-      return new AccessTypeError( *static_cast<ErrorParam*>(creationParams) );
-   }
-};
-
-
-class CodeErrorClass: public ErrorClass
-{
-public:
-   CodeErrorClass():
-      ErrorClass("CodeError")
-   {}
-
-   virtual void* create(void* creationParams ) const
-   {
-      return new CodeError( *static_cast<ErrorParam*>(creationParams) );
-   }
-};
-
-class GenericErrorClass: public ErrorClass
-{
-public:
-   GenericErrorClass():
-      ErrorClass( "GenericError" )
-      {}
-
-   virtual void* create(void* creationParams ) const
-   {
-      return new GenericError( *static_cast<ErrorParam*>(creationParams) );
-   }
-};
-
-class InterruptedErrorClass: public ErrorClass
-{
-public:
-   InterruptedErrorClass():
-      ErrorClass( "InterruptedError" )
-      {}
-
-   virtual void* create(void* creationParams ) const
-   {
-      return new InterruptedError( *static_cast<ErrorParam*>(creationParams) );
-   }
-};
-
-
-class IOErrorClass: public ErrorClass
-{
-public:
-   IOErrorClass():
-      ErrorClass( "IOError" )
-      {}
-
-   virtual void* create(void* creationParams ) const
-   {
-      return new IOError( *static_cast<ErrorParam*>(creationParams) );
-   }
-};
-
-
-class OperandErrorClass: public ErrorClass
-{
-public:
-   OperandErrorClass():
-      ErrorClass( "OperandError" )
-      {}
-
-   virtual void* create(void* creationParams ) const
-   {
-      return new OperandError( *static_cast<ErrorParam*>(creationParams) );
-   }
-};
-
-
-class UnsupportedErrorClass: public ErrorClass
-{
-public:
-   UnsupportedErrorClass():
-      ErrorClass( "UnsupportedError" )
-      {}
-
-   virtual void* create(void* creationParams ) const
-   {
-      return new UnsupportedError( *static_cast<ErrorParam*>(creationParams) );
-   }
-};
-
-
-class EncodingErrorClass: public ErrorClass
-{
-public:
-   EncodingErrorClass():
-      ErrorClass( "EncodingError" )
-      {}
-
-   virtual void* create(void* creationParams ) const
-   {
-      return new EncodingError( *static_cast<ErrorParam*>(creationParams) );
-   }
-};
-
-class SyntaxErrorClass: public ErrorClass
-{
-public:
-   SyntaxErrorClass():
-      ErrorClass( "SyntaxError" )
-      {}
-
-   virtual void* create(void* creationParams ) const
-   {
-      return new SyntaxError( *static_cast<ErrorParam*>(creationParams) );
-   }
-};
-
-class ParamErrorClass: public ErrorClass
-{
-public:
-   ParamErrorClass():
-      ErrorClass( "ParamError" )
-      {}
-
-   virtual void* create(void* creationParams ) const
-   {
-      return new SyntaxError( *static_cast<ErrorParam*>(creationParams) );
-   }
 };
 
 //=======================================================
@@ -293,22 +131,7 @@ Engine::Engine()
    m_classes[FLC_ITEM_NUM] = new ClassNumeric;
    m_classes[FLC_ITEM_FUNC] = new ClassFunction;
    m_classes[FLC_ITEM_METHOD] = new ClassNil;
-   m_classes[FLC_ITEM_REF] = new ClassReference;
-   
-   //=====================================
-   // Initialization of standard errors.
-   //
-   m_accessErrorClass = new AccessErrorClass;
-   m_accessTypeErrorClass = new AccessTypeErrorClass;
-   m_codeErrorClass = new CodeErrorClass;
-   m_genericErrorClass = new GenericErrorClass;
-   m_interruptedErrorClass = new InterruptedErrorClass;
-   m_ioErrorClass = new IOErrorClass;
-   m_operandErrorClass = new OperandErrorClass;
-   m_unsupportedErrorClass = new UnsupportedErrorClass;
-   m_encodingErrorClass = new EncodingErrorClass;
-   m_syntaxErrorClass = new SyntaxErrorClass;
-   m_paramErrorClass = new ParamErrorClass;
+   m_classes[FLC_ITEM_REF] = new ClassReference;   
 
    m_bom = new BOM;
 
@@ -332,7 +155,13 @@ Engine::Engine()
    addPseudoFunction(new Ext::TypeId);
    addPseudoFunction(new Ext::Clone);
 
+   //============================================
+   // Creating singletons
+   //
+   
    m_stdSteps = new StdSteps;
+   m_stdErrors = new StdErrors;
+   
    //=====================================
    // The Core Module
    //
@@ -356,20 +185,6 @@ Engine::~Engine()
    delete m_metaClass;
    delete m_functionClass;
    delete m_referenceClass;
-
-   // ===============================
-   // Delete standard error classes
-   //
-   delete m_accessErrorClass;
-   delete m_accessTypeErrorClass;
-   delete m_codeErrorClass;
-   delete m_genericErrorClass;
-   delete m_ioErrorClass;
-   delete m_interruptedErrorClass;
-   delete m_operandErrorClass;
-   delete m_unsupportedErrorClass;
-   delete m_encodingErrorClass;
-   delete m_paramErrorClass;
 
    // ===============================
    // Delete standard item classes
@@ -400,6 +215,7 @@ Engine::~Engine()
    delete m_core;
    delete m_bom;
    delete m_stdSteps;
+   delete m_stdErrors;
 
    delete m_collector;
    delete m_mtx;
@@ -591,77 +407,6 @@ ClassReference* Engine::referenceClass() const
 {
    fassert( m_instance != 0 );
    return m_instance->m_referenceClass;
-}
-
-//=====================================================
-// Error handlers
-//
-
-Class* Engine::codeErrorClass() const
-{
-   fassert( m_instance != 0 );
-   return m_instance->m_codeErrorClass;
-}
-
-Class* Engine::genericErrorClass() const
-{
-   fassert( m_instance != 0 );
-   return m_instance->m_genericErrorClass;
-}
-
-Class* Engine::ioErrorClass() const
-{
-   fassert( m_instance != 0 );
-   return m_instance->m_ioErrorClass;
-}
-
-Class* Engine::interruptedErrorClass() const
-{
-   fassert( m_instance != 0 );
-   return m_instance->m_interruptedErrorClass;
-}
-
-Class* Engine::encodingErrorClass() const
-{
-   fassert( m_instance != 0 );
-   return m_instance->m_encodingErrorClass;
-}
-
-Class* Engine::accessErrorClass() const
-{
-   fassert( m_instance != 0 );
-   return m_instance->m_accessErrorClass;
-}
-
-Class* Engine::accessTypeErrorClass() const
-{
-   fassert( m_instance != 0 );
-   return m_instance->m_accessTypeErrorClass;
-}
-
-Class* Engine::syntaxErrorClass() const
-{
-   fassert( m_instance != 0 );
-   return m_instance->m_syntaxErrorClass;
-}
-
-Class* Engine::paramErrorClass() const
-{
-   fassert( m_instance != 0 );
-   return m_instance->m_paramErrorClass;
-}
-
-
-Class* Engine::operandErrorClass() const
-{
-   fassert( m_instance != 0 );
-   return m_instance->m_operandErrorClass;
-}
-
-Class* Engine::unsupportedErrorClass() const
-{
-   fassert( m_instance != 0 );
-   return m_instance->m_unsupportedErrorClass;
 }
 
 }

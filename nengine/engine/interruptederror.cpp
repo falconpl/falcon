@@ -17,11 +17,12 @@
 #include <falcon/interruptederror.h>
 #include <falcon/errorclass.h>
 #include <falcon/engine.h>
+#include <falcon/stderrors.h>
 
 namespace Falcon {
 
 InterruptedError::InterruptedError( const ErrorParam &params ):
-   Error( Engine::instance()->ioErrorClass(), params )
+   Error( Engine::instance()->stdErrors()->io(), params )
 {
 }
 

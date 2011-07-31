@@ -1,11 +1,11 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: unsupportederror.cpp
+   FILE: linkerror.cpp
 
-   Error class raised when functions receive invalid parameters.
+   Generic Error class.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
-   Begin: Sat, 07 May 2011 19:29:56 +0200
+   Begin: Fri, 04 Feb 2011 18:39:36 +0100
 
    -------------------------------------------------------------------
    (C) Copyright 2011: the FALCON developers (see list in AUTHORS file)
@@ -13,23 +13,22 @@
    See LICENSE file for licensing details.
 */
 
-
-#include <falcon/paramerror.h>
-#include <falcon/errorclass.h>
 #include <falcon/engine.h>
+#include <falcon/linkerror.h>
+#include <falcon/errorclass.h>
 #include <falcon/stderrors.h>
 
 namespace Falcon {
 
-ParamError::ParamError( const ErrorParam &params ):
-   Error( Engine::instance()->stdErrors()->param(), params )
+LinkError::LinkError( const ErrorParam &params ):
+   Error( Engine::instance()->stdErrors()->link(), params )
 {
 }
 
-ParamError::~ParamError()
+LinkError::~LinkError()
 {
 }
 
 }
 
-/* end of unsupportederror.cpp */
+/* end of linkerror.cpp */

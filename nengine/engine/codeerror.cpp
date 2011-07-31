@@ -17,11 +17,12 @@
 #include <falcon/codeerror.h>
 #include <falcon/errorclass.h>
 #include <falcon/engine.h>
+#include <falcon/stderrors.h>
 
 namespace Falcon {
 
 CodeError::CodeError( const ErrorParam &params ):
-   Error( Engine::instance()->codeErrorClass(), params )
+   Error( Engine::instance()->stdErrors()->code(), params )
 {
 }
 

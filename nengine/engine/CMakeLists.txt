@@ -114,12 +114,7 @@ add_library(falcon_engine SHARED
   exprmultiunpack.cpp
   exprunpack.cpp
   extfunc.cpp
-  fassert.cpp
-  falconclass.cpp
-  falconinstance.cpp
-  falconstate.cpp
-  fatal.cpp
-  fstream.cpp
+  errorclasses.cpp
   expression.cpp
   exprfactory.cpp
   exprmath.cpp
@@ -131,6 +126,12 @@ add_library(falcon_engine SHARED
   flexyclass.cpp
   flexydict.cpp
   function.cpp
+  fassert.cpp
+  falconclass.cpp
+  falconinstance.cpp
+  falconstate.cpp
+  fatal.cpp
+  fstream.cpp
   genericerror.cpp
   globalsymbol.cpp
   hyperclass.cpp
@@ -142,6 +143,7 @@ add_library(falcon_engine SHARED
   itemdict.cpp
   interruptederror.cpp
   ioerror.cpp
+  linkerror.cpp
   localsymbol.cpp
   metaclass.cpp
   modcompiler.cpp
@@ -160,6 +162,7 @@ add_library(falcon_engine SHARED
   rulesyntree.cpp
   sourceref.cpp
   statement.cpp
+  stderrors.cpp
   stdsteps.cpp
   stmtautoexpr.cpp
   stmt_init.cpp

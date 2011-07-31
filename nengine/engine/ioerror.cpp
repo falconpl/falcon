@@ -17,11 +17,12 @@
 #include <falcon/ioerror.h>
 #include <falcon/errorclass.h>
 #include <falcon/engine.h>
+#include <falcon/stderrors.h>
 
 namespace Falcon {
 
 IOError::IOError( const ErrorParam &params ):
-   Error( Engine::instance()->ioErrorClass(), params )
+   Error( Engine::instance()->stdErrors()->io(), params )
 {
 }
 

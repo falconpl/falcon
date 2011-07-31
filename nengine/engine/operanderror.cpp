@@ -16,11 +16,12 @@
 
 #include <falcon/operanderror.h>
 #include <falcon/engine.h>
+#include <falcon/stderrors.h>
 
 namespace Falcon {
 
 OperandError::OperandError( const ErrorParam &params ):
-   Error( Engine::instance()->operandErrorClass(), params )
+   Error( Engine::instance()->stdErrors()->operand(), params )
 {
 }
 
