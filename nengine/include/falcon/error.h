@@ -61,7 +61,7 @@ public:
    typedef enum {
       e_orig_unknown = 0,
       e_orig_compiler = 1,
-      e_orig_assembler = 2,
+      e_orig_linker = 2,
       e_orig_loader = 3,
       e_orig_vm = 4,
       e_orig_script = 5,

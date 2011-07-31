@@ -46,7 +46,7 @@
 //--- error headers ---
 #include <falcon/accesserror.h>
 #include <falcon/accesstypeerror.h>
-#include <falcon/errorclass.h>
+#include <falcon/classerror.h>
 #include <falcon/codeerror.h>
 #include <falcon/genericerror.h>
 #include <falcon/interruptederror.h>

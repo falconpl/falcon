@@ -138,13 +138,13 @@ String &Error::heading( String &target ) const
 
    switch( m_origin )
    {
-   case ErrorParam::e_orig_compiler: target += "CO"; break;
-   case ErrorParam::e_orig_assembler: target += "AS"; break;
+   case ErrorParam::e_orig_compiler: target += "CP"; break;
+   case ErrorParam::e_orig_linker: target += "LK"; break;
    case ErrorParam::e_orig_loader: target += "LD"; break;
    case ErrorParam::e_orig_vm: target += "VM"; break;
    case ErrorParam::e_orig_runtime: target += "RT"; break;
    case ErrorParam::e_orig_mod: target += "MD"; break;
-   case ErrorParam::e_orig_script: target += "SS"; break;
+   case ErrorParam::e_orig_script: target += "SC"; break;
    default: target += "??";
    }
 

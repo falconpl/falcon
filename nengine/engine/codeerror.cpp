@@ -15,7 +15,7 @@
 
 
 #include <falcon/codeerror.h>
-#include <falcon/errorclass.h>
+#include <falcon/classerror.h>
 #include <falcon/engine.h>
 #include <falcon/stderrors.h>
 

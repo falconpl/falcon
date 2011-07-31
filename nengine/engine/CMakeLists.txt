@@ -86,6 +86,7 @@ add_library(falcon_engine SHARED
   classarray.cpp
   classbool.cpp
   classdict.cpp
+  classerror.cpp
   classfunction.cpp
   classint.cpp
   classnil.cpp
@@ -103,7 +104,6 @@ add_library(falcon_engine SHARED
   encodingerror.cpp
   engine.cpp
   error.cpp
-  errorclass.cpp
   exprarray.cpp
   exprcall.cpp
   exprcompare.cpp

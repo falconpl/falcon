@@ -27,18 +27,18 @@ namespace Falcon
 
 StdErrors::StdErrors()
 {
-   m_code = new CodeErrorClass;
-   m_generic = new GenericErrorClass;
-   m_operand = new OperandErrorClass;
-   m_unsupported = new UnsupportedErrorClass;
-   m_io = new IOErrorClass;
-   m_interrupted = new InterruptedErrorClass;
-   m_encoding = new EncodingErrorClass;
-   m_access = new AccessErrorClass;
-   m_accessType = new AccessTypeErrorClass;
-   m_syntax = new SyntaxErrorClass;
-   m_param =  new ParamErrorClass;
-   m_link = new LinkErrorClass;
+   m_code = new ClassCodeError;
+   m_generic = new ClassGenericError;
+   m_operand = new ClassOperandError;
+   m_unsupported = new ClassUnsupportedError;
+   m_io = new ClassIOError;
+   m_interrupted = new ClassInterruptedError;
+   m_encoding = new ClassEncodingError;
+   m_access = new ClassAccessError;
+   m_accessType = new ClassAccessTypeError;
+   m_syntax = new ClassSyntaxError;
+   m_param =  new ClassParamError;
+   m_link = new ClassLinkError;
 }
 
 

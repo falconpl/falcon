@@ -22,7 +22,7 @@
 //--- error headers ---
 #include <falcon/accesserror.h>
 #include <falcon/accesstypeerror.h>
-#include <falcon/errorclass.h>
+#include <falcon/classerror.h>
 #include <falcon/codeerror.h>
 #include <falcon/genericerror.h>
 #include <falcon/interruptederror.h>
@@ -38,7 +38,7 @@ namespace Falcon
 {
 
 
-void AccessErrorClass::op_create( VMContext* ctx, int32 pcount ) const
+void ClassAccessError::op_create( VMContext* ctx, int32 pcount ) const
 {
    static Collector* coll = Engine::instance()->collector();
    
@@ -49,7 +49,7 @@ void AccessErrorClass::op_create( VMContext* ctx, int32 pcount ) const
 }
 
 
-void AccessTypeErrorClass::op_create( VMContext* ctx, int32 pcount ) const
+void ClassAccessTypeError::op_create( VMContext* ctx, int32 pcount ) const
 {
    static Collector* coll = Engine::instance()->collector();
    
@@ -60,7 +60,7 @@ void AccessTypeErrorClass::op_create( VMContext* ctx, int32 pcount ) const
 }
 
 
-void CodeErrorClass::op_create( VMContext* ctx, int32 pcount ) const
+void ClassCodeError::op_create( VMContext* ctx, int32 pcount ) const
 {
    static Collector* coll = Engine::instance()->collector();
    
@@ -71,7 +71,7 @@ void CodeErrorClass::op_create( VMContext* ctx, int32 pcount ) const
 }
 
 
-void GenericErrorClass::op_create( VMContext* ctx, int32 pcount ) const
+void ClassGenericError::op_create( VMContext* ctx, int32 pcount ) const
 {
    static Collector* coll = Engine::instance()->collector();
    
@@ -82,7 +82,7 @@ void GenericErrorClass::op_create( VMContext* ctx, int32 pcount ) const
 }
 
 
-void InterruptedErrorClass::op_create( VMContext* ctx, int32 pcount ) const
+void ClassInterruptedError::op_create( VMContext* ctx, int32 pcount ) const
 {
    static Collector* coll = Engine::instance()->collector();
    
@@ -94,7 +94,7 @@ void InterruptedErrorClass::op_create( VMContext* ctx, int32 pcount ) const
 
 
 
-void IOErrorClass::op_create( VMContext* ctx, int32 pcount ) const
+void ClassIOError::op_create( VMContext* ctx, int32 pcount ) const
 {
    static Collector* coll = Engine::instance()->collector();
    
@@ -104,7 +104,7 @@ void IOErrorClass::op_create( VMContext* ctx, int32 pcount ) const
       FALCON_GC_STORE( coll, this, new IOError( params ) ) );
 }
 
-void LinkErrorClass::op_create( VMContext* ctx, int32 pcount ) const
+void ClassLinkError::op_create( VMContext* ctx, int32 pcount ) const
 {
    static Collector* coll = Engine::instance()->collector();
    
@@ -114,7 +114,7 @@ void LinkErrorClass::op_create( VMContext* ctx, int32 pcount ) const
       FALCON_GC_STORE( coll, this, new LinkError( params ) ) );
 }
 
-void OperandErrorClass::op_create( VMContext* ctx, int32 pcount ) const
+void ClassOperandError::op_create( VMContext* ctx, int32 pcount ) const
 {
    static Collector* coll = Engine::instance()->collector();
    
@@ -125,7 +125,7 @@ void OperandErrorClass::op_create( VMContext* ctx, int32 pcount ) const
 }
 
 
-void UnsupportedErrorClass::op_create( VMContext* ctx, int32 pcount ) const
+void ClassUnsupportedError::op_create( VMContext* ctx, int32 pcount ) const
 {
    static Collector* coll = Engine::instance()->collector();
    
@@ -135,7 +135,7 @@ void UnsupportedErrorClass::op_create( VMContext* ctx, int32 pcount ) const
       FALCON_GC_STORE( coll, this, new UnsupportedError( params ) ) );
 }
 
-void EncodingErrorClass::op_create( VMContext* ctx, int32 pcount ) const
+void ClassEncodingError::op_create( VMContext* ctx, int32 pcount ) const
 {
    static Collector* coll = Engine::instance()->collector();
    
@@ -145,7 +145,7 @@ void EncodingErrorClass::op_create( VMContext* ctx, int32 pcount ) const
       FALCON_GC_STORE( coll, this, new EncodingError( params ) ) );
 }
 
-void SyntaxErrorClass::op_create( VMContext* ctx, int32 pcount ) const
+void ClassSyntaxError::op_create( VMContext* ctx, int32 pcount ) const
 {
    static Collector* coll = Engine::instance()->collector();
    
@@ -156,7 +156,7 @@ void SyntaxErrorClass::op_create( VMContext* ctx, int32 pcount ) const
 }
 
    
-void ParamErrorClass::op_create( VMContext* ctx, int32 pcount ) const
+void ClassParamError::op_create( VMContext* ctx, int32 pcount ) const
 {
    static Collector* coll = Engine::instance()->collector();
    

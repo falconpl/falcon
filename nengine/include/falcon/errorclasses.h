@@ -16,17 +16,17 @@
 #ifndef _FALCON_ERRORCLASSES_H_
 #define _FALCON_ERRORCLASSES_H_
 
-#include <falcon/errorclass.h>
+#include <falcon/classerror.h>
 
 namespace Falcon {
 
 /** Class handler for AccessError exceptions. 
  */
-class AccessErrorClass: public ErrorClass
+class ClassAccessError: public ClassError
 {
 public:
-   AccessErrorClass():
-      ErrorClass("AccessError")
+   ClassAccessError():
+      ClassError("AccessError")
    {}
 
    virtual void op_create( VMContext* ctx, int32 pcount ) const;
@@ -34,11 +34,11 @@ public:
 
 /** Class handler for AccessTypeError exceptions. 
  */
-class AccessTypeErrorClass: public ErrorClass
+class ClassAccessTypeError: public ClassError
 {
 public:
-   AccessTypeErrorClass():
-      ErrorClass("AccessTypeError")
+   ClassAccessTypeError():
+      ClassError("AccessTypeError")
    {}
 
    virtual void op_create( VMContext* ctx, int32 pcount ) const;
@@ -46,11 +46,11 @@ public:
 
 /** Class handler for CodeError exceptions. 
  */
-class CodeErrorClass: public ErrorClass
+class ClassCodeError: public ClassError
 {
 public:
-   CodeErrorClass():
-      ErrorClass("CodeError")
+   ClassCodeError():
+      ClassError("CodeError")
    {}
 
    virtual void op_create( VMContext* ctx, int32 pcount ) const;
@@ -59,11 +59,11 @@ public:
 
 /** Class handler for GenericError exceptions. 
  */
-class GenericErrorClass: public ErrorClass
+class ClassGenericError: public ClassError
 {
 public:
-   GenericErrorClass():
-      ErrorClass( "GenericError" )
+   ClassGenericError():
+      ClassError( "GenericError" )
       {}
 
    virtual void op_create( VMContext* ctx, int32 pcount ) const;
@@ -72,11 +72,11 @@ public:
 
 /** Class handler for InterruptedError exceptions. 
  */
-class InterruptedErrorClass: public ErrorClass
+class ClassInterruptedError: public ClassError
 {
 public:
-   InterruptedErrorClass():
-      ErrorClass( "InterruptedError" )
+   ClassInterruptedError():
+      ClassError( "InterruptedError" )
       {}
 
    virtual void op_create( VMContext* ctx, int32 pcount ) const;
@@ -85,11 +85,11 @@ public:
 
 /** Class handler for IOError exceptions. 
  */
-class IOErrorClass: public ErrorClass
+class ClassIOError: public ClassError
 {
 public:
-   IOErrorClass():
-      ErrorClass( "IOError" )
+   ClassIOError():
+      ClassError( "IOError" )
       {}
 
    virtual void op_create( VMContext* ctx, int32 pcount ) const;
@@ -97,11 +97,11 @@ public:
 
 /** Class handler for LinkError exceptions. 
  */
-class LinkErrorClass: public ErrorClass
+class ClassLinkError: public ClassError
 {
 public:
-   LinkErrorClass():
-      ErrorClass( "LinkError" )
+   ClassLinkError():
+      ClassError( "LinkError" )
       {}
 
    virtual void op_create( VMContext* ctx, int32 pcount ) const;
@@ -110,11 +110,11 @@ public:
 
 /** Class handler for OperandError exceptions. 
  */
-class OperandErrorClass: public ErrorClass
+class ClassOperandError: public ClassError
 {
 public:
-   OperandErrorClass():
-      ErrorClass( "OperandError" )
+   ClassOperandError():
+      ClassError( "OperandError" )
       {}
 
    virtual void op_create( VMContext* ctx, int32 pcount ) const;
@@ -122,11 +122,11 @@ public:
 
 /** Class handler for UnsupportedError exceptions. 
  */
-class UnsupportedErrorClass: public ErrorClass
+class ClassUnsupportedError: public ClassError
 {
 public:
-   UnsupportedErrorClass():
-      ErrorClass( "UnsupportedError" )
+   ClassUnsupportedError():
+      ClassError( "UnsupportedError" )
       {}
 
    virtual void op_create( VMContext* ctx, int32 pcount ) const;
@@ -134,11 +134,11 @@ public:
 
 /** Class handler for EncodingError exceptions. 
  */
-class EncodingErrorClass: public ErrorClass
+class ClassEncodingError: public ClassError
 {
 public:
-   EncodingErrorClass():
-      ErrorClass( "EncodingError" )
+   ClassEncodingError():
+      ClassError( "EncodingError" )
       {}
 
    virtual void op_create( VMContext* ctx, int32 pcount ) const;
@@ -147,11 +147,11 @@ public:
 
 /** Class handler for SyntaxError exceptions. 
  */
-class SyntaxErrorClass: public ErrorClass
+class ClassSyntaxError: public ClassError
 {
 public:
-   SyntaxErrorClass():
-      ErrorClass( "SyntaxError" )
+   ClassSyntaxError():
+      ClassError( "SyntaxError" )
       {}
 
    virtual void op_create( VMContext* ctx, int32 pcount ) const;
@@ -160,11 +160,11 @@ public:
 
 /** Class handler for ParamError exceptions. 
  */
-class ParamErrorClass: public ErrorClass
+class ClassParamError: public ClassError
 {
 public:
-   ParamErrorClass():
-      ErrorClass( "ParamError" )
+   ClassParamError():
+      ClassError( "ParamError" )
       {}
       
    virtual void op_create( VMContext* ctx, int32 pcount ) const;

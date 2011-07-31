@@ -79,7 +79,7 @@ ModSpace::~ModSpace()
 void ModSpace::addLinkError( int err_id, const String& modName, const Symbol* sym, const String& extra )
 {
    Error* e = new LinkError( ErrorParam( err_id )
-      .origin(e_orig_vm)
+      .origin(ErrorParam::e_orig_linker)
       .line( sym != 0 ? sym->declaredAt() : 0 )
       .module( modName != "" ? modName : "<internal>" ) );
       

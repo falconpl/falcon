@@ -1,6 +1,6 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: error.h
+   FILE: classerror.h
 
    Class for storing error in scripts.
    -------------------------------------------------------------------
@@ -14,8 +14,8 @@
 */
 
 
-#ifndef FALCON_ERRORCLASS_H
-#define	FALCON_ERRORCLASS_H
+#ifndef FALCON_CLASSERROR_H
+#define FALCON_CLASSERROR_H
 
 #include <falcon/setup.h>
 #include <falcon/error.h>
@@ -30,7 +30,7 @@ class Stream;
  creationParameter for the create() method.
  
  */
-class FALCON_DYN_SYM ErrorClass: public Class
+class FALCON_DYN_SYM ClassError: public Class
 {
 public:
    virtual void dispose( void* self ) const;
@@ -44,8 +44,8 @@ public:
    void op_toString( VMContext* ctx, void* self ) const;
    
 protected:
-   ErrorClass( const String& name );
-   virtual ~ErrorClass();
+   ClassError( const String& name );
+   virtual ~ClassError();
 
    /** Turns the standard error parameters sent by scripts into an ErrorParam.
     \param ctx The context where the parameters reside.
@@ -77,6 +77,6 @@ protected:
 
 }
 
-#endif	/* FALCON_ERROR_H */
+#endif	/* FALCON_CLASSERROR_H */
 
-/* end of errorclass.h */
+/* end of classerror.h */

@@ -15,7 +15,6 @@
 
 #include <falcon/engine.h>
 #include <falcon/linkerror.h>
-#include <falcon/errorclass.h>
 #include <falcon/stderrors.h>
 
 namespace Falcon {

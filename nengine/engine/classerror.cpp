@@ -1,6 +1,6 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: errorclass.cpp
+   FILE: classerror.cpp
 
    Class for storing error in scripts.
    -------------------------------------------------------------------
@@ -14,9 +14,9 @@
 */
 
 #undef SRC
-#define SRC "engine/errorclass.cpp"
+#define SRC "engine/classerror.cpp"
 
-#include <falcon/errorclass.h>
+#include <falcon/classerror.h>
 #include <falcon/vmcontext.h>
 #include <falcon/item.h>
 #include <falcon/paramerror.h>
@@ -46,41 +46,41 @@ namespace Falcon {
  method).
  
  */
-ErrorClass::ErrorClass( const String& name ):
+ClassError::ClassError( const String& name ):
    Class(name)
 {
 }
 
-ErrorClass::~ErrorClass()
+ClassError::~ClassError()
 {
 }
 
-void ErrorClass::dispose( void* self ) const
+void ClassError::dispose( void* self ) const
 {
    // use the virtual delete feature.
    Error* error = (Error*)self;
    error->decref();
 }
 
-void* ErrorClass::clone( void* ) const
+void* ClassError::clone( void* ) const
 {
    // errors are uncloneable for now
    return 0;
 }
 
-void ErrorClass::serialize( DataWriter*, void* ) const
+void ClassError::serialize( DataWriter*, void* ) const
 {
    // TODO
 }
 
-void* ErrorClass::deserialize( DataReader* ) const
+void* ClassError::deserialize( DataReader* ) const
 {
    //TODO
    return 0;
 }
 
 
-void ErrorClass::describe( void* instance, String& target, int, int maxlen ) const
+void ClassError::describe( void* instance, String& target, int, int maxlen ) const
 {
    Error* err = static_cast<Error*>(instance);
    target.size(0);
@@ -93,7 +93,7 @@ void ErrorClass::describe( void* instance, String& target, int, int maxlen ) con
 }
 
 
-void ErrorClass::op_toString( VMContext* ctx, void* self ) const
+void ClassError::op_toString( VMContext* ctx, void* self ) const
 {
    Error* err = static_cast<Error*>(self);
    String* str = new String;   
@@ -102,7 +102,7 @@ void ErrorClass::op_toString( VMContext* ctx, void* self ) const
 }
 
 
-bool ErrorClass::invokeParams( VMContext* ctx, int pcount, ErrorParam& params, bool bThrow ) const
+bool ClassError::invokeParams( VMContext* ctx, int pcount, ErrorParam& params, bool bThrow ) const
 {
    Item IerrId;
    Item Idesc;
@@ -174,6 +174,9 @@ bool ErrorClass::invokeParams( VMContext* ctx, int pcount, ErrorParam& params, b
    params.desc( desc );
    params.extra( extra );
    
+   // Usually, when created this way we're created by a script
+   params.origin( ErrorParam::e_orig_script );
+   
    // now get the current line, symbol and module from the stack.
    int line = 0;
    if( ctx->codeDepth() != 0 )
@@ -208,5 +211,5 @@ bool ErrorClass::invokeParams( VMContext* ctx, int pcount, ErrorParam& params, b
 
 }
 
-/* end of errorclass.cpp */
+/* end of classerror.cpp */
 

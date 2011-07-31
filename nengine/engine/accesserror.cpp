@@ -15,7 +15,6 @@
 
 #include <falcon/engine.h>
 #include <falcon/accesserror.h>
-#include <falcon/errorclass.h>
 #include <falcon/stderrors.h>
 
 namespace Falcon {

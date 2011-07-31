@@ -72,18 +72,18 @@ CoreModule::CoreModule():
       << new MetaClass  // ?
       
       // Error classes
-      << new AccessErrorClass
-      << new AccessTypeErrorClass
-      << new CodeErrorClass
-      << new GenericErrorClass
-      << new InterruptedErrorClass
-      << new IOErrorClass
-      << new LinkErrorClass
-      << new OperandErrorClass
-      << new UnsupportedErrorClass
-      << new EncodingErrorClass
-      << new SyntaxErrorClass
-      << new ParamErrorClass
+      << new ClassAccessError
+      << new ClassAccessTypeError
+      << new ClassCodeError
+      << new ClassGenericError
+      << new ClassInterruptedError
+      << new ClassIOError
+      << new ClassLinkError
+      << new ClassOperandError
+      << new ClassUnsupportedError
+      << new ClassEncodingError
+      << new ClassSyntaxError
+      << new ClassParamError
       ;
 }
 

@@ -15,7 +15,7 @@
 
 #include <falcon/engine.h>
 #include <falcon/encodingerror.h>
-#include <falcon/errorclass.h>
+#include <falcon/classerror.h>
 #include <falcon/stderrors.h>
 
 namespace Falcon {

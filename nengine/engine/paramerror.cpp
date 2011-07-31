@@ -15,7 +15,6 @@
 
 
 #include <falcon/paramerror.h>
-#include <falcon/errorclass.h>
 #include <falcon/engine.h>
 #include <falcon/stderrors.h>
 
