@@ -164,6 +164,7 @@ add_library(falcon_engine SHARED
   metaclass.cpp
   modcompiler.cpp
   modloader.cpp
+  modspace.cpp
   module.cpp
   multiclass.cpp
   operanderror.cpp

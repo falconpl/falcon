@@ -16,6 +16,9 @@
 #include <falcon/modspace.h>
 #include <falcon/linkerror.h>
 #include <falcon/error.h>
+#include <falcon/symbol.h>
+#include <falcon/module.h>
+#include <falcon/vm.h>
 
 #include <map>
 #include <vector>
@@ -27,6 +30,11 @@ class ModSymbol
 public:
    Module* m_module;
    const Symbol* m_symbol;
+   
+   ModSymbol():
+      m_module( 0 ),
+      m_symbol( 0 )
+   {}   
    
    ModSymbol( Module* mod, const Symbol* sym ):
       m_module( mod ),
@@ -41,7 +49,12 @@ public:
    Module* m_module;
    bool m_bLoad;
    
-   ModSymbol( Module* mod, bool bLoad ):
+   ModuleLoadMode():
+      m_module(0),
+      m_bLoad( false )
+   {}
+   
+   ModuleLoadMode( Module* mod, bool bLoad ):
       m_module( mod ),
       m_bLoad( bLoad )
    {}
@@ -63,7 +76,7 @@ public:
    typedef std::vector<Error*> ErrorList;
    ErrorList m_errors;
    
-   Private();
+   Private() {}
    ~Private() {
       clearErrors();
    }
@@ -71,7 +84,7 @@ public:
    void clearErrors()
    {
       ErrorList::iterator iter = m_errors.begin();
-      while( m_errors != m_errors.end() )
+      while( iter != m_errors.end() )
       {
          (*iter)->decref();
          ++iter;
@@ -100,6 +113,7 @@ void ModSpace::addLinkError( int err_id, const String& modName, const Symbol* sy
    Error* e = new LinkError( ErrorParam( err_id )
       .origin(ErrorParam::e_orig_linker)
       .line( sym != 0 ? sym->declaredAt() : 0 )
+      .extra( extra )
       .module( modName != "" ? modName : "<internal>" ) );
       
    addLinkError( e );
@@ -139,8 +153,8 @@ Module* ModSpace::findModule( const String& local_name, bool &isLoad ) const
       return 0;
    }
    
-   isLoad = pos->second->m_bLoad;
-   return pos->second->m_module;
+   isLoad = pos->second.m_bLoad;
+   return pos->second.m_module;
 }
 
 
@@ -152,7 +166,7 @@ bool ModSpace::promoteLoad( const String& local_name )
       return false;
    }
    
-   pos->second->m_bLoad = true;
+   pos->second.m_bLoad = true;
    return true;
 }
 
@@ -166,8 +180,9 @@ bool ModSpace::addModule( Module* mod, bool isLoad )
    }
    
    _p->m_loadOrder.push_back( &_p->m_mods[ mod->name() ] );
+   _p->m_loadOrder.back()->m_bLoad = isLoad;
    
-   mod->resolveDeps( this );
+   // mod->resolveDeps...
    return true;
 }
 
@@ -184,7 +199,7 @@ bool ModSpace::link()
 }
 
 
-bool ModSpace::link_exports()
+void ModSpace::link_exports()
 {
    Private::ModLoadOrder& mods = _p->m_loadOrder;
    
@@ -204,7 +219,7 @@ bool ModSpace::link_exports()
             
             virtual bool operator()( const Symbol& sym, bool )
             {
-               m_owner->addExportedSymbol( m_module, sym, true );
+               m_owner->addExportedSymbol( m_module, &sym, true );
                return true;
             }
             
@@ -221,7 +236,7 @@ bool ModSpace::link_exports()
 }
 
 
-bool ModSpace::link_imports()
+void ModSpace::link_imports()
 {
    Private::ModLoadOrder& mods = _p->m_loadOrder;
    
@@ -248,7 +263,7 @@ void ModSpace::readyVM( VMachine* vm )
    Private::ModLoadOrder::const_reverse_iterator rimods = mods.rbegin();
    while( rimods != mods.rend() )
    {
-      Module* mod = rimods->m_module;
+      const Module* mod = (*rimods)->m_module;
       // TODO -- invoke the init methods.
       
       // TODO -- specific space for Main.
@@ -265,13 +280,13 @@ void ModSpace::readyVM( VMachine* vm )
  
 const Symbol* ModSpace::findExportedSymbol( const String& name, Module*& declarer ) const
 {
-   Private::SymbolMap::iterator pos = _p->m_syms->find( sym->name() );
+   Private::SymbolMap::const_iterator pos = _p->m_syms.find( name );
    
    // found in?
-   if( pos != _p->m_syms->end() )
+   if( pos != _p->m_syms.end() )
    {
-      declarer = pos->second->m_module;
-      return pos->second->m_symbol;
+      declarer = pos->second.m_module;
+      return pos->second.m_symbol;
    }
    
    return 0;
@@ -280,10 +295,10 @@ const Symbol* ModSpace::findExportedSymbol( const String& name, Module*& declare
 
 bool ModSpace::addExportedSymbol( Module* mod, const Symbol* sym, bool bAddError )
 {
-   Private::SymbolMap::iterator pos = _p->m_syms->find( sym->name() );
+   Private::SymbolMap::iterator pos = _p->m_syms.find( sym->name() );
    
    // Already in?
-   if( pos != _p->m_syms->end() )
+   if( pos != _p->m_syms.end() )
    {
       // Shall we add some error marker?
       if( ! bAddError )
@@ -291,7 +306,7 @@ bool ModSpace::addExportedSymbol( Module* mod, const Symbol* sym, bool bAddError
          // Else, describe the problem.
          String extra;
          ModSymbol& ms = pos->second;
-         if( ms.m_module != )
+         if( ms.m_module != 0 )
          {
             extra = "in " + ms.m_module->name();
             if( ms.m_symbol->declaredAt() != 0 )
@@ -304,14 +319,14 @@ bool ModSpace::addExportedSymbol( Module* mod, const Symbol* sym, bool bAddError
             extra += "internal symbol";
          }
          
-         addLinkError( e_already_def, mod->name(), &sym, extra );
+         addLinkError( e_already_def, mod->name(), sym, extra );
       }
       
       return false;
    }
    
    // add the entry
-   _p->m_syms[sym.name()] = ModSymbol( mod, &sym );
+   _p->m_syms[sym->name()] = ModSymbol( mod, sym );
    return true;
 }
    

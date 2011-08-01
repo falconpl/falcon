@@ -22,6 +22,7 @@
 #include <falcon/item.h>
 #include <falcon/modspace.h>
 #include <falcon/inheritance.h>
+#include <falcon/error.h>
 
 #include <map>
 #include <deque>
@@ -77,6 +78,7 @@ public:
       }
    };
 
+   /** Records a single remote name with multiple items waiting for that name to be resolved.*/
    class Dependency
    {
    public:
@@ -563,7 +565,7 @@ bool Module::addLoad( const String& name, bool bIsUri )
    }
 
    // add a new record
-   Private::Requirement* r = new Private::Requirement(name, true, bIsUri );
+   Private::Requirement* r = new Private::Requirement(name, true, bIsUri);
    _p->m_reqs[ name ] = r;
    return true;
 }
@@ -650,19 +652,33 @@ void Module::addImportInheritance( Inheritance* inh )
 }
 
 
-bool Module::passiveLink( ModSpace*  )
+bool Module::passiveLink( ModSpace* ms )
 {
-   // TODO
-   
    Private::ReqMap::iterator iter = _p->m_reqs.begin();
    while( iter != _p->m_reqs.end() )
    {
       Private::Requirement* req = iter->second;
+      // loaded symbols...
+      if( iter->first == "" )
+      {
+         Private::Requirement::DepMap::iterator iter = req->m_deps.begin();
+         while( iter != req->m_deps.end() )
+         {
+            Private::Dependency* dep = iter->second;
+            const Symbol* sym = ms->findExportedSymbol( dep->m_remoteName );
+            if( sym == 0 )
+            {
+               ms->addLinkError( e_undef_sym, m_uri, 0, dep->m_remoteName );
+            }
+            ++iter;
+         }
+      }
+      
       Module* mod = req->m_module;
       // if the module has been resolved, it won't be 0.
       if( mod != 0 )
       {
-         
+       
       }
       ++iter;
    }
