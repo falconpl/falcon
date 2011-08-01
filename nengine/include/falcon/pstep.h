@@ -52,7 +52,7 @@ public:
    inline String describe() const
    {
       String temp;
-      describe( temp );
+      describeTo( temp );
       return temp;
    }
 
@@ -62,18 +62,18 @@ public:
     * pstep that are not part of the syntactic tree, but just of the
     * VM code.
     * */
-   virtual void describe( String& ) const;
+   virtual void describeTo( String& ) const;
 
    /** Convert into a string -- short version.
     To be used by diag functions.
     */
-   virtual void oneLiner( String& s ) const;
+   virtual void oneLinerTo( String& s ) const;
 
    /** Convert into a string -- short version. */
    inline String oneLiner() const
    {
       String temp;
-      oneLiner( temp );
+      oneLinerTo( temp );
       return temp;
    }
 

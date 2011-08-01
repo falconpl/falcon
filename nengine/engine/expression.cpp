@@ -226,7 +226,7 @@ void ExprNot::apply_( const PStep* DEBUG_ONLY(self), VMContext* ctx )
    operand.setBoolean( ! operand.isTrue() );
 }
 
-void ExprNot::describe( String& str ) const
+void ExprNot::describeTo( String& str ) const
 {
    str = "not ";
    str += m_first->describe();
@@ -277,7 +277,7 @@ void ExprAnd::apply_( const PStep* DEBUG_ONLY(self), VMContext* ctx )
    operand.setBoolean( operand.isTrue() );
 }
 
-void ExprAnd::describe( String& str ) const
+void ExprAnd::describeTo( String& str ) const
 {
    str = "(" + m_first->describe() + " and " + m_second->describe() + ")";
 }
@@ -349,7 +349,7 @@ void ExprOr::apply_( const PStep* DEBUG_ONLY(self), VMContext* ctx )
 }
 
 
-void ExprOr::describe( String& str ) const
+void ExprOr::describeTo( String& str ) const
 {
    str = "(" + m_first->describe() + " or " + m_second->describe() + ")";
 }
@@ -398,7 +398,7 @@ bool ExprAssign::simplify( Item& ) const
    return false;
 }
 
-void ExprAssign::describe( String& str ) const
+void ExprAssign::describeTo( String& str ) const
 {
    str = "(" + m_first->describe() + " = " + m_second->describe() + ")";
 }
@@ -444,7 +444,7 @@ void ExprNeg::apply_( const PStep* DEBUG_ONLY(self), VMContext* ctx )
    }
 }
 
-void ExprNeg::describe( String& str ) const
+void ExprNeg::describeTo( String& str ) const
 {
    str = "-";
    str += m_first->describe();
@@ -493,7 +493,7 @@ void ExprEEQ::apply_( const PStep* DEBUG_ONLY(ps), VMContext* ctx )
 }
 
 
-void ExprEEQ::describe( String& ret ) const
+void ExprEEQ::describeTo( String& ret ) const
 {
    ret = "(" + m_first->describe() + " === " + m_second->describe() + ")";
 }
@@ -570,7 +570,7 @@ void ExprIIF::apply_( const PStep* self, VMContext* ctx )
    
 }
 
-void ExprIIF::describe( String& str ) const
+void ExprIIF::describeTo( String& str ) const
 {
    str = "( " + m_first->describe() + " ? " + m_second->describe() + " : " + m_third->describe() + " )";
 }
@@ -613,7 +613,7 @@ void ExprStarIndex::apply_( const PStep* DEBUG_ONLY(ps), VMContext* ctx )
 }
 
 
-void ExprStarIndex::describe( String& ret ) const
+void ExprStarIndex::describeTo( String& ret ) const
 {
    ret = "(" + m_first->describe() + "[*" + m_second->describe() + "])";
 }
@@ -639,7 +639,7 @@ void ExprOob::apply_( const PStep* DEBUG_ONLY(self), VMContext* ctx )
    ctx->topData().setOob();
 }
 
-void ExprOob::describe( String& str ) const
+void ExprOob::describeTo( String& str ) const
 {
    str = "^+";
    str += m_first->describe();
@@ -665,7 +665,7 @@ void ExprDeoob::apply_( const PStep* DEBUG_ONLY(self), VMContext* ctx )
    ctx->topData().resetOob();
 }
 
-void ExprDeoob::describe( String& str ) const
+void ExprDeoob::describeTo( String& str ) const
 {
    str = "^-";
    str += m_first->describe();
@@ -691,7 +691,7 @@ void ExprXorOob::apply_( const PStep* DEBUG_ONLY(self), VMContext* ctx )
    ctx->topData().xorOob();
 }
 
-void ExprXorOob::describe( String& str ) const
+void ExprXorOob::describeTo( String& str ) const
 {
    str = "^%";
    str += m_first->describe();
@@ -718,7 +718,7 @@ void ExprIsOob::apply_( const PStep* DEBUG_ONLY(self), VMContext* ctx )
    item.setBoolean(item.isOob());
 }
 
-void ExprIsOob::describe( String& str ) const
+void ExprIsOob::describeTo( String& str ) const
 {
    str = "^?";
    str += m_first->describe();
@@ -758,7 +758,7 @@ bool ExprSelf::simplify( Item& ) const
    return false;
 }
 
-void ExprSelf::describe( String & str ) const
+void ExprSelf::describeTo( String & str ) const
 {
    str = "self";
 }

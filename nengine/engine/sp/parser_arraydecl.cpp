@@ -176,7 +176,7 @@ public:
       }
    }
 
-   void describe( String& tgt ) const { tgt = "Temporary ArrayDecl"; }
+   void describeTo( String& tgt ) const { tgt = "Temporary ArrayDecl"; }
 };
 
 

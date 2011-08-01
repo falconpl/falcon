@@ -34,7 +34,7 @@ Breakpoint::~Breakpoint()
 {
 }
 
-void Breakpoint::describe( String& tgt ) const
+void Breakpoint::describeTo( String& tgt ) const
 {
    tgt = "(*)";
 }
@@ -68,13 +68,13 @@ StmtWhile::~StmtWhile()
    delete m_stmts;
 }
 
-void StmtWhile::oneLiner( String& tgt ) const
+void StmtWhile::oneLinerTo( String& tgt ) const
 {
    tgt = "while " + m_check->describe();
 }
 
 
-void StmtWhile::describe( String& tgt ) const
+void StmtWhile::describeTo( String& tgt ) const
 {
    for( int32 i = 1; i < chr(); i++ ) {
       tgt.append(' ');
@@ -145,12 +145,12 @@ StmtIf& StmtIf::setElse( SynTree* ifFalse )
 }
 
 
-void StmtIf::oneLiner( String& tgt ) const
+void StmtIf::oneLinerTo( String& tgt ) const
 {
    tgt = "if "+ m_elifs[0]->m_check->describe();
 }
 
-void StmtIf::describe( String& tgt ) const
+void StmtIf::describeTo( String& tgt ) const
 {
    tgt += "if "+ m_elifs[0]->m_check->describe() + "\n"
               + m_elifs[0]->m_ifTrue->describe();
@@ -255,7 +255,7 @@ void StmtReturn::expression( Expression* expr )
    m_expr = expr;
 }
 
-void StmtReturn::describe( String& tgt ) const
+void StmtReturn::describeTo( String& tgt ) const
 {
    for( int32 i = 1; i < chr(); i++ ) {
       tgt.append(' ');

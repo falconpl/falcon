@@ -112,7 +112,7 @@ void ExprIndex::PstepLValue::apply_( const PStep* ps, VMContext* ctx )
 }
 
 
-void ExprIndex::describe( String& ret ) const
+void ExprIndex::describeTo( String& ret ) const
 {
    ret = "(" + m_first->describe() + "[" + m_second->describe() + "])";
 }

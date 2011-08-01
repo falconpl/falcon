@@ -64,8 +64,7 @@ public:
 
    static void apply_( const PStep* ps, VMContext* ctx );
 
-   virtual void describe( String& tgt ) const;
-   inline String describe() const { return PStep::describe(); }
+   virtual void describeTo( String& tgt ) const;
 
    /** Returns the symbol table for this block.
     \param bmake if true, generate a table if not already created.

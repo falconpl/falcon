@@ -43,7 +43,7 @@ public:
    ExprSymbol( const ExprSymbol& other );
    virtual ~ExprSymbol();
 
-   virtual void describe(String & str) const;
+   virtual void describeTo(String & str) const;
 
    inline virtual ExprSymbol* clone() const { return new ExprSymbol(*this); }
 
@@ -73,7 +73,7 @@ protected:
       ExprSymbol* m_owner;
       
       PStepLValue( ExprSymbol* owner ): m_owner(owner) {}
-      virtual void describe( String& ) const;
+      virtual void describeTo( String& ) const;
       
    };   
    
@@ -81,7 +81,7 @@ protected:
    {
    public:
       PStepSave(){ apply = apply_; }
-      virtual void describe( String& ) const;
+      virtual void describeTo( String& ) const;
       static void apply_( const PStep* ps, VMContext* ctx );
    };  
    
@@ -89,7 +89,7 @@ protected:
    {
    public:
       PStepRemove() { apply = apply_; }
-      virtual void describe( String& ) const;
+      virtual void describeTo( String& ) const;
       static void apply_( const PStep* ps, VMContext* ctx );
    };  
    

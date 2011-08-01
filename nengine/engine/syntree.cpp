@@ -59,7 +59,7 @@ SynTree::~SynTree()
 }
 
 
-void SynTree::describe( String& tgt ) const
+void SynTree::describeTo( String& tgt ) const
 {
    for( size_t i = 0; i < _p->m_steps.size(); ++i )
    {

@@ -69,7 +69,7 @@ bool ExprUnpack::simplify( Item& ) const
    return false;
 }
 
-void ExprUnpack::describe( String& ret ) const
+void ExprUnpack::describeTo( String& ret ) const
 {
    String params;
    // and generate all the expressions, in inverse order.

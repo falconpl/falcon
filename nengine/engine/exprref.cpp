@@ -90,7 +90,7 @@ void ExprRef::apply_( const PStep* ps, VMContext* ctx )
    }   
 }
 
-void ExprRef::describe( String& str ) const
+void ExprRef::describeTo( String& str ) const
 {
    if( m_symbol == 0 )
    {

@@ -53,10 +53,8 @@ public:
    virtual void serialize( DataWriter* s ) const;
    virtual void precompile( PCode* pcd ) const;
 
-   virtual void describe( String& ) const;
-   virtual void oneLiner( String& s ) const;
-   inline String describe() const { return PStep::describe(); }
-   inline String oneLiner() const { return PStep::oneLiner(); }
+   virtual void describeTo( String& ) const;
+   virtual void oneLinerTo( String& s ) const;
    
    static void apply_( const PStep*, VMContext* vm );
 

@@ -147,7 +147,7 @@ void ExprPreInc::precompile( PCode* pcode ) const
 }
 
 
-void ExprPreInc::describe( String& str ) const
+void ExprPreInc::describeTo( String& str ) const
 {
    str = "++";
    str += m_first->describe();
@@ -178,7 +178,7 @@ void ExprPostInc::precompile( PCode* pcode ) const
    m_first->precompileAutoLvalue( pcode, this, false, true );
 }
 
-void ExprPostInc::describe( String& str ) const
+void ExprPostInc::describeTo( String& str ) const
 {
    str = m_first->describe();
    str += "++";
@@ -200,7 +200,7 @@ void ExprPreDec::apply_( const PStep* ps, VMContext* ctx )
 }
 
 
-void ExprPreDec::describe( String& str ) const
+void ExprPreDec::describeTo( String& str ) const
 {
    str = "--";
    str += m_first->describe();
@@ -237,7 +237,7 @@ void ExprPostDec::precompile( PCode* pcode ) const
    m_first->precompileAutoLvalue( pcode, this, false, true );
 }
 
-void ExprPostDec::describe( String& str ) const
+void ExprPostDec::describeTo( String& str ) const
 {
    str = m_first->describe();
    str += "--";

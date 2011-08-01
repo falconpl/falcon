@@ -308,7 +308,7 @@ ExprMath::~ExprMath()
 {}
 
 
-void ExprMath::describe( String& ret ) const
+void ExprMath::describeTo( String& ret ) const
 {
    ret = "(" + m_first->describe() + m_name + m_second->describe() + ")";
 }

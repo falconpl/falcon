@@ -50,7 +50,7 @@ public:
    public:
       PStepDupliTop() { apply = apply_; }
       static void apply_( const PStep*, VMContext* ctx );
-      virtual void describe( String& ) const;
+      virtual void describeTo( String& ) const;
    };
    PStepDupliTop m_dupliTop;
    
@@ -60,7 +60,7 @@ public:
    public:
       PStepDupliTop2() { apply = apply_; }
       static void apply_( const PStep*, VMContext* ctx );
-      virtual void describe( String& ) const;
+      virtual void describeTo( String& ) const;
    };
    PStepDupliTop2 m_dupliTop2;
    
@@ -70,7 +70,7 @@ public:
    public:
       PStepDupliTop3() { apply = apply_; }
       static void apply_( const PStep*, VMContext* ctx );
-      virtual void describe( String& ) const;
+      virtual void describeTo( String& ) const;
    };
    PStepDupliTop3 m_dupliTop3;
 
@@ -81,7 +81,7 @@ public:
    public:
       PStepSwapTop() { apply = apply_; }
       static void apply_( const PStep*, VMContext* ctx );
-      virtual void describe( String& ) const;
+      virtual void describeTo( String& ) const;
    };
    
    PStepSwapTop m_swapTop;
@@ -97,7 +97,7 @@ public:
    public:
       PStepSwapTopWith2() { apply = apply_; }
       static void apply_( const PStep*, VMContext* ctx );
-      virtual void describe( String& ) const;
+      virtual void describeTo( String& ) const;
    };
    
    PStepSwapTopWith2 m_swapTopWith2;
@@ -114,7 +114,7 @@ public:
    public:
       PStepCopyDown2() { apply = apply_; }
       static void apply_( const PStep*, VMContext* ctx );
-      virtual void describe( String& ) const;
+      virtual void describeTo( String& ) const;
    };
    PStepCopyDown2 m_copyDown2;
    
@@ -123,7 +123,7 @@ public:
    public:
       PStepCopyDown3() { apply = apply_; }
       static void apply_( const PStep*, VMContext* ctx );
-      virtual void describe( String& ) const;
+      virtual void describeTo( String& ) const;
    };
    PStepCopyDown3 m_copyDown3;
    
@@ -132,7 +132,7 @@ public:
    public:
       PStepCopyDown4() { apply = apply_; }
       static void apply_( const PStep*, VMContext* ctx );
-      virtual void describe( String& ) const;
+      virtual void describeTo( String& ) const;
    };
    PStepCopyDown4 m_copyDown4;
    
@@ -141,7 +141,7 @@ public:
    public:
       PStepCopyDown5() { apply = apply_; }
       static void apply_( const PStep*, VMContext* ctx );
-      virtual void describe( String& ) const;
+      virtual void describeTo( String& ) const;
    };
    PStepCopyDown5 m_copyDown5;
 
@@ -151,7 +151,7 @@ public:
    public:
       PStepPop() { apply = apply_; }
       static void apply_( const PStep*, VMContext* ctx );
-      virtual void describe( String& ) const;
+      virtual void describeTo( String& ) const;
    };
    PStepPop m_pop;
    
@@ -161,7 +161,7 @@ public:
    public:
       PStepDragDown() { apply = apply_; }
       static void apply_( const PStep*, VMContext* ctx );
-      virtual void describe( String& ) const;
+      virtual void describeTo( String& ) const;
    };
    PStepDragDown m_dragDown;
 
@@ -173,7 +173,7 @@ public:
    public:
       PStepAddSpace() {apply = apply_; }
       static void apply_( const PStep*, VMContext* ctx );
-      virtual void describe( String& ) const;
+      virtual void describeTo( String& ) const;
    };
    PStepAddSpace m_addSpace;
    
@@ -187,7 +187,7 @@ public:
    public:
       PStepDupliTop_() { apply = apply_; }
       static void apply_( const PStep*, VMContext* ctx );
-      virtual void describe( String& ) const;
+      virtual void describeTo( String& ) const;
    };
    PStepDupliTop_ m_dupliTop_;
    
@@ -197,7 +197,7 @@ public:
    public:
       PStepDupliTop2_() { apply = apply_; }
       static void apply_( const PStep*, VMContext* ctx );
-      virtual void describe( String& ) const;
+      virtual void describeTo( String& ) const;
    };
    PStepDupliTop2_ m_dupliTop2_;
    
@@ -207,7 +207,7 @@ public:
    public:
       PStepDupliTop3_() { apply = apply_; }
       static void apply_( const PStep*, VMContext* ctx );
-      virtual void describe( String& ) const;
+      virtual void describeTo( String& ) const;
    };
    PStepDupliTop3_ m_dupliTop3_;
 
@@ -218,7 +218,7 @@ public:
    public:
       PStepSwapTop_() { apply = apply_; }
       static void apply_( const PStep*, VMContext* ctx );
-      virtual void describe( String& ) const;
+      virtual void describeTo( String& ) const;
    };
    
    PStepSwapTop_ m_swapTop_;
@@ -234,7 +234,7 @@ public:
    public:
       PStepSwapTopWith2_() { apply = apply_; }
       static void apply_( const PStep*, VMContext* ctx );
-      virtual void describe( String& ) const;
+      virtual void describeTo( String& ) const;
    };
    
    PStepSwapTopWith2_ m_swapTopWith2_;
@@ -251,7 +251,7 @@ public:
    public:
       PStepCopyDown2_() { apply = apply_; }
       static void apply_( const PStep*, VMContext* ctx );
-      virtual void describe( String& ) const;
+      virtual void describeTo( String& ) const;
    };
    PStepCopyDown2_ m_copyDown2_;
    
@@ -260,7 +260,7 @@ public:
    public:
       PStepCopyDown3_() { apply = apply_; }
       static void apply_( const PStep*, VMContext* ctx );
-      virtual void describe( String& ) const;
+      virtual void describeTo( String& ) const;
    };
    PStepCopyDown3_ m_copyDown3_;
    
@@ -269,7 +269,7 @@ public:
    public:
       PStepCopyDown4_() { apply = apply_; }
       static void apply_( const PStep*, VMContext* ctx );
-      virtual void describe( String& ) const;
+      virtual void describeTo( String& ) const;
    };
    PStepCopyDown4_ m_copyDown4_;
    
@@ -278,7 +278,7 @@ public:
    public:
       PStepCopyDown5_() { apply = apply_; }
       static void apply_( const PStep*, VMContext* ctx );
-      virtual void describe( String& ) const;
+      virtual void describeTo( String& ) const;
    };
    PStepCopyDown5_ m_copyDown5_;
 
@@ -288,7 +288,7 @@ public:
    public:
       PStepPop_() { apply = apply_; }
       static void apply_( const PStep*, VMContext* ctx );
-      virtual void describe( String& ) const;
+      virtual void describeTo( String& ) const;
    };
    PStepPop_ m_pop_;
    
@@ -298,7 +298,7 @@ public:
    public:
       PStepDragDown_() { apply = apply_; }
       static void apply_( const PStep*, VMContext* ctx );
-      virtual void describe( String& ) const;
+      virtual void describeTo( String& ) const;
    };
    PStepDragDown_ m_dragDown_;
    
@@ -307,7 +307,7 @@ public:
    public:
       PStepAddSpace_() {apply = apply_; }
       static void apply_( const PStep*, VMContext* ctx );
-      virtual void describe( String& ) const;
+      virtual void describeTo( String& ) const;
    };
    PStepAddSpace_ m_addSpace_;
 };

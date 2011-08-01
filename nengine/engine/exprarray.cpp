@@ -102,7 +102,7 @@ ExprArray& ExprArray::add( Expression* e )
 
 //=====================================================
 
-void ExprArray::describe( String& str ) const
+void ExprArray::describeTo( String& str ) const
 {
    Private::ExprVector& mye = _p->m_exprs;
    Private::ExprVector::const_iterator iter = mye.begin();
@@ -121,7 +121,7 @@ void ExprArray::describe( String& str ) const
    str += "\n]\n";
 }
 
-void ExprArray::oneLiner( String& str ) const
+void ExprArray::oneLinerTo( String& str ) const
 {
    Private::ExprVector& mye = _p->m_exprs;
    Private::ExprVector::const_iterator iter = mye.begin();

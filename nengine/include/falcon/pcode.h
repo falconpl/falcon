@@ -68,8 +68,7 @@ public:
    /** Pushes a new step in the pcode. */
    void pushStep( const PStep* ps );
 
-   virtual void describe( String& res ) const;
-   virtual String describe() const {return PStep::describe(); }
+   virtual void describeTo( String& res ) const;
    
    friend class StmtAutoexpr;
 

@@ -39,7 +39,7 @@ StmtInit::~StmtInit()
    // Nothing to do
 }
 
-void StmtInit::describe( String& tgt ) const
+void StmtInit::describeTo( String& tgt ) const
 {
    tgt += "Initialize " + m_inheritance->describe();
 }

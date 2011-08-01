@@ -38,10 +38,7 @@ public:
 
    inline virtual ExprCall* clone() const { return new ExprCall( *this ); }
    virtual bool simplify( Item& value ) const;
-   virtual void describe( String& ) const;
-   virtual void oneLiner( String& s ) const { describe( s ); }
-   inline String describe() const { return PStep::describe(); }
-   inline String oneLiner() const { return PStep::oneLiner(); }
+   virtual void describeTo( String& ) const;
 
    int paramCount() const;
    Expression* getParam( int n ) const;
@@ -82,7 +79,7 @@ private:
          apply = apply_;
       }
 
-      virtual void describe( String& txt ) const;
+      virtual void describeTo( String& txt ) const;
       static void apply_( const PStep* ps, VMContext* ctx );
 
    private:

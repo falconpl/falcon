@@ -95,7 +95,7 @@ void Error::decref()
    }
 }
 
-void Error::describe( String &target ) const
+void Error::describeTo( String &target ) const
 {
    heading( target );
 
@@ -119,7 +119,7 @@ void Error::describe( String &target ) const
       std::deque<Error*>::const_iterator iter = _p->m_subErrors.begin();
       while( iter != _p->m_subErrors.end() )
       {
-         (*iter)->describe( target );
+         (*iter)->describeTo( target );
          ++iter;
       }
    }

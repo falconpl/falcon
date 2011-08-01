@@ -20,14 +20,14 @@
 
 namespace Falcon {
 
-void PStep::describe( String& s ) const
+void PStep::describeTo( String& s ) const
 {
    s="Unnamed pstep";
 }
 
-void PStep::oneLiner( String& s ) const
+void PStep::oneLinerTo( String& s ) const
 {
-   describe(s);
+   describeTo(s);
 }
 
 }

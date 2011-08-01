@@ -219,13 +219,12 @@ public:
    const Item &raised() const { return m_raised; }
    bool hasRaised() const { return m_bHasRaised; }
 
-    /** Renders the error to a string.
-    */
-   String describe() const { String temp; describe( temp ); return temp; }
-
+   inline String describe() const {
+      String s; describeTo(s); return s;
+   }
    /** Renders the error to a string.
     */
-   virtual void describe( String &target ) const;
+   virtual void describeTo( String &target ) const;
 
    /** Writes only the heading of the error to the target string.
       The error heading is everything of the error without the traceback.

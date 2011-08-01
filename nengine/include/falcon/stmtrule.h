@@ -35,8 +35,7 @@ public:
    StmtRule& addStatement( Statement* stmt );
    StmtRule& addAlternative();
 
-   void describe( String& tgt ) const;
-   inline String describe() const { return PStep::describe(); }
+   void describeTo( String& tgt ) const;
 
    static void apply_( const PStep*, VMContext* ctx );
 
@@ -57,8 +56,7 @@ public:
    StmtCut( int32 line=0, int32 chr=0 );
    virtual ~StmtCut();
 
-   void describe( String& tgt ) const;
-   inline String describe() const { return PStep::describe(); }
+   void describeTo( String& tgt ) const;
 
    static void apply_( const PStep*, VMContext* ctx );
 };

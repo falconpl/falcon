@@ -97,7 +97,7 @@ void ClassError::op_toString( VMContext* ctx, void* self ) const
 {
    Error* err = static_cast<Error*>(self);
    String* str = new String;   
-   err->describe(*str);
+   err->describeTo(*str);
    ctx->topData() = str->garbage();
 }
 

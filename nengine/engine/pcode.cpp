@@ -57,7 +57,7 @@ PCode::~PCode()
    delete _p;
 }
 
-void PCode::describe( String& res ) const
+void PCode::describeTo( String& res ) const
 {
    if( _p->m_steps.empty() )
    {

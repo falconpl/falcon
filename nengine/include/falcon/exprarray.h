@@ -54,14 +54,12 @@ public:
    virtual void serialize( DataWriter* s ) const;
    virtual void precompile( PCode* pcd ) const;
 
-   virtual void describe( String& ) const;
-   virtual void oneLiner( String& s ) const;
+   virtual void describeTo( String& ) const;
+   virtual void oneLinerTo( String& s ) const;
 
    static void apply_( const PStep*, VMContext* ctx );
 
    inline virtual ExprArray* clone() const { return new ExprArray( *this ); }
-   inline String describe() const { return PStep::describe(); }
-   inline String oneLiner() const { return PStep::oneLiner(); }
 
    virtual bool isStatic() const { return false; }
    virtual bool simplify( Item& result ) const;

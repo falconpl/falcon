@@ -34,11 +34,8 @@ public:
    StmtAutoexpr( Expression* expr, int32 line=0, int32 chr = 0 );
    virtual ~StmtAutoexpr();
 
-   void describe( String& tgt ) const;
-   inline String describe() const { return PStep::describe(); }
-
-   void oneLiner( String& tgt ) const;
-   inline String oneLiner() const { return PStep::oneLiner(); }
+   void describeTo( String& tgt ) const;
+   void oneLinerTo( String& tgt ) const;
 
    /** Check explicit non-determinism set. 
     If true, then an explicit "?" is specified for this statement.
