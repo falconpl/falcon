@@ -300,9 +300,13 @@ String *Byte::clone( const String *str ) const
 
 length_t Byte::find( const String *str, const String *element, length_t start, length_t end ) const
 {
-   if ( str->size() == 0 || element->size() == 0 )
+   if ( (str->size() == 0) 
+      || (element->size() == 0) 
+      || (start >= str->length()) )
+   {
       return npos;
-
+   }
+   
    if ( end > str->length() )  // npos is defined to be greater than any size
       end = str->length();
 

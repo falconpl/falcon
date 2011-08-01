@@ -15,7 +15,7 @@
 
 
 #ifndef FALCON_ERROR_H
-#define	FALCON_ERROR_H
+#define FALCON_ERROR_H
 
 #include <falcon/setup.h>
 #include <falcon/types.h>

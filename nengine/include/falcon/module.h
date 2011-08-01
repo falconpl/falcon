@@ -31,6 +31,7 @@ class Item;
 class Class;
 class Inheritance;
 class UnknownSymbol;
+class ModSpace;
 
 /** Standard Falcon Execution unit and library.
 
@@ -302,6 +303,16 @@ public:
    Symbol* addExport( const String& name );
 
    void addImportInheritance( Inheritance* inh );
+   
+   /** Performs a passive link step on this module.
+    During this step, the module tries to resolve all its own dependencies
+    throught the modules and public symbols offered by the module space.
+    
+    This method is either called during the link phase of the module space
+    (ModSpace::link()) or before injecting a dynamic module in the virtual 
+    machine.
+    */
+   bool passiveLink( ModSpace* ms );
    
 private:
    String m_name;

@@ -274,7 +274,7 @@ Directory* VFSFile::openDir( const URI& uri )
 }
 
 
-FileStat::t_fileType VFSFile::fileType( const URI& uri )
+FileStat::t_fileType VFSFile::fileType( const URI& uri, bool )
 {
    String fname = uri.path();
    Path::uriToWin( fname );
@@ -374,7 +374,7 @@ FileStat::t_fileType VFSFile::fileType( const URI& uri )
 }
 
 
-bool VFSFile::readStats( const URI& uri, FileStat &sts )
+bool VFSFile::readStats( const URI& uri, FileStat &sts, bool )
 {
    String fname = uri.path();
    Path::uriToWin( fname );

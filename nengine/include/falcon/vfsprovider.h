@@ -154,7 +154,7 @@ public:
    /** Just an inline for opening file with default parameters.
       Default parameters are "read only, full sharing".
    */
-   inline Stream *open( const URI &uri ) {
+   virtual inline Stream *openRO( const URI &uri ) {
       return open( uri, OParams() );
    }
 
@@ -171,15 +171,20 @@ public:
    virtual void mkdir( const URI &uri, bool bWithParents = true )=0;
    virtual void erase( const URI &uri )=0;
    /** Gets the stats of a given file.
-      \param uri the file of which to get thes stats.
+      \param uri the file of which to get the stats.
       \param s The stats where to store the stats.
+      \param delink if true, resolve symbolic links before returning the file stats.
       \return true if the file is found, false if it doesn't exists.
       \throw IOError if the the stats of an existing file cannot be read.
     */
-   virtual bool readStats( const URI &uri, FileStat &s )=0;
+   virtual bool readStats( const URI &uri, FileStat &s, bool delink = true )=0;
 
-   /** Checks if a file exists, and in that case, returns the type of the file. */
-   virtual FileStat::t_fileType fileType( const URI& uri )=0;
+   /** Checks if a file exists, and in that case, returns the type of the file. 
+      \param uri the file of which to get thes stats.
+      \param delink if true, resolve symbolic links before returning the file stats.
+      \return The file type as it would be returned in the file stats.
+    */
+   virtual FileStat::t_fileType fileType( const URI& uri, bool delink = true )=0;
 
    virtual void move( const URI &suri, const URI &duri ) = 0;
 protected:

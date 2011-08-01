@@ -18,9 +18,23 @@ if(UNIX OR APPLE)
     timestamp_posix.cpp
     vfs_file_posix.cpp
   )
+   
+  if(APPLE)
+    set(SYS_SPECIFIC
+       ${SYS_SPECIFIC}
+       dynloader_macosx.cpp
+    )
+  else()
+    set(SYS_SPECIFIC
+       ${SYS_SPECIFIC}
+       dynloader_posix.cpp
+    )
+  endif()
+
 elseif(WIN32)
 
   set(SYS_SPECIFIC
+    dynloader_win.cpp
     fstream_win.cpp
     interrupt_win.cpp
     mt_win.cpp
@@ -100,6 +114,7 @@ add_library(falcon_engine SHARED
   datareader.cpp
   datawriter.cpp
   directory.cpp
+  dynloader.cpp
   dynsymbol.cpp
   encodingerror.cpp
   engine.cpp
@@ -122,6 +137,7 @@ add_library(falcon_engine SHARED
   exprref.cpp
   exprsym.cpp
   exprvalue.cpp
+  famloader.cpp
   filestat.cpp
   flexyclass.cpp
   flexydict.cpp
@@ -147,6 +163,7 @@ add_library(falcon_engine SHARED
   localsymbol.cpp
   metaclass.cpp
   modcompiler.cpp
+  modloader.cpp
   module.cpp
   multiclass.cpp
   operanderror.cpp

@@ -23,6 +23,8 @@ namespace Falcon {
 
 class VMachine;
 class Module;
+class Error;
+class Symbol;
 
 /** Collection of (static) modules active in a virtual machine.
  
@@ -40,8 +42,9 @@ class FALCON_DYN_CLASS ModSpace
 {
 
 public:
+   
    /** Creates the module space on the given virtual machine.*/
-   ModSpace( VMachine* owner );
+   ModSpace();
    virtual ~ModSpace();
    
    VMachine* vm() const { return m_vm;  }
@@ -58,6 +61,19 @@ public:
     */
    void addLinkError( int err_id, const String& modname, const Symbol* sym, const String& extra="" );
 
+   /** Adds a link error.
+    \param e The error to be added.
+    */
+   void addLinkError( Error* e );
+   
+   /** Returns all the generated error as a single composed error. 
+    \return a LinkError of type e_link_error containing all the suberrors, 
+    or 0 if there was no error to be returned.
+    
+    Once called, the previusly recorded errors are cleared.
+    */
+   Error* makeError() const;
+   
    /** Finds a module in the space structure.
     \param local_name The name of the module to be found.
     \param isLoad Will be set to true if the module is required for load.
@@ -98,7 +114,6 @@ public:
    bool promoteLoad( const String& local_name );
    
    /** Adds a module to the module space.
-    \parm local_name The local name under which the module is known.
     \param mod The module to be linked.
     \param isLoad If true, the module is required for load.
     \return true on success, false if there is already a module with the same name.
@@ -114,8 +129,11 @@ public:
     
     A module previously added for import can be promoted to added for load
     later on, through the promoteLoad() method.
+    
+    \note The caller must have already provided the module with a name
+    consistent with the internal naming scheme.
     */
-   bool addModule( const String& local_name, Module* mod, bool isLoad );
+   bool addModule( Module* mod, bool isLoad );
    
    /** Links the previously added modules. 
     \return true on success, false in case of errors during the link phase.
@@ -138,7 +156,7 @@ public:
     This method is to be called after link() and before the virtual machine
     is finally launched for run.
     */
-   void readyVM();
+   void readyVM( VMachine* vm );
    
    
    /** Finds a symbol that is globally exported or globally defined.
@@ -167,19 +185,23 @@ public:
    /** Adds a symbol to the exported map. 
     \param mod The module exporting the symbol.
     \param sym The symbol being exported.
+    \param bAddError if true, add an alreadydef error in case of symbol already defined.
     \return true on success, false if the symbol was already exported.
     
     This method is mainly meant to be used during the link() process. However,
     it's legal to pre-export symbols, and eventually associate a null module
     to symbols created by the application.
     */
-   bool addExportedSymbol( Module* mod, const Symbol* sym );
-   
+   bool addExportedSymbol( Module* mod, const Symbol* sym, bool bAddError = false );
+    
 private:
    VMachine* m_vm;
-   
+    
    class Private;
    Private* _p;
+   
+   void link_exports();
+   void link_imports();
 };
 
 }

@@ -20,7 +20,7 @@
 #include <falcon/unknownsymbol.h>
 #include <falcon/extfunc.h>
 #include <falcon/item.h>
-
+#include <falcon/modspace.h>
 #include <falcon/inheritance.h>
 
 #include <map>
@@ -113,11 +113,10 @@ public:
       typedef std::map<String, Dependency*> DepMap;
       DepMap m_deps;
 
-      Requirement( const String& name, bool bIsLoad, bool bIsUri=false, Module* mod = 0 ):
+      Requirement( const String& name, bool bIsLoad, bool bIsUri=false ):
          m_uri( name ),
          m_bIsUri( bIsUri ),
-         m_bIsLoad( bIsLoad ),
-         m_module(mod)
+         m_bIsLoad( bIsLoad )
       {}
 
       ~Requirement()
@@ -648,6 +647,27 @@ void Module::addImportInheritance( Inheritance* inh )
    
    // Record the fact that we have to save transform an unknown symbol...
    dep->m_waiting.push_back( new Private::WaitingInherit( inh ) );
+}
+
+
+bool Module::passiveLink( ModSpace*  )
+{
+   // TODO
+   
+   Private::ReqMap::iterator iter = _p->m_reqs.begin();
+   while( iter != _p->m_reqs.end() )
+   {
+      Private::Requirement* req = iter->second;
+      Module* mod = req->m_module;
+      // if the module has been resolved, it won't be 0.
+      if( mod != 0 )
+      {
+         
+      }
+      ++iter;
+   }
+   
+   return false;
 }
 
 }

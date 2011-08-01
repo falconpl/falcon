@@ -14,7 +14,7 @@
 */
 
 #ifndef FALCON_INTCOMPILER_H
-#define	FALCON_INTCOMPILER_H
+#define FALCON_INTCOMPILER_H
 
 #include <falcon/setup.h>
 #include <falcon/sp/sourceparser.h>

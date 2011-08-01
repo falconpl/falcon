@@ -81,7 +81,7 @@ Directory* VFSIface::openDir( const URI &uri )
 }
 
 
-bool VFSIface::readStats( const URI &uri, FileStat &s )
+bool VFSIface::readStats( const URI &uri, FileStat &s, bool deref )
 {
    VFSIface_p::VFSMap::iterator iter = _p->m_vfsmap.find( uri.scheme() );
    if( iter == _p->m_vfsmap.end() )
@@ -90,11 +90,11 @@ bool VFSIface::readStats( const URI &uri, FileStat &s )
               .extra("scheme " + uri.scheme()) );
    }
 
-   return iter->second->readStats( uri, s );
+   return iter->second->readStats( uri, s, deref );
 }
 
 
-FileStat::t_fileType VFSIface::fileType( const URI& uri )
+FileStat::t_fileType VFSIface::fileType( const URI& uri, bool bderef )
 {
    VFSIface_p::VFSMap::iterator iter = _p->m_vfsmap.find( uri.scheme() );
    if( iter == _p->m_vfsmap.end() )
@@ -103,7 +103,7 @@ FileStat::t_fileType VFSIface::fileType( const URI& uri )
               .extra("scheme " + uri.scheme()) );
    }
 
-   return iter->second->fileType( uri );
+   return iter->second->fileType( uri, bderef );
 }
 
 

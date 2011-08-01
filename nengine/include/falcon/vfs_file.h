@@ -39,8 +39,8 @@ public:
    virtual Stream* open( const URI &uri, const OParams &p );
    virtual Stream* create( const URI &uri, const CParams &p );
    virtual Directory* openDir( const URI &uri );
-   virtual bool readStats( const URI &uri, FileStat &s );
-   FileStat::t_fileType fileType( const URI& uri );
+   virtual bool readStats( const URI &uri, FileStat &s, bool delink=true );
+   FileStat::t_fileType fileType( const URI& uri, bool delink=true );
 
    virtual void mkdir( const URI &uri, bool bCreateParent=true );
    virtual void erase( const URI &uri );

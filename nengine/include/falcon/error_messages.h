@@ -203,11 +203,12 @@ FAL_ERRORDECL( e_io_dup, 211, "Cannot duplicate the source file descriptor" );
 FAL_ERRORDECL( e_deser, 220, "Deserialization failed" );
 FAL_ERRORDECL( e_deser_eof, 221, "Hit EOF while deserializing" );
 
-FAL_ERRORDECL( e_nofile, 250, "File not found" );
+FAL_ERRORDECL( e_link_error, 250, "Generic link error");
 FAL_ERRORDECL( e_loaderror, 251, "Error in loading a module" );
 FAL_ERRORDECL( e_invformat, 252, "Invalid or damaged Falcon VM file" );
 FAL_ERRORDECL( e_loader_unsupported, 253, "Operation not supported by the module loader" );
 FAL_ERRORDECL( e_unrec_file_type, 254, "Unrecognized file type" );
+FAL_ERRORDECL( e_nofile, 255, "File not found" );
 
 FAL_ERRORDECL( e_unknown_encoding, 300, "Unknown encoding name" );
 FAL_ERRORDECL( e_enc_fail, 301, "Encoding failed or data not encodable" );

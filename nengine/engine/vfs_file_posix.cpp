@@ -175,7 +175,7 @@ Directory* VFSFile::openDir( const URI& uri )
 }
 
 
-FileStat::t_fileType VFSFile::fileType( const URI& uri )
+FileStat::t_fileType VFSFile::fileType( const URI& uri, bool )
 {
    AutoCString filename( uri.get() );
    struct stat fs;
@@ -206,7 +206,7 @@ FileStat::t_fileType VFSFile::fileType( const URI& uri )
    return FileStat::_unknown;
 }
 
-bool VFSFile::readStats( const URI& uri, FileStat &sts )
+bool VFSFile::readStats( const URI& uri, FileStat &sts, bool )
 {
    AutoCString filename( uri.get() );
 
