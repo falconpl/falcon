@@ -103,7 +103,7 @@ ExprDict& ExprDict::add( Expression* k, Expression* v )
 
 //=====================================================
 
-void ExprDict::describe( String& str ) const
+void ExprDict::describeTo( String& str ) const
 {
    Private::ExprVector& mye = _p->m_exprs;
    Private::ExprVector::const_iterator iter = mye.begin();
@@ -131,7 +131,7 @@ void ExprDict::describe( String& str ) const
    str += "\n]\n";
 }
 
-void ExprDict::oneLiner( String& str ) const
+void ExprDict::oneLinerTo( String& str ) const
 {
    Private::ExprVector& mye = _p->m_exprs;
    Private::ExprVector::const_iterator iter = mye.begin();

@@ -74,7 +74,7 @@ ExprSymbol::~ExprSymbol()
    // nothig to do
 }
 
-void ExprSymbol::describe( String& val ) const
+void ExprSymbol::describeTo( String& val ) const
 {
    val = m_symbol->type() == Symbol::t_unknown_symbol ? 
       "/* unknown */" + m_symbol->name() :
@@ -94,14 +94,14 @@ void ExprSymbol::deserialize( DataReader* )
 }
 
 
-void ExprSymbol::PStepLValue::describe( String& s ) const
+void ExprSymbol::PStepLValue::describeTo( String& s ) const
 {
-   m_owner->describe( s );
+   m_owner->describeTo( s );
 }
 
 
 
-void ExprSymbol::PStepSave::describe( String& s ) const
+void ExprSymbol::PStepSave::describeTo( String& s ) const
 {
    s = "Symbol internal save";
 }
@@ -112,7 +112,7 @@ void ExprSymbol::PStepSave::apply_( const PStep*, VMContext* ctx )
 }
 
 
-void ExprSymbol::PStepRemove::describe( String& s ) const
+void ExprSymbol::PStepRemove::describeTo( String& s ) const
 {
    s += "Symbol internal remove";
 }

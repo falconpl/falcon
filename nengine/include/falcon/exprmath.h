@@ -27,11 +27,7 @@ public:
    ExprMath( const ExprMath& other );
    virtual ~ExprMath();
 
-   virtual void describe( String& ) const;
-
-   virtual void oneLiner( String& s ) const { describe( s ); }
-   inline String describe() const { return PStep::describe(); }
-   inline String oneLiner() const { return PStep::oneLiner(); }
+   virtual void describeTo( String& ) const;
 
    inline virtual bool isStandAlone() const { return false; }
    virtual bool isStatic() const { return false; }

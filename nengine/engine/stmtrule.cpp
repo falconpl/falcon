@@ -69,7 +69,7 @@ StmtRule& StmtRule::addAlternative()
 }
 
 
-void StmtRule::describe( String& tgt ) const
+void StmtRule::describeTo( String& tgt ) const
 {
    tgt += "rule\n";
    bool bFirst = true;
@@ -81,7 +81,7 @@ void StmtRule::describe( String& tgt ) const
          tgt += "or\n";
       }
       bFirst = false;
-      iter->describe(tgt);
+      iter->describeTo(tgt);
       ++iter;
    }
    tgt += "end";
@@ -149,7 +149,7 @@ StmtCut::~StmtCut()
 
 }
 
-void StmtCut::describe( String& tgt ) const
+void StmtCut::describeTo( String& tgt ) const
 {
    tgt += "!";
 }

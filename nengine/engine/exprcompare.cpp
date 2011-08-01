@@ -141,7 +141,7 @@ ExprCompare::~ExprCompare()
 
 
 
-void ExprCompare::describe( String& ret ) const
+void ExprCompare::describeTo( String& ret ) const
 {
    ret = "(" + m_first->describe() + m_name + m_second->describe() + ")";
 }

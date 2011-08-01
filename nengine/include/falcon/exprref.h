@@ -43,8 +43,7 @@ public:
 
    inline virtual ExprRef* clone() const { return new ExprRef( *this ); }
    
-   virtual void describe( String& ) const;
-   inline String describe() const { return PStep::describe(); }
+   virtual void describeTo( String& ) const;
 
    virtual bool isStatic() const { return false; }
    virtual bool simplify( Item& result ) const;

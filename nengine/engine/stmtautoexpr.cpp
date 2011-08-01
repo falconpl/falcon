@@ -47,7 +47,7 @@ StmtAutoexpr::~StmtAutoexpr()
    delete m_expr;
 }
 
-void StmtAutoexpr::describe( String& tgt ) const
+void StmtAutoexpr::describeTo( String& tgt ) const
 {
    for( int32 i = 1; i < chr(); i++ ) {
       tgt.append(' ');
@@ -59,7 +59,7 @@ void StmtAutoexpr::describe( String& tgt ) const
    tgt += m_expr->describe();
 }
 
-void StmtAutoexpr::oneLiner( String& tgt ) const
+void StmtAutoexpr::oneLinerTo( String& tgt ) const
 {
    tgt += m_expr->describe();
 }

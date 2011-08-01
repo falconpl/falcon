@@ -51,8 +51,7 @@ public:
    inline virtual ExprDot* clone() const { return new ExprDot( *this ); } 
    virtual bool simplify( Item& value ) const; 
    static void apply_( const PStep*, VMContext* ctx );
-   virtual void describe( String& ) const;
-   inline String describe() const { return PStep::describe(); }
+   virtual void describeTo( String& ) const;
    
 protected:
    class PstepLValue: public PStep

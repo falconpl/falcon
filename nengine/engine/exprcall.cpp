@@ -174,7 +174,7 @@ void ExprCall::apply_( const PStep* v, VMContext* ctx )
 
 }
 
-void ExprCall::PStepPushFunc::describe( String& txt ) const
+void ExprCall::PStepPushFunc::describeTo( String& txt ) const
 {
    txt = "#PushFunc ";
    txt += m_func->name();
@@ -205,7 +205,7 @@ int ExprCall::paramCount() const
    return _p->m_params.size();
 }
 
-void ExprCall::describe( String& ret ) const
+void ExprCall::describeTo( String& ret ) const
 {
    String params;
    // and generate all the expressions, in inverse order.

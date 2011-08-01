@@ -118,7 +118,7 @@ bool ExprValue::isStatic() const
    return true;
 }
 
-void ExprValue::describe( String & str ) const
+void ExprValue::describeTo( String & str ) const
 {
    m_item.describe(str);
 }

@@ -349,10 +349,7 @@ protected:
    inline virtual class_name* clone() const { return new class_name( *this ); } \
    virtual bool simplify( Item& value ) const; \
    static void apply_( const PStep*, VMContext* ctx ); \
-   virtual void describe( String& ) const;\
-   virtual void oneLiner( String& s ) const { describe( s ); }\
-   inline String describe() const { return PStep::describe(); }\
-   inline String oneLiner() const { return PStep::oneLiner(); }\
+   virtual void describeTo( String& ) const;\
    protected:\
    inline class_name(): UnaryExpression( op ) {}\
    friend class ExprFactory;\
@@ -368,10 +365,7 @@ protected:
    inline virtual class_name* clone() const { return new class_name( *this ); } \
    virtual bool simplify( Item& value ) const; \
    static void apply_( const PStep*, VMContext* ctx ); \
-   virtual void describe( String& ) const;\
-   virtual void oneLiner( String& s ) const { describe( s ); }\
-   inline String describe() const { return PStep::describe(); }\
-   inline String oneLiner() const { return PStep::oneLiner(); }\
+   virtual void describeTo( String& ) const;\
    protected:\
    friend class ExprFactory;\
    public:
@@ -382,10 +376,7 @@ protected:
    inline virtual class_name* clone() const { return new class_name( *this ); } \
    virtual bool simplify( Item& value ) const; \
    static void apply_( const PStep*, VMContext* ctx ); \
-   virtual void describe( String& ) const;\
-   virtual void oneLiner( String& s ) const { describe( s ); }\
-   inline String describe() const { return PStep::describe(); }\
-   inline String oneLiner() const { return PStep::oneLiner(); }\
+   virtual void describeTo( String& ) const;\
    protected:\
    inline class_name(): TernaryExpression( op ) {}\
    friend class ExprFactory;\
@@ -464,13 +455,10 @@ public:
    inline virtual ExprAssign* clone() const { return new ExprAssign( *this ); }
 
    virtual bool simplify( Item& value ) const;
-   virtual void describe( String& ) const;
-   inline virtual void oneLiner( String& s ) const { describe(s); }
+   virtual void describeTo( String& ) const;
 
    inline virtual bool isStandAlone() const { return true; }
    virtual void precompile( PCode* pcode ) const;
-   inline String describe() const { return PStep::describe(); }
-   inline String oneLiner() const { return PStep::oneLiner(); }
 
 protected:
    inline ExprAssign():
@@ -506,10 +494,7 @@ public:
 
    inline virtual ExprUnpack* clone() const { return new ExprUnpack( *this ); }
    virtual bool simplify( Item& value ) const;
-   virtual void describe( String& ) const;
-   virtual void oneLiner( String& s ) const { describe( s ); }
-   inline String describe() const { return PStep::describe(); }
-   inline String oneLiner() const { return PStep::oneLiner(); }
+   virtual void describeTo( String& ) const;
 
    int targetCount() const;
    Symbol* getAssignand( int n ) const;
@@ -544,10 +529,7 @@ public:
 
    inline virtual ExprMultiUnpack* clone() const { return new ExprMultiUnpack( *this ); }
    virtual bool simplify( Item& value ) const;
-   virtual void describe( String& ) const;
-   virtual void oneLiner( String& s ) const { describe( s ); }
-   inline String describe() const { return PStep::describe(); }
-   inline String oneLiner() const { return PStep::oneLiner(); }
+   virtual void describeTo( String& ) const;
 
    int targetCount() const;
    Symbol* getAssignand( int n ) const;
@@ -708,7 +690,7 @@ public:
    virtual bool isStatic() const;
    virtual ExprSelf* clone() const;
    virtual bool simplify( Item& result ) const;
-   virtual void describe( String & str ) const;
+   virtual void describeTo( String & str ) const;
 
 private:
    static void apply_( const PStep* s1, VMContext* ctx );

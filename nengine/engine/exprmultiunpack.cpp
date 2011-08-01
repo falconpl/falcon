@@ -81,7 +81,7 @@ bool ExprMultiUnpack::simplify( Item& ) const
    return false;
 }
 
-void ExprMultiUnpack::describe( String& ret ) const
+void ExprMultiUnpack::describeTo( String& ret ) const
 {
    String params;
    

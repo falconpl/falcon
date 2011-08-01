@@ -60,7 +60,7 @@ public:
    virtual ExprValue* clone() const;
    virtual void serialize( DataWriter* s ) const;
    virtual bool isStatic() const;
-   virtual void describe( String& ) const;
+   virtual void describeTo( String& ) const;
    virtual void precompile( PCode* pc )  const;
 
 protected:

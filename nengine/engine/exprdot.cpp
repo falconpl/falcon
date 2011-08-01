@@ -72,7 +72,7 @@ void ExprDot::precompileLvalue( PCode* pcode ) const
    pcode->pushStep( m_pstep_lvalue );
 }
 
-void ExprDot::describe( String& ret ) const
+void ExprDot::describeTo( String& ret ) const
 {
    ret = "(" + m_first->describe() + "." + m_prop + ")";
 }

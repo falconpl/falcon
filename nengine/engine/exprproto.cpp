@@ -111,7 +111,7 @@ void ExprProto::precompile( PCode* pcd ) const
 
 }
 
-void ExprProto::describe( String& tgt ) const
+void ExprProto::describeTo( String& tgt ) const
 {
    tgt.size(0);
    tgt += "p{";
@@ -124,7 +124,7 @@ void ExprProto::describe( String& tgt ) const
       }
 
       temp.size(0);
-      iter->second->oneLiner(temp);
+      iter->second->oneLinerTo(temp);
       tgt += iter->first + "=" + temp;
       ++iter;
    }
