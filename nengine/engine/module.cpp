@@ -21,11 +21,13 @@
 #include <falcon/extfunc.h>
 #include <falcon/item.h>
 #include <falcon/modspace.h>
+#include <falcon/modloader.h>
 #include <falcon/inheritance.h>
 #include <falcon/error.h>
 #include <falcon/linkerror.h>
 #include <falcon/falconclass.h>
 #include <falcon/hyperclass.h>
+
 
 #include <map>
 #include <deque>
@@ -139,6 +141,7 @@ public:
             (*eli)->decref();
             ++eli;
          }
+         m_errors.clear();
       }
       
       /** Called when the remote name is resolved. 
@@ -168,7 +171,10 @@ public:
       String m_uri;
       bool m_bIsUri;
       bool m_bIsLoad;
+      /** This pointer stays 0 until resolved via resolve[*]Reqs */
       Module* m_module;
+      /** Dinamicity of modules determine if they are to be deleted.*/
+      bool m_bIsDynamic;
 
       typedef std::map<String, Dependency*> DepMap;
       DepMap m_deps;
@@ -176,7 +182,9 @@ public:
       Requirement( const String& name, bool bIsLoad, bool bIsUri=false ):
          m_uri( name ),
          m_bIsUri( bIsUri ),
-         m_bIsLoad( bIsLoad )
+         m_bIsLoad( bIsLoad ),
+         m_module(0),
+         m_bIsDynamic( false )
       {}
 
       ~Requirement()
@@ -186,6 +194,11 @@ public:
          {
             delete dep_i->second;
             ++dep_i;
+         }
+         
+         if( m_bIsDynamic )
+         {
+            delete m_module;
          }
       }
    };
@@ -259,10 +272,10 @@ public:
       }
    }
 
-   Dependency* getDep( const String& source, bool bIsUri, const String& name )
+   Dependency* getDep( const String& sourcemod, bool bIsUri, const String& symname )
    {
       Requirement* req;
-      ReqMap::iterator ireq = m_reqs.find( name );
+      ReqMap::iterator ireq = m_reqs.find( sourcemod );
       if( ireq != m_reqs.end() )
       {
          // already loaded?
@@ -271,20 +284,20 @@ public:
       }
       else
       {
-         req = new Requirement(source, false, bIsUri );
-         m_reqs[name] = req;
+         req = new Requirement(sourcemod, false, bIsUri );
+         m_reqs[sourcemod] = req;
       }
 
       Dependency* dep;
-      Requirement::DepMap::iterator idep = req->m_deps.find( name );
+      Requirement::DepMap::iterator idep = req->m_deps.find( symname );
       if( idep != req->m_deps.end() )
       {
          dep = idep->second;
       }
       else
       {
-         dep = new Private::Dependency( name );
-         req->m_deps[name] = dep;
+         dep = new Private::Dependency( symname );
+         req->m_deps[symname] = dep;
       }
 
       return dep;
@@ -608,10 +621,10 @@ void Module::enumerateExports( SymbolEnumerator& rator ) const
    }
 }
 
-bool Module::addLoad( const String& name, bool bIsUri )
+bool Module::addLoad( const String& mod_name, bool bIsUri )
 {
    // do we have the recor?
-   Private::ReqMap::iterator ireq = _p->m_reqs.find( name );
+   Private::ReqMap::iterator ireq = _p->m_reqs.find( mod_name );
    if( ireq != _p->m_reqs.end() )
    {
       // already loaded?
@@ -624,9 +637,9 @@ bool Module::addLoad( const String& name, bool bIsUri )
       return true;
    }
 
-   // add a new record
-   Private::Requirement* r = new Private::Requirement(name, true, bIsUri);
-   _p->m_reqs[ name ] = r;
+   // add a new requirement with load request
+   Private::Requirement* r = new Private::Requirement( mod_name, true, bIsUri);
+   _p->m_reqs[ mod_name ] = r;
    return true;
 }
 
@@ -660,7 +673,9 @@ UnknownSymbol* Module::addImport( const String& name )
       return 0;
    }
 
+   // Get the special empty dependency for pure imports.
    Private::Dependency* dep = _p->getDep( "", false, name );
+   
    UnknownSymbol* usym = new UnknownSymbol(name);
    // Record the fact that we have to save transform an unknown symbol...
    dep->m_waiting.push_back( new Private::WaitingSym( usym ) );
@@ -753,13 +768,16 @@ bool Module::passiveLink( ModSpace* ms )
             {
                // we're sending the module where this item is resolved, not the source.
                dep->resolved( this, sym );
-               Private::Dependency::ErrorList::iterator erri = dep->m_errors.begin();
-               // If we have errors, transfer them to the module space.
-               while (erri != dep->m_errors.end() )
+               if( ! dep->m_errors.empty() )
                {
-                  ms->addLinkError( *erri );
+                  Private::Dependency::ErrorList::iterator erri = dep->m_errors.begin();
+                  // If we have errors, transfer them to the module space.
+                  while (erri != dep->m_errors.end() )
+                  {
+                     ms->addLinkError( *erri );
+                  }
+                  dep->clearErrors();
                }
-               dep->clearErrors();
             }
             ++iter;
          }
@@ -821,6 +839,104 @@ void Module::completeClass(FalconClass* fcls)
          value->setUser( value->asClass(), hcls );
       }
    }
+}
+
+
+bool Module::resolveStaticReqs( ModSpace* space )
+{
+   Private::ReqMap& reqs = _p->m_reqs;
+   Private::ReqMap::iterator iter = reqs.begin();
+   while( iter != reqs.end() )
+   {
+      Private::Requirement& req = *iter->second;
+      
+      // skip the special null requirement for implicit imports.      
+      if( req.m_uri == "" )
+      {
+         ++iter;
+         continue;
+      }
+      
+      // already in?
+      bool bLoad;
+      Module* mod;
+      if( (mod = space->findModule( req.m_uri, bLoad )) != 0 )
+      {
+         // need to promote?
+         if( ! bLoad && req.m_bIsLoad )
+         {
+            space->promoteLoad( req.m_uri );
+         }
+         //anyhow add to us.
+         req.m_module = mod;
+         req.m_bIsDynamic = false;
+         
+      }
+      else
+      {
+         // try to load
+         ModLoader* loader = space->modLoader();
+         if( req.m_bIsUri )
+         {
+            // shall throw on error.
+            mod = loader->loadFile( req.m_uri, ModLoader::e_mt_none, true );                        
+         }
+         else
+         {
+            // shall throw on error.
+            mod = loader->loadName( req.m_uri, ModLoader::e_mt_none );                        
+         }
+         // we don't really need to add it now, but...
+         req.m_module = mod;
+         req.m_bIsDynamic = false;
+         
+         // add it to the space -- which might fire other loads.
+         space->addModule( mod, req.m_bIsLoad, false );
+      }
+      
+      ++iter;
+   }
+   
+   // TODO: Throw or return false on error?
+   return true;
+}
+
+
+bool Module::resolveDynReqs( ModLoader* loader )
+{
+   Private::ReqMap& reqs = _p->m_reqs;
+   Private::ReqMap::iterator iter = reqs.begin();
+   while( iter != reqs.end() )
+   {
+      Private::Requirement& req = *iter->second;
+      
+      // skip the special null requirement for implicit imports.      
+      if( req.m_uri == "" )
+      {
+         ++iter;
+         continue;
+      }
+      
+      Module* mod;
+      if( req.m_bIsUri )
+      {
+         // shall throw on error.
+         mod = loader->loadFile( req.m_uri, ModLoader::e_mt_none, true );                        
+      }
+      else
+      {
+         // shall throw on error.
+         mod = loader->loadName( req.m_uri, ModLoader::e_mt_none );                        
+      }
+      // we don't really need to add it now, but...
+      req.m_module = mod;
+      req.m_bIsDynamic = true;
+               
+      ++iter;
+   }
+   
+   // TODO: Throw or return false on error?
+   return true;
 }
 
 }

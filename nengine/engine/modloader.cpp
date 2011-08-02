@@ -29,6 +29,7 @@
 #include <falcon/textreader.h>
 #include <falcon/datareader.h>
 #include <falcon/stream.h>
+#include <falcon/genericerror.h>
 
 #include <falcon/trace.h>
 #include <falcon/fassert.h>
@@ -392,7 +393,14 @@ Module* ModLoader::load_internal(
          ins->shouldThrow(true);
          TextReader* input = new TextReader( ins, m_tcoder, true );
          // compiler gets the ownership of input.
-         return m_compiler->compile( input, uri.get(), modName );
+         Module* output = m_compiler->compile( input, uri.get(), modName );
+         
+         // for now, we just throw
+         if( output == 0 )
+         {
+            throw m_compiler->makeError();
+         }
+         return output;
       }
          
       case e_mt_vmmod:

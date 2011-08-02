@@ -22,6 +22,7 @@
 #include <falcon/unknownsymbol.h>
 #include <falcon/inheritance.h>
 #include <falcon/sp/sourcelexer.h>
+#include <falcon/parser/parser.h>
 
 namespace Falcon {
 
@@ -73,7 +74,11 @@ void ModCompiler::Context::onNewStatement( Statement* )
 
 void ModCompiler::Context::onLoad( const String& path, bool isFsPath )
 {
-   m_owner->m_module->addLoad( path, isFsPath );
+   if( ! m_owner->m_module->addLoad( path, isFsPath ) )
+   {
+      m_owner->m_sp.addError( e_loaderror, m_owner->m_sp.currentSource(), 0, 0, 0, 
+         "already loaded "+path );
+   }
 }
 
 
@@ -94,6 +99,8 @@ void ModCompiler::Context::onImport(const String& symName )
 
 void ModCompiler::Context::onExport(const String& symName)
 {
+   // TODO: check export all
+   // TODO: check already exported
    m_owner->m_module->addVariable( symName, true );
 }
 

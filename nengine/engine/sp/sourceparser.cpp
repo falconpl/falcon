@@ -29,11 +29,13 @@
 #include <falcon/sp/parser_class.h>
 #include <falcon/sp/parser_call.h>
 #include <falcon/sp/parser_end.h>
+#include <falcon/sp/parser_export.h>
 #include <falcon/sp/parser_expr.h>
 #include <falcon/sp/parser_function.h>
 #include <falcon/sp/parser_if.h>
 #include <falcon/sp/parser_index.h>
 #include <falcon/sp/parser_list.h>
+#include <falcon/sp/parser_load.h>
 #include <falcon/sp/parser_proto.h>
 #include <falcon/sp/parser_reference.h>
 #include <falcon/sp/parser_rule.h>
@@ -132,7 +134,10 @@ SourceParser::SourceParser():
    T_true( "true" ),
    T_false( "false" ),
    T_self( "self" ),
-   T_from( "from" )
+   T_from( "from" ),
+   T_load( "load" ),
+   T_export( "export" ),
+   T_import( "import" )
 {
    S_Autoexpr << "Autoexpr"
       << (r_line_autoexpr << "Autoexpr" << apply_line_expr << Expr << T_EOL)
@@ -180,6 +185,20 @@ SourceParser::SourceParser():
    S_MultiAssign << "MultiAssign"
       << (r_Stmt_assign_list << "STMT_assign_list" << apply_stmt_assign_list << NeListExpr_ungreed << T_EqSign << NeListExpr )
       ;
+   
+   S_Load << "load" << load_errhand;
+   S_Load << (r_load_string << "load_string" << apply_load_string << T_load << T_String << T_EOL );
+   S_Load << (r_load_mod_spec << "load_mod_spec" << apply_load_mod_spec << T_load << ModSpec << T_EOL );
+
+   ModSpec << "Module specification" << load_modspec_errhand;
+   ModSpec << (r_modspec_next << "modspec_next" << apply_modspec_next << ModSpec << T_Dot << T_Name );
+   ModSpec << (r_modspec_first << "modspec_first" << apply_modspec_first << T_Name );
+   ModSpec << (r_modspec_first_self << "modspec_first_self" << apply_modspec_first_self << T_self );
+   ModSpec << (r_modspec_first_dot << "modspec_first_dot" << apply_modspec_first_dot << T_Dot );
+
+   S_Export << "export" << export_errhand;
+   S_Export << ( r_export_rule << "export_rule" << apply_export_rule << T_export << ListSymbol << T_EOL );
+   
 
   //==========================================================================
   // Expression
@@ -363,6 +382,9 @@ SourceParser::SourceParser():
    //State declarations
    //
    s_Main << "Main"
+      << S_Load
+      << S_Export
+      
       << S_Function
       << S_Class
       << S_Autoexpr

@@ -32,6 +32,7 @@ class Class;
 class Inheritance;
 class UnknownSymbol;
 class ModSpace;
+class ModLoader;
 class FalconClass;
 
 /** Standard Falcon Execution unit and library.
@@ -339,7 +340,27 @@ public:
     bound to this class are updated.
     */
    void completeClass( FalconClass* fcls );
+   
+   /** Resolve module requirements statically through a module space.
+    \param space The module space where dependencies are resolved statically.
+    
+    This method tries to load or import all the modules from which this module
+    depends. 
+    
+    As a module space is provided as a static module storage, the modules
+    are loaded statically and added to the given modspace. As a result, they
+    might automatically generate requests for other modules.
+    
+    Before trying to load a module, the ModSpace is searched. If a module is
+    already available in the module space, it is used (and eventually promoted
+    to "load requirement" if necessary), otherwise the ModLoader offered by
+    the ModSpace is used to search for the module on the virtual file system.
 
+    \TODO more docs for throw
+    */
+   bool resolveStaticReqs( ModSpace* space );
+
+   bool resolveDynReqs( ModLoader* loader );
 private:
    String m_name;
    String m_uri;

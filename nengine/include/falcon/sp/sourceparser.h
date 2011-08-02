@@ -108,6 +108,9 @@ public:
    Parsing::Terminal T_false;
    Parsing::Terminal T_self;
    Parsing::Terminal T_from;
+   Parsing::Terminal T_load;
+   Parsing::Terminal T_export;
+   Parsing::Terminal T_import;
 
    //================================================
    // Statements
@@ -150,6 +153,22 @@ public:
 
    Parsing::NonTerminal S_MultiAssign;
    Parsing::Rule r_Stmt_assign_list;
+   
+   //================================================
+   // Load, import and export
+   //
+   Parsing::NonTerminal S_Load;
+   Parsing::Rule r_load_string;
+   Parsing::Rule r_load_mod_spec;
+
+   Parsing::NonTerminal ModSpec;
+   Parsing::Rule r_modspec_next;
+   Parsing::Rule r_modspec_first;
+   Parsing::Rule r_modspec_first_self;
+   Parsing::Rule r_modspec_first_dot;
+   
+   Parsing::NonTerminal S_Export;
+   Parsing::Rule r_export_rule;
 
    //================================================
    // Expression

@@ -189,6 +189,10 @@ public:
     */
    void clearTokens();
 
+   /** Clear all the frames up to current decision (and all the tokens read up to date).
+    */
+   void clearFrames();
+   
    /** Perform a single-step compilation.
       \return true on success, false if there is an error.
 

@@ -302,6 +302,17 @@ void Parser::clearTokens()
       simplify(_p->m_tokenStack->size(), 0);
 }
 
+
+void Parser::clearFrames()
+{
+   _p->m_pframes->clear();
+   size_t tc = tokenCount();
+   if( tc > 0 )
+   {
+      simplify( tc, 0 );
+   }
+}
+
 int32 Parser::tokenCount()
 {
    int nDepth = _p->m_pframes->empty() ? 0 : _p->m_pframes->back().m_nStackDepth;
@@ -497,12 +508,7 @@ void Parser::syntaxError()
 
    addError( e_syntax, uri, line, chr );
 
-   _p->m_pframes->clear();
-   size_t tc = tokenCount();
-   if( tc > 0 )
-   {
-      simplify( tc, 0 );
-   }
+   clearFrames();
 }
 
 

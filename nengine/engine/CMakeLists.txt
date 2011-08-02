@@ -76,11 +76,13 @@ add_library(falcon_engine SHARED
   sp/parser_class.cpp
   sp/parser_deletor.cpp
   sp/parser_end.cpp
+  sp/parser_export.cpp
   sp/parser_expr.cpp
   sp/parser_function.cpp
   sp/parser_if.cpp
   sp/parser_index.cpp
   sp/parser_list.cpp
+  sp/parser_load.cpp
   sp/parser_proto.cpp
   sp/parser_reference.cpp
   sp/parser_rule.cpp

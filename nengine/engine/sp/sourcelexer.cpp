@@ -706,6 +706,7 @@ Parsing::TokenInstance* SourceLexer::checkWord()
          if ( m_text == "self" ) return parser->T_self.makeInstance(m_sline, m_schr);
          if ( m_text == "true" ) return parser->T_true.makeInstance(m_sline, m_schr);
          if ( m_text == "from" ) return parser->T_from.makeInstance(m_sline, m_schr);
+         if ( m_text == "load" ) return parser->T_load.makeInstance(m_sline, m_schr);
 
          /*
          if ( m_text == "load" )  // directive
@@ -778,19 +779,11 @@ Parsing::TokenInstance* SourceLexer::checkWord()
          if ( m_text == "object" )
             return OBJECT;
             */
-         if ( m_text == "return" )
-            return parser->T_return.makeInstance(m_sline, m_schr);
+         if ( m_text == "return" ) return parser->T_return.makeInstance(m_sline, m_schr);
+         if ( m_text == "export" ) return parser->T_export.makeInstance(m_sline, m_schr);
+         if ( m_text == "import" ) return parser->T_import.makeInstance(m_sline, m_schr);
+         
          /*
-         if ( m_text == "export" ) // directive
-         {
-            m_bIsDirectiveLine = true;
-            return EXPORT;
-         }
-         if ( m_text == "import" ) // directive
-         {
-            m_bIsDirectiveLine = true;
-            return IMPORT;
-         }
          if ( m_text == "static" )
             return STATIC;
          */

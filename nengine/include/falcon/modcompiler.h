@@ -64,6 +64,12 @@ public:
       m_sp.enumerateErrors( e );
    }
    
+   /** Generate an error in case of compilation problems.
+    \return an error instance including all the compilation errors or 0 if
+    there wasn't any error.
+    
+    \TODO Return CompileError.
+    */
    inline GenericError* makeError() const 
    {
       return m_sp.makeError();

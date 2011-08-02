@@ -45,8 +45,7 @@ bool expr_errhand(const NonTerminal&, Parser& p)
    p.addError( e_syn_expr, p.currentSource(), ti2->line(), ti2->chr(), ti->line() );
 
    // remove the whole expression.
-   p.resetNextToken();
-   p.simplify( p.availTokens() );
+   p.simplify( p.tokenCount() );
    return true;
 }
 

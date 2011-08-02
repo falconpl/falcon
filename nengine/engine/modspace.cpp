@@ -99,6 +99,7 @@ public:
          (*iter)->decref();
          ++iter;
       }
+      m_errors.clear();
    }
 };
 
@@ -206,7 +207,9 @@ bool ModSpace::addModule( Module* mod, bool isLoad, bool bExcludeMain )
       exportSymbols( mod );
    }
       
-   // mod->resolveDeps...
+   // now resolve the module dependencies.
+   mod->resolveStaticReqs( this );
+   
    return true;
 }
 
