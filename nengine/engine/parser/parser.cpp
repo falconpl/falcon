@@ -389,6 +389,11 @@ const String& Parser::currentSource() const
    return _p->m_lLexers.back()->uri();
 }
 
+int Parser::currentLine() const
+{
+   return _p->m_lLexers.back()->line();
+}
+
 void Parser::setContext( void* ctx )
 {
    m_ctx = ctx;

@@ -127,7 +127,8 @@ void ModSpace::addLinkError( int err_id, const String& modName, const Symbol* sy
       .origin(ErrorParam::e_orig_linker)
       .line( sym != 0 ? sym->declaredAt() : 0 )
       .extra( extra )
-      .module( modName != "" ? modName : "<internal>" ) );
+      .module( modName != "" ? modName : "<internal>" ) 
+      .symbol( sym != 0 ? sym->name() : "" ));
       
    addLinkError( e );
    e->decref();

@@ -296,14 +296,14 @@ public:
    
    /** Export a symbol.
     \param name The name of the symbol to be exported.
-    \return The exported symbol
+    \param bAlready will be set to true if the symbol was already defined.
+    \return The exported symbol or 0 if the symbol was not defined.
     
-    If the symbol is still not defined, it is created as a global symbol
-    it is created now as a nil global.
+    If the symbol is still not defined, zero is returned.
     
-    \note it is legal to export undefined symbols (symbol forwarding).
+    \note it is NOT legal to export undefined symbols -- to avoid mistyping.
     */
-   Symbol* addExport( const String& name );
+   Symbol* addExport( const String& name, bool &bAlready );
 
    void addImportInheritance( Inheritance* inh );
    
@@ -361,10 +361,15 @@ public:
    bool resolveStaticReqs( ModSpace* space );
 
    bool resolveDynReqs( ModLoader* loader );
+   
+   bool exportAll() const { return m_bExportAll; }
+   void exportAll( bool e ) { m_bExportAll = e; }
+   
 private:
    String m_name;
    String m_uri;
    uint32 m_lastGCMark;
+   bool m_bExportAll;
 
    class Private;
    Private* _p;

@@ -74,10 +74,10 @@ void ModCompiler::Context::onNewStatement( Statement* )
 
 void ModCompiler::Context::onLoad( const String& path, bool isFsPath )
 {
+   SourceParser& sp = m_owner->m_sp;
    if( ! m_owner->m_module->addLoad( path, isFsPath ) )
    {
-      m_owner->m_sp.addError( e_loaderror, m_owner->m_sp.currentSource(), 0, 0, 0, 
-         "already loaded "+path );
+      sp.addError( e_load_already, sp.currentSource(), sp.currentLine()-1, 0, 0, path );
    }
 }
 
@@ -93,15 +93,46 @@ void ModCompiler::Context::onImportFrom( const String& path, bool isFsPath, cons
 
 void ModCompiler::Context::onImport(const String& symName )
 {
-   m_owner->m_module->addImport( symName );
+   
+   if( ! m_owner->m_module->addImport( symName ) )
+   {
+      SourceParser& sp = m_owner->m_sp;
+      sp.addError( e_import_already, sp.currentSource(), sp.currentLine()-1, 0, 0, symName );
+   }
 }
 
 
 void ModCompiler::Context::onExport(const String& symName)
 {
-   // TODO: check export all
-   // TODO: check already exported
-   m_owner->m_module->addVariable( symName, true );
+   Module& mod = *m_owner->m_module;
+   SourceParser& sp = m_owner->m_sp;
+   
+   
+   // Already exporting all?
+   if( mod.exportAll() )
+   {
+      sp.addError( e_export_all, sp.currentSource(), sp.currentLine()-1, 0, 0 );
+   }      
+   else if( symName == "" )
+   {
+      mod.exportAll( true );
+   }
+   else if( symName.startsWith( "_" ) )
+   {
+      sp.addError( e_export_private, sp.currentSource(), sp.currentLine()-1, 0, 0, symName );
+   }
+   else {
+      bool adef;
+      Symbol* sym = mod.addExport( symName, adef );
+      if( sym == 0 )
+      {
+         sp.addError( e_undef_sym, sp.currentSource(), sp.currentLine()-1, 0, 0, symName );
+      }
+      else if( adef )
+      {
+         sp.addError( e_export_already, sp.currentSource(), sp.currentLine()-1, 0, 0, symName );
+      }
+   }
 }
 
 
@@ -132,7 +163,7 @@ GlobalSymbol* ModCompiler::Context::onGlobalDefined( const String& name, bool& b
    if( sym == 0 )
    {
       bAlreadyDef = false;
-      return m_owner->m_module->addVariable( name );
+      return m_owner->m_module->addVariable( name, false );
    }
 
    bAlreadyDef = true;

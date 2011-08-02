@@ -310,10 +310,10 @@ public:
 
 Module::Module( const String& name ):
    m_name( name ),
-   m_lastGCMark(0)
+   m_lastGCMark(0),
+   m_bExportAll( false )
 {
-   TRACE("Creating internal module '%s'",
-      name.c_ize() );
+   TRACE("Creating internal module '%s'", name.c_ize() );
    m_uri = "internal:" + name;
    _p = new Private;
 }
@@ -322,7 +322,8 @@ Module::Module( const String& name ):
 Module::Module( const String& name, const String& uri ):
    m_name( name ),
    m_uri(uri),
-   m_lastGCMark(0)
+   m_lastGCMark(0),
+   m_bExportAll( false )
 {
    TRACE("Creating module '%s' from %s",
       name.c_ize(), uri.c_ize() );
@@ -610,14 +611,24 @@ void Module::enumerateGlobals( SymbolEnumerator& rator ) const
 
 void Module::enumerateExports( SymbolEnumerator& rator ) const
 {
-   const Private::GlobalsMap& syms = _p->m_gExports;
+   const Private::GlobalsMap* psyms = m_bExportAll ? &_p->m_gSyms : &_p->m_gExports;   
+   const Private::GlobalsMap& syms = *psyms;
+   
    Private::GlobalsMap::const_iterator iter = syms.begin();
 
    while( iter != syms.end() )
    {
       Symbol* sym = iter->second;
-      if( ! rator( *sym, ++iter == syms.end()) )
-         break;
+      // ignore "private" symbols
+      if( sym->name().startsWith("_") || sym->type() != Symbol::t_global_symbol )
+      {
+         ++iter;
+      }
+      else
+      {
+         if( ! rator( *sym, ++iter == syms.end()) )
+            break;
+      }
    }
 }
 
@@ -704,24 +715,29 @@ bool Module::addImplicitImport( UnknownSymbol* uks )
 }
 
 
-Symbol* Module::addExport( const String& name )
+Symbol* Module::addExport( const String& name, bool& bAlready )
 {
-   Symbol* sym;
+   Symbol* sym = 0;
+   // if we have export all or if this is already exported, return 0.
+   Private::GlobalsMap::const_iterator iter; 
+   if( m_bExportAll || (( iter = _p->m_gExports.find( name )) != _p->m_gExports.end()) )
+   {
+      sym = iter->second;
+      bAlready = true;
+      return sym;
+   }   
    
    // We can't be called if the symbol is alredy declared elsewhere.
-   Private::GlobalsMap::const_iterator iter = _p->m_gSyms.find( name );
+   iter = _p->m_gSyms.find( name );
    if( iter != _p->m_gSyms.end() )
    {
       sym = iter->second;
       
       // ... and save the dependency.
-      _p->m_gExports[name] = sym;          
+      _p->m_gExports[name] = sym;  
    }
-   else
-   {
-      sym = addVariable( name, true );
-   }
-
+   
+   bAlready = false;   
    return sym;
 }
 

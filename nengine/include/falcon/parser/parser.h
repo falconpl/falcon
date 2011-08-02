@@ -409,6 +409,9 @@ public:
     \return A string representing the current source currently under parsing.
     */
    const String& currentSource() const;
+   
+   /** Returns the current line in the current lexer. */
+   int currentLine() const;
 
    /** Returns the interactive mode status.
     \return true if the parser is in interactive mode.

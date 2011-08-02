@@ -209,6 +209,10 @@ FAL_ERRORDECL( e_invformat, 252, "Invalid or damaged Falcon VM file" );
 FAL_ERRORDECL( e_loader_unsupported, 253, "Operation not supported by the module loader" );
 FAL_ERRORDECL( e_unrec_file_type, 254, "Unrecognized file type" );
 FAL_ERRORDECL( e_nofile, 255, "File not found" );
+FAL_ERRORDECL( e_load_already, 256, "Resource already required for load" );
+FAL_ERRORDECL( e_import_already, 257, "Imported symbol already declared" );
+FAL_ERRORDECL( e_export_already, 258, "Symbol already declared for export" );
+FAL_ERRORDECL( e_export_private, 259, "Cannot export a symbol starting with '_' (private)." );
 
 FAL_ERRORDECL( e_unknown_encoding, 300, "Unknown encoding name" );
 FAL_ERRORDECL( e_enc_fail, 301, "Encoding failed or data not encodable" );
