@@ -36,7 +36,7 @@ public:
    VFSFile();
    virtual ~VFSFile();
 
-   virtual Stream* open( const URI &uri, const OParams &p );
+   virtual Stream* open( const URI &uri, const OParams &p = OParams(1) );
    virtual Stream* create( const URI &uri, const CParams &p );
    virtual Directory* openDir( const URI &uri );
    virtual bool readStats( const URI &uri, FileStat &s, bool delink=true );
@@ -55,10 +55,10 @@ protected:
 
       if ( p.isRdwr() )
          omode = O_RDWR;
-      else if ( p.isRdOnly() )
-         omode = O_RDONLY;
-      else
+      else if ( p.isWrOnly() )
          omode = O_WRONLY;
+      else
+         omode = O_RDONLY;
 
       if( p.isTruncate() )
          omode |= O_TRUNC;

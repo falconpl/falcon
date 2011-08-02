@@ -23,6 +23,9 @@
 #include <falcon/modspace.h>
 #include <falcon/inheritance.h>
 #include <falcon/error.h>
+#include <falcon/linkerror.h>
+#include <falcon/falconclass.h>
+#include <falcon/hyperclass.h>
 
 #include <map>
 #include <deque>
@@ -39,7 +42,7 @@ public:
    class WaitingDep
    {
    public:
-      virtual void onSymbolLoaded( Module* mod, Symbol* sym ) = 0;
+      virtual Error* onSymbolLoaded( Module* mod, Symbol* sym ) = 0;
    };
 
    class WaitingSym: public WaitingDep
@@ -51,9 +54,10 @@ public:
          m_symbol( sym )
       {}
 
-      virtual void onSymbolLoaded( Module*, Symbol* sym )
+      virtual Error* onSymbolLoaded( Module*, Symbol* sym )
       {
          m_symbol->define( sym );
+         return 0;
       }
    };
 
@@ -66,15 +70,35 @@ public:
          m_inh( inh )
       {}
 
-      virtual void onSymbolLoaded( Module*, Symbol* sym )
+      virtual Error* onSymbolLoaded( Module* mod, Symbol* sym )
       {
-         //TODO -- account error if not a class or not retriveable
          Item* value;
-         if( (value = sym->value( 0 )) == 0 )
+         if( (value = sym->value( 0 )) == 0 || ! value->isClass() )
          {
-            //...
+            // the symbol is not global?            
+            return new LinkError( ErrorParam( e_inv_inherit ) 
+               .module(mod->name())
+               .symbol( m_inh->owner()->name() )
+               .line(m_inh->sourceRef().line())
+               .chr(m_inh->sourceRef().chr())
+               .extra( sym->name() )
+               .origin(ErrorParam::e_orig_linker));
          }
-
+         
+         // Ok, we have a valid class.
+         Class* parent = static_cast<Class*>(value->asInst());
+         m_inh->parent( parent );
+         // is the class a Falcon class?
+         if( parent->isFalconClass() )
+         {
+            // then, see if we can link it.
+            FalconClass* falcls = static_cast<FalconClass*>(parent);
+            if( falcls->missingParents() == 0 )
+            {
+               mod->completeClass( falcls );
+            }
+         }
+         return 0;
       }
    };
 
@@ -86,6 +110,9 @@ public:
       
       typedef std::deque<WaitingDep*> WaitList;
       WaitList m_waiting;
+      
+      typedef std::deque<Error*> ErrorList;
+      ErrorList m_errors;
 
       Dependency( const String& rname ):
          m_remoteName( rname )
@@ -100,16 +127,35 @@ public:
             delete *wli;
             ++wli;
          }
+         
+         clearErrors();
+      }
+
+      
+      void clearErrors() {
+         ErrorList::iterator eli = m_errors.begin();
+         while( eli != m_errors.end() )
+         {
+            (*eli)->decref();
+            ++eli;
+         }
       }
       
-      /** Called when the remote name is resolved. */
+      /** Called when the remote name is resolved. 
+       \param Module The module where the symbol is imported (not exported!)
+       \parma sym the defined symbol (coming from the exporter module).
+       */
       void resolved( Module* mod, Symbol* sym )
       {
          WaitList::iterator iter = m_waiting.begin();
          while( iter != m_waiting.end() )
          {
             WaitingDep* dep = *iter;
-            dep->onSymbolLoaded( mod, sym );
+            Error* err = dep->onSymbolLoaded( mod, sym );
+            if( err != 0 )
+            {
+               m_errors.push_back( err );
+            }
             ++iter;
          }
       }
@@ -245,7 +291,9 @@ public:
    }
 };
 
-
+//=========================================================
+// Main module class
+//
 
 Module::Module( const String& name ):
    m_name( name ),
@@ -623,6 +671,24 @@ UnknownSymbol* Module::addImport( const String& name )
 }
 
 
+bool Module::addImplicitImport( UnknownSymbol* uks )
+{
+   // We can't be called if the symbol is alredy declared elsewhere.
+   if( _p->m_gSyms.find( uks->name() ) != _p->m_gSyms.end() )
+   {
+      return false;
+   }
+
+   Private::Dependency* dep = _p->getDep( "", false, uks->name() );
+   // Record the fact that we have to save transform an unknown symbol...
+   dep->m_waiting.push_back( new Private::WaitingSym( uks ) );
+   // ... and save the dependency.
+   _p->m_gSyms[uks->name()] = uks;
+
+   return true;
+}
+
+
 Symbol* Module::addExport( const String& name )
 {
    Symbol* sym;
@@ -670,8 +736,8 @@ bool Module::passiveLink( ModSpace* ms )
    while( iter != _p->m_reqs.end() )
    {
       Private::Requirement* req = iter->second;
-      // loaded symbols...
-      if( iter->first == "" )
+      // loaded symbols from import...
+      if( req->m_uri == "" )
       {
          Private::Requirement::DepMap::iterator iter = req->m_deps.begin();
          while( iter != req->m_deps.end() )
@@ -685,7 +751,15 @@ bool Module::passiveLink( ModSpace* ms )
             }
             else
             {
-               dep->resolved( mod, sym );
+               // we're sending the module where this item is resolved, not the source.
+               dep->resolved( this, sym );
+               Private::Dependency::ErrorList::iterator erri = dep->m_errors.begin();
+               // If we have errors, transfer them to the module space.
+               while (erri != dep->m_errors.end() )
+               {
+                  ms->addLinkError( *erri );
+               }
+               dep->clearErrors();
             }
             ++iter;
          }
@@ -695,7 +769,7 @@ bool Module::passiveLink( ModSpace* ms )
       // if the module has been resolved, it won't be 0.
       if( mod != 0 )
       {
-       
+         // TODO: Resolve import/from direct imports.
       }
       ++iter;
    }
@@ -703,7 +777,52 @@ bool Module::passiveLink( ModSpace* ms )
    return false;
 }
 
+
+void Module::storeSourceClass( FalconClass* fcls, bool isObject, GlobalSymbol* gs )
+{
+   Class* cls = fcls;
+   
+   // The interactive compiler won't call us here if we have some undefined class,
+   // as such, the construct can fail only if some class is not a falcon class.
+   if( !fcls->construct() )
+   {
+      // did we fail to construct because we're incomplete?
+      if( !fcls->missingParents() )
+      {
+         // so, we have to generate an hyper class out of our falcon-class
+         // -- the hyperclass is also owning the FalconClass.
+         cls = fcls->hyperConstruct();         
+      }
+   }
+
+   if( gs == 0 )
+   {
+      addAnonClass( cls );
+   }
+   else
+   {
+      addClass( gs, cls, isObject );
+   }
+}
+
+
+void Module::completeClass(FalconClass* fcls)
+{                  
+   // Completely resolved!
+   if( !fcls->isPureFalcon() )
+   {
+      HyperClass* hcls = fcls->hyperConstruct();
+      _p->m_classes[hcls->name()] = hcls;
+      // anonymous classes cannot have a name in the global symbol table, so...
+      Private::GlobalsMap::iterator pos = _p->m_gSyms.find( hcls->name() );
+      if( pos != _p->m_gSyms.end() )
+      {
+         Item* value = pos->second->value(0);
+         value->setUser( value->asClass(), hcls );
+      }
+   }
+}
+
 }
 
 /* end of module.cpp */
-

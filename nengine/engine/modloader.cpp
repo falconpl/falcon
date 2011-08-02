@@ -28,6 +28,7 @@
 #include <falcon/vfsiface.h>
 #include <falcon/textreader.h>
 #include <falcon/datareader.h>
+#include <falcon/stream.h>
 
 #include <falcon/trace.h>
 #include <falcon/fassert.h>
@@ -141,7 +142,7 @@ Module* ModLoader::loadFile( const URI& uri, t_modtype type, bool bScan )
             t_modtype etype = checkFile_internal( location, type, tgtUri );
             if( etype != e_mt_none )
             {
-               return load_internal( location.get(), tgtUri, etype );
+               return load_internal( *iter, tgtUri, etype );
             }
          }
          else
@@ -388,7 +389,7 @@ Module* ModLoader::load_internal(
          {
             throw makeError( e_nofile, __LINE__, uri.get() );
          }
-         
+         ins->shouldThrow(true);
          TextReader* input = new TextReader( ins, m_tcoder, true );
          // compiler gets the ownership of input.
          return m_compiler->compile( input, uri.get(), modName );
@@ -402,6 +403,7 @@ Module* ModLoader::load_internal(
             throw makeError( e_nofile, __LINE__, uri.get() );
          }
          
+         ins->shouldThrow(true);
          DataReader dr( ins, DataReader::e_LE, true );
          return m_famLoader->load( &dr, uri.get(), modName );
       }

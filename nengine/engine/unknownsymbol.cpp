@@ -124,6 +124,12 @@ void UnknownSymbol::define( Symbol* def )
       case t_unknown_symbol: 
          af = UnknownSymbol::apply_; 
          afl = UnknownSymbol::apply_lvalue_; 
+         {
+            // Undefined symbols are used also for external references;
+            // append the expressions referencing us to the incoming undefined symbol
+            Private::ExprVector& otherRefs = static_cast<UnknownSymbol*>(def)->_p->m_owners;
+            otherRefs.insert( otherRefs.end(), _p->m_owners.begin(), _p->m_owners.end() );
+         }
          break;
 
       default:

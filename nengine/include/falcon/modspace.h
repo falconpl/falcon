@@ -25,6 +25,7 @@ class VMachine;
 class Module;
 class Error;
 class Symbol;
+class ModLoader;
 
 /** Collection of (static) modules active in a virtual machine.
  
@@ -44,10 +45,10 @@ class FALCON_DYN_CLASS ModSpace
 public:
    
    /** Creates the module space on the given virtual machine.*/
-   ModSpace();
+   ModSpace( VMachine* vm );
    virtual ~ModSpace();
    
-   VMachine* vm() const { return m_vm;  }
+   VMachine* vm() const { return m_vm; }
 
    /** Adds a link error.
     \param err_id Id of the error.
@@ -116,6 +117,7 @@ public:
    /** Adds a module to the module space.
     \param mod The module to be linked.
     \param isLoad If true, the module is required for load.
+    \param bExcludeMain Do not initialize the module.
     \return true on success, false if there is already a module with the same name.
     
     This adds the module in this ModSpace. The added module is not immediately
@@ -133,7 +135,7 @@ public:
     \note The caller must have already provided the module with a name
     consistent with the internal naming scheme.
     */
-   bool addModule( Module* mod, bool isLoad );
+   bool addModule( Module* mod, bool isLoad, bool bExcludeMain=false );
    
    /** Links the previously added modules. 
     \return true on success, false in case of errors during the link phase.
@@ -150,13 +152,13 @@ public:
     The method returns true if the link process could complete without any error,
     and false if there was some error during the link process.
     */
-   bool link();
+   bool link( bool bThrowOnError = false );
    
    /** Prepares the invocation of initialization methods.
     This method is to be called after link() and before the virtual machine
     is finally launched for run.
     */
-   void readyVM( VMachine* vm );
+   void readyVM();
    
    
    /** Finds a symbol that is globally exported or globally defined.
@@ -192,16 +194,25 @@ public:
     it's legal to pre-export symbols, and eventually associate a null module
     to symbols created by the application.
     */
-   bool addExportedSymbol( Module* mod, Symbol* sym, bool bAddError = false );
+   bool addExportedSymbol( Module* mod, Symbol* sym, bool bAddError = true );
     
+   /** Gets the module loader that's associated with this module space.
+    \return 
+    
+    The module space uses a modLoader to resolve automatically the dependencies
+    of added modules.
+    */
+   ModLoader* modLoader() const { return m_loader; }
+   
 private:
    VMachine* m_vm;
     
    class Private;
    Private* _p;
    
-   void link_exports();
-   void link_imports();
+   ModLoader* m_loader;
+   
+   void exportSymbols( Module* mod );
 };
 
 }

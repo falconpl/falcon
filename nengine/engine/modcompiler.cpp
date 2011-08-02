@@ -19,6 +19,7 @@
 #include <falcon/hyperclass.h>
 #include <falcon/exprvalue.h>
 #include <falcon/globalsymbol.h>
+#include <falcon/unknownsymbol.h>
 #include <falcon/inheritance.h>
 #include <falcon/sp/sourcelexer.h>
 
@@ -59,35 +60,8 @@ void ModCompiler::Context::onNewFunc( Function* function, GlobalSymbol* gs )
 
 void ModCompiler::Context::onNewClass( Class* cls, bool bIsObj, GlobalSymbol* gs )
 {
-   if( gs == 0 )
-   {
-      // anonynmous class
-      String name = "__class#";
-      name.N( m_owner->m_nClsCount++ );
-      cls->name( name );
-   }
-   
    FalconClass* fcls = static_cast<FalconClass*>(cls);
-   if( !fcls->construct() )
-   {
-      // did we fail to construct because we're incomplete?
-      if( ! fcls->missingParents() )
-      {
-         // so, we have to generate an hyper class out of our falcon-class
-         // -- the hyperclass is also owning the FalconClass.
-         Class* hyperclass = fcls->hyperConstruct();
-         m_owner->m_module->addClass( gs, hyperclass, bIsObj );
-      }
-      else
-      {
-         // wait cfor completion in link phase
-         m_owner->m_module->addClass( gs, cls, bIsObj );
-      }
-   }
-   else
-   {
-      m_owner->m_module->addClass( gs, cls, bIsObj );
-   }
+   m_owner->m_module->storeSourceClass( fcls, bIsObj, gs );
 }
 
 
@@ -140,12 +114,7 @@ Symbol* ModCompiler::Context::onUndefinedSymbol( const String& name )
 {
    // Is this a global symbol?
    Symbol* gsym = m_owner->m_module->getGlobal( name );
-   if( gsym == 0 )
-   {
-      // Then require it to be imported.
-      gsym = (Symbol*) m_owner->m_module->addImport( name );
-   }
-   
+   // --- if not, let the onUnknownSymbol to be called for implicit import.
    return gsym;
 }
 
@@ -164,10 +133,15 @@ GlobalSymbol* ModCompiler::Context::onGlobalDefined( const String& name, bool& b
 }
 
 
-bool ModCompiler::Context::onUnknownSymbol( UnknownSymbol* )
+bool ModCompiler::Context::onUnknownSymbol( UnknownSymbol* uks )
 {
-   // let the unknown symbol to be stored in the tree.
-   return false;
+   if( ! m_owner->m_module->addImplicitImport( uks ) )
+   {
+      delete uks;
+      return false;
+   }
+   
+   return true;
 }
 
 

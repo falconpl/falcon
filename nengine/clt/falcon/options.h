@@ -60,8 +60,7 @@ public:
    bool force_recomp;
    bool check_memory;
 
-   bool comp_memory;
-   bool recompile_on_load;
+   bool ignore_sources;
    bool save_modules;
    bool wait_after;
    bool parse_ftd;

@@ -19,6 +19,7 @@
 #include <falcon/symbol.h>
 #include <falcon/module.h>
 #include <falcon/vm.h>
+#include <falcon/modloader.h>
 
 #include <map>
 #include <vector>
@@ -77,8 +78,17 @@ public:
    ErrorList m_errors;
    
    Private() {}
-   ~Private() {
+   
+   ~Private() 
+   {
       clearErrors();
+      
+      ModMap::iterator iter = m_mods.begin();
+      while( iter != m_mods.end() )
+      {
+         delete iter->second.m_module;
+         ++iter;
+      }
    }
    
    void clearErrors()
@@ -92,18 +102,20 @@ public:
    }
 };
 
-//=====================================================
+//==============================================================
 // Main class
 //
 
-ModSpace::ModSpace():
-   m_vm( 0 ),
+ModSpace::ModSpace( VMachine* owner ):
+   m_vm( owner ),
    _p( new Private )
 {
+   m_loader = new ModLoader;
 }
 
 ModSpace::~ModSpace()
 {
+   delete m_loader;
    delete _p;
 }
    
@@ -167,77 +179,40 @@ bool ModSpace::promoteLoad( const String& local_name )
    }
    
    pos->second.m_bLoad = true;
+   exportSymbols( pos->second.m_module );
    return true;
 }
 
    
-bool ModSpace::addModule( Module* mod, bool isLoad )
+bool ModSpace::addModule( Module* mod, bool isLoad, bool bExcludeMain )
 {
    Private::ModMap::iterator pos = _p->m_mods.find( mod->name() );
-   if( pos == _p->m_mods.end() )
+   if( pos != _p->m_mods.end() )
    {
       return false;
    }
    
-   _p->m_loadOrder.push_back( &_p->m_mods[ mod->name() ] );
-   _p->m_loadOrder.back()->m_bLoad = isLoad;
+   ModuleLoadMode* modload = &_p->m_mods[ mod->name() ];
+   modload->m_bLoad = isLoad;
+   modload->m_module = mod;
    
+   if( ! bExcludeMain )
+   {
+      _p->m_loadOrder.push_back( modload );      
+   }
+      
+   if ( isLoad )
+   {
+      exportSymbols( mod );
+   }
+      
    // mod->resolveDeps...
    return true;
 }
 
    
-bool ModSpace::link()
-{
-   // step 1 -- export symbols from load modules.
-   link_exports();
-   
-   // step 2 -- Now link the required symbols.
-   link_imports();
-   
-   return _p->m_errors.empty();
-}
-
-
-void ModSpace::link_exports()
-{
-   Private::ModLoadOrder& mods = _p->m_loadOrder;
-   
-   Private::ModLoadOrder::const_reverse_iterator rimods = mods.rbegin();
-   while( rimods != mods.rend() )
-   {
-      ModuleLoadMode* lm = *rimods;
-      if ( lm->m_bLoad )
-      {
-         class Rator: public Module::SymbolEnumerator
-         {
-         public:
-            Rator( ModSpace* owner, Module* mod ):
-               m_owner( owner ),
-               m_module( mod )
-            {}
-            
-            virtual bool operator()( const Symbol& sym, bool )
-            {
-               m_owner->addExportedSymbol( m_module, const_cast<Symbol*>(&sym), true );
-               return true;
-            }
-            
-         private:
-            ModSpace* m_owner;
-            Module* m_module;
-         };
-         
-         Rator rator( this, lm->m_module );
-         lm->m_module->enumerateExports( rator );
-      }
-      ++rimods;
-   }
-}
-
-
-void ModSpace::link_imports()
-{
+bool ModSpace::link( bool bThrowOnError )
+{   
    Private::ModLoadOrder& mods = _p->m_loadOrder;
    
    Private::ModLoadOrder::const_iterator imods = mods.begin();
@@ -249,12 +224,18 @@ void ModSpace::link_imports()
       mod->passiveLink( this );
       ++imods;
    }
+   
+   if( bThrowOnError && ! _p->m_errors.empty() )
+   {
+      throw makeError();
+   }
+   
+   return _p->m_errors.empty();
 }
 
 
-void ModSpace::readyVM( VMachine* vm )
+void ModSpace::readyVM()
 {
-   m_vm = vm;
    // TODO: set in the vm.
    
    Private::ModLoadOrder& mods = _p->m_loadOrder;
@@ -301,7 +282,7 @@ bool ModSpace::addExportedSymbol( Module* mod, Symbol* sym, bool bAddError )
    if( pos != _p->m_syms.end() )
    {
       // Shall we add some error marker?
-      if( ! bAddError )
+      if( bAddError )
       {
          // Else, describe the problem.
          String extra;
@@ -330,6 +311,30 @@ bool ModSpace::addExportedSymbol( Module* mod, Symbol* sym, bool bAddError )
    return true;
 }
    
+void ModSpace::exportSymbols( Module* mod )
+{
+   class Rator: public Module::SymbolEnumerator
+   {
+   public:
+      Rator( ModSpace* owner, Module* mod ):
+         m_owner( owner ),
+         m_module( mod )
+      {}
+
+      virtual bool operator()( const Symbol& sym, bool )
+      {
+         m_owner->addExportedSymbol( m_module, const_cast<Symbol*>(&sym), true );
+         return true;
+      }
+
+   private:
+      ModSpace* m_owner;
+      Module* m_module;
+   };
+
+   Rator rator( this, mod );
+   mod->enumerateExports( rator );
+}
 }
 
 /* end of modspace.cpp */

@@ -60,8 +60,8 @@ public:
       friend class VSFProvider;
 
    public:
-      OParams():
-         m_oflags(0),
+      OParams( uint32 flags = 0 ):
+         m_oflags( flags ),
          m_shflags(0)
       {}
 

@@ -26,6 +26,7 @@
 #include <falcon/stmt_init.h>
 
 #include <falcon/stdstreams.h>
+#include <falcon/streambuffer.h>
 #include <falcon/textwriter.h>
 #include <falcon/textreader.h>
 #include <falcon/datawriter.h>
@@ -33,15 +34,15 @@
 
 #include <falcon/module.h>
 #include <falcon/intcompiler.h>
+#include <falcon/modcompiler.h>
+#include <falcon/modspace.h>
 
 #include <falcon/vm.h>
 #include <falcon/vmcontext.h>
 #include <falcon/application.h>
 
 #include <falcon/cm/coremodule.h>
-
 #include <falcon/vfsprovider.h>
-
 
 //--- error headers ---
 #include <falcon/accesserror.h>

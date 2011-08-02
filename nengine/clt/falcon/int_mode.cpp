@@ -36,7 +36,8 @@ void IntMode::run()
    
    vm.textOut()->write( "Welcome to Falcon.\n" );
    
-   vm.link( new CoreModule );
+   Module* core = new CoreModule;
+   vm.modSpace()->addModule( core, true, false );
    IntCompiler intComp(&vm);
 
    String tgt;

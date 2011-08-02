@@ -28,6 +28,7 @@
 #include <falcon/rulesyntree.h>
 #include <falcon/synfunc.h>
 #include <falcon/extfunc.h>
+#include <falcon/modspace.h>
 
 #include <falcon/stdstreams.h>
 #include <falcon/textwriter.h>
@@ -73,7 +74,7 @@ void go()
 #endif
 
    VMachine vm;
-   vm.link( new CoreModule );
+   vm.modSpace()->addModule( new CoreModule, true );
    IntCompiler intComp(&vm);
 
    String tgt;

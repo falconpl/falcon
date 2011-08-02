@@ -33,6 +33,7 @@
 #include <falcon/syntaxerror.h>
 #include <falcon/codeerror.h>
 #include <falcon/error.h>
+#include <falcon/modspace.h>
 
 #include <falcon/expression.h>
 #include <falcon/exprvalue.h>
@@ -73,27 +74,15 @@ void IntCompiler::Context::onNewFunc( Function* function, GlobalSymbol* gs )
 void IntCompiler::Context::onNewClass( Class* cls, bool isObject, GlobalSymbol* gs )
 {
    FalconClass* fcls = static_cast<FalconClass*>(cls);
-   // The interactive compiler won't call us here if we have some undefined class,
-   // as such, the construct can fail only if some class is not a falcon class.
-   if( !fcls->construct() )
+   if( fcls->missingParents() == 0 )
    {
-      // did we fail to construct because we're incomplete?
-      if( ! fcls->missingParents() )
-      {
-         // so, we have to generate an hyper class out of our falcon-class
-         // -- the hyperclass is also owning the FalconClass.
-         Class* hyperclass = fcls->hyperConstruct();
-         m_owner->m_module->addClass( gs, hyperclass, isObject );
-      }
-      else
-      {
-         // we already detected the undefined symbol error.
-         delete cls;
-      }
+      // TODO: Error on failure.
+      m_owner->m_module->storeSourceClass( fcls, isObject, gs );        
    }
    else
    {
-      m_owner->m_module->addClass( gs, cls, isObject );
+      // we have already raised undefined symbol error.
+      delete cls;
    }
 }
 
@@ -148,7 +137,7 @@ Symbol* IntCompiler::Context::onUndefinedSymbol( const String& name )
    if( gsym == 0 )
    {
       // try to find it in the exported symbols of the VM.
-      gsym = (Symbol*) m_owner->m_vm->findExportedSymbol( name );
+      gsym = (Symbol*) m_owner->m_vm->modSpace()->findExportedSymbol( name );
    }
 
    return gsym;
@@ -195,7 +184,7 @@ void IntCompiler::Context::onInheritance( Inheritance* inh  )
    const Symbol* sym = m_owner->m_module->getGlobal(inh->className());
    if( sym == 0 )
    {
-      sym = m_owner->m_vm->findExportedSymbol( inh->className() );
+      sym = m_owner->m_vm->modSpace()->findExportedSymbol( inh->className() );
    }
 
    // found?

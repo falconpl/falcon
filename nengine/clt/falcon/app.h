@@ -38,7 +38,7 @@ public:
    
    void guardAndGo( int argc, char* argv[] );
    void interactive();
-   void compile( const String& script );
+   void launch( const String& script );
 };
 
 } // namespace Falcon

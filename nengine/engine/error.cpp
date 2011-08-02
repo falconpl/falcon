@@ -219,6 +219,7 @@ void Error::addTrace( const TraceStep& tb )
 void Error::appendSubError( Error *error )
 {
    error->incref();
+   
    _p->m_subErrors.push_back( error );
 }
 

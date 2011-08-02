@@ -32,6 +32,7 @@ class Class;
 class Inheritance;
 class UnknownSymbol;
 class ModSpace;
+class FalconClass;
 
 /** Standard Falcon Execution unit and library.
 
@@ -290,6 +291,7 @@ public:
     \return 0 if already existing, or a valid UnknownSymbol if not found.
     */
    UnknownSymbol* addImport( const String& name );
+   bool addImplicitImport( UnknownSymbol* uks );
    
    /** Export a symbol.
     \param name The name of the symbol to be exported.
@@ -314,6 +316,30 @@ public:
     */
    bool passiveLink( ModSpace* ms );
    
+   /** Stores a class coming from a source module.
+    \param fcls The class to be added.
+    \param isObject if true, adds an object instance.
+    \param gs An optional gobal symbol associated with this class.
+    
+    This method decides if a FalconClass should be added as complete (in this
+    case, it may be transformed in a HyperClass if necessary) or if it requires
+    to be posted for later linkage imports.
+    
+    Module compilers and code synthezizing classes that may require external
+    inheritances should use this method.
+    */
+   void storeSourceClass( FalconClass* fcls, bool isObject, GlobalSymbol* gs = 0 );
+   
+   /** Perform completion checks on source classes.
+    \param fcls The class that have just been completed.
+    
+    This method is called when all the inheritances of a FalconClass are
+    (succesfully) resolved. In case it's necessary to create a HyperClass
+    out of this FalconClass, the class ID and eventually the global symbol
+    bound to this class are updated.
+    */
+   void completeClass( FalconClass* fcls );
+
 private:
    String m_name;
    String m_uri;

@@ -38,9 +38,8 @@ FalconOptions::FalconOptions():
    search_path( false ),
    force_recomp( false ),
    check_memory( false ),
-
-   comp_memory( true ),
-   recompile_on_load( true ),
+   
+   ignore_sources( false ),
    save_modules( true ),
    wait_after( false ),
    parse_ftd( false ),
@@ -82,7 +81,6 @@ void FalconOptions::usage( bool deep )
       << "   -D          Set constant (as <constant>=<value>)" << endl
       << "   -E <enc>    Source files are in <enc> encoding (overrides -e)" << endl
       << "   -f          force recompilation of modules even when .fam are found" << endl
-      << "   -m          do NOT compile in memory (use temporary files)" << endl
       << "   -T          consider given [module] as .ftd (template document)" << endl
       << endl
       << "Run options (r_opts):" << endl
@@ -96,7 +94,7 @@ void FalconOptions::usage( bool deep )
       << "   -M          do NOT save the compiled modules in '.fam' files" << endl
       << "   -p <module> preload (pump in) given module" << endl
       << "   -P          ignore system PATH (and FALCON_LOAD_PATH envvar)" << endl
-      << "   -r          do NOT recompile sources (ignore sources)" << endl
+      << "   -I          Ignore sources" << endl
       << endl
       << "General options:" << endl
       << "   -h/-?       display usage" << endl
@@ -206,7 +204,6 @@ void FalconOptions::parse( int argc, char **argv, int &script_pos )
                   module_language = op + 2;
                break;
 
-            case 'm': comp_memory = false; break;
             case 'M': save_modules = false; break;
 
             case 'o':
@@ -224,7 +221,7 @@ void FalconOptions::parse( int argc, char **argv, int &script_pos )
                break;
 
             case 'P': ignore_syspath = true; break;
-            case 'r': recompile_on_load = false; break;
+            case 'I': ignore_sources = true; break;
 
             case 's': errOnStdout = true; break;
             case 't': modalGiven(); tree_out = true; break;

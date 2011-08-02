@@ -18,8 +18,7 @@
 #include <falcon/trace.h>
 
 #include "int_mode.h"
-#include "falcon/modcompiler.h"
-#include "falcon/streambuffer.h"
+#include "falcon/modloader.h"
 
 using namespace Falcon;
 
@@ -55,7 +54,7 @@ void FalconApp::guardAndGo( int argc, char* argv[] )
          }
          
          String script = argv[scriptPos-1];
-         compile( script );
+         launch( script );
       }
    }
    catch( Error* e )
@@ -72,60 +71,89 @@ void FalconApp::interactive()
    intmode.run();
 }
 
-void FalconApp::compile( const String& script )
+
+void FalconApp::launch( const String& script )
 {
-   TextWriter out(new StdOutStream);
+   // Create the virtual machine -- that is used also for textual output.
+   VMachine vm;
+   vm.setStdEncoding( m_options.io_encoding );
    
-   Stream* fs = Engine::instance()->vsf().open( script, 
-      VFSProvider::OParams().rdOnly() );
-   
+   // can we access the required module?
+   Stream* fs = Engine::instance()->vsf().openRO( script );   
    if( fs == 0 )
    {
-      out.write( "Can't open " + script+ "\n" );
+      vm.textOut()->write( "Can't open " + script+ "\n" );
       return;
    }
    
-   ModCompiler compiler;
+   // Ok, we opened the file; prepare the space (and most important, the loader) 
+   ModSpace* ms = vm.modSpace();
+   ModLoader* loader = ms->modLoader();
    
-   TextReader* tr = new TextReader( fs );
-   
-   Module* mod = compiler.compile( tr, script, script );
-   if( mod == 0 )
+   // do we have a load path?
+   loader->setSearchPath(".");
+   if( m_options.load_path.size() > 0 )
    {
-      
-      Error* err = compiler.makeError();         
-      // in case of a compilation, discard the encapsulator.
-      class MyEnumerator: public Error::ErrorEnumerator {
-      public:
-         MyEnumerator( TextWriter* wr ):
-            m_wr(wr)
-         {}
-
-         virtual bool operator()( const Error& e, bool  ){
-            m_wr->write(e.describe()+"\n");
-            return true;
-         }
-      private:
-         TextWriter* m_wr;
-      };
-      MyEnumerator rator(&out);
-
-      err->enumerateErrors( rator );
-      return;
+      // Is the load path totally substituting?
+      loader->addSearchPath(m_options.load_path);
    }
    
-   SynFunc* fmain = (SynFunc*) mod->getFunction("__main__"); 
-   if( m_options.tree_out )
+   if( ! m_options.ignore_syspath )
    {
-      
-      out.write( fmain->syntree().describe() +"\n");
-      return;
+      loader->addFalconPath();
    }
    
+   // Now configure other options of the lodaer.
+   // -- How to treat sources?
+   if( m_options.ignore_sources )
+   {
+      loader->useSources( ModLoader::e_us_never );
+   }
+   else if( m_options.force_recomp )
+   {
+      loader->useSources( ModLoader::e_us_always );
+   }
    
-   VMachine vm;
-   vm.link( mod );
-   vm.currentContext()->call( fmain, 0 );
+   // -- Save modules?
+   if( m_options.save_modules )
+   {
+      if( m_options.force_recomp)
+      {
+         loader->savePC( ModLoader::e_save_mandatory );
+      }
+      else
+      {
+         loader->savePC( ModLoader::e_save_try );
+      }
+   }
+   else
+   {
+      loader->savePC( ModLoader::e_save_no );
+   }   
+   
+   // What kind of module we are loading here?
+   ModLoader::t_modtype type = ModLoader::e_mt_none;
+   if( m_options.run_only )
+   {
+      type = ModLoader::e_mt_vmmod;
+   }
+   else if ( m_options.compile_only )
+   {
+      type = ModLoader::e_mt_source;
+   }
+         
+   // TODO -- FIX ftds
+   // load the main module...
+   Module* module = loader->loadFile( script, type );
+   
+   // and start the resolution dance.
+   ms->addModule( module, true );
+   ms->addModule( new CoreModule, true );
+   
+   // throw on error.
+   ms->link( true );
+   
+   ms->readyVM();
    vm.run();
 }
 

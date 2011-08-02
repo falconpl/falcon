@@ -172,7 +172,7 @@ public:
    //
    
    /** Should compilation process save the precompiled modules? */
-   typedef enum t_save_pc {
+   typedef enum {
       /** Never save the precompiled modules. */
       e_save_no,
       /** Try to save precompiled modules and ignore errors. */
@@ -182,7 +182,7 @@ public:
    } t_save_pc;
 
    /** Consider input source as ftd? */
-   typedef enum t_check_ftd {
+   typedef enum {
       /** Sources are never FTD */
       e_ftd_ignore,
       /** Consider FTD sources depedning on source extension. */
@@ -192,7 +192,7 @@ public:
    } t_check_ftd;
    
    /** Use sources when in doubt between a source and a precompiled? */
-   typedef enum t_use_sources {
+   typedef enum {
       /** If sources are newer than FAM, use sources. */
       e_us_newer,
       /** Always use soucrces. */

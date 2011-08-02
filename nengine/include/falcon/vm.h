@@ -35,6 +35,7 @@ class TextWriter;
 class Transcoder;
 class Module;
 class Symbol;
+class ModSpace;
 
 /** The Falcon virtual machine.
 */
@@ -247,13 +248,6 @@ public:
     */
    Item* findLocalItem( const String& name ) const;
 
-   /** Finds a symbol that is globally exported or globally defined.
-    \return The symbol, if defined or 0 if the name cannot be found.
-    \param name The name of the symbol that is exported.
-    
-    */
-   const Symbol* findExportedSymbol( const String& name ) const;
-
    /** Returns true if the current has not any code.
 
     */
@@ -381,51 +375,9 @@ public:
    //=========================================================
    // VM Streams
    //=========================================================
-   /** Links a module.
-    \param mod The module to be linked.
 
-    This method adds the module to the virtual machine, trying to find
-    existing dependencies
-
-    A module can be added only to a virtual machine. The virtual
-    machine owns the module.
-
-    \note currently a stub.
-    */
-   void link( Module* mod );
-
-   //void enumerateUndefined( );
-
-   /** Adds a symbol to the exported map. */
-   bool addExportedSymbol( Module* mod, const Symbol* sym );
-
-   /** Adds a link error.
-    \param err_id Id of the error.
-    \param mod The module where the error was found.
-    \param sym The symbol that caused the error.
-    \param extra Extra description.
-
-    During the link process, multiple errors could be found.
-    When the link process is complete, the Virtual Machine owner will
-    call checkRun() that will throw an error.    
-    */
-   void addLinkError( int err_id, Module* mod, const Symbol* sym, const String& extra="" );
-
-   /** Check if the VM is ready to run.
-    \return A pointer to a throwable error if the virtual machine cannot be
-    run, 0 if the VM is ready.
-    
-    This call performs checks on the current status of the virtual machine, and
-    raises an error if:
-    - There are pending link errors (usually duplicated symbols).
-    - There are currently undefined symbols.
-    
-    This method can be called multiple times, in case new modules are added
-    after run() is performed (even from inside a run), but 
-
-    \note the call is threadsafe.
-    */
-   Error* checkRun();
+   /** Gets the module space associated with this virtual machine. */
+   ModSpace* modSpace() const { return m_modspace; }
 
 protected:
 
@@ -439,6 +391,8 @@ protected:
 
    Transcoder* m_stdCoder;
    bool m_bOwnCoder;
+   
+   ModSpace* m_modspace;
 
    /** Called back when an error was thrown directly inside the machine.
     \param e The error being thrown.
