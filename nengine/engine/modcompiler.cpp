@@ -83,10 +83,19 @@ void ModCompiler::Context::onLoad( const String& path, bool isFsPath )
 
 
 void ModCompiler::Context::onImportFrom( const String& path, bool isFsPath, const String& symName,
-      const String& asName, const String &inName )
+      const String& nsName, bool bIsNS )
 {
    // TODO: create the namespace
-   String localName = asName != "" ? asName : inName + "." + symName;
+   String localName;
+   if ( nsName != "" )
+   {
+      localName = bIsNS ? nsName + "." + symName : nsName;
+   }
+   else
+   {
+      localName = symName;
+   }
+   
    m_owner->m_module->addImportFrom( localName,  symName, path, isFsPath );
 }
 

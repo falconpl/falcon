@@ -133,9 +133,8 @@ public:
       \param isFsPath True if the path is a filesystem path, false if it's a
              logical module name.
       \param symName the name of the symbol to import (might be empty for "all").
-      \param asName Name under which the symbol must be aliased Will be nothing
-               if not given.
-      \param inName Name for the local namespace where the symbol is imported.
+      \param targetName Name under which the symbol must be aliased or namespace.
+      \param bIsNS If true, targetName is to be intended as a namespace.
 
     This directive imports one symbol (or asks for all the symbols to be
     imported) from a given module. If a symName is given, it is possible to
@@ -154,7 +153,7 @@ public:
     wish to abort with error if it's done.
     */
    virtual void onImportFrom( const String& path, bool isFsPath, const String& symName,
-         const String& asName, const String &inName ) = 0;
+         const String& targetName, bool bIsNS ) = 0;
 
    /** Called back when parsing an "import symbol " directive.
       \param symName the name of the symbol to import.

@@ -170,6 +170,21 @@ public:
    Parsing::NonTerminal S_Export;
    Parsing::Rule r_export_rule;
 
+   Parsing::NonTerminal S_Import;
+   Parsing::Rule r_import_rule;
+   
+   Parsing::NonTerminal ImportClause;
+   Parsing::Rule r_import_from_in;
+   Parsing::Rule r_import_from_in_modspec;
+   Parsing::Rule r_import_from_str;
+   Parsing::Rule r_import_from_mods;
+   Parsing::Rule r_import_namelist;
+
+   Parsing::NonTerminal ImportFromInClause;
+   Parsing::Rule r_import_fromin;
+   Parsing::Rule r_import_fromas;
+   Parsing::Rule r_import_from_empty;
+   
    //================================================
    // Expression
    //

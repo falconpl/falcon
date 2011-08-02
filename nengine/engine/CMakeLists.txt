@@ -80,6 +80,7 @@ add_library(falcon_engine SHARED
   sp/parser_expr.cpp
   sp/parser_function.cpp
   sp/parser_if.cpp
+  sp/parser_import.cpp
   sp/parser_index.cpp
   sp/parser_list.cpp
   sp/parser_load.cpp

@@ -57,7 +57,7 @@ public:
    virtual void onNewStatement( Statement* stmt );
    virtual void onLoad( const String& path, bool isFsPath );
    virtual void onImportFrom( const String& path, bool isFsPath, const String& symName,
-         const String& asName, const String &inName );
+         const String& nsName, bool bIsNS );
    virtual void onImport(const String& symName );
    virtual void onExport(const String& symName);
    virtual void onDirective(const String& name, const String& value);
@@ -126,12 +126,11 @@ void Context::onLoad( const String& path, bool isFsPath )
 }
 
 void Context::onImportFrom( const String& path, bool isFsPath, const String& symName,
-         const String& asName, const String &inName )
+         const String& nsName, bool bIsNS )
 {
    std::cout << "CALLBACK: import " << symName.c_ize() << " from "
       << path.c_ize() << (isFsPath ? " (path) " : " ")
-      << (asName.size() ? (String(" as ")+asName).c_ize() : "")
-      << (inName.size() ? (String(" in ")+inName).c_ize() : "")
+      << (nsName.size() ? (String( bIsNS ? " in ": " as ")+nsName).c_ize() : "")
       << std::endl;
 }
 

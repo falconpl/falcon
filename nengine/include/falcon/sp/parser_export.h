@@ -2,7 +2,7 @@
    FALCON - The Falcon Programming Language.
    FILE: parser_export.h
 
-   Parser for Falcon source files -- index accessor handler
+   Parser for Falcon source files -- export dirrective
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: Tue, 02 Aug 2011 16:41:40 +0200

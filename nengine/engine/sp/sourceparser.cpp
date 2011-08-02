@@ -34,6 +34,7 @@
 #include <falcon/sp/parser_function.h>
 #include <falcon/sp/parser_if.h>
 #include <falcon/sp/parser_index.h>
+#include <falcon/sp/parser_import.h>
 #include <falcon/sp/parser_list.h>
 #include <falcon/sp/parser_load.h>
 #include <falcon/sp/parser_proto.h>
@@ -43,6 +44,8 @@
 
 #include <falcon/parser/rule.h>
 #include <falcon/parser/parser.h>
+
+#include "private_types.h"
 
 namespace Falcon {
 
@@ -199,13 +202,33 @@ SourceParser::SourceParser():
    S_Export << "export" << export_errhand;
    S_Export << ( r_export_rule << "export_rule" << apply_export_rule << T_export << ListSymbol << T_EOL );
    
+   //==========================================================================
+   // Import & family
+   //
+   
+   // We use a selector strategy to reduce the amount of tokens visible to the root state.s
+   S_Import << "import" << import_errhand;
+   S_Import << ( r_import_rule << "import_rule" << apply_import << T_import << ImportClause );
+   
+   ImportClause << "import clause";
+   ImportClause << ( r_import_from_in << "import_from_in" << apply_import_from_in
+      << ListSymbol << T_from << T_String << ImportFromInClause );
+   ImportClause << ( r_import_from_in_modspec << "import_from_in_modspec" << apply_import_from_in_modspec
+      << ListSymbol << T_from << ModSpec << ImportFromInClause );
 
-  //==========================================================================
-  // Expression
-  //
-  Expr << "Expr";
-  Expr << expr_errhand;
-  Expr << (r_Expr_assign << "Expr_assign" << apply_expr_assign << Expr << T_EqSign << NeListExpr );
+   ImportFromInClause << "from/in clause";   
+   ImportFromInClause << ( r_import_fromin << "import_fromin" << apply_import_fromin 
+      << T_in << ModSpec << T_EOL );
+   ImportFromInClause << ( r_import_fromas << "import_fromas" << apply_import_fromas 
+      << T_as << T_Name << T_EOL );
+   ImportFromInClause << ( r_import_from_empty << "import_from_empty" << apply_import_from_empty << T_EOL );
+
+   //==========================================================================
+   // Expression
+   //
+   Expr << "Expr";
+   Expr << expr_errhand;
+   Expr << (r_Expr_assign << "Expr_assign" << apply_expr_assign << Expr << T_EqSign << NeListExpr );
 
    Expr<< (r_Expr_equal << "Expr_equal" << apply_expr_equal << Expr << T_DblEq << Expr);
    Expr<< (r_Expr_diff << "Expr_diff" << apply_expr_diff << Expr << T_NotEq << Expr);
@@ -384,6 +407,7 @@ SourceParser::SourceParser():
    s_Main << "Main"
       << S_Load
       << S_Export
+      << S_Import
       
       << S_Function
       << S_Class

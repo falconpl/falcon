@@ -135,7 +135,16 @@ public:
    inline String* asString() const { return (String*) m_v.v_voidp; }
 
    /** Gets the parser token associated with this instance. */
-   const Token& token() const { return m_token; }
+   const Token& token() const { return *m_token; }
+
+   /** Changes the parser token associated with this instance. 
+    \param t The new token.
+    
+    \note This method should be used with care. The value inside the token
+    instance must be compatible, or must be changed before returning from
+    the parser context.
+    */
+   void token( const Token& t ) { m_token = &t; }
 
    int line() const { return m_line; }
    int chr() const { return m_chr; }
@@ -150,7 +159,7 @@ private:
       void* v_voidp;
    } Value;
 
-   const Token& m_token;
+   const Token* m_token;
    Value m_v;
    deletor m_deletor;
 

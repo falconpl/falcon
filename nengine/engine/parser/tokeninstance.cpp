@@ -25,7 +25,7 @@ namespace Parsing {
 TokenInstance::TokenInstance( int line, int chr, const Token& tok  ):
    m_line( line ),
    m_chr( chr ),
-   m_token( tok ),
+   m_token( &tok ),
    m_deletor(0)
 {
    m_v.v_int = 0;

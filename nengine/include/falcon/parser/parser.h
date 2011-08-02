@@ -19,7 +19,6 @@
 #include <falcon/setup.h>
 #include <falcon/string.h>
 #include <falcon/enumerator.h>
-#include <falcon/enumerator.h>
 
 // Include all to simplify child subclasses.
 #include <falcon/parser/tokeninstance.h>

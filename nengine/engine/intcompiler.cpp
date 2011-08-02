@@ -100,7 +100,7 @@ void IntCompiler::Context::onLoad( const String&, bool )
 
 
 void IntCompiler::Context::onImportFrom( const String&, bool, const String&,
-         const String&, const String & )
+         const String&, bool )
 {
    // TODO
 }

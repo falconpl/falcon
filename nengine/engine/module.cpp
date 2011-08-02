@@ -655,7 +655,6 @@ bool Module::addLoad( const String& mod_name, bool bIsUri )
 }
 
 
-
 UnknownSymbol* Module::addImportFrom( const String& localName, const String& remoteName,
                                         const String& source, bool bIsUri )
 {
@@ -803,7 +802,32 @@ bool Module::passiveLink( ModSpace* ms )
       // if the module has been resolved, it won't be 0.
       if( mod != 0 )
       {
-         // TODO: Resolve import/from direct imports.
+         Private::Requirement::DepMap::iterator iter = req->m_deps.begin();
+         while( iter != req->m_deps.end() )
+         {
+            Private::Dependency* dep = iter->second;
+            Symbol* sym = mod->getGlobal( dep->m_remoteName );
+            if( sym == 0 )
+            {
+               ms->addLinkError( e_undef_sym, m_uri, 0, dep->m_remoteName );
+            }
+            else
+            {
+               // we're sending the module where this item is resolved, not the source.
+               dep->resolved( this, sym );
+               if( ! dep->m_errors.empty() )
+               {
+                  Private::Dependency::ErrorList::iterator erri = dep->m_errors.begin();
+                  // If we have errors, transfer them to the module space.
+                  while (erri != dep->m_errors.end() )
+                  {
+                     ms->addLinkError( *erri );
+                  }
+                  dep->clearErrors();
+               }
+            }
+            ++iter;
+         }
       }
       ++iter;
    }

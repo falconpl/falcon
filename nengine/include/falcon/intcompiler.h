@@ -86,7 +86,7 @@ private:
       virtual void onNewStatement( Statement* stmt );
       virtual void onLoad( const String& path, bool isFsPath );
       virtual void onImportFrom( const String& path, bool isFsPath, const String& symName,
-            const String& asName, const String &inName );
+            const String& nsName, bool bIsNS );
       virtual void onImport(const String& symName );
       virtual void onExport(const String& symName);
       virtual void onDirective(const String& name, const String& value);
