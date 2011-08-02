@@ -29,14 +29,14 @@ class ModSymbol
 {
 public:
    Module* m_module;
-   const Symbol* m_symbol;
+   Symbol* m_symbol;
    
    ModSymbol():
       m_module( 0 ),
       m_symbol( 0 )
    {}   
    
-   ModSymbol( Module* mod, const Symbol* sym ):
+   ModSymbol( Module* mod, Symbol* sym ):
       m_module( mod ),
       m_symbol( sym )
    {}
@@ -219,7 +219,7 @@ void ModSpace::link_exports()
             
             virtual bool operator()( const Symbol& sym, bool )
             {
-               m_owner->addExportedSymbol( m_module, &sym, true );
+               m_owner->addExportedSymbol( m_module, const_cast<Symbol*>(&sym), true );
                return true;
             }
             
@@ -278,7 +278,7 @@ void ModSpace::readyVM( VMachine* vm )
 }
 
  
-const Symbol* ModSpace::findExportedSymbol( const String& name, Module*& declarer ) const
+Symbol* ModSpace::findExportedSymbol( const String& name, Module*& declarer ) const
 {
    Private::SymbolMap::const_iterator pos = _p->m_syms.find( name );
    
@@ -293,7 +293,7 @@ const Symbol* ModSpace::findExportedSymbol( const String& name, Module*& declare
 }
    
 
-bool ModSpace::addExportedSymbol( Module* mod, const Symbol* sym, bool bAddError )
+bool ModSpace::addExportedSymbol( Module* mod, Symbol* sym, bool bAddError )
 {
    Private::SymbolMap::iterator pos = _p->m_syms.find( sym->name() );
    

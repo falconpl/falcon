@@ -39,22 +39,15 @@ LocalSymbol::~LocalSymbol()
 }
 
 
-void LocalSymbol::assign( VMContext* ctx, const Item& value ) const
-{
-   ctx->localVar( m_id ).assign( value );
-}
-
-bool LocalSymbol::retrieve( Item& value, VMContext* ctx ) const
+Item* LocalSymbol::value( VMContext* ctx ) const
 {
    if( ctx == 0 ) 
    {
-      return false;
+      return 0;
    }
 
-   value = ctx->localVar( m_id );
-   return true;
+   return &ctx->localVar( m_id );
 }
-
 
 void LocalSymbol::apply_( const PStep* s1, VMContext* ctx )
 {

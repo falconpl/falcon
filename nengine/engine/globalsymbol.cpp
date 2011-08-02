@@ -46,16 +46,11 @@ GlobalSymbol::GlobalSymbol( const GlobalSymbol& other ):
 GlobalSymbol::~GlobalSymbol()
 {}
 
-void GlobalSymbol::assign( VMContext*, const Item& value ) const
+Item* GlobalSymbol::value( VMContext* ) const
 {
-   const_cast<Item*>(&m_item)->assign( value );
+   return const_cast<Item*>(&m_item);
 }
 
-bool GlobalSymbol::retrieve( Item& value, VMContext* ) const
-{
-   value = m_item;
-   return true;
-}
 
 void GlobalSymbol::apply_( const PStep* ps, VMContext* ctx )
 {

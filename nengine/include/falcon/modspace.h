@@ -168,7 +168,7 @@ public:
     the \b declarer parameter is set to zero. In fact, it is possible for embedding
     applications to create module-less symbols.
     */
-   const Symbol* findExportedSymbol( const String& name, Module*& declarer ) const;
+   Symbol* findExportedSymbol( const String& name, Module*& declarer ) const;
    
    /** Finds a symbol that is globally exported or globally defined.
     \param name The name of the symbol that is exported.
@@ -176,7 +176,7 @@ public:
     This version doesn't return the module where the symbol was declared.
     */
    
-   const Symbol* findExportedSymbol( const String& name ) const
+   Symbol* findExportedSymbol( const String& name ) const
    {
       Module* dummy;
       return findExportedSymbol( name, dummy );
@@ -192,7 +192,7 @@ public:
     it's legal to pre-export symbols, and eventually associate a null module
     to symbols created by the application.
     */
-   bool addExportedSymbol( Module* mod, const Symbol* sym, bool bAddError = false );
+   bool addExportedSymbol( Module* mod, Symbol* sym, bool bAddError = false );
     
 private:
    VMachine* m_vm;

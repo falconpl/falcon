@@ -60,7 +60,7 @@ void apply_expr_call( const Rule&, Parser& p )
    if( callee->type() == Expression::t_symbol )
    {
       // check if the symbol is a pseudofunction
-      Symbol* funsym = static_cast<ExprSymbol*>(callee)->symbol();
+      const Symbol* funsym = static_cast<ExprSymbol*>(callee)->symbol();
       PseudoFunction* pf = einst->getPseudoFunction( funsym->name() );
 
       // if it is, we don't need the callee expression anymore.

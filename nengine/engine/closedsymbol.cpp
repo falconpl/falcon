@@ -37,21 +37,15 @@ ClosedSymbol::ClosedSymbol( const ClosedSymbol& other ):
 ClosedSymbol::~ClosedSymbol()
 {}
 
-void ClosedSymbol::assign( VMContext*, const Item& value ) const
+Item* ClosedSymbol::value( VMContext* ) const
 {
-   const_cast<ClosedSymbol*>(this)->m_item.assign( value );
+   return &const_cast<ClosedSymbol*>(this)->m_item;
 }
-
- bool ClosedSymbol::retrieve( Item& value, VMContext* ) const
- {
-    value = const_cast<ClosedSymbol*>(this)->m_item;
-    return true;
- }
 
 void ClosedSymbol::apply_( const PStep* ps, VMContext* ctx )
 {
    const ExprSymbol* self = static_cast<const ExprSymbol*>(ps);
-   ClosedSymbol* sym = static_cast<ClosedSymbol*>(self->symbol());
+   const ClosedSymbol* sym = static_cast<const ClosedSymbol*>(self->symbol());
 
    TRACE2( "Apply closed '%s'", sym->m_name.c_ize() );
    ctx->pushData( sym->m_item );
@@ -62,10 +56,10 @@ void ClosedSymbol::apply_( const PStep* ps, VMContext* ctx )
 void ClosedSymbol::apply_lvalue_( const PStep* ps, VMContext* ctx )
 {
    const ExprSymbol::PStepLValue* self = static_cast<const ExprSymbol::PStepLValue*>(ps);
-   ClosedSymbol* sym = static_cast<ClosedSymbol*>(self->m_owner->symbol());
+   const ClosedSymbol* sym = static_cast<const ClosedSymbol*>(self->m_owner->symbol());
 
    TRACE2( "LValue apply to closed '%s'", sym->m_name .c_ize() );
-   sym->m_item.assign( ctx->topData() );
+   const_cast<ClosedSymbol*>(sym)->m_item.assign( ctx->topData() );
    // topData is already the value of the l-value evaluation.
    // so we leave it alone.
 }

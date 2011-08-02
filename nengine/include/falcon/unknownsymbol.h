@@ -59,8 +59,7 @@ public:
 
    virtual UnknownSymbol* clone() const { return new UnknownSymbol(*this); }
 
-   virtual void assign( VMContext* ctx, const Item& value ) const;
-   virtual bool retrieve( Item& value, VMContext* ctx = 0 ) const;
+   virtual Item* value( VMContext* ) const;
 
    static void apply_( const PStep* self, VMContext* ctx );
    static void apply_lvalue_( const PStep* self, VMContext* ctx );

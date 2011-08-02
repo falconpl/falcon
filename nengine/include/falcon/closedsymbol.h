@@ -42,13 +42,9 @@ public:
    static void apply_lvalue_( const PStep*, VMContext* vm );
    virtual ClosedSymbol* clone() const { return new ClosedSymbol(*this); }
 
-   virtual void assign( VMContext* vm, const Item& value ) const;
-   virtual bool retrieve( Item& value, VMContext* vm=0 ) const;
+   virtual Item* value( VMContext* ctx ) const;
 
    virtual Expression* makeExpression();
-
-   const Item& value() const { return m_item; }
-   Item& value() { return m_item; }
 
 protected:
    Item m_item;

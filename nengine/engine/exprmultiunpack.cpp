@@ -124,7 +124,7 @@ Expression* ExprMultiUnpack::getAssignee( int i) const
 }
 
 
-ExprMultiUnpack& ExprMultiUnpack::addAssignment(Symbol* e, Expression* expr)
+ExprMultiUnpack& ExprMultiUnpack::addAssignment( Symbol* e, Expression* expr)
 {
    // save exprs and symbols in a parallel array
    _p->m_params.push_back(e);
@@ -164,7 +164,7 @@ void ExprMultiUnpack::apply_( const PStep* ps, VMContext* ctx )
    Item* topStack = &ctx->topData() - pcount+1;
    for( ; i < pcount; ++i, ++topStack )
    {
-      syms[i]->assign( ctx, *topStack );
+      *syms[i]->value( ctx ) = *topStack;
    }
    
    if ( self->isTop() )

@@ -39,15 +39,11 @@ public:
 
    virtual GlobalSymbol* clone() const { return new GlobalSymbol(*this); }
    
-   virtual void assign( VMContext* ctx, const Item& value ) const;
-   virtual bool retrieve( Item& value, VMContext* ctx ) const;
-   
    static void apply_( const PStep* self, VMContext* ctx );
    static void apply_lvalue_( const PStep* self, VMContext* ctx );
    virtual Expression* makeExpression();
 
-   const Item& value() const { return m_item; }
-   Item& value() { return m_item; }
+   virtual Item* value( VMContext* ) const;
 
 protected:
    GlobalSymbol();

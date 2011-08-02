@@ -53,15 +53,9 @@ UnknownSymbol::~UnknownSymbol()
    // nothing to do
 }
 
-void UnknownSymbol::assign( VMContext*, const Item&  ) const
+Item* UnknownSymbol::value( VMContext* ) const
 {
    throw new CodeError( ErrorParam( e_assign_sym, __LINE__, __FILE__ ).extra(name()) );
-}
-
-bool UnknownSymbol::retrieve( Item&, VMContext* ) const
-{
-   throw new CodeError( ErrorParam( e_assign_sym, __LINE__, __FILE__ ).extra(name()) );
-   //return true;
 }
 
 void UnknownSymbol::apply_( const PStep* s, VMContext* ctx )

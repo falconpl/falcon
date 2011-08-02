@@ -192,22 +192,22 @@ void ModCompiler::Context::onInheritance( Inheritance* inh  )
    // found?
    if( sym != 0 )
    {
-      Item itm;
-      if( ! sym->retrieve( itm, 0 ) )
+      Item* itm;
+      if( ( itm = sym->value() ) == 0 )
       {
          //TODO: Add inheritance line number.
          m_owner->m_sp.addError( e_undef_sym, m_owner->m_sp.currentSource(), 
                  inh->sourceRef().line(), inh->sourceRef().chr(), 0, inh->className() );
       }
       // we want a class. A rdeal class.
-      else if ( ! itm.isUser() || ! itm.asClass()->isMetaClass() )
+      else if ( ! itm->isUser() || ! itm->asClass()->isMetaClass() )
       {
          m_owner->m_sp.addError( e_inv_inherit, m_owner->m_sp.currentSource(), 
                  inh->sourceRef().line(), inh->sourceRef().chr(), 0, inh->className() );
       }
       else
       {
-         inh->parent( static_cast<Class*>(itm.asInst()) );
+         inh->parent( static_cast<Class*>(itm->asInst()) );
       }
 
       // ok, now how to break away if we aren't complete?

@@ -38,39 +38,21 @@ DynSymbol::~DynSymbol()
 }
 
 
-void DynSymbol::assign( VMContext* ctx, const Item& value ) const
-{
-   Item* fval = ctx->vm()->findLocalItem( name() );
-   
-   if( fval == 0 )
-   {
-      throw new CodeError( ErrorParam( e_undef_sym, __LINE__, __FILE__).extra("Dyn:" + name()));
-   }
-
-   fval->assign( value );
-}
-
-
-bool DynSymbol::retrieve( Item& value, VMContext* ctx ) const
+Item* DynSymbol::value( VMContext* ctx ) const
 {
    if( ctx == 0 )
    {
-      return false;
+      return 0;
    }
 
-   Item* itm = ctx->vm()->findLocalItem( name() );
-   if( itm != 0 )
-   {
-      value = *itm;
-      return true;
-   }
-   return false;
+   return ctx->vm()->findLocalItem( name() );
 }
+
 
 void DynSymbol::apply_( const PStep* ps, VMContext* ctx )
 {
    const ExprSymbol* self = static_cast<const ExprSymbol*>(ps);
-   DynSymbol* sym = static_cast<DynSymbol*>(self->symbol());
+   const DynSymbol* sym = static_cast<const DynSymbol*>(self->symbol());
 
    Item* fval = ctx->vm()->findLocalItem( sym->name() );
    if ( fval )
@@ -87,7 +69,7 @@ void DynSymbol::apply_( const PStep* ps, VMContext* ctx )
 void DynSymbol::apply_lvalue_( const PStep* ps, VMContext* ctx )
 {
    const ExprSymbol::PStepLValue* self = static_cast<const ExprSymbol::PStepLValue*>(ps);
-   DynSymbol* sym = static_cast<DynSymbol*>(self->m_owner->symbol());
+   const DynSymbol* sym = static_cast<const DynSymbol*>(self->m_owner->symbol());
 
    Item* fval = ctx->vm()->findLocalItem( sym->name() );
    if ( fval )

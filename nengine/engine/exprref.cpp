@@ -58,6 +58,7 @@ ExprRef::~ExprRef()
    delete m_expr;
 }
 
+
 void ExprRef::apply_( const PStep* ps, VMContext* ctx )
 {
    static ClassReference* refClass = Engine::instance()->referenceClass();
@@ -72,22 +73,19 @@ void ExprRef::apply_( const PStep* ps, VMContext* ctx )
    // get the class/data pair of the item.
    Class* cls;
    void* data;
-   Item value;
-   self->m_symbol->retrieve(value, ctx);
+   Item &value = *self->m_symbol->value(ctx);
+   fassert( &value != 0 );
    value.forceClassInst( cls, data );
    
    // if this is already a reference, we're done.
-   if( cls->typeID() == refClass->typeID() )
-   {
-      ctx->pushData( value );
-   }
-   else
+   if( cls->typeID() != refClass->typeID() )
    {
       // both the original item and the copy in the stack must be changed.
       refClass->makeRef( value );
-      self->m_symbol->assign( ctx, value );
-      ctx->pushData(value);
-   }   
+   }
+   
+   Item copy = value; // prevent stack corruption (value may be on the stack)
+   ctx->pushData(copy);
 }
 
 void ExprRef::describeTo( String& str ) const

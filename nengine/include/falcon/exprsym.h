@@ -55,7 +55,7 @@ public:
 
    // Return the symbol pointed by this expression.
    Symbol* symbol() const { return m_symbol; }
-   void symbol(Symbol* sym) { m_symbol = sym; }
+   void symbol( Symbol* sym) { m_symbol = sym; }
 
 
    /** Redefine precompile in lvalue context.

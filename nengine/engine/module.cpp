@@ -69,8 +69,8 @@ public:
       virtual void onSymbolLoaded( Module*, Symbol* sym )
       {
          //TODO -- account error if not a class or not retriveable
-         Item value;
-         if( sym->retrieve( value, 0 ) )
+         Item* value;
+         if( (value = sym->value( 0 )) == 0 )
          {
             //...
          }
@@ -99,6 +99,18 @@ public:
          {
             delete *wli;
             ++wli;
+         }
+      }
+      
+      /** Called when the remote name is resolved. */
+      void resolved( Module* mod, Symbol* sym )
+      {
+         WaitList::iterator iter = m_waiting.begin();
+         while( iter != m_waiting.end() )
+         {
+            WaitingDep* dep = *iter;
+            dep->onSymbolLoaded( mod, sym );
+            ++iter;
          }
       }
    };
@@ -371,7 +383,7 @@ void Module::addFunction( GlobalSymbol* gsym, Function* f )
 
    if(gsym)
    {
-      gsym->value() = f;
+      *gsym->value(0) = f;
    }
 }
 
@@ -407,7 +419,7 @@ void Module::addClass( GlobalSymbol* gsym, Class* fc, bool )
 
    if(gsym)
    {
-      gsym->value().setUser( ccls, fc );
+      gsym->value(0)->setUser( ccls, fc );
    }
 }
 
@@ -665,10 +677,15 @@ bool Module::passiveLink( ModSpace* ms )
          while( iter != req->m_deps.end() )
          {
             Private::Dependency* dep = iter->second;
-            const Symbol* sym = ms->findExportedSymbol( dep->m_remoteName );
+            Module* mod;
+            Symbol* sym = ms->findExportedSymbol( dep->m_remoteName, mod );
             if( sym == 0 )
             {
                ms->addLinkError( e_undef_sym, m_uri, 0, dep->m_remoteName );
+            }
+            else
+            {
+               dep->resolved( mod, sym );
             }
             ++iter;
          }
