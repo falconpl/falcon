@@ -85,6 +85,9 @@ class DynUnloader;
  its syntactic tree and reference global variables, so they don't need to back-mark 
  their module -- however, they do because of meta-information held in the module
  (module logical name, URI, attributes etc).
+ 
+ \note Modules whose source is uncertain should be always deleted through the
+ unload() method. See the method description for more information.
  */
 class FALCON_DYN_CLASS Module {
 public:
@@ -302,28 +305,60 @@ public:
     */
    void sendDynamicToGarbage();
 
+   /** Adds a load request.
+    \param name The module to be loaded
+    \param bIsUri Set to true if the module name is a system path or URI.
+    */
    bool addLoad( const String& name, bool bIsUri=false );
 
+   /** Adds a standard import/from request.
+    \param localName The name of the symbol as it's locally known.
+    \param remoteName The symbol name as it's known in the import source module.
+    \parma source The import source module name or location.
+    \param bIsUri Set to true if the module name is a system path or URI.
+    */
    UnknownSymbol* addImportFrom( const String& localName, const String& remoteName,
                                            const String& source, bool bIsUri );
 
    /** Explicitly generate an imported global symbol.
+    \param name The symbol to be searched.
     \return 0 if already existing, or a valid UnknownSymbol if not found.
+    
+    Generic imports are declared with "import from modulename [in namespace]".
+    This method requries that all the unknown symbol (eventually related
+    to a local namespace) are searched in the given module before being
+    searched in the global export table.
+        
     */
    UnknownSymbol* addImport( const String& name );
    
+   /** Adds an implicitly imported symbol.
+    \param uks The unknown symbol that should be resolved during link time.
+    \return true if the symbol could be added, false if the symbol name was
+    already existing in the module.
+    */
    bool addImplicitImport( UnknownSymbol* uks );
    
-   /** Callback that is called when a symbol import request is satisfied. 
+   /** Callback that is called when a symbol import request is satisfied.
+    \param requester The module from which the request was issued.
+    \param definer The module where the symbol has been found.
+    \param sym The resolved symbol.
     */
    
    typedef Error* (*t_func_import_req)( Module* requester, Module* definer, Symbol* sym );
+   
    /** Adds an import request.
-    t_func_import_req, const String& symName, 
+    \param cbFunc a t_func_import_req callback that will be notified when this
+      symbol is found (if ever). 
+    \param symName the symbol to be searched.
+    \param sourceMod The module that should provide the required symbol, or ""
+           if the symbol should be searched in the global export table.
+    \param bModIsPath True if sourceMod is a location or URI, false if it's
+           a logical name.
                
     This method requests that a certain callback is invoked when a certain dependency is rsolved.
     */
-   void addImportRequest( t_func_import_req, const String& symName, 
+   void addImportRequest( t_func_import_req cbFunc, const String& symName, 
                const String& sourceMod="", bool bModIsPath=false );
    
    /** Export a symbol.
@@ -337,6 +372,15 @@ public:
     */
    Symbol* addExport( const String& name, bool &bAlready );
 
+   /** Adds an inheritance that's supposed to come from outside.
+    \param inh The inheritance to be resolved during the link step.
+    
+    This method adds an inheritance of a FalconClass to the list of things
+    to be resolved during the link phase.
+    
+    When all the external inheritances are resolved, the owner class is
+    generated and readied to be used.
+    */
    void addImportInheritance( Inheritance* inh );
    
    /** Performs a passive link step on this module.
@@ -392,12 +436,33 @@ public:
     */
    bool resolveStaticReqs( ModSpace* space );
 
+   /** Resolves module requirements dynamically.
+    \param loader A loader used to resolve dynamic deps.
+    
+    This puts all the resolved dependencies at disposal of this module.
+    Resolved modules are destroyed when this module is destroyed.
+    */
    bool resolveDynReqs( ModLoader* loader );
    
+   /** Reads the exportAll flag.
+    \return True if this module wants to export all the non-private symbols.
+    */
    bool exportAll() const { return m_bExportAll; }
+   
+   /** Sets the exportAll flag.
+    \param e set to true if this module wants to export all the non-private symbols.
+    */   
    void exportAll( bool e ) { m_bExportAll = e; }
    
-   
+   /** Unloads a dynamically loaded module.
+    This method destroys the current module. In case the module has been
+    crated through a dynamic shared object loader, the module is also unloaded.
+    
+    The system keeps a reference of loaded shared objects, so if the underlying
+    shared library has been used to generate more modules, the other modules
+    will still be able to work.
+    
+    */
    virtual void unload();
 private:
    String m_name;

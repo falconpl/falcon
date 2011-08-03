@@ -25,11 +25,19 @@
 
 #include <iostream>
 
+/** A traditional VM-based EXT function.
+ */
 void TestFunc( Falcon::VMachine* )
 {
    std::cout << "Hello wrold from a module!" << std::endl;
 }
 
+/** A new Function -- directly invoking printl.
+ 
+ This function will try to find printl in the global exports the first time
+ it gets loaded.
+ 
+ */
 class TestFunc2: public Falcon::Function
 {
 public:
@@ -65,6 +73,11 @@ private:
 };
 
 
+/** A function with static linkage.
+ 
+ This function uses a pointer to the printl function that gets resolved
+ during linking via the addImport request.
+ */
 class TestFunc3: public Falcon::Function
 {
 public:
@@ -91,11 +104,22 @@ public:
 };
 
 
+/** A module with extended capabilities.
+ 
+ It is not strictly necessary to extend the Module class,
+ as all the features are available to the base class and
+ virtuality is not explicitly involved.
+ 
+ However, using an extended module helps to keep together some
+ features, as i.e. the callback function in response to link resolution events.
+ */
 class TestModule: public Falcon::Module
 {
 public:
+   /** We keep a pointer to an item that we need we should talk with. */
    TestFunc3* m_TheTestFunc3;   
    
+   /** This callback is invoked when the "printl" function is found.*/
    static Falcon::Error* onPrintlResolved( Falcon::Module* requester, Falcon::Module* , Falcon::Symbol* sym )
    {   
       // printl should really be a function in a global symbol ,but...
@@ -140,7 +164,6 @@ TestModule::~TestModule()
 {
    // Nothing to do.
 }
-
 
 
 FALCON_MODULE_DECL 

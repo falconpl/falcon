@@ -31,13 +31,17 @@ using namespace Parsing;
 bool import_errhand(const NonTerminal&, Parser& p);
 
 void apply_import( const Rule&, Parser& p );
-void apply_import_from_in( const Rule&, Parser& p );
-void apply_import_from_in_modspec( const Rule&, Parser& p );
-void apply_import_namelist( const Rule&, Parser& p );
 
-void apply_import_fromin( const Rule&, Parser& p );
-void apply_import_fromas( const Rule&, Parser& p );
-void apply_import_from_empty( const Rule&, Parser& p );
+void apply_import_from_string_as( const Rule&, Parser& p );
+void apply_import_from_string_in( const Rule&, Parser& p );
+void apply_import_string( const Rule&, Parser& p );
+
+void apply_import_from_modspec_as( const Rule&, Parser& p );
+void apply_import_from_modspec_in( const Rule&, Parser& p );
+void apply_import_from_modspec( const Rule&, Parser& p );
+
+void apply_import_syms( const Rule&, Parser& p );
+
 }
 
 #endif

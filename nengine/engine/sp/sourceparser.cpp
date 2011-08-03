@@ -193,7 +193,7 @@ SourceParser::SourceParser():
    S_Load << (r_load_string << "load_string" << apply_load_string << T_load << T_String << T_EOL );
    S_Load << (r_load_mod_spec << "load_mod_spec" << apply_load_mod_spec << T_load << ModSpec << T_EOL );
 
-   ModSpec << "Module specification" << load_modspec_errhand;
+   ModSpec << "ModSpec" << load_modspec_errhand;
    ModSpec << (r_modspec_next << "modspec_next" << apply_modspec_next << ModSpec << T_Dot << T_Name );
    ModSpec << (r_modspec_first << "modspec_first" << apply_modspec_first << T_Name );
    ModSpec << (r_modspec_first_self << "modspec_first_self" << apply_modspec_first_self << T_self );
@@ -210,18 +210,23 @@ SourceParser::SourceParser():
    S_Import << "import" << import_errhand;
    S_Import << ( r_import_rule << "import_rule" << apply_import << T_import << ImportClause );
    
-   ImportClause << "import clause";
-   ImportClause << ( r_import_from_in << "import_from_in" << apply_import_from_in
-      << ListSymbol << T_from << T_String << ImportFromInClause );
-   ImportClause << ( r_import_from_in_modspec << "import_from_in_modspec" << apply_import_from_in_modspec
-      << ListSymbol << T_from << ModSpec << ImportFromInClause );
+   ImportClause << "ImportClause";
+   ImportClause << ( r_import_from_string_as << "import_from_string_as" << apply_import_from_string_as
+      << ListSymbol << T_from << T_String << T_as << T_Name << T_EOL );
+   ImportClause << ( r_import_from_string_in << "import_from_string_in" << apply_import_from_string_in
+      << ListSymbol << T_from << T_String << T_in << ModSpec << T_EOL );
+   ImportClause << ( r_import_from_string << "import_from_string" << apply_import_string
+      << ListSymbol << T_from << T_String << T_EOL );
+   
+   ImportClause << ( r_import_from_modspec_as << "import_from_modspec_as" << apply_import_from_modspec_as
+      << ListSymbol << T_from << ModSpec << T_as << T_Name << T_EOL );   
+   ImportClause << ( r_import_from_modspec_in << "import_from_modspec_in" << apply_import_from_modspec_in
+      << ListSymbol << T_from << ModSpec << T_in << ModSpec << T_EOL );
+   ImportClause << ( r_import_from_modspec << "import_from_modspec" << apply_import_from_modspec
+      << ListSymbol << T_from << ModSpec << T_EOL );
 
-   ImportFromInClause << "from/in clause";   
-   ImportFromInClause << ( r_import_fromin << "import_fromin" << apply_import_fromin 
-      << T_in << ModSpec << T_EOL );
-   ImportFromInClause << ( r_import_fromas << "import_fromas" << apply_import_fromas 
-      << T_as << T_Name << T_EOL );
-   ImportFromInClause << ( r_import_from_empty << "import_from_empty" << apply_import_from_empty << T_EOL );
+   ImportClause << ( r_import_syms << "import_syms" << apply_import_syms
+      << ListSymbol << T_EOL );
 
    //==========================================================================
    // Expression

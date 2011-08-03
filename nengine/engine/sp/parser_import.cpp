@@ -32,30 +32,6 @@ namespace Falcon {
 
 using namespace Parsing;
 
-/** Internal class representing an import as or in clause*/
-class ImportClause
-{
-public:
-   String* m_target;
-   bool m_bIsIn;
-   
-   ImportClause( String* str, bool b ):
-      m_target( str ),
-      m_bIsIn( b )
-   {}
-   
-   ~ImportClause() {
-      delete m_target;
-   }
-};
-
-
-static void import_clause_deletor( void* data )
-{
-   delete static_cast<ImportClause*>(data);
-}
-
-
 bool import_errhand(const NonTerminal&, Parser& p)
 {
    //SourceParser& sp = *static_cast<SourceParser*>(p);
@@ -77,32 +53,36 @@ void apply_import( const Rule&, Parser& p )
 }
 
 
-static void apply_import_internal( Parser&p, 
-   TokenInstance* tnamelist,  TokenInstance* tdepName, 
-   TokenInstance* importClause, bool bNameIsPath )
+static void apply_import_internal( Parser& p, 
+   TokenInstance* tnamelist,  
+   TokenInstance* tdepName, bool bNameIsPath,
+   TokenInstance* tInOrAs,  bool bIsIn )
 {
    ParserContext* ctx = static_cast<ParserContext*>( p.context() );
    
    NameList* list = static_cast<NameList*>(tnamelist->asData());
    String* name = tdepName->asString();
-   ImportClause* ic = static_cast<ImportClause*>(importClause->asData());
    
    if( list->empty() )
    {
-      if( ic == 0 )
+      if( tInOrAs == 0 )
+      {         
+         // "import from modname"
+         ctx->onImportFrom( *name, bNameIsPath, "", "", false );
+      }
+      else
       {
-         // it's a general import/from.
-         // general import-from don't support as.
-         if( ! ic->m_bIsIn )
+         // TODO: use ic->m_target just to create the namespace in the compiler,
+         // it's a general import/from in ns.
+         if( bIsIn )
          {
+            ctx->onImportFrom( *name, bNameIsPath, "", *tInOrAs->asString(), true );
+         }
+         else
+         {
+            // general import-from don't support as.
             p.addError( e_syn_import_as, p.currentSource(), tnamelist->line(), tnamelist->chr(), 0 );
          }
-
-         // import from modname
-         // TODO: use ic->m_target just to create the namespace in the compiler,
-         // As import from Module in ... is the same as import from Module to us.
-         // we don't need to know 
-         ctx->onImportFrom( *name, bNameIsPath, "", "", false );
       }
    }
    else
@@ -111,9 +91,9 @@ static void apply_import_internal( Parser&p,
       while( iter != list->end() )
       {
          // this will eventually add the needed errors.
-         if( ic != 0 )
+         if( tInOrAs != 0 )
          {
-            ctx->onImportFrom( *name, bNameIsPath, *iter, *ic->m_target, ic->m_bIsIn );
+            ctx->onImportFrom( *name, bNameIsPath, *iter, *tInOrAs->asString(), bIsIn );
          }
          else
          {
@@ -122,7 +102,7 @@ static void apply_import_internal( Parser&p,
          ++iter;
          
          // as clause and more things?
-         if( ic != 0 && ! ic->m_bIsIn && iter != list->end() )
+         if( tInOrAs != 0 && ! bIsIn && iter != list->end() )
          {
             // import/from/as supports only one symbol
             p.addError( e_syn_import_as, p.currentSource(), tnamelist->line(), tnamelist->chr(), 0 );
@@ -133,40 +113,100 @@ static void apply_import_internal( Parser&p,
    
    // Declaret that this namelist is a valid ImportClause
    SourceParser& sp = *static_cast<SourceParser*>(&p);
-   importClause->token( sp.ImportClause );
+   TokenInstance* ti = new TokenInstance( 
+                     tnamelist->line(), tnamelist->chr(), sp.ImportClause );
    
    // let the last token to live this way.
-   p.simplify( 3 );
+   p.simplify( tInOrAs == 0 ? 4 : 6, ti );
 }
 
 
-void apply_import_from_in( const Rule&, Parser& p )
+void apply_import_from_string_as( const Rule&, Parser& p )
 {
-   // << NameList << T_from << T_String << ImportFromInClause );
+   // << ListSymbol << T_from << T_String << T_as << T_Name << T_EOL
    TokenInstance* tnamelist = p.getNextToken();
-   p.getNextToken(); // T_From
+   p.getNextToken();
    TokenInstance* tdepName = p.getNextToken();
-   TokenInstance* importClause = p.getNextToken();
+   p.getNextToken();
+   TokenInstance* tInOrAs = p.getNextToken();
    
-   apply_import_internal( p, tnamelist,  tdepName, importClause, true );
+   apply_import_internal( p, tnamelist, 
+      tdepName, true,
+      tInOrAs, false );
 }
 
-
-void apply_import_from_in_modspec( const Rule&, Parser& p )
+void apply_import_from_string_in( const Rule&, Parser& p )
 {
-   // << NameList << T_from << T_ModSpec << ImportFromInClause );
+   // << ListSymbol << T_from << T_String << T_in << T_Name << T_EOL
    TokenInstance* tnamelist = p.getNextToken();
-   p.getNextToken(); // T_From
+   p.getNextToken();
    TokenInstance* tdepName = p.getNextToken();
-   TokenInstance* importClause = p.getNextToken();
+   p.getNextToken();
+   TokenInstance* tInOrAs = p.getNextToken();
    
-   apply_import_internal( p, tnamelist,  tdepName, importClause, false );
+   apply_import_internal( p, tnamelist, 
+      tdepName, true,
+      tInOrAs, true );
 }
 
 
-void apply_import_namelist( const Rule&, Parser& p )
+void apply_import_string( const Rule&, Parser& p )
 {
-   //<< NameList
+   // << ListSymbol << T_from << T_String << T_EOL
+   TokenInstance* tnamelist = p.getNextToken();
+   p.getNextToken();
+   TokenInstance* tdepName = p.getNextToken();   
+   
+   apply_import_internal( p, tnamelist, 
+      tdepName, true,
+      0, false );
+}
+
+
+void apply_import_from_modspec_as( const Rule&, Parser& p )
+{
+   // << ListSymbol << T_from << T_String << T_as << T_Name << T_EOL
+   TokenInstance* tnamelist = p.getNextToken();
+   p.getNextToken();
+   TokenInstance* tdepName = p.getNextToken();
+   p.getNextToken();
+   TokenInstance* tInOrAs = p.getNextToken();
+   
+   apply_import_internal( p, tnamelist, 
+      tdepName, false,
+      tInOrAs, false );
+}
+
+void apply_import_from_modspec_in( const Rule&, Parser& p )
+{
+   // << ListSymbol << T_from << T_String << T_in << T_Name << T_EOL
+   TokenInstance* tnamelist = p.getNextToken();
+   p.getNextToken();
+   TokenInstance* tdepName = p.getNextToken();
+   p.getNextToken();
+   TokenInstance* tInOrAs = p.getNextToken();
+   
+   apply_import_internal( p, tnamelist, 
+      tdepName, false,
+      tInOrAs, true );
+}
+
+
+void apply_import_from_modspec( const Rule&, Parser& p )
+{
+   // << ListSymbol << T_from << T_String << T_EOL
+   TokenInstance* tnamelist = p.getNextToken();
+   p.getNextToken();
+   TokenInstance* tdepName = p.getNextToken();   
+   
+   apply_import_internal( p, tnamelist, 
+      tdepName, false,
+      0, false );
+}
+
+void apply_import_syms( const Rule&, Parser& p )
+{
+   // << ListSymbol << T_EOL
    
    TokenInstance* tnamelist = p.getNextToken();
    NameList* list = static_cast<NameList*>(tnamelist->asData());
@@ -190,44 +230,11 @@ void apply_import_namelist( const Rule&, Parser& p )
    
    // Declaret that this namelist is a valid ImportClause
    SourceParser& sp = *static_cast<SourceParser*>(&p);
-   tnamelist->token( sp.ImportClause );
-   // nothing to simplify
+   p.getNextToken()->token( sp.ImportClause ); // turn the EOL in importclause
+   // and remove the list token.
+   p.simplify(1,0);
 }
 
-
-static void apply_import_fromin_internal( Parser& p, bool bInAs )
-{
-   SourceParser& sp = *static_cast<SourceParser*>(&p);
-   
-   p.getNextToken();
-   TokenInstance* tmodspec = p.getNextToken();
-   
-   TokenInstance* tic = new TokenInstance( tmodspec->line(), tmodspec->chr(), 
-                                                      sp.ImportFromInClause );
-      
-   tic->setValue( new ImportClause( tmodspec->detachString(), bInAs ), import_clause_deletor );
-   p.simplify(3, tic);   
-}
-
-
-void apply_import_fromin( const Rule&, Parser& p )
-{
-   apply_import_fromin_internal( p, true );
-}
-
-
-void apply_import_fromas( const Rule&, Parser& p )
-{
-   // << T_as << Name << T_EOL
-   apply_import_fromin_internal( p, false );
-}
-
-
-void apply_import_from_empty( const Rule&, Parser& p )
-{
-   SourceParser& sp = *static_cast<SourceParser*>(&p);
-   p.getNextToken()->token(sp.ImportFromInClause);
-}
 
 }
 
