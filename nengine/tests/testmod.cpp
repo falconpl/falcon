@@ -3,6 +3,14 @@
    FILE: testmod.cpp
 
    Test of a module
+ 
+   Try with this script:
+
+   import from testmod
+   testFunc()
+   testFunc2()
+   testFunc3()
+
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: Wed, 03 Aug 2011 21:58:46 +0200
@@ -86,8 +94,26 @@ public:
 class TestModule: public Falcon::Module
 {
 public:
-   TestFunc3* m_TheTestFunc3;
+   TestFunc3* m_TheTestFunc3;   
    
+   static Falcon::Error* onPrintlResolved( Falcon::Module* requester, Falcon::Module* , Falcon::Symbol* sym )
+   {   
+      // printl should really be a function in a global symbol ,but...
+      if( sym->value(0) == 0 || ! sym->value(0)->isFunction() )
+      {
+         return new Falcon::LinkError( Falcon::ErrorParam( 
+               Falcon::e_link_error, __LINE__, requester->name() )
+            .extra( "printl is not a global function!" ) );
+      }
+
+      // We know the requester is an instance of our module.
+      static_cast<TestModule*>(requester)->m_TheTestFunc3->m_funcPrintl = 
+                                                      sym->value(0)->asFunction();
+
+      // we have no error to signal. 
+      return 0;
+   }
+
    TestModule():
       Module( "TestModule" )
    {
@@ -100,6 +126,10 @@ public:
       
       // add a traditional function.
       addFunction( "testFunc", &TestFunc, true );
+      
+      // try to add static resolution.
+      // by default, symbols are searched in the exported symbol table.
+      addImportRequest( &onPrintlResolved, "printl" );
    }
    
    virtual ~TestModule();
@@ -111,33 +141,11 @@ TestModule::~TestModule()
    // Nothing to do.
 }
 
-static Falcon::Error* onPrintlResolved( Falcon::Module* requester, Falcon::Module* , Falcon::Symbol* sym )
-{   
-   // printl should really be a function in a global symbol ,but...
-   if( sym->value(0) == 0 || ! sym->value(0)->isFunction() )
-   {
-      return new Falcon::LinkError( Falcon::ErrorParam( 
-            Falcon::e_link_error, __LINE__, requester->name() )
-         .extra( "printl is not a global function!" ) );
-   }
-   
-   // We know the requester is an instance of our module.
-   static_cast<TestModule*>(requester)->m_TheTestFunc3->m_funcPrintl = 
-                                                   sym->value(0)->asFunction();
-   
-   // we have no error to signal. 
-   return 0;
-}
 
 
 FALCON_MODULE_DECL 
 {
    Falcon::Module* mod = new TestModule;
-      
-   // try to add static resolution.
-   // by default, symbols are searched in the exported symbol table.
-   mod->addImportRequest( &onPrintlResolved, "printl" );
-   
    return mod;
 }
 
