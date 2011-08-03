@@ -32,7 +32,7 @@
 #include <falcon/hyperclass.h>
 #include <falcon/dynunloader.h>
 
-
+#include <stdexcept>
 #include <map>
 #include <deque>
 
@@ -64,6 +64,23 @@ public:
       {
          m_symbol->define( sym );
          return 0;
+      }
+   };
+   
+   class WaitingFunc: public WaitingDep
+   {
+   public:
+      Module* m_requester;
+      t_func_import_req m_func;
+
+      WaitingFunc( Module* req, t_func_import_req func ):
+         m_requester( req ),
+         m_func( func )
+      {}
+      
+      virtual Error* onSymbolLoaded( Module* mod, Symbol* sym )
+      {
+         return m_func( m_requester, mod, sym );
       }
    };
 
@@ -350,10 +367,16 @@ Module::Module( const String& name, const String& uri ):
 Module::~Module()
 {
    TRACE("Deleting module %s", m_name.c_ize() );
+   
+   
+   fassert2( m_unloader == 0, "A module cannot be destroyed with an active unloader!" );
+   if( m_unloader != 0 )
+   {      
+      throw std::runtime_error( "A module cannot be destroyed with an active unloader!" );
+   }
 
    // this is doing to do a bit of stuff; see ~Private()
    delete _p;   
-   delete m_unloader;
    TRACE("Module '%s' deletion complete", m_name.c_ize() );
 }
 
@@ -757,6 +780,14 @@ bool Module::addImplicitImport( UnknownSymbol* uks )
 }
 
 
+void Module::addImportRequest( Module::t_func_import_req func, const String& symName, const String& sourceMod, bool bModIsPath)
+{   
+   Private::Dependency* dep = _p->getDep( sourceMod, bModIsPath, symName );
+   // Record the fact that we have to save transform an unknown symbol...
+   dep->m_waiting.push_back( new Private::WaitingFunc( this, func ) );
+}
+
+
 Symbol* Module::addExport( const String& name, bool& bAlready )
 {
    Symbol* sym = 0;
@@ -1061,6 +1092,22 @@ bool Module::resolveDynReqs( ModLoader* loader )
    
    // TODO: Throw or return false on error?
    return true;
+}
+
+
+void Module::unload()
+{
+   if( m_unloader != 0 )
+   {
+      DynUnloader* ul = m_unloader;
+      m_unloader = 0;
+      delete this;
+      ul->unload();
+   }
+   else
+   {
+      delete this;
+   }
 }
 
 }

@@ -86,9 +86,12 @@ public:
       ModMap::iterator iter = m_mods.begin();
       while( iter != m_mods.end() )
       {
-         delete iter->second.m_module;
+         Module* mod = iter->second.m_module;
+         mod->unload();
          ++iter;
+      
       }
+      m_mods.clear();
    }
    
    void clearErrors()

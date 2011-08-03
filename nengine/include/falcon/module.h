@@ -311,7 +311,20 @@ public:
     \return 0 if already existing, or a valid UnknownSymbol if not found.
     */
    UnknownSymbol* addImport( const String& name );
+   
    bool addImplicitImport( UnknownSymbol* uks );
+   
+   /** Callback that is called when a symbol import request is satisfied. 
+    */
+   
+   typedef Error* (*t_func_import_req)( Module* requester, Module* definer, Symbol* sym );
+   /** Adds an import request.
+    t_func_import_req, const String& symName, 
+               
+    This method requests that a certain callback is invoked when a certain dependency is rsolved.
+    */
+   void addImportRequest( t_func_import_req, const String& symName, 
+               const String& sourceMod="", bool bModIsPath=false );
    
    /** Export a symbol.
     \param name The name of the symbol to be exported.
@@ -384,6 +397,8 @@ public:
    bool exportAll() const { return m_bExportAll; }
    void exportAll( bool e ) { m_bExportAll = e; }
    
+   
+   virtual void unload();
 private:
    String m_name;
    String m_uri;

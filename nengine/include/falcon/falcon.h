@@ -65,6 +65,7 @@
 #include <falcon/unsupportederror.h>
 #include <falcon/syntaxerror.h>
 #include <falcon/encodingerror.h>
+#include <falcon/linkerror.h>
 
 #endif	/* FALCON_H */
 
