@@ -23,6 +23,12 @@
 #include <falcon/enumerator.h>
 #include <falcon/refcounter.h>
 
+#define DEFALUT_FALCON_MODULE_INIT falcon_module_init
+#define DEFALUT_FALCON_MODULE_INIT_NAME "falcon_module_init"
+
+#define FALCON_MODULE_DECL \
+   FALCON_MODULE_TYPE DEFALUT_FALCON_MODULE_INIT()
+
 namespace Falcon {
 
 class GlobalSymbol;
@@ -34,6 +40,7 @@ class UnknownSymbol;
 class ModSpace;
 class ModLoader;
 class FalconClass;
+class DynUnloader;
 
 /** Standard Falcon Execution unit and library.
 
@@ -249,6 +256,18 @@ public:
       return *this;
    }
 
+   /** Adds a generic import request.
+    \param source The source path or logical module name.
+    \param bIsUri If true, the source is an URI, otherwise is a module name.
+    \return True if the module could be added or promoted, false if it was
+            already imported as generic.
+   
+    Generic import requests (as in "import from ModuleName") inform the
+    engine that unknown symbols declared in the module are to be searched 
+    first in that module, and then in the global exported symbol space.
+    
+    */
+   bool addGenericImport( const String& source, bool bIsUri );
 
    /** Mark (dynamic) modules for Garbage Collecting.
     \param mark the current GC mark.
@@ -370,10 +389,20 @@ private:
    String m_uri;
    uint32 m_lastGCMark;
    bool m_bExportAll;
+   
+   DynUnloader* m_unloader;
 
    class Private;
    Private* _p;
    friend class Private;   
+   friend class DynLoader;
+   friend class FAMLoader;
+   
+   void name( const String& v ) { m_name = v; }
+   void uri( const String& v ) { m_uri = v; }
+   void setDynUnloader( DynUnloader* ul ) { m_unloader = ul; }
+   
+   Symbol* findGenericallyExportedSymbol( const String& symname, Module*& mod ) const; 
 };
 
 }

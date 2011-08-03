@@ -206,11 +206,11 @@ public:
    */
    bool setFullLocation( const String &floc );
 
-   /** Sets the file part. */
-   void setFile( const String &file );
+   /** Sets the filename part (extension escluded). */
+   void setFilename( const String &file );
 
    /** Sets the filename part (both file and extension). */
-   void setFilename( const String &fname );
+   void setFileAndExt( const String &fname );
 
    /** Sets the extension part. */
    void setExtension( const String &extension );

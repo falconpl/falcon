@@ -378,7 +378,7 @@ void Path::setLocation( const String &loc )
 }
 
 
-void Path::setFile( const String &file )
+void Path::setFilename( const String &file )
 {
    if ( file.find( "/" ) != String::npos || file.find( "\\" ) != String::npos || file.find( ":" ) != String::npos )
    {
@@ -414,7 +414,7 @@ void Path::setExtension( const String &ext )
 }
 
 
-void Path::setFilename( const String &fname )
+void Path::setFileAndExt( const String &fname )
 {
    if ( fname.find( "/" ) != String::npos || fname.find( "\\" ) != String::npos || fname.find( ":" ) != String::npos )
    {

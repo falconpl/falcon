@@ -35,15 +35,19 @@ public:
    /** Loads a pre-compiled module from a data stream. 
     \param filePath The path where the shared object is stored.
     \param local_name The name under which the module is internally known.
+    \return A valid module.
+    \throw IOError on load error.
     
     \TODO Use a URI
     */
    Module* load( const String& filePath, const String& local_name );
-
+   
    /** Returns a System-specific extension. */
    static const String& sysExtension();
-   
-   
+
+private:
+
+   Module* load_sys( const String& filePath );
 };
 
 }

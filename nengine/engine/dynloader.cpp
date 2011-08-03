@@ -17,6 +17,9 @@
 #define SRC "engine/dynloader.cpp"
 
 #include <falcon/dynloader.h>
+#include <falcon/dynunloader.h>
+#include <falcon/module.h>
+#include <falcon/fassert.h>
 
 namespace Falcon
 {
@@ -27,11 +30,32 @@ DynLoader::DynLoader()
 DynLoader::~DynLoader()
 {}
    
-Module* DynLoader::load( const String& , const String&  )
-{
-   return 0;
+Module* DynLoader::load( const String& modpath, const String& modname )
+{   
+   Module* mod = load_sys( modpath );
+   fassert( mod != 0 ); // should throw on problem.
+   mod->uri( modpath );
+   mod->name( modname );
+   return mod;
 }
 
+
+//===================================================================
+//
+
+DynUnloader::DynUnloader( void* sysData ):
+   m_sysData(sysData)
+{}
+
+DynUnloader::~DynUnloader()
+{
+   if( m_sysData != 0 )
+   {
+      unload();
+   }
+   m_sysData = 0;
+}
+ 
 }
 
 /* end of dynloader.cpp */

@@ -96,7 +96,18 @@ void ModCompiler::Context::onImportFrom( const String& path, bool isFsPath, cons
       localName = symName;
    }
    
-   m_owner->m_module->addImportFrom( localName,  symName, path, isFsPath );
+   if( localName != "" )
+   {
+      m_owner->m_module->addImportFrom( localName,  symName, path, isFsPath );
+   }
+   else
+   {
+      if( ! m_owner->m_module->addGenericImport( path, isFsPath ) )
+      {
+         SourceParser& sp = m_owner->m_sp;
+         sp.addError( e_import_already_mod, sp.currentSource(), sp.currentLine()-1, 0, 0, path );
+      }
+   }
 }
 
 

@@ -13,6 +13,9 @@
    See LICENSE file for licensing details.
 */
 
+#undef SRC
+#define SRC "engine/module.cpp"
+
 #include <falcon/trace.h>
 #include <falcon/module.h>
 #include <falcon/itemarray.h>
@@ -27,6 +30,7 @@
 #include <falcon/linkerror.h>
 #include <falcon/falconclass.h>
 #include <falcon/hyperclass.h>
+#include <falcon/dynunloader.h>
 
 
 #include <map>
@@ -178,13 +182,16 @@ public:
 
       typedef std::map<String, Dependency*> DepMap;
       DepMap m_deps;
+      
+      bool m_bIsGenericProvider;
 
       Requirement( const String& name, bool bIsLoad, bool bIsUri=false ):
          m_uri( name ),
          m_bIsUri( bIsUri ),
          m_bIsLoad( bIsLoad ),
          m_module(0),
-         m_bIsDynamic( false )
+         m_bIsDynamic( false ),
+         m_bIsGenericProvider( false )
       {}
 
       ~Requirement()
@@ -203,8 +210,14 @@ public:
       }
    };
 
+   // Map module-name/path -> requirent*
    typedef std::map<String, Requirement*> ReqMap;
    ReqMap m_reqs;
+   
+   typedef std::deque<Requirement*> ReqList;
+   // Generic requirements, that is, import from Module 
+   // (modules that might provide any undefined symbol).
+   ReqList m_genericMods;
 
    //============================================
    // Main data
@@ -311,7 +324,8 @@ public:
 Module::Module( const String& name ):
    m_name( name ),
    m_lastGCMark(0),
-   m_bExportAll( false )
+   m_bExportAll( false ),
+   m_unloader( 0 )
 {
    TRACE("Creating internal module '%s'", name.c_ize() );
    m_uri = "internal:" + name;
@@ -323,7 +337,8 @@ Module::Module( const String& name, const String& uri ):
    m_name( name ),
    m_uri(uri),
    m_lastGCMark(0),
-   m_bExportAll( false )
+   m_bExportAll( false ),
+   m_unloader( 0 )
 {
    TRACE("Creating module '%s' from %s",
       name.c_ize(), uri.c_ize() );
@@ -337,8 +352,8 @@ Module::~Module()
    TRACE("Deleting module %s", m_name.c_ize() );
 
    // this is doing to do a bit of stuff; see ~Private()
-   delete _p;
-
+   delete _p;   
+   delete m_unloader;
    TRACE("Module '%s' deletion complete", m_name.c_ize() );
 }
 
@@ -655,6 +670,34 @@ bool Module::addLoad( const String& mod_name, bool bIsUri )
 }
 
 
+bool Module::addGenericImport( const String& source, bool bIsUri )
+{
+   Private::ReqMap::iterator pos = _p->m_reqs.find( source );
+   Private::Requirement* req;
+   if( pos != _p->m_reqs.end() )
+   {
+      // can we promote the module to generic import?
+      req = pos->second;
+      if( req->m_bIsGenericProvider )
+      {
+         // sorry, already promoted
+         return false;
+      }
+   }
+   else
+   {
+      // create the requirement now.
+      req = new Private::Requirement( source, false, bIsUri );
+      _p->m_reqs[source] = req;
+   }
+   
+   // If we're here, we can grant promotion.
+   req->m_bIsGenericProvider = true;
+   _p->m_genericMods.push_back( req );
+   return true;
+}
+
+
 UnknownSymbol* Module::addImportFrom( const String& localName, const String& remoteName,
                                         const String& source, bool bIsUri )
 {
@@ -670,7 +713,7 @@ UnknownSymbol* Module::addImportFrom( const String& localName, const String& rem
    dep->m_waiting.push_back( new Private::WaitingSym( usym ) );
    // ... and save the dependency.
    _p->m_gSyms[localName] = usym;
-
+   
    return usym;
 }
 
@@ -774,7 +817,16 @@ bool Module::passiveLink( ModSpace* ms )
          {
             Private::Dependency* dep = iter->second;
             Module* mod;
-            Symbol* sym = ms->findExportedSymbol( dep->m_remoteName, mod );
+            
+            // first, try to resolve the symbol in the generic export list.
+            Symbol* sym = findGenericallyExportedSymbol( dep->m_remoteName, mod );
+               
+            // better luck with the global exports
+            if ( sym == 0 )
+            {
+               sym = ms->findExportedSymbol( dep->m_remoteName, mod );
+            }
+            
             if( sym == 0 )
             {
                ms->addLinkError( e_undef_sym, m_uri, 0, dep->m_remoteName );
@@ -833,6 +885,31 @@ bool Module::passiveLink( ModSpace* ms )
    }
    
    return false;
+}
+
+
+Symbol* Module::findGenericallyExportedSymbol( const String& symname, Module*& declarer ) const
+{
+   Private::ReqList::const_iterator pos = _p->m_genericMods.begin();
+   
+   // found in?
+   while( pos != _p->m_genericMods.end() )
+   {
+      Private::Requirement* req = *pos;
+      if( req->m_module != 0 )
+      {
+         Symbol *sym = req->m_module->getGlobal( symname );
+         if( sym != 0 )
+         {
+            declarer = req->m_module;
+            return sym;
+         }
+      }
+      
+      ++pos;
+   }
+   
+   return 0;
 }
 
 
@@ -925,6 +1002,13 @@ bool Module::resolveStaticReqs( ModSpace* space )
          {
             // shall throw on error.
             mod = loader->loadName( req.m_uri, ModLoader::e_mt_none );                        
+         }
+         if( mod == 0 )
+         {
+            // the only reason mod can be 0 here is that we didn't find it.
+            throw new LinkError( ErrorParam( e_loaderror, __LINE__, SRC )
+               .origin( ErrorParam::e_orig_linker )
+               .extra( req.m_uri ));
          }
          // we don't really need to add it now, but...
          req.m_module = mod;

@@ -76,6 +76,7 @@ void apply_import( const Rule&, Parser& p )
    p.simplify(2);
 }
 
+
 static void apply_import_internal( Parser&p, 
    TokenInstance* tnamelist,  TokenInstance* tdepName, 
    TokenInstance* importClause, bool bNameIsPath )
@@ -97,11 +98,10 @@ static void apply_import_internal( Parser&p,
             p.addError( e_syn_import_as, p.currentSource(), tnamelist->line(), tnamelist->chr(), 0 );
          }
 
-         // anyhow, use this thing as an "in" clause
-         ctx->onImportFrom( *name, bNameIsPath, "", *ic->m_target, true );
-      }
-      else
-      {
+         // import from modname
+         // TODO: use ic->m_target just to create the namespace in the compiler,
+         // As import from Module in ... is the same as import from Module to us.
+         // we don't need to know 
          ctx->onImportFrom( *name, bNameIsPath, "", "", false );
       }
    }
@@ -138,7 +138,6 @@ static void apply_import_internal( Parser&p,
    // let the last token to live this way.
    p.simplify( 3 );
 }
-
 
 
 void apply_import_from_in( const Rule&, Parser& p )
@@ -195,6 +194,7 @@ void apply_import_namelist( const Rule&, Parser& p )
    // nothing to simplify
 }
 
+
 static void apply_import_fromin_internal( Parser& p, bool bInAs )
 {
    SourceParser& sp = *static_cast<SourceParser*>(&p);
@@ -221,6 +221,7 @@ void apply_import_fromas( const Rule&, Parser& p )
    // << T_as << Name << T_EOL
    apply_import_fromin_internal( p, false );
 }
+
 
 void apply_import_from_empty( const Rule&, Parser& p )
 {

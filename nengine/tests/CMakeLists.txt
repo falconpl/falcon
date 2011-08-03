@@ -55,3 +55,15 @@ target_link_libraries( testparser falcon_engine )
 message("Adding interactive mode")
 add_executable( intmode intmode.cpp )
 target_link_libraries( intmode falcon_engine )
+
+###############################################
+message("Adding a test module")
+add_library( testmod_fm MODULE
+   testmod.cpp )
+
+set_target_properties( 
+   testmod_fm
+   PROPERTIES 
+      PREFIX "" )
+
+target_link_libraries( testmod_fm falcon_engine )

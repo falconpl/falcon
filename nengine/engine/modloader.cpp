@@ -309,6 +309,7 @@ ModLoader::t_modtype ModLoader::checkFile_internal(
    uris[0] = uri; uris[0].pathElement().setExtension( "fal" );
    uris[1] = uri; uris[1].pathElement().setExtension( m_famExt );
    uris[2] = uri; uris[2].pathElement().setExtension( DynLoader::sysExtension() );
+                  uris[2].pathElement().setFilename( uris[2].pathElement().getFile() + "_fm" );
    uris[3] = uri; uris[3].pathElement().setExtension( m_ftdExt );
    
    // the files we should look at depends on our working mode.
@@ -416,7 +417,7 @@ Module* ModLoader::load_internal(
          return m_famLoader->load( &dr, uri.get(), modName );
       }
          
-      case e_mt_binmod:
+      case e_mt_binmod:         
          return m_dynLoader->load( uri.get(), modName );
          
       default:

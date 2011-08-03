@@ -44,6 +44,15 @@
 #include <falcon/cm/coremodule.h>
 #include <falcon/vfsprovider.h>
 
+#include <falcon/symbol.h>
+#include <falcon/globalsymbol.h>
+#include <falcon/localsymbol.h>
+#include <falcon/dynsymbol.h>
+#include <falcon/closedsymbol.h>
+
+#include <falcon/item.h>
+#include <falcon/itemid.h>
+
 //--- error headers ---
 #include <falcon/accesserror.h>
 #include <falcon/accesstypeerror.h>
