@@ -42,6 +42,7 @@ private:
 
    // Used to decide if minus is unary or not.
    bool m_hadOperator;
+   bool m_hadImport;
 
    // Used when starting strings
    bool m_stringStart;

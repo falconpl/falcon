@@ -43,7 +43,8 @@ SourceLexer::SourceLexer( const String& uri, Parsing::Parser* p, TextReader* rea
    _p( new Private ),
    m_sline( 0 ),
    m_schr( 0 ),
-   m_hadOperator( 0 ),
+   m_hadOperator( false ),
+   m_hadImport(false),
    m_stringStart( false ),
    m_stringML( false ),
    m_state( state_none ),
@@ -683,6 +684,7 @@ void SourceLexer::resetState()
 {
    m_state = state_line;
    m_hadOperator = false; // checkOperator will set it back as needed.
+   m_hadImport = false;
 }
 
 Parsing::TokenInstance* SourceLexer::checkWord()
@@ -782,7 +784,11 @@ Parsing::TokenInstance* SourceLexer::checkWord()
             */
          if ( m_text == "return" ) return parser->T_return.makeInstance(m_sline, m_schr);
          if ( m_text == "export" ) return parser->T_export.makeInstance(m_sline, m_schr);
-         if ( m_text == "import" ) return parser->T_import.makeInstance(m_sline, m_schr);
+         if ( m_text == "import" ) 
+         {
+            m_hadImport = true;
+            return parser->T_import.makeInstance(m_sline, m_schr);
+         }
          
          /*
          if ( m_text == "static" )
@@ -836,6 +842,10 @@ Parsing::TokenInstance* SourceLexer::checkWord()
    }
 
    // As a fallback, create a "name" word
+   if( !m_hadImport && isNameSpace(m_text) )
+   {
+      m_parser->addError( e_ns_clash, m_parser->currentSource(), m_sline, m_schr, 0, m_text );
+   }
    return m_parser->T_Name.makeInstance( m_sline, m_schr, m_text );
 }
 

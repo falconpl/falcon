@@ -164,7 +164,7 @@ FAL_ERRORDECL( e_nl_in_lit, 163, "New line in literal string" );
 FAL_ERRORDECL( e_fself_outside, 164, "'fself' outside functions or blocks" );
 FAL_ERRORDECL( e_undef_param, 165, "Required parameter not found" );
 FAL_ERRORDECL( e_noeffect, 166, "Statement has no effect (at least in part)" );
-FAL_ERRORDECL( e_ns_clash, 167, "Clash in namespaces aliasing" );
+FAL_ERRORDECL( e_ns_clash, 167, "Can't refer directly to a namespace once declared." );
 FAL_ERRORDECL( e_directive_unk, 168, "Unknown directive" );
 FAL_ERRORDECL( e_directive_value, 169, "Invalid value for directive" );
 FAL_ERRORDECL( e_sm_adef, 170, "State member already defined" );
