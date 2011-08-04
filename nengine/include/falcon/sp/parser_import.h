@@ -42,6 +42,17 @@ void apply_import_from_modspec( const Rule&, Parser& p );
 
 void apply_import_syms( const Rule&, Parser& p );
 
+bool importspec_errhand(const NonTerminal&, Parser& p);
+
+void apply_ImportSpec_next( const Rule&, Parser& p );
+void apply_ImportSpec_attach_last( const Rule&, Parser& p );
+void apply_ImportSpec_attach_next( const Rule&, Parser& p );
+void apply_ImportSpec_first( const Rule&, Parser& p );
+void apply_ImportSpec_empty( const Rule&, Parser& p );
+
+void apply_nsspec_last( const Rule&, Parser& p );
+void apply_nsspec_next( const Rule&, Parser& p );
+void apply_nsspec_first( const Rule&, Parser& p );
 }
 
 #endif

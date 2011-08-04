@@ -37,6 +37,7 @@
 #include <falcon/sp/parser_import.h>
 #include <falcon/sp/parser_list.h>
 #include <falcon/sp/parser_load.h>
+#include <falcon/sp/parser_namespace.h>
 #include <falcon/sp/parser_proto.h>
 #include <falcon/sp/parser_reference.h>
 #include <falcon/sp/parser_rule.h>
@@ -140,7 +141,8 @@ SourceParser::SourceParser():
    T_from( "from" ),
    T_load( "load" ),
    T_export( "export" ),
-   T_import( "import" )
+   T_import( "import" ),
+   T_namespace( "namespace" )
 {
    S_Autoexpr << "Autoexpr"
       << (r_line_autoexpr << "Autoexpr" << apply_line_expr << Expr << T_EOL)
@@ -212,22 +214,38 @@ SourceParser::SourceParser():
    
    ImportClause << "ImportClause";
    ImportClause << ( r_import_from_string_as << "import_from_string_as" << apply_import_from_string_as
-      << ListSymbol << T_from << T_String << T_as << T_Name << T_EOL );
+      << ImportSpec << T_from << T_String << T_as << T_Name << T_EOL );
    ImportClause << ( r_import_from_string_in << "import_from_string_in" << apply_import_from_string_in
-      << ListSymbol << T_from << T_String << T_in << ModSpec << T_EOL );
+      << ImportSpec << T_from << T_String << T_in << ModSpec << T_EOL );
    ImportClause << ( r_import_from_string << "import_from_string" << apply_import_string
-      << ListSymbol << T_from << T_String << T_EOL );
+      << ImportSpec << T_from << T_String << T_EOL );
    
    ImportClause << ( r_import_from_modspec_as << "import_from_modspec_as" << apply_import_from_modspec_as
-      << ListSymbol << T_from << ModSpec << T_as << T_Name << T_EOL );   
+      << ImportSpec << T_from << ModSpec << T_as << T_Name << T_EOL );   
    ImportClause << ( r_import_from_modspec_in << "import_from_modspec_in" << apply_import_from_modspec_in
-      << ListSymbol << T_from << ModSpec << T_in << ModSpec << T_EOL );
+      << ImportSpec << T_from << ModSpec << T_in << ModSpec << T_EOL );
    ImportClause << ( r_import_from_modspec << "import_from_modspec" << apply_import_from_modspec
-      << ListSymbol << T_from << ModSpec << T_EOL );
+      << ImportSpec << T_from << ModSpec << T_EOL );
 
    ImportClause << ( r_import_syms << "import_syms" << apply_import_syms
-      << ListSymbol << T_EOL );
+      << ImportSpec << T_EOL );
 
+
+   ImportSpec << "ImportSpec" << importspec_errhand;
+   ImportSpec<< (r_ImportSpec_next <<  "ImportSpec_next" <<  apply_ImportSpec_next << ImportSpec << T_Comma << NameSpaceSpec );
+   ImportSpec<< (r_ImportSpec_attach_last <<  "ImportSpec_attach_last" <<  apply_ImportSpec_attach_last << ImportSpec << T_Dot << T_Times );
+   ImportSpec<< (r_ImportSpec_attach_next <<  "ImportSpec_attach_next" <<  apply_ImportSpec_attach_next << ImportSpec << T_Dot << T_Name );
+   ImportSpec<< (r_ImportSpec_first << "ImportSpec_first" << apply_ImportSpec_first << NameSpaceSpec );
+   ImportSpec<< (r_ImportSpec_empty << "ImportSpec_empty" << apply_ImportSpec_empty );
+   
+   NameSpaceSpec << "NameSpaceSpec";
+   NameSpaceSpec << (r_NameSpaceSpec_last <<  "NameSpaceSpec_last" <<  apply_nsspec_last << NameSpaceSpec << T_Dot << T_Times );
+   NameSpaceSpec << (r_NameSpaceSpec_next <<  "NameSpaceSpec_next" <<  apply_nsspec_next << NameSpaceSpec << T_Dot << T_Name );
+   NameSpaceSpec << (r_NameSpaceSpec_first << "NameSpaceSpec_first" << apply_nsspec_first << T_Name );
+
+   S_Namespace << "Namespace decl";
+   S_Namespace << (r_NameSpace <<  "NameSpace" <<  apply_namespace << T_namespace << NameSpaceSpec << T_EOL );
+   
    //==========================================================================
    // Expression
    //
@@ -322,8 +340,7 @@ SourceParser::SourceParser():
    NeListExpr_ungreed<< (r_NeListExpr_ungreed_first << "NeListExpr_ungreed_first" << apply_NeListExpr_ungreed_first << Expr );
    r_NeListExpr_ungreed_next.setGreedy(false);
 
-   ListSymbol << "ListSymbol";
-   ListSymbol << ListExpr_errhand;
+   ListSymbol << "ListSymbol" << ListExpr_errhand;
    ListSymbol<< (r_ListSymbol_next << "ListSymbol_next" << apply_ListSymbol_next << ListSymbol << T_Comma << T_Name );
    ListSymbol<< (r_ListSymbol_first << "ListSymbol_first" << apply_ListSymbol_first << T_Name );
    ListSymbol<< (r_ListSymbol_empty << "ListSymbol_empty" << apply_ListSymbol_empty );
@@ -413,6 +430,7 @@ SourceParser::SourceParser():
       << S_Load
       << S_Export
       << S_Import
+      << S_Namespace
       
       << S_Function
       << S_Class

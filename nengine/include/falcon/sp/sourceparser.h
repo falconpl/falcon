@@ -111,6 +111,7 @@ public:
    Parsing::Terminal T_load;
    Parsing::Terminal T_export;
    Parsing::Terminal T_import;
+   Parsing::Terminal T_namespace;
 
    //================================================
    // Statements
@@ -181,6 +182,21 @@ public:
    Parsing::Rule r_import_from_modspec_in;
    Parsing::Rule r_import_from_modspec;   
    Parsing::Rule r_import_syms;
+   
+   Parsing::NonTerminal ImportSpec;
+   Parsing::Rule r_ImportSpec_next;
+   Parsing::Rule r_ImportSpec_attach_last;
+   Parsing::Rule r_ImportSpec_attach_next;
+   Parsing::Rule r_ImportSpec_first;
+   Parsing::Rule r_ImportSpec_empty;
+   
+   Parsing::NonTerminal NameSpaceSpec;
+   Parsing::Rule r_NameSpaceSpec_last;
+   Parsing::Rule r_NameSpaceSpec_next;
+   Parsing::Rule r_NameSpaceSpec_first;
+   
+   Parsing::NonTerminal S_Namespace;
+   Parsing::Rule r_NameSpace;
    
    //================================================
    // Expression

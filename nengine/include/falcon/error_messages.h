@@ -212,11 +212,15 @@ FAL_ERRORDECL( e_nofile, 255, "File not found" );
 FAL_ERRORDECL( e_load_already, 256, "Resource already required for load" );
 FAL_ERRORDECL( e_import_already, 257, "Imported symbol already declared" );
 FAL_ERRORDECL( e_export_already, 258, "Symbol already declared for export" );
-FAL_ERRORDECL( e_export_private, 259, "Cannot export a symbol starting with '_' (private)." );
-FAL_ERRORDECL( e_syn_import_as, 260, "Import/from 'as' clause supports exactly one single symbol name." );
-FAL_ERRORDECL( e_import_already_mod, 261, "Module already generically imported." );
-FAL_ERRORDECL( e_mod_notfound, 262, "Module required in load/import not found." );
+FAL_ERRORDECL( e_export_private, 259, "Cannot export a symbol starting with '_' (private)" );
+FAL_ERRORDECL( e_syn_import_as, 260, "Import/from 'as' clause supports exactly one single symbol name" );
+FAL_ERRORDECL( e_import_already_mod, 261, "Module already generically imported" );
+FAL_ERRORDECL( e_mod_notfound, 262, "Module required in load/import not found" );
+FAL_ERRORDECL( e_syn_import_spec, 263, "Error in imported symbol specification list" );
+FAL_ERRORDECL( e_syn_namespace, 264, "Error in namespace declaration" );
+FAL_ERRORDECL( e_syn_namespace_star, 265, "Namespace declarations cannot be extended with '*'" );
 
+   
 FAL_ERRORDECL( e_unknown_encoding, 300, "Unknown encoding name" );
 FAL_ERRORDECL( e_enc_fail, 301, "Encoding failed or data not encodable" );
 FAL_ERRORDECL( e_dec_fail, 302, "Decode failed or input data not in required format" );

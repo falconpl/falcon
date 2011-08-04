@@ -598,6 +598,7 @@ Parsing::TokenInstance* SourceLexer::nextToken()
             if( String::isWhiteSpace( chr ) ||
                isParenthesis(chr) || chr == '\'' || chr == '"' 
                || chr == '$' || chr == '#'
+               || chr == '*' || chr == '+' || chr == '-' || chr == '/'
                || !isTokenLimit( chr ) )
             {
                // special case -- dot/square
@@ -817,6 +818,8 @@ Parsing::TokenInstance* SourceLexer::checkWord()
       break;
 
       case 9:
+         if ( m_text == "namespace" )
+            return parser->T_namespace.makeInstance(m_sline, m_schr);         
          /*
          if ( m_text == "directive" )
          {
