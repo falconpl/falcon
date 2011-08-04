@@ -38,6 +38,8 @@ public:
 
    virtual void addError( int code, const String& uri, int l, int c, int ctx, const String& extra );
    virtual void addError( int code, const String& uri, int l, int c=0, int ctx=0  );
+   
+   void addNameSpace( const String ns );
 
    //===============================================
    // Terminal tokens
@@ -177,9 +179,13 @@ public:
    Parsing::NonTerminal ImportClause;   
    Parsing::Rule r_import_from_string_as;
    Parsing::Rule r_import_from_string_in;
+   Parsing::Rule r_import_star_from_string_in;
+   Parsing::Rule r_import_star_from_string;
    Parsing::Rule r_import_from_string;
    Parsing::Rule r_import_from_modspec_as;
    Parsing::Rule r_import_from_modspec_in;
+   Parsing::Rule r_import_star_from_modspec_in;
+   Parsing::Rule r_import_star_from_modspec;   
    Parsing::Rule r_import_from_modspec;   
    Parsing::Rule r_import_syms;
    

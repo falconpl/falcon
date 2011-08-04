@@ -34,10 +34,14 @@ void apply_import( const Rule&, Parser& p );
 
 void apply_import_from_string_as( const Rule&, Parser& p );
 void apply_import_from_string_in( const Rule&, Parser& p );
+void apply_import_star_from_string_in( const Rule&, Parser& p );
+void apply_import_star_from_string( const Rule&, Parser& p );
 void apply_import_string( const Rule&, Parser& p );
 
 void apply_import_from_modspec_as( const Rule&, Parser& p );
 void apply_import_from_modspec_in( const Rule&, Parser& p );
+void apply_import_star_from_modspec_in( const Rule&, Parser& p );
+void apply_import_star_from_modspec( const Rule&, Parser& p );
 void apply_import_from_modspec( const Rule&, Parser& p );
 
 void apply_import_syms( const Rule&, Parser& p );

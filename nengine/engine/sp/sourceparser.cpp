@@ -47,6 +47,7 @@
 #include <falcon/parser/parser.h>
 
 #include "private_types.h"
+#include "falcon/parser/lexer.h"
 
 namespace Falcon {
 
@@ -213,17 +214,27 @@ SourceParser::SourceParser():
    S_Import << ( r_import_rule << "import_rule" << apply_import << T_import << ImportClause );
    
    ImportClause << "ImportClause";
+   ImportClause << ( r_import_star_from_string_in << "import_star_from_string_in" << apply_import_star_from_string_in
+      << T_Times << T_from << T_String << T_in << NameSpaceSpec << T_EOL );
+   ImportClause << ( r_import_star_from_string << "import_star_from_string" << apply_import_star_from_string
+      << T_Times << T_from << T_String << T_EOL );
+   
+   ImportClause << ( r_import_star_from_modspec_in << "import_star_from_modspec_in" << apply_import_star_from_modspec_in
+      << T_Times << T_from << ModSpec << T_in << NameSpaceSpec << T_EOL );
+   ImportClause << ( r_import_star_from_modspec << "import_star_from_modspec_in" << apply_import_star_from_modspec
+      << T_Times << T_from << ModSpec << T_EOL );
+   
    ImportClause << ( r_import_from_string_as << "import_from_string_as" << apply_import_from_string_as
       << ImportSpec << T_from << T_String << T_as << T_Name << T_EOL );
    ImportClause << ( r_import_from_string_in << "import_from_string_in" << apply_import_from_string_in
-      << ImportSpec << T_from << T_String << T_in << ModSpec << T_EOL );
+      << ImportSpec << T_from << T_String << T_in << NameSpaceSpec << T_EOL );
    ImportClause << ( r_import_from_string << "import_from_string" << apply_import_string
       << ImportSpec << T_from << T_String << T_EOL );
    
    ImportClause << ( r_import_from_modspec_as << "import_from_modspec_as" << apply_import_from_modspec_as
       << ImportSpec << T_from << ModSpec << T_as << T_Name << T_EOL );   
    ImportClause << ( r_import_from_modspec_in << "import_from_modspec_in" << apply_import_from_modspec_in
-      << ImportSpec << T_from << ModSpec << T_in << ModSpec << T_EOL );
+      << ImportSpec << T_from << ModSpec << T_in << NameSpaceSpec << T_EOL );
    ImportClause << ( r_import_from_modspec << "import_from_modspec" << apply_import_from_modspec
       << ImportSpec << T_from << ModSpec << T_EOL );
 

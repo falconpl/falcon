@@ -1109,6 +1109,17 @@ void Parser::reset()
    _p->m_lStates.clear();
 }
 
+
+Lexer* Parser::currentLexer() const
+{
+   if( _p->m_lLexers.empty() )
+   {
+      return 0;
+   }
+
+   return _p->m_lLexers.back();
+}
+
 }
 }
 

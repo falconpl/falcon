@@ -26,11 +26,21 @@
 
 #include <falcon/parser/tokeninstance.h>
 
+#include <set>
 
 namespace Falcon {
 
+class SourceLexer::Private
+{
+public:
+   typedef std::set<String> StringSet;
+   StringSet m_nsSet;
+};
+
+
 SourceLexer::SourceLexer( const String& uri, Parsing::Parser* p, TextReader* reader ):
    Parsing::Lexer( uri, p, reader ),
+   _p( new Private ),
    m_sline( 0 ),
    m_schr( 0 ),
    m_hadOperator( 0 ),
@@ -44,6 +54,7 @@ SourceLexer::SourceLexer( const String& uri, Parsing::Parser* p, TextReader* rea
 SourceLexer::~SourceLexer()
 {
    delete m_nextToken;
+   delete _p;
 }
 
 Parsing::TokenInstance* SourceLexer::nextToken()
@@ -586,10 +597,14 @@ Parsing::TokenInstance* SourceLexer::nextToken()
                   m_text.size(0);
                   return parser->T_OpenProto.makeInstance( m_sline, m_schr );
                }
-
-               unget(chr);
-               resetState();
-               return checkWord();
+               
+               // namespace check
+               if( chr != '.' || ! isNameSpace( m_text ) )
+               {
+                  unget(chr);
+                  resetState();
+                  return checkWord();
+               }
             }
             m_text.append( chr );
             break;
@@ -710,25 +725,10 @@ Parsing::TokenInstance* SourceLexer::checkWord()
          if ( m_text == "load" ) return parser->T_load.makeInstance(m_sline, m_schr);
 
          /*
-         if ( m_text == "load" )  // directive
-         {
-            m_bIsDirectiveLine = true;
-            return LOAD;
-         }
-         if ( m_text == "else" )
-            return ELSE;
-         if ( m_text == "elif" )
-            return ELIF;
-         if ( m_text == "from" )
-            return FROM;
-         if ( m_text == "self" )
-            return SELF;
          if ( m_text == "case" )
             return CASE;
          if ( m_text == "loop" )
             return LOOP;
-         if ( m_text == "true" )
-            return TRUE_TOKEN;
          if ( m_text == "enum" )
             return ENUM;
           */
@@ -904,12 +904,21 @@ Parsing::TokenInstance* SourceLexer::checkOperator()
          break;
    }
 
-
    m_hadOperator = false;
    // in case of error
    addError( e_inv_token );
 
    return 0;
+}
+
+void SourceLexer::addNameSpace(const String& ns)
+{
+   _p->m_nsSet.insert( ns ); 
+}
+
+bool SourceLexer::isNameSpace(const String& name)
+{
+   return _p->m_nsSet.find( name ) != _p->m_nsSet.end();
 }
 
 }

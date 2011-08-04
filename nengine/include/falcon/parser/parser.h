@@ -476,6 +476,8 @@ public:
     \note Lexers are left untouched in their current state.
     */
    virtual void reset();
+   
+   Lexer* currentLexer() const;
 
    //=================================================================
    // Common terminals

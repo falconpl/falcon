@@ -53,6 +53,19 @@ void apply_import( const Rule&, Parser& p )
 }
 
 
+static void apply_import_star( Parser& p, const String& modspec, bool bIsPath, const String& ns )
+{      
+   SourceParser& sp = *static_cast<SourceParser*>(&p);
+   ParserContext* ctx = static_cast<ParserContext*>( p.context() );
+   ctx->onImportFrom( modspec, bIsPath, "*", ns, true );
+   
+   // leave the import clause
+   TokenInstance* tEOL = p.getLastToken();
+   tEOL->token( sp.ImportClause );
+   p.simplify( ns == "" ? 3 : 5 );
+}
+
+
 static void apply_import_internal( Parser& p, 
    TokenInstance* tnamelist,  
    TokenInstance* tdepName, bool bNameIsPath,
@@ -62,10 +75,17 @@ static void apply_import_internal( Parser& p,
    
    NameList* list = static_cast<NameList*>(tnamelist->asData());
    String* name = tdepName->asString();
+   String* nspace = tInOrAs == 0 ? 0 : tInOrAs->asString();
+   
+   if( nspace->find("*") != String::npos )
+   {
+      // notice that "as" grammar cannot generate a "*" here.
+      p.addError( e_syn_namespace_star, p.currentSource(), tdepName->line(), tdepName->chr() );
+   }
    
    if( list->empty() )
    {
-      if( tInOrAs == 0 )
+      if( nspace == 0 )
       {         
          // "import from modname"
          ctx->onImportFrom( *name, bNameIsPath, "", "", false );
@@ -76,7 +96,8 @@ static void apply_import_internal( Parser& p,
          // it's a general import/from in ns.
          if( bIsIn )
          {
-            ctx->onImportFrom( *name, bNameIsPath, "", *tInOrAs->asString(), true );
+            ctx->onImportFrom( *name, bNameIsPath, "", *nspace, true );
+            
          }
          else
          {
@@ -113,11 +134,11 @@ static void apply_import_internal( Parser& p,
    
    // Declaret that this namelist is a valid ImportClause
    SourceParser& sp = *static_cast<SourceParser*>(&p);
-   TokenInstance* ti = new TokenInstance( 
-                     tnamelist->line(), tnamelist->chr(), sp.ImportClause );
+   TokenInstance* ti = p.getLastToken();
+   ti->token( sp.ImportClause );
    
    // let the last token to live this way.
-   p.simplify( tInOrAs == 0 ? 4 : 6, ti );
+   p.simplify( tInOrAs == 0 ? 3 : 5 );
 }
 
 
@@ -149,6 +170,28 @@ void apply_import_from_string_in( const Rule&, Parser& p )
       tInOrAs, true );
 }
 
+
+void apply_import_star_from_string_in( const Rule&, Parser& p )
+{
+   // << T_Times << T_from << T_String << T_in << T_Name << T_EOL
+   p.getNextToken();
+   p.getNextToken();
+   TokenInstance* tdepName = p.getNextToken();
+   p.getNextToken();
+   TokenInstance* tInOrAs = p.getNextToken();
+   
+   apply_import_star( p, *tdepName->asString(), true, *tInOrAs->asString() );
+}
+
+void apply_import_star_from_string( const Rule&, Parser& p )
+{
+   // << T_Times << T_from << T_String << T_EOL
+   p.getNextToken();
+   p.getNextToken();
+   TokenInstance* tdepName = p.getNextToken();
+   
+   apply_import_star( p, *tdepName->asString(), true, "" );
+}
 
 void apply_import_string( const Rule&, Parser& p )
 {
@@ -189,6 +232,30 @@ void apply_import_from_modspec_in( const Rule&, Parser& p )
    apply_import_internal( p, tnamelist, 
       tdepName, false,
       tInOrAs, true );
+}
+
+
+void apply_import_star_from_modspec_in( const Rule&, Parser& p )
+{
+   // << T_Times << T_from << ModSpec << T_in << T_Name << T_EOL
+   p.getNextToken();
+   p.getNextToken();
+   TokenInstance* tdepName = p.getNextToken();
+   p.getNextToken();
+   TokenInstance* tInOrAs = p.getNextToken();
+   
+   apply_import_star( p, *tdepName->asString(), false, *tInOrAs->asString() );
+}
+
+
+void apply_import_star_from_modspec( const Rule&, Parser& p )
+{
+   // << T_Times << T_from << T_String << T_EOL
+   p.getNextToken();
+   p.getNextToken();
+   TokenInstance* tdepName = p.getNextToken();
+   
+   apply_import_star( p, *tdepName->asString(), false, "" );
 }
 
 

@@ -28,9 +28,15 @@ public:
    SourceLexer( const String& uri, Parsing::Parser* p, TextReader* reader );
    virtual ~SourceLexer();
    
+   bool isNameSpace( const String& name );
+   void addNameSpace( const String& ns );
+   
    virtual Parsing::TokenInstance* nextToken();
 
 private:
+   class Private;
+   Private* _p;
+   
    int32 m_sline;
    int32 m_schr;
 
