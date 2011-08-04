@@ -254,7 +254,7 @@ SourceParser::SourceParser():
    NameSpaceSpec << (r_NameSpaceSpec_next <<  "NameSpaceSpec_next" <<  apply_nsspec_next << NameSpaceSpec << T_Dot << T_Name );
    NameSpaceSpec << (r_NameSpaceSpec_first << "NameSpaceSpec_first" << apply_nsspec_first << T_Name );
 
-   S_Namespace << "Namespace decl";
+   S_Namespace << "Namespace decl" << namespace_errhand;
    S_Namespace << (r_NameSpace <<  "NameSpace" <<  apply_namespace << T_namespace << NameSpaceSpec << T_EOL );
    
    //==========================================================================
@@ -340,24 +340,22 @@ SourceParser::SourceParser():
    ListExpr<< (r_ListExpr_empty << "ListExpr_empty" << apply_ListExpr_empty );
 
    NeListExpr << "NeListExpr";
-   NeListExpr << ListExpr_errhand;
+   NeListExpr << expr_errhand;
    NeListExpr<< (r_NeListExpr_next << "NeListExpr_next" << apply_NeListExpr_next << NeListExpr << T_Comma << Expr );
    NeListExpr<< (r_NeListExpr_first << "NeListExpr_first" << apply_NeListExpr_first << Expr );
 
 
-   NeListExpr_ungreed << "NeListExpr_ungreed";
-   NeListExpr_ungreed << ListExpr_errhand;
+   NeListExpr_ungreed << "NeListExpr_ungreed" << expr_errhand;
    NeListExpr_ungreed<< (r_NeListExpr_ungreed_next << "NeListExpr_ungreed_next" << apply_NeListExpr_ungreed_next << NeListExpr_ungreed << T_Comma << Expr );
    NeListExpr_ungreed<< (r_NeListExpr_ungreed_first << "NeListExpr_ungreed_first" << apply_NeListExpr_ungreed_first << Expr );
    r_NeListExpr_ungreed_next.setGreedy(false);
 
-   ListSymbol << "ListSymbol" << ListExpr_errhand;
+   ListSymbol << "ListSymbol";
    ListSymbol<< (r_ListSymbol_next << "ListSymbol_next" << apply_ListSymbol_next << ListSymbol << T_Comma << T_Name );
    ListSymbol<< (r_ListSymbol_first << "ListSymbol_first" << apply_ListSymbol_first << T_Name );
    ListSymbol<< (r_ListSymbol_empty << "ListSymbol_empty" << apply_ListSymbol_empty );
 
    NeListSymbol << "NeListSymbol";
-   NeListSymbol << ListExpr_errhand;
    NeListSymbol<< (r_NeListSymbol_next << "NeListSymbol_next" << apply_NeListSymbol_next << NeListSymbol << T_Comma << T_Name );
    NeListSymbol<< (r_NeListSymbol_first << "NeListSymbol_first" << apply_NeListSymbol_first << T_Name );
 

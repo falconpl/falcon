@@ -37,10 +37,15 @@ bool import_errhand(const NonTerminal&, Parser& p)
 {
    //SourceParser& sp = *static_cast<SourceParser*>(p);
    TokenInstance* ti = p.getNextToken();
-   p.addError( e_syn_import, p.currentSource(), ti->line(), ti->chr() );
-
+   
+   // already detected?
+   if( p.lastErrorLine() != ti->line() )
+   {
+      p.addError( e_syn_import, p.currentSource(), ti->line(), ti->chr() );
+   }
+   
    // remove the whole line
-   // TODO: Sync with EOL
+   p.consumeUpTo( p.T_EOL );
    p.clearFrames();
    return true;
 }

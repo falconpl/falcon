@@ -277,13 +277,15 @@ void ParserContext::abandonSymbols()
       //todo error!
    }
 
+   /* We must not delete the symbols, because they are held in expressions.
    Private::SymbolMap& unknown = _p->m_unknown.back();
 
    for( Private::SymbolMap::iterator it = unknown.begin(), end = unknown.end(); it != end ; ++it)
    {
       delete it->second;
    }
-
+   */
+   
    _p->m_unknown.back().clear();
 }
 

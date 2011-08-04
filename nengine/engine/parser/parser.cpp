@@ -92,7 +92,8 @@ Parser::Parser():
    T_String("String"),
    m_ctx(0),
    m_bIsDone(false),
-   m_bInteractive(0)
+   m_bInteractive(0),
+   m_consumeToken(0)
 {
    _p = new Private;
 }
@@ -674,8 +675,21 @@ void Parser::parserLoop()
          return;
          ti = new TokenInstance(0, 0, T_EOF );
       }
-
-      _p->m_tokenStack->push_back(ti);
+      
+      if( m_consumeToken != 0 )
+      {
+         TRACE1( "Parser::parserLoop -- Discarding token %s in search of %s", 
+            ti->token().name().c_ize(), m_consumeToken->name().c_ize() );
+         if ( ti->token().id() == m_consumeToken->id() )
+         {
+            m_consumeToken = 0;
+         }
+         continue;
+      }
+      else
+      {
+         _p->m_tokenStack->push_back(ti);
+      }
 
       TRACE1( "Parser::parserLoop -- stack now: %s ", dumpStack().c_ize() );
 

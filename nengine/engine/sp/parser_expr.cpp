@@ -44,6 +44,10 @@ bool expr_errhand(const NonTerminal&, Parser& p)
    TokenInstance* ti2 = p.getLastToken();
    p.addError( e_syn_expr, p.currentSource(), ti2->line(), ti2->chr(), ti->line() );
 
+   // remove the very last token.
+   //while( ti != ti2 ) ti = p.getNextToken();
+   //p.trimFromCurrentToken();
+   
    // remove the whole expression.
    p.simplify( p.tokenCount() );
    return true;

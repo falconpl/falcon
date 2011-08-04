@@ -488,6 +488,8 @@ public:
    Terminal T_Name;
    Terminal T_String;
 
+   void consumeUpTo( const Token& token ) { m_consumeToken = &token; }
+   
 protected:
    void* m_ctx;
    bool m_bIsDone;
@@ -503,13 +505,15 @@ protected:
 
    // simplifies the topmost rule.
    void applyCurrentRule();
-
+   
 private:
    friend class Rule;
    class Private;
 
    // Data that requires local instantation
    Private* _p;
+
+   const Token* m_consumeToken;
 };
 
 }

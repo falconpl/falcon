@@ -38,7 +38,7 @@ bool namespace_errhand(const NonTerminal&, Parser& p)
    p.addError( e_syn_namespace, p.currentSource(), ti->line(), ti->chr() );
 
    // remove the whole line
-   // TODO: Sync with EOL
+   p.consumeUpTo( p.T_EOL );
    p.clearFrames();
    return true;
 }
