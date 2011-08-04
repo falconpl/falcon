@@ -197,10 +197,15 @@ public:
       /** Dinamicity of modules determine if they are to be deleted.*/
       bool m_bIsDynamic;
 
+      // Local name -> remote dependency
       typedef std::map<String, Dependency*> DepMap;
       DepMap m_deps;
       
       bool m_bIsGenericProvider;
+      
+      // Remote NS (or "") -> local NS (or "")
+      typedef std::map<String, String> NsImportMap;
+      NsImportMap m_fullImport;
 
       Requirement( const String& name, bool bIsLoad, bool bIsUri=false ):
          m_uri( name ),
@@ -226,19 +231,36 @@ public:
          }
       }
    };
+   
+   /** Class used to keep track of full remote namespace imports.
+    */
+   class NSImport {
+   public:
+      String m_remNS;
+      Requirement* m_req;
+      
+      NSImport( const String& remNS, Requirement* req ):
+      m_remNS( remNS ), m_req(req)
+      {}
+         
+   };
+      
+   //============================================
+   // Main data
+   //============================================
 
    // Map module-name/path -> requirent*
    typedef std::map<String, Requirement*> ReqMap;
    ReqMap m_reqs;
+   
+   typedef std::map<String, NSImport*> NSImportMap;
+   NSImportMap m_nsImports;
    
    typedef std::deque<Requirement*> ReqList;
    // Generic requirements, that is, import from Module 
    // (modules that might provide any undefined symbol).
    ReqList m_genericMods;
 
-   //============================================
-   // Main data
-   //============================================
    typedef std::map<String, Symbol*> GlobalsMap;
    GlobalsMap m_gSyms;
    GlobalsMap m_gExports;
@@ -300,9 +322,60 @@ public:
          delete vi->second;
          ++vi;
       }
+      
+      NSImportMap::iterator nsii = m_nsImports.begin();
+      while( nsii != m_nsImports.end() )
+      {
+         // set the module to 0, so that we're not dec-reffed.
+         delete nsii->second;         
+         ++nsii;
+      }
    }
 
-   Dependency* getDep( const String& sourcemod, bool bIsUri, const String& symname )
+   
+   Dependency* getDep( const String& sourcemod, bool bIsUri, const String& symname, bool bSearchNS = false )
+   {
+      // has the symbolname a namespace translation?
+      String remSymName;      
+      Requirement* req;
+      
+      length_t pos;
+      if( bSearchNS && (pos = symname.rfind(".")) != String::npos )
+      {
+         // for sure, it has a namespace; but has a translation?
+         String localNS = symname.subString(0,pos);
+         NSImportMap::iterator nsi = m_nsImports.find( localNS );
+         if( nsi != m_nsImports.end() )
+         {
+            // yep, we have an import namespace translator.
+            req = nsi->second->m_req;
+            remSymName = nsi->second->m_remNS + "." + symname.subString(pos+1);
+         }
+      }
+      else
+      {
+        remSymName = symname;
+        req = getReq( sourcemod, bIsUri );
+      }
+            
+      Dependency* dep;
+      Requirement::DepMap::iterator idep = req->m_deps.find( symname );
+      if( idep != req->m_deps.end() )
+      {
+         dep = idep->second;
+      }
+      else
+      {
+         
+         dep = new Private::Dependency( remSymName );
+         req->m_deps[symname] = dep;
+      }
+
+      return dep;
+   }
+   
+   
+   Requirement* getReq( const String& sourcemod, bool bIsUri )
    {
       Requirement* req;
       ReqMap::iterator ireq = m_reqs.find( sourcemod );
@@ -317,20 +390,22 @@ public:
          req = new Requirement(sourcemod, false, bIsUri );
          m_reqs[sourcemod] = req;
       }
-
-      Dependency* dep;
-      Requirement::DepMap::iterator idep = req->m_deps.find( symname );
-      if( idep != req->m_deps.end() )
+      return req;
+   }
+      
+   /** Prepares the whole namespace import
+    */
+   bool addNSImport( const String& localNS, const String& remoteNS, Requirement* req )
+   {
+      // can't import a more than a single remote whole ns in a local ns
+      NSImportMap::iterator iter = m_nsImports.find( localNS );
+      if( iter != m_nsImports.end() )
       {
-         dep = idep->second;
+         return false;
       }
-      else
-      {
-         dep = new Private::Dependency( symname );
-         req->m_deps[symname] = dep;
-      }
-
-      return dep;
+      
+      m_nsImports[ localNS ] = new NSImport( remoteNS, req );
+      return true;
    }
 };
 
@@ -598,7 +673,7 @@ GlobalSymbol* Module::addVariable( const String& name, const Item& value, bool b
       if( bExport )
       {
          _p->m_gExports[name] = sym;
-      }
+      }     
    }
 
    return sym;
@@ -770,7 +845,7 @@ bool Module::addImplicitImport( UnknownSymbol* uks )
       return false;
    }
 
-   Private::Dependency* dep = _p->getDep( "", false, uks->name() );
+   Private::Dependency* dep = _p->getDep( "", false, uks->name(), true );
    // Record the fact that we have to save transform an unknown symbol...
    dep->m_waiting.push_back( new Private::WaitingSym( uks ) );
    // ... and save the dependency.
@@ -1108,6 +1183,68 @@ void Module::unload()
    {
       delete this;
    }
+}
+
+
+bool Module::addImportFromWithNS( const String& localNS, const String& remoteName, 
+            const String& modName, bool isFsPath )
+{   
+   Private::Requirement* req = _p->getReq( modName, isFsPath );
+   
+   // generic import from/in ns?
+   if( remoteName == "" || remoteName == "*" )
+   {
+      // add a namespace requirement so that we know where to search for symbols
+      if( localNS == "" )
+      {
+         if ( ! addGenericImport( modName, isFsPath ) )
+         {
+            return false;
+         }
+      }
+      else if( ! _p->addNSImport( localNS, "", req ) )
+      {
+         return false; 
+      }
+      
+      if ( remoteName == "*" )
+      {
+         req->m_fullImport[""] = localNS; // ok also with localNS == ""
+      }
+   }
+   else
+   {
+      // is the source name composed?
+      length_t posDot = remoteName.rfind( "." );
+      if( posDot != String::npos )
+      {
+         String remPrefix = remoteName.subString( 0, posDot );
+         String remDetail = remoteName.subString(posDot + 1);
+         
+         // import the whole thing in a namespace.
+         if( remDetail == "*" )
+         {
+            // add a namespace requirement so that we know where to search for symbols      
+            if( ! _p->addNSImport( localNS, remPrefix, req ) )
+            {
+               return false; 
+            }
+            
+            req->m_fullImport[remPrefix] = localNS;
+         }
+         else
+         {
+            addImportFrom( localNS + "." + remDetail,  remoteName, modName, isFsPath );
+         }
+      }
+      else
+      {
+         // we have just to add the symbol as-is
+         addImportFrom( localNS + "." + remoteName,  remoteName, modName, isFsPath );
+      }
+   }
+   
+   return true;
 }
 
 }

@@ -85,36 +85,65 @@ void ModCompiler::Context::onLoad( const String& path, bool isFsPath )
 void ModCompiler::Context::onImportFrom( const String& path, bool isFsPath, const String& symName,
       const String& nsName, bool bIsNS )
 {
-   // TODO: create the namespace
-   String localName;
-   if ( nsName != "" )
+   if( nsName != "" )
    {
-      localName = bIsNS ? nsName + "." + symName : nsName;
-   }
-   else
-   {
-      localName = symName;
-   }
-   
-   if( localName != "" )
-   {
-      m_owner->m_module->addImportFrom( localName,  symName, path, isFsPath );
-   }
-   else
-   {
-      if( ! m_owner->m_module->addGenericImport( path, isFsPath ) )
+      if( bIsNS )
+      {        
+         m_owner->m_module->addImportFromWithNS( nsName, symName, path, isFsPath );
+      }
+      else
       {
-         SourceParser& sp = m_owner->m_sp;
-         sp.addError( e_import_already_mod, sp.currentSource(), sp.currentLine()-1, 0, 0, path );
+         // it's an as -- and a pure one, as the parser removes possible "as" errors.
+         m_owner->m_module->addImportFrom( nsName, symName, path, isFsPath );
       }
    }
+   else
+   {
+      if( symName == "" )
+      {
+         if( ! m_owner->m_module->addGenericImport( path, isFsPath ) )
+         {
+            SourceParser& sp = m_owner->m_sp;
+            sp.addError( e_import_already_mod, sp.currentSource(), sp.currentLine()-1, 0, 0, path );
+         }
+      }
+      else
+      {
+         if( symName.endsWith("*") )
+         {
+            // fake "import a.b.c.* from Module in a.b.c
+            m_owner->m_module->addImportFromWithNS( 
+                        symName.length() > 2 ? 
+                                 symName.subString(0, symName.length()-2) : "", 
+                        symName, path, isFsPath );
+         }
+         else
+         {
+            m_owner->m_module->addImportFrom( symName, symName, path, isFsPath );
+         }
+      }
+   }  
 }
 
 
 void ModCompiler::Context::onImport(const String& symName )
 {
-   
-   if( ! m_owner->m_module->addImport( symName ) )
+   if( symName.endsWith("*") )
+   {
+      if( symName.length() == 1 )
+      {
+         SourceParser& sp = m_owner->m_sp;
+         sp.addError( e_syn_import, sp.currentSource(), sp.currentLine()-1, 0, 0, symName );
+      }
+      else
+      {
+         // fake "import a.b.c.* from "" in a.b.c
+         m_owner->m_module->addImportFromWithNS( 
+                  symName.subString(0, symName.length()-2), 
+                  symName, "", true );
+      }
+   }
+   else if( ! m_owner->m_module->addImport( symName ) )
    {
       SourceParser& sp = m_owner->m_sp;
       sp.addError( e_import_already, sp.currentSource(), sp.currentLine()-1, 0, 0, symName );
@@ -126,8 +155,7 @@ void ModCompiler::Context::onExport(const String& symName)
 {
    Module& mod = *m_owner->m_module;
    SourceParser& sp = m_owner->m_sp;
-   
-   
+      
    // Already exporting all?
    if( mod.exportAll() )
    {

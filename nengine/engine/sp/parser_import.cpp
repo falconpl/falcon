@@ -124,8 +124,8 @@ static void apply_import_internal( Parser& p,
       {
          const String& symName = *iter;
          // accept asterisk in names only at the end.
-         uint32 starPos;
-         if( (starPos = symName.find( "*" )) != String::npos && starPos < symName.length()-1 )
+         length_t starPos = symName.find( "*" );
+         if( starPos != String::npos && starPos < symName.length()-1 )
          {
             p.addError( e_syn_import_name_star, p.currentSource(), tnamelist->line(), tnamelist->chr(), 0 );
          }
@@ -133,7 +133,16 @@ static void apply_import_internal( Parser& p,
          // this will eventually add the needed errors.
          if( tInOrAs != 0 )
          {
-            ctx->onImportFrom( *name, bNameIsPath, symName, *nspace, bIsIn );
+            if( ! bIsIn && starPos == symName.length()-1 )
+            {
+               // as cannot be used with *
+               p.addError( e_syn_import_as, p.currentSource(), tnamelist->line(), tnamelist->chr(), 0 );
+               break; // force loop break, "as" accept just one symbol and we had already one error.
+            }
+            else
+            {
+               ctx->onImportFrom( *name, bNameIsPath, symName, *nspace, bIsIn );
+            }
          }
          else
          {
@@ -315,7 +324,24 @@ void apply_import_syms( const Rule&, Parser& p )
       while( iter != list->end() )
       {
          // this will eventually add the needed errors.
-         ctx->onImport(*iter);
+         // check for "*"
+         const String& symName = *iter;
+         length_t starPos = symName.find( "*" );
+         if( starPos != String::npos && starPos < symName.length()-1 )
+         {
+            p.addError( e_syn_import_name_star, p.currentSource(), tnamelist->line(), tnamelist->chr(), 0 );
+         }         
+         else
+         {
+            // check implicit namespace creation.
+            if( starPos == symName.length()-1 )
+            {               
+               static_cast<SourceLexer*>(p.currentLexer())->
+                  addNameSpace( symName.subString(0, symName.length()-2 ) );
+            }
+            ctx->onImport(*iter);
+         }
+         
          ++iter;
       }
    }

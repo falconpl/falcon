@@ -464,6 +464,13 @@ public:
     
     */
    virtual void unload();
+   
+   /** Creates a namespace-sensible import.
+    \TODO explain
+    */
+   bool addImportFromWithNS( const String& localNS, const String& remoteName, 
+            const String& modName, bool isFsPath );
+
 private:
    String m_name;
    String m_uri;
