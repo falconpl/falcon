@@ -65,6 +65,7 @@ bool errhand_if(const NonTerminal&, Parser& p)
 
    p.resetNextToken();
    p.simplify( p.availTokens() );
+   p.clearFrames();
    return true;
 }
 
