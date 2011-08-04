@@ -24,6 +24,7 @@
 #include <falcon/parser/rule.h>
 #include <falcon/parser/parser.h>
 
+#include <falcon/sp/sourcelexer.h>
 #include <falcon/sp/parser_namespace.h>
 
 namespace Falcon {
@@ -57,6 +58,8 @@ void apply_namespace( const Rule&, Parser& p )
    {
       p.addError( e_syn_namespace_star, p.currentSource(), tname->line(), tname->chr() );
    }
+   
+   static_cast<SourceLexer*>(p.currentLexer())->addNameSpace( *ns );
    
    // TODO: Add the namespace.
    p.simplify(3);

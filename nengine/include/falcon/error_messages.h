@@ -219,7 +219,7 @@ FAL_ERRORDECL( e_mod_notfound, 262, "Module required in load/import not found" )
 FAL_ERRORDECL( e_syn_import_spec, 263, "Error in imported symbol specification list" );
 FAL_ERRORDECL( e_syn_namespace, 264, "Error in namespace declaration" );
 FAL_ERRORDECL( e_syn_namespace_star, 265, "Namespace declarations cannot be extended with '*'" );
-
+FAL_ERRORDECL( e_syn_import_name_star, 266, "Imported symbols cannot contain a star marker (if not at end)." );
    
 FAL_ERRORDECL( e_unknown_encoding, 300, "Unknown encoding name" );
 FAL_ERRORDECL( e_enc_fail, 301, "Encoding failed or data not encodable" );

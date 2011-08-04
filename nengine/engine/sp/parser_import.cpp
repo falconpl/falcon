@@ -25,6 +25,7 @@
 #include <falcon/parser/parser.h>
 
 #include <falcon/sp/parser_import.h>
+#include <falcon/sp/sourcelexer.h>
 
 #include "private_types.h"
 
@@ -58,6 +59,10 @@ static void apply_import_star( Parser& p, const String& modspec, bool bIsPath, c
    SourceParser& sp = *static_cast<SourceParser*>(&p);
    ParserContext* ctx = static_cast<ParserContext*>( p.context() );
    ctx->onImportFrom( modspec, bIsPath, "*", ns, true );
+   if( ns != "" )
+   {
+      static_cast<SourceLexer*>(p.currentLexer())->addNameSpace( ns );
+   }
    
    // leave the import clause
    TokenInstance* tEOL = p.getLastToken();
@@ -77,7 +82,7 @@ static void apply_import_internal( Parser& p,
    String* name = tdepName->asString();
    String* nspace = tInOrAs == 0 ? 0 : tInOrAs->asString();
    
-   if( nspace->find("*") != String::npos )
+   if( nspace != 0 && nspace->find("*") != String::npos )
    {
       // notice that "as" grammar cannot generate a "*" here.
       p.addError( e_syn_namespace_star, p.currentSource(), tdepName->line(), tdepName->chr() );
@@ -97,7 +102,7 @@ static void apply_import_internal( Parser& p,
          if( bIsIn )
          {
             ctx->onImportFrom( *name, bNameIsPath, "", *nspace, true );
-            
+            static_cast<SourceLexer*>(p.currentLexer())->addNameSpace( *nspace );
          }
          else
          {
@@ -108,17 +113,37 @@ static void apply_import_internal( Parser& p,
    }
    else
    {
+      // add the namespace?
+      if( bIsIn && nspace != 0 )
+      {
+         static_cast<SourceLexer*>(p.currentLexer())->addNameSpace( *nspace );
+      }
+
       NameList::iterator iter = list->begin();
       while( iter != list->end() )
       {
+         const String& symName = *iter;
+         // accept asterisk in names only at the end.
+         uint32 starPos;
+         if( (starPos = symName.find( "*" )) != String::npos && starPos < symName.length()-1 )
+         {
+            p.addError( e_syn_import_name_star, p.currentSource(), tnamelist->line(), tnamelist->chr(), 0 );
+         }
+         
          // this will eventually add the needed errors.
          if( tInOrAs != 0 )
          {
-            ctx->onImportFrom( *name, bNameIsPath, *iter, *tInOrAs->asString(), bIsIn );
+            ctx->onImportFrom( *name, bNameIsPath, symName, *nspace, bIsIn );
          }
          else
          {
-            ctx->onImportFrom( *name, bNameIsPath, *iter, "", false );
+            ctx->onImportFrom( *name, bNameIsPath, symName, "", false );
+            // check implicit namespace creation.
+            if( (starPos = symName.rfind(".")) != String::npos )
+            {               
+               static_cast<SourceLexer*>(p.currentLexer())->
+                  addNameSpace( nspace->subString(0, starPos ) );
+            }
          }
          ++iter;
          
