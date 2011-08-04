@@ -306,6 +306,18 @@ public:
       for ( length_t is = 0; is < m_staticdData.length(); ++ is )
       {
          Item& itm = m_staticdData[is];
+         // remove functions and classes for our internal dictionaries
+         switch( itm.asClass()->typeID() )
+         {
+            case FLC_ITEM_FUNC:
+               m_functions.erase(static_cast<Function*>(itm.asInst())->name());
+               break;
+               
+            case FLC_CLASS_ID_CLASS:
+               m_classes.erase(static_cast<Class*>(itm.asInst())->name());
+               break;
+         }
+         
          itm.asClass()->dispose( itm.asInst() );
       }
 
@@ -433,7 +445,9 @@ Module::Module( const String& name ):
    m_name( name ),
    m_lastGCMark(0),
    m_bExportAll( false ),
-   m_unloader( 0 )
+   m_unloader( 0 ),
+   m_anonFuncs(0),
+   m_anonClasses(0)
 {
    TRACE("Creating internal module '%s'", name.c_ize() );
    m_uri = "internal:" + name;
@@ -481,26 +495,17 @@ void Module::addStaticData( Class* cls, void* data )
 void Module::addAnonFunction( Function* f )
 {
    // finally add to the function vecotr so that we can account it.
-   String name = f->name();
-   int count = 0;
-   while( _p->m_functions.find( name ) != _p->m_functions.end() )
+   String name;
+   do
    {
-      name = f->name();
-      name.A("_").N(count++);
-   }
+      name = "lambda#";
+      name.N(m_anonFuncs++);
+   } while( _p->m_functions.find( name ) != _p->m_functions.end() );
 
    f->name(name);
 
    _p->m_functions[name] = f;
    f->module(this);
-
-   // if this anonymous function was temporarily added as static data, we can remove it.
-   if( ! _p->m_staticdData.empty()
-         && _p->m_staticdData.at(_p->m_staticdData.length()-1).asInst() == f )
-   {
-      _p->m_staticdData.length( _p->m_staticdData.length()-1 );
-   }
-
 }
 
 
@@ -522,7 +527,7 @@ void Module::sendDynamicToGarbage()
       Item& itm = ia[is];
       Class* handler = itm.asClass();
       if ( handler->typeID() != FLC_CLASS_ID_CLASS
-         || handler->typeID() != FLC_CLASS_ID_FUNCTION )
+         || handler->typeID() != FLC_ITEM_FUNC )
       {
          FALCON_GC_STORE( coll, handler, itm.asInst() );
          ia.remove( is );
@@ -648,25 +653,17 @@ GlobalSymbol* Module::addClass( Class* fc, bool, bool bExport )
 void Module::addAnonClass( Class* cls )
 {
    // finally add to the function vecotr so that we can account it.
-   String name = cls->name();
-   int count = 0;
-   while( _p->m_classes.find( name ) != _p->m_classes.end() )
+   String name;
+   do
    {
-      name = cls->name();
-      name.A("_").N(count++);
-   }
+      name = "class#";
+      name.N(m_anonClasses++);
+   } while ( _p->m_classes.find( name ) != _p->m_classes.end() );
 
    cls->name(name);
 
    _p->m_classes[name] = cls;
    cls->module(this);
-
-   // if this anonymous class was temporarily added as static data, we can remove it.
-   if( ! _p->m_staticdData.empty()
-         && _p->m_staticdData.at(_p->m_staticdData.length()-1).asInst() == cls )
-   {
-      _p->m_staticdData.length( _p->m_staticdData.length()-1 );
-   }
 }
 
 

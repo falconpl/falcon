@@ -35,12 +35,11 @@
 
 // Theese are the class IDs, used to get the typeID of this item.
 #define FLC_CLASS_ID_STRING   10
-#define FLC_CLASS_ID_FUNCTION 11
-#define FLC_CLASS_ID_ARRAY    12
-#define FLC_CLASS_ID_DICT     13
-#define FLC_CLASS_ID_RANGE    14
-#define FLC_CLASS_ID_CLASS    15
-#define FLC_CLASS_ID_PROTO    16
+#define FLC_CLASS_ID_ARRAY    11
+#define FLC_CLASS_ID_DICT     12
+#define FLC_CLASS_ID_RANGE    13
+#define FLC_CLASS_ID_CLASS    14
+#define FLC_CLASS_ID_PROTO    15
 
 // Other generic object
 #define FLC_CLASS_ID_OBJECT   20

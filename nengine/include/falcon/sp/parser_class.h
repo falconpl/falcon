@@ -27,6 +27,8 @@ class Parser;
 
 using namespace Parsing;
 
+bool classdecl_errhand(const NonTerminal&, Parser& p);
+
 void apply_class( const Rule&, Parser& p );
 void apply_class_p( const Rule&, Parser& p );
 void apply_class_from( const Rule&, Parser& p );
@@ -40,6 +42,13 @@ void apply_FromClause_first( const Rule&, Parser& p );
 
 void apply_FromClause_entry_with_expr( const Rule&, Parser& p );
 void apply_FromClause_entry( const Rule&, Parser& p );
+
+
+void apply_expr_class( const Rule&, Parser& p );
+void apply_anonclass_from( const Rule&, Parser& p );
+void apply_anonclass( const Rule&, Parser& p );
+void apply_anonclass_p_from( const Rule&, Parser& p );
+void apply_anonclass_p( const Rule&, Parser& p );
 
 }
 

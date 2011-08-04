@@ -13,6 +13,8 @@
    See LICENSE file for licensing details.
 */
 
+#undef SRC
+#define SRC "engine/class.cpp"
 
 #include <falcon/trace.h>
 #include <falcon/module.h>

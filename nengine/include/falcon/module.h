@@ -472,15 +472,18 @@ public:
             const String& modName, bool isFsPath );
 
 private:
+   class Private;
+   Private* _p;
+   
    String m_name;
    String m_uri;
    uint32 m_lastGCMark;
    bool m_bExportAll;
-   
    DynUnloader* m_unloader;
-
-   class Private;
-   Private* _p;
+   
+   int m_anonFuncs;
+   int m_anonClasses;
+   
    friend class Private;   
    friend class DynLoader;
    friend class FAMLoader;

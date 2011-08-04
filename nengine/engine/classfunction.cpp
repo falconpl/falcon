@@ -15,12 +15,13 @@
 
 #include <falcon/classfunction.h>
 #include <falcon/synfunc.h>
-#include "falcon/itemid.h"
+#include <falcon/itemid.h>
+#include <falcon/vmcontext.h>
 
 namespace Falcon {
 
 ClassFunction::ClassFunction():
-   Class("Function", FLC_CLASS_ID_FUNCTION )
+   Class("Function", FLC_ITEM_FUNC )
 {
 }
 
@@ -73,6 +74,15 @@ bool ClassFunction::gcCheck( void* self, uint32 mark ) const
 {
    return static_cast<Function*>(self)->gcCheck(mark);
 }
+
+
+
+void ClassFunction::op_call( VMContext* ctx, int32 paramCount, void* self ) const
+{
+   ctx->call( static_cast<Function*>(self), paramCount );
+}
+
+
 
 }
 

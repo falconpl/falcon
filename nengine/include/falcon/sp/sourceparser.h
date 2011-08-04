@@ -253,6 +253,7 @@ public:
 
    Parsing::Rule r_Expr_function;
    Parsing::Rule r_Expr_lambda;
+   Parsing::Rule r_Expr_class;
    Parsing::Rule r_Expr_proto;
 
    //================================================
@@ -272,6 +273,11 @@ public:
    Parsing::Rule r_class_p_from;
    Parsing::Rule r_class_p;
 
+   Parsing::Rule r_anonclass_from;
+   Parsing::Rule r_anonclass;
+   Parsing::Rule r_anonclass_p_from;
+   Parsing::Rule r_anonclass_p;
+   
    Parsing::NonTerminal S_InitDecl;
    Parsing::Rule r_init;
 
@@ -333,6 +339,8 @@ public:
    Parsing::NonTerminal LambdaParams;
    Parsing::Rule r_lambda_params;
 
+   Parsing::NonTerminal AnonClassParams;
+   
    Parsing::NonTerminal S_ProtoProp;
    Parsing::Rule r_proto_prop;
 
@@ -363,6 +371,7 @@ public:
    Parsing::State s_InlineFunc;
    Parsing::State s_ClassBody;
    Parsing::State s_LambdaStart;
+   Parsing::State s_ClassStart;
    Parsing::State s_ProtoDecl;
    Parsing::State s_ArrayDecl;
 };

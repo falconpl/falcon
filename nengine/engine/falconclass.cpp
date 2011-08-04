@@ -169,9 +169,7 @@ FalconClass::FalconClass( const String& name ):
    m_hasInitExpr( false ),
    m_hasInit( false ),
    m_missingParents( 0 ),
-   m_bPureFalcon( true ),
-   m_initExprStep( this ),
-   m_initFuncStep( this )
+   m_bPureFalcon( true )   
 {
    _p = new Private;   
    m_bIsfalconClass = true;
@@ -538,14 +536,14 @@ bool FalconClass::construct( bool bHiddenParents )
 
       if( m_hasInitExpr )
       {
-         hasSomething = true;
-         st.append( &m_initExprStep );
+         hasSomething = true;         
+         st.append( new PStepInitExpr( this ) );
       }
 
       if( m_hasInit )
       {
          hasSomething = true;
-         st.append( &m_initFuncStep );
+         st.append( new PStepInit( this ) );
       }
 
       //! We may destroy the constructor... or not.

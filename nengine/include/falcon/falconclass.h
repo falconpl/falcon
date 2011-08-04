@@ -450,8 +450,6 @@ private:
       FalconClass* m_owner;
    };
 
-   PStepInitExpr m_initExprStep;
-
    // This is used to invoke 
    class PStepInit: public Statement
    {
@@ -461,10 +459,7 @@ private:
       
    private:
       FalconClass* m_owner;
-   };
-
-   PStepInit m_initFuncStep;
-   
+   };   
    friend class PStepInitExpr;
 };
 

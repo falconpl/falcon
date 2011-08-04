@@ -130,8 +130,6 @@ void on_close_function( void* )
 
 void on_close_lambda( void* thing )
 {
-   // TODO: name the function
-
    // ensure single expressions to be considered returns.
    SourceParser& sp = *static_cast<SourceParser*>(thing);
    ParserContext* ctx = static_cast<ParserContext*>(sp.context());
@@ -145,6 +143,7 @@ void on_close_lambda( void* thing )
       func->syntree().set(0, ret);
    }
 }
+
 
 void apply_expr_func(const Rule&, Parser& p)
 {
@@ -206,6 +205,7 @@ void apply_expr_lambda(const Rule&, Parser& p)
 
 void apply_lambda_params(const Rule&, Parser& p)
 {
+   static Class* fcls = Engine::instance()->functionClass();
    // ListSymbol << T_Arrow
    SourceParser& sp = static_cast<SourceParser&>(p);
 
@@ -223,7 +223,7 @@ void apply_lambda_params(const Rule&, Parser& p)
    }
 
    TokenInstance* ti = new TokenInstance(lsym->line(),lsym->chr(), sp.Expr);
-   Expression* expr = new ExprValue(Item(func));
+   Expression* expr = ctx->onStaticData( fcls, func );   
    ti->setValue(expr,expr_deletor);
 
    // remove this stuff from the stack

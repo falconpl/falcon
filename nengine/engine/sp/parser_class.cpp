@@ -17,6 +17,7 @@
 #define SRC "engine/sp/parser_class.cpp"
 
 #include <falcon/setup.h>
+#include <falcon/trace.h>
 
 #include <falcon/expression.h>
 #include <falcon/error.h>
@@ -35,6 +36,7 @@
 #include <falcon/sp/parser_deletor.h>
 
 #include <falcon/sp/parser_class.h>
+#include <falcon/parser/lexer.h>
 
 #include "private_types.h"
 
@@ -43,6 +45,37 @@
 namespace Falcon {
 
 typedef std::list<Inheritance* > InhList;
+
+bool classdecl_errhand(const NonTerminal&, Parser& p)
+{
+   ParserContext* ctx = static_cast<ParserContext*>(p.context());
+   TokenInstance* ti = p.getNextToken();
+   
+   // already detected?
+   if( p.lastErrorLine() != ti->line() )
+   {
+      p.addError( e_syn_import, p.currentSource(), ti->line(), ti->chr() );
+   }
+   
+   // remove the whole line
+   p.consumeUpTo( p.T_EOL );
+   p.clearFrames();
+   
+   if( ! p.interactive() )
+   {
+      // put in a fake if statement (else, subsequent else/elif/end would also cause errors).
+      FalconClass* cls = new FalconClass( "anonymous" );
+      ctx->openClass( cls, false, 0 );
+      p.pushState("ClassBody");
+   }
+   else
+   {
+      MESSAGE2( "classdecl_errhand -- Ignoring CLASS in interactive mode." );
+   }
+      
+   // we need to create a discardable anonymous class if we're a module.   
+   return true;
+}
 
 void inh_list_deletor(void* data)
 {
@@ -70,30 +103,52 @@ static void make_class( Parser& p, int tCount,
          TokenInstance* tParams,
          TokenInstance* tfrom )
 {
+   static Class* ccls = Engine::instance()->metaClass();
+   
+   SourceParser& sp = static_cast<SourceParser&>(p);
    ParserContext* ctx = static_cast<ParserContext*>(p.context());
 
-   // Are we already in a function?
-   if( ctx->currentFunc() != 0 || ctx->currentClass() != 0 || ctx->currentStmt() != 0 )
+   FalconClass* cls = 0;
+   GlobalSymbol* symclass = 0;
+   TokenInstance* ti = 0;
+   
+   // a symbol class?
+   if ( tname != 0 )
    {
-      p.addError( e_toplevel_class,  p.currentSource(), tname->line(), tname->chr() );
-      p.simplify( tCount  );
-      return;
-   }
+      // Are we already in a function?
+      if( ctx->currentFunc() != 0 || ctx->currentClass() != 0 || ctx->currentStmt() != 0 )
+      {
+         p.addError( e_toplevel_class,  p.currentSource(), tname->line(), tname->chr() );
+         p.simplify( tCount  );
+         return;
+      }
 
-   // check if the symbol is free -- defining an unique symbol
-   bool alreadyDef;
-   GlobalSymbol* symclass = ctx->onGlobalDefined( *tname->asString(), alreadyDef );
-   if( alreadyDef )
+      // check if the symbol is free -- defining an unique symbol
+      bool alreadyDef;
+      symclass = ctx->onGlobalDefined( *tname->asString(), alreadyDef );
+      if( alreadyDef )
+      {
+         // not free!
+         p.addError( e_already_def,  p.currentSource(), tname->line(), tname->chr(), 0,
+            String("at line ").N(symclass->declaredAt()) );
+         p.simplify( tCount );
+         return;
+      }
+
+      // Ok, we took the symbol.
+      cls = new FalconClass( *tname->asString() );
+   }
+   else
    {
-      // not free!
-      p.addError( e_already_def,  p.currentSource(), tname->line(), tname->chr(), 0,
-         String("at line ").N(symclass->declaredAt()) );
-      p.simplify( tCount );
-      return;
+      // we don't have a symbol...
+      cls = new FalconClass( "anonymous" );
+      symclass = 0;
+      
+      // ... but we have an expression value
+      ti = new TokenInstance( p.currentLine(), p.currentLexer()->character(), sp.Expr);
+      Expression* expr = ctx->onStaticData( ccls, cls );   
+      ti->setValue( expr, expr_deletor );
    }
-
-   // Ok, we took the symbol.
-   FalconClass* cls = new FalconClass( *tname->asString() );
 
    // Some parameters to take care of?
    if( tParams != 0 )
@@ -125,10 +180,14 @@ static void make_class( Parser& p, int tCount,
       flist->clear();
    }
 
-
    // remove this stuff from the stack
-   p.simplify( tCount );
-
+   p.simplify(tCount, ti);
+   // remove the ClassStart state?
+   if ( tname == 0 )
+   {
+      p.popState();
+   }
+   
    ctx->openClass(cls, false, symclass);
 
    // time to check the symbols.
@@ -222,6 +281,10 @@ void apply_pdecl_expr( const Rule&, Parser& p )
 }
 
 
+//=================================================================
+// Init clause
+//
+
 void apply_init_expr( const Rule&, Parser& p )
 {
    // T_init << EOL;
@@ -262,6 +325,9 @@ void apply_init_expr( const Rule&, Parser& p )
    }
 }
 
+//=================================================================
+// From clause
+//
 
 void apply_FromClause_next( const Rule&, Parser& p  )
 {
@@ -333,6 +399,60 @@ void apply_FromClause_entry( const Rule&, Parser& p )
    TokenInstance* tInh = new TokenInstance(tname->line(), tname->chr(), sp.FromEntry );
    tInh->setValue( new Inheritance(*tname->asString()), &inh_deletor );
    p.simplify( 1, tInh );
+}
+
+
+//======================================================================
+// Anon classes.
+//
+
+void apply_expr_class(const Rule&, Parser& p)
+{
+   // T_class
+   p.simplify(1);
+   p.pushState( "ClassStart", false );
+}
+
+
+void apply_anonclass_from( const Rule&, Parser& p )
+{
+   //<< T_from << FromClause << T_EOL
+   p.getNextToken(); // T_from
+   TokenInstance* tfrom=p.getNextToken();
+
+   make_class(p, 3, 0, 0, tfrom );
+   
+}
+
+
+void apply_anonclass( const Rule&, Parser& p )
+{
+   // << T_EOL
+   make_class(p, 1, 0, 0, 0 );
+}
+
+
+void apply_anonclass_p_from( const Rule&, Parser& p )
+{
+   // << T_Openpar << ListSymbol << T_Closepar << T_from << FromClause << T_EOL
+   p.getNextToken(); // T_Openpar
+   TokenInstance* tparams = p.getNextToken();
+   p.getNextToken(); // T_Closepar
+   p.getNextToken(); // T_from
+   TokenInstance* tfrom = p.getNextToken();
+
+   make_class(p, 3, 0, tparams, tfrom );
+}
+
+
+void apply_anonclass_p( const Rule&, Parser& p )
+{
+   // << T_Openpar << ListSymbol << T_Closepar  << T_EOL
+   p.getNextToken(); // T_Openpar
+   TokenInstance* tparams = p.getNextToken();
+   
+   make_class(p, 3, 0, tparams, 0 );
+
 }
 
 }

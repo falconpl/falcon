@@ -308,6 +308,7 @@ SourceParser::SourceParser():
    Expr<< (r_Expr_function << "Expr_func" << apply_expr_func << T_function << T_Openpar << ListSymbol << T_Closepar << T_EOL);
    // Start of lambda expressions.
    Expr<< (r_Expr_lambda << "Expr_lambda" << apply_expr_lambda << T_OpenGraph );
+   Expr<< (r_Expr_class << "Expr_class" << apply_expr_class << T_class );
    Expr<< (r_Expr_proto << "Expr_proto" << apply_expr_proto << T_OpenProto );
 
    S_Function << "Function"
@@ -361,7 +362,7 @@ SourceParser::SourceParser():
 
    //==================================
    // Class
-   S_Class << "Class";
+   S_Class << "Class" << classdecl_errhand;
    S_Class << (r_class_from << "Class w/from" << apply_class_from 
                << T_class << T_Name << T_from << FromClause << T_EOL );
    S_Class << (r_class << "Class decl" << apply_class << T_class << T_Name << T_EOL );
@@ -396,6 +397,19 @@ SourceParser::SourceParser():
    LambdaParams << ( r_lambda_params << "Params in lambda" << apply_lambda_params 
                         << ListSymbol << T_Arrow );
 
+   //==========================================================================
+   // Anon Classes
+   //
+   AnonClassParams << "AnonClassParams" << classdecl_errhand;
+   AnonClassParams << (r_anonclass_from << "AClass w/from" << apply_anonclass_from 
+                  << T_from << FromClause << T_EOL );
+   AnonClassParams << (r_anonclass << "AClass decl" << apply_anonclass << T_EOL );
+   AnonClassParams << (r_anonclass_p_from << "AClass w/params & from" << apply_anonclass_p_from
+                  << T_Openpar << ListSymbol << T_Closepar << T_from << FromClause << T_EOL );
+   AnonClassParams << (r_anonclass_p << "AClass w/params" << apply_anonclass_p
+             << T_Openpar << ListSymbol << T_Closepar  << T_EOL );
+
+   
    //==========================================================================
    // prototype
    //
@@ -483,6 +497,10 @@ SourceParser::SourceParser():
       << S_EmptyLine
       ;
    
+   s_ClassStart << "ClassStart"
+      << AnonClassParams
+      ;
+   
    s_ProtoDecl << "ProtoDecl"
       << S_ProtoProp
       << S_EmptyLine
@@ -499,6 +517,7 @@ SourceParser::SourceParser():
    addState( s_LambdaStart );
    addState( s_ProtoDecl );
    addState( s_ArrayDecl );
+   addState( s_ClassStart );
 }
 
 void SourceParser::onPushState( bool isPushedState )

@@ -67,7 +67,15 @@ void IntCompiler::Context::onInputOver()
 
 void IntCompiler::Context::onNewFunc( Function* function, GlobalSymbol* gs )
 {
-   m_owner->m_module->addFunction( gs, function );
+   // remove the function from the static-data
+   if( gs != 0 )
+   {
+      m_owner->m_module->addFunction( gs, function );
+   }
+   else
+   {
+      m_owner->m_module->addAnonFunction( function );
+   }
 }
 
 
@@ -174,7 +182,15 @@ bool IntCompiler::Context::onUnknownSymbol( UnknownSymbol* sym )
 Expression* IntCompiler::Context::onStaticData( Class* cls, void* data )
 {
    m_owner->m_module->addStaticData( cls, data );
-   return new ExprValue( Item( cls, data ) );
+   if( cls->typeID() == FLC_ITEM_FUNC )
+   {
+      // simplify functions to function items.
+      return new ExprValue( Item( static_cast<Function*>(data) ) );
+   }
+   else
+   {
+      return new ExprValue( Item( cls, data ) );
+   }
 }
 
 
