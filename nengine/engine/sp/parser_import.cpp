@@ -151,7 +151,7 @@ static void apply_import_internal( Parser& p,
             if( (starPos = symName.rfind(".")) != String::npos )
             {               
                static_cast<SourceLexer*>(p.currentLexer())->
-                  addNameSpace( nspace->subString(0, starPos ) );
+                  addNameSpace( symName.subString(0, starPos ) );
             }
          }
          ++iter;

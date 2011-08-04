@@ -244,7 +244,17 @@ public:
       {}
          
    };
+   
+   class SymbolGuard {
+   public:
+      Symbol* m_sym;
+      bool m_bOwn;
       
+      SymbolGuard( Symbol* sym=0, bool bOwn = true ):
+         m_sym( sym ),
+         m_bOwn( bOwn )
+      {}
+   };
    //============================================
    // Main data
    //============================================
@@ -262,7 +272,8 @@ public:
    ReqList m_genericMods;
 
    typedef std::map<String, Symbol*> GlobalsMap;
-   GlobalsMap m_gSyms;
+   typedef std::map<String, SymbolGuard> SymbolGuardMap;
+   SymbolGuardMap m_gSyms;
    GlobalsMap m_gExports;
 
    typedef std::map<String, Function*> FunctionMap;
@@ -280,11 +291,14 @@ public:
    ~Private()
    {
       // We can destroy the globals, as we're always responsible for that...
-      GlobalsMap::iterator iter = m_gSyms.begin();
+      SymbolGuardMap::iterator iter = m_gSyms.begin();
       while( iter != m_gSyms.end() )
       {
-         Symbol* sym = iter->second;         
-         delete sym;
+         if( iter->second.m_bOwn )
+         {
+            Symbol* sym = iter->second.m_sym;
+            delete sym;
+         }
          ++iter;
       }
 
@@ -337,7 +351,7 @@ public:
    {
       // has the symbolname a namespace translation?
       String remSymName;      
-      Requirement* req;
+      Requirement* req = 0;
       
       length_t pos;
       if( bSearchNS && (pos = symname.rfind(".")) != String::npos )
@@ -352,7 +366,9 @@ public:
             remSymName = nsi->second->m_remNS + "." + symname.subString(pos+1);
          }
       }
-      else
+      
+      // if not found, or if we don't even want to search it, use the default
+      if( req == 0 )
       {
         remSymName = symname;
         req = getReq( sourcemod, bIsUri );
@@ -523,7 +539,7 @@ GlobalSymbol* Module::addFunction( Function* f, bool bExport )
 {
    //static Engine* eng = Engine::instance();
 
-   Private::GlobalsMap& syms = _p->m_gSyms;
+   Private::SymbolGuardMap& syms = _p->m_gSyms;
    if( syms.find(f->name()) != syms.end() )
    {
       return 0;
@@ -531,7 +547,7 @@ GlobalSymbol* Module::addFunction( Function* f, bool bExport )
 
    // add the symbol to the symbol table.
    GlobalSymbol* sym = new GlobalSymbol( f->name(), f );
-   syms[f->name()] = sym;
+   syms[f->name()] = Private::SymbolGuard(sym);
 
    // Eventually export it.
    if( bExport )
@@ -566,7 +582,7 @@ void Module::addFunction( GlobalSymbol* gsym, Function* f )
 GlobalSymbol* Module::addFunction( const String &name, ext_func_t f, bool bExport )
 {
    // check if the name is free.
-   Private::GlobalsMap& syms = _p->m_gSyms;
+   Private::SymbolGuardMap& syms = _p->m_gSyms;
    if( syms.find(name) != syms.end() )
    {
       return 0;
@@ -603,7 +619,7 @@ GlobalSymbol* Module::addClass( Class* fc, bool, bool bExport )
 {
    static Class* ccls = Engine::instance()->metaClass();
 
-   Private::GlobalsMap& syms = _p->m_gSyms;
+   Private::SymbolGuardMap& syms = _p->m_gSyms;
    if( syms.find(fc->name()) != syms.end() )
    {
       return 0;
@@ -612,7 +628,7 @@ GlobalSymbol* Module::addClass( Class* fc, bool, bool bExport )
    // add a proper object in the global vector
    // add the symbol to the symbol table.
    GlobalSymbol* sym = new GlobalSymbol( fc->name(), Item(ccls, fc) );
-   syms[fc->name()] = sym;
+   syms[fc->name()] = Private::SymbolGuard(sym);
 
    // Eventually export it.
    if( bExport )
@@ -659,8 +675,8 @@ GlobalSymbol* Module::addVariable( const String& name, const Item& value, bool b
    GlobalSymbol* sym;
    
    // check if the name is free.
-   Private::GlobalsMap& syms = _p->m_gSyms;
-   Private::GlobalsMap::iterator pos = syms.find(name);
+   Private::SymbolGuardMap& syms = _p->m_gSyms;
+   Private::SymbolGuardMap::iterator pos = syms.find(name);
    if( pos != syms.end() )
    {
       sym = 0;
@@ -682,15 +698,15 @@ GlobalSymbol* Module::addVariable( const String& name, const Item& value, bool b
 
 Symbol* Module::getGlobal( const String& name ) const
 {
-   const Private::GlobalsMap& syms = _p->m_gSyms;
-   Private::GlobalsMap::const_iterator iter = syms.find(name);
+   const Private::SymbolGuardMap& syms = _p->m_gSyms;
+   Private::SymbolGuardMap::const_iterator iter = syms.find(name);
 
    if( iter == syms.end() )
    {
       return 0;
    }
 
-   return iter->second;
+   return iter->second.m_sym;
 }
 
 
@@ -710,12 +726,12 @@ Function* Module::getFunction( const String& name ) const
 
 void Module::enumerateGlobals( SymbolEnumerator& rator ) const
 {
-   const Private::GlobalsMap& syms = _p->m_gSyms;
-   Private::GlobalsMap::const_iterator iter = syms.begin();
+   const Private::SymbolGuardMap& syms = _p->m_gSyms;
+   Private::SymbolGuardMap::const_iterator iter = syms.begin();
 
    while( iter != syms.end() )
    {
-      Symbol* sym = iter->second;
+      Symbol* sym = iter->second.m_sym;
       if( ! rator( *sym, ++iter == syms.end()) )
          break;
    }
@@ -724,27 +740,49 @@ void Module::enumerateGlobals( SymbolEnumerator& rator ) const
 
 void Module::enumerateExports( SymbolEnumerator& rator ) const
 {
-   const Private::GlobalsMap* psyms = m_bExportAll ? &_p->m_gSyms : &_p->m_gExports;   
-   const Private::GlobalsMap& syms = *psyms;
-   
-   Private::GlobalsMap::const_iterator iter = syms.begin();
-
-   while( iter != syms.end() )
+   if( m_bExportAll )
    {
-      Symbol* sym = iter->second;
-      // ignore "private" symbols
-      if( sym->name().startsWith("_") || sym->type() != Symbol::t_global_symbol )
+      const Private::SymbolGuardMap& syms = _p->m_gSyms;   
+      Private::SymbolGuardMap::const_iterator iter = syms.begin();
+
+      while( iter != syms.end() )
       {
-         ++iter;
+         Symbol* sym = iter->second.m_sym;
+         // ignore "private" symbols
+         if( sym->name().startsWith("_") || sym->type() != Symbol::t_global_symbol )
+         {
+            ++iter;
+         }
+         else
+         {
+            if( ! rator( *sym, ++iter == syms.end()) )
+               break;
+         }
       }
-      else
+   }
+   else
+   { 
+      const Private::GlobalsMap& syms = _p->m_gExports;
+      Private::GlobalsMap::const_iterator iter = syms.begin();
+
+      while( iter != syms.end() )
       {
-         if( ! rator( *sym, ++iter == syms.end()) )
-            break;
+         Symbol* sym = iter->second;
+         // ignore "private" symbols
+         if( sym->name().startsWith("_") || sym->type() != Symbol::t_global_symbol )
+         {
+            ++iter;
+         }
+         else
+         {
+            if( ! rator( *sym, ++iter == syms.end()) )
+               break;
+         }
       }
    }
 }
 
+   
 bool Module::addLoad( const String& mod_name, bool bIsUri )
 {
    // do we have the recor?
@@ -867,19 +905,19 @@ Symbol* Module::addExport( const String& name, bool& bAlready )
 {
    Symbol* sym = 0;
    // if we have export all or if this is already exported, return 0.
-   Private::GlobalsMap::const_iterator iter; 
-   if( m_bExportAll || (( iter = _p->m_gExports.find( name )) != _p->m_gExports.end()) )
+   Private::GlobalsMap::const_iterator eiter; 
+   if( m_bExportAll || (( eiter = _p->m_gExports.find( name )) != _p->m_gExports.end()) )
    {
-      sym = iter->second;
+      sym = eiter->second;
       bAlready = true;
       return sym;
    }   
    
    // We can't be called if the symbol is alredy declared elsewhere.
-   iter = _p->m_gSyms.find( name );
+   Private::SymbolGuardMap::iterator iter = _p->m_gSyms.find( name );
    if( iter != _p->m_gSyms.end() )
    {
-      sym = iter->second;
+      sym = iter->second.m_sym;
       
       // ... and save the dependency.
       _p->m_gExports[name] = sym;  
@@ -986,6 +1024,29 @@ bool Module::passiveLink( ModSpace* ms )
             }
             ++iter;
          }
+         
+         // performs also the namespace forwarding
+         Private::Requirement::NsImportMap::iterator nsiter = req->m_fullImport.begin();
+         while( nsiter != req->m_fullImport.end() )
+         {
+            const String& remoteNS = nsiter->first;
+            const String& localNS = nsiter->second;
+            // search the symbols in the remote namespace.
+            Private::SymbolGuardMap& globs = req->m_module->_p->m_gSyms;
+            String nsPrefix = remoteNS + ".";
+            Private::SymbolGuardMap::iterator gi = globs.lower_bound(nsPrefix);
+            while( gi != globs.end() && gi->first.startsWith(nsPrefix) )
+            {
+               String localName = localNS + "." + gi->first.subString(nsPrefix.length());
+               if( _p->m_gSyms.find(localName) == _p->m_gSyms.end())
+               {
+                  _p->m_gSyms[localName] = Private::SymbolGuard(gi->second.m_sym, false);
+               }
+               ++gi;
+            }
+            
+            ++nsiter;
+         }
       }
       ++iter;
    }
@@ -1055,10 +1116,10 @@ void Module::completeClass(FalconClass* fcls)
       HyperClass* hcls = fcls->hyperConstruct();
       _p->m_classes[hcls->name()] = hcls;
       // anonymous classes cannot have a name in the global symbol table, so...
-      Private::GlobalsMap::iterator pos = _p->m_gSyms.find( hcls->name() );
+      Private::SymbolGuardMap::iterator pos = _p->m_gSyms.find( hcls->name() );
       if( pos != _p->m_gSyms.end() )
       {
-         Item* value = pos->second->value(0);
+         Item* value = pos->second.m_sym->value(0);
          value->setUser( value->asClass(), hcls );
       }
    }

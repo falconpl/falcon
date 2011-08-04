@@ -222,8 +222,8 @@ bool ModSpace::link( bool bThrowOnError )
 {   
    Private::ModLoadOrder& mods = _p->m_loadOrder;
    
-   Private::ModLoadOrder::const_iterator imods = mods.begin();
-   while( imods != mods.end() )
+   Private::ModLoadOrder::const_reverse_iterator imods = mods.rbegin();
+   while( imods != mods.rend() )
    {
       ModuleLoadMode* lm = *imods;
       Module* mod = lm->m_module;
@@ -247,11 +247,12 @@ void ModSpace::readyVM()
    
    Private::ModLoadOrder& mods = _p->m_loadOrder;
    
+   // insertion goes first to last because execution goes last to first.
    VMContext* mainContext = m_vm->currentContext();
-   Private::ModLoadOrder::const_reverse_iterator rimods = mods.rbegin();
-   while( rimods != mods.rend() )
+   Private::ModLoadOrder::const_iterator imods = mods.begin();
+   while( imods != mods.end() )
    {
-      const Module* mod = (*rimods)->m_module;
+      const Module* mod = (*imods)->m_module;
       // TODO -- invoke the init methods.
       
       // TODO -- specific space for Main.
@@ -261,7 +262,7 @@ void ModSpace::readyVM()
          mainContext->call( main, 0 );
       }
             
-      ++rimods;
+      ++imods;
    }
 }
 
