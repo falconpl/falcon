@@ -33,7 +33,7 @@ class String;
  an interface to the system routines to free the resources allocated through
  that handle.
  
- This class is created by the DynLoaded and stored in the generated Module.
+ This class is created by the DynLoader and stored in the generated Module.
  At module destruction, right before freeing the memory associated with the 
  Falcon module, will invoke the unload() method of this class and discharge
  the data from the memory.
