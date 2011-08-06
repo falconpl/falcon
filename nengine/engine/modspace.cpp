@@ -319,6 +319,7 @@ bool ModSpace::addExportedSymbol( Module* mod, Symbol* sym, bool bAddError )
    return true;
 }
    
+
 void ModSpace::exportSymbols( Module* mod )
 {
    class Rator: public Module::SymbolEnumerator
@@ -343,6 +344,7 @@ void ModSpace::exportSymbols( Module* mod )
    Rator rator( this, mod );
    mod->enumerateExports( rator );
 }
+
 }
 
 /* end of modspace.cpp */

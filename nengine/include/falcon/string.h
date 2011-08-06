@@ -106,6 +106,8 @@ public:
    /** Finds a substring in a string, and eventually returns npos if not found. */
    virtual length_t find( const String *str, const String *element, length_t start =0, length_t end = npos) const = 0;
    virtual length_t rfind( const String *str, const String *element, length_t start =0, length_t end = npos) const = 0;
+   virtual length_t find( const String *str, char_t chr, length_t start =0, length_t end = npos) const = 0;
+   virtual length_t rfind( const String *str, char_t chr, length_t start =0, length_t end = npos) const = 0;
    virtual void insert( String *str, length_t pos, length_t len, const String *source ) const =0;
    virtual bool change( String *str, length_t start, length_t end, const String *source ) const =0;
    virtual void remove( String *str, length_t pos, length_t len ) const =0;
@@ -136,6 +138,8 @@ public:
    virtual String *clone( const String *str ) const;
    virtual length_t find( const String *str, const String *element, length_t start =0, length_t end = 0) const;
    virtual length_t rfind( const String *str, const String *element, length_t start =0, length_t end = 0) const;
+   virtual length_t find( const String *str, char_t chr, length_t start =0, length_t end = 0) const;
+   virtual length_t rfind( const String *str, char_t chr, length_t start =0, length_t end = 0) const;
    virtual void remove( String *str, length_t pos, length_t len ) const;
 
    virtual void bufferize( String *str ) const;
@@ -677,6 +681,16 @@ public:
       return m_class->rfind( this, &element, start, end );
    }
 
+   length_t find( char_t element, length_t start=0, length_t end=csh::npos) const
+   {
+      return m_class->find( this, element, start, end );
+   }
+
+   length_t rfind( char_t element, length_t start=0, length_t end=csh::npos) const
+   {
+      return m_class->rfind( this, element, start, end );
+   }
+
    /** Compares a string to another.
       Optimized to match against C strings.
       \see compare( const String &other )
@@ -733,6 +747,16 @@ public:
    */
    int compareIgnoreCase( const wchar_t *other ) const;
 
+   /** Find one of the characters in the string. 
+   \param src A string containing all the charcters to be searched.
+    */
+   length_t findFirstOf( const String& src, length_t pos = 0 ) const;
+
+   /** Find one of the characters in the string from the back of the string. 
+    \param src A string containing all the charcters to be searched.
+    */
+   length_t findLastOf( const String& src, length_t pos = npos ) const ;
+   
    /** Returns true if this string is empty. */
    bool operator !() { return m_size == 0; }
 
@@ -753,6 +777,8 @@ public:
       append( chr );
       return *this;
    }
+   
+
 
    /** Assign from a const char string.
       If this string is not empty, its content are destroyed; then

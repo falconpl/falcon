@@ -59,12 +59,9 @@ bool errhand_if(const NonTerminal&, Parser& p)
    }
    else
    {
+      // on interactive parsers, let the whole instruction to be destroyed.
       MESSAGE2( "errhand_if -- Ignoring IF in interactive mode." );
    }
-   // on interactive parsers, let the whole instruction to be destroyed.
-
-   p.resetNextToken();
-   p.simplify( p.availTokens() );
    p.clearFrames();
    return true;
 }

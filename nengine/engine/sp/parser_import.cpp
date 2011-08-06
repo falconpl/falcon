@@ -87,7 +87,7 @@ static void apply_import_internal( Parser& p,
    String* name = tdepName->asString();
    String* nspace = tInOrAs == 0 ? 0 : tInOrAs->asString();
    
-   if( nspace != 0 && nspace->find("*") != String::npos )
+   if( nspace != 0 && nspace->find( '*') != String::npos )
    {
       // notice that "as" grammar cannot generate a "*" here.
       p.addError( e_syn_namespace_star, p.currentSource(), tdepName->line(), tdepName->chr() );
@@ -129,7 +129,7 @@ static void apply_import_internal( Parser& p,
       {
          const String& symName = *iter;
          // accept asterisk in names only at the end.
-         length_t starPos = symName.find( "*" );
+         length_t starPos = symName.find( '*' );
          if( starPos != String::npos && starPos < symName.length()-1 )
          {
             p.addError( e_syn_import_name_star, p.currentSource(), tnamelist->line(), tnamelist->chr(), 0 );
@@ -153,7 +153,7 @@ static void apply_import_internal( Parser& p,
          {
             ctx->onImportFrom( *name, bNameIsPath, symName, "", false );
             // check implicit namespace creation.
-            if( (starPos = symName.rfind(".")) != String::npos )
+            if( (starPos = symName.rfind( '.')) != String::npos )
             {               
                static_cast<SourceLexer*>(p.currentLexer())->
                   addNameSpace( symName.subString(0, starPos ) );
@@ -331,7 +331,7 @@ void apply_import_syms( const Rule&, Parser& p )
          // this will eventually add the needed errors.
          // check for "*"
          const String& symName = *iter;
-         length_t starPos = symName.find( "*" );
+         length_t starPos = symName.find( '*' );
          if( starPos != String::npos && starPos < symName.length()-1 )
          {
             p.addError( e_syn_import_name_star, p.currentSource(), tnamelist->line(), tnamelist->chr(), 0 );

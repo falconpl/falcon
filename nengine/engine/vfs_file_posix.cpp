@@ -43,7 +43,7 @@ public:
       Directory(location),
       m_dir(md)
    {
-      AutoCString loc(location.get());
+      AutoCString loc(location.encode());
       m_dir = ::opendir( loc.c_str() );
    }
 
@@ -177,7 +177,7 @@ Directory* VFSFile::openDir( const URI& uri )
 
 FileStat::t_fileType VFSFile::fileType( const URI& uri, bool )
 {
-   AutoCString filename( uri.get() );
+   AutoCString filename( uri.encode() );
    struct stat fs;
    if ( lstat( filename.c_str(), &fs ) != 0 )
    {
@@ -208,7 +208,7 @@ FileStat::t_fileType VFSFile::fileType( const URI& uri, bool )
 
 bool VFSFile::readStats( const URI& uri, FileStat &sts, bool )
 {
-   AutoCString filename( uri.get() );
+   AutoCString filename( uri.encode() );
 
    struct stat fs;
 
@@ -287,8 +287,8 @@ void VFSFile::mkdir( const URI &uri, bool descend )
    if ( descend )
    {
       // find /.. sequences
-      uint32 pos = strName.find( "/" );
-      if(pos == 0) pos = strName.find( "/", 1 ); // an absolute path
+      uint32 pos = strName.find( '/' );
+      if(pos == 0) pos = strName.find( '/', 1 ); // an absolute path
       while( true )
       {
          String strPath( strName, 0, pos );
@@ -311,7 +311,7 @@ void VFSFile::mkdir( const URI &uri, bool descend )
          if ( pos == String::npos )
             break;
 
-         pos = strName.find( "/", pos + 1 );
+         pos = strName.find( '/', pos + 1 );
        }
 
    }

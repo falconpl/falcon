@@ -380,6 +380,70 @@ length_t Byte::rfind( const String *str, const String *element, length_t start, 
 }
 
 
+
+length_t Byte::find( const String *str, char_t keyStart, length_t start, length_t end ) const
+{
+   length_t len =  str->length();
+   if ( start >= len )
+   {
+      return npos;
+   }
+   
+   if ( end > len )  // npos is defined to be greater than any size
+   {
+      end = len;
+   }
+   else if ( end < start ) 
+   {
+      register length_t temp = end;
+      end = start;
+      start = temp;
+   }
+
+   while( start <= end )
+   {
+      if ( str->getCharAt( start ) == keyStart )
+      {
+         return start;
+      }
+      start++;
+   }
+
+   // not found.
+   return npos;
+}
+
+
+length_t Byte::rfind( const String *str, char_t keyStart, length_t start, length_t end ) const
+{
+   length_t len =  str->length();
+   if ( start >= len )
+   {
+      return npos;
+   }
+
+   if ( end > len ) {
+      end = len;
+   }
+   else if ( end < start ) 
+   {
+      length_t temp = end;
+      end = start;
+      start = temp;
+   }
+   
+   while( end > start  )
+   {
+      if ( str->getCharAt( --end ) == keyStart ) {
+         return end;
+      }
+   }
+
+   // not found.
+   return npos;
+}
+
+
 void Byte::remove( String *str, length_t pos, length_t len ) const
 {
    length_t sl = str->length();
@@ -2281,6 +2345,49 @@ void String::unescapeQuotes()
       }
    }
 }
+
+
+length_t String::findFirstOf( const String& src, length_t pos ) const
+{
+   length_t len = length();
+   if ( pos >= len )
+   {
+      return npos;
+   }
+   
+   while( pos < len )
+   {
+      if ( src.find( getCharAt(pos) ) != npos )
+      {
+         return pos;
+      }
+      ++pos;
+   }
+   
+   return npos;
+}
+
+
+length_t String::findLastOf( const String& src, length_t pos ) const 
+{
+   length_t len = length();
+   if ( pos >= len )
+   {
+      pos = len;
+   }
+   
+   while( pos > 0 )
+   {
+      if ( src.find( getCharAt(--pos) ) != npos )
+      {
+         return pos;
+      }
+   }
+   
+   return npos;
+}
+
+
 
 GCToken* String::garbage()
 {

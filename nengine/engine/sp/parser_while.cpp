@@ -17,10 +17,12 @@
 #define SRC "engine/sp/parsercontext.cpp"
 
 #include <falcon/setup.h>
+#include <falcon/trace.h>
 
 #include <falcon/expression.h>
 #include <falcon/statement.h>
 #include <falcon/stmtautoexpr.h>
+#include <falcon/exprvalue.h>
 
 #include <falcon/parser/rule.h>
 #include <falcon/parser/parser.h>
@@ -28,12 +30,40 @@
 #include <falcon/sp/sourceparser.h>
 #include <falcon/sp/parsercontext.h>
 #include <falcon/sp/parser_deletor.h>
-
-#include <falcon/sp/parser_autoexpr.h>
+#include <falcon/sp/parser_while.h>
 
 namespace Falcon {
 
 using namespace Parsing;
+
+bool while_errhand(const NonTerminal&, Parser& p)
+{
+   TokenInstance* ti = p.getNextToken();
+   TokenInstance* ti2 = p.getLastToken();
+
+   if( p.lastErrorLine() < ti->line() )
+   {
+      // generate another error only if we didn't notice it already.
+      p.addError( e_syn_if, p.currentSource(), ti->line(), ti2->chr() );
+   }
+
+   if( ! p.interactive() )
+   {
+      // put in a fake if statement (else, subsequent else/elif/end would also cause errors).
+      SynTree* stWhile = new SynTree;
+      StmtWhile* fakeWhile = new StmtWhile( new ExprValue(1), stWhile, ti->line(), ti->chr() );
+      ParserContext* st = static_cast<ParserContext*>(p.context());
+      st->openBlock( fakeWhile, stWhile );
+   }
+   else
+   {
+      MESSAGE2( "while_errhand -- Ignoring WHILE in interactive mode." );
+   }
+   // on interactive parsers, let the whole instruction to be destroyed.
+
+   p.clearFrames();
+   return true;
+}
 
 void apply_while_short( const Rule&, Parser& p )
 {

@@ -22,6 +22,7 @@
 #include <falcon/cm/tostring.h>
 #include <falcon/cm/typeid.h>
 #include <falcon/cm/clone.h>
+#include <falcon/cm/uri.h>
 
 #include <falcon/classstring.h>
 #include <falcon/classnil.h>
@@ -37,7 +38,6 @@
 
 // the standard error classes
 #include <falcon/errorclasses.h>
-
 
 
 namespace Falcon {
@@ -57,6 +57,9 @@ CoreModule::CoreModule():
       << new Ext::ToString
       << new Ext::TypeId
       << new Ext::Clone
+      
+      // Standard classes
+      << new Ext::ClassURI
       
       // Type reflection
       << new ClassNil

@@ -366,7 +366,7 @@ public:
       Requirement* req = 0;
       
       length_t pos;
-      if( bSearchNS && (pos = symname.rfind(".")) != String::npos )
+      if( bSearchNS && (pos = symname.rfind( '.')) != String::npos )
       {
          // for sure, it has a namespace; but has a translation?
          String localNS = symname.subString(0,pos);
@@ -930,7 +930,7 @@ void Module::addImportInheritance( Inheritance* inh )
    // Inheritances with dots are dependent on the given module.
    String ModName, inhName;
    inhName = inh->className();
-   length_t pos = inhName.rfind(".");
+   length_t pos = inhName.rfind( '.');
    if( pos != String::npos )
    {
       ModName = inhName.subString(0,pos);
@@ -1273,7 +1273,7 @@ bool Module::addImportFromWithNS( const String& localNS, const String& remoteNam
    else
    {
       // is the source name composed?
-      length_t posDot = remoteName.rfind( "." );
+      length_t posDot = remoteName.rfind( '.' );
       if( posDot != String::npos )
       {
          String remPrefix = remoteName.subString( 0, posDot );

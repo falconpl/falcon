@@ -303,7 +303,7 @@ void FalconOptions::parseDefine( const String& str )
 
 void FalconOptions::parseEqString( const String& str, String& key, String& value )
 {
-   length_t pos = str.find( "=" );
+   length_t pos = str.find( '=' );
    if( pos != String::npos )
    {
       key = str.subString(0, pos);

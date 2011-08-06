@@ -162,7 +162,7 @@ SourceParser::SourceParser():
       << (r_else << "else" << apply_else << T_else << T_EOL )
       ;
 
-   S_While << "WHILE"
+   S_While << "WHILE" << while_errhand
       << (r_while_short << "while_short" << apply_while_short << T_while << Expr << T_Colon << Expr << T_EOL )
       << (r_while << "while" << apply_while << T_while << Expr << T_EOL )
       ;

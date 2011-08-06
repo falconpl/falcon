@@ -54,7 +54,7 @@ void apply_namespace( const Rule&, Parser& p )
    p.getNextToken();
    TokenInstance* tname = p.getNextToken();
    String* ns = tname->asString();
-   if( ns->find("*") != String::npos )
+   if( ns->find( '*') != String::npos )
    {
       p.addError( e_syn_namespace_star, p.currentSource(), tname->line(), tname->chr() );
    }

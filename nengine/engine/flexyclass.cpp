@@ -141,7 +141,7 @@ void FlexyClass::op_create( VMContext* ctx, int32 pcount ) const
             {
                if( key.isString() )
                {
-                  if( key.asString()->find( " " ) == String::npos )
+                  if( key.asString()->find( ' ' ) == String::npos )
                   {
                      if( value.isFunction() )
                      {

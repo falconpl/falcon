@@ -42,6 +42,8 @@
 
 #include <falcon/inheritance.h>
 
+#include "falcon/modloader.h"
+
 namespace Falcon {
 
 //=======================================================================
@@ -101,28 +103,71 @@ void IntCompiler::Context::onNewStatement( Statement* )
 }
 
 
-void IntCompiler::Context::onLoad( const String&, bool )
+void IntCompiler::Context::onLoad( const String& path, bool isFsPath )
 {
-   // TODO
+   SourceParser& sp = m_owner->m_sp;
+   if( ! m_owner->m_module->addLoad( path, isFsPath ) )
+   {
+      sp.addError( e_load_already, sp.currentSource(), sp.currentLine()-1, 0, 0, path );
+   }
+   else
+   {
+      // just adding it top the module won't be of any help.
+      ModLoader* ml = m_owner->m_vm->modSpace()->modLoader();
+      Module* mod;
+      if( isFsPath )
+      {
+         mod = ml->loadFile( path );
+      }
+      else
+      {
+         mod = ml->loadName( path );
+      }
+
+      // Resolve dynamic 
+      mod->resolveDynReqs( ml );
+
+      // perform passive linkage
+      mod->passiveLink (m_owner->m_vm->modSpace() );
+   }
 }
 
 
 void IntCompiler::Context::onImportFrom( const String&, bool, const String&,
          const String&, bool )
 {
-   // TODO
+   
 }
 
 
-void IntCompiler::Context::onImport(const String& )
+void IntCompiler::Context::onImport(const String& symName )
 {
-   // TODO
+   Symbol* sym = m_owner->m_module->addImport( symName );
+   if( sym == 0 )
+   {
+      m_owner->m_sp.addError( e_already_def, m_owner->m_sp.currentSource(), 
+           0, 0, 0 );
+   }
 }
 
 
-void IntCompiler::Context::onExport(const String&)
+void IntCompiler::Context::onExport(const String& symName )
 {
-   // TODO
+   bool already;
+   Symbol* sym = m_owner->m_module->addExport( symName, already );
+   
+   // already exported?
+   if( already )
+   {
+      m_owner->m_sp.addError( e_export_already, m_owner->m_sp.currentSource(), 
+           sym->declaredAt(), 0, 0 );
+   }
+   else if( ! m_owner->m_vm->modSpace()
+         ->addExportedSymbol( m_owner->m_module, sym, false ) )
+   {
+      m_owner->m_sp.addError( e_already_def, m_owner->m_sp.currentSource(), 
+           m_owner->m_sp.currentLine(), 0, 0, symName );
+   }
 }
 
 

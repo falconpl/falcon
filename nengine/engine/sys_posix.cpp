@@ -204,7 +204,7 @@ void _enumerateEnvironment( EnvStringCallback cb, void* cbData )
       temp = *env;
 
       uint32 pos;
-      if ( (pos = temp.find( "=" )) != String::npos )
+      if ( (pos = temp.find( '=' )) != String::npos )
       {
          cb( temp.subString(0,pos), temp.subString(pos+1), cbData );
       }
@@ -236,7 +236,7 @@ void _enumerateEnvironment( EnvStringCallback cb, void* cbData )
          temp = *env;
 
       uint32 pos;
-      if ( (pos = temp.find( "=" )) != String::npos )
+      if ( (pos = temp.find( '=' )) != String::npos )
       {
          cb( temp.subString(0,pos), temp.subString(pos+1), cbData );
       }

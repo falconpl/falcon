@@ -67,6 +67,7 @@ add_library(falcon_engine SHARED
   core_module/typeid.cpp
   core_module/clone.cpp
   core_module/coremodule.cpp
+  core_module/uri.cpp
 
   sp/parser_arraydecl.cpp
   sp/parser_assign.cpp

@@ -95,11 +95,11 @@ Module* ModLoader::loadName( const String& name, t_modtype type )
    String modName = name;
    
    // change "." into "/"
-   length_t pos1 = modName.find( "." );
+   length_t pos1 = modName.find( '.' );
    while( pos1 != String::npos )
    {
       modName.setCharAt( pos1, '/' );
-      pos1 = modName.find( ".", pos1+1 );      
+      pos1 = modName.find( '.', pos1+1 );      
    }
    
    return loadFile( modName, type, true );
@@ -118,7 +118,8 @@ Module* ModLoader::loadFile( const URI& uri, t_modtype type, bool bScan )
    URI tgtUri;
    
    // is the file absolute?
-   if( uri.pathElement().isAbsolute() || ! bScan )
+   Path path( URI::URLDecode( uri.path() ) );
+   if( path.isAbsolute() || ! bScan )
    {      
       t_modtype etype = checkFile_internal( uri, type, tgtUri );
       if( etype != e_mt_none )
@@ -138,7 +139,7 @@ Module* ModLoader::loadFile( const URI& uri, t_modtype type, bool bScan )
          
          if( location.isValid() )
          {
-            TRACE( "Scanning for module %s with type %d ", location.get().c_ize(), type );
+            TRACE( "Scanning for module %s with type %d ", location.encode().c_ize(), type );
         
             t_modtype etype = checkFile_internal( location, type, tgtUri );
             if( etype != e_mt_none )
@@ -148,7 +149,7 @@ Module* ModLoader::loadFile( const URI& uri, t_modtype type, bool bScan )
          }
          else
          {
-            TRACE( "URI not valid: %s", location.get().c_ize() );
+            TRACE( "URI not valid: %s", location.encode().c_ize() );
          }
          ++iter;
       }            
@@ -189,12 +190,12 @@ void ModLoader::addSearchPath( const String &path )
    m_path = "";
    
    length_t pos0 = 0;
-   length_t pos = path.find( ";" );
+   length_t pos = path.find( ';' );
    while( pos != String::npos )
    {
       plist.push_back(path.subString( pos0, pos ) );
       pos0 = pos+1;
-      pos = path.find( ";", pos0 );
+      pos = path.find( ';', pos0 );
    }
 
    // Push the last one
@@ -261,14 +262,14 @@ void ModLoader::pathToName( const String &path, const String &modFile, String &m
    {
       modName = modName.subString(2);
    }
-   else if( modName.find( "/" ) == 0 )
+   else if( modName.find( '/' ) == 0 )
    {
       modName = modName.subString(1);
    }
    
    // chop away terminal extension.
-   length_t pos1 = modName.rfind( "." );
-   length_t pos2 = modName.rfind( "/" );
+   length_t pos1 = modName.rfind( '.' );
+   length_t pos2 = modName.rfind( '/' );
    if ( pos1 != String::npos && 
          (pos2 == String::npos || pos2 < pos1 ) )
    {
@@ -276,11 +277,11 @@ void ModLoader::pathToName( const String &path, const String &modFile, String &m
    }
    
    // change "/" into .
-   pos1 = modName.find( "/" );
+   pos1 = modName.find( '/' );
    while( pos1 != String::npos )
    {
       modName.setCharAt( pos1, '.' );
-      pos1 = modName.find( "/", pos1+1 );      
+      pos1 = modName.find( '/', pos1+1 );      
    }
 }
 
@@ -306,11 +307,14 @@ ModLoader::t_modtype ModLoader::checkFile_internal(
    FileStat stats[4];
    URI uris[4];
    t_modtype types[] = { e_mt_source, e_mt_vmmod, e_mt_binmod, e_mt_ftd };
-   uris[0] = uri; uris[0].pathElement().setExtension( "fal" );
-   uris[1] = uri; uris[1].pathElement().setExtension( m_famExt );
-   uris[2] = uri; uris[2].pathElement().setExtension( DynLoader::sysExtension() );
-                  uris[2].pathElement().setFilename( uris[2].pathElement().getFile() + "_fm" );
-   uris[3] = uri; uris[3].pathElement().setExtension( m_ftdExt );
+   Path path( URI::URLDecode(uri.path()) );
+   
+   uris[0] = uri; path.ext( "fal" ); uris[0].path( path.encode() );
+   uris[1] = uri; path.ext( m_famExt ); uris[1].path( path.encode() );
+   uris[3] = uri; path.ext( m_ftdExt ); uris[3].path( path.encode() );
+   // here we modify the filename, it must be done for last.
+   uris[2] = uri; path.fileext( path.file() + "_fm." + DynLoader::sysExtension() ); 
+                    uris[2].path( path.encode() );
    
    // the files we should look at depends on our working mode.
    switch( m_useSources )
@@ -372,7 +376,7 @@ Module* ModLoader::load_internal(
    // if the scheme is not in the prefix, then we should just use the path.
    if( prefixPath.find( uri.scheme() ) == 0 )
    {
-      pathToName( prefixPath, uri.get(), modName );
+      pathToName( prefixPath, uri.encode(), modName );
    }
    else
    {
@@ -389,12 +393,12 @@ Module* ModLoader::load_internal(
          Stream* ins = vfs->openRO( uri );
          if( ins == 0 )
          {
-            throw makeError( e_nofile, __LINE__, uri.get() );
+            throw makeError( e_nofile, __LINE__, uri.encode() );
          }
          ins->shouldThrow(true);
          TextReader* input = new TextReader( ins, m_tcoder, true );
          // compiler gets the ownership of input.
-         Module* output = m_compiler->compile( input, uri.get(), modName );
+         Module* output = m_compiler->compile( input, uri.encode(), modName );
          
          // for now, we just throw
          if( output == 0 )
@@ -409,16 +413,16 @@ Module* ModLoader::load_internal(
          Stream* ins = vfs->openRO( uri );
          if( ins == 0 )
          {
-            throw makeError( e_nofile, __LINE__, uri.get() );
+            throw makeError( e_nofile, __LINE__, uri.encode() );
          }
          
          ins->shouldThrow(true);
          DataReader dr( ins, DataReader::e_LE, true );
-         return m_famLoader->load( &dr, uri.get(), modName );
+         return m_famLoader->load( &dr, uri.encode(), modName );
       }
          
       case e_mt_binmod:         
-         return m_dynLoader->load( uri.get(), modName );
+         return m_dynLoader->load( uri.encode(), modName );
          
       default:
          fassert2(false, "Should not be here...");
