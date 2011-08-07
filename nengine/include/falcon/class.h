@@ -60,11 +60,11 @@ class Inheritance;
  All this methods have a prototype modelled after the following:
 
  @code
- virtual void op_something( VMContext* ctx, void* self );
+ virtual void op_something( VMContext* ctx, void* instance );
  @endcode
 
  Each operator receives an instance of the real object that this Class
- manipulates in the \b self pointer and the virtual machine that requested
+ manipulates in the \b instance pointer and the virtual machine that requested
  the operation to be performed.
 
  Other than this, operands have also some parameters that are Item instances
@@ -93,14 +93,14 @@ class Inheritance;
  call the VMachine. In that case, the stack clean step should be performed
  by the deep step, before exiting the code frame.
 
- \note Usually the first operand is also the item holding the \b self instance.
- However, self is always passed to the operands because the VM did already some
+ \note Usually the first operand is also the item holding the \b instance instance.
+ However, instance is always passed to the operands because the VM did already some
  work in checking the kind of item stored as the first operand. However, the
  callee may be interested in accessing the first operand as well, as the Item
  in that place may hold some information (flags, out-of-band, copy marker and
  so on) that the implementor may find useful.
 
- Notice that \b self is set to 0 when the class is a flat item reflection core
+ Notice that \b instance is set to 0 when the class is a flat item reflection core
  class (as the Integer, Nil, Boolean and Numeric handlers). It receives a value
  only if the first operand is a FLC_USER_ITEM or FLC_DEEP_ITEM.
  
@@ -205,18 +205,22 @@ public:
    // Instance management
 
    /** Disposes an instance.
+    \param instance The instance to be disposed of.
     \note Actually, the disposal might be a dereference if necessary.
     */
-   virtual void dispose( void* self ) const = 0;
+   virtual void dispose( void* instance ) const = 0;
 
-   /** Clones an instance */
-   virtual void* clone( void* source ) const = 0;
+   /** Clones an instance.
+    \param instance The instance to be cloned.
+    \return A new copy of the instance.
+    */
+   virtual void* clone( void* instance ) const = 0;
 
    /** Serializes an instance */
-   virtual void serialize( DataWriter* stream, void* self ) const = 0;
+   virtual void serialize( DataWriter* stream, void* instance ) const = 0;
 
    /** Deserializes an instance.
-      The new instance must be initialized and ready to be "selfed".
+      The new instance must be initialized and ready to be "instanceed".
    */
    virtual void* deserialize( DataReader* stream ) const = 0;
 
@@ -225,21 +229,21 @@ public:
    //
 
    /** Marks an instance.
-    \parm self The intance of this class to be marked.
+    \parm instance The intance of this class to be marked.
     \param mark The gc mark to be applied.
 
     This method is called every time an item with mark sign is inspected.
 
-    The class has here the ability to set a mark flag on the self instance,
+    The class has here the ability to set a mark flag on the instance instance,
     and eventually propagate the mark to other contents or data related
-    to the self instance.
+    to the instance instance.
 
     \note The base version does nothing.
     */
-   virtual void gcMark( void* self, uint32 mark ) const;
+   virtual void gcMark( void* instance, uint32 mark ) const;
 
    /** Determines if an instance should be disposed of.
-    \parm self The intance of this class to be marked.
+    \parm instance The intance of this class to be marked.
     \param mark The current gc Mark.
     \return True if the instance is alive, false if it can be disposed.
 
@@ -255,13 +259,13 @@ public:
     collector will \b not call the dispose() method of this class after
     a gcCheck).
 
-    Notice that disposing of the \b self parameter without returning false
+    Notice that disposing of the \b instance parameter without returning false
     might make the GC to present the same item again to this class, possibly
     causing crashes (double free, illegal memory access etc.).
 
     \note The base version does nothing.
     */
-   virtual bool gcCheck( void* self, uint32 mark ) const;
+   virtual bool gcCheck( void* instance, uint32 mark ) const;
 
 
    /** Called back when this class is subject to GC as a metaclass data.
@@ -289,8 +293,8 @@ public:
     This method is called back by metaclass handlers when a GC-enabled data
     is checked.
 
-    The base class behavior is that to destroy itself and return false if
-    \b mark is greater than the last mark seen in gcMarkMyself.
+    The base class behavior is that to destroy itinstance and return false if
+    \b mark is greater than the last mark seen in gcMarkMyinstance.
     */
    virtual bool gcCheckMyself( uint32 mark );
 
@@ -298,14 +302,14 @@ public:
    typedef Enumerator<String> PropertyEnumerator;   
 
    /** Emnumerate the properties in this class.
-     @param self The object for which the properties have been requested.
+     @param instance The object for which the properties have been requested.
      @param cb A callback function receiving one property at a time.
 
-    The method may be called with a "self" 0 if this class has invariant
+    The method may be called with a "instance" 0 if this class has invariant
     instances.
      @note This base class implementation does nothing.
     */
-   virtual void enumerateProperties( void* self, PropertyEnumerator& cb ) const;
+   virtual void enumerateProperties( void* instance, PropertyEnumerator& cb ) const;
    
    /** Callback receiving all the properties with their values in this class. */
    class PVEnumerator
@@ -315,21 +319,21 @@ public:
    };
 
    /** Emnumerate the properties in this class with their associated values.
-     @param self The object for which the properties have been requested.
+     @param instance The object for which the properties have been requested.
      @param cb A callback function receiving one property at a time.
 
      @note This base class implementation does nothing.
     */
-   virtual void enumeratePV( void* self, PVEnumerator& cb ) const;
+   virtual void enumeratePV( void* instance, PVEnumerator& cb ) const;
 
 
    /** Return true if the class provides the given property.
-      @param self The object for which the properties have been requested.
+      @param instance The object for which the properties have been requested.
 
-      The method may be called with a "self" 0 if this class has invariant
+      The method may be called with a "instance" 0 if this class has invariant
       instances.
     */
-   virtual bool hasProperty( void* self, const String& prop ) const;
+   virtual bool hasProperty( void* instance, const String& prop ) const;
 
    /** Return a (possibly deep) summary or description of an instance.
       \param instance The instance to be described.
@@ -361,7 +365,7 @@ public:
     \param inh The inheritance that has been just resolved.
 
     When a foreign inheritance of a class gets resolved during the link
-    phase, the parent need to know about this fact to prepare itself.
+    phase, the parent need to know about this fact to prepare itinstance.
 
     The inheritance determines if the owner is a falcon class, and in case
     it is, it calls back this method.
@@ -398,170 +402,170 @@ public:
 
    /** Called back when the VM wants to negate an item.
      \param vm the virtual machine that will receive the result.
-     \param self the instance (or 0 on flat items)
+     \param instance the instance (or 0 on flat items)
 
     \note The operand is unary -- requires OpToken with 1 parameter.
 
     */
-   virtual void op_neg( VMContext* ctx, void* self ) const;
+   virtual void op_neg( VMContext* ctx, void* instance ) const;
 
    /** Called back when the VM wants to add something.
      \param vm the virtual machine that will receive the result.
-     \param self the instance (or 0 on flat items)
+     \param instance the instance (or 0 on flat items)
 
     \note The operand is binary -- requires OpToken with 2 parameters.
 
     */
-   virtual void op_add( VMContext* ctx, void* self ) const;
+   virtual void op_add( VMContext* ctx, void* instance ) const;
 
    /** Called back when the VM wants to subtract something.
      \param vm the virtual machine that will receive the result.
-     \param self the instance (or 0 on flat items)
+     \param instance the instance (or 0 on flat items)
 
     \note The operand is binary -- requires OpToken with 2 parameters.
 
     */
-   virtual void op_sub( VMContext* ctx, void* self ) const;
+   virtual void op_sub( VMContext* ctx, void* instance ) const;
 
    /** Called back when the VM wants to multiply something.
      \param vm the virtual machine that will receive the result.
-     \param self the instance (or 0 on flat items)
+     \param instance the instance (or 0 on flat items)
 
     \note The operand is binary -- requires OpToken with 2 parameters.
 
     */
-   virtual void op_mul( VMContext* ctx, void* self ) const;
+   virtual void op_mul( VMContext* ctx, void* instance ) const;
 
    /** Called back when the VM wants to divide something.
      \param vm the virtual machine that will receive the result.
-     \param self the instance (or 0 on flat items)
+     \param instance the instance (or 0 on flat items)
 
     \note The operand is binary -- requires OpToken with 2 parameters.
 
     */
-   virtual void op_div( VMContext* ctx, void* self ) const;
+   virtual void op_div( VMContext* ctx, void* instance ) const;
 
    /** Called back when the VM wants to apply the modulo operator.
      \param vm the virtual machine that will receive the result.
-     \param self the instance (or 0 on flat items)
+     \param instance the instance (or 0 on flat items)
 
     \note The operand is binary -- requires OpToken with 2 parameters.
 
     */
-   virtual void op_mod( VMContext* ctx, void* self ) const;
+   virtual void op_mod( VMContext* ctx, void* instance ) const;
 
    /** Called back when the VM wants to apply the power operator on.
      \param vm the virtual machine that will receive the result.
-     \param self the instance (or 0 on flat items)
+     \param instance the instance (or 0 on flat items)
 
     \note The operand is binary -- requires OpToken with 2 parameters.
 
     */
-   virtual void op_pow( VMContext* ctx, void* self ) const;
+   virtual void op_pow( VMContext* ctx, void* instance ) const;
 
    /** Called back when the VM wants to add something to an item.
      \param vm the virtual machine that will receive the result.
-     \param self the instance (or 0 on flat items)
+     \param instance the instance (or 0 on flat items)
 
     \note The operand is binary -- requires OpToken with 2 parameters.
     */
-   virtual void op_aadd( VMContext* ctx, void* self) const;
+   virtual void op_aadd( VMContext* ctx, void* instance) const;
 
    /** Called back when the VM wants to subtract something to an item.
      \param vm the virtual machine that will receive the result.
-     \param self the instance (or 0 on flat items)
+     \param instance the instance (or 0 on flat items)
 
     \note The operand is binary -- requires OpToken with 2 parameters.
     */
-   virtual void op_asub( VMContext* ctx, void* self ) const;
+   virtual void op_asub( VMContext* ctx, void* instance ) const;
 
    /** Called back when the VM wants to multiply something to an item.
      \param vm the virtual machine that will receive the result.
-     \param self the instance (or 0 on flat items)
+     \param instance the instance (or 0 on flat items)
 
     \note The operand is binary -- requires OpToken with 2 parameters.
     */
-   virtual void op_amul( VMContext* ctx, void* self ) const;
+   virtual void op_amul( VMContext* ctx, void* instance ) const;
 
    /** Called back when the VM wants to divide something to an item.
      \param vm the virtual machine that will receive the result.
-     \param self the instance (or 0 on flat items)
+     \param instance the instance (or 0 on flat items)
 
     \note The operand is binary -- requires OpToken with 2 parameters.
     */
-   virtual void op_adiv( VMContext* ctx, void* self ) const;
+   virtual void op_adiv( VMContext* ctx, void* instance ) const;
 
    /** Called back when the VM wants to apply the modulo something to an item.
      \param vm the virtual machine that will receive the result.
-     \param self the instance in op1 (or 0 on flat items)
+     \param instance the instance in op1 (or 0 on flat items)
      \param op1 The original first operand (where the instasnce was stored),
       that is also the place where to store the result.
      \param op2 The original second operand.
     */
-   virtual void op_amod( VMContext* ctx, void* self ) const;
+   virtual void op_amod( VMContext* ctx, void* instance ) const;
 
    /** Called back when the VM wants to apply get the power of an item.
      \param vm the virtual machine that will receive the result.
-     \param self the instance (or 0 on flat items)
+     \param instance the instance (or 0 on flat items)
 
     \note The operand is binary -- requires OpToken with 2 parameters.
    */
-   virtual void op_apow( VMContext* ctx, void* self ) const;
+   virtual void op_apow( VMContext* ctx, void* instance ) const;
 
    /** Called back when the VM wants to increment (prefix) an item.
      \param vm the virtual machine that will receive the result.
-     \param self the instance in op1 (or 0 on flat items)
-     \param self the instance (or 0 on flat items)
+     \param instance the instance in op1 (or 0 on flat items)
+     \param instance the instance (or 0 on flat items)
 
     \note The operand is unary -- requires OpToken with 1 parameter.
    */
-   virtual void op_inc( VMContext* vm, void* self ) const;
+   virtual void op_inc( VMContext* vm, void* instance ) const;
 
    /* Called back when the VM wants to decrement (prefix) an item.
      \param vm the virtual machine that will receive the result.
-     \param self the instance in op1 (or 0 on flat items)
-     \param self the instance (or 0 on flat items)
+     \param instance the instance in op1 (or 0 on flat items)
+     \param instance the instance (or 0 on flat items)
 
     \note The operand is unary -- requires OpToken with 1 parameter.
    */
-   virtual void op_dec(VMContext* vm, void* self) const;
+   virtual void op_dec(VMContext* vm, void* instance) const;
 
    /** Called back when the VM wants to increment (postfix) an item.
      \param vm the virtual machine that will receive the result.
-     \param self the instance in op1 (or 0 on flat items)
-     \param self the instance (or 0 on flat items)
+     \param instance the instance in op1 (or 0 on flat items)
+     \param instance the instance (or 0 on flat items)
 
     \note The operand is unary -- requires OpToken with 1 parameter.
    */
-   virtual void op_incpost(VMContext* vm, void* self ) const;
+   virtual void op_incpost(VMContext* vm, void* instance ) const;
    
    /** Called back when the VM wants to decrement (postfix) an item.
      \param vm the virtual machine that will receive the result.
-     \param self the instance in op1 (or 0 on flat items)
-     \param self the instance (or 0 on flat items)
+     \param instance the instance in op1 (or 0 on flat items)
+     \param instance the instance (or 0 on flat items)
 
     \note The operand is unary -- requires OpToken with 1 parameter.
    */
-   virtual void op_decpost(VMContext* vm, void* self ) const;
+   virtual void op_decpost(VMContext* vm, void* instance ) const;
 
    /** Called back when the VM wants to get an index out of an item.
      \param vm the virtual machine that will receive the result.
-     \param self the instance (or 0 on flat items)
+     \param instance the instance (or 0 on flat items)
 
     \note The operand is binary -- requires OpToken with 2 parameters.
 
-    The first operand is self, the second operand is the index to be accessed.
+    The first operand is instance, the second operand is the index to be accessed.
    */
-   virtual void op_getIndex(VMContext* vm, void* self ) const;
+   virtual void op_getIndex(VMContext* vm, void* instance ) const;
    
    /** Called back when the VM wants to get an index out of an item.
      \param vm the virtual machine that will receive the result.
-     \param self the instance (or 0 on flat items)
+     \param instance the instance (or 0 on flat items)
 
     \note The operand is ternary -- requires OpToken with 3 parameters.
 
     Operands are in order:
-    - The item holding this \b self instance
+    - The item holding this \b instance instance
     - The index being accessed (the value inside the [] brackets)
     - The new value for the item.
 
@@ -577,28 +581,28 @@ public:
     value the implementor wants to pass back.
 
    */
-   virtual void op_setIndex(VMContext* vm, void* self ) const;
+   virtual void op_setIndex(VMContext* vm, void* instance ) const;
 
    /** Called back when the VM wants to get the value of a property of an item
      \param vm the virtual machine that will receive the result.
-     \param self the instance (or 0 on flat items)
+     \param instance the instance (or 0 on flat items)
     \param prop The oroperty to be accessed.
 
     \note The operand is unary -- requires OpToken with 1 parameter.
    */
-   virtual void op_getProperty( VMContext* ctx, void* self, const String& prop) const;
+   virtual void op_getProperty( VMContext* ctx, void* instance, const String& prop) const;
 
    /** Called back when the VM wants to set a value of a property in an item.
      \param vm the virtual machine that will receive the result.
-     \param self the instance (or 0 on flat items)
+     \param instance the instance (or 0 on flat items)
 
     \note The operand is binary -- requires OpToken with 2 parameters.
    */
-   virtual void op_setProperty( VMContext* ctx, void* self, const String& prop ) const;
+   virtual void op_setProperty( VMContext* ctx, void* instance, const String& prop ) const;
 
    /** Called back when the VM wants to compare an item to this instance. 
      \param vm the virtual machine that will receive the result.
-     \param self the instance (or 0 on flat items)
+     \param instance the instance (or 0 on flat items)
 
     \note The operand is binary -- requires OpToken with 2 parameters.
 
@@ -614,11 +618,11 @@ public:
     All the subclasses should call the base class op_compare as a residual
     criterion.
     */
-   virtual void op_compare( VMContext* ctx, void* self ) const;
+   virtual void op_compare( VMContext* ctx, void* instance ) const;
 
    /** Called back when the VM wants to know if an item is true.
      \param vm the virtual machine that will receive the result.
-     \param self the instance (or 0 on flat items)
+     \param instance the instance (or 0 on flat items)
 
     \note The operand is unary -- requires OpToken with 1 parameter.
 
@@ -627,11 +631,11 @@ public:
 
     The result placed in target should be a boolean true or false value.
     */
-   virtual void op_isTrue( VMContext* ctx, void* self ) const;
+   virtual void op_isTrue( VMContext* ctx, void* instance ) const;
 
    /** Called back when the VM wants to know if an item is true.
      \param vm the virtual machine that will receive the result.
-     \param self the instance (or 0 on flat items)
+     \param instance the instance (or 0 on flat items)
 
     \note The operand is binary -- requires OpToken with 2 parameters.
 
@@ -640,22 +644,22 @@ public:
 
     The result should be a boolean true or false value.
     */
-   virtual void op_in( VMContext* ctx, void* self ) const;
+   virtual void op_in( VMContext* ctx, void* instance ) const;
    
    /** Called back when the vm wants to know if a certain item provides a certain property.
      \param vm the virtual machine that will receive the result.
-     \param self the instance (or 0 on flat items).
+     \param instance the instance (or 0 on flat items).
      \param property The property that should be accessed.
 
     \note The operand is unary -- requires OpToken with 1 parameter.
 
     The result placed in target should be a boolean true or false value.
     */
-   virtual void op_provides( VMContext* ctx, void* self, const String& property ) const;
+   virtual void op_provides( VMContext* ctx, void* instance, const String& property ) const;
 
    /** Call the instance.
     \param vm A virutal machine where the call is performed.
-    \param self An instance of this class
+    \param instance An instance of this class
     \param pcount the number of parameters in the call.
 
     This operation has variable count of parameters. They are placed in reverse
@@ -670,12 +674,12 @@ public:
     \note The default operation associated with the base class is that to raise
     a non-callable exception.
     */
-   virtual void op_call( VMContext* ctx, int32 paramCount, void* self ) const;
+   virtual void op_call( VMContext* ctx, int32 paramCount, void* instance ) const;
 
 
    /** Implements textification operator for the Virtual Macine.
     \param vm the virtual machine that will receive the result.
-    \param self the instance.
+    \param instance the instance.
     \note The operand is unary -- requires OpToken with 1 parameter.
 
     This method obtains immediately a textual value for the instance
@@ -683,24 +687,24 @@ public:
     string geneartor code.
 
     The base class behavior is that of calling Class::describe() with depth 1
-    and without maximum lenght on the instance passed as self in the virtual
+    and without maximum lenght on the instance passed as instance in the virtual
     machine and uses it as the result of the operation.
 
     Implementors not willing to use describe() or wishing to skip an extra
     virtual function call should reimplement this class.
     */
-   virtual void op_toString( VMContext* ctx, void* self ) const;
+   virtual void op_toString( VMContext* ctx, void* instance ) const;
 
    /** Prepares iteration.
     \param vm the virtual machine that will receive the result.
-    \param self the instance (or 0 on flat items)
+    \param instance the instance (or 0 on flat items)
     \note The operand is unary -- requires OpToken with 1 parameter.
 
     This method call is generated by the virtual machine when it
     requires the start of an iteration on the contents this item.
 
     The sublcasses reimplementing this method should prepare a value
-    that sould be stored somewhere in the stack or in the item itself.
+    that sould be stored somewhere in the stack or in the item itinstance.
     It is advisable to make the operator re-entrant, so that it can be
     called multiple times and interleaved with op_next even from the same
     thread (a single thread might operate on different VMContext).
@@ -720,11 +724,11 @@ public:
     In case the collection is not iterable, it should either raise an exception
     or leave a Item with the break bit set (that's the default behavior).
     */
-   virtual void op_first( VMContext* ctx, void* self ) const;
+   virtual void op_first( VMContext* ctx, void* instance ) const;
 
    /** Continues iteration.
     \param vm the virtual machine that will receive the result.
-    \param self the instance (or 0 on flat items)
+    \param instance the instance (or 0 on flat items)
     \note The operand is unary -- requires OpToken with 1 parameter.
 
     This method call is generated by the virtual machine when it
@@ -738,7 +742,7 @@ public:
     the collection is exausted, it should post a nil item with the break bit
     set.
     */
-   virtual void op_next( VMContext* ctx, void* self ) const;
+   virtual void op_next( VMContext* ctx, void* instance ) const;
 
 protected:
    bool m_bIsfalconClass;

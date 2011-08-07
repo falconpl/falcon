@@ -50,6 +50,10 @@
 #include <falcon/dynsymbol.h>
 #include <falcon/closedsymbol.h>
 
+#include <falcon/classuser.h>
+#include <falcon/property.h>
+#include <falcon/method.h>
+
 #include <falcon/item.h>
 #include <falcon/itemid.h>
 

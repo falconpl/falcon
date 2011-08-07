@@ -62,6 +62,7 @@ add_library(falcon_engine SHARED
   core_module/describe.cpp
   core_module/len.cpp
   core_module/minmax.cpp
+  core_module/path.cpp
   core_module/print.cpp
   core_module/tostring.cpp
   core_module/typeid.cpp
@@ -112,6 +113,7 @@ add_library(falcon_engine SHARED
   classnumeric.cpp
   classreference.cpp
   classstring.cpp
+  classuser.cpp
   closedsymbol.cpp
   codeerror.cpp
   collector.cpp
@@ -167,6 +169,7 @@ add_library(falcon_engine SHARED
   linkerror.cpp
   localsymbol.cpp
   metaclass.cpp
+  method.cpp
   modcompiler.cpp
   modloader.cpp
   modspace.cpp
@@ -180,6 +183,7 @@ add_library(falcon_engine SHARED
   pstep.cpp
   path.cpp
   pcode.cpp
+  property.cpp
   rampmode.cpp
   reader.cpp
   rulesyntree.cpp
@@ -210,6 +214,7 @@ add_library(falcon_engine SHARED
   unknownsymbol.cpp
   unsupportederror.cpp
   uri.cpp
+  usercarrier.cpp
   vfsiface.cpp
   vfsprovider.cpp
   vm.cpp

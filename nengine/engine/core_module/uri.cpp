@@ -28,57 +28,26 @@
 namespace Falcon {
 namespace Ext {
 
-/** We keep a C++ uri + the path, the auth data and the query*/
-class URICarrier
-{
-public:
-   URI m_uri;
-   Path* m_path;
-   URI::Authority* m_auth;
-   URI::Query* m_query;
-   
-   uint32 m_gcMark;
-   
-   URICarrier():
-      m_path(0),
-      m_auth(0),
-      m_query(0)
-   {}
-   
-   URICarrier( const URICarrier& other ):
-      m_uri(other.m_uri),
-      m_path(0),
-      m_auth(0),
-      m_query(0)
-   {}
-   
-   ~URICarrier()
-   {
-      delete m_path;
-      delete m_auth;
-      delete m_query;
-   }
-};
-
 
 ClassURI::ClassURI():
-   Class("URI")
-{}
+   ClassUser("URI"),
+   m_mthSetq( this ),
+   m_mthGetq( this ),
+   m_encoded( this ),
+   m_scheme( this ),
+   m_auth( this ),
+   m_path( this ),
+   m_query( this ),
+   m_fragment( this ),
+   m_propHost( this ),
+   m_propPort( this ),
+   m_propUser( this ),
+   m_propPwd( this )
+{
+}
 
 ClassURI::~ClassURI()
 {}
-
-
-void ClassURI::dispose( void* self ) const
-{
-   delete static_cast<URICarrier*>(self);
-}
-
-
-void* ClassURI::clone( void* self ) const
-{
-   return new URICarrier( *static_cast<URICarrier*>(self) );
-}
 
    
 void ClassURI::serialize( DataWriter*, void* ) const
@@ -92,44 +61,20 @@ void* ClassURI::deserialize( DataReader* ) const
    return 0;
 }
    
-
-void ClassURI::describe( void* instance, String& target, int, int ) const
+void* ClassURI::createInstance( Item* params, int pcount ) const
 {
-   URICarrier* uc = static_cast<URICarrier*>(instance);
-   target = uc->m_uri.encode();
-}
-   
-
-void ClassURI::gcMark( void* self, uint32 mark ) const
-{
-   URICarrier* uc = static_cast<URICarrier*>(self);
-   uc->m_gcMark = mark;
-}
-
-bool ClassURI::gcCheck( void* self, uint32 mark ) const
-{
-   URICarrier* uc = static_cast<URICarrier*>(self);
-   return uc->m_gcMark >= mark;
-}
-
-
-void ClassURI::op_create( VMContext* ctx, int32 pcount ) const
-{
-   static Collector* coll = Engine::instance()->collector();
-   
    URICarrier* uc;
    
    if ( pcount >= 1 )
    {
-      Item& other = ctx->opcodeParam(pcount-1);
+      Item& other = *params;
       if( other.isString() )
       {
-         uc = new URICarrier;
-         if( ! uc->m_uri.parse( *other.asString() ) )
+         uc = new URICarrier( carriedProps() );         
+         if( ! uc->m_uri.parse( *other.asString(), &uc->m_auth, &uc->m_path, &uc->m_query ) )
          {
             delete uc;
-            throw new ParamError( ErrorParam( e_param_type, __LINE__, SRC )
-               .extra( "invalid URI" )
+            throw new ParamError( ErrorParam( e_malformed_uri, __LINE__, SRC )
                .origin(ErrorParam::e_orig_mod) );
          }
       }
@@ -147,10 +92,10 @@ void ClassURI::op_create( VMContext* ctx, int32 pcount ) const
    }
    else
    {
-      uc = new URICarrier;
+      uc = new URICarrier( carriedProps() );
    }
       
-   ctx->stackResult( pcount+1, FALCON_GC_STORE(coll, this, uc) );
+   return uc;
 }
 
 
@@ -159,70 +104,210 @@ void ClassURI::op_toString( VMContext* ctx, void* self ) const
    URICarrier* uc = static_cast<URICarrier*>(self);
    ctx->topData() = (new String(uc->m_uri.encode()))->garbage();
 }
- 
 
-void ClassURI::op_getProperty( VMContext* ctx, void* self, const String& prop) const
+//=========================================================
+// Methods
+//
+
+void ClassURI::MethodSetq::invoke( VMContext* ctx, int32 )
 {
-   URICarrier* uc = static_cast<URICarrier*>(self);
-  
-   if( prop == "scheme" )
+   Item* iKey = ctx->param(0);
+   Item* iValue = ctx->param(1);
+   
+   if( iKey == 0 || ! iKey->isString() || 
+       iValue == 0 || ! ( iValue->isString() || iValue->isNil() ) )
    {
-      ctx->topData() = uc->m_uri.scheme();
+      throw paramError( __LINE__, SRC );
    }
-   else if( prop == "auth" )
+   
+   URICarrier* uc = static_cast<URICarrier*>(ctx->self().asInst());
+   if( iValue->isString() )
    {
-      ctx->topData() = uc->m_uri.auth();
-   }
-   else if( prop == "path" )
-   {
-      ctx->topData() = uc->m_uri.path();
-   }
-   else if( prop == "query" )
-   {
-      ctx->topData() = uc->m_uri.query();
-   }
-   else if( prop == "fragment" )
-   {
-      ctx->topData() = uc->m_uri.fragment();
+      uc->m_query.put( *iKey->asString(), *iValue->asString() );
    }
    else
    {
-      return Class::op_getProperty( ctx, self, prop );
+      uc->m_query.remove( *iKey->asString() );
    }
+   uc->m_uri.query( uc->m_query.encode() );
+   
+   ctx->returnFrame();
 }
-
-
-void ClassURI::op_setProperty( VMContext* ctx, void* self, const String& prop ) const
+   
+      
+void ClassURI::MethodGetq::invoke( VMContext* ctx, int32 )  
 {
-   URICarrier* uc = static_cast<URICarrier*>(self);
-  
-   if( prop == "scheme" )
+   Item* iKey = ctx->param(0);
+   Item* iValue = ctx->param(1);
+   
+   if( iKey == 0 || ! iKey->isString() )
    {
-      ctx->topData() = uc->m_uri.scheme();
+      throw paramError( __LINE__, SRC );
    }
-   else if( prop == "auth" )
+   
+   URICarrier* uc = static_cast<URICarrier*>(ctx->self().asInst());
+   
+   String value;
+   if( uc->m_query.get( *iKey->asString(), value ) )
    {
-      ctx->topData() = uc->m_uri.auth();
-   }
-   else if( prop == "path" )
-   {
-      ctx->topData() = uc->m_uri.path();
-   }
-   else if( prop == "query" )
-   {
-      ctx->topData() = uc->m_uri.query();
-   }
-   else if( prop == "fragment" )
-   {
-      ctx->topData() = uc->m_uri.fragment();
+      ctx->returnFrame( value );
    }
    else
    {
-      return Class::op_setProperty( ctx, self, prop );
+      if( iValue != 0 )
+      {
+         ctx->returnFrame( *iValue );
+      }
+      else
+      {
+         ctx->returnFrame();
+      }
    }
 }
 
+//=========================================================
+// Properties
+//
 
+void ClassURI::PropertyEncoded::set( void* instance, const Item& value )
+{
+   checkType( value.isString(), "S" );
+   URICarrier* uric = static_cast<URICarrier*>(instance);
+   if( ! uric->m_uri.parse( *value.asString(), 
+                     &uric->m_auth, &uric->m_path, &uric->m_query ) )
+   {
+      throw new ParamError( ErrorParam( e_malformed_uri, __LINE__, SRC ) );
+   }   
+}
+
+
+const String& ClassURI::PropertyEncoded::getString( void* instance )
+{
+   URICarrier* uric = static_cast<URICarrier*>(instance);
+   return uric->m_uri.encode();      
+}
+
+
+void ClassURI::PropertyAuth::set( void* instance, const Item& value )
+{
+   checkType( value.isString(), "S" );
+   URICarrier* uric = static_cast<URICarrier*>(instance);
+   if( ! uric->m_auth.parse( *value.asString() ) )
+   {
+      throw new ParamError( ErrorParam( e_malformed_uri, __LINE__, SRC ) );
+   }   
+   
+   uric->m_uri.auth( uric->m_auth.encode() );
+}
+
+
+const String& ClassURI::PropertyAuth::getString( void* instance )
+{
+   URICarrier* uric = static_cast<URICarrier*>(instance);   
+   return uric->m_uri.auth();
+}
+
+
+
+void ClassURI::PropertyPath::set( void* instance, const Item& value )
+{
+   checkType( value.isString(), "S" );
+   URICarrier* uric = static_cast<URICarrier*>(instance);
+   if( ! uric->m_path.parse( *value.asString() ) )
+   {
+      throw new ParamError( ErrorParam( e_malformed_uri, __LINE__, SRC ) );
+   }   
+   
+   uric->m_uri.path( uric->m_path.encode() );
+}
+
+
+const String& ClassURI::PropertyPath::getString( void* instance )
+{
+   URICarrier* uric = static_cast<URICarrier*>(instance);      
+   return uric->m_uri.path();
+}
+
+
+void ClassURI::PropertyQuery::set( void* instance, const Item& value )
+{
+   checkType( value.isString(), "S" );
+   URICarrier* uric = static_cast<URICarrier*>(instance);
+   if( ! uric->m_query.parse( *value.asString() ) )
+   {
+      throw new ParamError( ErrorParam( e_malformed_uri, __LINE__, SRC ) );
+   }   
+   
+   uric->m_uri.query( uric->m_query.encode() );
+}
+
+
+const String& ClassURI::PropertyQuery::getString( void* instance )
+{
+   URICarrier* uric = static_cast<URICarrier*>(instance);
+   return uric->m_uri.query();
+}
+
+
+void ClassURI::PropertyHost::set( void* instance, const Item& value )
+{
+   checkType( value.isString(), "S" );
+   URICarrier* uric = static_cast<URICarrier*>(instance);   
+      
+   uric->m_auth.host( *value.asString() );   
+   uric->m_uri.auth( uric->m_auth.encode() );
+}
+
+const String& ClassURI::PropertyHost::getString( void* instance )
+{
+   URICarrier* uric = static_cast<URICarrier*>(instance);
+   return uric->m_auth.host();
+}
+
+void ClassURI::PropertyPort::set( void* instance, const Item& value )
+{
+   checkType( value.isString(), "S" );
+   URICarrier* uric = static_cast<URICarrier*>(instance);
+   uric->m_auth.port( *value.asString() );
+   uric->m_uri.auth( uric->m_auth.encode() );
+}
+
+const String& ClassURI::PropertyPort::getString( void* instance )
+{
+   URICarrier* uric = static_cast<URICarrier*>(instance);   
+   return uric->m_auth.port();
+}
+
+   
+void ClassURI::PropertyUser::set( void* instance, const Item& value )
+{
+   checkType( value.isString(), "S" );
+   URICarrier* uric = static_cast<URICarrier*>(instance);   
+   uric->m_auth.user( *value.asString() );
+   uric->m_uri.auth( uric->m_auth.encode() );
+}
+
+const String& ClassURI::PropertyUser::getString( void* instance )
+{
+   URICarrier* uric = static_cast<URICarrier*>(instance);
+   return uric->m_auth.user();
+}
+
+
+void ClassURI::PropertyPwd::set( void* instance, const Item& value )
+{
+   checkType( value.isString(), "S" );
+   URICarrier* uric = static_cast<URICarrier*>(instance);
+   uric->m_auth.password( *value.asString() );   
+   uric->m_uri.auth( uric->m_auth.encode() );
+}
+
+const String& ClassURI::PropertyPwd::getString( void* instance )
+{
+   URICarrier* uric = static_cast<URICarrier*>(instance);
+   return uric->m_auth.password();
+}   
+   
 }
 }
 

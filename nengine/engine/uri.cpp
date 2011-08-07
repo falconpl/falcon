@@ -69,13 +69,13 @@ bool URI::Authority::parse( const String& uriAuth )
       {
          return false;
       }
-      else
+   }
+   else
+   {
+      if( ! URLDecode( hostPart.subString(0,poscolon), m_host ) 
+         || ! URLDecode( hostPart.subString(poscolon+1), m_port ) )
       {
-         if( ! URLDecode( hostPart.subString(0,poscolon), m_host ) 
-            || ! URLDecode( hostPart.subString(poscolon+1), m_port ) )
-         {
-            return false;
-         }
+         return false;
       }
    }
    
@@ -88,6 +88,8 @@ const String& URI::Authority::encode() const
    {
       return m_encoded;
    }
+   
+   m_encoded.size(0);
    
    if ( m_user.size() > 0 )
    {
@@ -107,7 +109,7 @@ const String& URI::Authority::encode() const
    
    if( m_port.size() > 0 )
    {
-      m_encoded += URLEncode( m_port );
+      m_encoded += ":" + URLEncode( m_port );
    }
    
    return m_encoded;
@@ -136,8 +138,14 @@ URI::Query::~Query()
       
 bool URI::Query::parse( const String& query )
 {
-   m_encoded = "@";
+   if( query.size() == 0 )
+   {
+      m_encoded.size(0);
+      return true;
+   }
    
+   m_encoded = "@";
+
    // find the next &
    length_t pos = 0;
    length_t posNext;
@@ -146,7 +154,7 @@ bool URI::Query::parse( const String& query )
    
    do
    {
-      posNext = query.find( '&' );
+      posNext = query.find( '&', pos );
       
       String part = query.subString( pos, posNext );
       if( part.size() == 0 )
@@ -314,9 +322,9 @@ const String& URI::encode() const
    {
       if( m_authority.size() > 0 && m_path.getCharAt(0) != '/' )
       {
-         m_encoded += '/';
+         m_encoded += "/./";  // use ./ to declare the relative path marker
       }
-      m_encoded += m_path;
+      m_encoded += URLEncodePath(m_path);
    }
    else
    {
@@ -350,7 +358,7 @@ bool URI::parse( const String &newUri, URI::Authority* auth, Path* path, URI::Qu
    {
       m_bValid = false;
    }   
-   else if( path != 0 && ! path->parse( URLDecode(m_path) ) )
+   else if( path != 0 && ! path->parse( m_path ) )
    {
       m_bValid = false;
    }
@@ -446,7 +454,11 @@ bool URI::internal_parse( const String &newUri )
             if( state == e_scheme || state == e_path )
             {
                // preceeding things are a path.
-               m_path = newUri.subString(pStart, pEnd );
+               if( ! URLDecode( newUri.subString(pStart, pEnd ), m_path ) )
+               {
+                  return false;
+               }
+               
                pStart = pEnd + 1;
                state = e_query;
             }

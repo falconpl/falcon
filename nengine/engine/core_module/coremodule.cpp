@@ -2,7 +2,7 @@
    FALCON - The Falcon Programming Language.
    FILE: coremodule.cpp
 
-   Function objects.
+   Core module -- main file.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: Sat, 30 Apr 2011 12:25:36 +0200
@@ -23,6 +23,7 @@
 #include <falcon/cm/typeid.h>
 #include <falcon/cm/clone.h>
 #include <falcon/cm/uri.h>
+#include <falcon/cm/path.h>
 
 #include <falcon/classstring.h>
 #include <falcon/classnil.h>
@@ -60,6 +61,7 @@ CoreModule::CoreModule():
       
       // Standard classes
       << new Ext::ClassURI
+      << new Ext::ClassPath
       
       // Type reflection
       << new ClassNil

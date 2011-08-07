@@ -299,7 +299,7 @@ bool Path::getFullLocation( String &str ) const
 }
 
 
-bool Path::setFullLocation( const String &str )
+bool Path::fulloc( const String &str )
 {
    length_t pos = str.find( ':' );
    if( pos == str.length() )

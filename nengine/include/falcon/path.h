@@ -189,7 +189,7 @@ public:
    /** Gets the location part, eventually including the resource specificator if present. 
     \return 
     */
-   String getFullLocation() const { String fmt; getFullLocation( fmt ); return fmt; }
+   String fulloc() const { String fmt; getFullLocation( fmt ); return fmt; }
    
    /** Gets the location part, eventually including the resource specificator if present. 
     \param str Where to store the full location (device + path).
@@ -229,7 +229,7 @@ public:
       \param floc Full location.
       \return true if correctly parsed.
    */
-   bool setFullLocation( const String &floc );
+   bool fulloc( const String &floc );
    
    /** Returns true if this path is an absolute path. */
    bool isAbsolute() const;

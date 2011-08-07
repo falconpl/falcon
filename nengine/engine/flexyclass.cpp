@@ -182,18 +182,8 @@ void FlexyClass::op_create( VMContext* ctx, int32 pcount ) const
             }
 
             virtual void operator()( const String& data, Item& value )
-            {
-               if( value.isFunction() )
-               {
-                  Function* func = value.asFunction();
-                  Item temp = m_fself;
-                  temp.methodize( func );
-                  m_self->insert( data, temp );
-               }
-               else
-               {
-                  m_self->insert( data, value );
-               }
+            {              
+               m_self->insert( data, value );
             }
             
          private:

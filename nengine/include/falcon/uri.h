@@ -44,6 +44,12 @@ public:
       Authority()
       {}
       
+      /** Creates an autority with all the fields empty. */
+      Authority( const String& value )
+      {
+         parse(value);
+      }
+      
       /** Creates an autority filling all the fields. 
        \param host The host responding to this authority.
        \param port the port where this autority responds.
