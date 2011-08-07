@@ -18,6 +18,7 @@
 
 #include <falcon/setup.h>
 #include <falcon/trace.h>
+#include <falcon/error.h>
 
 #include <falcon/expression.h>
 #include <falcon/statement.h>

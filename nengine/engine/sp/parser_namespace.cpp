@@ -16,6 +16,7 @@
 #undef SRC
 #define SRC "engine/sp/parser_namespace.cpp"
 
+#include <falcon/error.h>
 #include <falcon/sp/sourceparser.h>
 #include <falcon/sp/parsercontext.h>
 #include <falcon/sp/parser_atom.h>

@@ -86,7 +86,7 @@ void ExprIndex::precompileAutoLvalue( PCode* pcode, const PStep* activity, bool 
 }
 
 
-void ExprIndex::apply_( const PStep* ps, VMContext* ctx )
+void ExprIndex::apply_( const PStep* DEBUG_ONLY(ps), VMContext* ctx )
 {
    TRACE2( "Apply \"%s\"", ((ExprIndex*)ps)->describe().c_ize() );
 
@@ -99,7 +99,7 @@ void ExprIndex::apply_( const PStep* ps, VMContext* ctx )
 }
 
 
-void ExprIndex::PstepLValue::apply_( const PStep* ps, VMContext* ctx )
+void ExprIndex::PstepLValue::apply_( const PStep* DEBUG_ONLY(ps), VMContext* ctx )
 {
    TRACE2( "Apply lvalue \"%s\"", ((ExprIndex::PstepLValue*)ps)->describe().c_ize() );
 

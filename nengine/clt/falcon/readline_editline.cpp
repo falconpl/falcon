@@ -45,7 +45,7 @@ complete_func(EditLine *el, int)
    
 	const wchar_t *ptr;
 	const LineInfoW *lf = el_wline(el);
-	unsigned char res;
+	unsigned char res = CC_NORM;
 
 	/* Find the last word */
 	for (ptr = lf->cursor -1; ptr > lf->buffer; --ptr)

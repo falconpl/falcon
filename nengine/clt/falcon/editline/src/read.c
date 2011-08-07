@@ -312,6 +312,7 @@ utf8_islead(unsigned char c)
 private int
 read_char(EditLine *el, Char *cp)
 {
+   int unused;
 	ssize_t num_read;
 	int tried = 0;
         char cbuf[MB_LEN_MAX];
@@ -345,7 +346,7 @@ read_char(EditLine *el, Char *cp)
 			goto again; /* discard the byte we read and try again */
 		++cbp;
 		if ((bytes = ct_mbtowc(cp, cbuf, cbp)) == -1) {
-			ct_mbtowc_reset;
+			unused = ct_mbtowc_reset;
 			if (cbp >= MB_LEN_MAX) { /* "shouldn't happen" */
 				*cp = '\0';
 				return (-1);

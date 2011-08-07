@@ -1400,6 +1400,7 @@ void String::append( const String &str )
 {
 /*   if ( str.size() < FALCON_STRING_ALLOCATION_BLOCK )
       m_class->reserve( this, FALCON_STRING_ALLOCATION_BLOCK, true, true ); */
+   
    m_class->insert( this, length(), 0, &str );
 }
 

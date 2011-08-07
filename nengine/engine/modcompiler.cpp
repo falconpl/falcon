@@ -13,6 +13,7 @@
    See LICENSE file for licensing details.
 */
 
+#include <falcon/error.h>
 #include <falcon/modcompiler.h>
 #include <falcon/module.h>
 #include <falcon/falconclass.h>

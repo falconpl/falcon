@@ -44,7 +44,7 @@ Module* DynLoader::load_sys( const String& filePath )
    }
  
    Module* (*module_init)();
-   *((void**) &module_init) = ::dlsym( modData, DEFALUT_FALCON_MODULE_INIT_NAME );
+   module_init = (Module* (*)())::dlsym( modData, DEFALUT_FALCON_MODULE_INIT_NAME );
    if ( module_init == 0 )
    {
       throw new IOError( ErrorParam( e_binstartup, __LINE__, SRC )

@@ -58,15 +58,14 @@ Item* UnknownSymbol::value( VMContext* ) const
    throw new CodeError( ErrorParam( e_assign_sym, __LINE__, __FILE__ ).extra(name()) );
 }
 
-void UnknownSymbol::apply_( const PStep* s, VMContext* ctx )
-{
-   const ExprSymbol* self = static_cast<const ExprSymbol*>(s);
-   
+void UnknownSymbol::apply_( const PStep* DEBUG_ONLY(s), VMContext* ctx )
+{   
 #ifndef NDEBUG
+   const ExprSymbol* self = static_cast<const ExprSymbol*>(s);
    Symbol* sym = self->symbol();
    String name = "/* unknown */" + sym->name();
-#endif
    TRACE2( "Apply unknown '%s'", name.c_ize() );
+#endif
    ctx->pushData( Item() ); // a nil
 }
 
@@ -135,6 +134,7 @@ void UnknownSymbol::define( Symbol* def )
       default:
          fassert(0);
          af = 0;
+         afl = 0;
    }
 
    Private::ExprVector::iterator iter = _p->m_owners.begin();

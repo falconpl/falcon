@@ -127,7 +127,7 @@ bool ClassUser::hasProperty( void*, const String& prop ) const
 
 
 void ClassUser::describe( void* instance, String& target, int depth, int maxlen ) const
-{
+{   
    target += "Class " + name();
 
    if( depth == 0 )
@@ -139,13 +139,14 @@ void ClassUser::describe( void* instance, String& target, int depth, int maxlen 
       Private::PropMap::const_iterator iter = _p->m_props.begin();
       bool bFirst = true;
       
-      target += "{";
+      target += '{';
       
       while( iter != _p->m_props.end() )
       {
          Property* prop = iter->second;
          Item value;
          prop->get( instance, value );
+         
          if( ! (value.isFunction() || value.isMethod()) )
          {
             if( bFirst )
@@ -154,15 +155,17 @@ void ClassUser::describe( void* instance, String& target, int depth, int maxlen 
             }
             else
             {
-               target += ", ";
+               target += ','; target += ' ';
             }
          
-            target += prop->name() + "=" + value.describe( depth-1, maxlen );
+            String temp;
+            value.describe( temp, depth-1, maxlen );
+            target += prop->name() + "=" + temp;
          }         
          ++iter;
       }
             
-      target += "}";
+      target += '}';
    }
 }
 

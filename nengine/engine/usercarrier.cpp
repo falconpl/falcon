@@ -60,8 +60,8 @@ void UserCarrier::gcMark( uint32 mark )
       Item& item = m_data[i];
       if( item.isGarbaged() )
       {
-         Class* cls;
-         void* data;
+         Class* cls = 0;
+         void* data = 0;
          item.asClassInst( cls, data );
          cls->gcMark( data, mark );
       }

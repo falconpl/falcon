@@ -201,7 +201,7 @@ ct_encode_char(char *dst, size_t len, Char c)
 	l = ct_wctomb(dst, c);
 
 	if (l < 0) {
-		ct_wctomb_reset;
+		l = ct_wctomb_reset; // to avoid warning l=
 		l = 0;
 	}
 	return l;
