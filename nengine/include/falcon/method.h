@@ -48,8 +48,9 @@ private:
    MethodProp m_prop;
 };
 
+
 #define FALCON_DECLARE_METHOD(MTH_NAME, SIGNATURE) \
-   class Method_ ## MTH_NAME: public Method \
+   class Method_ ## MTH_NAME: public ::Falcon::Method \
    { \
    public: \
       Method_ ## MTH_NAME( ClassUser* u ): \

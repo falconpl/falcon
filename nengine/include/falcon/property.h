@@ -181,6 +181,89 @@ public:
    virtual void get( void* instance, Item& value );
 };
 
+
+#define FALCON_DECLARE_PROPERTY(PROP_NAME) \
+   class Property_ ## PROP_NAME: public ::Falcon::Property \
+   { \
+   public: \
+      Property_ ## PROP_NAME( ClassUser* u ): \
+         Property( u, #PROP_NAME ) \
+      {} \
+      virtual ~Property_ ## PROP_NAME() {} \
+      virtual void set( void* instance, const Item& value ); \
+      virtual void get( void* instance, Item& value ); \
+   } m_Property_ ## PROP_NAME;
+
+
+#define FALCON_DECLARE_CPROPERTY(PROP_NAME) \
+   class Property_ ## PROP_NAME: public ::Falcon::PropertyCarried \
+   { \
+   public: \
+      Property_ ## PROP_NAME( ClassUser* u ): \
+         PropertyCarried( u, #PROP_NAME ) \
+      {} \
+      virtual ~Property_ ## PROP_NAME() {} \
+      virtual void set( void* instance, const Item& value ); \
+      virtual void get( void* instance, Item& value ); \
+   } m_Property_ ## PROP_NAME;
+
+
+#define FALCON_DECLARE_RPROPERTY(PROP_NAME) \
+   class Property_ ## PROP_NAME: public ::Falcon::PropertyReflect \
+   { \
+   public: \
+      Property_ ## PROP_NAME( ClassUser* u ): \
+         PropertyReflect( u, #PROP_NAME ) \
+      {} \
+      virtual ~Property_ ## PROP_NAME() {} \
+      virtual void set( void* instance, const Item& value ); \
+      virtual void get( void* instance, Item& value ); \
+   } m_Property_ ## PROP_NAME;
+
+
+#define FALCON_DECLARE_STRPROPERTY(PROP_NAME) \
+   class Property_ ## PROP_NAME: public ::Falcon::PropertyString \
+   { \
+   public: \
+      Property_ ## PROP_NAME( ClassUser* u ): \
+         PropertyString( u, #PROP_NAME ) \
+      {} \
+      virtual ~Property_ ## PROP_NAME() {} \
+      virtual void set( void* instance, const Item& value ); \
+      virtual const String& getString( void* instance ); \
+   } m_Property_ ## PROP_NAME;
+
+
+#define FALCON_DECLARE_DATAPROPERTY(PROP_NAME) \
+   class Property_ ## PROP_NAME: public ::Falcon::PropertyData \
+   { \
+   public: \
+      Property_ ## PROP_NAME( ClassUser* u ): \
+         PropertyData( u, #PROP_NAME ) \
+      {} \
+      virtual ~Property_ ## PROP_NAME() {} \
+      virtual void set( void* instance, const Item& value ); \
+      virtual void get( void* instance, Item& value ); \
+   } m_Property_ ## PROP_NAME;
+
+
+#define FALCON_INIT_PROPERTY(PROP_NAME) m_Property_ ## PROP_NAME(this)
+
+#define FALCON_DEFINE_PROPERTY_SET(CLASS_NAME, PROP_NAME) void CLASS_NAME :: Property_ ## PROP_NAME::set
+#define FALCON_DEFINE_PROPERTY_SET_P(CLASS_NAME, PROP_NAME) \
+      void CLASS_NAME :: Property_ ## PROP_NAME::set( void* instance, const Item& value )
+
+#define FALCON_DEFINE_PROPERTY_GET(CLASS_NAME, PROP_NAME) void CLASS_NAME :: Property_ ## PROP_NAME::get
+#define FALCON_DEFINE_PROPERTY_GET_P(CLASS_NAME, PROP_NAME) \
+      void CLASS_NAME :: Property_ ## PROP_NAME::get( void* instance, Item& value )
+
+#define FALCON_DEFINE_PROPERTY_GETS(CLASS_NAME, PROP_NAME) \
+      const String& CLASS_NAME :: Property_ ## PROP_NAME::getString
+
+#define FALCON_DEFINE_PROPERTY_GETS_P(CLASS_NAME, PROP_NAME) \
+      const String& CLASS_NAME :: Property_ ## PROP_NAME::getString( void* instance )
+
+
 }
 
 #endif	/* PROPERTY_H */

@@ -32,18 +32,19 @@ namespace Ext {
 
 ClassPath::ClassPath():
    ClassUser("Path"),
-   m_propRes(this),
-   m_propLoc(this),
-   m_propFullLoc(this),
-   m_propFile(this),
-   m_propExt(this),
-   m_propFileExt(this),
-   m_propEncoded(this),
    
-   m_propWLoc(this),
-   m_propFileWFullLoc(this),   
-   m_propFileWEncoded(this),
+   FALCON_INIT_PROPERTY( resource ),
+   FALCON_INIT_PROPERTY( location ),
+   FALCON_INIT_PROPERTY( fulloc ),
+   FALCON_INIT_PROPERTY( file ),
+   FALCON_INIT_PROPERTY( ext ),
+   FALCON_INIT_PROPERTY( filext ),
+   FALCON_INIT_PROPERTY( encoded ),
    
+   FALCON_INIT_PROPERTY( wlocation ),
+   FALCON_INIT_PROPERTY( wfulloc ),
+   FALCON_INIT_PROPERTY( wencoded ),
+
    FALCON_INIT_METHOD( absolutize ),
    FALCON_INIT_METHOD( relativize ),
    FALCON_INIT_METHOD( canonicize ),
@@ -115,7 +116,7 @@ void ClassPath::op_toString( VMContext* ctx, void* self ) const
 // Properties.
 //
    
-void ClassPath::PropertyResource::set( void* instance, const Item& value )
+FALCON_DEFINE_PROPERTY_SET_P( ClassPath, resource )
 {
    checkType( value.isString(), "S" );
    if( ! static_cast<PathCarrier*>(instance)->m_path.resource(*value.asString()) )
@@ -124,13 +125,13 @@ void ClassPath::PropertyResource::set( void* instance, const Item& value )
    }
 }
 
-const String& ClassPath::PropertyResource::getString( void* instance )
+FALCON_DEFINE_PROPERTY_GETS_P( ClassPath, resource )
 {
    return static_cast<PathCarrier*>(instance)->m_path.resource();
 }
 
 
-void ClassPath::PropertyLocation::set( void* instance, const Item& value )
+FALCON_DEFINE_PROPERTY_SET_P( ClassPath, location )
 {
    checkType( value.isString(), "S" );
    if( ! static_cast<PathCarrier*>(instance)->m_path.location(*value.asString()) )
@@ -139,13 +140,13 @@ void ClassPath::PropertyLocation::set( void* instance, const Item& value )
    }
 }
 
-const String& ClassPath::PropertyLocation::getString( void* instance )
+FALCON_DEFINE_PROPERTY_GETS_P( ClassPath, location )
 {
    return static_cast<PathCarrier*>(instance)->m_path.location();
 }
 
 
-void ClassPath::PropertyFullLocation::set( void* instance, const Item& value )
+FALCON_DEFINE_PROPERTY_SET_P( ClassPath, fulloc )
 {
    checkType( value.isString(), "S" );
    if( ! static_cast<PathCarrier*>(instance)->m_path.fulloc(*value.asString()) )
@@ -154,7 +155,7 @@ void ClassPath::PropertyFullLocation::set( void* instance, const Item& value )
    }
 }
 
-const String& ClassPath::PropertyFullLocation::getString( void* instance )
+FALCON_DEFINE_PROPERTY_GETS_P( ClassPath, fulloc )
 {
    PathCarrier* pc = static_cast<PathCarrier*>(instance);
    pc->m_path.getFullLocation(pc->m_fulloc);   
@@ -162,7 +163,7 @@ const String& ClassPath::PropertyFullLocation::getString( void* instance )
 }
    
   
-void ClassPath::PropertyFile::set( void* instance, const Item& value )
+FALCON_DEFINE_PROPERTY_SET_P( ClassPath, file )
 {
    checkType( value.isString(), "S" );
    if( ! static_cast<PathCarrier*>(instance)->m_path.file(*value.asString()) )
@@ -171,13 +172,13 @@ void ClassPath::PropertyFile::set( void* instance, const Item& value )
    }
 }
 
-const String& ClassPath::PropertyFile::getString( void* instance )
+FALCON_DEFINE_PROPERTY_GETS_P( ClassPath, file )
 {
    return static_cast<PathCarrier*>(instance)->m_path.file();
 }
    
 
-void ClassPath::PropertyExt::set( void* instance, const Item& value )
+FALCON_DEFINE_PROPERTY_SET_P( ClassPath, ext )
 {
    checkType( value.isString(), "S" );
    if( ! static_cast<PathCarrier*>(instance)->m_path.ext(*value.asString()) )
@@ -186,12 +187,12 @@ void ClassPath::PropertyExt::set( void* instance, const Item& value )
    }
 }
 
-const String& ClassPath::PropertyExt::getString( void* instance )
+FALCON_DEFINE_PROPERTY_GETS_P( ClassPath, ext )
 {
    return static_cast<PathCarrier*>(instance)->m_path.ext();
 }
 
-void ClassPath::PropertyFileExt::set( void* instance, const Item& value )
+FALCON_DEFINE_PROPERTY_SET_P( ClassPath, filext )
 {
    checkType( value.isString(), "S" );
    if( ! static_cast<PathCarrier*>(instance)->m_path.fileext(*value.asString()) )
@@ -200,13 +201,13 @@ void ClassPath::PropertyFileExt::set( void* instance, const Item& value )
    }
 }
 
-const String& ClassPath::PropertyFileExt::getString( void* instance )
+FALCON_DEFINE_PROPERTY_GETS_P( ClassPath, filext )
 {
    return static_cast<PathCarrier*>(instance)->m_path.fileext();
 }
 
 
-void ClassPath::PropertyEncoded::set( void* instance, const Item& value )
+FALCON_DEFINE_PROPERTY_SET_P( ClassPath, encoded )
 {
    checkType( value.isString(), "S" );
    if( ! static_cast<PathCarrier*>(instance)->m_path.parse(*value.asString()) )
@@ -215,13 +216,13 @@ void ClassPath::PropertyEncoded::set( void* instance, const Item& value )
    }
 }
 
-const String& ClassPath::PropertyEncoded::getString( void* instance )
+FALCON_DEFINE_PROPERTY_GETS_P( ClassPath, encoded )
 {
    return static_cast<PathCarrier*>(instance)->m_path.encode();
 }
 
 
-void ClassPath::PropertyWLoc::set( void* instance, const Item& value )
+FALCON_DEFINE_PROPERTY_SET_P( ClassPath, wlocation )
 {
    checkType( value.isString(), "S" );
    if( ! static_cast<PathCarrier*>(instance)->m_path.location(*value.asString()) )
@@ -230,14 +231,15 @@ void ClassPath::PropertyWLoc::set( void* instance, const Item& value )
    }
 }
 
-const String& ClassPath::PropertyWLoc::getString( void* instance )
+FALCON_DEFINE_PROPERTY_GETS_P( ClassPath, wlocation )
 {
    PathCarrier* pc = static_cast<PathCarrier*>(instance);
    pc->m_path.getWinLocation(pc->m_winLoc);   
    return pc->m_winLoc;
 }
 
-void ClassPath::PropertyWFullLoc::set( void* instance, const Item& value )
+
+FALCON_DEFINE_PROPERTY_SET_P( ClassPath, wfulloc )
 {
    checkType( value.isString(), "S" );
    if( ! static_cast<PathCarrier*>(instance)->m_path.fulloc(*value.asString()) )
@@ -246,7 +248,7 @@ void ClassPath::PropertyWFullLoc::set( void* instance, const Item& value )
    }
 }
 
-const String& ClassPath::PropertyWFullLoc::getString( void* instance )
+FALCON_DEFINE_PROPERTY_GETS_P( ClassPath, wfulloc )
 {
    PathCarrier* pc = static_cast<PathCarrier*>(instance);
    pc->m_path.getFullWinLocation(pc->m_fullWinLoc);   
@@ -254,7 +256,7 @@ const String& ClassPath::PropertyWFullLoc::getString( void* instance )
 }
 
 
-void ClassPath::PropertyWEncoded::set( void* instance, const Item& value )
+FALCON_DEFINE_PROPERTY_SET_P( ClassPath, wencoded )
 {
    checkType( value.isString(), "S" );
    if( ! static_cast<PathCarrier*>(instance)->m_path.parse(*value.asString()) )
@@ -263,7 +265,7 @@ void ClassPath::PropertyWEncoded::set( void* instance, const Item& value )
    }
 }
 
-const String& ClassPath::PropertyWEncoded::getString( void* instance )
+FALCON_DEFINE_PROPERTY_GETS_P( ClassPath, wencoded )
 {
    PathCarrier* pc = static_cast<PathCarrier*>(instance);
    pc->m_path.getWinFormat(pc->m_winpath);   

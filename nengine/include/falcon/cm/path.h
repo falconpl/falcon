@@ -77,137 +77,17 @@ private:
    // Properties.
    //
    
-   class PropertyResource: public PropertyString
-   {
-   public:
-      PropertyResource( ClassUser* owner ):
-         PropertyString( owner, "resource" )
-      {}      
-      virtual ~PropertyResource() {}
-      
-      virtual void set( void* instance, const Item& value );      
-      virtual const String& getString( void* instance );
-   }
-   m_propRes;
-   
-   class PropertyLocation: public PropertyString
-   {
-   public:
-      PropertyLocation( ClassUser* owner ):
-         PropertyString( owner, "location" )
-      {}      
-      virtual ~PropertyLocation() {}
-      
-      virtual void set( void* instance, const Item& value );      
-      virtual const String& getString( void* instance );
-   }
-   m_propLoc;
-   
-   class PropertyFullLocation: public PropertyString
-   {
-   public:
-      PropertyFullLocation( ClassUser* owner ):
-         PropertyString( owner, "fulloc" )
-      {}      
-      virtual ~PropertyFullLocation() {}
-      
-      virtual void set( void* instance, const Item& value );      
-      virtual const String& getString( void* instance );
-   }
-   m_propFullLoc;
-   
-   class PropertyFile: public PropertyString
-   {
-   public:
-      PropertyFile( ClassUser* owner ):
-         PropertyString( owner, "file" )
-      {}      
-      virtual ~PropertyFile() {}
-      
-      virtual void set( void* instance, const Item& value );      
-      virtual const String& getString( void* instance );
-   }
-   m_propFile;
-   
-   class PropertyExt: public PropertyString
-   {
-   public:
-      PropertyExt( ClassUser* owner ):
-         PropertyString( owner, "ext" )
-      {}      
-      virtual ~PropertyExt() {}
-      
-      virtual void set( void* instance, const Item& value );      
-      virtual const String& getString( void* instance );
-   }
-   m_propExt;
-   
-   class PropertyFileExt: public PropertyString
-   {
-   public:
-      PropertyFileExt( ClassUser* owner ):
-         PropertyString( owner, "filext" )
-      {}      
-      virtual ~PropertyFileExt() {}
-      
-      virtual void set( void* instance, const Item& value );      
-      virtual const String& getString( void* instance );
-   }
-   m_propFileExt;
+   FALCON_DECLARE_STRPROPERTY( resource )
+   FALCON_DECLARE_STRPROPERTY( location )
+   FALCON_DECLARE_STRPROPERTY( fulloc )
+   FALCON_DECLARE_STRPROPERTY( file )
+   FALCON_DECLARE_STRPROPERTY( ext )
+   FALCON_DECLARE_STRPROPERTY( filext )
+   FALCON_DECLARE_STRPROPERTY( encoded )
+   FALCON_DECLARE_STRPROPERTY( wlocation )
+   FALCON_DECLARE_STRPROPERTY( wfulloc )
+   FALCON_DECLARE_STRPROPERTY( wencoded )
 
-   class PropertyEncoded: public PropertyString
-   {
-   public:
-      PropertyEncoded( ClassUser* owner ):
-         PropertyString( owner, "encoded" )
-      {}      
-      virtual ~PropertyEncoded() {}
-      
-      virtual void set( void* instance, const Item& value );      
-      virtual const String& getString( void* instance );
-   }
-   m_propEncoded;
-
-   
-   class PropertyWLoc: public PropertyString
-   {
-   public:
-      PropertyWLoc( ClassUser* owner ):
-         PropertyString( owner, "wlocation" )
-      {}      
-      virtual ~PropertyWLoc() {}
-      
-      virtual void set( void* instance, const Item& value );      
-      virtual const String& getString( void* instance );
-   }
-   m_propWLoc;
-   
-   class PropertyWFullLoc: public PropertyString
-   {
-   public:
-      PropertyWFullLoc( ClassUser* owner ):
-         PropertyString( owner, "wfulloc" )
-      {}      
-      virtual ~PropertyWFullLoc() {}
-      
-      virtual void set( void* instance, const Item& value );      
-      virtual const String& getString( void* instance );
-   }
-   m_propFileWFullLoc;
-   
-   class PropertyWEncoded: public PropertyString
-   {
-   public:
-      PropertyWEncoded( ClassUser* owner ):
-         PropertyString( owner, "wencoded" )
-      {}      
-      virtual ~PropertyWEncoded() {}
-      
-      virtual void set( void* instance, const Item& value );      
-      virtual const String& getString( void* instance );
-   }
-   m_propFileWEncoded;
-   
    FALCON_DECLARE_METHOD( absolutize, "parent:[S]" );
    FALCON_DECLARE_METHOD( relativize, "parent:S" );
    FALCON_DECLARE_METHOD( canonicize, "" );
