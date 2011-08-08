@@ -39,6 +39,7 @@ Parser::Private::Private():
 Parser::Private::~Private()
 {
    clearTokens();
+   clearStates();
 
    // clear the lexers
    {
@@ -66,19 +67,41 @@ void Parser::Private::clearTokens()
    }
 }
 
-
-Parser::Private::ParseFrame::~ParseFrame()
+void Parser::Private::clearStates()
 {
-   TRACE2("Destroying ParseFrame at %p", this );
-   /*Alternatives::iterator iter = m_candidates.begin();
-
-   while( iter != m_candidates.end() )
+   StateStack::iterator iter = m_lStates.begin();
+   while( iter != m_lStates.end() )
    {
       delete *iter;
       ++iter;
    }
-*/
-   //m_candidates.clear();
+   m_lStates.clear();
+   
+   m_tokenStack = 0;
+   m_pframes = 0;
+   m_pErrorFrames = 0;
+}
+
+
+Parser::Private::ParseFrame::~ParseFrame()
+{
+   TRACE2("Destroying ParseFrame at %p", this );
+}
+
+
+Parser::Private::StateFrame::StateFrame( State* s ):
+   m_state( s ),
+   m_cbfunc( 0 ),
+   m_cbdata( 0 ),
+   m_id(0),
+   m_appliedRules(0)
+{
+   TRACE2("Creating StateFrame at %p", this );
+}
+
+Parser::Private::StateFrame::~StateFrame()
+{
+   TRACE2("Destroying StateFrame at %p", this );
 }
 
 //========================================================
@@ -124,10 +147,12 @@ void Parser::pushState( const String& name, bool isPushedState )
       {
          TRACE("Parser::pushState -- pframes.size()=%d",(int)_p->m_pframes->size());
       }
-      _p->m_lStates.push_back( iter->second );
+      
+      Private::StateFrame* stf = new Private::StateFrame( iter->second );
+      _p->m_lStates.push_back( stf );
 
       // set new proxy pointers
-      Private::StateFrame& bf = _p->m_lStates.back();
+      Private::StateFrame& bf = *stf;
       _p->m_tokenStack = &bf.m_tokenStack;
       _p->m_pframes = &bf.m_pframes;
       _p->m_pErrorFrames = &bf.m_pErrorFrames;
@@ -145,7 +170,7 @@ void Parser::pushState( const String& name, Parser::StateFrameFunc cf, void* dat
 {
    pushState( name );
 
-   Private::StateFrame& bf = _p->m_lStates.back();
+   Private::StateFrame& bf = *_p->m_lStates.back();
    bf.m_cbfunc = cf;
    bf.m_cbdata = data;
 }
@@ -159,28 +184,34 @@ void Parser::popState()
       throw new CodeError( ErrorParam( e_underflow, __LINE__, __FILE__ ).extra("Parser::popState") );
    }
 
-   StateFrameFunc func = _p->m_lStates.back().m_cbfunc;
-   void *cbdata = _p->m_lStates.back().m_cbdata;
+   Private::StateFrame* sf = _p->m_lStates.back();
+   
+   StateFrameFunc func = sf->m_cbfunc;
+   void *cbdata = sf->m_cbdata;
 
    // copy the residual tokens
-   Private::TokenStack ts = _p->m_lStates.back().m_tokenStack;
+   Private::TokenStack& ts = sf->m_tokenStack;
+   Private::TokenStack& tsPrev = (*(++_p->m_lStates.rbegin()))->m_tokenStack;
+   Private::TokenStack::iterator tsiter = ts.begin();
+   while( tsiter != ts.end() )
+   {
+      tsPrev.push_back( *tsiter );
+      ++tsiter;
+   }
+   ts.clear(); // prevent destruction of the tokens.
+   
+   
    _p->m_lStates.pop_back();
-   TRACE1( "Parser::popState -- now topmost state is '%s'", _p->m_lStates.back().m_state->name().c_ize() );
+   delete sf;
+   TRACE1( "Parser::popState -- now topmost state is '%s'", _p->m_lStates.back()->m_state->name().c_ize() );
 
    // reset proxy pointers
-   Private::StateFrame& bf = _p->m_lStates.back();
+   Private::StateFrame& bf = *_p->m_lStates.back();
    _p->m_tokenStack = &bf.m_tokenStack;
    _p->m_pframes = &bf.m_pframes;
    _p->m_pErrorFrames = &bf.m_pErrorFrames;
    TRACE1("Parser::popState -- pframes.size()=%d, stack now: %s",
       (int)_p->m_pframes->size(), dumpStack().c_ize());
-
-   Private::TokenStack::iterator tsiter = ts.begin();
-   while( tsiter != ts.end() )
-   {
-      _p->m_tokenStack->push_back( *tsiter );
-      ++tsiter;
-   }
 
    // execute the callback (?)
    if( func != 0 )
@@ -220,7 +251,7 @@ bool Parser::parse( const String& mainState )
    Private::StateMap::const_iterator iter = _p->m_states.find( mainState );
    if( iter != _p->m_states.end() )
    {
-      _p->m_lStates.clear();
+      _p->clearStates();
       pushState( mainState, false );
    }
    else
@@ -248,7 +279,23 @@ bool Parser::parse( const String& mainState )
 
 bool Parser::isComplete() const
 {
-   return _p->m_tokenStack->empty() || _p->m_tokenStack->front()->token().id() == T_EOF.id();
+   TRACE1( "Parser::isComplete? -- ptr %p", _p->m_tokenStack );
+   if( _p->m_tokenStack == 0 )
+   {
+      return true;
+   }
+   
+   TRACE1( "Parser::isComplete? -- %s", _p->m_tokenStack->empty() ? "empty" : "not empty");
+   
+   if( _p->m_tokenStack->empty() )
+   {
+      return true;
+   }
+   
+   TRACE1( "Parser::isComplete? -- %s", 
+         _p->m_tokenStack->front()->token().id() == T_EOF.id() ? "EOF" : "not eof" );
+   
+   return _p->m_tokenStack->front()->token().id() == T_EOF.id();
 }
 
 
@@ -482,7 +529,7 @@ bool Parser::step()
    }
 
    TRACE1( "Parser::step -- on state \"%s\" -- %s ",
-         _p->m_lStates.back().m_state->name().c_ize(), dumpStack().c_ize() );
+         _p->m_lStates.back()->m_state->name().c_ize(), dumpStack().c_ize() );
 
    clearErrors();
 
@@ -708,7 +755,7 @@ void Parser::onNewToken()
       MESSAGE1( "Parser::onNewToken -- starting new path finding" );
 
       //... let the current state to find a path for us.
-      State* curState = _p->m_lStates.back().m_state;
+      State* curState = _p->m_lStates.back()->m_state;
 
       // still empty?
       if( curState->findPaths( *this ) )
@@ -1076,7 +1123,7 @@ void Parser::explorePaths()
 
 void Parser::applyCurrentRule()
 {
-   Private::StateFrame& state = _p->m_lStates.back();
+   Private::StateFrame& state = *_p->m_lStates.back();
    Private::FrameStack* stack = _p->m_pframes;
    Private::ParseFrame& frame = stack->back();
    fassert( ! frame.m_path.empty() );
@@ -1097,9 +1144,9 @@ void Parser::applyCurrentRule()
    TRACE3( "Applied rule %s -- state depth %d -- state id %d",
       currentRule->name().c_ize(),
       (int) _p->m_lStates.size(),
-      _p->m_lStates.back().m_id );
+      _p->m_lStates.back()->m_id );
    // did we changed state?
-   if( frameId != _p->m_lStates.back().m_id )
+   if( frameId != _p->m_lStates.back()->m_id )
    {
       TRACE3( "Rule %s detect pop-state", currentRule->name().c_ize() );
       return;
@@ -1119,8 +1166,8 @@ void Parser::applyCurrentRule()
 void Parser::reset()
 {
    resetNextToken();
-   _p->clearTokens();
-   _p->m_lStates.clear();
+   //_p->clearTokens();
+   _p->clearStates();
 }
 
 
