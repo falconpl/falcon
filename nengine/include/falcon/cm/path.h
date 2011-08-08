@@ -208,8 +208,8 @@ private:
    }
    m_propFileWEncoded;
    
-   FALCON_DECLARE_METHOD( absolutize, "[S]" );
-   FALCON_DECLARE_METHOD( relativize, "S" );
+   FALCON_DECLARE_METHOD( absolutize, "parent:[S]" );
+   FALCON_DECLARE_METHOD( relativize, "parent:S" );
    FALCON_DECLARE_METHOD( canonicize, "" );
    FALCON_DECLARE_METHOD( cwd, "" );
 };

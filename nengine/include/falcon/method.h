@@ -54,7 +54,7 @@ private:
    public: \
       Method_ ## MTH_NAME( ClassUser* u ): \
          Method( u, #MTH_NAME ) \
-      { signature( SIGNATURE ); } \
+      { parseDescription( SIGNATURE ); } \
       virtual ~Method_ ## MTH_NAME() {} \
       virtual void invoke( VMContext* ctx, int32 pCount = 0 ); \
    } m_Method_ ## MTH_NAME;

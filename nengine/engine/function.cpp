@@ -40,7 +40,7 @@ Function::Function( const String& name, Module* module, int32 line ):
    m_module( module ),
    m_methodOf( 0 ),
    m_line( line ),
-   m_bDeterm(false),
+   m_bDeterm(true),
    m_bEta(false)
 {}
 
@@ -52,6 +52,62 @@ Function::~Function()
 void Function::module( Module* owner )
 {
    m_module = owner;
+}
+
+
+bool Function::parseDescription( const String& params )
+{
+   m_signature = "";
+   
+   length_t ppos = 0;
+   char_t chr;
+   while( (chr = params.getCharAt(ppos)) == '*' || chr == '&' )
+   {
+      if ( chr == '&' )
+      {
+         setEta(true);
+      }
+      else
+      {
+         setDeterm(true);
+      }
+      ++ppos;
+   }
+      
+   if ( ppos >= params.length() )
+   {
+      return true;
+   }
+   
+   length_t pos;
+   do 
+   {
+      pos = params.find( ',', ppos );   
+      String param = params.subString(ppos, pos);
+      param.trim();
+      length_t pColon = param.find( ":" );
+      if( pColon == String::npos || pColon == 0 )
+      {
+         return false;
+      }
+      else
+      {
+         String pname = param.subString(0,pColon); pname.trim();
+         String psig = param.subString(pColon+1); psig.trim();
+         
+         addParam( pname );
+         if( m_signature.size() > 0 )
+         {
+            m_signature += ",";
+         }
+         m_signature += psig;
+      }
+      
+      ppos = pos+1;      
+   }
+   while( pos != String::npos );
+   
+   return true;
 }
 
 
