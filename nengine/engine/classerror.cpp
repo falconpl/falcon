@@ -22,7 +22,6 @@
 #include <falcon/paramerror.h>
 #include <falcon/function.h>
 #include <falcon/module.h>
-#include <curses.h>
 
 
 namespace Falcon {

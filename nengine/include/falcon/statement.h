@@ -177,36 +177,9 @@ public:
 private:
    SynTree* m_ifFalse;
 
-   class ElifBranch
-   {
-   public:
-      Expression* m_check;
-      PCode m_pcCheck;
-      SynTree* m_ifTrue;
-      SourceRef m_sr;
+   struct Private;
+   Private* _p;
 
-      ElifBranch( Expression *check, SynTree* ifTrue, int32 line=0, int32 chr = 0 ):
-         m_check( check ),
-         m_ifTrue( ifTrue ),
-         m_sr( line, chr )
-      {
-         compile();
-      }
-
-      ElifBranch( const ElifBranch& other ):
-         m_check( other.m_check ),
-         m_ifTrue( other.m_ifTrue ),
-         m_sr(other.m_sr)
-      {
-         compile();
-      }
-
-      ~ElifBranch();
-
-      void compile();
-   };
-
-   std::vector<ElifBranch* > m_elifs;
 };
 
 }
