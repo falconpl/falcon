@@ -24,6 +24,8 @@
 #include <falcon/path.h>
 #include <falcon/paramerror.h>
 
+#include "falcon/cm/uri.h"
+
 namespace Falcon {
 namespace Ext {
 
@@ -40,8 +42,12 @@ ClassPath::ClassPath():
    
    m_propWLoc(this),
    m_propFileWFullLoc(this),   
-   m_propFileWEncoded(this)
-
+   m_propFileWEncoded(this),
+   
+   FALCON_INIT_METHOD( absolutize ),
+   FALCON_INIT_METHOD( relativize ),
+   FALCON_INIT_METHOD( canonicize ),
+   FALCON_INIT_METHOD( cwd )
 {
 }
 
@@ -264,6 +270,60 @@ const String& ClassPath::PropertyWEncoded::getString( void* instance )
    return pc->m_winpath;
 }
    
+
+FALCON_DEFINE_METHOD_P1( ClassPath, absolutize )
+{
+   Item* i_path = ctx->param(0);
+   if( i_path != 0 && !(i_path->isString()||i_path->isNil()) )
+   {
+      throw paramError();
+   }
+   
+   PathCarrier* pc = static_cast<PathCarrier*>(ctx->self().asInst());
+   if( i_path == 0 || i_path->isNil() )
+   {
+      pc->m_path.absolutize();
+   }
+   else
+   {
+      pc->m_path.absolutize( *i_path->asString() );
+   }
+   
+   ctx->returnFrame();   
+}
+
+
+FALCON_DEFINE_METHOD_P1( ClassPath, relativize )
+{
+   Item* i_path = ctx->param(0);
+   if( i_path == 0 || ! i_path->isString() )
+   {
+      throw paramError();
+   }
+   
+   PathCarrier* pc = static_cast<PathCarrier*>(ctx->self().asInst());
+   Item ret; 
+   ret.setBoolean( pc->m_path.relativize( *i_path->asString() ) );
+   ctx->returnFrame(ret);   
+}
+
+
+FALCON_DEFINE_METHOD_P1( ClassPath, canonicize )
+{
+   PathCarrier* pc = static_cast<PathCarrier*>(ctx->self().asInst());
+   pc->m_path.canonicize();
+   ctx->returnFrame();
+}
+
+
+FALCON_DEFINE_METHOD_P1( ClassPath, cwd )
+{   
+   String temp;
+   Path::currentWorkDirectory( temp );
+   ctx->returnFrame( temp );
+}
+
+
 }
 }
 

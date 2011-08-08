@@ -19,6 +19,8 @@
 #include <falcon/uri.h>
 #include <falcon/path.h>
 
+#include <falcon/sys.h>  // for _getCWD -- we could move it in specific source
+
 namespace Falcon
 {
 
@@ -304,18 +306,24 @@ bool Path::getFullLocation( String &str ) const
 bool Path::fulloc( const String &str )
 {
    length_t pos = str.find( ':' );
-   if( pos == str.length() )
+   if( pos == String::npos )
    {
       if( location( str ) )
       {
          m_device = "";
+         m_encoded = "";
          return true;
       }
+   }
+   else if ( pos == 1 )
+   {
+      return false;
    }
    else
    {
       if( resource( str.subString(0,pos) ) && location( str.subString( pos + 1 ) ) )
       {
+         m_encoded = "";
          return true;
       }
    }
@@ -586,6 +594,147 @@ void Path::uriToWin( String &result )
 }
 
 
+void Path::absolutize( const String& root )
+{
+   if( isAbsolute() )
+   {
+      return;
+   }
+   
+   // do we need the root?
+   Path temp;
+   if ( root == "" )
+   {
+      String nRoot;
+      currentWorkDirectory(nRoot);
+      temp.fulloc( nRoot );
+   }
+   else
+   {
+      temp.fulloc( root );
+   }
+   
+   // calculate relative directory
+   resource( temp.resource() );
+   location( temp.location() + "/" + location() );
+   canonicize();
+}
+
+
+void Path::canonicize()
+{
+   m_encoded = "";
+   
+   // add a final "/" to the location, we'll need that.
+   m_location += '/';
+   
+   // first, remove /./
+   length_t pos = m_location.find( "/./" );
+   while ( pos != String::npos  )
+   {            
+      m_location.remove( pos, 2 );
+      pos = m_location.find( "/./", pos );
+   }
+   
+   // then, remove "/../"
+   pos = m_location.find( "/../" );
+   while ( pos != String::npos )
+   {
+      if( pos == 0 )
+      {
+         // leave the initial "/"
+         m_location.remove( pos, 3 );
+         // next...
+         pos = m_location.find( "/../" );
+      }
+      else
+      {
+         // find the preceding "/" and remove all up to that
+         length_t pos2 = m_location.rfind( '/', pos - 1 );
+         // ... but only if there is something to be removed.
+         if( pos2 == String::npos )
+         {
+            pos2 = 0;
+         }
+         
+         m_location.remove( pos2, pos - pos2 + 3 );
+         // next...
+         pos = m_location.find( "/../", pos2 );
+      }
+   }
+   
+   // remove the last "/" that we added previously.
+   m_location.size( m_location.size() - m_location.manipulator()->charSize() );
+   
+   // finally, remove leading "./" if any -- other "/./" are already gone.
+   if( m_location.size() > 2 && 
+       m_location.getCharAt(0) == '.' && m_location.getCharAt(1) == '/' )
+   {
+      m_location.remove( 0, 2 );
+   }
+}
+
+
+bool Path::relativize( const String& parent )
+{
+   // preliminary control.
+   if ( parent.size() == 0 || ! isAbsolute() )
+   {
+      return false;
+   }
+   
+   Path temp;
+   if( parent.getCharAt( parent.length()-1 ) != '/' )
+   {
+      if( ! temp.fulloc( parent + "/" ) )
+      {
+         return false;
+      }
+   }
+   else
+   {
+      if( ! temp.fulloc( parent ) )
+      {
+         return false;
+      }
+   }
+   
+   if( temp.resource().size() > 0  && resource().size() > 0 && 
+         temp.resource() != temp.resource() )
+   {
+      return false;
+   }
+   
+   
+   if( location().find( temp.location() ) == 0 )
+   {
+      if( location().length() == temp.location().length() )
+      {
+         // we're the same.
+         location( "." );
+         m_encoded = "";
+         return true;
+      }
+      else if( location().getCharAt( temp.location().length() 
+         ) == '/' )
+      {
+         // a "/" follows the path. we can cut it away.
+         m_location.remove(0, temp.location().length()+1 );
+         m_encoded = "";
+         return true;
+      }
+      // otherwise, the path it's not a direct parent.
+   }
+   
+   return false;
+}
+ 
+
+bool Path::currentWorkDirectory( String& target )
+{
+   return Sys::_getCWD( target );
+}
+   
 }
 
 /* end of path.cpp */

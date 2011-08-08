@@ -683,9 +683,9 @@ public:
    void prepend( const String &source ) { m_class->insert( this, 0, 0, &source ); }
 
    length_t find( const String &element, length_t start=0, length_t end=csh::npos) const;
-   length_t rfind( const String &element, length_t start=0, length_t end=csh::npos) const;
+   length_t rfind( const String &element, length_t start=csh::npos, length_t end=0) const;
    length_t find( char_t element, length_t start=0, length_t end=csh::npos) const;
-   length_t rfind( char_t element, length_t start=0, length_t end=csh::npos) const;
+   length_t rfind( char_t element, length_t start=csh::npos, length_t end=0) const;
 
    /** Compares a string to another.
       Optimized to match against C strings.

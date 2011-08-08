@@ -94,7 +94,7 @@ public:
    bool isValid() const { return m_bValid; }
    
    void clear();
-   
+      
    //=================================================================
    // Setting and getting raw elements.
    //
@@ -102,7 +102,72 @@ public:
    /** Get the location part (path to file) in RFC3986 format.
    */
    const String& location() const { return m_location; }
+      
+   /** Makes the current path absolute with respect to a given root.
+    \param root The directory to which the directory is relative, or "" for
+          "relative to current work directory".
+    
+    If the path described by this Path instance is relative, this method adds 
+    the @b root parameter (or the current system work directory if root is empty),
+    and resolves parent references ("../") eliminating them. 
+    
+    If it's absolute, the root parameter is ignored, but parent references are
+    still resolved.
+    
+    Notice that the parent reference of the root directory of a system is 
+    still the root directory; so it is legal to have more parent references
+    than actual directory levels. For instance, "/path/deep/2/../../../../" will
+    resolve to "/". Current directory indcators "./" are removed as well 
+    as no-ops.
+    
+    \note Keep in mind that absolutizing directories using CWD is thread unsafe;
+    the program won't crash, but your path might point to somewhere you didn't
+    expect.
+    
+    \note root is intended as a location, even if not terminating with /.
+    */
+   void absolutize( const String& root = "" );
    
+   /** Makes this path canonical.
+    Removes "./" occourences from this path.
+    
+    If this path is absolute, all the "../" are removed as well.
+    Notice that the parent reference of the root directory of a system is 
+    still the root directory; so it is legal to have more parent references
+    than actual directory levels. For instance, "/path/deep/2/../../../../" will
+    resolve to "/". 
+    
+    If this path is absolute, "../" will be removed only if possible, i.e. if
+    there is a previous path to be removed.
+    */
+   void canonicize();
+   
+   /** Relativizes this path to a given location.
+    \param parent The path that should be used to relativize this Path instance.
+    \return false if \b parent or this path are not absolute or, \b parent
+            it's not a parent of the location stored in this path.
+    
+    This method transforms an absolute path into a relative path if the parent
+    path given as paremeter is actually a predecessor of the location described
+    in this path in the direcory structure.
+    
+    Both \b parent and this path must be absolute, and possibly normalized.
+    
+    This method will consider also the unit specifier; if not given in \b parent,
+    or in this path, it will be ignored, while if given both in \b parent and
+    in this path it will be removed. If given in both entities but not matching,
+    the absolutization will fail.
+    
+    \note parent is intended as a location, even if not terminating with /.
+    */
+   bool relativize( const String& parent );
+   
+   /** Gets the current system work directory (normalized in Falcon path format).
+    \param target Where to store the directory.
+    \return True on success, false on system failure.
+    */
+   static bool currentWorkDirectory( String& target );
+
    /** Sets the location part in RFC3986 format. 
     \param loc the new location.
     \return false If the location is malformed (cannot contain ':').

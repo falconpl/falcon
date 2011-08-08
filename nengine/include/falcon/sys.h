@@ -104,6 +104,8 @@ FALCON_DYN_SYM void _dummy_ctrl_c_handler();
 /** Get the system page size. */
 FALCON_DYN_SYM long _getPageSize();
 
+/** Gets the current working directory. */
+FALCON_DYN_SYM bool _getCWD( String& name );
 
 #ifdef FALCON_SYSTEM_WIN
 }

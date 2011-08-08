@@ -32,12 +32,11 @@ public:
    UserCarrier( const UserCarrier& other );
    
    virtual ~UserCarrier();
+   virtual UserCarrier* clone() const = 0;   
    
    virtual void gcMark( uint32 mark );   
    uint32 gcMark() const { return m_gcMark; }
 
-   virtual UserCarrier* clone();
-   
    Item* dataAt( uint32 pos ) const { return m_data + pos; }
    uint32 itemCount() const { return m_itemCount; }
    

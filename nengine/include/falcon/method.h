@@ -48,6 +48,24 @@ private:
    MethodProp m_prop;
 };
 
+#define FALCON_DECLARE_METHOD(MTH_NAME, SIGNATURE) \
+   class Method_ ## MTH_NAME: public Method \
+   { \
+   public: \
+      Method_ ## MTH_NAME( ClassUser* u ): \
+         Method( u, #MTH_NAME ) \
+      { signature( SIGNATURE ); } \
+      virtual ~Method_ ## MTH_NAME() {} \
+      virtual void invoke( VMContext* ctx, int32 pCount = 0 ); \
+   } m_Method_ ## MTH_NAME;
+
+#define FALCON_INIT_METHOD(MTH_NAME) m_Method_ ## MTH_NAME(this)
+#define FALCON_DEFINE_METHOD(CLASS_NAME, MTH_NAME) void CLASS_NAME :: Method_ ## MTH_NAME::invoke
+#define FALCON_DEFINE_METHOD_P(CLASS_NAME, MTH_NAME) \
+      void CLASS_NAME :: Method_ ## MTH_NAME::invoke( VMContext* ctx, int pCount )
+#define FALCON_DEFINE_METHOD_P1(CLASS_NAME, MTH_NAME) \
+      void CLASS_NAME :: Method_ ## MTH_NAME::invoke( VMContext* ctx, int )
+
 }
 
 #endif	/* _FALCON_METHOD_H_ */

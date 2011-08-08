@@ -363,6 +363,12 @@ long _getPageSize()
 }
 
 
+bool _getCWD( String& name )
+{
+   // stub
+   return false;
+}
+
 }
 }
 

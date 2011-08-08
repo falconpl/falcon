@@ -2272,11 +2272,11 @@ length_t inl_rfind_chr( const String* str, char_t chr, length_t start, length_t 
    const __T* startptr = ptr + start;
    const __T* endptr = ptr + end;
    
-   while( endptr > startptr  )
+   while( endptr < startptr  )
    {
-      --endptr;
-      if ( *endptr == chr ) {
-         return( endptr - ptr );
+      --startptr;
+      if ( *startptr == chr ) {
+         return( startptr - ptr );
       }
    }   
    
@@ -2330,10 +2330,10 @@ length_t String::rfind( const String &element, length_t start, length_t end ) co
    if ( size() == 0 || element.size() == 0 )
       return npos;
 
-   if ( end > this->length() )  // npos is defined to be greater than any size
+   if ( start > this->length() )  // npos is defined to be greater than any size
       end = this->length();
 
-   if ( end < start ) {
+   if ( end > start ) {
       length_t temp = end;
       end = start;
       start = temp;
@@ -2341,15 +2341,15 @@ length_t String::rfind( const String &element, length_t start, length_t end ) co
 
    char_t keyStart = element.getCharAt( 0 );
    length_t elemLen = element.length();
-   if ( elemLen > (end - start) )
+   if ( elemLen > (start - end) )
    {
       // can't possibly be found
       return npos;
    }
 
-   length_t pos = end - elemLen;
+   length_t pos = start - elemLen;
 
-   while( pos >= start  )
+   while( pos >= end )
    {
       if ( this->getCharAt( pos ) == keyStart ) {
          length_t len = 1;
@@ -2401,15 +2401,15 @@ length_t String::find( char_t keyStart, length_t start, length_t end ) const
 length_t String::rfind( char_t keyStart, length_t start, length_t end ) const
 {
    register length_t len = length();
-   if ( start >= len )
+   if ( end >= len )
    {
       return npos;
    }
 
-   if ( end > len ) {
-      end = len;
+   if ( start > len ) {
+      start = len;
    }
-   else if ( end < start ) 
+   else if ( end > start ) 
    {
       length_t temp = end;
       end = start;

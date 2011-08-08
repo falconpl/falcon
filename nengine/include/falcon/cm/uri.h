@@ -50,6 +50,8 @@ public:
    virtual ~URICarrier()
    {      
    }
+   
+   virtual URICarrier* clone() const { return new URICarrier(*this); }
 };
 
 

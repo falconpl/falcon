@@ -28,6 +28,7 @@ extern "C"
 #endif
 
 #include <unistd.h>
+#include <limits.h>
 #include <time.h>
 #include <sys/time.h>
 #include <sys/stat.h>
@@ -259,6 +260,19 @@ long _getPageSize()
    #endif
 }
 
+
+bool _getCWD( String& name )
+{
+   char buf[PATH_MAX+1];
+   char* res = getcwd( buf, PATH_MAX );
+   if( res == 0 )
+   {
+      return false;
+   }
+   
+   name.fromUTF8( buf );
+   return true;
+}
 }
 }
 

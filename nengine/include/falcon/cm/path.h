@@ -49,8 +49,10 @@ public:
    {}
    
    virtual ~PathCarrier()
-   {      
+   {
    }
+   
+   virtual PathCarrier* clone() const { return new PathCarrier(*this); }
 };
 
 
@@ -205,6 +207,11 @@ private:
       virtual const String& getString( void* instance );
    }
    m_propFileWEncoded;
+   
+   FALCON_DECLARE_METHOD( absolutize, "[S]" );
+   FALCON_DECLARE_METHOD( relativize, "S" );
+   FALCON_DECLARE_METHOD( canonicize, "" );
+   FALCON_DECLARE_METHOD( cwd, "" );
 };
 
 }

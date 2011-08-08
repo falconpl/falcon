@@ -67,12 +67,6 @@ void UserCarrier::gcMark( uint32 mark )
       }
    }
 }
-
-
-UserCarrier* UserCarrier::clone()
-{
-   return new UserCarrier( *this );
-}
    
 }
 
