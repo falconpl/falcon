@@ -2221,7 +2221,17 @@ void String::reserve( length_t size )
       if ( m_allocated == 0 )
       {
          m_class = m_class->bufferedManipulator();
-         m_storage = (byte*) malloc( size );
+         if( m_size > 0 )
+         {
+            byte* mem = (byte*) malloc( size );
+            memcpy( mem, m_storage, m_size );
+            m_storage = mem;
+         }
+         else
+         {
+            m_storage = (byte*) malloc( size );
+         }
+         
       }
       else
       {
