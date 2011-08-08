@@ -270,20 +270,22 @@ bool Path::fileext( const String &fname )
 void Path::getWinFormat( String &str ) const
 {
    encode();
-   
-   str.reserve( m_encoded.size() );
-
-   // if we have a resource specifier, we know we have a leading /
-   uint32 startPos = m_encoded.getCharAt(0) == '/' && m_device.size() != 0 ? 1: 0;
-   uint32 endPos = m_encoded.length();
-   while( startPos < endPos )
+   if( m_device.size() != 0 && m_encoded.getCharAt(0) == '/' )
    {
-      uint32 chr = m_encoded.getCharAt( startPos );
-      if( chr != '/' )
-         str.append( chr );
-      else
-         str.append( '\\' );
-      ++startPos;
+      str = m_encoded.subString(1);
+   }
+   else
+   {
+      str = m_encoded;
+   }
+   
+   // if we have a resource specifier, we know we have a leading /
+   uint32 pos = str.find( '/' );
+   
+   while( pos != String::npos )
+   {
+      str.setCharAt( pos, '\\' );
+      pos = str.find( '/', pos + 1 );
    }
 }
 
@@ -324,31 +326,34 @@ bool Path::fulloc( const String &str )
 
 bool Path::getWinLocation( String &str ) const
 {
-   str = location();
-   if( str == "" )
+   str.size(0);
+   str.append(location());
+   if( str.size() == 0 )
    {
       return false;
    }   
 
-   uint32 len = str.length();
-   for( uint32 i = 0; i < len; i ++ )
+   uint32 pos = str.find( '/' );
+   while( pos != String::npos )
    {
-      if ( str.getCharAt( i ) == '/' )
-         str.setCharAt( i, '\\' );
+      str.setCharAt( pos, '\\' );
+      pos = str.find( '/', pos+1 );
    }
-
    return true;
 }
 
 
 bool Path::getFullWinLocation( String &str ) const
 {
+   // it's ok with size as well.  
+   str.size(0);
+   
    if ( m_device != "" )
    {
       String loc;
       if ( getWinLocation( loc ) )
       {
-         str = m_device + ":" + loc;
+         str.append(m_device); str.append( ':' ); str.append(loc);
          return true;
       }
    }

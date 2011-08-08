@@ -80,10 +80,6 @@ typedef enum
 {
    cs_static,
    cs_buffer,
-   cs_static16,
-   cs_buffer16,
-   cs_static32,
-   cs_buffer32
 } t_type;
 
 /** Invalid position for core strings. */
@@ -96,18 +92,13 @@ class FALCON_DYN_CLASS Base
 {
 public:
    virtual ~Base() {}
-   virtual t_type type() const =0;
-   virtual uint16 charSize() const = 0;
-   virtual length_t length( const String *str ) const =0;
-   virtual length_t getCharAt( const String *str, length_t pos ) const =0;
-
+   t_type type() const { return m_type; }
+   uint32 charSize() const { return m_charSize; }   
+   inline length_t length( const String *str ) const;
+   
    virtual void setCharAt( String *str, length_t pos, char_t chr ) const =0;
    virtual void subString( const String *str, int32 start, int32 end, String *target ) const =0;
    /** Finds a substring in a string, and eventually returns npos if not found. */
-   virtual length_t find( const String *str, const String *element, length_t start =0, length_t end = npos) const = 0;
-   virtual length_t rfind( const String *str, const String *element, length_t start =0, length_t end = npos) const = 0;
-   virtual length_t find( const String *str, char_t chr, length_t start =0, length_t end = npos) const = 0;
-   virtual length_t rfind( const String *str, char_t chr, length_t start =0, length_t end = npos) const = 0;
    virtual void insert( String *str, length_t pos, length_t len, const String *source ) const =0;
    virtual bool change( String *str, length_t start, length_t end, const String *source ) const =0;
    virtual void remove( String *str, length_t pos, length_t len ) const =0;
@@ -116,10 +107,13 @@ public:
 
    virtual void bufferize( String *str ) const =0;
    virtual void bufferize( String *str, const String *strOrig ) const =0;
-   virtual void reserve( String *str, length_t size, bool relative = false, bool block = false ) const = 0;
    virtual void shrink( String *str ) const = 0;
 
    virtual const Base *bufferedManipulator() const =0;
+
+protected:
+   t_type m_type;
+   uint32 m_charSize;
 };
 
 /** Byte orientet base class.
@@ -130,22 +124,16 @@ class FALCON_DYN_CLASS Byte: public Base
 {
 public:
    virtual ~ Byte() {}
-   virtual length_t length( const String *str ) const;
-   virtual length_t getCharAt( const String *str, length_t pos ) const;
+   
    // Todo: fix this incongruency
    virtual void subString( const String *str, int32 start, int32 end, String *target ) const;
    virtual bool change( String *str, length_t pos, length_t end, const String *source ) const;
    virtual String *clone( const String *str ) const;
-   virtual length_t find( const String *str, const String *element, length_t start =0, length_t end = 0) const;
-   virtual length_t rfind( const String *str, const String *element, length_t start =0, length_t end = 0) const;
-   virtual length_t find( const String *str, char_t chr, length_t start =0, length_t end = 0) const;
-   virtual length_t rfind( const String *str, char_t chr, length_t start =0, length_t end = 0) const;
    virtual void remove( String *str, length_t pos, length_t len ) const;
 
    virtual void bufferize( String *str ) const;
    virtual void bufferize( String *str, const String *strOrig ) const;
 
-   virtual void reserve( String *str, length_t size, bool relative = false, bool block = false ) const;
    virtual const Base *bufferedManipulator() const { return this; }
 };
 
@@ -160,16 +148,19 @@ public:
 class FALCON_DYN_CLASS Static: public Byte
 {
 public:
+   Static()
+   {
+      m_type = cs_static;
+      m_charSize = 1;
+   }
+   
    virtual ~Static() {}
-   virtual t_type type() const { return cs_static; }
-   virtual uint16 charSize() const { return 1; }
 
    virtual void setCharAt( String *str, length_t pos, char_t chr ) const;
    virtual void insert( String *str, length_t pos, length_t len, const String *source ) const;
    virtual void remove( String *str, length_t pos, length_t len ) const;
    virtual void destroy( String *str ) const;
 
-   virtual void reserve( String *str, length_t size, bool relative = false, bool block = false ) const;
    virtual void shrink( String *str ) const;
    virtual const Base *bufferedManipulator() const;
 };
@@ -186,14 +177,17 @@ public:
 class FALCON_DYN_CLASS Buffer: public Byte
 {
 public:
+   Buffer()
+   {
+      m_type = cs_buffer;
+      m_charSize = 1;
+   }
+   
    virtual ~Buffer() {}
-   virtual t_type type() const { return cs_buffer; }
-   virtual uint16 charSize() const { return 1; }
 
    virtual void setCharAt( String *str, length_t pos, char_t chr ) const;
    virtual void insert( String *str, length_t pos, length_t len, const String *source ) const;
    virtual void destroy( String *str ) const;
-   virtual void reserve( String *str, length_t size, bool relative = false, bool block = false ) const;
    virtual void shrink( String *str ) const;
 
 };
@@ -201,45 +195,53 @@ public:
 class FALCON_DYN_CLASS Static16: public Static
 {
 public:
+   Static16()
+   {
+      m_charSize = 2;
+   }
+   
    virtual ~Static16() {}
-   virtual uint16 charSize() const  { return 2; }
-   virtual length_t length( const String *str ) const;
-   virtual length_t getCharAt( const String *str, length_t pos ) const;
    virtual void setCharAt( String *str, length_t pos, char_t chr ) const;
    virtual void remove( String *str, length_t pos, length_t len ) const;
-   virtual void reserve( String *str, length_t size, bool relative = false, bool block = false ) const;
    virtual const Base *bufferedManipulator() const;
 };
 
 class FALCON_DYN_CLASS Static32: public Static16
 {
 public:
+   Static32()
+   {
+      m_charSize = 4;
+   }
+
    virtual ~Static32() {}
-   virtual uint16 charSize() const { return 4; }
-   virtual length_t length( const String *str ) const;
-   virtual length_t getCharAt( const String *str, length_t pos ) const;
    virtual void setCharAt( String *str, length_t pos, char_t chr ) const;
    virtual void remove( String *str, length_t pos, length_t len ) const;
-   virtual void reserve( String *str, length_t size, bool relative = false, bool block = false ) const;
    virtual const Base *bufferedManipulator() const;
 };
 
 class FALCON_DYN_CLASS Buffer16: public Buffer
 {
 public:
-   virtual uint16 charSize() const { return 2; }
-   virtual length_t length( const String *str ) const;
-   virtual length_t getCharAt( const String *str, length_t pos ) const;
+   Buffer16()
+   {
+      m_charSize = 2;
+   }
+   
+   virtual ~Buffer16() {}
+   
    virtual void setCharAt( String *str, length_t pos, char_t chr ) const;
 };
 
 class FALCON_DYN_CLASS Buffer32: public Buffer16
 {
 public:
+   Buffer32()
+   {
+      m_charSize = 4;
+   }
    virtual ~Buffer32() {}
-   virtual uint16 charSize() const { return 4; }
-   virtual length_t length( const String *str ) const;
-   virtual length_t getCharAt( const String *str, length_t pos ) const;
+   
    virtual void setCharAt( String *str, length_t pos, char_t chr ) const;
 };
 
@@ -652,8 +654,17 @@ public:
    */
    void shrink() { m_class->shrink( this ); }
 
-
-   length_t getCharAt( length_t pos ) const { return m_class->getCharAt( this, pos ); }
+   inline char_t getCharAt( length_t pos ) const
+   {
+      switch( m_class->charSize() )
+      {
+         case 1: return getRawStorage()[pos];
+         case 2: return ((uint16*)getRawStorage())[pos];
+         case 4: return ((uint32*)getRawStorage())[pos];
+      }
+      return 0;
+   }
+   
    void setCharAt( length_t pos, char_t chr ) { m_class->setCharAt( this, pos, chr ); }
    String subString( int32 start, int32 end ) const { return String( *this, start, end ); }
    String subString( int32 start ) const { return String( *this, start, length() ); }
@@ -671,25 +682,10 @@ public:
 
    void prepend( const String &source ) { m_class->insert( this, 0, 0, &source ); }
 
-   length_t find( const String &element, length_t start=0, length_t end=csh::npos) const
-   {
-      return m_class->find( this, &element, start, end );
-   }
-
-   length_t rfind( const String &element, length_t start=0, length_t end=csh::npos) const
-   {
-      return m_class->rfind( this, &element, start, end );
-   }
-
-   length_t find( char_t element, length_t start=0, length_t end=csh::npos) const
-   {
-      return m_class->find( this, element, start, end );
-   }
-
-   length_t rfind( char_t element, length_t start=0, length_t end=csh::npos) const
-   {
-      return m_class->rfind( this, element, start, end );
-   }
+   length_t find( const String &element, length_t start=0, length_t end=csh::npos) const;
+   length_t rfind( const String &element, length_t start=0, length_t end=csh::npos) const;
+   length_t find( char_t element, length_t start=0, length_t end=csh::npos) const;
+   length_t rfind( char_t element, length_t start=0, length_t end=csh::npos) const;
 
    /** Compares a string to another.
       Optimized to match against C strings.
@@ -1111,11 +1107,8 @@ public:
       \note the width is in bytes.
       \param size minimal space that must be allocated as writeable heap buffer (in bytes).
    */
-   void reserve( length_t size )
-   {
-      m_class->reserve( this, size );
-   }
-
+   void reserve( length_t size );
+   
    /** Remove efficiently whitespaces at beginning and end of the string.
       If whitespaces are only at the end of the string, the lenght of the string
       is simply reduced; this means that static strings may stay static after
@@ -1147,9 +1140,7 @@ public:
    void upper();
 
    bool isStatic() const {
-      return manipulator()->type() == csh::cs_static ||
-             manipulator()->type() == csh::cs_static16 ||
-             manipulator()->type() == csh::cs_static32;
+      return manipulator()->type() == csh::cs_static;
    }
 
    /** Bufferize an UTF-8 string.
@@ -1297,6 +1288,12 @@ public:
    bool operator() ( const String *s1, const String *s2 ) const
       { return s1->compare( *s2 ) < 0; }
 };
+
+
+length_t csh::Base::length(const String* str) const
+{
+    return str->size()/m_charSize; 
+}
 
 }
 

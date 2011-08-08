@@ -127,8 +127,14 @@ bool ClassUser::hasProperty( void*, const String& prop ) const
 
 
 void ClassUser::describe( void* instance, String& target, int depth, int maxlen ) const
-{   
-   target += "Class " + name();
+{
+   String temp;
+   
+   target.reserve(128);
+   target.size(0);
+   
+   target.append("Class " );
+   target.append(name());
 
    if( depth == 0 )
    {
@@ -158,9 +164,11 @@ void ClassUser::describe( void* instance, String& target, int depth, int maxlen 
                target += ','; target += ' ';
             }
          
-            String temp;
             value.describe( temp, depth-1, maxlen );
-            target += prop->name() + "=" + temp;
+            target.append( prop->name() );
+            target.append('=');
+            target.append(temp);
+            temp.size(0);
          }         
          ++iter;
       }

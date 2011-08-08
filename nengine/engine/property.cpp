@@ -78,10 +78,7 @@ void PropertyString::get( void* instance, Item& target )
    }
    
    const String& value = getString( instance );
-   if( value != *str )
-   {
-      str->bufferize( value );
-   }
+   str->bufferize(value);
    
    // str is in cache.
    target.copy(*cache);   

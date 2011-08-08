@@ -126,59 +126,6 @@ static Base* adaptBuffer( byte *srcBuffer, uint32 srcPos, uint32 srcCharLen,
    return 0;
 }
 
-length_t Byte::length( const String *str ) const
-{
-   return str->size() / charSize();
-}
-
-
-char_t Byte::getCharAt( const String *str, length_t pos ) const
-{
-   return (char_t) str->getRawStorage()[pos];
-}
-
-length_t Static16::length( const String *str ) const
-{
-   return str->size() >> 1;
-}
-
-length_t Static32::length( const String *str ) const
-{
-   return str->size() >> 2;
-}
-
-length_t Buffer16::length( const String *str ) const
-{
-   return str->size() >> 1;
-}
-
-length_t Buffer32::length( const String *str ) const
-{
-   return str->size() >> 2;
-}
-
-
-char_t Static16::getCharAt( const String *str, length_t pos ) const
-{
-   return (char_t)  reinterpret_cast< uint16 *>(str->getRawStorage())[ pos ];
-}
-
-char_t Buffer16::getCharAt( const String *str, length_t pos ) const
-{
-   return (char_t)  reinterpret_cast< uint16 *>(str->getRawStorage())[ pos ];
-}
-
-char_t Static32::getCharAt( const String *str, length_t pos ) const
-{
-   return reinterpret_cast< char_t *>(str->getRawStorage())[ pos ];
-}
-
-char_t Buffer32::getCharAt( const String *str, length_t pos ) const
-{
-   return reinterpret_cast< char_t *>(str->getRawStorage())[ pos ];
-}
-
-
 
 void Byte::subString( const String *str, int32 start, int32 end, String *tgt ) const
 {
@@ -298,151 +245,6 @@ String *Byte::clone( const String *str ) const
    return new String( *str );
 }
 
-length_t Byte::find( const String *str, const String *element, length_t start, length_t end ) const
-{
-   if ( (str->size() == 0) 
-      || (element->size() == 0) 
-      || (start >= str->length()) )
-   {
-      return npos;
-   }
-   
-   if ( end > str->length() )  // npos is defined to be greater than any size
-      end = str->length();
-
-   if ( end < start ) {
-      register length_t temp = end;
-      end = start;
-      start = temp;
-   }
-
-   length_t pos = start;
-   char_t keyStart = element->getCharAt( 0 );
-   length_t elemLen = element->length();
-
-   while( pos + elemLen <= end )
-   {
-      if ( str->getCharAt( pos ) == keyStart )
-      {
-         length_t len = 1;
-         while( pos + len < end && len < elemLen && element->getCharAt(len) == str->getCharAt( pos + len ) )
-            len++;
-         if ( len == elemLen )
-            return pos;
-      }
-      pos++;
-   }
-
-   // not found.
-   return npos;
-}
-
-
-length_t Byte::rfind( const String *str, const String *element, length_t start, length_t end ) const
-{
-   if ( str->size() == 0 || element->size() == 0 )
-      return npos;
-
-   if ( end > str->length() )  // npos is defined to be greater than any size
-      end = str->length();
-
-   if ( end < start ) {
-      length_t temp = end;
-      end = start;
-      start = temp;
-   }
-
-   char_t keyStart = element->getCharAt( 0 );
-   length_t elemLen = element->length();
-   if ( elemLen > (end - start) )
-   {
-      // can't possibly be found
-      return npos;
-   }
-
-   length_t pos = end - elemLen;
-
-   while( pos >= start  )
-   {
-      if ( str->getCharAt( pos ) == keyStart ) {
-         length_t len = 1;
-         while( pos + len < end && len < elemLen && element->getCharAt(len) == str->getCharAt( pos + len ) )
-            len++;
-         if ( len == elemLen )
-            return pos;
-      }
-      if ( pos == 0 ) break;
-      pos--;
-   }
-
-   // not found.
-   return npos;
-}
-
-
-
-length_t Byte::find( const String *str, char_t keyStart, length_t start, length_t end ) const
-{
-   length_t len =  str->length();
-   if ( start >= len )
-   {
-      return npos;
-   }
-   
-   if ( end > len )  // npos is defined to be greater than any size
-   {
-      end = len;
-   }
-   else if ( end < start ) 
-   {
-      register length_t temp = end;
-      end = start;
-      start = temp;
-   }
-
-   while( start <= end )
-   {
-      if ( str->getCharAt( start ) == keyStart )
-      {
-         return start;
-      }
-      start++;
-   }
-
-   // not found.
-   return npos;
-}
-
-
-length_t Byte::rfind( const String *str, char_t keyStart, length_t start, length_t end ) const
-{
-   length_t len =  str->length();
-   if ( start >= len )
-   {
-      return npos;
-   }
-
-   if ( end > len ) {
-      end = len;
-   }
-   else if ( end < start ) 
-   {
-      length_t temp = end;
-      end = start;
-      start = temp;
-   }
-   
-   while( end > start  )
-   {
-      if ( str->getCharAt( --end ) == keyStart ) {
-         return end;
-      }
-   }
-
-   // not found.
-   return npos;
-}
-
 
 void Byte::remove( String *str, length_t pos, length_t len ) const
 {
@@ -499,61 +301,41 @@ void Byte::bufferize( String *str ) const
 void Byte::bufferize( String *str, const String *strOrig ) const
 {
    // copy the other string contents.
-   if ( str->m_allocated != 0 )
-      free( str->m_storage );
-
    length_t size = strOrig->m_size;
-   if ( size == 0 ) {
+   if ( size == 0 ) 
+   {
       str->m_class = &handler_static;
       str->setRawStorage( 0, 0 );
+      
+      if ( str->m_allocated != 0 )
+      {
+         free( str->m_storage );
+      }
    }
-   else {
-      byte *mem = (byte *) malloc( size );
+   else 
+   {
+      byte *mem;
+      if ( str->m_allocated >= size )
+      {
+         mem = str->m_storage;
+      }
+      else if( str->m_allocated > 0 )
+      {
+         mem = (byte *) realloc( str->m_storage, size );
+         str->m_allocated = size;
+      }
+      else
+      {
+         mem = (byte *) malloc( size );
+         str->m_allocated = size;
+      }
+      
       memcpy( mem, strOrig->getRawStorage(), size );
       str->setRawStorage( mem, size );
       str->m_class = strOrig->m_class->bufferedManipulator();
    }
 
 }
-
-void Byte::reserve( String *str, length_t size, bool relative, bool block ) const
-{
-   if ( relative )
-      size += str->m_allocated;
-
-   register uint16 chs = charSize();
-   if ( block )
-   {
-      if ( size % FALCON_STRING_ALLOCATION_BLOCK != 0 )
-      {
-         size /= (FALCON_STRING_ALLOCATION_BLOCK * chs);
-         size ++;
-         size *= (FALCON_STRING_ALLOCATION_BLOCK * chs);
-      }
-   }
-
-   length_t nextAlloc = size * chs;
-
-   // the required size may be already allocated
-   if ( nextAlloc > str->allocated() )
-   {
-      byte *mem = (byte *) malloc( nextAlloc );
-      length_t size = str->m_size;
-      if ( str->m_size > 0 )
-         memcpy( mem, str->m_storage, str->m_size );
-
-      // we can now destroy the old string.
-      if ( str->allocated() != 0 )
-         free( str->m_storage );
-
-      str->m_storage = mem;
-      str->m_size = size;
-      str->m_allocated = nextAlloc;
-   }
-
-   // let the subclasses set the correct manipulator
-}
-
 
 //============================================================0
 
@@ -562,32 +344,14 @@ void Static::shrink( String * ) const
 // do nothing
 }
 
-void Static::reserve( String *str, length_t size, bool relative, bool block ) const
-{
-   Byte::reserve( str, size, relative, block );
-   str->m_class = &handler_buffer;
-}
-
 const Base *Static::bufferedManipulator() const
 {
    return  &handler_buffer;
 }
 
-void Static16::reserve( String *str, length_t size, bool relative, bool block ) const
-{
-   Byte::reserve( str, size, relative, block );
-   str->m_class = &handler_buffer16;
-}
-
 const Base *Static16::bufferedManipulator() const
 {
    return  &handler_buffer16;
-}
-
-void Static32::reserve( String *str, length_t size, bool relative, bool block ) const
-{
-   Byte::reserve( str, size, relative, block );
-   str->m_class = &handler_buffer32;
 }
 
 const Base *Static32::bufferedManipulator() const
@@ -945,11 +709,6 @@ void Buffer::shrink( String *str ) const
    }
 }
 
-void Buffer::reserve( String *str, length_t size, bool relative, bool block ) const
-{
-   Byte::reserve( str, size, relative, block );
-   // manipulator is ok
-}
 
 
 void Buffer::destroy( String *str ) const
@@ -1122,29 +881,99 @@ String &String::adopt( wchar_t *buffer, length_t size, length_t allocated )
    return *this;
 }
 
+
+template<class __T1, class __T2>
+int inl_comparer( const byte* b1, const byte* b2, length_t len1, length_t len2 )
+{
+   length_t len = len1 > len2 ? len2 : len1;
+   
+   const __T1* ptr1 = (const __T1*) b1;
+   const __T2* ptr2 = (const __T2*) b2;
+      
+   const __T1* end = ptr1 + len;
+   while( ptr1 < end )
+   {
+      if( *ptr1 < *ptr2 )
+      {
+         return -1;
+      }
+      else if( *ptr1 > *ptr2 )
+      {
+         return 1;
+      }
+      ++ptr1;
+      ++ptr2;
+   }
+   
+   // the strings are the same?
+   if ( len1 < len2 )
+      return -1;
+   // return greater also if other is ended; we are NOT ended...
+   else if ( len1 > len2 )
+      return 1;
+
+   // yes
+   return 0;
+}
+
+
+template<class __T1, class __T2>
+int inl_comparez( const byte* b1, const byte* b2, length_t len )
+{
+   const __T1* ptr1 = (const __T1*) b1;
+   const __T2* ptr2 = (const __T2*) b2;
+      
+   const __T1* end = ptr1 + len;
+   while( ptr1 < end && *ptr2 )
+   {
+      if( *ptr1 < (unsigned) *ptr2  )
+      {
+         return -1;
+      }
+      else if( *ptr1 > (unsigned) *ptr2 )
+      {
+         return 1;
+      }
+      ++ptr1;
+      ++ptr2;
+   }
+   
+   // Hit the end of the search?
+   if ( ptr1 == end )
+   {
+      // Same for ptr2?
+      if( *ptr2 == 0)
+      {
+         //Strings are the same.
+         return 0;
+      }
+      // ptr2 has still things; we're smaller.
+      return -1;
+   }
+   // exited because *ptr2 == 0!
+   return 1;
+}
+
+
 int String::compare( const char *other ) const
 {
-   length_t pos = 0;
-   length_t len = length();
-
-   while( pos < len )
+   switch( manipulator()->charSize())
    {
-      char_t c1 = getCharAt( pos );
-      if ( c1 < (char_t) *other )
-         return -1;
-      // return greater also if other is ended; we are NOT ended...
-      else if ( c1 > (char_t) *other || (char_t) *other == 0 )
-         return 1;
+      case 0x01:
+         return inl_comparez<byte, byte>( 
+               getRawStorage(), (const byte*)other, size() );         
 
-      other ++;
-      pos++;
+      case 0x02:
+         return inl_comparez<uint16, byte>( 
+               getRawStorage(), (const byte*)other, 
+               size() >> 1);         
+      
+      case 0x04:
+         return inl_comparez<uint32, byte>( 
+               getRawStorage(), (const byte*)other, 
+               size() >> 2 );
    }
-
-   if ( *other != 0 )
-      // other is greater
-      return -1;
-
-   // the strings are the same
+   
    return 0;
 }
 
@@ -1183,27 +1012,23 @@ int String::compareIgnoreCase( const char *other ) const
 
 int String::compare( const wchar_t *other ) const
 {
-   length_t pos = 0;
-   length_t len = length();
-
-   while( pos < len )
+   switch( manipulator()->charSize())
    {
-      char_t c1 = getCharAt( pos );
-      if ( c1 < (char_t) *other )
-         return -1;
-      // return greater also if other is ended; we are NOT ended...
-      else if ( c1 > (char_t) *other || (char_t) *other == 0 )
-         return 1;
+      case 0x01:
+         return inl_comparez<byte, wchar_t>( 
+               getRawStorage(), (const byte*) other, size() );         
 
-      other ++;
-      pos++;
+      case 0x02:
+         return inl_comparez<uint16, wchar_t>( 
+               getRawStorage(), (const byte*)other, 
+               size() >> 1);         
+      
+      case 0x04:
+         return inl_comparez<uint32, wchar_t>( 
+               getRawStorage(), (const byte*) other, 
+               size() >> 2 );
    }
-
-   if ( *other != 0 )
-      // other is greater
-      return -1;
-
-   // the strings are the same
+   
    return 0;
 }
 
@@ -1240,34 +1065,72 @@ int String::compareIgnoreCase( const wchar_t *other ) const
    return 0;
 }
 
+
 int String::compare( const String &other ) const
 {
-   length_t len1 = length();
-   length_t len2 = other.length();
-   length_t len = len1 > len2 ? len2 : len1;
-
-   length_t pos = 0;
-   while( pos < len )
+   switch( manipulator()->charSize() << 8 | other.manipulator()->charSize() )
    {
-      char_t c1 = getCharAt( pos );
-      char_t c2 = other.getCharAt( pos );
+      case 0x0101:
+      {
+         int cmp = memcmp( getRawStorage(), other.getRawStorage(), 
+                               size() < other.size() ? size() : other.size() );
+         if( cmp != 0 )
+         {
+            return cmp;
+         }
+         if( size() < other.size() )
+         {
+            return -1;
+         }
+         else if( size() > other.size() )
+         {
+            return 1;
+         }
+         return 0;
+      }
+      break;
 
-      if ( c1 < c2 )
-         return -1;
-      // return greater also if other is ended; we are NOT ended...
-      else if ( c1 > c2 )
-         return 1;
-
-      pos++;
+      case 0x0201:
+         return inl_comparer< uint16, byte>( 
+               getRawStorage(), other.getRawStorage(), 
+            size() >> 1, other.size() );         
+      
+      case 0x0401:
+         return inl_comparer< uint32, byte>( 
+               getRawStorage(), other.getRawStorage(), 
+            size() >> 2, other.size() );
+         
+      case 0x0102:
+         return inl_comparer< byte, uint16>( 
+               getRawStorage(), other.getRawStorage(), 
+            size(), other.size() >> 1 );
+         
+      case 0x0104:
+         return inl_comparer< byte, uint32>( 
+               getRawStorage(), other.getRawStorage(), 
+            size(), other.size() >> 2 );         
+      
+      case 0x0204:
+         return inl_comparer< uint16, uint32>( 
+               getRawStorage(), other.getRawStorage(), 
+            size() >> 1, other.size() >> 2 );         
+      
+      case 0x0202:
+         return inl_comparer< uint16, uint16>( 
+               getRawStorage(), other.getRawStorage(), 
+            size() >> 1, other.size() >> 1 );         
+         
+      case 0x0402:
+         return inl_comparer< uint32, uint16>( 
+               getRawStorage(), other.getRawStorage(), 
+            size() >> 2, other.size() >> 1 );         
+         
+      case 0x0404:
+         return inl_comparer< uint32, uint32>( 
+               getRawStorage(), other.getRawStorage(), 
+            size() >> 2, other.size() >> 2 );         
    }
-
-   // the strings are the same?
-   if ( len1 < len2 )
-      return -1;
-   // return greater also if other is ended; we are NOT ended...
-   else if ( len1 > len2 )
-      return 1;
-
+   
    // yes
    return 0;
 }
@@ -1408,7 +1271,7 @@ void String::append( char_t chr )
 {
    if ( size() >= allocated() )
    {
-      m_class->reserve( this, size() + FALCON_STRING_ALLOCATION_BLOCK, false, true ); // allocates a whole block next
+      reserve( size() + FALCON_STRING_ALLOCATION_BLOCK ); // allocates a whole block next
    }
 
    // reserve forces to buffer, so we have only to extend
@@ -1424,7 +1287,7 @@ void String::prepend( char_t chr )
 {
    if ( size() >= allocated() )
    {
-      m_class->reserve( this, size() + FALCON_STRING_ALLOCATION_BLOCK, false, true ); // allocates a whole block next
+      reserve( size() + FALCON_STRING_ALLOCATION_BLOCK ); // allocates a whole block next
    }
 
    // reserve forces to buffer, so we have only to extend
@@ -1451,7 +1314,7 @@ void String::internal_escape( String &strout, bool full ) const
 {
    length_t len = length();
    length_t pos = 0;
-   strout.m_class->reserve( &strout, len ); // prepare for at least len chars
+   strout.reserve( len ); // prepare for at least len chars
    strout.size( 0 ); // clear target string
 
    while( pos < len )
@@ -2189,6 +2052,7 @@ bool String::endsWith( const String &str, bool icase ) const
    return true;
 }
 
+
 bool String::wildcardMatch( const String& wildcard, bool bIcase ) const
 {
    const String* wcard = &wildcard;
@@ -2345,6 +2209,212 @@ void String::unescapeQuotes()
          ++i;
       }
    }
+}
+
+
+void String::reserve( length_t size )
+{
+   size *= m_class->charSize();
+   
+   if( m_allocated < size )
+   {
+      if ( m_allocated == 0 )
+      {
+         m_class = m_class->bufferedManipulator();
+         m_storage = (byte*) malloc( size );
+      }
+      else
+      {
+         m_storage = (byte*) realloc( m_storage, size );
+      }
+      
+      m_allocated = size;   
+   }
+}
+
+
+template<class __T>
+length_t inl_find_chr( const String* str, char_t chr, length_t start, length_t end )
+{
+   const __T* ptr = (const __T*) str->getRawStorage();
+   
+   const __T* startptr = ptr + start;
+   const __T* endptr = ptr + end;
+   
+   while( startptr < endptr )
+   {
+      if ( *startptr == chr )
+      {
+         return (startptr-ptr);
+      }
+      startptr++;
+   }
+   
+   return String::npos;
+}
+
+
+template<class __T>
+length_t inl_rfind_chr( const String* str, char_t chr, length_t start, length_t end )
+{
+   const __T* ptr = (const __T*) str->getRawStorage();
+   
+   const __T* startptr = ptr + start;
+   const __T* endptr = ptr + end;
+   
+   while( endptr > startptr  )
+   {
+      --endptr;
+      if ( *endptr == chr ) {
+         return( endptr - ptr );
+      }
+   }   
+   
+   return String::npos;
+}
+
+
+
+length_t String::find( const String &element, length_t start, length_t end ) const
+{
+   if ( (size() == 0) 
+      || (element.size() == 0) 
+      || (start >= length()) )
+   {
+      return npos;
+   }
+   
+   if ( end > length() )  // npos is defined to be greater than any size
+      end = length();
+
+   if ( end < start ) {
+      register length_t temp = end;
+      end = start;
+      start = temp;
+   }
+
+   length_t pos = start;
+   char_t keyStart = element.getCharAt( 0 );
+   length_t elemLen = element.length();
+
+   while( pos + elemLen <= end )
+   {
+      if ( getCharAt( pos ) == keyStart )
+      {
+         length_t len = 1;
+         while( pos + len < end && len < elemLen && element.getCharAt(len) == getCharAt( pos + len ) )
+            len++;
+         if ( len == elemLen )
+            return pos;
+      }
+      pos++;
+   }
+
+   // not found.
+   return npos;
+}
+
+
+length_t String::rfind( const String &element, length_t start, length_t end ) const
+{
+   if ( size() == 0 || element.size() == 0 )
+      return npos;
+
+   if ( end > this->length() )  // npos is defined to be greater than any size
+      end = this->length();
+
+   if ( end < start ) {
+      length_t temp = end;
+      end = start;
+      start = temp;
+   }
+
+   char_t keyStart = element.getCharAt( 0 );
+   length_t elemLen = element.length();
+   if ( elemLen > (end - start) )
+   {
+      // can't possibly be found
+      return npos;
+   }
+
+   length_t pos = end - elemLen;
+
+   while( pos >= start  )
+   {
+      if ( this->getCharAt( pos ) == keyStart ) {
+         length_t len = 1;
+         while( pos + len < end && len < elemLen && element.getCharAt(len) == this->getCharAt( pos + len ) )
+            len++;
+         if ( len == elemLen )
+            return pos;
+      }
+      if ( pos == 0 ) break;
+      pos--;
+   }
+
+   // not found.
+   return npos;
+}
+
+
+length_t String::find( char_t keyStart, length_t start, length_t end ) const
+{
+   register length_t len =  length();
+   if ( start >= len )
+   {
+      return npos;
+   }
+   
+   if ( end > len )  // npos is defined to be greater than any size
+   {
+      end = len;
+   }
+   else if ( end < start ) 
+   {
+      register length_t temp = end;
+      end = start;
+      start = temp;
+   }
+
+   switch( m_class->charSize() )
+   {
+      case 1: return inl_find_chr<byte>( this, keyStart, start, end );
+      case 2: return inl_find_chr<uint16>( this, keyStart, start, end );
+      case 4: return inl_find_chr<uint32>( this, keyStart, start, end );
+   }
+   
+   // not found.
+   return npos;
+}
+
+
+length_t String::rfind( char_t keyStart, length_t start, length_t end ) const
+{
+   register length_t len = length();
+   if ( start >= len )
+   {
+      return npos;
+   }
+
+   if ( end > len ) {
+      end = len;
+   }
+   else if ( end < start ) 
+   {
+      length_t temp = end;
+      end = start;
+      start = temp;
+   }
+      
+   switch( m_class->charSize() )
+   {
+      case 1: return inl_rfind_chr<byte>( this, keyStart, start, end );
+      case 2: return inl_rfind_chr<uint16>( this, keyStart, start, end );
+      case 4: return inl_rfind_chr<uint32>( this, keyStart, start, end );
+   }
+
+   // not found.
+   return npos;
 }
 
 
