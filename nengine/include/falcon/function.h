@@ -71,6 +71,40 @@ public:
     Used by the module destructor do prevent de-referencing during destruction.
    */
    void detachModule() {m_module = 0;}
+   
+   /** Parses the description of the function.
+    \param dsec Descriptive list of parameters and signature.
+    
+    This method parses the description of a Falcon function, adding the parameter
+    names and the signature that are needed for dynamic parameter binding,
+    documentation, automated checks and error reporting.
+    
+    For instance, this code:
+    \code
+    Function f( "afunc" );
+    f.addParam( "param0" );
+    f.addParam( "param1" );
+    f.signature( "S,[N]" );
+    \endcode
+    
+    and this:
+    \code
+    Function f( "afunc" );
+    parseDescription( "param0:S,param1:[N]" );
+    \endcode
+    
+    are equivalent.
+    
+    The description may start with "&" and/or "*" characters. "&" means that
+    the function is eta, while "*" means that the function is non-deterministic
+    (by default, functions are deterministic).
+    
+    \return false on malformed parameter string, 
+    */
+   bool parseDescription( const String& desc );
+   
+   
+   //void getParams( int pCount,  ... );
 
    void methodOf( Class* cls ) { m_methodOf = cls; }
    Class* methodOf() const { return m_methodOf; }
