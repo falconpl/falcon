@@ -614,7 +614,6 @@ Parsing::TokenInstance* SourceLexer::nextToken()
             if( String::isWhiteSpace( chr ) ||
                isParenthesis(chr) || chr == '\'' || chr == '"' 
                || chr == '$' || chr == '#'
-               || chr == '*' || chr == '+' || chr == '-' || chr == '/'
                || !isTokenLimit( chr ) )
             {
                // special case -- dot/square
