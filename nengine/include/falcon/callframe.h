@@ -40,16 +40,16 @@ public:
    Function* m_function;
 
    /** Number of parameters used for the effective call. */
-   int32 m_paramCount;
+   uint32 m_paramCount;
 
    /** Stack base for this frame; item at this point is parameter 0 */
-   int32 m_stackBase;
+   uint32 m_stackBase;
 
    /** Stack base for this frame when the function is invoked.
     Rules can temporarily change the stack base. This stackbase is granted
     to be the initial stack base of the function.
     */
-   int32 m_initBase;
+   uint32 m_initBase;
 
    /** Codebase for this frame.
     *
@@ -60,7 +60,7 @@ public:
     * only in case of explicit return so that it is not necessary to
     * scan the code stack to unroll the function call.
     */
-   int32 m_codeBase;
+   uint32 m_codeBase;
 
    /** Image of "self" in this frame. */
    Item m_self;

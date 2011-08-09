@@ -112,8 +112,54 @@ void StmtWhile::apply_( const PStep* s1, VMContext* ctx )
 //====================================================================
 //
 
+struct StmtIf::Private
+{
+    class ElifBranch;
+    typedef std::vector< ElifBranch* > ElifVector;
+
+    ElifVector m_elifs;
+};
+
+class StmtIf::Private::ElifBranch
+{
+public:
+   Expression* m_check;
+   PCode m_pcCheck;
+   SynTree* m_ifTrue;
+   SourceRef m_sr;
+
+   ElifBranch( Expression *check, SynTree* ifTrue, int32 line=0, int32 chr = 0 ):
+      m_check( check ),
+      m_ifTrue( ifTrue ),
+      m_sr( line, chr )
+   {
+      compile();
+   }
+
+   ElifBranch( const ElifBranch& other ):
+      m_check( other.m_check ),
+      m_ifTrue( other.m_ifTrue ),
+      m_sr(other.m_sr)
+   {
+      compile();
+   }
+
+   ~ElifBranch()
+   {
+      delete m_check;
+      delete m_ifTrue;
+   }
+
+   void compile()
+   {
+      m_check->precompile( &m_pcCheck );
+   }
+};
+
+
 StmtIf::StmtIf( Expression* check, SynTree* ifTrue, SynTree* ifFalse, int32 line, int32 chr ):
-   Statement( if_t, line, chr )
+   Statement( if_t, line, chr ),
+   _p( new Private )
 {
    apply = apply_;
 
@@ -121,19 +167,27 @@ StmtIf::StmtIf( Expression* check, SynTree* ifTrue, SynTree* ifFalse, int32 line
    addElif( check, ifTrue );
    // push ourselves and the expression in the steps
    m_step0 = this;
-   m_step1 = &m_elifs[0]->m_pcCheck;
+   m_step1 = &( _p->m_elifs[0]->m_pcCheck );
 }
 
 StmtIf::~StmtIf()
 {
-   delete m_ifFalse;
-   for( unsigned i = 0; i < m_elifs.size(); ++i )
-      delete m_elifs[i];
+   // if we have an else branch, delete it
+   if( m_ifFalse )
+   {
+      delete m_ifFalse;
+   }
+   // then delete our elif branches (if any)
+   for( unsigned i = 0; i < _p->m_elifs.size(); ++i )
+   {
+      delete _p->m_elifs[i];
+   }
+   delete _p;
 }
 
 StmtIf& StmtIf::addElif( Expression *check, SynTree* ifTrue, int32 line, int32 chr  )
 {
-   m_elifs.push_back( new ElifBranch(check, ifTrue, line, chr ) );
+   _p->m_elifs.push_back( new Private::ElifBranch(check, ifTrue, line, chr ) );
    return *this;
 }
 
@@ -147,18 +201,18 @@ StmtIf& StmtIf::setElse( SynTree* ifFalse )
 
 void StmtIf::oneLinerTo( String& tgt ) const
 {
-   tgt = "if "+ m_elifs[0]->m_check->describe();
+   tgt = "if "+ _p->m_elifs[0]->m_check->describe();
 }
 
 void StmtIf::describeTo( String& tgt ) const
 {
-   tgt += "if "+ m_elifs[0]->m_check->describe() + "\n"
-              + m_elifs[0]->m_ifTrue->describe();
+   tgt += "if "+ _p->m_elifs[0]->m_check->describe() + "\n"
+              + _p->m_elifs[0]->m_ifTrue->describe();
 
-   for ( size_t i = 1; i < m_elifs.size(); ++i )
+   for ( size_t i = 1; i < _p->m_elifs.size(); ++i )
    {      
-      tgt += "elif " + m_elifs[i]->m_check->describe() + "\n"
-                     + m_elifs[i]->m_ifTrue->describe();
+      tgt += "elif " + _p->m_elifs[i]->m_check->describe() + "\n"
+                     + _p->m_elifs[i]->m_ifTrue->describe();
    }
 
    if( m_ifFalse != 0  ) {
@@ -182,18 +236,18 @@ void StmtIf::apply_( const PStep* s1, VMContext* ctx )
 
       TRACE1( "--Entering elif %d", sid );
       // we're gone -- but we may use our frame.
-      ctx->resetCode( self->m_elifs[sid]->m_ifTrue );
+      ctx->resetCode( self->_p->m_elifs[sid]->m_ifTrue );
    }
    else
    {
       ctx->popData(); // anyhow, we have consumed the data
 
       // try next else-if
-      if( ++sid < (int) self->m_elifs.size() )
+      if( ++sid < (int) self->_p->m_elifs.size() )
       {
          TRACE2( "--Trying branch %d", sid );
          ctx->currentCode().m_seqId = sid;
-         ctx->pushCode( &self->m_elifs[sid]->m_pcCheck );
+         ctx->pushCode( &self->_p->m_elifs[sid]->m_pcCheck );
       }
       else
       {
@@ -211,18 +265,6 @@ void StmtIf::apply_( const PStep* s1, VMContext* ctx )
          }
       }
    }
-}
-
-
-StmtIf::ElifBranch::~ElifBranch()
-{
-   delete m_check;
-   delete m_ifTrue;
-}
-
-void StmtIf::ElifBranch::compile()
-{
-   m_check->precompile( &m_pcCheck );
 }
 
 //============================================================

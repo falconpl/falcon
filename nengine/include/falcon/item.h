@@ -406,7 +406,7 @@ public:
    /** Returns true if this item has the copy-marker.
     \return true if copied.
     */
-   bool copied() const { return content.base.bits.copied; }
+   bool copied() const { return content.base.bits.copied != 0; }
 
    /** Sets the copy mode.
       \note the method is marked "const" because it operates on
@@ -539,7 +539,7 @@ public:
    {
       fassert2(type() == FLC_ITEM_USER, 
             "Item::deuser() must be called only on FLC_ITEM_USER items.");
-      int id = asClass()->typeID();
+      int id = (int)asClass()->typeID();
       if( id < FLC_ITEM_COUNT )
       {
          *this = *static_cast<Item*>(asInst());

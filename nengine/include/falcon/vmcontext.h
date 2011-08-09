@@ -72,19 +72,31 @@ public:
    }
 
    /** Return the nth parameter in the local context.
+   \param n The parameter number, starting from 0.
+   \return A pointer to the nth parameter in the stack, or 0 if out of range.
     */
-   inline const Item* param( int n ) const {
+   inline const Item* param( uint32 n ) const {
       fassert(m_dataStack+(n + m_topCall->m_stackBase) < m_maxData );
       if( m_topCall->m_paramCount <= n ) return 0;
       return &m_dataStack[ n + m_topCall->m_stackBase ];
    }
 
-   inline Item* param( int n )  {
+   /** Return the nth parameter in the local context (non-const).
+   \param n The parameter number, starting from 0.
+   \return A pointer to the nth parameter in the stack, or 0 if out of range.
+    */
+   inline Item* param( uint32 n )  {
       fassert(m_dataStack+(n + m_topCall->m_stackBase) < m_maxData );
       if( m_topCall->m_paramCount <= n ) return 0;
       return &m_dataStack[ n + m_topCall->m_stackBase ];
    }
 
+  /** Returns the parameter array in the current frame.
+    \return An array of items pointing to the top of the local frame data stack.
+
+    This method returns the values in the current topmost data frame.
+    This usually points to the first parameter of the currently executed function.
+    */
    inline Item* params() {
       return &m_dataStack[ m_topCall->m_stackBase ];
    }
@@ -559,14 +571,6 @@ public:
          pushData( result );
       }
    }
-
-      /** Returns the parameter array in the current frame.
-    \return An array of items pointing to the top of the local frame data stack.
-
-    This method returns the values in the current topmost data frame.
-    This usually points to the first parameter of the currently executed function.
-    */
-   inline Item* params() const { return params(); }
 
    /** Returns pseudo-parameters.
     \param count Number of pseudo parameters.

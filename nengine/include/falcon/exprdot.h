@@ -54,10 +54,11 @@ public:
    virtual void describeTo( String& ) const;
    
 protected:
-   class PstepLValue: public PStep
+   class FALCON_DYN_CLASS PstepLValue: public PStep
    {
    public:
       PstepLValue( ExprDot* owner ): m_owner(owner) { apply = apply_; }
+      virtual ~PstepLValue() {}
       static void apply_( const PStep*, VMContext* ctx );
    private:
       ExprDot* m_owner;

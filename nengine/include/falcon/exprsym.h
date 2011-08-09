@@ -67,7 +67,7 @@ public:
 
 protected:
    
-   class PStepLValue: public PStep
+   class FALCON_DYN_CLASS PStepLValue: public PStep
    {
    public:
       ExprSymbol* m_owner;
@@ -77,7 +77,7 @@ protected:
       
    };   
    
-   class PStepSave: public PStep
+   class FALCON_DYN_CLASS PStepSave: public PStep
    {
    public:
       PStepSave(){ apply = apply_; }
@@ -85,7 +85,7 @@ protected:
       static void apply_( const PStep* ps, VMContext* ctx );
    };  
    
-   class PStepRemove: public PStep
+   class FALCON_DYN_CLASS PStepRemove: public PStep
    {
    public:
       PStepRemove() { apply = apply_; }
