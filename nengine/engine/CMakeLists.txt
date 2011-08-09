@@ -171,6 +171,7 @@ add_library(falcon_engine SHARED
   metaclass.cpp
   method.cpp
   modcompiler.cpp
+  modmap.cpp
   modloader.cpp
   modspace.cpp
   module.cpp
@@ -199,6 +200,7 @@ add_library(falcon_engine SHARED
   stream.cpp
   sun_strtod.cpp
   symbol.cpp
+  symbolmap.cpp
   symboltable.cpp
   synfunc.cpp
   syntaxerror.cpp
