@@ -877,7 +877,7 @@ void FalconClass::PStepInit::apply_( const PStep* ps, VMContext* ctx )
    // supposedly, if we're here, we have been invited -- m_init != 0.
    CallFrame& frame = ctx->currentFrame();
 
-   for( int i = 0; i < frame.m_paramCount; ++i )
+   for( uint32 i = 0; i < frame.m_paramCount; ++i )
    {
       ctx->pushData( *ctx->param(i) );
    }
