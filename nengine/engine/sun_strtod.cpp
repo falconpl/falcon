@@ -26,7 +26,7 @@ namespace Falcon {
 # ifdef __GNUC__
 #  define const __const__
 # else
-#  define const
+#  define const const
 # endif
 #endif
 
@@ -54,7 +54,7 @@ static double powersOf10[] = {	/* Table giving binary powers of 10.  Entry */
     1.0e128,
     1.0e256
 };
-
+
 /*
  *----------------------------------------------------------------------
  *

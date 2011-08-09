@@ -150,7 +150,7 @@ void MinOrMax::InvokeStep::apply_( const PStep* ps, VMContext* ctx )
    Class* cls;
    void* udata;
    MinOrMax::InvokeStep* self = (MinOrMax::InvokeStep*) ps;
-   int comp;
+   int64 comp;
    Item* op1, *op2;
    ctx->operands(op1,op2);
 
@@ -203,7 +203,7 @@ void MinOrMax::InvokeStep::CompareStep::apply_( const PStep* ps, VMContext* ctx 
    MinOrMax::InvokeStep* self = (MinOrMax::InvokeStep*) ps;
 
    // get the result left by the operand.
-   int comp = ctx->topData().forceInteger();
+   int64 comp = ctx->topData().forceInteger();
    ctx->popData();
    if( self->m_bIsMax ) comp = -comp;
 

@@ -34,7 +34,7 @@ public:
 private:
    
    /** Step used to SET a value in the array.*/
-   class PstepLValue: public PStep
+   class FALCON_DYN_CLASS PstepLValue: public PStep
    {
    public:
       PstepLValue() { apply = apply_; }

@@ -137,70 +137,77 @@ private:
    int m_nParents;
    Function* m_constructor;   
 
-   class FinishCreateStep: public PStep
+   class FALCON_DYN_CLASS FinishCreateStep: public PStep
    {
    public:
       FinishCreateStep( HyperClass* o ): m_owner(o) { apply = apply_; }
+      virtual ~FinishCreateStep() {};
       static void apply_(const PStep* ps, VMContext* ctx );
 
    private:
       HyperClass* m_owner;
    };
 
-   class CreateMasterStep: public PStep
+   class FALCON_DYN_CLASS CreateMasterStep: public PStep
    {
    public:
       CreateMasterStep( HyperClass* o ): m_owner(o) { apply = apply_; }
+      virtual ~CreateMasterStep() {};
       static void apply_(const PStep* ps, VMContext* ctx );
 
    private:
       HyperClass* m_owner;
    };
 
-   class ParentCreatedStep: public PStep
+   class FALCON_DYN_CLASS ParentCreatedStep: public PStep
    {
    public:
       ParentCreatedStep( HyperClass* o ): m_owner(o) { apply = apply_; }
+      virtual ~ParentCreatedStep() {};
       static void apply_(const PStep* ps, VMContext* ctx );
 
    private:
       HyperClass* m_owner;
    };
 
-   class CreateParentStep: public PStep
+   class FALCON_DYN_CLASS CreateParentStep: public PStep
    {
    public:
       CreateParentStep( HyperClass* o ): m_owner(o) { apply = apply_; }
+      virtual ~CreateParentStep() {};
       static void apply_(const PStep* ps, VMContext* ctx );
 
    private:
       HyperClass* m_owner;
    };
 
-   class FinishInvokeStep: public PStep
+   class FALCON_DYN_CLASS FinishInvokeStep: public PStep
    {
    public:
       FinishInvokeStep( HyperClass* o ): m_owner(o) { apply = apply_; }
+      virtual ~FinishInvokeStep() {};
       static void apply_(const PStep* ps, VMContext* ctx );
 
    private:
       HyperClass* m_owner;
    };
 
-   class InvokeMasterStep: public PStep
+   class FALCON_DYN_CLASS InvokeMasterStep: public PStep
    {
    public:
       InvokeMasterStep( HyperClass* o ): m_owner(o) { apply = apply_; }
+      virtual ~InvokeMasterStep() {};
       static void apply_(const PStep* ps, VMContext* ctx );
 
    private:
       HyperClass* m_owner;
    };
 
-   class CreateEmptyNext: public PStep
+   class FALCON_DYN_CLASS CreateEmptyNext: public PStep
    {
    public:
       CreateEmptyNext( HyperClass* o ): m_owner(o) { apply = apply_; }
+      virtual ~CreateEmptyNext() {};
       static void apply_(const PStep* ps, VMContext* ctx );
 
    private:

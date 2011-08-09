@@ -601,7 +601,7 @@ void ExprStarIndex::apply_( const PStep* DEBUG_ONLY(ps), VMContext* ctx )
 
    if ( str.isString() && index.isOrdinal() )
    {
-      index.setInteger( str.asString()->getCharAt(index.forceInteger()) );
+      index.setInteger( str.asString()->getCharAt((length_t)index.forceInteger()) );
    }
    else
    {

@@ -173,10 +173,10 @@ bool generic_simplify( Item& value, Expression* m_first, Expression* m_second )
          value.setInteger( __CPR::operate( d1.asInteger(), d2.asInteger() ) );
          return true;
       case FLC_ITEM_INT << 8 | FLC_ITEM_NUM:
-         value.setNumeric( __CPR::operaten( d1.asInteger(), d2.asNumeric() ) );
+         value.setNumeric( __CPR::operaten( (numeric) d1.asInteger(), d2.asNumeric() ) );
          return true;
       case FLC_ITEM_NUM << 8 | FLC_ITEM_INT:
-         value.setNumeric( __CPR::operaten( d1.asNumeric(), d2.asInteger() ) ) ;
+         value.setNumeric( __CPR::operaten( d1.asNumeric(),(numeric) d2.asInteger() ) ) ;
          return true;
       case FLC_ITEM_NUM << 8 | FLC_ITEM_NUM:
          value.setNumeric( __CPR::operaten( d1.asNumeric(), d2.asNumeric() ) );

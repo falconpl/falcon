@@ -33,18 +33,20 @@ private:
    bool m_bIsMax;
 
    // Step for invocation
-   class InvokeStep: public PStep
+   class FALCON_DYN_CLASS InvokeStep: public PStep
    {
    public:
       InvokeStep( bool isMax );
+      virtual ~InvokeStep() {}
       static void apply_( const PStep* ps, VMContext* vm );
 
       bool m_bIsMax;
       // Step if the first item has a compare overload
-      class CompareStep: public PStep
+      class FALCON_DYN_CLASS CompareStep: public PStep
       {
       public:
          CompareStep( bool isMax );
+         virtual ~CompareStep() {}
          static void apply_( const PStep* ps, VMContext* vm );
 
          bool m_bIsMax;
@@ -54,12 +56,12 @@ private:
    };
 
 
-
    // Step if the first item has a compare overload
-   class CompareNextStep: public PStep
+   class FALCON_DYN_CLASS CompareNextStep: public PStep
    {
    public:
       CompareNextStep( bool isMax );
+      virtual ~CompareNextStep() {}
       static void apply_( const PStep* ps, VMContext* vm );
 
       bool m_bIsMax;

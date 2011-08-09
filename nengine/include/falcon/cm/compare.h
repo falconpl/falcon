@@ -76,17 +76,19 @@ public:
    virtual void invoke( VMContext* ctx, int32 nParams );
 
 private:
-   class NextStep: public PStep
+   class FALCON_DYN_CLASS NextStep: public PStep
    {
    public:
       NextStep() { apply = apply_; }
+      virtual ~NextStep() {}
       static void apply_( const PStep* ps, VMContext* ctx );
    };
 
-   class Invoke: public PStep
+   class FALCON_DYN_CLASS Invoke: public PStep
    {
    public:
       Invoke() { apply = apply_; }
+      virtual ~Invoke() {}
       static void apply_( const PStep* ps, VMContext* ctx );
 
    };

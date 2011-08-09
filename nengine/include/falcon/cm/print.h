@@ -62,10 +62,11 @@ public:
    virtual void invoke( VMContext* ctx, int32 nParams );
 
 private:
-   class NextStep: public PStep
+   class FALCON_DYN_CLASS NextStep: public PStep
    {
    public:
       NextStep();
+      virtual ~NextStep() {}
       static void apply_( const PStep* ps, VMContext* ctx );
       void printNext( VMContext* ctx, int count ) const;
       bool m_isPrintl;

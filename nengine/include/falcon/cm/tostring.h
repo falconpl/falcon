@@ -80,10 +80,11 @@ public:
 
 private:
 
-   class Next: public PStep
+   class FALCON_DYN_CLASS Next: public PStep
    {
    public:
       Next() { apply = apply_; }
+      virtual ~Next() {}
       static void apply_( const PStep* ps, VMContext* ctx );
 
    };

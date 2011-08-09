@@ -30,10 +30,11 @@ public:
 
 private:
 
-   class Invoke: public PStep
+   class FALCON_DYN_CLASS Invoke: public PStep
    {
    public:
       Invoke() { apply = apply_; }
+      virtual ~Invoke() {}
       static void apply_( const PStep* ps, VMContext* ctx );
 
    };
