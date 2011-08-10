@@ -21,7 +21,9 @@ using namespace Falcon;
 
 IntMode::IntMode( FalconApp* owner ):
    m_owner( owner )
-{}
+{
+   Engine::instance()->getCore()->exportToModspace(m_vm.modSpace()); 
+}
 
 
 
@@ -35,9 +37,7 @@ void IntMode::run()
    VMachine& vm = m_vm;
    
    vm.textOut()->write( "Welcome to Falcon.\n" );
-   
-   Module* core = new CoreModule;
-   vm.modSpace()->addModule( core, true, false );
+    
    IntCompiler intComp(&vm);
 
    String tgt;

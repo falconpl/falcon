@@ -24,6 +24,7 @@ namespace Falcon
 
 class Module;
 class Symbol;
+class ModGroup;
 
 /** A simple class orderly guarding symbols and the module they come from.
  */
@@ -59,8 +60,29 @@ public:
    SymbolMap();
    ~SymbolMap();
    
-   void add( Symbol* sym, Module* mod );
+   /** Adds a symbol that is globally exported.
+    \param sym The symbol to be exported.
+    \param mod Optinally, the module that is exporting the symbol.
+    \return true if the symbol could be added, false if it was already present.
+    */
+   
+   bool add( Symbol* sym, Module* mod = 0 );
+   
+   /** Removes an exported symbol.
+    \param symName The name of the symbol to be exported.
+    */
    void remove( const String& symName );
+   
+   /** Finds a symbol that is globally exported or globally defined.
+    \param name The name of the symbol that is exported.    
+    \return An entry containing the symbol and the declarer, if defined, 
+            or 0 if the name cannot be found.
+    
+    \note The caller must be prepared to the event that a symbol is found, but
+    the \b declarer parameter is set to zero. In fact, it is possible for embedding
+    applications to create module-less symbols.
+    */
+
    Entry* find( const String& symName ) const;
    
 
@@ -76,6 +98,8 @@ public:
 private:
    class Private;
    Private* _p;
+   
+   friend class ModGroup;
 };
 
 }

@@ -18,25 +18,20 @@
 
 #include <falcon/setup.h>
 #include <falcon/string.h>
+#include <falcon/loadmode.h>
 
 namespace Falcon 
 {
 
 class Module;
+class ModGroup;
 
 /** A simple class orderly guarding modules.
  */
 class FALCON_DYN_CLASS ModMap
 {
 public:
-   typedef enum 
-   {
-      e_lm_load,
-      e_lm_import_public,
-      e_lm_import_private            
-   }
-   t_importMode;
-
+   
    /** An entry of a the module map.
     An entry in a module map is composed of:
     - The pointer to the module;
@@ -48,7 +43,7 @@ public:
    {
    public:
       
-      Entry( Module* mod, t_importMode im, bool bOwn ):
+      Entry( Module* mod, t_loadMode im, bool bOwn ):
          m_module(mod),
          m_imode(im),
          m_bOwn( bOwn )
@@ -58,18 +53,19 @@ public:
       
       Module* module() const { return m_module; }
       bool own() const { return m_bOwn; }
-      t_importMode imode() const { return m_imode; }
-
+      t_loadMode imode() const { return m_imode; }
+      void imode( t_loadMode eml ) { m_imode = eml; }
+      
    private:
       Module* m_module;
-      t_importMode m_imode;
+      t_loadMode m_imode;
       bool m_bOwn;
    };
   
    ModMap();
    ~ModMap();
    
-   void add( Module* mod, t_importMode im, bool bown = true );
+   void add( Module* mod, t_loadMode im, bool bown = true );
    void remove( Module* mod );
    
    Entry* findByURI( const String& path ) const;
@@ -86,9 +82,12 @@ public:
    
    void enumerate( EntryEnumerator& rator ) const;
    
+   bool empty() const;
 private:
    class Private;
    Private* _p;
+   
+   friend class ModGroup;
 };
 
 }

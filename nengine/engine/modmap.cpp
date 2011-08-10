@@ -15,37 +15,14 @@
 
 #include <falcon/modmap.h>
 #include <falcon/module.h>
+#include <falcon/mt.h>
+
+#include "modmap_private.h"
 
 #include <map>
 
 namespace Falcon 
 {
-
-class ModMap::Private
-{
-public:   
-   typedef std::map<Module*,ModMap::Entry*> ModEntryMap;
-   typedef std::map<String,ModMap::Entry*> NameEntryMap;
-   
-   ModEntryMap m_modMap;
-   NameEntryMap m_modsByName;
-   NameEntryMap m_modsByPath;   
-   
-   Private() {};
-   
-   ~Private()
-   {
-      // for all the modules
-      ModEntryMap::iterator iter = m_modMap.begin();
-      while( iter != m_modMap.end() )
-      {
-         // if we own the module, it will be delete as well
-         delete iter->second; 
-         ++iter;
-      }
-   }
-};
-
 
 ModMap::ModMap():
    _p( new Private) 
@@ -59,21 +36,26 @@ ModMap::~ModMap()
 ModMap::Entry::~Entry()
 {
    if( m_bOwn )
-      delete m_module;
+   {
+      m_module->unload();
+   }
 }
 
 
-void ModMap::add( Module* mod, t_importMode im, bool bown )
+void ModMap::add( Module* mod, t_loadMode im, bool bown )
 {
    Entry* ne = new Entry( mod, im, bown );
+   _p->m_mtx.lock();   
    _p->m_modMap[mod] = ne;
    _p->m_modsByName[mod->name()] = ne;
    _p->m_modsByPath[mod->uri()] = ne;
+   _p->m_mtx.unlock();   
 }
 
 
 void ModMap::remove( Module* mod )
 {
+   _p->m_mtx.lock();   
    _p->m_modsByName.erase( mod->name() );
    _p->m_modsByPath.erase( mod->uri() );
    
@@ -82,56 +64,86 @@ void ModMap::remove( Module* mod )
    {
       Entry* entry = pos->second;
       _p->m_modMap.erase( pos );
+      _p->m_mtx.unlock();   
       delete entry;
+   }
+   else
+   {
+      _p->m_mtx.unlock();   
    }
 }
 
 
 ModMap::Entry* ModMap::findByURI( const String& path ) const
 {
+   _p->m_mtx.lock();   
    Private::NameEntryMap::iterator pos = _p->m_modsByName.find( path );
    if( pos != _p->m_modsByName.end() )
    {
-      return pos->second;
+      Entry* e = pos->second;
+      _p->m_mtx.unlock();   
+      return e;
    }
+   _p->m_mtx.unlock();   
+
    return 0;
 }
 
 
 ModMap::Entry* ModMap::findByName( const String& name ) const
 {
+   _p->m_mtx.lock();   
    Private::NameEntryMap::iterator pos = _p->m_modsByName.find( name );
    if( pos != _p->m_modsByName.end() )
    {
-      return pos->second;
+      Entry* e = pos->second;
+      _p->m_mtx.unlock();   
+      return e;
    }
+   _p->m_mtx.unlock();
    return 0;
 }
 
 
 ModMap::Entry* ModMap::findByModule( Module* mod ) const
 {
+   _p->m_mtx.lock();   
    Private::ModEntryMap::iterator pos = _p->m_modMap.find( mod );
    if( pos != _p->m_modMap.end() )
    {
-      return pos->second;
+      Entry* e = pos->second;
+      _p->m_mtx.unlock();
+      return e;
    }
+   _p->m_mtx.unlock();
    return 0;
 }
 
 
 void ModMap::enumerate( ModMap::EntryEnumerator& rator ) const
 {
+   _p->m_mtx.lock();
    Private::ModEntryMap::iterator iter = _p->m_modMap.begin();
    while( iter != _p->m_modMap.end() )
    {
       // if we own the module, it will be delete as well
-      rator(iter->second); 
+      Entry* e = iter->second;
       ++iter;
+      _p->m_mtx.unlock();
+      rator( e ); 
+      _p->m_mtx.lock();      
    }
+   _p->m_mtx.unlock();
 }
 
- 
+bool ModMap::empty() const
+{
+   _p->m_mtx.lock();
+   bool bResult = _p->m_modMap.empty();
+   _p->m_mtx.unlock();
+   return bResult;
+}
+
 }
 
 /* end of modmap.cpp */

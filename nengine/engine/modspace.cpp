@@ -20,90 +20,28 @@
 #include <falcon/module.h>
 #include <falcon/vm.h>
 #include <falcon/modloader.h>
+#include <falcon/mt.h>
+#include <falcon/modgroup.h>
 
 #include <map>
-#include <vector>
 
 namespace Falcon {
-
-class ModSymbol
-{
-public:
-   Module* m_module;
-   Symbol* m_symbol;
-   
-   ModSymbol():
-      m_module( 0 ),
-      m_symbol( 0 )
-   {}   
-   
-   ModSymbol( Module* mod, Symbol* sym ):
-      m_module( mod ),
-      m_symbol( sym )
-   {}
-};
-
-
-class ModuleLoadMode
-{
-public:
-   Module* m_module;
-   bool m_bLoad;
-   
-   ModuleLoadMode():
-      m_module(0),
-      m_bLoad( false )
-   {}
-   
-   ModuleLoadMode( Module* mod, bool bLoad ):
-      m_module( mod ),
-      m_bLoad( bLoad )
-   {}
-};
 
 
 class ModSpace::Private
 {
 public:
-   typedef std::map<String, ModSymbol> SymbolMap;
-   SymbolMap m_syms;
    
-   typedef std::map<String, ModuleLoadMode> ModMap;
-   ModMap m_mods;
-   
-   typedef std::vector<ModuleLoadMode*> ModLoadOrder;
-   ModLoadOrder m_loadOrder;
-   
-   typedef std::vector<Error*> ErrorList;
-   ErrorList m_errors;
+   Mutex m_mtx;
+   typedef std::map<String,String> TokenMap;
+   TokenMap m_tokens;
    
    Private() {}
    
    ~Private() 
-   {
-      clearErrors();
-      
-      ModMap::iterator iter = m_mods.begin();
-      while( iter != m_mods.end() )
-      {
-         Module* mod = iter->second.m_module;
-         mod->unload();
-         ++iter;
-      
-      }
-      m_mods.clear();
+   {     
    }
    
-   void clearErrors()
-   {
-      ErrorList::iterator iter = m_errors.begin();
-      while( iter != m_errors.end() )
-      {
-         (*iter)->decref();
-         ++iter;
-      }
-      m_errors.clear();
-   }
 };
 
 //==============================================================
@@ -122,166 +60,81 @@ ModSpace::~ModSpace()
    delete m_loader;
    delete _p;
 }
-   
 
-void ModSpace::addLinkError( int err_id, const String& modName, const Symbol* sym, const String& extra )
+
+bool ModSpace::addSymbolToken( const String& name, const String& modName, String& declarer )
 {
-   Error* e = new LinkError( ErrorParam( err_id )
-      .origin(ErrorParam::e_orig_linker)
-      .line( sym != 0 ? sym->declaredAt() : 0 )
-      .extra( extra )
-      .module( modName != "" ? modName : "<internal>" ) 
-      .symbol( sym != 0 ? sym->name() : "" ));
-      
-   addLinkError( e );
-   e->decref();
-}
-
-
-void ModSpace::addLinkError( Error* e )
-{
-   _p->m_errors.push_back( e );
-   e->incref();
-}
-
-
-Error* ModSpace::makeError() const
-{
-   Error* e = new LinkError( ErrorParam( e_link_error, __LINE__, SRC )
-      .origin(ErrorParam::e_orig_linker) );
-   
-   Private::ErrorList::iterator iter = _p->m_errors.begin();
-   while( iter != _p->m_errors.end() )
+   _p->m_mtx.lock();
+   Private::TokenMap::iterator iter = _p->m_tokens.find( name );
+   if( iter != _p->m_tokens.end() )
    {
-      e->appendSubError( *iter );
-      ++iter;
+      declarer = iter->second;
+      _p->m_mtx.unlock();
+      return false;
    }
    
-   _p->clearErrors();
-   return e;
+   _p->m_tokens[name] = modName;
+   _p->m_mtx.unlock();
+   return true;
 }
-   
 
-Module* ModSpace::findModule( const String& local_name, bool &isLoad ) const
+void ModSpace::removeSymbolToken( const String& name, const String& modName )
 {
-   Private::ModMap::iterator pos = _p->m_mods.find( local_name );
-   if( pos == _p->m_mods.end() )
+   _p->m_mtx.lock();
+   Private::TokenMap::iterator iter = _p->m_tokens.find( name );
+   if( iter != _p->m_tokens.end() )
+   {
+      if( iter->second == modName )
+      {
+      _p->m_tokens.erase( iter );
+      }
+   }
+   _p->m_mtx.unlock();
+}
+
+
+Symbol* ModSpace::findExportedSymbol( const String& name ) const
+{
+   SymbolMap::Entry* entry = symbols().find( name );
+   if( entry == 0 )
    {
       return 0;
    }
-   
-   isLoad = pos->second.m_bLoad;
-   return pos->second.m_module;
+   return entry->symbol();
 }
 
 
-bool ModSpace::promoteLoad( const String& local_name )
+Error* ModSpace::add( Module* mod, t_loadMode lm, VMContext* ctx )
 {
-   Private::ModMap::iterator pos = _p->m_mods.find( local_name );
-   if( pos == _p->m_mods.end() )
+   //static Collector* coll = Engine::instance()->collector();
+   
+   ModGroup* mg = new ModGroup( this );
+   if ( mg->add( mod, lm ) )
    {
-      return false;
-   }
-   
-   pos->second.m_bLoad = true;
-   exportSymbols( pos->second.m_module );
-   return true;
-}
-
-   
-bool ModSpace::addModule( Module* mod, bool isLoad, bool bExcludeMain )
-{
-   Private::ModMap::iterator pos = _p->m_mods.find( mod->name() );
-   if( pos != _p->m_mods.end() )
-   {
-      return false;
-   }
-   
-   ModuleLoadMode* modload = &_p->m_mods[ mod->name() ];
-   modload->m_bLoad = isLoad;
-   modload->m_module = mod;
-   
-   if( ! bExcludeMain )
-   {
-      _p->m_loadOrder.push_back( modload );      
-   }
-      
-   if ( isLoad )
-   {
-      exportSymbols( mod );
-   }
-      
-   // now resolve the module dependencies.
-   mod->resolveStaticReqs( this );
-   
-   return true;
-}
-
-   
-bool ModSpace::link( bool bThrowOnError )
-{   
-   Private::ModLoadOrder& mods = _p->m_loadOrder;
-   
-   Private::ModLoadOrder::const_reverse_iterator imods = mods.rbegin();
-   while( imods != mods.rend() )
-   {
-      ModuleLoadMode* lm = *imods;
-      Module* mod = lm->m_module;
-      
-      mod->passiveLink( this );
-      ++imods;
-   }
-   
-   if( bThrowOnError && ! _p->m_errors.empty() )
-   {
-      throw makeError();
-   }
-   
-   return _p->m_errors.empty();
-}
-
-
-void ModSpace::readyVM()
-{
-   // TODO: set in the vm.
-   
-   Private::ModLoadOrder& mods = _p->m_loadOrder;
-   
-   // insertion goes first to last because execution goes last to first.
-   VMContext* mainContext = m_vm->currentContext();
-   Private::ModLoadOrder::const_iterator imods = mods.begin();
-   while( imods != mods.end() )
-   {
-      const Module* mod = (*imods)->m_module;
-      // TODO -- invoke the init methods.
-      
-      // TODO -- specific space for Main.
-      Function* main = mod->getFunction("__main__");
-      if( main != 0 )
+      if( mg->link() )
       {
-         mainContext->call( main, 0 );
+         mg->readyVM( ctx );
+         if( mg->modules().empty() )
+         {
+            delete mg;
+         }
+         else
+         {
+            //TODO
+            //FALCON_GC_STORE( coll, clsModGroup, mg );
+         }
+         return 0;
       }
-            
-      ++imods;
-   }
-}
-
- 
-Symbol* ModSpace::findExportedSymbol( const String& name, Module*& declarer ) const
-{
-   Private::SymbolMap::const_iterator pos = _p->m_syms.find( name );
-   
-   // found in?
-   if( pos != _p->m_syms.end() )
-   {
-      declarer = pos->second.m_module;
-      return pos->second.m_symbol;
    }
    
-   return 0;
+   // we had some error.
+   Error* err = mg->makeError();
+   delete mg;
+   return err;
 }
    
 
+/*
 bool ModSpace::addExportedSymbol( Module* mod, Symbol* sym, bool bAddError )
 {
    Private::SymbolMap::iterator pos = _p->m_syms.find( sym->name() );
@@ -317,33 +170,9 @@ bool ModSpace::addExportedSymbol( Module* mod, Symbol* sym, bool bAddError )
    // add the entry
    _p->m_syms[sym->name()] = ModSymbol( mod, sym );
    return true;
-}
-   
+} 
+*/
 
-void ModSpace::exportSymbols( Module* mod )
-{
-   class Rator: public Module::SymbolEnumerator
-   {
-   public:
-      Rator( ModSpace* owner, Module* mod ):
-         m_owner( owner ),
-         m_module( mod )
-      {}
-
-      virtual bool operator()( const Symbol& sym, bool )
-      {
-         m_owner->addExportedSymbol( m_module, const_cast<Symbol*>(&sym), true );
-         return true;
-      }
-
-   private:
-      ModSpace* m_owner;
-      Module* m_module;
-   };
-
-   Rator rator( this, mod );
-   mod->enumerateExports( rator );
-}
 
 }
 

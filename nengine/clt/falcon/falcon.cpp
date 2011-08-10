@@ -19,6 +19,7 @@
 
 #include "int_mode.h"
 #include "falcon/modloader.h"
+#include "falcon/modgroup.h"
 
 using namespace Falcon;
 
@@ -143,17 +144,23 @@ void FalconApp::launch( const String& script )
    }
          
    // TODO -- FIX ftds
-   // load the main module...
    Module* module = loader->loadFile( script, type );
+   module->setMain();
+   
+   Engine::instance()->getCore()->exportToModspace( vm.modSpace() );
    
    // and start the resolution dance.
-   ms->addModule( module, true );
-   ms->addModule( new CoreModule, true );
+   ModGroup* mg = new ModGroup( ms );  
+   mg->add( module, e_lm_load );
+   
    
    // throw on error.
-   ms->link( true );
+   if( ! mg->link() )
+   {
+      throw mg->makeError();
+   }
    
-   ms->readyVM();
+   mg->readyVM( vm.currentContext() );
    vm.run();
 }
 

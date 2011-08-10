@@ -24,6 +24,7 @@
 #include <falcon/extfunc.h>
 #include <falcon/item.h>
 #include <falcon/modspace.h>
+#include <falcon/modgroup.h>
 #include <falcon/modloader.h>
 #include <falcon/inheritance.h>
 #include <falcon/error.h>
@@ -31,6 +32,7 @@
 #include <falcon/falconclass.h>
 #include <falcon/hyperclass.h>
 #include <falcon/dynunloader.h>
+#include <falcon/genericerror.h>
 
 #include <stdexcept>
 #include <map>
@@ -191,7 +193,7 @@ public:
    public:
       String m_uri;
       bool m_bIsUri;
-      bool m_bIsLoad;
+      t_loadMode m_loadMode;
       /** This pointer stays 0 until resolved via resolve[*]Reqs */
       Module* m_module;
       /** Dinamicity of modules determine if they are to be deleted.*/
@@ -207,10 +209,10 @@ public:
       typedef std::map<String, String> NsImportMap;
       NsImportMap m_fullImport;
 
-      Requirement( const String& name, bool bIsLoad, bool bIsUri=false ):
+      Requirement( const String& name, t_loadMode imode=e_lm_import_public, bool bIsUri=false ):
          m_uri( name ),
          m_bIsUri( bIsUri ),
-         m_bIsLoad( bIsLoad ),
+         m_loadMode( imode ),
          m_module(0),
          m_bIsDynamic( false ),
          m_bIsGenericProvider( false )
@@ -415,7 +417,7 @@ public:
       }
       else
       {
-         req = new Requirement(sourcemod, false, bIsUri );
+         req = new Requirement(sourcemod, e_lm_import_public , bIsUri );
          m_reqs[sourcemod] = req;
       }
       return req;
@@ -446,6 +448,7 @@ Module::Module( const String& name ):
    m_lastGCMark(0),
    m_bExportAll( false ),
    m_unloader( 0 ),
+   m_bMain( false ),
    m_anonFuncs(0),
    m_anonClasses(0)
 {
@@ -460,7 +463,10 @@ Module::Module( const String& name, const String& uri ):
    m_uri(uri),
    m_lastGCMark(0),
    m_bExportAll( false ),
-   m_unloader( 0 )
+   m_unloader( 0 ),
+   m_bMain( false ),
+   m_anonFuncs(0),
+   m_anonClasses(0)
 {
    TRACE("Creating module '%s' from %s",
       name.c_ize(), uri.c_ize() );
@@ -485,6 +491,15 @@ Module::~Module()
    TRACE("Module '%s' deletion complete", m_name.c_ize() );
 }
 
+
+void Module::gcMark( uint32 mark )
+{
+   m_lastGCMark = mark;
+   if ( m_modGroup != 0 )
+   {
+      m_modGroup->gcMark( mark );
+   }
+}
 
 void Module::addStaticData( Class* cls, void* data )
 {
@@ -788,16 +803,16 @@ bool Module::addLoad( const String& mod_name, bool bIsUri )
    {
       // already loaded?
       Private::Requirement* r = ireq->second;
-      if( r->m_bIsLoad )
+      if( r->m_loadMode == e_lm_load )
       {
          return false;
       }
-      r->m_bIsLoad = true;
+      r->m_loadMode = e_lm_load;
       return true;
    }
 
    // add a new requirement with load request
-   Private::Requirement* r = new Private::Requirement( mod_name, true, bIsUri);
+   Private::Requirement* r = new Private::Requirement( mod_name, e_lm_load, bIsUri);
    _p->m_reqs[ mod_name ] = r;
    return true;
 }
@@ -820,7 +835,7 @@ bool Module::addGenericImport( const String& source, bool bIsUri )
    else
    {
       // create the requirement now.
-      req = new Private::Requirement( source, false, bIsUri );
+      req = new Private::Requirement( source, e_lm_load, bIsUri );
       _p->m_reqs[source] = req;
    }
    
@@ -944,114 +959,6 @@ void Module::addImportInheritance( Inheritance* inh )
 }
 
 
-bool Module::passiveLink( ModSpace* ms )
-{
-   Private::ReqMap::iterator iter = _p->m_reqs.begin();
-   while( iter != _p->m_reqs.end() )
-   {
-      Private::Requirement* req = iter->second;
-      // loaded symbols from import...
-      if( req->m_uri == "" )
-      {
-         Private::Requirement::DepMap::iterator iter = req->m_deps.begin();
-         while( iter != req->m_deps.end() )
-         {
-            Private::Dependency* dep = iter->second;
-            Module* mod;
-            
-            // first, try to resolve the symbol in the generic export list.
-            Symbol* sym = findGenericallyExportedSymbol( dep->m_remoteName, mod );
-               
-            // better luck with the global exports
-            if ( sym == 0 )
-            {
-               sym = ms->findExportedSymbol( dep->m_remoteName, mod );
-            }
-            
-            if( sym == 0 )
-            {
-               ms->addLinkError( e_undef_sym, m_uri, 0, dep->m_remoteName );
-            }
-            else
-            {
-               // we're sending the module where this item is resolved, not the source.
-               dep->resolved( this, sym );
-               if( ! dep->m_errors.empty() )
-               {
-                  Private::Dependency::ErrorList::iterator erri = dep->m_errors.begin();
-                  // If we have errors, transfer them to the module space.
-                  while (erri != dep->m_errors.end() )
-                  {
-                     ms->addLinkError( *erri );
-                  }
-                  dep->clearErrors();
-               }
-            }
-            ++iter;
-         }
-      }
-      
-      Module* mod = req->m_module;
-      // if the module has been resolved, it won't be 0.
-      if( mod != 0 )
-      {
-         Private::Requirement::DepMap::iterator iter = req->m_deps.begin();
-         while( iter != req->m_deps.end() )
-         {
-            Private::Dependency* dep = iter->second;
-            Symbol* sym = mod->getGlobal( dep->m_remoteName );
-            if( sym == 0 )
-            {
-               ms->addLinkError( e_undef_sym, m_uri, 0, dep->m_remoteName );
-            }
-            else
-            {
-               // we're sending the module where this item is resolved, not the source.
-               dep->resolved( this, sym );
-               if( ! dep->m_errors.empty() )
-               {
-                  Private::Dependency::ErrorList::iterator erri = dep->m_errors.begin();
-                  // If we have errors, transfer them to the module space.
-                  while (erri != dep->m_errors.end() )
-                  {
-                     ms->addLinkError( *erri );
-                  }
-                  dep->clearErrors();
-               }
-            }
-            ++iter;
-         }
-         
-         // performs also the namespace forwarding
-         Private::Requirement::NsImportMap::iterator nsiter = req->m_fullImport.begin();
-         while( nsiter != req->m_fullImport.end() )
-         {
-            const String& remoteNS = nsiter->first;
-            const String& localNS = nsiter->second;
-            // search the symbols in the remote namespace.
-            Private::SymbolGuardMap& globs = req->m_module->_p->m_gSyms;
-            String nsPrefix = remoteNS + ".";
-            Private::SymbolGuardMap::iterator gi = globs.lower_bound(nsPrefix);
-            while( gi != globs.end() && gi->first.startsWith(nsPrefix) )
-            {
-               String localName = localNS + "." + gi->first.subString(nsPrefix.length());
-               if( _p->m_gSyms.find(localName) == _p->m_gSyms.end())
-               {
-                  _p->m_gSyms[localName] = Private::SymbolGuard(gi->second.m_sym, false);
-               }
-               ++gi;
-            }
-            
-            ++nsiter;
-         }
-      }
-      ++iter;
-   }
-   
-   return false;
-}
-
-
 Symbol* Module::findGenericallyExportedSymbol( const String& symname, Module*& declarer ) const
 {
    Private::ReqList::const_iterator pos = _p->m_genericMods.begin();
@@ -1123,7 +1030,7 @@ void Module::completeClass(FalconClass* fcls)
 }
 
 
-bool Module::resolveStaticReqs( ModSpace* space )
+bool Module::resolveStaticReqs()
 {
    Private::ReqMap& reqs = _p->m_reqs;
    Private::ReqMap::iterator iter = reqs.begin();
@@ -1139,24 +1046,11 @@ bool Module::resolveStaticReqs( ModSpace* space )
       }
       
       // already in?
-      bool bLoad;
-      Module* mod;
-      if( (mod = space->findModule( req.m_uri, bLoad )) != 0 )
-      {
-         // need to promote?
-         if( ! bLoad && req.m_bIsLoad )
-         {
-            space->promoteLoad( req.m_uri );
-         }
-         //anyhow add to us.
-         req.m_module = mod;
-         req.m_bIsDynamic = false;
-         
-      }
-      else
+      Module* mod = linkExistingModule( req.m_uri, req.m_bIsUri, req.m_loadMode );
+      if ( mod == 0 )
       {
          // try to load
-         ModLoader* loader = space->modLoader();
+         ModLoader* loader = m_modGroup->space()->modLoader();
          if( req.m_bIsUri )
          {
             // shall throw on error.
@@ -1167,6 +1061,7 @@ bool Module::resolveStaticReqs( ModSpace* space )
             // shall throw on error.
             mod = loader->loadName( req.m_uri, ModLoader::e_mt_none );                        
          }
+         
          if( mod == 0 )
          {
             // the only reason mod can be 0 here is that we didn't find it.
@@ -1178,8 +1073,8 @@ bool Module::resolveStaticReqs( ModSpace* space )
          req.m_module = mod;
          req.m_bIsDynamic = false;
          
-         // add it to the space -- which might fire other loads.
-         space->addModule( mod, req.m_bIsLoad, false );
+         // add it to the group -- which might fire another set of resolutions.
+         m_modGroup->add( mod, req.m_loadMode );
       }
       
       ++iter;
@@ -1187,6 +1082,73 @@ bool Module::resolveStaticReqs( ModSpace* space )
    
    // TODO: Throw or return false on error?
    return true;
+}
+
+
+Module* Module::linkExistingModule( const String& name, bool bIsUri, t_loadMode imode )
+{
+   ModMap::Entry* entry = 0;
+   if( bIsUri )
+   {
+      entry = m_modGroup->modules().findByURI( name );
+   }
+   else
+   {
+      entry = m_modGroup->modules().findByName( name );
+   }
+
+   if( entry != 0 )
+   {
+      // we have a module, but is it adequate?
+      if( imode == e_lm_import_private )
+      {
+         if( entry->imode() == imode )
+         {
+            // yes, the module is imported privately and we import it privately.
+            return entry->module();
+         }
+         // nope, no other combination possible with private imports.
+         return 0;
+      }
+      
+      // ok we can use, and eventually promote the module.
+      if( imode == e_lm_load )
+      {
+         entry->imode( e_lm_load );
+      }
+      
+      return entry->module();
+   }
+   
+   // not found; try in the global space, if not privately imported.
+   if( imode == e_lm_import_private )
+   {
+      return 0;
+   }
+   
+   if( bIsUri )
+   {
+      entry = m_modGroup->space()->modules().findByURI( name );
+   }
+   else
+   {
+      entry = m_modGroup->space()->modules().findByName( name );
+   }
+   
+   if( entry != 0 )
+   {
+      // we can use the module, but only if it's imported and we want to load it,
+      // we necessarily need to load it anew.
+      if ( entry->imode() == e_lm_import_public &&  imode == e_lm_load )
+      {
+         return 0; // load it anew
+      }
+      //otherwise, if we want to import it or we want to load it and it's already loaded...
+      return entry->module();
+   }
+
+   // not found.
+   return 0;
 }
 
 
@@ -1304,6 +1266,318 @@ bool Module::addImportFromWithNS( const String& localNS, const String& remoteNam
    
    return true;
 }
+
+
+Error* Module::resolveDirectImports( bool bUseModGroup )
+{
+   fassert( m_modGroup != 0 || ! bUseModGroup );
+   
+   Error* error = 0;
+      
+   Private::ReqMap::iterator iter = _p->m_reqs.begin();
+   while( iter != _p->m_reqs.end() )
+   {
+      Private::Requirement* req = iter->second;          
+      Module* mod = req->m_module;
+      // if the module has been resolved, it won't be 0.
+      if( mod != 0 )
+      {
+         Private::Requirement::DepMap::iterator iter = req->m_deps.begin();
+         while( iter != req->m_deps.end() )
+         {
+            Private::Dependency* dep = iter->second;
+            Symbol* sym = mod->getGlobal( dep->m_remoteName );
+            if( sym == 0 )
+            {
+               if( bUseModGroup )
+               {
+                  m_modGroup->addLinkError( e_undef_sym, m_uri, 0, dep->m_remoteName );
+               }
+               else
+               {
+                  if( error == 0 )
+                  {
+                     error = new GenericError( ErrorParam( e_link_error, __LINE__, SRC )
+                        .module( name() )
+                        .extra( "Details follow") );
+                  }
+                  error->appendSubError( new LinkError(
+                        ErrorParam( e_undef_sym )
+                        .module( m_uri )
+                        .symbol(dep->m_remoteName)) 
+                     );
+               }
+            }
+            else
+            {
+               // we're sending the module where this item is resolved, not the source.
+               dep->resolved( this, sym );
+               if( ! dep->m_errors.empty() )
+               {
+                  Private::Dependency::ErrorList::iterator erri = dep->m_errors.begin();
+                  // If we have errors, transfer them to the module space.
+                  while (erri != dep->m_errors.end() )
+                  {
+                     if( bUseModGroup )
+                     {
+                        m_modGroup->addLinkError( *erri );
+                     }
+                     else
+                     {
+                        if( error == 0 )
+                        {
+                           error = new GenericError( ErrorParam( e_link_error, __LINE__, SRC )
+                              .module( name() )
+                              .extra( "Details follow") );
+                        }
+                        error->appendSubError( *erri );
+                     }
+                     
+                  }
+                  dep->clearErrors();
+               }
+            }
+            ++iter;
+         }
+         
+         // performs also the namespace forwarding
+         Private::Requirement::NsImportMap::iterator nsiter = req->m_fullImport.begin();
+         while( nsiter != req->m_fullImport.end() )
+         {
+            const String& remoteNS = nsiter->first;
+            const String& localNS = nsiter->second;
+            // search the symbols in the remote namespace.
+            Private::SymbolGuardMap& globs = req->m_module->_p->m_gSyms;
+            String nsPrefix = remoteNS + ".";
+            Private::SymbolGuardMap::iterator gi = globs.lower_bound(nsPrefix);
+            while( gi != globs.end() && gi->first.startsWith(nsPrefix) )
+            {
+               String localName = localNS + "." + gi->first.subString(nsPrefix.length());
+               if( _p->m_gSyms.find(localName) == _p->m_gSyms.end())
+               {
+                  _p->m_gSyms[localName] = Private::SymbolGuard(gi->second.m_sym, false);
+               }
+               ++gi;
+            }
+            
+            ++nsiter;
+         }
+      }
+      ++iter;
+   }
+   
+   return error;
+}
+
+
+void Module::exportSymsInGroup( bool bForReal )
+{
+   if( m_bExportAll )
+   {
+      const Private::SymbolGuardMap& syms = _p->m_gSyms;   
+      Private::SymbolGuardMap::const_iterator iter = syms.begin();
+
+      while( iter != syms.end() )
+      {
+         Symbol* sym = iter->second.m_sym;
+         // ignore "private" symbols
+         if( ! (sym->name().startsWith("_") || sym->type() != Symbol::t_global_symbol) )
+         {
+            exportSymbolInGroup( sym, bForReal );
+         }
+         ++iter;
+      }
+   }
+   else
+   { 
+      const Private::GlobalsMap& syms = _p->m_gExports;
+      Private::GlobalsMap::const_iterator iter = syms.begin();
+
+      while( iter != syms.end() )
+      {
+         Symbol* sym = iter->second;
+         // ignore "private" symbols
+         if( ! (sym->name().startsWith("_") || sym->type() != Symbol::t_global_symbol) )
+         {
+            exportSymbolInGroup( sym, bForReal );
+         }
+         ++iter;
+      }
+   }
+}
+
+
+Error* Module::exportToModspace( ModSpace* ms )
+{
+   Error* err = 0;
+   
+   if( m_bExportAll )
+   {
+      const Private::SymbolGuardMap& syms = _p->m_gSyms;   
+      Private::SymbolGuardMap::const_iterator iter = syms.begin();
+
+      while( iter != syms.end() )
+      {
+         Symbol* sym = iter->second.m_sym;
+         // ignore "private" symbols
+         if( ! (sym->name().startsWith("_") || sym->type() != Symbol::t_global_symbol) )
+         {
+            Error* e = exportSymbolToModspace( ms, sym );
+            if( e != 0 )
+            {
+               if ( err == 0 ) err = new GenericError( ErrorParam( e_link_error, __LINE__, SRC ) );
+               err->appendSubError( e );
+            }
+         }
+         ++iter;
+      }
+   }
+   else
+   { 
+      const Private::GlobalsMap& syms = _p->m_gExports;
+      Private::GlobalsMap::const_iterator iter = syms.begin();
+
+      while( iter != syms.end() )
+      {
+         Symbol* sym = iter->second;
+         // ignore "private" symbols
+         if( ! (sym->name().startsWith("_") || sym->type() != Symbol::t_global_symbol) )
+         {
+            Error* e = exportSymbolToModspace( ms, sym );
+            if( e != 0 )
+            {
+               if ( err == 0 ) err = new GenericError( ErrorParam( e_link_error, __LINE__, SRC ) );
+               err->appendSubError( e );
+            }
+         }
+         ++iter;
+      }
+   }
+   
+   return err;
+}
+
+
+Error* Module::exportSymbolToModspace( ModSpace* ms, Symbol* sym )
+{
+   SymbolMap::Entry* entry = ms->symbols().find( sym->name() );
+   if( entry != 0 )
+   {
+      return new LinkError( ErrorParam(e_link_error, sym->declaredAt(), name() )
+         .extra( String("in ") 
+               + (entry->module() != 0 ? entry->module()->name() : String( "<internal>" )) )
+         );
+   }
+   else
+   {
+      ms->symbols().add( sym, this );
+   }
+   
+   return 0;
+}
+
+
+bool Module::exportSymbolInGroup( Symbol* sym, bool bForReal )
+{
+   ModSpace* ms = m_modGroup->space();
+   
+   // is the symbol free to be added in the group?
+   SymbolMap::Entry* entry = m_modGroup->symbols().find(sym->name());
+   
+   if( entry == 0 )
+   {
+      // ok, we can export to the group, but what about the space?
+      if ( bForReal )
+      {
+         String declarer;
+         if ( ! ms->addSymbolToken( sym->name(), this->uri(), declarer ) )
+         {
+            m_modGroup->addLinkError( e_already_def, this->uri(), sym, "in " + declarer );
+            return false;
+         }
+         else
+         {
+            // ok, we can export the symbol.
+            m_modGroup->symbols().add( sym, this );
+            return true;
+         }
+      }
+      else
+      {
+         entry = ms->symbols().find( sym->name() );
+      }
+   }
+   
+   if( entry != 0 )
+   {
+      String declarer = entry->module()->uri();
+      m_modGroup->addLinkError( e_already_def, this->uri(), sym, "in " + declarer );
+      return false;
+   }
+   
+   return true;
+} 
+
+
+void Module::resolveGenericImports( bool bForReal )
+{
+   // find the generic imports.
+   Private::ReqMap::iterator ireq = _p->m_reqs.find( "" );
+   
+      // loaded symbols from import...
+   if( ireq != _p->m_reqs.end() )
+   {
+      Private::Requirement* req = ireq->second;
+      Private::Requirement::DepMap::iterator iter = req->m_deps.begin();
+      while( iter != req->m_deps.end() )
+      {
+         Private::Dependency* dep = iter->second;
+         Module* mod;
+
+         // first, try to resolve the symbol in the generic export list.
+         Symbol* sym = findGenericallyExportedSymbol( dep->m_remoteName, mod );
+
+         // better luck with the global exports
+         if ( sym == 0 )
+         {
+            SymbolMap::Entry* entry = m_modGroup->symbols().find( dep->m_remoteName );
+            if( entry != 0 )
+            {
+               sym = entry->symbol();
+            }
+         }
+         
+         // Still nothing?  -- try with the modspace
+         if( sym == 0 )
+         {
+            sym = m_modGroup->space()->findExportedSymbol( dep->m_remoteName );
+         }
+
+         // this time, we're doomed.
+         if( sym == 0 )
+         {
+            m_modGroup->addLinkError( e_undef_sym, m_uri, 0, dep->m_remoteName );
+         }
+         else if( bForReal )
+         {
+            // we're sending the module where this item is resolved, not the source.
+            dep->resolved( this, sym );
+            if( ! dep->m_errors.empty() )
+            {
+               Private::Dependency::ErrorList::iterator erri = dep->m_errors.begin();
+               // If we have errors, transfer them to the module space.
+               while (erri != dep->m_errors.end() )
+               {
+                  m_modGroup->addLinkError( *erri );
+               }
+               dep->clearErrors();
+            }
+         }
+         ++iter;
+      }
+   }
+}
+
 
 }
 

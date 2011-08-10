@@ -15,30 +15,14 @@
 
 #include <falcon/symbolmap.h>
 #include <falcon/symbol.h>
+#include <falcon/mt.h>
+
+#include "symbolmap_private.h"
 
 #include <map>
 
 namespace Falcon 
 {
-
-class SymbolMap::Private
-{
-public:
-   typedef std::map<String, SymbolMap::Entry*> SymModMap;
-   SymModMap m_syms;
-
-   Private() {}
-   ~Private() 
-   {
-      SymModMap::iterator iter = m_syms.begin();
-      while( iter != m_syms.end() )
-      {
-         delete iter->second;
-         ++iter;
-      }
-   }
-};
-
 
 SymbolMap::SymbolMap():
    _p( new Private )
@@ -49,42 +33,68 @@ SymbolMap::~SymbolMap()
   delete _p; 
 }
    
-void SymbolMap::add( Symbol* sym, Module* mod )
+bool SymbolMap::add( Symbol* sym, Module* mod )
 {
-   _p->m_syms[sym->name()] = new Entry( sym, mod );
+   Entry* e = new Entry( sym, mod );
+   _p->m_mtx.lock();
+   if ( _p->m_syms.find( sym->name() ) != _p->m_syms.end() )
+   {
+      _p->m_mtx.unlock();
+      return false;
+   }
+   _p->m_syms[sym->name()] = e;
+   _p->m_mtx.unlock();
+   return true;
 }
 
 void SymbolMap::remove( const String& symName )
 {
+   _p->m_mtx.lock();
    Private::SymModMap::iterator pos = _p->m_syms.find(symName);
    if( pos != _p->m_syms.end() )
    {
-      delete pos->second;
+      Entry* e = pos->second; 
       _p->m_syms.erase( pos );
+      _p->m_mtx.unlock();
+      delete e;
+   }
+   else
+   {
+      _p->m_mtx.unlock();
    }
 }
 
 
 SymbolMap::Entry* SymbolMap::find( const String& symName ) const
 {
+   _p->m_mtx.lock();
    Private::SymModMap::iterator pos = _p->m_syms.find(symName);
    if( pos != _p->m_syms.end() )
    {
-      return pos->second;
+      Entry* e = pos->second; 
+      _p->m_mtx.unlock();
+      return e;
    }
    
+   _p->m_mtx.unlock();   
    return 0;
 }
 
 
 void SymbolMap::enumerate( SymbolMap::EntryEnumerator& rator ) const
 {
+   _p->m_mtx.lock();
    Private::SymModMap::iterator iter = _p->m_syms.begin();
    while( iter != _p->m_syms.end() )
    {
-      rator(iter->second);
+      Entry* e = iter->second;
       ++iter;
+      
+      _p->m_mtx.unlock();      
+      rator(e);
+      _p->m_mtx.lock();      
    }
+   _p->m_mtx.unlock();
 }
 
 }

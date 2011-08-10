@@ -13,6 +13,8 @@
    See LICENSE file for licensing details.
 */
 
+#undef SRC
+#define SRC "engine/intcompiler.cpp"
 
 #include <falcon/intcompiler.h>
 #include <falcon/module.h>
@@ -43,6 +45,8 @@
 #include <falcon/inheritance.h>
 
 #include "falcon/modloader.h"
+#include "falcon/modgroup.h"
+#include "falcon/ioerror.h"
 
 namespace Falcon {
 
@@ -123,12 +127,21 @@ void IntCompiler::Context::onLoad( const String& path, bool isFsPath )
       {
          mod = ml->loadName( path );
       }
-
-      // Resolve dynamic 
-      mod->resolveDynReqs( ml );
-
-      // perform passive linkage
-      mod->passiveLink (m_owner->m_vm->modSpace() );
+      
+      if( mod != 0 )
+      {
+         Error* err =m_owner->m_vm->modSpace()->add( mod, e_lm_load, m_owner->m_vm->currentContext() );      
+         if( err != 0 )
+         {
+            throw err;
+         }
+      }
+      else
+      {
+         throw new IOError( ErrorParam(e_mod_notfound, __LINE__, SRC )
+            .extra( path )
+            .origin( ErrorParam::e_orig_loader ));
+      }
    }
 }
 
@@ -162,8 +175,7 @@ void IntCompiler::Context::onExport(const String& symName )
       m_owner->m_sp.addError( e_export_already, m_owner->m_sp.currentSource(), 
            sym->declaredAt(), 0, 0 );
    }
-   else if( ! m_owner->m_vm->modSpace()
-         ->addExportedSymbol( m_owner->m_module, sym, false ) )
+   else if( ! m_owner->m_vm->modSpace()->symbols().add( sym, m_owner->m_module ) )
    {
       m_owner->m_sp.addError( e_already_def, m_owner->m_sp.currentSource(), 
            m_owner->m_sp.currentLine(), 0, 0, symName );
@@ -190,7 +202,11 @@ Symbol* IntCompiler::Context::onUndefinedSymbol( const String& name )
    if( gsym == 0 )
    {
       // try to find it in the exported symbols of the VM.
-      gsym = (Symbol*) m_owner->m_vm->modSpace()->findExportedSymbol( name );
+      SymbolMap::Entry* entry = m_owner->m_vm->modSpace()->symbols().find( name );
+      if( entry != 0 )
+      {
+         gsym = entry->symbol();
+      }
    }
 
    return gsym;
@@ -245,7 +261,11 @@ void IntCompiler::Context::onInheritance( Inheritance* inh  )
    const Symbol* sym = m_owner->m_module->getGlobal(inh->className());
    if( sym == 0 )
    {
-      sym = m_owner->m_vm->modSpace()->findExportedSymbol( inh->className() );
+      SymbolMap::Entry* entry = m_owner->m_vm->modSpace()->symbols().find( inh->className() );
+      if( entry != 0 )
+      {
+         sym = entry->symbol();
+      }      
    }
 
    // found?

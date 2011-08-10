@@ -22,6 +22,8 @@
 #include <falcon/function.h>
 #include <falcon/enumerator.h>
 #include <falcon/refcounter.h>
+#include <falcon/modmap.h>
+#include <falcon/loadmode.h>
 
 #define DEFALUT_FALCON_MODULE_INIT falcon_module_init
 #define DEFALUT_FALCON_MODULE_INIT_NAME "falcon_module_init"
@@ -41,6 +43,7 @@ class ModSpace;
 class ModLoader;
 class FalconClass;
 class DynUnloader;
+class ModGroup;
 
 /** Standard Falcon Execution unit and library.
 
@@ -278,7 +281,7 @@ public:
     This is used by ClassModule when the module is handed to the Virtual
     Machine for dynamic collection.
     */
-   void gcMark( uint32 mark ) { m_lastGCMark = mark; }
+   void gcMark( uint32 mark );
 
    /** Determines if a module can be reclaimed.
     \return last GC mark.
@@ -383,16 +386,6 @@ public:
     */
    void addImportInheritance( Inheritance* inh );
    
-   /** Performs a passive link step on this module.
-    During this step, the module tries to resolve all its own dependencies
-    throught the modules and public symbols offered by the module space.
-    
-    This method is either called during the link phase of the module space
-    (ModSpace::link()) or before injecting a dynamic module in the virtual 
-    machine.
-    */
-   bool passiveLink( ModSpace* ms );
-   
    /** Stores a class coming from a source module.
     \param fcls The class to be added.
     \param isObject if true, adds an object instance.
@@ -417,24 +410,6 @@ public:
     */
    void completeClass( FalconClass* fcls );
    
-   /** Resolve module requirements statically through a module space.
-    \param space The module space where dependencies are resolved statically.
-    
-    This method tries to load or import all the modules from which this module
-    depends. 
-    
-    As a module space is provided as a static module storage, the modules
-    are loaded statically and added to the given modspace. As a result, they
-    might automatically generate requests for other modules.
-    
-    Before trying to load a module, the ModSpace is searched. If a module is
-    already available in the module space, it is used (and eventually promoted
-    to "load requirement" if necessary), otherwise the ModLoader offered by
-    the ModSpace is used to search for the module on the virtual file system.
-
-    \TODO more docs for throw
-    */
-   bool resolveStaticReqs( ModSpace* space );
 
    /** Resolves module requirements dynamically.
     \param loader A loader used to resolve dynamic deps.
@@ -471,6 +446,22 @@ public:
    bool addImportFromWithNS( const String& localNS, const String& remoteName, 
             const String& modName, bool isFsPath );
 
+   /** Returns the module group associated with this module.    
+    \return The module group in which this module is stored, or 0 if this
+            is a static module living in the global module space.
+    */
+   ModGroup* moduleGroup() const { return m_modGroup; }
+   
+   void moduleGroup( ModGroup* md ) { m_modGroup = md; }
+   
+   bool isMain() const { return m_bMain; }
+   
+   void setMain( bool isMain = true ) { m_bMain = isMain; } 
+   
+   Error* resolveDirectImports( bool bUseModGroup );
+
+   Error* exportToModspace( ModSpace* ms );
+   
 private:
    class Private;
    Private* _p;
@@ -480,6 +471,8 @@ private:
    uint32 m_lastGCMark;
    bool m_bExportAll;
    DynUnloader* m_unloader;
+   ModGroup* m_modGroup;
+   bool m_bMain;
    
    int m_anonFuncs;
    int m_anonClasses;
@@ -487,12 +480,52 @@ private:
    friend class Private;   
    friend class DynLoader;
    friend class FAMLoader;
+   friend class ModGroup;
    
    void name( const String& v ) { m_name = v; }
    void uri( const String& v ) { m_uri = v; }
    void setDynUnloader( DynUnloader* ul ) { m_unloader = ul; }
    
-   Symbol* findGenericallyExportedSymbol( const String& symname, Module*& mod ) const; 
+   Symbol* findGenericallyExportedSymbol( const String& symname, Module*& mod ) const;
+   
+   bool exportOnModGroup();
+   
+   void exportSymsInGroup( bool bForReal );
+   void resolveGenericImports( bool bForReal );
+   bool exportSymbolInGroup( Symbol* sym, bool bForReal );
+   
+   /** Resolve module requirements statically through a module space.
+    
+    This method tries to load or import all the modules from which this module
+    depends.
+    
+      \note This is used directly and exclusively by the ModGroup class.
+    
+    As a module space is provided as a static module storage, the modules
+    are loaded statically and added to the given modspace. As a result, they
+    might automatically generate requests for other modules.
+    
+    Before trying to load a module, the ModSpace is searched. If a module is
+    already available in the module space, it is used (and eventually promoted
+    to "load requirement" if necessary), otherwise the ModLoader offered by
+    the ModSpace is used to search for the module on the virtual file system.
+
+    */
+   bool resolveStaticReqs();
+   
+   /** Check if we can use an existing module to resolve this requirement.
+    
+    We can use a module that has been already loaded if:
+    - It's local (modgrouop), it has been imported privately and need to import it privately here.
+    - It's local, and is imported publically or loaded (if not loaded, might get promoted).
+    - It's global (modspace), and it's \b not imported privately here.
+    
+    Otherwise, a new load is needed (even if the module already exists somewhere.
+    */
+   Module* linkExistingModule( const String& name, bool bIsUri, t_loadMode imode );
+
+   Error* exportSymbolToModspace( ModSpace* ms, Symbol* sym );
+
 };
 
 }

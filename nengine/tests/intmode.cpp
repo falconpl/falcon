@@ -74,7 +74,9 @@ void go()
 #endif
 
    VMachine vm;
-   vm.modSpace()->addModule( new CoreModule, true );
+   Module* mod = Engine::instance()->getCore();
+   mod->exportToModspace( vm.modSpace() );
+   
    IntCompiler intComp(&vm);
 
    String tgt;
