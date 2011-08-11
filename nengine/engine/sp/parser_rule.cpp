@@ -59,7 +59,7 @@ void apply_cut( const Rule&, Parser& p )
 
    ParserContext* st = static_cast<ParserContext*>(p.context());
 
-   if ( st->currentStmt() == 0 || st->currentStmt()->type() != Statement::rule_t )
+   if ( st->currentStmt() == 0 || st->currentStmt()->type() != Statement::e_stmt_rule )
    {
       p.addError( e_syn_cut, p.currentSource(), trule->line(), trule->chr() );
    }

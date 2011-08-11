@@ -80,6 +80,7 @@ add_library(falcon_engine SHARED
   sp/parser_end.cpp
   sp/parser_export.cpp
   sp/parser_expr.cpp
+  sp/parser_for.cpp
   sp/parser_function.cpp
   sp/parser_if.cpp
   sp/parser_import.cpp
@@ -110,6 +111,7 @@ add_library(falcon_engine SHARED
   classfunction.cpp
   classint.cpp
   classnil.cpp
+  classmethod.cpp
   classnumeric.cpp
   classreference.cpp
   classstring.cpp
@@ -195,6 +197,7 @@ add_library(falcon_engine SHARED
   stderrors.cpp
   stdsteps.cpp
   stmtautoexpr.cpp
+  stmtfor.cpp
   stmt_init.cpp
   stmtrule.cpp
   string.cpp

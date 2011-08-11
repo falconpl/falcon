@@ -255,6 +255,24 @@ Symbol* ParserContext::addVariable( const String& variable )
    return us;
 }
 
+Symbol* ParserContext::addDefinedVariable( const String& variable )
+{
+   Symbol* nuks;
+   
+   if( m_symtab == 0 )
+   {
+      // we're in the global context.
+      bool bAlready;
+      nuks = onGlobalDefined( variable, bAlready );
+   }
+   else
+   {
+      // add it in the current symbol table.
+      nuks = m_symtab->addLocal( variable );
+   }
+   
+   return nuks;
+}
 
 void ParserContext::undoVariable( const String& variable )
 {

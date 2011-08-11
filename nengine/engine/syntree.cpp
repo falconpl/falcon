@@ -13,6 +13,7 @@
    See LICENSE file for licensing details.
 */
 
+#include <falcon/trace.h>
 #include <falcon/syntree.h>
 #include <falcon/vm.h>
 #include <falcon/codeframe.h>
@@ -85,6 +86,8 @@ void SynTree::apply_( const PStep* ps, VMContext* ctx )
 
    // get the current step.
    CodeFrame& cf = ctx->currentCode();
+   TRACE1( "Syntree::apply -- %p with %d/%d", ps, cf.m_seqId, self->_p->m_steps.size() );
+   
    if (cf.m_seqId >= (int) self->_p->m_steps.size() )
    {
       // we're done.
@@ -93,6 +96,7 @@ void SynTree::apply_( const PStep* ps, VMContext* ctx )
    }
 
    Statement* step = self->_p->m_steps[ cf.m_seqId++ ];
+   TRACE2( "Syntree::apply -- preparing \"%s\"", step->oneLiner().c_ize() );
    step->prepare(ctx);
 }
 

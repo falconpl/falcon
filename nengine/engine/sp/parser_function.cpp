@@ -136,7 +136,7 @@ void on_close_lambda( void* thing )
    SynFunc* func=ctx->currentFunc();
 
    int size = func->syntree().size();
-   if ( size == 1 && func->syntree().at(0)->type() == Statement::autoexpr_t )
+   if ( size == 1 && func->syntree().at(0)->type() == Statement::e_stmt_autoexpr )
    {
       StmtAutoexpr* aexpr = static_cast<StmtAutoexpr*>( func->syntree().at(0) );
       StmtReturn* ret = new StmtReturn( aexpr->detachExpr() );

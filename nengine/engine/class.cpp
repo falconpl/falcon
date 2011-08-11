@@ -339,7 +339,7 @@ void Class::op_toString( VMContext* ctx, void *self ) const
 }
 
 
-void Class::op_first( VMContext* ctx, void* ) const
+void Class::op_iter( VMContext* ctx, void* ) const
 {
    ctx->topData().setBreak();
 }

@@ -142,7 +142,7 @@ void apply_elif( const Rule&, Parser& p )
       ParserContext* st = static_cast<ParserContext*>(p.context());
 
       Statement* current = st->currentStmt();
-      if( current == 0 || current->type() != Statement::if_t )
+      if( current == 0 || current->type() != Statement::e_stmt_if )
       {
          p.addError( e_syn_elif, p.currentSource(), tif->line(), tif->chr() );
          delete expr;
@@ -180,7 +180,7 @@ void apply_else( const Rule&, Parser& p )
       ParserContext* st = static_cast<ParserContext*>(p.context());
 
       Statement* current = st->currentStmt();
-      if( current == 0 || current->type() != Statement::if_t )
+      if( current == 0 || current->type() != Statement::e_stmt_if )
       {
          p.addError( e_syn_else, p.currentSource(), telse->line(), telse->chr() );
       }

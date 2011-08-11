@@ -663,18 +663,18 @@ void MultiClass::op_toString( VMContext* ctx, void* self ) const
    }
 }
 
-void MultiClass::op_first( VMContext* ctx, void* self ) const
+void MultiClass::op_iter( VMContext* ctx, void* self ) const
 {
    Class* cls;
    void* udata;
 
    if( inl_get_override( self, OVERRIDE_OP_FIRST_ID, cls, udata ) )
    {
-      cls->op_first( ctx, udata );
+      cls->op_iter( ctx, udata );
    }
    else
    {
-      Class::op_first( ctx, self );
+      Class::op_iter( ctx, self );
    }
 }
 

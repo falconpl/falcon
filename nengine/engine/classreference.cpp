@@ -453,13 +453,13 @@ void ClassReference::op_toString( VMContext* ctx, void* self ) const
 }
 
 
-void ClassReference::op_first( VMContext* ctx, void* self ) const
+void ClassReference::op_iter( VMContext* ctx, void* self ) const
 {
    Reference* ref = static_cast<Reference*>(self);
    Class* cls;
    void* data;
    ref->m_item.forceClassInst( cls, data );
-   cls->op_first( ctx, data );   
+   cls->op_iter( ctx, data );   
 }
 
 

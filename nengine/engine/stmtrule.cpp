@@ -29,7 +29,7 @@ public:
 };
 
 StmtRule::StmtRule( int32 line, int32 chr ):
-   Statement( rule_t, line, chr )
+   Statement( e_stmt_rule, line, chr )
 {
    apply = apply_;
    _p = new Private;
@@ -139,7 +139,7 @@ void StmtRule::apply_( const PStep*s1 , VMContext* ctx )
 // Statement cut
 
 StmtCut::StmtCut( int32 line, int32 chr ):
-   Statement( cut_t,  line, chr )
+   Statement( e_stmt_cut,  line, chr )
 {
    apply = apply_;
 }

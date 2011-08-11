@@ -309,11 +309,18 @@ public:
 
     This might create a new variable or access an already existing variable
     in the current context.
-
-    \note By default, variables are added also as "extern".
     */
    Symbol* addVariable( const String& variable );
 
+   /** Creates a new variable and define it immediately in the current context.
+    \param variable A Variable or symbol name to be created.
+    \return A new or already existing symbol.
+
+    This might create a new variable or access an already existing variable
+    in the current context.
+    */
+   Symbol* addDefinedVariable( const String& variable );
+   
    /** Remove a previusly referenced variable in the current statement.
     \param variable
 

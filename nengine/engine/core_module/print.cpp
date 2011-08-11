@@ -73,6 +73,7 @@ FuncPrintBase::NextStep::NextStep()
 
 void FuncPrintBase::NextStep::printNext( VMContext* ctx, int count ) const
 {
+   String str;
    TextWriter* out = ctx->vm()->textOut();
    int nParams = ctx->currentFrame().m_paramCount;
 
@@ -85,26 +86,44 @@ void FuncPrintBase::NextStep::printNext( VMContext* ctx, int count ) const
       Class* cls;
       void* data;
 
-      item->forceClassInst( cls, data );
-      // put the input data for toString
-      ctx->topData() = *item;
-      ++count;
-
-      ctx->currentCode().m_seqId = count;
-      cls->op_toString( ctx, data );
-      if( ctx->wentDeep(this) )
+      if( item->asClassInst( cls, data ) )
       {
-         return;
-      }
+         if( cls->typeID() == FLC_CLASS_ID_STRING )
+         {
+            out->write(*static_cast<String*>(data));
+            ++count;
+         }
+         else
+         {
+            // put the input data for toString
+            ctx->topData() = *item;
+            ++count;
 
-      TRACE3("Function print%s -- printNext", m_isPrintl ? "l" : "" );
-      if( ctx->topData().isString() )
-      {
-         out->write(*ctx->topData().asString());
+            ctx->currentCode().m_seqId = count;
+            cls->op_toString( ctx, data );
+            if( ctx->wentDeep(this) )
+            {
+               return;
+            }
+
+            TRACE3("Function print%s -- printNext", m_isPrintl ? "l" : "" );
+            if( ctx->topData().isString() )
+            {
+               out->write(*ctx->topData().asString());
+            }
+            else
+            {
+               out->write( "<class " + cls->name() +" failed toString>" );
+            }
+         }
       }
       else
       {
-         out->write( "<class " + cls->name() +" failed toString>" );
+         // a flat item.
+         str.size(0);
+         item->describe( str, 1, -1 );
+         out->write( str );
+         ++count;
       }
    }
    ctx->popCode();

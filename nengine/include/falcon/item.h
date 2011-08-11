@@ -494,6 +494,12 @@ public:
       It will do nothing meaningfull on other types.
    */
    numeric forceNumeric() const ;
+   
+   const Item* dereference() const { 
+      return type() == FLC_ITEM_REF ? 
+            content.mth.ref :
+            this; 
+   }
 
    Item* dereference() { 
       return type() == FLC_ITEM_REF ? 
@@ -585,14 +591,27 @@ public:
    void flagsOn( byte b ) { content.base.bits.flags |= b; }
    void flagsOff( byte b ) { content.base.bits.flags &= ~b; }
 
-   bool isLast() const { return (content.base.bits.flags | flagLast ) != 0; }
-   bool isBreak() const { return (content.base.bits.flags | flagBreak ) != 0; }
-   bool isContinue() const { return (content.base.bits.flags | flagContinue ) != 0; }
+   bool isLast() const { return (content.base.bits.flags & flagLast ) != 0; }
+   bool isBreak() const { return (content.base.bits.flags & flagBreak ) != 0; }
+   bool isContinue() const { return (content.base.bits.flags & flagContinue ) != 0; }
 
    void setLast() { content.base.bits.flags |= flagLast; }
    void setBreak() { content.base.bits.flags |= flagBreak; }
    void setContinue() { content.base.bits.flags |= flagContinue; }
 
+   /** GC Mark the item -- if necessary. 
+    Provided this is an item in need of GC marking, this method asks the
+    item class to mark the item. Otherwise, the operation is no-op.
+    
+    */
+   
+   void gcMark( uint32 mark ) const
+   {
+      if( isUser() && isGarbaged() )
+      {
+         asClass()->gcMark( asInst(), mark );
+      }
+   }
 
    /** Clone the item.
       If the item is not cloneable, the method returns false. Is up to the caller to

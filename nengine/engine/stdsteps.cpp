@@ -150,6 +150,31 @@ void StdSteps::PStepPop::describeTo( String& s ) const
 }
 
 
+
+void StdSteps::PStepPop2::apply_( const PStep*, VMContext* ctx )
+{
+   ctx->popCode();
+   ctx->popData(2);
+}
+
+void StdSteps::PStepPop2::describeTo( String& s ) const
+{
+   s = "PStepPop2";
+}
+
+
+void StdSteps::PStepPop3::apply_( const PStep*, VMContext* ctx )
+{
+   ctx->popCode();
+   ctx->popData(3);
+}
+
+void StdSteps::PStepPop3::describeTo( String& s ) const
+{
+   s = "PStepPop3";
+}
+
+
 void StdSteps::PStepDragDown::apply_( const PStep*, VMContext* ctx )
 {
    ctx->popCode();
@@ -294,6 +319,28 @@ void StdSteps::PStepPop_::describeTo( String& s ) const
    s = "PStepPop_";
 }
 
+
+
+void StdSteps::PStepPop2_::apply_( const PStep*, VMContext* ctx )
+{
+   ctx->popData(2);
+}
+
+void StdSteps::PStepPop2_::describeTo( String& s ) const
+{
+   s = "PStepPop2";
+}
+
+
+void StdSteps::PStepPop3_::apply_( const PStep*, VMContext* ctx )
+{
+   ctx->popData(3);
+}
+
+void StdSteps::PStepPop3_::describeTo( String& s ) const
+{
+   s = "PStepPop3_";
+}
 
 void StdSteps::PStepDragDown_::apply_( const PStep*, VMContext* ctx )
 {

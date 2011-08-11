@@ -459,7 +459,7 @@ void OverridableClass::op_toString( VMContext* ctx, void* self ) const
    }
 }
 
-void OverridableClass::op_first( VMContext* ctx, void* self ) const
+void OverridableClass::op_iter( VMContext* ctx, void* self ) const
 {
    override_unary( ctx, self, OVERRIDE_OP_FIRST_ID, OVERRIDE_OP_FIRST );
 }

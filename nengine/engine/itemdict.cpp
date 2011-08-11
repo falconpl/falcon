@@ -15,6 +15,10 @@
 
 #include <falcon/itemdict.h>
 #include <falcon/item.h>
+#include <falcon/range.h>
+#include <falcon/class.h>
+#include <falcon/itemid.h>
+#include <falcon/accesstypeerror.h>
 
 #include <map>
 
@@ -23,12 +27,101 @@ namespace Falcon
 
 class ItemDict::Private
 {
-public:
-   typedef std::map<Item, Item> ItemMap;
-   ItemMap m_items;
+public:   
+   typedef std::map<int64, Item> IntegerMap;
+   typedef std::map<String, Item> StringMap;
 
+   class class_data_pair 
+   {
+   public:
+      Class* cls;
+      void* data;
+      
+      class_data_pair():
+         cls(0),
+         data(0)
+      {}
+      
+      class_data_pair( Class* c, void* d ):
+         cls(c),
+         data(d)
+      {}
+   };
+   
+   class cdcomparer
+   {
+   public:
+      bool operator()( const class_data_pair& first, const class_data_pair& second )
+      {
+         if( first.cls < second.cls ) return true;
+         if( first.cls > second.cls ) return false;
+         return first.data < second.data;
+      }
+   };
+   
+   class rangecomparer
+   {
+   public:
+      bool operator()( const Range& first, const Range& second )
+      {
+         return first.compare(second) < 0;
+      }
+   };
+   
+   typedef std::map<class_data_pair, Item, cdcomparer> InstanceMap;
+   typedef std::map<Range, Item, rangecomparer> RangeMap;
+
+   
+   RangeMap m_rangeMap;
+   IntegerMap m_intMap;
+   StringMap m_stringMap;
+   InstanceMap m_instMap;
+   
    Private() {}
+   
+   Private( const Private& other):
+      m_rangeMap( other.m_rangeMap ),
+      m_intMap( other.m_intMap ),
+      m_stringMap( other.m_stringMap ),
+      m_instMap( other.m_instMap )
+   {}
+   
    ~Private() {}
+   
+   void gcMark( uint32 mark )
+   {
+
+      RangeMap::iterator irange = m_rangeMap.begin();
+      while( irange != m_rangeMap.end() )
+      {
+         irange->second.gcMark( mark );
+         ++irange;
+      }
+      
+      IntegerMap::iterator iint = m_intMap.begin();
+      while( iint != m_intMap.end() )
+      {
+         iint->second.gcMark( mark );
+         ++iint;
+      }
+      
+      StringMap::iterator istring = m_stringMap.begin();
+      while( istring != m_stringMap.end() )
+      {
+         istring->second.gcMark( mark );
+         ++istring;
+      }
+      
+      InstanceMap::iterator iinst = m_instMap.begin();
+      while( iinst != m_instMap.end() )
+      {
+         iinst->first.cls->gcMark( iinst->first.data, mark );
+         iinst->first.cls->gcMarkMyself( mark );
+         iinst->second.gcMark( mark );
+         ++iinst;
+      }
+   }
+
 };
 
 
@@ -36,18 +129,14 @@ ItemDict::ItemDict():
    _p( new Private ),
    m_flags(0),
    m_currentMark(0)
-{
-
-}
+{}
 
 
 ItemDict::ItemDict( const ItemDict& other ):
-   _p( new Private ),
+   _p( new Private(*other._p) ),
    m_flags( other.m_flags ),
    m_currentMark( other.m_currentMark )
-{
-   _p->m_items = other._p->m_items;
-}
+{}
 
 
 ItemDict::~ItemDict()
@@ -63,61 +152,98 @@ void ItemDict::gcMark( uint32 mark )
    }
 
    m_currentMark = mark;
-   
-   Private::ItemMap& dict = _p->m_items;
-   Private::ItemMap::iterator pos = dict.begin();
-
-   while( pos != dict.end() )
-   {
-      const Item& key = pos->first;
-      const Item& value = pos->second;
-      if( key.isUser() && key.isGarbaged() )
-      {
-         key.asClass()->gcMark(key.asInst(), mark);
-      }
-
-      if( value.isUser() && value.isGarbaged() )
-      {
-         value.asClass()->gcMark(value.asInst(), mark);
-      }
-
-      ++pos;
-   }
+   _p->gcMark( mark );
 }
 
 
 void ItemDict::insert( const Item& key, const Item& value )
-{
-   _p->m_items[key] = value;
+{  
+   if( key.isReference() )
+   {
+      insert( *key.dereference(), value );
+      return;
+   }
+   
+   switch( key.type() )
+   {      
+      case FLC_ITEM_INT:
+         _p->m_intMap[ key.asInteger() ] = value;
+         break;
+         
+      case FLC_ITEM_NUM:
+         _p->m_intMap[ (int64) key.asNumeric() ] = value;
+         break;
+                       
+      default:
+      {
+         Class *cls;
+         void* data;
+         
+         key.forceClassInst( cls, data );
+         switch( cls->typeID() )
+         {
+            case FLC_CLASS_ID_STRING:
+               _p->m_stringMap[ *static_cast<String*>(data) ] = value;
+               break;
+               
+            case FLC_CLASS_ID_RANGE:
+               _p->m_rangeMap[ *static_cast<Range*>(data) ] = value;
+               break;
+               
+            default:
+               _p->m_instMap[ 
+                  Private::class_data_pair( cls, data ) ] = value;
+               break;
+         }
+      }
+   }
 }
 
 
 void ItemDict::remove( const Item& key )
 {
-   _p->m_items.erase( key );
+   if( key.isReference() )
+   {
+      remove( *key.dereference() );
+      return;
+   }
+   
+   switch( key.type() )
+   {      
+      case FLC_ITEM_INT:
+         _p->m_intMap.erase(key.asInteger());
+         break;
+         
+      case FLC_ITEM_NUM:
+         _p->m_intMap.erase( (int64) key.asNumeric() );
+         break;
+         
+         
+      case FLC_ITEM_USER:
+         _p->m_instMap.erase(
+              Private::class_data_pair( key.asClass(), key.asInst() ) );
+         break;
+   
+      default:
+         // should not happen, but...
+         throw new AccessTypeError( ErrorParam( e_dict_key, __LINE__, SRC ) );
+   }
 }
 
 
-Item* ItemDict::find( const Item& key )
+Item* ItemDict::find( const Item&  )
 {
-   Private::ItemMap& dict = _p->m_items;
-   Private::ItemMap::iterator pos = dict.find( key );
-   if( pos == dict.end() )
-   {
-      return 0;
-   }
-
-   return &pos->second;
+   return 0;
 }
 
 
 length_t ItemDict::size() const
 {
-   return _p->m_items.size();
+   return 0;
 }
 
 
-void ItemDict::describe( String& target, int depth, int maxlen ) const
+void ItemDict::describe( String& target, int depth, int  ) const
 {
    if( depth == 0 )
    {
@@ -125,6 +251,7 @@ void ItemDict::describe( String& target, int depth, int maxlen ) const
       return;
    }
    
+   /*
    Private::ItemMap& dict = _p->m_items;
    Private::ItemMap::const_iterator pos = dict.begin();
 
@@ -148,19 +275,13 @@ void ItemDict::describe( String& target, int depth, int maxlen ) const
    }
 
    target += "]";
+    */
 }
 
 
-void ItemDict::enumerate( Enumerator& rator )
+void ItemDict::enumerate( Enumerator&  )
 {
-   Private::ItemMap& dict = _p->m_items;
-   Private::ItemMap::iterator pos = dict.begin();
-
-   while( pos != dict.end() )
-   {
-      rator( pos->first, pos->second );
-      ++pos;
-   }
+   
 }
 
 

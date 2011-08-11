@@ -57,7 +57,7 @@ void SynFunc::invoke( VMContext* ctx, int32 nparams )
       ctx->addLocals( lc - nparams );
    }
    
-   if( this->syntree().last()->type() != Statement::return_t )
+   if( this->syntree().last()->type() != Statement::e_stmt_return )
    {
       MESSAGE1( "-- Pushing extra return" );
       ctx->pushCode( &s_a_return );

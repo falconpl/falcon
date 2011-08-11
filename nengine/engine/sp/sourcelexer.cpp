@@ -796,9 +796,8 @@ Parsing::TokenInstance* SourceLexer::checkWord()
       break;
 
       case 7:
+         if ( m_text == "forlast" ) return parser->T_forlast.makeInstance(m_sline, m_schr);
          /*
-         if ( m_text == "forlast" )
-            return FORLAST;
          if ( m_text == "default" )
             return DEFAULT;
          */
@@ -810,6 +809,8 @@ Parsing::TokenInstance* SourceLexer::checkWord()
          if ( m_text == "provides" )
             return PROVIDES;
            */
+         if ( m_text == "forfirst" ) return parser->T_forfirst.makeInstance(m_sline, m_schr);
+         
          if ( m_text == "function" )
             return parser->T_function.makeInstance(m_sline, m_schr);
          /*
@@ -825,18 +826,15 @@ Parsing::TokenInstance* SourceLexer::checkWord()
       case 9:
          if ( m_text == "namespace" )
             return parser->T_namespace.makeInstance(m_sline, m_schr);         
-         /*
+         if ( m_text == "formiddle" ) return parser->T_formiddle.makeInstance(m_sline, m_schr);
+        /*
          if ( m_text == "directive" )
          {
             // No assigments in directive.
             m_bIsDirectiveLine = true;
             return DIRECTIVE;
          }
-         if ( m_text == "innerfunc" )
-            return INNERFUNC;
-         if ( m_text == "formiddle" )
-            return FORMIDDLE;
-          */
+         */
       break;
    }
 

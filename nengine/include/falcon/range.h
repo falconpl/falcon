@@ -26,8 +26,8 @@ class FALCON_DYN_CLASS Range
    int64 m_start;
    int64 m_end;
    int64 m_step;
-   int32 m_gcMark;
    bool m_open;
+   int32 m_gcMark;
    
 
 public:
@@ -93,6 +93,23 @@ public:
    inline void step( int64 s ) { m_step = s; }
    inline void gcMark( int32 mark ) { m_gcMark = mark; }
 
+   inline int64 compare( const Range& other ) const
+   {
+      int64 res = m_start - other.m_start;
+      if ( res != 0 ) return res;
+      if( m_open ) 
+      {
+         if( ! other.m_open ) return -1;         
+      }
+      else
+      {
+         if( other.m_open ) return 1;
+         
+         res = m_end - other.m_end;
+         if( res != 0 ) return res;
+      }
+      return m_step - other.m_step;      
+   }
 };
 
 }

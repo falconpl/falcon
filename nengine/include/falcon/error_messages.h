@@ -158,6 +158,8 @@ FAL_ERRORDECL( e_compile, 151, "Dynamic compilation failed -- details in suberro
 FAL_ERRORDECL( e_syn_unpack, 152, "Unpack-array assignment declaration error" );
 FAL_ERRORDECL( e_syn_expr, 153, "Error in expression syntax" );
 
+
+FAL_ERRORDECL( e_not_iterable, 160, "Iterating on non-iterable item." );
 FAL_ERRORDECL( e_cmp_unprep, 161, "Compiler not prepared (still needs to be fed with a module)" );
 FAL_ERRORDECL( e_not_implemented, 162, "Feature not implemented/not available on this instance" );
 FAL_ERRORDECL( e_nl_in_lit, 163, "New line in literal string" );
@@ -173,6 +175,8 @@ FAL_ERRORDECL( e_undef_state, 172, "Undefined state" );
 FAL_ERRORDECL( e_circular_inh, 173, "Circular inheritance detected" );
 FAL_ERRORDECL( e_invop_unb, 174, "Unbound value used in arbitrary operation" );
 FAL_ERRORDECL( e_determ_decl, 175, "Determinism status already specified" );
+FAL_ERRORDECL( e_dict_key, 176, "The given item cannot be used as a key for a dictionary" );
+FAL_ERRORDECL( e_dict_acc, 177, "Key not found in dictionary" );
 
 FAL_ERRORDECL( e_catch_clash, 180, "Duplicate type identifier in catch selector" );
 FAL_ERRORDECL( e_catch_adef, 181, "Default catch block already defined" );
@@ -184,8 +188,11 @@ FAL_ERRORDECL( e_par_unbal, 186, "Unbalanced parenthesis at end of file" );
 FAL_ERRORDECL( e_square_unbal, 187, "Unbalanced square parenthesis at end of file" );
 FAL_ERRORDECL( e_unclosed_string, 188, "Unclosed string at end of file" );
 FAL_ERRORDECL( e_graph_unbal, 189, "Unbalanced bracket parenthesis at end of file" );
-
 FAL_ERRORDECL( e_syn_cut, 190, "Rule cut '!' not under rule" );
+FAL_ERRORDECL( e_forfirst_outside, 191, "Block 'forfirst' declared outside 'for'" );
+FAL_ERRORDECL( e_forlast_outside, 192, "Block 'forlast' declared outside 'for'" );
+FAL_ERRORDECL( e_formiddle_outside, 193, "Block 'formiddle' declared outside 'for'" );
+
 
 FAL_ERRORDECL( e_io_error, 200, "Generic I/O Error" );
 FAL_ERRORDECL( e_io_open, 201, "I/O error: Can't open required resource" );

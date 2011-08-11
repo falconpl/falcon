@@ -25,7 +25,7 @@ namespace Falcon
 {
 
 Breakpoint::Breakpoint( int32 line, int32 chr ):
-   Statement(breakpoint_t, line, chr )
+   Statement(e_stmt_breakpoint, line, chr )
 {
    apply = apply_;
 }
@@ -49,7 +49,7 @@ void Breakpoint::apply_( const PStep*, VMContext* ctx )
 //
 
 StmtWhile::StmtWhile( Expression* check, SynTree* stmts, int32 line, int32 chr ):
-   Statement( while_t, line, chr ),
+   Statement( e_stmt_while, line, chr ),
    m_check(check),
    m_stmts( stmts )
 {
@@ -158,7 +158,7 @@ public:
 
 
 StmtIf::StmtIf( Expression* check, SynTree* ifTrue, SynTree* ifFalse, int32 line, int32 chr ):
-   Statement( if_t, line, chr ),
+   Statement( e_stmt_if, line, chr ),
    _p( new Private )
 {
    apply = apply_;
@@ -271,7 +271,7 @@ void StmtIf::apply_( const PStep* s1, VMContext* ctx )
 // Return
 //
 StmtReturn::StmtReturn( Expression* expr, int32 line, int32 chr ):
-      Statement(return_t, line, chr ),
+      Statement(e_stmt_return, line, chr ),
       m_expr( expr )
 {
    apply = apply_;

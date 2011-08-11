@@ -28,7 +28,7 @@ namespace Falcon
 {
 
 StmtAutoexpr::StmtAutoexpr( Expression* expr, int32 line, int32 chr ):
-      Statement(autoexpr_t, line, chr ),
+      Statement(e_stmt_autoexpr, line, chr ),
       m_expr( expr ),
       m_nd( false ),
       m_determ( false )

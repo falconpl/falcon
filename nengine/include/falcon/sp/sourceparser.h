@@ -115,6 +115,10 @@ public:
    Parsing::Terminal T_import;
    Parsing::Terminal T_namespace;
 
+   Parsing::Terminal T_forfirst;
+   Parsing::Terminal T_formiddle;
+   Parsing::Terminal T_forlast;
+
    //================================================
    // Statements
    //
@@ -138,6 +142,18 @@ public:
    Parsing::Rule r_while;
    Parsing::Rule r_while_short;
 
+   Parsing::NonTerminal S_For;
+   Parsing::Rule r_for_to_step;
+   Parsing::Rule r_for_to;
+   Parsing::Rule r_for_in;
+   
+   Parsing::NonTerminal S_Forfirst;
+   Parsing::Rule r_forfirst;
+   Parsing::NonTerminal S_Formiddle;
+   Parsing::Rule r_formiddle;
+   Parsing::NonTerminal S_Forlast;
+   Parsing::Rule r_forlast;
+   
    Parsing::NonTerminal S_Rule;
    Parsing::Rule r_rule;
 

@@ -49,6 +49,7 @@ public:
    {
    public:
       PStepDupliTop() { apply = apply_; }
+      virtual ~PStepDupliTop() {}
       static void apply_( const PStep*, VMContext* ctx );
       virtual void describeTo( String& ) const;
    };
@@ -59,6 +60,7 @@ public:
    {
    public:
       PStepDupliTop2() { apply = apply_; }
+      virtual ~PStepDupliTop2() {}
       static void apply_( const PStep*, VMContext* ctx );
       virtual void describeTo( String& ) const;
    };
@@ -69,6 +71,7 @@ public:
    {
    public:
       PStepDupliTop3() { apply = apply_; }
+      virtual ~PStepDupliTop3() {}
       static void apply_( const PStep*, VMContext* ctx );
       virtual void describeTo( String& ) const;
    };
@@ -80,6 +83,7 @@ public:
    {
    public:
       PStepSwapTop() { apply = apply_; }
+      virtual ~PStepSwapTop() {}
       static void apply_( const PStep*, VMContext* ctx );
       virtual void describeTo( String& ) const;
    };
@@ -96,6 +100,7 @@ public:
    {
    public:
       PStepSwapTopWith2() { apply = apply_; }
+      virtual ~PStepSwapTopWith2() {}
       static void apply_( const PStep*, VMContext* ctx );
       virtual void describeTo( String& ) const;
    };
@@ -113,6 +118,7 @@ public:
    {
    public:
       PStepCopyDown2() { apply = apply_; }
+      virtual ~PStepCopyDown2() {}
       static void apply_( const PStep*, VMContext* ctx );
       virtual void describeTo( String& ) const;
    };
@@ -122,6 +128,7 @@ public:
    {
    public:
       PStepCopyDown3() { apply = apply_; }
+      virtual ~PStepCopyDown3() {}
       static void apply_( const PStep*, VMContext* ctx );
       virtual void describeTo( String& ) const;
    };
@@ -131,6 +138,7 @@ public:
    {
    public:
       PStepCopyDown4() { apply = apply_; }
+      virtual ~PStepCopyDown4() {}
       static void apply_( const PStep*, VMContext* ctx );
       virtual void describeTo( String& ) const;
    };
@@ -140,6 +148,7 @@ public:
    {
    public:
       PStepCopyDown5() { apply = apply_; }
+      virtual ~PStepCopyDown5() {}
       static void apply_( const PStep*, VMContext* ctx );
       virtual void describeTo( String& ) const;
    };
@@ -150,16 +159,40 @@ public:
    {
    public:
       PStepPop() { apply = apply_; }
+      virtual ~PStepPop() {}
       static void apply_( const PStep*, VMContext* ctx );
       virtual void describeTo( String& ) const;
    };
    PStepPop m_pop;
+   
+   /** Cleans the topmost 2 values */
+   class PStepPop2: public PStep
+   {
+   public:
+      PStepPop2() { apply = apply_; }
+      virtual ~PStepPop2() {}
+      static void apply_( const PStep*, VMContext* ctx );
+      virtual void describeTo( String& ) const;
+   };
+   PStepPop2 m_pop2;
+   
+   /** Cleans the topmost 3 values */
+   class PStepPop3: public PStep
+   {
+   public:
+      PStepPop3() { apply = apply_; }
+      virtual ~PStepPop3() {}
+      static void apply_( const PStep*, VMContext* ctx );
+      virtual void describeTo( String& ) const;
+   };
+   PStepPop3 m_pop3;
    
    /** Pops the topmost value of the stack and copies it on the previous item. */
    class PStepDragDown: public PStep
    {
    public:
       PStepDragDown() { apply = apply_; }
+      virtual ~PStepDragDown() {}
       static void apply_( const PStep*, VMContext* ctx );
       virtual void describeTo( String& ) const;
    };
@@ -172,6 +205,7 @@ public:
    {
    public:
       PStepAddSpace() {apply = apply_; }
+      virtual ~PStepAddSpace() {}
       static void apply_( const PStep*, VMContext* ctx );
       virtual void describeTo( String& ) const;
    };
@@ -186,6 +220,7 @@ public:
    {
    public:
       PStepDupliTop_() { apply = apply_; }
+      virtual ~PStepDupliTop_() {}
       static void apply_( const PStep*, VMContext* ctx );
       virtual void describeTo( String& ) const;
    };
@@ -196,6 +231,7 @@ public:
    {
    public:
       PStepDupliTop2_() { apply = apply_; }
+      virtual ~PStepDupliTop2_() {}
       static void apply_( const PStep*, VMContext* ctx );
       virtual void describeTo( String& ) const;
    };
@@ -206,6 +242,7 @@ public:
    {
    public:
       PStepDupliTop3_() { apply = apply_; }
+      virtual ~PStepDupliTop3_() {}
       static void apply_( const PStep*, VMContext* ctx );
       virtual void describeTo( String& ) const;
    };
@@ -217,6 +254,7 @@ public:
    {
    public:
       PStepSwapTop_() { apply = apply_; }
+      virtual ~PStepSwapTop_() {}
       static void apply_( const PStep*, VMContext* ctx );
       virtual void describeTo( String& ) const;
    };
@@ -233,6 +271,7 @@ public:
    {
    public:
       PStepSwapTopWith2_() { apply = apply_; }
+      virtual ~PStepSwapTopWith2_() {}
       static void apply_( const PStep*, VMContext* ctx );
       virtual void describeTo( String& ) const;
    };
@@ -250,6 +289,7 @@ public:
    {
    public:
       PStepCopyDown2_() { apply = apply_; }
+      virtual ~PStepCopyDown2_() {}
       static void apply_( const PStep*, VMContext* ctx );
       virtual void describeTo( String& ) const;
    };
@@ -259,6 +299,7 @@ public:
    {
    public:
       PStepCopyDown3_() { apply = apply_; }
+      virtual ~PStepCopyDown3_() {}
       static void apply_( const PStep*, VMContext* ctx );
       virtual void describeTo( String& ) const;
    };
@@ -268,6 +309,7 @@ public:
    {
    public:
       PStepCopyDown4_() { apply = apply_; }
+      virtual ~PStepCopyDown4_() {}
       static void apply_( const PStep*, VMContext* ctx );
       virtual void describeTo( String& ) const;
    };
@@ -277,6 +319,7 @@ public:
    {
    public:
       PStepCopyDown5_() { apply = apply_; }
+      virtual ~PStepCopyDown5_() {}
       static void apply_( const PStep*, VMContext* ctx );
       virtual void describeTo( String& ) const;
    };
@@ -287,16 +330,40 @@ public:
    {
    public:
       PStepPop_() { apply = apply_; }
+      virtual ~PStepPop_() {}
       static void apply_( const PStep*, VMContext* ctx );
       virtual void describeTo( String& ) const;
    };
    PStepPop_ m_pop_;
+   
+   /** Cleans the topmost 2 values */
+   class PStepPop2_: public PStep
+   {
+   public:
+      PStepPop2_() { apply = apply_; }
+      virtual ~PStepPop2_() {}
+      static void apply_( const PStep*, VMContext* ctx );
+      virtual void describeTo( String& ) const;
+   };
+   PStepPop2_ m_pop2_;
+   
+   /** Cleans the topmost 3 values */
+   class PStepPop3_: public PStep
+   {
+   public:
+      PStepPop3_() { apply = apply_; }
+      virtual ~PStepPop3_() {}
+      static void apply_( const PStep*, VMContext* ctx );
+      virtual void describeTo( String& ) const;
+   };
+   PStepPop3_ m_pop3_;
    
    /** Pops the topmost value of the stack and copies it on the previous item. */
    class PStepDragDown_: public PStep
    {
    public:
       PStepDragDown_() { apply = apply_; }
+      virtual ~PStepDragDown_() {}
       static void apply_( const PStep*, VMContext* ctx );
       virtual void describeTo( String& ) const;
    };
@@ -306,6 +373,7 @@ public:
    {
    public:
       PStepAddSpace_() {apply = apply_; }
+      virtual ~PStepAddSpace_() {}
       static void apply_( const PStep*, VMContext* ctx );
       virtual void describeTo( String& ) const;
    };

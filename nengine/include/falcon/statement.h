@@ -35,18 +35,20 @@ class FALCON_DYN_CLASS Statement: public PStep
 
 public:
    typedef enum {
-      breakpoint_t,
-      autoexpr_t,
-      if_t,
-      while_t,
-      return_t,
-      rule_t,
-      cut_t,
-      init_t,
+      e_stmt_breakpoint,
+      e_stmt_autoexpr,
+      e_stmt_if,
+      e_stmt_while,
+      e_stmt_return,
+      e_stmt_rule,
+      e_stmt_cut,
+      e_stmt_init,
+      e_stmt_for_in,
+      e_stmt_for_to,
       custom_t
-   } statement_t ;
+   } t_statement;
 
-   Statement( statement_t type, int32 line=0, int32 chr=0 ):
+   Statement( t_statement type, int32 line=0, int32 chr=0 ):
       PStep( line, chr ),
       m_step0(0), m_step1(0), m_step2(0), m_step3(0),
       m_discardable(false),
@@ -54,7 +56,7 @@ public:
    {}
 
    inline virtual ~Statement() {}
-   inline statement_t type() const { return m_type; }
+   inline t_statement type() const { return m_type; }
    /** Subclasses can set this to true to be discareded during parsing.*/
    inline bool discardable() const { return m_discardable; }
 
@@ -90,7 +92,7 @@ protected:
    friend class SynTree;
    friend class RuleSynTree;
 private:
-   statement_t m_type;
+   t_statement m_type;
 };
 
 /** Statement causing the VM to return.

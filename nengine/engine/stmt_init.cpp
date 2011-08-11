@@ -24,7 +24,7 @@ namespace Falcon
 {
 
 StmtInit::StmtInit( Inheritance* inh, int32 line, int32 chr  ):
-   Statement( init_t, line, chr ),
+   Statement( e_stmt_init, line, chr ),
    m_inheritance( inh )
 {
    fassert( inh->parent() != 0 && inh->parent()->isFalconClass() );

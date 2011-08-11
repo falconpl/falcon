@@ -255,6 +255,41 @@ void ClassArray::op_toString( VMContext* ctx, void* self ) const
    ctx->stackResult( 1, s );
 }
 
+
+void ClassArray::op_iter( VMContext* ctx, void* ) const
+{
+   // (seq)(iter)(value)
+   Item& iter = ctx->opcodeParam(1);
+   iter.setInteger( (int64) 0 );
+}
+
+
+void ClassArray::op_next( VMContext* ctx, void* instance ) const
+{
+   // (seq)(iter)(value)
+   Item& iter = ctx->opcodeParam(1);
+   length_t pos = 0;
+   
+   ItemArray* arr = static_cast<ItemArray*>(instance);
+   fassert( iter.isInteger() );
+   pos = (length_t) iter.asInteger();
+   if( pos >= arr->length() )
+   {
+      ctx->topData().setBreak();
+   }
+   else
+   {
+      ctx->topData().assign( arr->at(pos++) );
+      if( pos >= arr->length() )
+      {
+         ctx->topData().setLast();
+      }
+      iter.setInteger( pos );
+   }
+}
+
+
+
 #if 0
 void ClassArray::op_toString( VMContext* ctx, void* self ) const
    // If we're long 0, surrender.

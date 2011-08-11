@@ -371,7 +371,7 @@ IntCompiler::compile_status IntCompiler::compileNext( const String& value)
          VMContext* ctx = m_vm->currentContext();
          ctx->pushReturn();
          ctx->pushCode(m_currentTree);
-         if ( m_currentTree->at(0)->type() == Statement::autoexpr_t )
+         if ( m_currentTree->at(0)->type() == Statement::e_stmt_autoexpr )
          {
             // this requires evaluation; but is this a direct call?
             StmtAutoexpr* stmt = static_cast<StmtAutoexpr*>(m_currentTree->at(0));

@@ -31,6 +31,7 @@
 #include <falcon/sp/parser_end.h>
 #include <falcon/sp/parser_export.h>
 #include <falcon/sp/parser_expr.h>
+#include <falcon/sp/parser_for.h>
 #include <falcon/sp/parser_function.h>
 #include <falcon/sp/parser_if.h>
 #include <falcon/sp/parser_index.h>
@@ -143,7 +144,12 @@ SourceParser::SourceParser():
    T_load( "load" ),
    T_export( "export" ),
    T_import( "import" ),
-   T_namespace( "namespace" )
+   T_namespace( "namespace" ),
+   
+   T_forfirst( "forfirst" ),
+   T_formiddle( "formiddle" ),
+   T_forlast( "forlast" )
+   
 {
    S_Autoexpr << "Autoexpr"
       << (r_line_autoexpr << "Autoexpr" << apply_line_expr << Expr << T_EOL)
@@ -166,7 +172,30 @@ SourceParser::SourceParser():
       << (r_while_short << "while_short" << apply_while_short << T_while << Expr << T_Colon << Expr << T_EOL )
       << (r_while << "while" << apply_while << T_while << Expr << T_EOL )
       ;
+   
+   S_For << "FOR" << for_errhand;
+   S_For << (r_for_to_step << "FOR/to/step" << apply_for_to_step
+            << T_for << T_Name << T_EqSign << Expr << T_to << Expr << T_Comma << Expr << T_EOL )
+      << (r_for_to << "FOR/to" << apply_for_to 
+            << T_for << T_Name << T_EqSign << Expr << T_to << Expr << T_EOL )
+      << (r_for_in << "FOR/in" << apply_for_in << T_for << NeListSymbol << T_in << Expr << T_EOL )
+      ;
+      
+   S_Forfirst << "forfirst";
+   S_Forfirst << (r_forfirst << "FORfirst" << apply_forfirst
+            << T_forfirst << T_EOL )     
+      ;
+   
+   S_Formiddle << "formiddle";
+   S_Formiddle << (r_formiddle << "FORmiddle" << apply_formiddle
+            << T_formiddle << T_EOL )     
+      ;
 
+   S_Forlast << "forlast";
+   S_Forlast << (r_forlast << "FORlast" << apply_forlast
+            << T_forlast << T_EOL )     
+      ;
+   
    S_Rule << "RULE"
       << (r_rule << "rule" << apply_rule << T_rule << T_EOL )
       ;
@@ -450,6 +479,7 @@ SourceParser::SourceParser():
    //State declarations
    //
    s_Main << "Main"
+      << S_EmptyLine
       << S_Load
       << S_Export
       << S_Import
@@ -457,16 +487,20 @@ SourceParser::SourceParser():
       
       << S_Function
       << S_Class
-      << S_Autoexpr
+      
       << S_If
       << S_Elif
       << S_Else
       << S_While
+      << S_For
+      << S_Forfirst
+      << S_Formiddle
+      << S_Forlast
       << S_Rule
       << S_Cut
       << S_End
       << S_Return
-      << S_EmptyLine
+      << S_Autoexpr
       ;
 
    s_ClassBody << "ClassBody"
@@ -478,18 +512,20 @@ SourceParser::SourceParser():
       ;
 
    s_InlineFunc << "InlineFunc"
-      << S_Function
-      << S_Class
-      << S_Autoexpr
+      << S_EmptyLine
       << S_If
       << S_Elif
       << S_Else
       << S_While
+      << S_For
+      << S_Forfirst
+      << S_Formiddle
+      << S_Forlast
       << S_Rule
       << S_Cut
       << S_SmallEnd
       << S_Return
-      << S_EmptyLine
+      << S_Autoexpr
       ;
 
    s_LambdaStart << "LambdaStart"
