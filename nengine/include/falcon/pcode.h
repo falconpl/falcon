@@ -72,11 +72,13 @@ public:
    
    friend class StmtAutoexpr;
 
+   void autonomous();
 private:
    class Private;
    Private* _p;
 
    static void apply_( const PStep* ps, VMContext* ctx );
+   static void apply_auto_( const PStep* ps, VMContext* ctx );
 };
 
 }

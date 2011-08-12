@@ -84,7 +84,7 @@ void apply_if_short( const Rule&, Parser& p )
       ParserContext* st = static_cast<ParserContext*>(p.context());
 
       SynTree* ifTrue = new SynTree;
-      ifTrue->append( new StmtAutoexpr(sa) );
+      ifTrue->append( new StmtAutoexpr(sa, false) );
 
       StmtIf* stmt_if = new StmtIf(expr, ifTrue, 0, tif->line(), tif->chr());
       st->addStatement( stmt_if );

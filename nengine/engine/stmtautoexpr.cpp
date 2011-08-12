@@ -27,7 +27,7 @@
 namespace Falcon 
 {
 
-StmtAutoexpr::StmtAutoexpr( Expression* expr, int32 line, int32 chr ):
+StmtAutoexpr::StmtAutoexpr( Expression* expr, bool isInRule, int32 line, int32 chr ):
       Statement(e_stmt_autoexpr, line, chr ),
       m_expr( expr ),
       m_nd( false ),
@@ -37,9 +37,17 @@ StmtAutoexpr::StmtAutoexpr( Expression* expr, int32 line, int32 chr ):
    
    m_expr->precompile(&m_pcExpr);
 
-   // Push ourselves
-   m_step0 = this;
-   m_step1 = &m_pcExpr;
+   // Push ourselves?
+   if( isInRule )
+   {
+      m_step0 = this;
+      m_step1 = &m_pcExpr;
+   }
+   else
+   {
+      m_pcExpr.autonomous();
+      m_step0 = &m_pcExpr;
+   }
 }
 
 StmtAutoexpr::~StmtAutoexpr()

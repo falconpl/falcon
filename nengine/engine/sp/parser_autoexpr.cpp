@@ -69,9 +69,12 @@ void apply_line_expr( const Rule&, Parser& p )
    // in interactive context, add the statement only if we don't have errors.
    if( !p.interactive() || p.lastErrorLine() < ti->line() )
    {
+      ParserContext* ctx = static_cast<ParserContext*>(p.context());      
       Expression* expr = static_cast<Expression*>(ti->detachValue());
-      Statement* line = new StmtAutoexpr(expr, ti->line(), ti->chr());
-      ParserContext* ctx = static_cast<ParserContext*>(p.context());
+      
+      Statement* parent = ctx->currentStmt();
+      bool inrule = p.interactive() || (parent != 0 && parent->type() == Statement::e_stmt_rule);
+      Statement* line = new StmtAutoexpr(expr, inrule, ti->line(), ti->chr());
       ctx->addStatement( line );
    }
 

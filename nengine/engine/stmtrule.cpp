@@ -24,8 +24,18 @@ namespace Falcon
 
 class StmtRule::Private {
 public:
-   typedef std::vector<RuleSynTree> AltTrees;
+   typedef std::vector<RuleSynTree* > AltTrees;
    AltTrees m_altTrees;
+   
+   ~Private()
+   {
+      AltTrees::iterator iter = m_altTrees.begin();
+      while( iter != m_altTrees.end() )
+      {
+         delete *iter;
+         ++iter;
+      }
+   }
 };
 
 StmtRule::StmtRule( int32 line, int32 chr ):
@@ -34,7 +44,7 @@ StmtRule::StmtRule( int32 line, int32 chr ):
    apply = apply_;
    _p = new Private;
    // create a base rule syntree
-   _p->m_altTrees.push_back( RuleSynTree() );
+   _p->m_altTrees.push_back( new RuleSynTree() );
 
    // push ourselves when prepare is invoked
    m_step0 = this;
@@ -49,22 +59,22 @@ StmtRule::~StmtRule()
 
 StmtRule& StmtRule::addStatement( Statement* stmt )
 {
-   _p->m_altTrees.back().append( stmt );
+   _p->m_altTrees.back()->append( stmt );
    return *this;
 }
 
 SynTree& StmtRule::currentTree()
 {
-   return _p->m_altTrees.back();
+   return *_p->m_altTrees.back();
 }
 
 const SynTree& StmtRule::currentTree() const
 {
-   return _p->m_altTrees.back();
+   return *_p->m_altTrees.back();
 }
 StmtRule& StmtRule::addAlternative()
 {
-   _p->m_altTrees.push_back( RuleSynTree() );
+   _p->m_altTrees.push_back( new RuleSynTree() );
    return *this;
 }
 
@@ -81,7 +91,7 @@ void StmtRule::describeTo( String& tgt ) const
          tgt += "or\n";
       }
       bFirst = false;
-      iter->describeTo(tgt);
+      (*iter)->describeTo(tgt);
       ++iter;
    }
    tgt += "end";
@@ -130,7 +140,7 @@ void StmtRule::apply_( const PStep*s1 , VMContext* ctx )
          ctx->startRuleFrame();
 
          // push the next alternative and pricess it
-         ctx->pushCode( &self->_p->m_altTrees[cf.m_seqId++] );
+         ctx->pushCode( self->_p->m_altTrees[cf.m_seqId++] );
       }
    }
 }

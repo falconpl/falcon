@@ -22,7 +22,6 @@
 
 #include <falcon/expression.h>
 #include <falcon/statement.h>
-#include <falcon/stmtautoexpr.h>
 #include <falcon/exprvalue.h>
 #include <falcon/stmtfor.h>
 

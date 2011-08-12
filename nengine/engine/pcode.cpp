@@ -96,6 +96,38 @@ void PCode::apply_( const PStep* self, VMContext* ctx )
    ctx->popCode();
 }
 
+void PCode::apply_auto_( const PStep* self, VMContext* ctx )
+{
+   TRACE2( "PCode apply: %p (%s)", self, self->describe().c_ize() );
+
+   const Private::StepList& steps = static_cast<const PCode*>(self)->_p->m_steps;
+   register CodeFrame& cf = ctx->currentCode();
+
+   // TODO Check if all this loops are really performance wise
+   int size = steps.size();
+
+   TRACE2( "PCode apply: step %d/%d", cf.m_seqId, size );
+
+   while ( cf.m_seqId < size )
+   {
+      const PStep* pstep = steps[ cf.m_seqId++ ];
+      pstep->apply( pstep, ctx );
+
+      if( &ctx->currentCode() != &cf )
+      {
+         return;
+      }
+   }
+
+   // when we're done...
+   ctx->popCode();
+   ctx->popData();
+}
+
+void PCode::autonomous()
+{
+   apply = apply_auto_;
+}
 
 }
 

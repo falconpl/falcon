@@ -80,7 +80,7 @@ void apply_while_short( const Rule&, Parser& p )
    ParserContext* st = static_cast<ParserContext*>(p.context());
 
    SynTree* whsyn = new SynTree;
-   whsyn->append( new StmtAutoexpr(sa) );
+   whsyn->append( new StmtAutoexpr(sa, false ) );
 
    StmtWhile* stmt_wh = new StmtWhile(expr, whsyn);
    stmt_wh->decl( twhile->line(), twhile->chr() );

@@ -60,28 +60,28 @@ void generic_apply_( const PStep* DEBUG_ONLY(ps), VMContext* ctx )
    TRACE2( "Apply \"%s\"", ((ExprCompare*)ps)->describe().c_ize() );
 
    // copy the second
-   Item *op1, *op2;
-   ctx->operands( op1, op2 );
+   register Item& op1 = ctx->opcodeParam(1);
+   register Item& op2 = ctx->opcodeParam(0);
 
-   switch ( op1->type() << 8 | op2->type() )
+   switch ( op1.type() << 8 | op2.type() )
    {
    case FLC_ITEM_INT << 8 | FLC_ITEM_INT:
-      op1->setBoolean( __CPR::pass( op1->asInteger(), op2->asInteger() ) );
+      op1.setBoolean( __CPR::pass( op1.asInteger(), op2.asInteger() ) );
       ctx->popData();
       break;
 
    case FLC_ITEM_INT << 8 | FLC_ITEM_NUM:
-      op1->setBoolean( __CPR::pass( op1->asInteger(), op2->asNumeric() ) );
+      op1.setBoolean( __CPR::pass( op1.asInteger(), op2.asNumeric() ) );
       ctx->popData();
       break;
 
    case FLC_ITEM_NUM << 8 | FLC_ITEM_INT:
-      op1->setBoolean( __CPR::pass( op1->asNumeric(), op2->asInteger() ) );
+      op1.setBoolean( __CPR::pass( op1.asNumeric(), op2.asInteger() ) );
       ctx->popData();
       break;
 
    case FLC_ITEM_NUM << 8 | FLC_ITEM_NUM:
-      op1->setBoolean( __CPR::pass( op1->asNumeric(), op2->asNumeric() ) );
+      op1.setBoolean( __CPR::pass( op1.asNumeric(), op2.asNumeric() ) );
       ctx->popData();
       break;
 
@@ -92,15 +92,14 @@ void generic_apply_( const PStep* DEBUG_ONLY(ps), VMContext* ctx )
    case FLC_ITEM_USER << 8 | FLC_ITEM_METHOD:
    case FLC_ITEM_USER << 8 | FLC_ITEM_FUNC:
    case FLC_ITEM_USER << 8 | FLC_ITEM_USER:
-      op1->asClass()->op_compare( ctx, op1->asInst() );
+      op1.asClass()->op_compare( ctx, op1.asInst() );
       // refetch, we may have gone deep
-      op1 = &ctx->topData();
-      fassert( op1->isInteger() );
-      op1->setBoolean( __CPR::cmpCheck( op1->asInteger() < 0 ) );
+      fassert( ctx->topData().isInteger() );
+      ctx->topData().setBoolean( __CPR::cmpCheck( ctx->topData().asInteger() < 0 ) );
       break;
 
    default:
-      op1->setBoolean( __CPR::cmpCheck( op1->compare(*op2) ) );
+      op1.setBoolean( __CPR::cmpCheck( op1.compare(op2) ) );
       ctx->popData();
    }
 }

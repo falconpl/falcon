@@ -63,6 +63,7 @@ public:
    SynTree& append( Statement* step );
 
    static void apply_( const PStep* ps, VMContext* ctx );
+   static void apply_single_( const PStep* ps, VMContext* ctx );
 
    virtual void describeTo( String& tgt ) const;
 
@@ -79,6 +80,7 @@ protected:
    Private* _p;
    
    SymbolTable* m_locals;
+   Statement* m_single;
 };
 
 }

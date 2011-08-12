@@ -280,6 +280,7 @@ bool VMachine::run()
             // if we're still alive it means the event was correctly handled
             break;
       }
+      
       // END STEP
    }
 

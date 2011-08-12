@@ -195,8 +195,8 @@ void generic_apply_( const PStep* ps, VMContext* ctx )
    TRACE2( "Apply \"%s\"", ((ExprMath*)ps)->describe().c_ize() );
 
    // No need to copy the second, we're not packing the stack now.
-   Item *op1, *op2;
-   ctx->operands( op1, op2 );
+   register Item *op1 = &ctx->opcodeParam(1); 
+   register Item *op2 = &ctx->opcodeParam(0);
    __CPR::swapper( *op1, *op2 );   
 
    if ( __CPR::zeroCheck(*op2) )
@@ -219,7 +219,7 @@ void generic_apply_( const PStep* ps, VMContext* ctx )
    switch ( op1->type() << 8 | op2->type() )
    {
    case FLC_ITEM_INT << 8 | FLC_ITEM_INT:
-      op1->setInteger( __CPR::operate(op1->asInteger(), op2->asInteger()) );
+      op1->content.data.val64 = __CPR::operate(op1->asInteger(), op2->asInteger());
       ctx->popData();
       break;
 
@@ -228,11 +228,11 @@ void generic_apply_( const PStep* ps, VMContext* ctx )
       ctx->popData();
       break;
    case FLC_ITEM_NUM << 8 | FLC_ITEM_INT:
-      op1->setNumeric( __CPR::operaten(op1->asNumeric(), op2->asInteger()) );
+      op1->content.data.number = __CPR::operaten(op1->asNumeric(), op2->asInteger());
       ctx->popData();
       break;
    case FLC_ITEM_NUM << 8 | FLC_ITEM_NUM:
-      op1->setNumeric( __CPR::operaten(op1->asNumeric(), op2->asNumeric()) );
+      op1->content.data.number = __CPR::operaten(op1->asNumeric(), op2->asNumeric());
       ctx->popData();
       break;
       

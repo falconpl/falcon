@@ -225,8 +225,8 @@ void StmtForIn::PStepGetNext::apply_( const PStep*, VMContext* ctx )
     // we're never needed anymore
     ctx->popCode();
     
-    Class* cls;
-    void* dt;
+    Class* cls = 0;
+    void* dt = 0;
     // here we have seq, iter, <space>...
     ctx->opcodeParam(2).asClassInst( cls, dt );
     // ... pass them to next.

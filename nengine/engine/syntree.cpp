@@ -83,23 +83,45 @@ SymbolTable* SynTree::locals( bool bmake )
 void SynTree::apply_( const PStep* ps, VMContext* ctx )
 {
    const SynTree* self = static_cast<const SynTree*>(ps);
-
    // get the current step.
    CodeFrame& cf = ctx->currentCode();
    TRACE1( "Syntree::apply -- %p with %d/%d", ps, cf.m_seqId, self->_p->m_steps.size() );
    
-   if (cf.m_seqId >= (int) self->_p->m_steps.size() )
+   register Private::Steps& steps = self->_p->m_steps;
+   register length_t len = steps.size();
+   register Statement* step = steps[ cf.m_seqId++ ];
+      
+   if (cf.m_seqId >= (int) len )
    {
       // we're done.
       ctx->popCode();
-      return;
+      if( cf.m_seqId > (int) len )
+      {
+         MESSAGE2( "Syntree::exiting now" );
+         // yeah, done for good 
+         // -- step is invalid, the sequence was over before we got here.
+         // -- This should happen only when the syntree was empty -- which
+         // -- is pathological, as empty syntrees should have been purged
+         return;
+      }
+      else
+      {
+         MESSAGE2( "Syntree::exiting next step" );         
+      }
    }
 
-   Statement* step = self->_p->m_steps[ cf.m_seqId++ ];
    TRACE2( "Syntree::apply -- preparing \"%s\"", step->oneLiner().c_ize() );
    step->prepare(ctx);
 }
 
+
+
+void SynTree::apply_single_( const PStep* ps, VMContext* ctx )
+{
+   const SynTree* self = static_cast<const SynTree*>(ps);
+   ctx->popCode();
+   self->m_single->prepare(ctx);
+}
 
 void SynTree::set( int pos, Statement* p )  {
    delete _p->m_steps[pos];
@@ -109,21 +131,43 @@ void SynTree::set( int pos, Statement* p )  {
 
 void SynTree::remove( int pos )
 {
-     Statement* p =_p->m_steps[ pos ];
-     _p->m_steps.erase( _p->m_steps.begin()+pos );
-     delete p;
+  Statement* p =_p->m_steps[ pos ];
+  _p->m_steps.erase( _p->m_steps.begin()+pos );
+  delete p;
 }
 
 
 void SynTree::insert( int pos, Statement* step )
 {
    _p->m_steps.insert( _p->m_steps.begin()+pos, step );
+   size_t size = _p->m_steps.size();
+   if( size == 2 )
+   {
+      apply = apply_;
+   }
+   else if( size == 1 )
+   {
+      m_single = step;
+      apply = apply_single_;
+   }
 }
 
 
 SynTree& SynTree::append( Statement* step )
 {
    _p->m_steps.push_back( step );
+   size_t size = _p->m_steps.size();
+   
+   if( size == 2 )
+   {
+      apply = apply_;
+   }
+   else if( size == 1 )
+   {
+      m_single = step;
+      apply = apply_single_;
+   }
+   
    return *this;
 }
 

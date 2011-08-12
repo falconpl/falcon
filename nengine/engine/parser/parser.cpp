@@ -115,7 +115,7 @@ Parser::Parser():
    T_String("String"),
    m_ctx(0),
    m_bIsDone(false),
-   m_bInteractive(0),
+   m_bInteractive(false),
    m_consumeToken(0)
 {
    _p = new Private;

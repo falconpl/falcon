@@ -31,7 +31,7 @@ namespace Falcon {
 class FALCON_DYN_CLASS StmtAutoexpr: public Statement
 {
 public:
-   StmtAutoexpr( Expression* expr, int32 line=0, int32 chr = 0 );
+   StmtAutoexpr( Expression* expr, bool isInRule=false, int32 line=0, int32 chr = 0 );
    virtual ~StmtAutoexpr();
 
    void describeTo( String& tgt ) const;
@@ -77,6 +77,7 @@ public:
       m_expr = 0;
       return expr;
    }
+   
    
 private:
    // apply is the same as PCODE, but it also checks ND requests.

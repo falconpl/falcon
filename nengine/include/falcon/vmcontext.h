@@ -353,7 +353,7 @@ public:
       register CallFrame& cf = currentFrame();
       if( cf.m_initBase < cf.m_stackBase )
       {
-         register Item& itm = *param(-1);
+         register Item& itm = m_dataStack[cf.m_stackBase-1];
          register bool mode = itm.isOob();
          itm.resetOob();
          return mode;
