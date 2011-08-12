@@ -114,6 +114,7 @@ add_library(falcon_engine SHARED
   classmethod.cpp
   classnumeric.cpp
   classreference.cpp
+  classrange.cpp
   classstring.cpp
   classuser.cpp
   closedsymbol.cpp

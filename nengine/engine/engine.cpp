@@ -55,6 +55,7 @@
 #include <falcon/classint.h>
 #include <falcon/classnumeric.h>
 #include <falcon/classstring.h>
+#include <falcon/classrange.h>
 #include <falcon/classarray.h>
 #include <falcon/classdict.h>
 #include <falcon/classnumeric.h>
@@ -118,6 +119,7 @@ Engine::Engine()
    //
    m_functionClass = new ClassFunction;
    m_stringClass = new ClassString;
+   m_rangeClass = new ClassRange;
    m_arrayClass = new ClassArray;
    m_dictClass = new ClassDict;
    m_protoClass = new PrototypeClass;
@@ -179,6 +181,7 @@ Engine::~Engine()
    m_collector->stop();
 
    delete m_stringClass;
+   delete m_rangeClass;
    delete m_arrayClass;
    delete m_dictClass;
    delete m_protoClass;
@@ -378,6 +381,13 @@ Class* Engine::stringClass() const
    fassert( m_instance != 0 );
    return m_instance->m_stringClass;
 }
+
+Class* Engine::rangeClass() const
+{
+   fassert( m_instance != 0 );
+   return m_instance->m_rangeClass;
+}
+
 
 Class* Engine::arrayClass() const
 {

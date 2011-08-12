@@ -133,6 +133,17 @@ public:
     return a null pointer.
     */
    Class* stringClass() const;
+   
+   /** Returns the global instance of the String class.
+   \return the Engine instance of the String Class (handler).
+
+    Method init() must have been called before.
+
+    @note This method will assert and terminate the program if compiled in debug mode
+    in case the engine has not been initialized. In release, it will just
+    return a null pointer.
+    */
+   Class* rangeClass() const;
 
    /** Returns the global instance of the Array class.
    \return the Engine instance of the Array Class (handler).
@@ -282,6 +293,7 @@ protected:
    //
    Class* m_functionClass;
    Class* m_stringClass;
+   Class* m_rangeClass;
    Class* m_arrayClass;
    Class* m_dictClass;
    Class* m_protoClass;

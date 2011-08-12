@@ -27,7 +27,7 @@ class FALCON_DYN_CLASS Range
    int64 m_end;
    int64 m_step;
    bool m_open;
-   int32 m_gcMark;
+   uint32 m_gcMark;
    
 
 public:
@@ -85,13 +85,13 @@ public:
    inline int64 start() const { return m_start; }
    inline int64 end() const { return m_end; }
    inline int64 step() const { return m_step; }
-   inline int32 gcMark() const { return m_gcMark; }
+   inline uint32 gcMark() const { return m_gcMark; }
 
    inline void setOpen(bool open) { m_open = open; }
    inline void start( int64 s ) { m_start = s; }
    inline void end( int64 s ) { m_end = s; }
    inline void step( int64 s ) { m_step = s; }
-   inline void gcMark( int32 mark ) { m_gcMark = mark; }
+   inline void gcMark( uint32 mark ) { m_gcMark = mark; }
 
    inline int64 compare( const Range& other ) const
    {
@@ -110,6 +110,24 @@ public:
       }
       return m_step - other.m_step;      
    }
+   
+   void describe( String& target ) const
+   {
+      target.size(0);
+      target.append('[');
+      target.N( start() ).A(":");
+      if( ! isOpen() )
+      {
+         target.N( end() );
+      }
+      if( step() != 0 )
+      {
+         target.A(":").N(step());
+      }
+      target.append(']');
+   }
+   
+   String describe() const { String temp; describe(temp); return temp; }
 };
 
 }

@@ -20,6 +20,7 @@
 
 
 #include "falcon/accesserror.h"
+#include "falcon/accesstypeerror.h"
 
 namespace Falcon {
 
@@ -34,16 +35,16 @@ ClassRange::~ClassRange()
 }
 
 
-//void ClassRange::dispose( void* self ) const
-//{
-   //ItemDict* f = static_cast<ItemDict*>(self);
-   //delete f;
-//}
+void ClassRange::dispose( void* self ) const
+{
+   Range* f = static_cast<Range*>(self);   
+   delete f;
+}
 
 
 void* ClassRange::clone( void* source ) const
 {
-   return Range(*static_cast<Range*>(source));
+   return new Range(*static_cast<Range*>(source));
 }
 
 
@@ -59,7 +60,7 @@ void* ClassRange::deserialize( DataReader* ) const
    return 0;
 }
 
-void ClassRange::describe( void* instance, String& target, int maxDepth, int maxLen ) const
+void ClassRange::describe( void* instance, String& target, int maxDepth, int ) const
 {
    if( maxDepth == 0 )
    {
@@ -67,8 +68,8 @@ void ClassRange::describe( void* instance, String& target, int maxDepth, int max
       return;
    }
 
-   //ItemDict* dict = static_cast<ItemDict*>(instance);
-   //dict->describe(target, maxDepth, maxLen);
+   Range* r = static_cast<Range*>(instance);
+   r->describe(target);
 }
 
 
@@ -79,12 +80,12 @@ void ClassRange::gcMark( void* self, uint32 mark ) const
    range.gcMark( mark );
 }
 
-bool gcCheck( void* self, uint32 mark ) const
+
+bool ClassRange::gcCheck( void* self, uint32 mark ) const
 {
    Range& range = *static_cast<Range*>(self);
    if ( range.gcMark() < mark)
    {
-      dispose(self);
       return false;
    }
    else
@@ -96,72 +97,164 @@ bool gcCheck( void* self, uint32 mark ) const
 void ClassRange::enumerateProperties( void*, PropertyEnumerator& cb ) const
 {
    cb("len", true);
+   cb("len_", true);
 }
 
-void ClassRange::enumeratePV( void*, Class::PVEnumerator& ) const
+void ClassRange::enumeratePV( void*, Class::PVEnumerator& rator ) const
 {
-   // EnumerateVP doesn't normally return static methods.
+   Item temp;
+   
+   temp = 3;
+   rator("len_", temp );
 }
+
 
 //=======================================================================
 //
 void ClassRange::op_create( VMContext* ctx, int pcount ) const
 {
    static Collector* coll = Engine::instance()->collector();
-   int64* inst = new int64[3];
-   inst[0] = inst[1] = inst[2] = 0;
+   
+   Range* inst = new Range;
+   
+   
+   switch( pcount )
+   {
+      case 0:
+         inst->start(0); 
+         inst->setOpen(true);
+         break;
+         
+      case 1: 
+         inst->start(ctx->opcodeParam(0).forceInteger()); 
+         inst->setOpen(true);
+         break;
+         
+      case 2:
+         inst->start(ctx->opcodeParam(1).forceInteger()); 
+         if( ctx->opcodeParam(0).isNil() )
+         {
+            inst->setOpen(true);         
+         }
+         else
+         {
+            inst->end(ctx->opcodeParam(0).forceInteger());
+         }
+         break;
+         
+      default: // 3 or more.
+         inst->start(ctx->opcodeParam(2).forceInteger()); 
+         if( ctx->opcodeParam(1).isNil() )
+         {
+            inst->setOpen(true);         
+         }
+         else
+         {
+            inst->end(ctx->opcodeParam(1).forceInteger());
+         }
+         inst->step(ctx->opcodeParam(0).forceInteger()); 
+         inst->setOpen(false);
+         break;
+   }
+   
    ctx->stackResult( pcount + 1, FALCON_GC_STORE( coll, this, inst ) );
-}
-
-void ClassRange::op_add( VMContext*, void* ) const
-{
-   //TODO
-}
-
-void ClassRange::op_isTrue( VMContext* ctx, void* self ) const
-{
-   ctx->stackResult( 1, static_cast<ItemDict*>(self)->size() != 0 );
-}
-
-void ClassRange::op_toString( VMContext* ctx, void* self ) const
-{
-   String s;
-   s.A("[Dictionary of ").N((int64)static_cast<ItemDict*>(self)->size()).A(" elements]");
-   ctx->stackResult( 1, s );
 }
 
 
 void ClassRange::op_getProperty( VMContext* ctx, void* self, const String& property ) const
 {
+   if( property == "len_" )
+   {
+      ctx->stackResult(1, 3);
+   }
+   
    Class::op_getProperty( ctx, self, property );
 }
 
 void ClassRange::op_getIndex( VMContext* ctx, void* self ) const
 {
-   Item *index, *dict_item;
-   ctx->operands( index, dict_item );
+   Item *item, *index;
+   ctx->operands( item, index );
+   Range& range = *static_cast<Range*>(self);
 
-   ItemDict& dict = *static_cast<ItemDict*>(self);
-   Item* result = dict.find( *index );
-
-   if( result != 0 )
+   if( index->isOrdinal() )
    {
-      ctx->stackResult( 2, *result );
+      int64 v = index->forceInteger();
+      if ( v < 0 ) v = 2+v;
+      switch( v )
+      {
+         case 0:
+            ctx->stackResult( 2, range.start() );
+            break;
+            
+         case 1:
+            ctx->stackResult( 2, range.isOpen()? Item() : Item(range.end()) );
+            break;
+            
+         case 2:
+            ctx->stackResult( 2, range.step() );
+            break;
+            
+         default:
+            throw new AccessError( ErrorParam(e_arracc, __LINE__, SRC )
+               .origin(ErrorParam::e_orig_vm) );
+      }      
    }
    else
    {
-      throw new AccessError( ErrorParam( e_arracc, __LINE__, __FILE__ ) );
+      throw new AccessTypeError( ErrorParam(e_param_type, __LINE__, SRC )
+            .origin(ErrorParam::e_orig_vm) );
    }
 }
 
 void ClassRange::op_setIndex( VMContext* ctx, void* self ) const
 {
-   Item *value, *index, *dict_item;
-   ctx->operands( value, index, dict_item );
+   Item* value, *item, *index;
+   ctx->operands( value, item, index );
+   
+   Range* range = static_cast<Range*>(self);
 
-   ItemDict& dict = *static_cast<ItemDict*>(self);
-   dict.insert( *index, *value );
-   ctx->stackResult(3, *value);
+   if( index->isOrdinal() )
+   {
+      int64 v = index->forceInteger();
+      if ( v < 0 ) v = 2+v;
+      
+      switch( v )
+      {
+         case 0:
+            range->start( value->forceInteger() );
+            ctx->popData(2);
+            break;
+            
+         case 1: 
+            if( value->isNil() )
+            {
+               range->setOpen(true);
+            }
+            else if ( value->isOrdinal() )
+            {
+               range->setOpen(false);                              
+               range->end( value->forceInteger() );
+            }
+            
+            ctx->popData(2);
+            break;
+
+         case 2:
+            range->step( value->forceInteger() );
+            ctx->popData(2);
+            break;            
+          
+         default:
+            throw new AccessError( ErrorParam(e_arracc, __LINE__, SRC )
+               .origin(ErrorParam::e_orig_vm) );
+      }      
+   }
+   else
+   {
+      throw new AccessTypeError( ErrorParam(e_param_type, __LINE__, SRC )
+            .origin(ErrorParam::e_orig_vm) );
+   }
 }
 
 
