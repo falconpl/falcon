@@ -126,8 +126,8 @@ void ClassDict::op_getProperty( VMContext* ctx, void* self, const String& proper
 
 void ClassDict::op_getIndex( VMContext* ctx, void* self ) const
 {
-   Item *index, *dict_item;
-   ctx->operands( index, dict_item );
+   Item *item, *index;
+   ctx->operands( item, index );
 
    ItemDict& dict = *static_cast<ItemDict*>(self);
    Item* result = dict.find( *index );
@@ -144,8 +144,8 @@ void ClassDict::op_getIndex( VMContext* ctx, void* self ) const
 
 void ClassDict::op_setIndex( VMContext* ctx, void* self ) const
 {
-   Item *value, *index, *dict_item;
-   ctx->operands( value, index, dict_item );
+   Item* value, *item, *index;
+   ctx->operands( value, item, index );
 
    ItemDict& dict = *static_cast<ItemDict*>(self);
    dict.insert( *index, *value );

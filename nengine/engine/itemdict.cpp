@@ -85,7 +85,11 @@ public:
    StringMap m_stringMap;
    InstanceMap m_instMap;
    
-   Private() {}
+   Private():
+      m_bHasNil( false ),
+      m_bHasTrue( false ),
+      m_bHasFalse( false )
+   {}
    
    Private( const Private& other):
       m_bHasNil( false ),
@@ -102,7 +106,10 @@ public:
    
    void gcMark( uint32 mark )
    {
-
+      if( m_bHasNil ) m_itemNil.gcMark( mark );
+      if( m_bHasTrue ) m_itemTrue.gcMark( mark );
+      if( m_bHasFalse ) m_itemFalse.gcMark( mark );
+      
       RangeMap::iterator irange = m_rangeMap.begin();
       while( irange != m_rangeMap.end() )
       {
@@ -485,14 +492,14 @@ void ItemDict::describe( String& target, int depth, int maxlen ) const
    Private::StringMap::iterator siter = _p->m_stringMap.begin();   
    while( siter != _p->m_stringMap.end() )
    {
-      const Item& value = iiter->second;      
+      const Item& value = siter->second;      
       value.describe( vs, depth-1, maxlen );
       if( target.size() > 1 )
       {
          target += ", ";
       }
 
-      target += siter->first + " => " + vs;
+      target += "\"" + siter->first + "\" => " + vs;
       ++siter;
    }
    
