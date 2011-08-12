@@ -188,6 +188,18 @@ public:
     return a null pointer.
     */
    Class* metaClass() const;
+   
+   
+   /** Returns the global instance of the GenericClass class.
+   \return the Engine instance of the GenericClass handler.
+
+    Method init() must have been called before.
+
+    @note This method will assert and terminate the program if compiled in debug mode
+    in case the engine has not been initialized. In release, it will just
+    return a null pointer.
+    */
+   Class* genericClass() const;
 
    /** Returns the global instance of the ClassReference class.
    \return the Engine instance of the ClassReference handler.
@@ -298,6 +310,7 @@ protected:
    Class* m_dictClass;
    Class* m_protoClass;
    Class* m_metaClass;
+   Class* m_genericClass;
    ClassReference* m_referenceClass;
    
    //===============================================

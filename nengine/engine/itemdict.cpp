@@ -18,6 +18,7 @@
 #include <falcon/range.h>
 #include <falcon/class.h>
 #include <falcon/itemid.h>
+#include <falcon/itemarray.h>
 #include <falcon/accesstypeerror.h>
 
 #include <map>
@@ -146,14 +147,16 @@ public:
 ItemDict::ItemDict():
    _p( new Private ),
    m_flags(0),
-   m_currentMark(0)
+   m_currentMark(0),
+   m_version(0)
 {}
 
 
 ItemDict::ItemDict( const ItemDict& other ):
    _p( new Private(*other._p) ),
    m_flags( other.m_flags ),
-   m_currentMark( other.m_currentMark )
+   m_currentMark( other.m_currentMark ),
+   m_version(0)
 {}
 
 
@@ -564,6 +567,233 @@ void ItemDict::enumerate( Enumerator& rator )
       ++kiter;
    }
 }
+
+//========================================================
+// Iterator class
+//
+
+class ItemDict::Iterator::Private
+{
+public:
+   ItemArray m_pair;
+   
+   ItemDict::Private::IntegerMap::const_iterator i_iter;
+   ItemDict::Private::RangeMap::const_iterator r_iter;
+   ItemDict::Private::StringMap::const_iterator s_iter;
+   ItemDict::Private::InstanceMap::const_iterator t_iter;
+   
+   Private() {
+      m_pair.resize(2);
+   }
+   ~Private() {};
+};
+
+
+
+ItemDict::Iterator::Iterator( ItemDict* item ):
+   GenericItem( "ItemDict::Iterator" ),
+   _pm( new Private ),
+   m_dict( item ),
+   m_version( item->version() ),
+   m_currentMark(0),
+   m_complete( false ),
+   m_state( e_st_none )
+{
+   _pm->i_iter = item->_p->m_intMap.begin();
+   _pm->r_iter = item->_p->m_rangeMap.begin();
+   _pm->s_iter = item->_p->m_stringMap.begin();
+   _pm->t_iter = item->_p->m_instMap.begin();
+}
+
+
+ItemDict::Iterator::~Iterator()
+{
+   delete _pm;
+}
+
+
+void ItemDict::Iterator::gcMark( uint32 value )
+{
+   if( m_currentMark != value )
+   {
+      m_currentMark = value;
+      _pm->m_pair.gcMark( value );
+      if( m_dict != 0 )
+      {
+         m_dict->gcMark( value );
+      }
+   }
+}
+
+
+bool ItemDict::Iterator::gcCheck( uint32 value )
+{
+   // If all our components are old...
+   if( _pm->m_pair.currentMark() < value
+      && m_tempString.currentMark() < value
+      && m_currentMark < value 
+      )
+   {
+      return false; // item dead
+   }
+   
+   return true;
+}
+
+
+ItemDict::Iterator* ItemDict::Iterator::clone() const
+{
+   if( m_dict == 0 ) return 0;
+   return new Iterator( m_dict );
+}
+
+
+void ItemDict::Iterator::describe( String& target ) const
+{
+   target = "ItemDict::Iterator";
+   if( m_dict == 0 || m_version != m_dict->version() )
+   {
+      target += " (invalidated)";
+   }
+}
+
+
+bool ItemDict::Iterator::next( Item& target )
+{
+   static Class* ac = Engine::instance()->arrayClass();
+   
+   if( m_dict == 0 ) return false;
+   if( m_version != m_dict->version() )
+   {
+      m_dict = 0;
+      return false;
+   }
+      
+   if( m_complete )
+   {
+      target.setBreak(); 
+      return true;
+   }
+    
+   advance();
+    
+   // create a copied item, and ask to mark it for gc.
+   target.assign( Item(ac, &_pm->m_pair, true ) );
+   if( m_complete )
+   {
+      target.setLast();
+   }
+   
+   return true;
+}
+
+
+void ItemDict::Iterator::advance()
+{
+   static Class* scls = Engine::instance()->stringClass();
+   static Class* rcls = Engine::instance()->rangeClass();
+   static Collector* coll = Engine::instance()->collector();
+   
+   fassert( m_dict != 0 );
+   fassert( m_dict->version() == m_version );
+   
+   ItemDict::Private* p = m_dict->_p;
+   
+   bool found = false;
+   
+   switch( m_state )
+   {
+      case e_st_none:
+         m_state = e_st_nil;
+         // fallthrough
+         
+      case e_st_nil:
+         m_state = e_st_true;
+         if( p->m_bHasNil )
+         {
+            found = true;
+            _pm->m_pair[0].setNil();
+            _pm->m_pair[1] = m_dict->_p->m_itemNil;
+         }
+         // fallthrough
+         
+      case e_st_true:
+         m_state = e_st_false;
+         if( p->m_bHasTrue )
+         {
+            if( found ) return;
+            found = true;
+            _pm->m_pair[0].setBoolean( true );
+            _pm->m_pair[1] = m_dict->_p->m_itemTrue;
+         }
+         // fallthrough
+         
+      case e_st_false:
+         m_state = e_st_int;         
+         if( p->m_bHasFalse )
+         {
+            if( found ) return;
+            found = true;
+            _pm->m_pair[0].setBoolean( false );
+            _pm->m_pair[1] = m_dict->_p->m_itemFalse;
+         }
+         // fallthrough
+         
+      case e_st_int:
+         while( p->m_intMap.end() != _pm->i_iter )
+         {
+            if( found ) return;
+            found = true;
+            _pm->m_pair[0].setInteger( _pm->i_iter->first );
+            _pm->m_pair[1] = _pm->i_iter->second;
+            ++_pm->i_iter;
+         }
+         m_state = e_st_range;
+         // fallthrough
+         
+      case e_st_range:
+         while( p->m_rangeMap.end() != _pm->r_iter )
+         {
+            if( found ) return;
+            found = true;
+            _pm->m_pair[0].setUser( FALCON_GC_STORE( coll, rcls, new Range(_pm->r_iter->first)) );
+            _pm->m_pair[1] = _pm->r_iter->second;
+            ++_pm->r_iter;
+         }
+         m_state = e_st_string;
+         
+      case e_st_string:
+         while( p->m_stringMap.end() != _pm->s_iter )
+         {
+            if( found ) return;
+            found = true;
+            m_tempString = _pm->s_iter->first;
+            _pm->m_pair[0].setUser( scls, &m_tempString, true );
+            _pm->m_pair[0].copied();
+            _pm->m_pair[1] = _pm->s_iter->second;
+            ++_pm->s_iter;
+         }
+         m_state = e_st_string;
+         
+      case e_st_other:
+         while( p->m_instMap.end() != _pm->t_iter )
+         {
+            if( found ) return;
+            found = true;
+            const ItemDict::Private::class_data_pair& pair = _pm->t_iter->first;
+            _pm->m_pair[0].setUser( pair.cls, pair.data, true );
+            _pm->m_pair[1] = _pm->t_iter->second;
+            ++_pm->t_iter;
+         }
+         m_state = e_st_done;
+         
+      case e_st_done:
+         m_complete = true;   
+   }
+   
+   
+}
+
 
 }
 

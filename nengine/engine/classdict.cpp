@@ -83,9 +83,8 @@ void ClassDict::gcMark( void* self, uint32 mark ) const
    dict.gcMark( mark );
 }
 
-void ClassDict::enumerateProperties( void*, PropertyEnumerator& cb ) const
+void ClassDict::enumerateProperties( void*, PropertyEnumerator& ) const
 {
-   cb("len", true);
 }
 
 void ClassDict::enumeratePV( void*, Class::PVEnumerator& ) const
@@ -152,6 +151,27 @@ void ClassDict::op_setIndex( VMContext* ctx, void* self ) const
    ctx->stackResult(3, *value);
 }
 
+void ClassDict::op_iter( VMContext* ctx, void* instance ) const
+{
+   static Collector* coll = Engine::instance()->collector();
+   static Class* genc = Engine::instance()->genericClass();
+   
+   ItemDict* dict = static_cast<ItemDict*>(instance);
+   ItemDict::Iterator* iter = new ItemDict::Iterator( dict );
+   ctx->opcodeParam( 1 ).setUser( FALCON_GC_STORE( coll, genc, iter ) );
+}
+
+
+void ClassDict::op_next( VMContext* ctx, void*  ) const
+{
+   Item& user = ctx->opcodeParam( 1 );
+   fassert( user.isUser() );
+   Class* cls = user.asClass();
+   fassert( cls == Engine::instance()->genericClass() );
+   
+   ItemDict::Iterator* iter = static_cast<ItemDict::Iterator*>(user.asInst());
+   iter->next( ctx->topData() );
+}
 
 }
 

@@ -301,6 +301,7 @@ protected:
    length_t m_allocated;
    length_t m_size;
    byte *m_storage;
+   uint32 m_lastMark;
 
    /**sym
     * Creates the core string.
@@ -330,7 +331,8 @@ public:
       m_class( &csh::handler_static ),
       m_allocated( 0 ),
       m_size( 0 ),
-      m_storage( 0 )
+      m_storage( 0 ),
+      m_lastMark( 0 )
    {
    }
 
@@ -437,7 +439,8 @@ public:
       Use bufferize() on this string to ensure that it is deep-copied.
    */
    String( const String &other ):
-      m_allocated( 0 )
+      m_allocated( 0 ),
+      m_lastMark( other.m_lastMark )
    {
       copy( other );
    }
@@ -1247,6 +1250,9 @@ public:
    {
       return chr == ' ' || chr == '\t' || chr == '\r' || chr == '\n';
    }
+   
+   void gcMark( uint32 mark ) { m_lastMark = mark; }
+   uint32 currentMark() const { return m_lastMark; }
 };
 
 

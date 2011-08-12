@@ -110,6 +110,7 @@ add_library(falcon_engine SHARED
   classerror.cpp
   classfunction.cpp
   classint.cpp
+  classgeneric.cpp
   classnil.cpp
   classmethod.cpp
   classnumeric.cpp

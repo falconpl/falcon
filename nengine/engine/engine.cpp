@@ -58,6 +58,7 @@
 #include <falcon/classrange.h>
 #include <falcon/classarray.h>
 #include <falcon/classdict.h>
+#include <falcon/classgeneric.h>
 #include <falcon/classnumeric.h>
 #include <falcon/prototypeclass.h>
 #include <falcon/metaclass.h>
@@ -124,6 +125,7 @@ Engine::Engine()
    m_dictClass = new ClassDict;
    m_protoClass = new PrototypeClass;
    m_metaClass = new MetaClass;
+   m_genericClass = new ClassGeneric;
    m_referenceClass = new ClassReference;
 
    // Initialization of the class vector.
@@ -187,6 +189,7 @@ Engine::~Engine()
    delete m_protoClass;
    delete m_metaClass;
    delete m_functionClass;
+   delete m_genericClass;
    delete m_referenceClass;
 
    // ===============================
@@ -411,6 +414,12 @@ Class* Engine::metaClass() const
 {
    fassert( m_instance != 0 );
    return m_instance->m_metaClass;
+}
+
+Class* Engine::genericClass() const
+{
+   fassert( m_instance != 0 );
+   return m_instance->m_genericClass;
 }
 
 ClassReference* Engine::referenceClass() const

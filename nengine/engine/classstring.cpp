@@ -91,7 +91,6 @@ void ClassString::enumerateProperties( void*, Class::PropertyEnumerator& cb ) co
    // TODO: More
    cb("len", false );
    cb("len_", false );
-   cb("__add", true );
 }
 
 void ClassString::enumeratePV( void* self, Class::PVEnumerator& cb ) const
@@ -109,8 +108,19 @@ bool ClassString::hasProperty( void*, const String& prop ) const
    // TODO: More
    return 
       prop == "len"
-      || prop == "len_"
-      || prop == "__add";
+      || prop == "len_";
+}
+
+
+void ClassString::gcMark( void* instance, uint32 mark ) const
+{
+   static_cast<String*>(instance)->gcMark(mark);
+}
+
+
+bool ClassString::gcCheck( void* instance, uint32 mark ) const
+{
+   return static_cast<String*>(instance)->currentMark() >= mark;
 }
 
 //=======================================================================

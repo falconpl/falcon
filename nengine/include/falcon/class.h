@@ -254,10 +254,9 @@ public:
     the object has been left behind and can be disposed at class will.
 
     Returning false, the garbage collector will free its own accounting
-    resources and won't call the gcCheck() method anymore. The class should
-    dispose the instance on its own will before returning (the garbage
-    collector will \b not call the dispose() method of this class after
-    a gcCheck).
+    resources and won't call the gcCheck() method anymore. The dispose 
+    method will be then called at a (near) future moment by the garbage collector
+    when the object is finalized.
 
     Notice that disposing of the \b instance parameter without returning false
     might make the GC to present the same item again to this class, possibly

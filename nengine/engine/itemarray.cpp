@@ -81,11 +81,13 @@ ItemArray::ItemArray():
    m_alloc(0),
    m_size(0),
    m_data(0),
-   m_growth( flc_ARRAY_GROWTH )
+   m_growth( flc_ARRAY_GROWTH ),
+   m_mark(0)
 {}
 
 ItemArray::ItemArray( const ItemArray& other ):
-   m_growth( other.m_growth )
+   m_growth( other.m_growth ),
+   m_mark(0)
 {
    if( other.m_size != 0 )
    {
@@ -583,19 +585,25 @@ int ItemArray::compare( const ItemArray& other, ItemArray::Parentship* parent ) 
 
 void ItemArray::gcMark( uint32 mark )
 {
-   Item* begin = m_data;
-   Item* end = m_data + m_size;
-   
-   while( begin < end )
+   if( m_mark != mark )
    {
-      // notice -- the isUser() is a parnoid check.
-      if( begin->isGarbaged() && begin->isUser() )
+      m_mark = mark;
+      Item* begin = m_data;
+      Item* end = m_data + m_size;
+
+      while( begin < end )
       {
-         begin->asClass()->gcMark(begin->asInst(), mark);
+         // notice -- the isUser() is a parnoid check.
+         if( begin->isGarbaged() && begin->isUser() )
+         {
+            begin->asClass()->gcMark(begin->asInst(), mark);
+         }
+         ++begin;
       }
-      ++begin;
    }
 }
+
+
 
 }
 

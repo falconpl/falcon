@@ -45,6 +45,9 @@ public:
    virtual void enumeratePV( void* self, PVEnumerator& cb ) const;
    virtual bool hasProperty( void* self, const String& prop ) const;
    
+   virtual void gcMark( void* instance, uint32 mark ) const;
+   virtual bool gcCheck( void* instance, uint32 mark ) const;
+
    //=============================================================
    virtual void op_create( VMContext* ctx, int32 pcount ) const;
 

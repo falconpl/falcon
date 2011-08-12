@@ -525,7 +525,6 @@ private:
    Module* linkExistingModule( const String& name, bool bIsUri, t_loadMode imode );
 
    Error* exportSymbolToModspace( ModSpace* ms, Symbol* sym );
-
 };
 
 }

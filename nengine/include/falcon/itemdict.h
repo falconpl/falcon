@@ -18,6 +18,7 @@
 #include <falcon/setup.h>
 #include <falcon/string.h>
 #include <falcon/overridableclass.h>
+#include <falcon/genericitem.h>
 
 namespace Falcon
 {
@@ -55,13 +56,62 @@ public:
       virtual void operator()( const Item& key, Item& value )=0;
    };
    
-   void enumerate( Enumerator& rator );
+   void enumerate( Enumerator& rator );   
+   uint32 version() const { return m_version; }
+   
+   /** Iterator used by ClassDict to iterate with op_first/op_next. */
+   class Iterator: public GenericItem
+   {
+   public:
+      Iterator( ItemDict* item );      
+      virtual ~Iterator();
+      
+      virtual bool gcCheck( uint32 value );
+      virtual void gcMark( uint32 value );
+      virtual Iterator* clone() const;
+      virtual void describe( String& target ) const;
+
+      /** Prepare the next pair on the target item. */
+      bool next( Item& target );
+            
+   private:
+      class Private;
+      Private* _pm;
+      
+      ItemDict* m_dict;
+      uint32 m_version;      
+      uint32 m_currentMark;
+      bool m_complete;
+      String m_tempString;
+      
+      /** Internal iterator advancement. */
+      void advance();
+      
+      typedef enum
+      {
+         e_st_none,
+         e_st_nil,
+         e_st_true,
+         e_st_false,
+         e_st_int,
+         e_st_range,
+         e_st_string,
+         e_st_other,
+         e_st_done
+      } state;
+      
+      state m_state;
+   };
+   
 private:
    class Private;
    Private* _p;
    
    uint32 m_flags;
    uint32 m_currentMark;
+   uint32 m_version;
+   
+   friend class Iterator;
 };
 
 }

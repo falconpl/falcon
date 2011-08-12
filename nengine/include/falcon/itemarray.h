@@ -199,11 +199,13 @@ public:
     */
    void gcMark( uint32 mark );
    
+   uint32 currentMark() const { return m_mark; }
 private:
    length_t m_alloc;
    length_t m_size;
    Item *m_data;
    length_t m_growth;
+   uint32 m_mark;
 
    ItemArray( Item *buffer, length_t size, length_t alloc );
 
