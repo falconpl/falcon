@@ -118,6 +118,8 @@ public:
    Parsing::Terminal T_forfirst;
    Parsing::Terminal T_formiddle;
    Parsing::Terminal T_forlast;
+   Parsing::Terminal T_break;
+   Parsing::Terminal T_continue;
 
    //================================================
    // Statements
@@ -141,6 +143,12 @@ public:
    Parsing::NonTerminal S_While;
    Parsing::Rule r_while;
    Parsing::Rule r_while_short;
+   
+   Parsing::NonTerminal S_Continue;
+   Parsing::Rule r_continue;
+
+   Parsing::NonTerminal S_Break;
+   Parsing::Rule r_break;
 
    Parsing::NonTerminal S_For;
    Parsing::Rule r_for_to_step;
@@ -255,6 +263,7 @@ public:
    Parsing::Rule r_Expr_pars2;
    Parsing::Rule r_Expr_times;
    Parsing::Rule r_Expr_div;
+   Parsing::Rule r_Expr_mod;
    Parsing::Rule r_Expr_pow;
    Parsing::Rule r_Expr_auto_add;
    Parsing::Rule r_Expr_auto_sub;
@@ -321,6 +330,8 @@ public:
    Parsing::Rule r_Atom_False;
    Parsing::Rule r_Atom_True;
    Parsing::Rule r_Atom_self;
+   Parsing::Rule r_Atom_continue;
+   Parsing::Rule r_Atom_break;
    Parsing::Rule r_Atom_Nil;
 
    //================================================

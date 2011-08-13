@@ -259,6 +259,7 @@ FAL_ERRORDECL( e_tabcol_acc, 520, "Table column not found" );
 FAL_ERRORDECL( e_cont_atomic, 521, "Continuation while in atomic mode" );
 FAL_ERRORDECL( e_cont_out, 522, "Continuation invoked when already complete" );
 FAL_ERRORDECL( e_parse_format, 523, "Input data is not in expected format" );
+FAL_ERRORDECL( e_call_loop, 524, "Calling a sequence having itself as callable element." );
 
 FAL_ERRORDECL( e_inv_params, 900, "Invalid parameters" );
 FAL_ERRORDECL( e_missing_params, 901, "Mandatory parameter missing" );

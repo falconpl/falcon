@@ -32,6 +32,8 @@ bool while_errhand(const NonTerminal&, Parser& p);
 
 void apply_while_short( const Rule&, Parser& p );
 void apply_while( const Rule&, Parser& p );
+void apply_continue( const Rule&, Parser& p );
+void apply_break( const Rule&, Parser& p );
 
 }
 

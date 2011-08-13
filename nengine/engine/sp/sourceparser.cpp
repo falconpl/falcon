@@ -148,7 +148,9 @@ SourceParser::SourceParser():
    
    T_forfirst( "forfirst" ),
    T_formiddle( "formiddle" ),
-   T_forlast( "forlast" )
+   T_forlast( "forlast" ),
+   T_break( "break" ),
+   T_continue( "continue" )   
    
 {
    S_Autoexpr << "Autoexpr"
@@ -215,6 +217,14 @@ SourceParser::SourceParser():
 
    S_EmptyLine << "EMPTY"
       << (r_empty << "Empty line" << apply_dummy << T_EOL )
+      ;
+   
+   S_Continue << "Continue"
+      << (r_continue << "continue rule" << apply_continue << T_continue << T_EOL )
+      ;
+   
+   S_Break << "Break"
+      << (r_break << "break rule" << apply_break << T_break << T_EOL )
       ;
 
    S_MultiAssign << "MultiAssign"
@@ -322,6 +332,7 @@ SourceParser::SourceParser():
    Expr<< (r_Expr_pars2 << "Expr_pars2" << apply_expr_pars << T_DotPar << Expr << T_Closepar);
    Expr<< (r_Expr_times << "Expr_times" << apply_expr_times << Expr << T_Times << Expr);
    Expr<< (r_Expr_div   << "Expr_div"   << apply_expr_div   << Expr << T_Divide << Expr );
+   Expr<< (r_Expr_mod   << "Expr_mod"   << apply_expr_mod   << Expr << T_Modulo << Expr );
    Expr<< (r_Expr_pow   << "Expr_pow"   << apply_expr_pow   << Expr << T_Power << Expr );
    Expr<< (r_Expr_auto_add << "Expr_auto_add"   << apply_expr_auto_add   << Expr << T_AutoAdd << Expr );
    Expr<< (r_Expr_auto_sub << "Expr_auto_sub"   << apply_expr_auto_sub   << Expr << T_AutoSub << Expr );
@@ -360,6 +371,8 @@ SourceParser::SourceParser():
       << (r_Atom_False<< "Atom_False" << apply_Atom_False << T_false )
       << (r_Atom_True<< "Atom_True" << apply_Atom_True << T_true )
       << (r_Atom_self<< "Atom_Self" << apply_Atom_Self << T_self )
+      << (r_Atom_continue<< "Atom_continue" << apply_Atom_Continue << T_continue )
+      << (r_Atom_break<< "Atom_break" << apply_Atom_Break << T_break )
       << (r_Atom_Nil<< "Atom_Nil" << apply_Atom_Nil << T_nil )
       ;
 
@@ -492,6 +505,8 @@ SourceParser::SourceParser():
       << S_Elif
       << S_Else
       << S_While
+      << S_Continue
+      << S_Break
       << S_For
       << S_Forfirst
       << S_Formiddle
@@ -517,6 +532,8 @@ SourceParser::SourceParser():
       << S_Elif
       << S_Else
       << S_While
+      << S_Continue
+      << S_Break
       << S_For
       << S_Forfirst
       << S_Formiddle

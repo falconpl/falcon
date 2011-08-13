@@ -47,9 +47,6 @@ public:
    SynTree();
    virtual ~SynTree();
 
-   /** Mark this as a composed class.*/
-   virtual bool isComposed() const { return true; }
-
    int size() const;
    bool empty() const;
 

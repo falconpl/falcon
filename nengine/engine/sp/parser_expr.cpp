@@ -183,11 +183,15 @@ void apply_expr_preinc(const Rule&, Parser& p )
    apply_expr_binary(r, p, new ExprTimes );
 }
 
- void apply_expr_div( const Rule& r, Parser& p )
+void apply_expr_div( const Rule& r, Parser& p )
 {
    apply_expr_binary(r, p, new ExprDiv );
 }
 
+void apply_expr_mod( const Rule& r, Parser& p )
+{
+   apply_expr_binary(r, p, new ExprMod );
+}
 
 void apply_expr_pow( const Rule& r, Parser& p )
 {

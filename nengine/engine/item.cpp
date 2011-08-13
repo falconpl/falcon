@@ -151,7 +151,18 @@ void Item::describe( String &target, int maxDepth, int maxLength ) const
    switch( this->type() )
    {
       case FLC_ITEM_NIL:
-         target = "Nil";
+         if ( isContinue() )
+         {
+            target = "continue";
+         }
+         else if ( isBreak() )
+         {
+            target = "break";
+         }
+         else
+         {
+            target = "Nil";
+         }
       break;
 
       case FLC_ITEM_BOOL:

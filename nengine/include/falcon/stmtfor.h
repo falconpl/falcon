@@ -109,7 +109,7 @@ private:
    
    class PStepFirst: public PStep {
    public:
-      PStepFirst( StmtForIn* owner ): m_owner(owner) { apply = apply_; }
+      PStepFirst( StmtForIn* owner ): m_owner(owner) { m_bIsLoopBase = true; apply = apply_; }
       virtual ~PStepFirst() {};
       void describeTo( String& str ) { str = "PStepFirst of " + m_owner->oneLiner(); }
       
@@ -120,7 +120,7 @@ private:
    
    class PStepNext: public PStep {
    public:
-      PStepNext( StmtForIn* owner ): m_owner(owner) { apply = apply_; }
+      PStepNext( StmtForIn* owner ): m_owner(owner) { m_bIsLoopBase = true; apply = apply_; }
       virtual ~PStepNext() {};
       void describeTo( String& str ) { str = "PStepNext of " + m_owner->oneLiner(); }
       
@@ -131,7 +131,7 @@ private:
    
    class PStepGetNext: public PStep {
    public:
-      PStepGetNext( StmtForIn* owner ): m_owner(owner) { apply = apply_; }
+      PStepGetNext( StmtForIn* owner ): m_owner(owner) { m_bIsNextBase = true; apply = apply_; }
       virtual ~PStepGetNext() {};
       void describeTo( String& str ) { str = "PStepGetNext of " + m_owner->oneLiner(); }
       
@@ -197,7 +197,11 @@ private:
    
    class PStepNext: public PStep {
    public:
-      PStepNext( StmtForTo* owner ): m_owner(owner) { apply = apply_; }
+      PStepNext( StmtForTo* owner ): m_owner(owner) { 
+         m_bIsLoopBase = true;   
+         m_bIsNextBase = true; 
+         apply = apply_; 
+      }
       virtual ~PStepNext() {};
       void describeTo( String& str ) { str = "PStepNext of " + m_owner->oneLiner(); }
       

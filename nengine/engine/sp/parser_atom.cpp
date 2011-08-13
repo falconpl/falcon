@@ -130,6 +130,28 @@ void apply_Atom_Self ( const Rule&, Parser& p )
    p.simplify(1,ti2);
 }
 
+void apply_Atom_Continue( const Rule&, Parser& p )
+{
+   SourceParser& sp = static_cast<SourceParser&>(p);   
+   TokenInstance* ti = p.getNextToken();
+   
+   Item cont;
+   cont.setContinue();
+   ti->token( sp.Atom );
+   ti->setValue( new ExprValue(cont), expr_deletor );
+}
+
+void apply_Atom_Break ( const Rule&, Parser& p )
+{
+   SourceParser& sp = static_cast<SourceParser&>(p);   
+   TokenInstance* ti = p.getNextToken();
+   
+   Item b;
+   b.setBreak();
+   ti->token( sp.Atom );
+   ti->setValue( new ExprValue(b), expr_deletor );
+}
+
 void apply_Atom_Nil ( const Rule&, Parser& p )
 {
    // << (r_Atom_Nil << "Atom_Nil" << apply_Atom_Nil << T_Nil )

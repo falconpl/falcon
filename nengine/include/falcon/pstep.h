@@ -40,10 +40,18 @@ namespace Falcon {
 class FALCON_DYN_CLASS PStep
 {
 public:
-   inline PStep() {};
+   inline PStep(): 
+      m_bIsLoopBase(false),
+      m_bIsNextBase(false),
+      m_bIsComposed(false)
+   {}
+   
    inline PStep( int line, int chr ):
+      m_bIsLoopBase(false),
+      m_bIsNextBase(false),
+      m_bIsComposed(false),
       m_sr(line, chr)
-   {};
+   {}
 
 
    inline virtual ~PStep() {}
@@ -96,15 +104,25 @@ public:
    /** Returns the line where this PStep was declared in source.
     If the PStep wasn't generated from source, the line will be 0.
     */
-   int line() const { return m_sr.line(); }
+   inline int line() const { return m_sr.line(); }
 
    /** Returns the character where this PStep was declared in source.
     If the PStep wasn't generated from source, the character will be 0.
    */
-   int chr() const { return m_sr.chr(); }
+   inline int chr() const { return m_sr.chr(); }
 
-   virtual bool isComposed() const { return false; }
-private:
+   inline bool isComposed() const { return m_bIsComposed; }
+   inline bool isNextBase() const { return m_bIsNextBase; }
+   inline bool isLoopBase() const { return m_bIsLoopBase; }
+
+   inline void setNextBase() { m_bIsNextBase = true; }
+protected:
+   bool m_bIsLoopBase;
+   bool m_bIsNextBase;
+   bool m_bIsComposed;
+   bool m_bIsCatch;
+
+private:   
    SourceRef m_sr;
 };
 

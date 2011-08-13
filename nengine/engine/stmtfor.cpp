@@ -103,9 +103,11 @@ StmtForIn::StmtForIn( Expression* gen, int32 line, int32 chr):
    m_stepGetNext( this )
 {
    apply = apply_;
+   m_bIsLoopBase = true;
    m_step0 = this;
    gen->precompile( &m_pcExpr );
    m_step1 = &m_pcExpr;
+   
 }
 
 StmtForIn::~StmtForIn()
@@ -348,6 +350,7 @@ StmtForTo::StmtForTo( Symbol* tgt, int64 start, int64 end, int64 step, int32 lin
    m_stepPushStep(this)
 {
    apply = apply_;
+   m_bIsLoopBase = true;
    
    m_step0 = this;
    m_step1 = &m_stepPushStart;
@@ -442,7 +445,7 @@ void StmtForTo::apply_( const PStep* ps, VMContext* ctx )
    int64 step = ctx->opcodeParam(2).asInteger();
    
    // in some cases, we don't even start the loop
-   if( (end > start && step < 0) || (start > end && step > 0 ) )
+   if( (end > start && step < 0) || (start > end && step > 0 ) || ctx->topData().isBreak())
    {
       ctx->popCode();
       ctx->popData(3);
@@ -518,12 +521,20 @@ void StmtForTo::apply_( const PStep* ps, VMContext* ctx )
 void StmtForTo::PStepNext::apply_( const PStep* ps, VMContext* ctx )
 {
    const StmtForTo* self = static_cast<const StmtForTo::PStepNext*>(ps)->m_owner;
-   int64 start = ctx->topData().asInteger();
-   int64 end = ctx->opcodeParam(1).asInteger();
-   int64 step = ctx->opcodeParam(2).asInteger();
 
    bool bLast = false;
    
+   if( ctx->topData().isBreak() )
+   {
+      ctx->popCode();
+      ctx->popData(3);
+      return;
+   }
+   
+   int64 start = ctx->topData().asInteger();
+   int64 end = ctx->opcodeParam(1).asInteger();
+   int64 step = ctx->opcodeParam(2).asInteger();
+      
    // however, we won't be called anymore.
    ctx->currentCode().m_step = &self->m_stepNext;
    

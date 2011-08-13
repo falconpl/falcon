@@ -739,12 +739,11 @@ Parsing::TokenInstance* SourceLexer::checkWord()
           if ( m_text == "while" ) return parser->T_while.makeInstance(m_sline, m_schr);
           if ( m_text == "false" ) return parser->T_false.makeInstance(m_sline, m_schr);
           if ( m_text == "class" ) return parser->T_class.makeInstance(m_sline, m_schr);
+          if ( m_text == "break" ) return parser->T_break.makeInstance(m_sline, m_schr);
 
          /*
          if ( m_text == "catch" )
             return CATCH;
-         if ( m_text == "break" )
-            return BREAK;
          if ( m_text == "raise" )
             return RAISE;
          if ( m_text == "class" )
@@ -813,14 +812,9 @@ Parsing::TokenInstance* SourceLexer::checkWord()
          
          if ( m_text == "function" )
             return parser->T_function.makeInstance(m_sline, m_schr);
-         /*
+         
          if ( m_text == "continue" )
-            return CONTINUE;
-         if ( m_text == "dropping" )
-            return DROPPING;
-         if ( m_text == "forfirst" )
-            return FORFIRST;
-          */
+            return parser->T_continue.makeInstance(m_sline, m_schr);
       break;
 
       case 9:

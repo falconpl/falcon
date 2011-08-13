@@ -249,7 +249,9 @@ void generic_apply_( const PStep* ps, VMContext* ctx )
    default:
       // no need to throw, we're going to get back in the VM.
       throw
-         new OperandError( ErrorParam(e_invalid_op, __LINE__ ).extra(((ExprMath*)ps)->name()) );
+         new OperandError( ErrorParam(e_invalid_op, __LINE__, SRC )
+            .origin( ErrorParam::e_orig_vm )
+            .extra(((ExprMath*)ps)->name()) );
    }
 }
 

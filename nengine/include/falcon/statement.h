@@ -45,6 +45,8 @@ public:
       e_stmt_init,
       e_stmt_for_in,
       e_stmt_for_to,
+      e_stmt_continue,
+      e_stmt_break,
       custom_t
    } t_statement;
 
@@ -154,6 +156,34 @@ private:
    SynTree* m_stmts;
 };
 
+
+/** Continue statement.
+ *
+ * Unrolls to the topmost continue PStep and proceeds from there.
+ */
+class FALCON_DYN_CLASS StmtContinue: public Statement
+{
+public:
+   StmtContinue( int32 line=0, int32 chr = 0 );
+   virtual ~StmtContinue() {};
+
+   void describeTo( String& tgt ) const;
+   static void apply_( const PStep*, VMContext* ctx );
+};
+
+/** Break statement.
+ *
+ * Unrolls to the topmost loop PStep and post a Break item in the data stack.
+ */
+class FALCON_DYN_CLASS StmtBreak: public Statement
+{
+public:
+   StmtBreak( int32 line=0, int32 chr = 0 );
+   virtual ~StmtBreak() {};
+
+   void describeTo( String& tgt ) const;
+   static void apply_( const PStep*, VMContext* ctx );
+};
 
 /** If statement.
  *

@@ -50,6 +50,7 @@ void apply_expr_minus( const Rule& r, Parser& p );
 
 void apply_expr_times( const Rule& r, Parser& p );
 void apply_expr_div( const Rule& r, Parser& p );
+void apply_expr_mod( const Rule& r, Parser& p );
 void apply_expr_pow( const Rule& r, Parser& p );
 void apply_expr_neg( const Rule&, Parser& p );
 

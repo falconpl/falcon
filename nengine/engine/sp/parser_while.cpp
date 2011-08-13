@@ -110,6 +110,30 @@ void apply_while( const Rule&, Parser& p )
    p.simplify(3);
 }
 
+void apply_continue( const Rule&, Parser& p )
+{
+   // << T_continue << T_EOL )
+   ParserContext* ctx = static_cast<ParserContext*>(p.context());
+   TokenInstance* ti = p.getLastToken();
+   Statement* stmt = new StmtContinue( ti->line(), ti->chr() );
+   ctx->addStatement( stmt );
+   
+   // clear the stack
+   p.simplify(2);
+}
+
+void apply_break( const Rule&, Parser& p )
+{
+   // << T_break << T_EOL )
+   ParserContext* ctx = static_cast<ParserContext*>(p.context());
+   TokenInstance* ti = p.getLastToken();
+   Statement* stmt = new StmtBreak( ti->line(), ti->chr() );
+   ctx->addStatement( stmt );
+   
+   // clear the stack
+   p.simplify(2);   
+}
+
 }
 
 /* end of parser_while.cpp */

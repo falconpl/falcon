@@ -54,8 +54,10 @@ StmtWhile::StmtWhile( Expression* check, SynTree* stmts, int32 line, int32 chr )
    m_stmts( stmts )
 {
    apply = apply_;
+   m_bIsLoopBase = true;
 
    check->precompile(&m_pcCheck);
+   m_pcCheck.setNextBase();
 
    // push ourselves and the expression in the steps
    m_step0 = this;
@@ -89,6 +91,7 @@ void StmtWhile::apply_( const PStep* s1, VMContext* ctx )
 {
    const StmtWhile* self = static_cast<const StmtWhile*>(s1);
    
+   // break items are always nil, and so, false.
    if ( ctx->topData().isTrue() )
    {
       TRACE1( "Apply 'while' at line %d -- redo ", self->line() );
@@ -108,6 +111,47 @@ void StmtWhile::apply_( const PStep* s1, VMContext* ctx )
 }
 
 
+StmtContinue::StmtContinue( int32 line, int32 chr ):
+   Statement( e_stmt_continue, line, chr)
+{
+   apply = apply_;
+   m_step0 = this;
+}
+
+   
+void StmtContinue::describeTo( String& tgt ) const
+{
+   tgt = "continue";
+}
+
+
+void StmtContinue::apply_( const PStep*, VMContext* ctx )
+{
+   ctx->unrollToNextBase();
+}
+
+
+StmtBreak::StmtBreak( int32 line, int32 chr ):
+   Statement( e_stmt_break, line, chr)
+{
+   apply = apply_;
+   m_step0 = this;
+}
+
+   
+void StmtBreak::describeTo( String& tgt ) const
+{
+   tgt = "break";
+}
+
+
+void StmtBreak::apply_( const PStep*, VMContext* ctx )
+{
+   ctx->unrollToLoopBase();
+   Item b;
+   b.setBreak();
+   ctx->pushData( b );
+}
 
 //====================================================================
 //
