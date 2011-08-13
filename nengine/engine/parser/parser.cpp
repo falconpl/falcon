@@ -971,7 +971,9 @@ bool Parser::applyPaths()
       // prioritized tokens.
       if (tcount == rsize )
       {
-         if( currentRule->isGreedy() )
+         /* This seems to be broken:
+          
+          if( currentRule->isGreedy() )
          {
             const NonTerminal* nt = static_cast<const NonTerminal*>(&_p->m_tokenStack->back()->token());
             addParseFrame(const_cast<NonTerminal*>(nt), _p->m_tokenStack->size()-1);
@@ -981,7 +983,8 @@ bool Parser::applyPaths()
                   currentRule->name().c_ize(), nt->name().c_ize());
             return false;
          }
-         else if( ((! frame.m_bIsRightAssoc) && frame.m_nPriority == 0)
+         else */
+         if( ((! frame.m_bIsRightAssoc) && frame.m_nPriority == 0)
             || !currentRule->getTokenAt(currentRule->arity()-1)->isNT() )
          {
             applyCurrentRule();
