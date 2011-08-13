@@ -256,6 +256,39 @@ void ClassArray::op_toString( VMContext* ctx, void* self ) const
 }
 
 
+void ClassArray::op_call( VMContext* ctx, int32 paramCount, void* self ) const
+{
+   ItemArray* data = static_cast<ItemArray*>(self);
+   length_t len = data->length();
+   
+   if( len == 0 )
+   {
+      Class::op_call( ctx, paramCount, self ); 
+   }
+   else 
+   {
+      Item* elems = data->elements();
+      
+      Class *cls;
+      void* udata;
+      elems->forceClassInst( cls, udata );
+      if( udata == data)
+      {
+         // infinite expand loop.
+         throw new CodeError( ErrorParam( e_call_loop, __LINE__, SRC )
+            .origin( ErrorParam::e_orig_vm )
+            );
+      }
+      
+      // expand the array as parameters.
+      ctx->insertData( paramCount+1, data->elements(), (int32) len, 1 );
+      
+      // invoke the call.
+      cls->op_call( ctx, len + paramCount-1, udata );
+   }   
+}
+
+
 void ClassArray::op_iter( VMContext* ctx, void* ) const
 {
    // (seq)(iter)(value)

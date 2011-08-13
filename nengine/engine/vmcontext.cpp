@@ -185,15 +185,69 @@ void VMContext::commitRule()
 }
 
 
+
+template<class __checker>
+void VMContext::unrollToNext( const __checker& check )
+{
+   // first, we must have at least a function around.
+   register CallFrame* curFrame =  m_topCall;
+   register CodeFrame* curCode = m_topCode;
+   register Item* curData = m_topData;
+   while( m_callStack <= curFrame )
+   {
+      // then, get the current topCall pointer to code stack.
+      CodeFrame* baseCode = m_codeStack + curFrame->m_codeBase;
+      // now unroll up to when we're able to hit a next base
+      while( curCode >= baseCode )
+      {
+         if( check( *curCode->m_step ) )
+         {
+            m_topCall = curFrame;
+            m_topData = curData;
+            m_topCode = curCode;
+            return;
+         }
+         --curCode;
+      }
+      // unroll the call.
+      curData = m_dataStack + curFrame->m_initBase;
+      curFrame--;
+   }
+   // we didn't find it.
+   throw new CodeError( ErrorParam(e_break_out, __LINE__, SRC )
+      .origin(ErrorParam::e_orig_vm));
+}
+
+class CheckIfCodeIsNextBase
+{
+public:
+   inline bool operator()( const PStep& ps ) const { return ps.isNextBase(); }
+};
+
+class CheckIfCodeIsLoopBase
+{
+public:
+   inline bool operator()( const PStep& ps ) const { return ps.isLoopBase(); }
+};
+
+
+void VMContext::unrollToNextBase()
+{
+   CheckIfCodeIsNextBase checker;
+   unrollToNext( checker );
+}
+
+
+void VMContext::unrollToLoopBase()
+{
+   CheckIfCodeIsLoopBase checker;
+   unrollToNext( checker );
+}
+
+
 //===================================================================
 // Higher level management
 //
-
-
-bool VMContext::wentDeep( const PStep* ps )
-{
-   return m_topCode->m_step != ps;
-}
 
 
 void VMContext::pushQuit()
@@ -203,7 +257,7 @@ void VMContext::pushQuit()
       QuitStep() { apply = apply_; }
       virtual ~QuitStep() {}
 
-      inline virtual void describe( String& s ) const { s= "#Quit"; }
+      inline virtual void describeTo( String& s ) const { s= "#Quit"; }
    private:
       static void apply_( const PStep*, VMContext *ctx )
       {
@@ -224,7 +278,7 @@ void VMContext::pushComplete()
       CompleteStep() { apply = apply_; }
       virtual ~CompleteStep() {}
 
-      inline virtual void describe( String& s ) const { s= "#Complete"; }
+      inline virtual void describeTo( String& s ) const { s= "#Complete"; }
    private:
       static void apply_( const PStep*, VMContext *ctx )
       {
@@ -245,7 +299,7 @@ void VMContext::pushReturn()
       Step() { apply = apply_; }
       virtual ~Step() {}
 
-      inline virtual void describe( String& s ) const { s= "#Return"; }
+      inline virtual void describeTo( String& s ) const { s= "#Return"; }
    private:
       static void apply_( const PStep*, VMContext *ctx )
       {
@@ -266,7 +320,7 @@ void VMContext::pushBreak()
       Step() { apply = apply_; }
       virtual ~Step() {}
 
-      inline virtual void describe( String& s ) const { s= "#Break"; }
+      inline virtual void describeTo( String& s ) const { s= "#Break"; }
    private:
       static void apply_( const PStep*, VMContext *ctx )
       {
@@ -282,8 +336,9 @@ void VMContext::pushBreak()
 
 void VMContext::call( Function* function, int nparams, const Item& self )
 {
-   TRACE( "%s -- call frame code:%p, data:%p, call:%p",
-         function->locate().c_ize(),m_topCode, m_topData, m_topCall  );
+   TRACE( "Calling method %s.%s -- call frame code:%p, data:%p, call:%p",
+         self.describe(3).c_ize(), function->locate().c_ize(),
+         m_topCode, m_topData, m_topCall  );
 
    makeCallFrame( function, nparams, self );
    TRACE1( "-- codebase:%d, stackBase:%d, self: %s ", \
@@ -296,15 +351,52 @@ void VMContext::call( Function* function, int nparams, const Item& self )
 
 void VMContext::call( Function* function, int nparams )
 {
-   TRACE( "Entering function: %s", function->locate().c_ize() );
-   TRACE( "-- call frame code:%p, data:%p, call:%p", m_topCode, m_topData, m_topCall  );
+   TRACE( "Calling function %s -- call frame code:%p, data:%p, call:%p",
+         function->locate().c_ize(),m_topCode, m_topData, m_topCall  );
 
    makeCallFrame( function, nparams );
-   TRACE1( "-- codebase:%d, stackBase:%d ", \
+   TRACE3( "-- codebase:%d, stackBase:%d ", \
          m_topCall->m_codeBase, m_topCall->m_stackBase );
 
    // do the call
    function->invoke( this, nparams );
+}
+
+
+void VMContext::callItem( const Item& item, int pcount, Item const* params )
+{
+   TRACE( "Calling item: %s -- call frame code:%p, data:%p, call:%p",
+      item.describe(2).c_ize(), m_topCode, m_topData, m_topCall  );
+
+   Class* cls;
+   void* data;
+   item.forceClassInst( cls, data );
+   
+   addSpace( pcount+1 );
+   *(m_topData - ( pcount + 1 )) = item;
+   if( pcount > 0 )
+   {      
+      memcpy( m_topData-pcount, params, pcount * sizeof(item) );
+   }
+   
+   cls->op_call( this, pcount, data );
+}
+
+
+void VMContext::insertData(int32 pos, Item* data, int32 dataSize, int32 replSize )
+{
+   addSpace( dataSize - replSize );
+   // this is the first item we have to mangle with.
+   Item* base = m_topData - (dataSize - replSize + pos-1);
+   
+   if( pos > replSize )
+   {  
+      memmove( base + dataSize,
+               base + replSize, 
+               sizeof(Item) * (pos-replSize) );
+   }
+   
+   memcpy( base, data, sizeof(Item)*dataSize );
 }
 
 

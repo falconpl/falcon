@@ -181,6 +181,40 @@ public:
          moreData();
       }
    }
+   
+   /** Insert some data at some point in the stack.
+    \param pos The position in the stack where data must be inserted, 0 being top.
+    \param data The data to be inserted.
+    \param dataSize Count of items to be inserted.
+    \param replSize How many items should be overwritten starting from pos.
+    
+    Suppose you want to shift some parameters to make room for a funciton, and
+    eventually extra parameters, before the function call. For instance, suppose
+    you have...
+    
+    \code
+    ..., (data), (data), (param2), (param3) // top
+    \endcode
+    
+    And want to add the function and an extra parameter:
+    
+    \code
+    ..., (data), (data), [func], [param1], (param2), (param3) // top
+    \endcode
+    
+    This mehtod allows to shift forward the nth item in the stack and 
+    place new data. For instance, the code to perform the example operation
+    would be:
+    \code
+    {
+       ...
+       Item items[] = { funcItem, param1 };
+       ctx->insertData( 2, items, 2 );
+       ...
+    }
+    \endcode    
+    */
+   void insertData( int32 pos, Item* data, int dataSize, int32 replSize=0 );
 
    /** Top data in the stack
     *
@@ -617,8 +651,10 @@ public:
     \endcode
 
     */
-   bool wentDeep( const PStep* top );
-
+   inline bool wentDeep( const PStep* top )
+   {
+      return m_topCode->m_step != top;
+   }
 
    /** Pushes a quit step at current position in the code stack.
     This method should always be pushed in a VM before it is invoked
@@ -640,6 +676,25 @@ public:
     */
    void pushComplete();
 
+  
+   /** Prepares the VM to execute a function.
+
+    The VM gets readied to execute the function from the next step,
+    which may be invoked via step(), run() or by returning from the caller
+    of this function in case the caller has been invoked by the VM itself.
+    
+    \note At function return, np items from the stack will be popped, and the
+    return value of the function (or nil if none) will be placed at the top
+    of the stack. This means that the item immediately preceeding the first
+    parameter will be overwritten. The call expressions generate the item containing
+    the callable entity at this place, but entities invoking functions outside
+    call expression evaluation contexts must be sure that they have an extra
+    space in the stak where the return value can be placed. In doubt,
+    consider using callItem which gives this guarantee.
+    
+    @param function The function to be invoked.
+    @param np Number of parameters that must be already in the stack.
+    */ 
    void call( Function* f, int np );
 
    /** Prepares the VM to execute a function (actually, a method).
@@ -647,13 +702,72 @@ public:
     The VM gets readied to execute the function from the next step,
     which may be invoked via step(), run() or by returning from the caller
     of this function in case the caller has been invoked by the VM itself.
+    
+    This version of call causes the current frame to be considered as
+    "methodic", that is, to have a valid "self" item and a method bit marker
+    set in the context. This helps to select different behavior in functions
+    that may be invoked directly or as a mehtod for various items.
+    
+    \note At function return, np items from the stack will be popped, and the
+    return value of the function (or nil if none) will be placed at the top
+    of the stack. This means that the item immediately preceeding the first
+    parameter will be overwritten. The call expressions generate the item containing
+    the callable entity at this place, but entities invoking functions outside
+    call expression evaluation contexts must be sure that they have an extra
+    space in the stak where the return value can be placed. In doubt,
+    consider using callItem which gives this guarantee.
+    
     @param function The function to be invoked.
     @param np Number of parameters that must be already in the stack.
     @param self The item on which this method is invoked. Pure functions are
                 considered methods of "nil".
     */
-   virtual void call( Function* function, int np, const Item& self );
+   void call( Function* function, int np, const Item& self );
 
+   /** Calls an item without parameters.
+    \see callItem( const Item&, ... )
+    */
+   void callItem( const Item& item ) { callItem( item, 0, 0 ); }
+   
+   /** Calls an arbitrary item with arbitrary parameters.
+    \param item The item to be called.
+    \throw Non-callable Error if this item doesn't provide a valid Class::op_call
+    callback.
+   
+    This method prepares the invocation of an item as if it was called by
+    the script. The method can receive variable parameters of type Item&, 
+    which must exist \b outside the stack of this context (that might be
+    destroyed during the peparation of this call).
+    
+    This method pushes the called item and the parameters up to when it meets
+    a 0 in the parameter list, then invokes the Class::op_call mehtod of the
+    class of \b item.
+    
+    The item may be a method, a function a functor or any other callable entity,
+    that is, any item whose Class has op_call reimplemented.
+    
+    After this method, the caller should immediately retour, as the method might
+    immediately invoke the required code if possible, or prepare it for later
+    invocation by the VM if not possible. In both cases, the context stacks
+    and status must be considered invalidated after this method returns.
+    
+    \note The variable parameters must be Item instances whose existence must
+    be ensured until callItem() method returns. The contents of the items must 
+    either be static and exist for the whole duration of the program or be 
+    delivered to the Garbage Collector for separate accounting.
+    
+    Example usage:
+    \code
+    void somefunc( VMContext* ctx, const Item& callable )
+    {
+       ....
+       Item params[3] = { Item(10), Item( "Hello world" ), Item( 3.5 ) };
+       ctx->callItem( item, 3, params );    
+    }
+    \endcode
+    */
+   void callItem( const Item& item, int pcount, Item const* params );
+   
    /** Returns from the current frame.
     \param value The value considered as "exit value" of this frame.
 
@@ -662,7 +776,17 @@ public:
     after stack reset to the "return value" passed as parameter.
     */
    void returnFrame( const Item& value = Item() );
+      
+   /** Unrolls the code and function frames down to the nearest "next" loop base. 
+    \throw CodeError if base not found.
+    */
+   void unrollToNextBase();
 
+   /** Unrolls the code and function frames down to the nearest "break" loop base. 
+    \throw CodeError if base not found.
+    */
+   void unrollToLoopBase();
+   
 protected:
 
    // Inner constructor to create subclasses
@@ -689,6 +813,8 @@ protected:
 
    // used by ifDeep - goingDeep() - wentDeep() triplet
    const PStep* m_deepStep;
+     
+   template <class __checker> void unrollToNext( const __checker& check );
 };
 
 }
