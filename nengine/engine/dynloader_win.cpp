@@ -22,13 +22,10 @@
 #include <falcon/path.h>
 #include <falcon/module.h>
 #include <falcon/ioerror.h>
+#include <falcon/memory.h>
 
 #include <windows.h>
-#ifdef UNICODE // defined in windows.h
-    #include <falcon/autowstring.h>
-#else
-    #include <falcon/autocstring.h>
-#endif
+
 
 
 namespace Falcon
@@ -36,24 +33,36 @@ namespace Falcon
 
 Module* DynLoader::load_sys( const String& filePath )
 {
-   String winFilePath = filePath;
-   Path::uriToWin( winFilePath );
+	String dll_name = filePath;
+   Path::uriToWin( dll_name );
 
-#ifdef UNICODE
-   AutoWString cpath( winFilePath );
-   const wchar_t* rawPath = cpath.w_str();
-#else
-   AutoCString cpath( winFilePath );
-   const char* rawPath = cpath.c_str();
-#endif
+	uint32 bufsize = dll_name.length() * sizeof( wchar_t ) + sizeof( wchar_t );
+	wchar_t *dll_name_wc = (wchar_t *) memAlloc( bufsize );
+   dll_name.toWideString( dll_name_wc, bufsize );
 
-   HMODULE module = LoadLibrary( rawPath );
-   if( module == 0 )
+   HMODULE module = LoadLibraryW( dll_name_wc );
+   DWORD error;
+
+   if ( module == NULL ) 
    {
-       throw new IOError( ErrorParam( e_binload, __LINE__, SRC )
+      error = GetLastError();
+      if (  error  == ERROR_CALL_NOT_IMPLEMENTED )
+      {
+         char *dll_name_c = (char *) dll_name_wc;
+         if( dll_name.toCString( dll_name_c, bufsize ) > 0 )
+            module = LoadLibrary( dll_name_c );
+      }
+   }
+
+   memFree( dll_name_wc );
+
+   if ( module == NULL )
+   {
+      throw new IOError( ErrorParam( e_binload, __LINE__, SRC )
           .origin( ErrorParam::e_orig_loader )
           .sysError( GetLastError() )
           .extra( filePath ) );
+      return false;
    }
 
    typedef Module* (*module_init_type)();
