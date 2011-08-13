@@ -28,7 +28,7 @@ endif()
 #
 if( CMAKE_COMPILER_IS_GNUCXX )
    message( "Adding GNU g++ specific flags" )
-   add_definitions(-Wall -Wextra -Werror -pthread)
+   add_definitions(-Wall -Wextra -Werror -lpthread)
 endif()
 
 add_subdirectory(engine)

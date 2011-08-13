@@ -372,25 +372,25 @@ bool _getCWD( String& name )
       return false;
    }
 
-	DWORD bufSize = size * sizeof( wchar_t ) + sizeof( wchar_t );
+   DWORD bufSize = size * sizeof( wchar_t ) + sizeof( wchar_t );
    wchar_t *buffer = (wchar_t *) memAlloc( bufSize );
    size = GetCurrentDirectoryW( bufSize, buffer );
 
-	if( size == 0 && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED )
-	{
-		char *buffer_c = (char *) buffer;
-		size = GetCurrentDirectory( bufSize, buffer_c );
+   if( size == 0 && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED )
+   {
+      char *buffer_c = (char *) buffer;
+      size = GetCurrentDirectory( bufSize, buffer_c );
 
-		if( size == 0 ) 
+      if( size == 0 )
       {
-			memFree( buffer );
-			return false;
-		}
+         memFree( buffer );
+         return false;
+      }
 
-		name.adopt( buffer_c, size, bufSize );
-		Path::winToUri( name );
-		return true;
-	}
+      name.adopt( buffer_c, size, bufSize );
+      Path::winToUri( name );
+      return true;
+   }
 
    if( size == 0 ) 
    {
