@@ -783,6 +783,11 @@ void Parser::onNewToken()
 
    // try to simplify the stack, if possible.
    applyPaths();
+   if( _p->m_pframes->empty() && ! _p->m_tokenStack->empty() )
+   {
+      MESSAGE1( "Parser::onNewToken -- stack not empty after applyPaths, trying to find new ways." );
+      onNewToken();
+   }
 }
 
 

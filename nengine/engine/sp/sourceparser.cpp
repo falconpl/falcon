@@ -65,9 +65,9 @@ static void apply_dummy( const Rule&, Parser& p )
 //==========================================================
 
 SourceParser::SourceParser():
-   T_Openpar("("),
+   T_Openpar("(",20),
    T_Closepar(")"),
-   T_OpenSquare("["),
+   T_OpenSquare("[", 20),
    T_DotPar(".("),
    T_DotSquare(".["),
    T_CloseSquare("]"),
