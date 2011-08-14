@@ -18,6 +18,8 @@
 
 #include <falcon/statement.h>
 #include <falcon/rulesyntree.h>
+#include <falcon/expression.h>
+#include <falcon/pcode.h>
 
 namespace Falcon
 {
@@ -41,23 +43,48 @@ public:
 
    SynTree& currentTree();
    const SynTree& currentTree() const;
-
+   
 protected:
    class Private;
    Private* _p;
 };
 
 /** Cut statement.
-   Kills the current rule context in a rule.
+   Kills the current rule context in a rule, or makes an expression
+  "deterministic".
 */
 class FALCON_DYN_CLASS StmtCut: public Statement
 {
 public:
-   StmtCut( int32 line=0, int32 chr=0 );
+   StmtCut( Expression* expr = 0, int32 line=0, int32 chr=0 );
    virtual ~StmtCut();
 
    void describeTo( String& tgt ) const;
 
+private:
+   Expression* m_expr;
+   PCode m_pc;
+   
+   static void apply_( const PStep*, VMContext* ctx );
+   static void apply_cut_expr_( const PStep*, VMContext* ctx );
+};
+
+
+/** Doubt statement.
+ Forces an expression to be non-deterministic.
+*/
+class FALCON_DYN_CLASS StmtDoubt: public Statement
+{
+public:
+   StmtDoubt( Expression* expr, int32 line=0, int32 chr=0 );
+   virtual ~StmtDoubt();
+
+   void describeTo( String& tgt ) const;
+
+private:
+   Expression* m_expr;
+   PCode m_pc;
+   
    static void apply_( const PStep*, VMContext* ctx );
 };
 

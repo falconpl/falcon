@@ -25,7 +25,6 @@ namespace Ext {
 Describe::Describe():
    Function( "describe" )
 {
-   setDeterm(true);
    signature("X,[N],[N]");
    //mthSignature("[N],[N]");
    addParam("item");

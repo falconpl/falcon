@@ -147,11 +147,11 @@ void SynTree::insert( int pos, Statement* step )
 {
    _p->m_steps.insert( _p->m_steps.begin()+pos, step );
    size_t size = _p->m_steps.size();
-   if( size == 2 )
+   if( size == 2 && apply == apply_single_ )
    {
       apply = apply_;
    }
-   else if( size == 1 )
+   else if( size == 1 && apply == apply_empty_ )
    {
       m_single = step;
       apply = apply_single_;
@@ -164,11 +164,12 @@ SynTree& SynTree::append( Statement* step )
    _p->m_steps.push_back( step );
    size_t size = _p->m_steps.size();
    
-   if( size == 2 )
+   // check also the previous function to prevent overwriting.
+   if( size == 2 && apply == apply_single_ )
    {
       apply = apply_;
    }
-   else if( size == 1 )
+   else if( size == 1 && apply == apply_empty_ )
    {
       m_single = step;
       apply = apply_single_;

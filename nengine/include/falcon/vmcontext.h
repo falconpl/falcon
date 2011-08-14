@@ -303,7 +303,7 @@ public:
       fassert( callf.m_stackBase > callf.m_initBase );
 
       // our frame informations are at param -1
-      int64 vals = param(-1)->asInteger();
+      int64 vals = params()[-1].asInteger();
 
       // roll back to previous state stack state.
       m_topData = m_dataStack + callf.m_stackBase - 2;
@@ -323,7 +323,7 @@ public:
       fassert( callf.m_stackBase > callf.m_initBase );
 
       // our frame informations are at param -1
-      int64 vals = param(-1)->asInteger();
+      int64 vals = params()[-1].asInteger();
       while( (vals & 0xFFFFFFFF) != 0xFFFFFF )
       {
          m_topData = m_dataStack + callf.m_stackBase - 2;
@@ -331,7 +331,7 @@ public:
          // roll back to previous state stack state.
          callf.m_stackBase = (int32) (vals >> 32);
 
-         vals = param(-1)->asInteger();
+         vals = params()[-1].asInteger();
          // assert if we're not in a rule frame anymore!
          fassert( callf.m_stackBase > callf.m_initBase );
       }
@@ -346,7 +346,7 @@ public:
       fassert( cf.m_stackBase > cf.m_initBase );
 
       long localCount = localVarCount();
-      int32 baseRuleTop = param(-1)->content.mth.ruleTop;
+      int32 baseRuleTop = params()[-1].content.mth.ruleTop;
       // move forward the stack base.
       cf.m_stackBase = baseRuleTop;
       m_topData = m_dataStack + baseRuleTop + localCount - 1;
@@ -371,7 +371,8 @@ public:
       // are we in a rule frame?
       if( cf.m_initBase < cf.m_stackBase )
       {
-         param(-1)->setOob();
+         register Item& itm = m_dataStack[cf.m_stackBase-1];
+         itm.setOob(true);
       }
    }
 
@@ -787,6 +788,9 @@ public:
     */
    void unrollToLoopBase();
    
+   bool ruleEntryResult() const { return m_ruleEntryResult; }
+   void ruleEntryResult( bool v ) { m_ruleEntryResult = v; }
+   
 protected:
 
    // Inner constructor to create subclasses
@@ -805,7 +809,7 @@ protected:
    Item* m_maxData;
 
    Item m_regA;
-
+  
    VMachine* m_vm;
 
    friend class VMachine;
@@ -813,7 +817,9 @@ protected:
 
    // used by ifDeep - goingDeep() - wentDeep() triplet
    const PStep* m_deepStep;
-     
+  
+   bool m_ruleEntryResult;
+   
    template <class __checker> void unrollToNext( const __checker& check );
 };
 

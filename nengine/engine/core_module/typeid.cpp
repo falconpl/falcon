@@ -25,7 +25,6 @@ namespace Ext {
 TypeId::TypeId():
    PseudoFunction( "typeId", &m_invoke )
 {
-   setDeterm(true);
    signature("X");
    addParam("item");
 }

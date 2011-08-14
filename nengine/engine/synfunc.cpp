@@ -20,24 +20,62 @@
 #include <falcon/trace.h>
 #include <falcon/localsymbol.h>
 #include <falcon/closedsymbol.h>
+#include <falcon/pstep.h>
 
 namespace Falcon
 {
 
+
 SynFunc::SynFunc( const String& name, Module* owner, int32 line ):
-   Function( name, owner, line )
-{}
+   Function( name, owner, line ),
+   m_bIsPredicate( false )
+{
+   // by default, use a statement return as fallback cleanup. 
+   setPredicate( false );
+}
 
 
 SynFunc::~SynFunc()
 {
 }
 
-void SynFunc::invoke( VMContext* ctx, int32 nparams )
-{
-   // Used by the VM to insert this opcode if needed to exit SynFuncs.
-   static StmtReturn s_a_return;
 
+void SynFunc::setPredicate(bool bmode)
+{
+   static StmtReturn s_stdReturn;
+   
+   class PStepReturnRule: public PStep
+   {
+   public:
+      PStepReturnRule() { apply = apply_; }
+      virtual ~PStepReturnRule() {}
+      void describeTo( String& v ) const { v = "Automatic return rule value"; }
+      
+   private:
+      static void apply_( const PStep*, VMContext* ctx ) {
+         Item b;
+         b.setBoolean( ctx->ruleEntryResult() );
+         ctx->returnFrame( b );
+      }
+   };
+   
+   static PStepReturnRule s_ruleReturn;
+   
+   m_bIsPredicate = bmode;
+   if( bmode )
+   {
+      m_retStep = &s_ruleReturn;
+   }
+   else
+   {
+      // reset the default return value
+      m_retStep = &s_stdReturn;
+   }
+}
+
+
+void SynFunc::invoke( VMContext* ctx, int32 nparams )
+{   
    // nothing to do?
    if( syntree().empty() )
    {
@@ -57,12 +95,8 @@ void SynFunc::invoke( VMContext* ctx, int32 nparams )
       ctx->addLocals( lc - nparams );
    }
    
-   if( this->syntree().last()->type() != Statement::e_stmt_return )
-   {
-      MESSAGE1( "-- Pushing extra return" );
-      ctx->pushCode( &s_a_return );
-   }
-
+   // push a static return in case of problems.   
+   ctx->pushCode( m_retStep );
    ctx->pushCode( &this->syntree() );
 }
 

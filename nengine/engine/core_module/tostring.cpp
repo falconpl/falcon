@@ -26,7 +26,6 @@ namespace Ext {
 ToString::ToString():
    Function( "toString" )
 {
-   setDeterm(true);
    signature("X,[S]");
    addParam("item");
    addParam("format");

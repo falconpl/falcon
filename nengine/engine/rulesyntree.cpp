@@ -21,7 +21,8 @@
 namespace Falcon
 {
 
-RuleSynTree::RuleSynTree()
+RuleSynTree::RuleSynTree():
+   m_stepNext(this)
 {
    apply = apply_;
 }
@@ -34,11 +35,32 @@ void RuleSynTree::apply_( const PStep* ps, VMContext* ctx )
 {
    const RuleSynTree* self = static_cast<const RuleSynTree*>(ps);
 
+   // prepare the first step
+   if( self->size() == 0 )
+   {
+      ctx->ruleEntryResult( true );
+      return;
+   }
+   else
+   {
+      // we can start the dance.
+      register CodeFrame& cf = ctx->currentCode();
+      cf.m_step = &self->m_stepNext;
+      cf.m_seqId = 1;
+      self->at( 0 )->prepare(ctx);
+      ctx->ruleEntryResult( true );
+   }   
+}
+
+
+void RuleSynTree::PStepNext::apply_(const PStep* ps, VMContext* ctx)
+{
+   const RuleSynTree::PStepNext* self = static_cast<const RuleSynTree::PStepNext*>(ps);
    // get the current step.
    CodeFrame& cf = ctx->currentCode();
-
+   
    // Have the rule failed?
-   if( ctx->regA().isBoolean() && ctx->regA().asBoolean() == false )
+   if( ! ctx->ruleEntryResult() )
    {
       // have a we a traceback point?
       register uint32 tbpoint = ctx->unrollRuleFrame();
@@ -51,24 +73,24 @@ void RuleSynTree::apply_( const PStep* ps, VMContext* ctx )
 
       // we have a traceback.
       cf.m_seqId = tbpoint;
+      ctx->ruleEntryResult( true ); // reset the result.
    }
-   else if (cf.m_seqId >= (int) self->size() )
+   else if (cf.m_seqId >= (int) self->m_owner->size() )
    {
       // We have processed the rule up to the end -- SUCCESS
-      
+      ctx->popCode();
       // Commit the rule hypotesis
       ctx->commitRule();      
-      ctx->popCode();
       return;
    }
    else if( ctx->checkNDContext() )
    {
       // we have a non-determ context at step - 1
-      ctx->addRuleNDFrame( cf.m_seqId - 1);
+      ctx->addRuleNDFrame( cf.m_seqId - 1 );
    }
-
+      
    // just proceed with next step
-   Statement* step = self->at( cf.m_seqId++ );
+   Statement* step = self->m_owner->at( cf.m_seqId++ );
    step->prepare(ctx);
 }
 

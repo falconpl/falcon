@@ -66,7 +66,8 @@ public:
    Parsing::Terminal T_EEQ;
    
    Parsing::Terminal T_Comma;
-   Parsing::Terminal T_Cut;
+   Parsing::Terminal T_QMark;
+   Parsing::Terminal T_Bang;
    Parsing::Terminal T_UnaryMinus;
    Parsing::Terminal T_Dollar;
    Parsing::Terminal T_Power;
@@ -176,7 +177,11 @@ public:
    Parsing::Rule r_rule;
 
    Parsing::NonTerminal S_Cut;
+   Parsing::Rule r_cut_expr;
    Parsing::Rule r_cut;
+   
+   Parsing::NonTerminal S_Doubt;
+   Parsing::Rule r_doubt;
 
    Parsing::NonTerminal S_End;
    Parsing::Rule r_end;
@@ -304,6 +309,8 @@ public:
    Parsing::Rule r_function;
 
    Parsing::NonTerminal S_Return;
+   Parsing::Rule r_return_doubt;
+   Parsing::Rule r_return_expr;
    Parsing::Rule r_return;
 
    Parsing::NonTerminal S_Class;

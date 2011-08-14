@@ -127,13 +127,23 @@ public:
    virtual ~StmtReturn();
 
    void describeTo( String& tgt ) const;
-   static void apply_( const PStep*, VMContext* ctx );
 
    Expression* expression() const { return m_expr; }
    void expression( Expression* expr );
+   
+   bool hasDoubt() const { return m_bHasDoubt; }
+   void hasDoubt( bool b );
+   
 private:
    Expression* m_expr;
    PCode m_pcExpr;
+   bool m_bHasDoubt;
+   
+   static void apply_( const PStep*, VMContext* ctx );
+   static void apply_expr_( const PStep*, VMContext* ctx );
+   static void apply_doubt_( const PStep*, VMContext* ctx );
+   static void apply_expr_doubt_( const PStep*, VMContext* ctx );
+
 };
 
 

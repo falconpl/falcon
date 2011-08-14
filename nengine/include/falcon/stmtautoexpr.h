@@ -31,35 +31,11 @@ namespace Falcon {
 class FALCON_DYN_CLASS StmtAutoexpr: public Statement
 {
 public:
-   StmtAutoexpr( Expression* expr, bool isInRule=false, int32 line=0, int32 chr = 0 );
+   StmtAutoexpr( Expression* expr, int32 line=0, int32 chr = 0 );
    virtual ~StmtAutoexpr();
 
    void describeTo( String& tgt ) const;
    void oneLinerTo( String& tgt ) const;
-
-   /** Check explicit non-determinism set. 
-    If true, then an explicit "?" is specified for this statement.
-   */
-   bool nd() const { return m_nd; }
-   
-   /** Sets explicit non-determinism status.
-    \parm mode If this statement must be forced to be non-deterministic.
-    \throw CodeError if determ() is already set.
-    In rules, the "?" prefix indicates a rule statement that may fail.
-   */
-   void nd( bool mode );
-
-   /** Check if explicit determinism is set.
-    If true, then an explicit "*" is specified for this statement.
-   */
-   bool determ() const { return m_determ; }
-
-   /** Sets explicit determinism status.
-    \parm mode If this statement must be forced to be deterministic.
-    \throw CodeError if nd() is already set.
-    In rules, the "?" prefix indicates a rule statement that may fail.
-   */
-   void determ( bool mode );
 
    /** Returns the expression held by this expression-statement.
     \return The held expression, or 0 if it was not set.
@@ -79,15 +55,23 @@ public:
    }
    
    
+   void setInteractive( bool bInter );
+   bool isInteractive() const { return m_bInteractive; }
+   
+   void setInRule( bool bRule );
+   bool isInRule() const { return m_bInRule; }
+   
 private:
    // apply is the same as PCODE, but it also checks ND requests.
    static void apply_( const PStep* self, VMContext* ctx );
+   static void apply_interactive_( const PStep* self, VMContext* ctx );
+   static void apply_rule_( const PStep* self, VMContext* ctx );
    
    Expression* m_expr;
    PCode m_pcExpr;
-
-   bool m_nd;
-   bool m_determ;
+   
+   bool m_bInteractive;
+   bool m_bInRule;
 };
 
 }

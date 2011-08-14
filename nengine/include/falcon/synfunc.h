@@ -58,8 +58,13 @@ public:
 
    virtual void invoke( VMContext* ctx, int32 pCount = 0 );
    
+   void setPredicate( bool bmode );
+   bool isPredicate() const { return m_bIsPredicate; }
+   
 protected:
    SynTree m_syntree;
+   PStep* m_retStep;
+   bool m_bIsPredicate;
 };
 
 }

@@ -95,9 +95,8 @@ public:
     
     are equivalent.
     
-    The description may start with "&" and/or "*" characters. "&" means that
-    the function is eta, while "*" means that the function is non-deterministic
-    (by default, functions are deterministic).
+    The description may start with "&" character. "&" means that
+    the function is ETA (by default, functions are non-eta).
     
     \return false on malformed parameter string, 
     */
@@ -175,16 +174,6 @@ public:
    /** Just candy grammar for this->apply(vm); */
    void operator()( VMContext* ctx ) { invoke(ctx); }
 
-   /** Return true if this function is deterministic.
-    \return true if the function is deterministic.
-    */
-   bool isDeterm() const { return m_bDeterm; }
-   
-   /** Set the determinism status of this function.
-    \param mode true to set this function as deterministic
-    */
-   void setDeterm( bool mode ) { m_bDeterm = mode; }
-
    /** Return true if this function is ETA.
     \return true if the function is an ETA function.
 
@@ -194,8 +183,9 @@ public:
     */
    bool isEta() const { return m_bEta; }
 
-   /** Set the determinism status of this function.
-    \param mode true to set this function as deterministic
+   /** Set the Eta-ness status of this function.
+    \param mode true to set this function as ETA.
+    \see isEta()
     */
    void setEta( bool mode ) { m_bEta = mode; }
 
@@ -231,7 +221,7 @@ public:
     Module *mod = new Module(...);
     (*mod)
        << &(*(new Func0) << "p0" << "p1" ... )
-       << &(*(new Func1) << "p0" << "p1" ... << Function::determ );
+       << &(*(new Func1) << "p0" << "p1" ... << Function::eta );
     @endcode
     */
    inline Function& operator <<( const String& param )
@@ -257,36 +247,12 @@ public:
     */
    static EtaSetter eta;
 
-   /** Deterministic setter.
-    \see setDeterm
-    */
-   class DetermSetter {
-   };
-
-   /** Deterministic setter.
-    Use this object to set the function as deterministic:
-    @code
-    Function f;
-    f << "Param0" << "Param1" << Function::determ;
-    @endcode
-    */
-   static DetermSetter determ;
-
    /** Candy grammar to set this function as eta.
     \see setEta
     */
    inline Function& operator <<( const EtaSetter& )
    {
       setEta(true);
-      return *this;
-   }
-
-   /** Candy grammar to set this function as deterministic.
-    \see setDeterm
-    */
-   inline Function& operator <<( const DetermSetter& )
-   {
-      setDeterm(true);
       return *this;
    }
 
@@ -322,9 +288,7 @@ protected:
 
    int32 m_line;
 
-   bool m_bDeterm;
    bool m_bEta;
-
    SymbolTable m_symtab;
 };
 

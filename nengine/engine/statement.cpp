@@ -315,10 +315,11 @@ void StmtIf::apply_( const PStep* s1, VMContext* ctx )
 // Return
 //
 StmtReturn::StmtReturn( Expression* expr, int32 line, int32 chr ):
-      Statement(e_stmt_return, line, chr ),
-      m_expr( expr )
+   Statement(e_stmt_return, line, chr ),
+   m_expr( expr ),
+   m_bHasDoubt( false )
 {
-   apply = apply_;
+   
 
    m_step0 = this;
 
@@ -327,6 +328,11 @@ StmtReturn::StmtReturn( Expression* expr, int32 line, int32 chr ):
       m_expr = expr;
       expr->precompile( &m_pcExpr );
       m_step1 = &m_pcExpr;
+      apply = apply_expr_;
+   }
+   else
+   {
+      apply = apply_;
    }
 }
 
@@ -339,42 +345,68 @@ void StmtReturn::expression( Expression* expr )
 {
    delete m_expr;
    m_expr = expr;
+   apply = m_bHasDoubt ? apply_expr_doubt_ : apply_expr_;
 }
+
+
+void StmtReturn::hasDoubt( bool b )
+{
+   m_bHasDoubt = b; 
+   if( b )
+   {
+      apply = m_expr == 0 ? apply_expr_doubt_ : apply_doubt_;
+   }
+   else
+   {
+      apply = m_expr == 0 ? apply_expr_ : apply_;
+   }
+}
+ 
 
 void StmtReturn::describeTo( String& tgt ) const
 {
-   for( int32 i = 1; i < chr(); i++ ) {
-      tgt.append(' ');
+   tgt = "return";
+   
+   if( m_bHasDoubt )
+   {
+      tgt += " ?";
    }
-
+   
    if( m_expr != 0 )
    {
-      tgt = "return " + m_expr->describe() +"\n";
-   }
-   else
-   {
-      tgt = "return\n";
-   }
+      tgt += " ";
+      tgt += m_expr->describe();
+   }   
 }
 
 
-void StmtReturn::apply_( const PStep*ps, VMContext* ctx )
+void StmtReturn::apply_( const PStep*, VMContext* ctx )
 {
-   const StmtReturn* stmt = static_cast<const StmtReturn*>(ps);
-   TRACE1( "Apply 'return' at line %d ", stmt->line() );
-
-   Item retval;
-   // clear A if there wasn't any expression
-   if ( stmt->m_expr != 0 )
-   {
-      ctx->returnFrame( ctx->topData() );
-   }
-   else
-   {
-      ctx->returnFrame();
-   }
+   MESSAGE1( "Apply 'return'" );   
+   ctx->returnFrame();
 }
 
+
+void StmtReturn::apply_expr_( const PStep*, VMContext* ctx )
+{
+   MESSAGE1( "Apply 'return expr'" );
+   ctx->returnFrame( ctx->topData() );
+}
+
+void StmtReturn::apply_doubt_( const PStep*, VMContext* ctx )
+{
+   MESSAGE1( "Apply 'return ?'");   
+   ctx->returnFrame();
+   ctx->SetNDContext();
+}
+
+
+void StmtReturn::apply_expr_doubt_( const PStep*, VMContext* ctx )
+{
+   MESSAGE1( "Apply 'return expr'" );
+   ctx->returnFrame( ctx->topData() );
+   ctx->SetNDContext();
+}
 
 }
 

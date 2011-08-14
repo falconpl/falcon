@@ -192,6 +192,7 @@ FAL_ERRORDECL( e_syn_cut, 190, "Rule cut '!' not under rule" );
 FAL_ERRORDECL( e_forfirst_outside, 191, "Block 'forfirst' declared outside 'for'" );
 FAL_ERRORDECL( e_forlast_outside, 192, "Block 'forlast' declared outside 'for'" );
 FAL_ERRORDECL( e_formiddle_outside, 193, "Block 'formiddle' declared outside 'for'" );
+FAL_ERRORDECL( e_syn_doubt, 194, "Rule doubt '?' not under rule" );
 
 
 FAL_ERRORDECL( e_io_error, 200, "Generic I/O Error" );

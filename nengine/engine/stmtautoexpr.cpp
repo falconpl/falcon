@@ -27,27 +27,18 @@
 namespace Falcon 
 {
 
-StmtAutoexpr::StmtAutoexpr( Expression* expr, bool isInRule, int32 line, int32 chr ):
-      Statement(e_stmt_autoexpr, line, chr ),
-      m_expr( expr ),
-      m_nd( false ),
-      m_determ( false )
+StmtAutoexpr::StmtAutoexpr( Expression* expr, int32 line, int32 chr ):
+   Statement(e_stmt_autoexpr, line, chr ),
+   m_expr( expr ),
+   m_bInteractive( false ),
+   m_bInRule( false )
 {
-   apply = apply_;
-   
+   apply = apply_; 
    m_expr->precompile(&m_pcExpr);
-
-   // Push ourselves?
-   if( isInRule )
-   {
-      m_step0 = this;
-      m_step1 = &m_pcExpr;
-   }
-   else
-   {
-      m_pcExpr.autonomous();
-      m_step0 = &m_pcExpr;
-   }
+   
+   // normally, we don't want to be notified.
+   m_pcExpr.autonomous( true );
+   m_step0 = &m_pcExpr;   
 }
 
 StmtAutoexpr::~StmtAutoexpr()
@@ -57,13 +48,6 @@ StmtAutoexpr::~StmtAutoexpr()
 
 void StmtAutoexpr::describeTo( String& tgt ) const
 {
-   for( int32 i = 1; i < chr(); i++ ) {
-      tgt.append(' ');
-   }
-
-   if( m_nd ) tgt += "? ";
-   else if( m_determ ) tgt += "* ";
-   
    tgt += m_expr->describe();
 }
 
@@ -72,45 +56,97 @@ void StmtAutoexpr::oneLinerTo( String& tgt ) const
    tgt += m_expr->describe();
 }
 
-void StmtAutoexpr::nd( bool mode )
-{
-   if ( m_determ )
-      throw new CodeError( ErrorParam( e_determ_decl, __LINE__, __FILE__ ).extra( "setting nd" ) );
 
-   m_nd = mode;
+void StmtAutoexpr::setInteractive( bool bInter )
+{
+   m_bInteractive = bInter;
+   if( bInter )
+   {
+      apply = apply_interactive_;
+      m_step0 = this;
+      m_step1 = &m_pcExpr;
+      m_pcExpr.autonomous( false );
+   }
+   else
+   {
+      if( m_bInRule )
+      {
+         apply = apply_rule_;
+         m_step0 = this;
+         m_step1 = &m_pcExpr;
+         m_pcExpr.autonomous( false );
+      }
+      else
+      {
+         m_step0 = &m_pcExpr;
+         m_pcExpr.autonomous( true );
+      }
+   }
 }
 
-void StmtAutoexpr::determ( bool mode )
-{
-   if ( m_nd )
-      throw new CodeError( ErrorParam( e_determ_decl, __LINE__, __FILE__ ).extra( "setting determ" ) );
 
-   m_determ = mode;
+void StmtAutoexpr::setInRule( bool bMode )
+{
+   m_bInRule = bMode;
+   if( bMode )
+   {
+      apply = apply_rule_;
+      m_step0 = this;
+      m_step1 = &m_pcExpr;
+      m_pcExpr.autonomous( false );
+   }
+   else
+   {
+      if( m_bInteractive )
+      {
+         apply = apply_interactive_;
+         m_step0 = this;
+         m_step1 = &m_pcExpr;
+         m_pcExpr.autonomous( false );
+      }
+      else
+      {
+         m_step0 = &m_pcExpr;
+         m_pcExpr.autonomous( true );
+      }
+   }
 }
 
-void StmtAutoexpr::apply_( const PStep* self, VMContext* ctx )
+void StmtAutoexpr::apply_( const PStep* DEBUG_ONLY(self), VMContext* )
 {
    TRACE3( "StmtAutoexpr apply: %p (%s)", self, self->describe().c_ize() );
+}
 
+
+void StmtAutoexpr::apply_interactive_( const PStep* DEBUG_ONLY(self), VMContext* ctx )
+{
+   TRACE3( "StmtAutoexpr apply interactive: %p (%s)", self, self->describe().c_ize() );
+   
    // we never need to be called again.
    ctx->popCode();
    
-   // save the result in the A register
    ctx->regA() = ctx->topData();
-
+   
    // remove the data created by the expression
    ctx->popData();
+}
 
-   // finally, check determinism.
-   const StmtAutoexpr* sae = static_cast<const StmtAutoexpr*>(self);
-   if( sae->m_determ ) 
-   {
-      ctx->checkNDContext();
-   }
-   else if( sae->m_nd ) 
-   {
-      ctx->SetNDContext();
-   }
+
+void StmtAutoexpr::apply_rule_( const PStep* DEBUG_ONLY(self), VMContext* ctx )
+{
+   TRACE3( "StmtAutoexpr apply rule: %p (%s)", self, self->describe().c_ize() );
+
+   // we never need to be called again.
+   ctx->popCode();
+
+   // we're inside a rule, or we wouldn't be called.
+   register Item* td = ctx->topData().dereference();
+   
+   // set to false only if the last op result was a boolean false.
+   ctx->ruleEntryResult( !(td->isBoolean() && td->asBoolean() == false) );
+   
+   // remove the data created by the expression
+   ctx->popData();
 }
 
 }

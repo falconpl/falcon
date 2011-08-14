@@ -150,8 +150,7 @@ public:
     * reducing expressions at compile time.
     */
    virtual bool simplify( Item& result ) const = 0;
-
-
+   
    /** Pre-compiles the expression on a PCode.
     *
     * The vast majority of expressions in Falcon programs can be

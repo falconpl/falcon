@@ -30,7 +30,6 @@ namespace Falcon
 {
 
 Function::EtaSetter Function::eta;
-Function::DetermSetter Function::determ;
 
 
 Function::Function( const String& name, Module* module, int32 line ):
@@ -40,7 +39,6 @@ Function::Function( const String& name, Module* module, int32 line ):
    m_module( module ),
    m_methodOf( 0 ),
    m_line( line ),
-   m_bDeterm(true),
    m_bEta(false)
 {}
 
@@ -61,16 +59,9 @@ bool Function::parseDescription( const String& params )
    
    length_t ppos = 0;
    char_t chr;
-   while( (chr = params.getCharAt(ppos)) == '*' || chr == '&' )
+   while( (chr = params.getCharAt(ppos)) == '&' )
    {
-      if ( chr == '&' )
-      {
-         setEta(true);
-      }
-      else
-      {
-         setDeterm(true);
-      }
+      setEta(true);
       ++ppos;
    }
       

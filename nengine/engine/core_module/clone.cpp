@@ -26,7 +26,6 @@ namespace Ext {
 Clone::Clone():
    PseudoFunction( "clone", &m_invoke )
 {
-   setDeterm(true);
    signature("X");
    addParam("item");
 }

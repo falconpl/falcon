@@ -31,8 +31,6 @@ MinOrMax::MinOrMax( const String& name, bool bIsMax ):
    addParam("first");
    addParam("second");
    signature( "X,X,..." );
-
-   setDeterm(true);
 }
 
 MinOrMax::~MinOrMax()

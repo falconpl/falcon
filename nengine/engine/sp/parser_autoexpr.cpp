@@ -73,8 +73,16 @@ void apply_line_expr( const Rule&, Parser& p )
       Expression* expr = static_cast<Expression*>(ti->detachValue());
       
       Statement* parent = ctx->currentStmt();
-      bool inrule = p.interactive() || (parent != 0 && parent->type() == Statement::e_stmt_rule);
-      Statement* line = new StmtAutoexpr(expr, inrule, ti->line(), ti->chr());
+      StmtAutoexpr* line = new StmtAutoexpr(expr, ti->line(), ti->chr());
+      if( parent != 0 && parent->type() == Statement::e_stmt_rule )
+      {
+         line->setInRule( true );
+      }
+      else if( p.interactive() )
+      {
+         line->setInteractive( true );
+      }
+      
       ctx->addStatement( line );
    }
 

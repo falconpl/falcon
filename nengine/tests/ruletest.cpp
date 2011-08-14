@@ -135,7 +135,7 @@ void go()
    StmtAutoexpr* assign_expr = new StmtAutoexpr(
                new ExprAssign( var_a->makeExpression(),
                   new ExprPlus( var_a->makeExpression(), new ExprValue(1) ) ) );
-   assign_expr->nd(true);
+   
    // and the rule
    StmtRule* rule = new StmtRule;
    (*rule)

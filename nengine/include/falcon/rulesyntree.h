@@ -34,7 +34,21 @@ public:
    RuleSynTree();
    virtual ~RuleSynTree();
 
+private:
    static void apply_( const PStep* ps, VMContext* ctx );
+
+   class PStepNext: public PStep {
+   public:
+      PStepNext( RuleSynTree* owner ): m_owner(owner) { apply = apply_; }
+      virtual ~PStepNext() {};
+      void describeTo( String& str ) { str = "PStepNext of " + m_owner->oneLiner(); }
+      
+   private:
+      static void apply_( const PStep* self, VMContext* ctx );
+      RuleSynTree* m_owner;
+   };
+   PStepNext m_stepNext;
+       
 };
 
 }

@@ -34,7 +34,8 @@ public:
 
 
 PCode::PCode():
-   _p(new Private)
+   _p(new Private),
+   m_bAutonomous( false )
 {
    apply = apply_;
    
@@ -124,9 +125,17 @@ void PCode::apply_auto_( const PStep* self, VMContext* ctx )
    ctx->popData();
 }
 
-void PCode::autonomous()
+void PCode::autonomous( bool bMode )
 {
-   apply = apply_auto_;
+   m_bAutonomous = bMode;
+   if( bMode )
+   {
+      apply = apply_auto_;
+   }
+   else
+   {
+      apply = apply_;
+   }
 }
 
 }

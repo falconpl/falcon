@@ -24,7 +24,7 @@ namespace Falcon
 
 class StmtRule::Private {
 public:
-   typedef std::vector<RuleSynTree* > AltTrees;
+   typedef std::vector<RuleSynTree*> AltTrees;
    AltTrees m_altTrees;
    
    ~Private()
@@ -104,28 +104,22 @@ void StmtRule::apply_( const PStep*s1 , VMContext* ctx )
    CodeFrame& cf = ctx->currentCode();
 
    // Always process the first alternative
-   if ( cf.m_seqId > 0 && ( ! ctx->regA().isBoolean() || ctx->regA().asBoolean() == true) )
+   if ( cf.m_seqId > 0 && ctx->ruleEntryResult() )
    {
-      TRACE1( "Apply 'rule' at line %d -- success ", self->line() );
-      // force A to be true
-      ctx->regA().setBoolean(true);
+      TRACE1( "Apply 'rule' at line %d -- success ", self->line() );      
       //we're done
       ctx->popCode();
    }
    else
    {
       // on first alternative -- or if previous alternative failed...
-
       if( cf.m_seqId >= (int) self->_p->m_altTrees.size() )
       {
          // we failed, and we have no more alternatives.
          TRACE1( "Apply 'rule' at line %d -- rule failed", self->line() );
 
          // we're done
-         ctx->popCode();
-
-         // force A to be false
-         ctx->regA().setBoolean(false);
+         ctx->popCode();         
       }
       else
       {
@@ -140,34 +134,116 @@ void StmtRule::apply_( const PStep*s1 , VMContext* ctx )
          ctx->startRuleFrame();
 
          // push the next alternative and pricess it
-         ctx->pushCode( self->_p->m_altTrees[cf.m_seqId++] );
+         RuleSynTree* rst = self->_p->m_altTrees[cf.m_seqId++];
+         ctx->pushCode( rst );
       }
    }
 }
 
 //================================================================
 // Statement cut
+//
 
-StmtCut::StmtCut( int32 line, int32 chr ):
-   Statement( e_stmt_cut,  line, chr )
+StmtCut::StmtCut( Expression* expr, int32 line, int32 chr ):
+   Statement( e_stmt_cut,  line, chr ),
+   m_expr(expr)
 {
-   apply = apply_;
+   m_step0 = this;
+
+   if( expr == 0 )
+   {
+      apply = apply_;
+   }
+   else
+   {
+      expr->precompile( &m_pc );
+      m_step1 = &m_pc;
+      apply = apply_cut_expr_;
+   }
 }
 
 StmtCut::~StmtCut()
 {
-
+   delete m_expr;
 }
 
 void StmtCut::describeTo( String& tgt ) const
 {
    tgt += "!";
+   if( m_expr != 0 )
+   {
+      tgt += " ";
+      tgt += m_expr->describe();
+   }
 }
 
 void StmtCut::apply_( const PStep*, VMContext* ctx )
 {
    ctx->unrollRuleBranches();
+   ctx->popCode(); // use us just once.
 }
+
+void StmtCut::apply_cut_expr_( const PStep*, VMContext* ctx )
+{
+   // clear the non-deterministic bit in the context, if set.
+   ctx->checkNDContext();
+   ctx->popCode(); // use us just once.
+   
+   // we're inside a rule, or we wouldn't be called.
+   register Item* td = ctx->topData().dereference();
+   
+   // set to false only if the last op result was a boolean false.
+   ctx->ruleEntryResult( !(td->isBoolean() && td->asBoolean() == false) );
+   
+   // remove the data created by the expression
+   ctx->popData();
+   
+}
+
+
+//================================================================
+// Statement doubt
+//
+
+
+StmtDoubt::StmtDoubt( Expression* expr, int32 line, int32 chr ):
+   Statement( e_stmt_cut,  line, chr ),
+   m_expr(expr)
+{
+   m_step0 = this;   
+   expr->precompile( &m_pc );
+   m_step1 = &m_pc;
+   
+   apply = apply_;
+}
+
+StmtDoubt::~StmtDoubt()
+{
+   delete m_expr;
+}
+
+void StmtDoubt::describeTo( String& tgt ) const
+{
+   tgt += "? ";
+   tgt += m_expr->describe();
+}
+
+void StmtDoubt::apply_( const PStep*, VMContext* ctx )
+{   
+   // Declare this context as non-deterministic
+   ctx->SetNDContext();
+   ctx->popCode(); // use us just once.
+   
+   // we're inside a rule, or we wouldn't be called.
+   register Item* td = ctx->topData().dereference();
+   
+   // set to false only if the last op result was a boolean false.
+   ctx->ruleEntryResult( !(td->isBoolean() && td->asBoolean() == false) );
+   
+   // remove the data created by the expression
+   ctx->popData();
+}
+
 
 }
 

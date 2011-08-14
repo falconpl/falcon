@@ -88,7 +88,8 @@ SourceParser::SourceParser():
    T_EEQ( "===", 70 ),
    
    T_Comma( "," , 180 ),
-   T_Cut("!"),
+   T_QMark( "?" , 170 ),
+   T_Bang("!"),
 
    T_UnaryMinus("(neg)",23),
    T_Dollar("$",23),
@@ -219,9 +220,14 @@ SourceParser::SourceParser():
       ;
 
    S_Cut << "CUT"
-      << (r_cut << "cut" << apply_cut << T_Cut << T_EOL )
+      << (r_cut_expr << "cut-expr" << apply_cut_expr << T_Bang << Expr << T_EOL )
+      << (r_cut << "cut" << apply_cut << T_Bang << T_EOL )
       ;
 
+   S_Doubt << "Doubt"
+      << (r_doubt << "doubt-expr" << apply_doubt << T_QMark << Expr << T_EOL )
+      ;
+   
    S_End << "END"
       << (r_end_rich << "RichEnd" << apply_end_rich << T_end << Expr << T_EOL )
       << (r_end << "end" << apply_end << T_end << T_EOL)
@@ -381,7 +387,9 @@ SourceParser::SourceParser():
       ;
       
    S_Return << "Return"
-      << (r_return << "return" << apply_return << T_return << Expr << T_EOL)
+      << (r_return_doubt << "return doubt" << apply_return_doubt << T_return << T_QMark << Expr << T_EOL)
+      << (r_return_expr << "return expr" << apply_return_expr << T_return << Expr << T_EOL)
+      << (r_return << "return" << apply_return << T_return << T_EOL)
       ;
 
    Atom << "Atom"
@@ -535,6 +543,7 @@ SourceParser::SourceParser():
       << S_Forlast
       << S_Rule
       << S_Cut
+      << S_Doubt
       << S_End
       << S_Return
       << S_Autoexpr
@@ -563,6 +572,7 @@ SourceParser::SourceParser():
       << S_Forlast
       << S_Rule
       << S_Cut
+      << S_Doubt
       << S_SmallEnd
       << S_Return
       << S_Autoexpr

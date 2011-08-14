@@ -109,23 +109,20 @@ void apply_function(const Rule& r,Parser& p)
    inner_apply_function( r, p, false );
 }
 
-/*
-//TODO Remove
-static void apply_function_short(const Rule& r, Parser& p)
-{
-   inner_apply_function( r, p, true );
-}
-*/
 
-
-void on_close_function( void* )
+void on_close_function( void* thing )
 {
-   // TODO: name the function
-   /*
+   // check if the function we have just created is a predicate.
    SourceParser& sp = *static_cast<SourceParser*>(thing);
    ParserContext* ctx = static_cast<ParserContext*>(sp.context());
-   SynFunc* func=ctx->currentFunc();
-   */
+   SynFunc* func = ctx->currentFunc();
+   if ( func->syntree().size() == 1 )
+   {
+      if( func->syntree().at(1)->type() == Statement::e_stmt_rule )
+      {
+         func->setPredicate( true );
+      }
+   }
 }
 
 void on_close_lambda( void* thing )
@@ -176,22 +173,46 @@ void apply_expr_func(const Rule&, Parser& p)
 
    // open a new main state for the function
    ctx->openFunc(func);
+   // will check on close if the function is a predicate.
    p.pushState( "InlineFunc", on_close_function , &p );
 }
 
 
+void apply_return_doubt(const Rule&, Parser& p)
+{
+   ParserContext* ctx = static_cast<ParserContext*>(p.context());
+   p.getNextToken();//T_return
+   p.getNextToken();//T_QMark
+   TokenInstance* texpr=p.getNextToken();
+
+   Expression* expr = static_cast<Expression*>(texpr->detachValue());
+   StmtReturn* stmt_ret = new StmtReturn( expr, texpr->line(), texpr->chr() );
+   stmt_ret->hasDoubt( true );
+   ctx->addStatement(stmt_ret);
+
+   p.simplify(4);
+}
+
+void apply_return_expr(const Rule&, Parser& p)
+{
+   ParserContext* ctx = static_cast<ParserContext*>(p.context());
+   p.getNextToken();//T_return
+   TokenInstance* texpr = p.getNextToken(); // Expr
+   
+   Expression* expr = static_cast<Expression*>(texpr->detachValue());
+   StmtReturn* stmt_ret = new StmtReturn( expr, texpr->line(), texpr->chr() );
+   ctx->addStatement(stmt_ret);
+
+   p.simplify(3);
+}
+
 
 void apply_return(const Rule&, Parser& p)
 {
-   SourceParser& sp = static_cast<SourceParser&>(p);
    ParserContext* ctx = static_cast<ParserContext*>(p.context());
-   sp.getNextToken();//T_function
-   TokenInstance* texpr=sp.getNextToken();
-   sp.getNextToken();//T_EOL
+   ctx->addStatement(new StmtReturn );
 
-   ctx->addStatement(new StmtReturn(static_cast<Expression*>(texpr->detachValue())));
-
-   p.simplify(3);
+   p.simplify(2);
 }
 
 

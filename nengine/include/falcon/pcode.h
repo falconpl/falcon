@@ -72,11 +72,14 @@ public:
    
    friend class StmtAutoexpr;
 
-   void autonomous();
+   void autonomous( bool bMode );
+   bool autonomous() const { return m_bAutonomous; }
 private:
    class Private;
    Private* _p;
 
+   bool m_bAutonomous;
+   
    static void apply_( const PStep* ps, VMContext* ctx );
    static void apply_auto_( const PStep* ps, VMContext* ctx );
 };

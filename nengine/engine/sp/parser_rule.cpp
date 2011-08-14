@@ -51,11 +51,16 @@ void apply_rule( const Rule&, Parser& p )
    p.simplify(2);
 }
 
-void apply_cut( const Rule&, Parser& p )
+
+
+static void apply_cut_internal( const Rule&, Parser& p, bool hasExpr )
 {
-   // << (r_cut << "cut" << apply_cut << T_cut << T_EOL )
    TokenInstance* trule = p.getNextToken();
-   p.getNextToken();
+   Expression* expr = 0;
+   if( hasExpr )
+   {
+      expr = static_cast<Expression*>(p.getNextToken()->detachValue());
+   }
 
    ParserContext* st = static_cast<ParserContext*>(p.context());
 
@@ -65,12 +70,47 @@ void apply_cut( const Rule&, Parser& p )
    }
    else
    {
-      StmtCut* stmt_cut = new StmtCut( trule->line(), trule->chr() );
-      static_cast<StmtRule*>(st->currentStmt())->addStatement(stmt_cut);
+      StmtCut* stmt_cut = new StmtCut( expr, trule->line(), trule->chr() );
+      st->addStatement( stmt_cut );
    }
 
    // clear the stack
-   p.simplify(2);
+   p.simplify( expr != 0 ? 3 : 2);
+}
+
+
+void apply_cut_expr( const Rule& r, Parser& p )
+{
+   // << (r_cut << "cut" << apply_cut << T_cut << Expr << T_EOL )
+   apply_cut_internal( r, p, true );
+}
+
+
+void apply_cut( const Rule& r, Parser& p )
+{
+   // << (r_cut << "cut" << apply_cut << T_cut << T_EOL )
+   apply_cut_internal( r, p, false );
+}
+
+
+void apply_doubt( const Rule&, Parser& p )
+{
+   TokenInstance* trule = p.getNextToken();
+   Expression* expr = static_cast<Expression*>(p.getNextToken()->detachValue());
+   ParserContext* st = static_cast<ParserContext*>(p.context());
+
+   if ( st->currentStmt() == 0 || st->currentStmt()->type() != Statement::e_stmt_rule )
+   {
+      p.addError( e_syn_doubt, p.currentSource(), trule->line(), trule->chr() );
+   }
+   else
+   {
+      StmtDoubt* stmt_doubt = new StmtDoubt( expr, trule->line(), trule->chr() );
+      st->addStatement( stmt_doubt );
+   }
+
+   // clear the stack
+   p.simplify( 3 );
 }
 
 }

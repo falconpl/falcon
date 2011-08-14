@@ -44,7 +44,6 @@ public:
    TestFunc2():
       Function("testFunc2")
    {
-      setDeterm(true);
       //addParam(" nothing ")
       m_funcPrintl = 0;
       
@@ -85,7 +84,6 @@ public:
    TestFunc3():
       Function("testFunc3")
    {
-      setDeterm(true);
       m_funcPrintl = 0;
       
    }

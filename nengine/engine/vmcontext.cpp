@@ -27,7 +27,8 @@
 namespace Falcon {
 
 VMContext::VMContext( VMachine* vm ):
-   m_vm(vm)
+   m_vm(vm),
+   m_ruleEntryResult(false)
 {
    m_codeStack = (CodeFrame *) malloc(INITIAL_STACK_ALLOC*sizeof(CodeFrame));
    m_topCode = m_codeStack-1;
@@ -50,7 +51,8 @@ VMContext::VMContext( VMachine* vm ):
 
 
 VMContext::VMContext( bool ):
-   m_vm(0)
+   m_vm(0),
+   m_ruleEntryResult(false)
 {
 }
 
@@ -122,7 +124,7 @@ void VMContext::startRuleFrame()
    CallFrame& cf = currentFrame();
    int32 stackBase = cf.m_stackBase;
    long localCount = ((m_topData+1) - m_dataStack) - stackBase;
-   while ( m_maxData - m_topData < localCount + 1 )
+   while ( m_topData + localCount + 1 > m_maxData )
    {
       moreData();
    }
@@ -139,7 +141,7 @@ void VMContext::startRuleFrame()
 
    // move forward the stack base.
    cf.m_stackBase = dataSize();
-   m_topData = m_dataStack + cf.m_stackBase + localCount-1;
+   m_topData += localCount; // point to the last local
 }
 
 
@@ -147,10 +149,10 @@ void VMContext::addRuleNDFrame( uint32 tbPoint )
 {
    CallFrame& cf = currentFrame();
    int32 stackBase = cf.m_stackBase;
-   int32 oldRuleTop = param(-1)->content.mth.ruleTop;
+   int32 oldRuleTop = m_dataStack[stackBase-1].content.mth.ruleTop;
 
    long localCount = ((m_topData+1) - m_dataStack) - stackBase;
-   while ( m_maxData - m_topData < localCount + 1 )
+   while ( m_topData + localCount + 1 > m_maxData )
    {
       moreData();
    }
@@ -167,7 +169,7 @@ void VMContext::addRuleNDFrame( uint32 tbPoint )
 
    // move forward the stack base.
    cf.m_stackBase = dataSize();
-   m_topData = m_dataStack + cf.m_stackBase + localCount-1;
+   m_topData += localCount;
 }
 
 
@@ -175,7 +177,7 @@ void VMContext::commitRule()
 {
    CallFrame& cf = currentFrame();
    long localCount = localVarCount();
-   int32 baseRuleTop = param(-1)->content.mth.ruleTop;
+   int32 baseRuleTop = params()[-1].content.mth.ruleTop;
 
    // copy the local variables.
    memcpy( m_dataStack + baseRuleTop, m_dataStack + cf.m_stackBase, localCount * sizeof(Item) );
@@ -406,12 +408,6 @@ void VMContext::returnFrame( const Item& value )
    register CallFrame* topCall = m_topCall;
 
    TRACE1( "Return frame from function %s", topCall->m_function->name().c_ize() );
-
-   // set determinism context
-   if( ! topCall->m_function->isDeterm() )
-   {
-      SetNDContext();
-   }
 
    // reset code and data
    m_topCode = m_codeStack + topCall->m_codeBase-1;

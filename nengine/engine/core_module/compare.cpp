@@ -26,7 +26,6 @@ namespace Ext {
 Compare::Compare():
    PseudoFunction("compare", &m_invoke)
 {
-   setDeterm(true);
    signature("X,X");
    addParam("item");
    addParam("item2");

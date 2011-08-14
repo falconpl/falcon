@@ -25,7 +25,6 @@ namespace Ext {
 Len::Len():
    PseudoFunction( "len", &m_invoke )
 {
-   setDeterm(true);
    signature("X");
    addParam("item");
 }

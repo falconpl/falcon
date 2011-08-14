@@ -27,7 +27,6 @@ FuncPrintBase::FuncPrintBase( const String& name, bool ispl ):
 {
    m_nextStep.m_isPrintl = ispl;
    signature("...");
-   setDeterm(true);
 }
 
 FuncPrintBase::~FuncPrintBase() {}
