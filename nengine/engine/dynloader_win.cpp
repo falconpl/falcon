@@ -33,11 +33,11 @@ namespace Falcon
 
 Module* DynLoader::load_sys( const String& filePath )
 {
-	String dll_name = filePath;
+   String dll_name = filePath;
    Path::uriToWin( dll_name );
 
-	uint32 bufsize = dll_name.length() * sizeof( wchar_t ) + sizeof( wchar_t );
-	wchar_t *dll_name_wc = (wchar_t *) memAlloc( bufsize );
+   uint32 bufsize = dll_name.length() * sizeof( wchar_t ) + sizeof( wchar_t );
+   wchar_t *dll_name_wc = (wchar_t *) memAlloc( bufsize );
    dll_name.toWideString( dll_name_wc, bufsize );
 
    HMODULE module = LoadLibraryW( dll_name_wc );
@@ -59,9 +59,9 @@ Module* DynLoader::load_sys( const String& filePath )
    if ( module == NULL )
    {
       throw new IOError( ErrorParam( e_binload, __LINE__, SRC )
-          .origin( ErrorParam::e_orig_loader )
-          .sysError( GetLastError() )
-          .extra( filePath ) );
+                         .origin( ErrorParam::e_orig_loader )
+                         .sysError( GetLastError() )
+                         .extra( filePath ) );
       return false;
    }
 
@@ -73,9 +73,9 @@ Module* DynLoader::load_sys( const String& filePath )
    Module* mod = module_init();
    if( mod == 0 )
    {
-       throw new IOError( ErrorParam( e_bininit, __LINE__, SRC )
-          .origin( ErrorParam::e_orig_loader )
-          .extra( filePath ) );
+      throw new IOError( ErrorParam( e_bininit, __LINE__, SRC )
+                         .origin( ErrorParam::e_orig_loader )
+                         .extra( filePath ) );
    }
 
    mod->setDynUnloader( new DynUnloader( module ) );
