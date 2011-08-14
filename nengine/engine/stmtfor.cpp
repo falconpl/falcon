@@ -41,6 +41,11 @@ StmtForBase::~StmtForBase()
    delete m_forLast;
 }
 
+void StmtForBase::PStepCleanup::apply_( const PStep*, VMContext* ctx )
+{
+   ctx->popCode();
+   ctx->popData(3);
+}
 
 void StmtForBase::describeTo( String& tgt ) const
 {   
@@ -102,12 +107,13 @@ StmtForIn::StmtForIn( Expression* gen, int32 line, int32 chr):
    m_stepNext( this ),
    m_stepGetNext( this )
 {
-   apply = apply_;
-   m_bIsLoopBase = true;
+   apply = apply_; 
    m_step0 = this;
    gen->precompile( &m_pcExpr );
    m_step1 = &m_pcExpr;
    
+   //NOTE: This pstep is NOT a loopbase; it just sets up the loop.
+   // a break here must be intercepted by outer loops until our loop is setup.
 }
 
 StmtForIn::~StmtForIn()
@@ -198,7 +204,8 @@ void StmtForIn::apply_( const PStep* ps, VMContext* ctx )
    if( ctx->topData().asClassInst( cls, dt )  )
    {       
       // Prepare to get the iterator item...
-      ctx->currentCode().m_step = &self->m_stepFirst;      
+      ctx->currentCode().m_step = &self->m_stepCleanup;
+      ctx->pushCode( &self->m_stepFirst );      
       ctx->pushCode( &self->m_stepGetNext );
       
       // and create an iterator.
@@ -238,8 +245,6 @@ void StmtForIn::PStepGetNext::apply_( const PStep*, VMContext* ctx )
 
 void StmtForIn::PStepFirst::apply_( const PStep* ps, VMContext* ctx )
 {
-   static PStep* spop3 = &Engine::instance()->stdSteps()->m_pop3;
-   
    const StmtForIn* self = static_cast<const StmtForIn::PStepFirst*>(ps)->m_owner;
 
    // we have here seq, iter, item
@@ -247,7 +252,6 @@ void StmtForIn::PStepFirst::apply_( const PStep* ps, VMContext* ctx )
    if( topData.isBreak() )
    {
       ctx->popCode();
-      ctx->popData(3);
       return;
    }
 
@@ -257,8 +261,7 @@ void StmtForIn::PStepFirst::apply_( const PStep* ps, VMContext* ctx )
    if( topData.isLast() )
    {
       topData.flagsOff( Item::flagLast );
-      ctx->currentCode().m_step = spop3;
-       
+      ctx->popCode(); // we won't be called again.
       if( self->m_forLast != 0 )
       {
          ctx->pushCode( self->m_forLast );
@@ -289,8 +292,6 @@ void StmtForIn::PStepFirst::apply_( const PStep* ps, VMContext* ctx )
 
 void StmtForIn::PStepNext::apply_( const PStep* ps, VMContext* ctx )
 {
-   static PStep* spop3 = &Engine::instance()->stdSteps()->m_pop3;
-   
    const StmtForIn* self = static_cast<const StmtForIn::PStepNext*>(ps)->m_owner;
 
    // we have here seq, iter, item
@@ -298,7 +299,6 @@ void StmtForIn::PStepNext::apply_( const PStep* ps, VMContext* ctx )
    if( topData.isBreak() )
    {
       ctx->popCode();
-      ctx->popData(3);
       return;
    }
    
@@ -308,7 +308,7 @@ void StmtForIn::PStepNext::apply_( const PStep* ps, VMContext* ctx )
    if( topData.isLast() )
    {
       topData.flagsOff( Item::flagLast );
-      ctx->currentCode().m_step = spop3;
+      ctx->popCode(); // we won't be called again.
        
       if( self->m_forLast != 0 )
       {
@@ -350,8 +350,9 @@ StmtForTo::StmtForTo( Symbol* tgt, int64 start, int64 end, int64 step, int32 lin
    m_stepPushStep(this)
 {
    apply = apply_;
-   m_bIsLoopBase = true;
    
+   // Note: this PStep is NOT a loop base. We're preparing the loop here.
+   // Any break should be intercepted by outer loops until we setup the loop.
    m_step0 = this;
    m_step1 = &m_stepPushStart;
    m_step2 = &m_stepPushEnd;
@@ -445,73 +446,35 @@ void StmtForTo::apply_( const PStep* ps, VMContext* ctx )
    int64 step = ctx->opcodeParam(2).asInteger();
    
    // in some cases, we don't even start the loop
-   if( (end > start && step < 0) || (start > end && step > 0 ) || ctx->topData().isBreak())
+   if( (end > start && step < 0) || (start > end && step > 0 ) )
    {
       ctx->popCode();
       ctx->popData(3);
       return;
    }
    
-   bool bLast = false;
-   
-   // however, we won't be called anymore.
-   ctx->currentCode().m_step = &self->m_stepNext;
-   
-   // the start, at minimum, will be done.
-   self->m_target->value( ctx )->setInteger( start );   
+   // fix the default step
    if( step == 0 )
    {
-      if ( end > start ) 
+      if ( end >= start ) 
       {
-         ctx->topData().setInteger(start+1);
-      }
-      else if ( end < start ) 
-      {
-         ctx->topData().setInteger(start-1);
+         ctx->opcodeParam(2).setInteger(1);
       }
       else
       {
-         // this will be the last loop.
-         ctx->popCode();
-         ctx->popData(3);
-         bLast = true;
-      }
-   }
-   else
-   {
-      start += step;
-      ctx->topData().setInteger(start);
-      
-      if( (step > 0 && start >= end) || ( step < 0 && start <= end ) )
-      {
-         // this will be the last loop.
-         ctx->popCode();
-         ctx->popData(3);
-         bLast = true;
-      }
+         ctx->opcodeParam(2).setInteger(-1);
+      }      
    }
    
-   if( bLast )
-   {
-      if( self->m_forLast != 0 )
-      {
-         ctx->pushCode( self->m_forLast );
-      }
-   }
-   else
-   {
-      if( self->m_forMiddle != 0 )
-      {
-         ctx->pushCode( self->m_forMiddle );
-      }
-   }
+   // however, we won't be called anymore.
+   ctx->currentCode().m_step = & self->m_stepCleanup;
+   ctx->pushCode( &self->m_stepNext );
    
-   if( self->m_body )
-   {
-      ctx->pushCode( self->m_body );
-   }
+   // call the next step now to prepare the first loop
+   self->m_stepNext.apply( ps, ctx );
    
-   if( self->m_forFirst )
+   // eventually, push the first opode in top of all.
+   if( self->m_forFirst != 0 )
    {
       ctx->pushCode( self->m_forFirst );
    }
@@ -521,59 +484,20 @@ void StmtForTo::apply_( const PStep* ps, VMContext* ctx )
 void StmtForTo::PStepNext::apply_( const PStep* ps, VMContext* ctx )
 {
    const StmtForTo* self = static_cast<const StmtForTo::PStepNext*>(ps)->m_owner;
-
-   bool bLast = false;
    
-   if( ctx->topData().isBreak() )
-   {
-      ctx->popCode();
-      ctx->popData(3);
-      return;
-   }
-   
-   int64 start = ctx->topData().asInteger();
+   register int64 start = ctx->topData().asInteger();
    int64 end = ctx->opcodeParam(1).asInteger();
    int64 step = ctx->opcodeParam(2).asInteger();
-      
-   // however, we won't be called anymore.
-   ctx->currentCode().m_step = &self->m_stepNext;
    
    // the start, at minimum, will be done.
    self->m_target->value( ctx )->setInteger( start );   
-   if( step == 0 )
-   {
-      if ( end > start ) 
-      {
-         ctx->topData().setInteger(start+1);
-      }
-      else if ( end < start ) 
-      {
-         ctx->topData().setInteger(start-1);
-      }
-      else
-      {
-         // this will be the last loop.
-         ctx->popCode();
-         ctx->popData(3);
-         bLast = true;
-      }
-   }
-   else
-   {
-      start += step;
-      ctx->topData().setInteger(start);
-      
-      if( (step > 0 && start >= end) || ( step < 0 && start <= end ) )
-      {
-         // this will be the last loop.
-         ctx->popCode();
-         ctx->popData(3);
-         bLast = true;
-      }
-   }
    
-   if( bLast )
+   // step cannot be 0 as it has been sanitized by our main step.
+   if( (step > 0 && start >= end) || ( step < 0 && start <= end ) )
    {
+      // this will be the last loop.
+      ctx->popCode();
+      
       if( self->m_forLast != 0 )
       {
          ctx->pushCode( self->m_forLast );
@@ -591,6 +515,9 @@ void StmtForTo::PStepNext::apply_( const PStep* ps, VMContext* ctx )
    {
       ctx->pushCode( self->m_body );
    }
+   
+   start += step;
+   ctx->topData().content.data.val64 = start;
 }
 
 

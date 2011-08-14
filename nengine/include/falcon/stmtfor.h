@@ -70,6 +70,25 @@ protected:
       {}
       
    virtual ~StmtForBase();
+   
+   class PStepCleanup: public PStep
+   {
+   public:
+      PStepCleanup() { 
+         apply = apply_; 
+         m_bIsLoopBase = true;
+         // act also as a next-base when the loop is over.
+         m_bIsNextBase = true; 
+      }
+      virtual ~PStepCleanup() {};
+      void describeTo( String& str ) { str = "PStepCleanup"; }
+      
+   private:
+      static void apply_( const PStep* self, VMContext* ctx );
+   };
+   PStepCleanup m_stepCleanup;
+   
+   
 };
 
 
@@ -198,7 +217,6 @@ private:
    class PStepNext: public PStep {
    public:
       PStepNext( StmtForTo* owner ): m_owner(owner) { 
-         m_bIsLoopBase = true;   
          m_bIsNextBase = true; 
          apply = apply_; 
       }
