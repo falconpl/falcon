@@ -69,25 +69,19 @@ bool errhand_if(const NonTerminal&, Parser& p)
 
 void apply_if_short( const Rule&, Parser& p )
 {
-   // << (r_if_short << "if_short" << apply_if_short << T_if << Expr << T_Colon << S_Autoexpr << T_EOL )
+   // << (r_if_short << "if_short" << apply_if_short << T_if << Expr << T_Colon  )
    TokenInstance* tif = p.getNextToken();
 
    // don't open the if context if  we have an error in interactive mode.
    if( !p.interactive() || p.lastErrorLine() < tif->line() )
    {
-      TokenInstance* texpr = p.getNextToken();
-      p.getNextToken();
-      TokenInstance* tstatement = p.getNextToken();
-
+      TokenInstance* texpr = p.getNextToken();      
       Expression* expr = static_cast<Expression*>(texpr->detachValue());
-      Expression* sa = static_cast<Expression*>(tstatement->detachValue());
-      ParserContext* st = static_cast<ParserContext*>(p.context());
+      ParserContext* ctx = static_cast<ParserContext*>(p.context());
 
       SynTree* ifTrue = new SynTree;
-      ifTrue->append( new StmtAutoexpr(sa, false) );
-
       StmtIf* stmt_if = new StmtIf(expr, ifTrue, 0, tif->line(), tif->chr());
-      st->addStatement( stmt_if );
+      ctx->openBlock( stmt_if, ifTrue, true );
    }
    else
    {
@@ -95,7 +89,7 @@ void apply_if_short( const Rule&, Parser& p )
    }
    
    // clear the stack
-   p.simplify(5);
+   p.simplify(3);
 }
 
 

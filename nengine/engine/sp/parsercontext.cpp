@@ -66,7 +66,7 @@ class ParserContext::CCFrame
    CCFrame();
    CCFrame( FalconClass* cls, bool bIsObject, GlobalSymbol* gs );
    CCFrame( SynFunc* func, GlobalSymbol* gs );
-   CCFrame( Statement* stmt );
+   CCFrame( Statement* stmt, bool bAutoClose = false );
 
    void setup();
 
@@ -81,6 +81,9 @@ public:
 
    /** True if a parser state was pushed at this frame */
    bool m_bStatePushed;
+   
+   /** True when the context should be closed immediately at first addStatement */
+   bool m_bAutoClose;
 
    GlobalSymbol* m_sym;
 
@@ -105,6 +108,7 @@ public:
 ParserContext::CCFrame::CCFrame():
    m_type( t_none_type ),
    m_bStatePushed( false ),
+   m_bAutoClose(false),
    m_sym(0)
 {
    setup();
@@ -113,6 +117,7 @@ ParserContext::CCFrame::CCFrame():
 ParserContext::CCFrame::CCFrame( FalconClass* cls, bool bIsObject, GlobalSymbol* gs ):
    m_type( bIsObject ? t_object_type : t_class_type ),
    m_bStatePushed( false ),
+   m_bAutoClose( false ),
    m_sym(gs)
 {
    m_elem.cls = cls;
@@ -122,6 +127,7 @@ ParserContext::CCFrame::CCFrame( FalconClass* cls, bool bIsObject, GlobalSymbol*
 ParserContext::CCFrame::CCFrame( SynFunc* func, GlobalSymbol* gs ):
    m_type( t_func_type ),
    m_bStatePushed( false ),
+   m_bAutoClose( false ),
    m_sym(gs)
 {
    m_elem.func = func;
@@ -129,9 +135,10 @@ ParserContext::CCFrame::CCFrame( SynFunc* func, GlobalSymbol* gs ):
 }
 
 
-ParserContext::CCFrame::CCFrame( Statement* stmt ):
+ParserContext::CCFrame::CCFrame( Statement* stmt, bool bAutoClose ):
    m_type( t_stmt_type ),
    m_bStatePushed( false ),
+   m_bAutoClose( bAutoClose ),
    m_sym(0)
 {
    m_elem.stmt = stmt;
@@ -505,6 +512,11 @@ void ParserContext::addStatement( Statement* stmt )
    {
       m_st->append(stmt);
       onNewStatement( stmt );
+      
+      if( _p->m_frames.back().m_bAutoClose )
+      {
+         closeContext();
+      }
    }
    else
    {
@@ -514,7 +526,7 @@ void ParserContext::addStatement( Statement* stmt )
 }
 
 
-void ParserContext::openBlock( Statement* parent, SynTree* branch )
+void ParserContext::openBlock( Statement* parent, SynTree* branch, bool bAutoClose )
 {
    TRACE("ParserContext::openBlock type %d", (int) parent->type() );
 
@@ -525,7 +537,7 @@ void ParserContext::openBlock( Statement* parent, SynTree* branch )
    // if the pareser is not interactive, append the statement even after undefined errors.
    if( result || ! m_parser->interactive() )
    {
-      _p->m_frames.push_back( CCFrame(parent) );
+      _p->m_frames.push_back( CCFrame(parent, bAutoClose) );
       m_cstatement = parent;
       m_st = branch;
    }

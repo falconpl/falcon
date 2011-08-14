@@ -68,26 +68,22 @@ bool while_errhand(const NonTerminal&, Parser& p)
 
 void apply_while_short( const Rule&, Parser& p )
 {
-   // << (r_while_short << "while_short" << apply_while_short << T_while << Expr << T_Colon << Expr << T_EOL )
+   // << (r_while_short << "while_short" << apply_while_short << T_while << Expr << T_Colon
 
    TokenInstance* twhile = p.getNextToken();
    TokenInstance* texpr = p.getNextToken();
-   p.getNextToken();
-   TokenInstance* tstatement = p.getNextToken();
 
    Expression* expr = static_cast<Expression*>(texpr->detachValue());
-   Expression* sa = static_cast<Expression*>(tstatement->detachValue());
    ParserContext* st = static_cast<ParserContext*>(p.context());
 
    SynTree* whsyn = new SynTree;
-   whsyn->append( new StmtAutoexpr(sa, false ) );
 
    StmtWhile* stmt_wh = new StmtWhile(expr, whsyn);
    stmt_wh->decl( twhile->line(), twhile->chr() );
-   st->addStatement( stmt_wh );
-
+   st->openBlock( stmt_wh, whsyn, true );
+   
    // clear the stack
-   p.simplify(5);
+   p.simplify(3);
 }
 
 

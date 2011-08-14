@@ -47,7 +47,7 @@ bool for_errhand(const NonTerminal&, Parser& p)
    if( p.lastErrorLine() < ti->line() )
    {
       // generate another error only if we didn't notice it already.
-      p.addError( e_syn_if, p.currentSource(), ti->line(), ti2->chr() );
+      p.addError( e_syn_for, p.currentSource(), ti->line(), ti2->chr() );
    }
 
    if( ! p.interactive() )
@@ -150,6 +150,33 @@ void apply_for_to_step( const Rule&, Parser& p )
 }
 
 
+void apply_for_to_step_short( const Rule&, Parser& p )
+{
+   // << T_for << Symbol << T_EqSign << Expr << T_to << Expr << T_comma << Expr << T_COLON )
+   ParserContext* st = static_cast<ParserContext*>(p.context());
+
+   TokenInstance* tfor = p.getNextToken();
+   TokenInstance* tsym = p.getNextToken();
+   p.getNextToken(); // =
+   TokenInstance* texpr_start = p.getNextToken();
+   p.getNextToken(); // to
+   TokenInstance* texpr_end = p.getNextToken();
+   p.getNextToken(); // ,
+   TokenInstance* texpr_step = p.getNextToken();
+   
+   Expression* expr_start = static_cast<Expression*>(texpr_start->detachValue());
+   Expression* expr_end = static_cast<Expression*>(texpr_end->detachValue());
+   Expression* expr_step = static_cast<Expression*>(texpr_step->detachValue());
+
+   StmtForTo* ft = internal_for_to( p, tfor, *tsym->asString(), expr_start, expr_end, expr_step );
+   ft->body( new SynTree );
+   
+   st->openBlock( ft, ft->body(), true );
+
+   // clear the stack
+   p.simplify(9);
+}
+
 void apply_for_to( const Rule&, Parser& p )
 {
    // << T_for << Symbol << T_EqSign << Expr << T_to << Expr << T_EOL )
@@ -169,6 +196,31 @@ void apply_for_to( const Rule&, Parser& p )
    ft->body( new SynTree );
    
    st->openBlock( ft, ft->body() );
+
+   // clear the stack
+   p.simplify(7);
+}
+
+
+void apply_for_to_short( const Rule&, Parser& p )
+{
+   // << T_for << Symbol << T_EqSign << Expr << T_to << Expr << T_EOL )
+   ParserContext* st = static_cast<ParserContext*>(p.context());
+
+   TokenInstance* tfor = p.getNextToken();
+   TokenInstance* tsym = p.getNextToken();
+   p.getNextToken(); // =
+   TokenInstance* texpr_start = p.getNextToken();
+   p.getNextToken(); // to
+   TokenInstance* texpr_end = p.getNextToken();
+   
+   Expression* expr_start = static_cast<Expression*>(texpr_start->detachValue());
+   Expression* expr_end = static_cast<Expression*>(texpr_end->detachValue());
+
+   StmtForTo* ft = internal_for_to( p, tfor, *tsym->asString(), expr_start, expr_end, 0);
+   ft->body( new SynTree );
+   
+   st->openBlock( ft, ft->body(), true );
 
    // clear the stack
    p.simplify(7);
@@ -205,8 +257,38 @@ void apply_for_in( const Rule&, Parser& p )
    p.simplify(5);
 }
 
+void apply_for_in_short( const Rule&, Parser& p )
+{
+   // << T_for << NeListSymbol << T_in << Expr << T_EOL )
+   ParserContext* ctx = static_cast<ParserContext*>(p.context());
 
-void apply_forfirst( const Rule&, Parser& p )
+   TokenInstance* tfor = p.getNextToken();
+   TokenInstance* tlist = p.getNextToken();   
+   p.getNextToken(); // in
+   TokenInstance* texpr = p.getNextToken();
+   
+   Expression* expr = static_cast<Expression*>(texpr->detachValue());
+   NameList* list = static_cast<NameList*>(tlist->detachValue());
+   NameList::iterator iter = list->begin();
+   
+   StmtForIn* forin = new StmtForIn( expr, tfor->line(), tfor->chr() );
+   
+   while( iter != list->end() )
+   {
+      Symbol* var = ctx->addDefinedVariable( *iter );
+      forin->addParameter( var );
+      ++iter;
+   }
+         
+   forin->body( new SynTree );   
+   ctx->openBlock( forin, forin->body(), true );
+   
+   // clear the stack
+   p.simplify(5);
+}
+
+
+static void apply_forfirst_internal( const Rule&, Parser& p, bool bShort )
 {
    // << T_forfirst << T_EOL )
    ParserContext* ctx = static_cast<ParserContext*>(p.context());
@@ -229,14 +311,26 @@ void apply_forfirst( const Rule&, Parser& p )
    
    // anyhow, add the block
    base->forFirst( new SynTree );
-   ctx->openBlock( new StmtTempFor, base->forFirst() );
+   ctx->openBlock( new StmtTempFor, base->forFirst(), bShort );
    
    // clear the stack
    p.simplify(2);
 }
 
 
-void apply_formiddle( const Rule&, Parser& p )
+void apply_forfirst( const Rule& r, Parser& p )
+{
+   apply_forfirst_internal( r, p, false );
+}
+
+
+void apply_forfirst_short( const Rule& r, Parser& p )
+{
+   apply_forfirst_internal( r, p, true );
+}
+
+
+static void apply_formiddle_internal( const Rule&, Parser& p, bool isShort )
 {
    // << T_formiddle << T_EOL )
    ParserContext* ctx = static_cast<ParserContext*>(p.context());
@@ -259,14 +353,25 @@ void apply_formiddle( const Rule&, Parser& p )
    
    // anyhow, add the block
    base->forMiddle( new SynTree );
-   ctx->openBlock( new StmtTempFor, base->forMiddle() );
+   ctx->openBlock( new StmtTempFor, base->forMiddle(), isShort );
    
    // clear the stack
    p.simplify(2);
 }
 
 
-void apply_forlast( const Rule&, Parser& p )
+void apply_formiddle( const Rule& r, Parser& p )
+{
+   apply_formiddle_internal( r, p, false );
+}
+
+
+void apply_formiddle_short( const Rule& r, Parser& p )
+{
+   apply_formiddle_internal( r, p, true );
+}
+
+static void apply_forlast_internal( const Rule&, Parser& p, bool isShort )
 {
    // << T_forlast << T_EOL )
    ParserContext* ctx = static_cast<ParserContext*>(p.context());   
@@ -288,10 +393,21 @@ void apply_forlast( const Rule&, Parser& p )
    
    // anyhow, add the block
    base->forLast( new SynTree );
-   ctx->openBlock( new StmtTempFor, base->forLast() );
+   ctx->openBlock( new StmtTempFor, base->forLast(), isShort );
    
    // clear the stack
    p.simplify(2);
+}
+
+
+void apply_forlast( const Rule& r, Parser& p )
+{
+   apply_forlast_internal( r, p, false );
+}
+
+void apply_forlast_short( const Rule& r, Parser& p )
+{
+   apply_forlast_internal( r, p, true );
 }
 
 }

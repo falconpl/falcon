@@ -392,9 +392,10 @@ public:
    /** Opens a new block-statement context.
     \param Statement parent The parent that is opening this context.
     \param branch The SynTree under which to add new
+    \param bAutoClose Close automatically the context at first statement.
     \see checkSymbols();
     */
-   void openBlock( Statement* parent, SynTree* branch );
+   void openBlock( Statement* parent, SynTree* branch, bool bAutoClose = false );
 
    /** Changes the branch of a block statement context without closing it.
     \return A new SynTree if it's possible to open a branch now, 0 otherwise.

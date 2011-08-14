@@ -31,6 +31,7 @@
 #include <falcon/sp/parser_end.h>
 #include <falcon/sp/parser_export.h>
 #include <falcon/sp/parser_expr.h>
+#include <falcon/sp/parser_fastprint.h>
 #include <falcon/sp/parser_for.h>
 #include <falcon/sp/parser_function.h>
 #include <falcon/sp/parser_if.h>
@@ -82,6 +83,8 @@ SourceParser::SourceParser():
    T_AutoDiv( "/=", 70 ),
    T_AutoMod( "%=", 70 ),
    T_AutoPow( "**=", 70 ),
+   T_AutoRShift( ">>=", 70 ),
+   T_AutoLShift( "<<=", 70 ),
    T_EEQ( "===", 70 ),
    
    T_Comma( "," , 180 ),
@@ -94,6 +97,8 @@ SourceParser::SourceParser():
    T_Times("*",30),
    T_Divide("/",30),
    T_Modulo("%",30),
+   T_RShift(">>",30),
+   T_LShift("<<",30),
 
    T_Plus("+",50),
    T_Minus("-",50),
@@ -159,7 +164,7 @@ SourceParser::SourceParser():
       ;
 
    S_If << "IF" << errhand_if;
-   S_If << (r_if_short << "if_short" << apply_if_short << T_if << Expr << T_Colon << Expr << T_EOL );
+   S_If << (r_if_short << "if_short" << apply_if_short << T_if << Expr << T_Colon );
    S_If << (r_if << "if" << apply_if << T_if << Expr << T_EOL );
 
    S_Elif << "ELIF"
@@ -171,31 +176,42 @@ SourceParser::SourceParser():
       ;
 
    S_While << "WHILE" << while_errhand
-      << (r_while_short << "while_short" << apply_while_short << T_while << Expr << T_Colon << Expr << T_EOL )
+      << (r_while_short << "while_short" << apply_while_short << T_while << Expr << T_Colon )
       << (r_while << "while" << apply_while << T_while << Expr << T_EOL )
       ;
    
    S_For << "FOR" << for_errhand;
    S_For << (r_for_to_step << "FOR/to/step" << apply_for_to_step
             << T_for << T_Name << T_EqSign << Expr << T_to << Expr << T_Comma << Expr << T_EOL )
+      << (r_for_to_step_short << "FOR/to/step short" << apply_for_to_step_short
+            << T_for << T_Name << T_EqSign << Expr << T_to << Expr << T_Comma << Expr << T_Colon )
       << (r_for_to << "FOR/to" << apply_for_to 
             << T_for << T_Name << T_EqSign << Expr << T_to << Expr << T_EOL )
+      << (r_for_to_short << "FOR/to short" << apply_for_to_short
+            << T_for << T_Name << T_EqSign << Expr << T_to << Expr << T_Colon )
       << (r_for_in << "FOR/in" << apply_for_in << T_for << NeListSymbol << T_in << Expr << T_EOL )
+      << (r_for_in_short << "FOR/in short" << apply_for_in_short << T_for << NeListSymbol << T_in << Expr << T_Colon )
       ;
       
    S_Forfirst << "forfirst";
    S_Forfirst << (r_forfirst << "FORfirst" << apply_forfirst
             << T_forfirst << T_EOL )     
+      << (r_forfirst_short << "FORfirst short" << apply_forfirst_short
+            << T_forfirst << T_Colon )     
       ;
    
    S_Formiddle << "formiddle";
    S_Formiddle << (r_formiddle << "FORmiddle" << apply_formiddle
             << T_formiddle << T_EOL )     
+         << (r_formiddle_short << "FORmiddle short" << apply_formiddle_short
+            << T_formiddle << T_Colon )     
       ;
 
    S_Forlast << "forlast";
    S_Forlast << (r_forlast << "FORlast" << apply_forlast
-            << T_forlast << T_EOL )     
+            << T_forlast << T_EOL )
+       << (r_forlast_short << "FORlast short" << apply_forlast_short
+            << T_forlast << T_Colon )
       ;
    
    S_Rule << "RULE"
@@ -229,6 +245,11 @@ SourceParser::SourceParser():
 
    S_MultiAssign << "MultiAssign"
       << (r_Stmt_assign_list << "STMT_assign_list" << apply_stmt_assign_list << NeListExpr_ungreed << T_EqSign << NeListExpr )
+      ;
+   
+   S_FastPrint << "FastPrint"
+      << ( r_fastprint << "fastprint rule" << apply_fastprint << T_RShift << ListExpr << T_EOL )
+      << ( r_fastprint_nl << "fastprint+nl" << apply_fastprint_nl << T_Greater << ListExpr << T_EOL )
       ;
    
    S_Load << "load" << load_errhand;
@@ -501,6 +522,7 @@ SourceParser::SourceParser():
       << S_Function
       << S_Class
       
+      << S_FastPrint
       << S_If
       << S_Elif
       << S_Else
@@ -528,6 +550,7 @@ SourceParser::SourceParser():
 
    s_InlineFunc << "InlineFunc"
       << S_EmptyLine
+      << S_FastPrint
       << S_If
       << S_Elif
       << S_Else

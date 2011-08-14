@@ -47,6 +47,7 @@ public:
       e_stmt_for_to,
       e_stmt_continue,
       e_stmt_break,
+      e_stmt_fastprint,
       custom_t
    } t_statement;
 

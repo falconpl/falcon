@@ -61,6 +61,8 @@ public:
    Parsing::Terminal T_AutoDiv;
    Parsing::Terminal T_AutoMod;
    Parsing::Terminal T_AutoPow;
+   Parsing::Terminal T_AutoRShift;
+   Parsing::Terminal T_AutoLShift;
    Parsing::Terminal T_EEQ;
    
    Parsing::Terminal T_Comma;
@@ -71,6 +73,8 @@ public:
    Parsing::Terminal T_Times;
    Parsing::Terminal T_Divide;
    Parsing::Terminal T_Modulo;
+   Parsing::Terminal T_RShift;
+   Parsing::Terminal T_LShift;
    Parsing::Terminal T_Plus;
    Parsing::Terminal T_Minus;
    Parsing::Terminal T_PlusPlus;
@@ -152,15 +156,21 @@ public:
 
    Parsing::NonTerminal S_For;
    Parsing::Rule r_for_to_step;
+   Parsing::Rule r_for_to_step_short;
    Parsing::Rule r_for_to;
+   Parsing::Rule r_for_to_short;
    Parsing::Rule r_for_in;
+   Parsing::Rule r_for_in_short;
    
    Parsing::NonTerminal S_Forfirst;
    Parsing::Rule r_forfirst;
+   Parsing::Rule r_forfirst_short;
    Parsing::NonTerminal S_Formiddle;
    Parsing::Rule r_formiddle;
+   Parsing::Rule r_formiddle_short;
    Parsing::NonTerminal S_Forlast;
    Parsing::Rule r_forlast;
+   Parsing::Rule r_forlast_short;
    
    Parsing::NonTerminal S_Rule;
    Parsing::Rule r_rule;
@@ -180,6 +190,10 @@ public:
 
    Parsing::NonTerminal S_MultiAssign;
    Parsing::Rule r_Stmt_assign_list;
+   
+   Parsing::NonTerminal S_FastPrint;
+   Parsing::Rule r_fastprint;
+   Parsing::Rule r_fastprint_nl;
    
    //================================================
    // Load, import and export
