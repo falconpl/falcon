@@ -51,7 +51,7 @@ SynTree::SynTree():
 {
    /** Mark this as a composed class */
    m_bIsComposed = true;
-   apply = apply_;
+   apply = apply_empty_;
 }
 
 
@@ -116,7 +116,11 @@ void SynTree::apply_( const PStep* ps, VMContext* ctx )
    step->prepare(ctx);
 }
 
-
+void SynTree::apply_empty_( const PStep*, VMContext* ctx )
+{
+   // we don't exist -- and should not have been generated, actually
+   ctx->popCode();
+}
 
 void SynTree::apply_single_( const PStep* ps, VMContext* ctx )
 {
