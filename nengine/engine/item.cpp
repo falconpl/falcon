@@ -275,6 +275,7 @@ int Item::compare( const Item& other ) const
    return typeDiff;
 }
 
+
 }
 
 /* end of item.cpp */

@@ -179,6 +179,51 @@ private:
    class ops;
 };
 
+/** Expr shift right */
+class FALCON_DYN_CLASS ExprRShift: public ExprMath
+{
+public:
+   ExprRShift( Expression* op1=0, Expression* op2=0 );
+
+   ExprRShift( const ExprMod& other ):
+      ExprMath(other)
+   {}
+
+   virtual ~ExprRShift();
+   inline virtual ExprRShift* clone() const { return new ExprRShift( *this ); }
+
+   virtual bool simplify( Item& value ) const;
+
+protected:
+   friend class ExprFactory;
+
+private:
+   class ops;
+};
+
+
+/** Expr shift left */
+class FALCON_DYN_CLASS ExprLShift: public ExprMath
+{
+public:
+   ExprLShift( Expression* op1=0, Expression* op2=0 );
+
+   ExprLShift( const ExprMod& other ):
+      ExprMath(other)
+   {}
+
+   virtual ~ExprLShift();
+   inline virtual ExprLShift* clone() const { return new ExprLShift( *this ); }
+
+   virtual bool simplify( Item& value ) const;
+
+protected:
+   friend class ExprFactory;
+
+private:
+   class ops;
+};
+
 //=====================================================================
 // Auto expressions
 //
@@ -311,6 +356,46 @@ public:
 
    virtual ~ExprAutoMod();
    inline virtual ExprAutoMod* clone() const { return new ExprAutoMod( *this ); }
+
+protected:
+   friend class ExprFactory;
+
+private:
+   class ops;
+};
+
+/** Auto-Power operator. */
+class FALCON_DYN_CLASS ExprAutoRShift: public ExprAuto
+{
+public:
+   ExprAutoRShift( Expression* op1=0, Expression* op2=0 );
+
+   ExprAutoRShift( const ExprAutoPow& other ):
+      ExprAuto(other)
+   {}
+
+   virtual ~ExprAutoRShift();
+   inline virtual ExprAutoRShift* clone() const { return new ExprAutoRShift( *this ); }
+
+protected:
+   friend class ExprFactory;
+
+private:
+   class ops;
+};
+
+/** Auto-Power operator. */
+class FALCON_DYN_CLASS ExprAutoLShift: public ExprAuto
+{
+public:
+   ExprAutoLShift( Expression* op1=0, Expression* op2=0 );
+
+   ExprAutoLShift( const ExprAutoPow& other ):
+      ExprAuto(other)
+   {}
+
+   virtual ~ExprAutoLShift();
+   inline virtual ExprAutoLShift* clone() const { return new ExprAutoLShift( *this ); }
 
 protected:
    friend class ExprFactory;

@@ -53,6 +53,8 @@ void apply_expr_div( const Rule& r, Parser& p );
 void apply_expr_mod( const Rule& r, Parser& p );
 void apply_expr_pow( const Rule& r, Parser& p );
 void apply_expr_neg( const Rule&, Parser& p );
+void apply_expr_shr( const Rule&, Parser& p );
+void apply_expr_shl( const Rule&, Parser& p );
 
 void apply_expr_auto_add( const Rule&, Parser& p );
 void apply_expr_auto_sub( const Rule&, Parser& p );
@@ -60,6 +62,8 @@ void apply_expr_auto_times( const Rule&, Parser& p );
 void apply_expr_auto_div( const Rule&, Parser& p );
 void apply_expr_auto_mod( const Rule&, Parser& p );
 void apply_expr_auto_pow( const Rule&, Parser& p );
+void apply_expr_auto_shr( const Rule&, Parser& p );
+void apply_expr_auto_shl( const Rule&, Parser& p );
 
 
 void apply_expr_pars( const Rule&, Parser& p );

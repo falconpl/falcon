@@ -48,6 +48,7 @@ public:
    
    //=============================================================
    virtual void op_create( VMContext* ctx, int32 pcount ) const;
+   virtual void op_call( VMContext* ctx, int32 paramCount, void* self ) const;
 };
 
 }

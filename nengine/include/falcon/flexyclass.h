@@ -18,7 +18,7 @@
 
 #include <falcon/setup.h>
 #include <falcon/string.h>
-#include <falcon/overridableclass.h>
+#include <falcon/class.h>
 
 namespace Falcon
 {
@@ -26,7 +26,7 @@ namespace Falcon
 /** Class handling flexible objects.
 
  */
-class FALCON_DYN_CLASS FlexyClass: public OverridableClass
+class FALCON_DYN_CLASS FlexyClass: public Class
 {
 public:
 
@@ -55,13 +55,51 @@ public:
    //=========================================================
    // Operators.
    //
+      
+   virtual void op_neg( VMContext* ctx, void* self ) const;
+   virtual void op_add( VMContext* ctx, void* self ) const;
+   virtual void op_sub( VMContext* ctx, void* self ) const;
+   virtual void op_mul( VMContext* ctx, void* self ) const;
+   virtual void op_div( VMContext* ctx, void* self ) const;
+   virtual void op_mod( VMContext* ctx, void* self ) const;
+   virtual void op_pow( VMContext* ctx, void* self ) const;
+   virtual void op_shr( VMContext* ctx, void* self ) const;
+   virtual void op_shl( VMContext* ctx, void* self ) const;
+   virtual void op_aadd( VMContext* ctx, void* self) const;
+   virtual void op_asub( VMContext* ctx, void* self ) const;
+   virtual void op_amul( VMContext* ctx, void* self ) const;
+   virtual void op_adiv( VMContext* ctx, void* self ) const;
+   virtual void op_amod( VMContext* ctx, void* self ) const;
+   virtual void op_apow( VMContext* ctx, void* self ) const;
+   virtual void op_ashr( VMContext* ctx, void* self ) const;
+   virtual void op_ashl( VMContext* ctx, void* self ) const;
+   virtual void op_inc( VMContext* ctx, void* self ) const;
+   virtual void op_dec( VMContext* ctx, void* self) const;
+   virtual void op_incpost( VMContext* ctx, void* self ) const;
+   virtual void op_decpost( VMContext* ctx, void* self ) const;
+   virtual void op_getIndex( VMContext* ctx, void* self ) const;
+   virtual void op_setIndex( VMContext* ctx, void* self ) const;
+   // won't provide set/get property
 
+   virtual void op_compare( VMContext* ctx, void* self ) const;
+   virtual void op_isTrue( VMContext* ctx, void* self ) const;
+   virtual void op_in( VMContext* ctx, void* self ) const;
+
+   virtual void op_call( VMContext* ctx, int32 paramCount, void* self ) const;
+   virtual void op_toString( VMContext* ctx, void* self ) const;
+   virtual void op_iter( VMContext* ctx, void* self ) const;
+   virtual void op_next( VMContext* ctx, void* self ) const;
+   
+   // ==============================
    virtual void op_create( VMContext* ctx, int32 pcount ) const;
    virtual void op_getProperty( VMContext* ctx, void* self, const String& prop) const;
    virtual void op_setProperty( VMContext* ctx, void* self, const String& prop ) const;
 
 protected:
    FlexyClass( const String& name );
+
+private:
+   inline bool operand( int opCount, const String& name, VMContext* ctx, void* self, bool bRaise = true ) const;
 };
 
 }

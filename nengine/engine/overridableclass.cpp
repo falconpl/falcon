@@ -81,7 +81,10 @@ inline void OverridableClass::override_binary( VMContext* ctx, void* self, int o
    }
    else
    {
-      throw new OperandError( ErrorParam(__LINE__, e_invop ).extra(opName) );
+      throw new OperandError( ErrorParam(e_invop, __LINE__, SRC )
+         .extra(opName)
+         .origin( ErrorParam::e_orig_vm)
+         );
    }
 }
 
@@ -97,6 +100,8 @@ void OverridableClass::overrideAddMethod( const String& name, Function* mth )
    else if( name == OVERRIDE_OP_DIV ) m_overrides[OVERRIDE_OP_DIV_ID] = mth;
    else if( name == OVERRIDE_OP_MOD ) m_overrides[OVERRIDE_OP_MOD_ID] = mth;
    else if( name == OVERRIDE_OP_POW ) m_overrides[OVERRIDE_OP_POW_ID] = mth;
+   else if( name == OVERRIDE_OP_SHR ) m_overrides[OVERRIDE_OP_SHR_ID] = mth;
+   else if( name == OVERRIDE_OP_SHL ) m_overrides[OVERRIDE_OP_SHL_ID] = mth;
 
    else if( name == OVERRIDE_OP_AADD ) m_overrides[OVERRIDE_OP_AADD_ID] = mth;
    else if( name == OVERRIDE_OP_ASUB ) m_overrides[OVERRIDE_OP_ASUB_ID] = mth;
@@ -104,6 +109,8 @@ void OverridableClass::overrideAddMethod( const String& name, Function* mth )
    else if( name == OVERRIDE_OP_ADIV ) m_overrides[OVERRIDE_OP_ADIV_ID] = mth;
    else if( name == OVERRIDE_OP_AMOD ) m_overrides[OVERRIDE_OP_AMOD_ID] = mth;
    else if( name == OVERRIDE_OP_APOW ) m_overrides[OVERRIDE_OP_APOW_ID] = mth;
+   else if( name == OVERRIDE_OP_ASHR ) m_overrides[OVERRIDE_OP_ASHR_ID] = mth;
+   else if( name == OVERRIDE_OP_ASHL ) m_overrides[OVERRIDE_OP_ASHL_ID] = mth;
 
    else if( name == OVERRIDE_OP_INC ) m_overrides[OVERRIDE_OP_INC_ID] = mth;
    else if( name == OVERRIDE_OP_DEC ) m_overrides[OVERRIDE_OP_DEC_ID] = mth;
@@ -142,6 +149,8 @@ void OverridableClass::overrideRemoveMethod( const String& name )
    else if( name == OVERRIDE_OP_DIV ) m_overrides[OVERRIDE_OP_DIV_ID] = 0;
    else if( name == OVERRIDE_OP_MOD ) m_overrides[OVERRIDE_OP_MOD_ID] = 0;
    else if( name == OVERRIDE_OP_POW ) m_overrides[OVERRIDE_OP_POW_ID] = 0;
+   else if( name == OVERRIDE_OP_SHR ) m_overrides[OVERRIDE_OP_SHR_ID] = 0;
+   else if( name == OVERRIDE_OP_SHL ) m_overrides[OVERRIDE_OP_SHL_ID] = 0;
 
    else if( name == OVERRIDE_OP_AADD ) m_overrides[OVERRIDE_OP_AADD_ID] = 0;
    else if( name == OVERRIDE_OP_ASUB ) m_overrides[OVERRIDE_OP_ASUB_ID] = 0;
@@ -149,6 +158,8 @@ void OverridableClass::overrideRemoveMethod( const String& name )
    else if( name == OVERRIDE_OP_ADIV ) m_overrides[OVERRIDE_OP_ADIV_ID] = 0;
    else if( name == OVERRIDE_OP_AMOD ) m_overrides[OVERRIDE_OP_AMOD_ID] = 0;
    else if( name == OVERRIDE_OP_APOW ) m_overrides[OVERRIDE_OP_APOW_ID] = 0;
+   else if( name == OVERRIDE_OP_ASHR ) m_overrides[OVERRIDE_OP_ASHR_ID] = 0;
+   else if( name == OVERRIDE_OP_ASHL ) m_overrides[OVERRIDE_OP_ASHL_ID] = 0;
 
    else if( name == OVERRIDE_OP_INC ) m_overrides[OVERRIDE_OP_INC_ID] = 0;
    else if( name == OVERRIDE_OP_DEC ) m_overrides[OVERRIDE_OP_DEC_ID] = 0;
@@ -217,6 +228,16 @@ void OverridableClass::op_pow( VMContext* ctx, void* self ) const
    override_binary( ctx, self, OVERRIDE_OP_POW_ID, OVERRIDE_OP_POW );
 }
 
+void OverridableClass::op_shr( VMContext* ctx, void* self ) const
+{
+   override_binary( ctx, self, OVERRIDE_OP_SHR_ID, OVERRIDE_OP_SHR );
+}
+
+void OverridableClass::op_shl( VMContext* ctx, void* self ) const
+{
+   override_binary( ctx, self, OVERRIDE_OP_SHL_ID, OVERRIDE_OP_SHL );
+}
+
 
 void OverridableClass::op_aadd( VMContext* ctx, void* self) const
 {
@@ -253,6 +274,15 @@ void OverridableClass::op_apow( VMContext* ctx, void* self ) const
    override_binary( ctx, self, OVERRIDE_OP_APOW_ID, OVERRIDE_OP_APOW );
 }
 
+void OverridableClass::op_ashr( VMContext* ctx, void* self ) const
+{
+   override_binary( ctx, self, OVERRIDE_OP_ASHR_ID, OVERRIDE_OP_ASHR );
+}
+
+void OverridableClass::op_ashl( VMContext* ctx, void* self ) const
+{
+   override_binary( ctx, self, OVERRIDE_OP_ASHL_ID, OVERRIDE_OP_ASHL );
+}
 
 void OverridableClass::op_inc( VMContext* ctx, void* self ) const
 {

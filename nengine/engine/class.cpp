@@ -210,6 +210,16 @@ void Class::op_pow( VMContext* , void* ) const
    throw new OperandError( ErrorParam( e_invop, __LINE__, SRC ).extra("pow") );
 }
 
+void Class::op_shr( VMContext* , void* ) const
+{
+   throw new OperandError( ErrorParam( e_invop, __LINE__, SRC ).extra(">>") );
+}
+
+void Class::op_shl( VMContext* , void* ) const
+{
+   throw new OperandError( ErrorParam( e_invop, __LINE__, SRC ).extra("<<") );
+}
+
 
 void Class::op_aadd( VMContext* , void* ) const
 {
@@ -244,6 +254,16 @@ void Class::op_amod( VMContext* , void* ) const
 void Class::op_apow( VMContext* , void* ) const
 {
    throw new OperandError( ErrorParam( e_invop, __LINE__, SRC ).extra("**=") );
+}
+
+void Class::op_ashr( VMContext* , void* ) const
+{
+   throw new OperandError( ErrorParam( e_invop, __LINE__, SRC ).extra(">>=") );
+}
+
+void Class::op_ashl( VMContext* , void* ) const
+{
+   throw new OperandError( ErrorParam( e_invop, __LINE__, SRC ).extra("<<=") );
 }
 
 

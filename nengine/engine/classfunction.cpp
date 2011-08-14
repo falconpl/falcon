@@ -83,7 +83,6 @@ void ClassFunction::op_call( VMContext* ctx, int32 paramCount, void* self ) cons
 }
 
 
-
 }
 
 /* end of classfunction.cpp */

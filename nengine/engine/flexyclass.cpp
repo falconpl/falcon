@@ -23,6 +23,9 @@
 #include <falcon/vmcontext.h>
 #include <falcon/accesserror.h>
 #include <falcon/engine.h>
+#include <falcon/operanderror.h>
+
+#include <falcon/ov_names.h>
 
 #include <map>
 
@@ -31,12 +34,12 @@ namespace Falcon
 {
 
 FlexyClass::FlexyClass():
-   OverridableClass( "Flexy" )
+   Class( "Flexy" )
 {
 }
 
 FlexyClass::FlexyClass( const String& name ):
-   OverridableClass( name )
+   Class( name )
 {
 }
 
@@ -183,7 +186,17 @@ void FlexyClass::op_create( VMContext* ctx, int32 pcount ) const
 
             virtual void operator()( const String& data, Item& value )
             {              
-               m_self->insert( data, value );
+               if( value.isFunction() )
+               {
+                  Function* func = value.asFunction();
+                  Item temp = m_fself;
+                  temp.methodize( func );
+                  m_self->insert( data, temp );
+               }
+               else
+               {
+                  m_self->insert( data, value );
+               }
             }
             
          private:
@@ -235,6 +248,212 @@ void FlexyClass::op_setProperty( VMContext* ctx, void* self, const String& prop 
    dict.insert( prop, value );
 }
 
+
+//=========================================================================
+//
+//
+
+inline bool FlexyClass::operand( int opCount, const String& name, VMContext* ctx, void* self, bool bRaise ) const
+{
+   FlexyDict& dict = *static_cast<FlexyDict*>(self);
+   Item* item = dict.find( name );
+   if( item != 0 )
+   {
+      if( item->isFunction() ) 
+      {
+         Function* f = item->asFunction();
+         Item &iself = ctx->opcodeParam(opCount);
+         iself.methodize(f);
+         ctx->call(f, opCount-1, iself );
+      }
+      else
+      {
+         // try to call the item.
+         Class* cls;
+         void* data;
+         item->forceClassInst( cls, data );
+         ctx->opcodeParam(opCount) = *item;
+         cls->op_call( ctx, opCount - 1, data );
+      }
+      return true;
+   }
+    
+   if( bRaise )
+   {
+      throw new OperandError( ErrorParam(e_invop, __LINE__, SRC )
+         .extra(name)
+         .origin( ErrorParam::e_orig_vm)
+         );
+   }
+   return false;
+}
+
+
+void FlexyClass::op_neg( VMContext* ctx, void* self ) const
+{
+   operand( 1, OVERRIDE_OP_NEG, ctx, self );
+}
+
+void FlexyClass::op_add( VMContext* ctx, void* self ) const
+{
+   operand( 2, OVERRIDE_OP_ADD, ctx, self );
+}
+
+
+void FlexyClass::op_sub( VMContext* ctx, void* self ) const
+{
+   operand( 2, OVERRIDE_OP_SUB, ctx, self );
+}
+
+
+void FlexyClass::op_mul( VMContext* ctx, void* self ) const
+{
+   operand( 2, OVERRIDE_OP_MUL, ctx, self );
+}
+
+
+void FlexyClass::op_div( VMContext* ctx, void* self ) const
+{
+   operand( 2, OVERRIDE_OP_DIV, ctx, self );
+}
+
+void FlexyClass::op_mod( VMContext* ctx, void* self ) const
+{
+   operand( 2, OVERRIDE_OP_MOD, ctx, self );
+}
+
+void FlexyClass::op_pow( VMContext* ctx, void* self ) const
+{
+   operand( 2, OVERRIDE_OP_POW, ctx, self );
+}
+
+void FlexyClass::op_shr( VMContext* ctx, void* self ) const
+{
+   operand( 2, OVERRIDE_OP_SHR, ctx, self );
+}
+
+void FlexyClass::op_shl( VMContext* ctx, void* self ) const
+{
+   operand( 2, OVERRIDE_OP_SHL, ctx, self );
+}
+
+void FlexyClass::op_aadd( VMContext* ctx, void* self) const
+{
+   operand( 2, OVERRIDE_OP_AADD, ctx, self );
+}
+
+void FlexyClass::op_asub( VMContext* ctx, void* self ) const
+{
+   operand( 2, OVERRIDE_OP_ASUB, ctx, self );
+}
+
+void FlexyClass::op_amul( VMContext* ctx, void* self ) const
+{
+   operand( 2, OVERRIDE_OP_AMUL, ctx, self );
+}
+
+void FlexyClass::op_adiv( VMContext* ctx, void* self ) const
+{
+   operand( 2, OVERRIDE_OP_ADIV, ctx, self );
+}
+
+void FlexyClass::op_amod( VMContext* ctx, void* self ) const
+{
+   operand( 2, OVERRIDE_OP_AMOD, ctx, self );
+}
+
+void FlexyClass::op_apow( VMContext* ctx, void* self ) const
+{
+   operand( 2, OVERRIDE_OP_APOW, ctx, self );
+}
+
+void FlexyClass::op_ashr( VMContext* ctx, void* self ) const
+{
+   operand( 2, OVERRIDE_OP_ASHR, ctx, self );
+}
+
+void FlexyClass::op_ashl( VMContext* ctx, void* self ) const
+{
+   operand( 2, OVERRIDE_OP_ASHL, ctx, self );
+}
+
+void FlexyClass::op_inc( VMContext* ctx, void* self ) const
+{
+   operand( 1, OVERRIDE_OP_INC, ctx, self );
+}
+
+void FlexyClass::op_dec( VMContext* ctx, void* self) const
+{
+   operand( 1, OVERRIDE_OP_DEC, ctx, self );
+}
+
+void FlexyClass::op_incpost( VMContext* ctx, void* self ) const
+{
+   operand( 1, OVERRIDE_OP_INCPOST, ctx, self );
+}
+
+void FlexyClass::op_decpost( VMContext* ctx, void* self ) const
+{
+   operand( 1, OVERRIDE_OP_DECPOST, ctx, self );
+}
+
+void FlexyClass::op_getIndex( VMContext* ctx, void* self ) const
+{
+   operand( 2, OVERRIDE_OP_GETINDEX, ctx, self );
+}
+
+void FlexyClass::op_setIndex( VMContext* ctx, void* self ) const
+{
+   operand( 3, OVERRIDE_OP_SETINDEX, ctx, self );
+}
+
+
+void FlexyClass::op_compare( VMContext* ctx, void* self ) const
+{
+   if ( ! operand( 2, OVERRIDE_OP_COMPARE, ctx, self, false ) )
+   {
+      Class::op_isTrue(ctx, self);
+   }
+}
+
+void FlexyClass::op_isTrue( VMContext* ctx, void* self ) const
+{
+   if ( ! operand( 1, OVERRIDE_OP_ISTRUE, ctx, self, false ) )
+   {
+      Class::op_isTrue(ctx, self);
+   }
+}
+
+void FlexyClass::op_in( VMContext* ctx, void* self ) const
+{
+   operand( 2, OVERRIDE_OP_IN, ctx, self );
+}
+
+void FlexyClass::op_call( VMContext* ctx, int32 paramCount, void* self ) const
+{
+   operand( paramCount+1, OVERRIDE_OP_CALL, ctx, self );   
+}
+
+void FlexyClass::op_toString( VMContext* ctx, void* self ) const
+{
+   if ( ! operand( 1, OVERRIDE_OP_TOSTRING, ctx, self, false ) )
+   {
+      Class::op_toString(ctx, self);
+   }
+}
+
+void FlexyClass::op_iter( VMContext* ctx, void* self ) const
+{
+   operand( 1, OVERRIDE_OP_FIRST, ctx, self );
+}
+
+
+void FlexyClass::op_next( VMContext* ctx, void* self ) const
+{
+   operand( 2, OVERRIDE_OP_NEXT, ctx, self );
+}
+
+   
 }
 
 /* end of flexyclass.cpp */

@@ -361,12 +361,16 @@ SourceParser::SourceParser():
    Expr<< (r_Expr_div   << "Expr_div"   << apply_expr_div   << Expr << T_Divide << Expr );
    Expr<< (r_Expr_mod   << "Expr_mod"   << apply_expr_mod   << Expr << T_Modulo << Expr );
    Expr<< (r_Expr_pow   << "Expr_pow"   << apply_expr_pow   << Expr << T_Power << Expr );
+   Expr<< (r_Expr_shr   << "Expr_shr"   << apply_expr_shr   << Expr << T_RShift << Expr );
+   Expr<< (r_Expr_shl   << "Expr_shl"   << apply_expr_shl   << Expr << T_LShift << Expr );
    Expr<< (r_Expr_auto_add << "Expr_auto_add"   << apply_expr_auto_add   << Expr << T_AutoAdd << Expr );
    Expr<< (r_Expr_auto_sub << "Expr_auto_sub"   << apply_expr_auto_sub   << Expr << T_AutoSub << Expr );
    Expr<< (r_Expr_auto_times << "Expr_auto_times"   << apply_expr_auto_times   << Expr << T_AutoTimes << Expr );
    Expr<< (r_Expr_auto_div << "Expr_auto_div"   << apply_expr_auto_div   << Expr << T_AutoDiv << Expr );
    Expr<< (r_Expr_auto_mod << "Expr_auto_mod"   << apply_expr_auto_mod   << Expr << T_AutoMod << Expr );
    Expr<< (r_Expr_auto_pow << "Expr_auto_pow"   << apply_expr_auto_pow   << Expr << T_AutoPow << Expr );
+   Expr<< (r_Expr_auto_shl << "Expr_auto_shr"   << apply_expr_auto_shr  << Expr << T_AutoRShift << Expr );
+   Expr<< (r_Expr_auto_shr << "Expr_auto_shl"   << apply_expr_auto_shl   << Expr << T_AutoLShift << Expr );
    // the lexer may find a non-unary minus when parsing it not after an operator...;
    Expr<< (r_Expr_neg   << "Expr_neg"   << apply_expr_neg << T_Minus << Expr );
    // ... or find an unary minus when getting it after another operator.;

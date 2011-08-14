@@ -284,12 +284,16 @@ public:
    Parsing::Rule r_Expr_div;
    Parsing::Rule r_Expr_mod;
    Parsing::Rule r_Expr_pow;
+   Parsing::Rule r_Expr_shl;
+   Parsing::Rule r_Expr_shr;
    Parsing::Rule r_Expr_auto_add;
    Parsing::Rule r_Expr_auto_sub;
    Parsing::Rule r_Expr_auto_times;
    Parsing::Rule r_Expr_auto_div;
    Parsing::Rule r_Expr_auto_mod;
    Parsing::Rule r_Expr_auto_pow;
+   Parsing::Rule r_Expr_auto_shr;
+   Parsing::Rule r_Expr_auto_shl;
    
    Parsing::Rule r_Expr_neg;
    Parsing::Rule r_Expr_neg2;

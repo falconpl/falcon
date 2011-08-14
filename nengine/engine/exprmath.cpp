@@ -92,6 +92,27 @@ public:
 };
 
 
+class ExprRShift::ops
+{
+public:
+   static int64 operate( int64 a, int64 b ) { return ((uint64)a) >> ((uint64)b); }
+   static void operate( VMContext* ctx, Class* cls, void* inst ) { cls->op_shr(ctx, inst); }
+   static numeric operaten( numeric a, numeric b ) { return ((uint64)a) >> ((uint64)b); }
+   static bool zeroCheck( const Item& ) { return false; }
+   static void swapper( Item&, Item&) {}
+};
+
+class ExprLShift::ops
+{
+public:
+   static int64 operate( int64 a, int64 b ) { return (int64) ((uint64)a) << ((uint64)b); }
+   static void operate( VMContext* ctx, Class* cls, void* inst ) { cls->op_shl(ctx, inst); }
+   static numeric operaten( numeric a, numeric b ) { return ((uint64)a) << ((uint64)b); }
+   static bool zeroCheck( const Item& ) { return false; }
+   static void swapper( Item&, Item&) {} 
+};
+
+
 
 class ExprAutoPlus::ops
 {
@@ -153,12 +174,34 @@ public:
    static void operate( VMContext* ctx, Class* cls, void* inst ) { cls->op_apow(ctx, inst); }
    static numeric operaten( numeric a, numeric b ) { return pow(a,b); }
    static bool zeroCheck( const Item& ) { return false; }
+   static void swapper( Item& op1, Item& op2 ) {
+      op1.swap(op2);
+      if( op2.isInteger() ) {op2.setNumeric( op2.asInteger());}
+   }
+};
+
+class ExprAutoRShift::ops
+{
+public:
+   static int64 operate( int64 a, int64 b ) { return ((uint64)a) >> ((uint64)b);; }
+   static void operate( VMContext* ctx, Class* cls, void* inst ) { cls->op_ashr(ctx, inst); }
+   static numeric operaten( numeric a, numeric b ) { return ((uint64)a) >> ((uint64)b); }
+   static bool zeroCheck( const Item& ) { return false; }
+   static void swapper( Item& op1, Item& op2 ) {op1.swap(op2);}
+};
+
+class ExprAutoLShift::ops
+{
+public:
+   static int64 operate( int64 a, int64 b ) { return ((uint64)a) << ((uint64)b);; }
+   static void operate( VMContext* ctx, Class* cls, void* inst ) { cls->op_ashl(ctx, inst); }
+   static numeric operaten( numeric a, numeric b ) { return ((uint64)a) << ((uint64)b); }
+   static bool zeroCheck( const Item& ) { return false; }
    static void swapper( Item& op1, Item& op2 ) { 
       op1.swap(op2);
       if( op2.isInteger() ) {op2.setNumeric( op2.asInteger());} 
    }   
 };
-
 
 // Inline class to simplify
 template <class __CPR >
@@ -338,7 +381,7 @@ bool ExprPlus::simplify( Item& value ) const
 // EXPR Minus
 //
 ExprMinus::ExprMinus( Expression* op1, Expression* op2 ):
-   ExprMath( op1, op2, t_le, "-" )
+   ExprMath( op1, op2, t_minus, "-" )
 {
    apply = &generic_apply_<ops>;
 }
@@ -356,7 +399,7 @@ bool ExprMinus::simplify( Item& value ) const
 // EXPR Times
 //
 ExprTimes::ExprTimes( Expression* op1, Expression* op2 ):
-   ExprMath( op1, op2, t_gt, "*" )
+   ExprMath( op1, op2, t_times, "*" )
 {
    apply = &generic_apply_<ops>;
 }
@@ -373,7 +416,7 @@ bool ExprTimes::simplify( Item& value ) const
 // EXPR Div
 //
 ExprDiv::ExprDiv( Expression* op1, Expression* op2 ):
-   ExprMath( op1, op2, t_ge, "/" )
+   ExprMath( op1, op2, t_divide, "/" )
 {
    apply = &generic_apply_<ops>;
 }
@@ -390,7 +433,7 @@ bool ExprDiv::simplify( Item& value ) const
 // EXPR Mod
 //
 ExprMod::ExprMod( Expression* op1, Expression* op2 ):
-   ExprMath( op1, op2, t_eq, "%" )
+   ExprMath( op1, op2, t_modulo, "%" )
 {
    apply = &generic_apply_<ops>;
 }
@@ -403,6 +446,40 @@ bool ExprMod::simplify( Item& value ) const
    return generic_simplify<ops>( value, m_first, m_second );
 }
 
+//========================================================
+// EXPR LShift
+//
+ExprRShift::ExprRShift( Expression* op1, Expression* op2 ):
+   ExprMath( op1, op2, t_shr, ">>" )
+{
+   apply = &generic_apply_<ops>;
+}
+
+ExprRShift::~ExprRShift()
+{}
+
+bool ExprRShift::simplify( Item& value ) const
+{
+   return generic_simplify<ops>( value, m_first, m_second );
+}
+
+
+//========================================================
+// EXPR LShift
+//
+ExprLShift::ExprLShift( Expression* op1, Expression* op2 ):
+   ExprMath( op1, op2, t_shl, "<<" )
+{
+   apply = &generic_apply_<ops>;
+}
+
+ExprLShift::~ExprLShift()
+{}
+
+bool ExprLShift::simplify( Item& value ) const
+{
+   return generic_simplify<ops>( value, m_first, m_second );
+}
 
 //========================================================
 // EXPR Pow
@@ -501,7 +578,7 @@ ExprAutoMod::~ExprAutoMod()
 {}
 
 //========================================================
-// EXPR AMod
+// EXPR Apow
 //
 ExprAutoPow::ExprAutoPow( Expression* op1, Expression* op2 ):
    ExprAuto( op1, op2, t_apow, "**=" )
@@ -511,6 +588,31 @@ ExprAutoPow::ExprAutoPow( Expression* op1, Expression* op2 ):
 
 ExprAutoPow::~ExprAutoPow()
 {}
+
+//========================================================
+// EXPR AShr
+//
+ExprAutoRShift::ExprAutoRShift( Expression* op1, Expression* op2 ):
+   ExprAuto( op1, op2, t_ashr, ">>=" )
+{
+   apply = &generic_apply_<ops>;
+}
+
+ExprAutoRShift::~ExprAutoRShift()
+{}
+
+//========================================================
+// EXPR AMod
+
+ExprAutoLShift::ExprAutoLShift( Expression* op1, Expression* op2 ):
+   ExprAuto( op1, op2, t_shl, "<<=" )
+{
+   apply = &generic_apply_<ops>;
+}
+
+ExprAutoLShift::~ExprAutoLShift()
+{}
+
 
 }
 

@@ -56,6 +56,8 @@ public:
       t_divide,
       t_modulo,
       t_power,
+      t_shr,
+      t_shl,
 
       t_gt,
       t_ge,
@@ -93,6 +95,8 @@ public:
       t_adiv,
       t_amod,
       t_apow,
+      t_ashr,
+      t_ashl,
 
       t_eval,
       t_oob,

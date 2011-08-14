@@ -61,6 +61,8 @@ void MultiClass::checkAddOverride( const String& name, Property* p )
    else if( name == OVERRIDE_OP_DIV ) m_overrides[OVERRIDE_OP_DIV_ID] = p;
    else if( name == OVERRIDE_OP_MOD ) m_overrides[OVERRIDE_OP_MOD_ID] = p;
    else if( name == OVERRIDE_OP_POW ) m_overrides[OVERRIDE_OP_POW_ID] = p;
+   else if( name == OVERRIDE_OP_SHR ) m_overrides[OVERRIDE_OP_SHR_ID] = p;
+   else if( name == OVERRIDE_OP_SHL ) m_overrides[OVERRIDE_OP_SHL_ID] = p;
 
    else if( name == OVERRIDE_OP_AADD ) m_overrides[OVERRIDE_OP_AADD_ID] = p;
    else if( name == OVERRIDE_OP_ASUB ) m_overrides[OVERRIDE_OP_ASUB_ID] = p;
@@ -68,6 +70,8 @@ void MultiClass::checkAddOverride( const String& name, Property* p )
    else if( name == OVERRIDE_OP_ADIV ) m_overrides[OVERRIDE_OP_ADIV_ID] = p;
    else if( name == OVERRIDE_OP_AMOD ) m_overrides[OVERRIDE_OP_AMOD_ID] = p;
    else if( name == OVERRIDE_OP_APOW ) m_overrides[OVERRIDE_OP_APOW_ID] = p;
+   else if( name == OVERRIDE_OP_ASHR ) m_overrides[OVERRIDE_OP_ASHR_ID] = p;
+   else if( name == OVERRIDE_OP_ASHL ) m_overrides[OVERRIDE_OP_ASHL_ID] = p;
 
    else if( name == OVERRIDE_OP_INC ) m_overrides[OVERRIDE_OP_INC_ID] = p;
    else if( name == OVERRIDE_OP_DEC ) m_overrides[OVERRIDE_OP_DEC_ID] = p;
@@ -106,6 +110,8 @@ void MultiClass::checkRemoveOverride( const String& name )
    else if( name == OVERRIDE_OP_DIV ) m_overrides[OVERRIDE_OP_DIV_ID] = 0;
    else if( name == OVERRIDE_OP_MOD ) m_overrides[OVERRIDE_OP_MOD_ID] = 0;
    else if( name == OVERRIDE_OP_POW ) m_overrides[OVERRIDE_OP_POW_ID] = 0;
+   else if( name == OVERRIDE_OP_SHR ) m_overrides[OVERRIDE_OP_SHR_ID] = 0;
+   else if( name == OVERRIDE_OP_SHL ) m_overrides[OVERRIDE_OP_SHL_ID] = 0;
 
    else if( name == OVERRIDE_OP_AADD ) m_overrides[OVERRIDE_OP_AADD_ID] = 0;
    else if( name == OVERRIDE_OP_ASUB ) m_overrides[OVERRIDE_OP_ASUB_ID] = 0;
@@ -113,6 +119,8 @@ void MultiClass::checkRemoveOverride( const String& name )
    else if( name == OVERRIDE_OP_ADIV ) m_overrides[OVERRIDE_OP_ADIV_ID] = 0;
    else if( name == OVERRIDE_OP_AMOD ) m_overrides[OVERRIDE_OP_AMOD_ID] = 0;
    else if( name == OVERRIDE_OP_APOW ) m_overrides[OVERRIDE_OP_APOW_ID] = 0;
+   else if( name == OVERRIDE_OP_ASHR ) m_overrides[OVERRIDE_OP_ASHR_ID] = 0;
+   else if( name == OVERRIDE_OP_ASHL ) m_overrides[OVERRIDE_OP_ASHL_ID] = 0;
 
    else if( name == OVERRIDE_OP_INC ) m_overrides[OVERRIDE_OP_INC_ID] = 0;
    else if( name == OVERRIDE_OP_DEC ) m_overrides[OVERRIDE_OP_DEC_ID] = 0;
@@ -282,6 +290,36 @@ void MultiClass::op_pow( VMContext* ctx, void* self ) const
    }
 }
 
+void MultiClass::op_shr( VMContext* ctx, void* self ) const
+{
+   Class* cls;
+   void* udata;
+
+   if( inl_get_override( self, OVERRIDE_OP_SHR_ID, cls, udata ) )
+   {
+      cls->op_pow( ctx, udata );
+   }
+   else
+   {
+      throw new OperandError( ErrorParam(e_invop, __LINE__, SRC ).extra(OVERRIDE_OP_SHR) );
+   }
+}
+
+void MultiClass::op_shl( VMContext* ctx, void* self ) const
+{
+   Class* cls;
+   void* udata;
+
+   if( inl_get_override( self, OVERRIDE_OP_SHL_ID, cls, udata ) )
+   {
+      cls->op_pow( ctx, udata );
+   }
+   else
+   {
+      throw new OperandError( ErrorParam(e_invop, __LINE__, SRC ).extra(OVERRIDE_OP_SHL) );
+   }
+}
+
 
 void MultiClass::op_aadd( VMContext* ctx, void* self) const
 {
@@ -377,6 +415,39 @@ void MultiClass::op_apow( VMContext* ctx, void* self ) const
       throw new OperandError( ErrorParam(e_invop, __LINE__, SRC ).extra(OVERRIDE_OP_APOW) );
    }
 }
+
+
+void MultiClass::op_ashr( VMContext* ctx, void* self ) const
+{
+   Class* cls;
+   void* udata;
+
+   if( inl_get_override( self, OVERRIDE_OP_ASHR_ID, cls, udata ) )
+   {
+      cls->op_apow( ctx, udata );
+   }
+   else
+   {
+      throw new OperandError( ErrorParam(e_invop, __LINE__, SRC ).extra(OVERRIDE_OP_ASHR) );
+   }
+}
+
+
+void MultiClass::op_ashl( VMContext* ctx, void* self ) const
+{
+   Class* cls;
+   void* udata;
+
+   if( inl_get_override( self, OVERRIDE_OP_ASHL_ID, cls, udata ) )
+   {
+      cls->op_apow( ctx, udata );
+   }
+   else
+   {
+      throw new OperandError( ErrorParam(e_invop, __LINE__, SRC ).extra(OVERRIDE_OP_ASHL) );
+   }
+}
+
 
 
 void MultiClass::op_inc( VMContext* ctx, void* self ) const

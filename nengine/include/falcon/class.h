@@ -461,6 +461,24 @@ public:
 
     */
    virtual void op_pow( VMContext* ctx, void* instance ) const;
+   
+   /** Called back when the VM wants to apply the shift right operator.
+     \param vm the virtual machine that will receive the result.
+     \param instance the instance (or 0 on flat items)
+
+    \note The operand is binary -- requires OpToken with 2 parameters.
+
+    */
+   virtual void op_shr( VMContext* ctx, void* instance ) const;
+   
+   /** Called back when the VM wants to apply the shift left operator.
+     \param vm the virtual machine that will receive the result.
+     \param instance the instance (or 0 on flat items)
+
+    \note The operand is binary -- requires OpToken with 2 parameters.
+
+    */
+   virtual void op_shl( VMContext* ctx, void* instance ) const;   
 
    /** Called back when the VM wants to add something to an item.
      \param vm the virtual machine that will receive the result.
@@ -503,7 +521,7 @@ public:
     */
    virtual void op_amod( VMContext* ctx, void* instance ) const;
 
-   /** Called back when the VM wants to apply get the power of an item.
+   /** Called back when the VM wants to get the power of an item.
      \param vm the virtual machine that will receive the result.
      \param instance the instance (or 0 on flat items)
 
@@ -511,6 +529,22 @@ public:
    */
    virtual void op_apow( VMContext* ctx, void* instance ) const;
 
+   /** Called back when the VM wants to apply get the power of an item.
+     \param vm the virtual machine that will receive the result.
+     \param instance the instance (or 0 on flat items)
+
+    \note The operand is binary -- requires OpToken with 2 parameters.
+   */
+   virtual void op_ashr( VMContext* ctx, void* instance ) const;
+
+   /** Called back when the VM wants to apply get the shift-left of an item.
+     \param vm the virtual machine that will receive the result.
+     \param instance the instance (or 0 on flat items)
+
+    \note The operand is binary -- requires OpToken with 2 parameters.
+   */
+   virtual void op_ashl( VMContext* ctx, void* instance ) const;
+   
    /** Called back when the VM wants to increment (prefix) an item.
      \param vm the virtual machine that will receive the result.
      \param instance the instance in op1 (or 0 on flat items)

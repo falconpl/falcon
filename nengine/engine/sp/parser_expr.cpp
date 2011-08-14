@@ -197,7 +197,16 @@ void apply_expr_pow( const Rule& r, Parser& p )
 {
    apply_expr_binary(r, p, new ExprPow );
 }
- 
+
+void apply_expr_shr( const Rule& r, Parser& p )
+{
+   apply_expr_binary(r, p, new ExprRShift );
+}
+
+void apply_expr_shl( const Rule& r, Parser& p )
+{
+   apply_expr_binary(r, p, new ExprLShift );
+}
 
 void apply_expr_auto( const Rule&, Parser& p, BinaryExpression* aexpr )
 {
@@ -262,6 +271,17 @@ void apply_expr_auto_pow( const Rule&r, Parser& p )
    apply_expr_auto( r, p, aexpr );
 }
 
+void apply_expr_auto_shr( const Rule&r, Parser& p )
+{
+   BinaryExpression* aexpr = new ExprAutoRShift;
+   apply_expr_auto( r, p, aexpr );
+}
+
+void apply_expr_auto_shl( const Rule&r, Parser& p )
+{
+   BinaryExpression* aexpr = new ExprAutoLShift;
+   apply_expr_auto( r, p, aexpr );
+}
 
  void apply_expr_neg( const Rule&, Parser& p )
 {

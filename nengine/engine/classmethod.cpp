@@ -108,6 +108,15 @@ void ClassMethod::op_create( VMContext* ctx, int32 pcount ) const
       .extra("X,F") );
 }
 
+
+void ClassMethod::op_call( VMContext* ctx, int32 paramCount, void* self ) const
+{
+   Item copy = *static_cast<Item*>(self);
+   Function* fmth = copy.asMethodFunction();
+   copy.unmethodize();
+   ctx->call( fmth, paramCount, copy );
+}
+
 }
 
 /* end of classmethod.cpp */

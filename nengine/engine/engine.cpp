@@ -60,6 +60,7 @@
 #include <falcon/classdict.h>
 #include <falcon/classgeneric.h>
 #include <falcon/classnumeric.h>
+#include <falcon/classmethod.h>
 #include <falcon/prototypeclass.h>
 #include <falcon/metaclass.h>
 #include <falcon/classreference.h>
@@ -134,7 +135,7 @@ Engine::Engine()
    m_classes[FLC_ITEM_INT] = new ClassInt;
    m_classes[FLC_ITEM_NUM] = new ClassNumeric;
    m_classes[FLC_ITEM_FUNC] = new ClassFunction;
-   m_classes[FLC_ITEM_METHOD] = new ClassNil;
+   m_classes[FLC_ITEM_METHOD] = new ClassMethod;
    m_classes[FLC_ITEM_REF] = new ClassReference;   
 
    m_bom = new BOM;
