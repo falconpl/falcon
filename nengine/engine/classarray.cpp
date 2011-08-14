@@ -19,6 +19,7 @@
 #include <falcon/accesserror.h>
 #include <falcon/paramerror.h>
 #include <falcon/itemarray.h>
+#include <falcon/codeerror.h>
 
 namespace Falcon {
 

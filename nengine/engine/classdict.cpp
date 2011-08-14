@@ -166,8 +166,7 @@ void ClassDict::op_next( VMContext* ctx, void*  ) const
 {
    Item& user = ctx->opcodeParam( 1 );
    fassert( user.isUser() );
-   Class* cls = user.asClass();
-   fassert( cls == Engine::instance()->genericClass() );
+   fassert( user.asClass() == Engine::instance()->genericClass() );
    
    ItemDict::Iterator* iter = static_cast<ItemDict::Iterator*>(user.asInst());
    iter->next( ctx->topData() );

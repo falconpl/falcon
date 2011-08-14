@@ -18,6 +18,7 @@
 #include <falcon/itemid.h>
 #include <falcon/function.h>
 #include <falcon/vm.h>
+#include <falcon/codeerror.h>
 
 #include <stdlib.h>
 #include <string.h>
