@@ -92,6 +92,7 @@ add_library(falcon_engine SHARED
   sp/parser_proto.cpp
   sp/parser_reference.cpp
   sp/parser_rule.cpp
+  sp/parser_try.cpp
   sp/parser_while.cpp
   sp/parsercontext.cpp
   sp/sourcelexer.cpp
@@ -194,6 +195,7 @@ add_library(falcon_engine SHARED
   property.cpp
   rampmode.cpp
   reader.cpp
+  requirement.cpp
   rulesyntree.cpp
   sourceref.cpp
   statement.cpp
@@ -203,7 +205,9 @@ add_library(falcon_engine SHARED
   stmtfastprint.cpp
   stmtfor.cpp
   stmt_init.cpp
+  stmtraise.cpp
   stmtrule.cpp
+  stmttry.cpp
   string.cpp
   stringstream.cpp
   stream.cpp

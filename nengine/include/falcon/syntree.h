@@ -24,6 +24,7 @@ namespace Falcon
 
 class Statement;
 class SymbolTable;
+class Symbol;
 
 /** Syntactic tree.
  *
@@ -73,12 +74,37 @@ public:
     */
    SymbolTable* locals( bool bmake = true );
 
+   /** Gets the head symbol for this syntree.
+    \return A previously set head symbol or 0.
+    
+    Some syntree have a meaningful "head" symbol that is used in different
+    contexts to identify the syntree. For instance, it can be used in the 
+    catch clause as the symbol where the incoming raised item should be stored.
+    
+    This is an extra space in the syntree where this information can be stored.
+    */
+   Symbol* headSymbol() const { return m_head; }
+   
+   /** Gets the head symbol for this syntree.
+    \param s The symbol to be set.
+    
+    Some syntree have a meaningful "head" symbol that is used in different
+    contexts to identify the syntree. For instance, it can be used in the 
+    catch clause as the symbol where the incoming raised item should be stored.
+    
+    This is an extra space in the syntree where this information can be stored.
+    
+    \note The ownership of the symbol stays on the caller.
+    */
+   void headSymbol( Symbol* s ) { m_head = s; }
+   
 protected:
    class Private;
    Private* _p;
    
    SymbolTable* m_locals;
    Statement* m_single;
+   Symbol* m_head;
 };
 
 }

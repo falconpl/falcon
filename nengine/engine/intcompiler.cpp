@@ -41,12 +41,13 @@
 #include <falcon/exprvalue.h>
 #include <falcon/falconclass.h>
 #include <falcon/hyperclass.h>
+#include <falcon/modloader.h>
+#include <falcon/modgroup.h>
+#include <falcon/ioerror.h>
 
 #include <falcon/inheritance.h>
+#include <falcon/requirement.h>
 
-#include "falcon/modloader.h"
-#include "falcon/modgroup.h"
-#include "falcon/ioerror.h"
 
 namespace Falcon {
 
@@ -274,7 +275,6 @@ void IntCompiler::Context::onInheritance( Inheritance* inh  )
       Item* itm;
       if( (itm = sym->value( m_owner->m_vm->currentContext() )) == 0 )
       {
-         //TODO: Add inheritance line number.
          m_owner->m_sp.addError( e_undef_sym, m_owner->m_sp.currentSource(), 
                  inh->sourceRef().line(), inh->sourceRef().chr(), 0, inh->className() );
       }
@@ -293,10 +293,48 @@ void IntCompiler::Context::onInheritance( Inheritance* inh  )
    }
    else
    {
-      // TODO -- add line
       m_owner->m_sp.addError( e_undef_sym, m_owner->m_sp.currentSource(), 
               inh->sourceRef().line(), inh->sourceRef().chr(), 0, inh->className() );
    }
+}
+
+
+void IntCompiler::Context::onRequirement( Requirement* rec )
+{
+   Error* error = 0;
+   // In the interactive compiler context, classes must have been already defined...
+   const Symbol* sym = m_owner->m_module->getGlobal(rec->name());
+   if( sym != 0 )
+   {
+      error = rec->resolve( 0, sym );
+      if( error == 0 )
+      {
+         return;
+      }
+   }
+   else
+   {
+      SymbolMap::Entry* entry = m_owner->m_vm->modSpace()->symbols().find( rec->name() );
+      if( entry != 0 )
+      {
+         error = rec->resolve( entry->module(), entry->symbol() );
+         if( error == 0 )
+         {
+            return;
+         }
+      }
+   }
+   
+   // if we're here, the resolver raised an error, or the symbol wasn't found.
+   if( error != 0 )
+   {
+      // the main loop will take care of this
+      throw error;
+   }
+   
+   m_owner->m_sp.addError( e_undef_sym, m_owner->m_sp.currentSource(), 
+                 rec->sourceRef().line(), rec->sourceRef().chr(), 0, rec->name() );
+   
 }
 
 //=======================================================================

@@ -76,7 +76,7 @@ FAL_ERRORDECL( e_inv_inherit, 38, "Class inherits from a symbol that is not a cl
 FAL_ERRORDECL( e_nonsym_ref, 39, "Trying to get a reference from something that's not a symbol" );
 
 FAL_ERRORDECL( e_no_cls_inst, 40, "No internal class found for standalone object" );
-FAL_ERRORDECL( e_switch_clash, 41, "Duplicate or clashing switch case" );
+FAL_ERRORDECL( e_switch_clash, 41, "Duplicate or clashing switch/select case" );
 FAL_ERRORDECL( e_switch_default, 42, "Default block already defined in switch" );
 FAL_ERRORDECL( e_service_adef, 43, "Service already published" );
 FAL_ERRORDECL( e_service_undef, 44, "Required service has not been published" );
@@ -157,6 +157,10 @@ FAL_ERRORDECL( e_syn_end, 150, "Misplaced 'end' keyword" );
 FAL_ERRORDECL( e_compile, 151, "Dynamic compilation failed -- details in suberrors" );
 FAL_ERRORDECL( e_syn_unpack, 152, "Unpack-array assignment declaration error" );
 FAL_ERRORDECL( e_syn_expr, 153, "Error in expression syntax" );
+FAL_ERRORDECL( e_syn_finally, 154, "Syntax error in 'finally' statement" );
+FAL_ERRORDECL( e_catch_outside, 155, "Statement 'catch' not in a 'try'" );
+FAL_ERRORDECL( e_finally_outside, 156, "Statement 'finally' not in a 'try'" );
+FAL_ERRORDECL( e_finally_adef, 157, "Statement 'finally' already declared in 'try'" );
 
 
 FAL_ERRORDECL( e_not_iterable, 160, "Iterating on non-iterable item." );
@@ -193,6 +197,8 @@ FAL_ERRORDECL( e_forfirst_outside, 191, "Block 'forfirst' declared outside 'for'
 FAL_ERRORDECL( e_forlast_outside, 192, "Block 'forlast' declared outside 'for'" );
 FAL_ERRORDECL( e_formiddle_outside, 193, "Block 'formiddle' declared outside 'for'" );
 FAL_ERRORDECL( e_syn_doubt, 194, "Rule doubt '?' not under rule" );
+FAL_ERRORDECL( e_catch_invtype, 195, "Invalid type in catch clause" );
+FAL_ERRORDECL( e_select_invtype, 196, "Invalid type in select clause" );
 
 
 FAL_ERRORDECL( e_io_error, 200, "Generic I/O Error" );
@@ -261,6 +267,7 @@ FAL_ERRORDECL( e_cont_atomic, 521, "Continuation while in atomic mode" );
 FAL_ERRORDECL( e_cont_out, 522, "Continuation invoked when already complete" );
 FAL_ERRORDECL( e_parse_format, 523, "Input data is not in expected format" );
 FAL_ERRORDECL( e_call_loop, 524, "Calling a sequence having itself as callable element." );
+FAL_ERRORDECL( e_not_a_class, 525, "Imported symbol is not a class." );
 
 FAL_ERRORDECL( e_inv_params, 900, "Invalid parameters" );
 FAL_ERRORDECL( e_missing_params, 901, "Mandatory parameter missing" );

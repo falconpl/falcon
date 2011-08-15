@@ -167,14 +167,18 @@ public:
     */
    bool isMetaClass() const { return typeID() == FLC_CLASS_ID_CLASS; }
 
-   /** Return true if this class can safely cast to a Prototype class.
-    \return true if this is a Prototype.
+   /** Determines if this is a class in the ErrorClass hierarcy.
+    \return true if this is an error class.
 
-    Prototype classes have special significance to the engine.
-
-    This flag is true for Prototype instances and (eventually) derived classes.
+    This flags allows to easily unbox error raised by scripts autonomously
+    out of their handler class and treat them as proper Falcon::Error classes
+    at C++ level.
+    
+    \note Theoretically, it is also possible to check Class::isDerivedFrom on the
+    base Error* class provided by the StdErrors class in the engine, but
+    this way is faster.
     */
-   bool isPrototype() const { return m_bIsPrototype; }
+   bool isErrorClass() const { return m_bIsErrorClass; }
 
    /** Gets a direct parent class of this class by name.
     \param name The name of the direct parent class.
@@ -184,6 +188,15 @@ public:
     The default behavior is that of always returning 0.
     */
    virtual Class* getParent( const String& name ) const;
+   
+   /** Check if the given class is derived from this class. 
+    \param cls The possibly base class.
+    \return True if cls is one of the base classes.
+    
+    The method returns true if the class is the same as this class or
+    if one of the base classes of this class is derived from cls.
+    */
+   virtual bool isDerivedFrom( Class* cls ) const;
 
    /** Sets the module of this class.
     \param m The module where this class resides.
@@ -770,7 +783,7 @@ public:
 
 protected:
    bool m_bIsfalconClass;
-   bool m_bIsPrototype;
+   bool m_bIsErrorClass;
    
    /** This flags are at disposal of subclasses for special purpose (i.e. cast conversions). */
    int32 m_userFlags;

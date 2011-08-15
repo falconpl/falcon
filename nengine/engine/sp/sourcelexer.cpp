@@ -740,10 +740,8 @@ Parsing::TokenInstance* SourceLexer::checkWord()
           if ( m_text == "false" ) return parser->T_false.makeInstance(m_sline, m_schr);
           if ( m_text == "class" ) return parser->T_class.makeInstance(m_sline, m_schr);
           if ( m_text == "break" ) return parser->T_break.makeInstance(m_sline, m_schr);
-
-         /*
-         if ( m_text == "catch" )
-            return CATCH;
+          if ( m_text == "catch" ) return parser->T_catch.makeInstance(m_sline, m_schr);
+          /*
          if ( m_text == "raise" )
             return RAISE;
          if ( m_text == "class" )
@@ -796,6 +794,7 @@ Parsing::TokenInstance* SourceLexer::checkWord()
 
       case 7:
          if ( m_text == "forlast" ) return parser->T_forlast.makeInstance(m_sline, m_schr);
+         if ( m_text == "finally" ) return parser->T_finally.makeInstance(m_sline, m_schr);
          /*
          if ( m_text == "default" )
             return DEFAULT;

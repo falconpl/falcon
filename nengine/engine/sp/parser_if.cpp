@@ -191,7 +191,7 @@ void apply_else( const Rule&, Parser& p )
    }
    else
    {
-      MESSAGE2( "apply_else -- Ignoring IF in interactive mode." );
+      MESSAGE2( "apply_else -- Ignoring ELSE in interactive mode." );
    }
 
    // clear the stack

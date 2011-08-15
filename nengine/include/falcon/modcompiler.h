@@ -99,6 +99,7 @@ private:
       virtual bool onUnknownSymbol( UnknownSymbol* sym );
       virtual Expression* onStaticData( Class* cls, void* data );
       virtual void onInheritance( Inheritance* inh  );
+      virtual void onRequirement( Requirement* rec );
 
    private:
       ModCompiler* m_owner;

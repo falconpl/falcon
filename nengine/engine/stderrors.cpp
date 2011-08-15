@@ -27,6 +27,7 @@ namespace Falcon
 
 StdErrors::StdErrors()
 {
+   m_error = new ClassError("Error");
    m_code = new ClassCodeError;
    m_generic = new ClassGenericError;
    m_operand = new ClassOperandError;
@@ -44,6 +45,7 @@ StdErrors::StdErrors()
 
 StdErrors::~StdErrors()
 {
+   delete m_error;
    delete m_code;
    delete m_generic;
    delete m_operand;

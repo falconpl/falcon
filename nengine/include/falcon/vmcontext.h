@@ -27,6 +27,7 @@ namespace Falcon {
 
 class VMachine;
 class SynFunc;
+class StmtTry;
 
 /**
  * Structure needed to store VM data.
@@ -790,6 +791,83 @@ public:
    
    bool ruleEntryResult() const { return m_ruleEntryResult; }
    void ruleEntryResult( bool v ) { m_ruleEntryResult = v; }
+   
+   //=============================================================
+   // Try/catch
+   //
+   
+   /** Pushes a new try frame.
+    */
+   void pushTryFrame( const StmtTry* t );
+   
+   /** Pop a try frame.
+    */
+   void popTryFrame();
+   
+   /** Called back on item raisal.
+    \param raised The item that was explicitly raised.
+    
+    This method searches the try-stack for a possible catcher. If one is found,
+    the catcher is activated, otherwise an uncaucght raise error is thrown
+    at C++ level.
+    
+    \note This method will unbox items containing instances of subclasses of 
+    ClassError class and pass them to manageError automatically. However, 
+    unboxing won't happen for script classes derived from error classes.
+    
+    \see manageError()
+    */
+   void raiseItem( const Item& raised );
+   
+   /** Tries to manage an error through try handlers.
+    \param exc The Falcon::Error instance that was thrown.
+    \return true If an handler was found, false if there isn't any handler.
+    
+    This method is invoked by the virtual machine when it catches an Error*
+    thrown by some part of the code. This exceptins are usually meant to be
+    handled by a script, if possible, or forwarded to the system if the
+    script can't manage it.
+    
+    If an handler is found, the stacks are unrolled and the execution of
+    the error handler is preapred in the stack. 
+    
+    If a finally block is found before an error handler can be found, the
+    error is stored in that try-frame and the cleanup procedure is invoked
+    by unrolling the stacks up to that point; a marker is left in the finalize
+    pstep frame so that, after cleanup, the process can proceed.
+    
+    If a new error is thrown during a finalization, two things may happen: either
+    it is handled by an handler inside the finalize process or it is unhandled.
+    If it is handled, then the error raisal process continues. If it is unhandled,
+    the new error gets propagated as a sub-error of the old one. Example:
+    
+    @code
+    try
+      raise Error( 100, "Test Error" )
+    finally
+      raise Error( 101, "Test From Finally" )
+    end
+    @endcode
+    
+    In this case, the error 101 becomes a sub-error of error 100, and the
+    error-catching procedure continues for error 100.
+    
+    If a non-error item is raised from finally, it becomes an sub-error of the
+    main one as a "uncaught raised item" exception. If the non-error item was
+    raised before an error or an item throw by finally, the non-error item is
+    lost and the raisal process continues with the item raised by the finally
+    code.
+    */
+   bool manageError( Error* exc );
+
+   /** Continues a previously interrupted raisal.
+    Invoked by cleanup frames after a finally block has been invoked.
+    
+    The context leaves a marker in the sequence ID of the cleanup step; if found,
+    the cleanup step invoke this method, which pops the current try-frame and
+    repeats the try-unroll procedure using the error that was saved in the frame.
+    */
+   void continueRaisal();
    
 protected:
 

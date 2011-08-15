@@ -31,7 +31,7 @@ namespace Falcon {
 
 Class::Class( const String& name ):
    m_bIsfalconClass( false ),
-   m_bIsPrototype( false ),
+   m_bIsErrorClass( false ),
    m_userFlags(0),
    m_name( name ),
    m_typeID( FLC_CLASS_ID_OBJECT ),
@@ -41,7 +41,7 @@ Class::Class( const String& name ):
 
 Class::Class( const String& name, int64 tid ):
    m_bIsfalconClass( false ),
-   m_bIsPrototype( false ),
+   m_bIsErrorClass( false ),
    m_userFlags(0),
    m_name( name ),
    m_typeID( tid ),
@@ -62,6 +62,12 @@ Class* Class::getParent( const String& ) const
 {
    // normally does nothing
    return 0;
+}
+
+
+bool Class::isDerivedFrom( Class* cls ) const
+{
+   return this == cls;
 }
 
 
