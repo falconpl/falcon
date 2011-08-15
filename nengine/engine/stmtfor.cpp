@@ -44,7 +44,7 @@ StmtForBase::~StmtForBase()
 void StmtForBase::PStepCleanup::apply_( const PStep*, VMContext* ctx )
 {
    ctx->popCode();
-   ctx->popData(3);
+   ctx->popData(2);
 }
 
 void StmtForBase::describeTo( String& tgt ) const
@@ -209,7 +209,7 @@ void StmtForIn::apply_( const PStep* ps, VMContext* ctx )
       ctx->pushCode( &self->m_stepGetNext );
       
       // and create an iterator.
-      ctx->addLocals(2);      
+      //ctx->addLocals(2);      
       cls->op_iter( ctx, dt );       
    }
    else if( ctx->topData().isNil() )
@@ -229,7 +229,7 @@ void StmtForIn::apply_( const PStep* ps, VMContext* ctx )
 
 void StmtForIn::PStepGetNext::apply_( const PStep*, VMContext* ctx )
 {
-    fassert( ctx->opcodeParam(2).isUser() );
+    fassert( ctx->opcodeParam(1).isUser() );
        
     // we're never needed anymore
     ctx->popCode();
@@ -237,7 +237,7 @@ void StmtForIn::PStepGetNext::apply_( const PStep*, VMContext* ctx )
     Class* cls = 0;
     void* dt = 0;
     // here we have seq, iter, <space>...
-    ctx->opcodeParam(2).asClassInst( cls, dt );
+    ctx->opcodeParam(1).asClassInst( cls, dt );
     // ... pass them to next.
     cls->op_next( ctx, dt );
 }
@@ -287,6 +287,9 @@ void StmtForIn::PStepFirst::apply_( const PStep* ps, VMContext* ctx )
    {
       ctx->pushCode( self->m_forFirst );
    }
+   
+   // in any case, the extra item can be removed.
+   ctx->popData();
 }
 
 
@@ -328,6 +331,8 @@ void StmtForIn::PStepNext::apply_( const PStep* ps, VMContext* ctx )
    {
       ctx->pushCode( self->m_body );
    }
+   // in any case, the extra item can be removed.
+   ctx->popData();
 }
 
 

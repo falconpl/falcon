@@ -292,16 +292,15 @@ void ClassArray::op_call( VMContext* ctx, int32 paramCount, void* self ) const
 
 void ClassArray::op_iter( VMContext* ctx, void* ) const
 {
-   // (seq)(iter)(value)
-   Item& iter = ctx->opcodeParam(1);
-   iter.setInteger( (int64) 0 );
+   // (seq)
+   ctx->pushData( (int64) 0 );
 }
 
 
 void ClassArray::op_next( VMContext* ctx, void* instance ) const
 {
-   // (seq)(iter)(value)
-   Item& iter = ctx->opcodeParam(1);
+   // (seq)(iter)
+   Item& iter = ctx->opcodeParam(0);
    length_t pos = 0;
    
    ItemArray* arr = static_cast<ItemArray*>(instance);
@@ -309,16 +308,19 @@ void ClassArray::op_next( VMContext* ctx, void* instance ) const
    pos = (length_t) iter.asInteger();
    if( pos >= arr->length() )
    {
-      ctx->topData().setBreak();
+      ctx->addDataSlot().setBreak();
    }
    else
    {
-      ctx->topData().assign( arr->at(pos++) );
+      
+      Item& value = arr->at(pos++);
+      value.copied();
+      iter.setInteger( pos );
+      ctx->pushData( value );
       if( pos >= arr->length() )
       {
          ctx->topData().setLast();
       }
-      iter.setInteger( pos );
    }
 }
 

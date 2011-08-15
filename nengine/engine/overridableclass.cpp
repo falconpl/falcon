@@ -129,7 +129,7 @@ void OverridableClass::overrideAddMethod( const String& name, Function* mth )
    else if( name == OVERRIDE_OP_IN ) m_overrides[OVERRIDE_OP_IN_ID] = mth;
    else if( name == OVERRIDE_OP_PROVIDES ) m_overrides[OVERRIDE_OP_PROVIDES_ID] = mth;
    else if( name == OVERRIDE_OP_TOSTRING ) m_overrides[OVERRIDE_OP_TOSTRING_ID] = mth;
-   else if( name == OVERRIDE_OP_FIRST ) m_overrides[OVERRIDE_OP_FIRST_ID] = mth;
+   else if( name == OVERRIDE_OP_ITER ) m_overrides[OVERRIDE_OP_NEXT_ID] = mth;
    else if( name == OVERRIDE_OP_NEXT ) m_overrides[OVERRIDE_OP_NEXT_ID] = mth;
 
 #if OVERRIDE_OP_NEXT_ID + 1 != OVERRIDE_OP_COUNT
@@ -178,7 +178,7 @@ void OverridableClass::overrideRemoveMethod( const String& name )
    else if( name == OVERRIDE_OP_IN ) m_overrides[OVERRIDE_OP_IN_ID] = 0;
    else if( name == OVERRIDE_OP_PROVIDES ) m_overrides[OVERRIDE_OP_PROVIDES_ID] = 0;
    else if( name == OVERRIDE_OP_TOSTRING ) m_overrides[OVERRIDE_OP_TOSTRING_ID] = 0;
-   else if( name == OVERRIDE_OP_FIRST ) m_overrides[OVERRIDE_OP_FIRST_ID] = 0;
+   else if( name == OVERRIDE_OP_ITER ) m_overrides[OVERRIDE_OP_NEXT_ID] = 0;
    else if( name == OVERRIDE_OP_NEXT ) m_overrides[OVERRIDE_OP_NEXT_ID] = 0;
 
 #if OVERRIDE_OP_NEXT_ID + 1 != OVERRIDE_OP_COUNT
@@ -491,12 +491,18 @@ void OverridableClass::op_toString( VMContext* ctx, void* self ) const
 
 void OverridableClass::op_iter( VMContext* ctx, void* self ) const
 {
-   override_unary( ctx, self, OVERRIDE_OP_FIRST_ID, OVERRIDE_OP_FIRST );
+   ctx->addSpace(1);
+   ctx->opcodeParam(0) = ctx->opcodeParam(1);
+
+   override_unary( ctx, self, OVERRIDE_OP_NEXT_ID, OVERRIDE_OP_ITER );
 }
 
 void OverridableClass::op_next( VMContext* ctx, void* self ) const
 {
-   override_unary( ctx, self, OVERRIDE_OP_NEXT_ID, OVERRIDE_OP_NEXT );
+   ctx->addSpace(2);
+   ctx->opcodeParam(0) = ctx->opcodeParam(2);
+   ctx->opcodeParam(1) = ctx->opcodeParam(3);
+   override_binary( ctx, self, OVERRIDE_OP_NEXT_ID, OVERRIDE_OP_NEXT );
 }
 
 

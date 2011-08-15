@@ -53,7 +53,7 @@
 #define OVERRIDE_OP_IN        "__in"
 #define OVERRIDE_OP_PROVIDES  "__provides"
 #define OVERRIDE_OP_TOSTRING  "toString"
-#define OVERRIDE_OP_FIRST     "__first"
+#define OVERRIDE_OP_ITER      "__iter"
 #define OVERRIDE_OP_NEXT      "__next"
 
 #define OVERRIDE_OP_COUNT 33
@@ -97,7 +97,7 @@
 #define OVERRIDE_OP_IN_ID        28
 #define OVERRIDE_OP_PROVIDES_ID  29
 #define OVERRIDE_OP_TOSTRING_ID  30
-#define OVERRIDE_OP_FIRST_ID     31
+#define OVERRIDE_OP_ITER_ID      31
 #define OVERRIDE_OP_NEXT_ID      32
 
 #define OVERRIDE_OP_COUNT_ID  33

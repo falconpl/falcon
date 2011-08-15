@@ -75,7 +75,7 @@ SourceParser::SourceParser():
    T_OpenProto("p{"),
    T_CloseGraph("}"),
 
-   T_Dot("."),
+   T_Dot(".",15),
    T_Arrow("=>", 170 ),
    T_AutoAdd( "+=", 70 ),
    T_AutoSub( "-=", 70 ),

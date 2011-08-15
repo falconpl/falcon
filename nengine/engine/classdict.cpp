@@ -158,17 +158,18 @@ void ClassDict::op_iter( VMContext* ctx, void* instance ) const
    
    ItemDict* dict = static_cast<ItemDict*>(instance);
    ItemDict::Iterator* iter = new ItemDict::Iterator( dict );
-   ctx->opcodeParam( 1 ).setUser( FALCON_GC_STORE( coll, genc, iter ) );
+   ctx->pushData( FALCON_GC_STORE( coll, genc, iter ) );
 }
 
 
 void ClassDict::op_next( VMContext* ctx, void*  ) const
 {
-   Item& user = ctx->opcodeParam( 1 );
+   Item& user = ctx->opcodeParam( 0 );
    fassert( user.isUser() );
    fassert( user.asClass() == Engine::instance()->genericClass() );
    
    ItemDict::Iterator* iter = static_cast<ItemDict::Iterator*>(user.asInst());
+   ctx->addSpace(1);
    iter->next( ctx->topData() );
 }
 

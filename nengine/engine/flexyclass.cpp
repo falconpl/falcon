@@ -262,7 +262,7 @@ inline bool FlexyClass::operand( int opCount, const String& name, VMContext* ctx
       if( item->isFunction() ) 
       {
          Function* f = item->asFunction();
-         Item &iself = ctx->opcodeParam(opCount);
+         Item &iself = ctx->opcodeParam(opCount-1);
          iself.methodize(f);
          ctx->call(f, opCount-1, iself );
       }
@@ -272,7 +272,7 @@ inline bool FlexyClass::operand( int opCount, const String& name, VMContext* ctx
          Class* cls;
          void* data;
          item->forceClassInst( cls, data );
-         ctx->opcodeParam(opCount) = *item;
+         ctx->opcodeParam(opCount-1) = *item;
          cls->op_call( ctx, opCount - 1, data );
       }
       return true;
@@ -444,12 +444,19 @@ void FlexyClass::op_toString( VMContext* ctx, void* self ) const
 
 void FlexyClass::op_iter( VMContext* ctx, void* self ) const
 {
-   operand( 1, OVERRIDE_OP_FIRST, ctx, self );
+   // copy the topdata
+   ctx->addSpace(1);
+   ctx->opcodeParam(0) = ctx->opcodeParam(1);
+   operand( 1, OVERRIDE_OP_ITER, ctx, self );
 }
 
 
 void FlexyClass::op_next( VMContext* ctx, void* self ) const
 {
+   // copy the 2 items at the top 
+   ctx->addSpace(2);
+   ctx->opcodeParam(0) = ctx->opcodeParam(2);
+   ctx->opcodeParam(1) = ctx->opcodeParam(3);
    operand( 2, OVERRIDE_OP_NEXT, ctx, self );
 }
 

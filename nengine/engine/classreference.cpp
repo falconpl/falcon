@@ -253,6 +253,26 @@ void ClassReference::op_pow( VMContext* ctx, void* self ) const
 }
 
 
+void ClassReference::op_shr( VMContext* ctx, void* self ) const
+{
+   Reference* ref = static_cast<Reference*>(self);
+   Class* cls;
+   void* data;
+   ref->m_item.forceClassInst( cls, data );
+   cls->op_shr( ctx, data );   
+}
+
+
+void ClassReference::op_shl( VMContext* ctx, void* self ) const
+{
+   Reference* ref = static_cast<Reference*>(self);
+   Class* cls;
+   void* data;
+   ref->m_item.forceClassInst( cls, data );
+   cls->op_shl( ctx, data );   
+}
+
+
 void ClassReference::op_aadd( VMContext* ctx, void* self) const
 {
    Reference* ref = static_cast<Reference*>(self);
@@ -312,6 +332,23 @@ void ClassReference::op_apow( VMContext* ctx, void* self ) const
    cls->op_apow( ctx, data );   
 }
 
+void ClassReference::op_ashr( VMContext* ctx, void* self ) const
+{
+   Reference* ref = static_cast<Reference*>(self);
+   Class* cls;
+   void* data;
+   ref->m_item.forceClassInst( cls, data );
+   cls->op_ashr( ctx, data );   
+}
+
+void ClassReference::op_ashl( VMContext* ctx, void* self ) const
+{
+   Reference* ref = static_cast<Reference*>(self);
+   Class* cls;
+   void* data;
+   ref->m_item.forceClassInst( cls, data );
+   cls->op_ashl( ctx, data );   
+}
 
 void ClassReference::op_inc( VMContext* ctx, void* self ) const
 {
