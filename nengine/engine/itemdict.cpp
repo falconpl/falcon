@@ -52,7 +52,7 @@ public:
    class cdcomparer
    {
    public:
-      bool operator()( const class_data_pair& first, const class_data_pair& second )
+      bool operator()( const class_data_pair& first, const class_data_pair& second ) const
       {
          if( first.cls < second.cls ) return true;
          if( first.cls > second.cls ) return false;
@@ -63,7 +63,7 @@ public:
    class rangecomparer
    {
    public:
-      bool operator()( const Range& first, const Range& second )
+      bool operator()( const Range& first, const Range& second ) const
       {
          return first.compare(second) < 0;
       }
