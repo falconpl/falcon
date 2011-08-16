@@ -56,6 +56,9 @@ public:
    virtual void op_getIndex( VMContext* ctx, void* self ) const;
    virtual void op_setIndex( VMContext* ctx, void* self ) const;
 
+   virtual void op_iter( VMContext* ctx, void* instance ) const;
+   virtual void op_next( VMContext* ctx, void* instance ) const;
+
 private:
 };
 

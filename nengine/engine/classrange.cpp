@@ -257,7 +257,42 @@ void ClassRange::op_setIndex( VMContext* ctx, void* self ) const
    }
 }
 
+void ClassRange::op_iter( VMContext* ctx, void* self ) const
+{
+  Range* range = static_cast<Range*>(self);
+  ctx->pushData( range->start() );
+}
+
+
+void ClassRange::op_next( VMContext* ctx, void* self ) const
+{
+  Range* range = static_cast<Range*>(self);
+  Item& iter = ctx->opcodeParam(0);
+  int64 current = 0;
+  int64 next = 0;
+
+  fassert( iter.isInteger() );
+  current = iter.asInteger();
+  if ( !range->isOpen() )
+  {
+      if ( current >= range->end() )
+      {
+         ctx->addDataSlot().setBreak();
+         return;
+      }
+  }
+  next = current + ((range->step()==0) ? 1 : range->step());
+  ctx->topData().setInteger( next );
+  ctx->pushData( current );
+  if ( !range->isOpen() )
+  {
+       if ( next >= range->end() )
+       {
+          ctx->topData().setLast();
+       }
+  }
+}
 
 }
 
-/* end of classdict.cpp */
+/* end of classrange.cpp */
