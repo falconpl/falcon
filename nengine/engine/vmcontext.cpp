@@ -27,6 +27,7 @@
 namespace Falcon {
 
 VMContext::VMContext( VMachine* vm ):
+   m_thrown(0),  
    m_vm(vm),
    m_ruleEntryResult(false)
 {
@@ -43,14 +44,13 @@ VMContext::VMContext( VMachine* vm ):
    m_topData = m_dataStack;
    m_maxData = m_dataStack + INITIAL_STACK_ALLOC;
 
-   m_deepStep = 0;
-
    // prepare a low-limit VM terminator request.
    pushReturn();
 }
 
 
 VMContext::VMContext( bool ):
+   m_thrown(0),  
    m_vm(0),
    m_ruleEntryResult(false)
 {
@@ -247,11 +247,28 @@ void VMContext::unrollToLoopBase()
    unrollToNext( checker );
 }
 
+//===================================================================
+// Try frame management.
+//
+
+void VMContext::raiseItem( const Item&  )
+{
+}
+   
+bool VMContext::manageError( Error*  )
+{
+   return false;
+}
+
+void VMContext::finallyComplete()
+{
+   
+}
+ 
 
 //===================================================================
 // Higher level management
 //
-
 
 void VMContext::pushQuit()
 {

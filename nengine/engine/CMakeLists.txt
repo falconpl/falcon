@@ -207,6 +207,7 @@ add_library(falcon_engine SHARED
   stmt_init.cpp
   stmtraise.cpp
   stmtrule.cpp
+  stmtselect.cpp
   stmttry.cpp
   string.cpp
   stringstream.cpp

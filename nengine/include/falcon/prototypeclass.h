@@ -37,6 +37,10 @@ namespace Falcon
  \note Due to this dynamic nature, prototype strucutre access is interlocked via
  a per-class mutex.
 
+  \note FlexClass (and Prototype) have bases, but not parent. getParent
+ and isDerivedFrom won't be available on the classes, but only on proper
+ instance and only at language level. However, getParentData is available
+ (as it operates on a proper instance).
  */
 class FALCON_DYN_CLASS PrototypeClass: public FlexyClass
 {
@@ -45,7 +49,7 @@ public:
  
     \note The master class is owned by this hyperclass and it's destroyed
     when the hyperclass is destroyed.
-    */
+    */       
    PrototypeClass();
    virtual ~PrototypeClass();
 

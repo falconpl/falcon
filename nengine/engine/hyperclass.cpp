@@ -195,6 +195,65 @@ void* HyperClass::deserialize( DataReader* ) const
 }
 
 
+bool HyperClass::isDerivedFrom( Class* cls ) const
+{
+   // are we the required class?
+   if ( cls == this ) return true;
+   
+   // is the class a parent of one of our parents?
+   Private::ParentVector::const_iterator iter = _p->m_parents.begin();
+   while( iter != _p->m_parents.end() )
+   {
+      Inheritance* inh = *iter;
+      // notice that isDerivedFrom returns true also if cls == parent.
+      if( inh->parent() != 0 && inh->parent()->isDerivedFrom(cls) )
+      {
+         return true;
+      }
+      ++iter;
+   }
+   
+   return false;
+}
+
+
+void* HyperClass::getParentData( Class* parent, void* data ) const
+{
+   // are we the searched parent?
+   if( parent == this )
+   {
+      // then the searched data is the given one.
+      return data;
+   }
+      
+   // else, search the parent data among our parents.
+   // parent data is stored in an itemarray in data, 
+   // -- parent N data is at position N.
+   ItemArray* ia = static_cast<ItemArray*>(data);
+   Private::ParentVector::const_iterator iter = _p->m_parents.begin();
+   length_t count = 0;
+   // ... so we scan the parent vector...
+   while( iter != _p->m_parents.end() )
+   {
+      Inheritance* inh = *iter;
+      if( inh->parent() != 0 )
+      {
+         // ... and ask each parent to find the parent data in its data.
+         void* dp = inh->parent()->getParentData( parent, ia->at(count).asInst() );
+         if( dp != 0 )
+         {
+            return dp;
+         }
+      }
+      ++iter;
+      ++count;
+   }
+   
+   // no luck.
+   return 0;
+}
+
+
 void HyperClass::gcMarkMyself( uint32 mark )
 {
    if( m_lastGCMark != mark )

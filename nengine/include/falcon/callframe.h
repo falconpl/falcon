@@ -2,7 +2,7 @@
    FALCON - The Falcon Programming Language.
    FILE: callframe.h
 
-   Falcon virtual machine - code frame.
+   Falcon virtual machine - call frame.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: Sat, 08 Jan 2011 18:46:25 +0100

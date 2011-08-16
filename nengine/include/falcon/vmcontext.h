@@ -20,6 +20,7 @@
 #include <falcon/item.h>
 #include <falcon/codeframe.h>
 #include <falcon/callframe.h>
+#include <falcon/tryframe.h>
 
 #include <falcon/paranoid.h>
 
@@ -794,15 +795,7 @@ public:
    
    //=============================================================
    // Try/catch
-   //
-   
-   /** Pushes a new try frame.
-    */
-   void pushTryFrame( const StmtTry* t );
-   
-   /** Pop a try frame.
-    */
-   void popTryFrame();
+   //   
    
    /** Called back on item raisal.
     \param raised The item that was explicitly raised.
@@ -860,14 +853,14 @@ public:
     */
    bool manageError( Error* exc );
 
-   /** Continues a previously interrupted raisal.
+   /** Proceeds after a finally frame is complete.
     Invoked by cleanup frames after a finally block has been invoked.
     
     The context leaves a marker in the sequence ID of the cleanup step; if found,
     the cleanup step invoke this method, which pops the current try-frame and
     repeats the try-unroll procedure using the error that was saved in the frame.
     */
-   void continueRaisal();
+   void finallyComplete();
    
 protected:
 
@@ -887,6 +880,13 @@ protected:
    Item* m_maxData;
 
    Item m_regA;
+   
+   /** Error whose throwing was suspended by a finally handling. */
+   Error* m_thrown;
+   
+   bool m_bRaisingItem;
+   /** Item whose raisal was suspended by a finally handling. */
+   Item m_raised;
   
    VMachine* m_vm;
 

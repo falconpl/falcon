@@ -20,6 +20,10 @@
 #include <falcon/expression.h>
 #include <falcon/pcode.h>
 #include <falcon/vmcontext.h>
+#include <falcon/syntree.h>
+#include <falcon/linkerror.h>
+#include <falcon/symbol.h>
+#include <falcon/module.h>
 
 #include <map>
 #include <deque>
@@ -97,7 +101,7 @@ StmtSelect::~StmtSelect()
 }
 
 
-virtual void StmtSelect::describeTo( String& tgt ) const
+void StmtSelect::describeTo( String& tgt ) const
 {
    tgt = "select " + m_expr->oneLiner() +"\n";
    // TODO 
@@ -111,32 +115,38 @@ void StmtSelect::oneLinerTo( String& tgt ) const
 
 bool StmtSelect::addSelectType( int64 typeId, SynTree* block )
 {
+   // refuse to add if already existing.
    if ( _p->m_intBlocks.find( typeId ) != _p->m_intBlocks.end() )
    {
       return false;
    }
    
+   // save the block only if not just pushed in the last operation.
    if( _p->m_blocks.empty() || _p->m_blocks.back() != block )
    {
       _p->m_blocks.push_back( block );
    }
    
+   // anyhow, associate the request.
    _p->m_intBlocks[typeId ] = block;
    return true;
 }
 
 bool StmtSelect::addSelectClass( Class* cls, SynTree* block )
 {
-   if ( _p->m_classBlocks.find( v ) != _p->m_classBlocks.end() )
+   // refuse to add if already existing.
+   if ( _p->m_classBlocks.find( cls ) != _p->m_classBlocks.end() )
    {
       return false;
    }
    
+   // save the block only if not just pushed in the last operation.
    if( _p->m_blocks.empty() || _p->m_blocks.back() != block )
    {
       _p->m_blocks.push_back( block );
    }
    
+   // anyhow, associate the request.
    _p->m_classBlocks[ cls ] = block;
    
    // record the requirement -- as already resolved.
@@ -163,7 +173,7 @@ Requirement* StmtSelect::addSelectName( const String& name, SynTree* block )
 SynTree* StmtSelect::findBlockForType( int64 typeId ) const
 {
    Private::IntBlocks::iterator pos = _p->m_intBlocks.find( typeId );
-   if( pos != 0 )
+   if( pos != _p->m_intBlocks.end() )
    {
       return pos->second;
    }
@@ -174,7 +184,7 @@ SynTree* StmtSelect::findBlockForType( int64 typeId ) const
 SynTree* StmtSelect::findBlockForClass( Class* cls ) const
 {
    Private::ClassBlocks::iterator pos = _p->m_classBlocks.find( cls );
-   if( pos != 0 )
+   if( pos != _p->m_classBlocks.end() )
    {
       return pos->second;
    }
@@ -198,12 +208,14 @@ SynTree* StmtSelect::findBlockForClass( Class* cls ) const
 
 SynTree* StmtSelect::findBlockForItem( const Item& itm ) const
 {
-   
+   // fist try with the types.
    if( _p->m_intBlocks.size() > 0 )
    {
+      // The type is that for the item...
       int64 tid = itm.dereference()->type();
       if( tid == FLC_ITEM_USER )
       {
+         // ... or specified by the class.
          tid = itm.asClass()->typeID();
       }
       
@@ -214,7 +226,7 @@ SynTree* StmtSelect::findBlockForItem( const Item& itm ) const
       }
    }
    
-   // no luck with integers.
+   // no luck with integer representing type ids -- try to find a class.
    Class* cls;
    void* data;
    itm.forceClassInst( cls, data );
@@ -241,9 +253,9 @@ bool StmtSelect::setDefault( SynTree* block )
 }
 
 
-static void StmtSelect::apply_( const PStep* ps, VMContext* ctx )
+void StmtSelect::apply_( const PStep* ps, VMContext* ctx )
 {
-   StmtSelect* self = static_cast<StmtSelect*>(ps);
+   const StmtSelect* self = static_cast<const StmtSelect*>(ps);
    
    SynTree* res = self->findBlockForItem( ctx->topData() );
    
@@ -269,12 +281,12 @@ Error* StmtSelect::SelectRequirer::resolved( Module* source, const Symbol* sym, 
    Item* itm = sym->value(0);
    if( itm == 0 || (!itm->isOrdinal()&& ! itm->isClass()) )
    {
-      return new LinkError( ErrorParam( m_owner->m_expr == 0 ? e_catch_invtype | e_select_invtype )
+      return new LinkError( ErrorParam( m_owner->m_expr == 0 ? e_catch_invtype : e_select_invtype )
          .line( sender->sourceRef().line() )
          .module( m_owner->m_module != 0 ? m_owner->m_module->uri() : "" )
          .origin( ErrorParam::e_orig_linker )
          .symbol( sym->name() )
-         .extra( "declared in " + (source != 0 ? source->uri() : "<internal>" ) )
+         .extra( String("declared in ") + (source != 0 ? source->uri() : "<internal>" ) )
          );
    }
    
@@ -284,12 +296,12 @@ Error* StmtSelect::SelectRequirer::resolved( Module* source, const Symbol* sym, 
       int64 tid = itm->forceInteger();
       if( m_owner->_p->m_intBlocks.find( tid ) != m_owner->_p->m_intBlocks.end() )
       {
-         return new LinkError( ErrorParam( m_owner->m_expr == 0 ? e_catch_clash | e_switch_clash )
+         return new LinkError( ErrorParam( m_owner->m_expr == 0 ? e_catch_clash : e_switch_clash )
             .line( sender->sourceRef().line() )
             .module( m_owner->m_module != 0 ? m_owner->m_module->uri() : "" )
             .origin( ErrorParam::e_orig_linker )
             .symbol( sym->name() )
-            .extra( "declared in " + (source != 0 ? source->uri() : "<internal>" ) )
+            .extra( String("declared in ") + (source != 0 ? source->uri() : "<internal>" ) )
             );
       }
       m_owner->_p->m_intBlocks[ tid ] = sr->m_block;
@@ -299,18 +311,20 @@ Error* StmtSelect::SelectRequirer::resolved( Module* source, const Symbol* sym, 
       Class* cls = itm->asClass();
       if( m_owner->_p->m_classBlocks.find( cls ) != m_owner->_p->m_classBlocks.end() )
       {
-         return new LinkError( ErrorParam( m_owner->m_expr == 0 ? e_catch_clash | e_switch_clash )
+         return new LinkError( ErrorParam( m_owner->m_expr == 0 ? e_catch_clash : e_switch_clash )
             .line( sender->sourceRef().line() )
             .module( m_owner->m_module != 0 ? m_owner->m_module->uri() : "" )
             .origin( ErrorParam::e_orig_linker )
             .symbol( sym->name() )
-            .extra( "declared in " + (source != 0 ? source->uri() : "<internal>" ) )
+            .extra( String("declared in ") + (source != 0 ? source->uri() : "<internal>" ) )
             );
       }
       m_owner->_p->m_classBlocks[ cls ] = sr->m_block;
    }
    
    return 0;
+}
+
 }
 
 /* end of stmtselect.cpp */

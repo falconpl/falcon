@@ -75,7 +75,7 @@ void StmtTry::apply_( const PStep* ps, VMContext* ctx )
    
    // creates a try frame at this position.
    // save this position
-   ctx->pushTryFrame( t );
+   //ctx->pushTryFrame( t );
 }
 
 
@@ -83,7 +83,7 @@ void StmtTry::PStepCleanup::apply_( const PStep*ps, VMContext* ctx )
 {
    const StmtTry::PStepCleanup* cleanup = static_cast<const StmtTry::PStepCleanup*>(ps);
    // remove the try frame before we cause some exception here.
-   ctx->popTryFrame();
+   //ctx->popTryFrame();
    
    // have we a finally?
    SynTree* finbody = cleanup->m_owner->fbody();

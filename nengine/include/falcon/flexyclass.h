@@ -25,6 +25,10 @@ namespace Falcon
 
 /** Class handling flexible objects.
 
+ \note FlexClass (and Prototype) have bases, but not parent. getParent
+ and isDerivedFrom won't be available on the classes, but only on proper
+ instance and only at language level. However, getParentData is available
+ (as it operates on a proper instance).
  */
 class FALCON_DYN_CLASS FlexyClass: public Class
 {
@@ -51,6 +55,7 @@ public:
    virtual void enumeratePV( void* self, PVEnumerator& cb ) const;
    virtual bool hasProperty( void* self, const String& prop ) const;
    virtual void describe( void* instance, String& target, int depth = 3, int maxlen = 60 ) const;
+   virtual void* getParentData( Class* parent, void* data ) const;
 
    //=========================================================
    // Operators.

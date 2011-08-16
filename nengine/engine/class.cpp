@@ -71,6 +71,13 @@ bool Class::isDerivedFrom( Class* cls ) const
 }
 
 
+void* Class::getParentData( Class* parent, void* data ) const
+{
+   if( parent == this ) return data;
+   return 0;
+}
+
+
 void Class::module( Module* m )
 {
    m_module = m;

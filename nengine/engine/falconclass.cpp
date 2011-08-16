@@ -457,6 +457,39 @@ void FalconClass::enumeratePropertiesOnly( PropertyEnumerator& cb ) const
 }
 
 
+bool FalconClass::isDerivedFrom( Class* cls ) const
+{
+   // are we the required class?
+   if( this == cls ) return true;
+   
+   Private::ParentList::const_iterator iter = _p->m_inherit.begin();
+   while( iter != _p->m_inherit.end() )
+   {
+      const Inheritance* inh = *iter;
+      // ... or is the parent derived from the required class?
+      if( inh->parent() != 0 && inh->parent()->isDerivedFrom( cls ) )
+      {
+         return true;
+      }
+      ++iter;
+   }
+   
+   return false;
+}
+
+
+void* FalconClass::getParentData( Class* parent, void* data ) const
+{
+   // The data for all the hierarcy is the same.
+   if( this->isDerivedFrom( parent ) )
+   {
+      return data;
+   }
+   
+   return 0;
+}
+
+
 SynFunc* FalconClass::makeConstructor()
 {
    if ( m_constructor == 0 )
