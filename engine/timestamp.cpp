@@ -1,27 +1,23 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: TimeStampapi.cpp
+   FILE: TimeStamp.cpp
 
-   Short description
+    Implementation of the non-system specific TimeStamp class
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
-   Begin: lun mar 6 2006
+   Begin: Fri, 25 Mar 2011 18:21:38 +0100
 
    -------------------------------------------------------------------
-   (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
+   (C) Copyright 2011: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
 */
 
-/** \file
-   Short description
-*/
-
 #include <falcon/timestamp.h>
-#include <falcon/memory.h>
-#include <falcon/time_sys.h>
 #include <falcon/autocstring.h>
-#include <falcon/item.h>
+
+#include <falcon/datawriter.h>
+#include <falcon/datareader.h>
 
 #include <stdio.h>
 #include <string.h>
@@ -61,7 +57,7 @@ void TimeStamp::copy( const TimeStamp &ts )
 const char *TimeStamp::getRFC2822_ZoneName( TimeZone tz, bool bSemantic, bool bSaving )
 {
    if ( tz == tz_local )
-      tz = Sys::Time::getLocalTimeZone();
+      tz = getLocalTimeZone();
 
    switch( tz )
    {
@@ -103,7 +99,7 @@ const char *TimeStamp::getRFC2822_ZoneName( TimeZone tz, bool bSemantic, bool bS
 }
 
 
-TimeZone TimeStamp::getRFC2822_Zone( const char *csZoneName )
+TimeStamp::TimeZone TimeStamp::getRFC2822_Zone( const char *csZoneName )
 {
    if( strncmp( "UT", csZoneName, 2 ) == 0 ||
       strncmp( "GMT", csZoneName, 3 ) == 0 ||
@@ -272,7 +268,7 @@ bool TimeStamp::toRFC2822( String &target, bool bSemantic, bool bDst ) const
 
    if  ( tz == tz_local )
    {
-      tz = Sys::Time::getLocalTimeZone();
+      tz = getLocalTimeZone();
    }
 
    target.append( getRFC2822_ZoneName( tz, bSemantic, bDst ) );
@@ -477,62 +473,6 @@ int16 TimeStamp::dayOfWeek() const
 
    nday %= 7;
    return nday;
-}
-
-
-int64 TimeStamp::toLongFormat() const
-{
-   if ( ! isValid() )
-      return -1;
-
-   int64 res = 0;
-
-   res |= m_year;
-   // 4 bits for months
-   res <<= 4;
-   res |= m_month;
-
-   // 5 bits for days
-   res <<= 5;
-   res |= m_day;
-
-   // 5 bits for hours
-   res <<= 5;
-   res |= m_hour;
-
-   // 6 bits for minutes
-   res <<= 6;
-   res |= m_minute;
-   // 6 bits for seconds
-   res <<= 6;
-   res |= m_second;
-   //10 bits for msecs
-   res <<= 10;
-   res |= m_msec;
-   // 5 bits for tz.
-   res <<= 5;
-   res |= (int) m_timezone;
-
-   return res;
-}
-
-void TimeStamp::fromLongFormat( int64 lf )
-{
-   m_timezone = (TimeZone) (0x1f & lf);
-   lf >>= 5;
-   m_msec = (int16) ( 0x3ff & lf );
-   lf >>= 10;
-   m_second = (int16) ( 0x3f & lf );
-   lf >>= 6;
-   m_minute = (int16) ( 0x3f & lf );
-   lf >>= 6;
-   m_hour = (int16) ( 0x1f & lf );
-   lf >>= 5;
-   m_day = (int16) ( 0x1f & lf );
-   lf >>= 5;
-   m_month = (int16) ( 0xf & lf );
-   lf >>= 4;
-   m_year = (int16) lf;
 }
 
 
@@ -817,7 +757,7 @@ void TimeStamp::getTZDisplacement( TimeZone tz, int16 &hours, int16 &minutes )
 {
    if  ( tz == tz_local )
    {
-      tz = Sys::Time::getLocalTimeZone();
+      tz = getLocalTimeZone();
    }
 
    switch( tz )
@@ -860,11 +800,13 @@ void TimeStamp::getTZDisplacement( TimeZone tz, int16 &hours, int16 &minutes )
 void TimeStamp::toString( String &target ) const
 {
    // for now a fast thing
-   uint32 allocated = 23 > FALCON_STRING_ALLOCATION_BLOCK ? 24 : FALCON_STRING_ALLOCATION_BLOCK;
-   char *storage = (char *) memAlloc( allocated );
-   sprintf( (char *)storage, "%04d-%02d-%02d %02d:%02d:%02d.%03d",
+   uint32 allocated = 24 >= FALCON_STRING_ALLOCATION_BLOCK ? 24 : FALCON_STRING_ALLOCATION_BLOCK;
+   target.size(0);
+   target.manipulator( &csh::handler_buffer );
+   target.reserve(allocated);
+   
+   sprintf( (char *)target.getRawStorage(), "%04d-%02d-%02d %02d:%02d:%02d.%03d",
       m_year, m_month, m_day, m_hour, m_minute, m_second, m_msec );
-   target.adopt( storage, 23, allocated );
 }
 
 bool TimeStamp::toString( String &target, const String &fmt ) const
@@ -932,27 +874,18 @@ bool TimeStamp::toString( String &target, const String &fmt ) const
    return false;
 }
 
-void TimeStamp::currentTime()
-{
-   Sys::Time::currentTime( *this );
-   if  ( m_timezone == tz_local )
-   {
-      m_timezone = Sys::Time::getLocalTimeZone();
-   }
-}
-
 void TimeStamp::changeTimezone( TimeZone tz )
 {
    if  ( m_timezone == tz_local )
    {
-      m_timezone = Sys::Time::getLocalTimeZone();
+      m_timezone = getLocalTimeZone();
 
       if (tz == tz_local ) // no shift...
          return;
    }
 
    if ( tz == tz_local )
-      tz = Sys::Time::getLocalTimeZone();
+      tz = getLocalTimeZone();
 
    // no shift
    if ( tz == m_timezone )
@@ -974,6 +907,56 @@ void TimeStamp::changeTimezone( TimeZone tz )
 TimeStamp *TimeStamp::clone() const
 {
    return new TimeStamp( *this );
+}
+
+TimeStamp *TimeStamp::create()
+{
+   return new TimeStamp();
+}
+
+void TimeStamp::serialize( DataWriter* dw ) const
+{
+   dw->write(m_year);
+   dw->write(m_month);
+   dw->write(m_day);
+   dw->write(m_hour);
+   dw->write(m_minute);
+   dw->write(m_second);
+   dw->write(m_msec);
+   dw->write((char) m_timezone);
+}
+
+
+void TimeStamp::read( DataReader* dr )
+{
+   char tzone;
+
+   dr->read(m_year);
+   dr->read(m_month);
+   dr->read(m_day);
+   dr->read(m_hour);
+   dr->read(m_minute);
+   dr->read(m_second);
+   dr->read(m_msec);
+   dr->read(tzone);
+
+   m_timezone = (TimeZone) tzone;
+}
+
+TimeStamp* TimeStamp::deserialize( DataReader* dr )
+{
+   TimeStamp* ts = create();
+
+   try
+   {
+      ts->read( dr );
+      return ts;
+   }
+   catch( ... )
+   {
+      delete ts;
+      throw;
+   }
 }
 
 }

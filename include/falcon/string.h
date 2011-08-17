@@ -17,22 +17,20 @@
    Core falcon string representation
 */
 
-#ifndef flc_string_H
-#define flc_string_H
+#ifndef _FALCON_STRING_H_
+#define _FALCON_STRING_H_
 
+#include <falcon/setup.h>
 #include <falcon/types.h>
-#include <falcon/garbageable.h>
-#include <falcon/gcalloc.h>
-#include <falcon/deepitem.h>
 #include <stdlib.h>
 
 #define FALCON_STRING_ALLOCATION_BLOCK 32
 
 namespace Falcon {
 
-class Stream;
-class VMachine;
-class LiveModule;
+class DataWriter;
+class DataReader;
+class GCToken;
 
 /** Core falcon string representation.
    This is a string as seen by the VM and its fellows (module loader, module and so on).
@@ -82,14 +80,10 @@ typedef enum
 {
    cs_static,
    cs_buffer,
-   cs_static16,
-   cs_buffer16,
-   cs_static32,
-   cs_buffer32
 } t_type;
 
 /** Invalid position for core strings. */
-const uint32 npos = 0xFFFFFFFF;
+const length_t npos = -1;
 
 /** Base corestring manager class.
    This is actually an interface that must be implemented by all the core string managers.
@@ -98,28 +92,28 @@ class FALCON_DYN_CLASS Base
 {
 public:
    virtual ~Base() {}
-   virtual t_type type() const =0;
-   virtual uint32 charSize() const = 0;
-   virtual uint32 length( const String *str ) const =0;
-   virtual uint32 getCharAt( const String *str, uint32 pos ) const =0;
-
-   virtual void setCharAt( String *str, uint32 pos, uint32 chr ) const =0;
+   t_type type() const { return m_type; }
+   uint32 charSize() const { return m_charSize; }   
+   inline length_t length( const String *str ) const;
+   
+   virtual void setCharAt( String *str, length_t pos, char_t chr ) const =0;
    virtual void subString( const String *str, int32 start, int32 end, String *target ) const =0;
    /** Finds a substring in a string, and eventually returns npos if not found. */
-   virtual uint32 find( const String *str, const String *element, uint32 start =0, uint32 end = npos) const = 0;
-   virtual uint32 rfind( const String *str, const String *element, uint32 start =0, uint32 end = npos) const = 0;
-   virtual void insert( String *str, uint32 pos, uint32 len, const String *source ) const =0;
-   virtual bool change( String *str, uint32 start, uint32 end, const String *source ) const =0;
-   virtual void remove( String *str, uint32 pos, uint32 len ) const =0;
+   virtual void insert( String *str, length_t pos, length_t len, const String *source ) const =0;
+   virtual bool change( String *str, length_t start, length_t end, const String *source ) const =0;
+   virtual void remove( String *str, length_t pos, length_t len ) const =0;
    virtual String *clone( const String *str ) const =0;
    virtual void destroy( String *str ) const =0;
 
    virtual void bufferize( String *str ) const =0;
    virtual void bufferize( String *str, const String *strOrig ) const =0;
-   virtual void reserve( String *str, uint32 size, bool relative = false, bool block = false ) const = 0;
    virtual void shrink( String *str ) const = 0;
 
    virtual const Base *bufferedManipulator() const =0;
+
+protected:
+   t_type m_type;
+   uint32 m_charSize;
 };
 
 /** Byte orientet base class.
@@ -130,19 +124,16 @@ class FALCON_DYN_CLASS Byte: public Base
 {
 public:
    virtual ~ Byte() {}
-   virtual uint32 length( const String *str ) const;
-   virtual uint32 getCharAt( const String *str, uint32 pos ) const;
+   
+   // Todo: fix this incongruency
    virtual void subString( const String *str, int32 start, int32 end, String *target ) const;
-   virtual bool change( String *str, uint32 pos, uint32 end, const String *source ) const;
+   virtual bool change( String *str, length_t pos, length_t end, const String *source ) const;
    virtual String *clone( const String *str ) const;
-   virtual uint32 find( const String *str, const String *element, uint32 start =0, uint32 end = 0) const;
-   virtual uint32 rfind( const String *str, const String *element, uint32 start =0, uint32 end = 0) const;
-   virtual void remove( String *str, uint32 pos, uint32 len ) const;
+   virtual void remove( String *str, length_t pos, length_t len ) const;
 
    virtual void bufferize( String *str ) const;
    virtual void bufferize( String *str, const String *strOrig ) const;
 
-   virtual void reserve( String *str, uint32 size, bool relative = false, bool block = false ) const;
    virtual const Base *bufferedManipulator() const { return this; }
 };
 
@@ -157,16 +148,19 @@ public:
 class FALCON_DYN_CLASS Static: public Byte
 {
 public:
+   Static()
+   {
+      m_type = cs_static;
+      m_charSize = 1;
+   }
+   
    virtual ~Static() {}
-   virtual t_type type() const { return cs_static; }
-   virtual uint32 charSize() const { return 1; }
 
-   virtual void setCharAt( String *str, uint32 pos, uint32 chr ) const;
-   virtual void insert( String *str, uint32 pos, uint32 len, const String *source ) const;
-   virtual void remove( String *str, uint32 pos, uint32 len ) const;
+   virtual void setCharAt( String *str, length_t pos, char_t chr ) const;
+   virtual void insert( String *str, length_t pos, length_t len, const String *source ) const;
+   virtual void remove( String *str, length_t pos, length_t len ) const;
    virtual void destroy( String *str ) const;
 
-   virtual void reserve( String *str, uint32 size, bool relative = false, bool block = false ) const;
    virtual void shrink( String *str ) const;
    virtual const Base *bufferedManipulator() const;
 };
@@ -183,14 +177,17 @@ public:
 class FALCON_DYN_CLASS Buffer: public Byte
 {
 public:
+   Buffer()
+   {
+      m_type = cs_buffer;
+      m_charSize = 1;
+   }
+   
    virtual ~Buffer() {}
-   virtual t_type type() const { return cs_buffer; }
-   virtual uint32 charSize() const { return 1; }
 
-   virtual void setCharAt( String *str, uint32 pos, uint32 chr ) const;
-   virtual void insert( String *str, uint32 pos, uint32 len, const String *source ) const;
+   virtual void setCharAt( String *str, length_t pos, char_t chr ) const;
+   virtual void insert( String *str, length_t pos, length_t len, const String *source ) const;
    virtual void destroy( String *str ) const;
-   virtual void reserve( String *str, uint32 size, bool relative = false, bool block = false ) const;
    virtual void shrink( String *str ) const;
 
 };
@@ -198,46 +195,54 @@ public:
 class FALCON_DYN_CLASS Static16: public Static
 {
 public:
+   Static16()
+   {
+      m_charSize = 2;
+   }
+   
    virtual ~Static16() {}
-   virtual uint32 charSize() const  { return 2; }
-   virtual uint32 length( const String *str ) const;
-   virtual uint32 getCharAt( const String *str, uint32 pos ) const;
-   virtual void setCharAt( String *str, uint32 pos, uint32 chr ) const;
-   virtual void remove( String *str, uint32 pos, uint32 len ) const;
-   virtual void reserve( String *str, uint32 size, bool relative = false, bool block = false ) const;
+   virtual void setCharAt( String *str, length_t pos, char_t chr ) const;
+   virtual void remove( String *str, length_t pos, length_t len ) const;
    virtual const Base *bufferedManipulator() const;
 };
 
 class FALCON_DYN_CLASS Static32: public Static16
 {
 public:
+   Static32()
+   {
+      m_charSize = 4;
+   }
+
    virtual ~Static32() {}
-   virtual uint32 charSize() const { return 4; }
-   virtual uint32 length( const String *str ) const;
-   virtual uint32 getCharAt( const String *str, uint32 pos ) const;
-   virtual void setCharAt( String *str, uint32 pos, uint32 chr ) const;
-   virtual void remove( String *str, uint32 pos, uint32 len ) const;
-   virtual void reserve( String *str, uint32 size, bool relative = false, bool block = false ) const;
+   virtual void setCharAt( String *str, length_t pos, char_t chr ) const;
+   virtual void remove( String *str, length_t pos, length_t len ) const;
    virtual const Base *bufferedManipulator() const;
 };
 
 class FALCON_DYN_CLASS Buffer16: public Buffer
 {
 public:
-   virtual uint32 charSize() const { return 2; }
-   virtual uint32 length( const String *str ) const;
-   virtual uint32 getCharAt( const String *str, uint32 pos ) const;
-   virtual void setCharAt( String *str, uint32 pos, uint32 chr ) const;
+   Buffer16()
+   {
+      m_charSize = 2;
+   }
+   
+   virtual ~Buffer16() {}
+   
+   virtual void setCharAt( String *str, length_t pos, char_t chr ) const;
 };
 
 class FALCON_DYN_CLASS Buffer32: public Buffer16
 {
 public:
+   Buffer32()
+   {
+      m_charSize = 4;
+   }
    virtual ~Buffer32() {}
-   virtual uint32 charSize() const { return 4; }
-   virtual uint32 length( const String *str ) const;
-   virtual uint32 getCharAt( const String *str, uint32 pos ) const;
-   virtual void setCharAt( String *str, uint32 pos, uint32 chr ) const;
+   
+   virtual void setCharAt( String *str, length_t pos, char_t chr ) const;
 };
 
 extern FALCON_DYN_SYM Static handler_static;
@@ -279,7 +284,7 @@ extern FALCON_DYN_SYM Buffer32 handler_buffer32;
    mapping between corestring subclasses and the manager they use.
 */
 
-class FALCON_DYN_CLASS String: public GCAlloc
+class FALCON_DYN_CLASS String
 {
 
    friend class csh::Base;
@@ -293,20 +298,10 @@ class FALCON_DYN_CLASS String: public GCAlloc
 
 protected:
    const csh::Base *m_class;
-   uint32 m_allocated;
-   uint32 m_size;
-
+   length_t m_allocated;
+   length_t m_size;
    byte *m_storage;
-
-   /**
-    * True if this string is exportable - importable in GC context.
-    */
-   bool m_bExported;
-
-   // Reserved for future usage.
-   byte m_bFlags;
-
-   bool m_bCore;
+   uint32 m_lastMark;
 
    /**sym
     * Creates the core string.
@@ -337,8 +332,7 @@ public:
       m_allocated( 0 ),
       m_size( 0 ),
       m_storage( 0 ),
-      m_bExported( false ),
-      m_bCore( false )
+      m_lastMark( 0 )
    {
    }
 
@@ -410,7 +404,7 @@ public:
       \param len the length of the string in buffer (in bytes). Pass -1 to make the constructor to determine the
             buffer length by scanning it in search for '\\0'
    */
-   String( const char *data, int32 len );
+   String( const char *data, length_t len );
 
    /** Allows on-the-fly core string creation from static data.
       This is the wide string version.
@@ -425,12 +419,12 @@ public:
       \param len the length of the buffer (in wide characters). Pass -1 to make the constructor to determine the
             buffer length by scanning it in search for '\\0'
    */
-   String( const wchar_t *data, int32 len );
+   String( const wchar_t *data, length_t len );
 
 
    /** Creates a bufferized string with preallocated space.
    */
-   explicit String( uint32 prealloc );
+   explicit String( length_t prealloc );
 
    /** Copies a string.
       If the copied string is a bufferized string, a new bufferzied string is
@@ -446,8 +440,7 @@ public:
    */
    String( const String &other ):
       m_allocated( 0 ),
-      m_bExported( false ),
-      m_bCore( false )
+      m_lastMark( other.m_lastMark )
    {
       copy( other );
    }
@@ -465,8 +458,9 @@ public:
       valid.
 
       Use bufferize() on this string to ensure that it is copied.
+    // TODO fix size and reversing
    */
-   String( const String &other, uint32 begin, uint32 end = csh::npos );
+   String( const String &other, length_t begin, length_t end = csh::npos );
 
    /** Destroys the String.
       As the method is not virtual (neither the class is), different kind of strings
@@ -516,7 +510,7 @@ public:
       \param allocated the size of the buffer as it was allocated (in bytes)
       \return itself
    */
-   String &adopt( char *buffer, uint32 size, uint32 allocated );
+   String &adopt( char *buffer, length_t size, length_t allocated );
 
    /** Adopt a pre-allocated dynamic buffer (wide char version).
       This function takes the content of the given buffer and sets it as the
@@ -533,7 +527,7 @@ public:
       \param allocated the size of the buffer as it was allocated (in bytes)
       \return itself
    */
-   String &adopt( wchar_t *buffer, uint32 size, uint32 allocated );
+   String &adopt( wchar_t *buffer, length_t size, length_t allocated );
 
 
    /** Return the manipulator of the class.
@@ -563,7 +557,7 @@ public:
       may ignore this (and so let it undefined) or use it for special purposes (i.e. amount of
       free memory on the last chunk in chunked strings.)
    */
-   uint32 allocated() const { return m_allocated; }
+   length_t allocated() const { return m_allocated; }
 
 
    /** Changes the amount of allocated memory.
@@ -571,16 +565,16 @@ public:
       may ignore this (and so let it undefined) or use it for special purposes (i.e. amount of
       free memory on the last chunk in chunked strings.)
    */
-   void allocated( uint32 s ) { m_allocated = s; }
+   void allocated( length_t s ) { m_allocated = s; }
 
    /** Returns the amount of bytes the string occupies.
       This is the byte-size of the string, and may or may not be the same as the string length.
    */
-   uint32 size() const { return m_size; }
+   length_t size() const { return m_size; }
    /** Changes the amount of bytes the string is considered to occupy.
       This is the byte-size of the string, and may or may not be the same as the string length.
    */
-   void size( uint32 s ) { m_size = s; }
+   void size( length_t s ) { m_size = s; }
 
    /** Return the raw storage for this string.
       The raw storage is where the strings byte are stored. For more naive string (i.e. chunked), it
@@ -609,7 +603,7 @@ public:
       Being not a pure accessor, is actually better to cache this value somewhere if repeteadly
       needed.
    */
-   uint32 length() const { return m_class->length( this ); }
+   length_t length() const { return m_class->length( this ); }
 
    /** Tranforms the string into a zero-terminated string.
       This function fills a buffer that can be fed in libc and STL function requiring a zero
@@ -630,7 +624,7 @@ public:
       \param bufsize the size of the target buffer in bytes.
       \return npos if the buffer is not long enough, else returns the used size.
    */
-   uint32 toCString( char *target, uint32 bufsize ) const;
+   length_t toCString( char *target, length_t bufsize ) const;
 
    /** Tranforms the string into a zero-terminated wide string.
       This function returns fills a buffer that can be fed in functions accpeting
@@ -648,7 +642,7 @@ public:
       \param bufsize the size of the target buffer in bytes.
       \return npos if the buffer size is not large enough, else returns the string length in wchar_t count
    */
-   uint32 toWideString( wchar_t *target, uint32 bufsize ) const;
+   length_t toWideString( wchar_t *target, length_t bufsize ) const;
 
    /** Reduces the size of allocated memory to fit the string size.
       Use this method to shrink the allocated buffer storing the string
@@ -663,34 +657,38 @@ public:
    */
    void shrink() { m_class->shrink( this ); }
 
-
-   uint32 getCharAt( uint32 pos ) const { return m_class->getCharAt( this, pos ); }
-   void setCharAt( uint32 pos, uint32 chr ) { m_class->setCharAt( this, pos, chr ); }
+   inline char_t getCharAt( length_t pos ) const
+   {
+      switch( m_class->charSize() )
+      {
+         case 1: return getRawStorage()[pos];
+         case 2: return ((uint16*)getRawStorage())[pos];
+         case 4: return ((uint32*)getRawStorage())[pos];
+      }
+      return 0;
+   }
+   
+   void setCharAt( length_t pos, char_t chr ) { m_class->setCharAt( this, pos, chr ); }
    String subString( int32 start, int32 end ) const { return String( *this, start, end ); }
    String subString( int32 start ) const { return String( *this, start, length() ); }
-   bool change( int32 start, const String &other ) {
+   bool change( length_t start, const String &other ) {
       return m_class->change( this, start, csh::npos, &other );
    }
-   bool change( int32 start, int32 end, const String &other ) {
+   bool change( length_t start, length_t end, const String &other ) {
       return m_class->change( this, start, end, &other );
    }
-   void insert( uint32 pos, uint32 len, const String &source ) { m_class->insert( this, pos, len, &source ); }
-   void remove( uint32 pos, uint32 len ) { m_class->remove( this, pos, len ); }
+   void insert( length_t pos, length_t len, const String &source ) { m_class->insert( this, pos, len, &source ); }
+   void remove( length_t pos, length_t len ) { m_class->remove( this, pos, len ); }
    void append( const String &source );
-   void append( uint32 chr );
-   void prepend( uint32 chr );
+   void append( char_t chr );
+   void prepend( char_t chr );
 
    void prepend( const String &source ) { m_class->insert( this, 0, 0, &source ); }
 
-   uint32 find( const String &element, uint32 start=0, uint32 end=csh::npos) const
-   {
-      return m_class->find( this, &element, start, end );
-   }
-
-   uint32 rfind( const String &element, uint32 start=0, uint32 end=csh::npos) const
-   {
-      return m_class->rfind( this, &element, start, end );
-   }
+   length_t find( const String &element, length_t start=0, length_t end=csh::npos) const;
+   length_t rfind( const String &element, length_t start=csh::npos, length_t end=0) const;
+   length_t find( char_t element, length_t start=0, length_t end=csh::npos) const;
+   length_t rfind( char_t element, length_t start=csh::npos, length_t end=0) const;
 
    /** Compares a string to another.
       Optimized to match against C strings.
@@ -748,14 +746,24 @@ public:
    */
    int compareIgnoreCase( const wchar_t *other ) const;
 
+   /** Find one of the characters in the string. 
+   \param src A string containing all the charcters to be searched.
+    */
+   length_t findFirstOf( const String& src, length_t pos = 0 ) const;
+
+   /** Find one of the characters in the string from the back of the string. 
+    \param src A string containing all the charcters to be searched.
+    */
+   length_t findLastOf( const String& src, length_t pos = npos ) const ;
+   
    /** Returns true if this string is empty. */
    bool operator !() { return m_size == 0; }
 
    String & operator+=( const String &other ) { append( other ); return *this; }
-   String & operator+=( uint32 other ) { append( other ); return *this; }
-   String & operator+=( char other ) { append( (uint32) other ); return *this; }
+   String & operator+=( char_t other ) { append( other ); return *this; }
+   String & operator+=( char other ) { append( (char_t) other ); return *this; }
    String & operator+=( const char *other ) { append( String( other ) ); return *this; }
-   String & operator+=( wchar_t other ) { append( (uint32) other ); return *this; }
+   String & operator+=( wchar_t other ) { append( (char_t) other ); return *this; }
    String & operator+=( const wchar_t *other ) { append( String( other ) ); return *this; }
 
    String & operator=( const String &other ) {
@@ -763,11 +771,13 @@ public:
       return *this;
    }
 
-   String & operator=( uint32 chr ) {
+   String & operator=( char_t chr ) {
       m_size = 0;
       append( chr );
       return *this;
    }
+   
+
 
    /** Assign from a const char string.
       If this string is not empty, its content are destroyed; then
@@ -800,7 +810,7 @@ public:
       stream are turned on.
       \param out the stream on which to save the string.
    */
-   void serialize( Stream *out ) const;
+   void serialize( DataWriter *out ) const;
 
    /** Load the string from a stream.
       The string is deserialized from the stream and allocated in memory.
@@ -815,10 +825,9 @@ public:
       A failure usually means a stream corruption or an incompatible format.
 
       \param in the input stream where the string must be read from
-      \param bStatic true to create a self-destroryable static string
       \return true on success, false on failure.
    */
-   bool deserialize( Stream *in, bool bStatic=false );
+   bool deserialize( DataReader *in );
 
    /** Escapes a string for external representation.
       Convert special control characters to "\" prefixed characters,
@@ -877,7 +886,7 @@ public:
       \param pos initial position in the string from which to start the conversion
       \return true if succesful, false if parse failed
    */
-   bool parseInt( int64 &target, uint32 pos = 0 ) const;
+   bool parseInt( int64 &target, length_t pos = 0 ) const;
 
    /** Minimal numerical conversion.
       If this string represents a valid integer in octal format, the integer is returned.
@@ -886,7 +895,7 @@ public:
       \param pos initial position in the string from which to start the conversion
       \return true if succesful, false if parse failed
    */
-   bool parseOctal( uint64 &target, uint32 pos = 0 ) const;
+   bool parseOctal( uint64 &target, length_t pos = 0 ) const;
 
    /** Minimal numerical conversion.
       If this string represents a valid integer in octal format, the integer is returned.
@@ -895,7 +904,7 @@ public:
       \param pos initial position in the string from which to start the conversion
       \return true if succesful, false if parse failed
    */
-   bool parseBin( uint64 &target, uint32 pos = 0 ) const;
+   bool parseBin( uint64 &target, length_t pos = 0 ) const;
 
    /** Minimal numerical conversion.
       If this string represents a valid integer in hexadecimal format, the integer is returned.
@@ -904,7 +913,7 @@ public:
       \param pos initial position in the string from which to start the conversion
       \return true if succesful, false if parse failed
    */
-   bool parseHex( uint64 &target, uint32 pos = 0 ) const;
+   bool parseHex( uint64 &target, length_t pos = 0 ) const;
 
    /** Minimal numerical conversion.
       If this string represents a valid floating point number, the number is returned.
@@ -914,7 +923,7 @@ public:
       \param pos initial position in the string from which to start the conversion
       \return true if succesful, false if parse failed
    */
-   bool parseDouble( double &target, uint32 pos = 0 ) const;
+   bool parseDouble( double &target, length_t pos = 0 ) const;
 
 
     /** Converts a number to a string and appends it to this string.
@@ -942,7 +951,7 @@ public:
     */
     void writeNumber( double number )
     {
-      writeNumber( number, "%e" );
+      writeNumber( number, "%E" );
     }
 
     /** Converts a number to a string and appends it to this string.
@@ -978,6 +987,17 @@ public:
       * String s = String( "You got ").N( msg_count ).A( " messages " );
       */
     inline String& N( int32 number )
+    {
+       writeNumber( (int64) number );
+       return *this;
+    }
+
+    /** Cumulative version of writeNumber.
+      *
+      * This method can be used to concatenate strings and number such as for
+      * String s = String( "You got ").N( msg_count ).A( " messages " );
+      */
+    inline String& N( uint32 number )
     {
        writeNumber( (int64) number );
        return *this;
@@ -1036,14 +1056,14 @@ public:
       * This method can be used to concatenate strings and number such as for
       * String s = String( "You got ").N( msg_count ).A( " messages " );
       */
-    inline String& A( int chr )  { append((uint32)chr); return *this; }
+    inline String& A( int chr )  { append((char_t)chr); return *this; }
 
     /** Cumulative version of append.
       *
       * This method can be used to concatenate strings and number such as for
       * String s = String( "You got ").N( msg_count ).A( " messages " );
       */
-    inline String& A( uint32 chr ) { append(chr); return *this; }
+    inline String& A( char_t chr ) { append(chr); return *this; }
 
     /** Checks the position to be in the string, and eventually changes it if it's negative.
       This is just a nice inline shortuct so that the string constructor for substrings
@@ -1090,11 +1110,8 @@ public:
       \note the width is in bytes.
       \param size minimal space that must be allocated as writeable heap buffer (in bytes).
    */
-   void reserve( uint32 size )
-   {
-      m_class->reserve( this, size );
-   }
-
+   void reserve( length_t size );
+   
    /** Remove efficiently whitespaces at beginning and end of the string.
       If whitespaces are only at the end of the string, the lenght of the string
       is simply reduced; this means that static strings may stay static after
@@ -1126,9 +1143,7 @@ public:
    void upper();
 
    bool isStatic() const {
-      return manipulator()->type() == csh::cs_static ||
-             manipulator()->type() == csh::cs_static16 ||
-             manipulator()->type() == csh::cs_static32;
+      return manipulator()->type() == csh::cs_static;
    }
 
    /** Bufferize an UTF-8 string.
@@ -1149,7 +1164,7 @@ public:
       \return true on success, false if the sequence is invalid.
 
    */
-   bool fromUTF8( const char *utf8, int32 len );
+   bool fromUTF8( const char *utf8, length_t len );
 
    bool fromUTF8( const char *utf8 );
 
@@ -1162,24 +1177,17 @@ public:
 
       This operator is provided as a candy grammar for getCharAt().
    */
-   const uint32 operator []( uint32 pos ) const { return getCharAt( pos ); }
-
-   /** Return wether this exact string instance should be internationalized.
-      \note exported() attribute is not copied across string copies.
-   */
-   bool exported() const { return m_bExported; }
-   /** Sets wether this string should be exported in international context or not.
-   */
-   void exported( bool e ) { m_bExported = e; }
+   char_t operator []( length_t pos ) const { return getCharAt( pos ); }
 
    /** Adds an extra '\0' terminator past the end of the string.
+
       This makes the string data (available through getRawStorage()) suitable
       to be sent to C functions compatible with the character size of this
       string.
 
       Eventually, it should be preceded by a call to setCharSize().
    */
-   void c_ize();
+   const char* c_ize() const;
 
    /** Compares a string with the beginning of this string.
       If \b str is empty, returns true, if it's larger than
@@ -1218,33 +1226,33 @@ public:
        character in this string. The number of byte used can be
        1, 2 or 4.
 
-       If the new character size of this string is smaller than
-       the original one, characters that cannot be represented
-       are substituted with a \b subst value (by default, the
-       maximum value allowed for the given character size).
-
        If the original character size was different, the
        string is bufferized into a new memory area, otherwise
        the string is unchanged.
 
-       \note subst param is not currently implemented.
-
        @param nsize The new character size for the string.
-       @param subst The substitute character to be used when reducing size.
        @return True if the nsize value is valid, false otherwise.
    */
-   bool setCharSize( uint32 nsize, uint32 subst=0xFFFFFFFF );
+   bool setCharSize( uint16 nsize );
 
-   void writeIndex( const Item &index, const Item &target );
-   void readIndex( const Item &index, Item &target );
-   void readProperty( const String &prop, Item &item );
+   /** Stores this string in the standard garbage collector.
 
-   bool isCore() const { return m_bCore; }
+    After this call is issued, the string is delivered to the standard
+    garbage collector, and it cannot be destroyed anymore by the calling
+    program.
 
-   static bool isWhiteSpace( uint32 chr )
+    The returned token can be stored in an item to create a deep string.
+    */
+   GCToken* garbage();
+
+   /** Returns true if the given character is a whitespace. */
+   inline static bool isWhiteSpace( char_t chr )
    {
       return chr == ' ' || chr == '\t' || chr == '\r' || chr == '\n';
    }
+   
+   void gcMark( uint32 mark ) { m_lastMark = mark; }
+   uint32 currentMark() const { return m_lastMark; }
 };
 
 
@@ -1288,164 +1296,9 @@ public:
 };
 
 
-//=================================
-// Helpful list of string deletor
-//
-void string_deletor( void *data );
-
-class CoreString;
-
-class FALCON_DYN_CLASS StringGarbage: public Garbageable
+length_t csh::Base::length(const String* str) const
 {
-   CoreString *m_str;
-
-public:
-   StringGarbage( CoreString *owner ):
-      Garbageable(),
-      m_str( owner )
-   {}
-
-   virtual ~StringGarbage();
-   virtual bool finalize();
-};
-
-/** Garbage storage string.
-   This is the String used in VM operations (i.e. in all the VM items).
-   It is allocated inside the garbage collector, and cannot be directly
-   deleted.
-*/
-class FALCON_DYN_CLASS CoreString: public String
-{
-   StringGarbage m_gcptr;
-
-public:
-   CoreString():
-      String(),
-      m_gcptr( this )
-   {
-      m_bCore = true;
-   }
-
-   CoreString( const String &str ):
-      String( str ),
-      m_gcptr( this )
-   {
-      m_bCore = true;
-   }
-
-   CoreString( const CoreString &str ):
-      String( str ),
-      m_gcptr( this )
-   {
-      m_bCore = true;
-   }
-
-   CoreString( const char *data ):
-      String( data ),
-      m_gcptr( this )
-   {
-      m_bCore = true;
-   }
-
-   CoreString( const wchar_t *data ):
-      String( data ),
-      m_gcptr( this )
-   {
-      m_bCore = true;
-   }
-
-   CoreString( const char *data, int32 len ):
-      String( data, len ),
-      m_gcptr( this )
-   {
-      m_bCore = true;
-   }
-
-   CoreString( const wchar_t *data, int32 len ):
-      String( data, len ),
-      m_gcptr( this )
-   {
-      m_bCore = true;
-   }
-
-
-   /** Creates a bufferized string with preallocated space.
-   */
-   explicit CoreString( uint32 prealloc ):
-      String( prealloc ),
-      m_gcptr( this )
-   {
-      m_bCore = true;
-   }
-
-   CoreString( const String &other, uint32 begin, uint32 end = csh::npos ):
-      String( other, begin, end ),
-      m_gcptr( this )
-   {
-      m_bCore = true;
-   }
-
-   const StringGarbage &garbage() const { return m_gcptr; }
-
-   StringGarbage &garbage() { return m_gcptr; }
-
-   void mark( uint32 m ) { m_gcptr.mark( m ); }
-
-   CoreString & operator+=( const CoreString &other ) { append( other ); return *this; }
-   CoreString & operator+=( const String &other ) { append( other ); return *this; }
-   CoreString & operator+=( uint32 other ) { append( other ); return *this; }
-   CoreString & operator+=( char other ) { append( (uint32) other ); return *this; }
-   CoreString & operator+=( const char *other ) { append( String( other ) ); return *this; }
-   CoreString & operator+=( wchar_t other ) { append( (uint32) other ); return *this; }
-   CoreString & operator+=( const wchar_t *other ) { append( String( other ) ); return *this; }
-
-   CoreString & operator=( const CoreString &other ) {
-      copy( other );
-      return *this;
-   }
-
-   CoreString & operator=( const String &other ) {
-      copy( other );
-      return *this;
-   }
-
-   CoreString & operator=( uint32 chr ) {
-      m_size = 0;
-      append( chr );
-      return *this;
-   }
-
-
-   CoreString & operator=( const char *other ) {
-      if ( m_storage != 0 )
-         m_class->destroy( this );
-      copy( String( other ) );
-      return *this;
-   }
-};
-
-
-//=================================
-// inline proxy constructors
-//
-
-/** Creates a String from an utf8 sequence on the fly.
-   This is a proxy constructor for String. The string data is
-   bufferized, so the sequence needs not to be valid after this call.
-
-   \note this function returns a valid string also if the \b utf8 paramter is
-      not a valid utf8 sequence. If there is the need for error detection,
-      use String::fromUTF8 instead.
-
-   \see String::fromUTF8
-   \param utf8 the sequence
-   \return a string containing the decoded sequence
-*/
-inline CoreString *UTF8String( const char *utf8 )
-{
-   CoreString *str = new CoreString;
-   str->fromUTF8( utf8 );
-   return str;
+    return str->size()/m_charSize; 
 }
 
 }

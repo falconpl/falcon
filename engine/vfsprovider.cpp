@@ -2,16 +2,17 @@
    FALCON - The Falcon Programming Language.
    FILE: vfsprovider.cpp
 
-   Generic provider of file system abstraction.
+   Internal functions prototypes for DirApi.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
-   Begin: Thu, 11 Sep 2008 08:58:33 +0200
+   Begin: Fri, 25 Mar 2011 18:07:01 +0100
 
    -------------------------------------------------------------------
-   (C) Copyright 2008: the FALCON developers (see list in AUTHORS file)
+   (C) Copyright 2011: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
 */
+
 #include <falcon/vfsprovider.h>
 
 namespace Falcon {
@@ -22,4 +23,4 @@ VFSProvider::~VFSProvider()
 
 }
 
-/* end of vsfprovider.cpp */
+/* end of vfsprovider.cpp */

@@ -17,8 +17,8 @@
    VSF provider for physical file system on the host system.
 */
 
-#ifndef flc_vfs_file_H
-#define flc_vfs_file_H
+#ifndef FALCON_VFS_FILE_H
+#define FALCON_VFS_FILE_H
 
 #include <falcon/vfsprovider.h>
 #include <fcntl.h>
@@ -31,9 +31,23 @@ namespace Falcon {
 */
 class FALCON_DYN_CLASS VFSFile: public VFSProvider
 {
+public:
+
+   VFSFile();
+   virtual ~VFSFile();
+
+   virtual Stream* open( const URI &uri, const OParams &p = OParams(1) );
+   virtual Stream* create( const URI &uri, const CParams &p );
+   virtual Directory* openDir( const URI &uri );
+   virtual bool readStats( const URI &uri, FileStat &s, bool delink=true );
+   FileStat::t_fileType fileType( const URI& uri, bool delink=true );
+
+   virtual void mkdir( const URI &uri, bool bCreateParent=true );
+   virtual void erase( const URI &uri );
+   virtual void move( const URI &suri, const URI &duri );
+
 protected:
    void *m_fsdata;
-
 
    inline int paramsToMode( const OParams &p )
    {
@@ -41,10 +55,10 @@ protected:
 
       if ( p.isRdwr() )
          omode = O_RDWR;
-      else if ( p.isRdOnly() )
-         omode = O_RDONLY;
-      else
+      else if ( p.isWrOnly() )
          omode = O_WRONLY;
+      else
+         omode = O_RDONLY;
 
       if( p.isTruncate() )
          omode |= O_TRUNC;
@@ -54,29 +68,6 @@ protected:
 
       return omode;
    }
-
-public:
-   VFSFile();
-   virtual ~VFSFile();
-
-   virtual Stream* open( const URI &uri, const OParams &p );
-   virtual Stream* create( const URI &uri, const CParams &p, bool &bSuccess );
-   virtual DirEntry* openDir( const URI &uri );
-   virtual bool readStats( const URI &uri, FileStat &s );
-   virtual bool writeStats( const URI &uri, const FileStat &s );
-
-   virtual bool chown( const URI &uri, int uid, int gid );
-   virtual bool chmod( const URI &uri, int mode );
-
-   virtual bool link( const URI &uri1, const URI &uri2, bool bSymbolic );
-   virtual bool unlink( const URI &uri );
-
-   virtual bool mkdir( const URI &uri, uint32 mode );
-   virtual bool rmdir( const URI &uri );
-   virtual bool move( const URI &suri, const URI &duri );
-
-   virtual int64 getLastFsError();
-   virtual Error *getLastError();
 };
 
 }

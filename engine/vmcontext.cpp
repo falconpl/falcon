@@ -2,411 +2,745 @@
    FALCON - The Falcon Programming Language.
    FILE: vmcontext.cpp
 
-   Short description
+   Falcon virtual machine.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
-   Begin: mar nov 9 2004
+   Begin: Sat, 15 Jan 2011 11:36:42 +0100
 
    -------------------------------------------------------------------
-   (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
+   (C) Copyright 2011: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
 */
 
-/** \file
-   Short description
-*/
-
-#include <falcon/vm.h>
-#include "vmsema.h"
 #include <falcon/vmcontext.h>
-#include <falcon/traits.h>
-#include <falcon/genericvector.h>
-#include <falcon/sys.h>
+#include <falcon/trace.h>
+#include <falcon/itemid.h>
+#include <falcon/function.h>
+#include <falcon/vm.h>
+#include <falcon/codeerror.h>
+#include <falcon/stmttry.h>      // for catch.
+#include <falcon/engine.h>       // for catch -- error check
+#include <falcon/stderrors.h>    // for catch -- error check
+#include <falcon/syntree.h>    // for catch -- error check
+#include <falcon/symbol.h>    // for catch -- error check
 
-#define VM_STACK_MEMORY_THRESHOLD 128
+#include <stdlib.h>
+#include <string.h>
 
 
 namespace Falcon {
 
-//==================================
-// Deletor for the frame list.
-
-VMContext::VMContext():
-   m_frames(0),
-   m_spareFrames(0)
+VMContext::VMContext( VMachine* vm ):
+   m_thrown(0),
+   m_finMode( e_fin_none ),
+   m_vm(vm),
+   m_ruleEntryResult(false),
+   m_catchBlock(0),
+   m_event(eventNone)
 {
-   m_sleepingOn = 0;
+   m_codeStack = (CodeFrame *) malloc(INITIAL_STACK_ALLOC*sizeof(CodeFrame));
+   m_topCode = m_codeStack-1;
+   m_maxCode = m_codeStack + INITIAL_STACK_ALLOC;
 
-   m_schedule = 0.0;
-   m_priority = 0;
+   m_callStack = (CallFrame*)  malloc(INITIAL_STACK_ALLOC*sizeof(CallFrame));
+   m_topCall = m_callStack-1;
+   m_maxCall = m_callStack + INITIAL_STACK_ALLOC;
 
-   m_atomicMode = false;
+   m_dataStack = (Item*) malloc(INITIAL_STACK_ALLOC*sizeof(Item));
+   // the data stack can NEVER be empty. -- an empty data stack is an error.
+   m_topData = m_dataStack;
+   m_maxData = m_dataStack + INITIAL_STACK_ALLOC;
 
-   m_tryFrame = 0;
-
-   m_pc = 0;
-   m_pc_next = 0;
-   m_symbol = 0;
-   m_lmodule = 0;
-
-   m_frames = allocFrame();
-   // reset stuff for the first frame,
-   // as allocFrame doesn't clear everything for performance reasons.
-   m_frames->m_param_count = 0;
-   m_frames->m_break = false;
+   // prepare a low-limit VM terminator request.
+   pushReturn();
 }
 
-VMContext::VMContext( const VMContext& other ):
-   m_frames(0),
-   m_spareFrames(0)
+
+VMContext::VMContext( bool ):
+   m_thrown(0),
+   m_finMode( e_fin_none ),
+   m_vm(0),
+   m_ruleEntryResult(false),
+   m_catchBlock(0),
+   m_event(eventNone)
 {
-   m_sleepingOn = 0;
-
-   m_schedule = 0.0;
-   m_priority = 0;
-   
-   m_atomicMode = false;
-
-   m_tryFrame = 0;
-
-   m_pc = other.m_pc;
-   m_pc_next = other.m_pc_next;
-   m_symbol = other.m_symbol;
-   m_lmodule = other.m_lmodule;
-
-   m_frames = allocFrame();
-   // reset stuff for the first frame,
-   // as allocFrame doesn't clear everything for performance reasons.
-   m_frames->m_param_count = 0;
-   m_frames->m_break = false;
 }
-
 
 VMContext::~VMContext()
 {
-   StackFrame* frame = m_spareFrames;
-   while ( frame != 0 )
-   {
-      StackFrame* gone = frame;
-      frame = frame->prev();
-      delete gone;
-   }
-
-   frame = m_frames;
-   while ( frame != 0 )
-   {
-      StackFrame* gone = frame;
-      frame = frame->prev();
-      delete gone;
-   }
-
-   m_frames = m_spareFrames = 0;
+   free(m_codeStack);
+   free(m_callStack);
+   free(m_dataStack);
+   if( m_thrown != 0 ) m_thrown->decref();   
 }
 
 
-void VMContext::scheduleAfter( numeric secs )
+void VMContext::moreData()
 {
-   m_schedule = Sys::_seconds() + secs;
+   long distance = (long)(m_topData - m_dataStack);
+   long newSize = (long)(m_maxData - m_dataStack + INCREMENT_STACK_ALLOC);
+   TRACE("Reallocating %p: %d -> %ld", m_dataStack, (int)(m_maxData - m_dataStack), newSize );
+
+   m_dataStack = (Item*) realloc( m_dataStack, newSize * sizeof(Item) );
+   m_topData = m_dataStack + distance;
+   m_maxData = m_dataStack + newSize;
 }
 
 
-void VMContext::waitOn( VMSemaphore* sem, numeric secs )
+void VMContext::copyData( Item* target, size_t count, size_t start)
 {
-   if( secs < 0.0 )
-      m_schedule = -1.0;
-   else
-      m_schedule =  Sys::_seconds() + secs;
+   size_t depth = dataSize();
 
-   m_sleepingOn = sem;
-}
-
-void VMContext::wakeup( bool signaled )
-{
-   if ( m_sleepingOn != 0 )  // overkill, but...
+   if ( start == (size_t)-1)
    {
-      m_sleepingOn->unsubscribe( this );
-      m_sleepingOn = 0;
-      m_schedule = 0.0;  // immediately runnable
-
-      // don't change the A status if not sleeping on a semaphore.
-      regA().setBoolean(signaled); // we have not been awaken, and must return false
-   }
-}
-
-void VMContext::signaled()
-{
-   if ( m_sleepingOn != 0 )  // overkill, but...
-   {
-      // Don't unsubscribe; the semaphore is unsubscribing us.
-      m_sleepingOn = 0;
-      m_schedule = 0.0;  // immediately runnable
+      start = depth < count ? 0 : depth - count;
    }
 
-   regA().setBoolean(true); // we have not been awaken, and must return false}
+   if ( count + start > depth )
+   {
+      count = depth - start;
+   }
+
+   memcpy( target, m_dataStack + start, sizeof(Item) * count );
 }
 
 
-StackFrame* VMContext::createFrame( uint32 paramCount, ext_func_frame_t frameEndFunc )
+void VMContext::moreCode()
 {
-   StackFrame* frame = allocFrame();
+   long distance = (long)(m_topCode - m_codeStack); // we don't want the size of the code,
 
-   frame->prepareParams( m_frames, paramCount );
+   long newSize = (long)(m_maxCode - m_codeStack + INCREMENT_STACK_ALLOC);
+   TRACE("Reallocating %p: %d -> %ld", m_codeStack, (int)(m_maxCode - m_codeStack), newSize );
 
-   frame->m_symbol = symbol();
-   frame->m_module = lmodule();
-
-   frame->m_ret_pc = pc_next();
-   frame->m_call_pc = pc();
-   frame->m_break = false;
-   frame->m_prevTryFrame = m_tryFrame;
-
-   frame->m_try_base = VMachine::i_noTryFrame;
-
-   // parameter count.
-   frame->m_param_count = paramCount;
-
-   // iterative processing support
-   frame->m_endFrameFunc = frameEndFunc;
-
-   frame->m_self.setNil();
-   frame->m_binding = regBind();
-
-   return frame;
+   m_codeStack = (CodeFrame*) realloc( m_codeStack, newSize * sizeof(CodeFrame) );
+   m_topCode = m_codeStack + distance;
+   m_maxCode = m_codeStack + newSize;
 }
 
 
-void VMContext::fillErrorTraceback( Error &error )
+void VMContext::moreCall()
 {
-   fassert( ! error.hasTraceback() );
+   long distance = (long)(m_topCall - m_callStack);
+   long newSize = (long)(m_maxCall - m_callStack + INCREMENT_STACK_ALLOC);
+   TRACE("Reallocating %p: %d -> %ld", m_callStack, (int)(m_maxCall - m_callStack), newSize );
 
-   const Symbol *csym = m_symbol;
-   if ( csym != 0 )
-   {
-      uint32 curLine;
-      if( csym->isFunction() )
-      {
-         curLine = csym->module()->getLineAt( csym->getFuncDef()->basePC() + pc() );
-      }
-      else {
-         // should have been filled by raise
-         curLine = error.line();
-      }
-
-      error.addTrace( csym->module()->name(), csym->module()->path(), csym->name(),
-         curLine,
-         pc());
-   }
-
-   StackFrame* frame = currentFrame();
-   while( frame != 0 )
-   {
-      const Symbol *sym = frame->m_symbol;
-      if ( sym != 0 )
-      { // possible when VM has not been initiated from main
-         uint32 line;
-         if( sym->isFunction() )
-            line = sym->module()->getLineAt( sym->getFuncDef()->basePC() + frame->m_call_pc );
-         else
-            line = 0;
-
-         error.addTrace( sym->module()->name(), sym->module()->path(), sym->name(), line, frame->m_call_pc );
-      }
-
-      frame = frame->prev();
-   }
+   m_callStack = (CallFrame*) realloc( m_callStack, newSize * sizeof(CallFrame) );
+   m_topCall = m_callStack + distance;
+   m_maxCall = m_callStack + newSize;
 }
 
-bool VMContext::getTraceStep( uint32 level, const Symbol* &sym, uint32& line, uint32 &pc )
+
+void VMContext::startRuleFrame()
 {
-   StackFrame* frame = currentFrame();
-   while( frame != 0 && frame->m_symbol != 0 && level > 0 )
+   CallFrame& cf = currentFrame();
+   int32 stackBase = cf.m_stackBase;
+   long localCount = (long)((m_topData+1) - m_dataStack) - stackBase;
+   while ( m_topData + localCount + 1 > m_maxData )
    {
-      frame = frame->prev();
-      level--;
+      moreData();
    }
 
-   if( frame == 0 || frame->m_symbol == 0 )
-      return false;
+   Item& ruleFrame = addDataSlot();
+   ruleFrame.type( FLC_ITEM_FRAMING );
+   ruleFrame.content.data.val64 = stackBase;
+   ruleFrame.content.data.val64 <<= 32;
+   ruleFrame.content.data.val64 |= 0xFFFFFFFF;
+   ruleFrame.content.mth.ruleTop = stackBase;
 
+   // copy the local variables.
+   memcpy( m_topData + 1, m_dataStack + stackBase, localCount * sizeof(Item) );
+
+   // move forward the stack base.
+   cf.m_stackBase = dataSize();
+   m_topData += localCount; // point to the last local
+}
+
+
+void VMContext::addRuleNDFrame( uint32 tbPoint )
+{
+   CallFrame& cf = currentFrame();
+   int32 stackBase = cf.m_stackBase;
+   int32 oldRuleTop = m_dataStack[stackBase-1].content.mth.ruleTop;
+
+   long localCount = (long)((m_topData+1) - m_dataStack) - stackBase;
+   while ( m_topData + localCount + 1 > m_maxData )
+   {
+      moreData();
+   }
+
+   Item& ruleFrame = addDataSlot();
+   ruleFrame.type( FLC_ITEM_FRAMING );
+   ruleFrame.content.data.val64 = stackBase;
+   ruleFrame.content.data.val64 <<= 32;
+   ruleFrame.content.data.val64 |= tbPoint;
+   ruleFrame.content.mth.ruleTop = oldRuleTop;
+
+   // copy the local variables.
+   memcpy( m_topData + 1, m_dataStack + stackBase, localCount * sizeof(Item) );
+
+   // move forward the stack base.
+   cf.m_stackBase = dataSize();
+   m_topData += localCount;
+}
+
+
+void VMContext::commitRule()
+{
+   CallFrame& cf = currentFrame();
+   long localCount = localVarCount();
+   int32 baseRuleTop = params()[-1].content.mth.ruleTop;
+
+   // copy the local variables.
+   memcpy( m_dataStack + baseRuleTop, m_dataStack + cf.m_stackBase, localCount * sizeof(Item) );
+
+   // move forward the stack base.
+   cf.m_stackBase = baseRuleTop;
+   m_topData = m_dataStack + baseRuleTop + localCount - 1;
+}
+
+
+
+template<class __checker>
+bool VMContext::unrollToNext( const __checker& check )
+{
+   // first, we must have at least a function around.
+   register CallFrame* curFrame =  m_topCall;
+   register CodeFrame* curCode = m_topCode;
+   register Item* curData = m_topData;
    
-   sym = frame->m_symbol;
-   pc = frame->m_call_pc;
-   if( sym->isFunction() )
-      line = sym->module()->getLineAt( sym->getFuncDef()->basePC() + pc );
-   else
-      line = 0;
-
-   return true;
-}
-
-
-void VMContext::addFrame( StackFrame* frame )
-{
-   frame->prev( m_frames );
-   m_frames = frame;
-}
-
-StackFrame* VMContext::popFrame()
-{
-   if ( m_frames == 0 )
-      return 0;
-
-   StackFrame *ret = m_frames;
-   m_frames = m_frames->prev();
-   ret->prev(0);
-   return ret;
-}
-
-StackFrame* VMContext::allocFrame()
-{
-   if( m_spareFrames != 0 )
+   while( m_callStack <= curFrame )
    {
-      StackFrame* ret = m_spareFrames;
-      m_spareFrames = m_spareFrames->prev();
-      ret->resizeStack(0);
-
-      ret->prev(0);
-      ret->m_try_base = VMachine::i_noTryFrame;
-      ret->m_prevTryFrame = 0;
-      ret->m_module = 0;
-      ret->m_symbol = 0;
-
-      return ret;
-   }
-
-   return new StackFrame;
-}
-
-
-void VMContext::disposeFrame( StackFrame* frame )
-{
-   frame->prev( m_spareFrames );
-   m_spareFrames = frame;
-}
-
-void VMContext::disposeFrames( StackFrame* first, StackFrame* last )
-{
-   last->prev( m_spareFrames );
-   m_spareFrames = first;
-}
-
-void VMContext::resetFrames()
-{
-   if( m_frames == 0 )
-   {
-      m_frames = allocFrame();
-   }
-   else
-   {
-      StackFrame* top = m_frames->prev();
-      m_frames->prev( 0 );
-      m_frames->resizeStack(0);
-
-      if ( top != 0 )
+      // then, get the current topCall pointer to code stack.
+      CodeFrame* baseCode = m_codeStack + curFrame->m_codeBase;
+      // now unroll up to when we're able to hit a next base
+      while( curCode >= baseCode )
       {
-         StackFrame* last = top;
-         while ( last->prev() != 0 )
+         if( check( *curCode->m_step, this ) )
          {
-            last = last->prev();
+            m_topCall = curFrame;
+            m_topData = curData;
+            m_topCode = curCode;
+            return true;
          }
-         disposeFrames( top, last );
+         --curCode;
       }
+      
+      // were we searching a return?
+      if( check.isReturn() ) return true;
+      
+      // unroll the call.
+      curData = m_dataStack + curFrame->m_initBase;
+      curFrame--;
    }
+  
+   return false;
+}
 
-   /*
-   if ( m_frames != 0 )
+class CheckIfCodeIsNextBase
+{
+public:
+   inline bool operator()( const PStep& ps, VMContext* ctx ) const 
    {
-      StackFrame* last = m_frames;
-      while ( last->prev() != 0 )
+      if( ps.isFinally() )
       {
-         last = last->prev();
+         ctx->setFinallyContinuation( VMContext::e_fin_continue );
+         return true;
       }
-      disposeFrames( m_frames, last );
-      m_frames = 0;
+      
+      return ps.isNextBase(); 
    }
-   */
+   
+   bool isReturn() const { return false; }
+};
 
-
-   m_frames->m_symbol = 0;
-   m_frames->m_module = 0;
-   m_tryFrame = 0;
-}
-
-
-void VMContext::pushTry( uint32 landingPC )
+class CheckIfCodeIsLoopBase
 {
-   Item frame1( (((int64) landingPC) << 32) | (int64) currentFrame()->m_try_base );
-   m_tryFrame = currentFrame();
-   currentFrame()->pushItem( frame1 );
-   currentFrame()->m_try_base = currentFrame()->stackSize();
-}
+public:
+   inline bool operator()( const PStep& ps, VMContext* ctx ) const 
+   { 
+      if( ps.isFinally() )
+      {
+         ctx->setFinallyContinuation( VMContext::e_fin_break );
+         return true;
+      }
+      return ps.isLoopBase(); 
+   }
+   
+   bool isReturn() const { return false; }
+};
 
-void VMContext::popTry( bool moveTo )
+
+class CheckIfCodeIsCatchItem
 {
-   // If the try frame is wrong or not in current stack frame...
-   if( m_tryFrame == 0 )
-   {
-      throw new CodeError( ErrorParam( e_stackuf, __LINE__ ).
-         origin( e_orig_vm ) );
+public:
+   CheckIfCodeIsCatchItem( const Item& item ):
+      m_item(item)
+   {}
+   
+   inline bool operator()( const PStep& ps, VMContext* ctx ) const 
+   {       
+      if( ps.isFinally() )
+      {
+         ctx->setFinallyContinuation( VMContext::e_fin_raise );
+         return true;
+      }
+      
+      if( ps.isCatch() )
+      {
+         const StmtTry* stry = static_cast<const StmtTry*>( &ps );
+         SynTree* st = stry->catchSelect().findBlockForItem( m_item );
+         ctx->setCatchBlock( st );
+         return st != 0;
+      }
+      
+      return false;
    }
+   
+   bool isReturn() const { return false; }
+   
+private:
+   const Item& m_item;
+};
 
-   // search the frame to pop
-   while ( currentFrame() != m_tryFrame )
-   {
-      disposeFrame( popFrame() );
-   }
-
-   // get the frame and resize the stack
-   currentFrame()->resizeStack( currentFrame()->m_try_base );
-   fassert( currentFrame()->topItem().isInteger() );
-   int64 tf_land = currentFrame()->topItem().asInteger();
-   currentFrame()->pop(1);
-
-   // Change the try frame, and eventually move the PC to the proper position
-   currentFrame()->m_try_base = (uint32) tf_land;
-   if( ((uint32) tf_land) == VMachine::i_noTryFrame )
-   {
-      m_tryFrame = currentFrame()->m_prevTryFrame;
-   }
-
-   if( moveTo )
-   {
-      pc_next() = (uint32)(tf_land>>32);
-      pc() = pc_next();
-   }
-}
-
-
-bool VMContext::callReturn()
+class CheckIfCodeIsCatchError
 {
-   // Get the stack frame.
-   StackFrame &frame = *currentFrame();
-
-   // change symbol
-   symbol( frame.m_symbol );
-   pc_next() = frame.m_ret_pc;
-
-   // eventually change active module.
-   lmodule( frame.m_module );
-
-   // reset try frame
-   m_tryFrame = frame.m_prevTryFrame;
-
-   regBind() = frame.m_binding;
-
-   // reset stack base and resize the stack
-   disposeFrame( popFrame() );
-   // currentFrame may be zero, but in that case m_param_count would be zero too
-   if ( frame.m_param_count != 0 )
-   {
-      fassert( currentFrame() != 0 );
-      currentFrame()->pop( frame.m_param_count );
+public:
+   CheckIfCodeIsCatchError( Class* err ):
+      m_err(err)
+   {}
+   
+   inline bool operator()( const PStep& ps, VMContext* ctx ) const 
+   {       
+      if( ps.isFinally() )
+      {
+         ctx->setFinallyContinuation( VMContext::e_fin_raise );
+         return true;
+      }
+      
+      if( ps.isCatch() )
+      {
+         const StmtTry* stry = static_cast<const StmtTry*>( &ps );
+         SynTree* st = stry->catchSelect().findBlockForClass( m_err );
+         if ( st == 0 ) st = stry->catchSelect().getDefault();
+         ctx->setCatchBlock( st );
+         return st != 0;
+      }
+      
+      return false;
    }
+   
+   bool isReturn() const { return false; }
+   
+private:
+   Class* m_err;
+};
 
-   return frame.m_break;
+
+class CheckIfCodeIsReturn
+{
+public:
+   
+   inline bool operator()( const PStep& ps, VMContext* ctx ) const 
+   {       
+      if( ps.isFinally() )
+      {
+         ctx->setFinallyContinuation( VMContext::e_fin_return );
+         return true;
+      }
+      
+      return false;
+   }
+   
+   bool isReturn() const { return true; }
+};
+
+
+void VMContext::unrollToNextBase()
+{
+   CheckIfCodeIsNextBase checker;
+   if( ! unrollToNext( checker ) )
+   {
+      raiseError( new CodeError( ErrorParam(e_continue_out, __LINE__, SRC )
+         .origin(ErrorParam::e_orig_vm)) );
+   }
 }
 
+
+void VMContext::unrollToLoopBase()
+{
+   CheckIfCodeIsLoopBase checker;
+   if( ! unrollToNext( checker ) )
+   {
+      raiseError( new CodeError( ErrorParam(e_break_out, __LINE__, SRC )
+         .origin(ErrorParam::e_orig_vm)) );
+   }
+}
+
+//===================================================================
+// Try frame management.
+//
+
+void VMContext::raiseItem( const Item& item )
+{
+   // first, if this is a boxed error, unbox it and send it to raiseError.
+   if( item.isUser() )
+   {
+      if ( item.asClass()->isErrorClass() ) {
+         raiseError( static_cast<Error*>( item.asInst() ) );
+         return;
+      }
+   }
+   
+   // are we in a finally? -- in that case, we must just queue our item.
+   if( m_finMode == e_fin_raise && m_thrown != 0 )
+   {
+      // in this case, the effect is that of continue raisal of an uncaught item.
+      CodeError* ce = new CodeError( ErrorParam( e_uncaught, __LINE__, SRC )
+         .origin(ErrorParam::e_orig_vm));
+      ce->raised( item );
+      raiseError( ce );
+      return;
+   }
+   
+   // ok, it's a real item. Just in case, remove the rising-error marker.
+   if( m_thrown != 0 ) m_thrown->decref();
+   m_thrown = 0;
+
+   // can we catch it?
+   CheckIfCodeIsCatchItem check(item);
+   
+   m_catchBlock = 0;
+   if( unrollToNext<CheckIfCodeIsCatchItem>( check ) )
+   {
+      // the unroller has prepared the code for us
+      if( m_catchBlock != 0 )
+      {
+         resetCode( m_catchBlock );
+         Item* value = m_catchBlock->headSymbol()->value(this);
+         if( value != 0 )
+         {
+            *value = item; 
+         }
+         m_raised.setNil();
+      }
+      else
+      {
+         // otherwise, it was a finally, and we should leave it alone.
+         // Save the item for later re-raisal.
+         m_raised = item;
+      }
+   }
+   else 
+   {   
+      // no luck. 
+      
+      // reset the raised object, anyhow.
+      m_raised.setNil();
+      
+      CodeError* ce = new CodeError( ErrorParam( e_uncaught, __LINE__, SRC )
+         .origin(ErrorParam::e_orig_vm));
+      ce->raised( item );
+      raiseError( ce );
+   }
+}
+   
+void VMContext::raiseError( Error* ce )
+{   
+   // are we in a finally? 
+   // -- in that case, we must queue our error and continue the previous raise
+   if( m_finMode == e_fin_raise && m_thrown != 0 )
+   {     
+      m_thrown->appendSubError( ce );
+      ce = m_thrown;
+   }
+   else
+   {
+      ce->incref();
+      if( m_thrown != 0 ) m_thrown->decref();      
+   }
+   
+   // can we catch it?   
+   m_catchBlock = 0;
+   CheckIfCodeIsCatchError check( ce->handler() );
+   if( unrollToNext<CheckIfCodeIsCatchError>( check ) )
+   {
+      // the unroller has prepared the code for us
+      if( m_catchBlock != 0 )
+      {
+         resetCode( m_catchBlock );
+
+         // assign the error to the required item.
+         if( m_catchBlock->headSymbol() != 0 )
+         {
+            Item* value = m_catchBlock->headSymbol()->value(this);
+            if( value != 0 )
+            {
+               value->setUser( ce->handler(), ce, true );
+               m_thrown = 0;
+               ce->decref();
+            }
+         }
+      }
+      else
+      {
+         // otherwise, we have a finally around. 
+         m_thrown = ce;
+      }
+   }
+   else
+   {   
+      // prevent script-bound re-catching.
+      unhandledError(ce);
+   }
+}
+
+
+void VMContext::unhandledError( Error* ce )
+{
+   ce->incref();
+   if( m_thrown != 0 ) m_thrown->decref();
+   m_thrown = ce;
+   
+   m_event = eventRaise;
+}
+
+
+void VMContext::finallyComplete()
+{
+   /** reduce the count of traversed finally codes. */
+   switch( m_finMode )
+   {
+      case e_fin_none: break;
+      case e_fin_raise: 
+         if ( m_thrown != 0 ) 
+         {
+            // if we don't zero the thrown error, the system will be fooled and think
+            // that a new throw has appened.
+            Error* e = m_thrown;
+            m_thrown = 0;
+            raiseError( e );
+         }
+         else
+         {
+            raiseItem( m_raised );
+         }
+         break;
+         
+      case e_fin_break:
+         unrollToLoopBase();
+         break;
+               
+      case e_fin_continue:
+         unrollToNextBase();
+         break;
+         
+      case e_fin_return:
+         {
+            Item copy = m_raised;
+            m_raised.setNil();
+            returnFrame( copy );
+         }
+         break;
+         
+      case e_fin_terminate:
+         // currently not used.
+         break;
+   }
+   
+}
+ 
+
+//===================================================================
+// Higher level management
+//
+
+void VMContext::pushQuit()
+{
+   class QuitStep: public PStep {
+   public:
+      QuitStep() { apply = apply_; }
+      virtual ~QuitStep() {}
+
+      inline virtual void describeTo( String& s ) const { s= "#Quit"; }
+   private:
+      static void apply_( const PStep*, VMContext *ctx )
+      {
+         ctx->popCode();
+         ctx->quit();
+      }
+   };
+
+   static QuitStep qs;
+   pushCode( &qs );
+}
+
+
+void VMContext::pushComplete()
+{
+   class CompleteStep: public PStep {
+   public:
+      CompleteStep() { apply = apply_; }
+      virtual ~CompleteStep() {}
+
+      inline virtual void describeTo( String& s ) const { s= "#Complete"; }
+   private:
+      static void apply_( const PStep*, VMContext *ctx )
+      {
+         ctx->popCode();
+         ctx->quit();
+      }
+   };
+
+   static CompleteStep qs;
+   pushCode( &qs );
+}
+
+
+void VMContext::pushReturn()
+{
+   class Step: public PStep {
+   public:
+      Step() { apply = apply_; }
+      virtual ~Step() {}
+
+      inline virtual void describeTo( String& s ) const { s= "#Return"; }
+   private:
+      static void apply_( const PStep*, VMContext *ctx )
+      {
+         ctx->popCode();
+         ctx->setReturn();
+      }
+   };
+
+   static Step qs;
+   pushCode( &qs );
+}
+
+
+void VMContext::pushBreak()
+{
+   class Step: public PStep {
+   public:
+      Step() { apply = apply_; }
+      virtual ~Step() {}
+
+      inline virtual void describeTo( String& s ) const { s= "#Break"; }
+   private:
+      static void apply_( const PStep*, VMContext *ctx )
+      {
+         ctx->popCode();
+         ctx->breakpoint();
+      }
+   };
+
+   static Step qs;
+   pushCode( &qs );
+}
+
+
+void VMContext::call( Function* function, int nparams, const Item& self )
+{
+   TRACE( "Calling method %s.%s -- call frame code:%p, data:%p, call:%p",
+         self.describe(3).c_ize(), function->locate().c_ize(),
+         m_topCode, m_topData, m_topCall  );
+
+   makeCallFrame( function, nparams, self );
+   TRACE1( "-- codebase:%d, stackBase:%d, self: %s ", \
+         m_topCall->m_codeBase, m_topCall->m_stackBase, self.isNil() ? "nil" : "value"  );
+
+   // do the call
+   function->invoke( this, nparams );
+}
+
+
+void VMContext::call( Function* function, int nparams )
+{
+   TRACE( "Calling function %s -- call frame code:%p, data:%p, call:%p",
+         function->locate().c_ize(),m_topCode, m_topData, m_topCall  );
+
+   makeCallFrame( function, nparams );
+   TRACE3( "-- codebase:%d, stackBase:%d ", \
+         m_topCall->m_codeBase, m_topCall->m_stackBase );
+
+   // do the call
+   function->invoke( this, nparams );
+}
+
+
+void VMContext::callItem( const Item& item, int pcount, Item const* params )
+{
+   TRACE( "Calling item: %s -- call frame code:%p, data:%p, call:%p",
+      item.describe(2).c_ize(), m_topCode, m_topData, m_topCall  );
+
+   Class* cls;
+   void* data;
+   item.forceClassInst( cls, data );
+   
+   addSpace( pcount+1 );
+   *(m_topData - ( pcount + 1 )) = item;
+   if( pcount > 0 )
+   {      
+      memcpy( m_topData-pcount, params, pcount * sizeof(item) );
+   }
+   
+   cls->op_call( this, pcount, data );
+}
+
+
+void VMContext::insertData(int32 pos, Item* data, int32 dataSize, int32 replSize )
+{
+   addSpace( dataSize - replSize );
+   // this is the first item we have to mangle with.
+   Item* base = m_topData - (dataSize - replSize + pos-1);
+   
+   if( pos > replSize )
+   {  
+      memmove( base + dataSize,
+               base + replSize, 
+               sizeof(Item) * (pos-replSize) );
+   }
+   
+   memcpy( base, data, sizeof(Item)*dataSize );
+}
+
+
+void VMContext::returnFrame( const Item& value )
+{
+   register CallFrame* topCall = m_topCall;
+   TRACE1( "Return frame from function %s", topCall->m_function->name().c_ize() );
+
+   if( topCall->m_finallyCount > 0 )
+   {
+      // we have some finally block in the middle that must be respected.
+      CheckIfCodeIsReturn check;
+      unrollToNext( check );
+      m_raised = value;
+      return;
+   }
+   
+   // reset code and data
+   m_topCode = m_codeStack + topCall->m_codeBase-1;
+   PARANOID( "Code stack underflow at return", (m_topCode >= m_codeStack-1) );
+   // Use initBase as stackBase may have been moved -- but keep 1 parameter ...
+
+   m_topData = m_dataStack + topCall->m_initBase-1;
+   // notice: data stack can never be empty, an empty data stack is an errro.
+   PARANOID( "Data stack underflow at return", (m_topData >= m_dataStack) );
+
+   // Forward the return value
+   *m_topData = value;
+   
+   // Finalize return -- pop call frame
+   if( m_topCall-- ==  m_callStack )
+   {
+      setComplete();
+      MESSAGE( "Returned from last frame -- declaring complete." );
+   }
+
+   PARANOID( "Call stack underflow at return", (m_topCall >= m_callStack-1) );
+   TRACE( "Return frame code:%p, data:%p, call:%p", m_topCode, m_topData, m_topCall  );
+}
 
 }
 

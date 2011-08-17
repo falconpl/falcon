@@ -5,10 +5,10 @@
    Falcon compiler and interpreter - options file
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
-   Begin: Fri, 10 Sept 2004 13:15:23 +0100
+   Begin: Tue, 26 Jul 2011 10:31:32 +0200
 
    -------------------------------------------------------------------
-   (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
+   (C) Copyright 2011: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
 */
@@ -25,8 +25,6 @@ using namespace Falcon;
 
 
 FalconOptions::FalconOptions():
-   m_modal( false ),
-   m_justinfo( false ),
    input( "" ),
    output( "" ),
    load_path( "" ),
@@ -37,13 +35,11 @@ FalconOptions::FalconOptions():
    compile_only( false ),
    run_only( false ),
    tree_out( false ),
-   assemble_out( false ),
    search_path( false ),
    force_recomp( false ),
    check_memory( false ),
-
-   comp_memory( true ),
-   recompile_on_load( true ),
+   
+   ignore_sources( false ),
    save_modules( true ),
    wait_after( false ),
    parse_ftd( false ),
@@ -51,7 +47,10 @@ FalconOptions::FalconOptions():
    compile_tltable( false ),
    interactive( false ),
    ignore_syspath( false ),
-   errOnStdout(false)
+   errOnStdout(false),
+   m_modal( false ),
+   m_justinfo( false )
+   
 {}
 
 
@@ -63,19 +62,18 @@ void FalconOptions::usage( bool deep )
       << "       falcon -y [-o<output>] module" << endl
       << "       falcon -x [c_options] module" << endl
       << "       falcon [c_opts] [r_opts] module [script options]" << endl
-      << "       falcon -i [-p module] ...[-p module]" << endl
+      << "       falcon -i [-p module] ... [-p module]" << endl
       << endl;
 
    if( deep )
    {
       cout
       << "Modal options:" << endl
-      << "   -c          compile the given source in a .fam module" << endl
+      << "   -c          compile the given source(s) in a .fam module" << endl
       << "   -i          interactive mode" << endl
-      << "   -S          produce an assembly output" << endl
       << "   -t          generate a syntactic tree (for logic debug)" << endl
-      << "   -y          write string translation table for the module" << endl
       << "   -x          execute a binary '.fam' module" << endl
+      << "   -y          write string translation table for the module" << endl
       << "   --cgi       execute in GGI mode" << endl
       << endl
       << "Compilation options (c_opts):" << endl
@@ -83,7 +81,6 @@ void FalconOptions::usage( bool deep )
       << "   -D          Set constant (as <constant>=<value>)" << endl
       << "   -E <enc>    Source files are in <enc> encoding (overrides -e)" << endl
       << "   -f          force recompilation of modules even when .fam are found" << endl
-      << "   -m          do NOT compile in memory (use temporary files)" << endl
       << "   -T          consider given [module] as .ftd (template document)" << endl
       << endl
       << "Run options (r_opts):" << endl
@@ -97,7 +94,7 @@ void FalconOptions::usage( bool deep )
       << "   -M          do NOT save the compiled modules in '.fam' files" << endl
       << "   -p <module> preload (pump in) given module" << endl
       << "   -P          ignore system PATH (and FALCON_LOAD_PATH envvar)" << endl
-      << "   -r          do NOT recompile sources (ignore sources)" << endl
+      << "   -I          Ignore sources" << endl
       << endl
       << "General options:" << endl
       << "   -h/-?       display usage" << endl
@@ -146,16 +143,16 @@ void FalconOptions::parse( int argc, char **argv, int &script_pos )
             case 'C': check_memory = true; break;
             case 'd':
                if ( op[2] == 0 && i + 1< argc )
-                  directives.pushBack ( new String ( argv[++i] ) );
+                  parseDirective( argv[++i] );
                else
-                  directives.pushBack ( new String ( op + 2 ) );
+                  parseDirective( op + 2 );
                break;
 
             case 'D':
                if ( op[2] == 0 && i + 1< argc )
-                  defines.pushBack ( new String ( argv[++i] ) );
+                  parseDefine( argv[++i] );
                else
-                  defines.pushBack ( new String ( op + 2 ) );
+                  parseDefine( op+2 );
                break;
 
             case 'e':
@@ -207,7 +204,6 @@ void FalconOptions::parse( int argc, char **argv, int &script_pos )
                   module_language = op + 2;
                break;
 
-            case 'm': comp_memory = false; break;
             case 'M': save_modules = false; break;
 
             case 'o':
@@ -219,16 +215,15 @@ void FalconOptions::parse( int argc, char **argv, int &script_pos )
 
             case 'p':
                if ( op[2] == 0 && i + 1< argc )
-                  preloaded.pushBack ( new String ( argv[++i] ) );
+                  preloaded.push_back( argv[++i] );
                else
-                  preloaded.pushBack ( new String ( op + 2 ) );
+                  preloaded.push_back( op + 2 );
                break;
 
             case 'P': ignore_syspath = true; break;
-            case 'r': recompile_on_load = false; break;
+            case 'I': ignore_sources = true; break;
 
             case 's': errOnStdout = true; break;
-            case 'S': modalGiven(); assemble_out = true; break;
             case 't': modalGiven(); tree_out = true; break;
             case 'T': parse_ftd = true; break;
             case 'x': run_only = true; break;
@@ -240,12 +235,11 @@ void FalconOptions::parse( int argc, char **argv, int &script_pos )
                if( String( op+2 ) == "cgi" )
                {
                   errOnStdout = true;
-                  preloaded.pushBack( new String( "cgi" ) );
+                  preloaded.push_back( "cgi" );
                   break;
                }
 
             // else just fallthrough
-
 
             default:
                cerr << "falcon: unrecognized option '" << op << "'."<< endl << endl;
@@ -261,8 +255,8 @@ void FalconOptions::parse( int argc, char **argv, int &script_pos )
          break;
       }
    }
-
 }
+
 
 void FalconOptions::version()
 {
@@ -270,5 +264,66 @@ void FalconOptions::version()
    cout << "Version "  << FALCON_VERSION " (" FALCON_VERSION_NAME ")" << endl << endl;
 }
 
+
+void FalconOptions::parseDirective( const String& str )
+{
+   String key;
+   String value;
+   
+   parseEqString(str, key, value);
+   if( value == "" )
+   {
+      cerr << "falcon: invalid directive value '" << str.c_ize() << "'."<< endl << endl;
+      m_justinfo = true;
+      return;
+   }
+   
+   // let the parsing of the directive content to the compiler later on.
+   directives[key] = value;
+}
+
+
+void FalconOptions::parseDefine( const String& str )
+{
+   String key;
+   String value;
+   
+   parseEqString(str, key, value);
+   // There's no invalid values for defines, but empty key is not allowed.
+   if( key == "" )
+   {
+      cerr << "falcon: invalid define value '" << str.c_ize() << "'."<< endl << endl;
+      m_justinfo = true;
+      return;
+   }
+   
+   defines[key] = value;
+}
+
+
+void FalconOptions::parseEqString( const String& str, String& key, String& value )
+{
+   length_t pos = str.find( '=' );
+   if( pos != String::npos )
+   {
+      key = str.subString(0, pos);
+      if( pos < str.length() )
+      {
+        value = str.subString(pos+1);
+      }
+      else
+      {
+         value.size(0);
+      }
+   }
+   else
+   {
+      key = str;
+      value.size(0);
+   }
+   
+   key.bufferize();
+   value.bufferize();
+}
 
 /* options.cpp */

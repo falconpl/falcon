@@ -189,6 +189,12 @@ different systems.
    #define STR(x) _STR(x)
 #endif
 
+// Activate GC Trace in debug
+#ifndef NDEBUG
+   #undef FALCON_TRACE_GC
+   #define FALCON_TRACE_GC 1
+#endif
+
 #endif
 
 /* end of setup.h */

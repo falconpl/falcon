@@ -17,19 +17,19 @@
    Generic provider of file system abstraction.
 */
 
-#ifndef flc_vfs_provider_H
-#define flc_vfs_provider_H
+#ifndef FALCON_VFSPROVIDER_H
+#define FALCON_VFSPROVIDER_H
 
 #include <falcon/setup.h>
-#include <falcon/basealloc.h>
 #include <falcon/filestat.h>
-#include <falcon/dir_sys.h>
+#include <falcon/directory.h>
 #include <falcon/string.h>
 #include <falcon/uri.h>
 
 namespace Falcon {
 
 class Error;
+class Stream;
 
 /** Base class for Falcon Virtual File System Providers.
    VFS providers are singletons containing virtual
@@ -44,15 +44,8 @@ class Error;
    uri and finds an appropriate VFS provider for that
    kind of resource.
 */
-class FALCON_DYN_CLASS VFSProvider: public BaseAlloc
+class FALCON_DYN_CLASS VFSProvider
 {
-   String m_servedProto;
-
-protected:
-   VFSProvider( const String &name ):
-      m_servedProto( name )
-   {}
-
 public:
    virtual ~VFSProvider();
 
@@ -67,8 +60,8 @@ public:
       friend class VSFProvider;
 
    public:
-      OParams():
-         m_oflags(0),
+      OParams( uint32 flags = 0 ):
+         m_oflags( flags ),
          m_shflags(0)
       {}
 
@@ -129,13 +122,11 @@ public:
    class CParams: public OParams
    {
       uint32 m_cflags;
-      uint32 m_cmode;
       friend class VFSProvider;
 
    public:
       CParams():
-         m_cflags(0),
-         m_cmode( 0644 )
+         m_cflags(0)
       {}
 
       /** Fail if the file exists.
@@ -156,9 +147,6 @@ public:
       */
       CParams& noStream() { m_cflags |= 0x2; return *this; }
       bool isNoStream() const { return (m_cflags & 0x2) == 0x2; }
-
-      CParams& createMode( uint32 cm ) { m_cmode = cm; return *this; }
-      uint32 createMode() const { return m_cmode; }
    };
 
    inline const String& protocol() const { return m_servedProto; }
@@ -166,7 +154,7 @@ public:
    /** Just an inline for opening file with default parameters.
       Default parameters are "read only, full sharing".
    */
-   inline Stream *open( const URI &uri ) {
+   virtual inline Stream *openRO( const URI &uri ) {
       return open( uri, OParams() );
    }
 
@@ -174,51 +162,39 @@ public:
    virtual Stream* open( const URI &uri, const OParams &p )=0;
 
    inline Stream* create( const URI &uri ) {
-      bool dummy;
-      return create( uri, CParams(), dummy );
+      return create( uri, CParams() );
    }
+   
+   virtual Stream *create( const URI &uri, const CParams &p )=0;
+   virtual Directory* openDir( const URI &uri )=0;
 
-   inline Stream* create( const URI& uri, bool &bSuccess ) {
-      return create( uri, CParams(), bSuccess );
-   }
+   virtual void mkdir( const URI &uri, bool bWithParents = true )=0;
+   virtual void erase( const URI &uri )=0;
+   /** Gets the stats of a given file.
+      \param uri the file of which to get the stats.
+      \param s The stats where to store the stats.
+      \param delink if true, resolve symbolic links before returning the file stats.
+      \return true if the file is found, false if it doesn't exists.
+      \throw IOError if the the stats of an existing file cannot be read.
+    */
+   virtual bool readStats( const URI &uri, FileStat &s, bool delink = true )=0;
 
-   inline Stream* create( const URI& uri, const CParams &p ) {
-      bool dummy;
-      return create( uri, p, dummy );
-   }
+   /** Checks if a file exists, and in that case, returns the type of the file. 
+      \param uri the file of which to get thes stats.
+      \param delink if true, resolve symbolic links before returning the file stats.
+      \return The file type as it would be returned in the file stats.
+    */
+   virtual FileStat::t_fileType fileType( const URI& uri, bool delink = true )=0;
 
-   virtual bool link( const URI &uri1, const URI &uri2, bool bSymbolic )=0;
-   virtual bool unlink( const URI &uri )=0;
+   virtual void move( const URI &suri, const URI &duri ) = 0;
+protected:
+   VFSProvider( const String &name ):
+      m_servedProto( name )
+   {}
 
-   virtual Stream *create( const URI &uri, const CParams &p, bool &bSuccess )=0;
+private:
+   String m_servedProto;
 
-   virtual DirEntry* openDir( const URI &uri )=0;
-
-   virtual bool mkdir( const URI &uri, uint32 mode )=0;
-   virtual bool rmdir( const URI &uri )=0;
-   virtual bool move( const URI &suri, const URI &duri )=0;
-
-   virtual bool readStats( const URI &uri, FileStat &s )=0;
-   virtual bool writeStats( const URI &uri, const FileStat &s )=0;
-
-   virtual bool chown( const URI &uri, int uid, int gid )=0;
-   virtual bool chmod( const URI &uri, int mode )=0;
-
-   /** Get an integer representing the last file system specific error.
-      The semantic of this number may be different on different VFS,
-      but in all the VFS a return value of 0 is granted to indicate that
-      the last operation performed was succesful.
-
-      Also, the returned error code must be made thread specific or otherwise
-      reentrant/interlocked.
-   */
-   virtual int64 getLastFsError()=0;
-
-   /** Wraps the last system error into a suitable Falcon Error.
-      If getLastFsError() returns 0, then this method will return
-      0 too.
-   */
-   virtual Error *getLastError()=0;
 };
 }
 

@@ -5,137 +5,36 @@
    Error class.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
-   Begin: dom feb 18 2007
+   Begin: Fri, 04 Feb 2011 18:39:36 +0100
 
    -------------------------------------------------------------------
-   (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
+   (C) Copyright 2011: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
 */
 
-/** \file
-   Error class definition file.
-   (this file contains also the TraceStep class).
-*/
 
 #ifndef FALCON_ERROR_H
 #define FALCON_ERROR_H
 
 #include <falcon/setup.h>
 #include <falcon/types.h>
-#include <falcon/item.h>
-#include <falcon/genericlist.h>
 #include <falcon/string.h>
-#include <falcon/crobject.h>
-#include <falcon/reflectfunc.h>
+#include <falcon/item.h>
+#include <falcon/enumerator.h>
+#include <falcon/tracestep.h>
 
 namespace Falcon {
 
 class Error;
+class Class;
+class Error_p;
 
-namespace core {
-FALCON_FUNC_DYN_SYM Error_init ( ::Falcon::VMachine *vm );
-FALCON_FUNC_DYN_SYM SyntaxError_init ( ::Falcon::VMachine *vm );
-FALCON_FUNC_DYN_SYM CodeError_init ( ::Falcon::VMachine *vm );
-FALCON_FUNC_DYN_SYM IoError_init ( ::Falcon::VMachine *vm );
-FALCON_FUNC_DYN_SYM AccessError_init ( ::Falcon::VMachine *vm );
-FALCON_FUNC_DYN_SYM MathError_init ( ::Falcon::VMachine *vm );
-FALCON_FUNC_DYN_SYM ParamError_init ( ::Falcon::VMachine *vm );
-FALCON_FUNC_DYN_SYM ParseError_init ( ::Falcon::VMachine *vm );
-
-/** Reflective function to support error property: code */
-extern reflectionFuncDecl Error_code_rfrom;
-extern reflectionFuncDecl Error_description_rfrom;
-extern reflectionFuncDecl Error_message_rfrom;
-extern reflectionFuncDecl Error_systemError_rfrom;
-extern reflectionFuncDecl Error_origin_rfrom;
-extern reflectionFuncDecl Error_module_rfrom;
-extern reflectionFuncDecl Error_symbol_rfrom;
-extern reflectionFuncDecl Error_line_rfrom;
-extern reflectionFuncDecl Error_pc_rfrom;
-extern reflectionFuncDecl Error_subErrors_rfrom;
-extern reflectionFuncDecl Error_boxed_rfrom;
-
-extern reflectionFuncDecl Error_code_rto;
-extern reflectionFuncDecl Error_description_rto;
-extern reflectionFuncDecl Error_message_rto;
-extern reflectionFuncDecl Error_systemError_rto;
-extern reflectionFuncDecl Error_origin_rto;
-extern reflectionFuncDecl Error_module_rto;
-extern reflectionFuncDecl Error_symbol_rto;
-extern reflectionFuncDecl Error_line_rto;
-extern reflectionFuncDecl Error_pc_rto;
-extern reflectionFuncDecl Error_boxed_rto;
-
-/** Reflective class for error */
-class ErrorObject: public CRObject
-{
-public:
-   ErrorObject( const CoreClass* cls, Error *err );
-   Error* getError() const { return (::Falcon::Error*) getUserData(); }
-
-   virtual ~ErrorObject();
-   virtual void gcMark( uint32 mark );
-   virtual ErrorObject *clone() const;
-};
-
-CoreObject* ErrorObjectFactory( const CoreClass *cls, void *user_data, bool bDeserial );
-}
-
-
-// Declare the messaages...
-#include <falcon/eng_messages.h>
-
-// and set the error IDS.
+// Declare the error IDS
 #define FLC_DECLARE_ERROR_TABLE
-#include <falcon/eng_messages.h>
+#include <falcon/error_messages.h>
 #undef FLC_DECLARE_ERROR_TABLE
 
-typedef enum {
-   e_orig_unknown = 0,
-   e_orig_compiler = 1,
-   e_orig_assembler = 2,
-   e_orig_loader = 3,
-   e_orig_vm = 4,
-   e_orig_script = 5,
-   e_orig_runtime = 9,
-   e_orig_mod = 10
-} t_origin;
-
-class FALCON_DYN_CLASS TraceStep: public BaseAlloc
-{
-   String m_module;
-   String m_symbol;
-   uint32 m_line;
-   uint32 m_pc;
-   String m_modpath;
-
-public:
-   //TODO: Remove this version in the next version.
-   TraceStep( const String &module, const String symbol, uint32 line, uint32 pc ):
-      m_module( module ),
-      m_symbol( symbol ),
-      m_line( line ),
-      m_pc( pc )
-   {}
-
-   TraceStep( const String &module, const String &mod_path, const String symbol, uint32 line, uint32 pc ):
-      m_module( module ),
-      m_symbol( symbol ),
-      m_line( line ),
-      m_pc( pc ),
-      m_modpath( mod_path )
-   {}
-
-   const String &module() const { return m_module; }
-   const String &modulePath() const { return m_modpath; }
-   const String &symbol() const { return m_symbol; }
-   uint32 line() const { return m_line; }
-   uint32 pcounter() const { return m_pc; }
-
-   String toString() const { String temp; return toString( temp ); }
-   String &toString( String &target ) const;
-};
 
 /** Error Parameter class.
    This class provides the main Error class and its subclasses with named parameter idiom.
@@ -155,23 +54,57 @@ public:
    is an acceptable grammar to create an Error.
 */
 
-class ErrorParam: public BaseAlloc
+class ErrorParam
 {
 
 public:
+   typedef enum {
+      e_orig_unknown = 0,
+      e_orig_compiler = 1,
+      e_orig_linker = 2,
+      e_orig_loader = 3,
+      e_orig_vm = 4,
+      e_orig_script = 5,
+      e_orig_runtime = 9,
+      e_orig_mod = 10
+   } t_origin;
 
    /** Standard constructor.
       In the constructor a source line may be provided. This makes possible to use the
       __LINE__ ansi C macro to indicate the point in the source C++ file where an error
       is raised.
+
+    Similarly, the file is parameter can be set to __FILE__.
+
       \param code error code.
+      \param file the file where the error is raised.
       \param line optional line where error occurs.
    */
-   ErrorParam( int code, uint32 line = 0 ):
+   ErrorParam( int code, uint32 line = 0, const char* file = 0 ):
       m_errorCode( code ),
+      m_module( file == 0 ? "" : file, String::npos ),    // force buffering
       m_line( line ),
-      m_character( 0 ),
-      m_pc( 0 ),
+      m_chr( 0 ),
+      m_sysError( 0 ),
+      m_origin( e_orig_mod ),
+      m_catchable( true )
+      {}
+
+   ErrorParam( int code, uint32 line, const String& file ):
+      m_errorCode( code ),
+      m_module( file ),    // force buffering
+      m_line( line ),
+      m_chr( 0 ),
+      m_sysError( 0 ),
+      m_origin( e_orig_mod ),
+      m_catchable( true )
+      {}
+   
+   ErrorParam():
+      m_errorCode( 0 ),
+      m_module( "" ),    // force buffering
+      m_line( 0 ),
+      m_chr( 0 ),
       m_sysError( 0 ),
       m_origin( e_orig_mod ),
       m_catchable( true )
@@ -183,9 +116,8 @@ public:
    ErrorParam &symbol( const String &sym ) { m_symbol = sym; return *this; }
    ErrorParam &module( const String &mod ) { m_module = mod; return *this; }
    ErrorParam &line( uint32 line ) { m_line = line; return *this; }
-   ErrorParam &pc( uint32 pc ) { m_pc = pc; return *this; }
+   ErrorParam &chr( uint32 chr ) { m_chr = chr; return *this; }
    ErrorParam &sysError( uint32 e ) { m_sysError = e; return *this; }
-   ErrorParam &chr( uint32 c ) { m_character = c; return *this; }
    ErrorParam &origin( t_origin orig ) { m_origin = orig; return *this; }
    ErrorParam &hard() { m_catchable = false; return *this; }
 
@@ -199,13 +131,13 @@ private:
    String m_module;
 
    uint32 m_line;
-   uint32 m_character;
-   uint32 m_pc;
+   uint32 m_chr;
    uint32 m_sysError;
 
    t_origin m_origin;
    bool m_catchable;
 };
+
 
 /** The Error class.
    This class implements an error instance.
@@ -234,143 +166,45 @@ private:
 
    Scripts may raise any item, which may not necessary be Error instances.
    The item is then copied in the m_item member and passed to the error
-   handler.
+   handler. In this case, hasRaised() will return true, and the raised item
+ can be retrieved via the raised() method.
 */
 
-class FALCON_DYN_CLASS Error: public BaseAlloc
+class FALCON_DYN_CLASS Error
 {
-protected:
-   int32 m_refCount;
-
-   int m_errorCode;
-   String m_description;
-   String m_extra;
-   String m_symbol;
-   String m_module;
-   String m_className;
-
-   uint32 m_line;
-   uint32 m_character;
-   uint32 m_pc;
-   uint32 m_sysError;
-
-   t_origin m_origin;
-   bool m_catchable;
-   Item m_raised;
-
-   List m_steps;
-   ListElement *m_stepIter;
-
-   Error *m_nextError;
-   Error *m_LastNextError;
-
-   /** Error boxed form other error raising (possibly recursive) */
-   Error* m_boxed;
-
-   /** Empty constructor.
-      The error must be filled with proper values.
-   */
-   Error( const String &className ):
-      m_refCount( 1 ),
-      m_errorCode ( e_none ),
-      m_className( className ),
-      m_line( 0 ),
-      m_character( 0 ),
-      m_pc( 0 ),
-      m_sysError( 0 ),
-      m_origin( e_orig_unknown ),
-      m_catchable( true ),
-      m_nextError( 0 ),
-      m_LastNextError( 0 ),
-      m_boxed(0)
-   {
-      m_raised.setNil();
-   }
-
-   /** Copy constructor. */
-   Error( const Error &e );
-
-   /** Minimal constructor.
-      If the description is not filled, the toString() method will use the default description
-      for the given error code.
-   */
-   Error( const String &className, const ErrorParam &params ):
-      m_refCount( 1 ),
-      m_errorCode ( params.m_errorCode ),
-      m_description( params.m_description ),
-      m_extra( params.m_extra ),
-      m_symbol( params.m_symbol ),
-      m_module( params.m_module ),
-      m_className( className ),
-      m_line( params.m_line ),
-      m_character( params.m_character ),
-      m_pc( params.m_pc ),
-      m_sysError( params.m_sysError ),
-      m_origin( params.m_origin ),
-      m_catchable( params.m_catchable ),
-      m_nextError( 0 ),
-      m_LastNextError( 0 ),
-      m_boxed(0)
-   {
-      m_raised.setNil();
-   }
-
-   /** Private destructor.
-      Can be destroyed only via decref.
-   */
-   virtual ~Error();
 public:
 
-   Error():
-      m_refCount( 1 ),
-      m_errorCode ( e_none ),
-      m_className( "Error" ),
-      m_line( 0 ),
-      m_character( 0 ),
-      m_pc( 0 ),
-      m_sysError( 0 ),
-      m_origin( e_orig_unknown ),
-      m_catchable( true ),
-      m_nextError( 0 ),
-      m_LastNextError( 0 ),
-      m_boxed(0)
-   {
-      m_raised.setNil();
-   }
+   /** Enumerator for trace steps. 
+    @see enumerateSteps
+   */
+   typedef Enumerator<TraceStep> StepEnumerator;
 
-   Error( const ErrorParam &params ):
-      m_refCount( 1 ),
-      m_errorCode ( params.m_errorCode ),
-      m_description( params.m_description ),
-      m_extra( params.m_extra ),
-      m_symbol( params.m_symbol ),
-      m_module( params.m_module ),
-      m_className( "Error" ),
-      m_line( params.m_line ),
-      m_character( params.m_character ),
-      m_pc( params.m_pc ),
-      m_sysError( params.m_sysError ),
-      m_origin( params.m_origin ),
-      m_catchable( params.m_catchable ),
-      m_nextError( 0 ),
-      m_LastNextError( 0 ),
-      m_boxed(0)
-   {
-      m_raised.setNil();
-   }
+   /** Enumerator for sub-errors.
+    @see enumerateSuberrors
+    */
+   typedef Enumerator<Error> ErrorEnumerator;
 
+   /** Sets the error code.
+    \param ecode an error ID.
+    */
    void errorCode( int ecode ) { m_errorCode = ecode; }
+   /** Sets the system error code.
+
+    Many errors are raised after system errors in I/O operations.
+    This is a useful fields that avoids the need to recast or use ad-hoc
+    strucures for I/O or system related errors.
+    \param ecode The system error that caused this error to be raised.
+    */
    void systemError( uint32 ecode ) { m_sysError = ecode; }
    void errorDescription( const String &errorDesc ) { m_description = errorDesc; }
    void extraDescription( const String &extra ) { m_extra = extra; }
    void module( const String &moduleName ) { m_module = moduleName; }
    void symbol( const String &symbolName )  { m_symbol = symbolName; }
    void line( uint32 line ) { m_line = line; }
-   void character( uint32 chr ) { m_character = chr; }
-   void pcounter( uint32 pc ) { m_pc = pc; }
-   void origin( t_origin o ) { m_origin = o; }
+   void chr( uint32 chr ) { m_chr = chr; }
+   void origin( ErrorParam::t_origin o ) { m_origin = o; }
    void catchable( bool c ) { m_catchable = c; }
-   void raised( const Item &itm ) { m_raised = itm; }
+   void raised( const Item &itm ) { m_raised = itm; m_bHasRaised = true; }
 
    int errorCode() const { return m_errorCode; }
    uint32 systemError() const { return m_sysError; }
@@ -379,14 +213,18 @@ public:
    const String &module() const { return m_module; }
    const String &symbol() const { return m_symbol; }
    uint32 line() const { return m_line; }
-   uint32 character() const { return m_character; }
-   uint32 pcounter() const { return m_pc; }
-   t_origin origin() const { return m_origin; }
+   uint32 chr() const { return m_chr; }
+   ErrorParam::t_origin origin() const { return m_origin; }
    bool catchable() const { return m_catchable; }
    const Item &raised() const { return m_raised; }
+   bool hasRaised() const { return m_bHasRaised; }
 
-   String describe() const { String temp; return describe( temp ); }
-   virtual String &describe( String &target ) const;
+   inline String describe() const {
+      String s; describeTo(s); return s;
+   }
+   /** Renders the error to a string.
+    */
+   virtual void describeTo( String &target ) const;
 
    /** Writes only the heading of the error to the target string.
       The error heading is everything of the error without the traceback.
@@ -397,216 +235,116 @@ public:
    */
    virtual String &heading( String &target ) const;
 
+   /** Adds a sub-error to this error.
 
+    Some errors store multiple errors that cause a more general error condition.
+    For example, a compilation may fail due to multiple syntax errors. This fact
+    is represented by raising a CompileError which contains all the errors that
+    caused the compilation to fail.
+
+    */
    void appendSubError( Error *sub );
 
-   /** Returns an object that can be set in a Falcon item and handled by a script.
-      This method converts the error object in a Falcon Object, derived from the
-      proper class.
+   /** Creates a falcon instance that may be used directly by a script.
 
-      The method must be fed with a virtual machine. The target virtual machine
-      should have linked a module providing a "specular class". This method will
-      search the given VM for a class having the same name as the one that is
-      returned by the className() method (set in the constructor by the subclasses
-      of Error), and it will create an instance of that class. The method
-      will then fill the resulting object with the needed values, and finally
-      it will set itself as the User Data of the given object.
+    The error is referenced and stored in the data field of the item, and
+    the handler class is set to the scriptClass that was set when creating
+    the instance.
 
-      The target class Falcon should be a class derived from the Core class "Error",
-      so that the inherited methods as "toString" and "traceback" are inherited too,
-      and so that a check on "Error" inheritance will be positive.
-
+    This makes the item immediately useable from the script.
    */
-   virtual CoreObject *scriptize( VMachine *vm );
+   void scriptize( Item& tgt );
 
-   void addTrace( const String &module, const String &symbol, uint32 line, uint32 pc );
-   void addTrace( const String &module, const String &mod_path, const String &symbol, uint32 line, uint32 pc );
-   bool nextStep( String &module, String &symbol, uint32 &line, uint32 &pc );
-   void rewindStep();
+   Class* handler() const { return m_handler; }
 
-   const String &className() const { return m_className; }
+   /** Adds a trace step to this error.
+    This method adds a tracestep that lead to the place where the error
+    was raised.
 
-   void incref();
+    Errors raised outside a script execution may be without trace steps.
+    */
+   void addTrace( const TraceStep& step );
+
+   /** Enumerate the traceback steps.
+    \param rator A StepEnumerator that is called back with each step in turn.
+    */
+   void enumerateSteps( StepEnumerator &rator ) const;
+
+   /** Enumerate the sub-errors.
+    \param rator A ErrorEnumerator that is called back with each sub-error in turn.
+    \see appendSubError
+    */
+   void enumerateErrors( ErrorEnumerator &rator ) const;
+
+   /** Return the name of this error class.
+    Set in the constructcor.
+    */
+   const String &className() const;
+   
+   /** Gets the first sub-error.
+    Some errors are used to wrap a single lower level error. For example,
+    a virtual machine may be terminated because an error was raised and
+    nothing caught it; in that case, the termination error is UncaughtError,
+    and it will "box" the error that was raised originally inside the script.
+
+    This is called error "boxing". This method allows to access the first
+    sub-error, that may be the boxed error, without the need to setup an
+    enumerator callback.
+    \see appendSubError.
+    \return The boxed error, or 0 if this error isn't boxing anything.
+    */
+   Error* getBoxedError() const;
+
+   /** Return true if this error has been filled with a traceback.*/
+   bool hasTraceback() const;
+
+   /** Increment the reference count of this object */
+   void incref() const;
+
+   /** Decrements the reference count of this object.
+    The error must be considered invalid after this call.
+    */
    void decref();
 
-   Error* subError() const { return m_nextError; }
+protected:
 
-   virtual Error *clone() const;
+   /** Minimal constructor.
+      If the description is not filled, the toString() method will use the default description
+      for the given error code.
+   */
+   Error( Class* handler, const ErrorParam &params );
 
-   void boxError( Error *error );
-   Error* getBoxedError() const { return m_boxed; }
+   mutable int32 m_refCount;
 
-   bool hasTraceback() const { return ! m_steps.empty(); }
+   int m_errorCode;
+   String m_description;
+   String m_extra;
+   String m_symbol;
+   String m_module;
+   String m_className;
+   Class* m_handler;
+
+   uint32 m_line;
+   uint32 m_chr;
+   uint32 m_sysError;
+
+   ErrorParam::t_origin m_origin;
+   bool m_catchable;
+   Item m_raised;
+   bool m_bHasRaised;
+
+protected:
+   /** Private destructor.
+      Can be destroyed only via decref.
+   */
+   virtual ~Error();
+
+private:
+   Error_p* _p;
 };
-
-
-
-class GenericError: public Error
-{
-public:
-   GenericError():
-      Error( "GenericError" )
-   {}
-
-   GenericError( const ErrorParam &params  ):
-      Error( "GenericError", params )
-      {}
-};
-
-class CodeError: public Error
-{
-public:
-   CodeError():
-      Error( "CodeError" )
-   {}
-
-   CodeError( const ErrorParam &params  ):
-      Error( "CodeError", params )
-      {}
-};
-
-class SyntaxError: public Error
-{
-public:
-   SyntaxError():
-      Error( "SyntaxError" )
-   {}
-
-   SyntaxError( const ErrorParam &params  ):
-      Error( "SyntaxError", params )
-      {}
-};
-
-class AccessError: public Error
-{
-public:
-   AccessError():
-      Error( "AccessError" )
-   {}
-
-   AccessError( const ErrorParam &params  ):
-      Error( "AccessError", params )
-      {}
-};
-
-class MathError: public Error
-{
-public:
-   MathError():
-      Error( "MathError" )
-   {}
-
-   MathError( const ErrorParam &params  ):
-      Error( "MathError", params )
-      {}
-};
-
-class TypeError: public Error
-{
-public:
-   TypeError():
-      Error( "TypeError" )
-   {}
-
-   TypeError( const ErrorParam &params  ):
-      Error( "TypeError", params )
-      {}
-};
-
-class IoError: public Error
-{
-public:
-   IoError():
-      Error( "IoError" )
-   {}
-
-   IoError( const ErrorParam &params  ):
-      Error( "IoError", params )
-      {}
-};
-
-
-class ParamError: public Error
-{
-public:
-   ParamError():
-      Error( "ParamError" )
-   {}
-
-   ParamError( const ErrorParam &params  ):
-      Error( "ParamError", params )
-      {}
-};
-
-class ParseError: public Error
-{
-public:
-   ParseError():
-      Error( "ParseError" )
-   {}
-
-   ParseError( const ErrorParam &params  ):
-      Error( "ParseError", params )
-      {}
-};
-
-class CloneError: public Error
-{
-public:
-   CloneError():
-      Error( "CloneError" )
-   {}
-
-   CloneError( const ErrorParam &params  ):
-      Error( "CloneError", params )
-      {}
-};
-
-class InterruptedError: public Error
-{
-public:
-   InterruptedError():
-      Error( "InterruptedError" )
-   {}
-
-   InterruptedError( const ErrorParam &params  ):
-      Error( "InterruptedError", params )
-      {}
-};
-
-class MessageError: public Error
-{
-public:
-   MessageError():
-      Error( "MessageError" )
-   {}
-
-   MessageError( const ErrorParam &params  ):
-      Error( "MessageError", params )
-      {}
-};
-
-class TableError: public Error
-{
-public:
-   TableError():
-      Error( "TableError" )
-   {}
-
-   TableError( const ErrorParam &params  ):
-      Error( "TableError", params )
-      {}
-};
-
-
-/** Returns the description of a falcon error.
-   In case the error ID is not found, a sensible message will be returned.
-*/
-const String &errorDesc( int errorCode );
-
 
 }
 
-#endif
+#endif	/* FALCON_ERROR_H */
 
 /* end of error.h */

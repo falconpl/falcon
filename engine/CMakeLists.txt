@@ -6,252 +6,239 @@
 #Engine specific define
 add_definitions(-DFALCON_ENGINE_EXPORTS)
 
-include_directories(
-  ${PROJECT_BINARY_DIR}/include
-  ${PROJECT_SOURCE_DIR}/include
-  ${CMAKE_CURRENT_SOURCE_DIR}
-  ${CMAKE_CURRENT_SOURCE_DIR}/core_module  
-)
+# We need config.h
+include_directories( ${CMAKE_CURRENT_BINARY_DIR}/../include )
 
 message(STATUS "Compiling Falcon core on ${CMAKE_SYSTEM_NAME}" )
 
-#Specific system files
 if(UNIX OR APPLE)
   set(SYS_SPECIFIC
-    baton_posix.cpp
-    dir_sys_unix.cpp
-    fstream_sys_unix.cpp
+    fstream_posix.cpp
+    interrupt_posix.cpp
     mt_posix.cpp
-    stdstreams_unix.cpp
-    time_sys_unix.cpp
-    vm_sys_posix.cpp
-    vfs_file_unix.cpp
-    signals_posix.cpp
+    stdstreams_posix.cpp
+    sys_posix.cpp
+    timestamp_posix.cpp
+    vfs_file_posix.cpp
   )
-
-  #for solaris system flavor, add sys_solaris.cpp
-  if(CMAKE_SYSTEM_NAME STREQUAL "SunOS" )
-    list(APPEND SYS_SPECIFIC sys_solaris.cpp)
-  else()
-    list(APPEND SYS_SPECIFIC sys_unix.cpp)
-  endif()
-
-  #DL is different for unix and mac
+   
   if(APPLE)
-    list(APPEND SYS_SPECIFIC 
-      heap_bsd.cpp 
-      dll_mac.cpp 
-    )
-  elseif(CMAKE_SYSTEM_NAME STREQUAL "BSD")
-    list(APPEND SYS_SPECIFIC
-      heap_bsd.cpp
-      dll_dl.cpp 
+    set(SYS_SPECIFIC
+       ${SYS_SPECIFIC}
+       dynloader_macosx.cpp
     )
   else()
-    list(APPEND SYS_SPECIFIC
-      heap_posix.cpp
-      dll_dl.cpp
+    set(SYS_SPECIFIC
+       ${SYS_SPECIFIC}
+       dynloader_posix.cpp
     )
   endif()
-
-  option(FALCON_SKIP_BISON "Don't perform grammar recompilation" on)
-  if(NOT FALCON_SKIP_BISON)
-    find_program(BISON_EXECUTABLE bison)
-    if(NOT BISON_EXECUTABLE)
-      message(FATAL_ERROR "BISON not found - Turn on FALCON_SKIP_BISON to not perform grammar recompilation")
-    endif(NOT BISON_EXECUTABLE)
-    
-    # Builds out-of-source. Copy into the source tree and commit to svn, if desired.
-    add_custom_command(
-      DEPENDS 
-        ${PROJECT_SOURCE_DIR}/include/falcon/syntree.h
-        ${CMAKE_CURRENT_SOURCE_DIR}/src_parser.yy
-      COMMAND 
-        ${BISON_EXECUTABLE} -y ${CMAKE_CURRENT_SOURCE_DIR}/src_parser.yy 
-                            -o ${CMAKE_CURRENT_SOURCE_DIR}/src_parser.cpp       
-      OUTPUT
-        ${CMAKE_CURRENT_SOURCE_DIR}/src_parser.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/src_parser.hpp 
-      COMMENT "Creating src_parser.cpp"
-    )
-
-  endif(NOT FALCON_SKIP_BISON)
 
 elseif(WIN32)
 
   set(SYS_SPECIFIC
-    baton_win.cpp
-    dir_sys_win.cpp
-    dll_win.cpp
-    fstream_sys_win.cpp
-    heap_win.cpp
+    dynloader_win.cpp
+    fstream_win.cpp
+    interrupt_win.cpp
     mt_win.cpp
     stdstreams_win.cpp
     sys_win.cpp
-    time_sys_win.cpp
-    vm_sys_win.cpp
+    timestamp_win.cpp
     vfs_file_win.cpp
-    falcon_engine.rc
-    signals_win.cpp
   )
 endif()
 
 #################
-
-set(CORE_MODULE_SOURCES
-  core_module/array_ext.cpp
-  core_module/attrib_ext.cpp
-  core_module/cmdlineparser.cpp
-  core_module/complex_ext.cpp
-  core_module/continuation_ext.cpp  
-  core_module/core_module.cpp
-  core_module/coroutine_ext.cpp
-  core_module/dict_ext.cpp
-  core_module/dir_ext.cpp
-  core_module/envvars.cpp
-  core_module/error_ext.cpp
-  core_module/fal_include.cpp
-  core_module/file_ext.cpp
-  core_module/format_ext.cpp
-  core_module/function_ext.cpp
-  core_module/functional_ext.cpp
-  core_module/gc_ext.cpp
-  core_module/input.cpp
-  core_module/inspect.cpp
-  core_module/item_ext.cpp
-  core_module/iterator_ext.cpp
-  core_module/list_ext.cpp
-  core_module/math_ext.cpp
-  core_module/membuf_ext.cpp
-  core_module/message_ext.cpp
-  core_module/oob_ext.cpp
-  core_module/pagedict_ext.cpp
-  core_module/param_ext.cpp
-  core_module/path_ext.cpp
-  core_module/poopseq_ext.cpp
-  core_module/print.cpp
-  core_module/random.cpp
-  core_module/seconds.cpp
-  core_module/sequence_ext.cpp
-  core_module/serialize.cpp
-  core_module/set_ext.cpp
-  core_module/string_ext.cpp
-  core_module/state_ext.cpp
-  core_module/stringstream_ext.cpp
-  core_module/sys_ext.cpp
-  core_module/table.cpp
-  core_module/time_ext.cpp
-  core_module/transcode_ext.cpp
-  core_module/tokenizer_ext.cpp
-  core_module/uri_ext.cpp
-  core_module/vminfo_ext.cpp
-  core_module/webhelp.cpp
-)
-
-
 add_library(falcon_engine SHARED
-  attribmap.cpp
-  autocstring.cpp
-  autoucsstring.cpp
-  autowstring.cpp
-  base64.cpp
-  basealloc.cpp
-  cacheobject.cpp
-  crobject.cpp
-  compiler.cpp
-  complex.cpp
-  continuation.cpp
-  corearray.cpp
-  coreclass.cpp
-  coredict.cpp
-  corefunc.cpp
-  coreobject.cpp
-  coreslot.cpp
-  coretable.cpp
-  debug.cpp
-  deptab.cpp
-  error.cpp
-  falcondata.cpp
-  falconobject.cpp
-  fassert.cpp
-  filestat.cpp
-  format.cpp
-  garbageable.cpp
-  gcalloc.cpp
-  gencode.cpp
-  generatorseq.cpp
-  genericlist.cpp
-  genericmap.cpp
-  genericvector.cpp
-  genhasm.cpp
-  gentree.cpp
-  globals.cpp
-  intcomp.cpp
-  item.cpp
-  item_co.cpp
-  itemarray.cpp
-  itemlist.cpp
-  itemserial.cpp
-  itemset.cpp
-  itemtraits.cpp
-  iterator.cpp
-  lineardict.cpp
-  linemap.cpp
-  livemodule.cpp
-  ltree.cpp
-  membuf.cpp
-  memhash.cpp
+  ${SYS_SPECIFIC}
+
+  parser/lexer.cpp
+  parser/literal.cpp
+  parser/nonterminal.cpp
+  parser/parser.cpp
+  parser/rule.cpp
+  parser/state.cpp
+  parser/token.cpp
+  parser/tokeninstance.cpp
+
+  core_module/compare.cpp
+  core_module/describe.cpp
+  core_module/len.cpp
+  core_module/minmax.cpp
+  core_module/path.cpp
+  core_module/print.cpp
+  core_module/tostring.cpp
+  core_module/typeid.cpp
+  core_module/clone.cpp
+  core_module/coremodule.cpp
+  core_module/uri.cpp
+
+  sp/parser_arraydecl.cpp
+  sp/parser_assign.cpp
+  sp/parser_atom.cpp
+  sp/parser_autoexpr.cpp
+  sp/parser_call.cpp
+  sp/parser_class.cpp
+  sp/parser_deletor.cpp
+  sp/parser_end.cpp
+  sp/parser_export.cpp
+  sp/parser_expr.cpp
+  sp/parser_fastprint.cpp
+  sp/parser_for.cpp
+  sp/parser_function.cpp
+  sp/parser_if.cpp
+  sp/parser_import.cpp
+  sp/parser_index.cpp
+  sp/parser_list.cpp
+  sp/parser_load.cpp
+  sp/parser_namespace.cpp
+  sp/parser_proto.cpp
+  sp/parser_reference.cpp
+  sp/parser_rule.cpp
+  sp/parser_try.cpp
+  sp/parser_while.cpp
+  sp/parsercontext.cpp
+  sp/sourcelexer.cpp
+  sp/sourceparser.cpp
+
   memory.cpp
-  mempool.cpp
+  accesserror.cpp
+  accesstypeerror.cpp
+  application.cpp
+  autocstring.cpp
+  autowstring.cpp
+  bom.cpp
+  class.cpp
+  classarray.cpp
+  classbool.cpp
+  classdict.cpp
+  classerror.cpp
+  classfunction.cpp
+  classint.cpp
+  classgeneric.cpp
+  classnil.cpp
+  classmethod.cpp
+  classnumeric.cpp
+  classreference.cpp
+  classrange.cpp
+  classstring.cpp
+  classuser.cpp
+  closedsymbol.cpp
+  codeerror.cpp
+  collector.cpp
+  collector_history.cpp
+  datareader.cpp
+  datawriter.cpp
+  directory.cpp
+  dynloader.cpp
+  dynsymbol.cpp
+  encodingerror.cpp
+  engine.cpp
+  error.cpp
+  exprarray.cpp
+  exprcall.cpp
+  exprcompare.cpp
+  exprdict.cpp
+  exprdot.cpp
+  exprincdec.cpp
+  exprindex.cpp
+  exprmultiunpack.cpp
+  exprunpack.cpp
+  extfunc.cpp
+  errorclasses.cpp
+  expression.cpp
+  exprfactory.cpp
+  exprmath.cpp
+  exprproto.cpp
+  exprref.cpp
+  exprsym.cpp
+  exprvalue.cpp
+  famloader.cpp
+  filestat.cpp
+  flexyclass.cpp
+  flexydict.cpp
+  function.cpp
+  fassert.cpp
+  falconclass.cpp
+  falconinstance.cpp
+  falconstate.cpp
+  fatal.cpp
+  fstream.cpp
+  genericerror.cpp
+  globalsymbol.cpp
+  hyperclass.cpp
+  inheritance.cpp
+  intcompiler.cpp
+  item.cpp
+  item_util.cpp
+  itemarray.cpp
+  itemdict.cpp
+  interruptederror.cpp
+  ioerror.cpp
+  linkerror.cpp
+  localsymbol.cpp
+  metaclass.cpp
+  method.cpp
+  modcompiler.cpp
+  modgroup.cpp
+  modgroupbase.cpp
+  modmap.cpp
   modloader.cpp
+  modspace.cpp
   module.cpp
-  modulecache.cpp
-  pagedict.cpp
+  multiclass.cpp
+  operanderror.cpp
+  overridableclass.cpp
+  paramerror.cpp
+  prototypeclass.cpp
+  pseudofunc.cpp
+  pstep.cpp
   path.cpp
   pcode.cpp
-  poopseq.cpp
-  proptable.cpp
+  property.cpp
   rampmode.cpp
-  rangeseq.cpp
-  reflectobject.cpp
-  rosstream.cpp
-  runtime.cpp
-  sequence.cpp
-  service.cpp
-  smba.cpp
-  src_lexer.cpp
-  stackframe.cpp
-  stream.cpp
-  streambuffer.cpp
+  reader.cpp
+  requirement.cpp
+  rulesyntree.cpp
+  sourceref.cpp
+  statement.cpp
+  stderrors.cpp
+  stdsteps.cpp
+  stmtautoexpr.cpp
+  stmtfastprint.cpp
+  stmtfor.cpp
+  stmt_init.cpp
+  stmtraise.cpp
+  stmtrule.cpp
+  stmtselect.cpp
+  stmttry.cpp
   string.cpp
-  stringitem.cpp
   stringstream.cpp
-  strtable.cpp
+  stream.cpp
+  sun_strtod.cpp
   symbol.cpp
-  symtab.cpp
+  symbolmap.cpp
+  symboltable.cpp
+  synfunc.cpp
+  syntaxerror.cpp
   syntree.cpp
+  textreader.cpp
+  textwriter.cpp
   timestamp.cpp
+  transcoder.cpp
+  transcoderc.cpp
+  transcoderutf8.cpp
   trace.cpp
-  traits.cpp
-  transcoding.cpp
-  tokenizer.cpp
+  tracestep.cpp
+  unknownsymbol.cpp
+  unsupportederror.cpp
   uri.cpp
+  usercarrier.cpp
+  vfsiface.cpp
   vfsprovider.cpp
-  vmcontext.cpp
   vm.cpp
-  vmmaps.cpp
-  vmmsg.cpp
-  vm_run.cpp
-  vmsema.cpp
-  #
-  src_parser.hpp
-  src_parser.cpp
-  #
-  
-  ${FALCON_HEADERS}
-  
-  ${CORE_MODULE_SOURCES}
-  ${SYS_SPECIFIC}
+  vmcontext.cpp
+  writer.cpp
 )
 
 set_target_properties(falcon_engine PROPERTIES
@@ -277,5 +264,5 @@ endif()
 
 install(TARGETS falcon_engine 
   EXPORT falcon-core-targets
-  ${FALCON_INSTALL_DESTINATIONS} 
+  DESTINATION ${FALCON_INSTALL_DESTINATIONS}
 )

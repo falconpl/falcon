@@ -18,7 +18,6 @@
 
 #include <falcon/setup.h>
 #include <falcon/types.h>
-#include <falcon/basealloc.h>
 
 #include <stdlib.h>
 
@@ -28,7 +27,7 @@ namespace Falcon {
    The subclasses of this virtual class contain a configurable algorithm used by the
    Memory Pool to update its status after a succesful garbage collection.
 */
-class FALCON_DYN_CLASS RampMode: public BaseAlloc
+class FALCON_DYN_CLASS RampMode
 {
 protected:
    size_t m_normal;
@@ -39,13 +38,13 @@ public:
    virtual ~RampMode();
 
    /** Called before starting a scan loop.
-      No need for parameters as mempool, memory sizes and statistics are
+      No need for parameters as collector, memory sizes and statistics are
       globally available.
    */
    virtual void onScanInit()=0;
 
    /** Called when the scan is complete and there is the need for a new calculation.
-      No need for parameters as mempool, memory sizes and statistics are
+      No need for parameters as collector, memory sizes and statistics are
       globally available.
    */
    virtual void onScanComplete()=0;

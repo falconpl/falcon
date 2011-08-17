@@ -1,4 +1,4 @@
-/*	$NetBSD: filecomplete.c,v 1.15 2009/02/16 00:15:45 christos Exp $	*/
+/*	$NetBSD: filecomplete.c,v 1.23 2010/12/06 00:05:38 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -28,13 +28,13 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-  
+
 /* AIX requires this to be the first thing in the file.  */
 #if defined (_AIX) && !defined (__GNUC__)
  #pragma alloca
 #endif
 
-#include <config.h>
+#include "config.h"
 
 #ifdef __GNUC__
 # undef alloca
@@ -50,7 +50,7 @@ extern char *alloca ();
 #endif
 
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: filecomplete.c,v 1.15 2009/02/16 00:15:45 christos Exp $");
+__RCSID("$NetBSD: filecomplete.c,v 1.23 2010/12/06 00:05:38 dholland Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -72,8 +72,8 @@ __RCSID("$NetBSD: filecomplete.c,v 1.15 2009/02/16 00:15:45 christos Exp $");
 #include "histedit.h"
 #include "filecomplete.h"
 
-static char break_chars[] = { ' ', '\t', '\n', '"', '\\', '\'', '`', '@', '$',
-    '>', '<', '=', ';', '|', '&', '{', '(', '\0' };
+static const Char break_chars[] = { ' ', '\t', '\n', '"', '\\', '\'', '`', '@',
+    '$', '>', '<', '=', ';', '|', '&', '{', '(', '\0' };
 
 
 /********************************/
@@ -111,23 +111,19 @@ fn_tilde_expand(const char *txt)
 		temp[len - 2] = '\0';
 	}
 	if (temp[0] == 0) {
-#if defined(__SUNPRO_C)
-	   pass = getpwuid_r(getuid(), &pwres, pwbuf, sizeof(pwbuf));
-#elif defined(HAVE_GETPW_R_POSIX)
+#ifdef HAVE_GETPW_R_POSIX
 		if (getpwuid_r(getuid(), &pwres, pwbuf, sizeof(pwbuf), &pass) != 0)
 			pass = NULL;
-#elif defined(HAVE_GETPW_R_DRAFT)
+#elif HAVE_GETPW_R_DRAFT
 		pass = getpwuid_r(getuid(), &pwres, pwbuf, sizeof(pwbuf));
-#else 
+#else
       pass = getpwuid(getuid());
 #endif
 	} else {
-#if defined(__SUNPRO_C)
-      pass = getpwuid_r(getuid(), &pwres, pwbuf, sizeof(pwbuf));
-#elif defined(HAVE_GETPW_R_POSIX)
+#ifdef HAVE_GETPW_R_POSIX
 		if (getpwnam_r(temp, &pwres, pwbuf, sizeof(pwbuf), &pass) != 0)
 			pass = NULL;
-#elif defined(HAVE_GETPW_R_DRAFT)
+#elif HAVE_GETPW_R_DRAFT
 		pass = getpwnam_r(temp, &pwres, pwbuf, sizeof(pwbuf));
 #else
 		pass = getpwnam(temp);
@@ -175,20 +171,24 @@ fn_filename_completion_function(const char *text, int state)
 			nptr = realloc(filename, strlen(temp) + 1);
 			if (nptr == NULL) {
 				free(filename);
+				filename = NULL;
 				return NULL;
 			}
 			filename = nptr;
 			(void)strcpy(filename, temp);
 			len = temp - text;	/* including last slash */
+
 			nptr = realloc(dirname, len + 1);
 			if (nptr == NULL) {
-				free(filename);
+				free(dirname);
+				dirname = NULL;
 				return NULL;
 			}
 			dirname = nptr;
 			(void)strncpy(dirname, text, len);
 			dirname[len] = '\0';
 		} else {
+			free(filename);
 			if (*text == 0)
 				filename = NULL;
 			else {
@@ -196,6 +196,7 @@ fn_filename_completion_function(const char *text, int state)
 				if (filename == NULL)
 					return NULL;
 			}
+			free(dirname);
 			dirname = NULL;
 		}
 
@@ -205,12 +206,14 @@ fn_filename_completion_function(const char *text, int state)
 		}
 
 		/* support for ``~user'' syntax */
+
 		free(dirpath);
-
-		if (dirname == NULL && (dirname = strdup("./")) == NULL)
-			return NULL;
-
-		if (*dirname == '~')
+		dirpath = NULL;
+		if (dirname == NULL) {
+			if ((dirname = strdup("")) == NULL)
+				return NULL;
+			dirpath = strdup("./");
+		} else if (*dirname == '~')
 			dirpath = fn_tilde_expand(dirname);
 		else
 			dirpath = strdup(dirname);
@@ -354,37 +357,47 @@ _fn_qsort_string_compare(const void *i1, const void *i2)
 
 /*
  * Display list of strings in columnar format on readline's output stream.
- * 'matches' is list of strings, 'len' is number of strings in 'matches',
- * 'max' is maximum length of string in 'matches'.
+ * 'matches' is list of strings, 'num' is number of strings in 'matches',
+ * 'width' is maximum length of string in 'matches'.
+ *
+ * matches[0] is not one of the match strings, but it is counted in
+ * num, so the strings are matches[1] *through* matches[num-1].
  */
 void
-fn_display_match_list (EditLine *el, char **matches, size_t len, size_t max)
+fn_display_match_list (EditLine *el, char **matches, size_t num, size_t width)
 {
-	size_t i, idx, limit, count;
+	size_t line, lines, col, cols, thisguy;
 	int screenwidth = el->el_term.t_size.h;
 
+	/* Ignore matches[0]. Avoid 1-based array logic below. */
+	matches++;
+	num--;
+
 	/*
-	 * Find out how many entries can be put on one line, count
-	 * with two spaces between strings.
+	 * Find out how many entries can be put on one line; count
+	 * with one space between strings the same way it's printed.
 	 */
-	limit = screenwidth / (max + 2);
-	if (limit == 0)
-		limit = 1;
+	cols = screenwidth / (width + 1);
+	if (cols == 0)
+		cols = 1;
 
-	/* how many lines of output */
-	count = len / limit;
-	if (count * limit < len)
-		count++;
+	/* how many lines of output, rounded up */
+	lines = (num + cols - 1) / cols;
 
-	/* Sort the items if they are not already sorted. */
-	qsort(&matches[1], (size_t)(len - 1), sizeof(char *),
-	    _fn_qsort_string_compare);
+	/* Sort the items. */
+	qsort(matches, num, sizeof(char *), _fn_qsort_string_compare);
 
-	idx = 1;
-	for(; count > 0; count--) {
-		for(i = 0; i < limit && matches[idx]; i++, idx++)
-			(void)fprintf(el->el_outfile, "%-*s  ", (int)max,
-			    matches[idx]);
+	/*
+	 * On the ith line print elements i, i+lines, i+lines*2, etc.
+	 */
+	for (line = 0; line < lines; line++) {
+		for (col = 0; col < cols; col++) {
+			thisguy = line + col * lines;
+			if (thisguy >= num)
+				break;
+			(void)fprintf(el->el_outfile, "%s%-*s",
+			    col == 0 ? "" : " ", (int)width, matches[thisguy]);
+		}
 		(void)fprintf(el->el_outfile, "\n");
 	}
 }
@@ -405,13 +418,14 @@ int
 fn_complete(EditLine *el,
 	char *(*complet_func)(const char *, int),
 	char **(*attempted_completion_function)(const char *, int, int),
-	const char *word_break, const char *special_prefixes,
+	const Char *word_break, const Char *special_prefixes,
 	const char *(*app_func)(const char *), size_t query_items,
 	int *completion_type, int *over, int *point, int *end)
 {
-	const LineInfo *li;
-	char *temp, **matches;
-	const char *ctemp;
+	const TYPE(LineInfo) *li;
+	Char *temp;
+        char **matches;
+	const Char *ctemp;
 	size_t len;
 	int what_to_do = '\t';
 	int retval = CC_NORM;
@@ -429,20 +443,20 @@ fn_complete(EditLine *el,
 		app_func = append_char_function;
 
 	/* We now look backwards for the start of a filename/variable word */
-	li = el_line(el);
-	ctemp = (const char *) li->cursor;
+	li = FUN(el,line)(el);
+	ctemp = li->cursor;
 	while (ctemp > li->buffer
-	    && !strchr(word_break, ctemp[-1])
-	    && (!special_prefixes || !strchr(special_prefixes, ctemp[-1]) ) )
+	    && !Strchr(word_break, ctemp[-1])
+	    && (!special_prefixes || !Strchr(special_prefixes, ctemp[-1]) ) )
 		ctemp--;
 
 	len = li->cursor - ctemp;
 #if defined(__SSP__) || defined(__SSP_ALL__)
-	temp = malloc(len + 1);
+	temp = malloc(sizeof(*temp) * (len + 1));
 #else
-	temp = alloca(len + 1);
+	temp = alloca(sizeof(*temp) * (len + 1));
 #endif
-	(void)strncpy(temp, ctemp, len);
+	(void)Strncpy(temp, ctemp, len);
 	temp[len] = '\0';
 
 	/* these can be used by function called in completion_matches() */
@@ -454,13 +468,13 @@ fn_complete(EditLine *el,
 
 	if (attempted_completion_function) {
 		int cur_off = (int)(li->cursor - li->buffer);
-		matches = (*attempted_completion_function) (temp,
+		matches = (*attempted_completion_function) (ct_encode_string(temp, &el->el_scratch),
 		    (int)(cur_off - len), cur_off);
 	} else
 		matches = 0;
 	if (!attempted_completion_function || 
 	    (over != NULL && !*over && !matches))
-		matches = completion_matches(temp, complet_func);
+		matches = completion_matches(ct_encode_string(temp, &el->el_scratch), complet_func);
 
 	if (over != NULL)
 		*over = 0;
@@ -476,7 +490,8 @@ fn_complete(EditLine *el,
 		 */
 		if (matches[0][0] != '\0') {
 			el_deletestr(el, (int) len);
-			el_insertstr(el, matches[0]);
+			FUN(el,insertstr)(el,
+			    ct_decode_string(matches[0], &el->el_scratch));
 		}
 
 		if (what_to_do == '?')
@@ -488,7 +503,9 @@ fn_complete(EditLine *el,
 			 * it, unless we do filename completion and the
 			 * object is a directory.
 			 */
-			el_insertstr(el, (*app_func)(matches[0])); 
+			FUN(el,insertstr)(el,
+			    ct_decode_string((*app_func)(matches[0]),
+			    &el->el_scratch));
 		} else if (what_to_do == '!') {
     display_matches:
 			/*
@@ -496,11 +513,12 @@ fn_complete(EditLine *el,
 			 * matches.
 			 */
 
-			for(i=1, maxlen=0; matches[i]; i++) {
+			for(i = 1, maxlen = 0; matches[i]; i++) {
 				match_len = strlen(matches[i]);
 				if (match_len > maxlen)
 					maxlen = match_len;
 			}
+			/* matches[1] through matches[i-1] are available */
 			matches_num = i - 1;
 				
 			/* newline to get on next line from command line */
@@ -520,9 +538,17 @@ fn_complete(EditLine *el,
 				(void)fprintf(el->el_outfile, "\n");
 			}
 
-			if (match_display)
-				fn_display_match_list(el, matches, matches_num,
-				    maxlen);
+			if (match_display) {
+				/*
+				 * Interface of this function requires the
+				 * strings be matches[1..num-1] for compat.
+				 * We have matches_num strings not counting
+				 * the prefix in matches[0], so we need to
+				 * add 1 to matches_num for the call.
+				 */
+				fn_display_match_list(el, matches,
+				    matches_num+1, maxlen);
+			}
 			retval = CC_REDISPLAY;
 		} else if (matches[0][0]) {
 			/*

@@ -15,7 +15,7 @@
 
 #include <falcon/rampmode.h>
 #include <falcon/memory.h>
-#include <falcon/mempool.h>
+#include <falcon/collector.h>
 
 namespace Falcon {
 
@@ -35,8 +35,6 @@ RampNone::~RampNone()
 
 void RampNone::onScanInit()
 {
-   m_active = memPool->thresholdActive();
-   m_normal = memPool->thresholdNormal();
 }
 
 void RampNone::onScanComplete()
@@ -111,26 +109,26 @@ void RampSmooth::onScanInit()
    if ( m_pNormal == 0 )
    {
       m_pNormal = gcMemAllocated();
-      m_normal = m_pNormal;
-      m_active = (size_t)(m_normal * m_factor);
-   }
-}
-
-void RampSmooth::onScanComplete()
-{
-   // size_t is usually unsigned.
-   size_t allocated = gcMemAllocated();
-   if( m_pNormal > allocated )
-   {
-       // we're getting smaller
-       m_pNormal -= (size_t)((m_pNormal - allocated) / m_factor);
    }
    else {
-       m_pNormal += size_t((allocated-m_pNormal) / m_factor);
+      // size_t is usually unsigned.
+      size_t allocated = gcMemAllocated();
+      if( m_pNormal > allocated )
+      {
+         // we're getting smaller
+         m_pNormal -= (size_t)((m_pNormal - allocated) / m_factor);
+      }
+      else {
+         m_pNormal += size_t((allocated-m_pNormal) / m_factor);
+      }
    }
 
    m_normal = m_pNormal;
    m_active = (size_t)(m_normal * m_factor);
+}
+
+void RampSmooth::onScanComplete()
+{
 }
 
 }

@@ -19,48 +19,85 @@
 */
 
 #include <falcon/itemarray.h>
-#include <falcon/iterator.h>
-#include <falcon/memory.h>
-#include <falcon/vm.h>
-#include <falcon/lineardict.h>
-#include <falcon/coretable.h>
-#include <falcon/error.h>
-#include <falcon/eng_messages.h>
+#include <falcon/item.h>
+#include <falcon/string.h>
 
 #include <string.h>
 
+#define flc_ARRAY_GROWTH 32
+
 namespace Falcon
 {
+
+//========================================================
+// Inline utilities
+//
+inline Item* allocate( length_t size )
+{
+   return (Item*) malloc(sizeof(Item) * size);
+}
+
+inline void release( Item* data )
+{
+   if( data != 0 ) {
+      free( data );
+   }
+}
+
+
+class ItemArray::Helper
+{
+public:
+   ItemArray* m_master;
+
+   inline Helper( ItemArray* master ):
+      m_master(master)
+   {}
+
+   inline Item* reallocate( length_t size )
+   {
+      Item* newData = allocate( size );
+      memcpy( newData, m_master->m_data, ItemArray::esize( m_master->m_size ) );
+      return newData;
+   }
+
+   static inline void setCopied( const ItemArray& other )
+   {
+      register Item* data = other.m_data;
+      Item* end = data + other.m_size;
+      while( data < end )
+      {
+         data->copied(true);
+         ++data;
+      }
+   }
+};
+
+//========================================================
+// The item array
+//
 
 ItemArray::ItemArray():
    m_alloc(0),
    m_size(0),
    m_data(0),
    m_growth( flc_ARRAY_GROWTH ),
-   m_owner(0)
+   m_mark(0)
 {}
 
 ItemArray::ItemArray( const ItemArray& other ):
    m_growth( other.m_growth ),
-   m_owner( 0 )
+   m_mark(0)
 {
    if( other.m_size != 0 )
    {
       m_alloc = other.m_size;
       m_size = other.m_size;
-      m_data = (Item *) memAlloc( esize(other.m_size) );
-      memcpy( m_data, other.m_data, esize(other.m_size) );
 
-      // duplicate strings
-      for ( uint32 i = 0; i < m_size; ++i )
-      {
-         Item& item = m_data[i];
-
-         if( item.isString() && item.asString()->isCore() )
-         {
-            item = new CoreString( *item.asString() );
-         }
-      }
+      // set all the items in the source as copied.
+      Helper(this).setCopied( other );
+      m_data = allocate( m_size );
+      memcpy( m_data, other.m_data, esize(m_size) );
    }
    else
    {
@@ -71,60 +108,52 @@ ItemArray::ItemArray( const ItemArray& other ):
 }
 
 
-ItemArray::ItemArray( uint32 prealloc ):
-   m_growth( prealloc == 0 ? flc_ARRAY_GROWTH  : prealloc ),
-   m_owner( 0 )
+ItemArray::ItemArray( length_t prealloc ):
+   m_growth( prealloc == 0 ? flc_ARRAY_GROWTH  : prealloc )
 {
    if( m_growth < 4 )
       m_growth = 4;
 
-   m_data = (Item *) memAlloc( esize(m_growth) );
+   m_data = allocate( m_growth );
    m_alloc = m_growth;
    m_size = 0;
 }
 
 
-ItemArray::ItemArray( Item *buffer, uint32 size, uint32 alloc ):
+ItemArray::ItemArray( Item *buffer, length_t size, length_t alloc ):
    m_alloc(alloc),
    m_size(size),
    m_data(buffer),
-   m_growth( flc_ARRAY_GROWTH ),
-   m_owner( 0 )
+   m_growth( flc_ARRAY_GROWTH )
 {}
 
 
 ItemArray::~ItemArray()
 {
-   if ( m_data != 0 )
-      memFree( m_data );
+   release( m_data );
 }
-
-
-void ItemArray::gcMark( uint32 mark )
-{
-   Sequence::gcMark( mark );
-
-   for( uint32 pos = 0; pos < m_size; pos++ ) {
-      memPool->markItem( m_data[pos] );
-   }
-}
-
 
 void ItemArray::append( const Item &ndata )
 {
    // create enough space to hold the data
    if ( m_alloc <= m_size )
    {
-      // we don't know where the item is coming from; it may come from also from our thing.
-      Item copy = ndata;
       m_alloc = m_size + m_growth;
-      m_data = (Item *) memRealloc( m_data, esize( m_alloc ) );
-      m_data[ m_size ] = copy;
+      Item* newData = Helper(this).reallocate( m_alloc );
+
+      // ndata may come from m_data; delete it AFTER having assigned it.
+      // don't set the copied bit on ndata; in case of need, the caller will
+      newData[ m_size ] = ndata;
+
+      release( m_data );
+      m_data = newData;
+
    }
    else
    {
       m_data[ m_size ] = ndata;
    }
+
    m_size++;
 }
 
@@ -134,42 +163,53 @@ void ItemArray::merge( const ItemArray &other )
    if ( other.m_size == 0 )
       return;
 
+   // set all the items in the source as copied.
+   Helper(this).setCopied( other );
+
    if ( m_alloc < m_size + other.m_size ) {
       m_alloc = m_size + other.m_size;
-      m_data = (Item *) memRealloc( m_data, esize( m_alloc ) );
+      Item* newData = Helper(this).reallocate( m_alloc );
+      m_data = newData;
    }
 
    memcpy( m_data + m_size, other.m_data, esize( other.m_size ) );
    m_size += other.m_size;
 }
 
+
 void ItemArray::prepend( const Item &ndata )
 {
    // create enough space to hold the data
-   Item *mem = (Item *) memAlloc( esize(m_size + 1) );
    m_alloc = m_size + 1;
+   Item *mem = allocate( m_alloc );
    if ( m_size != 0 )
+   {
       memcpy( mem + 1, m_data, esize( m_size ) );
+   }
+
    mem[0] = ndata;
-   if ( m_size != 0 )
-      memFree( m_data );
+   release( m_data );
    m_data = mem;
    m_size++;
-   invalidateAllIters();
 }
+
 
 void ItemArray::merge_front( const ItemArray &other )
 {
    if ( other.m_size == 0 )
       return;
 
-   if ( m_alloc < m_size + other.m_size ) {
+   // set all the items in the source as copied.
+   Helper(this).setCopied( other );
+
+   if ( m_alloc < m_size + other.m_size )
+   {
       m_alloc = m_size + other.m_size;
-      Item *mem = (Item *) memAlloc( esize( m_alloc ) );
+      Item *mem = allocate(m_alloc);
       memcpy( mem , other.m_data, esize( other.m_size ) );
       if ( m_size > 0 ) {
          memcpy( mem + other.m_size, m_data, esize( m_size ) );
-         memFree( m_data );
+         release(m_data);
       }
 
       m_size = m_alloc;
@@ -181,118 +221,102 @@ void ItemArray::merge_front( const ItemArray &other )
       m_size += other.m_size;
    }
    
-   invalidateAllIters();
 }
 
-bool ItemArray::insert( const Item &ndata, int32 pos )
+bool ItemArray::insert( const Item &ndata, length_t pos )
 {
-   if ( pos < 0 )
-      pos = m_size + pos;
-   if ( pos < 0 || pos > (int32) m_size )
+   if ( pos > m_size )
       return false;
 
-   if ( m_alloc <= m_size ) {
+   if ( m_alloc <= m_size )
+   {
       m_alloc = m_size + flc_ARRAY_GROWTH;
-      Item *mem = (Item *) memAlloc( esize( m_alloc ) );
+      Item *mem = allocate(m_alloc);
       if ( pos > 0 )
          memcpy( mem , m_data, esize( pos ) );
-      if ( pos < (int32)m_size )
+      if ( pos < m_size )
          memcpy( mem + pos + 1, m_data + pos , esize(m_size - pos) );
 
       mem[ pos ] = ndata;
       m_size++;
-      memFree( m_data );
+      free( m_data );
       m_data = mem;
    }
    else {
-      if ( pos < (int32)m_size )
+      if ( pos < m_size )
          memmove( m_data + pos + 1, m_data+pos, esize( m_size - pos) );
       m_data[pos] = ndata;
       m_size ++;
    }
-   
-   if ( m_iterList != 0 )
-   {
-      m_invalidPoint = pos;
-      invalidateIteratorOnCriterion();
-   }
-   
+      
    return true;
 }
 
-bool ItemArray::insert( const ItemArray &other, int32 pos )
+bool ItemArray::insert( const ItemArray &other, length_t pos )
 {
    if ( other.m_size == 0 )
       return true;
 
-   if ( pos < 0 )
-      pos = m_size + pos;
-   if ( pos < 0 || pos > (int32)m_size )
+   if ( pos > m_size )
       return false;
 
+   Helper(this).setCopied( other );
+   
    if ( m_alloc < m_size + other.m_size ) {
       m_alloc = m_size + other.m_size;
-      Item *mem = (Item *) memAlloc( esize( m_alloc ) );
+      Item *mem = allocate(m_alloc);
       if ( pos > 0 )
          memcpy( mem , m_data, esize( pos ) );
 
-      if ( pos < (int32)m_size )
+      if ( pos < m_size )
          memcpy( mem + pos + other.m_size, m_data + pos , esize(m_size - pos) );
 
       memcpy( mem + pos , other.m_data, esize( other.m_size ) );
 
       m_size = m_alloc;
-      memFree( m_data );
+      release(m_data);
       m_data = mem;
    }
    else {
-      if ( pos < (int32)m_size )
+      if ( pos < m_size )
          memmove( m_data + other.m_size + pos, m_data + pos, esize(m_size - pos ) );
       memcpy( m_data + pos , other.m_data, esize( other.m_size ) );
       m_size += other.m_size;
    }
 
-   if ( m_iterList != 0 )
-   {
-      m_invalidPoint = pos;
-      invalidateIteratorOnCriterion();
-   }
-   
    return true;
 }
 
-bool ItemArray::remove( int32 first, int32 last )
+bool ItemArray::remove( length_t first, length_t rsize )
 {
-   if ( first < 0 )
-      first = m_size + first;
-   if ( first < 0 || first >= (int32)m_size )
-      return false;
-
-   if ( last < 0 )
-      last = m_size + last;
-   if ( last < 0 || last > (int32)m_size )
-      return false;
-
-   if( first > last ) {
-      int32 temp = first;
-      first = last;
-      // last can't be < first if it was == size.
-      last = temp+1;
-   }
-
-   uint32 rsize = last - first;
-   if ( last < (int32)m_size )
-      memmove( m_data + first, m_data + last, esize(m_size - last) );
-   m_size -= rsize;
-   
-   if ( m_iterList != 0 )
+   if (rsize == 0 )
    {
-      m_invalidPoint = first;
-      invalidateIteratorOnCriterion();
+      return true;
    }
    
+   if ( first + rsize > m_size )
+      return false;
+
+   length_t last = first + rsize;
+   if ( last < m_size )
+      memmove( m_data + first, m_data + last, esize(m_size - last ) );
+   m_size -= rsize;
+      
    return true;
 }
+
+bool ItemArray::remove( length_t first )
+{
+   if ( first >= m_size )
+      return false;
+
+   if ( first + 1 < m_size )
+      memmove( m_data + first, m_data + first + 1, esize(m_size - first) );
+   m_size --;
+
+   return true;
+}
+
 
 int32 ItemArray::find( const Item &itm ) const
 {
@@ -305,66 +329,35 @@ int32 ItemArray::find( const Item &itm ) const
    return -1;
 }
 
-
-bool ItemArray::remove( int32 first )
+bool ItemArray::change( const ItemArray &other, length_t begin, length_t rsize )
 {
-   if ( first < 0 )
-      first = m_size + first;
-   if ( first < 0 || first >= (int32)m_size )
+   length_t end = begin + rsize;
+
+   if( end > m_size )
       return false;
 
-   if ( first < (int32)m_size - 1 )
-      memmove( m_data + first, m_data + first + 1, esize(m_size - first) );
-   m_size --;
+   Helper(this).setCopied( other );
    
-   if ( m_iterList != 0 )
-   {
-      m_invalidPoint = first;
-      invalidateIteratorOnCriterion();
-   }
-   
-   return true;
-}
-
-bool ItemArray::change( const ItemArray &other, int32 begin, int32 end )
-{
-   if ( begin < 0 )
-      begin = m_size + begin;
-   if ( begin < 0 || begin > (int32)m_size )
-      return false;
-
-   if ( end < 0 )
-      end = m_size + end;
-   if ( end < 0 || end > (int32)m_size )
-      return false;
-
-   if( begin > end ) {
-      int32 temp = begin;
-      begin = end;
-      end = temp+1;
-   }
-
-   int32 rsize = end - begin;
-
    // we're considering end as "included" from now on.
    // this considers also negative range which already includes their extreme.
    if ( m_size - rsize + other.m_size > m_alloc )
    {
       m_alloc =  m_size - rsize + other.m_size;
-      Item *mem = (Item *) memAlloc( esize( m_alloc ) );
+      Item *mem = allocate(m_alloc);
       if ( begin > 0 )
          memcpy( mem, m_data, esize( begin ) );
       if ( other.m_size > 0 )
          memcpy( mem + begin, other.m_data, esize( other.m_size ) );
-      if ( end < (int32) m_size )
+
+      if ( end < m_size )
          memcpy( mem + begin + other.m_size, m_data + end, esize(m_size - end) );
 
-      memFree( m_data );
+      release( m_data );
       m_data = mem;
       m_size = m_alloc;
    }
    else {
-      if ( end < (int32)m_size )
+      if ( end < m_size )
          memmove( m_data + begin + other.m_size, m_data + end, esize(m_size - end) );
 
       if ( other.m_size > 0 )
@@ -372,87 +365,78 @@ bool ItemArray::change( const ItemArray &other, int32 begin, int32 end )
       m_size = m_size - rsize + other.m_size;
    }
    
-   if ( m_iterList != 0 )
-   {
-      m_invalidPoint = begin;
-      invalidateIteratorOnCriterion();
-   }
-
    return true;
 }
 
-bool ItemArray::insertSpace( uint32 pos, uint32 size )
+bool ItemArray::insertSpace( length_t pos, length_t size )
 {
    if ( size == 0 )
       return true;
 
-   if ( pos < 0 )
-      pos = m_size + pos;
-   if ( pos < 0 || pos > m_size )
+   if ( pos > m_size )
       return false;
 
    if ( m_alloc < m_size + size ) {
       m_alloc = ((m_size + size)/m_growth+1)*m_growth;
-      Item *mem = (Item *) memAlloc( esize( m_alloc ) );
+      Item *mem = allocate( m_alloc );
       if ( pos > 0 )
          memcpy( mem , m_data, esize( pos ) );
 
       if ( pos < m_size )
          memcpy( mem + pos + size, m_data + pos , esize(m_size - pos) );
 
-      for( uint32 i = pos; i < pos + size; i ++ )
-         m_data[i] = Item();
-
-      m_size += size;
-      memFree( m_data );
+      for( length_t i = pos; i < pos + size; i ++ )
+         m_data[i].setNil();
+      release( m_data );
       m_data = mem;
+      
+      m_size += size;
    }
    else {
       if ( pos < m_size )
-      memmove( m_data + size + pos, m_data + pos, esize(m_size - pos) );
-      for( uint32 i = pos; i < pos + size; i ++ )
-         m_data[i] = Item();
+         memmove( m_data + size + pos, m_data + pos, esize(m_size - pos) );
+      for( length_t i = pos; i < pos + size; i ++ )
+         m_data[i].setNil();
+      
       m_size += size;
    }
    
-   if ( m_iterList != 0 )
-   {
-      m_invalidPoint = pos;
-      invalidateIteratorOnCriterion();
-   }
-
    return true;
 }
 
 
-ItemArray *ItemArray::partition( int32 start, int32 end ) const
+ItemArray *ItemArray::partition( length_t start, length_t size, bool bReverse ) const
 {
-   int32 size;
    Item *buffer;
 
-   if ( start < 0 )
-      start = m_size + start;
-   if ( start < 0 || start >= (int32)m_size )
-      return 0;
-
-   if ( end < 0 )
-      end = m_size + end;
-   if ( end < 0 || end > (int32)m_size )
-      return 0;
-
-   if( end < start ) {
-      size = start - end + 1;
-      buffer = (Item *) memAlloc( esize( size ) );
-
-      for( int i = 0; i < size; i ++ )
-         buffer[i] = m_data[start - i];
+   if ( size == 0 )
+   {
+      return new ItemArray;
    }
-   else {
-      if( end == start ) {
-         return new ItemArray();
+
+   if( bReverse ) {
+      buffer = allocate(size);
+
+      for( length_t i = 0; i < size; i ++ )
+      {
+         // we need to set the original items as copied.
+         Item& item = m_data[start - i];
+         item.copied(true);
+         buffer[i] = item;
       }
-      size = end - start;
-      buffer = (Item *) memAlloc( esize( size ) );
+   }
+   else
+   {
+      // set to copied all the interested items in this array
+      Item* bp = m_data + start;
+      Item* bend = bp + size;
+      while( bp < bend )
+      {
+         bp->copied(true);
+         ++bp;
+      }
+
+      buffer = allocate(size);
       memcpy( buffer, m_data + start, esize( size )  );
    }
 
@@ -460,78 +444,60 @@ ItemArray *ItemArray::partition( int32 start, int32 end ) const
 }
 
 
-ItemArray *ItemArray::clone() const
-{
-   return new ItemArray( *this );
-}
-
-
-void ItemArray::resize( uint32 size )
+void ItemArray::resize( length_t size )
 {
    // use this request also to force size in shape with alloc.
-   if ( size > m_alloc ) {
+   if ( size > m_alloc )
+   {
       m_alloc = (size/m_growth + 1) *m_growth;
-      m_data = (Item *) memRealloc( m_data, esize( m_alloc ) );
-      memset( m_data + m_size, 0, esize( m_alloc - m_size ) );
+      Item* newData = allocate(m_alloc);
+      memcpy( newData, m_data, esize( m_size ) );
+      memset( newData + m_size, 0, esize( m_alloc - m_size ) );
+
+      release( m_data );
+      m_data = newData;
    }
    else if ( size > m_size )
+   {
       memset( m_data + m_size, 0, esize( size - m_size ) );
+   }
    else if ( size == m_size )
    {
       return;
-   }
-   else
-   {
-      if( m_iterList != 0 )
-      {
-         m_invalidPoint = size;
-         invalidateIteratorOnCriterion();
-      }
    }
 
    m_size = size;
 }
 
-void ItemArray::compact() {
+void ItemArray::compact()
+{
    if ( m_size == 0 ) {
-      if ( m_data != 0 ) {
-         memFree( m_data );
-         m_data = 0;
-      }
+      release(m_data);
+      m_data = 0;
       m_alloc = 0;
    }
    else if ( m_size < m_alloc )
    {
       m_alloc = m_size;
-      m_data = (Item *) memRealloc( m_data, esize( m_alloc ) );
-      memset( m_data + m_size, 0, esize( m_alloc - m_size ) );
+      Item* newData = allocate(m_alloc);
+      memcpy( newData, m_data, esize( m_size ) );
+      // no need to zero beyond m_size
+      release( m_data );
+      m_data = newData;
    }
 }
 
-void ItemArray::reserve( uint32 size )
+void ItemArray::reserve( length_t size )
 {
-   if ( size == 0 )
+   if ( size > m_alloc )
    {
-      if( m_iterList != 0 )
-      {
-         m_invalidPoint = size;
-         invalidateIteratorOnCriterion();
-      }
-
-      if ( m_data != 0 ) {
-         memFree( m_data );
-         m_data = 0;
-      }
-      m_alloc = 0;
-      m_size = 0;
-   }
-   else if ( size > m_alloc ) {
-      m_data = (Item *) memRealloc( m_data, esize( size ) );
       m_alloc = size;
+      Item* newData = Helper(this).reallocate( m_alloc );
+      m_data = newData;
    }
 }
 
-bool ItemArray::copyOnto( uint32 from, const ItemArray& src, uint32 first, uint32 amount )
+bool ItemArray::copyOnto( length_t from, const ItemArray& src, length_t first, length_t amount )
 {
    if( first > src.length() )
       return false;
@@ -547,126 +513,7 @@ bool ItemArray::copyOnto( uint32 from, const ItemArray& src, uint32 first, uint3
 
    memcpy( m_data + from, src.m_data + first, esize( amount ) );
 
-   if( m_iterList != 0 )
-   {
-      m_invalidPoint = from;
-      invalidateIteratorOnCriterion();
-   }
-   
    return true;
-}
-
-//============================================================
-// Iterator management.
-//============================================================
-
-void ItemArray::getIterator( Iterator& tgt, bool tail ) const
-{
-   Sequence::getIterator( tgt, tail );
-   tgt.position( tail ? (length()>0? length()-1: 0) : 0 );
-}
-
-
-void ItemArray::copyIterator( Iterator& tgt, const Iterator& source ) const
-{
-   Sequence::copyIterator( tgt, source );
-   tgt.position( source.position() );
-}
-
-
-void ItemArray::insert( Iterator &iter, const Item &data )
-{
-   if ( ! iter.isValid() )
-      throw new CodeError( ErrorParam( e_invalid_iter, __LINE__ )
-            .origin( e_orig_runtime ).extra( "ItemArray::insert" ) );
-
-   insert( data, (int32) iter.position() );
-   m_invalidPoint = (uint32) iter.position()+1;
-   invalidateIteratorOnCriterion();
-   // the iterator inserted before this position, so the element has moved forward
-   iter.position( iter.position() + 1 ); 
-}
-
-void ItemArray::erase( Iterator &iter )
-{
-   if ( iter.position() >= length() )
-      throw new AccessError( ErrorParam( e_iter_outrange, __LINE__ )
-            .origin( e_orig_runtime ).extra( "ItemArray::erase" ) );
-
-   uint32 first = (uint32) iter.position();
-   if ( first+1 < m_size )
-      memmove( m_data + first, m_data + first + 1, esize(m_size - first) );
-   m_size --;
-   
-   invalidateAnyOtherIter( &iter );   
-}
-
-
-bool ItemArray::hasNext( const Iterator &iter ) const
-{
-   return iter.position()+1 < length();
-}
-
-
-bool ItemArray::hasPrev( const Iterator &iter ) const
-{
-   return iter.position() > 0;
-}
-
-bool ItemArray::hasCurrent( const Iterator &iter ) const
-{
-   return iter.position() < length();
-}
-
-
-bool ItemArray::next( Iterator &iter ) const
-{
-   if ( iter.position() < length())
-   {
-      iter.position( iter.position() + 1 );
-      return iter.position() < length();
-   }
-   return false;
-}
-
-
-bool ItemArray::prev( Iterator &iter ) const
-{
-   if ( iter.position() > 0 )
-   {
-      iter.position( iter.position() - 1 );
-      return true;
-   }
-
-   iter.position( length() );
-   return false;
-}
-
-Item& ItemArray::getCurrent( const Iterator &iter )
-{
-   if ( iter.position() < length() )
-      return m_data[ iter.position() ];
-
-   throw new AccessError( ErrorParam( e_iter_outrange, __LINE__ )
-         .origin( e_orig_runtime ).extra( "ItemArray::getCurrent" ) );
-}
-
-
-Item& ItemArray::getCurrentKey( const Iterator &iter )
-{
-   throw new CodeError( ErrorParam( e_non_dict_seq, __LINE__ )
-         .origin( e_orig_runtime ).extra( "ItemArray::getCurrentKey" ) );
-}
-
-
-bool ItemArray::equalIterator( const Iterator &first, const Iterator &second ) const
-{
-   return first.position() == second.position();
-}
-
-bool ItemArray::onCriterion( Iterator* elem ) const
-{
-   return elem->position() >= m_invalidPoint;
 }
 
 
@@ -689,6 +536,7 @@ int ItemArray::compare( const ItemArray& other, ItemArray::Parentship* parent ) 
       }
          
       // different arrays?
+      /*
       if ( m_data[i].isArray() && other.m_data[i].isArray() )
       {
          // check if m_data[i] is in the list of parents.
@@ -724,6 +572,7 @@ int ItemArray::compare( const ItemArray& other, ItemArray::Parentship* parent ) 
                return cval;
             // else, check other items.
       }
+      */
    }
    
    if( m_size < other.m_size )
@@ -732,6 +581,29 @@ int ItemArray::compare( const ItemArray& other, ItemArray::Parentship* parent ) 
    //  ok, we're the same
    return 0;
 }
+
+
+void ItemArray::gcMark( uint32 mark )
+{
+   if( m_mark != mark )
+   {
+      m_mark = mark;
+      Item* begin = m_data;
+      Item* end = m_data + m_size;
+
+      while( begin < end )
+      {
+         // notice -- the isUser() is a parnoid check.
+         if( begin->isGarbaged() && begin->isUser() )
+         {
+            begin->asClass()->gcMark(begin->asInst(), mark);
+         }
+         ++begin;
+      }
+   }
+}
+
+
 
 }
 

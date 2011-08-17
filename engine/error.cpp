@@ -5,135 +5,84 @@
    Error management.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
-   Begin: lun ago 28 2006
+   Begin: Fri, 04 Feb 2011 21:15:36 +0100
 
    -------------------------------------------------------------------
-   (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
+   (C) Copyright 2011: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
 */
 
-/** \file
-   Error management.
-*/
-
 #include <falcon/setup.h>
 #include <falcon/error.h>
+#include <falcon/item.h>
+#include <falcon/tracestep.h>
+#include <falcon/mt.h>
 #include <falcon/sys.h>
-#include <falcon/vm.h>
-#include <falcon/coreobject.h>
+#include <falcon/class.h>
+#include <falcon/engine.h>
 
-#include <falcon/eng_messages.h>
+#include <deque>
 
 namespace Falcon {
 
-const String &errorDesc( int code )
+static const String errorDesc( int code )
 {
+   static String unk("Unknown error");
+
    switch( code )
    {
       #define FLC_MAKE_ERROR_MESSAGE_SELECTOR
-      #include <falcon/eng_messages.h>
+      #include <falcon/error_messages.h>
    }
 
-   return Engine::getMessage( msg_unknown_error );
-}
-
-
-String &TraceStep::toString( String &target ) const
-{
-   if ( m_modpath.size() )
-   {
-      target += "\"" + m_modpath + "\" "; 
-   }
-
-   target += m_module + "." + m_symbol + ":";
-   target.writeNumber( (int64) m_line );
-   target += "(PC:";
-   switch( m_pc )
-   {
-      case VMachine::i_pc_call_external: target += "ext"; break;
-      case VMachine::i_pc_call_external_return: target += "ext.r"; break;
-      case VMachine::i_pc_redo_request: target += "redo"; break;
-      case VMachine::i_pc_call_external_ctor: target += "ext.c"; break;
-      case VMachine::i_pc_call_external_ctor_return: target += "ext.cr"; break;
-      default:
-         target.writeNumber( (int64) m_pc );
-   }
-
-   target += ")";
-
-	return target;
+   return unk;
 }
 
 //==================================================
 // Error
 //==================================================
 
-Error::Error( const Error &e ):
-   m_nextError( 0 ),
-   m_LastNextError( 0 ),
-   m_boxed( 0 )
+class Error_p
 {
-   m_errorCode = e.m_errorCode;
-   m_line = e.m_line;
-   m_pc = e.m_pc;
-   m_character = e.m_character;
-   m_sysError = e.m_sysError;
-   m_origin = e.m_origin;
+public:
+   std::deque<TraceStep> m_steps;
+   std::deque<Error*> m_subErrors;
+};
 
-   m_catchable = e.m_catchable;
 
-   m_description = e.m_description;
-   m_extra = e.m_extra;
-   m_module = e.m_module;
-   m_symbol = e.m_symbol;
-   m_raised = e.m_raised;
-   m_className = e.m_className;
-
-   if ( e.m_boxed != 0 )
-   {
-      boxError(m_boxed);
-   }
-
-   m_refCount = 1;
-
-   ListElement *step_i = m_steps.begin();
-   while( step_i != 0 )
-   {
-      TraceStep *step = (TraceStep *) step_i->data();
-      addTrace( step->module(), step->symbol(), step->line(), step->pcounter() );
-      step_i = step_i->next();
-   }
+Error::Error( Class* handler, const ErrorParam &params ):
+   m_refCount( 1 ),
+   m_errorCode( params.m_errorCode ),
+   m_description( params.m_description ),
+   m_extra( params.m_extra ),
+   m_symbol( params.m_symbol ),
+   m_module( params.m_module ),
+   m_handler( handler ),
+   m_line( params.m_line ),
+   m_chr( params.m_chr ),
+   m_sysError( params.m_sysError ),
+   m_origin( params.m_origin ),
+   m_catchable( params.m_catchable ),
+   m_bHasRaised( false )
+{
+   _p = new Error_p;   
 }
 
 
 Error::~Error()
 {
-   ListElement *step_i = m_steps.begin();
-   while( step_i != 0 )
+   std::deque<Error*>::const_iterator iter = _p->m_subErrors.begin();
+   while( iter != _p->m_subErrors.end() )
    {
-      TraceStep *step = (TraceStep *) step_i->data();
-      delete step;
-      step_i = step_i->next();
+      (*iter)->decref();
+      ++iter;
    }
 
-   Error *ptr = m_nextError;
-   while( ptr != 0 )
-   {
-      Error *ptrnext = ptr->m_nextError;
-      ptr->m_nextError = 0;
-      ptr->decref();
-
-      ptr = ptrnext;
-   }
-
-   if ( m_boxed != 0 )
-   {
-      m_boxed->decref();
-   }
+   delete _p;
 }
 
-void Error::incref()
+void Error::incref() const
 {
    atomicInc( m_refCount );
 }
@@ -146,40 +95,40 @@ void Error::decref()
    }
 }
 
-String &Error::toString( String &target ) const
+void Error::describeTo( String &target ) const
 {
-   if ( m_boxed != 0 )
-   {
-      target += m_boxed->toString();
-      target += "  =====================================================\n";
-      target += "  Boxed in ";
-   }
-
    heading( target );
-   target += "\n";
 
-   if ( ! m_steps.empty() )
+   if ( ! _p->m_steps.empty() )
    {
-      target += "  Traceback:\n";
+      target += "\n   Traceback:";
 
-      ListElement *iter = m_steps.begin();
-      while( iter != 0 )
+      std::deque<TraceStep>::const_iterator iter = _p->m_steps.begin();
+      while( iter != _p->m_steps.end() )
       {
-          target += "   ";
-          TraceStep *step = (TraceStep *) iter->data();
-          step->toString( target );
-          target += "\n";
-          iter = iter->next();
+          target += "\n   ";
+          const TraceStep& step = *iter;
+          step.toString( target );
+          ++iter;
       }
    }
 
-   // recursive stringation
-   if ( m_nextError != 0 )
+   if (! _p->m_subErrors.empty() )
    {
-      m_nextError->toString( target );
+      target += "\n   Because of:\n";
+      std::deque<Error*>::const_iterator iter = _p->m_subErrors.begin();
+      while( iter != _p->m_subErrors.end() )
+      {
+         target += (*iter)->describe() +"\n";
+         
+         ++iter;
+      }
    }
 
-   return target;
+   if ( m_bHasRaised )
+   {
+      target += "   Raised item: " + m_raised.describe();
+   }
 }
 
 
@@ -190,13 +139,13 @@ String &Error::heading( String &target ) const
 
    switch( m_origin )
    {
-   case e_orig_compiler: target += "CO"; break;
-   case e_orig_assembler: target += "AS"; break;
-   case e_orig_loader: target += "LD"; break;
-   case e_orig_vm: target += "VM"; break;
-   case e_orig_runtime: target += "RT"; break;
-   case e_orig_mod: target += "MD"; break;
-   case e_orig_script: target += "SS"; break;
+   case ErrorParam::e_orig_compiler: target += "CP"; break;
+   case ErrorParam::e_orig_linker: target += "LK"; break;
+   case ErrorParam::e_orig_loader: target += "LD"; break;
+   case ErrorParam::e_orig_vm: target += "VM"; break;
+   case ErrorParam::e_orig_runtime: target += "RT"; break;
+   case ErrorParam::e_orig_mod: target += "MD"; break;
+   case ErrorParam::e_orig_script: target += "SC"; break;
    default: target += "??";
    }
 
@@ -233,25 +182,10 @@ String &Error::heading( String &target ) const
    if ( m_line != 0 )
       target.writeNumber( (int64) m_line );
 
-   if ( m_character != 0 ) {
-      target += "/";
-      target.writeNumber( (int64) m_character );
-   }
-
-   if ( m_pc != 0 )
+   if ( m_chr != 0 )
    {
-      target += "(PC:";
-       switch( m_pc )
-      {
-         case VMachine::i_pc_call_external: target += "ext"; break;
-         case VMachine::i_pc_call_external_return: target += "ext.r"; break;
-         case VMachine::i_pc_redo_request: target += "redo"; break;
-         case VMachine::i_pc_call_external_ctor: target += "ext.c"; break;
-         case VMachine::i_pc_call_external_ctor_return: target += "ext.cr"; break;
-         default:
-            target.writeNumber( (int64) m_pc );
-      }
-      target += ")";
+      target += ":";
+      target.writeNumber( (int64) m_chr );
    }
 
    if ( m_description.size() > 0 )
@@ -270,365 +204,83 @@ String &Error::heading( String &target ) const
    if ( ! m_raised.isNil() )
    {
       String temp;
-      m_raised.toString( temp );
+      m_raised.describe( temp );
       target += "\n"+ temp;
    }
 
    return target;
 }
 
-void Error::addTrace( const String &module, const String &symbol, uint32 line, uint32 pc )
+void Error::addTrace( const TraceStep& tb )
 {
-   m_steps.pushBack( new TraceStep( module, symbol, line, pc ) );
-   m_stepIter = m_steps.begin();
+   _p->m_steps.push_back( tb );
 }
 
-void Error::addTrace( const String &module, const String &modpath, const String &symbol, uint32 line, uint32 pc )
-{
-   m_steps.pushBack( new TraceStep( module, modpath, symbol, line, pc ) );
-   m_stepIter = m_steps.begin();
-}
 
 void Error::appendSubError( Error *error )
 {
-   if ( m_LastNextError == 0 )
-   {
-      m_LastNextError = m_nextError = error;
-   }
-   else {
-      m_LastNextError->m_nextError = error;
-      m_LastNextError = error;
-   }
-
    error->incref();
+   
+   _p->m_subErrors.push_back( error );
 }
 
 
-void Error::boxError( Error *error )
+
+void Error::scriptize( Item& tgt )
 {
-   if ( m_boxed != 0 )
+   static Collector* coll = Engine::instance()->collector();
+   incref();
+   tgt.setUser( FALCON_GC_STORE( coll, m_handler, this ) );
+}
+
+void Error::enumerateSteps( Error::StepEnumerator &rator ) const
+{
+   std::deque<TraceStep>::const_iterator iter = _p->m_steps.begin();
+   while( iter != _p->m_steps.end() )
    {
-      m_boxed->decref();
+      const TraceStep& ts = *iter;
+      ++iter;
+      bool last = iter == _p->m_steps.end();
+      if( ! rator( ts, last ) ) break;
    }
+}
 
-   m_boxed = error;
-   if ( error != 0 )
+
+void Error::enumerateErrors( Error::ErrorEnumerator &rator ) const
+{
+   std::deque<Error*>::const_iterator iter = _p->m_subErrors.begin();
+   while( iter != _p->m_subErrors.end() )
    {
-      error->incref();
+      Error* error = *iter;
+      ++iter;
+      bool last = iter == _p->m_subErrors.end();
+      if( ! rator( *error, last ) ) break;
    }
 }
 
 
-bool Error::nextStep( String &module, String &symbol, uint32 &line, uint32 &pc )
+Error* Error::getBoxedError() const
 {
-   if ( m_steps.empty() || m_stepIter == 0 )
-      return false;
-
-   TraceStep *step = (TraceStep *) m_stepIter->data();
-   module = step->module();
-   symbol = step->symbol();
-   line = step->line();
-   pc = step->pcounter();
-
-   m_stepIter = m_stepIter->next();
-
-   return true;
+   if( _p->m_subErrors.empty() )
+      return 0;
+   return _p->m_subErrors.front();
 }
 
-void Error::rewindStep()
+/** Return the name of this error class.
+ Set in the constructcor.
+ */
+const String& Error::className() const
 {
-   if ( ! m_steps.empty() )
-      m_stepIter = m_steps.begin();
+   return m_handler->name();
 }
 
-CoreObject *Error::scriptize( VMachine *vm )
+bool Error::hasTraceback() const
 {
-   Item *error_class = vm->findWKI( m_className );
-   // in case of 0, try with global items
-   if ( error_class == 0 )
-      error_class = vm->findGlobalItem( m_className );
-
-   if ( error_class == 0 || ! error_class->isClass() ) {
-      throw new GenericError(
-         ErrorParam( e_undef_sym, __LINE__)
-         .origin(e_orig_vm)
-         .module( "core.Error" ).
-         symbol( "Error::scriptize" )
-         .extra( m_className ).hard()
-         );
-   }
-
-   // CreateInstance will use ErrorObject, which increfs to us.
-   CoreObject *cobject = error_class->asClass()->createInstance( this );
-   return cobject;
-}
-
-Error *Error::clone() const
-{
-   return new Error( *this );
-}
-
-//==============================================================================
-// Reflections
-
-namespace core {
-
-void Error_code_rfrom( CoreObject *instance, void *userData, Item &property, const PropEntry& )
-{
-   Error *error = static_cast<Error *>(userData);
-   FALCON_REFLECT_INTEGER_FROM( error, errorCode );
-}
-
-void Error_description_rfrom(CoreObject *instance, void *userData, Item &property, const PropEntry& )
-{
-   Error *error = static_cast<Error *>(userData);
-   FALCON_REFLECT_STRING_FROM( error, errorDescription );
-}
-
-void Error_message_rfrom(CoreObject *instance, void *userData, Item &property, const PropEntry& )
-{
-   Error *error = static_cast<Error *>(userData);
-   FALCON_REFLECT_STRING_FROM( error, extraDescription );
-}
-
-void Error_systemError_rfrom(CoreObject *instance, void *userData, Item &property, const PropEntry& )
-{
-   Error *error = static_cast<Error *>(userData);
-   FALCON_REFLECT_INTEGER_FROM( error, systemError );
-}
-
-void Error_origin_rfrom(CoreObject *instance, void *userData, Item &property, const PropEntry& )
-{
-   Error *error = static_cast<Error *>(userData);
-
-   String origin;
-
-   switch( error->origin() )
-   {
-      case e_orig_compiler: origin = "compiler"; break;
-      case e_orig_assembler: origin = "assembler"; break;
-      case e_orig_loader: origin = "loader"; break;
-      case e_orig_vm: origin = "vm"; break;
-      case e_orig_script: origin = "script"; break;
-      case e_orig_runtime: origin = "runtime"; break;
-      case e_orig_mod: origin = "module"; break;
-      default: origin = "unknown";
-   }
-
-   property = new CoreString( origin );
-}
-
-void Error_module_rfrom(CoreObject *instance, void *userData, Item &property, const PropEntry& )
-{
-   Error *error = static_cast<Error *>(userData);
-   FALCON_REFLECT_STRING_FROM( error, module );
-}
-
-void Error_symbol_rfrom(CoreObject *instance, void *userData, Item &property, const PropEntry& )
-{
-   Error *error = static_cast<Error *>(userData);
-   FALCON_REFLECT_STRING_FROM( error, symbol );
-}
-
-void Error_line_rfrom(CoreObject *instance, void *userData, Item &property, const PropEntry& )
-{
-   Error *error = static_cast<Error *>(userData);
-   FALCON_REFLECT_INTEGER_FROM( error, line );
-}
-
-void Error_pc_rfrom(CoreObject *instance, void *userData, Item &property, const PropEntry& )
-{
-   Error *error = static_cast<Error *>(userData);
-   FALCON_REFLECT_INTEGER_FROM( error, pcounter );
-}
-
-void Error_boxed_rfrom(CoreObject *instance, void *userData, Item &property, const PropEntry& )
-{
-   Error *error = static_cast<Error *>(userData);
-   if ( error->getBoxedError() != 0 )
-   {
-      VMachine* vm = VMachine::getCurrent();
-      fassert( vm != 0 );
-      property =  error->getBoxedError()->scriptize(vm);
-   }
-   else
-   {
-      property.setNil();
-   }
-}
-
-void Error_subErrors_rfrom(CoreObject *instance, void *userData, Item &property, const PropEntry& )
-{
-   Error *error = static_cast<Error *>(userData);
-   VMachine* vm = VMachine::getCurrent();
-   fassert( vm != 0 );
-
-   // scriptize sub-errors
-   Error *ptr = error->subError();
-   if ( ptr != 0)
-   {
-      CoreArray *errorList = new CoreArray();
-
-      do
-      {
-         // CreateInstance will use ErrorObject, which increfs ptr.
-         CoreObject *subobject = ptr->scriptize( vm );
-
-         errorList->append( subobject );
-         ptr = ptr->subError();
-      }
-      while( ptr != 0 );
-
-      property = errorList;
-   }
-   else
-      property.setNil();
+   return ! _p->m_steps.empty();
 }
 
 
-void Error_code_rto( CoreObject *instance, void *userData, Item &property, const PropEntry& )
-{
-   Error *error = static_cast<Error *>(userData);
-   FALCON_REFLECT_INTEGER_TO( error, errorCode );
-}
-
-void Error_description_rto(CoreObject *instance, void *userData, Item &property, const PropEntry& )
-{
-   Error *error = static_cast<Error *>(userData);
-   FALCON_REFLECT_STRING_TO( error, errorDescription );
-}
-
-void Error_message_rto(CoreObject *instance, void *userData, Item &property, const PropEntry& )
-{
-   Error *error = static_cast<Error *>(userData);
-   FALCON_REFLECT_STRING_TO( error, extraDescription );
-}
-
-void Error_systemError_rto(CoreObject *instance, void *userData, Item &property, const PropEntry& )
-{
-   Error *error = static_cast<Error *>(userData);
-   FALCON_REFLECT_INTEGER_TO( error, systemError );
-}
-
-void Error_origin_rto(CoreObject *instance, void *userData, Item &property, const PropEntry& )
-{
-   Error *error = static_cast<Error *>(userData);
-
-   if ( property.isString() )
-   {
-      String &origin = *property.asString();
-      if( origin == "compiler" )
-      {
-         error->origin( e_orig_compiler );
-      }
-      else if( origin == "assembler" )
-      {
-         error->origin( e_orig_assembler );
-      }
-      else if( origin == "loader" )
-      {
-         error->origin( e_orig_loader );
-      }
-      else if( origin == "vm" )
-      {
-         error->origin( e_orig_vm );
-      }
-      else if( origin == "script" )
-      {
-         error->origin( e_orig_script );
-      }
-      else if( origin == "runtime" )
-      {
-         error->origin( e_orig_runtime );
-      }
-      else if( origin == "module" )
-      {
-         error->origin( e_orig_mod);
-      }
-      else {
-         throw new ParamError( ErrorParam( e_param_range ) );
-      }
-
-      return;
-   }
-
-   throw new ParamError( ErrorParam( e_inv_params ).extra( "S" ) );
-}
-
-void Error_module_rto(CoreObject *instance, void *userData, Item &property, const PropEntry& )
-{
-   Error *error = static_cast<Error *>(userData);
-   FALCON_REFLECT_STRING_TO( error, module );
-}
-
-void Error_symbol_rto(CoreObject *instance, void *userData, Item &property, const PropEntry& )
-{
-   Error *error = static_cast<Error *>(userData);
-   FALCON_REFLECT_STRING_TO( error, symbol );
-}
-
-void Error_line_rto(CoreObject *instance, void *userData, Item &property, const PropEntry& )
-{
-   Error *error = static_cast<Error *>(userData);
-   FALCON_REFLECT_INTEGER_TO( error, line );
-}
-
-void Error_pc_rto(CoreObject *instance, void *userData, Item &property, const PropEntry& )
-{
-   Error *error = static_cast<Error *>(userData);
-   FALCON_REFLECT_INTEGER_TO( error, pcounter );
-}
-
-void Error_boxed_rto(CoreObject *instance, void *userData, Item &property, const PropEntry& )
-{
-   Error *error = static_cast<Error *>(userData);
-   if ( property.isObject() && property.asObject()->derivedFrom("Error") )
-   {
-      error->boxError( static_cast<Error*>(property.asObject()->getUserData()) );
-   }
-}
-
-//============================================================
-// Reflector
-
-ErrorObject::ErrorObject( const CoreClass* cls, Error *err ):
-   CRObject( cls )
-{
-   if ( err != 0 )
-   {
-      err->incref();
-      setUserData( err );
-   }
-}
-
-ErrorObject::~ErrorObject()
-{
-   if ( m_user_data != 0 )
-      getError()->decref();
-}
-
-void ErrorObject::gcMark( uint32 mark )
-{
-   Error* error = getError();
-   if ( error != 0 )
-      memPool->markItem( const_cast<Item&>(error->raised()) );
-}
-
-
-ErrorObject *ErrorObject::clone() const
-{
-   return new ErrorObject( m_generatedBy, getError() );
-}
-
-//========================================================
-// Factory function
-//
-
-CoreObject* ErrorObjectFactory( const CoreClass *cls, void *user_data, bool )
-{
-      return new ErrorObject( cls, (Error *) user_data );
-}
-
-}} // namespace Falcon::core 
+} // namespace Falcon
 
 /* end of error.cpp */
+

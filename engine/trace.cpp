@@ -16,7 +16,8 @@
 #ifndef NDEBUG
 
 #include <falcon/trace.h>
-FALCON_DYN_SYM _falcon_trace_level >= 1 &&FILE* _falcon_trace_fp = 0;
+FALCON_DYN_SYM FILE* _falcon_trace_fp = 0;
+FALCON_DYN_SYM int _falcon_trace_level = 0;
 
 #endif
 

@@ -11,37 +11,12 @@ set(AHDR
   common.h
 ) 
 
-set(ASRC 
-  ${CMAKE_CURRENT_SOURCE_DIR}/vi.c 
-  ${CMAKE_CURRENT_SOURCE_DIR}/emacs.c 
-  ${CMAKE_CURRENT_SOURCE_DIR}/common.c
-)
 
-
-add_custom_command(
-  OUTPUT ${AHDR}
-  DEPENDS vi.c emacs.c common.c
-  COMMAND sh ${CMAKE_CURRENT_SOURCE_DIR}/makelist -h ${CMAKE_CURRENT_SOURCE_DIR}/vi.c > vi.h
-  COMMAND sh ${CMAKE_CURRENT_SOURCE_DIR}/makelist -h ${CMAKE_CURRENT_SOURCE_DIR}/emacs.c > emacs.h
-  COMMAND sh ${CMAKE_CURRENT_SOURCE_DIR}/makelist -h ${CMAKE_CURRENT_SOURCE_DIR}/common.c > common.h
-)
-add_custom_command(
-  OUTPUT fcns.h fcns.c help.h help.c 
-  DEPENDS ${AHDR}
-  COMMAND sh ${CMAKE_CURRENT_SOURCE_DIR}/makelist -fh ${AHDR} > fcns.h
-  COMMAND sh ${CMAKE_CURRENT_SOURCE_DIR}/makelist -bh ${ASRC} > help.h
-  COMMAND sh ${CMAKE_CURRENT_SOURCE_DIR}/makelist -fc ${AHDR} > fcns.c
-  COMMAND sh ${CMAKE_CURRENT_SOURCE_DIR}/makelist -bc ${ASRC} > help.c
-)
-
-add_custom_target(makelist_target DEPENDS 
-  ${AHDR} 
-  help.h 
-  fcns.h
-)
 set(libedit_SOURCES 
-  chared.c 
-  el.c 
+  chared.c
+  chartype.c
+  el.c
+  eln.c
   hist.c 
   key.c 
   map.c
@@ -57,11 +32,15 @@ set(libedit_SOURCES
   strlcat.c
   strlcpy.c 
   unvis.c 
-  vis.c 
+  vis.c
+  wcsdup.c
   tokenizer.c 
   history.c 
   filecomplete.c 
-  readline.c   
+   
+  vi.c
+  emacs.c
+  common.c
 )
 
 add_library(edit STATIC 

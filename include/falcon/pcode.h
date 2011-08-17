@@ -2,56 +2,90 @@
    FALCON - The Falcon Programming Language.
    FILE: pcode.h
 
-   Utilities to manage the Falcon Virtual Machine pseudo code.
+   Falcon virtual machine - pre-compiled code
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
-   Begin: Fri, 24 Jul 2009 19:42:40 +0200
+   Begin: Wed, 12 Jan 2011 17:54:13 +0100
 
    -------------------------------------------------------------------
-   (C) Copyright 2009: the FALCON developers (see list in AUTHORS file)
+   (C) Copyright 2011: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
 */
 
-#ifndef FALCON_PCODE_H_
-#define FALCON_PCODE_H_
+#ifndef FALCON_PCODE_H
+#define FALCON_PCODE_H
 
 #include <falcon/setup.h>
-#include <falcon/types.h>
-#include <falcon/pcodes.h>
+#include <falcon/pstep.h>
+#include <vector>
 
-namespace Falcon
-{
+namespace Falcon {
 
-class Module;
+class StmtAutoexpr;
 
-class FALCON_DYN_SYM PCODE
+/** Pre-Compiled code for the Falcon virtual machine.
+ *
+ * Precompiled code is a LIFO structure of pre-compiled code.
+ * The steps in a PCode are to be considered like pushed as-is
+ * in the virtual machine code stack, but instead of being
+ * compiled (pushed) on the fly, they have been pre-compiled
+ * for performance.
+ *
+ * The VM "applies" a pre compiled code by simply applying
+ * all the steps in it last-to-first.
+ *
+ * Also, the CompExpr won't call its member's prepare;
+ * that has been pre-called during the expression compilation
+ * phase. Instead, it will call their apply, as if they were
+ * called directly by the VM.
+ *
+ * PCode execution is vm-atomic. It's particularly adequate
+ * to expression evaluation, as the apply of a PCode is considered
+ * a single VM step.
+ *
+ * @note Remember that the PSteps in the PCode belong to the
+ * respective SynTree or statement holder. PCode is just a pre-pushed
+ * (linearized) set of static PSteps held elsewhere.
+ *
+ * \note Important: the calling code should make sure that the
+ * expression is precompiled at most ONCE, or in other words, that
+ * the PCode on which is precompiled is actually used just once
+ * in the target program. In fact, gate expressions uses a private
+ * member in their structure to determine the jump branch position,
+ * and that member can be used just once.
+ *
+*/
+class FALCON_DYN_CLASS PCode: public PStep
 {
 public:
-   /** Rotates endianity in IDs and numbers inside the PCode.
-    *
-    * \param code the raw pcode sequence
-    * \param codeSize the size in bytes of the code sequence.
-    * \param into true to actually endianize the code.
-    */
-   static void deendianize( byte* code, uint32 codeSize, bool into = false );
 
-   /** Rotates endianity in IDs and numbers inside the PCode.
-    *
-    * \param code the raw pcode sequence
-    * \param codeSize the size in bytes of the code sequence.
-    */
-   static void endianize( byte* code, uint32 codeSize )
-   {
-       deendianize( code, codeSize, true );
-   }
+   PCode();
+   ~PCode();
+   
+   int size() const;
 
-   static void convertEndianity( uint32 paramType, byte* targetArea, bool into=false );
-   static uint32 advanceParam( uint32 paramType );
+   /** Pushes a new step in the pcode. */
+   void pushStep( const PStep* ps );
+
+   virtual void describeTo( String& res ) const;
+   
+   friend class StmtAutoexpr;
+
+   void autonomous( bool bMode );
+   bool autonomous() const { return m_bAutonomous; }
+private:
+   class Private;
+   Private* _p;
+
+   bool m_bAutonomous;
+   
+   static void apply_( const PStep* ps, VMContext* ctx );
+   static void apply_auto_( const PStep* ps, VMContext* ctx );
 };
 
 }
 
-#endif /* FALCON_PCODE_H_ */
+#endif
 
-/* end of pcode.h */
+/* end of compexpr.h */

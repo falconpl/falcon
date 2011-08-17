@@ -19,7 +19,6 @@
 
 #include <falcon/setup.h>
 #include <falcon/types.h>
-#include <falcon/basealloc.h>
 
 #ifdef FALCON_SYSTEM_WIN
 #include <falcon/mt_win.h>
@@ -42,7 +41,7 @@ public:
 };
 
 /** Thread creation parameters. */
-class FALCON_DYN_CLASS ThreadParams: public BaseAlloc
+class FALCON_DYN_CLASS ThreadParams
 {
    uint32 m_stackSize;
    bool m_bDetached;
@@ -83,7 +82,7 @@ struct SYSTH_DATA;
    requests at higher level, preventing - controlling blocking I/O.
    
 */
-class FALCON_DYN_CLASS SysThread: public BaseAlloc
+class FALCON_DYN_CLASS SysThread
 {
    struct SYSTH_DATA* m_sysdata;
    

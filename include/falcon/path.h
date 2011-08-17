@@ -18,7 +18,7 @@
 
 #include <falcon/setup.h>
 #include <falcon/string.h>
-#include <falcon/gcalloc.h>
+
 
 namespace Falcon
 {
@@ -47,44 +47,25 @@ class URI;
    but it may get checked i.e. when insernted in a URI.
 */
 
-class FALCON_DYN_CLASS Path: public GCAlloc
+class FALCON_DYN_CLASS Path
 {
-   String m_path;
-
-   String m_device;
-   String m_location;
-   String m_file;
-   String m_extension;
-
-   bool m_bValid;
-
-   // resStart is always 1
-
-   URI* m_owner;
-
-   void compose();
 public:
 
    /** Empty constructor. */
    Path();
 
-   /** Path-in-uri constructor */
-   Path( URI *owner );
-
    /** Path constructor from strings. */
    Path( const String &path ):
-      m_bValid( true ),
-      m_owner(0)
+      m_bValid( true )
    {
-      set( path );
+      parse( path );
    }
 
    /** Copy constructor.
       Copies the other path as-is.
    */
    Path( const Path &other ):
-      m_bValid( true ),
-      m_owner(0)
+      m_bValid( true )
    {
       copy( other );
    }
@@ -94,44 +75,192 @@ public:
    */
    void copy( const Path &other );
 
-   /** Set a path from RFC 3986 format. */
-   bool set( const String &p );
+   /** Set a path from RFC 3986 format. 
+    The parsing automatically detects windows format and.
+    */
+   bool parse( const String &p );
 
    /** Retrurn the path in RFC 3986 format. */
-   const String &get() const { return m_path; }
+   const String &encode() const
+   {
+      if( m_encoded.size() > 0)
+      {
+         return m_encoded;
+      }
+      encode_internal();
+      return m_encoded;
+   }
 
-   /** Returns a path in MS-Windows format. */
-   String getWinFormat() const { String fmt; getWinFormat( fmt ); return fmt; }
-
-   /** Stores this path in windows format in a given string. */
-   void getWinFormat( String &str ) const;
-
-   /** Get the resource part (usually the disk specificator). */
-   String getResource() const { String fmt; getResource( fmt ); return fmt; }
-
-   /** Stores the resource part in a given string.
-      If the path has not a resource part, the string is also cleaned.
-      \param str the string where to store the resource part.
-      \return true if the path has a resource part.
-   */
-   bool getResource( String &str ) const;
-
+   bool isValid() const { return m_bValid; }
+   
+   void clear();
+      
+   //=================================================================
+   // Setting and getting raw elements.
+   //
+   
    /** Get the location part (path to file) in RFC3986 format.
    */
-   String getLocation() const { String fmt; getLocation( fmt ); return fmt; }
-
-   /** Gets the location part, eventually including the resource specificator if present. */
-   bool getFullLocation( String &str ) const;
+   const String& location() const { return m_location; }
+      
+   /** Makes the current path absolute with respect to a given root.
+    \param root The directory to which the directory is relative, or "" for
+          "relative to current work directory".
+    
+    If the path described by this Path instance is relative, this method adds 
+    the @b root parameter (or the current system work directory if root is empty),
+    and resolves parent references ("../") eliminating them. 
+    
+    If it's absolute, the root parameter is ignored, but parent references are
+    still resolved.
+    
+    Notice that the parent reference of the root directory of a system is 
+    still the root directory; so it is legal to have more parent references
+    than actual directory levels. For instance, "/path/deep/2/../../../../" will
+    resolve to "/". Current directory indcators "./" are removed as well 
+    as no-ops.
+    
+    \note Keep in mind that absolutizing directories using CWD is thread unsafe;
+    the program won't crash, but your path might point to somewhere you didn't
+    expect.
+    
+    \note root is intended as a location, even if not terminating with /.
+    */
+   void absolutize( const String& root = "" );
    
-   /** Gets the location part, eventually including the resource specificator if present. */
-   String getFullLocation() const { String fmt; getFullLocation( fmt ); return fmt; }
+   /** Makes this path canonical.
+    Removes "./" occourences from this path.
+    
+    If this path is absolute, all the "../" are removed as well.
+    Notice that the parent reference of the root directory of a system is 
+    still the root directory; so it is legal to have more parent references
+    than actual directory levels. For instance, "/path/deep/2/../../../../" will
+    resolve to "/". 
+    
+    If this path is absolute, "../" will be removed only if possible, i.e. if
+    there is a previous path to be removed.
+    */
+   void canonicize();
+   
+   /** Relativizes this path to a given location.
+    \param parent The path that should be used to relativize this Path instance.
+    \return false if \b parent or this path are not absolute or, \b parent
+            it's not a parent of the location stored in this path.
+    
+    This method transforms an absolute path into a relative path if the parent
+    path given as paremeter is actually a predecessor of the location described
+    in this path in the direcory structure.
+    
+    Both \b parent and this path must be absolute, and possibly normalized.
+    
+    This method will consider also the unit specifier; if not given in \b parent,
+    or in this path, it will be ignored, while if given both in \b parent and
+    in this path it will be removed. If given in both entities but not matching,
+    the absolutization will fail.
+    
+    \note parent is intended as a location, even if not terminating with /.
+    */
+   bool relativize( const String& parent );
+   
+   /** Gets the current system work directory (normalized in Falcon path format).
+    \param target Where to store the directory.
+    \return True on success, false on system failure.
+    */
+   static bool currentWorkDirectory( String& target );
 
-   /** Stores the resource part in a given string.
-      If the path has not a location part, the string is also cleaned.
-      \param str the string where to store the location part.
-      \return true if the path has a location part.
+   /** Sets the location part in RFC3986 format. 
+    \param loc the new location.
+    \return false If the location is malformed (cannot contain ':').
+    
+    The location is the part of the path that indicates the directory
+    (on a certain unit) where a file resides.
+    
+    Backslashes in the location are automatically converted into forward
+    slashes.
+    
+    */
+   bool location( const String &loc );
+
+ 
+   /** Get the filename part.
+      This returns the file and extension parts separated by a '.'.
    */
-   bool getLocation( String &str ) const;
+   const String& fileext() const { encode(); return m_filename; }
+   
+   /** Sets the filename and the extension.
+    \param fn The file and extension.
+    \return true if the format is correct, false if the file contains slashes,
+    colons or semicolons.
+    This returns the file and extension parts separated by a '.'.
+    */
+   bool fileext( const String& fn );
+    
+
+   /** Get the file part alone (without extension). */
+   const String& file() const { return m_file; }
+
+   
+   /** Sets the file part (without extension). 
+     \param value the new file part.
+    \return true if the part can be changed, false if it contains
+    an invalid character.
+    */
+   bool file( const String& value );
+  
+   /** Get the extension part. */
+   const String& ext() const { return m_extension; }
+   
+   /** Changes the extension part. 
+     \param value the new extension part.
+    \return true if the extension can be changed, false if it contains
+    an invalid character.
+    */
+   bool ext( const String& value );
+       
+   /** Get the resource specificator part (path to file) in RFC3986 format.
+   */
+   const String& resource() const { return m_device; }
+   
+   /** Sets the resource specificator part in RFC3986 format. 
+    \param dev the new resource.
+    
+    The device is the part of the path that indicates a unit,
+    a device or a generic resource indicator (e.g. C for "C:\\" on
+    windows).
+    
+    The dev parameter cannot have any separator (colon, slashes, semicolon,
+    dots).
+    */
+   bool resource( const String &dev );
+      
+
+   //=========================================================
+   // Andvanced utilities.
+   //
+
+   /** Returns a path in MS-Windows format. 
+    \return The path stored in this object in MS-Windows path format.
+    \note This method returns a temporary string. Use with care.
+    */
+   
+   String getWinFormat() const { String fmt; getWinFormat( fmt ); return fmt; }
+   
+   /** Stores this path in windows format in a given string. 
+    \param str Where to store the path in windows format.
+    */
+   void getWinFormat( String &str ) const;
+
+
+   /** Gets the location part, eventually including the resource specificator if present. 
+    \return 
+    */
+   String fulloc() const { String fmt; getFullLocation( fmt ); return fmt; }
+   
+   /** Gets the location part, eventually including the resource specificator if present. 
+    \param str Where to store the full location (device + path).
+    */
+   bool getFullLocation( String &str ) const;
+
 
    /** Get the location part (path to file) in MS-Windows format. */
    String getWinLocation() const { String fmt; getWinLocation( fmt ); return fmt; }
@@ -153,45 +282,6 @@ public:
    /** returns the disk specificator + location (windows absolute path) */
    String getFullWinLocation() const { String fmt; getFullWinLocation( fmt ); return fmt; } 
 
-   /** Get the filename part.
-      This returns the file and extension parts separated by a '.'
-   */
-   String getFilename() const { String fmt; getFilename( fmt ); return fmt; }
-
-   /** Stores the filename part in a given string.
-      If the path has not a filename part, the string is also cleaned.
-      \param str the string where to store the filename part.
-      \return true if the path has a filename part.
-   */
-   bool getFilename( String &str ) const;
-
-   /** Get the file part alone (without extension). */
-   String getFile() const { String fmt; getFile( fmt ); return fmt; }
-
-   /** Get the file part alone (without extension).
-      If the path has not a filename part, the string is also cleaned.
-      \param str the string where to store the filename part.
-      \return true if the path has a filename part.
-   */
-   bool getFile( String &str ) const;
-
-
-   /** Get the extension part. */
-   String getExtension() const { String fmt; getExtension( fmt ); return fmt; }
-
-   /** Stores the extension part in a given string.
-      If the path has not a extension part, the string is also cleaned.
-      \param str the string where to store the extension part.
-      \return true if the path has a extension part.
-   */
-   bool getExtension( String &str ) const;
-
-   /** Sets the resource part. */
-   void setResource( const String &res );
-
-   /** Sets the location part in RFC3986 format. */
-   void setLocation( const String &loc );
-
    /** Sets both the resource and the location in one step. 
       If the parameter is empty, both location and resource are cleared.
       
@@ -204,30 +294,16 @@ public:
       \param floc Full location.
       \return true if correctly parsed.
    */
-   bool setFullLocation( const String &floc );
-
-   /** Sets the file part. */
-   void setFile( const String &file );
-
-   /** Sets the filename part (both file and extension). */
-   void setFilename( const String &fname );
-
-   /** Sets the extension part. */
-   void setExtension( const String &extension );
-
+   bool fulloc( const String &floc );
+   
    /** Returns true if this path is an absolute path. */
    bool isAbsolute() const;
 
    /** Returns true if this path defines a location without a file */
    bool isLocation() const;
 
-   /** Returns true if the path is valid.
-      Notice that an empty path is still valid.
-   */
-   bool isValid() const { return m_bValid; }
 
    /** Splits the path into its constituents.
-      This version would eventually put the resource part in the first parameter.
       \param loc a string where the location will be placed.
       \param name a string where the filename in this path will be placed.
       \param ext a string where the file extension will be placed.
@@ -235,6 +311,7 @@ public:
    void split( String &loc, String &name, String &ext );
 
    /** Splits the path into its constituents.
+      This version would eventually put the resource part in the first parameter.
       \param res a string where the resource locator will be placed.
       \param loc a string where the location will be placed.
       \param name a string where the filename in this path will be placed.
@@ -266,11 +343,13 @@ public:
       \param loc the path location of the file.
       \param name the filename.
       \param ext the file extension.
-      \param bWin true if the location may be in MS-Windows format (backslashes).
    */
    void join( const String &res, const String &loc, const String &name, const String &ext );
 
    /** Add a path element at the end of a path.
+    \param npath The new part of the path to add to the location.
+    \return true on success, false if the path is malformed.
+    
       This extens the path adding some path element after the currently
       existing location portion. Leading "/" in npath, or trailing "/" in this
       path are ignored, and a traling "/" is forcefully added if there is a file
@@ -280,13 +359,14 @@ public:
       /path/ => /path/p1/p2
       /path/file.txt => /path/p1/p2/file.txt
    */
-   void extendLocation( const String &npath );
+   bool extendLocation( const String &npath );
 
    Path & operator =( const Path &other ) { copy( other ); return *this; }
-   bool operator ==( const Path &other ) const { return other.m_path == m_path; }
-   bool operator !=( const Path &other ) const { return other.m_path != m_path; }
-   bool operator <( const Path &other ) const { return m_path < other.m_path; }
-
+   bool operator ==( const Path &other ) const { encode(); other.encode(); return other.m_encoded == m_encoded; }
+   bool operator !=( const Path &other ) const { encode(); other.encode(); return other.m_encoded != m_encoded; }
+   bool operator <( const Path &other ) const { encode(); other.encode(); return m_encoded < other.m_encoded; }
+   bool operator >( const Path &other ) const { encode(); other.encode(); return m_encoded < other.m_encoded; }
+   
 
    /** Converts an arbitrary MS-Windows Path to URI path.
     An URI valid path starts either with a filename or with a "/"
@@ -325,6 +405,19 @@ public:
     @see getWinFormat
    */
    static void uriToWin( String &path );
+   
+private:
+   mutable String m_encoded;
+   mutable String m_filename;
+   
+   String m_device;
+   String m_location;
+   String m_file;
+   String m_extension;
+
+   bool m_bValid;
+
+   void encode_internal() const;
 };
 
 }

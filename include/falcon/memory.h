@@ -17,7 +17,6 @@
 #define flc_MEMORY_H
 
 #include <falcon/setup.h>
-#include <falcon/globals.h>
 #include <stdlib.h>
 
 /** \file
@@ -45,6 +44,10 @@
 */
 
 namespace Falcon {
+
+FALCON_DYN_SYM extern void * (*memAlloc) ( size_t );
+FALCON_DYN_SYM extern void (*memFree) ( void * );
+FALCON_DYN_SYM extern void * (*memRealloc) ( void *,  size_t );
 
 /** Account allocated memory.
    Allocators creating Falcon object should call this function to inform the GC system

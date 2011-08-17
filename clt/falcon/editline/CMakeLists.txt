@@ -6,7 +6,6 @@ set(HAVE_CURSES_H ${CURSES_HAVE_CURSES_H})
 set(HAVE_NCURSES_H ${CURSES_HAVE_NCURSES_H} )
 
 add_subdirectory(src)
-#add_subdirectory(examples)
 
 include(CheckIncludeFile)
 include(CheckFunctionExists)

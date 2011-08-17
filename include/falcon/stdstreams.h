@@ -1,49 +1,89 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: vm_stdstreams.h
+   FILE: stdstreams.h
 
-   System dependant default I/O streams.
+   System default I/O streams.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
-   Begin: ven ago 25 2006
+   Begin: Sun, 13 Mar 2011 20:06:59 +0100
 
    -------------------------------------------------------------------
-   (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
+   (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
 */
 
-/** \file
-   System dependant default I/O streams.
-   This file contains the declaration of the standard streams that will fill
-   VM and other systems basic I/O systems and that may be system dependant.
-*/
 
-#ifndef flc_stdstreams_H
-#define flc_stdstreams_H
+#ifndef _FALCON_STDSTREAMS_H_
+#define _FALCON_STDSTREAMS_H_
 
+#include <falcon/fstream.h>
 
 namespace Falcon {
 
-class Stream;
 
-   /** System specific input stream factory function.
-      This function will return a text oriented input stream.
-   */
-   FALCON_DYN_SYM Stream *stdInputStream();
-   /** System specific output stream factory function. */
-   FALCON_DYN_SYM Stream *stdOutputStream();
-   /** System specific error stream factory function. */
-   FALCON_DYN_SYM Stream *stdErrorStream();
+/** Standard Input Stream proxy.
+   This proxy opens a dupped stream that interacts with the standard stream of the process.
+   The application (and the VM, and the scripts too) may open and close an arbitrary number of
+   instances of this class.
 
-   /** Default text converter.
-      Depending on the system, this method will wrap the underlying stream in a EOL transcoder
-      or it will just return it.
-   */
-   FALCON_DYN_SYM Stream *DefaultTextTranscoder( Stream *underlying, bool own = true );
+ \note A single instance of this class may take ownership of the process standard stream passing the
+ constructor parameter as false.
 
-   /** Adds just the sytem default EOL transcoding policy. */
-   FALCON_DYN_SYM Stream *AddSystemEOL( Stream *underlying, bool own = true );
+*/
+class FALCON_DYN_CLASS StdInStream: public ReadOnlyFStream
+{
+public:
+   StdInStream( bool bDup = true );
+   virtual ~StdInStream() {}
+
+};
+
+/** Standard Output Stream proxy.
+   This proxy opens a dupped stream that interacts with the standard stream of the process.
+   The application (and the VM, and the scripts too) may open and close an arbitrary number of
+   instances of this class.
+
+
+    \note A single instance of this class may take ownership of the process standard stream passing the
+ constructor parameter as false.
+*/
+class FALCON_DYN_CLASS StdOutStream: public WriteOnlyFStream
+{
+public:
+   /** Creates a stream writing to the standard error stream of the host process.
+
+    If bDup is set to false, close() will actually close the process stream.
+
+    \param bDup pass as false to take the ownership of the underlying stream.
+    */
+   StdOutStream( bool bDup = true);
+   virtual ~StdOutStream() {}
+
+};
+
+/** Standard Error Stream proxy.
+   This proxy opens a dupped stream that interacts with the standard stream of the process.
+   The application (and the VM, and the scripts too) may open and close an arbitrary number of
+   this instances, without interfering each other.
+
+   If a script, the VM or an embedding application (that wishes to do it through Falcon portable
+   xplatform API) needs to close the standard stream, then it must create and delete (or simply close)
+   an instance of RawStdxxxStream.
+*/
+class FALCON_DYN_CLASS StdErrStream: public WriteOnlyFStream
+{
+public:
+   /** Creates a stream writing to the standard error stream of the host process.
+
+    If bDup is set to false, close() will actually close the process stream.
+
+    \param bDup pass as false to take the ownership of the underlying stream.
+    */
+   StdErrStream( bool bDup = true );
+   virtual ~StdErrStream() {}
+
+};
 
 }
 

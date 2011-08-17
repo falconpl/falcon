@@ -30,6 +30,7 @@
 #include <falcon/sys.h>
 #include <falcon/string.h>
 #include <falcon/memory.h>
+#include <falcon/path.h>
 #include <errno.h>
 #include <time.h>
 
@@ -356,7 +357,51 @@ int64 _getpid() {
 
 long _getPageSize()
 {
-   return WIN_PAGE_SIZE;
+   SYSTEM_INFO si;
+   GetSystemInfo( &si );
+
+   return (long) si.dwPageSize;
+}
+
+
+bool _getCWD( String& name )
+{
+   DWORD size = GetCurrentDirectory( 0, NULL );
+   if( size == 0 ) 
+   {
+      return false;
+   }
+
+   DWORD bufSize = size * sizeof( wchar_t ) + sizeof( wchar_t );
+   wchar_t *buffer = (wchar_t *) memAlloc( bufSize );
+   size = GetCurrentDirectoryW( bufSize, buffer );
+
+   if( size == 0 && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED )
+   {
+      char *buffer_c = (char *) buffer;
+      size = GetCurrentDirectory( bufSize, buffer_c );
+
+      if( size == 0 )
+      {
+         memFree( buffer );
+         return false;
+      }
+
+      name.adopt( buffer_c, size, bufSize );
+      Path::winToUri( name );
+      return true;
+   }
+
+   if( size == 0 ) 
+   {
+      memFree( buffer );
+      return false;
+   }
+
+   name.adopt( buffer, size, bufSize );
+   Path::winToUri( name );
+
+   return true;
 }
 
 }

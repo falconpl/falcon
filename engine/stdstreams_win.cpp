@@ -1,6 +1,6 @@
 /*
    FALCON - The Falcon Programming Language
-   FILE: vm_stdstreams_win.cpp
+   FILE: stdstreams_win.cpp
 
    Windows specific standard streams factories.
    -------------------------------------------------------------------
@@ -13,114 +13,56 @@
    See LICENSE file for licensing details.
 */
 
-/** \file
-   Windows specifi standard streams factories.
-   Actually, the same as unix, but using also the CRLF transcoder.
-*/
 
-#include <falcon/fstream.h>
-#include <falcon/transcoding.h>
 #include <falcon/stdstreams.h>
-#include <falcon/streambuffer.h>
+#include <falcon/fstream_win.h>
+#include <falcon/ioerror.h>
+
+#include <windows.h>
 
 namespace Falcon {
 
-Stream *stdInputStream()
+inline WinFStreamData* make_handle( HANDLE orig_handle, bool bDup )
 {
-   Stream *stdin = new StreamBuffer( new StdInStream );
-   String enc;
-
-   Falcon::Transcoder *coder;
-
-   if ( Falcon::GetSystemEncoding( enc ) )
+   HANDLE hTarget;
+   
+   if ( bDup )
    {
-      coder =  Falcon::TranscoderFactory( enc );
-      if ( coder == 0 ) {
-         coder = new TranscoderByte(0);
+      HANDLE curProc = GetCurrentProcess();
+      BOOL bRes = ::DuplicateHandle(
+                    curProc, 
+                    orig_handle, 
+                    curProc,
+                    &hTarget, 
+                    0,
+                    FALSE,
+                    DUPLICATE_SAME_ACCESS);
+      if( ! bRes )
+      {
+         throw new IOError( ErrorParam(e_io_dup, __LINE__, __FILE__)
+            .sysError(::GetLastError()) );
       }
    }
    else
-      coder = new TranscoderByte(0);
-
-   coder->setUnderlying( stdin, true );
-   /*Falcon::Transcoder *wincoder = new TranscoderEOL(0);
-   wincoder->setUnderlying( coder, true );*/
-   return coder;
-}
-
-
-
-Stream *stdOutputStream()
-{
-   Stream *stdout = new StreamBuffer( new StdOutStream );
-   String enc;
-
-   Falcon::Transcoder *coder;
-
-   if ( Falcon::GetSystemEncoding( enc ) )
    {
-      coder =  Falcon::TranscoderFactory( enc );
-      if ( coder == 0 ) {
-         coder = new TranscoderByte(0);
-      }
-   }
-   else
-      coder = new TranscoderByte(0);
-
-   coder->setUnderlying( stdout, true );
-   Falcon::Transcoder *wincoder = new TranscoderEOL(0);
-   wincoder->setUnderlying( coder, true );
-   return wincoder;
-
-}
-
-Stream *stdErrorStream()
-{
-   Stream *stderr = new StreamBuffer( new StdErrStream );
-   String enc;
-
-   Falcon::Transcoder *coder;
-
-   if ( Falcon::GetSystemEncoding( enc ) )
-   {
-      coder =  Falcon::TranscoderFactory( enc );
-      if ( coder == 0 ) {
-         coder = new TranscoderByte(0);
-      }
-   }
-   else
-      coder = new TranscoderByte(0);
-
-   coder->setUnderlying( stderr, true );
-   Falcon::Transcoder *wincoder = new TranscoderEOL(0);
-   wincoder->setUnderlying( coder, true );
-   return wincoder;
-}
-
-Stream *DefaultTextTranscoder( Stream *underlying, bool own )
-{
-   String encoding;
-   if ( ! GetSystemEncoding( encoding ) )
-   {
-      Falcon::Transcoder *wincoder = new TranscoderEOL(0);
-      wincoder->setUnderlying( underlying, own );
-      return wincoder;
+      hTarget = orig_handle;
    }
 
-   Transcoder *encap = TranscoderFactory( encoding );
-   encap->setUnderlying( underlying, own );
-
-   // the wincoder owns the underlying for sure.
-   Falcon::Transcoder *wincoder = new TranscoderEOL(0);
-   wincoder->setUnderlying( encap, true );
-
-   return wincoder;
+   return new WinFStreamData( hTarget, false );
 }
 
-Stream *AddSystemEOL( Stream *underlying, bool own )
-{
-   return new TranscoderEOL( underlying, own );
-}
+
+StdInStream::StdInStream( bool bDup ):
+ReadOnlyFStream(make_handle(GetStdHandle(STD_INPUT_HANDLE), bDup ))
+{}
+
+StdOutStream::StdOutStream( bool bDup ):
+   WriteOnlyFStream(make_handle(GetStdHandle(STD_OUTPUT_HANDLE), bDup ))
+{}
+
+StdErrStream::StdErrStream( bool bDup ):
+   WriteOnlyFStream(make_handle(GetStdHandle(STD_ERROR_HANDLE), bDup ))
+{}
 
 }
 

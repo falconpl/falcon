@@ -1,24 +1,21 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: file_string.h
+   FILE: stringstream.h
 
-   Management of membuffer strings; directly included by file_base.h
+   Straem for stream-like I/O to memory.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
-   Begin: sab nov 13 2004
+   Begin: Sun, 17 Apr 2011 21:57:04 +0200
 
    -------------------------------------------------------------------
-   (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
+   (C) Copyright 2011: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
 */
 
-/** \file
-   Management of membuffer strings; directly included by file_base.h.
-*/
 
-#ifndef flc_file_string_H
-#define flc_file_string_H
+#ifndef _FALCON_STRINGSTREAM_H
+#define _FALCON_STRINGSTREAM_H
 
 #include <falcon/string.h>
 #include <falcon/stream.h>
@@ -27,37 +24,17 @@ namespace Falcon {
 
 class FALCON_DYN_CLASS StringStream: public Stream
 {
-private:
-   class Buffer;
-   Buffer* m_b;
-   
-   
-protected:
-   uint64 m_lastError;
-   uint32 m_pos;
-   virtual int64 seek( int64 pos, e_whence whence );
-   
-   void setBuffer( const String &source );
-   void setBuffer( const char* source, int size=-1 );
-   bool detachBuffer();
-   
-   bool subWriteString( const String &source );
 public:
    StringStream( int32 size=0 );
    StringStream( const String &strbuf );
    StringStream( const StringStream &strbuf );
-
    virtual ~StringStream();
 
    virtual bool close();
-   virtual int32 read( void *buffer, int32 size );
-   virtual bool readString( String &dest, uint32 size );
-   virtual int32 write( const void *buffer, int32 size );
-   virtual bool writeString( const String &source, uint32 begin = 0, uint32 end = csh::npos );
-   virtual bool put( uint32 chr );
-   virtual bool get( uint32 &chr );
-   virtual int32 readAvailable( int32 msecs, const Sys::SystemData *sysData = 0 );
-   virtual int32 writeAvailable( int32 msecs, const Sys::SystemData *sysData = 0 );
+   virtual size_t read( void *buffer, size_t size );
+   virtual size_t write( const void *buffer, size_t size );
+   virtual size_t readAvailable( int32 msecs_timeout=0 );
+   virtual size_t writeAvailable( int32 msecs_timeout=0 );
 
    virtual int64 tell();
    virtual bool truncate( int64 pos=-1 );
@@ -66,13 +43,11 @@ public:
    uint32 allocated() const;
    byte *data() const;
 
-   virtual bool errorDescription( ::Falcon::String &description ) const;
-
    /** Transfers a string stream buffer into this one.
       The original buffer is emptied, and this buffer aqcuires the
       same status, allocation and contents of the other one.
    */
-   void transfer( StringStream &strbuf );
+   void transferFrom( StringStream &strbuf );
 
    /** Gets a string copying the content of the stream.
       The memory that is currently held in this object is copied in a string.
@@ -95,19 +70,6 @@ public:
       return temp;
    }
    
-   /** Gets a string copying the content of the stream, allocating in the garbage the target string.
-      The memory that is currently held in this object is copied in a string.
-      Read-write operations can then continue, and the status of the object
-      is not changed.
-      \return a string containing all the data in the stream (may be empty, but not 0).
-   */
-   CoreString *getCoreString() const
-   {
-      CoreString *temp = new CoreString;
-      getString( *temp );
-      return temp;
-   }
-
 
    /** Gets the phisical memory created by this object and turns it into a string.
       The memory that has been created by the stream-like operations is directly
@@ -121,11 +83,6 @@ public:
    */
    String *closeToString();
    
-   /** Gets the phisical memory created by this object and turns it into a newly created garbage collected string.
-      \see closeToString()
-      \return a string containing all the data in the stream.
-   */
-   CoreString *closeToCoreString();
    
    /** Gets the phisical memory created by this object and turns it into a string.
       This version of the method stores the phisical memory in the given string,
@@ -144,14 +101,26 @@ public:
       \return a byte * that will receive the internally created data.
    */
    byte  *closeToBuffer();
-
-   virtual int64 lastError() const;
+  
    virtual StringStream *clone() const;
-   virtual void gcMark( uint32 mark ) {}
+  
+protected:
+   int64 m_pos;
+   virtual int64 seek( int64 pos, e_whence whence );
+
+   void setBuffer( const String &source );
+   void setBuffer( const char* source, int size=-1 );
+   bool detachBuffer();
+
+   bool subWriteString( const String &source );
+
+private:
+   class Buffer;
+   Buffer* m_b;
 };
 
 }
 
 #endif
 
-/* end of file_string.h */
+/* end of stringstream.h */

@@ -5,10 +5,10 @@
    Options storage for falcon compiler.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
-   Begin: ven set 10 2004
+   Begin: Tue, 26 Jul 2011 10:31:32 +0200
 
    -------------------------------------------------------------------
-   (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
+   (C) Copyright 2011: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
 */
@@ -17,26 +17,27 @@
    Options storage for falcon compiler.
 */
 
-#ifndef flc_options_H
-#define flc_options_H
+#ifndef _FALCON_OPTIONS_H_
+#define _FALCON_OPTIONS_H_
 
 #include <falcon/string.h>
-#include <falcon/genericlist.h>
+
+#include <list>
+#include <map>
 
 namespace Falcon {
 
-/** Options storage for falcon compiler
+/** Options storage for falcon compiler.
+ 
    This class is just a nice place to store options for the compiler and their defaults.
 */
 
 class FalconOptions
 {
-   void modalGiven();
-   bool m_modal;
-   bool m_justinfo;
-
 public:
-
+   typedef std::list<String> StringList;
+   typedef std::map<String, String> StringMap;
+   
    String input;
    String output;
    String load_path;
@@ -47,20 +48,19 @@ public:
    String trace_file;
 #endif
 
-   List preloaded;
-   List directives;
-   List defines;
-
+   StringMap directives;
+   StringMap defines;
+   StringList preloaded;
+   
    bool compile_only;
    bool run_only;
    bool tree_out;
-   bool assemble_out;
+   
    bool search_path;
    bool force_recomp;
    bool check_memory;
 
-   bool comp_memory;
-   bool recompile_on_load;
+   bool ignore_sources;
    bool save_modules;
    bool wait_after;
    bool parse_ftd;
@@ -81,6 +81,14 @@ public:
 
    /** Returns true if the parsed options required an immediate exit. */
    bool wasJustInfo() const { return m_justinfo; }
+
+public:
+   void modalGiven();
+   void parseDirective( const String& str );
+   void parseDefine( const String& str );   
+   void parseEqString( const String& str, String& key, String& value );
+   bool m_modal;
+   bool m_justinfo;
 };
 
 } // namespace Falcon

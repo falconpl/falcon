@@ -13,15 +13,21 @@
    See LICENSE file for licensing details.
 */
 
-#ifndef HT_TYPES_H
-#define HT_TYPES_H
+#ifndef _FALCON_TYPES_H
+#define _FALCON_TYPES_H
 
 #include <falcon/setup.h>
+
+// Inclusion of stddef for size_t
+#include <stddef.h>
+#include <sys/types.h>
 
 namespace Falcon
 {
 
 class EngineData;
+class VMachine;
+class Module;
 
 typedef char *   cstring;
 
@@ -51,8 +57,15 @@ typedef long long int int64;
 typedef double numeric;
 typedef void * voidp;
 
-class VMachine;
-class Module;
+// length used in all the sizes
+typedef uint32 length_t;
+typedef uint32 char_t;
+
+//#if !defined(off_t) && !defined(_OFF_T)
+//#define off_t int64
+//#endif
+typedef int64 off_t;
+
 
 typedef void ( CDECL *ext_func_t) ( VMachine *);
 typedef bool ( CDECL *ext_func_frame_t) ( VMachine * );

@@ -17,87 +17,87 @@
 #define FALCON_ITEMARRAY_H_
 
 #include <falcon/setup.h>
-#include <falcon/sequence.h>
+#include <falcon/types.h>
 #include <falcon/item.h>
-#include <falcon/iterator.h>
 
 namespace Falcon
 {
 
-class CoreArray;
-class CoreTable;
+class Item;
 
-class FALCON_DYN_CLASS ItemArray: public Sequence
+class FALCON_DYN_CLASS ItemArray
 {
-   uint32 m_alloc;
-   uint32 m_size;
-   Item *m_data;
-   uint32 m_growth;
-   Garbageable* m_owner;
-   
-   // point starting from which the iterators to this sequence are invalidated (included).
-   // needs no initialization
-   uint32 m_invalidPoint;
-
-   friend class CoreArray;
-   friend class CoreTable;
-
-   ItemArray( Item *buffer, uint32 size, uint32 alloc );
-   
-   /** Classed used internally to track loops in traversals. */
-   class Parentship
-   {
-   public:
-      const ItemArray* m_array;
-      Parentship* m_parent;
-      
-      Parentship( const ItemArray* d, Parentship* parent=0 ):
-         m_array(d),
-         m_parent( parent )
-      {}
-   };
-   
-   int compare( const ItemArray& other, Parentship* parent ) const;
-
 
 public:
    ItemArray();
    ItemArray( const ItemArray& other );
-   ItemArray( uint32 prealloc );
+   ItemArray( length_t prealloc );
 
    virtual ~ItemArray();
 
-   virtual const Item &front() const { return m_data[0]; }
-   virtual const Item &back() const { return m_data[m_size-1]; }
-
    Item *elements() const { return m_data; }
    void elements( Item *d ) { m_data = d; }
-   uint32 allocated() const { return m_alloc; }
-   uint32 length()  const { return m_size; }
-   void length( uint32 size ) { m_size = size; }
-   void allocated( uint32 size ) { m_alloc = size; }
+   length_t allocated() const { return m_alloc; }
+   length_t length()  const { return m_size; }
+   void length( length_t size ) { m_size = size; }
+   void allocated( length_t size ) { m_alloc = size; }
 
-   virtual void clear() { m_size = 0; }
-   virtual bool empty() const { return m_size == 0; }
+   void clear() { m_size = 0; }
+   bool empty() const { return m_size == 0; }
 
-   virtual void gcMark( uint32 mark );
-   virtual ItemArray *clone() const ;
+   /** Appends an item to the array.
+      \param ndata The item to be added.
+      \note The item in ndata will not have the Item::copied() bit set.
+    */
+   void append( const Item &ndata );
 
-   virtual void append( const Item &ndata );
-   virtual void prepend( const Item &ndata );
+   /** Prepends an item to the array.
+      \param ndata The item to be added.
+      \note The item in ndata will not have the Item::copied() bit set.
+    */
+   void prepend( const Item &ndata );
 
+   /** Apeends all the items in an array to this array.
+      \param other The other array.
+      \note All the merged items will have the Item::copied() bit set.
+    */
    void merge( const ItemArray &other );
+
+   /** Prepends all the items from an array to this array.
+      \param other The other array.
+      \note All the merged items will have the Item::copied() bit set.
+    */
    void merge_front( const ItemArray &other );
 
-   bool insert( const Item &ndata, int32 pos );
-   bool insert( const ItemArray &other, int32 pos );
-   bool remove( int32 pos );
-   bool remove( int32 first, int32 last );
-   bool change( const ItemArray &other, int32 begin, int32 end );
-   int32 find( const Item &itm ) const;
-   bool insertSpace( uint32 pos, uint32 size );
+   /** Inserts an item into the array.
+      \param ndata The item to be added.
+      \param pos The position at which the item will be inserted.
+      \return false if \b pos is out of range.
+    
+    If \b pos is 0, the item will be inserted at the beginning of the
+    array. If it's equal to length(), then the item will be appended at the end.
 
-   void resize( uint32 size );
+      \note The item in ndata will not have the Item::copied() bit set.
+    */
+   bool insert( const Item &ndata, length_t pos );
+   
+   /** Insert another array at a given position.
+      \param other the other array from which items will be copied
+      \param pos the position at which the array will be inserted.
+
+    If \b pos is 0, the items will be inserted at the beginning of the
+    target array. If it's equal to length(), then the items will be appended at the end.
+
+      \note  All the merged items will not have the Item::copied() bit set.
+    */
+   bool insert( const ItemArray &other, length_t pos );
+   bool remove( length_t pos );
+   bool remove( length_t first, length_t count );
+   bool change( const ItemArray &other, length_t begin, length_t count );
+   int32 find( const Item &itm ) const;
+   bool insertSpace( length_t pos, length_t size );
+
+   void resize( length_t size );
 
    /* Returns a loop-free deep compare of the array. 
       The return value is the compare value of the first
@@ -110,9 +110,18 @@ public:
     * Reduce the memory used by this array to exactly its size.
     */
    void compact();
-   void reserve( uint32 size );
+   /** Reserve enough space as required.
+    \param size the amount of space needed.
+    */
+   void reserve( length_t size );
 
-   ItemArray *partition( int32 start, int32 end ) const;
+   /** Generate a sub-array.
+    \param start The first element to be taken.
+    \param count Number of elements to take.
+    \param bReverse if true, the returned partition will be reversed.
+    \return a newly allocated ItemArray.
+    */
+   ItemArray *partition( length_t start, length_t count, bool bReverse = false ) const;
 
    /** Copy part or all of another vector on this vector.
 
@@ -136,7 +145,7 @@ public:
        \param first The first element in the array to be copied.
        \param amount Number of elements to be copied.
     */
-   bool copyOnto( uint32 from, const ItemArray& src, uint32 first=0, uint32 amount=0xFFFFFFFF );
+   bool copyOnto( length_t from, const ItemArray& src, length_t first=0, length_t amount=0xFFFFFFFF );
 
    /** Copy part or all of another vector on this vector.
 
@@ -145,35 +154,28 @@ public:
        \param first The first element in the array to be copied.
        \param amount Number of elements to be copied.
     */
-   bool copyOnto( const ItemArray& src, uint32 first=0, uint32 amount=0xFFFFFFFF )
+   bool copyOnto( const ItemArray& src, length_t first=0, length_t amount=0xFFFFFFFF )
    {
       return copyOnto( 0, src, first, amount );
    }
 
-   inline virtual const Item &at( int32 pos ) const
-   {
-      if ( pos < 0 )
-         pos = m_size + pos;
-      if ( pos < 0 || pos > (int32) m_size )
-         throw "Invalid range while accessing Falcon::CoreArray";
-      return m_data[pos];
-   }
-
-   inline virtual Item &at( int32 pos )
-   {
-      if ( pos < 0 )
-         pos = m_size + pos;
-      if ( pos < 0 || pos > (int32)m_size )
-         throw "Invalid range while accessing Falcon::CoreArray";
-      return m_data[pos];
-   }
-
-   inline Item &operator[]( int32 pos ) throw()
+   /** Returns the element at nth position. */
+   inline const Item &at( length_t pos ) const
    {
       return m_data[pos];
    }
 
-   inline const Item &operator[]( int32 pos ) const throw()
+   inline Item &at( length_t pos )
+   {
+      return m_data[pos];
+   }
+
+   inline Item &operator[]( length_t pos )
+   {
+      return m_data[pos];
+   }
+
+   inline const Item &operator[]( length_t pos ) const
    {
       return m_data[pos];
    }
@@ -184,28 +186,46 @@ public:
     * @param count numbrer of elements
     * @return the amout of bytes needed to store the elements
     */
-   int32 esize( int32 count=1 ) const { return sizeof( Item ) * count; }
+   static int32 esize( int32 count=1 ) { return sizeof( Item ) * count; }
 
-   //========================================================
-   // Iterator implementation.
-   //========================================================
-protected:
+   /** Performs a flat copy of this item array.
+    \return A newly allocated item array.
+    \note All the items in this array, if any, are marked as copied.
+    */
+   ItemArray* clone() const { return new ItemArray(*this); }
 
-   virtual void getIterator( Iterator& tgt, bool tail = false ) const;
-   virtual void copyIterator( Iterator& tgt, const Iterator& source ) const;
-
-   virtual void insert( Iterator &iter, const Item &data );
-   virtual void erase( Iterator &iter );
-   virtual bool hasNext( const Iterator &iter ) const;
-   virtual bool hasPrev( const Iterator &iter ) const;
-   virtual bool hasCurrent( const Iterator &iter ) const;
-   virtual bool next( Iterator &iter ) const;
-   virtual bool prev( Iterator &iter ) const;
-   virtual Item& getCurrent( const Iterator &iter );
-   virtual Item& getCurrentKey( const Iterator &iter );
-   virtual bool equalIterator( const Iterator &first, const Iterator &second ) const;
+   /** Marks all the items in this array.
+    \param mark
+    */
+   void gcMark( uint32 mark );
    
-   virtual bool onCriterion( Iterator* elem ) const;
+   uint32 currentMark() const { return m_mark; }
+private:
+   length_t m_alloc;
+   length_t m_size;
+   Item *m_data;
+   length_t m_growth;
+   uint32 m_mark;
+
+   ItemArray( Item *buffer, length_t size, length_t alloc );
+
+   /** Classed used internally to track loops in traversals. */
+   class Parentship
+   {
+   public:
+      const ItemArray* m_array;
+      Parentship* m_parent;
+
+      Parentship( const ItemArray* d, Parentship* parent=0 ):
+         m_array(d),
+         m_parent( parent )
+      {}
+   };
+
+   int compare( const ItemArray& other, Parentship* parent ) const;
+
+   class Helper;
+   friend class Helper;
 };
 
 }

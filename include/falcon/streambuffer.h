@@ -69,8 +69,8 @@ public:
    virtual bool close();
    virtual int64 tell();
    virtual bool truncate( int64 pos=-1 );
-   virtual int32 readAvailable( int32 msecs_timeout, const Sys::SystemData *sysData = 0 );
-   virtual int32 writeAvailable( int32 msecs_timeout, const Sys::SystemData *sysData );
+   //virtual int32 readAvailable( int32 msecs_timeout, const Sys::SystemData *sysData = 0 );
+   //virtual int32 writeAvailable( int32 msecs_timeout, const Sys::SystemData *sysData );
    virtual bool flush();
    
    virtual bool get( uint32 &chr );
@@ -78,10 +78,7 @@ public:
    virtual int32 read( void *buffer, int32 size );
    virtual int32 write( const void *buffer, int32 size );
 
-   virtual bool errorDescription( ::Falcon::String &description ) const {
-      return m_stream->errorDescription( description );
-   }
-   virtual int64 lastError() const { return m_stream->lastError(); }
+   virtual size_t lastError() const { return m_stream->lastError(); }
    virtual t_status status() const { return m_stream->status(); }
    virtual void status(t_status s) { return m_stream->status(s); }
    

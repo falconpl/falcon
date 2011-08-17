@@ -1,14 +1,14 @@
 /*
-   FALCON - The Falcon Programming Language
+   FALCON - The Falcon Programming Language.
    FILE: stream.cpp
 
-   Implementation of common stream utility functions
+   Base class for I/O operations.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
-   Begin: ven ago 25 2006
+   Begin: Sat, 12 Mar 2011 13:00:57 +0100
 
    -------------------------------------------------------------------
-   (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
+   (C) Copyright 2011: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
 */
@@ -18,247 +18,33 @@
 */
 
 #include <falcon/stream.h>
-#include <falcon/memory.h>
-
-#include <string.h>
+#include <falcon/error.h>
+#include <falcon/unsupportederror.h>
 
 namespace Falcon {
 
+Stream::Stream():
+   m_status( t_none ),
+   m_lastError( 0 ),
+   m_bShouldThrow( false )
+{}
+
 Stream::Stream( const Stream &other ):
-   m_rhBufferSize( other.m_rhBufferSize ),
-   m_rhBufferPos( other.m_rhBufferPos ),
-   m_streamType( other.m_streamType ),
    m_status( other.m_status ),
-   m_lastMoved( other.m_lastMoved )
-{
-   if ( m_rhBufferSize != 0 )
-   {
-      m_rhBuffer = (uint32 *) memAlloc( m_rhBufferSize * sizeof( uint32 ) );
-      memcpy( m_rhBuffer, other.m_rhBuffer, m_rhBufferSize * sizeof( uint32 ) );
-   }
-   else
-      m_rhBuffer = 0;
-}
-
-bool Stream::errorDescription( ::Falcon::String &description ) const
-{
-   if ( m_status == t_unsupported ) {
-      description = "Unsupported operation for this stream";
-      return true;
-   }
-
-	return false;
-}
+   m_lastError( other.m_lastError ),
+   m_bShouldThrow(other.m_bShouldThrow)
+{}
 
 Stream::~Stream()
 {
-   if ( m_rhBuffer != 0 )
-      memFree( m_rhBuffer );
 }
 
-//=================
-// Private members
-
-void Stream::pushBuffer( uint32 chr )
+void Stream::throwUnsupported()
 {
-   if ( m_rhBufferPos == m_rhBufferSize )
-   {
-      m_rhBufferSize += FALCON_READAHEAD_BUFFER_BLOCK;
-      uint32 *buf = (uint32 *) memRealloc( m_rhBuffer, m_rhBufferSize *sizeof(uint32) );
-      m_rhBuffer = buf;
-   }
-   m_rhBuffer[ m_rhBufferPos ] = chr;
-   m_rhBufferPos ++;
-   reset();
-}
-
-bool Stream::popBuffer( uint32 &chr )
-{
-   if( m_rhBufferPos == 0 )
-      return false;
-   m_rhBufferPos--;
-   chr = m_rhBuffer[ m_rhBufferPos ];
-   return true;
-}
-
-//======================
-// Public members
-
-
-void Stream::unget( const String &target )
-{
-   uint32 pos = target.length();
-   while( pos > 0 )
-   {
-      pos--;
-      unget( target.getCharAt( pos ) );
-   }
-}
-
-bool Stream::readAhead( uint32 &chr )
-{
-   if( popBuffer( chr ) )
-      return true;
-
-   if ( ! get( chr ) )
-      return false;
-
-   unget( chr );
-   return true;
-}
-
-bool Stream::readAhead( String &target, uint32 size )
-{
-   if ( readString( target, size ) )
-      return false;
-   unget( target );
-   return true;
-}
-
-void Stream::discardReadAhead( uint32 count )
-{
-   if( count == 0 || count >= m_rhBufferPos )
-      m_rhBufferPos = 0;
-   else
-      m_rhBufferPos -= count;
-}
-
-bool Stream::flush()
-{
-   // does nothing
-   return true;
-}
-
-bool Stream::readString( String &target, uint32 size )
-{
-   if ( size == 0 )
-      return true;
-
-   uint32 chr;
-
-   // if we can't get EVEN a char, return false.
-   if( ! get( chr ) || ! good() )
-      return false;
-
-   target.append( chr );
-   size --;
-   while( size > 0 )
-   {
-      // if we can't get a char, return false on stream error.
-      if ( ! get( chr ) )
-         return good();
-
-      target.append( chr );
-      size --;
-   }
-
-   return true;
-}
-
-bool Stream::writeString( const String &source, uint32 begin, uint32 end )
-{
-   uint32 pos = begin;
-   if ( end > source.length() )
-      end = source.length();
-
-   while( pos < end ) {
-      // some error in writing?
-      if ( ! put( source.getCharAt( pos ) ) )
-         return false;
-
-      ++pos;
-   }
-
-   return true;
-}
-
-
-
-
-//======================================
-// Overridables
-//
-
-Stream *Stream::clone() const
-{
-   return 0;
-}
-
-bool Stream::close()
-{
-   status( t_unsupported );
-   return false;
-}
-
-
-int32 Stream::read( void *, int32 )
-{
-   status( t_unsupported );
-   return -1;
-}
-
-
-int32 Stream::write( const void *, int32 )
-{
-   status( t_unsupported );
-   return -1;
-}
-
-
-int64 Stream::tell()
-{
-   status( t_unsupported );
-   return -1;
-}
-
-
-bool Stream::truncate( int64 )
-{
-   status( t_unsupported );
-   return false;
-}
-
-
-int32 Stream::readAvailable( int32, const Sys::SystemData *sysData )
-{
-   status( t_unsupported );
-   return -1;
-}
-
-
-int32 Stream::writeAvailable( int32, const Sys::SystemData *sysData )
-{
-   status( t_unsupported );
-   return -1;
-}
-
-bool Stream::put( uint32 chr )
-{
-   status( t_unsupported );
-   return false;
-}
-
-
-int64 Stream::seek( int64 , e_whence )
-{
-   status( t_unsupported );
-   return -1;
-}
-
-
-int64 Stream::lastError() const
-{
-   return -1;
-}
-
-
-bool Stream::get( uint32 &chr )
-{
-   status( t_unsupported );
-   return false;
+   status( status() & t_unsupported );
+   throw new UnsupportedError( ErrorParam( e_io_unsup, __LINE__, __FILE__ ) );
 }
 
 }
-
 
 /* end of stream.cpp */

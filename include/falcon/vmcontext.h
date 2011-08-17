@@ -1,442 +1,1032 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: flc_vmcontext.h
+   FILE: vmcontext.h
 
-   Virtual Machine coroutine execution context.
+   Falcon virtual machine.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
-   Begin: mar nov 9 2004
+   Begin: Sat, 15 Jan 2011 11:36:42 +0100
 
    -------------------------------------------------------------------
-   (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
+   (C) Copyright 2011: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
 */
 
-/** \file
-   Virtual Machine coroutine execution context.
-*/
-
-#ifndef flc_vmcontext_H
-#define flc_vmcontext_H
+#ifndef FALCON_VMCONTEXT_H_
+#define FALCON_VMCONTEXT_H_
 
 #include <falcon/setup.h>
-#include <falcon/types.h>
-#include <falcon/genericvector.h>
-#include <falcon/genericlist.h>
-#include <falcon/basealloc.h>
-#include <falcon/livemodule.h>
-#include <falcon/stackframe.h>
+#include <falcon/item.h>
+#include <falcon/codeframe.h>
+#include <falcon/callframe.h>
+
+#include <falcon/paranoid.h>
 
 namespace Falcon {
 
-class Symbol;
-class Item;
-class VMSemaphore;
+class VMachine;
+class SynFunc;
+class StmtTry;
+class SynTree;
 
-/** Class representing a coroutine execution context. */
-class FALCON_DYN_CLASS VMContext: public BaseAlloc
+/**
+ * Structure needed to store VM data.
+ *
+ * Note, VMContext is better not to have virtual members.
+ *
+ */
+class FALCON_DYN_CLASS VMContext
 {
-   Item m_regA;
-   Item m_regB;
-
-   //Item m_regS1;
-   Item m_regL1;
-   Item m_regL2;
-   Item m_regBind;
-   Item m_regBindP;
-
-   VMSemaphore *m_sleepingOn;
-
-   /** Currently executed symbol.
-      May be 0 if the startmodule has not a "__main__" symbol;
-      this should be impossible when things are set up properly.
-   */
-   const Symbol* m_symbol;
-
-   /** Module that contains the currently being executed symbol. */
-   LiveModule *m_lmodule;
-
-   /** Point in time when this context is due to run again.
-    (this is an absolute measure).
-   */
-   numeric m_schedule;
-
-   int32 m_priority;
-
-   /** Program counter register.
-      Current execution point in current code.
-   */
-   uint32 m_pc;
-
-   /** Next program counter register.
-      This is the next instruction the VM has to execute.
-      Call returns and jumps can easily modify the VM execution flow by
-      changing this value, that is normally set just to m_pc + the length
-      of the current instruction.
-   */
-   uint32 m_pc_next;
-
-   /** Topmost try frame handler.
-    Inside a frame, the m_prevTryFrame points to the previous try frame, and
-    m_tryPos points to the position in the stack of the current frame where
-    the try try is to be restored.
-   */
-   StackFrame* m_tryFrame;
-
-   /** In atomic mode, the VM refuses to be kindly interrupted or to rotate contexts. */
-   bool m_atomicMode;
-
-   friend class VMSemaphore;
-
-   /** Stack of stack frames.
-    * The topmost stack frame is that indicated here.
-    */
-   StackFrame *m_frames;
-   StackFrame *m_spareFrames;
-
 public:
-   VMContext();
-   VMContext( const VMContext& other );
+   static const int INITIAL_STACK_ALLOC = 512;
+   static const int INCREMENT_STACK_ALLOC = 256;
+
+   VMContext( VMachine* owner = 0 );
    ~VMContext();
 
-   /** Wakes up the context after a wait. */
-   void wakeup( bool signaled = false );
-
-   void priority( int32 value ) { m_priority = value; }
-   int32 priority() const { return m_priority; }
-
-   void schedule( numeric value ) { m_schedule = value; }
-   numeric schedule() const { return m_schedule; }
-
-   /** Schedule this context after some time from now.
-      This function add the current system time to secs and
-      prepares this context to be scheduled after that absolute
-      time.
-
-      @param secs Number of seconds and fraction after current time.
-   */
-   void scheduleAfter( numeric secs );
-
-   /** Return true if this is waiting forever on a semaphore signal */
-   bool isWaitingForever() const { return m_sleepingOn != 0 && m_schedule < 0; }
-
-   VMSemaphore* waitingOn() const { return m_sleepingOn; }
-
-   void waitOn( VMSemaphore* sem, numeric value=-1 );
-   void signaled();
-
-   //===========================
-   uint32& pc() { return m_pc; }
-   const uint32& pc() const { return m_pc; }
-
-   uint32& pc_next() { return m_pc_next; }
-   const uint32& pc_next() const { return m_pc_next; }
-
-   StackFrame* tryFrame() const { return m_tryFrame; }
-
-   Item &regA() { return m_regA; }
-   const Item &regA() const { return m_regA; }
-   Item &regB() { return m_regB; }
-   const Item &regB() const { return m_regB; }
-
-   Item &regBind() { return m_regBind; }
-   const Item &regBind() const { return m_regBind; }
-   /*
-   Item &regBind() { return currentFrame()->m_binding; }
-   const Item &regBind() const { return currentFrame()->m_binding; }
-   */
-   Item &regBindP() { return m_regBindP; }
-   const Item &regBindP() const { return m_regBindP; }
-
-   Item &self() { return currentFrame()->m_self; }
-   const Item &self() const { return currentFrame()->m_self; }
-
-
-   /** Latch item.
-      Generated on load property/vector instructions, it stores the accessed object.
-   */
-   const Item &latch() const { return m_regL1; }
-   /** Latch item.
-      Generated on load property/vector instructions, it stores the accessed object.
-   */
-   Item &latch() { return m_regL1; }
-
-   /** Latcher item.
-      Generated on load property/vector instructions, it stores the accessor item.
-   */
-   const Item &latcher() const { return m_regL2; }
-   /** Latcher item.
-      Generated on load property/vector instructions, it stores the accessor item.
-   */
-   Item &latcher() { return m_regL2; }
-
-
-   //===========================================
-
-   const ItemArray& stack() const { return m_frames->stack(); }
-   ItemArray& stack() { return m_frames->stack(); }
-
-   VMSemaphore *sleepingOn() const { return m_sleepingOn; }
-   void sleepOn( VMSemaphore *sl ) { m_sleepingOn = sl; }
-
-   /** Returns the current module global variables vector. */
-   ItemArray &globals() { return m_lmodule->globals(); }
-
-   /** Returns the current module global variables vector (const version). */
-   const ItemArray &globals() const { return m_lmodule->globals(); }
-
-   /** Returns the currently active live module. */
-   LiveModule *lmodule() const { return m_lmodule; }
-
-   /** Changes the currently active live module. */
-   void lmodule(LiveModule *lm) { m_lmodule = lm; }
-
-   /** Returns the currently active symbol. */
-   const Symbol *symbol() const { return m_symbol; }
-
-   /** Changes the currently active symbol. */
-   void symbol( const Symbol* s ) { m_symbol = s; }
-
-   /** Returns the current code. */
-   byte* code() const {
-      fassert( symbol()->isFunction() );
-      return symbol()->getFuncDef()->code();
-   }
-
-   /** The currently active frame in this context */
-   StackFrame* currentFrame() const
+   void assign( VMachine* vm )
    {
-      return m_frames;
+      m_vm = vm;
    }
 
-   void setFrames( StackFrame* newTop )
+   VMachine* vm() const { return m_vm; }
+   
+   //=========================================================
+   // Varaibles - stack management
+   //=========================================================
+
+
+   /** Return the nth variable in the local context.
+    * Consider that:
+    * - 0 is self.
+    * - 1...N are the parameters
+    * - N+1... are local variables.
+    */
+   const Item& localVar( int id ) const
    {
-      m_frames = newTop;
+      return m_dataStack[ id + m_topCall->m_stackBase ];
    }
 
-   /** Creates a stack frame taking a certain number of parameters.
-      The stack is created so that it is ready to run the new context;
-      use addFrame to add it at a later moment, or prepareFrame to create
-      it and add it immediately.
-
-      \param paramCount number of parameters in the stack
-      \param frameEndFunc Callback function to be executed at frame end
-      \return The newly created or recycled stack frame.
-   */
-   StackFrame* createFrame( uint32 pcount, ext_func_frame_t frameEndFunc = 0 );
-
-   /** Creates a stack frame and adds it immediately to the stack list.
-
-      This call is equivalent to addFrame( callFrame( pcount, frameEndFunc) ).
-
-      \param paramCount number of parameters in the stack
-      \param frameEndFunc Callback function to be executed at frame end
-      \return The newly created or recycled stack frame.
-   */
-   inline StackFrame* prepareFrame( uint32 pcount, ext_func_frame_t frameEndFunc = 0 )
+   Item& localVar( int id )
    {
-      StackFrame* frame = createFrame( pcount, frameEndFunc );
-      addFrame( frame );
-      return frame;
+      return m_dataStack[ id + m_topCall->m_stackBase ];
    }
 
-   /** Adds a prepared stack frame on top of the frame list.
+   /** Return the nth parameter in the local context.
+   \param n The parameter number, starting from 0.
+   \return A pointer to the nth parameter in the stack, or 0 if out of range.
+    */
+   inline const Item* param( uint32 n ) const {
+      fassert(m_dataStack+(n + m_topCall->m_stackBase) < m_maxData );
+      if( m_topCall->m_paramCount <= n ) return 0;
+      return &m_dataStack[ n + m_topCall->m_stackBase ];
+   }
+
+   /** Return the nth parameter in the local context (non-const).
+   \param n The parameter number, starting from 0.
+   \return A pointer to the nth parameter in the stack, or 0 if out of range.
+    */
+   inline Item* param( uint32 n )  {
+      fassert(m_dataStack+(n + m_topCall->m_stackBase) < m_maxData );
+      if( m_topCall->m_paramCount <= n ) return 0;
+      return &m_dataStack[ n + m_topCall->m_stackBase ];
+   }
+
+  /** Returns the parameter array in the current frame.
+    \return An array of items pointing to the top of the local frame data stack.
+
+    This method returns the values in the current topmost data frame.
+    This usually points to the first parameter of the currently executed function.
+    */
+   inline Item* params() {
+      return &m_dataStack[ m_topCall->m_stackBase ];
+   }
+
+   inline int paramCount() {
+      fassert( m_topCall >= m_callStack );
+      return m_topCall->m_paramCount;
+   }
+
+
+   inline Item* opcodeParams( int count )
+   {
+      return m_topData - (count-1);
+   }
+
+   inline Item& opcodeParam( int count )
+   {
+      return *(m_topData - count);
+   }
+   
+   inline const Item& opcodeParam( int count ) const
+   {
+      return *(m_topData - count);
+   }
+
+   /** Return the nth parameter in the local context.
+    *
+    *TODO use the local stack.
+    */
+   inline const Item* local( int n ) const {
+      fassert(m_dataStack+(n + m_topCall->m_stackBase + m_topCall->m_paramCount) < m_maxData );
+      return &m_dataStack[ n + m_topCall->m_stackBase + m_topCall->m_paramCount ];
+   }
+
+   inline Item* local( int n ) {
+	  fassert(m_dataStack+(n + m_topCall->m_stackBase + m_topCall->m_paramCount) < m_maxData );
+      return &m_dataStack[ n + m_topCall->m_stackBase + m_topCall->m_paramCount ];
+   }
+
+   /** Push data on top of the stack.
+    \item data The data that must be pushed in the stack.
+    \note The data pushed is copied by-value in a new stack element, but it is
+          not colored.
+    */
+   inline void pushData( const Item& data ) {
+      ++m_topData;
+      if( m_topData >= m_maxData )
+      {
+         moreData();
+      }
+      *m_topData = data;
+   }
+
+   /** Add more variables on top of the stack.
+    \param count Number of variables to be added.
+    The resulting values will be nilled.
+    */
+   inline void addLocals( size_t count ) {
+      Item* base = m_topData+1;
+      m_topData += count;
+      if( m_topData >= m_maxData )
+      {
+         moreData();
+         base = m_topData - count;
+      }
+      while( base <= m_topData )
+      {
+         base->setNil();
+         ++base;
+      }
+   }
+
+   /** Add more variables on top of the stack -- without initializing them to nil.
+    \param count Number of variables to be added.
+
+    This is like addLocals, but doesn't nil the newly created variables.
+    */
+   inline void addSpace( size_t count ) {
+      m_topData += count;
+      if( m_topData >= m_maxData )
+      {
+         moreData();
+      }
+   }
+   
+   /** Insert some data at some point in the stack.
+    \param pos The position in the stack where data must be inserted, 0 being top.
+    \param data The data to be inserted.
+    \param dataSize Count of items to be inserted.
+    \param replSize How many items should be overwritten starting from pos.
+    
+    Suppose you want to shift some parameters to make room for a funciton, and
+    eventually extra parameters, before the function call. For instance, suppose
+    you have...
+    
+    \code
+    ..., (data), (data), (param2), (param3) // top
+    \endcode
+    
+    And want to add the function and an extra parameter:
+    
+    \code
+    ..., (data), (data), [func], [param1], (param2), (param3) // top
+    \endcode
+    
+    This mehtod allows to shift forward the nth item in the stack and 
+    place new data. For instance, the code to perform the example operation
+    would be:
+    \code
+    {
+       ...
+       Item items[] = { funcItem, param1 };
+       ctx->insertData( 2, items, 2 );
+       ...
+    }
+    \endcode    
+    */
+   void insertData( int32 pos, Item* data, int dataSize, int32 replSize=0 );
+
+   /** Top data in the stack
     *
     */
-   void addFrame( StackFrame* frame );
+   inline const Item& topData() const {
+      fassert( m_topData >= m_dataStack && m_topData < m_maxData );
+      return *m_topData;
+   }
 
-   /** Removes the topmost frame.
-    * The frame can be deleted or disposed via disposeFrame for further recycling.
-    * \return The just removed topmost frame or 0 if the frame stack is empty.
+   inline Item& topData() {
+       fassert( m_topData >= m_dataStack && m_topData < m_maxData);
+       return *m_topData;
+   }
+
+   /** Removes the last element from the stack */
+   void popData() {
+      m_topData--;
+      PARANOID( "Data stack underflow", (m_topData >= m_dataStack -1) );
+   }
+
+   /** Removes the last n elements from the stack */
+   void popData( size_t size ) {
+      m_topData-= size;
+      // Notice: an empty data stack is an error.
+      PARANOID( "Data stack underflow", (m_topData >= m_dataStack) );
+   }
+
+   inline long dataSize() const {
+      return (long)(m_topData - m_dataStack) + 1;
+   }
+
+   inline long localVarCount() const {
+      return (long)((m_topData+1) - m_dataStack) - currentFrame().m_stackBase;
+   }
+
+   /** Copy multiple values in a target. */
+   void copyData( Item* target, size_t count, size_t start = (size_t)-1);
+
+   /** Adds a data in the stack and returns a reference to it.
+    *
+    * Useful in case the caller is going to push some data in the stack,
+    * but it is still not having the final item ready.
+    *
+    * Using this method and then changing the returned item is more
+    * efficient than creating an item in the caller stack
+    * and then pushing it in the VM.
+    *
     */
-   StackFrame* popFrame();
+   Item& addDataSlot() {
+      ++m_topData;
+      if( m_topData >= m_maxData )
+      {
+         moreData();
+      }
+      return *m_topData;
+   }
 
-   void pushTry( uint32 locationPC );
-   void popTry( bool bMoveTo );
+   inline bool dataEmpty() const { return m_topData < m_dataStack; }
 
-   /** Returns from the current stack frame.
-    Modifies context PC and PCNext, and reutrns true if this is a break context.
+   /** Enlarge the data stack.*/
+   void moreData();
+
+
+   /** Begins a new rule frame.
+    
+    This is called when a new rule is encountered to begin the rule framing.
     */
-   bool callReturn();
+   void startRuleFrame();
 
+   /** Adds a new local rule frame with a non-deterministic traceback point.
+    \param tbPoint a traceback point or 0xFFFFFFFF if there isn't any
+            traceback point (topmost rule frame in a rule).
 
-   bool atomicMode() const { return m_atomicMode; }
-   void atomicMode( bool b ) { m_atomicMode = b; }
+    This creates a copy of the parameters and local variables of the
+    current call context, and shifts the stackbase forward.
+    */
+   void addRuleNDFrame( uint32 tbPoint );
 
-   /** Adds some space in the local stack for local variables. */
-   void addLocals( uint32 space )
+   /** Retract the current rule status and resets the rule frame to its previous state.
+    */
+   inline uint32 unrollRuleFrame()
    {
-      if ( stack().length() < space )
-         stack().resize( space );
+      CallFrame& callf = currentFrame();
+
+      // assert if we're not in a rule frame.
+      fassert( callf.m_stackBase > callf.m_initBase );
+
+      // our frame informations are at param -1
+      int64 vals = params()[-1].asInteger();
+
+      // roll back to previous state stack state.
+      m_topData = m_dataStack + callf.m_stackBase - 2;
+      callf.m_stackBase = (int32) (vals >> 32);
+
+      // return the traceback part
+      return (uint32)(vals & 0xFFFFFFFF);
    }
 
-   /** Returns the nth local item.
-      The first variable in the local context is numbered 0.
-      \note Fetched item pointers are valid while the stack doesn't change.
-            Pushes, addLocal(), item calls and VM operations may alter the
-            stack. Using this method again after such operations allows to
-            get a valid pointer to the desired item again. Items extracted with
-            this method can be also saved locally in an Item instance, at
-            the cost of a a flat item copy (a few bytes).
-      \param itemId the number of the local item accessed.
-      \return a valid pointer to the (dereferenced) local variable or 0 if itemId is invalid.
-   */
-   const Item *local( uint32 itemId ) const
+   /** Retract all the ND branches and get back
+    */
+   inline void unrollRuleBranches()
    {
-      return stack()[ itemId ].dereference();
+      CallFrame& callf = currentFrame();
+
+      // assert if we're not in a rule frame.
+      fassert( callf.m_stackBase > callf.m_initBase );
+
+      // our frame informations are at param -1
+      int64 vals = params()[-1].asInteger();
+      while( (vals & 0xFFFFFFFF) != 0xFFFFFF )
+      {
+         m_topData = m_dataStack + callf.m_stackBase - 2;
+
+         // roll back to previous state stack state.
+         callf.m_stackBase = (int32) (vals >> 32);
+
+         vals = params()[-1].asInteger();
+         // assert if we're not in a rule frame anymore!
+         fassert( callf.m_stackBase > callf.m_initBase );
+      }
    }
 
-   /** Returns the nth local item.
-      This is just the non-const version.
-      The first variable in the local context is numbered 0.
-      \param itemId the number of the local item accessed.
-      \return a valid pointer to the (dereferenced) local variable or 0 if itemId is invalid.
-   */
-   Item *local( uint32 itemId )
+   /** Retract a whole rule, thus closing it.
+    */
+   inline void unrollRule()
    {
-      return stack()[ itemId ].dereference();
+      CallFrame& cf = currentFrame();
+      // assert if we're not in a rule frame.
+      fassert( cf.m_stackBase > cf.m_initBase );
+
+      long localCount = localVarCount();
+      int32 baseRuleTop = params()[-1].content.mth.ruleTop;
+      // move forward the stack base.
+      cf.m_stackBase = baseRuleTop;
+      m_topData = m_dataStack + baseRuleTop + localCount - 1;
+
    }
 
-   /** Returns the parameter count for the current function.
-      \note If the method as not a current frame, you'll have a crash.
-      \return parameter count for the current function.
-   */
-   int32 paramCount() const {
-      fassert( m_frames != 0 );
-      return m_frames->m_param_count;
-   }
+   /** Commits a whole rule, thus closing it.
+    */
+   void commitRule();
 
-   /** Returns the nth paramter passed to the VM.
-      Const version of param(uint32).
-   */
-   const Item *param( uint32 itemId ) const
+   /** Specicfy that the current context is ND. 
+    When inside a rule, activating this bit will cause the upper rule to
+    consider the current operation as non-deterministic, and will cause a new
+    non-deterministic frame to be generated as the statement invoking this
+    method returns.
+
+    The method has no effect when not called from a non-rule context
+    */
+   void SetNDContext()
    {
-      if ( itemId >= m_frames->m_param_count ) return 0;
-      return m_frames->m_params[ itemId ].dereference();
+      register CallFrame& cf = currentFrame();
+      // are we in a rule frame?
+      if( cf.m_initBase < cf.m_stackBase )
+      {
+         register Item& itm = m_dataStack[cf.m_stackBase-1];
+         itm.setOob(true);
+      }
    }
 
-   /** Returns the nth paramter passed to the VM.
+   /** Checks (and clear) non-deterministic contexts.
 
-      This is just the noncost version.
+    A rule will check if a statement has performed some non-deterministic operation
+    calling this method, that will also clear the determinism status so no further
+    operation needs to be called by the checking rule.
 
-      The count is 0 based (0 is the first parameter).
-      If the parameter exists, a pointer to the Item holding the
-      parameter will be returned. If the item is a reference,
-      the referenced item is returned instead (i.e. the parameter
-      is dereferenced before the return).
-
-      The pointer may be modified by the caller, but this will usually
-      have no effect in the calling program unless the parameter has been
-      passed by reference.
-
-      \note Fetched item pointers are valid while the stack doesn't change.
-            Pushes, addLocal(), item calls and VM operations may alter the
-            stack. Using this method again after such operations allows to
-            get a valid pointer to the desired item. Items extracted with
-            this method can be also saved locally in an Item instance, at
-            the cost of a a flat item copy (a few bytes).
-
-      \param itemId the number of the parameter accessed, 0 based.
-      \return a valid pointer to the (dereferenced) parameter or 0 if itemId is invalid.
-      \see isParamByRef
-   */
-   Item *param( uint32 itemId )
+    */
+   bool checkNDContext()
    {
-      if ( itemId >= m_frames->m_param_count ) return 0;
-      //return &m_frames->prev()->stack()[ m_frames->prev()->stack().length() - m_frames->m_param_count + itemId];
-      return m_frames->m_params[ itemId ].dereference();
+      register CallFrame& cf = currentFrame();
+      if( cf.m_initBase < cf.m_stackBase )
+      {
+         register Item& itm = m_dataStack[cf.m_stackBase-1];
+         register bool mode = itm.isOob();
+         itm.resetOob();
+         return mode;
+      }
+      return false;
    }
 
-   /** Returns the nth pre-paramter passed to the VM.
-      Pre-parameters can be used to pass items to external functions.
-      They are numbered 0...n in reverse push order, and start at the first
-      push before the first real parameter.
+   //=========================================================
+   // Code frame management
+   //=========================================================
 
-      For example;
+   const CodeFrame& currentCode() const { return *m_topCode; }
+   CodeFrame& currentCode() { return *m_topCode; }
 
-      \code
-         Item *p0, *p1, *callable;
-         ...
-         vm->pushParameter( (int64) 0 );   // pre-parameter 1
-         vm->pushParameter( vm->self() );  // pre-parameter 0
-         vm->pushParameter( *p0 );
-         vm->pushParameter( *p1 );
+   inline void popCode() {
+      m_topCode--;
+      PARANOID( "Code stack underflow", (m_topCode >= m_codeStack -1) );
+   }
 
-         vm->callFrame( *callable, 2 );    // 2 parameters
-      \endcode
-   */
-   Item *preParam( uint32 itemId )
+   void popCode( int size ) {
+      m_topCode -= size;
+      PARANOID( "Code stack underflow", (m_topCode >= m_codeStack -1) );
+   }
+
+   void unrollCode( int size ) {
+      m_topCode = m_codeStack + size - 1;
+      PARANOID( "Code stack underflow", (m_topCode >= m_codeStack -1) );
+   }
+
+   /** Changes the currently running pstep.
+    *
+    *  Other than changing the top step, this method resets the sequence ID.
+    *  Be careful: this won't work for PCode (they need the seq ID to be set to their size).
+    */
+   inline void resetCode( const PStep* step ) {
+      CodeFrame& frame = currentCode();
+      frame.m_step = step;
+      frame.m_seqId = 0;
+   }
+
+   /** Returns the current code stack size.
+    *
+    * During processing of SynTree and CompExpr, the change of the stack size
+    * implies the request of a child item for the control to be returned to the VM.
+    *
+    */
+   inline long codeDepth() const { return (long)(m_topCode - m_codeStack) + 1; }
+
+   /** Push some code to be run in the execution stack.
+    *
+    * The step parameter is owned by the caller.
+    */
+   inline void pushCode( const PStep* step ) {
+      ++m_topCode;
+      if( m_topCode >= m_maxCode )
+      {
+         moreCode();
+      }
+      m_topCode->m_step = step;
+      m_topCode->m_seqId = 0;
+   }
+
+   /** Push some code to be run in the execution stack, but only if not already at top.
+    \param step The step to be pushed.
+    
+    This methods checks if \b step is the PStep at top of the code stack, and
+    if not, it will push it.
+
+    \note The method will crash if called when the code stack is empty.
+
+     */
+   inline void condPushCode( const PStep* step )
    {
-      Item* params = m_frames->m_params;
-      params -= 1 + itemId;
-      return params->dereference();
+      fassert( m_topCode >= m_codeStack );
+      if( m_topCode->m_step != step )
+      {
+         pushCode( step );
+      }
    }
 
-   /** Const version of preParam */
-   const Item *preParam( uint32 itemId ) const
+   void moreCode();
+
+   //=========================================================
+   // Stack resizing
+   //=========================================================
+
+   inline bool codeEmpty() const { return m_topCode < m_codeStack; }
+   //=========================================================
+   // Call frame management.
+   //=========================================================
+
+   /** Returns the self item in the local context.
+    */
+   inline const Item& self() const { return m_topCall->m_self; }
+   inline Item& self() { return m_topCall->m_self; }
+
+   const CallFrame& currentFrame() const { return *m_topCall; }
+   CallFrame& currentFrame() { return *m_topCall; }
+
+   const Item& regA() const { return m_regA; }
+   Item& regA() { return m_regA; }
+
+   inline long callDepth() const { return (long)(m_topCall - m_callStack) + 1; }
+
+   inline CallFrame* addCallFrame()  {
+      ++m_topCall;
+      if ( m_topCall >= m_maxCall )
+      {
+         moreCall();
+      }
+      return m_topCall;
+   }
+
+   /** Prepares a new methodic call frame. */
+   inline CallFrame* makeCallFrame( Function* function, int nparams, const Item& self )
    {
-      Item* params = m_frames->m_params;
-      params -= 1 + itemId;
-      return params->dereference();
+      register CallFrame* topCall = addCallFrame();
+      topCall->m_function = function;
+      topCall->m_codeBase = codeDepth();
+      // initialize also initBase, as stackBase may move
+      topCall->m_initBase = topCall->m_stackBase = dataSize()-nparams;
+      topCall->m_paramCount = nparams;
+      topCall->m_self = self;
+      topCall->m_bMethodic = true;
+
+      return topCall;
    }
 
-   /** Returns true if the nth element of the current function has been passed by reference.
-      \param itemId the number of the parameter accessed, 0 based.
-      \return true if the parameter exists and has been passed by reference, false otherwise
-   */
-   bool isParamByRef( uint32 itemId ) const
+   /** Prepares a new non-methodic call frame. */
+   inline CallFrame* makeCallFrame( Function* function, int nparams )
    {
-      if ( itemId >= m_frames->m_param_count ) return 0;
-      return m_frames->m_params[ itemId ].type() == FLC_ITEM_REFERENCE;
+      register CallFrame* topCall = addCallFrame();
+      topCall->m_function = function;
+      topCall->m_codeBase = codeDepth();
+      // initialize also initBase, as stackBase may move
+      topCall->m_initBase = topCall->m_stackBase = dataSize()-nparams;
+      topCall->m_paramCount = nparams;
+      topCall->m_self.setNil();
+      topCall->m_bMethodic = false;
+
+      return topCall;
    }
 
-   /** Installs a post-processing return frame handler.
-      The function passed as a parmeter will receive a pointer to this VM.
-
-      The function <b>MUST</b> return true if it performs another frame item call. This will
-      tell the VM that the stack cannot be freed now, as a new call stack has been
-      prepared for immediate execution. When done, the function will be called again.
-
-      A frame handler willing to call another frame and not willing to be called anymore
-      must first unininstall itself by calling this method with parameters set at 0,
-      and then it <b>MUST return true</b>.
-
-      A frame handler not installing a new call frame <b>MUST return false</b>. This will
-      terminate the current stack frame and cause the VM to complete the return stack.
-      \param callbackFunct the return frame handler, or 0 to disinstall a previously set handler.
-   */
-
-   void returnHandler( ext_func_frame_t callbackFunc )
-   {
-      currentFrame()->m_endFrameFunc = callbackFunc;
-   }
-
-   ext_func_frame_t returnHandler() const
-   {
-      return currentFrame()->m_endFrameFunc;
-   }
-
-   /** Pushes a parameter for the vm callItem and callFrame functions.
-      \see callItem
-      \see callFrame
-      \param item the item to be passes as a parameter to the next call.
-   */
-   void pushParam( const Item &item ) { stack().append(item); }
-
-   StackFrame* allocFrame();
-   void disposeFrame( StackFrame* frame );
-   void disposeFrames( StackFrame* first, StackFrame* last );
-   void resetFrames();
-
-   void fillErrorTraceback( Error& err );
+   bool isMethodic() const { return m_topCall->m_bMethodic; }
    
-   //! Gets a step in a traceback.
-   bool getTraceStep( uint32 level, const Symbol* &sym, uint32& line, uint32 &pc );
+   void moreCall();
+
+//========================================================
+//
+
+
+   /** Gets the operands from the top of the stack.
+    \param op1 The first operand.
+    \see Class
+
+    \note this method may be used also by pseudofunctions and generically
+    by any PStep in need to access the top of the stack.
+    */
+   inline void operands( Item*& op1 )
+   {
+      op1 = &topData();
+   }
+
+   /** Gets the operands from the top of the stack.
+    \param op1 The first operand.
+    \param op2 The second operand.
+    \see Class
+
+    \note this method may be used also by pseudofunctions and generically
+    by any PStep in need to access the top of the stack.
+    */
+   inline void operands( Item*& op1, Item*& op2 )
+   {
+      op1 = &topData()-1;
+      op2 = op1+1;
+   }
+
+   /** Gets the operands from the top of the stack.
+    \param op1 The first operand.
+    \param op2 The second operand.
+    \param op3 The thrid operand.
+    \see Class
+
+    \note this method may be used also by pseudofunctions and generically
+    by any PStep in need to access the top of the stack.
+    */
+   inline void operands( Item*& op1, Item*& op2, Item*& op3 )
+   {
+      op1 = &topData()-2;
+      op2 = op1+1;
+      op3 = op2+1;
+   }
+
+   /** Pops the stack when leaving a PStep or operand, and sets an operation result.
+    \param count Number of operands accepted by this step
+    \param result The value of the operation result.
+    \see Class
+
+    The effect of this function is that of popping \b count items from the
+    stack and then pushing the \b result. If \b count is 0, \b result is just
+    pushed at the end of the stack.
+    
+    \note this method may be used also by pseudofunctions and generically
+    by any PStep in need to access the top of the stack.
+    */
+   inline void stackResult( int count, const Item& result )
+   {
+      if( count > 0 )
+      {
+         popData( count-1 );
+         topData() = result;
+      }
+      else
+      {
+         pushData( result );
+      }
+   }
+
+   /** Returns pseudo-parameters.
+    \param count Number of pseudo parameters.
+    \return An array of items pointing to the pseudo parameters.
+
+    This can be used to retrieve the parameters of pseudo functions.
+    */
+   inline Item* pseudoParams( int32 count ) {
+      return &topData() - count + 1;
+   }
+
+   //=========================================================
+   // Deep call protocol
+   //=========================================================
+
+   
+   /** Called by a calling method to know if the called sub-methdod required a deep operation.
+    \return true if the sub-method needed to go deep.
+
+    A function that calls some code which might eventually push some other
+    PStep and require virtual machine interaction need to check if this
+    actually happened after it gets in control again.
+
+    To cleanly support this operation, a caller should:
+    # Push its own callback-pstep
+    # Call the code that might push its own psteps
+    # Check if its PStep is still at top code frame. If not, return immediately
+    # When done, pop its PStep
+
+    For instance:
+    \code
+    void SomeClass::op_something( VMContex* ctx, ... )
+    {
+      ...
+       ctx->pushCode( &SomeClass::m_myNextStep );
+       someItem->op_somethingElse( ctx, .... );
+       if ( ctx->wentDeep( &SomeClass::m_myNextStep ) )
+       {
+         return;
+       }
+       ...
+       ctx->popCode();
+    }
+    \endcode
+
+    */
+   inline bool wentDeep( const PStep* top )
+   {
+      return m_topCode->m_step != top;
+   }
+
+   /** Pushes a quit step at current position in the code stack.
+    This method should always be pushed in a VM before it is invoked
+    from unsafe code.
+    */
+   void pushQuit();
+
+   /** Pushes a breakpoint at current postition in the code stack.
+    */
+   void pushBreak();
+
+   /** Pushes a VM clear suspension request in the code stack.
+    @see setReturn
+    */
+   void pushReturn();
+
+   /** Pushes a "context complete" marker on the stack.
+    @see setComplete
+    */
+   void pushComplete();
+
+  
+   /** Prepares the VM to execute a function.
+
+    The VM gets readied to execute the function from the next step,
+    which may be invoked via step(), run() or by returning from the caller
+    of this function in case the caller has been invoked by the VM itself.
+    
+    \note At function return, np items from the stack will be popped, and the
+    return value of the function (or nil if none) will be placed at the top
+    of the stack. This means that the item immediately preceeding the first
+    parameter will be overwritten. The call expressions generate the item containing
+    the callable entity at this place, but entities invoking functions outside
+    call expression evaluation contexts must be sure that they have an extra
+    space in the stak where the return value can be placed. In doubt,
+    consider using callItem which gives this guarantee.
+    
+    @param function The function to be invoked.
+    @param np Number of parameters that must be already in the stack.
+    */ 
+   void call( Function* f, int np );
+
+   /** Prepares the VM to execute a function (actually, a method).
+
+    The VM gets readied to execute the function from the next step,
+    which may be invoked via step(), run() or by returning from the caller
+    of this function in case the caller has been invoked by the VM itself.
+    
+    This version of call causes the current frame to be considered as
+    "methodic", that is, to have a valid "self" item and a method bit marker
+    set in the context. This helps to select different behavior in functions
+    that may be invoked directly or as a mehtod for various items.
+    
+    \note At function return, np items from the stack will be popped, and the
+    return value of the function (or nil if none) will be placed at the top
+    of the stack. This means that the item immediately preceeding the first
+    parameter will be overwritten. The call expressions generate the item containing
+    the callable entity at this place, but entities invoking functions outside
+    call expression evaluation contexts must be sure that they have an extra
+    space in the stak where the return value can be placed. In doubt,
+    consider using callItem which gives this guarantee.
+    
+    @param function The function to be invoked.
+    @param np Number of parameters that must be already in the stack.
+    @param self The item on which this method is invoked. Pure functions are
+                considered methods of "nil".
+    */
+   void call( Function* function, int np, const Item& self );
+
+   /** Calls an item without parameters.
+    \see callItem( const Item&, ... )
+    */
+   void callItem( const Item& item ) { callItem( item, 0, 0 ); }
+   
+   /** Calls an arbitrary item with arbitrary parameters.
+    \param item The item to be called.
+    \throw Non-callable Error if this item doesn't provide a valid Class::op_call
+    callback.
+   
+    This method prepares the invocation of an item as if it was called by
+    the script. The method can receive variable parameters of type Item&, 
+    which must exist \b outside the stack of this context (that might be
+    destroyed during the peparation of this call).
+    
+    This method pushes the called item and the parameters up to when it meets
+    a 0 in the parameter list, then invokes the Class::op_call mehtod of the
+    class of \b item.
+    
+    The item may be a method, a function a functor or any other callable entity,
+    that is, any item whose Class has op_call reimplemented.
+    
+    After this method, the caller should immediately retour, as the method might
+    immediately invoke the required code if possible, or prepare it for later
+    invocation by the VM if not possible. In both cases, the context stacks
+    and status must be considered invalidated after this method returns.
+    
+    \note The variable parameters must be Item instances whose existence must
+    be ensured until callItem() method returns. The contents of the items must 
+    either be static and exist for the whole duration of the program or be 
+    delivered to the Garbage Collector for separate accounting.
+    
+    Example usage:
+    \code
+    void somefunc( VMContext* ctx, const Item& callable )
+    {
+       ....
+       Item params[3] = { Item(10), Item( "Hello world" ), Item( 3.5 ) };
+       ctx->callItem( item, 3, params );    
+    }
+    \endcode
+    */
+   void callItem( const Item& item, int pcount, Item const* params );
+   
+   /** Returns from the current frame.
+    \param value The value considered as "exit value" of this frame.
+
+    This methods pops che call stack of 1 unit and resets the other stacks
+    to the values described in the call stack. Also, it sets the top data item
+    after stack reset to the "return value" passed as parameter.
+    */
+   void returnFrame( const Item& value = Item() );
+      
+   /** Unrolls the code and function frames down to the nearest "next" loop base. 
+    \throw CodeError if base not found.
+    */
+   void unrollToNextBase();
+
+   /** Unrolls the code and function frames down to the nearest "break" loop base. 
+    \throw CodeError if base not found.
+    */
+   void unrollToLoopBase();
+   
+   bool ruleEntryResult() const { return m_ruleEntryResult; }
+   void ruleEntryResult( bool v ) { m_ruleEntryResult = v; }
+   
+   //=============================================================
+   // Try/catch
+   //   
+   
+   /** Called back on item raisal.
+    \param raised The item that was explicitly raised.
+    
+    This method searches the try-stack for a possible catcher. If one is found,
+    the catcher is activated, otherwise an uncaucght raise error is thrown
+    at C++ level.
+    
+    \note This method will unbox items containing instances of subclasses of 
+    ClassError class and pass them to manageError automatically. However, 
+    unboxing won't happen for script classes derived from error classes.
+    
+    \see manageError()
+    */
+   void raiseItem( const Item& raised );
+   
+   /** Tries to manage an error through try handlers.
+    \param exc The Falcon::Error instance that was thrown.
+    
+    This method is invoked by the virtual machine when it catches an Error*
+    thrown by some part of the code. This exceptins are usually meant to be
+    handled by a script, if possible, or forwarded to the system if the
+    script can't manage it.
+    
+    If an handler is found, the stacks are unrolled and the execution of
+    the error handler is preapred in the stack. 
+    
+    If a finally block is found before an error handler can be found, the
+    error is stored in that try-frame and the cleanup procedure is invoked
+    by unrolling the stacks up to that point; a marker is left in the finalize
+    pstep frame so that, after cleanup, the process can proceed.
+    
+    If a new error is thrown during a finalization, two things may happen: either
+    it is handled by an handler inside the finalize process or it is unhandled.
+    If it is handled, then the error raisal process continues. If it is unhandled,
+    the new error gets propagated as a sub-error of the old one. Example:
+    
+    @code
+    try
+      raise Error( 100, "Test Error" )
+    finally
+      raise Error( 101, "Test From Finally" )
+    end
+    @endcode
+    
+    In this case, the error 101 becomes a sub-error of error 100, and the
+    error-catching procedure continues for error 100.
+    
+    If a non-error item is raised from finally, it becomes an sub-error of the
+    main one as a "uncaught raised item" exception. If the non-error item was
+    raised before an error or an item throw by finally, the non-error item is
+    lost and the raisal process continues with the item raised by the finally
+    code.
+    */
+   void raiseError( Error* exc );
+
+   /** Proceeds after a finally frame is complete.
+    Invoked by cleanup frames after a finally block has been invoked.
+    
+    The context leaves a marker in the sequence ID of the cleanup step; if found,
+    the cleanup step invoke this method, which pops the current try-frame and
+    repeats the try-unroll procedure using the error that was saved in the frame.
+    */
+   void finallyComplete();
+   
+   /** Increments the count of traversed finally blocks in this frame.
+    
+    When a return is issued from inside a try block having a finally clause,
+    the return frame unroll procedure must first respect the finally block and
+    execute it. As unrolling the stack in search for the finally block is
+    more complex than simply executing a flat unroll, having the count of
+    active finally blocks helps to preform finally unrolls only when needed.
+    
+    This method is called when the code generator places a finally block on
+    the code stack, and its effects are reversed by enterFinally(), which
+    is invoked at the beginning of the finally block.
+    
+    */
+   void traverseFinally() { ++m_topCall->m_finallyCount; }
+   
+   /** Declares the begin of the execution of a finally block.
+    \see traverseFinally
+    */
+   void enterFinally() { --m_topCall->m_finallyCount; }
+   
+   /** Finally continuation mode type. */
+   typedef enum
+   {
+      /** Nothing to continue after finally */
+      e_fin_none,
+      /** Finally called during error raisal. */
+      e_fin_raise,
+      /** Finally called during a loop break. */
+      e_fin_break,
+      /** Finally called during a loop continue. */
+      e_fin_continue,
+      /** Finally called during a return stack unroll. */
+      e_fin_return,
+      /** Finally called during an explicit and soft termination request. */
+      e_fin_terminate
+   }
+   t_fin_mode;
+
+   void setFinallyContinuation( t_fin_mode fm ) { m_finMode = fm; }
+   
+   void setCatchBlock( const SynTree* ps ) { m_catchBlock = ps; }
+
+//==========================================================
+// Status management
+//
+
+   /** Events that may cause VM suspension or interruption. */
+   typedef enum {
+      /** All green, go on. */
+      eventNone,
+      /** Debug Breakpoint reached -- return. */
+      eventBreak,
+      /** Explicit return frame hit -- return. */
+      eventReturn,
+      /** Quit request -- get out. */
+      eventTerminate,
+      /** All the code has been processed -- get out. */
+      eventComplete,
+      /** Soft error raised -- manage it internally if possible. */
+      eventRaise
+   } t_event;
+
+   /** Returns the last event that was raised in this VM.
+      @return The last event generated by the vm.
+    */
+   inline t_event event() const { return m_event; }   
+
+   /** Asks for a light termination of the VM.
+    The VM immediately returns to the caller. The event is sticky; this means
+    that intermediate callers will see this event set and propagate it upwards.
+    */
+   inline void quit() { m_event = eventTerminate; }
+
+   /** Asks the VM to exit from its main loop.
+
+    This is generally handled by a specific opcode that asks for the VM to
+    exit its current main loop. The opcode may be inserted by special
+    "atomic" calls. When such a call is made, if the called function needs
+    to ask the VM to perform some calculation, then it can add this opcode
+    to the code stack to be called back when the calculation is done.
+
+    This is meant to be used internally by the engine and shouldn't be
+    tackled by modules or external code.
+
+    To cause the code flow to be temporarily suspended at current point
+    you may use the pushBreak() or pushReturn() methods, or otherwise push
+    your own PStep taking care of breaking the code.
+    */
+   inline void setReturn() { m_event = eventReturn; }
+
+   /** Resets the event.
+   */
+   inline void clearEvent() { m_event = eventNone; }
+
+   /** Sets the complete event
+   */
+   inline void setComplete() { m_event = eventComplete; }
+
+   /** Activates a breakpoint.
+
+      Breaks the current run loop. This is usually done by specific
+      breakpoint opcodes that are inserted at certain points in the code
+      to cause interruption for debug and inspection.
+
+    To cause the code flow to be temporarily suspended at current point
+    you may use the pushBreak() or pushReturn() methods, or otherwise push
+    your own PStep taking care of breaking the code.
+
+    The StmtBreakpoint can be inserted in source flows for this purpose.
+   */
+   inline void breakpoint() { m_event = eventBreak; }
+   
+   Error* thrownError() const { return m_thrown; }
+   
+protected:
+
+   // Inner constructor to create subclasses
+   VMContext( bool );
+
+   CodeFrame* m_codeStack;
+   CodeFrame* m_topCode;
+   CodeFrame* m_maxCode;
+
+   CallFrame* m_callStack;
+   CallFrame* m_topCall;
+   CallFrame* m_maxCall;
+
+   Item* m_dataStack;
+   Item* m_topData;
+   Item* m_maxData;
+
+   Item m_regA;
+   
+   /** Error whose throwing was suspended by a finally handling. */
+   Error* m_thrown;
+   
+   /** Item whose raisal was suspended by a finally handling. */
+   Item m_raised;
+   
+   // finally continuation mode.
+   t_fin_mode m_finMode;
+  
+   VMachine* m_vm;
+
+   friend class VMachine;
+   friend class SynFunc;
+  
+   bool m_ruleEntryResult;
+   
+   // temporary variable used during stack unrolls.
+   const SynTree* m_catchBlock;
+   
+   // last raised event.
+   t_event m_event;
+   
+   template <class __checker> bool unrollToNext( const __checker& check );
+   
+   /** Declares an unhandled error.
+    This method is invoked after an error is unhandled. The virtual machine
+    sees the error at run() loop and can handle it to the caller or throw it.
+    */
+   void unhandledError( Error* error );
 };
 
 }
 
-#endif
+#endif /* FALCON_VMCONTEXT_H_ */
 
-/* end of flc_vmcontext.h */
+/* end of vmcontext.h */

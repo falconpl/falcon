@@ -2,106 +2,142 @@
    FALCON - The Falcon Programming Language.
    FILE: print.cpp
 
-   Basic module
+   Falcon core module -- print/printl functions
    -------------------------------------------------------------------
-   Author: $AUTHOR
-   Begin: $DATE
+   Author: Giancarlo Niccolai
+   Begin: Sat, 30 Apr 2011 11:54:16 +0200
 
    -------------------------------------------------------------------
-   (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
+   (C) Copyright 2011: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
 */
 
-/*#
-   @beginmodule core
-*/
+#include <falcon/cm/print.h>
 
-#include <falcon/setup.h>
-#include <falcon/module.h>
-#include <falcon/item.h>
 #include <falcon/vm.h>
-#include <falcon/stream.h>
+#include <falcon/vmcontext.h>
+#include <falcon/textwriter.h>
 
 namespace Falcon {
-namespace core {
+namespace Ext {
 
-/*#
-   @function print
-   @inset core_basic_io
-   @param ... An arbitrary list of parameters.
-   @brief Prints the contents of various items to the standard output stream.
-
-   This function is the default way for a script to say something to the outer
-   world. Scripts can expect print to do a consistent thing with respect to the
-   environment they work in; stand alone scripts will have the printed data
-   to be represented on the VM output stream. The stream can be overloaded to
-   provide application supported output; by default it just passes any write to
-   the process output stream.
-
-   The items passed to print are just printed one after another, with no separation.
-   After print return, the standard output stream is flushed and the cursor (if present)
-   is moved past the last character printed. The function @a printl must be used,
-   or a newline character must be explicitly placed among the output items.
-
-   The print function has no support for pretty print (i.e. numeric formatting, space
-   padding and so on). Also, it does NOT automatically call the toString() method of objects.
-
-   @see printl
-*/
-FALCON_FUNC  print ( ::Falcon::VMachine *vm )
+FuncPrintBase::FuncPrintBase( const String& name, bool ispl ):
+   Function(name)
 {
-   Stream *stream = vm->stdOut();
-   if ( stream == 0 )
+   m_nextStep.m_isPrintl = ispl;
+   signature("...");
+}
+
+FuncPrintBase::~FuncPrintBase() {}
+
+void FuncPrintBase::invoke( VMContext* ctx, int32 )
+{
+   TRACE1("Function print%s -- apply", m_nextStep.m_isPrintl ? "l" : "" );
+   // [A]: create the space for op_toString
+   ctx->pushData(Item());
+   m_nextStep.printNext( ctx, 0 );
+}
+
+//=====================================================================
+// next step
+//=====================================================================
+
+void FuncPrintBase::NextStep::apply_( const PStep* ps, VMContext* ctx )
+{
+   fassert( ctx->regA().isString() );
+
+   // this is the return of a to-string deep call.
+   const NextStep* nstep = static_cast<const NextStep*>(ps);
+   TextWriter* out = ctx->vm()->textOut();
+   // write the result of the call.
+   if( ctx->topData().isString() )
    {
-      return;
+      out->write(*ctx->topData().asString());
+   }
+   else
+   {
+      out->write( "<failed toString>" );
    }
 
-   for (int i = 0; i < vm->paramCount(); i ++ )
+   // go on.
+   nstep->printNext( ctx, ctx->currentCode().m_seqId );
+}
+
+
+FuncPrintBase::NextStep::NextStep()
+{
+   apply = apply_;
+}
+
+void FuncPrintBase::NextStep::printNext( VMContext* ctx, int count ) const
+{
+   String str;
+   TextWriter* out = ctx->vm()->textOut();
+   int nParams = ctx->currentFrame().m_paramCount;
+
+   // we inherit an extra topData() space from our caller (see [A])
+   // push ourselves only if not already pushed and being called again.
+   ctx->condPushCode(this);
+   while( count < nParams )
    {
+      Item* item = ctx->param(count);
+      Class* cls;
+      void* data;
 
-      Item *elem = vm->param(i);
-      String temp;
+      if( item->asClassInst( cls, data ) )
+      {
+         if( cls->typeID() == FLC_CLASS_ID_STRING )
+         {
+            out->write(*static_cast<String*>(data));
+            ++count;
+         }
+         else
+         {
+            // put the input data for toString
+            ctx->topData() = *item;
+            ++count;
 
-      switch( elem->type() ) {
-         case FLC_ITEM_STRING:
-            stream->writeString( *elem->asString() );
-         break;
+            ctx->currentCode().m_seqId = count;
+            cls->op_toString( ctx, data );
+            if( ctx->wentDeep(this) )
+            {
+               return;
+            }
 
-         default:
-            elem->toString( temp );
-            stream->writeString( temp );
+            TRACE3("Function print%s -- printNext", m_isPrintl ? "l" : "" );
+            if( ctx->topData().isString() )
+            {
+               out->write(*ctx->topData().asString());
+            }
+            else
+            {
+               out->write( "<class " + cls->name() +" failed toString>" );
+            }
+         }
+      }
+      else
+      {
+         // a flat item.
+         str.size(0);
+         item->describe( str, 1, -1 );
+         out->write( str );
+         ++count;
       }
    }
+   ctx->popCode();
 
-   stream->flush();
-}
-
-/*#
-   @function printl
-   @inset core_basic_io
-   @param ... An arbitrary list of parameters.
-   @brief Prints the contents of various items to the VM standard output stream, and adds a newline.
-
-   This functions works exactly as @a print, but it adds a textual "new line" after all the
-   items are printed. The actual character sequence may vary depending on the underlying system.
-
-   @see print
-*/
-FALCON_FUNC  printl ( ::Falcon::VMachine *vm )
-{
-   Stream *stream = vm->stdOut();
-   if ( stream == 0 )
+   if (m_isPrintl)
    {
-      return;
+      out->write("\n");
    }
 
-   print( vm );
-   stream->writeString( "\n" );
-   stream->flush();
+   // we're out of the function.
+   ctx->returnFrame();
 }
 
-
-}}
+}
+}
 
 /* end of print.cpp */
+
