@@ -243,11 +243,11 @@ public:
    }
 
    inline long dataSize() const {
-      return (m_topData - m_dataStack) + 1;
+      return (long)(m_topData - m_dataStack) + 1;
    }
 
    inline long localVarCount() const {
-      return ((m_topData+1) - m_dataStack) - currentFrame().m_stackBase;
+      return (long)((m_topData+1) - m_dataStack) - currentFrame().m_stackBase;
    }
 
    /** Copy multiple values in a target. */
@@ -435,7 +435,7 @@ public:
     * implies the request of a child item for the control to be returned to the VM.
     *
     */
-   inline long codeDepth() const { return (m_topCode - m_codeStack) + 1; }
+   inline long codeDepth() const { return (long)(m_topCode - m_codeStack) + 1; }
 
    /** Push some code to be run in the execution stack.
     *
@@ -491,7 +491,7 @@ public:
    const Item& regA() const { return m_regA; }
    Item& regA() { return m_regA; }
 
-   inline long callDepth() const { return (m_topCall - m_callStack) + 1; }
+   inline long callDepth() const { return (long)(m_topCall - m_callStack) + 1; }
 
    inline CallFrame* addCallFrame()  {
       ++m_topCall;
