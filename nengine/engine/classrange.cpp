@@ -270,23 +270,26 @@ void ClassRange::op_next( VMContext* ctx, void* self ) const
   Item& iter = ctx->opcodeParam(0);
   int64 current = 0;
   int64 next = 0;
+  bool dir = true;
 
   fassert( iter.isInteger() );
   current = iter.asInteger();
+  next = current + ((range->step()==0) ? 1 : range->step());
+  dir = range->step()>=0;
   if ( !range->isOpen() )
   {
-      if ( current >= range->end() )
+     if ( dir ? current >= range->end() : current < range->end() )
       {
          ctx->addDataSlot().setBreak();
          return;
       }
   }
-  next = current + ((range->step()==0) ? 1 : range->step());
+  
   ctx->topData().setInteger( next );
   ctx->pushData( current );
   if ( !range->isOpen() )
   {
-       if ( next >= range->end() )
+       if ( dir ? next >= range->end() : next < range->end() )
        {
           ctx->topData().setLast();
        }
