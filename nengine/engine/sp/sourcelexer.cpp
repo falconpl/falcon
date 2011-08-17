@@ -140,6 +140,8 @@ Parsing::TokenInstance* SourceLexer::nextToken()
                }
                
                case ';': return m_parser->T_EOL.makeInstance(m_line, m_chr++);
+               case ':': return parser->T_Colon.makeInstance(m_line, m_chr++);
+               case ',': return parser->T_Comma.makeInstance(m_line, m_chr++);
                case '"':  m_stringML = false; m_stringStart = true; m_state = state_double_string; break;
                case '\'': m_stringML = false; m_stringStart = true; m_state = state_single_string; break;
                case '0': m_state = state_zero_prefix; break;
