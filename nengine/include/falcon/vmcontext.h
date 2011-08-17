@@ -20,7 +20,6 @@
 #include <falcon/item.h>
 #include <falcon/codeframe.h>
 #include <falcon/callframe.h>
-#include <falcon/tryframe.h>
 
 #include <falcon/paranoid.h>
 
