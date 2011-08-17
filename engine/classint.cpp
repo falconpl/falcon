@@ -75,7 +75,7 @@ void ClassInt::describe( void* instance, String& target, int, int ) const
 //=======================================================================
 //
 
-void ClassInt::op_create( VMContext* ctx, int pcount ) const
+void ClassInt::op_create( VMContext* ctx, int32 pcount ) const
 {
    if( pcount > 0 )
    {
@@ -129,7 +129,7 @@ void ClassInt::op_add( VMContext* ctx, void* self ) const
    iself = (Item*)self;
    op2 = &ctx->topData();
    
-   switch( typeID() )
+   switch( op2->type() )
    {
       case FLC_ITEM_INT:
          ctx->stackResult(2, iself->asInteger() + op2->asInteger() );
@@ -155,208 +155,329 @@ void ClassInt::op_add( VMContext* ctx, void* self ) const
 }
 
 
-void ClassInt::op_sub( VMContext* ctx, void* ) const {
-    
-   Item *self, *op2;
+void ClassInt::op_sub( VMContext* ctx, void* self ) const
+{
+   Item *iself, *op2;
+   iself = (Item*)self;
+   op2 = &ctx->topData();
 
-   OpToken token( ctx, self, op2 );
-
-   if( self->type() == op2->type() )
+   switch( op2->type() )
    {
+      case FLC_ITEM_INT:
+         ctx->stackResult(2, iself->asInteger() - op2->asInteger() );
+         break;
 
-      token.exit( self->asInteger() - op2->asInteger() );
+      case FLC_ITEM_NUM:
+         ctx->stackResult(2, iself->asInteger() - op2->asNumeric() );
+         break;
 
+      case FLC_ITEM_USER:
+         if( ctx->topData().deuser() )
+         {
+            op_sub( ctx, self );
+            break;
+         }
+         // else, fallthrough and raise the error.
+
+      default:
+         throw new OperandError( ErrorParam( e_invalid_op, __LINE__, SRC )
+               .origin( ErrorParam::e_orig_vm )
+               .extra( "-" ) );
    }
-
-   else if( op2->type() == FLC_ITEM_NUM )
-   {
-
-      token.exit( self->forceNumeric() - op2->asNumeric() );
-
-   } 
-   else 
-      throw new OperandError( ErrorParam( e_invalid_op, __LINE__, __FILE__ ).origin( ErrorParam::e_orig_vm ).extra( "Invalid operand term" ) );
-    
 }
 
 
-void ClassInt::op_mul( VMContext* ctx, void* ) const {
-    
-   Item *self, *op2;
+void ClassInt::op_mul( VMContext* ctx, void* self ) const
+{
+   Item *iself, *op2;
+   iself = (Item*)self;
+   op2 = &ctx->topData();
 
-   OpToken token( ctx, self, op2 );
-
-   if( self->type() == op2->type() )
+   switch( op2->type() )
    {
+      case FLC_ITEM_INT:
+         ctx->stackResult(2, iself->asInteger() * op2->asInteger() );
+         break;
 
-      token.exit( self->asInteger() * op2->asInteger() );
+      case FLC_ITEM_NUM:
+         ctx->stackResult(2, iself->asInteger() * op2->asNumeric() );
+         break;
 
+      case FLC_ITEM_USER:
+         if( ctx->topData().deuser() )
+         {
+            op_mul( ctx, self );
+            break;
+         }
+         // else, fallthrough and raise the error.
+
+      default:
+         throw new OperandError( ErrorParam( e_invalid_op, __LINE__, SRC )
+               .origin( ErrorParam::e_orig_vm )
+               .extra( "*" ) );
    }
+}
 
-   else if( op2->type() == FLC_ITEM_NUM )
+void ClassInt::op_div( VMContext* ctx, void* self ) const
+{
+   Item *iself, *op2;
+   iself = (Item*)self;
+   op2 = &ctx->topData();
+
+   switch( op2->type() )
    {
+      case FLC_ITEM_INT:
+         ctx->stackResult(2, iself->asInteger() / op2->forceNumeric() );
+         break;
 
-      token.exit( self->forceNumeric() * op2->asNumeric() );
+      case FLC_ITEM_NUM:
+         ctx->stackResult(2, iself->asInteger() / op2->asNumeric() );
+         break;
 
+      case FLC_ITEM_USER:
+         if( ctx->topData().deuser() )
+         {
+            op_div( ctx, self );
+            break;
+         }
+         // else, fallthrough and raise the error.
+
+      default:
+         throw new OperandError( ErrorParam( e_invalid_op, __LINE__, SRC )
+               .origin( ErrorParam::e_orig_vm )
+               .extra( "/" ) );
    }
-   else 
-      throw new OperandError( ErrorParam( e_invalid_op, __LINE__, __FILE__ ).origin( ErrorParam::e_orig_vm ).extra( "Invalid operand term" ) );
-    
 }
 
 
-void ClassInt::op_div( VMContext* ctx, void* ) const {
-    
-   Item *self, *op2;
+void ClassInt::op_mod( VMContext* ctx, void* self ) const
+{
+   Item *iself, *op2;
+   iself = (Item*)self;
+   op2 = &ctx->topData();
 
-   OpToken token( ctx, self, op2 );
-
-   if( self->type() == op2->type() )
+   switch( op2->type() )
    {
+      case FLC_ITEM_INT:
+         ctx->stackResult(2, iself->asInteger() % op2->asInteger() );
+         break;
 
-      token.exit( self->asInteger() / op2->asInteger() );
+      case FLC_ITEM_NUM:
+         ctx->stackResult(2, iself->asInteger() % op2->forceInteger() );
+         break;
 
+      case FLC_ITEM_USER:
+         if( ctx->topData().deuser() )
+         {
+            op_mod( ctx, self );
+            break;
+         }
+         // else, fallthrough and raise the error.
+
+      default:
+         throw new OperandError( ErrorParam( e_invalid_op, __LINE__, SRC )
+               .origin( ErrorParam::e_orig_vm )
+               .extra( "%" ) );
    }
-
-   else if( op2->type() == FLC_ITEM_NUM )
-   {
-
-      token.exit( self->forceNumeric() / op2->asNumeric() );
-
-   } 
-   else 
-      throw new OperandError( ErrorParam( e_invalid_op, __LINE__, __FILE__ ).origin( ErrorParam::e_orig_vm ).extra( "Invalid operand term" ) );
-    
 }
 
 
-void ClassInt::op_mod( VMContext* ctx, void* ) const {
-    
-   Item *self, *op2;
+void ClassInt::op_pow( VMContext* ctx, void* self ) const
+{
+   Item *iself, *op2;
+   iself = (Item*)self;
+   op2 = &ctx->topData();
 
-   OpToken token( ctx, self, op2 );
-
-   if( self->type() == op2->type() )
+   switch( op2->type() )
    {
+      case FLC_ITEM_INT:
+         ctx->stackResult(2, pow( iself->asInteger(), op2->asInteger() ) );
+         break;
 
-      token.exit( self->asInteger() % op2->asInteger() );
+      case FLC_ITEM_NUM:
+         ctx->stackResult(2, pow( iself->asInteger(), op2->asNumeric() ) );
+         break;
 
+      case FLC_ITEM_USER:
+         if( ctx->topData().deuser() )
+         {
+            op_pow( ctx, self );
+            break;
+         }
+         // else, fallthrough and raise the error.
+
+      default:
+         throw new OperandError( ErrorParam( e_invalid_op, __LINE__, SRC )
+               .origin( ErrorParam::e_orig_vm )
+               .extra( "**" ) );
    }
-   else 
-      throw new OperandError( ErrorParam( e_invalid_op, __LINE__, __FILE__ ).origin( ErrorParam::e_orig_vm ).extra( "Invalid operand term" ) );
-    
-    
 }
 
 
-void ClassInt::op_pow( VMContext* ctx, void* ) const {
-    
-   Item *self, *op2;
+void ClassInt::op_shr( VMContext* ctx, void* self ) const
+{
+   Item *iself, *op2;
+   iself = (Item*)self;
+   op2 = &ctx->topData();
 
-   OpToken token( ctx, self, op2 );
-
-   if( self->type() == op2->type() || op2->type() == FLC_ITEM_NUM )
+   switch( op2->type() )
    {
+      case FLC_ITEM_INT:
+         ctx->stackResult(2, iself->asInteger() >> op2->asInteger() );
+         break;
 
-      token.exit( pow( self->forceNumeric(), op2->forceNumeric() ) );
+      case FLC_ITEM_NUM:
+         ctx->stackResult(2, iself->asInteger() >> op2->forceInteger() );
+         break;
 
-   } 
-   else 
-      throw new OperandError( ErrorParam( e_invalid_op, __LINE__, __FILE__ ).origin( ErrorParam::e_orig_vm ).extra( "Invalid operand term" ) );
-    
+      case FLC_ITEM_USER:
+         if( ctx->topData().deuser() )
+         {
+            op_shr( ctx, self );
+            break;
+         }
+         // else, fallthrough and raise the error.
+
+      default:
+         throw new OperandError( ErrorParam( e_invalid_op, __LINE__, SRC )
+               .origin( ErrorParam::e_orig_vm )
+               .extra( ">>" ) );
+   }
+}
+
+void ClassInt::op_shl( VMContext* ctx, void* self ) const
+{
+    Item *iself, *op2;
+    iself = (Item*)self;
+    op2 = &ctx->topData();
+
+    switch( op2->type() )
+    {
+       case FLC_ITEM_INT:
+          ctx->stackResult(2, iself->asInteger() << op2->asInteger() );
+          break;
+
+       case FLC_ITEM_NUM:
+          ctx->stackResult(2, iself->asInteger() << op2->forceInteger() );
+          break;
+
+       case FLC_ITEM_USER:
+          if( ctx->topData().deuser() )
+          {
+             op_shl( ctx, self );
+             break;
+          }
+          // else, fallthrough and raise the error.
+
+       default:
+          throw new OperandError( ErrorParam( e_invalid_op, __LINE__, SRC )
+                .origin( ErrorParam::e_orig_vm )
+                .extra( "<<" ) );
+    }
+ }
+
+void ClassInt::op_aadd( VMContext* ctx, void*self ) const
+{
+   Item *iself, *op2;
+   iself = (Item*)self;
+   op2 = &ctx->topData();
+
+   switch( op2->type() )
+   {
+      case FLC_ITEM_INT:
+         ctx->stackResult(2, iself->asInteger() + op2->asInteger() );
+         break;
+
+      case FLC_ITEM_NUM:
+         ctx->stackResult(2, iself->asInteger() + op2->asNumeric() );
+         break;
+
+      case FLC_ITEM_USER:
+         if( ctx->topData().deuser() )
+         {
+            op_aadd( ctx, self );
+            break;
+         }
+         // else, fallthrough and raise the error.
+
+      default:
+         throw new OperandError( ErrorParam( e_invalid_op, __LINE__, SRC )
+               .origin( ErrorParam::e_orig_vm )
+               .extra( "+=" ) );
+   }
+}
+
+void ClassInt::op_asub( VMContext* ctx, void* self ) const
+{
+   Item *iself, *op2;
+   iself = (Item*)self;
+   op2 = &ctx->topData();
+
+   switch( op2->type() )
+   {
+      case FLC_ITEM_INT:
+         ctx->stackResult(2, iself->asInteger() - op2->asInteger() );
+         break;
+
+      case FLC_ITEM_NUM:
+         ctx->stackResult(2, iself->asInteger() - op2->asNumeric() );
+         break;
+
+      case FLC_ITEM_USER:
+         if( ctx->topData().deuser() )
+         {
+            op_asub( ctx, self );
+            break;
+         }
+         // else, fallthrough and raise the error.
+
+      default:
+         throw new OperandError( ErrorParam( e_invalid_op, __LINE__, SRC )
+               .origin( ErrorParam::e_orig_vm )
+               .extra( "-=" ) );
+   }
 }
 
 
-void ClassInt::op_aadd( VMContext* ctx, void*) const {
-    
-   Item *self, *op2;
+void ClassInt::op_amul( VMContext* ctx, void* self ) const
+{
+   Item *iself, *op2;
+   iself = (Item*)self;
+   op2 = &ctx->topData();
 
-   ctx->operands( self, op2 );
-
-   if( self->type() == op2->type() ) 
+   switch( op2->type() )
    {
+      case FLC_ITEM_INT:
+         ctx->stackResult(2, iself->asInteger() * op2->asInteger() );
+         break;
 
-      self->setInteger( self->asInteger() + op2->asInteger() );
+      case FLC_ITEM_NUM:
+         ctx->stackResult(2, iself->asInteger() * op2->asNumeric() );
+         break;
 
+      case FLC_ITEM_USER:
+         if( ctx->topData().deuser() )
+         {
+            op_amul( ctx, self );
+            break;
+         }
+         // else, fallthrough and raise the error.
+
+      default:
+         throw new OperandError( ErrorParam( e_invalid_op, __LINE__, SRC )
+               .origin( ErrorParam::e_orig_vm )
+               .extra( "*=" ) );
    }
-
-   else if( op2->type() == FLC_ITEM_NUM )
-   {
-
-      self->setNumeric( self->forceNumeric() + op2->asNumeric() );
-
-   } 
-   else 
-      throw new OperandError( ErrorParam( e_invalid_op, __LINE__, __FILE__ ).origin( ErrorParam::e_orig_vm ).extra( "Invalid operand term" ) );
-    
-
-   ctx->popData(); // Put self on the top of the stack
-    
-}
-
-void ClassInt::op_asub( VMContext* ctx, void* ) const {
-    
-   Item *self, *op2;
-
-   ctx->operands( self, op2 );
-
-   if( self->type() == op2->type() ) 
-   {
-
-      self->setInteger( self->asInteger() - op2->asInteger() );
-
-   }
-
-   else if( op2->type() == FLC_ITEM_NUM )
-   {
-
-      self->setNumeric( self->forceNumeric() - op2->asNumeric() );
-
-   } 
-   else 
-      throw new OperandError( ErrorParam( e_invalid_op, __LINE__, __FILE__ ).origin( ErrorParam::e_orig_vm ).extra( "Invalid operand term" ) );
-    
-
-   ctx->popData(); // Put self on the top of the stack
-    
-}
-
-
-void ClassInt::op_amul( VMContext* ctx, void* ) const {
-    
-   Item *self, *op2;
-
-   ctx->operands( self, op2 );
-
-   if( self->type() == op2->type() ) 
-   {
-
-      self->setInteger( self->asInteger() * op2->asInteger() );
-
-   }
-
-   else if( op2->type() == FLC_ITEM_NUM )
-   {
-
-      self->setNumeric( self->forceNumeric() * op2->asNumeric() );
-
-   } 
-   else 
-      throw new OperandError( ErrorParam( e_invalid_op, __LINE__, __FILE__ ).origin( ErrorParam::e_orig_vm ).extra( "Invalid operand term" ) );
-    
-
-   ctx->popData(); // Put self on the top of the stack
-    
 }
 
 
 void ClassInt::op_adiv( VMContext* ctx, void* ) const {
-    
+
    Item *self, *op2;
 
    ctx->operands( self, op2 );
 
-   if( self->type() == op2->type() ) 
+   if( self->type() == op2->type() )
    {
 
       self->setInteger( self->asInteger() / op2->asInteger() );
@@ -368,85 +489,183 @@ void ClassInt::op_adiv( VMContext* ctx, void* ) const {
 
       self->setNumeric( self->forceNumeric() / op2->asNumeric() );
 
-   } 
-   else 
-      throw new OperandError( ErrorParam( e_invalid_op, __LINE__, __FILE__ ).origin( ErrorParam::e_orig_vm ).extra( "Invalid operand term" ) );
-    
-
-   ctx->popData(); // Put self on the top of the stack
-    
-}
-
-
-void ClassInt::op_amod( VMContext* ctx, void* ) const {
-    
-   Item *self, *op2;
-
-   ctx->operands( self, op2 );
-
-   if( self->type() == op2->type() ) 
-   {
-
-      self->setInteger( self->asInteger() % op2->asInteger() );
-
    }
-   else 
+   else
       throw new OperandError( ErrorParam( e_invalid_op, __LINE__, __FILE__ ).origin( ErrorParam::e_orig_vm ).extra( "Invalid operand term" ) );
-    
+
 
    ctx->popData(); // Put self on the top of the stack
-    
+
 }
 
 
-void ClassInt::op_apow( VMContext* ctx, void* ) const {
-    
-   Item *self, *op2;
+void ClassInt::op_amod( VMContext* ctx, void* self ) const
+{
+   Item *iself, *op2;
+   iself = (Item*)self;
+   op2 = &ctx->topData();
 
-   ctx->operands( self, op2 );
-
-   if( self->type() == op2->type() || op2->type() == FLC_ITEM_NUM ) 
+   switch( op2->type() )
    {
+      case FLC_ITEM_INT:
+         ctx->stackResult(2, iself->asInteger() % op2->asInteger() );
+         break;
 
-      self->setNumeric( pow( self->forceNumeric() , op2->forceNumeric() ) );
+      case FLC_ITEM_NUM:
+         ctx->stackResult(2, iself->asInteger() % op2->forceInteger() );
+         break;
 
-   } 
-   else 
-      throw new OperandError( ErrorParam( e_invalid_op, __LINE__, __FILE__ ).origin( ErrorParam::e_orig_vm ).extra( "Invalid operand term" ) );
-    
+      case FLC_ITEM_USER:
+         if( ctx->topData().deuser() )
+         {
+            op_amod( ctx, self );
+            break;
+         }
+         // else, fallthrough and raise the error.
 
-   ctx->popData(); // Put self on the top of the stack
-    
+      default:
+         throw new OperandError( ErrorParam( e_invalid_op, __LINE__, SRC )
+               .origin( ErrorParam::e_orig_vm )
+               .extra( "%=" ) );
+   }
 }
 
 
-void ClassInt::op_inc( VMContext* ctx, void* ) const
-{    
-   Item *self;
-   ctx->operands( self );
-   self->setInteger( self->asInteger() + 1 );
+void ClassInt::op_apow( VMContext* ctx, void* self ) const
+{
+   Item *iself, *op2;
+   iself = (Item*)self;
+   op2 = &ctx->topData();
+
+   switch( op2->type() )
+   {
+      case FLC_ITEM_INT:
+         ctx->stackResult(2, pow( iself->asInteger(), op2->asInteger() ) );
+         break;
+
+      case FLC_ITEM_NUM:
+         ctx->stackResult(2, pow( iself->asInteger(), op2->asNumeric() ) );
+         break;
+
+      case FLC_ITEM_USER:
+         if( ctx->topData().deuser() )
+         {
+            op_apow( ctx, self );
+            break;
+         }
+         // else, fallthrough and raise the error.
+
+      default:
+         throw new OperandError( ErrorParam( e_invalid_op, __LINE__, SRC )
+               .origin( ErrorParam::e_orig_vm )
+               .extra( "**=" ) );
+   }
 }
 
 
-void ClassInt::op_dec( VMContext* ctx, void*) const
-{    
-   Item *self;
-   ctx->operands( self );
-   self->setInteger( self->asInteger() + 1 );
+void ClassInt::op_ashr( VMContext* ctx, void* self ) const
+{
+   Item *iself, *op2;
+   iself = (Item*)self;
+   op2 = &ctx->topData();
+
+   switch( op2->type() )
+   {
+      case FLC_ITEM_INT:
+         ctx->stackResult(2, iself->asInteger() >> op2->asInteger() );
+         break;
+
+      case FLC_ITEM_NUM:
+         ctx->stackResult(2, iself->asInteger() >> op2->forceInteger() );
+         break;
+
+      case FLC_ITEM_USER:
+         if( ctx->topData().deuser() )
+         {
+            op_ashr( ctx, self );
+            break;
+         }
+         // else, fallthrough and raise the error.
+
+      default:
+         throw new OperandError( ErrorParam( e_invalid_op, __LINE__, SRC )
+               .origin( ErrorParam::e_orig_vm )
+               .extra( ">>=" ) );
+   }
+}
+
+void ClassInt::op_ashl( VMContext* ctx, void* self ) const
+{
+    Item *iself, *op2;
+    iself = (Item*)self;
+    op2 = &ctx->topData();
+
+    switch( op2->type() )
+    {
+       case FLC_ITEM_INT:
+          ctx->stackResult(2, iself->asInteger() << op2->asInteger() );
+          break;
+
+       case FLC_ITEM_NUM:
+          ctx->stackResult(2, iself->asInteger() << op2->forceInteger() );
+          break;
+
+       case FLC_ITEM_USER:
+          if( ctx->topData().deuser() )
+          {
+             op_ashl( ctx, self );
+             break;
+          }
+          // else, fallthrough and raise the error.
+
+       default:
+          throw new OperandError( ErrorParam( e_invalid_op, __LINE__, SRC )
+                .origin( ErrorParam::e_orig_vm )
+                .extra( "<<=" ) );
+    }
+ }
+
+
+// -------- Helper functions to increment and decrement ClassInt -----
+
+inline void increment( VMContext *ctx, void *self )
+{
+   Item *iself = (Item*)self;
+   ctx->stackResult( 1, iself->asInteger() + 1 );
+}
+
+inline void decrement( VMContext *ctx, void *self )
+{
+   Item *iself = (Item*)self;
+   ctx->stackResult( 1, iself->asInteger() - 1 );
+}
+
+// ---------------------------------------------------------------------
+
+void ClassInt::op_inc( VMContext* ctx, void* self ) const
+{
+   increment( ctx, self );
 }
 
 
-void ClassInt::op_incpost( VMContext*, void* ) const
-{    
-   // TODO   
+void ClassInt::op_dec( VMContext* ctx, void* self ) const
+{
+   decrement( ctx, self );
 }
 
 
-void ClassInt::op_decpost( VMContext*, void* ) const
-{    
-   // TODO   
+void ClassInt::op_incpost( VMContext* ctx, void* self ) const
+{
+   increment( ctx, self );
+}
+
+
+void ClassInt::op_decpost( VMContext* ctx, void* self ) const
+{
+   decrement( ctx, self );
 }
 
 }
 
 /* end of classint.cpp */
+

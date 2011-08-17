@@ -14,7 +14,7 @@
 */
 
 #undef SRC
-#define SRC "engine/classgeneri.cpp"
+#define SRC "engine/classgeneric.cpp"
 
 #include <falcon/classgeneric.h>
 #include <falcon/genericitem.h>
