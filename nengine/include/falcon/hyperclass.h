@@ -93,6 +93,8 @@ public:
    virtual void* clone( void* source ) const;
    virtual void serialize( DataWriter* stream, void* self ) const;
    virtual void* deserialize( DataReader* stream ) const;
+   virtual bool isDerivedFrom( Class* cls ) const;
+   virtual void* getParentData( Class* parent, void* data ) const;
 
    Function* constructor() const { return m_constructor; }
    void constructor( Function* c ) { m_constructor = c; }

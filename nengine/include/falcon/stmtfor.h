@@ -2,7 +2,7 @@
    FALCON - The Falcon Programming Language.
    FILE: stmtfor.h
 
-   Syntactic tree item definitions -- Autoexpression.
+   Syntactic tree item definitions -- For/in and For/to.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: Thu, 11 Aug 2011 17:28:22 +0200

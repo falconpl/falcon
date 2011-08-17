@@ -48,6 +48,10 @@ public:
       e_stmt_continue,
       e_stmt_break,
       e_stmt_fastprint,
+      e_stmt_for,
+      e_stmt_try,
+      e_stmt_raise,
+      e_stmt_select,
       custom_t
    } t_statement;
 

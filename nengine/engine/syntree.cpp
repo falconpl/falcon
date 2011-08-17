@@ -47,7 +47,8 @@ public:
 
 SynTree::SynTree():
    _p( new Private ),
-   m_locals(0)
+   m_locals(0),
+   m_head(0)
 {
    /** Mark this as a composed class */
    m_bIsComposed = true;

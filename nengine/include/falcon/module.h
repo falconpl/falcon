@@ -44,6 +44,7 @@ class ModLoader;
 class FalconClass;
 class DynUnloader;
 class ModGroup;
+class Requirement;
 
 /** Standard Falcon Execution unit and library.
 
@@ -385,6 +386,17 @@ public:
     generated and readied to be used.
     */
    void addImportInheritance( Inheritance* inh );
+   
+   /** Adds a request for a foreign class not bound with an inheritance.
+    \param cr A RquiredClass that will be filled with the required class.
+    
+    Classes inheriting from other classes are not the only statements
+    specifically searching for classes in other modules. The RquiredClass class
+    represents this fact, allowing statements, or generic third party modules,
+    to ask for a foreign class.
+    
+    */
+   void addRequirement( Requirement* cr );
    
    /** Stores a class coming from a source module.
     \param fcls The class to be added.

@@ -37,14 +37,19 @@ public:
    virtual void* clone( void* source ) const;
    virtual void serialize( DataWriter* stream, void* self ) const;
    virtual void* deserialize( DataReader* stream ) const;
+   
+   /** Grant that subclasses are considered derived from the standard engine Error class.*/
+   virtual bool isDerivedFrom( Class* cls ) const;
 
    virtual void describe( void* instance, String& target, int depth = 3, int maxlen = 60 ) const;
    // TODO: overload properties.
 
    void op_toString( VMContext* ctx, void* self ) const;
    
-protected:
+
    ClassError( const String& name );
+
+protected:
    virtual ~ClassError();
 
    /** Turns the standard error parameters sent by scripts into an ErrorParam.

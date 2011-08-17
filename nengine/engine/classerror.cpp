@@ -23,6 +23,7 @@
 #include <falcon/function.h>
 #include <falcon/module.h>
 
+#include <falcon/stderrors.h>
 
 namespace Falcon {
 
@@ -48,6 +49,7 @@ namespace Falcon {
 ClassError::ClassError( const String& name ):
    Class(name)
 {
+   m_bIsErrorClass = true;
 }
 
 ClassError::~ClassError()
@@ -76,6 +78,13 @@ void* ClassError::deserialize( DataReader* ) const
 {
    //TODO
    return 0;
+}
+
+
+bool ClassError::isDerivedFrom( Class* cls ) const 
+{
+   static Class* stdError = Engine::instance()->stdErrors()->error();   
+   return cls == this || cls == stdError;
 }
 
 

@@ -242,7 +242,7 @@ public:
     the class is automatically finalized (it's components are setup).
     */
    bool addParent( Inheritance* inh );
-
+   
    /** Adds a parent and the parentship declaration.
     \param name The name of the inheritance.
     \param parent The parent of this class.
@@ -314,7 +314,9 @@ public:
     */
    void enumeratePropertiesOnly( PropertyEnumerator& cb ) const;
 
-   
+   virtual bool isDerivedFrom( Class* cls ) const;
+   virtual void* getParentData( Class* parent, void* data ) const;
+
    //====================================================================
    // Overrides from Class
    //

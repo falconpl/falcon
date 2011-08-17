@@ -167,14 +167,18 @@ public:
     */
    bool isMetaClass() const { return typeID() == FLC_CLASS_ID_CLASS; }
 
-   /** Return true if this class can safely cast to a Prototype class.
-    \return true if this is a Prototype.
+   /** Determines if this is a class in the ErrorClass hierarcy.
+    \return true if this is an error class.
 
-    Prototype classes have special significance to the engine.
-
-    This flag is true for Prototype instances and (eventually) derived classes.
+    This flags allows to easily unbox error raised by scripts autonomously
+    out of their handler class and treat them as proper Falcon::Error classes
+    at C++ level.
+    
+    \note Theoretically, it is also possible to check Class::isDerivedFrom on the
+    base Error* class provided by the StdErrors class in the engine, but
+    this way is faster.
     */
-   bool isPrototype() const { return m_bIsPrototype; }
+   bool isErrorClass() const { return m_bIsErrorClass; }
 
    /** Gets a direct parent class of this class by name.
     \param name The name of the direct parent class.
@@ -184,6 +188,36 @@ public:
     The default behavior is that of always returning 0.
     */
    virtual Class* getParent( const String& name ) const;
+   
+   /** Check if the given class is derived from this class. 
+    \param cls The possibly base class.
+    \return True if cls is one of the base classes.
+    
+    The method returns true if the class is the same as this class or
+    if one of the base classes of this class is derived from cls.
+    */
+   virtual bool isDerivedFrom( Class* cls ) const;
+   
+   /** Identifies the data known in a parent of a composed class.
+    \param parent The parent of this class.
+    \param data The data associated with this class.
+    \return A pointer to a data that is known to the parent, or 0 if parent is
+    unknown.
+    
+    Composed classes (for instance, HyperClass and Prototype) carry multiple
+    instances representing the data which is related to a specific parents.
+    This method can be used to retrieve the data which is associated with a
+    particular subclass.
+    
+    If \b parent is this same class, then \b data is returned. Otherwise, if
+    it's identified as a component of this class, an usable data is returned,
+    while if \b subcparentls is unknown, 0 is returned.
+    
+    In some contexts, parents might use the same data as their child; it's
+    the case of incremental classes as FalconClass. In that case, \b data may be
+    returned even if \b parent is a proper parent of this class.
+    */
+   virtual void* getParentData( Class* parent, void* data ) const;
 
    /** Sets the module of this class.
     \param m The module where this class resides.
@@ -770,7 +804,7 @@ public:
 
 protected:
    bool m_bIsfalconClass;
-   bool m_bIsPrototype;
+   bool m_bIsErrorClass;
    
    /** This flags are at disposal of subclasses for special purpose (i.e. cast conversions). */
    int32 m_userFlags;

@@ -43,6 +43,7 @@
 #include <falcon/sp/parser_proto.h>
 #include <falcon/sp/parser_reference.h>
 #include <falcon/sp/parser_rule.h>
+#include <falcon/sp/parser_try.h>
 #include <falcon/sp/parser_while.h>
 
 #include <falcon/parser/rule.h>
@@ -131,6 +132,9 @@ SourceParser::SourceParser():
    T_not("not", 50),
    T_nil("nil"),
    T_try("try"),
+   T_catch("catch"),
+   T_finally("finally"),
+   T_raise("raise"),
 
    T_elif("elif"),
    T_else("else"),
@@ -270,6 +274,25 @@ SourceParser::SourceParser():
 
    S_Export << "export" << export_errhand;
    S_Export << ( r_export_rule << "export_rule" << apply_export_rule << T_export << ListSymbol << T_EOL );
+   
+   S_Try << "try" << try_errhand;
+   S_Try << ( r_try_rule << "try_rule" << apply_try << T_try << T_EOL );
+   S_Catch << "catch" << catch_errhand;
+   S_Catch << ( r_catch_base << "catch_" << apply_catch << T_catch << CatchSpec ); 
+   S_Finally << "finally" << finally_errhand;
+   S_Finally << ( r_finally << "r_finally" << apply_finally << T_finally << T_EOL ); 
+   
+   CatchSpec << "CatchSpec"
+         << ( r_catch_all << "catch_all" << apply_catch_all << T_EOL )
+         << ( r_catch_in_var<< "catch_in_var" << apply_catch_in_var << T_in << T_Name << T_EOL )
+         << ( r_catch_number << "catch_number" << apply_catch_number <<  T_Int << T_EOL )
+         << ( r_catch_number_in_var << "catch_number_in_var" << apply_catch_number_in_var << T_Int << T_in << T_Name << T_EOL )
+         << ( r_catch_thing << "catch_thing" << apply_catch_thing <<  T_Name << T_EOL )
+         << ( r_catch_thing_in_var << "catch_thing_in_var" << apply_catch_thing_in_var << T_Name << T_in << T_Name << T_EOL )
+            ;
+   
+   S_Raise << "raise" << raise_errhand;
+   S_Raise << ( r_raise << "r_raise" << apply_raise << T_raise << Expr << T_EOL );
    
    //==========================================================================
    // Import & family
@@ -545,6 +568,10 @@ SourceParser::SourceParser():
       << S_Forfirst
       << S_Formiddle
       << S_Forlast
+      << S_Try
+      << S_Catch
+      << S_Finally   
+      << S_Raise
       << S_Rule
       << S_Cut
       << S_Doubt
@@ -574,6 +601,10 @@ SourceParser::SourceParser():
       << S_Forfirst
       << S_Formiddle
       << S_Forlast
+      << S_Try
+      << S_Catch
+      << S_Finally
+      << S_Raise
       << S_Rule
       << S_Cut
       << S_Doubt

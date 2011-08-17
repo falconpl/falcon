@@ -49,6 +49,9 @@ public:
    StdErrors();
    ~StdErrors();
    
+   /** Returns the global instance of the Error handler class. */
+   Class* error() const { return m_error; }
+   
    /** Returns the global instance of the CodeError handler Class.
     */
    Class* code() const{ return m_code; } 
@@ -100,6 +103,7 @@ public:
    Class* link() const { return m_link; }
    
 private:
+   Class* m_error;
    Class* m_code;
    Class* m_generic;
    Class* m_operand;

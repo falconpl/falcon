@@ -27,6 +27,7 @@
 #include <falcon/modgroup.h>
 #include <falcon/modloader.h>
 #include <falcon/inheritance.h>
+#include <falcon/requirement.h>
 #include <falcon/error.h>
 #include <falcon/linkerror.h>
 #include <falcon/falconclass.h>
@@ -126,6 +127,21 @@ public:
          return 0;
       }
    };
+   
+   class WaitingRequirement: public WaitingDep
+   {
+   public:
+      Requirement* m_cr;
+
+      WaitingRequirement( Requirement* inh ):
+         m_cr( inh )
+      {}
+
+      virtual Error* onSymbolLoaded( Module* mod, Symbol* sym )
+      {
+         return m_cr->resolve( mod, sym );
+      }
+   };
 
    /** Records a single remote name with multiple items waiting for that name to be resolved.*/
    class Dependency
@@ -188,7 +204,7 @@ public:
    };
 
    /** Record keeping track of needed modules (eventually already defined). */
-   class Requirement
+   class Request
    {
    public:
       String m_uri;
@@ -209,7 +225,7 @@ public:
       typedef std::map<String, String> NsImportMap;
       NsImportMap m_fullImport;
 
-      Requirement( const String& name, t_loadMode imode=e_lm_import_public, bool bIsUri=false ):
+      Request( const String& name, t_loadMode imode=e_lm_import_public, bool bIsUri=false ):
          m_uri( name ),
          m_bIsUri( bIsUri ),
          m_loadMode( imode ),
@@ -218,7 +234,7 @@ public:
          m_bIsGenericProvider( false )
       {}
 
-      ~Requirement()
+      ~Request()
       {
          DepMap::iterator dep_i = m_deps.begin();
          while( dep_i != m_deps.end() )
@@ -239,9 +255,9 @@ public:
    class NSImport {
    public:
       String m_remNS;
-      Requirement* m_req;
+      Request* m_req;
       
-      NSImport( const String& remNS, Requirement* req ):
+      NSImport( const String& remNS, Request* req ):
       m_remNS( remNS ), m_req(req)
       {}
          
@@ -262,13 +278,13 @@ public:
    //============================================
 
    // Map module-name/path -> requirent*
-   typedef std::map<String, Requirement*> ReqMap;
+   typedef std::map<String, Request*> ReqMap;
    ReqMap m_reqs;
    
    typedef std::map<String, NSImport*> NSImportMap;
    NSImportMap m_nsImports;
    
-   typedef std::deque<Requirement*> ReqList;
+   typedef std::deque<Request*> ReqList;
    // Generic requirements, that is, import from Module 
    // (modules that might provide any undefined symbol).
    ReqList m_genericMods;
@@ -365,7 +381,7 @@ public:
    {
       // has the symbolname a namespace translation?
       String remSymName;      
-      Requirement* req = 0;
+      Request* req = 0;
       
       length_t pos;
       if( bSearchNS && (pos = symname.rfind( '.')) != String::npos )
@@ -389,7 +405,7 @@ public:
       }
             
       Dependency* dep;
-      Requirement::DepMap::iterator idep = req->m_deps.find( symname );
+      Request::DepMap::iterator idep = req->m_deps.find( symname );
       if( idep != req->m_deps.end() )
       {
          dep = idep->second;
@@ -405,9 +421,9 @@ public:
    }
    
    
-   Requirement* getReq( const String& sourcemod, bool bIsUri )
+   Request* getReq( const String& sourcemod, bool bIsUri )
    {
-      Requirement* req;
+      Request* req;
       ReqMap::iterator ireq = m_reqs.find( sourcemod );
       if( ireq != m_reqs.end() )
       {
@@ -417,7 +433,7 @@ public:
       }
       else
       {
-         req = new Requirement(sourcemod, e_lm_import_public , bIsUri );
+         req = new Request(sourcemod, e_lm_import_public , bIsUri );
          m_reqs[sourcemod] = req;
       }
       return req;
@@ -425,7 +441,7 @@ public:
       
    /** Prepares the whole namespace import
     */
-   bool addNSImport( const String& localNS, const String& remoteNS, Requirement* req )
+   bool addNSImport( const String& localNS, const String& remoteNS, Request* req )
    {
       // can't import a more than a single remote whole ns in a local ns
       NSImportMap::iterator iter = m_nsImports.find( localNS );
@@ -802,7 +818,7 @@ bool Module::addLoad( const String& mod_name, bool bIsUri )
    if( ireq != _p->m_reqs.end() )
    {
       // already loaded?
-      Private::Requirement* r = ireq->second;
+      Private::Request* r = ireq->second;
       if( r->m_loadMode == e_lm_load )
       {
          return false;
@@ -812,7 +828,7 @@ bool Module::addLoad( const String& mod_name, bool bIsUri )
    }
 
    // add a new requirement with load request
-   Private::Requirement* r = new Private::Requirement( mod_name, e_lm_load, bIsUri);
+   Private::Request* r = new Private::Request( mod_name, e_lm_load, bIsUri);
    _p->m_reqs[ mod_name ] = r;
    return true;
 }
@@ -821,7 +837,7 @@ bool Module::addLoad( const String& mod_name, bool bIsUri )
 bool Module::addGenericImport( const String& source, bool bIsUri )
 {
    Private::ReqMap::iterator pos = _p->m_reqs.find( source );
-   Private::Requirement* req;
+   Private::Request* req;
    if( pos != _p->m_reqs.end() )
    {
       // can we promote the module to generic import?
@@ -835,7 +851,7 @@ bool Module::addGenericImport( const String& source, bool bIsUri )
    else
    {
       // create the requirement now.
-      req = new Private::Requirement( source, e_lm_load, bIsUri );
+      req = new Private::Request( source, e_lm_load, bIsUri );
       _p->m_reqs[source] = req;
    }
    
@@ -959,6 +975,25 @@ void Module::addImportInheritance( Inheritance* inh )
 }
 
 
+void Module::addRequirement( Requirement* cr )
+{
+   // Inheritances with dots are dependent on the given module.
+   String ModName, crName;
+   crName = cr->name();
+   length_t pos = crName.rfind( '.' );
+   if( pos != String::npos )
+   {
+      ModName = crName.subString(0,pos);
+      crName = crName.subString(pos);
+   }
+   
+   Private::Dependency* dep = _p->getDep( ModName, false, crName );
+   
+   // Record the fact that we have to save transform an unknown symbol...
+   dep->m_waiting.push_back( new Private::WaitingRequirement( cr ) );
+}
+
+
 Symbol* Module::findGenericallyExportedSymbol( const String& symname, Module*& declarer ) const
 {
    Private::ReqList::const_iterator pos = _p->m_genericMods.begin();
@@ -966,7 +1001,7 @@ Symbol* Module::findGenericallyExportedSymbol( const String& symname, Module*& d
    // found in?
    while( pos != _p->m_genericMods.end() )
    {
-      Private::Requirement* req = *pos;
+      Private::Request* req = *pos;
       if( req->m_module != 0 )
       {
          Symbol *sym = req->m_module->getGlobal( symname );
@@ -1036,7 +1071,7 @@ bool Module::resolveStaticReqs()
    Private::ReqMap::iterator iter = reqs.begin();
    while( iter != reqs.end() )
    {
-      Private::Requirement& req = *iter->second;
+      Private::Request& req = *iter->second;
       
       // skip the special null requirement for implicit imports.      
       if( req.m_uri == "" )
@@ -1158,7 +1193,7 @@ bool Module::resolveDynReqs( ModLoader* loader )
    Private::ReqMap::iterator iter = reqs.begin();
    while( iter != reqs.end() )
    {
-      Private::Requirement& req = *iter->second;
+      Private::Request& req = *iter->second;
       
       // skip the special null requirement for implicit imports.      
       if( req.m_uri == "" )
@@ -1209,7 +1244,7 @@ void Module::unload()
 bool Module::addImportFromWithNS( const String& localNS, const String& remoteName, 
             const String& modName, bool isFsPath )
 {   
-   Private::Requirement* req = _p->getReq( modName, isFsPath );
+   Private::Request* req = _p->getReq( modName, isFsPath );
    
    // generic import from/in ns?
    if( remoteName == "" || remoteName == "*" )
@@ -1277,12 +1312,12 @@ Error* Module::resolveDirectImports( bool bUseModGroup )
    Private::ReqMap::iterator iter = _p->m_reqs.begin();
    while( iter != _p->m_reqs.end() )
    {
-      Private::Requirement* req = iter->second;          
+      Private::Request* req = iter->second;          
       Module* mod = req->m_module;
       // if the module has been resolved, it won't be 0.
       if( mod != 0 )
       {
-         Private::Requirement::DepMap::iterator iter = req->m_deps.begin();
+         Private::Request::DepMap::iterator iter = req->m_deps.begin();
          while( iter != req->m_deps.end() )
          {
             Private::Dependency* dep = iter->second;
@@ -1341,7 +1376,7 @@ Error* Module::resolveDirectImports( bool bUseModGroup )
          }
          
          // performs also the namespace forwarding
-         Private::Requirement::NsImportMap::iterator nsiter = req->m_fullImport.begin();
+         Private::Request::NsImportMap::iterator nsiter = req->m_fullImport.begin();
          while( nsiter != req->m_fullImport.end() )
          {
             const String& remoteNS = nsiter->first;
@@ -1527,8 +1562,8 @@ void Module::resolveGenericImports( bool bForReal )
       // loaded symbols from import...
    if( ireq != _p->m_reqs.end() )
    {
-      Private::Requirement* req = ireq->second;
-      Private::Requirement::DepMap::iterator iter = req->m_deps.begin();
+      Private::Request* req = ireq->second;
+      Private::Request::DepMap::iterator iter = req->m_deps.begin();
       while( iter != req->m_deps.end() )
       {
          Private::Dependency* dep = iter->second;

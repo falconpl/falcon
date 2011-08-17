@@ -57,8 +57,7 @@ public:
 };
 
 
-VMachine::VMachine( Stream* stdIn, Stream* stdOut, Stream* stdErr ):
-   m_event(eventNone)
+VMachine::VMachine( Stream* stdIn, Stream* stdOut, Stream* stdErr )
 {
    // create the first context
    TRACE( "Virtual machine created at %p", this );
@@ -212,28 +211,15 @@ void VMachine::onRaise( const Item& item )
 }
 
 
-void VMachine::raiseItem( const Item& item )
-{
-   regA() = item;
-   m_event = eventRaise;
-}
-
-
-void VMachine::raiseError( Error* e )
-{
-   e->scriptize(regA());
-   m_event = eventRaise;
-}
-
 
 bool VMachine::run()
 {
    MESSAGE( "Run called" );
-   m_event = eventNone;
    PARANOID( "Call stack empty", (currentContext()->callDepth() > 0) );
 
    // for now... then it will be a TLS variable.
    VMContext* ctx = currentContext();
+   ctx->clearEvent();
    
    while( true )
    {
@@ -250,34 +236,33 @@ bool VMachine::run()
       }
       catch( Error* e )
       {
-         onError( e );
-         continue;
+         ctx->raiseError( e );
       }
 
-      switch( m_event )
+      switch( ctx->event() )
       {
-         case eventNone: break;
+         case VMContext::eventNone: break;
 
-         case eventBreak:
+         case VMContext::eventBreak:
             TRACE( "Hit breakpoint before %s ", location().c_ize() );
             return false;
 
-         case eventComplete:
+         case VMContext::eventComplete:
             MESSAGE( "Run terminated because lower-level complete detected" );
             return true;
 
-         case eventTerminate:
+         case VMContext::eventTerminate:
             MESSAGE( "Terminating on explicit termination request" );
             return true;
 
-         case eventReturn:
+         case VMContext::eventReturn:
             MESSAGE( "Retnring on setReturn request" );
-            m_event = eventNone;
+            ctx->clearEvent();
             return false;
 
-         case eventRaise:
-            onRaise( regA() );
-            // if we're still alive it means the event was correctly handled
+         case VMContext::eventRaise:
+            // for now, just throw the unhandled error.
+            onError(ctx->thrownError());
             break;
       }
       
@@ -285,7 +270,7 @@ bool VMachine::run()
    }
 
    MESSAGE( "Run terminated because of code exaustion" );
-   m_event = eventComplete;
+   ctx->setComplete();
    return true;
 }
 
@@ -427,8 +412,10 @@ bool VMachine::step()
       MESSAGE( "Step terminated" );
       return true;
    }
+   
+   VMContext* ctx = currentContext();
 
-   PARANOID( "Call stack empty", (currentContext()->callDepth() > 0) );
+   PARANOID( "Call stack empty", (ctx->callDepth() > 0) );
 
    // NOTE: This code must be manually coordinated with vm::run()
    // other solutions, as inline() or macros are either unsafe or
@@ -438,42 +425,41 @@ bool VMachine::step()
    // BEGIN OF STEP - END OF STEP
 
    // BEGIN OF STEP
-   const PStep* ps = currentContext()->currentCode().m_step;
+   const PStep* ps = ctx->currentCode().m_step;
    TRACE( "Step at %s", location().c_ize() );  // this is not in VM::Run
    try
    {
-      ps->apply( ps, currentContext() );
+      ps->apply( ps, ctx );
    }
    catch( Error* e )
    {
-      onError( e );
-      return true;
+      ctx->raiseError( e );
    }
 
-   switch( m_event )
+   switch( ctx->event() )
    {
-      case eventNone: break;
+      case VMContext::eventNone: break;
 
-      case eventBreak:
-         TRACE( "Hit breakpoint before line %s ", location().c_ize() );
+      case VMContext::eventBreak:
+         TRACE( "Hit breakpoint before %s ", location().c_ize() );
          return false;
 
-      case eventComplete:
+      case VMContext::eventComplete:
          MESSAGE( "Run terminated because lower-level complete detected" );
          return true;
 
-      case eventTerminate:
+      case VMContext::eventTerminate:
          MESSAGE( "Terminating on explicit termination request" );
          return true;
 
-      case eventReturn:
+      case VMContext::eventReturn:
          MESSAGE( "Retnring on setReturn request" );
-         m_event = eventNone;
+         ctx->clearEvent();
          return false;
 
-      case eventRaise:
-         onRaise( regA() );
-         // if we're still alive it means the event was correctly handled
+      case VMContext::eventRaise:
+         // for now, just throw the unhandled error.
+         onError(ctx->thrownError());
          break;
    }
    // END OF STEP

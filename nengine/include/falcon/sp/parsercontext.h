@@ -33,6 +33,7 @@ class Expression;
 class Statement;
 class FalconClass;
 class Inheritance;
+class Requirement;
 
 /** Compilation context for Falcon source file compiler (ABC).
 
@@ -286,10 +287,35 @@ public:
    virtual Expression* onStaticData( Class* cls, void* data ) = 0;
 
    /** Adds an inheritance record.
-    Inheritances are particular import structures
-    (more later).
+    Inheritances are particular import structures that statically specifies 
+    the fact that the imported entity must be a class, and that is part of
+    the inheritance of a class being defined in the forming module.
+    
+    The modules have support to generate link errors when a symbol speciried 
+    in a RequiredClass is not found (in the specified source namespaces or in 
+    the global namespace) or, if found, if the symbol is not referencing a
+    Class entity.
+    
+    Inheritance structures have also support to perform dynamic creation of
+    the classes they are part of. When all the inheritance are resolved, 
+    a FalconClass or HyperClass is dynamically created in the target module
+    by the link process.    
     */
    virtual void onInheritance( Inheritance* inh  ) = 0;
+   
+   /** Adds a requirement for a foreign class.
+    RequiredClass is a particular import structure that statically specifies 
+    the fact that the imported entity must be a class.
+    
+    The modules have support to generate link errors when a symbol speciried 
+    in a RequiredClass is not found (in the specified source namespaces or in 
+    the global namespace) or, if found, if the symbol is not referencing a
+    Class entity.
+    
+    This is similar to onInheritance(), but in this case inheritance completion
+    and subclass creation is not involved in the resolution process.
+    */
+   virtual void onRequirement( Requirement* rec ) = 0;
 
    /** Opens the main context frame.
     This context frame (main or base context frame) refers to the topmost

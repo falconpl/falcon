@@ -27,6 +27,8 @@ namespace Falcon {
 
 class VMachine;
 class SynFunc;
+class StmtTry;
+class SynTree;
 
 /**
  * Structure needed to store VM data.
@@ -423,7 +425,7 @@ public:
     *  Other than changing the top step, this method resets the sequence ID.
     *  Be careful: this won't work for PCode (they need the seq ID to be set to their size).
     */
-   inline void resetCode( PStep* step ) {
+   inline void resetCode( const PStep* step ) {
       CodeFrame& frame = currentCode();
       frame.m_step = step;
       frame.m_seqId = 0;
@@ -791,6 +793,188 @@ public:
    bool ruleEntryResult() const { return m_ruleEntryResult; }
    void ruleEntryResult( bool v ) { m_ruleEntryResult = v; }
    
+   //=============================================================
+   // Try/catch
+   //   
+   
+   /** Called back on item raisal.
+    \param raised The item that was explicitly raised.
+    
+    This method searches the try-stack for a possible catcher. If one is found,
+    the catcher is activated, otherwise an uncaucght raise error is thrown
+    at C++ level.
+    
+    \note This method will unbox items containing instances of subclasses of 
+    ClassError class and pass them to manageError automatically. However, 
+    unboxing won't happen for script classes derived from error classes.
+    
+    \see manageError()
+    */
+   void raiseItem( const Item& raised );
+   
+   /** Tries to manage an error through try handlers.
+    \param exc The Falcon::Error instance that was thrown.
+    
+    This method is invoked by the virtual machine when it catches an Error*
+    thrown by some part of the code. This exceptins are usually meant to be
+    handled by a script, if possible, or forwarded to the system if the
+    script can't manage it.
+    
+    If an handler is found, the stacks are unrolled and the execution of
+    the error handler is preapred in the stack. 
+    
+    If a finally block is found before an error handler can be found, the
+    error is stored in that try-frame and the cleanup procedure is invoked
+    by unrolling the stacks up to that point; a marker is left in the finalize
+    pstep frame so that, after cleanup, the process can proceed.
+    
+    If a new error is thrown during a finalization, two things may happen: either
+    it is handled by an handler inside the finalize process or it is unhandled.
+    If it is handled, then the error raisal process continues. If it is unhandled,
+    the new error gets propagated as a sub-error of the old one. Example:
+    
+    @code
+    try
+      raise Error( 100, "Test Error" )
+    finally
+      raise Error( 101, "Test From Finally" )
+    end
+    @endcode
+    
+    In this case, the error 101 becomes a sub-error of error 100, and the
+    error-catching procedure continues for error 100.
+    
+    If a non-error item is raised from finally, it becomes an sub-error of the
+    main one as a "uncaught raised item" exception. If the non-error item was
+    raised before an error or an item throw by finally, the non-error item is
+    lost and the raisal process continues with the item raised by the finally
+    code.
+    */
+   void raiseError( Error* exc );
+
+   /** Proceeds after a finally frame is complete.
+    Invoked by cleanup frames after a finally block has been invoked.
+    
+    The context leaves a marker in the sequence ID of the cleanup step; if found,
+    the cleanup step invoke this method, which pops the current try-frame and
+    repeats the try-unroll procedure using the error that was saved in the frame.
+    */
+   void finallyComplete();
+   
+   /** Increments the count of traversed finally blocks in this frame.
+    
+    When a return is issued from inside a try block having a finally clause,
+    the return frame unroll procedure must first respect the finally block and
+    execute it. As unrolling the stack in search for the finally block is
+    more complex than simply executing a flat unroll, having the count of
+    active finally blocks helps to preform finally unrolls only when needed.
+    
+    This method is called when the code generator places a finally block on
+    the code stack, and its effects are reversed by enterFinally(), which
+    is invoked at the beginning of the finally block.
+    
+    */
+   void traverseFinally() { ++m_topCall->m_finallyCount; }
+   
+   /** Declares the begin of the execution of a finally block.
+    \see traverseFinally
+    */
+   void enterFinally() { --m_topCall->m_finallyCount; }
+   
+   /** Finally continuation mode type. */
+   typedef enum
+   {
+      /** Nothing to continue after finally */
+      e_fin_none,
+      /** Finally called during error raisal. */
+      e_fin_raise,
+      /** Finally called during a loop break. */
+      e_fin_break,
+      /** Finally called during a loop continue. */
+      e_fin_continue,
+      /** Finally called during a return stack unroll. */
+      e_fin_return,
+      /** Finally called during an explicit and soft termination request. */
+      e_fin_terminate
+   }
+   t_fin_mode;
+
+   void setFinallyContinuation( t_fin_mode fm ) { m_finMode = fm; }
+   
+   void setCatchBlock( const SynTree* ps ) { m_catchBlock = ps; }
+
+//==========================================================
+// Status management
+//
+
+   /** Events that may cause VM suspension or interruption. */
+   typedef enum {
+      /** All green, go on. */
+      eventNone,
+      /** Debug Breakpoint reached -- return. */
+      eventBreak,
+      /** Explicit return frame hit -- return. */
+      eventReturn,
+      /** Quit request -- get out. */
+      eventTerminate,
+      /** All the code has been processed -- get out. */
+      eventComplete,
+      /** Soft error raised -- manage it internally if possible. */
+      eventRaise
+   } t_event;
+
+   /** Returns the last event that was raised in this VM.
+      @return The last event generated by the vm.
+    */
+   inline t_event event() const { return m_event; }   
+
+   /** Asks for a light termination of the VM.
+    The VM immediately returns to the caller. The event is sticky; this means
+    that intermediate callers will see this event set and propagate it upwards.
+    */
+   inline void quit() { m_event = eventTerminate; }
+
+   /** Asks the VM to exit from its main loop.
+
+    This is generally handled by a specific opcode that asks for the VM to
+    exit its current main loop. The opcode may be inserted by special
+    "atomic" calls. When such a call is made, if the called function needs
+    to ask the VM to perform some calculation, then it can add this opcode
+    to the code stack to be called back when the calculation is done.
+
+    This is meant to be used internally by the engine and shouldn't be
+    tackled by modules or external code.
+
+    To cause the code flow to be temporarily suspended at current point
+    you may use the pushBreak() or pushReturn() methods, or otherwise push
+    your own PStep taking care of breaking the code.
+    */
+   inline void setReturn() { m_event = eventReturn; }
+
+   /** Resets the event.
+   */
+   inline void clearEvent() { m_event = eventNone; }
+
+   /** Sets the complete event
+   */
+   inline void setComplete() { m_event = eventComplete; }
+
+   /** Activates a breakpoint.
+
+      Breaks the current run loop. This is usually done by specific
+      breakpoint opcodes that are inserted at certain points in the code
+      to cause interruption for debug and inspection.
+
+    To cause the code flow to be temporarily suspended at current point
+    you may use the pushBreak() or pushReturn() methods, or otherwise push
+    your own PStep taking care of breaking the code.
+
+    The StmtBreakpoint can be inserted in source flows for this purpose.
+   */
+   inline void breakpoint() { m_event = eventBreak; }
+   
+   Error* thrownError() const { return m_thrown; }
+   
 protected:
 
    // Inner constructor to create subclasses
@@ -809,18 +993,36 @@ protected:
    Item* m_maxData;
 
    Item m_regA;
+   
+   /** Error whose throwing was suspended by a finally handling. */
+   Error* m_thrown;
+   
+   /** Item whose raisal was suspended by a finally handling. */
+   Item m_raised;
+   
+   // finally continuation mode.
+   t_fin_mode m_finMode;
   
    VMachine* m_vm;
 
    friend class VMachine;
    friend class SynFunc;
-
-   // used by ifDeep - goingDeep() - wentDeep() triplet
-   const PStep* m_deepStep;
   
    bool m_ruleEntryResult;
    
-   template <class __checker> void unrollToNext( const __checker& check );
+   // temporary variable used during stack unrolls.
+   const SynTree* m_catchBlock;
+   
+   // last raised event.
+   t_event m_event;
+   
+   template <class __checker> bool unrollToNext( const __checker& check );
+   
+   /** Declares an unhandled error.
+    This method is invoked after an error is unhandled. The virtual machine
+    sees the error at run() loop and can handle it to the caller or throw it.
+    */
+   void unhandledError( Error* error );
 };
 
 }

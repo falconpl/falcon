@@ -37,7 +37,7 @@ public:
    virtual void reset();
 
    virtual void addError( int code, const String& uri, int l, int c, int ctx, const String& extra );
-   virtual void addError( int code, const String& uri, int l, int c=0, int ctx=0  );
+   virtual void addError( int code, const String& uri, int l, int c=0, int ctx=0  );   
    
    void addNameSpace( const String ns );
 
@@ -102,6 +102,9 @@ public:
    Parsing::Terminal T_not;
    Parsing::Terminal T_nil;
    Parsing::Terminal T_try;
+   Parsing::Terminal T_catch;
+   Parsing::Terminal T_finally;
+   Parsing::Terminal T_raise;
    Parsing::Terminal T_elif;
    Parsing::Terminal T_else;
    Parsing::Terminal T_rule;
@@ -215,7 +218,26 @@ public:
    
    Parsing::NonTerminal S_Export;
    Parsing::Rule r_export_rule;
+   
+   Parsing::NonTerminal S_Try;
+   Parsing::Rule r_try_rule;
 
+   Parsing::NonTerminal S_Catch;
+   Parsing::Rule r_catch_base;
+   Parsing::NonTerminal S_Finally;
+   Parsing::Rule r_finally;
+
+   Parsing::NonTerminal CatchSpec;
+   Parsing::Rule r_catch_all;
+   Parsing::Rule r_catch_in_var;
+   Parsing::Rule r_catch_number;
+   Parsing::Rule r_catch_number_in_var;
+   Parsing::Rule r_catch_thing;
+   Parsing::Rule r_catch_thing_in_var;
+
+   Parsing::NonTerminal S_Raise;
+   Parsing::Rule r_raise;
+   
    Parsing::NonTerminal S_Import;
    Parsing::Rule r_import_rule;
    

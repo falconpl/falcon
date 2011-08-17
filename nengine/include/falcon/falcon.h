@@ -71,6 +71,10 @@
 #include <falcon/encodingerror.h>
 #include <falcon/linkerror.h>
 
+//--- class headers ---
+#include <falcon/inheritance.h>
+#include <falcon/requirement.h>
+
 #endif	/* FALCON_H */
 
 /* end of falcon.h */

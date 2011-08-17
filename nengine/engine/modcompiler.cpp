@@ -22,8 +22,11 @@
 #include <falcon/globalsymbol.h>
 #include <falcon/unknownsymbol.h>
 #include <falcon/inheritance.h>
+#include <falcon/requirement.h>
+
 #include <falcon/sp/sourcelexer.h>
 #include <falcon/parser/parser.h>
+
 
 namespace Falcon {
 
@@ -256,7 +259,6 @@ void ModCompiler::Context::onInheritance( Inheritance* inh  )
       Item* itm;
       if( ( itm = sym->value() ) == 0 )
       {
-         //TODO: Add inheritance line number.
          m_owner->m_sp.addError( e_undef_sym, m_owner->m_sp.currentSource(), 
                  inh->sourceRef().line(), inh->sourceRef().chr(), 0, inh->className() );
       }
@@ -276,6 +278,29 @@ void ModCompiler::Context::onInheritance( Inheritance* inh  )
    else
    {
       m_owner->m_module->addImportInheritance( inh );
+   }
+}
+
+void ModCompiler::Context::onRequirement( Requirement* rec )
+{
+   Error* error = 0;
+   // In the interactive compiler context, classes must have been already defined...
+   const Symbol* sym = m_owner->m_module->getGlobal(rec->name());
+   
+   if( sym != 0 )
+   {
+      error = rec->resolve( 0, sym );
+      if( error != 0 )
+      {
+         // The error is a bout a local symbol. We can "downgrade" it.
+         m_owner->m_sp.addError( error->errorCode(), error->module(), error->line(), 0 );
+         error->decref();
+      }
+   }
+   else
+   {
+      // otherwise, just let the requirement pending in the module.
+      m_owner->m_module->addRequirement( rec );
    }
 }
 

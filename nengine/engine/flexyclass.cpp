@@ -75,6 +75,36 @@ void* FlexyClass::deserialize( DataReader* ) const
 }
 
 
+void* FlexyClass::getParentData( Class* parent, void* data ) const
+{
+   // if we're the searched class...
+   if( parent == this ) return data;
+   
+   // else, scan our bases, and provide the classe in our bases with their 
+   // -- own data.
+   FlexyDict* dict = static_cast<FlexyDict*>(data);
+   const ItemArray& bases = dict->base();
+   for( length_t i = 0; i < bases.length(); ++i )
+   {
+      // The items in bases are instances, but not necessarily UserData...
+      Class* cls;
+      void *udata;
+      //... so we have to force them as UserData
+      bases[i].forceClassInst( cls, udata );
+      // and see if the searched parent has something to do with them.
+      udata = cls->getParentData( parent, udata );
+      if( udata != 0 )
+      {
+         // success!
+         return udata;
+      }
+   }
+   
+   // No-luck
+   return 0;
+}
+
+
 void FlexyClass::gcMark( void* self, uint32 mark ) const
 {
    static_cast<FlexyDict*>(self)->gcMark(mark);
