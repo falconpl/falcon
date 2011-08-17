@@ -76,7 +76,8 @@ public:
    void removeSymbolToken( const String& name, const String& modName );
    
    Symbol* findExportedSymbol( const String& name ) const;
-      
+   
+   bool addSymbol( Symbol* sym, Module* mod = 0 );
    
    Error* add( Module* mod, t_loadMode lm, VMContext* ctx );
 

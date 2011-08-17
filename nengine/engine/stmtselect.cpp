@@ -194,7 +194,7 @@ SynTree* StmtSelect::findBlockForClass( Class* cls ) const
    while( iter != _p->m_classList.end() )
    {
       Class* base = (*iter)->m_cls;
-      if( cls->isDerivedFrom( base ) )
+      if( base != 0 && cls->isDerivedFrom( base ) )
       {
          return (*iter)->m_block;
       }
@@ -308,7 +308,8 @@ Error* StmtSelect::SelectRequirer::resolved( Module* source, const Symbol* sym, 
    }
    else
    {
-      Class* cls = itm->asClass();
+      fassert( itm->asClass()->isMetaClass() );
+      Class* cls = static_cast<Class*>(itm->asInst());
       if( m_owner->_p->m_classBlocks.find( cls ) != m_owner->_p->m_classBlocks.end() )
       {
          return new LinkError( ErrorParam( m_owner->m_expr == 0 ? e_catch_clash : e_switch_clash )
@@ -319,6 +320,7 @@ Error* StmtSelect::SelectRequirer::resolved( Module* source, const Symbol* sym, 
             .extra( String("declared in ") + (source != 0 ? source->uri() : "<internal>" ) )
             );
       }
+      sr->m_cls = cls;
       m_owner->_p->m_classBlocks[ cls ] = sr->m_block;
    }
    

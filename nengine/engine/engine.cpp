@@ -66,6 +66,11 @@
 #include <falcon/classreference.h>
 
 #include <falcon/stderrors.h>
+#include <falcon/modspace.h>
+
+#include <falcon/globalsymbol.h> // for builtin
+#include <falcon/item.h>         // for builtin
+
 
 #include <falcon/paranoid.h>
 #include <map>
@@ -87,6 +92,11 @@ class PseudoFunctionMap: public std::map<String, PseudoFunction*>
 {
 };
 
+class PredefSymMap: public std::map<String, GlobalSymbol*>
+{
+};
+
+
 //=======================================================
 // Engine static declarations
 //
@@ -107,7 +117,7 @@ Engine::Engine()
    #endif
 
    m_mtx = new Mutex;
-   m_collector = new Collector;
+   m_collector = new Collector;   
 
    //=====================================
    // Standard file systems.
@@ -128,7 +138,7 @@ Engine::Engine()
    m_metaClass = new MetaClass;
    m_genericClass = new ClassGeneric;
    m_referenceClass = new ClassReference;
-
+   
    // Initialization of the class vector.
    m_classes[FLC_ITEM_NIL] = new ClassNil;
    m_classes[FLC_ITEM_BOOL] = new ClassBool;
@@ -136,8 +146,8 @@ Engine::Engine()
    m_classes[FLC_ITEM_NUM] = new ClassNumeric;
    m_classes[FLC_ITEM_FUNC] = new ClassFunction;
    m_classes[FLC_ITEM_METHOD] = new ClassMethod;
-   m_classes[FLC_ITEM_REF] = new ClassReference;   
-
+   m_classes[FLC_ITEM_REF] = m_referenceClass;
+   
    m_bom = new BOM;
 
    //=====================================
@@ -163,14 +173,50 @@ Engine::Engine()
    //============================================
    // Creating singletons
    //
+   m_instance = this; // modules need the engine.
    
    m_stdSteps = new StdSteps;
    m_stdErrors = new StdErrors;
    
+   //============================================
+   // Creating predefined symbols
+   //
+   m_predefs = new PredefSymMap;
+   
+   addBuiltin( m_functionClass );
+   addBuiltin( m_stringClass );
+   addBuiltin( m_arrayClass );
+   addBuiltin( m_dictClass );
+   addBuiltin( m_protoClass );
+   addBuiltin( m_metaClass );
+   addBuiltin( m_genericClass );
+   addBuiltin( m_classes[FLC_ITEM_NIL] );
+   addBuiltin( m_classes[FLC_ITEM_BOOL] );
+   addBuiltin( m_classes[FLC_ITEM_INT] );
+   addBuiltin( m_classes[FLC_ITEM_NUM] );
+   addBuiltin( m_classes[FLC_ITEM_FUNC] );
+   addBuiltin( m_classes[FLC_ITEM_METHOD] );
+   addBuiltin( m_classes[FLC_ITEM_REF] ); // ?
+   
+   addBuiltin( "NilType", (int64) FLC_ITEM_NIL );
+   addBuiltin( "BoolType", (int64) FLC_ITEM_BOOL );
+   addBuiltin( "IntType", (int64) FLC_ITEM_INT );
+   addBuiltin( "NumericType", (int64) FLC_ITEM_INT ); // same as int
+   addBuiltin( "FunctionType", (int64) FLC_ITEM_FUNC );
+   addBuiltin( "MethodType", (int64) FLC_ITEM_METHOD );
+   addBuiltin( "ReferenceType", (int64) FLC_ITEM_REF ); // ?
+   addBuiltin( "StringType", (int64) FLC_CLASS_ID_STRING );
+   addBuiltin( "ArrayType", (int64) FLC_CLASS_ID_ARRAY );
+   addBuiltin( "DictType", (int64) FLC_CLASS_ID_DICT );
+   addBuiltin( "RangeType", (int64) FLC_CLASS_ID_RANGE );
+   addBuiltin( "ClassType", (int64) FLC_CLASS_ID_CLASS );
+   addBuiltin( "ProtoType", (int64) FLC_CLASS_ID_PROTO );
+      
+   m_stdErrors->addBuiltins();
+   
    //=====================================
    // The Core Module
    //
-   m_instance = this; // modules need the engine.
    m_core  = new CoreModule;
 
    MESSAGE( "Engine creation complete" );
@@ -191,7 +237,7 @@ Engine::~Engine()
    delete m_metaClass;
    delete m_functionClass;
    delete m_genericClass;
-   delete m_referenceClass;
+   //delete m_referenceClass;  already deleted in the loop
 
    // ===============================
    // Delete standard item classes
@@ -215,6 +261,19 @@ Engine::~Engine()
    }
 
    delete m_tcoders;
+   
+   // ===============================
+   // delete builtin symbols
+   //
+   {
+      PredefSymMap::iterator iter = m_predefs->begin();
+      while( iter != m_predefs->end() )
+      {
+         delete iter->second;
+         ++iter;
+      }
+   }
+   delete m_predefs;
 
    //============================================
    // Delete singletons
@@ -344,6 +403,38 @@ PseudoFunction* Engine::getPseudoFunction( const String& name ) const
    PseudoFunction* ret = iter->second;
    m_mtx->unlock();
    return ret;
+}
+
+
+bool Engine::addBuiltin( Class* src )
+{
+   return addBuiltin( src->name(), Item( m_metaClass, src ) );
+}
+
+
+bool Engine::addBuiltin( const String& name, const Item& value )
+{
+   PredefSymMap::iterator pos = m_predefs->find( name );
+   if( pos != m_predefs->end() )
+   {
+      return false;
+   }
+   
+   GlobalSymbol* sym = new GlobalSymbol( name );
+   *sym->value(0) = value;
+   (*m_predefs)[ name ] = sym;   
+   return true;
+}
+
+
+void Engine::exportBuiltins(ModSpace* ms) const
+{
+   PredefSymMap::const_iterator iter = m_predefs->begin();
+   while( iter != m_predefs->end() )
+   {
+      ms->addSymbol( iter->second, 0 );
+      ++iter;
+   }
 }
 
 //=====================================================

@@ -64,6 +64,8 @@ VMachine::VMachine( Stream* stdIn, Stream* stdOut, Stream* stdErr )
    _p = new Private;
    m_context = new VMContext(this);
    m_modspace = new ModSpace( this );
+   // make this optional?
+   Engine::instance()->exportBuiltins(m_modspace);
 
    if ( stdIn == 0 )
    {

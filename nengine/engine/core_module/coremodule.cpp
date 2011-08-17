@@ -62,35 +62,7 @@ CoreModule::CoreModule():
       
       // Standard classes
       << new Ext::ClassURI
-      << new Ext::ClassPath
-      
-      // Type reflection
-      << new ClassNil
-      << new ClassBool
-      << new ClassInt
-      << new ClassNumeric
-      << new ClassRange
-      << new ClassReference
-      << new ClassArray
-      << new ClassDict
-      << new ClassString
-      << new FlexyClass
-      << new PrototypeClass
-      << new MetaClass  // ?
-      
-      // Error classes
-      << new ClassAccessError
-      << new ClassAccessTypeError
-      << new ClassCodeError
-      << new ClassGenericError
-      << new ClassInterruptedError
-      << new ClassIOError
-      << new ClassLinkError
-      << new ClassOperandError
-      << new ClassUnsupportedError
-      << new ClassEncodingError
-      << new ClassSyntaxError
-      << new ClassParamError
+      << new Ext::ClassPath      
       ;
 }
 

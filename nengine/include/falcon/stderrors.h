@@ -102,6 +102,12 @@ public:
     */
    Class* link() const { return m_link; }
    
+   /** Adds all the error classes to the engine builtins. 
+    
+    Usually called by the engine at startup.
+    */
+   void addBuiltins() const;
+   
 private:
    Class* m_error;
    Class* m_code;

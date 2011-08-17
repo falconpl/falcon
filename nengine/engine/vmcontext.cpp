@@ -446,9 +446,7 @@ void VMContext::raiseItem( const Item& item )
 }
    
 void VMContext::raiseError( Error* ce )
-{
-   static Class* errClass = Engine::instance()->stdErrors()->error();
-   
+{   
    // are we in a finally? 
    // -- in that case, we must queue our error and continue the previous raise
    if( m_finMode == e_fin_raise && m_thrown != 0 )
@@ -464,7 +462,7 @@ void VMContext::raiseError( Error* ce )
    
    // can we catch it?   
    m_catchBlock = 0;
-   CheckIfCodeIsCatchError check( errClass );
+   CheckIfCodeIsCatchError check( ce->handler() );
    if( unrollToNext<CheckIfCodeIsCatchError>( check ) )
    {
       // the unroller has prepared the code for us

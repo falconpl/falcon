@@ -104,6 +104,12 @@ Symbol* ModSpace::findExportedSymbol( const String& name ) const
 }
 
 
+bool ModSpace::addSymbol( Symbol* sym, Module* mod ) 
+{
+   return symbols().add( sym, mod );
+}
+
+
 Error* ModSpace::add( Module* mod, t_loadMode lm, VMContext* ctx )
 {
    //static Collector* coll = Engine::instance()->collector();

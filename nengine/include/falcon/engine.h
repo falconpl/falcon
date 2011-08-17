@@ -32,11 +32,15 @@ class Transcoder;
 class TranscoderMap;
 class PseudoFunction;
 class PseudoFunctionMap;
+class PredefSymMap;
+
 class Module;
 class BOM;
 class ClassReference;
 class StdSteps;
 class StdErrors;
+class ModSpace;
+class Item;
 
 /** Falcon application global data.
 
@@ -285,6 +289,11 @@ public:
    /** Archive of standard steps. */
    StdSteps* stdSteps() const { return m_stdSteps; }
    
+   bool addBuiltin( Class* src );
+   bool addBuiltin( const String& name, const Item& value );
+   
+   void exportBuiltins( ModSpace* ms ) const;
+   
 protected:
    Engine();
    ~Engine();
@@ -341,6 +350,8 @@ protected:
    BOM* m_bom;
 
    PseudoFunctionMap* m_tpfuncs;
+   PredefSymMap* m_predefs;
+   
    StdSteps* m_stdSteps;
    StdErrors* m_stdErrors;
 };

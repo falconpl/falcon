@@ -58,7 +58,25 @@ StdErrors::~StdErrors()
    delete m_syntax;
    delete m_param;
    delete m_link;
+}
 
+void StdErrors::addBuiltins() const
+{
+   static Engine* eng = Engine::instance();
+   
+   eng->addBuiltin(m_error);
+   eng->addBuiltin(m_code);
+   eng->addBuiltin(m_generic);
+   eng->addBuiltin(m_operand);
+   eng->addBuiltin(m_unsupported);
+   eng->addBuiltin(m_io);
+   eng->addBuiltin(m_interrupted);
+   eng->addBuiltin(m_encoding);
+   eng->addBuiltin(m_access);
+   eng->addBuiltin(m_accessType);
+   eng->addBuiltin(m_syntax);
+   eng->addBuiltin(m_param);
+   eng->addBuiltin(m_link);
 }
    
 }

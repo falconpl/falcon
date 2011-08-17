@@ -36,6 +36,7 @@ public:
    GlobalSymbol( const String& name );
    GlobalSymbol( const String& name, const Item& initValue );
    GlobalSymbol( const GlobalSymbol& other );   
+   virtual ~GlobalSymbol();
 
    virtual GlobalSymbol* clone() const { return new GlobalSymbol(*this); }
    
@@ -49,7 +50,6 @@ protected:
    GlobalSymbol();
    Item m_item;
 
-   virtual ~GlobalSymbol();
    friend class ExprFactory;
 };
 
