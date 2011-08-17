@@ -78,8 +78,8 @@ VMContext::~VMContext()
 
 void VMContext::moreData()
 {
-   long distance = m_topData - m_dataStack;
-   long newSize = m_maxData - m_dataStack + INCREMENT_STACK_ALLOC;
+   long distance = (long)(m_topData - m_dataStack);
+   long newSize = (long)(m_maxData - m_dataStack + INCREMENT_STACK_ALLOC);
    TRACE("Reallocating %p: %d -> %ld", m_dataStack, (int)(m_maxData - m_dataStack), newSize );
 
    m_dataStack = (Item*) realloc( m_dataStack, newSize * sizeof(Item) );
@@ -108,9 +108,9 @@ void VMContext::copyData( Item* target, size_t count, size_t start)
 
 void VMContext::moreCode()
 {
-   long distance = m_topCode - m_codeStack; // we don't want the size of the code,
+   long distance = (long)(m_topCode - m_codeStack); // we don't want the size of the code,
 
-   long newSize = m_maxCode - m_codeStack + INCREMENT_STACK_ALLOC;
+   long newSize = (long)(m_maxCode - m_codeStack + INCREMENT_STACK_ALLOC);
    TRACE("Reallocating %p: %d -> %ld", m_codeStack, (int)(m_maxCode - m_codeStack), newSize );
 
    m_codeStack = (CodeFrame*) realloc( m_codeStack, newSize * sizeof(CodeFrame) );
@@ -121,8 +121,8 @@ void VMContext::moreCode()
 
 void VMContext::moreCall()
 {
-   long distance = m_topCall - m_callStack;
-   long newSize = m_maxCall - m_callStack + INCREMENT_STACK_ALLOC;
+   long distance = (long)(m_topCall - m_callStack);
+   long newSize = (long)(m_maxCall - m_callStack + INCREMENT_STACK_ALLOC);
    TRACE("Reallocating %p: %d -> %ld", m_callStack, (int)(m_maxCall - m_callStack), newSize );
 
    m_callStack = (CallFrame*) realloc( m_callStack, newSize * sizeof(CallFrame) );
@@ -135,7 +135,7 @@ void VMContext::startRuleFrame()
 {
    CallFrame& cf = currentFrame();
    int32 stackBase = cf.m_stackBase;
-   long localCount = ((m_topData+1) - m_dataStack) - stackBase;
+   long localCount = (long)((m_topData+1) - m_dataStack) - stackBase;
    while ( m_topData + localCount + 1 > m_maxData )
    {
       moreData();
@@ -163,7 +163,7 @@ void VMContext::addRuleNDFrame( uint32 tbPoint )
    int32 stackBase = cf.m_stackBase;
    int32 oldRuleTop = m_dataStack[stackBase-1].content.mth.ruleTop;
 
-   long localCount = ((m_topData+1) - m_dataStack) - stackBase;
+   long localCount = (long)((m_topData+1) - m_dataStack) - stackBase;
    while ( m_topData + localCount + 1 > m_maxData )
    {
       moreData();
