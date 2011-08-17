@@ -741,9 +741,8 @@ Parsing::TokenInstance* SourceLexer::checkWord()
           if ( m_text == "class" ) return parser->T_class.makeInstance(m_sline, m_schr);
           if ( m_text == "break" ) return parser->T_break.makeInstance(m_sline, m_schr);
           if ( m_text == "catch" ) return parser->T_catch.makeInstance(m_sline, m_schr);
+          if ( m_text == "raise" ) return parser->T_raise.makeInstance(m_sline, m_schr);
           /*
-         if ( m_text == "raise" )
-            return RAISE;
          if ( m_text == "class" )
             return CLASS;
          if ( m_text == "notin" )

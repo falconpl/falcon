@@ -26,24 +26,24 @@ StmtTry::StmtTry( SynTree* body, int32 line, int32 chr ):
    Statement( Statement::e_stmt_try, line, chr ),
    m_body( body ),
    m_fbody( 0 ),
-   m_cleanStep( this )
+   m_finallyStep( this )
 {
    apply = apply_;
-   // call us BEFORE our body
-   m_step0 = &m_cleanStep;
-   m_step1 = this;
+   m_bIsCatch = true;
+   m_step0 = this;
+   m_step1 = body;
 }
 
 StmtTry::StmtTry( int32 line, int32 chr):
    Statement( Statement::e_stmt_try, line, chr ),
    m_body( new SynTree ),
    m_fbody( 0 ),
-   m_cleanStep( this )
+   m_finallyStep( this )
 {
    apply = apply_;
-   // call us BEFORE our body
-   m_step0 = &m_cleanStep;
-   m_step1 = this;
+   m_bIsCatch = true;
+   m_step0 = this;
+   m_step1 = m_body;
 }
 
 
@@ -53,6 +53,27 @@ StmtTry::~StmtTry()
    delete m_fbody;
 }
 
+
+void StmtTry::fbody( SynTree* body )
+{
+   // reset the body?
+   if ( body == 0 )
+   {
+      m_step0 = this;
+      m_step1 = body;
+   }
+   else
+   {
+      // set it anew
+      m_step0 = &m_finallyStep;
+      m_step1 = this;
+      m_step2 = m_body;
+      m_step3 = &m_traverseFinallyStep;
+   }
+   
+   delete m_fbody;
+   m_fbody = body;
+}
 
 void StmtTry::describeTo( String& tgt ) const
 {
@@ -67,36 +88,36 @@ void StmtTry::oneLinerTo( String& tgt ) const
 }
 
    
-void StmtTry::apply_( const PStep* ps, VMContext* ctx )
+void StmtTry::apply_( const PStep*, VMContext* ctx )
+{ 
+   // we're just a placeholder for our catch clauses,
+   // if we're here, then we had no throws.
+   ctx->popCode(); 
+}
+
+void StmtTry::PStepTraverse::apply_( const PStep*, VMContext* ctx )
 {
-   const StmtTry* t = static_cast<const StmtTry*>(ps);
-   // we're not needed anymore in the code stack, so use our space for our body
-   ctx->currentCode().m_step = t->m_body; 
+   // declare that we'll be doing some finally
+   ctx->popCode();
+   ctx->traverseFinally();
+}
+
+void StmtTry::PStepFinally::apply_( const PStep* ps, VMContext* ctx )
+{
+   register const StmtTry* stry = static_cast<const StmtTry::PStepFinally*>(ps)->m_owner;
    
-   // creates a try frame at this position.
-   // save this position
-   //ctx->pushTryFrame( t );
+   // declare that we begin to work with finally
+   ctx->enterFinally();
+   ctx->currentCode().m_step = &stry->m_cleanStep;
+   ctx->pushCode( stry->m_fbody );   
 }
 
 
-void StmtTry::PStepCleanup::apply_( const PStep*ps, VMContext* ctx )
+void StmtTry::PStepCleanup::apply_( const PStep*, VMContext* ctx )
 {
-   const StmtTry::PStepCleanup* cleanup = static_cast<const StmtTry::PStepCleanup*>(ps);
-   // remove the try frame before we cause some exception here.
-   //ctx->popTryFrame();
-   
-   // have we a finally?
-   SynTree* finbody = cleanup->m_owner->fbody();
-   if ( finbody != 0 )
-   {
-      // use our space to fulfil it.
-      ctx->currentCode().m_step = finbody;
-   }
-   else
-   {
-      // pop this code
-      ctx->popCode();
-   }
+   // declare that we're ready to be completed
+   ctx->popCode();
+   ctx->finallyComplete();
 }
 
 

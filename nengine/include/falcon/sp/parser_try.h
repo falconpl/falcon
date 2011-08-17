@@ -28,10 +28,10 @@ class Parser;
 
 using namespace Parsing;
 
-bool try_errand(const NonTerminal&, Parser& p);
+bool try_errhand(const NonTerminal&, Parser& p);
 bool catch_errhand(const NonTerminal&, Parser& p);
 bool finally_errhand(const NonTerminal&, Parser& p);
-bool rasie_errhand(const NonTerminal&, Parser& p);
+bool raise_errhand(const NonTerminal&, Parser& p);
 
 void apply_try( const Rule&, Parser& p );
 void apply_catch( const Rule&, Parser& p );

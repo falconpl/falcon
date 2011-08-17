@@ -65,8 +65,12 @@ public:
    /** Image of "self" in this frame. */
    Item m_self;
 
+   /** Count of finally blocks traversed in this frame. */
+   uint16 m_finallyCount;
+   
    /** True if self has been passed. */
    bool m_bMethodic;
+   
 
    // Actually never used, just used at compile time by vector.
    CallFrame()
@@ -79,6 +83,7 @@ public:
       m_initBase( sb ),
       m_codeBase( cb ),
       m_self(self),
+      m_finallyCount(0),
       m_bMethodic( true )
    {}
 
@@ -88,6 +93,7 @@ public:
       m_stackBase( sb ),
       m_initBase( sb ),
       m_codeBase( cb ),
+      m_finallyCount(0),
       m_bMethodic( false )
    {}
 };

@@ -21,6 +21,7 @@
 #include <falcon/synfunc.h>
 #include <falcon/extfunc.h>
 #include <falcon/inheritance.h>
+#include <falcon/requirement.h>
 
 #include <falcon/stdstreams.h>
 #include <falcon/textwriter.h>
@@ -67,6 +68,7 @@ public:
    virtual bool onUnknownSymbol( UnknownSymbol* sym );
    virtual Expression* onStaticData( Class* cls, void* data );
    virtual void onInheritance( Inheritance* );
+   virtual void onRequirement( Requirement* rec );
 
 private:
    SynFunc m_main;
@@ -199,8 +201,17 @@ bool Context::onUnknownSymbol( UnknownSymbol* sym )
     std::cout << "CALLBACK: inheritance data : " <<
          temp.c_ize() << std::endl;
     // for now, we'll let it leak.
- }
+}
 
+ void Context::onRequirement( Requirement* req )
+ {
+    String temp = req->name();
+
+    std::cout << "CALLBACK: requirement data : " <<
+         temp.c_ize() << std::endl;
+    // for now, we'll let it leak.
+ }
+  
 //==============================================================
 // The application
 //

@@ -118,6 +118,8 @@ public:
    inline bool isComposed() const { return m_bIsComposed; }
    inline bool isNextBase() const { return m_bIsNextBase; }
    inline bool isLoopBase() const { return m_bIsLoopBase; }
+   inline bool isCatch() const { return m_bIsCatch; }
+   inline bool isFinally() const { return m_bIsFinally; }
 
    inline void setNextBase() { m_bIsNextBase = true; }
 

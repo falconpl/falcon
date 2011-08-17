@@ -222,8 +222,17 @@ static void internal_apply_catch( int toks, Parser& p, int line, int chr,
       }
       else
       { 
+         if( tid == -1 )
+         {
+            // the default catch
+            if ( ! stmttry->catchSelect().setDefault( newBranch ) )
+            {
+               p.addError( e_catch_adef, p.currentSource(), line, chr );
+               delete newBranch;
+            }
+         }
          // an integer catch
-         if( ! stmttry->catchSelect().addSelectType( tid, newBranch ) )
+         else if( ! stmttry->catchSelect().addSelectType( tid, newBranch ) )
          {
             // tid duplicated.
             p.addError( e_catch_clash, p.currentSource(), line, chr );

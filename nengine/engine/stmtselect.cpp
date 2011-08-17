@@ -231,7 +231,7 @@ SynTree* StmtSelect::findBlockForItem( const Item& itm ) const
    void* data;
    itm.forceClassInst( cls, data );
    SynTree* res = findBlockForClass( cls );
-   if( res == 0 )
+   if( res != 0 )
    {
       return res;
    }

@@ -275,7 +275,7 @@ SourceParser::SourceParser():
    S_Export << "export" << export_errhand;
    S_Export << ( r_export_rule << "export_rule" << apply_export_rule << T_export << ListSymbol << T_EOL );
    
-   S_Try << "try" << try_errand;
+   S_Try << "try" << try_errhand;
    S_Try << ( r_try_rule << "try_rule" << apply_try << T_try << T_EOL );
    S_Catch << "catch" << catch_errhand;
    S_Catch << ( r_catch_base << "catch_" << apply_catch << T_catch << CatchSpec ); 
@@ -291,8 +291,8 @@ SourceParser::SourceParser():
          << ( r_catch_thing_in_var << "catch_thing_in_var" << apply_catch_thing_in_var << T_Name << T_in << T_Name << T_EOL )
             ;
    
-   S_Raise << "raise" << rasie_errhand;
-   S_Raise << ( r_raise << "r_rise" << apply_raise << T_raise << Expr << T_EOL );
+   S_Raise << "raise" << raise_errhand;
+   S_Raise << ( r_raise << "r_raise" << apply_raise << T_raise << Expr << T_EOL );
    
    //==========================================================================
    // Import & family
