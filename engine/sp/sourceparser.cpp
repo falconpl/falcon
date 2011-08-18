@@ -371,6 +371,11 @@ SourceParser::SourceParser():
    Expr<< (r_Expr_not   << "Expr_not"  << apply_expr_not  << T_not << Expr );
    Expr<< (r_Expr_bnot  << "Expr_Bnot" << apply_expr_bnot << T_BNOT << Expr );
 
+   Expr<< (r_Expr_oob  << "Expr_oob" << apply_expr_oob << T_OOB << Expr );
+   Expr<< (r_Expr_deoob  << "Expr_deoob" << apply_expr_deoob << T_DEOOB << Expr );
+   Expr<< (r_Expr_xoob  << "Expr_xoob" << apply_expr_xoob << T_XOOB << Expr );
+   Expr<< (r_Expr_isoob  << "Expr_isoob" << apply_expr_isoob << T_ISOOB << Expr );
+
    Expr << (r_Expr_assign << "Expr_assign" << apply_expr_assign << Expr << T_EqSign << NeListExpr );
 
    Expr<< (r_Expr_equal << "Expr_equal" << apply_expr_equal << Expr << T_DblEq << Expr);

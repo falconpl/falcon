@@ -324,6 +324,11 @@ public:
    Parsing::Rule r_Expr_bxor;
    Parsing::Rule r_Expr_bnot;
    
+   Parsing::Rule r_Expr_oob;
+   Parsing::Rule r_Expr_deoob;
+   Parsing::Rule r_Expr_xoob;
+   Parsing::Rule r_Expr_isoob;
+   
    Parsing::Rule r_Expr_auto_add;
    Parsing::Rule r_Expr_auto_sub;
    Parsing::Rule r_Expr_auto_times;

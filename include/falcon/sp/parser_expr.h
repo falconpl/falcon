@@ -61,6 +61,10 @@ void apply_expr_bxor( const Rule&, Parser& p );
 void apply_expr_neg( const Rule&, Parser& p );
 void apply_expr_not( const Rule&, Parser& p );
 void apply_expr_bnot( const Rule&, Parser& p );
+void apply_expr_oob( const Rule&, Parser& p );
+void apply_expr_deoob( const Rule&, Parser& p );
+void apply_expr_xoob( const Rule&, Parser& p );
+void apply_expr_isoob( const Rule&, Parser& p );
 
 
 void apply_expr_auto_add( const Rule&, Parser& p );

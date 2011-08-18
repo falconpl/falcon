@@ -341,6 +341,26 @@ void apply_expr_bnot( const Rule& r, Parser& p )
    apply_expr_unary( r, p, new ExprBNOT );
 }
 
+void apply_expr_oob( const Rule& r, Parser& p )
+{
+   apply_expr_unary( r, p, new ExprOob );
+}
+
+void apply_expr_deoob( const Rule& r, Parser& p )
+{
+   apply_expr_unary( r, p, new ExprDeoob );
+}
+
+void apply_expr_xoob( const Rule& r, Parser& p )
+{
+   apply_expr_unary( r, p, new ExprXorOob );
+}
+
+void apply_expr_isoob( const Rule& r, Parser& p )
+{
+   apply_expr_unary( r, p, new ExprIsOob );
+}
+
 
 //=======================================================
 // Other expressions.
