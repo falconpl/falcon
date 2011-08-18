@@ -823,7 +823,7 @@ bool Parser::findPaths( bool bIncremental )
       int nBaseFrames = frameDepth();
       int nBaseRules = rulesDepth();
 
-      if( path.back()->match( *this, bIncremental ) )
+      if( path.back()->match( *this, bIncremental, true ) )
       {
          TRACE1("Parser::findPaths -- path '%s' match", path.back()->name().c_ize() );
          return true;
@@ -1100,7 +1100,6 @@ void Parser::explorePaths()
    {
       TRACE1( "Parser::explorePaths -- adding error frame %d(%s); parser frames %d",
          (int) _p->m_pErrorFrames->size(),
-         //_p->m_pErrorFrames->empty() ? "none" : _p->m_pErrorFrames->back().m_path.back()->name().c_ize(),
          _p->m_pErrorFrames->empty() ? "none" : _p->m_pErrorFrames->back().m_owningToken->name().c_ize(),
          (int) _p->m_pframes->size()
          );

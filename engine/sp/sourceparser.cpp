@@ -88,6 +88,17 @@ SourceParser::SourceParser():
    T_AutoLShift( "<<=", 70 ),
    T_EEQ( "===", 70 ),
    
+   T_BAND("^&", 60),
+   T_BOR("^|", 65),
+   T_BXOR("^^", 65),
+   T_BNOT("^!", 23),
+   
+   T_OOB("^+", 24),
+   T_DEOOB("^-", 24),
+   T_XOOB("^%", 24),
+   T_ISOOB("^?", 24),
+   T_EVAL("^*", 80),
+   
    T_Comma( "," , 180 ),
    T_QMark( "?" , 170 ),
    T_Bang("!"),
@@ -351,6 +362,15 @@ SourceParser::SourceParser():
    //
    Expr << "Expr";
    Expr << expr_errhand;
+
+   // Unary operators
+   // the lexer may find a non-unary minus when parsing it not after an operator...;   
+   Expr<< (r_Expr_neg   << "Expr_neg"   << apply_expr_neg << T_Minus << Expr );
+   // ... or find an unary minus when getting it after another operator.;
+   Expr<< (r_Expr_neg2   << "Expr_neg2"   << apply_expr_neg << T_UnaryMinus << Expr );   
+   Expr<< (r_Expr_not   << "Expr_not"  << apply_expr_not  << T_not << Expr );
+   Expr<< (r_Expr_bnot  << "Expr_Bnot" << apply_expr_bnot << T_BNOT << Expr );
+
    Expr << (r_Expr_assign << "Expr_assign" << apply_expr_assign << Expr << T_EqSign << NeListExpr );
 
    Expr<< (r_Expr_equal << "Expr_equal" << apply_expr_equal << Expr << T_DblEq << Expr);
@@ -386,6 +406,11 @@ SourceParser::SourceParser():
    Expr<< (r_Expr_pow   << "Expr_pow"   << apply_expr_pow   << Expr << T_Power << Expr );
    Expr<< (r_Expr_shr   << "Expr_shr"   << apply_expr_shr   << Expr << T_RShift << Expr );
    Expr<< (r_Expr_shl   << "Expr_shl"   << apply_expr_shl   << Expr << T_LShift << Expr );
+
+   Expr<< (r_Expr_band << "Expr_band" << apply_expr_band  << Expr << T_BAND << Expr );
+   Expr<< (r_Expr_bor  << "Expr_bor"  << apply_expr_bor   << Expr << T_BOR << Expr );
+   Expr<< (r_Expr_bxor << "Expr_bxor" << apply_expr_bxor  << Expr << T_BXOR << Expr );
+   
    Expr<< (r_Expr_auto_add << "Expr_auto_add"   << apply_expr_auto_add   << Expr << T_AutoAdd << Expr );
    Expr<< (r_Expr_auto_sub << "Expr_auto_sub"   << apply_expr_auto_sub   << Expr << T_AutoSub << Expr );
    Expr<< (r_Expr_auto_times << "Expr_auto_times"   << apply_expr_auto_times   << Expr << T_AutoTimes << Expr );
@@ -394,10 +419,8 @@ SourceParser::SourceParser():
    Expr<< (r_Expr_auto_pow << "Expr_auto_pow"   << apply_expr_auto_pow   << Expr << T_AutoPow << Expr );
    Expr<< (r_Expr_auto_shl << "Expr_auto_shr"   << apply_expr_auto_shr  << Expr << T_AutoRShift << Expr );
    Expr<< (r_Expr_auto_shr << "Expr_auto_shl"   << apply_expr_auto_shl   << Expr << T_AutoLShift << Expr );
-   // the lexer may find a non-unary minus when parsing it not after an operator...;
-   Expr<< (r_Expr_neg   << "Expr_neg"   << apply_expr_neg << T_Minus << Expr );
-   // ... or find an unary minus when getting it after another operator.;
-   Expr<< (r_Expr_neg2   << "Expr_neg2"   << apply_expr_neg << T_UnaryMinus << Expr );
+   
+   
    Expr<< (r_Expr_Atom << "Expr_atom" << apply_expr_atom << Atom);
    Expr<< (r_Expr_function << "Expr_func" << apply_expr_func << T_function << T_Openpar << ListSymbol << T_Closepar << T_EOL);
    // Start of lambda expressions.

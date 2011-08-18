@@ -109,10 +109,55 @@ public:
    static void operate( VMContext* ctx, Class* cls, void* inst ) { cls->op_shl(ctx, inst); }
    static numeric operaten( numeric a, numeric b ) { return ((uint64)a) << ((uint64)b); }
    static bool zeroCheck( const Item& ) { return false; }
-   static void swapper( Item&, Item&) {} 
+   static void swapper( Item&, Item& ) {} 
 };
 
 
+class ExprBAND::ops
+{
+public:
+   static int64 operate( int64 a, int64 b ) { return ((uint64)a) & ((uint64)b);; }
+   static void operate( VMContext*, Class*, void* ) { 
+      throw new OperandError( ErrorParam( e_invop, __LINE__, SRC )
+         .extra("^&")
+         .origin( ErrorParam::e_orig_vm )); 
+   }
+   static numeric operaten( numeric a, numeric b ) { return ((uint64)a) & ((uint64)b); }
+   static bool zeroCheck( const Item& ) { return false; }
+   static void swapper( Item&, Item& ) {} 
+};
+
+class ExprBOR::ops
+{
+public:
+   static int64 operate( int64 a, int64 b ) { return ((uint64)a) | ((uint64)b);; }
+   static void operate( VMContext*, Class*, void* ) { 
+      throw new OperandError( ErrorParam( e_invop, __LINE__, SRC )
+         .extra("^|")
+         .origin( ErrorParam::e_orig_vm )); 
+   }
+   static numeric operaten( numeric a, numeric b ) { return ((uint64)a) | ((uint64)b); }
+   static bool zeroCheck( const Item& ) { return false; }
+   static void swapper( Item&, Item& ) {} 
+};
+
+class ExprBXOR::ops
+{
+public:
+   static int64 operate( int64 a, int64 b ) { return ((uint64)a) ^ ((uint64)b); }
+   static void operate( VMContext*, Class*, void* ) { 
+      throw new OperandError( ErrorParam( e_invop, __LINE__, SRC )
+         .extra("^^")
+         .origin( ErrorParam::e_orig_vm )); 
+   }
+   static numeric operaten( numeric a, numeric b ) { return ((uint64)a) ^ ((uint64)b); }
+   static bool zeroCheck( const Item& ) { return false; }
+   static void swapper( Item&, Item& ) {} 
+};
+
+//==================================================
+// Autoexprs
+//
 
 class ExprAutoPlus::ops
 {
@@ -197,11 +242,10 @@ public:
    static void operate( VMContext* ctx, Class* cls, void* inst ) { cls->op_ashl(ctx, inst); }
    static numeric operaten( numeric a, numeric b ) { return ((uint64)a) << ((uint64)b); }
    static bool zeroCheck( const Item& ) { return false; }
-   static void swapper( Item& op1, Item& op2 ) { 
-      op1.swap(op2);
-      if( op2.isInteger() ) {op2.setNumeric( op2.asInteger());} 
-   }   
+   static void swapper( Item& op1, Item& op2 ) { op1.swap(op2); }   
 };
+
+
 
 // Inline class to simplify
 template <class __CPR >
@@ -498,6 +542,50 @@ bool ExprPow::simplify( Item& value ) const
 {
    return generic_simplify<ops>( value, m_first, m_second );
 }
+
+//========================================================
+// EXPR Bitwise and
+//
+ExprBAND::ExprBAND( Expression* op1, Expression* op2 ):
+   ExprMath( op1, op2, t_band, "^&" )
+{
+   apply = &generic_apply_<ops>;
+}
+
+bool ExprBAND::simplify( Item& value ) const
+{
+   return generic_simplify<ops>( value, m_first, m_second );
+}
+
+//========================================================
+// EXPR Bitwise or
+//
+ExprBOR::ExprBOR( Expression* op1, Expression* op2 ):
+   ExprMath( op1, op2, t_bor, "^|" )
+{
+   apply = &generic_apply_<ops>;
+}
+
+bool ExprBOR::simplify( Item& value ) const
+{
+   return generic_simplify<ops>( value, m_first, m_second );
+}
+
+
+//========================================================
+// EXPR Bitwise xor
+//
+ExprBXOR::ExprBXOR( Expression* op1, Expression* op2 ):
+   ExprMath( op1, op2, t_bxor, "^^" )
+{
+   apply = &generic_apply_<ops>;
+}
+
+bool ExprBXOR::simplify( Item& value ) const
+{
+   return generic_simplify<ops>( value, m_first, m_second );
+}
+
 
 //========================================================
 // Auto expressions AAdd

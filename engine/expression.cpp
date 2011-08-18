@@ -450,8 +450,46 @@ void ExprNeg::describeTo( String& str ) const
    str += m_first->describe();
 }
 
+//=========================================================
+// Bitwise not
 
+bool ExprBNOT::simplify( Item& value ) const
+{
+   if( m_first->simplify( value ) )
+   {
+      switch( value.type() )
+      {
+      case FLC_ITEM_INT: value.setInteger( ~value.asInteger() ); return true;
+      case FLC_ITEM_NUM: value.setInteger( ~value.forceInteger() ); return true;
+      }
+   }
 
+   return false;
+}
+
+void ExprBNOT::apply_( const PStep* DEBUG_ONLY(self), VMContext* ctx )
+{  
+   TRACE2( "Apply \"%s\"", ((ExprNeg*)self)->describe().c_ize() );
+   
+   Item& item = ctx->topData();
+
+   switch( item.type() )
+   {
+      case FLC_ITEM_INT: item.setInteger( -item.asInteger() ); break;
+      case FLC_ITEM_NUM: item.setInteger( ~item.forceInteger() ); break;
+      
+      default:
+      // no need to throw, we're going to get back in the VM.
+      throw
+         new OperandError( ErrorParam(e_invalid_op, __LINE__ ).extra("neg") );
+   }
+}
+
+void ExprBNOT::describeTo( String& str ) const
+{
+   str = "^! ";
+   str += m_first->describe();
+}
 
 //=========================================================
 //Comparisons

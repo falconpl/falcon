@@ -208,6 +208,26 @@ void apply_expr_shl( const Rule& r, Parser& p )
    apply_expr_binary(r, p, new ExprLShift );
 }
 
+void apply_expr_band( const Rule& r, Parser& p )
+{
+   apply_expr_binary(r, p, new ExprBAND );
+}
+
+void apply_expr_bor( const Rule& r, Parser& p )
+{
+   apply_expr_binary(r, p, new ExprBOR );
+}
+
+void apply_expr_bxor( const Rule& r, Parser& p )
+{
+   apply_expr_binary(r, p, new ExprBXOR );
+}
+
+
+//==================================================================
+// Auto expressions
+//
+
 void apply_expr_auto( const Rule&, Parser& p, BinaryExpression* aexpr )
 {
    SourceParser& sp = static_cast<SourceParser&>(p);
@@ -283,19 +303,48 @@ void apply_expr_auto_shl( const Rule&r, Parser& p )
    apply_expr_auto( r, p, aexpr );
 }
 
- void apply_expr_neg( const Rule&, Parser& p )
+
+//=======================================================
+// Unary expressions
+//
+
+static void apply_expr_unary( const Rule&, Parser& p, UnaryExpression* un )
 {
    SourceParser& sp = static_cast<SourceParser&>(p);
-
+   
    (void) p.getNextToken();
-   TokenInstance* value = p.getNextToken();
-
-   TokenInstance* ti2 = new TokenInstance( value->line(), value->chr(), sp.Expr );
-   ti2->setValue( new ExprNeg(static_cast<Expression*>(value->detachValue())), expr_deletor );
-
-   p.simplify(2,ti2);
+   TokenInstance* value = p.getNextToken();  // expr   
+   
+   // get the expression coming from the value and unarize it.
+   Expression* other = static_cast<Expression*>(value->detachValue());
+   un->first( other );
+   
+   // Complexify the value
+   value->token( sp.Expr );   // be sure to change it
+   value->setValue( un, expr_deletor );
+   p.simplify(1); // remove 1 token and keep the value.
 }
 
+
+void apply_expr_neg( const Rule& r, Parser& p )
+{
+   apply_expr_unary( r, p, new ExprNeg );
+}
+
+void apply_expr_not( const Rule& r, Parser& p )
+{
+   apply_expr_unary( r, p, new ExprNot );
+}
+
+void apply_expr_bnot( const Rule& r, Parser& p )
+{
+   apply_expr_unary( r, p, new ExprBNOT );
+}
+
+
+//=======================================================
+// Other expressions.
+//
 
 void apply_expr_pars( const Rule&, Parser& p )
 {

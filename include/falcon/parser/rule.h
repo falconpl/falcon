@@ -97,7 +97,7 @@ public:
    const String& name() const { return m_name; }   
 
    /** Checks if the rule is currently matching. */
-   bool match( Parser& p, bool bIncremental ) const;
+   bool match( Parser& p, bool bIncremental, bool bContinue = false ) const;
 
    /** Sets the non-terminal in which this rule is stored.
     \param nt The non-terminal symbol using this rule.

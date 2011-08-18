@@ -133,10 +133,10 @@ Token* Rule::getTokenAt( uint32 pos ) const
    return _p->m_vTokens[pos];
 }
 
-bool Rule::match( Parser& parser, bool bIncremental ) const
+bool Rule::match( Parser& parser, bool bIncremental, bool bContinue ) const
 {
-   TRACE2( "Rule::match(%s) -- %s", m_name.c_ize(),
-            bIncremental ? "incremental" : "full" );
+   TRACE2( "Rule::match(%s) -- %s/%s", m_name.c_ize(),
+            bIncremental ? "incremental" : "full", bContinue ? "cont" : "anew" );
 
    Parser::Private* pp = parser._p;
    size_t begin = pp->m_pframes->back().m_nStackDepth;
@@ -196,7 +196,7 @@ bool Rule::match( Parser& parser, bool bIncremental ) const
       TRACE2( "Rule::match(%s) -- checking '%s' <-> '%s'",
                m_name.c_ize(), curTok->name().c_ize(), stackToken->name().c_ize()  );
 
-      if( curTok->id() != stackToken->id() )
+      if( curTok->id() != stackToken->id() || bContinue )
       {
          TRACE3( "Rule::match(%s) -- searching a path from '%s' path to '%s' ",
             m_name.c_ize(), curTok->name().c_ize(), stackToken->name().c_ize() );

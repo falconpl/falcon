@@ -109,6 +109,11 @@ public:
       t_unpack,
       t_multiunpack,
       t_prototype,
+         
+      t_band,
+      t_bor,
+      t_bxor,
+      t_bnot,
 
       t_self,
       t_reference
@@ -348,15 +353,13 @@ protected:
 
 #define FALCON_UNARY_EXPRESSION_CLASS_DECLARATOR( class_name, op ) \
    inline class_name( Expression* op1 ): UnaryExpression( op, op1 ) {apply = apply_;} \
+   inline class_name(): UnaryExpression( op, 0 ) {apply = apply_; }\
    inline class_name( const class_name& other ): UnaryExpression( other ) {apply = apply_;} \
    inline virtual class_name* clone() const { return new class_name( *this ); } \
    virtual bool simplify( Item& value ) const; \
    static void apply_( const PStep*, VMContext* ctx ); \
    virtual void describeTo( String& ) const;\
-   protected:\
-   inline class_name(): UnaryExpression( op ) {}\
-   friend class ExprFactory;\
-   public:
+   friend class ExprFactory;
 
 #define FALCON_BINARY_EXPRESSION_CLASS_DECLARATOR( class_name, op ) \
    FALCON_BINARY_EXPRESSION_CLASS_DECLARATOR_EX( class_name, op, )
@@ -479,6 +482,11 @@ public:
    FALCON_UNARY_EXPRESSION_CLASS_DECLARATOR( ExprNeg, t_neg );
 };
 
+class FALCON_DYN_CLASS ExprBNOT: public UnaryExpression
+{
+public:
+   FALCON_UNARY_EXPRESSION_CLASS_DECLARATOR( ExprBNOT, t_bnot );
+};
 
 /** Exactly equal to operator. */
 class FALCON_DYN_CLASS ExprEEQ: public BinaryExpression

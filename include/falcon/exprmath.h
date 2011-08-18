@@ -224,6 +224,57 @@ private:
    class ops;
 };
 
+
+class FALCON_DYN_CLASS ExprBAND: public ExprMath
+{
+public:
+   ExprBAND( Expression* op1=0, Expression* op2=0 );
+   ExprBAND( const ExprMod& other ): ExprMath(other) {}
+   virtual ~ExprBAND() {}
+   inline virtual ExprBAND* clone() const { return new ExprBAND( *this ); }
+   virtual bool simplify( Item& value ) const;
+
+protected:
+   friend class ExprFactory;
+
+private:
+   class ops;
+};
+
+class FALCON_DYN_CLASS ExprBOR: public ExprMath
+{
+public:
+   ExprBOR( Expression* op1=0, Expression* op2=0 );
+   ExprBOR( const ExprMod& other ): ExprMath(other) {}
+   virtual ~ExprBOR() {}
+   inline virtual ExprBOR* clone() const { return new ExprBOR( *this ); }
+   virtual bool simplify( Item& value ) const;
+
+protected:
+   friend class ExprFactory;
+
+private:
+   class ops;
+};
+
+class FALCON_DYN_CLASS ExprBXOR: public ExprMath
+{
+public:
+   ExprBXOR( Expression* op1=0, Expression* op2=0 );
+   ExprBXOR( const ExprMod& other ): ExprMath(other) {}
+   virtual ~ExprBXOR() {}
+   inline virtual ExprBXOR* clone() const { return new ExprBXOR( *this ); }
+   virtual bool simplify( Item& value ) const;
+
+protected:
+   friend class ExprFactory;
+
+private:
+   class ops;
+};
+
+
+
 //=====================================================================
 // Auto expressions
 //

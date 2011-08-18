@@ -900,6 +900,18 @@ Parsing::TokenInstance* SourceLexer::checkOperator()
          if( m_text == "%=" ) return parser->T_AutoMod.makeInstance(m_sline, m_schr);
          if( m_text == ">>" ) return parser->T_RShift.makeInstance(m_sline, m_schr);
          if( m_text == "<<" ) return parser->T_LShift.makeInstance(m_sline, m_schr);
+         
+         if( m_text == "^&" ) return parser->T_BAND.makeInstance(m_sline, m_schr);
+         if( m_text == "^|" ) return parser->T_BOR.makeInstance(m_sline, m_schr);
+         if( m_text == "^^" ) return parser->T_BXOR.makeInstance(m_sline, m_schr);
+         if( m_text == "^!" ) return parser->T_BNOT.makeInstance(m_sline, m_schr);
+         
+         if( m_text == "^+" ) return parser->T_OOB.makeInstance(m_sline, m_schr);
+         if( m_text == "^-" ) return parser->T_DEOOB.makeInstance(m_sline, m_schr);
+         if( m_text == "^%" ) return parser->T_XOOB.makeInstance(m_sline, m_schr);
+         if( m_text == "^?" ) return parser->T_ISOOB.makeInstance(m_sline, m_schr);
+         
+         if( m_text == "^*" ) return parser->T_EVAL.makeInstance(m_sline, m_schr);
          break;
 
       case 3:

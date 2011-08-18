@@ -14,7 +14,7 @@
 */
 
 #ifndef SOURCEPARSER_H
-#define	SOURCEPARSER_H
+#define SOURCEPARSER_H
 
 #include <falcon/setup.h>
 #include <falcon/parser/parser.h>
@@ -64,6 +64,16 @@ public:
    Parsing::Terminal T_AutoRShift;
    Parsing::Terminal T_AutoLShift;
    Parsing::Terminal T_EEQ;
+   
+   Parsing::Terminal T_BAND;
+   Parsing::Terminal T_BOR;
+   Parsing::Terminal T_BXOR;
+   Parsing::Terminal T_BNOT;
+   Parsing::Terminal T_OOB;
+   Parsing::Terminal T_DEOOB;
+   Parsing::Terminal T_XOOB;
+   Parsing::Terminal T_ISOOB;
+   Parsing::Terminal T_EVAL;
    
    Parsing::Terminal T_Comma;
    Parsing::Terminal T_QMark;
@@ -128,7 +138,7 @@ public:
    Parsing::Terminal T_forlast;
    Parsing::Terminal T_break;
    Parsing::Terminal T_continue;
-
+   
    //================================================
    // Statements
    //
@@ -308,6 +318,12 @@ public:
    Parsing::Rule r_Expr_pow;
    Parsing::Rule r_Expr_shl;
    Parsing::Rule r_Expr_shr;
+   
+   Parsing::Rule r_Expr_band;
+   Parsing::Rule r_Expr_bor;
+   Parsing::Rule r_Expr_bxor;
+   Parsing::Rule r_Expr_bnot;
+   
    Parsing::Rule r_Expr_auto_add;
    Parsing::Rule r_Expr_auto_sub;
    Parsing::Rule r_Expr_auto_times;
@@ -319,6 +335,8 @@ public:
    
    Parsing::Rule r_Expr_neg;
    Parsing::Rule r_Expr_neg2;
+   Parsing::Rule r_Expr_not;
+   
    Parsing::Rule r_Expr_Atom;
 
    Parsing::Rule r_Expr_function;
