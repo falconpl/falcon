@@ -292,6 +292,24 @@ protected:
    SymbolTable m_symtab;
 };
 
+#define FALCON_DECLARE_FUNCTION(FN_NAME, SIGNATURE) \
+   class Function_ ## FN_NAME: public ::Falcon::Function \
+   { \
+   public: \
+      Function_ ## FN_NAME( ): \
+         Function( #FN_NAME ) \
+      { parseDescription( SIGNATURE ); } \
+      virtual ~Function_ ## FN_NAME() {} \
+      virtual void invoke( VMContext* ctx, int32 pCount = 0 ); \
+   };
+
+#define FALCON_DEFINE_FUNCTION(FN_NAME) void Function_ ## FN_NAME::invoke
+#define FALCON_DEFINE_FUNCTION_P(FN_NAME) \
+      void Function_ ## FN_NAME::invoke( VMContext* ctx, int pCount )
+#define FALCON_DEFINE_FUNCTION_P1(FN_NAME) \
+      void Function_ ## FN_NAME::invoke( VMContext* ctx, int )
+#define FALCON_FUNCTION_NAME(FN_NAME) Function_ ## FN_NAME
+
 }
 
 #endif /* FUNCTION_H_ */
