@@ -35,6 +35,11 @@
 */
 
 #include <falcon/engine.h>
+#include <falcon/vmcontext.h>
+#include <falcon/error.h>
+#include <falcon/paramerror.h>
+#include <falcon/matherror.h>
+
 #include "math_extra_ext.h"
 #include "math_extra_mod.h"
 
@@ -49,11 +54,11 @@ namespace Falcon {
       double res = func( value );
       if ( errno != 0 )
       {
-          throw new MathError( ErrorParam( e_domain, __LINE__).origin( e_orig_runtime ) );
+          throw new MathError( ErrorParam( e_domain, __LINE__).origin( ErrorParam::e_orig_runtime ) );
       }
       if ( res == 0.0 )
       {
-         throw new MathError( ErrorParam( e_div_by_zero, __LINE__).origin( e_orig_runtime ) );
+         throw new MathError( ErrorParam( e_div_by_zero, __LINE__).origin( ErrorParam::e_orig_runtime ) );
       }
       return 1/res;
    }
@@ -73,22 +78,22 @@ namespace Falcon {
           The function may raise an error if the value cannot
           be computed because of a domain or overflow error.
           */
-        FALCON_FUNC Func_cosh( ::Falcon::VMachine *vm )
+        FALCON_DEFINE_FUNCTION_P(cosh)
         {
-            Item *num1 = vm->param( 0 );         
+            Item *num1 = ctx->param( 0 );         
             if ( num1 == 0 || ! num1->isOrdinal() )
             {
-                throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).extra("N") );
+               throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( ErrorParam::e_orig_runtime ).extra("N") );
             }
 
             errno = 0;
             numeric res = cosh( num1->forceNumeric() );
             if ( errno != 0 )
             {
-                throw new MathError( ErrorParam( e_domain, __LINE__).origin( e_orig_runtime ) );
+                throw new MathError( ErrorParam( e_domain, __LINE__).origin( ErrorParam::e_orig_runtime ) );
             }
             else {                 
-                vm->retval( res );
+                ctx->stackResult( 1, res );
             }
         }
         
@@ -101,22 +106,22 @@ namespace Falcon {
           The function may raise an error if the value cannot
           be computed because of a domain or overflow error.
           */
-        FALCON_FUNC Func_sinh( ::Falcon::VMachine *vm )
+        FALCON_DEFINE_FUNCTION_P(sinh)
         {
-            Item *num1 = vm->param( 0 );
+            Item *num1 = ctx->param( 0 );
             if ( num1 == 0 || ! num1->isOrdinal() )
             {
-                throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).extra("N") );
+                throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( ErrorParam::e_orig_runtime ).extra("N") );
             }
 
             errno = 0;
             numeric res = sinh( num1->forceNumeric() );
             if ( errno != 0 )
             {
-                throw new MathError( ErrorParam( e_domain, __LINE__).origin( e_orig_runtime ) );
+                throw new MathError( ErrorParam( e_domain, __LINE__).origin( ErrorParam::e_orig_runtime ) );
             }
             else {                 
-                vm->retval( res );
+                ctx->stackResult( 1, res );
             }
         }
         
@@ -129,22 +134,22 @@ namespace Falcon {
           The function may raise an error if the value cannot
           be computed because of a domain or overflow error.
           */
-        FALCON_FUNC Func_tanh( ::Falcon::VMachine *vm )
+        FALCON_DEFINE_FUNCTION_P(tanh)
         {
-            Item *num1 = vm->param( 0 );
+            Item *num1 = ctx->param( 0 );
             if ( num1 == 0 || ! num1->isOrdinal() )
             {
-                throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).extra("N") );
+                throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( ErrorParam::e_orig_runtime ).extra("N") );
             }
 
             errno = 0;
             numeric res = tanh( num1->forceNumeric() );
             if ( errno != 0 )
             {
-                throw new MathError( ErrorParam( e_domain, __LINE__).origin( e_orig_runtime ) );
+                throw new MathError( ErrorParam( e_domain, __LINE__).origin( ErrorParam::e_orig_runtime ) );
             }
             else {                 
-                vm->retval( res );
+                ctx->stackResult( 1, res );
             }
         }
 
@@ -158,22 +163,22 @@ namespace Falcon {
           The function may raise an error if the value cannot
           be computed because of a domain or overflow error.
           */
-        FALCON_FUNC Func_acosh( ::Falcon::VMachine *vm )
+        FALCON_DEFINE_FUNCTION_P(acosh)
         {
-            Item *num1 = vm->param( 0 );         
+            Item *num1 = ctx->param( 0 );         
             if ( num1 == 0 || ! num1->isOrdinal() )
             {
-                throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).extra("N") );
+                throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( ErrorParam::e_orig_runtime ).extra("N") );
             }
 
             errno = 0;
             numeric res = acosh( num1->forceNumeric() );
             if ( errno != 0 )
             {
-                throw new MathError( ErrorParam( e_domain, __LINE__).origin( e_orig_runtime ) );
+                throw new MathError( ErrorParam( e_domain, __LINE__).origin( ErrorParam::e_orig_runtime ) );
             }
             else {                 
-                vm->retval( res );
+                ctx->stackResult( 1, res );
             }
         }
         
@@ -186,22 +191,22 @@ namespace Falcon {
           The function may raise an error if the value cannot
           be computed because of a domain or overflow error.
           */
-        FALCON_FUNC Func_asinh( ::Falcon::VMachine *vm )
+        FALCON_DEFINE_FUNCTION_P(asinh)
         {
-            Item *num1 = vm->param( 0 );
+            Item *num1 = ctx->param( 0 );
             if ( num1 == 0 || ! num1->isOrdinal() )
             {
-                throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).extra("N") );
+                throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( ErrorParam::e_orig_runtime ).extra("N") );
             }
 
             errno = 0;
             numeric res = asinh( num1->forceNumeric() );
             if ( errno != 0 )
             {
-                throw new MathError( ErrorParam( e_domain, __LINE__).origin( e_orig_runtime ) );
+                throw new MathError( ErrorParam( e_domain, __LINE__).origin( ErrorParam::e_orig_runtime ) );
             }
             else {                 
-                vm->retval( res );
+                ctx->stackResult( 1, res );
             }
         }
         
@@ -214,22 +219,22 @@ namespace Falcon {
           The function may raise an error if the value cannot
           be computed because of a domain or overflow error.
           */
-        FALCON_FUNC Func_atanh( ::Falcon::VMachine *vm )
+        FALCON_DEFINE_FUNCTION_P(atanh)
         {
-            Item *num1 = vm->param( 0 );
+            Item *num1 = ctx->param( 0 );
             if ( num1 == 0 || ! num1->isOrdinal() )
             {
-                throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).extra("N") );
+                throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( ErrorParam::e_orig_runtime ).extra("N") );
             }
 
             errno = 0;
             numeric res = atanh( num1->forceNumeric() );
             if ( errno != 0 )
             {
-                throw new MathError( ErrorParam( e_domain, __LINE__).origin( e_orig_runtime ) );
+                throw new MathError( ErrorParam( e_domain, __LINE__).origin( ErrorParam::e_orig_runtime ) );
             }
             else {                 
-                vm->retval( res );
+                ctx->stackResult( 1, res );
             }
         }
 
@@ -242,24 +247,24 @@ namespace Falcon {
           The function may raise an error if the value cannot
           be computed because of an overflow error.
           */
-        FALCON_FUNC Func_lambda( ::Falcon::VMachine *vm )
+        FALCON_DEFINE_FUNCTION_P(lambda)
         {
-            Item *num1 = vm->param( 0 );
-            Item *num2 = vm->param( 1 );
+            Item *num1 = ctx->param( 0 );
+            Item *num2 = ctx->param( 1 );
 
             if ( ! num1->isOrdinal() || ! num2->isOrdinal() )
             {
-                throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).extra("N") );
+                throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( ErrorParam::e_orig_runtime ).extra("N") );
             }
 
             errno = 0;
             numeric res = pow( num1->forceNumeric(), pow( num1->forceNumeric(), (num2->forceNumeric())-1 ) ) ;
             if ( errno != 0 )
             {
-                throw new MathError( ErrorParam( e_domain, __LINE__).origin( e_orig_runtime ) );
+                throw new MathError( ErrorParam( e_domain, __LINE__).origin( ErrorParam::e_orig_runtime ) );
             }
             else {                 
-                vm->retval( res );
+                ctx->stackResult( 2, res );
             }
         }
         
@@ -272,22 +277,22 @@ namespace Falcon {
           The function may raise an error if the value cannot
           be computed because of a domain or overflow error.
           */
-        FALCON_FUNC Func_sec( ::Falcon::VMachine *vm )
+        FALCON_DEFINE_FUNCTION_P(sec)
         {
-            Item *num1 = vm->param( 0 );
+            Item *num1 = ctx->param( 0 );
             if ( num1 == 0 || ! num1->isOrdinal() )
             {
-                throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).extra("N") );
+                throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( ErrorParam::e_orig_runtime ).extra("N") );
             }
 
             errno = 0;
             numeric res = 1 / cos( num1->forceNumeric() );
             if ( errno != 0 )
             {
-                throw new MathError( ErrorParam( e_domain, __LINE__).origin( e_orig_runtime ) );
+                throw new MathError( ErrorParam( e_domain, __LINE__).origin( ErrorParam::e_orig_runtime ) );
             }
             else {                 
-                vm->retval( res );
+                ctx->stackResult( 1, res );
             }
         }
         
@@ -300,22 +305,22 @@ namespace Falcon {
           The function may raise an error if the value cannot
           be computed because of a domain or overflow error.
           */
-        FALCON_FUNC Func_csc( ::Falcon::VMachine *vm )
+        FALCON_DEFINE_FUNCTION_P(cosec)
         {
-            Item *num1 = vm->param( 0 );
+            Item *num1 = ctx->param( 0 );
             if ( num1 == 0 || ! num1->isOrdinal() )
             {
-                throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).extra("N") );
+                throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( ErrorParam::e_orig_runtime ).extra("N") );
             }
 
             errno = 0;
             numeric res = 1 / sin( num1->forceNumeric() );
             if ( errno != 0 )
             {
-                throw new MathError( ErrorParam( e_domain, __LINE__).origin( e_orig_runtime ) );
+                throw new MathError( ErrorParam( e_domain, __LINE__).origin( ErrorParam::e_orig_runtime ) );
             }
             else {                 
-                vm->retval( res );
+                ctx->stackResult( 1, res );
             }
         }
         
@@ -328,22 +333,22 @@ namespace Falcon {
           The function may raise an error if the value cannot
           be computed because of a domain or overflow error.
           */
-        FALCON_FUNC Func_cotan( ::Falcon::VMachine *vm )
+        FALCON_DEFINE_FUNCTION_P(cotan)
         {
-            Item *num1 = vm->param( 0 );
+            Item *num1 = ctx->param( 0 );
             if ( num1 == 0 || ! num1->isOrdinal() )
             {
-                throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).extra("N") );
+                throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( ErrorParam::e_orig_runtime ).extra("N") );
             }
 
             errno = 0;
             numeric res = 1 / tan( num1->forceNumeric() );
             if ( errno != 0 )
             {
-                throw new MathError( ErrorParam( e_domain, __LINE__).origin( e_orig_runtime ) );
+                throw new MathError( ErrorParam( e_domain, __LINE__).origin( ErrorParam::e_orig_runtime ) );
             }
             else {                 
-                vm->retval( res );
+                ctx->stackResult( 1, res );
             }
         }
         

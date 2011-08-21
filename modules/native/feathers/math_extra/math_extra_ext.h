@@ -37,6 +37,7 @@
 #include <falcon/item.h>
 #include <falcon/types.h>
 #include <falcon/error.h>
+#include <falcon/function.h>
 
 #include <cmath>
 #include <cerrno>
@@ -44,22 +45,22 @@
 namespace Falcon { 
     namespace Ext {
         // Hyperbolic
-        FALCON_FUNC Func_cosh( ::Falcon::VMachine *vm );
-        FALCON_FUNC Func_sinh( ::Falcon::VMachine *vm );
-        FALCON_FUNC Func_tanh( ::Falcon::VMachine *vm );
+        FALCON_DECLARE_FUNCTION(cosh,"")
+        FALCON_DECLARE_FUNCTION(sinh,"")
+        FALCON_DECLARE_FUNCTION(tanh,"")
 
         // Inverse Hyperbolic
-        FALCON_FUNC Func_acosh( ::Falcon::VMachine *vm );
-        FALCON_FUNC Func_asinh( ::Falcon::VMachine *vm );
-        FALCON_FUNC Func_atanh( ::Falcon::VMachine *vm ); 
+        FALCON_DECLARE_FUNCTION(acosh,"")
+        FALCON_DECLARE_FUNCTION(asinh,"")
+        FALCON_DECLARE_FUNCTION(atanh,"")
 
         // Other
-        FALCON_FUNC Func_lambda( ::Falcon::VMachine *vm );
+        FALCON_DECLARE_FUNCTION(lambda,"")
 
-        // Reciprocal trigonometric function        
-        FALCON_FUNC Func_sec( ::Falcon::VMachine *vm );
-        FALCON_FUNC Func_csc( ::Falcon::VMachine *vm );
-        FALCON_FUNC Func_cotan( ::Falcon::VMachine *vm ); 
+        // Reciprocal trigonometric function
+        FALCON_DECLARE_FUNCTION(sec,"")
+        FALCON_DECLARE_FUNCTION(cosec,"")
+        FALCON_DECLARE_FUNCTION(cotan,"")
     }
 } // namespace Falcon::Ext
 

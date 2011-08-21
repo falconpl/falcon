@@ -43,40 +43,49 @@
    commonly used in scripting languages.
 */
 
+//Define the math_extra module class
+class MathExtraModule: public Falcon::Module
+{
+public:
+   // initialize the module
+   MathExtraModule():
+      Module("math_extra")
+   {
+
+      //language( "en_US" );
+      //engineVersion( FALCON_VERSION_NUM );
+      //version( VERSION_MAJOR, VERSION_MINOR, VERSION_REVISION );
+
+      //============================================================
+      // Api Declartion
+      //
+      
+      // Hyperbolic
+      addFunction( new Falcon::Ext::FALCON_FUNCTION_NAME(cosh) );
+      addFunction( new Falcon::Ext::FALCON_FUNCTION_NAME(sinh) );
+      addFunction( new Falcon::Ext::FALCON_FUNCTION_NAME(tanh) );
+      
+      // Inverse Hyperbolic
+      addFunction( new Falcon::Ext::FALCON_FUNCTION_NAME(acosh) );
+      addFunction( new Falcon::Ext::FALCON_FUNCTION_NAME(asinh) );
+      addFunction( new Falcon::Ext::FALCON_FUNCTION_NAME(atanh) );
+
+      // Reciprocal trigonometric function
+      addFunction( new Falcon::Ext::FALCON_FUNCTION_NAME(sec) );
+      addFunction( new Falcon::Ext::FALCON_FUNCTION_NAME(cosec) );
+      addFunction( new Falcon::Ext::FALCON_FUNCTION_NAME(cotan) );
+
+      // Other
+      addFunction( new Falcon::Ext::FALCON_FUNCTION_NAME(lambda) );
+
+   }
+   virtual ~MathExtraModule() {}
+};
+
 FALCON_MODULE_DECL
 {
-   #define FALCON_DECLARE_MODULE self
-
-   // initialize the module
-   Falcon::Module *self = new Falcon::Module();
-   self->name( "math_extra" );
-   self->language( "en_US" );
-   self->engineVersion( FALCON_VERSION_NUM );
-   self->version( VERSION_MAJOR, VERSION_MINOR, VERSION_REVISION );
-
-   //============================================================
-   // Api Declartion
-   //
-   
-   // Hyperbolic
-   self->addExtFunc( "cosh",  Falcon::Ext::Func_cosh );
-   self->addExtFunc( "sinh",  Falcon::Ext::Func_sinh );
-   self->addExtFunc( "tanh",  Falcon::Ext::Func_tanh );
-   
-   // Inverse Hyperbolic
-   self->addExtFunc( "acosh",  Falcon::Ext::Func_acosh );
-   self->addExtFunc( "asinh",  Falcon::Ext::Func_asinh );
-   self->addExtFunc( "atanh",  Falcon::Ext::Func_atanh );
-
-   // Reciprocal trigonometric function
-   self->addExtFunc( "sec",  Falcon::Ext::Func_sec );
-   self->addExtFunc( "csc",  Falcon::Ext::Func_csc );
-   self->addExtFunc( "cotan",  Falcon::Ext::Func_cotan );
-
-   // Other
-   self->addExtFunc( "lambda", Falcon::Ext::Func_lambda );
-
-   return self;
+   Falcon::Module* mod = new MathExtraModule;
+   return mod;
 }
 
 /* end of math_extra.cpp */
