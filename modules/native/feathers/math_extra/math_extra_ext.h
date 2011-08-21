@@ -45,22 +45,22 @@
 namespace Falcon { 
     namespace Ext {
         // Hyperbolic
-        FALCON_DECLARE_FUNCTION(cosh,"")
-        FALCON_DECLARE_FUNCTION(sinh,"")
-        FALCON_DECLARE_FUNCTION(tanh,"")
+       FALCON_DECLARE_FUNCTION(cosh,"arg:N")
+          FALCON_DECLARE_FUNCTION(sinh,"arg:N")
+          FALCON_DECLARE_FUNCTION(tanh,"arg:N")
 
         // Inverse Hyperbolic
-        FALCON_DECLARE_FUNCTION(acosh,"")
-        FALCON_DECLARE_FUNCTION(asinh,"")
-        FALCON_DECLARE_FUNCTION(atanh,"")
+        FALCON_DECLARE_FUNCTION(acosh,"arg:N")
+        FALCON_DECLARE_FUNCTION(asinh,"arg:N")
+        FALCON_DECLARE_FUNCTION(atanh,"arg:N")
 
         // Other
-        FALCON_DECLARE_FUNCTION(lambda,"")
+        FALCON_DECLARE_FUNCTION(lambda,"num1:N,num2:N")
 
         // Reciprocal trigonometric function
-        FALCON_DECLARE_FUNCTION(sec,"")
-        FALCON_DECLARE_FUNCTION(cosec,"")
-        FALCON_DECLARE_FUNCTION(cotan,"")
+        FALCON_DECLARE_FUNCTION(sec,"arg:N")
+        FALCON_DECLARE_FUNCTION(cosec,"arg:N")
+        FALCON_DECLARE_FUNCTION(cotan,"arg:N")
     }
 } // namespace Falcon::Ext
 
