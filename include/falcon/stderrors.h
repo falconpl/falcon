@@ -97,6 +97,10 @@ public:
     */
    Class* param() const { return m_param; }
    
+   /** Returns the global instance of the MathError handler Class.
+    */
+   Class* math() const { return m_math; }
+
    
    /** Returns the global instance of the LinkError handler Class.
     */
@@ -121,6 +125,7 @@ private:
    Class* m_accessType;
    Class* m_syntax;
    Class* m_param;
+   Class* m_math;
    Class* m_link;
 };
 

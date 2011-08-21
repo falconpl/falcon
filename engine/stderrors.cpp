@@ -39,6 +39,7 @@ StdErrors::StdErrors()
    m_accessType = new ClassAccessTypeError;
    m_syntax = new ClassSyntaxError;
    m_param =  new ClassParamError;
+   m_math = new ClassMathError;
    m_link = new ClassLinkError;
 }
 

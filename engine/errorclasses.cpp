@@ -33,6 +33,7 @@
 #include <falcon/encodingerror.h>
 #include <falcon/linkerror.h>
 #include <falcon/paramerror.h>
+#include <falcon/matherror.h>
 
 namespace Falcon
 {
@@ -164,6 +165,16 @@ void ClassParamError::op_create( VMContext* ctx, int32 pcount ) const
    invokeParams( ctx, pcount, params );
    ctx->stackResult( pcount + 1, 
       FALCON_GC_STORE( coll, this, new ParamError( params ) ) );
+}
+
+void ClassMathError::op_create( VMContext* ctx, int32 pcount ) const
+{
+   static Collector* coll = Engine::instance()->collector();
+   
+   ErrorParam params;
+   invokeParams( ctx, pcount, params );
+   ctx->stackResult( pcount + 1, 
+      FALCON_GC_STORE( coll, this, new MathError( params ) ) );
 }
 
 }

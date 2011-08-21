@@ -170,6 +170,18 @@ public:
    virtual void op_create( VMContext* ctx, int32 pcount ) const;
 };
 
+/** Class handler for MathError exceptions. 
+ */
+class ClassMathError: public ClassError
+{
+public:
+   ClassMathError():
+      ClassError( "MathError" )
+      {}
+      
+   virtual void op_create( VMContext* ctx, int32 pcount ) const;
+};
+
 
 }
 

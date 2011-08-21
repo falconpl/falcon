@@ -177,6 +177,7 @@ add_library(falcon_engine SHARED
   ioerror.cpp
   linkerror.cpp
   localsymbol.cpp
+  matherror.cpp
   metaclass.cpp
   method.cpp
   modcompiler.cpp

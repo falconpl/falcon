@@ -22,6 +22,7 @@
 #include <falcon/vm.h>
 #include <falcon/operanderror.h>
 #include <falcon/codeerror.h>
+#include <falcon/matherror.h>
 
 #include <math.h>
 
@@ -288,7 +289,7 @@ void generic_apply_( const PStep* ps, VMContext* ctx )
 
    if ( __CPR::zeroCheck(*op2) )
    {
-      throw new CodeError( ErrorParam(e_div_by_zero, __LINE__, SRC )
+      throw new MathError( ErrorParam(e_div_by_zero, __LINE__, SRC )
          .origin(ErrorParam::e_orig_vm) );
    }
    
