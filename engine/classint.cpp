@@ -291,11 +291,11 @@ void ClassInt::op_pow( VMContext* ctx, void* self ) const
    switch( op2->type() )
    {
       case FLC_ITEM_INT:
-         ctx->stackResult(2, pow( iself->asInteger(), op2->asInteger() ) );
+         ctx->stackResult(2, (int64)pow( (long double)iself->asInteger(), (long double)op2->asInteger() ) );
          break;
 
       case FLC_ITEM_NUM:
-         ctx->stackResult(2, pow( iself->asInteger(), op2->asNumeric() ) );
+         ctx->stackResult(2, (double)pow( (long double)iself->asInteger(), (long double)op2->asNumeric() ) );
          break;
 
       case FLC_ITEM_USER:
@@ -540,11 +540,11 @@ void ClassInt::op_apow( VMContext* ctx, void* self ) const
    switch( op2->type() )
    {
       case FLC_ITEM_INT:
-         ctx->stackResult(2, pow( iself->asInteger(), op2->asInteger() ) );
+         ctx->stackResult(2, (int64)pow( (long double)iself->asInteger(), (long double)op2->asInteger() ) );
          break;
 
       case FLC_ITEM_NUM:
-         ctx->stackResult(2, pow( iself->asInteger(), op2->asNumeric() ) );
+         ctx->stackResult(2, (double)pow( (long double)iself->asInteger(), (long double)op2->asNumeric() ) );
          break;
 
       case FLC_ITEM_USER:

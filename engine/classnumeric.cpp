@@ -294,7 +294,7 @@ void ClassNumeric::op_pow( VMContext* ctx, void* self ) const
    switch( op2->type() )
    {
       case FLC_ITEM_INT:
-         ctx->stackResult(2, pow( iself->asNumeric(), op2->asInteger() ) );
+         ctx->stackResult(2, (double)pow( (long double)iself->asNumeric(), (long double)op2->asInteger() ) );
          break;
 
       case FLC_ITEM_NUM:
@@ -548,7 +548,7 @@ void ClassNumeric::op_apow( VMContext* ctx, void* self ) const
    switch( op2->type() )
    {
       case FLC_ITEM_INT:
-         ctx->stackResult(2, pow( iself->asNumeric(), op2->asInteger() ) );
+         ctx->stackResult(2, (double)pow( (long double)iself->asNumeric(), (long double)op2->asInteger() ) );
          break;
 
       case FLC_ITEM_NUM:
