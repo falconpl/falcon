@@ -45,9 +45,9 @@
 namespace Falcon { 
     namespace Ext {
         // Hyperbolic
-       FALCON_DECLARE_FUNCTION(cosh,"arg:N")
-          FALCON_DECLARE_FUNCTION(sinh,"arg:N")
-          FALCON_DECLARE_FUNCTION(tanh,"arg:N")
+        FALCON_DECLARE_FUNCTION(cosh,"arg:N")
+        FALCON_DECLARE_FUNCTION(sinh,"arg:N")
+        FALCON_DECLARE_FUNCTION(tanh,"arg:N")
 
         // Inverse Hyperbolic
         FALCON_DECLARE_FUNCTION(acosh,"arg:N")
