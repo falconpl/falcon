@@ -1,6 +1,6 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: unsupportederror.cpp
+   FILE: paramerror.cpp
 
    Error class raised when functions receive invalid parameters.
    -------------------------------------------------------------------
@@ -31,4 +31,4 @@ ParamError::~ParamError()
 
 }
 
-/* end of unsupportederror.cpp */
+/* end of paramerror.cpp */

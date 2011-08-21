@@ -20,7 +20,7 @@
 
 namespace Falcon {
 
-/** Error thrown when when functions receive invalid parameters. */
+/** Error thrown when functions receive invalid parameters. */
 class FALCON_DYN_CLASS ParamError: public Error
 {
 public:
