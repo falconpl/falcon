@@ -84,7 +84,7 @@ Module* DynLoader::load_sys( const String& filePath )
 
 const String& DynLoader::sysExtension()
 {
-   static String ext = ".dll";
+   static String ext = "dll";
    return ext;
 }
 

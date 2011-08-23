@@ -83,6 +83,7 @@ void ModLoader::init ( const String &path, ModCompiler* mc, FAMLoader* faml, Dyn
    m_compiler = mc;
    m_famLoader = faml; 
    m_dynLoader = dld;
+   m_useSources = e_us_newer;
    
    m_encName = "C";
    m_tcoder = engine->getTranscoder( m_encName );
