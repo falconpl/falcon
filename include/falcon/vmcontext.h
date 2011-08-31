@@ -515,6 +515,7 @@ public:
       topCall->m_paramCount = nparams;
       topCall->m_self = self;
       topCall->m_bMethodic = true;
+      topCall->m_finallyCount = 0;
 
       return topCall;
    }
@@ -530,6 +531,7 @@ public:
       topCall->m_paramCount = nparams;
       topCall->m_self.setNil();
       topCall->m_bMethodic = false;
+      topCall->m_finallyCount = 0;
 
       return topCall;
    }
