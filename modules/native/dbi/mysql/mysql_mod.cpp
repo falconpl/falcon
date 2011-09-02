@@ -518,10 +518,15 @@ void DBIRecordsetMySQL_STMT::close()
 {
    DBIRecordsetMySQL::close();
 
-   if ( m_stmt != 0 ) {
+   if ( m_stmt != 0 ) 
+   {
       while( mysql_next_result( m_pConn->handle() ) == 0 )
       {
-         mysql_free_result( mysql_use_result( m_pConn->handle() ) );
+         MYSQL_RES *res = mysql_use_result( m_pConn->handle() );
+         if( res != NULL )
+         {
+            mysql_free_result( res );
+         }
       }
 
       m_stmt = 0;
@@ -945,7 +950,7 @@ void DBIStatementMySQL::reset()
 
 void DBIStatementMySQL::close()
 {
-   if ( m_statement != 0 )
+  if ( m_statement != 0 )
   {
      m_statement = 0;
      delete m_inBind;
@@ -1327,7 +1332,7 @@ DBIHandle *DBIServiceMySQL::connect( const String &parameters )
       );
    }
 
-   long szFlags = CLIENT_MULTI_STATEMENTS;
+   long szFlags = CLIENT_MULTI_STATEMENTS|CLIENT_MULTI_RESULTS;
    // TODO parse flags
 
    if ( mysql_real_connect( conn,
