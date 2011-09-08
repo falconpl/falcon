@@ -29,7 +29,7 @@
  */
 void TestFunc( Falcon::VMachine* )
 {
-   std::cout << "Hello wrold from a module!" << std::endl;
+   std::cout << "Hello world from a module!" << std::endl;
 }
 
 /** A new Function -- directly invoking printl.
