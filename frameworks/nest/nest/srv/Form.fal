@@ -430,6 +430,14 @@ class Field( name, maker )
       if maker: self.apply( maker )
    end
 
+   function _preText()
+      return ""
+   end
+   
+   function _postText()
+      return ""
+   end
+   
    function fullName()
       if self.srv: instance = self.srv.instance
       return instance ? instance +"." + self.name : self.name
@@ -437,10 +445,12 @@ class Field( name, maker )
    
    function toString()
       name = self.fullName()
-      str = @'<input type="$(self.type)" name="$(name)" id="$(name)"'
+      str = self._preText()
+      str += @'<input type="$(self.type)" name="$(name)" id="$(name)"'
       str += self._makeValue()
       str += self._makeContent()
-      str += "/>"
+      str += "/>" + self._postText()
+      
       return str
    end
 
@@ -674,6 +684,14 @@ end
 class CheckBox( name, prompt, opts, maker ) from MultiField( name, prompt, opts, maker )
    type = "checkbox"
    multiple = true
+   
+   function _preText()
+      return "<div>"
+   end
+   
+   function _postText()
+      return "</div>"
+   end
    
    function _makeValue( opt )
       str = " value=\"" +htmlEscape( opt.value ) + "\""
