@@ -219,11 +219,9 @@ bool ExprNot::simplify( Item& value ) const
 void ExprNot::apply_( const PStep* DEBUG_ONLY(self), VMContext* ctx )
 {
    TRACE2( "Apply \"%s\"", ((ExprNot*)self)->describe().c_ize() );
-
-   Item& operand = ctx->topData();
-
-   //TODO: overload not
-   operand.setBoolean( ! operand.isTrue() );
+   ctx->topData().setBoolean( ! ctx->boolTopData() );
+   //if the boolTopData goes deep, we'll be called again (and with a bool
+   // top data, next time).
 }
 
 void ExprNot::describeTo( String& str ) const

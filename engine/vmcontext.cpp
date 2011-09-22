@@ -783,6 +783,36 @@ void VMContext::returnFrame( const Item& value )
    TRACE( "Return frame code:%p, data:%p, call:%p", m_topCode, m_topData, m_topCall  );
 }
 
+
+
+bool VMContext::boolTopData()
+{
+   
+   switch( topData().type() )
+   {
+   case FLC_ITEM_NIL:
+      return false;
+
+   case FLC_ITEM_BOOL:
+      return topData().asBoolean();
+
+   case FLC_ITEM_INT:
+      return topData().asInteger() != 0;
+
+   case FLC_ITEM_NUM:
+      return topData().asNumeric() != 0.0;
+
+   case FLC_ITEM_USER:
+      topData().asClass()->op_isTrue( this, topData().asInst() );
+      if(topData().isBoolean() )
+      {
+         return topData().asBoolean();
+      }
+   }
+   
+   return false;
+}
+
 }
 
 /* end of vmcontext.cpp */

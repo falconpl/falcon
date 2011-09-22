@@ -530,8 +530,9 @@ public:
       return (type() == FLC_ITEM_USER && asClass()->typeID() == FLC_CLASS_ID_DICT);
    }
 
+   
    bool isTrue() const;
-
+   
    /** Turns an item into its non-user class form.
     \return True if the item can be de-usered.
     

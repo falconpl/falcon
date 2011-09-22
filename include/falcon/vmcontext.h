@@ -1014,6 +1014,12 @@ public:
    
    Error* thrownError() const { return m_thrown; }
    Error* detachThrownError() { Error* e = m_thrown; m_thrown =0; return e; }
+   
+   /** Check the boolean true-ness of the topmost data item, possibly going deep.
+    If 
+    */
+   bool boolTopData();
+   
 protected:
 
    // Inner constructor to create subclasses

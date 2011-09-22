@@ -349,7 +349,7 @@ void Class::op_setProperty( VMContext* , void*, const String& ) const
 
 void Class::op_isTrue( VMContext* ctx, void* ) const
 {
-   ctx->stackResult(1, true);
+   ctx->topData().setBoolean(true);
 }
 
 

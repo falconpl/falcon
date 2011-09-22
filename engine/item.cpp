@@ -101,6 +101,7 @@ bool Item::isTrue() const
    return false;
 }
 
+
 int64 Item::forceInteger() const
 {
    switch( type() ) {

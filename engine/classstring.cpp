@@ -350,9 +350,9 @@ void ClassString::op_toString( VMContext* ctx, void* data ) const
    ctx->topData().setUser( this, data, true ); 
 }
 
-void ClassString::op_true( VMContext* ctx, void* str) const
+void ClassString::op_isTrue( VMContext* ctx, void* str ) const
 {
-   ctx->topData() = static_cast<String*>(str)->size() != 0;
+   ctx->topData().setBoolean( static_cast<String*>(str)->size() != 0 );
 }
 
 }

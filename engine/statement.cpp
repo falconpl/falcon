@@ -92,7 +92,8 @@ void StmtWhile::apply_( const PStep* s1, VMContext* ctx )
    const StmtWhile* self = static_cast<const StmtWhile*>(s1);
    
    // break items are always nil, and so, false.
-   if ( ctx->topData().isTrue() )
+   CodeFrame& ctxTop = ctx->currentCode();
+   if ( ctx->boolTopData() )
    {
       TRACE1( "Apply 'while' at line %d -- redo ", self->line() );
       // redo.
@@ -100,8 +101,13 @@ void StmtWhile::apply_( const PStep* s1, VMContext* ctx )
       ctx->pushCode( self->m_stmts );
    }
    else {
-      TRACE1( "Apply 'while' at line %d -- leave ", self->line() );
+      if( &ctxTop != &ctx->currentCode() )
+      {
+         TRACE1( "Apply 'while' at line %d -- going deep on boolean check ", self->line() );
+         return;
+      }
       
+      TRACE1( "Apply 'while' at line %d -- leave ", self->line() );
       //we're done
       ctx->popCode();
    }
@@ -274,7 +280,8 @@ void StmtIf::apply_( const PStep* s1, VMContext* ctx )
    TRACE1( "Apply 'if' at line %d ", self->line() );
 
    int sid = ctx->currentCode().m_seqId;
-   if ( ctx->topData().isTrue() )
+   CodeFrame& ctxTop = ctx->currentCode();
+   if ( ctx->boolTopData() )
    {
       ctx->popData(); // anyhow, we have consumed the data
 
@@ -284,6 +291,12 @@ void StmtIf::apply_( const PStep* s1, VMContext* ctx )
    }
    else
    {
+      if( &ctxTop != &ctx->currentCode() )
+      {
+         TRACE1( "Apply 'if' at line %d -- going deep on boolean check ", self->line() );
+         return;
+      }
+      
       ctx->popData(); // anyhow, we have consumed the data
 
       // try next else-if

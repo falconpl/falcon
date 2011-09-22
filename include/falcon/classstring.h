@@ -54,12 +54,11 @@ public:
    virtual void op_add( VMContext* ctx, void* self ) const;
    virtual void op_aadd( VMContext* ctx, void* self ) const;
 
-   // THIS IS A TODO!
    virtual void op_getIndex( VMContext* ctx, void* self ) const;
    
    virtual void op_compare( VMContext* ctx, void* self ) const;
    virtual void op_toString( VMContext* ctx, void* self ) const;
-   virtual void op_true( VMContext* ctx, void* self ) const;
+   virtual void op_isTrue( VMContext* ctx, void* self ) const;
 
 private:
 

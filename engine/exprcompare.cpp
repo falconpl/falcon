@@ -95,7 +95,7 @@ void generic_apply_( const PStep* DEBUG_ONLY(ps), VMContext* ctx )
       op1.asClass()->op_compare( ctx, op1.asInst() );
       // refetch, we may have gone deep
       fassert( ctx->topData().isInteger() );
-      ctx->topData().setBoolean( __CPR::cmpCheck( ctx->topData().asInteger() < 0 ) );
+      ctx->topData().setBoolean( __CPR::cmpCheck( ctx->topData().asInteger() ) );
       break;
 
    default:
