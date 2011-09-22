@@ -373,15 +373,12 @@ void apply_array_entry_close( const Rule&, Parser& p )
    ctx->closeContext();
   
    // we still have the [ in the stack.
-   p.resetNextToken();
-   TokenInstance* openPar = p.getNextToken();
+   TokenInstance* openPar = p.getLastToken();
    // close the list
    Expression* made = make_array_expr( pl );
    made->decl( openPar->line(), openPar->chr() );
-   
-   TokenInstance* ti = new TokenInstance( openPar->line(), openPar->chr(), sp.Expr );
-   ti->setValue( made, expr_deletor );
-   p.simplify( 1, ti );
+   openPar->setValue( made, expr_deletor );
+   openPar->token( sp.Expr );
 }
 
 static void makeRange( Parser& p, int count, Expression* expr1, Expression* expr2, Expression* expr3 )
@@ -403,17 +400,14 @@ static void makeRange( Parser& p, int count, Expression* expr1, Expression* expr
    // anyhow, we're out of business -- and we can discard the forming data.
    p.simplify(count);
    ctx->closeContext();
+   Expression* made = new ExprRange( expr1, expr2, expr3 );
   
    // we still have the [ in the stack.
-   p.resetNextToken();
-   TokenInstance* openPar = p.getNextToken();
+   TokenInstance* openPar = p.getLastToken();
    // close the list
-   Expression* made = new ExprRange( expr1, expr2, expr3 );
    made->decl( openPar->line(), openPar->chr() );
-   
-   TokenInstance* ti = new TokenInstance( openPar->line(), openPar->chr(), sp.Expr );
-   ti->setValue( made, expr_deletor );
-   p.simplify( 1, ti );
+   openPar->setValue( made, expr_deletor );
+   openPar->token( sp.Expr );
 }
 
 
