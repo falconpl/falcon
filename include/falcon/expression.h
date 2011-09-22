@@ -109,6 +109,7 @@ public:
       t_unpack,
       t_multiunpack,
       t_prototype,
+      t_range,
          
       t_band,
       t_bor,

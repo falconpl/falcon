@@ -198,6 +198,18 @@ void StdSteps::PStepAddSpace::describeTo( String& s ) const
    s = "PStepAddSpace";
 }
 
+void StdSteps::PStepPushNil::apply_( const PStep*, VMContext* ctx )
+{
+   ctx->popCode();
+   ctx->addDataSlot();
+   ctx->topData().setNil();
+}
+
+void StdSteps::PStepPushNil::describeTo( String& s ) const
+{
+   s = "PStepPushNil";
+}
+
 //======================================================
 // PCode version
 //
@@ -363,6 +375,18 @@ void StdSteps::PStepAddSpace_::describeTo( String& s ) const
 {
    s = "PStepAddSpace_";
 }
+
+void StdSteps::PStepPushNil_::apply_( const PStep*, VMContext* ctx )
+{
+   ctx->addDataSlot();
+   ctx->topData().setNil();
+}
+
+void StdSteps::PStepPushNil_::describeTo( String& s ) const
+{
+   s = "PStepPushNil_";
+}
+
 
 }
 

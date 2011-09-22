@@ -199,7 +199,7 @@ public:
    PStepDragDown m_dragDown;
 
    /** Adds one empty space in top of the stack.
-    The space added is nilled for safety.
+    The space added is left as is, and not nilled!
     */
    class PStepAddSpace: public PStep
    {
@@ -210,6 +210,19 @@ public:
       virtual void describeTo( String& ) const;
    };
    PStepAddSpace m_addSpace;
+   
+   /** Pushes a nil item on the top of the stack.
+    The space added is nilled for safety.
+    */
+   class PStepPushNil: public PStep
+   {
+   public:
+      PStepPushNil() {apply = apply_; }
+      virtual ~PStepPushNil() {}
+      static void apply_( const PStep*, VMContext* ctx );
+      virtual void describeTo( String& ) const;
+   };
+   PStepPushNil m_pushNil;
    
    //======================================================
    // PCode version
@@ -378,6 +391,16 @@ public:
       virtual void describeTo( String& ) const;
    };
    PStepAddSpace_ m_addSpace_;
+   
+   class PStepPushNil_: public PStep
+   {
+   public:
+      PStepPushNil_() {apply = apply_; }
+      virtual ~PStepPushNil_() {}
+      static void apply_( const PStep*, VMContext* ctx );
+      virtual void describeTo( String& ) const;
+   };
+   PStepPushNil_ m_pushNil_;
 };
 
 }

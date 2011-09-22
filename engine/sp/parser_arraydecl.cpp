@@ -22,6 +22,7 @@
 #include <falcon/expression.h>
 #include <falcon/exprarray.h>
 #include <falcon/exprdict.h>
+#include <falcon/exprrange.h>
 
 #include <falcon/parser/rule.h>
 #include <falcon/parser/parser.h>
@@ -94,7 +95,7 @@ public:
    bool bHasSep;
    int definedAt;
 
-   typedef enum tag_t_state
+   typedef enum 
    {
       first_expr,
       separator,
@@ -381,6 +382,99 @@ void apply_array_entry_close( const Rule&, Parser& p )
    TokenInstance* ti = new TokenInstance( openPar->line(), openPar->chr(), sp.Expr );
    ti->setValue( made, expr_deletor );
    p.simplify( 1, ti );
+}
+
+static void makeRange( Parser& p, int count, Expression* expr1, Expression* expr2, Expression* expr3 )
+{
+   SourceParser& sp = *static_cast<SourceParser*>(&p);
+   ParserContext* ctx = static_cast<ParserContext*>(sp.context());   
+   StmtTempArrayDecl* decl = static_cast<StmtTempArrayDecl*>(ctx->currentStmt());
+   fassert( decl != 0 );
+   fassert( decl->type() == Statement::custom_t );
+
+   // We can't close a range if we're not in first state.
+   if( decl->m_forming->size() != 0 || decl->m_FirstExpr != 0 )
+   {
+      TokenInstance* ti = p.getNextToken();
+      p.addError( e_syn_rangedecl,
+         p.currentSource(), ti->line(), ti->chr(), decl->definedAt, "mixed range in array" );
+   }
+
+   // anyhow, we're out of business -- and we can discard the forming data.
+   p.simplify(count);
+   ctx->closeContext();
+  
+   // we still have the [ in the stack.
+   p.resetNextToken();
+   TokenInstance* openPar = p.getNextToken();
+   // close the list
+   Expression* made = new ExprRange( expr1, expr2, expr3 );
+   made->decl( openPar->line(), openPar->chr() );
+   
+   TokenInstance* ti = new TokenInstance( openPar->line(), openPar->chr(), sp.Expr );
+   ti->setValue( made, expr_deletor );
+   p.simplify( 1, ti );
+}
+
+
+void apply_array_entry_range3( const Rule&, Parser& p )
+{
+   // << Expr << T_Colon << Expr << T_Colon << Expr << T_CloseSquare 
+   
+   TokenInstance* texpr1 = p.getNextToken();
+   p.getNextToken(); //:
+   TokenInstance* texpr2 = p.getNextToken();
+   p.getNextToken(); //:
+   TokenInstance* texpr3 = p.getNextToken();
+   
+   makeRange( p, 6,
+         static_cast<Expression*>(texpr1->detachValue()), 
+         static_cast<Expression*>(texpr2->detachValue()), 
+         static_cast<Expression*>(texpr3->detachValue())
+      );
+}
+
+
+void apply_array_entry_range3bis( const Rule&, Parser& p )
+{
+   // << Expr << T_Colon << T_Colon << Expr << T_CloseSquare
+   TokenInstance* texpr1 = p.getNextToken();
+   p.getNextToken(); //:
+   p.getNextToken(); //:
+   TokenInstance* texpr3 = p.getNextToken();
+   
+   makeRange( p, 5,
+         static_cast<Expression*>(texpr1->detachValue()), 
+         0, 
+         static_cast<Expression*>(texpr3->detachValue())
+      );
+}
+
+
+void apply_array_entry_range2( const Rule&, Parser& p )
+{
+   // << Expr << T_Colon << Expr << T_CloseSquare
+   TokenInstance* texpr1 = p.getNextToken();
+   p.getNextToken(); //:
+   TokenInstance* texpr2 = p.getNextToken();
+   makeRange( p, 4,
+         static_cast<Expression*>(texpr1->detachValue()), 
+         static_cast<Expression*>(texpr2->detachValue()), 
+         0
+      );
+  
+}
+
+
+void apply_array_entry_range1( const Rule&, Parser& p )
+{
+   // << Expr << T_Colon << T_CloseSquare
+   TokenInstance* texpr1 = p.getNextToken();
+   makeRange( p, 3,
+         static_cast<Expression*>(texpr1->detachValue()), 
+         0, 
+         0
+      );
 }
 
 

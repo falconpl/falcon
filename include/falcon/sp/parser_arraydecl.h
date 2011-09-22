@@ -41,6 +41,11 @@ void apply_array_entry_eol( const Rule&, Parser& p );
 void apply_array_entry_arrow( const Rule&, Parser& p );
 void apply_array_entry_close( const Rule&, Parser& p );
 
+void apply_array_entry_range3( const Rule&, Parser& p );
+void apply_array_entry_range3bis( const Rule&, Parser& p );
+void apply_array_entry_range2( const Rule&, Parser& p );
+void apply_array_entry_range1( const Rule&, Parser& p );
+
 void apply_array_entry_runaway( const Rule&, Parser& p );
 
 }

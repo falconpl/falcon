@@ -143,6 +143,8 @@ add_library(falcon_engine SHARED
   exprincdec.cpp
   exprindex.cpp
   exprmultiunpack.cpp
+  exprrange.cpp
+  exprref.cpp
   exprunpack.cpp
   extfunc.cpp
   errorclasses.cpp

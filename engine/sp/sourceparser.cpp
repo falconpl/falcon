@@ -392,7 +392,7 @@ SourceParser::SourceParser():
    
    Expr<< (r_Expr_array_decl << "Expr_array_decl" << apply_expr_array_decl << T_OpenSquare );
    Expr<< (r_Expr_array_decl2 << "Expr_array_decl2" << apply_expr_array_decl2 << T_DotSquare );
-
+   
    Expr<< (r_Expr_ref << "Expr_ref" << apply_expr_ref << T_Dollar << T_Name );
    
    Expr<< (r_Expr_dot << "Expr_dot" << apply_expr_dot << Expr << T_Dot << T_Name);
@@ -554,6 +554,14 @@ SourceParser::SourceParser():
    ArrayEntry << ( r_array_entry_close << "array_entry_close" << apply_array_entry_close << T_CloseSquare );
    // a little trick; other than being ok, this Non terminal followed by a terminal raises the required arity
    // otherwise, Expr would match early.
+   ArrayEntry << ( r_array_entry_range3 << "array_entry_range3" << apply_array_entry_range3 
+         << Expr << T_Colon << Expr << T_Colon << Expr << T_CloseSquare );
+   ArrayEntry << ( r_array_entry_range3bis << "array_entry_range3bis" << apply_array_entry_range3bis
+         << Expr << T_Colon << T_Colon << Expr << T_CloseSquare );
+   ArrayEntry << ( r_array_entry_range2 << "array_entry_range2" << apply_array_entry_range2 
+         << Expr << T_Colon << Expr << T_CloseSquare );
+   ArrayEntry << ( r_array_entry_range1 << "array_entry_range1" << apply_array_entry_range1 
+         << Expr << T_Colon << T_CloseSquare );
    ArrayEntry << ( r_array_entry_expr2 << "array_entry_expr2" << apply_array_entry_expr << Expr << T_EOL );
    ArrayEntry << ( r_array_entry_expr1 << "array_entry_expr1" << apply_array_entry_expr << Expr );
 
@@ -565,6 +573,7 @@ SourceParser::SourceParser():
                   << (r_uk_elif << "UK_elif" << T_elif )
                   << (r_uk_else << "UK_else" << T_else )
                   << (r_uk_while << "UK_while" << T_while )
+                  << (r_uk_for << "UK_for" << T_for )
                   //... more to come
                   ;
    

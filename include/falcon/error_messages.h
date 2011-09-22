@@ -161,6 +161,7 @@ FAL_ERRORDECL( e_syn_finally, 154, "Syntax error in 'finally' statement" );
 FAL_ERRORDECL( e_catch_outside, 155, "Statement 'catch' not in a 'try'" );
 FAL_ERRORDECL( e_finally_outside, 156, "Statement 'finally' not in a 'try'" );
 FAL_ERRORDECL( e_finally_adef, 157, "Statement 'finally' already declared in 'try'" );
+FAL_ERRORDECL( e_syn_rangedecl, 158, "Syntax error in range declaration" );
 
 
 FAL_ERRORDECL( e_not_iterable, 160, "Iterating on non-iterable item." );

@@ -452,6 +452,10 @@ public:
    Parsing::Rule r_array_entry_eol;
    Parsing::Rule r_array_entry_arrow;
    Parsing::Rule r_array_entry_close;
+   Parsing::Rule r_array_entry_range3;
+   Parsing::Rule r_array_entry_range3bis;
+   Parsing::Rule r_array_entry_range2;
+   Parsing::Rule r_array_entry_range1;
    Parsing::Rule r_array_entry_runaway;
 
    Parsing::NonTerminal UnboundKeyword;
@@ -459,6 +463,7 @@ public:
    Parsing::Rule r_uk_elif;
    Parsing::Rule r_uk_else;
    Parsing::Rule r_uk_while;
+   Parsing::Rule r_uk_for;
    
    //================================================
    // States
