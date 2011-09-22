@@ -389,6 +389,14 @@ SourceParser::SourceParser():
    Expr<< (r_Expr_call << "Expr_call" << apply_expr_call << Expr << T_Openpar << ListExpr << T_Closepar );
    Expr<< (r_Expr_index << "Expr_index" << apply_expr_index << Expr << T_OpenSquare << Expr << T_CloseSquare );
    Expr<< (r_Expr_star_index << "Expr_star_index" << apply_expr_star_index << Expr << T_OpenSquare << T_Times << Expr << T_CloseSquare );
+   Expr<< (r_Expr_range_index3 << "Expr_Expr_range_index3" << apply_expr_range_index3
+            << Expr << T_OpenSquare << Expr << T_Colon << Expr << T_Colon << Expr << T_CloseSquare );
+   Expr<< (r_Expr_range_index3open << "Expr_Expr_range_index3open" << apply_expr_range_index3open
+            << Expr << T_OpenSquare << Expr << T_Colon << T_Colon << Expr << T_CloseSquare );
+   Expr<< (r_Expr_range_index2 << "Expr_Expr_range_index2" << apply_expr_range_index2
+            << Expr << T_OpenSquare << Expr << T_Colon << Expr << T_CloseSquare );
+   Expr<< (r_Expr_range_index1 << "Expr_Expr_range_index1" << apply_expr_range_index1
+            << Expr << T_OpenSquare << Expr << T_Colon << T_CloseSquare );
    
    Expr<< (r_Expr_array_decl << "Expr_array_decl" << apply_expr_array_decl << T_OpenSquare );
    Expr<< (r_Expr_array_decl2 << "Expr_array_decl2" << apply_expr_array_decl2 << T_DotSquare );

@@ -298,6 +298,10 @@ public:
    Parsing::Rule r_Expr_call;
    Parsing::Rule r_Expr_index;
    Parsing::Rule r_Expr_star_index;
+   Parsing::Rule r_Expr_range_index3;
+   Parsing::Rule r_Expr_range_index3open;
+   Parsing::Rule r_Expr_range_index2;
+   Parsing::Rule r_Expr_range_index1;
    Parsing::Rule r_Expr_empty_dict;
    Parsing::Rule r_Expr_array_decl;
    Parsing::Rule r_Expr_empty_dict2;
