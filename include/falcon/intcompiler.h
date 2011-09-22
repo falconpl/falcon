@@ -72,6 +72,13 @@ public:
     */
    bool isComplete() const;
    
+   /** Completely resets the current context of the VM of the interactive compiler.
+    To be used after a error to put the current VM context in initial
+    state.
+    
+    */
+   void resetVM();
+   
 private:
 
    /** Class used to notify the intcompiler about relevant facts in parsing. */

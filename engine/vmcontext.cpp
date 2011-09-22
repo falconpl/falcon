@@ -32,6 +32,7 @@
 namespace Falcon {
 
 VMContext::VMContext( VMachine* vm ):
+   m_safeCode(0),
    m_thrown(0),
    m_finMode( e_fin_none ),
    m_vm(vm),
@@ -58,6 +59,7 @@ VMContext::VMContext( VMachine* vm ):
 
 
 VMContext::VMContext( bool ):
+   m_safeCode(0),
    m_thrown(0),
    m_finMode( e_fin_none ),
    m_vm(0),
@@ -73,6 +75,32 @@ VMContext::~VMContext()
    free(m_callStack);
    free(m_dataStack);
    if( m_thrown != 0 ) m_thrown->decref();   
+}
+
+
+void VMContext::reset()
+{
+   if( m_thrown != 0 ) m_thrown->decref();
+   m_thrown = 0;
+
+   m_event = eventNone;
+   m_catchBlock = 0;
+   m_ruleEntryResult = false;
+   m_finMode = e_fin_none;
+   
+   m_topCode = m_codeStack-1;
+   m_topCall = m_callStack-1;
+   // the data stack can NEVER be empty. -- an empty data stack is an error.
+   m_topData = m_dataStack;
+
+   // prepare a low-limit VM terminator request.
+   pushReturn();
+}
+
+
+void VMContext::setSafeCode()
+{
+   m_safeCode = m_topCode - m_codeStack;  
 }
 
 
@@ -271,6 +299,7 @@ public:
 };
 
 
+
 class CheckIfCodeIsCatchItem
 {
 public:
@@ -377,6 +406,17 @@ void VMContext::unrollToLoopBase()
    }
 }
 
+bool VMContext::unrollToSafeCode()
+{
+   if ( m_safeCode == 0 )
+   {
+      return false;
+   }
+   
+   m_topCode = m_codeStack + m_safeCode;
+   return true;
+}
+
 //===================================================================
 // Try frame management.
 //
@@ -452,12 +492,13 @@ void VMContext::raiseError( Error* ce )
    if( m_finMode == e_fin_raise && m_thrown != 0 )
    {     
       m_thrown->appendSubError( ce );
+      ce->decref();
       ce = m_thrown;
    }
    else
    {
-      ce->incref();
-      if( m_thrown != 0 ) m_thrown->decref();      
+      if( m_thrown != 0 ) m_thrown->decref();
+      m_thrown = 0;
    }
    
    // can we catch it?   
@@ -477,7 +518,6 @@ void VMContext::raiseError( Error* ce )
             if( value != 0 )
             {
                value->setUser( ce->handler(), ce, true );
-               m_thrown = 0;
                ce->decref();
             }
          }
@@ -485,20 +525,21 @@ void VMContext::raiseError( Error* ce )
       else
       {
          // otherwise, we have a finally around. 
+         ce->incref();
          m_thrown = ce;
       }
    }
    else
    {   
       // prevent script-bound re-catching.
-      unhandledError(ce);
+      m_thrown = ce;
+      m_event = eventRaise;
    }
 }
 
 
 void VMContext::unhandledError( Error* ce )
 {
-   ce->incref();
    if( m_thrown != 0 ) m_thrown->decref();
    m_thrown = ce;
    

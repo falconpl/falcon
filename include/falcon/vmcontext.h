@@ -52,6 +52,33 @@ public:
 
    VMachine* vm() const { return m_vm; }
    
+   /** Resets the context to the initial state.
+    
+    This clears the context and sets it as if it was just created.
+    */
+   void reset();
+   
+   /** Sets the topmost code as "safe".
+    In interactive mode, when what's done up to date is correct,
+    an error must not cause the invalidation of the whole code structure.
+    
+    For instance,
+    @code
+    x = 1
+    if x
+      x = 2
+      an error  // raises a grammar error
+    end
+    > x        // expected to be 2
+    
+    After each "stop point", usually a self contained statement, the
+    interactive compiler calls this method to mark a point where everything
+    was considered ok. In case of subsequent error, the code stack (and
+    eventually other stacks across function borders) is rolled back to this
+    point.
+    */
+   void setSafeCode();
+   
    //=========================================================
    // Varaibles - stack management
    //=========================================================
@@ -792,6 +819,16 @@ public:
     */
    void unrollToLoopBase();
    
+   /** Unrolls the code and function frames down to the nearest "safe" code. 
+    \return false if the safe code is not found.
+    
+    If safe code is not found, the caller should consider discarding the context
+    or resetting it.
+    
+    \see setSafeCode();
+    */
+   bool unrollToSafeCode();
+   
    bool ruleEntryResult() const { return m_ruleEntryResult; }
    void ruleEntryResult( bool v ) { m_ruleEntryResult = v; }
    
@@ -976,7 +1013,7 @@ public:
    inline void breakpoint() { m_event = eventBreak; }
    
    Error* thrownError() const { return m_thrown; }
-   
+   Error* detachThrownError() { Error* e = m_thrown; m_thrown =0; return e; }
 protected:
 
    // Inner constructor to create subclasses
@@ -995,6 +1032,7 @@ protected:
    Item* m_maxData;
 
    Item m_regA;
+   uint64 m_safeCode;
    
    /** Error whose throwing was suspended by a finally handling. */
    Error* m_thrown;

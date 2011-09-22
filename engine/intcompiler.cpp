@@ -353,6 +353,8 @@ IntCompiler::IntCompiler( VMachine* vm ):
 
    // we'll never abandon the main frame in the virtual machine
    m_vm->currentContext()->makeCallFrame( m_main, 0, Item() );
+   // and we know the code up to here is safe.
+   m_vm->currentContext()->setSafeCode();
 
    // Prepare the compiler and the context.
    m_ctx = new Context( this );
@@ -496,6 +498,15 @@ void IntCompiler::resetTree()
 {
    m_sp.reset();
 }
+
+
+void IntCompiler::resetVM()
+{
+   VMContext* ctx = m_vm->currentContext();
+   ctx->reset();
+   ctx->makeCallFrame( m_main, 0, Item() );
+}
+
 
 bool IntCompiler::isComplete() const
 {

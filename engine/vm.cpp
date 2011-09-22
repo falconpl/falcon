@@ -264,7 +264,10 @@ bool VMachine::run()
 
          case VMContext::eventRaise:
             // for now, just throw the unhandled error.
-            onError(ctx->thrownError());
+         {
+            Error* e = ctx->detachThrownError();
+            onError(e);
+         }
             break;
       }
       

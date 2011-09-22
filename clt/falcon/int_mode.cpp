@@ -42,7 +42,7 @@ void IntMode::run()
 
    String tgt;
    String prompt = ">>> ";
-   
+      
    while( true )
    {
       if( ! read_line( prompt, tgt ) )
@@ -77,6 +77,7 @@ void IntMode::run()
                //... or we have nothing to do
                case IntCompiler::ok_t: break;
             }
+            vm.currentContext()->setSafeCode();
          }
          catch( Error* e )
          {
@@ -105,6 +106,10 @@ void IntMode::run()
             }
             
             e->decref();
+            if( ! vm.currentContext()->unrollToSafeCode() )
+            {
+               intComp.resetVM();
+            }
          }
 
          // resets the prompt

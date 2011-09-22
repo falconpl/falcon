@@ -122,7 +122,7 @@ public:
    inline bool isFinally() const { return m_bIsFinally; }
 
    inline void setNextBase() { m_bIsNextBase = true; }
-
+   
 protected:
    bool m_bIsLoopBase;
    bool m_bIsNextBase;
