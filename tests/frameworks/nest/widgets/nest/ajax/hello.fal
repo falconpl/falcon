@@ -1,0 +1,7 @@
+function ajax()
+   text = ["text" => "Hello world!", "headers" => Request.headers ]
+   if "Cookie" in Request.headers
+      text["Cookie"] = Request.headers["Cookie"]
+   end
+   return text
+end

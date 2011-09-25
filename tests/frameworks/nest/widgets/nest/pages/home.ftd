@@ -1,0 +1,35 @@
+<?
+   import from nest.js
+   import from nest.ajax
+   Reply.setCookie( "test", "Test value" )
+?>
+<h1>Hello world!</h1>
+<p>JS button utility function test: <? nest.js.button( "Button", "say_hi()" ) ?>.</p>
+<?
+   // JS Script facility test.
+   nest.js.script( "
+         function say_hi() {
+               alert('saying hi!');
+         }" )
+?>
+
+<p>Ajax basic function test: <? nest.js.button( "Button", "Nest.ajax('hello', {}, onHello)" ) ?>.</p>
+<?
+   // JS Script facility test.
+   nest.js.script( "
+         function onHello( obj ) {
+               alert('Received ajax hello: ' + obj.text );
+         }" )
+?>
+
+<p>Checking for cookie persistency via ajax: <? nest.js.button( "Button", "Nest.ajax('hello', {}, getCookie)" ) ?>.</p>
+<?
+   // JS Script facility test.
+   nest.js.script( "
+         function getCookie( obj ) {
+               alert('Cookie data via ajax was: ' + obj.Cookie );
+         }" )
+?>
+
+<p>Nest AJAX enabled widget test.</p>
+<?= Nest.widget( "HashMaker" )("hm").render() ?>

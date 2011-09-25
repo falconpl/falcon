@@ -1,0 +1,182 @@
+
+import from json in json
+
+class AJAXRequest( rp, extra ) 
+   reqProps = rp
+   extra = extra
+
+   function renderReqProps()
+      if self.reqProps: return json.JSONencode( self.reqProps ).replace( "\"", "'" )
+      return "null"
+   end
+
+   function renderExtra()
+      if self.extra: return htmlEscape(json.JSONencode( self.extra )).replace( "\"", "'" )
+      return "null"
+   end
+   
+end
+
+class Widget( id )
+   //# 'local' ID of this widget in the DOM model.
+   id = id
+
+   //# HTML Tag associated with this widget.
+   tag = "div"
+   
+   //# HTML properties associated with this widget at DOM level.
+   props = nil
+
+   //# Javascript callbacks resolving in a NEST widget ajax request.
+   ajaxReqs = nil
+
+   //# Custom message handlers.
+   ajaxMessages = nil
+
+   //# list of children.
+   children = []
+
+   //# parent of this widget.
+   parent = nil
+
+   //# Some widget cannot be closed with the XML self-closing tag.
+   isSelfClosing = true
+
+   //# Adds a child to this widget.
+   function addChild( wid )
+      wid.parent = self
+      self.children += wid
+   end
+
+   //# Renders an XHTML representation of this widget.
+   function render()
+      id = self.getFullID()
+
+      // render attributes.
+      rend = "<" + self.tag + " id=\"" + id + "\" "
+      rend += self.renderProps()
+      rend += self.renderAJAXReqs()
+      
+      if self.isSelfClosing and not self.children      
+         rend += "/>"
+      else
+         rend += ">"
+         rend += self.renderContent()         
+         rend += "</" + self.tag +">\n"
+      end
+
+      rend += self.renderAJAXMessages()
+      if not self.parent
+         rend += self.renderInitInfos( [self.id] )
+      end
+      
+      return rend
+   end
+
+   //# Renders the contents of this widget.
+   function renderContent()
+      rend = ""
+      for child in self.children
+         forfirst: rend += "\n"
+         rend += child.render() + "\n"
+      end
+      return rend
+   end
+
+   //# private
+   function renderInitInfos( initVector )
+      if initVector
+         obj = json.JSONencode( initVector )
+         rend = @"
+            <script language=\"javascript\">\n
+            document.getElementById('$(self.id)').Nest_initInfo = $(obj);\n
+            </script>\n"
+      else
+         rend = ""
+      end
+
+      return rend
+   end
+   
+   //# private
+   function renderProps()
+      rend = ""
+      for key, value in self.props
+         rend += key + "=\"" + htmlEscape(toString(value)) + "\""
+         formiddle: rend += " "
+      end
+      return rend
+   end
+
+
+   //# private
+   function renderAJAXReqs()
+      rend = ""
+      for key, value in self.ajaxReqs
+         forfirst
+            id = self.getFullID()
+            rend = " "
+         end
+         
+         rps = value.renderReqProps()
+         extra = value.renderExtra()
+         rend += key + "=\"Nest.widgetMsg('" + self.parentName() + "', '" +
+                       id + "', '"+key+"', " +rps+ ", " + extra +");\""
+         formiddle: rend += " "
+      end
+      return rend
+   end
+
+   //# private
+   function renderAJAXMessages()
+      rend = ""
+      for key, value in self.ajaxMessages
+         forfirst
+            this = "document.getElementById('" + self.getFullID() + "')";
+            rend += "<script language=\"javascript\">\n"
+         end
+
+         rend += "Nest.messageHandlers['" + key +"']= function(obj){" + @value + "}\n"
+         forlast: rend += "</script>"
+      end
+      
+      return rend
+   end
+   
+   /*# Returns the full ID of this widget (including the parent ones).
+      @return A string representing the full ID of this widget at DOM model level.
+
+      The full-id of a widget is its own ID preceded by a dot-separated list
+      of the parent ids up to the root.
+   */
+   function getFullID()
+      if self.parent
+         return self.parent.getFullID() + "." + self.id
+      end
+
+      return self.id
+   end
+
+   function parentName()
+      if self.parent
+         return self.parent.parentName()
+      end
+      return self.className()
+   end
+
+   //===================================================
+   //# route ajax requests
+   function AJAX( params )
+      params["parsed"] = true
+      return params
+   end
+
+   //# Generates a set-property message
+   function msgSetProperty( prop, value )
+      return [
+         "message" => "set",
+         "id" => self.getFullID(),
+         "property" => prop,
+         "value"=>value ]
+   end
+end

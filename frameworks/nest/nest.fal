@@ -28,6 +28,7 @@ import Hook from self.hook in hook_module
 import from self.utils
 
 import from compiler
+import from json
 
 
 const _phase_startup = 0
@@ -36,10 +37,12 @@ const _phase_exec = 2
 const _phase_render = 3
 
 const pages_dir = "pages"
+const widget_dir = "widgets"
+const ajax_dir = "ajax"
 const srv_dir = "srv"
 const dm_dir = "dm"
 const hooks_dir = "hooks"
-//const res_dir = "res"
+const res_dir = "res"
 
 /*# Basic Nest router class.
 
@@ -446,16 +449,23 @@ object Nest
       self.logi( "Routing started" )
       self._phase = _phase_startup
       // 1. Determine PID
-      if not pid: pid = self.router.route( self )
+      if not pid
+         aid = Request.getField( "aid", nil )
+         wid = Request.getField( "wid", nil )
+         if not aid and not wid
+            pid = self.router.route( self )
+         end
+      end
 
-      if pid == nil
+      if pid == nil and aid == nil and wid == nil
          // Todo: get the proper error.
          self.logw( "No route found" )
          self._manageError( NestError( NestError.no_route ), "" )
          if self.debug: self._displayDebug()
          return
       end
-
+      self.pid = pid
+      
       // 2. Load variables
       self._loadSession()
 
@@ -464,7 +474,6 @@ object Nest
       if self.log_level >= 3: self.logd( "Input vars: " + self.inputVars.describe() )
 
       // 3. Enter config phase
-      self.pid = pid
       try
          self._startup()
       catch Error in e
@@ -475,10 +484,35 @@ object Nest
 
       // 4. Read the page -- and load services
       self._phase = _phase_config
-      self.selector( pid )
+      if pid
+         self.selector( pid )
+      elif aid
+         self.ajax( aid )
+      else
+         self.ajax_widget( wid ) 
+      end
    end
 
-   /*# Page selector.
+   /*# AJAX function selector.
+      @param aid The ID of the AJAX function or widget.
+      @optparam method A method for an AJAX widget.
+
+   */
+   function ajax( aid )
+      ajax_file = utils.findFileInDirs(
+            [self.site_nest_dir + "/" +  ajax_dir, self.nest_dir + "/" +  ajax_dir ],
+            aid,
+            ["fal", "fam"]
+         )
+
+      if( ajax_file )
+         self._selector_ajax( ajax_file )
+      else
+         raise NestError( NestError.page_notfound, "", aid )
+      end
+   end
+
+   /*# Page function or method selector.
 
       Call this function to get the main ID of the page to be displayed.
 
@@ -586,6 +620,7 @@ object Nest
    function service( name, inst, vars )
       nestDir = self.nest_dir
       siteNestDir = self.site_nest_dir
+      
       srv = self._instanceModule( "Service", name, inst, self.services,
                // using a function instead of an array prevents array generation if not necessary
                {=> [ nestDir + "/" + srv_dir,
@@ -615,6 +650,86 @@ object Nest
       return srv
    end
 
+   /*# Invoke a widget class
+      @param name The logical name of the widget class to be invoked.
+      @return A @a Widget class.
+
+      Notice that widgets are local to the page where they are instantiated,
+      so they don't offer a cross-page, applicaiton-wide support like that of
+      Service and DataManager classes. This facility just helps to dynamically
+      load the widget from one of the widget location where Nest is supposed
+      to search it.
+
+      Theoretically, the widget may be located anywhere it can be reached
+      via import/load and then just intantiated; but this might make hard to
+      impossible to create project-specific widget overrides or may require to
+      dirty the code-out-of-site model of Nest. So, this method is just a facility
+      to load the desired class as a Nest aware plug-in.
+
+      The widget file must contain a class named exactly as the file (extension
+      excluded), which is the class that will be returned by this method.
+   */
+   function widget( name )
+      w_file = utils.findFileInDirs(
+            [self.site_nest_dir + "/" +  widget_dir, self.nest_dir + "/" + widget_dir ],
+            name,
+            ["fal", "fam"]
+         )
+      
+      if( w_file )
+         // by default, launchAtLink is true.
+         page = self._comp.loadFile( w_file )
+         widget = page.get(name)
+         if typeId( widget ) != ClassType
+            raise NestError( NestError.no_mod_class, "", name )
+         end
+
+         return widget
+      else
+         raise NestError( NestError.page_notfound, "", name )
+      end
+
+   end
+
+
+   function ajax_widget( wid )
+      widgetClass = self.widget( wid )
+
+      try
+         // init the widget.
+         params =  Request.getField( "params", nil )
+         if params: params = json.JSONdecode( params )
+         if params and "init" in params
+            initfunc = [widgetClass] + params["init"]
+            widget = initfunc()
+         else
+            widget = widgetClass()
+         end
+
+         // Execute the method.
+         if not widget provides AJAX
+            ctx = [ "error"=>"-4",
+                  "errorDesc"=>"Widget is not exposing the AJAX entry point: " + wid]
+         else
+            ctx = widget.AJAX( params )
+            if typeId( ctx ) != DictionaryType and typeId( ctx ) != ArrayType
+               ctx = [  "error"=>"-2",
+                        "errorDesc"=>"AJAX function \"" + wid + ".AJAX\" didn't return a dicitonary"
+                        ]
+            end
+         end
+      catch in e
+         ctx = [ "error"=>"-3",
+                  "errorDesc"=>"Uncaught error: " + e.toString() ]
+      end
+
+      // Ok send the output
+      >> json.JSONencode(ctx)
+
+      if self.debug
+         self._displayDebug()
+      end      
+   end
 
 
    /*# Produces nest automatic headings. */
@@ -1320,6 +1435,38 @@ object Nest
       end
       f.close()
    end
+
+
+   function _selector_ajax( file )
+      try
+         // by default, launchAtLink is true.
+         page = self._comp.loadFile( file )
+         ajax = page.get("ajax")
+         if not ajax.isCallable()
+            ctx = [  "error"=>"-1",
+                     "errorDesc"=>"Module \"" + file + "\" is not defining 'ajax' as function." ]
+         else
+            // parameters are in Request.getField
+            ctx = ajax( Request.getField( "params", nil ) )
+            if typeId( ctx ) != DictionaryType
+               ctx = [  "error"=>"-2",
+                        "errorDesc"=>"AJAX function \"" + file + "\" didn't return a dicitonary" ]
+            end
+         end
+         
+      catch in e
+         ctx = [ "error"=>"-3",
+                  "errorDesc"=>"Uncaught error: " + e.toString() ]
+      end
+
+      // Ok send the output
+      >> json.JSONencode(ctx)
+
+      if self.debug
+         self._displayDebug()
+      end
+   end
+
 
    function _onSessionVarChanged( sv, value )
       self.logd( @"Session var changed: $(sv)=$value" )

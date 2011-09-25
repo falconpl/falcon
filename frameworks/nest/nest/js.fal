@@ -1,0 +1,68 @@
+/*
+   FALCON - The Falcon Programming Language
+
+   Nest - Falcon web applcation engine
+
+   FILE: js.fal
+
+   Javascript utilities.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Sat, 14 Aug 2010 19:41:05 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+/*#
+   @brief Creates a javascript enabled button
+   @param value The text of the button
+   @param onClick Javascript to run on click
+   @optparam extra elements to be put in the button field (class, id, etc)
+      in a dictionary.
+
+   @note double quotes in onClick are escaped.
+*/
+
+function button( value, onClick, extra )
+   extratxt = ""
+   for k,v in extra
+      extratxt += @"$k=\"$v\" "
+   end
+
+   onClick = onClick.replace( '"', '\"' )
+   >> @"<input type=\"button\" value=\"$(value)\"  onclick=\"$(onClick) \" $(extratxt)/>"
+end
+
+/*#
+   @brief Creates a javascript enabled link
+   @param href The target of the link
+   @param text The text of the link
+   @param onClick Javascript to run on click
+   @optparam extra elements to be put in the anchor (class, id, target, etc)
+      in a dictionary.
+
+   @note double quotes in onClick are escaped.
+*/
+
+function link( href, text, onClick, extra )
+   extratxt = ""
+   for k,v in extra
+      extratxt += @"$k=\"$v\" "
+   end
+
+   onClick = onClick.replace( '"', '\"' )
+   >> @"<a href=\"href\" value=\"$(value)\" onclick=\"$(onClick) \" $(extratxt)/>$(text)</a>"
+end
+
+/*#
+   @brief Puts a javascript in the page.
+   @param text Content of the javascript.
+
+   Useful as correctly formated scripts are stripped of extra-spaces automatically.
+*/
+function script( text )
+   >> @"<script language=\"javascript\">$(text)</script>"
+end
