@@ -22,7 +22,7 @@ import GroupField from nest.srv.Form as GroupField
 import GroupField from nest.srv.Form as GroupField
 
 
-_days = map( { n => ff.Option( n, n ) }, [].comp([1:31] ) )
+_days = map( { n => ff.Option( n, n ) }, [].comp([1:32] ) )
 _months = .[
    ff.Option( 1, i"January" )
    ff.Option( 2, i"February" )
@@ -38,12 +38,6 @@ _months = .[
    ff.Option( 12, i"December" )
 ]
 
-_years = []
-_startYear = CurrentTime().year 
-for i in [ 18:100]
-	_years.add( _startYear - i)
-end
-
 /*# Date Select.
    @param name Name of the field in the rendered form.
    @param prompt Label of the field.
@@ -55,7 +49,7 @@ class DateSelect( name, prompt, maker ) from ff.GroupField( name, prompt,
    .[
       ff.Select( name + "_day", "", _days )
       ff.Select( name + "_month", "", _months )
-      ff.Select( name + "_year", "", _years )
+      ff.TextField( name + "_year", "", .[ size|4 maxlength|4 ] )
    ],
    maker )
 
