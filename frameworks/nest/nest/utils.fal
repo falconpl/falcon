@@ -67,9 +67,12 @@ end
       site/
       site/index.fal
       site/res
+      nest/ajax
+      nest/dm
       nest/pages
       nest/pages/home.fal
       nest/srv
+      nest/widgets
    @endcode
 
    Files in res will be copied from system Nest resource directory, and
@@ -92,6 +95,9 @@ function makeSite( tgtdir )
    dirMake( tgtdir + "nest", true )
    dirMake( tgtdir + "nest/pages", true )
    dirMake( tgtdir + "nest/srv", true )
+   dirMake( tgtdir + "nest/dm", true )
+   dirMake( tgtdir + "nest/widgets", true )
+   dirMake( tgtdir + "nest/ajax", true )
 
    if fileType( tgtdir + "/site/index.fal" ) == FileStat.NOTFOUND
       index = OutputStream( tgtdir + "/site/index.fal" )

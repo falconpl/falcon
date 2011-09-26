@@ -6,6 +6,7 @@ if(!Nest) { Nest = {}; }
 (function () {
    "use strict";
 
+   //============================================================================ Private part
    function ajax( url, data, callback ) {
       http = window.XMLHttpRequest ? new XMLHttpRequest() : new ActiveXObject("Microsoft.XMLHTTP");
 
@@ -64,7 +65,7 @@ if(!Nest) { Nest = {}; }
       }
    }
 
-
+   // prepare the information to be sent.
    function prepareInfos( widID, obj, infosToSend ) {
       var i = 0;
       var element;
@@ -93,9 +94,11 @@ if(!Nest) { Nest = {}; }
                element = document.getElementById( wid );
             }
          }
-
+         
          if (element[valname]) {
-            obj[valname] = element[valname];
+            // recreate the full entity name, re-localized after .. purging.
+            idArr.push( valname );
+            obj[idArr.join(".")] = element[valname];
          }
          i = i + 1;
       }
@@ -118,14 +121,17 @@ if(!Nest) { Nest = {}; }
       }
    }
 
+   //=================================================================================== Public interace
 
+   // Method 'ajax'
    if (typeof Nest.ajax !== 'function') {
       Nest.ajax = function ( req_id, params, callback ) {
          var url = "/?aid=" + req_id;
          ajax( url, params, callback );
       }
    }
-   
+
+   // Method 'widgetMsg' -- Sending AJAX requests to remote widget server.
    if (typeof Nest.widgetMsg !== 'function') {
       Nest.widgetMsg = function ( widClass, widID, msg, infosToSend, extraParams ) {
          // the object to be sent.
@@ -146,8 +152,38 @@ if(!Nest) { Nest = {}; }
          ajax( url, objToSend, Nest.widgetUpdate );
       }
    }
-   
 
+   // Method 'message' -- sends a local message to listeners in the page.
+   if (typeof Nest.message !== 'function') {
+      Nest.message = function ( wid, msg, value ) {
+         var listener = Nest.listeners[wid];
+         if( listener ) {
+            for (var i = 0; i < listener.length; i++) {
+               var func = listener[i].func;
+               var tgtid = listener[i].tgt;
+               func( tgtid, wid, msg, value );
+            }
+         }
+      }
+   }
+
+   // Method 'listen' -- Waits for updates on a certain widget ID
+   // callbacks are in this prototype: func( target, source_wid, msg, value );
+   if (typeof Nest.listen !== 'function') {
+      Nest.listen = function ( target, wid, cbfunc ) {
+         var listener = Nest.listeners[wid];
+         var listenRecord = { "tgt": target, "func": cbfunc };
+         if( listener ) {
+            listener.push( listenRecord );
+         }
+         else {
+            Nest.listeners[wid] = Array( listenRecord );
+         }
+      }
+   }   
+   
+   
+   // Method 'widgetUpdate' -- handling requests from widget server.
    if (typeof Nest.widgetUpdate !== 'function') {
       Nest.widgetUpdate = function ( obj ) {
          // handle multiple messages.
@@ -161,6 +197,7 @@ if(!Nest) { Nest = {}; }
       }
    }
 
+   // Method 'processMessage' -- handling a single request from widget server.
    if (typeof Nest.processMessage !== 'function') {
       Nest.processMessage = function ( obj ) {
          if( obj.message )
@@ -178,13 +215,7 @@ if(!Nest) { Nest = {}; }
       }
    }
    
-   // set the default message handlers
-   if (! Nest.messageHandlers ) {
-      Nest.messageHandlers = {
-         'set': handler_set
-      }
-   }
-
+   //=========================================================================== Error management.
    if (typeof Nest.onAJAXError !== 'function') {
       Nest.onAJAXError = function( code, text ){
          alert( "Nest framework AJAX error.\n" +
@@ -226,4 +257,18 @@ if(!Nest) { Nest = {}; }
             );
       }
    }
+
+   //=========================================================================== Object initialization.
+   // set the default widget server message handlers
+   if (! Nest.messageHandlers ) {
+      Nest.messageHandlers = {
+         'set': handler_set
+      }
+   }
+
+   // Set the local message handlers
+   if (! Nest.listeners ) {
+      Nest.listeners = {};
+   }
+
 }());

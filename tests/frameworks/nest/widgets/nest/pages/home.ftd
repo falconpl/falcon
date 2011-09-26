@@ -12,7 +12,7 @@
                alert('saying hi!');
          }" )
 ?>
-
+<hr>
 <p>Ajax basic function test: <? nest.js.button( "Button", "Nest.ajax('hello', {}, onHello)" ) ?>.</p>
 <?
    // JS Script facility test.
@@ -21,7 +21,6 @@
                alert('Received ajax hello: ' + obj.text );
          }" )
 ?>
-
 <p>Checking for cookie persistency via ajax: <? nest.js.button( "Button", "Nest.ajax('hello', {}, getCookie)" ) ?>.</p>
 <?
    // JS Script facility test.
@@ -31,5 +30,11 @@
          }" )
 ?>
 
+<hr>
 <p>Nest AJAX enabled widget test.</p>
 <?= Nest.widget( "HashMaker" )("hm").render() ?>
+<hr>
+
+<p>Advanced widgets with local page messaging</p>
+<?= Nest.widget( "RichPassword" )("my_password", "Enter password").render() ?>
+<p><i>Tests complete -- for now</i></p>

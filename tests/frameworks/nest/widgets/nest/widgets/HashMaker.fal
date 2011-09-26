@@ -30,7 +30,7 @@ class HashMaker( id ) from wid.Widget( id )
    end
 
    function AJAX( params )
-      value = params["infos"]["value"]
+      value = params["infos"]["area.value"]
       sha = hash.sha256( value )
       return [
          self.outputText.msgSetProperty( "innerHTML", sha ),
