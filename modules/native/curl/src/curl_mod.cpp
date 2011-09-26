@@ -179,7 +179,6 @@ size_t CurlHandle::write_msg( void *ptr, size_t size, size_t nmemb, void *data)
 
    if( vm != 0 )
    {
-      printf( "Received... %ld\n", size * nmemb );
       CurlHandle* cs = (CurlHandle*) data;
       VMMessage* vmmsg = new VMMessage( cs->m_sSlot );
       vmmsg->addParam( cs );

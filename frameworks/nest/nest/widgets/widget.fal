@@ -92,6 +92,34 @@ class Widget( id )
    //# Some widget cannot be closed with the XML self-closing tag.
    isSelfClosing = false
 
+   /*# If true, this is a ajax host, and can receive ajax messages directly.
+
+      Topmost widgets are always considered ajax AJAX, but there can be
+      some widgets included inside parents that can have their own AJAX
+      handler method.
+
+      Is this property is true, the rendere will tell Nest to send AJAX
+      requests to this widget.
+
+      A parent can easily override this setting by setting this property
+      to false even when a widget can manage its own AJAX messages; then
+      the parent can route the messages to the children, if it wants,
+      after having processed them.
+
+      @note AJAX hosts \b must be exposed in a widget module (a file under
+      nest/widget named after the exposed class) \b and must properly
+      fill the @a Widget.initInfos verctor with the parameters that
+      the Nest system must pass to the widget during initialization step. Also,
+      they \b must provide a "tag", that is, they must be real possibly visible
+      entities (or at least, an invisible empty "div"), and not just "widget groups". 
+   */
+   isAJAXHost = false
+
+   /*# Init informations.
+      This are the parameters that must be repeated to create a copy of this widget.
+   */
+   initInfos = [id]
+
    //# Adds a child to this widget.
    function addChild( wid )
       wid.parent = self
@@ -103,7 +131,7 @@ class Widget( id )
       id = self.getFullID()
       self.onRender()
 
-      // render attributes.
+      // render attributes -- if we have a tag we're an element in the document.
       if self.tag
          rend = "<" + self.tag + " id=\"" + id + "\" "
          rend += self.renderProps()
@@ -117,9 +145,10 @@ class Widget( id )
             rend += "</" + self.tag +">\n"
          end
          if not self.parent
-            rend += self.renderInitInfos( [self.id] )
+            rend += self.renderInitInfos()
          end
       else
+         // otherwise we're just a set of children entities.
          rend = self.renderContent()
       end
 
@@ -177,9 +206,9 @@ class Widget( id )
    end
    
    //# private
-   function renderInitInfos( initVector )
-      if initVector
-         obj = json.JSONencode( initVector )
+   function renderInitInfos()
+      if self.initInfos
+         obj = json.JSONencode( self.initInfos )
          rend = @"
             <script language=\"javascript\">\n
             document.getElementById('$(self.id)').Nest_initInfo = $(obj);\n
@@ -213,7 +242,7 @@ class Widget( id )
          
          rps = value.renderReqProps()
          extra = value.renderExtra()
-         rend += key + "=\"Nest.widgetMsg('" + self.parentName() + "', '" +
+         rend += key + "=\"Nest.widgetMsg('" + self.ajaxHostName() + "', '" +
                        id + "', '"+key+"', " +rps+ ", " + extra +");\""
          formiddle: rend += " "
       end
@@ -256,6 +285,15 @@ class Widget( id )
          return self.parent.parentName()
       end
       return self.className()
+   end
+
+   /*# Get the topmost widget class name with ajax host capabilities. */
+   function ajaxHostName()
+      if self.isAJAXHost or not self.parent
+         return self.className()
+      else
+         return self.parent.ajaxHostName()
+      end
    end
 
    /*# Utility to create the code to invoke a nest javascript local message.

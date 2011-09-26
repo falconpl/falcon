@@ -95,11 +95,12 @@ if(!Nest) { Nest = {}; }
             }
          }
          
-         if (element[valname]) {
+         if (element[valname] != null) {
             // recreate the full entity name, re-localized after .. purging.
             idArr.push( valname );
             obj[idArr.join(".")] = element[valname];
          }
+
          i = i + 1;
       }
    }
