@@ -8,7 +8,7 @@ if(!Nest) { Nest = {}; }
 
    //============================================================================ Private part
    function ajax( url, data, callback ) {
-      http = window.XMLHttpRequest ? new XMLHttpRequest() : new ActiveXObject("Microsoft.XMLHTTP");
+      var http = window.XMLHttpRequest ? new XMLHttpRequest() : new ActiveXObject("Microsoft.XMLHTTP");
 
       var params = "";
       if(data) {
@@ -25,8 +25,8 @@ if(!Nest) { Nest = {}; }
 
          //Send the proper header information along with the request
          http.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
-         http.setRequestHeader("Content-length", params.length);
-         http.setRequestHeader("Connection", "close");
+         // http.setRequestHeader("Content-length", params.length);
+         // http.setRequestHeader("Connection", "close");
       }
       else {
          http.open("GET", url, true);
@@ -126,7 +126,7 @@ if(!Nest) { Nest = {}; }
    // Method 'ajax'
    if (typeof Nest.ajax !== 'function') {
       Nest.ajax = function ( req_id, params, callback ) {
-         var url = "/?aid=" + req_id;
+         var url = "./?aid=" + req_id;
          ajax( url, params, callback );
       }
    }
@@ -147,7 +147,7 @@ if(!Nest) { Nest = {}; }
             objToSend["infos"] = infos;
          }
 
-         var url = "/?wid=" + widClass;
+         var url = "./?wid=" + widClass;
          //alert( JSON.stringify( objToSend ) );
          ajax( url, objToSend, Nest.widgetUpdate );
       }

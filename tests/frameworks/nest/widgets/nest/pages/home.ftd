@@ -36,5 +36,5 @@
 <hr>
 
 <p>Advanced widgets with local page messaging</p>
-<?= Nest.widget( "RichPassword" )("my_password", "Enter password").render() ?>
+<?= Nest.widget( "RichPassword" )("my_password", "Enter password", "Repeat password").render() ?>
 <p><i>Tests complete -- for now</i></p>

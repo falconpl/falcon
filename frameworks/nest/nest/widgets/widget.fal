@@ -90,7 +90,7 @@ class Widget( id )
    jsListeners = [=>]
 
    //# Some widget cannot be closed with the XML self-closing tag.
-   isSelfClosing = true
+   isSelfClosing = false
 
    //# Adds a child to this widget.
    function addChild( wid )
