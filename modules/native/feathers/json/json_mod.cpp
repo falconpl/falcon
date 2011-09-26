@@ -486,13 +486,14 @@ CoreDict* JSON::decodeDict( Stream* src ) const
    uint32 chr;
 
    enum {
+      st_key_first,
       st_key,
       st_value,
       st_comma,
       st_colon
    } state;
 
-   state = st_key;
+   state = st_key_first;
 
    Item key, value;
 
@@ -528,7 +529,15 @@ CoreDict* JSON::decodeDict( Stream* src ) const
          }
          break;
 
-      case st_key:
+         case st_key_first:
+            // empty dict?
+            if( chr == '}' )
+            {
+               return new CoreDict( cd );
+            }
+            // else, fallthrough
+            
+         case st_key: 
          src->unget( chr );
          {
             String sKey;
