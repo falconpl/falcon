@@ -3,9 +3,9 @@
 
    Nest - Falcon web applcation engine
 
-   FILE: text.fal
+   FILE: Image.fal
 
-   AJAX widgeting subsystem -- input field.
+   AJAX widgeting subsystem -- dynamic images.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: Mon, 26 Sep 2011 11:55:58 +0200
@@ -18,20 +18,21 @@
 
 import from nest.widgets.widget in widget
 
-class InputText( id, prompt ) from widget.Widget( id )
-   tag = "input"
+class Image( id, src, status ) from widget.Widget( id )
+   tag = "img"
+   status = status
+   initInfos = [id, src, status]
    isSelfClosing = true
-   prompt = prompt ? prompt : ""
-
+   
    init
       if self.props == nil: self.props = [=>]
-      self.props['name'] = self.getFullID()
-      self.props['type'] = "text"
+      self.props['src'] = src
+      if not status
+         self.props['style'] = "display:none"
+      else
+         self.props['style'] = ""
+      end
    end
-
-   function renderPrompt()
-      id = self.getFullID()
-      return "<label for=\"" + id + "\" id=\"" + id + "_label\">" + self.prompt + "</label>"
-   end
+   
 end
 

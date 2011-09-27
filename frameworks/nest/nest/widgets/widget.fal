@@ -21,6 +21,7 @@ import from json in json
 /*# Represents a request that could be sent via AJAX back to a widget.
    @optparam rp Required properties (data that must be sent back to us).
    @optparam extra Extra parameters that should be sent back here.
+   @potparam jsPrefix A javascript code that should be invoked before launching the ajax request.
    
    This class is used to store the parameters of AJAX requests that the widgets
    rendered on a web site could send back to to their server-side counterparts.
@@ -42,9 +43,10 @@ import from json in json
    property name that has been given ("value" => value,
    "../sibling/value" => "sibling.value" and so on).
 */
-class AJAXRequest( rp, extra ) 
+class AJAXRequest( rp, extra, jsPrefix ) 
    reqProps = rp
    extra = extra
+   jsPrefix = jsPrefix
 
    function renderReqProps()
       if self.reqProps: return json.JSONencode( self.reqProps ).replace( "\"", "'" )
@@ -55,7 +57,21 @@ class AJAXRequest( rp, extra )
       if self.extra: return htmlEscape(json.JSONencode( self.extra )).replace( "\"", "'" )
       return "null"
    end
-   
+
+   /*# Renders an AJAX request bound with this widget. */
+   function render( hostName, id, message )
+      rps = self.renderReqProps()
+      extra = self.renderExtra()
+      rend = "Nest.widgetMsg('" + hostName + "', '" +
+                       id + "', '"+message+"', " +rps+ ", " + extra +")"
+                       
+      if self.jsPrefix
+         return self.jsPrefix +";"+ rend
+      else
+         return rend
+      end
+   end
+
 end
 
 /*# Base class for the widgeting system.
@@ -92,6 +108,9 @@ class Widget( id )
    //# Some widget cannot be closed with the XML self-closing tag.
    isSelfClosing = false
 
+   //# Method invoked at javascript level after rendering.
+   onCreate = nil
+   
    /*# If true, this is a ajax host, and can receive ajax messages directly.
 
       Topmost widgets are always considered ajax AJAX, but there can be
@@ -144,29 +163,48 @@ class Widget( id )
             rend += self.renderContent()
             rend += "</" + self.tag +">\n"
          end
-         if not self.parent
+         if self.isAJAXHost or not self.parent
             rend += self.renderInitInfos()
          end
       else
+         rend = ""
+         if self.isAJAXHost
+            // in case of ajax hosting, we need a "mute div" to have a document entity with our name.
+            rend +="<div id=\""+id+"\" style=\"display:none\"></div>"
+            if not self.parent
+               rend += self.renderInitInfos()
+            end
+         end
          // otherwise we're just a set of children entities.
-         rend = self.renderContent()
+         rend += self.renderContent()
       end
 
-         rend += self.renderAJAXMessages()
+      rend += self.renderAJAXMessages()
 
       // finally, render JS methods that this class may have
-      rend += self.renderJSMethods()
       rend += self.renderJSListeners()
+      rend += self.renderJSMethods()
       return rend
    end
+   
 
    function renderJSMethods()
       rend = ""
+      
       for mthName, mthDef in self.jsMethods
-         forfirst: rend = "<script language=\"javascript\">\n" +
-                          "(function(){ var element = document.getElementById('" + self.getFullID() + "');\n"
          rend += "element." + mthName + "=" + mthDef + "\n"
-         forlast: rend += "}());</script>\n"
+      end
+
+      if self.onCreate
+         rend += "element.onCreate = function(){" + self.onCreate +";}\n"
+         rend += "element.onCreate();"
+      end
+      
+      if rend
+         rend = "<script language=\"javascript\">\n"+
+                "(function(){ var element = document.getElementById('" + self.getFullID() + "');\n" +
+                rend +
+                "}());</script>\n"
       end
       return rend
    end
@@ -237,18 +275,17 @@ class Widget( id )
       for key, value in self.ajaxReqs
          forfirst
             id = self.getFullID()
+            hostName = self.ajaxHostName()
             rend = " "
          end
-         
-         rps = value.renderReqProps()
-         extra = value.renderExtra()
-         rend += key + "=\"Nest.widgetMsg('" + self.ajaxHostName() + "', '" +
-                       id + "', '"+key+"', " +rps+ ", " + extra +");\""
+
+         req = value.render( hostName, id, key )
+         rend += key + "=\"" + req + ";\""
          formiddle: rend += " "
       end
       return rend
    end
-
+   
    //# private
    function renderAJAXMessages()
       rend = ""
@@ -307,13 +344,41 @@ class Widget( id )
       return "Nest.message('"+self.getFullID()+ "', '" + msg + "', " + value +");"
    end
 
-   /** Called back right before rendering.
+   /*# Called back right before rendering.
       Widget are often created and then added to a parent. This means that
       the information about their hierarcy is not ready at creation,
       but it's ready at render. This callback allows to do last setups
       before the widget is rendered.
    */
    function onRender()
+   end
+
+   /*# Sets the value of the widget before its rendering.
+   */
+   function setRenderValue( val )
+      self.props['value'] = val
+   end
+
+   /*# Adds this style to the 'style' property of this widget. */
+   function addStyle( style )
+      if not self.props
+         self.props = ["style" => style]
+      else
+         if "style" in self.props
+            self.props["style"] += style
+         else
+            self.props["style"] = style
+         end
+      end
+   end
+
+   function ajaxMsg( msg, infos, extra )
+      infos_s = infos ? json.JSONencode( infos ) : "null"
+      extra_s = extra ? json.JSONencode( extra ) : "null"
+      
+      return "Nest.widgetMsg('" + self.ajaxHostName() +
+               "', '" + self.getFullID() + "', '" + msg + "', " +
+               infos_s + ", " + extra_s + ");"
    end
    
    //===================================================
@@ -335,4 +400,14 @@ class Widget( id )
          "property" => prop,
          "value"=>value ]
    end
+
+   //# Generates a invoke method message
+   function msgInvoke( method, data )
+      return [
+         "message" => "invoke",
+         "id" => self.getFullID(),
+         "method" => method,
+         "param"=> data ]
+   end
+   
 end

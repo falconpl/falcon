@@ -32,11 +32,12 @@ class PairCheck( id, first_widget, second_widget ) from widget.Widget( id )
    ]
 
    jsListeners = [
-      first_widget => "function( tgt, wid, msg, value ) { tgt.checkFirst(value); }",
-      second_widget => "function( tgt, wid, msg, value ) { tgt.checkSecond(value); }"
+      first_widget => "function( wid, msg, value ) { this.checkFirst(value); }",
+      second_widget => "function(  wid, msg, value ) { this.checkSecond(value); }"
    ]
 
    function onRender()
+      // we render the method here to be able to change the text after init.
       self.jsMethods["checkPair"] = @'
          function(){
             if( this.valueOfFirst && this.valueOfSecond ) {

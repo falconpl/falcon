@@ -111,6 +111,12 @@ if(!Nest) { Nest = {}; }
       if( element ) { element[obj.property] = obj.value; }
    }
 
+   // Handler for invoke message
+   function handler_invoke( obj ) {
+      var element = document.getElementById( obj.id );
+      if( element ) { element[obj.method].call( element, obj.param ); }
+   }
+
    function prepareInit( widID, obj ) {
       // get the root widget.
       var rootID = widID.split(".")[0];
@@ -162,7 +168,7 @@ if(!Nest) { Nest = {}; }
             for (var i = 0; i < listener.length; i++) {
                var func = listener[i].func;
                var tgtid = listener[i].tgt;
-               func( tgtid, wid, msg, value );
+               func.call( tgtid, wid, msg, value );
             }
          }
       }
@@ -201,14 +207,14 @@ if(!Nest) { Nest = {}; }
    // Method 'processMessage' -- handling a single request from widget server.
    if (typeof Nest.processMessage !== 'function') {
       Nest.processMessage = function ( obj ) {
-         if( obj.message )
-         {
+         if( obj.message ) {
             var handler = Nest.messageHandlers[ obj.message ];
-            if( ! handler )
-            {
+            if( ! handler ) {
                Nest.onMessageNotFound( obj );
             }
-            handler( obj );
+            else {
+               handler( obj );
+            }
          }
          else {
             Nest.onWidgetUpdateError( obj );
@@ -246,7 +252,7 @@ if(!Nest) { Nest = {}; }
     if (typeof Nest.onMessageNotFound !== 'function') {
       Nest.onMessageNotFound = function( obj ){
          alert( "No handler registered for Nest widget message '" + obj.message + "'.\n" +
-            "Received: " + JSON.encode(obj) +"\n"
+            "Received: " + obj +"\n"
             );
       }
    }
@@ -254,7 +260,7 @@ if(!Nest) { Nest = {}; }
     if (typeof Nest.onWidgetUpdateError !== 'function') {
       Nest.onWidgetUpdateError = function( obj ) {
          alert( "Not a widget update message in Nest widget update.\n" +
-            "Received: " + JSON.encode(obj) +"\n"
+            "Received: " + obj +"\n"
             );
       }
    }
@@ -263,7 +269,8 @@ if(!Nest) { Nest = {}; }
    // set the default widget server message handlers
    if (! Nest.messageHandlers ) {
       Nest.messageHandlers = {
-         'set': handler_set
+         'set': handler_set,
+         'invoke': handler_invoke
       }
    }
 

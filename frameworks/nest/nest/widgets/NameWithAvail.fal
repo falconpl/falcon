@@ -1,0 +1,211 @@
+/*
+   FALCON - The Falcon Programming Language
+
+   Nest - Falcon web applcation engine
+
+   FILE: NameWithAvail.fal
+
+   AJAX widgeting subsystem -- Widget with password and checkers
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Mon, 26 Sep 2011 11:55:58 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2011: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+import from nest.widgets.widget in widget
+import InputText from nest.widgets.InputText as InputText
+import Image from nest.widgets.Image as Image
+
+
+class ImgAvail( id, name_wid ) from Image( id, "", true )
+   avail_img = "res/name_avail.png"
+   na_img = "res/name_na.png"
+   short_img = "res/name_short.png"
+   loading_img = "res/name_loading.gif"
+
+   name_wid = name_wid
+
+   function onRender()
+      self.addStyle( "vertical-align:middle" )
+      
+      // initially, the image is that of too short.
+      if not self.short_img
+         self.props["src"] = ""
+      else
+         self.props["src"] = self.short_img
+      end
+      
+      // Create a property that stores the minimum size
+      self.jsMethods = [
+            "minsize" => "" + self.parent.parent.minSize + ";",
+            "setAvailable" => @"
+               function( obj ) {
+                  if( obj.avail ) { this.src=\"$(self.avail_img)\"; }
+                  else { this.src=\"$(self.avail_img)\"; }
+               }"
+            ]
+
+      self.jsListeners = [
+         self.name_wid => @"
+            function( wid, msg, value ) {
+            if( value.length < this.minsize ) {
+               this.src = \"$(self.short_img)\";
+            }
+            else {
+               this.src = \"$(self.loading_img)\";
+            }
+         }"
+      ]
+   end
+
+end
+
+
+class TextAvail( id, name_wid ) from widget.Widget( id )
+   tag="span"
+
+   avail_prompt = "Name available"
+   na_prompt = "Name NOT available"
+   short_prompt = "Name too short"
+   working_prompt = "Checking..."
+
+   name_wid = name_wid
+   
+   function onRender()
+            
+      short_prompt = htmlEscape(self.short_prompt)
+      working_prompt = htmlEscape(self.working_prompt)
+      avail_prompt = htmlEscape(self.avail_prompt)
+      na_prompt = htmlEscape(self.na_prompt)
+      
+      // Create a property that stores the minimum size
+      self.jsMethods = [
+         "minsize" => "" + self.parent.parent.minSize + ";",
+         "setAvailable" => @"
+               function(obj){
+                  if( obj.avail ) { this.innerHTML=\"$(avail_prompt)\"; }
+                  else { this.innerHTML=\"$(na_prompt)\"; }
+               }"
+               ]
+
+      self.jsListeners = [
+         self.name_wid => @"
+            function( wid, msg, value ) {
+            if( value.length < this.minsize ) {
+               this.innerHTML = \"$(short_prompt)\";
+            }
+            else {
+               this.innerHTML = \"$(working_prompt)\";
+            }
+         }"
+      ]
+   end
+
+   function renderContent()
+      // initially, the name is too short
+      return self.short_prompt
+   end
+   
+end
+
+
+class AvailWidget( id, name_wid ) from widget.Widget( id )
+   tag = "span"
+   name_wid = name_wid
+   img_wid = ImgAvail( "status_img", name_wid )
+   status_wid = TextAvail( "status_text", name_wid )
+   
+   init
+      self.addChild( self.img_wid )
+      self.addChild( self.status_wid )
+   end
+
+end
+
+/*# Class checking for a name to be available.
+*/
+class NameWithAvail( id, prompt ) from InputText( id, prompt )
+   tag = nil
+   isAJAXHost = true
+   initInfos = [id, prompt]
+
+   // Minimum size for a name
+   minSize = 6
+   name_wid = InputText( "name", prompt )
+   avail_wid = AvailWidget( "avail", self.name_wid )
+   name_checked = widget.Widget( "name_checked" )
+
+   init
+      
+      self.name_checked.tag = "input"
+      self.name_checked.props = ["type" => "hidden"]
+      
+      self.addChild( self.name_wid )
+      self.addChild( self.avail_wid )
+      self.addChild( self.name_checked )      
+   end
+   
+   //#default rendering, not very complex.
+   function renderContent()
+      return self.name_wid.renderPrompt() + "&nbsp;" + self.name_wid.render() + "&nbsp;" +
+               self.avail_wid.render()
+   end
+
+
+   function setRenderValue( val )
+      self.name_wid.props['value'] = val
+   end
+
+   
+   function AJAX( params )
+      name = params["infos"]["value"]
+
+      swid = self.avail_wid.status_wid
+      iwid = self.avail_wid.img_wid
+      if self.checkAvail( name )
+         return [
+            swid.msgInvoke( "setAvailable", ["avail"=>true, "again"=>"test"] ),
+            iwid.msgInvoke( "setAvailable", ["avail"=>true] ),
+            self.name_checked.msgSetProperty( "value", "checked" ) ]
+      else
+         return [
+            swid.msgInvoke( "setAvailable", ["avail"=>false] ),
+            iwid.msgInvoke( "setAvailable", ["avail"=>false] ),
+            self.name_checked.msgSetProperty( "value", "" ) ]
+      end
+   end
+
+
+   function onRender()
+      // force the input widget to be posted with OUR name in forms.
+      self.name_wid.props = ["name" => self.getFullID()]
+      
+      // The prefix function posts the data value to the listeners and prevents calling ajax if name is too short.
+      prefixFunc = self.name_wid.makeMessage( 'value', 'this.value' ) +
+                   @";if(this.value.length < $(self.minSize)){return;}"
+
+      // add the same request for onchange and onkeyup in our name widget.
+      checkValueReq = widget.AJAXRequest( ["value"], nil, prefixFunc )
+      self.name_wid.ajaxReqs = [
+            //"onfocus"=> checkValueReq,
+            "onchange"=> checkValueReq,
+            "onkeyup"=> checkValueReq
+            ]
+
+      self.name_wid.onCreate = prefixFunc + self.name_wid.ajaxMsg( 'onCreate', ['value'] )
+   end
+   
+   /*# Overridable Method checking for availability of a name.
+      @param name The name to be checked
+      @return true if the name is available, false otherwise.
+   */
+   function checkAvail( name )
+      return true
+   end
+   
+end
+

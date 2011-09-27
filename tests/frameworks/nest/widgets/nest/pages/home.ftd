@@ -37,4 +37,8 @@
 
 <p>Advanced widgets with local page messaging</p>
 <?= Nest.widget( "RichPassword" )("my_password", "Enter password", "Repeat password").render() ?>
+<hr>
+<p>Avanced widget with ajax and local messaging</p>
+<?= Nest.widget( "NameWithAvail" )( "my_name", "Enter username" ).render() ?>
+
 <p><i>Tests complete -- for now</i></p>
