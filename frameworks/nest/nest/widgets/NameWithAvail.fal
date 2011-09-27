@@ -45,7 +45,7 @@ class ImgAvail( id, name_wid ) from Image( id, "", true )
             "setAvailable" => @"
                function( obj ) {
                   if( obj.avail ) { this.src=\"$(self.avail_img)\"; }
-                  else { this.src=\"$(self.avail_img)\"; }
+                  else { this.src=\"$(self.na_img)\"; }
                }"
             ]
 

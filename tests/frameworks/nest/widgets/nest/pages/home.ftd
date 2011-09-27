@@ -38,7 +38,13 @@
 <p>Advanced widgets with local page messaging</p>
 <?= Nest.widget( "RichPassword" )("my_password", "Enter password", "Repeat password").render() ?>
 <hr>
-<p>Avanced widget with ajax and local messaging</p>
-<?= Nest.widget( "NameWithAvail" )( "my_name", "Enter username" ).render() ?>
+<p>Avanced widget with AJAX and local messaging.</p>
+<p>Names taken on the server are: <?
+   namewid = Nest.widget( "TheNameIsAvail" )()
+   > ", ".merge( namewid.takenNames )
+?>
+</p>
+<p>Please, notice that the names must be at least <?= namewid.minSize ?> characters long.</p>
+<p><?= namewid.render() ?></p>
 
 <p><i>Tests complete -- for now</i></p>
