@@ -185,8 +185,12 @@ class NameWithAvail( id, prompt ) from InputText( id, prompt )
       self.name_wid.props = ["name" => self.getFullID()]
       
       // The prefix function posts the data value to the listeners and prevents calling ajax if name is too short.
-      prefixFunc = self.name_wid.makeMessage( 'value', 'this.value' ) +
-                   @";if(this.value.length < $(self.minSize)){return;}"
+      prefixFunc = "if(this.oldValue == this.value) {return;}" +
+                   self.name_wid.makeMessage( 'value', 'this.value' ) +
+                   @"
+                     ;if(this.value.length < $(self.minSize) ){return;}
+                     this.oldValue = this.value;
+                     "
 
       // add the same request for onchange and onkeyup in our name widget.
       checkValueReq = widget.AJAXRequest( ["value"], nil, prefixFunc )
