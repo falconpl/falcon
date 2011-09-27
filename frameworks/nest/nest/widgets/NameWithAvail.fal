@@ -74,7 +74,7 @@ class TextAvail( id, name_wid ) from widget.Widget( id )
    working_prompt = "Checking..."
 
    name_wid = name_wid
-   
+
    function onRender()
             
       short_prompt = htmlEscape(self.short_prompt)
@@ -133,14 +133,18 @@ class NameWithAvail( id, prompt ) from InputText( id, prompt )
    isAJAXHost = true
    initInfos = [id, prompt]
 
-   // Minimum size for a name
+   //# Minimum size for a name
    minSize = 6
+
+   //# Timeout before starting to check for the name.
+   typeTimeout = 250
+   
    name_wid = InputText( "name", prompt )
    avail_wid = AvailWidget( "avail", self.name_wid )
    name_checked = widget.Widget( "name_checked" )
 
+
    init
-      
       self.name_checked.tag = "input"
       self.name_checked.props = ["type" => "hidden"]
       
@@ -182,25 +186,48 @@ class NameWithAvail( id, prompt ) from InputText( id, prompt )
 
    function onRender()
       // force the input widget to be posted with OUR name in forms.
-      self.name_wid.props = ["name" => self.getFullID()]
-      
+      self.name_wid.props = [
+         "name" => self.getFullID(),
+         "onchange" => "this.onChange();",
+         "onkeyup" => "this.onChange();" 
+         ]
+
       // The prefix function posts the data value to the listeners and prevents calling ajax if name is too short.
-      prefixFunc = "if(this.oldValue == this.value) {return;}" +
-                   self.name_wid.makeMessage( 'value', 'this.value' ) +
-                   @"
-                     ;if(this.value.length < $(self.minSize) ){return;}
-                     this.oldValue = this.value;
-                     "
+      changeMsg = self.name_wid.makeMessage( 'value', 'this.value' )
+      ajaxMsg = self.name_wid.ajaxMsg( 'change', ['value'] )
+      checkFunc = @'
+         function() {
+            if(this.oldValue == this.value) {return;}
+            $(changeMsg)
+            if(this.value.length < $(self.minSize) ) {return;}
+            this.oldValue = this.value;
+            $(ajaxMsg)
+         }'
+
+      self.name_wid.jsMethods = [
+         "onChange" => "
+            function() {
+               if( this.timeoutVar ) { clearTimeout( this.timeoutVar ); }
+               this.timeoutVar = setTimeout('document.getElementById(\"' +this.id + '\").checkName()', " +
+            self.typeTimeout + ");}",
+            
+         "checkName" => checkFunc
+      ]
+      
+
+                     
 
       // add the same request for onchange and onkeyup in our name widget.
+      /*
       checkValueReq = widget.AJAXRequest( ["value"], nil, prefixFunc )
       self.name_wid.ajaxReqs = [
             //"onfocus"=> checkValueReq,
             "onchange"=> checkValueReq,
             "onkeyup"=> checkValueReq
             ]
-
-      self.name_wid.onCreate = prefixFunc + self.name_wid.ajaxMsg( 'onCreate', ['value'] )
+      */
+      
+      self.name_wid.onCreate = "document.getElementById(\""+ self.name_wid.getFullID() +"\").checkName()"
    end
    
    /*# Overridable Method checking for availability of a name.
