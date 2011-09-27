@@ -3,9 +3,9 @@
 
    Nest - Falcon web applcation engine
 
-   FILE: InputText.fal
+   FILE: Text.fal
 
-   AJAX widgeting subsystem -- input field.
+   AJAX widgeting subsystem -- Simple text/label widget (span).
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: Mon, 26 Sep 2011 11:55:58 +0200
@@ -18,20 +18,16 @@
 
 import from nest.widgets.widget in widget
 
-class InputText( id, prompt ) from widget.Widget( id )
-   tag = "input"
-   isSelfClosing = true
-   prompt = prompt ? prompt : ""
-
+class Text( id, deftext ) from widget.Widget( id )
+   tag = "span"
+   defText = deftext ? deftext : ""
+   
    init
       if self.props == nil: self.props = [=>]
-      self.props['name'] = self.getFullID()
-      self.props['type'] = "text"
    end
 
-   function renderPrompt()
-      id = self.getFullID()
-      return "<label for=\"" + id + "\" id=\"" + id + "_label\">" + self.prompt + "</label>"
+   function renderContent()
+      return self.defText
    end
 end
 

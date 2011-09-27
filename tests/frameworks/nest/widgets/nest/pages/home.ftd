@@ -33,8 +33,22 @@
 <hr>
 <p>Nest AJAX enabled widget test.</p>
 <?= Nest.widget( "HashMaker" )("hm").render() ?>
+
 <hr>
 
+<p>Basic widgets with local page messaging: Type some text and see the count change.</p>
+<?
+   wid = Nest.widget( "ActiveTextArea" )("enter_text", "Enter text", 3, 30)
+
+   widtext = Nest.widget("Text")("counter","0")
+   widtext.jsListeners = [
+      wid => " function( source, msg, value ) { this.innerHTML = value.length; }"
+      ]
+?>
+<p><?= wid.render() ?></p>
+<p>Lenght of the text: <span style="color:red"><?=widtext.render() ?></span></p>
+
+<hr>
 <p>Advanced widgets with local page messaging</p>
 <?= Nest.widget( "RichPassword" )("my_password", "Enter password", "Repeat password").render() ?>
 <hr>

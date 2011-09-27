@@ -197,7 +197,7 @@ class Widget( id )
 
       if self.onCreate
          rend += "element.onCreate = function(){" + self.onCreate +";}\n"
-         rend += "element.onCreate();"
+         Nest.closingScript += "document.getElementById('" + self.getFullID() + "').onCreate();\n"
       end
       
       if rend

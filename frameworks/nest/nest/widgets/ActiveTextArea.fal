@@ -1,0 +1,39 @@
+/*
+   FALCON - The Falcon Programming Language
+
+   Nest - Falcon web applcation engine
+
+   FILE: ActiveTextArea.fal
+
+   AJAX widgeting subsystem -- Textarea Widget exciting msg and AJAX
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Mon, 26 Sep 2011 11:55:58 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2011: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+import ActiveInput from nest.widgets.ActiveInput as ActiveInput
+
+/*# Class dispatching local messages and/or AJAX messages on text change.
+
+   Might be a text (default) or a textarea (if its tag is changed into
+   textarea) field that can send a 'change' message to local listeners
+   and to ajax listeners.
+*/
+class ActiveTextArea( id, prompt, rows, cols ) from ActiveInput( id, prompt )
+   tag = "textarea"
+   isSelfClosing = false
+   
+   init
+      if rows and cols
+         self.props["rows"] = rows
+         self.props["cols"] = cols
+      end
+   end
+end
+
+/* end of ActiveInput.fal */

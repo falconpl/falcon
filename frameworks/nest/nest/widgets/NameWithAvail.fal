@@ -18,6 +18,7 @@
 
 import from nest.widgets.widget in widget
 import InputText from nest.widgets.InputText as InputText
+import ActiveInput from nest.widgets.ActiveInput as ActiveInput
 import Image from nest.widgets.Image as Image
 
 
@@ -123,8 +124,9 @@ class AvailWidget( id, name_wid ) from widget.Widget( id )
       self.addChild( self.img_wid )
       self.addChild( self.status_wid )
    end
-
 end
+
+
 
 /*# Class checking for a name to be available.
 */
@@ -133,20 +135,17 @@ class NameWithAvail( id, prompt ) from InputText( id, prompt )
    isAJAXHost = true
    initInfos = [id, prompt]
 
-   //# Minimum size for a name
    minSize = 6
-
-   //# Timeout before starting to check for the name.
-   typeTimeout = 250
    
-   name_wid = InputText( "name", prompt )
+   name_wid = ActiveInput( "name", prompt )
    avail_wid = AvailWidget( "avail", self.name_wid )
    name_checked = widget.Widget( "name_checked" )
-
 
    init
       self.name_checked.tag = "input"
       self.name_checked.props = ["type" => "hidden"]
+      self.name_wid.typeTimeout = 250
+      self.name_wid.checkAjax = true
       
       self.addChild( self.name_wid )
       self.addChild( self.avail_wid )
@@ -172,7 +171,7 @@ class NameWithAvail( id, prompt ) from InputText( id, prompt )
       iwid = self.avail_wid.img_wid
       if self.checkAvail( name )
          return [
-            swid.msgInvoke( "setAvailable", ["avail"=>true, "again"=>"test"] ),
+            swid.msgInvoke( "setAvailable", ["avail"=>true] ),
             iwid.msgInvoke( "setAvailable", ["avail"=>true] ),
             self.name_checked.msgSetProperty( "value", "checked" ) ]
       else
@@ -186,48 +185,8 @@ class NameWithAvail( id, prompt ) from InputText( id, prompt )
 
    function onRender()
       // force the input widget to be posted with OUR name in forms.
-      self.name_wid.props = [
-         "name" => self.getFullID(),
-         "onchange" => "this.onChange();",
-         "onkeyup" => "this.onChange();" 
-         ]
-
-      // The prefix function posts the data value to the listeners and prevents calling ajax if name is too short.
-      changeMsg = self.name_wid.makeMessage( 'value', 'this.value' )
-      ajaxMsg = self.name_wid.ajaxMsg( 'change', ['value'] )
-      checkFunc = @'
-         function() {
-            if(this.oldValue == this.value) {return;}
-            $(changeMsg)
-            if(this.value.length < $(self.minSize) ) {return;}
-            this.oldValue = this.value;
-            $(ajaxMsg)
-         }'
-
-      self.name_wid.jsMethods = [
-         "onChange" => "
-            function() {
-               if( this.timeoutVar ) { clearTimeout( this.timeoutVar ); }
-               this.timeoutVar = setTimeout('document.getElementById(\"' +this.id + '\").checkName()', " +
-            self.typeTimeout + ");}",
-            
-         "checkName" => checkFunc
-      ]
-      
-
-                     
-
-      // add the same request for onchange and onkeyup in our name widget.
-      /*
-      checkValueReq = widget.AJAXRequest( ["value"], nil, prefixFunc )
-      self.name_wid.ajaxReqs = [
-            //"onfocus"=> checkValueReq,
-            "onchange"=> checkValueReq,
-            "onkeyup"=> checkValueReq
-            ]
-      */
-      
-      self.name_wid.onCreate = "document.getElementById(\""+ self.name_wid.getFullID() +"\").checkName()"
+      self.name_wid.props["name"] = self.getFullID();
+      self.name_wid.ajaxFilter = @"this.value.length < $(self.minSize)"
    end
    
    /*# Overridable Method checking for availability of a name.

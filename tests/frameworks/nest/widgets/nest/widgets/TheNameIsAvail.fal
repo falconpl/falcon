@@ -2,6 +2,7 @@
 import from nest.widgets.NameWithAvail in na
 
 class TheNameIsAvail() from na.NameWithAvail( "the_name", "Enter a name" )
+
    minSize = 4
    
    takenNames = [
@@ -13,7 +14,7 @@ class TheNameIsAvail() from na.NameWithAvail( "the_name", "Enter a name" )
       "gian",
       "stan"
       ]
-      
+   
    function checkAvail( name )
       return name notin self.takenNames
    end

@@ -251,6 +251,9 @@ object Nest
    /*# For now, use the max authlevel by default. */
    auth_level = AuthLevel.ADMIN
 
+   /*# Script that should be executed at the end of the page. */
+   closingScript = ""
+
    /*# Function called back after routing and before routed page execution.
 
       This is the ideal place to put code that must be always executed.
@@ -1348,6 +1351,9 @@ object Nest
          // render the slices requiring rendering.
          self._renderSlices()
 
+         // render the closeScripts
+         self._renderClosingScript()
+         
          // finalize services
          self._finalizeServices()
 
@@ -1408,6 +1414,17 @@ object Nest
       end
    end
 
+   function _renderClosingScript()
+      if self.closingScript
+         self.logi( "Rendering closing script -- generating" )
+         self._contentSlices += "<script language=\"javascript\">\n(function(){\n" +
+                  self.closingScript +
+                  "\n}());\n</script>"
+      else
+         self.logi( "Rendering closing script -- skipping" )
+      end
+   end
+   
    function _packSlices()
       self.logi( "Packing data slices" )
 
