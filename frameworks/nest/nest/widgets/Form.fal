@@ -1,0 +1,55 @@
+/*
+   FALCON - The Falcon Programming Language
+
+   Nest - Falcon web applcation engine
+
+   FILE: Form.fal
+
+   AJAX widgeting subsystem -- Text input Widget exciting msg and AJAX
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Wed, 28 Sep 2011 11:31:25 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2011: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+import from nest.widgets.widget in wid
+
+/*# Class presenting multiple widget for posting as a form.
+   @param id The ID of the form.
+   @param action The action of the form at submit.
+   @optparam method The method (GET or POST), defaults to "POST".
+
+*/
+class Form( id, action, method ) from Widget( id )
+   tag = "form"
+
+   init
+      if self.props == nil: self.props = [=>]
+      self.props["method"] = method ? method : "POST"
+      self.props["action"] = action
+      self.props["accept-charset"] = "UTF-8"
+   end
+
+   /*# Sets the "accept-charset" property.
+      @parm cs The charset.
+   */
+   function setCharset( cs )
+      self.props["accept-charset"] = cs
+   end
+
+   /*# Sets the "enctype" property to "multipart/form-data".
+
+      You'll want to call this when you have some file widget in the form.
+      "FileUpload" widgets call it automatically when they are added to a form.
+   */
+   function setSumbitData()
+      self.props["enctype"] = "multipart/form-data"
+   end
+
+end
+
+/* end of Form.fal */
