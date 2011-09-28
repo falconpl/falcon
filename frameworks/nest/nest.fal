@@ -490,9 +490,9 @@ object Nest
       if pid
          self.selector( pid )
       elif aid
-         self.ajax( aid )
+         self.selector_ajax( aid )
       else
-         self.ajax_widget( wid ) 
+         self.selector_ajax_widget( wid ) 
       end
    end
 
@@ -501,7 +501,7 @@ object Nest
       @optparam method A method for an AJAX widget.
 
    */
-   function ajax( aid )
+   function selector_ajax( aid )
       ajax_file = utils.findFileInDirs(
             [self.site_nest_dir + "/" +  ajax_dir, self.nest_dir + "/" +  ajax_dir ],
             aid,
@@ -509,7 +509,7 @@ object Nest
          )
 
       if( ajax_file )
-         self._selector_ajax( ajax_file )
+         self._selector_ajax( aid, ajax_file )
       else
          raise NestError( NestError.page_notfound, "", aid )
       end
@@ -695,7 +695,7 @@ object Nest
    end
 
 
-   function ajax_widget( wid )
+   function selector_ajax_widget( wid )
       widgetClass = self.widget( wid )
 
       try
@@ -1454,17 +1454,19 @@ object Nest
    end
 
 
-   function _selector_ajax( file )
+   function _selector_ajax( aid, file )
       try
          // by default, launchAtLink is true.
          page = self._comp.loadFile( file )
-         ajax = page.get("ajax")
+         ajax = page.get(aid)
          if not ajax.isCallable()
             ctx = [  "error"=>"-1",
-                     "errorDesc"=>"Module \"" + file + "\" is not defining 'ajax' as function." ]
+                     "errorDesc"=>"Module \"" + file + "\" is not defining '"+aid+"' as function." ]
          else
             // parameters are in Request.getField
-            ctx = ajax( Request.getField( "params", nil ) )
+            params = Request.getField( "params", nil )
+            if params: params = json.JSONdecode( params )
+            ctx = ajax( params )
             if typeId( ctx ) != DictionaryType
                ctx = [  "error"=>"-2",
                         "errorDesc"=>"AJAX function \"" + file + "\" didn't return a dicitonary" ]

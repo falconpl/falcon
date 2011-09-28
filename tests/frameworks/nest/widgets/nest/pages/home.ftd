@@ -13,14 +13,13 @@
          }" )
 ?>
 <hr>
-<p>Ajax basic function test: <? nest.js.button( "Button", "Nest.ajax('hello', {}, onHello)" ) ?>.</p>
-<?
-   // JS Script facility test.
-   nest.js.script( "
-         function onHello( obj ) {
-               alert('Received ajax hello: ' + obj.text );
-         }" )
-?>
+<p>Ajax basic function test: <? nest.js.button( "Button", "Nest.ajax('hello', {'p0':'A parameter'}, onHello)" ) ?>.</p>
+<script language="javascript">
+   function onHello( obj ) {
+         alert('Received ajax hello: ' + obj.text + 
+            '\nRepeated parameter: ' + obj.p0 );
+   }
+</script>
 <p>Checking for cookie persistency via ajax: <? nest.js.button( "Button", "Nest.ajax('hello', {}, getCookie)" ) ?>.</p>
 <?
    // JS Script facility test.
