@@ -133,7 +133,7 @@ if(!Nest) { Nest = {}; }
    // Method 'ajax'
    if (typeof Nest.ajax !== 'function') {
       Nest.ajax = function ( req_id, params, callback ) {
-         var url = "./?aid=" + req_id;
+         var url = "./?a=" + req_id;
          ajax( url, params, callback );
       }
    }
@@ -154,7 +154,7 @@ if(!Nest) { Nest = {}; }
             objToSend["infos"] = infos;
          }
 
-         var url = "./?wid=" + widClass;
+         var url = "./?w=" + widClass;
          //alert( JSON.stringify( objToSend ) );
          ajax( url, objToSend, Nest.widgetUpdate );
       }

@@ -453,8 +453,8 @@ object Nest
       self._phase = _phase_startup
       // 1. Determine PID
       if not pid
-         aid = Request.getField( "aid", nil )
-         wid = Request.getField( "wid", nil )
+         aid = Request.getField( "a", nil )
+         wid = Request.getField( "w", nil )
          if not aid and not wid
             pid = self.router.route( self )
          end
