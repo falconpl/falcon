@@ -119,12 +119,19 @@ if(!Nest) { Nest = {}; }
 
    function prepareInit( widID, obj ) {
       // get the root widget.
-      var rootID = widID.split(".")[0];
-      var rootElement = document.getElementById( rootID );
-      // If we have a root widget, see if we assigned an init info to it.
-      if ( rootElement && rootElement.Nest_initInfo )
+      
+      var list = widID.split(".");
+      while( list.length > 0 )
       {
-         obj.init = rootElement.Nest_initInfo;
+         widID = list.join(".");
+         var rootElement = document.getElementById( widID );
+         // If we have a root widget, see if we assigned an init info to it.
+         if ( rootElement && rootElement.Nest_initInfo )
+         {
+            obj.init = rootElement.Nest_initInfo;
+            break;
+         }
+         list.pop();
       }
    }
 

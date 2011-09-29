@@ -21,17 +21,12 @@ import from nest.widgets.widget in widget
 class InputText( id, prompt ) from widget.Widget( id )
    tag = "input"
    isSelfClosing = true
-   prompt = prompt ? prompt : ""
+   label = prompt ? prompt : ""
 
    init
       if self.props == nil: self.props = [=>]
       self.props['name'] = self.getFullID()
       self.props['type'] = "text"
-   end
-
-   function renderPrompt()
-      id = self.getFullID()
-      return "<label for=\"" + id + "\" id=\"" + id + "_label\">" + self.prompt + "</label>"
    end
 end
 

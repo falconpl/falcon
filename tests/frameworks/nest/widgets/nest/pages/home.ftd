@@ -61,4 +61,25 @@
 <p>Please, notice that the names must be at least <?= namewid.minSize ?> characters long.</p>
 <p><?= namewid.render() ?></p>
 
+<hr>
+<p>Form rendering.</p>
+<?
+   form = Nest.widget( "ListForm" )("testform", "#")
+   
+   wid = Nest.widget( "ActiveTextArea" )("enter_text", "Enter text", 3, 30)
+   widtext = Nest.widget("Text")("counter","0")
+   widtext.addStyle( "color:red; font-weight:bold" )
+   widtext.jsListeners = [
+      wid => " function( source, msg, value ) { this.innerHTML = value.length; }"
+      ]
+
+   th = Nest.widget( "TheNameIsAvail" )( "the_other_name" )
+   form.addChild( th )
+   form.addChild( Nest.widget( "RichPassword" )("my_password", "Enter password", "Repeat password") )
+   form.addChild( wid )
+   form.addChild( widtext )
+?>
+
+<?= form.render() ?>
+
 <p><i>Tests complete -- for now</i></p>

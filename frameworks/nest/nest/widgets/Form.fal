@@ -16,7 +16,7 @@
    See LICENSE file for licensing details.
 */
 
-import from nest.widgets.widget in wid
+import Widget from nest.widgets.widget as Widget
 
 /*# Class presenting multiple widget for posting as a form.
    @param id The ID of the form.
@@ -50,6 +50,47 @@ class Form( id, action, method ) from Widget( id )
       self.props["enctype"] = "multipart/form-data"
    end
 
+   /*# Overrides the base widget render content.
+      This version calls:
+         - renderFormBegin before rendering each widget.
+         - renderChild for every child.
+         - renderFormEnd after rendering all the children.
+
+      Each method must return a string that is the rendered
+      representation of the element.
+   */
+   function renderContent()
+      rend = self.renderFormBegin()
+      for child in self.children
+         rend += child.renderInParent( self ) +"\n"
+      end
+      return rend + self.renderFormEnd()
+   end
+
+   /*# Called back in rendering each element of the form.
+      @param child A child widget of this form.
+
+      The base version just renders the prompt via child.renderPrompt() and then
+      renders the body via child.render().
+   */
+   function renderChild( child )
+      return child.renderPrompt() + child.render()
+   end
+
+   /*# Renders the start entry of the form elements.
+      @return A string that is used before rendering any element.
+      The base class returns an empty string.
+   */
+   function renderFormBegin()
+      return ""
+   end
+
+   /*# Renders the end entry of the form elements.
+      @return A string that is used before after rendering all the elements.
+   */
+   function renderFormEnd()
+      return ""
+   end
 end
 
 /* end of Form.fal */

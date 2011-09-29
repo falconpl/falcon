@@ -124,6 +124,11 @@ class AvailWidget( id, name_wid ) from widget.Widget( id )
       self.addChild( self.img_wid )
       self.addChild( self.status_wid )
    end
+
+   function renderContent( framing )
+      return self.img_wid.render() + "&nbsp;" + self.status_wid.render()
+   end
+
 end
 
 
@@ -153,11 +158,17 @@ class NameWithAvail( id, prompt ) from InputText( id, prompt )
    end
    
    //#default rendering, not very complex.
-   function renderContent()
-      return self.name_wid.renderPrompt() + "&nbsp;" + self.name_wid.render() + "&nbsp;" +
-               self.avail_wid.render()
+   function renderLabel()
+      return self.name_wid.renderLabel()
+   end
+   
+   function renderInfo()
+      return self.avail_wid.renderCore()
    end
 
+   function renderContent()
+      return self.name_checked.render() + self.name_wid.renderCore()
+   end
 
    function setRenderValue( val )
       self.name_wid.props['value'] = val
@@ -185,6 +196,7 @@ class NameWithAvail( id, prompt ) from InputText( id, prompt )
 
    function onRender()
       // force the input widget to be posted with OUR name in forms.
+      self.initInfos[0] = self.getFullID()
       self.name_wid.props["name"] = self.getFullID();
       self.name_wid.ajaxFilter = @"this.value.length < $(self.minSize)"
    end

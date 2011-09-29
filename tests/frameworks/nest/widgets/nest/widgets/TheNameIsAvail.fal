@@ -1,8 +1,7 @@
 
 import from nest.widgets.NameWithAvail in na
 
-class TheNameIsAvail() from na.NameWithAvail( "the_name", "Enter a name" )
-
+class TheNameIsAvail(id) from na.NameWithAvail( id?id:"the_name", "Enter a name" )
    minSize = 4
    
    takenNames = [
