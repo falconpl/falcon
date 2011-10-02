@@ -1,0 +1,43 @@
+/*
+   FALCON - The Falcon Programming Language
+
+   Nest - Falcon web applcation engine
+
+   FILE: Select.fal
+
+   AJAX widgeting subsystem -- select input field.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Mon, 26 Sep 2011 11:55:58 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2011: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+import from nest.widgets.widget in widget
+
+/*# Option widget (part of Select).
+   @param value Value of the option when posted in a form.
+   @param text The text.
+   @param selected If true, this option is selected.
+   
+   Actually this widget can't stand alone wihtout beinga
+   child of a Select widget.
+
+   @note The @b id of this widget is set as the @b value parameter.
+*/
+class Option( value, text, selected ) from widget.Widget( value )
+   tag = "option"
+   text = text
+   
+   init
+      self.props = ["value" => value ]
+      if selected: self.props["selected"] = "selected"
+   end
+
+   function renderContent()
+      return self.text
+   end
+end

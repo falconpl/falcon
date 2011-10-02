@@ -43,17 +43,13 @@ class RadioButtonSet( id, choices, tagtype, tag_beg, tag_sep, tag_end ) from \
    value = nil
    
    init
-      for value in choices
-         if (pos = value.find(':'))
-            text = value[pos+1:]
-            value = value[0:pos]
-         else
-            text = value
-         end
-
-         child = RadioButton( value, id, value, text )
-         self.addChild( child )
-      end
+      self.autoAddChildren( choices )
+   end
+   
+   function makeAutoChild( value, text, checked )
+      child = RadioButton( value, self.id, value, text )
+      if checked: child.props["checked"] = "checked"
+      return child
    end
 
    function setRenderValue( val )
@@ -66,6 +62,6 @@ class RadioButtonSet( id, choices, tagtype, tag_beg, tag_sep, tag_end ) from \
    function getValue()
       return self.value
    end
-   
+
 end
 

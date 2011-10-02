@@ -106,8 +106,8 @@
    form.setConfirmSubmit( "Sure you want to submit?" )
 
    class MyCBSet from CheckBoxSet( "choice",
-               ["one:First choice", "two:Second choice", "three:Third choice"])
-
+               ["one:First choice$", "two:Second choice$", "three:Third choice$"])
+         
       function setRenderValue( val )
          self.CheckBoxSet.setRenderValue( val )
          if self.value.len() < 2
@@ -120,10 +120,25 @@
    cbox.label = "Pick one or more..."
    form.addChild( cbox )
 
-   rbox =Nest.widget( "RadioButtonSet" )( "pick",
+   rbox = Nest.widget( "RadioButtonSet" )( "pick",
                ["one:Alpha", "two:Beta", "three:Gamma"])
    rbox.label = "Hello"
    form.addChild( rbox )
+
+   selbox = Nest.widget( "Select" )( "selopt",
+               [ ": -- Pick one plz --", "one:Option One", "two:Option Two", "three:Option Three"],
+               "Pick one" )
+               
+   mselbox = Nest.widget( "Select" )( "selmulti",
+               ["one:Option One", "two:Option Two",
+                "three:Option Three",
+                "four:Option four" ],
+                "Pick many", -1 )
+   form.addChild( selbox )
+   form.addChild( mselbox )
+
+   datesel = Nest.widget( "DateSelector" )( "datesel" )
+   form.addChild( datesel )
    
    // bottom line...
    contSub = Nest.widget( "Container" )( "sub" )
@@ -137,6 +152,7 @@
       if not rbox.getValue()
          rbox.fieldInfo= "<b>Please, set one!</b>"
       end
+      datesel.fieldInfo = "You entered " + datesel.getValue()
    end
 ?>
 

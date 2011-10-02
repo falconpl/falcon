@@ -1,0 +1,93 @@
+/*
+   FALCON - The Falcon Programming Language
+
+   Nest - Falcon web applcation engine
+
+   FILE: DateSelector.fal
+
+   AJAX widgeting subsystem -- Container for dates.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Sun, 02 Oct 2011 13:53:51 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2011: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+import Container from nest.widgets.Container as Container
+import Select from nest.widgets.Select as Select
+import Option from nest.widgets.Option as Option
+import InputText from nest.widgets.InputText as InputText
+//import Regex from Regex as Regex
+
+/*# Selector for date.
+   @param id The widget ID
+   @optparam yearRange Range of years to be used to generate a year selector.
+   @optparam tagtype Tag used for this container (defaults to fieldset).
+   @optparam tag_beg HTML code to be put before the first child (defaults to "").
+   @optparam tag_sep HTML code to be put in between children (defaults to "&nbsp;").
+   @optparam tag_end HTML code to be put after the last child (defaults to "").
+
+*/
+class DateSelector( id, yearRange, tagtype, tag_beg, tag_sep, tag_end ) from \
+            Container( id, tagtype, tag_beg, tag_sep, tag_end )
+
+   months_names = [
+      "January", "February", "March", "April", "May", "June",
+      "July", "August", "September", "October", "November", "December" ]
+
+   short_months = [
+      "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+      "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" ]
+
+   num_months = [
+      "1", "2", "3", "4", "5", "6",
+      "7", "8", "9", "10", "11", "12" ]
+
+   //re = Regex( "([0-9]{1,4})-([0-9]{1,2})-([0-9]{1,2})")
+
+   days = nil
+   months = nil
+   years = nil
+   isYearRange = false
+   
+   init
+      self.makeMonths()
+      
+      self.days = Select( "day" )
+      for i = 1 to 31: self.days.addChild( Option( ""+i, i) )
+      self.months = Select( "month" )
+      for i = 1 to 12: self.months.addChild( Option( ""+i, self.months_names[i-1]) )
+      self.addChild( self.days )
+      self.addChild( self.months )
+      
+      if yearRange
+         self.years = Select( "year" )
+         for i in yearRange
+            self.years.addChild( Option( ""+i, i) )
+         end
+         self.isYearRange = true
+      else
+         self.years = InputText( "year" )
+         self.years.props['size'] = 4
+         self.years.props['maxlength'] = 4         
+      end
+
+      self.addChild( self.years )
+   end
+
+   /*# Override to change the name of the months. */
+   function makeMonths()
+   end
+
+   function setRenderValue( val )
+      // we usually do nothing on ourselves...
+   end
+
+
+   function getValue()
+      return self.years.getValue() + "-" + self.months.getValue() + "-" + self.days.getValue()
+   end
+end

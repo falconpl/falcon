@@ -38,56 +38,15 @@ import CheckBox from nest.widgets.CheckBox as CheckBox
    on the apparence of each choice.
 */
 class CheckBoxSet( id, choices, tagtype, tag_beg, tag_sep, tag_end ) from \
-            Container( id, tagtype, tag_beg, tag_sep, tag_end )
-
-   //# value of the checkbox set (array of checked box values)
-   value = nil
-   
+            Container( id, tagtype, tag_beg, tag_sep, tag_end )   
    init
-      for value in choices
-         if (pos = value.find(':'))
-            text = value[pos+1:]
-            value = value[0:pos]
-         else
-            text = value
-         end
-
-         child = CheckBox( value, value, text )
-         self.addChild( child )
-      end
+      self.autoAddChildren( choices )
    end
 
 
-   function setRenderValue( val )
-      if val.typeId() == ArrayType
-         for item in val
-            if item in self.childrenById
-               child = self.childrenById[item]
-               self.setChildChecked( child )
-            end
-         end
-      elif val in self.childrenById
-         self.setChildChecked( self.childrenById[val] )
-      end
+   function makeAutoChild( value, text, checked )
+      child = CheckBox( value, value, text )
+      if checked: child.props["checked"] = "checked"
+      return child
    end
-
-
-   function setChildChecked( child )
-      if self.value == nil: self.value = []
-      
-      if 'value' in child.props
-         self.value += child.props['value']
-      elif 'name' in child.props
-         self.value += child.props['name']
-      else
-         self.value += child.id
-      end
-      
-      child.props["checked"] = "checked"
-   end
-
-   function getValue()
-      return self.value
-   end
-   
 end

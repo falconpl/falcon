@@ -167,6 +167,9 @@ class Widget( id )
    //# Thing to be added automatically to names when generating the name field.
    addName = nil
 
+   //# Set true to put label AFTER the main widget in standard representation
+   labelsOnRight = false
+
    //# Adds a child to this widget.
    function addChild( wid )
       wid.parent = self
@@ -178,9 +181,73 @@ class Widget( id )
       end
    end
 
+   /*# Adds children to this widget using a list of string.
+      @optparam choices An array of choices (strings).
+
+      This method adds automatically a set of common children which
+      depends on the parent subwidget type. Container classes that
+      accept this automatic child addition protocol must provide
+      an overload for @a Widget.makeAutoChild, which returns the
+      created widget, or nil if the widget cannot be created.
+      
+      Each element in choice is a string with the following format:
+      "value:text". If ':' is not in the choice string, then the whole text will
+      be used both as a submit value and as a text.
+
+      If the value part is preceeded by an asterisk (*), then the entry will be
+      checked, selected, specially marked or put in evidence, depending on the
+      type of container.
+
+      If the text part ends with a dollar mark ('$'), then the label is placed
+      at right in rendering.
+   */
+   function autoAddChildren( choices )
+      for value in choices
+         if (pos = value.find(':')) >= 0
+            text = value[pos+1:]
+            value = value[0:pos]
+         else
+            // don't copy, so the changes we do below apply to both
+            text = $value
+         end
+
+         if value.startsWith( '*' )
+            checked = true
+            value = value[1:]
+         end
+
+         if text.endsWith('$')
+            text = text[0:-1]
+            onRight = true
+         end
+
+         child = self.makeAutoChild( value, text, checked )
+         if child
+            child.labelsOnRight = onRight
+            self.addChild( child )
+         end
+      end
+   end
+
+   /*# Callback used by autoAddChildren to create a proper child for this container.
+      @param value The value of this choice when submitted.
+      @param text The text or label associated with this choice.
+      @optparam checked If true, the element check or highlight should be actived.
+      @return A valid widget for the subclass container or nil if the widget cannot
+         be created.
+   */
+   function makeAutoChild( value, text, checked )
+      return nil
+   end
+
+
    //# Renders an XHTML representation of this widget.
    function render()
-      return self.renderLabel() + self.renderCore() + self.renderInfo()
+      if self.labelsOnRight
+         return self.renderCore() + self.renderLabel() + self.renderInfo()
+      else
+         return self.renderLabel() + self.renderCore() + self.renderInfo()
+      end
    end
 
    function renderCore()
