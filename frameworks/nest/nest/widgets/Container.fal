@@ -1,0 +1,58 @@
+/*
+   FALCON - The Falcon Programming Language
+
+   Nest - Falcon web applcation engine
+
+   FILE: Container.fal
+
+   AJAX widgeting subsystem -- Generic container (seen as a field).
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Sun, 02 Oct 2011 13:53:51 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2011: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+import from nest.widgets.widget in widget
+
+/*# Generic container (seen as a field).
+   @param id The widget ID
+   @optparam tagtype Tag used for this container (defaults to fieldset).
+   @optparam tag_beg HTML code to be put before the first child (defaults to "").
+   @optparam tag_beg HTML code to be put in between children (defaults to "&nbsp;").
+   @optparam tag_beg HTML code to be put after the last child (defaults to "").
+
+   This is the base class for widget containers; it can be used to
+   display multiple fields as a single field in forms.
+
+   The default tag of this container is 'fieldset'. You should
+   overload the class or reset it to another 
+*/
+class Container( id, tagtype, tag_beg, tag_sep, tag_end ) from widget.Widget( id )
+   tag = tagtype ? "fieldset" : tagtype
+   isSelfClosing = false
+
+   tag_beg = tag_beg ? tag_beg : ""
+   tag_sep = tag_sep ? tag_sep : "&nbsp;"
+   tag_end = tag_end ? tag_end : ""
+   
+   function renderContent()
+      res = ""
+      for child in self.children
+         forfirst: res += self.tag_beg
+         res += child.renderInParent( self )
+         formiddle: res += self.tag_sep
+         forlast: res += self.tag_end
+      end
+      return res
+   end
+
+   //# Override this for personalized label/content/info display
+   function renderChild( child )
+      return child.render()
+   end
+end
+

@@ -1,0 +1,48 @@
+/*
+   FALCON - The Falcon Programming Language
+
+   Nest - Falcon web applcation engine
+
+   FILE: Button.fal
+
+   AJAX widgeting subsystem -- Basic button (not for form submits)
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Sun, 02 Oct 2011 13:53:51 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2011: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+import from nest.widgets.widget in widget
+
+/*# Basic button (not for form submits).
+   @param id The widget ID
+   @param content The HTML content displayed in the button.
+   @optparam type Optional type (defautls to 'button')
+
+   This generates an HTML button. Normally, you should
+   rely to Submit or Reset fields in forms, as they generate the same
+   controlled values in froms submits in different browsers, while
+   button tag based submits can differ (some use the value attribute,
+   some use the contents of the tag). 
+*/
+class Button( id, content, type ) from widget.Widget( id )
+   tag = "button"
+   content = content
+   isSelfClosing = false
+
+   init
+      if self.props == nil: self.props = [=>]
+      self.props['name'] = nil   // will be filled at render
+      self.props['type'] = type ? type : "button"
+   end
+
+   function renderContent()
+      >> self.content
+   end
+   
+end
+

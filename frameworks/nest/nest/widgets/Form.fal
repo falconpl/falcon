@@ -17,6 +17,7 @@
 */
 
 import Widget from nest.widgets.widget as Widget
+import Hidden from nest.widgets.Hidden as Hidden
 
 /*# Class presenting multiple widget for posting as a form.
    @param id The ID of the form.
@@ -55,6 +56,63 @@ class Form( id, action, method ) from Widget( id )
       self.props["enctype"] = "multipart/form-data"
    end
 
+   /*# Helper to add a confirmation callback on a form.
+      @param content The text that should be displayed in the confirm box.
+      
+      This will setup a simple confirm javascript on form submit.
+      To do more sophisticated things, just set the 'onsubmit' property
+      in Form.props to your preferred callback.
+   */
+   function setConfirmSubmit( content )
+      self.props['onsubmit'] = 'return confirm("' + htmlEscape(content) + '");'
+   end
+   
+   /*# Helper to add a reset callback on a form.
+      @param content The text that should be displayed in the confirm box.
+      
+      This will setup a simple confirm javascript on form reset.
+      To do more sophisticated things, just set the 'onreset' property
+      in Form.props to your preferred callback.
+   */
+   function setConfirmReset( content )
+      self.props['onreset'] = 'return confirm("' + htmlEscape(content) + '");'
+   end
+
+   /*# Adds an hidden value that is to be sent as variable.
+      @param name The name of the field
+      @param value The value to be assigned to the field.
+
+      This is a helper automatically adding hidden fields to this form.
+      
+      The value will automatically be transformed in a set of dictionary or array
+      values in case it's a dictionary or an array.
+   */
+   function addHidden( name, value )
+      select value
+         case ArrayType
+            for val in value
+               valstr = value.toString()
+               field = Hidden( name + "." + valstr, valstr )
+               field.addName = "[]"
+
+               self.addChild( field )
+            end
+            
+         case DictionaryType
+            for key, val in value
+               valstr = value.toString()
+               field = Hidden( name + "." + key, valstr )
+               field.addName = @"[$key]"
+
+               self.addChild( field )
+            end
+            
+         default
+            field = Hidden( name, value )
+            self.addChild( field )
+      end
+   end
+   
    /*# Overrides the base widget render content.
       This version calls:
          - renderFormBegin before rendering each widget.
@@ -96,6 +154,7 @@ class Form( id, action, method ) from Widget( id )
    function renderFormEnd()
       return ""
    end
+
 end
 
 /* end of Form.fal */

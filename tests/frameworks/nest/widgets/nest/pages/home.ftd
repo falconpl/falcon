@@ -1,6 +1,8 @@
 <?
    import from nest.js
    import from nest.ajax
+   import CheckBoxSet from nest.widgets.CheckBoxSet as CheckBoxSet
+   
    Reply.setCookie( "test", "Test value" )
 ?>
 <h1>Hello world!</h1>
@@ -86,6 +88,7 @@
 <p>Form rendering -- table version.</p>
 <?
    form = Nest.widget( "TableForm" )("tableform", "#")
+   form.addHidden( "hasForm", "true" )
 
    wid = Nest.widget( "ActiveTextArea" )("enter_text", "Enter text", 3, 30)
    widtext = Nest.widget("Text")("counter","0")
@@ -99,6 +102,42 @@
    form.addChild( Nest.widget( "RichPassword" )("my_password", "Enter password", "Repeat password") )
    form.addChild( wid )
    form.addChild( widtext )
+   form.setConfirmReset( "Sure you want to reset?" )
+   form.setConfirmSubmit( "Sure you want to submit?" )
+
+   class MyCBSet from CheckBoxSet( "choice",
+               ["one:First choice", "two:Second choice", "three:Third choice"])
+
+      function setRenderValue( val )
+         self.CheckBoxSet.setRenderValue( val )
+         if self.value.len() < 2
+            self.fieldInfo = "<b>Please, select at least 2 items!</b>"
+         end
+      end
+   end
+   cbox = MyCBSet()
+   
+   cbox.label = "Pick one or more..."
+   form.addChild( cbox )
+
+   rbox =Nest.widget( "RadioButtonSet" )( "pick",
+               ["one:Alpha", "two:Beta", "three:Gamma"])
+   rbox.label = "Hello"
+   form.addChild( rbox )
+   
+   // bottom line...
+   contSub = Nest.widget( "Container" )( "sub" )
+   contSub.addChild( Nest.widget("Submit")("sb", "Send data") )
+   contSub.addChild( Nest.widget("Reset")("rb", "Reset data") )
+   form.addChild( contSub )
+   
+   if "tableform.hasForm" in Request.posts
+      > "Receiving form data from a post"
+      form.routeValues( Request.posts )
+      if not rbox.getValue()
+         rbox.fieldInfo= "<b>Please, set one!</b>"
+      end
+   end
 ?>
 
 <?= form.render() ?>

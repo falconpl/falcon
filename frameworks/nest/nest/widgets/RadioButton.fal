@@ -1,0 +1,52 @@
+/*
+   FALCON - The Falcon Programming Language
+
+   Nest - Falcon web applcation engine
+
+   FILE: RadioButton.fal
+
+   AJAX widgeting subsystem -- Radio button widget.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Sun, 02 Oct 2011 13:53:51 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2011: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+import from nest.widgets.widget in widget
+
+/*# Radio button form widget.
+   @param id The widget ID
+   @param name The name of the radio-button set.
+   @param value value of the radio button in the 
+   @param text Text displayed at radio button (label)
+
+   Radio buttons are the only widgets that share the same name across
+   different widgets with different ids. This fact is enforced during
+   the onRender phase by filing the correct name in the widget properties.
+*/
+class RadioButton( id, name, value, text ) from widget.Widget( id )
+   label = text
+   name = name
+   tag = "input"
+   
+   init
+      if self.props == nil: self.props = [=>]
+      self.props['value'] = value
+      self.props['type'] = 'radio'
+   end
+
+   function onRender()
+      if self.parent
+         pname = self.parent.getFullID()
+      else
+         pname = self.name
+      end
+
+      self.props['name'] = pname 
+   end
+   
+end

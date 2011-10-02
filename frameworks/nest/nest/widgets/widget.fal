@@ -164,6 +164,9 @@ class Widget( id )
    //# Text or widget associated with this field in form or form-like widgets
    fieldInfo = nil
 
+   //# Thing to be added automatically to names when generating the name field.
+   addName = nil
+
    //# Adds a child to this widget.
    function addChild( wid )
       wid.parent = self
@@ -182,6 +185,15 @@ class Widget( id )
 
    function renderCore()
       id = self.getFullID()
+      
+      // first calculate a default name, if required ...
+      if 'name' in self.props
+         name = id
+         if self.addName: name += self.addName
+         self.props['name'] = name
+      end
+      
+      // ... then allow the widget to self-render.
       self.onRender()
 
       // render attributes -- if we have a tag we're an element in the document.
@@ -267,11 +279,23 @@ class Widget( id )
       return rend
    end
 
+   /*# Allows children to be rendered back by a parent.
+      @param parent The parent where the child is being rendered.
 
+      Override this if you want the children to have specific
+      behavior when rendered in some parent.
+
+      The default behavior is that to call directly parent.renderChild().
+   */
    function renderInParent( parent )
       return parent.renderChild( self )
    end
 
+   /*# Override this for personalized label/content/info display
+      @param child The child to be rendered.
+
+      The default is to put a br tag after each child.
+   */
    function renderChild( child )
       return child.render() + "<br/>"
    end
@@ -408,9 +432,38 @@ class Widget( id )
    /*# Sets the value of the widget before its rendering.
    */
    function setRenderValue( val )
+      if self.props == nil: self.props = [=>]
       self.props['value'] = val
    end
 
+   /*# Gets a pre-render value set in the widget.
+      @return A value that is known to be associated with this widget.
+      
+      Possibly overridable; the default is to peek the value in the 'value' property.
+      Complex widgets as containers may have different definitions of their value.
+   */
+   function getValue()
+      if self.props and 'value' in self.props: return self.props['value']
+      return nil
+   end
+   
+   /*# Route a set of incoming post values in a widget hierarcy.
+      @param vals A dictionary of routable values.
+      @param top ID of the parent widget.
+   */
+   function routeValues( vals, top )
+      //> "Routing at "+top+"<br/>"
+      current = top ? top+"."+self.id : self.id
+      if current in vals
+         //> "Rendering "+vals[current]+"<br/>"
+         self.setRenderValue( vals[current] )
+      end
+      //> "Subroutong... <br/>"
+      for item in self.children
+         item.routeValues( vals, current )
+      end      
+   end
+   
    /*# Adds this style to the 'style' property of this widget. */
    function addStyle( style )
       if not self.props

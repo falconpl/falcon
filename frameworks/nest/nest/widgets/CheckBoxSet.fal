@@ -1,0 +1,93 @@
+/*
+   FALCON - The Falcon Programming Language
+
+   Nest - Falcon web applcation engine
+
+   FILE: CheckBoxSet.fal
+
+   AJAX widgeting subsystem -- Automated radio-button choice generator
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Sun, 02 Oct 2011 13:53:51 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2011: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+import Container from nest.widgets.Container as Container
+import CheckBox from nest.widgets.CheckBox as CheckBox
+
+/*# Automated CheckBox choice generator
+   @param id The widget ID
+   @optparam choices An array of choices (strings).
+   @optparam tagtype Tag used for this container (defaults to fieldset).
+   @optparam tag_beg HTML code to be put before the first child (defaults to "").
+   @optparam tag_beg HTML code to be put in between children (defaults to "&nbsp;").
+   @optparam tag_beg HTML code to be put after the last child (defaults to "").
+
+   This is a widget that automatically creates a set of radio buttons and adds
+   them to the container.
+
+   Each element in choice is a string with the following format:
+   "value:text". If ':' is not in the choice string, then the whole text will
+   be used both as a submit value and as a text.
+
+   You can also add more children after the widget is created for better control
+   on the apparence of each choice.
+*/
+class CheckBoxSet( id, choices, tagtype, tag_beg, tag_sep, tag_end ) from \
+            Container( id, tagtype, tag_beg, tag_sep, tag_end )
+
+   //# value of the checkbox set (array of checked box values)
+   value = nil
+   
+   init
+      for value in choices
+         if (pos = value.find(':'))
+            text = value[pos+1:]
+            value = value[0:pos]
+         else
+            text = value
+         end
+
+         child = CheckBox( value, value, text )
+         self.addChild( child )
+      end
+   end
+
+
+   function setRenderValue( val )
+      if val.typeId() == ArrayType
+         for item in val
+            if item in self.childrenById
+               child = self.childrenById[item]
+               self.setChildChecked( child )
+            end
+         end
+      elif val in self.childrenById
+         self.setChildChecked( self.childrenById[val] )
+      end
+   end
+
+
+   function setChildChecked( child )
+      if self.value == nil: self.value = []
+      
+      if 'value' in child.props
+         self.value += child.props['value']
+      elif 'name' in child.props
+         self.value += child.props['name']
+      else
+         self.value += child.id
+      end
+      
+      child.props["checked"] = "checked"
+   end
+
+   function getValue()
+      return self.value
+   end
+   
+end
