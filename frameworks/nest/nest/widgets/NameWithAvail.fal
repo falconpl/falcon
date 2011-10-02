@@ -32,14 +32,14 @@ class ImgAvail( id, name_wid ) from Image( id, "", true )
 
    function onRender()
       self.addStyle( "vertical-align:middle" )
-      
+
       // initially, the image is that of too short.
       if not self.short_img
          self.props["src"] = ""
       else
          self.props["src"] = self.short_img
       end
-      
+
       // Create a property that stores the minimum size
       self.jsMethods = [
             "minsize" => "" + self.parent.parent.minSize + ";",
@@ -77,12 +77,12 @@ class TextAvail( id, name_wid ) from widget.Widget( id )
    name_wid = name_wid
 
    function onRender()
-            
+
       short_prompt = htmlEscape(self.short_prompt)
       working_prompt = htmlEscape(self.working_prompt)
       avail_prompt = htmlEscape(self.avail_prompt)
       na_prompt = htmlEscape(self.na_prompt)
-      
+
       // Create a property that stores the minimum size
       self.jsMethods = [
          "minsize" => "" + self.parent.parent.minSize + ";",
@@ -110,7 +110,7 @@ class TextAvail( id, name_wid ) from widget.Widget( id )
       // initially, the name is too short
       return self.short_prompt
    end
-   
+
 end
 
 
@@ -119,7 +119,7 @@ class AvailWidget( id, name_wid ) from widget.Widget( id )
    name_wid = name_wid
    img_wid = ImgAvail( "status_img", name_wid )
    status_wid = TextAvail( "status_text", name_wid )
-   
+
    init
       self.addChild( self.img_wid )
       self.addChild( self.status_wid )
@@ -138,10 +138,10 @@ end
 class NameWithAvail( id, prompt ) from InputText( id, prompt )
    tag = nil
    isAJAXHost = true
-   initInfos = [id, prompt]
+   initInfos = [prompt]
 
    minSize = 6
-   
+
    name_wid = ActiveInput( "name", prompt )
    avail_wid = AvailWidget( "avail", self.name_wid )
    name_checked = widget.Widget( "name_checked" )
@@ -151,17 +151,17 @@ class NameWithAvail( id, prompt ) from InputText( id, prompt )
       self.name_checked.props = ["type" => "hidden"]
       self.name_wid.typeTimeout = 250
       self.name_wid.checkAjax = true
-      
+
       self.addChild( self.name_wid )
       self.addChild( self.avail_wid )
-      self.addChild( self.name_checked )      
+      self.addChild( self.name_checked )
    end
-   
+
    //#default rendering, not very complex.
    function renderLabel()
       return self.name_wid.renderLabel()
    end
-   
+
    function renderInfo()
       return self.avail_wid.renderCore()
    end
@@ -174,7 +174,7 @@ class NameWithAvail( id, prompt ) from InputText( id, prompt )
       self.name_wid.props['value'] = val
    end
 
-   
+
    function AJAX( params )
       name = params["infos"]["value"]
 
@@ -200,7 +200,7 @@ class NameWithAvail( id, prompt ) from InputText( id, prompt )
       self.name_wid.props["name"] = self.getFullID();
       self.name_wid.ajaxFilter = @"this.value.length < $(self.minSize)"
    end
-   
+
    /*# Overridable Method checking for availability of a name.
       @param name The name to be checked
       @return true if the name is available, false otherwise.
@@ -208,6 +208,6 @@ class NameWithAvail( id, prompt ) from InputText( id, prompt )
    function checkAvail( name )
       return true
    end
-   
+
 end
 

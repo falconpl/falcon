@@ -16,7 +16,7 @@
 <p>Ajax basic function test: <? nest.js.button( "Button", "Nest.ajax('hello', {'p0':'A parameter'}, onHello)" ) ?>.</p>
 <script language="javascript">
    function onHello( obj ) {
-         alert('Received ajax hello: ' + obj.text + 
+         alert('Received ajax hello: ' + obj.text +
             '\nRepeated parameter: ' + obj.p0 );
    }
 </script>
@@ -65,7 +65,28 @@
 <p>Form rendering.</p>
 <?
    form = Nest.widget( "ListForm" )("testform", "#")
-   
+
+   wid = Nest.widget( "ActiveTextArea" )("enter_text", "Enter text", 3, 30)
+   widtext = Nest.widget("Text")("counter","0")
+   widtext.addStyle( "color:red; font-weight:bold" )
+   widtext.jsListeners = [
+      wid => " function( source, msg, value ) { this.innerHTML = value.length; }"
+      ]
+
+   th = Nest.widget( "TheNameIsAvail" )( "the_other_name" )
+   form.addChild( th )
+   form.addChild( Nest.widget( "RichPassword" )("my_password", "Enter password", "Repeat password") )
+   form.addChild( wid )
+   form.addChild( widtext )
+?>
+
+<?= form.render() ?>
+
+<hr>
+<p>Form rendering -- table version.</p>
+<?
+   form = Nest.widget( "TableForm" )("tableform", "#")
+
    wid = Nest.widget( "ActiveTextArea" )("enter_text", "Enter text", 3, 30)
    widtext = Nest.widget("Text")("counter","0")
    widtext.addStyle( "color:red; font-weight:bold" )

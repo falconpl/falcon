@@ -22,7 +22,7 @@ import from json in json
    @optparam rp Required properties (data that must be sent back to us).
    @optparam extra Extra parameters that should be sent back here.
    @potparam jsPrefix A javascript code that should be invoked before launching the ajax request.
-   
+
    This class is used to store the parameters of AJAX requests that the widgets
    rendered on a web site could send back to to their server-side counterparts.
 
@@ -43,7 +43,7 @@ import from json in json
    property name that has been given ("value" => value,
    "../sibling/value" => "sibling.value" and so on).
 */
-class AJAXRequest( rp, extra, jsPrefix ) 
+class AJAXRequest( rp, extra, jsPrefix )
    reqProps = rp
    extra = extra
    jsPrefix = jsPrefix
@@ -64,7 +64,7 @@ class AJAXRequest( rp, extra, jsPrefix )
       extra = self.renderExtra()
       rend = "Nest.widgetMsg('" + hostName + "', '" +
                        id + "', '"+message+"', " +rps+ ", " + extra +")"
-                       
+
       if self.jsPrefix
          return self.jsPrefix +";"+ rend
       else
@@ -76,6 +76,11 @@ end
 
 /*# Base class for the widgeting system.
    @param id The id of the widget as know in the HTML/AJAX rendering.
+
+   @note All the widget subclasses willing to become AJAX hosts MUST
+   have an @b id parameter as their @b first parameter in the class
+   constructor. This @b id parameter will be propagated through the
+   widget hierarcy up to this base class, always as first parameter.
 */
 
 class Widget( id )
@@ -84,7 +89,7 @@ class Widget( id )
 
    //# HTML Tag associated with this widget.
    tag = "div"
-   
+
    //# HTML properties associated with this widget at DOM level.
    props = nil
 
@@ -96,6 +101,9 @@ class Widget( id )
 
    //# list of children.
    children = []
+
+   //# dictionary of children ordered by their ID.
+   childrenById = nil
 
    //# parent of this widget.
    parent = nil
@@ -110,7 +118,7 @@ class Widget( id )
 
    //# Method invoked at javascript level after rendering.
    onCreate = nil
-   
+
    /*# If true, this is a ajax host, and can receive ajax messages directly.
 
       Topmost widgets are always considered ajax AJAX, but there can be
@@ -130,18 +138,29 @@ class Widget( id )
       fill the @a Widget.initInfos verctor with the parameters that
       the Nest system must pass to the widget during initialization step. Also,
       they \b must provide a "tag", that is, they must be real possibly visible
-      entities (or at least, an invisible empty "div"), and not just "widget groups". 
+      entities (or at least, an invisible empty "div"),
+      and not just "widget groups". Notice that the @b id parameter is
+      automatically repeated by the Nest system, so it is not necessary
+      to present it inside the @b Widget.initInfo property.
+
+      @note All the widget subclasses willing to become AJAX hosts MUST
+      have an @b id parameter as their @b first parameter in the class
+      constructor. This @b id parameter will be propagated through the
+      widget hierarcy up to this base class, always as first parameter.
    */
    isAJAXHost = false
 
    /*# Init informations.
       This are the parameters that must be repeated to create a copy of this widget.
+      The @b id field alone needs not to be repeated as it is automatically
+      added in front of every initialization information as the widget is
+      created to fulfil AJAX host requests.
    */
-   initInfos = [id]
+   initInfos = nil
 
    //# Text or widget used as label/prompt form or form-like widgets
    label = nil
-   
+
    //# Text or widget associated with this field in form or form-like widgets
    fieldInfo = nil
 
@@ -149,13 +168,18 @@ class Widget( id )
    function addChild( wid )
       wid.parent = self
       self.children += wid
+      if self.childrenById
+         self.childrenById[wid.id] = wid
+      else
+         self.childrenById = [ wid.id =>wid ]
+      end
    end
 
    //# Renders an XHTML representation of this widget.
    function render()
       return self.renderLabel() + self.renderCore() + self.renderInfo()
    end
-   
+
    function renderCore()
       id = self.getFullID()
       self.onRender()
@@ -194,11 +218,11 @@ class Widget( id )
       rend += self.renderJSMethods()
       return rend
    end
-   
+
 
    function renderJSMethods()
       rend = ""
-      
+
       for mthName, mthDef in self.jsMethods
          rend += "element." + mthName + "=" + mthDef + "\n"
       end
@@ -207,7 +231,7 @@ class Widget( id )
          rend += "element.onCreate = function(){" + self.onCreate +";}\n"
          Nest.closingScript += "document.getElementById('" + self.getFullID() + "').onCreate();\n"
       end
-      
+
       if rend
          rend = "<script language=\"javascript\">\n"+
                 "(function(){ var element = document.getElementById('" + self.getFullID() + "');\n" +
@@ -227,7 +251,7 @@ class Widget( id )
       end
       return rend
    end
-   
+
    /*# Renders the contents of this widget.
       @return A string with the full HTML contents of this widget rendered.
 
@@ -243,9 +267,9 @@ class Widget( id )
       return rend
    end
 
-   
+
    function renderInParent( parent )
-      return parent.renderChild( self ) 
+      return parent.renderChild( self )
    end
 
    function renderChild( child )
@@ -267,23 +291,25 @@ class Widget( id )
       end
       return ""
    end
-   
+
    //# private
    function renderInitInfos()
+      id = self.getFullID()
+
       if self.initInfos
-         obj = json.JSONencode( self.initInfos )
-         id = self.getFullID()
-         rend = @"
-            <script language=\"javascript\">\n
-            document.getElementById('$(id)').Nest_initInfo = $(obj);\n
-            </script>\n"
+         obj = json.JSONencode( [id] + self.initInfos )
       else
-         rend = ""
+         obj =  "[\"" + id +"\"]"
       end
+
+      rend = @"
+         <script language=\"javascript\">\n
+         document.getElementById('$(id)').Nest_initInfo = $(obj);\n
+         </script>\n"
 
       return rend
    end
-   
+
    //# private
    function renderProps()
       rend = ""
@@ -311,7 +337,7 @@ class Widget( id )
       end
       return rend
    end
-   
+
    //# private
    function renderAJAXMessages()
       rend = ""
@@ -324,10 +350,10 @@ class Widget( id )
          rend += "Nest.messageHandlers['" + key +"']= function(obj){" + @value + "}\n"
          forlast: rend += "}());</script>"
       end
-      
+
       return rend
    end
-   
+
    /*# Returns the full ID of this widget (including the parent ones).
       @return A string representing the full ID of this widget at DOM model level.
 
@@ -401,14 +427,14 @@ class Widget( id )
    function ajaxMsg( msg, infos, extra )
       infos_s = infos ? json.JSONencode( infos ) : "null"
       extra_s = extra ? json.JSONencode( extra ) : "null"
-      
+
       return "Nest.widgetMsg('" + self.ajaxHostName() +
                "', '" + self.getFullID() + "', '" + msg + "', " +
                infos_s + ", " + extra_s + ");"
    end
 
    //===================================================
-   
+
 
    //===================================================
    /*# Route ajax requests.
@@ -438,5 +464,5 @@ class Widget( id )
          "method" => method,
          "param"=> data ]
    end
-   
+
 end

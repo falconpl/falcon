@@ -5,7 +5,7 @@
 
    FILE: Form.fal
 
-   AJAX widgeting subsystem -- Text input Widget exciting msg and AJAX
+   AJAX widgeting subsystem -- Form-like collection of widgets.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: Wed, 28 Sep 2011 11:31:25 +0200
@@ -23,6 +23,11 @@ import Widget from nest.widgets.widget as Widget
    @param action The action of the form at submit.
    @optparam method The method (GET or POST), defaults to "POST".
 
+   This class has support to route the input variables filling them
+   into its children. The children will receive setRenderValue
+   callbacks with the value the Form expects them to receive,
+   and may use this callback to check for correct values and eventually
+   prepare their @b fieldInfo property with an error message.
 */
 class Form( id, action, method ) from Widget( id )
    tag = "form"

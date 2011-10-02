@@ -22,7 +22,7 @@ directive lang = "en_US"
 import NestError from self.error as NestError
 import Service from self.service as Service
 import ServiceVar from self.service as ServiceVar
-import DBIDataManager from self.dbidm as DBIDataManager
+//import DBIDataManager from self.dbidm as DBIDataManager
 import DataManager from self.datamanager as DataManager
 import Hook from self.hook in hook_module
 import from self.utils
@@ -241,8 +241,8 @@ object Nest
       An enumeration with the following values
       - DBI = DBIDataManager class
    */
-   DM = bless( [
-      "DBI" => DBIDataManager
+   DM = bless( [=>
+      //"DBI" => DBIDataManager
       ])
 
    //# Repeat the hook class
@@ -468,7 +468,7 @@ object Nest
          return
       end
       self.pid = pid
-      
+
       // 2. Load variables
       self._loadSession()
 
@@ -492,7 +492,7 @@ object Nest
       elif aid
          self.selector_ajax( aid )
       else
-         self.selector_ajax_widget( wid ) 
+         self.selector_ajax_widget( wid )
       end
    end
 
@@ -623,7 +623,7 @@ object Nest
    function service( name, inst, vars )
       nestDir = self.nest_dir
       siteNestDir = self.site_nest_dir
-      
+
       srv = self._instanceModule( "Service", name, inst, self.services,
                // using a function instead of an array prevents array generation if not necessary
                {=> [ nestDir + "/" + srv_dir,
@@ -678,7 +678,7 @@ object Nest
             name,
             ["fal", "fam"]
          )
-      
+
       if( w_file )
          // by default, launchAtLink is true.
          page = self._comp.loadFile( w_file )
@@ -731,7 +731,7 @@ object Nest
 
       if self.debug
          self._displayDebug()
-      end      
+      end
    end
 
 
@@ -776,7 +776,7 @@ object Nest
    /*# Create a link to this or another page.
       @optparam pid The pageID of the desired page; leave nil to use the current pid.
       @optparam vars A dictionary of variables to be passed to the given page.
-      
+
    */
    function pageLink( pid, vars )
       return self.linkVars( self.router.routingURI( self.getURI(), pid ? pid : self.pid ), vars )
@@ -1353,7 +1353,7 @@ object Nest
 
          // render the closeScripts
          self._renderClosingScript()
-         
+
          // finalize services
          self._finalizeServices()
 
@@ -1424,7 +1424,7 @@ object Nest
          self.logi( "Rendering closing script -- skipping" )
       end
    end
-   
+
    function _packSlices()
       self.logi( "Packing data slices" )
 
@@ -1472,7 +1472,7 @@ object Nest
                         "errorDesc"=>"AJAX function \"" + file + "\" didn't return a dicitonary" ]
             end
          end
-         
+
       catch in e
          ctx = [ "error"=>"-3",
                   "errorDesc"=>"Uncaught error: " + e.toString() ]
@@ -1541,7 +1541,7 @@ object Nest
          > "<hr/>"
       end
    end
-   
+
 end
 
 // Re-export relevant Nest elements

@@ -18,14 +18,14 @@
 
 import from nest.widgets.Form in wid
 
-/*# List-specialized form.
+/*# Table-specialized form.
 
    This specialization of the form class is built to render
    its own children as a list of items. It is very common to use
    a stylesheet to transform UL/LI/label element sequences into well
    formatted fields.
 */
-class ListForm( id, action, method ) from wid.Form( id, action, method )
+class TableForm( id, action, method ) from wid.Form( id, action, method )
 
    /*# Called back in rendering each element of the form.
       @param child A child widget of this form.
@@ -34,9 +34,9 @@ class ListForm( id, action, method ) from wid.Form( id, action, method )
       renders the body via child.render().
    */
    function renderChild( field )
-      return "<li>" + self.labelFraming( field ) + "&nbsp;" +
+      return "<tr><td class=\"label\">" + field.renderLabel() + "</td><td class=\"content\">" +
              field.renderCore() + "&nbsp;" +
-             field.renderInfo() + "</li>\n"
+             field.renderInfo() + "</td></tr>\n"
    end
 
    /*# Renders the start entry of the form elements.
@@ -44,21 +44,16 @@ class ListForm( id, action, method ) from wid.Form( id, action, method )
       The base class returns an empty string.
    */
    function renderFormBegin()
-      return "<ul>\n"
+      return "<table>\n"
    end
 
    /*# Renders the end entry of the form elements.
       @return A string that is used before after rendering all the elements.
    */
    function renderFormEnd()
-      return "</ul>\n"
-   end
-
-   function labelFraming( child )
-      id = child.getFullID()
-      return "<label for=\"" + id + "\" id=\"" + id + "_label\">" + child.renderLabel() + "</label>"
+      return "</table>\n"
    end
 
 end
 
-/* end of Form.fal */
+/* end of TableForm.fal */
