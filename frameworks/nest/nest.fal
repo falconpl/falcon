@@ -22,7 +22,7 @@ directive lang = "en_US"
 import NestError from self.error as NestError
 import Service from self.service as Service
 import ServiceVar from self.service as ServiceVar
-//import DBIDataManager from self.dbidm as DBIDataManager
+import DBIDataManager from self.dbidm as DBIDataManager
 import DataManager from self.datamanager as DataManager
 import Hook from self.hook in hook_module
 import from self.utils
@@ -241,8 +241,8 @@ object Nest
       An enumeration with the following values
       - DBI = DBIDataManager class
    */
-   DM = bless( [=>
-      //"DBI" => DBIDataManager
+   DM = bless( [
+      "DBI" => DBIDataManager
       ])
 
    //# Repeat the hook class
