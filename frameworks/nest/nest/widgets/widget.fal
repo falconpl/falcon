@@ -240,6 +240,18 @@ class Widget( id )
       return nil
    end
 
+   /*# Method used to set properties of the widget.
+      @param props the properties to be set in the widget.
+      @return the widget itself.
+   */
+   function set( props )
+      if self.props == nil
+         self.props = props
+      else
+         self.props += props
+      end
+      return self
+   end
 
    //# Renders an XHTML representation of this widget.
    function render()

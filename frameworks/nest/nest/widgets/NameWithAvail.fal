@@ -73,7 +73,7 @@ class TextAvail( id, name_wid ) from widget.Widget( id )
    na_prompt = "Name NOT available"
    short_prompt = "Name too short"
    working_prompt = "Checking..."
-
+   first_prompt = ""
    name_wid = name_wid
 
    function onRender()
@@ -82,7 +82,10 @@ class TextAvail( id, name_wid ) from widget.Widget( id )
       working_prompt = htmlEscape(self.working_prompt)
       avail_prompt = htmlEscape(self.avail_prompt)
       na_prompt = htmlEscape(self.na_prompt)
-
+      if not self.first_prompt
+         self.first_prompt = self.short_prompt
+      end
+      
       // Create a property that stores the minimum size
       self.jsMethods = [
          "minsize" => "" + self.parent.parent.minSize + ";",
@@ -107,8 +110,7 @@ class TextAvail( id, name_wid ) from widget.Widget( id )
    end
 
    function renderContent()
-      // initially, the name is too short
-      return self.short_prompt
+      return self.first_prompt
    end
 
 end
@@ -209,5 +211,12 @@ class NameWithAvail( id, prompt ) from InputText( id, prompt )
       return true
    end
 
+   function getValue()
+      return self.name_wid.getValue()
+   end
+
+   function setAlertText( text )
+      self.avail_wid.status_wid.first_prompt = text
+   end
 end
 

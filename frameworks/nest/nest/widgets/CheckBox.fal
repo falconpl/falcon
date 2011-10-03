@@ -46,12 +46,16 @@ class CheckBox( id, value, text ) from widget.Widget( id )
 
    function onRender()
       if self.parent
-         pname = self.parent.getFullID()
+         if self.parent provides isCheckBoxSet
+            pname = self.parent.getFullID() + "[]"
+         else
+            pname = self.getFullID()
+         end
       else
          pname = self.name
       end
 
-      self.props['name'] = pname + "[]"
+      self.props['name'] = pname
    end
 
 end

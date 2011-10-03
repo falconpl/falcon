@@ -20,6 +20,7 @@ import from nest.widgets.widget in widget
 
 class PairCheck( id, first_widget, second_widget ) from widget.Widget( id )
    tag = "span"
+   content = ""
    first_widget = first_widget
    second_widget = second_widget
 
@@ -36,24 +37,23 @@ class PairCheck( id, first_widget, second_widget ) from widget.Widget( id )
       second_widget => "function(  wid, msg, value ) { this.checkSecond(value); }"
    ]
 
-
    function onRender()
       // we render the method here to be able to change the text after init.
       self.jsMethods["checkPair"] = @'
          function(){
-            if( this.valueOfFirst && this.valueOfSecond ) {
-               if( this.valueOfFirst == this.valueOfSecond ) {
-                  this.innerHTML="$(self.text_match)";
-               }
-               else {
-                  this.innerHTML="$(self.text_no_match)";
-               }
+            var match = "";
+            if( this.valueOfFirst == this.valueOfSecond ) {
+               this.innerHTML="$(self.text_match)";
+               match = "ok";
             }
             else {
-               this.innerHTML="";
+               this.innerHTML="$(self.text_no_match)";
+               match = "";
             }
          }'
    end
-   
-end
 
+   function renderContent()
+      return self.content
+   end
+end

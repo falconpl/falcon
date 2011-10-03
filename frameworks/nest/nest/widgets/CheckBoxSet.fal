@@ -39,6 +39,8 @@ import CheckBox from nest.widgets.CheckBox as CheckBox
 */
 class CheckBoxSet( id, choices, tagtype, tag_beg, tag_sep, tag_end ) from \
             Container( id, tagtype, tag_beg, tag_sep, tag_end )   
+   isCheckBoxSet = true
+
    init
       self.autoAddChildren( choices )
    end

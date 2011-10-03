@@ -59,6 +59,7 @@ class BasicRouter
 
    //# Returns a string that may be used to reach the given page
    function routingURI( baseUri, pid )
+      if not pid: pid = "home"
       return baseUri + "?pid=" + URI.encode( pid )
    end
 end
