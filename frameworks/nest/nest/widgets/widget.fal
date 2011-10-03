@@ -549,7 +549,7 @@ class Widget( id )
          self.props = ["style" => style]
       else
          if "style" in self.props
-            self.props["style"] += style
+            self.props["style"] += ";" + style
          else
             self.props["style"] = style
          end

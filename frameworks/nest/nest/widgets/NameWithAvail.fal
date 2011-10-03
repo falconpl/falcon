@@ -34,10 +34,11 @@ class ImgAvail( id, name_wid ) from Image( id, "", true )
       self.addStyle( "vertical-align:middle" )
 
       // initially, the image is that of too short.
-      if not self.short_img
-         self.props["src"] = ""
-      else
+      if self.short_img
          self.props["src"] = self.short_img
+      else
+         self.props["src"] = ""
+         self.addStyle( "display:none" )
       end
 
       // Create a property that stores the minimum size
@@ -50,17 +51,32 @@ class ImgAvail( id, name_wid ) from Image( id, "", true )
                }"
             ]
 
-      self.jsListeners = [
-         self.name_wid => @"
-            function( wid, msg, value ) {
-            if( value.length < this.minsize ) {
-               this.src = \"$(self.short_img)\";
-            }
-            else {
-               this.src = \"$(self.loading_img)\";
-            }
-         }"
-      ]
+      if self.short_img
+         self.jsListeners = [
+            self.name_wid => @"
+               function( wid, msg, value ) {
+               if( value.length < this.minsize ) {
+                  this.src = \"$(self.short_img)\";
+               }
+               else {
+                  this.src = \"$(self.loading_img)\";
+               }
+            }"
+         ]
+      else
+         self.jsListeners = [
+            self.name_wid => @"
+               function( wid, msg, value ) {
+               if( value.length > this.minsize ) {
+                  this.src = \"$(self.loading_img)\";
+                  this.style.display=\"\";
+               }
+               else {
+                  this.style.display=\"none\";
+               }
+            }"
+         ]
+      end
    end
 
 end
@@ -82,7 +98,7 @@ class TextAvail( id, name_wid ) from widget.Widget( id )
       working_prompt = htmlEscape(self.working_prompt)
       avail_prompt = htmlEscape(self.avail_prompt)
       na_prompt = htmlEscape(self.na_prompt)
-      if not self.first_prompt
+      if not self.first_prompt and self.short_prompt
          self.first_prompt = self.short_prompt
       end
       
@@ -96,19 +112,33 @@ class TextAvail( id, name_wid ) from widget.Widget( id )
                }"
                ]
 
-      self.jsListeners = [
-         self.name_wid => @"
-            function( wid, msg, value ) {
-            if( value.length < this.minsize ) {
-               this.innerHTML = \"$(short_prompt)\";
-            }
-            else {
-               this.innerHTML = \"$(working_prompt)\";
-            }
-         }"
-      ]
+      if self.short_prompt
+         self.jsListeners = [
+            self.name_wid => @"
+               function( wid, msg, value ) {
+               if( value.length < this.minsize ) {
+                  this.innerHTML = \"$(short_prompt)\";
+               }
+               else {
+                  this.innerHTML = \"$(working_prompt)\";
+               }
+            }"
+         ]
+      else
+         self.jsListeners = [
+            self.name_wid => @"
+               function( wid, msg, value ) {
+               if( value.length > this.minsize ) {
+                  this.innerHTML = \"$(working_prompt)\";
+               }
+               else {
+                  this.innerHTML = \"\";
+               }
+            }"
+         ]
+      end
    end
-
+   
    function renderContent()
       return self.first_prompt
    end
@@ -133,7 +163,7 @@ class AvailWidget( id, name_wid ) from widget.Widget( id )
 
 end
 
-
+// 
 
 /*# Class checking for a name to be available.
 */
@@ -197,10 +227,10 @@ class NameWithAvail( id, prompt ) from InputText( id, prompt )
 
 
    function onRender()
-      // force the input widget to be posted with OUR name in forms.
-      self.initInfos[0] = self.getFullID()
       self.name_wid.props["name"] = self.getFullID();
-      self.name_wid.ajaxFilter = @"this.value.length < $(self.minSize)"
+      if not self.name_wid.ajaxFilter
+         self.name_wid.ajaxFilter = @"this.value.length < $(self.minSize)"
+      end
    end
 
    /*# Overridable Method checking for availability of a name.

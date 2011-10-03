@@ -40,6 +40,8 @@ class ActiveInput( id, prompt ) from InputText( id, prompt )
 
    //# code used to prevent generating ajax messages.
    ajaxFilter = nil
+
+   onCreate = "this.activeCheck()"
    
    init
       self.props += [
@@ -87,8 +89,6 @@ class ActiveInput( id, prompt ) from InputText( id, prompt )
          self.jsMethods[ "onActiveChange" ] = "
             function() { this.activeCheck(); }"
       end
-      
-      self.onCreate = "document.getElementById(\""+ self.getFullID() +"\").activeCheck()"
    end
 end
 
