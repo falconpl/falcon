@@ -83,7 +83,19 @@ class DateSelector( id, yearRange, tagtype, tag_beg, tag_sep, tag_end ) from \
    end
 
    function setRenderValue( val )
-      // we usually do nothing on ourselves...
+      if val
+         if val.typeId() == StringType
+            vect = val.split('-')
+         elif val.derivedFrom( TimeStamp )
+            vect = [ val.year.toString(), val.month.toString(), val.day.toString() ]
+         end
+         
+         if(vect.len() == 3)
+            self.years.setRenderValue( vect[0].trim() )
+            self.months.setRenderValue( vect[1].trim() )
+            self.days.setRenderValue( vect[2].trim() )
+         end
+      end
    end
 
 
