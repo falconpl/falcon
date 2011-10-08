@@ -38,6 +38,8 @@ set( SRC_FILES
     gdk_Visual.cpp
     gdk_Window.cpp
     gtk_AboutDialog.cpp
+    gtk_AccelGroup.cpp
+    gtk_AccelMap.cpp
     gtk_Action.cpp
     gtk_Activatable.cpp
     gtk_Adjustment.cpp
@@ -200,6 +202,8 @@ set( HDR_FILES
     gdk_Visual.hpp
     gdk_Window.hpp
     gtk_AboutDialog.hpp
+    gtk_AccelGroup.hpp
+    gtk_AccelMap.hpp
     gtk_Action.hpp
     gtk_Activatable.hpp
     gtk_Adjustment.hpp
@@ -368,5 +372,5 @@ endif()
 #
 falcon_install_module( ${CURRENT_MODULE} )
 
-# vi: set ai et sw=4:
+# vi: set ai et sw=4 ts=4 sts=4:
 # kate: replace-tabs on; shift-width 4;

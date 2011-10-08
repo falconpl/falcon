@@ -61,7 +61,7 @@ public:
 
     static FALCON_FUNC get_resizable( VMARG );
 
-    //static FALCON_FUNC add_accel_group( VMARG );
+    static FALCON_FUNC add_accel_group( VMARG );
 
     //static FALCON_FUNC remove_accel_group( VMARG );
 

@@ -35,6 +35,8 @@
 #if GTK_CHECK_VERSION( 2, 6, 0 )
 #include "gtk_AboutDialog.hpp"
 #endif
+#include "gtk_AccelGroup.hpp"
+#include "gtk_AccelMap.hpp"
 #include "gtk_Action.hpp"
 #include "gtk_Adjustment.hpp"
 #include "gtk_Alignment.hpp"
@@ -166,7 +168,7 @@
 /*#
  @module gtk The Falcon GTK Binding module
 
- This module is a pretty complete binding of the gdk/gtk widgent
+ This module is a pretty complete binding of the gdk/gtk widget
  libraries.
 
  @beginmodule gtk
@@ -244,6 +246,8 @@ FALCON_MODULE_DECL
 
     // GObject based //
 
+    Falcon::Gtk::AccelGroup::modInit( self );
+    Falcon::Gtk::AccelMap::modInit( self );
     Falcon::Gtk::Action::modInit( self );
         Falcon::Gtk::ToggleAction::modInit( self );
             Falcon::Gtk::RadioAction::modInit( self );
