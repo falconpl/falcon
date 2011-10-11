@@ -41,7 +41,7 @@ class Button( id, content, type ) from widget.Widget( id )
    end
 
    function renderContent()
-      >> self.content
+      return self.content
    end
    
 end
