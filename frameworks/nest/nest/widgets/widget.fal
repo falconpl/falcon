@@ -533,6 +533,12 @@ class Widget( id )
       self.needID = true
       return "function(){ Nest.message(this.Nest_id, '" + msg + "', " + value +"); }"
    end
+
+   /*# Emit a message directly from within a js script. */
+   function jsEmit( msg, value )
+      self.needID = true
+      return "Nest.message(this.Nest_id, '" + msg + "', " + value +");"
+   end
    
    /*# Called back right before rendering.
       Widget are often created and then added to a parent. This means that
