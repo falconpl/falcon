@@ -184,6 +184,13 @@ class Widget( id )
       end
    end
 
+   //# Shortcut to add multiple children
+   function addChildren()
+      for child in passvp()
+         self.addChild( child )
+      end
+   end
+
    /*# Adds children to this widget using a list of string.
       @optparam choices An array of choices (strings).
 
