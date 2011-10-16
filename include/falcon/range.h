@@ -18,6 +18,7 @@
 
 #include <falcon/setup.h>
 #include <falcon/types.h>
+#include <falcon/string.h>
 
 namespace Falcon {
 

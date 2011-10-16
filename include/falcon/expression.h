@@ -25,7 +25,6 @@ namespace Falcon
 
 class DataReader;
 class DataWriter;
-class ExprFactory;
 class PCode;
 class PseudoFunction;
 class Symbol;
@@ -202,8 +201,6 @@ protected:
     */
    virtual void deserialize( DataReader* s );
 
-   friend class ExprFactory;
-
    /** Apply-modify function.
     
     Expression accepting a modify operator (i.e. ++, += *= etc.)
@@ -256,8 +253,6 @@ protected:
       {}
 
    virtual void deserialize( DataReader* s );
-
-   friend class ExprFactory;
 };
 
 
@@ -298,8 +293,6 @@ protected:
       {}
 
    virtual void deserialize( DataReader* s );
-
-   friend class ExprFactory;
 };
 
 
@@ -344,8 +337,6 @@ protected:
    {}
 
    virtual void deserialize( DataReader* s );
-
-   friend class ExprFactory;
 };
 
 //==============================================================
@@ -360,7 +351,6 @@ protected:
    virtual bool simplify( Item& value ) const; \
    static void apply_( const PStep*, VMContext* ctx ); \
    virtual void describeTo( String& ) const;\
-   friend class ExprFactory;
 
 #define FALCON_BINARY_EXPRESSION_CLASS_DECLARATOR( class_name, op ) \
    FALCON_BINARY_EXPRESSION_CLASS_DECLARATOR_EX( class_name, op, )
@@ -373,8 +363,6 @@ protected:
    virtual bool simplify( Item& value ) const; \
    static void apply_( const PStep*, VMContext* ctx ); \
    virtual void describeTo( String& ) const;\
-   protected:\
-   friend class ExprFactory;\
    public:
 
 #define FALCON_TERNARY_EXPRESSION_CLASS_DECLARATOR( class_name, op ) \
@@ -386,7 +374,6 @@ protected:
    virtual void describeTo( String& ) const;\
    protected:\
    inline class_name(): TernaryExpression( op ) {}\
-   friend class ExprFactory;\
    public:
 
 //==============================================================
@@ -470,8 +457,6 @@ public:
 protected:
    inline ExprAssign():
       BinaryExpression( t_assign ) {}
-
-   friend class ExprFactory;
 };
 
 
@@ -520,7 +505,6 @@ public:
 
 protected:
    ExprUnpack();
-   friend class ExprFactory;
    Expression* m_expander;
    bool m_bIsTop;
    
@@ -555,7 +539,6 @@ public:
    bool isTop() const { return m_bIsTop; }
 protected:
    ExprMultiUnpack();
-   friend class ExprFactory;
    bool m_bIsTop;
 
 private:

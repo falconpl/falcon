@@ -18,7 +18,6 @@
 #include <falcon/module.h>
 #include <falcon/falconclass.h>
 #include <falcon/hyperclass.h>
-#include <falcon/exprvalue.h>
 #include <falcon/globalsymbol.h>
 #include <falcon/unknownsymbol.h>
 #include <falcon/inheritance.h>
@@ -27,6 +26,7 @@
 #include <falcon/sp/sourcelexer.h>
 #include <falcon/parser/parser.h>
 
+#include <falcon/psteps/exprvalue.h>
 
 namespace Falcon {
 

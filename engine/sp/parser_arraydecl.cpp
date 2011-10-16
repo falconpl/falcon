@@ -19,10 +19,9 @@
 #include <falcon/setup.h>
 #include <falcon/error.h>
 
-#include <falcon/expression.h>
-#include <falcon/exprarray.h>
-#include <falcon/exprdict.h>
-#include <falcon/exprrange.h>
+#include <falcon/psteps/exprarray.h>
+#include <falcon/psteps/exprdict.h>
+#include <falcon/psteps/exprrange.h>
 
 #include <falcon/parser/rule.h>
 #include <falcon/parser/parser.h>

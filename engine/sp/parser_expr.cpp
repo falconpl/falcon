@@ -27,11 +27,11 @@
 #include <falcon/parser/rule.h>
 #include <falcon/parser/parser.h>
 
-#include <falcon/exprincdec.h>
-#include <falcon/exprvalue.h>
-#include <falcon/exprcompare.h>
-#include <falcon/exprmath.h>
-#include <falcon/exprdot.h>
+#include <falcon/psteps/exprincdec.h>
+#include <falcon/psteps/exprvalue.h>
+#include <falcon/psteps/exprcompare.h>
+#include <falcon/psteps/exprmath.h>
+#include <falcon/psteps/exprdot.h>
 
 namespace Falcon {
 

@@ -21,7 +21,6 @@
 
 #include <falcon/expression.h>
 #include <falcon/error.h>
-#include <falcon/exprvalue.h>
 #include <falcon/globalsymbol.h>
 #include <falcon/falconclass.h>
 #include <falcon/synfunc.h>
@@ -37,6 +36,8 @@
 
 #include <falcon/sp/parser_class.h>
 #include <falcon/parser/lexer.h>
+
+#include <falcon/psteps/exprvalue.h>
 
 #include "private_types.h"
 

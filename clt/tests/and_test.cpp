@@ -13,20 +13,20 @@
 #include <falcon/syntree.h>
 #include <falcon/localsymbol.h>
 #include <falcon/error.h>
-#include <falcon/expression.h>
-#include <falcon/exprcall.h>
-#include <falcon/exprvalue.h>
-#include <falcon/exprmath.h>
-#include <falcon/exprsym.h>
 #include <falcon/statement.h>
 #include <falcon/synfunc.h>
 #include <falcon/extfunc.h>
-#include <falcon/stmtautoexpr.h>
-
 
 #include <falcon/synfunc.h>
 #include <falcon/module.h>
 #include <falcon/application.h>
+
+#include <falcon/psteps/stmtif.h>
+#include <falcon/psteps/stmtautoexpr.h>
+#include <falcon/psteps/exprcall.h>
+#include <falcon/psteps/exprvalue.h>
+#include <falcon/psteps/exprmath.h>
+#include <falcon/psteps/exprsym.h>
 
 using namespace Falcon;
 

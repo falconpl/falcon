@@ -82,7 +82,6 @@ protected:
    class Private;
    
    Private* _p;
-   friend class ExprFactory;
 };
 
 }

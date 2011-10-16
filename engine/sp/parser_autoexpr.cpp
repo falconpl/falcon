@@ -17,10 +17,6 @@
 #define SRC "engine/sp/parser_autoexpr.cpp"
 
 #include <falcon/setup.h>
-
-#include <falcon/expression.h>
-#include <falcon/exprsym.h>
-#include <falcon/stmtautoexpr.h>
 #include <falcon/error.h>
 
 #include <falcon/parser/rule.h>
@@ -30,6 +26,9 @@
 #include <falcon/sp/parsercontext.h>
 #include <falcon/sp/parser_deletor.h>
 #include <falcon/sp/parser_autoexpr.h>
+
+#include <falcon/psteps/exprsym.h>
+#include <falcon/psteps/stmtautoexpr.h>
 
 #include "private_types.h"
 

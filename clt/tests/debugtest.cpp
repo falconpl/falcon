@@ -12,17 +12,17 @@
 #include <falcon/vm.h>
 #include <falcon/syntree.h>
 #include <falcon/localsymbol.h>
-#include <falcon/expression.h>
-#include <falcon/exprvalue.h>
-#include <falcon/exprcompare.h>
-#include <falcon/exprmath.h>
-#include <falcon/statement.h>
-#include <falcon/stmtautoexpr.h>
-
+#include <falcon/psteps/exprvalue.h>
+#include <falcon/psteps/exprcompare.h>
+#include <falcon/psteps/exprmath.h>
 
 #include <falcon/synfunc.h>
 #include <falcon/module.h>
 #include <falcon/application.h>
+#include <falcon/syntree.h>
+
+#include <falcon/psteps/stmtautoexpr.h>
+#include <falcon/psteps/stmtwhile.h>
 
 
 class DebugTestApp: public Falcon::Application

@@ -17,27 +17,25 @@
 #define SRC "engine/sp/parsercontext.cpp"
 
 #include <falcon/trace.h>
+#include <falcon/synfunc.h>
+#include <falcon/falconclass.h>
+#include <falcon/unknownsymbol.h>
+#include <falcon/globalsymbol.h>
+#include <falcon/closedsymbol.h>
+#include <falcon/error.h>
+#include <falcon/class.h>
+#include <falcon/falconclass.h>
 
 #include <falcon/sp/parsercontext.h>
 #include <falcon/sp/sourceparser.h>
 
-#include <falcon/synfunc.h>
-#include <falcon/falconclass.h>
-#include <falcon/unknownsymbol.h>
-
-#include <falcon/globalsymbol.h>
-#include <falcon/closedsymbol.h>
-#include <falcon/expression.h>
-#include <falcon/exprsym.h>
-#include <falcon/error.h>
-#include <falcon/class.h>
+#include <falcon/psteps/exprsym.h>
 
 #include <vector>
 #include <map>
 #include <list>
 #include <deque>
 
-#include "falcon/falconclass.h"
 
 namespace Falcon {
 

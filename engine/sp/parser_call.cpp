@@ -17,6 +17,8 @@
 #define SRC "engine/sp/parser_class.cpp"
 
 #include <falcon/setup.h>
+#include <falcon/pseudofunc.h>
+#include <falcon/symbol.h>
 
 #include <falcon/sp/sourceparser.h>
 #include <falcon/sp/parsercontext.h>
@@ -28,11 +30,8 @@
 #include <falcon/parser/parser.h>
 #include <falcon/parser/state.h>
 
-#include <falcon/exprcall.h>
-#include <falcon/exprsym.h>
-#include <falcon/pseudofunc.h>
-
-#include <falcon/symbol.h>
+#include <falcon/psteps/exprcall.h>
+#include <falcon/psteps/exprsym.h>
 
 #include "private_types.h"
 

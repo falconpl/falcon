@@ -13,13 +13,16 @@
    See LICENSE file for licensing details.
 */
 
-#include <falcon/globalsymbol.h>
-#include <falcon/exprsym.h>
-#include <falcon/vm.h>
+#undef SRC
+#define SRC "engine/globalsymbol.cpp"
 
+#include <falcon/globalsymbol.h>
+#include <falcon/vm.h>
+#include <falcon/accesserror.h>
 #include <falcon/trace.h>
 
-#include "falcon/accesserror.h"
+#include <falcon/psteps/exprsym.h>
+
 
 namespace Falcon {
 

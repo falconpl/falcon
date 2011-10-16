@@ -20,10 +20,11 @@
 #include <falcon/trace.h>
 #include <falcon/error.h>
 
-#include <falcon/expression.h>
-#include <falcon/statement.h>
-#include <falcon/stmtautoexpr.h>
-#include <falcon/exprvalue.h>
+#include <falcon/psteps/stmtautoexpr.h>
+#include <falcon/psteps/stmtwhile.h>
+#include <falcon/psteps/stmtcontinue.h>
+#include <falcon/psteps/stmtbreak.h>
+#include <falcon/psteps/exprvalue.h>
 
 #include <falcon/parser/rule.h>
 #include <falcon/parser/parser.h>

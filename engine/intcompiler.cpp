@@ -27,7 +27,7 @@
 #include <falcon/textreader.h>
 #include <falcon/textwriter.h>
 #include <falcon/statement.h>
-#include <falcon/stmtautoexpr.h>
+#include <falcon/psteps/stmtautoexpr.h>
 
 #include <falcon/parser/parser.h>
 #include <falcon/sp/sourcelexer.h>
@@ -38,15 +38,17 @@
 #include <falcon/modspace.h>
 
 #include <falcon/expression.h>
-#include <falcon/exprvalue.h>
 #include <falcon/falconclass.h>
 #include <falcon/hyperclass.h>
 #include <falcon/modloader.h>
 #include <falcon/modgroup.h>
 #include <falcon/ioerror.h>
-
 #include <falcon/inheritance.h>
 #include <falcon/requirement.h>
+
+#include <falcon/vm.h>
+
+#include <falcon/psteps/exprvalue.h>
 
 
 namespace Falcon {

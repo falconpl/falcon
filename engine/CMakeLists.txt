@@ -101,6 +101,47 @@ add_library(falcon_engine SHARED
   sp/sourcelexer.cpp
   sp/sourceparser.cpp
 
+  psteps/breakpoint.cpp
+  psteps/exprarray.cpp
+  psteps/exprassign.cpp
+  psteps/exprbnot.cpp
+  psteps/exprcall.cpp
+  psteps/exprcompare.cpp
+  psteps/exprdict.cpp
+  psteps/exprdot.cpp
+  psteps/expreeq.cpp
+  psteps/expriif.cpp
+  psteps/exprincdec.cpp
+  psteps/exprindex.cpp
+  psteps/exprlogic.cpp
+  psteps/exprmath.cpp
+  psteps/exprmultiunpack.cpp
+  psteps/exprneg.cpp
+  psteps/exproob.cpp
+  psteps/exprrange.cpp
+  psteps/exprref.cpp
+  psteps/exprproto.cpp
+  psteps/exprref.cpp
+  psteps/exprself.cpp
+  psteps/exprstarindex.cpp
+  psteps/exprsym.cpp
+  psteps/exprunpack.cpp
+  psteps/exprvalue.cpp
+
+  psteps/stmtautoexpr.cpp
+  psteps/stmtbreak.cpp
+  psteps/stmtcontinue.cpp
+  psteps/stmtfastprint.cpp
+  psteps/stmtfor.cpp
+  psteps/stmtif.cpp
+  psteps/stmtinit.cpp
+  psteps/stmtraise.cpp
+  psteps/stmtreturn.cpp
+  psteps/stmtrule.cpp
+  psteps/stmtselect.cpp
+  psteps/stmttry.cpp
+  psteps/stmtwhile.cpp
+
   memory.cpp
   accesserror.cpp
   accesstypeerror.cpp
@@ -135,26 +176,9 @@ add_library(falcon_engine SHARED
   encodingerror.cpp
   engine.cpp
   error.cpp
-  exprarray.cpp
-  exprcall.cpp
-  exprcompare.cpp
-  exprdict.cpp
-  exprdot.cpp
-  exprincdec.cpp
-  exprindex.cpp
-  exprmultiunpack.cpp
-  exprrange.cpp
-  exprref.cpp
-  exprunpack.cpp
   extfunc.cpp
   errorclasses.cpp
   expression.cpp
-  exprfactory.cpp
-  exprmath.cpp
-  exprproto.cpp
-  exprref.cpp
-  exprsym.cpp
-  exprvalue.cpp
   famloader.cpp
   filestat.cpp
   flexyclass.cpp
@@ -207,14 +231,6 @@ add_library(falcon_engine SHARED
   statement.cpp
   stderrors.cpp
   stdsteps.cpp
-  stmtautoexpr.cpp
-  stmtfastprint.cpp
-  stmtfor.cpp
-  stmt_init.cpp
-  stmtraise.cpp
-  stmtrule.cpp
-  stmtselect.cpp
-  stmttry.cpp
   string.cpp
   stringstream.cpp
   stream.cpp

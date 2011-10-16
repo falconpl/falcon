@@ -21,7 +21,6 @@
 #include <falcon/error.h>
 
 #include <falcon/expression.h>
-#include <falcon/stmtfastprint.h>
 
 #include <falcon/parser/rule.h>
 #include <falcon/parser/parser.h>
@@ -30,6 +29,8 @@
 #include <falcon/sp/parsercontext.h>
 #include <falcon/sp/parser_deletor.h>
 #include <falcon/sp/parser_fastprint.h>
+
+#include <falcon/psteps/stmtfastprint.h>
 
 #include "private_types.h"
 

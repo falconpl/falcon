@@ -31,11 +31,11 @@
 #include <falcon/optoken.h>
 #include <falcon/vmcontext.h>
 #include <falcon/expression.h>
-#include <falcon/stmt_init.h>
-
 #include <falcon/ov_names.h>
-
 #include <falcon/trace.h>
+
+#include <falcon/psteps/stmtreturn.h>
+#include <falcon/psteps/stmtinit.h>
 
 #include <map>
 #include <list>

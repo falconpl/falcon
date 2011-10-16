@@ -12,26 +12,24 @@
 #include <falcon/syntree.h>
 #include <falcon/localsymbol.h>
 #include <falcon/error.h>
-#include <falcon/expression.h>
-#include <falcon/exprvalue.h>
-#include <falcon/exprsym.h>
-#include <falcon/exprcompare.h>
-#include <falcon/exprmath.h>
-#include <falcon/exprcall.h>
 #include <falcon/statement.h>
-#include <falcon/stmtrule.h>
 #include <falcon/rulesyntree.h>
 #include <falcon/synfunc.h>
 #include <falcon/extfunc.h>
-#include <falcon/stmtautoexpr.h>
 
 #include <falcon/stdstreams.h>
 #include <falcon/textwriter.h>
 
-
-
 #include <falcon/trace.h>
 #include <falcon/application.h>
+
+#include <falcon/psteps/stmtautoexpr.h>
+#include <falcon/psteps/stmtrule.h>
+#include <falcon/psteps/exprvalue.h>
+#include <falcon/psteps/exprsym.h>
+#include <falcon/psteps/exprcompare.h>
+#include <falcon/psteps/exprmath.h>
+#include <falcon/psteps/exprcall.h>
 
 using namespace Falcon;
 

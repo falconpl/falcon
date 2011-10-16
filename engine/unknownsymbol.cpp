@@ -16,16 +16,16 @@
 #include <falcon/vmcontext.h>
 #include <falcon/vm.h>
 #include <falcon/unknownsymbol.h>
-#include <falcon/exprsym.h>
 #include <falcon/trace.h>
 #include <falcon/codeerror.h>
-
-#include <vector>
-
 #include <falcon/globalsymbol.h>
 #include <falcon/closedsymbol.h>
 #include <falcon/dynsymbol.h>
 #include <falcon/localsymbol.h>
+
+#include <falcon/psteps/exprsym.h>
+
+#include <vector>
 
 namespace Falcon {
 

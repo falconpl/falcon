@@ -13,12 +13,15 @@
    See LICENSE file for licensing details.
 */
 
+#undef SRC
+#define SRC "engine/dynsymbol.cpp"
+
+#include <falcon/trace.h>
 #include <falcon/dynsymbol.h>
-#include <falcon/exprsym.h>
 #include <falcon/vm.h>
 #include <falcon/codeerror.h>
 
-#include <falcon/trace.h>
+#include <falcon/psteps/exprsym.h>
 
 namespace Falcon {
 

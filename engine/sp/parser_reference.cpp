@@ -17,9 +17,7 @@
 #define SRC "engine/sp/parser_reference.cpp"
 
 #include <falcon/setup.h>
-
-#include <falcon/expression.h>
-#include <falcon/exprref.h>
+#include <falcon/symbol.h>
 
 #include <falcon/parser/rule.h>
 #include <falcon/parser/parser.h>
@@ -29,8 +27,9 @@
 #include <falcon/sp/parser_deletor.h>
 #include <falcon/sp/parser_reference.h>
 
+#include <falcon/psteps/exprref.h>
+
 #include "private_types.h"
-#include "falcon/symbol.h"
 
 
 namespace Falcon {

@@ -27,8 +27,7 @@
 #include <falcon/parser/rule.h>
 #include <falcon/parser/parser.h>
 
-#include <falcon/expression.h>
-#include <falcon/exprarray.h>
+#include <falcon/psteps/exprarray.h>
 
 #include "private_types.h"
 

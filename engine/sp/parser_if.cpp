@@ -20,10 +20,7 @@
 #include <falcon/trace.h>
 
 #include <falcon/error.h>
-#include <falcon/expression.h>
-#include <falcon/exprvalue.h>
 #include <falcon/statement.h>
-#include <falcon/stmtautoexpr.h>
 
 #include <falcon/parser/rule.h>
 #include <falcon/parser/parser.h>
@@ -31,8 +28,11 @@
 #include <falcon/sp/sourceparser.h>
 #include <falcon/sp/parsercontext.h>
 #include <falcon/sp/parser_deletor.h>
-
 #include <falcon/sp/parser_if.h>
+
+#include <falcon/psteps/stmtif.h>
+#include <falcon/psteps/stmtautoexpr.h>
+#include <falcon/psteps/exprvalue.h>
 
 namespace Falcon {
 

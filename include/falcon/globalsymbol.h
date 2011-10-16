@@ -49,8 +49,6 @@ public:
 protected:
    GlobalSymbol();
    Item m_item;
-
-   friend class ExprFactory;
 };
 
 }

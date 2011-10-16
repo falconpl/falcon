@@ -19,11 +19,8 @@
 #include <falcon/setup.h>
 #include <falcon/trace.h>
 #include <falcon/error.h>
-
 #include <falcon/expression.h>
 #include <falcon/statement.h>
-#include <falcon/exprvalue.h>
-#include <falcon/stmtfor.h>
 
 #include <falcon/parser/rule.h>
 #include <falcon/parser/parser.h>
@@ -32,6 +29,9 @@
 #include <falcon/sp/parsercontext.h>
 #include <falcon/sp/parser_deletor.h>
 #include <falcon/sp/parser_for.h>
+
+#include <falcon/psteps/stmtfor.h>
+#include <falcon/psteps/exprvalue.h>
 
 #include "private_types.h"
 

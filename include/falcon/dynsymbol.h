@@ -43,8 +43,6 @@ public:
 
 protected:
    DynSymbol();
-
-   friend class ExprFactory;
 };
 
 }

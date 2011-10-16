@@ -18,7 +18,7 @@
 
 #include <falcon/pstep.h>
 #include <falcon/pcode.h>
-#include <falcon/vm.h>
+#include <falcon/vmcontext.h>
 
 namespace Falcon
 {
@@ -100,133 +100,6 @@ protected:
    friend class RuleSynTree;
 private:
    t_statement m_type;
-};
-
-/** Statement causing the VM to return.
-
- This is a debug feature that causes the VM to return from its main
- loop when it meets this statement.
- */
-class FALCON_DYN_CLASS Breakpoint: public Statement
-{
-public:
-   Breakpoint(int32 line=0, int32 chr = 0);
-   virtual ~Breakpoint();
-
-   void describeTo( String& tgt ) const;
-
-   static void apply_( const PStep*, VMContext* ctx );
-};
-
-
-/** Return statement.
- *
- * Exits the current function.
- */
-class FALCON_DYN_CLASS StmtReturn: public Statement
-{
-public:
-   /** Returns a value */
-   StmtReturn( Expression* expr = 0, int32 line=0, int32 chr = 0 );
-   virtual ~StmtReturn();
-
-   void describeTo( String& tgt ) const;
-
-   Expression* expression() const { return m_expr; }
-   void expression( Expression* expr );
-   
-   bool hasDoubt() const { return m_bHasDoubt; }
-   void hasDoubt( bool b );
-   
-private:
-   Expression* m_expr;
-   PCode m_pcExpr;
-   bool m_bHasDoubt;
-   
-   static void apply_( const PStep*, VMContext* ctx );
-   static void apply_expr_( const PStep*, VMContext* ctx );
-   static void apply_doubt_( const PStep*, VMContext* ctx );
-   static void apply_expr_doubt_( const PStep*, VMContext* ctx );
-
-};
-
-
-/** While statement.
- *
- * Loops in a set of statements (syntree) while the given expression evaluates as true.
- */
-class FALCON_DYN_CLASS StmtWhile: public Statement
-{
-public:
-   StmtWhile( Expression* check, SynTree* stmts, int32 line=0, int32 chr = 0 );
-   virtual ~StmtWhile();
-
-   void describeTo( String& tgt ) const;
-   void oneLinerTo( String& tgt ) const;
-   static void apply_( const PStep*, VMContext* ctx );
-
-private:
-   Expression* m_check;
-   PCode m_pcCheck;
-   SynTree* m_stmts;
-};
-
-
-/** Continue statement.
- *
- * Unrolls to the topmost continue PStep and proceeds from there.
- */
-class FALCON_DYN_CLASS StmtContinue: public Statement
-{
-public:
-   StmtContinue( int32 line=0, int32 chr = 0 );
-   virtual ~StmtContinue() {};
-
-   void describeTo( String& tgt ) const;
-   static void apply_( const PStep*, VMContext* ctx );
-};
-
-/** Break statement.
- *
- * Unrolls to the topmost loop PStep and post a Break item in the data stack.
- */
-class FALCON_DYN_CLASS StmtBreak: public Statement
-{
-public:
-   StmtBreak( int32 line=0, int32 chr = 0 );
-   virtual ~StmtBreak() {};
-
-   void describeTo( String& tgt ) const;
-   static void apply_( const PStep*, VMContext* ctx );
-};
-
-/** If statement.
- *
- * Main logic branch control.
- */
-class FALCON_DYN_CLASS StmtIf: public Statement
-{
-public:
-   StmtIf( Expression* check, SynTree* ifTrue, SynTree* ifFalse = 0, int32 line=0, int32 chr = 0 );
-   virtual ~StmtIf();
-
-   virtual void describeTo( String& tgt ) const;
-   void oneLinerTo( String& tgt ) const;
-
-   static void apply_( const PStep*, VMContext* ctx );
-
-   /** Adds an else-if branch to the if statement */
-   StmtIf& addElif( Expression *check, SynTree* ifTrue, int32 line=0, int32 chr = 0 );
-
-   /** Sets the else branch for this if statement. */
-   StmtIf& setElse( SynTree* ifFalse );
-
-private:
-   SynTree* m_ifFalse;
-
-   struct Private;
-   Private* _p;
-
 };
 
 }

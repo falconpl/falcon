@@ -19,7 +19,6 @@
 #include <falcon/setup.h>
 #include <falcon/error.h>
 #include <falcon/statement.h>
-#include <falcon/stmtrule.h>
 
 #include <falcon/parser/rule.h>
 #include <falcon/parser/parser.h>
@@ -27,9 +26,11 @@
 #include <falcon/sp/sourceparser.h>
 #include <falcon/sp/parsercontext.h>
 #include <falcon/sp/parser_deletor.h>
+#include <falcon/sp/parser_rule.h>
+
+#include <falcon/psteps/stmtrule.h>
 
 #include "private_types.h"
-#include <falcon/sp/parser_rule.h>
 
 
 namespace Falcon {

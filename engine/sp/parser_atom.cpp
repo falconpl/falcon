@@ -24,9 +24,9 @@
 #include <falcon/parser/rule.h>
 #include <falcon/parser/parser.h>
 
-#include <falcon/expression.h>
-#include <falcon/exprsym.h>
-#include <falcon/exprvalue.h>
+#include <falcon/psteps/exprsym.h>
+#include <falcon/psteps/exprvalue.h>
+
 #include <falcon/symbol.h>
 
 namespace Falcon {

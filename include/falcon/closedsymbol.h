@@ -48,7 +48,6 @@ public:
 
 protected:
    Item m_item;
-   friend class ExprFactory;
 };
 
 }

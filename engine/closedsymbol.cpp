@@ -16,9 +16,9 @@
 #include <falcon/closedsymbol.h>
 #include <falcon/stream.h>
 #include <falcon/vm.h>
-#include <falcon/exprsym.h>
-
 #include <falcon/trace.h>
+
+#include <falcon/psteps/exprsym.h>
 
 namespace Falcon {
 

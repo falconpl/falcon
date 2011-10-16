@@ -12,14 +12,17 @@
 #include <falcon/syntree.h>
 #include <falcon/localsymbol.h>
 #include <falcon/expression.h>
-#include <falcon/exprvalue.h>
-#include <falcon/exprmath.h>
-#include <falcon/exprcompare.h>
 #include <falcon/statement.h>
-#include <falcon/stmtautoexpr.h>
 
 #include <falcon/synfunc.h>
 #include <falcon/application.h>
+
+#include <falcon/psteps/stmtautoexpr.h>
+#include <falcon/psteps/stmtreturn.h>
+#include <falcon/psteps/stmtwhile.h>
+#include <falcon/psteps/exprvalue.h>
+#include <falcon/psteps/exprmath.h>
+#include <falcon/psteps/exprcompare.h>
 
 class LoopApp: public Falcon::Application
 {
