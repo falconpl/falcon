@@ -24,7 +24,7 @@
 #include <falcon/path.h>
 #include <falcon/paramerror.h>
 
-#include "falcon/cm/uri.h"
+#include <falcon/cm/uri.h>
 
 namespace Falcon {
 namespace Ext {
