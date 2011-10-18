@@ -18,11 +18,12 @@
 #include <falcon/itemid.h>
 #include <falcon/function.h>
 #include <falcon/vm.h>
-#include <falcon/codeerror.h>
 #include <falcon/engine.h>       // for catch -- error check
 #include <falcon/stderrors.h>    // for catch -- error check
 #include <falcon/syntree.h>    // for catch -- error check
 #include <falcon/symbol.h>    // for catch -- error check
+
+#include <falcon/errors/codeerror.h>
 
 #include <falcon/psteps/stmttry.h>      // for catch.
 

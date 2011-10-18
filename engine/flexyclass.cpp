@@ -14,18 +14,18 @@
 */
 
 #define SRC "engine/flexyclass.cpp"
-#include <falcon/flexydict.h>
 
+#include <falcon/flexydict.h>
 #include <falcon/flexyclass.h>
 #include <falcon/item.h>
 #include <falcon/itemdict.h>
-
 #include <falcon/vmcontext.h>
-#include <falcon/accesserror.h>
 #include <falcon/engine.h>
-#include <falcon/operanderror.h>
-
 #include <falcon/ov_names.h>
+
+#include <falcon/errors/accesserror.h>
+#include <falcon/errors/operanderror.h>
+
 
 #include <map>
 

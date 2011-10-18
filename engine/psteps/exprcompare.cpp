@@ -16,7 +16,7 @@
 #include <falcon/trace.h>
 #include <falcon/vmcontext.h>
 #include <falcon/vm.h>
-#include <falcon/operanderror.h>
+#include <falcon/errors/operanderror.h>
 
 #include <falcon/psteps/exprcompare.h>
 

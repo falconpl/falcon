@@ -13,18 +13,18 @@
    See LICENSE file for licensing details.
 */
 
+#include <falcon/classes/classfunction.h>
+
 #include <falcon/function.h>
 #include <falcon/localsymbol.h>
 #include <falcon/closedsymbol.h>
 #include <falcon/item.h>
 #include <falcon/collector.h>
-#include <falcon/classfunction.h>
 #include <falcon/module.h>
 
 #include <falcon/engine.h>
 
-#include <falcon/error.h>
-#include <falcon/paramerror.h>
+#include <falcon/errors/paramerror.h>
 
 namespace Falcon
 {

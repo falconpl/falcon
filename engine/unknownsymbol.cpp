@@ -17,13 +17,14 @@
 #include <falcon/vm.h>
 #include <falcon/unknownsymbol.h>
 #include <falcon/trace.h>
-#include <falcon/codeerror.h>
 #include <falcon/globalsymbol.h>
 #include <falcon/closedsymbol.h>
 #include <falcon/dynsymbol.h>
 #include <falcon/localsymbol.h>
 
 #include <falcon/psteps/exprsym.h>
+
+#include <falcon/errors/codeerror.h>
 
 #include <vector>
 

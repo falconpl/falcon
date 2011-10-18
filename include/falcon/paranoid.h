@@ -25,7 +25,7 @@
 #ifdef _FALCON_NO_PARANOID_CHECK_
    #define PARANOID(...)
 #else
-   #include <falcon/codeerror.h>
+   #include <falcon/errors/codeerror.h>
    #define PARANOID( errdesc, x ) \
          { if( !(x) ) { \
             throw new CodeError( ErrorParam(e_paranoid, __LINE__) \

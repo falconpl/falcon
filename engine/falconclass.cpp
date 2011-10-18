@@ -27,7 +27,6 @@
 #include <falcon/datawriter.h>
 #include <falcon/falconstate.h>
 #include <falcon/expression.h>
-#include <falcon/operanderror.h>
 #include <falcon/optoken.h>
 #include <falcon/vmcontext.h>
 #include <falcon/expression.h>
@@ -36,6 +35,8 @@
 
 #include <falcon/psteps/stmtreturn.h>
 #include <falcon/psteps/stmtinit.h>
+
+#include <falcon/errors/operanderror.h>
 
 #include <map>
 #include <list>

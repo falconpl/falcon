@@ -18,9 +18,9 @@
 
 #include <falcon/pseudofunc.h>
 #include <falcon/fassert.h>
-#include <falcon/classuser.h>
 #include <falcon/property.h>
 #include <falcon/method.h>
+#include <falcon/classes/classuser.h>
 
 #include <falcon/usercarrier.h>
 #include <falcon/uri.h>

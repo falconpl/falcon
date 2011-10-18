@@ -31,9 +31,6 @@
 
 #include <falcon/parser/parser.h>
 #include <falcon/sp/sourcelexer.h>
-#include <falcon/genericerror.h>
-#include <falcon/syntaxerror.h>
-#include <falcon/codeerror.h>
 #include <falcon/error.h>
 #include <falcon/modspace.h>
 
@@ -42,9 +39,13 @@
 #include <falcon/hyperclass.h>
 #include <falcon/modloader.h>
 #include <falcon/modgroup.h>
-#include <falcon/ioerror.h>
 #include <falcon/inheritance.h>
 #include <falcon/requirement.h>
+
+#include <falcon/errors/genericerror.h>
+#include <falcon/errors/syntaxerror.h>
+#include <falcon/errors/codeerror.h>
+#include <falcon/errors/ioerror.h>
 
 #include <falcon/vm.h>
 

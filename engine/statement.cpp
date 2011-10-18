@@ -13,13 +13,13 @@
    See LICENSE file for licensing details.
 */
 
+#include <falcon/trace.h>
 #include <falcon/statement.h>
 #include <falcon/expression.h>
 #include <falcon/syntree.h>
 #include <falcon/vm.h>
 
-#include <falcon/codeerror.h>
-#include <falcon/trace.h>
+#include <falcon/errors/codeerror.h>
 
 namespace Falcon
 {

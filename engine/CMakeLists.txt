@@ -61,17 +61,17 @@ add_library(falcon_engine SHARED
   parser/token.cpp
   parser/tokeninstance.cpp
 
-  core_module/compare.cpp
-  core_module/describe.cpp
-  core_module/len.cpp
-  core_module/minmax.cpp
-  core_module/path.cpp
-  core_module/print.cpp
-  core_module/tostring.cpp
-  core_module/typeid.cpp
-  core_module/clone.cpp
-  core_module/coremodule.cpp
-  core_module/uri.cpp
+  cm/compare.cpp
+  cm/describe.cpp
+  cm/len.cpp
+  cm/minmax.cpp
+  cm/path.cpp
+  cm/print.cpp
+  cm/tostring.cpp
+  cm/typeid.cpp
+  cm/clone.cpp
+  cm/coremodule.cpp
+  cm/uri.cpp
 
   sp/parser_arraydecl.cpp
   sp/parser_assign.cpp
@@ -142,30 +142,46 @@ add_library(falcon_engine SHARED
   psteps/stmttry.cpp
   psteps/stmtwhile.cpp
 
+  classes/classarray.cpp
+  classes/classbool.cpp
+  classes/classdict.cpp
+  classes/classerror.cpp
+  classes/classfunction.cpp
+  classes/classint.cpp
+  classes/classgeneric.cpp
+  classes/classnil.cpp
+  classes/classmethod.cpp
+  classes/classnumeric.cpp
+  classes/classreference.cpp
+  classes/classrange.cpp
+  classes/classstring.cpp
+  classes/classuser.cpp
+
+  errors/accesserror.cpp
+  errors/accesstypeerror.cpp
+  errors/codeerror.cpp
+  errors/encodingerror.cpp
+  errors/errorclasses.cpp
+  errors/genericerror.cpp
+  errors/interruptederror.cpp
+  errors/ioerror.cpp
+  errors/linkerror.cpp
+  errors/matherror.cpp
+  errors/operanderror.cpp
+  errors/paramerror.cpp
+  errors/syntaxerror.cpp
+  errors/unsupportederror.cpp
+
+  tc/transcoderc.cpp
+  tc/transcoderutf8.cpp
+
   memory.cpp
-  accesserror.cpp
-  accesstypeerror.cpp
   application.cpp
   autocstring.cpp
   autowstring.cpp
   bom.cpp
   class.cpp
-  classarray.cpp
-  classbool.cpp
-  classdict.cpp
-  classerror.cpp
-  classfunction.cpp
-  classint.cpp
-  classgeneric.cpp
-  classnil.cpp
-  classmethod.cpp
-  classnumeric.cpp
-  classreference.cpp
-  classrange.cpp
-  classstring.cpp
-  classuser.cpp
   closedsymbol.cpp
-  codeerror.cpp
   collector.cpp
   collector_history.cpp
   datareader.cpp
@@ -173,11 +189,9 @@ add_library(falcon_engine SHARED
   directory.cpp
   dynloader.cpp
   dynsymbol.cpp
-  encodingerror.cpp
   engine.cpp
   error.cpp
   extfunc.cpp
-  errorclasses.cpp
   expression.cpp
   famloader.cpp
   filestat.cpp
@@ -190,7 +204,6 @@ add_library(falcon_engine SHARED
   falconstate.cpp
   fatal.cpp
   fstream.cpp
-  genericerror.cpp
   globalsymbol.cpp
   hyperclass.cpp
   inheritance.cpp
@@ -199,11 +212,7 @@ add_library(falcon_engine SHARED
   item_util.cpp
   itemarray.cpp
   itemdict.cpp
-  interruptederror.cpp
-  ioerror.cpp
-  linkerror.cpp
   localsymbol.cpp
-  matherror.cpp
   metaclass.cpp
   method.cpp
   modcompiler.cpp
@@ -214,9 +223,7 @@ add_library(falcon_engine SHARED
   modspace.cpp
   module.cpp
   multiclass.cpp
-  operanderror.cpp
   overridableclass.cpp
-  paramerror.cpp
   prototypeclass.cpp
   pseudofunc.cpp
   pstep.cpp
@@ -239,18 +246,14 @@ add_library(falcon_engine SHARED
   symbolmap.cpp
   symboltable.cpp
   synfunc.cpp
-  syntaxerror.cpp
   syntree.cpp
   textreader.cpp
   textwriter.cpp
   timestamp.cpp
   transcoder.cpp
-  transcoderc.cpp
-  transcoderutf8.cpp
   trace.cpp
   tracestep.cpp
   unknownsymbol.cpp
-  unsupportederror.cpp
   uri.cpp
   usercarrier.cpp
   vfsiface.cpp

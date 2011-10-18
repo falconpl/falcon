@@ -18,7 +18,7 @@
 #include <falcon/vmcontext.h>
 #include <falcon/pstep.h>
 #include <falcon/pcode.h>
-#include <falcon/operanderror.h>
+#include <falcon/errors/operanderror.h>
 
 namespace Falcon {
 

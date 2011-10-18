@@ -29,11 +29,12 @@
 #include <falcon/inheritance.h>
 #include <falcon/requirement.h>
 #include <falcon/error.h>
-#include <falcon/linkerror.h>
 #include <falcon/falconclass.h>
 #include <falcon/hyperclass.h>
 #include <falcon/dynunloader.h>
-#include <falcon/genericerror.h>
+
+#include <falcon/errors/genericerror.h>
+#include <falcon/errors/linkerror.h>
 
 #include <stdexcept>
 #include <map>

@@ -20,14 +20,15 @@
 #include <falcon/itemarray.h>
 #include <falcon/function.h>
 #include <falcon/ov_names.h>
-#include <falcon/accesserror.h>
-#include <falcon/operanderror.h>
 #include <falcon/vmcontext.h>
 #include <falcon/fassert.h>
 
-#include "multiclass_private.h"
+#include <falcon/errors/accesserror.h>
+#include <falcon/errors/operanderror.h>
 
 #include <cstring>
+
+#include "multiclass_private.h"
 
 namespace Falcon {
 

@@ -19,9 +19,9 @@
 #include <falcon/trace.h>
 #include <falcon/vmcontext.h>
 #include <falcon/vm.h>
-#include <falcon/operanderror.h>
-#include <falcon/codeerror.h>
-#include <falcon/matherror.h>
+#include <falcon/errors/operanderror.h>
+#include <falcon/errors/codeerror.h>
+#include <falcon/errors/matherror.h>
 
 #include <falcon/psteps/exprmath.h>
 

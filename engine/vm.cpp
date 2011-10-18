@@ -20,15 +20,11 @@
 #include <falcon/statement.h>
 #include <falcon/item.h>
 #include <falcon/function.h>
-#include <falcon/codeerror.h>
-
 #include <falcon/stream.h>
 #include <falcon/stdstreams.h>
 #include <falcon/textreader.h>
 #include <falcon/textwriter.h>
 #include <falcon/transcoder.h>
-
-#include <falcon/genericerror.h>
 #include <falcon/locationinfo.h>
 #include <falcon/module.h>
 #include <falcon/trace.h>
@@ -36,6 +32,9 @@
 #include <falcon/mt.h>
 #include <falcon/globalsymbol.h>
 #include <falcon/modspace.h>
+
+#include <falcon/errors/codeerror.h>
+#include <falcon/errors/genericerror.h>
 
 #include <map>
 #include <list>

@@ -18,8 +18,10 @@
 
 #include <falcon/property.h>
 #include <falcon/item.h>
-#include <falcon/classuser.h>
-#include <falcon/paramerror.h>
+
+#include <falcon/classes/classuser.h>
+
+#include <falcon/errors/paramerror.h>
 
 namespace Falcon {
 

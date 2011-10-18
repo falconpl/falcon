@@ -24,9 +24,9 @@
 #include <falcon/fstream.h>
 #include <falcon/fstream_posix.h>
 #include <falcon/interrupt.h>
-#include <falcon/ioerror.h>
-#include <falcon/interruptederror.h>
-#include <falcon/unsupportederror.h>
+#include <falcon/errors/ioerror.h>
+#include <falcon/errors/interruptederror.h>
+#include <falcon/errors/unsupportederror.h>
 
 #include <sys/types.h>
 #include <sys/stat.h>

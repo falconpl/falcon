@@ -15,10 +15,11 @@
 
 #include <falcon/falconinstance.h>
 #include <falcon/falconclass.h>
-#include <falcon/accesserror.h>
-#include <falcon/accesstypeerror.h>
+#include <falcon/inheritance.h>
 
-#include "falcon/inheritance.h"
+#include <falcon/errors/accesserror.h>
+#include <falcon/errors/accesstypeerror.h>
+
 
 namespace Falcon
 {

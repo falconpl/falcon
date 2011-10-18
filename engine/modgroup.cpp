@@ -19,17 +19,18 @@
 #include <falcon/modgroup.h>
 #include <falcon/trace.h>
 #include <falcon/error.h>
-#include <falcon/linkerror.h>
-#include <falcon/genericerror.h>
 #include <falcon/modspace.h>
 #include <falcon/module.h>
 #include <falcon/symbol.h>
 #include <falcon/vmcontext.h>
 
-#include "modmap_private.h"
-#include "symbolmap_private.h"
+#include <falcon/errors/linkerror.h>
+#include <falcon/errors/genericerror.h>
 
 #include <deque>
+
+#include "modmap_private.h"
+#include "symbolmap_private.h"
 
 namespace Falcon 
 {

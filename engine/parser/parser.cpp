@@ -15,15 +15,16 @@
 
 #define SRC "engine/parser/parser.cpp"
 
-#include <falcon/syntaxerror.h>
 #include <falcon/parser/parser.h>
 #include <falcon/parser/lexer.h>
 #include <falcon/parser/tokeninstance.h>
 #include <falcon/parser/state.h>
-#include <falcon/codeerror.h>
 #include <falcon/trace.h>
+
 #include <falcon/error.h>
-#include <falcon/genericerror.h>
+#include <falcon/errors/genericerror.h>
+#include <falcon/errors/syntaxerror.h>
+#include <falcon/errors/codeerror.h>
 
 #include "./parser_private.h"
 

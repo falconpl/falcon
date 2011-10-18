@@ -18,7 +18,7 @@
 #include <falcon/sys.h>
 #include <falcon/autocstring.h>
 #include <falcon/fstream.h>
-#include <falcon/ioerror.h>
+#include <falcon/errors/ioerror.h>
 #include <falcon/filestat.h>
 #include <falcon/directory.h>
 #include <falcon/fstream_posix.h>

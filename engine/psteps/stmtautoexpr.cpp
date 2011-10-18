@@ -20,7 +20,7 @@
 #include <falcon/syntree.h>
 #include <falcon/vmcontext.h>
 
-#include <falcon/codeerror.h>
+#include <falcon/errors/codeerror.h>
 #include <falcon/trace.h>
 
 #include <falcon/psteps/stmtautoexpr.h>

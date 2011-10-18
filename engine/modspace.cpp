@@ -14,7 +14,6 @@
 */
 
 #include <falcon/modspace.h>
-#include <falcon/linkerror.h>
 #include <falcon/error.h>
 #include <falcon/symbol.h>
 #include <falcon/module.h>
@@ -22,6 +21,8 @@
 #include <falcon/modloader.h>
 #include <falcon/mt.h>
 #include <falcon/modgroup.h>
+
+#include <falcon/errors/linkerror.h>
 
 #include <map>
 

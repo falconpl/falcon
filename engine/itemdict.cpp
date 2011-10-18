@@ -19,7 +19,8 @@
 #include <falcon/class.h>
 #include <falcon/itemid.h>
 #include <falcon/itemarray.h>
-#include <falcon/accesstypeerror.h>
+
+#include <falcon/errors/accesstypeerror.h>
 
 #include <map>
 

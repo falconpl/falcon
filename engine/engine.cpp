@@ -30,8 +30,8 @@
 
 //--- standard transcoder headers ---
 
-#include <falcon/transcoderc.h>
-#include <falcon/transcoderutf8.h>
+#include <falcon/tc/transcoderc.h>
+#include <falcon/tc/transcoderutf8.h>
 
 //--- core function headers ---
 #include <falcon/cm/coremodule.h>
@@ -49,21 +49,22 @@
 #include <falcon/collector.h>
 
 //--- type headers ---
-#include <falcon/classfunction.h>
-#include <falcon/classnil.h>
-#include <falcon/classbool.h>
-#include <falcon/classint.h>
-#include <falcon/classnumeric.h>
-#include <falcon/classstring.h>
-#include <falcon/classrange.h>
-#include <falcon/classarray.h>
-#include <falcon/classdict.h>
-#include <falcon/classgeneric.h>
-#include <falcon/classnumeric.h>
-#include <falcon/classmethod.h>
+#include <falcon/classes/classfunction.h>
+#include <falcon/classes/classnil.h>
+#include <falcon/classes/classbool.h>
+#include <falcon/classes/classint.h>
+#include <falcon/classes/classnumeric.h>
+#include <falcon/classes/classstring.h>
+#include <falcon/classes/classrange.h>
+#include <falcon/classes/classarray.h>
+#include <falcon/classes/classdict.h>
+#include <falcon/classes/classgeneric.h>
+#include <falcon/classes/classnumeric.h>
+#include <falcon/classes/classmethod.h>
+#include <falcon/classes/classreference.h>
+
 #include <falcon/prototypeclass.h>
 #include <falcon/metaclass.h>
-#include <falcon/classreference.h>
 
 #include <falcon/stderrors.h>
 #include <falcon/modspace.h>

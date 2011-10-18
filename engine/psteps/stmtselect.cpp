@@ -20,9 +20,10 @@
 #include <falcon/pcode.h>
 #include <falcon/vmcontext.h>
 #include <falcon/syntree.h>
-#include <falcon/linkerror.h>
 #include <falcon/symbol.h>
 #include <falcon/module.h>
+
+#include <falcon/errors/linkerror.h>
 
 #include <falcon/psteps/stmtselect.h>
 

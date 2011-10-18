@@ -19,7 +19,8 @@
 #include <falcon/prototypeclass.h>
 #include <falcon/flexydict.h>
 #include <falcon/vmcontext.h>
-#include <falcon/accesserror.h>
+
+#include <falcon/errors/accesserror.h>
 
 #include <map>
 #include <vector>

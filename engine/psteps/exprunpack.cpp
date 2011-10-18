@@ -18,8 +18,8 @@
 #include <falcon/item.h>
 #include <falcon/vm.h>
 #include <falcon/pcode.h>
-#include <falcon/operanderror.h>
-#include <falcon/codeerror.h>
+#include <falcon/errors/operanderror.h>
+#include <falcon/errors/codeerror.h>
 #include <falcon/itemarray.h>
 #include <falcon/symbol.h>
 

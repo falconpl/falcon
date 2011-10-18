@@ -24,7 +24,7 @@
 #include <falcon/application.h>
 #include <falcon/textreader.h>
 #include <falcon/globalsymbol.h>
-#include <falcon/genericerror.h>
+#include <falcon/errors/genericerror.h>
 #include <falcon/unknownsymbol.h>
 #include <falcon/falconclass.h>
 

@@ -17,9 +17,11 @@
 #define SRC "engine/method.cpp"
 
 #include <falcon/method.h>
-#include <falcon/classuser.h>
 #include <falcon/item.h>
-#include <falcon/codeerror.h>
+
+#include <falcon/classes/classuser.h>
+
+#include <falcon/errors/codeerror.h>
 
 namespace Falcon {
 

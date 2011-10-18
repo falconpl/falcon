@@ -20,7 +20,7 @@
 #include <falcon/stdstreams.h>
 #include <falcon/fstream_posix.h>
 #include <unistd.h>
-#include <falcon/ioerror.h>
+#include <falcon/errors/ioerror.h>
 
 namespace Falcon {
 

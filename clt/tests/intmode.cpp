@@ -27,7 +27,6 @@
 #include <falcon/extfunc.h>
 #include <falcon/modspace.h>
 #include <falcon/globalsymbol.h>
-#include <falcon/genericerror.h>
 #include <falcon/stdstreams.h>
 #include <falcon/textwriter.h>
 #include <falcon/trace.h>
@@ -38,6 +37,8 @@
 #include <falcon/sp/sourceparser.h>
 
 #include <falcon/cm/coremodule.h>
+
+#include <falcon/errors/genericerror.h>
 
 #include <falcon/psteps/stmtrule.h>
 #include <falcon/psteps/exprvalue.h>

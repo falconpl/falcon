@@ -17,7 +17,7 @@
 #include <falcon/stream.h>
 #include <falcon/engine.h>
 #include <falcon/transcoder.h>
-#include <falcon/encodingerror.h>
+#include <falcon/errors/encodingerror.h>
 
 #include <string.h>
 

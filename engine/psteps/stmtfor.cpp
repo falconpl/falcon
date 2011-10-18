@@ -19,12 +19,13 @@
 #include <falcon/trace.h>
 #include <falcon/fassert.h>
 #include <falcon/expression.h>
-#include <falcon/codeerror.h>
 #include <falcon/stdsteps.h>
 #include <falcon/syntree.h>
 #include <falcon/symbol.h>
 #include <falcon/itemarray.h>
-#include <falcon/accesserror.h>
+
+#include <falcon/errors/accesserror.h>
+#include <falcon/errors/codeerror.h>
 
 #include <falcon/psteps/stmtfor.h>
 

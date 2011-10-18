@@ -17,8 +17,7 @@
 #include <falcon/endianity.h>
 #include <falcon/stream.h>
 #include <falcon/datareader.h>
-
-#include <falcon/ioerror.h>
+#include <falcon/errors/ioerror.h>
 
 #include <string.h>
 

@@ -18,7 +18,7 @@
 
 #include <falcon/symbol.h>
 #include <falcon/vmcontext.h>
-#include <falcon/classreference.h>
+#include <falcon/classes/classreference.h>
 
 #include <falcon/psteps/exprsym.h>
 #include <falcon/psteps/exprref.h>

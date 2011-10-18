@@ -50,7 +50,7 @@
 #include <falcon/dynsymbol.h>
 #include <falcon/closedsymbol.h>
 
-#include <falcon/classuser.h>
+#include <falcon/classes/classuser.h>
 #include <falcon/property.h>
 #include <falcon/method.h>
 
@@ -58,18 +58,19 @@
 #include <falcon/itemid.h>
 
 //--- error headers ---
-#include <falcon/accesserror.h>
-#include <falcon/accesstypeerror.h>
-#include <falcon/classerror.h>
-#include <falcon/codeerror.h>
-#include <falcon/genericerror.h>
-#include <falcon/interruptederror.h>
-#include <falcon/ioerror.h>
-#include <falcon/operanderror.h>
-#include <falcon/unsupportederror.h>
-#include <falcon/syntaxerror.h>
-#include <falcon/encodingerror.h>
-#include <falcon/linkerror.h>
+#include <falcon/classes/classerror.h>
+
+#include <falcon/errors/accesserror.h>
+#include <falcon/errors/accesstypeerror.h>
+#include <falcon/errors/codeerror.h>
+#include <falcon/errors/genericerror.h>
+#include <falcon/errors/interruptederror.h>
+#include <falcon/errors/ioerror.h>
+#include <falcon/errors/operanderror.h>
+#include <falcon/errors/unsupportederror.h>
+#include <falcon/errors/syntaxerror.h>
+#include <falcon/errors/encodingerror.h>
+#include <falcon/errors/linkerror.h>
 
 //--- class headers ---
 #include <falcon/inheritance.h>

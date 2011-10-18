@@ -20,10 +20,10 @@
 #include <falcon/vmcontext.h>
 #include <falcon/class.h>
 #include <falcon/stdsteps.h>
-#include <falcon/operanderror.h>
 #include <falcon/pcode.h>
 
 #include <falcon/psteps/exprincdec.h>
+#include <falcon/errors/operanderror.h>
 
 namespace Falcon
 {

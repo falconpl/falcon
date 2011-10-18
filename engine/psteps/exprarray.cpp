@@ -15,7 +15,7 @@
 
 #include <falcon/trace.h>
 #include <falcon/itemarray.h>
-#include <falcon/classarray.h>
+#include <falcon/classes/classarray.h>
 #include <falcon/pcode.h>
 #include <falcon/vm.h>
 #include <falcon/engine.h>

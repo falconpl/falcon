@@ -24,15 +24,16 @@
 #include <falcon/sys.h>
 #include <falcon/engine.h>
 #include <falcon/transcoder.h>
-#include <falcon/ioerror.h>
 #include <falcon/vfsiface.h>
 #include <falcon/textreader.h>
 #include <falcon/datareader.h>
 #include <falcon/stream.h>
-#include <falcon/genericerror.h>
 
 #include <falcon/trace.h>
 #include <falcon/fassert.h>
+
+#include <falcon/errors/ioerror.h>
+#include <falcon/errors/genericerror.h>
 
 #include <deque>
 

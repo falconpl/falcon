@@ -16,7 +16,7 @@
 #ifndef _FALCON_ERRORCLASSES_H_
 #define _FALCON_ERRORCLASSES_H_
 
-#include <falcon/classerror.h>
+#include <falcon/classes/classerror.h>
 
 namespace Falcon {
 

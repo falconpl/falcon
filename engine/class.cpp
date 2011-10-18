@@ -21,10 +21,9 @@
 #include <falcon/class.h>
 #include <falcon/itemid.h>
 #include <falcon/vmcontext.h>
-#include <falcon/operanderror.h>
-#include <falcon/error.h>
-
 #include <falcon/bom.h>
+#include <falcon/errors/operanderror.h>
+
 
 
 namespace Falcon {

@@ -19,7 +19,7 @@
 #include <falcon/trace.h>
 #include <falcon/dynsymbol.h>
 #include <falcon/vm.h>
-#include <falcon/codeerror.h>
+#include <falcon/errors/codeerror.h>
 
 #include <falcon/psteps/exprsym.h>
 

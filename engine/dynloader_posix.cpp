@@ -18,7 +18,7 @@
 
 #include <falcon/dynloader.h>
 #include <falcon/dynunloader.h>
-#include <falcon/ioerror.h>
+#include <falcon/errors/ioerror.h>
 #include <falcon/autocstring.h>
 #include <falcon/string.h>
 
