@@ -63,7 +63,9 @@ FALCON_FUNC parse( VMARG )
     if ( key == 0 && mods == 0 )
         throw_inv_params( accel.c_str() ); // todo: better description?
     CoreArray* arr = new CoreArray( 2 );
-    arr->append( (int64) key );
+    String* s = new String;
+    s->append( key );
+    arr->append( s );
     arr->append( (int64) mods );
     vm->retval( arr );
 }
