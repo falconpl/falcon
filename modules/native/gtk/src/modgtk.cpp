@@ -35,6 +35,7 @@
 #if GTK_CHECK_VERSION( 2, 6, 0 )
 #include "gtk_AboutDialog.hpp"
 #endif
+#include "gtk_Accelerator.hpp"
 #include "gtk_AccelGroup.hpp"
 #include "gtk_AccelMap.hpp"
 #include "gtk_Action.hpp"
@@ -232,6 +233,7 @@ FALCON_MODULE_DECL
 
     // not GObject based //
 
+    Falcon::Gtk::Accelerator::modInit( self );
     Falcon::Gtk::CellEditable::modInit( self );
     Falcon::Gtk::FileFilterInfo::modInit( self );
     Falcon::Gtk::Main::modInit( self );

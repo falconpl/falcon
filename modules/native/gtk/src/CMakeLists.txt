@@ -38,6 +38,7 @@ set( SRC_FILES
     gdk_Visual.cpp
     gdk_Window.cpp
     gtk_AboutDialog.cpp
+    gtk_Accelerator.cpp
     gtk_AccelGroup.cpp
     gtk_AccelMap.cpp
     gtk_Action.cpp
@@ -202,6 +203,7 @@ set( HDR_FILES
     gdk_Visual.hpp
     gdk_Window.hpp
     gtk_AboutDialog.hpp
+    gtk_Accelerator.hpp
     gtk_AccelGroup.hpp
     gtk_AccelMap.hpp
     gtk_Action.hpp
