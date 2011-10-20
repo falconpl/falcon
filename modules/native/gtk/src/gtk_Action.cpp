@@ -68,7 +68,7 @@ void Action::modInit( Falcon::Module* mod )
     { "get_accel_path",         &Action::get_accel_path },
     { "set_accel_path",         &Action::set_accel_path },
     //{ "get_accel_closure",     &Action::get_accel_closure },
-    //{ "set_accel_group",       &Action::set_accel_group },
+    { "set_accel_group",       &Action::set_accel_group },
 #if GTK_CHECK_VERSION( 2, 16, 0 )
     { "set_label",              &Action::set_label },
     { "get_label",              &Action::get_label },
@@ -856,6 +856,24 @@ FALCON_FUNC Action::get_is_important( VMARG )
     MYSELF;
     GET_OBJ( self );
     vm->retval( (bool) gtk_action_get_is_important( (GtkAction*)_obj ) );
+}
+
+/*#
+    @method set_accel_group
+    @brief Sets the GtkAccelGroup in which the accelerator for this action will be installed
+    @param accel_group 	a GtkAccelGroup or NULL. [allow-none]
+*/
+FALCON_FUNC Action::set_accel_group( VMARG )
+{
+	Item* accGroup = vm->param( 0 );
+
+#ifndef NO_PARAMETER_CHECK
+#endif
+
+	MYSELF;
+    GET_OBJ( self );
+	gtk_action_set_accel_group( (GtkAction*)_obj, ( GtkAccelGroup* ) accGroup);
+
 }
 
 #endif // GTK_CHECK_VERSION( 2, 16, 0 )

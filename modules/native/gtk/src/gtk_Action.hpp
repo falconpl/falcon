@@ -86,7 +86,7 @@ public:
 
     //static FALCON_FUNC get_accel_closure( VMARG );
 
-    //static FALCON_FUNC set_accel_group( VMARG );
+    static FALCON_FUNC set_accel_group( VMARG );
 
 #if GTK_CHECK_VERSION( 2, 16, 0 )
 
