@@ -39,6 +39,7 @@
 #include "gtk_AccelGroup.hpp"
 #include "gtk_AccelMap.hpp"
 #include "gtk_Action.hpp"
+#include "gtk_ActionGroup.hpp"
 #include "gtk_Adjustment.hpp"
 #include "gtk_Alignment.hpp"
 #include "gtk_Arrow.hpp"
@@ -253,6 +254,7 @@ FALCON_MODULE_DECL
     Falcon::Gtk::Action::modInit( self );
         Falcon::Gtk::ToggleAction::modInit( self );
             Falcon::Gtk::RadioAction::modInit( self );
+    Falcon::Gtk::ActionGroup::modInit( self );
 #if GTK_VERSION_MINOR >= 18
     Falcon::Gtk::EntryBuffer::modInit( self );
 #endif

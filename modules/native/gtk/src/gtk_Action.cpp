@@ -880,5 +880,5 @@ FALCON_FUNC Action::get_is_important( VMARG )
 } // Gtk
 } // Falcon
 
-// vi: set ai et sw=4:
+// vi: set ai et sw=4 ts=4 sts=4:
 // kate: replace-tabs on; shift-width 4;

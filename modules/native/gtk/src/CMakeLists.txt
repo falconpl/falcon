@@ -42,6 +42,7 @@ set( SRC_FILES
     gtk_AccelGroup.cpp
     gtk_AccelMap.cpp
     gtk_Action.cpp
+    gtk_ActionGroup.cpp
     gtk_Activatable.cpp
     gtk_Adjustment.cpp
     gtk_Alignment.cpp
@@ -207,6 +208,7 @@ set( HDR_FILES
     gtk_AccelGroup.hpp
     gtk_AccelMap.hpp
     gtk_Action.hpp
+    gtk_ActionGroup.hpp
     gtk_Activatable.hpp
     gtk_Adjustment.hpp
     gtk_Alignment.hpp
