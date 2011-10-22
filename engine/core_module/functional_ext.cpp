@@ -64,7 +64,7 @@ namespace core {
    If this list had to be evaluated in a functional context, then before iff had a chance to
    decide what to do, the two arrays [func0, ...] and [func1,...] would have been evaluated.
    As iff is a special construct, the VM doesn't evaluate its parameters and lets iff perform
-   its operations as it prefer. In the case o iff, it first evaluates the first parameter,
+   its operations as it prefer. In the case of iff, it first evaluates the first parameter,
    then evaluates in functional context the second on the third parameter,
    leaving unevaluated the other one.
 
@@ -85,7 +85,7 @@ namespace core {
    This places in result the value returned by func0 if shouldEval is true, while it returns exactly
    the function object func0 as-is if shouldEval is false.
 
-   A more formal definition of the funcional programming support  in Falcon is provided in the
+   A more formal definition of the functional programming support  in Falcon is provided in the
    Survival Guide.
 */
 
@@ -129,7 +129,7 @@ static bool core_any_next( ::Falcon::VMachine *vm )
 
    Items in @b sequence are evaluated in functional context for truth value. This means that,
    if they are sigmas, they get sigma-reduced and their return value is evaluated,
-   otheriwise they are evaluated directly.
+   otherwise they are evaluated directly.
 
    Truth value is determined using the standard Falcon truth
    check (nil is false, numerics are true if not zero, strings and collections are true if not
@@ -177,7 +177,7 @@ FALCON_FUNC  core_any ( ::Falcon::VMachine *vm )
 
 static bool core_all_next( ::Falcon::VMachine *vm )
 {
-   // was the elaboration succesful?
+   // was the elaboration succesfull?
    if ( ! vm->regA().isTrue() )
    {
       vm->regA().setBoolean( false );
@@ -216,7 +216,7 @@ static bool core_all_next( ::Falcon::VMachine *vm )
 
    Items in @b sequence are evaluated in functional context for truth value. This means that,
    if they are sigmas, they get sigma-reduced and their return value is evaluated,
-   otheriwise they are evaluated directly.
+   otherwise they are evaluated directly.
 
    Truth value is determined using the standard Falcon truth
    check (nil is false, numerics are true if not zero, strings and collections are true if not
@@ -272,7 +272,7 @@ FALCON_FUNC  core_all ( ::Falcon::VMachine *vm )
 
 static bool core_anyp_next( ::Falcon::VMachine *vm )
 {
-   // was the elaboration succesful?
+   // was the elaboration succesfull?
    if ( vm->regA().isTrue() )
    {
       vm->regA().setBoolean( true );
@@ -321,7 +321,7 @@ static bool core_anyp_next( ::Falcon::VMachine *vm )
 
    Parameters are evaluated in functional context. This means that,
    if they are sigmas, they get sigma-reduced and their return value is evaluated,
-   otheriwise they are evaluated directly.
+   otherwise they are evaluated directly.
 
    Truth value is determined using the standard Falcon truth
    check (nil is false, numerics are true if not zero, strings and collections are true if not
@@ -358,7 +358,7 @@ FALCON_FUNC  core_anyp ( ::Falcon::VMachine *vm )
 
 static bool core_allp_next( ::Falcon::VMachine *vm )
 {
-   // was the elaboration succesful?
+   // was the elaboration succesfull?
    if ( ! vm->regA().isTrue() )
    {
       vm->regA().setBoolean( false );
@@ -407,7 +407,7 @@ static bool core_allp_next( ::Falcon::VMachine *vm )
 
    Parameters are evaluated in functional context. This means that,
    if they are sigmas, they get sigma-reduced and their return value is evaluated,
-   otheriwise they are evaluated directly.
+   otherwise they are evaluated directly.
 
    Truth value is determined using the standard Falcon truth
    check (nil is false, numerics are true if not zero, strings and collections are true if not
@@ -522,7 +522,7 @@ FALCON_FUNC  core_valof ( ::Falcon::VMachine *vm )
    on each element passed as a parameter, returning the
    smallest of them.
 
-   A standard VM comparation is performed, so the standard
+   A standard VM comparison is performed, so the standard
    ordering rules apply. This also means that objects overloading
    the @a BOM.compare method may provide specialized ordering
    rules.
@@ -564,7 +564,7 @@ FALCON_FUNC  core_min ( ::Falcon::VMachine *vm )
    on each element passed as a parameter, returning the
    greater of them.
 
-   A standard VM comparation is performed, so the standard
+   A standard VM comparison is performed, so the standard
    ordering rules apply. This also means that objects overloading
    the @a BOM.compare method may provide specialized ordering
    rules.

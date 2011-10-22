@@ -424,7 +424,7 @@ FALCON_FUNC  dirMakeLink( ::Falcon::VMachine *vm )
    @function fileNameSplit
    @brief Splits a filename in four elements.
    @param path A string containing a path.
-   @return An array of four elements containing the splitted string.
+   @return An array of four elements containing the split string.
 
    This function analyzes the given filename and separates it in disk/server
    specification, path, file name and extension, returning them in a 4 string
@@ -434,7 +434,7 @@ FALCON_FUNC  dirMakeLink( ::Falcon::VMachine *vm )
    The extension dot, the disk/server specification colon and the last slash of the
    path are removed from the returned strings.
 
-   @note This function is an interal shortcut to the @a Path class.
+   @note This function is an internal shortcut to the @a Path class.
 */
 
 FALCON_FUNC  fileNameSplit ( ::Falcon::VMachine *vm )
@@ -490,7 +490,7 @@ FALCON_FUNC  fileNameSplit ( ::Falcon::VMachine *vm )
    It is also possible to pass all the four elements in an array, in place
    of the @b spec parameter.
 
-   @note This function is an interal shortcut to the @a Path class.
+   @note This function is an internal shortcut to the @a Path class.
 */
 FALCON_FUNC  fileNameMerge ( ::Falcon::VMachine *vm )
 {
@@ -960,14 +960,14 @@ static bool Directory_descend_next ( ::Falcon::VMachine *vm )
    If an entry is detected to be a directory, it is passed to
    @b dfunc as the only parameter. If @b ffunc is also provided,
    then it will receive all the non-directory entries. Entries
-   coresponding to the current directory and the parent directory
+   corresponding to the current directory and the parent directory
    will never be sent to the handler functions.
 
    @note The parameters for @b dfunc and @b ffunc will always
    be relative to the directory on which this object has been
    created.
 
-   Retunring an out of band 0, any of the callbacks involved may
+   Returning an out of band 0, any of the callbacks involved may
    stop the processing and return immediately. An out of band 1
    will skip the currently processed item and proceed.
    The @b dfunc handler is called before descending into the found

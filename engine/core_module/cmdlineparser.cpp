@@ -183,7 +183,7 @@
 
    @b Notice: Callback methods in the instance are called in Virtual Machine atomic mode.
    The called methods cannot be interrupted by external kind requests, they won't honor
-   periodic callback requests and and they will be forbidden to sleep or yield the
+   periodic callback requests and they will be forbidden to sleep or yield the
    execution to other coroutines. Parsing of the whole command line happens
    in an atomic context, so it's not possible to wait for other coroutines in
    anyone of the callback methods. It is also advisable that methods are simple
