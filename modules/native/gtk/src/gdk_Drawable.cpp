@@ -111,7 +111,7 @@ Falcon::CoreObject* Drawable::factory( const Falcon::CoreClass* gen, void* drawa
 
     Some of the drawing operations take Pango data structures like PangoContext,
     PangoLayout or PangoLayoutLine as arguments. If you're using GTK+, the
-    ususal way to obtain these structures is via
+    usual way to obtain these structures is via
     gtk_widget_create_pango_context() or gtk_widget_create_pango_layout().
  */
 
