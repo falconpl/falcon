@@ -41,6 +41,7 @@ StdErrors::StdErrors()
    m_param =  new ClassParamError;
    m_math = new ClassMathError;
    m_link = new ClassLinkError;
+   m_unserializable = new ClassUnserializableError;
 }
 
 
@@ -59,6 +60,7 @@ StdErrors::~StdErrors()
    delete m_syntax;
    delete m_param;
    delete m_link;
+   delete m_unserializable;
 }
 
 void StdErrors::addBuiltins() const
@@ -78,6 +80,7 @@ void StdErrors::addBuiltins() const
    eng->addBuiltin(m_syntax);
    eng->addBuiltin(m_param);
    eng->addBuiltin(m_link);
+   eng->addBuiltin(m_unserializable);
 }
    
 }

@@ -2,7 +2,7 @@
    FALCON - The Falcon Programming Language.
    FILE: modcompiler.h
 
-   Interactive compiler
+   Module compiler from non-interactive text file.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: Sat, 07 May 2011 16:04:05 +0200

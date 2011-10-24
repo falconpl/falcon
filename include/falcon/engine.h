@@ -33,6 +33,7 @@ class TranscoderMap;
 class PseudoFunction;
 class PseudoFunctionMap;
 class PredefSymMap;
+class RegisteredClassesMap;
 
 class Module;
 class BOM;
@@ -245,8 +246,8 @@ public:
     */
    //Transcoder* getSystemTranscoder( bool bDefault = false );
 
-   VFSIface& vsf() { return m_vfs; }
-   const VFSIface& vsf() const { return m_vfs; }
+   VFSIface& vfs() { return m_vfs; }
+   const VFSIface& vfs() const { return m_vfs; }
 
    /** Adds a pseudofunction to the engine.
     \param pf The Pseudo function to be added.
@@ -289,10 +290,67 @@ public:
    /** Archive of standard steps. */
    StdSteps* stdSteps() const { return m_stdSteps; }
    
+   /** Adds a builtin instance of this class.
+    @param src The class of this item.
+    
+    This method adds a "class" item (Item with
+    MetaClass as class, and this Class as value) to the set of common
+    builtin items available to any falcon program.
+    
+    If the class has not a module, it is also automatically inserted
+    into the class register via registerClass().    
+    */
    bool addBuiltin( Class* src );
+   
+   /** Adds a builtin item.
+    @param name The name under which the builtin is known.
+    @param value The value that is to be published to the scripts.
+    
+    */
    bool addBuiltin( const String& name, const Item& value );
    
+   /** Exports the builtins on the given module space.
+    @param ms The module space where to export the builtins.
+    
+    */
    void exportBuiltins( ModSpace* ms ) const;
+   
+   /** Centralized repository of publically available classes.
+    @param cls The class to be stored.
+    
+    Classes are usually stored in the modules that create them; however, some 
+    classes are not created by modules. It's the case of classe provided by
+    the engine or by embedding applications.
+    
+    Usually, the scripts don't need those classes, but some processes may
+    need to access this classes by name. For instance, serialization, or
+    creation of standardized objects, may need to access a class knowing
+    its name.
+    
+    Class stored in the engine class register are known only by name, and they
+    must have a well-known system-wide uinque name. For instance, "Integer",
+    "String" and so on. Class having a module might be added to the register;
+    in that case, they will be known by their full ID (module logical name
+    preceding their name, separated by a dot). 
+    
+    However, there isn't any way to unregister a class, so, when registering
+    a class stored in a module, the caller must be sure that the module is static
+    and will not be destroyed until the end of the process.
+    
+    The class register is not owning the stored classes; this is just a
+    dictionary of well known classes that are not directly accessible in modules
+    that a VM may be provided with. 
+    
+    */
+   void registerClass( Class* reg );
+   
+   /** Gets a previously registered class by name.
+    @param name The name or full class ID of the desired class.
+    @return The class if it had been registered, 0 if the name is not found.
+    
+    @see registerClass
+    */
+   Class* getRegisteredClass( const String& name ) const;
    
 protected:
    Engine();
@@ -337,7 +395,8 @@ protected:
    Class* m_syntaxErrorClass;
    Class* m_paramErrorClass;
    
-
+   RegisteredClassesMap* m_regClasses;
+   
    //===============================================
    // Transcoders
    //

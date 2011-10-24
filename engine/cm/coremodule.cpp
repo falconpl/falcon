@@ -27,6 +27,7 @@
 #include <falcon/cm/clone.h>
 #include <falcon/cm/uri.h>
 #include <falcon/cm/path.h>
+#include <falcon/cm/stream.h>
 
 #include <falcon/classes/classstring.h>
 #include <falcon/classes/classnil.h>
@@ -66,6 +67,7 @@ CoreModule::CoreModule():
       // Standard classes
       << new Ext::ClassURI
       << new Ext::ClassPath      
+      << new Ext::ClassStream
       ;
 }
 

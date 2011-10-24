@@ -22,7 +22,9 @@
 #include <falcon/itemid.h>
 #include <falcon/vmcontext.h>
 #include <falcon/bom.h>
+#include <falcon/error.h>
 #include <falcon/errors/operanderror.h>
+#include <falcon/errors/unserializableerror.h>
 
 
 
@@ -80,6 +82,34 @@ void* Class::getParentData( Class* parent, void* data ) const
 void Class::module( Module* m )
 {
    m_module = m;
+}
+
+ 
+void Class::store( VMContext*, DataWriter*, void* ) const
+{
+      throw new UnserializableError(ErrorParam( e_unserializable, __LINE__, __FILE__ )
+      .origin( ErrorParam::e_orig_vm )
+      .extra(name() + " unsupported store"));
+}
+
+
+void Class::restore( VMContext*, DataReader*, void* ) const
+{
+   throw new UnserializableError(ErrorParam( e_unserializable, __LINE__, __FILE__ )
+      .origin( ErrorParam::e_orig_vm )
+      .extra(name() + " unsupported restore"));
+}
+
+
+void Class::flatten( VMContext*, ItemArray&, void* ) const
+{
+   // normally does nothing
+}
+
+
+void Class::unflatten( VMContext*, ItemArray&, void* ) const
+{
+   // normally does nothing
 }
 
 

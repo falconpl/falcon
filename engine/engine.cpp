@@ -97,6 +97,9 @@ class PredefSymMap: public std::map<String, GlobalSymbol*>
 {
 };
 
+class RegisteredClassesMap: public std::map<String, Class*>
+{
+};
 
 //=======================================================
 // Engine static declarations
@@ -183,6 +186,7 @@ Engine::Engine()
    // Creating predefined symbols
    //
    m_predefs = new PredefSymMap;
+   m_regClasses = new RegisteredClassesMap;
    
    addBuiltin( m_functionClass );
    addBuiltin( m_stringClass );
@@ -275,7 +279,8 @@ Engine::~Engine()
       }
    }
    delete m_predefs;
-
+   delete m_regClasses;
+   
    //============================================
    // Delete singletons
    //
@@ -409,6 +414,11 @@ PseudoFunction* Engine::getPseudoFunction( const String& name ) const
 
 bool Engine::addBuiltin( Class* src )
 {
+   if( src->module() == 0 )
+   {
+      registerClass( src );
+   }
+   
    return addBuiltin( src->name(), Item( m_metaClass, src ) );
 }
 
@@ -436,6 +446,28 @@ void Engine::exportBuiltins(ModSpace* ms) const
       ms->addSymbol( iter->second, 0 );
       ++iter;
    }
+}
+
+
+void Engine::registerClass( Class* reg )
+{
+   String name = reg->module() ? 
+      reg->module()->name() + "." + reg->name() :
+      reg->name();
+                 
+   (*m_regClasses)[name] = reg;
+}
+
+
+Class* Engine::getRegisteredClass( const String& name ) const
+{
+   RegisteredClassesMap::const_iterator iter = m_regClasses->find( name );
+   if( iter == m_regClasses->end() )
+   {
+      return 0;
+   }
+   
+   return iter->second;
 }
 
 //=====================================================

@@ -518,6 +518,8 @@ public:
    bool isReference() const { return type() == FLC_ITEM_REF; }
    bool isClass() const { return type() == FLC_ITEM_USER && asClass()->isMetaClass(); }
    
+   /** A stub for now */
+   bool isMemBuf() const { return false; } 
    bool isString() const {
       return (type() == FLC_ITEM_USER && asClass()->typeID() == FLC_CLASS_ID_STRING);
    }

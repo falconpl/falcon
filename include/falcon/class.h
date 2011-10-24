@@ -34,6 +34,7 @@ class DataReader;
 class DataWriter;
 class Module;
 class Inheritance;
+class ItemArray;
 
 /** Representation of classes, that is item types.
 
@@ -105,6 +106,10 @@ class Inheritance;
  only if the first operand is a FLC_USER_ITEM or FLC_DEEP_ITEM.
  
  \see OpToken
+ 
+ \section class_serialize Item serialization
+ 
+ TODO
 */
 
 class FALCON_DYN_CLASS Class
@@ -250,13 +255,76 @@ public:
     */
    virtual void* clone( void* instance ) const = 0;
 
-   /** Serializes an instance */
-   virtual void serialize( DataWriter* stream, void* instance ) const = 0;
+   /** Store an instance to a determined storage media.
+    @param ctx A virtual machine context where the serialization occours.
+    @param stream The data writer where the instance is being stored.
+    @param instance The instance that must be serialized.
+    @throw IoError on i/o error during serialization.
+    @throw UnserializableError if the class doesn't provide a class-specific
+    serialization.
+    
+    By default, the base class raises a UnserializableError, indicating that
+    there aren't enough information to store the live item on the stream.
+    Subclasses must reimplement this method doing something sensible.
+    
+    @see class_serialize
+    */
+   virtual void store( VMContext* ctx, DataWriter* stream, void* instance ) const;
 
-   /** Deserializes an instance.
-      The new instance must be initialized and ready to be "instanceed".
+   /** Restores an instance previously stored on a stream.
+    \param ctx A virtual machine context where the deserialization occours.
+    \param stream The data writer where the instance is being stored.
+    \param instance The instance that must be serialized.
+    \throw IoError on i/o error during serialization.
+    \throw UnserializableError if the class doesn't provide a class-specific
+    serialization.
+    
+    By default, the base class raises a UnserializableError, indicating that
+    there aren't enough information to store the live item on the stream.
+    Subclasses must reimplement this method doing something sensible.
+    
+    \see class_serialize
    */
-   virtual void* deserialize( DataReader* stream ) const = 0;
+   virtual void restore( VMContext* ctx, DataReader* stream, void* empty ) const;
+   
+   /** Called berfore storage to declare some other items that should be serialized.
+    \param ctx A virtual machine context where the deserialization occours.
+    \param stream The data writer where the instance is being stored.
+    \param instance The instance that must be serialized.
+    
+    This method is invoked before calling store(), to give a change to the class
+    to declare some other items on which this instance is dependent.
+    
+    The subclasses should just fill the subItems array or eventually invoke the
+    VM passing the subItem array to the called subroutine. The items that
+    are stored in the array will be serialized afterwards.
+    
+    The subItems array is garbage-locked by the Serializer instance that is
+    controlling the serialization process. 
+    
+    The base class does nothing.
+    
+    \see class_serialize
+   */
+   virtual void flatten( VMContext* ctx, ItemArray& subItems, void* instance ) const;
+   
+   /** Called after deserialization to restore other items.
+    \param ctx A virtual machine context where the deserialization occours.
+    \param stream The data writer where the instance is being stored.
+    \param instance The instance that must be serialized.
+    
+    This method is invoked after calling restore(). The subItem array is
+    filled with the same items, already deserialized, as it was filled by
+    flatten() before serialization occured.
+    
+    The subItems array is garbage-locked by the Deserializer instance that is
+    controlling the serialization process. 
+    
+    The base class does nothing.
+    
+    \see class_serialize
+   */
+   virtual void unflatten( VMContext* ctx, ItemArray& subItems, void* instance ) const;
 
    //=========================================================
    // Class management

@@ -136,6 +136,7 @@ String Function::locate() const
 Error* Function::paramError(int line, const char* place ) const
 {
    String placeName = place == 0 ? (m_module == 0 ? "" : m_module->name() ) : place;
+   placeName.bufferize();
    return new ParamError(
            ErrorParam(e_inv_params, line == 0 ? m_line: line, placeName)
            .extra(m_signature) );

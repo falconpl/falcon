@@ -80,7 +80,7 @@ void FalconApp::launch( const String& script )
    vm.setStdEncoding( m_options.io_encoding );
    
    // can we access the required module?
-   Stream* fs = Engine::instance()->vsf().openRO( script );   
+   Stream* fs = Engine::instance()->vfs().openRO( script );   
    if( fs == 0 )
    {
       vm.textOut()->write( "Can't open " + script+ "\n" );

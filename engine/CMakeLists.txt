@@ -61,17 +61,18 @@ add_library(falcon_engine SHARED
   parser/token.cpp
   parser/tokeninstance.cpp
 
+  cm/clone.cpp
   cm/compare.cpp
   cm/describe.cpp
   cm/len.cpp
   cm/minmax.cpp
   cm/path.cpp
   cm/print.cpp
+  cm/stream.cpp
   cm/tostring.cpp
   cm/typeid.cpp
-  cm/clone.cpp
-  cm/coremodule.cpp
   cm/uri.cpp
+  cm/coremodule.cpp
 
   sp/parser_arraydecl.cpp
   sp/parser_assign.cpp
@@ -170,6 +171,7 @@ add_library(falcon_engine SHARED
   errors/operanderror.cpp
   errors/paramerror.cpp
   errors/syntaxerror.cpp
+  errors/unserializableerror.cpp
   errors/unsupportederror.cpp
 
   tc/transcoderc.cpp
@@ -238,6 +240,7 @@ add_library(falcon_engine SHARED
   statement.cpp
   stderrors.cpp
   stdsteps.cpp
+  storer.cpp
   string.cpp
   stringstream.cpp
   stream.cpp

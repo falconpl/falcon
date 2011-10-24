@@ -106,6 +106,10 @@ public:
     */
    Class* link() const { return m_link; }
    
+   /** Returns the global instance of the UnserializableError handler Class.
+    */
+   Class* unserializable() const { return m_unserializable; }
+   
    /** Adds all the error classes to the engine builtins. 
     
     Usually called by the engine at startup.
@@ -127,6 +131,7 @@ private:
    Class* m_param;
    Class* m_math;
    Class* m_link;
+   Class* m_unserializable;
 };
 
 }

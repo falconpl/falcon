@@ -253,6 +253,8 @@ FAL_ERRORDECL( e_io_unsup, 208, "Unrecognized file type" );
 FAL_ERRORDECL( e_io_invalid, 209, "Unrecognized file type" );
 FAL_ERRORDECL( e_deser_eof, 210, "Hit EOF while deserializing" );
 FAL_ERRORDECL( e_search_eof, 211, "Search operation failed or item not found" );
+FAL_ERRORDECL( e_serialize, 212, "Serialization error" );
+FAL_ERRORDECL( e_deserialize, 213, "Deserialization error" );
 
 FAL_ERRORDECL( e_fmt_convert, 500, "Format not applicable to object" );
 FAL_ERRORDECL( e_interrupted, 501, "Asynchronous wait interruption" );

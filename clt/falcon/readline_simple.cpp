@@ -35,5 +35,5 @@ bool IntMode::read_line( const String& prompt, String &line )
       line += chr;
    }
 
-   return true;
+   return ! m_vm.stdIn()->eof();
 }

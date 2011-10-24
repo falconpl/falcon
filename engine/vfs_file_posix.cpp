@@ -126,7 +126,9 @@ Stream *VFSFile::open( const URI& uri, const OParams &p )
       return fs;
    }
 
-   return 0;
+   throw new IOError( ErrorParam( e_io_error, __LINE__, __FILE__ )
+                     .extra( uri.path() )
+                     .sysError(errno));
 }
 
 
@@ -157,6 +159,7 @@ Stream *VFSFile::create( const URI& uri, const CParams &p )
    }
 
    throw new IOError( ErrorParam( e_io_error, __LINE__, __FILE__ )
+                     .extra( uri.path() )
                      .sysError(errno));
 }
 

@@ -30,7 +30,7 @@ namespace Falcon {
 namespace Ext {
 
 /** We keep a C++ uri + the path, the auth data and the query*/
-class URICarrier: public UserCarrier
+class FALCON_DYN_CLASS URICarrier: public UserCarrier
 {
 public:
    URI m_uri;
@@ -55,7 +55,7 @@ public:
 };
 
 
-class ClassURI: public ClassUser
+class FALCON_DYN_CLASS ClassURI: public ClassUser
 {
 public:
    
@@ -74,7 +74,7 @@ private:
    //====================================================
    // Methods
    //
-   class MethodSetq: public Method
+   class FALCON_DYN_CLASS MethodSetq: public Method
    {
    public:
       MethodSetq( ClassUser* owner ):
@@ -91,7 +91,7 @@ private:
    m_mthSetq;
    
       
-   class MethodGetq: public Method
+   class FALCON_DYN_CLASS MethodGetq: public Method
    {
    public:
       MethodGetq( ClassUser* owner ):
@@ -111,7 +111,7 @@ private:
    // Properties.
    //
    
-   class PropertyEncoded: public PropertyString
+   class FALCON_DYN_CLASS PropertyEncoded: public PropertyString
    {
    public:
       PropertyEncoded( ClassUser* owner ):
@@ -124,7 +124,7 @@ private:
    }
    m_encoded;
    
-   class PropertyScheme: public PropertyString
+   class FALCON_DYN_CLASS PropertyScheme: public PropertyString
    {
    public:
       PropertyScheme( ClassUser* owner ):
@@ -146,7 +146,7 @@ private:
    }
    m_scheme;
    
-   class PropertyAuth: public PropertyString
+   class FALCON_DYN_CLASS PropertyAuth: public PropertyString
    {
    public:
       PropertyAuth( ClassUser* owner ):
@@ -160,7 +160,7 @@ private:
    }
    m_auth;
    
-   class PropertyPath: public PropertyString
+   class FALCON_DYN_CLASS PropertyPath: public PropertyString
    {
    public:
       PropertyPath( ClassUser* owner ):
@@ -174,7 +174,7 @@ private:
    }
    m_path;
    
-   class PropertyQuery: public PropertyString
+   class FALCON_DYN_CLASS PropertyQuery: public PropertyString
    {
    public:
       PropertyQuery( ClassUser* owner ):
@@ -188,7 +188,7 @@ private:
    }
    m_query;
    
-   class PropertyFragment: public PropertyString
+   class FALCON_DYN_CLASS PropertyFragment: public PropertyString
    {
    public:
       PropertyFragment( ClassUser* owner ):
@@ -210,7 +210,7 @@ private:
    }
    m_fragment;
    
-   class PropertyHost: public PropertyString
+   class FALCON_DYN_CLASS PropertyHost: public PropertyString
    {
    public:
       PropertyHost( ClassUser* owner ):
@@ -236,7 +236,7 @@ private:
    }
    m_propPort;
    
-   class PropertyUser: public PropertyString
+   class FALCON_DYN_CLASS PropertyUser: public PropertyString
    {
    public:
       PropertyUser( ClassUser* owner ):
@@ -249,7 +249,7 @@ private:
    }
    m_propUser;
    
-   class PropertyPwd: public PropertyString
+   class FALCON_DYN_CLASS PropertyPwd: public PropertyString
    {
    public:
       PropertyPwd( ClassUser* owner ):

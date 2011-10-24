@@ -35,6 +35,7 @@
 #include <falcon/errors/linkerror.h>
 #include <falcon/errors/paramerror.h>
 #include <falcon/errors/matherror.h>
+#include <falcon/errors/unserializableerror.h>
 
 namespace Falcon
 {
@@ -176,6 +177,17 @@ void ClassMathError::op_create( VMContext* ctx, int32 pcount ) const
    invokeParams( ctx, pcount, params );
    ctx->stackResult( pcount + 1, 
       FALCON_GC_STORE( coll, this, new MathError( params ) ) );
+}
+
+
+void ClassUnserializableError::op_create( VMContext* ctx, int32 pcount ) const
+{
+   static Collector* coll = Engine::instance()->collector();
+   
+   ErrorParam params;
+   invokeParams( ctx, pcount, params );
+   ctx->stackResult( pcount + 1, 
+      FALCON_GC_STORE( coll, this, new UnserializableError( params ) ) );
 }
 
 }

@@ -24,20 +24,24 @@ include_directories(
 
 unset(_project_targets)
 #
-add_subdirectory(bufext)
-add_subdirectory(compiler)
-add_subdirectory(confparser)
-add_subdirectory(funcext)
-add_subdirectory(hash)
-add_subdirectory(json)
-add_subdirectory(logging)
-add_subdirectory(math_extra)
-add_subdirectory(mxml)
-add_subdirectory(process)
-add_subdirectory(regex)
-add_subdirectory(socket)
-add_subdirectory(threading)
-add_subdirectory(zlib)
+#add_subdirectory(bufext)
+#add_subdirectory(compiler)
+#add_subdirectory(confparser)
+##add_subdirectory(funcext)
+#add_subdirectory(hash)
+#add_subdirectory(json)
+#add_subdirectory(logging)
+#add_subdirectory(math_extra)
+#add_subdirectory(mxml)
+#add_subdirectory(process)
+#add_subdirectory(regex)
+#add_subdirectory(socket)
+#add_subdirectory(threading)
+#add_subdirectory(zlib)
+
+# Virtual file system module.
+add_subdirectory(vfs)
+
 #
 add_custom_target(Falcon_Feathers)
 add_dependencies(Falcon_Feathers ${_project_targets})

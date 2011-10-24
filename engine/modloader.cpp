@@ -291,7 +291,7 @@ void ModLoader::pathToName( const String &path, const String &modFile, String &m
 ModLoader::t_modtype ModLoader::checkFile_internal( 
       const URI& uri, ModLoader::t_modtype type, URI& foundUri )
 {
-   static VFSIface* vfs = &Engine::instance()->vsf();
+   static VFSIface* vfs = &Engine::instance()->vfs();
    
    // if we have a type, just check if the beast exists.
    if( type != ModLoader::e_mt_none )
@@ -371,7 +371,7 @@ ModLoader::t_modtype ModLoader::checkFile_internal(
 Module* ModLoader::load_internal( 
       const String& prefixPath, const URI& uri, ModLoader::t_modtype type )
 {
-   static VFSIface* vfs = &Engine::instance()->vsf();
+   static VFSIface* vfs = &Engine::instance()->vfs();
   
    String modName;
    // The module name depends on the prefix path.

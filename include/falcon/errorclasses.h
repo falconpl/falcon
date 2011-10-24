@@ -182,6 +182,17 @@ public:
    virtual void op_create( VMContext* ctx, int32 pcount ) const;
 };
 
+/** Class handler for MathError exceptions. 
+ */
+class ClassUnserializableError: public ClassError
+{
+public:
+   ClassUnserializableError():
+      ClassError( "UnserializableError" )
+      {}
+      
+   virtual void op_create( VMContext* ctx, int32 pcount ) const;
+};
 
 }
 
