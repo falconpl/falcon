@@ -29,7 +29,7 @@ Open::Open( VFSModule* mod ):
    Function("open"),
    m_module( mod )
 { 
-   parseDescription("uri:S|URI,mode:S"); 
+   parseDescription("uri:S|URI,mode:[N]"); 
 }
       
 Open::~Open() {}
@@ -72,11 +72,14 @@ void Open::invoke( Falcon::VMContext* ctx, int )
    }
    else
    {
-      URI& theUri = static_cast<URICarrier*>( data )->m_uri;      
+      URICarrier* uricar = static_cast<URICarrier*>(cls->getParentData( m_module->uriClass(), data ));
+      URI& theUri = uricar->m_uri;
       stream = inst->vfs().open( theUri, op );
    }
    
-   ctx->returnFrame( FALCON_GC_STORE( coll, m_module->streamClass(), new StreamCarrier(stream) ) );
+   ctx->returnFrame( FALCON_GC_STORE( coll, 
+         m_module->streamClass(), 
+         new StreamCarrier(stream) ) );
 }
 
 }
