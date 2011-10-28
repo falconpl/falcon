@@ -31,6 +31,64 @@ enum Multipart
    parallel = "parallel"
 end
 
+
+/*# Creates a MIME data part.
+   @param data A string or memory buffer with the data to be attached.
+   @optparam type Content/type of the data (defaults to "application/octet-stream")
+   @optparam fname The file name of the part element.
+   @optparam partName Logical name of the part in the Mime document,
+   @return The new part created by this method.
+
+   This method creates a part that is immediately ready to be attached
+   as a data part in a multipart mime.
+
+   The part created by this method can be configured afterwards. By default, it
+   creates the following default headers:
+   @code
+   Content-Disposition: attachment
+   Content-Transfer-Encoding: base64
+   @endcode
+*/
+function makeDataPart( data, type, fname, partName )
+   if not type: type = "application/octet-stream"
+
+   if fname
+      if not partName: partName = fname
+      part = Part( [
+         "Content-Type" => [ "" => type, "name" => partName ],
+         "Content-Disposition" => ["" => "attachment", "filename" => fname],
+         "Content-Transfer-Encoding" => "base64"] )
+   else
+      part = Part( [
+         "Content-Type" => type,
+         "Content-Disposition" => "attachment",
+         "Content-Transfer-Encoding" => "base64"] )
+   end
+
+
+   // encoding the content
+   if data.typeId() == MemBufType
+      data = Base64.encode( data )
+   else
+      data = Base64.encode( strToMemBuf(data) )
+   end
+
+   // Breaking the part into lines
+   length = data.len()
+   dbuffer = StringStream( length + (length/76)*2+2)
+   for i in [76:length:76]
+      dbuffer.writeText( data, i-76, i )
+      dbuffer.write("\r\n")
+   end
+   if length % 76
+      dbuffer.writeText( data, int(length/76)*76 )
+      dbuffer.write( "\r\n" )
+   end
+   part.body = dbuffer.closeToString()
+
+   return part
+end
+
 /*# Part of a MIME document.
    @optparam headers The headers of this part.
    @optparam body The body of this part.
@@ -172,7 +230,7 @@ class Part( headers, body )
 
    /*# Attach a data content to the mail part.
       @param data A string or memory buffer with the data to be attached.
-      @param type Content/type of the data
+      @param type Content/type of the data (defaults to "application/octet-stream")
       @param fname The file name of the part element.
       @optparam partName Logical name of the part in the Mime document,
       @return The new part created by this method.
@@ -185,29 +243,11 @@ class Part( headers, body )
       to the part to be added.
 
       The part created by this method can be configured afterwards.
+      @see makeDataPart
    */
 
    function attachData( data, type, fname, partName )
-      if not partName: partName = fname
-
-      part = Part( [
-         "Content-Type" => [ "" => type, "name" => partName ],
-         "Content-Disposition" => ["" => "attachment", "filename" => fname],
-         "Content-Transfer-Encoding" => "base64"] )
-
-      // encoding the content
-      data = Base64.encode( strToMemBuf(data) )
-
-      // Breaking the part into lines
-      length = data.len()
-      dbuffer = strBuffer(length / 76 + 3 ) * 76
-      i = 0
-      for i in [76:length:76]
-         dbuffer += data[i-76:i] + "\r\n"
-      end
-      if length % 76: dbuffer += data[int(length/76)*76:] + "\r\n"
-      part.body = dbuffer
-
+      part = makeDataPart( data, type, fname, partName )
       self.attachPart( part )
       return part
    end
@@ -268,7 +308,11 @@ class Part( headers, body )
          self.body = "This is a MIME Multipart document."
          self._parts = [firstPart]
       end
-      self._parts += part
+      if self._parts
+         self._parts += part
+      else
+         self._parts = [part]
+      end
       return self
    end
 
