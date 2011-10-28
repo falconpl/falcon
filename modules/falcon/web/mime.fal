@@ -156,6 +156,18 @@ class Part( headers, body )
       return self
    end
 
+   /*# Declare this part as a full MIME 1.0 message.
+      This method sets up this part to be a full top-level message in compliancy
+      with RFC2045 (MIME). Mandatory top-level headers are set.
+
+      After this call, this part should not be added as subpart to another
+      parent; however, no check is currently performed.
+   */
+
+   function setTop()
+      self.headers["MIME-Version"] = "1.0"
+   end
+
    /*# Sets this part to be a Message part
       @optparam id If given, this is a message/partial part, where the whole message has the given ID.
       @optparam partNo If the message is "partial", then this indicates the number of the part.
@@ -302,12 +314,13 @@ class Part( headers, body )
             end
 
             firstPart.body = self.body
+            self._parts = [firstPart]
          end
 
          self.setMultipart( Multipart.mixed )
          self.body = "This is a MIME Multipart document."
-         self._parts = [firstPart]
       end
+
       if self._parts
          self._parts += part
       else
