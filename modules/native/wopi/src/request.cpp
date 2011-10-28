@@ -154,7 +154,7 @@ bool Request::parseBody( Stream* input )
 {
    // prepare the POST data receive area
    m_MainPart.startMemoryUpload();
-   fprintf( stderr, "Content length: %d / %d\n", (int) m_content_length, (int) m_nMaxMemUpload );
+   //fprintf( stderr, "Content length: %d / %d\n", (int) m_content_length, (int) m_nMaxMemUpload );
 
    // Inform the part if it can use memory uploads for their subparts.
    if ( m_content_length != -1 &&
