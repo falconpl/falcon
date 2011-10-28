@@ -14,7 +14,7 @@
     See LICENSE file for licensing details.
 */
 
-const _bstring = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!#$%&()*+,-./"
+const _bstring = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 const _default_boundary_length = 32
 const _header_line_size = 4096
 const _block_buffer = 16384
@@ -280,15 +280,15 @@ class Part( headers, body )
 
       if not count: count = _default_boundary_length
 
-      str = " " * count
-      for n in [0:count]
+      str = "=_" + (" " * count)
+      for n in [2:count+2]
          str[n] = randomPick( _bound_array )
       end
       return str
    end
 
    /*# Transforms this MIME in a string.
-	   @return This MIME element rendered as a String.
+      @return This MIME element rendered as a String.
    */
    function toString()
       s = StringStream()
@@ -296,8 +296,8 @@ class Part( headers, body )
       return s.closeToString()
    end
 
-   /*# Writes this mime-part on the given stream. 
-	  @param stream The stream where to write the part.
+   /*# Writes this mime-part on the given stream.
+     @param stream The stream where to write the part.
    */
    function write( stream )
       self._writeHeaders( stream )
@@ -343,7 +343,7 @@ class Part( headers, body )
             // as the main header is "", we can always be sure that it will be the first
             for key, val in value
                if key: stream.write( key + "=" )
-               if '"' in val or ';' in val
+               if '"' in val or ';' in val or " " in val
                   val = '"' + val.replace( '"', '\"' ) + '"'
                end
                stream.write( val )
@@ -356,17 +356,17 @@ class Part( headers, body )
    end
 
    /*# Sets the text for this MIME part.
-	   @param text The text to be encoded.
+      @param text The text to be encoded.
        @optparam ctype Content type of the part; if not given, defaults to "text/plain"
        @optparam cset Type of encoding of the rendered text. If not given, defaults to "utf-8"
-	   
-	   Converts the text string into an string of the given encoding, and
-	   prepares the headers of the part so that the transport is notified
-	   about the fact that this part is meant to be an encoded text.
-	   
-	   The @b cset parameter, if specificed, must be a character encoding know by Falcon.
+
+      Converts the text string into an string of the given encoding, and
+      prepares the headers of the part so that the transport is notified
+      about the fact that this part is meant to be an encoded text.
+
+      The @b cset parameter, if specificed, must be a character encoding know by Falcon.
    */
-	   
+
    function setText( text, ctype, cset )
       if not ctype: ctype = "text/plain"
       if not cset: cset = "utf-8"
@@ -606,7 +606,7 @@ function _parseHeaderParam( param, xvalues )
       // we know value[-1] is a quote or the upstream would have raised.
       value = value[1:-1].replace( '\"', '"' )
    end
-   
+
    if key == "" and xvalues.get("") != nil
       xvalues[key] += value
    else
@@ -714,4 +714,3 @@ function _parseBoundBody( stream, part, bound )
 end
 
 /* vi: set ai et sts=3 sw=3: */
-
