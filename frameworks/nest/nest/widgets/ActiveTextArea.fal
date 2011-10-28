@@ -47,6 +47,10 @@ class ActiveTextArea( id, prompt, rows, cols ) from ActiveInput( id, prompt )
    function renderContent()
       return self.content
    end
+
+   function getValue()
+      return self.content
+   end
 end
 
 /* end of ActiveTextArea.fal */
