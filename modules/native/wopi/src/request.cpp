@@ -377,9 +377,7 @@ CoreRequest::~CoreRequest()
 
 void CoreRequest::addUploaded( PartHandler* ph, const String& prefix )
 {
-   CoreString* key = prefix.size() == 0 ?
-         new CoreString(ph->name() ) :
-         new CoreString( prefix + "." + ph->name() );
+   String key = prefix.size() == 0 ? ph->name(): prefix + "." + ph->name();
 
    if( ph->isFile() )
    {
@@ -387,7 +385,7 @@ void CoreRequest::addUploaded( PartHandler* ph, const String& prefix )
       if( ph->filename().size() == 0 )
       {
          // puts a nil item.
-         m_base->m_posts->put( SafeItem(key), Item() );
+         Falcon::WOPI::Utils::addQueryVariable( key, Item(), m_base->m_posts->items() );
       }
       else
       {
@@ -419,7 +417,7 @@ void CoreRequest::addUploaded( PartHandler* ph, const String& prefix )
 
          // It may take some time before we can reach the vm,
          // so it's better to be sure we're not marked.
-         m_base->m_posts->put( SafeItem(key), SafeItem(upld) );
+         Falcon::WOPI::Utils::addQueryVariable( key, SafeItem(upld), m_base->m_posts->items() );
       }
    }
    else
@@ -435,7 +433,7 @@ void CoreRequest::addUploaded( PartHandler* ph, const String& prefix )
 
          // It may take some time before we can reach the vm,
          // so it's better to be sure we're not marked.
-         m_base->m_posts->put( SafeItem(key), SafeItem(value) );
+         Falcon::WOPI::Utils::addQueryVariable( key, SafeItem(value), m_base->m_posts->items() );
       }
       // else, don't know what to do
    }
@@ -443,11 +441,10 @@ void CoreRequest::addUploaded( PartHandler* ph, const String& prefix )
    PartHandler* child = ph->child();
    while( child != 0 )
    {
-      addUploaded( child, *key );
+      addUploaded( child, key );
       child = child->next();
    }
 }
-
 
 
 bool CoreRequest::processMultiPartBody()

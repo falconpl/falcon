@@ -40,6 +40,7 @@ CoreObject* makeURI( const URI& uri );
 
 void parseQuery( const String &query, ItemDict& dict );
 void parseQueryEntry( const String &query, ItemDict& dict );
+void addQueryVariable( const String &key, const Item& value, ItemDict& dict );
 
 bool parseHeaderEntry( const String &line, String& key, String& value );
 void makeRandomFilename( String& target, int size );
