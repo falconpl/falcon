@@ -785,24 +785,49 @@ object Nest
 
    /*# Create a link to this page */
    function linkVars( link, vars )
-      v = link
+      base = v = nil        // Base: the address, v: existing params
+      d = [ => ]
 
-      if vars
-         pos = v.find("?")
-         if pos == -1
-            v += "?"
-         else
-            if pos + 1 < v.len(): v += "&"
+      l = link.split("?")
+      base = l[0]
+
+      if l.len() > 1: v = l[1].trim()
+
+      if v
+
+         parms = strSplit( v, "&")
+
+         for param in parms
+            name, value = param.split( "=" )
+            d[name] = value
          end
 
-         for key, value in vars
-            v += URI.encode(key)
-            if value != nil: v += "=" + (^? value ? value:URI.encode(value.toString()))
-            formiddle: v += "&"
+      end
+
+      if vars
+         for key, value in vars: \
+            d[ URI.encode(key) ]  = ^? value ? value:URI.encode(value.toString())
+      end
+
+      v = ""
+
+      for key, value in d
+
+         if not value: continue
+
+         v += key + "=" + value
+
+         forfirst
+            v = "?" + v
+         end
+
+         formiddle
+            v += "&"
          end
       end
 
-      return v
+      return base + v
+
    end
 
    function actionLink( pid, cmd, cmdField )
