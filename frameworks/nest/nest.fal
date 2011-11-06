@@ -951,7 +951,7 @@ object Nest
             end
          end
 
-         self.logd( "Hook " + name + " reutrned  " + ret.describe() )
+         self.logd( "Hook " + name + " returned  " + ret.describe() )
          return ^- ret
       else
          self.logw( "Can't find hook " + name )
