@@ -17,6 +17,7 @@
    Falcon VM interface to socket module.
 */
 
+#include <falcon/autocstring.h>
 #include <falcon/fassert.h>
 #include <falcon/vm.h>
 #include <falcon/string.h>
@@ -161,6 +162,19 @@ FALCON_FUNC  socketErrorDesc( ::Falcon::VMachine *vm )
    }
 }
 
+/*#
+   @function haveSSL
+   @brief Check if the socket module has SSL capabilities.
+   @return True if we have SSL.
+ */
+FALCON_FUNC falcon_haveSSL( ::Falcon::VMachine *vm )
+{
+#if WITH_OPENSSL
+   vm->retval( true );
+#else
+   vm->retval( false );
+#endif
+}
 
 // ==============================================
 // Class Socket
@@ -169,7 +183,7 @@ FALCON_FUNC  socketErrorDesc( ::Falcon::VMachine *vm )
 /*#
    @class Socket
    @brief TCP/IP networking base class.
-   
+
    The Socket class is the base class for both UDP and TCP socket.
    It provides common methods and properties,
    and so it should not be directly instantiated.
@@ -308,7 +322,7 @@ FALCON_FUNC  Socket_readAvailable( ::Falcon::VMachine *vm )
    if ( (res = tcps->readAvailable( (int32)timeout, &vm->systemData() ) ) <= 0 )
    {
       if ( timeout > 0 ) vm->unidle();
-      
+
       // interrupted?
       if ( res == -2 )
       {
@@ -323,7 +337,7 @@ FALCON_FUNC  Socket_readAvailable( ::Falcon::VMachine *vm )
       else {
          self->setProperty( "lastError", tcps->lastError() );
          self->setProperty( "timedOut", Item( false ) );
-         
+
          throw  new NetError( ErrorParam( FALSOCK_ERR_GENERIC, __LINE__ )
             .desc( FAL_STR( sk_msg_generic ) )
             .sysError( (uint32) tcps->lastError() ) );
@@ -388,7 +402,7 @@ FALCON_FUNC  Socket_writeAvailable( ::Falcon::VMachine *vm )
    if ( ( res = tcps->writeAvailable( (int32)timeout, &vm->systemData() ) ) <= 0 )
    {
       if ( timeout > 0 ) vm->unidle();
-      
+
       // interrupted?
       if ( res == -2 )
       {
@@ -633,6 +647,106 @@ FALCON_FUNC  TCPSocket_isConnected( ::Falcon::VMachine *vm )
    self->setProperty( "timedOut", Item( false ) );
 }
 
+#if WITH_OPENSSL
+/*#
+   @method sslConfig TCPSocket
+   @brief Prepare a socket for SSL operations.
+   @param serverSide True for a server-side socket, false for a client-side socket.
+   @optparam version SSL method (one of SSLv2, SSLv3, SSLv23, TLSv1, DTLSv1 ). Default SSLv3
+   @optparam cert Certificate file
+   @optparam pkey Private key file
+   @optparam ca Certificate authorities file
+
+   Must be called after socket is really created, that is after connect() is called.
+ */
+FALCON_FUNC TCPSocket_sslConfig( ::Falcon::VMachine* vm )
+{
+   CoreObject *self = vm->self().asObject();
+   Sys::TCPSocket *tcps = (Sys::TCPSocket *) self->getUserData();
+
+   Item* i_asServer = vm->param( 0 );
+   Item* i_sslVer = vm->param( 1 );
+   Item* i_cert = vm->param( 2 );
+   Item* i_pkey = vm->param( 3 );
+   Item* i_ca = vm->param( 4 );
+
+   if ( !i_asServer || !( i_asServer->isBoolean() )
+      || !i_sslVer || !( i_sslVer->isInteger() )
+      || ( i_cert && !( i_cert->isString() || i_cert->isNil() ) )
+      || ( i_pkey && !( i_pkey->isString() || i_pkey->isNil() ) )
+      || ( i_ca && !( i_ca->isString() || i_ca->isNil() ) ) )
+   {
+      throw  new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "B,I,[S,S,S]" ) );
+   }
+
+   AutoCString s_cert( "" );
+   if ( i_cert && !i_cert->isNil() )
+   {
+      s_cert.set( i_cert->asString() );
+   }
+   AutoCString s_pkey( "" );
+   if ( i_pkey && !i_pkey->isNil() )
+   {
+      s_pkey.set( i_pkey->asString() );
+   }
+   AutoCString s_ca( "" );
+   if ( i_ca && !i_ca->isNil() )
+   {
+      s_ca.set( i_ca->asString() );
+   }
+
+   Sys::SSLData::ssl_error_t res = tcps->sslConfig( i_asServer->asBoolean(),
+                        (Sys::SSLData::sslVersion_t) i_sslVer->asInteger(),
+                        s_cert.c_str(), s_pkey.c_str(), s_ca.c_str() );
+
+   if ( res != Sys::SSLData::no_error )
+   {
+      throw new NetError( ErrorParam( FALSOCK_ERR_SSLCONFIG, __LINE__ )
+         .desc( FAL_STR( sk_msg_errsslconfig ) )
+         .sysError( (uint32) res ) );
+   }
+}
+
+
+/*#
+   @method sslConnect TCPSocket
+   @brief Negotiate an SSL connection.
+
+   Must be called after socket is connected and has been properly configured for
+   SSL operations.
+ */
+FALCON_FUNC TCPSocket_sslConnect( ::Falcon::VMachine* vm )
+{
+   CoreObject *self = vm->self().asObject();
+   Sys::TCPSocket *tcps = (Sys::TCPSocket *) self->getUserData();
+
+   Sys::SSLData::ssl_error_t res = tcps->sslConnect();
+
+   if ( res != Sys::SSLData::no_error )
+   {
+      throw new NetError( ErrorParam( FALSOCK_ERR_SSLCONNECT, __LINE__ )
+         .desc( FAL_STR( sk_msg_errsslconnect ) )
+         .sysError( (uint32) tcps->lastError() ) );
+   }
+}
+
+
+/*#
+   @method sslClear TCPSocket
+   @brief Free resources taken by SSL contexts.
+
+   Useful if you want to reuse a socket.
+ */
+FALCON_FUNC TCPSocket_sslClear( ::Falcon::VMachine *vm )
+{
+   CoreObject *self = vm->self().asObject();
+   Sys::TCPSocket *tcps = (Sys::TCPSocket *) self->getUserData();
+
+   tcps->sslClear();
+   vm->retnil();
+}
+#endif // WITH_OPENSSL
 
 /*#
    @method send TCPSocket
@@ -728,7 +842,7 @@ FALCON_FUNC  TCPSocket_send( ::Falcon::VMachine *vm )
    vm->idle();
    int32 res = tcps->send( data + start_pos, count );
    vm->unidle();
-   
+
    if( res == -1 ) {
       self->setProperty( "lastError", tcps->lastError() );
       throw  new NetError( ErrorParam( FALSOCK_ERR_SEND, __LINE__ )
@@ -752,6 +866,92 @@ FALCON_FUNC  TCPSocket_send( ::Falcon::VMachine *vm )
    }
 
 }
+
+#if WITH_OPENSSL
+/*#
+   @method sslWrite TCPSocket
+   @brief Similar as TCPSocket.send
+ */
+FALCON_FUNC  TCPSocket_sslWrite( ::Falcon::VMachine *vm )
+{
+   CoreObject *self = vm->self().asObject();
+   Sys::TCPSocket *tcps = (Sys::TCPSocket *) self->getUserData();
+
+   Item *i_data = vm->param( 0 );
+   Item *length = vm->param( 1 );
+   Item *start = vm->param( 2 );
+
+   if ( i_data == 0 || ! ( i_data->isString() || i_data->isMemBuf() )
+        || ( length != 0 && ! length->isOrdinal() )
+        || ( start != 0 && ! start->isOrdinal() )
+      )
+   {
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "S|M, [I], [I]" ) );
+   }
+
+   int32 start_pos;
+   int32 count;
+   const byte *data;
+
+   if( i_data->isMemBuf() )
+   {
+      MemBuf* mb = i_data->asMemBuf();
+      data = mb->data();
+      start_pos = mb->position();
+      count = mb->limit() - start_pos;
+
+      if ( count == 0 )
+      {
+         throw new ParamError( ErrorParam( e_param_range, __LINE__ ).
+               extra( FAL_STR( sk_msg_nobufspace ) ) );
+      }
+   }
+   else
+   {
+      String *dataStr = i_data->asString();
+      data = dataStr->getRawStorage();
+
+      start_pos = start == 0 ? 0 : (int32) start->forceInteger();
+      if ( start_pos < 0 ) start_pos = 0;
+      count = length == 0 ?
+               dataStr->size()-start_pos :
+               (int32) length->forceInteger();
+
+      if ( count < 0 || count + start_pos > (int32) dataStr->size() ) {
+         throw new ParamError( ErrorParam( e_param_range, __LINE__ ).
+                        extra( FAL_STR( sk_msg_nobufspace ) ) );
+      }
+   }
+
+   vm->idle();
+   int32 res = tcps->sslWrite( data + start_pos, count );
+   vm->unidle();
+
+   if( res == -1 ) {
+      self->setProperty( "lastError", tcps->ssl()->lastSysError );
+      throw  new NetError( ErrorParam( FALSOCK_ERR_SEND, __LINE__ )
+         .desc( FAL_STR( sk_msg_errsend ) )
+         .sysError( (uint32) tcps->ssl()->lastSysError ) );
+   }
+   else if ( res == -2 )
+   { // not implemented
+      self->setProperty( "timedOut", Item( true ) );
+      vm->retval(0);
+   }
+   else
+   {
+      vm->retval( res );
+      if ( i_data->isMemBuf() )
+      {
+         MemBuf* mb = i_data->asMemBuf();
+         mb->position( mb->position() + res );
+      }
+      self->setProperty( "timedOut", Item( false ) );
+   }
+
+}
+#endif // WITH_OPENSSL
 
 static int s_recv_tcp( VMachine* vm, byte* data, int size, Sys::Address& )
 {
@@ -777,6 +977,19 @@ static int s_recv_udp( VMachine* vm, byte* data, int size, Sys::Address& a)
    return size;
 }
 
+#if WITH_OPENSSL
+static int s_recv_ssl( VMachine* vm, byte* data, int size, Sys::Address& a)
+{
+   CoreObject *self = vm->self().asObject();
+   Sys::TCPSocket *tcps = (Sys::TCPSocket *) self->getUserData();
+
+   vm->idle();
+   size = tcps->sslRead( data, size );
+   vm->unidle();
+
+   return size;
+}
+#endif // WITH_OPENSSL
 
 static void  s_recv_result( VMachine* vm, int size, const Sys::Address& from )
 {
@@ -969,6 +1182,33 @@ FALCON_FUNC  TCPSocket_recv( ::Falcon::VMachine *vm )
    }
 }
 
+#if WITH_OPENSSL
+/*#
+   @method sslRead TCPSocket
+   @brief Similar as TCPSocket.recv
+ */
+FALCON_FUNC TCPSocket_sslRead( ::Falcon::VMachine *vm )
+{
+   Item *i_target = vm->param(0);
+   Item *i_size = vm->param(1);
+
+   if( i_target == 0 || ! ( i_target->isString()|| i_target->isMemBuf() )
+       || ( i_size != 0 && ! i_size->isOrdinal() ) )
+   {
+      throw  new ParamError( ErrorParam( e_inv_params, __LINE__ ).
+         extra( "S|M, [N]" ) );
+   }
+
+   if( i_target->isString() )
+   {
+      s_Socket_recv_string( vm, i_target, i_size, &s_recv_ssl );
+   }
+   else {
+      s_Socket_recv_membuf( vm, i_target, i_size, &s_recv_ssl );
+   }
+}
+#endif // WITH_OPENSSL
+
 /*#
    @method closeRead TCPSocket
    @brief Closes a socket read side.
@@ -994,7 +1234,7 @@ FALCON_FUNC  TCPSocket_closeRead( ::Falcon::VMachine *vm )
 {
    CoreObject *self = vm->self().asObject();
    Sys::TCPSocket *tcps = (Sys::TCPSocket *) self->getUserData();
-   
+
    vm->idle();
    if ( ! tcps->closeRead() ) {
       vm->unidle();
@@ -1045,7 +1285,7 @@ FALCON_FUNC  TCPSocket_closeWrite( ::Falcon::VMachine *vm )
    Sys::TCPSocket *tcps = (Sys::TCPSocket *) self->getUserData();
 
    self->setProperty( "timedOut", Item( false ) );
-   
+
    vm->idle();
    if ( tcps->closeWrite() ) {
       vm->unidle();
@@ -1083,7 +1323,7 @@ FALCON_FUNC  TCPSocket_close( ::Falcon::VMachine *vm )
    Sys::TCPSocket *tcps = (Sys::TCPSocket *) self->getUserData();
 
    vm->idle();
-   if ( ! tcps->close() ) 
+   if ( ! tcps->close() )
    {
       vm->unidle();
       // may time out
@@ -1264,11 +1504,11 @@ FALCON_FUNC  UDPSocket_sendTo( ::Falcon::VMachine *vm )
 
    Sys::Address target;
    target.set( *addr->asString(), *srvc->asString() );
-   
+
    vm->idle();
    int32 res = udps->sendTo( bData, count, target );
    vm->unidle();
-   
+
    if( res == -1 )
    {
       self->setProperty( "lastError", udps->lastError() );

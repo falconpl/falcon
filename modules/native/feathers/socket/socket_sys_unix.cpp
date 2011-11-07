@@ -53,7 +53,28 @@ bool init_system()
    return true;
 }
 
+#if WITH_OPENSSL
+static bool bSslInitialized = false;
 
+void ssl_init()
+{
+   if ( !bSslInitialized )
+   {
+      SSL_load_error_strings();
+      SSL_library_init();
+      bSslInitialized = true;
+   }
+}
+
+void ssl_fini()
+{
+   if ( bSslInitialized )
+   {
+      ERR_free_strings();
+      bSslInitialized = false;
+   }
+}
+#endif // WITH_OPENSSL
 
 bool isIPV4( const String &ipv4__ )
 {
@@ -126,6 +147,7 @@ bool getErrorDesc( int64 error, String &ret )
       ret.bufferize( buf );
    return true;
 }
+
 //================================================
 // Address
 //================================================
@@ -453,6 +475,28 @@ bool Socket::bind( Address &addr, bool packet, bool broadcast )
    return false;
 }
 
+//================================================
+// SSLData
+//================================================
+#if WITH_OPENSSL
+
+SSLData::~SSLData()
+{
+   if ( sslContext )
+   {
+      SSL_CTX_free( sslContext );
+      sslContext = 0;
+   }
+   if ( sslHandle )
+   {
+      SSL_shutdown( sslHandle );
+      SSL_free( sslHandle );
+      sslHandle = 0;
+   }
+}
+
+#endif // WITH_OPENSSL
+
 //===============================================
 // TCP Socket
 //===============================================
@@ -464,12 +508,21 @@ TCPSocket::TCPSocket( bool ipv6 )
    // default timeout is zero
    m_timeout = 0;
    m_lastError = 0;
-
+   #if WITH_OPENSSL
+   m_sslData = 0;
+   #endif
    d.m_iSystemData = 0;
 }
 
 TCPSocket::~TCPSocket()
 {
+   #if WITH_OPENSSL
+   if ( m_sslData )
+   {
+      delete m_sslData;
+      m_sslData = 0;
+   }
+   #endif
 }
 
 int32 TCPSocket::recv( byte *buffer, int32 size )
@@ -673,6 +726,202 @@ bool TCPSocket::isConnected()
    return false;
 }
 
+#if WITH_OPENSSL
+SSLData::ssl_error_t TCPSocket::sslConfig( bool asServer,
+                                           SSLData::sslVersion_t sslVer,
+                                           const char* certFile,
+                                           const char* pkeyFile,
+                                           const char* certAuthFile )
+{
+   Falcon::Sys::ssl_init();
+
+   if ( d.m_iSystemData <= 0 ) // no socket to attach
+      return SSLData::notready_error;
+
+   if ( m_sslData ) // called before?
+      return SSLData::no_error;
+
+   int i;
+   SSLData* sslD = new SSLData;
+   sslD->asServer = asServer;
+
+   // choose method
+   sslD->sslVersion = sslVer;
+   switch ( sslVer )
+   {
+   case SSLData::SSLv2:  sslD->sslMethod = SSLv2_method(); break;
+   case SSLData::SSLv3:  sslD->sslMethod = SSLv3_method(); break;
+   case SSLData::SSLv23: sslD->sslMethod = SSLv23_method(); break;
+   case SSLData::TLSv1:  sslD->sslMethod = TLSv1_method(); break;
+   case SSLData::DTLSv1: sslD->sslMethod = DTLSv1_method(); break;
+   default: sslD->sslMethod = SSLv3_method();
+   }
+
+   // create context
+   sslD->sslContext = SSL_CTX_new( sslD->sslMethod );
+   if ( !sslD->sslContext )
+   {
+      delete sslD;
+      return SSLData::ctx_error;
+   }
+
+   // certificate file
+   if ( certFile && certFile[0] != '\0' )
+   {
+      if ( ( i = SSL_CTX_use_certificate_file( sslD->sslContext, certFile,
+          SSL_FILETYPE_PEM ) != 1 ) )
+      {
+         delete sslD;
+         m_lastError = i;
+         return SSLData::cert_error;
+      }
+      sslD->certFile = certFile;
+      sslD->certFile.bufferize();
+   }
+
+   // private key file
+   if ( pkeyFile && pkeyFile[0] != '\0' )
+   {
+      if ( ( i = SSL_CTX_use_PrivateKey_file( sslD->sslContext, pkeyFile,
+          SSL_FILETYPE_PEM ) != 1 ) )
+      {
+         delete sslD;
+         m_lastError = i;
+         return SSLData::pkey_error;
+      }
+      sslD->keyFile = pkeyFile;
+      sslD->keyFile.bufferize();
+   }
+
+   // certificates authorities
+   if ( certAuthFile && certAuthFile[0] != '\0' )
+   {
+      STACK_OF( X509_NAME ) *cert_names;
+      cert_names = SSL_load_client_CA_file( certAuthFile );
+      if ( cert_names != 0 )
+      {
+         SSL_CTX_set_client_CA_list( sslD->sslContext, cert_names );
+      }
+      else
+      {
+         delete sslD;
+         m_lastError = i;
+         return SSLData::ca_error;
+      }
+      sslD->caFile = certAuthFile;
+      sslD->caFile.bufferize();
+   }
+
+   // ssl handle
+   sslD->sslHandle = SSL_new( sslD->sslContext );
+   if ( !sslD->sslHandle )
+   {
+      delete sslD;
+      return SSLData::handle_error;
+   }
+
+   // attach file descriptor
+   if ( ( i = SSL_set_fd( sslD->sslHandle, d.m_iSystemData ) ) != 1 )
+   {
+      delete sslD;
+      m_lastError = i;
+      return SSLData::fd_error;
+   }
+
+   // done
+   m_sslData = sslD;
+   return SSLData::no_error;
+}
+
+void TCPSocket::sslClear()
+{
+   if ( m_sslData )
+   {
+      delete m_sslData;
+      m_sslData = 0;
+   }
+}
+
+SSLData::ssl_error_t TCPSocket::sslConnect()
+{
+   //int flags = 0;
+   int i;
+
+   // need ssl context
+   if ( !m_sslData )
+      return SSLData::notready_error;
+   // no need to call several times
+   if ( m_sslData->handshakeState != SSLData::handshake_todo )
+      return SSLData::already_error;
+   // socket needs to be connected
+   if ( !m_connected )
+      return SSLData::notconnected_error;
+#if 0
+   // if timeout is -1, do not set nonblocking.
+   if( m_timeout >= 0 )
+   {
+      // set nonblocking
+      flags = fcntl( d.m_iSystemData, F_GETFL );
+      flags |= O_NONBLOCK;
+      fcntl( d.m_iSystemData, F_SETFL, flags );
+   }
+#endif
+
+   if ( m_sslData->asServer ) // server-side socket
+   {
+      i = SSL_accept( m_sslData->sslHandle );
+   }
+   else // client-side socket
+   {
+      i = SSL_connect( m_sslData->sslHandle );
+   }
+#if 0
+   // reset nonblocking status
+   if ( m_timeout >= 0 )
+   {
+      flags &= ~O_NONBLOCK;
+      fcntl( d.m_iSystemData, F_SETFL, flags );
+   }
+#endif
+   if ( i != 1 )
+   {
+      m_sslData->lastSysError = SSL_get_error( m_sslData->sslHandle, i );
+      m_sslData->lastSslError = SSLData::handshake_failed;
+      m_lastError = m_sslData->lastSysError;
+      m_sslData->handshakeState = SSLData::handshake_bad;
+      return SSLData::handshake_failed;
+   }
+
+   m_sslData->handshakeState = SSLData::handshake_ok;
+   return SSLData::no_error;
+}
+
+int32 TCPSocket::sslWrite( const byte* buf, int32 sz )
+{
+   int i = SSL_write( m_sslData->sslHandle, buf, sz );
+   if ( i <= 0 )
+   {
+      m_sslData->lastSysError = SSL_get_error( m_sslData->sslHandle, i );
+      m_sslData->lastSslError = SSLData::write_error;
+      m_lastError = m_sslData->lastSysError;
+      return -1;
+   }
+   return i;
+}
+
+int32 TCPSocket::sslRead( byte* buf, int32 sz )
+{
+   int i = SSL_read( m_sslData->sslHandle, buf, sz );
+   if ( i <= 0 )
+   {
+      m_sslData->lastSysError = SSL_get_error( m_sslData->sslHandle, i );
+      m_sslData->lastSslError = SSLData::read_error;
+      m_lastError = m_sslData->lastSysError;
+      return -1;
+   }
+   return i;
+}
+#endif // WITH_OPENSSL
 
 //================================================
 // Server

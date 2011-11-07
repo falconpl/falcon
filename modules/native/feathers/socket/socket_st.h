@@ -30,5 +30,9 @@ FAL_MODSTR( sk_msg_errrecv, "Network error while receiving data" );
 FAL_MODSTR( sk_msg_errclose, "Network error while closing socket" );
 FAL_MODSTR( sk_msg_errbind, "Can't bind socket to address" );
 FAL_MODSTR( sk_msg_erraccept, "Error while accepting connections" );
+#if WITH_OPENSSL
+FAL_MODSTR( sk_msg_errsslconfig, "Can't configure socket for SSL" );
+FAL_MODSTR( sk_msg_errsslconnect, "Can't negotiate SSL operations" );
+#endif
 
 /* socket_st.h */
