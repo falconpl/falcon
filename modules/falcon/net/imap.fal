@@ -36,8 +36,10 @@ end
    @param server Server address.
    @optparam port Port number (default 143).
    @optparam timeout Socket timeout in milliseconds (default 1000).
+   @optparam useSsl Wether to use SSL encrypted socket (default false).
+   @optparam sslVer SSL version to use (default TLSv1).
  */
-class IMAP( server, port, timeout )
+class IMAP( server, port, timeout, useSsl, sslVer )
 
    /*# Server address. */
    server = server
@@ -45,6 +47,11 @@ class IMAP( server, port, timeout )
    port = port ? toString( port ) : "143"
    /*# Timeout (in milliseconds) waiting for server contact. */
    timeout = timeout ? timeout : 1000
+   /*# Wether to use ssl. Change it before connection. */
+   useSsl = useSsl ? useSsl : false
+   _useSsl = false
+   /*# Ssl version to use, default TLSv1. */
+   sslVersion = sslVer ? sslVer : socket.TLSv1
    /*# Function used to show communication between client and server. */
    trace = {=>}
    /*# Current state (see @a IMAPState). */
@@ -65,7 +72,8 @@ class IMAP( server, port, timeout )
    function connect()
       sock = socket.TCPSocket()
       sock.setTimeout( self.timeout )
-      if not sock.connect( self.server, self.port )
+      sock.connect( self.server, self.port )
+      if not sock.isConnected()
          raise IMAPError( 10001, "Can't connect to required server", self.server.toString() + ":" + self.port )
       end
       sock.setTimeout( 0 )
@@ -78,6 +86,13 @@ class IMAP( server, port, timeout )
          raise IMAPError( 10002, "Remote server not ready", reply.trim() )
       else
          self.state = IMAPState.connected
+      end
+      // ssl ?
+      if self.useSsl
+         self.startTLS()
+         self._sock.sslConfig( false, self.sslVersion )
+         self._sock.sslConnect()
+         self._useSsl = true
       end
    end
 
@@ -121,16 +136,15 @@ class IMAP( server, port, timeout )
       self._n = 0 // reset internal counter
    end
 
-   /*
+   /*#
       @brief Start TLS procedure.
+    */
    function startTLS()
       tag = self._tag()
       out = @ "$(tag) STARTTLS"
-      reply = self._send( out )
-      if not reply.startsWith( tag + " OK" )
-         raise IMAPError( 10010, "Start TLS failed", reply.trim() )
-      end
-   end*/
+      self._send( out )
+      self._getTagResponse( "STARTTLS", tag )
+   end
 
    /*#
       @brief Select a mailbox.
@@ -439,7 +453,11 @@ class IMAP( server, port, timeout )
    function _send( cmd )
       self.trace( "--> " + cmd )
       if self._sock.writeAvailable( self.timeout/1000.0 )
-         self._sock.send( cmd + "\r\n" )
+         if not self._useSsl
+            self._sock.send( cmd + "\r\n" )
+         else
+            self._sock.sslWrite( cmd + "\r\n" )
+         end
       else
          raise IMAPError( 10001, "Socket write timeout (" + self.timeout.toString() + ")" )
       end
@@ -477,7 +495,11 @@ class IMAP( server, port, timeout )
          if toRead > 1500: toRead = 1500
          
          // receive more data.
-         recCount += self._sock.recv( buf, toRead )
+         if not self._useSsl
+            recCount += self._sock.recv( buf, toRead )
+         else
+            recCount += self._sock.sslRead( buf, toRead )
+         end
          reply += buf
       end
 
@@ -507,7 +529,11 @@ class IMAP( server, port, timeout )
          end
 
          // receive more data.
-         self._sock.recv( buf )
+         if not self._useSsl
+            self._sock.recv( buf )
+         else
+            self._sock.sslRead( buf )
+         end
          reply += buf
       end
       // send the first line and save the rest for later.
@@ -540,5 +566,5 @@ class IMAP( server, port, timeout )
 
 end // class IMAP
 
-/* vi: set et ai sw=3 sts=3: */
+/* vim: set et ai sw=3 ts=3 sts=3: */
 
