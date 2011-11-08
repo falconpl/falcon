@@ -532,17 +532,30 @@ function _parseHeaders( stream, part )
          end
       end
 
-      key,value = _parseHeaderLine( hdr )
-      hdr = ""
-
-      // should we consider some content type ?
-      if key.lower() == "content-type"
-         bound = _checkMultipart( value, part )
-      end
-
-      part.headers[key] = value
+      bd = _parseSingleHeader( hdr, part )
+      if bd: bound = bd
    end
 
+   // parse the last line
+   if buf
+      bd = _parseSingleHeader( buf, part )
+      if bd: bound = bd
+   end
+
+   return bound
+end
+
+
+function _parseSingleHeader( hdr, part )
+   key,value = _parseHeaderLine( hdr )
+   hdr = ""
+
+   // should we consider some content type ?
+   if key.lower() == "content-type"
+      bound = _checkMultipart( value, part )
+   end
+
+   part.headers[key] = value
    return bound
 end
 
