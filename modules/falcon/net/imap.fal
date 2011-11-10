@@ -16,7 +16,7 @@
 */
 
 import from socket
-
+import from regex
 export
 
 class IMAPError( code, desc, extra ) from Error( code, desc, extra )
@@ -58,13 +58,17 @@ class IMAP( server, port, timeout, useSsl, sslVer )
    state = IMAPState.nostate
    /*# Current selected mailbox. */
    selected = nil
-
+   
    _sock = nil
    _n = 0
 
    // save multiple lines, if we receive them.
    oldReply = ""
 
+   re_num = regex.Regex( "\\* ([0-9]+) (.*)$" )
+   re_ok = regex.Regex( "\\* OK ?(\\[(.*)\\])? ?(.*)$" )
+   re_flags = regex.Regex( "\\* FLAGS (.*)$" )
+   
    /*#
       @brief Connect to IMAP server.
       @raise IMAPError Unable to connect.
@@ -515,6 +519,16 @@ class IMAP( server, port, timeout, useSsl, sslVer )
       return reply
    end
 
+
+   function parseReply( reply )
+      res = [=>]
+      lines = reply.split( "\r\n" )
+      for line in lines
+         self.parseLine( line, res )
+      end
+      return bless(res)
+   end
+   
 
    function parseLine( line, res )
       // it's a numeric field?
