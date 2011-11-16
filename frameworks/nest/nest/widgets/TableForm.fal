@@ -1,0 +1,59 @@
+/*
+   FALCON - The Falcon Programming Language
+
+   Nest - Falcon web applcation engine
+
+   FILE: ListForm.fal
+
+   AJAX widgeting subsystem -- Form rendered as a list of items
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Wed, 28 Sep 2011 11:31:25 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2011: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+import from nest.widgets.Form in wid
+
+/*# Table-specialized form.
+
+   This specialization of the form class is built to render
+   its own children as a list of items. It is very common to use
+   a stylesheet to transform UL/LI/label element sequences into well
+   formatted fields.
+*/
+class TableForm( id, action, method ) from wid.Form( id, action, method )
+
+   /*# Called back in rendering each element of the form.
+      @param child A child widget of this form.
+
+      The base version just renders the prompt via child.renderPrompt() and then
+      renders the body via child.render().
+   */
+   function renderChild( field )
+      return "<tr><td class=\"label\">" + field.renderLabel() + "</td><td class=\"content\">" +
+             field.renderCore() + "&nbsp;" +
+             field.renderInfo() + "</td></tr>\n"
+   end
+
+   /*# Renders the start entry of the form elements.
+      @return A string that is used before rendering any element.
+      The base class returns an empty string.
+   */
+   function renderFormBegin()
+      return "<table>\n"
+   end
+
+   /*# Renders the end entry of the form elements.
+      @return A string that is used before after rendering all the elements.
+   */
+   function renderFormEnd()
+      return "</table>\n"
+   end
+
+end
+
+/* end of TableForm.fal */

@@ -89,29 +89,46 @@ bool Base64::decode( const String& data, byte* target, uint32& tgsize )
 {
    uint32 tgpos = 0;
    uint32 dsize = data.size();
-   uint32 padSize = 0;
 
-   for ( uint32 i = 0; i < dsize; i += 4 )
+   uint32 i = 0;
+   while( i < dsize )
    {
       uint32 value = 0;
-
-      for( uint32 n = 0; n < 4; ++n )
+      uint32 n = 0;
+      while( n < 4 && i < dsize )
       {
-         if( (i + n) >= dsize )
-            return false;
+         uint32 chr = data.getCharAt(i);
 
-         uint32 chr = data.getCharAt(i+n);
+         // whitespace? -- ignore.
+         if( chr == ' ' || chr == '\t' || chr == '\n' || chr == '\r' )
+         {
+            ++i;
+            continue;
+         }
+
+         // padding char?
          if( chr == '=' )
          {
-            padSize = dsize - i-n;
-            if ( padSize > 2 )
-            {
-               // not a valid char
+            // get the chars
+            if( (tgpos+n-1) >= tgsize )
                return false;
-            }
 
-            // else, it's padding.
-            break;
+            // have we to fix something?
+            if( n > 0 )
+            {
+               target[tgpos++] = (byte)((value>>16) &0xFF);
+
+               if( n > 1 )
+               {
+                  target[tgpos++] = (byte)((value>>8) &0xFF);
+
+                  if( n > 2 )
+                     target[tgpos++] = (byte)(value &0xFF);
+               }
+            }
+            
+            tgsize = tgpos;
+            return true;
          }
 
          uint32 bits = getBits( chr );
@@ -121,20 +138,16 @@ bool Base64::decode( const String& data, byte* target, uint32& tgsize )
 
          // create the value
          value |= bits << ((3-n)*6);
+
+         // advance in the string and in the status.
+         ++i;
+         ++n;
       }
 
-      // get the chars
-      if( (tgpos+3-padSize) >= tgsize )
-         return false;
-
-      // always done
+      if( (tgpos+3) >= tgsize ) return false;
       target[tgpos++] = (byte)((value>>16) &0xFF);
-
-      if( padSize < 2 )
-         target[tgpos++] = (byte)((value>>8) &0xFF);
-
-      if( padSize < 1 )
-         target[tgpos++] = (byte)(value &0xFF);
+      target[tgpos++] = (byte)((value>>8) &0xFF);
+      target[tgpos++] = (byte)(value &0xFF);
    }
 
    tgsize = tgpos;

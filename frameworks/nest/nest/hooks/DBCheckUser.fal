@@ -39,7 +39,7 @@ import DBEntity from nest.dbentity as DBEntity
    - **password_field**: Name of the field where the password is stored.
    - **level_field**: Optional; if given, the logged in users will receive the level specified in this field.
                      the field should be an integer, with higher levels represented as lower number
-                     (0 = admin); or, it may be a string that is maped through the **levels** configuration
+                     (0 = admin); or, it may be a string that is mapped through the **levels** configuration
                      variable.
    - **levels**: Optional; if given, must be a dictionary of strings => auth_level, where
                  each string corresponds to a value in the **level_field** column. If a level is not mapped,

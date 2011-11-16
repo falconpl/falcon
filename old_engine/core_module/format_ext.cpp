@@ -78,13 +78,13 @@ namespace core {
           while if it's set to zero, decimal numbers will be rounded.
 
       @b Decimal @b separator: a 'd' followed by any non-cipher character will be interpreted as decimal
-      separator setting. For example, to use central European standard for decimal nubmers and limit the
+      separator setting. For example, to use central European standard for decimal numbers and limit the
       output to 3 decimals, write ".3d,", or "d,.3". The default value is '.'.
 
       @b (Thousands) @b Grouping: actually it's the integer part group separator, as it will be displayed
       also for hexadecimal, octal and binary conversions. It is set using 'g' followed by the separator
       character, it defaults to ','. Normally, it is not displayed; to activate it set also the integer
-      grouping digit count; normally is 3, but it's 4 in Japanaese and Chinese locales, while it may be
+      grouping digit count; normally is 3, but it's 4 in Japanese and Chinese locales, while it may be
       useful to set it to 2 or 4 for hexadecimal, 3 for octal and 4 or 8 for binary. In example 'g4-'
       would group digits 4 by 4, grouping them with a "-". Zero would disable grouping.
 
@@ -221,7 +221,7 @@ FALCON_FUNC  Format_init ( ::Falcon::VMachine *vm )
    of the variable.
 
    It is possible to provide a pre-allocated string where to store the formatted
-   result to improve performace and spare memory.
+   result to improve performance and spare memory.
 */
 FALCON_FUNC  Format_format ( ::Falcon::VMachine *vm )
 {

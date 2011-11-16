@@ -21,7 +21,7 @@
    @inmodule core
 
    Functions in this set are meant to provide functional
-   support to arrays. Some of them replicate opeartor or
+   support to arrays. Some of them replicate operator or
    @a Array class methods.
 */
 
@@ -215,7 +215,7 @@ FALCON_FUNC  Array_back ( ::Falcon::VMachine *vm )
    @raise AccessError if the item is not an array.
    @return The table of which this item is a row.
 
-   This array method retreives the table that is related with the
+   This array method retrieves the table that is related with the
    item, provided the item is an array being part of a table.
 
    In case the item is an array, but it doesn't belong to any
@@ -237,13 +237,13 @@ FALCON_FUNC Array_table( VMachine *vm )
 /*#
    @method tabField Array
    @brief Returns one of the items in the array, given the field name.
-   @param field The field name or position to be retreived.
+   @param field The field name or position to be retrieved.
    @raise AccessError if the item is not an array.
    @return An item in the array or the default column value.
 
    If this item is an array and is part of a table, the field with
    the given name or ID (number) is searched in the table definition,
-   and if found, it is returned. If the coresponding item in the array
+   and if found, it is returned. If the corresponding item in the array
    is nil, then the table column data (default data) is returned instead,
    unless the item is also an OOB item. In that case, nil is returned
    and the default column value is ignored.
@@ -263,7 +263,7 @@ FALCON_FUNC Array_tabField( VMachine *vm )
    CoreArray *array = vm->self().asArray();
    if ( array->table() != 0 )
    {
-      // if a field paramter is given, return its value
+      // if a field parameter is given, return its value
       uint32 num = (uint32) CoreTable::noitem;
       CoreTable *table = reinterpret_cast<CoreTable*>(array->table()->getFalconData());
 
@@ -813,7 +813,7 @@ FALCON_FUNC  arrayBuffer ( ::Falcon::VMachine *vm )
 
    Normally, array operations, as insertions, additions and so on
    cause the array to grow to accommodate items that may come in the future.
-   also, reducing the size of an array doesn't automatically dispose of the
+   Also, reducing the size of an array doesn't automatically dispose of the
    memory held by the array to store its elements.
 
    This function grants that the memory used by the array is strictly the
@@ -827,7 +827,7 @@ FALCON_FUNC  arrayBuffer ( ::Falcon::VMachine *vm )
 
    Normally, array operations, as insertions, additions and so on
    cause the array to grow to accommodate items that may come in the future.
-   also, reducing the size of an array doesn't automatically dispose of the
+   Also, reducing the size of an array doesn't automatically dispose of the
    memory held by the array to store its elements.
 
    This method grants that the memory used by the array is strictly the
@@ -1152,7 +1152,7 @@ FALCON_FUNC  mth_arrayFind ( ::Falcon::VMachine *vm )
    The items in the array are fed one after another as the single parameter to the
    provided scanFunc, which may be any Falcon callable item, including a method. If
    the scanFunc returns true, the scan is interrupted and the index of the item is
-   returned. If the search is unsuccesful, -1 is returned.
+   returned. If the search is unsuccessful, -1 is returned.
 
    An optional start parameter may be provided to begin searching from a certain
    point on. If also an end parameter is given, the search is taken between start

@@ -43,7 +43,7 @@
 namespace Falcon {
 namespace core {
 
-// raises te correct error depending on the problem on the file
+// raises the correct error depending on the problem on the file
 static void s_breakage( Stream *file )
 {
    if ( file->unsupported() )
@@ -237,7 +237,7 @@ FALCON_FUNC  Stream_read ( ::Falcon::VMachine *vm )
          size = nsize;
    }
 
-   // delcare the VM idle during the I/O
+   // declare the VM idle during the I/O
    vm->idle();
    size = file->read( memory, size );
    vm->unidle();
@@ -269,7 +269,7 @@ FALCON_FUNC  Stream_read ( ::Falcon::VMachine *vm )
    @return A string containing binary data from the stream.
    @raise IoError on system errors.
 
-   This metod creates a string wide enough to read size bytes,
+   This method creates a string wide enough to read size bytes,
    and then tries to fill it with binary data coming from the stream.
 */
 FALCON_FUNC  Stream_grab ( ::Falcon::VMachine *vm )
@@ -715,7 +715,7 @@ FALCON_FUNC  Stream_grabLine ( ::Falcon::VMachine *vm )
    When the output buffer is a string, a size parameter can be given; otherwise
    the whole binary contents of the stream are written. A start position may
    optionally be given too; this allows to iterate through writes and send part
-   of the data that coulden't be send previously without extracting substrings or
+   of the data that couldn't be send previously without extracting substrings or
    copying the memory buffers.
 
    MemBuf items can participate to stream binary writes through their internal
@@ -1041,7 +1041,7 @@ FALCON_FUNC  Stream_truncate ( ::Falcon::VMachine *vm )
    @return An error code.
 
    Returns a system specific low level error code for last failed I/O
-   operation on this stream, or zero if the last operation was succesful.
+   operation on this stream, or zero if the last operation was successful.
 */
 FALCON_FUNC  Stream_lastError ( ::Falcon::VMachine *vm )
 {
@@ -1109,7 +1109,7 @@ FALCON_FUNC  Stream_isOpen ( ::Falcon::VMachine *vm )
    to wait for incoming data. If the parameter is not given, or if it's set to
    a negative value, the wait will be infinite.
 
-   A read after readAvailable has returned succesfully is granted not to be
+   A read after readAvailable has returned successfully is granted not to be
    blocking (unless another coroutine or thread reads data from the same stream
    in the meanwhile). Performing a read after that readAvailable has returned
    false will probably block for an undefined amount of time.
@@ -1162,7 +1162,7 @@ FALCON_FUNC  Stream_readAvailable ( ::Falcon::VMachine *vm )
    to wait for the line being cleared. If the @b seconds is not given, or if it's set to
    a negative value, the wait will be infinite.
 
-   A write operation after writeAvailable has returned succesfully is granted not to be
+   A write operation after writeAvailable has returned successfully is granted not to be
    blocking (unless another coroutine or thread writes data to the same stream
    in the meanwhile). Performing a read after that readAvailable has returned
    false will probably block for an undefined amount of time.
@@ -1326,7 +1326,7 @@ FALCON_FUNC  InputStream_creator ( ::Falcon::VMachine *vm )
             .extra( *fileName->asString() )  );
    }
 
-   // find the appropriage provider.
+   // find the appropiate provider.
    VFSProvider* vfs = Engine::getVFS( furi.scheme() );
    if ( vfs == 0 )
    {
@@ -1403,7 +1403,7 @@ FALCON_FUNC  OutputStream_creator ( ::Falcon::VMachine *vm )
             .extra( *fileName->asString() )  );
    }
 
-   // find the appropriage provider.
+   // find the appropriate provider.
    VFSProvider* vfs = Engine::getVFS( furi.scheme() );
    if ( vfs == 0 )
    {
@@ -1502,7 +1502,7 @@ FALCON_FUNC  IOStream_creator ( ::Falcon::VMachine *vm )
             .extra( *fileName->asString() ) );
    }
 
-   // find the appropriage provider.
+   // find the appropriate provider.
    VFSProvider* vfs = Engine::getVFS( furi.scheme() );
    if ( vfs == 0 )
    {
@@ -1848,7 +1848,7 @@ FALCON_FUNC  systemErrorDescription ( ::Falcon::VMachine *vm )
    @brief Set the buffering state of this stream.
    @param size Buffering size; pass 0 to disable.
 
-   This method activates or disactivates I/O buffering on this stream.
+   This method activates or unactivates I/O buffering on this stream.
 
    When buffering is active, every read/write operation is first cached
    in memory, provided the size of the memory buffer is wide enough to
@@ -1885,7 +1885,7 @@ FALCON_FUNC  Stream_setBuffering ( ::Falcon::VMachine *vm )
    int64 size = i_size->forceInteger();
 
    // Buffering lies between transcoders and the final stream.
-   // We need to find the first non-transcoder in the hierarcy.
+   // We need to find the first non-transcoder in the hierarchy.
 
    Stream *sub = file;
    Transcoder* ts = 0;   // lowermost transcoder.
@@ -1965,7 +1965,7 @@ FALCON_FUNC  Stream_getBuffering ( ::Falcon::VMachine *vm )
    Stream *file = dyncast<Stream *>( self->getFalconData() );
 
    // Buffering lies between transcoders and the final stream.
-   // We need to find the first non-transcoder in the hierarcy.
+   // We need to find the first non-transcoder in the hierarchy.
    Stream *sub = file;
    while( sub->isTranscoder() )
    {
@@ -2128,7 +2128,7 @@ FALCON_FUNC  readURI ( ::Falcon::VMachine *vm )
    }
 
 
-   // find the appropriage provider.
+   // find the appropriate provider.
    VFSProvider* vfs = Engine::getVFS( uri.scheme() );
    if ( vfs == 0 )
    {
@@ -2150,7 +2150,7 @@ FALCON_FUNC  readURI ( ::Falcon::VMachine *vm )
    int64 len;
    if( ! vfs->readStats( uri, fs ) )
    {
-      // we know the file exists; this means that the vfs doesn't provide file lenght.
+      // we know the file exists; this means that the vfs doesn't provide file length.
       len = -1;
    }
    else {

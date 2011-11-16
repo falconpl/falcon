@@ -510,7 +510,7 @@ FALCON_FUNC  mth_dictFill ( ::Falcon::VMachine *vm )
 */
 /*#
    @method get Dictionary
-   @brief Retreives a value associated with the given key
+   @brief Retrieves a value associated with the given key
    @param key The key to be found.
    @return The value associated with a key, or an out-of-band nil if not found.
 
@@ -520,7 +520,7 @@ FALCON_FUNC  mth_dictFill ( ::Falcon::VMachine *vm )
    returned if the value associated with a given key is exactly nil. In
    case the key cannot be found, the returned value will be marked as OOB.
    
-   @note This method bypassess getIndex__ override in blessed (POOP) dictionaries.
+   @note This method bypasses getIndex__ override in blessed (POOP) dictionaries.
 
    @see oob
 */
@@ -564,7 +564,7 @@ FALCON_FUNC  mth_dictGet( ::Falcon::VMachine *vm )
    @param value The key to be set.
    @return True if the value was overwritten, false if it has been inserted anew.
    
-   @note This method bypassess setIndex__ override in blessed (POOP) dictionaries.
+   @note This method bypasses setIndex__ override in blessed (POOP) dictionaries.
 
    @see oob
 */
@@ -576,7 +576,7 @@ FALCON_FUNC  mth_dictGet( ::Falcon::VMachine *vm )
    @param value The key to be set.
    @return True if the value was overwritten, false if it has been inserted anew.
    
-   @note This method bypassess setIndex__ override in blessed (POOP) dictionaries.
+   @note This method bypasses setIndex__ override in blessed (POOP) dictionaries.
 
    @see oob
 */
@@ -853,7 +853,7 @@ FALCON_FUNC  Dictionary_comp ( ::Falcon::VMachine *vm )
    @return This dictionary.
 
    Please, see the description of @a Sequence.comp, and the general @a Dictionary.comp
-   for dictioanry-specific notes.
+   for dictionary-specific notes.
 
    @see Sequence.mcomp
 */
@@ -890,7 +890,7 @@ FALCON_FUNC  Dictionary_mcomp ( ::Falcon::VMachine *vm )
    @return This dictionary.
 
    Please, see the description of @a Sequence.comp, and the general @a Dictionary.comp
-   for dictioanry-specific notes.
+   for dictionary-specific notes.
 
    @see Sequence.mfcomp
 */

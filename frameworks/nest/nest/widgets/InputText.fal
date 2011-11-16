@@ -1,0 +1,32 @@
+/*
+   FALCON - The Falcon Programming Language
+
+   Nest - Falcon web applcation engine
+
+   FILE: InputText.fal
+
+   AJAX widgeting subsystem -- input field.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Mon, 26 Sep 2011 11:55:58 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2011: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+import from nest.widgets.widget in widget
+
+class InputText( id, prompt ) from widget.Widget( id )
+   tag = "input"
+   isSelfClosing = true
+   label = prompt ? prompt : ""
+
+   init
+      if self.props == nil: self.props = [=>]
+      self.props['name'] = nil   // will be filled at render
+      self.props['type'] = "text"
+   end
+end
+

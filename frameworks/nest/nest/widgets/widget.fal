@@ -1,0 +1,641 @@
+/*
+   FALCON - The Falcon Programming Language
+
+   Nest - Falcon web applcation engine
+
+   FILE: widget.fal
+
+   Basic definition for the AJAX widgeting subsystem.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Mon, 26 Sep 2011 11:55:58 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2011: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+import from json in json
+
+/*# Represents a request that could be sent via AJAX back to a widget.
+   @optparam rp Required properties (data that must be sent back to us).
+   @optparam extra Extra parameters that should be sent back here.
+   @potparam jsPrefix A javascript code that should be invoked before launching the ajax request.
+
+   This class is used to store the parameters of AJAX requests that the widgets
+   rendered on a web site could send back to to their server-side counterparts.
+
+   It has a set of required properties and a set of extra fixed parameters.
+   The properties are a list of strings that represent a property in the rendered
+   widget or in a sibling or parent widget.
+
+   Property names are represented as path, relative to this widget. For instance,
+   - "value" reprsents the text value of this object.
+   - "../value" represents the text value of the parent object.
+   - "../sibling/value" represents the text value of an object called "sibling"
+     being rendered at the same level of this widget.
+   - "/a/b/value" is the text value of a widget "b" under widget "a" in the
+     topmost widget parent of this one.
+
+   Any DOM element property can be queried this way and sent back to the receiving
+   application, that will receive it in a "infos" entry, named after the relative
+   property name that has been given ("value" => value,
+   "../sibling/value" => "sibling.value" and so on).
+*/
+class AJAXRequest( rp, extra, jsPrefix )
+   reqProps = rp
+   extra = extra
+   jsPrefix = jsPrefix
+
+   function renderReqProps()
+      if self.reqProps: return json.JSONencode( self.reqProps ).replace( "\"", "'" )
+      return "null"
+   end
+
+   function renderExtra()
+      if self.extra: return htmlEscape(json.JSONencode( self.extra )).replace( "\"", "'" )
+      return "null"
+   end
+
+   /*# Renders an AJAX request bound with this widget. */
+   function render( hostName, id, message )
+      rps = self.renderReqProps()
+      extra = self.renderExtra()
+      rend = "Nest.widgetMsg('" + hostName + "', '" +
+                       id + "', '"+message+"', " +rps+ ", " + extra +")"
+
+      if self.jsPrefix
+         return self.jsPrefix +";"+ rend
+      else
+         return rend
+      end
+   end
+
+end
+
+/*# Base class for the widgeting system.
+   @param id The id of the widget as know in the HTML/AJAX rendering.
+
+   @note All the widget subclasses willing to become AJAX hosts MUST
+   have an @b id parameter as their @b first parameter in the class
+   constructor. This @b id parameter will be propagated through the
+   widget hierarcy up to this base class, always as first parameter.
+*/
+
+class Widget( id )
+   //# 'local' ID of this widget in the DOM model.
+   id = id
+
+   //# HTML Tag associated with this widget.
+   tag = "div"
+
+   //# HTML properties associated with this widget at DOM level.
+   props = nil
+
+   //# Javascript callbacks resolving in a NEST widget ajax request.
+   ajaxReqs = nil
+
+   //# Custom message handlers.
+   ajaxMessages = nil
+
+   //# list of children.
+   children = []
+
+   //# dictionary of children ordered by their ID.
+   childrenById = nil
+
+   //# parent of this widget.
+   parent = nil
+
+   //# list ov javascript methods to be added to this widget.
+   jsMethods = [=>]
+
+   jsListeners = [=>]
+
+   //# Some widget cannot be closed with the XML self-closing tag.
+   isSelfClosing = false
+
+   //# Method invoked at javascript level after rendering.
+   onCreate = nil
+
+   /*# If true, this is a ajax host, and can receive ajax messages directly.
+
+      Topmost widgets are always considered ajax AJAX, but there can be
+      some widgets included inside parents that can have their own AJAX
+      handler method.
+
+      Is this property is true, the rendere will tell Nest to send AJAX
+      requests to this widget.
+
+      A parent can easily override this setting by setting this property
+      to false even when a widget can manage its own AJAX messages; then
+      the parent can route the messages to the children, if it wants,
+      after having processed them.
+
+      @note AJAX hosts \b must be exposed in a widget module (a file under
+      nest/widget named after the exposed class) \b and must properly
+      fill the @a Widget.initInfos verctor with the parameters that
+      the Nest system must pass to the widget during initialization step. Also,
+      they \b must provide a "tag", that is, they must be real possibly visible
+      entities (or at least, an invisible empty "div"),
+      and not just "widget groups". Notice that the @b id parameter is
+      automatically repeated by the Nest system, so it is not necessary
+      to present it inside the @b Widget.initInfo property.
+
+      @note All the widget subclasses willing to become AJAX hosts MUST
+      have an @b id parameter as their @b first parameter in the class
+      constructor. This @b id parameter will be propagated through the
+      widget hierarcy up to this base class, always as first parameter.
+   */
+   isAJAXHost = false
+
+   /*# Init informations.
+      This are the parameters that must be repeated to create a copy of this widget.
+      The @b id field alone needs not to be repeated as it is automatically
+      added in front of every initialization information as the widget is
+      created to fulfil AJAX host requests.
+   */
+   initInfos = nil
+
+   //# Text or widget used as label/prompt form or form-like widgets
+   label = nil
+
+   //# Text or widget associated with this field in form or form-like widgets
+   fieldInfo = nil
+
+   //# Thing to be added automatically to names when generating the name field.
+   addName = nil
+
+   //# Set true to put label AFTER the main widget in standard representation
+   labelsOnRight = false
+
+   //# Set true when the widget JSON part of the widget requires Nest_id.
+   needID = false
+
+   //# Adds a child to this widget.
+   function addChild( wid )
+      wid.parent = self
+      self.children += wid
+      if self.childrenById
+         self.childrenById[wid.id] = wid
+      else
+         self.childrenById = [ wid.id =>wid ]
+      end
+   end
+
+   //# Shortcut to add multiple children
+   function addChildren()
+      for child in passvp()
+         self.addChild( child )
+      end
+   end
+
+   /*# Adds children to this widget using a list of string.
+      @optparam choices An array of choices (strings).
+
+      This method adds automatically a set of common children which
+      depends on the parent subwidget type. Container classes that
+      accept this automatic child addition protocol must provide
+      an overload for @a Widget.makeAutoChild, which returns the
+      created widget, or nil if the widget cannot be created.
+      
+      Each element in choice is a string with the following format:
+      "value:text". If ':' is not in the choice string, then the whole text will
+      be used both as a submit value and as a text.
+
+      If the value part is preceeded by an asterisk (*), then the entry will be
+      checked, selected, specially marked or put in evidence, depending on the
+      type of container.
+
+      If the text part ends with a dollar mark ('$'), then the label is placed
+      at right in rendering.
+   */
+   function autoAddChildren( choices )
+      for value in choices
+         if (pos = value.find(':')) >= 0
+            text = value[pos+1:]
+            value = value[0:pos]
+         else
+            // don't copy, so the changes we do below apply to both
+            text = $value
+         end
+
+         if value.startsWith( '*' )
+            checked = true
+            value = value[1:]
+         else
+            checked = false
+         end
+
+         if text.endsWith('$')
+            text = text[0:-1]
+            onRight = true
+         else
+            onRight = false
+         end
+
+         child = self.makeAutoChild( value, text, checked )
+         if child
+            child.labelsOnRight = onRight
+            self.addChild( child )
+         end
+      end
+   end
+
+   /*# Callback used by autoAddChildren to create a proper child for this container.
+      @param value The value of this choice when submitted.
+      @param text The text or label associated with this choice.
+      @optparam checked If true, the element check or highlight should be actived.
+      @return A valid widget for the subclass container or nil if the widget cannot
+         be created.
+   */
+   function makeAutoChild( value, text, checked )
+      return nil
+   end
+
+   /*# Method used to set properties of the widget.
+      @param props the properties to be set in the widget.
+      @return the widget itself.
+   */
+   function set( props )
+      if self.props == nil
+         self.props = props
+      else
+         self.props += props
+      end
+      return self
+   end
+
+   //# Renders an XHTML representation of this widget.
+   function render()
+      if self.labelsOnRight
+         return self.renderCore() + self.renderLabel() + self.renderInfo()
+      else
+         return self.renderLabel() + self.renderCore() + self.renderInfo()
+      end
+   end
+
+   function renderCore()
+      id = self.getFullID()
+      
+      // first calculate a default name, if required ...
+      if 'name' in self.props
+         name = id
+         if self.addName: name += self.addName
+         self.props['name'] = name
+      end
+      
+      // ... then allow the widget to self-render.
+      self.onRender()
+
+      // render attributes -- if we have a tag we're an element in the document.
+      if self.tag
+         rend = "<" + self.tag + " id=\"" + id + "\" "
+         rend += self.renderProps()
+         rend += self.renderAJAXReqs()
+
+         if self.isSelfClosing and not self.children
+            rend += "/>"
+         else
+            rend += ">"
+            rend += self.renderContent()
+            rend += "</" + self.tag +">\n"
+         end
+         if self.isAJAXHost or not self.parent
+            rend += self.renderInitInfos()
+         end
+      else
+         rend = ""
+         if self.isAJAXHost
+            // in case of ajax hosting, we need a "mute div" to have a document entity with our name.
+            rend +="<div id=\""+id+"\" style=\"display:none\"></div>"
+            rend += self.renderInitInfos()
+         end
+         // otherwise we're just a set of children entities.
+         rend += self.renderContent()
+      end
+
+      // finally, render JS methods that this class may have
+      rend += self.renderJSMethods()
+      // Listeners go after methods, as listener usually refer to methods.
+      rend += self.renderAJAXMessages()
+      rend += self.renderJSListeners()
+      return rend
+   end
+
+
+   function renderJSMethods()
+      rend = ""
+
+      for mthName, mthDef in self.jsMethods
+         // Add a ; just in case
+         rend += "element." + mthName + "=" + mthDef + ";\n"
+      end
+
+      if self.onCreate
+         rend += "element.onCreate = function(){" + self.onCreate +";}\n"
+         Nest.closingScript += "document.getElementById('" + self.getFullID() + "').onCreate();\n"
+      end
+
+      if self.needID
+         rend +="element.Nest_id = '" + self.getFullID() + "';\n"
+      end
+      
+      if rend
+         rend = "<script language=\"javascript\">\n"+
+                "(function(){ var element = document.getElementById('" + self.getFullID() + "');\n" +          
+                rend +
+                "}());</script>\n"
+      end
+      return rend
+   end
+
+   function renderJSListeners()
+      rend = ""
+      for widget, mthDef in self.jsListeners
+         forfirst: rend = "<script language=\"javascript\">\n" +
+                          "(function(){ var element = document.getElementById('" + self.getFullID() + "');\n"
+         rend += "Nest.listen( element, '"+ widget.getFullID() + "'," + mthDef + ");\n"
+         forlast: rend += "}());</script>\n"
+      end
+      return rend
+   end
+
+   /*# Renders the contents of this widget.
+      @return A string with the full HTML contents of this widget rendered.
+
+      @note A sub-widget may define renderPrompt method to differentiate
+      the prompt from the main body.
+   */
+   function renderContent()
+      rend = ""
+      for child in self.children
+         forfirst: rend += "\n"
+         rend += child.renderInParent( self ) +"\n"
+      end
+      return rend
+   end
+
+   /*# Allows children to be rendered back by a parent.
+      @param parent The parent where the child is being rendered.
+
+      Override this if you want the children to have specific
+      behavior when rendered in some parent.
+
+      The default behavior is that to call directly parent.renderChild().
+   */
+   function renderInParent( parent )
+      return parent.renderChild( self )
+   end
+
+   /*# Override this for personalized label/content/info display
+      @param child The child to be rendered.
+
+      The default is to put a br tag after each child.
+   */
+   function renderChild( child )
+      return child.render() + "<br/>"
+   end
+
+   function renderLabel()
+      if self.label
+         if self.label provides render: return self.label.render()
+         return self.label
+      end
+      return ""
+   end
+
+   function renderInfo()
+      if self.fieldInfo
+         if self.fieldInfo provides render: return self.fieldInfo.render()
+         return self.fieldInfo
+      end
+      return ""
+   end
+
+   //# private
+   function renderInitInfos()
+      id = self.getFullID()
+
+      if self.initInfos
+         obj = json.JSONencode( [id] + self.initInfos )
+      else
+         obj =  "[\"" + id +"\"]"
+      end
+
+      rend = @"
+         <script language=\"javascript\">\n
+         document.getElementById('$(id)').Nest_initInfo = $(obj);\n
+         </script>\n"
+
+      return rend
+   end
+
+   //# private
+   function renderProps()
+      rend = ""
+      for key, value in self.props
+         rend += key + "=\"" + htmlEscape(toString(value)) + "\""
+         formiddle: rend += " "
+      end
+      return rend
+   end
+
+
+   //# private
+   function renderAJAXReqs()
+      rend = ""
+      for key, value in self.ajaxReqs
+         forfirst
+            id = self.getFullID()
+            hostName = self.ajaxHostName()
+            rend = " "
+         end
+
+         req = value.render( hostName, id, key )
+         rend += key + "=\"" + req + ";\""
+         formiddle: rend += " "
+      end
+      return rend
+   end
+
+   //# private
+   function renderAJAXMessages()
+      rend = ""
+      for key, value in self.ajaxMessages
+         forfirst
+            this = "document.getElementById('" + self.getFullID() + "')";
+            rend += "<script language=\"javascript\">\n(function(){"
+         end
+
+         rend += "Nest.messageHandlers['" + key +"']= function(obj){" + @value + "}\n"
+         forlast: rend += "}());</script>"
+      end
+
+      return rend
+   end
+
+   /*# Returns the full ID of this widget (including the parent ones).
+      @return A string representing the full ID of this widget at DOM model level.
+
+      The full-id of a widget is its own ID preceded by a dot-separated list
+      of the parent ids up to the root.
+   */
+   function getFullID()
+      if self.parent
+         return self.parent.getFullID() + "." + self.id
+      end
+
+      return self.id
+   end
+
+   /*# Get the topmost widget class name. */
+   function parentName()
+      if self.parent
+         return self.parent.parentName()
+      end
+      return self.className()
+   end
+
+   /*# Get the topmost widget class name with ajax host capabilities. */
+   function ajaxHostName()
+      if self.isAJAXHost or not self.parent
+         return self.className()
+      else
+         return self.parent.ajaxHostName()
+      end
+   end
+
+   /*# Utility to create the code to invoke a nest javascript local message.
+      @param msg The name of the message generated by the widget in the browser page.
+      @param value A value associated with the message (may be any valid javascript expression).
+
+      @note The value member is directly placed in the javascript invocation; if it's meant to
+      be a string, proper quotes must be added inside the string.
+   */
+   function makeMessage( msg, value )
+      return "Nest.message('"+self.getFullID()+ "', '" + msg + "', " + value +");"
+   end
+
+   /*# Utility to emit a callback message.
+      @param msg The name of the message generated by the widget in the browser page.
+      @param value A value associated with the message (may be any valid javascript expression).
+
+      To be used in form
+      @code
+      wid.jsMethods = [
+         "onclick" => wid.makeEmit( "onclick", "this.value" )
+      ]
+      @endcode
+   */
+   function makeEmit( msg, value )
+      self.needID = true
+      return "function(){ Nest.message(this.Nest_id, '" + msg + "', " + value +"); }"
+   end
+
+   /*# Emit a message directly from within a js script. */
+   function jsEmit( msg, value )
+      self.needID = true
+      return "Nest.message(this.Nest_id, '" + msg + "', " + value +");"
+   end
+   
+   /*# Called back right before rendering.
+      Widget are often created and then added to a parent. This means that
+      the information about their hierarcy is not ready at creation,
+      but it's ready at render. This callback allows to do last setups
+      before the widget is rendered.
+   */
+   function onRender()
+   end
+
+   /*# Sets the value of the widget before its rendering.
+   */
+   function setRenderValue( val )
+      if self.props == nil: self.props = [=>]
+      self.props['value'] = val
+   end
+
+   /*# Gets a pre-render value set in the widget.
+      @return A value that is known to be associated with this widget.
+      
+      Possibly overridable; the default is to peek the value in the 'value' property.
+      Complex widgets as containers may have different definitions of their value.
+   */
+   function getValue()
+      if self.props and 'value' in self.props: return self.props['value']
+      return nil
+   end
+   
+   /*# Route a set of incoming post values in a widget hierarcy.
+      @param vals A dictionary of routable values.
+      @param top ID of the parent widget.
+   */
+   function routeValues( vals, top )
+      //> "Routing at "+top+"<br/>"
+      current = top ? top+"."+self.id : self.id
+      if current in vals
+         //> "Rendering "+vals[current]+"<br/>"
+         self.setRenderValue( vals[current] )
+      end
+      //> "Subroutong... <br/>"
+      for item in self.children
+         item.routeValues( vals, current )
+      end      
+   end
+   
+   /*# Adds this style to the 'style' property of this widget. */
+   function addStyle( style )
+      if not self.props
+         self.props = ["style" => style]
+      else
+         if "style" in self.props
+            self.props["style"] += ";" + style
+         else
+            self.props["style"] = style
+         end
+      end
+   end
+
+   function ajaxMsg( msg, infos, extra )
+      infos_s = infos ? json.JSONencode( infos ) : "null"
+      extra_s = extra ? json.JSONencode( extra ) : "null"
+
+      return "Nest.widgetMsg('" + self.ajaxHostName() +
+               "', '" + self.getFullID() + "', '" + msg + "', " +
+               infos_s + ", " + extra_s + ");"
+   end
+
+   //===================================================
+
+
+   //===================================================
+   /*# Route ajax requests.
+      @params The parameters generated by the remote ajax request.
+      @return A dictionary that is rendered as JSON and passed back.
+
+      The default base class implementation does nothing.
+   */
+   function AJAX( params )
+      return [=>]
+   end
+
+   //# Generates a set-property message
+   function msgSetProperty( prop, value )
+      return [
+         "message" => "set",
+         "id" => self.getFullID(),
+         "property" => prop,
+         "value"=>value ]
+   end
+
+   //# Generates a invoke method message
+   function msgInvoke( method, data )
+      return [
+         "message" => "invoke",
+         "id" => self.getFullID(),
+         "method" => method,
+         "param"=> data ]
+   end
+
+end

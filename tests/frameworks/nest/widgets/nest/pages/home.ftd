@@ -1,0 +1,161 @@
+<?
+   import from nest.js
+   import from nest.ajax
+   import CheckBoxSet from nest.widgets.CheckBoxSet as CheckBoxSet
+   
+   Reply.setCookie( "test", "Test value" )
+?>
+<h1>Hello world!</h1>
+<p>JS button utility function test: <? nest.js.button( "Button", "say_hi()" ) ?>.</p>
+<?
+   // JS Script facility test.
+   nest.js.script( "
+         function say_hi() {
+               alert('saying hi!');
+         }" )
+?>
+<hr>
+<p>Ajax basic function test: <? nest.js.button( "Button", "Nest.ajax('hello', {'p0':'A parameter'}, onHello)" ) ?>.</p>
+<script language="javascript">
+   function onHello( obj ) {
+         alert('Received ajax hello: ' + obj.text +
+            '\nRepeated parameter: ' + obj.p0 );
+   }
+</script>
+<p>Checking for cookie persistency via ajax: <? nest.js.button( "Button", "Nest.ajax('hello', {}, getCookie)" ) ?>.</p>
+<?
+   // JS Script facility test.
+   nest.js.script( "
+         function getCookie( obj ) {
+               alert('Cookie data via ajax was: ' + obj.Cookie );
+         }" )
+?>
+
+<hr>
+<p>Nest AJAX enabled widget test.</p>
+<?= Nest.widget( "HashMaker" )("hm").render() ?>
+
+<hr>
+
+<p>Basic widgets with local page messaging: Type some text and see the count change.</p>
+<?
+   wid = Nest.widget( "ActiveTextArea" )("enter_text", "Enter text", 3, 30)
+
+   widtext = Nest.widget("Text")("counter","0")
+   widtext.addStyle( "color:red; font-weight:bold" )
+   widtext.jsListeners = [
+      wid => " function( source, msg, value ) { this.innerHTML = value.length; }"
+      ]
+?>
+<p><?= wid.render() ?></p>
+<p>Lenght of the text: <?=widtext.render() ?></p>
+
+<hr>
+<p>Advanced widgets with local page messaging</p>
+<?= Nest.widget( "RichPassword" )("my_password", "Enter password", "Repeat password").render() ?>
+<hr>
+<p>Avanced widget with AJAX and local messaging.</p>
+<p>Names taken on the server are: <?
+   namewid = Nest.widget( "TheNameIsAvail" )()
+   > ", ".merge( namewid.takenNames )
+?>
+</p>
+<p>Please, notice that the names must be at least <?= namewid.minSize ?> characters long.</p>
+<p><?= namewid.render() ?></p>
+
+<hr>
+<p>Form rendering.</p>
+<?
+   form = Nest.widget( "ListForm" )("testform", "#")
+
+   wid = Nest.widget( "ActiveTextArea" )("enter_text", "Enter text", 3, 30)
+   widtext = Nest.widget("Text")("counter","0")
+   widtext.addStyle( "color:red; font-weight:bold" )
+   widtext.jsListeners = [
+      wid => " function( source, msg, value ) { this.innerHTML = value.length; }"
+      ]
+
+   th = Nest.widget( "TheNameIsAvail" )( "the_other_name" )
+   form.addChild( th )
+   form.addChild( Nest.widget( "RichPassword" )("my_password", "Enter password", "Repeat password") )
+   form.addChild( wid )
+   form.addChild( widtext )
+?>
+
+<?= form.render() ?>
+
+<hr>
+<p>Form rendering -- table version.</p>
+<?
+   form = Nest.widget( "TableForm" )("tableform", "#")
+   form.addHidden( "hasForm", "true" )
+
+   wid = Nest.widget( "ActiveTextArea" )("enter_text", "Enter text", 3, 30)
+   widtext = Nest.widget("Text")("counter","0")
+   widtext.addStyle( "color:red; font-weight:bold" )
+   widtext.jsListeners = [
+      wid => " function( source, msg, value ) { this.innerHTML = value.length; }"
+      ]
+
+   th = Nest.widget( "TheNameIsAvail" )( "the_other_name" )
+   form.addChild( th )
+   form.addChild( Nest.widget( "RichPassword" )("my_password", "Enter password", "Repeat password") )
+   form.addChild( wid )
+   form.addChild( widtext )
+   form.setConfirmReset( "Sure you want to reset?" )
+   form.setConfirmSubmit( "Sure you want to submit?" )
+
+   class MyCBSet from CheckBoxSet( "choice",
+               ["one:First choice$", "two:Second choice$", "three:Third choice$"])
+         
+      function setRenderValue( val )
+         self.CheckBoxSet.setRenderValue( val )
+         if self.value.len() < 2
+            self.fieldInfo = "<b>Please, select at least 2 items!</b>"
+         end
+      end
+   end
+   cbox = MyCBSet()
+   
+   cbox.label = "Pick one or more..."
+   form.addChild( cbox )
+
+   rbox = Nest.widget( "RadioButtonSet" )( "pick",
+               ["one:Alpha", "two:Beta", "three:Gamma"])
+   rbox.label = "Hello"
+   form.addChild( rbox )
+
+   selbox = Nest.widget( "Select" )( "selopt",
+               [ ": -- Pick one plz --", "one:Option One", "two:Option Two", "three:Option Three"],
+               "Pick one" )
+               
+   mselbox = Nest.widget( "Select" )( "selmulti",
+               ["one:Option One", "two:Option Two",
+                "three:Option Three",
+                "four:Option four" ],
+                "Pick many", -1 )
+   form.addChild( selbox )
+   form.addChild( mselbox )
+
+   datesel = Nest.widget( "DateSelector" )( "datesel" )
+   form.addChild( datesel )
+   
+   // bottom line...
+   contSub = Nest.widget( "Container" )( "sub" )
+   contSub.addChild( Nest.widget("Submit")("sb", "Send data") )
+   contSub.addChild( Nest.widget("Reset")("rb", "Reset data") )
+   form.addChild( contSub )
+   
+   if "tableform.hasForm" in Request.posts
+      > "Receiving form data from a post"
+      form.routeValues( Request.posts )
+      if not rbox.getValue()
+         rbox.fieldInfo= "<b>Please, set one!</b>"
+      end
+      datesel.fieldInfo = "You entered " + datesel.getValue()
+   end
+?>
+
+<?= form.render() ?>
+
+<p><i>Tests complete -- for now</i></p>

@@ -1,0 +1,7 @@
+function hello( req )
+   text = ["text" => "Hello world!", "p0" => "p0" in req ? req["p0"] : "" ]
+   if "Cookie" in Request.headers
+      text["Cookie"] = Request.headers["Cookie"]
+   end
+   return text
+end

@@ -1,0 +1,36 @@
+/*
+   FALCON - The Falcon Programming Language
+
+   Nest - Falcon web applcation engine
+
+   FILE: Reset.fal
+
+   AJAX widgeting subsystem -- Reset input tag.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Sun, 02 Oct 2011 13:53:51 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2011: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+import from nest.widgets.widget in widget
+
+/*# Reset input tag.
+   @param id The widget ID
+   @param value The value attribute of the input tag.
+*/
+class Reset( id, value ) from widget.Widget( id )
+   tag = "input"
+   isSelfClosing = true
+
+   init
+      if self.props == nil: self.props = [=>]
+      self.props['name'] = nil   // will be filled at render
+      self.props['type'] = "reset"
+      self.props['value'] = value
+   end
+end
+

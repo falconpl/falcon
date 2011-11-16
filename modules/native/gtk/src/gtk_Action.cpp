@@ -4,6 +4,7 @@
 
 #include "gtk_Action.hpp"
 
+#include "gtk_AccelGroup.hpp"
 #include "gtk_Buildable.hpp"
 #include "gtk_Image.hpp"
 #include "gtk_Menu.hpp"
@@ -68,7 +69,7 @@ void Action::modInit( Falcon::Module* mod )
     { "get_accel_path",         &Action::get_accel_path },
     { "set_accel_path",         &Action::set_accel_path },
     //{ "get_accel_closure",     &Action::get_accel_closure },
-    //{ "set_accel_group",       &Action::set_accel_group },
+    { "set_accel_group",        &Action::set_accel_group },
 #if GTK_CHECK_VERSION( 2, 16, 0 )
     { "set_label",              &Action::set_label },
     { "get_label",              &Action::get_label },
@@ -571,7 +572,23 @@ FALCON_FUNC Action::set_accel_path( VMARG )
 
 
 //FALCON_FUNC Action::get_accel_closure( VMARG );
-//FALCON_FUNC Action::set_accel_group( VMARG );
+
+
+/*#
+    @method set_accel_group GtkAction
+    @brief Sets the GtkAccelGroup in which the accelerator for this action will be installed
+    @param accel_group a GtkAccelGroup or Nil.
+ */
+FALCON_FUNC Action::set_accel_group( VMARG )
+{
+    Item* i_grp = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !( i_grp->isNil() || ( i_grp->isObject() && IS_DERIVED( i_grp, GtkAccelGroup ) ) ) )
+        throw_inv_params( "[GtkAccelGroup]" );
+#endif
+    gtk_action_set_accel_group( GET_ACTION( vm->self() ),
+                                i_grp->isNil() ? NULL : GET_ACCELGROUP( *i_grp ) );
+}
 
 
 #if GTK_CHECK_VERSION( 2, 16, 0 )
@@ -863,5 +880,5 @@ FALCON_FUNC Action::get_is_important( VMARG )
 } // Gtk
 } // Falcon
 
-// vi: set ai et sw=4:
+// vi: set ai et sw=4 ts=4 sts=4:
 // kate: replace-tabs on; shift-width 4;

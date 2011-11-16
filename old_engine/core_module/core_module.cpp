@@ -33,7 +33,7 @@
    VM it uses; this allow to override also the functions that are in this module to,
    in example, trace their calls or change their behavior.
 
-   Scripts lanuced from the falcon command line tools are granted to have access to the
+   Scripts launched from the falcon command line tools are granted to have access to the
    core module contents as they are described in this manual.
 
    Some of the functions that are provided in the core module, as printl, are a common
@@ -152,7 +152,7 @@ Module* core_module_init()
       @group bom_classes Basic Object Model
       @brief Generic item reflection classes
 
-      The classes in this group reflect the the underlying Falcon item types.
+      The classes in this group reflect the underlying Falcon item types.
       Methods declared by this classes can be applied to every item
       (if they are in the @a BOM class) or to some specific item type.
 
@@ -177,9 +177,9 @@ Module* core_module_init()
       This class contains the methods that can be applied to
       every falcon item; the method themselves are not
       shown in the item list, and the @b provides keyword
-      won't detectect their availability unless they have
+      won't detect their availability unless they have
       been explicitly re-declared (overloaded) by objects,
-      instances, classes, array bindings or blessed dictionariees.
+      instances, classes, array bindings or blessed dictionaries.
 
       Nevertheless, the method listed in the BOM metaclass can be
       applied to any item, while methods defined in specific
@@ -188,7 +188,7 @@ Module* core_module_init()
 
       @note The method @a BOM.compare is meant to overload the behavior
       of generic VM comparisons, including relational operators
-      (<, >, <=, >=, ==, !=) and generic ordering criterions, for example in
+      (<, >, <=, >=, ==, !=) and generic ordering criterion, for example in
       @a Dictionary insertions and @a arraySort.
    */
 
