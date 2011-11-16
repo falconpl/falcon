@@ -109,26 +109,20 @@ bool Base64::decode( const String& data, byte* target, uint32& tgsize )
          // padding char?
          if( chr == '=' )
          {
-            // get the chars
-            if( (tgpos+n-1) >= tgsize )
-               return false;
-
-            // have we to fix something?
-            if( n > 0 )
+            ++i;
+            while( i < dsize )
             {
-               target[tgpos++] = (byte)((value>>16) &0xFF);
-
-               if( n > 1 )
+               chr = data.getCharAt(i);
+               if( ! (chr == '=' || chr == ' ' || chr == '\t' || chr == '\n' || chr == '\r') )
                {
-                  target[tgpos++] = (byte)((value>>8) &0xFF);
-
-                  if( n > 2 )
-                     target[tgpos++] = (byte)(value &0xFF);
+                  // we had a "=" not at the end, this is not a base64 string.
+                  return false;
                }
+               ++i;
             }
-            
-            tgsize = tgpos;
-            return true;
+
+            // ok, finish this off.
+            break;
          }
 
          uint32 bits = getBits( chr );
@@ -144,10 +138,23 @@ bool Base64::decode( const String& data, byte* target, uint32& tgsize )
          ++n;
       }
 
-      if( (tgpos+3) >= tgsize ) return false;
-      target[tgpos++] = (byte)((value>>16) &0xFF);
-      target[tgpos++] = (byte)((value>>8) &0xFF);
-      target[tgpos++] = (byte)(value &0xFF);
+      // get the chars
+      if( (tgpos+n-1) >= tgsize )
+         return false;
+
+      // have we to fix something?
+      if( n > 0 )
+      {
+         target[tgpos++] = (byte)((value>>16) &0xFF);
+
+         if( n > 1 )
+         {
+            target[tgpos++] = (byte)((value>>8) &0xFF);
+
+            if( n > 2 )
+               target[tgpos++] = (byte)(value &0xFF);
+         }
+      }
    }
 
    tgsize = tgpos;
