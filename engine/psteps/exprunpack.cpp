@@ -141,7 +141,7 @@ void ExprUnpack::apply_( const PStep* ps, VMContext* ctx )
 
    for( i = 0; i < pcount; ++i )
    {
-      *syms[i]->value() = array[i];
+      *syms[i]->value(ctx) = array[i];
    }
 
    // leave the expander in the stack.

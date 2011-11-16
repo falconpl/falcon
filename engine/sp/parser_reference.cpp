@@ -47,8 +47,7 @@ void apply_expr_ref( const Rule&, Parser& p )
    TokenInstance* tref = p.getNextToken();
    
    // Create the symbol and the reference
-   Symbol* sym = ctx->addVariable(*tref->asString());
-   ExprSymbol* refexpr = static_cast<ExprSymbol*>(sym->makeExpression());
+   ExprSymbol* refexpr = ctx->addVariable(*tref->asString());
    Expression* reference = new ExprRef( refexpr );
    
    // update the result token

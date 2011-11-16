@@ -69,7 +69,6 @@
 #include <falcon/stderrors.h>
 #include <falcon/modspace.h>
 
-#include <falcon/globalsymbol.h> // for builtin
 #include <falcon/item.h>         // for builtin
 
 
@@ -93,7 +92,7 @@ class PseudoFunctionMap: public std::map<String, PseudoFunction*>
 {
 };
 
-class PredefSymMap: public std::map<String, GlobalSymbol*>
+class PredefMap: public std::map<String, Item>
 {
 };
 
@@ -185,7 +184,7 @@ Engine::Engine()
    //============================================
    // Creating predefined symbols
    //
-   m_predefs = new PredefSymMap;
+   m_predefs = new PredefMap;
    m_regClasses = new RegisteredClassesMap;
    
    addBuiltin( m_functionClass );
@@ -233,6 +232,9 @@ Engine::~Engine()
    MESSAGE( "Engine destruction started" );
 
    m_collector->stop();
+   
+   /** Bye bye core... */
+   delete m_core;
 
    delete m_stringClass;
    delete m_rangeClass;
@@ -269,22 +271,13 @@ Engine::~Engine()
    
    // ===============================
    // delete builtin symbols
-   //
-   {
-      PredefSymMap::iterator iter = m_predefs->begin();
-      while( iter != m_predefs->end() )
-      {
-         delete iter->second;
-         ++iter;
-      }
-   }
+   //   
    delete m_predefs;
    delete m_regClasses;
    
    //============================================
    // Delete singletons
    //
-   delete m_core;
    delete m_bom;
    delete m_stdSteps;
    delete m_stdErrors;
@@ -425,29 +418,26 @@ bool Engine::addBuiltin( Class* src )
 
 bool Engine::addBuiltin( const String& name, const Item& value )
 {
-   PredefSymMap::iterator pos = m_predefs->find( name );
+   PredefMap::iterator pos = m_predefs->find( name );
    if( pos != m_predefs->end() )
    {
       return false;
    }
    
-   GlobalSymbol* sym = new GlobalSymbol( name );
-   *sym->value(0) = value;
-   (*m_predefs)[ name ] = sym;   
+   (*m_predefs)[ name ] = value;   
    return true;
 }
 
-
-void Engine::exportBuiltins(ModSpace* ms) const
+const Item* Engine::getBuiltin( const String& name ) const
 {
-   PredefSymMap::const_iterator iter = m_predefs->begin();
-   while( iter != m_predefs->end() )
+   PredefMap::iterator pos = m_predefs->find( name );
+   if( pos != m_predefs->end() )
    {
-      ms->addSymbol( iter->second, 0 );
-      ++iter;
+      return &pos->second;
    }
+   
+   return 0;
 }
-
 
 void Engine::registerClass( Class* reg )
 {

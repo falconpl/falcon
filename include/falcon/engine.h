@@ -32,7 +32,7 @@ class Transcoder;
 class TranscoderMap;
 class PseudoFunction;
 class PseudoFunctionMap;
-class PredefSymMap;
+class PredefMap;
 class RegisteredClassesMap;
 
 class Module;
@@ -309,11 +309,9 @@ public:
     */
    bool addBuiltin( const String& name, const Item& value );
    
-   /** Exports the builtins on the given module space.
-    @param ms The module space where to export the builtins.
-    
+   /** Gets a pre-defined built-in value. 
     */
-   void exportBuiltins( ModSpace* ms ) const;
+   const Item* getBuiltin( const String& name ) const;
    
    /** Centralized repository of publically available classes.
     @param cls The class to be stored.
@@ -409,7 +407,7 @@ protected:
    BOM* m_bom;
 
    PseudoFunctionMap* m_tpfuncs;
-   PredefSymMap* m_predefs;
+   PredefMap* m_predefs;
    
    StdSteps* m_stdSteps;
    StdErrors* m_stdErrors;

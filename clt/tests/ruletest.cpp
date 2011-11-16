@@ -10,7 +10,6 @@
 
 #include <falcon/vm.h>
 #include <falcon/syntree.h>
-#include <falcon/localsymbol.h>
 #include <falcon/error.h>
 #include <falcon/statement.h>
 #include <falcon/rulesyntree.h>
@@ -131,24 +130,24 @@ void go()
    Falcon::Symbol* var_a = fmain.symbols().addLocal("a");
 
    StmtAutoexpr* assign_expr = new StmtAutoexpr(
-               new ExprAssign( var_a->makeExpression(),
-                  new ExprPlus( var_a->makeExpression(), new ExprValue(1) ) ) );
+               new ExprAssign( new ExprSymbol(var_a),
+                  new ExprPlus( new ExprSymbol(var_a), new ExprValue(1) ) ) );
    
    // and the rule
    StmtRule* rule = new StmtRule;
    (*rule)
          .addStatement( new StmtAutoexpr(
-               new ExprAssign( var_a->makeExpression(), new ExprValue(0) ) ) )
+               new ExprAssign( new ExprSymbol(var_a), new ExprValue(0) ) ) )
          .addStatement( assign_expr )
          .addStatement( new StmtAutoexpr(&(new ExprCall( new ExprValue(&printl) ))
-            ->addParam(new ExprValue("A: ")).addParam(var_a->makeExpression())) )
+            ->addParam( new ExprValue("A: ")).addParam(new ExprSymbol(var_a))) )
          .addStatement( new StmtAutoexpr(
-               new ExprGE( var_a->makeExpression(), new ExprValue(10) ) ) );
+               new ExprGE( new ExprSymbol(var_a), new ExprValue(10) ) ) );
 
    fmain.syntree()
       .append( rule )
       .append( new StmtAutoexpr(&(new ExprCall( new ExprValue(&printl) ))
-            ->addParam(new ExprValue("A was ")).addParam(var_a->makeExpression())) );
+            ->addParam(new ExprValue("A was ")).addParam(new ExprSymbol(var_a))) );
       
 
    std::cout << "Will run: "<< std::endl << fmain.syntree().describe().c_ize() << std::endl;

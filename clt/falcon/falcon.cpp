@@ -19,7 +19,6 @@
 
 #include "int_mode.h"
 #include "falcon/modloader.h"
-#include "falcon/modgroup.h"
 
 using namespace Falcon;
 
@@ -89,7 +88,7 @@ void FalconApp::launch( const String& script )
    
    // Ok, we opened the file; prepare the space (and most important, the loader) 
    ModSpace* ms = vm.modSpace();
-   ModLoader* loader = ms->modLoader();
+   ModLoader* loader = vm.modLoader();
    
    // do we have a load path?
    loader->setSearchPath(".");
@@ -147,20 +146,19 @@ void FalconApp::launch( const String& script )
    Module* module = loader->loadFile( script, type );
    module->setMain();
    
-   Engine::instance()->getCore()->exportToModspace( vm.modSpace() );
+   ms->add( Engine::instance()->getCore(), true, false );
    
-   // and start the resolution dance.
-   ModGroup* mg = new ModGroup( ms );  
-   mg->add( module, e_lm_load );
-   
+   // and start the resolution dance.   
+   ms->resolve( loader, module, true, true );   
    
    // throw on error.
-   if( ! mg->link() )
+   Error* linkerr = ms->link();
+   if( linkerr != 0 )
    {
-      throw mg->makeError();
+      throw linkerr;
    }
    
-   mg->readyVM( vm.currentContext() );
+   ms->readyVM( vm.currentContext() );
    vm.run();
 }
 

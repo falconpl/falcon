@@ -736,7 +736,6 @@ void SourceParser::addError( int code, const String& uri, int l, int c, int ctx 
    pc->abandonSymbols();
 }
 
-
 }
 
 /* end of sourceparser.cpp */

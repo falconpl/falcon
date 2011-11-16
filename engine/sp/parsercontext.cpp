@@ -17,11 +17,9 @@
 #define SRC "engine/sp/parsercontext.cpp"
 
 #include <falcon/trace.h>
+#include <falcon/symbol.h>
 #include <falcon/synfunc.h>
 #include <falcon/falconclass.h>
-#include <falcon/unknownsymbol.h>
-#include <falcon/globalsymbol.h>
-#include <falcon/closedsymbol.h>
 #include <falcon/error.h>
 #include <falcon/class.h>
 #include <falcon/falconclass.h>
@@ -62,8 +60,8 @@ class ParserContext::CCFrame
    } t_type;
 
    CCFrame();
-   CCFrame( FalconClass* cls, bool bIsObject, GlobalSymbol* gs );
-   CCFrame( SynFunc* func, GlobalSymbol* gs );
+   CCFrame( FalconClass* cls, bool bIsObject, Symbol* gs );
+   CCFrame( SynFunc* func, Symbol* gs );
    CCFrame( Statement* stmt, bool bAutoClose = false );
 
    void setup();
@@ -83,7 +81,7 @@ public:
    /** True when the context should be closed immediately at first addStatement */
    bool m_bAutoClose;
 
-   GlobalSymbol* m_sym;
+   Symbol* m_sym;
 
    //===================================================
 
@@ -112,7 +110,7 @@ ParserContext::CCFrame::CCFrame():
    setup();
 }
 
-ParserContext::CCFrame::CCFrame( FalconClass* cls, bool bIsObject, GlobalSymbol* gs ):
+ParserContext::CCFrame::CCFrame( FalconClass* cls, bool bIsObject, Symbol* gs ):
    m_type( bIsObject ? t_object_type : t_class_type ),
    m_bStatePushed( false ),
    m_bAutoClose( false ),
@@ -122,7 +120,7 @@ ParserContext::CCFrame::CCFrame( FalconClass* cls, bool bIsObject, GlobalSymbol*
    setup();
 }
 
-ParserContext::CCFrame::CCFrame( SynFunc* func, GlobalSymbol* gs ):
+ParserContext::CCFrame::CCFrame( SynFunc* func, Symbol* gs ):
    m_type( t_func_type ),
    m_bStatePushed( false ),
    m_bAutoClose( false ),
@@ -160,8 +158,8 @@ class ParserContext::Private
 private:
    friend class ParserContext;
 
-   typedef std::map< String, UnknownSymbol* > SymbolMap;
-   typedef std::list< SymbolMap > UnknownsStack;
+   typedef std::list< ExprSymbol* > UnknownList;
+   typedef std::list< UnknownList > UnknownsStack;
 
    /** Map of unknown symbols created during the current statement parsing. */
    UnknownsStack m_unknown;
@@ -226,7 +224,7 @@ void ParserContext::onStatePushed( bool isPushedState )
    {
       _p->m_frames.back().m_bStatePushed = true;
    }
-   _p->m_unknown.push_back(Private::SymbolMap());
+   _p->m_unknown.push_back(Private::UnknownList());
 }
 
 void ParserContext::onStatePopped()
@@ -236,31 +234,16 @@ void ParserContext::onStatePopped()
 
 
 
-Symbol* ParserContext::addVariable( const String& variable )
+ExprSymbol* ParserContext::addVariable( const String& variable )
 {
    TRACE("ParserContext::addVariable %s", variable.c_ize() );
 
-   if( _p->m_unknown.empty() )
-   {
-      fassert( false );
-   }
-
-   UnknownSymbol* us;
-   Private::SymbolMap::const_iterator iter = _p->m_unknown.back().find(variable);
-   if( iter == _p->m_unknown.back().end() )
-   {
-      us = new UnknownSymbol(variable);
-      _p->m_unknown.back()[variable] = us;
-   }
-   else
-   {
-      us = iter->second;
-   }
-
-   return us;
+   ExprSymbol* expr = new ExprSymbol( variable );   
+   _p->m_unknown.back().push_back( expr );
+   return expr;
 }
 
-Symbol* ParserContext::addDefinedVariable( const String& variable )
+Symbol* ParserContext::addDefineSymbol( const String& variable )
 {
    Symbol* nuks;
    
@@ -282,33 +265,40 @@ Symbol* ParserContext::addDefinedVariable( const String& variable )
 void ParserContext::undoVariable( const String& variable )
 {
    TRACE("ParserContext::undoVariable %s", variable.c_ize() );
-
+   fassert( ! _p->m_unknown.empty() );
+   
    if( _p->m_unknown.empty() )
    {
       //todo error!
+      return;
    }
 
-   _p->m_unknown.back().erase(variable);
+   Private::UnknownList& ul = _p->m_unknown.back();
+   Private::UnknownList::iterator iter = ul.begin();
+   
+   while( iter != ul.end() )
+   {
+      if ((*iter)->name() == variable )
+      {
+         ul.erase(iter);
+         return;
+      }
+      ++iter;
+   }
 }
 
 void ParserContext::abandonSymbols()
 {
    MESSAGE( "ParserContext::abandonSymbols" );
 
+   fassert( ! _p->m_unknown.empty() );
+   
    if( _p->m_unknown.empty() )
    {
       //todo error!
+      return;
    }
 
-   /* We must not delete the symbols, because they are held in expressions.
-   Private::SymbolMap& unknown = _p->m_unknown.back();
-
-   for( Private::SymbolMap::iterator it = unknown.begin(), end = unknown.end(); it != end ; ++it)
-   {
-      delete it->second;
-   }
-   */
-   
    _p->m_unknown.back().clear();
 }
 
@@ -318,60 +308,54 @@ void ParserContext::defineSymbols( Expression* expr )
 
    if( expr->type() == Expression::t_symbol )
    {
-      Symbol* uks = static_cast<ExprSymbol*>(expr)->symbol();
-      defineSymbol( uks );
-   }
-}
-
-void ParserContext::defineSymbol( Symbol* uks )
-{
-   if( uks->type() == Symbol::t_unknown_symbol )
-   {
-      TRACE1("ParserContext::defineSymbol trying to define symbol \"%s\"", uks->name().c_ize() );
-      Symbol* nuks = findSymbol(uks->name());
-      // Found?
-      if( nuks == 0 )
+      ExprSymbol* exprsym = static_cast<ExprSymbol*>(expr);
+      
+      Symbol* uks = exprsym->symbol();
+      if( uks == 0 )
       {
-         // --no ? create it
-         if( m_symtab == 0 )
+         TRACE1("ParserContext::defineSymbol trying to define symbol \"%s\"", exprsym->name().c_ize() );
+         Symbol* nuks = findSymbol(exprsym->name());
+         // Found?
+         if( nuks == 0 )
          {
-            // we're in the global context.
-            bool bAlready;
-            nuks = onGlobalDefined( uks->name(), bAlready );
+            // --no ? create it
+            if( m_symtab == 0 )
+            {
+               // we're in the global context.
+               bool bAlready;
+               nuks = onGlobalDefined( exprsym->name(), bAlready );            
+            }
+            else
+            {
+               // add it in the current symbol table.
+               nuks = m_symtab->addLocal( exprsym->name() );
+            }
+         }
+
+         // created?
+         if( nuks != 0 )
+         {
+            TRACE("ParserContext::defineSymbol defined \"%s\" as %d",
+                  nuks->name().c_ize(), nuks->type() );
+            // remove from the unknowns
+            undoVariable( exprsym->name() );
+            exprsym->symbol( nuks );
          }
          else
          {
-            // add it in the current symbol table.
-            nuks = m_symtab->addLocal( uks->name() );
-         }
-      }
+            //TODO: Use a more fitting error code for this?
+            m_parser->addError(e_undef_sym, m_parser->currentSource(), exprsym->line(), exprsym->chr(), 0, uks->name() );
 
-      // created?
-      if( nuks != 0 )
-      {
-         TRACE("ParserContext::defineSymbol defined \"%s\" as %d",
-               nuks->name().c_ize(), nuks->type() );
-         // remove from the unknowns
-         _p->m_unknown.back().erase( uks->name() );
-         static_cast<UnknownSymbol*>(uks)->define(nuks);
-         delete uks;
+            TRACE("ParserContext::defineSymbol cannot define \"%s\"",
+                  exprsym->name().c_ize() );
+         }
       }
       else
       {
-         //TODO: Use a more fitting error code for this?
-         m_parser->addError(e_undef_sym, m_parser->currentSource(), uks->declaredAt(),0, 0, uks->name() );
-
-         TRACE("ParserContext::defineSymbol cannot define \"%s\"",
-               uks->name().c_ize() );
-         // we cannot create it; delegate to subclasses
-         onUnknownSymbol( static_cast<UnknownSymbol*>(uks) );
+         // else, the symbol is already ok.
+         TRACE2("ParserContext::defineSymbol \"%s\" already of type %d",
+                  uks->name().c_ize(), uks->type() );
       }
-   }
-   else
-   {
-      // else, the symbol is already ok.
-      TRACE2("ParserContext::defineSymbol \"%s\" already of type %d",
-               uks->name().c_ize(), uks->type() );
    }
 }
 
@@ -379,54 +363,57 @@ void ParserContext::defineSymbol( Symbol* uks )
 bool ParserContext::checkSymbols()
 {
    bool isOk = true;
-   Private::SymbolMap& unknown = _p->m_unknown.back();
+   Private::UnknownList& unknown = _p->m_unknown.back();
 
    // try with all the undefined symbols.
    TRACE("ParserContext::checkSymbols on %d syms", (int) unknown.size() );
-   Private::SymbolMap::iterator iter = unknown.begin();
+   Private::UnknownList::iterator iter = unknown.begin();
    typedef std::deque< std::pair<String, int> > UnkonwnList;
    UnkonwnList unknownNames;
 
    while( iter != unknown.end() )
    {
-      UnknownSymbol* sym = iter->second;
-      Symbol* new_sym = findSymbol( sym->name() );
+      ExprSymbol* esym = *iter;
+      if ( esym->symbol() != 0 )
+      {
+         // already defined.
+         ++iter;
+         continue;
+      }
+      
+      Symbol* new_sym = findSymbol( esym->name() );
 
       if ( new_sym == 0 )
       {
          // see if it's a global or extern for our sub-class...
-         TRACE1("ParserContext::checkSymbols \"%s\" is undefined, up-notifying", sym->name().c_ize() );
-         new_sym = onUndefinedSymbol( sym->name() );
+         TRACE1("ParserContext::checkSymbols \"%s\" is undefined, up-notifying", esym->name().c_ize() );
+         new_sym = onUndefinedSymbol( esym->name() );
 
          // still undefined? -- we surrender, and hope that the subclass has properly raised
          if ( new_sym == 0 )
          {
-            TRACE1("ParserContext::checkSymbols \"%s\" leaving this symbol undefined", sym->name().c_ize() );
+            TRACE1("ParserContext::checkSymbols \"%s\" leaving this symbol undefined", esym->name().c_ize() );
          }
       }
 
       if( new_sym != 0 )
       {
-         TRACE1("ParserContext::checkSymbols \"%s\" is now of type %d", sym->name().c_ize(), new_sym->type() );
-         sym->define(new_sym);
-         delete sym;
+         TRACE1("ParserContext::checkSymbols \"%s\" is now of type %d", esym->name().c_ize(), new_sym->type() );
+         esym->symbol(new_sym);
       }
       else
       {
          TRACE1("ParserContext::checkSymbols cannot define \"%s\"",
-                  sym->name().c_ize() );
+                  esym->name().c_ize() );
 
-         String name = sym->name();
-         int dat = sym->declaredAt();
+         String name = esym->name();
+         int dat = esym->line();
          // this will probably destroy the symbol.
-         if( ! onUnknownSymbol( sym ) )
-         {
-            // record for later error generation
-            unknownNames.push_back( std::make_pair( name, dat ) );
-            // we know that the symbol is lost
-            // add error will clear unknown symbols. return immediately after this call, iterators are no longer valid.
-            isOk = false;
-         }
+         // record for later error generation
+         unknownNames.push_back( std::make_pair( name, dat ) );
+         // we know that the symbol is lost
+         // add error will clear unknown symbols. return immediately after this call, iterators are no longer valid.
+         isOk = false;
 
          // -- see if the callee wants to do something about that
       }
@@ -479,11 +466,11 @@ Symbol* ParserContext::findSymbol( const String& name )
       sym = frame.m_elem.func->symbols().findSymbol( name );
       if( sym !=  0 )
       {
-         if( sym->type() == Symbol::t_local_symbol )
+         if( sym->type() == Symbol::e_st_local )
          {
             TRACE1("ParserContext::findSymbol \"%s\" found, need to be closed", sym->name().c_ize() );
             //TODO: Properly close symbols. -- this won't work
-            ClosedSymbol* closym = new ClosedSymbol(name, Item());
+            Symbol* closym = new Symbol( name, Symbol::e_st_closed );
             m_symtab->addSymbol(closym);
             return closym;
          }
@@ -567,7 +554,7 @@ SynTree* ParserContext::changeBranch()
 }
 
 
-void ParserContext::openFunc( SynFunc *func, GlobalSymbol *gs )
+void ParserContext::openFunc( SynFunc *func, Symbol *gs )
 {
    TRACE("ParserContext::openFunc -- %s", func->name().c_ize() );
 
@@ -583,7 +570,7 @@ void ParserContext::openFunc( SynFunc *func, GlobalSymbol *gs )
 }
 
 
-void ParserContext::openClass( Class* cls, bool bIsObject, GlobalSymbol *gs )
+void ParserContext::openClass( Class* cls, bool bIsObject, Symbol *gs )
 {
    TRACE("ParserContext::openClass -- depth %d %s%s", (int)_p->m_frames.size() + 1,
             cls->name().c_ize(), bIsObject ? "":" (object)" );

@@ -61,15 +61,27 @@ void apply_Atom_Float ( const Rule&, Parser& p )
 
 void apply_Atom_Name ( const Rule&, Parser& p )
 {
+   static Engine* inst = Engine::instance();
+   
    // << (r_Atom_Name << "Atom_Name" << apply_Atom_Name << T_Name )
    SourceParser& sp = static_cast<SourceParser&>(p);
    ParserContext* ctx = static_cast<ParserContext*>(p.context());
 
    TokenInstance* ti = p.getNextToken();
-   Symbol* sym = ctx->addVariable(*ti->asString());
+   const Item* builtin = inst->getBuiltin( *ti->asString() );
+   Expression* sym; 
+
+   if( builtin )
+   {
+      sym = new ExprValue( *builtin );
+   }
+   else
+   {
+      sym = ctx->addVariable(*ti->asString()); 
+   }
 
    TokenInstance* ti2 = new TokenInstance(ti->line(), ti->chr(), sp.Atom );
-   ti2->setValue( sym->makeExpression(), expr_deletor );
+   ti2->setValue( sym, expr_deletor );
    p.simplify(1,ti2);
 }
 

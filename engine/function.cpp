@@ -16,8 +16,7 @@
 #include <falcon/classes/classfunction.h>
 
 #include <falcon/function.h>
-#include <falcon/localsymbol.h>
-#include <falcon/closedsymbol.h>
+#include <falcon/symbol.h>
 #include <falcon/item.h>
 #include <falcon/collector.h>
 #include <falcon/module.h>
@@ -39,11 +38,13 @@ Function::Function( const String& name, Module* module, int32 line ):
    m_module( module ),
    m_methodOf( 0 ),
    m_line( line ),
-   m_bEta(false)
+   m_bEta(false),
+   m_closedItems(0)
 {}
 
 Function::~Function()
 {
+   delete m_closedItems;
 }
 
 
@@ -146,6 +147,7 @@ Error* Function::paramError(int line, const char* place ) const
 void Function::gcMark( uint32 mark )
 {
    m_lastGCMark = mark;
+   // TODO: Mark the references.
 }
 
 

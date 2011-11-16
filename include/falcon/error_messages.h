@@ -94,7 +94,7 @@ FAL_ERRORDECL( e_bitwise_op, 55, "Bitwise operation on non-numeric parameters" )
 FAL_ERRORDECL( e_switch_body, 56, "Invalid statement in switch body" );
 FAL_ERRORDECL( e_select_body, 57, "Invalid statement in select body" );
 FAL_ERRORDECL( e_lone_end, 58, "'end' statement without open contexts" );
-FAL_ERRORDECL( e_inv_inherit2, 59, "Inheritance from more than one subtree of reflected classes" );
+FAL_ERRORDECL( e_inv_inherit2, 59, "Non-class symbol previously used as class inheritance" );
 FAL_ERRORDECL( e_byte_access, 60, "Byte accessor [*x] is read-only" );
 FAL_ERRORDECL( e_global_again, 61, "Variable was already global" );
 

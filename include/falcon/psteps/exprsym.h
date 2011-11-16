@@ -31,15 +31,35 @@ class ClosedSymbol;
 
 
 /** Expression referring to a symbol.
- *
- * These expressions have the role to access a symbol in read
- * or write (lvalue) mode in an expression..
- *
- *
+ 
+ These expressions have the role to access a symbol in read
+ or write (lvalue) mode in an expression.
+ 
+ Initially, when first created in an expression, the ExprSymbol
+ MAY refer just the name of the symbol that should be referenced,
+ so that the real symbol can be resolved at a later stage.
+ 
+ \todo Optimize adding PSTeps to access directly local, global and closed symbol
+ values. Now we're using the symbol access value functions, but that's superfluous
+ in a release optimized POV.
+ 
+ \note Expressions NEVER own the symbols they refer to. They must be held
+ somewhere else (in the compiler context, module or interactive virtual
+ machine).
  */
 class FALCON_DYN_CLASS ExprSymbol: public Expression
 {
 public:
+   /** Declare a forward symbol reference.
+    \param name The name of the symbol that should be used in this expression.
+    
+    This constrcutor can be used to create a symbol placeholder in an expression,
+    which can be then filled later on.
+    */
+   ExprSymbol( const String& name );
+   /** Declare A fully constructer symbol access expression.
+    */
+   ExprSymbol( Symbol* target );
    ExprSymbol( const ExprSymbol& other );
    virtual ~ExprSymbol();
 
@@ -56,25 +76,34 @@ public:
    // Return the symbol pointed by this expression.
    Symbol* symbol() const { return m_symbol; }
    void symbol( Symbol* sym) { m_symbol = sym; }
-
-
-   /** Redefine precompile in lvalue context.
+   
+   /** Returns the symbol name associated with this expression.
+    \return A symbol name.
     
-    */
+    If a symbol has been given for this expression, then the name of
+    that symbol is returned, otherwise the name assigned by the constructor
+    is returned.
+    .*/
+   const String& name() const;
+
    void precompileLvalue( PCode* pcode ) const;
 
    virtual void precompileAutoLvalue( PCode* pcode, const PStep* activity, bool bIsBinary, bool bSaveOld ) const;
 
 protected:
+   String m_name;
+   Symbol* m_symbol;
+   
+   static void apply_( const PStep* ps, VMContext* ctx );
    
    class FALCON_DYN_CLASS PStepLValue: public PStep
    {
    public:
       ExprSymbol* m_owner;
       
-      PStepLValue( ExprSymbol* owner ): m_owner(owner) {}
+      PStepLValue( ExprSymbol* owner ): m_owner(owner) { apply = apply_; }
       virtual void describeTo( String& ) const;
-      
+      static void apply_( const PStep* ps, VMContext* ctx );
    };   
    
    class FALCON_DYN_CLASS PStepSave: public PStep
@@ -96,29 +125,13 @@ protected:
    PStepLValue m_pslv;
    PStepSave m_pstepSave;        
    PStepRemove m_pstepRemove;
-      
-   
-   ExprSymbol( Symbol* target );
-
+        
    virtual void deserialize( DataReader* s );
    inline ExprSymbol( operator_t type ):
       Expression( type ),
       m_pslv(this)
    {}
 
-   /** Used by the symbol classes to set the adequate handler function. */
-   void setApply( apply_func func ) { apply = func; }
-   
-   /** Used by the symbol classes to set the adequate handler function. */
-   void setApplyLvalue( apply_func func ) { m_pslv.apply = func; }
-
-   Symbol* m_symbol;
-
-   friend class DynSymbol;
-   friend class GlobalSymbol;
-   friend class LocalSymbol;
-   friend class ClosedSymbol;
-   friend class UnknownSymbol;
 };
 
 }

@@ -58,17 +58,17 @@ void apply_expr_call( const Rule&, Parser& p )
    Expression* callee = static_cast<Expression*>(v1->detachValue());
    if( callee->type() == Expression::t_symbol )
    {
-      // check if the symbol is a pseudofunction
-      const Symbol* funsym = static_cast<ExprSymbol*>(callee)->symbol();
-      PseudoFunction* pf = einst->getPseudoFunction( funsym->name() );
+      // check if the symbol is a pseudofunction   
+      ExprSymbol* esym = static_cast<ExprSymbol*>(callee);
+      PseudoFunction* pf = einst->getPseudoFunction( esym->name() );
 
       // if it is, we don't need the callee expression anymore.
       if( pf != 0 )
       {
          call = new ExprCall(pf);
          ParserContext* ctx = static_cast<ParserContext*>(p.context());
-         ctx->undoVariable( funsym->name() );
-         delete callee;
+         ctx->undoVariable( esym->name() );
+         delete esym;
       }
       else
       {

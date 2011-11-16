@@ -17,15 +17,16 @@
 #include <falcon/modcompiler.h>
 #include <falcon/module.h>
 #include <falcon/falconclass.h>
-#include <falcon/globalsymbol.h>
-#include <falcon/unknownsymbol.h>
 #include <falcon/inheritance.h>
 #include <falcon/requirement.h>
+#include <falcon/vmcontext.h>
 
 #include <falcon/sp/sourcelexer.h>
 #include <falcon/parser/parser.h>
 
 #include <falcon/psteps/exprvalue.h>
+
+#include "falcon/symbol.h"
 
 namespace Falcon {
 
@@ -35,37 +36,66 @@ ModCompiler::Context::Context( ModCompiler* owner ):
 {
 }
 
+
 ModCompiler::Context::~Context()
 {
 
 }
 
+
 void ModCompiler::Context::onInputOver()
 {
    // todo: check undefined things.
+   m_owner->m_module->commitPendingInheritance();
 }
 
-void ModCompiler::Context::onNewFunc( Function* function, GlobalSymbol* gs )
+
+void ModCompiler::Context::onNewFunc( Function* function, Symbol* gs )
 {
+   Module* mod = m_owner->m_module;
+   
    if( gs == 0 )
    {
       // anonymous function
       String name = "__lambda#";
       name.N( m_owner->m_nLambdaCount++);
       function->name( name );
-      m_owner->m_module->addFunction( function, false );
+      mod->addFunction( function, false );
    }
    else
    {
-      m_owner->m_module->addFunction( gs, function );
+      mod->addFunction( gs, function );
+      if( mod->checkPendingInheritance( gs->name(), 0 ) )
+      {
+         m_owner->m_sp.addError( e_inv_inherit2, 
+            m_owner->m_sp.currentSource(), gs->declaredAt(), 0, 0, gs->name() );
+      }
    }
 }
 
 
-void ModCompiler::Context::onNewClass( Class* cls, bool bIsObj, GlobalSymbol* gs )
+void ModCompiler::Context::onNewClass( Class* cls, bool bIsObj, Symbol* gs )
 {
    FalconClass* fcls = static_cast<FalconClass*>(cls);
-   m_owner->m_module->storeSourceClass( fcls, bIsObj, gs );
+   Module* mod = m_owner->m_module;
+   
+   // save the source class
+   mod->storeSourceClass( fcls, bIsObj, gs );
+   
+   if( bIsObj )
+   {
+      // check if someone is waiting for us -- and if it is, he's wrong!
+      if( mod->checkPendingInheritance( gs->name(), 0 ) )
+      {
+         m_owner->m_sp.addError( e_inv_inherit2, 
+            m_owner->m_sp.currentSource(), gs->declaredAt(), 0, 0, gs->name() );
+      }
+   }
+   else
+   {
+      // check if someone is waiting for us.
+      mod->checkPendingInheritance( gs->name(), cls );
+   }
 }
 
 
@@ -88,44 +118,12 @@ void ModCompiler::Context::onLoad( const String& path, bool isFsPath )
 void ModCompiler::Context::onImportFrom( const String& path, bool isFsPath, const String& symName,
       const String& nsName, bool bIsNS )
 {
-   if( nsName != "" )
+   bool bImported = m_owner->m_module->anyImportFrom( path, isFsPath, symName, nsName, bIsNS );
+   if ( ! bImported )
    {
-      if( bIsNS )
-      {        
-         m_owner->m_module->addImportFromWithNS( nsName, symName, path, isFsPath );
-      }
-      else
-      {
-         // it's an as -- and a pure one, as the parser removes possible "as" errors.
-         m_owner->m_module->addImportFrom( nsName, symName, path, isFsPath );
-      }
+      SourceParser& sp = m_owner->m_sp;
+      sp.addError( e_import_already_mod, sp.currentSource(), sp.currentLine()-1, 0, 0, path );
    }
-   else
-   {
-      if( symName == "" )
-      {
-         if( ! m_owner->m_module->addGenericImport( path, isFsPath ) )
-         {
-            SourceParser& sp = m_owner->m_sp;
-            sp.addError( e_import_already_mod, sp.currentSource(), sp.currentLine()-1, 0, 0, path );
-         }
-      }
-      else
-      {
-         if( symName.endsWith("*") )
-         {
-            // fake "import a.b.c.* from Module in a.b.c
-            m_owner->m_module->addImportFromWithNS( 
-                        symName.length() > 2 ? 
-                                 symName.subString(0, symName.length()-2) : "", 
-                        symName, path, isFsPath );
-         }
-         else
-         {
-            m_owner->m_module->addImportFrom( symName, symName, path, isFsPath );
-         }
-      }
-   }  
 }
 
 
@@ -201,14 +199,19 @@ void ModCompiler::Context::onGlobal( const String& )
 
 Symbol* ModCompiler::Context::onUndefinedSymbol( const String& name )
 {
+   Module* mod = m_owner->m_module;
    // Is this a global symbol?
-   Symbol* gsym = m_owner->m_module->getGlobal( name );
-   // --- if not, let the onUnknownSymbol to be called for implicit import.
+   Symbol* gsym = mod->getGlobal( name );
+   if (gsym == 0)
+   {
+      // no? -- create it as an implicit import.
+      gsym = mod->addImplicitImport( name );      
+   }
    return gsym;
 }
 
 
-GlobalSymbol* ModCompiler::Context::onGlobalDefined( const String& name, bool& bAlreadyDef )
+Symbol* ModCompiler::Context::onGlobalDefined( const String& name, bool& bAlreadyDef )
 {
    Symbol* sym = m_owner->m_module->getGlobal(name);
    if( sym == 0 )
@@ -218,15 +221,14 @@ GlobalSymbol* ModCompiler::Context::onGlobalDefined( const String& name, bool& b
    }
 
    bAlreadyDef = true;
-   return static_cast<GlobalSymbol*>(sym);
+   return sym;
 }
 
 
-bool ModCompiler::Context::onUnknownSymbol( UnknownSymbol* uks )
+bool ModCompiler::Context::onUnknownSymbol( const String& uks )
 {
    if( ! m_owner->m_module->addImplicitImport( uks ) )
    {
-      delete uks;
       return false;
    }
    
@@ -249,20 +251,15 @@ Expression* ModCompiler::Context::onStaticData( Class* cls, void* data )
 
 void ModCompiler::Context::onInheritance( Inheritance* inh  )
 {
+   Module* mod = m_owner->m_module;
    // In the interactive compiler context, classes must have been already defined...
-   const Symbol* sym = m_owner->m_module->getGlobal(inh->className());
+   const Symbol* sym = mod->getGlobal(inh->className());
   
    // found?
    if( sym != 0 )
    {
-      Item* itm;
-      if( ( itm = sym->value() ) == 0 )
-      {
-         m_owner->m_sp.addError( e_undef_sym, m_owner->m_sp.currentSource(), 
-                 inh->sourceRef().line(), inh->sourceRef().chr(), 0, inh->className() );
-      }
-      // we want a class. A rdeal class.
-      else if ( ! itm->isUser() || ! itm->asClass()->isMetaClass() )
+      Item* itm = sym->defaultValue();
+      if ( ! itm->isUser() || ! itm->asClass()->isMetaClass() )
       {
          m_owner->m_sp.addError( e_inv_inherit, m_owner->m_sp.currentSource(), 
                  inh->sourceRef().line(), inh->sourceRef().chr(), 0, inh->className() );
@@ -271,12 +268,11 @@ void ModCompiler::Context::onInheritance( Inheritance* inh  )
       {
          inh->parent( static_cast<Class*>(itm->asInst()) );
       }
-
-      // ok, now how to break away if we aren't complete?
    }
    else
-   {
-      m_owner->m_module->addImportInheritance( inh );
+   {      
+      // add a marker that will tell us about the inheritance.
+      mod->addPendingInheritance( inh );
    }
 }
 

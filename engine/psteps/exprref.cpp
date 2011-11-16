@@ -23,6 +23,8 @@
 #include <falcon/psteps/exprsym.h>
 #include <falcon/psteps/exprref.h>
 
+#include "falcon/itemreference.h"
+
 
 namespace Falcon
 {
@@ -61,8 +63,6 @@ ExprRef::~ExprRef()
 
 void ExprRef::apply_( const PStep* ps, VMContext* ctx )
 {
-   static ClassReference* refClass = Engine::instance()->referenceClass();
-      
    const ExprRef* self = static_cast<const ExprRef*>(ps);
    
    if( self->m_symbol == 0 )
@@ -71,17 +71,15 @@ void ExprRef::apply_( const PStep* ps, VMContext* ctx )
    }
    
    // get the class/data pair of the item.
-   Class* cls;
-   void* data;
    Item &value = *self->m_symbol->value(ctx);
    fassert( &value != 0 );
-   value.forceClassInst( cls, data );
    
    // if this is already a reference, we're done.
-   if( cls->typeID() != refClass->typeID() )
+   if( ! value.isReference() )
    {
       // both the original item and the copy in the stack must be changed.
-      refClass->makeRef( value );
+      ItemReference* ref = new ItemReference;
+      ref->reference( value );
    }
    
    Item copy = value; // prevent stack corruption (value may be on the stack)

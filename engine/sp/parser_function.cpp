@@ -17,7 +17,7 @@
 #define SRC "engine/sp/parser_function.cpp"
 
 #include <falcon/setup.h>
-#include <falcon/globalsymbol.h>
+#include <falcon/symbol.h>
 #include <falcon/error.h>
 
 #include <falcon/parser/rule.h>
@@ -66,7 +66,7 @@ static SynFunc* inner_apply_function( const Rule&, Parser& p, bool bHasExpr )
 
    // check if the symbol is free -- defining an unique symbol
    bool alreadyDef;
-   GlobalSymbol* symfunc = ctx->onGlobalDefined( *tname->asString(), alreadyDef );
+   Symbol* symfunc = ctx->onGlobalDefined( *tname->asString(), alreadyDef );
    if( alreadyDef )
    {
       // not free!

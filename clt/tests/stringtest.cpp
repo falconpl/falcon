@@ -10,7 +10,7 @@
 
 #include <falcon/vm.h>
 #include <falcon/syntree.h>
-#include <falcon/localsymbol.h>
+#include <falcon/symbol.h>
 #include <falcon/error.h>
 #include <falcon/statement.h>
 #include <falcon/rulesyntree.h>
@@ -19,7 +19,6 @@
 #include <falcon/trace.h>
 #include <falcon/application.h>
 #include <falcon/cm/coremodule.h>
-#include <falcon/globalsymbol.h>
 
 #include <falcon/psteps/stmtautoexpr.h>
 #include <falcon/psteps/stmtrule.h>
@@ -64,7 +63,7 @@ void go()
    string_add.paramCount(1);
 
    string_add.syntree().append(
-         new StmtReturn( new ExprPlus( param->makeExpression(), new ExprValue( " -- Hello world" ) ) )
+         new StmtReturn( new ExprPlus( new ExprSymbol(param), new ExprValue( " -- Hello world" ) ) )
    );
 
    // and now the main function
@@ -79,10 +78,10 @@ void go()
 
    fmain.syntree()
       .append( new StmtAutoexpr(
-               new ExprAssign( strsym->makeExpression(), call_func ) ))
-      .append( new StmtAutoexpr(&(new ExprCall( printl->makeExpression() ))
-            ->addParam(strsym->makeExpression()).addParam(new ExprValue(1))) )
-      .append( new StmtReturn( strsym->makeExpression() ));
+               new ExprAssign( new ExprSymbol(strsym), call_func ) ))
+      .append( new StmtAutoexpr(&(new ExprCall( new ExprSymbol(printl) ))
+            ->addParam(new ExprSymbol(strsym)).addParam(new ExprValue(1))) )
+      .append( new StmtReturn( new ExprSymbol(strsym) ));
 
    std::cout << "Will run: " << fmain.syntree().describe().c_ize() << std::endl;
 

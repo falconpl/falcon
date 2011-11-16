@@ -24,7 +24,6 @@ namespace Falcon
 
 class String;
 class Symbol;
-class LocalSymbol;
 
 /** Holder for symbols relative to the owning level.
  Symbols tables are found:
@@ -87,12 +86,12 @@ public:
     \return A symbol pointer or 0 if the id is out of range.
 
     */
-   LocalSymbol* getLocal( int32 id ) const;
+  Symbol* getLocal( int32 id ) const;
 
 
    /** Adds a local symbol.
     \param The name of the local symbol.
-    \return a LocalSymbol newly created out of the given name, or an already
+    \return a Symbol newly created out of the given name, or an already
     existing symbol (warning: might not be a local symbol).
 
     If the name is already found int he local symbol table, that symbol is
@@ -113,7 +112,7 @@ public:
 
     \note The table takes ownership of this local symbol.
     */
-   bool addLocal( LocalSymbol* sym );
+   bool addLocal( Symbol* sym );
 
    /** Adds a non-local symbol to this table.
     \parma sym A symbol that is not considered local.

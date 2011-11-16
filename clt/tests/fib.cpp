@@ -10,7 +10,7 @@
 
 #include <falcon/vm.h>
 #include <falcon/syntree.h>
-#include <falcon/localsymbol.h>
+#include <falcon/symbol.h>
 #include <falcon/statement.h>
 #include <falcon/synfunc.h>
 #include <falcon/error.h>
@@ -51,18 +51,18 @@ void go( int fibSize )
    fib.paramCount(1);
 
    SynTree* ifTrue = new SynTree();
-   ifTrue->append(new StmtReturn( count->makeExpression() ) );
+   ifTrue->append(new StmtReturn( new ExprSymbol(count) ) );
 
    SynTree* ifFalse = new SynTree();
    ifFalse->append( new StmtReturn( new ExprPlus(
-         &(new ExprCall( new ExprValue(&fib) ))->addParam( new ExprMinus( count->makeExpression(), new ExprValue(1))),
-         &(new ExprCall( new ExprValue(&fib) ))->addParam( new ExprMinus( count->makeExpression(), new ExprValue(2)))
+         &(new ExprCall( new ExprValue(&fib) ))->addParam( new ExprMinus( new ExprSymbol(count), new ExprValue(1))),
+         &(new ExprCall( new ExprValue(&fib) ))->addParam( new ExprMinus( new ExprSymbol(count), new ExprValue(2)))
          ))
    );
 
    fib.syntree().append(
          new Falcon::StmtIf(
-               new ExprLT( count->makeExpression(), new ExprValue(2) ),
+               new ExprLT( new ExprSymbol(count), new ExprValue(2) ),
                ifTrue,
                ifFalse
          )

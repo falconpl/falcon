@@ -28,19 +28,30 @@ namespace Falcon {
 
 ExprSymbol::ExprSymbol( const ExprSymbol& other ):
       Expression( other ),
-      m_pslv(this),
-      m_symbol(other.m_symbol)
+      m_symbol(other.m_symbol),
+      m_pslv(this)
 {
-   apply = other.apply;
+   apply = apply_;
    m_pstep_lvalue = &m_pslv;
    m_pstep_lvalue->apply = other.m_pstep_lvalue->apply;
 }
 
 ExprSymbol::ExprSymbol( Symbol* target ):
    Expression( t_symbol ),
-   m_pslv(this),
-   m_symbol( target )
+   m_symbol( target ),
+   m_pslv(this)
 {
+   apply = apply_;
+   m_pstep_lvalue = &m_pslv;
+}
+
+ExprSymbol::ExprSymbol( const String& name ):
+   Expression( t_symbol ),
+   m_name(name),
+   m_symbol( 0 ),
+   m_pslv(this)
+{
+   apply = apply_;
    m_pstep_lvalue = &m_pslv;
 }
 
@@ -77,11 +88,18 @@ ExprSymbol::~ExprSymbol()
    // nothig to do
 }
 
+const String& ExprSymbol::name() const
+{
+   if ( m_symbol != 0 )
+   {
+      return m_symbol->name();
+   }
+   return m_name;
+}
+
 void ExprSymbol::describeTo( String& val ) const
 {
-   val = m_symbol->type() == Symbol::t_unknown_symbol ? 
-      "/* unknown */" + m_symbol->name() :
-      m_symbol->name();
+   val = m_symbol != 0 ? m_symbol->name() : m_name;
 }
 
 
@@ -108,7 +126,22 @@ void ExprSymbol::PStepSave::describeTo( String& s ) const
 {
    s = "Symbol internal save";
 }
-   
+
+
+void ExprSymbol::apply_( const PStep* ps, VMContext* ctx )
+{
+   const ExprSymbol* es = static_cast<const ExprSymbol*>(ps);
+   ctx->pushData( *es->m_symbol->value(ctx) );
+}
+
+
+void ExprSymbol::PStepLValue::apply_( const PStep* ps, VMContext* ctx )
+{
+   const ExprSymbol::PStepLValue* es = static_cast<const ExprSymbol::PStepLValue*>(ps);
+   *es->m_owner->m_symbol->value(ctx) = ctx->topData();
+}
+
+
 void ExprSymbol::PStepSave::apply_( const PStep*, VMContext* ctx )
 {
    ctx->opcodeParam(1) = ctx->opcodeParam(0);

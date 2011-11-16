@@ -17,8 +17,6 @@
 #include <falcon/vmcontext.h>
 #include <falcon/item.h>
 #include <falcon/trace.h>
-#include <falcon/localsymbol.h>
-#include <falcon/closedsymbol.h>
 #include <falcon/pstep.h>
 
 #include <falcon/psteps/stmtreturn.h>

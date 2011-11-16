@@ -18,7 +18,7 @@
 
 #include <falcon/vm.h>
 #include <falcon/syntree.h>
-#include <falcon/localsymbol.h>
+#include <falcon/symbol.h>
 #include <falcon/error.h>
 #include <falcon/expression.h>
 #include <falcon/statement.h>
@@ -26,7 +26,6 @@
 #include <falcon/synfunc.h>
 #include <falcon/extfunc.h>
 #include <falcon/modspace.h>
-#include <falcon/globalsymbol.h>
 #include <falcon/stdstreams.h>
 #include <falcon/textwriter.h>
 #include <falcon/trace.h>
@@ -74,8 +73,6 @@ void go()
 #endif
 
    VMachine vm;
-   Module* mod = Engine::instance()->getCore();
-   mod->exportToModspace( vm.modSpace() );
    
    IntCompiler intComp(&vm);
 

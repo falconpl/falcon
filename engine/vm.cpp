@@ -30,14 +30,18 @@
 #include <falcon/trace.h>
 #include <falcon/autocstring.h>
 #include <falcon/mt.h>
-#include <falcon/globalsymbol.h>
 #include <falcon/modspace.h>
+#include <falcon/modloader.h>
 
 #include <falcon/errors/codeerror.h>
 #include <falcon/errors/genericerror.h>
 
 #include <map>
 #include <list>
+#include <vector>
+
+#define INITIAL_GLOBAL_ALLOC 64
+#define INCREMENT_GLOBAL_ALLOC 64
 
 namespace Falcon
 {
@@ -53,6 +57,12 @@ public:
    ~Private()
    {
    }
+   
+   typedef std::vector<int32> IntVector;
+   IntVector m_globIds;
+   int32 m_nextGlobalId;
+   mutable Mutex m_mtxGlobIds;
+   
 };
 
 
@@ -62,9 +72,8 @@ VMachine::VMachine( Stream* stdIn, Stream* stdOut, Stream* stdErr )
    TRACE( "Virtual machine created at %p", this );
    _p = new Private;
    m_context = new VMContext(this);
-   m_modspace = new ModSpace( this );
-   // make this optional?
-   Engine::instance()->exportBuiltins(m_modspace);
+   m_modspace = new ModSpace( 0 );
+   m_loader = new ModLoader;
 
    if ( stdIn == 0 )
    {
@@ -111,7 +120,7 @@ VMachine::VMachine( Stream* stdIn, Stream* stdOut, Stream* stdErr )
 #endif
 
    m_textOut->lineFlush(true);
-   m_textErr->lineFlush(true);
+   m_textErr->lineFlush(true);  
 }
 
 
@@ -478,6 +487,51 @@ Item* VMachine::findLocalItem( const String& ) const
    return 0;
 }
 
+/*
+int32 VMachine::getGlobalID()
+{
+   int32 id;
+   
+   _p->m_mtxGlobIds.lock();
+   if ( _p->m_globIds.empty() )
+   {
+      id = _p->m_nextGlobalId++;
+      if ( id + m_globals >= m_globalsMax )
+      {
+         moreGlobals();
+      }
+   }
+   else
+   {
+      id = _p->m_globIds.back();
+      _p->m_globIds.pop_back();
+   }
+   _p->m_mtxGlobIds.unlock();
+   
+   return id;
+}
+ 
+
+void VMachine::freeGlobalID( int32 id )
+{
+   _p->m_mtxGlobIds.lock();   
+   _p->m_globIds.push_back( id );
+   _p->m_mtxGlobIds.unlock();
+}
+
+
+void VMachine::moreGlobals()
+{
+   size_t currentSize = m_globalsMax - m_globals;
+   size_t finalSize = (((currentSize + INCREMENT_GLOBAL_ALLOC)/INCREMENT_GLOBAL_ALLOC)+1)
+                           *INCREMENT_GLOBAL_ALLOC;   
+   TRACE("Reallocating %p: %d -> %d", 
+      m_globals, (int)(m_globalsMax - m_globals), finalSize );
+
+   m_globals = (Item*) realloc( m_globals, finalSize * sizeof(Item) );
+   m_globalsMax = m_globals + finalSize;
+}
+*/
 }
 
 /* end of vm.cpp */

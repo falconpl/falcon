@@ -24,12 +24,11 @@ namespace Falcon {
 
 class String;
 class Symbol;
-class GlobalSymbol;
-class UnknownSymbol;
 
 class SourceParser;
 class SynFunc;
 class Expression;
+class ExprSymbol;
 class Statement;
 class FalconClass;
 class Inheritance;
@@ -88,7 +87,7 @@ public:
     in this case, before calling this callback, the parser will generate a
     onDynamcFunction request.
     */
-   virtual void onNewFunc( Function* function, GlobalSymbol* gs = 0 ) = 0;
+   virtual void onNewFunc( Function* function, Symbol* gs = 0 ) = 0;
 
 
    /** Called back when creating a new class.
@@ -103,7 +102,7 @@ public:
     \b after onNewClass; subclasses may cache the function name to understand
     that the new global is referring to this function object.
     */
-   virtual void onNewClass( Class* cls, bool bIsObj, GlobalSymbol* gs = 0 ) = 0;
+   virtual void onNewClass( Class* cls, bool bIsObj, Symbol* gs = 0 ) = 0;
 
    /** Called back when creating a new class.
       \param stmt The statement being created.
@@ -231,31 +230,7 @@ public:
 
     If the owner returns zero, onUnknownSymbol is called.
     */
-   virtual GlobalSymbol* onGlobalDefined( const String& name, bool &alreadyDef ) = 0;
-
-   /** Called back when any try to define a symbol fail.
-    \param sym A symbol to be disposed of.
-    \return True if the symbol can be finally defined as an external import,
-      false if this is to be considered already an error.
-
-    Unknown symbols are symbols that cannot be placed in any symbol table,
-    because the resolution tries (joint effort of the SourceParser, this class,
-    its subclasses and eventually some other entity hold by the subclasses) have
-    falied.
-
-    The sym parameter should be stored somewhere to be later disposed, when the
-    syntree holding the symbol is not needed anymore. Normally, this is done
-    through symbol tables, but this can't be done with unknown symbols as they
-    cannot be placed in them.
-
-    If the implementation of this class knows that the symbol cannot be found
-    elsewhere (i.e. because implementing a dynamic compilation on top of
-    an already prepared VM) then the method should destroy the symbol (or 
-    record it for a later disposal) and return false. Otherwise, it should
-    mark it as "external" and publish it in its import table and then return true.
-
-    */
-   virtual bool onUnknownSymbol( UnknownSymbol* sym ) = 0;
+   virtual Symbol* onGlobalDefined( const String& name, bool &alreadyDef ) = 0;
 
    /** Called back when the parser creates new static data.
     \param cls The Falcon::Class of the static data.
@@ -331,21 +306,21 @@ public:
 
    /** Creates a new variable in the current context.
     \param variable A Variable or symbol name to be created.
-    \return A new or already existing symbol.
+    \return An expression in the current frame.
 
-    This might create a new variable or access an already existing variable
-    in the current context.
+    This method must return a newly allocated expression which will hold
+    a symbol after (or already holds a symbol, if possible). 
     */
-   Symbol* addVariable( const String& variable );
+   ExprSymbol* addVariable( const String& variable );
 
-   /** Creates a new variable and define it immediately in the current context.
+   /** Creates a new variable and defines it immediately in the current context.
     \param variable A Variable or symbol name to be created.
     \return A new or already existing symbol.
 
     This might create a new variable or access an already existing variable
     in the current context.
     */
-   Symbol* addDefinedVariable( const String& variable );
+   Symbol* addDefineSymbol( const String& variable );
    
    /** Remove a previusly referenced variable in the current statement.
     \param variable
@@ -369,10 +344,6 @@ public:
     */
    void defineSymbols( Expression* expr );
 
-   /** Define a single symbol (if unknown).
-    \param uks A symbol that, if unknown, shall be defined as created in the local context.
-    */
-   void defineSymbol( Symbol* uks );
 
    /** Checks the symbols that have been declared up to date.
     \return false if there is some unresolved symbol at the current checkpoint
@@ -451,7 +422,7 @@ public:
     The symbol, if provided, is given back to onNewFunction callback
     in the compiler context when the function is closed.
     */
-   void openFunc( SynFunc *func, GlobalSymbol* gs = 0 );
+   void openFunc( SynFunc *func, Symbol* gs = 0 );
 
    /** Opens a new Class statement context.
     \param cls The class being created.
@@ -465,7 +436,7 @@ public:
     The symbol, if provided, is given back to onNewClass callback
     in the compiler context when the function is closed.
     */
-   void openClass( Class *cls, bool bIsObject, GlobalSymbol* gs = 0 );
+   void openClass( Class *cls, bool bIsObject, Symbol* gs = 0 );
 
    /** Pops the current context.
     When a context is completed, it's onNew*() method is called by this method.

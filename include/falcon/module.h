@@ -33,17 +33,14 @@
 
 namespace Falcon {
 
-class GlobalSymbol;
-class UnknownSymbol;
+class Symbol;
 class Item;
 class Class;
 class Inheritance;
-class UnknownSymbol;
 class ModSpace;
 class ModLoader;
 class FalconClass;
 class DynUnloader;
-class ModGroup;
 class Requirement;
 
 /** Standard Falcon Execution unit and library.
@@ -132,15 +129,15 @@ public:
     method. The module will remove the anonymous elements from the static
     data list when they are found at the back of the list.
     */
-   void addStaticData( Class* cls, void* data );
+   Item* addStaticData( Class* cls, void* data );
 
    /** Adds a global function, possibly exportable.
     \param f The function to be added
     \param bExport if true, the returned symbol will be exported.
-    \return A GlobalSymbol holding a pointer to the global variable where the
+    \return A Symbol holding a pointer to the global variable where the
             function is now stored, or 0 if the function name is already present.
     */
-   GlobalSymbol* addFunction( Function* f, bool bExport = true );
+   Symbol* addFunction( Function* f, bool bExport = true );
 
    /** Adds an anonymous function.
     \param f The function to be added
@@ -156,7 +153,7 @@ public:
 
     
     */
-   void addFunction( GlobalSymbol* sym, Function* f );
+   void addFunction( Symbol* sym, Function* f );
 
    /** Adds a global function, possibly exportable.
     \param f The function to be added
@@ -165,12 +162,12 @@ public:
             function is now stored, or 0 if the function name is already present.
 
     */
-   GlobalSymbol* addFunction( const String& name, ext_func_t f, bool bExport = true );
+   Symbol* addFunction( const String& name, ext_func_t f, bool bExport = true );
 
    /** Adds a new class to this module.
-    
+    \note This method doesn't seek for existing waiting 
     */
-   void addClass( GlobalSymbol* gsym, Class* fc, bool isObj );
+   void addClass( Symbol* gsym, Class* fc, bool isObj );
 
    /** Adds a global class, possibly exportable.
     \param fc The class to be added
@@ -179,7 +176,7 @@ public:
     \return A GlobalSymbol holding a pointer to the global variable where the
             function is now stored, or 0 if the function name is already present.
     */
-   GlobalSymbol* addClass( Class* fc, bool isObj, bool bExport = true );
+   Symbol* addClass( Class* fc, bool isObj, bool bExport = true );
 
    /** Adds an anonymous class.
     \param cls The class to be added
@@ -197,7 +194,7 @@ public:
 
     Creates a nil variable and references it to a global symbol.
     */
-   GlobalSymbol* addVariable( const String& name, bool bExport = true );
+   Symbol* addVariable( const String& name, bool bExport = true );
 
    /** Adds a global variable, possibly exportable.
     \param name The name of the symbol referencing the variable.
@@ -212,7 +209,7 @@ public:
     a garbage lock that can be released after the module has been linked in
     the virtual machine.
     */
-   GlobalSymbol* addVariable( const String& name, const Item& value, bool bExport = true );
+   Symbol* addVariable( const String& name, const Item& value, bool bExport = true );
 
    /** Finds a global symbol by name.
     \param name The symbol name to be searched.
@@ -235,9 +232,6 @@ public:
 
    /** Enumerator receiving symbols in this module. */
    typedef Enumerator<Symbol> SymbolEnumerator;
-   
-   /** Enumerator receiving symbols in this module. */
-   typedef Enumerator<UnknownSymbol> USymbolEnumerator;
 
    /** Enumerate all the globals known by this module.
       \note The enumerated symbol might be a GlobalSymbol or an UnknownSymbol.
@@ -293,22 +287,6 @@ public:
 
    uint32 lastGCMark() const { return m_lastGCMark; }
 
-   /** Sends dynamic data to the garbage. 
-    This method is invoked as a part of the link step. When a DYNAMIC module
-    is delivered to a virtual machine, it must send to the garbage collector
-    all the static data that it does not want to account for. For instance,
-    strings, ranges, and any deep data that may need collection but that is
-    not going to keep this module alive when held somewhere.
-    
-    This method loops on all the static data and crates a garbage token
-    for all those items that we don't want to keep.
-    
-    As classes and functions are bound to back-reference this module, and as
-    they are destroyed as this module is dereferenced and disposed of, we won't
-    create GC tokens for those entitites.
-    */
-   void sendDynamicToGarbage();
-
    /** Adds a load request.
     \param name The module to be loaded
     \param bIsUri Set to true if the module name is a system path or URI.
@@ -320,13 +298,15 @@ public:
     \param remoteName The symbol name as it's known in the import source module.
     \parma source The import source module name or location.
     \param bIsUri Set to true if the module name is a system path or URI.
+    \return the Symbol created from this import from, or 0 if the symbol
+            already exists.
     */
-   UnknownSymbol* addImportFrom( const String& localName, const String& remoteName,
+   Symbol* addImportFrom( const String& localName, const String& remoteName,
                                            const String& source, bool bIsUri );
 
    /** Explicitly generate an imported global symbol.
     \param name The symbol to be searched.
-    \return 0 if already existing, or a valid UnknownSymbol if not found.
+    \return 0 if already existing, or a valid Symbol if not found.
     
     Generic imports are declared with "import from modulename [in namespace]".
     This method requries that all the unknown symbol (eventually related
@@ -334,14 +314,17 @@ public:
     searched in the global export table.
         
     */
-   UnknownSymbol* addImport( const String& name );
+   Symbol* addImport( const String& name );
    
    /** Adds an implicitly imported symbol.
     \param uks The unknown symbol that should be resolved during link time.
-    \return true if the symbol could be added, false if the symbol name was
-    already existing in the module.
+    \return 0 if already existing, or a valid Symbol if not found.
+    
+    Adds an implicit import. This is the same as import, but will always return
+    a valid symbol, which might be undefined if the symbol wasn't known before,
+    or it might be an existing global symbol.
     */
-   bool addImplicitImport( UnknownSymbol* uks );
+   Symbol* addImplicitImport( const String& name );
    
    /** Callback that is called when a symbol import request is satisfied.
     \param requester The module from which the request was issued.
@@ -384,8 +367,54 @@ public:
     
     When all the external inheritances are resolved, the owner class is
     generated and readied to be used.
+    
+    \note this method creates an implicit import with the same name of the
+            inherited class.
+    \note This method must be called ONLY if the imported inheritance has not
+            been found in the globals.
     */
    void addImportInheritance( Inheritance* inh );
+   
+   /** Adds an inheritance that is pending while the module is being formed.
+    \param inh the inheritance to be added.
+    
+    In non-interactive compilation mode, it is posible to have forward declarations of 
+    statically declared entities. When this happens with an inheritance clause,
+    this fact must be specially remembered so that further declarations do not
+    break the rules that the given symbol must be considered a class.
+    
+    Other methods checkPendingInheritance() and commitPendingiInheritances() are
+    used to complete the controls on the inheritance system.
+    */
+   void addPendingInheritance( Inheritance* inh );
+   
+   /** Checks the symbol for existing inheritances.
+      \param symName The name if the inheritance that has been created.
+      \param parent The parent class, if defined.
+      \return True if there are pending inheritances with this name, false otherwise.
+    
+    This method is called when statically defining functions or classes in non-interactive
+    compilation. 
+    
+    In case the defined symbol is a class, the parent parameter should
+    be the value of the newly defined classes; inheritances are then considered
+    resolved, and they won't be added as external requests when the module 
+    compilation is closed. 
+    
+    If they are function or objects, or any non-class statically declared
+    entity, the parent parameter should be zero. In that case, the method will
+    just check for the inheritance name to exist, and then return true. The
+    compiler should add an error because a non-class entity has been used as
+    static inheritance for a class.
+    */
+   bool checkPendingInheritance( const String& symName, Class* parent = 0 );
+   
+   /** Commits the inheritances into new external requests.
+    
+    To be called when the compilation of a module is complete. It will repeatedly
+    call addImportInheritance on any existing inheritance.
+   */
+   void commitPendingInheritance();
    
    /** Adds a request for a foreign class not bound with an inheritance.
     \param cr A RquiredClass that will be filled with the required class.
@@ -397,6 +426,8 @@ public:
     
     */
    void addRequirement( Requirement* cr );
+   
+   Error* addRequirementAndResolve( Requirement* cr );
    
    /** Stores a class coming from a source module.
     \param fcls The class to be added.
@@ -410,7 +441,7 @@ public:
     Module compilers and code synthezizing classes that may require external
     inheritances should use this method.
     */
-   void storeSourceClass( FalconClass* fcls, bool isObject, GlobalSymbol* gs = 0 );
+   void storeSourceClass( FalconClass* fcls, bool isObject, Symbol* gs = 0 );
    
    /** Perform completion checks on source classes.
     \param fcls The class that have just been completed.
@@ -422,14 +453,6 @@ public:
     */
    void completeClass( FalconClass* fcls );
    
-
-   /** Resolves module requirements dynamically.
-    \param loader A loader used to resolve dynamic deps.
-    
-    This puts all the resolved dependencies at disposal of this module.
-    Resolved modules are destroyed when this module is destroyed.
-    */
-   bool resolveDynReqs( ModLoader* loader );
    
    /** Reads the exportAll flag.
     \return True if this module wants to export all the non-private symbols.
@@ -462,69 +485,33 @@ public:
     \return The module group in which this module is stored, or 0 if this
             is a static module living in the global module space.
     */
-   ModGroup* moduleGroup() const { return m_modGroup; }
+   ModSpace* moduleSpace() const { return m_modSpace; }
    
-   void moduleGroup( ModGroup* md ) { m_modGroup = md; }
+   void moduleSpace( ModSpace* md ) { m_modSpace = md; }
    
    bool isMain() const { return m_bMain; }
    
    void setMain( bool isMain = true ) { m_bMain = isMain; } 
    
-   Error* resolveDirectImports( bool bUseModGroup );
+   /** Executes a namespace forwarding from a module into this one. */
+   void forwardNS( Module* mod, const String& remoteNS, const String& localNS );
 
-   Error* exportToModspace( ModSpace* ms );
-   
-private:
-   class Private;
-   Private* _p;
-   
-   String m_name;
-   String m_uri;
-   uint32 m_lastGCMark;
-   bool m_bExportAll;
-   DynUnloader* m_unloader;
-   ModGroup* m_modGroup;
-   bool m_bMain;
-   
-   int m_anonFuncs;
-   int m_anonClasses;
-   
-   friend class Private;   
-   friend class DynLoader;
-   friend class FAMLoader;
-   friend class ModGroup;
-   
-   void name( const String& v ) { m_name = v; }
-   void uri( const String& v ) { m_uri = v; }
-   void setDynUnloader( DynUnloader* ul ) { m_unloader = ul; }
-   
-   Symbol* findGenericallyExportedSymbol( const String& symname, Module*& mod ) const;
-   
-   bool exportOnModGroup();
-   
-   void exportSymsInGroup( bool bForReal );
-   void resolveGenericImports( bool bForReal );
-   bool exportSymbolInGroup( Symbol* sym, bool bForReal );
-   
-   /** Resolve module requirements statically through a module space.
+   /** Manages all the import/from command flavors.
+      \param path The path or module name to be load.
+      \param isFsPath if true, \b path is a filename, otherwise it's a logical module name.
+      \param symName The symbol to be loaded, or "" if none.
+      \param nsName The namespace or alias where to import the symbol.
+      \param bIsNS if true \b nsName is a namespace, if false is an alias.
+      \return True if the input could have been completed with succes, false
+               if it was already included
     
-    This method tries to load or import all the modules from which this module
-    depends.
-    
-      \note This is used directly and exclusively by the ModGroup class.
-    
-    As a module space is provided as a static module storage, the modules
-    are loaded statically and added to the given modspace. As a result, they
-    might automatically generate requests for other modules.
-    
-    Before trying to load a module, the ModSpace is searched. If a module is
-    already available in the module space, it is used (and eventually promoted
-    to "load requirement" if necessary), otherwise the ModLoader offered by
-    the ModSpace is used to search for the module on the virtual file system.
-
+    This is a shortcut selecting the proper input/from handler function
+    depending on the kind of import that is required in this module.
     */
-   bool resolveStaticReqs();
-   
+   bool anyImportFrom( const String& path, bool isFsPath, const String& symName,
+      const String& nsName, bool bIsNS );
+
+
    /** Check if we can use an existing module to resolve this requirement.
     
     We can use a module that has been already loaded if:
@@ -536,7 +523,70 @@ private:
     */
    Module* linkExistingModule( const String& name, bool bIsUri, t_loadMode imode );
 
-   Error* exportSymbolToModspace( ModSpace* ms, Symbol* sym );
+   /** Searches a symbol, complete with its namespace in the import structure.
+    \param name A symbol name, complete with its namespace prefix.
+    \return A symbol if found, 0 otherwise.
+    
+    This method searches a symbol in the import structure of a module.
+    
+    The Symbol is not searched in the
+    */
+   Symbol* searchInImports( const String& name, Module*& mod );
+   
+   /** Returns a new default value stored in this module.
+    \return A default value ready to be referenced by a symbol.
+    
+    Global, static and default parameter values are stored in the module
+    and referenced by the symbols in their Symbol::defaultValue() field.
+    
+    This method creates a new default value that is stored in the module and
+    stays valid as long as the module is alive. 
+    
+    \note Complex values as functions
+    and classes properly reference back the module they come from, so the module
+    stays alive as long as THEY are valid.
+    */
+   Item* addDefaultValue();
+   
+   /** Returns a new default value stored in this module.
+    \param src The source value where to copy the item from.
+    \return A default value ready to be referenced by a symbol.
+    
+    Global, static and default parameter values are stored in the module
+    and referenced by the symbols in their Symbol::defaultValue() field.
+    
+    This method creates a new default value that is stored in the module and
+    stays valid as long as the module is alive. 
+    
+    \note Complex values as functions
+    and classes properly reference back the module they come from, so the module
+    stays alive as long as THEY are valid.
+    */
+   Item* addDefaultValue( const Item& src );
+   
+private:
+   class Private;
+   Private* _p;
+   
+   ModSpace* m_modSpace;
+   String m_name;
+   String m_uri;
+   uint32 m_lastGCMark;
+   bool m_bExportAll;
+   DynUnloader* m_unloader;
+   bool m_bMain;
+   
+   int m_anonFuncs;
+   int m_anonClasses;
+   
+   friend class Private;   
+   friend class DynLoader;
+   friend class FAMLoader;
+   friend class ModSpace;
+   
+   void name( const String& v ) { m_name = v; }
+   void uri( const String& v ) { m_uri = v; }
+   void setDynUnloader( DynUnloader* ul ) { m_unloader = ul; }   
 };
 
 }

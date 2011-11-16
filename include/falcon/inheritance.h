@@ -48,7 +48,8 @@ class FALCON_DYN_CLASS Inheritance
 public:
    /** Creates the inheritance instance.
     \param name The logical name of the parent class.
-    \param parent The class corresponding to the inheritance name, if known
+    \param parent The class corresponding to the inheritance name, if known.
+    \param owner The class where this inheritance is delcaraed.
 
     The inheritance name is the name of the class as it's written
     after the "from" clause in the inheritance declarartion.

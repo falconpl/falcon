@@ -19,12 +19,11 @@
 #include <falcon/setup.h>
 #include <falcon/trace.h>
 
+#include <falcon/symbol.h>
 #include <falcon/expression.h>
 #include <falcon/error.h>
-#include <falcon/globalsymbol.h>
 #include <falcon/falconclass.h>
 #include <falcon/synfunc.h>
-#include <falcon/localsymbol.h>
 #include <falcon/inheritance.h>
 
 #include <falcon/parser/rule.h>
@@ -110,7 +109,7 @@ static void make_class( Parser& p, int tCount,
    ParserContext* ctx = static_cast<ParserContext*>(p.context());
 
    FalconClass* cls = 0;
-   GlobalSymbol* symclass = 0;
+   Symbol* symclass = 0;
    TokenInstance* ti = 0;
    
    // a symbol class?

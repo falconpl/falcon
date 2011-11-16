@@ -14,12 +14,11 @@
 */
 
 #include <falcon/symboltable.h>
+#include <falcon/symbol.h>
 #include <falcon/string.h>
 
 #include <vector>
 #include <map>
-
-#include "falcon/localsymbol.h"
 
 namespace Falcon
 {
@@ -34,7 +33,7 @@ private:
    typedef std::map<String, Symbol*> SymbolMap;
    SymbolMap m_symtab;
 
-   typedef std::vector<LocalSymbol*> SymbolVector;
+   typedef std::vector<Symbol*> SymbolVector;
    SymbolVector m_locals;
 
 };
@@ -71,7 +70,7 @@ Symbol* SymbolTable::findSymbol( const String& name ) const
 }
 
 
-LocalSymbol* SymbolTable::getLocal( int32 id ) const
+Symbol* SymbolTable::getLocal( int32 id ) const
 {
    if ( id < 0 || ((size_t)id) >= _p->m_locals.size() )
    {
@@ -90,7 +89,7 @@ Symbol* SymbolTable::addLocal( const String& name )
       return iter->second;
    }
    
-   LocalSymbol* ls = new LocalSymbol( name, _p->m_locals.size() );
+   Symbol* ls = new Symbol( name, Symbol::e_st_local, _p->m_locals.size() );
    _p->m_locals.push_back( ls );
    _p->m_symtab[name] = ls;
    
@@ -98,7 +97,7 @@ Symbol* SymbolTable::addLocal( const String& name )
 }
 
   
-bool SymbolTable::addLocal( LocalSymbol* sym )
+bool SymbolTable::addLocal( Symbol* sym )
 {
    Private::SymbolMap::iterator iter = _p->m_symtab.find( sym->name() );
    if( iter != _p->m_symtab.end() )
@@ -106,7 +105,7 @@ bool SymbolTable::addLocal( LocalSymbol* sym )
       return false;
    }
 
-   sym->m_id = _p->m_locals.size();
+   sym->define( Symbol::e_st_local, _p->m_locals.size() );
    _p->m_locals.push_back( sym );
    _p->m_symtab[sym->name()] = sym;
 

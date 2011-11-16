@@ -174,9 +174,13 @@ public:
       ++m_topData;
       if( m_topData >= m_maxData )
       {
+         Item temp = data;
          moreData();
+         *m_topData = temp;
       }
-      *m_topData = data;
+      else {
+         *m_topData = data;
+      }
    }
 
    /** Add more variables on top of the stack.
@@ -424,7 +428,7 @@ public:
       }
       return false;
    }
-
+   
    //=========================================================
    // Code frame management
    //=========================================================
@@ -1016,9 +1020,9 @@ public:
    Error* detachThrownError() { Error* e = m_thrown; m_thrown =0; return e; }
    
    /** Check the boolean true-ness of the topmost data item, possibly going deep.
-    If 
     */
    bool boolTopData();
+   
    
 protected:
 
@@ -1036,10 +1040,11 @@ protected:
    Item* m_dataStack;
    Item* m_topData;
    Item* m_maxData;
-
+   
    Item m_regA;
    uint64 m_safeCode;
-   
+
+
    /** Error whose throwing was suspended by a finally handling. */
    Error* m_thrown;
    

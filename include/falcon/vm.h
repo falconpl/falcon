@@ -36,6 +36,7 @@ class Transcoder;
 class Module;
 class Symbol;
 class ModSpace;
+class ModLoader;
 
 /** The Falcon virtual machine.
 */
@@ -281,12 +282,15 @@ public:
    inline TextWriter* textErr() const { return m_textOut; }
 
    //=========================================================
-   // VM Streams
+   // Module management
    //=========================================================
 
    /** Gets the module space associated with this virtual machine. */
    ModSpace* modSpace() const { return m_modspace; }
-
+  
+   /** Gets the module loader associated with this virtual machine. */
+   ModLoader* modLoader() const { return m_loader; }
+   
 protected:
 
    Stream *m_stdIn;
@@ -301,6 +305,9 @@ protected:
    bool m_bOwnCoder;
    
    ModSpace* m_modspace;
+   
+   // Loader for the incoming modules.
+   ModLoader* m_loader;
 
    /** Called back when an error was thrown directly inside the machine.
     \param e The error being thrown.
@@ -313,12 +320,13 @@ protected:
    void onRaise( const Item& item );
 
 private:
-   
    // current context
    VMContext* m_context;
-
+   
+   
+   
    class Private;
-   Private* _p;
+   Private* _p;   
 };
 
 }

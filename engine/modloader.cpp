@@ -104,7 +104,8 @@ Module* ModLoader::loadName( const String& name, t_modtype type )
       pos1 = modName.find( '.', pos1+1 );      
    }
    
-   return loadFile( modName, type, true );
+   Module* mod = loadFile( modName, type, true );
+   return mod;
 }
 
 
@@ -275,7 +276,7 @@ void ModLoader::pathToName( const String &path, const String &modFile, String &m
    if ( pos1 != String::npos && 
          (pos2 == String::npos || pos2 < pos1 ) )
    {
-      modName.subString(0, pos1);
+      modName = modName.subString(0, pos1);
    }
    
    // change "/" into .
@@ -423,7 +424,12 @@ Module* ModLoader::load_internal(
          return m_famLoader->load( &dr, uri.encode(), modName );
       }
          
-      case e_mt_binmod:         
+      case e_mt_binmod:
+         if ( modName.endsWith("_fm" ) )
+         {
+            modName = modName.subString(0,modName.length()-3);
+         }
+         
          return m_dynLoader->load( uri.encode(), modName );
          
       default:

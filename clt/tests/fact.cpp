@@ -10,7 +10,7 @@
 
 #include <falcon/vm.h>
 #include <falcon/syntree.h>
-#include <falcon/localsymbol.h>
+#include <falcon/symbol.h>
 #include <falcon/statement.h>
 #include <falcon/synfunc.h>
 
@@ -54,14 +54,14 @@ void go( int factSize )
 
    SynTree* ifFalse = new SynTree();
    ifFalse->append( new StmtReturn( new ExprTimes(
-         count->makeExpression(),
-         &(new ExprCall( new ExprValue(&fact) ))->addParam( new ExprMinus( count->makeExpression(), new ExprValue(1)))
+         new ExprSymbol(count),
+         &(new ExprCall( new ExprValue(&fact) ))->addParam( new ExprMinus( new ExprSymbol(count), new ExprValue(1)))
          ))
    );
 
    fact.syntree().append(
          new Falcon::StmtIf(
-               new ExprLT( count->makeExpression(), new ExprValue(2) ),
+               new ExprLT( new ExprSymbol(count), new ExprValue(2) ),
                ifTrue,
                ifFalse
          )

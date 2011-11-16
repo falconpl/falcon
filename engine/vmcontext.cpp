@@ -119,6 +119,7 @@ void VMContext::moreData()
 }
 
 
+
 void VMContext::copyData( Item* target, size_t count, size_t start)
 {
    size_t depth = dataSize();

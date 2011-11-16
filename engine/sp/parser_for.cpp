@@ -74,7 +74,7 @@ static StmtForTo* internal_for_to( Parser& p, TokenInstance* tfor,
          const String& name, Expression* start, Expression* end, Expression* step )
 {
    ParserContext* ctx = static_cast<ParserContext*>(p.context());
-   Symbol* sym = ctx->addDefinedVariable( name );
+   Symbol* sym = ctx->addDefineSymbol( name );
       
    int64 iStart = 0;
    int64 iEnd = 0;
@@ -245,7 +245,7 @@ void apply_for_in( const Rule&, Parser& p )
    
    while( iter != list->end() )
    {
-      Symbol* var = ctx->addDefinedVariable( *iter );
+      Symbol* var = ctx->addDefineSymbol( *iter );
       forin->addParameter( var );
       ++iter;
    }
@@ -275,7 +275,7 @@ void apply_for_in_short( const Rule&, Parser& p )
    
    while( iter != list->end() )
    {
-      Symbol* var = ctx->addDefinedVariable( *iter );
+      Symbol* var = ctx->addDefineSymbol( *iter );
       forin->addParameter( var );
       ++iter;
    }

@@ -11,10 +11,11 @@
 
 #include <falcon/vm.h>
 #include <falcon/syntree.h>
-#include <falcon/localsymbol.h>
+#include <falcon/symbol.h>
 #include <falcon/psteps/exprvalue.h>
 #include <falcon/psteps/exprcompare.h>
 #include <falcon/psteps/exprmath.h>
+#include <falcon/psteps/exprsym.h>
 
 #include <falcon/synfunc.h>
 #include <falcon/module.h>
@@ -41,21 +42,21 @@ void go()
    //   count = count + 1
    // end
 
-   Falcon::Symbol* count = new Falcon::LocalSymbol("count",0);
+   Falcon::Symbol* count = new Falcon::Symbol("count", Falcon::Symbol::e_st_local, 0);
    Falcon::SynTree* assign = new Falcon::SynTree;
    assign->append(
          new Falcon::StmtAutoexpr(
-               new Falcon::ExprAssign( count->makeExpression(),
-                     new Falcon::ExprPlus( count->makeExpression(), new Falcon::ExprValue(1) )
+               new Falcon::ExprAssign( new Falcon::ExprSymbol(count),
+                     new Falcon::ExprPlus( new Falcon::ExprSymbol(count), new Falcon::ExprValue(1) )
          ), 3,3));
 
 
    Falcon::SynTree* program = &fmain.syntree();
    (*program)
       .append( new Falcon::StmtAutoexpr(
-               new Falcon::ExprAssign( count->makeExpression(), new Falcon::ExprValue(0) ), 1,1 ) )
+               new Falcon::ExprAssign( new Falcon::ExprSymbol(count), new Falcon::ExprValue(0) ), 1,1 ) )
       .append( new Falcon::StmtWhile(
-                     new Falcon::ExprLT( count->makeExpression(), new Falcon::ExprValue(5) ),
+                     new Falcon::ExprLT( new Falcon::ExprSymbol(count), new Falcon::ExprValue(5) ),
                      assign, 2,1 ) );
 
    std::cout << program->describe().c_ize() << std::endl;

@@ -10,8 +10,8 @@
 #include <string>
 
 #include <falcon/vm.h>
+#include <falcon/symbol.h>
 #include <falcon/syntree.h>
-#include <falcon/localsymbol.h>
 #include <falcon/error.h>
 #include <falcon/statement.h>
 #include <falcon/synfunc.h>
@@ -105,18 +105,18 @@ void go( int arg, bool bUseOr )
    fmain.module(&module);
 
    
-   Symbol* count = new LocalSymbol("count",0);
-   Expression* assign = new ExprAssign( count->makeExpression(),
+   Symbol* count = new Symbol( "count", Symbol::e_st_local, 0);
+   Expression* assign = new ExprAssign( new ExprSymbol( count ),
                      new ExprPlus( new ExprValue(2), new ExprValue(1) ));
 
    SynTree* iftrue = new SynTree;
       iftrue->append( new StmtAutoexpr(
-            &(*(new ExprCall( new ExprValue(&printl) ))).addParam(new ExprValue("TRUE:")).addParam(count->makeExpression()))
+            &(*(new ExprCall( new ExprValue(&printl) ))).addParam(new ExprValue("TRUE:")).addParam(new ExprSymbol(count)))
              );
 
    SynTree* iffalse = new SynTree;
       iffalse->append( new StmtAutoexpr(
-            &(*(new ExprCall( new ExprValue(&printl) ))).addParam(new ExprValue("FALSE:")).addParam(count->makeExpression()))
+            &(*(new ExprCall( new ExprValue(&printl) ))).addParam(new ExprValue("FALSE:")).addParam(new ExprSymbol(count)))
              );
 
    Expression* check = bUseOr ?

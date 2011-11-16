@@ -208,7 +208,7 @@ static void internal_apply_catch( int toks, Parser& p, int line, int chr,
       // prepare the head symbol if needed
       if( tgt != 0 )
       {
-         Symbol* sym = ctx->addDefinedVariable( *tgt );
+         Symbol* sym = ctx->addDefineSymbol( *tgt );
          newBranch->headSymbol( sym );
       }
       

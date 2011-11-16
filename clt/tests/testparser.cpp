@@ -10,7 +10,6 @@
 
 #include <falcon/vm.h>
 #include <falcon/syntree.h>
-#include <falcon/localsymbol.h>
 #include <falcon/error.h>
 #include <falcon/statement.h>
 #include <falcon/rulesyntree.h>
@@ -23,9 +22,8 @@
 #include <falcon/trace.h>
 #include <falcon/application.h>
 #include <falcon/textreader.h>
-#include <falcon/globalsymbol.h>
+#include <falcon/symbol.h>
 #include <falcon/errors/genericerror.h>
-#include <falcon/unknownsymbol.h>
 #include <falcon/falconclass.h>
 
 #include <falcon/sp/sourceparser.h>
@@ -49,8 +47,8 @@ public:
    void display();
 
    virtual void onInputOver();
-   virtual void onNewFunc( Function* function, GlobalSymbol* gs = 0 );
-   virtual void onNewClass( Class* cls, bool bIsObj, GlobalSymbol* gs = 0 );
+   virtual void onNewFunc( Function* function, Symbol* gs = 0 );
+   virtual void onNewClass( Class* cls, bool bIsObj, Symbol* gs = 0 );
    virtual void onNewStatement( Statement* stmt );
    virtual void onLoad( const String& path, bool isFsPath );
    virtual void onImportFrom( const String& path, bool isFsPath, const String& symName,
@@ -60,8 +58,7 @@ public:
    virtual void onDirective(const String& name, const String& value);
    virtual void onGlobal( const String& name );
    virtual Symbol* onUndefinedSymbol( const String& name );
-   virtual GlobalSymbol* onGlobalDefined( const String& name, bool& bUnique );
-   virtual bool onUnknownSymbol( UnknownSymbol* sym );
+   virtual Symbol* onGlobalDefined( const String& name, bool& bUnique );
    virtual Expression* onStaticData( Class* cls, void* data );
    virtual void onInheritance( Inheritance* );
    virtual void onRequirement( Requirement* rec );
@@ -101,13 +98,13 @@ void Context::onInputOver()
    std::cout<< "CALLBACK: Input over"<<std::endl;
 }
 
-void Context::onNewFunc( Function* function, GlobalSymbol*)
+void Context::onNewFunc( Function* function, Symbol*)
 {
    std::cout<< "CALLBACK: NEW FUNCTION "<< function->name().c_ize() << std::endl;
 }
 
 
-void Context::onNewClass( Class* cls, bool bIsObj, GlobalSymbol* )
+void Context::onNewClass( Class* cls, bool bIsObj, Symbol* )
 {
    std::cout<< "CALLBACK: New class "<< cls->name().c_ize()
       << (bIsObj ? " (object)":"") << std::endl;
@@ -161,20 +158,10 @@ Symbol* Context::onUndefinedSymbol( const String& name )
    return m_main.symbols().addLocal(name);
 }
 
-GlobalSymbol* Context::onGlobalDefined( const String& name, bool& )
+Symbol* Context::onGlobalDefined( const String& name, bool& )
 {
    std::cout << "CALLBACK: new global defined: " << name.c_ize() << std::endl;
-   GlobalSymbol* sym = new GlobalSymbol(name,0);
-   m_main.symbols().addSymbol(sym);
-   return sym;
-}
-
-bool Context::onUnknownSymbol( UnknownSymbol* sym )
-{
-   std::cout << "CALLBACK: unknwon symbol -- pretty impossible: " <<
-         sym->name().c_ize() << std::endl;
-   delete sym;
-   return false;
+   return m_main.symbols().addLocal(name);
 }
 
  Expression* Context::onStaticData( Class* cls, void* data )

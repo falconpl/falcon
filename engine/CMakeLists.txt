@@ -183,14 +183,12 @@ add_library(falcon_engine SHARED
   autowstring.cpp
   bom.cpp
   class.cpp
-  closedsymbol.cpp
   collector.cpp
   collector_history.cpp
   datareader.cpp
   datawriter.cpp
   directory.cpp
   dynloader.cpp
-  dynsymbol.cpp
   engine.cpp
   error.cpp
   extfunc.cpp
@@ -206,7 +204,6 @@ add_library(falcon_engine SHARED
   falconstate.cpp
   fatal.cpp
   fstream.cpp
-  globalsymbol.cpp
   hyperclass.cpp
   inheritance.cpp
   intcompiler.cpp
@@ -214,12 +211,10 @@ add_library(falcon_engine SHARED
   item_util.cpp
   itemarray.cpp
   itemdict.cpp
-  localsymbol.cpp
+  itemreference.cpp
   metaclass.cpp
   method.cpp
   modcompiler.cpp
-  modgroup.cpp
-  modgroupbase.cpp
   modmap.cpp
   modloader.cpp
   modspace.cpp
@@ -256,7 +251,6 @@ add_library(falcon_engine SHARED
   transcoder.cpp
   trace.cpp
   tracestep.cpp
-  unknownsymbol.cpp
   uri.cpp
   usercarrier.cpp
   vfsiface.cpp

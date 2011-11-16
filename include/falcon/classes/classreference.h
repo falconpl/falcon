@@ -33,12 +33,6 @@ public:
    ClassReference();
    virtual ~ClassReference();
 
-   /** Makes a reference to this item.
-    \param source an item to be referenced.
-    Notice that the original item is changed into a reference to the item itself.
-    */
-   void* makeRef( Item& source ) const;
-
    //=============================================================
 
    virtual Class* getParent( const String& name ) const;
@@ -94,8 +88,6 @@ public:
    virtual void op_iter( VMContext* ctx, void* self ) const;
    virtual void op_next( VMContext* ctx, void* self ) const;
    
-private:
-   class Reference;
 };
 
 }

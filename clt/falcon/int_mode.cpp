@@ -14,6 +14,7 @@
 */
 
 #include "int_mode.h"
+#include "falcon/modloader.h"
 #include <falcon/string.h>
 #include <falcon/trace.h>
 
@@ -22,7 +23,7 @@ using namespace Falcon;
 IntMode::IntMode( FalconApp* owner ):
    m_owner( owner )
 {
-   Engine::instance()->getCore()->exportToModspace(m_vm.modSpace()); 
+   m_vm.modSpace()->add( Engine::instance()->getCore(), true, false ); 
 }
 
 
@@ -37,8 +38,23 @@ void IntMode::run()
    VMachine& vm = m_vm;
    
    vm.textOut()->write( "Welcome to Falcon.\n" );
-    
+   
    IntCompiler intComp(&vm);
+   vm.modSpace()->link();
+   
+   // do we have a load path?
+   ModLoader* loader = vm.modLoader();
+   loader->setSearchPath(".");
+   if( m_owner->m_options.load_path.size() > 0 )
+   {
+      // Is the load path totally substituting?
+      loader->addSearchPath(m_owner->m_options.load_path);
+   }
+   
+   if( ! m_owner->m_options.ignore_syspath )
+   {
+      loader->addFalconPath();
+   }
 
    String tgt;
    String prompt = ">>> ";
