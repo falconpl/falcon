@@ -428,7 +428,7 @@ class Part( headers, body )
       if not ctype: ctype = "text/plain"
       if not cset: cset = "utf-8"
       ttext = transcodeTo( text, cset )
-      self.body = self.quote( ttext )
+      self.body = quote( ttext )
       self.headers[ "Content-Type" ] = [""=>ctype, "charset" => cset]
       self.headers[ "Content-Transfer-Encoding" ] = "quoted-printable"
    end
@@ -440,38 +440,6 @@ class Part( headers, body )
       self.body = transcodeTo( text, cset )
       self.headers[ "Content-Type" ] = [""=>ctype, "charset" => cset]
       self.headers[ "Content-Transfer-Encoding" ] = "8-bit"
-   end
-
-   function quote( text )
-      fmt = Format("rp02X")
-      size = text.len()
-      ttgt = strBuffer( size*1.5 )
-      p = 0
-      line = ""
-      line_len = 0
-      while p < size
-         c = text[*p]
-         if c >= 32 and c <= 127 and c != 61
-            line += "\x0"/c
-            if ++line_len == 75
-               ttgt += line + "=\r\n"
-               line = ""
-               line_len = 0
-            end
-         else
-            if line_len + 3 >= 76
-               ttgt += line +"=\r\n"
-               line = "="+fmt.format(c)
-               line_len = 0
-            else
-               line += "="+fmt.format(c)
-               line_len += 3
-            end
-         end
-         ++p
-      end
-      ttgt += line
-      return ttgt
    end
 
 end
@@ -781,6 +749,99 @@ function _parseBoundBody( stream, part, bound )
    if boundPos >= 0
       raise ParseError( 10010, "Malformed body", "boundary broken at end of stream or no boundary" )
    end
+end
+
+
+/** Quotes a text in MIME quoted-printable format.
+@param text The text to be quoted.
+@return The quoted text
+
+@note The input should be 8-bit. Transcoded to utf-8 if unsure.
+*/
+
+function quote( text )
+   fmt = Format("rp02X")
+   size = text.len()
+   ttgt = strBuffer( size*1.5 )
+   p = 0
+   line = ""
+   line_len = 0
+   while p < size
+      c = text[*p]
+      if c >= 32 and c <= 127 and c != 61 and \
+                (line_len < 72 or c != 32 )
+         line += "\x0"/c
+         if ++line_len == 75
+            ttgt += line + "=\r\n"
+            line = ""
+            line_len = 0
+         end
+      else
+         if line_len + 3 >= 76
+            ttgt += line +"=\r\n"
+            line = "="+fmt.format(c)
+            line_len = 0
+         else
+            line += "="+fmt.format(c)
+            line_len += 3
+         end
+      end
+      ++p
+   end
+   ttgt += line
+   return ttgt
+end
+
+/** Unquotes a text in MIME quoted-printable format.
+@param text The text to be unquoted.
+@return The clear text
+*/
+
+function unquote( text )
+   size = text.len()
+   ttgt = strBuffer( size )
+   p0 = 0
+   p1 = text.find( "=" )
+
+   while p0 < size and p1 != -1
+      try
+         ttgt += text[p0:p1]
+         chr0 = text[* ++p1]
+         chr1 = text[* ++p1]
+      catch AccessError
+         raise ParseError( 10011, "Malformed quoted-printable text", "= at end of text" )
+      end
+      
+      p0 = p1+1
+      p1 = text.find( "=", p0 )
+
+      // Is this an =\r\n sequence (inserted EOL)
+      if chr0 == 0xD and chr1 == 0xA
+         continue
+      end
+
+      // is this an hex escape?
+      num = 0
+      if chr0 >= 0x30 and chr0 <= 0x39
+         num = (chr0-0x30) << 4
+      elif chr0 >= 0x41 and chr0 <= 0x45
+         num = (chr0-0x41+10) << 4
+      else
+         raise ParseError( 10011, "Malformed quoted-printable text", "Invaid =XX sequence" )
+      end
+
+      if chr1 >= 0x30 and chr1 <= 0x39
+         num |= chr1-0x30
+      elif chr1 >= 0x41 and chr1 <= 0x45
+         num |= chr1-0x41 + 10
+      else
+         raise ParseError( 10011, "Malformed quoted-printable text", "Invaid =XX sequence" )
+      end
+
+      ttgt += "\x0"/num
+   end
+   
+   return ttgt+text[p0:]
 end
 
 /* vi: set ai et sts=3 sw=3: */
