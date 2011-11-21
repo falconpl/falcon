@@ -749,7 +749,9 @@ SSLData::ssl_error_t TCPSocket::sslConfig( bool asServer,
    sslD->sslVersion = sslVer;
    switch ( sslVer )
    {
+#ifndef OPENSSL_NO_SSL2
    case SSLData::SSLv2:  sslD->sslMethod = SSLv2_method(); break;
+#endif
    case SSLData::SSLv3:  sslD->sslMethod = SSLv3_method(); break;
    case SSLData::SSLv23: sslD->sslMethod = SSLv23_method(); break;
    case SSLData::TLSv1:  sslD->sslMethod = TLSv1_method(); break;
