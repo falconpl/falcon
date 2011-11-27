@@ -48,6 +48,9 @@
 
 #include <falcon/psteps/exprvalue.h>
 
+#include "falcon/datareader.h"
+#include "falcon/importdef.h"
+
 
 namespace Falcon {
 
@@ -74,14 +77,21 @@ void IntCompiler::Context::onInputOver()
 
 void IntCompiler::Context::onNewFunc( Function* function, Symbol* gs )
 {
-   // remove the function from the static-data
-   if( gs != 0 )
-   {
-      m_owner->m_module->addFunction( gs, function );
+   try {
+      // remove the function from the static-data
+      if( gs != 0 )
+      {
+         m_owner->m_module->addFunction( gs, function );
+      }
+      else
+      {
+         m_owner->m_module->addAnonFunction( function );
+      }
    }
-   else
+   catch( Error* e )
    {
-      m_owner->m_module->addAnonFunction( function );
+      m_owner->m_sp.addError( e );
+      e->decref();
    }
 }
 
@@ -92,7 +102,15 @@ void IntCompiler::Context::onNewClass( Class* cls, bool isObject, Symbol* gs )
    if( fcls->missingParents() == 0 )
    {
       // TODO: Error on failure (?)
-      m_owner->m_module->storeSourceClass( fcls, isObject, gs );        
+      try
+      {
+         m_owner->m_module->storeSourceClass( fcls, isObject, gs );        
+      }
+      catch( Error* e )
+      {
+         m_owner->m_sp.addError( e );
+         e->decref();
+      }
    }
    else
    {
@@ -129,7 +147,8 @@ void IntCompiler::Context::onLoad( const String& path, bool isFsPath )
          Error* err = theSpace->link();
          if( err != 0 )
          {
-            throw err;
+            sp.addError( err );
+            err->decref();
          }
          
          theSpace->readyVM( m_owner->m_vm->currentContext() );
@@ -142,8 +161,7 @@ void IntCompiler::Context::onLoad( const String& path, bool isFsPath )
 }
 
 
-void IntCompiler::Context::onImportFrom( const String& path, bool isFsPath, const String& symName,
-      const String& nsName, bool bIsNS )
+bool IntCompiler::Context::onImportFrom( ImportDef* def )
 {
    SourceParser& sp = m_owner->m_sp;
 
@@ -151,60 +169,34 @@ void IntCompiler::Context::onImportFrom( const String& path, bool isFsPath, cons
    Module* vmmod = m_owner->m_module;
    
    // first of all, add the import entry to the module.
-   bool bProceed = vmmod->anyImportFrom( path, isFsPath, symName, nsName, bIsNS );
+   bool bProceed = vmmod->addImport( def );
+   
    
    // if the import was already handled, we should want he user.
    if( ! bProceed )
    {
       sp.addError( e_import_already, sp.currentSource(), sp.currentLine(), 0, 0 );
-      return;
+      return false;
    }
       
    // is the module already in? 
    // -- contrarily to load, import can be used multiple times on the 
    // -- same module
-   Module* imported = 0;
-   ModSpace* ms = vmmod->moduleSpace();   
-   imported = isFsPath ? ms->findByURI( path ) : ms->findByName( path );
+   ModSpace* ms = vmmod->moduleSpace(); 
    
-   Error* linkErrors;
-   
-   // shall we try to load the module?
-   if( imported == 0 )
-   {
-      // just adding it top the module won't be of any help.
-      ModLoader* ml = m_owner->m_vm->modLoader();      
-      imported = isFsPath ? ml->loadFile( path ) : ml->loadName( path );
-      if( imported != 0 )
-      {
-         // import never exports the target module symbols
-         ms->resolve( ml, imported, false, true );         
-      }
-      else
-      {
-         sp.addError( e_mod_notfound, sp.currentSource(), sp.currentLine(), 0, 0, path );
-         return;
-      }
-   }
-   
+   // resolving deps actually operates only on still unresolved deps.
+   //TODO: add a method to pinpoint required dep in ms and resolve THAT.
+   ms->resolveDeps( m_owner->m_vm->modLoader(), vmmod, false );
+
    // re-link also in case of import.
-   linkErrors = ms->link();
-   if( linkErrors ) 
+   Error* linkErrors = ms->link();
+   if( linkErrors != 0) 
    {
       throw linkErrors;
    }
+   
    ms->readyVM( m_owner->m_vm->currentContext() );
-}
-
-
-void IntCompiler::Context::onImport(const String& symName )
-{
-   Symbol* sym = m_owner->m_module->addImport( symName );
-   if( sym == 0 )
-   {
-      m_owner->m_sp.addError( e_already_def, m_owner->m_sp.currentSource(), 
-           0, 0, 0 );
-   }
+   return true;
 }
 
 
@@ -225,7 +217,9 @@ void IntCompiler::Context::onExport(const String& symName )
       Error* e = m_owner->m_vm->modSpace()->exportSymbol( m_owner->m_module, sym );
       if( e != 0 )
       {
-         throw e;
+         SourceParser& sp = m_owner->m_sp;
+         sp.addError( e );
+         e->decref();
       }
    }
 }
@@ -253,7 +247,7 @@ Symbol* IntCompiler::Context::onUndefinedSymbol( const String& name )
       // no? -- create it as an implicit import -- but only if really needed,
       // -- in the interactive mode, we just consider a missing reference to be an error.
       // and try to link it right now.
-      Symbol* exp = mod->moduleSpace()->findExportedSymbol( name );
+      Symbol* exp = mod->moduleSpace()->findExportedOrGeneralSymbol( mod, name );
       if( exp == 0 )
       {
          return 0;
@@ -284,8 +278,6 @@ Symbol* IntCompiler::Context::onGlobalDefined( const String& name, bool &adef )
    adef = true;
    return sym;
 }
-
-
 
 
 Expression* IntCompiler::Context::onStaticData( Class* cls, void* data )
@@ -333,29 +325,16 @@ void IntCompiler::Context::onInheritance( Inheritance* inh )
 
 void IntCompiler::Context::onRequirement( Requirement* rec )
 {
-   Error* error = 0;
    // In the interactive compiler context, classes must have been already defined...
-   const Symbol* sym = m_owner->m_module->getGlobal(rec->name());
-   
-   if( sym != 0 )
+   try
    {
-      error = rec->resolve( 0, sym );
-      if( error != 0 )
-      {
-         // The error is a bout a local symbol. We can "downgrade" it.
-         m_owner->m_sp.addError( error->errorCode(), error->module(), error->line(), 0 );
-         error->decref();
-      }
+      m_owner->m_module->addRequirement( rec );  
    }
-   else
+   catch( Error *e )
    {
-      // otherwise, just let the requirement pending in the module.
-      m_owner->m_module->addRequirement( rec );
+      m_owner->m_sp.addError( e );
+      e->decref();
    }
-   
-   m_owner->m_sp.addError( e_undef_sym, m_owner->m_sp.currentSource(), 
-                 rec->sourceRef().line(), rec->sourceRef().chr(), 0, rec->name() );
-   
 }
 
 //=======================================================================

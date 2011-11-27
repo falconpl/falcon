@@ -42,6 +42,7 @@ class ModLoader;
 class FalconClass;
 class DynUnloader;
 class Requirement;
+class ImportDef;
 
 /** Standard Falcon Execution unit and library.
 
@@ -287,44 +288,47 @@ public:
 
    uint32 lastGCMark() const { return m_lastGCMark; }
 
-   /** Adds a load request.
-    \param name The module to be loaded
-    \param bIsUri Set to true if the module name is a system path or URI.
-    */
-   bool addLoad( const String& name, bool bIsUri=false );
-
-   /** Adds a standard import/from request.
-    \param localName The name of the symbol as it's locally known.
-    \param remoteName The symbol name as it's known in the import source module.
-    \parma source The import source module name or location.
-    \param bIsUri Set to true if the module name is a system path or URI.
-    \return the Symbol created from this import from, or 0 if the symbol
-            already exists.
-    */
-   Symbol* addImportFrom( const String& localName, const String& remoteName,
-                                           const String& source, bool bIsUri );
-
-   /** Explicitly generate an imported global symbol.
-    \param name The symbol to be searched.
-    \return 0 if already existing, or a valid Symbol if not found.
-    
-    Generic imports are declared with "import from modulename [in namespace]".
-    This method requries that all the unknown symbol (eventually related
-    to a local namespace) are searched in the given module before being
-    searched in the global export table.
-        
-    */
-   Symbol* addImport( const String& name );
    
+   /** Adds a standard import/from or load request.
+    \param def An import definition.
+    \return true if the import definition is compatible with the module,
+    false if the symbols are already defined or if a load request was
+    already issued for a newly loaded module.
+    
+    In case the function returns false, the caller should look into the
+    import def and eventually raise a consistent error, then discard it.
+    If it returns true, the ownership passes on the module.
+    */
+   bool addImport( ImportDef* def );
+   
+   /** Shortcut to create a load ImportDef only if load is valid.
+    \param name The name or URI of the module.
+    \param bIsUri if name is URI.
+    \return 0 if the load was already declared, a valid ImportDef 
+    (already added to the module) if not.
+    
+    */
+   ImportDef* addLoad( const String& name, bool bIsUri );
+   
+   /** Returns an imported symbol */
+   Symbol* findImportedSymbol( const String& name ) const;
+
    /** Adds an implicitly imported symbol.
     \param uks The unknown symbol that should be resolved during link time.
-    \return 0 if already existing, or a valid Symbol if not found.
+    \param isNew True if the symbol is new.
+    \return A valid symbol (possibly created as "extern" on the spot).
     
     Adds an implicit import. This is the same as import, but will always return
     a valid symbol, which might be undefined if the symbol wasn't known before,
     or it might be an existing global symbol.
     */
-   Symbol* addImplicitImport( const String& name );
+   Symbol* addImplicitImport( const String& name, bool& isNew );
+   
+   Symbol* addImplicitImport( const String& name )
+   {
+      bool bDummy;
+      return addImplicitImport( name, bDummy );
+   }
    
    /** Callback that is called when a symbol import request is satisfied.
     \param requester The module from which the request was issued.
@@ -418,16 +422,23 @@ public:
    
    /** Adds a request for a foreign class not bound with an inheritance.
     \param cr A RquiredClass that will be filled with the required class.
+    \return The symbol attached to this requirement (usuallyan undefined symbol).
     
     Classes inheriting from other classes are not the only statements
     specifically searching for classes in other modules. The RquiredClass class
     represents this fact, allowing statements, or generic third party modules,
     to ask for a foreign class.
     
+    The caller should not generate a requirement for a global symbol
+    that is already defined. However, if there is a global and defined symbol 
+    matching the requirement, it is IMMEDIATELY resolved (Requirement::onResolved
+    is called), and the globally defined symbol is returned.
+    
+    \note The method may throw immeately, as the requirement may throw immediately.
+    
     */
-   void addRequirement( Requirement* cr );
+   Symbol* addRequirement( Requirement* cr );
    
-   Error* addRequirementAndResolve( Requirement* cr );
    
    /** Stores a class coming from a source module.
     \param fcls The class to be added.
@@ -475,11 +486,6 @@ public:
     */
    virtual void unload();
    
-   /** Creates a namespace-sensible import.
-    \TODO explain
-    */
-   bool addImportFromWithNS( const String& localNS, const String& remoteName, 
-            const String& modName, bool isFsPath );
 
    /** Returns the module group associated with this module.    
     \return The module group in which this module is stored, or 0 if this
@@ -495,22 +501,6 @@ public:
    
    /** Executes a namespace forwarding from a module into this one. */
    void forwardNS( Module* mod, const String& remoteNS, const String& localNS );
-
-   /** Manages all the import/from command flavors.
-      \param path The path or module name to be load.
-      \param isFsPath if true, \b path is a filename, otherwise it's a logical module name.
-      \param symName The symbol to be loaded, or "" if none.
-      \param nsName The namespace or alias where to import the symbol.
-      \param bIsNS if true \b nsName is a namespace, if false is an alias.
-      \return True if the input could have been completed with succes, false
-               if it was already included
-    
-    This is a shortcut selecting the proper input/from handler function
-    depending on the kind of import that is required in this module.
-    */
-   bool anyImportFrom( const String& path, bool isFsPath, const String& symName,
-      const String& nsName, bool bIsNS );
-
 
    /** Check if we can use an existing module to resolve this requirement.
     
@@ -586,7 +576,13 @@ private:
    
    void name( const String& v ) { m_name = v; }
    void uri( const String& v ) { m_uri = v; }
-   void setDynUnloader( DynUnloader* ul ) { m_unloader = ul; }   
+   void setDynUnloader( DynUnloader* ul ) { m_unloader = ul; } 
+   
+   // checks for forward declarations, eventually removing them.
+   void checkWaitingFwdDef( Symbol* sym );
+   
+   // used by various import and load requests.
+   bool addModuleRequirement( const String& name, bool bIsUri, bool bIsLoad );
 };
 
 }

@@ -205,6 +205,7 @@ add_library(falcon_engine SHARED
   fatal.cpp
   fstream.cpp
   hyperclass.cpp
+  importdef.cpp
   inheritance.cpp
   intcompiler.cpp
   item.cpp
@@ -229,7 +230,6 @@ add_library(falcon_engine SHARED
   property.cpp
   rampmode.cpp
   reader.cpp
-  requirement.cpp
   rulesyntree.cpp
   sourceref.cpp
   statement.cpp

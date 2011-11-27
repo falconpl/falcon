@@ -33,6 +33,7 @@ class Statement;
 class FalconClass;
 class Inheritance;
 class Requirement;
+class ImportDef;
 
 /** Compilation context for Falcon source file compiler (ABC).
 
@@ -152,21 +153,7 @@ public:
     \note if symName is empt, then asName cannot be specificed. The callee may
     wish to abort with error if it's done.
     */
-   virtual void onImportFrom( const String& path, bool isFsPath, const String& symName,
-         const String& targetName, bool bIsNS ) = 0;
-
-   /** Called back when parsing an "import symbol " directive.
-      \param symName the name of the symbol to import.
-
-      Specify a symbol to import from the global namespace.
-
-      When using the grammar
-      @code
-         import sym1, sym2, ... symN
-      @endcode
-    multiple calls to this method will be generated, one per declared symbol.
-    */
-   virtual void onImport(const String& symName ) = 0;
+   virtual bool onImportFrom( ImportDef* def ) = 0;
 
    /** Called back when parsing an "export symbol" directive.
       \param symName the name of the symbol to export, or an empty string

@@ -19,6 +19,10 @@
 #include <falcon/pcode.h>
 #include <falcon/expression.h>
 #include <falcon/vmcontext.h>
+#include <falcon/module.h>
+
+#include <falcon/symbol.h>
+#include <falcon/falconclass.h>
 
 #include <vector>
 
@@ -52,7 +56,8 @@ Inheritance::Inheritance( const String& name, Class* parent, Class* owner ):
    _p( new Private ),
    m_name(name),
    m_parent( parent ),
-   m_owner( owner )
+   m_owner( owner ),
+   m_requirer( name, this )
 {
 
 }
@@ -122,11 +127,46 @@ void Inheritance::describe( String& target ) const
 }
 
 
- PCode* Inheritance::compiledExpr() const
- {
-    return &_p->m_cparams;
- }
+PCode* Inheritance::compiledExpr() const
+{
+ return &_p->m_cparams;
+}
 
+
+void Inheritance::IRequirement::onResolved(   
+         const Module* source, const Symbol* srcSym, Module* tgt, Symbol* )
+{
+   Item* value;
+   
+   if( (value = srcSym->value( 0 )) == 0 || ! value->isClass() )
+   {
+      // the symbol is not a class?   
+      throw new CodeError( ErrorParam( e_inv_inherit ) 
+         .module( source == 0 ? "<internal>" : source->uri() )
+         .symbol( srcSym->name() )
+         .line( m_owner->sourceRef().line())
+         .chr( m_owner->sourceRef().chr())
+         .origin(ErrorParam::e_orig_linker));
+   }
+
+   // Ok, we have a valid class.
+   Class* newParent = static_cast<Class*>(value->asInst());
+   m_owner->parent( newParent );
+   Class* cls = m_owner->m_owner;
+   // is the owner class a Falcon class?
+   if( cls->isFalconClass() )
+   {
+      // then, see if we can link it.
+      FalconClass* falcls = static_cast<FalconClass*>(cls);
+      if( falcls->missingParents() == 0 && tgt != 0 )
+      {
+         // ok, the parent that has been found now was the last one.
+         tgt->completeClass( falcls );
+      }
+   }
+}
+  
+ 
 }
 
 /* end of inheritance.cpp */

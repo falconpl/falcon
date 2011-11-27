@@ -17,6 +17,7 @@
 #define SRC "engine/sp/parser_import.cpp"
 
 #include <falcon/error.h>
+#include <falcon/importdef.h>
 #include <falcon/sp/sourceparser.h>
 #include <falcon/sp/parsercontext.h>
 #include <falcon/sp/parser_atom.h>
@@ -27,6 +28,8 @@
 
 #include <falcon/sp/parser_import.h>
 #include <falcon/sp/sourcelexer.h>
+
+#include <list>
 
 #include "private_types.h"
 
@@ -64,8 +67,10 @@ static void apply_import_star( Parser& p, const String& modspec, bool bIsPath, c
 {      
    SourceParser& sp = *static_cast<SourceParser*>(&p);
    ParserContext* ctx = static_cast<ParserContext*>( p.context() );
-   ctx->onImportFrom( modspec, bIsPath, "*", ns, true );
-   if( ns != "" )
+   ImportDef* id = new ImportDef(modspec, bIsPath, "*", ns, true);
+   id->sr().line( sp.currentLine() );
+   
+   if( ctx->onImportFrom( id ) && ns != "" )
    {
       static_cast<SourceLexer*>(p.currentLexer())->addNameSpace( ns );
    }
@@ -82,49 +87,55 @@ static void apply_import_internal( Parser& p,
    TokenInstance* tdepName, bool bNameIsPath,
    TokenInstance* tInOrAs,  bool bIsIn )
 {
-   ParserContext* ctx = static_cast<ParserContext*>( p.context() );
-   
    NameList* list = static_cast<NameList*>(tnamelist->asData());
    String* name = tdepName->asString();
-   String* nspace = tInOrAs == 0 ? 0 : tInOrAs->asString();
+   String* nspace = tInOrAs == 0 ? 0 : tInOrAs->asString();   
+   
+   // -- we might have several failure reasons
+   bool bOk = true;
+   
+   // place where to store namespaces that we're finding.
+   // -- we must check that the import is OK before applying them.
+   NameList nsList;
+   // The forming import definition; we may need to delete it on error.
+   ImportDef* def = 0;
    
    if( nspace != 0 && nspace->find( '*') != String::npos )
    {
       // notice that "as" grammar cannot generate a "*" here.
       p.addError( e_syn_namespace_star, p.currentSource(), tdepName->line(), tdepName->chr() );
-   }
-   
-   if( list->empty() )
-   {
-      if( nspace == 0 )
-      {         
-         // "import from modname"
-         ctx->onImportFrom( *name, bNameIsPath, "", "", false );
-      }
-      else
-      {
-         // TODO: use ic->m_target just to create the namespace in the compiler,
-         // it's a general import/from in ns.
-         if( bIsIn )
-         {
-            ctx->onImportFrom( *name, bNameIsPath, "", *nspace, true );
-            static_cast<SourceLexer*>(p.currentLexer())->addNameSpace( *nspace );
-         }
-         else
-         {
-            // general import-from don't support as.
-            p.addError( e_syn_import_as, p.currentSource(), tnamelist->line(), tnamelist->chr(), 0 );
-         }
-      }
+      bOk = false;
    }
    else
    {
-      // add the namespace?
-      if( bIsIn && nspace != 0 )
+      def = new ImportDef;      
+      def->setImportModule( *name, bNameIsPath );
+      def->sr().line( p.currentLine() );
+      
+      if (nspace != 0)
       {
-         static_cast<SourceLexer*>(p.currentLexer())->addNameSpace( *nspace );
+         if( bIsIn )
+         {
+            def->setTargetNS( *nspace );
+            nsList.push_back( *nspace );
+         }
+         else
+         {
+            if( list->size() != 1 )
+            {
+               bOk = false;
+               p.addError( e_syn_import_as, p.currentSource(), tnamelist->line(), tnamelist->chr(), 0 );
+            }
+            else
+            {
+               def->setTargetSymbol( *nspace );
+            }
+         }
       }
-
+   }
+   
+   if( bOk )
+   {
       NameList::iterator iter = list->begin();
       while( iter != list->end() )
       {
@@ -133,7 +144,9 @@ static void apply_import_internal( Parser& p,
          length_t starPos = symName.find( '*' );
          if( starPos != String::npos && starPos < symName.length()-1 )
          {
+            bOk = false;
             p.addError( e_syn_import_name_star, p.currentSource(), tnamelist->line(), tnamelist->chr(), 0 );
+            break;
          }
          
          // this will eventually add the needed errors.
@@ -142,36 +155,54 @@ static void apply_import_internal( Parser& p,
             if( ! bIsIn && starPos == symName.length()-1 )
             {
                // as cannot be used with *
+               bOk = false;
                p.addError( e_syn_import_as, p.currentSource(), tnamelist->line(), tnamelist->chr(), 0 );
                break; // force loop break, "as" accept just one symbol and we had already one error.
             }
             else
             {
-               ctx->onImportFrom( *name, bNameIsPath, symName, *nspace, bIsIn );
+               def->addSourceSymbol( symName );
             }
          }
          else
          {
-            ctx->onImportFrom( *name, bNameIsPath, symName, "", false );
+            def->addSourceSymbol( symName );
+            
             // check implicit namespace creation.
             if( (starPos = symName.rfind( '.')) != String::npos )
             {               
-               static_cast<SourceLexer*>(p.currentLexer())->
-                  addNameSpace( symName.subString(0, starPos ) );
+               nsList.push_back(symName.subString(0, starPos ) );
             }
          }
-         ++iter;
-         
-         // as clause and more things?
-         if( tInOrAs != 0 && ! bIsIn && iter != list->end() )
-         {
-            // import/from/as supports only one symbol
-            p.addError( e_syn_import_as, p.currentSource(), tnamelist->line(), tnamelist->chr(), 0 );
-            break;
-         }
+         ++iter;        
       }      
    }
    
+   // If all is ok, apply what we have done.
+   if( bOk )
+   {
+      // does the import definition conflicts with the module?
+      ParserContext* ctx = static_cast<ParserContext*>( p.context() );
+      if( ctx->onImportFrom( def ) )
+      {
+         // ok, we can apply the namespaces.
+         NameList::iterator iter = nsList.begin();
+         while( iter != nsList.end() )
+         {
+            static_cast<SourceLexer*>(p.currentLexer())->addNameSpace( *iter );
+            ++iter;
+         }
+      }
+      else {
+         delete def;
+      }
+   }
+   else
+   {
+      // delete what we have partially done.
+      delete def;
+   }
+      
    // Declaret that this namelist is a valid ImportClause
    SourceParser& sp = *static_cast<SourceParser*>(&p);
    TokenInstance* ti = p.getLastToken();
@@ -319,10 +350,17 @@ void apply_import_syms( const Rule&, Parser& p )
    NameList* list = static_cast<NameList*>(tnamelist->asData());
    ParserContext* ctx = static_cast<ParserContext*>( p.context() );
    
+   ImportDef* id = new ImportDef;
+   id->sr().line( p.currentLine() );
+   
+   NameList nspaces;
+   bool bOk = true;
+   
    if( list->empty() )
    {
       // there can't be an empty list at this point.
       p.addError( e_syn_import, p.currentSource(), tnamelist->line(), tnamelist->chr(), 0 );
+      bOk = false;
    }
    else
    {
@@ -336,20 +374,41 @@ void apply_import_syms( const Rule&, Parser& p )
          if( starPos != String::npos && starPos < symName.length()-1 )
          {
             p.addError( e_syn_import_name_star, p.currentSource(), tnamelist->line(), tnamelist->chr(), 0 );
+            bOk = false;
          }         
          else
          {
             // check implicit namespace creation.
             if( starPos == symName.length()-1 )
-            {               
-               static_cast<SourceLexer*>(p.currentLexer())->
-                  addNameSpace( symName.subString(0, symName.length()-2 ) );
+            {
+               nspaces.push_back( symName.subString(0, symName.length()-2 ) );
             }
-            ctx->onImport(*iter);
+            
+            id->addSourceSymbol( symName );
          }
          
          ++iter;
       }
+   }
+
+   if( bOk )
+   {
+      bOk = ctx->onImportFrom( id );
+      if ( bOk )
+      {
+         NameList::iterator nli = nspaces.begin();
+         while( nli != nspaces.end() )
+         {
+            static_cast<SourceLexer*>(p.currentLexer())->
+                  addNameSpace( *nli );
+            ++nli;
+         }
+      }
+   }
+   
+   if ( ! bOk )
+   {
+      delete id;
    }
    
    // Declaret that this namelist is a valid ImportClause

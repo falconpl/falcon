@@ -159,6 +159,7 @@ public:
    void module( Module* m ) { m_module = m; } 
    
    Module* module() const { return m_module; }
+   
 private:
    struct Private;
    Private* _p;
@@ -168,30 +169,29 @@ private:
    SynTree* m_defaultBlock;
    Module* m_module;
    
-   class SelectRequirer: public Requirer
-   {
-   public:
-      SelectRequirer( StmtSelect* owner ): m_owner( owner ) {}
-      virtual ~SelectRequirer() {}
-      virtual Error* resolved( Module* source, const Symbol* sym, Requirement* sender );
-   private:
-      StmtSelect* m_owner;
-   }
-   m_requirer;
-   friend class SelectRequirer;
-   
    class SelectRequirement: public Requirement
    {
    public:
       SynTree* m_block;
       Class* m_cls;
       
-      SelectRequirement( const String& name, SynTree* b, Requirer* r ):
-         Requirement( name, r ),
+      SelectRequirement( const String& name, SynTree* b, StmtSelect* owner ):
+         Requirement( name ),
          m_block( b ),
-         m_cls( 0 )
-      {}      
+         m_cls( 0 ),
+         m_owner( owner ) 
+      {}
+      
+      virtual ~SelectRequirement() {}
+      
+      virtual void onResolved( const Module* source, const Symbol* srcSym, Module* tgt, Symbol* extSym );
+   
+   private:
+      StmtSelect* m_owner;
    };
+   
+   friend class SelectRequirement;
+   
       
    static void apply_( const PStep*, VMContext* ctx );
 };

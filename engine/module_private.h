@@ -18,6 +18,7 @@
 #define FALCON_MODULE_PRIVATE_H
 
 #include <falcon/module.h>
+#include <falcon/requirement.h>
 
 #include <deque>
 #include <list>
@@ -31,88 +32,82 @@ public:
    //============================================
    // Requirements and dependencies
    //============================================
-
-   class WaitingDep
-   {
-   public:
-      virtual Error* onSymbolLoaded( Module* mod, Symbol* sym ) = 0;
-   };
    
-   class WaitingFunc: public WaitingDep
+   /** Class keeping records of modules requested (referenced) by this module. */
+   class ModRequest
    {
    public:
-      Module* m_requester;
-      t_func_import_req m_func;
-
-      WaitingFunc( Module* req, t_func_import_req func ):
-         m_requester( req ),
-         m_func( func )
-      {}
+      String m_name;
+      bool m_isLoad;
+      bool m_bIsURI;
+      Module* m_module;
       
-      virtual Error* onSymbolLoaded( Module* mod, Symbol* sym );
-   };
-
-   class WaitingInherit: public WaitingDep
-   {
-   public:
-      Inheritance* m_inh;
-
-      WaitingInherit( Inheritance* inh ):
-         m_inh( inh )
-      {}
-
-      virtual Error* onSymbolLoaded( Module* mod, Symbol* sym );
+      ModRequest();
+      ModRequest( const String& name, bool isUri = false, bool isLoad = false, Module* mod = 0);
+      
+      ~ModRequest();
    };
    
-   class WaitingRequirement: public WaitingDep
-   {
-   public:
-      Requirement* m_cr;
-
-      WaitingRequirement( Requirement* inh ):
-         m_cr( inh )
-      {}
-
-      virtual Error* onSymbolLoaded( Module* mod, Symbol* sym );
-   };
-
-   /** Records a single remote name with multiple items waiting for that name to be resolved.*/
+   /** Record keeping track of needed modules (eventually already defined). */
    class Dependency
    {
    public:
-      String m_remoteName;
-      /** Local symbol representing the unkonwn remote symbol.
-       This is just a shortcut storage for the symbol, which is actually
-       stored in the globals of this module, under the localName of this
-       symbol (which is in the DepMap to which this dependency belongs).
-       
-       It might be if there is an explicit import request from an extension
-       module.
-       */
+      /** Local unresolved symbol. */
       Symbol* m_symbol;
       
-      Symbol* m_resolvedSymbol;
-      Module* m_resolvedModule;
+      /** The import definition related to this dependency. 
+       It will be nonzero if the symbol was created because of an explicit
+       import or related to it.
+       */
+      ImportDef* m_idef;
       
-      typedef std::deque<WaitingDep*> WaitList;
-      WaitList m_waiting;
+      /** The symbol designated by this dependency once resolved. */
+      Symbol* m_resSymbol;
       
-      typedef std::deque<Error*> ErrorList;
-      ErrorList m_errors;
+      /** The module request where the source module for this symbol is to be resolved (if direct) */
+      ModRequest* m_sourceReq; 
+      
+      /** The name of the symbol as it appares in the source module. */
+      String m_sourceName;
 
-      Dependency( const String& rname ):
-         m_remoteName( rname ),
-         m_symbol(0),
-         m_resolvedSymbol(0)
+      typedef std::list<Requirement*> WaitingList;
+      
+      /* Delayed requests waiting for this synmbol to be resolved. 
+       
+       This is a list of Requirement for things waiting for this dependency to be resolved.
+       The requirements are generated 
+       */      
+      WaitingList m_waitings;
+
+      Dependency():
+         m_symbol( 0 ),
+         m_idef( 0 ),
+         m_resSymbol( 0 ),
+         m_sourceReq(0)
+      {}
+      
+      Dependency( Symbol* sym ):
+         m_symbol( sym ),
+         m_idef( 0 ),
+         m_resSymbol( 0 ),
+         m_sourceReq(0)
+      {}
+      
+      Dependency( Symbol* sym, ImportDef* def ):
+         m_symbol( sym ),
+         m_idef( def ),
+         m_resSymbol( 0 ),
+         m_sourceReq(0)
       {}
 
       ~Dependency();
       
-      void clearErrors();
-      
-      /** Called when the remote name is resolved. 
-       \param Module The module where the symbol is imported (not exported!)
-       \parma sym the defined symbol (coming from the exporter module).
+      /** Called when the remote symbol is resolved. 
+       \param parentMod The module hosting this dependency
+       \param mod The module where the symbol is imported (not exported!)
+       \param sym the defined symbol (coming from the exporter module).
+       \return 0 if ok, a pointer to a composite error (error in a list)
+       in case of errors.
        
        The symbol associated with this dependency, if any, is filled with
        the id and default value of the incoming symbol. Type is left untouched
@@ -120,68 +115,65 @@ public:
        
        This calls all the waiting functions, and fills the m_errors queue
        with errors returned by that functions, if any.
-       */
-      void resolved( Module* mod, Symbol* sym );
-      
-      Error* resolveOnModSpace( ModSpace* ms, const String& uri, int line );
-   };
-
-   /** Record keeping track of needed modules (eventually already defined). */
-   class Request
-   {
-   public:
-      String m_uri;
-      bool m_bIsUri;
-      t_loadMode m_loadMode;
-      /** This pointer stays 0 until resolved via resolve[*]Reqs */
-      Module* m_module;
-
-      // Local name -> remote dependency
-      typedef std::map<String, Dependency*> DepMap;
-      DepMap m_deps;
-      
-      bool m_bIsGenericProvider;
-      
-      // Remote NS (or "") -> local NS (or "")
-      typedef std::map<String, String> NsImportMap;
-      NsImportMap m_fullImport;
-
-      Request( const String& name, t_loadMode imode=e_lm_import_public, bool bIsUri=false ):
-         m_uri( name ),
-         m_bIsUri( bIsUri ),
-         m_loadMode( imode ),
-         m_module(0),
-         m_bIsGenericProvider( false )
-      {}
-
-      ~Request();      
+       */      
+      Error* onResolved( Module* parentMod, Module* mod, Symbol* sym );
    };
    
-   /** Class used to keep track of full remote namespace imports.
-    */
-   class NSImport {
-   public:
-      String m_remNS;
-      Request* m_req;
-      
-      NSImport( const String& remNS, Request* req ):
-      m_remNS( remNS ), m_req(req)
-      {}
-         
-   };
-  
+   
    //============================================
    // Main data
    //============================================
 
-   // Map module-name/path -> requirent*
-   typedef std::map<String, Request*> ReqMap;
-   ReqMap m_reqs;
+   typedef std::map<String, Dependency*> DepMap;
+   /* Map ext symbol name -> Dependency*.
+    This map stores the dependecies known by this module. Each external symbol
+    has a dependency which records:
+    # Where it should be searched (an ImportDef referencing it).
+    # What should be done when found.
+    
+    Both this informations can be null. If there isn't an ImportDef where it has
+    to be searched, it is to be found in the global exports of the ModSpace
+    where this module resides.
+    */
+   DepMap m_deps;
    
-   typedef std::map<String, NSImport*> NSImportMap;
-   NSImportMap m_nsImports;
+   class DirectRequest 
+   {
+   public:
+      /** The import definition related to this dependency. 
+       */
+      ImportDef* m_idef;      
+      t_func_import_req m_cb;
+      
+      DirectRequest() {}
+      
+      DirectRequest( ImportDef* idef, t_func_import_req cb ):
+         m_idef( idef ),
+         m_cb(cb)
+      {}
+      
+      ~DirectRequest();
+   };
    
-   typedef std::deque<Request*> ReqList;
+   typedef std::deque<DirectRequest *> DirectReqList;
+   DirectReqList m_directReqs;
+   
+   typedef std::deque<ImportDef*> ImportDefList;
+   ImportDefList m_importDefs;   
+   
+   typedef std::map<String, ModRequest*> ReqMap;
+   
+   /** External modules static requirements.         
+    */
+   ReqMap m_mrmap;
+   
+   typedef std::deque<ModRequest*> ReqList;
+   /** List of requirements.
+    This list is kept ordered as load order do matters when it comes to
+    resolve import order and order of the execution of main code of modules.
+    */
+   ReqList m_mrlist;
+   
    // Generic requirements, that is, import from Module 
    // (modules that might provide any undefined symbol).
    ReqList m_genericMods;
@@ -198,33 +190,11 @@ public:
 
    typedef std::list<Item> StaticDataList; 
    StaticDataList m_staticData;
-   
-   typedef std::deque<Inheritance*> InheritanceList;
-   InheritanceList m_pendingInh;
-   
+      
    Private()
    {}
 
    ~Private();
-
-   Dependency* getDep( const String& sourcemod, bool bIsUri, const String& symname, bool bSearchNS = false );   
-   /** Finds an existing dependency in an existing module.
-    */
-   Dependency* findDep( const String& sourcemod, const String& symname ) const;   
-   /** Erases a dependency from a source module request. 
-    \param sourcemod The module originally requested for this symbol name.
-    \param symname The symbol name (eventually complete with the local namespace.
-    \param clearReq If true and this was the last dependency in the request, removes the reqest as well.
-    */
-   void removeDep( const String& sourcemod, const String& symname, bool clearReq=false );   
-   Request* getReq( const String& sourcemod, bool bIsUri );
-      
-   /** Prepares the whole namespace import
-    */
-   bool addNSImport( const String& localNS, const String& remoteNS, Request* req );
-   
-   /** Adds a requsirement to the dependency list. */
-   Dependency* addRequirement( Requirement * req );
 };
 
 }

@@ -78,8 +78,7 @@ StmtSelect::StmtSelect( Expression* expr, int32 line, int32 chr ):
    _p( new Private ),
    m_expr( expr ),
    m_defaultBlock(0),
-   m_module(0),
-   m_requirer( this )
+   m_module(0)
 {
    if (expr != 0 )
    {
@@ -152,7 +151,7 @@ bool StmtSelect::addSelectClass( Class* cls, SynTree* block )
    _p->m_classBlocks[ cls ] = block;
    
    // record the requirement -- as already resolved.
-   SelectRequirement* r = new SelectRequirement( cls->name(), block, &m_requirer );
+   SelectRequirement* r = new SelectRequirement( cls->name(), block, this );
    r->m_cls = cls;
    _p->m_classList.push_back( r );
    
@@ -166,7 +165,7 @@ Requirement* StmtSelect::addSelectName( const String& name, SynTree* block )
       _p->m_blocks.push_back( block );
    }
    
-   SelectRequirement* req = new SelectRequirement( name, block, &m_requirer );  
+   SelectRequirement* req = new SelectRequirement( name, block, this );  
    _p->m_classList.push_back( req );
    return req;
 }
@@ -277,14 +276,14 @@ void StmtSelect::apply_( const PStep* ps, VMContext* ctx )
 // The requirer
 //
    
-Error* StmtSelect::SelectRequirer::resolved( Module* source, const Symbol* sym, Requirement* sender )
+void StmtSelect::SelectRequirement::onResolved( 
+         const Module* source, const Symbol* sym, Module*, Symbol*  )
 {
-   SelectRequirement* sr = static_cast<SelectRequirement*>(sender);
-   Item* itm = sym->value(0);
+   Item* itm = sym->defaultValue();
    if( itm == 0 || (!itm->isOrdinal()&& ! itm->isClass()) )
    {
-      return new LinkError( ErrorParam( m_owner->m_expr == 0 ? e_catch_invtype : e_select_invtype )
-         .line( sender->sourceRef().line() )
+      throw new LinkError( ErrorParam( m_owner->m_expr == 0 ? e_catch_invtype : e_select_invtype )
+         .line( m_block->sr().line() )
          .module( m_owner->m_module != 0 ? m_owner->m_module->uri() : "" )
          .origin( ErrorParam::e_orig_linker )
          .symbol( sym->name() )
@@ -298,15 +297,15 @@ Error* StmtSelect::SelectRequirer::resolved( Module* source, const Symbol* sym, 
       int64 tid = itm->forceInteger();
       if( m_owner->_p->m_intBlocks.find( tid ) != m_owner->_p->m_intBlocks.end() )
       {
-         return new LinkError( ErrorParam( m_owner->m_expr == 0 ? e_catch_clash : e_switch_clash )
-            .line( sender->sourceRef().line() )
+         throw new LinkError( ErrorParam( m_owner->m_expr == 0 ? e_catch_clash : e_switch_clash )
+            .line( m_block->sr().line() )
             .module( m_owner->m_module != 0 ? m_owner->m_module->uri() : "" )
             .origin( ErrorParam::e_orig_linker )
             .symbol( sym->name() )
             .extra( String("declared in ") + (source != 0 ? source->uri() : "<internal>" ) )
             );
       }
-      m_owner->_p->m_intBlocks[ tid ] = sr->m_block;
+      m_owner->_p->m_intBlocks[ tid ] = m_block;
    }
    else
    {
@@ -314,19 +313,17 @@ Error* StmtSelect::SelectRequirer::resolved( Module* source, const Symbol* sym, 
       Class* cls = static_cast<Class*>(itm->asInst());
       if( m_owner->_p->m_classBlocks.find( cls ) != m_owner->_p->m_classBlocks.end() )
       {
-         return new LinkError( ErrorParam( m_owner->m_expr == 0 ? e_catch_clash : e_switch_clash )
-            .line( sender->sourceRef().line() )
+         throw new LinkError( ErrorParam( m_owner->m_expr == 0 ? e_catch_clash : e_switch_clash )
+            .line( m_block->sr().line() )
             .module( m_owner->m_module != 0 ? m_owner->m_module->uri() : "" )
             .origin( ErrorParam::e_orig_linker )
             .symbol( sym->name() )
             .extra( String("declared in ") + (source != 0 ? source->uri() : "<internal>" ) )
             );
       }
-      sr->m_cls = cls;
-      m_owner->_p->m_classBlocks[ cls ] = sr->m_block;
+      m_cls = cls;
+      m_owner->_p->m_classBlocks[ cls ] = m_block;
    }
-   
-   return 0;
 }
 
 }

@@ -49,6 +49,8 @@
 #include <falcon/parser/rule.h>
 #include <falcon/parser/parser.h>
 
+#include <falcon/error.h>
+
 #include "private_types.h"
 #include "falcon/parser/lexer.h"
 
@@ -726,6 +728,15 @@ void SourceParser::addError( int code, const String& uri, int l, int c, int ctx,
    Parser::addError( code, uri, l, c, ctx, extra );
    pc->abandonSymbols();
 }
+
+void SourceParser::addError( Error* err )
+{
+   ParserContext* pc = static_cast<ParserContext*>(m_ctx);
+   fassert( pc != 0 );
+   Parser::addError( err->errorCode(), err->module(), err->line(), err->chr(), 0, err->extraDescription() );
+   pc->abandonSymbols();
+}
+
 
 
 void SourceParser::addError( int code, const String& uri, int l, int c, int ctx )

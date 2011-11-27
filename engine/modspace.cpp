@@ -23,6 +23,7 @@
 #include <falcon/errors/linkerror.h>
 #include <falcon/itemarray.h>
 #include <falcon/errors/genericerror.h>
+#include <falcon/importdef.h>
 
 #include <map>
 #include <deque>
@@ -178,75 +179,111 @@ void ModSpace::resolve( ModLoader* ml, Module* mod, bool bExport, bool bOwn )
 }
 
 
+void ModSpace::resolveImportDef( ImportDef* def, ModLoader* ml, Module* requester ) 
+{
+   MESSAGE( "ModSpace::resolveImportDef" );
+   
+   Module* sourcemod = 0;
+   
+   // do we have a module to load?
+   if( def->sourceModule().size() != 0 )
+   {
+      ModuleData* sourcedt = findModuleData( def->sourceModule(), def->isUri() );
+      
+      if ( sourcedt == 0 )
+      {
+         sourcemod = def->isUri() ? ml->loadFile( def->sourceModule() ) : 
+                                  ml->loadName( def->sourceModule() );
+         
+         if( sourcemod == 0 )
+         {
+            TRACE1( "ModSpace::resolveImportDef failed to load request %s %s",
+                  def->sourceModule().c_ize(),
+                  def->isUri() ? "(as uri)" :  "(as name)" 
+                  );
+
+            Error* em = new LinkError( ErrorParam(e_mod_notfound, 0 )
+               .origin( ErrorParam::e_orig_linker )
+               .extra( def->sourceModule() ) );            
+            if( requester ) em->module( requester->uri() );
+            
+            throw em;
+         }
+         
+         // be sure the loaded module deps are resolved as well.
+         resolve( ml, sourcemod, def->isLoad(), true );
+      }
+      else {
+         sourcemod = sourcedt->m_mod;
+      }
+      
+      if ( requester != 0 )
+      {
+         Module::Private::ModRequest* req = requester->_p->m_mrmap[def->sourceModule()];
+         if( req != 0 )
+         {
+            req->m_module = sourcemod;
+         }
+      }
+   }   
+}
+
+
 void ModSpace::resolveDeps( ModLoader* ml, Module* mod, bool bExport )
 {   
-    TRACE( "ModSpace::resolveDeps %s %s",
+   TRACE( "ModSpace::resolveDeps %s %s",
       mod->name().c_ize(), bExport ? "with export" :  "" 
       );
     
    // scan the dependencies.
-   Module::Private* prv = mod->_p;   
-   Module::Private::ReqMap &reqs = prv->m_reqs;
+   Module::Private* prv = mod->_p;
+   Module::Private::ReqList &reqs = prv->m_mrlist;
    
-   Module::Private::ReqMap::iterator req_iter = reqs.begin();
-   while( req_iter != reqs.end() )
+   Module::Private::ReqList::iterator ri = reqs.begin();
+   while( ri != reqs.end() )
    {
-      Module::Private::Request* req = req_iter->second;
-      // Did we already load the module?
-      // Skip also generic import requests.
-      if( req->m_uri != "" && req->m_module == 0 )
+      Module::Private::ModRequest* req = *ri;
+      
+      // is this a request to load or import a module?
+      if ( req->m_module == 0 )
       {
-         ModuleData* dlmod = findModuleData( req->m_uri,req->m_bIsUri );
-         Module* lmod = 0;
+         // have we got the module here?
+         req->m_module = req->m_bIsURI ? findByURI( req->m_name ) : 
+                                  findByName( req->m_name );
          
-         if( dlmod == 0 )
+         // No -- try to load.
+         if( req->m_module == 0 )
          {
-            req->m_module = req->m_bIsUri ? ml->loadFile( req->m_uri ) : 
-                                  ml->loadName( req->m_uri );
-            // we can't find the module.
+            req->m_module = req->m_isLoad ? ml->loadFile( req->m_name ) : 
+                                     ml->loadName( req->m_name );
+
             if( req->m_module == 0 )
             {
                TRACE1( "ModSpace::resolveDeps failed to load request %s %s",
-                     req->m_uri.c_ize(), req->m_bIsUri ? "(as uri)" :  "(as name)" 
+                     req->m_name.c_ize(),
+                     req->m_bIsURI ? "(as uri)" : "(as name)" 
                      );
-               
-               throw new LinkError( ErrorParam(e_mod_notfound, 0 )
-                  .module( mod->uri() )
-                  .extra(req->m_uri) );
+
+               Error* em = new LinkError( ErrorParam(e_mod_notfound, 0, mod->uri() )
+                  .origin( ErrorParam::e_orig_linker )
+                  .extra( req->m_name ) );            
+
+               throw em;
             }
-            else
-            {
-               TRACE1( "ModSpace::resolveDeps loaded request %s %s",
-                     req->m_uri.c_ize(), req->m_bIsUri ? "(as uri)" :  "(as name)" 
-                     );
-               resolve( ml, req->m_module, req->m_loadMode == e_lm_load, true );
-            }            
+
+            // be sure the loaded module deps are resolved as well.
+            resolve( ml, req->m_module, req->m_isLoad, true );
          }
-         else
-         {
-            TRACE1( "ModSpace::resolveDeps already loaded module %s %s",
-                  req->m_uri.c_ize(), req->m_bIsUri ? "(as uri)" :  "(as name)" 
-                  );
-            req->m_module = dlmod->m_mod;
-            // should we promote the module? 
-            if( req->m_loadMode == e_lm_load )
-            {
-               TRACE1( "ModSpace::subResolve promoted module %s", req->m_uri.c_ize() );
-               dlmod->m_bExport = true;
-            }
-         }
-       
-         // lmod cant' be zero -- we should have thrown in that case.
-         fassert( lmod != 0 );         
-      }
-      ++req_iter;
+      }     
+      
+      ++ri;
    }
 }
 
 
 Error* ModSpace::link()
 {
-//   TRACE( "ModSpace::link start" );
+   MESSAGE( "ModSpace::link start" );
    
    Error* link_errors = 0;
    
@@ -274,6 +311,7 @@ Error* ModSpace::link()
    {
       Module* mod = (*iter)->m_mod;
       linkImports( mod, link_errors );
+      linkDirectRequests( mod, link_errors );
       ++iter;
    }
    
@@ -360,55 +398,191 @@ void ModSpace::gcMark( uint32  )
    //TODO
 }
 
+
 void ModSpace::linkImports(Module* mod, Error*& link_errors)
 {
    TRACE1( "ModSpace::linkImports importing requests of %s", mod->name().c_ize());
    
-   Module::Private::ReqMap &reqs = mod->_p->m_reqs;   
-   Module::Private::ReqMap::iterator req_iter = reqs.begin();
-   while( req_iter != reqs.end() )
+    
+   // scan the dependencies.
+   Module::Private* prv = mod->_p;   
+   Module::Private::DepMap &deps = prv->m_deps;
+   
+   Module::Private::DepMap::iterator dep_iter = deps.begin();
+   while( dep_iter != deps.end() )
    {
-      Module::Private::Request::DepMap& deps = req_iter->second->m_deps;
-      
-      // generic imports?
-      if( req_iter->first == "" )
+      Module::Private::Dependency* dep = dep_iter->second;
+      // ignore already resolved symbols (?)
+      if( dep->m_resSymbol == 0 )
       {
-         Module::Private::Request::DepMap::iterator dep_iter = deps.begin();
-         while( dep_iter != deps.end() )
+         // now, we have some symbol to import here. Are they general or specific?
+         if( dep->m_sourceReq != 0 )
          {
-            Module::Private::Dependency* dep = dep_iter->second;
-            const String& symName = dep->m_remoteName;
-            Module* declarer;
-            Symbol* sym = findExportedSymbol( symName, declarer );
-            if( sym != 0 )
-            {
-               dep->resolved( declarer, sym );
-               // do we have some errors?
-               Module::Private::Dependency::ErrorList::iterator ierr = dep->m_errors.begin();
-               while( ierr != dep->m_errors.end() ) {
-                  addLinkError(link_errors, *ierr);
-                  ++ierr;
-               }
-               dep->clearErrors();
-            }
-            else
-            {
-               LinkError* le = new LinkError( ErrorParam( e_undef_sym )
-                  .origin(ErrorParam::e_orig_linker)
-                  .module( mod->uri() )
-                  .line( dep->m_symbol->declaredAt() )
-                  .symbol(sym->name())
-                  .extra( "in " + mod->name() ));
-               addLinkError( link_errors, le );
-            }
-            
-            ++dep_iter;
+            linkSpecificDep( mod, dep, link_errors );
+         }
+         else
+         {
+            linkGeneralDep( mod, dep, link_errors );
          }
       }
+      ++dep_iter;
    }
 }
 
 
+void ModSpace::linkSpecificDep( Module* asker, void* def, Error*& link_errors )
+{
+   Module::Private::Dependency* dep = (Module::Private::Dependency*) def;
+   
+   fassert( dep->m_sourceReq != 0 );
+   fassert( dep->m_sourceReq->m_module != 0 );
+   
+   // in case we have the module, search the symbol there. 
+   Symbol* sym = dep->m_sourceReq->m_module->getGlobal( dep->m_sourceName );
+   // not found? we have a link error.
+   if( sym == 0 )
+   {
+      Error* em = new LinkError( ErrorParam(e_undef_sym, 0, asker->uri() )
+         .origin( ErrorParam::e_orig_linker )
+         .symbol( dep->m_sourceName )
+         .extra( "in " + dep->m_sourceReq->m_name ) );
+
+      addLinkError( link_errors, em );
+      return;
+   }
+
+   // Ok, we have the symbol. Now we must tell the requester we have found it
+   Error* em = dep->onResolved( asker, dep->m_sourceReq->m_module, sym );
+   if( em != 0 )
+   {
+      addLinkError( link_errors, em );
+   }
+}
+
+
+void ModSpace::linkGeneralDep(Module* asker, void* def, Error*& link_errors)
+{   
+   Module::Private::Dependency* dep = (Module::Private::Dependency*) def;
+   
+   // in case we have the module, search the symbol there.     
+   Module* declarer = 0;
+   const String& symName = dep->m_sourceName;
+   Symbol* sym;
+
+   sym = findExportedOrGeneralSymbol( asker, symName, declarer );
+   // not found? we have a link error.
+   if( sym == 0 )
+   {
+      Error* em = new LinkError( ErrorParam(e_undef_sym, 0, asker->uri() )
+         .origin( ErrorParam::e_orig_linker )
+         .symbol( symName ) );
+
+      addLinkError( link_errors, em );
+      return;
+   }
+
+   // Ok, we have the symbol. Now we must tell the requester we have found it
+   Error* em = dep->onResolved( asker, declarer, sym );
+   if( em != 0 )
+   {
+      addLinkError( link_errors, em );
+   }
+}
+
+
+void ModSpace::linkDirectRequests(Module* mod, Error*& link_errors)
+{
+   TRACE1( "ModSpace::linkDirectRequesets resolving direct requests of %s", mod->name().c_ize());
+      
+   // scan the dependencies.
+   Module::Private* prv = mod->_p;   
+   
+   Module::Private::DirectReqList::iterator ri = prv->m_directReqs.begin();
+   while( ri != prv->m_directReqs.end() )
+   {
+      Module::Private::DirectRequest* dr = *ri;
+      if( dr->m_idef->symbolCount() < 1 )
+      {
+         TRACE( "ModSpace::linkDirectRequesets skipping direct imports on %s", 
+               dr->m_idef->sourceModule().c_ize());
+         ++ri;
+         continue;
+      }
+      
+      Symbol* sym = 0;
+      Module* srcmod;
+      const String& name = dr->m_idef->sourceSymbol(0);
+      if( dr->m_idef->sourceModule().size() != 0 )
+      {
+         Module::Private::ModRequest* mr = prv->m_mrmap[ dr->m_idef->sourceModule() ];
+         if( mr == 0 || mr->m_module == 0 )
+         {
+            TRACE( "ModSpace::linkDirectRequesets modrequest was not resolved for %s", 
+                  dr->m_idef->sourceModule().c_ize());
+            ++ri;
+            continue;
+         }
+         
+         srcmod = mr->m_module;
+         sym = mod->getGlobal( name );
+         
+      }
+      else
+      {
+         sym = findExportedSymbol( name, srcmod );
+      }
+      
+      if( sym == 0 )
+      {
+         addLinkError( link_errors, new LinkError( ErrorParam(e_undef_sym)
+            .module( mod->name())
+            .symbol( name )
+            .extra( "explicit request") ) 
+            );         
+      }
+      else
+      {
+         TRACE2( "ModSpace::linkDirectRequesets resloved symbol %s", name.c_ize() );
+         Error* err = dr->m_cb( mod, srcmod, sym );
+         if( err != 0 )
+         {
+            addLinkError( link_errors, err );
+         }
+      }
+      
+      ++ri;
+   }
+}
+
+
+Symbol* ModSpace::findExportedOrGeneralSymbol( Module* asker, const String& symName, Module*& declarer )
+{  
+   Symbol* sym = findExportedSymbol( symName, declarer );      
+   
+   if( sym == 0 )
+   {
+      Module::Private::ReqList::iterator geni = asker->_p->m_genericMods.begin();
+      while( geni != asker->_p->m_genericMods.end() )
+      {
+         Module::Private::ModRequest* req = *geni;
+         
+         if ( req->m_module != 0 )
+         {
+            sym = req->m_module->getGlobal( symName );
+            if( sym != 0 )
+            {
+               declarer = req->m_module;
+               break;
+            }
+         }
+         ++geni;
+      }
+   }
+   
+   return sym;
+}
+
+   
 Symbol* ModSpace::findExportedSymbol( const String& symName, Module*& declarer )
 {
    Private::ExportSymMap::iterator iter = _p->m_symMap.find( symName );
@@ -419,7 +593,7 @@ Symbol* ModSpace::findExportedSymbol( const String& symName, Module*& declarer )
       declarer = entry.m_mod;
       return entry.m_sym;
    }
-   
+      
    if( m_parent != 0 )
    {
       return m_parent->findExportedSymbol( symName, declarer );

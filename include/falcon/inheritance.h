@@ -20,6 +20,7 @@
 #include <falcon/string.h>
 #include <falcon/pstep.h>
 #include <falcon/sourceref.h>
+#include <falcon/requirement.h>
 
 namespace Falcon
 {
@@ -145,6 +146,15 @@ public:
    
    /** sourceRef. */
    const SourceRef& sourceRef() const { return m_sdef; }
+   
+   /** Return the requirement relative to this inheritance.
+    
+    This returns a functor that gets called back when a pending inheritance
+    is resolved across modules.
+    Used during the link process.
+    */
+   const Requirement& requirement() const { return m_requirer; }
+   Requirement& requirement() { return m_requirer; }
 
 private:
 
@@ -155,6 +165,23 @@ private:
    Class* m_parent;
    Class* m_owner;
    SourceRef m_sdef;
+   
+   class IRequirement: public Requirement
+   {
+   public:
+      IRequirement( const String& name, Inheritance* owner ): 
+         Requirement( name ),
+         m_owner( owner ) 
+      {}      
+      virtual ~IRequirement() {}
+      
+      virtual void onResolved( const Module* source, const Symbol* srcSym, Module* tgt, Symbol* extSym );
+   
+   private:
+      Inheritance* m_owner;
+   }
+   m_requirer;
+   friend class IRequirement;
 };
 
 }

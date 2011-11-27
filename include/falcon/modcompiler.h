@@ -88,9 +88,7 @@ private:
       virtual void onNewClass( Class* cls, bool bIsObj, Symbol* gs=0 );
       virtual void onNewStatement( Statement* stmt );
       virtual void onLoad( const String& path, bool isFsPath );
-      virtual void onImportFrom( const String& path, bool isFsPath, const String& symName,
-            const String& nsName, bool bIsNS );
-      virtual void onImport(const String& symName );
+      virtual bool onImportFrom( ImportDef* def );
       virtual void onExport(const String& symName);
       virtual void onDirective(const String& name, const String& value);
       virtual void onGlobal( const String& name );

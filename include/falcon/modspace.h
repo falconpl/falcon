@@ -29,6 +29,7 @@ class Module;
 class Error;
 class Symbol;
 class ModLoader;
+class ImportDef;
 
 /** Collection of (static) modules active in a virtual machine.
  
@@ -120,6 +121,29 @@ public:
     
     */
    void resolve( ModLoader* ml, Module* mod, bool bExport = false, bool bOwn = true );
+   
+   
+   /** Resolves an import request.
+    
+    \param ml A mod loader that is used to load 
+    \param def The definition containing the module and the symbols to be resolved.
+    \param requester A module where the resolved symbols are stored. Can be null.
+    \throw IoError on error finding or loading the required modules.
+    \throw A link error with suberrors in case of errors during the linkage.
+    
+    This method checks or eventually performs all the linkages that are specified
+    by the given import definition. If a target module is given, its onImportResolved
+    is repeatedly called each time a symbol is resolved, and if the import directive
+    contains a namespace import requests (e.g. import * from...) then the onImportAll
+    is repeatedly called. In both cases, the name provided is the one that the
+    symbol should have in the requester module (accordingly with the import
+    definition).
+    
+    An empty requester can be used to pre-load the modules and check for correctness
+    of the import directive before actually applying it on a requester at a later
+    time.
+    */
+   void resolveImportDef( ImportDef* def, ModLoader* ml, Module* requester = 0 );
    
    
    /** Just resolves the dependencies of a module that was separately added.
@@ -249,13 +273,34 @@ public:
     */
    Error* exportSymbol( Module* mod, Symbol* sym );
 
-   /** Exports a single symbol on the module space. 
+   /** Finds a symbol that has been generally exported via the load/export constructs.
     Finds a globally exported symbol.
     */
    Symbol* findExportedSymbol( const String& symName, Module*& declarer );
    
-   /** Exports a single symbol on the module space. 
-    Finds a globally exported symbol.
+   /** Finds a symbol that might be generally exported or imported by a module.
+    \param asker The module that is asking for the given symbol.
+    \param symName The name of the symbol that is being searched (as remotely known).
+    \param decalrer a place where to store the module that declared the symbol, if found.
+    \return A valid symbol or 0 if the symbol is not found.
+    
+    This method finds a symbol that might be coming either from the global namespace
+    generated in this ModSpace via export/load directives, or a generally imported symbol
+    from any of the modules that were declared as general providers via import/from by
+    the module that is searching for that symbol.
+    
+    The generic load/export search is extended to the parent ModSpaces, if 
+    there is some parent.
+    */
+   Symbol* findExportedOrGeneralSymbol( Module* asker, const String& symName, Module*& declarer );
+
+   inline Symbol* findExportedOrGeneralSymbol( Module* asker, const String& symName )
+   {
+      Module* declarer;
+      return findExportedOrGeneralSymbol( asker, symName, declarer ); 
+   }
+   
+   /** Finds a globally exported symbol.
     */
    inline Symbol* findExportedSymbol( const String& symName )
    {
@@ -277,7 +322,12 @@ private:
    void exportFromModule( Module* mod, Error*& link_errors );
    
    void linkImports(Module* mod, Error*& link_errors);
+   void linkDirectRequests(Module* mod, Error*& link_errors);
    void addLinkError( Error*& top, Error* newError );
+   
+   void linkSpecificDep( Module* asker, void* def, Error*& link_errors);
+   void linkGeneralDep( Module* asker, void* def, Error*& link_errors);
+
 };
 
 }

@@ -25,8 +25,10 @@
 #include <falcon/parser/parser.h>
 
 #include <falcon/psteps/exprvalue.h>
+#include <falcon/importdef.h>
 
 #include "falcon/symbol.h"
+#include "falcon/importdef.h"
 
 namespace Falcon {
 
@@ -45,8 +47,6 @@ ModCompiler::Context::~Context()
 
 void ModCompiler::Context::onInputOver()
 {
-   // todo: check undefined things.
-   m_owner->m_module->commitPendingInheritance();
 }
 
 
@@ -54,22 +54,25 @@ void ModCompiler::Context::onNewFunc( Function* function, Symbol* gs )
 {
    Module* mod = m_owner->m_module;
    
-   if( gs == 0 )
+   try
    {
-      // anonymous function
-      String name = "__lambda#";
-      name.N( m_owner->m_nLambdaCount++);
-      function->name( name );
-      mod->addFunction( function, false );
-   }
-   else
-   {
-      mod->addFunction( gs, function );
-      if( mod->checkPendingInheritance( gs->name(), 0 ) )
+      if( gs == 0 )
       {
-         m_owner->m_sp.addError( e_inv_inherit2, 
-            m_owner->m_sp.currentSource(), gs->declaredAt(), 0, 0, gs->name() );
+         // anonymous function
+         String name = "__lambda#";
+         name.N( m_owner->m_nLambdaCount++);
+         function->name( name );
+         mod->addFunction( function, false );
       }
+      else
+      {
+         mod->addFunction( gs, function );
+      }
+   }
+   catch( Error* e )
+   {
+      m_owner->m_sp.addError( e );
+      e->decref();
    }
 }
 
@@ -79,22 +82,14 @@ void ModCompiler::Context::onNewClass( Class* cls, bool bIsObj, Symbol* gs )
    FalconClass* fcls = static_cast<FalconClass*>(cls);
    Module* mod = m_owner->m_module;
    
-   // save the source class
-   mod->storeSourceClass( fcls, bIsObj, gs );
-   
-   if( bIsObj )
-   {
-      // check if someone is waiting for us -- and if it is, he's wrong!
-      if( mod->checkPendingInheritance( gs->name(), 0 ) )
-      {
-         m_owner->m_sp.addError( e_inv_inherit2, 
-            m_owner->m_sp.currentSource(), gs->declaredAt(), 0, 0, gs->name() );
-      }
+   try {
+      // save the source class
+      mod->storeSourceClass( fcls, bIsObj, gs );
    }
-   else
+   catch( Error* e )
    {
-      // check if someone is waiting for us.
-      mod->checkPendingInheritance( gs->name(), cls );
+      m_owner->m_sp.addError( e );
+      e->decref();
    }
 }
 
@@ -108,47 +103,24 @@ void ModCompiler::Context::onNewStatement( Statement* )
 void ModCompiler::Context::onLoad( const String& path, bool isFsPath )
 {
    SourceParser& sp = m_owner->m_sp;
-   if( ! m_owner->m_module->addLoad( path, isFsPath ) )
+   
+   if( m_owner->m_module->addLoad( path, isFsPath ) == 0 )
    {
       sp.addError( e_load_already, sp.currentSource(), sp.currentLine()-1, 0, 0, path );
    }
 }
 
 
-void ModCompiler::Context::onImportFrom( const String& path, bool isFsPath, const String& symName,
-      const String& nsName, bool bIsNS )
+bool ModCompiler::Context::onImportFrom( ImportDef* def )
 {
-   bool bImported = m_owner->m_module->anyImportFrom( path, isFsPath, symName, nsName, bIsNS );
-   if ( ! bImported )
+   if ( ! m_owner->m_module->addImport( def ) )
    {
       SourceParser& sp = m_owner->m_sp;
-      sp.addError( e_import_already_mod, sp.currentSource(), sp.currentLine()-1, 0, 0, path );
+      sp.addError( e_import_already_mod, sp.currentSource(), sp.currentLine()-1, 0, 0, def->sourceModule() );
+      return false;
    }
-}
-
-
-void ModCompiler::Context::onImport(const String& symName )
-{
-   if( symName.endsWith("*") )
-   {
-      if( symName.length() == 1 )
-      {
-         SourceParser& sp = m_owner->m_sp;
-         sp.addError( e_syn_import, sp.currentSource(), sp.currentLine()-1, 0, 0, symName );
-      }
-      else
-      {
-         // fake "import a.b.c.* from "" in a.b.c
-         m_owner->m_module->addImportFromWithNS( 
-                  symName.subString(0, symName.length()-2), 
-                  symName, "", true );
-      }
-   }
-   else if( ! m_owner->m_module->addImport( symName ) )
-   {
-      SourceParser& sp = m_owner->m_sp;
-      sp.addError( e_import_already, sp.currentSource(), sp.currentLine()-1, 0, 0, symName );
-   }
+   
+   return true;
 }
 
 
@@ -259,6 +231,7 @@ void ModCompiler::Context::onInheritance( Inheritance* inh  )
    if( sym != 0 )
    {
       Item* itm = sym->defaultValue();
+      // and is that a class?
       if ( ! itm->isUser() || ! itm->asClass()->isMetaClass() )
       {
          m_owner->m_sp.addError( e_inv_inherit, m_owner->m_sp.currentSource(), 
@@ -271,33 +244,15 @@ void ModCompiler::Context::onInheritance( Inheritance* inh  )
    }
    else
    {      
-      // add a marker that will tell us about the inheritance.
-      mod->addPendingInheritance( inh );
+      // add a marker that will tell us about the inheritance when found.
+      mod->addRequirement( &inh->requirement() );
    }
 }
 
 
 void ModCompiler::Context::onRequirement( Requirement* rec )
 {
-   Error* error = 0;
-   // In the interactive compiler context, classes must have been already defined...
-   const Symbol* sym = m_owner->m_module->getGlobal(rec->name());
-   
-   if( sym != 0 )
-   {
-      error = rec->resolve( 0, sym );
-      if( error != 0 )
-      {
-         // The error is a bout a local symbol. We can "downgrade" it.
-         m_owner->m_sp.addError( error->errorCode(), error->module(), error->line(), 0 );
-         error->decref();
-      }
-   }
-   else
-   {
-      // otherwise, just let the requirement pending in the module.
-      m_owner->m_module->addRequirement( rec );
-   }
+   m_owner->m_module->addRequirement( rec );
 }
 
 //=================================================================
