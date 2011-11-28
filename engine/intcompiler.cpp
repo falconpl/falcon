@@ -167,32 +167,58 @@ bool IntCompiler::Context::onImportFrom( ImportDef* def )
 
    // have we already a module group for the module?
    Module* vmmod = m_owner->m_module;
-   
-   // first of all, add the import entry to the module.
-   bool bProceed = vmmod->addImport( def );
-   
-   
-   // if the import was already handled, we should want he user.
-   if( ! bProceed )
-   {
-      sp.addError( e_import_already, sp.currentSource(), sp.currentLine(), 0, 0 );
-      return false;
-   }
-      
-   // is the module already in? 
-   // -- contrarily to load, import can be used multiple times on the 
-   // -- same module
    ModSpace* ms = vmmod->moduleSpace(); 
    
-   // resolving deps actually operates only on still unresolved deps.
-   //TODO: add a method to pinpoint required dep in ms and resolve THAT.
-   ms->resolveDeps( m_owner->m_vm->modLoader(), vmmod, false );
-
-   // re-link also in case of import.
-   Error* linkErrors = ms->link();
+   // first, update the module space by pre-loading the required module.
+   try
+   {
+      ms->resolveImportDef( def, m_owner->m_vm->modLoader(), 0 );
+   }
+   catch( Error* e )
+   {
+      // nope, we can't go on.
+      sp.addError(e);
+      return false;
+   }
+   
+   // Now that we know that the module is ok, we can add the import entry to the module.
+   Error* linkErrors = vmmod->addImport( def );
+   
+   // if the import was already handled, we should warn he user.
+   if( linkErrors != 0 )
+   {
+      sp.addError( linkErrors );
+      return false;
+   }
+   
+   // the link will resolve newly undefined symbols.
+   linkErrors = ms->link();
    if( linkErrors != 0) 
    {
-      throw linkErrors;
+      vmmod->removeImport( def );
+      sp.addError(linkErrors);
+      return true;
+   }
+   
+   // When called again, we get the module we just loaded in the ms.    
+   try
+   {
+      //... and put it in place.
+      ms->resolveImportDef( def, m_owner->m_vm->modLoader(), vmmod );
+   }
+   catch( Error* e )
+   {
+      // ... we won't raise errors on second call to resolve, but just in case...
+      sp.addError(e);
+      return false;
+   }
+
+   /** Complete missing imports */
+   linkErrors = ms->linkModuleImports( vmmod );
+   if( linkErrors != 0) 
+   {
+      sp.addError(linkErrors);
+      return false;
    }
    
    ms->readyVM( m_owner->m_vm->currentContext() );

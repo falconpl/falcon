@@ -308,6 +308,11 @@ public:
       return findExportedSymbol( symName, declarer );
    }
    
+   /** Links the unlinked imports newly found in a single module.
+    \param mod Module.
+    */
+   Error* linkModuleImports( Module* mod );
+   
 private:      
    class Private;
    Private* _p;

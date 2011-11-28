@@ -38,6 +38,7 @@
 #include <map>
 #include <deque>
 #include <list>
+#include <algorithm>
 
 #include "module_private.h"
 #include "falcon/importdef.h"
@@ -533,51 +534,9 @@ void Module::enumerateExports( SymbolEnumerator& rator ) const
 }
 
 
-bool Module::addModuleRequirement( const String& name, bool bIsUri, bool bIsLoad )
+Error* Module::addModuleRequirement( ImportDef* def )
 {
-   Private::ReqMap::iterator pos = _p->m_mrmap.find( name );
-   if( pos != _p->m_mrmap.end() )
-   {
-      Private::ModRequest* req = pos->second;
-      // prevent double load requests -- or redefining already known modules.
-      if( ( bIsLoad && req->m_isLoad) || req->m_module != 0 )
-      {
-         return false;
-      }
-      
-      // update load status.
-      if( bIsLoad )
-      {
-         req->m_isLoad = true;
-      }
-      
-      // update logical name into physical if there is a clash.
-      // i.e. load test and load "test" will have "test" to prevail.
-      if( bIsLoad )
-      {
-         req->m_bIsURI = true;
-      }
-   }
-   else
-   {
-      // create a new entry
-      Private::ModRequest* req = new Private::ModRequest( name, bIsUri, bIsLoad );
-      _p->m_mrmap[name] = req;
-      _p->m_mrlist.push_back( req );
-   }
-
-   return true;
-}
-
-
-bool Module::addImport( ImportDef* def )
-{
-   if( ! addModuleRequirement( def->sourceModule(), def->isUri(), def->isLoad() ) )
-   {
-      return false;
-   }   
-   
-   // check that all the symbols are locally undefined.
+   // first, check if there is a clash with already defined symbols.
    int symcount = def->symbolCount();
    for( int i = 0; i < symcount; ++ i )
    {
@@ -590,11 +549,108 @@ bool Module::addImport( ImportDef* def )
          // it's a real symbol.
          if ( _p->m_gSyms.find( name ) != _p->m_gSyms.end() )
          {
-            return false;
+            return new CodeError( ErrorParam( e_import_already, def->sr().line(), this->uri() ) 
+               .origin( ErrorParam::e_orig_compiler )
+               .extra(name) );
          }
       }
    }
    
+   Private::ReqMap::iterator pos = _p->m_mrmap.find( def->sourceModule() );
+   if( pos != _p->m_mrmap.end() )
+   {
+      Private::ModRequest* req = pos->second;
+      // prevent double load requests -- or redefining already known modules.
+      if( def->isLoad() && req->m_isLoad )
+      {
+         return new CodeError( ErrorParam( e_load_already, def->sr().line(), this->uri() )
+            .origin( ErrorParam::e_orig_compiler )
+            .extra( def->sourceModule() ) );
+      }
+      
+      // update load status.
+      if( def->isLoad() )
+      {
+         req->m_isLoad = true;
+      }
+      
+      // update logical name into physical if there is a clash.
+      // i.e. load test and load "test" will have "test" to prevail.
+      if( def->isUri() )
+      {
+         req->m_bIsURI = true;
+      }
+      
+      req->m_defs.push_back( def );
+   }
+   else
+   {
+      // create a new entry
+      Private::ModRequest* req = new Private::ModRequest( def->sourceModule(), def->isUri(), def->isLoad() );
+      _p->m_mrmap[def->sourceModule()] = req;
+      req->m_defs.push_back( def );
+      _p->m_mrlist.push_back( req );
+   }
+
+   return 0;
+}
+
+
+bool Module::removeModuleRequirement( ImportDef* def )
+{
+   bool found = false;
+   
+   Private::ReqMap::iterator pos = _p->m_mrmap.find( def->sourceModule() );
+   if( pos != _p->m_mrmap.end() )
+   {
+      // search the def backward 
+      // -- (usually, we remove the last def because something went wrong)
+      Private::ImportDefList& defs = pos->second->m_defs;
+      Private::ImportDefList::reverse_iterator riter = defs.rbegin();
+      while( riter != defs.rend() )
+      {
+         if( *riter == def )
+         {
+            found = true;
+            defs.erase( (++riter).base() );
+            break;
+         }
+         ++riter;
+      }
+      
+      if( defs.empty() )
+      {
+         Private::ModRequest* req = pos->second;
+         // eventually remove from generic mod requirements.
+         if ( def->isGeneric() )
+         {
+            Private::ReqList::iterator reqi = 
+                  std::find( _p->m_genericMods.begin(), _p->m_genericMods.end(), req );
+            if( reqi != _p->m_genericMods.end() )
+            {
+               _p->m_genericMods.erase( reqi );
+            }
+         }
+         
+         _p->m_mrmap.erase( pos );
+         delete req;
+      }
+   }
+   
+   return found;
+}
+
+Error* Module::addImport( ImportDef* def )
+{
+   Error* error = addModuleRequirement( def );
+   if( error != 0 )
+   {
+      return error;
+   }
+      
+   // check that all the symbols are locally undefined.
+   int symcount = def->symbolCount();
+      
    // ok we can proceed -- record all the symbols as externs.
    for( int i = 0; i < symcount; ++ i )
    {
@@ -603,8 +659,7 @@ bool Module::addImport( ImportDef* def )
       if( name.size() == 0 ) continue; // a bit defensive.
       
       if( name.getCharAt( name.length() -1 ) != '*' )
-      {
-         // it's a real symbol.
+      {         
          Symbol* newsym = new Symbol( name, Symbol::e_st_extern, -1 );
          _p->m_gSyms[name] = newsym;
          
@@ -630,23 +685,59 @@ bool Module::addImport( ImportDef* def )
       }
    }
    
-   return true;
+   return 0;
+}
+
+
+
+void Module::removeImport( ImportDef* def )
+{
+   removeModuleRequirement( def);
+      
+   // We know that all the symbols in this importdef were defined.
+   int symcount = def->symbolCount();      
+   for( int i = 0; i < symcount; ++ i )
+   {
+      String name;      
+      def->targetSymbol( i, name );
+      
+      Private::GlobalsMap::iterator gp = _p->m_gSyms.find(name);
+      if( gp != _p->m_gSyms.end() )
+      {
+         delete gp->second;
+         _p->m_gSyms.erase( gp );
+      }
+      
+      Private::DepMap::iterator dp = _p->m_deps.find( name );
+      if ( dp != _p->m_deps.end() )
+      {
+         delete dp->second;
+         _p->m_deps.erase( dp );
+      }
+   }
+   
+   // remove the definition --- don't delete it, ownership is back to the caller!
+   Private::ImportDefList::iterator dli = 
+            std::find( _p->m_importDefs.begin(), _p->m_importDefs.end(), def );
+   if( dli != _p->m_importDefs.end() )
+   {
+      _p->m_importDefs.erase( dli );
+   }
 }
 
 
 ImportDef* Module::addLoad( const String& name, bool bIsUri )
 {
-   if( ! addModuleRequirement( name, bIsUri, true ) )
-   {
-      return 0;
-   }
-   
-   // if we're here, we can proceed.
    ImportDef* id = new ImportDef;
    id->setLoad( name, bIsUri );
    
-   _p->m_importDefs.push_back( id );
+   if( ! addModuleRequirement( id ) )
+   {
+      delete id;
+      return 0;
+   }
    
+   _p->m_importDefs.push_back( id );   
    return id;
 }
 
@@ -683,7 +774,7 @@ void Module::addImportRequest( Module::t_func_import_req func, const String& sym
    if( sourceMod.size() != 0 )
    {
       // we don't care if the module is already imported somewhere.
-      addModuleRequirement( sourceMod, bModIsPath, false );
+      addModuleRequirement( def );
    }
 }
 

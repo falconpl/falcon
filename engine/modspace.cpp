@@ -181,7 +181,7 @@ void ModSpace::resolve( ModLoader* ml, Module* mod, bool bExport, bool bOwn )
 
 void ModSpace::resolveImportDef( ImportDef* def, ModLoader* ml, Module* requester ) 
 {
-   MESSAGE( "ModSpace::resolveImportDef" );
+   TRACE( "ModSpace::resolveImportDef for %s", def->sourceModule().c_ize() );
    
    Module* sourcemod = 0;
    
@@ -328,6 +328,17 @@ Error* ModSpace::link()
 }
 
 
+Error* ModSpace::linkModuleImports( Module* mod )
+{
+   TRACE( "ModSpace::linkModuleImports start on %s", mod->uri().c_ize() );
+   Error* link_errors = 0;
+   linkImports( mod, link_errors );
+   linkDirectRequests( mod, link_errors );
+   
+   return link_errors;
+}
+
+
 void ModSpace::exportFromModule( Module* mod, Error*& link_errors )
 {
    TRACE1( "ModSpace::exportFromModule %s", mod->name().c_ize() );
@@ -457,6 +468,9 @@ void ModSpace::linkSpecificDep( Module* asker, void* def, Error*& link_errors )
    {
       addLinkError( link_errors, em );
    }
+   
+   // link the value.
+   dep->m_symbol->defaultValue( sym->defaultValue() );
 }
 
 
@@ -562,18 +576,51 @@ Symbol* ModSpace::findExportedOrGeneralSymbol( Module* asker, const String& symN
    if( sym == 0 )
    {
       Module::Private::ReqList::iterator geni = asker->_p->m_genericMods.begin();
+      // see if we have a namespace.
+      length_t dotpos = symName.rfind( '.' );
+      String nspace, nsname;
+      
+      if( dotpos != String::npos )
+      {
+         nspace = symName.subString(0,dotpos);
+         nsname = symName.subString(dotpos+1);
+      }
+
       while( geni != asker->_p->m_genericMods.end() )
       {
          Module::Private::ModRequest* req = *geni;
          
          if ( req->m_module != 0 )
          {
-            sym = req->m_module->getGlobal( symName );
-            if( sym != 0 )
+            if( dotpos == String::npos )
             {
-               declarer = req->m_module;
-               break;
+               sym = req->m_module->getGlobal( symName );
+               if( sym != 0 )
+               {
+                  declarer = req->m_module;
+                  break;
+               }
             }
+            else
+            {
+               // search the symbol in a namespace.
+               Module::Private::ImportDefList::iterator iter = req->m_defs.begin();
+               while( iter != req->m_defs.end() )
+               {
+                  ImportDef* def = *iter;
+                  if ( def->isNameSpace() && def->target() == nspace )
+                  {
+                     sym = req->m_module->getGlobal( nsname );
+                     if( sym != 0 )
+                     {
+                        declarer = req->m_module;
+                        break;
+                     }
+                  }
+                  ++iter;
+               }
+            }
+            
          }
          ++geni;
       }

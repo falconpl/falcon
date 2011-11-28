@@ -299,7 +299,9 @@ public:
     import def and eventually raise a consistent error, then discard it.
     If it returns true, the ownership passes on the module.
     */
-   bool addImport( ImportDef* def );
+   Error* addImport( ImportDef* def );
+   
+   void removeImport( ImportDef* def );
    
    /** Shortcut to create a load ImportDef only if load is valid.
     \param name The name or URI of the module.
@@ -582,7 +584,8 @@ private:
    void checkWaitingFwdDef( Symbol* sym );
    
    // used by various import and load requests.
-   bool addModuleRequirement( const String& name, bool bIsUri, bool bIsLoad );
+   Error* addModuleRequirement( ImportDef* def );
+   bool removeModuleRequirement( ImportDef* def );
 };
 
 }

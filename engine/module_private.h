@@ -29,6 +29,8 @@ namespace Falcon {
 class Module::Private
 {
 public:
+   typedef std::deque<ImportDef*> ImportDefList;
+   
    //============================================
    // Requirements and dependencies
    //============================================
@@ -41,6 +43,8 @@ public:
       bool m_isLoad;
       bool m_bIsURI;
       Module* m_module;
+      
+      ImportDefList m_defs;
       
       ModRequest();
       ModRequest( const String& name, bool isUri = false, bool isLoad = false, Module* mod = 0);
@@ -158,7 +162,7 @@ public:
    typedef std::deque<DirectRequest *> DirectReqList;
    DirectReqList m_directReqs;
    
-   typedef std::deque<ImportDef*> ImportDefList;
+   
    ImportDefList m_importDefs;   
    
    typedef std::map<String, ModRequest*> ReqMap;
