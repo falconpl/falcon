@@ -194,7 +194,27 @@ public:
 
    typedef std::list<Item> StaticDataList; 
    StaticDataList m_staticData;
+   
+   class NSImport {
+   public:
+      ImportDef* m_def;
+      ModRequest* m_req;
+      String m_from;
+      String m_to;
+      bool m_bPerformed;
       
+      NSImport( ImportDef* def, ModRequest* mr, const String& from, const String& to ):
+         m_def( def ),
+         m_req( mr ),
+         m_from( from ),
+         m_to( to ),
+         m_bPerformed( false )
+      {}
+   };
+   
+   typedef std::deque<NSImport*> NSImportList;
+   NSImportList m_nsimports;
+   
    Private()
    {}
 

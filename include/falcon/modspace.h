@@ -328,6 +328,7 @@ private:
    
    void linkImports(Module* mod, Error*& link_errors);
    void linkDirectRequests(Module* mod, Error*& link_errors);
+   void linkNSImports(Module* mod );
    void addLinkError( Error*& top, Error* newError );
    
    void linkSpecificDep( Module* asker, void* def, Error*& link_errors);

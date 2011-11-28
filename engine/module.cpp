@@ -173,6 +173,14 @@ Module::Private::~Private()
       delete *rl_i;
       ++rl_i;
    }
+   
+   NSImportList::iterator nsi = m_nsimports.begin();
+   while( nsi != m_nsimports.end() )
+   {
+      Private::NSImport* ns = *nsi;
+      delete ns;
+      ++nsi;
+   }
 }
 
 
@@ -670,6 +678,21 @@ Error* Module::addImport( ImportDef* def )
          
          _p->m_deps[name] = dep;
       }
+      else if( def->sourceModule().size() != 0 )
+      {
+         // get the from part.
+         String from;
+         name = def->sourceSymbol( i );
+         if ( name.length() > 2 )
+         {
+            from = name.subString(0, name.length()-2);
+         }
+         
+         // we should just have added it in addModuleRequirement
+         Private::ModRequest* req = _p->m_mrmap[def->sourceModule()];
+         fassert( req != 0 ); 
+         _p->m_nsimports.push_back( new Private::NSImport( def, req, from, def->target() ) );
+      }
    }
    
    // save the definition
@@ -722,6 +745,22 @@ void Module::removeImport( ImportDef* def )
    if( dli != _p->m_importDefs.end() )
    {
       _p->m_importDefs.erase( dli );
+   }
+   
+   // remove the nsImport, if any.
+   Private::NSImportList::iterator nsi = _p->m_nsimports.begin();
+   while( nsi != _p->m_nsimports.end() )
+   {
+      Private::NSImport* ns = *nsi;
+      if( ns->m_def == def )
+      {
+         nsi = _p->m_nsimports.erase( nsi );
+         delete ns;
+      }
+      else
+      {
+         ++nsi;
+      }
    }
 }
 

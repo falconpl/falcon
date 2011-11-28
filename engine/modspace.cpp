@@ -312,6 +312,7 @@ Error* ModSpace::link()
       Module* mod = (*iter)->m_mod;
       linkImports( mod, link_errors );
       linkDirectRequests( mod, link_errors );
+      linkNSImports( mod );
       ++iter;
    }
    
@@ -334,6 +335,11 @@ Error* ModSpace::linkModuleImports( Module* mod )
    Error* link_errors = 0;
    linkImports( mod, link_errors );
    linkDirectRequests( mod, link_errors );
+   
+   if( link_errors == 0 )
+   {
+      linkNSImports( mod );
+   }
    
    return link_errors;
 }
@@ -565,6 +571,81 @@ void ModSpace::linkDirectRequests(Module* mod, Error*& link_errors)
       }
       
       ++ri;
+   }
+}
+
+
+void ModSpace::linkNSImports(Module* mod )
+{
+   TRACE1( "ModSpace::linkNSImports honoring namespace imports requests of %s", 
+         mod->name().c_ize());
+      
+   // scan the dependencies.
+   Module::Private* prv = mod->_p;   
+   
+   Module::Private::NSImportList::iterator nsi = prv->m_nsimports.begin();
+   while( nsi != prv->m_nsimports.end() )
+   {
+      Module::Private::NSImport* ns = *nsi;
+      
+      if( ! ns->m_bPerformed )
+      {
+         ns->m_bPerformed = true;
+         fassert( ns->m_req != 0);
+         fassert( ns->m_req->m_module != 0 );
+         Module* srcMod = ns->m_req->m_module;
+                  
+         String srcName, tgName;
+         if( ns->m_from.size() != 0 )
+         {
+            srcName = ns->m_from + ".";
+         }
+         
+         Module::Private::GlobalsMap& srcGlobals = srcMod->_p->m_gSyms;         
+         Module::Private::GlobalsMap::iterator glb = srcGlobals.lower_bound( srcName );
+         while( glb != srcGlobals.end() )
+         {
+            Symbol* sym = glb->second;
+            if( ! sym->name().startsWith( srcName ) )
+            {
+               // we're done
+               break;
+            }
+            
+            // find the target name.
+            tgName = ns->m_to.size() == 0 ? sym->name() : ns->m_to + "." + sym->name();
+            // import it.
+            Module::Private::GlobalsMap::iterator myglb = mod->_p->m_gSyms.find( tgName );
+            if( myglb == mod->_p->m_gSyms.end() )
+            {
+               // new symbol, make it external.
+               Symbol* esym = new Symbol( tgName, Symbol::e_st_extern, -1 );
+               mod->_p->m_gSyms[tgName] = esym;
+               esym->defaultValue( sym->defaultValue() );
+            }
+            else
+            {
+               // just link it -- but keep it global.
+               // this will make so, during serialization, this symbol can be
+               // considered global.
+               Symbol* esym = myglb->second;
+               esym->defaultValue( sym->defaultValue() );
+               
+               // eventually, make it resolved in dependencies, 
+               // -- so we don't search for it elsewhere.
+               Module::Private::DepMap::iterator di = mod->_p->m_deps.find( tgName );
+               if( di != mod->_p->m_deps.end() )
+               {
+                  Module::Private::Dependency* dep = di->second;
+                  dep->m_resSymbol = esym;
+               }
+            }
+            
+            ++glb;
+         }
+      }
+      
+      ++nsi;
    }
 }
 
