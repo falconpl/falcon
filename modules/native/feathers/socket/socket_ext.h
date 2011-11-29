@@ -84,8 +84,6 @@ FALCON_FUNC  TCPSocket_close( ::Falcon::VMachine *vm );
 FALCON_FUNC  TCPSocket_sslConfig( ::Falcon::VMachine *vm );
 FALCON_FUNC  TCPSocket_sslClear( ::Falcon::VMachine *vm );
 FALCON_FUNC  TCPSocket_sslConnect( ::Falcon::VMachine *vm );
-FALCON_FUNC  TCPSocket_sslRead( ::Falcon::VMachine *vm );
-FALCON_FUNC  TCPSocket_sslWrite( ::Falcon::VMachine *vm );
 #endif
 
 // ==============================================

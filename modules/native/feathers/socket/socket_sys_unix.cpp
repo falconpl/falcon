@@ -527,6 +527,10 @@ TCPSocket::~TCPSocket()
 
 int32 TCPSocket::recv( byte *buffer, int32 size )
 {
+   // transfer to sslRead ?
+   if ( m_sslData && m_sslData->handshakeState == SSLData::handshake_ok )
+      return sslRead( buffer, size );
+
    if ( ! readAvailable( m_timeout ) ) {
       if ( m_lastError != 0 )
          return -1; // error
@@ -544,6 +548,10 @@ int32 TCPSocket::recv( byte *buffer, int32 size )
 
 int32 TCPSocket::send( const byte *buffer, int32 size )
 {
+   // transfer to sslWrite?
+   if ( m_sslData && m_sslData->handshakeState == SSLData::handshake_ok )
+      return sslWrite( buffer, size );
+
    if ( ! writeAvailable( m_timeout ) ) {
       if ( m_lastError != 0 )
          return -1; // error

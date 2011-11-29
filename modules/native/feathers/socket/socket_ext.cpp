@@ -867,92 +867,6 @@ FALCON_FUNC  TCPSocket_send( ::Falcon::VMachine *vm )
 
 }
 
-#if WITH_OPENSSL
-/*#
-   @method sslWrite TCPSocket
-   @brief Similar as TCPSocket.send
- */
-FALCON_FUNC  TCPSocket_sslWrite( ::Falcon::VMachine *vm )
-{
-   CoreObject *self = vm->self().asObject();
-   Sys::TCPSocket *tcps = (Sys::TCPSocket *) self->getUserData();
-
-   Item *i_data = vm->param( 0 );
-   Item *length = vm->param( 1 );
-   Item *start = vm->param( 2 );
-
-   if ( i_data == 0 || ! ( i_data->isString() || i_data->isMemBuf() )
-        || ( length != 0 && ! length->isOrdinal() )
-        || ( start != 0 && ! start->isOrdinal() )
-      )
-   {
-      throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "S|M, [I], [I]" ) );
-   }
-
-   int32 start_pos;
-   int32 count;
-   const byte *data;
-
-   if( i_data->isMemBuf() )
-   {
-      MemBuf* mb = i_data->asMemBuf();
-      data = mb->data();
-      start_pos = mb->position();
-      count = mb->limit() - start_pos;
-
-      if ( count == 0 )
-      {
-         throw new ParamError( ErrorParam( e_param_range, __LINE__ ).
-               extra( FAL_STR( sk_msg_nobufspace ) ) );
-      }
-   }
-   else
-   {
-      String *dataStr = i_data->asString();
-      data = dataStr->getRawStorage();
-
-      start_pos = start == 0 ? 0 : (int32) start->forceInteger();
-      if ( start_pos < 0 ) start_pos = 0;
-      count = length == 0 ?
-               dataStr->size()-start_pos :
-               (int32) length->forceInteger();
-
-      if ( count < 0 || count + start_pos > (int32) dataStr->size() ) {
-         throw new ParamError( ErrorParam( e_param_range, __LINE__ ).
-                        extra( FAL_STR( sk_msg_nobufspace ) ) );
-      }
-   }
-
-   vm->idle();
-   int32 res = tcps->sslWrite( data + start_pos, count );
-   vm->unidle();
-
-   if( res == -1 ) {
-      self->setProperty( "lastError", tcps->ssl()->lastSysError );
-      throw  new NetError( ErrorParam( FALSOCK_ERR_SEND, __LINE__ )
-         .desc( FAL_STR( sk_msg_errsend ) )
-         .sysError( (uint32) tcps->ssl()->lastSysError ) );
-   }
-   else if ( res == -2 )
-   { // not implemented
-      self->setProperty( "timedOut", Item( true ) );
-      vm->retval(0);
-   }
-   else
-   {
-      vm->retval( res );
-      if ( i_data->isMemBuf() )
-      {
-         MemBuf* mb = i_data->asMemBuf();
-         mb->position( mb->position() + res );
-      }
-      self->setProperty( "timedOut", Item( false ) );
-   }
-
-}
-#endif // WITH_OPENSSL
-
 static int s_recv_tcp( VMachine* vm, byte* data, int size, Sys::Address& )
 {
    CoreObject *self = vm->self().asObject();
@@ -976,20 +890,6 @@ static int s_recv_udp( VMachine* vm, byte* data, int size, Sys::Address& a)
 
    return size;
 }
-
-#if WITH_OPENSSL
-static int s_recv_ssl( VMachine* vm, byte* data, int size, Sys::Address& a)
-{
-   CoreObject *self = vm->self().asObject();
-   Sys::TCPSocket *tcps = (Sys::TCPSocket *) self->getUserData();
-
-   vm->idle();
-   size = tcps->sslRead( data, size );
-   vm->unidle();
-
-   return size;
-}
-#endif // WITH_OPENSSL
 
 static void  s_recv_result( VMachine* vm, int size, const Sys::Address& from )
 {
@@ -1181,33 +1081,6 @@ FALCON_FUNC  TCPSocket_recv( ::Falcon::VMachine *vm )
       s_Socket_recv_membuf( vm, i_target, i_size, &s_recv_tcp );
    }
 }
-
-#if WITH_OPENSSL
-/*#
-   @method sslRead TCPSocket
-   @brief Similar as TCPSocket.recv
- */
-FALCON_FUNC TCPSocket_sslRead( ::Falcon::VMachine *vm )
-{
-   Item *i_target = vm->param(0);
-   Item *i_size = vm->param(1);
-
-   if( i_target == 0 || ! ( i_target->isString()|| i_target->isMemBuf() )
-       || ( i_size != 0 && ! i_size->isOrdinal() ) )
-   {
-      throw  new ParamError( ErrorParam( e_inv_params, __LINE__ ).
-         extra( "S|M, [N]" ) );
-   }
-
-   if( i_target->isString() )
-   {
-      s_Socket_recv_string( vm, i_target, i_size, &s_recv_ssl );
-   }
-   else {
-      s_Socket_recv_membuf( vm, i_target, i_size, &s_recv_ssl );
-   }
-}
-#endif // WITH_OPENSSL
 
 /*#
    @method closeRead TCPSocket
