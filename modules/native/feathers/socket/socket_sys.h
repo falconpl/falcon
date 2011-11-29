@@ -301,7 +301,9 @@ public:
     */
    typedef enum
    {
+#ifndef OPENSSL_NO_SSL2
       SSLv2,
+#endif
       SSLv3,
       SSLv23,
       TLSv1,
