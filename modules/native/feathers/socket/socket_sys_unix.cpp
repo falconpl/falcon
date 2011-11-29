@@ -23,6 +23,7 @@
 #include <sys/socket.h>
 #include <sys/poll.h>
 #include <unistd.h>
+#include <falcon/autocstring.h>
 #include <falcon/vm_sys_posix.h>
 
 #include <netdb.h>
@@ -142,11 +143,26 @@ bool getErrorDesc( int64 error, String &ret )
    if ( error ==  -1 )
       ret.bufferize( "(internal) No valid target addresses for selected protocol" );
    else if ( strerror_r( (int) error, buf, 511 ) != 0 )
-      ret.bufferize( gai_strerror( (int) error ) );
+      ret.bufferize( "(internal) Unknown error" );
    else
       ret.bufferize( buf );
    return true;
 }
+
+bool getErrorDesc_GAI( int64 error, String &ret )
+{
+   const char* err;
+   if ( error ==  -1 )
+      ret.bufferize( "(internal) No valid target addresses for selected protocol" );
+   else if ( (err = gai_strerror( (int) error )) == 0 )
+      ret.bufferize( "(internal) Unknown error" );
+   else
+      ret.bufferize( err );
+   return true;
+}
+
+
+
 
 //================================================
 // Address
@@ -169,12 +185,16 @@ bool Address::resolve()
    memset( &hints, 0, sizeof( hints ) );
    hints.ai_family = AF_UNSPEC;
 
+   // check if the service is numeric
+   int64 port = 0;
+   m_service.parseInt( port );
+
    //toCString is guaranteed to stay as long as the string exists.
-   char hostBuf[256];
-   char serviceBuf[64];
-   m_host.toCString( hostBuf, 255 );
-   m_service.toCString( serviceBuf, 63 );
-   int error = getaddrinfo( hostBuf, serviceBuf, &hints, &res ) ;
+   AutoCString hostBuf( m_host );
+   AutoCString srvBuf( m_service );
+   int error = getaddrinfo( hostBuf.c_str(),
+                            (port != 0 || m_service == "") ? 0 : srvBuf.c_str(),
+                            &hints, &res ) ;
    if ( error != 0 ) {
       m_lastError = (int64) error;
       return false;
@@ -188,6 +208,11 @@ bool Address::resolve()
    m_resolvCount = 0;
    while ( res != 0 ) {
       m_resolvCount ++;
+      // valid for both ipv4 and ipv6
+      if( port != 0 )
+      {
+         ((struct sockaddr_in*) res->ai_addr)->sin_port = htons( (int) port);
+      }
       res = res->ai_next;
    }
 

@@ -579,9 +579,13 @@ FALCON_FUNC  TCPSocket_connect( ::Falcon::VMachine *vm )
    //in case of failed resolution, raise an error.
    if ( ! addr.resolve() ) {
       self->setProperty( "lastError", addr.lastError() );
+      String errdesc;
+      Sys::getErrorDesc_GAI( addr.lastError(), errdesc );
+      
       throw  new NetError( ErrorParam( FALSOCK_ERR_RESOLV, __LINE__ )
          .desc( FAL_STR( sk_msg_errcreate ) )
-         .sysError( (uint32) addr.lastError() ) );
+         .extra( errdesc.A("(").N(addr.lastError()).A(")") )
+         );
    }
 
    vm->idle();

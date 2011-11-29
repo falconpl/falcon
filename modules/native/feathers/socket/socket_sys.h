@@ -60,6 +60,7 @@ void ssl_fini();
 bool getHostName( String &name );
 
 bool getErrorDesc( int64 errorCode, String &desc );
+bool getErrorDesc_GAI( int64 errorCode, String &desc );
 
 //================================================
 // Address
