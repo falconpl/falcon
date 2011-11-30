@@ -158,4 +158,45 @@
 
 <?= form.render() ?>
 
+<hr>
+<h3>Table test</hr>
+<?
+   data = Wopi.getAppData( "table-app" )
+   if not data
+      data = makeTableData()
+   end
+   
+   table = Nest.widget( "Table" )( "tabtest", ["id|ID", "name|Name", "sname|Surname", "age|Age"] )
+   t_start = 0
+   t_span = 10
+   t_end = t_start + t_span
+   table.data = data[t_start:t_span]
+   
+?>
+<?= table.render() ?>
+
 <p><i>Tests complete -- for now</i></p>
+
+<?
+
+function makeTableData()
+   names = [ "Ada", "Charles", "John", "Edda", "Mary", "Martin", "Steve", "Steven", "Dennis", "Dart", "Luke", "Daisy", "Anthony", "Adam", "Alan", "William", "Bill"]
+   snames = .[ "Smith" "Brown" "Lee" "York" "Gates" "Howlings" "Turing" "Lovelace" "Babbage" "Duke" "Martin" "Summers" "Gates" "Wall" "Jobs" "Saders" "Wellby"]
+
+   data = []
+   for i = 1 to 100
+      data += [
+         'id' => i,
+         'name'=> randomPick( names ),
+         'sname' => randomPick( snames ),
+         'age' => random( 20, 70 )
+         ]
+   end
+   
+   while not Wopi.setAppData( data, "table-app" )
+   end
+
+   return data
+end
+
+?>

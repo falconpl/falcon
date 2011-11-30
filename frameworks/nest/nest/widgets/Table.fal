@@ -1,0 +1,135 @@
+/*
+   FALCON - The Falcon Programming Language
+
+   Nest - Falcon web applcation engine
+
+   FILE: Table.fal
+
+   AJAX widgeting subsystem -- Basic data-oriented table view.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Mon, 26 Sep 2011 11:55:58 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2011: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+import from nest.widgets.widget in widget
+
+class TableColumn( initData )
+   fieldName = nil
+   heading = nil
+   format = nil
+   nullRep = nil
+   renderData = { value =>
+      if not value
+         return self.nullRep? self.nullRep : ""
+      end
+      
+      return "<td>" + htmlEscape( self.format ? @ "$(value:" + self.format + ")" : toString(value) ) + "</td>"
+   }
+   
+   init
+      recs = strSplit( initData, "|" )
+      rlen = recs.len()
+      self.fieldName = recs[0]
+      self.heading = rlen > 1 ? recs[1] : recs[0]
+      if rlen > 2: self.format = rlen[2]
+      if rlen > 3: self.nullRep = rlen[3]
+   end
+      
+end   
+
+class TableBody( id, headers ) from widget.Widget( id + ".tb" )
+
+
+   function renderContent()
+      str = "<table>\n"
+      str += "<tr>"
+
+      headers = self.parent.headers
+      data = self.parent.data
+      
+      // prepare the header row
+      for tc in headers
+         str += "<th>" + htmlEscape( tc.heading ) + "</th>"
+      end
+      
+      str += "</tr><tr>\n"
+
+      // now read the data.
+      for row in data
+         str += "<tr>"
+         for tc in headers
+            if tc.fieldName in row
+               str += tc.renderData( row[tc.fieldName] )
+            else
+               str += tc.renderData( nil )
+            end
+         end
+         str += "</tr>\n"
+      end
+      str +="<table>\n"
+
+      return str
+   end
+   
+end
+
+class PageCursor( id ) from widget.Widget( id + ".pc" )
+   function renderContent()
+      return "PageCursor placeholder" 
+   end
+end
+
+
+ /*# Class representing a table.
+   @param id The widget id
+   @param headers The header of the table.
+   
+      Format of each field in headers is
+      @code
+      data|haeading|format|nil
+      @endcode
+
+      - @b data: The source data where the data from the column is taken.
+      - @b heading: The name of the heading.
+      - @b format: A render format for the data in the cell
+      - @b nil: The text printed for NIL data.
+   */
+   
+class Table( id, headers ) from widget.Widget( id )
+   tablebody = TableBody( id, headers )
+   pagecursor = PageCursor( id )
+
+   /*# The headers of the table body.
+      Each entry is an instance of class TableColumn
+      
+      Format of each field in headers is
+      @code
+      data|haeading|format|nil
+      @endcode
+
+      - @b data: The source data where the data from the column is taken.
+      - @b heading: The name of the heading.
+      - @b format: A render format for the data in the cell
+      - @b nil: The text printed for NIL data.
+   */
+   headers = []
+
+   /*# Where to store the array of dictionaries containing the required data */
+   data = nil
+
+   init
+      self.addChild( self.tablebody )
+      self.addChild( self.pagecursor )
+
+      for head in headers         
+         self.headers.add(TableColumn( head ) )
+      end
+   end
+
+end
+
