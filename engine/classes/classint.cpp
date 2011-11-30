@@ -57,19 +57,20 @@ void* ClassInt::clone( void* source ) const
 }
 
 
-void ClassInt::serialize( DataWriter *stream, void *self ) const
+
+void ClassInt::store( VMContext*, DataWriter* dw, void* data ) const
 {
-   int64 value = static_cast< Item* >( self )->asInteger();
-   stream->write( value );
+   dw->write( static_cast<Item*>( data )->asInteger() );
 }
 
 
-void* ClassInt::deserialize( DataReader *stream ) const
+void ClassInt::restore( VMContext* , DataReader* dr, void* data ) const
 {
    int64 value;
-   stream->read( value );
-   return new Item( value );
+   dr->read( value );
+   static_cast<Item*>( data )->setInteger(value);
 }
+
 
 void ClassInt::describe( void* instance, String& target, int, int ) const
 {

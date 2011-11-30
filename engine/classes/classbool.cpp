@@ -22,6 +22,9 @@
 #include <falcon/vmcontext.h>
 #include <falcon/optoken.h>
 
+#include <falcon/datawriter.h>
+#include <falcon/datareader.h>
+
 namespace Falcon {
 
 ClassBool::ClassBool() :
@@ -83,17 +86,19 @@ void* ClassBool::clone( void *self ) const
 }
 
 
-void ClassBool::serialize( DataWriter*, void* ) const
+void ClassBool::store( VMContext*, DataWriter* dw, void* data ) const
 {
-   // TODO
+   dw->write( static_cast<Item*>( data )->asBoolean() );
 }
 
 
-void* ClassBool::deserialize( DataReader* ) const
+void ClassBool::restore( VMContext* , DataReader* dr, void* data ) const
 {
-   // TODO
-   return 0;
+   bool value;
+   dr->read( value );
+   static_cast<Item*>( data )->setBoolean(value);
 }
+
 
 void ClassBool::describe( void *instance, String& target, int, int ) const
 {

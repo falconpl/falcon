@@ -89,29 +89,24 @@ void *ClassNumeric::clone( void *source ) const {
     
 }
 
-void ClassNumeric::serialize( DataWriter *stream, void *self ) const {
-    
-   numeric value = static_cast< Item* >( self )->asNumeric();
 
-   stream->write( value );
-    
+void ClassNumeric::store( VMContext*, DataWriter* dw, void* data ) const
+{
+   dw->write( static_cast<Item*>( data )->asNumeric() );
 }
 
 
-void* ClassNumeric::deserialize( DataReader *stream ) const {
-    
-   numeric value;
-
-   stream->read( value );
-
-   return new Item( value );
-    
+void ClassNumeric::restore( VMContext* , DataReader* dr, void* data ) const
+{
+   int64 value;
+   dr->read( value );
+   static_cast<Item*>( data )->setNumeric(value);
 }
 
-void ClassNumeric::describe( void* instance, String& target, int, int  ) const {
-    
-   target.N(((Item*) instance)->asNumeric() );
-    
+
+void ClassNumeric::describe( void* instance, String& target, int, int  ) const 
+{
+   target.N(((Item*) instance)->asNumeric() );   
 }
 
 // ================================================================

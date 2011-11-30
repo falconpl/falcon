@@ -51,14 +51,14 @@ void* ClassNil::clone( void* ) const
 }
 
 
-void ClassNil::serialize( DataWriter*, void* ) const
+void ClassNil::store( VMContext*, DataWriter* , void* ) const
 {
+   // Nothing to write.
 }
 
-
-void* ClassNil::deserialize( DataReader* ) const
+void ClassNil::restore( VMContext* , DataReader* , void* ) const
 {
-   return 0;
+   // nothing to read.
 }
 
 void ClassNil::describe( void*, String& target, int, int ) const

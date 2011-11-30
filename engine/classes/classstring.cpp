@@ -22,6 +22,9 @@
 #include <falcon/optoken.h>
 #include <falcon/errors/accesserror.h>
 
+#include <falcon/datareader.h>
+#include <falcon/datawriter.h>
+
 namespace Falcon {
 
 ClassString::ClassString():
@@ -49,27 +52,18 @@ void* ClassString::clone( void* source ) const
 }
 
 
-void ClassString::serialize( DataWriter* stream, void* self ) const
+void ClassString::store( VMContext*, DataWriter* dw, void* data ) const
 {
-   String* s = static_cast<String*>(self);
-   s->serialize(stream);
+   String* str = static_cast<String*>(data);
+   dw->write( *str );
 }
 
 
-void* ClassString::deserialize( DataReader* stream ) const
+void ClassString::restore( VMContext* , DataReader* dr, void* data ) const
 {
-   String* s = new String;
-   try {
-      s->deserialize( stream );
-   }
-   catch( ... )
-   {
-      delete s;
-      throw;
-   }
-
-   return s;
+   dr->read( *static_cast<String*>(data) );
 }
+
 
 void ClassString::describe( void* instance, String& target, int, int maxlen ) const
 {

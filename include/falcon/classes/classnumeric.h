@@ -35,8 +35,8 @@ public:
 
    virtual void dispose( void* self ) const;
    virtual void* clone( void* source ) const;
-   virtual void serialize( DataWriter* stream, void* self ) const;
-   virtual void* deserialize( DataReader* stream ) const;
+   virtual void store( VMContext*, DataWriter* dw, void* data ) const;
+   virtual void restore( VMContext* , DataReader* dr, void* data ) const;
 
    virtual void describe( void* instance, String& target, int depth = 3, int maxlen = 60 ) const;
 
