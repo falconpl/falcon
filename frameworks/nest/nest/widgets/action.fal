@@ -1,0 +1,82 @@
+/*
+   FALCON - The Falcon Programming Language
+
+   Nest - Falcon web applcation engine
+
+   FILE: action.fal
+
+   AJAX widgeting subsystem -- Action for tables.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Sun, 02 Oct 2011 13:53:51 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2011: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+class Action( owner, message, props )
+   owner = owner
+   message = message
+   props = props
+   
+   function makeMsg( keyvalue )
+      id = self.owner.getFullID()
+      msg = self.message
+      keyvalue = htmlEscape( keyvalue )
+      return @"Nest.message('$(id)', '$(msg)', $(keyvalue) )"
+   end
+
+
+   function renderProps()
+      str = ""
+      if self.props.typeId() == DictionaryType   
+         for key, value in self.props
+            // add a " " at the end anyhow to space the rendering
+            str += key + "=\"" + htmlEscape( value ) + "\" "
+         end
+      end
+
+      return str
+   end
+   
+end
+
+
+class ActionButton( content, owner, message, props ) from Action( owner, message, props )
+   content = content   
+   
+   function render( keyvalue, number )
+      id = self.owner.getFullID()
+      msg = self.makeMsg( keyvalue )
+      props = self.renderProps()
+      return @"<button id=\"$(id).btn.$(number)\" $(props)onclick=\"" + msg + "\">" + self.content + "</button>"
+   end   
+end
+
+
+class ActionLink( content, owner, message, props ) from Action( owner, message, props )
+   content = content
+
+   function render( keyvalue, number )
+      id = self.owner.getFullID()
+      msg = self.makeMsg( keyvalue )
+      props = self.renderProps()
+      return @"<a id=\"$(id).link.$(number)\" $(props)href=\"javascript:$(msg)\">$(self.content)</a>"
+   end
+end
+
+
+class ActionCheckBox( name, owner, message, props ) from Action( owner, message, props )
+   name = name
+
+   function render( keyvalue, number )
+      id = self.owner.getFullId()
+      props = self.renderProps()
+      return @"
+            <input name=\"$(self.name)\" id=\"$(id).cb.$(self.name).$(number)\"
+            type=\"checkbox\" $(props)/>"
+   end
+end
+
