@@ -1,0 +1,23 @@
+function AddTableRecord( req )
+   data = Wopi.getAppData("table-app")
+
+   record = [ "name" => req["name"],
+              "sname" => req["sname"],
+              "age" => req["age"]
+      ]
+
+   while true
+      if data
+         id = data[-1]["id"] + 1
+      else
+         id = 1
+      end
+      record["id"] = id
+      data.add( record )
+      
+      if Wopi.setAppData(data, "table-app"): break
+      data = Wopi.getAppData("table-app")
+   end
+   
+   return ["updated" => id]
+end

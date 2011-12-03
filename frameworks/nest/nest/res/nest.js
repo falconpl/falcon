@@ -136,7 +136,11 @@ if(!Nest) { Nest = {}; }
    }
 
    //=================================================================================== Public interace
-
+   // Method 'i' -- shortcut for document.getElementByID
+   if (typeof Nest.i !== 'function') {
+      Nest.i = function ( id ) { return document.getElementById( id ); }
+   }
+   
    // Method 'ajax'
    if (typeof Nest.ajax !== 'function') {
       Nest.ajax = function ( req_id, params, callback ) {

@@ -300,7 +300,9 @@ public:
     */
    typedef enum
    {
+#ifndef OPENSSL_NO_SSL2
       SSLv2,
+#endif
       SSLv3,
       SSLv23,
       TLSv1,
@@ -433,6 +435,9 @@ public:
     */
    SSLData::ssl_error_t sslConnect();
 
+protected:
+   /* These are called internally by send/recv
+    */
    int32 sslWrite( const byte* buf, int32 sz );
    int32 sslRead( byte* buf, int32 sz );
 #endif // WITH_OPENSSL

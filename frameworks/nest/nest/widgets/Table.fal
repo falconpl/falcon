@@ -1,0 +1,741 @@
+/*
+   FALCON - The Falcon Programming Language
+
+   Nest - Falcon web applcation engine
+
+   FILE: Table.fal
+
+   AJAX widgeting subsystem -- Basic data-oriented table view.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Mon, 26 Sep 2011 11:55:58 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2011: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+import from nest.widgets.widget in widget
+import from nest.widgets.action in action
+import from json in json
+
+/*# Class representing a table column
+   @optparam name
+   @optparam heading
+   @optparam fmt
+   @optparam nullrep   
+*/
+class TableColumn( name, heading, fmt, nullrep )
+   fieldName = name
+   heading = heading
+   format = fmt
+   nullRep = nullrep
+   ordering = true
+   // by default, class == name
+   cls = name
+
+   /*# Override or re-assign to provide column-specific data rendering */
+   renderData = { value =>
+      if value == nil
+         return self.nullRep ? self.nullRep : ""
+      end
+
+      if self.cls
+         cls=" class=\"" + self.cls + "\""
+      else
+         cls = ""
+      end
+      
+      if self.format
+         return @"<td$(cls)>" + (@("$("+htmlEscape(toString(value))+":" + self.format + ")")) + "</td>"
+      else
+         return "<td>" + value + "</td>"
+      end
+   }
+
+   /*# Uses a column definition string to fill the information about this column.
+      @param initData The column definition
+      
+      Format of column definition is:
+      @code
+      data|haeading|format|nil
+      @endcode
+
+      - @b data: The source data where the data from the column is taken.
+      - @b heading: The name of the heading.
+      - @b format: A render format for the data in the cell
+      - @b nil: The text printed for NIL data.
+
+      All fields are optional except the first.
+   */
+   function fromHeading( initData )
+      recs = strSplit( initData, "|" )
+      rlen = recs.len()
+      self.fieldName = recs[0]
+      self.heading = rlen > 1 ? recs[1] : recs[0]
+      if rlen > 2: self.format = rlen[2]
+      if rlen > 3: self.nullRep = rlen[3]
+   end
+   
+end
+
+
+class ActionTableColumn( heading, keyFields, commentFields, actions )
+   heading = heading
+   keyFields = keyFields
+   commentFields = commentFields
+   actions = actions
+   actionSeparator = "&nbsp;"
+
+   number = 0
+
+   combineComment = { data, fields =>
+      values = map( {v=> data[v]}, fields )
+      return " ".merge(values)
+   }
+   
+   combineKey = { data, fields =>
+      values = map( {v=> data[v]}, fields )
+      return "|".merge(values)
+   }
+         
+      
+   renderData = { data =>
+      str = "<td>"
+      dict = [=>]
+      if self.commentFields
+         comment= self.combineComment( data, self.commentFields )
+         dict['comment'] = comment
+      end
+      
+      key = self.combineKey( data, self.keyFields )
+      dict['key'] = key
+      value = json.JSONencode( dict )
+
+      for item in self.actions
+         str += item.render( value, self.number )
+         formiddle: str += self.actionSeparator
+      end
+      str +="</td>"
+
+      ++self.number
+      return str
+   }
+end
+
+
+
+class CheckTableColumn( colName, heading, keyFields, commentFields )
+   colName = colName
+   heading = heading
+   keyFields = keyFields
+   commentFields = commentFields
+
+   // This is automatically filled on render by our owner.
+   table = nil
+   number = 0
+
+   combineComment = { data, fields =>
+      values = map( {v=> data[v]}, fields )
+      return " ".merge(values)
+   }
+
+   combineKey = { data, fields =>
+      values = map( {v=> data[v]}, fields )
+      return "|".merge(values)
+   }
+
+
+   renderCheckboxKey = { data =>
+      return self.combineKey( data, self.keyFields )
+   }
+
+   renderCheckboxComment = { data =>
+      if self.commentFields
+         return self.combineComment( data, self.commentFields )
+      end
+      return ""
+   }
+   
+   renderData = { data =>
+      str = "<td>"
+
+      str +="<input type=\"checkbox\" name=\"" +self.colName+"\" id=\""+
+         self.table.getFullID() + "."  + self.colName + "." + self.number +
+         "\" onclick=\"Nest.i('" + self.table.getFullID() + "').onCheckCol(this,"+ 
+               self.number+", '"+self.colName+ "')\"/>"
+      
+      str +="</td>"
+
+      ++self.number
+      return str
+   }
+
+   function makeHeading()
+       str = self.heading + "<br/><input type=\"checkbox\" name=\"" +self.colName+"\" id=\""+
+         self.table.getFullID() + "."  + self.colName +
+         "\" onclick=\"Nest.i('" + self.table.getFullID() + "').onCheckAllCol(this,"+
+               "'"+self.colName+ "')\"/>"
+      return str
+   end
+end
+
+
+
+class TableBody( id ) from widget.Widget( id + ".tb" )
+
+   /*# Side on which to print the order text.
+      - -1 = left
+      - 0 = None
+      - 1 = right
+   */
+   orderSide = 1
+
+   textBeforeAsc = "&nbsp;"
+   /*# Text to print to put the ascending order.
+   */
+   textOrderAsc = "(^)"
+
+   /*# Text to print to put the descending order.
+   */
+   textOrderDesc = "(V)"
+   
+   /*# Text for active order ascending
+   */
+   textActiveAsc = "[<b>^</b>]"
+
+   /*# Text for active descending order.
+   */
+   textActiveDesc = "[<b>V</b>]"
+
+   textAfterDesc = "&nbsp;"
+   
+   function renderContent()
+      str = "<table>\n"
+      str += "<tr>"
+
+      headers = self.parent.headers
+      data = self.parent.data
+      
+      // prepare the header row
+      col = 1
+      for tc in headers
+         ordering = nil
+         if self.orderSide != 0 and tc provides ordering and tc.ordering
+            ordering = self.textBeforeAsc
+            if col == self.parent.orderColumn // positive
+               ordering += self.textActiveAsc
+            else
+               ordering += "<a href=\"javascript:" +
+                  self.parent.getJSSelf() +".setOrder(" + col + ");\">" +
+                  self.textOrderAsc + "</a>"
+            end
+
+            if col == -self.parent.orderColumn // negative
+               ordering += self.textActiveDesc
+            else
+               ordering += "<a href=\"javascript:" +
+                  self.parent.getJSSelf() +".setOrder(" + (-col) + ");\">" +
+                  self.textOrderDesc + "</a>"
+            end
+ 
+            ordering += self.textAfterDesc         
+         end
+         
+         str += "<th>"
+         if ordering and self.orderSide < 0: str += ordering
+         str += tc provides makeHeading ?  tc.makeHeading() : tc.heading
+         if ordering and self.orderSide > 0: str += ordering
+         str += "</th>"
+         col++
+      end
+      
+      str += "</tr>\n"
+
+      // now read the data.
+      for row in data
+         str += "<tr>"
+         for tc in headers
+            if tc provides fieldName
+               if tc.fieldName in row
+                  str += tc.renderData( row[tc.fieldName] )
+               else
+                  str += tc.renderData( nil )
+               end
+            else
+               str += tc.renderData( row )
+            end
+
+            if tc provides renderCheckboxKey and tc provides colName and tc provides renderCheckboxComment
+               self.parent.addCheckboxData( tc.colName, tc.renderCheckboxKey(row), tc.renderCheckboxComment(row) )
+            end
+         end
+         str += "</tr>\n"
+      end
+      str +="<table>\n"
+
+      return str
+   end
+   
+end
+
+
+class PageCursor( id ) from widget.Widget( id + ".pc" )
+   /*# Text used to render the 'first' marker */
+   firstText = "<b>&lt;&lt;</b>"
+
+   /*# Text used to render the 'pervious' marker */
+   prevText = "<b>&lt;</b>"
+
+   /*# Text used to render the 'next' marker */
+   nextText = "<b>&gt;</b>"
+
+   /*# Text used to render the 'last' marker */
+   lastText = "<b>&gt;&gt;</b>"
+
+   /*# Cell style or class (or both) */
+   cellStyle = ""
+
+   /*# Style for current page */
+   currCellStyle = ""
+
+   /*# Maximum number of previous pages with respect to current page to be seen */
+   prevPages = 3
+
+   /*# Maximum number of next pages with respect to current page to be seen */
+   nextPages = 3
+
+   /*# Number of first pages always shown */
+   firstPages = 2
+   
+   /*# Number of last pages always shown */
+   lastPages = 2
+   
+   /*# Ellips to represent pages out of range */
+   outOfRangePages = "..."
+
+   makeCurrentCell = { value => "<b>" + value +  "</b>" }
+
+
+   function renderContent()
+      // fetch some (sanitized) value from parent
+      ipp = self.parent.itemsPerPage < 0 ? self.parent.data.len() : self.parent.itemsPerPage
+      ic = self.parent.itemCount < 0 ? self.parent.data.len() : self.parent.itemCount
+      items = self.parent.itemCount
+      firstItem = self.parent.firstItem
+
+      // do we really need to be printed?
+      if ic <= ipp: return ""
+
+      // ok, we're paged -- calculate the current page.
+      cp = int( firstItem / ipp ) + 1
+
+      // bootstrap the string
+      str = "<table><tr>\n"
+
+      // previous markers
+      if cp > 1
+         str += "<td " + self.cellStyle + "><a href=\"javascript:" +
+                     self.parent.getJSSelf() +".goToPage(1);\">" +
+                     self.firstText + "</a></td>\n"
+         if cp > 2
+            str += "<td " + self.cellStyle + "><a href=\"javascript:" +
+                     self.parent.getJSSelf() +".goToPage(" + (cp-1) + ");\">" +
+                     self.prevText + "</a></td>\n"
+         end
+         
+         // first pages
+         fp = self.firstPages
+         if fp >= cp: fp = cp - 1
+         for i = 1 to fp, 1
+            str += "<td " + self.cellStyle + "><a href=\"javascript:" +
+                     self.parent.getJSSelf() +".goToPage(" + i + ");\">" +
+                     i + "</a></td>\n"
+         end
+         
+         // Minimum page
+         minPage = cp - self.prevPages
+         if minPage <= fp
+            minPage = fp+1
+         else
+            str += "<td " + self.cellStyle + ">" + self.outOfRangePages + "</td>\n"
+         end
+
+         for i = minPage to cp - 1, 1
+            str += "<td " + self.cellStyle + "><a href=\"javascript:" +
+                     self.parent.getJSSelf() +".goToPage(" + i + ");\">" +
+                     i + "</a></td>\n"
+         end
+         
+      end
+
+      // the current page.
+      str += "<td " + self.currCellStyle + ">" + self.makeCurrentCell(cp) + "</td>\n"
+
+      // last part of the page list
+      if firstItem + ipp < items
+         maxPage = cp + self.nextPages
+         totPages = int( items / ipp )
+         if items % ipp != 0: totPages += 1
+         
+         maxCount = maxPage > totPages ? totPages : maxPage
+         for i = cp + 1 to maxCount, 1
+            str += "<td " + self.cellStyle + "><a href=\"javascript:" +
+                     self.parent.getJSSelf() +".goToPage(" + i + ");\">" +
+                     i + "</a></td>\n"
+         end
+
+         
+         if maxCount != totPages
+            // last pages
+            lp = totPages - self.lastPages + 1
+            if lp <= maxCount
+               lp = maxCount + 1
+            else
+               str += "<td " + self.cellStyle + ">" + self.outOfRangePages + "</td>\n"
+            end
+
+            for i = lp to totPages, 1
+               str += "<td " + self.cellStyle + "><a href=\"javascript:" +
+                     self.parent.getJSSelf() +".goToPage(" + i + ");\">" +
+                     i + "</a></td>\n"
+            end            
+         end
+
+         if cp + 1 < totPages
+            str += "<td " + self.cellStyle + "><a href=\"javascript:" +
+                     self.parent.getJSSelf() +".goToPage(" + (cp+1) + ");\">" +
+                     self.nextText + "</a></td>\n"
+         end
+         
+         if cp < totPages
+            // always display last if not last page
+            str += "<td " + self.cellStyle + "><a href=\"javascript:" +
+                        self.parent.getJSSelf() +".goToPage(" + totPages + ");\">" +
+                     self.lastText + "</a></td>\n"
+         end
+      end
+
+      // close the table
+      str += "</tr></table>\n"
+      return str
+   end
+end
+
+
+ /*# Base abstract Class representing a table.
+   @param id The widget id
+   @param itemsPerPage The number of items shown for each page
+   @param itemCount Number of total items in the data set, or -1 for all in self.data
+   @param firstItem first item shown (0 based)
+   @param orderColumn column having ordering priority in display (negative for descending) (1 based)
+
+   This is a base abstract class that must be reimplemented to provide
+   a fully working, ajax-sensible multi-page table widget.
+
+   @note It is possible to have a single-page table widget setting itemsPerPage = itemCount.
+
+   The subclasses must reimplement the following methods:
+   - makeColumns() -- called back to re-create the heading and columns information of the table.
+   - setDataView() -- called back to update the viewable dataset in the current page.
+
+   On AJAX request, the Nest AJAX system takes care of re-creating the widget with its ID and creation
+   parameters (itemsPerPage, itemCount, currentPage, orderColumn); it's responsibility of
+   the concrete subclass to recreate the headers and set the right dataset portion in @b data
+   as it has to be viewed.
+
+   @note It is not strictly necessary to set a valid value for itemCount at object creation
+   if setDataView() is able to recalculate it properly.
+
+   @note Pages and colums are numbered starting from 1.
+
+   @section nest_wid_table_style Styling the table.
+
+   The table is fully represented under a div that will be the topmost widget.
+   The div ID is the ID declared in the table widget. It may be given a class
+   by adding a property 'class' to its props dictionary.
+   
+   The widget contains two sub-widgets called Table.tablebody and Table.pagecursor.
+   They both are rapresented in a div which can be given a specific class through
+   the props dictionary, and they both appare as a table inside their div element.
+
+   The ID of the div element of Table.tablebody is set to the parent ID plus ".tb", while
+   the ID of the div element of Table.pagecursor is set to the parent ID plus ".tc".
+
+   This widget doesn't come with any style whatsoever.
+*/
+   
+class Table( id, itemsPerPage, itemCount, firstItem, orderColumn ) from widget.Widget( id )
+   tablebody = TableBody( id )
+   pagecursor = PageCursor( id )
+
+   isAJAXHost = true
+
+   /*# The headers of the table body.
+      Each entry is an instance of class TableColumn
+      
+      Format of each field in headers is
+      @code
+      data|haeading|format|nil
+      @endcode
+
+      - @b data: The source data where the data from the column is taken.
+      - @b heading: The name of the heading.
+      - @b format: A render format for the data in the cell
+      - @b nil: The text printed for NIL data.
+   */
+   headers = []
+
+   /*# Where to store the array of dictionaries containing the required data */
+   data = nil
+
+   /*# First item in view */
+   firstItem = firstItem
+   
+   /*# Count of items in view -- defaults to 20 */
+   itemsPerPage = itemsPerPage
+
+   /*# Count of total items in the dataset (set to -1 to get data.len()) */
+   itemCount = itemCount
+
+   /*# Column to be ordered. */
+   orderColumn = orderColumn
+
+   /*# Methods for the javascript part */
+   jsMethods = [=>]
+
+   /* A filter in format field:string */
+   filter = ""
+
+   checboxData = [=>]
+   
+   init
+      self.initInfos = [itemsPerPage, itemCount, firstItem, orderColumn]
+
+      // initialize our javascript counterpart
+      self.onCreate = @"
+         if ( ! this.itemsPerPage ) {
+            this.itemsPerPage = $(itemsPerPage);
+            this.firstItem = $(firstItem);
+            this.column = $(orderColumn);
+            this.filter = \"$(self.filter)\";
+         }
+         "
+         
+      self.addChild( self.tablebody )
+      self.addChild( self.pagecursor )
+
+      self.makeColumns()
+      self.setDataView( int(firstItem / itemsPerPage) + 1 )
+   end
+
+
+   function AJAX( params )
+
+      msg = params["msg"]
+      
+      self.firstItem = int(params["extra"]["fi"])
+      self.itemsPerPage = int(params["extra"]["ipp"])
+      self.orderColumn = int(params["extra"]["column"])
+      self.filter = params["extra"]["filter"]
+      
+      if msg == "goto" or msg == "order" or msg == 'filter' or msg == 'refresh'
+         self.setDataView()
+      end
+      
+      retval = [
+         self.msgSetProperty( 'innerHTML', self.render() )
+         ]
+      if self.checboxData
+         retval += self.msgInvoke( 'setCheckboxData', self.checboxData )
+      end
+      return retval
+   end
+
+   function onRender()
+      // hook for check columns
+      self.checboxData = [=>]
+
+      if self.jsMethods: return
+      self.jsMethods['ckcols'] = "{};"
+      
+      // As messages may be called on create, force to call onCreate()
+      self.jsMethods['goToPage'] = \
+            "function( page ) { this.firstItem = (page-1)*this.itemsPerPage; " +
+               self.ajaxMsgLiteral( "goto", nil, self._makeAjaxDict() ) + "; }"
+
+      self.jsMethods['refresh'] = \
+            "function() {" + self.ajaxMsgLiteral( "refresh", nil, self._makeAjaxDict() ) + "; }"
+               
+      self.jsMethods['setOrder'] = \
+            "function( col ) { this.column=col; " +
+            self.ajaxMsgLiteral( "order", nil, self._makeAjaxDict() ) + "; }"
+
+      self.jsMethods['setFilter'] = \
+            "function( filter ) { this.onCreate(); this.filter=filter; " +
+            self.ajaxMsgLiteral( "filter", nil, self._makeAjaxDict() ) + "; }"            
+
+      self.jsMethods['onCheckCol'] = "
+         function( cb, num, name ) {
+            this.ckcols[name][num].checked = cb.checked;
+            if( ! cb.checked ) { document.getElementById(this.id + '.'+name).checked = false; }
+         }"
+
+       self.jsMethods['setCheckboxData'] = "
+         function( value ) {this.ckcols = value;}"
+      
+
+      self.jsMethods['onCheckAllCol'] = "
+         function( cb, name ) {
+            for( var num = 0; num < this.ckcols[name].length; ++num ) {
+               this.ckcols[name][num].checked = cb.checked;
+               document.getElementById( this.id + '.' + name + '.' + num ).checked = cb.checked;
+            }
+         }"
+
+       self.jsMethods['clearChecks'] = "
+         function() {
+            for( var name in this.ckcols ) {
+               document.getElementById( this.id + '.' + name ).checked = false;
+               for( var num = 0; num < this.ckcols[name].length; ++num ) {
+                  this.ckcols[name][num].checked = false;
+                  document.getElementById( this.id + '.' + name + '.' + num ).checked = false;
+               }
+            }
+         }"
+
+      self.jsMethods['withSelected'] = "
+         function( name, callback ) {
+            var res = new Array();
+            for( var num = 0; num < this.ckcols[name].length; ++num ) {
+               if( this.ckcols[name][num].checked == true )
+               {
+                  res.push( this.ckcols[name][num] );
+               }
+            }
+            callback( res );
+         }"
+   end
+
+   function _makeAjaxDict()
+      return "{\"fi\": this.firstItem, \"ipp\": this.itemsPerPage, \"column\":this.column, \"filter\": this.filter}"
+   end
+
+   /*# Helper method to create the column data through string defintions.
+      @param headers An array of header definition
+      
+      Format of each field in headers is
+      @code
+      data|haeading|format|nil
+      @endcode
+
+      - @b data: The source data where the data from the column is taken.
+      - @b heading: The name of the heading.
+      - @b format: A render format for the data in the cell
+      - @b nil: The text printed for NIL data.
+
+      @note This just iteratively adds a new TableColumn instance calling its
+      @a TableColumn.fromHeading method.
+
+      @note Pages and colums are numbered starting from 1.
+   */
+
+   function columsFromHeadings( headers )
+      for head in headers
+         tc = TableColumn()
+         tc.fromHeading( head )
+         self.headers.add( tc )
+      end
+   end
+
+   /*# Adds a widget that is intended as a filter.
+      @param wid A widget for which this table waits for a change message.
+      @param filterPrefix If given, messages from this widget will be prefixed by this
+         text and ":".
+         
+      When the widget in @b wid issues a change message,
+      the value of the message is sent to the setFilter javascript method
+      of this table, which, by default, sends a "filter" AJAX message to
+      its AJAX widget host.
+
+      The filterPrefix may be used to tell different filters.
+   */
+   function addFilterWidget( wid, filterPrefix )
+      if not self.jsListeners: self.jsListeners = [=>]
+      
+      self.jsListeners[wid] = \
+            "function( source, msg, value ) { if (msg == 'change') { this.setFilter( " +
+            (filterPrefix ? "\"" + filterPrefix + ":\"+": "" ) + "value );} }"
+   end
+
+   /*# Fixes the first item and return a last item according to itemCount and ItemPerPage.
+      \return a suitable value for the last item to be shown, to create a partition in a data array
+
+      This method perform some sensible checks on the values of the firstItem property
+      and calculates a lastItem that should be displayed (excluded, as in range format),
+      considering the itemsPerPage and itemCount properties.
+   */
+   function sanitizeItemRange()
+      if self.itemCount <= self.itemsPerPage
+         self.firstItem = 0
+      elif self.firstItem >= self.itemCount
+         self.firstItem = self.itemCount-1
+      end
+
+      if self.firstItem < 0
+         self.firstItem = 0
+      end
+      
+      lastItem = self.firstItem + self.itemsPerPage
+      if lastItem > self.itemCount: lastItem = self.itemCount
+      return lastItem
+   end
+
+   function addActionColumn( heading, keyFields, commentFields, actions )
+      self.headers.add( ActionTableColumn( heading, keyFields, commentFields, actions ) )
+   end
+
+   function addCheckboxColumn( colName, heading, keyFields, commentFields )
+      col = CheckTableColumn( colName, heading, keyFields, commentFields )
+      col.table = self
+      self.headers.add( col )
+   end
+
+   function addCheckboxData( colName, key, comment )
+      if colName notin self.checboxData
+         arr = []
+         self.checboxData[colName] = arr
+      else
+         arr = self.checboxData[colName]
+      end
+      arr += [ "key" => key, "comment" => comment ]
+   end      
+   //==========================================================================
+   // Overrides
+   //
+   
+   /*# Called back on AJAX requests to set the data view
+      This method should read the current class values of firstItem and itemPerPage, and
+      set the values into self.data accordingly
+      
+      @note Pages and colums are numbered starting from 1. So, the item with
+      id 0 is located at top of page 1.
+   */
+   function setDataView()
+      raise "Please override setDataView"
+   end
+
+   /*# Called back to create the table heading.
+d
+      This method should put a set of TableColumn instances in the
+      @a Table.headers array.
+      
+      @note It might be useful to use the helper method @a Table.columsFromHeadings.
+   */
+   function makeColumns()
+      raise "Please override makeColumns"
+   end
+
+end
+

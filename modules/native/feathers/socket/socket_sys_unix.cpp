@@ -527,6 +527,12 @@ TCPSocket::~TCPSocket()
 
 int32 TCPSocket::recv( byte *buffer, int32 size )
 {
+#if WITH_OPENSSL
+   // transfer to sslRead ?
+   if ( m_sslData && m_sslData->handshakeState == SSLData::handshake_ok )
+      return sslRead( buffer, size );
+#endif
+
    if ( ! readAvailable( m_timeout ) ) {
       if ( m_lastError != 0 )
          return -1; // error
@@ -544,6 +550,12 @@ int32 TCPSocket::recv( byte *buffer, int32 size )
 
 int32 TCPSocket::send( const byte *buffer, int32 size )
 {
+#if WITH_OPENSSL
+   // transfer to sslWrite?
+   if ( m_sslData && m_sslData->handshakeState == SSLData::handshake_ok )
+      return sslWrite( buffer, size );
+#endif
+
    if ( ! writeAvailable( m_timeout ) ) {
       if ( m_lastError != 0 )
          return -1; // error
@@ -749,12 +761,14 @@ SSLData::ssl_error_t TCPSocket::sslConfig( bool asServer,
    sslD->sslVersion = sslVer;
    switch ( sslVer )
    {
-   case SSLData::SSLv2:  sslD->sslMethod = SSLv2_method(); break;
-   case SSLData::SSLv3:  sslD->sslMethod = SSLv3_method(); break;
-   case SSLData::SSLv23: sslD->sslMethod = SSLv23_method(); break;
-   case SSLData::TLSv1:  sslD->sslMethod = TLSv1_method(); break;
-   case SSLData::DTLSv1: sslD->sslMethod = DTLSv1_method(); break;
-   default: sslD->sslMethod = SSLv3_method();
+#ifndef OPENSSL_NO_SSL2
+   case SSLData::SSLv2:  sslD->sslMethod = (SSL_METHOD*) SSLv2_method(); break;
+#endif
+   case SSLData::SSLv3:  sslD->sslMethod = (SSL_METHOD*) SSLv3_method(); break;
+   case SSLData::SSLv23: sslD->sslMethod = (SSL_METHOD*) SSLv23_method(); break;
+   case SSLData::TLSv1:  sslD->sslMethod = (SSL_METHOD*) TLSv1_method(); break;
+   case SSLData::DTLSv1: sslD->sslMethod = (SSL_METHOD*) DTLSv1_method(); break;
+   default: sslD->sslMethod = (SSL_METHOD*) SSLv3_method();
    }
 
    // create context

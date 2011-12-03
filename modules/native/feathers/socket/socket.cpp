@@ -24,6 +24,10 @@
 
 #include "version.h"
 
+#if WITH_OPENSSL
+#include <openssl/ssl.h> // check for OPENSSL_NO_SSL2
+#endif // WITH_OPENSSL
+
 /*#
    @module feathers.socket Low level IP networking.
    @brief Low level TCP/IP networking support.
@@ -121,12 +125,14 @@ FALCON_MODULE_DECL
    self->addExtFunc( "haveSSL", Falcon::Ext::falcon_haveSSL );
 
    #if WITH_OPENSSL
+   #ifndef OPENSSL_NO_SSL2
    self->addConstant( "SSLv2", (Falcon::int64) Falcon::Sys::SSLData::SSLv2 );
+   #endif
    self->addConstant( "SSLv3", (Falcon::int64) Falcon::Sys::SSLData::SSLv3 );
    self->addConstant( "SSLv23", (Falcon::int64) Falcon::Sys::SSLData::SSLv23 );
    self->addConstant( "TLSv1", (Falcon::int64) Falcon::Sys::SSLData::TLSv1 );
    self->addConstant( "DTLSv1", (Falcon::int64) Falcon::Sys::SSLData::DTLSv1 );
-   #endif
+   #endif // WITH_OPENSSL
 
    //====================================
    // private class socket.
@@ -164,8 +170,6 @@ FALCON_MODULE_DECL
    self->addClassMethod( tcpsocket, "sslConfig", Falcon::Ext::TCPSocket_sslConfig );
    self->addClassMethod( tcpsocket, "sslClear", Falcon::Ext::TCPSocket_sslClear );
    self->addClassMethod( tcpsocket, "sslConnect", Falcon::Ext::TCPSocket_sslConnect );
-   self->addClassMethod( tcpsocket, "sslRead", Falcon::Ext::TCPSocket_sslRead );
-   self->addClassMethod( tcpsocket, "sslWrite", Falcon::Ext::TCPSocket_sslWrite );
    #endif
 
    //====================================

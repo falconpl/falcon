@@ -14,12 +14,12 @@ s.sslConfig( false, socket.SSLv3 )
 s.sslConnect()
 > "==== SSL Connected!"
 
-i = s.sslWrite( "GET /\r\n\r\n" )
+i = s.send( "GET /\r\n\r\n" )
 > @ "==== $(i) bytes written!"
 
 buf=''
 txt=''
-while (i = s.sslRead(buf,4098)) == 4098
+while (i = s.recv(buf,4098)) == 4098
    txt += buf
 end
 if i != 0: txt += buf
