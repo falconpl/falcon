@@ -147,18 +147,15 @@ class CheckTableColumn( colName, heading, keyFields, commentFields )
    }
 
 
-   renderCheckboxData = { data =>
-      dict = [=>]
-      if self.commentFields
-         comment= self.combineComment( data, self.commentFields )
-         dict['comment'] = comment
-      end
+   renderCheckboxKey = { data =>
+      return self.combineKey( data, self.keyFields )
+   }
 
-      key = self.combineKey( data, self.keyFields )
-      dict['key'] = key
-      value = json.JSONencode( dict )
-      //value = value.replace( "\"", "'" )
-      return value
+   renderCheckboxComment = { data =>
+      if self.commentFields
+         return self.combineComment( data, self.commentFields )
+      end
+      return ""
    }
    
    renderData = { data =>
@@ -270,8 +267,8 @@ class TableBody( id ) from widget.Widget( id + ".tb" )
                str += tc.renderData( row )
             end
 
-            if tc provides renderCheckboxData
-               self.parent.addCheckboxData( tc.colName, tc.renderCheckboxData(row) )
+            if tc provides renderCheckboxKey and tc provides colName and tc provides renderCheckboxComment
+               self.parent.addCheckboxData( tc.colName, tc.renderCheckboxKey(row), tc.renderCheckboxComment(row) )
             end
          end
          str += "</tr>\n"
@@ -511,7 +508,7 @@ class Table( id, itemsPerPage, itemCount, firstItem, orderColumn ) from widget.W
    /* A filter in format field:string */
    filter = ""
 
-   checkboxMakeScript = ""
+   checboxData = [=>]
    
    init
       self.initInfos = [itemsPerPage, itemCount, firstItem, orderColumn]
@@ -523,7 +520,6 @@ class Table( id, itemsPerPage, itemCount, firstItem, orderColumn ) from widget.W
             this.firstItem = $(firstItem);
             this.column = $(orderColumn);
             this.filter = \"$(self.filter)\";
-            this.fillCheckboxData();
          }
          "
          
@@ -548,11 +544,20 @@ class Table( id, itemsPerPage, itemCount, firstItem, orderColumn ) from widget.W
          self.setDataView()
       end
       
-      return self.msgSetProperty( 'innerHTML', self.render() )
+      retval = [
+         self.msgSetProperty( 'innerHTML', self.render() )
+         ]
+      if self.checboxData
+         retval += self.msgInvoke( 'setCheckboxData', self.checboxData )
+      end
+      return retval
    end
 
    function onRender()
       // hook for check columns
+      self.checboxData = [=>]
+
+      if self.jsMethods: return
       self.jsMethods['ckcols'] = "{};"
       
       // As messages may be called on create, force to call onCreate()
@@ -577,11 +582,8 @@ class Table( id, itemsPerPage, itemCount, firstItem, orderColumn ) from widget.W
             if( ! cb.checked ) { document.getElementById(this.id + '.'+name).checked = false; }
          }"
 
-       self.jsMethods['addCheckboxData'] = "
-         function( name, value ) {
-            if( typeof this.ckcols[name] != 'object' ) { this.ckcols[name] = new Array(); }
-            this.ckcols[name].push(value);
-         }"
+       self.jsMethods['setCheckboxData'] = "
+         function( value ) {this.ckcols = value;}"
       
 
       self.jsMethods['onCheckAllCol'] = "
@@ -592,7 +594,18 @@ class Table( id, itemsPerPage, itemCount, firstItem, orderColumn ) from widget.W
             }
          }"
 
-      self.jsMethods['doOnSelected'] = "
+       self.jsMethods['clearChecks'] = "
+         function() {
+            for( var name in this.ckcols ) {
+               document.getElementById( this.id + '.' + name ).checked = false;
+               for( var num = 0; num < this.ckcols[name].length; ++num ) {
+                  this.ckcols[name][num].checked = false;
+                  document.getElementById( this.id + '.' + name + '.' + num ).checked = false;
+               }
+            }
+         }"
+
+      self.jsMethods['withSelected'] = "
          function( name, callback ) {
             var res = new Array();
             for( var num = 0; num < this.ckcols[name].length; ++num ) {
@@ -689,10 +702,15 @@ class Table( id, itemsPerPage, itemCount, firstItem, orderColumn ) from widget.W
       self.headers.add( col )
    end
 
-   function addCheckboxData( colName, data )
-      self.checkboxMakeScript += "this.addCheckboxData('" + colName + "', " + data + ");\n"
-      self.jsMethods['fillCheckboxData'] = "function() {" + self.checkboxMakeScript + "}"
-   end
+   function addCheckboxData( colName, key, comment )
+      if colName notin self.checboxData
+         arr = []
+         self.checboxData[colName] = arr
+      else
+         arr = self.checboxData[colName]
+      end
+      arr += [ "key" => key, "comment" => comment ]
+   end      
    //==========================================================================
    // Overrides
    //

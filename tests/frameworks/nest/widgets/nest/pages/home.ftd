@@ -272,7 +272,26 @@
    //=================================================================
    // Multiple deletor
    //
-   
+   tmdeletor = Button( 'tabtest.multideletor', "Delete selected" )
+   tmdeletor.props =[ "onclick" => "Nest.i('tabtest').withSelected('sel', function( vals ){Nest.i('tabtest.deletor').delete(vals);})" ]
+   tmdeletor.jsMethods = [
+      "delete" => "
+      function(vals) {
+         if (vals.length == 0) {
+            alert( 'No selected item!' );
+            return;
+         }
+         var text = '';
+         for( var item in vals ) {            
+            if ( text != '' ) text = text + ', ';
+            text = text + vals[item].comment;
+         }
+         if( window.confirm( 'Delete '+ text +'?' ) ) {
+               Nest.ajax('TableMultiDelete', vals, function( vals ){ alert(JSON.stringify(vals));Nest.i('tabtest').refresh();});
+         }
+      }"
+   ]
+
    //=================================================================
    // Adder
    //
@@ -283,6 +302,7 @@
 ?>
 <?= filterText.render() ?><br/>
 <?= table.render() ?>
+<?= tmdeletor.render() ?>
 <?= tadder.render() ?>
 <?= tdeletor.render() ?>
 <?= tupd.render() ?>
