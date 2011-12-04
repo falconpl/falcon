@@ -2,6 +2,13 @@
    import from nest.js
    import from nest.ajax
    import CheckBoxSet from nest.widgets.CheckBoxSet as CheckBoxSet
+   import from nest.widgets.widget in widget
+
+   // for the table
+   import InputText from nest.widgets.InputText as InputText
+   import Hidden from nest.widgets.Hidden as Hidden
+   import Button from nest.widgets.Button as Button
+   
    
    Reply.setCookie( "test", "Test value" )
 ?>
@@ -158,4 +165,147 @@
 
 <?= form.render() ?>
 
+<hr>
+<h3>Table test</h3>
+
+<?
+   filterText = Nest.widget("ActiveInput" )( "TabNamefilter", "Filter Surname Name" )
+   filterText.typeTimeout = 300
+   table = Nest.widget( "NameTable" )( "tabtest", 10, -1, 0, 0 )
+   table.addFilterWidget( filterText )
+
+   //=================================================================
+   // Deletor
+   //
+   class TableDeletor from widget.Widget( "tabtest.deletor" )
+      props = ['style'=>"display:none"]
+      jsListeners = [
+         table => "
+            function( source, msg, value ) {
+               if(msg == 'del') {
+                  if( window.confirm('delete: ' + value.comment) ) {
+                     Nest.ajax( 'DeleteTableRecord', {id:value.key}, function(){Nest.i('tabtest').refresh()} );
+                  }
+               }
+            }"
+      ]
+   end
+
+   tdeletor = TableDeletor()
+
+   //=================================================================
+   // Updater
+   //
+
+   class TableUpdater from widget.Widget( "tabtest.updater" )
+      props = ['style'=>"display:none"]
+      jsListeners = [
+         table => "
+            function( source, msg, value ) {
+               if(msg == 'upd') {
+                  this.fetchData(value.key);
+               }
+            }"
+      ]
+
+      jsMethods = [
+         "fetchData" => "
+            function( id ){
+                  Nest.i('tabtest.updater').style.display='none';
+                  Nest.ajax( 'GetTableRecord', {\"id\":id}, function(v){Nest.i('tabtest.updater').refresh(v)} );
+            }",
+
+         "newData" => "
+            function(){
+                  Nest.i('tabtest.updater.id').value = -1;
+                  Nest.i('tabtest.updater.name').value = '';
+                  Nest.i('tabtest.updater.surname').value = '';
+                  Nest.i('tabtest.updater.age').value = '';
+                  
+                  Nest.i('tabtest.updater').style.display='';
+            }",
+            
+         "refresh" => "
+            function( data ) {
+               Nest.i('tabtest.updater.id').value = data.id;
+               Nest.i('tabtest.updater.name').value = data.name;
+               Nest.i('tabtest.updater.surname').value = data.sname;
+               Nest.i('tabtest.updater.age').value = data.age;
+               Nest.i('tabtest.updater').style.display = '';
+            }",
+
+         "update_done" => "
+            function(){
+               var dict = {
+                  id: Nest.i('tabtest.updater.id').value,
+                  name: Nest.i('tabtest.updater.name').value,
+                  sname: Nest.i('tabtest.updater.surname').value,
+                  age: Nest.i('tabtest.updater.age').value };
+
+                  Nest.i('tabtest.updater').style.display='none';
+                  var func = 'UpdateTableRecord';
+                  if( dict.id < 0 ) { func = 'AddTableRecord'; }
+                  Nest.ajax( func, dict, function(){Nest.i('tabtest').refresh()} );
+            }"
+         ]
+
+      init
+         self.addChild( Hidden( 'id' ) )
+         self.addChild( InputText( 'name', "Name:" ) )
+         self.addChild( InputText( 'surname', "Surname:" ) )
+         self.addChild( InputText( 'age', "Age:" ) )
+
+         updbtn = Button( 'update', "Update" )
+         updbtn.props = [ "onclick" => "Nest.i('tabtest.updater').update_done()" ]
+         fgtbtn = Button( 'forget', "Forget it" )
+         fgtbtn.props = [ "onclick" => "Nest.i('tabtest.updater').style.display='none'" ]
+         
+         self.addChild( updbtn )
+         self.addChild( fgtbtn )
+         
+      end
+      
+   end
+
+   tupd = TableUpdater()
+
+   //=================================================================
+   // Multiple deletor
+   //
+   tmdeletor = Button( 'tabtest.multideletor', "Delete selected" )
+   tmdeletor.props =[ "onclick" => "Nest.i('tabtest').withSelected('sel', function( vals ){Nest.i('tabtest.deletor').delete(vals);})" ]
+   tmdeletor.jsMethods = [
+      "delete" => "
+      function(vals) {
+         if (vals.length == 0) {
+            alert( 'No selected item!' );
+            return;
+         }
+         var text = '';
+         for( var item in vals ) {            
+            if ( text != '' ) text = text + ', ';
+            text = text + vals[item].comment;
+         }
+         if( window.confirm( 'Delete '+ text +'?' ) ) {
+               Nest.ajax('TableMultiDelete', vals, function( vals ){ alert(JSON.stringify(vals));Nest.i('tabtest').refresh();});
+         }
+      }"
+   ]
+
+   //=================================================================
+   // Adder
+   //
+
+   tadder = Button( 'tabtest.adder', "Add" )
+   tadder.props =[ "onclick" => "Nest.i('tabtest.updater').newData()" ]
+   
+?>
+<?= filterText.render() ?><br/>
+<?= table.render() ?>
+<?= tmdeletor.render() ?>
+<?= tadder.render() ?>
+<?= tdeletor.render() ?>
+<?= tupd.render() ?>
+
 <p><i>Tests complete -- for now</i></p>
+

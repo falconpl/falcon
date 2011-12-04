@@ -170,8 +170,6 @@ FALCON_MODULE_DECL
    self->addClassMethod( tcpsocket, "sslConfig", Falcon::Ext::TCPSocket_sslConfig );
    self->addClassMethod( tcpsocket, "sslClear", Falcon::Ext::TCPSocket_sslClear );
    self->addClassMethod( tcpsocket, "sslConnect", Falcon::Ext::TCPSocket_sslConnect );
-   self->addClassMethod( tcpsocket, "sslRead", Falcon::Ext::TCPSocket_sslRead );
-   self->addClassMethod( tcpsocket, "sslWrite", Falcon::Ext::TCPSocket_sslWrite );
    #endif
 
    //====================================

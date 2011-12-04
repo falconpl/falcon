@@ -1,0 +1,19 @@
+function TableMultiDelete( req )
+
+   count = 0
+   while true
+      data = Wopi.getAppData("table-app")
+      for item in req
+         id = int(item["key"])
+         number = arrayScan( data, { v => v["id"] == id} )
+         if number >= 0
+            data.remove(number)
+            ++count
+         end
+      end
+
+      if Wopi.setAppData(data, "table-app"): break      
+   end
+
+   return ["removed" => count]
+end

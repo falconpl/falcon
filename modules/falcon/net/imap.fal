@@ -49,7 +49,6 @@ class IMAP( server, port, timeout, useSsl, sslVer )
    timeout = timeout ? timeout : 1000
    /*# Wether to use ssl. Change it before connection. */
    useSsl = useSsl ? useSsl : false
-   _useSsl = false
    /*# Ssl version to use, default TLSv1. */
    sslVersion = sslVer ? sslVer : socket.TLSv1
    /*# Function used to show communication between client and server. */
@@ -96,7 +95,6 @@ class IMAP( server, port, timeout, useSsl, sslVer )
          self.startTLS()
          self._sock.sslConfig( false, self.sslVersion )
          self._sock.sslConnect()
-         self._useSsl = true
       end
    end
 
@@ -459,11 +457,7 @@ class IMAP( server, port, timeout, useSsl, sslVer )
    function _send( cmd )
       self.trace( "--> " + cmd )
       if self._sock.writeAvailable( self.timeout/1000.0 )
-         if not self._useSsl
-            self._sock.send( cmd + "\r\n" )
-         else
-            self._sock.sslWrite( cmd + "\r\n" )
-         end
+         self._sock.send( cmd + "\r\n" )
       else
          raise IMAPError( 10001, "Socket write timeout (" + self.timeout.toString() + ")" )
       end
@@ -501,11 +495,7 @@ class IMAP( server, port, timeout, useSsl, sslVer )
          if toRead > 1500: toRead = 1500
          
          // receive more data.
-         if not self._useSsl
-            recCount += self._sock.recv( buf, toRead )
-         else
-            recCount += self._sock.sslRead( buf, toRead )
-         end
+         recCount += self._sock.recv( buf, toRead )
          reply += buf
       end
 
@@ -584,11 +574,7 @@ class IMAP( server, port, timeout, useSsl, sslVer )
          end
 
          // receive more data.
-         if not self._useSsl
-            self._sock.recv( buf )
-         else
-            self._sock.sslRead( buf )
-         end
+         self._sock.recv( buf )
          reply += buf
       end
       // send the first line and save the rest for later.

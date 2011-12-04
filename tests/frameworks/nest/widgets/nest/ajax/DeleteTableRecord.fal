@@ -1,0 +1,11 @@
+function DeleteTableRecord( req )
+   id = int(req["id"])
+   data = Wopi.getAppData("table-app")
+   number = arrayScan( data, { v => v["id"] == id} )
+   if number >= 0
+      data.remove(number)
+      Wopi.setAppData(data, "table-app")
+      return ["removed" => id]
+   end
+   return ["unknown" => id]
+end
