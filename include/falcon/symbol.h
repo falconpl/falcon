@@ -130,6 +130,9 @@ public:
     */
    void defaultValue( Item* val ) { m_defval = val; }
    
+   void setConstant( bool bMode = true ) { m_bConstant = bMode; }
+   bool isConstant() const { return m_bConstant; }
+   
 protected:
    
    String m_name;
@@ -138,6 +141,7 @@ protected:
    uint32 m_id;   
    type_t m_type;
    bool m_external;
+   bool m_bConstant;
    
    Item* m_defval;
 

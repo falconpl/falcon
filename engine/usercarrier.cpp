@@ -20,18 +20,28 @@
 #include <falcon/string.h>
 #include <falcon/item.h>
 #include <falcon/usercarrier.h>
+#include <falcon/errors/unsupportederror.h>
 
 namespace Falcon {
 
+UserCarrier::UserCarrier():
+   m_data( 0 ),
+   m_itemCount( 0 ),
+   m_gcMark(0)
+{}
+
 UserCarrier::UserCarrier( uint32  itemcount ):
-   m_data( new Item[ itemcount ] ),
+   m_data( itemcount == 0 ? 0 : new Item[ itemcount ] ),
    m_itemCount( itemcount ),
    m_gcMark(0)
 {
-   for ( size_t i = 0; i < itemcount; ++i )
+   if( itemcount > 0 )
    {
-      m_data[i].setNil();
-   }  
+      for ( size_t i = 0; i < itemcount; ++i )
+      {
+         m_data[i].setNil();
+      }
+   }
 }
 
 
@@ -68,6 +78,19 @@ void UserCarrier::gcMark( uint32 mark )
    }
 }
    
+template<class __T>
+UserCarrierT<__T>::UserCarrierT( const UserCarrierT<__T>& other ):
+      UserCarrier( other )
+{
+   m_data = other.cloneData();
+   if ( m_data == 0 )
+   {
+      throw new UnsupportedError( ErrorParam( e_uncloneable, __LINE__, SRC ).
+         origin(ErrorParam::e_orig_runtime)
+         );
+   }
+}
+
 }
 
 /* end of usercarrier.cpp */

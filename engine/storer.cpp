@@ -227,7 +227,6 @@ bool Storer::traverse( Class* handler, void* data )
 
 void Storer::TraverseNext::apply_( const PStep* ps, VMContext* ctx )
 {
-   fassert( ctx->topData().isArray() );
    const TraverseNext* self = static_cast<const TraverseNext*>( ps );
    // get the object we're working on.
    Private::ObjectDataPtrVector& traversing = self->m_owner->_p->m_objTraversing;

@@ -11,8 +11,10 @@ include_directories(
 #Specific system files
 
 add_library(vfs_fm MODULE
-   vfs.cpp
+   create.cpp
    open.cpp
+
+   vfs.cpp
 )
 
 falcon_finalize_module( vfs_fm )

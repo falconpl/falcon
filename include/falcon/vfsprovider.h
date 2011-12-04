@@ -64,23 +64,31 @@ public:
          m_oflags( flags ),
          m_shflags(0)
       {}
+               
+      static const unsigned int e_oflag_rd = 0x1;
+      static const unsigned int e_oflag_wr = 0x2;
+      static const unsigned int e_oflag_append = 0x4;
+      static const unsigned int e_oflag_trunc = 0x8;         
+      
+      static const unsigned int e_sflag_nr = 0x1;
+      static const unsigned int e_sflag_nw = 0x2;
 
-      OParams& rdOnly() { m_oflags |= 0x1; return *this; }
-      bool isRdOnly() const { return (m_oflags & 0x1) == 0x1; }
+      OParams& rdOnly() { m_oflags |= e_oflag_rd; return *this; }
+      bool isRdOnly() const { return (m_oflags & e_oflag_rd) == e_oflag_rd; }
 
-      OParams& wrOnly() { m_oflags |= 0x2; return *this; }
-      bool isWrOnly() const { return (m_oflags & 0x2) == 0x2; }
+      OParams& wrOnly() { m_oflags |= e_oflag_wr; return *this; }
+      bool isWrOnly() const { return (m_oflags & e_oflag_wr) == e_oflag_wr; }
 
-      OParams& rdwr() { m_oflags |= 0x3; return *this; }
-      bool isRdwr() const { return (m_oflags & 0x3) == 0x3; }
+      OParams& rdwr() { m_oflags |= e_oflag_rd |e_oflag_wr; return *this; }
+      bool isRdwr() const { return (m_oflags & (e_oflag_rd |e_oflag_wr)) == (e_oflag_rd |e_oflag_wr); }
 
       /** Open the file for append.
          File pointer is moved to the end of file at open.
          (Some FS guarantee also moving the file pointer at end of file
          after each write).
       */
-      OParams& append() { m_oflags |= 0x4; return *this; }
-      bool isAppend() const { return (m_oflags & 0x4) == 0x4; }
+      OParams& append() { m_oflags |= e_oflag_append; return *this; }
+      bool isAppend() const { return (m_oflags & e_oflag_append) == e_oflag_append; }
 
       /** If the file exists, it is truncated.
 
@@ -89,17 +97,17 @@ public:
          but all its other stats (as owner, security access, creation date, etc.)
          are left untouched.
       */
-      OParams& truncate() { m_oflags |= 0x8; return *this; }
-      bool isTruncate() const { return (m_oflags & 0x8) == 0x8; }
+      OParams& truncate() { m_oflags |= e_oflag_trunc; return *this; }
+      bool isTruncate() const { return (m_oflags & e_oflag_trunc) == e_oflag_trunc; }
 
-      OParams& shNoRead() { m_shflags |= 0x1; return *this; }
-      bool isShNoRead() const { return (m_shflags & 0x1) == 0x1; }
+      OParams& shNoRead() { m_shflags |= e_sflag_nr; return *this; }
+      bool isShNoRead() const { return (m_shflags & e_sflag_nr) == e_sflag_nr; }
 
-      OParams& shNoWrite() { m_shflags |= 0x2; return *this; }
-      bool isShNoWrite() const { return (m_shflags & 0x2) == 0x2; }
+      OParams& shNoWrite() { m_shflags |= e_sflag_nw; return *this; }
+      bool isShNoWrite() const { return (m_shflags & e_sflag_nw) == e_sflag_nw; }
 
-      OParams& shNone() { m_shflags |= 0x3; return *this; }
-      bool isShNone() const { return (m_shflags & 0x3) == 0x3; }
+      OParams& shNone() { m_shflags |= (e_sflag_nr|e_sflag_nw); return *this; }
+      bool isShNone() const { return (m_shflags & (e_sflag_nr|e_sflag_nw)) == (e_sflag_nr|e_sflag_nw); }
    };
 
    /** Create Paramenter.
@@ -125,9 +133,13 @@ public:
       friend class VFSProvider;
 
    public:
-      CParams():
-         m_cflags(0)
+      CParams( uint32 cflags = 0):
+         m_cflags( cflags )
       {}
+         
+      static const unsigned int e_cflag_noovr = 0x1;
+      static const unsigned int e_cflag_nostream = 0x2;
+
 
       /** Fail if the file exists.
          If the file exists and none of append() or truncate() options are specified,
@@ -136,8 +148,8 @@ public:
          The subsystem is bound to return a nonzero value from getLastFsError() if
          returning faulty from a this operation.
       */
-      CParams& noOvr() { m_cflags |= 0x1; return *this; }
-      bool isNoOvr() const { return (m_cflags & 0x1) == 0x1; }
+      CParams& noOvr() { m_cflags |= e_cflag_noovr; return *this; }
+      bool isNoOvr() const { return (m_cflags & e_cflag_noovr) == e_cflag_noovr; }
 
       /** Avoid returning an open stream to the caller.
          Usually, if create() is successful an open stream
@@ -145,8 +157,8 @@ public:
          function will return 0, eventually closing immediately the
          handle to the file in those systems with "open creating" semantics.
       */
-      CParams& noStream() { m_cflags |= 0x2; return *this; }
-      bool isNoStream() const { return (m_cflags & 0x2) == 0x2; }
+      CParams& noStream() { m_cflags |= e_cflag_nostream; return *this; }
+      bool isNoStream() const { return (m_cflags & e_cflag_nostream) == e_cflag_nostream; }
    };
 
    inline const String& protocol() const { return m_servedProto; }

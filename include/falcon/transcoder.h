@@ -73,8 +73,9 @@ public:
 
    /** Decodes a buffer.
     \param data Input buffer containing the encoded data.
-    \param count The size of the buffer to be decoded.
+    \param size The size of the buffer to be decoded.
     \param target Where to store the decoded text.
+    \param count Maximum number of characters to be read.
     \param bThrow If true, throw an exception in case of incorrect encoding.
     \return the number of bytes that could be decoded, or String::npos if the data is not
     correctly encoded (if bThrow if false).

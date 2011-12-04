@@ -136,7 +136,7 @@ PCode* Inheritance::compiledExpr() const
 void Inheritance::IRequirement::onResolved(   
          const Module* source, const Symbol* srcSym, Module* tgt, Symbol* )
 {
-   Item* value;
+   const Item* value;
    
    if( (value = srcSym->value( 0 )) == 0 || ! value->isClass() )
    {

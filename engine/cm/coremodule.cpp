@@ -27,20 +27,8 @@
 #include <falcon/cm/clone.h>
 #include <falcon/cm/uri.h>
 #include <falcon/cm/path.h>
+#include <falcon/cm/storer.h>
 #include <falcon/cm/stream.h>
-
-#include <falcon/classes/classstring.h>
-#include <falcon/classes/classnil.h>
-#include <falcon/classes/classbool.h>
-#include <falcon/classes/classint.h>
-#include <falcon/classes/classnumeric.h>
-#include <falcon/classes/classdict.h>
-#include <falcon/classes/classarray.h>
-#include <falcon/classes/classrange.h>
-#include <falcon/classes/classreference.h>
-#include <falcon/flexyclass.h>
-#include <falcon/prototypeclass.h>
-#include <falcon/metaclass.h>
 
 // the standard error classes
 #include <falcon/errorclasses.h>
@@ -66,7 +54,8 @@ CoreModule::CoreModule():
       
       // Standard classes
       << new Ext::ClassURI
-      << new Ext::ClassPath      
+      << new Ext::ClassPath
+      << new Ext::ClassStorer
       << new Ext::ClassStream
       ;
 }

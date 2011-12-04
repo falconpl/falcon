@@ -13,14 +13,13 @@
    See LICENSE file for licensing details.
 */
 
-/** \file
-   Item API implementation
-   This File contains the non-inlined access to items.
-*/
+#undef SRC
+#define SRC "engine/item.cpp"
 
 #include <falcon/item.h>
 #include <falcon/itemid.h>
 #include <falcon/engine.h>
+
 
 namespace Falcon
 {

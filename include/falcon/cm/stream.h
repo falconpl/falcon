@@ -29,6 +29,8 @@
 namespace Falcon {
 
 class Stream;
+class StreamBuffer;
+class Transcoder;
 
 namespace Ext {
 
@@ -38,6 +40,9 @@ class FALCON_DYN_CLASS StreamCarrier
 {
 public:
    Stream* m_stream;
+   StreamBuffer* m_sbuf;
+   Stream* m_underlying;
+   
    uint32* m_count;
    uint32 m_gcMark;
    
@@ -45,6 +50,8 @@ public:
    StreamCarrier( const StreamCarrier& other );
    virtual ~StreamCarrier();
    virtual StreamCarrier* clone() const;
+   
+   void setBuffering( uint32 size );
 };
 
 
@@ -86,6 +93,8 @@ private:
    FALCON_DECLARE_PROPERTY( bad )
    FALCON_DECLARE_PROPERTY( good )
    FALCON_DECLARE_PROPERTY( isopen )
+   FALCON_DECLARE_PROPERTY( buffer )
+   FALCON_DECLARE_PROPERTY( encoding )
    
    FALCON_DECLARE_METHOD( write, "data:S|M, count:[N], start:[N]" );
    FALCON_DECLARE_METHOD( read, "data:S|M, count:[N], start:[N]" );
@@ -96,6 +105,7 @@ private:
    FALCON_DECLARE_METHOD( seekEnd, "position:N" );
    FALCON_DECLARE_METHOD( seek, "position:N,whence:N" );
    FALCON_DECLARE_METHOD( tell, "" );
+   FALCON_DECLARE_METHOD( flush, "" );
    FALCON_DECLARE_METHOD( trunc, "position:[N]" );
    FALCON_DECLARE_METHOD( ravail, "msecs:[N]" );
    FALCON_DECLARE_METHOD( wavail, "msecs:[N]" );

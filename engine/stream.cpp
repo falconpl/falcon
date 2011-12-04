@@ -45,6 +45,11 @@ void Stream::throwUnsupported()
    throw new UnsupportedError( ErrorParam( e_io_unsup, __LINE__, __FILE__ ) );
 }
 
+bool Stream::flush()
+{
+   return true;
+}
+
 }
 
 /* end of stream.cpp */

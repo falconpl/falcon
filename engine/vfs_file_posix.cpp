@@ -143,7 +143,7 @@ Stream *VFSFile::create( const URI& uri, const CParams &p )
    AutoCString cfilename( uri.path() );
    errno=0;
 
-   int handle = ::open( cfilename.c_str(), O_CREAT | omode, DEFAULT_CREATE_MODE );
+   int handle = ::open( cfilename.c_str(), O_CREAT | O_RDWR | omode, DEFAULT_CREATE_MODE );
 
    if ( handle >= 0 )
    {

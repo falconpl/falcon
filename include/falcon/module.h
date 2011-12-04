@@ -179,6 +179,14 @@ public:
     */
    Symbol* addClass( Class* fc, bool isObj, bool bExport = true );
 
+   /** Finds an already registered class.
+    \return A global class or 0 if not found.
+
+    If the given name is present as a global class in the current module.
+    */
+   Class* getClass( const String& name ) const;
+   
+   
    /** Adds an anonymous class.
     \param cls The class to be added
 
@@ -555,6 +563,20 @@ public:
     stays alive as long as THEY are valid.
     */
    Item* addDefaultValue( const Item& src );
+   
+   /** Adds a constant at global level in the module.
+    \param name The name of the constant.
+    \param value The value of the constant.
+    \reutrn true if the name is free, false if the constant cannot be created.
+    
+    This method adds a constant for export in the module by adding a 
+    global symbol and then assigning a default value to it.
+    
+    Assigmnet to the symbol is inhibited, but if the constant is complex (i.e.
+    a class instance), it could be possible that its contents are actually
+    changed.
+    */
+   bool addConstant( const String& name, const Item& value );
    
 private:
    class Private;

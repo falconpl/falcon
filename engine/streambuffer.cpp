@@ -27,7 +27,6 @@
 namespace Falcon {
 
 StreamBuffer::StreamBuffer( Stream *underlying, bool bOwn, uint32 bufSize ):
-   Stream( underlying->type() ),
    m_bufSize( bufSize ),
    m_changed( false ),
    m_bufPos(0),
@@ -41,7 +40,7 @@ StreamBuffer::StreamBuffer( Stream *underlying, bool bOwn, uint32 bufSize ):
 }
 
 StreamBuffer::StreamBuffer( const StreamBuffer &other ):
-   Stream( other.m_streamType ),
+   Stream( other ),
    m_bufSize( other.m_bufSize ),
    m_changed( other.m_changed ),
    m_bufPos( other.m_bufPos ),
@@ -104,10 +103,10 @@ bool StreamBuffer::refill()
    return true;
 }
 
-int32 StreamBuffer::read( void *b, int32 size )
+size_t StreamBuffer::read( void *b, size_t size )
 {
    // minimal sanity check
-   if ( size <= 0 )
+   if ( size == 0 )
       return 0;
 
    if( ! m_stream->good() || ! m_stream->open() )
@@ -115,7 +114,7 @@ int32 StreamBuffer::read( void *b, int32 size )
 
    byte *buf = (byte*) b;
 
-   int32 avail = m_bufLen - m_bufPos;
+   size_t avail = m_bufLen - m_bufPos;
 
    // have we something to store in the buffer?
    if ( avail > 0 )
@@ -132,15 +131,16 @@ int32 StreamBuffer::read( void *b, int32 size )
          memcpy( buf, m_buffer + m_bufPos, avail );
          m_bufPos = m_bufLen;  // declare we have consumed everything.
          // return a partial read in case of underlying networks
-         if ( m_stream->type() == t_network )
+         /*if ( m_stream->type() == t_network )
             return avail;
+          */
       }
    }
 
    // if we're here, we need to refill the buffer, or eventually to read everything from the stream
    // the amount of data we still have to put in the buffer is size - avail.
 
-   int32 toBeRead = size - avail;
+   size_t toBeRead = size - avail;
 
    // would be a new buffer enough to store the data?
    if ( toBeRead <= m_bufSize )
@@ -178,10 +178,10 @@ int32 StreamBuffer::read( void *b, int32 size )
 }
 
 
-int32 StreamBuffer::write( const void *b, int32 size )
+size_t StreamBuffer::write( const void *b, size_t size )
 {
    // minimal sanity check
-   if ( size <= 0 )
+   if ( size == 0 )
       return 0;
 
    if( m_stream->status() != t_open )
@@ -190,7 +190,7 @@ int32 StreamBuffer::write( const void *b, int32 size )
    const byte *buf = (byte*) b;
 
    // first; is there any space left in the buffer for write?
-   int32 avail = m_bufSize - m_bufPos;
+   size_t avail = m_bufSize - m_bufPos;
    if( avail > 0 )
    {
       m_changed = true;
@@ -218,7 +218,7 @@ int32 StreamBuffer::write( const void *b, int32 size )
 
    // now, if the rest of the data can be stored in the next buffer,
    // refill and write. Otherwise, just flush and try a single write out.
-   int32 toBeWritten = size - avail;
+   size_t toBeWritten = size - avail;
    if( toBeWritten <= m_bufSize )
    {
       flush();
@@ -233,13 +233,13 @@ int32 StreamBuffer::write( const void *b, int32 size )
    {
       flush(); // but don't reload now
 
-      toBeWritten = m_stream->write( buf + avail, toBeWritten );
-      if( toBeWritten < 0 )
+      int written = m_stream->write( buf + avail, toBeWritten );
+      if( written < 0 )
       {
          return avail;
       }
-      m_filePos += toBeWritten;
-      return avail + toBeWritten;
+      m_filePos += written;
+      return avail + written;
    }
 }
 
@@ -287,20 +287,20 @@ bool StreamBuffer::truncate( int64 pos )
    }
 }
 
-int32 StreamBuffer::readAvailable( int32 msecs_timeout, const Sys::SystemData *sysData )
+size_t StreamBuffer::readAvailable( int32 msecs_timeout )
 {
    if ( m_bufPos < m_bufLen )
       return m_bufLen - m_bufPos;
 
-   return m_stream->readAvailable( msecs_timeout, sysData );
+   return m_stream->readAvailable( msecs_timeout );
 }
 
-int32 StreamBuffer::writeAvailable( int32 msecs_timeout, const Sys::SystemData *sysData )
+size_t StreamBuffer::writeAvailable( int32 msecs_timeout )
 {
    if ( m_bufPos < m_bufSize )
       return m_bufSize - m_bufPos;
 
-   return m_stream->writeAvailable( msecs_timeout, sysData );
+   return m_stream->writeAvailable( msecs_timeout );
 }
 
 int64 StreamBuffer::seek( int64 pos, e_whence whence )
@@ -326,7 +326,7 @@ bool StreamBuffer::flush()
       return true;
 
    int32 written = m_stream->write( m_buffer, m_bufLen );
-   int32 count = written;
+   uint32 count = (uint32)written;
    while( written > 0 && count < m_bufLen )
    {
       written = m_stream->write( m_buffer + count, m_bufLen - count );
@@ -346,11 +346,9 @@ bool StreamBuffer::flush()
    return true;
 }
 
+
 bool StreamBuffer::get( uint32 &chr )
 {
-   if ( popBuffer(chr) )
-      return true;
-
    if ( m_bufPos == m_bufLen )
    {
       if ( ! refill() )
@@ -363,6 +361,7 @@ bool StreamBuffer::get( uint32 &chr )
    chr = m_buffer[m_bufPos++ ];
    return true;
 }
+
 
 bool StreamBuffer::put( uint32 chr )
 {
@@ -387,12 +386,17 @@ bool StreamBuffer::put( uint32 chr )
 bool StreamBuffer::resizeBuffer( uint32 size )
 {
    fassert( size > 0 );
-   if ( ! flush() )
-      return false;
+   
+   if(size != m_bufSize )
+   {
+      if ( ! flush() )
+         return false;
 
-   memFree( m_buffer );
-   m_buffer = (byte*) memAlloc( size );
-   m_bufSize = size;
+      memFree( m_buffer );
+      m_buffer = (byte*) memAlloc( size );
+      m_bufSize = size;  
+   }
+   
    return true;
 }
 

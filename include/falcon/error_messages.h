@@ -73,7 +73,7 @@ FAL_ERRORDECL( e_init_given, 36, "Constructor already declared" );
 
 FAL_ERRORDECL( e_static_const, 37, "Static member initializers must be a constant expression" );
 FAL_ERRORDECL( e_inv_inherit, 38, "Class inherits from a symbol that is not a class" );
-FAL_ERRORDECL( e_nonsym_ref, 39, "Trying to get a reference from something that's not a symbol" );
+FAL_ERRORDECL( e_nonsym_ref, 39, "Trying to get a reference from a constant value" );
 
 FAL_ERRORDECL( e_no_cls_inst, 40, "No internal class found for standalone object" );
 FAL_ERRORDECL( e_switch_clash, 41, "Duplicate or clashing switch/select case" );
@@ -278,6 +278,7 @@ FAL_ERRORDECL( e_param_range, 903, "Parameters content invalid/out of range" );
 FAL_ERRORDECL( e_param_indir_code, 904, "Parse error in indirect code" );
 FAL_ERRORDECL( e_param_strexp_code, 905, "Parse error in expanded string" );
 FAL_ERRORDECL( e_param_fmt_code, 906, "Parse error in format specifier" );
+FAL_ERRORDECL( e_inv_prop_value, 907, "Invalid value assigned to a property" );
 
 FAL_ERRORDECL( e_paranoid, 999, "Paranoid check failed" );
 

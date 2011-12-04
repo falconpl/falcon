@@ -70,8 +70,15 @@ void ExprRef::apply_( const PStep* ps, VMContext* ctx )
       const_cast<ExprRef*>(self)->m_symbol = self->m_expr->symbol();
    }
    
+   if( self->m_symbol->isConstant() )
+   {
+      throw new CodeError( ErrorParam(e_nonsym_ref, __LINE__, SRC )
+         .origin( ErrorParam::e_orig_vm )
+         .extra( self->m_symbol->name() ) );
+   }
+   
    // get the class/data pair of the item.
-   Item &value = *self->m_symbol->value(ctx);
+   Item &value = (*self->m_symbol->value(ctx));
    fassert( &value != 0 );
    
    // if this is already a reference, we're done.

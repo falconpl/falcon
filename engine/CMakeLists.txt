@@ -68,6 +68,7 @@ add_library(falcon_engine SHARED
   cm/minmax.cpp
   cm/path.cpp
   cm/print.cpp
+  cm/storer.cpp
   cm/stream.cpp
   cm/tostring.cpp
   cm/typeid.cpp
@@ -239,6 +240,7 @@ add_library(falcon_engine SHARED
   string.cpp
   stringstream.cpp
   stream.cpp
+  streambuffer.cpp
   sun_strtod.cpp
   symbol.cpp
   symbolmap.cpp

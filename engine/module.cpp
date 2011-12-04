@@ -410,6 +410,17 @@ Symbol* Module::addClass( Class* fc, bool, bool bExport )
    return sym;
 }
 
+Class* Module::getClass( const String& name ) const
+{
+   Private::ClassMap::const_iterator iter = _p->m_classes.find(name);
+   if( iter != _p->m_classes.end() )
+   {
+      return iter->second;
+   }
+   
+   return 0;
+}
+
 
 void Module::addAnonClass( Class* cls )
 {
@@ -975,6 +986,21 @@ Item* Module::addDefaultValue( const Item& src )
 {
    _p->m_staticData.push_back( src );
    return &_p->m_staticData.back();
+}
+
+
+bool Module::addConstant( const String& name, const Item& value )
+{
+   Symbol* gsym = addVariable( name, true );
+   if ( gsym == 0 ) 
+   { 
+      return false;
+   }
+   
+   Item* data = addDefaultValue( value );
+   gsym->defaultValue( data );
+   gsym->setConstant();
+   return true;
 }
 
 void Module::checkWaitingFwdDef( Symbol* sym )

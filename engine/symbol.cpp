@@ -24,6 +24,8 @@ Symbol::Symbol( const String& name, type_t t, uint32 id ):
    m_name( name ),
    m_declaredAt(0),
    m_type(t),
+   m_external(false),
+   m_bConstant(false),
    m_defval(0)
 {
    define( t, id );
@@ -34,7 +36,10 @@ Symbol::Symbol( const Symbol& other ):
    m_declaredAt( other.m_declaredAt ),
    m_id( m_id ),
    m_type( other.m_type ),
+   m_external(other.m_external),
+   m_bConstant(other.m_bConstant),
    m_defval(other.m_defval),
+
    __value( other.__value )
 {}
 

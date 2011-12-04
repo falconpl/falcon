@@ -28,52 +28,19 @@
 namespace Falcon {
 namespace Ext {
 
-/** We keep th path, the auth data and the query. */
-class PathCarrier: public UserCarrier
-{
-public:
-   Path m_path;
-   
-   String m_fulloc;
-   String m_fullWinLoc;
-   String m_winLoc;
-   String m_winpath;
-   
-   PathCarrier( uint32 nprops ):
-      UserCarrier(nprops)
-   {}
-   
-   PathCarrier( const PathCarrier& other ):
-      UserCarrier( other.itemCount() ),
-      m_path( other.m_path )
-   {}
-   
-   virtual ~PathCarrier()
-   {
-   }
-   
-   virtual PathCarrier* clone() const { return new PathCarrier(*this); }
-};
-
-
 class ClassStorer: public ClassUser
 {
 public:
    
-   ClassPath();
-   virtual ~ClassPath();
+   ClassStorer();
+   virtual ~ClassStorer();
    
-   //=============================================================
-   //
+   void op_create( VMContext* ctx, int32 pcount ) const;
    virtual void* createInstance( Item* params, int pcount ) const;   
-   virtual void op_toString( VMContext* ctx, void* self ) const;
-   
 private:   
    
-   FALCON_DECLARE_METHOD( absolutize, "parent:[S]" );
-   FALCON_DECLARE_METHOD( relativize, "parent:S" );
-   FALCON_DECLARE_METHOD( canonicize, "" );
-   FALCON_DECLARE_METHOD( cwd, "" );
+   FALCON_DECLARE_METHOD( store, "item:S" );
+   FALCON_DECLARE_METHOD( commit, "stream:Stream" );
 };
 
 }

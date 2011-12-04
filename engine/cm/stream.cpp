@@ -31,11 +31,20 @@
 #include <falcon/errors/ioerror.h>
 #include <falcon/stream.h>
 
+#include <falcon/streambuffer.h>
+#include <falcon/transcoder.h>
+#include <falcon/memory.h>
+#include <falcon/errors/encodingerror.h>
+
+#include <string.h>
+
 namespace Falcon {
 namespace Ext {
  
 StreamCarrier::StreamCarrier( Stream* stream ):
    m_stream(stream),
+   m_sbuf(0),
+   m_underlying(stream),
    m_count( new uint32 ),
    m_gcMark(0)
 {}
@@ -43,9 +52,10 @@ StreamCarrier::StreamCarrier( Stream* stream ):
 
 StreamCarrier::StreamCarrier( const StreamCarrier& other ):
    m_stream( other.m_stream ),
+   m_sbuf(other.m_sbuf),
+   m_underlying(other.m_underlying),
    m_count( other.m_count ),
    m_gcMark(0)
-
 {
    ++(*m_count);
 }
@@ -55,10 +65,39 @@ StreamCarrier::~StreamCarrier()
    if( --(*m_count) == 0 )
    {
       delete m_count;
-      delete m_stream;
+      delete m_sbuf;
+      delete m_underlying;
    }
 }
-   
+
+
+void StreamCarrier::setBuffering( uint32 size )
+{
+   // shall we initialize a buffer?
+   if( m_sbuf == 0 && size != 0 )
+   {
+      m_sbuf = new StreamBuffer( m_underlying, false, size );
+      m_stream = m_sbuf;
+   }
+   else {
+      // with size 0 remove buffering.
+      if( size == 0 )
+      {
+         if( m_sbuf != 0 )
+         {
+            m_stream = m_underlying;
+            delete m_sbuf;
+            m_sbuf = 0;
+         }
+         // otherwise, we have nothing to do, size = 0 but it's already so.
+      }
+      else {
+         m_sbuf->resizeBuffer( size );
+      }
+   }
+}
+
+
 StreamCarrier* StreamCarrier::clone() const 
 { 
    return new StreamCarrier(*this); 
@@ -77,6 +116,8 @@ ClassStream::ClassStream():
    FALCON_INIT_PROPERTY( bad ),
    FALCON_INIT_PROPERTY( good ),
    FALCON_INIT_PROPERTY( isopen ),
+   FALCON_INIT_PROPERTY( buffer ),
+   FALCON_INIT_PROPERTY( encoding ),
 
    FALCON_INIT_METHOD( write ),
    FALCON_INIT_METHOD( read ),
@@ -87,6 +128,7 @@ ClassStream::ClassStream():
    FALCON_INIT_METHOD( seekEnd ),
    FALCON_INIT_METHOD( seek ),
    FALCON_INIT_METHOD( tell ),
+   FALCON_INIT_METHOD( flush ),   
    FALCON_INIT_METHOD( trunc ),
    FALCON_INIT_METHOD( ravail ),
    FALCON_INIT_METHOD( wavail )
@@ -241,12 +283,89 @@ FALCON_DEFINE_PROPERTY_GET_P( ClassStream, isopen )
 }
 
 
+FALCON_DEFINE_PROPERTY_SET_P( ClassStream, buffer )
+{
+   if ( ! value.isInteger() )
+   {
+      throw new ParamError( ErrorParam(e_inv_prop_value, __LINE__, SRC ).extra("N"));
+   }
+   
+   StreamCarrier* sc = static_cast<StreamCarrier*>(instance);
+   uint32 v = value.asInteger() < 0 ? 0 : value.asInteger();
+   sc->setBuffering( v );
+}
+
+FALCON_DEFINE_PROPERTY_GET_P( ClassStream, buffer )
+{
+   StreamCarrier* sc = static_cast<StreamCarrier*>(instance);
+   uint32 bufSize = sc->m_sbuf == 0 ? 0 : sc->m_sbuf->bufferSize();   
+   value = (int64) bufSize;
+}
+
+/*
+FALCON_DEFINE_PROPERTY_SET_P( ClassStream, encoding )
+{
+   StreamCarrier* sc = static_cast<StreamCarrier*>(instance);
+   
+   bool bReset = false;
+   if( value.isNil() )
+   {
+      bReset = true;
+   }
+   else if( value.isString() )
+   {
+      const String& encName = *value.asString();
+      if( encName == "" || encName == "C" )
+      {
+         bReset = true;
+      }
+      else
+      {
+         delete sc->m_tcoder;
+         sc->m_tcoder = Engine::instance()->getTranscoder(encName);
+         if( sc->m_tcoder )
+         {
+            // unknown encoding
+            throw new ParamError( ErrorParam( e_param_range, __LINE__, SRC )
+               .origin( ErrorParam::e_orig_runtime )
+               .extra("Unknown encoding " + encName));
+         }
+      }      
+   }
+   else
+   {
+      throw new ParamError( ErrorParam(e_inv_prop_value, __LINE__, SRC ).extra("S|Nil"));
+   }
+   
+   if( bReset )
+   {
+      delete sc->m_tcoder;
+      sc->m_tcoder = 0;
+   }   
+}
+
+FALCON_DEFINE_PROPERTY_GET_P( ClassStream, encoding )
+{
+   StreamCarrier* sc = static_cast<StreamCarrier*>(instance);
+   
+   if( sc->m_tcoder == 0 )
+   {
+      value.setNil();
+   }
+   else {
+      value = sc->m_tcoder->name();
+   }
+}
+
+*/
 //======================================================
 // Methods
 //
 
 FALCON_DEFINE_METHOD_P1( ClassStream, write )
 {
+   StreamCarrier* sc = static_cast<StreamCarrier*>(ctx->self().asInst());
+   
    Item* i_data = ctx->param(0);
    if( i_data == 0 || !(i_data->isString()||i_data->isMemBuf()) )
    {
@@ -263,9 +382,10 @@ FALCON_DEFINE_METHOD_P1( ClassStream, write )
       throw paramError();
    }
    
-   byte* dataSource = i_data->asString()->getRawStorage();
-   uint32 dataSize = i_data->asString()->size();
-   uint32 count = dataSize;
+   byte* dataSource; 
+   uint32 dataSize;
+   
+   uint32 count = String::npos;
    uint32 start = 0;
    
    if( i_start != 0 && ! i_start->isNil() )
@@ -286,12 +406,31 @@ FALCON_DEFINE_METHOD_P1( ClassStream, write )
          count = (uint32) icount;
       }
    }
-   
-   if( start >= dataSize )
+      
+   if( i_data->isString() )
    {
-      // nothing to do.
-      ctx->returnFrame( (int64) 0 );
-      return;
+      /*if( sc->m_tcoder != 0 )
+      {
+         ctx->returnFrame(writeString( sc->m_tcoder, sc->m_stream, *i_data->asString(), start, count ));
+         return;
+      }
+      else
+      {
+       */
+      dataSource = i_data->asString()->getRawStorage();
+      dataSize = i_data->asString()->size();
+   }
+   else
+   {
+      /* TODO: Membuf
+      dataSource = i_data->isMem;
+      dataSize = i_data->asString()->size();
+       */
+   }
+   
+   if( count == String::npos ) 
+   {
+      count = dataSize;
    }
    
    if( start + count > dataSize )
@@ -299,11 +438,16 @@ FALCON_DEFINE_METHOD_P1( ClassStream, write )
       count = dataSize - start;
    }
    
-   StreamCarrier* sc = static_cast<StreamCarrier*>(ctx->self().asInst());
+   if( start >= dataSize || count <= 0 )
+   {
+      // nothing to do.
+      ctx->returnFrame( (int64) 0 );
+      return;
+   }
+   
    int64 retval = (int64) sc->m_stream->write(dataSource+start, count);   
    ctx->returnFrame( retval );   
 }
-
 
 
 FALCON_DEFINE_METHOD_P1( ClassStream, read )
@@ -391,12 +535,6 @@ FALCON_DEFINE_METHOD_P1( ClassStream, grab )
    ctx->returnFrame( rv );
 }
 
-/*
-   FALCON_INIT_METHOD( ravail ),
-   FALCON_INIT_METHOD( wavail )
- */
-
-
 FALCON_DEFINE_METHOD_P1( ClassStream, close )
 {
    StreamCarrier* sc = static_cast<StreamCarrier*>(ctx->self().asInst());
@@ -468,6 +606,12 @@ FALCON_DEFINE_METHOD_P1( ClassStream, tell )
 }
 
 
+FALCON_DEFINE_METHOD_P1( ClassStream, flush )
+{   
+   StreamCarrier* sc = static_cast<StreamCarrier*>(ctx->self().asInst());   
+   ctx->returnFrame( sc->m_stream->flush() );
+}
+
 FALCON_DEFINE_METHOD_P1( ClassStream, trunc )
 {   
    Item* i_loc = ctx->param(0);
@@ -505,7 +649,6 @@ FALCON_DEFINE_METHOD_P1( ClassStream, wavail )
    int64 loc = i_loc != 0 ? i_loc->forceInteger() : -1 ;
    ctx->returnFrame( (int64) sc->m_stream->writeAvailable( loc ) );
 }
-
 
 }
 }

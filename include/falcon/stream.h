@@ -185,6 +185,14 @@ public:
 
    /** Seks from a given position in a file. */
    virtual off_t seek( off_t pos, e_whence w ) = 0;
+   
+   /** Commits pending read/write operations on those streams supporting delayed rw. 
+    \return true of the operation is completed, false on error (if not raising exceptions).
+    \throw IoError on i/o error while writing if throwing exception is enabled.
+    
+    On other streams, it has no effect.
+    */
+   virtual bool flush();
 
    /** Returns the system error ID from the last I/O operation. */
    virtual size_t lastError() const { return m_lastError; }

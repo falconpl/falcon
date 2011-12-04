@@ -35,11 +35,11 @@ public:
    } enum_default_buffer_size;
 
 private:
-   int32 m_bufSize;
+   uint32 m_bufSize;
    bool m_changed;
    byte *m_buffer;
-   int32 m_bufPos;
-   int32 m_bufLen;
+   uint32 m_bufPos;
+   uint32 m_bufLen;
 
    uint64 m_filePos;
    bool m_bReseek;
@@ -69,14 +69,14 @@ public:
    virtual bool close();
    virtual int64 tell();
    virtual bool truncate( int64 pos=-1 );
-   //virtual int32 readAvailable( int32 msecs_timeout, const Sys::SystemData *sysData = 0 );
-   //virtual int32 writeAvailable( int32 msecs_timeout, const Sys::SystemData *sysData );
+   size_t readAvailable( int32 msecs_timeout = 0 );
+   size_t writeAvailable( int32 msecs_timeout = 0 );
    virtual bool flush();
    
    virtual bool get( uint32 &chr );
    virtual bool put( uint32 chr );
-   virtual int32 read( void *buffer, int32 size );
-   virtual int32 write( const void *buffer, int32 size );
+   virtual size_t read( void *buffer, size_t size );
+   virtual size_t write( const void *buffer, size_t size );
 
    virtual size_t lastError() const { return m_stream->lastError(); }
    virtual t_status status() const { return m_stream->status(); }

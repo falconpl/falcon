@@ -461,10 +461,10 @@ void VMContext::raiseItem( const Item& item )
       if( m_catchBlock != 0 )
       {
          resetCode( m_catchBlock );
-         Item* value = m_catchBlock->headSymbol()->value(this);
-         if( value != 0 )
+         Symbol* sym = m_catchBlock->headSymbol();
+         if( sym != 0 )
          {
-            *value = item; 
+            *sym->value(this) = item; 
          }
          m_raised.setNil();
       }

@@ -17,8 +17,8 @@
 #define SRC "falcon/cm/storer.cpp"
 
 #include <falcon/cm/storer.h>
-
 #include <falcon/storer.h>
+#include <falcon/datawriter.h>
 
 #include <falcon/vm.h>
 #include <falcon/vmcontext.h>
@@ -26,26 +26,36 @@
 #include <falcon/errors/paramerror.h>
 #include <falcon/errors/codeerror.h>
 
-#include <falcon/cm/uri.h>
+#include <falcon/usercarrier.h>
+
+#include "falcon/module.h"
 
 namespace Falcon {
 namespace Ext {
 
+typedef UserCarrierT<Storer> StorerCarrier;
 
 ClassStorer::ClassStorer():
    ClassUser("Storer"),
    FALCON_INIT_METHOD( store ),
    FALCON_INIT_METHOD( commit )
-{
-   
-}
+{}
 
 ClassStorer::~ClassStorer()
 {}
 
-void* ClassStorer::createInstance( Item* params, int pcount ) const
+void ClassStorer::op_create( VMContext* ctx, int32 pcount ) const
+{
+   static Collector* coll = Engine::instance()->collector(); 
+   
+   void* instance = new StorerCarrier( new Storer(ctx) );
+   ctx->stackResult( pcount + 1, FALCON_GC_STORE( coll, this, instance ) );
+}
+
+
+void* ClassStorer::createInstance( Item*, int  ) const
 { 
-   return new Storer;
+   return 0;
 }
 
 //====================================================
@@ -61,42 +71,38 @@ FALCON_DEFINE_METHOD_P1( ClassStorer, store )
       throw paramError();
    }
    
-   Storer* storer = static_cast<Storer*>(ctx->self().asInst());
-   
+   Storer* storer = static_cast<StorerCarrier*>(ctx->self().asInst())->carried();
+   Class* cls; void *data; 
+   i_item->forceClassInst( cls, data );
+   storer->store( cls, data );
    ctx->returnFrame();   
 }
 
 
-FALCON_DEFINE_METHOD_P1( ClassPath, relativize )
-{
-   Item* i_path = ctx->param(0);
-   if( i_path == 0 || ! i_path->isString() )
+FALCON_DEFINE_METHOD_P1( ClassStorer, commit )
+{  
+   static Class* clsStream = module()->getClass( "Stream" );
+   fassert( clsStream != 0 );
+   
+   Item* i_item = ctx->param(0);
+   if( i_item == 0 )
+   {
+      throw paramError();
+   }
+
+   Class* cls; void* data;
+   i_item->forceClassInst( cls, data ); 
+   
+   if( ! cls->isDerivedFrom( clsStream ) )
    {
       throw paramError();
    }
    
-   PathCarrier* pc = static_cast<PathCarrier*>(ctx->self().asInst());
-   Item ret; 
-   ret.setBoolean( pc->m_path.relativize( *i_path->asString() ) );
-   ctx->returnFrame(ret);   
+   Storer* storer = static_cast<StorerCarrier*>(ctx->self().asInst())->carried();
+   DataWriter dw( static_cast<Stream*>(data) );
+   storer->commit( &dw );
+   ctx->returnFrame();   
 }
-
-
-FALCON_DEFINE_METHOD_P1( ClassPath, canonicize )
-{
-   PathCarrier* pc = static_cast<PathCarrier*>(ctx->self().asInst());
-   pc->m_path.canonicize();
-   ctx->returnFrame();
-}
-
-
-FALCON_DEFINE_METHOD_P1( ClassPath, cwd )
-{   
-   String temp;
-   Path::currentWorkDirectory( temp );
-   ctx->returnFrame( temp );
-}
-
 
 }
 }
