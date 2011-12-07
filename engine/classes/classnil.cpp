@@ -26,6 +26,7 @@ namespace Falcon {
 ClassNil::ClassNil():
    Class("Nil", FLC_ITEM_NIL )
 {
+   m_bIsFlatInstance = true;
 }
 
 
@@ -56,7 +57,7 @@ void ClassNil::store( VMContext*, DataWriter* , void* ) const
    // Nothing to write.
 }
 
-void ClassNil::restore( VMContext* , DataReader* , void* ) const
+void ClassNil::restore( VMContext* , DataReader* , void*& ) const
 {
    // nothing to read.
 }

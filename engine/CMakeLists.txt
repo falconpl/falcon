@@ -68,6 +68,7 @@ add_library(falcon_engine SHARED
   cm/minmax.cpp
   cm/path.cpp
   cm/print.cpp
+  cm/restorer.cpp
   cm/storer.cpp
   cm/stream.cpp
   cm/tostring.cpp
@@ -231,6 +232,7 @@ add_library(falcon_engine SHARED
   property.cpp
   rampmode.cpp
   reader.cpp
+  restorer.cpp
   rulesyntree.cpp
   sourceref.cpp
   statement.cpp

@@ -1,6 +1,6 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: deserializer.h
+   FILE: restorer.h
 
    Helper for cyclic joint structure deserialization.
    -------------------------------------------------------------------
@@ -13,43 +13,96 @@
    See LICENSE file for licensing details.
 */
 
-#ifndef FALCON_DESERIALIZER_H
-#define FALCON_DESERIALIZER_H
+#ifndef FALCON_RESTORER_H
+#define FALCON_RESTORER_H
 
 #include <falcon/setup.h>
 #include <falcon/types.h>
+#include <falcon/pstep.h>
 
 namespace Falcon {
 
-class Class;
-class DataReader;
+class Stream;
 class ModSpace;
+class VMContext;
+class Class;
+class ModLoader;
 
 /** Helper for cyclic joint structure deserialization.
+ 
+ \see Storer
 */
 
-class FALCON_DYN_CLASS Deserializer
+class FALCON_DYN_CLASS Restorer
 {
 public:
-   Deserializer(ModSpace* srcSpace=0);
-   virtual ~Deserializer();
+   Restorer( VMContext* vmc );
+   virtual ~Restorer();
    
-   virtual void restore( DataReader* rd );
+   /** Restores the data in the requried stream.
+    \return true IF the restore was complete, false if the VMContext was altered.
+    \throw IoError on error reading from the stream
+    \thrown ParseError on semantic errors while reading from the stream.
+    */
+   virtual bool restore( Stream* rd, ModSpace* msp, ModLoader* ml );
    
-   virtual void* next( Class&* handler );
+   virtual bool next( Class*& handler, void*& data );
    virtual bool hasNext() const;
    virtual uint32 objCount() const;
    
-private:      
-   ModSpace* m_modSpace;
+private:       
+   class Private;
+   Private* _p;
    
-   class MetaData;
-   MetaData* _meta;
+   VMContext* m_ctx;
    
-   DataReader* m_rd;
+   void readClassTable();
+   bool loadClasses( ModSpace* msp, ModLoader* ml );
+   void readInstanceTable();
    
-   // Using void* because we'll be using private data for that.
-   // void postDeserialize( MetaData& prv );   
+   bool readObjectTable();   
+   bool unflatten();
+
+   
+   class FALCON_DYN_CLASS ReadNext: public PStep
+   {
+   public:
+      ReadNext(Restorer* owner): m_owner(owner) { apply = apply_; }
+      virtual ~ReadNext() {}
+      static void apply_( const PStep* ps, VMContext* ctx );
+   private:
+      Restorer* m_owner; 
+   };
+
+   friend class ReadNext;
+   ReadNext m_readNext;
+   
+   class FALCON_DYN_CLASS UnflattenNext: public PStep
+   {
+   public:
+      UnflattenNext(Restorer* owner): m_owner(owner) { apply = apply_; }
+      virtual ~UnflattenNext() {}
+      static void apply_( const PStep* ps, VMContext* ctx );
+   
+   private:
+      Restorer* m_owner; 
+   };
+
+   friend class UnflattenNext;
+   UnflattenNext m_unflattenNext;
+  
+   class FALCON_DYN_CLASS LinkNext: public PStep
+   {
+   public:
+      LinkNext(Restorer* owner): m_owner(owner) { apply = apply_; }
+      virtual ~LinkNext() {}
+      static void apply_( const PStep* ps, VMContext* ctx );
+   private:
+      Restorer* m_owner; 
+   };
+
+   friend class LinkNext;
+   LinkNext m_linkNext;
 };
 
 }

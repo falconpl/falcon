@@ -37,7 +37,7 @@ public:
    virtual void* clone( void* source ) const;
    
    virtual void store( VMContext* ctx, DataWriter* stream, void* instance ) const;
-   virtual void restore( VMContext* ctx, DataReader* stream, void* empty ) const;
+   virtual void restore( VMContext* ctx, DataReader* stream, void*& empty ) const;
 
    virtual void describe( void* instance, String& target, int maxDepth = 3, int maxLength = 60 ) const;
 

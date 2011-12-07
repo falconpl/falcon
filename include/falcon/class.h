@@ -166,6 +166,21 @@ public:
     */
    bool isFalconClass() const { return m_bIsfalconClass; }
 
+   
+   /** Returns true if this class has flat instances.
+    Flat instances are completely stored in the item accompaining the class.
+    Their data is the (possibly volatile and transient) pointer to the item
+    containing the whole information needed to rebuild the object. 
+    
+    Flat classes known by the engine are:
+    - ClassNil
+    - ClassBool
+    - ClassInteger
+    - ClassNumeric
+    
+    */
+   bool isFlatInstance() const { return m_bIsFlatInstance; }
+   
    /** Flag to check for the metaclass.
     The MetaClass is a special class that handle other classes.
     This resolves in typeID() == FLC_CLASS_ID_CLASS
@@ -274,7 +289,7 @@ public:
    /** Restores an instance previously stored on a stream.
     \param ctx A virtual machine context where the deserialization occours.
     \param stream The data writer where the instance is being stored.
-    \param instance The instance that must be serialized.
+    \param empty A pointer that will be filled with the new instance (but see below)
     \throw IoError on i/o error during serialization.
     \throw UnserializableError if the class doesn't provide a class-specific
     serialization.
@@ -283,9 +298,13 @@ public:
     there aren't enough information to store the live item on the stream.
     Subclasses must reimplement this method doing something sensible.
     
+    @note The \b empty pointer will receive the newly created and deserialized instance,
+    but flat classes (those for which isFlatInstance() returns true) expect this
+    pointer to be preallocated as an entity of class Item.
+    
     \see class_serialize
    */
-   virtual void restore( VMContext* ctx, DataReader* stream, void* empty ) const;
+   virtual void restore( VMContext* ctx, DataReader* stream, void*& empty ) const;
    
    /** Called berfore storage to declare some other items that should be serialized.
     \param ctx A virtual machine context where the deserialization occours.
@@ -870,9 +889,11 @@ public:
     */
    virtual void op_next( VMContext* ctx, void* instance ) const;
 
+   
 protected:
    bool m_bIsfalconClass;
    bool m_bIsErrorClass;
+   bool m_bIsFlatInstance;
    
    /** This flags are at disposal of subclasses for special purpose (i.e. cast conversions). */
    int32 m_userFlags;

@@ -34,6 +34,7 @@ namespace Falcon {
 ClassInt::ClassInt():
    Class( "Integer", FLC_ITEM_INT )
 {
+   m_bIsFlatInstance = true;
 }
 
 
@@ -64,7 +65,7 @@ void ClassInt::store( VMContext*, DataWriter* dw, void* data ) const
 }
 
 
-void ClassInt::restore( VMContext* , DataReader* dr, void* data ) const
+void ClassInt::restore( VMContext* , DataReader* dr, void*& data ) const
 {
    int64 value;
    dr->read( value );

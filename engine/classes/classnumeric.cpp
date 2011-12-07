@@ -33,9 +33,16 @@
 namespace Falcon {
     
 
-ClassNumeric::ClassNumeric() : Class( "Numeric", FLC_ITEM_NUM ) { }
+ClassNumeric::ClassNumeric() : 
+   Class( "Numeric", FLC_ITEM_NUM ) 
+{ 
+   m_bIsFlatInstance = true; 
+}
 
-ClassNumeric::~ClassNumeric() { }
+
+ClassNumeric::~ClassNumeric() 
+{ 
+}
 
 void ClassNumeric::op_create( VMContext* ctx, int pcount ) const
 {
@@ -96,7 +103,7 @@ void ClassNumeric::store( VMContext*, DataWriter* dw, void* data ) const
 }
 
 
-void ClassNumeric::restore( VMContext* , DataReader* dr, void* data ) const
+void ClassNumeric::restore( VMContext* , DataReader* dr, void*& data ) const
 {
    int64 value;
    dr->read( value );

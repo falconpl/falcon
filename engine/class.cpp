@@ -33,6 +33,7 @@ namespace Falcon {
 Class::Class( const String& name ):
    m_bIsfalconClass( false ),
    m_bIsErrorClass( false ),
+   m_bIsFlatInstance(false),
    m_userFlags(0),
    m_name( name ),
    m_typeID( FLC_CLASS_ID_OBJECT ),
@@ -43,6 +44,7 @@ Class::Class( const String& name ):
 Class::Class( const String& name, int64 tid ):
    m_bIsfalconClass( false ),
    m_bIsErrorClass( false ),
+   m_bIsFlatInstance(false),
    m_userFlags(0),
    m_name( name ),
    m_typeID( tid ),
@@ -93,7 +95,7 @@ void Class::store( VMContext*, DataWriter*, void* ) const
 }
 
 
-void Class::restore( VMContext*, DataReader*, void* ) const
+void Class::restore( VMContext*, DataReader*, void*& ) const
 {
    throw new UnserializableError(ErrorParam( e_unserializable, __LINE__, __FILE__ )
       .origin( ErrorParam::e_orig_vm )

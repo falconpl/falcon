@@ -45,8 +45,8 @@ StreamCarrier::StreamCarrier( Stream* stream ):
    m_stream(stream),
    m_sbuf(0),
    m_underlying(stream),
-   m_count( new uint32 ),
-   m_gcMark(0)
+   m_gcMark(0),
+   m_count( new uint32 )
 {}
 
 
@@ -54,20 +54,17 @@ StreamCarrier::StreamCarrier( const StreamCarrier& other ):
    m_stream( other.m_stream ),
    m_sbuf(other.m_sbuf),
    m_underlying(other.m_underlying),
-   m_count( other.m_count ),
-   m_gcMark(0)
+   m_gcMark(0),
+   m_count( other.m_count )
 {
    ++(*m_count);
 }
 
 StreamCarrier::~StreamCarrier()
-{
-   if( --(*m_count) == 0 )
-   {
-      delete m_count;
-      delete m_sbuf;
-      delete m_underlying;
-   }
+{   
+   delete m_count;
+   delete m_sbuf;
+   delete m_underlying;
 }
 
 
@@ -104,6 +101,22 @@ StreamCarrier* StreamCarrier::clone() const
 }
 
 
+void StreamCarrier::incref()
+{
+   ++ *m_count  ;
+}
+
+void StreamCarrier::decref()
+{
+   if( -- *m_count == 0 ) 
+   {
+      delete this;
+   }
+}
+   
+//==================================================
+//
+
 ClassStream::ClassStream():
    ClassUser("Stream"),
    
@@ -117,7 +130,6 @@ ClassStream::ClassStream():
    FALCON_INIT_PROPERTY( good ),
    FALCON_INIT_PROPERTY( isopen ),
    FALCON_INIT_PROPERTY( buffer ),
-   FALCON_INIT_PROPERTY( encoding ),
 
    FALCON_INIT_METHOD( write ),
    FALCON_INIT_METHOD( read ),
@@ -141,7 +153,7 @@ ClassStream::~ClassStream()
 
 void ClassStream::dispose( void* instance ) const
 {
-   delete static_cast<StreamCarrier*>(instance);
+   static_cast<StreamCarrier*>(instance)->decref();
 }
 
 void* ClassStream::clone( void* insatnce ) const

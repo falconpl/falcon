@@ -166,6 +166,8 @@ public:
     representation of the character values. 
     */
    bool write( const String& tgt );
+   
+   bool write( const char* data ) { return write(String(data)); }
 
 private:
 

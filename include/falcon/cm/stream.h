@@ -43,15 +43,21 @@ public:
    StreamBuffer* m_sbuf;
    Stream* m_underlying;
    
-   uint32* m_count;
    uint32 m_gcMark;
    
    StreamCarrier( Stream* stream );
    StreamCarrier( const StreamCarrier& other );
-   virtual ~StreamCarrier();
    virtual StreamCarrier* clone() const;
    
    void setBuffering( uint32 size );
+   
+   void incref();
+   void decref();
+
+private:
+   uint32* m_count;
+   virtual ~StreamCarrier();
+
 };
 
 
@@ -94,7 +100,6 @@ private:
    FALCON_DECLARE_PROPERTY( good )
    FALCON_DECLARE_PROPERTY( isopen )
    FALCON_DECLARE_PROPERTY( buffer )
-   FALCON_DECLARE_PROPERTY( encoding )
    
    FALCON_DECLARE_METHOD( write, "data:S|M, count:[N], start:[N]" );
    FALCON_DECLARE_METHOD( read, "data:S|M, count:[N], start:[N]" );

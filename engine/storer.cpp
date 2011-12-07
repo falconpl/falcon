@@ -23,6 +23,7 @@
 
 #include <map>
 #include <vector>
+#include <list>
 
 namespace Falcon {
 
@@ -40,6 +41,9 @@ public:
    
    /** Vector of numeric IDs on which an object depends. */
    typedef std::vector<size_t> IDVector;
+   
+   /** Vector of items, used to store flat instances. */
+   typedef std::list<Item> InstanceList;
    
    /** Data relative to a signle serialized item. */
    class ObjectData {
@@ -74,19 +78,18 @@ public:
    typedef std::vector<ObjectData> ObjectDataVector;
    typedef std::vector<ObjectData*> ObjectDataPtrVector;
    typedef std::vector<Class*> ClassVector;
+   // Vector storing items of classes having flat data.
+   InstanceList m_flatInstances;
    
    ClassMap m_classes;
    ClassVector m_clsVector;
    
    ObjectMap m_objects;
    ObjectDataVector m_objVector;
-   IDVector m_objBoundaries;
+   // Objects as they are stored.
+   IDVector m_storedVector;
    ObjectDataPtrVector m_objTraversing;
-   
-   // used during serialization.
-   uint32 m_partStart;
-   uint32 m_partEnd;
-   
+      
    Private() {
       static Collector* coll = Engine::instance()->collector();
       
@@ -100,25 +103,38 @@ public:
       m_lock->dispose();
    }
    
-   void setNextObject()
+   void setNextObject( uint32 id )
    {
-      m_objBoundaries.push_back( m_objVector.size() );
+      m_storedVector.push_back( id );
    }
    
    
    ObjectData* addObject( Class* cls, void* obj, bool& bIsNew )
    {
-      // if the object is alredy there...
-      ObjectMap::const_iterator objIter = m_objects.find(obj);
-      if( objIter != m_objects.end() )
+      // if the object is flat, it's never there.
+      if( cls->isFlatInstance() )
       {
-         //... we have already it all
-         bIsNew = false;
-         return &m_objVector[objIter->second];
+         Item* data = static_cast<Item*>(obj);
+         m_flatInstances.push_back(*data);
+         obj = &m_flatInstances.back();
+      }
+      else 
+      {
+         // It's not flat, we must search it.
+         ObjectMap::const_iterator objIter = m_objects.find(obj);
+         // if the object is alredy there...
+         if( objIter != m_objects.end() )
+         {
+            //... we have already it all
+            bIsNew = false;
+            ObjectData* dt = &m_objVector[objIter->second];
+            return dt;
+         }
       }
       
+      // it's a new object -- manage it.
       bIsNew = true;
-      size_t objCount = m_objects.size()+1;
+      size_t objCount = m_objVector.size();
       m_objects[obj] = objCount;
       
       // ... then, see if we need to save the class as well..
@@ -132,7 +148,7 @@ public:
       else
       {
          // New class in town...
-         clsId = m_classes.size()+1;
+         clsId = m_classes.size();
          m_classes[cls] = clsId;
          m_clsVector.push_back( cls );
       }
@@ -154,15 +170,16 @@ public:
 Storer::Storer( VMContext* ctx ):
    _p(0),
    m_ctx(ctx),
+   m_writer( new DataWriter(0) ),
    m_traverseNext( this ),
-   m_writeNext(this),
-   m_writeNextPart( this )
+   m_writeNext(this)
 {  
 }
 
 
 Storer::~Storer()
 {
+   delete m_writer;
    delete _p;
 }
 
@@ -175,42 +192,49 @@ bool Storer::store( Class* handler, void* data )
    }
    
    // First, create the Private that we use to unroll cycles.
-   return traverse( handler, data );
+   return traverse( handler, data, true );
 }
 
 
-bool Storer::commit( DataWriter* wr )
+bool Storer::commit( Stream* dataStream )
 {
    try
    {
-      // Then store them.
-      writeClassDict( wr );
+      m_writer->changeStream( dataStream, false, true );
+      writeClassTable( m_writer );
+      writeInstanceTable( m_writer );
 
       // Serialize each item.
-      return doSerialize( wr );
+      return writeObjectTable( m_writer );
    }
    catch( ... )
    {
+      delete _p;
+      _p = 0;
       throw;
    }
 }
 
 
-bool Storer::traverse( Class* handler, void* data )
+bool Storer::traverse( Class* handler, void* data, bool isTopLevel )
 {
    // first, save the item.
    bool bIsNew;
    Storer::Private::ObjectData* objd = _p->addObject( handler, data, bIsNew );
-   _p->addTraversing( objd );
+   
+   if( isTopLevel )
+   {
+      _p->setNextObject( objd->m_id );
+   }
    
    if( ! bIsNew )
    {
       //... was already there -- then we have nothing to do.
       return true;
    }
-   
-   
+      
    // if the item is new, traverse its dependencies.
+   _p->addTraversing( objd );
    m_ctx->pushCode( &m_traverseNext );
    handler->flatten( m_ctx, *_p->m_theArray, data );
    if ( m_ctx->currentCode().m_step != &m_traverseNext )
@@ -261,17 +285,11 @@ void Storer::TraverseNext::apply_( const PStep* ps, VMContext* ctx )
 
    // we're done for now.
    traversing.pop_back();
-   // was this the last element we should check?
-   if( traversing.empty() )
-   {
-      // then declare the end of the object.
-      self->m_owner->_p->setNextObject();
-   }
    ctx->popCode();
 }
 
 
-void Storer::writeClassDict( DataWriter* wr )
+void Storer::writeClassTable( DataWriter* wr )
 {   
    // First, write the class dictionary.
    uint32 clsSize = (uint32) _p->m_clsVector.size();
@@ -299,15 +317,32 @@ void Storer::writeClassDict( DataWriter* wr )
 }
 
 
-bool Storer::doSerialize( DataWriter* wr )
+void Storer::writeInstanceTable( DataWriter* wr )
+{   
+   // First, write the class dictionary.
+   uint32 instSize = (uint32) _p->m_storedVector.size();
+   wr->write( instSize );
+   Private::IDVector::const_iterator iter = _p->m_storedVector.begin();
+   Private::IDVector::const_iterator end = _p->m_storedVector.end();
+   while( iter != end )
+   {
+      // for each class we must write its name and the module it is found in.
+      uint32 itemID = *iter;
+      wr->write(itemID);      
+      ++iter;
+   }
+}
+
+
+bool Storer::writeObjectTable( DataWriter* wr )
 {
    // write the object boundary count
-   uint32 size = (uint32) _p->m_objBoundaries.size();
+   uint32 size = (uint32) _p->m_objVector.size();
    wr->write( size );
-   
-   m_writer = wr;
+
    m_ctx->pushCode( &m_writeNext );
    m_writeNext.apply_( &m_writeNext, m_ctx );
+   // have we completely run without the need to call the VM?
    return _p == 0;
 }
 
@@ -317,14 +352,15 @@ void Storer::WriteNext::apply_( const PStep* ps, VMContext* ctx )
    
    // first, serialize the data of each item.
    register int32& pos = ctx->currentCode().m_seqId;
-   int32 size = (int32) self.m_owner->_p->m_objBoundaries.size();
+   int32 size = (int32) self.m_owner->_p->m_objVector.size();
    DataWriter* wr = self.m_owner->m_writer;
    
    while( pos < size ) 
    {
       register uint32 i = pos;
       ++pos;
-      if( ! self.m_owner->doSerializeItems( i, wr ) )
+      self.m_owner->writeObjectDeps( i, wr );
+      if( ! self.m_owner->writeObject( ctx, i, wr ) )
       {
          return;
       }
@@ -333,82 +369,48 @@ void Storer::WriteNext::apply_( const PStep* ps, VMContext* ctx )
    // we're done.
    delete self.m_owner->_p;
    self.m_owner->_p = 0;
+   self.m_owner->m_writer->flush();
    ctx->popCode();
 }
 
 
-bool Storer::doSerializeItems( uint32 pos, DataWriter* wr )
+void Storer::writeObjectDeps( uint32 pos, DataWriter* wr )
 {
-   // first, calculate the boundary of this item.
-   uint32 start = pos == 0 ? 0 : _p->m_objBoundaries[pos-1];
-   uint32 end = _p->m_objBoundaries[pos];
-      
-   // we must write at least 1 object data.
-   fassert( end > start );
-   
    // write a boundary to be sure about the synch
    uint32 boundary = 0xFECDBA98;
    wr->write( boundary );
-
-   // write the item count
-   uint32 size = end - start;
-   wr->write( size );
+      
+   const Private::ObjectData& obd = _p->m_objVector[pos];
+   // first, write the class ID referred by this object.
+   uint32 clid = (uint32) obd.m_clsId;
+   wr->write( clid );
    
-   _p->m_partStart = start;
-   _p->m_partEnd = end;
-   
-   m_ctx->pushCode( &m_writeNextPart );
-   m_writeNextPart.apply( &m_writeNextPart, m_ctx );
-   return _p->m_partEnd != _p->m_partStart;
-}   
+   // the object ID is not necessary, at it's sequential
 
+   // then write the dep list.
+   uint32 depSize = obd.m_deps.size();
+   wr->write( depSize );
 
-void Storer::WriteNextPart::apply_( const PStep* ps, VMContext* ctx )
-{
-   const WriteNextPart& self = *static_cast<const WriteNextPart*>(ps);
-   Storer::Private* _p = self.m_owner->_p;
-   DataWriter* wr = self.m_owner->m_writer;
-   
-   // we must record changes in _p->m_partStart because we may re-enter.
-   uint32& start = _p->m_partStart;
-   uint32& end = _p->m_partEnd;
-   while( start < end )
+   for( uint32 depPos = 0; depPos < depSize; ++depPos )
    {
-      // Get the item we must write.   
-      const Private::ObjectData& obd = _p->m_objVector[start];
-      // prepare for next loop
-      ++start;
-
-      // first, write the class ID referred by this object.
-      uint32 clid = (uint32) obd.m_clsId;
-      wr->write( clid );
-      
-      // then write the dep map.
-      uint32 depSize = obd.m_deps.size();
-      wr->write( depSize );
-      
-      for( uint32 depPos = 0; depPos < depSize; ++depPos )
-      {
-         uint32 depId = (uint32) obd.m_deps[depPos];
-         wr->write( depId );
-      }
-      
-      // And finally serialize the instance.
-      Class* cls = _p->m_clsVector[clid];
-            
-      cls->store( 0, wr, obd.m_data );
-      // went deep?
-      if( ctx->currentCode().m_step != ps )
-      {
-         // suspend operations.
-         return;
-      }
-      
+      uint32 depId = (uint32) obd.m_deps[depPos];
+      wr->write( depId );
    }
-   
-   // we're done -- changes in _p->m_partStart mark our completion.
-   ctx->popCode();
 }
+
+bool Storer::writeObject( VMContext* ctx, uint32 pos, DataWriter* wr )
+{   
+   // first, get the class that must serialize us.
+   const Private::ObjectData& obd = _p->m_objVector[pos];
+   uint32 clid = (uint32) obd.m_clsId;
+   Class* cls = _p->m_clsVector[clid];
+   const PStep* ps = ctx->currentCode().m_step;
+   
+   // then serialize us.
+   cls->store( ctx, wr, obd.m_data );
+   // Return ture if we didn't go deep.
+   return ctx->currentCode().m_step == ps;
+}   
 
 
 }

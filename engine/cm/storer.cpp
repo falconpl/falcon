@@ -28,12 +28,42 @@
 
 #include <falcon/usercarrier.h>
 
-#include "falcon/module.h"
+#include <falcon/module.h>
+
+#include <falcon/cm/stream.h>
 
 namespace Falcon {
 namespace Ext {
 
-typedef UserCarrierT<Storer> StorerCarrier;
+class StorerCarrier: public UserCarrierT<Storer> 
+{
+   
+public:
+   StorerCarrier( Storer* data ):
+      UserCarrierT<Storer> (data),
+      m_streamc(0)
+   {}
+      
+   virtual ~StorerCarrier()
+   {
+      if( m_streamc != 0 )
+         m_streamc->decref();
+   }
+   
+   void setStream( StreamCarrier* stc )
+   {
+      if( m_streamc !=  0)
+      {
+         m_streamc->decref();
+      }
+      m_streamc = stc;
+      m_streamc->incref();
+   }
+   
+private:
+   StreamCarrier* m_streamc;
+};
+
 
 ClassStorer::ClassStorer():
    ClassUser("Storer"),
@@ -74,14 +104,18 @@ FALCON_DEFINE_METHOD_P1( ClassStorer, store )
    Storer* storer = static_cast<StorerCarrier*>(ctx->self().asInst())->carried();
    Class* cls; void *data; 
    i_item->forceClassInst( cls, data );
-   storer->store( cls, data );
-   ctx->returnFrame();   
+   
+   // we must return only if the store was completed in this loop
+   if( storer->store( cls, data ) )
+   {
+      ctx->returnFrame();
+   }
 }
 
 
 FALCON_DEFINE_METHOD_P1( ClassStorer, commit )
 {  
-   static Class* clsStream = module()->getClass( "Stream" );
+   static Class* clsStream = methodOf()->module()->getClass( "Stream" );
    fassert( clsStream != 0 );
    
    Item* i_item = ctx->param(0);
@@ -98,9 +132,14 @@ FALCON_DEFINE_METHOD_P1( ClassStorer, commit )
       throw paramError();
    }
    
-   Storer* storer = static_cast<StorerCarrier*>(ctx->self().asInst())->carried();
-   DataWriter dw( static_cast<Stream*>(data) );
-   storer->commit( &dw );
+   StorerCarrier* stc = static_cast<StorerCarrier*>(ctx->self().asInst());
+   Storer* storer = stc->carried();
+   StreamCarrier* streamc = static_cast<StreamCarrier*>(data);
+   stc->setStream( streamc );
+   
+   // skip internal buffering, even if provided, by taking the underlying
+   
+   storer->commit( streamc->m_underlying );
    ctx->returnFrame();   
 }
 

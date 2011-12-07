@@ -28,6 +28,7 @@
 #include <falcon/cm/uri.h>
 #include <falcon/cm/path.h>
 #include <falcon/cm/storer.h>
+#include <falcon/cm/restorer.h>
 #include <falcon/cm/stream.h>
 
 // the standard error classes
@@ -55,6 +56,7 @@ CoreModule::CoreModule():
       // Standard classes
       << new Ext::ClassURI
       << new Ext::ClassPath
+      << new Ext::ClassRestorer
       << new Ext::ClassStorer
       << new Ext::ClassStream
       ;

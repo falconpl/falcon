@@ -112,61 +112,50 @@ bool DataWriter::write(byte value)
 bool DataWriter::write( uint16 value )
 {
    byte* addr = (byte*) &value;
-   byte locBuf[2];
    if( m_bIsSameEndianity )
    {
-      locBuf[0] = addr[0];
-      locBuf[1] = addr[1];
+      return Writer::writeRaw( addr, 2 );
    }
    else
    {
+      byte locBuf[2];
       locBuf[1] = addr[0];
       locBuf[0] = addr[1];
+      return Writer::writeRaw( locBuf, 2 );
    }
-
-   return Writer::writeRaw( locBuf, 2 );
 }
 
 bool DataWriter::write( uint32 value )
 {
    byte* addr = (byte*) &value;
-   byte locBuf[4];
+   
    if( m_bIsSameEndianity )
    {
-      locBuf[0] = addr[0];
-      locBuf[1] = addr[1];
-      locBuf[2] = addr[2];
-      locBuf[3] = addr[3];
+      return Writer::writeRaw( addr, 4 );
    }
    else
    {
+      byte locBuf[4];
       locBuf[3] = addr[0];
       locBuf[2] = addr[1];
       locBuf[1] = addr[2];
       locBuf[0] = addr[3];
+      return Writer::writeRaw( locBuf, 4 );
    }
 
-   return Writer::writeRaw( locBuf, 4 );
 }
 
 
 bool DataWriter::write( uint64 value )
 {
    byte* addr = (byte*) &value;
-   byte locBuf[8];
    if( m_bIsSameEndianity )
    {
-      locBuf[0] = addr[0];
-      locBuf[1] = addr[1];
-      locBuf[2] = addr[2];
-      locBuf[3] = addr[3];
-      locBuf[4] = addr[4];
-      locBuf[5] = addr[5];
-      locBuf[6] = addr[6];
-      locBuf[7] = addr[7];
+      return Writer::writeRaw( addr, 8 );
    }
    else
    {
+      byte locBuf[8];
       locBuf[7] = addr[0];
       locBuf[6] = addr[1];
       locBuf[5] = addr[2];
@@ -175,52 +164,40 @@ bool DataWriter::write( uint64 value )
       locBuf[2] = addr[5];
       locBuf[1] = addr[6];
       locBuf[0] = addr[7];
+      return Writer::writeRaw( locBuf, 8 );
    }
-
-   return Writer::writeRaw( locBuf, 8 );
 }
 
 
 bool DataWriter::write( float value )
 {
    byte* addr = (byte*) &value;
-   byte locBuf[4];
    if( m_bIsSameEndianity )
    {
-      locBuf[0] = addr[0];
-      locBuf[1] = addr[1];
-      locBuf[2] = addr[2];
-      locBuf[3] = addr[3];
+      return Writer::writeRaw( addr, 4 );
    }
    else
    {
+      byte locBuf[4];
       locBuf[3] = addr[0];
       locBuf[2] = addr[1];
       locBuf[1] = addr[2];
       locBuf[0] = addr[3];
+      return Writer::writeRaw( locBuf, 4 );
    }
-
-   return Writer::writeRaw( locBuf, 4 );
 }
 
 
 bool DataWriter::write( double value )
 {
    byte* addr = (byte*) &value;
-   byte locBuf[8];
    if( m_bIsSameEndianity )
    {
-      locBuf[0] = addr[0];
-      locBuf[1] = addr[1];
-      locBuf[2] = addr[2];
-      locBuf[3] = addr[3];
-      locBuf[4] = addr[4];
-      locBuf[5] = addr[5];
-      locBuf[6] = addr[6];
-      locBuf[7] = addr[7];
+      return Writer::writeRaw( addr, 8 );
    }
    else
    {
+      byte locBuf[8];
       locBuf[7] = addr[0];
       locBuf[6] = addr[1];
       locBuf[5] = addr[2];
@@ -229,9 +206,9 @@ bool DataWriter::write( double value )
       locBuf[2] = addr[5];
       locBuf[1] = addr[6];
       locBuf[0] = addr[7];
+      return Writer::writeRaw( locBuf, 8 );
    }
 
-   return Writer::writeRaw( locBuf, 8 );
 }
 
 

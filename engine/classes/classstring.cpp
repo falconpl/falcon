@@ -59,9 +59,18 @@ void ClassString::store( VMContext*, DataWriter* dw, void* data ) const
 }
 
 
-void ClassString::restore( VMContext* , DataReader* dr, void* data ) const
+void ClassString::restore( VMContext* , DataReader* dr, void*& data ) const
 {
-   dr->read( *static_cast<String*>(data) );
+   String* str = new String;
+   try{
+      dr->read( *str );
+      data = str;
+   }
+   catch( ... )
+   {
+      delete str;
+      throw;
+   }
 }
 
 

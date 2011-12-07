@@ -28,9 +28,9 @@
 namespace Falcon {
 
 ClassBool::ClassBool() :
-   Class( "Boolean", FLC_ITEM_BOOL )
-   
+   Class( "Boolean", FLC_ITEM_BOOL )   
 { 
+   m_bIsFlatInstance = true;
 }
 
 ClassBool::~ClassBool()
@@ -92,7 +92,7 @@ void ClassBool::store( VMContext*, DataWriter* dw, void* data ) const
 }
 
 
-void ClassBool::restore( VMContext* , DataReader* dr, void* data ) const
+void ClassBool::restore( VMContext* , DataReader* dr, void*& data ) const
 {
    bool value;
    dr->read( value );

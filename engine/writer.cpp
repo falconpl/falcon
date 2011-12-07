@@ -45,6 +45,7 @@ Writer::Writer( Stream* stream, bool bOwn ):
 
 Writer::~Writer()
 {
+   flush();
    delete[] m_buffer;
    if ( m_bOwnStream )
    {

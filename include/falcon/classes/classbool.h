@@ -41,7 +41,7 @@ public:
    virtual void dispose( void* self ) const;
    virtual void* clone( void* source ) const;
    virtual void store( VMContext*, DataWriter* , void* ) const;
-   virtual void restore( VMContext* , DataReader* , void* ) const;
+   virtual void restore( VMContext* , DataReader* , void*& ) const;
 
    virtual void describe( void* instance, String& target, int maxDepth = 3, int maxLength = 60 ) const;
 
