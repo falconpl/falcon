@@ -23,6 +23,8 @@
 #include <falcon/psteps/exprsym.h>
 #include <falcon/psteps/exprref.h>
 
+#include <falcon/errors/codeerror.h>
+
 #include "falcon/itemreference.h"
 
 

@@ -24,6 +24,8 @@
 #include <falcon/symbol.h>
 #include <falcon/falconclass.h>
 
+#include <falcon/errors/codeerror.h>
+
 #include <vector>
 
 

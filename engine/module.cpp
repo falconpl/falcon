@@ -31,6 +31,7 @@
 #include <falcon/hyperclass.h>
 #include <falcon/dynunloader.h>
 
+#include <falcon/errors/codeerror.h>
 #include <falcon/errors/genericerror.h>
 #include <falcon/errors/linkerror.h>
 
