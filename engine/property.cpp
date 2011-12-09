@@ -211,11 +211,11 @@ void PropertyReflect::get( void* instance, Item& value )
          break;
          
       case e_rt_int64:
-         value.setBoolean( *(int64*)inst );
+         value.setInteger( *(int64*)inst );
          break;
          
       case e_rt_uint64:         
-         value.setBoolean( (int64) *(uint64*)inst );
+         value.setInteger( (int64) *(uint64*)inst );
          break;
          
       case e_rt_float:
