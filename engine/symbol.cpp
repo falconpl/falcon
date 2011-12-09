@@ -40,7 +40,7 @@ Symbol::Symbol( const Symbol& other ):
    m_bConstant(other.m_bConstant),
    m_defval(other.m_defval),
 
-   __value( other.__value )
+   m_value( other.m_value )
 {}
 
 
@@ -54,10 +54,10 @@ void Symbol::define( type_t t, uint32 id )
    m_id = id;
    switch(t)
    {
-      case e_st_local: __value = value_local; break;
-      case e_st_extern: case e_st_global: __value = value_global; break;
-      case e_st_closed: __value = value_closed; break;
-      case e_st_undefined: __value = value_undef; break;         
+      case e_st_local: m_value = value_local; break;
+      case e_st_extern: case e_st_global: m_value = value_global; break;
+      case e_st_closed: m_value = value_closed; break;
+      case e_st_undefined: m_value = value_undef; break;         
    }
 }
 

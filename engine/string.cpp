@@ -888,15 +888,15 @@ String &String::adopt( wchar_t *buffer, length_t size, length_t allocated )
 }
 
 
-template<class __T1, class __T2>
+template<class _t1, class _t2>
 int inl_comparer( const byte* b1, const byte* b2, length_t len1, length_t len2 )
 {
    length_t len = len1 > len2 ? len2 : len1;
    
-   const __T1* ptr1 = (const __T1*) b1;
-   const __T2* ptr2 = (const __T2*) b2;
+   const _t1* ptr1 = (const _t1*) b1;
+   const _t2* ptr2 = (const _t2*) b2;
       
-   const __T1* end = ptr1 + len;
+   const _t1* end = ptr1 + len;
    while( ptr1 < end )
    {
       if( *ptr1 < *ptr2 )
@@ -923,13 +923,13 @@ int inl_comparer( const byte* b1, const byte* b2, length_t len1, length_t len2 )
 }
 
 
-template<class __T1, class __T2>
+template<class _t1, class _t2>
 int inl_comparez( const byte* b1, const byte* b2, length_t len )
 {
-   const __T1* ptr1 = (const __T1*) b1;
-   const __T2* ptr2 = (const __T2*) b2;
+   const _t1* ptr1 = (const _t1*) b1;
+   const _t2* ptr2 = (const _t2*) b2;
       
-   const __T1* end = ptr1 + len;
+   const _t1* end = ptr1 + len;
    while( ptr1 < end && *ptr2 )
    {
       if( *ptr1 < (unsigned) *ptr2  )
@@ -2249,13 +2249,13 @@ void String::reserve( length_t size )
 }
 
 
-template<class __T>
+template<class _t>
 length_t inl_find_chr( const String* str, char_t chr, length_t start, length_t end )
 {
-   const __T* ptr = (const __T*) str->getRawStorage();
+   const _t* ptr = (const _t*) str->getRawStorage();
    
-   const __T* startptr = ptr + start;
-   const __T* endptr = ptr + end;
+   const _t* startptr = ptr + start;
+   const _t* endptr = ptr + end;
    
    while( startptr < endptr )
    {
@@ -2270,13 +2270,13 @@ length_t inl_find_chr( const String* str, char_t chr, length_t start, length_t e
 }
 
 
-template<class __T>
+template<class _t>
 length_t inl_rfind_chr( const String* str, char_t chr, length_t start, length_t end )
 {
-   const __T* ptr = (const __T*) str->getRawStorage();
+   const _t* ptr = (const _t*) str->getRawStorage();
    
-   const __T* startptr = ptr + start;
-   const __T* endptr = ptr + end;
+   const _t* startptr = ptr + start;
+   const _t* endptr = ptr + end;
    
    while( endptr < startptr  )
    {

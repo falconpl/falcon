@@ -78,8 +78,8 @@ void UserCarrier::gcMark( uint32 mark )
    }
 }
    
-template<class __T>
-UserCarrierT<__T>::UserCarrierT( const UserCarrierT<__T>& other ):
+template<class _t>
+UserCarrierT<_t>::UserCarrierT( const UserCarrierT<_t>& other ):
       UserCarrier( other )
 {
    m_data = other.cloneData();

@@ -23,7 +23,7 @@
 namespace Falcon {
 
 // Inline class to simplify
-template <class __CPR >
+template <class _cpr >
 bool generic_simplify( Item& value, Expression* m_first, Expression* m_second )
 {
    Item d1, d2;
@@ -32,19 +32,19 @@ bool generic_simplify( Item& value, Expression* m_first, Expression* m_second )
       switch ( d1.type() << 8 | d2.type() )
       {
       case FLC_ITEM_INT << 8 | FLC_ITEM_INT:
-         value.setBoolean( __CPR::pass( d1.asInteger(), d2.asInteger() ) );
+         value.setBoolean( _cpr::pass( d1.asInteger(), d2.asInteger() ) );
          break;
       case FLC_ITEM_INT << 8 | FLC_ITEM_NUM:
-         value.setBoolean( __CPR::passn( d1.asInteger(), d2.asNumeric() ) );
+         value.setBoolean( _cpr::passn( d1.asInteger(), d2.asNumeric() ) );
          break;
       case FLC_ITEM_NUM << 8 | FLC_ITEM_INT:
-         value.setBoolean( __CPR::passn( d1.asNumeric(), d2.asInteger() ) ) ;
+         value.setBoolean( _cpr::passn( d1.asNumeric(), d2.asInteger() ) ) ;
          break;
       case FLC_ITEM_NUM << 8 | FLC_ITEM_NUM:
-         value.setBoolean( __CPR::passn( d1.asNumeric(), d2.asNumeric() ) );
+         value.setBoolean( _cpr::passn( d1.asNumeric(), d2.asNumeric() ) );
          break;
       default:
-         value.setBoolean( __CPR::pass( d1.type(), d2.type() ) );
+         value.setBoolean( _cpr::pass( d1.type(), d2.type() ) );
       }
 
       return true;
@@ -55,7 +55,7 @@ bool generic_simplify( Item& value, Expression* m_first, Expression* m_second )
 
 
 // Inline class to apply
-template <class __CPR >
+template <class _cpr >
 void generic_apply_( const PStep* DEBUG_ONLY(ps), VMContext* ctx )
 {
    TRACE2( "Apply \"%s\"", ((ExprCompare*)ps)->describe().c_ize() );
@@ -67,22 +67,22 @@ void generic_apply_( const PStep* DEBUG_ONLY(ps), VMContext* ctx )
    switch ( op1.type() << 8 | op2.type() )
    {
    case FLC_ITEM_INT << 8 | FLC_ITEM_INT:
-      op1.setBoolean( __CPR::pass( op1.asInteger(), op2.asInteger() ) );
+      op1.setBoolean( _cpr::pass( op1.asInteger(), op2.asInteger() ) );
       ctx->popData();
       break;
 
    case FLC_ITEM_INT << 8 | FLC_ITEM_NUM:
-      op1.setBoolean( __CPR::pass( op1.asInteger(), op2.asNumeric() ) );
+      op1.setBoolean( _cpr::pass( op1.asInteger(), op2.asNumeric() ) );
       ctx->popData();
       break;
 
    case FLC_ITEM_NUM << 8 | FLC_ITEM_INT:
-      op1.setBoolean( __CPR::pass( op1.asNumeric(), op2.asInteger() ) );
+      op1.setBoolean( _cpr::pass( op1.asNumeric(), op2.asInteger() ) );
       ctx->popData();
       break;
 
    case FLC_ITEM_NUM << 8 | FLC_ITEM_NUM:
-      op1.setBoolean( __CPR::pass( op1.asNumeric(), op2.asNumeric() ) );
+      op1.setBoolean( _cpr::pass( op1.asNumeric(), op2.asNumeric() ) );
       ctx->popData();
       break;
 
@@ -96,11 +96,11 @@ void generic_apply_( const PStep* DEBUG_ONLY(ps), VMContext* ctx )
       op1.asClass()->op_compare( ctx, op1.asInst() );
       // refetch, we may have gone deep
       fassert( ctx->topData().isInteger() );
-      ctx->topData().setBoolean( __CPR::cmpCheck( ctx->topData().asInteger() ) );
+      ctx->topData().setBoolean( _cpr::cmpCheck( ctx->topData().asInteger() ) );
       break;
 
    default:
-      op1.setBoolean( __CPR::cmpCheck( op1.compare(op2) ) );
+      op1.setBoolean( _cpr::cmpCheck( op1.compare(op2) ) );
       ctx->popData();
    }
 }

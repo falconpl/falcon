@@ -233,8 +233,8 @@ void VMContext::commitRule()
 
 
 
-template<class __checker>
-bool VMContext::unrollToNext( const __checker& check )
+template<class _checker>
+bool VMContext::unrollToNext( const _checker& check )
 {
    // first, we must have at least a function around.
    register CallFrame* curFrame =  m_topCall;

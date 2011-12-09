@@ -95,7 +95,7 @@ public:
     \return A pointer to the value exact location, or 0 if it cannot be
     determined.
    */
-   Item* value( VMContext* ctx ) const { return __value( ctx, this ); }
+   Item* value( VMContext* ctx ) const { return m_value( ctx, this ); }
    
    /** Return the item.
     \return the ID of the symbol, or Symbol::undef if undefined.
@@ -145,7 +145,7 @@ protected:
    
    Item* m_defval;
 
-   Item* (*__value)( VMContext* ctx, const Symbol* sym );
+   Item* (*m_value)( VMContext* ctx, const Symbol* sym );
    static Item* value_global( VMContext* ctx, const Symbol* sym );
    static Item* value_local( VMContext* ctx, const Symbol* sym );
    static Item* value_closed( VMContext* ctx, const Symbol* sym );

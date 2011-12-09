@@ -543,7 +543,7 @@ void VFSFile::move( const URI &suri, const URI &duri )
 }
 
 
-static void __mkdir( const String& fname )
+static void _mkdir( const String& fname )
 {
    AutoWString wBuffer( fname );
    BOOL res = ::CreateDirectoryW( wBuffer.w_str(), NULL );
@@ -583,7 +583,7 @@ void VFSFile::mkdir( const URI &uri, bool descend )
          if ( fileType( strPath ) != FileStat::_dir )
          {
             // if it's not a directory, try to create the directory.
-            __mkdir( strPath );
+            _mkdir( strPath );
          }
 
          // last loop?
@@ -597,7 +597,7 @@ void VFSFile::mkdir( const URI &uri, bool descend )
    else
    {
       // Just one try; succeed or fail
-      __mkdir( strName );
+      _mkdir( strName );
    }
 }
 

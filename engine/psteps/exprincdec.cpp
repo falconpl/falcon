@@ -74,15 +74,15 @@ public:
 
 
 // Inline class to simplify
-template <class __CPR >
+template <class _cpr >
 bool generic_simplify( Item& value, Expression* first )
 {
    if( first->simplify( value ) )
    {
       switch( value.type() )
       {
-      case FLC_ITEM_INT: value.setInteger( __CPR::operate(value.asInteger()) ); return true;
-      case FLC_ITEM_NUM: value.setNumeric( __CPR::operaten(value.asNumeric()) ); return true;
+      case FLC_ITEM_INT: value.setInteger( _cpr::operate(value.asInteger()) ); return true;
+      case FLC_ITEM_NUM: value.setNumeric( _cpr::operaten(value.asNumeric()) ); return true;
       }
    }
 
@@ -91,7 +91,7 @@ bool generic_simplify( Item& value, Expression* first )
 
 
 // Inline class to apply
-template <class __CPR >
+template <class _cpr >
 void generic_apply_( const PStep* DEBUG_ONLY(ps), VMContext* ctx )
 {
 #ifndef NDEBUG
@@ -111,16 +111,16 @@ void generic_apply_( const PStep* DEBUG_ONLY(ps), VMContext* ctx )
    
    switch( op->type() )
    {
-      case FLC_ITEM_INT: op->setInteger(  __CPR::operate(op->asInteger()) ); break;
-      case FLC_ITEM_NUM: op->setNumeric(  __CPR::operaten(op->asNumeric()) ); break;
+      case FLC_ITEM_INT: op->setInteger(  _cpr::operate(op->asInteger()) ); break;
+      case FLC_ITEM_NUM: op->setNumeric(  _cpr::operaten(op->asNumeric()) ); break;
       case FLC_ITEM_USER:
-         __CPR::operate( ctx, op->asClass(), op->asInst() );
+         _cpr::operate( ctx, op->asClass(), op->asInst() );
          break;
 
       default:
       // no need to throw, we're going to get back in the VM.
       throw
-         new OperandError( ErrorParam(e_invalid_op, __LINE__ ).extra(__CPR::id()) );
+         new OperandError( ErrorParam(e_invalid_op, __LINE__ ).extra(_cpr::id()) );
    }
 }
 
