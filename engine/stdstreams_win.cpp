@@ -16,7 +16,7 @@
 
 #include <falcon/stdstreams.h>
 #include <falcon/fstream_win.h>
-#include <falcon/ioerror.h>
+#include <falcon/errors/ioerror.h>
 
 #include <windows.h>
 

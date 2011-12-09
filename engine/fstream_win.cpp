@@ -17,8 +17,8 @@
 #include <falcon/sys.h>
 #include <falcon/path.h>
 #include <falcon/fstream.h>
-#include <falcon/ioerror.h>
-#include <falcon/interruptederror.h>
+#include <falcon/errors/ioerror.h>
+#include <falcon/errors/interruptederror.h>
 
 #include <falcon/fstream_win.h>
 #include <windows.h>
