@@ -685,7 +685,11 @@ Error* Module::addImport( ImportDef* def )
          
          // and add a dependency.
          Private::Dependency* dep = new Private::Dependency( newsym, def );
-         dep->m_sourceReq = _p->m_mrmap[ def->sourceModule() ];
+         if( def->sourceModule().size() )
+         {
+            dep->m_sourceReq = _p->m_mrmap[ def->sourceModule() ];
+         }
+         
          dep->m_sourceName = def->sourceSymbol( i );
          
          _p->m_deps[name] = dep;
