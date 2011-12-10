@@ -194,6 +194,8 @@ Engine::Engine()
    addBuiltin( m_protoClass );
    addBuiltin( m_metaClass );
    addBuiltin( m_genericClass );
+   addBuiltin( m_rangeClass  );
+   
    addBuiltin( m_classes[FLC_ITEM_NIL] );
    addBuiltin( m_classes[FLC_ITEM_BOOL] );
    addBuiltin( m_classes[FLC_ITEM_INT] );

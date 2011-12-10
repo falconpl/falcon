@@ -21,8 +21,12 @@
 #include <falcon/itemid.h>
 #include <falcon/vmcontext.h>
 #include <falcon/itemdict.h>
+#include <falcon/datawriter.h>
+#include <falcon/datareader.h>
+#include <falcon/itemarray.h>
 
 #include <falcon/errors/accesserror.h>
+#include <falcon/errors/unserializableerror.h>
 
 namespace Falcon {
 
@@ -50,17 +54,77 @@ void* ClassDict::clone( void* source ) const
 }
 
 
-void ClassDict::serialize( DataWriter*, void* ) const
+void ClassDict::store( VMContext*, DataWriter* stream, void* instance ) const
 {
-   // todo
+   ItemDict* dict = static_cast<ItemDict*>(instance);
+   stream->write(dict->m_flags);
+   stream->write(dict->m_version);
+   
 }
 
 
-void* ClassDict::deserialize( DataReader* ) const
+void ClassDict::restore( VMContext*, DataReader* stream, void*& empty ) const
 {
-   //todo
-   return 0;
+   // first read the data (which may throw).
+   uint32 flags, version;
+   stream->read(flags);
+   stream->read(version);
+   
+   // when we're done, create the entity.
+   ItemDict* dict = new ItemDict;
+   dict->m_flags = flags;
+   dict->m_version = flags;
+   empty = dict;
 }
+
+
+void ClassDict::flatten( VMContext*, ItemArray& subItems, void* instance ) const
+{
+   // we need to enumerate all the keys/values in the array ...
+   class FlatterEnum: public ItemDict::Enumerator {
+   public:
+      FlatterEnum( ItemArray& tgt ):
+         m_tgt( tgt )
+      {}
+      
+      virtual void operator()( const Item& key, Item& value )
+      {
+         m_tgt.append( key );
+         m_tgt.append( value );
+      }
+      
+   private:
+      ItemArray& m_tgt;
+   };
+   
+   FlatterEnum rator( subItems );
+   
+   // However, we have at least an hint about the enumeration size.
+   ItemDict* dict = static_cast<ItemDict*>(instance);
+   subItems.reserve( dict->size() * 2 );
+   dict->enumerate(rator);
+   
+}
+
+
+void ClassDict::unflatten( VMContext*, ItemArray& subItems, void* instance ) const
+{
+   ItemDict* dict = static_cast<ItemDict*>(instance);
+   uint32 size = subItems.length();
+   if( size %2  != 0 )
+   {
+      // woops something wrong.
+      throw new UnserializableError( ErrorParam( e_deser, __LINE__, SRC )
+         .origin( ErrorParam::e_orig_runtime )
+         .extra( "Unmatching keys/values"));
+   }
+   
+   for(uint32 i = 0; i < size; i += 2 )
+   {
+      dict->insert( subItems[i], subItems[i+1] );
+   }
+}
+
 
 void ClassDict::describe( void* instance, String& target, int maxDepth, int maxLen ) const
 {

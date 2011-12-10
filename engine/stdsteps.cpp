@@ -387,6 +387,15 @@ void StdSteps::PStepPushNil_::describeTo( String& s ) const
    s = "PStepPushNil_";
 }
 
+void StdSteps::PStepReturnFrame::apply_( const PStep*, VMContext* ctx )
+{
+   ctx->returnFrame();
+}
+
+void StdSteps::PStepReturnFrame::describeTo( String& s ) const
+{
+   s = "PStepReturnFrame";
+}
 
 }
 

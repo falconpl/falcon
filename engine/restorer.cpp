@@ -157,6 +157,14 @@ bool Restorer::next( Class*& handler, void*& data )
    if( _p != 0 && ( _p->m_current < _p->m_objList.size()) ) 
    {
       uint32 objID = _p->m_objList[_p->m_current];
+      
+      if( objID >= _p->m_objVector.size() )
+      {
+          throw new UnserializableError( ErrorParam(e_deser, __LINE__, SRC )
+               .origin( ErrorParam::e_orig_runtime)
+               .extra( String("Invalid instance ID at ").N(_p->m_current) ));
+      }
+      
       _p->m_current++;
       Private::ObjectData& objd = _p->m_objVector[objID];
       uint32 clsID = objd.m_clsId;
@@ -330,13 +338,9 @@ void Restorer::readInstanceTable()
    _p->m_objList.resize( instCount );
    for (uint32 n = 0; n < instCount; n ++ )
    {      
-      _p->m_reader.read( _p->m_objList[n] );
-      if( _p->m_objList[n] >= instCount )
-      {
-          throw new UnserializableError( ErrorParam(e_deser, __LINE__, SRC )
-               .origin( ErrorParam::e_orig_runtime)
-               .extra( String("Invalid instance ID at ").N(n) ));
-      }
+      uint32 objID;
+      _p->m_reader.read( objID );
+      _p->m_objList[n] = objID;
    }
 }
 
@@ -409,9 +413,11 @@ void Restorer::ReadNext::apply_( const PStep* ps, VMContext* ctx )
          objd.m_deps.resize( depsCount );
          for( uint32 i = 0; i < depsCount; ++ i )
          {
-            _p->m_reader.read( objd.m_deps[i] );
+            uint32 objID;
+            _p->m_reader.read( objID );
+            objd.m_deps[i] = objID;
             // the objects have been already resized.
-            if( objd.m_deps[i] >= objects.size() )
+            if( objID >= objects.size() )
             {
                throw new UnserializableError( ErrorParam( e_deser, __LINE__, SRC )
                   .origin( ErrorParam::e_orig_runtime )
@@ -461,13 +467,21 @@ void Restorer::UnflattenNext::apply_( const PStep* ps, VMContext* ctx )
       // have we dependencies?
       if( objd.m_deps.size() > 0 )
       {
+         
          // Load them in the temporary array
          _p->m_flattener.resize( objd.m_deps.size() );
-         for( uint32 i; i < objd.m_deps.size(); ++i )
+         for( uint32 i = 0; i < objd.m_deps.size(); ++i )
          {
             Private::ObjectData& tgtdata = objects[objd.m_deps[i]];
             Class* cls = _p->m_clsVector[ tgtdata.m_clsId ].m_cls;
-            _p->m_flattener[i].setUser( cls, tgtdata.m_data );
+            if( cls->isFlatInstance() )
+            {
+               _p->m_flattener[i] = *static_cast<Item*>(tgtdata.m_data);
+            }
+            else
+            {
+               _p->m_flattener[i].setUser( cls, tgtdata.m_data );
+            }
          }
          
          // ask the class to use the objects.

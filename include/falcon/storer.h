@@ -202,7 +202,7 @@ private:
    DataWriter* m_writer;
       
    // Using void* because we'll be using private data for that.
-   bool traverse( Class* handler, void* data, bool isTopLevel = false );
+   bool traverse( Class* handler, void* data, bool isTopLevel = false, void** objd = 0 );
    void writeClassTable( DataWriter* wr );
    void writeInstanceTable( DataWriter* wr );
    bool writeObjectTable( DataWriter* wr );

@@ -57,9 +57,10 @@ void ClassNil::store( VMContext*, DataWriter* , void* ) const
    // Nothing to write.
 }
 
-void ClassNil::restore( VMContext* , DataReader* , void*& ) const
+void ClassNil::restore( VMContext* , DataReader* , void*& empty ) const
 {
-   // nothing to read.
+   // just to be sure.
+   static_cast<Item*>(empty)->setNil();
 }
 
 void ClassNil::describe( void*, String& target, int, int ) const

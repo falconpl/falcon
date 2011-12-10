@@ -22,14 +22,10 @@
 
 namespace Falcon {
 
+class ClassRange;
+
 class FALCON_DYN_CLASS Range
 {
-   int64 m_start;
-   int64 m_end;
-   int64 m_step;
-   bool m_open;
-   uint32 m_gcMark;
-   
 
 public:
    Range():
@@ -129,6 +125,16 @@ public:
    }
    
    String describe() const { String temp; describe(temp); return temp; }
+
+private:
+   int64 m_start;
+   int64 m_end;
+   int64 m_step;
+   bool m_open;
+   uint32 m_gcMark;
+   
+
+   friend class ClassRange;
 };
 
 }

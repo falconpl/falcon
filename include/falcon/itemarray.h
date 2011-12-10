@@ -24,6 +24,7 @@ namespace Falcon
 {
 
 class Item;
+class ClassArray;
 
 class FALCON_DYN_CLASS ItemArray
 {
@@ -58,10 +59,10 @@ public:
    void prepend( const Item &ndata );
 
    /** Apeends all the items in an array to this array.
-      \param other The other array.
+      \param source Array from where the merge data is coming. 
       \note All the merged items will have the Item::copied() bit set.
     */
-   void merge( const ItemArray &other );
+   void merge( const ItemArray &source );
 
    /** Prepends all the items from an array to this array.
       \param other The other array.
@@ -158,6 +159,14 @@ public:
    {
       return copyOnto( 0, src, first, amount );
    }
+   
+   /** Full copy a source array without setting the copied bit.
+    \param src A source array that's copied onto this one.
+    
+    The contents of this array are voided and the source array is fully
+    copied, without setting src.
+    */
+   void replicate( const ItemArray& src );
 
    /** Returns the element at nth position. */
    inline const Item &at( length_t pos ) const
@@ -199,7 +208,11 @@ public:
     */
    void gcMark( uint32 mark );
    
+   /** Returns current garbage collector marking.
+    \return The GC Mark.
+    */
    uint32 currentMark() const { return m_mark; }
+   
 private:
    length_t m_alloc;
    length_t m_size;
@@ -226,6 +239,7 @@ private:
 
    class Helper;
    friend class Helper;
+   friend class ClassArray;
 };
 
 }

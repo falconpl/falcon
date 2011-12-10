@@ -24,7 +24,7 @@
 #include <falcon/path.h>
 #include <falcon/errors/paramerror.h>
 #include <falcon/errors/codeerror.h>
-
+#include <falcon/stdsteps.h>
 #include <falcon/usercarrier.h>
 
 #include <falcon/module.h>
@@ -120,6 +120,8 @@ FALCON_DEFINE_PROPERTY_SET( ClassRestorer, hasNext )( void*, const Item& )
 FALCON_DEFINE_METHOD_P1( ClassRestorer, restore )
 {
    static Class* clsStream = methodOf()->module()->getClass( "Stream" );
+   static PStep* retStep = &Engine::instance()->stdSteps()->m_returnFrame;
+   
    fassert( clsStream != 0 );
    
    Item* i_item = ctx->param(0);
@@ -140,7 +142,9 @@ FALCON_DEFINE_METHOD_P1( ClassRestorer, restore )
    Restorer* restorer = stc->carried();
    StreamCarrier* streamc = static_cast<StreamCarrier*>(data);
    stc->setStream( streamc );
-   
+
+   // prepare not to return the frame now but later.
+   ctx->pushCode( retStep );
    bool complete =  restorer->restore(streamc->m_underlying, 
                            ctx->vm()->modSpace(), ctx->vm()->modLoader() );
    if( complete )

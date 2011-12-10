@@ -29,10 +29,7 @@ namespace Falcon {
 
 class Storer::Private
 {
-public:
-   ItemArray* m_theArray;
-   GCLock* m_lock;
-   
+public:   
    /** Map connecting each class with its own serialization ID. */
    typedef std::map<Class*, size_t> ClassMap;
    
@@ -55,6 +52,9 @@ public:
       /** Items to be given back while deserializing. */
       IDVector m_deps;
       
+      /** Working array used during traversing.*/
+      ItemArray m_theArray;
+      
       ObjectData():
          m_data(0),
          m_id(0),
@@ -75,7 +75,7 @@ public:
       {}
    };
    
-   typedef std::vector<ObjectData> ObjectDataVector;
+   typedef std::vector<ObjectData*> ObjectDataVector;
    typedef std::vector<ObjectData*> ObjectDataPtrVector;
    typedef std::vector<Class*> ClassVector;
    // Vector storing items of classes having flat data.
@@ -91,16 +91,15 @@ public:
    ObjectDataPtrVector m_objTraversing;
       
    Private() {
-      static Collector* coll = Engine::instance()->collector();
-      
-      m_theArray = new ItemArray;
-      Item itx;
-      itx.setArray( m_theArray, true );
-      m_lock = coll->lock( itx );
    }
    
    ~Private() {
-      m_lock->dispose();
+      ObjectDataVector::iterator obvi = m_objVector.begin();
+      while( obvi != m_objVector.end() )
+      {
+         delete *obvi;
+         ++obvi;
+      }
    }
    
    void setNextObject( uint32 id )
@@ -127,7 +126,7 @@ public:
          {
             //... we have already it all
             bIsNew = false;
-            ObjectData* dt = &m_objVector[objIter->second];
+            ObjectData* dt = m_objVector[objIter->second];
             return dt;
          }
       }
@@ -153,8 +152,9 @@ public:
          m_clsVector.push_back( cls );
       }
       
-      m_objVector.push_back( ObjectData( obj, objCount, clsId ) );
-      return &m_objVector.back();
+      ObjectData* ndt = new ObjectData( obj, objCount, clsId );
+      m_objVector.push_back( ndt );
+      return ndt;
    }
    
    inline void addTraversing( ObjectData* obj )
@@ -216,11 +216,15 @@ bool Storer::commit( Stream* dataStream )
 }
 
 
-bool Storer::traverse( Class* handler, void* data, bool isTopLevel )
+bool Storer::traverse( Class* handler, void* data, bool isTopLevel, void** obj )
 {
    // first, save the item.
    bool bIsNew;
    Storer::Private::ObjectData* objd = _p->addObject( handler, data, bIsNew );
+   if( obj != 0 )
+   {
+      *obj = objd;
+   }
    
    if( isTopLevel )
    {
@@ -234,18 +238,31 @@ bool Storer::traverse( Class* handler, void* data, bool isTopLevel )
    }
       
    // if the item is new, traverse its dependencies.
-   _p->addTraversing( objd );
    m_ctx->pushCode( &m_traverseNext );
-   handler->flatten( m_ctx, *_p->m_theArray, data );
-   if ( m_ctx->currentCode().m_step != &m_traverseNext )
+   int32 myDepth = m_ctx->codeDepth();
+   handler->flatten( m_ctx, objd->m_theArray, data );
+   if ( m_ctx->codeDepth() != myDepth )
    {
-      // going deep? -- suspend processing
+      // going deep? -- suspend processing and save current work object
+      _p->addTraversing( objd );
       return false;
    }
    
-   // continue processing.
+   // nothing to traverse?
+   if( objd->m_theArray.empty() )
+   {
+      m_ctx->popCode();
+      return true;
+   }
+   
+   // continue processing -- first saving current work object.
+   _p->addTraversing( objd );
+   // we know we're having as many deps as indicated in by the entity
+   objd->m_deps.reserve(objd->m_theArray.length());
+   // perform the sub-traversal.
    m_traverseNext.apply_( &m_traverseNext, m_ctx ); 
-   return _p->m_objTraversing.empty();
+   // On completion, the PStep will pop itself, causing codeDepth < myDepth.
+   return m_ctx->codeDepth() < myDepth; 
 }
 
 
@@ -256,7 +273,7 @@ void Storer::TraverseNext::apply_( const PStep* ps, VMContext* ctx )
    Private::ObjectDataPtrVector& traversing = self->m_owner->_p->m_objTraversing;
    fassert( ! traversing.empty() );
    Private::ObjectData* objd = traversing.back();
-   ItemArray& items = *self->m_owner->_p->m_theArray;
+   ItemArray& items = objd->m_theArray;
    
    int &i = ctx->currentCode().m_seqId;
    // The dependencies are now stored in items array.
@@ -266,24 +283,23 @@ void Storer::TraverseNext::apply_( const PStep* ps, VMContext* ctx )
       void* udata;
       
       // get the class that can serialize the item...
-      items[i].forceClassInst( cls, udata );
+      Item& current = items[i];
+      current.forceClassInst( cls, udata );
       ++i; // prepare for going deep
-      //... and traverse it.
-      if ( self->m_owner->traverse( cls, udata ) ) 
+      Private::ObjectData* newDep;
+      bool bDidAll = self->m_owner->traverse( cls, udata, false, (void**) &newDep );
+      // Always save the traversed item -- which is alwas added right now...
+      objd->m_deps.push_back( newDep->m_id );
+     
+      if ( ! bDidAll ) 
       {
-         //... then save the ID of the traversed item into our meta data.
-         Private::ObjectData* subObj = traversing.back();
-         objd->m_deps.push_back( subObj->m_id );
-         traversing.pop_back();
-      }
-      else
-      {
-         // suspend our execution.
+         // ... and suspend our execution in case the traversed item 
+         // -- needs to be traversed again.
          return; 
       }
    }
 
-   // we're done for now.
+   // This traversed item has been fully traversed.
    traversing.pop_back();
    ctx->popCode();
 }
@@ -380,7 +396,7 @@ void Storer::writeObjectDeps( uint32 pos, DataWriter* wr )
    uint32 boundary = 0xFECDBA98;
    wr->write( boundary );
       
-   const Private::ObjectData& obd = _p->m_objVector[pos];
+   const Private::ObjectData& obd = *_p->m_objVector[pos];
    // first, write the class ID referred by this object.
    uint32 clid = (uint32) obd.m_clsId;
    wr->write( clid );
@@ -401,7 +417,7 @@ void Storer::writeObjectDeps( uint32 pos, DataWriter* wr )
 bool Storer::writeObject( VMContext* ctx, uint32 pos, DataWriter* wr )
 {   
    // first, get the class that must serialize us.
-   const Private::ObjectData& obd = _p->m_objVector[pos];
+   const Private::ObjectData& obd = *_p->m_objVector[pos];
    uint32 clid = (uint32) obd.m_clsId;
    Class* cls = _p->m_clsVector[clid];
    const PStep* ps = ctx->currentCode().m_step;

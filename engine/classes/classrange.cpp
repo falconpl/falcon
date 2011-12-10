@@ -20,6 +20,8 @@
 #include <falcon/range.h>
 #include <falcon/itemid.h>
 #include <falcon/vmcontext.h>
+#include <falcon/datawriter.h>
+#include <falcon/datareader.h>
 
 #include <falcon/errors/accesserror.h>
 #include <falcon/errors/accesstypeerror.h>
@@ -50,17 +52,35 @@ void* ClassRange::clone( void* source ) const
 }
 
 
-void ClassRange::serialize( DataWriter*, void* ) const
+void ClassRange::store( VMContext*, DataWriter* stream, void* instance ) const
 {
-   // todo
+   Range* r = static_cast<Range*>(instance);
+   stream->write(r->m_start);
+   stream->write(r->m_end);
+   stream->write(r->m_step);
+   stream->write(r->m_open);   
 }
 
 
-void* ClassRange::deserialize( DataReader* ) const
+void ClassRange::restore( VMContext*, DataReader* stream, void*& empty ) const
 {
-   //todo
-   return 0;
+   int64 start, end, step;
+   bool isOpen;
+   
+   stream->read(start);
+   stream->read(end);
+   stream->read(step);
+   stream->read(isOpen);   
+
+   Range* r = new Range;
+   r->m_start = start;
+   r->m_end = end;
+   r->m_step = step;
+   r->m_open = isOpen;
+   
+   empty = r;
 }
+
 
 void ClassRange::describe( void* instance, String& target, int maxDepth, int ) const
 {

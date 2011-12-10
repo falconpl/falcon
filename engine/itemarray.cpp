@@ -158,22 +158,22 @@ void ItemArray::append( const Item &ndata )
 }
 
 
-void ItemArray::merge( const ItemArray &other )
+void ItemArray::merge( const ItemArray &source )
 {
-   if ( other.m_size == 0 )
+   if ( source.m_size == 0 )
       return;
 
    // set all the items in the source as copied.
-   Helper(this).setCopied( other );
+   Helper(this).setCopied( source );
 
-   if ( m_alloc < m_size + other.m_size ) {
-      m_alloc = m_size + other.m_size;
+   if ( m_alloc < m_size + source.m_size ) {
+      m_alloc = m_size + source.m_size;
       Item* newData = Helper(this).reallocate( m_alloc );
       m_data = newData;
    }
 
-   memcpy( m_data + m_size, other.m_data, esize( other.m_size ) );
-   m_size += other.m_size;
+   memcpy( m_data + m_size, source.m_data, esize( source.m_size ) );
+   m_size += source.m_size;
 }
 
 
@@ -497,6 +497,7 @@ void ItemArray::reserve( length_t size )
    }
 }
 
+
 bool ItemArray::copyOnto( length_t from, const ItemArray& src, length_t first, length_t amount )
 {
    if( first > src.length() )
@@ -514,6 +515,14 @@ bool ItemArray::copyOnto( length_t from, const ItemArray& src, length_t first, l
    memcpy( m_data + from, src.m_data + first, esize( amount ) );
 
    return true;
+}
+
+
+void ItemArray::replicate( const ItemArray& src )
+{
+   length_t amount = src.length();
+   resize( amount );
+   memcpy( m_data, src.m_data, esize( amount ) );
 }
 
 

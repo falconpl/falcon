@@ -401,6 +401,27 @@ public:
       virtual void describeTo( String& ) const;
    };
    PStepPushNil_ m_pushNil_;
+   
+   /** Pstep immediately invoking return from current frame.
+    Use as a safeguard in functional programming.
+    
+    This is pushed by functions that have just started and are introducing sequences 
+    that may or may not complete immediately. By adding this explicit request to
+    the VM to return, the functions can make sure that the frame is returned
+    when the pushed sequences are completed.
+    
+    This PStep has not a "keep self" version because returning the frame will
+    discard itself and any other PStep up to the nearest call frame.
+    */
+   class PStepReturnFrame: public PStep
+   {
+   public:
+      PStepReturnFrame() {apply = apply_; }
+      virtual ~PStepReturnFrame() {}
+      static void apply_( const PStep*, VMContext* ctx );
+      virtual void describeTo( String& ) const;
+   };
+   PStepReturnFrame m_returnFrame;
 };
 
 }

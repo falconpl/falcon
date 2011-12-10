@@ -20,8 +20,11 @@
 #include <falcon/overridableclass.h>
 #include <falcon/genericitem.h>
 
+
 namespace Falcon
 {
+
+class ClassDict;
 
 /** Class storing lexicographic ordered item dictionaries.
 
@@ -112,6 +115,7 @@ private:
    uint32 m_version;
    
    friend class Iterator;
+   friend class ClassDict;
 };
 
 }

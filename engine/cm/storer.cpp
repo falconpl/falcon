@@ -25,10 +25,9 @@
 #include <falcon/path.h>
 #include <falcon/errors/paramerror.h>
 #include <falcon/errors/codeerror.h>
-
 #include <falcon/usercarrier.h>
-
 #include <falcon/module.h>
+#include <falcon/stdsteps.h>
 
 #include <falcon/cm/stream.h>
 
@@ -95,6 +94,8 @@ void* ClassStorer::createInstance( Item*, int  ) const
 
 FALCON_DEFINE_METHOD_P1( ClassStorer, store )
 {
+   static StdSteps* stdSteps = Engine::instance()->stdSteps();
+   
    Item* i_item = ctx->param(0);
    if( i_item == 0 )
    {
@@ -104,6 +105,9 @@ FALCON_DEFINE_METHOD_P1( ClassStorer, store )
    Storer* storer = static_cast<StorerCarrier*>(ctx->self().asInst())->carried();
    Class* cls; void *data; 
    i_item->forceClassInst( cls, data );
+   
+   // prepare an explicit call of the return frame
+   ctx->pushCode( &stdSteps->m_returnFrame );
    
    // we must return only if the store was completed in this loop
    if( storer->store( cls, data ) )
@@ -115,6 +119,8 @@ FALCON_DEFINE_METHOD_P1( ClassStorer, store )
 
 FALCON_DEFINE_METHOD_P1( ClassStorer, commit )
 {  
+   static StdSteps* stdSteps = Engine::instance()->stdSteps();
+   
    static Class* clsStream = methodOf()->module()->getClass( "Stream" );
    fassert( clsStream != 0 );
    
@@ -137,10 +143,15 @@ FALCON_DEFINE_METHOD_P1( ClassStorer, commit )
    StreamCarrier* streamc = static_cast<StreamCarrier*>(data);
    stc->setStream( streamc );
    
-   // skip internal buffering, even if provided, by taking the underlying
+   // prepare an explicit call of the return frame
+   ctx->pushCode( &stdSteps->m_returnFrame );
    
-   storer->commit( streamc->m_underlying );
-   ctx->returnFrame();   
+   // skip internal buffering, even if provided, by taking the underlying
+   if( storer->commit( streamc->m_underlying ) )
+   {
+      // we must return only if the store was completed in this loop
+      ctx->returnFrame();
+   }
 }
 
 }

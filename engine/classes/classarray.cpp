@@ -20,6 +20,8 @@
 #include <falcon/itemid.h>
 #include <falcon/vmcontext.h>
 #include <falcon/itemarray.h>
+#include <falcon/datareader.h>
+#include <falcon/datawriter.h>
 
 #include <falcon/errors/accesserror.h>
 #include <falcon/errors/codeerror.h>
@@ -52,16 +54,36 @@ void* ClassArray::clone( void* source ) const
 }
 
 
-void ClassArray::serialize( DataWriter*, void* ) const
+void ClassArray::store( VMContext*, DataWriter* stream, void* instance ) const
 {
-   // todo
+   // ATM we have the growth parameter to save.
+   ItemArray* arr = static_cast<ItemArray*>( instance );
+   stream->write(arr->m_growth);
 }
 
 
-void* ClassArray::deserialize( DataReader* ) const
+void ClassArray::restore( VMContext*, DataReader* stream, void*& empty ) const
 {
-   //todo
-   return 0;
+   uint32 growth;
+   stream->read(growth);
+   
+   ItemArray* iarr = new ItemArray;
+   iarr->m_growth = growth;
+   empty = iarr;
+}
+
+
+void ClassArray::flatten( VMContext*, ItemArray& subItems, void* instance ) const
+{
+   ItemArray* self = static_cast<ItemArray*>(instance);
+   subItems.replicate(*self);
+}
+
+
+void ClassArray::unflatten( VMContext*, ItemArray& subItems, void* instance ) const
+{
+   ItemArray* self = static_cast<ItemArray*>(instance);
+   self->replicate(subItems);
 }
 
 
