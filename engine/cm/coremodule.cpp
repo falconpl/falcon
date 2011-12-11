@@ -31,11 +31,13 @@
 #include <falcon/cm/restorer.h>
 #include <falcon/cm/stream.h>
 #include <falcon/cm/textstream.h>
+#include <falcon/cm/textwriter.h>
+#include <falcon/cm/datareader.h>
+#include <falcon/cm/datawriter.h>
 
 // the standard error classes
 #include <falcon/errorclasses.h>
 
-#include "falcon/cm/textstream.h"
 
 
 namespace Falcon {
@@ -65,6 +67,9 @@ CoreModule::CoreModule():
       << new Ext::ClassStorer
       << classStream
       << new Ext::ClassTextStream( classStream )
+      << new Ext::ClassTextWriter( classStream )
+      << new Ext::ClassDataWriter()
+      << new Ext::ClassDataReader()
       ;
 }
 

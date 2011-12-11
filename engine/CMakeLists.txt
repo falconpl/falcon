@@ -63,6 +63,8 @@ add_library(falcon_engine SHARED
 
   cm/clone.cpp
   cm/compare.cpp
+  cm/datareader.cpp
+  cm/datawriter.cpp
   cm/describe.cpp
   cm/len.cpp
   cm/minmax.cpp
@@ -71,7 +73,9 @@ add_library(falcon_engine SHARED
   cm/restorer.cpp
   cm/storer.cpp
   cm/stream.cpp
+  cm/textreader.cpp
   cm/textstream.cpp
+  cm/textwriter.cpp
   cm/tostring.cpp
   cm/typeid.cpp
   cm/uri.cpp

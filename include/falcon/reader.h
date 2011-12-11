@@ -122,6 +122,12 @@ public:
     If it was owned, the previous stream is destroyed.
     */
    virtual void changeStream( Stream* s, bool bOwn = false, bool bDiscard = false );
+      
+   /** Returns true if the underlying stream is exhausted. */
+   bool eof();
+   
+   /** Discards read buffer and syncs with current position in the underlying stream. */
+   void sync();
    
 protected:
    /** Create for normal operations. */
@@ -180,10 +186,7 @@ protected:
     level if the stream can't provide enough data.
     */
    virtual bool ensure( length_t size );
-
-   /** Returns true if the underlying stream is exhausted. */
-   bool eof();
-
+   
    byte* m_buffer;
    length_t m_bufPos;
    length_t m_bufLength;

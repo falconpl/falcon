@@ -61,6 +61,8 @@ public:
 
     */
    virtual void setBufferSize( length_t bs );
+   
+   length_t bufferSize() const { return m_bufSize; }
 
    /** Write all the pending data that's left.
     \throw IOError on error in flushing the stream.

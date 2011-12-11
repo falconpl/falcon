@@ -161,7 +161,7 @@ void ClassTextStream::op_create( VMContext* ctx, int32 pcount ) const
 
 
 //==========================================================
-// Methods
+// Properties
 //
 
 FALCON_DEFINE_PROPERTY_SET_P( ClassTextStream, encoding )
@@ -193,6 +193,9 @@ FALCON_DEFINE_PROPERTY_GET_P( ClassTextStream, encoding )
    TextStreamCarrier* sc = static_cast<TextStreamCarrier*>(instance);     
    value = sc->m_encoding;
 }
+
+//========================================================
+// Methods
 
 FALCON_DEFINE_METHOD_P1( ClassTextStream, write )
 {   
@@ -254,17 +257,22 @@ FALCON_DEFINE_METHOD_P1( ClassTextStream, grab )
    }
 
    String* str = new String;   
-   Item rv(str, true, __LINE__, SRC); // force to garbage the string NOW!
-   
    int64 icount = i_count->forceInteger();
    // shall we read?
    if( icount > 0 )
    {      
       TextStreamCarrier* sc = static_cast<TextStreamCarrier*>(ctx->self().asInst());
-      sc->m_reader.read( *str, icount );      
+      try {
+         sc->m_reader.read( *str, icount );
+      }
+      catch( ... ) {
+         delete str;
+         throw;
+      }
    }
    
    // Return the string.
+   Item rv(str, true, __LINE__, SRC); // force to garbage the string NOW!
    ctx->returnFrame( rv );
 }
 
@@ -306,7 +314,6 @@ FALCON_DEFINE_METHOD_P1( ClassTextStream, grabLine )
    }
 
    String* str = new String;   
-   Item rv(str, true, __LINE__, SRC); // force to garbage the string NOW!
    
    length_t count =  i_count == 0 ? 4096 : 
          static_cast<length_t>(i_count->forceInteger());
@@ -315,10 +322,18 @@ FALCON_DEFINE_METHOD_P1( ClassTextStream, grabLine )
    if( count > 0 )
    {      
       TextStreamCarrier* sc = static_cast<TextStreamCarrier*>(ctx->self().asInst());
-      sc->m_reader.readLine( *str, count );      
+      try {
+         sc->m_reader.readLine( *str, count );      
+      }
+      catch(...)
+      {
+         delete str;
+         throw;
+      }
    }
    
    // Return the string.
+   Item rv(str, true, __LINE__, SRC); // force to garbage the string NOW!
    ctx->returnFrame( rv );
 }
 

@@ -337,14 +337,6 @@ FALCON_DEFINE_METHOD_P1( ClassStream, write )
       
    if( i_data->isString() )
    {
-      /*if( sc->m_tcoder != 0 )
-      {
-         ctx->returnFrame(writeString( sc->m_tcoder, sc->m_stream, *i_data->asString(), start, count ));
-         return;
-      }
-      else
-      {
-       */
       dataSource = i_data->asString()->getRawStorage();
       dataSize = i_data->asString()->size();
    }
@@ -374,7 +366,7 @@ FALCON_DEFINE_METHOD_P1( ClassStream, write )
    }
    
    int64 retval = (int64) sc->m_stream->write(dataSource+start, count);   
-   ctx->returnFrame( retval );   
+   ctx->returnFrame( retval );
 }
 
 

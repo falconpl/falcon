@@ -64,6 +64,8 @@ public:
     This method allows to change the text decoder runtime.
     */
    void setEncoding( Transcoder* decoder );
+   
+   Transcoder* transcoder() const { return m_encoder; }
 
    /** Change automatic translation of LF into CRLF.
 
@@ -78,13 +80,14 @@ public:
     The sequence is sent to the transcoder prior being written to the stream, so
     the CRLF sequence will be rendered correctly under the required encoding.
 
-    This settings also affects the behavior of writeLine(); if set to true,
+    This settings also affect the behavior of writeLine(); if set to true,
     writeLine will generate a CRLF sequence write after each call, instead of a
     simple LF character.
 
     Setting this facility slows down the writer operation. Where possible, i.e.
     if the need for the target stream to use CRLF sequences as line breaks is 
-    known in advance, it may be advisable to manually convert newlines into CRLF.
+    known in advance, it may be advisable to manually use CRLF sequences as
+    line separators on first instance.
 
     Use of this feature is suggested when the required behavior is not known
     when the content is created.

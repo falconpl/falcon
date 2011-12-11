@@ -35,6 +35,11 @@ class Stream;
  DataReader and DataWriter classes are used for serialization. As such, they have
  also limited support to read and write basic Falcon data structure (as i.e. strings).
 
+ \note DataWriter and DataReader have support to be directly shared with a virtual
+ machine by offering a GC hook (gcMarking). A DataReader or DataWriter that might
+ be given to the virtual machine should not be directly deleted after isInGC()
+ returns true.
+ 
  \see DataReader
  */
 class FALCON_DYN_CLASS DataWriter: public Writer
@@ -64,6 +69,8 @@ public:
     DataWriter have an according endianity default setting.
    */
    DataWriter( t_endianity endian = e_LE );
+   
+   DataWriter( const DataWriter& other );
 
    virtual ~DataWriter();
 
@@ -169,10 +176,21 @@ public:
    
    bool write( const char* data ) { return write(String(data)); }
 
+   /** Checks if this entity is in GC. */
+   bool isInGC() const { return m_gcMark != 0; }
+   
+   /** Mark this entity for GC. */
+   void gcMark( uint32 mark ) { m_gcMark = mark; }
+   
+   /** Gets the GC entity. */
+   uint32 gcMark() const { return m_gcMark; }
+
 private:
 
    t_endianity m_endianity;
    bool m_bIsSameEndianity;
+   uint32 m_gcMark;
+   
 };
 
 }

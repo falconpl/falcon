@@ -16,8 +16,6 @@
 #ifndef FALCON_CORE_TEXTSTREAM_H
 #define FALCON_CORE_TEXTSTREAM_H
 
-#include <falcon/pseudofunc.h>
-#include <falcon/fassert.h>
 #include <falcon/classes/classuser.h>
 #include <falcon/property.h>
 #include <falcon/method.h>
@@ -30,8 +28,6 @@
 namespace Falcon {
 
 class Stream;
-class StreamBuffer;
-class Transcoder;
 
 namespace Ext {
 

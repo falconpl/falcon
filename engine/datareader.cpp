@@ -24,16 +24,27 @@
 namespace Falcon {
 
 DataReader::DataReader( Stream* stream, t_endianity endian, bool bOwn ):
-   Reader( stream, bOwn )
+   Reader( stream, bOwn ),
+   m_gcMark( 0 )
 {
    setEndianity( endian );
 }
 
 
-DataReader::DataReader( t_endianity endian )
+DataReader::DataReader( t_endianity endian ):
+   m_gcMark( 0 )
 {
    setEndianity( endian );
 }
+
+
+DataReader::DataReader( const DataReader& other ):
+   Reader( m_stream ? m_stream->clone() : 0 , true ),
+   m_gcMark( 0 )
+{
+   setEndianity( other.m_endianity );
+}
+
 
 DataReader::~DataReader()
 {

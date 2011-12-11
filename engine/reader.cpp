@@ -120,6 +120,13 @@ void Reader::changeStream( Stream* s, bool bOwn, bool bDiscard )
 }
 
 
+void Reader::sync()
+{
+   m_bufPos = 0;
+   m_bufLength = 0;
+}
+
+
 bool Reader::refill()
 {
    fassert( m_stream != 0 );

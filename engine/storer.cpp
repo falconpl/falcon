@@ -179,7 +179,11 @@ Storer::Storer( VMContext* ctx ):
 
 Storer::~Storer()
 {
-   delete m_writer;
+   if( !m_writer->isInGC() )
+   {
+      delete m_writer;
+   }
+   
    delete _p;
 }
 

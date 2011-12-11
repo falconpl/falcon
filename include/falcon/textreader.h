@@ -103,6 +103,8 @@ public:
     \note The TextReader is never owning the transcoder.
     */
    void setEncoding( Transcoder* decoder );
+   
+   Transcoder* transcoder() const { return m_decoder; }
 
    /** Reads a text from the stream.
     \param str A target string where to put the data.

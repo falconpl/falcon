@@ -60,7 +60,7 @@ public:
    virtual ~UserCarrier();
    virtual UserCarrier* clone() const { return new UserCarrier(*this); }  
    
-   virtual void gcMark( uint32 mark );   
+   virtual void gcMark( uint32 mark );
    uint32 gcMark() const { return m_gcMark; }
 
    Item* dataAt( uint32 pos ) const { return m_data + pos; }
