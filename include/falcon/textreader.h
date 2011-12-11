@@ -99,6 +99,8 @@ public:
     \param decoder the new decoder that should be used instead of the current one.
 
     This method allows to change the text decoder runtime.
+    
+    \note The TextReader is never owning the transcoder.
     */
    void setEncoding( Transcoder* decoder );
 

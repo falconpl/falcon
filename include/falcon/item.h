@@ -177,9 +177,9 @@ public:
     copy (and eventual deep-copy) of the already created string is avoided.
     
     */
-   Item( String* str, bool bGarbage = false )
+   Item( String* str, bool bGarbage = false, int line=0, const char* source=0 )
    {
-      setString(str,bGarbage);
+      setString(str, bGarbage, line, source);
    }
 
    /** Sets this item to a String item.
@@ -204,7 +204,7 @@ public:
     \param str A pointer to a Falcon String that must be adopted.
     \see Item( String* )
     */
-   void setString( String* str, bool bGarbage = false );
+   void setString( String* str, bool bGarbage = false, int line=0, const char* source=0 );
 
    /** Creates a boolean item. */
    explicit inline Item( bool b ) {

@@ -107,7 +107,7 @@ length_t TranscoderUTF8::encode( const String& source, byte* data, length_t size
    return (length_t)(tgt - data);
 }
 
-length_t TranscoderUTF8::decode( const byte* data, length_t, String& target, length_t count, bool bThrow ) const
+length_t TranscoderUTF8::decode( const byte* data, length_t count, String& target, length_t maxSize, bool bThrow ) const
 {
    const byte* utf8 = data;
    const byte* limit = data+count;
@@ -116,7 +116,7 @@ length_t TranscoderUTF8::decode( const byte* data, length_t, String& target, len
    target.reserve( count );  // can be max this size.
    target.size(0);
 
-   while( utf8 < limit && done < count )
+   while( utf8 < limit && done < maxSize )
    {
       char_t chr = 0;
 

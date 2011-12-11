@@ -39,13 +39,20 @@ void Item::setString( const String& str )
    setUser( (new String(str))->garbage() );
 }
 
-void Item::setString( String* str, bool bGarbage )
+void Item::setString( String* str, bool bGarbage, int line, const char* src )
 {
    static Class* strClass = Engine::instance()->stringClass();
    static Collector* coll = Engine::instance()->collector();
    if( bGarbage )
    {
-      setUser(FALCON_GC_STORE(coll, strClass, str));
+      if( src != 0 )
+      {
+         setUser(FALCON_GC_STORE_PARAMS(coll, strClass, str, line, src));
+      }
+      else
+      {
+         setUser(FALCON_GC_STORE(coll, strClass, str ));
+      }
    }
    else
    {

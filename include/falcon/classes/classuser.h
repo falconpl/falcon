@@ -93,6 +93,78 @@ public:
     */
    void add( Property* prop );
    
+   /** Adds a parent class.
+    This method allow to declare Class (most commonly another UserClass) as
+    parent of this class.
+    
+    The parent classes will be used to determine automatically parentship
+    when Class::derivedFrom is invoked, and will geneate an hidden read-only
+    property having the same name of the parent class. The property is not
+    returned in the property enumerations, and hasProperty returns false if
+    invoked with the name of a parent class, but when invoked, an object having
+    the desired parent class and the same user data as this class is returned.
+    
+    This is the common parent class access protocol in the standard class-based
+    OOP model of Falcon, and is isomorphic with FalconClass behavior (classes
+    declared at source file level or similarly built).
+    
+    This means that the parent classes must all understand and use the same
+    user data associated with this child class. If this is not the case, e.g.
+    if this class is theoretically a subclass of something, but the inner data
+    the parents use is incompatible at binary level, then it is necessary to
+    manually override Class::derivedFrom() and Class::getProperty to generate
+    a proper instance for the Falcon engine.
+    
+    A safe way to use this automated feature is that of deriving the data
+    this class presents to Falcon from the same UserData used by the parent(s).
+    
+    If the data type known by the parents is not compatible with the data type
+    handled by this subclass, it is necessary just to override Class::getParentData()
+    to offer a parent-specific data to the outer world. Notice that, in this case,
+    it might be necessary to override also Class::gcMark() to correctly mark
+    all the elements the parent classes need to mark.
+    
+    \note The parent classes added through this method are \b not invoked during
+    object creation. 
+    
+    \note Subclasses providing a different inheritance scheme must override
+    Class::getParent, Class::getParentData, Class::isDerivedFrom and Class::getProperty
+    */
+   void addParent( Class* cls );
+   
+   /** Overridden to return one of the parents declared through addParent(). 
+    \param name The name of a parent.
+    \return A parent added in addParent if the name is known, 0 otherwise.
+    */
+   virtual Class* getParent( const String& name ) const;
+   
+   /** Overridden to return exactly the class data.
+    
+    \param parent A parent class.
+    \param data The data handled by this class.
+    \return data if parent is this class or any parent declared by addParent,
+      0 otherwise.
+    
+    This method is invoked by getProperty when the name of a parent class
+    is requested as a property. 
+    
+    This method should be overridden by subclasses if some of the parents cannot
+    handle the same data type used by this class.
+    */
+   virtual void* getParentData( Class* parent, void* data ) const;
+   
+   /** Overridden to return true if the required class is added through addParent. 
+    \param cls A parent class.
+    \return true if the parent is known, false otherwise.
+    
+    */
+   virtual bool isDerivedFrom( Class* cls ) const;
+   
+   /** Overridden to mark this class and all the parents through addParent. 
+    \param mark A GC mark indicator.    
+    */
+   virtual void gcMarkMyself( uint32 mark );
+   
    /** Number of properties carried (to be cached).
     
     Carried properties are those properties that requrie separate caching,
@@ -132,6 +204,10 @@ public:
     
     \note This class supposes that the instance is derived from UserCarrier.
     if this is not the case, override this method to use your data.
+    
+    \note parent classes declared with addParent() are not invoked to clear
+    their data. In case of need, it is necessary to derive this method to
+    properly handle parent class disposal.
     */
    virtual void dispose( void* instance ) const;
    
@@ -141,6 +217,10 @@ public:
     
     \note This class supposes that the instance is derived from UserCarrier.
     if this is not the case, override this method to use your data.
+    
+    \note parent classes declared with addParent() are not invoked to clone
+    their data. In case of need, it is necessary to derive this method to
+    properly handle parent class cloning.
     */
    virtual void* clone( void* insatnce ) const;
 
@@ -150,6 +230,10 @@ public:
     
     \note This class supposes that the instance is derived from UserCarrier.
     if this is not the case, override this method to use your data.
+    
+    \note parent classes declared with addParent() are not invoked to mark
+    their data. In case of need, it is necessary to derive this method to
+    properly handle parent class marking.
     */
    virtual void gcMark( void* instance, uint32 mark ) const;
    

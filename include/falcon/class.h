@@ -215,6 +215,9 @@ public:
     
     The method returns true if the class is the same as this class or
     if one of the base classes of this class is derived from cls.
+    
+    The base implementation checks if the parameter is the same as \b this.
+    Subclasses should check against theoretical or structured inheritance.
     */
    virtual bool isDerivedFrom( Class* cls ) const;
    
@@ -392,10 +395,10 @@ public:
       \param The mark of this class.
 
     Classes may themselves be data for other higher-level metaclasses
-    (i..e the ClassClass handler). Dynamic classes are subject to GC
+    (i..e the MetaClass handler). Dynamic classes are subject to GC
     as any other dynamic data.
 
-    This method is called by ClassClass and other
+    This method is called by MetaClass and other
     class-type handlers, as well as some deep instances that know that their
     class could theoretically be dynamic.
 

@@ -35,11 +35,17 @@
          coll->H_storeLocked( cls, (void*) data, SRC, __LINE__ ): \
          coll->storeLocked( cls, (void*) data ))
 
+   #define FALCON_GC_STORE_PARAMS( coll, cls, data, line, src ) ( coll->trace() ?\
+         coll->H_store( cls, (void*) data, src, line ): \
+         coll->store( cls, (void*) data ))
+
 #else  //FALCON_TRACE_GC
    /** This macro can be used to activate the history recording of GC entities.
     See the main body class.
     */
    #define FALCON_GC_STORE( coll, cls, data ) (coll->store( cls, (void*) data ))
+
+   #define FALCON_GC_STORE_PARAMS( coll, cls, data, line, src ) (coll->store( cls, (void*) data ))
 
    /** This macro can be used to activate the history recording of GC entities.
     See the main body class.

@@ -30,9 +30,12 @@
 #include <falcon/cm/storer.h>
 #include <falcon/cm/restorer.h>
 #include <falcon/cm/stream.h>
+#include <falcon/cm/textstream.h>
 
 // the standard error classes
 #include <falcon/errorclasses.h>
+
+#include "falcon/cm/textstream.h"
 
 
 namespace Falcon {
@@ -40,6 +43,8 @@ namespace Falcon {
 CoreModule::CoreModule():
    Module("core")
 {
+   Ext::ClassStream* classStream = new Ext::ClassStream;
+   
    *this
       // Standard functions
       << new Ext::Compare
@@ -58,7 +63,8 @@ CoreModule::CoreModule():
       << new Ext::ClassPath
       << new Ext::ClassRestorer
       << new Ext::ClassStorer
-      << new Ext::ClassStream
+      << classStream
+      << new Ext::ClassTextStream( classStream )
       ;
 }
 

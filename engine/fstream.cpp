@@ -13,8 +13,6 @@
    See LICENSE file for licensing details.
 */
 
-
-
 #include <falcon/fstream.h>
 
 namespace Falcon{

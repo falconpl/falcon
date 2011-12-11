@@ -812,6 +812,7 @@ public:
     after stack reset to the "return value" passed as parameter.
     */
    void returnFrame( const Item& value = Item() );
+  
       
    /** Unrolls the code and function frames down to the nearest "next" loop base. 
     \throw CodeError if base not found.

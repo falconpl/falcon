@@ -137,17 +137,17 @@ class VMContext;
    \/\* ... *\/
    file = vfs.open( "storetest"  )
    restorer = Restorer()
-   restorer.read( file )
+   restorer.restore( file )
 
-   > restorer.restore()      // 1
-   > restorer.restore()      // 2
-   > restorer.restore()      // "Hello"
-   > restorer.restore()      // "World"
-   > restorer.restore()      // throws an exception.
+   > restorer.next()      // 1
+   > restorer.next()      // 2
+   > restorer.next()      // "Hello"
+   > restorer.next()      // "World"
+   > restorer.next()      // throws an exception.
  @endcode
  
- In this code, all the 4 stored objects are restored at <b>restorer.read</b>,
- while subsequent calls to <b>restorer.restore</b> will just return objects that
+ In this code, all the 4 stored objects are restored at <b>restorer.restore</b>,
+ while subsequent calls to <b>restorer.next</b> will just return objects that
  have already been fully created and are already alive in <b>restorer</b>.
  
  Complex programs willing to partition their storage may opt for a strategy

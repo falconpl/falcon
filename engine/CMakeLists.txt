@@ -71,6 +71,7 @@ add_library(falcon_engine SHARED
   cm/restorer.cpp
   cm/storer.cpp
   cm/stream.cpp
+  cm/textstream.cpp
   cm/tostring.cpp
   cm/typeid.cpp
   cm/uri.cpp

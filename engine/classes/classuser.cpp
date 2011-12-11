@@ -22,6 +22,7 @@
 #include <falcon/vmcontext.h>
 
 #include <map>
+#include <vector>
 
 namespace Falcon {
 
@@ -33,6 +34,8 @@ public:
    typedef std::map<String, Property*> PropMap;
    PropMap m_props;
    
+   typedef std::vector<Class*> ParentList;
+   ParentList m_parents;
    
    Private(){}
    ~Private() {}
@@ -64,6 +67,77 @@ void ClassUser::add( Property* prop )
       
 }
 
+void ClassUser::addParent( Class* parent )
+{
+   _p->m_parents.push_back( parent );
+}
+
+
+Class* ClassUser::getParent( const String& name ) const
+{
+   Private::ParentList::iterator iter = _p->m_parents.begin();
+   while( iter != _p->m_parents.end() )
+   {
+      if( (*iter)->name() == name )
+      {
+         return (*iter);
+      }
+      ++iter;
+   }
+   
+   return 0;
+ }
+   
+
+void* ClassUser::getParentData( Class* parent, void* data ) const
+{
+   Private::ParentList::iterator iter = _p->m_parents.begin();
+   while( iter != _p->m_parents.end() )
+   {
+      if( (*iter) == parent )
+      {
+         return data;
+      }
+      ++iter;
+   }
+   
+   return 0;
+}
+
+   
+bool ClassUser::isDerivedFrom( Class* cls ) const
+{
+   if( cls == this ) 
+   {
+      return true;
+   }
+   
+   Private::ParentList::iterator iter = _p->m_parents.begin();
+   while( iter != _p->m_parents.end() )
+   {
+      if( (*iter) == cls )
+      {
+         return true;
+      }
+      ++iter;
+   }
+   
+   return false;
+}
+   
+
+void ClassUser::gcMarkMyself( uint32 mark )
+{
+   Class::gcMarkMyself(mark);
+   Private::ParentList::iterator iter = _p->m_parents.begin();
+   while( iter != _p->m_parents.end() )
+   {
+      (*iter)->gcMarkMyself( mark );
+      ++iter;
+   }
+}
+
+   
 
 void ClassUser::dispose( void* instance ) const
 {
@@ -197,6 +271,18 @@ void ClassUser::op_getProperty( VMContext* ctx, void* instance, const String& pr
    }
    else
    {
+      Class* parent = getParent( prop );
+      if( parent != 0 )
+      {
+         void* data = getParentData( parent, instance );
+         if( data != 0 )
+         {
+            ctx->topData().setUser( parent, data );
+            return;
+         }
+      }
+      
+      // fallback to class get property
       Class::op_getProperty( ctx, instance, prop );
    }   
 }

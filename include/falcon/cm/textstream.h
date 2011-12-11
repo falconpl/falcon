@@ -1,8 +1,8 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: stream.h
+   FILE: textstream.h
 
-   Falcon core module -- Interface to Stream.
+   Falcon core module -- Abstraction integrating text streams
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: Sat, 11 Jun 2011 20:20:06 +0200
@@ -13,8 +13,8 @@
    See LICENSE file for licensing details.
 */
 
-#ifndef FALCON_CORE_STREAM_H
-#define FALCON_CORE_STREAM_H
+#ifndef FALCON_CORE_TEXTSTREAM_H
+#define FALCON_CORE_TEXTSTREAM_H
 
 #include <falcon/pseudofunc.h>
 #include <falcon/fassert.h>
@@ -22,9 +22,10 @@
 #include <falcon/property.h>
 #include <falcon/method.h>
 #include <falcon/types.h>
+#include <falcon/textreader.h>
+#include <falcon/textwriter.h>
 
-#include <falcon/usercarrier.h>
-#include <falcon/path.h>
+#include <falcon/cm/stream.h>
 
 namespace Falcon {
 
@@ -35,77 +36,66 @@ class Transcoder;
 namespace Ext {
 
 
-/** We keep th path, the auth data and the query. */
+/** Holder for the stream and its TextReader/TextWriter helpers. */
 class FALCON_DYN_CLASS TextStreamCarrier: public StreamCarrier
 {
 public:
+   // we won't be separating the text readers and writers.
    TextReader m_reader;
    TextWriter m_writer;
-   Transcoder *m_tcoder;
-      
+   String m_encoding;
+
+   
    TextStreamCarrier( Stream* stream );
-   virtual ~TextStreamCarrier();
+   virtual ~TextStreamCarrier();   
+   virtual void onFlushingOperation();   
+   
+   bool setEncoding( const String& encName );
 };
 
 
 /*# @class TextStream
-   
+   @param stream A stream on which to operate.
+ 
  */
 class ClassTextStream: public ClassStream
 {
 public:
-   
-   ClassTextStream();
+   /** Create the textstream class.
+    \param parent A ClassStream that will be known in the owning module
+    as the parent of this class.
+    */
+   ClassTextStream( ClassStream* parent );
    virtual ~ClassTextStream();
 
    //=============================================================
-   // Using a different carrier.
-   
-   virtual void dispose( void* instance ) const;
-   virtual void* clone( void* insatnce ) const;
-   virtual void gcMark( void* instance, uint32 mark ) const;
-   virtual bool gcCheck( void* instance, uint32 mark ) const;
-   
-   //=============================================================
    //
    virtual void op_create( VMContext* ctx, int32 pcount ) const;
-   virtual void* createInstance( Item* params, int pcount ) const;
    
 private:   
    
+   // keeping a reference for simplicity
+   ClassStream* m_stream;
    //====================================================
    // Properties.
    //
+   FALCON_DECLARE_PROPERTY( encoding );
    
-   FALCON_DECLARE_PROPERTY( error )
-   FALCON_DECLARE_PROPERTY( moved )
-   FALCON_DECLARE_PROPERTY( position )
-   FALCON_DECLARE_PROPERTY( status )
-   FALCON_DECLARE_PROPERTY( eof )
-   FALCON_DECLARE_PROPERTY( interrupted )
-   FALCON_DECLARE_PROPERTY( bad )
-   FALCON_DECLARE_PROPERTY( good )
-   FALCON_DECLARE_PROPERTY( isopen )
-   FALCON_DECLARE_PROPERTY( buffer )
-   
-   FALCON_DECLARE_METHOD( write, "data:S|M, count:[N], start:[N]" );
-   FALCON_DECLARE_METHOD( read, "data:S|M, count:[N], start:[N]" );
+   FALCON_DECLARE_METHOD( write, "text:S, count:[N], start:[N]" );
+   FALCON_DECLARE_METHOD( read, "text:S, count:[N]" );   
    FALCON_DECLARE_METHOD( grab, "count:N" );
-   FALCON_DECLARE_METHOD( close, "" );
-   FALCON_DECLARE_METHOD( seekBeg, "position:N" );
-   FALCON_DECLARE_METHOD( seekCur, "position:N" );
-   FALCON_DECLARE_METHOD( seekEnd, "position:N" );
-   FALCON_DECLARE_METHOD( seek, "position:N,whence:N" );
-   FALCON_DECLARE_METHOD( tell, "" );
-   FALCON_DECLARE_METHOD( flush, "" );
-   FALCON_DECLARE_METHOD( trunc, "position:[N]" );
-   FALCON_DECLARE_METHOD( ravail, "msecs:[N]" );
-   FALCON_DECLARE_METHOD( wavail, "msecs:[N]" );
+   FALCON_DECLARE_METHOD( readLine, "text:S, maxCount:[N]" );   
+   FALCON_DECLARE_METHOD( grabLine, "maxCount:[N]" );   
+   FALCON_DECLARE_METHOD( readChar, "text:S, append:[B]" );
+   FALCON_DECLARE_METHOD( getChar, "" );
+   FALCON_DECLARE_METHOD( ungetChar, "char:S|N" );
+   FALCON_DECLARE_METHOD( putChar, "char:S|N" );
+   
 };
 
 }
 }
 
-#endif	/* FALCON_CORE_TOSTRING_H */
+#endif	/* FALCON_CORE_TEXTSTREAM_H */
 
 /* end of textstream.h */

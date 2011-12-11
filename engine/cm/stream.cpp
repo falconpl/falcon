@@ -16,11 +16,9 @@
 #undef SRC
 #define SRC "falcon/cm/stream.cpp"
 
-#include <falcon/cm/path.h>
 
 #include <falcon/vm.h>
 #include <falcon/vmcontext.h>
-#include <falcon/path.h>
 #include <falcon/errors/paramerror.h>
 #include <falcon/errors/codeerror.h>
 
@@ -80,6 +78,11 @@ void StreamCarrier::setBuffering( uint32 size )
          m_sbuf->resizeBuffer( size );
       }
    }
+}
+
+void StreamCarrier::onFlushingOperation()
+{
+   // normally, do nothing.
 }
 
 //==================================================
@@ -283,62 +286,6 @@ FALCON_DEFINE_PROPERTY_GET_P( ClassStream, buffer )
    value = (int64) bufSize;
 }
 
-/*
-FALCON_DEFINE_PROPERTY_SET_P( ClassStream, encoding )
-{
-   StreamCarrier* sc = static_cast<StreamCarrier*>(instance);
-   
-   bool bReset = false;
-   if( value.isNil() )
-   {
-      bReset = true;
-   }
-   else if( value.isString() )
-   {
-      const String& encName = *value.asString();
-      if( encName == "" || encName == "C" )
-      {
-         bReset = true;
-      }
-      else
-      {
-         delete sc->m_tcoder;
-         sc->m_tcoder = Engine::instance()->getTranscoder(encName);
-         if( sc->m_tcoder )
-         {
-            // unknown encoding
-            throw new ParamError( ErrorParam( e_param_range, __LINE__, SRC )
-               .origin( ErrorParam::e_orig_runtime )
-               .extra("Unknown encoding " + encName));
-         }
-      }      
-   }
-   else
-   {
-      throw new ParamError( ErrorParam(e_inv_prop_value, __LINE__, SRC ).extra("S|Nil"));
-   }
-   
-   if( bReset )
-   {
-      delete sc->m_tcoder;
-      sc->m_tcoder = 0;
-   }   
-}
-
-FALCON_DEFINE_PROPERTY_GET_P( ClassStream, encoding )
-{
-   StreamCarrier* sc = static_cast<StreamCarrier*>(instance);
-   
-   if( sc->m_tcoder == 0 )
-   {
-      value.setNil();
-   }
-   else {
-      value = sc->m_tcoder->name();
-   }
-}
-
-*/
 //======================================================
 // Methods
 //
@@ -525,14 +472,15 @@ FALCON_DEFINE_METHOD_P1( ClassStream, close )
 
 
 FALCON_DEFINE_METHOD_P1( ClassStream, seekBeg )
-{   
+{
    Item* i_loc = ctx->param(0);
    if( i_loc == 0 || !(i_loc->isOrdinal()) )
    {
       throw paramError();
    }
    StreamCarrier* sc = static_cast<StreamCarrier*>(ctx->self().asInst());
-   
+
+   sc->onFlushingOperation();
    ctx->returnFrame( sc->m_stream->seekBegin( i_loc->forceInteger() ) );
 }
 
@@ -546,6 +494,7 @@ FALCON_DEFINE_METHOD_P1( ClassStream, seekCur )
    }
    StreamCarrier* sc = static_cast<StreamCarrier*>(ctx->self().asInst());
    
+   sc->onFlushingOperation();
    ctx->returnFrame( sc->m_stream->seekCurrent( i_loc->forceInteger() ) );
 }
 
@@ -559,6 +508,7 @@ FALCON_DEFINE_METHOD_P1( ClassStream, seekEnd )
    }
    StreamCarrier* sc = static_cast<StreamCarrier*>(ctx->self().asInst());
    
+   sc->onFlushingOperation();
    ctx->returnFrame( sc->m_stream->seekEnd( i_loc->forceInteger() ) );
 }
 
@@ -575,6 +525,7 @@ FALCON_DEFINE_METHOD_P1( ClassStream, seek )
    
    StreamCarrier* sc = static_cast<StreamCarrier*>(ctx->self().asInst());
    
+   sc->onFlushingOperation();
    ctx->returnFrame( sc->m_stream->seek( i_loc->forceInteger(), 
          (Stream::e_whence) i_whence->forceInteger() ) );
 }
@@ -590,6 +541,7 @@ FALCON_DEFINE_METHOD_P1( ClassStream, tell )
 FALCON_DEFINE_METHOD_P1( ClassStream, flush )
 {   
    StreamCarrier* sc = static_cast<StreamCarrier*>(ctx->self().asInst());   
+   sc->onFlushingOperation();
    ctx->returnFrame( sc->m_stream->flush() );
 }
 
@@ -601,6 +553,7 @@ FALCON_DEFINE_METHOD_P1( ClassStream, trunc )
       throw paramError();
    }
    StreamCarrier* sc = static_cast<StreamCarrier*>(ctx->self().asInst());
+   sc->onFlushingOperation();
    int64 loc = i_loc != 0 ? i_loc->forceInteger() : -1 ;
    ctx->returnFrame( sc->m_stream->truncate( loc ) );
 }

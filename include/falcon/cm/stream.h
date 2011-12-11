@@ -49,6 +49,8 @@ public:
    virtual ~StreamCarrier();
    
    void setBuffering( uint32 size );
+   
+   virtual void onFlushingOperation();
 };
 
 
