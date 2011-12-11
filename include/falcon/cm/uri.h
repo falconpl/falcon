@@ -43,7 +43,7 @@ public:
    {}
    
    URICarrier( const URICarrier& other ):
-      UserCarrier( other.itemCount() ),
+      UserCarrier( other.dataSize() ),
       m_uri( other.m_uri )
    {}
    

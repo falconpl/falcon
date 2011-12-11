@@ -36,31 +36,27 @@ namespace Ext {
 
 
 /** We keep th path, the auth data and the query. */
-class FALCON_DYN_CLASS StreamCarrier
+class FALCON_DYN_CLASS TextStreamCarrier: public StreamCarrier
 {
 public:
-   uint32 m_gcMark;
-   
-   Stream* m_stream;
-   StreamBuffer* m_sbuf;
-   Stream* m_underlying;
+   TextReader m_reader;
+   TextWriter m_writer;
+   Transcoder *m_tcoder;
       
-   StreamCarrier( Stream* stream );
-   virtual ~StreamCarrier();
-   
-   void setBuffering( uint32 size );
+   TextStreamCarrier( Stream* stream );
+   virtual ~TextStreamCarrier();
 };
 
 
-/*# @class Stream
+/*# @class TextStream
    
  */
-class ClassStream: public ClassUser
+class ClassTextStream: public ClassStream
 {
 public:
    
-   ClassStream();
-   virtual ~ClassStream();
+   ClassTextStream();
+   virtual ~ClassTextStream();
 
    //=============================================================
    // Using a different carrier.
@@ -112,4 +108,4 @@ private:
 
 #endif	/* FALCON_CORE_TOSTRING_H */
 
-/* end of stream.h */
+/* end of textstream.h */

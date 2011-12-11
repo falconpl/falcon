@@ -45,18 +45,20 @@ public:
       
    virtual ~StorerCarrier()
    {
-      if( m_streamc != 0 )
-         m_streamc->decref();
    }
    
    void setStream( StreamCarrier* stc )
-   {
-      if( m_streamc !=  0)
-      {
-         m_streamc->decref();
-      }
+   {     
       m_streamc = stc;
-      m_streamc->incref();
+   }
+   
+   virtual void gcMark( uint32 mark )
+   {
+      if ( m_gcMark != mark )
+      {
+         m_gcMark = mark;
+         m_streamc->m_gcMark = mark;
+      }
    }
    
 private:

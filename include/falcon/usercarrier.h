@@ -64,12 +64,14 @@ public:
    uint32 gcMark() const { return m_gcMark; }
 
    Item* dataAt( uint32 pos ) const { return m_data + pos; }
-   uint32 itemCount() const { return m_itemCount; }
+   uint32 dataSize() const { return m_dataSize; }
    
 private:
    
    Item* m_data;
-   uint32 m_itemCount;
+   uint32 m_dataSize;
+
+protected:
    uint32 m_gcMark;
 };
 
@@ -89,6 +91,7 @@ public:
    UserCarrierT( const UserCarrierT<__T>& other );
 
    __T* carried() const { return m_data; }
+   
 protected:
    virtual void* cloneData() const { return 0; } 
 

@@ -44,7 +44,7 @@ public:
    {}
    
    PathCarrier( const PathCarrier& other ):
-      UserCarrier( other.itemCount() ),
+      UserCarrier( other.dataSize() ),
       m_path( other.m_path )
    {}
    

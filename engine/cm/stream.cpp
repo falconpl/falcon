@@ -42,27 +42,15 @@ namespace Falcon {
 namespace Ext {
  
 StreamCarrier::StreamCarrier( Stream* stream ):
+   m_gcMark(0),
    m_stream(stream),
    m_sbuf(0),
-   m_underlying(stream),
-   m_gcMark(0),
-   m_count( new uint32 )
+   m_underlying(stream)
 {}
 
 
-StreamCarrier::StreamCarrier( const StreamCarrier& other ):
-   m_stream( other.m_stream ),
-   m_sbuf(other.m_sbuf),
-   m_underlying(other.m_underlying),
-   m_gcMark(0),
-   m_count( other.m_count )
-{
-   ++(*m_count);
-}
-
 StreamCarrier::~StreamCarrier()
 {   
-   delete m_count;
    delete m_sbuf;
    delete m_underlying;
 }
@@ -94,26 +82,6 @@ void StreamCarrier::setBuffering( uint32 size )
    }
 }
 
-
-StreamCarrier* StreamCarrier::clone() const 
-{ 
-   return new StreamCarrier(*this); 
-}
-
-
-void StreamCarrier::incref()
-{
-   ++ *m_count  ;
-}
-
-void StreamCarrier::decref()
-{
-   if( -- *m_count == 0 ) 
-   {
-      delete this;
-   }
-}
-   
 //==================================================
 //
 
@@ -153,12 +121,13 @@ ClassStream::~ClassStream()
 
 void ClassStream::dispose( void* instance ) const
 {
-   static_cast<StreamCarrier*>(instance)->decref();
+   delete static_cast<StreamCarrier*>(instance);
 }
 
 void* ClassStream::clone( void* insatnce ) const
 {
-   return new StreamCarrier(*static_cast<StreamCarrier*>(insatnce));
+   // TODO: Clone the underlying streams to have new file pointers
+   return insatnce;
 }
 
 

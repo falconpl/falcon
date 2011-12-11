@@ -26,13 +26,13 @@ namespace Falcon {
 
 UserCarrier::UserCarrier():
    m_data( 0 ),
-   m_itemCount( 0 ),
+   m_dataSize( 0 ),
    m_gcMark(0)
 {}
 
 UserCarrier::UserCarrier( uint32  itemcount ):
    m_data( itemcount == 0 ? 0 : new Item[ itemcount ] ),
-   m_itemCount( itemcount ),
+   m_dataSize( itemcount ),
    m_gcMark(0)
 {
    if( itemcount > 0 )
@@ -46,11 +46,11 @@ UserCarrier::UserCarrier( uint32  itemcount ):
 
 
 UserCarrier::UserCarrier( const UserCarrier& other ):
-   m_data( new Item[ other.m_itemCount ] ),
-   m_itemCount( other.m_itemCount ),
+   m_data( new Item[ other.m_dataSize ] ),
+   m_dataSize( other.m_dataSize ),
    m_gcMark(0)
 {
-   for ( size_t i = 0; i < m_itemCount; ++i )
+   for ( size_t i = 0; i < m_dataSize; ++i )
    {
       m_data[i].setNil();
    }
@@ -65,7 +65,7 @@ UserCarrier::~UserCarrier()
 
 void UserCarrier::gcMark( uint32 mark )   
 {
-   for ( size_t i = 0; i < m_itemCount; ++i )
+   for ( size_t i = 0; i < m_dataSize; ++i )
    {
       Item& item = m_data[i];
       if( item.isGarbaged() )
