@@ -25,12 +25,11 @@ namespace Falcon
 
 StmtInit::StmtInit( Inheritance* inh, int32 line, int32 chr  ):
    Statement( e_stmt_init, line, chr ),
+   m_postInit( this ),
    m_inheritance( inh )
 {
    fassert( inh->parent() != 0 && inh->parent()->isFalconClass() );
    apply = apply_;
-   m_step0 = this;
-   m_step1 = inh->compiledExpr();
    inh->defineAt(line, chr);
 }
 
@@ -50,14 +49,47 @@ void StmtInit::apply_( const PStep* ps, VMContext* ctx )
    TRACE( "Initializing %s with %d params",
          init->m_inheritance->describe().c_ize(),
          (int) init->m_inheritance->paramCount() );
-
-   // we shall be around just once
+   
+   // should we descend?
+   ctx->resetCode( &m_postInit );
+   if( init->m_inheritance->prepareOnContext(ctx) )
+   {     
+      // we went deep, let postInit to fix the thing.
+      return;
+   }
+   
+   // we shall be around just once -- this shall remove US or postInit.
    ctx->popCode();
+   
+   class FalconClass* fcs = static_cast<FalconClass*>( init->m_inheritance->parent());
+   register CallFrame& cf = ctx->currentFrame();
+   // if we're here, we didn't have any expression to evaluate.
+   ctx->call( fcs->constructor(), 0, cf.m_self );
+}
+
+
+StmtInit::PostInit::~PostInit()
+{   
+}
+
+StmtInit::PostInit::describeTo( String& tgt )
+{
+   m_owner->describeTo(tgt);
+   tgt += " [postInit]";
+}
+
+void StmtInit::PostInit::apply_( const PStep* ps, VMContext* ctx )
+{
+   const StmtInit* init = static_cast<const StmtInit::PostInit*>( ps )->m_owner;
+   // we shall be around just once -- this shall remove US or postInit.
+   ctx->popCode();
+   
    class FalconClass* fcs = static_cast<FalconClass*>( init->m_inheritance->parent());
    register CallFrame& cf = ctx->currentFrame();
    ctx->call( fcs->constructor(),
               init->m_inheritance->paramCount(), cf.m_self );
 }
+  
 
 }
 

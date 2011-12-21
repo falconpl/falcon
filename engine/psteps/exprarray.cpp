@@ -16,7 +16,6 @@
 #include <falcon/trace.h>
 #include <falcon/itemarray.h>
 #include <falcon/classes/classarray.h>
-#include <falcon/pcode.h>
 #include <falcon/vm.h>
 #include <falcon/engine.h>
 
@@ -138,34 +137,11 @@ void ExprArray::oneLinerTo( String& str ) const
    str += " ]";
 }
 
-void ExprArray::precompile( PCode* pcd ) const
-{
-   TRACE3( "Precompiling ExprArray: %p (%s)", pcd, oneLiner().c_ize() );
-   Private::ExprVector& mye = _p->m_exprs;
-   Private::ExprVector::const_iterator iter = mye.begin();
-   while( iter != mye.end() )
-   {
-      (*iter)->precompile(pcd);
-      ++iter;
-   }
-
-   pcd->pushStep( this );
-}
-
 //=====================================================
-
-void ExprArray::serialize( DataWriter* ) const
-{
-   // TODO
-}
-
-void ExprArray::deserialize( DataReader* )
-{
-   // TODO
-}
 
 bool ExprArray::simplify( Item& ) const
 {
+   // TODO: if all expressions are simple, we can create an array.
    return false;
 }
 
@@ -175,16 +151,29 @@ void ExprArray::apply_( const PStep* ps, VMContext* ctx )
 {
    static Class* ca_class = Engine::instance()->arrayClass();
    static Collector* collector = Engine::instance()->collector();
-
+   
    const ExprArray* ea = static_cast<const ExprArray*>(ps);
    Private::ExprVector& mye = ea->_p->m_exprs;
 
+   // invoke all the expressions.
+   CodeFrame& cf = ctx->currentCode();
+   while( cf.m_seqId < mye.size() )
+   {
+      if( ctx->stepInYield( mye[cf.m_seqId ++], cf ) )
+      {
+         return;
+      }
+   }
+   
+   // we are ready to itemize the expressions.   
    ItemArray* array = new ItemArray( mye.size() );
    array->length(mye.size());
 
    ctx->copyData( array->elements(), mye.size() );
    ctx->popData( mye.size() );
    ctx->pushData( FALCON_GC_STORE( collector, ca_class, array ) );
+   
+   ctx->popCode();
 }
 
 

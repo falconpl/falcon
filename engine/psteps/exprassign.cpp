@@ -16,20 +16,8 @@
 #include <falcon/expression.h>
 #include <falcon/trace.h>
 #include <falcon/vmcontext.h>
-#include <falcon/pcode.h>
 
 namespace Falcon {
-
-
-void ExprAssign::precompile( PCode* pcode ) const
-{
-   TRACE3( "Precompiling Assign: %p (%s)", pcode, describe().c_ize() );
-
-   // just, evaluate the second, then evaluate the first,
-   // but the first knows it's a lvalue.
-   m_second->precompile(pcode);
-   m_first->precompileLvalue(pcode);
-}
 
 
 bool ExprAssign::simplify( Item& ) const
@@ -41,6 +29,41 @@ bool ExprAssign::simplify( Item& ) const
 void ExprAssign::describeTo( String& str ) const
 {
    str = "(" + m_first->describe() + " = " + m_second->describe() + ")";
+}
+
+
+void ExprAssign::apply_( const PStep* ps, VMContext* ctx )
+{
+   const ExprAssign* self = static_cast<const ExprAssign*>(ps);
+   TRACE2( "Apply \"%s\"", self->describe().c_ize() );
+   
+   
+   // Resolve...
+   fassert( self->m_first != 0 );
+   fassert( self->m_first->lvalueStep() != 0 );
+   fassert( self->m_second != 0 );
+   
+   // Generate the values
+   CodeFrame& cf = ctx->currentCode();
+   switch( cf.m_seqId )
+   {
+      case 0: 
+         // check the start.
+         cf.m_seqId = 1;
+         if( ctx->stepInYield( self->m_second, cf ) )
+         {
+            return;
+         }
+         // fallthrough
+      case 1:
+         cf.m_seqId = 2;
+         if( ctx->stepInYield( self->m_first->lvalueStep(), cf ) )
+         {
+            return;
+         }      
+   }
+   
+   ctx->popCode();
 }
 
 }

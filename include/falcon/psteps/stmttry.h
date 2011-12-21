@@ -60,20 +60,20 @@ private:
    
    static void apply_( const PStep*, VMContext* ctx );
    
-   /** Cleanup step, popping the try frame and eventually invoking the finally.*/
-   class PStepTraverse: public PStep 
+   /** Placeholder for break after having pushed our body.*/
+   class PStepDone: public PStep 
    {
    public:
-      PStepTraverse() { apply = apply_; }
-      virtual ~PStepTraverse() {}
-      virtual void describeTo( String& tgt ) const { tgt = "Try enter"; }
+      PStepDone() { apply = apply_; m_bIsCatch = true; }
+      virtual ~PStepDone() {}
+      virtual void describeTo( String& tgt ) const { tgt = "Try done"; }
    
    private:
       static void apply_( const PStep*, VMContext* ctx );
    }
-   m_traverseFinallyStep;
+   m_stepDone;   
    
-   /** Cleanup step, popping the try frame and eventually invoking the finally.*/
+   /** Execute the finally clause of this try.*/
    class PStepFinally: public PStep 
    {
    public:

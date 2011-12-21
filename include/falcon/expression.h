@@ -129,9 +129,6 @@ public:
    /** Returns the position in the source where the expression was generated. */
    SourceRef& sourceRef() { return m_sourceRef; }
 
-   /** Serialize the expression on a stream. */
-   virtual void serialize( DataWriter* s ) const;
-
    /** Returns true if the expression can be found alone in a statement. */
    inline virtual bool isStandAlone() const { return false; }
 
@@ -159,48 +156,14 @@ public:
     * reducing expressions at compile time.
     */
    virtual bool simplify( Item& result ) const = 0;
-   
-   /** Pre-compiles the expression on a PCode.
-    *
-    * The vast majority of expressions in Falcon programs can be
-    * precompiled to PCode stack stubs, and then sent into the VM
-    * through their precompiled PCode form.
-    *
-    * \note Important: the calling code should make sure that the
-    * expression is precompiled at most ONCE, or in other words, that
-    * the PCode on which is precompiled is actually used just once
-    * in the target program. In fact, gate expressions uses a private
-    * member in their structure to determine the jump branch position,
-    * and that member can be used just once.
-    */
-   virtual void precompile( PCode* pcd ) const;
 
-   /** Pre-compiles the expression on a PCode -- with lvalue.
-    Same as pre-compile, but this will push the lvalue pstep instead of
-    this pstep, if available.
-    */
-   virtual void precompileLvalue( PCode* pcd ) const;
-   
-   /** Pre-compiles the expression on a PCode -- with lvalue on X= operators.
-    When the setting of the value after some calculus in lvalue contexts
-    need other operations, this can help managing extra operations needed.
-    
-    \note By default, this calls precompileLvalue().
-    */
-   virtual void precompileAutoLvalue( PCode* pcode, const PStep* activity, bool bIsBinary, bool bSaveOld ) const;
-   
 protected:
 
    Expression( operator_t t ):
       m_pstep_lvalue(0),
       m_operator( t )
    {}
-
-   /** Deserialize the expression from a stream.
-    * The expression type id must have been already read.
-    */
-   virtual void deserialize( DataReader* s );
-
+      
    /** Apply-modify function.
     
     Expression accepting a modify operator (i.e. ++, += *= etc.)
@@ -236,13 +199,10 @@ public:
 
    virtual ~UnaryExpression();
 
-   virtual void serialize( DataWriter* s ) const;
    virtual bool isStatic() const;
 
    Expression *first() const { return m_first; }
    void first( Expression *f ) { delete m_first; m_first= f; }
-
-   virtual void precompile( PCode* pcd ) const;
 
 protected:
    Expression* m_first;
@@ -251,8 +211,6 @@ protected:
          Expression( type ),
          m_first(0)
       {}
-
-   virtual void deserialize( DataReader* s );
 };
 
 
@@ -270,8 +228,6 @@ public:
 
    virtual ~BinaryExpression();
 
-   virtual void serialize( DataWriter* s ) const;
-
    Expression *first() const { return m_first; }
    void first( Expression *f ) { delete m_first; m_first= f; }
 
@@ -279,8 +235,6 @@ public:
    void second( Expression *s ) { delete m_second; m_second = s; }
 
    virtual bool isStatic() const;
-
-   virtual void precompile( PCode* pcd ) const;
 
 protected:
    Expression* m_first;
@@ -291,8 +245,6 @@ protected:
          m_first(0),
          m_second(0)
       {}
-
-   virtual void deserialize( DataReader* s );
 };
 
 
@@ -310,7 +262,6 @@ public:
    TernaryExpression( const TernaryExpression& other );
 
    virtual ~TernaryExpression();
-   virtual void serialize( DataWriter* s ) const;
    virtual bool isStatic() const;
 
    Expression *first() const { return m_first; }
@@ -321,8 +272,6 @@ public:
 
    Expression *third() const { return m_third; }
    void third( Expression *t ) { delete m_third; m_third = t; }
-
-   virtual void precompile( PCode* pcd ) const;
 
 protected:
    Expression* m_first;
@@ -336,7 +285,6 @@ protected:
       m_third(0)
    {}
 
-   virtual void deserialize( DataReader* s );
 };
 
 //==============================================================
@@ -396,7 +344,6 @@ public:
     * An "and" expression can stand alone if it has a standalone second operator.
     */
    inline virtual bool isStandAlone() const { return m_second->isStandAlone(); }
-   void precompile( PCode* pcode ) const;
 
 private:
    class FALCON_DYN_CLASS Gate: public PStep {
@@ -419,17 +366,6 @@ public:
     * An "or" expression can stand alone if it has a standalone second operand.
     */
    inline virtual bool isStandAlone() const { return m_second->isStandAlone(); }
-
-   virtual void precompile( PCode* pcode ) const;
-
-private:
-
-   class FALCON_DYN_CLASS Gate: public PStep {
-   public:
-      Gate();
-      static void apply_( const PStep*, VMContext* ctx );
-      mutable int m_shortCircuitSeqId;
-   } m_gate;
 };
 
 /** Assignment operation. */
@@ -452,11 +388,12 @@ public:
    virtual void describeTo( String& ) const;
 
    inline virtual bool isStandAlone() const { return true; }
-   virtual void precompile( PCode* pcode ) const;
 
 protected:
    inline ExprAssign():
       BinaryExpression( t_assign ) {}
+      
+   static void apply_( const PStep* ps, VMContext* ctx );
 };
 
 
@@ -498,7 +435,6 @@ public:
    ExprUnpack& addAssignand( Symbol* );
 
    inline virtual bool isStandAlone() const { return false; }
-   void precompile( PCode* pcode ) const;
 
    virtual bool isStatic() const { return false; }
    bool isTop() const { return m_bIsTop; }
@@ -533,7 +469,6 @@ public:
    ExprMultiUnpack& addAssignment( Symbol* tgt, Expression* src );
 
    inline virtual bool isStandAlone() const { return false; }
-   void precompile( PCode* pcode ) const;
    virtual bool isStatic() const { return false; }
 
    bool isTop() const { return m_bIsTop; }
@@ -577,26 +512,38 @@ public:
 class FALCON_DYN_CLASS ExprIIF: public TernaryExpression
 {
 public:
-   FALCON_TERNARY_EXPRESSION_CLASS_DECLARATOR( ExprIIF, t_iif );
-
+   inline ExprIIF( Expression* op1, Expression* op2, Expression* op3 ):
+         TernaryExpression( t_iif, op1, op2, op3 ),
+         m_gate( this )
+         {apply = apply_;}
+   inline ExprIIF( const ExprIIF& other ): TernaryExpression( other ) {apply = apply_;}
+   inline virtual ExprIIF* clone() const { return new ExprIIF( *this ); }
+   virtual bool simplify( Item& value ) const;
+   static void apply_( const PStep*, VMContext* ctx );
+   virtual void describeTo( String& ) const;
+   
    /** Check if the and expression can stand alone.
-    *
-    * An "?" expression can stand alone if the second AND third operand are standalone.
+      An "?" expression can stand alone if the second AND third operand are standalone.
     */
    inline virtual bool isStandAlone() const {
       return m_second->isStandAlone() && m_third->isStandAlone();
    }
+   
+protected:
+      
+   inline ExprIIF(): TernaryExpression( t_iif ) {}
 
-   void precompile( PCode* pcode ) const;
 private:
    mutable int m_falseSeqId;
+   
    class FALCON_DYN_CLASS Gate: public PStep {
-public:
-      Gate();
+   public:
+      Gate( ExprIIF* owner ): m_owner(owner) { apply = apply_; }
+      void describeTo( String& target ) const { target = "Gate for expriif"; }
       static void apply_( const PStep*, VMContext* ctx );
-      mutable int m_endSeqId;
+   private:
+      ExprIIF* m_owner;
    } m_gate;
-
 };
 
 

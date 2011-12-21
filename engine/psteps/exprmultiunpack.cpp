@@ -133,23 +133,6 @@ ExprMultiUnpack& ExprMultiUnpack::addAssignment( Symbol* e, Expression* expr)
 }
 
 
-void ExprMultiUnpack::precompile( PCode* pcode ) const
-{
-   TRACE3( "Precompiling multi unpack: %p (%s)", pcode, describe().c_ize() );
-
-   // First, compile the assigment expressions.
-   std::vector<Expression*>::const_iterator iter = _p->m_assignee.begin();
-   while( iter != _p->m_assignee.end() )
-   {
-      (*iter)->precompile( pcode );
-      ++iter;
-   }
-
-   // then push ourselves
-   pcode->pushStep( this );
-}
-
-
 void ExprMultiUnpack::apply_( const PStep* ps, VMContext* ctx )
 {
    TRACE3( "Apply multi unpack: %p (%s)", ps, ps->describe().c_ize() );
@@ -157,6 +140,17 @@ void ExprMultiUnpack::apply_( const PStep* ps, VMContext* ctx )
    ExprMultiUnpack* self = (ExprMultiUnpack*) ps;
    std::vector<Symbol*> &syms = self->_p->m_params;
 
+   // invoke all the expressions.
+   CodeFrame& cf = ctx->currentCode();
+   std::vector<Expression*>& assignee = self->_p->m_assignee;
+   while( cf.m_seqId < assignee.size() )
+   {
+      if( ctx->stepInYield( assignee[cf.m_seqId ++], cf ) )
+      {
+         return;
+      }
+   }
+   
    size_t pcount = syms.size();
 
    size_t i = 0;

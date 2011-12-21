@@ -56,9 +56,30 @@ bool generic_simplify( Item& value, Expression* m_first, Expression* m_second )
 
 // Inline class to apply
 template <class _cpr >
-void generic_apply_( const PStep* DEBUG_ONLY(ps), VMContext* ctx )
+void generic_apply_( const PStep* ps, VMContext* ctx )
 {
-   TRACE2( "Apply \"%s\"", ((ExprCompare*)ps)->describe().c_ize() );
+   const ExprCompare* self = static_cast<const ExprCompare*>(ps);
+   TRACE2( "Apply \"%s\"", self->describe().c_ize() );
+
+   CodeFrame& cf = ctx->currentCode();
+   switch( cf.m_seqId )
+   {
+   case 0: 
+      // check the first operand.
+      cf.m_seqId = 1;
+      if( ctx->stepInYield( self->m_first, cf ) )
+      {
+         return;
+      }
+      // fallthrough
+   case 1:
+      cf.m_seqId = 2;
+      if( ctx->stepInYield( self->m_second, cf ) )
+      {
+         return;
+      }
+      // fallthrough  
+   }
 
    // copy the second
    register Item& op1 = ctx->opcodeParam(1);
@@ -96,13 +117,20 @@ void generic_apply_( const PStep* DEBUG_ONLY(ps), VMContext* ctx )
       op1.asClass()->op_compare( ctx, op1.asInst() );
       // refetch, we may have gone deep
       fassert( ctx->topData().isInteger() );
-      ctx->topData().setBoolean( _cpr::cmpCheck( ctx->topData().asInteger() ) );
+      {
+         int64 cmp = ctx->topData().asInteger();
+         ctx->popData();
+         ctx->topData().setBoolean( _cpr::cmpCheck( cmp ) );
+      }
+      
       break;
 
    default:
       op1.setBoolean( _cpr::cmpCheck( op1.compare(op2) ) );
       ctx->popData();
    }
+   
+   ctx->popCode();
 }
 
 template

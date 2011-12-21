@@ -28,9 +28,6 @@ StmtRaise::StmtRaise( Expression* risen, int32 line, int32 chr ):
    m_expr( risen )
 {
    apply = apply_;
-   risen->precompile( &m_pcExpr );
-   m_step0 = this;
-   m_step1 = &m_pcExpr;
 }
 
 StmtRaise::~StmtRaise()
@@ -46,8 +43,25 @@ void StmtRaise::describeTo( String& tgt ) const
 }
 
 
-void StmtRaise::apply_( const PStep*, VMContext* ctx )
+void StmtRaise::apply_( const PStep* ps, VMContext* ctx )
 {
+   const StmtRaise* rs = static_cast<const StmtRaise*>( ps );
+   
+   CodeFrame& curCode = ctx->currentCode();
+   // first time around?
+   if( curCode.m_seqId == 0 )
+   {
+      // -- mark for second time around
+      curCode.m_seqId++;
+      // -- execute the expression
+      ctx->stepIn( rs->m_expr );
+      if( &curCode != &ctx->currentCode() )
+      {
+         // if went deep, try later.
+         return;
+      }
+   }
+      
    // it's pretty useless to pop things from the stack, 
    // as this operation will unroll it (code stack included) and/or throw.
    ctx->raiseItem( ctx->topData() );

@@ -26,7 +26,6 @@ StmtContinue::StmtContinue( int32 line, int32 chr ):
    Statement( e_stmt_continue, line, chr)
 {
    apply = apply_;
-   m_step0 = this;
 }
 
    
@@ -38,7 +37,7 @@ void StmtContinue::describeTo( String& tgt ) const
 
 void StmtContinue::apply_( const PStep*, VMContext* ctx )
 {
-   ctx->unrollToNextBase();
+   ctx->unrollToNextBase(); // that will pop me as well.
 }
 
 }

@@ -26,7 +26,6 @@ StmtBreak::StmtBreak( int32 line, int32 chr ):
    Statement( e_stmt_break, line, chr)
 {
    apply = apply_;
-   m_step0 = this;
 }
 
    
@@ -38,7 +37,7 @@ void StmtBreak::describeTo( String& tgt ) const
 
 void StmtBreak::apply_( const PStep*, VMContext* ctx )
 {
-   ctx->unrollToLoopBase();
+   ctx->unrollToLoopBase(); // which will pop us as well.
    Item b;
    b.setBreak();
    ctx->pushData( b );

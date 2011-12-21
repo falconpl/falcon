@@ -17,7 +17,6 @@
 #define SRC "engine/psteps/exprdict.cpp"
 
 #include <falcon/trace.h>
-#include <falcon/pcode.h>
 #include <falcon/vm.h>
 #include <falcon/engine.h>
 #include <falcon/itemdict.h>
@@ -32,7 +31,7 @@ namespace Falcon
 class ExprDict::Private {
 public:
 
-   typedef std::vector< std::pair<Expression*, Expression*> > ExprVector;
+   typedef std::vector< Expression* > ExprVector;
    ExprVector m_exprs;
 
    ~Private()
@@ -40,8 +39,7 @@ public:
       ExprVector::iterator iter = m_exprs.begin();
       while( iter != m_exprs.end() )
       {
-         delete iter->first;
-         delete iter->second;
+         delete *iter;
          ++iter;
       }
    }
@@ -69,7 +67,11 @@ ExprDict::ExprDict( const ExprDict& other ):
    Private::ExprVector::const_iterator iter = oe.begin();
    while( iter != oe.end() )
    {
-      mye.push_back( std::make_pair(iter->first->clone(), iter->second->clone()) );
+      Expression* first = *iter;
+      ++iter;
+      Expression* second = *iter;
+      ++iter;
+      mye.push_back( std::make_pair(first, second) );
       ++iter;
    }
 }
@@ -82,7 +84,7 @@ ExprDict::~ExprDict()
 
 size_t ExprDict::arity() const
 {
-   return _p->m_exprs.size();
+   return _p->m_exprs.size()/2;
 }
 
 
@@ -91,8 +93,8 @@ bool ExprDict::get( size_t n, Expression* &first, Expression* &second ) const
    Private::ExprVector& mye = _p->m_exprs;
    if( n < mye.size() )
    {
-      first = mye[n].first;
-      second = mye[n].second;
+      first = mye[n/2];
+      second = mye[n/2+1];
       return true;
    }
 
@@ -101,7 +103,8 @@ bool ExprDict::get( size_t n, Expression* &first, Expression* &second ) const
 
 ExprDict& ExprDict::add( Expression* k, Expression* v )
 {
-   _p->m_exprs.push_back( std::make_pair(k,v) );
+   _p->m_exprs.push_back( k );
+   _p->m_exprs.push_back( v );
    return *this;
 }
 
@@ -126,9 +129,10 @@ void ExprDict::describeTo( String& str ) const
          str += ",\n";
       }
 
-      str += iter->first->describe();
+      str += (*iter)->describe();
+      ++iter;
       str += " => ";
-      str += iter->second->describe();
+      str += *(iter)->describe();
       ++iter;
    }
 
@@ -154,47 +158,19 @@ void ExprDict::oneLinerTo( String& str ) const
          str += ", ";
       }
 
-      str += iter->first->oneLiner();
+      str += (*iter)->describe();
+      ++iter;
       str += " => ";
-      str += iter->second->oneLiner();
+      str += *(iter)->describe();
       ++iter;
    }
 
    str += " ]";
 }
 
-void ExprDict::precompile( PCode* pcd ) const
-{
-   TRACE3( "Precompiling ExprDict: %p (%s)", pcd, oneLiner().c_ize() );
-   Private::ExprVector& mye = _p->m_exprs;
-   Private::ExprVector::const_iterator iter = mye.begin();
-   while( iter != mye.end() )
-   {
-      iter->first->precompile(pcd);
-      iter->second->precompile(pcd);
-      ++iter;
-   }
-
-   pcd->pushStep( this );
-}
-
-
 bool ExprDict::simplify( Item& ) const
 {
    return false;
-}
-
-
-//=====================================================
-
-void ExprDict::serialize( DataWriter* ) const
-{
-   // TODO
-}
-
-void ExprDict::deserialize( DataReader* )
-{
-   // TODO
 }
 
 
@@ -206,8 +182,21 @@ void ExprDict::apply_( const PStep*ps, VMContext* ctx )
    static Collector* collector = Engine::instance()->collector();
 
    const ExprDict* ea = static_cast<const ExprDict*>(ps);
-   Private::ExprVector& mye = ea->_p->m_exprs;
-   size_t size = mye.size() * 2;
+   
+   CodeFrame& cf = ctx->currentCode(); 
+   Private::ExprVector& mye = ea->_p->m_exprs ;
+   Private::ExprVector::const_iterator iter = mye.begin() + cf.m_seqId;
+   while( iter != mye.end() )
+   {
+      // generate the expression and eventually yield back.
+      if( ctx->stepInYield( ps, cf ) )
+      {
+         return;
+      }
+      ++iter;
+   }
+   
+   size_t size = mye.size();
    Item* items = ctx->opcodeParams( size );
    Item* end =  items + size;
 
@@ -222,6 +211,9 @@ void ExprDict::apply_( const PStep*ps, VMContext* ctx )
    fassert( items == end );
 
    ctx->stackResult(size, FALCON_GC_STORE(collector, cd_class, nd) );
+   
+   // we're done.
+   ctx->popCode();
 }
 
 

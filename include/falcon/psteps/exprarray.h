@@ -51,9 +51,6 @@ public:
 
    virtual ~ExprArray();
 
-   virtual void serialize( DataWriter* s ) const;
-   virtual void precompile( PCode* pcd ) const;
-
    virtual void describeTo( String& ) const;
    virtual void oneLinerTo( String& s ) const;
 
@@ -63,9 +60,6 @@ public:
 
    virtual bool isStatic() const { return false; }
    virtual bool simplify( Item& result ) const;
-
-protected:
-   virtual void deserialize( DataReader* s );
 
 private:
    class Private;

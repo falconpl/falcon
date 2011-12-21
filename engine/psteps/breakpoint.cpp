@@ -37,6 +37,7 @@ void Breakpoint::describeTo( String& tgt ) const
 void Breakpoint::apply_( const PStep*, VMContext* ctx )
 {
    ctx->breakpoint();
+   ctx->popCode();
 }
 
 }

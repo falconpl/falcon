@@ -280,68 +280,125 @@ bool generic_simplify( Item& value, Expression* m_first, Expression* m_second )
 // Inline class to apply
 template <class _cpr >
 void generic_apply_( const PStep* ps, VMContext* ctx )
-{
-   TRACE2( "Apply \"%s\"", ((ExprMath*)ps)->describe().c_ize() );
-
-   // No need to copy the second, we're not packing the stack now.
-   register Item *op1 = &ctx->opcodeParam(1); 
-   register Item *op2 = &ctx->opcodeParam(0);
-   _cpr::swapper( *op1, *op2 );   
-
-   if ( _cpr::zeroCheck(*op2) )
-   {
-      throw new MathError( ErrorParam(e_div_by_zero, __LINE__, SRC )
-         .origin(ErrorParam::e_orig_vm) );
-   }
+{  
+   const ExprMath* self = static_cast<const ExprMath*>(ps);
    
-   // we dereference also op1 to help copy-on-write decisions from overrides
-   if( op1->isReference() )
-   {
-      *op1 = *op1->dereference();
-   }
-   
-   if( op2->isReference() )
-   {
-      *op2 = *op2->dereference();
-   }
-   
-   switch ( op1->type() << 8 | op2->type() )
-   {
-   case FLC_ITEM_INT << 8 | FLC_ITEM_INT:
-      op1->content.data.val64 = _cpr::operate(op1->asInteger(), op2->asInteger());
-      ctx->popData();
-      break;
+#ifndef NDEBUG
+   TRACE2( "Apply \"%s\"", self->describe().c_ize() );
+#endif
 
-   case FLC_ITEM_INT << 8 | FLC_ITEM_NUM:
-      op1->setNumeric( _cpr::operaten(op1->asInteger(), op2->asNumeric()) );
-      ctx->popData();
-      break;
-   case FLC_ITEM_NUM << 8 | FLC_ITEM_INT:
-      op1->content.data.number = _cpr::operaten(op1->asNumeric(), op2->asInteger());
-      ctx->popData();
-      break;
-   case FLC_ITEM_NUM << 8 | FLC_ITEM_NUM:
-      op1->content.data.number = _cpr::operaten(op1->asNumeric(), op2->asNumeric());
-      ctx->popData();
-      break;
+   CodeFrame& cf = ctx->currentCode();
+   switch( cf.m_seqId )
+   {
+      // Phase 0 -- generate the item.
+   case 0:
+      cf.m_seqId = 1;
+      if( ctx->stepInYield( self->first(), cf ) )
+      {
+         return;
+      }
+      // fallthrough
       
-   case FLC_ITEM_USER << 8 | FLC_ITEM_NIL:
-   case FLC_ITEM_USER << 8 | FLC_ITEM_BOOL:
-   case FLC_ITEM_USER << 8 | FLC_ITEM_INT:
-   case FLC_ITEM_USER << 8 | FLC_ITEM_NUM:
-   case FLC_ITEM_USER << 8 | FLC_ITEM_METHOD:
-   case FLC_ITEM_USER << 8 | FLC_ITEM_FUNC:
-   case FLC_ITEM_USER << 8 | FLC_ITEM_USER:
-      _cpr::operate( ctx, op1->asClass(), op1->asInst() );
-      break;
+      // Phase 1 -- generate the other item.
+   case 1:
+      cf.m_seqId = 2;
+      if( ctx->stepInYield( self->second(), cf ) )
+      {
+         return;
+      }
+      // fallthrough
+   
+      // Phase 2 -- operate
+   case 2:
+      cf.m_seqId = 3;
+      {         
+         // No need to copy the second, we're not packing the stack now.
+         register Item *op1 = &ctx->opcodeParam(1); 
+         register Item *op2 = &ctx->opcodeParam(0);
+         _cpr::swapper( *op1, *op2 );   
 
-   default:
-      // no need to throw, we're going to get back in the VM.
-      throw
-         new OperandError( ErrorParam(e_invalid_op, __LINE__, SRC )
-            .origin( ErrorParam::e_orig_vm )
-            .extra(((ExprMath*)ps)->name()) );
+         if ( _cpr::zeroCheck(*op2) )
+         {
+            throw new MathError( ErrorParam(e_div_by_zero, __LINE__, SRC )
+               .origin(ErrorParam::e_orig_vm) );
+         }
+
+         // we dereference also op1 to help copy-on-write decisions from overrides
+         if( op1->isReference() )
+         {
+            *op1 = *op1->dereference();
+         }
+
+         if( op2->isReference() )
+         {
+            *op2 = *op2->dereference();
+         }
+
+         switch ( op1->type() << 8 | op2->type() )
+         {
+         case FLC_ITEM_INT << 8 | FLC_ITEM_INT:
+            op1->content.data.val64 = _cpr::operate(op1->asInteger(), op2->asInteger());
+            ctx->popData();
+            break;
+
+         case FLC_ITEM_INT << 8 | FLC_ITEM_NUM:
+            op1->setNumeric( _cpr::operaten(op1->asInteger(), op2->asNumeric()) );
+            ctx->popData();
+            break;
+         case FLC_ITEM_NUM << 8 | FLC_ITEM_INT:
+            op1->content.data.number = _cpr::operaten(op1->asNumeric(), op2->asInteger());
+            ctx->popData();
+            break;
+         case FLC_ITEM_NUM << 8 | FLC_ITEM_NUM:
+            op1->content.data.number = _cpr::operaten(op1->asNumeric(), op2->asNumeric());
+            ctx->popData();
+            break;
+
+         case FLC_ITEM_USER << 8 | FLC_ITEM_NIL:
+         case FLC_ITEM_USER << 8 | FLC_ITEM_BOOL:
+         case FLC_ITEM_USER << 8 | FLC_ITEM_INT:
+         case FLC_ITEM_USER << 8 | FLC_ITEM_NUM:
+         case FLC_ITEM_USER << 8 | FLC_ITEM_METHOD:
+         case FLC_ITEM_USER << 8 | FLC_ITEM_FUNC:
+         case FLC_ITEM_USER << 8 | FLC_ITEM_USER:
+            _cpr::operate( ctx, op1->asClass(), op1->asInst() );
+            break;
+
+         default:
+            // no need to throw, we're going to get back in the VM.
+            throw
+               new OperandError( ErrorParam(e_invalid_op, __LINE__, SRC )
+                  .origin( ErrorParam::e_orig_vm )
+                  .extra(((ExprMath*)ps)->name()) );
+         }
+      }
+      
+      // might have gone deep
+      if( &cf != &ctx->currentCode() )
+      {
+         return;
+      }
+      
+      // fallthrough
+   
+      // Phase 3 -- assigning the topmost value back.
+   case 3:
+      cf.m_seqId = 4;
+      // now assign the topmost item in the stack to the lvalue of self.
+      PStep* lvalue = self->lvalueStep();
+      if( lvalue != 0 )
+      {
+         if( ctx->stepInYield( lvalue, cf ) )
+         {
+            return;
+         }
+      }
+      
    }
+   
+   // we're done and won't be back.
+   ctx->popCode();
+
 }
 
 
@@ -596,15 +653,6 @@ bool ExprBXOR::simplify( Item& value ) const
 ExprAuto::ExprAuto( Expression* op1, Expression* op2, Expression::operator_t t, const String& name ):
    ExprMath( op1, op2, t, name )
 {}
-
-void ExprAuto::precompile( PCode* pc ) const
-{
-   // Warning; the order of resolution of auto-expression is the reverse.
-   // we want first the second (assignand) to be resolved.
-   // This means we'll have the wrong things in the stack...
-   m_second->precompile( pc );
-   m_first->precompileAutoLvalue( pc, this, true, false );
-}
 
 //========================================================
 // EXPR AAdd

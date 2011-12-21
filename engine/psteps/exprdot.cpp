@@ -18,7 +18,6 @@
 
 #include <falcon/trace.h>
 #include <falcon/vmcontext.h>
-#include <falcon/pcode.h>
 #include <falcon/stdsteps.h>
 
 #include <falcon/psteps/exprdot.h>
@@ -41,7 +40,20 @@ void ExprDot::apply_( const PStep* ps, VMContext* ctx )
 {
    TRACE2( "Apply \"%s\"", ((ExprDot*)ps)->describe().c_ize() );
    const ExprDot* dot_expr = static_cast<const ExprDot*>(ps);
-
+   
+   CodeFrame& cf = ctx->currentCode();
+   if( cf.m_seqId == 0 )
+   {
+      cf.m_seqId = 1;
+      if( ctx->stepInYield(dot_expr->m_first, cf ) )
+      {
+         return;
+      }
+   }
+   
+   // anyhow we're done.
+   ctx->popCode();
+   
    Class* cls;
    void* self;
    // get prop name
@@ -57,6 +69,19 @@ void ExprDot::PstepLValue::apply_( const PStep* ps, VMContext* ctx )
    const ExprDot::PstepLValue* dot_lv_expr = static_cast<const ExprDot::PstepLValue*>(ps);
    TRACE2( "Apply lvalue \"%s\"", dot_lv_expr->m_owner->describe().c_ize() );
 
+   CodeFrame& cf = ctx->currentCode();
+   if( cf.m_seqId == 0 )
+   {
+      cf.m_seqId = 1;
+      if( ctx->stepInYield(dot_lv_expr->m_owner->m_first, cf ) )
+      {
+         return;
+      }
+   }
+   
+   // anyhow we're done.
+   ctx->popCode();
+   
    Class* cls;
    void* self;
    // get prop name
@@ -64,13 +89,7 @@ void ExprDot::PstepLValue::apply_( const PStep* ps, VMContext* ctx )
    //acquire the class
    ctx->topData().forceClassInst(cls, self);
    cls->op_setProperty(ctx, self, prop );
-}
-
-
-void ExprDot::precompileLvalue( PCode* pcode ) const
-{
-   m_first->precompile( pcode );
-   pcode->pushStep( m_pstep_lvalue );
+   // it's not our duty to remove the tompost value from the stack.
 }
 
 void ExprDot::describeTo( String& ret ) const
@@ -78,7 +97,7 @@ void ExprDot::describeTo( String& ret ) const
    ret = "(" + m_first->describe() + "." + m_prop + ")";
 }
 
-
+/*
 void ExprDot::precompileAutoLvalue( PCode* pcode, const PStep* activity, bool bIsBinary, bool bSaveOld ) const
 {
    static StdSteps* steps = Engine::instance()->stdSteps();
@@ -120,6 +139,7 @@ void ExprDot::precompileAutoLvalue( PCode* pcode, const PStep* activity, bool bI
       pcode->pushStep( &steps->m_pop_ );
    }
 }
+*/
 
 }
 

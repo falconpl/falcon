@@ -422,6 +422,27 @@ public:
       virtual void describeTo( String& ) const;
    };
    PStepReturnFrame m_returnFrame;
+   
+   
+   class PStepReturnFrameWithTop: public PStep
+   {
+   public:
+      PStepReturnFrameWithTop() {apply = apply_; }
+      virtual ~PStepReturnFrameWithTop() {}
+      static void apply_( const PStep*, VMContext* ctx );
+      virtual void describeTo( String& ) const;
+   };
+   PStepReturnFrame m_returnFrameWithTop;
+   
+      class PStepReturnFrameWithTopDoubt: public PStep
+   {
+   public:
+      PStepReturnFrameWithTopDoubt() {apply = apply_; }
+      virtual ~PStepReturnFrameWithTopDoubt() {}
+      static void apply_( const PStep*, VMContext* ctx );
+      virtual void describeTo( String& ) const;
+   };
+   PStepReturnFrame m_returnFrameWithTopDoubt;
 };
 
 }

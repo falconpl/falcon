@@ -82,9 +82,6 @@ StmtSelect::StmtSelect( Expression* expr, int32 line, int32 chr ):
 {
    if (expr != 0 )
    {
-      expr->precompile( &m_pcExpr );
-      m_step0 = this;
-      m_step1 = &m_pcExpr;
       apply = apply_;
    }
    else
@@ -257,6 +254,17 @@ bool StmtSelect::setDefault( SynTree* block )
 void StmtSelect::apply_( const PStep* ps, VMContext* ctx )
 {
    const StmtSelect* self = static_cast<const StmtSelect*>(ps);
+   
+   CodeFrame& cf = ctx->currentCode();
+   // first time around? -- call the expression.
+   if( cf.m_seqId == 0 )
+   {
+      cf.m_seqId = 1; 
+      if( ctx->stepInYield( self->m_expr, cf ) ) 
+      {
+         return;
+      }
+   }
    
    SynTree* res = self->findBlockForItem( ctx->topData() );
    

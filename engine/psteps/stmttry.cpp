@@ -31,8 +31,6 @@ StmtTry::StmtTry( SynTree* body, int32 line, int32 chr ):
 {
    apply = apply_;
    m_bIsCatch = true;
-   m_step0 = this;
-   m_step1 = body;
 }
 
 StmtTry::StmtTry( int32 line, int32 chr):
@@ -43,8 +41,6 @@ StmtTry::StmtTry( int32 line, int32 chr):
 {
    apply = apply_;
    m_bIsCatch = true;
-   m_step0 = this;
-   m_step1 = m_body;
 }
 
 
@@ -58,6 +54,7 @@ StmtTry::~StmtTry()
 void StmtTry::fbody( SynTree* body )
 {
    // reset the body?
+   /*
    if ( body == 0 )
    {
       m_step0 = this;
@@ -71,6 +68,7 @@ void StmtTry::fbody( SynTree* body )
       m_step2 = m_body;
       m_step3 = &m_traverseFinallyStep;
    }
+   */
    
    delete m_fbody;
    m_fbody = body;
@@ -89,19 +87,47 @@ void StmtTry::oneLinerTo( String& tgt ) const
 }
 
    
-void StmtTry::apply_( const PStep*, VMContext* ctx )
+void StmtTry::apply_( const PStep* ps, VMContext* ctx )
+{ 
+   const StmtTry* self = static_cast<const StmtTry*>(ps);
+   
+   
+   if( self->m_body != 0 )
+   {
+      // push the finally step?
+      if( self->m_fbody != 0 )
+      {
+         // put the finally processor in our place...
+         ctx->resetCode( &self->m_finallyStep );
+         // add a catch position placeholder
+         ctx->pushCode( &self->m_stepDone );
+         // ... and declare that we'll be doing some finally
+         ctx->traverseFinally();
+      }
+      else
+      {
+         // just add the catch placeholder.
+         ctx->resetCode( &self->m_stepDone );
+      }
+      
+      if( ctx->stepInYield( self->m_body ) )
+         return;
+   }
+   else if( self->m_fbody )
+   {
+      // we're just doing the finally!
+      ctx->popCode();
+      ctx->stepIn( self->m_fbody );
+   }   
+}
+
+void StmtTry::PStepDone::apply_( const PStep*, VMContext* ctx )
 { 
    // we're just a placeholder for our catch clauses,
    // if we're here, then we had no throws.
    ctx->popCode(); 
 }
 
-void StmtTry::PStepTraverse::apply_( const PStep*, VMContext* ctx )
-{
-   // declare that we'll be doing some finally
-   ctx->popCode();
-   ctx->traverseFinally();
-}
 
 void StmtTry::PStepFinally::apply_( const PStep* ps, VMContext* ctx )
 {
@@ -110,7 +136,7 @@ void StmtTry::PStepFinally::apply_( const PStep* ps, VMContext* ctx )
    // declare that we begin to work with finally
    ctx->enterFinally();
    ctx->currentCode().m_step = &stry->m_cleanStep;
-   ctx->pushCode( stry->m_fbody );   
+   ctx->stepIn( stry->m_fbody );   
 }
 
 

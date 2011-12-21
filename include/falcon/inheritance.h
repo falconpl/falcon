@@ -27,7 +27,7 @@ namespace Falcon
 
 class Class;
 class Expression;
-class PCode;
+class VMContext;
 
 /** Structure holding information about inheritance in a class.
  This structure holds the needed information to create automatic inheritance
@@ -102,21 +102,12 @@ public:
     */
    Expression* param( size_t n ) const;
 
-
-   /** Gets the PCode generating the expression call stack.
-    \return a PCode filled with the expressions building the initializatio parameters.
-
-    The returned pcode is filled (or will be filled) with the pre-compilation
-    of the expressions that shall be used as parameters for the call of the
-    class constructor.
-
-    It can be directly used in a syntree (or in a statement) to generate all
-    the parameters in the final call stack.
-
-    \note The returned entity is property of this class.
+   /** Prepare the contentext pushing all the expressions forming the parameters.
+    \param ctx the context where to push the expressions.
+    \return true if some expression were pushed, false otherwise.
     */
-   PCode* compiledExpr() const;
-
+   bool prepareOnContext( VMContext* ctx );
+   
    /** Describes this inheritance.
       \param target A string where to place the description of this class.
     */

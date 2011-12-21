@@ -46,7 +46,7 @@ StmtForBase::~StmtForBase()
 void StmtForBase::PStepCleanup::apply_( const PStep*, VMContext* ctx )
 {
    ctx->popCode();
-   ctx->popData(2);
+   ctx->popData(ctx->currentCode().m_seqId);
 }
 
 void StmtForBase::describeTo( String& tgt ) const
@@ -105,17 +105,16 @@ StmtForIn::StmtForIn( Expression* gen, int32 line, int32 chr):
    StmtForBase( Statement::e_stmt_for_in, line, chr ),
    _p( new Private ),
    m_expr(gen),
+   m_stepBegin( this ),
    m_stepFirst( this ),
    m_stepNext( this ),
    m_stepGetNext( this )
 {
    apply = apply_; 
-   m_step0 = this;
-   gen->precompile( &m_pcExpr );
-   m_step1 = &m_pcExpr;
    
    //NOTE: This pstep is NOT a loopbase; it just sets up the loop.
    // a break here must be intercepted by outer loops until our loop is setup.
+   
 }
 
 StmtForIn::~StmtForIn()
@@ -195,10 +194,16 @@ void StmtForIn::expandItem( Item& itm, VMContext* ctx ) const
    }
 }
 
-
 void StmtForIn::apply_( const PStep* ps, VMContext* ctx )
 {
    const StmtForIn* self = static_cast<const StmtForIn*>(ps);
+   ctx->resetCode( self->m_stepBegin );
+   ctx->stepIn( self->m_expr );
+}
+
+void StmtForIn::PStepBegin::apply_( const PStep* ps, VMContext* ctx )
+{
+   const StmtForIn* self = static_cast<const StmtForIn::PStepBegin*>(ps)->m_owner;
    
    // we have the evaluated expression on top of the stack -- make it to next.
    Class* cls;
@@ -207,6 +212,7 @@ void StmtForIn::apply_( const PStep* ps, VMContext* ctx )
    {       
       // Prepare to get the iterator item...
       ctx->currentCode().m_step = &self->m_stepCleanup;
+      ctx->currentCode().m_seqId = 2;
       ctx->pushCode( &self->m_stepFirst );      
       ctx->pushCode( &self->m_stepGetNext );
       
@@ -342,28 +348,15 @@ void StmtForIn::PStepNext::apply_( const PStep* ps, VMContext* ctx )
 // For - to
 //
 
-StmtForTo::StmtForTo( Symbol* tgt, int64 start, int64 end, int64 step, int32 line, int32 chr ):
+StmtForTo::StmtForTo( Symbol* tgt, Expression* start, Expression* end, Expression* step, int32 line, int32 chr ):
    StmtForBase( Statement::e_stmt_for_to, line, chr ),
    m_target( tgt ),
-   m_start(0),
-   m_end(0),  
-   m_step(0),
-   m_istart(start),
-   m_iend(end),
-   m_istep(step),
+   m_start(start),
+   m_end(end),  
+   m_step(step),
    m_stepNext(this),
-   m_stepPushStart(this),
-   m_stepPushEnd(this),
-   m_stepPushStep(this)
 {
-   apply = apply_;
-   
-   // Note: this PStep is NOT a loop base. We're preparing the loop here.
-   // Any break should be intercepted by outer loops until we setup the loop.
-   m_step0 = this;
-   m_step1 = &m_stepPushStart;
-   m_step2 = &m_stepPushEnd;
-   m_step3 = &m_stepPushStep;      
+   apply = apply_;     
 }
 
 
@@ -379,11 +372,6 @@ void StmtForTo::startExpr( Expression* s )
 {
    delete m_start;
    m_start = s;
-   if( s != 0 )
-   {
-      s->precompile(&m_pcExprStart);
-      m_step1 = &m_pcExprStart;
-   }
 }
 
 
@@ -391,22 +379,12 @@ void StmtForTo::endExpr( Expression* s )
 {
    delete m_end;
    m_end = s;
-   if( s != 0 )
-   {
-      s->precompile(&m_pcExprEnd);
-      m_step2 = &m_pcExprEnd;
-   }
 }
    
 void StmtForTo::stepExpr( Expression* s )
 {
    delete m_step;
    m_step = s;
-   if( s != 0 )
-   {
-      s->precompile(&m_pcExprStep);
-      m_step3 = &m_pcExprStep;
-   }
 }
 
    
@@ -414,33 +392,12 @@ void StmtForTo::oneLinerTo( String& tgt ) const
 {  
    tgt += "for " + m_target->name() + " = " ;
 
-   if( m_start != 0 )
-   {
-      tgt += m_start->describe();
-   }
-   else
-   {
-      tgt.N( m_istart );
-   }
-   
-   tgt + " to ";
-   
-   if( m_end != 0 )
-   {
-      tgt += m_end->describe();
-   }
-   else
-   {
-      tgt.N( m_iend );
-   }
-   
+   tgt += m_start->describe();   
+   tgt + " to ";   
+   tgt += m_end->describe();
    if( m_step != 0 )
    {
-      tgt += " step " + m_step->describe();
-   }
-   else
-   {
-      tgt.A(" step ").N( m_iend );
+      tgt += ", " + m_step->describe();
    }
 }
    
@@ -448,9 +405,47 @@ void StmtForTo::oneLinerTo( String& tgt ) const
 void StmtForTo::apply_( const PStep* ps, VMContext* ctx )
 {
    const StmtForTo* self = static_cast<const StmtForTo*>(ps);
-   int64 start = ctx->topData().asInteger();
+   
+   // we must at least have a start and an end
+   fassert( self->m_start != 0 );
+   fassert( self->m_end != 0 );
+   
+   // First of all, start executing the start, end and step expressions.
+   CodeFrame& cf = ctx->currentCode();
+   switch( cf.m_seqId )
+   {
+      case 0: 
+         // check the start.
+         cf.m_seqId = 1;
+         if( ctx->stepInYield( self->m_start, cf ) )
+         {
+            return;
+         }
+         // fallthrough
+      case 1:
+         cf.m_seqId = 2;
+         if( ctx->stepInYield( self->m_end, cf ) )
+         {
+            return;
+         }
+         // fallthrough
+      case 2:
+         cf.m_seqId = 3;
+         if( self->m_step != 0 )
+         {
+            if( ctx->stepInYield( self->m_step, cf ) )
+            {
+               return;
+            }
+         }
+         else {
+            ctx->pushData( (int64) 0 );
+         }
+   }
+   
+   int64 step = ctx->topData().asInteger();
    int64 end = ctx->opcodeParam(1).asInteger();
-   int64 step = ctx->opcodeParam(2).asInteger();
+   int64 start = ctx->opcodeParam(2).asInteger();
    
    // in some cases, we don't even start the loop
    if( (end > start && step < 0) || (start > end && step > 0 ) )
@@ -465,16 +460,17 @@ void StmtForTo::apply_( const PStep* ps, VMContext* ctx )
    {
       if ( end >= start ) 
       {
-         ctx->opcodeParam(2).setInteger(1);
+         ctx->opcodeParam(0).setInteger(1);
       }
       else
       {
-         ctx->opcodeParam(2).setInteger(-1);
+         ctx->opcodeParam(0).setInteger(-1);
       }      
    }
    
    // however, we won't be called anymore.
-   ctx->currentCode().m_step = & self->m_stepCleanup;
+   cf.m_step = & self->m_stepCleanup;
+   cf.m_seqId = 3; // 3 items to remove at cleanup
    ctx->pushCode( &self->m_stepNext );
    
    // call the next step now to prepare the first loop
@@ -492,9 +488,9 @@ void StmtForTo::PStepNext::apply_( const PStep* ps, VMContext* ctx )
 {
    const StmtForTo* self = static_cast<const StmtForTo::PStepNext*>(ps)->m_owner;
    
-   register int64 start = ctx->topData().asInteger();
+   register int64 start = ctx->opcodeParam(2).asInteger();
    int64 end = ctx->opcodeParam(1).asInteger();
-   int64 step = ctx->opcodeParam(2).asInteger();
+   int64 step = ctx->topData().asInteger();
    
    // the start, at minimum, will be done.
    self->m_target->value( ctx )->setInteger( start );   
@@ -525,28 +521,6 @@ void StmtForTo::PStepNext::apply_( const PStep* ps, VMContext* ctx )
    
    start += step;
    ctx->topData().content.data.val64 = start;
-}
-
-
-void StmtForTo::PStepPushStart::apply_( const PStep* ps, VMContext* ctx )
-{
-   const StmtForTo* self = static_cast<const StmtForTo::PStepPushStart*>(ps)->m_owner;
-   ctx->popCode();   
-   ctx->pushData( self->m_istart );
-}
-
-void StmtForTo::PStepPushEnd::apply_( const PStep* ps, VMContext* ctx )
-{
-   const StmtForTo* self = static_cast<const StmtForTo::PStepPushEnd*>(ps)->m_owner;
-   ctx->popCode();   
-   ctx->pushData( self->m_iend );
-}
-
-void StmtForTo::PStepPushStep::apply_( const PStep* ps, VMContext* ctx )
-{
-   const StmtForTo* self = static_cast<const StmtForTo::PStepPushStep*>(ps)->m_owner;
-   ctx->popCode();   
-   ctx->pushData( self->m_istep );
 }
 
 

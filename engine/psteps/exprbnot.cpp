@@ -17,7 +17,6 @@
 #include <falcon/trace.h>
 #include <falcon/vmcontext.h>
 #include <falcon/pstep.h>
-#include <falcon/pcode.h>
 #include <falcon/errors/operanderror.h>
 
 namespace Falcon {
@@ -37,10 +36,20 @@ bool ExprBNOT::simplify( Item& value ) const
    return false;
 }
 
-void ExprBNOT::apply_( const PStep* DEBUG_ONLY(self), VMContext* ctx )
+void ExprBNOT::apply_( const PStep* ps, VMContext* ctx )
 {  
-   TRACE2( "Apply \"%s\"", ((ExprNeg*)self)->describe().c_ize() );
+   const ExprBNOT* self = static_cast<const ExprBNOT*>(ps);
+   TRACE2( "Apply \"%s\"", self->describe().c_ize() );
    
+   CodeFrame& cf = ctx->currentCode();
+   if( cf.m_seqId == 0 )
+   {
+      cf.m_seqId = 1;
+      if( ctx->stepInYield( self->m_first, cf ) )
+         return;
+   }
+   
+   ctx->popCode();
    Item& item = ctx->topData();
 
    switch( item.type() )
@@ -51,7 +60,7 @@ void ExprBNOT::apply_( const PStep* DEBUG_ONLY(self), VMContext* ctx )
       default:
       // no need to throw, we're going to get back in the VM.
       throw
-         new OperandError( ErrorParam(e_invalid_op, __LINE__ ).extra("neg") );
+         new OperandError( ErrorParam(e_invalid_op, __LINE__ ).extra("^!") );
    }
 }
 

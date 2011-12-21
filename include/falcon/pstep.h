@@ -89,6 +89,68 @@ public:
       return temp;
    }
 
+   /** Apply function. 
+    \param self The PStep that was applied here.
+    \param ctx The virtual machine context where this apply function was run
+    
+    This is the callback function that the virtual machine will invoke when
+    this step is found in the code stack. As such, the step being called via
+    the apply function is \b granted to be on top of the code stack of the
+    \b ctx it receives.
+    
+    \note the apply function is called exclusively by a Virtual Machine or 
+    Virtual Machine Context related operation on the top item in the code
+    stack.
+    
+    The function could be called also by a composite PStep. For instance,
+    it can be called by a parent expression or by a SynTree, which is a 
+    collection of special subclasses of PStep (more specifically, a collection
+    of Statement instances).
+    
+    The composite PStep will check if the called sub-steps have changed the
+    code stack, and in case they did, it will yield the control to its caller.
+    
+    The pattern for composite step is as follows:
+    @code
+    // I am at top of VMContext
+    while not done
+       get next substep
+       call next substep apply by pushing it in the context
+       Am I still at top of the VMcontext? -- if not, return
+    end
+    pop myself from VMContext.
+    @endcocde
+    
+    There are two ways to check if the VMContext has been changed. It is possible
+    to check if the topmost code frame is changed,
+    @code
+    CodeFrame& topCode = ctx->currentCode(); // yep, that's me
+    doSomething();
+    if( &topCode != &ctx->currentCode() ) 
+       return;
+    ctx->popCode(); // remove me.
+    @endcode
+    
+    Although fast, this method is subject to false positive in case the code
+    in doSomething pushed something in the stack but then removed it, as the
+    stack might have been invalidated in the meanwhile.
+    
+    However, this is hardly a problem as the stack soon stabilizes to a size
+    accomodating the program depth, and the code must be designed to properly
+    be resumed after returning. However, if this causes some problem, or if 
+    arranging for return is slower than peforming a little more complex check,
+    this second pattern can be used:
+    
+    @code
+    long depth = ctx->codeSize();
+    doSomething();
+    if( ctx->wentDeepSized( depth ) ) 
+       return;
+    @endcode
+    
+    The check is slower (this requires some pointer math) but avoids
+    false postives.
+    */
    typedef void (*apply_func)(const PStep* self, VMContext* ctx);
 
    apply_func apply;

@@ -17,7 +17,6 @@
 #include <falcon/trace.h>
 #include <falcon/vmcontext.h>
 #include <falcon/pstep.h>
-#include <falcon/pcode.h>
 
 namespace Falcon {
 
@@ -31,12 +30,23 @@ bool ExprNot::simplify( Item& value ) const
    return false;
 }
 
-void ExprNot::apply_( const PStep* DEBUG_ONLY(self), VMContext* ctx )
+void ExprNot::apply_( const PStep* ps, VMContext* ctx )
 {
-   TRACE2( "Apply \"%s\"", ((ExprNot*)self)->describe().c_ize() );
+   const ExprNot* self = static_cast<const ExprNot*>(ps);
+   TRACE2( "Apply \"%s\"", self->describe().c_ize() );
+   
+   CodeFrame& cf = ctx->currentCode();
+   if( cf.m_seqId == 0 )
+   {
+      cf.m_seqId = 1;
+      if( ctx->stepInYield( self->m_first, cf ) )
+      {
+         return;
+      }
+   }
+   
    ctx->topData().setBoolean( ! ctx->boolTopData() );
-   //if the boolTopData goes deep, we'll be called again (and with a bool
-   // top data, next time).
+   ctx->popCode();
 }
 
 void ExprNot::describeTo( String& str ) const
@@ -62,62 +72,50 @@ bool ExprAnd::simplify( Item& value ) const
 
 }
 
-void ExprAnd::precompile( PCode* pcode ) const
-{
-   TRACE2( "Precompile \"%s\"", describe().c_ize() );
 
-   // check the first expression for first...
-   m_first->precompile( pcode );
-    // add a gate to jump checks on short circuits
-   pcode->pushStep( &m_gate );
-   // and then the second expr last
-   m_second->precompile( pcode );
-   pcode->pushStep( this );
-   //set shortcircuit jump location to end of expr.
-   m_gate.m_shortCircuitSeqId = pcode->size();
-  
+void ExprAnd::apply_( const PStep* ps, VMContext* ctx )
+{
+   const ExprAnd* self = static_cast<const ExprAnd*>(ps);
+   TRACE2( "Apply \"%s\"", self->describe().c_ize() );
    
-}
+   CodeFrame& cf = ctx->currentCode();
+   switch( cf.m_seqId )
+   {
+   // calc first expression
+   case 0:
+      cf.m_seqId = 1;
+      if( ctx->stepInYield( self->m_first, cf ) )
+      {
+         return;
+      }
 
-void ExprAnd::apply_( const PStep* DEBUG_ONLY(self), VMContext* ctx )
-{
-   TRACE2( "Apply \"%s\"", ((ExprAnd*)self)->describe().c_ize() );
-
-   // use the space left from us by the previous expression
+      // check if the first expression was false and then go away
+   case 1:
+      if( ! ctx->topData().isTrue() )
+      {
+         // we're done -- short circuited.
+         ctx->topData().setBoolean(false);
+         ctx->popCode();
+         return;
+      }
+      // it was true, we need to test the second expression
+      cf.m_seqId = 2;
+      if( ctx->stepInYield( self->m_second, cf ) )
+      {
+         return;
+      }         
+   }
+   
+   // reuse the operand left by the other expression
    Item& operand = ctx->topData();
-
-   // Booleanize it
    operand.setBoolean( operand.isTrue() );
+   ctx->popCode();
 }
+
 
 void ExprAnd::describeTo( String& str ) const
 {
    str = "(" + m_first->describe() + " and " + m_second->describe() + ")";
-}
-
-
-ExprAnd::Gate::Gate() {
-   apply = apply_;
-}
-
-
-void ExprAnd::Gate::apply_( const PStep* ps, VMContext* ctx )
-{
-   TRACE2( "Apply GATE \"%s\"", ((ExprAnd::Gate*)ps)->describe().c_ize() );
-
-   // read and recycle the topmost data.
-   Item& operand = ctx->topData();
-
-   if( ! operand.isTrue() )
-   {
-      operand.setBoolean( false );
-      // pop ourselves and the calling code
-      ctx->currentCode().m_seqId = static_cast<const Gate*>(ps)->m_shortCircuitSeqId;
-   }
-   else {
-      // the other expression is bound to push data, remove ours
-      ctx->popData();
-   }   
 }
 
 //=========================================================
@@ -136,59 +134,49 @@ bool ExprOr::simplify( Item& value ) const
 }
 
 
-void ExprOr::precompile( PCode* pcode ) const
+void ExprOr::apply_( const PStep* ps, VMContext* ctx )
 {
-   TRACE2( "Precompile \"%s\"", describe().c_ize() );
+   const ExprOr* self = static_cast<const ExprOr*>(ps);
+   TRACE2( "Apply \"%s\"", self->describe().c_ize() );
+   
+   CodeFrame& cf = ctx->currentCode();
+   switch( cf.m_seqId )
+   {
+   // calc first expression
+   case 0:
+      cf.m_seqId = 1;
+      if( ctx->stepInYield( self->m_first, cf ) )
+      {
+         return;
+      }
 
-   // check the first expression for first...
-   m_first->precompile( pcode );
-   // add a gate to jump checks on short circuits
-   pcode->pushStep( &m_gate );
-   // and then the second expr last
-   m_second->precompile( pcode );
-   pcode->pushStep( this );
-   //set shortcircuit jump location to end of expr.
-   m_gate.m_shortCircuitSeqId = pcode->size();
-}
-
-
-void ExprOr::apply_( const PStep* DEBUG_ONLY(self), VMContext* ctx )
-{
-   TRACE2( "Apply \"%s\"", ((ExprOr*)self)->describe().c_ize() );
+      // check if the first expression was true and then go away
+   case 1:
+      if( ctx->topData().isTrue() )
+      {
+         // we're done -- short circuited.
+         ctx->topData().setBoolean(true);
+         ctx->popCode();
+         return;
+      }
+      // it was false, we need to test the second expression
+      cf.m_seqId = 2;
+      if( ctx->stepInYield( self->m_second, cf ) )
+      {
+         return;
+      }         
+   }
    
    // reuse the operand left by the other expression
    Item& operand = ctx->topData();
    operand.setBoolean( operand.isTrue() );
+   ctx->popCode();
 }
 
 
 void ExprOr::describeTo( String& str ) const
 {
    str = "(" + m_first->describe() + " or " + m_second->describe() + ")";
-}
-
-
-ExprOr::Gate::Gate() {
-   apply = apply_;
-}
-
-
-void ExprOr::Gate::apply_( const PStep* ps,  VMContext* ctx )
-{
-   TRACE2( "Apply GATE \"%s\"", ((ExprOr::Gate*)ps)->describe().c_ize() );
-
-   // read and recycle the topmost data.
-   Item& operand = ctx->topData();
-   if( operand.isTrue() )
-   {
-      operand.setBoolean( true );
-      // pop ourselves and the calling code
-      ctx->currentCode().m_seqId = static_cast<const Gate*>(ps)->m_shortCircuitSeqId;
-   }
-   else {
-      // the other expression is bound to push data, remove ours
-      ctx->popData();
-   }
 }
 
 }

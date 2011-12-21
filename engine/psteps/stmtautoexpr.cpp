@@ -35,11 +35,6 @@ StmtAutoexpr::StmtAutoexpr( Expression* expr, int32 line, int32 chr ):
    m_bInRule( false )
 {
    apply = apply_; 
-   m_expr->precompile(&m_pcExpr);
-   
-   // normally, we don't want to be notified.
-   m_pcExpr.autonomous( true );
-   m_step0 = &m_pcExpr;   
 }
 
 StmtAutoexpr::~StmtAutoexpr()
@@ -64,23 +59,16 @@ void StmtAutoexpr::setInteractive( bool bInter )
    if( bInter )
    {
       apply = apply_interactive_;
-      m_step0 = this;
-      m_step1 = &m_pcExpr;
-      m_pcExpr.autonomous( false );
    }
    else
    {
       if( m_bInRule )
       {
          apply = apply_rule_;
-         m_step0 = this;
-         m_step1 = &m_pcExpr;
-         m_pcExpr.autonomous( false );
       }
       else
       {
-         m_step0 = &m_pcExpr;
-         m_pcExpr.autonomous( true );
+         apply = apply_;
       }
    }
 }
@@ -91,37 +79,59 @@ void StmtAutoexpr::setInRule( bool bMode )
    m_bInRule = bMode;
    if( bMode )
    {
-      apply = apply_rule_;
-      m_step0 = this;
-      m_step1 = &m_pcExpr;
-      m_pcExpr.autonomous( false );
+      apply = apply_rule_;      
    }
    else
    {
       if( m_bInteractive )
       {
          apply = apply_interactive_;
-         m_step0 = this;
-         m_step1 = &m_pcExpr;
-         m_pcExpr.autonomous( false );
       }
       else
       {
-         m_step0 = &m_pcExpr;
-         m_pcExpr.autonomous( true );
+         apply = apply_;
       }
    }
 }
 
-void StmtAutoexpr::apply_( const PStep* DEBUG_ONLY(self), VMContext* )
+void StmtAutoexpr::apply_( const PStep* ps, VMContext* ctx )
 {
+   const StmtAutoexpr* self = static_cast<const StmtAutoexpr*>( ps );
    TRACE3( "StmtAutoexpr apply: %p (%s)", self, self->describe().c_ize() );
+   
+   CodeFrame& cf = ctx->currentCode();
+   // first time, try to run the expression.
+   if( cf.m_seqId == 0 )
+   {
+      cf.m_seqId = 1;
+     
+      if( ctx->stepInYield( self->m_expr, cf ) )
+      {
+         return;
+      }
+   }
+   // just cleanup our mess.
+   ctx->popData();
+   ctx->popCode();
 }
 
 
-void StmtAutoexpr::apply_interactive_( const PStep* DEBUG_ONLY(self), VMContext* ctx )
+void StmtAutoexpr::apply_interactive_( const PStep* self, VMContext* ctx )
 {
+   const StmtAutoexpr* self = static_cast<const StmtAutoexpr*>( ps );
    TRACE3( "StmtAutoexpr apply interactive: %p (%s)", self, self->describe().c_ize() );
+   
+   CodeFrame& cf = ctx->currentCode();
+   // first time, try to run the expression.
+   if( cf.m_seqId == 0 )
+   {
+      cf.m_seqId = 1;
+     
+      if( ctx->stepInYield( self->m_expr, cf ) )
+      {
+         return;
+      }
+   }
    
    // we never need to be called again.
    ctx->popCode();
@@ -133,9 +143,22 @@ void StmtAutoexpr::apply_interactive_( const PStep* DEBUG_ONLY(self), VMContext*
 }
 
 
-void StmtAutoexpr::apply_rule_( const PStep* DEBUG_ONLY(self), VMContext* ctx )
+void StmtAutoexpr::apply_rule_( const PStep* self, VMContext* ctx )
 {
+   const StmtAutoexpr* self = static_cast<const StmtAutoexpr*>( ps );
    TRACE3( "StmtAutoexpr apply rule: %p (%s)", self, self->describe().c_ize() );
+   
+   CodeFrame& cf = ctx->currentCode();
+   // first time, try to run the expression.
+   if( cf.m_seqId == 0 )
+   {
+      cf.m_seqId = 1;
+     
+      if( ctx->stepInYield( self->m_expr, cf ) )
+      {
+         return;
+      }
+   }
 
    // we never need to be called again.
    ctx->popCode();

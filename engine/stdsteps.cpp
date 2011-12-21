@@ -397,6 +397,28 @@ void StdSteps::PStepReturnFrame::describeTo( String& s ) const
    s = "PStepReturnFrame";
 }
 
+
+void StdSteps::PStepReturnFrameWithTop::apply_( const PStep*, VMContext* ctx )
+{
+   ctx->returnFrame( ctx->topData() );
+}
+
+void StdSteps::PStepReturnFrameWithTop::describeTo( String& s ) const
+{
+   s = "PStepReturnFrameWithTop";
+}
+
+void StdSteps::PStepReturnFrameWithTopDoubt::apply_( const PStep*, VMContext* ctx )
+{      
+   ctx->returnFrame( ctx->topData() );
+   ctx->SetNDContext();
+}
+
+void StdSteps::PStepReturnFrameWithTopDoubt::describeTo( String& s ) const
+{
+   s = "PStepReturnFrameWithTopDoubt";
+}
+
 }
 
 /* end of stdsteps.cpp */

@@ -17,7 +17,6 @@
 #include <falcon/trace.h>
 #include <falcon/vmcontext.h>
 #include <falcon/pstep.h>
-#include <falcon/pcode.h>
 
 namespace Falcon {
 
@@ -41,41 +40,25 @@ bool ExprIIF::simplify( Item& value ) const
 }
 
 
-void ExprIIF::precompile( PCode* pcode ) const
-{
-   TRACE2( "Precompile \"%s\"", describe().c_ize() );
-   
-   //precompile condition executed first.
-   m_first->precompile( pcode );
-   //push ourselves to determine where to branch to.
-   pcode->pushStep( this );
-   //precompile true expr.
-   m_second->precompile( pcode );
-   //push gate to allow exit after true expr.
-   pcode->pushStep( &m_gate );
-   //acuire the position of the start of the false expr to jump to.
-   m_falseSeqId = pcode->size();
-   //precompile false expr.
-   m_third->precompile( pcode );
-   //acquire the position at the end of the expr to jump over the false expr.
-   m_gate.m_endSeqId = pcode->size();
-   
-}
-
-void ExprIIF::apply_( const PStep* self, VMContext* ctx )
+void ExprIIF::apply_( const PStep* ps, VMContext* ctx )
 {  
-   TRACE2( "Apply \"%s\"", ((ExprIIF*)self)->describe().c_ize() );
+   const ExprIIF* self = static_cast<const ExprIIF*>( ps );
+   TRACE2( "Apply \"%s\"", self->describe().c_ize() );
+   
+   ctx->resetCode( &self->m_gate );
+   // launch the first expression
+   if( ctx->stepInYield(self->first()) )
+   {
+      return;
+   }
+   
+   // we didn't go deep
+   ctx->popCode(); // so remove gate
    
    //get the value of the condition and pop it.
-   Item cond = ctx->topData();
+   bool cond = ctx->topData().isTrue();
    ctx->popData();
-
-   if ( !cond.isTrue() )
-   {
-      ctx->currentCode().m_seqId = ((ExprIIF*)self)->m_falseSeqId;
-   }
-
-   
+   ctx->stepIn( cond ? self->second() : self->third() );
 }
 
 void ExprIIF::describeTo( String& str ) const
@@ -89,9 +72,15 @@ ExprIIF::Gate::Gate() {
 
 void ExprIIF::Gate::apply_( const PStep* ps,  VMContext* ctx )
 {
+   const ExprIIF* self = static_cast<const ExprIIF::Gate*>( ps )->m_owner;
    TRACE2( "Apply GATE \"%s\"", ((ExprIIF::Gate*)ps)->describe().c_ize() );
 
-   ctx->currentCode().m_seqId = ((ExprIIF::Gate*)ps)->m_endSeqId;
+   ctx->popCode();
+   
+   //get the value of the condition and pop it.
+   bool cond = ctx->topData().isTrue();
+   ctx->popData();
+   ctx->stepIn( cond ? self->second() : self->third() );
 }
 
 }

@@ -49,9 +49,6 @@ StmtRule::StmtRule( int32 line, int32 chr ):
    _p = new Private;
    // create a base rule syntree
    _p->m_altTrees.push_back( new RuleSynTree() );
-
-   // push ourselves when prepare is invoked
-   m_step0 = this;
 }
 
 
@@ -152,16 +149,12 @@ StmtCut::StmtCut( Expression* expr, int32 line, int32 chr ):
    Statement( e_stmt_cut,  line, chr ),
    m_expr(expr)
 {
-   m_step0 = this;
-
    if( expr == 0 )
    {
       apply = apply_;
    }
    else
    {
-      expr->precompile( &m_pc );
-      m_step1 = &m_pc;
       apply = apply_cut_expr_;
    }
 }
@@ -187,8 +180,22 @@ void StmtCut::apply_( const PStep*, VMContext* ctx )
    ctx->popCode(); // use us just once.
 }
 
-void StmtCut::apply_cut_expr_( const PStep*, VMContext* ctx )
+void StmtCut::apply_cut_expr_( const PStep* ps, VMContext* ctx )
 {
+   CodeFrame& cf = ctx->currentCode();
+   
+   // first time around? -- call the expression.
+   if( cf.m_seqId == 0 )
+   {
+      cf.m_seqId = 1;
+      const StmtCut* self = static_cast<const StmtCut*>(ps);
+      if( ctx->stepInYield( self->m_expr, cf ) ) 
+      {
+         return;
+      }
+   }
+   // second time around? -- we have our expression solved in top data.
+   
    // clear the non-deterministic bit in the context, if set.
    ctx->checkNDContext();
    ctx->popCode(); // use us just once.
@@ -201,7 +208,6 @@ void StmtCut::apply_cut_expr_( const PStep*, VMContext* ctx )
    
    // remove the data created by the expression
    ctx->popData();
-   
 }
 
 
@@ -214,10 +220,6 @@ StmtDoubt::StmtDoubt( Expression* expr, int32 line, int32 chr ):
    Statement( e_stmt_cut,  line, chr ),
    m_expr(expr)
 {
-   m_step0 = this;   
-   expr->precompile( &m_pc );
-   m_step1 = &m_pc;
-   
    apply = apply_;
 }
 
@@ -232,8 +234,21 @@ void StmtDoubt::describeTo( String& tgt ) const
    tgt += m_expr->describe();
 }
 
-void StmtDoubt::apply_( const PStep*, VMContext* ctx )
-{   
+void StmtDoubt::apply_( const PStep* ps, VMContext* ctx )
+{  
+   CodeFrame& cf = ctx->currentCode();
+   
+   // first time around? -- call the expression.
+   if( cf.m_seqId == 0 )
+   {
+      const StmtDoubt* self = static_cast<const StmtDoubt*>(ps);
+      cf.m_seqId = 1;
+      if( ctx->stepInYield( self->m_expr, cf ) ) 
+      {
+         return;
+      }
+   }
+   
    // Declare this context as non-deterministic
    ctx->SetNDContext();
    ctx->popCode(); // use us just once.

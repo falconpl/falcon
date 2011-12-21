@@ -18,7 +18,6 @@
 
 
 #include <falcon/expression.h>
-#include <falcon/pcode.h>
 #include <falcon/vm.h>
 #include <falcon/textwriter.h>
 
@@ -64,7 +63,6 @@ StmtFastPrint::StmtFastPrint( bool bAddNL ):
    m_bAddNL( bAddNL )
 {
    apply = apply_;
-   m_step0 = this;
 }
 
 
@@ -77,7 +75,6 @@ StmtFastPrint::~StmtFastPrint()
 void StmtFastPrint::add( Expression* expr )
 {
    PCode* pc = new PCode;
-   expr->precompile( pc );
    _p->m_exprs.push_back( expr );
    _p->m_pcodes.push_back( pc );
 }
@@ -98,9 +95,9 @@ length_t StmtFastPrint::size() const
 void StmtFastPrint::apply_( const PStep* ps, VMContext* ctx )
 {
    const StmtFastPrint* self = static_cast< const StmtFastPrint*>( ps );   
-   register Private::PCodeList& pl = self->_p->m_pcodes;
-   register CodeFrame& cframe = ctx->currentCode();
-   register int seqId = cframe.m_seqId;
+   Private::PCodeList& pl = self->_p->m_pcodes;
+   CodeFrame& cframe = ctx->currentCode();
+   int seqId = cframe.m_seqId;
    
    // can we print?
    if( seqId > 0 )

@@ -33,11 +33,21 @@ bool ExprOob::simplify( Item& value ) const
    return false;
 }
 
-void ExprOob::apply_( const PStep* DEBUG_ONLY(self), VMContext* ctx )
+void ExprOob::apply_( const PStep* ps, VMContext* ctx )
 {  
-   TRACE2( "Apply \"%s\"", ((ExprOob*)self)->describe().c_ize() );
+   const ExprOob* self = static_cast<const ExprOob*>(ps);
+   TRACE2( "Apply \"%s\"", self->describe().c_ize() );
+   
+   CodeFrame& cf = ctx->currentCode();
+   if( cf.m_seqId == 0 )
+   {
+      cf.m_seqId = 1;
+      if( ctx->stepInYield( self->m_first, cf ) )
+         return;
+   }
    
    ctx->topData().setOob();
+   ctx->popCode();
 }
 
 void ExprOob::describeTo( String& str ) const
@@ -59,11 +69,21 @@ bool ExprDeoob::simplify( Item& value ) const
    return false;
 }
 
-void ExprDeoob::apply_( const PStep* DEBUG_ONLY(self), VMContext* ctx )
+void ExprDeoob::apply_( const PStep* pos, VMContext* ctx )
 {  
-   TRACE2( "Apply \"%s\"", ((ExprDeoob*)self)->describe().c_ize() );
+   const ExprDeoob* self = static_cast<const ExprDeoob*>(ps);
+   TRACE2( "Apply \"%s\"", self->describe().c_ize() );
+   
+   CodeFrame& cf = ctx->currentCode();
+   if( cf.m_seqId == 0 )
+   {
+      cf.m_seqId = 1;
+      if( ctx->stepInYield( self->m_first, cf ) )
+         return;
+   }
    
    ctx->topData().resetOob();
+   ctx->popCode();
 }
 
 void ExprDeoob::describeTo( String& str ) const
@@ -85,9 +105,19 @@ bool ExprXorOob::simplify( Item& value ) const
    return false;
 }
 
-void ExprXorOob::apply_( const PStep* DEBUG_ONLY(self), VMContext* ctx )
+void ExprXorOob::apply_( const PStep* ps, VMContext* ctx )
 {  
-   TRACE2( "Apply \"%s\"", ((ExprXorOob*)self)->describe().c_ize() );
+   const ExprXorOob* self = static_cast<const ExprXorOob*>(ps);
+   TRACE2( "Apply \"%s\"", self->describe().c_ize() );
+   
+   CodeFrame& cf = ctx->currentCode();
+   if( cf.m_seqId == 0 )
+   {
+      cf.m_seqId = 1;
+      if( ctx->stepInYield( self->m_first, cf ) )
+         return;
+   }
+
    
    ctx->topData().xorOob();
 }
@@ -113,7 +143,16 @@ bool ExprIsOob::simplify( Item& value ) const
 
 void ExprIsOob::apply_( const PStep* DEBUG_ONLY(self), VMContext* ctx )
 {  
-   TRACE2( "Apply \"%s\"", ((ExprXorOob*)self)->describe().c_ize() );
+   const ExprIsOob* self = static_cast<const ExprIsOob*>(ps);
+   TRACE2( "Apply \"%s\"", self->describe().c_ize() );
+   
+   CodeFrame& cf = ctx->currentCode();
+   if( cf.m_seqId == 0 )
+   {
+      cf.m_seqId = 1;
+      if( ctx->stepInYield( self->m_first, cf ) )
+         return;
+   }
    
    Item& item = ctx->topData();
    item.setBoolean(item.isOob());

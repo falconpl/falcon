@@ -127,6 +127,17 @@ private:
       
    // apply is the same as PCODE, but it also checks ND requests.
    static void apply_( const PStep* self, VMContext* ctx );   
+    
+   class PStepBegin: public PStep {
+   public:
+      PStepBegin( StmtForIn* owner ): m_owner(owner) { m_bIsLoopBase = true; apply = apply_; }
+      virtual ~PStepBegin() {};
+      void describeTo( String& str ) { str = "PStepBegin of " + m_owner->oneLiner(); }
+      
+   private:
+      static void apply_( const PStep* self, VMContext* ctx );
+      StmtForIn* m_owner;
+   };
    
    class PStepFirst: public PStep {
    public:
@@ -163,8 +174,8 @@ private:
  
 
    Expression* m_expr;
-   PCode m_pcExpr;  
    
+   PStepBegin m_stepBegin;
    PStepFirst m_stepFirst;
    PStepNext m_stepNext;
    PStepGetNext m_stepGetNext;
@@ -204,14 +215,9 @@ private:
    Symbol* m_target;
    
    Expression* m_start;
-   PCode m_pcExprStart;
-
    Expression* m_end;
-   PCode m_pcExprEnd;
-   
    Expression* m_step;
-   PCode m_pcExprStep;
-
+   
    int64 m_istart;
    int64 m_iend;
    int64 m_istep;

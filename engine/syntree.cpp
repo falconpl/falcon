@@ -88,34 +88,29 @@ void SynTree::apply_( const PStep* ps, VMContext* ctx )
    const SynTree* self = static_cast<const SynTree*>(ps);
    // get the current step.
    CodeFrame& cf = ctx->currentCode();
-   TRACE1( "Syntree::apply -- %p with %d/%d", ps, cf.m_seqId, self->_p->m_steps.size() );
    
    register Private::Steps& steps = self->_p->m_steps;
-   register length_t len = steps.size();
-   register Statement* step = steps[ cf.m_seqId++ ];
-      
-   if (cf.m_seqId >= (int) len )
+   length_t len = steps.size();
+   int& seqId = cf.m_seqId;
+   
+   TRACE1( "Syntree::apply -- %p with %d/%d", ps, seqId, len );
+   
+   while( seqId < (int) len )
    {
-      // we're done.
-      ctx->popCode();
-      if( cf.m_seqId > (int) len )
+      Statement* step = steps[ seqId++ ];
+      if( ctx->stepInYield(step, cf) )
       {
-         MESSAGE2( "Syntree::exiting now" );
-         // yeah, done for good 
-         // -- step is invalid, the sequence was over before we got here.
-         // -- This should happen only when the syntree was empty -- which
-         // -- is pathological, as empty syntrees should have been purged
+         TRACE2( "Syntree::apply -- going deep at step %d \"%s\"", 
+                     seqId-1, 
+                     step->oneLiner().c_ize() );
          return;
-      }
-      else
-      {
-         MESSAGE2( "Syntree::exiting next step" );         
       }
    }
 
    TRACE2( "Syntree::apply -- preparing \"%s\"", step->oneLiner().c_ize() );
-   step->prepare(ctx);
+   ctx->popCode();
 }
+
 
 void SynTree::apply_empty_( const PStep*, VMContext* ctx )
 {
@@ -123,12 +118,15 @@ void SynTree::apply_empty_( const PStep*, VMContext* ctx )
    ctx->popCode();
 }
 
+
 void SynTree::apply_single_( const PStep* ps, VMContext* ctx )
 {
    const SynTree* self = static_cast<const SynTree*>(ps);
-   ctx->popCode();
-   self->m_single->prepare(ctx);
+   register const PStep* singps = self->m_single;
+   ctx->resetCode( singps );
+   self->m_single->apply(singps, ctx);
 }
+
 
 void SynTree::set( int pos, Statement* p )  {
    delete _p->m_steps[pos];

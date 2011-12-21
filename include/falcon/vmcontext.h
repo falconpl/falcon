@@ -461,6 +461,13 @@ public:
       frame.m_step = step;
       frame.m_seqId = 0;
    }
+   
+   inline void resetAndApply( const PStep* step ) {
+      CodeFrame& frame = currentCode();
+      frame.m_step = step;
+      frame.m_seqId = 0;
+      pstep->apply( pstep, this );
+   }
 
    /** Returns the current code stack size.
     *
@@ -686,10 +693,85 @@ public:
     }
     \endcode
 
+    @note This method is subject to false negative if something pushed
+    the same pstep that is checked. Use wentDeepSized in case this could
+    happen.
     */
    inline bool wentDeep( const PStep* top )
    {
       return m_topCode->m_step != top;
+   }
+   
+   inline bool wentDeepSized( long depth )
+   {
+      return depth != (m_topCode - m_codeStack)+1;
+   }
+   
+   /** Applies a pstep by pushing it and immediately invoking its apply method.
+    \param ps The step to be applied.
+    
+    The applied pstep has now the change to remove itself if its work is done,
+    stay pushed to continue its work at a later time or push other psteps that
+    need to be executed afterwards (with or without removing itself in the
+    process).
+    */
+   inline void stepIn( const PStep* ps ) {      
+      pushCode( ps );
+      ps->apply( ps, this );      
+   }
+   
+   /** Step in and check if the caller should yield the control.
+    \param ps The step to be performed.
+    \return True if the caller should immediately return, false otherwise.
+    
+    This method invoke the required PStep apply and signals to the caller
+    if it should yield the control back upstream (possibly to the Virtual Machine)
+    or if it COULD continue performing further operations.
+
+    */
+   inline bool stepInYield( const PStep* ps ) {
+      const CodeFrame* top = m_topCode;
+      pushCode( ps );
+      ps->apply( ps, this );
+      return top != m_topCode || m_event != eventNone;
+   }
+   
+   /** Step in and check if the caller should yield the control (optimized).
+    \param ps The step to be performed.
+    \param top The topmost codeframe when this method is called.
+    \return True if the caller should immediately return, false otherwise.
+    
+    This method invoke the required PStep apply and signals to the caller
+    if it should yield the control back upstream (possibly to the Virtual Machine)
+    or if it COULD continue performing further operations.
+
+    This versions of stepInYeld uses a previously fetched top code frame
+    to perform the check so that it can be used multiple times in tight loops.
+    
+    */
+   inline bool stepInYield( const PStep* ps, const CodeFrame& top ) {
+      pushCode( ps );
+      ps->apply( ps, this );
+      return &top != m_topCode || m_event != eventNone;
+   }
+   
+   /** Step in and check if the caller should yield the control (optimized).
+    \param ps The step to be performed.
+    \param depth Current depth of the code stack.
+    \return True if the caller should immediately return, false otherwise.
+    
+    This method invoke the required PStep apply and signals to the caller
+    if it should yield the control back upstream (possibly to the Virtual Machine)
+    or if it COULD continue performing further operations.
+
+    This versions of stepInYeld uses a previously fetched stack depth
+    to perform the check so that it can be used multiple times in tight loops.
+    
+    */
+   inline bool stepInYield( const PStep* ps, long depth ) {
+      pushCode( ps );
+      ps->apply( ps, this );
+      return (depth != (m_topCode-m_codeStack+1)) || m_event != eventNone;
    }
 
    /** Pushes a quit step at current position in the code stack.
@@ -1024,6 +1106,14 @@ public:
     */
    bool boolTopData();
    
+   /** Check the boolean true-ness of the topmost data item, removing the top element.
+    */
+   inline bool boolTopDataAndPop()
+   {
+      bool btop = boolTopData();
+      popData();
+      return btop;
+   }
    
 protected:
 

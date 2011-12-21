@@ -40,10 +40,6 @@ class Property;
  users. This also allows to cherry-pick desirable features and drop those that
  are considered unworth or unnecessary by reimplementing some virtual functions.
  
- The ClassUser leave undefined the Class::serialize and Class::deserialize
- abstract methods, and adds a new abstract method called createInstance. It's
- possible to stub all this methods as doing-nothing if they are not needed.
- 
  \section user_class_components Components of a user class.
  
  To authomatize the integration of foreign code, the ClassUser framework
@@ -61,7 +57,7 @@ class Property;
    commonly required by any non-elementary integration of foreign unaware code,
    as deep GC marking, item reflection, cloning and destruction.
  
- Almost none of the class in the framework is "complete" as is, and require
+ Almost none of the classes in the framework is "complete" as is, and require
  specialization through subclassing.
  
  \section user_class_prop_meth Properties and Methods

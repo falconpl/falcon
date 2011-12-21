@@ -17,15 +17,36 @@
 #include <falcon/trace.h>
 #include <falcon/vmcontext.h>
 #include <falcon/pstep.h>
-#include <falcon/pcode.h>
 
 namespace Falcon {
 
 
-void ExprEEQ::apply_( const PStep* DEBUG_ONLY(ps), VMContext* ctx )
+void ExprEEQ::apply_( const PStep* ps, VMContext* ctx )
 {
-   TRACE2( "Apply \"%s\"", ((ExprEEQ*)ps)->describe().c_ize() );
+   const ExprEEQ* self = static_cast<const ExprEEQ*>( ps );
+   TRACE2( "Apply \"%s\"", (()ps)->describe().c_ize() );
 
+   // First of all, start executing the start, end and step expressions.
+   CodeFrame& cf = ctx->currentCode();
+   switch( cf.m_seqId )
+   {
+   case 0: 
+      // check the start.
+      cf.m_seqId = 1;
+      if( ctx->stepInYield( self->m_first, cf ) )
+      {
+         return;
+      }
+      // fallthrough
+   case 1:
+      cf.m_seqId = 2;
+      if( ctx->stepInYield( self->m_second, cf ) )
+      {
+         return;
+      }
+      // fallthrough
+   }
+   
    Item *op1, *op2;
    ctx->operands( op1, op2 );
 
@@ -56,6 +77,7 @@ void ExprEEQ::apply_( const PStep* DEBUG_ONLY(ps), VMContext* ctx )
    }
    
    ctx->popData();
+   ctx->popCode();
 }
 
 

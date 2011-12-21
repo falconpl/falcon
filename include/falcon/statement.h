@@ -17,7 +17,6 @@
 #define FALCON_STATEMENT_H
 
 #include <falcon/pstep.h>
-#include <falcon/pcode.h>
 #include <falcon/vmcontext.h>
 
 namespace Falcon
@@ -57,7 +56,6 @@ public:
 
    Statement( t_statement type, int32 line=0, int32 chr=0 ):
       PStep( line, chr ),
-      m_step0(0), m_step1(0), m_step2(0), m_step3(0),
       m_discardable(false),
       m_type(type)
    {}
@@ -68,33 +66,7 @@ public:
    inline bool discardable() const { return m_discardable; }
 
 protected:
-   /** Steps being prepared by the statement */
-   PStep* m_step0;
-   PStep* m_step1;
-   PStep* m_step2;
-   PStep* m_step3;
-
    bool m_discardable;
-   
-   inline void prepare( VMContext* ctx ) const
-   {
-      if ( m_step0 )
-      {
-         ctx->pushCode(m_step0);
-         if ( m_step1 )
-         {
-            ctx->pushCode(m_step1);
-            if ( m_step2 )
-            {
-               ctx->pushCode(m_step2);
-               if ( m_step3 )
-               {
-                  ctx->pushCode(m_step3);
-               }
-            }
-         }
-      }
-   }
 
    friend class SynTree;
    friend class RuleSynTree;

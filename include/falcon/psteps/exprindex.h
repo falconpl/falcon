@@ -27,9 +27,6 @@ class FALCON_DYN_CLASS ExprIndex: public BinaryExpression
 public:
    FALCON_BINARY_EXPRESSION_CLASS_DECLARATOR_EX( ExprIndex, t_array_access, 
          m_pstep_lvalue = &m_pslv; );
-
-   void precompileLvalue( PCode* pcode ) const;
-   void precompileAutoLvalue( PCode* pcode, const PStep* activity, bool bIsBinary, bool bSaveOld ) const;
    
 private:
    

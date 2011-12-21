@@ -37,7 +37,7 @@ namespace Falcon
  \note Due to this dynamic nature, prototype strucutre access is interlocked via
  a per-class mutex.
 
-  \note FlexClass (and Prototype) have bases, but not parent. getParent
+  \note FlexClass (and Prototype) have bases, but not parents. getParent
  and isDerivedFrom won't be available on the classes, but only on proper
  instance and only at language level. However, getParentData is available
  (as it operates on a proper instance).

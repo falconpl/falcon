@@ -233,7 +233,6 @@ add_library(falcon_engine SHARED
   pseudofunc.cpp
   pstep.cpp
   path.cpp
-  pcode.cpp
   property.cpp
   rampmode.cpp
   reader.cpp

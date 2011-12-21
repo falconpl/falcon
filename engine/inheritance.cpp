@@ -37,8 +37,6 @@ class Inheritance::Private
 public:
    typedef std::vector<Expression*> ParamList;
    ParamList m_params;
-   // precompiled params.
-   PCode m_cparams;
 
    Private() {}
    
@@ -85,7 +83,6 @@ void Inheritance::parent( Class* cls )
 void Inheritance::addParameter( Expression* expr )
 {
    _p->m_params.push_back( expr );
-   expr->precompile( &_p->m_cparams );
 }
 
 
@@ -97,6 +94,24 @@ size_t Inheritance::paramCount() const
 Expression* Inheritance::param( size_t n ) const
 {
    return _p->m_params[n];
+}
+
+
+bool Inheritance::prepareOnContext( VMContext* ctx )
+{
+   Private::ParamList& params = _p->m_params;
+   if( params.empty() )
+   {
+      return false;
+   }
+   
+   Private::ParamList::iterator iter = params.begin();
+   while( params.end() != iter )
+   {
+      ctx->pushCode( *iter ); 
+      ++iter;
+   }
+   return true;
 }
 
 
@@ -126,12 +141,6 @@ void Inheritance::describe( String& target ) const
       
       target += temp + ")";
    }
-}
-
-
-PCode* Inheritance::compiledExpr() const
-{
- return &_p->m_cparams;
 }
 
 

@@ -49,6 +49,20 @@ public:
    static void apply_( const PStep*, VMContext* ctx );
 
 private:
+      
+   class PostInit: public PStep {
+      public:
+         PostInit(StmtInit* owner): m_owner(owner) { apply = apply_; }
+         virtual ~PostInit();
+         void describeTo( String& tgt );
+         static void apply_( const PStep* ps, VMContext* ctx );
+      private:
+         StmtInit* m_owner;
+   }
+   m_postInit;
+   
+   friend m_postInit;
+   
    Inheritance* m_inheritance;
 };
 

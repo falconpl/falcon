@@ -13,7 +13,6 @@
    See LICENSE file for licensing details.
 */
 
-#include <falcon/pcode.h>
 #include <falcon/pseudofunc.h>
 #include <falcon/trace.h>
 #include <falcon/vm.h>
@@ -33,8 +32,7 @@ public:
 ExprCall::ExprCall( Expression* op1 ):
    Expression( t_funcall ),
    m_func(0),
-   m_callExpr(op1),
-   m_psPushFunc( 0 )
+   m_callExpr(op1)
 {
    _p = new Private;
    apply = apply_;
@@ -44,16 +42,14 @@ ExprCall::ExprCall( Expression* op1 ):
 ExprCall::ExprCall( PseudoFunction* f ):
    Expression( t_funcall ),
    m_func(f),
-   m_callExpr(0),
-   m_psPushFunc(f)
+   m_callExpr(0)
 {
    _p = new Private;
-   apply = apply_dummy_;
+   apply = apply_;
 }
 
 ExprCall::ExprCall( const ExprCall& other ):
-   Expression( other ),
-   m_psPushFunc( other.m_func )
+   Expression( other )
 {
    apply = other.apply;
    m_func = other.m_func;
@@ -81,61 +77,70 @@ ExprCall::~ExprCall()
 }
 
 
-/** Function call. */
-void ExprCall::precompile( PCode* pcode ) const
-{
-   TRACE3( "Precompiling call: %p (%s)", pcode, describe().c_ize() );
-
-   // first, precompile the called object, if any,
-   if( m_callExpr != 0 )
-   {
-      m_callExpr->precompile( pcode );
-   }
-   else if( _p->m_params.size() != (unsigned) m_func->paramCount() )
-   {
-      pcode->pushStep(&m_psPushFunc);
-   }
-
-   // precompile all parameters in order.
-   for( uint32 i = 0; i < _p->m_params.size(); ++i )
-   {
-      _p->m_params[i]->precompile( pcode );
-   }
-
-   // and finally push the step to do the call.
-   if( m_callExpr != 0 || _p->m_params.size() != (unsigned) m_func->paramCount() )
-   {
-      pcode->pushStep( this );
-   }
-   else
-   {
-      // pseudofunctions can be pushed directly.
-      pcode->pushStep( m_func->pstep() );
-   }
-}
-
-
 bool ExprCall::simplify( Item& ) const
 {
    return false;
 }
-
-
-void ExprCall::apply_dummy_( const PStep* v, VMContext* ctx )
-{
-   const ExprCall* self = static_cast<const ExprCall*>(v);
-   TRACE2( "Apply CALL -- dummy! %s", self->describe().c_ize());
-   ctx->call( self->m_func, self->_p->m_params.size() );
-}
-
 
 void ExprCall::apply_( const PStep* v, VMContext* ctx )
 {
    static Engine* eng = Engine::instance();
    const ExprCall* self = static_cast<const ExprCall*>(v);
    TRACE2( "Apply CALL %s", self->describe().c_ize() );
-
    int pcount = self->_p->m_params.size();
+
+   // prepare the call expression.
+   CodeFrame& cf = ctx->currentCode();
+   if( cf.m_seqId == 0 )  
+   {
+      // got to compile or push the call item.
+      cf.m_seqId = 1;
+      if( self->m_callExpr != 0 )
+      {
+         if( ctx->stepInYield( self->m_callExpr, cf ) )
+         {
+            return;
+         }
+      }
+      else 
+      {
+         fassert( self->m_func != 0 );
+         // can we call directly our nice function?
+         // call directly our pseudofunction?
+         if( self->m_func->paramCount() == pcount )
+         {
+            ctx->resetCode( self->m_func );
+            return;
+         }
+         
+         // Otherwise, we must handle this as a normal function
+         // -- but notice that the compiler should have blocked us.         
+         ctx->pushData( self->m_func );
+      }
+   }
+   
+   // now got to generate all the paraeters, if any.
+   // Notice that seqId here is nparam + 1, as 0 is for the function itself.
+   
+   if( pcount >= cf.m_seqId )
+   {
+      std::vector<Expression*>::iterator pos = self->_p->m_params.begin() + (cf.m_seqId-1);
+      std::vector<Expression*>::iterator end = self->_p->m_params.end();
+      while( pos < end )
+      {
+         cf.m_seqId++;
+         if( ctx->stepInYield( *pos, cf ) )
+         {
+            return;
+         }
+         ++pos;
+      }
+   }   
+   
+   // anyhow, we're out of business.
+   ctx->popCode();
+
+   // now, top points to our function value.
    register Item& top = *(&ctx->topData()-pcount);
 
    switch(top.type())
@@ -156,8 +161,6 @@ void ExprCall::apply_( const PStep* v, VMContext* ctx )
          }
          break;
 
-      // TODO: Class Method
-
       case FLC_ITEM_USER:
          {
             Class* cls = top.asClass();
@@ -172,20 +175,6 @@ void ExprCall::apply_( const PStep* v, VMContext* ctx )
             cls->op_call( ctx, pcount, 0 );
          }
    }
-
-}
-
-void ExprCall::PStepPushFunc::describeTo( String& txt ) const
-{
-   txt = "#PushFunc ";
-   txt += m_func->name();
-}
-
-
-void ExprCall::PStepPushFunc::apply_( const PStep* ps, VMContext* ctx )
-{
-   const PStepPushFunc* self = static_cast<const PStepPushFunc*>(ps);
-   ctx->pushData(self->m_func);
 }
 
 

@@ -16,6 +16,7 @@
 #include <falcon/trace.h>
 #include <falcon/expression.h>
 #include <falcon/vmcontext.h>
+#include <falcon/stdsteps.h>
 
 #include <falcon/psteps/stmtreturn.h>
 
@@ -27,13 +28,9 @@ StmtReturn::StmtReturn( Expression* expr, int32 line, int32 chr ):
    m_expr( expr ),
    m_bHasDoubt( false )
 {
-   m_step0 = this;
 
    if ( expr )
    {
-      m_expr = expr;
-      expr->precompile( &m_pcExpr );
-      m_step1 = &m_pcExpr;
       apply = apply_expr_;
    }
    else
@@ -93,9 +90,22 @@ void StmtReturn::apply_( const PStep*, VMContext* ctx )
 }
 
 
-void StmtReturn::apply_expr_( const PStep*, VMContext* ctx )
+void StmtReturn::apply_expr_( const PStep* ps, VMContext* ctx )
 {
    MESSAGE1( "Apply 'return expr'" );
+   const StmtReturn* self = static_cast<const StmtReturn*>( ps );
+   
+   // change our step in a standard return with top data
+   ctx->resetCode( &StdSteps::m_returnFrame );
+   CodeFrame& frame = ctx->currentCode();
+   ctx->stepIn( self->m_expr );
+   if( &frame != &ctx->currentCode() )
+   {
+      // we went deep, let's the standard return frame to deal with the topic.
+      return;
+   }
+      
+   // we can return now. No need for popping, we're popping a lot here.
    ctx->returnFrame( ctx->topData() );
 }
 
@@ -110,6 +120,19 @@ void StmtReturn::apply_doubt_( const PStep*, VMContext* ctx )
 void StmtReturn::apply_expr_doubt_( const PStep*, VMContext* ctx )
 {
    MESSAGE1( "Apply 'return expr'" );
+   
+   const StmtReturn* self = static_cast<const StmtReturn*>( ps );
+   
+   // change our step in a standard return with top data
+   ctx->resetCode( &StdSteps::m_returnFrameWithTopDoubt );
+   CodeFrame& frame = ctx->currentCode();
+   ctx->stepIn( self->m_expr );
+   if( &frame != &ctx->currentCode() )
+   {
+      // we went deep, let's the standard return frame to deal with the topic.
+      return;
+   }
+   
    ctx->returnFrame( ctx->topData() );
    ctx->SetNDContext();
 }
