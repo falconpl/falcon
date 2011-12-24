@@ -48,7 +48,7 @@ private:
    }
    m_postCheck;
    
-   friend PostCheck;
+   friend class PostCheck;
    
    Expression* m_check;
    SynTree* m_stmts;

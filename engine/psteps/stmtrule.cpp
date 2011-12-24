@@ -22,6 +22,8 @@
 
 #include <falcon/psteps/stmtrule.h>
 
+#include <vector>
+
 namespace Falcon
 {
 
@@ -176,8 +178,7 @@ void StmtCut::describeTo( String& tgt ) const
 
 void StmtCut::apply_( const PStep*, VMContext* ctx )
 {
-   ctx->unrollRuleBranches();
-   ctx->popCode(); // use us just once.
+   ctx->unrollRuleBranches(); // which also pops us
 }
 
 void StmtCut::apply_cut_expr_( const PStep* ps, VMContext* ctx )

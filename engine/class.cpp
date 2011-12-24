@@ -405,7 +405,9 @@ void Class::op_toString( VMContext* ctx, void *self ) const
 
 void Class::op_iter( VMContext* ctx, void* ) const
 {
-   ctx->pushData(Item().setBreak());
+   Item item;
+   item.setBreak();
+   ctx->pushData(item);
 }
 
 void Class::op_next( VMContext* ctx, void* ) const

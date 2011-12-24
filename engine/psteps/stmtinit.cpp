@@ -51,7 +51,7 @@ void StmtInit::apply_( const PStep* ps, VMContext* ctx )
          (int) init->m_inheritance->paramCount() );
    
    // should we descend?
-   ctx->resetCode( &m_postInit );
+   ctx->resetCode( &init->m_postInit );
    if( init->m_inheritance->prepareOnContext(ctx) )
    {     
       // we went deep, let postInit to fix the thing.
@@ -72,7 +72,7 @@ StmtInit::PostInit::~PostInit()
 {   
 }
 
-StmtInit::PostInit::describeTo( String& tgt )
+void StmtInit::PostInit::describeTo( String& tgt ) const
 {
    m_owner->describeTo(tgt);
    tgt += " [postInit]";

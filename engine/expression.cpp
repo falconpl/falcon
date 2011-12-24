@@ -18,7 +18,6 @@
 #include <falcon/datareader.h>
 #include <falcon/item.h>
 #include <falcon/vm.h>
-#include <falcon/pcode.h>
 #include <falcon/trace.h>
 
 namespace Falcon {
@@ -33,38 +32,6 @@ Expression::Expression( const Expression &other ):
 Expression::~Expression()
 {}
 
-void Expression::serialize( DataWriter* s ) const
-{
-   byte type = (byte) m_operator;
-   s->write( type );
-   m_sourceRef.serialize( s );
-}
-
-void Expression::deserialize( DataReader* s )
-{
-   m_sourceRef.deserialize( s );
-}
-
-void Expression::precompile( PCode* pcode ) const
-{
-   pcode->pushStep( this );
-}
-
-void Expression::precompileLvalue( PCode* pcode ) const
-{
-   // We do this, but the parser should have blocked us...
-   pcode->pushStep( this );
-}
-
-void Expression::precompileAutoLvalue( PCode* pcode, const PStep* activity, bool, bool ) const
-{
-   // We do this, but the parser should have blocked us...
-   precompile( pcode );             // access -- prepare params
-   // no save
-   pcode->pushStep( activity );     // action
-   // no restore
-   precompileLvalue( pcode );       // storage -- if applicable.
-}
 
 //=============================================================
 
@@ -80,23 +47,6 @@ UnaryExpression::~UnaryExpression()
 }
 
 
-void UnaryExpression::precompile( PCode* pcode ) const
-{
-   TRACE3( "Precompiling un-exp: %p (%s)", pcode, describe().c_ize() );
-   m_first->precompile( pcode );
-   pcode->pushStep( this );
-}
-
-void UnaryExpression::serialize( DataWriter* s ) const
-{
-   Expression::serialize( s );
-   m_first->serialize( s );
-}
-
-void UnaryExpression::deserialize( DataReader* s )
-{
-   Expression::deserialize(s);
-}
 
 bool UnaryExpression::isStatic() const
 {
@@ -119,26 +69,6 @@ BinaryExpression::~BinaryExpression()
 }
 
 
-void BinaryExpression::precompile( PCode* pcode ) const
-{
-   TRACE3( "Precompiling bin-exp: %p (%s)", pcode, describe().c_ize() );
-   m_first->precompile( pcode );
-   m_second->precompile( pcode );
-   pcode->pushStep( this );
-}
-
-void BinaryExpression::serialize( DataWriter* s ) const
-{
-   Expression::serialize( s );
-   m_first->serialize( s );
-   m_second->serialize( s );
-}
-
-void BinaryExpression::deserialize( DataReader* s )
-{
-   Expression::deserialize(s);
-}
-
 bool BinaryExpression::isStatic() const
 {
    return m_first->isStatic() && m_second->isStatic();
@@ -158,30 +88,6 @@ TernaryExpression::~TernaryExpression()
    delete m_first;
    delete m_second;
    delete m_third;
-}
-
-void TernaryExpression::precompile( PCode* pcode ) const
-{
-   TRACE3( "Precompiling tri-exp: %p (%s)", pcode, describe().c_ize() );
-   
-   m_first->precompile( pcode );
-   m_second->precompile( pcode );
-   m_third->precompile( pcode );
-   pcode->pushStep( this );
-}
-
-
-void TernaryExpression::serialize( DataWriter* s ) const
-{
-   Expression::serialize( s );
-   m_third->serialize( s );
-   m_second->serialize( s );
-   m_first->serialize( s );
-}
-
-void TernaryExpression::deserialize( DataReader* s )
-{
-   Expression::deserialize(s);
 }
 
 bool TernaryExpression::isStatic() const

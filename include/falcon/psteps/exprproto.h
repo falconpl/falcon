@@ -53,9 +53,6 @@ public:
     */
    ExprProto& add( const String& name, Expression* e );
 
-   virtual void serialize( DataWriter* s ) const;
-   virtual void precompile( PCode* pcd ) const;
-
    virtual void describeTo( String& ) const;
 
    static void apply_( const PStep*, VMContext* ctx );
@@ -64,10 +61,7 @@ public:
 
    virtual bool isStatic() const { return false; }
    virtual bool simplify( Item& result ) const;
-
-protected:
-   virtual void deserialize( DataReader* s );
-
+   
 private:
    class Private;
    Private* _p;

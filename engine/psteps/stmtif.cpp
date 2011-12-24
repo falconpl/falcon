@@ -20,6 +20,8 @@
 
 #include <falcon/psteps/stmtif.h>
 
+#include <vector>
+
 namespace Falcon
 {
 

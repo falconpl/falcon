@@ -30,26 +30,7 @@ public:
    
    virtual void precompile( PCode* pcode ) const;
    
-private:
-   
-   class FALCON_DYN_CLASS PStepNextApply: public PStep {
-   public:
-      NextApply( ExprPreInc* owner ): m_owner(owner) { apply = apply_; }
-      virtual ~PStepCleanup(){}
-      void NextApply( String& target ) const { target = "NextApply for expriif"; }
-      static void apply_( const PStep*, VMContext* ctx );
-   private:
-      ExprPreInc* m_owner;
-   } m_nextApply;
-
-   class FALCON_DYN_CLASS PStepCleanup: public PStep {
-   public:
-      PStepCleanup(){ apply = apply_; }
-      virtual ~PStepCleanup(){}
-      void PStepCleanup( String& target ) const { target = "NextApply for expriif"; }
-      static void apply_( const PStep*, VMContext* ctx );
-   } m_cleanup;
-   
+private:   
    class ops;
 };
 

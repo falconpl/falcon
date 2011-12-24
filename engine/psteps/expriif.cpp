@@ -66,7 +66,9 @@ void ExprIIF::describeTo( String& str ) const
    str = "( " + m_first->describe() + " ? " + m_second->describe() + " : " + m_third->describe() + " )";
 }
 
-ExprIIF::Gate::Gate() {
+ExprIIF::Gate::Gate( ExprIIF* owner ):
+   m_owner(owner) 
+{
    apply = apply_;
 }
 

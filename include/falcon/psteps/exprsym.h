@@ -86,10 +86,6 @@ public:
     .*/
    const String& name() const;
 
-   void precompileLvalue( PCode* pcode ) const;
-
-   virtual void precompileAutoLvalue( PCode* pcode, const PStep* activity, bool bIsBinary, bool bSaveOld ) const;
-
 protected:
    String m_name;
    Symbol* m_symbol;
@@ -106,25 +102,7 @@ protected:
       static void apply_( const PStep* ps, VMContext* ctx );
    };   
    
-   class FALCON_DYN_CLASS PStepSave: public PStep
-   {
-   public:
-      PStepSave(){ apply = apply_; }
-      virtual void describeTo( String& ) const;
-      static void apply_( const PStep* ps, VMContext* ctx );
-   };  
-   
-   class FALCON_DYN_CLASS PStepRemove: public PStep
-   {
-   public:
-      PStepRemove() { apply = apply_; }
-      virtual void describeTo( String& ) const;
-      static void apply_( const PStep* ps, VMContext* ctx );
-   };  
-   
    PStepLValue m_pslv;
-   PStepSave m_pstepSave;        
-   PStepRemove m_pstepRemove;
         
    virtual void deserialize( DataReader* s );
    inline ExprSymbol( operator_t type ):

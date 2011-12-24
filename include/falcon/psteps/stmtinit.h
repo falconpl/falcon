@@ -54,14 +54,14 @@ private:
       public:
          PostInit(StmtInit* owner): m_owner(owner) { apply = apply_; }
          virtual ~PostInit();
-         void describeTo( String& tgt );
+         void describeTo( String& tgt ) const;
          static void apply_( const PStep* ps, VMContext* ctx );
       private:
          StmtInit* m_owner;
    }
    m_postInit;
    
-   friend m_postInit;
+   friend class PostInit;
    
    Inheritance* m_inheritance;
 };

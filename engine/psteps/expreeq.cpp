@@ -24,7 +24,7 @@ namespace Falcon {
 void ExprEEQ::apply_( const PStep* ps, VMContext* ctx )
 {
    const ExprEEQ* self = static_cast<const ExprEEQ*>( ps );
-   TRACE2( "Apply \"%s\"", (()ps)->describe().c_ize() );
+   TRACE2( "Apply \"%s\"", self->describe().c_ize() );
 
    // First of all, start executing the start, end and step expressions.
    CodeFrame& cf = ctx->currentCode();

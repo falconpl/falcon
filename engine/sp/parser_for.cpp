@@ -75,7 +75,7 @@ static StmtForTo* internal_for_to( Parser& p, TokenInstance* tfor,
 {
    ParserContext* ctx = static_cast<ParserContext*>(p.context());
    Symbol* sym = ctx->addDefineSymbol( name );
-      
+   /*
    int64 iStart = 0;
    int64 iEnd = 0;
    int64 iStep = 0;
@@ -115,10 +115,13 @@ static StmtForTo* internal_for_to( Parser& p, TokenInstance* tfor,
    
    StmtForTo* ft = new StmtForTo( sym, iStart, iEnd, iStep, tfor->line(), tfor->chr() );
    
+      
    if( start != 0 ) ft->startExpr( start );
    if( end != 0 ) ft->endExpr( end );
    if( step != 0 ) ft->stepExpr( step );
+   */
    
+   StmtForTo* ft = new StmtForTo( sym, start, end, step, tfor->line(), tfor->chr() );
    return ft;
 }
 

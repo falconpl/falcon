@@ -34,9 +34,6 @@ public:
    typedef std::deque<Expression*> ExprList;   
    ExprList m_exprs;
    
-   typedef std::deque<PCode*> PCodeList;   
-   PCodeList m_pcodes;
-   
    Private() {}
    ~Private() 
    {
@@ -45,13 +42,6 @@ public:
       {
          delete *iter;
          ++iter;
-      }
-      
-      PCodeList::iterator piter = m_pcodes.begin();
-      while( piter != m_pcodes.end() )
-      {
-         delete *piter;
-         ++piter;
       }
    }
 };
@@ -74,9 +64,7 @@ StmtFastPrint::~StmtFastPrint()
 
 void StmtFastPrint::add( Expression* expr )
 {
-   PCode* pc = new PCode;
    _p->m_exprs.push_back( expr );
-   _p->m_pcodes.push_back( pc );
 }
 
 
@@ -95,7 +83,7 @@ length_t StmtFastPrint::size() const
 void StmtFastPrint::apply_( const PStep* ps, VMContext* ctx )
 {
    const StmtFastPrint* self = static_cast< const StmtFastPrint*>( ps );   
-   Private::PCodeList& pl = self->_p->m_pcodes;
+   Private::ExprList& pl = self->_p->m_exprs;
    CodeFrame& cframe = ctx->currentCode();
    int seqId = cframe.m_seqId;
    

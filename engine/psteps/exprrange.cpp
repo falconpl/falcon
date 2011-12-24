@@ -18,7 +18,6 @@
 
 #include <falcon/range.h>
 #include <falcon/vmcontext.h>
-#include <falcon/pcode.h>
 #include <falcon/stdsteps.h>
 
 #include <falcon/psteps/exprrange.h>
@@ -76,55 +75,7 @@ ExprRange::~ExprRange()
    delete m_eend;
    delete m_estep;
 }
-
-
-void ExprRange::serialize( DataWriter* ) const
-{
    
-}
-
-
-void ExprRange::deserialize( DataReader* )
-{
-   
-}
-
-
-   
-void ExprRange::precompile( PCode* pcd ) const
-{
-   static StdSteps* stdsteps = Engine::instance()->stdSteps();
-   
-   if( m_estart != 0 )
-   {
-      m_estart->precompile( pcd );
-   }
-   else
-   {
-      pcd->pushStep( &stdsteps->m_pushNil_ );
-   }
-
-   if( m_eend != 0 )
-   {
-      m_eend->precompile( pcd );
-   }
-   else
-   {
-      pcd->pushStep( &stdsteps->m_pushNil_ );
-   }
-   
-   if( m_estep != 0 )
-   {
-      m_estep->precompile( pcd );
-   }
-   else
-   {
-      pcd->pushStep( &stdsteps->m_pushNil_ );
-   }
-   
-   pcd->pushStep( this );
-}
-
 
 void ExprRange::start( Expression* expr )
 {
@@ -154,11 +105,57 @@ bool ExprRange::simplify( Item& ) const
 }
 
 
-void ExprRange::apply_( const PStep*, VMContext* ctx )
+void ExprRange::apply_( const PStep* ps, VMContext* ctx )
 {
    static Collector* coll = Engine::instance()->collector();
    static Class* cls =  Engine::instance()->rangeClass();   
    
+   const ExprRange* self = static_cast<const ExprRange*>(ps);
+   CodeFrame& cs = ctx->currentCode();
+   switch( cs.m_seqId )
+   {
+   case 0:
+      cs.m_seqId = 1;
+
+      if( self->m_estart != 0 ) {
+         if( ctx->stepInYield( self->m_estart, cs ) )
+         {
+            return;
+         }
+      }
+      else {
+         ctx->pushData(Item());
+      }
+
+      // fallthrough
+   case 1:
+      cs.m_seqId = 2;
+
+      if( self->m_eend != 0 ) {
+         if( ctx->stepInYield( self->m_eend, cs ) )
+         {
+            return;
+         }
+      }
+      else {
+         ctx->pushData(Item());
+      }
+
+   case 2:
+      cs.m_seqId = 3;
+
+      if( self->m_estep != 0 ) {
+         if( ctx->stepInYield( self->m_estep, cs ) )
+         {
+            return;
+         }
+      }
+      else {
+         ctx->pushData(Item());
+      }
+   }
+   
+   // TODO: Pool ranges.
    Range* rng = new Range( 
       ctx->opcodeParam(2).forceInteger(),
       ctx->opcodeParam(1).forceInteger(),
@@ -166,6 +163,8 @@ void ExprRange::apply_( const PStep*, VMContext* ctx )
       ctx->opcodeParam(1).isNil() 
       );
   
+   // we're done.
+   ctx->popCode();
    ctx->stackResult( 3, FALCON_GC_STORE( coll, cls, rng ) );
 }
  

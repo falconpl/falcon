@@ -197,7 +197,7 @@ void StmtForIn::expandItem( Item& itm, VMContext* ctx ) const
 void StmtForIn::apply_( const PStep* ps, VMContext* ctx )
 {
    const StmtForIn* self = static_cast<const StmtForIn*>(ps);
-   ctx->resetCode( self->m_stepBegin );
+   ctx->resetCode( &self->m_stepBegin );
    ctx->stepIn( self->m_expr );
 }
 
@@ -354,7 +354,7 @@ StmtForTo::StmtForTo( Symbol* tgt, Expression* start, Expression* end, Expressio
    m_start(start),
    m_end(end),  
    m_step(step),
-   m_stepNext(this),
+   m_stepNext(this)
 {
    apply = apply_;     
 }

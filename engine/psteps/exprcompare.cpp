@@ -67,14 +67,14 @@ void generic_apply_( const PStep* ps, VMContext* ctx )
    case 0: 
       // check the first operand.
       cf.m_seqId = 1;
-      if( ctx->stepInYield( self->m_first, cf ) )
+      if( ctx->stepInYield( self->first(), cf ) )
       {
          return;
       }
       // fallthrough
    case 1:
       cf.m_seqId = 2;
-      if( ctx->stepInYield( self->m_second, cf ) )
+      if( ctx->stepInYield( self->second(), cf ) )
       {
          return;
       }

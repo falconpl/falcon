@@ -18,15 +18,38 @@
 #include <falcon/trace.h>
 #include <falcon/vmcontext.h>
 #include <falcon/pstep.h>
-#include <falcon/pcode.h>
 #include <falcon/errors/operanderror.h>
 
 namespace Falcon {
 
-void ExprStarIndex::apply_( const PStep* DEBUG_ONLY(ps), VMContext* ctx )
+void ExprStarIndex::apply_( const PStep* ps, VMContext* ctx )
 {
-   TRACE2( "Apply \"%s\"", ((ExprStarIndex*)ps)->describe().c_ize() );
+   const ExprStarIndex* self = static_cast<const ExprStarIndex*>(ps);
+   TRACE2( "Apply \"%s\"", self->describe().c_ize() );
 
+   // manage first and second expression.
+   CodeFrame& cs = ctx->currentCode();
+   switch( cs.m_seqId )
+   {
+      case 0:
+         cs.m_seqId = 1;
+         // first we must resolve the index
+         if( ctx->stepInYield( self->second(), cs ) ) {
+            return;
+         }
+         // fallthrough
+      case 1:
+         cs.m_seqId = 2;
+         // then the item on which the index is applied.
+         if( ctx->stepInYield( self->first(), cs ) ) {
+            return;
+         }
+         // fallthrough         
+   }
+   
+   // here we're not called anymore.
+   ctx->popCode();
+   
    Item str = ctx->topData();
    ctx->popData();
    Item& index = ctx->topData();

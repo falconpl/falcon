@@ -19,7 +19,6 @@
 #include <falcon/statement.h>
 #include <falcon/rulesyntree.h>
 #include <falcon/expression.h>
-#include <falcon/pcode.h>
 
 namespace Falcon
 {
@@ -63,7 +62,6 @@ public:
 
 private:
    Expression* m_expr;
-   PCode m_pc;
    
    static void apply_( const PStep*, VMContext* ctx );
    static void apply_cut_expr_( const PStep*, VMContext* ctx );
@@ -83,8 +81,6 @@ public:
 
 private:
    Expression* m_expr;
-   PCode m_pc;
-   
    static void apply_( const PStep*, VMContext* ctx );
 };
 

@@ -165,7 +165,6 @@ private:
    Private* _p;
    
    Expression* m_expr;
-   PCode m_pcExpr;
    SynTree* m_defaultBlock;
    Module* m_module;
    

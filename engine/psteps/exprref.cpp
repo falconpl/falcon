@@ -91,6 +91,7 @@ void ExprRef::apply_( const PStep* ps, VMContext* ctx )
       ref->reference( value );
    }
    
+   ctx->popCode();
    Item copy = value; // prevent stack corruption (value may be on the stack)
    ctx->pushData(copy);
 }
@@ -110,11 +111,6 @@ void ExprRef::describeTo( String& str ) const
 bool ExprRef::simplify( Item&  ) const
 {
    return false;
-}
-
-void ExprRef::deserialize( DataReader* )
-{
-   //TODO
 }
 
 

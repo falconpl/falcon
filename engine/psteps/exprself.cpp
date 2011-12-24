@@ -17,7 +17,6 @@
 #include <falcon/trace.h>
 #include <falcon/vmcontext.h>
 #include <falcon/pstep.h>
-#include <falcon/pcode.h>
 
 namespace Falcon {
 
@@ -59,6 +58,7 @@ void ExprSelf::describeTo( String & str ) const
 
 void ExprSelf::apply_( const PStep*, VMContext* ctx )
 {
+   ctx->popCode();
    ctx->pushData(ctx->currentFrame().m_self);
 }
 

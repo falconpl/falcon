@@ -38,7 +38,7 @@ bool ExprNeg::simplify( Item& value ) const
 
 void ExprNeg::apply_( const PStep* ps, VMContext* ctx )
 {  
-   const ExprNeg* self = static_cast<const ExprNot*>(ps);
+   const ExprNeg* self = static_cast<const ExprNeg*>(ps);
    TRACE2( "Apply \"%s\"", self->describe().c_ize() );
    
    CodeFrame& cf = ctx->currentCode();

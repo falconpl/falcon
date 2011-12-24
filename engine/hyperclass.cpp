@@ -23,7 +23,6 @@
 #include <falcon/fassert.h>
 #include <falcon/trace.h>
 #include <falcon/inheritance.h>
-#include <falcon/pcode.h>
 
 #include "multiclass_private.h"
 

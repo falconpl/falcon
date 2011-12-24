@@ -43,7 +43,6 @@ public:
    
 private:
    Expression* m_expr;
-   PCode m_pcExpr;
    bool m_bHasDoubt;
    
    static void apply_( const PStep*, VMContext* ctx );

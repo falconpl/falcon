@@ -157,7 +157,8 @@ void ExprArray::apply_( const PStep* ps, VMContext* ctx )
 
    // invoke all the expressions.
    CodeFrame& cf = ctx->currentCode();
-   while( cf.m_seqId < mye.size() )
+   int size = (int) mye.size();
+   while( cf.m_seqId < size )
    {
       if( ctx->stepInYield( mye[cf.m_seqId ++], cf ) )
       {

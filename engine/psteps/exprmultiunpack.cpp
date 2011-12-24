@@ -17,11 +17,12 @@
 #include <falcon/expression.h>
 #include <falcon/item.h>
 #include <falcon/vm.h>
-#include <falcon/pcode.h>
 #include <falcon/errors/operanderror.h>
 #include <falcon/errors/codeerror.h>
 #include <falcon/itemarray.h>
 #include <falcon/symbol.h>
+
+#include <vector>
 
 namespace Falcon {
 
@@ -143,7 +144,8 @@ void ExprMultiUnpack::apply_( const PStep* ps, VMContext* ctx )
    // invoke all the expressions.
    CodeFrame& cf = ctx->currentCode();
    std::vector<Expression*>& assignee = self->_p->m_assignee;
-   while( cf.m_seqId < assignee.size() )
+   int size = (int) assignee.size();
+   while( cf.m_seqId < size )
    {
       if( ctx->stepInYield( assignee[cf.m_seqId ++], cf ) )
       {

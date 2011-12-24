@@ -17,7 +17,6 @@
 #define SRC "engine/psteps/exprproto.cpp"
 
 #include <falcon/vmcontext.h>
-#include <falcon/pcode.h>
 #include <falcon/prototypeclass.h>
 #include <falcon/flexydict.h>
 
@@ -92,29 +91,6 @@ ExprProto& ExprProto::add( const String& name, Expression* e )
 }
 
 
-void ExprProto::serialize( DataWriter* ) const
-{
-   // TODO
-}
-
-void ExprProto::deserialize( DataReader* )
-{
-   // TODO
-}
-
-void ExprProto::precompile( PCode* pcd ) const
-{
-   // push all the expressions in inverse order.
-   Private::DefVector::const_iterator iter = _p->m_defs.begin();
-   while( _p->m_defs.end() != iter )
-   {
-      iter->second->precompile( pcd );
-      ++iter;
-   }
-   pcd->pushStep(this);
-
-}
-
 void ExprProto::describeTo( String& tgt ) const
 {
    tgt.size(0);
@@ -147,10 +123,23 @@ void ExprProto::apply_( const PStep* ps, VMContext* ctx )
    static Collector* coll = Engine::instance()->collector();
    static Class* cls =  Engine::instance()->protoClass();
    
-   const ExprProto* expr = static_cast<const ExprProto*>(ps);
-   Private::DefVector& dv = expr->_p->m_defs;
-   register int size = (int) dv.size();
-
+   const ExprProto* self = static_cast<const ExprProto*>(ps);
+   CodeFrame& cs = ctx->currentCode();
+   
+   // apply all the expressions.
+   int& seqId = cs.m_seqId;
+   Private::DefVector& dv = self->_p->m_defs;
+   int size = (int) dv.size();
+   while( seqId < size )
+   {
+      Expression* current = dv[seqId++].second;
+      if( ctx->stepInYield( current, cs ) )
+      {
+         return;
+      }
+   }
+   
+   // we're done with the exrpessions
    FlexyDict *value = new FlexyDict;
 
    Item* result = ctx->opcodeParams(size);
@@ -188,6 +177,8 @@ void ExprProto::apply_( const PStep* ps, VMContext* ctx )
       ++viter;
    }
   
+   // we're done.
+   ctx->popCode();
    ctx->stackResult( size, FALCON_GC_STORE( coll, cls, value ) );
 }
 

@@ -187,7 +187,7 @@ private:
 class FALCON_DYN_CLASS StmtForTo: public StmtForBase
 {
 public:
-   StmtForTo( Symbol* tgt=0, int64 start=0, int64 end=0, int64 step=0, int32 line=0, int32 chr = 0 );      
+   StmtForTo( Symbol* tgt=0, Expression* start=0, Expression* end=0, Expression* step=0, int32 line=0, int32 chr = 0 );      
    virtual ~StmtForTo();
       
    Expression* startExpr() const { return m_start; }
@@ -198,13 +198,6 @@ public:
 
    Expression* stepExpr() const { return m_step; }
    void stepExpr( Expression* s );
-
-   int64 startInt() const { return m_istart; }
-   void startInt( int64 v ) { m_istart = v; }
-   int64 endInt() const { return m_iend; }
-   void endInt( int64 v ) { m_iend = v; }
-   int64 endStep() const { return m_istep; }
-   void endStep( int64 v ) { m_istep = v; }
       
    void oneLinerTo( String& tgt ) const;
    
@@ -217,10 +210,6 @@ private:
    Expression* m_start;
    Expression* m_end;
    Expression* m_step;
-   
-   int64 m_istart;
-   int64 m_iend;
-   int64 m_istep;
    
    class PStepNext: public PStep {
    public:
@@ -237,41 +226,6 @@ private:
    };
    PStepNext m_stepNext;
    
-   class PStepPushStart: public PStep {
-   public:
-      PStepPushStart( StmtForTo* owner ): m_owner(owner) { apply = apply_; }
-      virtual ~PStepPushStart() {};
-      void describeTo( String& str ) { str = "PStepPushStart of " + m_owner->oneLiner(); }
-      
-   private:
-      static void apply_( const PStep* self, VMContext* ctx );
-      StmtForTo* m_owner;
-   };
-   PStepPushStart m_stepPushStart;
-   
-   class PStepPushEnd: public PStep {
-   public:
-      PStepPushEnd( StmtForTo* owner ): m_owner(owner) { apply = apply_; }
-      virtual ~PStepPushEnd() {};
-      void describeTo( String& str ) { str = "PStepPushEnd of " + m_owner->oneLiner(); }
-      
-   private:
-      static void apply_( const PStep* self, VMContext* ctx );
-      StmtForTo* m_owner;
-   };
-   PStepPushEnd m_stepPushEnd;
-   
-   class PStepPushStep: public PStep {
-   public:
-      PStepPushStep( StmtForTo* owner ): m_owner(owner) { apply = apply_; }
-      virtual ~PStepPushStep() {};
-      void describeTo( String& str ) { str = "PStepPushStep of " + m_owner->oneLiner(); }
-      
-   private:
-      static void apply_( const PStep* self, VMContext* ctx );
-      StmtForTo* m_owner;
-   };
-   PStepPushStep m_stepPushStep;
        
 };
 

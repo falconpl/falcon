@@ -20,7 +20,6 @@
 #include <falcon/item.h>
 #include <falcon/gclock.h>
 #include <falcon/vm.h>
-#include <falcon/pcode.h>
 
 #include <falcon/psteps/exprvalue.h>
 
@@ -43,6 +42,7 @@ ExprValue::ExprValue( const Item& item ):
       m_lock = 0;
    }
 }
+
 
 ExprValue::ExprValue( const ExprValue& other ):
    Expression( t_value ),
@@ -92,12 +92,8 @@ void ExprValue::item( const Item& i )
 void ExprValue::apply_( const PStep *ps, VMContext* ctx )
 {
    const ExprValue* self = static_cast<const ExprValue*>(ps);
+   ctx->popCode();
    ctx->pushData( self->m_item );
-}
-
-void ExprValue::precompile( PCode* pc )  const
-{
-   pc->pushStep( this );
 }
 
 bool ExprValue::simplify( Item& item ) const
@@ -111,11 +107,6 @@ ExprValue* ExprValue::clone() const
    return new ExprValue( *this );
 }
 
-void ExprValue::serialize( DataWriter* s ) const
-{
-   Expression::serialize( s );
-   //m_item.serialize(s);
-}
 
 bool ExprValue::isStatic() const
 {
@@ -125,22 +116,6 @@ bool ExprValue::isStatic() const
 void ExprValue::describeTo( String & str ) const
 {
    m_item.describe(str);
-}
-
-void ExprValue::deserialize( DataReader* s )
-{
-   static Collector* coll = Engine::instance()->collector();
-
-   Expression::deserialize(s);
-   //m_item.deserialize();
-   if ( m_item.isGarbaged() )
-   {
-      m_lock = coll->lock(m_item);
-   }
-   else
-   {
-      m_lock = 0;
-   }
 }
 
 }

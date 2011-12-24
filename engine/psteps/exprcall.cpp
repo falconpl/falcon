@@ -109,7 +109,7 @@ void ExprCall::apply_( const PStep* v, VMContext* ctx )
          // call directly our pseudofunction?
          if( self->m_func->paramCount() == pcount )
          {
-            ctx->resetCode( self->m_func );
+            ctx->resetCode( self->m_func->pstep() );
             return;
          }
          

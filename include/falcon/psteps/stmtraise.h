@@ -17,7 +17,6 @@
 #define _FALCON_STMTRAISE_H_
 
 #include <falcon/statement.h>
-#include <falcon/pcode.h>
 
 namespace Falcon {
 
@@ -46,7 +45,6 @@ public:
 
 private:
    Expression* m_expr;
-   PCode m_pcExpr;
    
    static void apply_( const PStep*, VMContext* ctx );
 };

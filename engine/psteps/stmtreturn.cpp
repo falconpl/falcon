@@ -92,11 +92,13 @@ void StmtReturn::apply_( const PStep*, VMContext* ctx )
 
 void StmtReturn::apply_expr_( const PStep* ps, VMContext* ctx )
 {
+   static StdSteps* steps = Engine::instance()->stdSteps();
+   
    MESSAGE1( "Apply 'return expr'" );
    const StmtReturn* self = static_cast<const StmtReturn*>( ps );
    
    // change our step in a standard return with top data
-   ctx->resetCode( &StdSteps::m_returnFrame );
+   ctx->resetCode( &steps->m_returnFrame );
    CodeFrame& frame = ctx->currentCode();
    ctx->stepIn( self->m_expr );
    if( &frame != &ctx->currentCode() )
@@ -109,6 +111,7 @@ void StmtReturn::apply_expr_( const PStep* ps, VMContext* ctx )
    ctx->returnFrame( ctx->topData() );
 }
 
+
 void StmtReturn::apply_doubt_( const PStep*, VMContext* ctx )
 {
    MESSAGE1( "Apply 'return ?'");   
@@ -117,14 +120,16 @@ void StmtReturn::apply_doubt_( const PStep*, VMContext* ctx )
 }
 
 
-void StmtReturn::apply_expr_doubt_( const PStep*, VMContext* ctx )
+void StmtReturn::apply_expr_doubt_( const PStep* ps, VMContext* ctx )
 {
+   const StdSteps* steps = Engine::instance()->stdSteps();
+   
    MESSAGE1( "Apply 'return expr'" );
    
    const StmtReturn* self = static_cast<const StmtReturn*>( ps );
    
    // change our step in a standard return with top data
-   ctx->resetCode( &StdSteps::m_returnFrameWithTopDoubt );
+   ctx->resetCode( &steps->m_returnFrameWithTopDoubt );
    CodeFrame& frame = ctx->currentCode();
    ctx->stepIn( self->m_expr );
    if( &frame != &ctx->currentCode() )

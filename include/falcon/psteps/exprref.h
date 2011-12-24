@@ -48,9 +48,6 @@ public:
    virtual bool simplify( Item& result ) const;
 
    inline Symbol* symbol() const { return m_symbol; }
-   
-protected:
-   virtual void deserialize( DataReader* s );
 
 private:
    Symbol* m_symbol;

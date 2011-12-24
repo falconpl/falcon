@@ -71,7 +71,8 @@ ExprDict::ExprDict( const ExprDict& other ):
       ++iter;
       Expression* second = *iter;
       ++iter;
-      mye.push_back( std::make_pair(first, second) );
+      mye.push_back( first );
+      mye.push_back( second );
       ++iter;
    }
 }
@@ -132,7 +133,7 @@ void ExprDict::describeTo( String& str ) const
       str += (*iter)->describe();
       ++iter;
       str += " => ";
-      str += *(iter)->describe();
+      str += (*iter)->describe();
       ++iter;
    }
 
@@ -161,7 +162,7 @@ void ExprDict::oneLinerTo( String& str ) const
       str += (*iter)->describe();
       ++iter;
       str += " => ";
-      str += *(iter)->describe();
+      str += (*iter)->describe();
       ++iter;
    }
 

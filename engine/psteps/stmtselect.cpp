@@ -17,7 +17,6 @@
 #define SRC "engine/psteps/select.cpp"
 
 #include <falcon/expression.h>
-#include <falcon/pcode.h>
 #include <falcon/vmcontext.h>
 #include <falcon/syntree.h>
 #include <falcon/symbol.h>

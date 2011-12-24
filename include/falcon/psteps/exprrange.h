@@ -39,17 +39,11 @@ public:
    void end( Expression* expr );
    void step( Expression* expr );
    
-   virtual void serialize( DataWriter* s ) const;
-   virtual void precompile( PCode* pcd ) const;
-   
    static void apply_( const PStep*, VMContext* ctx );
 
    inline virtual ExprRange* clone() const { return new ExprRange( *this ); }
    virtual bool isStatic() const { return false; }
    virtual bool simplify( Item& result ) const;
-
-protected:
-   virtual void deserialize( DataReader* s );
    
 private:
    Expression* m_estart;

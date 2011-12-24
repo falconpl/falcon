@@ -16,7 +16,6 @@
 #include <falcon/trace.h>
 #include <falcon/inheritance.h>
 #include <falcon/string.h>
-#include <falcon/pcode.h>
 #include <falcon/expression.h>
 #include <falcon/vmcontext.h>
 #include <falcon/module.h>

@@ -116,7 +116,7 @@ void StmtAutoexpr::apply_( const PStep* ps, VMContext* ctx )
 }
 
 
-void StmtAutoexpr::apply_interactive_( const PStep* self, VMContext* ctx )
+void StmtAutoexpr::apply_interactive_( const PStep* ps, VMContext* ctx )
 {
    const StmtAutoexpr* self = static_cast<const StmtAutoexpr*>( ps );
    TRACE3( "StmtAutoexpr apply interactive: %p (%s)", self, self->describe().c_ize() );
@@ -143,7 +143,7 @@ void StmtAutoexpr::apply_interactive_( const PStep* self, VMContext* ctx )
 }
 
 
-void StmtAutoexpr::apply_rule_( const PStep* self, VMContext* ctx )
+void StmtAutoexpr::apply_rule_( const PStep* ps, VMContext* ctx )
 {
    const StmtAutoexpr* self = static_cast<const StmtAutoexpr*>( ps );
    TRACE3( "StmtAutoexpr apply rule: %p (%s)", self, self->describe().c_ize() );

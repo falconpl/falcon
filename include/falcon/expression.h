@@ -516,7 +516,7 @@ public:
          TernaryExpression( t_iif, op1, op2, op3 ),
          m_gate( this )
          {apply = apply_;}
-   inline ExprIIF( const ExprIIF& other ): TernaryExpression( other ) {apply = apply_;}
+   inline ExprIIF( const ExprIIF& other ): TernaryExpression( other ), m_gate(this) {apply = apply_;}
    inline virtual ExprIIF* clone() const { return new ExprIIF( *this ); }
    virtual bool simplify( Item& value ) const;
    static void apply_( const PStep*, VMContext* ctx );
@@ -531,14 +531,14 @@ public:
    
 protected:
       
-   inline ExprIIF(): TernaryExpression( t_iif ) {}
+   inline ExprIIF(): TernaryExpression( t_iif ), m_gate(this) {}
 
 private:
    mutable int m_falseSeqId;
    
    class FALCON_DYN_CLASS Gate: public PStep {
    public:
-      Gate( ExprIIF* owner ): m_owner(owner) { apply = apply_; }
+      Gate( ExprIIF* owner );
       void describeTo( String& target ) const { target = "Gate for expriif"; }
       static void apply_( const PStep*, VMContext* ctx );
    private:

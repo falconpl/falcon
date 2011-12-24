@@ -17,7 +17,6 @@
 #include <falcon/trace.h>
 #include <falcon/vmcontext.h>
 #include <falcon/pstep.h>
-#include <falcon/pcode.h>
 
 namespace Falcon {
 
@@ -69,7 +68,7 @@ bool ExprDeoob::simplify( Item& value ) const
    return false;
 }
 
-void ExprDeoob::apply_( const PStep* pos, VMContext* ctx )
+void ExprDeoob::apply_( const PStep* ps, VMContext* ctx )
 {  
    const ExprDeoob* self = static_cast<const ExprDeoob*>(ps);
    TRACE2( "Apply \"%s\"", self->describe().c_ize() );
@@ -141,7 +140,7 @@ bool ExprIsOob::simplify( Item& value ) const
    return false;
 }
 
-void ExprIsOob::apply_( const PStep* DEBUG_ONLY(self), VMContext* ctx )
+void ExprIsOob::apply_( const PStep* ps, VMContext* ctx )
 {  
    const ExprIsOob* self = static_cast<const ExprIsOob*>(ps);
    TRACE2( "Apply \"%s\"", self->describe().c_ize() );

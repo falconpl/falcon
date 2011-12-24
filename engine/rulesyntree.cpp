@@ -47,7 +47,7 @@ void RuleSynTree::apply_( const PStep* ps, VMContext* ctx )
       register CodeFrame& cf = ctx->currentCode();
       cf.m_step = &self->m_stepNext;
       cf.m_seqId = 1;
-      self->at( 0 )->prepare(ctx);
+      ctx->pushCode( self->at( 0 ) );
       ctx->ruleEntryResult( true );
    }   
 }
@@ -91,7 +91,7 @@ void RuleSynTree::PStepNext::apply_(const PStep* ps, VMContext* ctx)
       
    // just proceed with next step
    Statement* step = self->m_owner->at( cf.m_seqId++ );
-   step->prepare(ctx);
+   ctx->pushCode( step );
 }
 
 }

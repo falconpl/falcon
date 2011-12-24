@@ -17,11 +17,12 @@
 #include <falcon/expression.h>
 #include <falcon/item.h>
 #include <falcon/vm.h>
-#include <falcon/pcode.h>
 #include <falcon/errors/operanderror.h>
 #include <falcon/errors/codeerror.h>
 #include <falcon/itemarray.h>
 #include <falcon/symbol.h>
+
+#include <vector>
 
 namespace Falcon {
 
@@ -102,27 +103,28 @@ ExprUnpack& ExprUnpack::addAssignand(Symbol* e)
 }
 
 
-void ExprUnpack::precompile( PCode* pcode ) const
-{
-   TRACE3( "Precompiling unpack: %p (%s)", pcode, describe().c_ize() );
-
-   // first, precompile the
-   m_expander->precompile( pcode );
-
-   pcode->pushStep( this );
-}
-
-
 void ExprUnpack::apply_( const PStep* ps, VMContext* ctx )
 {
    TRACE3( "Apply unpack: %p (%s)", ps, ps->describe().c_ize() );
 
-   ExprUnpack* self = (ExprUnpack*) ps;
+   const ExprUnpack* self = static_cast<const ExprUnpack*>(ps);
    std::vector<Symbol*> &syms = self->_p->m_params;
    size_t pcount = syms.size();
    
+   // eventually generate the expander.
+   CodeFrame& cf = ctx->currentCode();
+   if( cf.m_seqId == 0 )
+   {
+      cf.m_seqId = 1;
+      if( ctx->stepInYield( self->m_expander, cf ) )
+      {
+         return;
+      }
+   }
+   
+   // we won't be called anymore
+   ctx->popCode();
    register Item& expander = ctx->topData();
-
    if ( ! expander.isArray() )
    {
       // no need to throw, we're going to get back in the VM.
@@ -138,7 +140,6 @@ void ExprUnpack::apply_( const PStep* ps, VMContext* ctx )
    }
 
    size_t i;
-
    for( i = 0; i < pcount; ++i )
    {
       *syms[i]->value(ctx) = array[i];

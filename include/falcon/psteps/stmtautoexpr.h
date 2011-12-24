@@ -68,8 +68,7 @@ private:
    static void apply_rule_( const PStep* self, VMContext* ctx );
    
    Expression* m_expr;
-   PCode m_pcExpr;
-   
+
    bool m_bInteractive;
    bool m_bInRule;
 };

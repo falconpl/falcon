@@ -466,7 +466,7 @@ public:
       CodeFrame& frame = currentCode();
       frame.m_step = step;
       frame.m_seqId = 0;
-      pstep->apply( pstep, this );
+      step->apply( step, this );
    }
 
    /** Returns the current code stack size.

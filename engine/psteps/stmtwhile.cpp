@@ -104,7 +104,7 @@ void StmtWhile::PostCheck::describeTo( String& tgt )
 
 void StmtWhile::PostCheck::apply_( const PStep* ps, VMContext* ctx )
 {
-   const StmtWhile::PostCheck* self = static_cast<const StmtWhile*>(ps);
+   const StmtWhile::PostCheck* self = static_cast<const StmtWhile::PostCheck*>(ps);
    
    // break items are always nil, and so, false.
    if ( ctx->boolTopDataAndPop() )
