@@ -33,7 +33,9 @@ namespace Parsing {
 
 Parser::Private::Private():
    m_nextTokenPos(0),
+   m_tokenStack(0),
    m_stateFrameID(0)
+
 {
 }
 
@@ -77,7 +79,7 @@ void Parser::Private::clearStates()
       ++iter;
    }
    m_lStates.clear();
-   
+
    m_tokenStack = 0;
    m_pframes = 0;
    m_pErrorFrames = 0;
@@ -148,7 +150,7 @@ void Parser::pushState( const String& name, bool isPushedState )
       {
          TRACE("Parser::pushState -- pframes.size()=%d",(int)_p->m_pframes->size());
       }
-      
+
       Private::StateFrame* stf = new Private::StateFrame( iter->second );
       _p->m_lStates.push_back( stf );
 
@@ -186,7 +188,7 @@ void Parser::popState()
    }
 
    Private::StateFrame* sf = _p->m_lStates.back();
-   
+
    StateFrameFunc func = sf->m_cbfunc;
    void *cbdata = sf->m_cbdata;
 
@@ -200,8 +202,8 @@ void Parser::popState()
       ++tsiter;
    }
    ts.clear(); // prevent destruction of the tokens.
-   
-   
+
+
    _p->m_lStates.pop_back();
    delete sf;
    TRACE1( "Parser::popState -- now topmost state is '%s'", _p->m_lStates.back()->m_state->name().c_ize() );
@@ -285,17 +287,17 @@ bool Parser::isComplete() const
    {
       return true;
    }
-   
+
    TRACE1( "Parser::isComplete? -- %s", _p->m_tokenStack->empty() ? "empty" : "not empty");
-   
+
    if( _p->m_tokenStack->empty() )
    {
       return true;
    }
-   
-   TRACE1( "Parser::isComplete? -- %s", 
+
+   TRACE1( "Parser::isComplete? -- %s",
          _p->m_tokenStack->front()->token().id() == T_EOF.id() ? "EOF" : "not eof" );
-   
+
    return _p->m_tokenStack->front()->token().id() == T_EOF.id();
 }
 
@@ -428,7 +430,7 @@ int32 Parser::lastErrorLine() const
    {
       return 0;
    }
-   
+
    return _p->m_lErrors.back().nLine;
 }
 
@@ -723,10 +725,10 @@ void Parser::parserLoop()
          return;
          ti = new TokenInstance(0, 0, T_EOF );
       }
-      
+
       if( m_consumeToken != 0 )
       {
-         TRACE1( "Parser::parserLoop -- Discarding token %s in search of %s", 
+         TRACE1( "Parser::parserLoop -- Discarding token %s in search of %s",
             ti->token().name().c_ize(), m_consumeToken->name().c_ize() );
          if ( ti->token().id() == m_consumeToken->id() )
          {
@@ -867,7 +869,7 @@ void Parser::parseError()
       _p->m_pframes->push_back(_p->m_pErrorFrames->back());
       _p->m_pErrorFrames->pop_back();
    }
-   
+
 
    //_p->m_pframes->clear();
 
@@ -876,7 +878,7 @@ void Parser::parseError()
    // -- fall back to syntax error.
    while( ! _p->m_pframes->empty() )
    {
-      Private::ParseFrame& frame = _p->m_pframes->back();      
+      Private::ParseFrame& frame = _p->m_pframes->back();
 
       while( ! frame.m_path.empty() )
       {
@@ -977,7 +979,7 @@ bool Parser::applyPaths()
       // prioritized tokens.
       if (tcount == rsize )
       {
-            
+
          if( ((! frame.m_bIsRightAssoc) && frame.m_nPriority == 0)
             || !currentRule->getTokenAt(currentRule->arity()-1)->isNT() )
          {
@@ -1148,7 +1150,7 @@ void Parser::applyCurrentRule()
       frameId );
 
    state.m_appliedRules++;
-   currentRule->apply(*this);   
+   currentRule->apply(*this);
 
    TRACE3( "Applied rule %s -- state depth %d -- state id %d",
       currentRule->name().c_ize(),
