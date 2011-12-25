@@ -24,7 +24,6 @@ namespace Falcon
 
 StmtWhile::StmtWhile( Expression* check, SynTree* stmts, int32 line, int32 chr ):
    Statement( e_stmt_while, line, chr ),
-   m_postCheck( this ),
    m_check(check),
    m_stmts( stmts )
 {
@@ -59,19 +58,20 @@ void StmtWhile::apply_( const PStep* s1, VMContext* ctx )
 {
    const StmtWhile* self = static_cast<const StmtWhile*>(s1);
    
-   // push a post-check step
-   ctx->pushCode( &self->m_postCheck );
-   CodeFrame& postCheckFrame = ctx->currentCode();
+   CodeFrame& cf = ctx->currentCode();
    
-   // and perform the check
-   ctx->stepIn( self->m_check );
-   if( &ctx->currentCode() != &postCheckFrame )
+   // Perform the check
+   if ( cf.m_seqId == 0 ) 
    {
-      // ignore soft exception, we're yielding back soon anyhow.
-      return;
+      cf.m_seqId = 1;
+      if( ctx->stepInYield( self->m_check, cf ) )
+      {
+         // ignore soft exception, we're yielding back soon anyhow.
+         return;
+      }
    }
-   // we don't need the postCheck code anymore.
-   ctx->popCode();
+   // otherwise, we're here after performing a check.
+   cf.m_seqId = 0; // ... so we set it back to perform check.
    
    // break items are always nil, and so, false.
    if ( ctx->boolTopData() )
@@ -86,37 +86,6 @@ void StmtWhile::apply_( const PStep* s1, VMContext* ctx )
       TRACE1( "Apply 'while' at line %d -- leave ", self->line() );
       //we're done
       ctx->popData();
-      ctx->popCode();
-   }
-}
-
-
-
-StmtWhile::PostCheck::~PostCheck()
-{   
-}
-
-void StmtWhile::PostCheck::describeTo( String& tgt )
-{
-   m_owner->describeTo(tgt);
-   tgt += " [postcheck]";
-}
-
-void StmtWhile::PostCheck::apply_( const PStep* ps, VMContext* ctx )
-{
-   const StmtWhile::PostCheck* self = static_cast<const StmtWhile::PostCheck*>(ps);
-   
-   // break items are always nil, and so, false.
-   if ( ctx->boolTopDataAndPop() )
-   {
-      TRACE1( "Apply 'while (post check)' at line %d -- redo", self->m_owner->line() );
-      // redo -- avoiding to remove ourself so we can use our own pstep.
-      ctx->resetAndApply( self->m_owner->m_stmts );
-      // no matter if stmts went deep, we're bound to be called again to recheck
-   }
-   else {      
-      TRACE1( "Apply 'while (post check)' at line %d -- leave ", self->line() );
-      //we're done
       ctx->popCode();
    }
 }

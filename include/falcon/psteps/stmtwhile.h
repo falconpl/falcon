@@ -35,21 +35,7 @@ public:
    void oneLinerTo( String& tgt ) const;
    static void apply_( const PStep*, VMContext* ctx );
 
-private:
-   
-   class PostCheck: public PStep {
-      public:
-         PostCheck(StmtWhile* owner): m_owner(owner) { apply = apply_; }
-         virtual ~PostCheck();
-         void describeTo( String& tgt );
-         static void apply_( const PStep* ps, VMContext* ctx );
-      private:
-         StmtWhile* m_owner;
-   }
-   m_postCheck;
-   
-   friend class PostCheck;
-   
+private:   
    Expression* m_check;
    SynTree* m_stmts;
 };

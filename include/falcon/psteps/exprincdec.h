@@ -28,8 +28,6 @@ public:
    FALCON_UNARY_EXPRESSION_CLASS_DECLARATOR( ExprPreInc, t_pre_inc );
    inline virtual bool isStandAlone() const { return true; }
    
-   virtual void precompile( PCode* pcode ) const;
-   
 private:   
    class ops;
 };
@@ -40,7 +38,6 @@ class FALCON_DYN_CLASS ExprPostInc: public UnaryExpression
 public:
    FALCON_UNARY_EXPRESSION_CLASS_DECLARATOR( ExprPostInc, t_post_inc );
    inline virtual bool isStandAlone() const { return true; }
-   virtual void precompile( PCode* pcode ) const;
 
 private:
    class ops;
@@ -52,7 +49,6 @@ class FALCON_DYN_CLASS ExprPreDec: public UnaryExpression
 public:
    FALCON_UNARY_EXPRESSION_CLASS_DECLARATOR( ExprPreDec, t_pre_dec );
    inline virtual bool isStandAlone() const { return true; }
-   virtual void precompile( PCode* pcode ) const;
    
 private:
    class ops;
@@ -64,7 +60,6 @@ class FALCON_DYN_CLASS ExprPostDec: public UnaryExpression
 public:
    FALCON_UNARY_EXPRESSION_CLASS_DECLARATOR( ExprPostDec, t_post_dec );
    inline virtual bool isStandAlone() const { return true; }
-   virtual void precompile( PCode* pcode ) const;
 
 private:
    class ops;

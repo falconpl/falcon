@@ -243,8 +243,7 @@ public:
       ExprMath(other)
    {}
    
-   virtual bool simplify( Item& ) const { return false; } 
-   virtual void precompile( PCode* pc ) const;
+   virtual bool simplify( Item& ) const { return false; }
 };
 
 /** Autp-Plus opertor. */

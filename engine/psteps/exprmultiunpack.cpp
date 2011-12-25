@@ -147,7 +147,8 @@ void ExprMultiUnpack::apply_( const PStep* ps, VMContext* ctx )
    int size = (int) assignee.size();
    while( cf.m_seqId < size )
    {
-      if( ctx->stepInYield( assignee[cf.m_seqId ++], cf ) )
+      Expression* an = assignee[cf.m_seqId++];
+      if( ctx->stepInYield( an, cf ) )
       {
          return;
       }
@@ -180,9 +181,10 @@ void ExprMultiUnpack::apply_( const PStep* ps, VMContext* ctx )
       ctx->popData(pcount-1);
       ctx->topData().setArray( retval );
    }
+   
+   ctx->popCode();
 }
 
 }
 
 /* end of exprmultiunpack.cpp */
-

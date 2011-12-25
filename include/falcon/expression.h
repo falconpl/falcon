@@ -345,13 +345,6 @@ public:
     */
    inline virtual bool isStandAlone() const { return m_second->isStandAlone(); }
 
-private:
-   class FALCON_DYN_CLASS Gate: public PStep {
-   public:
-      Gate();
-      static void apply_( const PStep*, VMContext* ctx );
-      mutable int m_shortCircuitSeqId;
-   } m_gate;
 };
 
 
@@ -375,11 +368,13 @@ public:
    inline ExprAssign( Expression* op1, Expression* op2 ):
       BinaryExpression( t_assign, op1, op2 )
    {
+         apply = apply_;
    }
 
    inline ExprAssign( const ExprAssign& other ):
       BinaryExpression( other )
    {
+      apply = apply_;
    }
 
    inline virtual ExprAssign* clone() const { return new ExprAssign( *this ); }
@@ -391,7 +386,7 @@ public:
 
 protected:
    inline ExprAssign():
-      BinaryExpression( t_assign ) {}
+      BinaryExpression( t_assign ) {apply = apply_;}
       
    static void apply_( const PStep* ps, VMContext* ctx );
 };

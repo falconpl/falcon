@@ -30,48 +30,48 @@ namespace Falcon
 class ExprPreInc::ops
 {
 public:
-   inline bool isPre() const { return true; }
+   inline static void preAssign( VMContext* ) {}
+   inline static void postAssign( VMContext* ) {}
    inline static int64 operate( int64 a ) { return a + 1; }
    inline static void operate( VMContext* ctx, Class* cls, void* inst ) { cls->op_inc(ctx, inst); }
    inline static numeric operaten( numeric a ) { return a + 1.0; }
    inline static const char* id() { return "++"; }
-   inline static void postAssign( VMContext* ) {}
 };
 
 
 class ExprPreDec::ops
 {
 public:
-   inline bool isPre() const { return true; }
+   inline static void preAssign( VMContext* ) {}
+   inline static void postAssign( VMContext* ) {}
    inline static int64 operate( int64 a ) { return a - 1; }
    inline static void operate( VMContext* ctx, Class* cls, void* inst ) { cls->op_dec(ctx, inst); }
    inline static numeric operaten( numeric a ) { return a - 1.0; }
    inline static const char* id() { return "--"; }
-   inline static void postAssign( VMContext* ) {}
 };
 
 
 class ExprPostInc::ops
 {
 public:
-   inline bool isPre() const { return false; }
+   inline static void preAssign( VMContext* ctx ) { Item temp = ctx->topData(); ctx->pushData(temp);}
+   inline static void postAssign( VMContext* ctx ) {ctx->popData();}
    inline static int64 operate( int64 a ) { return a + 1; }
    inline static void operate( VMContext* ctx, Class* cls, void* inst ) { cls->op_incpost(ctx, inst); }
    inline static numeric operaten( numeric a ) { return a + 1.0; }
    inline static const char* id() { return "<post>++"; }
-   inline static void postAssign(VMContext* ctx) { ctx->popData(); } 
 };
 
 
 class ExprPostDec::ops
 {
 public:
-   inline bool isPre() const { return false; }
+   inline static void preAssign( VMContext* ctx ) { Item temp = ctx->topData(); ctx->pushData(temp);}
+   inline static void postAssign( VMContext* ctx ) {ctx->popData();}
    inline static int64 operate( int64 a ) { return a - 1; }
    inline static void operate( VMContext* ctx, Class* cls, void* inst ) { cls->op_decpost(ctx, inst); }
    inline static numeric operaten( numeric a ) { return a - 1.0; }
    inline static const char* id() { return "<post>--"; }
-   inline static void postAssign(VMContext* ctx) { ctx->popData(); } 
 };
 
 //==============================================================
@@ -119,8 +119,9 @@ void generic_apply_( const PStep* ps, VMContext* ctx )
       // Phase 1 -- operate
    case 1:
       cf.m_seqId = 2;
-      {         
-         // No need to copy the second, we're not packing the stack now.
+      {   
+         // eventually save the result if necessary
+         _cpr::preAssign( ctx );
          Item *op;
          ctx->operands( op );
 
@@ -157,7 +158,7 @@ void generic_apply_( const PStep* ps, VMContext* ctx )
    case 2:
       cf.m_seqId = 3;
       // now assign the topmost item in the stack to the lvalue of self.
-      PStep* lvalue = self->lvalueStep();
+      PStep* lvalue = self->first()->lvalueStep();
       if( lvalue != 0 )
       {
          if( ctx->stepInYield( lvalue, cf ) )

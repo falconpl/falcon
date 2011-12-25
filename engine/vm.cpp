@@ -14,7 +14,6 @@
 */
 
 #include <falcon/vm.h>
-#include <falcon/pcode.h>
 #include <falcon/symbol.h>
 #include <falcon/syntree.h>
 #include <falcon/statement.h>

@@ -97,50 +97,6 @@ void ExprDot::describeTo( String& ret ) const
    ret = "(" + m_first->describe() + "." + m_prop + ")";
 }
 
-/*
-void ExprDot::precompileAutoLvalue( PCode* pcode, const PStep* activity, bool bIsBinary, bool bSaveOld ) const
-{
-   static StdSteps* steps = Engine::instance()->stdSteps();
-   
-   // preparation of the parameters for accessor
-   m_first->precompile( pcode );
-   
-   // save the accessor parameters and eventually bring in the second parameter.
-   if( bIsBinary )
-   {
-      pcode->pushStep( &steps->m_dupliTop2_ );
-   }
-   else
-   {
-      pcode->pushStep( &steps->m_dupliTop_ );
-   }
-   
-   pcode->pushStep( this ); // get the value at index 
-   
-   if( bSaveOld )
-   {
-      // Saves the value.
-      pcode->pushStep( &steps->m_copyDown2_ ); 
-   }
-      
-   // Perform the operation
-   pcode->pushStep( activity );
-   
-   // save the value
-   pcode->pushStep( &steps->m_swapTop_ ); // restore   
-   pcode->pushStep( m_pstep_lvalue );
-   
-   if( bIsBinary )
-   {
-      pcode->pushStep( &steps->m_dragDown_ );
-   }
-   else if( bSaveOld )
-   {
-      pcode->pushStep( &steps->m_pop_ );
-   }
-}
-*/
-
 }
 
 /* end of exprdot.cpp */

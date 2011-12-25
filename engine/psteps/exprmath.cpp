@@ -385,7 +385,7 @@ void generic_apply_( const PStep* ps, VMContext* ctx )
    case 3:
       cf.m_seqId = 4;
       // now assign the topmost item in the stack to the lvalue of self.
-      PStep* lvalue = self->lvalueStep();
+      PStep* lvalue = self->first()->lvalueStep();
       if( lvalue != 0 )
       {
          if( ctx->stepInYield( lvalue, cf ) )

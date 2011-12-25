@@ -36,7 +36,6 @@ class Expression;
 class MetaClass;
 class HyperClass;
 class VMContext;
-class PCode;
 
 
 /** Class defined by a Falcon script.
@@ -110,8 +109,7 @@ public:
       inline Property( const String& name, size_t value ):
          m_name( name ),
          m_type(t_prop),
-         m_expr(0),
-         m_preExpr(0)
+         m_expr(0)
       {
          m_value.id = value;
       }
@@ -124,11 +122,6 @@ public:
       
 
       ~Property();
-
-      /** Returns associated pre-compiled expression (if this property holds an expression).
-       \return a valid PCode or 0 if this is not an expression.
-       */
-      PCode* pexpr() const { return m_preExpr; }
       
       /** Returns associated expression (if this property holds an expression).
        \return a valid PCode or 0 if this is not an expression.
@@ -138,7 +131,6 @@ public:
       Property* clone() const { return new Property(*this); }
    private:
       Expression* m_expr;
-      PCode* m_preExpr;
    };
 
    FalconClass( const String& name );

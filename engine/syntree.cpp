@@ -107,7 +107,7 @@ void SynTree::apply_( const PStep* ps, VMContext* ctx )
       }
    }
 
-   TRACE2( "Syntree::apply -- preparing \"%s\"", step->oneLiner().c_ize() );
+   TRACE2( "Syntree::apply -- preparing \"%s\"", self->oneLiner().c_ize() );
    ctx->popCode();
 }
 

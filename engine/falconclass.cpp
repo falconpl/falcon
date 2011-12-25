@@ -98,40 +98,32 @@ public:
 FalconClass::Property::Property( const String& name, size_t value, Expression* expr ):
    m_name(name),
    m_type(t_prop),
-   m_expr( expr ),
-   m_preExpr(0)
+   m_expr( expr )
 {
    m_value.id = value;
-   m_preExpr = new PCode;
-   expr->precompile( m_preExpr );
 }
 
 
 FalconClass::Property::Property( const Property& other ):
    m_type( other.m_type ),
    m_value( other.m_value ),
-   m_expr( 0 ),
-   m_preExpr( 0 )
+   m_expr( 0 )
 {
    if( other.m_expr != 0 )
    {
       m_expr = other.m_expr->clone();
-      m_preExpr = new PCode;
-      m_expr->precompile( m_preExpr );
    }
 }
 
 FalconClass::Property::~Property()
 {
-   delete m_preExpr;
    delete m_expr;
 }
 
 FalconClass::Property::Property( Inheritance* value ):
    m_name(value->className()),
    m_type(t_inh),
-   m_expr(0),
-   m_preExpr(0)
+   m_expr(0)
 {
    m_value.inh = value;
 }
@@ -140,8 +132,7 @@ FalconClass::Property::Property( Inheritance* value ):
 FalconClass::Property::Property( Function* value ):
    m_name( value->name() ),
    m_type(t_func),
-   m_expr(0),
-   m_preExpr(0)
+   m_expr(0)
 {
    m_value.func = value;
 }
@@ -150,8 +141,7 @@ FalconClass::Property::Property( Function* value ):
 FalconClass::Property::Property( FalconState* value ):
    m_name( "TODO" ),
    m_type(t_state),
-   m_expr(0),
-   m_preExpr(0)
+   m_expr(0)
 {
    m_value.state = value;
 }
@@ -840,7 +830,6 @@ FalconClass::PStepInitExpr::PStepInitExpr( FalconClass* o ):
    m_owner(o)
 {
    apply = apply_;
-   m_step0 = this;
 }
 
 void FalconClass::PStepInitExpr::apply_( const PStep* ps, VMContext* ctx )
@@ -886,7 +875,7 @@ void FalconClass::PStepInitExpr::apply_( const PStep* ps, VMContext* ctx )
 
    Property* current = iprops[seqId++];
    ccode.m_seqId = seqId;
-   ctx->pushCode( current->pexpr() );
+   ctx->pushCode( current->expression() );
 }
 
 //==============================================================
@@ -896,7 +885,6 @@ FalconClass::PStepInit::PStepInit( FalconClass* o ):
    m_owner(o)
 {
    apply = apply_;
-   m_step0 = this;
 }
 
 

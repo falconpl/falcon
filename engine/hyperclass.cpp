@@ -383,7 +383,7 @@ void HyperClass::op_create( VMContext* ctx, int32 pcount ) const
             ctx->pushCode( &m_createParentStep );
             ctx->currentCode().m_seqId = _p->m_parents.size() - 1;
             //... after having created the parameters.
-            ctx->pushCode( bottom->compiledExpr() );
+            bottom->prepareOnContext( ctx );
          }
          else
          {
@@ -481,7 +481,7 @@ void HyperClass::ParentCreatedStep::apply_(const PStep* ps, VMContext* ctx )
       int seqId = cf.m_seqId;
       ctx->pushCode( &h->m_createParentStep );
       ctx->currentCode().m_seqId = seqId;
-      ctx->pushCode( inh->compiledExpr() );
+      inh->prepareOnContext( ctx );
    }
    // let the VM take care of the rest.
 }

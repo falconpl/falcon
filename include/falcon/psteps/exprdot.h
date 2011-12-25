@@ -44,9 +44,6 @@ public:
    }
    
    virtual ~ExprDot();
-
-   virtual void precompileLvalue( PCode* pcode ) const;
-   virtual void precompileAutoLvalue( PCode* pcode, const PStep* activity, bool bIsBinary, bool bSaveOld ) const;
    
    inline virtual ExprDot* clone() const { return new ExprDot( *this ); } 
    virtual bool simplify( Item& value ) const; 

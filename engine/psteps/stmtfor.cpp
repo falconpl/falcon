@@ -469,12 +469,14 @@ void StmtForTo::apply_( const PStep* ps, VMContext* ctx )
    }
    
    // however, we won't be called anymore.
-   cf.m_step = & self->m_stepCleanup;
+   cf.m_step = &self->m_stepCleanup;
    cf.m_seqId = 3; // 3 items to remove at cleanup
    ctx->pushCode( &self->m_stepNext );
    
-   // call the next step now to prepare the first loop
-   self->m_stepNext.apply( ps, ctx );
+   // Prepare the start value   
+   Symbol* target = self->m_target;
+   Item* tgtItem = target->value( ctx );
+   tgtItem->setInteger( start );   
    
    // eventually, push the first opode in top of all.
    if( self->m_forFirst != 0 )
@@ -493,7 +495,9 @@ void StmtForTo::PStepNext::apply_( const PStep* ps, VMContext* ctx )
    int64 step = ctx->topData().asInteger();
    
    // the start, at minimum, will be done.
-   self->m_target->value( ctx )->setInteger( start );   
+   Symbol* target = self->m_target;
+   Item* tgtItem = target->value( ctx );
+   tgtItem->setInteger( start );   
    
    // step cannot be 0 as it has been sanitized by our main step.
    if( (step > 0 && start >= end) || ( step < 0 && start <= end ) )
@@ -520,7 +524,7 @@ void StmtForTo::PStepNext::apply_( const PStep* ps, VMContext* ctx )
    }
    
    start += step;
-   ctx->topData().content.data.val64 = start;
+   ctx->opcodeParam(2).content.data.val64 = start;
 }
 
 
