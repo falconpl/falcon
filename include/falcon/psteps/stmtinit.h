@@ -44,7 +44,8 @@ public:
    StmtInit( Inheritance* inh, int32 line=0, int32 chr=0 );
    virtual ~StmtInit();
 
-   void describeTo( String& tgt ) const;
+   void describeTo( String& tgt, int depth=0 ) const;
+   void oneLinerTo( String& tgt ) const;
    
    static void apply_( const PStep*, VMContext* ctx );
 
@@ -54,7 +55,7 @@ private:
       public:
          PostInit(StmtInit* owner): m_owner(owner) { apply = apply_; }
          virtual ~PostInit();
-         void describeTo( String& tgt ) const;
+         void describeTo( String& tgt, int depth=0 ) const;
          static void apply_( const PStep* ps, VMContext* ctx );
       private:
          StmtInit* m_owner;

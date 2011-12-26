@@ -53,7 +53,7 @@ public:
     */
    ExprProto& add( const String& name, Expression* e );
 
-   virtual void describeTo( String& ) const;
+   virtual void describeTo( String&, int depth=0 ) const;
 
    static void apply_( const PStep*, VMContext* ctx );
 

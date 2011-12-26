@@ -31,7 +31,8 @@ public:
    StmtContinue( int32 line=0, int32 chr = 0 );
    virtual ~StmtContinue() {};
 
-   void describeTo( String& tgt ) const;
+   void describeTo( String& tgt, int depth=0 ) const;
+   void oneLinerTo( String& tgt ) const;
    static void apply_( const PStep*, VMContext* ctx );
 };
 

@@ -31,7 +31,7 @@ public:
    StmtWhile( Expression* check, SynTree* stmts, int32 line=0, int32 chr = 0 );
    virtual ~StmtWhile();
 
-   void describeTo( String& tgt ) const;
+   void describeTo( String& tgt, int depth=0 ) const;
    void oneLinerTo( String& tgt ) const;
    static void apply_( const PStep*, VMContext* ctx );
 

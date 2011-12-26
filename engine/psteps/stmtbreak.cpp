@@ -35,7 +35,7 @@ void StmtBreak::describeTo( String& tgt, int depth ) const
 }
 
 
-void StmtBreak::oneLinerTo( String& tgt, int depth ) const
+void StmtBreak::oneLinerTo( String& tgt ) const
 {
    tgt = "break";
 }

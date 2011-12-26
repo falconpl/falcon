@@ -33,7 +33,8 @@ public:
    StmtReturn( Expression* expr = 0, int32 line=0, int32 chr = 0 );
    virtual ~StmtReturn();
 
-   void describeTo( String& tgt ) const;
+   void describeTo( String& tgt, int depth=0 ) const;
+   void oneLinerTo( String& tgt ) const;
 
    Expression* expression() const { return m_expr; }
    void expression( Expression* expr );

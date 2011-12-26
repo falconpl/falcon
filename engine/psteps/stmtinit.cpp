@@ -81,9 +81,9 @@ StmtInit::PostInit::~PostInit()
 {   
 }
 
-void StmtInit::PostInit::describeTo( String& tgt ) const
+void StmtInit::PostInit::describeTo( String& tgt, int depth ) const
 {
-   m_owner->describeTo(tgt);
+   m_owner->describeTo(tgt, depth);
    tgt += " [postInit]";
 }
 

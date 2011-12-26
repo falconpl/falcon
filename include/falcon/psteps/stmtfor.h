@@ -42,7 +42,7 @@ public:
 class FALCON_DYN_CLASS StmtForBase: public Statement
 {
 public:   
-   virtual void describeTo( String& tgt ) const;
+   virtual void describeTo( String& tgt, int depth=0 ) const;
    
    SynTree* body() const { return m_body; }
    void body( SynTree* st ) { m_body = st; }
@@ -132,7 +132,7 @@ private:
    public:
       PStepBegin( StmtForIn* owner ): m_owner(owner) { m_bIsLoopBase = true; apply = apply_; }
       virtual ~PStepBegin() {};
-      void describeTo( String& str ) { str = "PStepBegin of " + m_owner->oneLiner(); }
+      void describeTo( String& str, int=0 ) { str = "PStepBegin of " + m_owner->oneLiner(); }
       
    private:
       static void apply_( const PStep* self, VMContext* ctx );
@@ -143,7 +143,7 @@ private:
    public:
       PStepFirst( StmtForIn* owner ): m_owner(owner) { m_bIsLoopBase = true; apply = apply_; }
       virtual ~PStepFirst() {};
-      void describeTo( String& str ) { str = "PStepFirst of " + m_owner->oneLiner(); }
+      void describeTo( String& str, int = 0 ) { str = "PStepFirst of " + m_owner->oneLiner(); }
       
    private:
       static void apply_( const PStep* self, VMContext* ctx );
@@ -165,7 +165,7 @@ private:
    public:
       PStepGetNext( StmtForIn* owner ): m_owner(owner) { m_bIsNextBase = true; apply = apply_; }
       virtual ~PStepGetNext() {};
-      void describeTo( String& str ) { str = "PStepGetNext of " + m_owner->oneLiner(); }
+      void describeTo( String& str, int =0 ) { str = "PStepGetNext of " + m_owner->oneLiner(); }
       
    private:
       static void apply_( const PStep* self, VMContext* ctx );
@@ -218,7 +218,7 @@ private:
          apply = apply_; 
       }
       virtual ~PStepNext() {};
-      void describeTo( String& str ) { str = "PStepNext of " + m_owner->oneLiner(); }
+      void describeTo( String& str, int = 0 ) { str = "PStepNext of " + m_owner->oneLiner(); }
       
    private:
       static void apply_( const PStep* self, VMContext* ctx );

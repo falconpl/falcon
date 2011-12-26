@@ -32,7 +32,7 @@ public:
    Breakpoint(int32 line=0, int32 chr = 0);
    virtual ~Breakpoint();
 
-   void describeTo( String& tgt ) const;
+   void describeTo( String& tgt, int depth=0 ) const;
 
    static void apply_( const PStep*, VMContext* ctx );
 };

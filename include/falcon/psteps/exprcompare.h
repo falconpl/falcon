@@ -27,7 +27,7 @@ public:
    ExprCompare( const ExprCompare& other );
    virtual ~ExprCompare();
 
-   virtual void describeTo( String& ) const;
+   virtual void describeTo( String&, int depth=0 ) const;
 
    inline virtual bool isStandAlone() const { return false; }
    virtual bool isStatic() const { return false; }

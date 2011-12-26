@@ -52,7 +52,7 @@ public:
    StmtSelect( Expression* expr = 0, int32 line = 0, int32 chr = 0 );
    virtual ~StmtSelect();
 
-   virtual void describeTo( String& tgt ) const;
+   virtual void describeTo( String& tgt, int depth=0 ) const;
    void oneLinerTo( String& tgt ) const;
    
    /** Adds a branch for an integer type ID. 

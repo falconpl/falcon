@@ -37,7 +37,7 @@ public:
 
    inline virtual ExprCall* clone() const { return new ExprCall( *this ); }
    virtual bool simplify( Item& value ) const;
-   virtual void describeTo( String& ) const;
+   virtual void describeTo( String&, int depth=0 ) const;
 
    int paramCount() const;
    Expression* getParam( int n ) const;

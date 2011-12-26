@@ -117,12 +117,12 @@ void StmtIf::describeTo( String& tgt, int depth ) const
    String prefix = String(" ").replicate( depth * depthIndent );   
    String prefix1 = String(" ").replicate( (depth+1) * depthIndent );
    
-   tgt += prefix + "if "+ _p->m_elifs[0]->m_check->describe(depth+1) + "\n"
+   tgt += prefix + "if "+ _p->m_elifs[0]->m_check->describe(depth+1) + "\n" +
               prefix1 + _p->m_elifs[0]->m_ifTrue->describe(depth+1) +"\n";
 
    for ( size_t i = 1; i < _p->m_elifs.size(); ++i )
    {      
-      tgt += prefix + "elif " + _p->m_elifs[i]->m_check->describe(depth+1) + "\n"
+      tgt += prefix + "elif " + _p->m_elifs[i]->m_check->describe(depth+1) + "\n" +
                      prefix1 + _p->m_elifs[i]->m_ifTrue->describe(depth+1);
    }
 

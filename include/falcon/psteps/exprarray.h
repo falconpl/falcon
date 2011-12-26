@@ -51,7 +51,7 @@ public:
 
    virtual ~ExprArray();
 
-   virtual void describeTo( String& ) const;
+   virtual void describeTo( String& s, int depth=0 ) const;
    virtual void oneLinerTo( String& s ) const;
 
    static void apply_( const PStep*, VMContext* ctx );

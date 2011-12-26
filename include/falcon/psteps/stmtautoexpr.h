@@ -34,7 +34,7 @@ public:
    StmtAutoexpr( Expression* expr, int32 line=0, int32 chr = 0 );
    virtual ~StmtAutoexpr();
 
-   void describeTo( String& tgt ) const;
+   void describeTo( String& tgt, int depth=0 ) const;
    void oneLinerTo( String& tgt ) const;
 
    /** Returns the expression held by this expression-statement.

@@ -36,7 +36,7 @@ public:
    Expression* at( int n ) const;
    length_t size() const;
    
-   virtual void describeTo( String& str, int depth ) const;
+   virtual void describeTo( String& str, int depth=0 ) const;
    virtual void oneLinerTo( String& str ) const;
    
 protected:

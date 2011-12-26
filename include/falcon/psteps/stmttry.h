@@ -34,7 +34,7 @@ public:
    StmtTry( int32 line=0, int32 chr = 0 );
    virtual ~StmtTry();
 
-   virtual void describeTo( String& tgt ) const;
+   virtual void describeTo( String& tgt, int depth=0 ) const;
    void oneLinerTo( String& tgt ) const;
 
    /** Gets the body of this try. */
@@ -66,7 +66,7 @@ private:
    public:
       PStepDone() { apply = apply_; m_bIsCatch = true; }
       virtual ~PStepDone() {}
-      virtual void describeTo( String& tgt ) const { tgt = "Try done"; }
+      virtual void describeTo( String& tgt, int =0 ) const { tgt = "Try done"; }
    
    private:
       static void apply_( const PStep*, VMContext* ctx );
@@ -79,7 +79,7 @@ private:
    public:
       PStepFinally( StmtTry* t ): m_owner(t) { apply = apply_; m_bIsFinally = true; }
       virtual ~PStepFinally() {}
-      virtual void describeTo( String& tgt ) const { tgt = "Try finally"; }
+      virtual void describeTo( String& tgt, int =0 ) const { tgt = "Try finally"; }
    
    private:
       StmtTry* m_owner;
@@ -93,7 +93,7 @@ private:
    public:
       PStepCleanup() { apply = apply_; }
       virtual ~PStepCleanup() {}
-      virtual void describeTo( String& tgt ) const { tgt = "Try cleanup"; }
+      virtual void describeTo( String& tgt, int =0 ) const { tgt = "Try cleanup"; }
    
    private:
       static void apply_( const PStep*, VMContext* ctx );

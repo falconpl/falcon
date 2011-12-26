@@ -36,7 +36,7 @@ public:
    StmtRule& addStatement( Statement* stmt );
    StmtRule& addAlternative();
 
-   void describeTo( String& tgt ) const;
+   void describeTo( String& tgt, int depth=0 ) const;
 
    static void apply_( const PStep*, VMContext* ctx );
 

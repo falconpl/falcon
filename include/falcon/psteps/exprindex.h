@@ -35,6 +35,8 @@ private:
    {
    public:
       PstepLValue() { apply = apply_; }
+      virtual ~PstepLValue() {}
+      virtual void describeTo( String& target, int =0 ) const { target = "Index lvalue"; }
       static void apply_( const PStep*, VMContext* ctx );
    };   
    PstepLValue m_pslv;   

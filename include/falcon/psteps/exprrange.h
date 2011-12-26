@@ -45,7 +45,7 @@ public:
    virtual bool isStatic() const { return false; }
    virtual bool simplify( Item& result ) const;
    
-   virtual void describeTo( String& target, int depth ) const;
+   virtual void describeTo( String& target, int depth=0 ) const;
    
 private:
    Expression* m_estart;

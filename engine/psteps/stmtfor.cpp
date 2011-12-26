@@ -53,7 +53,7 @@ void StmtForBase::describeTo( String& tgt, int depth ) const
 {   
    String prefix = String(" ").replicate( depth * depthIndent );   
    String prefix1 = String(" ").replicate( (depth+1) * depthIndent );
-   tgt =  + oneLiner();
+   tgt = prefix + oneLiner();
    tgt += "\n";
    
    if( m_body != 0 )

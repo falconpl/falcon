@@ -37,7 +37,8 @@ public:
    StmtRaise( Expression* risen, int32 line=0, int32 chr = 0 );   
    virtual ~StmtRaise();
 
-   virtual void describeTo( String& tgt ) const;
+   virtual void describeTo( String& tgt, int depth=0 ) const;
+   void oneLinerTo( String& tgt ) const;
 
    /** Gets the expression generating the item to be raised. 
     */

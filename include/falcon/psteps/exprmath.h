@@ -27,7 +27,7 @@ public:
    ExprMath( const ExprMath& other );
    virtual ~ExprMath();
 
-   virtual void describeTo( String& ) const;
+   virtual void describeTo( String&, int depth=0 ) const;
 
    inline virtual bool isStandAlone() const { return false; }
    virtual bool isStatic() const { return false; }

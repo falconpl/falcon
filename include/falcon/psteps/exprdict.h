@@ -49,7 +49,7 @@ public:
     */
    ExprDict& add( Expression* k, Expression* v );
 
-   virtual void describeTo( String& ) const;
+   virtual void describeTo( String&, int depth=0 ) const;
    virtual void oneLinerTo( String& s ) const;
    
    static void apply_( const PStep*, VMContext* vm );

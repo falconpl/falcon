@@ -298,7 +298,7 @@ protected:
    inline virtual class_name* clone() const { return new class_name( *this ); } \
    virtual bool simplify( Item& value ) const; \
    static void apply_( const PStep*, VMContext* ctx ); \
-   virtual void describeTo( String& ) const;\
+   virtual void describeTo( String&, int depth = 0 ) const;\
 
 #define FALCON_BINARY_EXPRESSION_CLASS_DECLARATOR( class_name, op ) \
    FALCON_BINARY_EXPRESSION_CLASS_DECLARATOR_EX( class_name, op, )
@@ -310,7 +310,7 @@ protected:
    inline virtual class_name* clone() const { return new class_name( *this ); } \
    virtual bool simplify( Item& value ) const; \
    static void apply_( const PStep*, VMContext* ctx ); \
-   virtual void describeTo( String& ) const;\
+   virtual void describeTo( String&, int depth=0 ) const;\
    public:
 
 #define FALCON_TERNARY_EXPRESSION_CLASS_DECLARATOR( class_name, op ) \
@@ -319,7 +319,7 @@ protected:
    inline virtual class_name* clone() const { return new class_name( *this ); } \
    virtual bool simplify( Item& value ) const; \
    static void apply_( const PStep*, VMContext* ctx ); \
-   virtual void describeTo( String& ) const;\
+   virtual void describeTo( String&, int depth = 0 ) const;\
    protected:\
    inline class_name(): TernaryExpression( op ) {}\
    public:
@@ -380,7 +380,7 @@ public:
    inline virtual ExprAssign* clone() const { return new ExprAssign( *this ); }
 
    virtual bool simplify( Item& value ) const;
-   virtual void describeTo( String& ) const;
+   virtual void describeTo( String&, int depth=0 ) const;
 
    inline virtual bool isStandAlone() const { return true; }
 
@@ -423,7 +423,7 @@ public:
 
    inline virtual ExprUnpack* clone() const { return new ExprUnpack( *this ); }
    virtual bool simplify( Item& value ) const;
-   virtual void describeTo( String& ) const;
+   virtual void describeTo( String&, int depth = 0 ) const;
 
    int targetCount() const;
    Symbol* getAssignand( int n ) const;
@@ -456,7 +456,7 @@ public:
 
    inline virtual ExprMultiUnpack* clone() const { return new ExprMultiUnpack( *this ); }
    virtual bool simplify( Item& value ) const;
-   virtual void describeTo( String& ) const;
+   virtual void describeTo( String&, int depth = 0 ) const;
 
    int targetCount() const;
    Symbol* getAssignand( int n ) const;
@@ -515,7 +515,7 @@ public:
    inline virtual ExprIIF* clone() const { return new ExprIIF( *this ); }
    virtual bool simplify( Item& value ) const;
    static void apply_( const PStep*, VMContext* ctx );
-   virtual void describeTo( String& ) const;
+   virtual void describeTo( String&, int depth = 0 ) const;
    
    /** Check if the and expression can stand alone.
       An "?" expression can stand alone if the second AND third operand are standalone.
@@ -627,7 +627,7 @@ public:
    virtual bool isStatic() const;
    virtual ExprSelf* clone() const;
    virtual bool simplify( Item& result ) const;
-   virtual void describeTo( String & str ) const;
+   virtual void describeTo( String & str, int depth = 0 ) const;
 
 private:
    static void apply_( const PStep* s1, VMContext* ctx );
