@@ -42,9 +42,9 @@ StmtAutoexpr::~StmtAutoexpr()
    delete m_expr;
 }
 
-void StmtAutoexpr::describeTo( String& tgt ) const
+void StmtAutoexpr::describeTo( String& tgt, int depth ) const
 {
-   tgt += m_expr->describe();
+   tgt += String(" ").replicate( depth * depthIndent ) + m_expr->describe();
 }
 
 void StmtAutoexpr::oneLinerTo( String& tgt ) const

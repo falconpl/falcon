@@ -81,9 +81,9 @@ void ExprEEQ::apply_( const PStep* ps, VMContext* ctx )
 }
 
 
-void ExprEEQ::describeTo( String& ret ) const
+void ExprEEQ::describeTo( String& ret, int depth ) const
 {
-   ret = "(" + m_first->describe() + " === " + m_second->describe() + ")";
+   ret = "(" + m_first->describe(depth+1) + " === " + m_second->describe(depth+1) + ")";
 }
 
 bool ExprEEQ::simplify( Item& value ) const

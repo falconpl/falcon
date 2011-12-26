@@ -75,7 +75,31 @@ ExprRange::~ExprRange()
    delete m_eend;
    delete m_estep;
 }
+
+
+void ExprRange::describeTo( String& target, int depth ) const
+{
+   target = "[";
+   if( m_estart != 0 )
+   {
+      target += m_estart->describe(depth+1);
+   }
+   target += ":";
    
+   if( m_eend != 0 )
+   {
+      target += m_eend->describe(depth+1);
+   }
+   
+   if( m_estep != 0 )
+   {
+      target += ":";
+      target += m_estep->describe(depth+1);
+   }
+   
+   target += "]";
+}
+
 
 void ExprRange::start( Expression* expr )
 {

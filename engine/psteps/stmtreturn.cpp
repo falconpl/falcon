@@ -66,7 +66,24 @@ void StmtReturn::hasDoubt( bool b )
 }
  
 
-void StmtReturn::describeTo( String& tgt ) const
+void StmtReturn::describeTo( String& tgt, int depth ) const
+{
+   tgt = String(" ").replicate(depth * depthIndent ) + "return";
+   
+   if( m_bHasDoubt )
+   {
+      tgt += " ?";
+   }
+   
+   if( m_expr != 0 )
+   {
+      tgt += " ";
+      tgt += m_expr->describe( depth + 1 );
+   }   
+}
+
+
+void StmtReturn::oneLinerTo( String& tgt ) const
 {
    tgt = "return";
    
@@ -78,7 +95,7 @@ void StmtReturn::describeTo( String& tgt ) const
    if( m_expr != 0 )
    {
       tgt += " ";
-      tgt += m_expr->describe();
+      tgt += m_expr->oneLiner();
    }   
 }
 

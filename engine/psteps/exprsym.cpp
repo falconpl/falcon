@@ -70,27 +70,16 @@ const String& ExprSymbol::name() const
    return m_name;
 }
 
-void ExprSymbol::describeTo( String& val ) const
+void ExprSymbol::describeTo( String& val, int ) const
 {
    val = m_symbol != 0 ? m_symbol->name() : m_name;
 }
 
 
-void ExprSymbol::serialize( DataWriter* ) const
+
+void ExprSymbol::PStepLValue::describeTo( String& s, int depth ) const
 {
-   // TODO
-}
-
-
-void ExprSymbol::deserialize( DataReader* )
-{
-   // TODO
-}
-
-
-void ExprSymbol::PStepLValue::describeTo( String& s ) const
-{
-   m_owner->describeTo( s );
+   m_owner->describeTo( s, depth );
 }
 
 void ExprSymbol::apply_( const PStep* ps, VMContext* ctx )

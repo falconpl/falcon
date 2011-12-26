@@ -64,7 +64,8 @@ public:
    static void apply_single_( const PStep* ps, VMContext* ctx );
    static void apply_empty_( const PStep* ps, VMContext* ctx );
 
-   virtual void describeTo( String& tgt ) const;
+   virtual void describeTo( String& tgt, int depth ) const;
+   virtual void oneLinerTo( String& tgt ) const;
 
    /** Returns the symbol table for this block.
     \param bmake if true, generate a table if not already created.

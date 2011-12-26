@@ -42,7 +42,7 @@ public:
 
    inline virtual ExprRef* clone() const { return new ExprRef( *this ); }
    
-   virtual void describeTo( String& ) const;
+   virtual void describeTo( String&, int depth ) const;
 
    virtual bool isStatic() const { return false; }
    virtual bool simplify( Item& result ) const;

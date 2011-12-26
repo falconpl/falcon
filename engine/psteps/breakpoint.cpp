@@ -29,7 +29,7 @@ Breakpoint::~Breakpoint()
 {
 }
 
-void Breakpoint::describeTo( String& tgt ) const
+void Breakpoint::describeTo( String& tgt, int ) const
 {
    tgt = "(*)";
 }

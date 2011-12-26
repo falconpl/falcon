@@ -91,7 +91,7 @@ ExprProto& ExprProto::add( const String& name, Expression* e )
 }
 
 
-void ExprProto::describeTo( String& tgt ) const
+void ExprProto::describeTo( String& tgt, int depth ) const
 {
    tgt.size(0);
    tgt += "p{";
@@ -104,7 +104,7 @@ void ExprProto::describeTo( String& tgt ) const
       }
 
       temp.size(0);
-      iter->second->oneLinerTo(temp);
+      iter->second->describeTo(temp, depth+1);
       tgt += iter->first + "=" + temp;
       ++iter;
    }

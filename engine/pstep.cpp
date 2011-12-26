@@ -20,7 +20,7 @@
 
 namespace Falcon {
 
-void PStep::describeTo( String& s ) const
+void PStep::describeTo( String& s, int ) const
 {
    s="Unnamed pstep";
 }

@@ -195,7 +195,7 @@ int ExprCall::paramCount() const
    return _p->m_params.size();
 }
 
-void ExprCall::describeTo( String& ret ) const
+void ExprCall::describeTo( String& ret, int depth ) const
 {
    String params;
    // and generate all the expressions, in inverse order.
@@ -205,12 +205,12 @@ void ExprCall::describeTo( String& ret ) const
       {
          params += ", ";
       }
-      params += _p->m_params[i]->describe();
+      params += _p->m_params[i]->describe(depth+1);
    }
 
    if( m_callExpr != 0 )
    {
-      ret = m_callExpr->describe() + "(" + params +  ")";
+      ret = m_callExpr->describe(depth+1) + "(" + params +  ")";
    }
    else
    {

@@ -29,7 +29,13 @@ StmtContinue::StmtContinue( int32 line, int32 chr ):
 }
 
    
-void StmtContinue::describeTo( String& tgt ) const
+void StmtContinue::describeTo( String& tgt, int depth ) const
+{
+   tgt = String(" ").replicate( depth * depthIndent ) + "continue";
+}
+
+
+void StmtContinue::oneLinerTo( String& tgt ) const
 {
    tgt = "continue";
 }

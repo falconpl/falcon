@@ -49,10 +49,10 @@ void ExprNot::apply_( const PStep* ps, VMContext* ctx )
    ctx->popCode();
 }
 
-void ExprNot::describeTo( String& str ) const
+void ExprNot::describeTo( String& str, int depth ) const
 {
    str = "not ";
-   str += m_first->describe();
+   str += m_first->describe(depth+1);
 }
 
 //=========================================================
@@ -113,9 +113,9 @@ void ExprAnd::apply_( const PStep* ps, VMContext* ctx )
 }
 
 
-void ExprAnd::describeTo( String& str ) const
+void ExprAnd::describeTo( String& str, int depth ) const
 {
-   str = "(" + m_first->describe() + " and " + m_second->describe() + ")";
+   str = "(" + m_first->describe(depth+1) + " and " + m_second->describe(depth+1) + ")";
 }
 
 //=========================================================
@@ -174,9 +174,9 @@ void ExprOr::apply_( const PStep* ps, VMContext* ctx )
 }
 
 
-void ExprOr::describeTo( String& str ) const
+void ExprOr::describeTo( String& str, int depth ) const
 {
-   str = "(" + m_first->describe() + " or " + m_second->describe() + ")";
+   str = "(" + m_first->describe(depth+1) + " or " + m_second->describe(depth+1) + ")";
 }
 
 }

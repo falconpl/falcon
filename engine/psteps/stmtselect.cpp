@@ -98,9 +98,10 @@ StmtSelect::~StmtSelect()
 }
 
 
-void StmtSelect::describeTo( String& tgt ) const
+void StmtSelect::describeTo( String& tgt, int depth ) const
 {
-   tgt = "select " + m_expr->oneLiner() +"\n";
+   String prefix = String(" ").replicate( depth * depthIndent );
+   tgt = prefix + "select " + m_expr->oneLiner() +"\n";
    // TODO 
 }
 

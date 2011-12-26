@@ -63,12 +63,21 @@ SynTree::~SynTree()
 }
 
 
-void SynTree::describeTo( String& tgt ) const
+void SynTree::describeTo( String& tgt, int depth ) const
 {
+   String prefix = String( " " ).replicate( depth * depthIndent );
    for( size_t i = 0; i < _p->m_steps.size(); ++i )
    {
-      tgt += _p->m_steps[i]->describe() + "\n";
+      if ( i > 0 ) tgt += "\n";
+      tgt += prefix + _p->m_steps[i]->describe( depth + 1 );
    }
+}
+
+
+void SynTree::oneLinerTo( String& tgt ) const
+{
+   // todo: represent the first one?
+   tgt = "...";
 }
 
 

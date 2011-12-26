@@ -61,9 +61,11 @@ void ExprIIF::apply_( const PStep* ps, VMContext* ctx )
    ctx->stepIn( cond ? self->second() : self->third() );
 }
 
-void ExprIIF::describeTo( String& str ) const
+void ExprIIF::describeTo( String& str, int depth ) const
 {
-   str = "( " + m_first->describe() + " ? " + m_second->describe() + " : " + m_third->describe() + " )";
+   str = "( " + m_first->describe(depth+1) + " ? " 
+            + m_second->describe(depth+1) + " : " 
+            + m_third->describe(depth+1) + " )";
 }
 
 ExprIIF::Gate::Gate( ExprIIF* owner ):

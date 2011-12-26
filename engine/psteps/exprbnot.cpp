@@ -64,10 +64,10 @@ void ExprBNOT::apply_( const PStep* ps, VMContext* ctx )
    }
 }
 
-void ExprBNOT::describeTo( String& str ) const
+void ExprBNOT::describeTo( String& str, int depth ) const
 {
    str = "^! ";
-   str += m_first->describe();
+   str += m_first->describe( depth + 1 );
 }
 
 }

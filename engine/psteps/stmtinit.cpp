@@ -38,10 +38,19 @@ StmtInit::~StmtInit()
    // Nothing to do
 }
 
-void StmtInit::describeTo( String& tgt ) const
+
+void StmtInit::describeTo( String& tgt, int depth ) const
 {
-   tgt += "Initialize " + m_inheritance->describe();
+   tgt += String(" ").replicate( depth * depthIndent ) +
+         "Initialize " + m_inheritance->describe();
 }
+
+
+void StmtInit::oneLinerTo( String& tgt ) const
+{
+   tgt +=  "Initialize " + m_inheritance->describe();
+}
+
 
 void StmtInit::apply_( const PStep* ps, VMContext* ctx )
 {

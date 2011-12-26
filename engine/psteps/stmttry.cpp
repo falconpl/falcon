@@ -53,31 +53,15 @@ StmtTry::~StmtTry()
 
 void StmtTry::fbody( SynTree* body )
 {
-   // reset the body?
-   /*
-   if ( body == 0 )
-   {
-      m_step0 = this;
-      m_step1 = body;
-   }
-   else
-   {
-      // set it anew
-      m_step0 = &m_finallyStep;
-      m_step1 = this;
-      m_step2 = m_body;
-      m_step3 = &m_traverseFinallyStep;
-   }
-   */
-   
    delete m_fbody;
    m_fbody = body;
 }
 
-void StmtTry::describeTo( String& tgt ) const
+void StmtTry::describeTo( String& tgt, int depth ) const
 {
-   // TODO: describe branches.
-   tgt = "try\n" + m_body->describe() + "\nend";   
+   // TODO: describe catches.
+   String prefix = String(" ").replicate( depth * depthIndent );
+   tgt = prefix + "try\n" + m_body->describe( depth + 1 ) + "\n" + prefix + "end";   
 }
 
 

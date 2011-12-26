@@ -49,40 +49,42 @@ void StmtForBase::PStepCleanup::apply_( const PStep*, VMContext* ctx )
    ctx->popData(ctx->currentCode().m_seqId);
 }
 
-void StmtForBase::describeTo( String& tgt ) const
+void StmtForBase::describeTo( String& tgt, int depth ) const
 {   
-   oneLinerTo(tgt);
+   String prefix = String(" ").replicate( depth * depthIndent );   
+   String prefix1 = String(" ").replicate( (depth+1) * depthIndent );
+   tgt =  + oneLiner();
    tgt += "\n";
    
    if( m_body != 0 )
    {
       String temp;
-      m_body->describeTo( temp );
-      tgt+=temp;
+      m_body->describeTo( temp, depth + 1);
+      tgt += prefix1 + temp + "\n";
    }
    
    if( m_forFirst != 0 )
    {
       String temp;
-      m_forFirst->describeTo( temp );
-      tgt += "\nforfirst\n" + temp + "end\n\n";
+      m_forFirst->describeTo( temp, depth + 1 );
+      tgt += prefix + "forfirst\n" + prefix1 +  temp + "\n" + prefix + "end\n";
    }
    
    if( m_forMiddle != 0 )
    {
       String temp;
-      m_forMiddle->describeTo( temp );
-      tgt+= "\nformiddle\n" + temp + "end\n\n";
+      m_forMiddle->describeTo( temp, depth + 1 );
+      tgt+= prefix + "formiddle\n" + prefix1 +  temp + "\n" + prefix + "end\n";
    }
    
    if( m_forLast != 0 )
    {
       String temp;
-      m_forLast->describeTo( temp );
-      tgt+= "\nforlast\n" + temp + "end\n\n";
+      m_forLast->describeTo( temp, depth + 1 );
+      tgt += prefix + "forlast\n" + prefix1 +  temp + "\n" + prefix + "end\n";
    }
    
-   tgt += "end\n\n";
+   tgt += prefix + "end";
 }
 
 

@@ -1880,6 +1880,22 @@ void String::trim( int mode )
    }
 }
 
+
+String String::replicate( int times )
+{
+   if( times == 0 ) return "";
+   if( times == 1 ) return *this;
+   
+   String res = *this;
+   while( times > 1 ) {
+      res += *this;
+      times--;
+   }
+   
+   return res;
+}
+
+
 void String::lower()
 {
    length_t len = length();

@@ -71,8 +71,6 @@ public:
    inline virtual bool simplify( Item& ) const { return false; }
    inline virtual bool isStatic() const { return false; }
 
-   virtual void serialize( DataWriter* s ) const;
-
    // Return the symbol pointed by this expression.
    Symbol* symbol() const { return m_symbol; }
    void symbol( Symbol* sym) { m_symbol = sym; }
@@ -103,8 +101,7 @@ protected:
    };   
    
    PStepLValue m_pslv;
-        
-   virtual void deserialize( DataReader* s );
+   
    inline ExprSymbol( operator_t type ):
       Expression( type ),
       m_pslv(this)

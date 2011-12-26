@@ -39,19 +39,17 @@ StmtWhile::~StmtWhile()
 
 void StmtWhile::oneLinerTo( String& tgt ) const
 {
-   tgt = "while " + m_check->describe();
+   tgt = "while " + m_check->oneLiner();
 }
 
 
-void StmtWhile::describeTo( String& tgt ) const
+void StmtWhile::describeTo( String& tgt, int depth ) const
 {
-   for( int32 i = 1; i < chr(); i++ ) {
-      tgt.append(' ');
-   }
+   String prefix = String(" ").replicate( depth * depthIndent );
    
-   tgt += "while " + m_check->describe() + "\n" +
-           m_stmts->describe() +
-         "end\n";
+   tgt += prefix + "while " + m_check->describe(depth+1) + "\n" +
+           m_stmts->describe(depth+1) + "\n" +
+         prefix + "end";
 }
 
 void StmtWhile::apply_( const PStep* s1, VMContext* ctx )

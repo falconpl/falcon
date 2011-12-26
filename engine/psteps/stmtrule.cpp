@@ -82,22 +82,24 @@ StmtRule& StmtRule::addAlternative()
 }
 
 
-void StmtRule::describeTo( String& tgt ) const
+void StmtRule::describeTo( String& tgt, int depth ) const
 {
-   tgt += "rule\n";
+   String prefix = String( " " ).replicate( depth * depthIndent );
+      
+   tgt += prefix + "rule\n";
    bool bFirst = true;
    Private::AltTrees::const_iterator iter = _p->m_altTrees.begin();
    while( iter != _p->m_altTrees.end() )
    {
       if( ! bFirst )
       {
-         tgt += "or\n";
+         tgt += prefix + "or\n";
       }
       bFirst = false;
-      (*iter)->describeTo(tgt);
+      (*iter)->describe( depth + 1 );
       ++iter;
    }
-   tgt += "end";
+   tgt += prefix + "end";
 }
 
 

@@ -69,7 +69,7 @@ bool ExprUnpack::simplify( Item& ) const
    return false;
 }
 
-void ExprUnpack::describeTo( String& ret ) const
+void ExprUnpack::describeTo( String& ret, int depth ) const
 {
    String params;
    // and generate all the expressions, in inverse order.
@@ -82,7 +82,7 @@ void ExprUnpack::describeTo( String& ret ) const
       params += _p->m_params[i]->name();
    }
 
-   ret = params + " = " + m_expander->describe();
+   ret = params + " = " + m_expander->describe(depth+1);
 }
 
 

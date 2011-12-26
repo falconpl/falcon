@@ -111,7 +111,7 @@ ExprDict& ExprDict::add( Expression* k, Expression* v )
 
 //=====================================================
 
-void ExprDict::describeTo( String& str ) const
+void ExprDict::describeTo( String& str, int depth ) const
 {
    Private::ExprVector& mye = _p->m_exprs;
    Private::ExprVector::const_iterator iter = mye.begin();
@@ -122,6 +122,7 @@ void ExprDict::describeTo( String& str ) const
       return;
    }
 
+   String prefix = String(" ").replicate((depth+1) * depthIndent);
    str = "[ ";
    while( iter != mye.end() )
    {
@@ -130,14 +131,15 @@ void ExprDict::describeTo( String& str ) const
          str += ",\n";
       }
 
-      str += (*iter)->describe();
+      str += prefix + (*iter)->describe( depth+1 );
       ++iter;
       str += " => ";
-      str += (*iter)->describe();
+      str += (*iter)->describe( depth+1 );
       ++iter;
    }
 
-   str += "\n]\n";
+   
+   str += String(" ").replicate(depth*depthIndent) + "\n]";
 }
 
 void ExprDict::oneLinerTo( String& str ) const
@@ -159,10 +161,10 @@ void ExprDict::oneLinerTo( String& str ) const
          str += ", ";
       }
 
-      str += (*iter)->describe();
+      str += (*iter)->oneLiner();
       ++iter;
       str += " => ";
-      str += (*iter)->describe();
+      str += (*iter)->oneLiner();
       ++iter;
    }
 

@@ -36,12 +36,18 @@ StmtRaise::~StmtRaise()
 }
 
 
-void StmtRaise::describeTo( String& tgt ) const
+void StmtRaise::describeTo( String& tgt, int depth ) const
 {
-   tgt = "raise " + m_expr->describe();
+   tgt = String(" ").replicate( depth * depthIndent ) +
+         "raise " + m_expr->describe( depth + 1 );
    
 }
 
+void StmtRaise::oneLinerTo( String& tgt ) const
+{
+   tgt = "raise " + m_expr->oneLiner();
+   
+}
 
 void StmtRaise::apply_( const PStep* ps, VMContext* ctx )
 {

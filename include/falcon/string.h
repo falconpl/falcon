@@ -1122,8 +1122,19 @@ public:
 
    */
    void trim( int mode );
+   
+   /** Trims whitespaces from all the parts of the string. */
    void trim() { trim( 0 ); }
 
+   /** Returns a string replicating the first one. 
+    \param times Count of replicates of this string
+    \return a string conatining this string replicated n times.
+    
+    If times is 0 the resulting string is empty; if it's 1, its a copy of the
+    original one.
+    */
+   String replicate( int times );
+   
    /**
     * Remove efficiently 'what' at the beginning of the string.
     *

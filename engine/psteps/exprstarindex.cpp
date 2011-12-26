@@ -68,9 +68,9 @@ void ExprStarIndex::apply_( const PStep* ps, VMContext* ctx )
 }
 
 
-void ExprStarIndex::describeTo( String& ret ) const
+void ExprStarIndex::describeTo( String& ret, int depth ) const
 {
-   ret = "(" + m_first->describe() + "[*" + m_second->describe() + "])";
+   ret = "(" + m_first->describe(depth+1) + "[*" + m_second->describe(depth+1) + "])";
 }
 
 }

@@ -80,10 +80,10 @@ void ExprNeg::apply_( const PStep* ps, VMContext* ctx )
 }
 
 
-void ExprNeg::describeTo( String& str ) const
+void ExprNeg::describeTo( String& str, int depth ) const
 {
-   str = "-";
-   str += m_first->describe();
+   str = "(-";
+   str += m_first->describe(depth+1)+")";
 }
 
 }

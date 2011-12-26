@@ -99,10 +99,18 @@ ExprArray& ExprArray::add( Expression* e )
 
 //=====================================================
 
-void ExprArray::describeTo( String& str ) const
+void ExprArray::describeTo( String& str, int depth ) const
 {
    Private::ExprVector& mye = _p->m_exprs;
    Private::ExprVector::const_iterator iter = mye.begin();
+   
+   if( mye.empty() )
+   {
+      str = "[]";
+      return;
+   }
+   
+   String prefix = String(" ").replicate( (depth+1) * depthIndent );
    str = "[ ";
    while( iter != mye.end() )
    {
@@ -111,11 +119,11 @@ void ExprArray::describeTo( String& str ) const
          str += ",\n";
       }
 
-      str += (*iter)->describe();
+      str += prefix + (*iter)->describe( depth +1 );
       ++iter;
    }
 
-   str += "\n]\n";
+   str += String(" ").replicate( depth * depthIndent ) + "\n] ";
 }
 
 void ExprArray::oneLinerTo( String& str ) const

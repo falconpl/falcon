@@ -192,10 +192,10 @@ void ExprPreInc::apply_( const PStep* ps, VMContext* ctx )
 }
 
 
-void ExprPreInc::describeTo( String& str ) const
+void ExprPreInc::describeTo( String& str, int depth ) const
 {
    str = "++";
-   str += m_first->describe();
+   str += m_first->describe(depth+1);
 }
 
 //=========================================================
@@ -214,9 +214,9 @@ void ExprPostInc::apply_( const PStep* ps, VMContext* ctx )
 }
 
 
-void ExprPostInc::describeTo( String& str ) const
+void ExprPostInc::describeTo( String& str, int depth ) const
 {
-   str = m_first->describe();
+   str = m_first->describe(depth+1);
    str += "++";
 }
 
@@ -236,10 +236,10 @@ void ExprPreDec::apply_( const PStep* ps, VMContext* ctx )
 }
 
 
-void ExprPreDec::describeTo( String& str ) const
+void ExprPreDec::describeTo( String& str, int depth ) const
 {
    str = "--";
-   str += m_first->describe();
+   str += m_first->describe(depth+1);
 }
 
 //=========================================================
@@ -258,9 +258,9 @@ void ExprPostDec::apply_( const PStep* ps, VMContext* ctx )
 }
 
 
-void ExprPostDec::describeTo( String& str ) const
+void ExprPostDec::describeTo( String& str, int depth ) const
 {
-   str = m_first->describe();
+   str = m_first->describe(depth+1);
    str += "--";
 }
 

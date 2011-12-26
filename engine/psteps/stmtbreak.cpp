@@ -29,7 +29,13 @@ StmtBreak::StmtBreak( int32 line, int32 chr ):
 }
 
    
-void StmtBreak::describeTo( String& tgt ) const
+void StmtBreak::describeTo( String& tgt, int depth ) const
+{
+   tgt = String(" ").replicate( depth * depthIndent ) + "break";
+}
+
+
+void StmtBreak::oneLinerTo( String& tgt, int depth ) const
 {
    tgt = "break";
 }

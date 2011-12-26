@@ -81,7 +81,7 @@ bool ExprMultiUnpack::simplify( Item& ) const
    return false;
 }
 
-void ExprMultiUnpack::describeTo( String& ret ) const
+void ExprMultiUnpack::describeTo( String& ret, int depth ) const
 {
    String params;
    
@@ -103,7 +103,7 @@ void ExprMultiUnpack::describeTo( String& ret ) const
          params += ", ";
       }
 
-      params += _p->m_assignee[i]->describe();
+      params += _p->m_assignee[i]->describe(depth+1);
    }
 }
 

@@ -112,22 +112,25 @@ void StmtIf::oneLinerTo( String& tgt ) const
 }
 
 
-void StmtIf::describeTo( String& tgt ) const
+void StmtIf::describeTo( String& tgt, int depth ) const
 {
-   tgt += "if "+ _p->m_elifs[0]->m_check->describe() + "\n"
-              + _p->m_elifs[0]->m_ifTrue->describe();
+   String prefix = String(" ").replicate( depth * depthIndent );   
+   String prefix1 = String(" ").replicate( (depth+1) * depthIndent );
+   
+   tgt += prefix + "if "+ _p->m_elifs[0]->m_check->describe(depth+1) + "\n"
+              prefix1 + _p->m_elifs[0]->m_ifTrue->describe(depth+1) +"\n";
 
    for ( size_t i = 1; i < _p->m_elifs.size(); ++i )
    {      
-      tgt += "elif " + _p->m_elifs[i]->m_check->describe() + "\n"
-                     + _p->m_elifs[i]->m_ifTrue->describe();
+      tgt += prefix + "elif " + _p->m_elifs[i]->m_check->describe(depth+1) + "\n"
+                     prefix1 + _p->m_elifs[i]->m_ifTrue->describe(depth+1);
    }
 
    if( m_ifFalse != 0  ) {
-      tgt += "else\n" + m_ifFalse->describe();
+      tgt += prefix + "else\n" + prefix1 + m_ifFalse->describe(depth+1) +"\n";
    }
 
-   tgt += "end\n";
+   tgt += prefix + "end";
 }
 
 

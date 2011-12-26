@@ -51,7 +51,7 @@ bool ExprSelf::simplify( Item& ) const
    return false;
 }
 
-void ExprSelf::describeTo( String & str ) const
+void ExprSelf::describeTo( String & str, int ) const
 {
    str = "self";
 }

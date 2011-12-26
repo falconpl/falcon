@@ -40,31 +40,36 @@ namespace Falcon {
 class FALCON_DYN_CLASS PStep
 {
 public:
-   inline PStep(): 
-      m_bIsLoopBase(false),
-      m_bIsNextBase(false),
-      m_bIsComposed(false),
-      m_bIsCatch(false),
-      m_bIsFinally(false)
-   {}
+   /** Size of each depth scale in describe(). */
+   static const int depthIndent = 3;
    
-   inline PStep( int line, int chr ):
+   inline PStep( int line=0, int chr=0 ):
       m_bIsLoopBase(false),
       m_bIsNextBase(false),
       m_bIsComposed(false),
       m_bIsCatch(false),
       m_bIsFinally(false),
+      m_class(0),
       m_sr(line, chr)
    {}
 
+   inline PStep( Class* handler, int line=0, int chr=0 ):
+      m_bIsLoopBase(false),
+      m_bIsNextBase(false),
+      m_bIsComposed(false),
+      m_bIsCatch(false),
+      m_bIsFinally(false),
+      m_class(handler),
+      m_sr(line, chr)
+   {}
 
    inline virtual ~PStep() {}
 
    /** Convert into a string */
-   inline String describe() const
+   inline String describe( int depth = 0 ) const
    {
       String temp;
-      describeTo( temp );
+      describeTo( temp, depth );
       return temp;
    }
 
@@ -74,7 +79,7 @@ public:
     * pstep that are not part of the syntactic tree, but just of the
     * VM code.
     * */
-   virtual void describeTo( String& ) const;
+   virtual void describeTo( String&, int depth = 0 ) const;
 
    /** Convert into a string -- short version.
     To be used by diag functions.
@@ -185,6 +190,8 @@ public:
 
    inline void setNextBase() { m_bIsNextBase = true; }
    
+   Class* handler() const { return m_class; }
+   void handler( Class* cls ) { m_class = cls; }
 protected:
    bool m_bIsLoopBase;
    bool m_bIsNextBase;
@@ -193,6 +200,7 @@ protected:
    bool m_bIsFinally;
 
 private:   
+   Class* m_class;
    SourceRef m_sr;
 };
 

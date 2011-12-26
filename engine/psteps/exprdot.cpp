@@ -92,9 +92,9 @@ void ExprDot::PstepLValue::apply_( const PStep* ps, VMContext* ctx )
    // it's not our duty to remove the tompost value from the stack.
 }
 
-void ExprDot::describeTo( String& ret ) const
+void ExprDot::describeTo( String& ret, int depth ) const
 {
-   ret = "(" + m_first->describe() + "." + m_prop + ")";
+   ret = "(" + m_first->describe(depth+1) + "." + m_prop + ")";
 }
 
 }

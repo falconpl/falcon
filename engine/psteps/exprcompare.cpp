@@ -169,9 +169,9 @@ ExprCompare::~ExprCompare()
 
 
 
-void ExprCompare::describeTo( String& ret ) const
+void ExprCompare::describeTo( String& ret, int depth ) const
 {
-   ret = "(" + m_first->describe() + m_name + m_second->describe() + ")";
+   ret = "(" + m_first->describe( depth + 1 ) + m_name + m_second->describe(depth+1) + ")";
 }
 
 

@@ -26,9 +26,9 @@ bool ExprAssign::simplify( Item& ) const
    return false;
 }
 
-void ExprAssign::describeTo( String& str ) const
+void ExprAssign::describeTo( String& str, int depth ) const
 {
-   str = "(" + m_first->describe() + " = " + m_second->describe() + ")";
+   str = "(" + m_first->describe(depth+1) + " = " + m_second->describe(depth+1) + ")";
 }
 
 

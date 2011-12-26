@@ -49,10 +49,10 @@ void ExprOob::apply_( const PStep* ps, VMContext* ctx )
    ctx->popCode();
 }
 
-void ExprOob::describeTo( String& str ) const
+void ExprOob::describeTo( String& str, int depth ) const
 {
    str = "^+";
-   str += m_first->describe();
+   str += m_first->describe(depth+1);
 }
 
 
@@ -85,10 +85,10 @@ void ExprDeoob::apply_( const PStep* ps, VMContext* ctx )
    ctx->popCode();
 }
 
-void ExprDeoob::describeTo( String& str ) const
+void ExprDeoob::describeTo( String& str, int depth ) const
 {
    str = "^-";
-   str += m_first->describe();
+   str += m_first->describe(depth+1);
 }
 
 
@@ -121,10 +121,10 @@ void ExprXorOob::apply_( const PStep* ps, VMContext* ctx )
    ctx->topData().xorOob();
 }
 
-void ExprXorOob::describeTo( String& str ) const
+void ExprXorOob::describeTo( String& str, int depth ) const
 {
    str = "^%";
-   str += m_first->describe();
+   str += m_first->describe(depth+1);
 }
 
 
@@ -157,10 +157,10 @@ void ExprIsOob::apply_( const PStep* ps, VMContext* ctx )
    item.setBoolean(item.isOob());
 }
 
-void ExprIsOob::describeTo( String& str ) const
+void ExprIsOob::describeTo( String& str, int depth ) const
 {
    str = "^?";
-   str += m_first->describe();
+   str += m_first->describe(depth+1);
 }
 
 }

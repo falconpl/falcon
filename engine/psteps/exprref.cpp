@@ -96,7 +96,8 @@ void ExprRef::apply_( const PStep* ps, VMContext* ctx )
    ctx->pushData(copy);
 }
 
-void ExprRef::describeTo( String& str ) const
+
+void ExprRef::describeTo( String& str, int ) const
 {
    if( m_symbol == 0 )
    {
@@ -107,6 +108,7 @@ void ExprRef::describeTo( String& str ) const
       str = "$" + m_symbol->name();
    }
 }
+
 
 bool ExprRef::simplify( Item&  ) const
 {
