@@ -53,6 +53,16 @@ public:
       m_sr(line, chr)
    {}
 
+   /** Creates the PStep with a handler class.
+    \param handler A Class representing this PStep at script level.
+    \param line the line where the PStep is delcared in a source file.
+    \param chr the character where the PStep is declared in a source file.
+    
+    A handler class is used by the VM and by the serialization process to
+    expose a PStep to a script. Some PSteps are internally used by the VM and
+    are not visible as static grammar entities, so it's perfectly legit to
+    have PSteps without a handler class.
+    */
    inline PStep( Class* handler, int line=0, int chr=0 ):
       m_bIsLoopBase(false),
       m_bIsNextBase(false),
@@ -74,17 +84,19 @@ public:
    }
 
    /** Convert into a string.
-    *
-    * The default base class function does nothing. This is useful for
-    * pstep that are not part of the syntactic tree, but just of the
-    * VM code.
-    * */
-   virtual void describeTo( String&, int depth = 0 ) const;
+    \param target A target string where to write the pstep representation.
+    \param depth A syntactic depth (toplevel is 0) used for indentation.
+    
+    The default base class function does nothing. This is useful for
+    pstep that are not part of the syntactic tree, but just of the
+    VM code.
+    */
+   virtual void describeTo( String& target, int depth = 0 ) const;
 
    /** Convert into a string -- short version.
     To be used by diag functions.
     */
-   virtual void oneLinerTo( String& s ) const;
+   virtual void oneLinerTo( String& target ) const;
 
    /** Convert into a string -- short version. */
    inline String oneLiner() const
@@ -190,8 +202,23 @@ public:
 
    inline void setNextBase() { m_bIsNextBase = true; }
    
+   /** Gets the handler class of this step.
+    \return a valid handler class or 0 if the step cannot be handled.
+    
+    A handler class is used by the VM and by the serialization process to
+    expose a PStep to a script. Some PSteps are internally used by the VM and
+    are not visible as static grammar entities, so it's perfectly legit to
+    have PSteps without a handler class.
+    
+    \note the class is not owned nor 
+    */
    Class* handler() const { return m_class; }
+   
+   /** Sets the handler of this step.
+   \param cls The handler Class of this step.
+    */
    void handler( Class* cls ) { m_class = cls; }
+      
 protected:
    bool m_bIsLoopBase;
    bool m_bIsNextBase;

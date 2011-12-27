@@ -66,14 +66,20 @@ static SynFunc* inner_apply_function( const Rule&, Parser& p, bool bHasExpr )
 
    // check if the symbol is free -- defining an unique symbol
    bool alreadyDef;
-   Symbol* symfunc = ctx->onGlobalDefined( *tname->asString(), alreadyDef );
-   if( alreadyDef )
+   Symbol* symfunc = 0; 
+   // a method?
+   if( ctx->currentClass() == 0 )
    {
-      // not free!
-      p.addError( e_already_def,  p.currentSource(), tname->line(), tname->chr(), 0,
-         String("at line ").N(symfunc->declaredAt()) );
-      p.simplify(tcount);
-      return 0;
+      // if not, it's a global function
+      symfunc = ctx->onGlobalDefined( *tname->asString(), alreadyDef );
+      if( alreadyDef )
+      {
+         // not free!
+         p.addError( e_already_def,  p.currentSource(), tname->line(), tname->chr(), 0,
+            String("at line ").N(symfunc->declaredAt()) );
+         p.simplify(tcount);
+         return 0;
+      }
    }
 
    // Ok, we took the symbol.

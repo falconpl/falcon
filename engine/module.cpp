@@ -131,8 +131,8 @@ Module::Private::~Private()
    }
 
    // and get rid of the static data, if we have.
-   StaticDataList::iterator sditer = m_staticData.begin();
-   while( sditer != m_staticData.end() )
+   StaticDataList::reverse_iterator sditer = m_staticData.rbegin();
+   while( sditer != m_staticData.rend() )
    {
       Item& itm = *sditer;      
       
