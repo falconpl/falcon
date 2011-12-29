@@ -35,6 +35,7 @@ class DataWriter;
 class Module;
 class Inheritance;
 class ItemArray;
+class Error;
 
 /** Representation of classes, that is item types.
 
@@ -220,6 +221,10 @@ public:
     Subclasses should check against theoretical or structured inheritance.
     */
    virtual bool isDerivedFrom( Class* cls ) const;
+   
+   typedef Enumerator<Class> ClassEnumerator;
+   
+   virtual void enumerateParents( ClassEnumerator& cb ) const;
    
    /** Identifies the data known in a parent of a composed class.
     \param parent The parent of this class.
@@ -892,6 +897,12 @@ public:
     */
    virtual void op_next( VMContext* ctx, void* instance ) const;
 
+   //================================================================
+   // Utilities
+   //
+
+   /** Generates a read only property access error. */
+   Error* ropError( const String& prop, int line = 0, const char* src = 0 );
    
 protected:
    bool m_bIsfalconClass;

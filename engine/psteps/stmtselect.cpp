@@ -26,6 +26,9 @@
 
 #include <falcon/psteps/stmtselect.h>
 
+#include <falcon/engine.h>
+#include <falcon/synclasses.h>
+
 #include <map>
 #include <deque>
 
@@ -73,12 +76,16 @@ public:
    
 
 StmtSelect::StmtSelect( Expression* expr, int32 line, int32 chr ):
-   Statement( e_stmt_select, line, chr ),
+   Statement( line, chr ),
    _p( new Private ),
    m_expr( expr ),
    m_defaultBlock(0),
    m_module(0)
 {
+   static Class* mycls = &Engine::instance()->synclasses()->m_stmt_select;
+   m_class = mycls;
+
+   
    if (expr != 0 )
    {
       apply = apply_;

@@ -461,7 +461,7 @@ void VMContext::raiseItem( const Item& item )
       if( m_catchBlock != 0 )
       {
          resetCode( m_catchBlock );
-         Symbol* sym = m_catchBlock->headSymbol();
+         Symbol* sym = m_catchBlock->target();
          if( sym != 0 )
          {
             *sym->value(this) = item; 
@@ -516,9 +516,9 @@ void VMContext::raiseError( Error* ce )
          resetCode( m_catchBlock );
 
          // assign the error to the required item.
-         if( m_catchBlock->headSymbol() != 0 )
+         if( m_catchBlock->target() != 0 )
          {
-            Item* value = m_catchBlock->headSymbol()->value(this);
+            Item* value = m_catchBlock->target()->value(this);
             if( value != 0 )
             {
                value->setUser( ce->handler(), ce, true );

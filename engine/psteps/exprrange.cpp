@@ -20,6 +20,9 @@
 #include <falcon/vmcontext.h>
 #include <falcon/stdsteps.h>
 
+#include <falcon/synclasses.h>
+#include <falcon/engine.h>
+
 #include <falcon/psteps/exprrange.h>
 
 namespace Falcon

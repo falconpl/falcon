@@ -20,6 +20,9 @@
 #include <falcon/cm/compare.h>
 #include <falcon/cm/describe.h>
 #include <falcon/cm/len.h>
+#include <falcon/cm/baseclass.h>
+#include <falcon/cm/inspect.h>
+#include <falcon/cm/classname.h>
 #include <falcon/cm/minmax.h>
 #include <falcon/cm/print.h>
 #include <falcon/cm/tostring.h>
@@ -59,6 +62,9 @@ CoreModule::CoreModule():
       << new Ext::ToString
       << new Ext::TypeId
       << new Ext::Clone
+      << new Ext::ClassName
+      << new Ext::BaseClass
+      << new Ext::Inspect
       
       // Standard classes
       << new Ext::ClassURI

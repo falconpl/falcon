@@ -20,14 +20,19 @@
 
 #include <falcon/psteps/stmtreturn.h>
 
+#include <falcon/engine.h>
+#include <falcon/synclasses.h>
+
 namespace Falcon
 {
 
 StmtReturn::StmtReturn( Expression* expr, int32 line, int32 chr ):
-   Statement(e_stmt_return, line, chr ),
+   Statement( line, chr ),
    m_expr( expr ),
    m_bHasDoubt( false )
 {
+   static Class* mycls = &Engine::instance()->synclasses()->m_stmt_return;
+   m_class = mycls;
 
    if ( expr )
    {
@@ -51,6 +56,21 @@ void StmtReturn::expression( Expression* expr )
    apply = m_bHasDoubt ? apply_expr_doubt_ : apply_expr_;
 }
 
+
+Expression* StmtRaise::selector()
+{
+   return m_expr;
+}
+
+bool StmtRaise::selector( Expression* e )
+{
+   if( e!= 0 && e->parent(this) )
+   {
+      delete m_expr;
+      m_expr = e;
+   }
+   return true;
+}
 
 void StmtReturn::hasDoubt( bool b )
 {

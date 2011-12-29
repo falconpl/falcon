@@ -28,16 +28,43 @@ namespace Falcon
 class FALCON_DYN_CLASS StmtWhile: public Statement
 {
 public:
-   StmtWhile( Expression* check, SynTree* stmts, int32 line=0, int32 chr = 0 );
+   /** Creates a while statement, creating a new syntree. */   
+   StmtWhile( Expression* expr, int32 line=0, int32 chr = 0 );
+   
+   /** Creates a while statement, adopting an existign statement set. */
+   StmtWhile( Expression* expr, SynTree* stmts, int32 line=0, int32 chr = 0 );
    virtual ~StmtWhile();
 
    void describeTo( String& tgt, int depth=0 ) const;
    void oneLinerTo( String& tgt ) const;
    static void apply_( const PStep*, VMContext* ctx );
 
+   SynTree* mainBlock() const { return m_stmts; }
+   
+   virtual int32 arity() const;
+   virtual TreeStep* nth( int32 n ) const;
+   virtual bool nth( int32 n, TreeStep* ts );
+   
+   
+   virtual int32 arity() const;
+   
+   /** Nth sub-element of this element in 0..arity() */
+   virtual TreeStep* nth( int32 n ) const;
+   
+   /** Setting the nth sub-element.
+    \param n The sub-element number.
+    \param ts An unparented expression.
+    \return true if \b ts can be parented and n is valid, false otherwise.
+    
+    If a previous expression occupies this position, it is destroyed.    
+    */
+   virtual bool nth( int32 n, TreeStep* ts );
+   
+   virtual Expression* selector();   
+   virtual bool selector( Expression* e ); 
 private:   
-   Expression* m_check;
    SynTree* m_stmts;
+   Expression* m_expr;
 };
 
 }

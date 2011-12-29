@@ -5,7 +5,7 @@
    Falcon core module -- describe function/method
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
-   Begin: Sat, 04 Jun 2011 20:52:06 +0200
+   Begin: Wed, 28 Dec 2011 11:12:52 +0100
 
    -------------------------------------------------------------------
    (C) Copyright 2011: the FALCON developers (see list in AUTHORS file)
@@ -19,62 +19,47 @@
 #include <falcon/cm/describe.h>
 #include <falcon/vm.h>
 #include <falcon/vmcontext.h>
-#include <falcon/itemid.h>
-#include <falcon/errors/paramerror.h>
+#include <falcon/error.h>
 
 namespace Falcon {
 namespace Ext {
 
 Describe::Describe():
-   Function( "describe" )
+   PseudoFunction( "describe", &m_invoke )
 {
-   signature("X,[N],[N]");
-   //mthSignature("[N],[N]");
+   signature("X");
    addParam("item");
-   addParam("depth");
-   addParam("maxLength");
 }
 
 Describe::~Describe()
 {
 }
 
-void Describe::invoke( VMContext* ctx, int32 )
+void Describe::invoke( VMContext* ctx, int32 nParams )
 {
-   Item* elem, *md, *ml;
+   Item *elem;
    if ( ctx->isMethodic() )
    {
       elem = &ctx->self();
-      md = ctx->param(0);
-      ml = ctx->param(1);
-      if (  ( md != 0 && ! md->isOrdinal() )
-         || ( ml != 0 && ! ml->isOrdinal() )
-         )
-      {
-         throw new ParamError( ErrorParam( e_inv_params )
-            .extra("[N],[N]") );
-      }
    }
    else
    {
-      elem = ctx->param( 0 );
-      md = ctx->param( 1 );
-      ml = ctx->param( 2 );
-      if ( elem == 0 
-         || ( md != 0 && ! md->isOrdinal() )
-         || ( ml != 0 && ! ml->isOrdinal() )
-         )
+      if( nParams <= 0 )
       {
          throw paramError();
       }
+
+      elem = ctx->params();
    }
 
-   int maxDepth = md == 0 ? 3 : md->forceInteger();
-   int maxLen = ml == 0 ? 60 : ml->forceInteger();
+   ctx->returnFrame((new String(elem->describe()))->garbage());
+}
 
-   String* theString = new String;
-   elem->describe( *theString, maxDepth, maxLen );
-   ctx->returnFrame( theString->garbage() );
+
+void Describe::Invoke::apply_( const PStep*, VMContext* ctx )
+{
+   register Item& top = ctx->topData();
+   top = (new String(top.describe()))->garbage();
 }
 
 }

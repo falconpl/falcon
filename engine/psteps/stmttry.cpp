@@ -21,24 +21,34 @@
 
 #include <falcon/psteps/stmttry.h>
 
+#include <falcon/engine.h>
+#include <falcon/synclasses.h>
+
 namespace Falcon {
 
 StmtTry::StmtTry( SynTree* body, int32 line, int32 chr ):
-   Statement( Statement::e_stmt_try, line, chr ),
+   Statement( line, chr ),
    m_body( body ),
    m_fbody( 0 ),
    m_finallyStep( this )
 {
+   static Class* mycls = &Engine::instance()->synclasses()->m_stmt_try;
+   m_class = mycls;
+
    apply = apply_;
    m_bIsCatch = true;
 }
 
 StmtTry::StmtTry( int32 line, int32 chr):
-   Statement( Statement::e_stmt_try, line, chr ),
+   Statement( line, chr ),
    m_body( new SynTree ),
    m_fbody( 0 ),
    m_finallyStep( this )
 {
+   static Class* mycls = &Engine::instance()->synclasses()->m_stmt_try;
+   m_class = mycls;
+
+   
    apply = apply_;
    m_bIsCatch = true;
 }

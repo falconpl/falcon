@@ -122,9 +122,13 @@ void bound_(VMContext*, const Class*, void*)
    fassert2( false, "Not implemented" );
 }  
 
-void className(VMContext*, const Class*, void*)
+void className(VMContext* ctx, const Class* , void*)
 {
-   fassert2( false, "Not implemented" );
+   static Function* classNameFunc = Engine::instance()->getPseudoFunction("className");
+   fassert( classNameFunc != 0 );
+
+   Item &value = ctx->topData();
+   value.methodize(classNameFunc);
 }
 
 
@@ -139,15 +143,22 @@ void className_(VMContext* ctx, const Class*, void* data)
    token.exit(cls1->name()); // garbage this string
 }
 
-void baseClass(VMContext*, const Class*, void*)
+void baseClass(VMContext* ctx, const Class*, void*)
 {
-   fassert2( false, "Not implemented" );
+   static Function* classNameFunc = Engine::instance()->getPseudoFunction("baseClass");
+   fassert( classNameFunc != 0 );
+
+   Item &value = ctx->topData();
+   value.methodize(classNameFunc);
 }
 
 
-void baseClass_(VMContext*, const Class*, void*)
+void baseClass_(VMContext* ctx, const Class* cls, void*)
 {
-   fassert2( false, "Not implemented" );
+   static Class* mc = Engine::instance()->metaClass();
+   static Collector* coll = Engine::instance()->collector();
+   
+   ctx->topData().setUser( FALCON_GC_STORE( coll, mc, cls ) );
 }
 
 //======================================================

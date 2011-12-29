@@ -20,6 +20,9 @@
 
 #include <falcon/psteps/exprcall.h>
 
+#include <falcon/synclasses.h>
+#include <falcon/engine.h>
+
 #include <vector>
 
 namespace Falcon {

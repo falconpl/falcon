@@ -23,8 +23,11 @@ namespace Falcon
 
 
 StmtContinue::StmtContinue( int32 line, int32 chr ):
-   Statement( e_stmt_continue, line, chr)
+   Statement( line, chr)
 {
+   static Class* mycls = &Engine::instance()->synclasses()->m_stmt_continue;
+   m_class = mycls;
+
    apply = apply_;
 }
 

@@ -25,7 +25,7 @@
 #include <falcon/error.h>
 #include <falcon/errors/operanderror.h>
 #include <falcon/errors/unserializableerror.h>
-
+#include <falcon/errors/accesserror.h>
 
 
 namespace Falcon {
@@ -73,6 +73,11 @@ bool Class::isDerivedFrom( Class* cls ) const
    return this == cls;
 }
 
+
+void Class::enumerateParents( Class::ClassEnumerator&  ) const
+{
+   // normally does nothing
+}
 
 void* Class::getParentData( Class* parent, void* data ) const
 {
@@ -371,10 +376,10 @@ void Class::op_getProperty( VMContext* ctx, void* data, const String& property )
 }
 
 
-void Class::op_setProperty( VMContext* , void*, const String& ) const
+void Class::op_setProperty( VMContext* , void*, const String& prop ) const
 {
    // TODO: IS it worth to add more infos about self in the error?
-   throw new OperandError( ErrorParam( e_prop_acc, __LINE__, SRC ).extra(".=") );
+   throw new OperandError( ErrorParam( e_prop_acc, __LINE__, SRC ).extra(prop) );
 }
 
 
@@ -415,6 +420,16 @@ void Class::op_next( VMContext* ctx, void* ) const
    ctx->topData().setBreak();
 }
 
+
+
+Error* Class::ropError( const String& prop, int line, const char* src )
+{
+   if( src == 0 ) src = SRC;
+   if( line == 0 ) line == __LINE__;
+   return new AccessError( ErrorParam( e_prop_ro, line, src )
+         .origin(ErrorParam::e_orig_vm)
+         .extra(prop));
+}
 
 }
 

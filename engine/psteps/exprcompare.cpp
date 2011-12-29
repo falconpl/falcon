@@ -18,6 +18,9 @@
 #include <falcon/vm.h>
 #include <falcon/errors/operanderror.h>
 
+#include <falcon/synclasses.h>
+#include <falcon/engine.h>
+
 #include <falcon/psteps/exprcompare.h>
 
 namespace Falcon {

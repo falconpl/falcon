@@ -25,15 +25,20 @@
 
 #include <falcon/psteps/stmtautoexpr.h>
 
+#include <falcon/engine.h>
+#include <falcon/synclasses.h>
+
 namespace Falcon 
 {
 
 StmtAutoexpr::StmtAutoexpr( Expression* expr, int32 line, int32 chr ):
-   Statement(e_stmt_autoexpr, line, chr ),
+   Statement( line, chr ),
    m_expr( expr ),
    m_bInteractive( false ),
    m_bInRule( false )
 {
+   static Class* mycls = &Engine::instance()->synclasses()->m_stmt_autoexpr;
+   m_class = mycls;
    apply = apply_; 
 }
 
@@ -50,6 +55,21 @@ void StmtAutoexpr::describeTo( String& tgt, int depth ) const
 void StmtAutoexpr::oneLinerTo( String& tgt ) const
 {
    tgt += m_expr->describe();
+}
+
+
+Expression* StmtAutoexpr::selector()
+{
+   return m_expr;
+}
+
+
+bool StmtAutoexpr::selector( Expression* e )
+{
+   if( e == 0 || ! e->parent(this) ) return false;
+   delete m_expr;
+   m_expr = e;
+   return true;
 }
 
 

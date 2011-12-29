@@ -19,38 +19,112 @@
 #include <falcon/vmcontext.h>
 #include <falcon/syntree.h>
 
+#include <falcon/engine.h>
+#include <falcon/synclasses.h>
+
 namespace Falcon
 {
 
-StmtWhile::StmtWhile( Expression* check, SynTree* stmts, int32 line, int32 chr ):
-   Statement( e_stmt_while, line, chr ),
-   m_check(check),
-   m_stmts( stmts )
+StmtWhile::StmtWhile( Expression* expr, SynTree* stmts, int32 line, int32 chr ):
+   Statement( line, chr ),
+   m_stmts( stmts ),
+   m_expr( expr )
 {
+   static Class* classWhile = &Engine::instance()->synclasses()->m_stmt_while;
+   m_class = classWhile;
+   
+   stmts->setParent(this);
+   expr->setParent(this);
+   
    apply = apply_;
+   m_class = classWhile;
    m_bIsLoopBase = true;
 }
 
+StmtWhile::StmtWhile( Expression* expr, int32 line, int32 chr ):
+   Statement( line, chr ),
+   m_stmts( 0 ),
+   m_expr( expr )
+{
+   static Class* classWhile = &Engine::instance()->synclasses()->m_stmt_while;
+   m_class = classWhile;
+   
+   m_stmts = new SynTree;
+   m_stmts->setParent(this);
+   expr->setParent(this);
+   apply = apply_;
+   m_class = classWhile;
+   m_bIsLoopBase = true;
+}
+
+
 StmtWhile::~StmtWhile()
 {
-   delete m_check;
    delete m_stmts;
 }
 
+
+Expression* StmtWhile::selector()
+{
+   return m_expr;
+}
+
+
+bool StmtWhile::selector( Expression* e )
+{
+   if( e!= 0 && e->setParent(this))
+   {
+      delete m_expr;
+      m_expr = e;
+   }
+}
+   
 void StmtWhile::oneLinerTo( String& tgt ) const
 {
-   tgt = "while " + m_check->oneLiner();
+   tgt = "while " + m_expr->oneLiner();
 }
 
 
 void StmtWhile::describeTo( String& tgt, int depth ) const
 {
    String prefix = String(" ").replicate( depth * depthIndent );
-   
-   tgt += prefix + "while " + m_check->describe(depth+1) + "\n" +
+   if( m_stmts )
+   {
+      tgt += prefix + "while " + m_expr->describe(depth+1) + "\n" +
            m_stmts->describe(depth+1) + "\n" +
          prefix + "end";
+   }
+   else
+   {
+      tgt = "while";
+   }
 }
+
+int StmtWhile::arity() const
+{
+   return 1;
+}
+
+TreeStep* StmtWhile::nth( int n ) const
+{
+   if( n == 0 || n == -1 ) return m_stmts;
+   return 0;
+}
+
+
+bool StmtWhile::nth( int n, SynTree* st )
+{
+   if( st != 0 || ! st->setParent(this) ) return false;
+   
+   if( n == 0 || n == -1 ) 
+   {
+      delete m_stmts;
+      m_stmts = st;
+   }
+   
+   return 0;
+}
+
 
 void StmtWhile::apply_( const PStep* s1, VMContext* ctx )
 {
@@ -59,10 +133,11 @@ void StmtWhile::apply_( const PStep* s1, VMContext* ctx )
    CodeFrame& cf = ctx->currentCode();
    
    // Perform the check
+   SynTree* tree = self->m_stmts;
    if ( cf.m_seqId == 0 ) 
    {
       cf.m_seqId = 1;
-      if( ctx->stepInYield( self->m_check, cf ) )
+      if( ctx->stepInYield( self->m_expr, cf ) )
       {
          // ignore soft exception, we're yielding back soon anyhow.
          return;
@@ -77,7 +152,7 @@ void StmtWhile::apply_( const PStep* s1, VMContext* ctx )
       ctx->popData();
       TRACE1( "Apply 'while' at line %d -- redo", self->line() );
       // redo
-      ctx->stepIn( self->m_stmts );
+      ctx->stepIn( tree );
       // no matter if stmts went deep, we're bound to be called again to recheck
    }
    else {      

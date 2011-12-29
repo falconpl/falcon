@@ -2,10 +2,10 @@
    FALCON - The Falcon Programming Language.
    FILE: describe.h
 
-   Falcon core module -- len function/method
+   Falcon core module -- describe function/method
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
-   Begin: Sat, 11 Jun 2011 20:23:04 +0200
+   Begin: Sat, 04 Jun 2011 20:52:06 +0200
 
    -------------------------------------------------------------------
    (C) Copyright 2011: the FALCON developers (see list in AUTHORS file)
@@ -14,7 +14,7 @@
 */
 
 #ifndef FALCON_CORE_DESCRIBE_H
-#define	FALCON_CORE_DESCRIBE_H
+#define FALCON_CORE_DESCRIBE_H
 
 #include <falcon/pseudofunc.h>
 #include <falcon/fassert.h>
@@ -23,66 +23,46 @@
 namespace Falcon {
 namespace Ext {
 
-
 /*#
    @function describe
-   @param item The item to be inspected.
-   @optparam depth Maximum inspect depth.
-   @optparam maxLen Limit the display size of possibly very long items as i.e. strings or membufs.
-   @brief Returns the deep contents of an item on a string representation.
+   @brief Returns a basic description of the object.
+   @param item an item of any kind
+   @return A string representing the contents of an object.
 
-   This function returns a string containing a representation of the given item.
-   If the item is deep (an array, an instance, a dictionary) the contents are
-   also passed through this function.
-
-   This function traverses arrays and items deeply; there isn't any protection
-   against circular references, which may cause endless loop. However, the
-   default maximum depth is 3, which is a good depth for debugging (goes deep,
-   but doesn't dig beyond average interesting points). Set to -1 to have
-   infinite depth.
-
-   By default, only the first 60 characters of strings and elements of membufs
-   are displayed. You may change this default by providing a @b maxLen parameter.
-
-   You may create personalized inspect functions using forward bindings, like
-   the following:
-   @code
-   compactDescribe = .[describe depth|1 maxLen|15]
-   @endcode
 */
 
 /*#
    @method describe BOM
-   @optparam depth Maximum inspect depth.
-   @optparam maxLen Limit the display size of possibly very long items as i.e. strings or membufs.
-   @brief Returns the deep contents of an item on a string representation.
 
-   This method returns a string containing a representation of this item.
-   If the item is deep (an array, an instance, a dictionary) the contents are
-   also passed through this function.
-
-   This method traverses arrays and items deeply; there isn't any protection
-   against circular references, which may cause endless loop. However, the
-   default maximum depth is 3, which is a good depth for debugging (goes deep,
-   but doesn't dig beyond average interesting points). Set to -1 to have
-   infinite depth.
-
-   By default, only the first 60 characters of strings and elements of membufs
-   are displayed. You may change this default by providing a @b maxLen parameter.
+   @function describe
+   @brief Returns a basic description of the object.
+   @return A string representing the contents of an object.
 */
 
-
-class FALCON_DYN_CLASS Describe: public Function
+class FALCON_DYN_CLASS Describe: public PseudoFunction
 {
 public:
    Describe();
    virtual ~Describe();
-   virtual void invoke( VMContext* ctx, int32 nParams );
+   virtual void invoke( VMContext* vm, int32 nParams );
+
+private:
+   
+   class FALCON_DYN_CLASS Invoke: public PStep
+   {
+   public:
+      Invoke() { apply = apply_; }
+      virtual ~Invoke() {}
+      static void apply_( const PStep* ps, VMContext* vm );
+
+   };
+
+   Invoke m_invoke;
 };
 
 }
 }
 
-#endif	/* FALCON_CORE_DESCRIBE_H */
+#endif
 
 /* end of describe.h */

@@ -17,11 +17,19 @@
 #include <falcon/trace.h>
 #include <falcon/vmcontext.h>
 
+#include <falcon/synclasses.h>
+#include <falcon/engine.h>
+
+#include <falcon/synclasses.h>
+#include <falcon/engine.h>
+
+
 namespace Falcon {
 
 
 bool ExprAssign::simplify( Item& ) const
 {
+   FALCON_DECLARE_SYN_CLASS( expr_array )
    // TODO Simplify for closed symbols
    return false;
 }

@@ -61,11 +61,13 @@ add_library(falcon_engine SHARED
   parser/token.cpp
   parser/tokeninstance.cpp
 
+  cm/classname.cpp
   cm/clone.cpp
   cm/compare.cpp
   cm/datareader.cpp
   cm/datawriter.cpp
   cm/describe.cpp
+  cm/inspect.cpp
   cm/len.cpp
   cm/minmax.cpp
   cm/path.cpp
@@ -164,6 +166,11 @@ add_library(falcon_engine SHARED
   classes/classrange.cpp
   classes/classstring.cpp
   classes/classuser.cpp
+  
+  classes/classexpression.cpp
+  classes/classstatement.cpp
+  classes/classsyntree.cpp
+  classes/classsymbol.cpp
 
   errors/accesserror.cpp
   errors/accesstypeerror.cpp
@@ -194,6 +201,7 @@ add_library(falcon_engine SHARED
   collector_history.cpp
   datareader.cpp
   datawriter.cpp
+  derivedfrom.cpp
   directory.cpp
   dynloader.cpp
   engine.cpp
@@ -251,6 +259,7 @@ add_library(falcon_engine SHARED
   symbol.cpp
   symbolmap.cpp
   symboltable.cpp
+  synclasses.cpp
   synfunc.cpp
   syntree.cpp
   textreader.cpp

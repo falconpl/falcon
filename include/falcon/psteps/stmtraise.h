@@ -44,6 +44,9 @@ public:
     */
    Expression* expr() const { return m_expr; }      
 
+   virtual Expression* selector(); 
+   virtual bool selector( Expression* e ); 
+   
 private:
    Expression* m_expr;
    

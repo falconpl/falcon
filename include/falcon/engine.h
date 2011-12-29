@@ -43,6 +43,8 @@ class StdErrors;
 class ModSpace;
 class Item;
 
+class SynClasses;
+
 /** Falcon application global data.
 
  This class stores the gloal items that must be known by the falcon engine
@@ -217,6 +219,73 @@ public:
     */
    ClassReference* referenceClass() const;
    
+   
+   /** Returns the global instance of the ClassTreeStep class.
+   \return the Engine instance of the ClassTreeStep handler.
+
+    Method init() must have been called before.
+
+    @note This method will assert and terminate the program if compiled in debug mode
+    in case the engine has not been initialized. In release, it will just
+    return a null pointer.
+    */
+   Class* treeStepClass() const;
+   
+   /** Returns the global instance of the statement class.
+   \return the Engine instance of the ClassStatement handler.
+
+    Method init() must have been called before.
+
+    @note This method will assert and terminate the program if compiled in debug mode
+    in case the engine has not been initialized. In release, it will just
+    return a null pointer.
+    */
+   Class* statementClass() const;
+   
+   /** Returns the global instance of the ClassExpression class.
+   \return the Engine instance of the ClassExpression handler.
+
+    Method init() must have been called before.
+
+    @note This method will assert and terminate the program if compiled in debug mode
+    in case the engine has not been initialized. In release, it will just
+    return a null pointer.
+    */
+   Class* expressionClass() const;
+   
+   /** Returns the global instance of the ClassSynTree class.
+   \return the Engine instance of the ClassSynTree handler.
+
+    Method init() must have been called before.
+
+    @note This method will assert and terminate the program if compiled in debug mode
+    in case the engine has not been initialized. In release, it will just
+    return a null pointer.
+    */
+   Class* syntreeClass() const;
+   
+   /** Returns the global instance of the ClassSymbol class.
+   \return the Engine instance of the ClassSymbol handler.
+
+    Method init() must have been called before.
+
+    @note This method will assert and terminate the program if compiled in debug mode
+    in case the engine has not been initialized. In release, it will just
+    return a null pointer.
+    */
+   Class* symbolClass() const;
+   
+   /** Returns the collection of standard syntactic tree classes.
+   \return the Engine instance of the SynClasses class collection.
+
+    Method init() must have been called before.
+
+    @note This method will assert and terminate the program if compiled in debug mode
+    in case the engine has not been initialized. In release, it will just
+    return a null pointer.
+    */
+   SynClasses* synclasses() const;
+   
    /** Returns the standard collection of error handlers.
     */
    StdErrors* stdErrors() const { return m_stdErrors; }
@@ -377,7 +446,7 @@ protected:
    Class* m_metaClass;
    Class* m_genericClass;
    ClassReference* m_referenceClass;
-   
+
    //===============================================
    // Standard error handlers
    //
@@ -392,7 +461,18 @@ protected:
    Class* m_encodingErrorClass;
    Class* m_syntaxErrorClass;
    Class* m_paramErrorClass;
+
+   //===============================================
+   // Basic code reflection entities
+   //
+   Class* m_treeStepClass;
+   Class* m_statementClass;
+   Class* m_exprClass;
+   Class* m_syntreeClass;
+   Class* m_symbolClass;
    
+   SynClasses* m_synClasses;
+
    RegisteredClassesMap* m_regClasses;
    
    //===============================================

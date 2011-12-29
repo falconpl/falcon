@@ -24,6 +24,9 @@
 
 #include <vector>
 
+#include <falcon/engine.h>
+#include <falcon/synclasses.h>
+
 namespace Falcon
 {
 
@@ -45,8 +48,11 @@ public:
 };
 
 StmtRule::StmtRule( int32 line, int32 chr ):
-   Statement( e_stmt_rule, line, chr )
+   Statement( line, chr )
 {
+   static Class* mycls = &Engine::instance()->synclasses()->m_stmt_rule;
+   m_class = mycls;
+   
    apply = apply_;
    _p = new Private;
    // create a base rule syntree
@@ -150,9 +156,12 @@ void StmtRule::apply_( const PStep*s1 , VMContext* ctx )
 //
 
 StmtCut::StmtCut( Expression* expr, int32 line, int32 chr ):
-   Statement( e_stmt_cut,  line, chr ),
+   Statement( line, chr ),
    m_expr(expr)
 {
+   static Class* mycls = &Engine::instance()->synclasses()->m_stmt_cut;
+   m_class = mycls;
+
    if( expr == 0 )
    {
       apply = apply_;
@@ -220,9 +229,12 @@ void StmtCut::apply_cut_expr_( const PStep* ps, VMContext* ctx )
 
 
 StmtDoubt::StmtDoubt( Expression* expr, int32 line, int32 chr ):
-   Statement( e_stmt_cut,  line, chr ),
+   Statement( line, chr ),
    m_expr(expr)
 {
+   static Class* mycls = &Engine::instance()->synclasses()->m_stmt_doubt;
+   m_class = mycls;
+   
    apply = apply_;
 }
 

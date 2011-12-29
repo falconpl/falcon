@@ -17,7 +17,7 @@
 #define FALCON_SYNTREE_H
 
 #include <falcon/setup.h>
-#include <falcon/pstep.h>
+#include <falcon/treestep.h>
 
 namespace Falcon
 {
@@ -25,6 +25,7 @@ namespace Falcon
 class Statement;
 class SymbolTable;
 class Symbol;
+class Expression;
 
 /** Syntactic tree.
  *
@@ -41,7 +42,7 @@ class Symbol;
  * \note None of the methods in this class is guarded. Accessing any invalid
  * item outside 0..size() will cause crash.
  */
-class FALCON_DYN_CLASS SynTree: public PStep
+class FALCON_DYN_CLASS SynTree: public TreeStep
 {
 
 public:
@@ -56,8 +57,17 @@ public:
    Statement* at( int pos ) const;
    void set( int pos, Statement* p );
 
-   void insert( int pos, Statement* step );
-   void remove( int pos );
+   /** Inserts a symbol */
+   bool insert( int pos, Statement* step );
+   
+   /** Appends a statement.
+    The method will silently fail if the step has already a parent.
+    */
+   bool remove( int pos );
+   
+   /** Appends a statement.
+    The method will silently fail if the step has already a parent.
+    */
    SynTree& append( Statement* step );
 
    static void apply_( const PStep* ps, VMContext* ctx );
@@ -84,7 +94,7 @@ public:
     
     This is an extra space in the syntree where this information can be stored.
     */
-   Symbol* headSymbol() const { return m_head; }
+   Symbol* target() const { return m_head; }
    
    /** Gets the head symbol for this syntree.
     \param s The symbol to be set.
@@ -97,15 +107,29 @@ public:
     
     \note The ownership of the symbol stays on the caller.
     */
-   void headSymbol( Symbol* s ) { m_head = s; }
+   void target( Symbol* s ) { m_head = s; }
+   
+   /** Returns the selector expression for this block.
+    
+    Conditional blocks have selector expression determining whether the 
+    block should be entered or not.
+    */
+   Expression* selector() const { return m_selector; }
+   
+   bool selector( Expression* expr );
+   
+   virtual SynTree* clone() const;
    
 protected:
+   SynTree( Class* subclass );
+   
    class Private;
    Private* _p;
    
    SymbolTable* m_locals;
    Statement* m_single;
    Symbol* m_head;
+   Expression* m_selector;
 };
 
 }

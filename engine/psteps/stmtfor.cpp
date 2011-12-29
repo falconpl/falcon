@@ -29,6 +29,10 @@
 
 #include <falcon/psteps/stmtfor.h>
 
+#include <falcon/engine.h>
+#include <falcon/synclasses.h>
+
+
 #include <vector>
 
 namespace Falcon 
@@ -43,6 +47,45 @@ StmtForBase::~StmtForBase()
    delete m_forLast;
 }
 
+int32 StmtForBase::arity() const
+{
+   return 4;
+}
+
+TreeStep* StmtForBase::nth( int32 n ) const
+{
+   switch( n )
+   {
+      case 0: case -4: return m_body;
+      case 1: case -3: return m_forFirst;
+      case 2: case -2: return m_forMiddle;
+      case 3: case -1: return m_forLast;      
+   }
+   return 0;
+}
+
+virtual bool StmtForBase::nth( int32 n, TreeStep* ts )
+{
+    // accept even a 0
+   if( ts != 0 && ts->parent() != 0 )
+   {
+      return false;
+   }
+     
+   switch( n )
+   {
+      case 0: case -4: delete m_body; m_body = ts; break;
+      case 1: case -3: return m_forFirst; m_forFirst = ts; break;
+      case 2: case -2: return m_forMiddle; m_forMiddle = ts; break;
+      case 3: case -1: return m_forLast; m_forLast = ts; break; 
+      default: return false;
+   }
+   if( ts != 0 ) ts->parent( this );
+   
+   return true;
+}
+
+   
 void StmtForBase::PStepCleanup::apply_( const PStep*, VMContext* ctx )
 {
    ctx->popCode();
@@ -104,7 +147,7 @@ public:
 
 
 StmtForIn::StmtForIn( Expression* gen, int32 line, int32 chr):
-   StmtForBase( Statement::e_stmt_for_in, line, chr ),
+   StmtForBase( line, chr ),
    _p( new Private ),
    m_expr(gen),
    m_stepBegin( this ),
@@ -112,6 +155,9 @@ StmtForIn::StmtForIn( Expression* gen, int32 line, int32 chr):
    m_stepNext( this ),
    m_stepGetNext( this )
 {
+   static Class* mycls = &Engine::instance()->synclasses()->m_stmt_forin;
+   m_class = mycls;
+
    apply = apply_; 
    
    //NOTE: This pstep is NOT a loopbase; it just sets up the loop.
@@ -151,6 +197,22 @@ void StmtForIn::oneLinerTo( String& tgt ) const
 void StmtForIn::addParameter( Symbol* sym )
 {
    _p->m_params.push_back( sym );
+}
+
+Expression*  StmtForIn::selector() const
+{
+   return generator();
+}
+
+bool StmtForIn::selector( Expression* e )
+{
+   if( e != 0 && e->parent() != 0 )
+   {
+      delete m_gen;
+      m_gen = e;
+      return true;
+   }
+   return false;
 }
 
 
@@ -351,13 +413,16 @@ void StmtForIn::PStepNext::apply_( const PStep* ps, VMContext* ctx )
 //
 
 StmtForTo::StmtForTo( Symbol* tgt, Expression* start, Expression* end, Expression* step, int32 line, int32 chr ):
-   StmtForBase( Statement::e_stmt_for_to, line, chr ),
+   StmtForBase( line, chr ),
    m_target( tgt ),
    m_start(start),
    m_end(end),  
    m_step(step),
    m_stepNext(this)
 {
+   static Class* mycls = &Engine::instance()->synclasses()->m_stmt_forto;
+   m_class = mycls;
+   
    apply = apply_;     
 }
 

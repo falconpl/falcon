@@ -25,6 +25,9 @@
 
 #include <falcon/psteps/exprmath.h>
 
+#include <falcon/synclasses.h>
+#include <falcon/engine.h>
+
 #include <math.h>
 
 namespace Falcon {

@@ -61,6 +61,9 @@ public:
    void setInRule( bool bRule );
    bool isInRule() const { return m_bInRule; }
    
+   virtual Expression* selector(); 
+   virtual bool selector( Expression* e ); 
+   
 private:
    // apply is the same as PCODE, but it also checks ND requests.
    static void apply_( const PStep* self, VMContext* ctx );

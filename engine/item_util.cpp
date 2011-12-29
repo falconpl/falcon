@@ -17,6 +17,8 @@
 #include <falcon/itemarray.h>
 #include <falcon/string.h>
 
+#include "falcon/itemdict.h"
+
 namespace Falcon {
 
 int64 Item::len() const
@@ -32,20 +34,14 @@ int64 Item::len() const
 
       case FLC_CLASS_ID_ARRAY:
          return (int64) static_cast<ItemArray*>( data )->length();
-
-      /* TODO
+      
       case FLC_CLASS_ID_DICT:
-         ctx->retval( (int64) elem->asMemBuf()->length() );
-         break;
-
+         return (int64) static_cast<ItemDict*>( data )->size();
+      
       case FLC_CLASS_ID_RANGE:
-         ctx->retval( (int64) elem->asDict()->length() );
-         break;
-
-      case FLC_ITEM_RANGE:
-         vm->retval( 3 );
-         break;
-      */
+         return (int64) 3;
+            
+      /* TODO MEMBUF*/
 
       default:
          return 0;

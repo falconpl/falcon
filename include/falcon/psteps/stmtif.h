@@ -28,7 +28,9 @@ namespace Falcon
 class FALCON_DYN_CLASS StmtIf: public Statement
 {
 public:
-   StmtIf( Expression* check, SynTree* ifTrue, SynTree* ifFalse = 0, int32 line=0, int32 chr = 0 );
+   StmtIf( SynTree* ifTrue, SynTree* ifFalse, int32 line=0, int32 chr = 0 );
+   StmtIf( SynTree* ifTrue, int32 line=0, int32 chr = 0 );
+   StmtIf( int32 line=0, int32 chr = 0 );
    virtual ~StmtIf();
 
    virtual void describeTo( String& tgt, int depth=0 ) const;
@@ -36,18 +38,21 @@ public:
 
    static void apply_( const PStep*, VMContext* ctx );
 
-   /** Adds an else-if branch to the if statement */
-   StmtIf& addElif( Expression *check, SynTree* ifTrue, int32 line=0, int32 chr = 0 );
+   /** Adds an else-if branch to the if statement.
+    If the branch has no selector, it becomes the else branch.
+    */
+   StmtIf& addElif( SynTree* ifTrue );
 
-   /** Sets the else branch for this if statement. */
-   StmtIf& setElse( SynTree* ifFalse );
-
+   virtual int32 arity() const;
+   virtual TreeStep* nth( int32 n ) const;   
+   virtual bool nth( int32 n, TreeStep* ts );   
+   virtual bool insert( int32 pos, TreeStep* element );   
+   virtual bool remove( int32 pos );
+   
 private:
-   SynTree* m_ifFalse;
 
    struct Private;
    Private* _p;
-
 };
 
 }

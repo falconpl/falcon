@@ -63,6 +63,13 @@
 #include <falcon/classes/classmethod.h>
 #include <falcon/classes/classreference.h>
 
+#include <falcon/classes/classtreestep.h>
+#include <falcon/classes/classstatement.h>
+#include <falcon/classes/classexpression.h>
+#include <falcon/classes/classsyntree.h>
+#include <falcon/classes/classsymbol.h>
+#include <falcon/synclasses.h>
+
 #include <falcon/prototypeclass.h>
 #include <falcon/metaclass.h>
 
@@ -172,6 +179,9 @@ Engine::Engine()
    addPseudoFunction(new Ext::Min);
    addPseudoFunction(new Ext::TypeId);
    addPseudoFunction(new Ext::Clone);
+   addPseudoFunction(new Ext::ClassName);
+   addPseudoFunction(new Ext::BaseClass);
+   addPseudoFunction(new Ext::Describe);
 
    //============================================
    // Creating singletons
@@ -219,6 +229,26 @@ Engine::Engine()
    addBuiltin( "ProtoType", (int64) FLC_CLASS_ID_PROTO );
       
    m_stdErrors->addBuiltins();
+   //=====================================
+   // Syntax Reflection
+   //
+      
+   m_symbolClass = new ClassSymbol;
+   
+   m_treeStepClass = new ClassTreeStep;
+   m_statementClass = new ClassStatement(m_treeStepClass);
+   m_exprClass = new ClassExpression(m_treeStepClass);
+   m_syntreeClass = new ClassSynTree(m_treeStepClass, m_symbolClass);
+   
+   
+   addBuiltin(m_treeStepClass);
+   addBuiltin(m_statementClass);
+   addBuiltin(m_exprClass);
+   addBuiltin(m_syntreeClass);
+   addBuiltin(m_symbolClass);
+   
+   m_synClasses = new SynClasses;
+   m_synClasses->subscribe( this );
    
    //=====================================
    // The Core Module
@@ -276,6 +306,14 @@ Engine::~Engine()
    //   
    delete m_predefs;
    delete m_regClasses;
+   
+   delete m_treeStepClass;
+   delete m_statementClass;
+   delete m_exprClass;
+   delete m_syntreeClass;
+   delete m_symbolClass;
+   
+   delete m_synClasses;
    
    //============================================
    // Delete singletons
@@ -545,6 +583,44 @@ ClassReference* Engine::referenceClass() const
    return m_instance->m_referenceClass;
 }
 
+
+Class* Engine::treeStepClass() const
+{
+   fassert( m_instance != 0 );
+   return m_instance->m_treeStepClass;
+}
+
+Class* Engine::statementClass() const
+{
+   fassert( m_instance != 0 );
+   return m_instance->m_statementClass;
+}
+
+Class* Engine::expressionClass() const
+{
+   fassert( m_instance != 0 );
+   return m_instance->m_expressionClass;
+}
+
+Class* Engine::syntreeClass() const
+{
+   fassert( m_instance != 0 );
+   return m_instance->m_syntreeClass;
+}
+
+Class* Engine::syntreeClass() const
+{
+   fassert( m_instance != 0 );
+   return m_instance->m_symbolClass;
+}
+
+
+SynClasses* Engine::synclasses() const
+{
+   fassert( m_instance != 0 );
+   return m_instance->m_synClasses;
+}
+   
 }
 
 /* end of engine.cpp */

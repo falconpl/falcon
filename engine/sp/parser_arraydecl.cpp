@@ -177,6 +177,8 @@ public:
    }
 
    void describeTo( String& tgt ) const { tgt = "Temporary ArrayDecl"; }
+   
+   virtual StmtTempArrayDecl* clone() const { return 0; }
 };
 
 
@@ -217,7 +219,6 @@ void apply_array_entry_expr( const Rule&, Parser&p )
    ParserContext* ctx = static_cast<ParserContext*>(sp.context());
    StmtTempArrayDecl* decl = static_cast<StmtTempArrayDecl*>(ctx->currentStmt());
    fassert( decl != 0 );
-   fassert( decl->type() == Statement::custom_t );
 
    TokenInstance* texpr = sp.getNextToken();
    Expression* expr = static_cast<Expression*>(texpr->detachValue());
@@ -261,7 +262,6 @@ void apply_array_entry_comma( const Rule&, Parser& p )
    ParserContext* ctx = static_cast<ParserContext*>(sp.context());
    StmtTempArrayDecl* decl = static_cast<StmtTempArrayDecl*>(ctx->currentStmt());
    fassert( decl != 0 );
-   fassert( decl->type() == Statement::custom_t );
 
    // When we expect a comma, we can only have a comma.
    if( decl->state != StmtTempArrayDecl::separator )
@@ -296,7 +296,6 @@ void apply_array_entry_arrow( const Rule&, Parser& p )
    ParserContext* ctx = static_cast<ParserContext*>(sp.context());
    StmtTempArrayDecl* decl = static_cast<StmtTempArrayDecl*>(ctx->currentStmt());
    fassert( decl != 0 );
-   fassert( decl->type() == Statement::custom_t );
 
    // waiting for an arrow?
    if( decl->state == StmtTempArrayDecl::arrow )
@@ -342,7 +341,6 @@ void apply_array_entry_close( const Rule&, Parser& p )
    ParserContext* ctx = static_cast<ParserContext*>(sp.context());
    StmtTempArrayDecl* decl = static_cast<StmtTempArrayDecl*>(ctx->currentStmt());
    fassert( decl != 0 );
-   fassert( decl->type() == Statement::custom_t );
 
    // if waiting for an arrow or a second, we have an error.
    if( decl->state == StmtTempArrayDecl::second_expr
@@ -386,7 +384,6 @@ static void makeRange( Parser& p, int count, Expression* expr1, Expression* expr
    ParserContext* ctx = static_cast<ParserContext*>(sp.context());   
    StmtTempArrayDecl* decl = static_cast<StmtTempArrayDecl*>(ctx->currentStmt());
    fassert( decl != 0 );
-   fassert( decl->type() == Statement::custom_t );
 
    // We can't close a range if we're not in first state.
    if( decl->m_forming->size() != 0 || decl->m_FirstExpr != 0 )

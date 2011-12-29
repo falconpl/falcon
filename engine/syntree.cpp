@@ -19,6 +19,7 @@
 #include <falcon/codeframe.h>
 #include <falcon/statement.h>
 #include <falcon/symboltable.h>
+#include <falcon/expression.h>
 
 #include <vector>
 
@@ -46,9 +47,23 @@ public:
 
 
 SynTree::SynTree():
+   TreeStep( ... TreeStep::e_cat_syntree ),
    _p( new Private ),
    m_locals(0),
-   m_head(0)
+   m_head(0),
+   m_selector(0)
+{
+   /** Mark this as a composed class */
+   m_bIsComposed = true;
+   apply = apply_empty_;
+}
+
+SynTree::SynTree( Class* subclass ):
+   TreeStep( subclass, TreeStep::e_cat_syntree ),
+   _p( new Private ),
+   m_locals(0),
+   m_head(0),
+   m_selector(0)
 {
    /** Mark this as a composed class */
    m_bIsComposed = true;
@@ -60,8 +75,27 @@ SynTree::~SynTree()
 {
    delete _p;
    delete m_locals;
+   delete m_selector;
 }
 
+
+virtual SynTree* clone() const
+{
+   return new SynTree( *this );
+}
+
+bool SynTree::selector( Expression* expr )
+{
+   if ( expr->parent() != 0 )
+   {
+      return false;
+   }
+   
+   expr->parent() = this;
+   delete m_selector;
+   m_selector = expr;
+   return true;
+}
 
 void SynTree::describeTo( String& tgt, int depth ) const
 {
@@ -137,17 +171,25 @@ void SynTree::apply_single_( const PStep* ps, VMContext* ctx )
 }
 
 
-void SynTree::set( int pos, Statement* p )  {
+bool SynTree::set( int pos, Statement* p )  {
+   if( p->m_parent == 0 )
+   {
+      return false;
+   }
+   if( pos < 0 ) pos = _p->m_steps.size() + pos;
+   if( pos < 0 || pos > (int) _p->m_steps.size() ) return false;
    delete _p->m_steps[pos];
   _p->m_steps[pos] = p;
 }
 
 
-void SynTree::remove( int pos )
+bool SynTree::remove( int pos )
 {
-  Statement* p =_p->m_steps[ pos ];
-  _p->m_steps.erase( _p->m_steps.begin()+pos );
-  delete p;
+   if( pos < 0 ) pos = _p->m_steps.size() + pos;
+   if( pos < 0 || pos > (int) _p->m_steps.size() ) return false;
+   Statement* p =_p->m_steps[ pos ];
+   _p->m_steps.erase( _p->m_steps.begin()+pos );
+   delete p;
 }
 
 

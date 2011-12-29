@@ -21,6 +21,9 @@
 #include <falcon/symbol.h>
 #include <falcon/vmcontext.h>
 
+#include <falcon/synclasses.h>
+#include <falcon/engine.h>
+
 #include <falcon/psteps/exprsym.h>
 
 namespace Falcon {

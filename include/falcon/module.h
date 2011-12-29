@@ -15,7 +15,7 @@
 
 
 #ifndef FALCON_MODULE_H
-#define	FALCON_MODULE_H
+#define FALCON_MODULE_H
 
 #include <falcon/setup.h>
 #include <falcon/string.h>

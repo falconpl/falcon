@@ -49,30 +49,9 @@ public:
       m_bIsComposed(false),
       m_bIsCatch(false),
       m_bIsFinally(false),
-      m_class(0),
       m_sr(line, chr)
    {}
-
-   /** Creates the PStep with a handler class.
-    \param handler A Class representing this PStep at script level.
-    \param line the line where the PStep is delcared in a source file.
-    \param chr the character where the PStep is declared in a source file.
-    
-    A handler class is used by the VM and by the serialization process to
-    expose a PStep to a script. Some PSteps are internally used by the VM and
-    are not visible as static grammar entities, so it's perfectly legit to
-    have PSteps without a handler class.
-    */
-   inline PStep( Class* handler, int line=0, int chr=0 ):
-      m_bIsLoopBase(false),
-      m_bIsNextBase(false),
-      m_bIsComposed(false),
-      m_bIsCatch(false),
-      m_bIsFinally(false),
-      m_class(handler),
-      m_sr(line, chr)
-   {}
-
+   
    inline virtual ~PStep() {}
 
    /** Convert into a string */
@@ -202,23 +181,6 @@ public:
 
    inline void setNextBase() { m_bIsNextBase = true; }
    
-   /** Gets the handler class of this step.
-    \return a valid handler class or 0 if the step cannot be handled.
-    
-    A handler class is used by the VM and by the serialization process to
-    expose a PStep to a script. Some PSteps are internally used by the VM and
-    are not visible as static grammar entities, so it's perfectly legit to
-    have PSteps without a handler class.
-    
-    \note the class is not owned nor 
-    */
-   Class* handler() const { return m_class; }
-   
-   /** Sets the handler of this step.
-   \param cls The handler Class of this step.
-    */
-   void handler( Class* cls ) { m_class = cls; }
-      
 protected:
    bool m_bIsLoopBase;
    bool m_bIsNextBase;
@@ -227,7 +189,7 @@ protected:
    bool m_bIsFinally;
 
 private:   
-   Class* m_class;
+   
    SourceRef m_sr;
 };
 

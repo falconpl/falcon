@@ -20,7 +20,6 @@
 #include <falcon/expression.h>
 #include <falcon/vm.h>
 #include <falcon/textwriter.h>
-
 #include <falcon/psteps/stmtfastprint.h>
 
 #include <deque>
@@ -47,11 +46,14 @@ public:
 };
 
 
-StmtFastPrint::StmtFastPrint( bool bAddNL ):
-   Statement( e_stmt_fastprint ),
+StmtFastPrint::StmtFastPrint( bool bAddNL, int line, int chr ):
+   Statement( line, chr ),
    _p( new Private ),   
    m_bAddNL( bAddNL )
 {
+   static Class* mycls = &Engine::instance()->synclasses()->m_stmt_fastprint;
+   m_class = mycls;
+   
    apply = apply_;
 }
 

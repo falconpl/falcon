@@ -21,6 +21,9 @@
 
 #include <falcon/psteps/exprarray.h>
 
+#include <falcon/synclasses.h>
+#include <falcon/engine.h>
+
 #include <vector>
 
 namespace Falcon
@@ -45,8 +48,10 @@ public:
 
 
 ExprArray::ExprArray():
-   Expression( t_arrayDecl )
+   Expression()
 {
+   FALCON_DECLARE_SYN_CLASS( expr_array )
+      
    apply = apply_;
    _p = new Private;
 }
@@ -55,6 +60,8 @@ ExprArray::ExprArray():
 ExprArray::ExprArray( const ExprArray& other ):
    Expression(other)
 {
+   FALCON_DECLARE_SYN_CLASS( expr_array )
+      
    _p = new Private;
    Private::ExprVector& oe = other._p->m_exprs;
    Private::ExprVector& mye = _p->m_exprs;
@@ -74,9 +81,9 @@ ExprArray::~ExprArray()
 }
 
 
-size_t ExprArray::arity() const
+int ExprArray::arity() const
 {
-   return _p->m_exprs.size();
+   return (int) _p->m_exprs.size();
 }
 
 

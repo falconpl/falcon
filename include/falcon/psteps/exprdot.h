@@ -34,6 +34,12 @@ public:
       m_pstep_lvalue = &m_pslv;
    }
 
+   inline ExprDot(): UnaryExpression( t_obj_access ), m_pslv(this)
+   { 
+      apply = apply_; 
+      m_pstep_lvalue = &m_pslv;
+   }
+      
    inline ExprDot( const ExprDot& other ):
       UnaryExpression( other ),
       m_pslv(this),
@@ -50,6 +56,9 @@ public:
    static void apply_( const PStep*, VMContext* ctx );
    virtual void describeTo( String&, int depth=0 ) const;
    
+   const String& property() const { return m_prop; }
+   void property( const String& p ) { m_prop = p; }
+   
 protected:
    class FALCON_DYN_CLASS PstepLValue: public PStep
    {
@@ -62,11 +71,7 @@ protected:
    };
    PstepLValue m_pslv;
    
-   inline ExprDot(): UnaryExpression( t_obj_access ), m_pslv(this)
-   { 
-      apply = apply_; 
-      m_pstep_lvalue = &m_pslv;
-   }
+   
    
    const String m_prop;
 };

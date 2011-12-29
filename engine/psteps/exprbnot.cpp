@@ -19,6 +19,10 @@
 #include <falcon/pstep.h>
 #include <falcon/errors/operanderror.h>
 
+#include <falcon/synclasses.h>
+#include <falcon/engine.h>
+
+
 namespace Falcon {
 
 

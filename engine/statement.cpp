@@ -23,7 +23,8 @@
 
 namespace Falcon
 {
-
+Statement::~Statement() 
+{}
 }
 
 /* end of statement.cpp */

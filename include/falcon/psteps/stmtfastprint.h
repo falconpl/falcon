@@ -29,7 +29,7 @@ namespace Falcon
 class FALCON_DYN_CLASS StmtFastPrint: public Statement
 {
 public:
-   StmtFastPrint( bool bAddNL = true );
+   StmtFastPrint( bool bAddNL = true, int line = 0, int chr = 0 );
    virtual ~StmtFastPrint();
    
    void add( Expression* expr );

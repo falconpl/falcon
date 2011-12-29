@@ -209,7 +209,7 @@ static void internal_apply_catch( int toks, Parser& p, int line, int chr,
       if( tgt != 0 )
       {
          Symbol* sym = ctx->addDefineSymbol( *tgt );
-         newBranch->headSymbol( sym );
+         newBranch->target( sym );
       }
       
       if( errName != 0 )

@@ -22,6 +22,9 @@
 #include <falcon/itemarray.h>
 #include <falcon/symbol.h>
 
+#include <falcon/synclasses.h>
+#include <falcon/engine.h>
+
 #include <vector>
 
 namespace Falcon {

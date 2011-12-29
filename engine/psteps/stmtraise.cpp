@@ -20,13 +20,18 @@
 #include <falcon/expression.h>
 
 #include <falcon/psteps/stmtraise.h>
+#include <falcon/engine.h>
+#include <falcon/synclasses.h>
 
 namespace Falcon {
 
 StmtRaise::StmtRaise( Expression* risen, int32 line, int32 chr ):
-   Statement( Statement::e_stmt_raise, line, chr ),
+   Statement( line, chr ),
    m_expr( risen )
 {
+   static Class* mycls = &Engine::instance()->synclasses()->m_stmt_raise;
+   m_class = mycls;
+
    apply = apply_;
 }
 
@@ -40,7 +45,22 @@ void StmtRaise::describeTo( String& tgt, int depth ) const
 {
    tgt = String(" ").replicate( depth * depthIndent ) +
          "raise " + m_expr->describe( depth + 1 );
-   
+}
+
+
+Expression* StmtRaise::selector()
+{
+   return m_expr;
+}
+
+bool StmtRaise::selector( Expression* e )
+{
+   if( e!= 0 && e->parent(this) )
+   {
+      delete m_expr;
+      m_expr = e;
+   }
+   return true;
 }
 
 void StmtRaise::oneLinerTo( String& tgt ) const

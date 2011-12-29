@@ -27,7 +27,7 @@ class StmtTempFor: public Statement
 {
 public:
    StmtTempFor():
-      Statement( custom_t )
+      Statement(  )
    {
       // don't record us, we're temp.
       m_discardable = true;
@@ -55,6 +55,10 @@ public:
 
    SynTree* forLast() const { return m_forLast; }
    void forLast( SynTree* st ) { m_forLast = st; }
+   
+   virtual int32 arity() const;
+   virtual TreeStep* nth( int32 n ) const;
+   virtual bool nth( int32 n, TreeStep* ts );
 
 protected:
    
@@ -63,8 +67,8 @@ protected:
    SynTree* m_forMiddle;
    SynTree* m_forLast;
    
-   StmtForBase( Statement::t_statement t, int32 line=0, int32 chr = 0 ):
-      Statement( t, line, chr ),
+   StmtForBase( int32 line=0, int32 chr=0 ):
+      Statement( line, chr ),
       m_body(0),
       m_forFirst(0),
       m_forMiddle(0),
@@ -120,6 +124,8 @@ public:
    
    void expandItem( Item& itm, VMContext* ctx ) const;
 
+   virtual Expression* selector(); 
+   virtual bool selector( Expression* e ); 
    
 private:
    class Private;

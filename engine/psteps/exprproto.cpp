@@ -20,6 +20,9 @@
 #include <falcon/prototypeclass.h>
 #include <falcon/flexydict.h>
 
+#include <falcon/synclasses.h>
+#include <falcon/engine.h>
+
 #include <falcon/psteps/exprproto.h>
 
 #include <vector>

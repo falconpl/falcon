@@ -17,18 +17,21 @@
 #include <falcon/psteps/stmtbreak.h>
 #include <falcon/expression.h>
 #include <falcon/vmcontext.h>
+#include <falcon/synclasses.h>
+#include <falcon/engine.h>
 
 namespace Falcon
 {
 
-
 StmtBreak::StmtBreak( int32 line, int32 chr ):
-   Statement( e_stmt_break, line, chr)
+   Statement(line, chr)
 {
+   static Class* mycls = &Engine::instance()->synclasses()->m_stmt_break;
+   m_class = mycls;
+   
    apply = apply_;
 }
 
-   
 void StmtBreak::describeTo( String& tgt, int depth ) const
 {
    tgt = String(" ").replicate( depth * depthIndent ) + "break";

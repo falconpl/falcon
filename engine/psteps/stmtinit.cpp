@@ -20,15 +20,22 @@
 
 #include <falcon/psteps/stmtinit.h>
 
+#include <falcon/engine.h>
+#include <falcon/synclasses.h>
+
 namespace Falcon
 {
 
 StmtInit::StmtInit( Inheritance* inh, int32 line, int32 chr  ):
-   Statement( e_stmt_init, line, chr ),
+   Statement( line, chr ),
    m_postInit( this ),
    m_inheritance( inh )
 {
    fassert( inh->parent() != 0 && inh->parent()->isFalconClass() );
+   
+   static Class* mycls = &Engine::instance()->synclasses()->m_stmt_init;
+   m_class = mycls;
+   
    apply = apply_;
    inh->defineAt(line, chr);
 }

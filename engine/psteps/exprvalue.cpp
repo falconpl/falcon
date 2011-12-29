@@ -21,6 +21,9 @@
 #include <falcon/gclock.h>
 #include <falcon/vm.h>
 
+#include <falcon/synclasses.h>
+#include <falcon/engine.h>
+
 #include <falcon/psteps/exprvalue.h>
 
 namespace Falcon {

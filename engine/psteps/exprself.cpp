@@ -18,6 +18,9 @@
 #include <falcon/vmcontext.h>
 #include <falcon/pstep.h>
 
+#include <falcon/synclasses.h>
+#include <falcon/engine.h>
+
 namespace Falcon {
 
 

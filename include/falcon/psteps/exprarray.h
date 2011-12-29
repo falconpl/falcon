@@ -37,7 +37,7 @@ public:
     \return Count of expressions held in this array.
     */
 
-   size_t arity() const;
+   virtual int arity() const;
    /** Get the nth expression in the array.
     \param n The number of the expression that must be accessed.
     \return the nth expression or 0 if n is out of range.

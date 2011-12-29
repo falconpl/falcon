@@ -42,6 +42,9 @@ public:
    bool hasDoubt() const { return m_bHasDoubt; }
    void hasDoubt( bool b );
    
+   virtual Expression* selector(); 
+   virtual bool selector( Expression* e );
+   
 private:
    Expression* m_expr;
    bool m_bHasDoubt;

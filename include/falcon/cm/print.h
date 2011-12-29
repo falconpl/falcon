@@ -14,7 +14,7 @@
 */
 
 #ifndef FALCON_CORE_PRINT_H
-#define	FALCON_CORE_PRINT_H
+#define FALCON_CORE_PRINT_H
 
 #include <falcon/function.h>
 #include <falcon/pstep.h>
@@ -118,3 +118,5 @@ public:
 }
 
 #endif	/* PRINT_H */
+
+/* end of print.h */

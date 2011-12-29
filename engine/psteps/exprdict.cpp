@@ -23,6 +23,9 @@
 
 #include <falcon/psteps/exprdict.h>
 
+#include <falcon/synclasses.h>
+#include <falcon/engine.h>
+
 #include <vector>
 
 namespace Falcon
@@ -83,9 +86,9 @@ ExprDict::~ExprDict()
 }
 
 
-size_t ExprDict::arity() const
+int ExprDict::arity() const
 {
-   return _p->m_exprs.size()/2;
+   return (int) _p->m_exprs.size()/2;
 }
 
 

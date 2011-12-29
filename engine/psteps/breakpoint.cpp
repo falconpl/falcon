@@ -15,13 +15,16 @@
 
 #include <falcon/trace.h>
 #include <falcon/psteps/breakpoint.h>
+#include <falcon/synclasses.h>
+#include <falcon/engine.h>
 
 namespace Falcon
 {
 
 Breakpoint::Breakpoint( int32 line, int32 chr ):
-   Statement(e_stmt_breakpoint, line, chr )
+   Statement( line, chr )
 {
+   FALCON_DECLARE_SYN_CLASS( stmt_breakpoint )
    apply = apply_;
 }
 

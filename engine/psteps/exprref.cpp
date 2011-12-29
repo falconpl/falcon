@@ -22,10 +22,12 @@
 
 #include <falcon/psteps/exprsym.h>
 #include <falcon/psteps/exprref.h>
-
 #include <falcon/errors/codeerror.h>
 
-#include "falcon/itemreference.h"
+#include <falcon/synclasses.h>
+#include <falcon/engine.h>
+
+#include <falcon/itemreference.h>
 
 
 namespace Falcon

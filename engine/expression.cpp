@@ -23,15 +23,13 @@
 namespace Falcon {
 
 Expression::Expression( const Expression &other ):
-   PStep(other),
+   TreeStep(other),
    m_pstep_lvalue(0),
-   m_operator( other.m_operator ),
-   m_sourceRef( other.m_sourceRef )
+   m_trait( other.m_trait )
 {}
 
 Expression::~Expression()
 {}
-
 
 //=============================================================
 
@@ -47,11 +45,42 @@ UnaryExpression::~UnaryExpression()
 }
 
 
-
 bool UnaryExpression::isStatic() const
 {
    return m_first->isStatic();
 }
+
+
+int32 UnaryExpression::arity() const
+{
+   return 1;
+}
+
+
+TreeStep* UnaryExpression::nth( int32 n ) const
+{
+   if( n == 0 || n == -1 )
+   {
+      return m_first;
+   }
+   return 0;
+}
+
+
+bool UnaryExpression::nth( int32 n, TreeStep* ts )
+{
+   
+   if( n == 0 || n == -1 )
+   {
+      if( ! ts->parent(this) ) return false;
+      delete m_first;
+      m_first = ts;
+      return true;
+   }
+   
+   return false;
+}
+
 
 //=============================================================
 
@@ -74,6 +103,43 @@ bool BinaryExpression::isStatic() const
    return m_first->isStatic() && m_second->isStatic();
 }
 
+
+int32 BinaryExpression::arity() const
+{
+   return 2;
+}
+
+
+TreeStep* BinaryExpression::nth( int32 n ) const
+{
+   switch( n )
+   {
+   case 0: case -2: return m_first;
+   case 1: case -1: return m_second;
+   }
+   return 0;
+}
+
+
+bool BinaryExpression::nth( int32 n, TreeStep* ts )
+{
+   switch( n )
+   {
+   case 0: case -2:      
+      if( ! ts->parent(this) ) return false;
+      delete m_first;
+      m_first = ts;
+      return true;
+   case 1: case -1:
+      if( ! ts->parent(this) ) return false;
+      delete m_second;
+      m_second = ts;
+      return true;
+   }
+   
+   return false;
+}
+
 //=============================================================
 TernaryExpression::TernaryExpression( const TernaryExpression &other ):
    Expression( other ),
@@ -94,6 +160,50 @@ bool TernaryExpression::isStatic() const
 {
    return m_first->isStatic() && m_second->isStatic() && m_third->isStatic();
 }
+
+
+int32 TernaryExpression::arity() const
+{
+   return 3;
+}
+
+
+TreeStep* TernaryExpression::nth( int32 n ) const
+{
+   switch( n )
+   {
+   case 0: case -3: return m_first;
+   case 1: case -2: return m_second;
+   case 2: case -1: return m_third;
+   }
+   return 0;
+}
+
+
+bool TernaryExpression::nth( int32 n, TreeStep* ts )
+{
+   switch( n )
+   {
+   case 0: case -3:      
+      if( ! ts->parent(this) ) return false;
+      delete m_first;
+      m_first = ts;
+      return true;
+   case 1: case -2:
+      if( ! ts->parent(this) ) return false;
+      delete m_second;
+      m_second = ts;
+      return true;
+   case 2: case -1:
+      if( ! ts->parent(this) ) return false;
+      delete m_third;
+      m_third = ts;
+      return true;
+   }
+   
+   return false;
+}
+
 
 }
 
