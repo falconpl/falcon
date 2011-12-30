@@ -16,7 +16,7 @@
 #ifndef FALCON_EXPRARRAY_H
 #define FALCON_EXPRARRAY_H
 
-#include <falcon/expression.h>
+#include <falcon/psteps/exprvector.h>
 
 namespace Falcon
 {
@@ -27,27 +27,17 @@ namespace Falcon
  for example when generating parametric calls or assignment lists.
 
  */
-class FALCON_DYN_CLASS ExprArray: public Expression
+class FALCON_DYN_CLASS ExprArray: public ExprVector
 {
 public:
-   ExprArray();
+   ExprArray( int line = 0, int chr = 0);
    ExprArray( const ExprArray& other );
-
+   
+   virtual ExprArray* clone() const;
+   
    /** Gets the number of sub-expressions in this expression-array.
     \return Count of expressions held in this array.
     */
-
-   virtual int arity() const;
-   /** Get the nth expression in the array.
-    \param n The number of the expression that must be accessed.
-    \return the nth expression or 0 if n is out of range.
-    */
-   Expression* get( size_t n ) const;
-
-   /** Adds another expression to this array.
-    \return itself (useful for declarations in sources)
-    */
-   ExprArray& add( Expression* e );
 
    virtual ~ExprArray();
 
@@ -61,9 +51,6 @@ public:
    virtual bool isStatic() const { return false; }
    virtual bool simplify( Item& result ) const;
 
-private:
-   class Private;
-   Private* _p;
 };
 
 }

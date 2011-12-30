@@ -14,7 +14,7 @@
 */
 
 #include <falcon/trace.h>
-#include <falcon/expression.h>
+#include <falcon/psteps/exprmultiunpack.h>
 #include <falcon/item.h>
 #include <falcon/vm.h>
 #include <falcon/errors/operanderror.h>
@@ -24,7 +24,7 @@
 
 #include <falcon/synclasses.h>
 #include <falcon/engine.h>
-v
+
 #include <vector>
 
 namespace Falcon {
@@ -36,19 +36,32 @@ public:
 };
 
 //=========================================================
-// Unpack
+// MultiUnpack
+//
+ExprMultiUnpack::ExprMultiUnpack( int line, int chr ):
+   Expression(line, chr),
+   m_bIsTop( true ),
+   _p( new Private )
+{
+   FALCON_DECLARE_SYN_CLASS( expr_munpack )
+   apply = apply_;
+}
 
-ExprMultiUnpack::ExprMultiUnpack( bool isTop ):
-   Expression(t_multiunpack),
+ExprMultiUnpack::ExprMultiUnpack( bool isTop, int line, int chr ):
+   Expression(line, chr),
    m_bIsTop( isTop ),
    _p( new Private )
 {
+   FALCON_DECLARE_SYN_CLASS( expr_munpack )
    apply = apply_;
 }
+
 
 ExprMultiUnpack::ExprMultiUnpack( const ExprMultiUnpack& other ):
          Expression(other)
 {
+   apply = apply_;
+    
    _p = new Private;
 
    _p->m_params.reserve(other._p->m_params.size());
@@ -66,8 +79,8 @@ ExprMultiUnpack::ExprMultiUnpack( const ExprMultiUnpack& other ):
       _p->m_assignee.push_back( (*itere)->clone() );
       ++itere;
    }
-
 }
+
 
 ExprMultiUnpack::~ExprMultiUnpack()
 {
@@ -78,6 +91,7 @@ ExprMultiUnpack::~ExprMultiUnpack()
       ++iter;
    }
 }
+
 
 bool ExprMultiUnpack::simplify( Item& ) const
 {

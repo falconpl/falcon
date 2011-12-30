@@ -16,7 +16,7 @@
 #ifndef FALCON_EXPRPROTO_H
 #define FALCON_EXPRPROTO_H
 
-#include <falcon/expression.h>
+#include <falcon/psteps/exprvector.h>
 
 namespace Falcon
 {
@@ -30,12 +30,19 @@ namespace Falcon
 class FALCON_DYN_CLASS ExprProto: public Expression
 {
 public:
-   ExprProto();
+   ExprProto(int line = 0, int chr = 0);
    ExprProto( const ExprProto& other );
    virtual ~ExprProto();
 
    size_t size() const;
 
+   virtual int32 arity() const;
+   virtual TreeStep* nth( int32 n ) const;   
+   virtual bool nth( int32 n, TreeStep* ts );
+   
+   /** Overridden to remove nth expression and name.. */
+   virtual bool remove( int n );
+   
    /** Get the nth expression in the declaration.
     \param n The number of the expression that must be accessed.
     \return the nth expression or 0 if n is out of range.

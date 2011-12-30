@@ -13,16 +13,12 @@
    See LICENSE file for licensing details.
 */
 
-#include <falcon/expression.h>
+#include <falcon/psteps/exproob.h>
 #include <falcon/trace.h>
 #include <falcon/vmcontext.h>
 #include <falcon/pstep.h>
 
-#include <falcon/synclasses.h>
-#include <falcon/engine.h>
-
 namespace Falcon {
-
 
 bool ExprOob::simplify( Item& value ) const
 {
@@ -40,6 +36,8 @@ void ExprOob::apply_( const PStep* ps, VMContext* ctx )
    const ExprOob* self = static_cast<const ExprOob*>(ps);
    TRACE2( "Apply \"%s\"", self->describe().c_ize() );
    
+   fassert( self->first() != 0 );
+   
    CodeFrame& cf = ctx->currentCode();
    if( cf.m_seqId == 0 )
    {
@@ -54,6 +52,12 @@ void ExprOob::apply_( const PStep* ps, VMContext* ctx )
 
 void ExprOob::describeTo( String& str, int depth ) const
 {
+   if( m_first == 0 )
+   {
+      str = "<Blank ExprOob>";
+      return;
+   }
+   
    str = "^+";
    str += m_first->describe(depth+1);
 }
@@ -76,6 +80,8 @@ void ExprDeoob::apply_( const PStep* ps, VMContext* ctx )
    const ExprDeoob* self = static_cast<const ExprDeoob*>(ps);
    TRACE2( "Apply \"%s\"", self->describe().c_ize() );
    
+   fassert( self->first() != 0 );
+   
    CodeFrame& cf = ctx->currentCode();
    if( cf.m_seqId == 0 )
    {
@@ -90,6 +96,12 @@ void ExprDeoob::apply_( const PStep* ps, VMContext* ctx )
 
 void ExprDeoob::describeTo( String& str, int depth ) const
 {
+   if( m_first == 0 )
+   {
+      str = "<Blank ExprDeoob>";
+      return;
+   }
+   
    str = "^-";
    str += m_first->describe(depth+1);
 }
@@ -112,6 +124,8 @@ void ExprXorOob::apply_( const PStep* ps, VMContext* ctx )
    const ExprXorOob* self = static_cast<const ExprXorOob*>(ps);
    TRACE2( "Apply \"%s\"", self->describe().c_ize() );
    
+   fassert( self->first() != 0 );
+
    CodeFrame& cf = ctx->currentCode();
    if( cf.m_seqId == 0 )
    {
@@ -126,6 +140,12 @@ void ExprXorOob::apply_( const PStep* ps, VMContext* ctx )
 
 void ExprXorOob::describeTo( String& str, int depth ) const
 {
+   if( m_first == 0 )
+   {
+      str = "<Blank ExprXorOob>";
+      return;
+   }
+   
    str = "^%";
    str += m_first->describe(depth+1);
 }
@@ -148,6 +168,8 @@ void ExprIsOob::apply_( const PStep* ps, VMContext* ctx )
    const ExprIsOob* self = static_cast<const ExprIsOob*>(ps);
    TRACE2( "Apply \"%s\"", self->describe().c_ize() );
    
+   fassert( self->first() != 0 );
+   
    CodeFrame& cf = ctx->currentCode();
    if( cf.m_seqId == 0 )
    {
@@ -162,6 +184,12 @@ void ExprIsOob::apply_( const PStep* ps, VMContext* ctx )
 
 void ExprIsOob::describeTo( String& str, int depth ) const
 {
+   if( m_first == 0 )
+   {
+      str = "<Blank IsOob>";
+      return;
+   }
+
    str = "^?";
    str += m_first->describe(depth+1);
 }

@@ -23,9 +23,7 @@ namespace Falcon {
 class FALCON_DYN_CLASS ExprMath: public BinaryExpression
 {
 public:
-   ExprMath( Expression* op1, Expression* op2, operator_t t, const String& name );
-   ExprMath( const ExprMath& other );
-   virtual ~ExprMath();
+   inline virtual ~ExprMath() {}
 
    virtual void describeTo( String&, int depth=0 ) const;
 
@@ -34,201 +32,52 @@ public:
 
    const String& name() const { return m_name; }
 
-public:
+protected:
    String m_name;
+   
+   ExprMath( Expression* op1, Expression* op2, const String& name, int line = 0, int chr = 0 );
+   ExprMath( const String& name, int line = 0, int chr = 0 );
+   ExprMath( const ExprMath& other );
 };
 
+#define FALCON_DECLARE_MATH_EXPR_CLASS( ClassName)\
+      class FALCON_DYN_CLASS ClassName: public ExprMath\
+      {\
+      public:\
+         ClassName( int line = 0, int chr = 0 );\
+         ClassName( Expression* op1, Expression* op2, int line = 0, int chr = 0 );\
+         ClassName( &other );\
+         inline virtual ~ClassName() {}; \
+         inline virtual ClassName* clone() const { return new ClassName( *this ); }\
+         virtual bool simplify( Item& value ) const; \
+      private:\
+         class ops;\
+      };\
 
 /** Plus opertor. */
-class FALCON_DYN_CLASS ExprPlus: public ExprMath
-{
-public:
-   ExprPlus( Expression* op1=0, Expression* op2=0 );
-
-   ExprPlus( const ExprPlus& other ):
-      ExprMath(other)
-   {}
-
-   virtual ~ExprPlus();
-
-   inline virtual ExprPlus* clone() const { return new ExprPlus( *this ); }
-
-   virtual bool simplify( Item& value ) const;   
-
-private:
-   class ops;
-};
-
+FALCON_DECLARE_MATH_EXPR_CLASS( ExprPlus )
 /** Minus operator. */
-class FALCON_DYN_CLASS ExprMinus: public ExprMath
-{
-public:
-   ExprMinus( Expression* op1=0, Expression* op2=0 );
-
-   ExprMinus( const ExprMinus& other ):
-      ExprMath(other)
-   {}
-
-   virtual ~ExprMinus();
-   inline virtual ExprMinus* clone() const { return new ExprMinus( *this ); }
-   virtual bool simplify( Item& value ) const;
-
-private:
-   class ops;
-};
-
+FALCON_DECLARE_MATH_EXPR_CLASS( ExprMinus )
 /** Times operator. */
-class FALCON_DYN_CLASS ExprTimes: public ExprMath
-{
-public:
-   ExprTimes( Expression* op1=0, Expression* op2=0 );
-
-   ExprTimes( const ExprTimes& other ):
-      ExprMath(other)
-   {}
-
-   virtual ~ExprTimes();
-   inline virtual ExprTimes* clone() const { return new ExprTimes( *this ); }
-   virtual bool simplify( Item& value ) const;
-
-private:
-   class ops;
-};
-
-
+FALCON_DECLARE_MATH_EXPR_CLASS( ExprTimes )
 /** Division operator. */
-class FALCON_DYN_CLASS ExprDiv: public ExprMath
-{
-public:
-   ExprDiv( Expression* op1=0, Expression* op2=0 );
-
-   ExprDiv( const ExprDiv& other ):
-      ExprMath(other)
-   {}
-
-   virtual ~ExprDiv();
-   inline virtual ExprDiv* clone() const { return new ExprDiv( *this ); }
-   virtual bool simplify( Item& value ) const;
-
-private:
-   class ops;
-};
-
-
+FALCON_DECLARE_MATH_EXPR_CLASS( ExprDiv )
 /** Power operator. */
-class FALCON_DYN_CLASS ExprPow: public ExprMath
-{
-public:
-   ExprPow( Expression* op1=0, Expression* op2=0 );
-
-   ExprPow( const ExprPow& other ):
-      ExprMath(other)
-   {}
-
-   virtual ~ExprPow();
-   inline virtual ExprPow* clone() const { return new ExprPow( *this ); }
-   virtual bool simplify( Item& value ) const;
-
-private:
-   class ops;
-};
-
-
+FALCON_DECLARE_MATH_EXPR_CLASS( ExprPow )
 /** Expr modulo. */
-class FALCON_DYN_CLASS ExprMod: public ExprMath
-{
-public:
-   ExprMod( Expression* op1=0, Expression* op2=0 );
+FALCON_DECLARE_MATH_EXPR_CLASS( ExprMod )
 
-   ExprMod( const ExprMod& other ):
-      ExprMath(other)
-   {}
-
-   virtual ~ExprMod();
-   inline virtual ExprMod* clone() const { return new ExprMod( *this ); }
-   virtual bool simplify( Item& value ) const;
-
-private:
-   class ops;
-};
 
 /** Expr shift right */
-class FALCON_DYN_CLASS ExprRShift: public ExprMath
-{
-public:
-   ExprRShift( Expression* op1=0, Expression* op2=0 );
-
-   ExprRShift( const ExprMod& other ):
-      ExprMath(other)
-   {}
-
-   virtual ~ExprRShift();
-   inline virtual ExprRShift* clone() const { return new ExprRShift( *this ); }
-   virtual bool simplify( Item& value ) const;
-   
-private:
-   class ops;
-};
-
-
+FALCON_DECLARE_MATH_EXPR_CLASS( ExprRShift )
 /** Expr shift left */
-class FALCON_DYN_CLASS ExprLShift: public ExprMath
-{
-public:
-   ExprLShift( Expression* op1=0, Expression* op2=0 );
-
-   ExprLShift( const ExprMod& other ):
-      ExprMath(other)
-   {}
-
-   virtual ~ExprLShift();
-   inline virtual ExprLShift* clone() const { return new ExprLShift( *this ); }
-   virtual bool simplify( Item& value ) const;
-
-private:
-   class ops;
-};
-
-
-class FALCON_DYN_CLASS ExprBAND: public ExprMath
-{
-public:
-   ExprBAND( Expression* op1=0, Expression* op2=0 );
-   ExprBAND( const ExprMod& other ): ExprMath(other) {}
-   virtual ~ExprBAND() {}
-   inline virtual ExprBAND* clone() const { return new ExprBAND( *this ); }
-   virtual bool simplify( Item& value ) const;
-
-private:
-   class ops;
-};
-
-class FALCON_DYN_CLASS ExprBOR: public ExprMath
-{
-public:
-   ExprBOR( Expression* op1=0, Expression* op2=0 );
-   ExprBOR( const ExprMod& other ): ExprMath(other) {}
-   virtual ~ExprBOR() {}
-   inline virtual ExprBOR* clone() const { return new ExprBOR( *this ); }
-   virtual bool simplify( Item& value ) const;
-
-private:
-   class ops;
-};
-
-class FALCON_DYN_CLASS ExprBXOR: public ExprMath
-{
-public:
-   ExprBXOR( Expression* op1=0, Expression* op2=0 );
-   ExprBXOR( const ExprMod& other ): ExprMath(other) {}
-   virtual ~ExprBXOR() {}
-   inline virtual ExprBXOR* clone() const { return new ExprBXOR( *this ); }
-   virtual bool simplify( Item& value ) const;
-
-private:
-   class ops;
-};
-
+FALCON_DECLARE_MATH_EXPR_CLASS( ExprLShift )
+/** Expr bitwise and */
+FALCON_DECLARE_MATH_EXPR_CLASS( ExprBAND )
+/** Expr bitwise or */
+FALCON_DECLARE_MATH_EXPR_CLASS( ExprBOR )
+/** Expr bitwise or */
+FALCON_DECLARE_MATH_EXPR_CLASS( ExprBXOR )
 
 
 //=====================================================================
@@ -236,154 +85,45 @@ private:
 //
 class FALCON_DYN_CLASS ExprAuto: public ExprMath
 {
-public:
-   ExprAuto( Expression* op1, Expression* op2, Expression::operator_t t, const String& name );
-
-   ExprAuto( const ExprAuto& other ):
-      ExprMath(other)
-   {}
-   
+public:   
+   inline virtual ~ExprAuto() {}
    virtual bool simplify( Item& ) const { return false; }
+   
+protected:
+   ExprAuto( Expression* op1, Expression* op2, const String& name, int line = 0, int chr = 0 );
+   ExprAuto( const String& name, int line = 0, int chr = 0 );
+   ExprAuto( const ExprAuto& other );
 };
+
+#define FALCON_DECLARE_MATH_AUTOEXPR_CLASS(ClassName)\
+      class FALCON_DYN_CLASS ClassName: public ExprAuto\
+      {\
+      public:\
+         ClassName( int line = 0, int chr = 0 );\
+         ClassName( Expression* op1, Expression* op2, int line = 0, int chr = 0 );\
+         ClassName( &other );\
+         inline virtual ~ClassName() {}; \
+         inline virtual ClassName* clone() const { return new ClassName( *this ); }\
+      private:\
+         class ops;\
+      };\
 
 /** Autp-Plus opertor. */
-class FALCON_DYN_CLASS ExprAutoPlus: public ExprAuto
-{
-public:
-   ExprAutoPlus( Expression* op1=0, Expression* op2=0 );
-
-   ExprAutoPlus( const ExprAutoPlus& other ):
-      ExprAuto(other)
-   {}
-   virtual ~ExprAutoPlus();
-   inline virtual ExprAutoPlus* clone() const { return new ExprAutoPlus( *this ); }
-
-private:
-   class ops;
-};
-
+FALCON_DECLARE_MATH_AUTOEXPR_CLASS( ExprAutoPlus )
 /** Auto-Minus operator. */
-class FALCON_DYN_CLASS ExprAutoMinus: public ExprAuto
-{
-public:
-   ExprAutoMinus( Expression* op1=0, Expression* op2=0 );
-
-   ExprAutoMinus( const ExprAutoMinus& other ):
-      ExprAuto(other)
-   {}
-
-   virtual ~ExprAutoMinus();
-   inline virtual ExprAutoMinus* clone() const { return new ExprAutoMinus( *this ); }
-
-private:
-   class ops;
-};
-
-
+FALCON_DECLARE_MATH_AUTOEXPR_CLASS( ExprAutoMinus )
 /** Auto-Times operator. */
-class FALCON_DYN_CLASS ExprAutoTimes: public ExprAuto
-{
-public:
-   ExprAutoTimes( Expression* op1=0, Expression* op2=0 );
-
-   ExprAutoTimes( const ExprAutoTimes& other ):
-      ExprAuto(other)
-   {}
-
-   virtual ~ExprAutoTimes();
-   inline virtual ExprAutoTimes* clone() const { return new ExprAutoTimes( *this ); }
-
-private:
-   class ops;
-};
-
-
+FALCON_DECLARE_MATH_AUTOEXPR_CLASS( ExprAutoTimes )
 /** Auto-Division operator. */
-class FALCON_DYN_CLASS ExprAutoDiv: public ExprAuto
-{
-public:
-   ExprAutoDiv( Expression* op1=0, Expression* op2=0 );
-
-   ExprAutoDiv( const ExprAutoDiv& other ):
-      ExprAuto(other)
-   {}
-
-   virtual ~ExprAutoDiv();
-   inline virtual ExprAutoDiv* clone() const { return new ExprAutoDiv( *this ); }
-
-private:
-   class ops;
-};
-
-
+FALCON_DECLARE_MATH_AUTOEXPR_CLASS( ExprAutoDiv )
 /** Auto-Power operator. */
-class FALCON_DYN_CLASS ExprAutoPow: public ExprAuto
-{
-public:
-   ExprAutoPow( Expression* op1=0, Expression* op2=0 );
-
-   ExprAutoPow( const ExprAutoPow& other ):
-      ExprAuto(other)
-   {}
-
-   virtual ~ExprAutoPow();
-   inline virtual ExprAutoPow* clone() const { return new ExprAutoPow( *this ); }
-
-private:
-   class ops;
-};
-
-
+FALCON_DECLARE_MATH_AUTOEXPR_CLASS( ExprAutoPow )
 /** Auto-modulo operator. */
-class FALCON_DYN_CLASS ExprAutoMod: public ExprAuto
-{
-public:
-   ExprAutoMod( Expression* op1=0, Expression* op2=0 );
-
-   ExprAutoMod( const ExprAutoMod& other ):
-      ExprAuto(other)
-   {}
-
-   virtual ~ExprAutoMod();
-   inline virtual ExprAutoMod* clone() const { return new ExprAutoMod( *this ); }
-
-private:
-   class ops;
-};
-
-/** Auto-Power operator. */
-class FALCON_DYN_CLASS ExprAutoRShift: public ExprAuto
-{
-public:
-   ExprAutoRShift( Expression* op1=0, Expression* op2=0 );
-
-   ExprAutoRShift( const ExprAutoPow& other ):
-      ExprAuto(other)
-   {}
-
-   virtual ~ExprAutoRShift();
-   inline virtual ExprAutoRShift* clone() const { return new ExprAutoRShift( *this ); }
-
-private:
-   class ops;
-};
-
-/** Auto-Power operator. */
-class FALCON_DYN_CLASS ExprAutoLShift: public ExprAuto
-{
-public:
-   ExprAutoLShift( Expression* op1=0, Expression* op2=0 );
-
-   ExprAutoLShift( const ExprAutoPow& other ):
-      ExprAuto(other)
-   {}
-
-   virtual ~ExprAutoLShift();
-   inline virtual ExprAutoLShift* clone() const { return new ExprAutoLShift( *this ); }
-
-private:
-   class ops;
-};
+FALCON_DECLARE_MATH_AUTOEXPR_CLASS( ExprAutoMod )
+/** Auto-Right shift operator. */
+FALCON_DECLARE_MATH_AUTOEXPR_CLASS( ExprAutoRShift )
+/** Auto-Left shift operator. */
+FALCON_DECLARE_MATH_AUTOEXPR_CLASS( ExprAutoLShift )
 
 }
 

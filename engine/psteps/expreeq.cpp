@@ -13,6 +13,9 @@
    See LICENSE file for licensing details.
 */
 
+#undef SRC
+#define SRC "engine/psteps/expreeq.cpp"
+
 #include <falcon/expression.h>
 #include <falcon/trace.h>
 #include <falcon/vmcontext.h>
@@ -24,12 +27,14 @@
 
 namespace Falcon {
 
-
 void ExprEEQ::apply_( const PStep* ps, VMContext* ctx )
 {
    const ExprEEQ* self = static_cast<const ExprEEQ*>( ps );
    TRACE2( "Apply \"%s\"", self->describe().c_ize() );
 
+   fassert( self->first() != 0 );
+   fassert( self->second() != 0 );
+   
    // First of all, start executing the start, end and step expressions.
    CodeFrame& cf = ctx->currentCode();
    switch( cf.m_seqId )
@@ -37,14 +42,14 @@ void ExprEEQ::apply_( const PStep* ps, VMContext* ctx )
    case 0: 
       // check the start.
       cf.m_seqId = 1;
-      if( ctx->stepInYield( self->m_first, cf ) )
+      if( ctx->stepInYield( self->first(), cf ) )
       {
          return;
       }
       // fallthrough
    case 1:
       cf.m_seqId = 2;
-      if( ctx->stepInYield( self->m_second, cf ) )
+      if( ctx->stepInYield( self->second(), cf ) )
       {
          return;
       }
@@ -87,6 +92,12 @@ void ExprEEQ::apply_( const PStep* ps, VMContext* ctx )
 
 void ExprEEQ::describeTo( String& ret, int depth ) const
 {
+   if( m_first == 0 || m_second == 0 )
+   {
+      ret = "<Blank ExprEEQ>";
+      return;
+   }
+   
    ret = "(" + m_first->describe(depth+1) + " === " + m_second->describe(depth+1) + ")";
 }
 

@@ -28,73 +28,57 @@
 
 #include <vector>
 
+#include "exprvector_private.h"
+
 namespace Falcon
 {
 
-class ExprDict::Private {
-public:
 
-   typedef std::vector< Expression* > ExprVector;
-   ExprVector m_exprs;
-
-   ~Private()
-   {
-      ExprVector::iterator iter = m_exprs.begin();
-      while( iter != m_exprs.end() )
-      {
-         delete *iter;
-         ++iter;
-      }
-   }
-
-};
-
-
-ExprDict::ExprDict():
-   Expression( t_dictDecl )
+ExprDict::ExprDict( int line, int chr ):
+   Expression( line, chr )
 {
-   _p = new Private;
+   FALCON_DECLARE_SYN_CLASS( expr_gendict )
    apply = apply_;
 }
 
 
 ExprDict::ExprDict( const ExprDict& other ):
-   Expression(other)
+   ExprVector(other)
 {
-   _p = new Private;
    apply = apply_;
-   Private::ExprVector& oe = other._p->m_exprs;
-   Private::ExprVector& mye = _p->m_exprs;
-
-   mye.reserve(oe.size());
-   Private::ExprVector::const_iterator iter = oe.begin();
-   while( iter != oe.end() )
-   {
-      Expression* first = *iter;
-      ++iter;
-      Expression* second = *iter;
-      ++iter;
-      mye.push_back( first );
-      mye.push_back( second );
-      ++iter;
-   }
 }
 
 ExprDict::~ExprDict()
 {
-   delete _p;
 }
 
 
-int ExprDict::arity() const
+int ExprDict::pairs() const
 {
    return (int) _p->m_exprs.size()/2;
+}
+
+bool ExprDict::insert( int32 pos, TreeStep* element )
+{
+   return false;
+}
+   
+
+bool ExprDict::remove( int32 pos )
+{
+   int size = (int) _p->m_exprs.size()/2;
+   if( pos < 0 ) pos = size + pos;
+   if( pos < 0 || pos >= size ) return false;
+   pos *= 2;
+   
+   _p->m_exprs.erase(_p->m_exprs.begin()+pos);
+   _p->m_exprs.erase(_p->m_exprs.begin()+pos);
 }
 
 
 bool ExprDict::get( size_t n, Expression* &first, Expression* &second ) const
 {
-   Private::ExprVector& mye = _p->m_exprs;
+   ExprVector_Private::ExprVector& mye = _p->m_exprs;
    if( n < mye.size() )
    {
       first = mye[n/2];
@@ -116,8 +100,8 @@ ExprDict& ExprDict::add( Expression* k, Expression* v )
 
 void ExprDict::describeTo( String& str, int depth ) const
 {
-   Private::ExprVector& mye = _p->m_exprs;
-   Private::ExprVector::const_iterator iter = mye.begin();
+   ExprVector_Private::ExprVector& mye = _p->m_exprs;
+   ExprVector_Private::ExprVector::const_iterator iter = mye.begin();
 
    if( mye.empty() )
    {
@@ -147,8 +131,8 @@ void ExprDict::describeTo( String& str, int depth ) const
 
 void ExprDict::oneLinerTo( String& str ) const
 {
-   Private::ExprVector& mye = _p->m_exprs;
-   Private::ExprVector::const_iterator iter = mye.begin();
+   ExprVector_Private::ExprVector& mye = _p->m_exprs;
+   ExprVector_Private::ExprVector::const_iterator iter = mye.begin();
 
    if( mye.empty() )
    {
@@ -190,8 +174,8 @@ void ExprDict::apply_( const PStep*ps, VMContext* ctx )
    const ExprDict* ea = static_cast<const ExprDict*>(ps);
    
    CodeFrame& cf = ctx->currentCode(); 
-   Private::ExprVector& mye = ea->_p->m_exprs ;
-   Private::ExprVector::const_iterator iter = mye.begin() + cf.m_seqId;
+   ExprVector_Private::ExprVector& mye = ea->_p->m_exprs ;
+   ExprVector_Private::ExprVector::const_iterator iter = mye.begin() + cf.m_seqId;
    while( iter != mye.end() )
    {
       // generate the expression and eventually yield back.

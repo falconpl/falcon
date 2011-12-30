@@ -28,8 +28,18 @@ Breakpoint::Breakpoint( int32 line, int32 chr ):
    apply = apply_;
 }
 
+Breakpoint::Breakpoint( const Breakpoint& other ):
+   Statement(other)
+{
+}
+
 Breakpoint::~Breakpoint()
 {
+}
+   
+Breakpoint* Breakpoint::clone() const
+{
+   return new Breakpoint(this);
 }
 
 void Breakpoint::describeTo( String& tgt, int ) const

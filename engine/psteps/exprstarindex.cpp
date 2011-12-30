@@ -13,6 +13,8 @@
    See LICENSE file for licensing details.
 */
 
+#undef SRC
+#define SRC "engine/psteps/exprstarindex.cpp"
 
 #include <falcon/expression.h>
 #include <falcon/trace.h>
@@ -30,6 +32,9 @@ void ExprStarIndex::apply_( const PStep* ps, VMContext* ctx )
    const ExprStarIndex* self = static_cast<const ExprStarIndex*>(ps);
    TRACE2( "Apply \"%s\"", self->describe().c_ize() );
 
+   fassert( self->first() != 0 );
+   fassert( self->second() != 0 );
+   
    // manage first and second expression.
    CodeFrame& cs = ctx->currentCode();
    switch( cs.m_seqId )
@@ -73,6 +78,12 @@ void ExprStarIndex::apply_( const PStep* ps, VMContext* ctx )
 
 void ExprStarIndex::describeTo( String& ret, int depth ) const
 {
+   if( m_first == 0 || m_second == 0 )
+   {
+      ret = "<Blank ExprStarIndex>";
+      return 0;
+   }
+   
    ret = "(" + m_first->describe(depth+1) + "[*" + m_second->describe(depth+1) + "])";
 }
 

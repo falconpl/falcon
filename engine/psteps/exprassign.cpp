@@ -13,12 +13,9 @@
    See LICENSE file for licensing details.
 */
 
-#include <falcon/expression.h>
 #include <falcon/trace.h>
+#include <falcon/psteps/exprassign.h>
 #include <falcon/vmcontext.h>
-
-#include <falcon/synclasses.h>
-#include <falcon/engine.h>
 
 #include <falcon/synclasses.h>
 #include <falcon/engine.h>
@@ -26,17 +23,43 @@
 
 namespace Falcon {
 
+ExprAssign::ExprAssign(int line, int chr) :
+   BinaryExpression( line, chr )
+{
+   FALCON_DECLARE_SYN_CLASS( expr_assign )
+   apply = apply_;
+}
+
+ExprAssign::ExprAssign( Expression* op1, Expression* op2, int line, int chr ):
+   BinaryExpression( op1, op2, line, chr )
+{
+   FALCON_DECLARE_SYN_CLASS( expr_assign )
+   apply = apply_;
+}
+
+ExprAssign::ExprAssign( const ExprAssign& other ):
+   BinaryExpression( other )
+{
+   FALCON_DECLARE_SYN_CLASS( expr_assign )
+   apply = apply_;
+}
 
 bool ExprAssign::simplify( Item& ) const
 {
-   FALCON_DECLARE_SYN_CLASS( expr_array )
    // TODO Simplify for closed symbols
    return false;
 }
 
 void ExprAssign::describeTo( String& str, int depth ) const
 {
-   str = "(" + m_first->describe(depth+1) + " = " + m_second->describe(depth+1) + ")";
+   if( m_first == 0 || m_second == 0 )
+   {
+      str = "<Blank ExprAssign>";
+   }
+   else
+   {
+      str = "(" + m_first->describe(depth+1) + " = " + m_second->describe(depth+1) + ")";
+   }
 }
 
 

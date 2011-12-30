@@ -28,27 +28,29 @@
 namespace Falcon
 {
 
-ExprRange::ExprRange():
-   Expression( t_range ),
+ExprRange::ExprRange( int line, int chr ):
+   Expression( line, chr ),
    m_estart( 0 ),
    m_eend( 0 ),
    m_estep( 0 )
 {
+   FALCON_DECLARE_SYN_CLASS( expr_genrange )
    apply = apply_;
 }
 
-ExprRange::ExprRange( Expression *estart, Expression* eend, Expression* estep ):
-   Expression( t_range ),
+ExprRange::ExprRange( Expression *estart, Expression* eend, Expression* estep, int line, int chr ):
+   Expression( line, chr ),
    m_estart( estart ),
    m_eend( eend ),
    m_estep( estep )
 {
+   FALCON_DECLARE_SYN_CLASS( expr_genrange )
    apply = apply_;
 }
 
 
 ExprRange::ExprRange( const ExprRange& other ):
-   Expression( t_range ),
+   Expression( other ),
    m_estart( 0 ),
    m_eend( 0 ),
    m_estep( 0 )

@@ -17,6 +17,8 @@
 #define _FALCON_EXPRINDEX_H_
 
 #include <falcon/expression.h>
+#include <falcon/synclasses.h>
+#include <falcon/engine.h>
 
 namespace Falcon
 {
@@ -25,8 +27,7 @@ namespace Falcon
 class FALCON_DYN_CLASS ExprIndex: public BinaryExpression
 {
 public:
-   FALCON_BINARY_EXPRESSION_CLASS_DECLARATOR_EX( ExprIndex, t_array_access, 
-         m_pstep_lvalue = &m_pslv; );
+   FALCON_BINARY_EXPRESSION_CLASS_DECLARATOR_EX( ExprIndex, expr_index, m_pstep_lvalue = &m_pslv; );
    
 private:
    

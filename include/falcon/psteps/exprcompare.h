@@ -20,11 +20,10 @@
 
 namespace Falcon {
 
+/** Abstract base class for comparers. */
 class FALCON_DYN_CLASS ExprCompare: public BinaryExpression
 {
-public:
-   ExprCompare( Expression* op1, Expression* op2, operator_t t, const String& name );
-   ExprCompare( const ExprCompare& other );
+public:   
    virtual ~ExprCompare();
 
    virtual void describeTo( String&, int depth=0 ) const;
@@ -34,8 +33,12 @@ public:
 
    const String& name() const { return m_name; }
 
-public:
+protected:
    String m_name;
+   
+   ExprCompare( const String& name, int line = 0, int chr = 0 );
+   ExprCompare( Expression* op1, Expression* op2, const String& name, int line = 0, int chr = 0 );
+   ExprCompare( const ExprCompare& other );
 };
 
 
@@ -43,16 +46,12 @@ public:
 class FALCON_DYN_CLASS ExprLT: public ExprCompare
 {
 public:
-   ExprLT( Expression* op1=0, Expression* op2=0 );
-
-   ExprLT( const ExprLT& other ):
-      ExprCompare(other)
-   {}
+   ExprLT( int line = 0, int chr = 0 );
+   ExprLT( Expression* op1, Expression* op2, int line = 0, int chr = 0 );
+   ExprLT( const ExprLT& other );
 
    virtual ~ExprLT();
-
-   inline virtual ExprLT* clone() const { return new ExprLT( *this ); }
-   
+   inline virtual ExprLT* clone() const { return new ExprLT( *this ); }   
    virtual bool simplify( Item& value ) const;
 
    class comparer
@@ -69,11 +68,9 @@ public:
 class FALCON_DYN_CLASS ExprLE: public ExprCompare
 {
 public:
-   ExprLE( Expression* op1=0, Expression* op2=0 );
-
-   ExprLE( const ExprLT& other ):
-      ExprCompare(other)
-   {}
+   ExprLE( int line = 0, int chr = 0 );
+   ExprLE( Expression* op1, Expression* op2, int line = 0, int chr = 0 );
+   ExprLE( const ExprLT& other );
 
    virtual ~ExprLE();
 
@@ -95,17 +92,14 @@ public:
 class FALCON_DYN_CLASS ExprGT: public ExprCompare
 {
 public:
-   ExprGT( Expression* op1=0, Expression* op2=0 );
-
-   ExprGT( const ExprGT& other ):
-      ExprCompare(other)
-   {}
+   ExprGT( int line = 0, int chr = 0 );
+   ExprGT( Expression* op1, Expression* op2, int line = 0, int chr = 0 );
+   ExprGT( const ExprGT& other );
 
    virtual ~ExprGT();
    inline virtual ExprGT* clone() const { return new ExprGT( *this ); }
 
    virtual bool simplify( Item& value ) const;
-
 
    class comparer
    {
@@ -122,11 +116,9 @@ public:
 class FALCON_DYN_CLASS ExprGE: public ExprCompare
 {
 public:
-   ExprGE( Expression* op1=0, Expression* op2=0 );
-   
-   ExprGE( const ExprGE& other ):
-      ExprCompare(other)
-   {}
+   ExprGE( int line = 0, int chr = 0 );
+   ExprGE( Expression* op1, Expression* op2, int line = 0, int chr = 0 );
+   ExprGE( const ExprGE& other );
 
    virtual ~ExprGE();
    inline virtual ExprGE* clone() const { return new ExprGE( *this ); }
@@ -148,11 +140,9 @@ public:
 class FALCON_DYN_CLASS ExprEQ: public ExprCompare
 {
 public:
-   ExprEQ( Expression* op1=0, Expression* op2=0 );
-
-   ExprEQ( const ExprEQ& other ):
-      ExprCompare(other)
-   {}
+   ExprEQ( int line = 0, int chr = 0 );
+   ExprEQ( Expression* op1, Expression* op2, int line = 0, int chr = 0 );
+   ExprEQ( const ExprEQ& other );
 
    virtual ~ExprEQ();
    inline virtual ExprEQ* clone() const { return new ExprEQ( *this ); }
@@ -174,11 +164,9 @@ public:
 class FALCON_DYN_CLASS ExprNE: public ExprCompare
 {
 public:
-   ExprNE( Expression* op1=0, Expression* op2=0 );
-   
-   ExprNE( const ExprNE& other ):
-      ExprCompare(other)
-   {}
+   ExprNE( int line = 0, int chr = 0 );
+   ExprNE( Expression* op1, Expression* op2, int line = 0, int chr = 0 );
+   ExprNE( const ExprNE& other );
 
    virtual ~ExprNE();
    inline virtual ExprNE* clone() const { return new ExprNE( *this ); }

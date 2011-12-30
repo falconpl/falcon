@@ -32,8 +32,9 @@ class Symbol;
 class FALCON_DYN_CLASS ExprRef: public Expression
 {
 public:
-   ExprRef( Symbol* sym );
-   ExprRef( ExprSymbol* sym );
+   ExprRef( int line = 0, int chr = 0 );
+   ExprRef( Symbol* sym, int line = 0, int chr = 0 );
+   ExprRef( ExprSymbol* sym, int line = 0, int chr = 0 );
    ExprRef( const ExprRef& other );
    
    virtual ~ExprRef();
@@ -48,6 +49,9 @@ public:
    virtual bool simplify( Item& result ) const;
 
    inline Symbol* symbol() const { return m_symbol; }
+
+   virtual Expression* selector() const;
+   virtual bool selector( Expression* expr );
 
 private:
    Symbol* m_symbol;

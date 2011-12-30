@@ -25,29 +25,9 @@ namespace Falcon
 class FALCON_DYN_CLASS ExprDot: public UnaryExpression
 {
 public:
-   inline ExprDot( const String& prop, Expression* op1 ): 
-      UnaryExpression( t_obj_access, op1 ),
-      m_pslv(this),
-      m_prop(prop)
-   {
-      apply = apply_;
-      m_pstep_lvalue = &m_pslv;
-   }
-
-   inline ExprDot(): UnaryExpression( t_obj_access ), m_pslv(this)
-   { 
-      apply = apply_; 
-      m_pstep_lvalue = &m_pslv;
-   }
-      
-   inline ExprDot( const ExprDot& other ):
-      UnaryExpression( other ),
-      m_pslv(this),
-      m_prop(other.m_prop)
-   {
-      apply = apply_;
-      m_pstep_lvalue = &m_pslv;
-   }
+   ExprDot( const String& prop, Expression* op1, int line = 0, int chr = 0 );
+   ExprDot( int line=0, chr=0 );      
+   ExprDot( const ExprDot& other );
    
    virtual ~ExprDot();
    

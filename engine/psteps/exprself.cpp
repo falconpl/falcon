@@ -13,7 +13,7 @@
    See LICENSE file for licensing details.
 */
 
-#include <falcon/expression.h>
+#include <falcon/psteps/exprself.h>
 #include <falcon/trace.h>
 #include <falcon/vmcontext.h>
 #include <falcon/pstep.h>
@@ -23,10 +23,10 @@
 
 namespace Falcon {
 
-
-ExprSelf::ExprSelf():
-   Expression(Expression::t_self)
+ExprSelf::ExprSelf( int line, int chr ):
+   Expression( line, chr )
 {
+   FALCON_DECLARE_SYN_CLASS( expr_self )
    apply = apply_;
 }
 

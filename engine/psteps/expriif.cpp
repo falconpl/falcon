@@ -12,8 +12,10 @@
 
    See LICENSE file for licensing details.
 */
+#undef SRC
+#define SRC "engine/psteps/expriif.cpp"
 
-#include <falcon/expression.h>
+#include <falcon/psteps/expriif.h>
 #include <falcon/trace.h>
 #include <falcon/vmcontext.h>
 #include <falcon/pstep.h>
@@ -24,6 +26,33 @@
 
 namespace Falcon {
 
+ExprIIF::ExprIIF( int line, int chr ):
+   TernaryExpression( line, chr ),
+         m_gate( this )
+{
+   FALCON_DECLARE_SYN_CLASS( expr_iif )
+   apply = apply_;
+}
+
+
+ExprIIF::ExprIIF( Expression* op1, Expression* op2, Expression* op3, int line, int chr):
+   TernaryExpression( op1, op2, op3 ),
+   m_gate( this )
+{
+   FALCON_DECLARE_SYN_CLASS( expr_iif )
+   apply = apply_;
+}
+   
+ExprIIF::ExprIIF( const ExprIIF& other ): 
+   TernaryExpression( other ), 
+   m_gate(this)
+{
+   apply = apply_;
+}
+
+
+ExprIIF::~ExprIIF()
+{}
 
 bool ExprIIF::simplify( Item& value ) const
 {

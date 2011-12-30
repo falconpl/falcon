@@ -30,95 +30,13 @@ class PseudoFunction;
 class Symbol;
 
 /** Pure abstract class representing a Falcon expression.
- *
- * Base for all the expressions in the language.
+   Base for all the expressions in the language.
+ @see TreeStep
  */
 class FALCON_DYN_CLASS Expression: public TreeStep
 {
 public:   
    
-   typedef enum {
-      t_value,
-      t_symbol,
-      t_neg,
-      t_not,
-
-      t_and,
-      t_gate_and,
-      t_or,
-      t_gate_or,
-
-      t_assign,
-
-      t_plus,
-      t_minus,
-      t_times,
-      t_divide,
-      t_modulo,
-      t_power,
-      t_shr,
-      t_shl,
-
-      t_gt,
-      t_ge,
-      t_lt,
-      t_le,
-      t_eq,
-      t_exeq,
-      t_neq,
-
-      /* We'll use this later */
-      t_pre_inc,
-      t_post_inc,
-      t_pre_dec,
-      t_post_dec,
-
-      t_in,
-      t_notin,
-      t_provides,
-      t_iif,
-
-      t_obj_access,
-      t_funcall,
-      t_array_access,
-      t_array_byte_access,
-      t_strexpand,
-      t_indirect,
-
-
-      t_fbind,
-
-      t_aadd,
-      t_asub,
-      t_amul,
-      t_adiv,
-      t_amod,
-      t_apow,
-      t_ashr,
-      t_ashl,
-
-      t_eval,
-      t_oob,
-      t_deoob,
-      t_xoroob,
-      t_isoob,
-
-      t_arrayDecl,
-      t_dictDecl,
-      t_unpack,
-      t_multiunpack,
-      t_prototype,
-      t_range,
-         
-      t_band,
-      t_bor,
-      t_bxor,
-      t_bnot,
-
-      t_self,
-      t_reference
-   } operator_t;
-      
    Expression( const Expression &other );
    virtual ~Expression();
 
@@ -162,16 +80,9 @@ public:
    virtual bool simplify( Item& result ) const = 0;   
       
 protected:
-
-   /*   Expression( Class* handler, int line = 0, int chr = 0  ):
-      TreeStep( handler, line, chr ),
-      m_pstep_lvalue(0)
-   {}
-    */
    
-   // WIP:
-   Expression( operator_t, int line = 0, int chr = 0  ):
-      TreeStep( 0, TreeStep::e_cat_expression, line, chr ),
+   Expression( int line = 0, int chr = 0  ):
+      TreeStep( line, chr ),
       m_pstep_lvalue(0),
       m_trait( e_trait_none )
    {}
@@ -199,14 +110,13 @@ protected:
 class FALCON_DYN_CLASS UnaryExpression: public Expression
 {
 public:
-   /*
-   inline UnaryExpression( Class* handler, Expression* op1, int line = 0, int chr = 0 ):
-      Expression( handler, line, chr ),
+   inline UnaryExpression( Expression* op1, int line = 0, int chr = 0 ):
+      Expression( line, chr ),
       m_first( op1 )
    {}
-    */
-   inline UnaryExpression( operator_t t, Expression* op1=0, int line = 0, int chr = 0 ):
-      Expression( t, line, chr ),
+      
+   inline UnaryExpression(  Expression* op1=0, int line = 0, int chr = 0 ):
+      Expression( line, chr ),
       m_first( op1 )
    {}
 
@@ -231,15 +141,15 @@ protected:
 class FALCON_DYN_CLASS BinaryExpression: public Expression
 {
 public:
-   /*
-   inline BinaryExpression( Class* handler, Expression* op1, Expression* op2, int line = 0, int chr = 0 ):
-      Expression( handler, line, chr ),
-      m_first( op1 ),
-      m_second( op2 )
+
+   inline BinaryExpression( int line=0, int ch =0 ):
+      Expression( line, chr ),
+      m_first( 0 ),
+      m_second( 0 )
    {}
-    */
-   inline BinaryExpression( operator_t t, Expression* op1=0, Expression* op2=0, int line = 0, int chr = 0 ):
-      Expression( t, line, chr ),
+      
+   inline BinaryExpression( Expression* op1, Expression* op2, int line = 0, int chr = 0 ):
+      Expression( line, chr ),
       m_first( op1 ),
       m_second( op2 )
    {}
@@ -270,20 +180,19 @@ protected:
 class FALCON_DYN_CLASS TernaryExpression: public Expression
 {
 public:
-   /*
-   inline TernaryExpression( Class* handler, Expression* op1, Expression* op2, Expression* op3, int line = 0, int chr = 0 ):
-      Expression( handler, line, chr ),
+  
+   inline TernaryExpression( Expression* op1, Expression* op2, Expression* op3, int line = 0, int chr = 0 ):
+      Expression( line, chr ),
       m_first( op1 ),
       m_second( op2 ),
       m_third( op3 )
    {}
-    */
 
-   inline TernaryExpression( operator_t t, Expression* op1=0, Expression* op2=0, Expression* op3=0, int line = 0, int chr = 0 ):
-      Expression( t, line, chr ),
-      m_first( op1 ),
-      m_second( op2 ),
-      m_third( op3 )
+   inline TernaryExpression( int line = 0, int chr = 0 ):
+      Expression( line, chr ),
+      m_first( 0 ),
+      m_second( 0 ),
+      m_third( 0 )
    {}
       
    TernaryExpression( const TernaryExpression& other );
@@ -312,194 +221,49 @@ protected:
 // Many operators take this form:
 //
 
-#define FALCON_UNARY_EXPRESSION_CLASS_DECLARATOR( class_name, op ) \
-   inline class_name( Expression* op1 ): UnaryExpression( op, op1 ) {apply = apply_;} \
-   inline class_name(): UnaryExpression( op, 0 ) {apply = apply_; }\
-   inline class_name( const class_name& other ): UnaryExpression( other ) {apply = apply_;} \
+#define FALCON_UNARY_EXPRESSION_CLASS_DECLARATOR( class_name, handler ) \
+   inline class_name( Expression* op1, int line=0, int chr=0 ): \
+            UnaryExpression( op1, line, chr ) { FALCON_DECLARE_SYN_CLASS( handler ); apply = apply_;} \
+   inline class_name(int line=0, int chr=0): \
+            UnaryExpression(line,chr) { FALCON_DECLARE_SYN_CLASS( handler );  apply = apply_; }\
+   inline class_name( const class_name& other ):\
+            UnaryExpression( other ) {FALCON_DECLARE_SYN_CLASS( handler ); apply = apply_;} \
    inline virtual class_name* clone() const { return new class_name( *this ); } \
    virtual bool simplify( Item& value ) const; \
    static void apply_( const PStep*, VMContext* ctx ); \
-   virtual void describeTo( String&, int depth = 0 ) const;\
+   virtual void describeTo( String&, int depth = 0 ) const;
 
-#define FALCON_BINARY_EXPRESSION_CLASS_DECLARATOR( class_name, op ) \
-   FALCON_BINARY_EXPRESSION_CLASS_DECLARATOR_EX( class_name, op, )
+#define FALCON_BINARY_EXPRESSION_CLASS_DECLARATOR( class_name, handler ) \
+   FALCON_BINARY_EXPRESSION_CLASS_DECLARATOR_EX( class_name, handler, )
 
-#define FALCON_BINARY_EXPRESSION_CLASS_DECLARATOR_EX( class_name, op, extended_constructor ) \
-   inline class_name(): BinaryExpression( op ) {apply = apply_; extended_constructor}\
-   inline class_name( Expression* op1, Expression* op2 ): BinaryExpression( op, op1, op2 ) { apply = apply_; extended_constructor } \
-   inline class_name( const class_name& other ): BinaryExpression( other ) {apply = apply_; extended_constructor} \
+#define FALCON_BINARY_EXPRESSION_CLASS_DECLARATOR_EX( class_name, handler, extended_constructor ) \
+   inline class_name( Expression* op1, Expression* op2, int line=0, int chr=0 ): \
+            BinaryExpression( op1, op2, line, chr ) { FALCON_DECLARE_SYN_CLASS( handler ); apply = apply_; extended_constructor} \
+   inline class_name(int line=0, int chr=0): \
+            BinaryExpression(line,chr) { FALCON_DECLARE_SYN_CLASS( handler );  apply = apply_; extended_constructor}\
+   inline class_name( const class_name& other ):\
+            BinaryExpression( other ) {FALCON_DECLARE_SYN_CLASS( handler ); apply = apply_; extended_constructor} \
    inline virtual class_name* clone() const { return new class_name( *this ); } \
    virtual bool simplify( Item& value ) const; \
    static void apply_( const PStep*, VMContext* ctx ); \
    virtual void describeTo( String&, int depth=0 ) const;\
    public:
 
-#define FALCON_TERNARY_EXPRESSION_CLASS_DECLARATOR( class_name, op ) \
-   inline class_name( Expression* op1, Expression* op2, Expression* op3 ): TernaryExpression( op, op1, op2, op3 ) {apply = apply_;} \
-   inline class_name( const class_name& other ): TernaryExpression( other ) {apply = apply_;} \
+#define FALCON_TERNARY_EXPRESSION_CLASS_DECLARATOR( class_name, handler ) \
+   inline class_name( Expression* op1, Expression* op2, Expression* op3, int line=0, int chr=0 ): \
+            TernaryExpression( op1, op2, op3, line, chr ) { FALCON_DECLARE_SYN_CLASS( handler ); apply = apply_;} \
+   inline class_name(int line=0, int chr=0): \
+            TernaryExpression(line,chr) { FALCON_DECLARE_SYN_CLASS( handler );  apply = apply_; }\
+   inline class_name( const class_name& other ):\
+            TernaryExpression( other ) {FALCON_DECLARE_SYN_CLASS( handler ); apply = apply_; } \
    inline virtual class_name* clone() const { return new class_name( *this ); } \
    virtual bool simplify( Item& value ) const; \
    static void apply_( const PStep*, VMContext* ctx ); \
    virtual void describeTo( String&, int depth = 0 ) const;\
-   protected:\
-   inline class_name(): TernaryExpression( op ) {}\
    public:
 
 //==============================================================
 
-/** logic not. */
-class FALCON_DYN_CLASS ExprNot: public UnaryExpression
-{
-public:
-   FALCON_UNARY_EXPRESSION_CLASS_DECLARATOR( ExprNot, t_not );
-};
-
-/** logic and. */
-class FALCON_DYN_CLASS ExprAnd: public BinaryExpression
-{
-public:
-   FALCON_BINARY_EXPRESSION_CLASS_DECLARATOR( ExprAnd, t_and );
-
-   /** Check if the and expression can stand alone.
-    *
-    * An "and" expression can stand alone if it has a standalone second operator.
-    */
-   inline virtual bool isStandAlone() const { return m_second->isStandAlone(); }
-
-};
-
-
-/** logic or. */
-class FALCON_DYN_CLASS ExprOr: public BinaryExpression
-{
-public:
-   FALCON_BINARY_EXPRESSION_CLASS_DECLARATOR( ExprOr, t_or );
-
-   /** Check if the and expression can stand alone.
-    *
-    * An "or" expression can stand alone if it has a standalone second operand.
-    */
-   inline virtual bool isStandAlone() const { return m_second->isStandAlone(); }
-};
-
-/** Assignment operation. */
-class FALCON_DYN_CLASS ExprAssign: public BinaryExpression
-{
-public:
-   inline ExprAssign( Expression* op1, Expression* op2 ):
-      BinaryExpression( op1, op2 )
-   {
-         FALCON_DECLARE_SYN_CLASS( expr_assign )
-         apply = apply_;
-   }
-
-   inline ExprAssign( const ExprAssign& other ):
-      BinaryExpression( other )
-   {
-      FALCON_DECLARE_SYN_CLASS( expr_assign )
-      apply = apply_;
-   }
-
-   inline virtual ExprAssign* clone() const { return new ExprAssign( *this ); }
-
-   virtual bool simplify( Item& value ) const;
-   virtual void describeTo( String&, int depth=0 ) const;
-
-   inline virtual bool isStandAlone() const { return true; }
-
-protected:
-   inline ExprAssign():
-      BinaryExpression( t_assign ) {apply = apply_;}
-      
-   static void apply_( const PStep* ps, VMContext* ctx );
-};
-
-
-
-/** Unary negative. */
-class FALCON_DYN_CLASS ExprNeg: public UnaryExpression
-{
-public:
-   FALCON_UNARY_EXPRESSION_CLASS_DECLARATOR( ExprNeg, t_neg );
-};
-
-class FALCON_DYN_CLASS ExprBNOT: public UnaryExpression
-{
-public:
-   FALCON_UNARY_EXPRESSION_CLASS_DECLARATOR( ExprBNOT, t_bnot );
-};
-
-/** Exactly equal to operator. */
-class FALCON_DYN_CLASS ExprEEQ: public BinaryExpression
-{
-public:
-   FALCON_BINARY_EXPRESSION_CLASS_DECLARATOR( ExprEEQ, t_exeq );
-};
-
-/** Array expansion. */
-class FALCON_DYN_CLASS ExprUnpack: public Expression
-{
-public:
-   ExprUnpack( Expression* op1, bool bIsTop );
-   ExprUnpack( const ExprUnpack& other );
-   virtual ~ExprUnpack();
-
-   inline virtual ExprUnpack* clone() const { return new ExprUnpack( *this ); }
-   virtual bool simplify( Item& value ) const;
-   virtual void describeTo( String&, int depth = 0 ) const;
-
-   int targetCount() const;
-   Symbol* getAssignand( int n ) const;
-   ExprUnpack& addAssignand( Symbol* );
-
-   inline virtual bool isStandAlone() const { return false; }
-
-   virtual bool isStatic() const { return false; }
-   bool isTop() const { return m_bIsTop; }
-
-protected:
-   ExprUnpack();
-   Expression* m_expander;
-   bool m_bIsTop;
-   
-private:
-   class Private;
-   Private* _p;
-
-   static void apply_( const PStep*, VMContext* ctx );
-};
-
-
-class FALCON_DYN_CLASS ExprMultiUnpack: public Expression
-{
-public:
-   ExprMultiUnpack( bool bIsTop );
-   ExprMultiUnpack( const ExprMultiUnpack& other );
-   virtual ~ExprMultiUnpack();
-
-   inline virtual ExprMultiUnpack* clone() const { return new ExprMultiUnpack( *this ); }
-   virtual bool simplify( Item& value ) const;
-   virtual void describeTo( String&, int depth = 0 ) const;
-
-   int targetCount() const;
-   Symbol* getAssignand( int n ) const;
-   Expression* getAssignee( int n ) const;
-   ExprMultiUnpack& addAssignment( Symbol* tgt, Expression* src );
-
-   inline virtual bool isStandAlone() const { return false; }
-   virtual bool isStatic() const { return false; }
-
-   bool isTop() const { return m_bIsTop; }
-protected:
-   ExprMultiUnpack();
-   bool m_bIsTop;
-
-private:
-   class Private;
-   Private* _p;
-
-   static void apply_( const PStep*, VMContext* ctx );
-};
 
 #if 0
 
@@ -524,55 +288,6 @@ public:
    FALCON_BINARY_EXPRESSION_CLASS_DECLARATOR( ExprProvides, t_provides );
 };
 
-#endif
-
-/** Fast if -- ternary conditional operator. */
-class FALCON_DYN_CLASS ExprIIF: public TernaryExpression
-{
-public:
-   inline ExprIIF( Expression* op1, Expression* op2, Expression* op3 ):
-         TernaryExpression( t_iif, op1, op2, op3 ),
-         m_gate( this )
-         {apply = apply_;}
-   inline ExprIIF( const ExprIIF& other ): TernaryExpression( other ), m_gate(this) {apply = apply_;}
-   inline virtual ExprIIF* clone() const { return new ExprIIF( *this ); }
-   virtual bool simplify( Item& value ) const;
-   static void apply_( const PStep*, VMContext* ctx );
-   virtual void describeTo( String&, int depth = 0 ) const;
-   
-   /** Check if the and expression can stand alone.
-      An "?" expression can stand alone if the second AND third operand are standalone.
-    */
-   inline virtual bool isStandAlone() const {
-      return m_second->isStandAlone() && m_third->isStandAlone();
-   }
-   
-protected:
-      
-   inline ExprIIF(): TernaryExpression( t_iif ), m_gate(this) {}
-
-private:
-   mutable int m_falseSeqId;
-   
-   class FALCON_DYN_CLASS Gate: public PStep {
-   public:
-      Gate( ExprIIF* owner );
-      void describeTo( String& target ) const { target = "Gate for expriif"; }
-      static void apply_( const PStep*, VMContext* ctx );
-   private:
-      ExprIIF* m_owner;
-   } m_gate;
-};
-
-
-/** Special string Index accessor. */
-class FALCON_DYN_CLASS ExprStarIndex: public BinaryExpression
-{
-public:
-   FALCON_BINARY_EXPRESSION_CLASS_DECLARATOR( ExprStarIndex, t_array_byte_access );
-};
-
-#if 0
 
 /** String expansion expression */
 class FALCON_DYN_CLASS ExprStrExpand: public UnaryExpression
@@ -606,60 +321,8 @@ public:
 
 #endif
 
-
-/** Set Out-of-band expression. */
-class FALCON_DYN_CLASS ExprOob: public UnaryExpression
-{
-public:
-   FALCON_UNARY_EXPRESSION_CLASS_DECLARATOR( ExprOob, t_oob );
-};
-
-/** Reset Out-of-band expression. */
-class FALCON_DYN_CLASS ExprDeoob: public UnaryExpression
-{
-public:
-   FALCON_UNARY_EXPRESSION_CLASS_DECLARATOR( ExprDeoob, t_deoob );
-};
-
-/** Invert Out-of-band expression. */
-class FALCON_DYN_CLASS ExprXorOob: public UnaryExpression
-{
-public:
-   FALCON_UNARY_EXPRESSION_CLASS_DECLARATOR( ExprXorOob, t_xoroob );
-};
-
-/** Check if is Out-of-band expression. */
-class FALCON_DYN_CLASS ExprIsOob: public UnaryExpression
-{
-public:
-   FALCON_UNARY_EXPRESSION_CLASS_DECLARATOR( ExprIsOob, t_isoob );
-};
-
-//======================================
-// Self &c
-
-/** Class implementing Self atom value.
- */
-class FALCON_DYN_CLASS ExprSelf: public Expression
-{
-public:
-   ExprSelf();
-   ExprSelf( const ExprSelf &other );
-   virtual ~ExprSelf();
-
-   virtual bool isStatic() const;
-   virtual ExprSelf* clone() const;
-   virtual bool simplify( Item& result ) const;
-   virtual void describeTo( String & str, int depth = 0 ) const;
-
-private:
-   static void apply_( const PStep* s1, VMContext* ctx );
-
-};
-
 }
 
 #endif
 
 /* end of expression.h */
-

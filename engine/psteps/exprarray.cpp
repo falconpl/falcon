@@ -26,90 +26,38 @@
 
 #include <vector>
 
+#include "exprvector_private.h"
+
 namespace Falcon
 {
 
-class ExprArray::Private {
-public:
-
-   typedef std::vector< Expression* > ExprVector;
-   ExprVector m_exprs;
-
-   ~Private()
-   {
-      ExprVector::iterator iter = m_exprs.begin();
-      while( iter != m_exprs.end() )
-      {
-         delete (*iter);
-         ++iter;
-      }
-   }
-};
-
-
-ExprArray::ExprArray():
-   Expression()
+ExprArray::ExprArray( int line, int chr ):
+   ExprVector( line, chr )
 {
    FALCON_DECLARE_SYN_CLASS( expr_array )
-      
    apply = apply_;
-   _p = new Private;
 }
 
 
 ExprArray::ExprArray( const ExprArray& other ):
-   Expression(other)
+   ExprVector(other)
 {
-   FALCON_DECLARE_SYN_CLASS( expr_array )
-      
-   _p = new Private;
-   Private::ExprVector& oe = other._p->m_exprs;
-   Private::ExprVector& mye = _p->m_exprs;
-
-   mye.reserve(oe.size());
-   Private::ExprVector::const_iterator iter = oe.begin();
-   while( iter != oe.end() )
-   {
-      mye.push_back( (*iter)->clone() );
-      ++iter;
-   }
-}
-
-ExprArray::~ExprArray()
-{
-   delete _p;
+   FALCON_DECLARE_SYN_CLASS( expr_array )   
+   apply = apply_;
 }
 
 
-int ExprArray::arity() const
+virtual ExprArray* ExprArray::clone() const
 {
-   return (int) _p->m_exprs.size();
-}
-
-
-Expression* ExprArray::get( size_t n ) const
-{
-   Private::ExprVector& mye = _p->m_exprs;
-   if( n < mye.size() )
-   {
-      return mye[n];
-   }
-   
-   return 0;
-}
-
-ExprArray& ExprArray::add( Expression* e )
-{
-   _p->m_exprs.push_back(e);
-   return *this;
+   return new ExprArray(*this);
 }
 
 //=====================================================
 
 void ExprArray::describeTo( String& str, int depth ) const
 {
-   Private::ExprVector& mye = _p->m_exprs;
-   Private::ExprVector::const_iterator iter = mye.begin();
+   ExprVector_Private::ExprVector& mye = _p->m_exprs;
+   ExprVector_Private::ExprVector::const_iterator iter = mye.begin();
    
    if( mye.empty() )
    {
@@ -135,8 +83,8 @@ void ExprArray::describeTo( String& str, int depth ) const
 
 void ExprArray::oneLinerTo( String& str ) const
 {
-   Private::ExprVector& mye = _p->m_exprs;
-   Private::ExprVector::const_iterator iter = mye.begin();
+   ExprVector_Private::ExprVector& mye = _p->m_exprs;
+   ExprVector_Private::ExprVector::const_iterator iter = mye.begin();
    str = "[ ";
    while( iter != mye.end() )
    {
@@ -168,7 +116,7 @@ void ExprArray::apply_( const PStep* ps, VMContext* ctx )
    static Collector* collector = Engine::instance()->collector();
    
    const ExprArray* ea = static_cast<const ExprArray*>(ps);
-   Private::ExprVector& mye = ea->_p->m_exprs;
+   ExprVector_Private::ExprVector& mye = ea->_p->m_exprs;
 
    // invoke all the expressions.
    CodeFrame& cf = ctx->currentCode();

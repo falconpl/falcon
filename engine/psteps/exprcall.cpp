@@ -32,51 +32,51 @@ public:
    std::vector<Expression*> m_params;
 };
 
-ExprCall::ExprCall( Expression* op1 ):
-   Expression( t_funcall ),
+ExprCall::ExprCall( int line, int chr ):
+   Expression( line, chr ),
+   m_func(0),
+   m_callExpr(0)
+{
+   FALCON_DECLARE_SYN_CLASS( expr_call )
+      
+   apply = apply_;
+}
+
+
+ExprCall::ExprCall( Expression* op1, int line, int chr ):
+   Expression( line, chr ),
    m_func(0),
    m_callExpr(op1)
 {
-   _p = new Private;
+   FALCON_DECLARE_SYN_CLASS( expr_call )
    apply = apply_;
 }
 
 
-ExprCall::ExprCall( PseudoFunction* f ):
-   Expression( t_funcall ),
+ExprCall::ExprCall( PseudoFunction* f, int line, int chr ):
+   Expression( line, chr ),
    m_func(f),
    m_callExpr(0)
 {
-   _p = new Private;
+   FALCON_DECLARE_SYN_CLASS( expr_call )
    apply = apply_;
 }
 
+
 ExprCall::ExprCall( const ExprCall& other ):
-   Expression( other )
+   ExprVector( other )
 {
-   apply = other.apply;
+   FALCON_DECLARE_SYN_CLASS( expr_call )
    m_func = other.m_func;
    m_callExpr = other.m_callExpr;
 
-   _p = new Private;
-   _p->m_params.reserve( other._p->m_params.size() );
-   std::vector<Expression*>::const_iterator iter = other._p->m_params.begin();
-   while(iter != other._p->m_params.end())
-   {
-      _p->m_params.push_back((*iter)->clone());
-      ++iter;
-   }
+   apply = apply_;
 }
+
 
 ExprCall::~ExprCall()
 {
-   // and generate all the expressions, in inverse order.
-   for( unsigned int i = 0; i < _p->m_params.size(); ++i )
-   {
-      delete _p->m_params[i];
-   }
-
-   delete _p;
+   delete m_callExpr;
 }
 
 
@@ -90,8 +90,10 @@ void ExprCall::apply_( const PStep* v, VMContext* ctx )
    static Engine* eng = Engine::instance();
    const ExprCall* self = static_cast<const ExprCall*>(v);
    TRACE2( "Apply CALL %s", self->describe().c_ize() );
-   int pcount = self->_p->m_params.size();
+   int pcount = self->_p->m_exprs.size();
 
+   fassert( self->m_func != 0 || self->m_callExpr != 0 );
+   
    // prepare the call expression.
    CodeFrame& cf = ctx->currentCode();
    if( cf.m_seqId == 0 )  
@@ -127,8 +129,8 @@ void ExprCall::apply_( const PStep* v, VMContext* ctx )
    
    if( pcount >= cf.m_seqId )
    {
-      std::vector<Expression*>::iterator pos = self->_p->m_params.begin() + (cf.m_seqId-1);
-      std::vector<Expression*>::iterator end = self->_p->m_params.end();
+      ExprVector_Private::ExprVector::iterator pos = self->_p->m_exprs.begin() + (cf.m_seqId-1);
+      ExprVector_Private::ExprVector::iterator end = self->_p->m_exprs.end();
       while( pos < end )
       {
          cf.m_seqId++;
@@ -181,34 +183,39 @@ void ExprCall::apply_( const PStep* v, VMContext* ctx )
 }
 
 
-ExprCall& ExprCall::addParam( Expression* p )
+Expression* ExprCall::selector() const
 {
-   _p->m_params.push_back( p );
-   return *this;
+   return m_callExpr;
 }
 
 
-Expression* ExprCall::getParam( int n ) const
+bool ExprCall::selector( Expression* e )
 {
-   return _p->m_params[ n ];
+   if( e->setParent(this))
+   {
+      delete m_callExpr;
+      m_callExpr = e;
+   }
 }
 
-int ExprCall::paramCount() const
-{
-   return _p->m_params.size();
-}
 
 void ExprCall::describeTo( String& ret, int depth ) const
 {
+   if( m_callExpr == 0 && m_func == 0 )
+   {
+      ret = "<Blank ExprCall>";
+      return;
+   }
+   
    String params;
    // and generate all the expressions, in inverse order.
-   for( unsigned int i = 0; i < _p->m_params.size(); ++i )
+   for( unsigned int i = 0; i < _p->m_exprs.size(); ++i )
    {
       if ( params.size() )
       {
          params += ", ";
       }
-      params += _p->m_params[i]->describe(depth+1);
+      params += _p->m_exprs[i]->describe(depth+1);
    }
 
    if( m_callExpr != 0 )

@@ -38,7 +38,10 @@ bool ExprIndex::simplify( Item& ) const
 void ExprIndex::apply_( const PStep* DEBUG_ONLY(ps), VMContext* ctx )
 {
    TRACE2( "Apply \"%s\"", ((ExprIndex*)ps)->describe().c_ize() );
-
+   
+   fassert( ((ExprIndex*)ps)->first() != 0 );
+   fassert( ((ExprIndex*)ps)->second() != 0 );
+   
    Class* cls;
    void* self;
    
@@ -52,6 +55,9 @@ void ExprIndex::PstepLValue::apply_( const PStep* DEBUG_ONLY(ps), VMContext* ctx
 {
    TRACE2( "Apply lvalue \"%s\"", ((ExprIndex::PstepLValue*)ps)->describe().c_ize() );
 
+   fassert( ((ExprIndex*)ps)->first() != 0 );
+   fassert( ((ExprIndex*)ps)->second() != 0 );
+   
    Class* cls;
    void* self;
    
@@ -63,6 +69,12 @@ void ExprIndex::PstepLValue::apply_( const PStep* DEBUG_ONLY(ps), VMContext* ctx
 
 void ExprIndex::describeTo( String& ret, int depth ) const
 {
+   if( m_first == 0 || m_second == 0 )
+   {
+      ret = "<Blank ExprIndex>";
+      return;
+   }
+   
    ret = "(" + m_first->describe(depth+1) + "[" + m_second->describe(depth+1) + "])";
 }
 

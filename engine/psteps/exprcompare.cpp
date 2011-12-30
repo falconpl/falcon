@@ -13,6 +13,9 @@
    See LICENSE file for licensing details.
 */
 
+#undef SRC
+#define SRC "engine/psteps/exprcompare.cpp"
+
 #include <falcon/trace.h>
 #include <falcon/vmcontext.h>
 #include <falcon/vm.h>
@@ -63,6 +66,9 @@ void generic_apply_( const PStep* ps, VMContext* ctx )
 {
    const ExprCompare* self = static_cast<const ExprCompare*>(ps);
    TRACE2( "Apply \"%s\"", self->describe().c_ize() );
+   
+   fassert( self->first() != 0 );
+   fassert( self->second() != 0 );
 
    CodeFrame& cf = ctx->currentCode();
    switch( cf.m_seqId )
@@ -156,9 +162,13 @@ void generic_apply_<ExprNE::comparer>( const PStep* ps, VMContext* ctx );
 
 //==========================================================
 
+ExprCompare::ExprCompare( const String& name, int line, int chr ):
+   BinaryExpression( line, chr ),
+   m_name(name)
+{}
 
-ExprCompare::ExprCompare( Expression* op1, Expression* op2, Expression::operator_t t, const String& name ):
-   BinaryExpression( t, op1, op2 ),
+ExprCompare::ExprCompare( Expression* op1, Expression* op2, const String& name, int line, int chr ):
+   BinaryExpression( op1, op2, line, chr ),
    m_name(name)
 {}
 
@@ -174,7 +184,14 @@ ExprCompare::~ExprCompare()
 
 void ExprCompare::describeTo( String& ret, int depth ) const
 {
-   ret = "(" + m_first->describe( depth + 1 ) + m_name + m_second->describe(depth+1) + ")";
+   if( m_first == 0 || m_second == 0 )
+   {
+      ret = "<Blank '" + m_name + "'>";
+   }
+   else
+   {
+      ret = "(" + m_first->describe( depth + 1 ) + m_name + m_second->describe(depth+1) + ")";
+   }
 }
 
 
@@ -182,11 +199,26 @@ void ExprCompare::describeTo( String& ret, int depth ) const
 // EXPR LT
 //
 
-ExprLT::ExprLT( Expression* op1, Expression* op2 ):
-   ExprCompare( op1, op2, t_lt, "<" )
+ExprLT::ExprLT( int line, int chr ):
+   ExprCompare( "<", line, chr )
+{
+   FALCON_DECLARE_SYN_CLASS( expr_lt )
+   apply = &generic_apply_<ExprLT::comparer>;
+}
+
+ExprLT::ExprLT( Expression* op1, Expression* op2, int line, int chr ):
+   ExprCompare( op1, op2, "<", line, chr )
+{
+   FALCON_DECLARE_SYN_CLASS( expr_lt )
+   apply = &generic_apply_<ExprLT::comparer>;
+}
+
+ExprLT::ExprLT( const ExprLT& other ):
+   ExprCompare(other)
 {
    apply = &generic_apply_<ExprLT::comparer>;
 }
+
 
 ExprLT::~ExprLT()
 {}
@@ -200,12 +232,25 @@ bool ExprLT::simplify( Item& value ) const
 //========================================================
 // EXPR LE
 //
-ExprLE::ExprLE( Expression* op1, Expression* op2 ):
-   ExprCompare( op1, op2, t_le, "<=" )
+ExprLE::ExprLE( int line, int chr ):
+   ExprCompare( line, chr )
 {
+   FALCON_DECLARE_SYN_CLASS( expr_le )
    apply = &generic_apply_<ExprLE::comparer>;
 }
 
+ExprLE::ExprLE( Expression* op1, Expression* op2, int line, int chr ):
+   ExprCompare( op1, op2, "<=", line, chr )
+{
+   FALCON_DECLARE_SYN_CLASS( expr_le )
+   apply = &generic_apply_<ExprLE::comparer>;
+}
+
+ExprLE::ExprLE( const ExprLT& other ):
+   ExprCompare(other)
+{
+   apply = &generic_apply_<ExprLE::comparer>;
+}
 
 ExprLE::~ExprLE()
 {}
@@ -218,8 +263,22 @@ bool ExprLE::simplify( Item& value ) const
 //========================================================
 // EXPR GT
 //
-ExprGT::ExprGT( Expression* op1, Expression* op2 ):
-   ExprCompare( op1, op2, t_gt, ">" )
+ExprGT::ExprGT( int line, int chr ):
+   ExprCompare( line, chr )
+{
+   FALCON_DECLARE_SYN_CLASS( expr_gt )
+   apply = &generic_apply_<ExprGT::comparer>;
+}
+
+ExprGT::ExprGT( Expression* op1, Expression* op2, int line, int chr ):
+   ExprCompare( op1, op2, ">", line, chr )
+{
+   FALCON_DECLARE_SYN_CLASS( expr_gt )
+   apply = &generic_apply_<ExprGT::comparer>;
+}
+
+ExprGT::ExprGT( const ExprLT& other ):
+   ExprCompare(other)
 {
    apply = &generic_apply_<ExprGT::comparer>;
 }
@@ -235,8 +294,22 @@ bool ExprGT::simplify( Item& value ) const
 //========================================================
 // EXPR GE
 //
-ExprGE::ExprGE( Expression* op1, Expression* op2 ):
-   ExprCompare( op1, op2, t_ge, ">=" )
+ExprGE::ExprGE( int line, int chr ):
+   ExprCompare(  ">=", line, chr )
+{
+   FALCON_DECLARE_SYN_CLASS( expr_ge )
+   apply = &generic_apply_<ExprGE::comparer>;
+}
+
+ExprGE::ExprGE( Expression* op1, Expression* op2, int line, int chr ):
+   ExprCompare( op1, op2, ">=", line, chr )
+{
+   FALCON_DECLARE_SYN_CLASS( expr_ge )
+   apply = &generic_apply_<ExprGE::comparer>;
+}
+
+ExprGE::ExprGE( const ExprLT& other ):
+   ExprCompare(other)
 {
    apply = &generic_apply_<ExprGE::comparer>;
 }
@@ -252,8 +325,22 @@ bool ExprGE::simplify( Item& value ) const
 //========================================================
 // EXPR EQ
 //
-ExprEQ::ExprEQ( Expression* op1, Expression* op2 ):
-   ExprCompare( op1, op2, t_eq, "==" )
+ExprEQ::ExprEQ( int line, int chr ):
+   ExprCompare( line, chr )
+{
+   FALCON_DECLARE_SYN_CLASS( expr_eq )
+   apply = &generic_apply_<ExprEQ::comparer>;
+}
+
+ExprEQ::ExprEQ( Expression* op1, Expression* op2, int line, int chr ):
+   ExprCompare( op1, op2, "==", line, chr )
+{
+   FALCON_DECLARE_SYN_CLASS( expr_eq )
+   apply = &generic_apply_<ExprEQ::comparer>;
+}
+
+ExprEQ::ExprEQ( const ExprLT& other ):
+   ExprCompare(other)
 {
    apply = &generic_apply_<ExprEQ::comparer>;
 }
@@ -270,8 +357,22 @@ bool ExprEQ::simplify( Item& value ) const
 //========================================================
 // EXPR NEQ
 //
-ExprNE::ExprNE( Expression* op1, Expression* op2 ):
-   ExprCompare( op1, op2, t_neq, "!=" )
+ExprNE::ExprNE( int line, int chr ):
+   ExprCompare( "!=", line, chr )
+{
+   FALCON_DECLARE_SYN_CLASS( expr_ne )
+   apply = &generic_apply_<ExprNE::comparer>;
+}
+
+ExprNE::ExprNE( Expression* op1, Expression* op2, int line, int chr ):
+   ExprCompare( op1, op2, "!=", line, chr )
+{
+   FALCON_DECLARE_SYN_CLASS( expr_ne )
+   apply = &generic_apply_<ExprNE::comparer>;
+}
+
+ExprNE::ExprNE( const ExprLT& other ):
+   ExprCompare(other)
 {
    apply = &generic_apply_<ExprNE::comparer>;
 }

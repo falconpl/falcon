@@ -33,23 +33,34 @@
 namespace Falcon
 {
 
+ExprRef::ExprRef( int line, int chr ):
+   Expression( line, chr ),
+   m_symbol( 0 ),
+   m_expr(0)
+{
+   FALCON_DECLARE_SYN_CLASS( expr_genref )
+   apply = apply_;
+}
 
-ExprRef::ExprRef( Symbol* sym ):
-   Expression( t_reference ),
+
+ExprRef::ExprRef( Symbol* sym, int line, int chr ):
+   Expression( line, chr ),
    m_symbol( sym ),
    m_expr(0)
 {
+   FALCON_DECLARE_SYN_CLASS( expr_genref )
    apply = apply_;
 }
 
-ExprRef::ExprRef( ExprSymbol* expr ):
-   Expression( t_reference ),
+
+ExprRef::ExprRef( ExprSymbol* expr, int line, int chr ):
+   Expression( line, chr ),
    m_symbol( 0 ),
    m_expr( expr )
 {
+   FALCON_DECLARE_SYN_CLASS( expr_genref )
    apply = apply_;
 }
-
 
 
 ExprRef::ExprRef( const ExprRef& other ):
@@ -59,15 +70,35 @@ ExprRef::ExprRef( const ExprRef& other ):
    apply = apply_;
 }
 
+
 ExprRef::~ExprRef()
 {
    delete m_expr;
 }
 
 
+Expression* ExprRef::selector() const
+{
+   return m_expr;
+}
+
+bool ExprRef::selector( Expression* expr )
+{
+   if( expr->setParent(this) )
+   {
+      delete m_expr;
+      return true;
+   }
+   
+   return false;
+}
+
+
 void ExprRef::apply_( const PStep* ps, VMContext* ctx )
 {
    const ExprRef* self = static_cast<const ExprRef*>(ps);
+   
+   fassert( self->m_symbol != 0 || self->m_expr != 0 );
    
    if( self->m_symbol == 0 )
    {
@@ -103,6 +134,12 @@ void ExprRef::describeTo( String& str, int ) const
 {
    if( m_symbol == 0 )
    {
+      if( m_expr == 0 )
+      {
+         str = "<Blank ExprRef>";
+         return;
+      }
+      
       str = "$" + m_expr->symbol()->name();
    }
    else

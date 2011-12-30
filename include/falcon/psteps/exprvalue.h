@@ -33,11 +33,11 @@ class VMachine;
 class FALCON_DYN_CLASS ExprValue: public Expression
 {
 public:
-   ExprValue( const Item& item );
+   ExprValue( int line = 0, int chr = 0 );
+   ExprValue( const Item& item, int line = 0, int chr = 0 );
    ExprValue( const ExprValue& other );
 
    virtual ~ExprValue();
-
 
    virtual bool simplify( Item& result ) const;
 
@@ -58,12 +58,6 @@ public:
    virtual ExprValue* clone() const;
    virtual bool isStatic() const;
    virtual void describeTo( String&, int depth=0 ) const;
-
-protected:
-   inline ExprValue():
-      Expression( t_value ),
-      m_lock(0)
-   {}
 
 private:
    Item m_item;

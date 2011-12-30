@@ -13,9 +13,10 @@
    See LICENSE file for licensing details.
 */
 
+#undef SRC
 #define SRC "engine/psteps/exprlogic.cpp"
 
-#include <falcon/expression.h>
+#include <falcon/psteps/exprlogic.h>
 #include <falcon/trace.h>
 #include <falcon/vmcontext.h>
 #include <falcon/pstep.h>
@@ -41,6 +42,8 @@ void ExprNot::apply_( const PStep* ps, VMContext* ctx )
    const ExprNot* self = static_cast<const ExprNot*>(ps);
    TRACE2( "Apply \"%s\"", self->describe().c_ize() );
    
+   fassert( self->first() != 0 );
+   
    CodeFrame& cf = ctx->currentCode();
    if( cf.m_seqId == 0 )
    {
@@ -57,6 +60,12 @@ void ExprNot::apply_( const PStep* ps, VMContext* ctx )
 
 void ExprNot::describeTo( String& str, int depth ) const
 {
+   if( m_first == 0 )
+   {
+      str = "<Blank ExprNot>";
+      return;
+   }
+   
    str = "not ";
    str += m_first->describe(depth+1);
 }
@@ -84,6 +93,9 @@ void ExprAnd::apply_( const PStep* ps, VMContext* ctx )
    const ExprAnd* self = static_cast<const ExprAnd*>(ps);
    TRACE2( "Apply \"%s\"", self->describe().c_ize() );
    
+   fassert( self->first() != 0 );
+   fassert( self->second() != 0 );
+
    CodeFrame& cf = ctx->currentCode();
    switch( cf.m_seqId )
    {
@@ -121,6 +133,12 @@ void ExprAnd::apply_( const PStep* ps, VMContext* ctx )
 
 void ExprAnd::describeTo( String& str, int depth ) const
 {
+   if( m_first == 0 || m_second == 0 )
+   {
+      str = "<Blank ExprAnd>";
+      return;
+   }
+   
    str = "(" + m_first->describe(depth+1) + " and " + m_second->describe(depth+1) + ")";
 }
 
@@ -144,6 +162,9 @@ void ExprOr::apply_( const PStep* ps, VMContext* ctx )
 {
    const ExprOr* self = static_cast<const ExprOr*>(ps);
    TRACE2( "Apply \"%s\"", self->describe().c_ize() );
+   
+   fassert( self->first() != 0 );
+   fassert( self->second() != 0 );
    
    CodeFrame& cf = ctx->currentCode();
    switch( cf.m_seqId )
@@ -182,6 +203,12 @@ void ExprOr::apply_( const PStep* ps, VMContext* ctx )
 
 void ExprOr::describeTo( String& str, int depth ) const
 {
+   if( m_first == 0 || m_second == 0 )
+   {
+      str = "<Blank ExprOr>";
+      return;
+   }
+
    str = "(" + m_first->describe(depth+1) + " or " + m_second->describe(depth+1) + ")";
 }
 

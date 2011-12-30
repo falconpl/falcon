@@ -50,16 +50,19 @@ class ClosedSymbol;
 class FALCON_DYN_CLASS ExprSymbol: public Expression
 {
 public:
+   ExprSymbol( int line = 0, int chr = 0 );
+   
    /** Declare a forward symbol reference.
     \param name The name of the symbol that should be used in this expression.
     
     This constrcutor can be used to create a symbol placeholder in an expression,
     which can be then filled later on.
     */
-   ExprSymbol( const String& name );
+   ExprSymbol( const String& name, int line = 0, int chr = 0 );
+   
    /** Declare A fully constructer symbol access expression.
     */
-   ExprSymbol( Symbol* target );
+   ExprSymbol( Symbol* target, int line = 0, int chr = 0 );
    ExprSymbol( const ExprSymbol& other );
    virtual ~ExprSymbol();
 
@@ -73,7 +76,7 @@ public:
 
    // Return the symbol pointed by this expression.
    Symbol* symbol() const { return m_symbol; }
-   void symbol( Symbol* sym) { m_symbol = sym; }
+   void symbol( Symbol* sym ) { m_symbol = sym; }
    
    /** Returns the symbol name associated with this expression.
     \return A symbol name.
@@ -83,6 +86,8 @@ public:
     is returned.
     .*/
    const String& name() const;
+   
+   void name( const String& newName );
 
 protected:
    String m_name;
@@ -101,12 +106,6 @@ protected:
    };   
    
    PStepLValue m_pslv;
-   
-   inline ExprSymbol( operator_t type ):
-      Expression( type ),
-      m_pslv(this)
-   {}
-
 };
 
 }

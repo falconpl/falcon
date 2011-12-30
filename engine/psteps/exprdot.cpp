@@ -27,7 +27,36 @@
 
 namespace Falcon
 {
+ExprDot::ExprDot( const String& prop, Expression* op1, int line, int chr ): 
+   UnaryExpression( op1, line, chr ),
+   m_pslv(this),
+   m_prop(prop)
+{
+   FALCON_DECLARE_SYN_CLASS( expr_dot )
+   apply = apply_;
+   m_pstep_lvalue = &m_pslv;
+}
 
+
+ExprDot::ExprDot( int line, int chr ): 
+   UnaryExpression( line, chr ),
+   m_pslv(this)
+{ 
+   FALCON_DECLARE_SYN_CLASS( expr_dot )
+   apply = apply_; 
+   m_pstep_lvalue = &m_pslv;
+}
+
+
+ExprDot::ExprDot( const ExprDot& other ):
+   UnaryExpression( other ),
+   m_pslv(this),
+   m_prop(other.m_prop)
+{
+   apply = apply_;
+   m_pstep_lvalue = &m_pslv;
+}
+   
 ExprDot::~ExprDot()
 {
 }
@@ -43,6 +72,8 @@ void ExprDot::apply_( const PStep* ps, VMContext* ctx )
 {
    TRACE2( "Apply \"%s\"", ((ExprDot*)ps)->describe().c_ize() );
    const ExprDot* dot_expr = static_cast<const ExprDot*>(ps);
+   
+   fassert( dot_expr->first() != 0 );
    
    CodeFrame& cf = ctx->currentCode();
    if( cf.m_seqId == 0 )
@@ -97,6 +128,12 @@ void ExprDot::PstepLValue::apply_( const PStep* ps, VMContext* ctx )
 
 void ExprDot::describeTo( String& ret, int depth ) const
 {
+   if( m_first == 0 )
+   {
+      ret = "<Blank ExprDOT>";
+      return;
+   }
+   
    ret = "(" + m_first->describe(depth+1) + "." + m_prop + ")";
 }
 

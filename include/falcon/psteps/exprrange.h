@@ -26,8 +26,8 @@ namespace Falcon
 class FALCON_DYN_CLASS ExprRange: public Expression
 {
 public:
-   ExprRange();
-   ExprRange( Expression *estart, Expression* eend=0, Expression* estep=0 );
+   ExprRange( int line = 0, int chr = 0 );
+   ExprRange( Expression *estart, Expression* eend=0, Expression* estep=0, int line = 0, int chr = 0 );
    ExprRange( const ExprRange& other );
    virtual ~ExprRange();
    

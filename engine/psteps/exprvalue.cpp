@@ -28,9 +28,18 @@
 
 namespace Falcon {
 
-ExprValue::ExprValue( const Item& item ):
-      Expression( t_value )
+ExprValue::ExprValue( int line, int chr ):
+   Expression(line, chr),
+   m_lock(0)
 {
+   FALCON_DECLARE_SYN_CLASS( expr_value )
+   apply = apply_;
+}
+
+ExprValue::ExprValue( const Item& item, int line, int chr ):
+      Expression( line, chr )
+{
+   FALCON_DECLARE_SYN_CLASS( expr_value )
    static Collector* coll = Engine::instance()->collector();
 
    m_item.copy(item); // silently copy
@@ -48,7 +57,7 @@ ExprValue::ExprValue( const Item& item ):
 
 
 ExprValue::ExprValue( const ExprValue& other ):
-   Expression( t_value ),
+   Expression( other ),
    m_item( other.m_item )
 {
    static Collector* coll = Engine::instance()->collector();

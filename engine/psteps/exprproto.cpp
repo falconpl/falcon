@@ -49,10 +49,11 @@ public:
 };
 
 
-ExprProto::ExprProto():
-   Expression( Expression::t_prototype ),
+ExprProto::ExprProto( int line, int chr ):
+   Expression( line, chr ),
    _p(new Private)
 {
+   FALCON_DECLARE_SYN_CLASS( expr_proto )
    apply=apply_;
 }
 
@@ -66,6 +67,39 @@ ExprProto::ExprProto( const ExprProto& other ):
 ExprProto::~ExprProto()
 {
    delete _p;
+}
+
+
+int32 ExprProto::arity() const
+{
+   return (int) _p->m_defs.size();
+}
+
+TreeStep* ExprProto::nth( int32 n ) const
+{
+   if( n < 0 ) n = (int)_p->m_defs.size() + n;
+   if( n < 0 || n >= (int)_p->m_defs.size() ) return 0;
+   return _p->m_defs[n]->second;
+}
+
+bool ExprProto::nth( int32 n, TreeStep* ts )
+{
+   if( ts->category() != TreeStep::e_cat_expression ) return false;
+   if( n < 0 ) n = (int)_p->m_defs.size() + n;
+   if( n < 0 || n >= (int)_p->m_defs.size() ) return false;
+   if( ! ts->setParent(this) ) return false;
+   delete _p->m_defs[n]->second;
+   _p->m_defs[n]->second = ts;
+   return true;
+}
+
+
+virtual bool ExprProto::remove( int n )
+{
+   if( n < 0 ) n = (int)_p->m_defs.size() + n;
+   if( n < 0 || n >= (int)_p->m_defs.size() ) return false;
+   delete _p->m_defs[n]->second;
+   _p->m_defs.erase( _p->m_defs.begin() + n );
 }
 
 

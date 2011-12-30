@@ -14,7 +14,7 @@
 */
 
 #include <falcon/trace.h>
-#include <falcon/expression.h>
+#include <falcon/psteps/exprunpack.h>
 #include <falcon/item.h>
 #include <falcon/vm.h>
 #include <falcon/errors/operanderror.h>
@@ -29,6 +29,7 @@
 
 namespace Falcon {
 
+
 class ExprUnpack::Private {
 public:
    std::vector<Symbol*> m_params;
@@ -37,17 +38,28 @@ public:
 //=========================================================
 // Unpack
 
-ExprUnpack::ExprUnpack( Expression* op1, bool isTop ):
-   Expression(t_unpack),
+ExprUnpack::ExprUnpack( Expression* op1, bool isTop, int line, int chr ):
+   Expression(line, chr),
    m_expander(op1),
    m_bIsTop( isTop ),
    _p( new Private )
 {
+   FALCON_DECLARE_SYN_CLASS( expr_unpack )
+   apply = apply_;
+}
+
+ExprUnpack::ExprUnpack( int line, int chr ):
+   Expression(line, chr),
+   m_expander(0),
+   m_bIsTop( false ),
+   _p( new Private )
+{
+   FALCON_DECLARE_SYN_CLASS( expr_unpack )
    apply = apply_;
 }
 
 ExprUnpack::ExprUnpack( const ExprUnpack& other ):
-         Expression(other)
+   Expression(other)
 {
    _p = new Private;
    

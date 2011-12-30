@@ -108,6 +108,8 @@ void generic_apply_( const PStep* ps, VMContext* ctx )
    TRACE2( "Apply \"%s\"", self->describe().c_ize() );
 #endif
 
+   fassert( self->first() != 0 );
+   
    CodeFrame& cf = ctx->currentCode();
    switch( cf.m_seqId )
    {
@@ -198,6 +200,12 @@ void ExprPreInc::apply_( const PStep* ps, VMContext* ctx )
 
 void ExprPreInc::describeTo( String& str, int depth ) const
 {
+   if( m_first == 0 )
+   {
+      str = "<Blank ExprPreInc>";
+      return;
+   }
+   
    str = "++";
    str += m_first->describe(depth+1);
 }
@@ -220,6 +228,12 @@ void ExprPostInc::apply_( const PStep* ps, VMContext* ctx )
 
 void ExprPostInc::describeTo( String& str, int depth ) const
 {
+   if( m_first == 0 )
+   {
+      str = "<Blank ExprPostInc>";
+      return;
+   }
+
    str = m_first->describe(depth+1);
    str += "++";
 }
@@ -242,6 +256,12 @@ void ExprPreDec::apply_( const PStep* ps, VMContext* ctx )
 
 void ExprPreDec::describeTo( String& str, int depth ) const
 {
+   if( m_first == 0 )
+   {
+      str = "<Blank ExprPreDec>";
+      return;
+   }
+   
    str = "--";
    str += m_first->describe(depth+1);
 }
@@ -264,6 +284,12 @@ void ExprPostDec::apply_( const PStep* ps, VMContext* ctx )
 
 void ExprPostDec::describeTo( String& str, int depth ) const
 {
+   if( m_first == 0 )
+   {
+      str = "<Blank ExprPostDec>";
+      return;
+   }
+
    str = m_first->describe(depth+1);
    str += "--";
 }

@@ -17,6 +17,8 @@
 #define _FALCON_EXPRINCDEC_H_
 
 #include <falcon/expression.h>
+#include <falcon/synclasses.h>
+#include <falcon/engine.h>
 
 namespace Falcon
 {
@@ -25,7 +27,7 @@ namespace Falcon
 class FALCON_DYN_CLASS ExprPreInc: public UnaryExpression
 {
 public:
-   FALCON_UNARY_EXPRESSION_CLASS_DECLARATOR( ExprPreInc, t_pre_inc );
+   FALCON_UNARY_EXPRESSION_CLASS_DECLARATOR( ExprPreInc, expr_preinc );
    inline virtual bool isStandAlone() const { return true; }
    
 private:   
@@ -36,7 +38,7 @@ private:
 class FALCON_DYN_CLASS ExprPostInc: public UnaryExpression
 {
 public:
-   FALCON_UNARY_EXPRESSION_CLASS_DECLARATOR( ExprPostInc, t_post_inc );
+   FALCON_UNARY_EXPRESSION_CLASS_DECLARATOR( ExprPostInc, expr_postinc );
    inline virtual bool isStandAlone() const { return true; }
 
 private:
@@ -47,7 +49,7 @@ private:
 class FALCON_DYN_CLASS ExprPreDec: public UnaryExpression
 {
 public:
-   FALCON_UNARY_EXPRESSION_CLASS_DECLARATOR( ExprPreDec, t_pre_dec );
+   FALCON_UNARY_EXPRESSION_CLASS_DECLARATOR( ExprPreDec, expr_predec );
    inline virtual bool isStandAlone() const { return true; }
    
 private:
@@ -58,7 +60,7 @@ private:
 class FALCON_DYN_CLASS ExprPostDec: public UnaryExpression
 {
 public:
-   FALCON_UNARY_EXPRESSION_CLASS_DECLARATOR( ExprPostDec, t_post_dec );
+   FALCON_UNARY_EXPRESSION_CLASS_DECLARATOR( ExprPostDec, expr_postdec );
    inline virtual bool isStandAlone() const { return true; }
 
 private:

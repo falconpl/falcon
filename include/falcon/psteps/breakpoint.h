@@ -30,7 +30,9 @@ class FALCON_DYN_CLASS Breakpoint: public Statement
 {
 public:
    Breakpoint(int32 line=0, int32 chr = 0);
+   Breakpoint( const Breakpoint& other );
    virtual ~Breakpoint();
+   Breakpoint* clone() const;
 
    void describeTo( String& tgt, int depth=0 ) const;
 

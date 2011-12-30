@@ -32,6 +32,50 @@
 
 namespace Falcon {
 
+
+
+ExprMath::ExprMath( Expression* op1, Expression* op2, const String& name, int line, int chr ):
+   BinaryExpression( op1, op2, line, chr ),
+   m_name(name)
+{}
+
+ExprMath::ExprMath( const String& name, int line, int chr ):
+   BinaryExpression( line, chr ),
+   m_name(name)
+{}
+
+ExprMath::ExprMath( const ExprMath& other ):
+   BinaryExpression( other ),
+   m_name(other.m_name)
+{}
+
+void ExprMath::describeTo( String& ret, int depth ) const
+{
+   if( m_first == 0 || m_second == 0 )
+   {
+      ret = "<Blank '" + m_name + "'>";
+      return;
+   }
+   
+   ret = "(" + m_first->describe(depth+1) + m_name + m_second->describe(depth+1) + ")";
+}
+
+
+ExprAuto::ExprAuto( const String& name, int line = 0, int chr = 0 ):
+   ExprMath( name, line, chr )
+{}
+
+
+ExprAuto::ExprAuto( Expression* op1, Expression* op2, const String& name, int line, int chr ):
+   ExprMath( op1, op2, name, line, chr )
+{}
+
+
+ExprAuto::ExprAuto( const ExprAuto& other ):
+   ExprMath(other)
+{}
+
+
 class ExprPlus::ops
 {
 public:
@@ -289,7 +333,10 @@ void generic_apply_( const PStep* ps, VMContext* ctx )
 #ifndef NDEBUG
    TRACE2( "Apply \"%s\"", self->describe().c_ize() );
 #endif
-
+   
+   fassert( self->first() != 0 );
+   fassert( self->second() != 0 );
+   
    CodeFrame& cf = ctx->currentCode();
    switch( cf.m_seqId )
    {
@@ -423,6 +470,20 @@ void generic_apply_<ExprMod::ops>( const PStep* ps, VMContext* ctx );
 template
 void generic_apply_<ExprPow::ops>( const PStep* ps, VMContext* ctx );
 
+template
+void generic_apply_<ExprLShift::ops>( const PStep* ps, VMContext* ctx );
+
+template
+void generic_apply_<ExprRShift::ops>( const PStep* ps, VMContext* ctx );
+
+template
+void generic_apply_<ExprBAND::ops>( const PStep* ps, VMContext* ctx );
+
+template
+void generic_apply_<ExprBOR::ops>( const PStep* ps, VMContext* ctx );
+
+template
+void generic_apply_<ExprBXOR::ops>( const PStep* ps, VMContext* ctx );
 
 template
 void generic_apply_<ExprAutoPlus::ops>( const PStep* ps, VMContext* ctx );
@@ -442,318 +503,57 @@ void generic_apply_<ExprAutoMod::ops>( const PStep* ps, VMContext* ctx );
 template
 void generic_apply_<ExprAutoPow::ops>( const PStep* ps, VMContext* ctx );
 
-//==========================================================
+template
+void generic_apply_<ExprAutoLShift::ops>( const PStep* ps, VMContext* ctx );
 
-
-ExprMath::ExprMath( Expression* op1, Expression* op2, Expression::operator_t t, const String& name ):
-   BinaryExpression( t, op1, op2 ),
-   m_name(name)
-{}
-
-ExprMath::ExprMath( const ExprMath& other ):
-   BinaryExpression( other ),
-   m_name( other.m_name )
-{}
-
-ExprMath::~ExprMath()
-{}
-
-
-void ExprMath::describeTo( String& ret, int depth ) const
-{
-   ret = "(" + m_first->describe(depth+1) + m_name + m_second->describe(depth+1) + ")";
-}
+template
+void generic_apply_<ExprAutoRShift::ops>( const PStep* ps, VMContext* ctx );
 
 //========================================================
-// EXPR Plus
+// Implementation
 //
 
-ExprPlus::ExprPlus( Expression* op1, Expression* op2 ):
-   ExprMath( op1, op2, t_plus, "+" )
-{
-   apply = &generic_apply_<ops>;
-}
+#define FALCON_IMPLEMENT_MATH_EXPR_CLASS( name, symbol, handler ) \
+   name::name( Expression* op1, Expression* op2, int line, int chr ): \
+      ExprMath( op1, op2, symbol, line, chr )\
+      { FALCON_DECLARE_SYN_CLASS( expr_iif ); apply = &generic_apply_<ops>; }\
+   name::name( int line, int chr ): \
+      ExprMath( symbol, line, chr )\
+      { FALCON_DECLARE_SYN_CLASS( expr_iif ); apply = &generic_apply_<ops>; }\
+   bool name::simplify( Item& value ) const {\
+      return generic_simplify<ops>( value, m_first, m_second );\
+   }
 
-ExprPlus::~ExprPlus()
-{}
-
-bool ExprPlus::simplify( Item& value ) const
-{
-   return generic_simplify<ops>( value, m_first, m_second );
-}
-
-
-//========================================================
-// EXPR Minus
-//
-ExprMinus::ExprMinus( Expression* op1, Expression* op2 ):
-   ExprMath( op1, op2, t_minus, "-" )
-{
-   apply = &generic_apply_<ops>;
-}
-
-
-ExprMinus::~ExprMinus()
-{}
-
-bool ExprMinus::simplify( Item& value ) const
-{
-   return generic_simplify<ops>( value, m_first, m_second );
-}
-
-//========================================================
-// EXPR Times
-//
-ExprTimes::ExprTimes( Expression* op1, Expression* op2 ):
-   ExprMath( op1, op2, t_times, "*" )
-{
-   apply = &generic_apply_<ops>;
-}
-
-ExprTimes::~ExprTimes()
-{}
-
-bool ExprTimes::simplify( Item& value ) const
-{
-   return generic_simplify<ops>( value, m_first, m_second );
-}
-
-//========================================================
-// EXPR Div
-//
-ExprDiv::ExprDiv( Expression* op1, Expression* op2 ):
-   ExprMath( op1, op2, t_divide, "/" )
-{
-   apply = &generic_apply_<ops>;
-}
-
-ExprDiv::~ExprDiv()
-{}
-
-bool ExprDiv::simplify( Item& value ) const
-{
-   return generic_simplify<ops>( value, m_first, m_second );
-}
-
-//========================================================
-// EXPR Mod
-//
-ExprMod::ExprMod( Expression* op1, Expression* op2 ):
-   ExprMath( op1, op2, t_modulo, "%" )
-{
-   apply = &generic_apply_<ops>;
-}
-
-ExprMod::~ExprMod()
-{}
-
-bool ExprMod::simplify( Item& value ) const
-{
-   return generic_simplify<ops>( value, m_first, m_second );
-}
-
-//========================================================
-// EXPR LShift
-//
-ExprRShift::ExprRShift( Expression* op1, Expression* op2 ):
-   ExprMath( op1, op2, t_shr, ">>" )
-{
-   apply = &generic_apply_<ops>;
-}
-
-ExprRShift::~ExprRShift()
-{}
-
-bool ExprRShift::simplify( Item& value ) const
-{
-   return generic_simplify<ops>( value, m_first, m_second );
-}
+FALCON_IMPLEMENT_MATH_EXPR_CLASS( ExprPlus, "+", expr_plus )
+FALCON_IMPLEMENT_MATH_EXPR_CLASS( ExprMinus, "-", expr_minus)
+FALCON_IMPLEMENT_MATH_EXPR_CLASS( ExprTimes, "*", expr_times )
+FALCON_IMPLEMENT_MATH_EXPR_CLASS( ExprDiv, "/", expr_div )
+FALCON_IMPLEMENT_MATH_EXPR_CLASS( ExprPow, "**", expr_pow )
+FALCON_IMPLEMENT_MATH_EXPR_CLASS( ExprMod, "%", expr_mod )
+FALCON_IMPLEMENT_MATH_EXPR_CLASS( ExprLShift, "<<", expr_lshift )
+FALCON_IMPLEMENT_MATH_EXPR_CLASS( ExprRShift, ">>", expr_rshift )
+FALCON_IMPLEMENT_MATH_EXPR_CLASS( ExprBAND, "^&", expr_band )
+FALCON_IMPLEMENT_MATH_EXPR_CLASS( ExprBOR, "^|", expr_bor )
+FALCON_IMPLEMENT_MATH_EXPR_CLASS( ExprBXOR, "^^", expr_plus )
 
 
-//========================================================
-// EXPR LShift
-//
-ExprLShift::ExprLShift( Expression* op1, Expression* op2 ):
-   ExprMath( op1, op2, t_shl, "<<" )
-{
-   apply = &generic_apply_<ops>;
-}
 
-ExprLShift::~ExprLShift()
-{}
+#define FALCON_IMPLEMENT_MATH_AUTOEXPR_CLASS( name, symbol, handler ) \
+   name::name( Expression* op1, Expression* op2, int line, int chr ): \
+      ExprMath( op1, op2, symbol, line, chr )\
+      { FALCON_DECLARE_SYN_CLASS( expr_iif ); apply = &generic_apply_<ops>; }\
+   name::name( int line, int chr ): \
+      ExprMath( symbol, line, chr )\
+      { FALCON_DECLARE_SYN_CLASS( expr_iif ); apply = &generic_apply_<ops>; }
 
-bool ExprLShift::simplify( Item& value ) const
-{
-   return generic_simplify<ops>( value, m_first, m_second );
-}
-
-//========================================================
-// EXPR Pow
-//
-ExprPow::ExprPow( Expression* op1, Expression* op2 ):
-   ExprMath( op1, op2, t_neq, "**" )
-{
-   apply = &generic_apply_<ops>;
-}
-
-ExprPow::~ExprPow()
-{}
-
-
-bool ExprPow::simplify( Item& value ) const
-{
-   return generic_simplify<ops>( value, m_first, m_second );
-}
-
-//========================================================
-// EXPR Bitwise and
-//
-ExprBAND::ExprBAND( Expression* op1, Expression* op2 ):
-   ExprMath( op1, op2, t_band, "^&" )
-{
-   apply = &generic_apply_<ops>;
-}
-
-bool ExprBAND::simplify( Item& value ) const
-{
-   return generic_simplify<ops>( value, m_first, m_second );
-}
-
-//========================================================
-// EXPR Bitwise or
-//
-ExprBOR::ExprBOR( Expression* op1, Expression* op2 ):
-   ExprMath( op1, op2, t_bor, "^|" )
-{
-   apply = &generic_apply_<ops>;
-}
-
-bool ExprBOR::simplify( Item& value ) const
-{
-   return generic_simplify<ops>( value, m_first, m_second );
-}
-
-
-//========================================================
-// EXPR Bitwise xor
-//
-ExprBXOR::ExprBXOR( Expression* op1, Expression* op2 ):
-   ExprMath( op1, op2, t_bxor, "^^" )
-{
-   apply = &generic_apply_<ops>;
-}
-
-bool ExprBXOR::simplify( Item& value ) const
-{
-   return generic_simplify<ops>( value, m_first, m_second );
-}
-
-
-//========================================================
-// Auto expressions AAdd
-//
-
-ExprAuto::ExprAuto( Expression* op1, Expression* op2, Expression::operator_t t, const String& name ):
-   ExprMath( op1, op2, t, name )
-{}
-
-//========================================================
-// EXPR AAdd
-//
-ExprAutoPlus::ExprAutoPlus( Expression* op1, Expression* op2 ):
-   ExprAuto( op1, op2, t_aadd, "+=" )
-{
-   apply = &generic_apply_<ops>;
-}
-
-ExprAutoPlus::~ExprAutoPlus()
-{}
-
-//========================================================
-// EXPR ASub
-//
-ExprAutoMinus::ExprAutoMinus( Expression* op1, Expression* op2 ):
-   ExprAuto( op1, op2, t_asub, "-=" )
-{
-   apply = &generic_apply_<ops>;
-}
-
-ExprAutoMinus::~ExprAutoMinus()
-{}
-
-
-//========================================================
-// EXPR ATimes
-//
-ExprAutoTimes::ExprAutoTimes( Expression* op1, Expression* op2 ):
-   ExprAuto( op1, op2, t_amul, "*=" )
-{
-   apply = &generic_apply_<ops>;
-}
-
-ExprAutoTimes::~ExprAutoTimes()
-{}
-
-//========================================================
-// EXPR ADiv
-//
-ExprAutoDiv::ExprAutoDiv( Expression* op1, Expression* op2 ):
-   ExprAuto( op1, op2, t_adiv, "/=" )
-{
-   apply = &generic_apply_<ops>;
-}
-
-ExprAutoDiv::~ExprAutoDiv()
-{}
-
-//========================================================
-// EXPR AMod
-//
-ExprAutoMod::ExprAutoMod( Expression* op1, Expression* op2 ):
-   ExprAuto( op1, op2, t_amod, "%=" )
-{
-   apply = &generic_apply_<ops>;
-}
-
-ExprAutoMod::~ExprAutoMod()
-{}
-
-//========================================================
-// EXPR Apow
-//
-ExprAutoPow::ExprAutoPow( Expression* op1, Expression* op2 ):
-   ExprAuto( op1, op2, t_apow, "**=" )
-{
-   apply = &generic_apply_<ops>;
-}
-
-ExprAutoPow::~ExprAutoPow()
-{}
-
-//========================================================
-// EXPR AShr
-//
-ExprAutoRShift::ExprAutoRShift( Expression* op1, Expression* op2 ):
-   ExprAuto( op1, op2, t_ashr, ">>=" )
-{
-   apply = &generic_apply_<ops>;
-}
-
-ExprAutoRShift::~ExprAutoRShift()
-{}
-
-//========================================================
-// EXPR AMod
-
-ExprAutoLShift::ExprAutoLShift( Expression* op1, Expression* op2 ):
-   ExprAuto( op1, op2, t_shl, "<<=" )
-{
-   apply = &generic_apply_<ops>;
-}
-
-ExprAutoLShift::~ExprAutoLShift()
-{}
-
+FALCON_IMPLEMENT_MATH_AUTOEXPR_CLASS( ExprAutoPlus, "+=", expr_aplus )
+FALCON_IMPLEMENT_MATH_AUTOEXPR_CLASS( ExprAutoMinus, "-=", expr_aminus )
+FALCON_IMPLEMENT_MATH_AUTOEXPR_CLASS( ExprAutoTimes, "*=", expr_atimes )
+FALCON_IMPLEMENT_MATH_AUTOEXPR_CLASS( ExprAutoDiv, "/=", expr_adiv )
+FALCON_IMPLEMENT_MATH_AUTOEXPR_CLASS( ExprAutoPow, "**=", expr_apow )
+FALCON_IMPLEMENT_MATH_AUTOEXPR_CLASS( ExprAutoMod, "%=", expr_amod )
+FALCON_IMPLEMENT_MATH_AUTOEXPR_CLASS( ExprAutoLShift, "<<=", expr_alshift )
+FALCON_IMPLEMENT_MATH_AUTOEXPR_CLASS( ExprAutoRShift, ">>=", expr_arshift )
 
 }
 

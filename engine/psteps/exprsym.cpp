@@ -28,36 +28,50 @@
 
 namespace Falcon {
 
+ExprSymbol::ExprSymbol( int line, int chr ):
+   Expression( line, chr ),
+   m_symbol( 0 ),
+   m_pslv(this)
+{
+   FALCON_DECLARE_SYN_CLASS( expr_sym )
+   apply = apply_;
+   m_pstep_lvalue = &m_pslv;
+}
+
+
+ExprSymbol::ExprSymbol( Symbol* target, int line, int chr ):
+   Expression( line, chr ),
+   m_symbol( target ),
+   m_pslv(this)
+{
+   FALCON_DECLARE_SYN_CLASS( expr_sym )
+   apply = apply_;
+   m_pstep_lvalue = &m_pslv;
+}
+
+
+ExprSymbol::ExprSymbol( const String& name, int line, int chr ):
+   Expression( line, chr ),
+   m_name(name),
+   m_symbol( 0 ),
+   m_pslv(this)
+{
+   FALCON_DECLARE_SYN_CLASS( expr_sym )
+   apply = apply_;
+   m_pstep_lvalue = &m_pslv;
+}
+
+
 ExprSymbol::ExprSymbol( const ExprSymbol& other ):
-      Expression( other ),
-      m_symbol(other.m_symbol),
-      m_pslv(this)
+   Expression( other ),
+   m_name( other.m_name ),
+   m_symbol(other.m_symbol),
+   m_pslv(this)
 {
    apply = apply_;
    m_pstep_lvalue = &m_pslv;
    m_pstep_lvalue->apply = other.m_pstep_lvalue->apply;
 }
-
-ExprSymbol::ExprSymbol( Symbol* target ):
-   Expression( t_symbol ),
-   m_symbol( target ),
-   m_pslv(this)
-{
-   apply = apply_;
-   m_pstep_lvalue = &m_pslv;
-}
-
-ExprSymbol::ExprSymbol( const String& name ):
-   Expression( t_symbol ),
-   m_name(name),
-   m_symbol( 0 ),
-   m_pslv(this)
-{
-   apply = apply_;
-   m_pstep_lvalue = &m_pslv;
-}
-
-
 
 ExprSymbol::~ExprSymbol()
 {
@@ -73,9 +87,26 @@ const String& ExprSymbol::name() const
    return m_name;
 }
 
+void ExprSymbol::name( const String& n )
+{
+   m_name = n;
+}
+
+
 void ExprSymbol::describeTo( String& val, int ) const
 {
-   val = m_symbol != 0 ? m_symbol->name() : m_name;
+   if( m_symbol == 0 )
+   {
+      if ( m_name->size() == 0 )
+      {
+         val = "<Blank ExprSymbol>";
+         return;
+      }
+      val = m_name;
+   }
+   else {   
+      val = m_symbol->name();
+   }
 }
 
 
@@ -88,6 +119,7 @@ void ExprSymbol::PStepLValue::describeTo( String& s, int depth ) const
 void ExprSymbol::apply_( const PStep* ps, VMContext* ctx )
 {
    const ExprSymbol* es = static_cast<const ExprSymbol*>(ps);
+   fassert( m_symbol != 0 );
    ctx->popCode();
    ctx->pushData( *es->m_symbol->value(ctx) );
 }
@@ -96,6 +128,7 @@ void ExprSymbol::apply_( const PStep* ps, VMContext* ctx )
 void ExprSymbol::PStepLValue::apply_( const PStep* ps, VMContext* ctx )
 {
    const ExprSymbol::PStepLValue* es = static_cast<const ExprSymbol::PStepLValue*>(ps);
+   fassert( m_symbol != 0 );
    ctx->popCode();
    *es->m_owner->m_symbol->value(ctx) = ctx->topData();
 }

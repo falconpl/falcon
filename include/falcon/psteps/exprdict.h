@@ -16,24 +16,33 @@
 #ifndef FALCON_EXPRDICT_H
 #define FALCON_EXPRDICT_H
 
-#include <falcon/expression.h>
+#include <falcon/psteps/exprvector.h>
 
 namespace Falcon
 {
 
-/** Expression declaring dictionaries. */
-class FALCON_DYN_CLASS ExprDict: public Expression
+/** Expression declaring dictionaries. 
+ \TODO: plublish a method to insert a parir.
+ \note The remove method removes a pair of elements.
+ */
+class FALCON_DYN_CLASS ExprDict: public ExprVector
 {
 public:
-   ExprDict();
+   ExprDict(int line=0, int chr=0);
    ExprDict( const ExprDict& other );
    virtual ~ExprDict();
-
-   /** Gets the number of sub-expressions in this expression-array.
-    \return Count of expressions held in this array.
+   
+   /** Overridden to forbid acceptance of single elements. */
+   virtual bool insert( int32 pos, TreeStep* element );
+   
+   /** Will remove a pair of element. Pos is the nth pair. */
+   virtual bool remove( int32 pos );
+   
+   /** Return the number of pairs in the dictionary.
+    
+    Equals to arity / 2
     */
-
-   virtual int arity() const;
+   const int pairs() const;
    /** Get the nth expression in the array.
     \param n The number of the expression pair that must be accessed.
     \param first The first expression of the pair.
@@ -59,9 +68,6 @@ public:
    virtual bool isStatic() const { return false; }
    virtual bool simplify( Item& result ) const;
 
-private:
-   class Private;
-   Private* _p;
 };
 
 }
