@@ -29,10 +29,14 @@ class FALCON_DYN_CLASS StmtContinue: public Statement
 {
 public:
    StmtContinue( int32 line=0, int32 chr = 0 );
+   StmtContinue( const StmtContinue& other );
    virtual ~StmtContinue() {};
 
-   void describeTo( String& tgt, int depth=0 ) const;
-   void oneLinerTo( String& tgt ) const;
+   virtual void describeTo( String& tgt, int depth=0 ) const;
+   virtual void oneLinerTo( String& tgt ) const;
+   
+   virtual StmtContinue* clone() const { return new StmtContinue(*this); }
+protected:
    static void apply_( const PStep*, VMContext* ctx );
 };
 

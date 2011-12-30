@@ -60,6 +60,8 @@ public:
    virtual TreeStep* nth( int32 n ) const;
    virtual bool nth( int32 n, TreeStep* ts );
 
+   bool isValid() const = 0;
+   
 protected:
    
    SynTree* m_body;
@@ -74,6 +76,8 @@ protected:
       m_forMiddle(0),
       m_forLast(0)
       {}
+   
+   StmtForBase( const StmtForBase& other );
       
    virtual ~StmtForBase();
    
@@ -104,6 +108,8 @@ protected:
 class FALCON_DYN_CLASS StmtForIn: public StmtForBase
 {
 public:
+   StmtForIn( int32 line=0, int32 chr = 0 );
+   StmtForIn( const StmtForIn& other );
    StmtForIn( Expression* gen, int32 line=0, int32 chr = 0 );
    
    virtual ~StmtForIn();
@@ -125,8 +131,10 @@ public:
    void expandItem( Item& itm, VMContext* ctx ) const;
 
    virtual Expression* selector(); 
-   virtual bool selector( Expression* e ); 
+   virtual bool selector( Expression* e );
+   virtual StmtForIn* clone() const { return new StmtForIn(*this); }
    
+   bool isValid() const;
 private:
    class Private;
    Private* _p;
@@ -194,6 +202,7 @@ class FALCON_DYN_CLASS StmtForTo: public StmtForBase
 {
 public:
    StmtForTo( Symbol* tgt=0, Expression* start=0, Expression* end=0, Expression* step=0, int32 line=0, int32 chr = 0 );      
+   StmtForTo( const StmtForTo& other );
    virtual ~StmtForTo();
       
    Expression* startExpr() const { return m_start; }
@@ -205,8 +214,10 @@ public:
    Expression* stepExpr() const { return m_step; }
    void stepExpr( Expression* s );
       
-   void oneLinerTo( String& tgt ) const;
+   virtual void oneLinerTo( String& tgt ) const;
+   virtual void clone() const { return new StmtForTo(*this);}
    
+   bool isValid() const;
 private:
    // apply is the same as PCODE, but it also checks ND requests.
    static void apply_( const PStep* self, VMContext* ctx );

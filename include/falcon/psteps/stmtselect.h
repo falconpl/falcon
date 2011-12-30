@@ -50,10 +50,15 @@ public:
     for similar reasons.
     */
    StmtSelect( Expression* expr = 0, int32 line = 0, int32 chr = 0 );
+   StmtSelect( const StmtSelect& other );
    virtual ~StmtSelect();
 
    virtual void describeTo( String& tgt, int depth=0 ) const;
-   void oneLinerTo( String& tgt ) const;
+   virtual void oneLinerTo( String& tgt ) const;
+   virtual StmtSelect* clone() const { return new StmtSelect(*this); }
+   
+   virtual Expression* selector() const;
+   virtual bool selector( Expression* expr );
    
    /** Adds a branch for an integer type ID. 
     \param typeId the type ID that will activate this branch.

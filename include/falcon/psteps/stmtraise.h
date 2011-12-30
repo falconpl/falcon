@@ -29,22 +29,27 @@ class Expression;
 class FALCON_DYN_CLASS StmtRaise: public Statement
 {
 public:
+   StmtRaise( int32 line=0, int32 chr = 0 );
+   
    /** Raises an expression.
     \param risen The expression generating the sitem to be risen (mandatory).
     \param line The line where this statement is declared.
     \param chr The character where this statement is delcared.
     */
-   StmtRaise( Expression* risen, int32 line=0, int32 chr = 0 );   
+   StmtRaise( Expression* risen, int32 line=0, int32 chr = 0 ); 
+   StmtRaise( const StmtRaise& other ); 
+   
    virtual ~StmtRaise();
 
    virtual void describeTo( String& tgt, int depth=0 ) const;
-   void oneLinerTo( String& tgt ) const;
+   virtual void oneLinerTo( String& tgt ) const;
+   virtual StmtRaise* clone() const { return new StmtRaise(*this); }
 
    /** Gets the expression generating the item to be raised. 
     */
    Expression* expr() const { return m_expr; }      
 
-   virtual Expression* selector(); 
+   virtual Expression* selector() const; 
    virtual bool selector( Expression* e ); 
    
 private:

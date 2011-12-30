@@ -82,12 +82,11 @@ StmtSelect::StmtSelect( Expression* expr, int32 line, int32 chr ):
    m_defaultBlock(0),
    m_module(0)
 {
-   static Class* mycls = &Engine::instance()->synclasses()->m_stmt_select;
-   m_class = mycls;
-
+   FALCON_DECLARE_SYN_CLASS( stmt_select );
    
    if (expr != 0 )
    {
+      expr->setParent(this);
       apply = apply_;
    }
    else
@@ -95,6 +94,32 @@ StmtSelect::StmtSelect( Expression* expr, int32 line, int32 chr ):
       // we're used just as a dictionary.
       apply = 0;
    }
+}
+
+StmtSelect::StmtSelect( const StmtSelect& other ):
+   m_expr(0),
+   m_defaultBlock(0)
+{
+   if ( other.m_expr != 0 )
+   {
+      m_expr = other.m_expr->clone();
+      m_expr->setParent(this);
+      apply = apply_;
+   }
+   else
+   {
+      // we're used just as a dictionary.
+      apply = 0;
+   }
+   
+   if ( other.m_defaultBlock != 0 )
+   {
+      m_defaultBlock = other.m_expr->clone();
+      m_defaultBlock->setParent(this);
+   }
+   
+   // TODO: Copy the blocks
+   _p = new Private;
 }
 
 StmtSelect::~StmtSelect() 
@@ -107,15 +132,46 @@ StmtSelect::~StmtSelect()
 
 void StmtSelect::describeTo( String& tgt, int depth ) const
 {
-   String prefix = String(" ").replicate( depth * depthIndent );
-   tgt = prefix + "select " + m_expr->oneLiner() +"\n";
-   // TODO 
+   if( m_expr != 0 )
+   {
+      String prefix = String(" ").replicate( depth * depthIndent );
+      tgt = prefix + "select " + m_expr->describe() +"\n";      
+   }
+
+   //TODO...
 }
 
 
+Expression* StmtSelect::selector() const
+{
+   return m_expr;
+}
+
+
+bool StmtSelect::selector( Expression* expr )
+{
+   if( expr == 0 )
+   {
+      delete m_expr;
+      m_expr = 0;
+      // we're used just as a dictionary.
+      apply = 0;
+   }
+   else {
+      if( ! expr->setParent(this) ) return false;
+      delete m_expr;
+      m_expr = expr;
+      apply = apply_;
+   }
+   return true;
+}
+   
 void StmtSelect::oneLinerTo( String& tgt ) const
 {
-   tgt = "select " + m_expr->oneLiner();
+   if( m_expr != 0 )
+   {
+      tgt = "select " + m_expr->oneLiner();
+   }
 }
 
 bool StmtSelect::addSelectType( int64 typeId, SynTree* block )
@@ -129,6 +185,7 @@ bool StmtSelect::addSelectType( int64 typeId, SynTree* block )
    // save the block only if not just pushed in the last operation.
    if( _p->m_blocks.empty() || _p->m_blocks.back() != block )
    {
+      if( ! block->setParent(this) ) return false;
       _p->m_blocks.push_back( block );
    }
    
@@ -148,6 +205,7 @@ bool StmtSelect::addSelectClass( Class* cls, SynTree* block )
    // save the block only if not just pushed in the last operation.
    if( _p->m_blocks.empty() || _p->m_blocks.back() != block )
    {
+      if( ! block->setParent(this) ) return false;
       _p->m_blocks.push_back( block );
    }
    
@@ -166,6 +224,7 @@ Requirement* StmtSelect::addSelectName( const String& name, SynTree* block )
 {      
    if( _p->m_blocks.empty() || _p->m_blocks.back() != block )
    {
+      if( ! block->setParent(this) ) return false;
       _p->m_blocks.push_back( block );
    }
    
@@ -247,12 +306,13 @@ SynTree* StmtSelect::findBlockForItem( const Item& itm ) const
  
 
 bool StmtSelect::setDefault( SynTree* block )
-{
-   if( m_defaultBlock )
+{   
+   if( ! block->setParent(this) )
    {
       return false;
    }
    
+   delete m_defaultBlock;
    m_defaultBlock = block;
    return true;
 }

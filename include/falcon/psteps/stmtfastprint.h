@@ -20,6 +20,7 @@
 
 namespace Falcon
 {
+class ExprVector_Private;
 
 /** Fastprint statement.
  The fastprint statement is a line beginning with ">" or ">>", printing 
@@ -29,8 +30,16 @@ namespace Falcon
 class FALCON_DYN_CLASS StmtFastPrint: public Statement
 {
 public:
-   StmtFastPrint( bool bAddNL = true, int line = 0, int chr = 0 );
+   StmtFastPrint( int line = 0, int chr = 0 );
+   StmtFastPrint( bool bAddNL, int line = 0, int chr = 0 );
+   StmtFastPrint( const StmtFastPrint& other );
    virtual ~StmtFastPrint();
+   
+   virtual int arity() const;
+   virtual TreeStep* nth( int32 n ) const;
+   virtual bool nth( int32 n, TreeStep* ts );
+   virtual bool insert( int32 n, TreeStep* ts );
+   virtual bool remove( int32 n );
    
    void add( Expression* expr );
    Expression* at( int n ) const;
@@ -38,13 +47,15 @@ public:
    
    virtual void describeTo( String& str, int depth=0 ) const;
    virtual void oneLinerTo( String& str ) const;
+   virtual StmtFastPrint* clone() const { return new StmtFastPrint(*this); }
    
+   void setAddNL( bool b ) { m_bAddNL = b ; }
+   bool isAddNL() const { return m_bAddNL; }
+
 protected:
-   class Private;
-   Private* _p;
+   ExprVector_Private* _p;
    
-   bool m_bAddNL;
-   
+   bool m_bAddNL;   
    static void apply_( const PStep*, VMContext* ctx );
 };
 

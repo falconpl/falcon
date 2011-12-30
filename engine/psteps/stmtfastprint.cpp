@@ -22,47 +22,75 @@
 #include <falcon/textwriter.h>
 #include <falcon/psteps/stmtfastprint.h>
 
-#include <deque>
+#include <falcon/synclasses.h>
+#include <falcon/engine.h>
+
+#include "exprvector_private.h"
 
 namespace Falcon
 {
 
-class StmtFastPrint::Private
+StmtFastPrint::StmtFastPrint( int line, int chr ):
+   Statement( line, chr ),
+   _p( new ExprVector_Private ),   
+   m_bAddNL( true )
 {
-public:
-   typedef std::deque<Expression*> ExprList;   
-   ExprList m_exprs;
-   
-   Private() {}
-   ~Private() 
-   {
-      ExprList::iterator iter = m_exprs.begin();
-      while( iter != m_exprs.end() )
-      {
-         delete *iter;
-         ++iter;
-      }
-   }
-};
+   FALCON_DECLARE_SYN_CLASS(stmt_fastprint)
+   apply = apply_;
+}
 
 
 StmtFastPrint::StmtFastPrint( bool bAddNL, int line, int chr ):
    Statement( line, chr ),
-   _p( new Private ),   
+   _p( new ExprVector_Private ),   
    m_bAddNL( bAddNL )
 {
-   static Class* mycls = &Engine::instance()->synclasses()->m_stmt_fastprint;
-   m_class = mycls;
-   
+   FALCON_DECLARE_SYN_CLASS(stmt_fastprint)
    apply = apply_;
 }
 
+StmtFastPrint::StmtFastPrint( const StmtFastPrint& other ):
+   Statement( other ),
+   _p( new ExprVector_Private(*other._p) ),   
+   m_bAddNL( other.m_bAddNL )
+{
+   apply = apply_;
+}
 
 StmtFastPrint::~StmtFastPrint()
 {
    delete _p;
 }
-   
+
+
+
+int StmtFastPrint::arity() const
+{
+   return _p->arity();
+}
+
+TreeStep* ExprVector::nth( int32 n ) const
+{
+   return _p->nth(n);
+}
+
+bool StmtFastPrint::nth( int32 n, TreeStep* ts )
+{
+   if( ts == 0 || ts->category() != TreeStep::e_cat_expression ) return false;
+   return _p->nth(n, ts, this );
+}
+
+bool StmtFastPrint::insert( int32 n, TreeStep* ts )
+{   
+   if( ts == 0 || ts->category() != TreeStep::e_cat_expression ) return false;
+   return _p->insert(n, ts, this );
+}
+
+bool StmtFastPrint::remove( int32 n )
+{   
+   return _p->remove(n);
+}
+
 
 void StmtFastPrint::add( Expression* expr )
 {
@@ -87,7 +115,7 @@ void StmtFastPrint::describeTo( String& str, int depth ) const
    str = String( " " ).replicate( depth * depthIndent ) + 
       (m_bAddNL ? "> " : ">> ");
    
-   Private::ExprList::iterator iter = _p->m_exprs.begin();
+   ExprVector_Private::ExprVector::iterator iter = _p->m_exprs.begin();
    while( iter != _p->m_exprs.end() )
    {
       str += (*iter)->describe( depth + 1 );
@@ -104,7 +132,7 @@ void StmtFastPrint::oneLinerTo( String& str ) const
 {
    str = (m_bAddNL ? "> " : ">> ");
    
-   Private::ExprList::iterator iter = _p->m_exprs.begin();
+   ExprVector_Private::ExprVector::iterator iter = _p->m_exprs.begin();
    while( iter != _p->m_exprs.end() )
    {
       str += (*iter)->oneLiner();
@@ -120,7 +148,7 @@ void StmtFastPrint::oneLinerTo( String& str ) const
 void StmtFastPrint::apply_( const PStep* ps, VMContext* ctx )
 {
    const StmtFastPrint* self = static_cast< const StmtFastPrint*>( ps );   
-   Private::ExprList& pl = self->_p->m_exprs;
+   ExprVector_Private::ExprVector& pl = self->_p->m_exprs;
    CodeFrame& cframe = ctx->currentCode();
    int seqId = cframe.m_seqId;
    

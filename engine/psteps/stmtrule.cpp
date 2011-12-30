@@ -27,36 +27,38 @@
 #include <falcon/engine.h>
 #include <falcon/synclasses.h>
 
+#include "exprvector_private.h"
+
 namespace Falcon
 {
 
-
 class StmtRule::Private {
 public:
-   typedef std::vector<RuleSynTree*> AltTrees;
-   AltTrees m_altTrees;
+   typedef TSVector_Private<RuleSynTree> RuleVector;
+   RuleVector m_altTrees;
    
-   ~Private()
-   {
-      AltTrees::iterator iter = m_altTrees.begin();
-      while( iter != m_altTrees.end() )
-      {
-         delete *iter;
-         ++iter;
-      }
-   }
+   Private() {}
+   ~Private() {}
+   
+   Private( const Private& other, TreeStep* owner ):
+      m_altTrees( other.m_altTrees, owner )
+   {}
 };
 
 StmtRule::StmtRule( int32 line, int32 chr ):
    Statement( line, chr )
 {
-   static Class* mycls = &Engine::instance()->synclasses()->m_stmt_rule;
-   m_class = mycls;
+   FALCON_DECLARE_SYN_CLASS( stmt_rule );
    
    apply = apply_;
-   _p = new Private;
-   // create a base rule syntree
-   _p->m_altTrees.push_back( new RuleSynTree() );
+   _p = new Private;   
+}
+
+StmtRule::StmtRule( const StmtRule& other ):
+   Statement( other )
+{  
+   apply = apply_;   
+   _p = new Private( other._p, this );   
 }
 
 
@@ -68,34 +70,60 @@ StmtRule::~StmtRule()
 
 StmtRule& StmtRule::addStatement( Statement* stmt )
 {
-   _p->m_altTrees.back()->append( stmt );
+   if( _p->m_altTrees.arity() == 0 )
+   {
+      // create a base rule syntree
+      TreeStep* st = new RuleSynTree();
+      st->setParent(this);
+      _p->m_altTrees.m_exprs.push_back(st);
+   }
+      
+   _p->m_altTrees.m_exprs.back()->append( stmt );
    return *this;
 }
 
+
 SynTree& StmtRule::currentTree()
 {
-   return *_p->m_altTrees.back();
+   if( _p->m_altTrees.arity() == 0 )
+   {
+      // create a base rule syntree
+      TreeStep* st = new RuleSynTree();
+      st->setParent(this);
+      _p->m_altTrees.m_exprs.push_back(st);
+   }
+      
+   return *_p->m_altTrees.m_exprs.back();
 }
 
 const SynTree& StmtRule::currentTree() const
 {
-   return *_p->m_altTrees.back();
+   return *_p->m_altTrees.m_exprs.back();
 }
+
 StmtRule& StmtRule::addAlternative()
 {
-   _p->m_altTrees.push_back( new RuleSynTree() );
+   RuleSynTree* st = new RuleSynTree();
+   st->setParent(this);
+   _p->m_altTrees.m_exprs.push_back( st );
    return *this;
 }
 
 
 void StmtRule::describeTo( String& tgt, int depth ) const
 {
+   if( _p->m_altTrees.arity() == 0 )
+   {
+      tgt = "<Blank StmtRule>";
+      return;
+   }
+   
    String prefix = String( " " ).replicate( depth * depthIndent );
       
    tgt += prefix + "rule\n";
    bool bFirst = true;
-   Private::AltTrees::const_iterator iter = _p->m_altTrees.begin();
-   while( iter != _p->m_altTrees.end() )
+   Private::RuleVector::ExprVector::const_iterator iter = _p->m_altTrees.m_exprs.begin();
+   while( iter != _p->m_altTrees.m_exprs.end() )
    {
       if( ! bFirst )
       {
@@ -109,11 +137,25 @@ void StmtRule::describeTo( String& tgt, int depth ) const
 }
 
 
+void StmtRule::oneLinerTo( String& tgt ) const
+{
+   if( _p->m_altTrees.arity() == 0 )
+   {
+      tgt = "<Blank StmtRule>";
+      return;
+   }
+   
+   tgt += "rule ...";
+}
+
+
 void StmtRule::apply_( const PStep*s1 , VMContext* ctx )
 {
    const StmtRule* self = static_cast<const StmtRule*>(s1);
    CodeFrame& cf = ctx->currentCode();
 
+   fassert( _p->m_altTrees.arity() > 0 );
+   
    // Always process the first alternative
    if ( cf.m_seqId > 0 && ctx->ruleEntryResult() )
    {
@@ -155,10 +197,20 @@ void StmtRule::apply_( const PStep*s1 , VMContext* ctx )
 // Statement cut
 //
 
+StmtCut::StmtCut( int32 line, int32 chr ):
+   Statement( line, chr ),
+   m_expr(0)
+{ 
+   FALCON_DECLARE_SYN_CLASS( stmt_cut );
+   apply = apply_;
+}
+
+
 StmtCut::StmtCut( Expression* expr, int32 line, int32 chr ):
    Statement( line, chr ),
    m_expr(expr)
 {
+   FALCON_DECLARE_SYN_CLASS( stmt_cut );
    static Class* mycls = &Engine::instance()->synclasses()->m_stmt_cut;
    m_class = mycls;
 
@@ -168,25 +220,84 @@ StmtCut::StmtCut( Expression* expr, int32 line, int32 chr ):
    }
    else
    {
+      expr->setParent(this);
       apply = apply_cut_expr_;
    }
 }
+
+StmtCut::StmtCut( const StmtCut& other ):
+   Statement( other ),
+   m_expr(0)
+{ 
+   if( other.m_expr == 0 )
+   {
+      apply = apply_;
+   }
+   else
+   {
+      m_expr = other.m_expr->clone();
+      m_expr->setParent(this);
+      apply = apply_cut_expr_;
+   }
+}
+
 
 StmtCut::~StmtCut()
 {
    delete m_expr;
 }
 
-void StmtCut::describeTo( String& tgt ) const
+void StmtCut::describeTo( String& tgt, int depth ) const
 {
-   tgt += "!";
+   String prefix = String(" ").replicate(depth * depthIndent);
+   tgt = prefix + "!";
    if( m_expr != 0 )
    {
       tgt += " ";
-      tgt += m_expr->describe();
+      tgt += m_expr->describe(depth+1);
    }
 }
 
+void StmtCut::oneLinerTo( String& tgt ) const
+{
+   tgt = "!";
+   if( m_expr != 0 )
+   {
+      tgt += " ";
+      tgt += m_expr->oneLiner();
+   }
+}
+
+
+Expression* StmtCut::selector()  const
+{
+   return m_expr;
+}
+
+
+bool StmtCut::selector( Expression* expr )
+{
+   if( expr == 0 )
+   {
+      apply = apply_;
+      delete m_expr;
+      m_expr = 0;
+      return true;
+   }
+   else
+   {
+      if ( expr->setParent(this) ) {
+         apply = apply_cut_expr_;
+         delete m_expr;
+         m_expr = expr;
+         return true;
+      }
+   }
+   
+   return false;
+}
+
+   
 void StmtCut::apply_( const PStep*, VMContext* ctx )
 {
    ctx->unrollRuleBranches(); // which also pops us
@@ -227,15 +338,34 @@ void StmtCut::apply_cut_expr_( const PStep* ps, VMContext* ctx )
 // Statement doubt
 //
 
+StmtDoubt::StmtDoubt( int32 line, int32 chr ):
+   Statement( line, chr ),
+   m_expr(0)
+{
+   FALCON_DECLARE_SYN_CLASS( stmt_doubt );
+   apply = apply_;
+}
 
 StmtDoubt::StmtDoubt( Expression* expr, int32 line, int32 chr ):
    Statement( line, chr ),
    m_expr(expr)
 {
-   static Class* mycls = &Engine::instance()->synclasses()->m_stmt_doubt;
-   m_class = mycls;
-   
+   FALCON_DECLARE_SYN_CLASS( stmt_doubt );   
    apply = apply_;
+   expr->setParent(this);
+}
+
+
+StmtDoubt::StmtDoubt( const StmtDoubt& other ):
+   Statement( other ),
+   m_expr(0)
+{
+   apply = apply_;
+   if( other.m_expr != 0 )
+   {
+      m_expr = other.m_expr->clone();
+      m_expr->setParent(this);
+   }
 }
 
 StmtDoubt::~StmtDoubt()
@@ -243,15 +373,34 @@ StmtDoubt::~StmtDoubt()
    delete m_expr;
 }
 
-void StmtDoubt::describeTo( String& tgt ) const
+void StmtDoubt::describeTo( String& tgt, int depth ) const
 {
+   if( m_expr == 0 ) {
+      tgt = "<Blank StmtDoubt>";
+      return;
+   }
+   
+   tgt += String(" ").replicate( depth * depthIndent) + "? ";
+   tgt += m_expr->describe( depth + 1 );
+}
+
+
+void StmtDoubt::oneLinerTo( String& tgt ) const
+{
+   if( m_expr == 0 ) {
+      tgt = "<Blank StmtDoubt>";
+      return;
+   }
+     
    tgt += "? ";
-   tgt += m_expr->describe();
+   tgt += m_expr->oneLiner();
 }
 
 void StmtDoubt::apply_( const PStep* ps, VMContext* ctx )
 {  
    CodeFrame& cf = ctx->currentCode();
+   
+   fassert( m_expr != 0 );
    
    // first time around? -- call the expression.
    if( cf.m_seqId == 0 )

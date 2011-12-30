@@ -31,15 +31,39 @@
 namespace Falcon 
 {
 
+StmtAutoexpr::StmtAutoexpr( int32 line, int32 chr ):
+   Statement( line, chr ),
+   m_expr( 0 ),
+   m_bInteractive( false ),
+   m_bInRule( false )
+{
+   FALCON_DECLARE_SYN_CLASS(stmt_autoexpr)
+   apply = apply_; 
+}
+
 StmtAutoexpr::StmtAutoexpr( Expression* expr, int32 line, int32 chr ):
    Statement( line, chr ),
    m_expr( expr ),
    m_bInteractive( false ),
    m_bInRule( false )
 {
-   static Class* mycls = &Engine::instance()->synclasses()->m_stmt_autoexpr;
-   m_class = mycls;
+   FALCON_DECLARE_SYN_CLASS(stmt_autoexpr);
    apply = apply_; 
+   expr->setParent(this);
+}
+
+StmtAutoexpr::StmtAutoexpr( const StmtAutoexpr& other ):
+   Statement(other),
+   m_expr(0),
+   m_bInteractive( other.m_bInteractive ),
+   m_bInRule( other.m_bInRule )
+{
+   apply = apply_; 
+   
+   if( other.m_expr != 0 ) {
+      m_expr = other.m_expr->clone();
+      m_expr->setParent(this);
+   }
 }
 
 StmtAutoexpr::~StmtAutoexpr()
@@ -49,6 +73,12 @@ StmtAutoexpr::~StmtAutoexpr()
 
 void StmtAutoexpr::describeTo( String& tgt, int depth ) const
 {
+   if( m_expr == 0 )
+   {
+      tgt = "<Blank StmtAutoexpr>";
+      return;
+   }
+   
    tgt += String(" ").replicate( depth * depthIndent ) + m_expr->describe();
 }
 
@@ -58,7 +88,7 @@ void StmtAutoexpr::oneLinerTo( String& tgt ) const
 }
 
 
-Expression* StmtAutoexpr::selector()
+Expression* StmtAutoexpr::selector() const
 {
    return m_expr;
 }
@@ -66,7 +96,7 @@ Expression* StmtAutoexpr::selector()
 
 bool StmtAutoexpr::selector( Expression* e )
 {
-   if( e == 0 || ! e->parent(this) ) return false;
+   if( e == 0 || ! e->setParent(this) ) return false;
    delete m_expr;
    m_expr = e;
    return true;
@@ -119,6 +149,8 @@ void StmtAutoexpr::apply_( const PStep* ps, VMContext* ctx )
    const StmtAutoexpr* self = static_cast<const StmtAutoexpr*>( ps );
    TRACE3( "StmtAutoexpr apply: %p (%s)", self, self->describe().c_ize() );
    
+   fassert( m_expr != 0 );
+   
    CodeFrame& cf = ctx->currentCode();
    // first time, try to run the expression.
    if( cf.m_seqId == 0 )
@@ -140,6 +172,8 @@ void StmtAutoexpr::apply_interactive_( const PStep* ps, VMContext* ctx )
 {
    const StmtAutoexpr* self = static_cast<const StmtAutoexpr*>( ps );
    TRACE3( "StmtAutoexpr apply interactive: %p (%s)", self, self->describe().c_ize() );
+   
+   fassert( m_expr != 0 );
    
    CodeFrame& cf = ctx->currentCode();
    // first time, try to run the expression.

@@ -26,16 +26,25 @@
 namespace Falcon
 {
 
+StmtReturn::StmtReturn( int32 line, int32 chr ):
+   Statement( line, chr ),
+   m_expr( 0 ),
+   m_bHasDoubt( false )
+{
+   FALCON_DECLARE_SYN_CLASS( stmt_return );   
+   apply = apply_;
+}
+
 StmtReturn::StmtReturn( Expression* expr, int32 line, int32 chr ):
    Statement( line, chr ),
    m_expr( expr ),
    m_bHasDoubt( false )
 {
-   static Class* mycls = &Engine::instance()->synclasses()->m_stmt_return;
-   m_class = mycls;
-
+   FALCON_DECLARE_SYN_CLASS( stmt_return );   
+   
    if ( expr )
    {
+      expr->setParent(this);
       apply = apply_expr_;
    }
    else
@@ -44,31 +53,55 @@ StmtReturn::StmtReturn( Expression* expr, int32 line, int32 chr ):
    }
 }
 
+
+StmtReturn::StmtReturn( const StmtReturn& other ):
+   Statement( other ),
+   m_expr( 0 ),
+   m_bHasDoubt( false )
+{
+   FALCON_DECLARE_SYN_CLASS( stmt_return );   
+   
+   if ( other.m_expr )
+   {
+      m_expr = other.m_expr;
+      m_expr->setParent(this);
+      apply = apply_expr_;
+   }
+   else
+   {
+      apply = apply_;
+   }
+}
+
+
 StmtReturn::~StmtReturn()
 {
    delete m_expr;
 }
 
-void StmtReturn::expression( Expression* expr )
-{
-   delete m_expr;
-   m_expr = expr;
-   apply = m_bHasDoubt ? apply_expr_doubt_ : apply_expr_;
-}
-
-
-Expression* StmtRaise::selector()
+Expression* StmtRaise::selector() const
 {
    return m_expr;
 }
 
+
 bool StmtRaise::selector( Expression* e )
 {
-   if( e!= 0 && e->parent(this) )
+   if( e!= 0  )
    {
-      delete m_expr;
-      m_expr = e;
+      if( e->setParent(this) )
+      {
+         delete m_expr;
+         m_expr = e;
+         apply = m_bHasDoubt ? apply_expr_doubt_ : apply_expr_;
+         return true;
+      }
+      return false;
    }
+      
+   delete m_expr;
+   m_expr = 0;
+   apply = m_bHasDoubt ? apply_doubt_ : apply_;
    return true;
 }
 

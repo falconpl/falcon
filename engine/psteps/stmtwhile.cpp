@@ -25,46 +25,77 @@
 namespace Falcon
 {
 
+StmtWhile::StmtWhile(int32 line, int32 chr ):
+   Statement( line, chr ),
+   m_stmts( 0 ),
+   m_expr( 0 )
+{
+   FALCON_DECLARE_SYN_CLASS( stmt_while );
+   
+   apply = apply_;
+   m_bIsLoopBase = true;
+}
+
 StmtWhile::StmtWhile( Expression* expr, SynTree* stmts, int32 line, int32 chr ):
    Statement( line, chr ),
    m_stmts( stmts ),
    m_expr( expr )
 {
-   static Class* classWhile = &Engine::instance()->synclasses()->m_stmt_while;
-   m_class = classWhile;
+   FALCON_DECLARE_SYN_CLASS( stmt_while );
    
    stmts->setParent(this);
    expr->setParent(this);
    
    apply = apply_;
-   m_class = classWhile;
    m_bIsLoopBase = true;
 }
+
 
 StmtWhile::StmtWhile( Expression* expr, int32 line, int32 chr ):
    Statement( line, chr ),
    m_stmts( 0 ),
    m_expr( expr )
 {
-   static Class* classWhile = &Engine::instance()->synclasses()->m_stmt_while;
-   m_class = classWhile;
+   FALCON_DECLARE_SYN_CLASS( stmt_while );
    
    m_stmts = new SynTree;
    m_stmts->setParent(this);
    expr->setParent(this);
    apply = apply_;
-   m_class = classWhile;
    m_bIsLoopBase = true;
 }
 
 
+
+StmtWhile::StmtWhile( const StmtWhile& other ):
+   Statement( other ),
+   m_stmts( 0 ),
+   m_expr( 0 )
+{
+   apply = apply_;
+   m_bIsLoopBase = true;
+   
+   if( other.m_stmts )
+   {
+      m_stmts = other.m_stmts->clone();
+      m_stmts->setParent(this);
+   }
+   
+   if( other.m_expr != 0 )
+   {
+      m_expr = other.m_expr->clone();
+      m_expr->setParent(this);      
+   }
+}
+
 StmtWhile::~StmtWhile()
 {
    delete m_stmts;
+   delete m_expr;
 }
 
 
-Expression* StmtWhile::selector()
+Expression* StmtWhile::selector() const
 {
    return m_expr;
 }
@@ -81,23 +112,28 @@ bool StmtWhile::selector( Expression* e )
    
 void StmtWhile::oneLinerTo( String& tgt ) const
 {
+   if( m_expr == 0 )
+   {
+      tgt = "<Blank StmtWhile>";
+      return;
+   }
+   
    tgt = "while " + m_expr->oneLiner();
 }
 
 
 void StmtWhile::describeTo( String& tgt, int depth ) const
 {
-   String prefix = String(" ").replicate( depth * depthIndent );
-   if( m_stmts )
+   if( m_expr == 0 || m_stmts == 0 )
    {
-      tgt += prefix + "while " + m_expr->describe(depth+1) + "\n" +
+      tgt = "<Blank StmtWhile>";
+      return;
+   }
+   
+   String prefix = String(" ").replicate( depth * depthIndent );
+   tgt += prefix + "while " + m_expr->describe(depth+1) + "\n" +
            m_stmts->describe(depth+1) + "\n" +
          prefix + "end";
-   }
-   else
-   {
-      tgt = "while";
-   }
 }
 
 int StmtWhile::arity() const
@@ -114,7 +150,7 @@ TreeStep* StmtWhile::nth( int n ) const
 
 bool StmtWhile::nth( int n, SynTree* st )
 {
-   if( st != 0 || ! st->setParent(this) ) return false;
+   if( st == 0 || ! st->setParent(this) ) return false;
    
    if( n == 0 || n == -1 ) 
    {
@@ -129,6 +165,9 @@ bool StmtWhile::nth( int n, SynTree* st )
 void StmtWhile::apply_( const PStep* s1, VMContext* ctx )
 {
    const StmtWhile* self = static_cast<const StmtWhile*>(s1);
+   TRACE( "StmtWhile::apply_ entering %s", self->oneLiner().c_str() );
+   fassert( m_expr != 0 );
+   fassert( m_stmts != 0 );
    
    CodeFrame& cf = ctx->currentCode();
    

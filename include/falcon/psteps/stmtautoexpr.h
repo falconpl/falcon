@@ -31,16 +31,13 @@ namespace Falcon {
 class FALCON_DYN_CLASS StmtAutoexpr: public Statement
 {
 public:
+   StmtAutoexpr( int32 line=0, int32 chr = 0 );
    StmtAutoexpr( Expression* expr, int32 line=0, int32 chr = 0 );
+   StmtAutoexpr( const StmtAutoexpr& other );
    virtual ~StmtAutoexpr();
 
    void describeTo( String& tgt, int depth=0 ) const;
-   void oneLinerTo( String& tgt ) const;
-
-   /** Returns the expression held by this expression-statement.
-    \return The held expression, or 0 if it was not set.
-    */
-   Expression* expr() const { return m_expr; }
+   void oneLinerTo( String& tgt ) const;   
 
    /** Removes the expression stored in this AutoExpression.
     \return The held expression, or 0 if it was not set.
@@ -50,10 +47,12 @@ public:
     */
    Expression* detachExpr() {
       Expression* expr = m_expr;
+      m_expr->setParent(0);
       m_expr = 0;
       return expr;
    }
    
+   virtual inline StmtAutoexpr* clone() const { return new StmtAutoexpr(this); }
    
    void setInteractive( bool bInter );
    bool isInteractive() const { return m_bInteractive; }
@@ -61,7 +60,9 @@ public:
    void setInRule( bool bRule );
    bool isInRule() const { return m_bInRule; }
    
+   /** Returns the selector of this autoexpression. */
    virtual Expression* selector(); 
+   
    virtual bool selector( Expression* e ); 
    
 private:

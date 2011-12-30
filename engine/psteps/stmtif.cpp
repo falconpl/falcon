@@ -13,6 +13,8 @@
    See LICENSE file for licensing details.
 */
 
+#define SRC "engine/psteps/stmtif.cpp"
+
 #include <falcon/trace.h>
 #include <falcon/expression.h>
 #include <falcon/vmcontext.h>
@@ -21,25 +23,18 @@
 #include <falcon/psteps/stmtif.h>
 #include <falcon/engine.h>
 #include <falcon/synclasses.h>
-
 #include <vector>
+
+#include "exprvector_private.h"
 
 namespace Falcon
 {
 
-
-struct StmtIf::Private
-{
-    typedef std::vector< SynTree* > ElifVector;
-    ElifVector m_elifs;
-};
-
 StmtIf::StmtIf( SynTree* ifTrue, SynTree* ifFalse, int32 line, int32 chr ):
    Statement( line, chr ),
-   _p( new Private )
+   _p( new STVector_Private )
 {
-   static Class* mycls = &Engine::instance()->synclasses()->m_stmt_forto;
-   m_class = mycls;
+   FALCON_DECLARE_SYN_CLASS(stmt_if)
 
    apply = apply_;
 
@@ -55,9 +50,7 @@ StmtIf::StmtIf( SynTree* ifTrue, int32 line, int32 chr ):
    Statement( line, chr ),
    _p( new Private )
 {
-   static Class* mycls = &Engine::instance()->synclasses()->m_stmt_forto;
-   m_class = mycls;
-
+   FALCON_DECLARE_SYN_CLASS(stmt_if)
    apply = apply_;
 
    addElif( ifTrue );
@@ -68,109 +61,64 @@ StmtIf::StmtIf( int32 line, int32 chr ):
    Statement( line, chr ),
    _p( new Private )
 {
-   static Class* mycls = &Engine::instance()->synclasses()->m_stmt_forto;
-   m_class = mycls;
-
+   FALCON_DECLARE_SYN_CLASS(stmt_if)
    apply = apply_;
 }
 
 
-StmtIf::~StmtIf()
+StmtIf::StmtIf( const StmtIf& other ):
+   Statement( line, chr ),
+   _p( new Private(other._p) )
 {
-   // then delete our elif branches (if any)
+   apply = apply_;
+   
    for( unsigned i = 0; i < _p->m_elifs.size(); ++i )
    {
-      delete _p->m_elifs[i];
+      delete _p->m_elifs[i]->setParent(this);
    }
+}
+
+
+StmtIf::~StmtIf()
+{   
    delete _p;
 }
 
 
 int32 StmtIf::arity() const
 {
-   return (int) _p->m_elifs.size();
+   return _p->arity();
 }
 
 TreeStep* StmtIf::nth( int32 n ) const
 {
-   int size = (int) _p->m_elifs.size();
-   
-   if ( n < 0 )
-   {
-      n = size + 1 + n;
-   }
-   
-   if( n < 0 || n >= size ) return 0;
-   return _p->m_elifs[n];
+   return _p->nth( n );
 }
 
 bool StmtIf::nth( int32 n, TreeStep* ts )
 {
-   int size = (int) _p->m_elifs.size();
-   
-   if ( n < 0 )
-   {
-      n = size + n;
-   }
-   
-   if( n < 0 || n >= size ) return false;
-   if ( ts != 0 && ts->category() == TreeStep::e_cat_syntree && ts->setParent(this) ) 
-   {
-      // change the nth elif
-      delete _p->m_elifs[n];
-      // if we could parent it, then it's a syntree.
-      _p->m_elifs[n] = static_cast<SynTree*>(ts);
-      return true;
-   }   
-   return false;
+    if ( ts == 0 || ts->category() != TreeStep::e_cat_syntree ) return false;
+    return _p->nth( n, ts, this );
 }
 
-bool StmtIf::insert( int32 n, TreeStep* element )
+bool StmtIf::insert( int32 n, TreeStep* ts )
 {
-   int size = (int) _p->m_elifs.size();
-   
-   if ( n < 0 )
-   {
-      n = size + n;
-   }
-   
-   if ( element != 0 && element->category() == TreeStep::e_cat_syntree && element->setParent(this) ) 
-   {
-      if( n < 0 || n >= size )
-      {
-         _p->m_elifs.push_back( static_cast<SynTree*>(element) );
-      }
-      else {      
-         // if we could parent it, then it's a syntree.
-         _p->m_elifs.insert( _p->m_elifs.begin() + n, static_cast<SynTree*>(element));
-      }
-      return true;
-   }   
-   return false;
+   if ( ts == 0 || ts->category() != TreeStep::e_cat_syntree ) return false;
+   return _p->insert( n, ts, this);
 }
 
 bool StmtIf::remove( int32 n )
 {
-   int size = (int) _p->m_elifs.size();
-
-   if ( n < 0 )
-   {
-      n = size + n;
-   }
-   
-   if( n < 0 || n >= size )
-   {
-      return false;
-   }
-   
-   delete _p->m_elifs[n];
-   _p->m_elifs.erase( _p->m_elifs.begin() + n );
+   return _p->remove( n );
 }
 
 
 StmtIf& StmtIf::addElif( SynTree* ifTrue  )
 {
-   _p->m_elifs.push_back( ifTrue );
+   if( ifTrue->setParent(this) )
+   {
+      _p->m_elifs.push_back( ifTrue );
+   }
    return *this;
 }
 
@@ -178,7 +126,7 @@ void StmtIf::oneLinerTo( String& tgt ) const
 {
    if( _p->m_elifs.empty() || _p->m_elifs[0]->selector() == 0 )
    {
-      tgt = "if...";
+      tgt = "<Blank StmtIF>";
    }
    else {
       tgt = "if "+ _p->m_elifs[0]->selector()->describe();
@@ -188,6 +136,11 @@ void StmtIf::oneLinerTo( String& tgt ) const
 
 void StmtIf::describeTo( String& tgt, int depth ) const
 {
+   if( _p->m_elifs.empty() || _p->m_elifs[0]->selector() == 0 )
+   {
+      tgt = "<Blank StmtIF>";
+      return;
+   }
    
    String prefix = String(" ").replicate( depth * depthIndent );   
    String prefix1 = String(" ").replicate( (depth+1) * depthIndent );
@@ -229,6 +182,8 @@ void StmtIf::apply_( const PStep* s1, VMContext* ctx )
    Private::ElifVector& elifs = self->_p->m_elifs;
    int& sid = ifFrame.m_seqId;
    int len = (int) elifs.size();
+   
+   fassert( len > 0 );
    
    TRACE1( "Apply 'if %d/%d' at line %d ", sid, len, self->line() );
    

@@ -17,6 +17,8 @@
 #include <falcon/psteps/stmtcontinue.h>
 #include <falcon/expression.h>
 #include <falcon/vmcontext.h>
+#include <falcon/synclasses.h>
+#include <falcon/engine.h>
 
 namespace Falcon
 {
@@ -25,12 +27,15 @@ namespace Falcon
 StmtContinue::StmtContinue( int32 line, int32 chr ):
    Statement( line, chr)
 {
-   static Class* mycls = &Engine::instance()->synclasses()->m_stmt_continue;
-   m_class = mycls;
-
+   FALCON_DECLARE_SYN_CLASS(stmt_continue)
    apply = apply_;
 }
 
+StmtContinue::StmtContinue( const StmtContinue& other ):
+   Statement( other )
+{
+   apply = apply_;
+}
    
 void StmtContinue::describeTo( String& tgt, int depth ) const
 {

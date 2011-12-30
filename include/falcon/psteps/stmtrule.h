@@ -31,13 +31,16 @@ class FALCON_DYN_CLASS StmtRule: public Statement
 {
 public:
    StmtRule( int32 line=0, int32 chr=0 );
+   StmtRule( const StmtRule& other );   
    virtual ~StmtRule();
    
    StmtRule& addStatement( Statement* stmt );
    StmtRule& addAlternative();
 
-   void describeTo( String& tgt, int depth=0 ) const;
-
+   virtual void describeTo( String& tgt, int depth=0 ) const;
+   virtual void oneLinerTo( String& tgt ) const;
+   virtual StmtRule* clone() const;
+   
    static void apply_( const PStep*, VMContext* ctx );
 
    SynTree& currentTree();
@@ -55,11 +58,19 @@ protected:
 class FALCON_DYN_CLASS StmtCut: public Statement
 {
 public:
-   StmtCut( Expression* expr = 0, int32 line=0, int32 chr=0 );
+   StmtCut( int32 line=0, int32 chr=0 );
+   StmtCut( Expression* expr, int32 line=0, int32 chr=0 );
+   StmtCut( const StmtCut& expr );   
    virtual ~StmtCut();
 
-   void describeTo( String& tgt ) const;
-
+   virtual void describeTo( String& tgt, int depth=0 ) const;
+   virtual void oneLinerTo( String& tgt ) const;
+   
+   virtual StmtCut* clone() const { return new StmtCut(*this); }
+   
+   virtual Expression* selector()  const;
+   virtual bool selector( Expression* expr );
+   
 private:
    Expression* m_expr;
    
@@ -74,11 +85,15 @@ private:
 class FALCON_DYN_CLASS StmtDoubt: public Statement
 {
 public:
+   StmtDoubt( int32 line=0, int32 chr=0 );
    StmtDoubt( Expression* expr, int32 line=0, int32 chr=0 );
+   StmtDoubt( const StmtDoubt& other );
    virtual ~StmtDoubt();
 
-   void describeTo( String& tgt ) const;
-
+   virtual void describeTo( String& tgt, int depth=0) const;
+   virtual void oneLinerTo( String& tgt ) const;
+   virtual StmtDoubt* clone() const { return new StmtDoubt(*this); }
+   
 private:
    Expression* m_expr;
    static void apply_( const PStep*, VMContext* ctx );

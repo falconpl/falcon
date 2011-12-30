@@ -92,8 +92,47 @@ void StmtForBase::PStepCleanup::apply_( const PStep*, VMContext* ctx )
    ctx->popData(ctx->currentCode().m_seqId);
 }
 
+
+StmtForBase::StmtForBase( const StmtForBase& other ):
+   Statement( other ),
+   m_body(0),
+   m_forFirst(0),
+   m_forMiddle(0),
+   m_forLast(0)
+{
+   if( other.m_body != 0) 
+   {
+      m_body = other.m_body->clone(); 
+      m_body->setParent(this);
+   }
+
+   if( other.m_forFirst != 0) 
+   {
+      m_forFirst = other.m_forFirst->clone(); 
+      m_forFirst->setParent(this);
+   }
+
+   if( other.m_forMiddle != 0) 
+   {
+      m_forMiddle = other.m_forMiddle->clone(); 
+      m_forMiddle->setParent(this);
+   }
+
+   if( other.m_forLast != 0) 
+   {
+      m_forLast = other.m_forLast->clone(); 
+      m_forLast->setParent(this);
+   }   
+}
+
 void StmtForBase::describeTo( String& tgt, int depth ) const
 {   
+   if ( ! isValid() )
+   {
+      tgt = "<Blank StmtForIn/to>";
+      return;
+   }
+   
    String prefix = String(" ").replicate( depth * depthIndent );   
    String prefix1 = String(" ").replicate( (depth+1) * depthIndent );
    tgt = prefix + oneLiner();
@@ -142,9 +181,29 @@ public:
    SymVector m_params;
    
    Private() {}
+   
+   Private( const Private& other):
+      m_params( other.m_params )
+   {}
+   
    ~Private() {}
 };
 
+StmtForIn::StmtForIn( int32 line, int32 chr):
+   StmtForBase( line, chr ),
+   _p( new Private ),
+   m_expr(0),
+   m_stepBegin( this ),
+   m_stepFirst( this ),
+   m_stepNext( this ),
+   m_stepGetNext( this )
+{
+   FALCON_DECLARE_SYN_CLASS(stmt_forin)
+   apply = apply_; 
+   
+   //NOTE: This pstep is NOT a loopbase; it just sets up the loop.
+   // a break here must be intercepted by outer loops until our loop is setup.
+}
 
 StmtForIn::StmtForIn( Expression* gen, int32 line, int32 chr):
    StmtForBase( line, chr ),
@@ -155,14 +214,30 @@ StmtForIn::StmtForIn( Expression* gen, int32 line, int32 chr):
    m_stepNext( this ),
    m_stepGetNext( this )
 {
-   static Class* mycls = &Engine::instance()->synclasses()->m_stmt_forin;
-   m_class = mycls;
-
+   FALCON_DECLARE_SYN_CLASS(stmt_forin)
    apply = apply_; 
+   gen->setParent(this);
    
    //NOTE: This pstep is NOT a loopbase; it just sets up the loop.
    // a break here must be intercepted by outer loops until our loop is setup.
+}
+
+StmtForIn::StmtForIn( const StmtForIn& other ):
+   StmtForBase( other ),
+   _p( new Private(*other._p) ),
+   m_expr(0),
+   m_stepBegin( this ),
+   m_stepFirst( this ),
+   m_stepNext( this ),
+   m_stepGetNext( this )
+{
+   apply = apply_;
    
+   if( other.m_expr != 0 )
+   {
+      m_expr = other.m_expr->clone();
+      m_expr->setParent(this);
+   }
 }
 
 StmtForIn::~StmtForIn()
@@ -170,9 +245,20 @@ StmtForIn::~StmtForIn()
    delete _p;
 }
 
+bool StmtForIn::isValid() const 
+{
+   return m_expr != 0 && _p->m_params->size() != 0 ;
+}
+
 
 void StmtForIn::oneLinerTo( String& tgt ) const
 {
+   if( ! isValid() )
+   {
+      tgt = "<Blank StmtForIn>";
+      return;
+   }
+   
    tgt += "for ";
       
    String syms;
@@ -194,7 +280,7 @@ void StmtForIn::oneLinerTo( String& tgt ) const
 }
 
 
-void StmtForIn::addParameter( Symbol* sym )
+void StmtForIn::addParameter( Symbol* sym ) const
 {
    _p->m_params.push_back( sym );
 }
@@ -206,10 +292,10 @@ Expression*  StmtForIn::selector() const
 
 bool StmtForIn::selector( Expression* e )
 {
-   if( e != 0 && e->parent() != 0 )
+   if( e != 0 && e->setParent( this ) )
    {
-      delete m_gen;
-      m_gen = e;
+      delete m_expr;
+      m_expr = e;
       return true;
    }
    return false;
@@ -261,6 +347,9 @@ void StmtForIn::expandItem( Item& itm, VMContext* ctx ) const
 void StmtForIn::apply_( const PStep* ps, VMContext* ctx )
 {
    const StmtForIn* self = static_cast<const StmtForIn*>(ps);
+   
+   fassert( self->isValid() );
+   
    ctx->resetCode( &self->m_stepBegin );
    ctx->stepIn( self->m_expr );
 }
@@ -420,12 +509,37 @@ StmtForTo::StmtForTo( Symbol* tgt, Expression* start, Expression* end, Expressio
    m_step(step),
    m_stepNext(this)
 {
-   static Class* mycls = &Engine::instance()->synclasses()->m_stmt_forto;
-   m_class = mycls;
-   
+   FALCON_DECLARE_SYN_CLASS(stmt_forto)   
    apply = apply_;     
 }
 
+
+StmtForTo::StmtForTo( const StmtForTo& other ):
+   StmtForBase( other ),
+   m_target( other.m_target ),
+   m_start(0),
+   m_end(0),  
+   m_step(0),
+   m_stepNext(this)
+{
+   apply = apply_;
+   
+   if( other.m_start != 0 ) {
+      m_start = other.m_start->clone();
+      m_start->setParent(this);
+   }
+   
+   if( other.m_end != 0 ) {
+      m_end = other.m_end->clone();
+      m_end->setParent(this);
+   }
+   
+   if( other.m_step != 0 ) {
+      m_step = other.m_step->clone();
+      m_step->setParent(this);
+   }
+   
+}
 
 StmtForTo::~StmtForTo() 
 {
@@ -433,7 +547,11 @@ StmtForTo::~StmtForTo()
    delete m_end;
    delete m_step;  
 }
-      
+
+bool StmtForTo::isValid() const 
+{
+   return m_target != 0 && m_start != 0 && m_end != 0;
+}
 
 void StmtForTo::startExpr( Expression* s )
 {
@@ -457,6 +575,12 @@ void StmtForTo::stepExpr( Expression* s )
    
 void StmtForTo::oneLinerTo( String& tgt ) const
 {  
+   if( ! isValid() )
+   {
+      tgt = "<Blank StmtForTo>";
+      return;
+   }
+   
    tgt += "for " + m_target->name() + " = " ;
 
    tgt += m_start->describe();   
@@ -473,6 +597,8 @@ void StmtForTo::apply_( const PStep* ps, VMContext* ctx )
 {
    const StmtForTo* self = static_cast<const StmtForTo*>(ps);
    
+   fassert( self->isValid() );
+
    // we must at least have a start and an end
    fassert( self->m_start != 0 );
    fassert( self->m_end != 0 );

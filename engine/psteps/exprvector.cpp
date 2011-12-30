@@ -37,17 +37,7 @@ ExprVector::ExprVector( int line, int chr):
 ExprVector::ExprVector( const ExprVector& other ):
    Expression(other)
 {
-   _p = new ExprVector_Private;
-   ExprVector_Private::ExprVector& oe = other._p->m_exprs;
-   ExprVector_Private::ExprVector& mye = _p->m_exprs;
-
-   mye.reserve(oe.size());
-   ExprVector_Private::ExprVector::const_iterator iter = oe.begin();
-   while( iter != oe.end() )
-   {
-      mye.push_back( (*iter)->clone() );
-      ++iter;
-   }
+   _p = new ExprVector_Private(other._p, this);
 }
 
 ExprVector::~ExprVector()
@@ -57,57 +47,29 @@ ExprVector::~ExprVector()
 
 int ExprVector::arity() const
 {
-   return (int) _p->m_exprs.size();
+   return _p->arity();
 }
 
 TreeStep* ExprVector::nth( int32 n ) const
 {
-   if( n < 0 ) n = (int) _p->m_exprs.size() + n;
-   if( n < 0 || n >= _p->m_exprs.size() ) return 0;
-   
-   return (int) _p->m_exprs[n];
+   return _p->nth(n);
 }
 
 bool ExprVector::nth( int32 n, TreeStep* ts )
 {
-   if( ts->category() != TreeStep::e_cat_expression ) return false;
-   if( n < 0 ) n = (int) _p->m_exprs.size() + n;
-   if( n < 0 || n >= _p->m_exprs.size() ) return false;
-   if( ! ts->setParent(this) ) return false;
-   
-   delete _p->m_exprs[n];
-   _p->m_exprs[n] = static_cast<Expression*>(ts);
-   return true;
+   if( ts == 0 || ts->category() != TreeStep::e_cat_expression ) return false;
+   return _p->nth(n, static_cast<Expression*>(ts), this );
 }
 
 bool ExprVector::insert( int32 n, TreeStep* ts )
-{
-   if( ts->category() != TreeStep::e_cat_expression ) return false;
-   if( ! ts->setParent(this) ) return false;
-   
-   if( n < 0 ) n = (int) _p->m_exprs.size() + n;
-   
-   if( n < 0 || n >= _p->m_exprs.size() ) {      
-      _p->m_exprs.push_back(static_cast<Expression*>(ts));
-   }
-   else {
-      delete _p->m_exprs[n];
-      _p->m_exprs[n] = static_cast<Expression*>(ts);
-   }
-   
-   return true;
+{   
+   if( ts == 0 || ts->category() != TreeStep::e_cat_expression ) return false;
+   return _p->insert(n, static_cast<Expression*>(ts), this );
 }
 
 bool ExprVector::remove( int32 n )
 {   
-   if( n < 0 ) n = (int) _p->m_exprs.size() + n;
-   
-   if( n < 0 || n >= _p->m_exprs.size() ) {      
-      return false;
-   }
-   
-   delete _p->m_exprs[n];
-   _p->m_exprs.erase( _p->m_exprs.begin() + n );
+   return _p->remove(n);
 }
 
 

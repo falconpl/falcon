@@ -21,6 +21,8 @@
 namespace Falcon
 {
 
+class STVector_Private;
+
 /** If statement.
  *
  * Main logic branch control.
@@ -31,11 +33,13 @@ public:
    StmtIf( SynTree* ifTrue, SynTree* ifFalse, int32 line=0, int32 chr = 0 );
    StmtIf( SynTree* ifTrue, int32 line=0, int32 chr = 0 );
    StmtIf( int32 line=0, int32 chr = 0 );
+   StmtIf( const StmtIf& other );
    virtual ~StmtIf();
 
    virtual void describeTo( String& tgt, int depth=0 ) const;
-   void oneLinerTo( String& tgt ) const;
-
+   virtual void oneLinerTo( String& tgt ) const;
+   virtual StmtIf* clone() const { return new StmtIf(*this); }
+   
    static void apply_( const PStep*, VMContext* ctx );
 
    /** Adds an else-if branch to the if statement.
@@ -50,9 +54,7 @@ public:
    virtual bool remove( int32 pos );
    
 private:
-
-   struct Private;
-   Private* _p;
+   STVector_Private* _p;
 };
 
 }

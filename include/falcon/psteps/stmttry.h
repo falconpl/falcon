@@ -30,15 +30,26 @@ class RequiredClass;
 class FALCON_DYN_CLASS StmtTry: public Statement
 {
 public:   
-   StmtTry( SynTree* body, int32 line=0, int32 chr = 0 );
-   StmtTry( int32 line=0, int32 chr = 0 );
+   StmtTry( int32 line=0, int32 chr = 0 );   
+   StmtTry( SynTree* body, int32 line=0, int32 chr = 0 );   
+   StmtTry( SynTree* body, SynTree* fbody, int32 line=0, int32 chr = 0 );   
+   StmtTry( const StmtTry& other );   
    virtual ~StmtTry();
 
    virtual void describeTo( String& tgt, int depth=0 ) const;
-   void oneLinerTo( String& tgt ) const;
+   virtual void oneLinerTo( String& tgt ) const;
+   virtual StmtTry* clone( String& tgt ) const { return new StmtTry(*this); }
 
    /** Gets the body of this try. */
    SynTree* body() const { return m_body; }
+   /** Sets the body for the main block.
+    \param b The new body.
+    
+    Be sure that the statement didn't have a finally body already
+    before invoking this method..
+    */   
+   bool body(SynTree* b);
+   
    
    /** Gets the body for the finally block */   
    SynTree* fbody() const { return m_fbody; }
@@ -48,7 +59,7 @@ public:
     Be sure that the statement didn't have a finally body already
     before invoking this method..
     */   
-   void fbody(SynTree* b);
+   bool fbody(SynTree* b);
    
    StmtSelect& catchSelect() { return m_select; } 
    const StmtSelect& catchSelect() const { return m_select; }

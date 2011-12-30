@@ -28,15 +28,22 @@ namespace Falcon
 class FALCON_DYN_CLASS StmtWhile: public Statement
 {
 public:
+   /** Creates a while statement for deserialization. */   
+   StmtWhile( int32 line=0, int32 chr=0 );
+   
    /** Creates a while statement, creating a new syntree. */   
    StmtWhile( Expression* expr, int32 line=0, int32 chr = 0 );
    
    /** Creates a while statement, adopting an existign statement set. */
    StmtWhile( Expression* expr, SynTree* stmts, int32 line=0, int32 chr = 0 );
+   
+   StmtWhile( const StmtWhile& other );
+   
    virtual ~StmtWhile();
 
-   void describeTo( String& tgt, int depth=0 ) const;
-   void oneLinerTo( String& tgt ) const;
+   virtual void describeTo( String& tgt, int depth=0 ) const;
+   virtual void oneLinerTo( String& tgt ) const;
+   virtual StmtWhile* clone() const { return StmtWhile(*this); }
    static void apply_( const PStep*, VMContext* ctx );
 
    SynTree* mainBlock() const { return m_stmts; }
@@ -45,23 +52,9 @@ public:
    virtual TreeStep* nth( int32 n ) const;
    virtual bool nth( int32 n, TreeStep* ts );
    
-   
-   virtual int32 arity() const;
-   
-   /** Nth sub-element of this element in 0..arity() */
-   virtual TreeStep* nth( int32 n ) const;
-   
-   /** Setting the nth sub-element.
-    \param n The sub-element number.
-    \param ts An unparented expression.
-    \return true if \b ts can be parented and n is valid, false otherwise.
-    
-    If a previous expression occupies this position, it is destroyed.    
-    */
-   virtual bool nth( int32 n, TreeStep* ts );
-   
-   virtual Expression* selector();   
+   virtual Expression* selector() const;   
    virtual bool selector( Expression* e ); 
+
 private:   
    SynTree* m_stmts;
    Expression* m_expr;

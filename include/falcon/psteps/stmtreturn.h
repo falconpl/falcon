@@ -30,19 +30,19 @@ class FALCON_DYN_CLASS StmtReturn: public Statement
 {
 public:
    /** Returns a value */
-   StmtReturn( Expression* expr = 0, int32 line=0, int32 chr = 0 );
+   StmtReturn( int32 line=0, int32 chr = 0 );
+   StmtReturn( Expression* expr, int32 line=0, int32 chr = 0 );
+   StmtReturn( const StmtReturn& other );
    virtual ~StmtReturn();
 
-   void describeTo( String& tgt, int depth=0 ) const;
-   void oneLinerTo( String& tgt ) const;
-
-   Expression* expression() const { return m_expr; }
-   void expression( Expression* expr );
+   virtual void describeTo( String& tgt, int depth=0 ) const;
+   virtual void oneLinerTo( String& tgt ) const;
+   virtual StmtReturn* clone() const { return new StmtReturn(*this); }
    
    bool hasDoubt() const { return m_bHasDoubt; }
    void hasDoubt( bool b );
    
-   virtual Expression* selector(); 
+   virtual Expression* selector() const; 
    virtual bool selector( Expression* e );
    
 private:

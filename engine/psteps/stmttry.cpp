@@ -26,31 +26,70 @@
 
 namespace Falcon {
 
-StmtTry::StmtTry( SynTree* body, int32 line, int32 chr ):
-   Statement( line, chr ),
-   m_body( body ),
-   m_fbody( 0 ),
-   m_finallyStep( this )
-{
-   static Class* mycls = &Engine::instance()->synclasses()->m_stmt_try;
-   m_class = mycls;
-
-   apply = apply_;
-   m_bIsCatch = true;
-}
-
 StmtTry::StmtTry( int32 line, int32 chr):
    Statement( line, chr ),
    m_body( new SynTree ),
    m_fbody( 0 ),
    m_finallyStep( this )
 {
-   static Class* mycls = &Engine::instance()->synclasses()->m_stmt_try;
-   m_class = mycls;
-
+   FALCON_DECLARE_SYN_CLASS( stmt_try );
    
+   m_select.setParent(this);
    apply = apply_;
    m_bIsCatch = true;
+}
+
+StmtTry::StmtTry( SynTree* body, int32 line, int32 chr ):
+   Statement( line, chr ),
+   m_body( body ),
+   m_fbody( 0 ),
+   m_finallyStep( this )
+{
+   FALCON_DECLARE_SYN_CLASS( stmt_try );
+
+   m_select.setParent(this);
+   body->setParent( this );
+   apply = apply_;
+   m_bIsCatch = true;
+}
+
+StmtTry::StmtTry( SynTree* body, SynTree* fbody, int32 line, int32 chr ):
+   Statement( line, chr ),
+   m_body( body ),
+   m_fbody( fbody ),
+   m_finallyStep( this )
+{
+   FALCON_DECLARE_SYN_CLASS( stmt_try );
+
+   m_select.setParent(this);
+   body->setParent( this );
+   fbody->setParent(this);
+   apply = apply_;
+   m_bIsCatch = true;
+}
+
+StmtTry::StmtTry( const StmtTry& other ):
+   Statement( other ),
+   m_body( 0 ),
+   m_fbody( 0 ),
+   m_select( other.m_select ),
+   m_finallyStep( this )
+{
+   apply = apply_;   
+   m_select.setParent(this);
+   
+   if( other.m_body )
+   {
+      m_body = other.m_body->clone();
+      m_body->setParent( this );
+      m_bIsCatch = true;
+   }
+   
+   if( other.m_fbody )
+   {
+      m_fbody = other.m_fbody->clone();
+      m_fbody->setParent( this );
+   }
 }
 
 
@@ -61,15 +100,38 @@ StmtTry::~StmtTry()
 }
 
 
-void StmtTry::fbody( SynTree* body )
-{
-   delete m_fbody;
-   m_fbody = body;
+bool StmtTry::body( SynTree* body )
+{ 
+   if( body->setParent(this) )
+   {
+      delete m_body;
+      m_body = body;
+      return true;
+   }
+   return false;
+}
+
+
+bool StmtTry::fbody( SynTree* body )
+{ 
+   if( body->setParent(this) )
+   {
+      delete m_fbody;
+      m_fbody = body;
+      return true;
+   }
+   return false;
 }
 
 void StmtTry::describeTo( String& tgt, int depth ) const
 {
-   // TODO: describe catches.
+   // TODO: describe catches, finally & check various options.
+   if( m_body == 0 )
+   {
+      tgt = "<Blank StmtTry>";
+      return;
+   }
+   
    String prefix = String(" ").replicate( depth * depthIndent );
    tgt = prefix + "try\n" + m_body->describe( depth + 1 ) + "\n" + prefix + "end";   
 }
@@ -83,8 +145,7 @@ void StmtTry::oneLinerTo( String& tgt ) const
    
 void StmtTry::apply_( const PStep* ps, VMContext* ctx )
 { 
-   const StmtTry* self = static_cast<const StmtTry*>(ps);
-   
+   const StmtTry* self = static_cast<const StmtTry*>(ps);   
    
    if( self->m_body != 0 )
    {

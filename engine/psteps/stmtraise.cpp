@@ -25,15 +25,38 @@
 
 namespace Falcon {
 
+StmtRaise::StmtRaise( int32 line=0, int32 chr = 0 ):
+   Statement( line, chr ),
+   m_expr( 0 )
+{
+   FALCON_DECLARE_SYN_CLASS( stmt_raise );
+   apply = apply_;
+}
+   
+
 StmtRaise::StmtRaise( Expression* risen, int32 line, int32 chr ):
    Statement( line, chr ),
    m_expr( risen )
 {
-   static Class* mycls = &Engine::instance()->synclasses()->m_stmt_raise;
-   m_class = mycls;
-
+   FALCON_DECLARE_SYN_CLASS( stmt_raise );
    apply = apply_;
+   risen->setParent(this);
 }
+
+
+StmtRaise::StmtRaise( const StmtRaise& other ):
+   Statement( line, chr ),
+   m_expr( 0 )
+{
+   apply = apply_;
+   
+   if( other.m_expr != 0 )
+   {
+      m_expr = other.m_expr->clone();
+      m_expr->setParent(this);
+   }
+}
+
 
 StmtRaise::~StmtRaise()
 {
@@ -43,12 +66,18 @@ StmtRaise::~StmtRaise()
 
 void StmtRaise::describeTo( String& tgt, int depth ) const
 {
+   if( m_expr == 0 )
+   {
+      tgt = "<Blank StmtRaise>";
+      return;
+   }
+   
    tgt = String(" ").replicate( depth * depthIndent ) +
          "raise " + m_expr->describe( depth + 1 );
 }
 
 
-Expression* StmtRaise::selector()
+Expression* StmtRaise::selector() const
 {
    return m_expr;
 }
@@ -65,6 +94,12 @@ bool StmtRaise::selector( Expression* e )
 
 void StmtRaise::oneLinerTo( String& tgt ) const
 {
+   if( m_expr == 0 )
+   {
+      tgt = "<Blank StmtRaise>";
+      return;
+   }
+      
    tgt = "raise " + m_expr->oneLiner();
    
 }
@@ -72,6 +107,8 @@ void StmtRaise::oneLinerTo( String& tgt ) const
 void StmtRaise::apply_( const PStep* ps, VMContext* ctx )
 {
    const StmtRaise* rs = static_cast<const StmtRaise*>( ps );
+   
+   fassert( rs->m_expr != 0 );
    
    CodeFrame& curCode = ctx->currentCode();
    // first time around?

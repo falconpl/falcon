@@ -22,13 +22,32 @@
 namespace Falcon
 {
 
-class ExprVector_Private {
+template <class TreeStepSubClass__>
+class TSVector_Private {
 public:
 
-   typedef std::vector< Expression* > ExprVector;
+   typedef std::vector< TreeStepSubClass__* > ExprVector;
    ExprVector m_exprs;
+   
+   inline TSVector_Private( const TSVector_Private<TreeStepSubClass__>& other, TreeStep* owner ) {
+      m_owner = owner;
+      ExprVector& oe = other.m_exprs;
+      ExprVector& mye = m_exprs;
 
-   ~ExprVector_Private()
+      mye.reserve(oe.size());
+      ExprVector::const_iterator iter = oe.begin();
+      while( iter != oe.end() )
+      {
+         TreeStepSubClass__* expr = (*iter)->clone();
+         expr->setParent( owner );
+         mye.push_back( expr );
+         
+         ++iter;
+      }
+   }
+   
+   
+   ~TSVector_Private()
    {
       ExprVector::iterator iter = m_exprs.begin();
       while( iter != m_exprs.end() )
@@ -37,7 +56,67 @@ public:
          ++iter;
       }
    }
+   
+   
+   inline int arity() const
+   {
+      return (int) m_exprs.size();
+   }
+
+   inline TreeStepSubClass__* nth( int32 n ) const
+   {
+      if( n < 0 ) n = (int) m_exprs.size() + n;
+      if( n < 0 || n >= m_exprs.size() ) return 0;
+
+      return m_exprs[n];
+   }
+
+   bool nth( int32 n, TreeStepSubClass__* ts, TreeStep* owner)
+   {
+      if( n < 0 ) n = (int) m_exprs.size() + n;
+      if( n < 0 || n >= m_exprs.size() ) return false;
+      if( ts != 0 && ! ts->setParent(owner) ) return false;
+
+      delete m_exprs[n];
+      m_exprs[n] = ts;
+      return true;
+   }
+
+   inline bool insert( int32 n, TreeStepSubClass__* ts, TreeStep* owner )
+   {
+      if( ts != 0 && ! ts->setParent(owner) ) return false;
+
+      if( n < 0 ) n = (int) m_exprs.size() + n;
+
+      if( n < 0 || n >= m_exprs.size() ) {      
+         m_exprs.push_back(ts);
+      }
+      else {
+         delete m_exprs[n];
+         m_exprs[n] = ts;
+      }
+
+      return true;
+   }
+
+   inline bool remove( int32 n )
+   {   
+      if( n < 0 ) n = (int) m_exprs.size() + n;
+
+      if( n < 0 || n >= m_exprs.size() ) {      
+         return false;
+      }
+
+      delete m_exprs[n];
+      m_exprs.erase( m_exprs.begin() + n );
+      return true;
+   }
 };
+
+typedef TSVector_Private<Expression> ExprVector_Private;
+typedef TSVector_Private<SynTree> STVector_Private;
+
+
 }
 
 #endif

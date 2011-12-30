@@ -26,9 +26,13 @@ namespace Falcon
 StmtBreak::StmtBreak( int32 line, int32 chr ):
    Statement(line, chr)
 {
-   static Class* mycls = &Engine::instance()->synclasses()->m_stmt_break;
-   m_class = mycls;
-   
+   FALCON_DECLARE_SYN_CLASS(stmt_break)
+   apply = apply_;
+}
+
+StmtBreak::StmtBreak( const StmtBreak& other ):
+   Statement(other)
+{
    apply = apply_;
 }
 
