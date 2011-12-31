@@ -31,15 +31,13 @@ class FALCON_DYN_CLASS ExprArray: public ExprVector
 {
 public:
    ExprArray( int line = 0, int chr = 0);
-   ExprArray( const ExprArray& other );
-   
-   virtual ExprArray* clone() const;
+   ExprArray( const ExprArray& other );  
    
    /** Gets the number of sub-expressions in this expression-array.
     \return Count of expressions held in this array.
     */
 
-   virtual ~ExprArray();
+   virtual ~ExprArray() {}
 
    virtual void describeTo( String& s, int depth=0 ) const;
    virtual void oneLinerTo( String& s ) const;

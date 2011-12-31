@@ -40,6 +40,9 @@
 #include <falcon/cm/minmax.h>
 #include <falcon/cm/typeid.h>
 #include <falcon/cm/clone.h>
+#include <falcon/cm/classname.h>
+#include <falcon/cm/baseclass.h>
+#include <falcon/cm/describe.h>
 
 #include <falcon/bom.h>
 #include <falcon/stdsteps.h>
@@ -235,10 +238,11 @@ Engine::Engine()
       
    m_symbolClass = new ClassSymbol;
    
-   m_treeStepClass = new ClassTreeStep;
-   m_statementClass = new ClassStatement(m_treeStepClass);
-   m_exprClass = new ClassExpression(m_treeStepClass);
-   m_syntreeClass = new ClassSynTree(m_treeStepClass, m_symbolClass);
+   ClassTreeStep* ctreeStep = new ClassTreeStep;
+   m_treeStepClass = ctreeStep;
+   m_statementClass = new ClassStatement(ctreeStep);
+   m_exprClass = new ClassExpression(ctreeStep);
+   m_syntreeClass = new ClassSynTree(ctreeStep, static_cast<ClassSymbol*>(m_symbolClass));
    
    
    addBuiltin(m_treeStepClass);
@@ -247,7 +251,7 @@ Engine::Engine()
    addBuiltin(m_syntreeClass);
    addBuiltin(m_symbolClass);
    
-   m_synClasses = new SynClasses;
+   m_synClasses = new SynClasses(m_syntreeClass, m_statementClass, m_exprClass );
    m_synClasses->subscribe( this );
    
    //=====================================
@@ -599,7 +603,7 @@ Class* Engine::statementClass() const
 Class* Engine::expressionClass() const
 {
    fassert( m_instance != 0 );
-   return m_instance->m_expressionClass;
+   return m_instance->m_exprClass;
 }
 
 Class* Engine::syntreeClass() const
@@ -608,7 +612,7 @@ Class* Engine::syntreeClass() const
    return m_instance->m_syntreeClass;
 }
 
-Class* Engine::syntreeClass() const
+Class* Engine::symbolClass() const
 {
    fassert( m_instance != 0 );
    return m_instance->m_symbolClass;

@@ -23,10 +23,10 @@
 
 #include <falcon/synclasses.h>
 #include <falcon/engine.h>
+#include "exprvector_private.h"
 
 #include <vector>
 
-#include "exprvector_private.h"
 
 namespace Falcon
 {
@@ -34,7 +34,7 @@ namespace Falcon
 ExprArray::ExprArray( int line, int chr ):
    ExprVector( line, chr )
 {
-   FALCON_DECLARE_SYN_CLASS( expr_array )
+   FALCON_DECLARE_SYN_CLASS( expr_genarray )
    apply = apply_;
 }
 
@@ -42,15 +42,10 @@ ExprArray::ExprArray( int line, int chr ):
 ExprArray::ExprArray( const ExprArray& other ):
    ExprVector(other)
 {
-   FALCON_DECLARE_SYN_CLASS( expr_array )   
+   FALCON_DECLARE_SYN_CLASS( expr_genarray )   
    apply = apply_;
 }
 
-
-virtual ExprArray* ExprArray::clone() const
-{
-   return new ExprArray(*this);
-}
 
 //=====================================================
 

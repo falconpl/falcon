@@ -105,7 +105,7 @@ void* ClassUser::getParentData( Class* parent, void* data ) const
 }
 
    
-bool ClassUser::isDerivedFrom( Class* cls ) const
+bool ClassUser::isDerivedFrom( const Class* cls ) const
 {
    if( cls == this ) 
    {

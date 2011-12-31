@@ -38,7 +38,7 @@ public:
 
    virtual void describeTo( String& tgt, int depth=0 ) const;
    virtual void oneLinerTo( String& tgt ) const;
-   virtual StmtTry* clone( String& tgt ) const { return new StmtTry(*this); }
+   virtual StmtTry* clone() const { return new StmtTry(*this); }
 
    /** Gets the body of this try. */
    SynTree* body() const { return m_body; }

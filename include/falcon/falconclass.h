@@ -306,7 +306,7 @@ public:
     */
    void enumeratePropertiesOnly( PropertyEnumerator& cb ) const;
 
-   virtual bool isDerivedFrom( Class* cls ) const;
+   virtual bool isDerivedFrom( const Class* cls ) const;
    virtual void* getParentData( Class* parent, void* data ) const;
 
    //====================================================================
@@ -440,6 +440,7 @@ private:
    public:
       PStepInitExpr( FalconClass* o );
       static void apply_( const PStep*, VMContext* );
+      virtual PStepInitExpr* clone() const { return 0; }
    private:
       FalconClass* m_owner;
    };
@@ -450,6 +451,7 @@ private:
    public:
       PStepInit( FalconClass* o );
       static void apply_( const PStep*, VMContext* );
+      virtual PStepInitExpr* clone() const { return 0; }
       
    private:
       FalconClass* m_owner;

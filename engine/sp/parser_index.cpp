@@ -26,6 +26,7 @@
 #include <falcon/parser/parser.h>
 
 #include <falcon/psteps/exprindex.h>
+#include <falcon/psteps/exprstarindex.h>
 #include <falcon/psteps/exprrange.h>
 
 namespace Falcon {

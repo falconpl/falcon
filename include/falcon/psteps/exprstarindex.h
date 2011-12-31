@@ -14,7 +14,7 @@
 */
 
 #ifndef FALCON_EXPRSTARINDEX_H_
-#ifndef FALCON_EXPRSTARINDEX_H_
+#define FALCON_EXPRSTARINDEX_H_
 
 #include <falcon/expression.h>
 #include <falcon/synclasses.h>

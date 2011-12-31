@@ -61,6 +61,7 @@ add_library(falcon_engine SHARED
   parser/token.cpp
   parser/tokeninstance.cpp
 
+  cm/baseclass.cpp
   cm/classname.cpp
   cm/clone.cpp
   cm/compare.cpp
@@ -114,7 +115,7 @@ add_library(falcon_engine SHARED
   psteps/breakpoint.cpp
   psteps/exprarray.cpp
   psteps/exprassign.cpp
-  psteps/exprbnot.cpp
+  psteps/exprbitwise.cpp
   psteps/exprcall.cpp
   psteps/exprcompare.cpp
   psteps/exprdict.cpp
@@ -137,6 +138,8 @@ add_library(falcon_engine SHARED
   psteps/exprsym.cpp
   psteps/exprunpack.cpp
   psteps/exprvalue.cpp
+
+  psteps/exprvector.cpp
 
   psteps/stmtautoexpr.cpp
   psteps/stmtbreak.cpp
@@ -165,6 +168,7 @@ add_library(falcon_engine SHARED
   classes/classreference.cpp
   classes/classrange.cpp
   classes/classstring.cpp
+  classes/classtreestep.cpp
   classes/classuser.cpp
   
   classes/classexpression.cpp
@@ -268,6 +272,7 @@ add_library(falcon_engine SHARED
   transcoder.cpp
   trace.cpp
   tracestep.cpp
+  treestep.cpp
   uri.cpp
   usercarrier.cpp
   vfsiface.cpp

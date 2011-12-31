@@ -27,18 +27,21 @@ class TSVector_Private {
 public:
 
    typedef std::vector< TreeStepSubClass__* > ExprVector;
+   typedef typename ExprVector::iterator ExprVector_i;
+   typedef typename ExprVector::const_iterator ExprVector_ci;
    ExprVector m_exprs;
    
+   inline TSVector_Private() {}
+   
    inline TSVector_Private( const TSVector_Private<TreeStepSubClass__>& other, TreeStep* owner ) {
-      m_owner = owner;
-      ExprVector& oe = other.m_exprs;
+      const ExprVector& oe = other.m_exprs;
       ExprVector& mye = m_exprs;
 
       mye.reserve(oe.size());
-      ExprVector::const_iterator iter = oe.begin();
+      ExprVector_ci iter = oe.begin();
       while( iter != oe.end() )
       {
-         TreeStepSubClass__* expr = (*iter)->clone();
+         TreeStepSubClass__* expr = static_cast<TreeStepSubClass__*>((*iter)->clone());
          expr->setParent( owner );
          mye.push_back( expr );
          
@@ -49,10 +52,10 @@ public:
    
    ~TSVector_Private()
    {
-      ExprVector::iterator iter = m_exprs.begin();
+      ExprVector_i iter = m_exprs.begin();
       while( iter != m_exprs.end() )
       {
-         delete (*iter);
+         delete *iter;
          ++iter;
       }
    }
@@ -66,7 +69,7 @@ public:
    inline TreeStepSubClass__* nth( int32 n ) const
    {
       if( n < 0 ) n = (int) m_exprs.size() + n;
-      if( n < 0 || n >= m_exprs.size() ) return 0;
+      if( n < 0 || n >= (int) m_exprs.size() ) return 0;
 
       return m_exprs[n];
    }
@@ -74,7 +77,7 @@ public:
    bool nth( int32 n, TreeStepSubClass__* ts, TreeStep* owner)
    {
       if( n < 0 ) n = (int) m_exprs.size() + n;
-      if( n < 0 || n >= m_exprs.size() ) return false;
+      if( n < 0 || n >= (int) m_exprs.size() ) return false;
       if( ts != 0 && ! ts->setParent(owner) ) return false;
 
       delete m_exprs[n];
@@ -88,7 +91,7 @@ public:
 
       if( n < 0 ) n = (int) m_exprs.size() + n;
 
-      if( n < 0 || n >= m_exprs.size() ) {      
+      if( n < 0 || n >= (int) m_exprs.size() ) {      
          m_exprs.push_back(ts);
       }
       else {
@@ -103,7 +106,7 @@ public:
    {   
       if( n < 0 ) n = (int) m_exprs.size() + n;
 
-      if( n < 0 || n >= m_exprs.size() ) {      
+      if( n < 0 || n >= (int) m_exprs.size() ) {      
          return false;
       }
 
@@ -113,8 +116,18 @@ public:
    }
 };
 
-typedef TSVector_Private<Expression> ExprVector_Private;
-typedef TSVector_Private<SynTree> STVector_Private;
+
+class ExprVector_Private: public TSVector_Private<Expression>
+{
+public:
+   
+   ExprVector_Private() {}
+   ~ExprVector_Private() {}
+   
+   ExprVector_Private( const ExprVector_Private& other, TreeStep* owner ):
+      TSVector_Private<Expression>( other, owner )
+   {}
+};
 
 
 }

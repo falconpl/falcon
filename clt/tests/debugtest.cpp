@@ -24,7 +24,7 @@
 
 #include <falcon/psteps/stmtautoexpr.h>
 #include <falcon/psteps/stmtwhile.h>
-
+#include <falcon/psteps/exprassign.h>
 
 class DebugTestApp: public Falcon::Application
 {

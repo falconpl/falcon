@@ -35,6 +35,7 @@
 
 #include <falcon/psteps/stmtreturn.h>
 #include <falcon/psteps/stmtinit.h>
+#include <falcon/psteps/exprself.h>
 
 #include <falcon/errors/operanderror.h>
 
@@ -448,7 +449,7 @@ void FalconClass::enumeratePropertiesOnly( PropertyEnumerator& cb ) const
 }
 
 
-bool FalconClass::isDerivedFrom( Class* cls ) const
+bool FalconClass::isDerivedFrom( const Class* cls ) const
 {
    // are we the required class?
    if( this == cls ) return true;
@@ -826,7 +827,7 @@ void FalconClass::op_setProperty( VMContext* ctx, void* self, const String& prop
 //==============================================================
 
 FalconClass::PStepInitExpr::PStepInitExpr( FalconClass* o ):
-   Statement( Statement::custom_t ),
+   Statement(),
    m_owner(o)
 {
    apply = apply_;
@@ -881,7 +882,7 @@ void FalconClass::PStepInitExpr::apply_( const PStep* ps, VMContext* ctx )
 //==============================================================
 
 FalconClass::PStepInit::PStepInit( FalconClass* o ):
-   Statement( Statement::custom_t ),
+   Statement(),
    m_owner(o)
 {
    apply = apply_;

@@ -32,16 +32,14 @@
 namespace Falcon
 {
 
-class StmtRule::Private {
+class StmtRule::Private: public TSVector_Private<RuleSynTree> 
+{
 public:
-   typedef TSVector_Private<RuleSynTree> RuleVector;
-   RuleVector m_altTrees;
-   
    Private() {}
    ~Private() {}
    
    Private( const Private& other, TreeStep* owner ):
-      m_altTrees( other.m_altTrees, owner )
+      TSVector_Private<RuleSynTree>( other, owner )
    {}
 };
 
@@ -58,7 +56,7 @@ StmtRule::StmtRule( const StmtRule& other ):
    Statement( other )
 {  
    apply = apply_;   
-   _p = new Private( other._p, this );   
+   _p = new Private( *other._p, this );   
 }
 
 
@@ -70,49 +68,49 @@ StmtRule::~StmtRule()
 
 StmtRule& StmtRule::addStatement( Statement* stmt )
 {
-   if( _p->m_altTrees.arity() == 0 )
+   if( _p->arity() == 0 )
    {
       // create a base rule syntree
-      TreeStep* st = new RuleSynTree();
+      RuleSynTree* st = new RuleSynTree();
       st->setParent(this);
-      _p->m_altTrees.m_exprs.push_back(st);
+      _p->m_exprs.push_back(st);
    }
       
-   _p->m_altTrees.m_exprs.back()->append( stmt );
+   _p->m_exprs.back()->append( stmt );
    return *this;
 }
 
 
 SynTree& StmtRule::currentTree()
 {
-   if( _p->m_altTrees.arity() == 0 )
+   if( _p->arity() == 0 )
    {
       // create a base rule syntree
-      TreeStep* st = new RuleSynTree();
+      RuleSynTree* st = new RuleSynTree();
       st->setParent(this);
-      _p->m_altTrees.m_exprs.push_back(st);
+      _p->m_exprs.push_back(st);
    }
       
-   return *_p->m_altTrees.m_exprs.back();
+   return *_p->m_exprs.back();
 }
 
 const SynTree& StmtRule::currentTree() const
 {
-   return *_p->m_altTrees.m_exprs.back();
+   return *_p->m_exprs.back();
 }
 
 StmtRule& StmtRule::addAlternative()
 {
    RuleSynTree* st = new RuleSynTree();
    st->setParent(this);
-   _p->m_altTrees.m_exprs.push_back( st );
+   _p->m_exprs.push_back( st );
    return *this;
 }
 
 
 void StmtRule::describeTo( String& tgt, int depth ) const
 {
-   if( _p->m_altTrees.arity() == 0 )
+   if( _p->arity() == 0 )
    {
       tgt = "<Blank StmtRule>";
       return;
@@ -122,8 +120,8 @@ void StmtRule::describeTo( String& tgt, int depth ) const
       
    tgt += prefix + "rule\n";
    bool bFirst = true;
-   Private::RuleVector::ExprVector::const_iterator iter = _p->m_altTrees.m_exprs.begin();
-   while( iter != _p->m_altTrees.m_exprs.end() )
+   Private::ExprVector::const_iterator iter = _p->m_exprs.begin();
+   while( iter != _p->m_exprs.end() )
    {
       if( ! bFirst )
       {
@@ -139,7 +137,7 @@ void StmtRule::describeTo( String& tgt, int depth ) const
 
 void StmtRule::oneLinerTo( String& tgt ) const
 {
-   if( _p->m_altTrees.arity() == 0 )
+   if( _p->arity() == 0 )
    {
       tgt = "<Blank StmtRule>";
       return;
@@ -154,7 +152,7 @@ void StmtRule::apply_( const PStep*s1 , VMContext* ctx )
    const StmtRule* self = static_cast<const StmtRule*>(s1);
    CodeFrame& cf = ctx->currentCode();
 
-   fassert( _p->m_altTrees.arity() > 0 );
+   fassert( self->_p->arity() > 0 );
    
    // Always process the first alternative
    if ( cf.m_seqId > 0 && ctx->ruleEntryResult() )
@@ -166,7 +164,7 @@ void StmtRule::apply_( const PStep*s1 , VMContext* ctx )
    else
    {
       // on first alternative -- or if previous alternative failed...
-      if( cf.m_seqId >= (int) self->_p->m_altTrees.size() )
+      if( cf.m_seqId >= (int) self->_p->arity() )
       {
          // we failed, and we have no more alternatives.
          TRACE1( "Apply 'rule' at line %d -- rule failed", self->line() );
@@ -187,7 +185,7 @@ void StmtRule::apply_( const PStep*s1 , VMContext* ctx )
          ctx->startRuleFrame();
 
          // push the next alternative and pricess it
-         RuleSynTree* rst = self->_p->m_altTrees[cf.m_seqId++];
+         RuleSynTree* rst = self->_p->m_exprs[cf.m_seqId++];
          ctx->pushCode( rst );
       }
    }
@@ -211,8 +209,6 @@ StmtCut::StmtCut( Expression* expr, int32 line, int32 chr ):
    m_expr(expr)
 {
    FALCON_DECLARE_SYN_CLASS( stmt_cut );
-   static Class* mycls = &Engine::instance()->synclasses()->m_stmt_cut;
-   m_class = mycls;
 
    if( expr == 0 )
    {
@@ -398,14 +394,14 @@ void StmtDoubt::oneLinerTo( String& tgt ) const
 
 void StmtDoubt::apply_( const PStep* ps, VMContext* ctx )
 {  
+   const StmtDoubt* self = static_cast<const StmtDoubt*>(ps);
    CodeFrame& cf = ctx->currentCode();
    
-   fassert( m_expr != 0 );
+   fassert( self->m_expr != 0 );
    
    // first time around? -- call the expression.
    if( cf.m_seqId == 0 )
    {
-      const StmtDoubt* self = static_cast<const StmtDoubt*>(ps);
       cf.m_seqId = 1;
       if( ctx->stepInYield( self->m_expr, cf ) ) 
       {

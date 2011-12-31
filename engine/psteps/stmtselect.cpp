@@ -97,6 +97,7 @@ StmtSelect::StmtSelect( Expression* expr, int32 line, int32 chr ):
 }
 
 StmtSelect::StmtSelect( const StmtSelect& other ):
+   Statement( other ),
    m_expr(0),
    m_defaultBlock(0)
 {
@@ -114,7 +115,7 @@ StmtSelect::StmtSelect( const StmtSelect& other ):
    
    if ( other.m_defaultBlock != 0 )
    {
-      m_defaultBlock = other.m_expr->clone();
+      m_defaultBlock = other.m_defaultBlock->clone();
       m_defaultBlock->setParent(this);
    }
    

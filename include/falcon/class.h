@@ -220,9 +220,9 @@ public:
     The base implementation checks if the parameter is the same as \b this.
     Subclasses should check against theoretical or structured inheritance.
     */
-   virtual bool isDerivedFrom( Class* cls ) const;
+   virtual bool isDerivedFrom( const Class* cls ) const;
    
-   typedef Enumerator<Class> ClassEnumerator;
+   typedef Enumerator<Class* > ClassEnumerator;
    
    virtual void enumerateParents( ClassEnumerator& cb ) const;
    
@@ -902,7 +902,29 @@ public:
    //
 
    /** Generates a read only property access error. */
-   Error* ropError( const String& prop, int line = 0, const char* src = 0 );
+   Error* ropError( const String& prop, int line = 0, const char* src = 0 ) const;
+   
+   /** User flags.
+    User flags are at disposal of the user to define some subtyping of class hierarcies.
+    
+    The ClassTreeStep hierarcy uses it to mark some special classes that have some
+    significance to the engine. 
+    
+    Although there's no mechanism to guarantee that the numbers and flags assigned
+    are unique, if the user is reasonabily safe about the usage domain of a certain
+    class, it's safe to make assumption on the userFlags, which are never queried
+    or altered by the engine.
+    
+    For instance, as TresSteps are bound to give off a certain classes which tightly
+    relates to them, applying userFlags() on TreeStep::cls() return value is a 
+    "safe domain". A set of classes having a given parent module built by the user
+    are another "safe domain". 
+    
+    \note The base Class constructor zeroes the user flags.
+    */
+   int32 userFlags() const { return m_userFlags; }
+   
+   void userFlags( int32 uf ) { m_userFlags = uf; }
    
 protected:
    bool m_bIsfalconClass;

@@ -15,7 +15,7 @@
 
 
 #ifndef FALCON_CODEERROR_H
-#define	FALCON_CODEERROR_H
+#define FALCON_CODEERROR_H
 
 #include <falcon/error.h>
 

@@ -28,6 +28,7 @@
 #include <falcon/parser/parser.h>
 
 #include <falcon/psteps/exprarray.h>
+#include <falcon/psteps/exprassign.h>
 
 #include "private_types.h"
 

@@ -21,8 +21,6 @@
 namespace Falcon
 {
 
-class STVector_Private;
-
 /** If statement.
  *
  * Main logic branch control.
@@ -54,7 +52,8 @@ public:
    virtual bool remove( int32 pos );
    
 private:
-   STVector_Private* _p;
+   class Private;
+   Private* _p;
 };
 
 }

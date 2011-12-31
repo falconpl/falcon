@@ -149,7 +149,7 @@ void StmtAutoexpr::apply_( const PStep* ps, VMContext* ctx )
    const StmtAutoexpr* self = static_cast<const StmtAutoexpr*>( ps );
    TRACE3( "StmtAutoexpr apply: %p (%s)", self, self->describe().c_ize() );
    
-   fassert( m_expr != 0 );
+   fassert( self->m_expr != 0 );
    
    CodeFrame& cf = ctx->currentCode();
    // first time, try to run the expression.
@@ -173,7 +173,7 @@ void StmtAutoexpr::apply_interactive_( const PStep* ps, VMContext* ctx )
    const StmtAutoexpr* self = static_cast<const StmtAutoexpr*>( ps );
    TRACE3( "StmtAutoexpr apply interactive: %p (%s)", self, self->describe().c_ize() );
    
-   fassert( m_expr != 0 );
+   fassert( self->m_expr != 0 );
    
    CodeFrame& cf = ctx->currentCode();
    // first time, try to run the expression.
@@ -201,6 +201,8 @@ void StmtAutoexpr::apply_rule_( const PStep* ps, VMContext* ctx )
 {
    const StmtAutoexpr* self = static_cast<const StmtAutoexpr*>( ps );
    TRACE3( "StmtAutoexpr apply rule: %p (%s)", self, self->describe().c_ize() );
+   
+   fassert( self->m_expr != 0 );
    
    CodeFrame& cf = ctx->currentCode();
    // first time, try to run the expression.

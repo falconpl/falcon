@@ -42,7 +42,7 @@ public:
     
     Equals to arity / 2
     */
-   const int pairs() const;
+   int pairs() const;
    /** Get the nth expression in the array.
     \param n The number of the expression pair that must be accessed.
     \param first The first expression of the pair.

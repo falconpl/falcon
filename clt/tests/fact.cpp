@@ -55,13 +55,13 @@ void go( int factSize )
    SynTree* ifFalse = new SynTree();
    ifFalse->append( new StmtReturn( new ExprTimes(
          new ExprSymbol(count),
-         &(new ExprCall( new ExprValue(&fact) ))->addParam( new ExprMinus( new ExprSymbol(count), new ExprValue(1)))
+         &(new ExprCall( new ExprValue(&fact) ))->add( new ExprMinus( new ExprSymbol(count), new ExprValue(1)))
          ))
    );
 
+   ifTrue->selector( new ExprLT( new ExprSymbol(count), new ExprValue(2) ) );
    fact.syntree().append(
-         new Falcon::StmtIf(
-               new ExprLT( new ExprSymbol(count), new ExprValue(2) ),
+         new Falcon::StmtIf(               
                ifTrue,
                ifFalse
          )
@@ -71,7 +71,7 @@ void go( int factSize )
 
    // and now the main function
    ExprCall* call_fact = new ExprCall( new ExprValue(&fact) );
-   call_fact->addParam( new ExprValue(factSize) );
+   call_fact->add( new ExprValue(factSize) );
 
    SynFunc fmain( "__main__" );
    fmain.syntree().append(

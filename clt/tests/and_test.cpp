@@ -27,6 +27,8 @@
 #include <falcon/psteps/exprvalue.h>
 #include <falcon/psteps/exprmath.h>
 #include <falcon/psteps/exprsym.h>
+#include <falcon/psteps/exprassign.h>
+#include <falcon/psteps/exprlogic.h>
 
 using namespace Falcon;
 
@@ -111,12 +113,12 @@ void go( int arg, bool bUseOr )
 
    SynTree* iftrue = new SynTree;
       iftrue->append( new StmtAutoexpr(
-            &(*(new ExprCall( new ExprValue(&printl) ))).addParam(new ExprValue("TRUE:")).addParam(new ExprSymbol(count)))
+            &(*(new ExprCall( new ExprValue(&printl) ))).add(new ExprValue("TRUE:")).add(new ExprSymbol(count)))
              );
 
    SynTree* iffalse = new SynTree;
       iffalse->append( new StmtAutoexpr(
-            &(*(new ExprCall( new ExprValue(&printl) ))).addParam(new ExprValue("FALSE:")).addParam(new ExprSymbol(count)))
+            &(*(new ExprCall( new ExprValue(&printl) ))).add(new ExprValue("FALSE:")).add(new ExprSymbol(count)))
              );
 
    Expression* check = bUseOr ?
@@ -124,8 +126,9 @@ void go( int arg, bool bUseOr )
          static_cast<Expression*>(new ExprAnd( new ExprValue(arg), assign ));
 
    SynTree* program = &fmain.syntree();
+   iftrue->selector(check);
    (*program)
-      .append( new StmtIf( check, iftrue, iffalse ) );
+      .append( new StmtIf( iftrue, iffalse ) );
    
    std::cout << program->describe().c_ize() << std::endl;
 

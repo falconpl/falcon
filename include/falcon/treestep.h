@@ -20,6 +20,9 @@
 namespace Falcon {
 
 class Class;
+class Expression;
+class Statement;
+class SynTree;
 
 /** PStep extension that can be insereted in an exposable syntactic tree.
  
@@ -227,19 +230,19 @@ public:
     expressions. On exit, will be true if the expression as been created anew.
     \return 0 If the item is not an expression, a valid expression otherwise .
     */
-   static TreeStep* checkExpr( const Item& item, bool& bCreate );
+   static Expression* checkExpr( const Item& item, bool& bCreate );
    
    /** Checks if the given item is a TreeStep of type statement.
     \param item The item to be checked.
     \return 0 If the item is not a statement, a valid statement otherwise .
     */
-   static TreeStep* checkStatement( const Item& item );
+   static Statement* checkStatement( const Item& item );
    
    /** Checks if the given item is a TreeStep of type syntree.
     \param item The item to be checked.
     \return 0 If the item is not a syntree, a valid syntree otherwise .
     */
-   static TreeStep* checkSyntree( const Item& item );
+   static SynTree* checkSyntree( const Item& item );
       
    //=================================================
    // Arity

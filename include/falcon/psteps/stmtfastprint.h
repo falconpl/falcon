@@ -20,7 +20,6 @@
 
 namespace Falcon
 {
-class ExprVector_Private;
 
 /** Fastprint statement.
  The fastprint statement is a line beginning with ">" or ">>", printing 
@@ -53,7 +52,8 @@ public:
    bool isAddNL() const { return m_bAddNL; }
 
 protected:
-   ExprVector_Private* _p;
+   class Private;
+   Private* _p;
    
    bool m_bAddNL;   
    static void apply_( const PStep*, VMContext* ctx );

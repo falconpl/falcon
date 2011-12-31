@@ -25,6 +25,8 @@
 #include <falcon/psteps/exprsym.h>
 #include <falcon/psteps/exprcompare.h>
 #include <falcon/psteps/exprmath.h>
+#include <falcon/psteps/exprassign.h>
+
 
 using namespace Falcon;
 
@@ -55,14 +57,14 @@ void go( int fibSize )
 
    SynTree* ifFalse = new SynTree();
    ifFalse->append( new StmtReturn( new ExprPlus(
-         &(new ExprCall( new ExprValue(&fib) ))->addParam( new ExprMinus( new ExprSymbol(count), new ExprValue(1))),
-         &(new ExprCall( new ExprValue(&fib) ))->addParam( new ExprMinus( new ExprSymbol(count), new ExprValue(2)))
+         &(new ExprCall( new ExprValue(&fib) ))->add( new ExprMinus( new ExprSymbol(count), new ExprValue(1))),
+         &(new ExprCall( new ExprValue(&fib) ))->add( new ExprMinus( new ExprSymbol(count), new ExprValue(2)))
          ))
    );
 
+   ifTrue->selector(new ExprLT( new ExprSymbol(count), new ExprValue(2) ));
    fib.syntree().append(
-         new Falcon::StmtIf(
-               new ExprLT( new ExprSymbol(count), new ExprValue(2) ),
+         new Falcon::StmtIf(               
                ifTrue,
                ifFalse
          )
@@ -72,7 +74,7 @@ void go( int fibSize )
 
    // and now the main function
    ExprCall* call_fib = new ExprCall( new ExprValue(&fib) );
-   call_fib->addParam( new ExprValue(fibSize) );
+   call_fib->add( new ExprValue(fibSize) );
 
    SynFunc fmain( "__main__" );
    fmain.syntree().append(

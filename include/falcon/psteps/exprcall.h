@@ -57,7 +57,6 @@ public:
    virtual bool selector( Expression* e ); 
    
 protected:
-   inline ExprCall();
    PseudoFunction* m_func;
    Expression* m_callExpr;
 

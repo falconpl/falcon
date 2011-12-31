@@ -25,15 +25,12 @@
 
 #include <vector>
 
+#include "exprvector_private.h"
+
 namespace Falcon {
 
-class ExprCall::Private {
-public:
-   std::vector<Expression*> m_params;
-};
-
 ExprCall::ExprCall( int line, int chr ):
-   Expression( line, chr ),
+   ExprVector( line, chr ),
    m_func(0),
    m_callExpr(0)
 {
@@ -44,7 +41,7 @@ ExprCall::ExprCall( int line, int chr ):
 
 
 ExprCall::ExprCall( Expression* op1, int line, int chr ):
-   Expression( line, chr ),
+   ExprVector( line, chr ),
    m_func(0),
    m_callExpr(op1)
 {
@@ -54,7 +51,7 @@ ExprCall::ExprCall( Expression* op1, int line, int chr ):
 
 
 ExprCall::ExprCall( PseudoFunction* f, int line, int chr ):
-   Expression( line, chr ),
+   ExprVector( line, chr ),
    m_func(f),
    m_callExpr(0)
 {
@@ -195,7 +192,9 @@ bool ExprCall::selector( Expression* e )
    {
       delete m_callExpr;
       m_callExpr = e;
+      return true;
    }
+   return false;
 }
 
 

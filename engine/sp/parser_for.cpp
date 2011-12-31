@@ -32,6 +32,7 @@
 
 #include <falcon/psteps/stmtfor.h>
 #include <falcon/psteps/exprvalue.h>
+#include <falcon/synclasses_id.h>
 
 #include "private_types.h"
 
@@ -298,8 +299,8 @@ static void apply_forfirst_internal( const Rule&, Parser& p, bool bShort )
    
    Statement* stmt = ctx->currentStmt();
    
-   if( stmt == 0 ||
-      (stmt->type() != Statement::e_stmt_for_in && stmt->type() != Statement::e_stmt_for_to ) )
+   // TODO: Use a typing system?
+   if( stmt == 0 || stmt->cls()->userFlags() != FALCON_SYNCLASS_ID_FORCLASSES )
    {
       TokenInstance* ti = p.getNextToken();
       p.addError( e_forfirst_outside, p.currentSource(), ti->line(), ti->chr() );
@@ -340,8 +341,7 @@ static void apply_formiddle_internal( const Rule&, Parser& p, bool isShort )
    
    Statement* stmt = ctx->currentStmt();
    
-   if( stmt == 0 ||
-      (stmt->type() != Statement::e_stmt_for_in && stmt->type() != Statement::e_stmt_for_to ) )
+   if( stmt == 0 || stmt->cls()->userFlags() != FALCON_SYNCLASS_ID_FORCLASSES )
    {
       TokenInstance* ti = p.getNextToken();
       p.addError( e_formiddle_outside, p.currentSource(), ti->line(), ti->chr() );
@@ -380,8 +380,7 @@ static void apply_forlast_internal( const Rule&, Parser& p, bool isShort )
    ParserContext* ctx = static_cast<ParserContext*>(p.context());   
    Statement* stmt = ctx->currentStmt();
    
-   if( stmt == 0 ||
-      (stmt->type() != Statement::e_stmt_for_in && stmt->type() != Statement::e_stmt_for_to ) )
+   if( stmt == 0 || stmt->cls()->userFlags() != FALCON_SYNCLASS_ID_FORCLASSES )
    {
       TokenInstance* ti = p.getNextToken();
       p.addError( e_forlast_outside, p.currentSource(), ti->line(), ti->chr() );

@@ -39,7 +39,7 @@ Breakpoint::~Breakpoint()
    
 Breakpoint* Breakpoint::clone() const
 {
-   return new Breakpoint(this);
+   return new Breakpoint(*this);
 }
 
 void Breakpoint::describeTo( String& tgt, int ) const

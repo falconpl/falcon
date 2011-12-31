@@ -46,25 +46,48 @@ class FALCON_DYN_CLASS SynTree: public TreeStep
 {
 
 public:
-   SynTree();
+   SynTree( int line = 0, int chr = 0);
+   SynTree( const SynTree& other );
    virtual ~SynTree();
 
-   int size() const;
+   
+   /** Direct interface. 
+    Faster than nth()*/
+   Statement* at( int pos ) const;
+   /** Direct interface. 
+    Faster than arity()*/
+   size_t size() const;
+ 
    bool empty() const;
-
    Statement* first() const;
    Statement* last() const;
-   Statement* at( int pos ) const;
-   void set( int pos, Statement* p );
+   
+   virtual void describeTo( String& tgt, int depth = 0) const;
+   virtual void oneLinerTo( String& tgt ) const;
+   virtual SynTree* clone() const { return new SynTree(*this); }
 
-   /** Inserts a symbol */
-   bool insert( int pos, Statement* step );
+
+   virtual int32 arity() const;   
+   virtual TreeStep* nth( int32 n ) const;
+   virtual bool nth( int32 n, TreeStep* ts );
+   virtual bool insert( int32 pos, TreeStep* element );
+   virtual bool remove( int32 pos );
    
-   /** Appends a statement.
-    The method will silently fail if the step has already a parent.
-    */
-   bool remove( int pos );
-   
+   /** Returns the selector expression for this block.
+
+    Conditional blocks have selector expression determining whether the 
+    block should be entered or not.
+    */   
+   virtual Expression* selector() const { return m_selector; }
+   /** Changes the selector for this block
+    \param e A new unparented selector expression.
+
+    Conditional blocks have selector expression determining whether the 
+    block should be entered or not.
+    */  
+   virtual bool selector( Expression* e ); 
+
+      
    /** Appends a statement.
     The method will silently fail if the step has already a parent.
     */
@@ -74,8 +97,6 @@ public:
    static void apply_single_( const PStep* ps, VMContext* ctx );
    static void apply_empty_( const PStep* ps, VMContext* ctx );
 
-   virtual void describeTo( String& tgt, int depth = 0) const;
-   virtual void oneLinerTo( String& tgt ) const;
 
    /** Returns the symbol table for this block.
     \param bmake if true, generate a table if not already created.
@@ -108,21 +129,8 @@ public:
     \note The ownership of the symbol stays on the caller.
     */
    void target( Symbol* s ) { m_head = s; }
-   
-   /** Returns the selector expression for this block.
-    
-    Conditional blocks have selector expression determining whether the 
-    block should be entered or not.
-    */
-   Expression* selector() const { return m_selector; }
-   
-   bool selector( Expression* expr );
-   
-   virtual SynTree* clone() const;
-   
-protected:
-   SynTree( Class* subclass );
-   
+      
+protected:   
    class Private;
    Private* _p;
    
@@ -130,6 +138,8 @@ protected:
    Statement* m_single;
    Symbol* m_head;
    Expression* m_selector;
+
+   void setApply();
 };
 
 }

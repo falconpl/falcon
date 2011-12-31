@@ -154,7 +154,7 @@ public:
     \return true if the parent is known, false otherwise.
     
     */
-   virtual bool isDerivedFrom( Class* cls ) const;
+   virtual bool isDerivedFrom( const Class* cls ) const;
    
    /** Overridden to mark this class and all the parents through addParent. 
     \param mark A GC mark indicator.    

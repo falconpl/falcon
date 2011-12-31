@@ -36,6 +36,8 @@ public:
    ~StmtTempFor()
    {
    }
+   
+   virtual StmtTempFor* clone() const { return 0; }
 };
 
 
@@ -60,7 +62,8 @@ public:
    virtual TreeStep* nth( int32 n ) const;
    virtual bool nth( int32 n, TreeStep* ts );
 
-   bool isValid() const = 0;
+   virtual bool isValid() const = 0;
+   virtual bool isForHost() const { return true; }
    
 protected:
    
@@ -130,11 +133,11 @@ public:
    
    void expandItem( Item& itm, VMContext* ctx ) const;
 
-   virtual Expression* selector(); 
+   virtual Expression* selector() const; 
    virtual bool selector( Expression* e );
    virtual StmtForIn* clone() const { return new StmtForIn(*this); }
    
-   bool isValid() const;
+   virtual bool isValid() const;
 private:
    class Private;
    Private* _p;
@@ -215,9 +218,9 @@ public:
    void stepExpr( Expression* s );
       
    virtual void oneLinerTo( String& tgt ) const;
-   virtual void clone() const { return new StmtForTo(*this);}
+   virtual StmtForTo* clone() const { return new StmtForTo(*this); }
    
-   bool isValid() const;
+   virtual bool isValid() const;
 private:
    // apply is the same as PCODE, but it also checks ND requests.
    static void apply_( const PStep* self, VMContext* ctx );

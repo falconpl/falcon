@@ -36,16 +36,23 @@ class Inheritance;
  to the constructor of the classes indicated in the inheritance entry.
 
  \note This statement doesn't own the Instance entry; it just references it.
+ \note This statement is never generated on the source tree.
  */
 class FALCON_DYN_CLASS StmtInit: public Statement
 {
 public:
+   StmtInit( int32 =0, int32 =0 ):
+   m_postInit(this)
+   { 
+      //TODO
+   }
    
    StmtInit( Inheritance* inh, int32 line=0, int32 chr=0 );
    virtual ~StmtInit();
 
-   void describeTo( String& tgt, int depth=0 ) const;
-   void oneLinerTo( String& tgt ) const;
+   virtual void describeTo( String& tgt, int depth=0 ) const;
+   virtual void oneLinerTo( String& tgt ) const;
+   virtual StmtInit* clone() const { return new StmtInit( m_inheritance, line(), chr() ); }
    
    static void apply_( const PStep*, VMContext* ctx );
 

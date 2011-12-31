@@ -24,6 +24,7 @@
 #include <falcon/parser/rule.h>
 #include <falcon/parser/parser.h>
 
+#include <falcon/psteps/exprself.h>
 #include <falcon/psteps/exprsym.h>
 #include <falcon/psteps/exprvalue.h>
 

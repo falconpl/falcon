@@ -25,7 +25,7 @@
 
 namespace Falcon {
 
-StmtRaise::StmtRaise( int32 line=0, int32 chr = 0 ):
+StmtRaise::StmtRaise( int32 line, int32 chr):
    Statement( line, chr ),
    m_expr( 0 )
 {
@@ -45,7 +45,7 @@ StmtRaise::StmtRaise( Expression* risen, int32 line, int32 chr ):
 
 
 StmtRaise::StmtRaise( const StmtRaise& other ):
-   Statement( line, chr ),
+   Statement( other ),
    m_expr( 0 )
 {
    apply = apply_;
@@ -84,7 +84,7 @@ Expression* StmtRaise::selector() const
 
 bool StmtRaise::selector( Expression* e )
 {
-   if( e!= 0 && e->parent(this) )
+   if( e!= 0 && e->setParent(this) )
    {
       delete m_expr;
       m_expr = e;

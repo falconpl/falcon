@@ -13,8 +13,8 @@
    See LICENSE file for licensing details.
 */
 
-#ifndef FALCON_EXPRUNPACK_H_
-#define FALCON_EXPRUNPACK_H_
+#ifndef FALCON_EXPRMULTIUNPACK_H_
+#define FALCON_EXPRMULTIUNPACK_H_
 
 #include <falcon/expression.h>
 
@@ -45,7 +45,6 @@ public:
 
    bool isTop() const { return m_bIsTop; }
 protected:
-   ExprMultiUnpack();
    bool m_bIsTop;
 
 private:
@@ -56,5 +55,7 @@ private:
 };
 
 }
+
+#endif
 
 /* end of exprmultiunpack.h */

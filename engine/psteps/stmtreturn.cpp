@@ -79,13 +79,13 @@ StmtReturn::~StmtReturn()
    delete m_expr;
 }
 
-Expression* StmtRaise::selector() const
+Expression* StmtReturn::selector() const
 {
    return m_expr;
 }
 
 
-bool StmtRaise::selector( Expression* e )
+bool StmtReturn::selector( Expression* e )
 {
    if( e!= 0  )
    {

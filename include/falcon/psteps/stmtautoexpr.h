@@ -17,6 +17,7 @@
 #define _FALCON_STMTAUTOEXPR_H_
 
 #include <falcon/statement.h>
+#include <falcon/expression.h>
 
 namespace Falcon {
 /** Autoexpression.
@@ -36,8 +37,9 @@ public:
    StmtAutoexpr( const StmtAutoexpr& other );
    virtual ~StmtAutoexpr();
 
-   void describeTo( String& tgt, int depth=0 ) const;
-   void oneLinerTo( String& tgt ) const;   
+   virtual bool isAutoExpr() const { return true; }
+   virtual void describeTo( String& tgt, int depth=0 ) const;
+   virtual void oneLinerTo( String& tgt ) const;   
 
    /** Removes the expression stored in this AutoExpression.
     \return The held expression, or 0 if it was not set.
@@ -52,7 +54,7 @@ public:
       return expr;
    }
    
-   virtual inline StmtAutoexpr* clone() const { return new StmtAutoexpr(this); }
+   virtual inline StmtAutoexpr* clone() const { return new StmtAutoexpr(*this); }
    
    void setInteractive( bool bInter );
    bool isInteractive() const { return m_bInteractive; }
@@ -61,7 +63,7 @@ public:
    bool isInRule() const { return m_bInRule; }
    
    /** Returns the selector of this autoexpression. */
-   virtual Expression* selector(); 
+   virtual Expression* selector() const; 
    
    virtual bool selector( Expression* e ); 
    

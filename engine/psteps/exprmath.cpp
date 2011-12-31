@@ -61,7 +61,7 @@ void ExprMath::describeTo( String& ret, int depth ) const
 }
 
 
-ExprAuto::ExprAuto( const String& name, int line = 0, int chr = 0 ):
+ExprAuto::ExprAuto( const String& name, int line, int chr ):
    ExprMath( name, line, chr )
 {}
 
@@ -518,8 +518,11 @@ void generic_apply_<ExprAutoRShift::ops>( const PStep* ps, VMContext* ctx );
       ExprMath( op1, op2, symbol, line, chr )\
       { FALCON_DECLARE_SYN_CLASS( expr_iif ); apply = &generic_apply_<ops>; }\
    name::name( int line, int chr ): \
-      ExprMath( symbol, line, chr )\
+      ExprMath( symbol, line, chr ) \
       { FALCON_DECLARE_SYN_CLASS( expr_iif ); apply = &generic_apply_<ops>; }\
+   name::name( const name &other ): \
+      ExprMath( other ) \
+      { apply = &generic_apply_<ops>; }\
    bool name::simplify( Item& value ) const {\
       return generic_simplify<ops>( value, m_first, m_second );\
    }
@@ -540,11 +543,14 @@ FALCON_IMPLEMENT_MATH_EXPR_CLASS( ExprBXOR, "^^", expr_plus )
 
 #define FALCON_IMPLEMENT_MATH_AUTOEXPR_CLASS( name, symbol, handler ) \
    name::name( Expression* op1, Expression* op2, int line, int chr ): \
-      ExprMath( op1, op2, symbol, line, chr )\
+      ExprAuto( op1, op2, symbol, line, chr )\
       { FALCON_DECLARE_SYN_CLASS( expr_iif ); apply = &generic_apply_<ops>; }\
    name::name( int line, int chr ): \
-      ExprMath( symbol, line, chr )\
-      { FALCON_DECLARE_SYN_CLASS( expr_iif ); apply = &generic_apply_<ops>; }
+      ExprAuto( symbol, line, chr )\
+      { FALCON_DECLARE_SYN_CLASS( expr_iif ); apply = &generic_apply_<ops>; }\
+   name::name( const name &other ): \
+      ExprAuto( other ) \
+      { apply = &generic_apply_<ops>; }
 
 FALCON_IMPLEMENT_MATH_AUTOEXPR_CLASS( ExprAutoPlus, "+=", expr_aplus )
 FALCON_IMPLEMENT_MATH_AUTOEXPR_CLASS( ExprAutoMinus, "-=", expr_aminus )

@@ -31,6 +31,7 @@
 #include <falcon/psteps/stmtreturn.h>
 #include <falcon/psteps/stmtautoexpr.h>
 #include <falcon/psteps/exprvalue.h>
+#include <falcon/synclasses_id.h>
 
 #include "private_types.h"
 
@@ -121,7 +122,7 @@ void on_close_function( void* thing )
    SynFunc* func = ctx->currentFunc();
    if ( func->syntree().size() == 1 )
    {
-      if( func->syntree().at(1)->type() == Statement::e_stmt_rule )
+      if( func->syntree().at(0)->cls()->userFlags() == FALCON_SYNCLASS_ID_RULE )
       {
          func->setPredicate( true );
       }
@@ -136,11 +137,11 @@ void on_close_lambda( void* thing )
    SynFunc* func=ctx->currentFunc();
 
    int size = func->syntree().size();
-   if ( size == 1 && func->syntree().at(0)->type() == Statement::e_stmt_autoexpr )
+   if ( size == 1 && func->syntree().at(0)->cls()->userFlags() == FALCON_SYNCLASS_ID_AUTOEXPR )
    {
       StmtAutoexpr* aexpr = static_cast<StmtAutoexpr*>( func->syntree().at(0) );
       StmtReturn* ret = new StmtReturn( aexpr->detachExpr() );
-      func->syntree().set(0, ret);
+      func->syntree().nth(0, ret);
    }
 }
 

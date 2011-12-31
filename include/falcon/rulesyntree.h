@@ -32,8 +32,10 @@ class FALCON_DYN_CLASS RuleSynTree: public SynTree
 
 public:
    RuleSynTree();
+   RuleSynTree( const RuleSynTree& other );
    virtual ~RuleSynTree();
 
+   RuleSynTree* clone() const { return new RuleSynTree( *this ); }
 private:
    static void apply_( const PStep* ps, VMContext* ctx );
 

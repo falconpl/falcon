@@ -53,7 +53,7 @@ ExprProto::ExprProto( int line, int chr ):
    Expression( line, chr ),
    _p(new Private)
 {
-   FALCON_DECLARE_SYN_CLASS( expr_proto )
+   FALCON_DECLARE_SYN_CLASS( expr_genproto )
    apply=apply_;
 }
 
@@ -79,7 +79,7 @@ TreeStep* ExprProto::nth( int32 n ) const
 {
    if( n < 0 ) n = (int)_p->m_defs.size() + n;
    if( n < 0 || n >= (int)_p->m_defs.size() ) return 0;
-   return _p->m_defs[n]->second;
+   return _p->m_defs[n].second;
 }
 
 bool ExprProto::nth( int32 n, TreeStep* ts )
@@ -88,18 +88,19 @@ bool ExprProto::nth( int32 n, TreeStep* ts )
    if( n < 0 ) n = (int)_p->m_defs.size() + n;
    if( n < 0 || n >= (int)_p->m_defs.size() ) return false;
    if( ! ts->setParent(this) ) return false;
-   delete _p->m_defs[n]->second;
-   _p->m_defs[n]->second = ts;
+   delete _p->m_defs[n].second;
+   _p->m_defs[n].second = static_cast<Expression*>(ts);
    return true;
 }
 
 
-virtual bool ExprProto::remove( int n )
+bool ExprProto::remove( int n )
 {
    if( n < 0 ) n = (int)_p->m_defs.size() + n;
    if( n < 0 || n >= (int)_p->m_defs.size() ) return false;
-   delete _p->m_defs[n]->second;
+   delete _p->m_defs[n].second;
    _p->m_defs.erase( _p->m_defs.begin() + n );
+   return true;
 }
 
 

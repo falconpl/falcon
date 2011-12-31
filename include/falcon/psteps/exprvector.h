@@ -47,7 +47,7 @@ public:
    /** Adds another expression to this array.
     \return itself (useful for declarations in sources)
     */
-   ExprArray& add( Expression* e );
+   ExprVector& add( Expression* e );
 
 protected:
    ExprVector_Private* _p;

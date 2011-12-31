@@ -17,8 +17,11 @@
 #include <falcon/class.h>
 #include <falcon/item.h>
 #include <falcon/psteps/exprvalue.h>
-#include <falcon/psteps/exprsymbol.h>
+#include <falcon/psteps/exprsym.h>
 #include <falcon/engine.h>
+
+#include <falcon/statement.h>
+#include <falcon/syntree.h>
 
 namespace Falcon {
 
@@ -68,7 +71,7 @@ bool TreeStep::remove( int32 )
    return false;
 }
 
-void TreeStep::selector() const
+Expression* TreeStep::selector() const
 {
    return 0;
 }
@@ -79,7 +82,7 @@ bool TreeStep::selector( Expression* )
 }
 
 
-TreeStep* TreeStep::checkExpr( const Item& item, bool& bCreate )
+Expression* TreeStep::checkExpr( const Item& item, bool& bCreate )
 {
    static Class* clsTreeStep = Engine::instance()->treeStepClass();
    static Class* clsSymbol = Engine::instance()->symbolClass();
@@ -103,7 +106,7 @@ TreeStep* TreeStep::checkExpr( const Item& item, bool& bCreate )
       if( theStep->category() == TreeStep::e_cat_expression )
       {
          bCreate = false;
-         return theStep;
+         return static_cast<Expression*>(theStep);
       }
       return 0;
    }
@@ -123,7 +126,7 @@ TreeStep* TreeStep::checkExpr( const Item& item, bool& bCreate )
 }
 
 
-TreeStep* TreeStep::checkStatement( const Item& item )
+Statement* TreeStep::checkStatement( const Item& item )
 {
    static Class* clsTreeStep = Engine::instance()->treeStepClass();
    
@@ -140,14 +143,14 @@ TreeStep* TreeStep::checkStatement( const Item& item )
       TreeStep* theStep = static_cast<TreeStep*>( data );
       if( theStep->category() == TreeStep::e_cat_statement )
       {
-         return theStep;
+         return static_cast<Statement*>(theStep);
       }
    }
    return 0;
 }
 
 
-TreeStep* TreeStep::checkSyntree( const Item& item )
+SynTree* TreeStep::checkSyntree( const Item& item )
 {
    static Class* clsTreeStep = Engine::instance()->treeStepClass();
    
@@ -164,7 +167,7 @@ TreeStep* TreeStep::checkSyntree( const Item& item )
       TreeStep* theStep = static_cast<TreeStep*>( data );
       if( theStep->category() == TreeStep::e_cat_syntree )
       {
-         return theStep;
+         return static_cast<SynTree*>(theStep);
       }
    }
    return 0;

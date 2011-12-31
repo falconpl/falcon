@@ -17,6 +17,7 @@
 #include <falcon/setup.h>
 #include <falcon/string.h>
 #include <falcon/classes/classstatement.h>
+#include <falcon/classes/classtreestep.h>
 
 namespace Falcon {
 

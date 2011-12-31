@@ -68,7 +68,7 @@ Class* Class::getParent( const String& ) const
 }
 
 
-bool Class::isDerivedFrom( Class* cls ) const
+bool Class::isDerivedFrom( const Class* cls ) const
 {
    return this == cls;
 }
@@ -422,10 +422,10 @@ void Class::op_next( VMContext* ctx, void* ) const
 
 
 
-Error* Class::ropError( const String& prop, int line, const char* src )
+Error* Class::ropError( const String& prop, int line, const char* src ) const
 {
    if( src == 0 ) src = SRC;
-   if( line == 0 ) line == __LINE__;
+   if( line == 0 ) line = __LINE__;
    return new AccessError( ErrorParam( e_prop_ro, line, src )
          .origin(ErrorParam::e_orig_vm)
          .extra(prop));

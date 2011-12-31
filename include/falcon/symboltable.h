@@ -63,6 +63,7 @@ class FALCON_DYN_CLASS SymbolTable
 {
 public:
    SymbolTable();
+   SymbolTable( const SymbolTable& other);
    virtual ~SymbolTable();
 
    /** Number of local variables in this function.

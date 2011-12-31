@@ -25,6 +25,8 @@
 #include <falcon/psteps/exprmath.h>
 #include <falcon/psteps/exprcompare.h>
 
+#include <falcon/psteps/exprassign.h>
+
 class LoopApp: public Falcon::Application
 {
 

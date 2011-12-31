@@ -37,7 +37,7 @@ ExprVector::ExprVector( int line, int chr):
 ExprVector::ExprVector( const ExprVector& other ):
    Expression(other)
 {
-   _p = new ExprVector_Private(other._p, this);
+   _p = new ExprVector_Private(*other._p, this);
 }
 
 ExprVector::~ExprVector()

@@ -107,7 +107,9 @@ bool StmtWhile::selector( Expression* e )
    {
       delete m_expr;
       m_expr = e;
+      return true;
    }
+   return false;
 }
    
 void StmtWhile::oneLinerTo( String& tgt ) const
@@ -148,14 +150,14 @@ TreeStep* StmtWhile::nth( int n ) const
 }
 
 
-bool StmtWhile::nth( int n, SynTree* st )
+bool StmtWhile::nth( int n, TreeStep* st )
 {
-   if( st == 0 || ! st->setParent(this) ) return false;
+   if( st == 0 || st->category() != TreeStep::e_cat_syntree || ! st->setParent(this) ) return false;
    
    if( n == 0 || n == -1 ) 
    {
       delete m_stmts;
-      m_stmts = st;
+      m_stmts = static_cast<SynTree*>(st);
    }
    
    return 0;
@@ -165,9 +167,9 @@ bool StmtWhile::nth( int n, SynTree* st )
 void StmtWhile::apply_( const PStep* s1, VMContext* ctx )
 {
    const StmtWhile* self = static_cast<const StmtWhile*>(s1);
-   TRACE( "StmtWhile::apply_ entering %s", self->oneLiner().c_str() );
-   fassert( m_expr != 0 );
-   fassert( m_stmts != 0 );
+   TRACE( "StmtWhile::apply_ entering %s", self->oneLiner().c_ize() );
+   fassert( self->m_expr != 0 );
+   fassert( self->m_stmts != 0 );
    
    CodeFrame& cf = ctx->currentCode();
    

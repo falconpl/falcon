@@ -18,9 +18,9 @@
 #include <falcon/setup.h>
 #include <falcon/classes/classsymbol.h>
 
-#include "falcon/symbol.h"
-#include "falcon/engine.h"
-#include "falcon/vmcontext.h"
+#include <falcon/symbol.h>
+#include <falcon/engine.h>
+#include <falcon/vmcontext.h>
 
 namespace Falcon {
 
@@ -46,7 +46,11 @@ void* ClassSymbol::clone( void* instance ) const
    return instance;
 }
    
-//void ClassSymbol::op_create( VMContext* ctx, int32 pcount ) const;
+void ClassSymbol::op_create( VMContext* ctx, int32 pcount ) const
+{
+   // TODO
+   ctx->stackResult(pcount, Item());
+}
    
 void ClassSymbol::enumerateProperties( void*, PropertyEnumerator& cb ) const
 {
@@ -59,12 +63,12 @@ void ClassSymbol::enumeratePV( void* instance, PVEnumerator& cb ) const
    static Class* strClass = Engine::instance()->stringClass();
  
    Symbol* sym = static_cast<Symbol*>( instance );
-   cb("name", Item(strClass,sym ));
-   cb("value", sym->defaultValue() );
-   
+   Item temp( strClass, sym );
+   cb("name", temp );
+   cb("value", *sym->defaultValue() );   
 }
 
-bool ClassSymbol::hasProperty( void* instance, const String& prop ) const
+bool ClassSymbol::hasProperty( void*, const String& prop ) const
 {
    return
       prop == "name"

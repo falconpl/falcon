@@ -194,7 +194,7 @@ void* HyperClass::deserialize( DataReader* ) const
 }
 
 
-bool HyperClass::isDerivedFrom( Class* cls ) const
+bool HyperClass::isDerivedFrom( const Class* cls ) const
 {
    // are we the required class?
    if ( cls == this ) return true;

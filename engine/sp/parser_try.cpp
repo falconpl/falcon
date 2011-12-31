@@ -34,6 +34,8 @@
 #include <falcon/psteps/stmtraise.h>
 #include <falcon/psteps/exprvalue.h>
 
+#include <falcon/synclasses_id.h>
+
 namespace Falcon {
 
 using namespace Parsing;
@@ -154,7 +156,7 @@ void apply_finally( const Rule&, Parser& p )
    
    ParserContext* ctx = static_cast<ParserContext*>(p.context());
    Statement* stmt = ctx->currentStmt();
-   if( stmt == 0 || stmt->type() != Statement::e_stmt_try )
+   if( stmt == 0 || stmt->cls()->userFlags() != FALCON_SYNCLASS_ID_CATCHHOST )
    {
       p.addError( e_finally_outside, p.currentSource(), ti->line(), ti->chr() );
    }
@@ -196,7 +198,7 @@ static void internal_apply_catch( int toks, Parser& p, int line, int chr,
 {   
    ParserContext* ctx = static_cast<ParserContext*>(p.context());
    Statement* stmt = ctx->currentStmt();
-   if( stmt == 0 || stmt->type() != Statement::e_stmt_try )
+   if( stmt == 0 || stmt->cls()->userFlags() != FALCON_SYNCLASS_ID_CATCHHOST )
    {
       p.addError( e_catch_outside, p.currentSource(), line, 0 );
    }
@@ -254,7 +256,7 @@ void apply_catch_all( const Rule&, Parser& p )
    
    ParserContext* ctx = static_cast<ParserContext*>(p.context());
    Statement* stmt = ctx->currentStmt();
-   if( stmt == 0 || stmt->type() != Statement::e_stmt_try )
+   if( stmt == 0 || stmt->cls()->userFlags() != FALCON_SYNCLASS_ID_CATCHHOST )
    {
       p.addError( e_catch_outside, p.currentSource(), ti->line(), ti->chr() );
    }

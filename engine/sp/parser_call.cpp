@@ -56,7 +56,7 @@ void apply_expr_call( const Rule&, Parser& p )
 
    TokenInstance* ti = new TokenInstance(v1->line(), v1->chr(), sp.Expr);
    Expression* callee = static_cast<Expression*>(v1->detachValue());
-   if( callee->type() == Expression::t_symbol )
+   if( callee->trait() == Expression::e_trait_symbol )
    {
       // check if the symbol is a pseudofunction   
       ExprSymbol* esym = static_cast<ExprSymbol*>(callee);
@@ -83,7 +83,7 @@ void apply_expr_call( const Rule&, Parser& p )
    List::iterator iter = list->begin();
    while( iter != list->end() )
    {
-      call->addParam( *iter );
+      call->add( *iter );
       ++iter;
    }
    // free the expressions in the list

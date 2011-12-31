@@ -79,12 +79,6 @@ void ExprIndex::describeTo( String& ret, int depth ) const
 }
 
 
-bool ExprStarIndex::simplify( Item& ) const
-{
-   //TODO add simplification for static string star indexing.
-   return false;
-}
-
 }
 
 /* end of exprindex.cpp */

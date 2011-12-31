@@ -39,7 +39,7 @@ public:
    virtual void* deserialize( DataReader* stream ) const;
    
    /** Grant that subclasses are considered derived from the standard engine Error class.*/
-   virtual bool isDerivedFrom( Class* cls ) const;
+   virtual bool isDerivedFrom( const Class* cls ) const;
 
    virtual void describe( void* instance, String& target, int depth = 3, int maxlen = 60 ) const;
    // TODO: overload properties.

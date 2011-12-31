@@ -29,6 +29,10 @@
 
 #include <falcon/psteps/exprsym.h>
 #include <falcon/psteps/stmtautoexpr.h>
+#include <falcon/psteps/exprassign.h>
+#include <falcon/psteps/exprunpack.h>
+#include <falcon/psteps/exprmultiunpack.h>
+#include <falcon/synclasses_id.h>
 
 #include "private_types.h"
 
@@ -47,11 +51,9 @@ static bool check_type( Parser&p, Expression* expr, int line, int chr )
    // -- symbols
    // -- accessors
    // -- calls (i.e. if they return a reference).
-   Expression::operator_t type = expr->type();
-   if( type != Expression::t_symbol &&
-       type != Expression::t_array_access &&
-       type != Expression::t_obj_access &&
-       type != Expression::t_funcall
+   Expression::t_trait type = expr->trait();
+   if( type != Expression::e_trait_symbol &&
+       type != Expression::e_trait_assignable
      )
    {
      p.addError( e_assign_sym, p.currentSource(), line, chr, 0 );
@@ -73,7 +75,7 @@ void apply_line_expr( const Rule&, Parser& p )
       
       Statement* parent = ctx->currentStmt();
       StmtAutoexpr* line = new StmtAutoexpr(expr, ti->line(), ti->chr());
-      if( parent != 0 && parent->type() == Statement::e_stmt_rule )
+      if( parent != 0 && parent->cls()->userFlags() == FALCON_SYNCLASS_ID_RULE )
       {
          line->setInRule( true );
       }
@@ -143,7 +145,7 @@ void apply_stmt_assign_list( const Rule&, Parser& p )
          while( iterRight != listLeft->end() )
          {
             Expression* expr = *iterRight;
-            if( expr->type() != Expression::t_symbol )
+            if( expr->trait() != Expression::e_trait_symbol )
             {
                p.addError(e_syn_unpack, p.currentSource(), v2->line(), v2->chr());
                p.simplify(3, ti);

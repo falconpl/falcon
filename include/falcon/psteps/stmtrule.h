@@ -39,7 +39,7 @@ public:
 
    virtual void describeTo( String& tgt, int depth=0 ) const;
    virtual void oneLinerTo( String& tgt ) const;
-   virtual StmtRule* clone() const;
+   virtual StmtRule* clone() const { return new StmtRule(*this); }
    
    static void apply_( const PStep*, VMContext* ctx );
 

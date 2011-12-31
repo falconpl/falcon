@@ -233,7 +233,7 @@ bool ExprLT::simplify( Item& value ) const
 // EXPR LE
 //
 ExprLE::ExprLE( int line, int chr ):
-   ExprCompare( line, chr )
+   ExprCompare( "<=", line, chr )
 {
    FALCON_DECLARE_SYN_CLASS( expr_le )
    apply = &generic_apply_<ExprLE::comparer>;
@@ -264,7 +264,7 @@ bool ExprLE::simplify( Item& value ) const
 // EXPR GT
 //
 ExprGT::ExprGT( int line, int chr ):
-   ExprCompare( line, chr )
+   ExprCompare( ">", line, chr )
 {
    FALCON_DECLARE_SYN_CLASS( expr_gt )
    apply = &generic_apply_<ExprGT::comparer>;
@@ -277,7 +277,7 @@ ExprGT::ExprGT( Expression* op1, Expression* op2, int line, int chr ):
    apply = &generic_apply_<ExprGT::comparer>;
 }
 
-ExprGT::ExprGT( const ExprLT& other ):
+ExprGT::ExprGT( const ExprGT& other ):
    ExprCompare(other)
 {
    apply = &generic_apply_<ExprGT::comparer>;
@@ -295,7 +295,7 @@ bool ExprGT::simplify( Item& value ) const
 // EXPR GE
 //
 ExprGE::ExprGE( int line, int chr ):
-   ExprCompare(  ">=", line, chr )
+   ExprCompare( ">=", line, chr )
 {
    FALCON_DECLARE_SYN_CLASS( expr_ge )
    apply = &generic_apply_<ExprGE::comparer>;
@@ -308,7 +308,7 @@ ExprGE::ExprGE( Expression* op1, Expression* op2, int line, int chr ):
    apply = &generic_apply_<ExprGE::comparer>;
 }
 
-ExprGE::ExprGE( const ExprLT& other ):
+ExprGE::ExprGE( const ExprGE& other ):
    ExprCompare(other)
 {
    apply = &generic_apply_<ExprGE::comparer>;
@@ -326,7 +326,7 @@ bool ExprGE::simplify( Item& value ) const
 // EXPR EQ
 //
 ExprEQ::ExprEQ( int line, int chr ):
-   ExprCompare( line, chr )
+   ExprCompare( "==", line, chr )
 {
    FALCON_DECLARE_SYN_CLASS( expr_eq )
    apply = &generic_apply_<ExprEQ::comparer>;
@@ -339,7 +339,7 @@ ExprEQ::ExprEQ( Expression* op1, Expression* op2, int line, int chr ):
    apply = &generic_apply_<ExprEQ::comparer>;
 }
 
-ExprEQ::ExprEQ( const ExprLT& other ):
+ExprEQ::ExprEQ( const ExprEQ& other ):
    ExprCompare(other)
 {
    apply = &generic_apply_<ExprEQ::comparer>;
@@ -371,7 +371,7 @@ ExprNE::ExprNE( Expression* op1, Expression* op2, int line, int chr ):
    apply = &generic_apply_<ExprNE::comparer>;
 }
 
-ExprNE::ExprNE( const ExprLT& other ):
+ExprNE::ExprNE( const ExprNE& other ):
    ExprCompare(other)
 {
    apply = &generic_apply_<ExprNE::comparer>;

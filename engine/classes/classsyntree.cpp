@@ -16,9 +16,14 @@
 
 #include <falcon/setup.h>
 #include <falcon/string.h>
-#include <falcon/classes/classsyntree.h>
 #include <falcon/syntree.h>
 #include <falcon/vmcontext.h>
+
+#include <falcon/classes/classsyntree.h>
+#include <falcon/classes/classtreestep.h>
+#include <falcon/classes/classsymbol.h>
+
+#include <falcon/errors/paramerror.h>
 
 namespace Falcon {
 
@@ -52,7 +57,7 @@ void ClassSynTree::enumeratePV( void* instance, Class::PVEnumerator& cb ) const
 bool ClassSynTree::hasProperty( void* instance, const String& prop ) const
 {
    return  
-         || prop == "target" 
+         prop == "target" 
          || m_parent->hasProperty( instance, prop );
 }
 
@@ -78,7 +83,7 @@ void ClassSynTree::op_setProperty( VMContext* ctx, void* instance, const String&
    Item& source = ctx->opcodeParam(0);
    if ( prop == "target" ) {
       // is a symbol?
-      Class* cls; void src;
+      Class* cls; void* src;
       if( source.asClassInst( cls, src ) && cls->isDerivedFrom( m_classSymbol ) )
       {
          // ok, we can go.
@@ -88,7 +93,7 @@ void ClassSynTree::op_setProperty( VMContext* ctx, void* instance, const String&
       }
       
       // If we're here, it's not an expression
-      throw ParamError( ErrorParam(e_param_type, __LINE__, SRC )
+      throw new ParamError( ErrorParam(e_param_type, __LINE__, SRC )
             .origin( ErrorParam::e_orig_vm)
             .extra( "Symbol" ) );
    }

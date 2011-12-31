@@ -16,6 +16,7 @@
 #define SRC "engine/derivedfrom.cpp"
 
 #include <falcon/derivedfrom.h>
+#include <falcon/vmcontext.h>
 
 namespace Falcon {
 
@@ -24,11 +25,6 @@ DerivedFrom::DerivedFrom( Class* parent, const String& name ):
    Class(name),
    m_parent( parent )
 {}
-
-
-DerivedFrom::~DerivedFrom() 
-{}
-
 
 bool DerivedFrom::isDerivedFrom( Class* cls ) const
 {
@@ -73,7 +69,7 @@ bool DerivedFrom::hasProperty( void* instance, const String& prop ) const
 bool DerivedFrom::op_getParentProperty( VMContext* ctx, void* instance, const String& prop ) const
 {
    // screens parent's parent
-   if( m_parent->hasProperty( prop ) )
+   if( m_parent->hasProperty( instance, prop ) )
    {
       m_parent->op_getProperty( ctx, instance, prop );
       return true;
@@ -90,7 +86,7 @@ void DerivedFrom::op_getProperty( VMContext* ctx, void* instance, const String& 
    }
    else
    {
-      if( m_parent->hasProperty( prop ) )
+      if( m_parent->hasProperty( instance, prop ) )
       {
          m_parent->op_getProperty( ctx, instance, prop );
       }
@@ -312,13 +308,13 @@ void DerivedFrom::op_in( VMContext* ctx, void* instance ) const
 
 void DerivedFrom::op_provides( VMContext* ctx, void* instance, const String& property ) const
 {
-   return m_parent->op_provides( ctx, instance );
+   return m_parent->op_provides( ctx, instance, property );
 }
 
 
 void DerivedFrom::op_call( VMContext* ctx, int32 paramCount, void* instance ) const
 {
-   return m_parent->op_call( ctx, instance );
+   return m_parent->op_call( ctx, paramCount, instance );
 }
 
 void DerivedFrom::op_toString( VMContext* ctx, void* instance ) const

@@ -36,11 +36,25 @@ private:
    typedef std::vector<Symbol*> SymbolVector;
    SymbolVector m_locals;
 
+   Private() {}
+   
+   // No deep copy involved...
+   Private( const Private& other ):
+      m_symtab( other.m_symtab ),
+      m_locals( other.m_locals )
+   {}
+   
+   ~Private() {}
 };
 
 SymbolTable::SymbolTable()
 {
    _p = new Private;
+}
+
+SymbolTable::SymbolTable( const SymbolTable& other)
+{
+   _p = new Private( *other._p );
 }
 
 SymbolTable::~SymbolTable()

@@ -23,13 +23,15 @@
 
 namespace Falcon {
 
+class TreeStep;
+
 /** Base handler class for TreeStep reflected at script level.
  
  */
 class ClassTreeStep: public Class
 {
 public:
-   ClassTreeStep( const String& name );
+   ClassTreeStep();
    virtual ~ClassTreeStep();         
   
 
@@ -69,7 +71,7 @@ public:
    // This class is always alive as it resides in core/engine
    virtual bool gcCheckMyself( uint32 mark );
 
-   virtual TreeStep* createInstance() const = 0;
+   virtual TreeStep* createInstance() const { return 0; }
 private:
    
    class LenMethod: public Function {
@@ -93,9 +95,9 @@ private:
       void invoke( VMContext* ctx, int32 pCount = 0 );
    };
 
-   LenMethod m_lenMethod;
-   InsertMethod m_insertMethod;
-   RemoveMethod m_removeMethod;
+   mutable LenMethod m_lenMethod;
+   mutable InsertMethod m_insertMethod;
+   mutable RemoveMethod m_removeMethod;
 };
 
 }

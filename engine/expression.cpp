@@ -68,13 +68,12 @@ TreeStep* UnaryExpression::nth( int32 n ) const
 
 
 bool UnaryExpression::nth( int32 n, TreeStep* ts )
-{
-   
+{   
    if( n == 0 || n == -1 )
    {
-      if( ! ts->parent(this) ) return false;
+      if( ts == 0 || ts->category() != TreeStep::e_cat_expression || ! ts->setParent(this) ) return false;
       delete m_first;
-      m_first = ts;
+      m_first = static_cast<Expression*>(ts);
       return true;
    }
    
@@ -126,14 +125,14 @@ bool BinaryExpression::nth( int32 n, TreeStep* ts )
    switch( n )
    {
    case 0: case -2:      
-      if( ! ts->parent(this) ) return false;
+      if( ts == 0 || ts->category() != TreeStep::e_cat_expression || ! ts->setParent(this) ) return false;
       delete m_first;
-      m_first = ts;
+      m_first = static_cast<Expression*>(ts);
       return true;
    case 1: case -1:
-      if( ! ts->parent(this) ) return false;
+      if( ts == 0 || ts->category() != TreeStep::e_cat_expression || ! ts->setParent(this) ) return false;
       delete m_second;
-      m_second = ts;
+      m_second = static_cast<Expression*>(ts);
       return true;
    }
    
@@ -185,19 +184,19 @@ bool TernaryExpression::nth( int32 n, TreeStep* ts )
    switch( n )
    {
    case 0: case -3:      
-      if( ! ts->parent(this) ) return false;
+      if( ts == 0 || ts->category() != TreeStep::e_cat_expression || ! ts->setParent(this) ) return false;
       delete m_first;
-      m_first = ts;
+      m_first = static_cast<Expression*>(ts);
       return true;
    case 1: case -2:
-      if( ! ts->parent(this) ) return false;
+      if( ts == 0 || ts->category() != TreeStep::e_cat_expression || ! ts->setParent(this) ) return false;
       delete m_second;
-      m_second = ts;
+      m_second = static_cast<Expression*>(ts);
       return true;
    case 2: case -1:
-      if( ! ts->parent(this) ) return false;
+      if( ts == 0 || ts->category() != TreeStep::e_cat_expression || ! ts->setParent(this) ) return false;
       delete m_third;
-      m_third = ts;
+      m_third = static_cast<Expression*>(ts);
       return true;
    }
    

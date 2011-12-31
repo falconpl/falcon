@@ -26,7 +26,8 @@ namespace Falcon {
 class FALCON_DYN_CLASS ExprUnpack: public Expression
 {
 public:
-   ExprUnpack( Expression* op1, bool bIsTop );
+   ExprUnpack( int line = 0, int chr = 0 );
+   ExprUnpack( Expression* op1, bool bIsTop, int line = 0, int chr = 0 );
    ExprUnpack( const ExprUnpack& other );
    virtual ~ExprUnpack();
 
@@ -44,7 +45,6 @@ public:
    bool isTop() const { return m_bIsTop; }
 
 protected:
-   ExprUnpack();
    Expression* m_expander;
    bool m_bIsTop;
    

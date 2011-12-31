@@ -18,96 +18,78 @@
 #include <falcon/synclasses.h>
 #include <falcon/vmcontext.h>
 #include <falcon/engine.h>
-   
+#include <falcon/treestep.h>
+
+#include <falcon/synclasses_id.h>
+
+#include <falcon/errors/paramerror.h>
+
+#include <falcon/psteps/breakpoint.h>
+#include <falcon/psteps/exprarray.h>
+#include <falcon/psteps/exprassign.h>
+#include <falcon/psteps/exprbitwise.h>
+#include <falcon/psteps/exprcall.h>
+#include <falcon/psteps/exprcompare.h>
+#include <falcon/psteps/exprdict.h>
+#include <falcon/psteps/exprdot.h>
+#include <falcon/psteps/expreeq.h>
+#include <falcon/psteps/expriif.h>
+#include <falcon/psteps/exprincdec.h>
+#include <falcon/psteps/exprindex.h>
+#include <falcon/psteps/exprlogic.h>
+#include <falcon/psteps/exprmath.h>
+#include <falcon/psteps/exprmultiunpack.h>
+#include <falcon/psteps/exprneg.h>
+#include <falcon/psteps/exproob.h>
+#include <falcon/psteps/exprproto.h>
+#include <falcon/psteps/exprrange.h>
+#include <falcon/psteps/exprref.h>
+#include <falcon/psteps/exprself.h>
+#include <falcon/psteps/exprstarindex.h>
+#include <falcon/psteps/exprsym.h>
+#include <falcon/psteps/exprunpack.h>
+#include <falcon/psteps/exprvalue.h>
+
+#include <falcon/psteps/stmtautoexpr.h>
+#include <falcon/psteps/stmtbreak.h>
+#include <falcon/psteps/stmtcontinue.h>
+#include <falcon/psteps/stmtfastprint.h>
+#include <falcon/psteps/stmtfor.h>
+#include <falcon/psteps/stmtif.h>
+#include <falcon/psteps/stmtinit.h>
+#include <falcon/psteps/stmtraise.h>
+#include <falcon/psteps/stmtreturn.h>
+#include <falcon/psteps/stmtrule.h>
+#include <falcon/psteps/stmtselect.h>
+#include <falcon/psteps/stmttry.h>
+#include <falcon/psteps/stmtwhile.h>
 
 namespace Falcon {
+#undef FALCON_SYNCLASS_DECLARATOR_DECLARE
+#define FALCON_SYNCLASS_DECLARATOR_APPLY
+
+SynClasses::SynClasses( Class* classSynTree, Class* classStatement, Class* classExpr ):
+   m_cls_st( classSynTree ),
+   m_cls_stmt( classStatement ),
+   m_cls_expr( classExpr ),
+   #include <falcon/synclasses_list.h>
+   m_dummy_end(0)
+{
+   m_stmt_forto.userFlags(FALCON_SYNCLASS_ID_FORCLASSES);
+   m_stmt_forin.userFlags(FALCON_SYNCLASS_ID_RULE);
+   m_stmt_if.userFlags(FALCON_SYNCLASS_ID_ELSEHOST);
+   m_stmt_select.userFlags(FALCON_SYNCLASS_ID_CASEHOST);
+   m_stmt_autoexpr.userFlags(FALCON_SYNCLASS_ID_AUTOEXPR);
+   m_expr_call.userFlags(FALCON_SYNCLASS_ID_CALLFUNC);
+}
 
 SynClasses::~SynClasses() {}
  
 void SynClasses::subscribe( Engine* engine )
 {
-   engine->addBuiltin( & m_expr_genarray);
-   engine->addBuiltin( & m_expr_assign);
-   engine->addBuiltin( & m_expr_bnot);
-   engine->addBuiltin( & m_expr_call);
-   // compare
-   engine->addBuiltin( & m_expr_lt);
-   engine->addBuiltin( & m_expr_le);
-   engine->addBuiltin( & m_expr_gt);
-   engine->addBuiltin( & m_expr_ge);
-   engine->addBuiltin( & m_expr_eq);
-   engine->addBuiltin( & m_expr_ne);
-   //
-   engine->addBuiltin( & m_expr_gendict);
-   engine->addBuiltin( & m_expr_dot);
-   engine->addBuiltin( & m_expr_eeq);
-   engine->addBuiltin( & m_expr_iif);
-   // inc-dec
-   engine->addBuiltin( & m_expr_preinc);
-   engine->addBuiltin( & m_expr_predec);
-   engine->addBuiltin( & m_expr_postinc);
-   engine->addBuiltin( & m_expr_postdec);
-   //
-   engine->addBuiltin( & m_expr_index);
-   // Logic
-   engine->addBuiltin( & m_expr_not);
-   engine->addBuiltin( & m_expr_and);
-   engine->addBuiltin( & m_expr_or);
-   // Math
-   engine->addBuiltin( & m_expr_plus);
-   engine->addBuiltin( & m_expr_minus);
-   engine->addBuiltin( & m_expr_times);
-   engine->addBuiltin( & m_expr_div);
-   engine->addBuiltin( & m_expr_mod);
-   engine->addBuiltin( & m_expr_pow);
-   // Auto-math
-   engine->addBuiltin( & m_expr_aplus);
-   engine->addBuiltin( & m_expr_aminus);
-   engine->addBuiltin( & m_expr_atimes);
-   engine->addBuiltin( & m_expr_adiv);
-   engine->addBuiltin( & m_expr_amod);
-   engine->addBuiltin( & m_expr_apow);
-   // 
-   engine->addBuiltin( & m_expr_munpack);
-   engine->addBuiltin( & m_expr_neg);
-   // OOB
-   engine->addBuiltin( & m_expr_oob);
-   engine->addBuiltin( & m_expr_deoob);
-   engine->addBuiltin( & m_expr_isoob);
-   engine->addBuiltin( & m_expr_xoroob);
-   // 
-   engine->addBuiltin( & m_expr_genproto);
-   engine->addBuiltin( & m_expr_genrange);
-   engine->addBuiltin( & m_expr_genref);
-   engine->addBuiltin( & m_expr_self);
-   engine->addBuiltin( & m_expr_starindex);
-   engine->addBuiltin( & m_expr_sym);
-   engine->addBuiltin( & m_expr_unpack);
-   engine->addBuiltin( & m_expr_value);
-   
-   //======================================================================
-   // Statement classes
-   //
-   engine->addBuiltin( & m_stmt_autoexpr);
-   engine->addBuiltin( & m_stmt_break);
-   engine->addBuiltin( & m_stmt_breakpoint);
-   engine->addBuiltin( & m_stmt_continue);
-   engine->addBuiltin( & m_stmt_fastprint);
-   engine->addBuiltin( & m_stmt_forin);
-   engine->addBuiltin( & m_stmt_forto);
-   engine->addBuiltin( & m_stmt_if);
-   engine->addBuiltin( & m_stmt_init);
-   engine->addBuiltin( & m_stmt_raise);
-   engine->addBuiltin( & m_stmt_return);
-   engine->addBuiltin( & m_stmt_rule);
-   engine->addBuiltin( & m_stmt_select);
-   engine->addBuiltin( & m_stmt_try);
-   engine->addBuiltin( & m_stmt_while);
-   
-   //======================================================================
-   // Syntree classes
-   //
-   engine->addBuiltin( & m_st_rulest);
+   #undef FALCON_SYNCLASS_DECLARATOR_APPLY
+   #define FALCON_SYNCLASS_DECLARATOR_REGISTER
+   #include <falcon/synclasses_list.h>
 }
    
 
@@ -181,10 +163,10 @@ void SynClasses::naryExprSet( VMContext* ctx, int pcount, TreeStep* step, int32 
    }
 }
 
-GarbageToken* SynClasses::collect( Class*, TreeStep*, int line )
+GCToken* SynClasses::collect( const Class* cls, TreeStep* earr, int line )
 {
-   const Collector* coll = Engine::instance()->collector();
-   return FALCON_GC_STORE_PARAMS( coll, this, earr, line, SRC );
+   static Collector* coll = Engine::instance()->collector();
+   return FALCON_GC_STORE_PARAMS( coll, cls, earr, line, SRC );
 }
 
 //===========================================================
@@ -194,19 +176,19 @@ GarbageToken* SynClasses::collect( Class*, TreeStep*, int line )
 #define FALCON_STANDARD_SYNCLASS_OP_CREATE( cls, exprcls, operation ) \
    void SynClasses::Class## cls ::op_create( VMContext* ctx, int pcount ) const\
    {\
-      ##exprcls * expr = new ##exprcls ; \
-      SynClasses:: ##operation ( ctx, pcount, expr ); \
+      exprcls * expr = new exprcls ; \
+      SynClasses:: operation ( ctx, pcount, expr ); \
       ctx->stackResult( pcount, SynClasses::collect( this, expr, __LINE__ ) ); \
    }\
-   TreeStep* SynClasses::Class## cls ::createInstance() const\
+   TreeStep* SynClasses::Class##cls ::createInstance() const\
    {\
-      return new ##exprcls ; \
+      return new exprcls ; \
    }
 
 
 FALCON_STANDARD_SYNCLASS_OP_CREATE( GenArray, ExprArray, varExprInsert )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Assign, ExprAssign, binaryExprSet )
-FALCON_STANDARD_SYNCLASS_OP_CREATE( BNot, ExprBNot, unaryExprSet )
+FALCON_STANDARD_SYNCLASS_OP_CREATE( BNot, ExprBNOT, unaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Call, ExprCall, varExprInsert )
 
 FALCON_STANDARD_SYNCLASS_OP_CREATE( LT, ExprLT, binaryExprSet )
@@ -299,7 +281,7 @@ TreeStep* SynClasses::ClassGenDict::createInstance() const { return new ExprDict
 
 void SynClasses::ClassDotAccess::op_create( VMContext* ctx, int pcount ) const
 {
-   if( pcount < 2 != 0 || ! ctx->opcodeParams(pcount)[1].isString() )
+   if( (pcount < 2) || (! ctx->opcodeParams(pcount)[1].isString()) )
    {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__, SRC )
             .origin( ErrorParam::e_orig_runtime)
@@ -339,7 +321,7 @@ TreeStep* SynClasses::ClassUnpack::createInstance() const { return new ExprUnpac
 
 void SynClasses::ClassGenRange::op_create( VMContext* ctx, int pcount ) const
 {
-   if( pcount < 3 != 0 )
+   if( pcount < 3 )
    {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__, SRC )
             .origin( ErrorParam::e_orig_runtime)
@@ -353,7 +335,7 @@ void SynClasses::ClassGenRange::op_create( VMContext* ctx, int pcount ) const
    if( ! ops[0].isNil() )
    {
       bool bCreate = true;
-      Expression* val = TreeStep::checkExpr(ops[0],bCreate);
+      Expression* val = static_cast<Expression*>(TreeStep::checkExpr(ops[0],bCreate));
       // TODO: Check for integers.
       if( val == 0 ) bOk = false;
       rng->start( val );
@@ -362,7 +344,7 @@ void SynClasses::ClassGenRange::op_create( VMContext* ctx, int pcount ) const
    if( bOk && ! ops[1].isNil() )
    {
       bool bCreate = true;
-      Expression* val = TreeStep::checkExpr(ops[1],bCreate);
+      Expression* val = static_cast<Expression*>(TreeStep::checkExpr(ops[1],bCreate));
       // TODO: Check for integers.
       if( val == 0 ) bOk = false;
       rng->end( val );
@@ -371,7 +353,7 @@ void SynClasses::ClassGenRange::op_create( VMContext* ctx, int pcount ) const
    if( bOk && ! ops[2].isNil() )
    {
       bool bCreate = true;
-      Expression* val = TreeStep::checkExpr(ops[2],bCreate);
+      Expression* val = static_cast<Expression*>(TreeStep::checkExpr(ops[2],bCreate));
       // TODO: Check for integers.
       if( val == 0 ) bOk = false;      
       rng->step( val );
@@ -395,7 +377,7 @@ void SynClasses::ClassGenRef::op_create( VMContext* ctx, int pcount ) const
    static Class* symClass = Engine::instance()->symbolClass();
    static Class* exprClass = Engine::instance()->expressionClass();
    
-   Item* params = *ctx->opcodeParams(pcount);
+   Item* params = ctx->opcodeParams(pcount);
    Class* cls;
    void* data;
    if( pcount < 1 || params->asClassInst(cls, data) )
@@ -409,15 +391,15 @@ void SynClasses::ClassGenRef::op_create( VMContext* ctx, int pcount ) const
    {
       //TODO:TreeStepInherit
       Symbol* sym = static_cast<Symbol*>( data );
-      ExprValue* expr = new ExprRef( sym );
+      ExprRef* expr = new ExprRef( sym );
       ctx->stackResult( pcount, SynClasses::collect( this, expr, __LINE__ ) );
    }
    else if( cls->isDerivedFrom( exprClass ) &&
-      static_cast<Expression*>(data)->type() == Expression::e_trait_symbol )
+      static_cast<Expression*>(data)->trait() == Expression::e_trait_symbol )
    {
       //TODO:TreeStepInherit
       ExprSymbol* sym = static_cast<ExprSymbol*>( data );
-      ExprValue* expr = new ExprRef( sym );
+      ExprRef* expr = new ExprRef( sym );
       ctx->stackResult( pcount, SynClasses::collect( this, expr, __LINE__ ) );
    }
    else {            
@@ -432,7 +414,7 @@ void SynClasses::ClassGenSym::op_create( VMContext* ctx, int pcount ) const
 {
    static Class* symClass = Engine::instance()->symbolClass();
    
-   Item* params = *ctx->opcodeParams(pcount);
+   Item* params = ctx->opcodeParams(pcount);
    Class* cls;
    void* data;
    if( pcount < 1 || params->asClassInst(cls, data) || ! cls->isDerivedFrom(symClass) )
@@ -444,7 +426,7 @@ void SynClasses::ClassGenSym::op_create( VMContext* ctx, int pcount ) const
    
    //TODO:TreeStepInherit
    Symbol* sym = static_cast<Symbol*>( data );
-   ExprValue* expr = new ExprSymbol( sym );
+   ExprSymbol* expr = new ExprSymbol( sym );
    ctx->stackResult( pcount, SynClasses::collect( this, expr, __LINE__ ) );
 }
 TreeStep* SynClasses::ClassGenSym::createInstance() const { return new ExprSymbol; }
@@ -485,6 +467,7 @@ FALCON_STANDARD_SYNCLASS_OP_CREATE( Init, StmtInit, zeroaryExprSet )
    
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Raise, StmtRaise, zeroaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Return, StmtReturn, zeroaryExprSet )
+FALCON_STANDARD_SYNCLASS_OP_CREATE( Rule, StmtRule, zeroaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Select, StmtSelect, zeroaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Try, StmtTry, zeroaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( While, StmtWhile, zeroaryExprSet )

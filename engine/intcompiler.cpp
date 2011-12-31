@@ -48,8 +48,9 @@
 
 #include <falcon/psteps/exprvalue.h>
 
-#include "falcon/datareader.h"
-#include "falcon/importdef.h"
+#include <falcon/datareader.h>
+#include <falcon/importdef.h>
+#include <falcon/synclasses_id.h>
 
 
 namespace Falcon {
@@ -439,12 +440,12 @@ IntCompiler::compile_status IntCompiler::compileNext( const String& value)
          VMContext* ctx = m_vm->currentContext();
          ctx->pushReturn();
          ctx->pushCode(m_currentTree);
-         if ( m_currentTree->at(0)->type() == Statement::e_stmt_autoexpr )
+         if ( m_currentTree->at(0)->cls()->userFlags() == FALCON_SYNCLASS_ID_AUTOEXPR )
          {
             // this requires evaluation; but is this a direct call?
             StmtAutoexpr* stmt = static_cast<StmtAutoexpr*>(m_currentTree->at(0));
-            Expression* expr = stmt->expr();
-            if( expr != 0 && expr->type() == Expression::t_funcall )
+            Expression* expr = stmt->selector();
+            if( expr != 0 && expr->cls()->userFlags() == FALCON_SYNCLASS_ID_CALLFUNC )
             {
                ret = eval_direct_t;
             }

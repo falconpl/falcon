@@ -34,6 +34,8 @@
 #include <falcon/psteps/stmtautoexpr.h>
 #include <falcon/psteps/exprvalue.h>
 
+#include "falcon/synclasses_id.h"
+
 namespace Falcon {
 
 using namespace Parsing;
@@ -53,7 +55,8 @@ bool errhand_if(const NonTerminal&, Parser& p)
    {
       // put in a fake if statement (else, subsequent else/elif/end would also cause errors).
       SynTree* stIf = new SynTree;
-      StmtIf* fakeIf = new StmtIf( new ExprValue(1), stIf, 0, ti->line(), ti->chr() );
+      stIf->selector(new ExprValue(1));
+      StmtIf* fakeIf = new StmtIf( stIf, 0, ti->line(), ti->chr() );
       ParserContext* st = static_cast<ParserContext*>(p.context());
       st->openBlock( fakeIf, stIf );
    }
@@ -80,7 +83,8 @@ void apply_if_short( const Rule&, Parser& p )
       ParserContext* ctx = static_cast<ParserContext*>(p.context());
 
       SynTree* ifTrue = new SynTree;
-      StmtIf* stmt_if = new StmtIf(expr, ifTrue, 0, tif->line(), tif->chr());
+      ifTrue->selector(expr);
+      StmtIf* stmt_if = new StmtIf(ifTrue, 0, tif->line(), tif->chr());
       ctx->openBlock( stmt_if, ifTrue, true );
    }
    else
@@ -108,7 +112,8 @@ void apply_if( const Rule&, Parser& p )
       ParserContext* st = static_cast<ParserContext*>(p.context());
 
       SynTree* ifTrue = new SynTree;
-      StmtIf* stmt_if = new StmtIf(expr, ifTrue, 0, tif->line(), tif->chr());
+      ifTrue->selector( expr );
+      StmtIf* stmt_if = new StmtIf(ifTrue, 0, tif->line(), tif->chr());
       st->openBlock( stmt_if, ifTrue );
    }
    else
@@ -136,7 +141,7 @@ void apply_elif( const Rule&, Parser& p )
       ParserContext* st = static_cast<ParserContext*>(p.context());
 
       Statement* current = st->currentStmt();
-      if( current == 0 || current->type() != Statement::e_stmt_if )
+      if( current == 0 || current->cls()->userFlags() != FALCON_SYNCLASS_ID_ELSEHOST )
       {
          p.addError( e_syn_elif, p.currentSource(), tif->line(), tif->chr() );
          delete expr;
@@ -147,7 +152,9 @@ void apply_elif( const Rule&, Parser& p )
          // can we really change branch now?
          SynTree* ifElse = st->changeBranch();
          if ( ifElse != 0 ) {
-            stmt_if->addElif( expr, ifElse, tif->line(), tif->chr() );
+            ifElse->selector(expr);
+            ifElse->decl( tif->line(), tif->chr() );
+            stmt_if->addElif( ifElse );
          }
       }
    }
@@ -174,7 +181,7 @@ void apply_else( const Rule&, Parser& p )
       ParserContext* st = static_cast<ParserContext*>(p.context());
 
       Statement* current = st->currentStmt();
-      if( current == 0 || current->type() != Statement::e_stmt_if )
+      if( current == 0 || current->cls()->userFlags() != FALCON_SYNCLASS_ID_ELSEHOST )
       {
          p.addError( e_syn_else, p.currentSource(), telse->line(), telse->chr() );
       }
@@ -185,7 +192,9 @@ void apply_else( const Rule&, Parser& p )
          // can we really change branch?
          SynTree* ifElse = st->changeBranch();
          if( ifElse != 0 ) {
-            stmt_if->setElse( ifElse );
+            ifElse->decl( telse->line(), telse->chr() );
+            ifElse->selector(0); // just to be sure
+            stmt_if->addElif(ifElse);
          }
       }
    }

@@ -40,11 +40,7 @@ public:
    inline virtual bool isStandAlone() const {
       return m_second->isStandAlone() && m_third->isStandAlone();
    }
-   
-protected:
-      
-   inline ExprIIF(): TernaryExpression( t_iif ), m_gate(this) {}
-
+  
 private:
    mutable int m_falseSeqId;
    

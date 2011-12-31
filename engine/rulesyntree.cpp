@@ -18,10 +18,21 @@
 #include <falcon/codeframe.h>
 #include <falcon/statement.h>
 
+#include <falcon/engine.h>
+#include <falcon/synclasses.h>
+
 namespace Falcon
 {
 
 RuleSynTree::RuleSynTree():
+   m_stepNext(this)
+{
+   FALCON_DECLARE_SYN_CLASS( st_rulest );
+   apply = apply_;
+}
+
+RuleSynTree::RuleSynTree( const RuleSynTree& other ):
+   SynTree( other ),
    m_stepNext(this)
 {
    apply = apply_;

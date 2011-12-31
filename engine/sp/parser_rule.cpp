@@ -31,6 +31,7 @@
 #include <falcon/psteps/stmtrule.h>
 
 #include "private_types.h"
+#include "falcon/synclasses_id.h"
 
 
 namespace Falcon {
@@ -65,7 +66,8 @@ static void apply_cut_internal( const Rule&, Parser& p, bool hasExpr )
 
    ParserContext* st = static_cast<ParserContext*>(p.context());
 
-   if ( st->currentStmt() == 0 || st->currentStmt()->type() != Statement::e_stmt_rule )
+   if ( st->currentStmt() == 0 || 
+      ( st->currentStmt()->cls()->userFlags() != FALCON_SYNCLASS_ID_RULE) )
    {
       p.addError( e_syn_cut, p.currentSource(), trule->line(), trule->chr() );
    }
@@ -100,7 +102,8 @@ void apply_doubt( const Rule&, Parser& p )
    Expression* expr = static_cast<Expression*>(p.getNextToken()->detachValue());
    ParserContext* st = static_cast<ParserContext*>(p.context());
 
-   if ( st->currentStmt() == 0 || st->currentStmt()->type() != Statement::e_stmt_rule )
+   if ( st->currentStmt() == 0 || 
+      ( st->currentStmt()->cls()->userFlags() != FALCON_SYNCLASS_ID_RULE) )
    {
       p.addError( e_syn_doubt, p.currentSource(), trule->line(), trule->chr() );
    }

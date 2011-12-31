@@ -30,9 +30,22 @@
 namespace Falcon
 {
 
+class StmtFastPrint::Private: public TSVector_Private<Expression>
+{
+public:
+   
+   Private() {}
+   ~Private() {}
+   
+   Private( const Private& other, TreeStep* owner ):
+      TSVector_Private<Expression>( other, owner )
+   {}
+};
+
+
 StmtFastPrint::StmtFastPrint( int line, int chr ):
    Statement( line, chr ),
-   _p( new ExprVector_Private ),   
+   _p( new Private ),   
    m_bAddNL( true )
 {
    FALCON_DECLARE_SYN_CLASS(stmt_fastprint)
@@ -42,7 +55,7 @@ StmtFastPrint::StmtFastPrint( int line, int chr ):
 
 StmtFastPrint::StmtFastPrint( bool bAddNL, int line, int chr ):
    Statement( line, chr ),
-   _p( new ExprVector_Private ),   
+   _p( new Private ),   
    m_bAddNL( bAddNL )
 {
    FALCON_DECLARE_SYN_CLASS(stmt_fastprint)
@@ -51,7 +64,7 @@ StmtFastPrint::StmtFastPrint( bool bAddNL, int line, int chr ):
 
 StmtFastPrint::StmtFastPrint( const StmtFastPrint& other ):
    Statement( other ),
-   _p( new ExprVector_Private(*other._p) ),   
+   _p( new Private(*other._p, this) ),   
    m_bAddNL( other.m_bAddNL )
 {
    apply = apply_;
@@ -69,7 +82,7 @@ int StmtFastPrint::arity() const
    return _p->arity();
 }
 
-TreeStep* ExprVector::nth( int32 n ) const
+TreeStep* StmtFastPrint::nth( int32 n ) const
 {
    return _p->nth(n);
 }
@@ -77,13 +90,13 @@ TreeStep* ExprVector::nth( int32 n ) const
 bool StmtFastPrint::nth( int32 n, TreeStep* ts )
 {
    if( ts == 0 || ts->category() != TreeStep::e_cat_expression ) return false;
-   return _p->nth(n, ts, this );
+   return _p->nth(n, static_cast<Expression*>(ts), this );
 }
 
 bool StmtFastPrint::insert( int32 n, TreeStep* ts )
 {   
    if( ts == 0 || ts->category() != TreeStep::e_cat_expression ) return false;
-   return _p->insert(n, ts, this );
+   return _p->insert(n, static_cast<Expression*>(ts), this );
 }
 
 bool StmtFastPrint::remove( int32 n )
@@ -115,7 +128,7 @@ void StmtFastPrint::describeTo( String& str, int depth ) const
    str = String( " " ).replicate( depth * depthIndent ) + 
       (m_bAddNL ? "> " : ">> ");
    
-   ExprVector_Private::ExprVector::iterator iter = _p->m_exprs.begin();
+   Private::ExprVector::iterator iter = _p->m_exprs.begin();
    while( iter != _p->m_exprs.end() )
    {
       str += (*iter)->describe( depth + 1 );
@@ -132,7 +145,7 @@ void StmtFastPrint::oneLinerTo( String& str ) const
 {
    str = (m_bAddNL ? "> " : ">> ");
    
-   ExprVector_Private::ExprVector::iterator iter = _p->m_exprs.begin();
+   Private::ExprVector::iterator iter = _p->m_exprs.begin();
    while( iter != _p->m_exprs.end() )
    {
       str += (*iter)->oneLiner();
@@ -148,7 +161,7 @@ void StmtFastPrint::oneLinerTo( String& str ) const
 void StmtFastPrint::apply_( const PStep* ps, VMContext* ctx )
 {
    const StmtFastPrint* self = static_cast< const StmtFastPrint*>( ps );   
-   ExprVector_Private::ExprVector& pl = self->_p->m_exprs;
+   Private::ExprVector& pl = self->_p->m_exprs;
    CodeFrame& cframe = ctx->currentCode();
    int seqId = cframe.m_seqId;
    

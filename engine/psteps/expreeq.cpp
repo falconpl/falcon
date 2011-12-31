@@ -24,6 +24,7 @@
 #include <falcon/synclasses.h>
 #include <falcon/engine.h>
 
+#include <falcon/psteps/expreeq.h>
 
 namespace Falcon {
 

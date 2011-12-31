@@ -17,15 +17,20 @@
 #include <falcon/classes/classtreestep.h>
 #include <falcon/treestep.h>
 
+#include <falcon/statement.h>
+#include <falcon/expression.h>
+
 #include <falcon/vmcontext.h>
 #include <falcon/itemarray.h>
 #include <falcon/datawriter.h>
 #include <falcon/datareader.h>
 
+#include <falcon/errors/accesserror.h>
+
 namespace Falcon {
 
-ClassTreeStep::ClassTreeStep( const String& name ):
-   Class(name)
+ClassTreeStep::ClassTreeStep():
+   Class("TreeStep - abstract")
 {
    m_lenMethod.methodOf(this);   
    m_insertMethod.methodOf(this);
@@ -97,17 +102,19 @@ void ClassTreeStep::enumerateProperties( void*, Class::PropertyEnumerator& cb ) 
 void ClassTreeStep::enumeratePV( void* instance, Class::PVEnumerator& cb ) const
 {     
    Statement* stmt = static_cast<Statement*>(instance);
-   cb("len_", (int64) stmt->arity());
+   Item temp = (int64) stmt->arity();
+   cb("len_", temp );
    
    Expression* expr = stmt->selector();
    if( expr != 0 )
    {
-      cb("selector", Item( expr->cls(), expr ) );   
+      temp.setUser( expr->cls(), expr );
    }
    else
    {
-      cb("selector", Item());
+      temp.setNil();
    }
+   cb("selector", temp);   
 }
    
 
@@ -150,7 +157,7 @@ void ClassTreeStep::op_getProperty( VMContext* ctx, void* instance, const String
    }
    else if( prop == "len_" )
    {
-      ctx->topData().setInteger( (int64) stmt->() );
+      ctx->topData().setInteger( (int64) stmt->arity() );
    }
    else
    {
@@ -182,14 +189,14 @@ void ClassTreeStep::op_setProperty( VMContext* ctx, void* instance, const String
          
          if( expr->parent() != 0 )
          {
-            throw CodeError( ErrorParam(e_invalid_op, __LINE__, SRC)
+            throw new CodeError( ErrorParam(e_invalid_op, __LINE__, SRC)
                .origin( ErrorParam::e_orig_vm)
                .extra( "Parented entity cannot be inserted" ) );
          }
 
          if( ! stmt->selector( expr ) )
          {
-            throw CodeError( ErrorParam(e_invalid_op, __LINE__, SRC)
+            throw new CodeError( ErrorParam(e_invalid_op, __LINE__, SRC)
                .origin( ErrorParam::e_orig_vm)
                .extra( "Entity is not accepting that kind of element" ) );
          }
@@ -197,7 +204,7 @@ void ClassTreeStep::op_setProperty( VMContext* ctx, void* instance, const String
       
       ctx->stackResult(3, ctx->topData());
    }
-   else if( hasProperty(prop) )
+   else if( hasProperty( instance, prop) )
    {
       throw ropError( prop, __LINE__, SRC );
    }
@@ -223,9 +230,10 @@ void ClassTreeStep::restore( VMContext*, DataReader*dr, void*& empty ) const
    dr->read( line );
    dr->read( chr );
    ts->decl( line, chr );
+   empty = ts;
 }
 
-void ClassTreeStep::flatten( VMContext* ctx, ItemArray& subItems, void* instance ) const
+void ClassTreeStep::flatten( VMContext*, ItemArray& subItems, void* instance ) const
 {
    TreeStep* ts = static_cast<TreeStep*>( instance );
    if( ts->arity() > 0 )
@@ -244,7 +252,7 @@ void ClassTreeStep::flatten( VMContext* ctx, ItemArray& subItems, void* instance
    
 }
 
-void ClassTreeStep::unflatten( VMContext* ctx, ItemArray& subItems, void* instance ) const
+void ClassTreeStep::unflatten( VMContext*, ItemArray& subItems, void* instance ) const
 {
    TreeStep* ts = static_cast<TreeStep*>( instance );
    for( int i = 0; i < (int) subItems.length(); ++i )
@@ -319,7 +327,7 @@ void ClassTreeStep::op_setIndex(VMContext* ctx, void* instance ) const
       {
          if( ! self->nth( num, 0 ) )
          {
-            throw CodeError( ErrorParam(e_invalid_op, __LINE__, SRC)
+            throw new CodeError( ErrorParam(e_invalid_op, __LINE__, SRC)
                .origin( ErrorParam::e_orig_vm)
                .extra( "Statement is not allowing an optional block" ) );
          }
@@ -339,21 +347,21 @@ void ClassTreeStep::op_setIndex(VMContext* ctx, void* instance ) const
          // check TreeStep category.
          if( ! self->canHost( ts ) )
          {
-            throw CodeError( ErrorParam(e_invalid_op, __LINE__, SRC)
+            throw new CodeError( ErrorParam(e_invalid_op, __LINE__, SRC)
                .origin( ErrorParam::e_orig_vm)
                .extra( "Incompatible type of Step to be inserted here" ) );
          }
          
          if( ts->parent() != 0 )
          {
-            throw CodeError( ErrorParam(e_invalid_op, __LINE__, SRC)
+            throw new CodeError( ErrorParam(e_invalid_op, __LINE__, SRC)
                .origin( ErrorParam::e_orig_vm)
                .extra( "Parented entity cannot be inserted" ) );
          }
 
          if( ! self->nth( num, ts ) )
          {
-            throw CodeError( ErrorParam(e_invalid_op, __LINE__, SRC)
+            throw new CodeError( ErrorParam(e_invalid_op, __LINE__, SRC)
                .origin( ErrorParam::e_orig_vm)
                .extra( "Entity is not accepting that kind of element" ) );
          }
@@ -401,7 +409,7 @@ void ClassTreeStep::op_next( VMContext* ctx, void* instance ) const
       else {
          Item value(st->cls(), st);
          ctx->pushData( value );
-         if( pos >= stmt->nth() )
+         if( pos >= stmt->arity() )
          {
             ctx->topData().setLast();
          }
@@ -474,7 +482,7 @@ void ClassTreeStep::InsertMethod::invoke( VMContext* ctx, int32 pcount )
    TreeStep* ts = static_cast<TreeStep*>( inst );
    if( ts->parent() !=  0 )
    {
-      ctx->raiseError( CodeError( ErrorParam(e_invalid_op, __LINE__, SRC)
+      ctx->raiseError( new CodeError( ErrorParam(e_invalid_op, __LINE__, SRC)
       .origin( ErrorParam::e_orig_runtime)
       .extra( "Parented syntree cannot be inserted" ) ) );
       return;
@@ -484,13 +492,13 @@ void ClassTreeStep::InsertMethod::invoke( VMContext* ctx, int32 pcount )
    TreeStep* self_step = static_cast<TreeStep*>(self.asInst());
    if( ! self_step->canHost( ts ) )
    {
-      throw CodeError( ErrorParam(e_invalid_op, __LINE__, SRC)
+      throw new CodeError( ErrorParam(e_invalid_op, __LINE__, SRC)
          .origin( ErrorParam::e_orig_vm)
          .extra( "Incompatible type of Step to be inserted here" ) );
    }
 
    if( ! self_step->insert( i_pos->forceInteger(), ts) ) {
-      ctx->raiseError( CodeError( ErrorParam(e_invalid_op, __LINE__, SRC)
+      ctx->raiseError( new CodeError( ErrorParam(e_invalid_op, __LINE__, SRC)
       .origin( ErrorParam::e_orig_runtime)
       .extra( "This Statement is not accepting insert" ) ) );
       
@@ -530,7 +538,7 @@ void ClassTreeStep::RemoveMethod::invoke( VMContext* ctx, int32 pcount )
         
    TreeStep* self_step = static_cast<TreeStep*>(self.asInst());
    if( ! self_step->remove( i_pos->forceInteger() ) ) {
-      ctx->raiseError( CodeError( ErrorParam(e_invalid_op, __LINE__, SRC)
+      ctx->raiseError( new CodeError( ErrorParam(e_invalid_op, __LINE__, SRC)
       .origin( ErrorParam::e_orig_runtime)
       .extra( "This Statement is not accepting remove" ) ) );
       

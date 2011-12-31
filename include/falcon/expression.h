@@ -43,12 +43,13 @@ public:
    typedef enum {
       e_trait_none,
       e_trait_symbol,
-      e_trait_value
+      e_trait_value,
+      e_trait_assignable
    }
    t_trait;
    
    // TODO: Rename in trait()
-   t_trait type() const { return m_trait; }
+   t_trait trait() const { return m_trait; }
    
  /** Clone this expression.
     */
@@ -82,7 +83,7 @@ public:
 protected:
    
    Expression( int line = 0, int chr = 0  ):
-      TreeStep( line, chr ),
+      TreeStep( e_cat_expression, line, chr ),
       m_pstep_lvalue(0),
       m_trait( e_trait_none )
    {}
@@ -115,9 +116,9 @@ public:
       m_first( op1 )
    {}
       
-   inline UnaryExpression(  Expression* op1=0, int line = 0, int chr = 0 ):
+   inline UnaryExpression( int line = 0, int chr = 0 ):
       Expression( line, chr ),
-      m_first( op1 )
+      m_first( 0 )
    {}
 
    UnaryExpression( const UnaryExpression& other );
@@ -126,11 +127,17 @@ public:
    virtual bool isStatic() const;
 
    Expression *first() const { return m_first; }
-   void first( Expression *f ) { delete m_first; m_first= f; }
+   void first( Expression *f ) { 
+      if ( f->setParent(this) )
+      {
+         delete m_first; 
+         m_first= f; 
+      }
+   }
 
    virtual int32 arity() const;
-   virtual Expression* nth( int32 n ) const;
-   virtual bool nth( int32 n, Expression* ts );
+   virtual TreeStep* nth( int32 n ) const;
+   virtual bool nth( int32 n, TreeStep* ts );
    
 protected:
    Expression* m_first;
@@ -142,7 +149,7 @@ class FALCON_DYN_CLASS BinaryExpression: public Expression
 {
 public:
 
-   inline BinaryExpression( int line=0, int ch =0 ):
+   inline BinaryExpression( int line=0, int chr =0 ):
       Expression( line, chr ),
       m_first( 0 ),
       m_second( 0 )
@@ -158,15 +165,27 @@ public:
    virtual ~BinaryExpression();
 
    Expression *first() const { return m_first; }
-   void first( Expression *f ) { delete m_first; m_first= f; }
+   void first( Expression *f ) { 
+      if ( f->setParent(this) )
+      {
+         delete m_first; 
+         m_first= f; 
+      }
+   }
    Expression *second() const { return m_second; }
-   void second( Expression *s ) { delete m_second; m_second = s; }
+   void second( Expression *f ) { 
+      if ( f->setParent(this) )
+      {
+         delete m_second; 
+         m_second= f; 
+      }
+   }
 
    virtual bool isStatic() const;
 
    virtual int32 arity() const;
-   virtual Expression* nth( int32 n ) const;
-   virtual bool nth( int32 n, Expression* ts );
+   virtual TreeStep* nth( int32 n ) const;
+   virtual bool nth( int32 n, TreeStep* ts );
    
 protected:
    
@@ -201,15 +220,33 @@ public:
    virtual bool isStatic() const;
 
    Expression *first() const { return m_first; }
-   void first( Expression *f ) { delete m_first; m_first= f; }
+   void first( Expression *f ) { 
+      if ( f->setParent(this) )
+      {
+         delete m_first; 
+         m_first= f; 
+      }
+   }
    Expression *second() const { return m_second; }
-   void second( Expression *s ) { delete m_second; m_second = s; }
+   void second( Expression *f ) { 
+      if ( f->setParent(this) )
+      {
+         delete m_second; 
+         m_second= f; 
+      }
+   }
    Expression *third() const { return m_third; }
-   void third( Expression *t ) { delete m_third; m_third = t; }
+   void third( Expression *f ) { 
+      if ( f->setParent(this) )
+      {
+         delete m_third; 
+         m_third= f; 
+      }
+   }
    
    virtual int32 arity() const;
-   virtual Expression* nth( int32 n ) const;
-   virtual bool nth( int32 n, Expression* ts );
+   virtual TreeStep* nth( int32 n ) const;
+   virtual bool nth( int32 n, TreeStep* ts );
 
 protected:
    Expression* m_first;
@@ -228,6 +265,7 @@ protected:
             UnaryExpression(line,chr) { FALCON_DECLARE_SYN_CLASS( handler );  apply = apply_; }\
    inline class_name( const class_name& other ):\
             UnaryExpression( other ) {FALCON_DECLARE_SYN_CLASS( handler ); apply = apply_;} \
+   inline ~class_name() {}\
    inline virtual class_name* clone() const { return new class_name( *this ); } \
    virtual bool simplify( Item& value ) const; \
    static void apply_( const PStep*, VMContext* ctx ); \
@@ -243,6 +281,7 @@ protected:
             BinaryExpression(line,chr) { FALCON_DECLARE_SYN_CLASS( handler );  apply = apply_; extended_constructor}\
    inline class_name( const class_name& other ):\
             BinaryExpression( other ) {FALCON_DECLARE_SYN_CLASS( handler ); apply = apply_; extended_constructor} \
+   inline ~class_name() {}\
    inline virtual class_name* clone() const { return new class_name( *this ); } \
    virtual bool simplify( Item& value ) const; \
    static void apply_( const PStep*, VMContext* ctx ); \
@@ -256,6 +295,7 @@ protected:
             TernaryExpression(line,chr) { FALCON_DECLARE_SYN_CLASS( handler );  apply = apply_; }\
    inline class_name( const class_name& other ):\
             TernaryExpression( other ) {FALCON_DECLARE_SYN_CLASS( handler ); apply = apply_; } \
+   inline ~class_name() {}\
    inline virtual class_name* clone() const { return new class_name( *this ); } \
    virtual bool simplify( Item& value ) const; \
    static void apply_( const PStep*, VMContext* ctx ); \

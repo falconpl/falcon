@@ -27,7 +27,8 @@ namespace Falcon
 class FALCON_DYN_CLASS ExprIndex: public BinaryExpression
 {
 public:
-   FALCON_BINARY_EXPRESSION_CLASS_DECLARATOR_EX( ExprIndex, expr_index, m_pstep_lvalue = &m_pslv; );
+   FALCON_BINARY_EXPRESSION_CLASS_DECLARATOR_EX( ExprIndex, expr_index, \
+            m_pstep_lvalue = &m_pslv; m_trait = e_trait_assignable; );
    
 private:
    

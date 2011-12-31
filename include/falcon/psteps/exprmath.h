@@ -14,7 +14,7 @@
 */
 
 #ifndef _FALCON_EXPRMATH_H
-#define	_FALCON_EXPRMATH_H
+#define _FALCON_EXPRMATH_H
 
 #include <falcon/expression.h>
 
@@ -46,7 +46,7 @@ protected:
       public:\
          ClassName( int line = 0, int chr = 0 );\
          ClassName( Expression* op1, Expression* op2, int line = 0, int chr = 0 );\
-         ClassName( &other );\
+         ClassName( const ClassName &other );\
          inline virtual ~ClassName() {}; \
          inline virtual ClassName* clone() const { return new ClassName( *this ); }\
          virtual bool simplify( Item& value ) const; \
@@ -101,7 +101,7 @@ protected:
       public:\
          ClassName( int line = 0, int chr = 0 );\
          ClassName( Expression* op1, Expression* op2, int line = 0, int chr = 0 );\
-         ClassName( &other );\
+         ClassName( const ClassName &other );\
          inline virtual ~ClassName() {}; \
          inline virtual ClassName* clone() const { return new ClassName( *this ); }\
       private:\

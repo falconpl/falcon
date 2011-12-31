@@ -81,7 +81,7 @@ void* ClassError::deserialize( DataReader* ) const
 }
 
 
-bool ClassError::isDerivedFrom( Class* cls ) const 
+bool ClassError::isDerivedFrom( const Class* cls ) const 
 {
    static Class* stdError = Engine::instance()->stdErrors()->error();   
    return cls == this || cls == stdError;

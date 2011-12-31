@@ -40,7 +40,7 @@ void ExprBNOT::apply_( const PStep* ps, VMContext* ctx )
    const ExprBNOT* self = static_cast<const ExprBNOT*>(ps);
    TRACE2( "Apply \"%s\"", self->describe().c_ize() );
    
-   fassert( m_first != 0 );
+   fassert( self->first() != 0 );
    
    CodeFrame& cf = ctx->currentCode();
    if( cf.m_seqId == 0 )

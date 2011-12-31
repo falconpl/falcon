@@ -43,7 +43,7 @@ public:
 
    virtual void describeTo( String& tgt, int depth=0 ) const;
    virtual void oneLinerTo( String& tgt ) const;
-   virtual StmtWhile* clone() const { return StmtWhile(*this); }
+   virtual StmtWhile* clone() const { return new StmtWhile(*this); }
    static void apply_( const PStep*, VMContext* ctx );
 
    SynTree* mainBlock() const { return m_stmts; }

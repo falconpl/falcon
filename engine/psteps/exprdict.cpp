@@ -35,7 +35,7 @@ namespace Falcon
 
 
 ExprDict::ExprDict( int line, int chr ):
-   Expression( line, chr )
+   ExprVector( line, chr )
 {
    FALCON_DECLARE_SYN_CLASS( expr_gendict )
    apply = apply_;
@@ -58,7 +58,7 @@ int ExprDict::pairs() const
    return (int) _p->m_exprs.size()/2;
 }
 
-bool ExprDict::insert( int32 pos, TreeStep* element )
+bool ExprDict::insert( int32, TreeStep* )
 {
    return false;
 }
@@ -73,6 +73,7 @@ bool ExprDict::remove( int32 pos )
    
    _p->m_exprs.erase(_p->m_exprs.begin()+pos);
    _p->m_exprs.erase(_p->m_exprs.begin()+pos);
+   return true;
 }
 
 

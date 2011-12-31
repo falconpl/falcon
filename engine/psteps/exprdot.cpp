@@ -35,6 +35,7 @@ ExprDot::ExprDot( const String& prop, Expression* op1, int line, int chr ):
    FALCON_DECLARE_SYN_CLASS( expr_dot )
    apply = apply_;
    m_pstep_lvalue = &m_pslv;
+   m_trait = e_trait_assignable;
 }
 
 
@@ -45,6 +46,7 @@ ExprDot::ExprDot( int line, int chr ):
    FALCON_DECLARE_SYN_CLASS( expr_dot )
    apply = apply_; 
    m_pstep_lvalue = &m_pslv;
+   m_trait = e_trait_assignable;
 }
 
 
@@ -55,6 +57,7 @@ ExprDot::ExprDot( const ExprDot& other ):
 {
    apply = apply_;
    m_pstep_lvalue = &m_pslv;
+   m_trait = e_trait_assignable;
 }
    
 ExprDot::~ExprDot()

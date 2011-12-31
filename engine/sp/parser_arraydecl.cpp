@@ -107,7 +107,7 @@ public:
    t_state state; 
 
    StmtTempArrayDecl():
-      Statement( custom_t ),
+      Statement( 0,0 ),
       m_forming( new PairList ),
       m_FirstExpr(0),
       bFirstGiven( false ),

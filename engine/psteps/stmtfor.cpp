@@ -64,23 +64,23 @@ TreeStep* StmtForBase::nth( int32 n ) const
    return 0;
 }
 
-virtual bool StmtForBase::nth( int32 n, TreeStep* ts )
+bool StmtForBase::nth( int32 n, TreeStep* ts )
 {
-    // accept even a 0
-   if( ts != 0 && ts->parent() != 0 )
+   // accept even a 0
+   if( ts != 0 )
    {
-      return false;
+      if( ts->parent() != 0 || ts->category() != TreeStep::e_cat_syntree ) return false;
    }
      
    switch( n )
    {
-      case 0: case -4: delete m_body; m_body = ts; break;
-      case 1: case -3: return m_forFirst; m_forFirst = ts; break;
-      case 2: case -2: return m_forMiddle; m_forMiddle = ts; break;
-      case 3: case -1: return m_forLast; m_forLast = ts; break; 
+      case 0: case -4: delete m_body; m_body = static_cast<SynTree*>(ts); break;
+      case 1: case -3: delete m_forFirst; m_forFirst = static_cast<SynTree*>(ts); break;
+      case 2: case -2: delete m_forMiddle; m_forMiddle = static_cast<SynTree*>(ts); break;
+      case 3: case -1: delete m_forLast; m_forLast = static_cast<SynTree*>(ts); break; 
       default: return false;
    }
-   if( ts != 0 ) ts->parent( this );
+   if( ts != 0 ) ts->setParent( this );
    
    return true;
 }
@@ -247,7 +247,7 @@ StmtForIn::~StmtForIn()
 
 bool StmtForIn::isValid() const 
 {
-   return m_expr != 0 && _p->m_params->size() != 0 ;
+   return m_expr != 0 && _p->m_params.size() != 0 ;
 }
 
 
@@ -280,7 +280,7 @@ void StmtForIn::oneLinerTo( String& tgt ) const
 }
 
 
-void StmtForIn::addParameter( Symbol* sym ) const
+void StmtForIn::addParameter( Symbol* sym )
 {
    _p->m_params.push_back( sym );
 }

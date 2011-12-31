@@ -34,6 +34,7 @@ ExprValue::ExprValue( int line, int chr ):
 {
    FALCON_DECLARE_SYN_CLASS( expr_value )
    apply = apply_;
+   m_trait = e_trait_value;
 }
 
 ExprValue::ExprValue( const Item& item, int line, int chr ):
@@ -44,6 +45,7 @@ ExprValue::ExprValue( const Item& item, int line, int chr ):
 
    m_item.copy(item); // silently copy
    apply = apply_;
+   m_trait = e_trait_value;
 
    if ( item.isGarbaged() )
    {
@@ -63,6 +65,7 @@ ExprValue::ExprValue( const ExprValue& other ):
    static Collector* coll = Engine::instance()->collector();
    
    apply = apply_;
+   m_trait = e_trait_value;
 
    if ( m_item.isGarbaged() )
    {

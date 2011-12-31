@@ -28,6 +28,7 @@
 #include <falcon/psteps/exprsym.h>
 #include <falcon/psteps/exprcall.h>
 #include <falcon/psteps/exprmath.h>
+#include <falcon/psteps/exprassign.h>
 
 using namespace Falcon;
 
@@ -68,7 +69,7 @@ void go()
 
    // and now the main function
    ExprCall* call_func = new ExprCall( new ExprValue(&string_add) );
-   call_func->addParam( new ExprValue("A string") );
+   call_func->add( new ExprValue("A string") );
 
    Symbol* printl = cm.getGlobal("printl");
 
@@ -80,7 +81,7 @@ void go()
       .append( new StmtAutoexpr(
                new ExprAssign( new ExprSymbol(strsym), call_func ) ))
       .append( new StmtAutoexpr(&(new ExprCall( new ExprSymbol(printl) ))
-            ->addParam(new ExprSymbol(strsym)).addParam(new ExprValue(1))) )
+            ->add(new ExprSymbol(strsym)).add(new ExprValue(1))) )
       .append( new StmtReturn( new ExprSymbol(strsym) ));
 
    std::cout << "Will run: " << fmain.syntree().describe().c_ize() << std::endl;

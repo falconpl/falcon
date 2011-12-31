@@ -43,7 +43,7 @@ public:
    ExprProto* m_forming;
 
    StmtTempProto():
-      Statement( custom_t )
+      Statement( 0,0 )
    {
       // don't record us, we're temp.
       m_discardable = true;
@@ -52,6 +52,8 @@ public:
    ~StmtTempProto()
    {
    }
+   
+   virtual StmtTempProto* clone() const { return 0; }
 };
 
 /*
@@ -91,7 +93,7 @@ void apply_proto_prop(const Rule&, Parser& p)
     ParserContext* ctx = static_cast<ParserContext*>(sp.context());
     StmtTempProto* proto = static_cast<StmtTempProto*>(ctx->currentStmt());
     fassert( proto != 0 );
-    fassert( proto->type() == Statement::custom_t );
+    fassert( proto->cls() == 0 ); // temporary statements have no class.
 
     TokenInstance* tname = sp.getNextToken();
     sp.getNextToken();

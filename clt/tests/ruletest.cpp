@@ -29,6 +29,7 @@
 #include <falcon/psteps/exprcompare.h>
 #include <falcon/psteps/exprmath.h>
 #include <falcon/psteps/exprcall.h>
+#include <falcon/psteps/exprassign.h>
 
 using namespace Falcon;
 
@@ -140,14 +141,14 @@ void go()
                new ExprAssign( new ExprSymbol(var_a), new ExprValue(0) ) ) )
          .addStatement( assign_expr )
          .addStatement( new StmtAutoexpr(&(new ExprCall( new ExprValue(&printl) ))
-            ->addParam( new ExprValue("A: ")).addParam(new ExprSymbol(var_a))) )
+            ->add( new ExprValue("A: ")).add(new ExprSymbol(var_a))) )
          .addStatement( new StmtAutoexpr(
                new ExprGE( new ExprSymbol(var_a), new ExprValue(10) ) ) );
 
    fmain.syntree()
       .append( rule )
       .append( new StmtAutoexpr(&(new ExprCall( new ExprValue(&printl) ))
-            ->addParam(new ExprValue("A was ")).addParam(new ExprSymbol(var_a))) );
+            ->add(new ExprValue("A was ")).add(new ExprSymbol(var_a))) );
       
 
    std::cout << "Will run: "<< std::endl << fmain.syntree().describe().c_ize() << std::endl;

@@ -22,10 +22,10 @@
 #include <falcon/pstep.h>
 #include <falcon/errors/operanderror.h>
 
-#include <falcon/synclasses.h>
-#include <falcon/engine.h>
+#include <falcon/psteps/exprstarindex.h>
 
 namespace Falcon {
+
 
 void ExprStarIndex::apply_( const PStep* ps, VMContext* ctx )
 {
@@ -81,12 +81,18 @@ void ExprStarIndex::describeTo( String& ret, int depth ) const
    if( m_first == 0 || m_second == 0 )
    {
       ret = "<Blank ExprStarIndex>";
-      return 0;
+      return;
    }
    
    ret = "(" + m_first->describe(depth+1) + "[*" + m_second->describe(depth+1) + "])";
 }
 
+
+bool ExprStarIndex::simplify( Item& ) const
+{
+   return false;
+}
+ 
 }
 
 /* end of exprstarindex.cpp */

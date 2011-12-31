@@ -32,6 +32,11 @@
 #include <falcon/psteps/exprcompare.h>
 #include <falcon/psteps/exprmath.h>
 #include <falcon/psteps/exprdot.h>
+#include <falcon/psteps/expreeq.h>
+#include <falcon/psteps/exprneg.h>
+#include <falcon/psteps/exprbitwise.h>
+#include <falcon/psteps/exproob.h>
+#include <falcon/psteps/exprlogic.h>
 
 namespace Falcon {
 

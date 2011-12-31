@@ -26,7 +26,7 @@ class FALCON_DYN_CLASS ExprDot: public UnaryExpression
 {
 public:
    ExprDot( const String& prop, Expression* op1, int line = 0, int chr = 0 );
-   ExprDot( int line=0, chr=0 );      
+   ExprDot( int line=0, int chr=0 );      
    ExprDot( const ExprDot& other );
    
    virtual ~ExprDot();
@@ -51,9 +51,7 @@ protected:
    };
    PstepLValue m_pslv;
    
-   
-   
-   const String m_prop;
+   String m_prop;
 };
 
 }

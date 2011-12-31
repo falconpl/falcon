@@ -36,7 +36,7 @@ ExprIIF::ExprIIF( int line, int chr ):
 
 
 ExprIIF::ExprIIF( Expression* op1, Expression* op2, Expression* op3, int line, int chr):
-   TernaryExpression( op1, op2, op3 ),
+   TernaryExpression( op1, op2, op3 , line, chr),
    m_gate( this )
 {
    FALCON_DECLARE_SYN_CLASS( expr_iif )
