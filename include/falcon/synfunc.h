@@ -19,7 +19,7 @@
 #include <falcon/setup.h>
 #include <falcon/string.h>
 #include <falcon/function.h>
-#include <falcon/syntree.h>
+#include <falcon/rootsyntree.h>
 
 namespace Falcon
 {
@@ -62,7 +62,7 @@ public:
    bool isPredicate() const { return m_bIsPredicate; }
    
 protected:
-   SynTree m_syntree;
+   RootSynTree m_syntree;
    PStep* m_retStep;
    bool m_bIsPredicate;
 };

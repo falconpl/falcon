@@ -91,10 +91,11 @@ bool ClassTreeStep::gcCheck( void* instance, uint32 mark ) const
          
 void ClassTreeStep::enumerateProperties( void*, Class::PropertyEnumerator& cb ) const
 {  
+   cb("arity", false);
    cb("insert", false);
-   cb("len", false);
-   cb("len_", false);
+   cb("parent", false );
    cb("remove", true);
+   
    //cb("append", true);
 }
 
@@ -103,8 +104,8 @@ void ClassTreeStep::enumeratePV( void* instance, Class::PVEnumerator& cb ) const
 {     
    Statement* stmt = static_cast<Statement*>(instance);
    Item temp = (int64) stmt->arity();
-   cb("len_", temp );
    
+   cb("arity", temp );
    Expression* expr = stmt->selector();
    if( expr != 0 )
    {
@@ -121,8 +122,7 @@ void ClassTreeStep::enumeratePV( void* instance, Class::PVEnumerator& cb ) const
 bool ClassTreeStep::hasProperty( void*, const String& prop ) const
 {
    return 
-         prop == "len" 
-      || prop == "len_"
+         prop == "arity" 
       || prop == "selector"
       || prop == "insert" 
       || prop == "remove";
@@ -136,7 +136,7 @@ void ClassTreeStep::op_getProperty( VMContext* ctx, void* instance, const String
    {
       ctx->topData().methodize( &m_lenMethod );
    }
-   else if( prop == "insert")
+   else if( prop == "insert" )
    {
       ctx->topData().methodize( &m_insertMethod );
    }
@@ -155,9 +155,16 @@ void ClassTreeStep::op_getProperty( VMContext* ctx, void* instance, const String
          ctx->topData().setNil();
       }
    }
-   else if( prop == "len_" )
+   else if( prop == "len_" || prop == "arity" )
    {
       ctx->topData().setInteger( (int64) stmt->arity() );
+   }
+   else if( prop == "parent" )
+   {
+      if( stmt->parent() == 0 )
+         ctx->topData().setNil();
+      else
+         ctx->topData().setUser( stmt->parent()->cls(), stmt->parent() );
    }
    else
    {
@@ -236,15 +243,21 @@ void ClassTreeStep::restore( VMContext*, DataReader*dr, void*& empty ) const
 void ClassTreeStep::flatten( VMContext*, ItemArray& subItems, void* instance ) const
 {
    TreeStep* ts = static_cast<TreeStep*>( instance );
+   subItems.resize( ts->arity() + 1 );
+   if( ts->selector() != 0 )
+   {
+      subItems.at(0).setUser( ts->selector()->cls(), ts->selector() );
+   }
+   // else, let it be nil.
+   
    if( ts->arity() > 0 )
    {
-      subItems.resize( ts->arity() );
       for( int i = 0; i < ts->arity(); ++i )
       {
          TreeStep* element = ts->nth(i);
          if( element != 0 )
          {
-            subItems[i].setUser( element->cls(), element );
+            subItems[i+1].setUser( element->cls(), element );
          }
          // else, let it be nil.
       }

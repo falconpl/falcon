@@ -27,6 +27,7 @@ namespace Falcon
 
 SynFunc::SynFunc( const String& name, Module* owner, int32 line ):
    Function( name, owner, line ),
+   m_syntree( this ),
    m_bIsPredicate( false )
 {
    // by default, use a statement return as fallback cleanup. 
