@@ -49,7 +49,7 @@ void* ClassSymbol::clone( void* instance ) const
 void ClassSymbol::op_create( VMContext* ctx, int32 pcount ) const
 {
    // TODO
-   ctx->stackResult(pcount, Item());
+   ctx->stackResult(pcount+1, Item());
 }
    
 void ClassSymbol::enumerateProperties( void*, PropertyEnumerator& cb ) const

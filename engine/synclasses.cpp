@@ -178,7 +178,7 @@ GCToken* SynClasses::collect( const Class* cls, TreeStep* earr, int line )
    {\
       exprcls * expr = new exprcls ; \
       SynClasses:: operation ( ctx, pcount, expr ); \
-      ctx->stackResult( pcount, SynClasses::collect( this, expr, __LINE__ ) ); \
+      ctx->stackResult( pcount+1, SynClasses::collect( this, expr, __LINE__ ) ); \
    }\
    TreeStep* SynClasses::Class##cls ::createInstance() const\
    {\
@@ -273,7 +273,7 @@ void SynClasses::ClassGenDict::op_create( VMContext* ctx, int pcount ) const
    
    ExprDict* expr = new ExprDict;
    SynClasses:: varExprInsert( ctx, pcount, expr );
-   ctx->stackResult( pcount, SynClasses::collect( this, expr, __LINE__ ) );
+   ctx->stackResult( pcount+1, SynClasses::collect( this, expr, __LINE__ ) );
 }
 TreeStep* SynClasses::ClassGenDict::createInstance() const { return new ExprDict; }
 
@@ -291,7 +291,7 @@ void SynClasses::ClassDotAccess::op_create( VMContext* ctx, int pcount ) const
    ExprDot* expr = new ExprDot;
    SynClasses::unaryExprSet( ctx, pcount, expr );
    expr->property( *ctx->opcodeParams(pcount)[1].asString() );
-   ctx->stackResult( pcount, SynClasses::collect( this, expr, __LINE__ ) );
+   ctx->stackResult( pcount+1, SynClasses::collect( this, expr, __LINE__ ) );
 }
 TreeStep* SynClasses::ClassDotAccess::createInstance() const { return new ExprDot; }
 
@@ -367,7 +367,7 @@ void SynClasses::ClassGenRange::op_create( VMContext* ctx, int pcount ) const
          .extra( String("Expression|Nil,Expression|Nil,Expression|Nil") ) );
    }
 
-   ctx->stackResult( pcount, SynClasses::collect( this, rng, __LINE__ ) );
+   ctx->stackResult( pcount+1, SynClasses::collect( this, rng, __LINE__ ) );
 }
 TreeStep* SynClasses::ClassGenRange::createInstance() const { return new ExprRange; }
 
@@ -392,7 +392,7 @@ void SynClasses::ClassGenRef::op_create( VMContext* ctx, int pcount ) const
       //TODO:TreeStepInherit
       Symbol* sym = static_cast<Symbol*>( data );
       ExprRef* expr = new ExprRef( sym );
-      ctx->stackResult( pcount, SynClasses::collect( this, expr, __LINE__ ) );
+      ctx->stackResult( pcount+1, SynClasses::collect( this, expr, __LINE__ ) );
    }
    else if( cls->isDerivedFrom( exprClass ) &&
       static_cast<Expression*>(data)->trait() == Expression::e_trait_symbol )
@@ -400,7 +400,7 @@ void SynClasses::ClassGenRef::op_create( VMContext* ctx, int pcount ) const
       //TODO:TreeStepInherit
       ExprSymbol* sym = static_cast<ExprSymbol*>( data );
       ExprRef* expr = new ExprRef( sym );
-      ctx->stackResult( pcount, SynClasses::collect( this, expr, __LINE__ ) );
+      ctx->stackResult( pcount+1, SynClasses::collect( this, expr, __LINE__ ) );
    }
    else {            
       throw new ParamError( ErrorParam( e_inv_params, __LINE__, SRC )
@@ -415,19 +415,30 @@ void SynClasses::ClassGenSym::op_create( VMContext* ctx, int pcount ) const
    static Class* symClass = Engine::instance()->symbolClass();
    
    Item* params = ctx->opcodeParams(pcount);
-   Class* cls;
-   void* data;
-   if( pcount < 1 || params->asClassInst(cls, data) || ! cls->isDerivedFrom(symClass) )
-   {
-      throw new ParamError( ErrorParam( e_inv_params, __LINE__, SRC )
-            .origin( ErrorParam::e_orig_runtime)
-            .extra( String("Symbol") ) );
-   }
    
+   if( pcount >= 1 )
+   {
+      Class* cls;
+      void* data;
+      if( params->isString() )
+      {
+         ExprSymbol* expr = new ExprSymbol( *params->asString() );
+         ctx->stackResult( pcount+1, SynClasses::collect( this, expr, __LINE__ ) );
+         return;
+      }
+      else if( params->asClassInst(cls, data) && cls->isDerivedFrom(symClass) )
+      {
+         Symbol* sym = static_cast<Symbol*>( data );
+         ExprSymbol* expr = new ExprSymbol( sym );
+         ctx->stackResult( pcount+1, SynClasses::collect( this, expr, __LINE__ ) );
+         return;
+      }
+   }
+      
+   throw new ParamError( ErrorParam( e_inv_params, __LINE__, SRC )
+         .origin( ErrorParam::e_orig_runtime)
+         .extra( String("Symbol|S") ) );
    //TODO:TreeStepInherit
-   Symbol* sym = static_cast<Symbol*>( data );
-   ExprSymbol* expr = new ExprSymbol( sym );
-   ctx->stackResult( pcount, SynClasses::collect( this, expr, __LINE__ ) );
 }
 TreeStep* SynClasses::ClassGenSym::createInstance() const { return new ExprSymbol; }
 
@@ -441,7 +452,7 @@ void SynClasses::ClassValue::op_create( VMContext* ctx, int pcount ) const
    }
    
    ExprValue* expr = new ExprValue( *ctx->opcodeParams(pcount) );
-   ctx->stackResult( pcount, SynClasses::collect( this, expr, __LINE__ ) );
+   ctx->stackResult( pcount+1, SynClasses::collect( this, expr, __LINE__ ) );
 }
 
 TreeStep* SynClasses::ClassValue::createInstance() const { return new ExprValue; }

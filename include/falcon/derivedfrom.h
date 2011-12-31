@@ -37,7 +37,7 @@ public:
    
    
    virtual void describe( void* instance, String& target, int depth = 3, int maxlen = 60 ) const;
-   virtual bool isDerivedFrom( Class* cls ) const;
+   virtual bool isDerivedFrom( const Class* cls ) const;
    virtual Class* getParent( const String& name ) const;
    virtual void* getParentData( Class* parent, void* data ) const;
    virtual void enumerateParents( Class::ClassEnumerator& pe ) const;

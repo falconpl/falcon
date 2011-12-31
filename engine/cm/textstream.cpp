@@ -156,7 +156,7 @@ void ClassTextStream::op_create( VMContext* ctx, int32 pcount ) const
       tsc = new TextStreamCarrier( scarrier->m_underlying->clone() );
    }   
    
-   ctx->stackResult(pcount, FALCON_GC_STORE( coll, this, tsc ) );
+   ctx->stackResult(pcount+1, FALCON_GC_STORE( coll, this, tsc ) );
 }
 
 

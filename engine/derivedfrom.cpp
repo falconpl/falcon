@@ -31,7 +31,7 @@ void DerivedFrom::describe( void* instance, String& target, int depth, int maxle
    m_parent->describe( instance, target, depth, maxlen );
 }
 
-bool DerivedFrom::isDerivedFrom( Class* cls ) const
+bool DerivedFrom::isDerivedFrom( const Class* cls ) const
 {
    return cls == this || m_parent->isDerivedFrom(cls);
 }

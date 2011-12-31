@@ -303,10 +303,10 @@ bool ClassTreeStep::gcCheckMyself( uint32 )
 void ClassTreeStep::op_getIndex(VMContext* ctx, void* instance ) const
 {
    TreeStep* stmt = static_cast<TreeStep*>(instance);
-   Item& index = ctx->opcodeParam(1);
+   Item& index = ctx->opcodeParam(0);
    if( index.isOrdinal() )
    {
-      int64 num = ctx->opcodeParam(1).forceInteger();
+      int64 num = ctx->opcodeParam(0).forceInteger();
       if( num < 0 ) num = stmt->arity() + num;
       if( num < 0 || num >= stmt->arity() )
       {
@@ -335,10 +335,10 @@ void ClassTreeStep::op_getIndex(VMContext* ctx, void* instance ) const
 void ClassTreeStep::op_setIndex(VMContext* ctx, void* instance ) const
 {  
    TreeStep* self = static_cast<TreeStep*>(instance);
-   Item& index = ctx->opcodeParam(1);
+   Item& index = ctx->opcodeParam(0);
    if( index.isOrdinal() )
    {
-      int64 num = ctx->opcodeParam(1).forceInteger();
+      int64 num = ctx->opcodeParam(0).forceInteger();
       if( num < 0 ) num = self->arity() + num;
       if( num < 0 || num >= self->arity() )
       {
@@ -363,7 +363,7 @@ void ClassTreeStep::op_setIndex(VMContext* ctx, void* instance ) const
          {
             throw new AccessError( ErrorParam( e_inv_params, __LINE__, SRC )
                .origin(ErrorParam::e_orig_vm)
-               .extra( "SynTree" ) );
+               .extra( "TreeStep" ) );
          }
 
 
@@ -391,7 +391,7 @@ void ClassTreeStep::op_setIndex(VMContext* ctx, void* instance ) const
          }
       }
       
-      ctx->stackResult( 3, ctx->topData() );
+      ctx->popData(2); // keep the 3d value, that we just assigned.
    }
    else {
       throw new AccessError( ErrorParam( e_inv_params, __LINE__, SRC )

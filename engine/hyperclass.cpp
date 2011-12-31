@@ -524,7 +524,7 @@ void HyperClass::FinishInvokeStep::apply_(const PStep* ps, VMContext* ctx )
    
    //remove the params and publish self.
    HyperClass* h = static_cast<const FinishInvokeStep*>(ps)->m_owner;
-   ctx->stackResult( pcount+3, Item( h, inst ) );
+   ctx->stackResult( pcount+1+3, Item( h, inst ) );
    // declare the data as in need of collection.
    ctx->topData().garbage();
 
