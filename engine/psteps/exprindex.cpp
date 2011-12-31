@@ -25,6 +25,10 @@
 
 #include <falcon/psteps/exprindex.h>
 
+#include <falcon/psteps/exprsym.h>
+#include <falcon/symbol.h>
+#include <falcon/psteps/exprvalue.h>
+
 namespace Falcon
 {
 
@@ -34,36 +38,94 @@ bool ExprIndex::simplify( Item& ) const
    return false;
 }
 
+class Activity_GetIndex {
+public:
+   inline static void operate( Class* cls, VMContext* ctx, void* instance ) {
+      cls->op_getIndex( ctx, instance );
+   }
+   inline static const char* mode() { return ""; }
+};
 
-void ExprIndex::apply_( const PStep* DEBUG_ONLY(ps), VMContext* ctx )
-{
-   TRACE2( "Apply \"%s\"", ((ExprIndex*)ps)->describe().c_ize() );
+class Activity_SetIndex {
+public:
+   inline static void operate( Class* cls, VMContext* ctx, void* instance ) {
+      cls->op_setIndex( ctx, instance );
+   }
+   inline static const char* mode() { return "lvalue"; }
+};
    
-   fassert( ((ExprIndex*)ps)->first() != 0 );
-   fassert( ((ExprIndex*)ps)->second() != 0 );
    
+
+template< class activity>
+inline void generic_apply( const ExprIndex* self, VMContext* ctx )
+{   
+   TRACE2( "Apply %s \"%s\"", activity::mode(), self->describe().c_ize() );
+   
+   fassert( self->first() != 0 );
+   fassert( self->second() != 0 );
+   
+   CodeFrame& cf = ctx->currentCode();
+   Expression::t_trait trait;
+   register Expression* current;
+   
+   switch( cf.m_seqId )
+   {
+      // first time around
+      case 0:
+         cf.m_seqId = 1;
+         // don't bother to call if we know what it is
+         // TODO: it's better optimized through a specific pstep.
+         current = self->first();
+         trait = current->trait();
+         if( trait == Expression::e_trait_symbol )
+         {
+            ctx->pushData(*static_cast<ExprSymbol*>( current )->symbol()->value(ctx));
+         }
+         else {
+            if( ctx->stepInYield( current, cf ) ) return;
+         }
+         // fallthrough
+         
+      case 1:
+         cf.m_seqId = 2;
+         // don't bother to call if we know what it is
+         // TODO: it's better optimized through a specific pstep.
+         current = self->second();
+         trait = current->trait();
+         if( trait == Expression::e_trait_value )
+         {
+            ctx->pushData(static_cast<ExprValue*>( current )->item());
+         }
+         else {
+            if( ctx->stepInYield( current, cf ) ) return;
+         }
+         // fallthrough
+   }
+   
+   // we're done here.
+   ctx->popCode();
+   
+   // now apply the index.
    Class* cls;
-   void* self;
+   void* instance;
    
    //acquire the class
-   (&ctx->topData()-1)->forceClassInst(cls, self);
-   cls->op_getIndex( ctx, self );
+   (&ctx->topData()-1)->forceClassInst(cls, instance);
+   // apply the set or get index
+   activity::operate( cls, ctx, instance );   
+}
+
+void ExprIndex::apply_( const PStep* ps, VMContext* ctx )
+{
+   const ExprIndex* self = static_cast<const ExprIndex*>(ps);
+   generic_apply<Activity_GetIndex>( self, ctx );
 }
 
 
 void ExprIndex::PstepLValue::apply_( const PStep* DEBUG_ONLY(ps), VMContext* ctx )
 {
-   TRACE2( "Apply lvalue \"%s\"", ((ExprIndex::PstepLValue*)ps)->describe().c_ize() );
-
-   fassert( ((ExprIndex*)ps)->first() != 0 );
-   fassert( ((ExprIndex*)ps)->second() != 0 );
-   
-   Class* cls;
-   void* self;
-   
-   //acquire the class
-   (&ctx->topData()-1)->forceClassInst(cls, self);
-   cls->op_setIndex( ctx, self );
+   const ExprIndex* self = static_cast<const ExprIndex::PstepLValue*>(ps)->m_owner;
+   generic_apply<Activity_SetIndex>( self, ctx );
 }
 
 

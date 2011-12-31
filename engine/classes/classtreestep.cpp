@@ -39,7 +39,15 @@ ClassTreeStep::ClassTreeStep():
 
 ClassTreeStep::~ClassTreeStep()
 {}
-   
+
+
+void ClassTreeStep::describe( void* instance, String& target, int, int ) const
+{
+   TreeStep* ts = static_cast<TreeStep*>(instance);
+   ts->describeTo( target );
+}
+
+
 void ClassTreeStep::dispose( void* instance ) const
 {
    TRACE( "ClassTreeStep::dispose %p ", instance );
@@ -122,7 +130,10 @@ void ClassTreeStep::enumeratePV( void* instance, Class::PVEnumerator& cb ) const
 bool ClassTreeStep::hasProperty( void*, const String& prop ) const
 {
    return 
-         prop == "arity" 
+         prop == "arity"
+      || prop == "len"
+      || prop == "len_"
+      || prop == "parent"
       || prop == "selector"
       || prop == "insert" 
       || prop == "remove";

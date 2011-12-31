@@ -26,6 +26,11 @@ DerivedFrom::DerivedFrom( Class* parent, const String& name ):
    m_parent( parent )
 {}
 
+void DerivedFrom::describe( void* instance, String& target, int depth, int maxlen ) const
+{
+   m_parent->describe( instance, target, depth, maxlen );
+}
+
 bool DerivedFrom::isDerivedFrom( Class* cls ) const
 {
    return cls == this || m_parent->isDerivedFrom(cls);

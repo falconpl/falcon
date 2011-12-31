@@ -46,7 +46,8 @@ void apply_expr_index( const Rule&, Parser& p )
    TokenInstance* ti = new TokenInstance(v1->line(), v1->chr(), sp.Expr);
    ti->setValue( new ExprIndex(
          static_cast<Expression*>(v1->detachValue()),
-         static_cast<Expression*>(v2->detachValue())
+         static_cast<Expression*>(v2->detachValue()),
+         v1->line(), v1->chr()
       ), expr_deletor );
 
    p.simplify(4,ti);
@@ -68,7 +69,8 @@ void apply_expr_star_index( const Rule&, Parser& p )
    TokenInstance* ti = new TokenInstance(v1->line(), v1->chr(), sp.Expr);
    ti->setValue( new ExprStarIndex(
          static_cast<Expression*>(v1->detachValue()),
-         static_cast<Expression*>(v2->detachValue())
+         static_cast<Expression*>(v2->detachValue()),
+         v1->line(), v1->chr()
       ), expr_deletor );
 
    p.simplify(5,ti);
@@ -90,13 +92,15 @@ void apply_expr_range_index3( const Rule&, Parser& p )
    ExprRange* rng = new ExprRange( 
          static_cast<Expression*>(tstart->detachValue()),
          static_cast<Expression*>(tend->detachValue()),
-         static_cast<Expression*>(tstep->detachValue())
+         static_cast<Expression*>(tstep->detachValue()),
+         v1->line(), v1->chr()
       );
    
    TokenInstance* ti = new TokenInstance(v1->line(), v1->chr(), sp.Expr);
    ti->setValue( new ExprIndex(
          static_cast<Expression*>(v1->detachValue()),
-         rng
+         rng,
+         v1->line(), v1->chr()
       ), expr_deletor );
 
    p.simplify(8,ti);
@@ -123,7 +127,8 @@ void apply_expr_range_index3open( const Rule&, Parser& p )
    TokenInstance* ti = new TokenInstance(v1->line(), v1->chr(), sp.Expr);
    ti->setValue( new ExprIndex(
          static_cast<Expression*>(v1->detachValue()),
-         rng
+         rng,
+         v1->line(), v1->chr()
       ), expr_deletor );
 
    p.simplify(7,ti);   
@@ -143,13 +148,15 @@ void apply_expr_range_index2( const Rule&, Parser& p )
    ExprRange* rng = new ExprRange( 
          static_cast<Expression*>(tstart->detachValue()),
          static_cast<Expression*>(tend->detachValue()),
-         0
+         0,
+         v1->line(), v1->chr()
       );
    
    TokenInstance* ti = new TokenInstance(v1->line(), v1->chr(), sp.Expr);
    ti->setValue( new ExprIndex(
          static_cast<Expression*>(v1->detachValue()),
-         rng
+         rng,
+         v1->line(), v1->chr()
       ), expr_deletor );
 
    p.simplify(6,ti);      
@@ -167,13 +174,15 @@ void apply_expr_range_index1( const Rule&, Parser& p )
    ExprRange* rng = new ExprRange( 
          static_cast<Expression*>(tstart->detachValue()),
          0,
-         0
+         0,
+         v1->line(), v1->chr()
       );
    
    TokenInstance* ti = new TokenInstance(v1->line(), v1->chr(), sp.Expr);
    ti->setValue( new ExprIndex(
          static_cast<Expression*>(v1->detachValue()),
-         rng
+         rng,
+         v1->line(), v1->chr()
       ), expr_deletor );
 
    p.simplify(5,ti);

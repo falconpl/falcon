@@ -36,6 +36,7 @@ public:
    bool op_getParentProperty( VMContext* ctx, void* instance, const String& prop ) const;
    
    
+   virtual void describe( void* instance, String& target, int depth = 3, int maxlen = 60 ) const;
    virtual bool isDerivedFrom( Class* cls ) const;
    virtual Class* getParent( const String& name ) const;
    virtual void* getParentData( Class* parent, void* data ) const;

@@ -156,7 +156,7 @@ bool Class::gcCheckMyself( uint32 mark )
 
 void Class::describe( void*, String& target, int, int ) const
 {
-   target = "<*?>";
+   target = "<" + name() + "*>";
 }
 
 

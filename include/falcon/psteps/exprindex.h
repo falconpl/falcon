@@ -28,7 +28,9 @@ class FALCON_DYN_CLASS ExprIndex: public BinaryExpression
 {
 public:
    FALCON_BINARY_EXPRESSION_CLASS_DECLARATOR_EX( ExprIndex, expr_index, \
-            m_pstep_lvalue = &m_pslv; m_trait = e_trait_assignable; );
+            m_pstep_lvalue = &m_pslv; \
+            m_pslv.m_owner = this; \
+            m_trait = e_trait_assignable; );
    
 private:
    
@@ -40,6 +42,9 @@ private:
       virtual ~PstepLValue() {}
       virtual void describeTo( String& target, int =0 ) const { target = "Index lvalue"; }
       static void apply_( const PStep*, VMContext* ctx );
+   private:
+      ExprIndex* m_owner;
+      friend class ExprIndex;
    };   
    PstepLValue m_pslv;   
 };

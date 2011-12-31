@@ -35,6 +35,7 @@ public:
    virtual ~ClassTreeStep();         
   
 
+   virtual void describe( void* instance, String& target, int depth = 3, int maxlen = 60 ) const;
    virtual void dispose( void* instance ) const;
    virtual void* clone( void* insatnce ) const;
    virtual void gcMark( void* instance, uint32 mark ) const;
