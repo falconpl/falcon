@@ -8,7 +8,7 @@
       Class##name( Class* derfrom ): DerivedFrom( derfrom, #name ) {}   \
       virtual ~Class##name() {};\
       virtual void op_create( VMContext* ctx, int32 pcount ) const;\
-      virtual TreeStep* createInstance() const; \
+      virtual void restore( VMContext* ctx, DataReader*dr, void*& empty ) const; \
       extra\
    } \
    variable;
@@ -114,10 +114,21 @@ FALCON_SYNCLASS_DECLARATOR(m_expr_genrange, GenRange, expr)
 FALCON_SYNCLASS_DECLARATOR(m_expr_genref, GenRef, expr)
 FALCON_SYNCLASS_DECLARATOR(m_expr_self, Self, expr)
 FALCON_SYNCLASS_DECLARATOR(m_expr_starindex, StarIndexAccess, expr)
-FALCON_SYNCLASS_DECLARATOR(m_expr_sym, GenSym, expr)
 FALCON_SYNCLASS_DECLARATOR(m_expr_unpack, Unpack, expr)
-FALCON_SYNCLASS_DECLARATOR(m_expr_value, Value, expr)
 
+FALCON_SYNCLASS_DECLARATOR_EX(m_expr_sym, GenSym, expr, \
+      void store( VMContext*, DataWriter* dw, void* instance ) const; )
+
+FALCON_SYNCLASS_DECLARATOR_EX(m_expr_value, Value, expr, \
+      virtual void flatten( VMContext* ctx, ItemArray& subItems, void* instance ) const;\
+      virtual void unflatten( VMContext* ctx, ItemArray& subItems, void* instance ) const; )
+
+   
+   
+   
+   /** The normal behavior is that to unflatten all via nth.
+   */
+   
 //======================================================================
 // Statement classes
 //

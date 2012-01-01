@@ -138,7 +138,7 @@ void DerivedFrom::flatten( VMContext* ctx, ItemArray& subItems, void* instance )
 
 void DerivedFrom::unflatten( VMContext* ctx, ItemArray& subItems, void* instance ) const
 {
-   m_parent->flatten( ctx, subItems, instance );
+   m_parent->unflatten( ctx, subItems, instance );
 }
 
 //=========================================================

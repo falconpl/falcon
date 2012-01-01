@@ -64,6 +64,10 @@
 #include <falcon/psteps/stmttry.h>
 #include <falcon/psteps/stmtwhile.h>
 
+#include <falcon/itemarray.h>
+#include <falcon/datawriter.h>
+#include <falcon/datareader.h>
+
 namespace Falcon {
 #undef FALCON_SYNCLASS_DECLARATOR_DECLARE
 #define FALCON_SYNCLASS_DECLARATOR_APPLY
@@ -180,10 +184,11 @@ GCToken* SynClasses::collect( const Class* cls, TreeStep* earr, int line )
       SynClasses:: operation ( ctx, pcount, expr ); \
       ctx->stackResult( pcount+1, SynClasses::collect( this, expr, __LINE__ ) ); \
    }\
-   TreeStep* SynClasses::Class##cls ::createInstance() const\
+   void SynClasses::Class##cls ::restore( VMContext* ctx, DataReader*dr, void*& empty ) const \
    {\
-      return new exprcls ; \
-   }
+      empty = new exprcls ; \
+      m_parent->restore( ctx, dr, empty ); \
+   }\
 
 
 FALCON_STANDARD_SYNCLASS_OP_CREATE( GenArray, ExprArray, varExprInsert )
@@ -275,7 +280,11 @@ void SynClasses::ClassGenDict::op_create( VMContext* ctx, int pcount ) const
    SynClasses:: varExprInsert( ctx, pcount, expr );
    ctx->stackResult( pcount+1, SynClasses::collect( this, expr, __LINE__ ) );
 }
-TreeStep* SynClasses::ClassGenDict::createInstance() const { return new ExprDict; }
+void SynClasses::ClassGenDict::restore( VMContext* ctx, DataReader*dr, void*& empty ) const
+{
+   empty = new ExprDict;
+   m_parent->restore( ctx, dr, empty );
+}
 
 
 
@@ -293,7 +302,11 @@ void SynClasses::ClassDotAccess::op_create( VMContext* ctx, int pcount ) const
    expr->property( *ctx->opcodeParams(pcount)[1].asString() );
    ctx->stackResult( pcount+1, SynClasses::collect( this, expr, __LINE__ ) );
 }
-TreeStep* SynClasses::ClassDotAccess::createInstance() const { return new ExprDot; }
+void SynClasses::ClassDotAccess::restore( VMContext* ctx, DataReader*dr, void*& empty ) const
+{
+   empty = new ExprDot;
+   m_parent->restore( ctx, dr, empty );
+}
 
 
 void SynClasses::ClassMUnpack::op_create( VMContext* ctx, int pcount ) const
@@ -301,7 +314,11 @@ void SynClasses::ClassMUnpack::op_create( VMContext* ctx, int pcount ) const
    // TODO -- parse a list of pairs symbol->expression
    Class::op_create( ctx, pcount );
 }
-TreeStep* SynClasses::ClassMUnpack::createInstance() const { return new ExprMultiUnpack; }
+void SynClasses::ClassMUnpack::restore( VMContext* ctx, DataReader*dr, void*& empty ) const
+{
+   empty = new ExprMultiUnpack;
+   m_parent->restore( ctx, dr, empty );
+}
 
 
 void SynClasses::ClassGenProto::op_create( VMContext* ctx, int pcount ) const
@@ -309,14 +326,22 @@ void SynClasses::ClassGenProto::op_create( VMContext* ctx, int pcount ) const
    // TODO -- parse a list of pairs string->expression
    Class::op_create( ctx, pcount );
 }
-TreeStep* SynClasses::ClassGenProto::createInstance() const { return new ExprProto; }
+void SynClasses::ClassGenProto::restore( VMContext* ctx, DataReader*dr, void*& empty ) const
+{
+   empty = new ExprProto;
+   m_parent->restore( ctx, dr, empty );
+}
 
 void SynClasses::ClassUnpack::op_create( VMContext* ctx, int pcount ) const
 {       
    // TODO -- parse a list of pairs symbol, + 1 terminal expression
    Class::op_create( ctx, pcount );
 }
-TreeStep* SynClasses::ClassUnpack::createInstance() const { return new ExprUnpack; }
+void SynClasses::ClassUnpack::restore( VMContext* ctx, DataReader*dr, void*& empty ) const
+{
+   empty = new ExprUnpack;
+   m_parent->restore( ctx, dr, empty );
+}
 
 
 void SynClasses::ClassGenRange::op_create( VMContext* ctx, int pcount ) const
@@ -369,8 +394,12 @@ void SynClasses::ClassGenRange::op_create( VMContext* ctx, int pcount ) const
 
    ctx->stackResult( pcount+1, SynClasses::collect( this, rng, __LINE__ ) );
 }
-TreeStep* SynClasses::ClassGenRange::createInstance() const { return new ExprRange; }
 
+void SynClasses::ClassGenRange::restore( VMContext* ctx, DataReader*dr, void*& empty ) const
+{
+   empty = new ExprRange;
+   m_parent->restore( ctx, dr, empty );
+}
 
 void SynClasses::ClassGenRef::op_create( VMContext* ctx, int pcount ) const
 {
@@ -408,7 +437,12 @@ void SynClasses::ClassGenRef::op_create( VMContext* ctx, int pcount ) const
             .extra( String("Symbol|Sym") ) );
    }
 }
-TreeStep* SynClasses::ClassGenRef::createInstance() const { return new ExprRef; }
+void SynClasses::ClassGenRef::restore( VMContext* ctx, DataReader*dr, void*& empty ) const
+{
+   empty = new ExprRef;
+   m_parent->restore( ctx, dr, empty );
+}
+
 
 void SynClasses::ClassGenSym::op_create( VMContext* ctx, int pcount ) const
 {
@@ -440,7 +474,30 @@ void SynClasses::ClassGenSym::op_create( VMContext* ctx, int pcount ) const
          .extra( String("Symbol|S") ) );
    //TODO:TreeStepInherit
 }
-TreeStep* SynClasses::ClassGenSym::createInstance() const { return new ExprSymbol; }
+
+void SynClasses::ClassGenSym::store( VMContext*, DataWriter* dw, void* instance ) const
+{
+   ExprSymbol* es = static_cast<ExprSymbol*>(instance);
+   dw->write( es->line() );
+   dw->write( es->chr() );
+   dw->write( es->name() );
+}
+
+void SynClasses::ClassGenSym::restore( VMContext*, DataReader*dr, void*& empty ) const
+{
+   ExprSymbol* es = new ExprSymbol;   
+   int32 line, chr;
+   String name;
+   
+   // TODO: this is just a test.
+   dr->read( line );
+   dr->read( chr );
+   dr->read( name );
+   es->decl( line, chr );
+   es->name( name );
+   empty = es;
+}
+
 
 void SynClasses::ClassValue::op_create( VMContext* ctx, int pcount ) const
 {
@@ -455,7 +512,25 @@ void SynClasses::ClassValue::op_create( VMContext* ctx, int pcount ) const
    ctx->stackResult( pcount+1, SynClasses::collect( this, expr, __LINE__ ) );
 }
 
-TreeStep* SynClasses::ClassValue::createInstance() const { return new ExprValue; }
+void SynClasses::ClassValue::flatten( VMContext*, ItemArray& subItems, void* instance ) const
+{
+   ExprValue* ev = static_cast<ExprValue*>( instance );
+   subItems.resize(1);
+   subItems[0] = ev->item();
+}
+
+void SynClasses::ClassValue::unflatten( VMContext*, ItemArray& subItems, void* instance ) const
+{
+   fassert(subItems.length() == 1);
+   ExprValue* ev = static_cast<ExprValue*>( instance );
+   ev->item( subItems[0] );
+}
+
+void SynClasses::ClassValue::restore( VMContext* ctx, DataReader*dr, void*& empty ) const
+{
+   empty = new ExprValue;
+   m_parent->restore( ctx, dr, empty );
+}
 
 //=================================================================
 // Statements
