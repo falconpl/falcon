@@ -48,7 +48,6 @@ SynTree::SynTree( int line, int chr ):
    TreeStep( TreeStep::e_cat_syntree, line, chr ),
    _p( new Private ),
    m_locals(0),
-   m_single(0),
    m_head(0),
    m_selector(0)
 {
@@ -65,13 +64,11 @@ SynTree::SynTree( const SynTree& other ):
    TreeStep( TreeStep::e_cat_syntree ),
    _p( 0 ),
    m_locals(0),
-   m_single(0),
    m_head(0),
    m_selector(0)
 {   
    /** Mark this as a composed class */
-   m_bIsComposed = true;
-   apply = other.apply; 
+   m_bIsComposed = true;  
    
    _p = new Private(*other._p, this);
    if( other.m_locals != 0 )
@@ -88,6 +85,8 @@ SynTree::SynTree( const SynTree& other ):
       m_selector = other.m_selector->clone();
       m_selector->setParent(this);
    }
+   
+   setApply();
 }
 
 
@@ -181,9 +180,9 @@ void SynTree::apply_empty_( const PStep*, VMContext* ctx )
 void SynTree::apply_single_( const PStep* ps, VMContext* ctx )
 {
    const SynTree* self = static_cast<const SynTree*>(ps);
-   register const PStep* singps = self->m_single;
+   register const PStep* singps = self->_p->m_steps.m_exprs[0];
    ctx->resetCode( singps );
-   self->m_single->apply(singps, ctx);
+   singps->apply(singps, ctx);
 }
 
 
@@ -274,7 +273,6 @@ void SynTree::setApply()
          
       case 1:
          apply = apply_single_;
-         m_single = _p->m_steps.nth(0);
          break;
          
       default:
