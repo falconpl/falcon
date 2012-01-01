@@ -42,23 +42,28 @@ public:
    public:
       void* m_data;
       size_t m_clsId;
+      /** returned to the parent for the first time -- garbage it!*/
+      bool m_bFirstTime;
       
       /** Items to be given back while deserializing. */
       IDVector m_deps;
       
       ObjectData():
          m_data(0),
-         m_clsId(0)
+         m_clsId(0),
+         m_bFirstTime(true)
       {}
       
       ObjectData( void* data,  size_t cls ):
          m_data(data),
-         m_clsId(cls)
+         m_clsId(cls),
+         m_bFirstTime(true)
       {}
       
       ObjectData( const ObjectData& other ):
          m_data( other.m_data ),
-         m_clsId( other.m_clsId )
+         m_clsId( other.m_clsId ),
+         m_bFirstTime(true)
       // ignore m_deps
       {}
    };
@@ -152,7 +157,7 @@ bool Restorer::restore( Stream* rd, ModSpace* space, ModLoader* ml )
 }
 
 
-bool Restorer::next( Class*& handler, void*& data )
+bool Restorer::next( Class*& handler, void*& data, bool &first )
 {
    if( _p != 0 && ( _p->m_current < _p->m_objList.size()) ) 
    {
@@ -169,7 +174,9 @@ bool Restorer::next( Class*& handler, void*& data )
       Private::ObjectData& objd = _p->m_objVector[objID];
       uint32 clsID = objd.m_clsId;
       handler = _p->m_clsVector[clsID].m_cls;
-      data = objd.m_data;      
+      data = objd.m_data;
+      first = objd.m_bFirstTime;
+      objd.m_bFirstTime = false;
       return true;
    }
    

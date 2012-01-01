@@ -46,7 +46,7 @@ public:
     */
    virtual bool restore( Stream* rd, ModSpace* msp, ModLoader* ml );
    
-   virtual bool next( Class*& handler, void*& data );
+   virtual bool next( Class*& handler, void*& data, bool& first );
    virtual bool hasNext() const;
    virtual uint32 objCount() const;
    

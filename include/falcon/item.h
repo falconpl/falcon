@@ -454,14 +454,7 @@ public:
    void assign( const Item& other )
    {
       other.copied(true);
-      if( isReference() && ! other.isReference() )
-      {
-         dereference()->copy(other);
-      }
-      else
-      {
-         copy(other);
-      }
+      dereference()->copy(other);
    }
 
    bool asBoolean() const { return content.data.val32 != 0; }

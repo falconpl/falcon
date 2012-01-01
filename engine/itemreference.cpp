@@ -19,22 +19,44 @@
 
 namespace Falcon {
 
-void ItemReference::reference( Item& target )
+ItemReference* ItemReference::create( Item& source )
 {
    static Class* cls = Engine::instance()->referenceClass();
    static Collector* coll = Engine::instance()->collector();
 
-   if( target.isReference() )
+   if( source.isReference() )
    {
-      m_item = *target.asReference();
+      return static_cast<ItemReference*>(source.asInst());
    }
    else
    {
-      m_item  = target;
-      target.setUser( FALCON_GC_STORE( coll, cls, this) );
-      target.content.mth.ref = &m_item;
-      target.type( FLC_ITEM_REF );
+      ItemReference* nr = new ItemReference( source );
+      // generate a GC token for tne newly created entity.
+      source.setUser( FALCON_GC_STORE( coll, cls, nr ) );
+      // save the item as a reference.
+      source.content.mth.ref = &nr->item();
+      source.type(FLC_ITEM_REF);
+      return nr;
    }
+}
+
+ItemReference* ItemReference::create( Item& source, Item &target )
+{
+   static Class* cls = Engine::instance()->referenceClass();
+   static Collector* coll = Engine::instance()->collector();
+
+   if( ! source.isReference() )
+   {
+      ItemReference* nr = new ItemReference( source );
+      // save the item as a reference.
+      source.setUser( FALCON_GC_STORE( coll, cls, nr ) );
+      // save the item as a reference.
+      source.content.mth.ref = &nr->item();
+      source.type(FLC_ITEM_REF);
+   }
+   
+   target = source;
+   return static_cast<ItemReference*>(source.asInst());
 }
 
 }

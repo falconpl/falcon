@@ -42,8 +42,12 @@ public:
 
    virtual void dispose( void* self ) const;
    virtual void* clone( void* source ) const;
-   virtual void serialize( DataWriter* stream, void* self ) const;
-   virtual void* deserialize( DataReader* stream ) const;
+   virtual void store( VMContext* ctx, DataWriter* stream, void* instance ) const;
+   virtual void restore( VMContext* ctx, DataReader* stream, void*& empty ) const;  
+   virtual void flatten( VMContext* ctx, ItemArray& subItems, void* instance ) const;
+   virtual void unflatten( VMContext* ctx, ItemArray& subItems, void* instance ) const;
+   
+   // TODO: Flatten/unflatten.
    
    virtual void gcMark( void* self, uint32 mark ) const;
    virtual bool gcCheck( void* self, uint32 mark ) const;

@@ -698,13 +698,26 @@ void VMContext::call( Function* function, int nparams, const Item& self )
    function->invoke( this, nparams );
 }
 
-
 void VMContext::call( Function* function, int nparams )
 {
    TRACE( "Calling function %s -- call frame code:%p, data:%p, call:%p",
          function->locate().c_ize(),m_topCode, m_topData, m_topCall  );
 
    makeCallFrame( function, nparams );
+   TRACE3( "-- codebase:%d, stackBase:%d ", \
+         m_topCall->m_codeBase, m_topCall->m_stackBase );
+
+   // do the call
+   function->invoke( this, nparams );
+}
+
+
+void VMContext::call( Function* function, ItemReference* closedData, int nparams )
+{
+   TRACE( "Calling function %s -- call frame code:%p, data:%p, call:%p",
+         function->locate().c_ize(),m_topCode, m_topData, m_topCall  );
+
+   makeCallFrame( function, closedData, nparams );
    TRACE3( "-- codebase:%d, stackBase:%d ", \
          m_topCall->m_codeBase, m_topCall->m_stackBase );
 

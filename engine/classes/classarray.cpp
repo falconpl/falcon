@@ -265,8 +265,7 @@ void ClassArray::op_setIndex( VMContext* ctx, void* self ) const
          throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra("out of range") );
       }
       // the value is copied here.
-      value->copied(true);
-      array[v] = *value;
+      array[v].assign(*value);
       ctx->stackResult(3, *value);
    }
    else

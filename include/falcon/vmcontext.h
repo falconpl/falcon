@@ -525,6 +525,8 @@ public:
    inline const Item& self() const { return m_topCall->m_self; }
    inline Item& self() { return m_topCall->m_self; }
 
+   const CallFrame& previousFrame( uint32 n ) const { return *(m_topCall-n); }
+   
    const CallFrame& currentFrame() const { return *m_topCall; }
    CallFrame& currentFrame() { return *m_topCall; }
 
@@ -547,6 +549,7 @@ public:
    {
       register CallFrame* topCall = addCallFrame();
       topCall->m_function = function;
+      topCall->m_closedData = 0;
       topCall->m_codeBase = codeDepth();
       // initialize also initBase, as stackBase may move
       topCall->m_initBase = topCall->m_stackBase = dataSize()-nparams;
@@ -563,6 +566,24 @@ public:
    {
       register CallFrame* topCall = addCallFrame();
       topCall->m_function = function;
+      topCall->m_closedData = 0;
+      topCall->m_codeBase = codeDepth();
+      // initialize also initBase, as stackBase may move
+      topCall->m_initBase = topCall->m_stackBase = dataSize()-nparams;
+      topCall->m_paramCount = nparams;
+      topCall->m_self.setNil();
+      topCall->m_bMethodic = false;
+      topCall->m_finallyCount = 0;
+
+      return topCall;
+   }
+   
+   /** Prepares a new non-methodic closure call frame. */
+   inline CallFrame* makeCallFrame( Function* function, ItemReference* cd, int nparams )
+   {
+      register CallFrame* topCall = addCallFrame();
+      topCall->m_function = function;
+      topCall->m_closedData = cd;
       topCall->m_codeBase = codeDepth();
       // initialize also initBase, as stackBase may move
       topCall->m_initBase = topCall->m_stackBase = dataSize()-nparams;
@@ -842,6 +863,11 @@ public:
     */
    void call( Function* function, int np, const Item& self );
 
+   /** Invokes a function passing closure data. 
+    \see ClassClosure
+    */
+   void call( Function* function, ItemReference* closedData, int nparams );
+   
    /** Calls an item without parameters.
     \see callItem( const Item&, ... )
     */

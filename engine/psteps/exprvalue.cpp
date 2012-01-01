@@ -47,7 +47,7 @@ ExprValue::ExprValue( const Item& item, int line, int chr ):
    apply = apply_;
    m_trait = e_trait_value;
 
-   if ( item.isGarbaged() )
+   if ( item.isUser() )
    {
       m_lock = coll->lock(m_item);
    }
@@ -67,7 +67,7 @@ ExprValue::ExprValue( const ExprValue& other ):
    apply = apply_;
    m_trait = e_trait_value;
 
-   if ( m_item.isGarbaged() )
+   if ( m_item.isUser() )
    {
       m_lock = coll->lock(m_item);
    }
@@ -97,10 +97,14 @@ void ExprValue::item( const Item& i )
    }   
 
    m_item = i;
-   if ( m_item.isGarbaged() )
+   if ( m_item.isUser() )
    {
       m_lock = coll->lock(m_item);
-   }   
+   }
+   else
+   {
+      m_lock = 0;
+   }
 }
 
 

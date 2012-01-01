@@ -159,19 +159,32 @@ FALCON_DEFINE_METHOD_P1( ClassRestorer, restore )
 FALCON_DEFINE_METHOD_P1( ClassRestorer, next )
 {  
    static Collector* coll = Engine::instance()->collector();
+   static ClassReference* refClass = Engine::instance()->referenceClass();
    
    RestorerCarrier* stc = static_cast<RestorerCarrier*>(ctx->self().asInst());
    Restorer* restorer = stc->carried();
    Class* cls;
    void* data;
-   if( restorer->next( cls, data ) )
+   bool first;
+   if( restorer->next( cls, data, first ) )
    {
       if (cls->isFlatInstance())
       {
          ctx->returnFrame( *static_cast<Item*>(data) );
       }
       else {
-         ctx->returnFrame( FALCON_GC_STORE(coll, cls, data) );
+         // send to the garbage the items that have been returned for the first time.
+         if( first )
+            ctx->returnFrame( FALCON_GC_STORE(coll, cls, data) );
+         else
+            ctx->returnFrame( Item(cls, data) );
+         
+         // TODO: This is a bad trick but I am on other things now
+         if( (Class*)refClass == cls )
+         {
+            ctx->topData().type( FLC_ITEM_REF );
+            ctx->topData().content.mth.ref = &static_cast<ItemReference*>(data)->item();
+         }
       }
    }
    else

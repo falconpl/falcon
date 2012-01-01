@@ -115,17 +115,11 @@ void ExprRef::apply_( const PStep* ps, VMContext* ctx )
    // get the class/data pair of the item.
    Item &value = (*self->m_symbol->value(ctx));
    fassert( &value != 0 );
-   
-   // if this is already a reference, we're done.
-   if( ! value.isReference() )
-   {
-      // both the original item and the copy in the stack must be changed.
-      ItemReference* ref = new ItemReference;
-      ref->reference( value );
-   }
+   Item copy = value; 
+   ItemReference::create( value, copy );
    
    ctx->popCode();
-   Item copy = value; // prevent stack corruption (value may be on the stack)
+   // prevent stack corruption (value may be on the stack)
    ctx->pushData(copy);
 }
 

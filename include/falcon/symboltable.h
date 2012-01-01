@@ -66,12 +66,19 @@ public:
    SymbolTable( const SymbolTable& other);
    virtual ~SymbolTable();
 
-   /** Number of local variables in this function.
+   /** Number of local variables in this table.
       @return count of local symbols.
 
     \note This method is NOT an inline. Use sparcely.
     */
    int32 localCount() const;
+   
+   /** Number of closed variables in this table.
+      @return count of closed symbols.
+
+    \note This method is NOT an inline. Use sparcely.
+    */
+   int32 closedCount() const;
 
    /** Finds a symbol by name.
     \param name The name of the symbol to be found.
@@ -88,6 +95,13 @@ public:
 
     */
   Symbol* getLocal( int32 id ) const;
+  
+   /** Gets a closed symbol by ID.
+    \param id The id of the symbol
+    \return A symbol pointer or 0 if the id is out of range.
+
+    */
+  Symbol* getClosed( int32 id ) const;
 
 
    /** Adds a local symbol.
@@ -114,6 +128,32 @@ public:
     \note The table takes ownership of this local symbol.
     */
    bool addLocal( Symbol* sym );
+
+
+   /** Adds a closed symbol.
+    \param The name of the local symbol.
+    \return a Symbol newly created out of the given name, or an already
+    existing symbol (warning: might not be a local symbol).
+
+    If the name is already found int he local symbol table, that symbol is
+    returned instead. So, the caller must take care to ascertain that the returned
+    symbol is actually a closed symbol before using it in a context where this
+    difference matters.
+    
+    */
+   Symbol* addClosed( const String& name );
+
+   /** Adds an already created closeed symbol.
+    \param sym The local symbol to be added to this table.
+    \return True on success, false if the name is already used.
+    
+    If a symbol with the same name exists, the symbol is not added and the
+    method returns false. The caller must then take proper action (i.e. destroy
+    the symbol and signal error).
+
+    \note The table takes ownership of this closed symbol.
+    */
+   bool addClosed( Symbol* sym );
 
    /** Adds a non-local symbol to this table.
     \parma sym A symbol that is not considered local.

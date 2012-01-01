@@ -51,23 +51,21 @@ public:
    }
    
    uint32 gcMark() const { return m_mark; }
-
-   /** References an item, and turn it into a reference to us.
-    \param item The item to be turned into a reference.
-    Notice that the original item is changed into a reference to the item itself.
+   
+   /** Creates a newly allocated ItemReference to the target.
+    \param source The source that will be trasformed into a reference to this item.
+    
+    If the source is a reference, the ItemReference in the source will be returned,
+    otherwise the 
     */
-   void reference( Item& target );
+   static ItemReference* create( Item& source ); 
    
    /** Creates a newly allocated ItemReference to the target.
     \param target The target that will be trasformed into a reference to this item.
+    If the target is a reference, the ItemReference in the target will be returned.
     */
-   static ItemReference* create( Item& target ) 
-   {
-      ItemReference* ref = new ItemReference;
-      ref->reference( target );
-      return ref;
-   }
-   
+   static ItemReference* create( Item& source, Item& target ); 
+      
 private:
    Item m_item;
    uint32 m_mark;

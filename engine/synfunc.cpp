@@ -49,7 +49,7 @@ void SynFunc::setPredicate(bool bmode)
    public:
       PStepReturnRule() { apply = apply_; }
       virtual ~PStepReturnRule() {}
-      void describeTo( String& v ) const { v = "Automatic return rule value"; }
+      void describeTo( String& v, int ) const { v = "Automatic return rule value"; }
       
    private:
       static void apply_( const PStep*, VMContext* ctx ) {

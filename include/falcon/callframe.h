@@ -22,6 +22,8 @@
 namespace Falcon {
 
 class Function;
+class ItemReference;
+
 
 /** Call Frame for the Falcon virtual machine.
  *
@@ -38,6 +40,9 @@ class FALCON_DYN_CLASS CallFrame
 public:
    /** Function calling this frame. */
    Function* m_function;
+   
+   /** Data closed in closures.. */
+   ItemReference* m_closedData;
 
    /** Number of parameters used for the effective call. */
    uint32 m_paramCount;
@@ -61,7 +66,7 @@ public:
     * scan the code stack to unroll the function call.
     */
    uint32 m_codeBase;
-
+   
    /** Image of "self" in this frame. */
    Item m_self;
 
@@ -71,6 +76,7 @@ public:
    /** True if self has been passed. */
    bool m_bMethodic;
    
+   
 
    // Actually never used, just used at compile time by vector.
    CallFrame()
@@ -78,6 +84,7 @@ public:
 
    CallFrame( Function* f, int pc, int sb, int cb, const Item& self ):
       m_function(f),
+      m_closedData(0),
       m_paramCount( pc ),
       m_stackBase( sb ),
       m_initBase( sb ),
@@ -89,6 +96,7 @@ public:
 
    CallFrame( Function* f, int pc, int sb, int cb):
       m_function(f),
+      m_closedData(0),
       m_paramCount( pc ),
       m_stackBase( sb ),
       m_initBase( sb ),

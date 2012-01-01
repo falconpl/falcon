@@ -191,28 +191,28 @@ void ItemDict::insert( const Item& key, const Item& value )
    {      
       case FLC_ITEM_NIL:
          _p->m_bHasNil = true;
-         _p->m_itemNil = value;
+         _p->m_itemNil.assign(value);
          break;
          
       case FLC_ITEM_BOOL:
          if( key.asBoolean() )
          {
             _p->m_bHasTrue = true;
-            _p->m_itemTrue = value;
+            _p->m_itemTrue.assign(value);
          }
          else
          {
             _p->m_bHasFalse = true;
-            _p->m_itemFalse = value;
+            _p->m_itemFalse.assign(value);
          }
          break;
          
       case FLC_ITEM_INT:
-         _p->m_intMap[ key.asInteger() ] = value;
+         _p->m_intMap[ key.asInteger() ].assign(value);
          break;
          
       case FLC_ITEM_NUM:
-         _p->m_intMap[ (int64) key.asNumeric() ] = value;
+         _p->m_intMap[ (int64) key.asNumeric() ].assign(value);
          break;
                        
       default:
@@ -224,16 +224,16 @@ void ItemDict::insert( const Item& key, const Item& value )
          switch( cls->typeID() )
          {
             case FLC_CLASS_ID_STRING:
-               _p->m_stringMap[ *static_cast<String*>(data) ] = value;
+               _p->m_stringMap[ *static_cast<String*>(data) ].assign(value);
                break;
                
             case FLC_CLASS_ID_RANGE:
-               _p->m_rangeMap[ *static_cast<Range*>(data) ] = value;
+               _p->m_rangeMap[ *static_cast<Range*>(data) ].assign(value);
                break;
                
             default:
                _p->m_instMap[ 
-                  Private::class_data_pair( cls, data ) ] = value;
+                  Private::class_data_pair( cls, data ) ].assign(value);
                break;
          }
       }
@@ -253,16 +253,19 @@ void ItemDict::remove( const Item& key )
    {      
       case FLC_ITEM_NIL:
          _p->m_bHasNil = false;
+         _p->m_itemNil.setNil();
          break;
          
       case FLC_ITEM_BOOL:
          if( key.asBoolean() )
          {
             _p->m_bHasTrue = false;
+            _p->m_itemTrue.setNil();
          }
          else
          {
             _p->m_bHasFalse = false;
+            _p->m_itemFalse.setNil();
          }
          break;
          

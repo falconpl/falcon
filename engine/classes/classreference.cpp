@@ -24,6 +24,8 @@
 #include <falcon/errors/paramerror.h>
 #include <falcon/itemreference.h>
 
+#include "falcon/itemarray.h"
+
 namespace Falcon
 {
 
@@ -57,20 +59,24 @@ void* ClassReference::clone( void* source ) const
    return new ItemReference(*ref);   
 }
 
-
-void ClassReference::serialize( DataWriter* , void*  ) const
+void ClassReference::store( VMContext*, DataWriter*, void* ) const {}
+void ClassReference::restore( VMContext*, DataReader*, void*& empty ) const 
 {
-   // TODO
+   empty = new ItemReference;
 }
 
-
-void* ClassReference::deserialize( DataReader* ) const
+void ClassReference::flatten( VMContext*, ItemArray& subItems, void* instance ) const
 {
-   //TODO
-   return 0;
+   ItemReference* ref = static_cast<ItemReference*>(instance);
+   subItems.append(ref->item());
 }
 
-   
+void ClassReference::unflatten( VMContext*, ItemArray& subItems, void* instance ) const
+{
+   ItemReference* ref = static_cast<ItemReference*>(instance);
+   ref->item() = subItems[0];
+}
+
 void ClassReference::gcMark( void* self, uint32 mark ) const
 {
    ItemReference* ref = static_cast<ItemReference*>(self);
