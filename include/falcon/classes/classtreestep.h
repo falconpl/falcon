@@ -72,7 +72,6 @@ public:
    // This class is always alive as it resides in core/engine
    virtual bool gcCheckMyself( uint32 mark );
 
-   virtual TreeStep* createInstance() const { return 0; }
 private:
    
    class LenMethod: public Function {

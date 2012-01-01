@@ -243,12 +243,13 @@ void ClassTreeStep::store( VMContext*, DataWriter* dw, void* instance ) const
 
 void ClassTreeStep::restore( VMContext*, DataReader*dr, void*& empty ) const
 {
-   TreeStep* ts = createInstance();
+   // We do require that empty is not zero.
+   fassert( empty != 0 );
+   TreeStep* ts = static_cast<TreeStep*>(empty);
    int32 line, chr;
    dr->read( line );
    dr->read( chr );
    ts->decl( line, chr );
-   empty = ts;
 }
 
 void ClassTreeStep::flatten( VMContext*, ItemArray& subItems, void* instance ) const
@@ -279,11 +280,19 @@ void ClassTreeStep::flatten( VMContext*, ItemArray& subItems, void* instance ) c
 void ClassTreeStep::unflatten( VMContext*, ItemArray& subItems, void* instance ) const
 {
    TreeStep* ts = static_cast<TreeStep*>( instance );
-   for( int i = 0; i < (int) subItems.length(); ++i )
+   
+   if( subItems[0].isUser() )
+   {
+      // we have a selector.
+      fassert( subItems[0].asClass()->isDerivedFrom(this) );
+      ts->selector( static_cast<Expression*>(subItems[0].asInst()) );
+   }
+   
+   for( int i = 1; i < (int) subItems.length(); ++i )
    {
       if( subItems[i].isUser() )
       {
-         ts->nth(i, static_cast<TreeStep*>( subItems[i].asInst() ) );         
+         ts->nth(i-1, static_cast<TreeStep*>( subItems[i].asInst() ) );         
       }
       // else, it was nil and unused.
    }
