@@ -17,6 +17,7 @@
 #define SRC "engine/classes/classarray.cpp"
 
 #include <falcon/classes/classarray.h>
+#include <falcon/range.h>
 #include <falcon/itemid.h>
 #include <falcon/vmcontext.h>
 #include <falcon/itemarray.h>
@@ -142,22 +143,109 @@ void ClassArray::op_getProperty( VMContext* ctx, void* self, const String& prope
 void ClassArray::op_getIndex( VMContext* ctx, void* self ) const
 {
    Item *index, *arritem;
+
    ctx->operands( arritem, index );
 
    ItemArray& array = *static_cast<ItemArray*>(self);
+
    if (index->isOrdinal())
    {
       int64 v = index->forceInteger();
+
       if( v < 0 ) v = array.length() + v;
+
       if( v >= array.length() )
       {
          throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra("out of range") );
       }
+
       ctx->stackResult(2, array[v]);
+   }
+   else if ( index->isUser() ) // index is a range
+   {
+      // if range is moving from a smaller number to larger (start left move right in the array)
+      //      give values in same order as they appear in the array
+      // if range is moving from a larger number to smaller (start right move left in the array)
+      //      give values in reverse order as they appear in the array
+
+      Class *cls;
+      void *udata;
+
+      if ( ! index->asClassInst( cls, udata ) )
+      {
+         throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra("type error") );
+      }
+
+      if ( cls->typeID() == FLC_CLASS_ID_RANGE )
+      {
+         Range& rng = *static_cast<Range*>(udata);
+
+         int64 step = ( rng.step() == 0 ) ? 1 : rng.step(); // No step given assume 1
+         int64 start = rng.start();
+         int64 end = rng.end();
+         int64 arrayLen = array.length();
+
+         // do some validation checks before proceeding
+         if ( start > arrayLen || start < (arrayLen * -1)  || end > arrayLen || end < (arrayLen * -1) )
+         {
+            throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra("index out of range") );
+         }
+
+         bool reverse = false;
+
+         if ( rng.isOpen() )
+         {
+            // If negative number start from the end of the array
+            if ( start < 0 ) start = arrayLen + start;
+
+            end = arrayLen;
+         }
+         else
+         {
+            if ( start < 0 ) start = arrayLen + start;
+
+            if ( end < 0 ) end = arrayLen + end;
+
+            if ( start == end ) end++; // handle [1:1] range
+
+            if ( start > end )
+            {
+               reverse = true;
+               if ( rng.step() == 0 ) step = -1;
+            }
+         }
+
+         ItemArray *returnArray = new ItemArray( abs( (start - end) + 1 ) );
+
+         if ( reverse )
+         {
+            while ( start >= end )
+            {
+               returnArray->append( array[start] );
+               start += step;
+            }
+         }
+         else
+         {
+            while ( start < end )
+            {
+               returnArray->append( array[start] );
+               start += step;
+            }
+         }
+
+         static Collector* coll = Engine::instance()->collector();
+
+         ctx->stackResult( 2, FALCON_GC_STORE( coll, this, returnArray ) );
+         }
+      else
+      {
+         throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra("unknown index") );
+      }
    }
    else
    {
-      throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra("N") );
+      throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra("invalid index") );
    }
 }
 

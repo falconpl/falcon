@@ -17,6 +17,7 @@
 #define SRC "engine/classes/classstring.cpp"
 
 #include <falcon/classes/classstring.h>
+#include <falcon/range.h>
 #include <falcon/itemid.h>
 #include <falcon/vmcontext.h>
 #include <falcon/optoken.h>
@@ -296,24 +297,109 @@ void ClassString::NextOp::apply_( const PStep*, VMContext* ctx )
 void ClassString::op_getIndex( VMContext* ctx, void* self ) const
 {
    Item *index, *stritem;
+
    ctx->operands( stritem, index );
 
    String& str = *static_cast<String*>(self);
+
    if (index->isOrdinal())
    {
       int64 v = index->forceInteger();
-      if( v < 0 ) v = str.length() + v;
-      if( v >= str.length() )
+
+      if ( v < 0 ) v = str.length() + v;
+
+      if ( v >= str.length() )
       {
          throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra("out of range") );
       }
+
       String *s = new String();
+
       s->append(str.getCharAt(v));
       ctx->stackResult(2, s->garbage() );
    }
+   else if ( index->isUser() ) // index is a range
+   {
+      // if range is moving from a smaller number to larger (start left move right in the array)
+      //      give values in same order as they appear in the array
+      // if range is moving from a larger number to smaller (start right move left in the array)
+      //      give values in reverse order as they appear in the array
+
+      Class *cls;
+      void *udata; 
+
+      if ( ! index->asClassInst( cls, udata ) )
+      {
+         throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra("type error") );
+      }
+
+      // Confirm we have a range
+      if ( ! cls->typeID() == FLC_CLASS_ID_RANGE )
+      {
+         throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra("unknown index") );
+      }
+
+      Range& rng = *static_cast<Range*>(udata);
+
+      int64 step = ( rng.step() == 0 ) ? 1 : rng.step(); // assume 1 if no step given
+      int64 start = rng.start();
+      int64 end = rng.end();
+      int64 strLen = str.length();
+
+      // do some validation checks before proceeding
+      if ( start > strLen || start < (strLen * -1)  || end > strLen || end < (strLen * -1) )
+      {
+         throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra("index out of range") );
+      }
+
+      bool reverse = false;
+
+      String *s = new String();
+
+      if ( rng.isOpen() )
+      {
+         // If negative number count from the end of the array
+         if ( start < 0 ) start = strLen + start;
+
+         end = strLen;
+      }
+      else // non-open range
+      {
+         if ( start < 0 ) start = strLen + start;
+
+         if ( end < 0 ) end = strLen + end;
+
+         if ( start == end ) end++; // handle [1:1] range
+
+         if ( start > end )
+         {
+            reverse = true;
+            if ( rng.step() == 0 ) step = -1;
+         }
+      }
+
+      if ( reverse )
+      {
+         while ( start >= end )
+         {
+            s->append( str.getCharAt( start ) );
+            start += step;
+         }
+      }
+      else
+      {
+         while ( start < end )
+         {
+            s->append( str.getCharAt( start ) );
+            start += step;
+         }
+      }
+
+      ctx->stackResult( 2, s->garbage() );
+   }
    else
    {
-      throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra("N") );
+      throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra("invalid index") );
    }
 }
 
