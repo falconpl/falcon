@@ -56,6 +56,7 @@ FALCON_SYNCLASS_DECLARATOR(m_expr_genarray, GenArray, expr)
 FALCON_SYNCLASS_DECLARATOR(m_expr_assign, Assign, expr)
 FALCON_SYNCLASS_DECLARATOR(m_expr_bnot, BNot, expr)
 FALCON_SYNCLASS_DECLARATOR(m_expr_call, Call, expr)
+FALCON_SYNCLASS_DECLARATOR(m_expr_closure, GenClosure, expr)
 // compare
 FALCON_SYNCLASS_DECLARATOR(m_expr_lt, LT, expr)
 FALCON_SYNCLASS_DECLARATOR(m_expr_le, LE, expr)

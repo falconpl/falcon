@@ -579,7 +579,7 @@ public:
    }
    
    /** Prepares a new non-methodic closure call frame. */
-   inline CallFrame* makeCallFrame( Function* function, ItemReference* cd, int nparams )
+   inline CallFrame* makeCallFrame( Function* function, ItemArray* cd, int nparams )
    {
       register CallFrame* topCall = addCallFrame();
       topCall->m_function = function;
@@ -866,7 +866,7 @@ public:
    /** Invokes a function passing closure data. 
     \see ClassClosure
     */
-   void call( Function* function, ItemReference* closedData, int nparams );
+   void call( Function* function, ItemArray* closedData, int nparams );
    
    /** Calls an item without parameters.
     \see callItem( const Item&, ... )

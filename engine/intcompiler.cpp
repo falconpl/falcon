@@ -454,7 +454,8 @@ IntCompiler::compile_status IntCompiler::compileNext( const String& value)
                ret = eval_t;
             }
          }
-         // else ret can stay ok
+         // else ret can stay ok         
+         //m_vm->textOut()->write( m_currentTree->describe() );
 
          try {
             m_vm->run();

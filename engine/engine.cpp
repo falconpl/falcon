@@ -55,6 +55,7 @@
 #include <falcon/classes/classfunction.h>
 #include <falcon/classes/classnil.h>
 #include <falcon/classes/classbool.h>
+#include <falcon/classes/classclosure.h>
 #include <falcon/classes/classint.h>
 #include <falcon/classes/classnumeric.h>
 #include <falcon/classes/classstring.h>
@@ -236,6 +237,7 @@ Engine::Engine()
    // Syntax Reflection
    //
       
+   m_closureClass = new ClassClosure;
    m_symbolClass = new ClassSymbol;
    
    ClassTreeStep* ctreeStep = new ClassTreeStep;
@@ -316,6 +318,7 @@ Engine::~Engine()
    delete m_exprClass;
    delete m_syntreeClass;
    delete m_symbolClass;
+   delete m_closureClass;
    
    delete m_synClasses;
    
@@ -617,6 +620,13 @@ Class* Engine::symbolClass() const
    fassert( m_instance != 0 );
    return m_instance->m_symbolClass;
 }
+
+Class* Engine::closureClass() const
+{
+   fassert( m_instance != 0 );
+   return m_instance->m_closureClass;
+}
+
 
 
 SynClasses* Engine::synclasses() const

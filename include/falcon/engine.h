@@ -275,6 +275,17 @@ public:
     */
    Class* symbolClass() const;
    
+   /** Returns the global instance of the ClassClosure class.
+   \return the Engine instance of the ClassClosure handler.
+
+    Method init() must have been called before.
+
+    @note This method will assert and terminate the program if compiled in debug mode
+    in case the engine has not been initialized. In release, it will just
+    return a null pointer.
+    */
+   Class* closureClass() const;
+   
    /** Returns the collection of standard syntactic tree classes.
    \return the Engine instance of the SynClasses class collection.
 
@@ -470,6 +481,7 @@ protected:
    Class* m_exprClass;
    Class* m_syntreeClass;
    Class* m_symbolClass;
+   Class* m_closureClass;
    
    SynClasses* m_synClasses;
 

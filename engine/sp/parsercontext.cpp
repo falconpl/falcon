@@ -470,8 +470,7 @@ Symbol* ParserContext::findSymbol( const String& name )
          {
             TRACE1("ParserContext::findSymbol \"%s\" found, need to be closed", sym->name().c_ize() );
             //TODO: Properly close symbols. -- this won't work
-            Symbol* closym = new Symbol( name, Symbol::e_st_closed );
-            m_symtab->addSymbol(closym);
+            Symbol* closym = m_symtab->addClosed(name);
             return closym;
          }
 

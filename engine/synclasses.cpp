@@ -29,6 +29,7 @@
 #include <falcon/psteps/exprassign.h>
 #include <falcon/psteps/exprbitwise.h>
 #include <falcon/psteps/exprcall.h>
+#include <falcon/psteps/exprclosure.h>
 #include <falcon/psteps/exprcompare.h>
 #include <falcon/psteps/exprdict.h>
 #include <falcon/psteps/exprdot.h>
@@ -195,6 +196,7 @@ FALCON_STANDARD_SYNCLASS_OP_CREATE( GenArray, ExprArray, varExprInsert )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Assign, ExprAssign, binaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( BNot, ExprBNOT, unaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Call, ExprCall, varExprInsert )
+// GenClosure --specificly managed
 
 FALCON_STANDARD_SYNCLASS_OP_CREATE( LT, ExprLT, binaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( LE, ExprLE, binaryExprSet )
@@ -266,6 +268,26 @@ FALCON_STANDARD_SYNCLASS_OP_CREATE( StarIndexAccess, ExprStarIndex, binaryExprSe
 //=================================================================
 // Specific management
 //
+
+void SynClasses::ClassGenClosure::op_create( VMContext* ctx, int pcount ) const
+{
+   if( pcount < 1 || ! ctx->topData().isFunction() )
+   {
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__, SRC )
+            .origin( ErrorParam::e_orig_runtime)
+            .extra( String("C") ) );
+   }
+   
+   ExprClosure* expr = new ExprClosure( ctx->topData().asFunction() );
+   ctx->stackResult( pcount+1, SynClasses::collect( this, expr, __LINE__ ) );
+}
+void SynClasses::ClassGenClosure::restore( VMContext* ctx, DataReader*dr, void*& empty ) const
+{
+   // TODO
+   empty = new ExprClosure;
+   m_parent->restore( ctx, dr, empty );
+}
+
 
 void SynClasses::ClassGenDict::op_create( VMContext* ctx, int pcount ) const
 {

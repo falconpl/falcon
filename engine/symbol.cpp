@@ -17,6 +17,8 @@
 #include <falcon/stream.h>
 #include <falcon/vm.h>
 #include <falcon/function.h>
+#include <falcon/callframe.h>
+#include <falcon/itemarray.h>
 
 namespace Falcon {
 
@@ -74,7 +76,7 @@ Item* Symbol::value_local( VMContext* ctx, const Symbol* sym )
 
 Item* Symbol::value_closed( VMContext* ctx, const Symbol* sym )
 {
-   return &ctx->currentFrame().m_function->closedItem( sym->m_id );
+   return & (*ctx->currentFrame().m_closedData)[sym->m_id];
 }
 
 Item* Symbol::value_undef( VMContext* , const Symbol* )

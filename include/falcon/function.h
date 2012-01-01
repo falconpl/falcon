@@ -277,14 +277,6 @@ public:
     */
    virtual bool gcCheck( uint32 mark );
    
-   /** Return the nth closed item in this function. 
-    \param id The id of the closed symbol.
-    \return A pointer to the item that has been closed (usually, a reference).
-    
-    */
-   const Item& closedItem( uint32 id ) const { return m_closedItems[id].item(); }
-   Item& closedItem( uint32 id ) { return m_closedItems[id].item(); }
-
 protected:
    String m_name;
    String m_signature;
@@ -298,8 +290,6 @@ protected:
 
    bool m_bEta;
    SymbolTable m_symtab;
-   
-   ItemReference* m_closedItems;
 };
 
 #define FALCON_DECLARE_FUNCTION(FN_NAME, SIGNATURE) \

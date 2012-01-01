@@ -117,6 +117,7 @@ add_library(falcon_engine SHARED
   psteps/exprassign.cpp
   psteps/exprbitwise.cpp
   psteps/exprcall.cpp
+  psteps/exprclosure.cpp
   psteps/exprcompare.cpp
   psteps/exprdict.cpp
   psteps/exprdot.cpp
@@ -157,6 +158,7 @@ add_library(falcon_engine SHARED
 
   classes/classarray.cpp
   classes/classbool.cpp
+  classes/classclosure.cpp
   classes/classdict.cpp
   classes/classerror.cpp
   classes/classfunction.cpp
@@ -201,6 +203,7 @@ add_library(falcon_engine SHARED
   autowstring.cpp
   bom.cpp
   class.cpp
+  closure.cpp
   collector.cpp
   collector_history.cpp
   datareader.cpp

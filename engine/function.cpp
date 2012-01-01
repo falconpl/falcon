@@ -38,13 +38,11 @@ Function::Function( const String& name, Module* module, int32 line ):
    m_module( module ),
    m_methodOf( 0 ),
    m_line( line ),
-   m_bEta(false),
-   m_closedItems(0)
+   m_bEta(false)
 {}
 
 Function::~Function()
 {
-   delete m_closedItems;
 }
 
 

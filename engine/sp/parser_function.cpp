@@ -34,6 +34,8 @@
 #include <falcon/synclasses_id.h>
 
 #include "private_types.h"
+#include "falcon/psteps/exprclosure.h"
+#include "falcon/psteps/exprsym.h"
 
 namespace Falcon {
 
@@ -127,6 +129,12 @@ void on_close_function( void* thing )
          func->setPredicate( true );
       }
    }
+   
+   // was this a closure?
+   if( func->symbols().closedCount() > 0 ) {
+      // change our token -- from function (value) to closure
+      sp.getLastToken()->setValue( new ExprClosure(func), expr_deletor );
+   }  
 }
 
 void on_close_lambda( void* thing )
@@ -143,6 +151,12 @@ void on_close_lambda( void* thing )
       StmtReturn* ret = new StmtReturn( aexpr->detachExpr() );
       func->syntree().nth(0, ret);
    }
+   
+   // was this a closure?
+   if( func->symbols().closedCount() > 0 ) {
+      // change our token -- from function (value) to closure
+      sp.getLastToken()->setValue( new ExprClosure(func), expr_deletor );
+   }  
 }
 
 
@@ -255,7 +269,7 @@ void apply_lambda_params(const Rule&, Parser& p)
    p.simplify(2,ti);
    // remove the lambdastart state
    p.popState();
-
+   
    // open a new main state for the function
    ctx->openFunc(func);
    p.pushState( "InlineFunc", on_close_lambda , &p );

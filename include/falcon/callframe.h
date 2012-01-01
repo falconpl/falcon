@@ -22,7 +22,7 @@
 namespace Falcon {
 
 class Function;
-class ItemReference;
+class ItemArray;
 
 
 /** Call Frame for the Falcon virtual machine.
@@ -42,7 +42,7 @@ public:
    Function* m_function;
    
    /** Data closed in closures.. */
-   ItemReference* m_closedData;
+   ItemArray* m_closedData;
 
    /** Number of parameters used for the effective call. */
    uint32 m_paramCount;

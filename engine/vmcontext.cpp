@@ -712,7 +712,7 @@ void VMContext::call( Function* function, int nparams )
 }
 
 
-void VMContext::call( Function* function, ItemReference* closedData, int nparams )
+void VMContext::call( Function* function, ItemArray* closedData, int nparams )
 {
    TRACE( "Calling function %s -- call frame code:%p, data:%p, call:%p",
          function->locate().c_ize(),m_topCode, m_topData, m_topCall  );

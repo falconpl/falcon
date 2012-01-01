@@ -135,7 +135,6 @@ protected:
    Private* _p;
    
    SymbolTable* m_locals;
-   Statement* m_single;
    Symbol* m_head;
    Expression* m_selector;
 
