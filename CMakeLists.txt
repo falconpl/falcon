@@ -53,7 +53,7 @@ endif()
 #
 if( CMAKE_COMPILER_IS_GNUCXX )
    message( "Adding GNU g++ specific flags" )
-   add_definitions(-Wall -Wextra -Werror -lpthread)
+   add_definitions(-Wall -Wextra -Werror -Wno-error=uninitialized -lpthread)
 endif()
 
 ##################################################################
