@@ -53,21 +53,21 @@ public:
    }
    inline static const char* mode() { return "lvalue"; }
 };
-   
-   
+
+
 
 template< class activity>
 inline void generic_apply( const ExprIndex* self, VMContext* ctx )
-{   
+{
    TRACE2( "Apply %s \"%s\"", activity::mode(), self->describe().c_ize() );
-   
+
    fassert( self->first() != 0 );
    fassert( self->second() != 0 );
-   
+
    CodeFrame& cf = ctx->currentCode();
    Expression::t_trait trait;
    register Expression* current;
-   
+
    switch( cf.m_seqId )
    {
       // first time around
@@ -85,7 +85,7 @@ inline void generic_apply( const ExprIndex* self, VMContext* ctx )
             if( ctx->stepInYield( current, cf ) ) return;
          }
          // fallthrough
-         
+
       case 1:
          cf.m_seqId = 2;
          // don't bother to call if we know what it is
@@ -101,18 +101,18 @@ inline void generic_apply( const ExprIndex* self, VMContext* ctx )
          }
          // fallthrough
    }
-   
+
    // we're done here.
    ctx->popCode();
-   
+
    // now apply the index.
    Class* cls;
    void* instance;
-   
+
    //acquire the class
    (&ctx->topData()-1)->forceClassInst(cls, instance);
    // apply the set or get index
-   activity::operate( cls, ctx, instance );   
+   activity::operate( cls, ctx, instance );
 }
 
 void ExprIndex::apply_( const PStep* ps, VMContext* ctx )
@@ -122,7 +122,7 @@ void ExprIndex::apply_( const PStep* ps, VMContext* ctx )
 }
 
 
-void ExprIndex::PstepLValue::apply_( const PStep* DEBUG_ONLY(ps), VMContext* ctx )
+void ExprIndex::PstepLValue::apply_( const PStep* ps, VMContext* ctx )
 {
    const ExprIndex* self = static_cast<const ExprIndex::PstepLValue*>(ps)->m_owner;
    generic_apply<Activity_SetIndex>( self, ctx );
@@ -136,7 +136,7 @@ void ExprIndex::describeTo( String& ret, int depth ) const
       ret = "<Blank ExprIndex>";
       return;
    }
-   
+
    ret = "(" + m_first->describe(depth+1) + "[" + m_second->describe(depth+1) + "])";
 }
 

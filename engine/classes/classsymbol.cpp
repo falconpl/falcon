@@ -21,6 +21,7 @@
 #include <falcon/symbol.h>
 #include <falcon/engine.h>
 #include <falcon/vmcontext.h>
+#include <falcon/error.h>
 
 namespace Falcon {
 
@@ -45,13 +46,13 @@ void* ClassSymbol::clone( void* instance ) const
 {
    return instance;
 }
-   
+
 void ClassSymbol::op_create( VMContext* ctx, int32 pcount ) const
 {
    // TODO
    ctx->stackResult(pcount+1, Item());
 }
-   
+
 void ClassSymbol::enumerateProperties( void*, PropertyEnumerator& cb ) const
 {
    cb("name", false);
@@ -61,11 +62,11 @@ void ClassSymbol::enumerateProperties( void*, PropertyEnumerator& cb ) const
 void ClassSymbol::enumeratePV( void* instance, PVEnumerator& cb ) const
 {
    static Class* strClass = Engine::instance()->stringClass();
- 
+
    Symbol* sym = static_cast<Symbol*>( instance );
    Item temp( strClass, sym );
    cb("name", temp );
-   cb("value", *sym->defaultValue() );   
+   cb("value", *sym->defaultValue() );
 }
 
 bool ClassSymbol::hasProperty( void*, const String& prop ) const
@@ -74,13 +75,13 @@ bool ClassSymbol::hasProperty( void*, const String& prop ) const
       prop == "name"
       || prop == "value";
 }
-   
+
 void ClassSymbol::op_getProperty( VMContext* ctx, void* instance, const String& prop) const
 {
    static Class* strClass = Engine::instance()->stringClass();
-   
+
    Symbol* sym = static_cast<Symbol*>( instance );
-   
+
    if( prop == "name" )
    {
       ctx->stackResult(2, Item( strClass, sym ) );
@@ -97,9 +98,9 @@ void ClassSymbol::op_getProperty( VMContext* ctx, void* instance, const String& 
 
 
 void ClassSymbol::op_setProperty( VMContext* ctx, void* instance, const String& prop) const
-{  
+{
    Symbol* sym = static_cast<Symbol*>( instance );
-   
+
    if( prop == "name" )
    {
       throw ropError( prop, __LINE__, SRC );
