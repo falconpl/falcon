@@ -168,7 +168,7 @@ void StmtReturn::apply_expr_( const PStep* ps, VMContext* ctx )
    const StmtReturn* self = static_cast<const StmtReturn*>( ps );
    
    // change our step in a standard return with top data
-   ctx->resetCode( &steps->m_returnFrame );
+   ctx->resetCode( &steps->m_returnFrameWithTop );
    CodeFrame& frame = ctx->currentCode();
    ctx->stepIn( self->m_expr );
    if( &frame != &ctx->currentCode() )

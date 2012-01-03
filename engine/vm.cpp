@@ -315,7 +315,7 @@ String VMachine::report()
    register VMContext* ctx = m_context;
 
    String data = String("Call: ").N( (int32) ctx->callDepth() )
-         .A("; Code: ").N((int32)ctx->codeDepth()).A("/").N(ctx->m_topCode->m_seqId)
+         .A("; Code: ").N((int32)ctx->codeDepth()).A("/").N(ctx->currentCode().m_seqId)
          .A("; Data: ").N((int32)ctx->dataSize());
 
    String tmp;

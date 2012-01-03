@@ -39,9 +39,6 @@ class SynTree;
 class FALCON_DYN_CLASS VMContext
 {
 public:
-   static const int INITIAL_STACK_ALLOC = 512;
-   static const int INCREMENT_STACK_ALLOC = 256;
-
    VMContext( VMachine* owner = 0 );
    ~VMContext();
 
@@ -86,18 +83,17 @@ public:
 
    /** Return the nth variable in the local context.
     * Consider that:
-    * - 0 is self.
-    * - 1...N are the parameters
-    * - N+1... are local variables.
+    * - 0...N-1 are the parameters
+    * - N... are local variables.
     */
    const Item& localVar( int id ) const
    {
-      return m_dataStack[ id + m_topCall->m_stackBase ];
+      return m_dataStack.m_base[ id + currentFrame().m_stackBase ];
    }
 
    Item& localVar( int id )
    {
-      return m_dataStack[ id + m_topCall->m_stackBase ];
+      return m_dataStack.m_base[ id + currentFrame().m_stackBase ];
    }
 
    /** Return the nth parameter in the local context.
@@ -105,9 +101,9 @@ public:
    \return A pointer to the nth parameter in the stack, or 0 if out of range.
     */
    inline const Item* param( uint32 n ) const {
-      fassert(m_dataStack+(n + m_topCall->m_stackBase) < m_maxData );
-      if( m_topCall->m_paramCount <= n ) return 0;
-      return &m_dataStack[ n + m_topCall->m_stackBase ];
+      fassert(m_dataStack.m_base+(n + currentFrame().m_stackBase) < m_dataStack.m_max );
+      if( currentFrame().m_paramCount <= n ) return 0;
+      return &m_dataStack.m_base[ n + currentFrame().m_stackBase ];
    }
 
    /** Return the nth parameter in the local context (non-const).
@@ -115,9 +111,9 @@ public:
    \return A pointer to the nth parameter in the stack, or 0 if out of range.
     */
    inline Item* param( uint32 n )  {
-      fassert(m_dataStack+(n + m_topCall->m_stackBase) < m_maxData );
-      if( m_topCall->m_paramCount <= n ) return 0;
-      return &m_dataStack[ n + m_topCall->m_stackBase ];
+      fassert(m_dataStack.m_base+(n + currentFrame().m_stackBase) < m_dataStack.m_max );
+      if( currentFrame().m_paramCount <= n ) return 0;
+      return &m_dataStack.m_base[ n + currentFrame().m_stackBase ];
    }
 
   /** Returns the parameter array in the current frame.
@@ -127,28 +123,28 @@ public:
     This usually points to the first parameter of the currently executed function.
     */
    inline Item* params() {
-      return &m_dataStack[ m_topCall->m_stackBase ];
+      return &m_dataStack.m_base[ currentFrame().m_stackBase ];
    }
 
    inline int paramCount() {
-      fassert( m_topCall >= m_callStack );
-      return m_topCall->m_paramCount;
+      fassert( &currentFrame() >= m_callStack.m_base );
+      return currentFrame().m_paramCount;
    }
 
 
    inline Item* opcodeParams( int count )
    {
-      return m_topData - (count-1);
+      return m_dataStack.m_top - (count-1);
    }
 
    inline Item& opcodeParam( int count )
    {
-      return *(m_topData - count);
+      return *(m_dataStack.m_top - count);
    }
    
    inline const Item& opcodeParam( int count ) const
    {
-      return *(m_topData - count);
+      return *(m_dataStack.m_top - count);
    }
 
    /** Return the nth parameter in the local context.
@@ -156,13 +152,13 @@ public:
     *TODO use the local stack.
     */
    inline const Item* local( int n ) const {
-      fassert(m_dataStack+(n + m_topCall->m_stackBase + m_topCall->m_paramCount) < m_maxData );
-      return &m_dataStack[ n + m_topCall->m_stackBase + m_topCall->m_paramCount ];
+      fassert(m_dataStack.m_base+(n + currentFrame().m_stackBase + currentFrame().m_paramCount) < m_dataStack.m_max );
+      return &m_dataStack.m_base[ n + currentFrame().m_stackBase + currentFrame().m_paramCount ];
    }
 
    inline Item* local( int n ) {
-	  fassert(m_dataStack+(n + m_topCall->m_stackBase + m_topCall->m_paramCount) < m_maxData );
-      return &m_dataStack[ n + m_topCall->m_stackBase + m_topCall->m_paramCount ];
+	  fassert(m_dataStack.m_base+(n + currentFrame().m_stackBase + currentFrame().m_paramCount) < m_dataStack.m_max );
+      return &m_dataStack.m_base[ n + currentFrame().m_stackBase + currentFrame().m_paramCount ];
    }
 
    /** Push data on top of the stack.
@@ -171,15 +167,15 @@ public:
           not colored.
     */
    inline void pushData( const Item& data ) {
-      ++m_topData;
-      if( m_topData >= m_maxData )
+      ++m_dataStack.m_top;
+      if( m_dataStack.m_top >= m_dataStack.m_max )
       {
          Item temp = data;
-         moreData();
-         *m_topData = temp;
+         m_dataStack.more();
+         *m_dataStack.m_top = temp;
       }
       else {
-         *m_topData = data;
+         *m_dataStack.m_top = data;
       }
    }
 
@@ -188,14 +184,14 @@ public:
     The resulting values will be nilled.
     */
    inline void addLocals( size_t count ) {
-      Item* base = m_topData+1;
-      m_topData += count;
-      if( m_topData >= m_maxData )
+      Item* base = m_dataStack.m_top+1;
+      m_dataStack.m_top += count;
+      if( m_dataStack.m_top >= m_dataStack.m_max )
       {
-         moreData();
-         base = m_topData - count;
+         m_dataStack.more();
+         base = m_dataStack.m_top - count;
       }
-      while( base <= m_topData )
+      while( base <= m_dataStack.m_top )
       {
          base->setNil();
          ++base;
@@ -208,10 +204,10 @@ public:
     This is like addLocals, but doesn't nil the newly created variables.
     */
    inline void addSpace( size_t count ) {
-      m_topData += count;
-      if( m_topData >= m_maxData )
+      m_dataStack.m_top += count;
+      if( m_dataStack.m_top >= m_dataStack.m_max )
       {
-         moreData();
+         m_dataStack.more();
       }
    }
    
@@ -253,34 +249,35 @@ public:
     *
     */
    inline const Item& topData() const {
-      fassert( m_topData >= m_dataStack && m_topData < m_maxData );
-      return *m_topData;
+      fassert( m_dataStack.m_top >= m_dataStack.m_base && m_dataStack.m_top < m_dataStack.m_max );
+      return *m_dataStack.m_top;
    }
 
    inline Item& topData() {
-       fassert( m_topData >= m_dataStack && m_topData < m_maxData);
-       return *m_topData;
+       fassert( m_dataStack.m_top >= m_dataStack.m_base && m_dataStack.m_top < m_dataStack.m_max);
+       return *m_dataStack.m_top;
    }
 
    /** Removes the last element from the stack */
-   void popData() {
-      m_topData--;
-      PARANOID( "Data stack underflow", (m_topData >= m_dataStack -1) );
+   inline void popData() {
+      m_dataStack.pop();
+      // Notice: an empty data stack is an error.
+      PARANOID( "Data stack underflow", (m_dataStack.m_top >= m_dataStack.m_base) );
    }
 
    /** Removes the last n elements from the stack */
-   void popData( size_t size ) {
-      m_topData-= size;
+   inline void popData( int size ) {
+      m_dataStack.pop(size);
       // Notice: an empty data stack is an error.
-      PARANOID( "Data stack underflow", (m_topData >= m_dataStack) );
+      PARANOID( "Data stack underflow", (m_dataStack.m_top >= m_dataStack.m_base) );
    }
 
    inline long dataSize() const {
-      return (long)(m_topData - m_dataStack) + 1;
+      return (long)m_dataStack.depth();
    }
 
    inline long localVarCount() const {
-      return (long)((m_topData+1) - m_dataStack) - currentFrame().m_stackBase;
+      return (long)m_dataStack.depth() - currentFrame().m_stackBase;
    }
 
    /** Copy multiple values in a target. */
@@ -296,20 +293,11 @@ public:
     * and then pushing it in the VM.
     *
     */
-   Item& addDataSlot() {
-      ++m_topData;
-      if( m_topData >= m_maxData )
-      {
-         moreData();
-      }
-      return *m_topData;
+   Item& addDataSlot() {      
+      return *m_dataStack.addSlot();
    }
 
-   inline bool dataEmpty() const { return m_topData < m_dataStack; }
-
-   /** Enlarge the data stack.*/
-   void moreData();
-
+   inline bool dataEmpty() const { return m_dataStack.m_top < m_dataStack.m_base; }
 
    /** Begins a new rule frame.
     
@@ -339,7 +327,7 @@ public:
       int64 vals = params()[-1].asInteger();
 
       // roll back to previous state stack state.
-      m_topData = m_dataStack + callf.m_stackBase - 2;
+      m_dataStack.m_top = m_dataStack.m_base + callf.m_stackBase - 2;
       callf.m_stackBase = (int32) (vals >> 32);
 
       // return the traceback part
@@ -359,7 +347,7 @@ public:
       int64 vals = params()[-1].asInteger();
       while( (vals & 0xFFFFFFFF) != 0xFFFFFF )
       {
-         m_topData = m_dataStack + callf.m_stackBase - 2;
+         m_dataStack.m_top = m_dataStack.m_base + callf.m_stackBase - 2;
 
          // roll back to previous state stack state.
          callf.m_stackBase = (int32) (vals >> 32);
@@ -382,7 +370,7 @@ public:
       int32 baseRuleTop = params()[-1].content.mth.ruleTop;
       // move forward the stack base.
       cf.m_stackBase = baseRuleTop;
-      m_topData = m_dataStack + baseRuleTop + localCount - 1;
+      m_dataStack.m_top = m_dataStack.m_base + baseRuleTop + localCount - 1;
 
    }
 
@@ -404,7 +392,7 @@ public:
       // are we in a rule frame?
       if( cf.m_initBase < cf.m_stackBase )
       {
-         register Item& itm = m_dataStack[cf.m_stackBase-1];
+         register Item& itm = m_dataStack.m_base[cf.m_stackBase-1];
          itm.setOob(true);
       }
    }
@@ -421,7 +409,7 @@ public:
       register CallFrame& cf = currentFrame();
       if( cf.m_initBase < cf.m_stackBase )
       {
-         register Item& itm = m_dataStack[cf.m_stackBase-1];
+         register Item& itm = m_dataStack.m_base[cf.m_stackBase-1];
          register bool mode = itm.isOob();
          itm.resetOob();
          return mode;
@@ -433,22 +421,22 @@ public:
    // Code frame management
    //=========================================================
 
-   const CodeFrame& currentCode() const { return *m_topCode; }
-   CodeFrame& currentCode() { return *m_topCode; }
+   const CodeFrame& currentCode() const { return *m_codeStack.m_top; }
+   CodeFrame& currentCode() { return *m_codeStack.m_top; }
 
    inline void popCode() {
-      m_topCode--;
-      PARANOID( "Code stack underflow", (m_topCode >= m_codeStack -1) );
+      m_codeStack.pop();
+      PARANOID( "Code stack underflow", m_codeStack.depth() >= 0 );
    }
 
-   void popCode( int size ) {
-      m_topCode -= size;
-      PARANOID( "Code stack underflow", (m_topCode >= m_codeStack -1) );
+   inline void popCode( int size ) {
+      m_codeStack.pop(size);
+      PARANOID( "Code stack underflow", m_codeStack.depth() >= 0 );
    }
 
-   void unrollCode( int size ) {
-      m_topCode = m_codeStack + size - 1;
-      PARANOID( "Code stack underflow", (m_topCode >= m_codeStack -1) );
+   inline void unrollCode( int size ) {
+      m_codeStack.unroll( size );
+      PARANOID( "Code stack underflow", m_codeStack.depth() >= 0 );
    }
 
    /** Changes the currently running pstep.
@@ -475,20 +463,16 @@ public:
     * implies the request of a child item for the control to be returned to the VM.
     *
     */
-   inline long codeDepth() const { return (long)(m_topCode - m_codeStack) + 1; }
+   inline long codeDepth() const { return (long)m_codeStack.depth(); }
 
    /** Push some code to be run in the execution stack.
     *
     * The step parameter is owned by the caller.
     */
    inline void pushCode( const PStep* step ) {
-      ++m_topCode;
-      if( m_topCode >= m_maxCode )
-      {
-         moreCode();
-      }
-      m_topCode->m_step = step;
-      m_topCode->m_seqId = 0;
+      register CodeFrame* cf = m_codeStack.addSlot();
+      cf->m_step = step;
+      cf->m_seqId = 0;
    }
 
    /** Push some code to be run in the execution stack, but only if not already at top.
@@ -502,52 +486,42 @@ public:
      */
    inline void condPushCode( const PStep* step )
    {
-      fassert( m_topCode >= m_codeStack );
-      if( m_topCode->m_step != step )
+      fassert( m_codeStack.m_top >= m_codeStack.m_base );
+      if( m_codeStack.m_top->m_step != step )
       {
          pushCode( step );
       }
    }
 
-   void moreCode();
-
-   //=========================================================
-   // Stack resizing
-   //=========================================================
-
-   inline bool codeEmpty() const { return m_topCode < m_codeStack; }
+   inline bool codeEmpty() const { return m_codeStack.depth() == 0; }
+   
    //=========================================================
    // Call frame management.
    //=========================================================
 
    /** Returns the self item in the local context.
     */
-   inline const Item& self() const { return m_topCall->m_self; }
-   inline Item& self() { return m_topCall->m_self; }
+   inline const Item& self() const { return currentFrame().m_self; }
+   inline Item& self() { return currentFrame().m_self; }
 
-   const CallFrame& previousFrame( uint32 n ) const { return *(m_topCall-n); }
+   const CallFrame& previousFrame( uint32 n ) const { return *(&currentFrame()-n); }
    
-   const CallFrame& currentFrame() const { return *m_topCall; }
-   CallFrame& currentFrame() { return *m_topCall; }
+   const CallFrame& currentFrame() const { return *m_callStack.m_top; }
+   CallFrame& currentFrame() { return *m_callStack.m_top; }
 
    const Item& regA() const { return m_regA; }
    Item& regA() { return m_regA; }
 
-   inline long callDepth() const { return (long)(m_topCall - m_callStack) + 1; }
+   inline long callDepth() const { return (long)m_callStack.depth(); }
 
    inline CallFrame* addCallFrame()  {
-      ++m_topCall;
-      if ( m_topCall >= m_maxCall )
-      {
-         moreCall();
-      }
-      return m_topCall;
+      return m_callStack.addSlot();
    }
 
    /** Prepares a new methodic call frame. */
    inline CallFrame* makeCallFrame( Function* function, int nparams, const Item& self )
    {
-      register CallFrame* topCall = addCallFrame();
+      register CallFrame* topCall = m_callStack.addSlot();
       topCall->m_function = function;
       topCall->m_closedData = 0;
       topCall->m_codeBase = codeDepth();
@@ -564,7 +538,7 @@ public:
    /** Prepares a new non-methodic call frame. */
    inline CallFrame* makeCallFrame( Function* function, int nparams )
    {
-      register CallFrame* topCall = addCallFrame();
+      register CallFrame* topCall = m_callStack.addSlot();
       topCall->m_function = function;
       topCall->m_closedData = 0;
       topCall->m_codeBase = codeDepth();
@@ -581,7 +555,7 @@ public:
    /** Prepares a new non-methodic closure call frame. */
    inline CallFrame* makeCallFrame( Function* function, ItemArray* cd, int nparams )
    {
-      register CallFrame* topCall = addCallFrame();
+      register CallFrame* topCall = m_callStack.addSlot();
       topCall->m_function = function;
       topCall->m_closedData = cd;
       topCall->m_codeBase = codeDepth();
@@ -595,9 +569,7 @@ public:
       return topCall;
    }
 
-   bool isMethodic() const { return m_topCall->m_bMethodic; }
-   
-   void moreCall();
+   bool isMethodic() const { return currentFrame().m_bMethodic; }
 
 //========================================================
 //
@@ -720,12 +692,12 @@ public:
     */
    inline bool wentDeep( const PStep* top )
    {
-      return m_topCode->m_step != top;
+      return m_codeStack.m_top->m_step != top;
    }
    
    inline bool wentDeepSized( long depth )
    {
-      return depth != (m_topCode - m_codeStack)+1;
+      return depth != (m_codeStack.m_top - m_codeStack.m_base)+1;
    }
    
    /** Applies a pstep by pushing it and immediately invoking its apply method.
@@ -751,10 +723,10 @@ public:
 
     */
    inline bool stepInYield( const PStep* ps ) {
-      const CodeFrame* top = m_topCode;
+      const CodeFrame* top = m_codeStack.m_top;
       pushCode( ps );
       ps->apply( ps, this );
-      return top != m_topCode || m_event != eventNone;
+      return top != m_codeStack.m_top || m_event != eventNone;
    }
    
    /** Step in and check if the caller should yield the control (optimized).
@@ -773,7 +745,7 @@ public:
    inline bool stepInYield( const PStep* ps, const CodeFrame& top ) {
       pushCode( ps );
       ps->apply( ps, this );
-      return &top != m_topCode || m_event != eventNone;
+      return &top != m_codeStack.m_top || m_event != eventNone;
    }
    
    /** Step in and check if the caller should yield the control (optimized).
@@ -792,7 +764,7 @@ public:
    inline bool stepInYield( const PStep* ps, long depth ) {
       pushCode( ps );
       ps->apply( ps, this );
-      return (depth != (m_topCode-m_codeStack+1)) || m_event != eventNone;
+      return (depth != (m_codeStack.m_top-m_codeStack.m_base+1)) || m_event != eventNone;
    }
 
    /** Pushes a quit step at current position in the code stack.
@@ -1026,12 +998,12 @@ public:
     is invoked at the beginning of the finally block.
     
     */
-   void traverseFinally() { ++m_topCall->m_finallyCount; }
+   void traverseFinally() { ++currentFrame().m_finallyCount; }
    
    /** Declares the begin of the execution of a finally block.
     \see traverseFinally
     */
-   void enterFinally() { --m_topCall->m_finallyCount; }
+   void enterFinally() { --currentFrame().m_finallyCount; }
    
    /** Finally continuation mode type. */
    typedef enum
@@ -1141,26 +1113,112 @@ public:
       return btop;
    }
    
+   //===============================================================
+   // Dynamic Symbols
+   //
+   /** Sets the value associated with a dynamic symbol.
+    \param name the name of the dynsymbol to be associated.
+    \param value The new value to be associated with the symbol.
+    
+    If the symbol exists in the local context, it is updated. If it does
+    not exist, it is created and the value is stored as the symbol item.
+    
+    \note The value is set through Item::assign, respecting referencing and
+    copy semantics.
+    */
+   //void setDynSymbolValue( const String& name, const Item& value );
+   
+   /** Gets the the value associated with a dynamic symbol.
+    \param name the name of the dynsymbol to be associated.
+    \return A pointer to the item associated with the symbol.
+    
+    If the symbol exists in the local context, its associated value is returned.
+    if it doesn't exist, it is searched through the local context from the current
+    function to the topmost function. 
+    
+    If a local symbol corresponding to the given name is found, its value is
+    referenced and the reference item is associated with the name; the referenced
+    item (already de-referenced) is returned.
+    
+    If a local symbol is not found, then the global symbol table of the module
+    of the topmost function is searched. If the symbol is found the same operation
+    as above is performed.
+    
+    If the symbol is not found, it is searched in the globally exported symbol
+    map in the virtual machine. Again, if the search is positive, it is 
+    associated as per above.
+    
+    If the search finally fails, a NIL item is created in the local dynsymbol
+    context and associated to the symbol, and that is returned.
+    
+    \note Symbols marked as constant are returned by value; they aren't referenced.
+    */
+   //Item* getDynSymbolValue( const String& name );
+   
 protected:
+
+   template<class datatype__>
+   class LinearStack
+   {
+   public:
+      static const int INITIAL_STACK_ALLOC = 512;
+      static const int INCREMENT_STACK_ALLOC = 256;
+
+      datatype__* m_base;
+      datatype__* m_top;
+      datatype__* m_max;
+
+      LinearStack(): m_base(0) {}
+      ~LinearStack();
+
+      void init( int base = -1 );
+      
+      inline void reset( int base = -1)
+      {
+         m_top = m_base-base;
+      }
+
+      inline long height() const {
+         return m_top - m_base;
+      }
+
+      inline long depth() const {
+         return (m_top - m_base)+1;
+      }
+
+      void more();
+      
+      inline void pop() {
+         --m_top;
+      }
+      
+      inline void pop( int count ) {
+         m_top -= count;
+      }
+      
+      inline void unroll( int oldSize ) {
+         m_top = m_base + oldSize - 1;
+      }
+      
+      inline datatype__* addSlot() {
+         ++m_top;
+         if( m_top >= m_max )
+         {
+            more();
+         }
+         return  m_top;
+      }
+   };
 
    // Inner constructor to create subclasses
    VMContext( bool );
-
-   CodeFrame* m_codeStack;
-   CodeFrame* m_topCode;
-   CodeFrame* m_maxCode;
-
-   CallFrame* m_callStack;
-   CallFrame* m_topCall;
-   CallFrame* m_maxCall;
-
-   Item* m_dataStack;
-   Item* m_topData;
-   Item* m_maxData;
    
+   LinearStack<CodeFrame> m_codeStack;
+   LinearStack<CallFrame> m_callStack;
+   LinearStack<Item> m_dataStack;
+      
    Item m_regA;
    uint64 m_safeCode;
-
 
    /** Error whose throwing was suspended by a finally handling. */
    Error* m_thrown;

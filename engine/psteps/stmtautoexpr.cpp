@@ -171,7 +171,8 @@ void StmtAutoexpr::apply_( const PStep* ps, VMContext* ctx )
 void StmtAutoexpr::apply_interactive_( const PStep* ps, VMContext* ctx )
 {
    const StmtAutoexpr* self = static_cast<const StmtAutoexpr*>( ps );
-   TRACE3( "StmtAutoexpr apply interactive: %p (%s)", self, self->describe().c_ize() );
+   TRACE3( "StmtAutoexpr apply interactive: %p (%s) data size: %d", 
+         self, self->describe().c_ize(), (int)ctx->dataSize() );
    
    fassert( self->m_expr != 0 );
    
@@ -188,12 +189,13 @@ void StmtAutoexpr::apply_interactive_( const PStep* ps, VMContext* ctx )
    }
    
    // we never need to be called again.
-   ctx->popCode();
-   
+   ctx->popCode();   
    ctx->regA() = ctx->topData();
+   ctx->popData();
    
    // remove the data created by the expression
-   ctx->popData();
+   TRACE3( "StmtAutoexpr end interactive: %p (%s) data size: %d", 
+         self, self->describe().c_ize(), (int)ctx->dataSize() );
 }
 
 

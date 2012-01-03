@@ -252,7 +252,7 @@ public:
       static void apply_( const PStep*, VMContext* ctx );
       virtual void describeTo( String& ) const;
    };
-   PStepReturnFrame m_returnFrameWithTop;
+   PStepReturnFrameWithTop m_returnFrameWithTop;
    
       class PStepReturnFrameWithTopDoubt: public PStep
    {

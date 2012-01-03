@@ -84,7 +84,7 @@ void apply_if_short( const Rule&, Parser& p )
 
       SynTree* ifTrue = new SynTree;
       ifTrue->selector(expr);
-      StmtIf* stmt_if = new StmtIf(ifTrue, 0, tif->line(), tif->chr());
+      StmtIf* stmt_if = new StmtIf(ifTrue, tif->line(), tif->chr());
       ctx->openBlock( stmt_if, ifTrue, true );
    }
    else
@@ -113,7 +113,7 @@ void apply_if( const Rule&, Parser& p )
 
       SynTree* ifTrue = new SynTree;
       ifTrue->selector( expr );
-      StmtIf* stmt_if = new StmtIf(ifTrue, 0, tif->line(), tif->chr());
+      StmtIf* stmt_if = new StmtIf(ifTrue, tif->line(), tif->chr());
       st->openBlock( stmt_if, ifTrue );
    }
    else

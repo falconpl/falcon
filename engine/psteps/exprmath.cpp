@@ -84,6 +84,7 @@ public:
    static numeric operaten( numeric a, numeric b ) { return a + b; }
    static bool zeroCheck( const Item& ) { return false; }
    static void swapper( Item& , Item&  ) {}   
+   static void assign( PStep*, VMContext* ) {}
 };
 
 class ExprMinus::ops
@@ -94,6 +95,7 @@ public:
    static numeric operaten( numeric a, numeric b ) { return a - b; }
    static bool zeroCheck( const Item& ) { return false; }
    static void swapper( Item&, Item&  ) {}   
+   static void assign( PStep*, VMContext* ) {}
 };
 
 class ExprTimes::ops
@@ -104,6 +106,7 @@ public:
    static numeric operaten( numeric a, numeric b ) { return a * b; }
    static bool zeroCheck( const Item& ) { return false; }
    static void swapper( Item&, Item& ) {}   
+   static void assign( PStep*, VMContext* ) {}
 };
 
 class ExprDiv::ops
@@ -116,6 +119,7 @@ public:
    static void swapper( Item&, Item& op1) { 
       if( op1.isInteger() ) {op1.setNumeric( op1.asInteger());} 
    }   
+   static void assign( PStep*, VMContext* ) {}
 };
 
 class ExprMod::ops
@@ -126,6 +130,7 @@ public:
    static numeric operaten( numeric a, numeric b ) { return ((int64)a) % ((int64)b); }
    static bool zeroCheck( const Item& n ) { return n.isOrdinal() && n.forceInteger() == 0; }
    static void swapper( Item&, Item& ) {}   
+   static void assign( PStep*, VMContext* ) {}
 };
 
 class ExprPow::ops
@@ -138,6 +143,7 @@ public:
    static void swapper( Item&, Item& op1) { 
       if( op1.isInteger() ) {op1.setNumeric( op1.asInteger());} 
    }   
+   static void assign( PStep*, VMContext* ) {}
 };
 
 
@@ -149,6 +155,7 @@ public:
    static numeric operaten( numeric a, numeric b ) { return ((uint64)a) >> ((uint64)b); }
    static bool zeroCheck( const Item& ) { return false; }
    static void swapper( Item&, Item&) {}
+   static void assign( PStep*, VMContext* ) {}
 };
 
 class ExprLShift::ops
@@ -159,6 +166,7 @@ public:
    static numeric operaten( numeric a, numeric b ) { return ((uint64)a) << ((uint64)b); }
    static bool zeroCheck( const Item& ) { return false; }
    static void swapper( Item&, Item& ) {} 
+   static void assign( PStep*, VMContext* ) {}
 };
 
 
@@ -174,6 +182,7 @@ public:
    static numeric operaten( numeric a, numeric b ) { return ((uint64)a) & ((uint64)b); }
    static bool zeroCheck( const Item& ) { return false; }
    static void swapper( Item&, Item& ) {} 
+   static void assign( PStep*, VMContext* ) {}
 };
 
 class ExprBOR::ops
@@ -188,6 +197,7 @@ public:
    static numeric operaten( numeric a, numeric b ) { return ((uint64)a) | ((uint64)b); }
    static bool zeroCheck( const Item& ) { return false; }
    static void swapper( Item&, Item& ) {} 
+   static void assign( PStep*, VMContext* ) {}
 };
 
 class ExprBXOR::ops
@@ -202,6 +212,7 @@ public:
    static numeric operaten( numeric a, numeric b ) { return ((uint64)a) ^ ((uint64)b); }
    static bool zeroCheck( const Item& ) { return false; }
    static void swapper( Item&, Item& ) {} 
+   static void assign( PStep*, VMContext* ) {}
 };
 
 //==================================================
@@ -216,6 +227,7 @@ public:
    static numeric operaten( numeric a, numeric b ) { return a + b; }
    static bool zeroCheck( const Item& ) { return false; }
    static void swapper( Item& op1, Item& op2 ) { op1.swap(op2); }   
+   static void assign( PStep* lvalue, VMContext* ctx ) {if( lvalue != 0 ) { ctx->stepIn( lvalue ); } }
 };
 
 class ExprAutoMinus::ops
@@ -226,6 +238,7 @@ public:
    static numeric operaten( numeric a, numeric b ) { return a - b; }
    static bool zeroCheck( const Item& ) { return false; }
    static void swapper( Item& op1, Item& op2 ) { op1.swap(op2); }   
+   static void assign( PStep* lvalue, VMContext* ctx ) {if( lvalue != 0 ) { ctx->stepIn( lvalue ); } }
 };
 
 class ExprAutoTimes::ops
@@ -236,6 +249,7 @@ public:
    static numeric operaten( numeric a, numeric b ) { return a * b; }
    static bool zeroCheck( const Item& ) { return false; }
    static void swapper( Item& op1, Item& op2 ) { op1.swap(op2); }   
+   static void assign( PStep* lvalue, VMContext* ctx ) {if( lvalue != 0 ) { ctx->stepIn( lvalue ); } }
 };
 
 class ExprAutoDiv::ops
@@ -249,6 +263,7 @@ public:
       op1.swap(op2); 
       if( op2.isInteger() ) {op2.setNumeric( op2.asInteger());} 
    }   
+   static void assign( PStep* lvalue, VMContext* ctx ) {if( lvalue != 0 ) { ctx->stepIn( lvalue ); } }
 };
 
 class ExprAutoMod::ops
@@ -259,6 +274,7 @@ public:
    static numeric operaten( numeric a, numeric b ) { return ((int64)a) % ((int64)b); }
    static bool zeroCheck( const Item& n ) { return n.isOrdinal() && n.forceInteger() == 0; }
    static void swapper( Item& op1, Item& op2 ) { op1.swap(op2); }   
+   static void assign( PStep* lvalue, VMContext* ctx ) {if( lvalue != 0 ) { ctx->stepIn( lvalue ); } }
 };
 
 class ExprAutoPow::ops
@@ -272,6 +288,7 @@ public:
       op1.swap(op2);
       if( op2.isInteger() ) {op2.setNumeric( op2.asInteger());}
    }
+   static void assign( PStep* lvalue, VMContext* ctx ) {if( lvalue != 0 ) { ctx->stepIn( lvalue ); } }
 };
 
 class ExprAutoRShift::ops
@@ -282,6 +299,7 @@ public:
    static numeric operaten( numeric a, numeric b ) { return ((uint64)a) >> ((uint64)b); }
    static bool zeroCheck( const Item& ) { return false; }
    static void swapper( Item& op1, Item& op2 ) {op1.swap(op2);}
+   static void assign( PStep* lvalue, VMContext* ctx ) {if( lvalue != 0 ) { ctx->stepIn( lvalue ); } }
 };
 
 class ExprAutoLShift::ops
@@ -292,6 +310,7 @@ public:
    static numeric operaten( numeric a, numeric b ) { return ((uint64)a) << ((uint64)b); }
    static bool zeroCheck( const Item& ) { return false; }
    static void swapper( Item& op1, Item& op2 ) { op1.swap(op2); }   
+   static void assign( PStep* lvalue, VMContext* ctx ) {if( lvalue != 0 ) { ctx->stepIn( lvalue ); } }
 };
 
 
@@ -433,22 +452,12 @@ void generic_apply_( const PStep* ps, VMContext* ctx )
    
       // Phase 3 -- assigning the topmost value back.
    case 3:
-      cf.m_seqId = 4;
-      // now assign the topmost item in the stack to the lvalue of self.
-      PStep* lvalue = self->first()->lvalueStep();
-      if( lvalue != 0 )
-      {
-         if( ctx->stepInYield( lvalue, cf ) )
-         {
-            return;
-         }
-      }
+      // we're done and won't be back.
+      ctx->popCode();
+      // however, eventually assign the that we have on the stack back.
+      _cpr::assign( self->first()->lvalueStep(), ctx );      
       
    }
-   
-   // we're done and won't be back.
-   ctx->popCode();
-
 }
 
 

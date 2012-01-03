@@ -34,6 +34,37 @@
 
 namespace Falcon {
 
+template<class datatype__>
+void VMContext::LinearStack<datatype__>::init( int base )
+{
+   m_base = (datatype__*) malloc( m_base, INITIAL_STACK_ALLOC * sizeof(datatype__) );
+   m_top = m_base + base;
+   m_max = m_base + INITIAL_STACK_ALLOC;
+}
+
+template<class datatype__>
+VMContext::LinearStack<datatype__>::~LinearStack()
+{
+   if( m_base != 0 ) free( m_base );
+}
+
+template<class datatype__>
+void VMContext::LinearStack<datatype__>::more()
+{
+   long distance = (long)(m_top - m_base);
+   long newSize = (long)(m_max - m_base + INCREMENT_STACK_ALLOC);
+   TRACE("Reallocating %p: %d -> %ld", m_base, (int)(m_max - m_base), newSize );
+
+   m_base = (datatype__*) realloc( m_base, newSize * sizeof(datatype__) );
+   m_top = m_base + distance;
+   m_max = m_base + newSize;
+}
+
+
+//========================================================
+//
+
+
 VMContext::VMContext( VMachine* vm ):
    m_safeCode(0),
    m_thrown(0),
@@ -43,19 +74,6 @@ VMContext::VMContext( VMachine* vm ):
    m_catchBlock(0),
    m_event(eventNone)
 {
-   m_codeStack = (CodeFrame *) malloc(INITIAL_STACK_ALLOC*sizeof(CodeFrame));
-   m_topCode = m_codeStack-1;
-   m_maxCode = m_codeStack + INITIAL_STACK_ALLOC;
-
-   m_callStack = (CallFrame*)  malloc(INITIAL_STACK_ALLOC*sizeof(CallFrame));
-   m_topCall = m_callStack-1;
-   m_maxCall = m_callStack + INITIAL_STACK_ALLOC;
-
-   m_dataStack = (Item*) malloc(INITIAL_STACK_ALLOC*sizeof(Item));
-   // the data stack can NEVER be empty. -- an empty data stack is an error.
-   m_topData = m_dataStack;
-   m_maxData = m_dataStack + INITIAL_STACK_ALLOC;
-
    // prepare a low-limit VM terminator request.
    pushReturn();
 }
@@ -74,9 +92,6 @@ VMContext::VMContext( bool ):
 
 VMContext::~VMContext()
 {
-   free(m_codeStack);
-   free(m_callStack);
-   free(m_dataStack);
    if( m_thrown != 0 ) m_thrown->decref();   
 }
 
@@ -91,10 +106,10 @@ void VMContext::reset()
    m_ruleEntryResult = false;
    m_finMode = e_fin_none;
    
-   m_topCode = m_codeStack-1;
-   m_topCall = m_callStack-1;
+   m_codeStack.m_top = m_codeStack.m_base-1;
+   m_callStack.m_top = m_callStack.m_base-1;
    // the data stack can NEVER be empty. -- an empty data stack is an error.
-   m_topData = m_dataStack;
+   m_dataStack.m_top = m_dataStack.m_base;
 
    // prepare a low-limit VM terminator request.
    pushReturn();
@@ -103,22 +118,8 @@ void VMContext::reset()
 
 void VMContext::setSafeCode()
 {
-   m_safeCode = m_topCode - m_codeStack;  
+   m_safeCode = m_codeStack.m_top - m_codeStack.m_base;  
 }
-
-
-void VMContext::moreData()
-{
-   long distance = (long)(m_topData - m_dataStack);
-   long newSize = (long)(m_maxData - m_dataStack + INCREMENT_STACK_ALLOC);
-   TRACE("Reallocating %p: %d -> %ld", m_dataStack, (int)(m_maxData - m_dataStack), newSize );
-
-   m_dataStack = (Item*) realloc( m_dataStack, newSize * sizeof(Item) );
-   m_topData = m_dataStack + distance;
-   m_maxData = m_dataStack + newSize;
-}
-
-
 
 void VMContext::copyData( Item* target, size_t count, size_t start)
 {
@@ -134,32 +135,7 @@ void VMContext::copyData( Item* target, size_t count, size_t start)
       count = depth - start;
    }
 
-   memcpy( target, m_dataStack + start, sizeof(Item) * count );
-}
-
-
-void VMContext::moreCode()
-{
-   long distance = (long)(m_topCode - m_codeStack); // we don't want the size of the code,
-
-   long newSize = (long)(m_maxCode - m_codeStack + INCREMENT_STACK_ALLOC);
-   TRACE("Reallocating %p: %d -> %ld", m_codeStack, (int)(m_maxCode - m_codeStack), newSize );
-
-   m_codeStack = (CodeFrame*) realloc( m_codeStack, newSize * sizeof(CodeFrame) );
-   m_topCode = m_codeStack + distance;
-   m_maxCode = m_codeStack + newSize;
-}
-
-
-void VMContext::moreCall()
-{
-   long distance = (long)(m_topCall - m_callStack);
-   long newSize = (long)(m_maxCall - m_callStack + INCREMENT_STACK_ALLOC);
-   TRACE("Reallocating %p: %d -> %ld", m_callStack, (int)(m_maxCall - m_callStack), newSize );
-
-   m_callStack = (CallFrame*) realloc( m_callStack, newSize * sizeof(CallFrame) );
-   m_topCall = m_callStack + distance;
-   m_maxCall = m_callStack + newSize;
+   memcpy( target, m_dataStack.m_base + start, sizeof(Item) * count );
 }
 
 
@@ -167,10 +143,10 @@ void VMContext::startRuleFrame()
 {
    CallFrame& cf = currentFrame();
    int32 stackBase = cf.m_stackBase;
-   long localCount = (long)((m_topData+1) - m_dataStack) - stackBase;
-   while ( m_topData + localCount + 1 > m_maxData )
+   long localCount = (long)((m_dataStack.m_top+1) - m_dataStack.m_base) - stackBase;
+   while ( m_dataStack.m_top + localCount + 1 > m_dataStack.m_max )
    {
-      moreData();
+      m_dataStack.more();
    }
 
    Item& ruleFrame = addDataSlot();
@@ -181,11 +157,11 @@ void VMContext::startRuleFrame()
    ruleFrame.content.mth.ruleTop = stackBase;
 
    // copy the local variables.
-   memcpy( m_topData + 1, m_dataStack + stackBase, localCount * sizeof(Item) );
+   memcpy( m_dataStack.m_top + 1, m_dataStack.m_base + stackBase, localCount * sizeof(Item) );
 
    // move forward the stack base.
    cf.m_stackBase = dataSize();
-   m_topData += localCount; // point to the last local
+   m_dataStack.m_top += localCount; // point to the last local
 }
 
 
@@ -193,12 +169,12 @@ void VMContext::addRuleNDFrame( uint32 tbPoint )
 {
    CallFrame& cf = currentFrame();
    int32 stackBase = cf.m_stackBase;
-   int32 oldRuleTop = m_dataStack[stackBase-1].content.mth.ruleTop;
+   int32 oldRuleTop = m_dataStack.m_base[stackBase-1].content.mth.ruleTop;
 
-   long localCount = (long)((m_topData+1) - m_dataStack) - stackBase;
-   while ( m_topData + localCount + 1 > m_maxData )
+   long localCount = (long)((m_dataStack.m_top+1) - m_dataStack.m_base) - stackBase;
+   while ( m_dataStack.m_top + localCount + 1 > m_dataStack.m_max )
    {
-      moreData();
+      m_dataStack.more();
    }
 
    Item& ruleFrame = addDataSlot();
@@ -209,11 +185,11 @@ void VMContext::addRuleNDFrame( uint32 tbPoint )
    ruleFrame.content.mth.ruleTop = oldRuleTop;
 
    // copy the local variables.
-   memcpy( m_topData + 1, m_dataStack + stackBase, localCount * sizeof(Item) );
+   memcpy( m_dataStack.m_top + 1, m_dataStack.m_base + stackBase, localCount * sizeof(Item) );
 
    // move forward the stack base.
    cf.m_stackBase = dataSize();
-   m_topData += localCount;
+   m_dataStack.m_top += localCount;
 }
 
 
@@ -224,11 +200,11 @@ void VMContext::commitRule()
    int32 baseRuleTop = params()[-1].content.mth.ruleTop;
 
    // copy the local variables.
-   memcpy( m_dataStack + baseRuleTop, m_dataStack + cf.m_stackBase, localCount * sizeof(Item) );
+   memcpy( m_dataStack.m_base + baseRuleTop, m_dataStack.m_base + cf.m_stackBase, localCount * sizeof(Item) );
 
    // move forward the stack base.
    cf.m_stackBase = baseRuleTop;
-   m_topData = m_dataStack + baseRuleTop + localCount - 1;
+   m_dataStack.m_top = m_dataStack.m_base + baseRuleTop + localCount - 1;
 }
 
 
@@ -237,22 +213,22 @@ template<class _checker>
 bool VMContext::unrollToNext( const _checker& check )
 {
    // first, we must have at least a function around.
-   register CallFrame* curFrame =  m_topCall;
-   register CodeFrame* curCode = m_topCode;
-   register Item* curData = m_topData;
+   register CallFrame* curFrame =  m_callStack.m_top;
+   register CodeFrame* curCode = m_codeStack.m_top;
+   register Item* curData = m_dataStack.m_top;
    
-   while( m_callStack <= curFrame )
+   while( m_callStack.m_base <= curFrame )
    {
       // then, get the current topCall pointer to code stack.
-      CodeFrame* baseCode = m_codeStack + curFrame->m_codeBase;
+      CodeFrame* baseCode = m_codeStack.m_base + curFrame->m_codeBase;
       // now unroll up to when we're able to hit a next base
       while( curCode >= baseCode )
       {
          if( check( *curCode->m_step, this ) )
          {
-            m_topCall = curFrame;
-            m_topData = curData;
-            m_topCode = curCode;
+            m_callStack.m_top = curFrame;
+            m_dataStack.m_top = curData;
+            m_codeStack.m_top = curCode;
             return true;
          }
          --curCode;
@@ -262,7 +238,7 @@ bool VMContext::unrollToNext( const _checker& check )
       if( check.isReturn() ) return true;
       
       // unroll the call.
-      curData = m_dataStack + curFrame->m_initBase;
+      curData = m_dataStack.m_base + curFrame->m_initBase;
       curFrame--;
    }
   
@@ -417,7 +393,7 @@ bool VMContext::unrollToSafeCode()
       return false;
    }
    
-   m_topCode = m_codeStack + m_safeCode;
+   m_codeStack.m_top = m_codeStack.m_base + m_safeCode;
    return true;
 }
 
@@ -688,11 +664,11 @@ void VMContext::call( Function* function, int nparams, const Item& self )
 {
    TRACE( "Calling method %s.%s -- call frame code:%p, data:%p, call:%p",
          self.describe(3).c_ize(), function->locate().c_ize(),
-         m_topCode, m_topData, m_topCall  );
+         m_codeStack.m_top, m_dataStack.m_top, m_callStack.m_top  );
 
    makeCallFrame( function, nparams, self );
    TRACE1( "-- codebase:%d, stackBase:%d, self: %s ", \
-         m_topCall->m_codeBase, m_topCall->m_stackBase, self.isNil() ? "nil" : "value"  );
+         m_callStack.m_top->m_codeBase, m_callStack.m_top->m_stackBase, self.isNil() ? "nil" : "value"  );
 
    // do the call
    function->invoke( this, nparams );
@@ -701,11 +677,11 @@ void VMContext::call( Function* function, int nparams, const Item& self )
 void VMContext::call( Function* function, int nparams )
 {
    TRACE( "Calling function %s -- call frame code:%p, data:%p, call:%p",
-         function->locate().c_ize(),m_topCode, m_topData, m_topCall  );
+         function->locate().c_ize(),m_codeStack.m_top, m_dataStack.m_top, m_callStack.m_top  );
 
    makeCallFrame( function, nparams );
    TRACE3( "-- codebase:%d, stackBase:%d ", \
-         m_topCall->m_codeBase, m_topCall->m_stackBase );
+         m_callStack.m_top->m_codeBase, m_callStack.m_top->m_stackBase );
 
    // do the call
    function->invoke( this, nparams );
@@ -715,11 +691,11 @@ void VMContext::call( Function* function, int nparams )
 void VMContext::call( Function* function, ItemArray* closedData, int nparams )
 {
    TRACE( "Calling function %s -- call frame code:%p, data:%p, call:%p",
-         function->locate().c_ize(),m_topCode, m_topData, m_topCall  );
+         function->locate().c_ize(),m_codeStack.m_top, m_dataStack.m_top, m_callStack.m_top  );
 
    makeCallFrame( function, closedData, nparams );
    TRACE3( "-- codebase:%d, stackBase:%d ", \
-         m_topCall->m_codeBase, m_topCall->m_stackBase );
+         m_callStack.m_top->m_codeBase, m_callStack.m_top->m_stackBase );
 
    // do the call
    function->invoke( this, nparams );
@@ -729,17 +705,17 @@ void VMContext::call( Function* function, ItemArray* closedData, int nparams )
 void VMContext::callItem( const Item& item, int pcount, Item const* params )
 {
    TRACE( "Calling item: %s -- call frame code:%p, data:%p, call:%p",
-      item.describe(2).c_ize(), m_topCode, m_topData, m_topCall  );
+      item.describe(2).c_ize(), m_codeStack.m_top, m_dataStack.m_top, m_callStack.m_top  );
 
    Class* cls;
    void* data;
    item.forceClassInst( cls, data );
    
    addSpace( pcount+1 );
-   *(m_topData - ( pcount + 1 )) = item;
+   *(m_dataStack.m_top - ( pcount + 1 )) = item;
    if( pcount > 0 )
    {      
-      memcpy( m_topData-pcount, params, pcount * sizeof(item) );
+      memcpy( m_dataStack.m_top-pcount, params, pcount * sizeof(item) );
    }
    
    cls->op_call( this, pcount, data );
@@ -750,7 +726,7 @@ void VMContext::insertData(int32 pos, Item* data, int32 dataSize, int32 replSize
 {
    addSpace( dataSize - replSize );
    // this is the first item we have to mangle with.
-   Item* base = m_topData - (dataSize - replSize + pos-1);
+   Item* base = m_dataStack.m_top - (dataSize - replSize + pos-1);
    
    if( pos > replSize )
    {  
@@ -765,7 +741,7 @@ void VMContext::insertData(int32 pos, Item* data, int32 dataSize, int32 replSize
 
 void VMContext::returnFrame( const Item& value )
 {
-   register CallFrame* topCall = m_topCall;
+   register CallFrame* topCall = m_callStack.m_top;
    TRACE1( "Return frame from function %s", topCall->m_function->name().c_ize() );
 
    if( topCall->m_finallyCount > 0 )
@@ -778,26 +754,26 @@ void VMContext::returnFrame( const Item& value )
    }
    
    // reset code and data
-   m_topCode = m_codeStack + topCall->m_codeBase-1;
-   PARANOID( "Code stack underflow at return", (m_topCode >= m_codeStack-1) );
+   m_codeStack.m_top = m_codeStack.m_base + topCall->m_codeBase-1;
+   PARANOID( "Code stack underflow at return", (m_codeStack.m_top >= m_codeStack.m_base-1) );
    // Use initBase as stackBase may have been moved -- but keep 1 parameter ...
 
-   m_topData = m_dataStack + topCall->m_initBase-1;
-   // notice: data stack can never be empty, an empty data stack is an errro.
-   PARANOID( "Data stack underflow at return", (m_topData >= m_dataStack) );
+   m_dataStack.m_top = m_dataStack.m_base + topCall->m_initBase-1;
+   // notice: data stack can never be empty, an empty data stack is an error.
+   PARANOID( "Data stack underflow at return", (m_dataStack.m_top >= m_dataStack.m_base) );
 
    // Forward the return value
-   *m_topData = value;
+   *m_dataStack.m_top = value;
    
    // Finalize return -- pop call frame
-   if( m_topCall-- ==  m_callStack )
+   if( m_callStack.m_top-- ==  m_callStack.m_base )
    {
       setComplete();
       MESSAGE( "Returned from last frame -- declaring complete." );
    }
 
-   PARANOID( "Call stack underflow at return", (m_topCall >= m_callStack-1) );
-   TRACE( "Return frame code:%p, data:%p, call:%p", m_topCode, m_topData, m_topCall  );
+   PARANOID( "Call stack underflow at return", (m_callStack.m_top >= m_callStack.m_base-1) );
+   TRACE( "Return frame code:%p, data:%p, call:%p", m_codeStack.m_top, m_dataStack.m_top, m_callStack.m_top  );
 }
 
 

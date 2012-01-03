@@ -54,7 +54,6 @@ class VMContext;
  * As evaluation rules change depending on the symbol type, this is actually
  * an abstract class.
  *
- * TODO Serialization
  */
 class FALCON_DYN_CLASS Symbol
 {
@@ -63,7 +62,6 @@ public:
       e_st_local,
       e_st_global,
       e_st_closed,
-      e_st_dynamic,
       e_st_extern,
       e_st_undefined
    } type_t;
@@ -151,7 +149,6 @@ protected:
    static Item* value_local( VMContext* ctx, const Symbol* sym );
    static Item* value_closed( VMContext* ctx, const Symbol* sym );
    static Item* value_undef( VMContext* ctx, const Symbol* sym );
-   static Item* value_dynamic( VMContext* ctx, const Symbol* sym );
 };
 
 }
