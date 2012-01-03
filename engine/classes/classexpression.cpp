@@ -19,6 +19,9 @@
 #include <falcon/classes/classexpression.h>
 #include <falcon/classes/classtreestep.h>
 
+#include <falcon/vmcontext.h>
+#include <falcon/expression.h>
+
 namespace Falcon {
 
 ClassExpression::ClassExpression( ClassTreeStep* parent ):
@@ -26,6 +29,13 @@ ClassExpression::ClassExpression( ClassTreeStep* parent ):
 {}
    
 ClassExpression::~ClassExpression(){}
+
+void ClassExpression::op_eval( VMContext* ctx, void* self ) const
+{
+   // Remove the top of the stack because our expression will do its own.
+   ctx->popData();
+   ctx->pushCode( static_cast<Expression*>(self) );
+}
 
 }
 

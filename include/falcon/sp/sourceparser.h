@@ -343,6 +343,7 @@ public:
    Parsing::Rule r_Expr_auto_pow;
    Parsing::Rule r_Expr_auto_shr;
    Parsing::Rule r_Expr_auto_shl;
+   Parsing::Rule r_Expr_expr_eval;
    
    Parsing::Rule r_Expr_neg;
    Parsing::Rule r_Expr_neg2;

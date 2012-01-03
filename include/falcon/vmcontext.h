@@ -29,6 +29,7 @@ class VMachine;
 class SynFunc;
 class StmtTry;
 class SynTree;
+class DynSymbol;
 
 /**
  * Structure needed to store VM data.
@@ -527,6 +528,8 @@ public:
       topCall->m_codeBase = codeDepth();
       // initialize also initBase, as stackBase may move
       topCall->m_initBase = topCall->m_stackBase = dataSize()-nparams;
+      // TODO: enable rule application with dynsymbols?
+      topCall->m_dynsBase = m_dynsStack.depth();
       topCall->m_paramCount = nparams;
       topCall->m_self = self;
       topCall->m_bMethodic = true;
@@ -544,11 +547,14 @@ public:
       topCall->m_codeBase = codeDepth();
       // initialize also initBase, as stackBase may move
       topCall->m_initBase = topCall->m_stackBase = dataSize()-nparams;
+      // TODO: enable rule application with dynsymbols?
+      topCall->m_dynsBase = m_dynsStack.depth();
+      
       topCall->m_paramCount = nparams;
       topCall->m_self.setNil();
       topCall->m_bMethodic = false;
       topCall->m_finallyCount = 0;
-
+      
       return topCall;
    }
    
@@ -561,6 +567,8 @@ public:
       topCall->m_codeBase = codeDepth();
       // initialize also initBase, as stackBase may move
       topCall->m_initBase = topCall->m_stackBase = dataSize()-nparams;
+      // TODO: enable rule application with dynsymbols?
+      topCall->m_dynsBase = m_dynsStack.depth();
       topCall->m_paramCount = nparams;
       topCall->m_self.setNil();
       topCall->m_bMethodic = false;
@@ -1126,7 +1134,7 @@ public:
     \note The value is set through Item::assign, respecting referencing and
     copy semantics.
     */
-   //void setDynSymbolValue( const String& name, const Item& value );
+   void setDynSymbolValue( DynSymbol* dyns, const Item& value );
    
    /** Gets the the value associated with a dynamic symbol.
     \param name the name of the dynsymbol to be associated.
@@ -1153,9 +1161,36 @@ public:
     
     \note Symbols marked as constant are returned by value; they aren't referenced.
     */
-   //Item* getDynSymbolValue( const String& name );
+   Item* getDynSymbolValue( DynSymbol* dyns );
    
 protected:
+   
+   /** Class holding the dynamic symbol information on a stack. */
+   class DynsData {
+   public:
+      DynSymbol* m_sym;
+      Item m_item;
+      
+      DynsData():
+         m_sym(0)
+      {}
+      
+      DynsData( DynSymbol* sym ):
+         m_sym(sym)
+      {}
+      
+      DynsData( DynSymbol* sym, const Item& data ):
+         m_sym(sym),
+         m_item(data)
+      {}
+      
+      DynsData( const DynsData& other ):
+         m_sym(other.m_sym),
+         m_item(other.m_item)
+      {}
+      
+      ~DynsData() {}      
+   };
 
    template<class datatype__>
    class LinearStack
@@ -1184,6 +1219,15 @@ protected:
 
       inline long depth() const {
          return (m_top - m_base)+1;
+      }
+      
+      /** Returns a pointer to a position displaced from base.
+       This can be used in conjuction with the base value stored in call frames
+       to get the base of the current frame in the stack.
+       */
+      inline datatype__* offset( long dist )
+      {
+         return m_base + dist;
       }
 
       void more();
@@ -1216,6 +1260,7 @@ protected:
    LinearStack<CodeFrame> m_codeStack;
    LinearStack<CallFrame> m_callStack;
    LinearStack<Item> m_dataStack;
+   LinearStack<DynsData> m_dynsStack;
       
    Item m_regA;
    uint64 m_safeCode;

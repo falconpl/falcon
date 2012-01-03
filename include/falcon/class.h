@@ -820,7 +820,7 @@ public:
    virtual void op_provides( VMContext* ctx, void* instance, const String& property ) const;
 
    /** Call the instance.
-    \param vm A virutal machine where the call is performed.
+    \param ctx A virutal machine where the call is performed.
     \param instance An instance of this class
     \param pcount the number of parameters in the call.
 
@@ -838,6 +838,20 @@ public:
     */
    virtual void op_call( VMContext* ctx, int32 paramCount, void* instance ) const;
 
+   /** Invoke direct evaluation of the instance.
+    \param ctx A virutal machine where the call is performed.
+    \param instance An instance of this class
+
+    \note The operand is unary -- requires OpToken with 1 parameter.
+    
+    (It receives one parameter, which is usually the same object put as instance);
+    it is required to leave one parameter on the stack (receives one, go aways with 1,
+    the stack after completion of this step should have the same depth).
+    
+    The base class pushes the same item that is being evaluated (as evaluation
+    of neuter items resolve to themselves).
+    */
+   virtual void op_eval( VMContext* ctx, void* instance ) const;
 
    /** Implements textification operator for the Virtual Macine.
     \param vm the virtual machine that will receive the result.

@@ -86,6 +86,12 @@ void ClassFunction::op_call( VMContext* ctx, int32 paramCount, void* self ) cons
 }
 
 
+void ClassFunction::op_eval( VMContext* ctx, void* self ) const
+{
+   // called object is on top of the stack 
+   ctx->call( static_cast<Function*>(self), 0 );
+}
+
 }
 
 /* end of classfunction.cpp */

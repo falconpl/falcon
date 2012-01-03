@@ -473,6 +473,19 @@ void OverridableClass::op_call( VMContext* ctx, int32 paramCount, void* self ) c
 }
 
 
+void OverridableClass::op_eval( VMContext* ctx, void* self ) const
+{
+   // Override for eval is gone throug __call
+   Function* override = m_overrides[OVERRIDE_OP_CALL_ID];
+
+   // called object is on top of the stack
+   if( override != 0 )
+   {
+      ctx->call( override, 0, Item( this, self, true ) );
+   }
+}
+
+
 void OverridableClass::op_toString( VMContext* ctx, void* self ) const
 {
    Function* override = m_overrides[OVERRIDE_OP_TOSTRING_ID];

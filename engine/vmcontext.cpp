@@ -19,9 +19,13 @@
 #include <falcon/function.h>
 #include <falcon/vm.h>
 #include <falcon/engine.h>       // for catch -- error check
-#include <falcon/stderrors.h>    // for catch -- error check
-#include <falcon/syntree.h>    // for catch -- error check
-#include <falcon/symbol.h>    // for catch -- error check
+#include <falcon/stderrors.h>  
+#include <falcon/syntree.h>       // for catch -- error check
+#include <falcon/symbol.h>    
+#include <falcon/dynsymbol.h>
+
+#include <falcon/module.h>       // For getDynSymbolValue
+#include <falcon/modspace.h>
 
 #include <falcon/errors/codeerror.h>
 
@@ -75,6 +79,7 @@ VMContext::VMContext( VMachine* vm ):
    m_event(eventNone)
 {
    // prepare a low-limit VM terminator request.
+   m_dynsStack.init();
    m_codeStack.init();
    m_callStack.init();
    m_dataStack.init(0);
@@ -110,6 +115,7 @@ void VMContext::reset()
    m_ruleEntryResult = false;
    m_finMode = e_fin_none;
    
+   m_dynsStack.reset();
    m_codeStack.reset();
    m_callStack.reset();
    m_dataStack.reset(0);
@@ -219,6 +225,7 @@ bool VMContext::unrollToNext( const _checker& check )
    register CallFrame* curFrame =  m_callStack.m_top;
    register CodeFrame* curCode = m_codeStack.m_top;
    register Item* curData = m_dataStack.m_top;
+   register DynsData* curDyns = m_dynsStack.m_top;
    
    while( m_callStack.m_base <= curFrame )
    {
@@ -232,6 +239,7 @@ bool VMContext::unrollToNext( const _checker& check )
             m_callStack.m_top = curFrame;
             m_dataStack.m_top = curData;
             m_codeStack.m_top = curCode;
+            m_dynsStack.m_top = curDyns;
             return true;
          }
          --curCode;
@@ -757,18 +765,23 @@ void VMContext::returnFrame( const Item& value )
    }
    
    // reset code and data
-   m_codeStack.m_top = m_codeStack.m_base + topCall->m_codeBase-1;
+   m_codeStack.unroll( topCall->m_codeBase );
    PARANOID( "Code stack underflow at return", (m_codeStack.m_top >= m_codeStack.m_base-1) );
    // Use initBase as stackBase may have been moved -- but keep 1 parameter ...
 
-   m_dataStack.m_top = m_dataStack.m_base + topCall->m_initBase-1;
+   m_dataStack.unroll( topCall->m_initBase );
    // notice: data stack can never be empty, an empty data stack is an error.
    PARANOID( "Data stack underflow at return", (m_dataStack.m_top >= m_dataStack.m_base) );
 
+   m_dynsStack.unroll( topCall->m_dynsBase );
+   PARANOID( "Dynamic Symbols stack underflow at return", (m_dynsStack.m_top >= m_dynsStack.m_base-1) );
+   
    // Forward the return value
    *m_dataStack.m_top = value;
    
    // Finalize return -- pop call frame
+   // TODO: This is useful only in the interactive mode. Maybe we can use a 
+   // specific returnFrame for the interactive mode to achieve this.
    if( m_callStack.m_top-- ==  m_callStack.m_base )
    {
       setComplete();
@@ -778,7 +791,6 @@ void VMContext::returnFrame( const Item& value )
    PARANOID( "Call stack underflow at return", (m_callStack.m_top >= m_callStack.m_base-1) );
    TRACE( "Return frame code:%p, data:%p, call:%p", m_codeStack.m_top, m_dataStack.m_top, m_callStack.m_top  );
 }
-
 
 
 bool VMContext::boolTopData()
@@ -807,6 +819,98 @@ bool VMContext::boolTopData()
    }
    
    return false;
+}
+
+
+void VMContext::setDynSymbolValue( DynSymbol* dyns, const Item& value )
+{
+   *getDynSymbolValue(dyns) = value;
+}
+
+Item* VMContext::getDynSymbolValue( DynSymbol* dyns )
+{
+   // search for the dynsymbol in the current context.
+   const CallFrame* cf = &currentFrame();
+   register DynsData* dd = m_dynsStack.m_top;
+   register DynsData* base = m_dynsStack.offset( cf->m_dynsBase );
+   while( dd >= base ) {
+      if ( dyns == dd->m_sym )
+      {
+         // Found!
+         return dd->m_item.dereference();
+      }
+   }
+   
+   // no luck. Descend the frames.
+   --cf;
+   while( cf >= m_callStack.m_base )
+   {
+      dd = m_dynsStack.m_top;
+      base = m_dynsStack.offset( cf->m_dynsBase );
+      while( dd >= base ) {
+         if ( dyns == dd->m_sym )
+         {
+            // Found!
+            return dd->m_item.dereference();
+         }
+      }
+      
+      // no luck, try with locals.
+      fassert( cf->m_function != 0 );
+      Symbol* locsym = cf->m_function->symbols().findSymbol( dyns->name() );
+      if( locsym != 0 )
+      {
+         DynsData* newData = m_dynsStack.addSlot();
+         newData->m_sym = dyns;
+         // reference the target local variable into our slot.
+         ItemReference::create( 
+            m_dataStack.m_base[cf->m_initBase + locsym->id()], 
+            newData->m_item );
+         return newData->m_item.dereference();
+      }
+      --cf;
+   }
+   
+   // no luck? Try with module globals.
+   Module* master = currentFrame().m_function->module();
+   if( master != 0 )
+   {
+      Symbol* globsym = master->getGlobal( dyns->name() );
+      if( globsym != 0 )
+      {
+         Item* value = globsym->value(this);
+         DynsData* newData = m_dynsStack.addSlot();
+         newData->m_sym = dyns;
+         // reference the target local variable into our slot.
+         ItemReference::create( 
+            *value, 
+            newData->m_item );
+         return newData->m_item.dereference();
+      }
+   }
+   
+   // still no luck? -- what about exporeted symbols in VM?
+   ModSpace* ms = vm()->modSpace();
+   if( ms != 0 )
+   {
+      Symbol* expsym = ms->findExportedSymbol( dyns->name() );
+      if( expsym != 0 )
+      {
+         Item* value = expsym->value(this);
+         DynsData* newData = m_dynsStack.addSlot();
+         newData->m_sym = dyns;
+         // reference the target local variable into our slot.
+         ItemReference::create( 
+            *value, 
+            newData->m_item );
+         return newData->m_item.dereference();
+      }
+   }
+   
+   // No luck at all.
+   DynsData* newData = m_dynsStack.addSlot();
+   newData->m_sym = dyns;
+   return newData->m_item.dereference();
 }
 
 }

@@ -418,6 +418,13 @@ void ClassTreeStep::op_iter( VMContext* ctx, void* ) const
 }
 
 
+void ClassTreeStep::op_eval( VMContext* ctx, void* self ) const
+{
+   // BUT, e shouldn't be here -- expressions and statements have different ones
+   ctx->pushCode( static_cast<TreeStep*>(self) );
+}
+
+
 void ClassTreeStep::op_next( VMContext* ctx, void* instance ) const
 {
    Statement* stmt = static_cast<Statement*>(instance);

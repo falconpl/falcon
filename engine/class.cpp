@@ -346,6 +346,12 @@ void Class::op_call( VMContext* , int32, void* ) const
 }
 
 
+void Class::op_eval( VMContext*, void* ) const
+{
+   // we have nothing to do: just leave the data on the stack.
+}
+
+
 void Class::op_getIndex(VMContext* , void* ) const
 {
    throw new OperandError( ErrorParam( e_invop, __LINE__, SRC ).extra("[]") );

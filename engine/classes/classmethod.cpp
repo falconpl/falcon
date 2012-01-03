@@ -118,6 +118,17 @@ void ClassMethod::op_call( VMContext* ctx, int32 paramCount, void* self ) const
    ctx->call( fmth, paramCount, copy );
 }
 
+
+void ClassMethod::op_eval( VMContext* ctx, void* self ) const
+{   
+   Item copy = *static_cast<Item*>(self);   
+   
+   Function* fmth = copy.asMethodFunction();
+   copy.unmethodize();
+      
+   // called object is on top of the stack
+   ctx->call( fmth, 0, copy );
+}
 }
 
 /* end of classmethod.cpp */

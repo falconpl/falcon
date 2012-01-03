@@ -403,6 +403,14 @@ void ClassArray::op_call( VMContext* ctx, int32 paramCount, void* self ) const
 }
 
 
+void ClassArray::op_eval( VMContext* ctx, void* self ) const
+{
+   // TODO: Sigma reduction. For now, round it via vall.
+   // called object is on top of the stack
+   op_call( ctx, 0, self );
+}
+
+
 void ClassArray::op_iter( VMContext* ctx, void* ) const
 {
    // (seq)

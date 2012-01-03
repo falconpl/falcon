@@ -464,6 +464,12 @@ void FlexyClass::op_call( VMContext* ctx, int32 paramCount, void* self ) const
    operand( paramCount+1, OVERRIDE_OP_CALL, ctx, self );   
 }
 
+void FlexyClass::op_eval( VMContext* ctx, void* self ) const
+{
+   // called object is on top of the stack
+   operand( 1, OVERRIDE_OP_CALL, ctx, self, false );  
+}
+
 void FlexyClass::op_toString( VMContext* ctx, void* self ) const
 {
    if ( ! operand( 1, OVERRIDE_OP_TOSTRING, ctx, self, false ) )

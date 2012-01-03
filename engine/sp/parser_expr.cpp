@@ -37,6 +37,7 @@
 #include <falcon/psteps/exprbitwise.h>
 #include <falcon/psteps/exproob.h>
 #include <falcon/psteps/exprlogic.h>
+#include <falcon/psteps/expreval.h>
 
 namespace Falcon {
 
@@ -308,7 +309,6 @@ void apply_expr_auto_shl( const Rule&r, Parser& p )
    apply_expr_auto( r, p, aexpr );
 }
 
-
 //=======================================================
 // Unary expressions
 //
@@ -366,6 +366,10 @@ void apply_expr_isoob( const Rule& r, Parser& p )
    apply_expr_unary( r, p, new ExprIsOob );
 }
 
+void apply_expr_eval( const Rule&r, Parser& p )
+{
+   apply_expr_unary( r, p, new ExprEval );
+}
 
 //=======================================================
 // Other expressions.

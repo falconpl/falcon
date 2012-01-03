@@ -69,6 +69,8 @@ public:
    virtual void op_iter( VMContext* ctx, void* instance ) const;
    virtual void op_next( VMContext* ctx, void* instance ) const;
 
+   virtual void op_eval( VMContext* ctx, void* self ) const;
+   
    // This class is always alive as it resides in core/engine
    virtual bool gcCheckMyself( uint32 mark );
 

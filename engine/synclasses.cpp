@@ -34,6 +34,7 @@
 #include <falcon/psteps/exprdict.h>
 #include <falcon/psteps/exprdot.h>
 #include <falcon/psteps/expreeq.h>
+#include <falcon/psteps/expreval.h>
 #include <falcon/psteps/expriif.h>
 #include <falcon/psteps/exprincdec.h>
 #include <falcon/psteps/exprindex.h>
@@ -208,6 +209,7 @@ FALCON_STANDARD_SYNCLASS_OP_CREATE( NE, ExprNE, binaryExprSet )
 // GenDict --specificly managed
 // DotAccess -- specificly managed
 FALCON_STANDARD_SYNCLASS_OP_CREATE( EEQ, ExprEEQ, binaryExprSet )
+FALCON_STANDARD_SYNCLASS_OP_CREATE( Eval, ExprEval, unaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( IIF, ExprIIF, ternaryExprSet )
 
 // inc-dec

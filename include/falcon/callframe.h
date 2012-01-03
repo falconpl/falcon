@@ -55,6 +55,12 @@ public:
     to be the initial stack base of the function.
     */
    uint32 m_initBase;
+   
+   /** Dynamic symbols stack base.
+    \TODO This might be a temporary solution. Needs to be tested for performance
+    and alternatives.
+    */
+   uint32 m_dynsBase;
 
    /** Codebase for this frame.
     *
@@ -77,7 +83,6 @@ public:
    bool m_bMethodic;
    
    
-
    // Actually never used, just used at compile time by vector.
    CallFrame()
    {}
@@ -88,6 +93,7 @@ public:
       m_paramCount( pc ),
       m_stackBase( sb ),
       m_initBase( sb ),
+      m_dynsBase( 0 ),
       m_codeBase( cb ),
       m_self(self),
       m_finallyCount(0),
@@ -100,6 +106,7 @@ public:
       m_paramCount( pc ),
       m_stackBase( sb ),
       m_initBase( sb ),
+      m_dynsBase( 0 ),
       m_codeBase( cb ),
       m_finallyCount(0),
       m_bMethodic( false )

@@ -68,6 +68,7 @@ FALCON_SYNCLASS_DECLARATOR(m_expr_ne, NE, expr)
 FALCON_SYNCLASS_DECLARATOR(m_expr_gendict, GenDict, expr)
 FALCON_SYNCLASS_DECLARATOR(m_expr_dot, DotAccess, expr)
 FALCON_SYNCLASS_DECLARATOR(m_expr_eeq, EEQ, expr)
+FALCON_SYNCLASS_DECLARATOR(m_expr_eval, Eval, expr)   
 FALCON_SYNCLASS_DECLARATOR(m_expr_iif, IIF, expr)
 // inc-dec
 FALCON_SYNCLASS_DECLARATOR(m_expr_preinc, PreInc, expr)
