@@ -1,46 +1,45 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: classsymbol.h
+   FILE: classdynsymbol.h
 
    Symbol class handler.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
-   Begin: Tue, 27 Dec 2011 21:39:56 +0100
+   Begin: Tue, 03 Jan 2012 22:08:13 +0100
 
    -------------------------------------------------------------------
-   (C) Copyright 2011: the FALCON developers (see list in AUTHORS file)
+   (C) Copyright 2012: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
 */
 
-#ifndef _FALCON_CLASSSYMBOL_H_
-#define _FALCON_CLASSSYMBOL_H_
+#ifndef _FALCON_CLASSDYNSYMBOL_H_
+#define _FALCON_CLASSDYNSYMBOL_H_
 
 #include <falcon/setup.h>
 #include <falcon/class.h>
 
 namespace Falcon {
 
-class Symbol;
+class DynSymbol;
 
-/** Handler class for symbols.
+/** Handler class for dynamic symbols.
  
- The class can host any symbol; when used to create new symbols in the code,
+ The class can host dynamic symbol; when used to create new symbols in the code,
  it will generate DynSymbols.
  
  */
-class ClassSymbol: public Class // TreeStep
+class ClassDynSymbol: public Class
 {
 public:
-   ClassSymbol();
-   virtual ~ClassSymbol(); 
+   ClassDynSymbol();
+   virtual ~ClassDynSymbol(); 
 
    virtual void describe( void* instance, String& target, int depth = 3, int maxlen = 60 ) const;
    virtual void dispose( void* instance ) const;
    virtual void* clone( void* instance ) const;
    
    virtual void op_create( VMContext* ctx, int32 pcount ) const;
-   
    
    virtual void enumerateProperties( void* instance, PropertyEnumerator& cb ) const;
    virtual void enumeratePV( void* instance, PVEnumerator& cb ) const;
@@ -56,4 +55,4 @@ public:
 
 #endif 
 
-/* end of classsymbol.h */
+/* end of classdynsymbol.h */

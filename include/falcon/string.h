@@ -1264,6 +1264,7 @@ public:
    
    void gcMark( uint32 mark ) { m_lastMark = mark; }
    uint32 currentMark() const { return m_lastMark; }
+   String* clone() const { return new String(*this); }
 };
 
 

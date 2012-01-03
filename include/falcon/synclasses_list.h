@@ -67,6 +67,8 @@ FALCON_SYNCLASS_DECLARATOR(m_expr_ne, NE, expr)
 //
 FALCON_SYNCLASS_DECLARATOR(m_expr_gendict, GenDict, expr)
 FALCON_SYNCLASS_DECLARATOR(m_expr_dot, DotAccess, expr)
+FALCON_SYNCLASS_DECLARATOR_EX(m_expr_dynsym, GenDynSym, expr, \
+      void store( VMContext*, DataWriter* dw, void* instance ) const; )
 FALCON_SYNCLASS_DECLARATOR(m_expr_eeq, EEQ, expr)
 FALCON_SYNCLASS_DECLARATOR(m_expr_eval, Eval, expr)   
 FALCON_SYNCLASS_DECLARATOR(m_expr_iif, IIF, expr)

@@ -72,6 +72,7 @@
 #include <falcon/classes/classexpression.h>
 #include <falcon/classes/classsyntree.h>
 #include <falcon/classes/classsymbol.h>
+#include <falcon/classes/classdynsymbol.h>
 #include <falcon/synclasses.h>
 
 #include <falcon/prototypeclass.h>
@@ -239,6 +240,7 @@ Engine::Engine()
       
    m_closureClass = new ClassClosure;
    m_symbolClass = new ClassSymbol;
+   m_dynSymbolClass = new ClassDynSymbol;
    
    ClassTreeStep* ctreeStep = new ClassTreeStep;
    m_treeStepClass = ctreeStep;
@@ -252,6 +254,8 @@ Engine::Engine()
    addBuiltin(m_exprClass);
    addBuiltin(m_syntreeClass);
    addBuiltin(m_symbolClass);
+   addBuiltin( m_dynSymbolClass );
+   
    
    m_synClasses = new SynClasses(m_syntreeClass, m_statementClass, m_exprClass );
    m_synClasses->subscribe( this );
@@ -318,6 +322,7 @@ Engine::~Engine()
    delete m_exprClass;
    delete m_syntreeClass;
    delete m_symbolClass;
+   delete m_dynSymbolClass;
    delete m_closureClass;
    
    delete m_synClasses;
@@ -619,6 +624,12 @@ Class* Engine::symbolClass() const
 {
    fassert( m_instance != 0 );
    return m_instance->m_symbolClass;
+}
+
+Class* Engine::dynSymbolClass() const
+{
+   fassert( m_instance != 0 );
+   return m_instance->m_dynSymbolClass;
 }
 
 Class* Engine::closureClass() const

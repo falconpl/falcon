@@ -18,6 +18,7 @@
 #include <falcon/item.h>
 #include <falcon/psteps/exprvalue.h>
 #include <falcon/psteps/exprsym.h>
+#include <falcon/psteps/exprdynsym.h>
 #include <falcon/engine.h>
 
 #include <falcon/statement.h>
@@ -86,6 +87,7 @@ Expression* TreeStep::checkExpr( const Item& item, bool& bCreate )
 {
    static Class* clsTreeStep = Engine::instance()->treeStepClass();
    static Class* clsSymbol = Engine::instance()->symbolClass();
+   static Class* clsDynSymbol = Engine::instance()->dynSymbolClass();
    
    Class* cls;
    void* data;
@@ -117,8 +119,15 @@ Expression* TreeStep::checkExpr( const Item& item, bool& bCreate )
       }
       return 0;
    }
+   else if( cls->isDerivedFrom(clsDynSymbol) )
+   {   
+      if( bCreate ) {
+         return new ExprDynSymbol( static_cast<DynSymbol*>(data) );
+      }
+      return 0;
+   }
    else if( bCreate ) {
-      return new ExprSymbol( static_cast<Symbol*>(data) );
+      return new ExprValue(item);
    }
    else {
       return 0;

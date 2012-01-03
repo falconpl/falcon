@@ -275,6 +275,17 @@ public:
     */
    Class* symbolClass() const;
    
+   /** Returns the global instance of the ClassDynSymbol class.
+   \return the Engine instance of the ClassDynSymbol handler.
+
+    Method init() must have been called before.
+
+    @note This method will assert and terminate the program if compiled in debug mode
+    in case the engine has not been initialized. In release, it will just
+    return a null pointer.
+    */
+   Class* dynSymbolClass() const;
+   
    /** Returns the global instance of the ClassClosure class.
    \return the Engine instance of the ClassClosure handler.
 
@@ -481,6 +492,7 @@ protected:
    Class* m_exprClass;
    Class* m_syntreeClass;
    Class* m_symbolClass;
+   Class* m_dynSymbolClass;
    Class* m_closureClass;
    
    SynClasses* m_synClasses;

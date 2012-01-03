@@ -26,7 +26,7 @@
 namespace Falcon {
 
 ClassSymbol::ClassSymbol():
-   Class("Symbol")
+   Class("$Symbol")
 {}
 
 ClassSymbol::~ClassSymbol()
@@ -42,6 +42,13 @@ void ClassSymbol::dispose( void* ) const
    */
 }
 
+
+void ClassSymbol::describe( void* instance, String& target, int, int ) const
+{
+   Symbol* sym = static_cast<Symbol*>( instance );
+   target = sym->name();
+}
+
 void* ClassSymbol::clone( void* instance ) const
 {
    return instance;
@@ -49,8 +56,10 @@ void* ClassSymbol::clone( void* instance ) const
 
 void ClassSymbol::op_create( VMContext* ctx, int32 pcount ) const
 {
-   // TODO
-   ctx->stackResult(pcount+1, Item());
+   // we DO NOT CREATE SYMBOLS DYNAMICALLY. 
+   // This symbols (variables) can be created only via compiler.
+   // To create dynamic symbols we have DynSymbols (named "Symbol" to script).
+   Class::op_create( ctx, pcount );
 }
 
 void ClassSymbol::enumerateProperties( void*, PropertyEnumerator& cb ) const
@@ -78,13 +87,12 @@ bool ClassSymbol::hasProperty( void*, const String& prop ) const
 
 void ClassSymbol::op_getProperty( VMContext* ctx, void* instance, const String& prop) const
 {
-   static Class* strClass = Engine::instance()->stringClass();
-
    Symbol* sym = static_cast<Symbol*>( instance );
 
    if( prop == "name" )
    {
-      ctx->stackResult(2, Item( strClass, sym ) );
+      // maybe to be garbaged.
+      ctx->stackResult(2, sym->name().clone()->garbage() );
    }
    else if( prop == "value" )
    {
@@ -116,6 +124,13 @@ void ClassSymbol::op_setProperty( VMContext* ctx, void* instance, const String& 
    }
 }
 
+
+void ClassSymbol::op_eval( VMContext* ctx, void* instance ) const
+{
+   Symbol* sym = static_cast<Symbol*>( instance );   
+   ctx->topData() = *sym->value(ctx);
+}
+   
 }
 
 /* end of classsymbol.cpp */

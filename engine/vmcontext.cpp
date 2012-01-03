@@ -824,6 +824,7 @@ bool VMContext::boolTopData()
 
 void VMContext::setDynSymbolValue( DynSymbol* dyns, const Item& value )
 {
+   value.copied();
    *getDynSymbolValue(dyns) = value;
 }
 
@@ -839,6 +840,7 @@ Item* VMContext::getDynSymbolValue( DynSymbol* dyns )
          // Found!
          return dd->m_item.dereference();
       }
+      --dd;
    }
    
    // no luck. Descend the frames.

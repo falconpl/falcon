@@ -24,11 +24,6 @@
 namespace Falcon {
 
 class Symbol;
-class DynSymbol;
-class GlobalSymbol;
-class LocalSymbol;
-class ClosedSymbol;
-
 
 /** Expression referring to a symbol.
  

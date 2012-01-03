@@ -66,6 +66,9 @@
 #include <falcon/psteps/stmttry.h>
 #include <falcon/psteps/stmtwhile.h>
 
+#include <falcon/psteps/exprdynsym.h>
+#include <falcon/dynsymbol.h>
+
 #include <falcon/itemarray.h>
 #include <falcon/datawriter.h>
 #include <falcon/datareader.h>
@@ -208,6 +211,7 @@ FALCON_STANDARD_SYNCLASS_OP_CREATE( NE, ExprNE, binaryExprSet )
    
 // GenDict --specificly managed
 // DotAccess -- specificly managed
+// DynSym -- separated
 FALCON_STANDARD_SYNCLASS_OP_CREATE( EEQ, ExprEEQ, binaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Eval, ExprEval, unaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( IIF, ExprIIF, ternaryExprSet )
@@ -330,6 +334,35 @@ void SynClasses::ClassDotAccess::restore( VMContext* ctx, DataReader*dr, void*& 
 {
    empty = new ExprDot;
    m_parent->restore( ctx, dr, empty );
+}
+
+void SynClasses::ClassGenDynSym::op_create( VMContext* ctx, int pcount ) const
+{
+   static Class* dynSymClass = Engine::instance()->dynSymbolClass();
+   
+   Class* cls; 
+   void* data;
+   if( (pcount < 1) 
+      || (! ctx->opcodeParams(pcount)->asClassInst(cls, data) )
+      || ! cls->isDerivedFrom( dynSymClass) )
+   {
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__, SRC )
+            .origin( ErrorParam::e_orig_runtime)
+            .extra( String("Symbol") ) );
+   }
+   
+   ExprDynSymbol* expr = new ExprDynSymbol( static_cast<DynSymbol*>(data) );
+   ctx->stackResult( pcount+1, SynClasses::collect( this, expr, __LINE__ ) );
+}
+void SynClasses::ClassGenDynSym::store( VMContext*, DataWriter* dw, void* inst ) const
+{
+   dw->write(static_cast<ExprDynSymbol*>( inst )->dynSymbol()->name() );
+}
+void SynClasses::ClassGenDynSym::restore( VMContext*, DataReader*dr, void*& empty ) const
+{
+   String name;
+   dr->read(name);
+   empty = new ExprDynSymbol(new DynSymbol(name));
 }
 
 
