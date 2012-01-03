@@ -37,7 +37,7 @@ namespace Falcon {
 template<class datatype__>
 void VMContext::LinearStack<datatype__>::init( int base )
 {
-   m_base = (datatype__*) malloc( m_base, INITIAL_STACK_ALLOC * sizeof(datatype__) );
+   m_base = (datatype__*) malloc( INITIAL_STACK_ALLOC * sizeof(datatype__) );
    m_top = m_base + base;
    m_max = m_base + INITIAL_STACK_ALLOC;
 }
@@ -75,6 +75,10 @@ VMContext::VMContext( VMachine* vm ):
    m_event(eventNone)
 {
    // prepare a low-limit VM terminator request.
+   m_codeStack.init();
+   m_callStack.init();
+   m_dataStack.init(0);
+
    pushReturn();
 }
 
@@ -106,10 +110,9 @@ void VMContext::reset()
    m_ruleEntryResult = false;
    m_finMode = e_fin_none;
    
-   m_codeStack.m_top = m_codeStack.m_base-1;
-   m_callStack.m_top = m_callStack.m_base-1;
-   // the data stack can NEVER be empty. -- an empty data stack is an error.
-   m_dataStack.m_top = m_dataStack.m_base;
+   m_codeStack.reset();
+   m_callStack.reset();
+   m_dataStack.reset(0);
 
    // prepare a low-limit VM terminator request.
    pushReturn();
