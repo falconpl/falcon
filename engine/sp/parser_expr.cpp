@@ -38,6 +38,7 @@
 #include <falcon/psteps/exproob.h>
 #include <falcon/psteps/exprlogic.h>
 #include <falcon/psteps/expreval.h>
+#include <falcon/psteps/exprlit.h>
 
 namespace Falcon {
 
@@ -370,6 +371,13 @@ void apply_expr_eval( const Rule&r, Parser& p )
 {
    apply_expr_unary( r, p, new ExprEval );
 }
+
+void apply_expr_lit( const Rule&r, Parser& p )
+{
+   apply_expr_unary( r, p, new ExprLit );
+}
+
+
 
 //=======================================================
 // Other expressions.

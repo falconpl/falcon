@@ -38,6 +38,7 @@
 #include <falcon/psteps/expriif.h>
 #include <falcon/psteps/exprincdec.h>
 #include <falcon/psteps/exprindex.h>
+#include <falcon/psteps/exprlit.h>
 #include <falcon/psteps/exprlogic.h>
 #include <falcon/psteps/exprmath.h>
 #include <falcon/psteps/exprmultiunpack.h>
@@ -215,6 +216,7 @@ FALCON_STANDARD_SYNCLASS_OP_CREATE( NE, ExprNE, binaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( EEQ, ExprEEQ, binaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Eval, ExprEval, unaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( IIF, ExprIIF, ternaryExprSet )
+FALCON_STANDARD_SYNCLASS_OP_CREATE( Lit, ExprLit, unaryExprSet )
 
 // inc-dec
 FALCON_STANDARD_SYNCLASS_OP_CREATE( PreInc, ExprPreInc, unaryExprSet )

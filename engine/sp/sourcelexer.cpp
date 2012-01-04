@@ -912,6 +912,7 @@ Parsing::TokenInstance* SourceLexer::checkOperator()
          if( m_text == "^?" ) return parser->T_ISOOB.makeInstance(m_sline, m_schr);
          
          if( m_text == "^*" ) return parser->T_EVAL.makeInstance(m_sline, m_schr);
+         if( m_text == "^=" ) return parser->T_LIT.makeInstance(m_sline, m_schr);
          break;
 
       case 3:

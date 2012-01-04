@@ -100,6 +100,7 @@ SourceParser::SourceParser():
    T_XOOB("^%", 24),
    T_ISOOB("^?", 24),
    T_EVAL("^*", 80),
+   T_LIT("^=", 175),
    
    T_Comma( "," , 180 ),
    T_QMark( "?" , 170 ),
@@ -436,6 +437,7 @@ SourceParser::SourceParser():
    Expr<< (r_Expr_auto_shr << "Expr_auto_shl"   << apply_expr_auto_shl   << Expr << T_AutoLShift << Expr );
    
    Expr<< (r_Expr_expr_eval << "Expr_eval"  << apply_expr_eval << T_EVAL << Expr );
+   Expr<< (r_Expr_expr_lit << "Expr_lit"  << apply_expr_lit << T_LIT << Expr );
    
    Expr<< (r_Expr_Atom << "Expr_atom" << apply_expr_atom << Atom);
    Expr<< (r_Expr_function << "Expr_func" << apply_expr_func << T_function << T_Openpar << ListSymbol << T_Closepar << T_EOL);

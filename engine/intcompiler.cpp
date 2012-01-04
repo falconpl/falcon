@@ -469,7 +469,9 @@ IntCompiler::compile_status IntCompiler::compileNext( const String& value)
          }
 
          m_sp.reset();
-         delete m_currentTree;
+         // where to put the tree now?
+         // it might be reflected?
+         //delete m_currentTree;
          m_currentTree = 0;
       }
 

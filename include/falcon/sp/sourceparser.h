@@ -76,6 +76,7 @@ public:
    Parsing::Terminal T_XOOB;
    Parsing::Terminal T_ISOOB;
    Parsing::Terminal T_EVAL;
+   Parsing::Terminal T_LIT;
    
    Parsing::Terminal T_Comma;
    Parsing::Terminal T_QMark;
@@ -344,6 +345,7 @@ public:
    Parsing::Rule r_Expr_auto_shr;
    Parsing::Rule r_Expr_auto_shl;
    Parsing::Rule r_Expr_expr_eval;
+   Parsing::Rule r_Expr_expr_lit;
    
    Parsing::Rule r_Expr_neg;
    Parsing::Rule r_Expr_neg2;

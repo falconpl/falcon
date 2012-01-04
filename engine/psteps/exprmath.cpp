@@ -525,10 +525,10 @@ void generic_apply_<ExprAutoRShift::ops>( const PStep* ps, VMContext* ctx );
 #define FALCON_IMPLEMENT_MATH_EXPR_CLASS( name, symbol, handler ) \
    name::name( Expression* op1, Expression* op2, int line, int chr ): \
       ExprMath( op1, op2, symbol, line, chr )\
-      { FALCON_DECLARE_SYN_CLASS( expr_iif ); apply = &generic_apply_<ops>; }\
+      { FALCON_DECLARE_SYN_CLASS( handler ); apply = &generic_apply_<ops>; }\
    name::name( int line, int chr ): \
       ExprMath( symbol, line, chr ) \
-      { FALCON_DECLARE_SYN_CLASS( expr_iif ); apply = &generic_apply_<ops>; }\
+      { FALCON_DECLARE_SYN_CLASS( handler ); apply = &generic_apply_<ops>; }\
    name::name( const name &other ): \
       ExprMath( other ) \
       { apply = &generic_apply_<ops>; }\
