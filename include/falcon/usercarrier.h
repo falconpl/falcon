@@ -26,13 +26,13 @@ class ClassUser;
 class Item;
 
 /** Class used to store unaware third party data in the Falcon GC.
- 
+
  This base class can be used as a shell for external entities to be carried by
  an instance of a Class, generally a ClassUser.
- 
+
  This class is meant to be derived by the final implementation which has
- to carry the entity coming from outside (i.e. from an host program). 
- 
+ to carry the entity coming from outside (i.e. from an host program).
+
  The carrirer has support for basic GC marking and has an optional item
  vector which can be associated with the external data. The item vector is
  useful in case one or more of the properties associated with the external
@@ -41,33 +41,33 @@ class Item;
  as such, it is possible to store the result of the property access in the
  item array, which will be automatically garbage marked when the carrier
  is marked.
- 
+
  When the Falcon item goes out of scope, this carrier is destroyed by the GC.
  The subclass may do something sensible in the destructor, as i.e. destroying
  the carried data or communicate to the host program that the data is now
  free for use.
- 
- Subclasses \b must provide a way to clone the data, or return 0 from the 
- clone() abstract virtual method if it is not possible to clone it. 
+
+ Subclasses \b must provide a way to clone the data, or return 0 from the
+ clone() abstract virtual method if it is not possible to clone it.
  */
 class UserCarrier
 {
 public:
-   UserCarrier();   
-   UserCarrier( uint32  itemcount );   
+   UserCarrier();
+   UserCarrier( uint32  itemcount );
    UserCarrier( const UserCarrier& other );
-   
+
    virtual ~UserCarrier();
-   virtual UserCarrier* clone() const { return new UserCarrier(*this); }  
-   
+   virtual UserCarrier* clone() const { return new UserCarrier(*this); }
+
    virtual void gcMark( uint32 mark );
    uint32 gcMark() const { return m_gcMark; }
 
    Item* dataAt( uint32 pos ) const { return m_data + pos; }
    uint32 dataSize() const { return m_dataSize; }
-   
+
 private:
-   
+
    Item* m_data;
    uint32 m_dataSize;
 
@@ -83,17 +83,17 @@ public:
    UserCarrierT( __T* data ):
       m_data( data )
    {}
-      
+
    UserCarrierT( __T* data, uint32  itemcount ):
-      m_data( m_data )
+      m_data( data )
    {}
-   
+
    UserCarrierT( const UserCarrierT<__T>& other );
 
    __T* carried() const { return m_data; }
-   
+
 protected:
-   virtual void* cloneData() const { return 0; } 
+   virtual void* cloneData() const { return 0; }
 
 private:
    __T* m_data;

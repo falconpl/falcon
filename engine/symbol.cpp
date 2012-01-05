@@ -31,12 +31,12 @@ Symbol::Symbol( const String& name, type_t t, uint32 id ):
    m_defval(0)
 {
    define( t, id );
-}      
+}
 
 Symbol::Symbol( const Symbol& other ):
    m_name( other.m_name ),
    m_declaredAt( other.m_declaredAt ),
-   m_id( m_id ),
+   m_id( other.m_id ),
    m_type( other.m_type ),
    m_external(other.m_external),
    m_bConstant(other.m_bConstant),
@@ -59,7 +59,7 @@ void Symbol::define( type_t t, uint32 id )
       case e_st_local: m_value = value_local; break;
       case e_st_extern: case e_st_global: m_value = value_global; break;
       case e_st_closed: m_value = value_closed; break;
-      case e_st_undefined: m_value = value_undef; break;         
+      case e_st_undefined: m_value = value_undef; break;
    }
 }
 
