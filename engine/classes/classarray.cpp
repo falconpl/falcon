@@ -186,7 +186,7 @@ void ClassArray::op_getIndex( VMContext* ctx, void* self ) const
          int64 arrayLen = array.length();
 
          // do some validation checks before proceeding
-         if ( start > arrayLen || start < (arrayLen * -1)  || end > arrayLen || end < (arrayLen * -1) )
+         if ( start >= arrayLen || start < (arrayLen * -1)  || end > arrayLen || end < (arrayLen * -1) )
          {
             throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra("index out of range") );
          }
@@ -205,8 +205,6 @@ void ClassArray::op_getIndex( VMContext* ctx, void* self ) const
             if ( start < 0 ) start = arrayLen + start;
 
             if ( end < 0 ) end = arrayLen + end;
-
-            if ( start == end ) end++; // handle [1:1] range
 
             if ( start > end )
             {
@@ -237,7 +235,7 @@ void ClassArray::op_getIndex( VMContext* ctx, void* self ) const
          static Collector* coll = Engine::instance()->collector();
 
          ctx->stackResult( 2, FALCON_GC_STORE( coll, this, returnArray ) );
-         }
+      }
       else
       {
          throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra("unknown index") );
@@ -252,27 +250,125 @@ void ClassArray::op_getIndex( VMContext* ctx, void* self ) const
 
 void ClassArray::op_setIndex( VMContext* ctx, void* self ) const
 {
+   // arritem[index] = value
+   // arritem also = self
    Item* value, *arritem, *index;
+
    ctx->operands( value, arritem, index );
 
+   if ( (void *) arritem == self )
+   {
+      arritem = (Item *) 0;
+   }
+
+
    ItemArray& array = *static_cast<ItemArray*>(self);
+
    if (index->isOrdinal())
    {
       int64 v = index->forceInteger();
+
       if( v < 0 ) v = array.length() + v;
+
       if( v >= array.length() )
       {
-         throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra("out of range") );
+         throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra("index out of range") );
       }
-      // the value is copied here.
-      value->copied(true);
+
+      value->copied(true); // the value is copied here.
+
       array[v] = *value;
-      ctx->stackResult(3, *value);
+      ctx->stackResult(3, *value);  // push value back onto the stack
    }
-   else
+   else if ( ! index->isUser() ) // should get a user type
    {
       throw new AccessError( ErrorParam( e_arracc, __LINE__ ) );
    }
+
+   Class *rangeClass, *rhs;
+   void *udataRangeInst, *udataRhs;
+
+   if ( ! index->asClassInst( rangeClass, udataRangeInst ) )
+   {
+      throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra("range type error") );
+   }
+
+   if ( rangeClass->typeID() != FLC_CLASS_ID_RANGE )
+   {
+      throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra("unknown index") );
+   }
+
+   Range& rng = *static_cast<Range*>( udataRangeInst );
+
+   int64 arrayLen = array.length();
+   int64 start = rng.start();
+   int64 end = ( rng.isOpen() ) ? arrayLen : rng.end();
+
+
+   // handle negative number indexs
+   if ( start < 0 ) start = arrayLen + start;
+   if ( end < 0 ) end = arrayLen + end;
+
+   int64 rangeLen = ( rng.isOpen() ) ? arrayLen - start : end - start;
+
+   // do some validation checks before proceeding
+   if ( start >= arrayLen || start < (arrayLen * -1)  || end > arrayLen || end < (arrayLen * -1) )
+   {
+      throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra("index out of range") );
+   }
+
+   if ( value->asClassInst( rhs, udataRhs ) ) // is the rhs a deep class
+   {
+      if ( rhs->typeID() == FLC_CLASS_ID_ARRAY )
+      {
+         ItemArray& rhsArray = *static_cast<ItemArray*>(udataRhs);
+
+         int64 rhsLen = rhsArray.length();
+
+         if ( rangeLen < rhsLen )
+         {
+            array.change( rhsArray, start, rangeLen );
+         }
+         else if ( rangeLen > rhsLen )
+         {
+            array.change( rhsArray, start, rhsLen );
+
+            array.remove( ( start + rhsLen ), ( rangeLen - rhsLen ) ); 
+         }
+         else // rangeLen == rhsLen
+         {
+            array.copyOnto( start, rhsArray, 0, rhsLen );
+         }
+      }
+      else
+      {
+         value->copied(true);    // the value is copied here.
+
+         array[ ( start == end ) ? start + 1 : start ] = *value;
+
+         if ( rangeLen > 1 )
+         {
+            array.remove( ( start + 1 ), ( rangeLen - 1 ) ); 
+         }
+      }
+   }
+   else  // Not a deep class
+   {
+      value->copied(true);    // the value is copied here.
+
+      if ( rangeLen > 1 )
+      {
+         array[ ( start == end ) ? start + 1 : start ] = *value;
+
+         array.remove( ( start + 1 ), ( rangeLen - 1 ) ); 
+      }
+      else  // arritem[1:1]
+      {
+         array.insert( *value, (Falcon::length_t) start );
+      }
+   }
+
+   ctx->stackResult(3, *value);
 }
 
 
@@ -300,16 +396,16 @@ void ClassArray::op_add( VMContext* ctx, void* self ) const
 {
    static Class* arrayClass = Engine::instance()->arrayClass();
    static Collector* coll = Engine::instance()->collector();
-   
+
    ItemArray* array = static_cast<ItemArray*>(self);
    Item* op1, *op2;
    ctx->operands( op1, op2 );
 
    Class* cls;
    void* inst;
-   
+
    ItemArray *result = new ItemArray;
-    
+
    // a basic type?
    if( ! op2->asClassInst( cls, inst ) || cls->typeID() != typeID() )
    {

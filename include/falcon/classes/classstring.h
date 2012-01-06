@@ -55,6 +55,7 @@ public:
    virtual void op_aadd( VMContext* ctx, void* self ) const;
 
    virtual void op_getIndex( VMContext* ctx, void* self ) const;
+   virtual void op_setIndex( VMContext* ctx, void* self ) const;
    
    virtual void op_compare( VMContext* ctx, void* self ) const;
    virtual void op_toString( VMContext* ctx, void* self ) const;
@@ -62,7 +63,8 @@ public:
 
 private:
 
-   class FALCON_DYN_CLASS NextOp: public PStep {
+   class FALCON_DYN_CLASS NextOp: public PStep
+   {
    public:
       NextOp();
       static void apply_( const PStep*, VMContext* vm );
