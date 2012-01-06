@@ -19,9 +19,9 @@
 #include <falcon/function.h>
 #include <falcon/vm.h>
 #include <falcon/engine.h>       // for catch -- error check
-#include <falcon/stderrors.h>  
+#include <falcon/stderrors.h>
 #include <falcon/syntree.h>       // for catch -- error check
-#include <falcon/symbol.h>    
+#include <falcon/symbol.h>
 #include <falcon/dynsymbol.h>
 
 #include <falcon/module.h>       // For getDynSymbolValue
@@ -38,6 +38,7 @@
 
 namespace Falcon {
 
+
 template<class datatype__>
 void VMContext::LinearStack<datatype__>::init( int base )
 {
@@ -51,19 +52,6 @@ VMContext::LinearStack<datatype__>::~LinearStack()
 {
    if( m_base != 0 ) free( m_base );
 }
-
-template<class datatype__>
-void VMContext::LinearStack<datatype__>::more()
-{
-   long distance = (long)(m_top - m_base);
-   long newSize = (long)(m_max - m_base + INCREMENT_STACK_ALLOC);
-   TRACE("Reallocating %p: %d -> %ld", m_base, (int)(m_max - m_base), newSize );
-
-   m_base = (datatype__*) realloc( m_base, newSize * sizeof(datatype__) );
-   m_top = m_base + distance;
-   m_max = m_base + newSize;
-}
-
 
 //========================================================
 //
@@ -101,7 +89,7 @@ VMContext::VMContext( bool ):
 
 VMContext::~VMContext()
 {
-   if( m_thrown != 0 ) m_thrown->decref();   
+   if( m_thrown != 0 ) m_thrown->decref();
 }
 
 
@@ -114,7 +102,7 @@ void VMContext::reset()
    m_catchBlock = 0;
    m_ruleEntryResult = false;
    m_finMode = e_fin_none;
-   
+
    m_dynsStack.reset();
    m_codeStack.reset();
    m_callStack.reset();
@@ -127,7 +115,7 @@ void VMContext::reset()
 
 void VMContext::setSafeCode()
 {
-   m_safeCode = m_codeStack.m_top - m_codeStack.m_base;  
+   m_safeCode = m_codeStack.m_top - m_codeStack.m_base;
 }
 
 void VMContext::copyData( Item* target, size_t count, size_t start)
@@ -226,7 +214,7 @@ bool VMContext::unrollToNext( const _checker& check )
    register CodeFrame* curCode = m_codeStack.m_top;
    register Item* curData = m_dataStack.m_top;
    register DynsData* curDyns = m_dynsStack.m_top;
-   
+
    while( m_callStack.m_base <= curFrame )
    {
       // then, get the current topCall pointer to code stack.
@@ -244,48 +232,48 @@ bool VMContext::unrollToNext( const _checker& check )
          }
          --curCode;
       }
-      
+
       // were we searching a return?
       if( check.isReturn() ) return true;
-      
+
       // unroll the call.
       curData = m_dataStack.m_base + curFrame->m_initBase;
       curFrame--;
    }
-  
+
    return false;
 }
 
 class CheckIfCodeIsNextBase
 {
 public:
-   inline bool operator()( const PStep& ps, VMContext* ctx ) const 
+   inline bool operator()( const PStep& ps, VMContext* ctx ) const
    {
       if( ps.isFinally() )
       {
          ctx->setFinallyContinuation( VMContext::e_fin_continue );
          return true;
       }
-      
-      return ps.isNextBase(); 
+
+      return ps.isNextBase();
    }
-   
+
    bool isReturn() const { return false; }
 };
 
 class CheckIfCodeIsLoopBase
 {
 public:
-   inline bool operator()( const PStep& ps, VMContext* ctx ) const 
-   { 
+   inline bool operator()( const PStep& ps, VMContext* ctx ) const
+   {
       if( ps.isFinally() )
       {
          ctx->setFinallyContinuation( VMContext::e_fin_break );
          return true;
       }
-      return ps.isLoopBase(); 
+      return ps.isLoopBase();
    }
-   
+
    bool isReturn() const { return false; }
 };
 
@@ -297,15 +285,15 @@ public:
    CheckIfCodeIsCatchItem( const Item& item ):
       m_item(item)
    {}
-   
-   inline bool operator()( const PStep& ps, VMContext* ctx ) const 
-   {       
+
+   inline bool operator()( const PStep& ps, VMContext* ctx ) const
+   {
       if( ps.isFinally() )
       {
          ctx->setFinallyContinuation( VMContext::e_fin_raise );
          return true;
       }
-      
+
       if( ps.isCatch() )
       {
          const StmtTry* stry = static_cast<const StmtTry*>( &ps );
@@ -313,12 +301,12 @@ public:
          ctx->setCatchBlock( st );
          return st != 0;
       }
-      
+
       return false;
    }
-   
+
    bool isReturn() const { return false; }
-   
+
 private:
    const Item& m_item;
 };
@@ -329,15 +317,15 @@ public:
    CheckIfCodeIsCatchError( Class* err ):
       m_err(err)
    {}
-   
-   inline bool operator()( const PStep& ps, VMContext* ctx ) const 
-   {       
+
+   inline bool operator()( const PStep& ps, VMContext* ctx ) const
+   {
       if( ps.isFinally() )
       {
          ctx->setFinallyContinuation( VMContext::e_fin_raise );
          return true;
       }
-      
+
       if( ps.isCatch() )
       {
          const StmtTry* stry = static_cast<const StmtTry*>( &ps );
@@ -346,12 +334,12 @@ public:
          ctx->setCatchBlock( st );
          return st != 0;
       }
-      
+
       return false;
    }
-   
+
    bool isReturn() const { return false; }
-   
+
 private:
    Class* m_err;
 };
@@ -360,18 +348,18 @@ private:
 class CheckIfCodeIsReturn
 {
 public:
-   
-   inline bool operator()( const PStep& ps, VMContext* ctx ) const 
-   {       
+
+   inline bool operator()( const PStep& ps, VMContext* ctx ) const
+   {
       if( ps.isFinally() )
       {
          ctx->setFinallyContinuation( VMContext::e_fin_return );
          return true;
       }
-      
+
       return false;
    }
-   
+
    bool isReturn() const { return true; }
 };
 
@@ -403,7 +391,7 @@ bool VMContext::unrollToSafeCode()
    {
       return false;
    }
-   
+
    m_codeStack.m_top = m_codeStack.m_base + m_safeCode;
    return true;
 }
@@ -422,7 +410,7 @@ void VMContext::raiseItem( const Item& item )
          return;
       }
    }
-   
+
    // are we in a finally? -- in that case, we must just queue our item.
    if( m_finMode == e_fin_raise && m_thrown != 0 )
    {
@@ -433,14 +421,14 @@ void VMContext::raiseItem( const Item& item )
       raiseError( ce );
       return;
    }
-   
+
    // ok, it's a real item. Just in case, remove the rising-error marker.
    if( m_thrown != 0 ) m_thrown->decref();
    m_thrown = 0;
 
    // can we catch it?
    CheckIfCodeIsCatchItem check(item);
-   
+
    m_catchBlock = 0;
    if( unrollToNext<CheckIfCodeIsCatchItem>( check ) )
    {
@@ -451,7 +439,7 @@ void VMContext::raiseItem( const Item& item )
          Symbol* sym = m_catchBlock->target();
          if( sym != 0 )
          {
-            *sym->value(this) = item; 
+            *sym->value(this) = item;
          }
          m_raised.setNil();
       }
@@ -462,26 +450,26 @@ void VMContext::raiseItem( const Item& item )
          m_raised = item;
       }
    }
-   else 
-   {   
-      // no luck. 
-      
+   else
+   {
+      // no luck.
+
       // reset the raised object, anyhow.
       m_raised.setNil();
-      
+
       CodeError* ce = new CodeError( ErrorParam( e_uncaught, __LINE__, SRC )
          .origin(ErrorParam::e_orig_vm));
       ce->raised( item );
       raiseError( ce );
    }
 }
-   
+
 void VMContext::raiseError( Error* ce )
-{   
-   // are we in a finally? 
+{
+   // are we in a finally?
    // -- in that case, we must queue our error and continue the previous raise
    if( m_finMode == e_fin_raise && m_thrown != 0 )
-   {     
+   {
       m_thrown->appendSubError( ce );
       ce->decref();
       ce = m_thrown;
@@ -491,8 +479,8 @@ void VMContext::raiseError( Error* ce )
       if( m_thrown != 0 ) m_thrown->decref();
       m_thrown = 0;
    }
-   
-   // can we catch it?   
+
+   // can we catch it?
    m_catchBlock = 0;
    CheckIfCodeIsCatchError check( ce->handler() );
    if( unrollToNext<CheckIfCodeIsCatchError>( check ) )
@@ -515,13 +503,13 @@ void VMContext::raiseError( Error* ce )
       }
       else
       {
-         // otherwise, we have a finally around. 
+         // otherwise, we have a finally around.
          ce->incref();
          m_thrown = ce;
       }
    }
    else
-   {   
+   {
       // prevent script-bound re-catching.
       m_thrown = ce;
       m_event = eventRaise;
@@ -533,7 +521,7 @@ void VMContext::unhandledError( Error* ce )
 {
    if( m_thrown != 0 ) m_thrown->decref();
    m_thrown = ce;
-   
+
    m_event = eventRaise;
 }
 
@@ -544,8 +532,8 @@ void VMContext::finallyComplete()
    switch( m_finMode )
    {
       case e_fin_none: break;
-      case e_fin_raise: 
-         if ( m_thrown != 0 ) 
+      case e_fin_raise:
+         if ( m_thrown != 0 )
          {
             // if we don't zero the thrown error, the system will be fooled and think
             // that a new throw has appened.
@@ -558,15 +546,15 @@ void VMContext::finallyComplete()
             raiseItem( m_raised );
          }
          break;
-         
+
       case e_fin_break:
          unrollToLoopBase();
          break;
-               
+
       case e_fin_continue:
          unrollToNextBase();
          break;
-         
+
       case e_fin_return:
          {
             Item copy = m_raised;
@@ -574,14 +562,14 @@ void VMContext::finallyComplete()
             returnFrame( copy );
          }
          break;
-         
+
       case e_fin_terminate:
          // currently not used.
          break;
    }
-   
+
 }
- 
+
 
 //===================================================================
 // Higher level management
@@ -721,14 +709,14 @@ void VMContext::callItem( const Item& item, int pcount, Item const* params )
    Class* cls;
    void* data;
    item.forceClassInst( cls, data );
-   
+
    addSpace( pcount+1 );
    *(m_dataStack.m_top - ( pcount + 1 )) = item;
    if( pcount > 0 )
-   {      
+   {
       memcpy( m_dataStack.m_top-pcount, params, pcount * sizeof(item) );
    }
-   
+
    cls->op_call( this, pcount, data );
 }
 
@@ -738,14 +726,14 @@ void VMContext::insertData(int32 pos, Item* data, int32 dataSize, int32 replSize
    addSpace( dataSize - replSize );
    // this is the first item we have to mangle with.
    Item* base = m_dataStack.m_top - (dataSize - replSize + pos-1);
-   
+
    if( pos > replSize )
-   {  
+   {
       memmove( base + dataSize,
-               base + replSize, 
+               base + replSize,
                sizeof(Item) * (pos-replSize) );
    }
-   
+
    memcpy( base, data, sizeof(Item)*dataSize );
 }
 
@@ -763,7 +751,7 @@ void VMContext::returnFrame( const Item& value )
       m_raised = value;
       return;
    }
-   
+
    // reset code and data
    m_codeStack.unroll( topCall->m_codeBase );
    PARANOID( "Code stack underflow at return", (m_codeStack.m_top >= m_codeStack.m_base-1) );
@@ -775,12 +763,12 @@ void VMContext::returnFrame( const Item& value )
 
    m_dynsStack.unroll( topCall->m_dynsBase );
    PARANOID( "Dynamic Symbols stack underflow at return", (m_dynsStack.m_top >= m_dynsStack.m_base-1) );
-   
+
    // Forward the return value
    *m_dataStack.m_top = value;
-   
+
    // Finalize return -- pop call frame
-   // TODO: This is useful only in the interactive mode. Maybe we can use a 
+   // TODO: This is useful only in the interactive mode. Maybe we can use a
    // specific returnFrame for the interactive mode to achieve this.
    if( m_callStack.m_top-- ==  m_callStack.m_base )
    {
@@ -795,7 +783,7 @@ void VMContext::returnFrame( const Item& value )
 
 bool VMContext::boolTopData()
 {
-   
+
    switch( topData().type() )
    {
    case FLC_ITEM_NIL:
@@ -817,7 +805,7 @@ bool VMContext::boolTopData()
          return topData().asBoolean();
       }
    }
-   
+
    return false;
 }
 
@@ -842,7 +830,7 @@ Item* VMContext::getDynSymbolValue( DynSymbol* dyns )
       }
       --dd;
    }
-   
+
    // no luck. Descend the frames.
    --cf;
    while( cf >= m_callStack.m_base )
@@ -856,7 +844,7 @@ Item* VMContext::getDynSymbolValue( DynSymbol* dyns )
             return dd->m_item.dereference();
          }
       }
-      
+
       // no luck, try with locals.
       fassert( cf->m_function != 0 );
       Symbol* locsym = cf->m_function->symbols().findSymbol( dyns->name() );
@@ -865,14 +853,14 @@ Item* VMContext::getDynSymbolValue( DynSymbol* dyns )
          DynsData* newData = m_dynsStack.addSlot();
          newData->m_sym = dyns;
          // reference the target local variable into our slot.
-         ItemReference::create( 
-            m_dataStack.m_base[cf->m_initBase + locsym->id()], 
+         ItemReference::create(
+            m_dataStack.m_base[cf->m_initBase + locsym->id()],
             newData->m_item );
          return newData->m_item.dereference();
       }
       --cf;
    }
-   
+
    // no luck? Try with module globals.
    Module* master = currentFrame().m_function->module();
    if( master != 0 )
@@ -884,13 +872,13 @@ Item* VMContext::getDynSymbolValue( DynSymbol* dyns )
          DynsData* newData = m_dynsStack.addSlot();
          newData->m_sym = dyns;
          // reference the target local variable into our slot.
-         ItemReference::create( 
-            *value, 
+         ItemReference::create(
+            *value,
             newData->m_item );
          return newData->m_item.dereference();
       }
    }
-   
+
    // still no luck? -- what about exporeted symbols in VM?
    ModSpace* ms = vm()->modSpace();
    if( ms != 0 )
@@ -902,13 +890,13 @@ Item* VMContext::getDynSymbolValue( DynSymbol* dyns )
          DynsData* newData = m_dynsStack.addSlot();
          newData->m_sym = dyns;
          // reference the target local variable into our slot.
-         ItemReference::create( 
-            *value, 
+         ItemReference::create(
+            *value,
             newData->m_item );
          return newData->m_item.dereference();
       }
    }
-   
+
    // No luck at all.
    DynsData* newData = m_dynsStack.addSlot();
    newData->m_sym = dyns;
