@@ -582,7 +582,7 @@ void VMContext::pushQuit()
       QuitStep() { apply = apply_; }
       virtual ~QuitStep() {}
 
-      inline virtual void describeTo( String& s ) const { s= "#Quit"; }
+      inline virtual void describeTo( String& s, int =0 ) const { s= "#Quit"; }
    private:
       static void apply_( const PStep*, VMContext *ctx )
       {
@@ -603,7 +603,7 @@ void VMContext::pushComplete()
       CompleteStep() { apply = apply_; }
       virtual ~CompleteStep() {}
 
-      inline virtual void describeTo( String& s ) const { s= "#Complete"; }
+      inline virtual void describeTo( String& s, int =0 ) const { s= "#Complete"; }
    private:
       static void apply_( const PStep*, VMContext *ctx )
       {
@@ -624,7 +624,7 @@ void VMContext::pushReturn()
       Step() { apply = apply_; }
       virtual ~Step() {}
 
-      inline virtual void describeTo( String& s ) const { s= "#Return"; }
+      inline virtual void describeTo( String& s, int =0 ) const { s= "#Return"; }
    private:
       static void apply_( const PStep*, VMContext *ctx )
       {
@@ -645,7 +645,7 @@ void VMContext::pushBreak()
       Step() { apply = apply_; }
       virtual ~Step() {}
 
-      inline virtual void describeTo( String& s ) const { s= "#Break"; }
+      inline virtual void describeTo( String& s, int =0 ) const { s= "#Break"; }
    private:
       static void apply_( const PStep*, VMContext *ctx )
       {

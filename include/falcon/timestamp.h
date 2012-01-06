@@ -88,7 +88,7 @@ public:
       tz_NONE = 31
    } TimeZone;
 
-   
+
    int16 m_year;
    int16 m_month;
    int16 m_day;
@@ -115,8 +115,8 @@ public:
       copy( ts );
    }
 
-   ~TimeStamp() {}
-   
+   virtual ~TimeStamp() {}
+
 
    /** Set this timestamp as the system current time.
     \param bLocal if true (default), the current time is set to the current timezone.
@@ -134,7 +134,7 @@ public:
     \return true if the wait was performed, false if the timestamp is in the past.
     \throw InterruptedError if the wait was interrupted.
 
-    If the timestamp is in the past, no wait is actually performed. 
+    If the timestamp is in the past, no wait is actually performed.
 
     */
    static bool absoluteWait( const TimeStamp &ts, ref_ptr<Interrupt>& intr );
@@ -174,7 +174,7 @@ public:
                        a timestamp.
     */
    void fromSystemTime( void* system_time );
-  
+
 
    TimeStamp &operator = ( const TimeStamp &ts );
 
@@ -269,7 +269,7 @@ public:
       Week starting on monday, 0 based.
    */
    int16 dayOfWeek() const;
-  
+
    void add( const TimeStamp &ts );
    void add( int32 days, int32 hours=0, int32 mins=0, int32 secs=0, int32 msecs=0 );
    void distance( const TimeStamp &ts );
