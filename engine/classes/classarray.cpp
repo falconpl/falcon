@@ -274,17 +274,11 @@ void ClassArray::op_setIndex( VMContext* ctx, void* self ) const
       {
          throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra("index out of range") );
       }
-<<<<<<< HEAD
-      // the value is copied here.
-      array[v].assign(*value);
-      ctx->stackResult(3, *value);
-=======
 
       value->copied(true); // the value is copied here.
 
       array[v] = *value;
       ctx->stackResult(3, *value);  // push value back onto the stack
->>>>>>> ranges
    }
    else if ( ! index->isUser() ) // should get a user type
    {
