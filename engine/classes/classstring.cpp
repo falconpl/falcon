@@ -56,6 +56,7 @@ void* ClassString::clone( void* source ) const
 void ClassString::store( VMContext*, DataWriter* dw, void* data ) const
 {
    String* str = static_cast<String*>(data);
+
    dw->write( *str );
 }
 
@@ -63,7 +64,9 @@ void ClassString::store( VMContext*, DataWriter* dw, void* data ) const
 void ClassString::restore( VMContext* , DataReader* dr, void*& data ) const
 {
    String* str = new String;
-   try{
+
+   try
+   {
       dr->read( *str );
       data = str;
    }
@@ -78,9 +81,11 @@ void ClassString::restore( VMContext* , DataReader* dr, void*& data ) const
 void ClassString::describe( void* instance, String& target, int, int maxlen ) const
 {
    String* self = static_cast<String*>(instance);
-   target.size(0);
-   target.append('"');
-   if( (int) self->length() > maxlen )
+
+   target.size( 0 );
+   target.append( '"' );
+
+   if ( (int) self->length() > maxlen )
    {
       target += self->subString(0, maxlen);
       target += "...";
@@ -90,15 +95,17 @@ void ClassString::describe( void* instance, String& target, int, int maxlen ) co
       target += *self;
    }
    
-   target.append('"');
+   target.append( '"' );
 }
+
 
 void ClassString::enumerateProperties( void*, Class::PropertyEnumerator& cb ) const
 {
    // TODO: More
-   cb("len", false );
-   cb("len_", false );
+   cb( "len", false );
+   cb( "len_", false );
 }
+
 
 void ClassString::enumeratePV( void* self, Class::PVEnumerator& cb ) const
 {
@@ -106,9 +113,11 @@ void ClassString::enumeratePV( void* self, Class::PVEnumerator& cb ) const
    String* str = static_cast<String*>(self); 
    Item temp;
    
-   temp = ((int64)str->length());
+   temp = ( (int64)str->length() );
+
    cb("len_", temp );
 }
+
 
 bool ClassString::hasProperty( void*, const String& prop ) const
 {
@@ -130,6 +139,7 @@ bool ClassString::gcCheck( void* instance, uint32 mark ) const
    return static_cast<String*>(instance)->currentMark() >= mark;
 }
 
+
 //=======================================================================
 // Addition
 
@@ -137,15 +147,20 @@ void ClassString::op_add( VMContext* ctx, void* self ) const
 {
    String* str = static_cast<String*>(self);
    Item* op1, *op2;
+
    ctx->operands(op1, op2);
 
    Class* cls;
    void* inst;
-   if( ! op2->asClassInst( cls, inst ) )
+
+   if ( ! op2->asClassInst( cls, inst ) )
    {
-      String* copy = new String(*str);
-      copy->append(op2->describe());
-      ctx->stackResult(2, copy->garbage() );
+      String* copy = new String( *str );
+
+      copy->append( op2->describe() );
+
+      ctx->stackResult( 2, copy->garbage() );
+
       return;
    }
 
@@ -153,8 +168,11 @@ void ClassString::op_add( VMContext* ctx, void* self ) const
    {
       // it's a string!
       String *copy = new String(*str);
+
       copy->append( *static_cast<String*>(inst) );
-      ctx->stackResult(2, copy->garbage() );
+
+      ctx->stackResult( 2, copy->garbage() );
+
       return;
    }
 
@@ -164,11 +182,13 @@ void ClassString::op_add( VMContext* ctx, void* self ) const
    // this will transform op2 slot into its string representation.
    cls->op_toString( ctx, inst );
    
-   if( ! ctx->wentDeep( &m_nextOp ) )
+   if ( ! ctx->wentDeep( &m_nextOp ) )
    {
       ctx->popCode();
+
       // op2 has been transformed
       String* deep = (String*)op2->asInst();
+
       deep->prepend( *str );
    }
 }
@@ -180,30 +200,34 @@ void ClassString::op_add( VMContext* ctx, void* self ) const
 void ClassString::op_create( VMContext* ctx, int pcount ) const
 {
    // no param?
-   if( pcount == 0 )
+   if ( pcount == 0 )
    {
       // create a string.
       String* s = new String;
+
       ctx->stackResult(1, s->garbage() );
    }
    else
    {
       // the parameter is a string?
       Item* itm = ctx->opcodeParams(pcount);
-      if( itm->isString() )
+      if ( itm->isString() )
       {
          // copy it.
          String* s = new String( *itm->asString() );
+
          ctx->stackResult( pcount + 1, s->garbage() );
       }
       else
       {
          // apply the op_toString on the item.
          Item cpy = *itm;
+
          ctx->stackResult( pcount + 1, cpy );
 
          Class* cls;
          void* data;
+
          cpy.forceClassInst( cls, data );
          cls->op_toString( ctx, data );
       }
@@ -215,13 +239,15 @@ void ClassString::op_aadd( VMContext* ctx, void* self ) const
 {
    String* str = static_cast<String*>(self);
    Item* op1, *op2;
+
    ctx->operands(op1, op2);
 
    Class* cls;
    void* inst;
-   if( ! op2->asClassInst( cls, inst ) )
+
+   if ( ! op2->asClassInst( cls, inst ) )
    {
-      if( op1->copied() )
+      if ( op1->copied() )
       {
          String* copy = new String(*str);
          copy->append(op2->describe());
@@ -229,7 +255,7 @@ void ClassString::op_aadd( VMContext* ctx, void* self ) const
       }
       else
       {
-         op1->asString()->append(op2->describe());
+         op1->asString()->append( op2->describe() );
       }
 
       return;
@@ -238,9 +264,9 @@ void ClassString::op_aadd( VMContext* ctx, void* self ) const
    if ( cls->typeID() == typeID() )
    {
       // it's a string!
-      if( op1->copied() )
+      if ( op1->copied() )
       {
-         String *copy = new String(*str);
+         String *copy = new String( *str );
          copy->append( *static_cast<String*>(inst) );
          ctx->stackResult(2, copy->garbage() );
       }
@@ -257,14 +283,16 @@ void ClassString::op_aadd( VMContext* ctx, void* self ) const
    // this will transform op2 slot into its string representation.
    cls->op_toString( ctx, inst );
 
-   if( ! ctx->wentDeep(&m_nextOp) )
+   if( ! ctx->wentDeep( &m_nextOp ) )
    {
       ctx->popCode();
       // op2 has been transformed
       String* deep = (String*) op2->asInst();
+
       deep->prepend( *str );
    }
 }
+
 
 ClassString::NextOp::NextOp()
 {
@@ -276,23 +304,25 @@ void ClassString::NextOp::apply_( const PStep*, VMContext* ctx )
 {
    // The result of a deep call is in A
    Item* op1, *op2;
-   ctx->operands(op1, op2); // we'll discard op2
+
+   ctx->operands( op1, op2 ); // we'll discard op2
 
    String* deep = ctx->regA().asString();
    String* self = op1->asString();
 
    if( op1->copied() )
    {
-      String* copy = new String(*self);
+      String* copy = new String( *self );
       copy->append( *deep );
       ctx->stackResult( 2, copy->garbage() );
    }
    else
    {
       ctx->popData();
-      self->append(*deep);
+      self->append( *deep );
    }
 }
+
 
 void ClassString::op_getIndex( VMContext* ctx, void* self ) const
 {
@@ -310,12 +340,13 @@ void ClassString::op_getIndex( VMContext* ctx, void* self ) const
 
       if ( v >= str.length() )
       {
-         throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra("out of range") );
+         throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra("index out of range") );
       }
 
       String *s = new String();
 
       s->append(str.getCharAt(v));
+
       ctx->stackResult(2, s->garbage() );
    }
    else if ( index->isUser() ) // index is a range
@@ -347,7 +378,7 @@ void ClassString::op_getIndex( VMContext* ctx, void* self ) const
       int64 strLen = str.length();
 
       // do some validation checks before proceeding
-      if ( start > strLen || start < (strLen * -1)  || end > strLen || end < (strLen * -1) )
+      if ( start >= strLen || start < (strLen * -1)  || end > strLen || end < (strLen * -1) )
       {
          throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra("index out of range") );
       }
@@ -368,8 +399,6 @@ void ClassString::op_getIndex( VMContext* ctx, void* self ) const
          if ( start < 0 ) start = strLen + start;
 
          if ( end < 0 ) end = strLen + end;
-
-         if ( start == end ) end++; // handle [1:1] range
 
          if ( start > end )
          {
@@ -403,6 +432,113 @@ void ClassString::op_getIndex( VMContext* ctx, void* self ) const
    }
 }
 
+
+void ClassString::op_setIndex( VMContext* ctx, void* self ) const
+{
+   Item* value, *arritem, *index; 
+
+   ctx->operands( value, arritem, index );
+
+   String& str = *static_cast<String*>(self);
+
+   if ( ! value->isString() )
+   {
+      throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra("non string/char being assigned") );
+   }
+
+   String& strData = *( value->asString() );
+
+   if ( index->isOrdinal() )
+   {
+      // simple index assignment: a[x] = value
+
+      int64 v = index->forceInteger();
+
+      if ( v < 0 ) v = str.length() + v;
+
+      if ( v >= str.length() )
+      {
+         throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra("index out of range") );
+      }
+
+      value->copied( true ); // the value is copied here.
+
+      str.setCharAt( v, strData.getCharAt(0) );
+      
+      ctx->stackResult(3, *value);
+   }
+   else if ( ! index->isUser() )
+   {
+      throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra("invalid assignment to string") );
+   }
+
+   Class *rangeClass, *rhs;
+   void *udataRangeInst, *udataRhs;
+
+   if ( ! index->asClassInst( rangeClass, udataRangeInst ) )
+   {
+      throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra("lhs index error") );
+   }
+
+   if ( rangeClass->typeID() != FLC_CLASS_ID_RANGE )
+   {
+      throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra("unknown index range") );
+   }
+
+   if ( ! value->asClassInst( rhs, udataRhs ) ) // Get the rhs class and instance
+   {
+      // Something is not right
+      throw new AccessError( ErrorParam( e_arracc, __LINE__ ) );
+   }
+
+   Range& rng = *static_cast<Range*>(udataRangeInst);
+
+   int64 strLen = str.length();
+   int64 start = rng.start();
+   int64 end = ( rng.isOpen() ) ? strLen : rng.end();
+
+   // handle negative indexes
+   if ( start < 0 ) start = strLen + start;
+   if ( end < 0 ) end = strLen + end;
+
+   int64 rangeLen = ( rng.isOpen() ) ? strLen - start : end - start;
+
+   // do some validation checks before proceeding
+   if ( start >= strLen || start < (strLen * -1)  || end > strLen || end < (strLen * -1) )
+   {
+      throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra("index out of range") );
+   }
+
+   if ( rhs->typeID() == FLC_CLASS_ID_STRING )  // should be a string
+   {
+      String& strVal = *static_cast<String*>(udataRhs);
+
+      int64 rhsLen = strVal.length();
+
+      if ( rangeLen < rhsLen )
+      {
+         str.change( (Falcon::length_t)start, (Falcon::length_t)end, strVal );
+      }
+      else if ( rangeLen > rhsLen )
+      {
+         str.change( (Falcon::length_t)start, (Falcon::length_t)end, strData );
+      }
+      else // rangeLen == rhsLen
+      {
+         str.copy( strData );
+      }
+
+      value->copied( true ); // the value is copied here.
+
+      ctx->stackResult(3, *value);
+   }
+   else
+   {
+      throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra("invalid assignment to string") );
+   }
+}
+
+
 //=======================================================================
 // Comparation
 //
@@ -416,9 +552,9 @@ void ClassString::op_compare( VMContext* ctx, void* self ) const
    Class* otherClass;
    void* otherData;
 
-   if( op2->asClassInst( otherClass, otherData ) )
+   if ( op2->asClassInst( otherClass, otherData ) )
    {
-      if( otherClass->typeID() == typeID() )
+      if ( otherClass->typeID() == typeID() )
       {
          token.exit( string->compare(*static_cast<String*>(otherData) ) );
       }
@@ -441,6 +577,7 @@ void ClassString::op_toString( VMContext* ctx, void* data ) const
    // ... we won't be marked long if we're temporary.
    ctx->topData().setUser( this, data, true ); 
 }
+
 
 void ClassString::op_isTrue( VMContext* ctx, void* str ) const
 {
