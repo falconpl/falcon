@@ -256,11 +256,6 @@ void ClassArray::op_setIndex( VMContext* ctx, void* self ) const
 
    ctx->operands( value, arritem, index );
 
-   if ( (void *) arritem == self )
-   {
-      arritem = (Item *) 0;
-   }
-
 
    ItemArray& array = *static_cast<ItemArray*>(self);
 
