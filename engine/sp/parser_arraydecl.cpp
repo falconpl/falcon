@@ -94,7 +94,7 @@ public:
    bool bHasSep;
    int definedAt;
 
-   typedef enum 
+   typedef enum
    {
       first_expr,
       separator,
@@ -104,7 +104,7 @@ public:
    }
    t_state;
 
-   t_state state; 
+   t_state state;
 
    StmtTempArrayDecl():
       Statement( 0,0 ),
@@ -176,8 +176,8 @@ public:
       }
    }
 
-   void describeTo( String& tgt ) const { tgt = "Temporary ArrayDecl"; }
-   
+   void describeTo( String& tgt, int ) const { tgt = "Temporary ArrayDecl"; }
+
    virtual StmtTempArrayDecl* clone() const { return 0; }
 };
 
@@ -368,7 +368,7 @@ void apply_array_entry_close( const Rule&, Parser& p )
 
    p.simplify(1);
    ctx->closeContext();
-  
+
    // we still have the [ in the stack.
    TokenInstance* openPar = p.getLastToken();
    // close the list
@@ -381,7 +381,7 @@ void apply_array_entry_close( const Rule&, Parser& p )
 static void makeRange( Parser& p, int count, Expression* expr1, Expression* expr2, Expression* expr3 )
 {
    SourceParser& sp = *static_cast<SourceParser*>(&p);
-   ParserContext* ctx = static_cast<ParserContext*>(sp.context());   
+   ParserContext* ctx = static_cast<ParserContext*>(sp.context());
    StmtTempArrayDecl* decl = static_cast<StmtTempArrayDecl*>(ctx->currentStmt());
    fassert( decl != 0 );
 
@@ -397,7 +397,7 @@ static void makeRange( Parser& p, int count, Expression* expr1, Expression* expr
    p.simplify(count);
    ctx->closeContext();
    Expression* made = new ExprRange( expr1, expr2, expr3 );
-  
+
    // we still have the [ in the stack.
    TokenInstance* openPar = p.getLastToken();
    // close the list
@@ -409,17 +409,17 @@ static void makeRange( Parser& p, int count, Expression* expr1, Expression* expr
 
 void apply_array_entry_range3( const Rule&, Parser& p )
 {
-   // << Expr << T_Colon << Expr << T_Colon << Expr << T_CloseSquare 
-   
+   // << Expr << T_Colon << Expr << T_Colon << Expr << T_CloseSquare
+
    TokenInstance* texpr1 = p.getNextToken();
    p.getNextToken(); //:
    TokenInstance* texpr2 = p.getNextToken();
    p.getNextToken(); //:
    TokenInstance* texpr3 = p.getNextToken();
-   
+
    makeRange( p, 6,
-         static_cast<Expression*>(texpr1->detachValue()), 
-         static_cast<Expression*>(texpr2->detachValue()), 
+         static_cast<Expression*>(texpr1->detachValue()),
+         static_cast<Expression*>(texpr2->detachValue()),
          static_cast<Expression*>(texpr3->detachValue())
       );
 }
@@ -432,10 +432,10 @@ void apply_array_entry_range3bis( const Rule&, Parser& p )
    p.getNextToken(); //:
    p.getNextToken(); //:
    TokenInstance* texpr3 = p.getNextToken();
-   
+
    makeRange( p, 5,
-         static_cast<Expression*>(texpr1->detachValue()), 
-         0, 
+         static_cast<Expression*>(texpr1->detachValue()),
+         0,
          static_cast<Expression*>(texpr3->detachValue())
       );
 }
@@ -448,11 +448,11 @@ void apply_array_entry_range2( const Rule&, Parser& p )
    p.getNextToken(); //:
    TokenInstance* texpr2 = p.getNextToken();
    makeRange( p, 4,
-         static_cast<Expression*>(texpr1->detachValue()), 
-         static_cast<Expression*>(texpr2->detachValue()), 
+         static_cast<Expression*>(texpr1->detachValue()),
+         static_cast<Expression*>(texpr2->detachValue()),
          0
       );
-  
+
 }
 
 
@@ -461,8 +461,8 @@ void apply_array_entry_range1( const Rule&, Parser& p )
    // << Expr << T_Colon << T_CloseSquare
    TokenInstance* texpr1 = p.getNextToken();
    makeRange( p, 3,
-         static_cast<Expression*>(texpr1->detachValue()), 
-         0, 
+         static_cast<Expression*>(texpr1->detachValue()),
+         0,
          0
       );
 }

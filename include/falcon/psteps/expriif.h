@@ -28,26 +28,26 @@ public:
    ExprIIF( Expression* op1, Expression* op2, Expression* op3, int line =0, int chr = 0 );
    ExprIIF( const ExprIIF& other );
    virtual ~ExprIIF();
-   
+
    inline virtual ExprIIF* clone() const { return new ExprIIF( *this ); }
    virtual bool simplify( Item& value ) const;
    static void apply_( const PStep*, VMContext* ctx );
    virtual void describeTo( String&, int depth = 0 ) const;
-   
+
    /** Check if the and expression can stand alone.
       An "?" expression can stand alone if the second AND third operand are standalone.
     */
    inline virtual bool isStandAlone() const {
       return m_second->isStandAlone() && m_third->isStandAlone();
    }
-  
+
 private:
    mutable int m_falseSeqId;
-   
+
    class FALCON_DYN_CLASS Gate: public PStep {
    public:
       Gate( ExprIIF* owner );
-      void describeTo( String& target ) const { target = "Gate for expriif"; }
+      virtual void describeTo( String& target, int=0 ) const { target = "Gate for expriif"; }
       static void apply_( const PStep*, VMContext* ctx );
    private:
       ExprIIF* m_owner;

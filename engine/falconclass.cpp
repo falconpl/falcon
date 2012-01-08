@@ -161,9 +161,9 @@ FalconClass::FalconClass( const String& name ):
    m_hasInitExpr( false ),
    m_hasInit( false ),
    m_missingParents( 0 ),
-   m_bPureFalcon( true )   
+   m_bPureFalcon( true )
 {
-   _p = new Private;   
+   _p = new Private;
    m_bIsfalconClass = true;
 }
 
@@ -206,7 +206,7 @@ bool FalconClass::addProperty( const String& name, const Item& initValue )
    {
       m_shouldMark = true;
    }
-   
+
    return true;
 }
 
@@ -228,7 +228,7 @@ bool FalconClass::addProperty( const String& name, Expression* initExpr )
    // expr properties have a default NIL item.
    _p->m_propDefaults.append( Item() );
 
-   // declare that we need this expression to be initialized.   
+   // declare that we need this expression to be initialized.
    _p->m_initExpr.push_back( prop );
    m_hasInitExpr = true;
 
@@ -267,7 +267,7 @@ bool FalconClass::addMethod( Function* mth )
    Private::MemberMap& members = _p->m_members;
 
    const String& name = mth->name();
-   
+
    // first time around?
    if ( members.find( name ) != members.end() )
    {
@@ -295,7 +295,7 @@ Class* FalconClass::getParent( const String& name ) const
    return 0;
 }
 
-  
+
 bool FalconClass::setInit( Function* init )
 {
    if( m_init == 0 )
@@ -314,7 +314,7 @@ bool FalconClass::addParent( Inheritance* inh )
    Private::MemberMap& members = _p->m_members;
 
    const String& name = inh->className();
-   
+
    // first time around?
    if ( members.find( name ) != members.end() )
    {
@@ -333,7 +333,7 @@ bool FalconClass::addParent( Inheritance* inh )
    {
       m_bPureFalcon = false;
    }
-   
+
    _p->m_inherit.push_back( inh );
    inh->owner( this );
 
@@ -400,7 +400,7 @@ const FalconClass::Property* FalconClass::getProperty( const String& name ) cons
    return iter->second;
 }
 
-void FalconClass::gcMarkMyself( uint32 mark ) const
+void FalconClass::gcMarkMyself( uint32 mark )
 {
    if ( m_shouldMark )
    {
@@ -414,7 +414,7 @@ bool FalconClass::addState( FalconState* state )
    Private::MemberMap& members = _p->m_members;
 
    const String& name = state->name();
-   
+
    // first time around?
    if ( members.find( name ) != members.end() )
    {
@@ -453,7 +453,7 @@ bool FalconClass::isDerivedFrom( const Class* cls ) const
 {
    // are we the required class?
    if( this == cls ) return true;
-   
+
    Private::ParentList::const_iterator iter = _p->m_inherit.begin();
    while( iter != _p->m_inherit.end() )
    {
@@ -465,7 +465,7 @@ bool FalconClass::isDerivedFrom( const Class* cls ) const
       }
       ++iter;
    }
-   
+
    return false;
 }
 
@@ -477,7 +477,7 @@ void* FalconClass::getParentData( Class* parent, void* data ) const
    {
       return data;
    }
-   
+
    return 0;
 }
 
@@ -489,7 +489,7 @@ SynFunc* FalconClass::makeConstructor()
       m_constructor = new SynFunc( name() + "#constructor" );
       m_constructor->methodOf( this );
    }
-   
+
    return m_constructor;
 }
 
@@ -561,7 +561,7 @@ bool FalconClass::construct( bool bHiddenParents )
 
       if( m_hasInitExpr )
       {
-         hasSomething = true;         
+         hasSomething = true;
          st.append( new PStepInitExpr( this ) );
       }
 
@@ -583,7 +583,7 @@ bool FalconClass::construct( bool bHiddenParents )
             m_constructor = 0;
          }
       }
-      
+
       return true;
    }
 
@@ -617,7 +617,7 @@ HyperClass* FalconClass::hyperConstruct()
 
    //... and tell it to our new self.
    // Notice that this is ok even if the constructor is 0.
-   // -- if it is, we just don't need any frame.   
+   // -- if it is, we just don't need any frame.
    nself->constructor( m_constructor );
 
    // and give it to our
@@ -725,7 +725,7 @@ bool FalconClass::hasProperty( void*, const String& propName ) const
 void FalconClass::describe( void* instance, String& target, int depth, int maxlen ) const
 {
    FalconInstance* inst = static_cast<FalconInstance*>(instance);
-   
+
    class Descriptor: public PropertyEnumerator
    {
    public:
@@ -777,9 +777,9 @@ void FalconClass::describe( void* instance, String& target, int depth, int maxle
 
 void FalconClass::op_create( VMContext* ctx, int32 pcount ) const
 {
-  
+
    static Collector* coll = Engine::instance()->collector();
-   
+
    // we just need to copy the defaults.
    FalconClass* cls = const_cast<FalconClass*>(this);
    FalconInstance* inst = new FalconInstance(cls);
@@ -799,9 +799,9 @@ void FalconClass::op_create( VMContext* ctx, int32 pcount ) const
 
 
 void FalconClass::op_getProperty( VMContext* ctx, void* self, const String& propName ) const
-{   
+{
    FalconInstance* inst = static_cast<FalconInstance*>(self);
-   
+
    if( ! overrideGetProperty( ctx, self, propName ) )
    {
       if( ! inst->getMember( propName, ctx->topData() ) )
@@ -842,7 +842,7 @@ void FalconClass::PStepInitExpr::apply_( const PStep* ps, VMContext* ctx )
    register int seqId = ccode.m_seqId;
 
    TRACE( "In %s class pre-init step %d", step->m_owner->name().c_ize(), seqId );
-   
+
    if( seqId > 0 )
    {
       CallFrame& frame = ctx->currentFrame();
@@ -869,7 +869,7 @@ void FalconClass::PStepInitExpr::apply_( const PStep* ps, VMContext* ctx )
 
    if( ((size_t)seqId) >= iprops.size() )
    {
-      // we're done. 
+      // we're done.
       ctx->popCode();
       return;
    }

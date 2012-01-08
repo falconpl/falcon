@@ -18,7 +18,7 @@
 
 #include <falcon/stdsteps.h>
 #include <falcon/vmcontext.h>
-namespace Falcon 
+namespace Falcon
 {
 
 void StdSteps::PStepDupliTop::apply_( const PStep*, VMContext* ctx )
@@ -28,7 +28,7 @@ void StdSteps::PStepDupliTop::apply_( const PStep*, VMContext* ctx )
    ctx->opcodeParam(0) = ctx->opcodeParam(1);
 }
 
-void StdSteps::PStepDupliTop::describeTo( String& s ) const
+void StdSteps::PStepDupliTop::describeTo( String& s, int ) const
 {
    s = "PStepDupliTop";
 }
@@ -43,7 +43,7 @@ void StdSteps::PStepDupliTop2::apply_( const PStep*, VMContext* ctx )
 }
 
 
-void StdSteps::PStepDupliTop2::describeTo( String& s) const
+void StdSteps::PStepDupliTop2::describeTo( String& s, int) const
 {
    s = "PStepDupliTop2";
 }
@@ -59,7 +59,7 @@ void StdSteps::PStepDupliTop3::apply_( const PStep*, VMContext* ctx )
 }
 
 
-void StdSteps::PStepDupliTop3::describeTo( String& s ) const
+void StdSteps::PStepDupliTop3::describeTo( String& s, int ) const
 {
    s = "PStepDupliTop3";
 }
@@ -71,12 +71,12 @@ void StdSteps::PStepSwapTop::apply_( const PStep*, VMContext* ctx )
    ctx->opcodeParam(0).swap(ctx->opcodeParam(1));
 }
 
-void StdSteps::PStepSwapTop::describeTo( String& s ) const
+void StdSteps::PStepSwapTop::describeTo( String& s, int ) const
 {
    s = "PStepSwapTop";
 }
 
-  
+
 
 void StdSteps::PStepSwapTopWith2::apply_( const PStep*, VMContext* ctx )
 {
@@ -87,52 +87,52 @@ void StdSteps::PStepSwapTopWith2::apply_( const PStep*, VMContext* ctx )
    ctx->opcodeParam(2) = top;
 }
 
-void StdSteps::PStepSwapTopWith2::describeTo( String& s ) const
+void StdSteps::PStepSwapTopWith2::describeTo( String& s, int ) const
 {
    s = "PStepSwapTopWith2";
 }
 
 
 void StdSteps::PStepCopyDown2::apply_( const PStep*, VMContext* ctx )
-{   
+{
    ctx->popCode();
    ctx->opcodeParam(2) = ctx->opcodeParam(0);
 }
 
-void StdSteps::PStepCopyDown2::describeTo( String& s ) const
+void StdSteps::PStepCopyDown2::describeTo( String& s, int ) const
 {
    s = "PStepCopyDown2";
 }
 
 void StdSteps::PStepCopyDown3::apply_( const PStep*, VMContext* ctx )
-{   
+{
    ctx->popCode();
    ctx->opcodeParam(3) = ctx->opcodeParam(0);
 }
 
-void StdSteps::PStepCopyDown3::describeTo( String& s ) const
+void StdSteps::PStepCopyDown3::describeTo( String& s, int ) const
 {
    s = "PStepCopyDown3";
 }
 
 void StdSteps::PStepCopyDown4::apply_( const PStep*, VMContext* ctx )
-{   
+{
    ctx->popCode();
    ctx->opcodeParam(4) = ctx->opcodeParam(0);
 }
 
-void StdSteps::PStepCopyDown4::describeTo( String& s ) const
+void StdSteps::PStepCopyDown4::describeTo( String& s, int ) const
 {
    s = "PStepCopyDown4";
 }
 
 void StdSteps::PStepCopyDown5::apply_( const PStep*, VMContext* ctx )
-{   
+{
    ctx->popCode();
    ctx->opcodeParam(5) = ctx->opcodeParam(0);
 }
 
-void StdSteps::PStepCopyDown5::describeTo( String& s ) const
+void StdSteps::PStepCopyDown5::describeTo( String& s, int ) const
 {
    s = "PStepCopyDown5";
 }
@@ -144,7 +144,7 @@ void StdSteps::PStepPop::apply_( const PStep*, VMContext* ctx )
    ctx->popData();
 }
 
-void StdSteps::PStepPop::describeTo( String& s ) const
+void StdSteps::PStepPop::describeTo( String& s, int ) const
 {
    s = "PStepPop";
 }
@@ -157,7 +157,7 @@ void StdSteps::PStepPop2::apply_( const PStep*, VMContext* ctx )
    ctx->popData(2);
 }
 
-void StdSteps::PStepPop2::describeTo( String& s ) const
+void StdSteps::PStepPop2::describeTo( String& s, int ) const
 {
    s = "PStepPop2";
 }
@@ -169,7 +169,7 @@ void StdSteps::PStepPop3::apply_( const PStep*, VMContext* ctx )
    ctx->popData(3);
 }
 
-void StdSteps::PStepPop3::describeTo( String& s ) const
+void StdSteps::PStepPop3::describeTo( String& s, int ) const
 {
    s = "PStepPop3";
 }
@@ -182,7 +182,7 @@ void StdSteps::PStepDragDown::apply_( const PStep*, VMContext* ctx )
    ctx->popData();
 }
 
-void StdSteps::PStepDragDown::describeTo( String& s ) const
+void StdSteps::PStepDragDown::describeTo( String& s, int ) const
 {
    s = "PStepDragDown";
 }
@@ -193,7 +193,7 @@ void StdSteps::PStepAddSpace::apply_( const PStep*, VMContext* ctx )
    ctx->addDataSlot();
 }
 
-void StdSteps::PStepAddSpace::describeTo( String& s ) const
+void StdSteps::PStepAddSpace::describeTo( String& s, int ) const
 {
    s = "PStepAddSpace";
 }
@@ -205,7 +205,7 @@ void StdSteps::PStepPushNil::apply_( const PStep*, VMContext* ctx )
    ctx->topData().setNil();
 }
 
-void StdSteps::PStepPushNil::describeTo( String& s ) const
+void StdSteps::PStepPushNil::describeTo( String& s, int ) const
 {
    s = "PStepPushNil";
 }
@@ -215,7 +215,7 @@ void StdSteps::PStepReturnFrame::apply_( const PStep*, VMContext* ctx )
    ctx->returnFrame();
 }
 
-void StdSteps::PStepReturnFrame::describeTo( String& s ) const
+void StdSteps::PStepReturnFrame::describeTo( String& s, int ) const
 {
    s = "PStepReturnFrame";
 }
@@ -226,18 +226,18 @@ void StdSteps::PStepReturnFrameWithTop::apply_( const PStep*, VMContext* ctx )
    ctx->returnFrame( ctx->topData() );
 }
 
-void StdSteps::PStepReturnFrameWithTop::describeTo( String& s ) const
+void StdSteps::PStepReturnFrameWithTop::describeTo( String& s, int ) const
 {
    s = "PStepReturnFrameWithTop";
 }
 
 void StdSteps::PStepReturnFrameWithTopDoubt::apply_( const PStep*, VMContext* ctx )
-{      
+{
    ctx->returnFrame( ctx->topData() );
    ctx->SetNDContext();
 }
 
-void StdSteps::PStepReturnFrameWithTopDoubt::describeTo( String& s ) const
+void StdSteps::PStepReturnFrameWithTopDoubt::describeTo( String& s, int ) const
 {
    s = "PStepReturnFrameWithTopDoubt";
 }

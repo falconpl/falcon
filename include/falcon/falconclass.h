@@ -76,7 +76,7 @@ class VMContext;
  always create FalconClass instances, the VM may generate an HyperClass in
  their place if one of their parent classes is found to be a non-FalconClass
  instance during the link process, while resolving external symbols.
- 
+
  */
 class FALCON_DYN_CLASS FalconClass: public OverridableClass
 {
@@ -88,7 +88,7 @@ public:
       typedef union tag_cnt
       {
          size_t id;
-         Function* func;         
+         Function* func;
          Inheritance* inh;
          FalconState* state;
       } Value;
@@ -105,7 +105,7 @@ public:
       Value m_value;
 
       Property( const Property& other );
-      
+
       inline Property( const String& name, size_t value ):
          m_name( name ),
          m_type(t_prop),
@@ -119,10 +119,10 @@ public:
       Property( Function* value );
       Property( Inheritance* value );
       Property( FalconState* value );
-      
+
 
       ~Property();
-      
+
       /** Returns associated expression (if this property holds an expression).
        \return a valid PCode or 0 if this is not an expression.
        */
@@ -234,7 +234,7 @@ public:
     the class is automatically finalized (it's components are setup).
     */
    bool addParent( Inheritance* inh );
-   
+
    /** Adds a parent and the parentship declaration.
     \param name The name of the inheritance.
     \param parent The parent of this class.
@@ -292,7 +292,7 @@ public:
 
     \note A property named after the state is automatically added to the class.
     The property holds a State object (CoreState - FalconState value).
-   */   
+   */
    bool addState( FalconState* state );
 
    /** List the members in this class having property semantics.
@@ -302,7 +302,7 @@ public:
     properties may contain a function, becoming actually a method,
     however they have a different semantic. They cannot be changed at
     class level and they cannot be subject to state changes.
-    
+
     */
    void enumeratePropertiesOnly( PropertyEnumerator& cb ) const;
 
@@ -322,14 +322,14 @@ public:
    //=========================================================
    // Class management
    //
-   
+
    /** Marks the items in this class (if considered necessary).
     \param mark The mark that is used by GC.
 
     This is used to mark the default values of the class, if
     there is one or more deep item in the class.
     */
-   virtual void gcMarkMyself( uint32 mark ) const;
+   virtual void gcMarkMyself( uint32 mark );
 
    virtual void gcMark( void* self, uint32 mark ) const;
 
@@ -338,13 +338,13 @@ public:
    virtual bool hasProperty( void* self, const String& prop ) const;
    virtual void describe( void* instance, String& target, int depth = 3, int maxlen = 60 ) const;
 
- 
+
    /** Creates the constructor or returns it if it's already here. */
    SynFunc* makeConstructor();
 
    /** Return the constructor of this class. */
    SynFunc* constructor() const { return m_constructor; }
-   
+
    /** Create the class structure compiling it from its parents.
     \param bHiddenParents If true, we have some parents that might not
     be in our parent list.
@@ -356,7 +356,7 @@ public:
 
     If some of the parents are not FalconClass, the engine must generate an
     hyperclass out of this falcon class.
-    
+
     This method may destroy the constructor (or return succesfully without
     actually creating it) if it detects that we have no parents and we don't
     have nothing to be initialized. If bHiddenParents If true, we have some
@@ -389,7 +389,7 @@ public:
 
    /** Called back by an inheritance when it gets resolved.
     \param inh The inheritance that has been just resolved.
-    
+
     When a foreign inheritance of a class gets resolved during the link
     phase, the parent need to know about this fact to prepare itself.
 
@@ -403,7 +403,7 @@ public:
     are created at runtime when all the dependencies are known, and hyperclasses
     follow the rules of third party classes. In short, the only class type that
     supports forward definition of parentship is FalconClass.
-    
+
     On a FalconClass instance, this determines if the class is a pure
     FalconClass or needs to be transformed in an HyperClass.
     */
@@ -421,7 +421,7 @@ private:
 
    class Private;
    Private* _p;
-      
+
    String m_fc_name;
    Function* m_init;
    SynFunc* m_constructor;
@@ -445,17 +445,17 @@ private:
       FalconClass* m_owner;
    };
 
-   // This is used to invoke 
+   // This is used to invoke
    class PStepInit: public Statement
    {
    public:
       PStepInit( FalconClass* o );
       static void apply_( const PStep*, VMContext* );
       virtual PStepInitExpr* clone() const { return 0; }
-      
+
    private:
       FalconClass* m_owner;
-   };   
+   };
    friend class PStepInitExpr;
 };
 

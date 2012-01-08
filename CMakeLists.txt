@@ -56,6 +56,11 @@ if( CMAKE_COMPILER_IS_GNUCXX )
    add_definitions(-Wall -Wextra -Werror -Wno-error=uninitialized -lpthread)
 endif()
 
+if( CMAKE_CXX_COMPILER_ID STREQUAL "Clang" )
+   message( "Adding Clang specific flags" )
+   add_definitions(-Wall -Wextra -Werror)
+endif()
+
 ##################################################################
 # Falcon build environment setup
 

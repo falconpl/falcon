@@ -40,23 +40,23 @@ public:
    // blocks are kept separate for easier destruction and accounting.
    typedef std::deque<SynTree*> BlockList;
    BlockList m_blocks;
-   
+
    // blocks ordered for int
    typedef std::map<int64, SynTree*> IntBlocks;
-   
+
    // blocks ordered for class -- used only in case of perfect matches.
    typedef std::map<Class*, SynTree*> ClassBlocks;
-  
+
    // List of requested classes, and also declaration-ordered list of classes.
    typedef std::deque< StmtSelect::SelectRequirement* > ClassList;
-   
+
    IntBlocks m_intBlocks;
    ClassBlocks m_classBlocks;
    ClassList m_classList;
-   
-   
+
+
    Private() {}
-   ~Private() 
+   ~Private()
    {
       BlockList::iterator iter = m_blocks.begin();
       while( iter != m_blocks.end() )
@@ -64,7 +64,7 @@ public:
          delete *iter;
          ++iter;
       }
-      
+
       ClassList::iterator cliter = m_classList.begin();
       while( cliter != m_classList.end() )
       {
@@ -73,7 +73,7 @@ public:
       }
    }
 };
-   
+
 
 StmtSelect::StmtSelect( Expression* expr, int32 line, int32 chr ):
    Statement( line, chr ),
@@ -83,7 +83,7 @@ StmtSelect::StmtSelect( Expression* expr, int32 line, int32 chr ):
    m_module(0)
 {
    FALCON_DECLARE_SYN_CLASS( stmt_select );
-   
+
    if (expr != 0 )
    {
       expr->setParent(this);
@@ -112,18 +112,18 @@ StmtSelect::StmtSelect( const StmtSelect& other ):
       // we're used just as a dictionary.
       apply = 0;
    }
-   
+
    if ( other.m_defaultBlock != 0 )
    {
       m_defaultBlock = other.m_defaultBlock->clone();
       m_defaultBlock->setParent(this);
    }
-   
+
    // TODO: Copy the blocks
    _p = new Private;
 }
 
-StmtSelect::~StmtSelect() 
+StmtSelect::~StmtSelect()
 {
    delete m_expr;
    delete m_defaultBlock;
@@ -136,7 +136,7 @@ void StmtSelect::describeTo( String& tgt, int depth ) const
    if( m_expr != 0 )
    {
       String prefix = String(" ").replicate( depth * depthIndent );
-      tgt = prefix + "select " + m_expr->describe() +"\n";      
+      tgt = prefix + "select " + m_expr->describe() +"\n";
    }
 
    //TODO...
@@ -166,7 +166,7 @@ bool StmtSelect::selector( Expression* expr )
    }
    return true;
 }
-   
+
 void StmtSelect::oneLinerTo( String& tgt ) const
 {
    if( m_expr != 0 )
@@ -182,14 +182,14 @@ bool StmtSelect::addSelectType( int64 typeId, SynTree* block )
    {
       return false;
    }
-   
+
    // save the block only if not just pushed in the last operation.
    if( _p->m_blocks.empty() || _p->m_blocks.back() != block )
    {
       if( ! block->setParent(this) ) return false;
       _p->m_blocks.push_back( block );
    }
-   
+
    // anyhow, associate the request.
    _p->m_intBlocks[typeId ] = block;
    return true;
@@ -202,34 +202,34 @@ bool StmtSelect::addSelectClass( Class* cls, SynTree* block )
    {
       return false;
    }
-   
+
    // save the block only if not just pushed in the last operation.
    if( _p->m_blocks.empty() || _p->m_blocks.back() != block )
    {
       if( ! block->setParent(this) ) return false;
       _p->m_blocks.push_back( block );
    }
-   
+
    // anyhow, associate the request.
    _p->m_classBlocks[ cls ] = block;
-   
+
    // record the requirement -- as already resolved.
    SelectRequirement* r = new SelectRequirement( cls->name(), block, this );
    r->m_cls = cls;
    _p->m_classList.push_back( r );
-   
+
    return true;
 }
 
 Requirement* StmtSelect::addSelectName( const String& name, SynTree* block )
-{      
+{
    if( _p->m_blocks.empty() || _p->m_blocks.back() != block )
    {
-      if( ! block->setParent(this) ) return false;
+      if( ! block->setParent(this) ) return NULL;
       _p->m_blocks.push_back( block );
    }
-   
-   SelectRequirement* req = new SelectRequirement( name, block, this );  
+
+   SelectRequirement* req = new SelectRequirement( name, block, this );
    _p->m_classList.push_back( req );
    return req;
 }
@@ -253,8 +253,8 @@ SynTree* StmtSelect::findBlockForClass( Class* cls ) const
    {
       return pos->second;
    }
-   
-   // the class wasn't found; but we may have a predecessor in our list.   
+
+   // the class wasn't found; but we may have a predecessor in our list.
    Private::ClassList::iterator iter = _p->m_classList.begin();
    while( iter != _p->m_classList.end() )
    {
@@ -265,11 +265,11 @@ SynTree* StmtSelect::findBlockForClass( Class* cls ) const
       }
       ++iter;
    }
-   
+
    // no luck
    return 0;
 }
-   
+
 
 SynTree* StmtSelect::findBlockForItem( const Item& itm ) const
 {
@@ -283,14 +283,14 @@ SynTree* StmtSelect::findBlockForItem( const Item& itm ) const
          // ... or specified by the class.
          tid = itm.asClass()->typeID();
       }
-      
+
       Private::IntBlocks::iterator pos = _p->m_intBlocks.find( tid );
       if( pos != _p->m_intBlocks.end() )
       {
          return pos->second;
       }
    }
-   
+
    // no luck with integer representing type ids -- try to find a class.
    Class* cls;
    void* data;
@@ -300,19 +300,19 @@ SynTree* StmtSelect::findBlockForItem( const Item& itm ) const
    {
       return res;
    }
-   
+
    // the only hope left is the default block
    return m_defaultBlock;
 }
- 
+
 
 bool StmtSelect::setDefault( SynTree* block )
-{   
+{
    if( ! block->setParent(this) )
    {
       return false;
    }
-   
+
    delete m_defaultBlock;
    m_defaultBlock = block;
    return true;
@@ -322,25 +322,25 @@ bool StmtSelect::setDefault( SynTree* block )
 void StmtSelect::apply_( const PStep* ps, VMContext* ctx )
 {
    const StmtSelect* self = static_cast<const StmtSelect*>(ps);
-   
+
    CodeFrame& cf = ctx->currentCode();
    // first time around? -- call the expression.
    if( cf.m_seqId == 0 )
    {
-      cf.m_seqId = 1; 
-      if( ctx->stepInYield( self->m_expr, cf ) ) 
+      cf.m_seqId = 1;
+      if( ctx->stepInYield( self->m_expr, cf ) )
       {
          return;
       }
    }
-   
+
    SynTree* res = self->findBlockForItem( ctx->topData() );
-   
+
    // we're gone
    ctx->popCode();
    // and so is the topdata.
    ctx->popData();
-   
+
    // but if the syntree wants to do something...
    if( res != 0 )
    {
@@ -351,8 +351,8 @@ void StmtSelect::apply_( const PStep* ps, VMContext* ctx )
 //================================================================
 // The requirer
 //
-   
-void StmtSelect::SelectRequirement::onResolved( 
+
+void StmtSelect::SelectRequirement::onResolved(
          const Module* source, const Symbol* sym, Module*, Symbol*  )
 {
    Item* itm = sym->defaultValue();
@@ -366,8 +366,8 @@ void StmtSelect::SelectRequirement::onResolved(
          .extra( String("declared in ") + (source != 0 ? source->uri() : "<internal>" ) )
          );
    }
-   
-   // an integer? 
+
+   // an integer?
    if( itm->isOrdinal() )
    {
       int64 tid = itm->forceInteger();
