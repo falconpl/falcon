@@ -24,6 +24,8 @@ namespace Falcon
 
 class String;
 class Symbol;
+class SynTree;
+class Function;
 
 /** Holder for symbols relative to the owning level.
  Symbols tables are found:
@@ -63,7 +65,11 @@ class FALCON_DYN_CLASS SymbolTable
 {
 public:
    SymbolTable();
+   SymbolTable( Function* parent );
+   SymbolTable( SynTree* parent );
    SymbolTable( const SymbolTable& other);
+   SymbolTable( SynTree* parent, const SymbolTable& other);
+   SymbolTable( Function* parent, const SymbolTable& other);
    virtual ~SymbolTable();
 
    /** Number of local variables in this table.
@@ -117,17 +123,6 @@ public:
     */
    Symbol* addLocal( const String& name );
 
-   /** Adds an already created local symbol.
-    \param sym The local symbol to be added to this table.
-    \return True on success, false if the name is already used.
-    
-    If a symbol with the same name exists, the symbol is not added and the
-    method returns false. The caller must then take proper action (i.e. destroy
-    the symbol and signal error).
-
-    \note The table takes ownership of this local symbol.
-    */
-   bool addLocal( Symbol* sym );
 
 
    /** Adds a closed symbol.
@@ -143,36 +138,41 @@ public:
     */
    Symbol* addClosed( const String& name );
 
-   /** Adds an already created closeed symbol.
-    \param sym The local symbol to be added to this table.
-    \return True on success, false if the name is already used.
-    
-    If a symbol with the same name exists, the symbol is not added and the
-    method returns false. The caller must then take proper action (i.e. destroy
-    the symbol and signal error).
-
-    \note The table takes ownership of this closed symbol.
+   /** Sets a function as owner of this table.
+    This is used only to retrieve a paret to mark if any of the owned symbol is marked.
     */
-   bool addClosed( Symbol* sym );
-
-   /** Adds a non-local symbol to this table.
-    \parma sym A symbol that is not considered local.
-    \return True on success, false if the name is already used.
-
-    If a symbol with the same name exists, the symbol is not added and the
-    method returns false. The caller must then take proper action (i.e. destroy
-    the symbol and signal error).
-
-    \note The method doesn't check for the type of the incoming symbol, so it
-    won't take any particular action if the incoming symbol is actually a
-    LocalSymbol. The caller should separately call addLocal to update the local
-    symbol count.
+   void owner( SynTree* owner ) { m_owner.syntree = owner; m_ownedby = e_owned_syntree;}
+   
+   /** Sets a function as owner of this table.
+    This is used only to retrieve a paret to mark if any of the owned symbol is marked.
     */
-   bool addSymbol( Symbol* sym );
+   void owner( Function* owner ) { m_owner.function = owner; m_ownedby = e_owned_function;}   
+   
+   /** Invoked by owned symbols when marked.
+    */
 
+   void gcMark( uint32 mark );
+   
 private:
    class Private;
    Private* _p;
+   
+   typedef enum {
+      e_owned_none,
+         e_owned_syntree,
+         e_owned_function
+   }
+   t_ownedby;
+   
+   typedef union {
+      SynTree* syntree;
+      Function* function;
+   }
+   t_owner;
+   
+   t_owner m_owner;
+   t_ownedby m_ownedby;
+   
 };
 
 }

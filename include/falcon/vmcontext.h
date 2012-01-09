@@ -30,7 +30,7 @@ class VMachine;
 class SynFunc;
 class StmtTry;
 class SynTree;
-class DynSymbol;
+class Symbol;
 
 /**
  * Structure needed to store VM data.
@@ -1135,7 +1135,7 @@ public:
     \note The value is set through Item::assign, respecting referencing and
     copy semantics.
     */
-   void setDynSymbolValue( DynSymbol* dyns, const Item& value );
+   void setDynSymbolValue( const Symbol* dyns, const Item& value );
 
    /** Gets the the value associated with a dynamic symbol.
     \param name the name of the dynsymbol to be associated.
@@ -1162,25 +1162,25 @@ public:
 
     \note Symbols marked as constant are returned by value; they aren't referenced.
     */
-   Item* getDynSymbolValue( DynSymbol* dyns );
+   Item* getDynSymbolValue( const Symbol* dyns );
 
 protected:
 
    /** Class holding the dynamic symbol information on a stack. */
    class DynsData {
    public:
-      DynSymbol* m_sym;
+      const Symbol* m_sym;
       Item m_item;
 
       DynsData():
          m_sym(0)
       {}
 
-      DynsData( DynSymbol* sym ):
+      DynsData( const Symbol* sym ):
          m_sym(sym)
       {}
 
-      DynsData( DynSymbol* sym, const Item& data ):
+      DynsData( const Symbol* sym, const Item& data ):
          m_sym(sym),
          m_item(data)
       {}

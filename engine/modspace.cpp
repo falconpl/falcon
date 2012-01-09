@@ -403,7 +403,6 @@ Error* ModSpace::exportSymbol( Module* mod, Symbol* sym )
    _p->m_symMap[ sym->name() ] = Private::ExportSymEntry(mod,sym);
    _p->m_values.append( *sym->defaultValue() );
    
-   sym->define( Symbol::e_st_global, id );
    sym->defaultValue( &_p->m_values.at(id) );
    
    return 0;
@@ -476,7 +475,7 @@ void ModSpace::linkSpecificDep( Module* asker, void* def, Error*& link_errors )
    }
    
    // link the value.
-   dep->m_symbol->defaultValue( sym->defaultValue() );
+   dep->m_symbol->resolveExtern( asker, sym->defaultValue() );
 }
 
 
@@ -619,17 +618,15 @@ void ModSpace::linkNSImports(Module* mod )
             if( myglb == mod->_p->m_gSyms.end() )
             {
                // new symbol, make it external.
-               Symbol* esym = new Symbol( tgName, Symbol::e_st_extern, -1 );
+               Symbol* esym = Symbol::ExternSymbol( tgName, mod, 0 );
                mod->_p->m_gSyms[tgName] = esym;
-               esym->defaultValue( sym->defaultValue() );
+               esym->resolveExtern( srcMod, sym->defaultValue() );
             }
             else
             {
-               // just link it -- but keep it global.
-               // this will make so, during serialization, this symbol can be
-               // considered global.
+               // just link it 
                Symbol* esym = myglb->second;
-               esym->defaultValue( sym->defaultValue() );
+               esym->resolveExtern( srcMod, sym->defaultValue() );
                
                // eventually, make it resolved in dependencies, 
                // -- so we don't search for it elsewhere.

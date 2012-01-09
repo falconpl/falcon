@@ -18,6 +18,8 @@
 #include <falcon/symboltable.h>
 #include <falcon/symbol.h>
 #include <falcon/string.h>
+#include <falcon/syntree.h>
+#include <falcon/function.h>
 
 #include <vector>
 #include <map>
@@ -51,13 +53,45 @@ private:
    ~Private() {}
 };
 
-SymbolTable::SymbolTable()
+SymbolTable::SymbolTable():
+   m_ownedby( e_owned_none )
 {
+   m_owner.function = 0;
    _p = new Private;
 }
 
-SymbolTable::SymbolTable( const SymbolTable& other)
+SymbolTable::SymbolTable( Function* parent ):
+   m_ownedby( e_owned_function )
 {
+   m_owner.function = parent;
+   _p = new Private;
+}
+
+SymbolTable::SymbolTable( SynTree* parent ):
+   m_ownedby( e_owned_syntree )
+{
+   m_owner.syntree = parent;
+   _p = new Private;
+}
+
+SymbolTable::SymbolTable( Function* parent, const SymbolTable& other):
+   m_ownedby( e_owned_function )
+{
+    m_owner.function = parent;
+   _p = new Private( *other._p );
+}
+
+SymbolTable::SymbolTable( SynTree* parent, const SymbolTable& other):
+   m_ownedby( e_owned_syntree )
+{
+   m_owner.syntree = parent;
+   _p = new Private( *other._p );
+}
+
+SymbolTable::SymbolTable( const SymbolTable& other):
+   m_ownedby( e_owned_none )
+{
+   m_owner.function = 0;
    _p = new Private( *other._p );
 }
 
@@ -70,6 +104,19 @@ SymbolTable::~SymbolTable()
       ++iter;
    }
 }
+
+void SymbolTable::gcMark( uint32 mark ) 
+{ 
+   if( m_ownedby == e_owned_function )
+   {
+      m_owner.function->gcMark( mark );
+   }
+   else if ( m_ownedby == e_owned_syntree ) 
+   {
+      m_owner.syntree->gcMark( mark );
+   }
+}
+
 
 int32 SymbolTable::localCount() const
 {
@@ -122,29 +169,12 @@ Symbol* SymbolTable::addLocal( const String& name )
       return iter->second;
    }
    
-   Symbol* ls = new Symbol( name, Symbol::e_st_local, _p->m_locals.size() );
+   Symbol* ls = new Symbol( name, this, _p->m_locals.size() );
    _p->m_locals.push_back( ls );
    _p->m_symtab[name] = ls;
    
    return ls;
 }
-
-  
-bool SymbolTable::addLocal( Symbol* sym )
-{
-   Private::SymbolMap::iterator iter = _p->m_symtab.find( sym->name() );
-   if( iter != _p->m_symtab.end() )
-   {
-      return false;
-   }
-
-   sym->define( Symbol::e_st_local, _p->m_locals.size() );
-   _p->m_locals.push_back( sym );
-   _p->m_symtab[sym->name()] = sym;
-
-   return true;
-}
-
 
    
 Symbol* SymbolTable::addClosed( const String& name )
@@ -155,7 +185,7 @@ Symbol* SymbolTable::addClosed( const String& name )
       return iter->second;
    }
    
-   Symbol* ls = new Symbol( name, Symbol::e_st_closed, _p->m_closed.size() );
+   Symbol* ls = Symbol::ClosedSymbol( name, this, _p->m_closed.size() );
    _p->m_closed.push_back( ls );
    _p->m_symtab[name] = ls;
    
@@ -163,34 +193,6 @@ Symbol* SymbolTable::addClosed( const String& name )
 }
 
   
-bool SymbolTable::addClosed( Symbol* sym )
-{
-   Private::SymbolMap::iterator iter = _p->m_symtab.find( sym->name() );
-   if( iter != _p->m_symtab.end() )
-   {
-      return false;
-   }
-
-   sym->define( Symbol::e_st_closed, _p->m_closed.size() );
-   _p->m_closed.push_back( sym );
-   _p->m_symtab[sym->name()] = sym;
-
-   return true;
-}
-  
-
-bool SymbolTable::addSymbol( Symbol* sym )
-{
-   Private::SymbolMap::iterator iter = _p->m_symtab.find( sym->name() );
-   if( iter != _p->m_symtab.end() )
-   {
-      return false;
-   }
-
-   _p->m_symtab[sym->name()] = sym;
-   return true;
-}
-
 }
 
 /* end of symboltable.cpp */

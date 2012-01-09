@@ -58,9 +58,9 @@ public:
       {
          Falcon::Symbol* printlSym = 
             ctx->vm()->modSpace()->findExportedSymbol( "printl" );
-         fassert( printlSym != 0 && printlSym->value(0)->isFunction() );
+         fassert( printlSym != 0 && printlSym->getValue(0)->isFunction() );
          
-         m_funcPrintl = printlSym->value(0)->asFunction();
+         m_funcPrintl = printlSym->getValue(0)->asFunction();
       }      
       
       ctx->pushData("Hello from a function using printl!");
@@ -121,7 +121,7 @@ public:
    static Falcon::Error* onPrintlResolved( Falcon::Module* requester, Falcon::Module* , Falcon::Symbol* sym )
    {   
       // printl should really be a function in a global symbol ,but...
-      if( sym->value(0) == 0 || ! sym->value(0)->isFunction() )
+      if( sym->defaultValue() == 0 || ! sym->defaultValue()->isFunction() )
       {
          return new Falcon::LinkError( Falcon::ErrorParam( 
                Falcon::e_link_error, __LINE__, requester->name() )
@@ -130,7 +130,7 @@ public:
 
       // We know the requester is an instance of our module.
       static_cast<TestModule*>(requester)->m_TheTestFunc3->m_funcPrintl = 
-                                                      sym->value(0)->asFunction();
+                                                      sym->defaultValue()->asFunction();
 
       // we have no error to signal. 
       return 0;

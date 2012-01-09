@@ -314,7 +314,7 @@ void apply_init_expr( const Rule&, Parser& p )
       SynFunc* constructor = cls->makeConstructor();
       for(int pCount = 0; pCount < constructor->symbols().localCount(); ++pCount )
       {
-         init->symbols().addLocal( constructor->symbols().getLocal( pCount )->clone() );
+         init->symbols().addLocal( constructor->symbols().getLocal( pCount )->name() );
       }
       
       // the user can add a non-syntree function as init,

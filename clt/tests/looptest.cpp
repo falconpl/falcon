@@ -40,7 +40,7 @@ void go()
    //   count = count + 1
    // end
 
-   Falcon::Symbol* count = new Falcon::Symbol("count", Falcon::Symbol::e_st_local, 0);
+   Falcon::Symbol* count = fmain.symbols().addLocal("count");
    Falcon::SynTree* assign = new Falcon::SynTree;
    assign->append(
          new Falcon::StmtAutoexpr(

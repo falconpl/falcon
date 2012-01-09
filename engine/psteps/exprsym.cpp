@@ -125,7 +125,7 @@ void ExprSymbol::apply_( const PStep* ps, VMContext* ctx )
    const ExprSymbol* es = static_cast<const ExprSymbol*>(ps);
    fassert( es->m_symbol != 0 );
    ctx->popCode();
-   ctx->pushData( *es->m_symbol->value(ctx) );
+   ctx->pushData( *es->m_symbol->getValue(ctx) );
 }
 
 
@@ -134,7 +134,7 @@ void ExprSymbol::PStepLValue::apply_( const PStep* ps, VMContext* ctx )
    const ExprSymbol::PStepLValue* es = static_cast<const ExprSymbol::PStepLValue*>(ps);
    fassert( es->m_owner->m_symbol != 0 );
    ctx->popCode();
-   es->m_owner->m_symbol->value(ctx)->assign(ctx->topData());
+   es->m_owner->m_symbol->setValue(ctx, ctx->topData());
 }
    
 }

@@ -355,7 +355,7 @@ void StmtSelect::apply_( const PStep* ps, VMContext* ctx )
 void StmtSelect::SelectRequirement::onResolved(
          const Module* source, const Symbol* sym, Module*, Symbol*  )
 {
-   Item* itm = sym->defaultValue();
+   Item* itm = sym->getValue(0);
    if( itm == 0 || (!itm->isOrdinal()&& ! itm->isClass()) )
    {
       throw new LinkError( ErrorParam( m_owner->m_expr == 0 ? e_catch_invtype : e_select_invtype )

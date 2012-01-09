@@ -77,7 +77,7 @@ void Closure::close( VMContext* ctx )
             if( tgtsym != 0 )
             {
                // we found it. get the item.
-               Item* theItem = tgtsym->value(ctx);
+               Item* theItem = tgtsym->getValue(ctx);
                fassert( theItem != 0 );
                // now reference it in our closure array
                ItemReference::create(*theItem, m_closedData[i]);

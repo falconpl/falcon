@@ -35,25 +35,16 @@ UserCarrier::UserCarrier( uint32  itemcount ):
    m_dataSize( itemcount ),
    m_gcMark(0)
 {
-   if( itemcount > 0 )
-   {
-      for ( size_t i = 0; i < itemcount; ++i )
-      {
-         m_data[i].setNil();
-      }
-   }
+   /* The Item() constructor sets the items to nil*/
 }
 
 
 UserCarrier::UserCarrier( const UserCarrier& other ):
-   m_data( new Item[ other.m_dataSize ] ),
+   m_data( other.m_dataSize != 0 ? new Item[ other.m_dataSize ] : 0 ),
    m_dataSize( other.m_dataSize ),
    m_gcMark(0)
 {
-   for ( size_t i = 0; i < m_dataSize; ++i )
-   {
-      m_data[i].setNil();
-   }
+   /* The Item() constructor sets the items to nil*/
 }
    
 

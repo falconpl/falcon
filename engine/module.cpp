@@ -296,9 +296,13 @@ Symbol* Module::addFunction( Function* f, bool bExport )
    {
       return 0;
    }
+   
+   // add to the function vecotr so that we can account it.
+   _p->m_functions[f->name()] = f;
+   f->module(this);
 
    // add the symbol to the symbol table.
-   Symbol* sym = new Symbol( f->name(), Symbol::e_st_global );
+   Symbol* sym = new Symbol( f->name(), this, addDefaultValue( f ) );
    syms[f->name()] = sym;
 
    // Eventually export it.
@@ -307,12 +311,6 @@ Symbol* Module::addFunction( Function* f, bool bExport )
       // by hypotesis, we can't have a double here, already checked on m_gSyms
       _p->m_gExports[f->name()] = sym;
    }
-
-   // finally add to the function vecotr so that we can account it.
-   _p->m_functions[f->name()] = f;
-   f->module(this);
-
-   sym->defaultValue(addDefaultValue( f ));
    
    // see if this covers a forward declaration.
    checkWaitingFwdDef( sym );
@@ -390,7 +388,7 @@ Symbol* Module::addClass( Class* fc, bool, bool bExport )
 
    // add a proper object in the global vector
    // add the symbol to the symbol table.
-   Symbol* sym = new Symbol( fc->name(), Symbol::e_st_global );
+   Symbol* sym = new Symbol( fc->name(), this, addStaticData( ccls, fc ) );
    syms[fc->name()] = sym;
 
    // Eventually export it.
@@ -403,7 +401,6 @@ Symbol* Module::addClass( Class* fc, bool, bool bExport )
    // finally add to the function vecotr so that we can account it.
    _p->m_classes[fc->name()] = fc;
    fc->module(this);
-   sym->defaultValue( addStaticData( ccls, fc ) );
    // see if this covers a forward declaration.
    checkWaitingFwdDef( sym );
 
@@ -454,9 +451,8 @@ Symbol* Module::addVariable( const String& name, const Item& value, bool bExport
    else
    {
       // add the symbol to the symbol table.
-      sym = new Symbol( name, Symbol::e_st_global );
+      sym = new Symbol( name, this, addDefaultValue(value) );
       syms[name] = sym;
-      sym->defaultValue( addDefaultValue(value) );
       if( bExport )
       {
          _p->m_gExports[name] = sym;
@@ -680,7 +676,7 @@ Error* Module::addImport( ImportDef* def )
       
       if( name.getCharAt( name.length() -1 ) != '*' )
       {         
-         Symbol* newsym = new Symbol( name, Symbol::e_st_extern, -1 );
+         Symbol* newsym = Symbol::ExternSymbol( name, this, def->sr().line());
          _p->m_gSyms[name] = newsym;
          
          // and add a dependency.
@@ -809,7 +805,7 @@ Symbol* Module::addImplicitImport( const String& name, bool& isNew )
 
    isNew = true;
    // Record the fact that we have to save transform an unknown symbol...
-   Symbol* uks = new Symbol( name, Symbol::e_st_extern );
+   Symbol* uks = Symbol::ExternSymbol( name, this );
    Private::Dependency* dep = new Private::Dependency(uks);
    dep->m_sourceName = name;
    _p->m_deps[name] = dep;
@@ -873,7 +869,7 @@ Symbol* Module::addRequirement( Requirement* cr )
    Symbol* imported = addImplicitImport( symName );
    
    // is the symbol defined?
-   if( imported->type() != Symbol::e_st_extern &&  imported->type() != Symbol::e_st_undefined )
+   if( imported->type() != Symbol::e_st_extern )
    {
       cr->onResolved( this, imported, this, imported );
       return 0;

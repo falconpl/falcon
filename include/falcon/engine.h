@@ -492,7 +492,6 @@ protected:
    Class* m_exprClass;
    Class* m_syntreeClass;
    Class* m_symbolClass;
-   Class* m_dynSymbolClass;
    Class* m_closureClass;
    
    SynClasses* m_synClasses;

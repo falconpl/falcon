@@ -113,7 +113,7 @@ void ExprRef::apply_( const PStep* ps, VMContext* ctx )
    }
    
    // get the class/data pair of the item.
-   Item &value = (*self->m_symbol->value(ctx));
+   Item &value = (*self->m_symbol->getValue(ctx));
    fassert( &value != 0 );
    Item copy = value; 
    ItemReference::create( value, copy );

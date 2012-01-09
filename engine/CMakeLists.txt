@@ -121,7 +121,6 @@ add_library(falcon_engine SHARED
   psteps/exprcompare.cpp
   psteps/exprdict.cpp
   psteps/exprdot.cpp
-  psteps/exprdynsym.cpp
   psteps/expreeq.cpp
   psteps/expreval.cpp
   psteps/expriif.cpp
@@ -163,7 +162,6 @@ add_library(falcon_engine SHARED
   classes/classbool.cpp
   classes/classclosure.cpp
   classes/classdict.cpp
-  classes/classdynsymbol.cpp
   classes/classerror.cpp
   classes/classfunction.cpp
   classes/classint.cpp
@@ -174,6 +172,7 @@ add_library(falcon_engine SHARED
   classes/classreference.cpp
   classes/classrange.cpp
   classes/classstring.cpp
+  classes/classsymbol.cpp
   classes/classtreestep.cpp
   classes/classuser.cpp
   

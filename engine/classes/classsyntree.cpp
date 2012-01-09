@@ -69,7 +69,7 @@ void ClassSynTree::op_getProperty(VMContext* ctx, void* instance, const String& 
    {
       Item i_target;
       if( st->target() != 0 ) i_target.setUser( m_classSymbol, st->target() );
-      ctx->stackResult(2, i_target );
+      ctx->stackResult(1, i_target );
    }
    else {
       m_parent->op_getProperty( ctx, instance, prop );

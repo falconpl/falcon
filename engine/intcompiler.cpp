@@ -274,7 +274,8 @@ Symbol* IntCompiler::Context::onUndefinedSymbol( const String& name )
       // no? -- create it as an implicit import -- but only if really needed,
       // -- in the interactive mode, we just consider a missing reference to be an error.
       // and try to link it right now.
-      Symbol* exp = mod->moduleSpace()->findExportedOrGeneralSymbol( mod, name );
+      Module* importer;
+      Symbol* exp = mod->moduleSpace()->findExportedOrGeneralSymbol( mod, name, importer );
       if( exp == 0 )
       {
          return 0;
@@ -282,8 +283,7 @@ Symbol* IntCompiler::Context::onUndefinedSymbol( const String& name )
       gsym = mod->addImplicitImport( name );  
       
       // no need to "define" it, it stays an extern.
-      gsym->id( exp->id() );
-      gsym->defaultValue( exp->defaultValue() );
+      gsym->resolveExtern( importer, exp->defaultValue() );
    }
    return gsym;
 }
@@ -298,9 +298,6 @@ Symbol* IntCompiler::Context::onGlobalDefined( const String& name, bool &adef )
       return m_owner->m_module->addVariable( name );
    }
    // The interactive compiler never adds an undefined symbol
-   // -- as it immediately reports error.
-   fassert2( sym->type() != Symbol::e_st_undefined,
-         "Undefined symbol in the global map of the interactive compiler." );
 
    adef = true;
    return sym;
@@ -331,7 +328,7 @@ void IntCompiler::Context::onInheritance( Inheritance* inh )
    // found?
    if( sym != 0 )
    {
-      Item* itm = sym->defaultValue();
+      Item* itm = sym->getValue(0);
       if ( ! itm->isUser() || ! itm->asClass()->isMetaClass() )
       {
          m_owner->m_sp.addError( e_inv_inherit, m_owner->m_sp.currentSource(), 
@@ -471,6 +468,7 @@ IntCompiler::compile_status IntCompiler::compileNext( const String& value)
          m_sp.reset();
          // where to put the tree now?
          // it might be reflected?
+         //TODO: Good thing is to GC it.
          //delete m_currentTree;
          m_currentTree = 0;
       }

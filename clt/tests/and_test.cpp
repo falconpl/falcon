@@ -107,7 +107,7 @@ void go( int arg, bool bUseOr )
    fmain.module(&module);
 
    
-   Symbol* count = new Symbol( "count", Symbol::e_st_local, 0);
+   Symbol* count = fmain.symbols().addLocal("count");
    Expression* assign = new ExprAssign( new ExprSymbol( count ),
                      new ExprPlus( new ExprValue(2), new ExprValue(1) ));
 

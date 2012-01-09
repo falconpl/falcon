@@ -148,7 +148,7 @@ void Inheritance::IRequirement::onResolved(
 {
    const Item* value;
    
-   if( (value = srcSym->value( 0 )) == 0 || ! value->isClass() )
+   if( (value = srcSym->getValue( 0 )) == 0 || ! value->isClass() )
    {
       // the symbol is not a class?   
       throw new CodeError( ErrorParam( e_inv_inherit ) 

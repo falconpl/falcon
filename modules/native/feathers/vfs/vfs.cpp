@@ -67,7 +67,7 @@ VFSModule::~VFSModule()
 Falcon::Error* VFSModule::onURIResolved( Falcon::Module* requester, Falcon::Module* , Falcon::Symbol* sym )
 {   
    // printl should really be a function in a global symbol ,but...
-   if( sym->value(0) == 0 || ! sym->value(0)->isClass() )
+   if( sym->defaultValue() == 0 || ! sym->defaultValue()->isClass() )
    {
       return new Falcon::LinkError( Falcon::ErrorParam( 
             Falcon::e_link_error, __LINE__, requester->name() )
@@ -75,7 +75,7 @@ Falcon::Error* VFSModule::onURIResolved( Falcon::Module* requester, Falcon::Modu
    }
 
    // We know the requester is an instance of our module.
-   static_cast<VFSModule*>(requester)->m_uriClass = (Class*)sym->value(0)->asInst();
+   static_cast<VFSModule*>(requester)->m_uriClass = (Class*)sym->defaultValue()->asInst();
 
    // we have no error to signal. 
    return 0;
@@ -84,7 +84,7 @@ Falcon::Error* VFSModule::onURIResolved( Falcon::Module* requester, Falcon::Modu
 Falcon::Error* VFSModule::onStreamResolved( Falcon::Module* requester, Falcon::Module* , Falcon::Symbol* sym )
 {   
    // printl should really be a function in a global symbol ,but...
-   if( sym->value(0) == 0 || ! sym->value(0)->isClass() )
+   if( sym->defaultValue() == 0 || ! sym->defaultValue()->isClass() )
    {
       return new Falcon::LinkError( Falcon::ErrorParam( 
             Falcon::e_link_error, __LINE__, requester->name() )
@@ -92,7 +92,7 @@ Falcon::Error* VFSModule::onStreamResolved( Falcon::Module* requester, Falcon::M
    }
 
    // We know the requester is an instance of our module.
-   static_cast<VFSModule*>(requester)->m_streamClass = (Class*)sym->value(0)->asInst();
+   static_cast<VFSModule*>(requester)->m_streamClass = (Class*)sym->defaultValue()->asInst();
 
    // we have no error to signal. 
    return 0;

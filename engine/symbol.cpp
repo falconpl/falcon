@@ -16,73 +16,220 @@
 #include <falcon/symbol.h>
 #include <falcon/stream.h>
 #include <falcon/vm.h>
-#include <falcon/function.h>
+#include <falcon/symboltable.h>
 #include <falcon/callframe.h>
 #include <falcon/itemarray.h>
 
+#include "falcon/module.h"
+
 namespace Falcon {
 
-Symbol::Symbol( const String& name, type_t t, uint32 id ):
-   m_name( name ),
-   m_declaredAt(0),
-   m_type(t),
-   m_external(false),
-   m_bConstant(false),
-   m_defval(0)
+Symbol::Symbol()
 {
-   define( t, id );
+   // leave all unconfigured.
 }
 
-Symbol::Symbol( const Symbol& other ):
-   m_name( other.m_name ),
-   m_declaredAt( other.m_declaredAt ),
-   m_id( other.m_id ),
-   m_type( other.m_type ),
-   m_external(other.m_external),
-   m_bConstant(other.m_bConstant),
-   m_defval(other.m_defval),
+Symbol::Symbol( const String& name, int line ):
+   m_name(name),
+   m_declaredAt(line),         
+   m_remote(0),   
+   m_type( Symbol::e_st_dynamic ),
+   m_bConstant(false)  
+{
+   m_host.module = 0;
+   m_defvalue.asItem = 0;
+   
+   m_getValue = Symbol::getValue_dyns;
+   m_setValue = Symbol::setValue_dyns;
 
-   m_value( other.m_value )
-{}
+}
+   
+Symbol::Symbol( const String& name, SymbolTable* host, uint32 id, int line ):
+   m_name(name),
+   m_declaredAt(line),         
+   m_remote(0),   
+   m_type( Symbol::e_st_local ),
+   m_bConstant(false)  
+{
+   m_host.symtab = host;
+   m_defvalue.asId = id;
+   
+   m_getValue = Symbol::getValue_local;
+   m_setValue = Symbol::setValue_local;
+}
+   
+Symbol::Symbol( const String& name, Module* host, Item* value, int line ):
+   m_name(name),
+   m_declaredAt(line),         
+   m_remote(0),   
+   m_type( Symbol::e_st_global ),
+   m_bConstant(false)  
+{
+   m_host.module = host;
+   m_defvalue.asItem = value;
+   
+   m_getValue = Symbol::getValue_global;
+   m_setValue = Symbol::setValue_global;
+}
+   
+   
+Symbol* Symbol::ExternSymbol( const String& name, Module* mod, int line )
+{
+   Symbol* sym = new Symbol;
+   sym->m_name = name;
+   sym->m_declaredAt = line;         
+   sym->m_remote = 0;
+   sym->m_type = e_st_extern;
+   sym->m_bConstant = false;  
+   
+   sym->m_host.module = mod;
+   sym->m_defvalue.asItem = 0;
+   
+   sym->m_getValue = Symbol::getValue_extern;
+   sym->m_setValue = Symbol::setValue_extern;
+   return sym;
+}
+   
+
+Symbol* Symbol::ClosedSymbol( const String& name, SymbolTable* host, uint32 id, int line )
+{
+   Symbol* sym = new Symbol;
+   sym->m_name = name;
+   sym->m_declaredAt = line;         
+   sym->m_remote = 0;
+   sym->m_type = e_st_extern;
+   sym->m_bConstant = false;  
+   
+   sym->m_host.symtab = host;
+   sym->m_defvalue.asId = id;
+   
+   sym->m_getValue = Symbol::getValue_closed;
+   sym->m_setValue = Symbol::setValue_closed;
+   return sym;
+}
+   
+
+Symbol::Symbol( const Symbol& other ):
+   m_name(other.m_name),
+   m_declaredAt(other.m_declaredAt),         
+   m_defvalue(other.m_defvalue),
+   m_host(other.m_host),
+   m_remote(other.m_remote),
+   m_setValue(other.m_setValue),
+   m_getValue(other.m_getValue),
+   m_type( other.m_type ),
+   m_bConstant(other.m_bConstant)
+{
+}
 
 
 Symbol::~Symbol()
 {
 }
 
-
-void Symbol::define( type_t t, uint32 id )
+void Symbol::gcMark( uint32 mark )
 {
-   m_id = id;
-   switch(t)
+   if( m_name.currentMark() < mark )
    {
-      case e_st_local: m_value = value_local; break;
-      case e_st_extern: case e_st_global: m_value = value_global; break;
-      case e_st_closed: m_value = value_closed; break;
-      case e_st_undefined: m_value = value_undef; break;
+      m_name.gcMark( mark );
+      switch( m_type )
+      {
+         case e_st_global:
+            m_host.module->gcMark( mark );
+            break;
+            
+         case e_st_closed:
+         case e_st_local:
+            m_host.symtab->gcMark( mark );
+            break;
+            
+         case e_st_extern:
+            m_host.module->gcMark( mark );
+            if( m_remote != 0 ) m_remote->gcMark( mark );
+            break;
+            
+            // else, there's nothing to mark;
+            // we trust that both dynamic symbols have values somewhere safe.
+         case e_st_dynamic:  break;
+      }
    }
 }
 
-Item* Symbol::value_global( VMContext*, const Symbol* sym )
+
+void Symbol::resolveExtern( Module* newHost, Item* value )
 {
-   return sym->defaultValue();
+   fassert2( m_type == e_st_extern, "Ought to be an extern symbol." );
+   m_remote = newHost;
+   m_defvalue.asItem = value;
+   
+   m_getValue = Symbol::getValue_global;
+   m_setValue = Symbol::setValue_global;
 }
 
-Item* Symbol::value_local( VMContext* ctx, const Symbol* sym )
+void Symbol::promoteExtern( Item* value )
 {
-   // the ID of the symbol is relative with respect to stack base, as the parameters.
-   return &ctx->localVar( sym->m_id );
+   fassert2( m_type == e_st_extern, "Ought to be an extern symbol." );
+   m_defvalue.asItem = value;
+   // change also the type
+   m_type = e_st_global;
+   
+   m_getValue = Symbol::getValue_global;
+   m_setValue = Symbol::setValue_global;
 }
 
-Item* Symbol::value_closed( VMContext* ctx, const Symbol* sym )
+
+Item* Symbol::getValue_global( const Symbol* sym, VMContext* )
 {
-   return & (*ctx->currentFrame().m_closedData)[sym->m_id];
+   return sym->m_defvalue.asItem;
 }
 
-Item* Symbol::value_undef( VMContext* , const Symbol* )
+Item* Symbol::getValue_local( const Symbol* sym, VMContext* ctx )
 {
-   fassert2( false, "Called value on an undefined symbol");
-   return 0;
+   return &ctx->localVar(sym->m_defvalue.asId);
+}
+
+Item* Symbol::getValue_closed( const Symbol* sym, VMContext* ctx )
+{
+   return & (*ctx->currentFrame().m_closedData)[sym->m_defvalue.asId];
+}
+
+Item* Symbol::getValue_extern( const Symbol* sym, VMContext* ctx )
+{
+   // operate as a dynamic value
+   return ctx->getDynSymbolValue( sym );
+}
+
+Item* Symbol::getValue_dyns( const Symbol* sym, VMContext* ctx )
+{
+   return ctx->getDynSymbolValue( sym );
+}
+
+
+void Symbol::setValue_global( const Symbol* sym, VMContext*, const Item& value )
+{
+   sym->m_defvalue.asItem->assign(value);
+}
+
+void Symbol::setValue_local( const Symbol* sym, VMContext* ctx, const Item& value)
+{
+   ctx->localVar(sym->m_defvalue.asId).assign(value);
+}
+
+void Symbol::setValue_closed( const Symbol* sym, VMContext* ctx, const Item& value )
+{
+   (*ctx->currentFrame().m_closedData)[sym->m_defvalue.asId].assign(value);
+}
+
+void Symbol::setValue_extern( const Symbol* sym, VMContext* ctx, const Item& value )
+{
+   // operate as a dynamic value
+   ctx->setDynSymbolValue( sym, value );
+}
+
+
+void Symbol::setValue_dyns( const Symbol* sym, VMContext* ctx, const Item& value )
+{
+   ctx->setDynSymbolValue( sym, value );
 }
 
 }

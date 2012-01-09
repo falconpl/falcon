@@ -439,7 +439,7 @@ void VMContext::raiseItem( const Item& item )
          Symbol* sym = m_catchBlock->target();
          if( sym != 0 )
          {
-            *sym->value(this) = item;
+            sym->setValue(this, item);
          }
          m_raised.setNil();
       }
@@ -493,7 +493,7 @@ void VMContext::raiseError( Error* ce )
          // assign the error to the required item.
          if( m_catchBlock->target() != 0 )
          {
-            Item* value = m_catchBlock->target()->value(this);
+            Item* value = m_catchBlock->target()->getValue(this);
             if( value != 0 )
             {
                value->setUser( ce->handler(), ce, true );
@@ -810,13 +810,13 @@ bool VMContext::boolTopData()
 }
 
 
-void VMContext::setDynSymbolValue( DynSymbol* dyns, const Item& value )
+void VMContext::setDynSymbolValue( const Symbol* dyns, const Item& value )
 {
    value.copied();
    *getDynSymbolValue(dyns) = value;
 }
 
-Item* VMContext::getDynSymbolValue( DynSymbol* dyns )
+Item* VMContext::getDynSymbolValue( const Symbol* dyns )
 {
    // search for the dynsymbol in the current context.
    const CallFrame* cf = &currentFrame();
@@ -832,7 +832,6 @@ Item* VMContext::getDynSymbolValue( DynSymbol* dyns )
    }
 
    // no luck. Descend the frames.
-   --cf;
    while( cf >= m_callStack.m_base )
    {
       dd = m_dynsStack.m_top;
@@ -843,6 +842,7 @@ Item* VMContext::getDynSymbolValue( DynSymbol* dyns )
             // Found!
             return dd->m_item.dereference();
          }
+         --dd;
       }
 
       // no luck, try with locals.
@@ -854,7 +854,7 @@ Item* VMContext::getDynSymbolValue( DynSymbol* dyns )
          newData->m_sym = dyns;
          // reference the target local variable into our slot.
          ItemReference::create(
-            m_dataStack.m_base[cf->m_initBase + locsym->id()],
+            m_dataStack.m_base[cf->m_initBase + locsym->localId()],
             newData->m_item );
          return newData->m_item.dereference();
       }
@@ -868,7 +868,7 @@ Item* VMContext::getDynSymbolValue( DynSymbol* dyns )
       Symbol* globsym = master->getGlobal( dyns->name() );
       if( globsym != 0 )
       {
-         Item* value = globsym->value(this);
+         Item* value = globsym->getValue(this);
          DynsData* newData = m_dynsStack.addSlot();
          newData->m_sym = dyns;
          // reference the target local variable into our slot.
@@ -886,7 +886,7 @@ Item* VMContext::getDynSymbolValue( DynSymbol* dyns )
       Symbol* expsym = ms->findExportedSymbol( dyns->name() );
       if( expsym != 0 )
       {
-         Item* value = expsym->value(this);
+         Item* value = expsym->getValue(this);
          DynsData* newData = m_dynsStack.addSlot();
          newData->m_sym = dyns;
          // reference the target local variable into our slot.
