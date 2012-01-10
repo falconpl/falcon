@@ -41,8 +41,11 @@ void Item::setString( const String& str )
 
 void Item::setString( String* str, bool bGarbage, int line, const char* src )
 {
+   if( line ) line = line;
+   
    static Class* strClass = Engine::instance()->stringClass();
    static Collector* coll = Engine::instance()->collector();
+   
    if( bGarbage )
    {
       if( src != 0 )

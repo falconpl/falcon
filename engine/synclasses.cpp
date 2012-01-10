@@ -15,6 +15,7 @@
 
 #define SRC "engine/synclasses.cpp"
 
+#include <falcon/setup.h>
 #include <falcon/synclasses.h>
 #include <falcon/vmcontext.h>
 #include <falcon/engine.h>
@@ -172,6 +173,7 @@ void SynClasses::naryExprSet( VMContext* ctx, int pcount, TreeStep* step, int32 
 
 GCToken* SynClasses::collect( const Class* cls, TreeStep* earr, int line )
 {
+   FALCON_UNUSED_PARAM(line)
    static Collector* coll = Engine::instance()->collector();
    return FALCON_GC_STORE_PARAMS( coll, cls, earr, line, SRC );
 }
@@ -434,8 +436,8 @@ void SynClasses::ClassGenRef::op_create( VMContext* ctx, int pcount ) const
    static Class* exprClass = Engine::instance()->expressionClass();
    
    Item* params = ctx->opcodeParams(pcount);
-   Class* cls;
-   void* data;
+   Class* cls=0;
+   void* data=0;
    if( pcount < 1 || params->asClassInst(cls, data) )
    {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__, SRC )

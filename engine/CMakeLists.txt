@@ -106,6 +106,7 @@ add_library(falcon_engine SHARED
   sp/parser_proto.cpp
   sp/parser_reference.cpp
   sp/parser_rule.cpp
+  sp/parser_ternaryif.cpp
   sp/parser_try.cpp
   sp/parser_while.cpp
   sp/parsercontext.cpp

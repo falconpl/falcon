@@ -13,6 +13,8 @@
    See LICENSE file for licensing details.
 */
 
+#define SRC "engine/textwriter.cpp"
+
 #include <falcon/errors/paramerror.h>
 #include <falcon/cm/textwriter.h>
 #include <falcon/transcoder.h>

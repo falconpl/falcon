@@ -23,6 +23,7 @@
 
 #include <falcon/synclasses.h>
 #include <falcon/engine.h>
+#include <falcon/itemarray.h>
 
 #include <falcon/psteps/exprsym.h>
 
@@ -125,7 +126,21 @@ void ExprSymbol::apply_( const PStep* ps, VMContext* ctx )
    const ExprSymbol* es = static_cast<const ExprSymbol*>(ps);
    fassert( es->m_symbol != 0 );
    ctx->popCode();
-   ctx->pushData( *es->m_symbol->getValue(ctx) );
+   
+   ctx->pushData(*es->m_symbol->getValue(ctx));
+   /*
+   register Symbol* sym = es->m_symbol;
+   switch( sym->type() )
+   {
+      case Symbol::e_st_global: ctx->pushData(*sym->m_defvalue.asItem); break;
+      case Symbol::e_st_local: ctx->pushData(ctx->localVar(sym->m_defvalue.asId)); break;
+      case Symbol::e_st_closed: ctx->pushData(((*ctx->currentFrame().m_closedData)[sym->m_defvalue.asId])); break;
+      case Symbol::e_st_extern: 
+      case Symbol::e_st_dynamic:
+         // operate as a dynamic value
+         ctx->pushData(*ctx->getDynSymbolValue( sym ));
+         break;
+   }*/
 }
 
 

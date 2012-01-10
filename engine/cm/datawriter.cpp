@@ -13,6 +13,8 @@
    See LICENSE file for licensing details.
 */
 
+#define SRC "engine/datawriter.cpp"
+
 #include <falcon/cm/datawriter.h>
 
 #include <falcon/datawriter.h>
@@ -90,8 +92,8 @@ void* ClassDataWriter::createInstance( Item* params, int pcount ) const
    
    if( pcount >= 1 )
    {
-      Class* cls;
-      void* data;
+      Class* cls=0;
+      void* data=0;
       params[0].asClassInst( cls, data );
       if( cls->isDerivedFrom(streamCls) )
       {
@@ -191,8 +193,8 @@ FALCON_DEFINE_METHOD_P1( ClassDataWriter, write )
       throw paramError();
    }
    
-   byte* dataSource; 
-   uint32 dataSize;
+   byte* dataSource=0; 
+   uint32 dataSize=0;
    
    uint32 count = String::npos;
    uint32 start = 0;

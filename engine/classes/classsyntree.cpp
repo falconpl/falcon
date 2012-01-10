@@ -13,6 +13,7 @@
    See LICENSE file for licensing details.
 */
 
+#define SRC "engine/classes/classsyntree.cpp"
 
 #include <falcon/setup.h>
 #include <falcon/string.h>

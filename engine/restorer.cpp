@@ -13,6 +13,8 @@
    See LICENSE file for licensing details.
 */
 
+#define SRC "engine/restorer.cpp"
+
 #include <falcon/restorer.h>
 #include <falcon/string.h>
 #include <falcon/vmcontext.h>

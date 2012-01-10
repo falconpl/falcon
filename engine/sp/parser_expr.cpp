@@ -215,6 +215,16 @@ void apply_expr_shl( const Rule& r, Parser& p )
    apply_expr_binary(r, p, new ExprLShift );
 }
 
+void apply_expr_and( const Rule& r, Parser& p )
+{
+   apply_expr_binary(r, p, new ExprAnd );
+}
+
+void apply_expr_or( const Rule& r, Parser& p )
+{
+   apply_expr_binary(r, p, new ExprOr );
+}
+
 void apply_expr_band( const Rule& r, Parser& p )
 {
    apply_expr_binary(r, p, new ExprBAND );

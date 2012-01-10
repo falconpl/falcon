@@ -43,6 +43,7 @@
 #include <falcon/sp/parser_proto.h>
 #include <falcon/sp/parser_reference.h>
 #include <falcon/sp/parser_rule.h>
+#include <falcon/sp/parser_ternaryif.h>
 #include <falcon/sp/parser_try.h>
 #include <falcon/sp/parser_while.h>
 
@@ -423,6 +424,9 @@ SourceParser::SourceParser():
    Expr<< (r_Expr_shr   << "Expr_shr"   << apply_expr_shr   << Expr << T_RShift << Expr );
    Expr<< (r_Expr_shl   << "Expr_shl"   << apply_expr_shl   << Expr << T_LShift << Expr );
 
+   Expr<< (r_Expr_and << "Expr_and" << apply_expr_and  << Expr << T_and << Expr );
+   Expr<< (r_Expr_or  << "Expr_or"  << apply_expr_or   << Expr << T_or << Expr );
+   
    Expr<< (r_Expr_band << "Expr_band" << apply_expr_band  << Expr << T_BAND << Expr );
    Expr<< (r_Expr_bor  << "Expr_bor"  << apply_expr_bor   << Expr << T_BOR << Expr );
    Expr<< (r_Expr_bxor << "Expr_bxor" << apply_expr_bxor  << Expr << T_BXOR << Expr );
@@ -436,8 +440,12 @@ SourceParser::SourceParser():
    Expr<< (r_Expr_auto_shl << "Expr_auto_shr"   << apply_expr_auto_shr  << Expr << T_AutoRShift << Expr );
    Expr<< (r_Expr_auto_shr << "Expr_auto_shl"   << apply_expr_auto_shl   << Expr << T_AutoLShift << Expr );
    
+   Expr<< (r_Expr_ternary_if << "Expr_ternary_if"   << apply_expr_ternary_if  
+            << Expr << T_QMark << Expr << T_Colon << Expr );
+   
    Expr<< (r_Expr_expr_eval << "Expr_eval"  << apply_expr_eval << T_EVAL << Expr );
    Expr<< (r_Expr_expr_lit << "Expr_lit"  << apply_expr_lit << T_LIT << Expr );
+   
    
    Expr<< (r_Expr_Atom << "Expr_atom" << apply_expr_atom << Atom);
    Expr<< (r_Expr_function << "Expr_func" << apply_expr_func << T_function << T_Openpar << ListSymbol << T_Closepar << T_EOL);

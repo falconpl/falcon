@@ -310,8 +310,8 @@ FALCON_DEFINE_METHOD_P1( ClassStream, write )
       throw paramError();
    }
    
-   byte* dataSource; 
-   uint32 dataSize;
+   byte* dataSource=0; 
+   uint32 dataSize=0;
    
    uint32 count = String::npos;
    uint32 start = 0;

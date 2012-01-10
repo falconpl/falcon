@@ -13,6 +13,8 @@
    See LICENSE file for licensing details.
 */
 
+#define SRC "engine/classes/classtreestep.cpp"
+
 #include <falcon/trace.h>
 #include <falcon/classes/classtreestep.h>
 #include <falcon/treestep.h>

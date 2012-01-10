@@ -30,6 +30,7 @@ class VMContext;
 
 class SymbolTable;
 class Module;
+class ExprSymbol;
 
 /** Base symbol class.
  * A Falcon Symbol is a name indicating a value, possibly (usually) bound
@@ -225,6 +226,8 @@ protected:
    static void setValue_closed( const Symbol* sym, VMContext* ctx, const Item& value );
    static void setValue_extern( const Symbol* sym, VMContext* ctx, const Item& value );
    static void setValue_dyns( const Symbol* sym, VMContext* ctx, const Item& value );
+   
+   friend class ExprSymbol;
 };
 
 }

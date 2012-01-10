@@ -328,6 +328,9 @@ public:
    Parsing::Rule r_Expr_shl;
    Parsing::Rule r_Expr_shr;
    
+   Parsing::Rule r_Expr_and;
+   Parsing::Rule r_Expr_or;
+   
    Parsing::Rule r_Expr_band;
    Parsing::Rule r_Expr_bor;
    Parsing::Rule r_Expr_bxor;
@@ -346,6 +349,8 @@ public:
    Parsing::Rule r_Expr_auto_pow;
    Parsing::Rule r_Expr_auto_shr;
    Parsing::Rule r_Expr_auto_shl;
+   
+   Parsing::Rule r_Expr_ternary_if;
    Parsing::Rule r_Expr_expr_eval;
    Parsing::Rule r_Expr_expr_lit;
    

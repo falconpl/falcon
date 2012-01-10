@@ -13,6 +13,8 @@
    See LICENSE file for licensing details.
 */
 
+#define SRC "engine/modspace.cpp"
+
 #include <falcon/trace.h>
 #include <falcon/modspace.h>
 #include <falcon/error.h>
@@ -175,7 +177,7 @@ void ModSpace::resolve( ModLoader* ml, Module* mod, bool bExport, bool bOwn )
    // save the module as requested.
    add( mod, bExport, bOwn );
 
-   resolveDeps( ml, mod, bExport );
+   resolveDeps( ml, mod );
 }
 
 
@@ -229,11 +231,9 @@ void ModSpace::resolveImportDef( ImportDef* def, ModLoader* ml, Module* requeste
 }
 
 
-void ModSpace::resolveDeps( ModLoader* ml, Module* mod, bool bExport )
+void ModSpace::resolveDeps( ModLoader* ml, Module* mod)
 {   
-   TRACE( "ModSpace::resolveDeps %s %s",
-      mod->name().c_ize(), bExport ? "with export" :  "" 
-      );
+   TRACE( "ModSpace::resolveDeps %s", mod->name().c_ize() );
     
    // scan the dependencies.
    Module::Private* prv = mod->_p;

@@ -1109,9 +1109,6 @@ public:
    Error* thrownError() const { return m_thrown; }
    Error* detachThrownError() { Error* e = m_thrown; m_thrown =0; return e; }
 
-   /** Check the boolean true-ness of the topmost data item, possibly going deep.
-    */
-   bool boolTopData();
 
    /** Check the boolean true-ness of the topmost data item, removing the top element.
     */
@@ -1120,6 +1117,36 @@ public:
       bool btop = boolTopData();
       popData();
       return btop;
+   }
+
+   /** Check the boolean true-ness of the topmost data item, possibly going deep.
+    */
+   inline bool boolTopData()
+   {
+
+      switch( topData().type() )
+      {
+      case FLC_ITEM_NIL:
+         return false;
+
+      case FLC_ITEM_BOOL:
+         return topData().asBoolean();
+
+      case FLC_ITEM_INT:
+         return topData().asInteger() != 0;
+
+      case FLC_ITEM_NUM:
+         return topData().asNumeric() != 0.0;
+
+      case FLC_ITEM_USER:
+         topData().asClass()->op_isTrue( this, topData().asInst() );
+         if(topData().isBoolean() )
+         {
+            return topData().asBoolean();
+         }
+      }
+
+      return false;
    }
 
    //===============================================================

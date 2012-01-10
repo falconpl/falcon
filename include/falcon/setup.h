@@ -195,6 +195,10 @@ different systems.
    #define FALCON_TRACE_GC 1
 #endif
 
+#ifndef FALCON_UNUSED_PARAM
+#define FALCON_UNUSED_PARAM(x) {if(x) x = x;}
+#endif
+            
 #endif
 
 /* end of setup.h */

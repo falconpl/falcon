@@ -54,6 +54,10 @@ void apply_expr_mod( const Rule& r, Parser& p );
 void apply_expr_pow( const Rule& r, Parser& p );
 void apply_expr_shr( const Rule&, Parser& p );
 void apply_expr_shl( const Rule&, Parser& p );
+
+void apply_expr_and( const Rule&, Parser& p );
+void apply_expr_or( const Rule&, Parser& p );
+
 void apply_expr_band( const Rule&, Parser& p );
 void apply_expr_bor( const Rule&, Parser& p );
 void apply_expr_bxor( const Rule&, Parser& p );

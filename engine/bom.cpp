@@ -13,6 +13,8 @@
    See LICENSE file for licensing details.
 */
 
+#define SRC "engine/bom.cpp"
+
 #include <falcon/bom.h>
 #include <falcon/string.h>
 #include <falcon/vm.h>

@@ -156,7 +156,7 @@ public:
     This method is usually called by resolve().
     
     */
-   void resolveDeps( ModLoader* ml, Module* mod, bool bExport = false);
+   void resolveDeps( ModLoader* ml, Module* mod);
    
    /** Links newly added modules.
     \return A link error containing all the problems in this link

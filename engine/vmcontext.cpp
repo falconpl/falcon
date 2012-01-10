@@ -12,6 +12,7 @@
 
    See LICENSE file for licensing details.
 */
+#define SRC "engine/vmcontext.cpp"
 
 #include <falcon/vmcontext.h>
 #include <falcon/trace.h>
@@ -781,35 +782,6 @@ void VMContext::returnFrame( const Item& value )
 }
 
 
-bool VMContext::boolTopData()
-{
-
-   switch( topData().type() )
-   {
-   case FLC_ITEM_NIL:
-      return false;
-
-   case FLC_ITEM_BOOL:
-      return topData().asBoolean();
-
-   case FLC_ITEM_INT:
-      return topData().asInteger() != 0;
-
-   case FLC_ITEM_NUM:
-      return topData().asNumeric() != 0.0;
-
-   case FLC_ITEM_USER:
-      topData().asClass()->op_isTrue( this, topData().asInst() );
-      if(topData().isBoolean() )
-      {
-         return topData().asBoolean();
-      }
-   }
-
-   return false;
-}
-
-
 void VMContext::setDynSymbolValue( const Symbol* dyns, const Item& value )
 {
    value.copied();
@@ -823,7 +795,7 @@ Item* VMContext::getDynSymbolValue( const Symbol* dyns )
    register DynsData* dd = m_dynsStack.m_top;
    register DynsData* base = m_dynsStack.offset( cf->m_dynsBase );
    while( dd >= base ) {
-      if ( dyns == dd->m_sym )
+      if ( dyns->name() == dd->m_sym->name() )
       {
          // Found!
          return dd->m_item.dereference();
@@ -837,7 +809,7 @@ Item* VMContext::getDynSymbolValue( const Symbol* dyns )
       dd = m_dynsStack.m_top;
       base = m_dynsStack.offset( cf->m_dynsBase );
       while( dd >= base ) {
-         if ( dyns == dd->m_sym )
+         if ( dyns->name() == dd->m_sym->name() )
          {
             // Found!
             return dd->m_item.dereference();

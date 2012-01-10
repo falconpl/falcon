@@ -13,6 +13,8 @@
    See LICENSE file for licensing details.
 */
 
+#define SRC "falcon/modules/native/feathers/vfs/create.cpp"
+
 #include <falcon/vmcontext.h>
 #include <falcon/vfsprovider.h>
 #include <falcon/engine.h>

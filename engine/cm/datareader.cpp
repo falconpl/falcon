@@ -13,6 +13,8 @@
    See LICENSE file for licensing details.
 */
 
+#define SRC "engine/datareader.cpp"
+
 #include <falcon/cm/datareader.h>
 
 #include <falcon/datareader.h>
@@ -94,8 +96,8 @@ void* ClassDataReader::createInstance( Item* params, int pcount ) const
    
    if( pcount >= 1 )
    {
-      Class* cls;
-      void* data;
+      Class* cls=0;
+      void* data=0;
       params[0].asClassInst( cls, data );
       if( cls->isDerivedFrom(streamCls) )
       {
