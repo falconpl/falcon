@@ -83,6 +83,7 @@ public:
    Parsing::Terminal T_Bang;
    Parsing::Terminal T_UnaryMinus;
    Parsing::Terminal T_Dollar;
+   Parsing::Terminal T_Amper;
    Parsing::Terminal T_Power;
    Parsing::Terminal T_Times;
    Parsing::Terminal T_Divide;
@@ -312,6 +313,7 @@ public:
    Parsing::Rule r_Expr_empty_dict2;
    Parsing::Rule r_Expr_array_decl2;
    Parsing::Rule r_Expr_ref;
+   Parsing::Rule r_Expr_amper;
    Parsing::Rule r_Expr_dot;
    Parsing::Rule r_Expr_plus;
    Parsing::Rule r_Expr_preinc;

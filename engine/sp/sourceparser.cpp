@@ -28,6 +28,7 @@
 #include <falcon/sp/parser_autoexpr.h>
 #include <falcon/sp/parser_class.h>
 #include <falcon/sp/parser_call.h>
+#include <falcon/sp/parser_dynsym.h>
 #include <falcon/sp/parser_end.h>
 #include <falcon/sp/parser_export.h>
 #include <falcon/sp/parser_expr.h>
@@ -109,6 +110,7 @@ SourceParser::SourceParser():
 
    T_UnaryMinus("(neg)",23),
    T_Dollar("$",23),
+   T_Amper("&",23),
    T_Power("**", 25),
 
    T_Times("*",30),
@@ -128,7 +130,7 @@ SourceParser::SourceParser():
    T_Greater(">", 70),
    T_LE("<=", 70),
    T_GE(">=", 70),
-   T_Colon( ":" ),
+   T_Colon( ":", 170 ),
    T_EqSign("=", 200, false),
    T_EqSign2("=", 200 ),
 
@@ -406,6 +408,7 @@ SourceParser::SourceParser():
    Expr<< (r_Expr_array_decl2 << "Expr_array_decl2" << apply_expr_array_decl2 << T_DotSquare );
    
    Expr<< (r_Expr_ref << "Expr_ref" << apply_expr_ref << T_Dollar << T_Name );
+   Expr<< (r_Expr_amper << "Expr_dyns" << apply_expr_amper << T_Amper << T_Name );
    
    Expr<< (r_Expr_dot << "Expr_dot" << apply_expr_dot << Expr << T_Dot << T_Name);
    Expr<< (r_Expr_plus << "Expr_plus" << apply_expr_plus << Expr << T_Plus << Expr);

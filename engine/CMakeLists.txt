@@ -91,6 +91,7 @@ add_library(falcon_engine SHARED
   sp/parser_call.cpp
   sp/parser_class.cpp
   sp/parser_deletor.cpp
+  sp/parser_dynsym.cpp
   sp/parser_end.cpp
   sp/parser_export.cpp
   sp/parser_expr.cpp

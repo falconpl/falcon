@@ -861,6 +861,7 @@ Parsing::TokenInstance* SourceLexer::checkOperator()
          if( m_text == ":" ) return parser->T_Colon.makeInstance(m_sline, m_schr);
          if( m_text == "," ) return parser->T_Comma.makeInstance(m_sline, m_schr);
          if( m_text == "$" ) return parser->T_Dollar.makeInstance(m_sline, m_schr);
+         if( m_text == "&" ) return parser->T_Amper.makeInstance(m_sline, m_schr);
          if( m_text == "?" ) return parser->T_QMark.makeInstance(m_sline, m_schr);
          // the cut operator is a statement.
          if( m_text == "!" )
