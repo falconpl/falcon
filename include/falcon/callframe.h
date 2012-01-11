@@ -82,6 +82,9 @@ public:
    /** True if self has been passed. */
    bool m_bMethodic;
    
+   /** True if evaluating out of context. */
+   bool m_bEvalOutOfContext;
+   
    
    // Actually never used, just used at compile time by vector.
    CallFrame()
@@ -97,7 +100,8 @@ public:
       m_codeBase( cb ),
       m_self(self),
       m_finallyCount(0),
-      m_bMethodic( true )
+      m_bMethodic( true ),
+      m_bEvalOutOfContext(false)
    {}
 
    CallFrame( Function* f, int pc, int sb, int cb):
@@ -109,7 +113,8 @@ public:
       m_dynsBase( 0 ),
       m_codeBase( cb ),
       m_finallyCount(0),
-      m_bMethodic( false )
+      m_bMethodic( false ),
+      m_bEvalOutOfContext(false)
    {}
 };
 

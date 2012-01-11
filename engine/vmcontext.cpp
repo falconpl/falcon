@@ -793,22 +793,13 @@ Item* VMContext::getDynSymbolValue( const Symbol* dyns )
    // search for the dynsymbol in the current context.
    const CallFrame* cf = &currentFrame();
    register DynsData* dd = m_dynsStack.m_top;
-   register DynsData* base = m_dynsStack.offset( cf->m_dynsBase );
-   while( dd >= base ) {
-      if ( dyns->name() == dd->m_sym->name() )
-      {
-         // Found!
-         return dd->m_item.dereference();
-      }
-      --dd;
-   }
-
+   
    // no luck. Descend the frames.
    while( cf >= m_callStack.m_base )
    {
-      dd = m_dynsStack.m_top;
-      base = m_dynsStack.offset( cf->m_dynsBase );
-      while( dd >= base ) {
+      // keep dd from previous loop
+      register DynsData* base = m_dynsStack.offset( cf->m_dynsBase );
+      while( dd > base ) {
          if ( dyns->name() == dd->m_sym->name() )
          {
             // Found!

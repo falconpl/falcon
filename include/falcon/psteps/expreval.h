@@ -40,6 +40,19 @@ public:
    virtual bool simplify( Item& ) const { return false; }      
    
 public:
+   /** Placeholder for break after having pushed our body.*/
+   class PStepResetOC: public PStep 
+   {
+   public:
+      PStepResetOC() { apply = apply_; m_bIsFinally = true; }
+      virtual ~PStepResetOC() {}
+      virtual void describeTo( String& tgt, int =0 ) const { tgt = "Reset OC evaluation"; }
+      
+   private:
+      static void apply_( const PStep*, VMContext* ctx );
+   }
+   m_resetOC;   
+   
    static void apply_( const PStep*, VMContext* ctx );
 };
 

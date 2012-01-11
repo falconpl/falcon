@@ -534,6 +534,7 @@ public:
       topCall->m_paramCount = nparams;
       topCall->m_self = self;
       topCall->m_bMethodic = true;
+      topCall->m_bEvalOutOfContext = false;
       topCall->m_finallyCount = 0;
 
       return topCall;
@@ -554,6 +555,7 @@ public:
       topCall->m_paramCount = nparams;
       topCall->m_self.setNil();
       topCall->m_bMethodic = false;
+      topCall->m_bEvalOutOfContext = false;
       topCall->m_finallyCount = 0;
 
       return topCall;
@@ -573,6 +575,7 @@ public:
       topCall->m_paramCount = nparams;
       topCall->m_self.setNil();
       topCall->m_bMethodic = false;
+      topCall->m_bEvalOutOfContext = false;
       topCall->m_finallyCount = 0;
 
       return topCall;
@@ -1190,6 +1193,12 @@ public:
     \note Symbols marked as constant are returned by value; they aren't referenced.
     */
    Item* getDynSymbolValue( const Symbol* dyns );
+   
+   /** Returns true if the current frame is being evaluated out of context. */
+   bool evalOutOfContext() const { return currentFrame().m_bEvalOutOfContext; }
+   
+   /** Sets the out-of-context nature of the ongoing evaluation. */
+   void evalOutOfContext( bool otc ) { currentFrame().m_bEvalOutOfContext = otc; }
 
 protected:
 

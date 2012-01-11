@@ -37,6 +37,7 @@ UnaryExpression::UnaryExpression( const UnaryExpression &other ):
    Expression( other ),
    m_first( other.m_first->clone() )
 {
+   m_first->setParent(this);
 }
 
 UnaryExpression::~UnaryExpression()
@@ -88,6 +89,8 @@ BinaryExpression::BinaryExpression( const BinaryExpression &other ):
    m_first( other.m_first->clone() ),
    m_second( other.m_second->clone() )
 {
+   m_first->setParent(this);
+   m_second->setParent(this);
 }
 
 BinaryExpression::~BinaryExpression()
@@ -146,6 +149,9 @@ TernaryExpression::TernaryExpression( const TernaryExpression &other ):
    m_second( other.m_second->clone() ),
    m_third( other.m_third->clone() )
 {
+   m_first->setParent(this);
+   m_second->setParent(this);
+   m_third->setParent(this);
 }
 
 TernaryExpression::~TernaryExpression()

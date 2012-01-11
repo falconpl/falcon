@@ -89,13 +89,24 @@ TreeStep* StmtFastPrint::nth( int32 n ) const
 
 bool StmtFastPrint::nth( int32 n, TreeStep* ts )
 {
-   if( ts == 0 || ts->category() != TreeStep::e_cat_expression ) return false;
+   if( ts == 0 
+      || ts->category() != TreeStep::e_cat_expression 
+      || !ts->setParent(this) ) 
+   {
+      return false;
+   }
    return _p->nth(n, static_cast<Expression*>(ts), this );
 }
 
 bool StmtFastPrint::insert( int32 n, TreeStep* ts )
 {   
-   if( ts == 0 || ts->category() != TreeStep::e_cat_expression ) return false;
+   if( ts == 0 
+      || ts->category() != TreeStep::e_cat_expression
+      || !ts->setParent(this) ) 
+   {
+      return false;
+   }
+   
    return _p->insert(n, static_cast<Expression*>(ts), this );
 }
 
@@ -107,7 +118,10 @@ bool StmtFastPrint::remove( int32 n )
 
 void StmtFastPrint::add( Expression* expr )
 {
-   _p->m_exprs.push_back( expr );
+   if( expr->setParent(this) )
+   {
+      _p->m_exprs.push_back( expr );
+   }
 }
 
 

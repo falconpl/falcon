@@ -127,7 +127,14 @@ void ExprSymbol::apply_( const PStep* ps, VMContext* ctx )
    fassert( es->m_symbol != 0 );
    ctx->popCode();
    
-   ctx->pushData(*es->m_symbol->getValue(ctx));
+   if( ctx->evalOutOfContext() )
+   {
+      ctx->pushData(*ctx->getDynSymbolValue(es->m_symbol));
+   }
+   else
+   {
+      ctx->pushData(*es->m_symbol->getValue(ctx));
+   }
    /*
    register Symbol* sym = es->m_symbol;
    switch( sym->type() )
@@ -149,7 +156,15 @@ void ExprSymbol::PStepLValue::apply_( const PStep* ps, VMContext* ctx )
    const ExprSymbol::PStepLValue* es = static_cast<const ExprSymbol::PStepLValue*>(ps);
    fassert( es->m_owner->m_symbol != 0 );
    ctx->popCode();
-   es->m_owner->m_symbol->setValue(ctx, ctx->topData());
+      
+   if( ctx->evalOutOfContext() )
+   {
+      ctx->setDynSymbolValue(es->m_owner->m_symbol, ctx->topData());
+   }
+   else
+   {
+      es->m_owner->m_symbol->setValue(ctx, ctx->topData());
+   }
 }
    
 }

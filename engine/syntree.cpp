@@ -200,13 +200,25 @@ TreeStep* SynTree::nth( int pos ) const
 
 bool SynTree::nth( int pos, TreeStep* step )
 {
-   if( step == 0 || step->category() != TreeStep::e_cat_statement ) return false;
+   if( step == 0 
+      || step->category() != TreeStep::e_cat_statement 
+      || ! step->setParent(this) ) 
+   {
+      return false;
+   }
+   
    return _p->m_steps.nth( pos, static_cast<Statement*>(step), this );
 }
 
 bool SynTree::insert( int pos, TreeStep* step )
 {
-   if( step == 0 || step->category() != TreeStep::e_cat_statement ) return false;
+   if( step == 0 
+      || step->category() != TreeStep::e_cat_statement 
+      || ! step->setParent(this)) 
+   {
+      return false;
+   }
+   
    if( ! _p->m_steps.insert( pos, static_cast<Statement*>(step), this ) ) return false;
    if ( _p->m_steps.arity() <= 2 ){
       setApply();   

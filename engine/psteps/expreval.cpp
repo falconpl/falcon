@@ -51,12 +51,14 @@ void ExprEval::describeTo( String& str, int depth ) const
       return;
    }
    
-   str += "^* " + first()->describe( depth + 1 );
+   str += "(^* " + first()->describe( depth + 1 ) + ")";
 }
 
 
 void ExprEval::apply_( const PStep* ps, VMContext* ctx )
 {
+   static Class* classts = Engine::instance()->treeStepClass();
+   
    const ExprEval* self = static_cast<const ExprEval*>( ps );
    TRACE1( "Apply \"%s\"", self->describe().c_ize() );
    
@@ -73,16 +75,65 @@ void ExprEval::apply_( const PStep* ps, VMContext* ctx )
          return;
       }
    }
-   
+      
    // we're done...
    ctx->popCode();
+      
    // ... get the generated item and call evaluate on it.
-   Class* cls;
-   void* data;
+   Class* cls = 0;
+   void* data = 0;
    // keep the object in the stack.
    ctx->topData().forceClassInst( cls, data );
+   
+   // should we check for in-context evaluation?
+   if( ! ctx->evalOutOfContext() && cls->isDerivedFrom( classts ))
+   {
+      // no need to check if we're already out of context 
+      // -- or if the object is not a class
+      TreeStep* ts = static_cast<TreeStep*>(data);
+      TreeStep* parent = ts->parent();
+      while( parent != 0 )
+      {
+         if( parent == self )
+         {
+            // ok, we're for sure in the same context.
+            break;
+         }
+         ts = parent;
+         parent = ts->parent();
+      }
+      
+      if( parent == 0 ) 
+      {
+         // bad sign. let's see if we have a common ancestor.
+         parent = self->parent();
+         while( parent != ts )
+         {
+            if( parent == 0 ) {
+               // no common ancestor.
+               ctx->evalOutOfContext(true);
+               ctx->pushCode( &self->m_resetOC );
+               // resetOC is a finnaly block.
+               ctx->traverseFinally(); 
+               break;
+            }
+            parent = parent->parent();            
+         }
+      }
+   }
+   
    // generate evaluation.
    cls->op_eval( ctx, data );
+}
+
+
+void ExprEval::PStepResetOC::apply_(const PStep*, VMContext* ctx)
+{
+   // for sure, we're done...
+   ctx->popCode();
+   // and we can reset the OC
+   ctx->enterFinally();
+   ctx->evalOutOfContext(false);
 }
 
 }

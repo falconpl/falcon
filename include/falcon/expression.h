@@ -114,7 +114,9 @@ public:
    inline UnaryExpression( Expression* op1, int line = 0, int chr = 0 ):
       Expression( line, chr ),
       m_first( op1 )
-   {}
+   {
+      m_first->setParent(this);
+   }
       
    inline UnaryExpression( int line = 0, int chr = 0 ):
       Expression( line, chr ),
@@ -159,7 +161,10 @@ public:
       Expression( line, chr ),
       m_first( op1 ),
       m_second( op2 )
-   {}
+   {
+      m_first->setParent(this);
+      m_second->setParent(this);
+   }
 
    BinaryExpression( const BinaryExpression& other );
    virtual ~BinaryExpression();
@@ -205,7 +210,11 @@ public:
       m_first( op1 ),
       m_second( op2 ),
       m_third( op3 )
-   {}
+   {
+      m_first->setParent(this);
+      m_second->setParent(this);
+      m_third->setParent(this);
+   }
 
    inline TernaryExpression( int line = 0, int chr = 0 ):
       Expression( line, chr ),
