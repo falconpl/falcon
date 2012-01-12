@@ -91,26 +91,31 @@ void ClassArray::unflatten( VMContext*, ItemArray& subItems, void* instance ) co
 void ClassArray::describe( void* instance, String& target, int maxDepth, int maxLen ) const
 {
    ItemArray* arr = static_cast<ItemArray*>(instance);
-   target += "[";
+
+   target.append( "[" );
 
    String temp;
-   for( length_t pos = 0; pos < arr->length(); ++ pos )
+
+   for ( length_t pos = 0; pos < arr->length(); ++ pos )
    {
-      if( pos > 0 )
+      if ( pos > 0 )
       {
          target += ", ";
       }
       
       Class* cls;
       void* inst;
+
       arr->at(pos).forceClassInst(cls, inst);
+
       temp.size(0);
+
       cls->describe( inst, temp, maxDepth - 1, maxLen );
 
       target += temp;
    }
 
-   target += "]";
+   target.append( "]" );
 }
 
 
