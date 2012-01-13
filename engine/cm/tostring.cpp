@@ -67,7 +67,6 @@ void ToString::invoke( VMContext* ctx, int32 )
    {
       return;
    }
-   ctx->popCode();
    
    ctx->returnFrame(ctx->topData());
 }

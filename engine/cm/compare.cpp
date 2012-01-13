@@ -120,6 +120,7 @@ void Compare::Invoke::apply_( const PStep*, VMContext* ctx )
    {
       token.exit( first->compare(*second) );
    }
+   ctx->popCode();
 }
 
 }

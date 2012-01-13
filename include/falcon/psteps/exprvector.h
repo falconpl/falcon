@@ -48,7 +48,7 @@ public:
     \return itself (useful for declarations in sources)
     */
    ExprVector& add( Expression* e );
-
+   
 protected:
    ExprVector_Private* _p;
    ExprVector();   

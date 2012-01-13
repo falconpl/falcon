@@ -79,6 +79,8 @@ void TypeId::Invoke::apply_( const PStep*, VMContext* ctx  )
    {
       top = top.type();
    }
+   
+   ctx->popCode();
 }
 
 }

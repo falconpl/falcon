@@ -31,6 +31,7 @@
 #include <falcon/parser/state.h>
 
 #include <falcon/psteps/exprcall.h>
+#include <falcon/psteps/exprpseudocall.h>
 #include <falcon/psteps/exprsym.h>
 
 #include "private_types.h"
@@ -52,7 +53,8 @@ void apply_expr_call( const Rule&, Parser& p )
    p.getNextToken();
 
    // Our call expression
-   ExprCall* call;
+   ExprCall* call = 0;
+   ExprPseudoCall *callps = 0;
 
    TokenInstance* ti = new TokenInstance(v1->line(), v1->chr(), sp.Expr);
    Expression* callee = static_cast<Expression*>(v1->detachValue());
@@ -65,7 +67,7 @@ void apply_expr_call( const Rule&, Parser& p )
       // if it is, we don't need the callee expression anymore.
       if( pf != 0 )
       {
-         call = new ExprCall(pf);
+         callps = new ExprPseudoCall(pf);
          ParserContext* ctx = static_cast<ParserContext*>(p.context());
          ctx->undoVariable( esym->name() );
          delete esym;
@@ -83,13 +85,22 @@ void apply_expr_call( const Rule&, Parser& p )
    List::iterator iter = list->begin();
    while( iter != list->end() )
    {
-      call->add( *iter );
+      if( call != 0 ) call->add( *iter );
+      else callps->add( *iter );
       ++iter;
    }
    // free the expressions in the list
    list->clear();
 
-   ti->setValue( call, expr_deletor );
+   if( call != 0 )
+   {
+      ti->setValue( call, expr_deletor );
+   }
+   else
+   {
+      ti->setValue( callps, expr_deletor );
+   }
+   
    p.simplify(4,ti);
 }
 

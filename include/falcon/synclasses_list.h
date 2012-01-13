@@ -112,6 +112,7 @@ FALCON_SYNCLASS_DECLARATOR(m_expr_deoob, DeOob, expr)
 FALCON_SYNCLASS_DECLARATOR(m_expr_isoob, IsOob, expr)
 FALCON_SYNCLASS_DECLARATOR(m_expr_xoroob, XorOob, expr)
 // 
+FALCON_SYNCLASS_DECLARATOR(m_expr_pseudocall, PseudoCall, expr)
 FALCON_SYNCLASS_DECLARATOR(m_expr_genproto, GenProto, expr)
 FALCON_SYNCLASS_DECLARATOR(m_expr_genrange, GenRange, expr)
 FALCON_SYNCLASS_DECLARATOR(m_expr_genref, GenRef, expr)

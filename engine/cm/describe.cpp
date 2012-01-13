@@ -60,6 +60,7 @@ void Describe::Invoke::apply_( const PStep*, VMContext* ctx )
 {
    register Item& top = ctx->topData();
    top = (new String(top.describe()))->garbage();
+   ctx->popCode();
 }
 
 }

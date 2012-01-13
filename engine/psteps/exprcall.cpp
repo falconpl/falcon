@@ -31,29 +31,16 @@ namespace Falcon {
 
 ExprCall::ExprCall( int line, int chr ):
    ExprVector( line, chr ),
-   m_func(0),
    m_callExpr(0)
 {
-   FALCON_DECLARE_SYN_CLASS( expr_call )
-      
+   FALCON_DECLARE_SYN_CLASS( expr_call )      
    apply = apply_;
 }
 
 
-ExprCall::ExprCall( Expression* op1, int line, int chr ):
+ExprCall::ExprCall( Expression* callee, int line, int chr ):
    ExprVector( line, chr ),
-   m_func(0),
-   m_callExpr(op1)
-{
-   FALCON_DECLARE_SYN_CLASS( expr_call )
-   apply = apply_;
-}
-
-
-ExprCall::ExprCall( PseudoFunction* f, int line, int chr ):
-   ExprVector( line, chr ),
-   m_func(f),
-   m_callExpr(0)
+   m_callExpr(callee)
 {
    FALCON_DECLARE_SYN_CLASS( expr_call )
    apply = apply_;
@@ -64,9 +51,7 @@ ExprCall::ExprCall( const ExprCall& other ):
    ExprVector( other )
 {
    FALCON_DECLARE_SYN_CLASS( expr_call )
-   m_func = other.m_func;
    m_callExpr = other.m_callExpr;
-
    apply = apply_;
 }
 
@@ -89,37 +74,45 @@ void ExprCall::apply_( const PStep* v, VMContext* ctx )
    TRACE2( "Apply CALL %s", self->describe().c_ize() );
    int pcount = self->_p->m_exprs.size();
 
-   fassert( self->m_func != 0 || self->m_callExpr != 0 );
+   fassert( self->m_callExpr != 0 );
+   bool bHaveEta = false;
    
    // prepare the call expression.
    CodeFrame& cf = ctx->currentCode();
-   if( cf.m_seqId == 0 )  
+   switch( cf.m_seqId )
    {
-      // got to compile or push the call item.
-      cf.m_seqId = 1;
-      if( self->m_callExpr != 0 )
-      {
+      // Generate the called item.
+      case 0:
+         cf.m_seqId = 1;
          if( ctx->stepInYield( self->m_callExpr, cf ) )
          {
             return;
          }
-      }
-      else 
-      {
-         fassert( self->m_func != 0 );
-         // can we call directly our nice function?
-         // call directly our pseudofunction?
-         if( self->m_func->paramCount() == pcount )
-         {
-            ctx->resetCode( self->m_func->pstep() );
-            return;
-         }
          
-         // Otherwise, we must handle this as a normal function
-         // -- but notice that the compiler should have blocked us.         
-         ctx->pushData( self->m_func );
-      }
-   }
+      case 1:
+         // Evaluate the eta-ness of the called item
+         // no need to increase seqID, we won't be here with seqId=1 anymore
+         if (pcount > 0)
+         {
+            register Item& top = ctx->topData();
+            switch(top.type())
+            {
+               case FLC_ITEM_FUNC:
+               {
+                  Function* f = top.asFunction();
+                  bHaveEta = f->isEta();
+               }
+               break;
+               
+               case FLC_ITEM_METHOD:
+               {
+                  Item old = top;
+                  Function* f = top.asMethodFunction();
+                  bHaveEta = f->isEta();
+               }
+            }
+         }
+   }     
    
    // now got to generate all the paraeters, if any.
    // Notice that seqId here is nparam + 1, as 0 is for the function itself.
@@ -128,20 +121,34 @@ void ExprCall::apply_( const PStep* v, VMContext* ctx )
    {
       ExprVector_Private::ExprVector::iterator pos = self->_p->m_exprs.begin() + (cf.m_seqId-1);
       ExprVector_Private::ExprVector::iterator end = self->_p->m_exprs.end();
-      while( pos < end )
+      
+      if( bHaveEta )
       {
-         cf.m_seqId++;
-         if( ctx->stepInYield( *pos, cf ) )
+         while( pos < end )
          {
-            return;
+            Expression* expr = *pos;
+            ctx->pushData( Item(expr->cls(), expr ) );
+            ++pos;
          }
-         ++pos;
+      }
+      else 
+      {      
+         while( pos < end )
+         {
+            cf.m_seqId++;
+            if( ctx->stepInYield( *pos, cf ) )
+            {
+               return;
+            }
+            ++pos;
+         }
       }
    }   
    
-   // anyhow, we're out of business.
+   // we're out of business
    ctx->popCode();
 
+  
    // now, top points to our function value.
    register Item& top = *(&ctx->topData()-pcount);
 
@@ -200,30 +207,22 @@ bool ExprCall::selector( Expression* e )
 
 void ExprCall::describeTo( String& ret, int depth ) const
 {
-   if( m_callExpr == 0 && m_func == 0 )
+   if( m_callExpr == 0 )
    {
       ret = "<Blank ExprCall>";
       return;
    }
    
+   ret = m_callExpr->describe(depth+1);
    String params;
    // and generate all the expressions, in inverse order.
    for( unsigned int i = 0; i < _p->m_exprs.size(); ++i )
    {
       if ( params.size() )
       {
-         params += ", ";
+         ret += ", ";
       }
-      params += _p->m_exprs[i]->describe(depth+1);
-   }
-
-   if( m_callExpr != 0 )
-   {
-      ret = m_callExpr->describe(depth+1) + "(" + params +  ")";
-   }
-   else
-   {
-      ret = m_func->name() + "(" + params +  ")";
+      ret += _p->m_exprs[i]->describe(depth+1);
    }
 }
 

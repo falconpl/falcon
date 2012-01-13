@@ -161,13 +161,13 @@ void MinOrMax::InvokeStep::apply_( const PStep* ps, VMContext* ctx )
       ctx->pushData( *op1 );  // push the data...
       ctx->pushData( temp );  // and pay attention to the stack
 
-      ctx->pushCode( &self->m_compare );
+      ctx->resetCode( &self->m_compare );
+      long size = ctx->codeDepth();
       cls->op_compare( ctx, udata );
-      if( ctx->wentDeep( &self->m_compare ) )
+      if( ctx->codeDepth() != size )
       {
          return;
       }
-      ctx->popCode();
 
       fassert( ctx->topData().isInteger() );
       comp = ctx->topData().forceInteger();
@@ -188,6 +188,8 @@ void MinOrMax::InvokeStep::apply_( const PStep* ps, VMContext* ctx )
    {
       ctx->stackResult(2, *(comp <= 0 ? op1 : op2) );
    }
+   // we're done.
+   ctx->popCode();
 }
 
 
@@ -220,6 +222,8 @@ void MinOrMax::InvokeStep::CompareStep::apply_( const PStep* ps, VMContext* ctx 
       // else just pop the second; the first is already in place.
       ctx->popData();
    }
+   
+   ctx->popCode();
 }
 
 //==================================================

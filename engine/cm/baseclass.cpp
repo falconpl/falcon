@@ -69,6 +69,7 @@ void BaseClass::Invoke::apply_( const PStep*, VMContext* ctx )
    Class* cls; void* inst;
    top.forceClassInst( cls, inst );
    top.setUser( metaClass, cls );
+   ctx->popCode();
 }
 
 }

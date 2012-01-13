@@ -63,6 +63,7 @@ void Len::Invoke::apply_( const PStep*, VMContext* ctx )
 {
    register Item& top = ctx->topData();
    top = top.len();
+   ctx->popCode();
 }
 
 }

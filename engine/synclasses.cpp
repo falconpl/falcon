@@ -46,6 +46,7 @@
 #include <falcon/psteps/exprneg.h>
 #include <falcon/psteps/exproob.h>
 #include <falcon/psteps/exprproto.h>
+#include <falcon/psteps/exprpseudocall.h>
 #include <falcon/psteps/exprrange.h>
 #include <falcon/psteps/exprref.h>
 #include <falcon/psteps/exprself.h>
@@ -89,6 +90,7 @@ SynClasses::SynClasses( Class* classSynTree, Class* classStatement, Class* class
    m_stmt_select.userFlags(FALCON_SYNCLASS_ID_CASEHOST);
    m_stmt_autoexpr.userFlags(FALCON_SYNCLASS_ID_AUTOEXPR);
    m_expr_call.userFlags(FALCON_SYNCLASS_ID_CALLFUNC);
+   m_expr_pseudocall.userFlags(FALCON_SYNCLASS_ID_CALLFUNC);
 }
 
 SynClasses::~SynClasses() {}
@@ -261,6 +263,7 @@ FALCON_STANDARD_SYNCLASS_OP_CREATE( IsOob, ExprIsOob, unaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( XorOob, ExprXorOob, unaryExprSet )
 
 // GenProto -- separated
+// Pseudocall -- separated
 // GenRange -- seperated
 // GenRef -- separated
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Self, ExprSelf, zeroaryExprSet )
@@ -359,6 +362,21 @@ void SynClasses::ClassGenProto::restore( VMContext* ctx, DataReader*dr, void*& e
 {
    empty = new ExprProto;
    m_parent->restore( ctx, dr, empty );
+}
+
+
+
+void SynClasses::ClassPseudoCall::op_create( VMContext* ctx, int pcount ) const
+{       
+   // TODO -- parse a single pseudofunction and a list of parameters.
+   Class::op_create( ctx, pcount );
+}
+void SynClasses::ClassPseudoCall::restore( VMContext* ctx, DataReader*dr, void*& empty ) const
+{
+   fassert( "Not yet implementd" );
+   empty = new ExprPseudoCall;   
+   m_parent->restore( ctx, dr, empty );
+
 }
 
 void SynClasses::ClassUnpack::op_create( VMContext* ctx, int pcount ) const

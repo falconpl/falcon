@@ -66,6 +66,7 @@ void ClassName::Invoke::apply_( const PStep*, VMContext* ctx )
    Class* cls; void* inst;
    top.forceClassInst( cls, inst );
    top = (new String(cls->name()))->garbage();
+   ctx->popCode();
 }
 
 }

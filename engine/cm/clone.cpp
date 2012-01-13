@@ -78,6 +78,7 @@ void Clone::Invoke::apply_( const PStep*, VMContext* ctx )
    }
 
    top.setUser( cls, inst, true );
+   ctx->popCode();
 }
 
 }
