@@ -363,6 +363,7 @@ public:
    Parsing::Rule r_Expr_Atom;
 
    Parsing::Rule r_Expr_function;
+   Parsing::Rule r_Expr_functionEta;
    Parsing::Rule r_Expr_lambda;
    Parsing::Rule r_Expr_class;
    Parsing::Rule r_Expr_proto;
@@ -374,9 +375,11 @@ public:
    Parsing::NonTerminal S_Function;
    Parsing::Rule r_function_short;
    Parsing::Rule r_function;
+   Parsing::Rule r_function_eta;
 
    Parsing::NonTerminal S_Return;
    Parsing::Rule r_return_doubt;
+   Parsing::Rule r_return_eval;
    Parsing::Rule r_return_expr;
    Parsing::Rule r_return;
 
@@ -453,6 +456,7 @@ public:
 
    Parsing::NonTerminal LambdaParams;
    Parsing::Rule r_lambda_params;
+   Parsing::Rule r_lambda_params_eta;
 
    Parsing::NonTerminal AnonClassParams;
    

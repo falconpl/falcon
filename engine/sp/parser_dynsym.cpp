@@ -31,6 +31,7 @@
 #include <falcon/psteps/exprvalue.h>
 
 #include "private_types.h"
+#include "falcon/psteps/exprsym.h"
 
 
 namespace Falcon {
@@ -56,7 +57,9 @@ void apply_expr_amper( const Rule&, Parser& p )
    Symbol* nsym = new Symbol(*tref->asString(), tref->line());
    
    // TODO: Use the engine to cache dynsymbols
-   Expression* esyn = new ExprValue( FALCON_GC_STORE(coll, cls, nsym), 
+   // TODO: Use garbage collector
+   FALCON_GC_STORE(coll, cls, nsym );
+   Expression* esyn = new ExprSymbol(nsym, 
          tref->line(), tref->chr() );
    
    // update the result token

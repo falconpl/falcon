@@ -274,7 +274,7 @@ void Module::addAnonFunction( Function* f )
    String name;
    do
    {
-      name = "lambda#";
+      name = f->isEta() ? "eta#" : "lambda#";
       name.N(m_anonFuncs++);
    } while( _p->m_functions.find( name ) != _p->m_functions.end() );
 

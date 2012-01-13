@@ -242,6 +242,85 @@ void StdSteps::PStepReturnFrameWithTopDoubt::describeTo( String& s, int ) const
    s = "PStepReturnFrameWithTopDoubt";
 }
 
+
+void StdSteps::PStepReturnFrameWithTopEval::apply_( const PStep*, VMContext* ctx )
+{
+   static PStep* resetOC = &Engine::instance()->stdSteps()->m_resetOC;
+   ctx->returnFrame( ctx->topData() );
+   
+   if( !ctx->evalOutOfContext() )
+   {
+      ctx->evalOutOfContext(true);
+      ctx->resetCode( resetOC );
+   }
+   
+   Class* cls = 0;
+   void* data = 0;
+   ctx->topData().forceClassInst(cls, data);
+   cls->op_eval( ctx, data );
+}
+
+void StdSteps::PStepReturnFrameWithTopEval::describeTo( String& s, int ) const
+{
+   s = "PStepReturnFrameWithTopEval";
+}
+
+void StdSteps::PStepReturnFrameWithTopDoubtEval::apply_( const PStep*, VMContext* ctx )
+{
+   static PStep* resetOC = &Engine::instance()->stdSteps()->m_resetOC;
+   ctx->returnFrame( ctx->topData() );
+   ctx->SetNDContext();
+   
+   if( !ctx->evalOutOfContext() )
+   {
+      ctx->evalOutOfContext(true);
+      ctx->resetCode( resetOC );
+   }
+   
+   Class* cls = 0;
+   void* data = 0;
+   ctx->topData().forceClassInst(cls, data);
+   cls->op_eval( ctx, data );
+}
+
+void StdSteps::PStepReturnFrameWithTopDoubtEval::describeTo( String& s, int ) const
+{
+   s = "PStepReturnFrameWithTopDoubtEval";
+}
+
+
+void StdSteps::PStepEvalTop::apply_( const PStep*, VMContext* ctx )
+{
+   static PStep* resetOC = &Engine::instance()->stdSteps()->m_resetOC;
+   
+   if( !ctx->evalOutOfContext() )
+   {
+      ctx->evalOutOfContext(true);
+      ctx->resetCode( resetOC );
+   }
+   
+   Class* cls = 0;
+   void* data = 0;
+   ctx->topData().forceClassInst(cls, data);
+   cls->op_eval( ctx, data );
+}
+
+void StdSteps::PStepEvalTop::describeTo( String& s, int ) const
+{
+   s = "PStepEvalTop";
+}
+
+void StdSteps::PStepResetOC::apply_( const PStep*, VMContext* ctx )
+{
+   ctx->popCode();
+   ctx->enterFinally();
+   ctx->evalOutOfContext(false);
+}
+
+void StdSteps::PStepResetOC::describeTo( String& s, int ) const
+{
+   s = "PStepResetOC";
+}
 }
 
 /* end of stdsteps.cpp */

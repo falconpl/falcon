@@ -29,7 +29,8 @@ namespace Falcon
 StmtReturn::StmtReturn( int32 line, int32 chr ):
    Statement( line, chr ),
    m_expr( 0 ),
-   m_bHasDoubt( false )
+   m_bHasDoubt( false ),
+   m_bHasEval( false )
 {
    FALCON_DECLARE_SYN_CLASS( stmt_return );   
    apply = apply_;
@@ -57,19 +58,21 @@ StmtReturn::StmtReturn( Expression* expr, int32 line, int32 chr ):
 StmtReturn::StmtReturn( const StmtReturn& other ):
    Statement( other ),
    m_expr( 0 ),
-   m_bHasDoubt( false )
+   m_bHasDoubt( other.m_bHasDoubt ),
+   m_bHasEval( other.m_bHasEval )
 {
    FALCON_DECLARE_SYN_CLASS( stmt_return );   
    
+   apply = other.apply;
+   
    if ( other.m_expr )
    {
-      m_expr = other.m_expr;
+      m_expr = other.m_expr->clone();
       m_expr->setParent(this);
-      apply = apply_expr_;
    }
    else
    {
-      apply = apply_;
+      m_expr = 0;
    }
 }
 
@@ -116,6 +119,13 @@ void StmtReturn::hasDoubt( bool b )
    {
       apply = m_expr == 0 ? apply_expr_ : apply_;
    }
+}
+ 
+
+
+void StmtReturn::hasEval( bool b )
+{
+   m_bHasEval = b;   
 }
  
 
@@ -168,7 +178,11 @@ void StmtReturn::apply_expr_( const PStep* ps, VMContext* ctx )
    const StmtReturn* self = static_cast<const StmtReturn*>( ps );
    
    // change our step in a standard return with top data
-   ctx->resetCode( &steps->m_returnFrameWithTop );
+   if (self->m_bHasEval)
+      ctx->resetCode( &steps->m_returnFrameWithTopEval );
+   else
+      ctx->resetCode( &steps->m_returnFrameWithTop );
+   
    CodeFrame& frame = ctx->currentCode();
    ctx->stepIn( self->m_expr );
    if( &frame != &ctx->currentCode() )
@@ -179,6 +193,20 @@ void StmtReturn::apply_expr_( const PStep* ps, VMContext* ctx )
       
    // we can return now. No need for popping, we're popping a lot here.
    ctx->returnFrame( ctx->topData() );
+   
+   if( self->m_bHasEval )
+   {
+      if (!ctx->evalOutOfContext())
+      {
+         ctx->traverseFinally();
+         ctx->pushCode( &steps->m_resetOC );
+         ctx->evalOutOfContext(true);
+      }
+      Class* cls = 0;
+      void * data = 0;
+      ctx->topData().forceClassInst( cls, data );
+      cls->op_eval( ctx, data );
+   }
 }
 
 
@@ -199,7 +227,11 @@ void StmtReturn::apply_expr_doubt_( const PStep* ps, VMContext* ctx )
    const StmtReturn* self = static_cast<const StmtReturn*>( ps );
    
    // change our step in a standard return with top data
-   ctx->resetCode( &steps->m_returnFrameWithTopDoubt );
+   if (self->m_bHasEval)
+      ctx->resetCode( &steps->m_returnFrameWithTopEval );
+   else
+      ctx->resetCode( &steps->m_returnFrameWithTop );
+   
    CodeFrame& frame = ctx->currentCode();
    ctx->stepIn( self->m_expr );
    if( &frame != &ctx->currentCode() )
@@ -210,6 +242,20 @@ void StmtReturn::apply_expr_doubt_( const PStep* ps, VMContext* ctx )
    
    ctx->returnFrame( ctx->topData() );
    ctx->SetNDContext();
+   
+   if( self->m_bHasEval )
+   {
+      if (!ctx->evalOutOfContext())
+      {
+         ctx->traverseFinally();
+         ctx->pushCode( &steps->m_resetOC );
+         ctx->evalOutOfContext(true);
+      }
+      Class* cls = 0;
+      void * data = 0;
+      ctx->topData().forceClassInst( cls, data );
+      cls->op_eval( ctx, data );
+   }
 }
 
 }

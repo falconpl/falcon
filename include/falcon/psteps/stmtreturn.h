@@ -45,9 +45,13 @@ public:
    virtual Expression* selector() const; 
    virtual bool selector( Expression* e );
    
+   bool hasEval() const { return m_bHasEval; }
+   void hasEval( bool  b ) ;
+   
 private:
    Expression* m_expr;
    bool m_bHasDoubt;
+   bool m_bHasEval;
    
    static void apply_( const PStep*, VMContext* ctx );
    static void apply_expr_( const PStep*, VMContext* ctx );

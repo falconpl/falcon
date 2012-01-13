@@ -821,26 +821,26 @@ Item* VMContext::getDynSymbolValue( const Symbol* dyns )
             newData->m_item );
          return newData->m_item.dereference();
       }
-      --cf;
-   }
-
-   // no luck? Try with module globals.
-   Module* master = currentFrame().m_function->module();
-   if( master != 0 )
-   {
-      Symbol* globsym = master->getGlobal( dyns->name() );
-      if( globsym != 0 )
+      
+      // no luck? Try with module globals.
+      Module* master = cf->m_function->module();
+      if( master != 0 )
       {
-         Item* value = globsym->getValue(this);
-         DynsData* newData = m_dynsStack.addSlot();
-         newData->m_sym = dyns;
-         // reference the target local variable into our slot.
-         ItemReference::create(
-            *value,
-            newData->m_item );
-         return newData->m_item.dereference();
+         Symbol* globsym = master->getGlobal( dyns->name() );
+         if( globsym != 0 )
+         {
+            Item* value = globsym->getValue(this);
+            DynsData* newData = m_dynsStack.addSlot();
+            newData->m_sym = dyns;
+            // reference the target local variable into our slot.
+            ItemReference::create(
+               *value,
+               newData->m_item );
+            return newData->m_item.dereference();
+         }
       }
-   }
+      --cf;
+   }   
 
    // still no luck? -- what about exporeted symbols in VM?
    ModSpace* ms = vm()->modSpace();

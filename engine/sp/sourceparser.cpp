@@ -452,6 +452,7 @@ SourceParser::SourceParser():
    
    Expr<< (r_Expr_Atom << "Expr_atom" << apply_expr_atom << Atom);
    Expr<< (r_Expr_function << "Expr_func" << apply_expr_func << T_function << T_Openpar << ListSymbol << T_Closepar << T_EOL);
+   Expr<< (r_Expr_functionEta << "Expr_funcEta" << apply_expr_funcEta << T_function << T_Times << T_Openpar << ListSymbol << T_Closepar << T_EOL);
    // Start of lambda expressions.
    Expr<< (r_Expr_lambda << "Expr_lambda" << apply_expr_lambda << T_OpenGraph );
    Expr<< (r_Expr_class << "Expr_class" << apply_expr_class << T_class );
@@ -463,10 +464,13 @@ SourceParser::SourceParser():
        */
       << (r_function << "Function decl" << apply_function
              << T_function << T_Name << T_Openpar << ListSymbol << T_Closepar << T_EOL )
+      << (r_function_eta << "Function ETA decl" << apply_function_eta
+             << T_function << T_Times << T_Name << T_Openpar << ListSymbol << T_Closepar << T_EOL )
       ;
       
    S_Return << "Return"
       << (r_return_doubt << "return doubt" << apply_return_doubt << T_return << T_QMark << Expr << T_EOL)
+      << (r_return_eval << "return eval" << apply_return_eval << T_return << T_Times << Expr << T_EOL)
       << (r_return_expr << "return expr" << apply_return_expr << T_return << Expr << T_EOL)
       << (r_return << "return" << apply_return << T_return << T_EOL)
       ;
@@ -544,6 +548,8 @@ SourceParser::SourceParser():
    //
 
    LambdaParams << "LambdaParams";
+   /*LambdaParams << ( r_lambda_params_eta << "Params in lambda eta" << apply_lambda_params_eta
+                       << T_Times << ListSymbol << T_Arrow );*/
    LambdaParams << ( r_lambda_params << "Params in lambda" << apply_lambda_params 
                         << ListSymbol << T_Arrow );
 

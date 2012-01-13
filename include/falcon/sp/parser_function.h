@@ -29,14 +29,17 @@ class Parser;
 using namespace Parsing;
 
 void apply_function(const Rule& r,Parser& p);
+void apply_function_eta(const Rule& r,Parser& p);
 void apply_expr_func(const Rule&, Parser& p);
+void apply_expr_funcEta(const Rule&, Parser& p);
 void apply_return_doubt(const Rule&, Parser& p);
+void apply_return_eval(const Rule&, Parser& p);
 void apply_return_expr(const Rule&, Parser& p);
 void apply_return(const Rule&, Parser& p);
 void apply_expr_lambda(const Rule&, Parser& p);
 
 void apply_lambda_params(const Rule&, Parser& p);
-
+void apply_lambda_params_eta(const Rule&, Parser& p);
 }
 
 #endif

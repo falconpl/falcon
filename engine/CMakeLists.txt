@@ -68,6 +68,7 @@ add_library(falcon_engine SHARED
   cm/datareader.cpp
   cm/datawriter.cpp
   cm/describe.cpp
+  cm/iff.cpp
   cm/inspect.cpp
   cm/len.cpp
   cm/minmax.cpp

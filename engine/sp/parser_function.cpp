@@ -41,12 +41,13 @@ namespace Falcon {
 
 using namespace Parsing;
 
-static SynFunc* inner_apply_function( const Rule&, Parser& p, bool bHasExpr )
+static SynFunc* inner_apply_function( const Rule&, Parser& p, bool bHasExpr, bool isEta )
 {
    //<< (r_Expr_function << "Expr_function" << apply_function << T_function << T_Name << T_Openpar << ListSymbol << T_Closepar << T_EOL )
    ParserContext* ctx = static_cast<ParserContext*>(p.context());
 
    p.getNextToken();//T_function
+   if( isEta ) p.getNextToken();// '*'
    TokenInstance* tname = p.getNextToken();
    p.getNextToken();// '('
    TokenInstance* targs = p.getNextToken();
@@ -87,6 +88,7 @@ static SynFunc* inner_apply_function( const Rule&, Parser& p, bool bHasExpr )
 
    // Ok, we took the symbol.
    SynFunc* func = new SynFunc(*tname->asString(),0,tname->line());
+   if( isEta ) func->setEta(true);
    NameList* list = static_cast<NameList*>(targs->asData());
 
    for(NameList::const_iterator it=list->begin(),end=list->end();it!=end;++it)
@@ -112,7 +114,12 @@ static SynFunc* inner_apply_function( const Rule&, Parser& p, bool bHasExpr )
 
 void apply_function(const Rule& r,Parser& p)
 {
-   inner_apply_function( r, p, false );
+   inner_apply_function( r, p, false, false );
+}
+
+void apply_function_eta(const Rule& r,Parser& p)
+{
+   inner_apply_function( r, p, false, true );
 }
 
 
@@ -160,7 +167,7 @@ void on_close_lambda( void* thing )
 }
 
 
-void apply_expr_func(const Rule&, Parser& p)
+static void internal_expr_func(const Rule&, Parser& p, bool isEta )
 {
    static Class* fcls = Engine::instance()->functionClass();
    
@@ -169,10 +176,12 @@ void apply_expr_func(const Rule&, Parser& p)
 
    TokenInstance* tf = p.getNextToken();//T_function
    p.getNextToken();// '('
+   if( isEta ) p.getNextToken();// '*'
    TokenInstance* targs = p.getNextToken();
 
    // todo: generate an anonymous name
-   SynFunc* func=new SynFunc( "anonymous", 0, tf->line() );
+   SynFunc* func = new SynFunc( "anonymous", 0, tf->line() );
+   if( isEta ) func->setEta(true);
    NameList* list=static_cast<NameList*>(targs->asData());
 
    for(NameList::const_iterator it=list->begin(),end=list->end();it!=end;++it)
@@ -196,6 +205,17 @@ void apply_expr_func(const Rule&, Parser& p)
 }
 
 
+void apply_expr_func(const Rule& r, Parser& p)
+{
+   internal_expr_func( r, p, false );   
+}
+
+void apply_expr_funcEta(const Rule& r, Parser& p)
+{
+   internal_expr_func( r, p, true );   
+}
+
+
 void apply_return_doubt(const Rule&, Parser& p)
 {
    ParserContext* ctx = static_cast<ParserContext*>(p.context());
@@ -206,6 +226,21 @@ void apply_return_doubt(const Rule&, Parser& p)
    Expression* expr = static_cast<Expression*>(texpr->detachValue());
    StmtReturn* stmt_ret = new StmtReturn( expr, texpr->line(), texpr->chr() );
    stmt_ret->hasDoubt( true );
+   ctx->addStatement(stmt_ret);
+
+   p.simplify(4);
+}
+
+void apply_return_eval(const Rule&, Parser& p)
+{
+   ParserContext* ctx = static_cast<ParserContext*>(p.context());
+   p.getNextToken();//T_return
+   p.getNextToken();//T_Times
+   TokenInstance* texpr=p.getNextToken();
+
+   Expression* expr = static_cast<Expression*>(texpr->detachValue());
+   StmtReturn* stmt_ret = new StmtReturn( expr, texpr->line(), texpr->chr() );
+   stmt_ret->hasEval( true );
    ctx->addStatement(stmt_ret);
 
    p.simplify(4);
@@ -242,18 +277,20 @@ void apply_expr_lambda(const Rule&, Parser& p)
 }
 
 
-void apply_lambda_params(const Rule&, Parser& p)
+static void internal_lambda_params(const Rule&, Parser& p, bool isEta )
 {
    static Class* fcls = Engine::instance()->functionClass();
    // ListSymbol << T_Arrow
    SourceParser& sp = static_cast<SourceParser&>(p);
 
    ParserContext* ctx = static_cast<ParserContext*>(p.context());
+   if( isEta ) sp.getNextToken(); // '*';
    TokenInstance* lsym = sp.getNextToken();
 
 
    // and add the function state.
    SynFunc* func=new SynFunc("anonymous", 0, lsym->line());
+   if( isEta ) func->setEta(true);
    NameList* list=static_cast<NameList*>(lsym->asData());
 
    for(NameList::const_iterator it=list->begin(),end=list->end();it!=end;++it)
@@ -275,7 +312,15 @@ void apply_lambda_params(const Rule&, Parser& p)
    p.pushState( "InlineFunc", on_close_lambda , &p );
 }
 
+void apply_lambda_params(const Rule& r, Parser& p)
+{
+   internal_lambda_params( r, p, false );
+}
 
+void apply_lambda_params_eta(const Rule& r, Parser& p)
+{
+   internal_lambda_params( r, p, true );
+}
 
 }
 

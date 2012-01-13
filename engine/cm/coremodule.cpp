@@ -21,6 +21,7 @@
 #include <falcon/cm/describe.h>
 #include <falcon/cm/len.h>
 #include <falcon/cm/baseclass.h>
+#include <falcon/cm/iff.h>
 #include <falcon/cm/inspect.h>
 #include <falcon/cm/classname.h>
 #include <falcon/cm/minmax.h>
@@ -65,6 +66,7 @@ CoreModule::CoreModule():
       << new Ext::ClassName
       << new Ext::BaseClass
       << new Ext::Inspect
+      << new Ext::Iff
       
       // Standard classes
       << new Ext::ClassURI

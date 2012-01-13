@@ -254,7 +254,8 @@ public:
    };
    PStepReturnFrameWithTop m_returnFrameWithTop;
 
-      class PStepReturnFrameWithTopDoubt: public PStep
+     
+   class PStepReturnFrameWithTopDoubt: public PStep
    {
    public:
       PStepReturnFrameWithTopDoubt() {apply = apply_; }
@@ -262,7 +263,48 @@ public:
       static void apply_( const PStep*, VMContext* ctx );
       virtual void describeTo( String&, int =0 ) const;
    };
-   PStepReturnFrame m_returnFrameWithTopDoubt;
+   PStepReturnFrameWithTopDoubt m_returnFrameWithTopDoubt;
+   
+   class PStepReturnFrameWithTopEval: public PStep
+   {
+   public:
+      PStepReturnFrameWithTopEval() {apply = apply_; }
+      virtual ~PStepReturnFrameWithTopEval() {}
+      static void apply_( const PStep*, VMContext* ctx );
+      virtual void describeTo( String&, int =0 ) const;
+   };
+   PStepReturnFrameWithTopEval m_returnFrameWithTopEval;
+
+     
+   class PStepReturnFrameWithTopDoubtEval: public PStep
+   {
+   public:
+      PStepReturnFrameWithTopDoubtEval() {apply = apply_; }
+      virtual ~PStepReturnFrameWithTopDoubtEval() {}
+      static void apply_( const PStep*, VMContext* ctx );
+      virtual void describeTo( String&, int =0 ) const;
+   };
+   PStepReturnFrameWithTopDoubtEval PStepReturnFrameWithTopDoubtEval;
+   
+   class PStepEvalTop: public PStep
+   {
+   public:
+      PStepEvalTop() {apply = apply_; }
+      virtual ~PStepEvalTop() {}
+      static void apply_( const PStep*, VMContext* ctx );
+      virtual void describeTo( String&, int =0 ) const;
+   };
+   PStepEvalTop m_evalTop;
+   
+   class PStepResetOC: public PStep
+   {
+   public:
+      PStepResetOC() {apply = apply_; m_bIsFinally = true; }
+      virtual ~PStepResetOC() {}
+      static void apply_( const PStep*, VMContext* ctx );
+      virtual void describeTo( String&, int =0 ) const;
+   };
+   PStepResetOC m_resetOC;
 };
 
 }
