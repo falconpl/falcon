@@ -53,6 +53,7 @@
 #include <falcon/psteps/exprstarindex.h>
 #include <falcon/psteps/exprsym.h>
 #include <falcon/psteps/exprunpack.h>
+#include <falcon/psteps/exprunquote.h>
 #include <falcon/psteps/exprvalue.h>
 
 #include <falcon/psteps/stmtautoexpr.h>
@@ -272,6 +273,7 @@ FALCON_STANDARD_SYNCLASS_OP_CREATE( StarIndexAccess, ExprStarIndex, binaryExprSe
 
 // Sym -- separated
 // Unpack -- separated
+FALCON_STANDARD_SYNCLASS_OP_CREATE( Unquote, ExprUnquote, unaryExprSet )
 // Value -- separated
    
 //=================================================================

@@ -103,6 +103,7 @@ SourceParser::SourceParser():
    T_ISOOB("^?", 24),
    T_EVAL("^*", 80),
    T_LIT("^=", 175),
+   T_UNQUOTE("^~", 24 ),
    
    T_Comma( "," , 180 ),
    T_QMark( "?" , 170 ),
@@ -110,7 +111,7 @@ SourceParser::SourceParser():
 
    T_UnaryMinus("(neg)",23),
    T_Dollar("$",23),
-   T_Amper("&",23),
+   T_Amper("&",10),
    T_Power("**", 25),
 
    T_Times("*",30),
@@ -448,6 +449,7 @@ SourceParser::SourceParser():
    
    Expr<< (r_Expr_expr_eval << "Expr_eval"  << apply_expr_eval << T_EVAL << Expr );
    Expr<< (r_Expr_expr_lit << "Expr_lit"  << apply_expr_lit << T_LIT << Expr );
+   Expr<< (r_Expr_expr_unquote << "Expr_unquote"  << apply_expr_unquote << T_UNQUOTE << Expr );
    
    
    Expr<< (r_Expr_Atom << "Expr_atom" << apply_expr_atom << Atom);

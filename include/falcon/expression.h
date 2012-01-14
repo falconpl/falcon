@@ -51,9 +51,6 @@ public:
    // TODO: Rename in trait()
    t_trait trait() const { return m_trait; }
    
- /** Clone this expression.
-    */
-   virtual Expression* clone() const = 0;
 
    /** Returns true if the expression can be found alone in a statement. */
    inline virtual bool isStandAlone() const { return false; }
@@ -80,6 +77,8 @@ public:
     */
    virtual bool simplify( Item& result ) const = 0;   
       
+   virtual Expression* clone() const = 0;
+
 protected:
    
    Expression( int line = 0, int chr = 0  ):
@@ -141,6 +140,8 @@ public:
    virtual TreeStep* nth( int32 n ) const;
    virtual bool nth( int32 n, TreeStep* ts );
    
+   virtual void registerUnquotes( TreeStep* sender );
+
 protected:
    Expression* m_first;
 };
@@ -191,6 +192,8 @@ public:
    virtual int32 arity() const;
    virtual TreeStep* nth( int32 n ) const;
    virtual bool nth( int32 n, TreeStep* ts );
+   
+   virtual void registerUnquotes( TreeStep* sender );
    
 protected:
    
@@ -256,6 +259,8 @@ public:
    virtual int32 arity() const;
    virtual TreeStep* nth( int32 n ) const;
    virtual bool nth( int32 n, TreeStep* ts );
+   
+   virtual void registerUnquotes( TreeStep* sender );
 
 protected:
    Expression* m_first;

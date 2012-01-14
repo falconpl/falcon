@@ -1288,7 +1288,7 @@ protected:
       }
 
       inline void unroll( int oldSize ) {
-         m_top = m_base + oldSize - 1;
+         m_top = m_base + (oldSize - 1);
       }
 
       inline datatype__* addSlot() {

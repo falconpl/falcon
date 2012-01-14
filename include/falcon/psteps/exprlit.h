@@ -26,8 +26,8 @@ namespace Falcon {
 class ExprLit: public UnaryExpression
 {
 public:
-   ExprLit();
-   ExprLit( Expression* expr );
+   ExprLit( int line=0, int chr=0 );
+   ExprLit( Expression* expr, int line=0, int chr=0 );
    ExprLit( const ExprLit& other );
    
    virtual ~ExprLit() {};   
@@ -39,7 +39,14 @@ public:
    virtual bool isStatic() const {return false; }
    virtual bool simplify( Item& ) const { return false; }      
    
+   /** This is actually a proxy to first() used during deserialization. */
+   void setExpression( Expression* expr );
+   
+   virtual void subscribeUnquote( Expression* expr );
 public:
+   class Private;
+   Private* _p;
+   
    static void apply_( const PStep*, VMContext* ctx );
 };
 

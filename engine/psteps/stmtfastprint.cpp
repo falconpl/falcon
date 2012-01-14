@@ -90,8 +90,7 @@ TreeStep* StmtFastPrint::nth( int32 n ) const
 bool StmtFastPrint::nth( int32 n, TreeStep* ts )
 {
    if( ts == 0 
-      || ts->category() != TreeStep::e_cat_expression 
-      || !ts->setParent(this) ) 
+      || ts->category() != TreeStep::e_cat_expression ) 
    {
       return false;
    }
@@ -101,8 +100,7 @@ bool StmtFastPrint::nth( int32 n, TreeStep* ts )
 bool StmtFastPrint::insert( int32 n, TreeStep* ts )
 {   
    if( ts == 0 
-      || ts->category() != TreeStep::e_cat_expression
-      || !ts->setParent(this) ) 
+      || ts->category() != TreeStep::e_cat_expression ) 
    {
       return false;
    }

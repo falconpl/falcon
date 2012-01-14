@@ -46,7 +46,7 @@ public:
    virtual bool simplify( Item& result ) const;
    
    virtual void describeTo( String& target, int depth=0 ) const;
-   
+      
 private:
    Expression* m_estart;
    Expression* m_eend;

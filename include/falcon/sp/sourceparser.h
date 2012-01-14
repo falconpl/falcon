@@ -77,6 +77,7 @@ public:
    Parsing::Terminal T_ISOOB;
    Parsing::Terminal T_EVAL;
    Parsing::Terminal T_LIT;
+   Parsing::Terminal T_UNQUOTE;
    
    Parsing::Terminal T_Comma;
    Parsing::Terminal T_QMark;
@@ -355,6 +356,7 @@ public:
    Parsing::Rule r_Expr_ternary_if;
    Parsing::Rule r_Expr_expr_eval;
    Parsing::Rule r_Expr_expr_lit;
+   Parsing::Rule r_Expr_expr_unquote;
    
    Parsing::Rule r_Expr_neg;
    Parsing::Rule r_Expr_neg2;

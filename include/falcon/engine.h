@@ -45,6 +45,8 @@ class Item;
 
 class SynClasses;
 
+class VMContext;
+
 /** Falcon application global data.
 
  This class stores the gloal items that must be known by the falcon engine
@@ -441,6 +443,22 @@ public:
     */
    Class* getRegisteredClass( const String& name ) const;
    
+   /** Returns the context currently active in the current tread.
+    \return the context active in the current thread or 0 if the VM is not
+    running any context.
+    
+    The context will be returned also if the VM active in the current thread
+    is paused.
+    */
+   VMContext* currentContext() const;
+
+   /** Set the context run by this thread.
+    \param ctx The context being run.
+    Each time the VM changes the running context in the current VM execution
+    thread, this method is called to update the global visibility of the context.
+    */
+   void setCurrentContext( VMContext* ctx );
+   
 protected:
    Engine();
    ~Engine();
@@ -514,6 +532,9 @@ protected:
    
    StdSteps* m_stdSteps;
    StdErrors* m_stdErrors;
+   
+   // TODO: In MT, set this as TLS data.
+   VMContext* m_currentContext;
 };
 
 }

@@ -82,6 +82,11 @@ bool UnaryExpression::nth( int32 n, TreeStep* ts )
 }
 
 
+void UnaryExpression::registerUnquotes( TreeStep* sender )
+{
+   first()->registerUnquotes( sender );
+}
+
 //=============================================================
 
 BinaryExpression::BinaryExpression( const BinaryExpression &other ):
@@ -141,6 +146,14 @@ bool BinaryExpression::nth( int32 n, TreeStep* ts )
    
    return false;
 }
+
+
+void BinaryExpression::registerUnquotes( TreeStep* sender )
+{
+   first()->registerUnquotes( sender );
+   second()->registerUnquotes( sender );
+}
+
 
 //=============================================================
 TernaryExpression::TernaryExpression( const TernaryExpression &other ):
@@ -209,6 +222,13 @@ bool TernaryExpression::nth( int32 n, TreeStep* ts )
    return false;
 }
 
+
+void TernaryExpression::registerUnquotes( TreeStep* sender )
+{
+   first()->registerUnquotes( sender );
+   second()->registerUnquotes( sender );
+   third()->registerUnquotes( sender );
+}
 
 }
 

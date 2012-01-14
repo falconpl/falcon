@@ -172,7 +172,24 @@ SynTree* TreeStep::checkSyntree( const Item& item )
    }
    return 0;
 }
+ 
 
+void TreeStep::registerUnquotes( TreeStep* sender )
+{
+   Expression* sel = selector();
+   if ( sel != 0 ) sel->registerUnquotes(sender);
+   
+   for( int i = 0; i < arity(); ++i )
+   {
+      nth(i)->registerUnquotes(sender);
+   }
+}
+   
+   
+void TreeStep::subscribeUnquote( Expression* )
+{
+   // The base class implementation does nothing.
+}
 
 }
 

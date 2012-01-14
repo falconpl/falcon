@@ -262,6 +262,11 @@ Engine::Engine()
    //
    m_core  = new CoreModule;
 
+   // ====================================
+   // TODO: Prepare the TLS
+   //
+   m_currentContext = 0;
+   
    MESSAGE( "Engine creation complete" );
 }
 
@@ -635,7 +640,21 @@ SynClasses* Engine::synclasses() const
    fassert( m_instance != 0 );
    return m_instance->m_synClasses;
 }
-   
+
+
+VMContext* Engine::currentContext() const 
+{
+   fassert( m_instance != 0 );
+   return m_instance->m_currentContext;
+}
+
+
+void Engine::setCurrentContext( VMContext* ctx ) 
+{
+   fassert( m_instance != 0 );
+   m_instance->m_currentContext = ctx;
+}
+
 }
 
 /* end of engine.cpp */

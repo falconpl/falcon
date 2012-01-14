@@ -119,6 +119,7 @@ FALCON_SYNCLASS_DECLARATOR(m_expr_genref, GenRef, expr)
 FALCON_SYNCLASS_DECLARATOR(m_expr_self, Self, expr)
 FALCON_SYNCLASS_DECLARATOR(m_expr_starindex, StarIndexAccess, expr)
 FALCON_SYNCLASS_DECLARATOR(m_expr_unpack, Unpack, expr)
+FALCON_SYNCLASS_DECLARATOR(m_expr_unquote, Unquote, expr)
 
 FALCON_SYNCLASS_DECLARATOR_EX(m_expr_sym, GenSym, expr, \
       void store( VMContext*, DataWriter* dw, void* instance ) const; )

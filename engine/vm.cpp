@@ -228,6 +228,7 @@ bool VMachine::run()
 
    // for now... then it will be a TLS variable.
    VMContext* ctx = currentContext();
+   Engine::instance()->setCurrentContext(ctx);
    ctx->clearEvent();
    
    while( true )
@@ -426,6 +427,7 @@ bool VMachine::step()
    }
    
    VMContext* ctx = currentContext();
+   Engine::instance()->setCurrentContext(ctx);
 
    PARANOID( "Call stack empty", (ctx->callDepth() > 0) );
 
