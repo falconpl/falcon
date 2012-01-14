@@ -33,6 +33,7 @@ namespace Falcon {
 
 using namespace Parsing;
 
+
 void apply_expr_index( const Rule&, Parser& p )
 {
    // << (r_Expr_index << "Expr_index" << apply_expr_index << Expr << T_OpenSquare << Expr << T_CloseSquare )
@@ -43,21 +44,22 @@ void apply_expr_index( const Rule&, Parser& p )
    TokenInstance* v2 = p.getNextToken();
    p.getNextToken();
 
-   TokenInstance* ti = new TokenInstance(v1->line(), v1->chr(), sp.Expr);
-   ti->setValue( new ExprIndex(
-         static_cast<Expression*>(v1->detachValue()),
-         static_cast<Expression*>(v2->detachValue()),
-         v1->line(), v1->chr()
-      ), expr_deletor );
+   TokenInstance* ti = new TokenInstance( v1->line(), v1->chr(), sp.Expr );
 
-   p.simplify(4,ti);
+   ti->setValue( new ExprIndex( static_cast<Expression*>( v1->detachValue() ),
+         static_cast<Expression*>( v2->detachValue() ),
+         v1->line(),
+         v1->chr() ),
+      expr_deletor );
+
+   p.simplify( 4, ti );
 }
 
 
 void apply_expr_star_index( const Rule&, Parser& p )
 {
    // << (r_Expr_star_index << "Expr_star_index" << apply_expr_star_index << Expr << T_OpenSquare << T_Times << Expr << T_CloseSquare )
-   SourceParser& sp = static_cast<SourceParser&>(p);
+   SourceParser& sp = static_cast<SourceParser&>( p );
 
    TokenInstance* v1 = p.getNextToken();
    p.getNextToken();
@@ -66,127 +68,165 @@ void apply_expr_star_index( const Rule&, Parser& p )
    p.getNextToken();
 
    // Todo: set lvalues and define symbols in the module
-   TokenInstance* ti = new TokenInstance(v1->line(), v1->chr(), sp.Expr);
-   ti->setValue( new ExprStarIndex(
-         static_cast<Expression*>(v1->detachValue()),
-         static_cast<Expression*>(v2->detachValue()),
-         v1->line(), v1->chr()
-      ), expr_deletor );
+   TokenInstance* ti = new TokenInstance( v1->line(), v1->chr(), sp.Expr );
 
-   p.simplify(5,ti);
+   ti->setValue( new ExprStarIndex( static_cast<Expression*>( v1->detachValue() ),
+         static_cast<Expression*>( v2->detachValue() ),
+         v1->line(),
+         v1->chr() ),
+      expr_deletor );
+
+   p.simplify( 5, ti );
 }
+
 
 void apply_expr_range_index3( const Rule&, Parser& p )
 {
    // << Expr << T_OpenSquare << Expr << T_Colon << Expr << T_Colon << Expr << T_CloseSquare
-   SourceParser& sp = static_cast<SourceParser&>(p);
+   // Example array[n1:n2:n3]
+   SourceParser& sp = static_cast<SourceParser&>( p );
 
-   TokenInstance* v1 = p.getNextToken();
-   p.getNextToken();
-   TokenInstance* tstart = p.getNextToken();
-   p.getNextToken(); //:
-   TokenInstance* tend = p.getNextToken();
-   p.getNextToken(); //:
-   TokenInstance* tstep = p.getNextToken();
+   TokenInstance* v1 = p.getNextToken();  // array
+   p.getNextToken(); // '['
+   TokenInstance* tstart = p.getNextToken(); // n1
+   p.getNextToken(); // ':'
+   TokenInstance* tend = p.getNextToken();   // n2
+   p.getNextToken(); // ':'
+   TokenInstance* tstep = p.getNextToken();  // n3
    
-   ExprRange* rng = new ExprRange( 
-         static_cast<Expression*>(tstart->detachValue()),
-         static_cast<Expression*>(tend->detachValue()),
-         static_cast<Expression*>(tstep->detachValue()),
-         v1->line(), v1->chr()
+   ExprRange* rng = new ExprRange( static_cast<Expression*>( tstart->detachValue() ),
+         static_cast<Expression*>( tend->detachValue() ),
+         static_cast<Expression*>( tstep->detachValue() ),
+         v1->line(),
+         v1->chr()
       );
    
-   TokenInstance* ti = new TokenInstance(v1->line(), v1->chr(), sp.Expr);
-   ti->setValue( new ExprIndex(
-         static_cast<Expression*>(v1->detachValue()),
-         rng,
-         v1->line(), v1->chr()
-      ), expr_deletor );
+   TokenInstance* ti = new TokenInstance( v1->line(), v1->chr(), sp.Expr );
 
-   p.simplify(8,ti);
+   ti->setValue( new ExprIndex( static_cast<Expression*>( v1->detachValue() ),
+         rng,
+         v1->line(),
+         v1->chr() ),
+      expr_deletor );
+
+   p.simplify( 8, ti );
 }
+
 
 void apply_expr_range_index3open( const Rule&, Parser& p )
 {
    // << Expr << T_OpenSquare << Expr << T_Colon << T_Colon << Expr << T_CloseSquare
-   SourceParser& sp = static_cast<SourceParser&>(p);
+   // Example: array[n1::n2]
+   SourceParser& sp = static_cast<SourceParser&>( p );
 
-   TokenInstance* v1 = p.getNextToken();
-   p.getNextToken();
-   TokenInstance* tstart = p.getNextToken();
-   p.getNextToken(); //:
-   p.getNextToken(); //:
-   TokenInstance* tstep = p.getNextToken();
+   TokenInstance* v1 = p.getNextToken();  // array
+   p.getNextToken(); // '['
+   TokenInstance* tstart = p.getNextToken(); // n1
+   p.getNextToken(); // ':'
+   p.getNextToken(); // ':'
+   TokenInstance* tstep = p.getNextToken();  // n2
    
    ExprRange* rng = new ExprRange( 
-         static_cast<Expression*>(tstart->detachValue()),
-         0,
-         static_cast<Expression*>(tstep->detachValue())
-      );
+      static_cast<Expression*>( tstart->detachValue() ),
+      0,
+      static_cast<Expression*>( tstep->detachValue() ) );
    
    TokenInstance* ti = new TokenInstance(v1->line(), v1->chr(), sp.Expr);
-   ti->setValue( new ExprIndex(
-         static_cast<Expression*>(v1->detachValue()),
-         rng,
-         v1->line(), v1->chr()
-      ), expr_deletor );
 
-   p.simplify(7,ti);   
+   ti->setValue( new ExprIndex( static_cast<Expression*>( v1->detachValue() ),
+         rng,
+         v1->line(),
+         v1->chr() ),
+      expr_deletor );
+
+   p.simplify( 7, ti );   
 }
+
 
 void apply_expr_range_index2( const Rule&, Parser& p )
 {
    // << Expr << T_OpenSquare << Expr << T_Colon << Expr << T_CloseSquare
-   SourceParser& sp = static_cast<SourceParser&>(p);
+   // Example array[n1:n2]
+   SourceParser& sp = static_cast<SourceParser&>( p );
 
-   TokenInstance* v1 = p.getNextToken();
-   p.getNextToken();
-   TokenInstance* tstart = p.getNextToken();
-   p.getNextToken(); //:
-   TokenInstance* tend = p.getNextToken();
+   TokenInstance* v1 = p.getNextToken();  // array
+   p.getNextToken(); // '['
+   TokenInstance* tstart = p.getNextToken(); // n1
+   p.getNextToken(); // ':'
+   TokenInstance* tend = p.getNextToken();   // n2
    
-   ExprRange* rng = new ExprRange( 
-         static_cast<Expression*>(tstart->detachValue()),
-         static_cast<Expression*>(tend->detachValue()),
-         0,
-         v1->line(), v1->chr()
-      );
+   ExprRange* rng = new ExprRange( static_cast<Expression*>( tstart->detachValue() ),
+      static_cast<Expression*>( tend->detachValue() ),
+      0,
+      v1->line(),
+      v1->chr() );
    
-   TokenInstance* ti = new TokenInstance(v1->line(), v1->chr(), sp.Expr);
-   ti->setValue( new ExprIndex(
-         static_cast<Expression*>(v1->detachValue()),
+   TokenInstance* ti = new TokenInstance( v1->line(), v1->chr(), sp.Expr );
+
+   ti->setValue( new ExprIndex( static_cast<Expression*>( v1->detachValue() ),
          rng,
-         v1->line(), v1->chr()
-      ), expr_deletor );
+         v1->line(),
+         v1->chr() ),
+      expr_deletor );
 
-   p.simplify(6,ti);      
+   p.simplify( 6, ti );
 }
+
 
 void apply_expr_range_index1( const Rule&, Parser& p )
 {
    // << Expr << T_OpenSquare << Expr << T_Colon << T_CloseSquare
-   SourceParser& sp = static_cast<SourceParser&>(p);
+   // Example: array[n1:]
+   SourceParser& sp = static_cast<SourceParser&>( p );
 
-   TokenInstance* v1 = p.getNextToken();
-   p.getNextToken();
-   TokenInstance* tstart = p.getNextToken();
+   TokenInstance* v1 = p.getNextToken();  // "array"
+   p.getNextToken(); // '['
+   TokenInstance* tstart = p.getNextToken(); // "n1"
    
+   ExprRange* rng = new ExprRange( static_cast<Expression*>( tstart->detachValue() ),
+      0,
+      0,
+      v1->line(),
+      v1->chr() );
+   
+   TokenInstance* ti = new TokenInstance( v1->line(), v1->chr(), sp.Expr );
+
+   ti->setValue( new ExprIndex(
+         static_cast<Expression*>( v1->detachValue() ),
+            rng,
+            v1->line(), v1->chr() ),
+      expr_deletor );
+
+   p.simplify(5,ti);
+}
+
+
+void apply_expr_range_index0( const Rule&, Parser& p )
+{
+   // << Expr << T_OpenSquare << T_Colon << T_CloseSquare
+   // Example: array[:]
+   SourceParser& sp = static_cast<SourceParser&>( p );
+
+   TokenInstance* v1 = p.getNextToken();  // array
+
    ExprRange* rng = new ExprRange( 
-         static_cast<Expression*>(tstart->detachValue()),
+         0,
          0,
          0,
          v1->line(), v1->chr()
       );
-   
-   TokenInstance* ti = new TokenInstance(v1->line(), v1->chr(), sp.Expr);
-   ti->setValue( new ExprIndex(
-         static_cast<Expression*>(v1->detachValue()),
-         rng,
-         v1->line(), v1->chr()
-      ), expr_deletor );
 
-   p.simplify(5,ti);
+   TokenInstance* ti = new TokenInstance( v1->line(), v1->chr(), sp.Expr );
+
+   ti->setValue( new ExprIndex( static_cast<Expression*>( v1->detachValue() ),
+         rng,
+         v1->line(),
+         v1->chr() ),
+      expr_deletor );
+
+   p.simplify( 4, ti );
 }
+
 
 }
 

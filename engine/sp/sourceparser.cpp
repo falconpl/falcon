@@ -404,6 +404,8 @@ SourceParser::SourceParser():
             << Expr << T_OpenSquare << Expr << T_Colon << Expr << T_CloseSquare );
    Expr<< (r_Expr_range_index1 << "Expr_Expr_range_index1" << apply_expr_range_index1
             << Expr << T_OpenSquare << Expr << T_Colon << T_CloseSquare );
+   Expr<< (r_Expr_range_index0 << "Expr_Expr_range_index0" << apply_expr_range_index0
+            << Expr << T_OpenSquare << T_Colon << T_CloseSquare );
    
    Expr<< (r_Expr_array_decl << "Expr_array_decl" << apply_expr_array_decl << T_OpenSquare );
    Expr<< (r_Expr_array_decl2 << "Expr_array_decl2" << apply_expr_array_decl2 << T_DotSquare );
