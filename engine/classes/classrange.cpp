@@ -29,7 +29,7 @@
 namespace Falcon {
 
 ClassRange::ClassRange():
-   Class("Range", FLC_CLASS_ID_RANGE )
+   Class( "Range", FLC_CLASS_ID_RANGE )
 {
 }
 
@@ -41,7 +41,7 @@ ClassRange::~ClassRange()
 
 void ClassRange::dispose( void* self ) const
 {
-   Range* f = static_cast<Range*>(self);   
+   Range* f = static_cast<Range*>( self );   
    delete f;
 }
 
@@ -54,11 +54,11 @@ void* ClassRange::clone( void* source ) const
 
 void ClassRange::store( VMContext*, DataWriter* stream, void* instance ) const
 {
-   Range* r = static_cast<Range*>(instance);
-   stream->write(r->m_start);
-   stream->write(r->m_end);
-   stream->write(r->m_step);
-   stream->write(r->m_open);   
+   Range* r = static_cast<Range*>( instance );
+   stream->write( r->m_start );
+   stream->write( r->m_end );
+   stream->write( r->m_step );
+   stream->write( r->m_open);   
 }
 
 
@@ -67,10 +67,10 @@ void ClassRange::restore( VMContext*, DataReader* stream, void*& empty ) const
    int64 start, end, step;
    bool isOpen;
    
-   stream->read(start);
-   stream->read(end);
-   stream->read(step);
-   stream->read(isOpen);   
+   stream->read( start );
+   stream->read( end );
+   stream->read( step );
+   stream->read( isOpen );   
 
    Range* r = new Range;
    r->m_start = start;
@@ -90,23 +90,23 @@ void ClassRange::describe( void* instance, String& target, int maxDepth, int ) c
       return;
    }
 
-   Range* r = static_cast<Range*>(instance);
-   r->describe(target);
+   Range* r = static_cast<Range*>( instance );
+   r->describe( target );
 }
 
 
 
 void ClassRange::gcMark( void* self, uint32 mark ) const
 {
-   Range& range = *static_cast<Range*>(self);
+   Range& range = *static_cast<Range*>( self );
    range.gcMark( mark );
 }
 
 
 bool ClassRange::gcCheck( void* self, uint32 mark ) const
 {
-   Range& range = *static_cast<Range*>(self);
-   if ( range.gcMark() < mark)
+   Range& range = *static_cast<Range*>( self );
+   if ( range.gcMark() < mark )
    {
       return false;
    }
@@ -118,8 +118,8 @@ bool ClassRange::gcCheck( void* self, uint32 mark ) const
 
 void ClassRange::enumerateProperties( void*, PropertyEnumerator& cb ) const
 {
-   cb("len", true);
-   cb("len_", true);
+   cb( "len", true );
+   cb( "len_", true );
 }
 
 void ClassRange::enumeratePV( void*, Class::PVEnumerator& rator ) const
@@ -127,7 +127,7 @@ void ClassRange::enumeratePV( void*, Class::PVEnumerator& rator ) const
    Item temp;
    
    temp = 3;
-   rator("len_", temp );
+   rator( "len_", temp );
 }
 
 
@@ -143,39 +143,39 @@ void ClassRange::op_create( VMContext* ctx, int pcount ) const
    switch( pcount )
    {
       case 0:
-         inst->start(0); 
-         inst->setOpen(true);
+         inst->start( 0 ); 
+         inst->setOpen( true );
          break;
          
       case 1: 
-         inst->start(ctx->opcodeParam(0).forceInteger()); 
-         inst->setOpen(true);
+         inst->start( ctx->opcodeParam( 0 ).forceInteger() ); 
+         inst->setOpen( true );
          break;
          
       case 2:
-         inst->start(ctx->opcodeParam(1).forceInteger()); 
-         if( ctx->opcodeParam(0).isNil() )
+         inst->start(ctx->opcodeParam( 1 ).forceInteger() ); 
+         if( ctx->opcodeParam( 0 ).isNil() )
          {
-            inst->setOpen(true);         
+            inst->setOpen( true );         
          }
          else
          {
-            inst->end(ctx->opcodeParam(0).forceInteger());
+            inst->end( ctx->opcodeParam( 0 ).forceInteger() );
          }
          break;
          
       default: // 3 or more.
-         inst->start(ctx->opcodeParam(2).forceInteger()); 
-         if( ctx->opcodeParam(1).isNil() )
+         inst->start(ctx->opcodeParam( 2 ).forceInteger() ); 
+         if( ctx->opcodeParam( 1 ).isNil() )
          {
-            inst->setOpen(true);         
+            inst->setOpen( true );         
          }
          else
          {
-            inst->end(ctx->opcodeParam(1).forceInteger());
+            inst->end( ctx->opcodeParam( 1 ).forceInteger() );
          }
-         inst->step(ctx->opcodeParam(0).forceInteger()); 
-         inst->setOpen(false);
+         inst->step( ctx->opcodeParam( 0 ).forceInteger() ); 
+         inst->setOpen( false );
          break;
    }
    
@@ -187,7 +187,7 @@ void ClassRange::op_getProperty( VMContext* ctx, void* self, const String& prope
 {
    if( property == "len_" )
    {
-      ctx->stackResult(1, 3);
+      ctx->stackResult( 1, 3 );
    }
    
    Class::op_getProperty( ctx, self, property );
@@ -197,7 +197,7 @@ void ClassRange::op_getIndex( VMContext* ctx, void* self ) const
 {
    Item *item, *index;
    ctx->operands( item, index );
-   Range& range = *static_cast<Range*>(self);
+   Range& range = *static_cast<Range*>( self );
 
    if( index->isOrdinal() )
    {
@@ -210,7 +210,7 @@ void ClassRange::op_getIndex( VMContext* ctx, void* self ) const
             break;
             
          case 1:
-            ctx->stackResult( 2, range.isOpen()? Item() : Item(range.end()) );
+            ctx->stackResult( 2, range.isOpen()? Item() : Item( range.end() ) );
             break;
             
          case 2:
@@ -218,14 +218,14 @@ void ClassRange::op_getIndex( VMContext* ctx, void* self ) const
             break;
             
          default:
-            throw new AccessError( ErrorParam(e_arracc, __LINE__, SRC )
-               .origin(ErrorParam::e_orig_vm) );
+            throw new AccessError( ErrorParam( e_arracc, __LINE__, SRC )
+               .origin( ErrorParam::e_orig_vm ) );
       }      
    }
    else
    {
       throw new AccessTypeError( ErrorParam(e_param_type, __LINE__, SRC )
-            .origin(ErrorParam::e_orig_vm) );
+            .origin( ErrorParam::e_orig_vm ) );
    }
 }
 
@@ -234,7 +234,7 @@ void ClassRange::op_setIndex( VMContext* ctx, void* self ) const
    Item* value, *item, *index;
    ctx->operands( value, item, index );
    
-   Range* range = static_cast<Range*>(self);
+   Range* range = static_cast<Range*>( self );
 
    if( index->isOrdinal() )
    {
@@ -245,58 +245,58 @@ void ClassRange::op_setIndex( VMContext* ctx, void* self ) const
       {
          case 0:
             range->start( value->forceInteger() );
-            ctx->popData(2);
+            ctx->popData( 2 );
             break;
             
          case 1: 
             if( value->isNil() )
             {
-               range->setOpen(true);
+               range->setOpen( true );
             }
             else if ( value->isOrdinal() )
             {
-               range->setOpen(false);                              
+               range->setOpen( false );                              
                range->end( value->forceInteger() );
             }
             
-            ctx->popData(2);
+            ctx->popData( 2 );
             break;
 
          case 2:
             range->step( value->forceInteger() );
-            ctx->popData(2);
+            ctx->popData( 2 );
             break;            
           
          default:
-            throw new AccessError( ErrorParam(e_arracc, __LINE__, SRC )
-               .origin(ErrorParam::e_orig_vm) );
+            throw new AccessError( ErrorParam( e_arracc, __LINE__, SRC )
+               .origin( ErrorParam::e_orig_vm ) );
       }      
    }
    else
    {
-      throw new AccessTypeError( ErrorParam(e_param_type, __LINE__, SRC )
-            .origin(ErrorParam::e_orig_vm) );
+      throw new AccessTypeError( ErrorParam( e_param_type, __LINE__, SRC )
+            .origin( ErrorParam::e_orig_vm ) );
    }
 }
 
 void ClassRange::op_iter( VMContext* ctx, void* self ) const
 {
-  Range* range = static_cast<Range*>(self);
+  Range* range = static_cast<Range*>( self );
   ctx->pushData( range->start() );
 }
 
 
 void ClassRange::op_next( VMContext* ctx, void* self ) const
 {
-  Range* range = static_cast<Range*>(self);
-  Item& iter = ctx->opcodeParam(0);
+  Range* range = static_cast<Range*>( self );
+  Item& iter = ctx->opcodeParam( 0 );
   int64 current = 0;
   int64 next = 0;
   bool dir = true;
 
   fassert( iter.isInteger() );
   current = iter.asInteger();
-  next = current + ((range->step()==0) ? 1 : range->step());
+  next = current + ( ( range->step() == 0 ) ? 1 : range->step() );
   dir = range->step()>=0;
   if ( !range->isOpen() )
   {
