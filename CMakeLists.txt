@@ -13,7 +13,7 @@
 # FALCON_MOD_DIR    - Prefix for installation of modules. Defaults to
 #                     $FALCON_LIB_DIR/falcon on UNICES, and bin/ on windows.
 # FALCON_MAN_DIR    - Where manual pages are stored (below prefix)
-# FALCON_SHARE_DIR  - Where to install falco share files
+# FALCON_SHARE_DIR  - Where to install falcon share files
 # FALCON_CMAKE_DIR  - Where to install FalconConfig.cmake & c
 #
 ##  Options
