@@ -236,7 +236,7 @@ Module::~Module()
       throw std::runtime_error( "A module cannot be destroyed with an active unloader!" );
    }
 
-   // this is doing to do a bit of stuff; see ~Private()
+   // this is going to do a bit of stuff; see ~Private()
    delete _p;   
    TRACE("Module '%s' deletion complete", m_name.c_ize() );
 }
