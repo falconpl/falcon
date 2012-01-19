@@ -41,10 +41,17 @@ public:
    virtual void restore( VMContext* , DataReader* dr, void*& data ) const;
 
    virtual void describe( void* instance, String& target, int, int ) const;
+
+   // enumerateProperties enumerates everything, methods included
+   // used by the vm to determine everything in a class
    virtual void enumerateProperties( void* self, PropertyEnumerator& cb ) const;
+
+   // enumeratePV should enumerate only those properties that have a value
+   // and should be visible to the user.
    virtual void enumeratePV( void* self, PVEnumerator& cb ) const;
+
    virtual bool hasProperty( void* self, const String& prop ) const;
-   
+
    virtual void gcMark( void* instance, uint32 mark ) const;
    virtual bool gcCheck( void* instance, uint32 mark ) const;
 
@@ -56,7 +63,7 @@ public:
 
    virtual void op_getIndex( VMContext* ctx, void* self ) const;
    virtual void op_setIndex( VMContext* ctx, void* self ) const;
-   
+
    virtual void op_compare( VMContext* ctx, void* self ) const;
    virtual void op_toString( VMContext* ctx, void* self ) const;
    virtual void op_isTrue( VMContext* ctx, void* self ) const;

@@ -30,6 +30,40 @@
 
 namespace Falcon {
 
+
+namespace DictProperties {
+
+//
+// Class properties used for enumeration
+//
+const int NUM_OF_PROPERTIES   = 20;
+
+char properties[ ][ 12 ] = {
+   "back",  // 1
+   "best",
+   "clear",
+   "comp",
+   "do",
+   "dop",
+   "fill",
+   "find",
+   "first",
+   "front", // 10
+   "get",
+   "keys",
+   "last",
+   "mcomp",
+   "merge",
+   "mfcomp",
+   "properties",
+   "remove",
+   "setProperty",
+   "values" // 20
+};
+
+}
+
+
 ClassDict::ClassDict():
    Class("Dictionary", FLC_CLASS_ID_DICT )
 {
@@ -146,13 +180,19 @@ void ClassDict::gcMark( void* self, uint32 mark ) const
    dict.gcMark( mark );
 }
 
-void ClassDict::enumerateProperties( void*, PropertyEnumerator& ) const
+void ClassDict::enumerateProperties( void*, PropertyEnumerator& cb ) const
 {
+   for ( int cnt = 0; cnt < ( DictProperties::NUM_OF_PROPERTIES - 1 ); cnt++ )
+   {
+      cb( DictProperties::properties[ cnt ], false );
+   }
+
+   cb( DictProperties::properties[ DictProperties::NUM_OF_PROPERTIES - 1 ], true );
 }
 
 void ClassDict::enumeratePV( void*, Class::PVEnumerator& ) const
 {
-   // EnumerateVP doesn't normally return static methods.
+   // EnumeratePV doesn't normally return static methods.
 }
 
 //=======================================================================
