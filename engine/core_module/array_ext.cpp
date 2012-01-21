@@ -1401,8 +1401,8 @@ static void arraySort_insertionSort_flex( VMachine *vm, Item *comparer, Item *ar
    lexicographically. To sort the data based on an arbitrary criterion, or to sort
    complex items, or objects, based on some of their contents, the caller may
    provide a sortFunc that will receive two parameters. The sortFunc must return -1
-   if the first parameter is to be considered smaller than the second, 0 if they
-   are the same and 1 if the second parameter is considered greater.
+   if the first parameter is be considered greater than the second, 0 if they
+   are equal and 1 if the second parameter is to be considered greater.
 
    Sort function is called in atomic mode. The called function cannot be
    interrupted by external kind requests, and it cannot sleep or yield the
