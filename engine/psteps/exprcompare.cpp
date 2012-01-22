@@ -116,27 +116,20 @@ void generic_apply_( const PStep* ps, VMContext* ctx )
       ctx->popData();
       break;
 
-   case FLC_ITEM_USER << 8 | FLC_ITEM_NIL:
-   case FLC_ITEM_USER << 8 | FLC_ITEM_BOOL:
-   case FLC_ITEM_USER << 8 | FLC_ITEM_INT:
-   case FLC_ITEM_USER << 8 | FLC_ITEM_NUM:
-   case FLC_ITEM_USER << 8 | FLC_ITEM_METHOD:
-   case FLC_ITEM_USER << 8 | FLC_ITEM_FUNC:
-   case FLC_ITEM_USER << 8 | FLC_ITEM_USER:
-      op1.asClass()->op_compare( ctx, op1.asInst() );
-      // refetch, we may have gone deep
-      fassert( ctx->topData().isInteger() );
+   default:
+      if( op1.type() >= FLC_ITEM_USER )
       {
+         op1.asClass()->op_compare( ctx, op1.asInst() );
+         // refetch, we may have gone deep
+         fassert( ctx->topData().isInteger() );
          int64 cmp = ctx->topData().asInteger();
          ctx->popData();
          ctx->topData().setBoolean( _cpr::cmpCheck( cmp ) );
       }
-      
-      break;
-
-   default:
-      op1.setBoolean( _cpr::cmpCheck( op1.compare(op2) ) );
-      ctx->popData();
+      else {
+         op1.setBoolean( _cpr::cmpCheck( op1.compare(op2) ) );
+         ctx->popData();
+      }
    }
    
    ctx->popCode();

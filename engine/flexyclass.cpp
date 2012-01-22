@@ -167,7 +167,6 @@ void FlexyClass::op_create( VMContext* ctx, int32 pcount ) const
                m_self(self),
                m_fself( owner, self)
             {
-               m_fself.garbage();
             }
 
             virtual void operator()( const Item& key, Item& value )
@@ -210,8 +209,7 @@ void FlexyClass::op_create( VMContext* ctx, int32 pcount ) const
                m_owner(owner),
                m_self(self),
                m_fself( owner, self)
-            {
-               m_fself.garbage();
+            {               
             }
 
             virtual void operator()( const String& data, Item& value )
@@ -271,7 +269,7 @@ void FlexyClass::op_setProperty( VMContext* ctx, void* self, const String& prop 
    if ( value.isFunction() )
    {
       Function* func = value.asFunction();
-      value.setUser( this, &dict, true );
+      value.setUser( this, &dict );
       value.methodize( func );
    }
    

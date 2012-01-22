@@ -105,7 +105,7 @@ public:
    inline const Item* param( uint32 n ) const {
       fassert(m_dataStack.m_base+(n + currentFrame().m_stackBase) < m_dataStack.m_max );
       if( currentFrame().m_paramCount <= n ) return 0;
-      return &m_dataStack.m_base[ n + currentFrame().m_stackBase ];
+      return m_dataStack.m_base[ n + currentFrame().m_stackBase ].dereference();
    }
 
    /** Return the nth parameter in the local context (non-const).
@@ -113,6 +113,21 @@ public:
    \return A pointer to the nth parameter in the stack, or 0 if out of range.
     */
    inline Item* param( uint32 n )  {
+      fassert(m_dataStack.m_base+(n + currentFrame().m_stackBase) < m_dataStack.m_max );
+      if( currentFrame().m_paramCount <= n ) return 0;
+      return m_dataStack.m_base[ n + currentFrame().m_stackBase ].dereference();
+   }
+   
+   /** Return the nth parameter in the local context - not dereferenced.
+   \param n The parameter number, starting from 0.
+   \return A pointer to the nth parameter in the stack, or 0 if out of range.
+    
+    Normally, Context::param() returns the parameter derefererenced; at times,
+    extension functions may want to access to a parameter passed by reference
+    instead, so to change it. This method doesn't dereference the required
+    parameters.
+    */
+   inline Item* paramRef( uint32 n )  {
       fassert(m_dataStack.m_base+(n + currentFrame().m_stackBase) < m_dataStack.m_max );
       if( currentFrame().m_paramCount <= n ) return 0;
       return &m_dataStack.m_base[ n + currentFrame().m_stackBase ];
@@ -1127,7 +1142,7 @@ public:
    inline bool boolTopData()
    {
 
-      switch( topData().type() )
+      switch( topData().dereference()->type() )
       {
       case FLC_ITEM_NIL:
          return false;
@@ -1139,9 +1154,15 @@ public:
          return topData().asInteger() != 0;
 
       case FLC_ITEM_NUM:
-         return topData().asNumeric() != 0.0;
+         return topData().asNumeric() != 0.0;      
 
-      case FLC_ITEM_USER:
+      case FLC_ITEM_METHOD:
+         return true;
+         
+      case FLC_ITEM_REF:
+         return true;
+
+      default:
          topData().asClass()->op_isTrue( this, topData().asInst() );
          if(topData().isBoolean() )
          {

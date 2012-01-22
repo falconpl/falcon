@@ -153,7 +153,7 @@ FalconClass::Property::Property( FalconState* value ):
 //
 
 FalconClass::FalconClass( const String& name ):
-   OverridableClass("Object" , FLC_CLASS_ID_OBJECT ),
+   OverridableClass("Object" , FLC_ITEM_USER ),
    m_fc_name(name),
    m_init(0),
    m_constructor(0),
@@ -202,7 +202,7 @@ bool FalconClass::addProperty( const String& name, const Item& initValue )
    _p->m_propDefaults.append( initValue );
 
    // is this thing deep? -- if it is so, we should mark it
-   if( initValue.isGarbaged() )
+   if( initValue.type() >= FLC_ITEM_METHOD )
    {
       m_shouldMark = true;
    }

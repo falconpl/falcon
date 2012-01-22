@@ -510,7 +510,7 @@ void HyperClass::FinishInvokeStep::apply_(const PStep* ps, VMContext* ctx )
    Item* pstep_params = ctx->opcodeParams(3);
 
    // get self
-   fassert( pstep_params[0].type() == FLC_ITEM_USER );
+   fassert( pstep_params[0].type() >= FLC_ITEM_USER );
    ItemArray* inst = static_cast<ItemArray*>(pstep_params[0].asInst());
    // save the data created by the master class
    inst->at(0) = pstep_params[2];
@@ -526,7 +526,6 @@ void HyperClass::FinishInvokeStep::apply_(const PStep* ps, VMContext* ctx )
    HyperClass* h = static_cast<const FinishInvokeStep*>(ps)->m_owner;
    ctx->stackResult( pcount+1+3, Item( h, inst ) );
    // declare the data as in need of collection.
-   ctx->topData().garbage();
 
 }
 

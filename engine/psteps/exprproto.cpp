@@ -188,7 +188,7 @@ void ExprProto::apply_( const PStep* ps, VMContext* ctx )
       if( result->isFunction() )
       {
          Function* f = result->asFunction();
-         result->setUser( cls, value, true );
+         result->setUser( cls, value );
          result->methodize( f );
       }
 

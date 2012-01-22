@@ -277,12 +277,7 @@ SynTree* StmtSelect::findBlockForItem( const Item& itm ) const
    if( _p->m_intBlocks.size() > 0 )
    {
       // The type is that for the item...
-      int64 tid = itm.dereference()->type();
-      if( tid == FLC_ITEM_USER )
-      {
-         // ... or specified by the class.
-         tid = itm.asClass()->typeID();
-      }
+      int64 tid = itm.dereference()->type();      
 
       Private::IntBlocks::iterator pos = _p->m_intBlocks.find( tid );
       if( pos != _p->m_intBlocks.end() )

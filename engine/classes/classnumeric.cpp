@@ -150,14 +150,6 @@ void ClassNumeric::op_add( VMContext* ctx, void* self ) const
          ctx->stackResult(2, iself->asNumeric() + op2->asNumeric() );
          break;
 
-      case FLC_ITEM_USER:
-         if( ctx->topData().deuser() )
-         {
-            op_add( ctx, self );
-            break;
-         }
-         // else, fallthrough and raise the error.
-
       default:
          throw new OperandError( ErrorParam( e_invalid_op, __LINE__, SRC )
                .origin( ErrorParam::e_orig_vm )
@@ -181,14 +173,6 @@ void ClassNumeric::op_sub( VMContext* ctx, void* self ) const
       case FLC_ITEM_NUM:
          ctx->stackResult(2, iself->asNumeric() - op2->asNumeric() );
          break;
-
-      case FLC_ITEM_USER:
-         if( ctx->topData().deuser() )
-         {
-            op_sub( ctx, self );
-            break;
-         }
-         // else, fallthrough and raise the error.
 
       default:
          throw new OperandError( ErrorParam( e_invalid_op, __LINE__, SRC )
@@ -214,14 +198,6 @@ void ClassNumeric::op_mul( VMContext* ctx, void* self ) const
          ctx->stackResult(2, iself->asNumeric() * op2->asNumeric() );
          break;
 
-      case FLC_ITEM_USER:
-         if( ctx->topData().deuser() )
-         {
-            op_mul( ctx, self );
-            break;
-         }
-         // else, fallthrough and raise the error.
-
       default:
          throw new OperandError( ErrorParam( e_invalid_op, __LINE__, SRC )
                .origin( ErrorParam::e_orig_vm )
@@ -244,14 +220,6 @@ void ClassNumeric::op_div( VMContext* ctx, void* self ) const
       case FLC_ITEM_NUM:
          ctx->stackResult(2, iself->asNumeric() / op2->asNumeric() );
          break;
-
-      case FLC_ITEM_USER:
-         if( ctx->topData().deuser() )
-         {
-            op_div( ctx, self );
-            break;
-         }
-         // else, fallthrough and raise the error.
 
       default:
          throw new OperandError( ErrorParam( e_invalid_op, __LINE__, SRC )
@@ -277,14 +245,6 @@ void ClassNumeric::op_mod( VMContext* ctx, void* self ) const
          ctx->stackResult(2, iself->forceInteger() % op2->forceInteger() );
          break;
 
-      case FLC_ITEM_USER:
-         if( ctx->topData().deuser() )
-         {
-            op_mod( ctx, self );
-            break;
-         }
-         // else, fallthrough and raise the error.
-
       default:
          throw new OperandError( ErrorParam( e_invalid_op, __LINE__, SRC )
                .origin( ErrorParam::e_orig_vm )
@@ -308,14 +268,6 @@ void ClassNumeric::op_pow( VMContext* ctx, void* self ) const
       case FLC_ITEM_NUM:
          ctx->stackResult(2, pow( iself->asNumeric(), op2->asNumeric() ) );
          break;
-
-      case FLC_ITEM_USER:
-         if( ctx->topData().deuser() )
-         {
-            op_pow( ctx, self );
-            break;
-         }
-         // else, fallthrough and raise the error.
 
       default:
          throw new OperandError( ErrorParam( e_invalid_op, __LINE__, SRC )
@@ -341,14 +293,6 @@ void ClassNumeric::op_shr( VMContext* ctx, void* self ) const
          ctx->stackResult(2, iself->forceInteger() >> op2->forceInteger() );
          break;
 
-      case FLC_ITEM_USER:
-         if( ctx->topData().deuser() )
-         {
-            op_shr( ctx, self );
-            break;
-         }
-         // else, fallthrough and raise the error.
-
       default:
          throw new OperandError( ErrorParam( e_invalid_op, __LINE__, SRC )
                .origin( ErrorParam::e_orig_vm )
@@ -372,14 +316,6 @@ void ClassNumeric::op_shl( VMContext* ctx, void* self ) const
           ctx->stackResult(2, iself->forceInteger() << op2->forceInteger() );
           break;
 
-       case FLC_ITEM_USER:
-          if( ctx->topData().deuser() )
-          {
-             op_shl( ctx, self );
-             break;
-          }
-          // else, fallthrough and raise the error.
-
        default:
           throw new OperandError( ErrorParam( e_invalid_op, __LINE__, SRC )
                 .origin( ErrorParam::e_orig_vm )
@@ -402,14 +338,6 @@ void ClassNumeric::op_aadd( VMContext* ctx, void* self ) const
       case FLC_ITEM_NUM:
          ctx->stackResult(2, iself->asNumeric() + op2->asNumeric() );
          break;
-
-      case FLC_ITEM_USER:
-         if( ctx->topData().deuser() )
-         {
-            op_aadd( ctx, self );
-            break;
-         }
-         // else, fallthrough and raise the error.
 
       default:
          throw new OperandError( ErrorParam( e_invalid_op, __LINE__, SRC )
@@ -435,14 +363,6 @@ void ClassNumeric::op_asub( VMContext* ctx, void* self ) const
          ctx->stackResult(2, iself->asNumeric() - op2->asNumeric() );
          break;
 
-      case FLC_ITEM_USER:
-         if( ctx->topData().deuser() )
-         {
-            op_asub( ctx, self );
-            break;
-         }
-         // else, fallthrough and raise the error.
-
       default:
          throw new OperandError( ErrorParam( e_invalid_op, __LINE__, SRC )
                .origin( ErrorParam::e_orig_vm )
@@ -466,14 +386,6 @@ void ClassNumeric::op_amul( VMContext* ctx, void* self ) const
       case FLC_ITEM_NUM:
          ctx->stackResult(2, iself->asNumeric() * op2->asNumeric() );
          break;
-
-      case FLC_ITEM_USER:
-         if( ctx->topData().deuser() )
-         {
-            op_amul( ctx, self );
-            break;
-         }
-         // else, fallthrough and raise the error.
 
       default:
          throw new OperandError( ErrorParam( e_invalid_op, __LINE__, SRC )
@@ -499,14 +411,6 @@ void ClassNumeric::op_adiv( VMContext* ctx, void* self ) const
          ctx->stackResult(2, iself->asNumeric() / op2->asNumeric() );
          break;
 
-      case FLC_ITEM_USER:
-         if( ctx->topData().deuser() )
-         {
-            op_adiv( ctx, self );
-            break;
-         }
-         // else, fallthrough and raise the error.
-
       default:
          throw new OperandError( ErrorParam( e_invalid_op, __LINE__, SRC )
                .origin( ErrorParam::e_orig_vm )
@@ -530,14 +434,6 @@ void ClassNumeric::op_amod( VMContext* ctx, void* self ) const
       case FLC_ITEM_NUM:
          ctx->stackResult(2, iself->forceInteger() % op2->forceInteger() );
          break;
-
-      case FLC_ITEM_USER:
-         if( ctx->topData().deuser() )
-         {
-            op_amod( ctx, self );
-            break;
-         }
-         // else, fallthrough and raise the error.
 
       default:
          throw new OperandError( ErrorParam( e_invalid_op, __LINE__, SRC )
@@ -563,14 +459,6 @@ void ClassNumeric::op_apow( VMContext* ctx, void* self ) const
          ctx->stackResult(2, pow( iself->asNumeric(), op2->asNumeric() ) );
          break;
 
-      case FLC_ITEM_USER:
-         if( ctx->topData().deuser() )
-         {
-            op_apow( ctx, self );
-            break;
-         }
-         // else, fallthrough and raise the error.
-
       default:
          throw new OperandError( ErrorParam( e_invalid_op, __LINE__, SRC )
                .origin( ErrorParam::e_orig_vm )
@@ -595,14 +483,6 @@ void ClassNumeric::op_ashr( VMContext* ctx, void* self ) const
          ctx->stackResult(2, iself->forceInteger() >> op2->forceInteger() );
          break;
 
-      case FLC_ITEM_USER:
-         if( ctx->topData().deuser() )
-         {
-            op_ashr( ctx, self );
-            break;
-         }
-         // else, fallthrough and raise the error.
-
       default:
          throw new OperandError( ErrorParam( e_invalid_op, __LINE__, SRC )
                .origin( ErrorParam::e_orig_vm )
@@ -625,14 +505,6 @@ void ClassNumeric::op_ashl( VMContext* ctx, void* self ) const
        case FLC_ITEM_NUM:
           ctx->stackResult(2, iself->forceInteger() << op2->forceInteger() );
           break;
-
-       case FLC_ITEM_USER:
-          if( ctx->topData().deuser() )
-          {
-             op_ashl( ctx, self );
-             break;
-          }
-          // else, fallthrough and raise the error.
 
        default:
           throw new OperandError( ErrorParam( e_invalid_op, __LINE__, SRC )

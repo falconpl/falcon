@@ -60,12 +60,7 @@ void FlexyDict::gcMark( uint32 mark )
    while( pos != _p->m_im.end() )
    {
       const Item& value = pos->second;
-
-      if( value.isUser() && value.isGarbaged() )
-      {
-         value.asClass()->gcMark(value.asInst(), mark);
-      }
-
+      value.gcMark( mark );
       ++pos;
    }
 

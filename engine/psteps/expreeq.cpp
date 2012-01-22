@@ -78,12 +78,19 @@ void ExprEEQ::apply_( const PStep* ps, VMContext* ctx )
       op1->setBoolean( op1->asNumeric() == op2->asNumeric() );
       break;
 
-   case FLC_ITEM_USER << 8 | FLC_ITEM_USER:
-      op1->setBoolean( op1->asInst() == op2->asInst() );
+   case FLC_ITEM_METHOD << 8 | FLC_ITEM_METHOD:
+      op1->setBoolean( 
+         op1->asMethodFunction() == op2->asMethodFunction() 
+         && op1->asClass() == op2->asClass() 
+         && op1->asInst() == op2->asInst());
+      break;
+      
+   case FLC_ITEM_REF << 8 | FLC_ITEM_REF:
+      op1->setBoolean( op1->dereference() == op2->dereference() );
       break;
 
    default:
-      op1->setBoolean(false);
+      op1->setBoolean(op1->asInst() == op2->asInst());
    }
    
    ctx->popData();

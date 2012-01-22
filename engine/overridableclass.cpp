@@ -77,7 +77,7 @@ inline void OverridableClass::override_binary( VMContext* ctx, void* self, int o
 
       // 1 parameter == second; which will be popped away,
       // while first == self will be substituted with the return value.
-      ctx->call( override, 1, Item( this, self, true ) );
+      ctx->call( override, 1, Item( this, self ) );
    }
    else
    {
@@ -340,7 +340,7 @@ bool OverridableClass::overrideGetProperty( VMContext* ctx, void* self, const St
    if( override != 0 )
    {
       // call will destroy the value, that is the parameters
-      Item i_first( this, self, true );
+      Item i_first( this, self );
       ctx->popData();
       // I prefer to go safe and push a new string here.
       ctx->pushData( (new String(propName))->garbage() );
@@ -364,7 +364,7 @@ bool OverridableClass::overrideSetProperty( VMContext* ctx, void* self, const St
    if( override != 0 )
    {
       // call will remove the extra parameter...
-      Item iSelf( this, self, true );
+      Item iSelf( this, self );
       // remove "self" from the stack..
       ctx->popData();
       // exchange the property name and the data,
@@ -392,7 +392,7 @@ void OverridableClass::op_compare( VMContext* ctx, void* self ) const
    if( override )
    {
       // call will remove the extra parameter...
-      Item iSelf( this, self, true );
+      Item iSelf( this, self );
       // remove "self" from the stack..
       ctx->popData();
       ctx->call( override, 1, iSelf );
@@ -446,7 +446,7 @@ void OverridableClass::op_provides( VMContext* ctx, void* self, const String& pr
 
    if( override != 0  )
    {
-      Item i_self( this, self, true );
+      Item i_self( this, self );
       ctx->topData() = (new String(propName))->garbage();
       ctx->call( override, 1, i_self );
    }
@@ -464,7 +464,7 @@ void OverridableClass::op_call( VMContext* ctx, int32 paramCount, void* self ) c
    if( override != 0 )
    {
       ctx->popData();
-      ctx->call( override, paramCount, Item( this, self, true ) );
+      ctx->call( override, paramCount, Item( this, self ) );
    }
    else
    {
@@ -481,7 +481,7 @@ void OverridableClass::op_eval( VMContext* ctx, void* self ) const
    // called object is on top of the stack
    if( override != 0 )
    {
-      ctx->call( override, 0, Item( this, self, true ) );
+      ctx->call( override, 0, Item( this, self ) );
    }
 }
 
@@ -492,7 +492,7 @@ void OverridableClass::op_toString( VMContext* ctx, void* self ) const
 
    if( override != 0 )
    {
-      ctx->call( override, 0, Item( this, self, true ) );
+      ctx->call( override, 0, Item( this, self ) );
    }
    else
    {

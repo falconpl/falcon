@@ -128,33 +128,31 @@ void generic_apply_( const PStep* ps, VMContext* ctx )
       {   
          // eventually save the result if necessary
          _cpr::preAssign( ctx );
-         Item *op;
-         ctx->operands( op );
-
-         // we dereference also op1 to help copy-on-write decisions from overrides
-         if( op->isReference() )
-         {
-            *op = *op->dereference();
-         }
-
+         Item *op = ctx->topData().dereference();
+         
          switch( op->type() )
          {
             case FLC_ITEM_INT: op->setInteger( _cpr::operate(op->asInteger()) ); break;
             case FLC_ITEM_NUM: op->setNumeric( _cpr::operaten(op->asNumeric()) ); break;
-            case FLC_ITEM_USER:
-               _cpr::operate( ctx, op->asClass(), op->asInst() );
-               // went deep?
-               if( &cf != &ctx->currentCode() )
-               {
-                  // s_nextApply will be called
-                  return;
-               }
-               break;
-
             default:
-            // no need to throw, we're going to get back in the VM.
-            throw
-               new OperandError( ErrorParam(e_invalid_op, __LINE__ ).extra(_cpr::id()) );
+            {
+               Class* cls;
+               void* data;
+               if( op->asClassInst( cls, data ) )
+               {
+                  _cpr::operate( ctx, cls, data );
+                  // went deep?
+                  if( &cf != &ctx->currentCode() )
+                  {
+                     // s_nextApply will be called
+                     return;
+                  }
+               }
+               else {
+                  throw
+                     new OperandError( ErrorParam(e_invalid_op, __LINE__ ).extra(_cpr::id()) );
+               }
+            }
          }
       }
       

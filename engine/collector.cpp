@@ -1001,10 +1001,7 @@ void Collector::markLocked()
       else
       {
          const Item& item = lock->item();
-         if( item.isGarbaged() )
-         {
-            item.asClass()->gcMark( item.asInst(), mark );
-         }
+         item.gcMark( mark );
          
          lock = lock->m_next;
       }

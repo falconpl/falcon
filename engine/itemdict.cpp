@@ -682,7 +682,7 @@ bool ItemDict::Iterator::next( Item& target )
    advance();
     
    // create a copied item, and ask to mark it for gc.
-   target.assign( Item(ac, &_pm->m_pair, true ) );
+   target.assign( Item(ac, &_pm->m_pair ) );
    if( m_complete )
    {
       target.setLast();
@@ -772,7 +772,7 @@ void ItemDict::Iterator::advance()
             if( found ) return;
             found = true;
             m_tempString = _pm->s_iter->first;
-            _pm->m_pair[0].setUser( scls, &m_tempString, true );
+            _pm->m_pair[0].setUser( scls, &m_tempString );
             _pm->m_pair[0].copied();
             _pm->m_pair[1] = _pm->s_iter->second;
             ++_pm->s_iter;
@@ -785,7 +785,7 @@ void ItemDict::Iterator::advance()
             if( found ) return;
             found = true;
             const ItemDict::Private::class_data_pair& pair = _pm->t_iter->first;
-            _pm->m_pair[0].setUser( pair.cls, pair.data, true );
+            _pm->m_pair[0].setUser( pair.cls, pair.data );
             _pm->m_pair[1] = _pm->t_iter->second;
             ++_pm->t_iter;
          }

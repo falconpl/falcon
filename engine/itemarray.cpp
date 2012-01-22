@@ -603,10 +603,7 @@ void ItemArray::gcMark( uint32 mark )
       while( begin < end )
       {
          // notice -- the isUser() is a parnoid check.
-         if( begin->isGarbaged() && begin->isUser() )
-         {
-            begin->asClass()->gcMark(begin->asInst(), mark);
-         }
+         begin->gcMark(mark);
          ++begin;
       }
    }

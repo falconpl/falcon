@@ -423,31 +423,24 @@ void generic_apply_( const PStep* ps, VMContext* ctx )
             ctx->popData();
             break;
 
-         case FLC_ITEM_USER << 8 | FLC_ITEM_NIL:
-         case FLC_ITEM_USER << 8 | FLC_ITEM_BOOL:
-         case FLC_ITEM_USER << 8 | FLC_ITEM_INT:
-         case FLC_ITEM_USER << 8 | FLC_ITEM_NUM:
-         case FLC_ITEM_USER << 8 | FLC_ITEM_METHOD:
-         case FLC_ITEM_USER << 8 | FLC_ITEM_FUNC:
-         case FLC_ITEM_USER << 8 | FLC_ITEM_USER:
-            _cpr::operate( ctx, op1->asClass(), op1->asInst() );
+            
             break;
 
          default:
-            // no need to throw, we're going to get back in the VM.
-            throw
-               new OperandError( ErrorParam(e_invalid_op, __LINE__, SRC )
-                  .origin( ErrorParam::e_orig_vm )
-                  .extra(((ExprMath*)ps)->name()) );
+         {
+            Class* cls = 0;
+            void* inst = 0;
+            op1->forceClassInst( cls, inst );
+            _cpr::operate( ctx, cls, inst );
          }
       }
       
-      // might have gone deep
-      if( &cf != &ctx->currentCode() )
-      {
-         return;
-      }
-      
+         // might have gone deep
+         if( &cf != &ctx->currentCode() )
+         {
+            return;
+         }
+      }      
       // fallthrough
    
       // Phase 3 -- assigning the topmost value back.

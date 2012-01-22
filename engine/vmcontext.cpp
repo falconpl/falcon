@@ -497,7 +497,7 @@ void VMContext::raiseError( Error* ce )
             Item* value = m_catchBlock->target()->getValue(this);
             if( value != 0 )
             {
-               value->setUser( ce->handler(), ce, true );
+               value->setUser( ce->handler(), ce );
                ce->decref();
             }
          }

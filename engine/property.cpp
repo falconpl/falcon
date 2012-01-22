@@ -99,9 +99,6 @@ void PropertyData::set( void* instance, const Item& value )
    {
       initCacheItem( *cache );
       fassert( cache->isUser() );
-      
-      // ensure the item gets marked.
-      cache->garbage();
    }
    
    Class* cls, *vcls;
@@ -128,9 +125,6 @@ void PropertyData::get( void* instance, Item& target )
    {
       initCacheItem( *cache );
       fassert( cache->isUser() );
-      
-      // ensure the item gets marked.
-      cache->garbage();
    }
    
    fetch( cache->asInst() );  

@@ -56,24 +56,31 @@ void ExprNeg::apply_( const PStep* ps, VMContext* ctx )
       case 1:
       {
          cf.m_seqId = 2;
-         Item& item = ctx->topData();
+         Item* item = ctx->topData().dereference();
 
-         switch( item.type() )
+         switch( item->type() )
          {
-            case FLC_ITEM_INT: item.setInteger( -item.asInteger() ); break;
-            case FLC_ITEM_NUM: item.setNumeric( -item.asNumeric() ); break;
-            case FLC_ITEM_USER:
-               item.asClass()->op_neg( ctx, item.asInst() );
-               if( &cf != &ctx->currentCode() )
-               {
-                  return;
-               }
-               break;
-
+            case FLC_ITEM_INT: item->setInteger( -item->asInteger() ); break;
+            case FLC_ITEM_NUM: item->setNumeric( -item->asNumeric() ); break;
             default:
-            // no need to throw, we're going to get back in the VM.
-            throw
-               new OperandError( ErrorParam(e_invalid_op, __LINE__ ).extra("neg") );
+            {
+               Class* cls;
+               void* data;
+               if( item->asClassInst( cls, data ) )
+               {
+                  cls->op_neg( ctx, data );
+                  // went deep?
+                  if( &cf != &ctx->currentCode() )
+                  {
+                     // s_nextApply will be called
+                     return;
+                  }
+               }
+               else {
+                  throw
+                     new OperandError( ErrorParam(e_invalid_op, __LINE__ ).extra("neg") );
+               }
+            }            
          }
       }
    }

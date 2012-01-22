@@ -36,7 +36,7 @@ Class::Class( const String& name ):
    m_bIsFlatInstance(false),
    m_userFlags(0),
    m_name( name ),
-   m_typeID( FLC_CLASS_ID_OBJECT ),
+   m_typeID( FLC_ITEM_USER ),
    m_module(0),
    m_lastGCMark(0)
 {}

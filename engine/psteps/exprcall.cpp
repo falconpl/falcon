@@ -69,7 +69,6 @@ bool ExprCall::simplify( Item& ) const
 
 void ExprCall::apply_( const PStep* v, VMContext* ctx )
 {
-   static Engine* eng = Engine::instance();
    const ExprCall* self = static_cast<const ExprCall*>(v);
    TRACE2( "Apply CALL %s", self->describe().c_ize() );
    int pcount = self->_p->m_exprs.size();
@@ -97,7 +96,7 @@ void ExprCall::apply_( const PStep* v, VMContext* ctx )
             register Item& top = ctx->topData();
             switch(top.type())
             {
-               case FLC_ITEM_FUNC:
+               case FLC_CLASS_ID_FUNC:
                {
                   Function* f = top.asFunction();
                   bHaveEta = f->isEta();
@@ -153,8 +152,9 @@ void ExprCall::apply_( const PStep* v, VMContext* ctx )
 
    switch(top.type())
    {
-      case FLC_ITEM_FUNC:
+      case FLC_CLASS_ID_FUNC:
          {
+            // this is just a shortcut for a very common case.
             Function* f = top.asFunction();
             ctx->call( f, pcount );
          }
@@ -169,18 +169,12 @@ void ExprCall::apply_( const PStep* v, VMContext* ctx )
          }
          break;
 
-      case FLC_ITEM_USER:
-         {
-            Class* cls = top.asClass();
-            void* inst = top.asInst();
-            cls->op_call( ctx, pcount, inst );
-         }
-         break;
-
       default:
          {
-            Class* cls = eng->getTypeClass( top.type() );
-            cls->op_call( ctx, pcount, 0 );
+            Class* cls = 0;
+            void* inst = 0;
+            top.forceClassInst( cls, inst );
+            cls->op_call( ctx, pcount, inst );
          }
    }
 }

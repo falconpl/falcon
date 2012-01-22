@@ -61,7 +61,7 @@ void Clone::invoke( VMContext* ctx, int32 nParams )
       throw new CodeError(ErrorParam( e_uncloneable, __LINE__, SRC ));
    }
 
-   Item top( cls, inst, true );
+   Item top( cls, inst );
    ctx->returnFrame( top );
 }
 
@@ -77,7 +77,7 @@ void Clone::Invoke::apply_( const PStep*, VMContext* ctx )
       throw new CodeError(ErrorParam( e_uncloneable, __LINE__, SRC ));
    }
 
-   top.setUser( cls, inst, true );
+   top.setUser( cls, inst );
    ctx->popCode();
 }
 

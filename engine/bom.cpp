@@ -184,7 +184,7 @@ void clone_(VMContext* ctx, const Class* cls, void* data)
       throw new CodeError( ErrorParam(e_uncloneable, __LINE__, SRC ) );
    }
 
-   ctx->topData().setUser( cls, clone, true );
+   ctx->topData().setUser( cls, clone );
 
 }
 

@@ -130,6 +130,14 @@ Engine::Engine()
    m_bWindowsNamesConversion = false;
    #endif
 
+   if( m_instance != 0 )
+   {
+      throw new CodeError( ErrorParam(e_paranoid, __LINE__, SRC)
+         .extra( "Engine double initialization"));
+   }   
+   m_instance = this; // modules need the engine.
+
+
    m_mtx = new Mutex;
    m_collector = new Collector;   
 
@@ -158,11 +166,17 @@ Engine::Engine()
    m_classes[FLC_ITEM_BOOL] = new ClassBool;
    m_classes[FLC_ITEM_INT] = new ClassInt;
    m_classes[FLC_ITEM_NUM] = new ClassNumeric;
-   m_classes[FLC_ITEM_FUNC] = new ClassFunction;
    m_classes[FLC_ITEM_METHOD] = new ClassMethod;
    m_classes[FLC_ITEM_REF] = m_referenceClass;
    
    m_bom = new BOM;
+   
+   //===========================================
+   // Subsystems initialization
+   //
+   
+   Item::init( this );
+   
 
    //=====================================
    // Adding standard transcoders.
@@ -190,7 +204,6 @@ Engine::Engine()
    //============================================
    // Creating singletons
    //
-   m_instance = this; // modules need the engine.
    
    m_stdSteps = new StdSteps;
    m_stdErrors = new StdErrors;
@@ -214,7 +227,6 @@ Engine::Engine()
    addBuiltin( m_classes[FLC_ITEM_BOOL] );
    addBuiltin( m_classes[FLC_ITEM_INT] );
    addBuiltin( m_classes[FLC_ITEM_NUM] );
-   addBuiltin( m_classes[FLC_ITEM_FUNC] );
    addBuiltin( m_classes[FLC_ITEM_METHOD] );
    addBuiltin( m_classes[FLC_ITEM_REF] ); // ?
    
@@ -222,9 +234,11 @@ Engine::Engine()
    addBuiltin( "BoolType", (int64) FLC_ITEM_BOOL );
    addBuiltin( "IntType", (int64) FLC_ITEM_INT );
    addBuiltin( "NumericType", (int64) FLC_ITEM_INT ); // same as int
-   addBuiltin( "FunctionType", (int64) FLC_ITEM_FUNC );
    addBuiltin( "MethodType", (int64) FLC_ITEM_METHOD );
    addBuiltin( "ReferenceType", (int64) FLC_ITEM_REF ); // ?
+   
+   addBuiltin( "ObjectType", (int64) FLC_ITEM_USER );
+   addBuiltin( "FunctionType", (int64) FLC_CLASS_ID_FUNC );
    addBuiltin( "StringType", (int64) FLC_CLASS_ID_STRING );
    addBuiltin( "ArrayType", (int64) FLC_CLASS_ID_ARRAY );
    addBuiltin( "DictType", (int64) FLC_CLASS_ID_DICT );
@@ -245,17 +259,17 @@ Engine::Engine()
    m_statementClass = new ClassStatement(ctreeStep);
    m_exprClass = new ClassExpression(ctreeStep);
    m_syntreeClass = new ClassSynTree(ctreeStep, static_cast<ClassSymbol*>(m_symbolClass));
-   
-   
+      
+   addBuiltin(m_closureClass);
    addBuiltin(m_treeStepClass);
    addBuiltin(m_statementClass);
    addBuiltin(m_exprClass);
    addBuiltin(m_syntreeClass);
-   addBuiltin(m_symbolClass);
-   
+   addBuiltin(m_symbolClass);   
    
    m_synClasses = new SynClasses(m_syntreeClass, m_statementClass, m_exprClass );
    m_synClasses->subscribe( this );
+      
    
    //=====================================
    // The Core Module

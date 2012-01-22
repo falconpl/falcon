@@ -24,6 +24,19 @@
 namespace Falcon
 {
 
+Class* Item::m_funcClass;
+Class* Item::m_stringClass;
+Class* Item::m_dictClass;
+Class* Item::m_arrayClass;
+
+void Item::init(Engine* engine)
+{
+   m_funcClass = engine->functionClass();
+   m_stringClass = engine->stringClass();
+   m_dictClass = engine->dictClass();
+   m_arrayClass = engine->arrayClass();
+}
+
 void Item::setString( const char* str )
 {
    setUser( (new String(str))->garbage() );
@@ -190,12 +203,6 @@ void Item::describe( String &target, int maxDepth, int maxLength ) const
       }
       break;
 
-      case FLC_ITEM_FUNC:
-      {
-         Engine::instance()->functionClass()->describe( asFunction(), target, maxDepth, maxLength );
-      }
-      break;
-
       case FLC_ITEM_METHOD:
       {         
          String temp;
@@ -219,16 +226,9 @@ void Item::describe( String &target, int maxDepth, int maxLength ) const
          target = "Ref {" + target + "}";
       }
       break;
-
       
-      case FLC_ITEM_USER:
-      {
-         asClass()->describe( asInst(), target, maxDepth, maxLength );
-      }
-      break;
-
       default:
-         target = "<?>";
+         asClass()->describe( asInst(), target, maxDepth, maxLength );
    }
 }
 
@@ -237,19 +237,15 @@ bool Item::clone( Item& target ) const
 {
    void* data;
 
-   switch ( type() )
+   if( type() >= FLC_ITEM_USER )
    {
-   case FLC_ITEM_USER:
      data = asClass()->clone( asInst() );
      if ( data == 0 )
         return false;
+     
      target.setUser( asClass(), data );
-     // we suppose that the other instance is freshly allocated,
-     // -- if not, the class will know how to handle useless gcMarks
-     target.garbage();
-     break;
-
-   default:
+   }
+   else {
      target.copy( target );
    }
 
@@ -258,27 +254,30 @@ bool Item::clone( Item& target ) const
 
 int Item::compare( const Item& other ) const
 {
-   int typeDiff = type() - other.type();
+   const Item* i1 = dereference();
+   const Item* i2 = other.dereference();
+   
+   int typeDiff = i1->type() - i2->type();
    if( typeDiff == 0 )
    {
-      switch( type() ) {
+      switch( i1->type() ) {
       case FLC_ITEM_NIL: return 0;
-      case FLC_ITEM_INT: return (int) (asInteger() - other.asInteger());
-      case FLC_ITEM_NUM: return (int) (asNumeric() - other.asNumeric());
+      case FLC_ITEM_INT: return (int) (i1->asInteger() - i2->asInteger());
+      case FLC_ITEM_NUM: return (int) (i1->asNumeric() - i2->asNumeric());
       case FLC_ITEM_BOOL:
-         if( isTrue() )
+         if( i1->isTrue() )
          {
-            if ( other.isTrue() ) return 0;
+            if ( i2->isTrue() ) return 0;
             return 1;
          }
          else
          {
-            if( other.isTrue() ) return -1;
+            if( i2->isTrue() ) return -1;
             return 0;
          }
 
       default:
-         return (int64) (this - &other);
+         return (int64) (i1 - i2);
       }
    }
 

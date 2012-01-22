@@ -64,12 +64,10 @@ bool FalconInstance::getMember( const String& name, Item& target ) const
       case FalconClass::Property::t_func:
          target.setUser( m_origin, const_cast<FalconInstance*>(this) );
          target.methodize( prop->m_value.func );
-         target.garbage();  // just in case we're garbaged, enable marking on the method.
          break;
 
       case FalconClass::Property::t_inh:
          target.setUser( prop->m_value.inh->parent(), const_cast<FalconInstance*>(this) );
-         target.garbage();
          break;
 
       case FalconClass::Property::t_state:

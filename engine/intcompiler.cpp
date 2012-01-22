@@ -306,16 +306,8 @@ Symbol* IntCompiler::Context::onGlobalDefined( const String& name, bool &adef )
 
 Expression* IntCompiler::Context::onStaticData( Class* cls, void* data )
 {
-   m_owner->m_module->addStaticData( cls, data );
-   if( cls->typeID() == FLC_ITEM_FUNC )
-   {
-      // simplify functions to function items.
-      return new ExprValue( Item( static_cast<Function*>(data) ) );
-   }
-   else
-   {
-      return new ExprValue( Item( cls, data ) );
-   }
+   m_owner->m_module->addStaticData( cls, data );   
+   return new ExprValue( Item( cls, data ) );
 }
 
 

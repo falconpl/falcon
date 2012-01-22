@@ -628,7 +628,7 @@ void ClassString::op_toString( VMContext* ctx, void* data ) const
    // this op is generally called for temporary items,
    // ... so, even if we shouldn't be marked,
    // ... we won't be marked long if we're temporary.
-   ctx->topData().setUser( this, data, true ); 
+   ctx->topData().setUser( this, data ); 
 }
 
 

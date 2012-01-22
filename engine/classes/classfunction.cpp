@@ -24,7 +24,7 @@
 namespace Falcon {
 
 ClassFunction::ClassFunction():
-   Class("Function", FLC_ITEM_FUNC )
+   Class("Function", FLC_CLASS_ID_FUNC )
 {
 }
 

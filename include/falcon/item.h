@@ -71,14 +71,14 @@ public:
 #ifdef _MSC_VER
 	#if _MSC_VER < 1299
 	#define flagLiteral 0x01
-	#define flagIsGarbage 0x02
+	//#define flagIsGarbage 0x02
 	#define flagIsOob 0x04
 	#define flagLast 0x08
 	#define flagContinue 0x10
 	#define flagBreak 0x20
 	#else
 	   static const byte flagLiteral = 0x01;
-	   static const byte flagIsGarbage = 0x02;
+	   //static const byte flagIsGarbage = 0x02;
 	   static const byte flagIsOob = 0x04;
 	   static const byte flagLast = 0x08;
 	   static const byte flagContinue = 0x10;
@@ -86,14 +86,25 @@ public:
 	#endif
 #else
    static const byte flagLiteral = 0x01;
-   static const byte flagIsGarbage = 0x02;
+   //static const byte flagIsGarbage = 0x02;
    static const byte flagIsOob = 0x04;
    static const byte flagLast = 0x08;
    static const byte flagContinue = 0x10;
    static const byte flagBreak = 0x20;
 #endif
 
+   static Class* m_funcClass;
+   static Class* m_stringClass;
+   static Class* m_dictClass;
+   static Class* m_arrayClass;
+      
 public:
+   /** Initializes the item system.
+    Called by the engine during startup.
+    */
+   static void init( Engine* eng );
+
+      
    inline Item()
    {
       type( FLC_ITEM_NIL );
@@ -253,32 +264,21 @@ public:
 
    inline void setFunction( Function* f )
    {
-      type( FLC_ITEM_FUNC );
+      type( FLC_CLASS_ID_FUNC );
       content.data.ptr.pInst = f;
+      content.data.ptr.pClass = Item::m_funcClass;
    }
 
    inline Item( const Class* cls, void* inst ) {
        setUser( cls, inst );
    }
 
-   inline Item( const Class* cls, void* inst, bool ) {
-       setUser( cls, inst );
-       content.base.bits.flags |= flagIsGarbage;
-   }
 
    inline void setUser( const Class* cls, void* inst )
    {
-       type( FLC_ITEM_USER );
+       type( cls->typeID() );
        content.data.ptr.pInst = inst;
        content.data.ptr.pClass = (Class*) cls;
-   }
-
-   inline void setUser( const Class* cls, void* inst, bool )
-   {
-       type( FLC_ITEM_USER );
-       content.data.ptr.pInst = inst;
-       content.data.ptr.pClass = (Class*) cls;
-       garbage();
    }
 
    inline Item( GCToken* token )
@@ -288,23 +288,11 @@ public:
    
    inline void setUser( GCToken* token )
    {
-       type( FLC_ITEM_USER );
-       content.base.bits.flags |= flagIsGarbage;
-       content.data.ptr.pInst = token->data();
+       type( token->cls()->typeID() ); // normally
        content.data.ptr.pClass = token->cls();
+       content.data.ptr.pInst = token->data();
    }
 
-   /** Declare this item a garbage-sensible item.
-    This flags has effect only for USER type items.
-    */
-   inline void garbage() { content.base.bits.flags |= flagIsGarbage; }
-
-   /** Declare this item a garbage.
-    This flags has effect only for USER type items.
-    */
-   inline bool isGarbaged() const {
-      return (content.base.bits.flags & flagIsGarbage) != 0;
-   }
 
    inline void methodize( Function* mthFunc )
    {
@@ -504,25 +492,26 @@ public:
    bool isBoolean() const { return type() == FLC_ITEM_BOOL; }
    bool isInteger() const { return type() == FLC_ITEM_INT; }
    bool isNumeric() const { return type() == FLC_ITEM_NUM; }
-   bool isFunction() const { return type() == FLC_ITEM_FUNC; }
+   bool isFunction() const { return type() == FLC_CLASS_ID_FUNC; }
    bool isMethod() const { return type() == FLC_ITEM_METHOD; }
    bool isOrdinal() const { return type() == FLC_ITEM_INT || type() == FLC_ITEM_NUM; }
-   bool isUser() const { return type() == FLC_ITEM_USER; }
    bool isReference() const { return type() == FLC_ITEM_REF; }
-   bool isClass() const { return type() == FLC_ITEM_USER && asClass()->isMetaClass(); }
+   
+   bool isUser() const { return type() >= FLC_ITEM_USER; }
+   bool isClass() const { return type() == FLC_CLASS_ID_CLASS; }
    
    /** A stub for now */
    bool isMemBuf() const { return false; } 
    bool isString() const {
-      return (type() == FLC_ITEM_USER && asClass()->typeID() == FLC_CLASS_ID_STRING);
+      return (type() == FLC_CLASS_ID_STRING);
    }
 
    bool isArray() const {
-      return (type() == FLC_ITEM_USER && asClass()->typeID() == FLC_CLASS_ID_ARRAY);
+      return (type() == FLC_CLASS_ID_ARRAY);
    }
 
    bool isDict() const {
-      return (type() == FLC_ITEM_USER && asClass()->typeID() == FLC_CLASS_ID_DICT);
+      return (type() == FLC_CLASS_ID_DICT);
    }
 
    
@@ -539,7 +528,7 @@ public:
     */
    bool deuser()
    {
-      fassert2(type() == FLC_ITEM_USER, 
+      fassert2(type() >= FLC_ITEM_USER, 
             "Item::deuser() must be called only on FLC_ITEM_USER items.");
       int id = (int)asClass()->typeID();
       if( id < FLC_ITEM_COUNT )
@@ -603,7 +592,7 @@ public:
    
    void gcMark( uint32 mark ) const
    {
-      if( isUser() && isGarbaged() )
+      if( isUser() )
       {
          asClass()->gcMark( asInst(), mark );
       }
@@ -640,9 +629,8 @@ public:
     */
    bool asClassInst( Class*& cls, void*& udata ) const
    {
-      switch( type() )
+      if( isUser() )
       {
-      case FLC_ITEM_USER:
          cls = asClass();
          udata = asInst();
          return true;
@@ -653,6 +641,16 @@ public:
    ItemArray* asArray() const
    {
       return (ItemArray*) asInst();
+   }
+   
+   String* asString() const
+   {      
+      return static_cast<String*>(asInst());
+   }
+   
+   Item* asReference() const
+   {
+      return content.mth.ref;
    }
 
    
@@ -669,57 +667,16 @@ public:
    */
    void forceClassInst( Class*& cls, void*& udata ) const
    {
-      switch( type() )
+      if ( type() >= FLC_ITEM_USER )
       {
-      case FLC_ITEM_REF:
-      case FLC_ITEM_USER:
          cls = asClass();
          udata = asInst();
-         break;
-
-      case FLC_ITEM_FUNC:
-         cls = Engine::instance()->getTypeClass(type());
-         udata = asFunction();
-         break;
-         
-      default:
+      }
+      else {         
          cls = Engine::instance()->getTypeClass(type());
          udata = (void*)this;
       }
    }
-
-   //===================================================================
-   // Is string?
-   //
-   
-   bool isString( String*& str ) const
-   {
-      Class* cls;
-      if ( asClassInst( cls, (void*&)str ) )
-      {
-         return cls->typeID() == FLC_CLASS_ID_STRING;
-      }
-      return false;
-   }
-
-   String* asString() const
-   {
-      Class* cls;
-      void* udata;
-      if ( asClassInst( cls, udata ) )
-      {
-         if( cls->typeID() == FLC_CLASS_ID_STRING )
-            return static_cast<String*>(udata);
-      }
-
-      return 0;
-   }
-   
-   Item* asReference() const
-   {
-      return content.mth.ref;
-   }
-   
   
    //======================================================
    // Utilities

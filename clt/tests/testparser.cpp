@@ -162,7 +162,7 @@ Symbol* Context::onGlobalDefined( const String& name, bool& )
     std::cout << "CALLBACK: static data : " <<
          temp.c_ize() << std::endl;
 
-    return new ExprValue( Item( cls, data, true ) );
+    return new ExprValue( Item( cls, data ) );
  }
 
 

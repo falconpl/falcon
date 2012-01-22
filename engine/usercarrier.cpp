@@ -59,13 +59,7 @@ void UserCarrier::gcMark( uint32 mark )
    for ( size_t i = 0; i < m_dataSize; ++i )
    {
       Item& item = m_data[i];
-      if( item.isGarbaged() )
-      {
-         Class* cls = 0;
-         void* data = 0;
-         item.asClassInst( cls, data );
-         cls->gcMark( data, mark );
-      }
+      item.gcMark(mark);
    }
 }
    
