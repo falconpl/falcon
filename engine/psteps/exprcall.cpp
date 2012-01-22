@@ -106,7 +106,6 @@ void ExprCall::apply_( const PStep* v, VMContext* ctx )
                
                case FLC_ITEM_METHOD:
                {
-                  Item old = top;
                   Function* f = top.asMethodFunction();
                   bHaveEta = f->isEta();
                }

@@ -93,7 +93,9 @@ public:
    inline int64 compare( const Range& other ) const
    {
       int64 res = m_start - other.m_start;
+
       if ( res != 0 ) return res;
+
       if( m_open ) 
       {
          if( ! other.m_open ) return -1;         
@@ -105,26 +107,30 @@ public:
          res = m_end - other.m_end;
          if( res != 0 ) return res;
       }
+
       return m_step - other.m_step;      
    }
    
    void describe( String& target ) const
    {
-      target.size(0);
-      target.append('[');
-      target.N( start() ).A(":");
+      target.size( 0 );
+      target.append( '[' );
+      target.N( start() ).A( ":" );
+
       if( ! isOpen() )
       {
          target.N( end() );
       }
+
       if( step() != 0 )
       {
-         target.A(":").N(step());
+         target.A( ":" ).N( step() );
       }
-      target.append(']');
+
+      target.append( ']' );
    }
    
-   String describe() const { String temp; describe(temp); return temp; }
+   String describe() const { String temp; describe( temp ); return temp; }
 
 private:
    int64 m_start;
@@ -139,7 +145,6 @@ private:
 
 }
 
-#endif
+#endif // FLC_RANGE_H
 
 /* end of range.h */
-

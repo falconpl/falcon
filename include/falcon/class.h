@@ -43,11 +43,11 @@ class Error;
 
  The Class represents the operations that can be preformed
  on a certain instance.
- 
+
  To publish an item to the Virtual Machine, the calling program
  must create a class that instructs the VM about how the items
  of that type must be handled.
- 
+
  Falcon::Class instances take care of the creation of objects, of their serialization
  and of their disposal. It is also responsible to check for properties
 
@@ -105,11 +105,11 @@ class Error;
  Notice that \b instance is set to 0 when the class is a flat item reflection core
  class (as the Integer, Nil, Boolean and Numeric handlers). It receives a value
  only if the first operand is a FLC_USER_ITEM or FLC_DEEP_ITEM.
- 
+
  \see OpToken
- 
+
  \section class_serialize Item serialization
- 
+
  TODO
 */
 
@@ -131,7 +131,7 @@ public:
     * but the ID is available also for user application, starting from the baseUserID number.
     */
    Class( const String& name );
-   
+
    /** Creates a class defining a type ID
     \param name The name of the class.
     \param the Type ID of the items created by this class.
@@ -143,7 +143,7 @@ public:
     Strings, Arrays, Dictionaries, Ranges and even Integer or NIL are
     all item types that have a class offering a TID.
     */
-   Class( const String& name, int64 tid );   
+   Class( const String& name, int64 tid );
    virtual ~Class();
 
    const static int64 baseUserID = 100;
@@ -167,21 +167,21 @@ public:
     */
    bool isFalconClass() const { return m_bIsfalconClass; }
 
-   
+
    /** Returns true if this class has flat instances.
     Flat instances are completely stored in the item accompaining the class.
     Their data is the (possibly volatile and transient) pointer to the item
-    containing the whole information needed to rebuild the object. 
-    
+    containing the whole information needed to rebuild the object.
+
     Flat classes known by the engine are:
     - ClassNil
     - ClassBool
     - ClassInteger
     - ClassNumeric
-    
+
     */
    bool isFlatInstance() const { return m_bIsFlatInstance; }
-   
+
    /** Flag to check for the metaclass.
     The MetaClass is a special class that handle other classes.
     This resolves in typeID() == FLC_CLASS_ID_CLASS
@@ -194,7 +194,7 @@ public:
     This flags allows to easily unbox error raised by scripts autonomously
     out of their handler class and treat them as proper Falcon::Error classes
     at C++ level.
-    
+
     \note Theoretically, it is also possible to check Class::isDerivedFrom on the
     base Error* class provided by the StdErrors class in the engine, but
     this way is faster.
@@ -209,38 +209,38 @@ public:
     The default behavior is that of always returning 0.
     */
    virtual Class* getParent( const String& name ) const;
-   
-   /** Check if the given class is derived from this class. 
+
+   /** Check if the given class is derived from this class.
     \param cls The possibly base class.
     \return True if cls is one of the base classes.
-    
+
     The method returns true if the class is the same as this class or
     if one of the base classes of this class is derived from cls.
-    
+
     The base implementation checks if the parameter is the same as \b this.
     Subclasses should check against theoretical or structured inheritance.
     */
    virtual bool isDerivedFrom( const Class* cls ) const;
-   
+
    typedef Enumerator<Class* > ClassEnumerator;
-   
+
    virtual void enumerateParents( ClassEnumerator& cb ) const;
-   
+
    /** Identifies the data known in a parent of a composed class.
     \param parent The parent of this class.
     \param data The data associated with this class.
     \return A pointer to a data that is known to the parent, or 0 if parent is
     unknown.
-    
+
     Composed classes (for instance, HyperClass and Prototype) carry multiple
     instances representing the data which is related to a specific parents.
     This method can be used to retrieve the data which is associated with a
     particular subclass.
-    
+
     If \b parent is this same class, then \b data is returned. Otherwise, if
     it's identified as a component of this class, an usable data is returned,
     while if \b subcparentls is unknown, 0 is returned.
-    
+
     In some contexts, parents might use the same data as their child; it's
     the case of incremental classes as FalconClass. In that case, \b data may be
     returned even if \b parent is a proper parent of this class.
@@ -251,7 +251,7 @@ public:
     \param m The module where this class resides.
     */
    void module( Module* m );
-   
+
    /** Returns the module of this class.
     \return The module where this class resides, or 0 if the class is module-less.
     */
@@ -285,11 +285,11 @@ public:
     @throw IoError on i/o error during serialization.
     @throw UnserializableError if the class doesn't provide a class-specific
     serialization.
-    
+
     By default, the base class raises a UnserializableError, indicating that
     there aren't enough information to store the live item on the stream.
     Subclasses must reimplement this method doing something sensible.
-    
+
     @see class_serialize
     */
    virtual void store( VMContext* ctx, DataWriter* stream, void* instance ) const;
@@ -301,54 +301,54 @@ public:
     \throw IoError on i/o error during serialization.
     \throw UnserializableError if the class doesn't provide a class-specific
     serialization.
-    
+
     By default, the base class raises a UnserializableError, indicating that
     there aren't enough information to store the live item on the stream.
     Subclasses must reimplement this method doing something sensible.
-    
+
     @note The \b empty pointer will receive the newly created and deserialized instance,
     but flat classes (those for which isFlatInstance() returns true) expect this
     pointer to be preallocated as an entity of class Item.
-    
+
     \see class_serialize
    */
    virtual void restore( VMContext* ctx, DataReader* stream, void*& empty ) const;
-   
+
    /** Called berfore storage to declare some other items that should be serialized.
     \param ctx A virtual machine context where the deserialization occours.
     \param stream The data writer where the instance is being stored.
     \param instance The instance that must be serialized.
-    
+
     This method is invoked before calling store(), to give a change to the class
     to declare some other items on which this instance is dependent.
-    
+
     The subclasses should just fill the subItems array or eventually invoke the
     VM passing the subItem array to the called subroutine. The items that
     are stored in the array will be serialized afterwards.
-    
+
     The subItems array is garbage-locked by the Serializer instance that is
-    controlling the serialization process. 
-    
+    controlling the serialization process.
+
     The base class does nothing.
-    
+
     \see class_serialize
    */
    virtual void flatten( VMContext* ctx, ItemArray& subItems, void* instance ) const;
-   
+
    /** Called after deserialization to restore other items.
     \param ctx A virtual machine context where the deserialization occours.
     \param stream The data writer where the instance is being stored.
     \param instance The instance that must be serialized.
-    
+
     This method is invoked after calling restore(). The subItem array is
     filled with the same items, already deserialized, as it was filled by
     flatten() before serialization occured.
-    
+
     The subItems array is garbage-locked by the Deserializer instance that is
-    controlling the serialization process. 
-    
+    controlling the serialization process.
+
     The base class does nothing.
-    
+
     \see class_serialize
    */
    virtual void unflatten( VMContext* ctx, ItemArray& subItems, void* instance ) const;
@@ -358,7 +358,7 @@ public:
    //
 
    /** Marks an instance.
-    \parm instance The intance of this class to be marked.
+    \parm instance The instance of this class to be marked.
     \param mark The gc mark to be applied.
 
     This method is called every time an item with mark sign is inspected.
@@ -383,7 +383,7 @@ public:
     the object has been left behind and can be disposed at class will.
 
     Returning false, the garbage collector will free its own accounting
-    resources and won't call the gcCheck() method anymore. The dispose 
+    resources and won't call the gcCheck() method anymore. The dispose
     method will be then called at a (near) future moment by the garbage collector
     when the object is finalized.
 
@@ -427,7 +427,7 @@ public:
    virtual bool gcCheckMyself( uint32 mark );
 
    /** Callback receiving all the properties in this class. */
-   typedef Enumerator<String> PropertyEnumerator;   
+   typedef Enumerator<String> PropertyEnumerator;
 
    /** Emnumerate the properties in this class.
      @param instance The object for which the properties have been requested.
@@ -438,7 +438,7 @@ public:
      @note This base class implementation does nothing.
     */
    virtual void enumerateProperties( void* instance, PropertyEnumerator& cb ) const;
-   
+
    /** Callback receiving all the properties with their values in this class. */
    class PVEnumerator
    {
@@ -468,7 +468,7 @@ public:
       \param target Where to place the rendered string.
       \param depth Maximum depth in recursions.
       \param maxlen Maximum length.
-    
+
     This method returns a string containing a representation of this item. If
     the item is deep (an array, an instance, a dictionary) the contents are
     also passed through this function.
@@ -507,12 +507,12 @@ public:
    //=========================================================
    // Operators.
    //
-   
+
    /** Invoked by the VM to create an instance.
     \param VM a virtual machine invoking the object creation.
     \param pcount Number of parameters passed in the init request.
 
-    This method is invoked by the VM when it requires an intance to be
+    This method is invoked by the VM when it requires an instance to be
     created by this class.
 
     The operator must reduce the stack of pcount elements and add the
@@ -590,7 +590,7 @@ public:
 
     */
    virtual void op_pow( VMContext* ctx, void* instance ) const;
-   
+
    /** Called back when the VM wants to apply the shift right operator.
      \param vm the virtual machine that will receive the result.
      \param instance the instance (or 0 on flat items)
@@ -599,7 +599,7 @@ public:
 
     */
    virtual void op_shr( VMContext* ctx, void* instance ) const;
-   
+
    /** Called back when the VM wants to apply the shift left operator.
      \param vm the virtual machine that will receive the result.
      \param instance the instance (or 0 on flat items)
@@ -607,7 +607,7 @@ public:
     \note The operand is binary -- requires OpToken with 2 parameters.
 
     */
-   virtual void op_shl( VMContext* ctx, void* instance ) const;   
+   virtual void op_shl( VMContext* ctx, void* instance ) const;
 
    /** Called back when the VM wants to add something to an item.
      \param vm the virtual machine that will receive the result.
@@ -673,7 +673,7 @@ public:
     \note The operand is binary -- requires OpToken with 2 parameters.
    */
    virtual void op_ashl( VMContext* ctx, void* instance ) const;
-   
+
    /** Called back when the VM wants to increment (prefix) an item.
      \param vm the virtual machine that will receive the result.
      \param instance the instance in op1 (or 0 on flat items)
@@ -700,7 +700,7 @@ public:
     \note The operand is unary -- requires OpToken with 1 parameter.
    */
    virtual void op_incpost(VMContext* vm, void* instance ) const;
-   
+
    /** Called back when the VM wants to decrement (postfix) an item.
      \param vm the virtual machine that will receive the result.
      \param instance the instance in op1 (or 0 on flat items)
@@ -719,7 +719,7 @@ public:
     The first operand is instance, the second operand is the index to be accessed.
    */
    virtual void op_getIndex(VMContext* vm, void* instance ) const;
-   
+
    /** Called back when the VM wants to get an index out of an item.
      \param vm the virtual machine that will receive the result.
      \param instance the instance (or 0 on flat items)
@@ -762,7 +762,7 @@ public:
    */
    virtual void op_setProperty( VMContext* ctx, void* instance, const String& prop ) const;
 
-   /** Called back when the VM wants to compare an item to this instance. 
+   /** Called back when the VM wants to compare an item to this instance.
      \param vm the virtual machine that will receive the result.
      \param instance the instance (or 0 on flat items)
 
@@ -807,7 +807,7 @@ public:
     The result should be a boolean true or false value.
     */
    virtual void op_in( VMContext* ctx, void* instance ) const;
-   
+
    /** Called back when the vm wants to know if a certain item provides a certain property.
      \param vm the virtual machine that will receive the result.
      \param instance the instance (or 0 on flat items).
@@ -843,11 +843,11 @@ public:
     \param instance An instance of this class
 
     \note The operand is unary -- requires OpToken with 1 parameter.
-    
+
     (It receives one parameter, which is usually the same object put as instance);
     it is required to leave one parameter on the stack (receives one, go aways with 1,
     the stack after completion of this step should have the same depth).
-    
+
     The base class pushes the same item that is being evaluated (as evaluation
     of neuter items resolve to themselves).
     */
@@ -875,17 +875,17 @@ public:
     \param vm the virtual machine that will receive the result.
     \param instance the instance (or 0 on flat items)
     \note The operand unary, and generates an item.
-    
+
     \b signature: (0: seq) -> (1: seq) (0: iter)
-    
+
     This method call is generated by the virtual machine when it
     requires the start of an iteration on the contents this item.
-    
+
     The sublcasses reimplementing this method should prepare a value
     that will be presented afterward to op_next.
-    
+
     An item is left in the stack by the caller; op_iter should add a new item
-    with an iterator that can then be used by op_next, or stored elsewhere. 
+    with an iterator that can then be used by op_next, or stored elsewhere.
 
     In case the class can't create an iterator, it should just push a nil item.
     */
@@ -897,7 +897,7 @@ public:
     \note The operand is binary and leaves a new item in the stack.
 
     \b signature: (1: seq) (0: iter) --> (2: seq) (1: iter) (0: item|break)
-    
+
     This method call is generated by the virtual machine when it
     requires the start of an iteration on the contents this item.
 
@@ -917,34 +917,34 @@ public:
 
    /** Generates a read only property access error. */
    Error* ropError( const String& prop, int line = 0, const char* src = 0 ) const;
-   
+
    /** User flags.
     User flags are at disposal of the user to define some subtyping of class hierarcies.
-    
+
     The ClassTreeStep hierarcy uses it to mark some special classes that have some
-    significance to the engine. 
-    
+    significance to the engine.
+
     Although there's no mechanism to guarantee that the numbers and flags assigned
     are unique, if the user is reasonabily safe about the usage domain of a certain
     class, it's safe to make assumption on the userFlags, which are never queried
     or altered by the engine.
-    
+
     For instance, as TresSteps are bound to give off a certain classes which tightly
-    relates to them, applying userFlags() on TreeStep::cls() return value is a 
+    relates to them, applying userFlags() on TreeStep::cls() return value is a
     "safe domain". A set of classes having a given parent module built by the user
-    are another "safe domain". 
-    
+    are another "safe domain".
+
     \note The base Class constructor zeroes the user flags.
     */
    int32 userFlags() const { return m_userFlags; }
-   
+
    void userFlags( int32 uf ) { m_userFlags = uf; }
-   
+
 protected:
    bool m_bIsfalconClass;
    bool m_bIsErrorClass;
    bool m_bIsFlatInstance;
-   
+
    /** This flags are at disposal of subclasses for special purpose (i.e. cast conversions). */
    int32 m_userFlags;
 

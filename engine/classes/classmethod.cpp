@@ -69,22 +69,27 @@ void ClassMethod::describe( void* instance, String& target, int depth, int maxLe
 
 void ClassMethod::enumerateProperties( void*, PropertyEnumerator& cb ) const
 {
-   cb( "origin", true );
+   cb( "origin", false );
+   cb( "attributes", false );
+   cb( "base", false );
+   cb( "source", true );
 }
 
 
 void ClassMethod::enumeratePV( void* self, PVEnumerator& cb ) const
 {
    Item copy = *(Item*) self;
+
    copy.unmethodize();
-   cb( "origin", copy );   
+
+   cb( "origin", copy );
 }
 
 
 bool ClassMethod::hasProperty( void*, const String& prop ) const
 {
    if( prop == "origin" ) return true;
-   
+
    return false;
 }
 
@@ -101,9 +106,9 @@ void ClassMethod::op_create( VMContext* ctx, int32 pcount ) const
          mth.methodize( func.asFunction() );
          ctx->stackResult( pcount + 1, mth );
          return;
-      }      
+      }
    }
-   
+
    throw new ParamError( ErrorParam( e_inv_params, __LINE__, SRC )
       .origin( ErrorParam::e_orig_vm )
       .extra("X,F") );
@@ -120,15 +125,16 @@ void ClassMethod::op_call( VMContext* ctx, int32 paramCount, void* self ) const
 
 
 void ClassMethod::op_eval( VMContext* ctx, void* self ) const
-{   
-   Item copy = *static_cast<Item*>(self);   
-   
+{
+   Item copy = *static_cast<Item*>(self);
+
    Function* fmth = copy.asMethodFunction();
    copy.unmethodize();
-      
+
    // called object is on top of the stack
    ctx->call( fmth, 0, copy );
 }
+
 }
 
 /* end of classmethod.cpp */

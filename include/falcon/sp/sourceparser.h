@@ -309,6 +309,7 @@ public:
    Parsing::Rule r_Expr_range_index3open;
    Parsing::Rule r_Expr_range_index2;
    Parsing::Rule r_Expr_range_index1;
+   Parsing::Rule r_Expr_range_index0;
    Parsing::Rule r_Expr_empty_dict;
    Parsing::Rule r_Expr_array_decl;
    Parsing::Rule r_Expr_empty_dict2;

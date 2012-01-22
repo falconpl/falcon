@@ -43,32 +43,34 @@ ClassArray::~ClassArray()
 
 void ClassArray::dispose( void* self ) const
 {
-   ItemArray* f = static_cast<ItemArray*>(self);
-   delete f;
+   // ItemArray* f = static_cast<ItemArray*>( self );
+   delete static_cast<ItemArray*>( self );
 }
 
 
 void* ClassArray::clone( void* source ) const
 {
-   ItemArray* array = static_cast<ItemArray*>(source);
-   return new ItemArray(*array);
+   // ItemArray* array = static_cast<ItemArray*>( source );
+   return new ItemArray( *( static_cast<ItemArray*>( source ) ) );
 }
 
 
 void ClassArray::store( VMContext*, DataWriter* stream, void* instance ) const
 {
    // ATM we have the growth parameter to save.
-   ItemArray* arr = static_cast<ItemArray*>( instance );
-   stream->write(arr->m_growth);
+   // ItemArray* arr = static_cast<ItemArray*>( instance );
+   stream->write( ( static_cast<ItemArray*>( instance ) )->m_growth );
 }
 
 
 void ClassArray::restore( VMContext*, DataReader* stream, void*& empty ) const
 {
    uint32 growth;
-   stream->read(growth);
-   
+
+   stream->read( growth );
+
    ItemArray* iarr = new ItemArray;
+
    iarr->m_growth = growth;
    empty = iarr;
 }
@@ -76,21 +78,23 @@ void ClassArray::restore( VMContext*, DataReader* stream, void*& empty ) const
 
 void ClassArray::flatten( VMContext*, ItemArray& subItems, void* instance ) const
 {
-   ItemArray* self = static_cast<ItemArray*>(instance);
-   subItems.replicate(*self);
+   // ItemArray* self = static_cast<ItemArray*>( instance );
+
+   subItems.replicate( *( static_cast<ItemArray*>( instance ) ) );
 }
 
 
 void ClassArray::unflatten( VMContext*, ItemArray& subItems, void* instance ) const
 {
-   ItemArray* self = static_cast<ItemArray*>(instance);
-   self->replicate(subItems);
+   ItemArray* self = static_cast<ItemArray*>( instance );
+
+   self->replicate( subItems );
 }
 
 
 void ClassArray::describe( void* instance, String& target, int maxDepth, int maxLen ) const
 {
-   ItemArray* arr = static_cast<ItemArray*>(instance);
+   ItemArray* arr = static_cast<ItemArray*>( instance );
 
    target.append( "[" );
 
@@ -100,19 +104,19 @@ void ClassArray::describe( void* instance, String& target, int maxDepth, int max
    {
       if ( pos > 0 )
       {
-         target += ", ";
+         target.append( ", " );
       }
-      
+
       Class* cls;
       void* inst;
 
-      arr->at(pos).forceClassInst(cls, inst);
+      arr->at( pos ).forceClassInst( cls, inst );
 
-      temp.size(0);
+      temp.size( 0 );
 
       cls->describe( inst, temp, maxDepth - 1, maxLen );
 
-      target += temp;
+      target.append( temp );
    }
 
    target.append( "]" );
@@ -127,11 +131,13 @@ void ClassArray::op_create( VMContext* ctx, int pcount ) const
 
    if ( pcount >= 1 )
    {
-      Item* first = ctx->opcodeParams(pcount);
+      Item* first = ctx->opcodeParams( pcount );
+
       if( ! first->isOrdinal() )
       {
          throw new ParamError( ErrorParam( e_inv_params, __LINE__,__FILE__ ).extra( "[N]" ) );
       }
+
       count = first->forceInteger();
    }
 
@@ -151,9 +157,9 @@ void ClassArray::op_getIndex( VMContext* ctx, void* self ) const
 
    ctx->operands( arritem, index );
 
-   ItemArray& array = *static_cast<ItemArray*>(self);
+   ItemArray& array = *static_cast<ItemArray*>( self );
 
-   if (index->isOrdinal())
+   if ( index->isOrdinal())
    {
       int64 v = index->forceInteger();
 
@@ -161,10 +167,10 @@ void ClassArray::op_getIndex( VMContext* ctx, void* self ) const
 
       if( v >= array.length() )
       {
-         throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra("out of range") );
+         throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra( "out of range" ) );
       }
 
-      ctx->stackResult(2, array[v]);
+      ctx->stackResult( 2, array[v] );
    }
    else if ( index->isUser() ) // index is a range
    {
@@ -178,12 +184,12 @@ void ClassArray::op_getIndex( VMContext* ctx, void* self ) const
 
       if ( ! index->asClassInst( cls, udata ) )
       {
-         throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra("type error") );
+         throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra( "type error" ) );
       }
 
       if ( cls->typeID() == FLC_CLASS_ID_RANGE )
       {
-         Range& rng = *static_cast<Range*>(udata);
+         Range& rng = *static_cast<Range*>( udata );
 
          int64 step = ( rng.step() == 0 ) ? 1 : rng.step(); // No step given assume 1
          int64 start = rng.start();
@@ -191,9 +197,9 @@ void ClassArray::op_getIndex( VMContext* ctx, void* self ) const
          int64 arrayLen = array.length();
 
          // do some validation checks before proceeding
-         if ( start >= arrayLen || start < (arrayLen * -1)  || end > arrayLen || end < (arrayLen * -1) )
+         if ( start >= arrayLen || start < ( arrayLen * -1 )  || end > arrayLen || end < ( arrayLen * -1 ) )
          {
-            throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra("index out of range") );
+            throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra( "index out of range" ) );
          }
 
          bool reverse = false;
@@ -218,7 +224,7 @@ void ClassArray::op_getIndex( VMContext* ctx, void* self ) const
             }
          }
 
-         ItemArray *returnArray = new ItemArray( abs( (start - end) + 1 ) );
+         ItemArray *returnArray = new ItemArray( abs( ( start - end ) + 1 ) );
 
          if ( reverse )
          {
@@ -243,12 +249,12 @@ void ClassArray::op_getIndex( VMContext* ctx, void* self ) const
       }
       else
       {
-         throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra("unknown index") );
+         throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra( "unknown index" ) );
       }
    }
    else
    {
-      throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra("invalid index") );
+      throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra( "invalid index" ) );
    }
 }
 
@@ -262,9 +268,9 @@ void ClassArray::op_setIndex( VMContext* ctx, void* self ) const
    ctx->operands( value, arritem, index );
 
 
-   ItemArray& array = *static_cast<ItemArray*>(self);
+   ItemArray& array = *static_cast<ItemArray*>( self );
 
-   if (index->isOrdinal())
+   if ( index->isOrdinal() )
    {
       int64 v = index->forceInteger();
 
@@ -272,13 +278,13 @@ void ClassArray::op_setIndex( VMContext* ctx, void* self ) const
 
       if( v >= array.length() )
       {
-         throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra("index out of range") );
+         throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra( "index out of range" ) );
       }
 
-      value->copied(true); // the value is copied here.
+      value->copied( true ); // the value is copied here.
 
       array[v] = *value;
-      ctx->stackResult(3, *value);  // push value back onto the stack
+      ctx->stackResult( 3, *value );  // push value back onto the stack
    }
    else if ( ! index->isUser() ) // should get a user type
    {
@@ -290,12 +296,12 @@ void ClassArray::op_setIndex( VMContext* ctx, void* self ) const
 
    if ( ! index->asClassInst( rangeClass, udataRangeInst ) )
    {
-      throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra("range type error") );
+      throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra( "range type error" ) );
    }
 
    if ( rangeClass->typeID() != FLC_CLASS_ID_RANGE )
    {
-      throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra("unknown index") );
+      throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra( "unknown index" ) );
    }
 
    Range& rng = *static_cast<Range*>( udataRangeInst );
@@ -312,16 +318,16 @@ void ClassArray::op_setIndex( VMContext* ctx, void* self ) const
    int64 rangeLen = ( rng.isOpen() ) ? arrayLen - start : end - start;
 
    // do some validation checks before proceeding
-   if ( start >= arrayLen || start < (arrayLen * -1)  || end > arrayLen || end < (arrayLen * -1) )
+   if ( start >= arrayLen || start < ( arrayLen * -1 )  || end > arrayLen || end < ( arrayLen * -1 ) )
    {
-      throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra("index out of range") );
+      throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra( "index out of range" ) );
    }
 
    if ( value->asClassInst( rhs, udataRhs ) ) // is the rhs a deep class
    {
       if ( rhs->typeID() == FLC_CLASS_ID_ARRAY )
       {
-         ItemArray& rhsArray = *static_cast<ItemArray*>(udataRhs);
+         ItemArray& rhsArray = *static_cast<ItemArray*>( udataRhs );
 
          int64 rhsLen = rhsArray.length();
 
@@ -333,7 +339,7 @@ void ClassArray::op_setIndex( VMContext* ctx, void* self ) const
          {
             array.change( rhsArray, start, rhsLen );
 
-            array.remove( ( start + rhsLen ), ( rangeLen - rhsLen ) ); 
+            array.remove( ( start + rhsLen ), ( rangeLen - rhsLen ) );
          }
          else // rangeLen == rhsLen
          {
@@ -342,25 +348,25 @@ void ClassArray::op_setIndex( VMContext* ctx, void* self ) const
       }
       else
       {
-         value->copied(true);    // the value is copied here.
+         value->copied( true );    // the value is copied here.
 
          array[ ( start == end ) ? start + 1 : start ] = *value;
 
          if ( rangeLen > 1 )
          {
-            array.remove( ( start + 1 ), ( rangeLen - 1 ) ); 
+            array.remove( ( start + 1 ), ( rangeLen - 1 ) );
          }
       }
    }
    else  // Not a deep class
    {
-      value->copied(true);    // the value is copied here.
+      value->copied( true );    // the value is copied here.
 
       if ( rangeLen > 1 )
       {
          array[ ( start == end ) ? start + 1 : start ] = *value;
 
-         array.remove( ( start + 1 ), ( rangeLen - 1 ) ); 
+         array.remove( ( start + 1 ), ( rangeLen - 1 ) );
       }
       else  // arritem[1:1]
       {
@@ -368,13 +374,13 @@ void ClassArray::op_setIndex( VMContext* ctx, void* self ) const
       }
    }
 
-   ctx->stackResult(3, *value);
+   ctx->stackResult( 3, *value );
 }
 
 
 void ClassArray::gcMark( void* self, uint32 mark ) const
 {
-   ItemArray& array = *static_cast<ItemArray*>(self);
+   ItemArray& array = *static_cast<ItemArray*>( self );
    array.gcMark( mark );
 }
 
@@ -397,7 +403,7 @@ void ClassArray::op_add( VMContext* ctx, void* self ) const
    static Class* arrayClass = Engine::instance()->arrayClass();
    static Collector* coll = Engine::instance()->collector();
 
-   ItemArray* array = static_cast<ItemArray*>(self);
+   ItemArray* array = static_cast<ItemArray*>( self );
    Item* op1, *op2;
    ctx->operands( op1, op2 );
 
@@ -410,41 +416,42 @@ void ClassArray::op_add( VMContext* ctx, void* self ) const
    if( ! op2->asClassInst( cls, inst ) || cls->typeID() != typeID() )
    {
       result->reserve( array->length() + 1 );
-      result->merge(*array);
-      
-      op2->copied(true);
-      result->append(*op2);
+      result->merge( *array );
+
+      op2->copied( true );
+      result->append( *op2 );
    }
    else {
       // it's an array!
-      ItemArray* other = static_cast<ItemArray*>(inst);
+      ItemArray* other = static_cast<ItemArray*>( inst );
+
       result->reserve( array->length() + other->length() );
       result->merge( *array );
       result->merge( *other );
    }
-    
+
    ctx->stackResult( 2, Item( FALCON_GC_STORE( coll, arrayClass, result ) ) );
 }
 
 
 void ClassArray::op_aadd( VMContext* ctx, void* self ) const
 {
-   ItemArray* array = static_cast<ItemArray*>(self);
+   ItemArray* array = static_cast<ItemArray*>( self );
    Item* op1, *op2;
    ctx->operands( op1, op2 );
 
    Class* cls;
    void* inst;
-   
+
    // a basic type?
    if( ! op2->asClassInst( cls, inst ) || cls->typeID() != typeID() )
    {
-      op2->copied(true);
-      array->append(*op2);
+      op2->copied( true );
+      array->append( *op2 );
    }
    else {
       // it's an array!
-      ItemArray* other = static_cast<ItemArray*>(inst);
+      ItemArray* other = static_cast<ItemArray*>( inst );
       array->merge( *other );
    }
 
@@ -453,50 +460,50 @@ void ClassArray::op_aadd( VMContext* ctx, void* self ) const
 }
 
 
-void ClassArray::op_isTrue( VMContext* ctx, void* self) const
+void ClassArray::op_isTrue( VMContext* ctx, void* self ) const
 {
-   ctx->stackResult(1, static_cast<ItemArray*>(self)->length() != 0 );
+   ctx->stackResult( 1, static_cast<ItemArray*>( self )->length() != 0 );
 }
 
 
 void ClassArray::op_toString( VMContext* ctx, void* self ) const
 {
    String s;
-   s.A("[Array of ").N(static_cast<ItemArray*>(self)->length()).A(" elements]");
+   s.A("[Array of ").N( static_cast<ItemArray*>( self )->length() ).A( " elements]" );
    ctx->stackResult( 1, s );
 }
 
 
 void ClassArray::op_call( VMContext* ctx, int32 paramCount, void* self ) const
 {
-   ItemArray* data = static_cast<ItemArray*>(self);
+   ItemArray* data = static_cast<ItemArray*>( self );
    length_t len = data->length();
-   
+
    if( len == 0 )
    {
       Class::op_call( ctx, paramCount, self ); 
    }
-   else 
+   else
    {
       Item* elems = data->elements();
-      
+
       Class *cls;
       void* udata;
       elems->forceClassInst( cls, udata );
-      if( udata == data)
+      if( udata == data )
       {
          // infinite expand loop.
          throw new CodeError( ErrorParam( e_call_loop, __LINE__, SRC )
             .origin( ErrorParam::e_orig_vm )
             );
       }
-      
+
       // expand the array as parameters.
-      ctx->insertData( paramCount+1, data->elements(), (int32) len, 1 );
-      
+      ctx->insertData( paramCount + 1, data->elements(), (int32) len, 1 );
+
       // invoke the call.
       cls->op_call( ctx, len + paramCount-1, udata );
-   }   
+   }
 }
 
 
@@ -518,23 +525,27 @@ void ClassArray::op_iter( VMContext* ctx, void* ) const
 void ClassArray::op_next( VMContext* ctx, void* instance ) const
 {
    // (seq)(iter)
-   Item& iter = ctx->opcodeParam(0);
+   Item& iter = ctx->opcodeParam( 0 );
    length_t pos = 0;
-   
-   ItemArray* arr = static_cast<ItemArray*>(instance);
+
+   ItemArray* arr = static_cast<ItemArray*>( instance );
+
    fassert( iter.isInteger() );
    pos = (length_t) iter.asInteger();
+
    if( pos >= arr->length() )
    {
       ctx->addDataSlot().setBreak();
    }
    else
    {
-      
-      Item& value = arr->at(pos++);
+
+      Item& value = arr->at( pos++ );
+
       value.copied();
       iter.setInteger( pos );
       ctx->pushData( value );
+
       if( pos >= arr->length() )
       {
          ctx->topData().setLast();
@@ -547,11 +558,11 @@ void ClassArray::op_next( VMContext* ctx, void* instance ) const
 #if 0
 void ClassArray::op_toString( VMContext* ctx, void* self ) const
    // If we're long 0, surrender.
-   ItemArray* array = static_cast<ItemArray*>(self);
+   ItemArray* array = static_cast<ItemArray*>( self );
 
    if( array->length() == 0 )
    {
-      ctx->stackResult(1, "[]");
+      ctx->stackResult( 1, "[]" );
       return;
    }
    VMContext* ctx = ctx->currentContext();
@@ -561,9 +572,9 @@ void ClassArray::op_toString( VMContext* ctx, void* self ) const
    ctx->addDataSlot().setString("[ ");  // local 1 -- currently elaborated string.
 
    // add an item for op_toString
-   ctx->pushData(Item());
+   ctx->pushData( Item() );
 
-   m_toStringNextOp.apply(&m_toStringNextOp, vm);
+   m_toStringNextOp.apply( &m_toStringNextOp, vm );
 }
 
 
@@ -576,15 +587,15 @@ ClassArray::ToStringNextOp::ToStringNextOp()
 void ClassArray::ToStringNextOp::apply_( const PStep* step, VMachine* vm )
 {
    VMContext* ctx = ctx->currentContext();
-   
+
    // array in self
-   ItemArray* array = static_cast<ItemArray*>(ctx->self().asInst());
+   ItemArray* array = static_cast<ItemArray*>( ctx->self().asInst() );
 
    // loop counter in 0
-   length_t i = (length_t) ctx->local(0)->asInteger();
-   
+   length_t i = (length_t) ctx->local( 0 )->asInteger();
+
    // string in 1
-   String* myStr = ctx->local(1)->asString();
+   String* myStr = ctx->local( 1 )->asString();
    fassert( myStr != 0 )
 
    // have we been called from deep?
@@ -593,7 +604,7 @@ void ClassArray::ToStringNextOp::apply_( const PStep* step, VMachine* vm )
       // in this case, get the top data -- now converted by the deep call.
       fassert( ctx->topData().asString() )
       myStr->append(*ctx->topData().asString());
-   }   
+   }
 
    // continue with the stringification loop
    for( ; i < array->length(); ++i )
@@ -605,8 +616,8 @@ void ClassArray::ToStringNextOp::apply_( const PStep* step, VMachine* vm )
 
       Class* cls;
       void* inst;
-      Item& item = array->at(i);
-      
+      Item& item = array->at( i );
+
       // if it's a simple item, add it's base representation
       if( ! item.asClassInst( cls, inst ) )
       {
@@ -615,15 +626,15 @@ void ClassArray::ToStringNextOp::apply_( const PStep* step, VMachine* vm )
       else
       {
          // Not simple; we may be deep -- so prepare
-         ctx->local(0)->setInteger(i+1);
+         ctx->local( 0 )->setInteger( i+1 );
          ctx->topData() = item;
-         
+
          ctx->ifDeep( step );
          cls->op_toString( vm, inst );
          if( ctx->wentDeep() ) return;
 
          // pfew, not deep! just go on as usual
-         fassert(ctx->topData().isString());
+         fassert( ctx->topData().isString() );
          myStr->append( *ctx->topData().asString() );
       }
    }

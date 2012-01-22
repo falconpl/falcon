@@ -32,6 +32,7 @@ void apply_expr_range_index3( const Parsing::Rule&, Parsing::Parser& p );
 void apply_expr_range_index3open( const Parsing::Rule&, Parsing::Parser& p );
 void apply_expr_range_index2( const Parsing::Rule&, Parsing::Parser& p );
 void apply_expr_range_index1( const Parsing::Rule&, Parsing::Parser& p );
+void apply_expr_range_index0( const Parsing::Rule&, Parsing::Parser& p );
 
 
 }
