@@ -866,6 +866,8 @@ Item* VMContext::getDynSymbolValue( const Symbol* dyns )
    return newData->m_item.dereference();
 }
 
+
+
 }
 
 /* end of vmcontext.cpp */

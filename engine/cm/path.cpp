@@ -24,6 +24,9 @@
 #include <falcon/errors/paramerror.h>
 #include <falcon/errors/codeerror.h>
 
+#include <falcon/datawriter.h>
+#include <falcon/datareader.h>
+
 #include <falcon/cm/uri.h>
 
 namespace Falcon {
@@ -55,18 +58,24 @@ ClassPath::ClassPath():
 ClassPath::~ClassPath()
 {}
 
-   
-void ClassPath::serialize( DataWriter*, void* ) const
+
+void ClassPath::store( VMContext*, DataWriter* stream, void* instance ) const
 {
-   // TODO
+   PathCarrier* pc = static_cast<PathCarrier*>(instance);
+   stream->write(pc->m_path.encode());
 }
 
-void* ClassPath::deserialize( DataReader* ) const
+
+void ClassPath::restore( VMContext*, DataReader* stream, void*& empty ) const
 {
-   // TODO
-   return 0;
+   String pathName;
+   stream->read( pathName );
+   PathCarrier* pc = new PathCarrier(carriedProps());
+   pc->m_path.parse( pathName );
+   empty = pc;
 }
-   
+
+
 void* ClassPath::createInstance( Item* params, int pcount ) const
 {
    PathCarrier* uc;

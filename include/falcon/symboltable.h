@@ -26,6 +26,8 @@ class String;
 class Symbol;
 class SynTree;
 class Function;
+class DataWriter;
+class DataReader;
 
 /** Holder for symbols relative to the owning level.
  Symbols tables are found:
@@ -152,6 +154,9 @@ public:
     */
 
    void gcMark( uint32 mark );
+   
+   void store( DataWriter* dw );
+   void restore( DataReader* dr );
    
 private:
    class Private;

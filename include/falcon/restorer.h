@@ -50,7 +50,7 @@ public:
    virtual bool hasNext() const;
    virtual uint32 objCount() const;
    
-private:       
+private:
    class Private;
    Private* _p;
    

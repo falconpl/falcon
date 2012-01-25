@@ -20,6 +20,8 @@
 #include <falcon/string.h>
 #include <falcon/syntree.h>
 #include <falcon/function.h>
+#include <falcon/datareader.h>
+#include <falcon/datawriter.h>
 
 #include <vector>
 #include <map>
@@ -190,6 +192,54 @@ Symbol* SymbolTable::addClosed( const String& name )
    _p->m_symtab[name] = ls;
    
    return ls;
+}
+
+
+void SymbolTable::store( DataWriter* dw )
+{
+   dw->write( (size_t) _p->m_locals.size() );
+   {
+      Private::SymbolVector::iterator iter = _p->m_locals.begin();
+      while( iter != _p->m_locals.end() ) {
+         Symbol* sym = *iter;
+         dw->write( sym->name() );
+         ++iter;
+      }
+   }
+   
+   dw->write( (size_t) _p->m_closed.size() );
+   {
+      Private::SymbolVector::iterator iter = _p->m_closed.begin();
+      while( iter != _p->m_closed.end() ) {
+         Symbol* sym = *iter;
+         dw->write( sym->name() );
+         ++iter;
+      }
+   }
+}
+
+
+void SymbolTable::restore( DataReader* dr )
+{
+   size_t size;
+   
+   dr->read(size);
+   {
+      for( size_t i = 0; i < size; ++i ) {
+         String name;
+         dr->read(name);
+         addLocal(name);
+      }
+   }
+   
+   dr->read(size);
+   {
+      for( size_t i = 0; i < size; ++i ) {
+         String name;
+         dr->read(name);
+         addClosed(name);
+      }
+   }
 }
 
   

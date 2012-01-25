@@ -20,6 +20,9 @@
 #include <falcon/pstep.h>
 
 #include <falcon/psteps/stmtreturn.h>
+#include <falcon/itemarray.h>
+#include <falcon/datawriter.h>
+#include <falcon/datareader.h>
 
 namespace Falcon
 {
@@ -98,6 +101,96 @@ void SynFunc::invoke( VMContext* ctx, int32 nparams )
    // push a static return in case of problems.   
    ctx->pushCode( m_retStep );
    ctx->pushCode( &this->syntree() );
+}
+
+// As this is called by the engne at init, we don't have to care much about
+// mt clashes and so on.
+MetaStorer* SynFunc::metaStorer() const
+{
+   static MetaStorer* theStorer = Engine::instance()->getMetaStorer("$.SynFunc");
+   fassert( theStorer != 0 );
+   
+   return theStorer;
+}
+
+
+//==========================================================================
+// Storer for synfunctions.
+//
+
+SynFunc::SynStorer::SynStorer():
+   MetaStorer( "$.SynFunc" )
+{}
+
+void SynFunc::SynStorer::store( VMContext*, DataWriter* stream, void* instance ) const
+{
+   SynFunc* synfunc = static_cast<SynFunc*>(instance);
+   // saving the overall data.
+   stream->write( synfunc->name() );
+   stream->write( synfunc->declaredAt() );
+   stream->write( synfunc->isPredicate() );
+   stream->write( synfunc->isEta() );
+   stream->write( synfunc->signature() );
+   
+   // now we got to save the function parameter table.
+   stream->write( synfunc->paramCount() );
+   synfunc->symbols().store( stream );
+}
+
+void SynFunc::SynStorer::restore( VMContext*, DataReader* stream, void*& empty ) const
+{
+   bool bPred, bEta;
+   int line;
+   String name, signature;
+   
+   stream->read( name );
+   stream->read( line );
+   stream->read( bPred );
+   stream->read( bEta );
+   stream->read( signature );
+   
+   
+   SynFunc* synfunc = new SynFunc( name, 0, line );
+   synfunc->setPredicate( bPred );
+   synfunc->setEta( bEta );
+   synfunc->signature( signature );
+   
+   int32 pcount;
+   stream->read(pcount);
+   synfunc->paramCount( pcount );
+   synfunc->symbols().restore( stream );
+   
+   empty = synfunc;
+}
+
+void SynFunc::SynStorer::flatten( VMContext*, ItemArray& subItems, void* instance ) const
+{
+   SynFunc* synfunc = static_cast<SynFunc*>(instance);
+   subItems.reserve(synfunc->syntree().size());
+   for( uint32 i = 0; i < synfunc->syntree().size(); ++i ) {
+      Statement* stmt = synfunc->syntree().at(i);
+      Class* synClass = stmt->cls();
+      subItems.append(Item( synClass, stmt ) );
+   }
+}
+
+void SynFunc::SynStorer::unflatten( VMContext*, ItemArray& subItems, void* instance ) const
+{    
+   SynFunc* synfunc = static_cast<SynFunc*>(instance);
+   
+   for( uint32 i = 0; i < subItems.length(); ++i ) {
+      Class* cls = 0;
+      void* data = 0;
+      subItems[i].asClassInst(cls,data);
+      
+#ifndef NDEBUG
+      static Class* stmtClass = Engine::instance()->statementClass();
+      fassert2( cls != 0, "Serialized instances are not classes" );
+      fassert2( cls->isDerivedFrom( stmtClass ), "Serialized instances are not statements" );               
+#endif
+      
+      synfunc->syntree().append( static_cast<Statement*>(data) );
+   }
 }
 
 }

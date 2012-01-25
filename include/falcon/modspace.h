@@ -30,6 +30,8 @@ class Error;
 class Symbol;
 class ModLoader;
 class ImportDef;
+class Class;
+class Function;
 
 /** Collection of (static) modules active in a virtual machine.
  
@@ -200,7 +202,19 @@ public:
    // Service functions
    //===================================================================
    
+   Class* findDynamicClass( 
+      ModLoader* ml,
+      const String& moduleUri, 
+      const String& moduleName, 
+      const String& className, 
+      bool &addedMod );
    
+   Function* findDynamicFunction( 
+      ModLoader* ml,
+      const String& moduleUri, 
+      const String& moduleName, 
+      const String& functionName, 
+      bool &addedMod );
    
    /** Returns a previously stored module by name.
     \param name The logical name of the module to be searched.
@@ -333,6 +347,12 @@ private:
    
    void linkSpecificDep( Module* asker, void* def, Error*& link_errors);
    void linkGeneralDep( Module* asker, void* def, Error*& link_errors);
+   
+   Module* retreiveDynamicModule( 
+      ModLoader* ml,
+      const String& moduleUri, 
+      const String& moduleName,  
+      bool &addedMod );
 
 };
 

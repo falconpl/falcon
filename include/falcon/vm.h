@@ -290,7 +290,7 @@ public:
   
    /** Gets the module loader associated with this virtual machine. */
    ModLoader* modLoader() const { return m_loader; }
-   
+
 protected:
 
    Stream *m_stdIn;
@@ -318,7 +318,7 @@ protected:
     \param item The item being raised.
     */
    void onRaise( const Item& item );
-
+   
 private:
    // current context
    VMContext* m_context;

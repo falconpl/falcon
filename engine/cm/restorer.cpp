@@ -28,6 +28,7 @@
 #include <falcon/usercarrier.h>
 
 #include <falcon/module.h>
+#include <falcon/modspace.h>
 
 #include <falcon/cm/stream.h>
 
@@ -40,7 +41,8 @@ class RestorerCarrier: public UserCarrierT<Restorer>
 public:
    RestorerCarrier( Restorer* data ):
       UserCarrierT<Restorer> (data),
-      m_streamc(0)
+      m_streamc(0),
+      m_modSpace(0)
    {}
       
    virtual ~RestorerCarrier()
@@ -58,11 +60,15 @@ public:
       {
          m_gcMark = mark;
          m_streamc->m_gcMark = mark;
+         if( m_modSpace != 0 ) {
+            m_modSpace->gcMark( mark );
+         }
       }
    }
    
 private:
    StreamCarrier* m_streamc;
+   ModSpace* m_modSpace;
 };
 
 
@@ -142,7 +148,7 @@ FALCON_DEFINE_METHOD_P1( ClassRestorer, restore )
    
    RestorerCarrier* stc = static_cast<RestorerCarrier*>(ctx->self().asInst());
    Restorer* restorer = stc->carried();
-   StreamCarrier* streamc = static_cast<StreamCarrier*>(data);
+   StreamCarrier* streamc = static_cast<StreamCarrier*>(cls->getParentData(clsStream,data));
    stc->setStream( streamc );
 
    // prepare not to return the frame now but later.

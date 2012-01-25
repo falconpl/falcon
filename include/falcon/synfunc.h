@@ -20,6 +20,7 @@
 #include <falcon/string.h>
 #include <falcon/function.h>
 #include <falcon/rootsyntree.h>
+#include <falcon/metastorer.h>
 
 namespace Falcon
 {
@@ -61,10 +62,31 @@ public:
    void setPredicate( bool bmode );
    bool isPredicate() const { return m_bIsPredicate; }
    
+   virtual MetaStorer* metaStorer() const;
+   
+   class SynStorer: public MetaStorer
+   {
+   public:
+      SynStorer();
+      
+      virtual ~SynStorer() {}      
+      virtual void store( VMContext* ctx, DataWriter* stream, void* instance ) const;
+      virtual void restore( VMContext* ctx, DataReader* stream, void*& empty ) const;
+      virtual void flatten( VMContext* ctx, ItemArray& subItems, void* instance ) const;
+      virtual void unflatten( VMContext* ctx, ItemArray& subItems, void* instance ) const;
+   };
+   
 protected:
+   
+   SynFunc() {}
+   
    RootSynTree m_syntree;
    PStep* m_retStep;
    bool m_bIsPredicate;
+   
+   
+   
+   friend class SynStorer;
 };
 
 }

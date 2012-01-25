@@ -101,6 +101,8 @@ void SynClasses::subscribe( Engine* engine )
    #undef FALCON_SYNCLASS_DECLARATOR_APPLY
    #define FALCON_SYNCLASS_DECLARATOR_REGISTER
    #include <falcon/synclasses_list.h>
+
+#include "falcon/symbol.h"
 }
    
 
@@ -530,6 +532,10 @@ void SynClasses::ClassGenSym::store( VMContext*, DataWriter* dw, void* instance 
    dw->write( es->line() );
    dw->write( es->chr() );
    dw->write( es->name() );
+   /*
+   Symbol* sym = es->symbol();   
+   dw->write( sym->type() );
+    */
 }
 
 void SynClasses::ClassGenSym::restore( VMContext*, DataReader*dr, void*& empty ) const

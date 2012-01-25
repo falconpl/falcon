@@ -61,9 +61,9 @@ public:
    
    ClassURI();
    virtual ~ClassURI();
-
-   virtual void serialize( DataWriter* stream, void* self ) const;
-   virtual void* deserialize( DataReader* stream ) const;
+    
+   virtual void store( VMContext*, DataWriter* stream, void* instance ) const;
+   virtual void restore( VMContext*, DataReader* stream, void*& empty ) const;
    
    //=============================================================
    //

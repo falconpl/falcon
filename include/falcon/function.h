@@ -29,6 +29,8 @@ class VMContext;
 class Error;
 class Class;
 class Item;
+class MetaStorer;
+class ClassFunction;
 
 /**
  Falcon function.
@@ -276,6 +278,15 @@ public:
     newer than the one seen in gcMark.
     */
    virtual bool gcCheck( uint32 mark );
+ 
+   /** Returns a meta-storer to store complex functions.
+    \return 
+    
+    The base class returs 0; this tells the class to just store the function
+    location so that it is restored by looking at the engine or owning
+    module function table.
+    */
+   virtual MetaStorer *metaStorer() const { return 0; }
    
 protected:
    String m_name;
@@ -290,6 +301,9 @@ protected:
 
    bool m_bEta;
    SymbolTable m_symtab;
+   
+   Function() {}
+   friend class ClassFunction;
 };
 
 #define FALCON_DECLARE_FUNCTION(FN_NAME, SIGNATURE) \

@@ -34,6 +34,7 @@ class PseudoFunction;
 class PseudoFunctionMap;
 class PredefMap;
 class RegisteredClassesMap;
+class MetaStorerMap;
 
 class Module;
 class BOM;
@@ -44,7 +45,7 @@ class ModSpace;
 class Item;
 
 class SynClasses;
-
+class MetaStorer;
 class VMContext;
 
 /** Falcon application global data.
@@ -103,6 +104,25 @@ public:
     */
    Class* getTypeClass( int type );
 
+   /** Returns a registered meta-storer. 
+    \param name The required MetaStorer name.
+    \return A pointer to a metastorer or 0 if not found. 
+    \see MetaStorer
+    */
+   
+   MetaStorer* getMetaStorer( const String& name );
+   
+   /** Records a storer.
+    \param ms The storer.
+    \return True if the storer was recorded, false if the storer name is already
+    assigned.
+    
+    \see MetaStorer
+    
+    \note The engine becomes owner of the storer.
+    */
+   bool registerMetaStorer( MetaStorer* ms );
+   
    /** True when running on windows system.
     
     File naming convention and other details are different on windows systems.
@@ -515,6 +535,7 @@ protected:
    SynClasses* m_synClasses;
 
    RegisteredClassesMap* m_regClasses;
+   MetaStorerMap *m_metaStorers;
    
    //===============================================
    // Transcoders

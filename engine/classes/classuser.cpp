@@ -91,6 +91,11 @@ Class* ClassUser::getParent( const String& name ) const
 
 void* ClassUser::getParentData( Class* parent, void* data ) const
 {
+   if( parent == this ) 
+   {
+      return data;
+   }
+   
    Private::ParentList::iterator iter = _p->m_parents.begin();
    while( iter != _p->m_parents.end() )
    {

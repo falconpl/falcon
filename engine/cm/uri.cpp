@@ -22,6 +22,9 @@
 #include <falcon/vmcontext.h>
 #include <falcon/uri.h>
 #include <falcon/path.h>
+#include <falcon/datawriter.h>
+#include <falcon/datareader.h>
+
 #include <falcon/errors/paramerror.h>
 #include <falcon/errors/codeerror.h>
 
@@ -50,15 +53,20 @@ ClassURI::~ClassURI()
 {}
 
    
-void ClassURI::serialize( DataWriter*, void* ) const
+void ClassURI::store( VMContext*, DataWriter* stream, void* instance ) const
 {
-   // TODO
+   URICarrier* uc = static_cast<URICarrier*>(instance);
+   stream->write(uc->m_uri.encode());
 }
 
-void* ClassURI::deserialize( DataReader* ) const
+
+void ClassURI::restore( VMContext*, DataReader* stream, void*& empty ) const
 {
-   // TODO
-   return 0;
+   String uriName;
+   stream->read( uriName );
+   URICarrier* uc = new URICarrier( carriedProps() );
+   uc->m_uri.parse( uriName );
+   empty = uc;
 }
    
 void* ClassURI::createInstance( Item* params, int pcount ) const

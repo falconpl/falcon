@@ -26,6 +26,9 @@
 #include <falcon/itemarray.h>
 #include <falcon/errors/genericerror.h>
 #include <falcon/importdef.h>
+#include <falcon/pseudofunc.h>
+
+#include <falcon/errors/unserializableerror.h>
 
 #include <map>
 #include <deque>
@@ -248,14 +251,14 @@ void ModSpace::resolveDeps( ModLoader* ml, Module* mod)
       if ( req->m_module == 0 )
       {
          // have we got the module here?
-         req->m_module = req->m_bIsURI ? findByURI( req->m_name ) : 
-                                  findByName( req->m_name );
+         ModuleData* md = findModuleData( req->m_name, req->m_bIsURI );
          
          // No -- try to load.
-         if( req->m_module == 0 )
+         if( md == 0 )
          {
-            req->m_module = req->m_isLoad ? ml->loadFile( req->m_name ) : 
-                                     ml->loadName( req->m_name );
+            req->m_module = req->m_bIsURI ? 
+                                 ml->loadName( req->m_name ) : 
+                                 ml->loadFile( req->m_name );
 
             if( req->m_module == 0 )
             {
@@ -273,6 +276,17 @@ void ModSpace::resolveDeps( ModLoader* ml, Module* mod)
 
             // be sure the loaded module deps are resolved as well.
             resolve( ml, req->m_module, req->m_isLoad, true );
+         }
+         else 
+         {
+            req->m_module = md->m_mod;
+            
+            // eventually promote to load.
+            if( req->m_isLoad && ! md->m_bExport )
+            {
+               md->m_bExport = true;
+               _p->m_linkOrder.push_back( md );
+            }
          }
       }     
       
@@ -811,6 +825,197 @@ void ModSpace::addLinkError( Error*& top, Error* newError )
 
    top->appendSubError(newError);
 }  
+
+
+Module* ModSpace::retreiveDynamicModule( 
+      ModLoader* ml,
+      const String& moduleUri, 
+      const String& moduleName,  
+      bool &addedMod )
+{
+   Module* clsContainer = 0;
+   // priority in search and load are inverted:
+   // search by name -- by uri / load by uri -- by name.
+
+
+   // first, try to search by name
+   if( moduleName != "" )
+   {
+      clsContainer = this->findByName( moduleName );
+      
+      // if not found, see if we can find by uri
+      if( clsContainer == 0 && moduleUri != "" )
+      {
+         // is the URI around?
+         clsContainer = this->findByURI( moduleUri );
+         if( clsContainer == 0 )
+         {
+            // then try to load the module.
+            clsContainer = ml->loadFile( moduleUri, ModLoader::e_mt_none, true );
+            // to be linked?
+            addedMod = clsContainer != 0;
+         }
+      }
+      
+      // Not loaded? -- try to load by name.
+      if( clsContainer == 0 )
+      {
+         // then try to load the module.
+         clsContainer = ml->loadName( moduleName );
+         // to be linked?
+         addedMod = clsContainer != 0;
+      }
+   }
+
+   return clsContainer;
+}
+
+
+Class* ModSpace::findDynamicClass( 
+      ModLoader* ml,
+      const String& moduleUri, 
+      const String& moduleName, 
+      const String& className, 
+      bool &addedMod )
+{
+   static Engine* eng = Engine::instance();
+   
+   Module* clsContainer = retreiveDynamicModule( ml, moduleUri, moduleName, addedMod );
+   Class* theClass;
+
+   // still no luck?
+   if( clsContainer == 0 )
+   {
+      if( moduleName != "" )
+      {
+         // we should have found a module -- and if the module has a URI,
+         // then it has a name.
+         throw new UnserializableError( ErrorParam(e_deser, __LINE__, SRC )
+            .origin( ErrorParam::e_orig_runtime)
+            .extra( "Can't find module " + 
+                  moduleName + " for " + className ));
+      }
+
+      Symbol* sym = this->findExportedSymbol( className );
+      if( sym == 0 )
+      {
+         theClass = eng->getRegisteredClass( className );
+         if( theClass == 0 )
+         {
+            throw new UnserializableError( ErrorParam(e_deser, __LINE__, SRC )
+               .origin( ErrorParam::e_orig_runtime)
+               .extra( "Unavailable class " + className ));
+         }
+      }
+      else 
+      {
+         if( ! sym->defaultValue()->isClass() )
+         {
+             throw new UnserializableError( ErrorParam(e_deser, __LINE__, SRC )
+               .origin( ErrorParam::e_orig_runtime)
+               .extra( "Symbol is not class " + className ));
+         }
+
+         theClass = sym->defaultValue()->asClass();
+      }
+   }
+   else
+   {
+      // we are sure about the sourceship of the class...
+      theClass = clsContainer->getClass( className );
+      if( theClass == 0 )
+      {
+         String expl = "Unavailable class " + 
+                  className + " in " + clsContainer->uri();
+         delete clsContainer; // the module is not going anywhere.
+         throw new UnserializableError( ErrorParam(e_deser, __LINE__, SRC )
+            .origin( ErrorParam::e_orig_runtime)
+            .extra( expl ));
+      }
+
+      // shall we link a new module?
+      if( addedMod )
+      {
+         this->resolve( ml, clsContainer, false, true );
+      }
+   }
+   
+   return theClass;
+}
+
+
+Function* ModSpace::findDynamicFunction( 
+      ModLoader* ml,
+      const String& moduleUri, 
+      const String& moduleName, 
+      const String& funcName, 
+      bool &addedMod )
+{
+   static Engine* eng = Engine::instance();
+   
+   Module* clsContainer = retreiveDynamicModule( ml, moduleUri, moduleName, addedMod );
+   Function* theFunc = 0;
+
+   // still no luck?
+   if( clsContainer == 0 )
+   {
+      if( moduleName != "" )
+      {
+         // we should have found a module -- and if the module has a URI,
+         // then it has a name.
+         throw new UnserializableError( ErrorParam(e_deser, __LINE__, SRC )
+            .origin( ErrorParam::e_orig_runtime)
+            .extra( "Can't find module " + 
+                  moduleName + " for " + funcName ));
+      }
+
+      Symbol* sym = this->findExportedSymbol( funcName );
+      if( sym == 0 )
+      {
+         theFunc = eng->getPseudoFunction( funcName );
+         if( theFunc == 0 )
+         {
+            throw new UnserializableError( ErrorParam(e_deser, __LINE__, SRC )
+               .origin( ErrorParam::e_orig_runtime)
+               .extra( "Unavailable function " + funcName ));
+         }
+      }
+      else 
+      {
+         if( ! sym->defaultValue()->isFunction() )
+         {
+             throw new UnserializableError( ErrorParam(e_deser, __LINE__, SRC )
+               .origin( ErrorParam::e_orig_runtime)
+               .extra( "Symbol is not function " + funcName ));
+         }
+
+         theFunc = sym->defaultValue()->asFunction();
+      }
+   }
+   else
+   {
+      // we are sure about the sourceship of the class...
+      theFunc = clsContainer->getFunction( funcName );
+      if( theFunc == 0 )
+      {
+         String expl = "Unavailable function " + 
+                  funcName + " in " + clsContainer->uri();
+         delete clsContainer; // the module is not going anywhere.
+         throw new UnserializableError( ErrorParam(e_deser, __LINE__, SRC )
+            .origin( ErrorParam::e_orig_runtime)
+            .extra( expl ));
+      }
+
+      // shall we link a new module?
+      if( addedMod )
+      {
+         this->resolve( ml, clsContainer, false, true );
+      }
+   }
+   
+   return theFunc;
+}
+
 
 }
 

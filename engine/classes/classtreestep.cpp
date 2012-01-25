@@ -293,9 +293,11 @@ void ClassTreeStep::unflatten( VMContext*, ItemArray& subItems, void* instance )
 
    for( int i = 1; i < (int) subItems.length(); ++i )
    {
-      if( subItems[i].isUser() )
+      Class* cls = 0;
+      void* data = 0;
+      if( subItems[i].asClassInst(cls, data) )
       {
-         ts->nth(i-1, static_cast<TreeStep*>( subItems[i].asInst() ) );
+         ts->insert(i-1, static_cast<TreeStep*>( data ) );
       }
       // else, it was nil and unused.
    }

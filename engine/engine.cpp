@@ -46,6 +46,8 @@
 
 #include <falcon/bom.h>
 #include <falcon/stdsteps.h>
+#include <falcon/metastorer.h>
+#include <falcon/synfunc.h>
 
 //--- object headers ---
 #include <falcon/pseudofunc.h>
@@ -109,6 +111,10 @@ class PredefMap: public std::map<String, Item>
 
 class RegisteredClassesMap: public std::map<String, Class*>
 {
+};
+
+class MetaStorerMap: public std::map<String, MetaStorer*>
+{   
 };
 
 //=======================================================
@@ -213,6 +219,7 @@ Engine::Engine()
    //
    m_predefs = new PredefMap;
    m_regClasses = new RegisteredClassesMap;
+   m_metaStorers = new MetaStorerMap;
    
    addBuiltin( m_functionClass );
    addBuiltin( m_stringClass );
@@ -281,6 +288,11 @@ Engine::Engine()
    //
    m_currentContext = 0;
    
+   // ====================================
+   // TODO: Known meta-storers
+   //
+   registerMetaStorer( new SynFunc::SynStorer );
+   
    MESSAGE( "Engine creation complete" );
 }
 
@@ -319,6 +331,18 @@ Engine::~Engine()
    {
       TranscoderMap::iterator iter = m_tcoders->begin();
       while( iter != m_tcoders->end() )
+      {
+         delete iter->second;
+         ++iter;
+      }
+   }
+   
+   // ======================================
+   // Delete registered meta storers
+   //   
+   {
+      MetaStorerMap::iterator iter = m_metaStorers->begin();
+      while( iter != m_metaStorers->end() )
       {
          delete iter->second;
          ++iter;
@@ -527,6 +551,38 @@ Class* Engine::getRegisteredClass( const String& name ) const
    return iter->second;
 }
 
+
+MetaStorer* Engine::getMetaStorer( const String& name )
+{
+   MetaStorer* result = 0;
+   m_mtx->lock();
+   MetaStorerMap::const_iterator iter = m_metaStorers->find( name );
+   if( iter != m_metaStorers->end() )
+   {
+      result = iter->second;
+   }
+   m_mtx->unlock();
+   
+   return result;
+}
+   
+
+bool Engine::registerMetaStorer( MetaStorer* ms )
+{
+   m_mtx->lock();
+   MetaStorerMap::const_iterator iter = m_metaStorers->find( ms->name() );
+   if( iter != m_metaStorers->end() )
+   {
+      m_mtx->unlock();
+      return false;
+   }
+   else {
+      (*m_metaStorers)[ms->name()] = ms;
+   }
+   m_mtx->unlock();
+   return true;
+}
+
 //=====================================================
 // Global objects
 //
@@ -544,6 +600,8 @@ Collector* Engine::collector() const
    return m_instance->m_collector;
 }
 
+
+   
 //=====================================================
 // Type handlers
 //

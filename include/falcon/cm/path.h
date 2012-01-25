@@ -63,8 +63,8 @@ public:
    ClassPath();
    virtual ~ClassPath();
 
-   virtual void serialize( DataWriter* stream, void* self ) const;
-   virtual void* deserialize( DataReader* stream ) const;
+   virtual void store( VMContext* ctx, DataWriter* stream, void* instance ) const;
+   virtual void restore( VMContext* ctx, DataReader* stream, void*& empty ) const;
    
    //=============================================================
    //

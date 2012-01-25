@@ -15,7 +15,7 @@
 
 
 #ifndef FALCON_UNSUPPORTEDERROR_H
-#define	FALCON_UNSUPPORTEDERROR_H
+#define FALCON_UNSUPPORTEDERROR_H
 
 #include <falcon/error.h>
 

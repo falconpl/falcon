@@ -35,6 +35,8 @@
 #include <falcon/errors/codeerror.h>
 #include <falcon/errors/genericerror.h>
 
+#include <falcon/errors/unserializableerror.h>
+
 #include <map>
 #include <list>
 #include <vector>

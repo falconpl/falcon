@@ -17,7 +17,6 @@
 
 #include <falcon/restorer.h>
 #include <falcon/string.h>
-#include <falcon/vmcontext.h>
 #include <falcon/class.h>
 #include <falcon/datareader.h>
 #include <falcon/itemarray.h>
@@ -27,6 +26,9 @@
 #include <falcon/symbol.h>
 #include <falcon/engine.h>
 #include <falcon/errors/unserializableerror.h>
+
+#include <falcon/vmcontext.h>
+#include <falcon/vm.h>
 
 #include <vector>
 #include <list>
@@ -123,7 +125,7 @@ Restorer::Restorer( VMContext* ctx ):
    m_readNext( this ),
    m_unflattenNext( this ),
    m_linkNext( this )
-{  
+{       
 }
 
 
@@ -223,97 +225,14 @@ bool Restorer::loadClasses( ModSpace* msp, ModLoader* ml )
 {
    bool addedMod = false;
    
-   static Engine* eng = Engine::instance();
    Private::ClassVector::iterator iter = _p->m_clsVector.begin();
    while( _p->m_clsVector.end() != iter )
    {
-      Module* clsContainer = 0;
-      bool tbl = false; // to be linked?
-      
       Private::ClassInfo& cinfo = *iter;
-      if( cinfo.m_moduleUri != "" )
-      {
-         // is the URI around?
-         clsContainer = msp->findByURI( cinfo.m_moduleUri );
-         if( clsContainer == 0 )
-         {
-            // then try to load the module.
-            clsContainer = ml->loadFile( cinfo.m_moduleUri, ModLoader::e_mt_none, false );
-            // to be linked
-            tbl = clsContainer != 0;
-         }
-      }
+      cinfo.m_cls = msp->findDynamicClass( 
+            ml, cinfo.m_moduleUri, cinfo.m_moduleName, cinfo.m_className, 
+            addedMod );
       
-      // no luck?
-      if( clsContainer == 0 && cinfo.m_moduleName != "" )
-      {
-         clsContainer = msp->findByName( cinfo.m_moduleName );
-         if( clsContainer == 0 )
-         {
-            // then try to load the module.
-            clsContainer = ml->loadName( cinfo.m_moduleName );
-            // to be linked
-            tbl = clsContainer != 0;
-         }
-      }
-      
-      // still no luck?
-      if( clsContainer == 0 )
-      {
-         if( cinfo.m_moduleName != "" )
-         {
-            // we should have found a module -- and if the module has a URI,
-            // then it has a name.
-            throw new UnserializableError( ErrorParam(e_deser, __LINE__, SRC )
-               .origin( ErrorParam::e_orig_runtime)
-               .extra( "Can't find module " + 
-                     cinfo.m_moduleName + " for " + cinfo.m_className ));
-         }
-         
-         Symbol* sym = msp->findExportedSymbol( cinfo.m_className );
-         if( sym == 0 )
-         {
-            cinfo.m_cls = eng->getRegisteredClass( cinfo.m_className );         
-            if( cinfo.m_cls == 0 )
-            {
-               throw new UnserializableError( ErrorParam(e_deser, __LINE__, SRC )
-                  .origin( ErrorParam::e_orig_runtime)
-                  .extra( "Unavailable class " + cinfo.m_className ));
-            }
-         }
-         else 
-         {
-            if( ! sym->defaultValue()->isClass() )
-            {
-                throw new UnserializableError( ErrorParam(e_deser, __LINE__, SRC )
-                  .origin( ErrorParam::e_orig_runtime)
-                  .extra( "Symbol is not class " + cinfo.m_className ));
-            }
-         
-            cinfo.m_cls = sym->defaultValue()->asClass();
-         }
-      }
-      else
-      {
-         // we are sure about the sourceship of the class...
-         cinfo.m_cls = clsContainer->getClass( cinfo.m_className );
-         if( cinfo.m_cls == 0 )
-         {
-            String expl = "Unavailable class " + 
-                     cinfo.m_className + " in " + clsContainer->uri();
-            delete clsContainer; // the module is not going anywhere.
-            throw new UnserializableError( ErrorParam(e_deser, __LINE__, SRC )
-               .origin( ErrorParam::e_orig_runtime)
-               .extra( expl ));
-         }
-         
-         // shall we link a new module?
-         if( tbl )
-         {
-            msp->resolve( ml, clsContainer, false, true );
-            addedMod = true;
-         }
-      }
       ++iter;
    }
    

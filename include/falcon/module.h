@@ -500,10 +500,15 @@ public:
    /** Returns the module group associated with this module.    
     \return The module group in which this module is stored, or 0 if this
             is a static module living in the global module space.
+    
+    The module space might be created either by the module itself,
+    and used for private load, or be assigned by the loading process
+    by other modules or by the loading module space.
     */
    ModSpace* moduleSpace() const { return m_modSpace; }
    
    void moduleSpace( ModSpace* md ) { m_modSpace = md; }
+   
    
    bool isMain() const { return m_bMain; }
    
