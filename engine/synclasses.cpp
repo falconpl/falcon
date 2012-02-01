@@ -73,6 +73,7 @@
 #include <falcon/itemarray.h>
 #include <falcon/datawriter.h>
 #include <falcon/datareader.h>
+#include <falcon/symbol.h>
 
 namespace Falcon {
 #undef FALCON_SYNCLASS_DECLARATOR_DECLARE
@@ -101,8 +102,6 @@ void SynClasses::subscribe( Engine* engine )
    #undef FALCON_SYNCLASS_DECLARATOR_APPLY
    #define FALCON_SYNCLASS_DECLARATOR_REGISTER
    #include <falcon/synclasses_list.h>
-
-#include "falcon/symbol.h"
 }
    
 

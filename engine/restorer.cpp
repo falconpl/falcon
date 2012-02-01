@@ -45,7 +45,7 @@ public:
    class ObjectData {
    public:
       void* m_data;
-      size_t m_clsId;
+      uint32 m_clsId;
       /** returned to the parent for the first time -- garbage it!*/
       bool m_bFirstTime;
       

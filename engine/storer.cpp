@@ -31,13 +31,13 @@ class Storer::Private
 {
 public:   
    /** Map connecting each class with its own serialization ID. */
-   typedef std::map<Class*, size_t> ClassMap;
+   typedef std::map<Class*, uint32> ClassMap;
    
    /** Map connecting each each object with its own serialization ID. */
-   typedef std::map<void*, size_t> ObjectMap;   
+   typedef std::map<void*, uint32> ObjectMap;   
    
    /** Vector of numeric IDs on which an object depends. */
-   typedef std::vector<size_t> IDVector;
+   typedef std::vector<uint32> IDVector;
    
    /** Vector of items, used to store flat instances. */
    typedef std::list<Item> InstanceList;
@@ -46,8 +46,8 @@ public:
    class ObjectData {
    public:
       void* m_data;
-      size_t m_id;
-      size_t m_clsId;
+      uint32 m_id;
+      uint32 m_clsId;
       
       /** Items to be given back while deserializing. */
       IDVector m_deps;
@@ -61,7 +61,7 @@ public:
          m_clsId(0)
       {}
       
-      ObjectData( void* data, size_t id,  size_t cls ):
+      ObjectData( void* data, uint32 id,  uint32 cls ):
          m_data(data),
          m_id(id),
          m_clsId(cls)
@@ -133,11 +133,11 @@ public:
       
       // it's a new object -- manage it.
       bIsNew = true;
-      size_t objCount = m_objVector.size();
+      uint32 objCount = (uint32) m_objVector.size();
       m_objects[obj] = objCount;
       
       // ... then, see if we need to save the class as well..
-      size_t clsId;
+      uint32 clsId;
       ClassMap::const_iterator clsIter = m_classes.find(cls);
       if( clsIter != m_classes.end() )
       {

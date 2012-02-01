@@ -197,7 +197,7 @@ Symbol* SymbolTable::addClosed( const String& name )
 
 void SymbolTable::store( DataWriter* dw )
 {
-   dw->write( (size_t) _p->m_locals.size() );
+   dw->write( (uint32) _p->m_locals.size() );
    {
       Private::SymbolVector::iterator iter = _p->m_locals.begin();
       while( iter != _p->m_locals.end() ) {
@@ -207,7 +207,7 @@ void SymbolTable::store( DataWriter* dw )
       }
    }
    
-   dw->write( (size_t) _p->m_closed.size() );
+   dw->write( (uint32) _p->m_closed.size() );
    {
       Private::SymbolVector::iterator iter = _p->m_closed.begin();
       while( iter != _p->m_closed.end() ) {
@@ -221,11 +221,11 @@ void SymbolTable::store( DataWriter* dw )
 
 void SymbolTable::restore( DataReader* dr )
 {
-   size_t size;
+   uint32 size;
    
    dr->read(size);
    {
-      for( size_t i = 0; i < size; ++i ) {
+      for( uint32 i = 0; i < size; ++i ) {
          String name;
          dr->read(name);
          addLocal(name);
@@ -234,7 +234,7 @@ void SymbolTable::restore( DataReader* dr )
    
    dr->read(size);
    {
-      for( size_t i = 0; i < size; ++i ) {
+      for( uint32 i = 0; i < size; ++i ) {
          String name;
          dr->read(name);
          addClosed(name);
