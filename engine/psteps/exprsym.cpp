@@ -32,6 +32,7 @@ namespace Falcon {
 ExprSymbol::ExprSymbol( int line, int chr ):
    Expression( line, chr ),
    m_symbol( 0 ),
+   m_gcLock( 0 ),
    m_pslv(this)
 {
    FALCON_DECLARE_SYN_CLASS( expr_sym )
@@ -44,6 +45,7 @@ ExprSymbol::ExprSymbol( int line, int chr ):
 ExprSymbol::ExprSymbol( Symbol* target, int line, int chr ):
    Expression( line, chr ),
    m_symbol( target ),
+   m_gcLock( 0 ),
    m_pslv(this)
 {
    FALCON_DECLARE_SYN_CLASS( expr_sym )
@@ -57,6 +59,7 @@ ExprSymbol::ExprSymbol( const String& name, int line, int chr ):
    Expression( line, chr ),
    m_name(name),
    m_symbol( 0 ),
+   m_gcLock( 0 ),
    m_pslv(this)
 {
    FALCON_DECLARE_SYN_CLASS( expr_sym )
@@ -69,18 +72,31 @@ ExprSymbol::ExprSymbol( const String& name, int line, int chr ):
 ExprSymbol::ExprSymbol( const ExprSymbol& other ):
    Expression( other ),
    m_name( other.m_name ),
-   m_symbol(other.m_symbol),
    m_pslv(this)
 {
    apply = apply_;
    m_pstep_lvalue = &m_pslv;
    m_pstep_lvalue->apply = other.m_pstep_lvalue->apply;
    m_trait = e_trait_symbol;
+   
+   if( other.m_symbol == 0 ) {
+      m_symbol = 0;
+      m_gcLock = 0;
+   }
+   else {
+      m_gcLock = 0;
+      safeGuard( other.m_symbol );
+   }
 }
 
 ExprSymbol::~ExprSymbol()
 {
-   // nothig to do
+   static Collector* coll = Engine::instance()->collector();
+   
+   if( m_gcLock != 0 )
+   {
+      coll->unlock( m_gcLock );
+   }
 }
 
 const String& ExprSymbol::name() const
@@ -97,6 +113,20 @@ void ExprSymbol::name( const String& n )
    m_name = n;
 }
 
+
+
+void ExprSymbol::safeGuard( Symbol* sym )
+{
+   static Collector* coll = Engine::instance()->collector();
+   static Class* symClass = Engine::instance()->symbolClass();
+   
+   m_symbol = sym;
+   if( m_gcLock != 0 )
+   {
+      coll->unlock( m_gcLock );
+   }
+   m_gcLock = coll->lock( Item( symClass, sym ) );
+}
 
 void ExprSymbol::describeTo( String& val, int ) const
 {

@@ -26,6 +26,11 @@
 #include <falcon/errors/paramerror.h>
 #include <falcon/collector.h>
 
+#include <falcon/datareader.h>
+#include <falcon/datawriter.h>
+
+#include "falcon/itemarray.h"
+
 
 namespace Falcon {
 
@@ -138,7 +143,71 @@ void ClassSymbol::op_eval( VMContext* ctx, void* instance ) const
    Symbol* sym = static_cast<Symbol*>( instance );   
    ctx->topData() = *sym->getValue(ctx);
 }
+
+
+
+void ClassSymbol::store( VMContext*, DataWriter* stream, void* instance ) const
+{
+   Symbol* symbol = static_cast<Symbol*>(instance);
+   stream->write( symbol->name() );
+   stream->write( (char) symbol->type() );
+   stream->write( symbol->localId() );
+   stream->write( symbol->declaredAt() );
+   stream->write( symbol->isConstant() );
+}
+
+
+void ClassSymbol::restore( VMContext*, DataReader* stream, void*& empty ) const
+{
+   static Collector* coll = Engine::instance()->collector();
+      
+   String name;
+   char type;
+   int32 id, line;
+   bool isConst;
    
+   stream->read( name );
+   stream->read( type );
+   stream->read( id );
+   stream->read( line );
+   stream->read( isConst );
+   
+   Symbol* sym = new Symbol( name, (Symbol::type_t) type, id, type );
+   FALCON_GC_STORE( coll, this, sym );
+   
+   if( isConst ) { 
+      sym->setConstant(true); 
+   }
+   empty = sym;
+}
+
+
+void ClassSymbol::flatten( VMContext*, ItemArray& subItems, void* instance ) const
+{
+   subItems.reserve(1);
+   Symbol* symbol = static_cast<Symbol*>(instance);
+   
+   if( symbol->type() == Symbol::e_st_extern ) {
+      subItems.append( Item(this, symbol->externRef() ) );
+   }
+   else {
+      subItems.append( symbol->defaultValue() );
+   }
+}
+
+
+void ClassSymbol::unflatten( VMContext*, ItemArray& subItems, void* instance ) const
+{
+   Symbol* symbol = static_cast<Symbol*>(instance);
+   fassert( subItems.length() == 1 );
+   if( symbol->type() == Symbol::e_st_extern ) {
+      symbol->promoteExtern( static_cast<Symbol*>(subItems[0].asInst()) );
+   }
+   else {
+      symbol->defaultValue( subItems[0] );
+   }
+}
+
 }
 
 /* end of classsymbol.cpp */

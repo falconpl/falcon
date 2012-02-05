@@ -189,7 +189,9 @@ Symbol* ModCompiler::Context::onGlobalDefined( const String& name, bool& bAlread
    if( sym == 0 )
    {
       bAlreadyDef = false;
-      return m_owner->m_module->addVariable( name, false );
+      sym = m_owner->m_module->addVariable( name, false );
+      sym->declaredAt( m_owner->m_sp.currentLine() );
+      return sym;
    }
 
    bAlreadyDef = true;
@@ -211,9 +213,6 @@ bool ModCompiler::Context::onUnknownSymbol( const String& uks )
 
 Expression* ModCompiler::Context::onStaticData( Class* cls, void* data )
 {
-   // The data resides in the module...
-   m_owner->m_module->addStaticData( cls, data );
-
    //... which stays alive as long as all the expressions, residing in a function
    // stay alive. The talk may be different for code snippets, but we're dealing
    // with modules here. In short. we have no need for GC.
@@ -230,7 +229,7 @@ void ModCompiler::Context::onInheritance( Inheritance* inh  )
    // found?
    if( sym != 0 )
    {
-      Item* itm = sym->defaultValue();
+      const Item* itm = &sym->defaultValue();
       // and is that a class?
       if ( ! itm->isUser() || ! itm->asClass()->isMetaClass() )
       {

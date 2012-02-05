@@ -940,6 +940,9 @@ public:
 
    void userFlags( int32 uf ) { m_userFlags = uf; }
 
+   int32 declaredAt() const { return m_declaredAt; }
+   void declaredAt( int32 line ) { m_declaredAt = line; }
+   
 protected:
    bool m_bIsfalconClass;
    bool m_bIsErrorClass;
@@ -947,6 +950,7 @@ protected:
 
    /** This flags are at disposal of subclasses for special purpose (i.e. cast conversions). */
    int32 m_userFlags;
+   int32 m_declaredAt;
 
    String m_name;
    int64 m_typeID;

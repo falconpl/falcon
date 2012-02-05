@@ -22,6 +22,7 @@
 #include <falcon/function.h>
 #include <falcon/datareader.h>
 #include <falcon/datawriter.h>
+#include <falcon/itemarray.h>
 
 #include <vector>
 #include <map>
@@ -55,67 +56,32 @@ private:
    ~Private() {}
 };
 
-SymbolTable::SymbolTable():
-   m_ownedby( e_owned_none )
-{
-   m_owner.function = 0;
+SymbolTable::SymbolTable()
+{  
+   m_localCount = 0;
+   m_closedCount = 0;
    _p = new Private;
 }
 
-SymbolTable::SymbolTable( Function* parent ):
-   m_ownedby( e_owned_function )
+SymbolTable::SymbolTable( const SymbolTable& other)
 {
-   m_owner.function = parent;
-   _p = new Private;
-}
-
-SymbolTable::SymbolTable( SynTree* parent ):
-   m_ownedby( e_owned_syntree )
-{
-   m_owner.syntree = parent;
-   _p = new Private;
-}
-
-SymbolTable::SymbolTable( Function* parent, const SymbolTable& other):
-   m_ownedby( e_owned_function )
-{
-    m_owner.function = parent;
-   _p = new Private( *other._p );
-}
-
-SymbolTable::SymbolTable( SynTree* parent, const SymbolTable& other):
-   m_ownedby( e_owned_syntree )
-{
-   m_owner.syntree = parent;
-   _p = new Private( *other._p );
-}
-
-SymbolTable::SymbolTable( const SymbolTable& other):
-   m_ownedby( e_owned_none )
-{
-   m_owner.function = 0;
+   m_localCount = 0;
+   m_closedCount = 0;
    _p = new Private( *other._p );
 }
 
 SymbolTable::~SymbolTable()
 {
-   Private::SymbolMap::iterator iter = _p->m_symtab.begin();
-   while( iter != _p->m_symtab.end() )
-   {
-      delete iter->second;
-      ++iter;
-   }
 }
+
 
 void SymbolTable::gcMark( uint32 mark ) 
 { 
-   if( m_ownedby == e_owned_function )
+   Private::SymbolMap::iterator iter = _p->m_symtab.begin();
+   while( iter != _p->m_symtab.end() )
    {
-      m_owner.function->gcMark( mark );
-   }
-   else if ( m_ownedby == e_owned_syntree ) 
-   {
-      m_owner.syntree->gcMark( mark );
+      iter->second->gcMark( mark );
+      ++iter;
    }
 }
 
@@ -163,15 +129,20 @@ Symbol* SymbolTable::getClosed( int32 id ) const
 
 
    
-Symbol* SymbolTable::addLocal( const String& name )
+Symbol* SymbolTable::addLocal( const String& name, int32 line )
 {
+   Collector* coll = Engine::instance()->collector();
+   Class* symClass = Engine::instance()->symbolClass();
+   
    Private::SymbolMap::iterator iter = _p->m_symtab.find( name );
    if( iter != _p->m_symtab.end() )
    {
       return iter->second;
    }
    
-   Symbol* ls = new Symbol( name, this, _p->m_locals.size() );
+   Symbol* ls = new Symbol( name, 
+      Symbol::e_st_local, _p->m_locals.size(), line );
+   FALCON_GC_STORE(coll, symClass, ls );
    _p->m_locals.push_back( ls );
    _p->m_symtab[name] = ls;
    
@@ -179,15 +150,21 @@ Symbol* SymbolTable::addLocal( const String& name )
 }
 
    
-Symbol* SymbolTable::addClosed( const String& name )
+Symbol* SymbolTable::addClosed( const String& name, int32 line )
 {
+   Collector* coll = Engine::instance()->collector();
+   Class* symClass = Engine::instance()->symbolClass();
+   
    Private::SymbolMap::iterator iter = _p->m_symtab.find( name );
    if( iter != _p->m_symtab.end() )
    {
       return iter->second;
    }
    
-   Symbol* ls = Symbol::ClosedSymbol( name, this, _p->m_closed.size() );
+   Symbol* ls = new Symbol( name, 
+      Symbol::e_st_closed, _p->m_closed.size(), line );
+   
+   FALCON_GC_STORE(coll, symClass, ls );
    _p->m_closed.push_back( ls );
    _p->m_symtab[name] = ls;
    
@@ -198,51 +175,65 @@ Symbol* SymbolTable::addClosed( const String& name )
 void SymbolTable::store( DataWriter* dw )
 {
    dw->write( (uint32) _p->m_locals.size() );
-   {
-      Private::SymbolVector::iterator iter = _p->m_locals.begin();
-      while( iter != _p->m_locals.end() ) {
-         Symbol* sym = *iter;
-         dw->write( sym->name() );
-         ++iter;
-      }
-   }
-   
    dw->write( (uint32) _p->m_closed.size() );
-   {
-      Private::SymbolVector::iterator iter = _p->m_closed.begin();
-      while( iter != _p->m_closed.end() ) {
-         Symbol* sym = *iter;
-         dw->write( sym->name() );
-         ++iter;
-      }
-   }
+   
 }
 
 
 void SymbolTable::restore( DataReader* dr )
 {
-   uint32 size;
+   dr->read( m_localCount );
+   dr->read( m_closedCount );
+}
+
+void SymbolTable::flatten( ItemArray& array )
+{
+   Class* symClass = Engine::instance()->symbolClass();   
    
-   dr->read(size);
+   array.reserve( _p->m_locals.size() + _p->m_closed.size() );   
    {
-      for( uint32 i = 0; i < size; ++i ) {
-         String name;
-         dr->read(name);
-         addLocal(name);
+      Private::SymbolVector::iterator iter = _p->m_locals.begin();
+      while( iter != _p->m_locals.end() ) {
+         Symbol* sym = *iter;
+         array.append( Item( symClass, sym ) );
+         ++iter;
       }
    }
-   
-   dr->read(size);
+      
    {
-      for( uint32 i = 0; i < size; ++i ) {
-         String name;
-         dr->read(name);
-         addClosed(name);
+      Private::SymbolVector::iterator iter = _p->m_closed.begin();
+      while( iter != _p->m_closed.end() ) {
+         Symbol* sym = *iter;
+         array.append( Item( symClass, sym ) );
+         ++iter;
       }
    }
 }
 
-  
+
+void SymbolTable::unflatten( ItemArray& array )
+{
+   uint32 pos = 0;   
+   fassert( array.length() >= m_localCount+m_closedCount );
+   
+   // first the locals
+   while( pos < m_localCount )
+   {
+      Symbol* symbol = static_cast<Symbol*>(array[pos++].asInst());
+      _p->m_locals.push_back( symbol );
+      _p->m_symtab[symbol->name()] = symbol;
+   }
+   
+   // then the closed the locals
+   while( pos < m_localCount+m_closedCount )
+   {
+      Symbol* symbol = static_cast<Symbol*>(array[pos++].asInst());
+      _p->m_closed.push_back( symbol );
+      _p->m_symtab[symbol->name()] = symbol;
+   }
+   
+}
+
 }
 
 /* end of symboltable.cpp */

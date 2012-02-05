@@ -121,7 +121,7 @@ public:
    static Falcon::Error* onPrintlResolved( Falcon::Module* requester, Falcon::Module* , Falcon::Symbol* sym )
    {   
       // printl should really be a function in a global symbol ,but...
-      if( sym->defaultValue() == 0 || ! sym->defaultValue()->isFunction() )
+      if( ! sym->defaultValue().isFunction() )
       {
          return new Falcon::LinkError( Falcon::ErrorParam( 
                Falcon::e_link_error, __LINE__, requester->name() )
@@ -130,7 +130,7 @@ public:
 
       // We know the requester is an instance of our module.
       static_cast<TestModule*>(requester)->m_TheTestFunc3->m_funcPrintl = 
-                                                      sym->defaultValue()->asFunction();
+                                                      sym->defaultValue().asFunction();
 
       // we have no error to signal. 
       return 0;

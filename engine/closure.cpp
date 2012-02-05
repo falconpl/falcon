@@ -77,10 +77,12 @@ void Closure::close( VMContext* ctx )
             if( tgtsym != 0 )
             {
                // we found it. get the item.
-               Item* theItem = tgtsym->getValue(ctx);
+               const Item* theItem = tgtsym->getValue(ctx);
                fassert( theItem != 0 );
                // now reference it in our closure array
-               ItemReference::create(*theItem, m_closedData[i]);
+               m_closedData[i] = *theItem;
+               ItemReference::create(m_closedData[i]);
+               tgtsym->setValue(ctx, m_closedData[i]);
                // and since we're done, we can break;
                TRACE2( "Closure::close -- closed symbol %s at depth %d => \"%s\"",
                   closed->name().c_ize(), (int)i, theItem->describe().c_ize() );

@@ -154,7 +154,8 @@ static void make_class( Parser& p, int tCount,
    if( tParams != 0 )
    {
       NameList* list = static_cast<NameList*>( tParams->asData() );
-      SymbolTable& symtab = cls->makeConstructor()->symbols();
+      Function* func = cls->makeConstructor();
+      SymbolTable& symtab = func->symbols();
 
       for(NameList::const_iterator it=list->begin(),end=list->end();it!=end;++it)
       {
@@ -314,7 +315,8 @@ void apply_init_expr( const Rule&, Parser& p )
       SynFunc* constructor = cls->makeConstructor();
       for(int pCount = 0; pCount < constructor->symbols().localCount(); ++pCount )
       {
-         init->symbols().addLocal( constructor->symbols().getLocal( pCount )->name() );
+         init->symbols().addLocal( 
+            constructor->symbols().getLocal( pCount )->name() );
       }
       
       // the user can add a non-syntree function as init,

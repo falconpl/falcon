@@ -283,7 +283,7 @@ Symbol* IntCompiler::Context::onUndefinedSymbol( const String& name )
       gsym = mod->addImplicitImport( name );  
       
       // no need to "define" it, it stays an extern.
-      gsym->resolveExtern( importer, exp->defaultValue() );
+      gsym->promoteExtern(exp);
    }
    return gsym;
 }
@@ -295,7 +295,9 @@ Symbol* IntCompiler::Context::onGlobalDefined( const String& name, bool &adef )
    if( sym == 0 )
    {
       adef = false;
-      return m_owner->m_module->addVariable( name );
+      Symbol* s = m_owner->m_module->addVariable( name );
+      s->declaredAt( m_owner->m_sp.currentLine() );
+      return s;
    }
    // The interactive compiler never adds an undefined symbol
 
@@ -306,7 +308,6 @@ Symbol* IntCompiler::Context::onGlobalDefined( const String& name, bool &adef )
 
 Expression* IntCompiler::Context::onStaticData( Class* cls, void* data )
 {
-   m_owner->m_module->addStaticData( cls, data );   
    return new ExprValue( Item( cls, data ) );
 }
 
@@ -320,7 +321,7 @@ void IntCompiler::Context::onInheritance( Inheritance* inh )
    // found?
    if( sym != 0 )
    {
-      Item* itm = sym->getValue(0);
+      const Item* itm = sym->getValue(0);
       if ( ! itm->isUser() || ! itm->asClass()->isMetaClass() )
       {
          m_owner->m_sp.addError( e_inv_inherit, m_owner->m_sp.currentSource(), 

@@ -339,7 +339,7 @@ void ParserContext::defineSymbols( Expression* expr )
                   nuks->name().c_ize(), nuks->type() );
             // remove from the unknowns
             undoVariable( exprsym->name() );
-            exprsym->symbol( nuks );
+            exprsym->safeGuard( nuks );
          }
          else
          {
@@ -399,7 +399,7 @@ bool ParserContext::checkSymbols()
       if( new_sym != 0 )
       {
          TRACE1("ParserContext::checkSymbols \"%s\" is now of type %d", esym->name().c_ize(), new_sym->type() );
-         esym->symbol(new_sym);
+         esym->safeGuard(new_sym);
       }
       else
       {

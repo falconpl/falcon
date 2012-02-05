@@ -135,7 +135,6 @@ SymbolTable* SynTree::locals( bool bmake )
    if( m_locals == 0 && bmake )
    {
       m_locals = new SymbolTable();
-      m_locals->owner(this);
    }
    
    return m_locals;

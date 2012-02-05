@@ -122,7 +122,9 @@ FALCON_SYNCLASS_DECLARATOR(m_expr_unpack, Unpack, expr)
 FALCON_SYNCLASS_DECLARATOR(m_expr_unquote, Unquote, expr)
 
 FALCON_SYNCLASS_DECLARATOR_EX(m_expr_sym, GenSym, expr, \
-      void store( VMContext*, DataWriter* dw, void* instance ) const; )
+      virtual void store( VMContext*, DataWriter* dw, void* instance ) const; \
+      virtual void flatten( VMContext* ctx, ItemArray& subItems, void* instance ) const;\
+      virtual void unflatten( VMContext* ctx, ItemArray& subItems, void* instance ) const; )
 
 FALCON_SYNCLASS_DECLARATOR_EX(m_expr_value, Value, expr, \
       virtual void flatten( VMContext* ctx, ItemArray& subItems, void* instance ) const;\

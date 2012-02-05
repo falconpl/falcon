@@ -512,8 +512,9 @@ void SynClasses::ClassGenSym::op_create( VMContext* ctx, int pcount ) const
       }
       else if( params->asClassInst(cls, data) && cls->isDerivedFrom(symClass) )
       {
-         Symbol* sym = static_cast<Symbol*>( data );
-         ExprSymbol* expr = new ExprSymbol( sym );
+         Symbol* sym = static_cast<Symbol*>(symClass->getParentData( cls, data ));
+         ExprSymbol* expr = new ExprSymbol();
+         expr->safeGuard( sym );
          ctx->stackResult( pcount+1, SynClasses::collect( this, expr, __LINE__ ) );
          return;
       }
@@ -531,27 +532,47 @@ void SynClasses::ClassGenSym::store( VMContext*, DataWriter* dw, void* instance 
    dw->write( es->line() );
    dw->write( es->chr() );
    dw->write( es->name() );
-   /*
-   Symbol* sym = es->symbol();   
-   dw->write( sym->type() );
-    */
 }
 
 void SynClasses::ClassGenSym::restore( VMContext*, DataReader*dr, void*& empty ) const
 {
-   ExprSymbol* es = new ExprSymbol;   
+   // TODO: this is just a test.
    int32 line, chr;
    String name;
-   
-   // TODO: this is just a test.
    dr->read( line );
    dr->read( chr );
    dr->read( name );
+   
+   
+   ExprSymbol* es = new ExprSymbol;   
    es->decl( line, chr );
    es->name( name );
+   
    empty = es;
 }
 
+ void SynClasses::ClassGenSym::flatten( VMContext*, ItemArray& subItems, void* instance ) const
+ {
+    static Class* sc = Engine::instance()->symbolClass();
+    ExprSymbol* es = static_cast<ExprSymbol*>(instance);
+    
+    if( es->symbol() != 0 ) {
+       subItems.reserve(1);
+       subItems.append( Item(sc, es->symbol() ) );
+    }
+ }
+ 
+ void SynClasses::ClassGenSym::unflatten( VMContext*, ItemArray& subItems, void* instance ) const
+ {
+    if( subItems.length() > 0 ) {
+       Symbol* sym = static_cast<Symbol*>( subItems[0].asInst() );
+       ExprSymbol* es = static_cast<ExprSymbol*>(instance);
+       es->safeGuard( sym );
+    }
+ }
+ 
+//==========================================
+// Expr value
 
 void SynClasses::ClassValue::op_create( VMContext* ctx, int pcount ) const
 {

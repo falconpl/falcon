@@ -77,11 +77,16 @@ public:
    bool nth( int32 n, TreeStepSubClass__* ts, TreeStep* owner)
    {
       if( n < 0 ) n = (int) m_exprs.size() + n;
-      if( n < 0 || n >= (int) m_exprs.size() ) return false;
+      if( n < 0 || n > (int) m_exprs.size() ) return false;
       if( ts != 0 && ! ts->setParent(owner) ) return false;
-
-      delete m_exprs[n];
-      m_exprs[n] = ts;
+      
+      if( n == (int) m_exprs.size() ) {
+         m_exprs.push_back(ts);
+      }
+      else {
+         delete m_exprs[n];
+         m_exprs[n] = ts;
+      }
       return true;
    }
 

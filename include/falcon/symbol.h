@@ -20,16 +20,12 @@
 
 #include <falcon/setup.h>
 #include <falcon/string.h>
-
+#include <falcon/item.h>
 #include <falcon/fassert.h>
+
 namespace Falcon {
 
-class Item;
-class Expression;
 class VMContext;
-
-class SymbolTable;
-class Module;
 class ExprSymbol;
 
 /** Base symbol class.
@@ -78,19 +74,10 @@ public:
    Symbol();
 
    /** Creates a dynamic symbol. */
-   Symbol( const String& name, int line = 0);
+   Symbol( const String& name, int line = 0 );
    
-   /** Creates a local symbol. */
-   Symbol( const String& name, SymbolTable* host, uint32 asId, int line = 0 );
-   
-   /** Creates a global symbol. */
-   Symbol( const String& name, Module* host, Item* value, int line = 0 );
-   
-   /** Creates an extern symbol. */
-   static Symbol* ExternSymbol( const String& name, Module* mod, int line = 0 );
-  
-   /** Creates a closed symbol. */
-   static Symbol* ClosedSymbol( const String& name, SymbolTable* host, uint32 id, int line = 0 );
+   /** Creates a generic symbol. */
+   Symbol( const String& name, type_t type, uint32 asId, int line = 0 );
    
    /** Copies the other symbol */
    Symbol( const Symbol& other );
@@ -116,7 +103,7 @@ public:
     \param target Where to store the symbol value.
     \throw An exception if the symbol is undefined.
    */
-   inline Item* getValue( VMContext* ctx ) const { return m_getValue( this, ctx ); }
+   inline const Item* getValue( VMContext* ctx ) const { return m_getValue( this, ctx ); }
    
    /** Sets the
     \param ctx The context where the symbol value is to be determined.
@@ -127,99 +114,72 @@ public:
    
    Symbol* clone() const { return new Symbol(*this); }
    
-   /** Returns the default value of this symbol.
-    \return the default value for this symbol or 0 if not set.
-    
-    Default values are assigned by setting a read-only value
-    in a module or in a memory location outside the VM/GC scope.
-    
-    When they are linked, or in case of call, when they are pushed
-    in the stack, this default value is applied.
-    */
-   //Item* defaultValue() const { return m_defval; }
-   
-   /** Sets the default value for this symbol. 
-    \param val The default value.
-    
-    The default value is not accounted, owned nor gc marked in any way.
-    The caller must make sure that the item is properly gc'd or is outside
-    from VM/GC action scope.
-    */
-   //void defaultValue( Item* val ) { m_defval = val; }
-   
    void setConstant( bool bMode = true ) { m_bConstant = bMode; }
    bool isConstant() const { return m_bConstant; }
    
    void gcMark( uint32 mark );
+   
    /** Gets the current mark of this symbol*/
    uint32 gcMark() const { return m_name.currentMark(); }
    
    /** Id of a local variable indicated by this symbol.
     -- Meaningful only if this symbol is local.
     */
-   uint32 localId() const { return m_defvalue.asId; }
+   uint32 localId() const { return m_id; }
    
-   /** Remote module in extern symbols. 
-    This module is the module where the external global symbol is defined.
+   /** Promote an extern symbol. 
+    \param other The imported symbol.
+    
+    An extern symbol evaluates to the value of the imported symbol.
     */
-   Module* remote() const { return m_remote; }
-   
-   /** Sets the remote module.
-    This module is the module where the external global symbol is defined.
-    */
-   void remote( Module* rem ) { m_remote = rem; }
-   
-   /** Promote an extern symbol as "resolved" */
-   void resolveExtern( Module* newHost, Item* value );
-   
-   /** Promote an extern symbol as global (forward declaration) */
-   void promoteExtern( Item* value );
-   
-   Item* defaultValue() const { 
-      fassert( m_type == e_st_global || m_type == e_st_extern );
-      return m_defvalue.asItem;
+   void promoteExtern( Symbol* other )
+   {
+      fassert2( m_type == e_st_extern, "Ought to be an extern symbol." );
+      fassert2(other->m_type == e_st_global, "Other symbol must be global." );
+      
+      m_other = other;
    }
    
-   void defaultValue( Item* item ) { 
-      fassert( m_type == e_st_global || m_type == e_st_extern );
-      m_defvalue.asItem = item;
+   const Item& defaultValue() const {      
+      return m_defValue;
+   }
+
+   Item& defaultValue() {      
+      return m_defValue;
+   }
+
+   void defaultValue( const Item& item ) { 
+      m_defValue = item;
    }
    
+   /** Pointer to a symbol linekd as extern. */
+   Symbol *externRef() const { return m_other; }
 protected:
-   typedef union {
-      SymbolTable* symtab;
-      Module* module;
-   }
-   t_host;
-   
-   // ID used for global and local symbols.
-   typedef union {
-      uint32 asId;
-      Item* asItem;
-   }
-   t_defvalue;
    
    // Notice: we're using the string GC mark to keep ours.
    String m_name;
-   // source line at which they were declared
-   int32 m_declaredAt;         
-   t_defvalue m_defvalue;      
-   t_host m_host;
    
-   // remote module filled when the other item is found.
-   Module* m_remote;
+   // source line at which they were declared
+   int32 m_declaredAt;
+   
+   // Default value; can reference another symbol in extern symbols.   
+   Item m_defValue;
+   Symbol *m_other;
+   
+   // ID used for local symbols.
+   int32 m_id;
    
    void (*m_setValue)( const Symbol* sym, VMContext* ctx, const Item& value );
-   Item* (*m_getValue)( const Symbol* sym, VMContext* ctx );
+   const Item* (*m_getValue)( const Symbol* sym, VMContext* ctx );
    
    type_t m_type;
    bool m_bConstant;
    
-   static Item* getValue_global( const Symbol* sym, VMContext* ctx );
-   static Item* getValue_local( const Symbol* sym, VMContext* ctx );
-   static Item* getValue_closed( const Symbol* sym, VMContext* ctx );
-   static Item* getValue_extern( const Symbol* sym, VMContext* ctx );
-   static Item* getValue_dyns( const Symbol* sym, VMContext* ctx );
+   static const Item* getValue_global( const Symbol* sym, VMContext* ctx );
+   static const Item* getValue_local( const Symbol* sym, VMContext* ctx );
+   static const Item* getValue_closed( const Symbol* sym, VMContext* ctx );
+   static const Item* getValue_extern( const Symbol* sym, VMContext* ctx );
+   static const Item* getValue_dyns( const Symbol* sym, VMContext* ctx );
    
    static void setValue_global( const Symbol* sym, VMContext* ctx, const Item& value );
    static void setValue_local( const Symbol* sym, VMContext* ctx, const Item& value );

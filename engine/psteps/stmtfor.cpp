@@ -668,8 +668,7 @@ void StmtForTo::apply_( const PStep* ps, VMContext* ctx )
    
    // Prepare the start value   
    Symbol* target = self->m_target;
-   Item* tgtItem = target->getValue( ctx );
-   tgtItem->setInteger( start );   
+   target->setValue( ctx, start );
    
    // eventually, push the first opode in top of all.
    if( self->m_forFirst != 0 )
@@ -689,8 +688,7 @@ void StmtForTo::PStepNext::apply_( const PStep* ps, VMContext* ctx )
    
    // the start, at minimum, will be done.
    Symbol* target = self->m_target;
-   Item* tgtItem = target->getValue( ctx );
-   tgtItem->setInteger( start );   
+   target->setValue( ctx, start );   
    
    // step cannot be 0 as it has been sanitized by our main step.
    if( (step > 0 && start >= end) || ( step < 0 && start <= end ) )

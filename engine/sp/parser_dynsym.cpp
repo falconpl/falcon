@@ -59,8 +59,8 @@ void apply_expr_amper( const Rule&, Parser& p )
    // TODO: Use the engine to cache dynsymbols
    // TODO: Use garbage collector
    FALCON_GC_STORE(coll, cls, nsym );
-   Expression* esyn = new ExprSymbol(nsym, 
-         tref->line(), tref->chr() );
+   ExprSymbol* esyn = new ExprSymbol( tref->line(), tref->chr() );
+   esyn->safeGuard( nsym );
    
    // update the result token
    TokenInstance* ti = new TokenInstance( tref->line(), tref->chr(), sp.Expr );

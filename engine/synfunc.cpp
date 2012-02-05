@@ -166,19 +166,29 @@ void SynFunc::SynStorer::restore( VMContext*, DataReader* stream, void*& empty )
 void SynFunc::SynStorer::flatten( VMContext*, ItemArray& subItems, void* instance ) const
 {
    SynFunc* synfunc = static_cast<SynFunc*>(instance);
-   subItems.reserve(synfunc->syntree().size());
+   uint32 symtabSize = synfunc->symbols().localCount() + synfunc->symbols().closedCount();
+   subItems.reserve(synfunc->syntree().size() + symtabSize);
+   
+   // first flatten the unsuspecting symbol tree.
+   synfunc->symbols().flatten( subItems );
+      
    for( uint32 i = 0; i < synfunc->syntree().size(); ++i ) {
       Statement* stmt = synfunc->syntree().at(i);
       Class* synClass = stmt->cls();
       subItems.append(Item( synClass, stmt ) );
    }
+   
 }
+
 
 void SynFunc::SynStorer::unflatten( VMContext*, ItemArray& subItems, void* instance ) const
 {    
    SynFunc* synfunc = static_cast<SynFunc*>(instance);
+   // first restore the symbol table.
+   synfunc->symbols().unflatten( subItems );
+   uint32 symtabSize = synfunc->symbols().localCount() + synfunc->symbols().closedCount();
    
-   for( uint32 i = 0; i < subItems.length(); ++i ) {
+   for( uint32 i = symtabSize; i < subItems.length(); ++i ) {
       Class* cls = 0;
       void* data = 0;
       subItems[i].asClassInst(cls,data);

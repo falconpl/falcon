@@ -20,6 +20,7 @@
 
 #include <falcon/setup.h>
 #include <falcon/expression.h>
+#include <falcon/gclock.h>
 
 namespace Falcon {
 
@@ -34,13 +35,24 @@ class Symbol;
  MAY refer just the name of the symbol that should be referenced,
  so that the real symbol can be resolved at a later stage.
  
- \todo Optimize adding PSTeps to access directly local, global and closed symbol
- values. Now we're using the symbol access value functions, but that's superfluous
- in a release optimized POV.
+ The expressions will either hold a symbol coming from a container
+ (a function or a module), or a dynamic symbol created from the script.
  
- \note Expressions NEVER own the symbols they refer to. They must be held
- somewhere else (in the compiler context, module or interactive virtual
- machine).
+ In the former case, the symbol is simply referenced directly, without
+ any marking, GC Locking or reference counting mechanism. This is because
+ any element of a tree will end up in marking its container, where the
+ symbol referenced by this expression is supposed to be. Also, trees cannot
+ be unparented. This is achieved through the referenceFromContainer method.
+ 
+ In the latter case, the expression should create a GC Lock to keep safe
+ the dynamically created symbol as long as the expression, and the tree it is
+ in, exists. This is achieved through the safeGuard method.
+ 
+ Whenever a tree is cloned (which is the only way to move a tree away from
+ its container), if an ExprSymbol is holding a symbol, it creates a new
+ dynamic symbol resembling the old one, it stores it in the garbage collector
+ and gives it to the cloned ExprSymbol via the referenceFromContainer
+ method.
  */
 class FALCON_DYN_CLASS ExprSymbol: public Expression
 {
@@ -56,6 +68,10 @@ public:
    ExprSymbol( const String& name, int line = 0, int chr = 0 );
    
    /** Declare A fully constructer symbol access expression.
+    
+    This constructor assigns the symbol directly, as if
+      referenceFromContainer method was called.
+    
     */
    ExprSymbol( Symbol* target, int line = 0, int chr = 0 );
    ExprSymbol( const ExprSymbol& other );
@@ -71,7 +87,11 @@ public:
 
    // Return the symbol pointed by this expression.
    Symbol* symbol() const { return m_symbol; }
-   void symbol( Symbol* sym ) { m_symbol = sym; }
+   
+   /** Keeps safe a symbol.
+    This also creates a GCLock that will keep safe this symbol.
+    */
+   void safeGuard( Symbol* sym );
    
    /** Returns the symbol name associated with this expression.
     \return A symbol name.
@@ -87,6 +107,7 @@ public:
 protected:
    String m_name;
    Symbol* m_symbol;
+   GCLock* m_gcLock;
    
    static void apply_( const PStep* ps, VMContext* ctx );
    

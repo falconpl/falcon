@@ -197,7 +197,8 @@ Module::Module( const String& name ):
    m_unloader( 0 ),
    m_bMain( false ),
    m_anonFuncs(0),
-   m_anonClasses(0)
+   m_anonClasses(0),
+   m_mainFunc(0)
 {
    TRACE("Creating internal module '%s'", name.c_ize() );
    m_uri = "internal:" + name;
@@ -214,7 +215,8 @@ Module::Module( const String& name, const String& uri ):
    m_unloader( 0 ),
    m_bMain( false ),
    m_anonFuncs(0),
-   m_anonClasses(0)
+   m_anonClasses(0),
+   m_mainFunc(0)
 {
    TRACE("Creating module '%s' from %s",
       name.c_ize(), uri.c_ize() );
@@ -261,13 +263,6 @@ void Module::gcMark( uint32 mark )
 }
 
 
-Item* Module::addStaticData( Class* cls, void* data )
-{
-   _p->m_staticData.push_back( Item(cls, data) );
-   return &_p->m_staticData.back();
-}
-
-
 void Module::addAnonFunction( Function* f )
 {
    // finally add to the function vecotr so that we can account it.
@@ -289,6 +284,9 @@ void Module::addAnonFunction( Function* f )
 
 Symbol* Module::addFunction( Function* f, bool bExport )
 {
+   static Class* symClass = Engine::instance()->symbolClass();
+   static Collector* coll = Engine::instance()->collector();
+
    //static Engine* eng = Engine::instance();
 
    Private::GlobalsMap& syms = _p->m_gSyms;
@@ -302,7 +300,9 @@ Symbol* Module::addFunction( Function* f, bool bExport )
    f->module(this);
 
    // add the symbol to the symbol table.
-   Symbol* sym = new Symbol( f->name(), this, addDefaultValue( f ) );
+   Symbol* sym = new Symbol( f->name(), Symbol::e_st_global, 0, f->declaredAt() );
+   FALCON_GC_STORE( coll, symClass, sym );
+   sym->defaultValue(f);
    syms[f->name()] = sym;
 
    // Eventually export it.
@@ -329,8 +329,7 @@ void Module::addFunction( Symbol* gsym, Function* f )
    
    if(gsym)
    {
-      Item* ival = addDefaultValue(f);
-      gsym->defaultValue(ival);
+      gsym->defaultValue(f);
    }
    
    // see if this covers a forward declaration.
@@ -369,7 +368,7 @@ void Module::addClass( Symbol* gsym, Class* fc, bool )
 
    if(gsym)
    {
-      gsym->defaultValue( addStaticData( ccls, fc ) );
+      gsym->defaultValue( Item( ccls, fc ) );
       // see if this covers a forward declaration.
       checkWaitingFwdDef( gsym );
    }
@@ -379,6 +378,9 @@ void Module::addClass( Symbol* gsym, Class* fc, bool )
 Symbol* Module::addClass( Class* fc, bool, bool bExport )
 {
    static Class* ccls = Engine::instance()->metaClass();
+   static Class* csym = Engine::instance()->symbolClass();
+   static Collector* coll = Engine::instance()->collector();
+   
 
    Private::GlobalsMap& syms = _p->m_gSyms;
    if( syms.find(fc->name()) != syms.end() )
@@ -388,7 +390,10 @@ Symbol* Module::addClass( Class* fc, bool, bool bExport )
 
    // add a proper object in the global vector
    // add the symbol to the symbol table.
-   Symbol* sym = new Symbol( fc->name(), this, addStaticData( ccls, fc ) );
+   Symbol* sym = new Symbol( fc->name(), Symbol::e_st_global, 0, fc->declaredAt() );
+   FALCON_GC_STORE( coll, csym, sym );
+   
+   sym->defaultValue(Item(ccls, fc));
    syms[fc->name()] = sym;
 
    // Eventually export it.
@@ -403,7 +408,6 @@ Symbol* Module::addClass( Class* fc, bool, bool bExport )
    fc->module(this);
    // see if this covers a forward declaration.
    checkWaitingFwdDef( sym );
-
 
    return sym;
 }
@@ -439,6 +443,9 @@ void Module::addAnonClass( Class* cls )
 
 Symbol* Module::addVariable( const String& name, const Item& value, bool bExport )
 {
+   static Class* symClass = Engine::instance()->symbolClass();
+   static Collector* coll = Engine::instance()->collector();
+
    Symbol* sym;
    
    // check if the name is free.
@@ -451,7 +458,9 @@ Symbol* Module::addVariable( const String& name, const Item& value, bool bExport
    else
    {
       // add the symbol to the symbol table.
-      sym = new Symbol( name, this, addDefaultValue(value) );
+      sym = new Symbol( name, Symbol::e_st_global, 0, 0);
+      FALCON_GC_STORE( coll, symClass, sym );
+      sym->defaultValue(value);
       syms[name] = sym;
       if( bExport )
       {
@@ -658,6 +667,9 @@ bool Module::removeModuleRequirement( ImportDef* def )
 
 Error* Module::addImport( ImportDef* def )
 {
+   static Class* symClass = Engine::instance()->symbolClass();
+   static Collector* coll = Engine::instance()->collector();
+   
    Error* error = addModuleRequirement( def );
    if( error != 0 )
    {
@@ -676,7 +688,8 @@ Error* Module::addImport( ImportDef* def )
       
       if( name.getCharAt( name.length() -1 ) != '*' )
       {         
-         Symbol* newsym = Symbol::ExternSymbol( name, this, def->sr().line());
+         Symbol* newsym = new Symbol( name, Symbol::e_st_extern, 0, def->sr().line());
+         FALCON_GC_STORE( coll, symClass, newsym );
          _p->m_gSyms[name] = newsym;
          
          // and add a dependency.
@@ -795,6 +808,9 @@ ImportDef* Module::addLoad( const String& name, bool bIsUri )
 
 Symbol* Module::addImplicitImport( const String& name, bool& isNew )
 {
+   static Class* symClass = Engine::instance()->symbolClass();
+   static Collector* coll = Engine::instance()->collector();
+
    // We can't be called if the symbol is alredy declared elsewhere.
    Private::GlobalsMap::iterator pos = _p->m_gSyms.find( name );
    if( _p->m_gSyms.find( name ) != _p->m_gSyms.end() )
@@ -805,7 +821,8 @@ Symbol* Module::addImplicitImport( const String& name, bool& isNew )
 
    isNew = true;
    // Record the fact that we have to save transform an unknown symbol...
-   Symbol* uks = Symbol::ExternSymbol( name, this );
+   Symbol* uks = new Symbol( name, Symbol::e_st_extern, 0, 0);
+   FALCON_GC_STORE( coll, symClass, uks );
    Private::Dependency* dep = new Private::Dependency(uks);
    dep->m_sourceName = name;
    _p->m_deps[name] = dep;
@@ -932,8 +949,8 @@ void Module::completeClass(FalconClass* fcls)
       Private::GlobalsMap::iterator pos = _p->m_gSyms.find( hcls->name() );
       if( pos != _p->m_gSyms.end() )
       {
-         Item* value = pos->second->defaultValue();
-         value->setUser( value->asClass(), hcls );
+         Item& value = pos->second->defaultValue();
+         value.setUser( value.asClass(), hcls );
       }
    }
 }
@@ -958,6 +975,9 @@ void Module::unload()
 
 void Module::forwardNS( Module* mod, const String& remoteNS, const String& localNS )
 {
+   static Collector* coll = Engine::instance()->collector();
+   static Class* symClass = Engine::instance()->symbolClass();
+   
    Private::GlobalsMap& globs = mod->_p->m_gSyms;
    
    // search the symbols in the remote namespace.
@@ -968,8 +988,9 @@ void Module::forwardNS( Module* mod, const String& remoteNS, const String& local
       String localName = localNS + "." + gi->first.subString(nsPrefix.length());
       if( _p->m_gSyms.find(localName) == _p->m_gSyms.end())
       {
-         _p->m_gSyms[localName] = new Symbol(*gi->second);
-         //TODO: Reference the udnerlying VM variable
+         Symbol* gs = new Symbol(*gi->second);
+         FALCON_GC_STORE( coll, symClass, gs );
+         _p->m_gSyms[localName] = gs;
       }
       ++gi;
    }
@@ -998,8 +1019,7 @@ bool Module::addConstant( const String& name, const Item& value )
       return false;
    }
    
-   Item* data = addDefaultValue( value );
-   gsym->defaultValue( data );
+   gsym->defaultValue( value );
    gsym->setConstant();
    return true;
 }
@@ -1046,7 +1066,35 @@ void Module::checkWaitingFwdDef( Symbol* sym )
 }
 
 
+Function* Module::getMainFunction()
+{
+   if ( m_mainFunc == 0 )
+   {
+      // see if someone was nice enough to add it elsewhere.
+      Private::FunctionMap::iterator iter = _p->m_functions.find("__main__");
+      if ( iter != _p->m_functions.end() )
+      {
+         m_mainFunc = iter->second;
+      }
+      else {
+         m_mainFunc = new SynFunc("__main__");
+         _p->m_functions[m_mainFunc->name()] = m_mainFunc;
+      }
+   }
+   
+   return m_mainFunc;
+}
 
+void Module::setMainFunction( Function* mf )
+{
+   delete m_mainFunc;
+   m_mainFunc = mf;
+   mf->module(this);
+   mf->name("__main__");
+   
+   _p->m_functions[mf->name()] = mf;
+}
+   
 }
 
 /* end of module.cpp */

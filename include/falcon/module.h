@@ -114,24 +114,6 @@ public:
    const String& uri() const {return m_uri;}
 
 
-   /** Add static data that must be removed when the module is destroyed.
-    \param cls Data class.
-    \param data Data entity.
-    
-    Strings, anonymous functions and classes and so on are to be destroyed
-    when the module is gone.
-    
-    Static data should not be added to dynamic module (where data must be
-    able to take care of itself.
-    
-    The source compiler will call addAnonFunciton or addAnonClass exactly
-    after having compiled a valid anonymous function or class. To prevent
-    leaks in case of compilation errors, they are first dispatched to this
-    method. The module will remove the anonymous elements from the static
-    data list when they are found at the back of the list.
-    */
-   Item* addStaticData( Class* cls, void* data );
-
    /** Adds a global function, possibly exportable.
     \param f The function to be added
     \param bExport if true, the returned symbol will be exported.
@@ -583,6 +565,9 @@ public:
     */
    bool addConstant( const String& name, const Item& value );
    
+   Function* getMainFunction();
+   void setMainFunction( Function* mf );
+   
 private:
    class Private;
    Private* _p;
@@ -594,10 +579,11 @@ private:
    bool m_bExportAll;
    DynUnloader* m_unloader;
    bool m_bMain;
-   
+      
    int m_anonFuncs;
    int m_anonClasses;
-   
+   Function* m_mainFunc;
+
    friend class Private;   
    friend class DynLoader;
    friend class FAMLoader;

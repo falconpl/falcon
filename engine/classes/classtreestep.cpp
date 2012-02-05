@@ -297,7 +297,7 @@ void ClassTreeStep::unflatten( VMContext*, ItemArray& subItems, void* instance )
       void* data = 0;
       if( subItems[i].asClassInst(cls, data) )
       {
-         ts->insert(i-1, static_cast<TreeStep*>( data ) );
+         ts->nth(i-1, static_cast<TreeStep*>( data ) );
       }
       // else, it was nil and unused.
    }

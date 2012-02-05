@@ -28,6 +28,7 @@ class SynTree;
 class Function;
 class DataWriter;
 class DataReader;
+class ItemArray;
 
 /** Holder for symbols relative to the owning level.
  Symbols tables are found:
@@ -67,11 +68,7 @@ class FALCON_DYN_CLASS SymbolTable
 {
 public:
    SymbolTable();
-   SymbolTable( Function* parent );
-   SymbolTable( SynTree* parent );
    SymbolTable( const SymbolTable& other);
-   SymbolTable( SynTree* parent, const SymbolTable& other);
-   SymbolTable( Function* parent, const SymbolTable& other);
    virtual ~SymbolTable();
 
    /** Number of local variables in this table.
@@ -123,7 +120,7 @@ public:
     difference matters.
     
     */
-   Symbol* addLocal( const String& name );
+   Symbol* addLocal( const String& name, int32 line=0 );
 
 
 
@@ -138,18 +135,8 @@ public:
     difference matters.
     
     */
-   Symbol* addClosed( const String& name );
+   Symbol* addClosed( const String& name, int32 line=0 );
 
-   /** Sets a function as owner of this table.
-    This is used only to retrieve a paret to mark if any of the owned symbol is marked.
-    */
-   void owner( SynTree* owner ) { m_owner.syntree = owner; m_ownedby = e_owned_syntree;}
-   
-   /** Sets a function as owner of this table.
-    This is used only to retrieve a paret to mark if any of the owned symbol is marked.
-    */
-   void owner( Function* owner ) { m_owner.function = owner; m_ownedby = e_owned_function;}   
-   
    /** Invoked by owned symbols when marked.
     */
 
@@ -158,26 +145,16 @@ public:
    void store( DataWriter* dw );
    void restore( DataReader* dr );
    
+   void flatten( ItemArray& arr );
+   void unflatten( ItemArray& arr );
+   
 private:
    class Private;
    Private* _p;
    
-   typedef enum {
-      e_owned_none,
-         e_owned_syntree,
-         e_owned_function
-   }
-   t_ownedby;
-   
-   typedef union {
-      SynTree* syntree;
-      Function* function;
-   }
-   t_owner;
-   
-   t_owner m_owner;
-   t_ownedby m_ownedby;
-   
+   // used only during deserialization.
+   uint32 m_localCount;
+   uint32 m_closedCount;
 };
 
 }

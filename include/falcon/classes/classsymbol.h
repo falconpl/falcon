@@ -47,6 +47,12 @@ public:
    virtual void op_setProperty( VMContext* ctx, void* instance, const String& prop) const;
 
    virtual void op_eval( VMContext* ctx, void* instance ) const;
+   
+   void store( VMContext*, DataWriter* stream, void* instance ) const;
+   void restore( VMContext*, DataReader* stream, void*& empty ) const;
+   void flatten( VMContext*, ItemArray& subItems, void* instance ) const;
+   void unflatten( VMContext*, ItemArray& subItems, void* instance ) const;
+
 };
 
 }

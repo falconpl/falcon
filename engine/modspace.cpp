@@ -94,9 +94,7 @@ public:
    
    typedef std::map<String, ModSpace::ModuleData*> ModMap;
    ModMap m_modmap;
-   ModMap m_modmapByUri;
-   
-   ItemArray m_values;
+   ModMap m_modmapByUri;  
    
    Private()
    {}
@@ -410,15 +408,14 @@ Error* ModSpace::exportSymbol( Module* mod, Symbol* sym )
    }
    
    // link the symbol
-   uint32 id = _p->m_values.length();
-   TRACE1( "ModSpace::exportSymbol exporting %s.%s with id %d", 
-         mod->name().c_ize(), sym->name().c_ize(), id );
+   TRACE1( "ModSpace::exportSymbol exporting %s.%s", 
+         mod->name().c_ize(), sym->name().c_ize() );
    
-   _p->m_symMap[ sym->name() ] = Private::ExportSymEntry(mod,sym);
-   _p->m_values.append( *sym->defaultValue() );
+   // if the symbol is an extern symbol, then we have to get its
+   // reference.
    
-   sym->defaultValue( &_p->m_values.at(id) );
-   
+   _p->m_symMap[ sym->name() ] = Private::ExportSymEntry(mod,
+      sym->type() == Symbol::e_st_extern ? sym->externRef() : sym);
    return 0;
 }
 
@@ -489,7 +486,7 @@ void ModSpace::linkSpecificDep( Module* asker, void* def, Error*& link_errors )
    }
    
    // link the value.
-   dep->m_symbol->resolveExtern( asker, sym->defaultValue() );
+   dep->m_symbol->promoteExtern( sym );
 }
 
 
@@ -631,16 +628,16 @@ void ModSpace::linkNSImports(Module* mod )
             Module::Private::GlobalsMap::iterator myglb = mod->_p->m_gSyms.find( tgName );
             if( myglb == mod->_p->m_gSyms.end() )
             {
-               // new symbol, make it external.
-               Symbol* esym = Symbol::ExternSymbol( tgName, mod, 0 );
+               // new symbol, make it external -- declared in main function of the module
+               Symbol* esym = new Symbol( tgName, Symbol::e_st_extern );
                mod->_p->m_gSyms[tgName] = esym;
-               esym->resolveExtern( srcMod, sym->defaultValue() );
+               esym->promoteExtern( sym );
             }
             else
             {
                // just link it 
                Symbol* esym = myglb->second;
-               esym->resolveExtern( srcMod, sym->defaultValue() );
+               esym->promoteExtern( sym );
                
                // eventually, make it resolved in dependencies, 
                // -- so we don't search for it elsewhere.
@@ -909,14 +906,14 @@ Class* ModSpace::findDynamicClass(
       }
       else 
       {
-         if( ! sym->defaultValue()->isClass() )
+         if( ! sym->defaultValue().isClass() )
          {
              throw new UnserializableError( ErrorParam(e_deser, __LINE__, SRC )
                .origin( ErrorParam::e_orig_runtime)
                .extra( "Symbol is not class " + className ));
          }
 
-         theClass = sym->defaultValue()->asClass();
+         theClass = sym->defaultValue().asClass();
       }
    }
    else
@@ -982,14 +979,14 @@ Function* ModSpace::findDynamicFunction(
       }
       else 
       {
-         if( ! sym->defaultValue()->isFunction() )
+         if( ! sym->defaultValue().isFunction() )
          {
              throw new UnserializableError( ErrorParam(e_deser, __LINE__, SRC )
                .origin( ErrorParam::e_orig_runtime)
                .extra( "Symbol is not function " + funcName ));
          }
 
-         theFunc = sym->defaultValue()->asFunction();
+         theFunc = sym->defaultValue().asFunction();
       }
    }
    else

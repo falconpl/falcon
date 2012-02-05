@@ -205,7 +205,6 @@ bool ClassFunction::gcCheck( void* self, uint32 mark ) const
 }
 
 
-
 void ClassFunction::op_call( VMContext* ctx, int32 paramCount, void* self ) const
 {
    ctx->call( static_cast<Function*>(self), paramCount );

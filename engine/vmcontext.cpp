@@ -494,12 +494,8 @@ void VMContext::raiseError( Error* ce )
          // assign the error to the required item.
          if( m_catchBlock->target() != 0 )
          {
-            Item* value = m_catchBlock->target()->getValue(this);
-            if( value != 0 )
-            {
-               value->setUser( ce->handler(), ce );
-               ce->decref();
-            }
+            m_catchBlock->target()->setValue(this, Item( ce->handler(), ce ));            
+            ce->decref();
          }
       }
       else
@@ -829,13 +825,12 @@ Item* VMContext::getDynSymbolValue( const Symbol* dyns )
          Symbol* globsym = master->getGlobal( dyns->name() );
          if( globsym != 0 )
          {
-            Item* value = globsym->getValue(this);
+            
             DynsData* newData = m_dynsStack.addSlot();
             newData->m_sym = dyns;
             // reference the target local variable into our slot.
-            ItemReference::create(
-               *value,
-               newData->m_item );
+            ItemReference::create( newData->m_item );
+            globsym->setValue(this,newData->m_item );
             return newData->m_item.dereference();
          }
       }
@@ -849,13 +844,11 @@ Item* VMContext::getDynSymbolValue( const Symbol* dyns )
       Symbol* expsym = ms->findExportedSymbol( dyns->name() );
       if( expsym != 0 )
       {
-         Item* value = expsym->getValue(this);
          DynsData* newData = m_dynsStack.addSlot();
          newData->m_sym = dyns;
          // reference the target local variable into our slot.
-         ItemReference::create(
-            *value,
-            newData->m_item );
+         ItemReference::create( newData->m_item );
+         expsym->setValue(this,newData->m_item );
          return newData->m_item.dereference();
       }
    }
