@@ -57,7 +57,7 @@ class IMAP( server, port, timeout, useSsl, sslVer )
    state = IMAPState.nostate
    /*# Current selected mailbox. */
    selected = nil
-   
+
    _sock = nil
    _n = 0
 
@@ -67,7 +67,7 @@ class IMAP( server, port, timeout, useSsl, sslVer )
    re_num = regex.Regex( "\\* ([0-9]+) (.*)$" )
    re_ok = regex.Regex( "\\* OK ?(\\[(.*)\\])? ?(.*)$" )
    re_flags = regex.Regex( "\\* FLAGS (.*)$" )
-   
+
    /*#
       @brief Connect to IMAP server.
       @raise IMAPError Unable to connect.
@@ -473,17 +473,26 @@ class IMAP( server, port, timeout, useSsl, sslVer )
             reply = self.oldReply[:totalsz]
             self.oldReply = self.oldReply[totalsz:]
          end
-         self.trace( "<-- " + reply.trim() )
+         self.trace( "<--("+reply.len()+") " + reply.trim() )
          return reply
       end
 
       // read each block separately
-      reply = strBuffer( totalsz )
+      reply = strBuffer( totalsz + 1024 )
       buf = strBuffer( 1501 )
-      recCount = self.oldReply.len()
-      
-      while recCount < totalsz
 
+      recCount = self.oldReply.len()
+      oldsz = recCount // for trace
+      restsz = totalsz - oldsz // for trace
+
+      if recCount
+         reply = self.oldReply + reply
+         self.oldReply = ""
+      end
+
+      excess = ""
+
+      while 1
          // timeout? -- the remote server hung.
          if not self._sock.readAvailable( self.timeout/1000.0 )
             // Indicate a network problem, and how much data we got in the meanwhile
@@ -491,21 +500,24 @@ class IMAP( server, port, timeout, useSsl, sslVer )
                "(" + reply.len() + "/" + totalsz + ")" )
          end
 
-         toRead = totalsz - recCount
-         if toRead > 1500: toRead = 1500
-         
          // receive more data.
-         recCount += self._sock.recv( buf, toRead )
+         recCount += self._sock.recv( buf, 1500 )
          reply += buf
+
+         // see if we have the tag response entirely with OK.
+         if recCount > totalsz
+            excess = reply[totalsz:]
+            if excess.endsWith( "\r\n" ) and excess.startsWith( ")\r\n"+self._lastTag()+" OK " )
+               break
+            end
+         end
       end
 
-      // if we have extra data to put at beginning...
-      if self.oldReply
-         reply = self.oldReply + reply
-         self.oldReply = ""
-      end
-      
-      self.trace( "<-- " + reply.trim() )
+      // put excess in internal buffer.
+      self.oldReply = excess
+      reply = reply[:totalsz]
+
+      self.trace( "<--["+oldsz+"+"+restsz+"] " + reply.trim() )
       return reply
    end
 
@@ -518,7 +530,7 @@ class IMAP( server, port, timeout, useSsl, sslVer )
       end
       return bless(res)
    end
-   
+
 
    function parseLine( line, res )
       // it's a numeric field?
@@ -556,16 +568,16 @@ class IMAP( server, port, timeout, useSsl, sslVer )
       // nope, just values.
       return value
    end
-   
+
 
    function _recvLine( maxsz )
       static
          buf = strBuffer( 1024 )
       end
-      
+
       if maxsz == nil: maxsz = 1024
       reply = self.oldReply + strBuffer( maxsz )
-      
+
       while (pos = reply.find( "\r\n" )) < 0 and reply.len() < maxsz
 
          // timeout? -- the remote server hung.
@@ -597,7 +609,7 @@ class IMAP( server, port, timeout, useSsl, sslVer )
             // we're done.
             break
          end
-         
+
          data += line
       end
 

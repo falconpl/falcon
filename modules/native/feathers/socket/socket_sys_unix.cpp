@@ -569,6 +569,8 @@ int32 TCPSocket::recv( byte *buffer, int32 size )
       m_lastError = errno;
       return -1;
    }
+   if ( read == 0 ) // shutdown detected
+      terminate();
 
    return read;
 }
