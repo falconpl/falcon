@@ -216,7 +216,7 @@ bool FalconClass::addProperty( const String& name, Expression* initExpr )
    Private::MemberMap& members = _p->m_members;
 
    // first time around?
-   if ( members.find( name ) != members.end() )
+   if ( members.find( name ) != members.end() || initExpr->parent() != 0 )
    {
       return false;
    }
@@ -231,13 +231,11 @@ bool FalconClass::addProperty( const String& name, Expression* initExpr )
    // declare that we need this expression to be initialized.
    _p->m_initExpr.push_back( prop );
    m_hasInitExpr = true;
-
-   if ( m_init == 0 )
-   {
-      m_init = new SynFunc( "init" );
-      m_init->methodOf(this);
-      // but this won't modify the m_hasInit state.
-   }
+   m_constructor = makeConstructor();
+   
+   // Let's parent the expression so that it understands the evaluation context.
+   // notice that although we have a parent now, we're not owned by it.
+   initExpr->setParent(&m_constructor->syntree());
 
    return true;
 }

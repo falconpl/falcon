@@ -14,7 +14,7 @@
 */
 
 #include <falcon/trace.h>
-#include <falcon/inheritance.h>
+#include <falcon/psteps/exprinherit.h>
 #include <falcon/string.h>
 #include <falcon/expression.h>
 #include <falcon/vmcontext.h>

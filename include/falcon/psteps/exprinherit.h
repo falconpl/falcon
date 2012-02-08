@@ -1,6 +1,6 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: inheritance.h
+   FILE: exprinherit.h
 
    Structure holding information about inheritance in a class.
    -------------------------------------------------------------------
@@ -44,36 +44,13 @@ class VMContext;
  ('parameters').
  
  */
-class FALCON_DYN_CLASS Inheritance
+class FALCON_DYN_CLASS ExprInherit: public ExprVector
 {
 public:
-   /** Creates the inheritance instance.
-    \param name The logical name of the parent class.
-    \param parent The class corresponding to the inheritance name, if known.
-    \param owner The class where this inheritance is delcaraed.
-
-    The inheritance name is the name of the class as it's written
-    after the "from" clause in the inheritance declarartion.
-
-    It may include namespaces and/or remote module names, and might
-    not corespond with the name of the parent class as it is declared
-    in the source module.
-
-    */
-   Inheritance( const String& name, Class* parent=0, Class* owner=0 );
-   ~Inheritance();
-
-   /** The name of the class that we're searching.
-    This includes full path/namespace.
-
-    The inheritance name is the name of the class as it's written
-    after the "from" clause in the inheritance declarartion.
-
-    It may include namespaces and/or remote module names, and might
-    not corespond with the name of the parent class as it is declared
-    in the source module.
-    */
-   const String& className() const { return m_name; }
+   ExprCall( int line=0, int chr=0 );
+   ExprCall( Class* cls, int line=0, int chr=0 );
+   ExprCall( const ExprCall& other );
+   virtual ~ExprCall();
 
    /** The parent class.
     \return the Parent class, when resolved, or 0 if still not available.
@@ -179,4 +156,4 @@ private:
 
 #endif /* _FALCON_INHERITANCE_H_ */
 
-/* end of inheritance.h */
+/* end of exprinherit.h */
