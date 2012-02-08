@@ -109,7 +109,7 @@ void ClassSymbol::op_getProperty( VMContext* ctx, void* instance, const String& 
    }
    else if( prop == "value" )
    {
-      ctx->stackResult(1, *sym->getValue(ctx) );
+      ctx->stackResult(1, *ctx->getDynSymbolValue( sym ) );
       ctx->topData().copied();
    }
    else {
@@ -128,8 +128,7 @@ void ClassSymbol::op_setProperty( VMContext* ctx, void* instance, const String& 
    }
    else if( prop == "value" )
    {
-      sym->setValue(ctx, ctx->opcodeParam(3));
-      ctx->popData(2);
+      ctx->setDynSymbolValue( sym, ctx->opcodeParam(3) );
       ctx->topData().copied();
    }
    else {
@@ -141,7 +140,7 @@ void ClassSymbol::op_setProperty( VMContext* ctx, void* instance, const String& 
 void ClassSymbol::op_eval( VMContext* ctx, void* instance ) const
 {
    Symbol* sym = static_cast<Symbol*>( instance );   
-   ctx->topData() = *sym->getValue(ctx);
+   ctx->topData() = *ctx->getDynSymbolValue( sym );
 }
 
 
