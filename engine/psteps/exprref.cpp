@@ -76,6 +76,10 @@ ExprRef::~ExprRef()
    delete m_expr;
 }
 
+void ExprRef::symbol(Symbol* sym) const
+{
+   m_symbol = sym;
+}
 
 Expression* ExprRef::selector() const
 {

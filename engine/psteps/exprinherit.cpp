@@ -1,6 +1,6 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: inheritance.cpp
+   FILE: exprinherit.cpp
 
    Structure holding information about inheritance in a class.
    -------------------------------------------------------------------
@@ -15,133 +15,128 @@
 
 #include <falcon/trace.h>
 #include <falcon/psteps/exprinherit.h>
-#include <falcon/string.h>
 #include <falcon/expression.h>
 #include <falcon/vmcontext.h>
-#include <falcon/module.h>
+#include <falcon/class.h>
+#include <falcon/synclasses.h>
 
-#include <falcon/symbol.h>
-#include <falcon/falconclass.h>
 
-#include <falcon/errors/codeerror.h>
-
-#include <vector>
+#include <falcon/string.h>
+#include "exprvector_private.h"
 
 
 namespace Falcon
 {
 
-class Inheritance::Private
+ExprInherit::ExprInherit( int line, int chr ):
+   ExprVector( line, chr ),
+   m_base(0),
 {
-public:
-   typedef std::vector<Expression*> ParamList;
-   ParamList m_params;
+   FALCON_DECLARE_SYN_CLASS( expr_inherit )
+   apply = apply_;
+}
 
-   Private() {}
+ExprInherit::ExprInherit( const String& name, int line, int chr ):
+   ExprVector( line, chr )
+   m_base(0),
+   m_name( name )
+{
+   FALCON_DECLARE_SYN_CLASS( expr_inherit )
+   apply = apply_;
+}
+
+ExprInherit::ExprInherit( Class* base, int line, int chr ):
+   ExprVector( line, chr ),
+   m_base( base ),
+   m_name( base->name() )
+{
+   FALCON_DECLARE_SYN_CLASS( expr_inherit )
+   apply = apply_;
+}
    
-   ~Private()
-   {
-      ParamList::iterator iter = m_params.begin();
-      while( m_params.end() != iter )
-      {
-         delete *iter;
-         ++iter;
-      }
-   }
-};
-
-
-Inheritance::Inheritance( const String& name, Class* parent, Class* owner ):
-   _p( new Private ),
-   m_name(name),
-   m_parent( parent ),
-   m_owner( owner ),
-   m_requirer( name, this )
+ExprInherit::ExprInherit( const ExprInherit& other ):
+   ExprVector( other ),
+   m_base( other.m_base ),
+   m_name( other.m_name )
 {
-
+   apply = apply_;
+}
+  
+ExprInherit::~ExprInherit()
+{
 }
 
-Inheritance::~Inheritance()
-{
-   delete _p;
-}
-
-
-void Inheritance::parent( Class* cls )
-{
-   fassert( m_parent == 0 );
+void ExprInherit::describeTo( String& target, int depth ) const
+{   
+   String prefix = String(" ").replicate( depth * depthIndent );
    
-   m_parent = cls;
-   if( m_owner != 0 )
+   if( _p->m_exprs.empty() )
    {
-      m_owner->onInheritanceResolved( this );
-   }
-}
-
-
-void Inheritance::addParameter( Expression* expr )
-{
-   _p->m_params.push_back( expr );
-}
-
-
-size_t Inheritance::paramCount() const
-{
-   return _p->m_params.size();
-}
-
-Expression* Inheritance::param( size_t n ) const
-{
-   return _p->m_params[n];
-}
-
-
-bool Inheritance::prepareOnContext( VMContext* ctx )
-{
-   Private::ParamList& params = _p->m_params;
-   if( params.empty() )
-   {
-      return false;
-   }
-   
-   Private::ParamList::iterator iter = params.begin();
-   while( params.end() != iter )
-   {
-      ctx->pushCode( *iter ); 
-      ++iter;
-   }
-   return true;
-}
-
-
-void Inheritance::describe( String& target ) const
-{
-   Private::ParamList& params = _p->m_params;
-
-   if( params.empty() )
-   {
-      target = m_name;
+      target = prefix + m_name;
    }
    else
    {
-      target = m_name + "(";
-
+      target = prefix + m_name + "(";     
       String temp;
-      Private::ParamList::iterator iter = params.begin();
-      while( params.end() != iter )
+      ExprVector_Private::ExprVector::const_iterator iter = _p->m_exprs.begin();
+      while(  _p->m_exprs.end() != iter )
       {
+         Expression* param = *iter;
          if( temp.size() >  0 )
          {
             temp += ", ";
          }
-         temp += (*iter)->describe();
+         // keep same depth
+         temp += param->describe( depth );
          ++iter;
       }
-      
+
       target += temp + ")";
    }
 }
 
+void ExprInherit::apply_( const PStep* ps, VMContext* ctx )
+{
+   const ExprInherit* self = static_cast<const ExprInherit*>(ps);
+   fassert( self->m_base != 0 );
+   
+   // we need to "produce" the parameters, were any of it.
+   CodeFrame& cf = ctx->currentCode();
+   int& seqId = cf.m_seqId;
+   const ExprVector_Private::ExprVector& exprs = self->_p->m_exprs;   
+   int size = (int) exprs.size();   
+   
+   TRACE1("Apply with %d/%d parameters", seqId, size );
+   
+   while( seqId < size )
+   {
+      Expression* exp = exprs[seqId++];
+      if( ctx->stepInYield( exp, cf ) )
+      {
+         return;
+      }
+   }
+   
+   // we have expanded all the parameters. Go for init the class.
+   ctx->popCode();
+   Item* iinst = ctx->opcodeParam(size+1);
+   // The creation process must have given the instance to us right before
+   // -- the parameters were created.
+   fassert( iinst->isClass() );
+   fassert( iinst->asClass()->derivedFrom(self->m_base) );
+   void* instance = iinst->asClass()->getParentData( self->m_base, iinst->asInst());
+   
+   // invoke the init operator directly
+   if( self->m_base->op_init( ctx, instance, size ) )
+   {
+      // It's deep.
+      return;
+   }
+   // we're in charge of popping the parameters.
+   ctx->popData(size);
+}
+
+/*
 
 void Inheritance::IRequirement::onResolved(   
          const Module* source, const Symbol* srcSym, Module* tgt, Symbol* )
@@ -175,8 +170,8 @@ void Inheritance::IRequirement::onResolved(
       }
    }
 }
-  
+  */
  
 }
 
-/* end of inheritance.cpp */
+/* end of exprinherit.cpp */

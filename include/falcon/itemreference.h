@@ -52,6 +52,8 @@ public:
    
    uint32 gcMark() const { return m_mark; }
    
+   bool referenceItem( Item& item );
+   
    /** Creates a newly allocated ItemReference to the target.
     \param source The source that will be trasformed into a reference to this item.
     

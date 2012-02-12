@@ -53,6 +53,10 @@ void* ClassRange::clone( void* source ) const
    return new Range( *static_cast<Range*>( source ) );
 }
 
+void* ClassRange::createInstance() const
+{
+   return new Range;
+}
 
 void ClassRange::store( VMContext*, DataWriter* stream, void* instance ) const
 {
@@ -136,12 +140,9 @@ void ClassRange::enumeratePV( void*, Class::PVEnumerator& rator ) const
 
 //=======================================================================
 //
-void ClassRange::op_create( VMContext* ctx, int pcount ) const
-{
-   static Collector* coll = Engine::instance()->collector();
-
-   Range* inst = new Range;
-
+bool ClassRange::op_init( VMContext* ctx, void* instance, int pcount ) const
+{  
+   Range* inst = static_cast<Range*>(instance);
 
    switch( pcount )
    {
@@ -189,7 +190,7 @@ void ClassRange::op_create( VMContext* ctx, int pcount ) const
          break;
    }
 
-   ctx->stackResult( pcount + 1, FALCON_GC_STORE( coll, this, inst ) );
+   return false;
 }
 
 

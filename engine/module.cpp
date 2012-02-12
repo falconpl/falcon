@@ -24,7 +24,8 @@
 #include <falcon/item.h>
 #include <falcon/modspace.h>
 #include <falcon/modloader.h>
-#include <falcon/inheritance.h>
+#include <falcon/modrequest.h>
+#include <falcon/importdef.h>
 #include <falcon/requirement.h>
 #include <falcon/error.h>
 #include <falcon/falconclass.h>
@@ -42,33 +43,25 @@
 #include <algorithm>
 
 #include "module_private.h"
-#include "falcon/importdef.h"
 
-namespace Falcon {
-
+namespace Falcon 
+{
 
 Module::Private::Dependency::~Dependency()
 {
+   WaitingList::iterator iter = m_waitings.begin();
+   while( iter != m_waitings.end() );
+   {
+      Requirement* req = *iter;
+      if( ! req->isStatic() )
+      {
+         delete req;
+      }
+      
+      ++iter;
+   }
 }
  
-
-Module::Private::ModRequest::ModRequest():
-   m_isLoad ( false ),
-   m_bIsURI( false ),
-   m_module( 0 )
-{}
-
-
-Module::Private::ModRequest::ModRequest( const String& name, bool isUri, bool isLoad, Module* mod ):
-   m_name ( name ),
-   m_isLoad ( isLoad ),
-   m_bIsURI( isUri ),
-   m_module( mod )
-{}
-
-
-Module::Private::ModRequest::~ModRequest()
-{}
    
    
 Error* Module::Private::Dependency::onResolved( Module* parentMod, Module* mod, Symbol* sym )
@@ -82,7 +75,8 @@ Error* Module::Private::Dependency::onResolved( Module* parentMod, Module* mod, 
    {
       try 
       {
-         (*iter)->onResolved( mod, sym, parentMod, m_symbol );
+         Requirement* req = *iter;
+         req->onResolved( mod, sym, parentMod, m_symbol );
       }
       catch( Error * e )
       {
@@ -112,12 +106,6 @@ Error* Module::Private::Dependency::onResolved( Module* parentMod, Module* mod, 
    return res;
 }
 
-
-Module::Private::DirectRequest::~DirectRequest()
-{
-   delete m_idef;
-}
-
       
 Module::Private::~Private()
 {
@@ -130,27 +118,11 @@ Module::Private::~Private()
       ++iter;
    }
 
-   // and get rid of the static data, if we have.
-   StaticDataList::reverse_iterator sditer = m_staticData.rbegin();
-   while( sditer != m_staticData.rend() )
-   {
-      Item& itm = *sditer;      
-      
-      Class* cls; 
-      void* inst;
-      if( itm.asClassInst( cls, inst ) )
-      {
-         cls->dispose( inst );
-      }
-      
-      ++sditer;
-   }
-
    // destroy reqs and deps
-   DepMap::iterator req_i = m_deps.begin();
-   while( req_i != m_deps.end() )
+   DepList::iterator req_i = m_deplist.begin();
+   while( req_i != m_deplist.end() )
    {
-      delete req_i->second;
+      delete *m_deplist;
       ++req_i;
    }
    
@@ -160,14 +132,7 @@ Module::Private::~Private()
       delete *id_i;
       ++id_i;
    }
-   
-   DirectReqList::iterator dr_i = m_directReqs.begin();
-   while( dr_i != m_directReqs.end() )
-   {
-      delete *dr_i;
-      ++dr_i;
-   }
-   
+      
    ReqList::iterator rl_i = m_mrlist.begin();
    while( rl_i != m_mrlist.end() )
    {
@@ -252,13 +217,7 @@ void Module::gcMark( uint32 mark )
          m_modSpace->gcMark( mark );
       }
       
-      Private::StaticDataList::iterator sditer = _p->m_staticData.begin();
-      while( sditer != _p->m_staticData.end() )
-      {
-         sditer->gcMark( mark );
-         ++sditer;
-      }
-      
+      //TODO: Mark other modules and data in symbols      
    }
 }
 
@@ -468,6 +427,7 @@ Symbol* Module::addVariable( const String& name, const Item& value, bool bExport
       }     
    }
 
+   checkWaitingFwdDef( sym );
    return sym;
 }
 
@@ -559,7 +519,7 @@ void Module::enumerateExports( SymbolEnumerator& rator ) const
 }
 
 
-Error* Module::addModuleRequirement( ImportDef* def )
+Error* Module::addModuleRequirement( ImportDef* def, ModRequest*& req )
 {
    // first, check if there is a clash with already defined symbols.
    int symcount = def->symbolCount();
@@ -584,9 +544,9 @@ Error* Module::addModuleRequirement( ImportDef* def )
    Private::ReqMap::iterator pos = _p->m_mrmap.find( def->sourceModule() );
    if( pos != _p->m_mrmap.end() )
    {
-      Private::ModRequest* req = pos->second;
+      req = pos->second;
       // prevent double load requests -- or redefining already known modules.
-      if( def->isLoad() && req->m_isLoad )
+      if( def->isLoad() && req->isLoad() )
       {
          return new CodeError( ErrorParam( e_load_already, def->sr().line(), this->uri() )
             .origin( ErrorParam::e_orig_compiler )
@@ -596,27 +556,26 @@ Error* Module::addModuleRequirement( ImportDef* def )
       // update load status.
       if( def->isLoad() )
       {
-         req->m_isLoad = true;
+         req->promoteLoad();
       }
       
       // update logical name into physical if there is a clash.
       // i.e. load test and load "test" will have "test" to prevail.
       if( def->isUri() )
       {
-         req->m_bIsURI = true;
-      }
-      
-      req->m_defs.push_back( def );
+         req->isUri(true);
+      }      
    }
    else
    {
       // create a new entry
-      Private::ModRequest* req = new Private::ModRequest( def->sourceModule(), def->isUri(), def->isLoad() );
+      ModRequest* req = new ModRequest( def->sourceModule(), def->isUri(), def->isLoad() );
       _p->m_mrmap[def->sourceModule()] = req;
-      req->m_defs.push_back( def );
       _p->m_mrlist.push_back( req );
    }
 
+   def->modReq( req );
+   req->addImportDef( def );
    return 0;
 }
 
@@ -627,37 +586,34 @@ bool Module::removeModuleRequirement( ImportDef* def )
    
    Private::ReqMap::iterator pos = _p->m_mrmap.find( def->sourceModule() );
    if( pos != _p->m_mrmap.end() )
-   {
+   { 
+      found = true;
+      
       // search the def backward 
       // -- (usually, we remove the last def because something went wrong)
-      Private::ImportDefList& defs = pos->second->m_defs;
-      Private::ImportDefList::reverse_iterator riter = defs.rbegin();
-      while( riter != defs.rend() )
+      ModRequest* req = pos->second;
+      req->removeImportDef( def );
+      if( req->importDefCount() == 0 )
       {
-         if( *riter == def )
+         // we don't have any reason to depend from this module anymore 
+         _p->m_mrmap.erase(pos);
+         
+         // remove also from the generic mods, in case it was a generic provider
+         Private::ReqList::iterator reqi = 
+               std::find( _p->m_genericMods.begin(), _p->m_genericMods.end(), req );
+         if( reqi != _p->m_genericMods.end() )
          {
-            found = true;
-            defs.erase( (++riter).base() );
-            break;
-         }
-         ++riter;
-      }
-      
-      if( defs.empty() )
-      {
-         Private::ModRequest* req = pos->second;
-         // eventually remove from generic mod requirements.
-         if ( def->isGeneric() )
-         {
-            Private::ReqList::iterator reqi = 
-                  std::find( _p->m_genericMods.begin(), _p->m_genericMods.end(), req );
-            if( reqi != _p->m_genericMods.end() )
-            {
-               _p->m_genericMods.erase( reqi );
-            }
+            _p->m_genericMods.erase( reqi );
          }
          
-         _p->m_mrmap.erase( pos );
+         // And anyhow from the global list.
+         reqi = std::find( _p->m_mrlist.begin(), _p->m_mrlist.end(), req );
+         if( reqi != _p->m_mrlist.end() )
+         {
+            _p->m_genericMods.erase( reqi );
+         }
+         
+         // we own the request.
          delete req;
       }
    }
@@ -665,12 +621,14 @@ bool Module::removeModuleRequirement( ImportDef* def )
    return found;
 }
 
+
 Error* Module::addImport( ImportDef* def )
 {
    static Class* symClass = Engine::instance()->symbolClass();
    static Collector* coll = Engine::instance()->collector();
    
-   Error* error = addModuleRequirement( def );
+   ModRequest* req;
+   Error* error = addModuleRequirement( def, req );
    if( error != 0 )
    {
       return error;
@@ -701,7 +659,8 @@ Error* Module::addImport( ImportDef* def )
          
          dep->m_sourceName = def->sourceSymbol( i );
          
-         _p->m_deps[name] = dep;
+         _p->m_depsBySymbol[name] = dep;
+         _p->m_deplist.push_back( dep );
       }
       else if( def->sourceModule().size() != 0 )
       {
@@ -714,8 +673,6 @@ Error* Module::addImport( ImportDef* def )
          }
          
          // we should just have added it in addModuleRequirement
-         Private::ModRequest* req = _p->m_mrmap[def->sourceModule()];
-         fassert( req != 0 ); 
          _p->m_nsimports.push_back( new Private::NSImport( def, req, from, def->target() ) );
       }
    }
@@ -726,16 +683,11 @@ Error* Module::addImport( ImportDef* def )
    // eventually, save the module as a generic provider.
    if( def->isGeneric() )
    {
-      Private::ReqMap::iterator iter = _p->m_mrmap.find( def->sourceModule() );
-      if( iter != _p->m_mrmap.end() )
-      {
-         _p->m_genericMods.push_back( iter->second );
-      }
+      _p->m_genericMods.push_back( req );
    }
    
    return 0;
 }
-
 
 
 void Module::removeImport( ImportDef* def )
@@ -749,6 +701,12 @@ void Module::removeImport( ImportDef* def )
       String name;      
       def->targetSymbol( i, name );
       
+      Private::GlobalsMap::iterator gep = _p->m_gExports.find(name);
+      if( gep != _p->m_gExports.end() )
+      {
+         _p->m_gExports.erase( gep );
+      }
+      
       Private::GlobalsMap::iterator gp = _p->m_gSyms.find(name);
       if( gp != _p->m_gSyms.end() )
       {
@@ -756,15 +714,31 @@ void Module::removeImport( ImportDef* def )
          _p->m_gSyms.erase( gp );
       }
       
-      Private::DepMap::iterator dp = _p->m_deps.find( name );
-      if ( dp != _p->m_deps.end() )
+      Private::DepMap::iterator dp = _p->m_depsBySymbol.find( name );
+      if ( dp != _p->m_depsBySymbol.end() )
       {
-         delete dp->second;
-         _p->m_deps.erase( dp );
+         _p->m_depsBySymbol.erase( dp );
       }
    }
    
-   // remove the definition --- don't delete it, ownership is back to the caller!
+   // Remove all the related dependencies
+   Private::DepList::iterator depi = _p->deplist.begin();
+   while( depi != _p->deplist.end() ) 
+   {
+      Private::Dependency* dep = *depi;
+      if( dep->m_idef == def )
+      {
+         depi = _p->deplist.erase( depi );
+         delete dep;
+         
+      }
+      else 
+      {
+         ++depi;
+      }
+   }
+   
+   // remove the definition
    Private::ImportDefList::iterator dli = 
             std::find( _p->m_importDefs.begin(), _p->m_importDefs.end(), def );
    if( dli != _p->m_importDefs.end() )
@@ -787,6 +761,8 @@ void Module::removeImport( ImportDef* def )
          ++nsi;
       }
    }
+   
+   delete def;
 }
 
 
@@ -825,7 +801,8 @@ Symbol* Module::addImplicitImport( const String& name, bool& isNew )
    FALCON_GC_STORE( coll, symClass, uks );
    Private::Dependency* dep = new Private::Dependency(uks);
    dep->m_sourceName = name;
-   _p->m_deps[name] = dep;
+   _p->m_deplist.push_back(dep);
+   _p->m_depsBySymbol[name] = dep;
    // ... and save the symbols.
    _p->m_gSyms[name] = uks;
 
@@ -872,12 +849,6 @@ Symbol* Module::addExport( const String& name, bool& bAlready )
 }
 
 
-void Module::addImportInheritance( Inheritance* inh )
-{
-   addRequirement( &inh->requirement() );
-}
-
-
 Symbol* Module::addRequirement( Requirement* cr )
 {
    const String& symName = cr->name();
@@ -889,16 +860,18 @@ Symbol* Module::addRequirement( Requirement* cr )
    if( imported->type() != Symbol::e_st_extern )
    {
       cr->onResolved( this, imported, this, imported );
-      return 0;
+      delete cr;
+      return imported;
    }
     
    // at this point, the dependency must be created by implicit import.
-   Private::Dependency* dep = _p->m_deps[symName];
+   Private::Dependency* dep = _p->m_depsBySymbol[symName];
    if( dep == 0 )
    {
       // should not happen -- but if it happen, we can only search in global space
       dep = new Private::Dependency( imported );
-      _p->m_deps[imported->name()] = dep;
+      _p->m_depsBySymbol[imported->name()] = dep;
+      _p->m_deplist.push_back(dep);      
    }
    
    // Record the fact that we have to save transform an unknown symbol...
@@ -907,6 +880,145 @@ Symbol* Module::addRequirement( Requirement* cr )
    return imported;
 }
 
+
+
+
+
+void Module::unload()
+{
+   if( m_unloader != 0 )
+   {
+      DynUnloader* ul = m_unloader;
+      m_unloader = 0;
+      delete this;
+      ul->unload();
+   }
+   else
+   {
+      delete this;
+   }
+}
+
+
+
+void Module::forwardNS( Module* mod, const String& remoteNS, const String& localNS )
+{
+   static Collector* coll = Engine::instance()->collector();
+   static Class* symClass = Engine::instance()->symbolClass();
+   
+   Private::GlobalsMap& globs = mod->_p->m_gSyms;
+   
+   // search the symbols in the remote namespace.
+   String nsPrefix = remoteNS + ".";
+   Private::GlobalsMap::iterator gi = globs.lower_bound(nsPrefix);
+   while( gi != globs.end() && gi->first.startsWith(nsPrefix) )
+   {
+      String localName = localNS + "." + gi->first.subString(nsPrefix.length());
+      if( _p->m_gSyms.find(localName) == _p->m_gSyms.end())
+      {
+         Symbol* gs = new Symbol(*gi->second);
+         FALCON_GC_STORE( coll, symClass, gs );
+         _p->m_gSyms[localName] = gs;
+      }
+      ++gi;
+   }
+}
+
+
+bool Module::addConstant( const String& name, const Item& value )
+{
+   Symbol* gsym = addVariable( name, true );
+   if ( gsym == 0 ) 
+   { 
+      return false;
+   }
+   
+   gsym->defaultValue( value );
+   gsym->setConstant();
+   return true;
+}
+
+
+void Module::checkWaitingFwdDef( Symbol* sym )
+{   
+   // ignore non-globals
+   if ( sym->type() != Symbol::e_st_global )
+   {
+      return;
+   }
+   
+   Private::DepMap::iterator pos = _p->m_depsBySymbol.find( sym->name() );
+   if( pos != _p->m_depsBySymbol.end() )
+   {
+      // if the request covers an explicit import, this is an error.
+      Private::Dependency* dep = pos->second;
+      if( dep->m_idef != 0 )
+      {
+         throw new CodeError( 
+            ErrorParam(e_already_def, sym->declaredAt(), m_uri ) 
+            // TODO add source reference of the imported def
+            .extra( String("imported symbol"))
+            .origin(ErrorParam::e_orig_compiler)
+            );
+      }
+      else
+      {
+         // a genuine forward definition
+         Error* err = dep->onResolved( this, this, sym );
+
+         // remove the dependency (was just a forward marker)
+         _p->m_depsBySymbol.erase( pos );
+         Private::DepList::iterator dli =
+            std::find( _p->deplist.begin(), _p->deplist.end(), dep );
+         if( dli != _p->deplist.end() )
+         {
+            _p->deplist.erase( dli );
+         }
+         delete dep;
+
+         // throw in case of errors
+         if( err != 0 )
+         {
+            throw err;
+         }            
+      }
+   }
+}
+
+
+Function* Module::getMainFunction()
+{
+   if ( m_mainFunc == 0 )
+   {
+      // see if someone was nice enough to add it elsewhere.
+      Private::FunctionMap::iterator iter = _p->m_functions.find("__main__");
+      if ( iter != _p->m_functions.end() )
+      {
+         m_mainFunc = iter->second;
+      }
+      else {
+         m_mainFunc = new SynFunc("__main__");
+         _p->m_functions[m_mainFunc->name()] = m_mainFunc;
+      }
+   }
+   
+   return m_mainFunc;
+}
+
+
+void Module::setMainFunction( Function* mf )
+{
+   delete m_mainFunc;
+   m_mainFunc = mf;
+   mf->module(this);
+   mf->name("__main__");
+   
+   _p->m_functions[mf->name()] = mf;
+}
+
+//=====================================================================
+// Classes
+//=====================================================================
 
 
 void Module::storeSourceClass( FalconClass* fcls, bool isObject, Symbol* gs )
@@ -955,145 +1067,6 @@ void Module::completeClass(FalconClass* fcls)
    }
 }
 
-
-void Module::unload()
-{
-   if( m_unloader != 0 )
-   {
-      DynUnloader* ul = m_unloader;
-      m_unloader = 0;
-      delete this;
-      ul->unload();
-   }
-   else
-   {
-      delete this;
-   }
-}
-
-
-
-void Module::forwardNS( Module* mod, const String& remoteNS, const String& localNS )
-{
-   static Collector* coll = Engine::instance()->collector();
-   static Class* symClass = Engine::instance()->symbolClass();
-   
-   Private::GlobalsMap& globs = mod->_p->m_gSyms;
-   
-   // search the symbols in the remote namespace.
-   String nsPrefix = remoteNS + ".";
-   Private::GlobalsMap::iterator gi = globs.lower_bound(nsPrefix);
-   while( gi != globs.end() && gi->first.startsWith(nsPrefix) )
-   {
-      String localName = localNS + "." + gi->first.subString(nsPrefix.length());
-      if( _p->m_gSyms.find(localName) == _p->m_gSyms.end())
-      {
-         Symbol* gs = new Symbol(*gi->second);
-         FALCON_GC_STORE( coll, symClass, gs );
-         _p->m_gSyms[localName] = gs;
-      }
-      ++gi;
-   }
-}
-
-
-Item* Module::addDefaultValue()
-{
-   _p->m_staticData.push_back(Item());
-   return &_p->m_staticData.back();
-}
-
-
-Item* Module::addDefaultValue( const Item& src )
-{
-   _p->m_staticData.push_back( src );
-   return &_p->m_staticData.back();
-}
-
-
-bool Module::addConstant( const String& name, const Item& value )
-{
-   Symbol* gsym = addVariable( name, true );
-   if ( gsym == 0 ) 
-   { 
-      return false;
-   }
-   
-   gsym->defaultValue( value );
-   gsym->setConstant();
-   return true;
-}
-
-void Module::checkWaitingFwdDef( Symbol* sym )
-{   
-   // ignore non-globals
-   if ( sym->type() != Symbol::e_st_global )
-   {
-      return;
-   }
-   
-   Private::DepMap::iterator pos = _p->m_deps.find( sym->name() );
-   if( pos != _p->m_deps.end() )
-   {
-      // if the request covers an explicit import, this is an error.
-      Private::Dependency* dep = pos->second;
-      if( dep->m_idef != 0 )
-      {
-         throw new CodeError( 
-            ErrorParam(e_already_def, sym->declaredAt(), m_uri ) 
-            // TODO add source reference of the imported def
-            .extra( String("imported symbol"))
-            .origin(ErrorParam::e_orig_compiler)
-            );
-      }
-      else
-      {
-         // a genuine forward definition
-         Error* err = dep->onResolved( this, this, sym );
-
-         // remove the dependency (was just a forward marker)
-         // TODO: it's this ok for serialization -- do we need it?
-         _p->m_deps.erase( pos );
-         delete dep;
-
-         // throw in case of errors
-         if( err != 0 )
-         {
-            throw err;
-         }            
-      }
-   }
-}
-
-
-Function* Module::getMainFunction()
-{
-   if ( m_mainFunc == 0 )
-   {
-      // see if someone was nice enough to add it elsewhere.
-      Private::FunctionMap::iterator iter = _p->m_functions.find("__main__");
-      if ( iter != _p->m_functions.end() )
-      {
-         m_mainFunc = iter->second;
-      }
-      else {
-         m_mainFunc = new SynFunc("__main__");
-         _p->m_functions[m_mainFunc->name()] = m_mainFunc;
-      }
-   }
-   
-   return m_mainFunc;
-}
-
-void Module::setMainFunction( Function* mf )
-{
-   delete m_mainFunc;
-   m_mainFunc = mf;
-   mf->module(this);
-   mf->name("__main__");
-   
-   _p->m_functions[mf->name()] = mf;
-}
    
 }
 

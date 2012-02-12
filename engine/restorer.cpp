@@ -118,6 +118,14 @@ public:
 //===========================================================
 //
 //
+Restorer::Restorer():
+   _p(0),
+   m_ctx( 0 ),
+   m_readNext( this ),
+   m_unflattenNext( this ),
+   m_linkNext( this )
+{       
+}
 
 Restorer::Restorer( VMContext* ctx ):
    _p(0),

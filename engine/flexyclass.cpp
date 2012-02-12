@@ -61,6 +61,10 @@ void* FlexyClass::clone( void* self ) const
    return new FlexyDict( *static_cast<FlexyDict*>(self));
 }
 
+void* FlexyClass::createInstance() const
+{
+   return new FlexyDict;
+}
 
 void FlexyClass::serialize( DataWriter*, void*  ) const
 {
@@ -143,11 +147,10 @@ void FlexyClass::describe( void* self, String& target, int depth, int maxlen ) c
 }
 
 
-void FlexyClass::op_create( VMContext* ctx, int32 pcount ) const
+void FlexyClass::op_init( VMContext* ctx, void* instance, int32 pcount ) const
 {
-   static Collector* coll = Engine::instance()->collector();
-
-   FlexyDict* self = new FlexyDict;
+   FlexyDict* self = static_cast<FlexyDict*>(instance);
+   
    // In case of a single parameter...
    if( pcount >= 1 )
    {
@@ -239,7 +242,7 @@ void FlexyClass::op_create( VMContext* ctx, int32 pcount ) const
 
    }
 
-   ctx->stackResult( pcount+1, FALCON_GC_STORE(coll, this, self ) );
+   return false;
 }
 
 

@@ -7,7 +7,8 @@
    {public:\
       Class##name( Class* derfrom ): DerivedFrom( derfrom, #name ) {}   \
       virtual ~Class##name() {};\
-      virtual void op_create( VMContext* ctx, int32 pcount ) const;\
+      virtual void* createInstance() const;\
+      virtual bool op_init( VMContext* ctx, void* instance, int32 pcount ) const;\
       virtual void restore( VMContext* ctx, DataReader*dr, void*& empty ) const; \
       extra\
    } \
@@ -78,6 +79,8 @@ FALCON_SYNCLASS_DECLARATOR(m_expr_postinc, PostInc, expr)
 FALCON_SYNCLASS_DECLARATOR(m_expr_postdec, PostDec, expr)
 //
 FALCON_SYNCLASS_DECLARATOR(m_expr_index, IndexAccess, expr)
+FALCON_SYNCLASS_DECLARATOR(m_expr_inherit, Inherit, expr)
+FALCON_SYNCLASS_DECLARATOR(m_expr_parentship, Parentship, expr)
 // Logic
 FALCON_SYNCLASS_DECLARATOR(m_expr_not, Not, expr)
 FALCON_SYNCLASS_DECLARATOR(m_expr_and, And, expr)

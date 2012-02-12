@@ -257,16 +257,6 @@ void ClassUser::describe( void* instance, String& target, int depth, int maxlen 
 }
 
 
-void ClassUser::op_create( VMContext* ctx, int32 pcount ) const
-{
-   static Collector* coll = Engine::instance()->collector(); 
-   
-   Item* params = ctx->opcodeParams(pcount);
-   void* instance = createInstance( params, pcount );
-   ctx->stackResult( pcount + 1, FALCON_GC_STORE( coll, this, instance ) );
-}
-
-
 void ClassUser::op_getProperty( VMContext* ctx, void* instance, const String& prop ) const
 {
    Private::PropMap::const_iterator iter = _p->m_props.find( prop );

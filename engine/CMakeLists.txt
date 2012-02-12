@@ -129,12 +129,14 @@ add_library(falcon_engine SHARED
   psteps/expriif.cpp
   psteps/exprincdec.cpp
   psteps/exprindex.cpp
+  psteps/exprinherit.cpp
   psteps/exprlit.cpp
   psteps/exprlogic.cpp
   psteps/exprmath.cpp
   psteps/exprmultiunpack.cpp
   psteps/exprneg.cpp
   psteps/exproob.cpp
+  psteps/exprparentship.cpp
   psteps/exprrange.cpp
   psteps/exprref.cpp
   psteps/exprproto.cpp
@@ -236,7 +238,6 @@ add_library(falcon_engine SHARED
   fstream.cpp
   hyperclass.cpp
   importdef.cpp
-  inheritance.cpp
   intcompiler.cpp
   item.cpp
   item_util.cpp
@@ -246,8 +247,9 @@ add_library(falcon_engine SHARED
   metaclass.cpp
   method.cpp
   modcompiler.cpp
-  modmap.cpp
   modloader.cpp
+  modmap.cpp
+  modrequest.cpp
   modspace.cpp
   module.cpp
   multiclass.cpp

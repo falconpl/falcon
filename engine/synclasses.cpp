@@ -39,12 +39,14 @@
 #include <falcon/psteps/expriif.h>
 #include <falcon/psteps/exprincdec.h>
 #include <falcon/psteps/exprindex.h>
+#include <falcon/psteps/exprinherit.h>
 #include <falcon/psteps/exprlit.h>
 #include <falcon/psteps/exprlogic.h>
 #include <falcon/psteps/exprmath.h>
 #include <falcon/psteps/exprmultiunpack.h>
 #include <falcon/psteps/exprneg.h>
 #include <falcon/psteps/exproob.h>
+#include <falcon/psteps/exprparentship.h>
 #include <falcon/psteps/exprproto.h>
 #include <falcon/psteps/exprpseudocall.h>
 #include <falcon/psteps/exprrange.h>
@@ -187,11 +189,12 @@ GCToken* SynClasses::collect( const Class* cls, TreeStep* earr, int line )
 //
 
 #define FALCON_STANDARD_SYNCLASS_OP_CREATE( cls, exprcls, operation ) \
-   void SynClasses::Class## cls ::op_create( VMContext* ctx, int pcount ) const\
+   virtual void* createInstance() const { return new exprcls; } \
+   virtual bool SynClasses::Class## cls ::op_init( VMContext* ctx, void* instance, int pcount ) const\
    {\
-      exprcls * expr = new exprcls ; \
-      SynClasses:: operation ( ctx, pcount, expr ); \
-      ctx->stackResult( pcount+1, SynClasses::collect( this, expr, __LINE__ ) ); \
+      exprcls* expr = static_cast<exprcls*>(instance); \
+      SynClasses::operation ( ctx, pcount, expr ); \
+      return false \
    }\
    void SynClasses::Class##cls ::restore( VMContext* ctx, DataReader*dr, void*& empty ) const \
    {\
@@ -227,6 +230,8 @@ FALCON_STANDARD_SYNCLASS_OP_CREATE( PostInc, ExprPostInc, unaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( PostDec, ExprPostDec, unaryExprSet )
    
 FALCON_STANDARD_SYNCLASS_OP_CREATE( IndexAccess, ExprIndex, binaryExprSet )
+FALCON_STANDARD_SYNCLASS_OP_CREATE( Inherit, ExprInherit, varExprInsert )
+FALCON_STANDARD_SYNCLASS_OP_CREATE( Parentship, ExprParentship, varExprInsert )
 
 // Logic
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Not, ExprNot, unaryExprSet )
@@ -281,8 +286,15 @@ FALCON_STANDARD_SYNCLASS_OP_CREATE( Unquote, ExprUnquote, unaryExprSet )
 // Specific management
 //
 
-void SynClasses::ClassGenClosure::op_create( VMContext* ctx, int pcount ) const
+void*  SynClasses::ClassGenClosure::createInstance() const
 {
+   return new ExprClosure;
+}
+
+bool SynClasses::ClassGenClosure::op_init( VMContext* ctx, void* instance, int pcount ) const
+{
+   ExprClosure* expr = static_cast<ExprClosure*>(instance);
+   
    if( pcount < 1 || ! ctx->topData().isFunction() )
    {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__, SRC )
@@ -290,9 +302,10 @@ void SynClasses::ClassGenClosure::op_create( VMContext* ctx, int pcount ) const
             .extra( String("C") ) );
    }
    
-   ExprClosure* expr = new ExprClosure( ctx->topData().asFunction() );
-   ctx->stackResult( pcount+1, SynClasses::collect( this, expr, __LINE__ ) );
+   expr->closed( ctx->topData().asFunction() );
+   return false;
 }
+
 void SynClasses::ClassGenClosure::restore( VMContext* ctx, DataReader*dr, void*& empty ) const
 {
    // TODO
@@ -301,8 +314,14 @@ void SynClasses::ClassGenClosure::restore( VMContext* ctx, DataReader*dr, void*&
 }
 
 
-void SynClasses::ClassGenDict::op_create( VMContext* ctx, int pcount ) const
+void* SynClasses::ClassGenDict::createInstance() const
 {
+   return new ExprDict;
+}
+bool SynClasses::ClassGenDict::op_init( VMContext* ctx, void* instance, int pcount ) const
+{
+   ExprDict* expr = static_cast<ExprDict*>(instance);
+   
    if( pcount % 2 != 0 )
    {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__, SRC )
@@ -310,9 +329,8 @@ void SynClasses::ClassGenDict::op_create( VMContext* ctx, int pcount ) const
             .extra( String("Need pair count of expressions") ) );
    }
    
-   ExprDict* expr = new ExprDict;
    SynClasses:: varExprInsert( ctx, pcount, expr );
-   ctx->stackResult( pcount+1, SynClasses::collect( this, expr, __LINE__ ) );
+   return false;
 }
 void SynClasses::ClassGenDict::restore( VMContext* ctx, DataReader*dr, void*& empty ) const
 {
@@ -321,8 +339,11 @@ void SynClasses::ClassGenDict::restore( VMContext* ctx, DataReader*dr, void*& em
 }
 
 
-
-void SynClasses::ClassDotAccess::op_create( VMContext* ctx, int pcount ) const
+void* SynClasses::ClassDotAccess::createInstance() const
+{
+   return new ExprDot;
+}
+bool SynClasses::ClassDotAccess::op_init( VMContext* ctx, void* instance, int pcount ) const
 {
    if( (pcount < 2) || (! ctx->opcodeParams(pcount)[1].isString()) )
    {
@@ -331,10 +352,10 @@ void SynClasses::ClassDotAccess::op_create( VMContext* ctx, int pcount ) const
             .extra( String("Expression,S") ) );
    }
    
-   ExprDot* expr = new ExprDot;
+   ExprDot* expr = static_cast<ExprDot*>(instance);
    SynClasses::unaryExprSet( ctx, pcount, expr );
    expr->property( *ctx->opcodeParams(pcount)[1].asString() );
-   ctx->stackResult( pcount+1, SynClasses::collect( this, expr, __LINE__ ) );
+   return false;
 }
 void SynClasses::ClassDotAccess::restore( VMContext* ctx, DataReader*dr, void*& empty ) const
 {
@@ -343,11 +364,14 @@ void SynClasses::ClassDotAccess::restore( VMContext* ctx, DataReader*dr, void*& 
 }
 
 
-
-void SynClasses::ClassMUnpack::op_create( VMContext* ctx, int pcount ) const
+bool SynClasses::ClassMUnpack::createInstance() const
+{       
+   return new ExprMultiUnpack;
+}
+bool SynClasses::ClassMUnpack::op_init( VMContext* ctx, void* instance, int pcount ) const
 {       
    // TODO -- parse a list of pairs symbol->expression
-   Class::op_create( ctx, pcount );
+   return Class::op_init( ctx, pcount );
 }
 void SynClasses::ClassMUnpack::restore( VMContext* ctx, DataReader*dr, void*& empty ) const
 {
@@ -356,10 +380,14 @@ void SynClasses::ClassMUnpack::restore( VMContext* ctx, DataReader*dr, void*& em
 }
 
 
-void SynClasses::ClassGenProto::op_create( VMContext* ctx, int pcount ) const
+bool SynClasses::ClassGenProto::createInstance() const
+{       
+   return new ExprProto;
+}
+bool SynClasses::ClassGenProto::op_init( VMContext* ctx, void* instance, int pcount ) const
 {       
    // TODO -- parse a list of pairs string->expression
-   Class::op_create( ctx, pcount );
+   return Class::op_init( ctx, pcount );
 }
 void SynClasses::ClassGenProto::restore( VMContext* ctx, DataReader*dr, void*& empty ) const
 {
@@ -368,11 +396,14 @@ void SynClasses::ClassGenProto::restore( VMContext* ctx, DataReader*dr, void*& e
 }
 
 
-
-void SynClasses::ClassPseudoCall::op_create( VMContext* ctx, int pcount ) const
+bool SynClasses::ClassPseudoCall::createInstance() const
+{       
+   return new ExprPseudoCall;
+}
+bool SynClasses::ClassPseudoCall::op_init( VMContext* ctx, void* instance, int pcount ) const
 {       
    // TODO -- parse a single pseudofunction and a list of parameters.
-   Class::op_create( ctx, pcount );
+   return Class::op_init( ctx, instance, pcount );
 }
 void SynClasses::ClassPseudoCall::restore( VMContext* ctx, DataReader*dr, void*& empty ) const
 {
@@ -382,10 +413,14 @@ void SynClasses::ClassPseudoCall::restore( VMContext* ctx, DataReader*dr, void*&
 
 }
 
-void SynClasses::ClassUnpack::op_create( VMContext* ctx, int pcount ) const
+bool SynClasses::ClassUnpack::createInstance() const
+{       
+   return new ExprUnpack;
+}
+bool SynClasses::ClassUnpack::op_init( VMContext* ctx, void* instance, int pcount ) const
 {       
    // TODO -- parse a list of pairs symbol, + 1 terminal expression
-   Class::op_create( ctx, pcount );
+   return Class::op_init( ctx, instance, pcount );
 }
 void SynClasses::ClassUnpack::restore( VMContext* ctx, DataReader*dr, void*& empty ) const
 {
@@ -393,8 +428,11 @@ void SynClasses::ClassUnpack::restore( VMContext* ctx, DataReader*dr, void*& emp
    m_parent->restore( ctx, dr, empty );
 }
 
-
-void SynClasses::ClassGenRange::op_create( VMContext* ctx, int pcount ) const
+bool SynClasses::ClassGenRange::createInstance() const
+{       
+   return new ExprRange;
+}
+bool SynClasses::ClassGenRange::op_create( VMContext* ctx, void* instance, int pcount ) const
 {
    if( pcount < 3 )
    {
@@ -403,7 +441,7 @@ void SynClasses::ClassGenRange::op_create( VMContext* ctx, int pcount ) const
             .extra( String("Expression|Nil,Expression|Nil,Expression|Nil") ) );
    }
       
-   ExprRange* rng = new ExprRange;
+   ExprRange* rng = static_cast<ExprRange*>(instance);
    Item* ops = ctx->opcodeParams(pcount);
    
    bool bOk = true;
@@ -442,19 +480,26 @@ void SynClasses::ClassGenRange::op_create( VMContext* ctx, int pcount ) const
          .extra( String("Expression|Nil,Expression|Nil,Expression|Nil") ) );
    }
 
-   ctx->stackResult( pcount+1, SynClasses::collect( this, rng, __LINE__ ) );
+   return false;
 }
-
 void SynClasses::ClassGenRange::restore( VMContext* ctx, DataReader*dr, void*& empty ) const
 {
    empty = new ExprRange;
    m_parent->restore( ctx, dr, empty );
 }
 
-void SynClasses::ClassGenRef::op_create( VMContext* ctx, int pcount ) const
+
+
+void* SynClasses::ClassGenRef::createInstance() const
+{
+   return new ExprRef;
+}
+bool SynClasses::ClassGenRef::op_init( VMContext* ctx, void* isntance, int pcount ) const
 {
    static Class* symClass = Engine::instance()->symbolClass();
    static Class* exprClass = Engine::instance()->expressionClass();
+   
+   ExprRef* expr = static_cast<ExprRef*>(instance);
    
    Item* params = ctx->opcodeParams(pcount);
    Class* cls=0;
@@ -470,22 +515,22 @@ void SynClasses::ClassGenRef::op_create( VMContext* ctx, int pcount ) const
    {
       //TODO:TreeStepInherit
       Symbol* sym = static_cast<Symbol*>( data );
-      ExprRef* expr = new ExprRef( sym );
-      ctx->stackResult( pcount+1, SynClasses::collect( this, expr, __LINE__ ) );
+      expr->symbol(sym);
    }
    else if( cls->isDerivedFrom( exprClass ) &&
       static_cast<Expression*>(data)->trait() == Expression::e_trait_symbol )
    {
       //TODO:TreeStepInherit
       ExprSymbol* sym = static_cast<ExprSymbol*>( data );
-      ExprRef* expr = new ExprRef( sym );
-      ctx->stackResult( pcount+1, SynClasses::collect( this, expr, __LINE__ ) );
+      expr->selector( sym );
    }
    else {            
       throw new ParamError( ErrorParam( e_inv_params, __LINE__, SRC )
             .origin( ErrorParam::e_orig_runtime)
             .extra( String("Symbol|Sym") ) );
    }
+   
+   return false;
 }
 void SynClasses::ClassGenRef::restore( VMContext* ctx, DataReader*dr, void*& empty ) const
 {
@@ -494,10 +539,15 @@ void SynClasses::ClassGenRef::restore( VMContext* ctx, DataReader*dr, void*& emp
 }
 
 
-void SynClasses::ClassGenSym::op_create( VMContext* ctx, int pcount ) const
+void* SynClasses::ClassGenSym::createInstance() const
+{
+   return new ExprSymbol;
+}
+bool SynClasses::ClassGenSym::op_init( VMContext* ctx, void* instance, int pcount ) const
 {
    static Class* symClass = Engine::instance()->symbolClass();
    
+   ExprSymbol* expr = static_cast<ExprSymbol*>( instance );
    Item* params = ctx->opcodeParams(pcount);
    
    if( pcount >= 1 )
@@ -506,17 +556,14 @@ void SynClasses::ClassGenSym::op_create( VMContext* ctx, int pcount ) const
       void* data;
       if( params->isString() )
       {
-         ExprSymbol* expr = new ExprSymbol( *params->asString() );
-         ctx->stackResult( pcount+1, SynClasses::collect( this, expr, __LINE__ ) );
-         return;
+         expr->name(*params->asString());
+         return false;
       }
       else if( params->asClassInst(cls, data) && cls->isDerivedFrom(symClass) )
       {
          Symbol* sym = static_cast<Symbol*>(symClass->getParentData( cls, data ));
-         ExprSymbol* expr = new ExprSymbol();
          expr->safeGuard( sym );
-         ctx->stackResult( pcount+1, SynClasses::collect( this, expr, __LINE__ ) );
-         return;
+         return false;
       }
    }
       
@@ -525,7 +572,6 @@ void SynClasses::ClassGenSym::op_create( VMContext* ctx, int pcount ) const
          .extra( String("Symbol|S") ) );
    //TODO:TreeStepInherit
 }
-
 void SynClasses::ClassGenSym::store( VMContext*, DataWriter* dw, void* instance ) const
 {
    ExprSymbol* es = static_cast<ExprSymbol*>(instance);
@@ -533,7 +579,6 @@ void SynClasses::ClassGenSym::store( VMContext*, DataWriter* dw, void* instance 
    dw->write( es->chr() );
    dw->write( es->name() );
 }
-
 void SynClasses::ClassGenSym::restore( VMContext*, DataReader*dr, void*& empty ) const
 {
    // TODO: this is just a test.
@@ -550,7 +595,6 @@ void SynClasses::ClassGenSym::restore( VMContext*, DataReader*dr, void*& empty )
    
    empty = es;
 }
-
  void SynClasses::ClassGenSym::flatten( VMContext*, ItemArray& subItems, void* instance ) const
  {
     static Class* sc = Engine::instance()->symbolClass();
@@ -560,21 +604,23 @@ void SynClasses::ClassGenSym::restore( VMContext*, DataReader*dr, void*& empty )
        subItems.reserve(1);
        subItems.append( Item(sc, es->symbol() ) );
     }
- }
- 
- void SynClasses::ClassGenSym::unflatten( VMContext*, ItemArray& subItems, void* instance ) const
- {
-    if( subItems.length() > 0 ) {
-       Symbol* sym = static_cast<Symbol*>( subItems[0].asInst() );
-       ExprSymbol* es = static_cast<ExprSymbol*>(instance);
-       es->safeGuard( sym );
-    }
- }
+}
+void SynClasses::ClassGenSym::unflatten( VMContext*, ItemArray& subItems, void* instance ) const
+{
+   if( subItems.length() > 0 ) {
+      Symbol* sym = static_cast<Symbol*>( subItems[0].asInst() );
+      ExprSymbol* es = static_cast<ExprSymbol*>(instance);
+      es->safeGuard( sym );
+   }
+}
  
 //==========================================
 // Expr value
-
-void SynClasses::ClassValue::op_create( VMContext* ctx, int pcount ) const
+void* SynClasses::ClassValue::createInstance() const
+{
+   return new ExprValue;
+}
+bool SynClasses::ClassValue::op_init( VMContext* ctx, void* instance, int pcount ) const
 {
    if( pcount < 1 )
    {
@@ -583,8 +629,9 @@ void SynClasses::ClassValue::op_create( VMContext* ctx, int pcount ) const
             .extra( String("X") ) );
    }
    
-   ExprValue* expr = new ExprValue( *ctx->opcodeParams(pcount) );
-   ctx->stackResult( pcount+1, SynClasses::collect( this, expr, __LINE__ ) );
+   ExprValue* expr = static_cast<ExprValue*>(instance);
+   expr->item( *ctx->topData().dereference() );
+   return false;
 }
 
 void SynClasses::ClassValue::flatten( VMContext*, ItemArray& subItems, void* instance ) const

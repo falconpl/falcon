@@ -39,6 +39,7 @@ public:
 
    virtual void dispose( void* self ) const;
    virtual void* clone( void* source ) const;
+   virtual void* createInstance( void* source ) const;
    
    virtual void store( VMContext* ctx, DataWriter* stream, void* instance ) const;
    virtual void restore( VMContext* ctx, DataReader* stream, void*& empty ) const;
@@ -52,7 +53,7 @@ public:
 
    //=============================================================
 
-   virtual void op_create( VMContext* ctx, int32 pcount ) const;
+   virtual bool op_init( VMContext* ctx, void* instance, int32 pcount ) const;
 
    virtual void op_getProperty( VMContext* ctx, void* self, const String& prop) const;
    virtual void op_getIndex( VMContext* ctx, void* self ) const;

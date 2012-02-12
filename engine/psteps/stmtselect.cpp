@@ -31,6 +31,7 @@
 
 #include <map>
 #include <deque>
+#include <vector>
 
 namespace Falcon {
 
@@ -38,8 +39,7 @@ class StmtSelect::Private
 {
 public:
    // blocks are kept separate for easier destruction and accounting.
-   typedef std::deque<SynTree*> BlockList;
-   BlockList m_blocks;
+   typedef std::deque<SynTree*> BlockList;   
 
    // blocks ordered for int
    typedef std::map<int64, SynTree*> IntBlocks;
@@ -47,15 +47,44 @@ public:
    // blocks ordered for class -- used only in case of perfect matches.
    typedef std::map<Class*, SynTree*> ClassBlocks;
 
-   // List of requested classes, and also declaration-ordered list of classes.
-   typedef std::deque< StmtSelect::SelectRequirement* > ClassList;
+   // Declaration-ordered list of classes.
+   typedef std::vector< Class* > ClassList;
 
    IntBlocks m_intBlocks;
    ClassBlocks m_classBlocks;
+   
+   BlockList m_blocks;
    ClassList m_classList;
 
 
    Private() {}
+   
+   Private( StmtSelect* owner, const Private& other ) 
+   {
+      IntBlocks::const_iterator ibi = other.m_intBlocks.begin();
+      while( ibi != other.m_blocks.end() )
+      {
+         SynTree* st = ibi->second->clone();
+         st->setParent(owner);
+         m_intBlocks[ibi->first] = st;
+         m_blocks.push_back( st );
+         ++ibi;
+      }
+      
+      ClassBlocks::const_iterator cbi = other.m_classBlocks.begin();
+      while( cbi != other.m_blocks.end() )
+      {
+         SynTree* st = cbi->second->clone();
+         st->setParent(owner);
+         m_classBlocks[cbi->first] = st;
+         m_blocks.push_back( st );
+         ++cbi;
+      }
+    
+      // class list can be a flat copy, classes are in the engine.
+      m_classList = other.m_classList;
+   }
+   
    ~Private()
    {
       BlockList::iterator iter = m_blocks.begin();
@@ -63,14 +92,7 @@ public:
       {
          delete *iter;
          ++iter;
-      }
-
-      ClassList::iterator cliter = m_classList.begin();
-      while( cliter != m_classList.end() )
-      {
-         delete *cliter;
-         ++cliter;
-      }
+      }      
    }
 };
 
@@ -80,7 +102,7 @@ StmtSelect::StmtSelect( Expression* expr, int32 line, int32 chr ):
    _p( new Private ),
    m_expr( expr ),
    m_defaultBlock(0),
-   m_module(0)
+   m_unresolved(0)
 {
    FALCON_DECLARE_SYN_CLASS( stmt_select );
 
@@ -99,8 +121,12 @@ StmtSelect::StmtSelect( Expression* expr, int32 line, int32 chr ):
 StmtSelect::StmtSelect( const StmtSelect& other ):
    Statement( other ),
    m_expr(0),
-   m_defaultBlock(0)
+   m_defaultBlock(0),
+   m_unresolved( other.m_unresolved )
 {
+   // we can't duplicate unresolved symbols.
+   fassert( m_unresolved == 0 );
+   
    if ( other.m_expr != 0 )
    {
       m_expr = other.m_expr->clone();
@@ -118,9 +144,8 @@ StmtSelect::StmtSelect( const StmtSelect& other ):
       m_defaultBlock = other.m_defaultBlock->clone();
       m_defaultBlock->setParent(this);
    }
-
-   // TODO: Copy the blocks
-   _p = new Private;
+   
+   _p = new Private( this, other._p);
 }
 
 StmtSelect::~StmtSelect()
@@ -213,24 +238,28 @@ bool StmtSelect::addSelectClass( Class* cls, SynTree* block )
    // anyhow, associate the request.
    _p->m_classBlocks[ cls ] = block;
 
-   // record the requirement -- as already resolved.
-   SelectRequirement* r = new SelectRequirement( cls->name(), block, this );
-   r->m_cls = cls;
-   _p->m_classList.push_back( r );
+   // Add the class in order -- as already resolved.   
+   _p->m_classList.push_back( cls );
 
    return true;
 }
 
 Requirement* StmtSelect::addSelectName( const String& name, SynTree* block )
 {
+   // save the block only if not just pushed in the last operation.
    if( _p->m_blocks.empty() || _p->m_blocks.back() != block )
    {
-      if( ! block->setParent(this) ) return NULL;
+      if( ! block->setParent(this) ) return 0;
       _p->m_blocks.push_back( block );
    }
 
-   SelectRequirement* req = new SelectRequirement( name, block, this );
-   _p->m_classList.push_back( req );
+   // add an empty class as a placeholder.
+   _p->m_classList.push_back( 0 );
+   m_unresolved++;
+   
+   // add a requirement pointing to the missing class.
+   SelectRequirement* req = new SelectRequirement( 
+         _p->m_classList.size()-1, name, block, this );
    return req;
 }
 
@@ -258,10 +287,13 @@ SynTree* StmtSelect::findBlockForClass( Class* cls ) const
    Private::ClassList::iterator iter = _p->m_classList.begin();
    while( iter != _p->m_classList.end() )
    {
-      Class* base = (*iter)->m_cls;
+      Class* base = (*iter);
+      // base can be 0 if the class was resolved as actually being an integer.
       if( base != 0 && cls->isDerivedFrom( base ) )
       {
-         return (*iter)->m_block;
+         Private::ClassBlocks::iterator pos = _p->m_classBlocks.find( cls );
+         fassert( pos != _p->m_classBlocks.end() );
+         return pos->second;
       }
       ++iter;
    }
@@ -313,6 +345,41 @@ bool StmtSelect::setDefault( SynTree* block )
    return true;
 }
 
+bool StmtSelect::setSelectClass( int id, Class* cls )
+{
+   fassert( id < _p->m_classList.size() );
+   // refuse to add if already existing.
+   if ( _p->m_classBlocks.find( cls ) != _p->m_classBlocks.end() )
+   {
+      return false;
+   }
+
+   // anyhow, associate the request.
+   _p->m_classBlocks[ cls ] = block;
+   // and fix the ID in the class list.
+   _p->m_classList[id] = cls;
+   
+   m_unresolved--;
+   return true;
+}
+
+bool StmtSelect::setSelectType( int id, int typeId )
+{
+   fassert( id < _p->m_classBlocks.size() );
+   
+   // refuse to add if already existing.
+   if ( _p->m_intBlocks.find( typeId ) != _p->m_intBlocks.end() )
+   {
+      return false;
+   }
+
+   // anyhow, associate the request.
+   _p->m_intBlocks[ typeId ] = block;
+   // -- there's nothing to fix in the class list, leave it 0.
+   m_unresolved--;
+   return true;
+}
+
 
 void StmtSelect::apply_( const PStep* ps, VMContext* ctx )
 {
@@ -347,15 +414,15 @@ void StmtSelect::apply_( const PStep* ps, VMContext* ctx )
 // The requirer
 //
 
-void StmtSelect::SelectRequirement::onResolved(
-         const Module* source, const Symbol* sym, Module*, Symbol*  )
+void SelectRequirement::onResolved(
+         const Module* source, const Symbol* sym, Module* requirer, Symbol*  )
 {
    const Item* itm = sym->getValue(0);
    if( itm == 0 || (!itm->isOrdinal()&& ! itm->isClass()) )
    {
-      throw new LinkError( ErrorParam( m_owner->m_expr == 0 ? e_catch_invtype : e_select_invtype )
-         .line( m_block->sr().line() )
-         .module( m_owner->m_module != 0 ? m_owner->m_module->uri() : "" )
+      throw new LinkError( ErrorParam( m_owner->selector() == 0 ? e_catch_invtype : e_select_invtype )
+         .line( m_line )
+         .module( requirer->uri() )
          .origin( ErrorParam::e_orig_linker )
          .symbol( sym->name() )
          .extra( String("declared in ") + (source != 0 ? source->uri() : "<internal>" ) )
@@ -366,34 +433,31 @@ void StmtSelect::SelectRequirement::onResolved(
    if( itm->isOrdinal() )
    {
       int64 tid = itm->forceInteger();
-      if( m_owner->_p->m_intBlocks.find( tid ) != m_owner->_p->m_intBlocks.end() )
+      if( ! m_owner->setSelectType( m_id, tid ) )
       {
-         throw new LinkError( ErrorParam( m_owner->m_expr == 0 ? e_catch_clash : e_switch_clash )
-            .line( m_block->sr().line() )
-            .module( m_owner->m_module != 0 ? m_owner->m_module->uri() : "" )
+         throw new LinkError( ErrorParam( m_owner->selector() == 0 ? e_catch_clash : e_switch_clash )
+            .line( m_line )
+            .module( requirer->uri() )
             .origin( ErrorParam::e_orig_linker )
             .symbol( sym->name() )
             .extra( String("declared in ") + (source != 0 ? source->uri() : "<internal>" ) )
             );
-      }
-      m_owner->_p->m_intBlocks[ tid ] = m_block;
+      }      
    }
    else
    {
       fassert( itm->asClass()->isMetaClass() );
       Class* cls = static_cast<Class*>(itm->asInst());
-      if( m_owner->_p->m_classBlocks.find( cls ) != m_owner->_p->m_classBlocks.end() )
+      if( ! m_owner->setSelectClass( m_id, cls ) )
       {
-         throw new LinkError( ErrorParam( m_owner->m_expr == 0 ? e_catch_clash : e_switch_clash )
-            .line( m_block->sr().line() )
-            .module( m_owner->m_module != 0 ? m_owner->m_module->uri() : "" )
+         throw new LinkError( ErrorParam( m_owner->selector() == 0 ? e_catch_clash : e_switch_clash )
+            .line( m_line )
+            .module( requirer->uri() )
             .origin( ErrorParam::e_orig_linker )
             .symbol( sym->name() )
             .extra( String("declared in ") + (source != 0 ? source->uri() : "<internal>" ) )
             );
       }
-      m_cls = cls;
-      m_owner->_p->m_classBlocks[ cls ] = m_block;
    }
 }
 

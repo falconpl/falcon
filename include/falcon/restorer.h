@@ -36,6 +36,7 @@ class ModLoader;
 class FALCON_DYN_CLASS Restorer
 {
 public:
+   Restorer();
    Restorer( VMContext* vmc );
    virtual ~Restorer();
    
@@ -49,6 +50,9 @@ public:
    virtual bool next( Class*& handler, void*& data, bool& first );
    virtual bool hasNext() const;
    virtual uint32 objCount() const;
+   
+   void context( VMContext* vmc ) { m_ctx = vmc; }
+   VMContext* context() const { return m_ctx; }
    
 private:
    class Private;

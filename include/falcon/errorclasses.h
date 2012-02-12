@@ -18,181 +18,86 @@
 
 #include <falcon/classes/classerror.h>
 
+#ifdef FALCON_DEFINE_ERROR_CLASSES
+   #define FALCON_DECLARE_ERROR_CLASS( name ) \
+   void* Class##name:: createInstance() const{ return new Class##name; }
+   
+#else
+
+   #define FALCON_DECLARE_ERROR_CLASS( name ) \
+      class Class##name: public ClassError\
+      {\
+      public:\
+         Class##name(): ClassError( #name ) {} \
+         virtual ~Class##name(){} \
+         virtual void* createInstance() const;\
+      };
+#endif
+
 namespace Falcon {
 
 /** Class handler for AccessError exceptions. 
  */
-class ClassAccessError: public ClassError
-{
-public:
-   ClassAccessError():
-      ClassError("AccessError")
-   {}
-
-   virtual void op_create( VMContext* ctx, int32 pcount ) const;
-};
+FALCON_DECLARE_ERROR_CLASS( AccessError )
 
 /** Class handler for AccessTypeError exceptions. 
  */
-class ClassAccessTypeError: public ClassError
-{
-public:
-   ClassAccessTypeError():
-      ClassError("AccessTypeError")
-   {}
-
-   virtual void op_create( VMContext* ctx, int32 pcount ) const;
-};
+FALCON_DECLARE_ERROR_CLASS( AccessTypeError )
 
 /** Class handler for CodeError exceptions. 
  */
-class ClassCodeError: public ClassError
-{
-public:
-   ClassCodeError():
-      ClassError("CodeError")
-   {}
-
-   virtual void op_create( VMContext* ctx, int32 pcount ) const;
-};
-
+FALCON_DECLARE_ERROR_CLASS( CodeError )
 
 /** Class handler for GenericError exceptions. 
  */
-class ClassGenericError: public ClassError
-{
-public:
-   ClassGenericError():
-      ClassError( "GenericError" )
-      {}
-
-   virtual void op_create( VMContext* ctx, int32 pcount ) const;
-};
+FALCON_DECLARE_ERROR_CLASS( GenericError )
 
 
 /** Class handler for InterruptedError exceptions. 
  */
-class ClassInterruptedError: public ClassError
-{
-public:
-   ClassInterruptedError():
-      ClassError( "InterruptedError" )
-      {}
-
-   virtual void op_create( VMContext* ctx, int32 pcount ) const;
-};
-
+FALCON_DECLARE_ERROR_CLASS( InterruptedError )
 
 /** Class handler for IOError exceptions. 
  */
-class ClassIOError: public ClassError
-{
-public:
-   ClassIOError():
-      ClassError( "IOError" )
-      {}
 
-   virtual void op_create( VMContext* ctx, int32 pcount ) const;
-};
+FALCON_DECLARE_ERROR_CLASS( IOError )
 
 /** Class handler for LinkError exceptions. 
  */
-class ClassLinkError: public ClassError
-{
-public:
-   ClassLinkError():
-      ClassError( "LinkError" )
-      {}
-
-   virtual void op_create( VMContext* ctx, int32 pcount ) const;
-};
+FALCON_DECLARE_ERROR_CLASS( LinkError )
 
 
 /** Class handler for OperandError exceptions. 
  */
-class ClassOperandError: public ClassError
-{
-public:
-   ClassOperandError():
-      ClassError( "OperandError" )
-      {}
+FALCON_DECLARE_ERROR_CLASS( OperandError )
 
-   virtual void op_create( VMContext* ctx, int32 pcount ) const;
-};
 
 /** Class handler for UnsupportedError exceptions. 
  */
-class ClassUnsupportedError: public ClassError
-{
-public:
-   ClassUnsupportedError():
-      ClassError( "UnsupportedError" )
-      {}
+FALCON_DECLARE_ERROR_CLASS( UnsupportedError )
 
-   virtual void op_create( VMContext* ctx, int32 pcount ) const;
-};
 
 /** Class handler for EncodingError exceptions. 
  */
-class ClassEncodingError: public ClassError
-{
-public:
-   ClassEncodingError():
-      ClassError( "EncodingError" )
-      {}
-
-   virtual void op_create( VMContext* ctx, int32 pcount ) const;
-};
+FALCON_DECLARE_ERROR_CLASS( EncodingError )
 
 
 /** Class handler for SyntaxError exceptions. 
  */
-class ClassSyntaxError: public ClassError
-{
-public:
-   ClassSyntaxError():
-      ClassError( "SyntaxError" )
-      {}
-
-   virtual void op_create( VMContext* ctx, int32 pcount ) const;
-};
+FALCON_DECLARE_ERROR_CLASS( SyntaxError )
 
 
 /** Class handler for ParamError exceptions. 
  */
-class ClassParamError: public ClassError
-{
-public:
-   ClassParamError():
-      ClassError( "ParamError" )
-      {}
-      
-   virtual void op_create( VMContext* ctx, int32 pcount ) const;
-};
+FALCON_DECLARE_ERROR_CLASS( ParamError )
 
 /** Class handler for MathError exceptions. 
  */
-class ClassMathError: public ClassError
-{
-public:
-   ClassMathError():
-      ClassError( "MathError" )
-      {}
-      
-   virtual void op_create( VMContext* ctx, int32 pcount ) const;
-};
+FALCON_DECLARE_ERROR_CLASS( MathError )
 
 /** Class handler for MathError exceptions. 
  */
-class ClassUnserializableError: public ClassError
-{
-public:
-   ClassUnserializableError():
-      ClassError( "UnserializableError" )
-      {}
-      
-   virtual void op_create( VMContext* ctx, int32 pcount ) const;
-};
+FALCON_DECLARE_ERROR_CLASS( UnserializableError )
 
 }
 

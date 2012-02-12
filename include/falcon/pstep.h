@@ -54,14 +54,6 @@ public:
    
    inline virtual ~PStep() {}
 
-   /** Convert into a string */
-   inline String describe( int depth = 0 ) const
-   {
-      String temp;
-      describeTo( temp, depth );
-      return temp;
-   }
-
    /** Convert into a string.
     \param target A target string where to write the pstep representation.
     \param depth A syntactic depth (toplevel is 0) used for indentation.
@@ -77,14 +69,14 @@ public:
     */
    virtual void oneLinerTo( String& target ) const;
 
-   /** Convert into a string -- short version. */
-   inline String oneLiner() const
-   {
-      String temp;
-      oneLinerTo( temp );
-      return temp;
+   inline String describe( int depth = 0 ) const {
+      String temp; describeTo(temp, depth ); return temp;
    }
-
+   
+   inline String oneLiner() const {
+      String temp; oneLinerTo(temp); return temp;
+   }
+   
    /** Apply function. 
     \param self The PStep that was applied here.
     \param ctx The virtual machine context where this apply function was run

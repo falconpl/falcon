@@ -69,12 +69,9 @@ bool PrototypeClass::hasProperty( void* self, const String& prop ) const
 // Operators.
 //
 
-void PrototypeClass::op_create( VMContext* ctx, int32 params ) const
+bool PrototypeClass::op_init( VMContext* ctx, void* instance, int32 params ) const
 {
-   static Collector* coll = Engine::instance()->collector();
-   static Class* cls =  Engine::instance()->protoClass();
-
-   FlexyDict *value = new FlexyDict;
+   FlexyDict *value = static_cast<FlexyDict*>(instance);
 
    // we must create the prototype with the given bases.
    if( params > 0 )
@@ -91,7 +88,7 @@ void PrototypeClass::op_create( VMContext* ctx, int32 params ) const
       }
    }
 
-   ctx->stackResult( params+1, FALCON_GC_STORE( coll, cls, value ) );
+   return false;
 }
 
 

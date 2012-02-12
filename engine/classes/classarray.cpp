@@ -122,26 +122,26 @@ void ClassArray::describe( void* instance, String& target, int maxDepth, int max
    target.append( "]" );
 }
 
-
-void ClassArray::op_create( VMContext* ctx, int pcount ) const
+void* ClassArray::createInstance() const
 {
-   static Collector* coll = Engine::instance()->collector();
+   return new ItemArray;
+}
 
-   length_t count = 0;
 
-   if ( pcount >= 1 )
+bool ClassArray::op_init( VMContext* ctx, void* instance, int pcount ) const
+{
+   ItemArray* array = static_cast<ItemArray*>(instance);
+   if ( pcount > 0 )
    {
+      array->resize( pcount );
       Item* first = ctx->opcodeParams( pcount );
-
-      if( ! first->isOrdinal() )
+      for( int pos = 0; pos < pcount; ++ pos )
       {
-         throw new ParamError( ErrorParam( e_inv_params, __LINE__,__FILE__ ).extra( "[N]" ) );
+         (*array)[pos] = first[pos];
       }
-
-      count = first->forceInteger();
    }
-
-   ctx->stackResult( pcount+1, FALCON_GC_STORE( coll, this, new ItemArray( count ) ) );
+   
+   return false;
 }
 
 

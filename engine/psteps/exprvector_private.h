@@ -119,6 +119,13 @@ public:
       m_exprs.erase( m_exprs.begin() + n );
       return true;
    }
+   
+   inline bool append( TreeStepSubClass__* ts, TreeStep* owner )
+   {      
+      if( ts != 0 && ! ts->setParent(owner) ) return false;  
+      m_exprs.push_back(ts);
+      return true;
+   }
 };
 
 

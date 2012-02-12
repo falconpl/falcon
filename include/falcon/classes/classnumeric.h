@@ -35,13 +35,15 @@ public:
 
    virtual void dispose( void* self ) const;
    virtual void* clone( void* source ) const;
+   virtual void* createInstance() const;
+   
    virtual void store( VMContext*, DataWriter* dw, void* data ) const;
    virtual void restore( VMContext* , DataReader* dr, void*& data ) const;
 
    virtual void describe( void* instance, String& target, int depth = 3, int maxlen = 60 ) const;
 
    //=============================================================
-   virtual void op_create( VMContext* ctx, int32 pcount ) const;
+   virtual bool op_init( VMContext* ctx, void* instance, int32 pcount ) const;
    virtual void op_isTrue( VMContext* ctx, void* self ) const;
    virtual void op_toString( VMContext* ctx, void* self ) const;
    virtual void op_add( VMContext* ctx, void* self ) const;

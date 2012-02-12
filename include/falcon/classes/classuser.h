@@ -169,28 +169,6 @@ public:
     */
    uint32 carriedProps() const { return m_carriedProps; }
    
-   /** Instance creation helper.
-    \param params An array of items containing the parameters passed by the VM.
-    \param pcount Number of parameters in the params array.
-    
-    This method is called back by the op_create when creating an object
-    of this class. Actually, the op_create is just a wrapper adround this class,
-    so if you want to use directly the op_create method, you can just stub out
-    this abstract virtual call and write the needed code in op_create.
-    
-    However, notice that op_create needs to:
-    - Get the parameter array
-    - Account the created item in the GC, and create a poper UserData item.
-    - properly uroll the stack and place the created item at proper location on 
-      success.
-    
-    Be sure to know the op_create requirements if you want to use it directly.
-    
-    \note This method \b must return a valid instance. In case this is not
-    possible, it \b must throw a relevant Error derived exception pointer.
-    */
-   virtual void* createInstance( Item* params, int pcount ) const = 0;
-   
    //==================================================================
    // Things to be overridden if you don't want to use UserCarrier.
    //
@@ -253,7 +231,6 @@ public:
    virtual void describe( void* instance, String& target, int depth = 3, int maxlen = 60 ) const;
 
    
-   virtual void op_create( VMContext* ctx, int32 pcount ) const;
    virtual void op_getProperty( VMContext* ctx, void* instance, const String& prop) const;
    virtual void op_setProperty( VMContext* ctx, void* instance, const String& prop ) const;
 

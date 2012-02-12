@@ -85,6 +85,7 @@ public:
    ~Symbol();
 
    const String& name() const { return m_name; }
+   void name( const String& n) const { m_name = n; }
    type_t type() const { return m_type; }   
 
    /** Source line at which the symbol was declared.

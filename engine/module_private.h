@@ -19,6 +19,7 @@
 
 #include <falcon/module.h>
 #include <falcon/requirement.h>
+#include <falcon/modrequest.h>
 
 #include <deque>
 #include <list>
@@ -29,52 +30,108 @@ namespace Falcon {
 class Module::Private
 {
 public:
+   typedef std::deque<ModRequest*> ReqList;
+   
+   /** List of requirements.
+    
+    This list is kept ordered as load order do matters when it comes to
+    resolve import order and order of the execution of main code of modules.
+    */
+   ReqList m_mrlist;
+   
+   typedef std::map<String, ModRequest*> ReqMap;
+   
+   /** External modules static requirements, ordered by name.
+    
+    Name ordering is kept to simplify search for already define module 
+    requirements.
+    */
+   ReqMap m_mrmap;
+   
+   /* Generic requirements, that is modules named under "import from Module".
+    
+    When an import request with a generic requirement is found, the ModRequest
+    it bears is added here for simpler reference later on (so that it is not
+    necessary to scan all the import requests to find them).
+   */
+   ReqList m_genericMods;
+   
    typedef std::deque<ImportDef*> ImportDefList;
+   
+   /** List of import definitions.
+    
+    This is the list of "import" requests. It represents all the "import" directives,
+    ordered by their appareance order in the module.
+    
+    In this list, both "direct" and source import requests are stored.
+    
+    Direct imports are imports directly generated from code and not from 
+    a source script "import" or load directive.
+    */
+   ImportDefList m_importDefs; 
    
    //============================================
    // Requirements and dependencies
    //============================================
    
-   /** Class keeping records of modules requested (referenced) by this module. */
-   class ModRequest
-   {
-   public:
-      String m_name;
-      bool m_isLoad;
-      bool m_bIsURI;
-      Module* m_module;
-      
-      ImportDefList m_defs;
-      
-      ModRequest();
-      ModRequest( const String& name, bool isUri = false, bool isLoad = false, Module* mod = 0);
-      
-      ~ModRequest();
-   };
-   
-   /** Record keeping track of needed modules (eventually already defined). */
+   /** Data representing a dependency from a foreign entity.
+    
+    Dependencies may be created through:
+    - Explicit import requests (import directive).
+    - Implicit import requests (undefined symbols).
+    - Direct external symbol requirements.
+    
+    In the first two cases, an "extern" symbol in the host module gets bound to the
+    dependency, and resolving the dependence means to update the symbol to 
+    reference the external data.
+    
+    In case of direct dependency creation, the target symbol is just searched
+    in the required module, when found, and the dependency calls the registered
+    listeners (Requirement class instances).
+    
+    A dependency is generically bound to an import definition, unless it has
+    been created by an implicit import. If bound to an import definition,
+    it will be resolved in the scope of the module indicated by that, otherwise
+    it will be resolved by searching the generically exported symbols.
+    
+    Dependencies created to import implicitly or explicitly symbols will be
+    repeated in the m_depsBySymbol map. All the dependencies are stored in
+    m_deps.
+    */
    class Dependency
    {
    public:
-      /** Local unresolved symbol. */
+      /** Local unresolved symbol.
+       Could be zero in case of a dependency created by a direct request.
+       */
       Symbol* m_symbol;
       
-      /** The import definition related to this dependency. 
+      /** The import definition related to this dependency.
+       
        It will be nonzero if the symbol was created because of an explicit
        import or related to it.
+       
+       Could be zero if the dependency is created by an implicit impor request.
        */
       ImportDef* m_idef;
       
-      /** The symbol designated by this dependency once resolved. */
+      /** The symbol designated by this dependency once resolved. 
+       Will be zero until the symbol is not found in the source module.
+       */
       Symbol* m_resSymbol;
-      
-      /** The module request where the source module for this symbol is to be resolved (if direct) */
-      ModRequest* m_sourceReq; 
-      
-      /** The name of the symbol as it appares in the source module. */
+           
+      /** The name of the symbol as it appares in the source module.
+       It is calculated from the import definition, once applied namespaces
+       and/or name aliasing defined there, or set to the same name
+       of the implicitly imported symbol in case of implicit import.
+       
+       Dependencies created by direct imports requests will bear the name
+       of the required symbol in the target module.
+       */
       String m_sourceName;
 
-      typedef std::list<Requirement*> WaitingList;
+      /** We are responsible ofthe waiting list -- requirements are in the module. */
+      typedef std::deque<Requirement*> WaitingList;
       
       /* Delayed requests waiting for this synmbol to be resolved. 
        
@@ -82,26 +139,36 @@ public:
        The requirements are generated 
        */      
       WaitingList m_waitings;
+      
+      /** Position of this entity in the module data.
+       Used for simpler serialization, so that it is possible to reference this
+       entity in the serialized file.
+       */
+      int m_id;
 
       Dependency():
          m_symbol( 0 ),
          m_idef( 0 ),
+         m_resSymbol( 0 )
+      {}
+      
+      Dependency( const String& name ):
+         m_symbol( 0 ),
+         m_idef( 0 ),
          m_resSymbol( 0 ),
-         m_sourceReq(0)
+         m_sourceName( name )
       {}
       
       Dependency( Symbol* sym ):
          m_symbol( sym ),
          m_idef( 0 ),
-         m_resSymbol( 0 ),
-         m_sourceReq(0)
+         m_resSymbol( 0 )
       {}
       
       Dependency( Symbol* sym, ImportDef* def ):
          m_symbol( sym ),
          m_idef( def ),
-         m_resSymbol( 0 ),
-         m_sourceReq(0)
+         m_resSymbol( 0 )
       {}
 
       ~Dependency();
@@ -123,12 +190,19 @@ public:
       Error* onResolved( Module* parentMod, Module* mod, Symbol* sym );
    };
    
+   typedef std::deque<Dependency*> DepList;
+   /** List of all the dependencies in the module.
+    
+    */
+   DepList m_deplist;
    
-   //============================================
-   // Main data
-   //============================================
-
+   /** Map of dependencies by the explicit or implicit import symbol name. 
+    
+    Not all the dependencies are created because of an import. Some may be
+    directly created by direct import requests.
+    */   
    typedef std::map<String, Dependency*> DepMap;
+   
    /* Map ext symbol name -> Dependency*.
     This map stores the dependecies known by this module. Each external symbol
     has a dependency which records:
@@ -139,73 +213,29 @@ public:
     to be searched, it is to be found in the global exports of the ModSpace
     where this module resides.
     */
-   DepMap m_deps;
+   DepMap m_depsBySymbol;
    
-   class DirectRequest 
-   {
-   public:
-      /** The import definition related to this dependency. 
-       */
-      ImportDef* m_idef;      
-      t_func_import_req m_cb;
-      
-      DirectRequest() {}
-      
-      DirectRequest( ImportDef* idef, t_func_import_req cb ):
-         m_idef( idef ),
-         m_cb(cb)
-      {}
-      
-      ~DirectRequest();
-   };
-   
-   typedef std::deque<DirectRequest *> DirectReqList;
-   DirectReqList m_directReqs;
-   
-   
-   ImportDefList m_importDefs;   
-   
-   typedef std::map<String, ModRequest*> ReqMap;
-   
-   /** External modules static requirements.         
+   /** Class used to keep track of requests to import a whole namespace.
+    Namespace imports are request to import multiple symbols in the owner module.
+    
+    They are created throught the "import/ * /from" directive, where * indicates
+    the whole of a namespace. 
+    
+    Namespace imports are always bound to an import definition that
+    asks for multiple symbols to be imported.
+    
+    This class is used to keep track of where this kind of import directive
+    is meant to perform the transfer.
     */
-   ReqMap m_mrmap;
-   
-   typedef std::deque<ModRequest*> ReqList;
-   /** List of requirements.
-    This list is kept ordered as load order do matters when it comes to
-    resolve import order and order of the execution of main code of modules.
-    */
-   ReqList m_mrlist;
-   
-   // Generic requirements, that is, import from Module 
-   // (modules that might provide any undefined symbol).
-   ReqList m_genericMods;
-
-   typedef std::map<String, Symbol*> GlobalsMap;
-   GlobalsMap m_gSyms;
-   GlobalsMap m_gExports;
-
-   typedef std::map<String, Function*> FunctionMap;
-   FunctionMap m_functions;
-
-   typedef std::map<String, Class*> ClassMap;
-   ClassMap m_classes;
-
-   typedef std::list<Item> StaticDataList; 
-   StaticDataList m_staticData;
-   
    class NSImport {
    public:
       ImportDef* m_def;
-      ModRequest* m_req;
       String m_from;
       String m_to;
       bool m_bPerformed;
       
-      NSImport( ImportDef* def, ModRequest* mr, const String& from, const String& to ):
+      NSImport( ImportDef* def, const String& from, const String& to ):
          m_def( def ),
-         m_req( mr ),
          m_from( from ),
          m_to( to ),
          m_bPerformed( false )
@@ -214,6 +244,28 @@ public:
    
    typedef std::deque<NSImport*> NSImportList;
    NSImportList m_nsimports;
+   
+      
+   //============================================================
+   // Visible entities
+   //
+
+   typedef std::map<String, Symbol*> GlobalsMap;
+   /** Map of global symbols. 
+    All the global symbols defined in the module are listed here.
+    */
+   GlobalsMap m_gSyms;
+   
+   /** Map of global symbols that are exported. 
+    Symbols that must be exported are listed here.
+    */
+   GlobalsMap m_gExports;
+
+   typedef std::map<String, Function*> FunctionMap;
+   FunctionMap m_functions;
+
+   typedef std::map<String, Class*> ClassMap;
+   ClassMap m_classes;
    
    Private()
    {}

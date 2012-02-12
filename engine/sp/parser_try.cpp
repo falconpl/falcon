@@ -219,7 +219,14 @@ static void internal_apply_catch( int toks, Parser& p, int line, int chr,
          // catch by name.         
          Requirement* req = stmttry->catchSelect()
                            .addSelectName( *errName, newBranch );  
-         ctx->onRequirement( req );
+         if( req == 0 )
+         {
+            // name clash.
+            p.addError( e_catch_adef, p.currentSource(), line, chr );
+         }
+         else {
+            ctx->onRequirement( req );
+         }
       }
       else
       { 

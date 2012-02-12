@@ -36,8 +36,9 @@ public:
    virtual void describe( void* instance, String& target, int depth = 3, int maxlen = 60 ) const;
    virtual void dispose( void* instance ) const;
    virtual void* clone( void* instance ) const;
+   virtual void* createInstance() const;
    
-   virtual void op_create( VMContext* ctx, int32 pcount ) const;
+   virtual bool op_init( VMContext* ctx, void* instance, int32 pcount ) const;
    
    virtual void enumerateProperties( void* instance, PropertyEnumerator& cb ) const;
    virtual void enumeratePV( void* instance, PVEnumerator& cb ) const;

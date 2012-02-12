@@ -146,14 +146,7 @@ bool ClassStream::gcCheck( void* instance, uint32 mark ) const
    return carrier->m_gcMark < mark;
 }
    
-void ClassStream::op_create( VMContext*, int32 ) const
-{
-   throw new UnsupportedError( ErrorParam(e_abstract_init, __LINE__, __FILE__ )
-      .extra("Stream") 
-      );
-}
-
-void* ClassStream::createInstance( Item*, int ) const
+void* ClassStream::createInstance() const
 {
    // never really called
    return 0;

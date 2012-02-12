@@ -178,6 +178,7 @@ public:
     - ClassBool
     - ClassInteger
     - ClassNumeric
+    - ClassMethod
 
     */
    bool isFlatInstance() const { return m_bIsFlatInstance; }
@@ -269,14 +270,46 @@ public:
    /** Disposes an instance.
     \param instance The instance to be disposed of.
     \note Actually, the disposal might be a dereference if necessary.
+    
+    \note Flat instance classes need not to do anything.
     */
    virtual void dispose( void* instance ) const = 0;
 
    /** Clones an instance.
     \param instance The instance to be cloned.
     \return A new copy of the instance.
+    
+    \note Flat instance classes should return the instance parameter as-is.
     */
    virtual void* clone( void* instance ) const = 0;
+   
+  /** Creates a totally unconfigured instance of this class.
+    \return a new instance of an entity of this class.
+    
+    This method creates an instance that is then to be initialized
+    by other means (mainly, by a subsequent call to op_init).
+    
+    Some class hierarcies provide a "top-class" instance
+    
+    Some classes just provide static members and are not meant
+    to generate any instance. It is then legal to return 0 
+    (the system will generate a sensible error depending on the
+    context).
+   
+   This function is not required to handle the created instance to the
+   garbage collector. It is supposed that, in case this is reasonable,
+   the garbage collector is invoked by the op_init() class member, or
+   directly by the virtual machine when necessary.
+   
+   Once returned, the instance might be stored in the garbage collector
+   by the virtual machine. This ensures that any subsequent operation during
+   even complex init phases involving foreign subclasses can be correctly
+   handled and that the VM knows how to handled the (not fully configured)
+   instance during the following period.
+   
+    \note Flat instance classes \b must return 0.
+    */
+   virtual void* createInstance() const = 0; 
 
    /** Store an instance to a determined storage media.
     @param ctx A virtual machine context where the serialization occours.
@@ -502,31 +535,53 @@ public:
     FalconClass.
     */
    virtual void onInheritanceResolved( Inheritance* inh );
-
-
+   
    //=========================================================
    // Operators.
    //
 
-   /** Invoked by the VM to create an instance.
-    \param VM a virtual machine invoking the object creation.
+   /** Invoked by the VM to initialize an instance.
+    \param ctx a virtual machine context invoking the object initialization.
+    \param instance The instance to be initialized.
     \param pcount Number of parameters passed in the init request.
-
+    \return True if the init operation requires to go deep.
+    
     This method is invoked by the VM when it requires an instance to be
-    created by this class.
+    initialized by this class. The VM grants that the self item that is 
+    being initialized is pushed right before the first parameter, and 
+    can be found at opcodeParams( pcount+1 ). Notice that op_init() is called
+    also for base classes of the item currently being initialized, so the
+    item at opcodeParams( pcount+1 ) can be an instance of a child class.
+    
+    A call to this method will usually follow a call
+    to createInstance(), where the instance is created; prior calling this 
+    method, the VM ensures that the created instance is stored in the
+    garbage collector, so that any operation causing suspension, deep
+    descent or error in the VM won't leave the instance dangling in the void,
+    and can be accounted in case of deep and complex initialization rotuines.
 
-    The operator must reduce the stack of pcount elements and add the
-    nelwy created instance as a Falcon Item on the stack. The instance may
-    be either created as garbage sensible (DeepData) or as "static" UserData.
+    If the initialization fails for any reason, this method should throw
+    an error.
 
-    If the method is not able to perform one of this operations, it must
-    generate an exception.
-
-    If the method needs to invoke other VM operations, the method can
-    push a pstep to be called afterwards (see Context::ifDeep), and retard
-    the generation of the instance at a later moment.
+    If the method needs to invoke other VM operations, it must return \b true.
+    Doing so, it declares that the initialization sequence passes under
+    the control of this class. This class must then push proper PSteps in the
+    stack so that, when the initialization step is complete, \b pcount parameters
+    are removed from the data stack.
+    
+    In case this method doesn't need to perform deep operations in the VMContext,
+    it can simply return \b false. In this case, the caller will properly remove 
+    items from the data stack as needed.
+    
+    In any case, pushing an instance of the class on the stack is \b not a
+    responsibility of this method. This operation is performed by the caller,
+    where needed.
+    
+    \note Flat instance classes will receive the item to be initialized
+    in the \b instance paramter.
+    
     */
-   virtual void op_create( VMContext* ctx, int32 pcount ) const;
+   virtual bool op_init( VMContext* ctx, void* instance, int32 pcount ) const;
 
    /** Called back when the VM wants to negate an item.
      \param vm the virtual machine that will receive the result.

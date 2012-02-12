@@ -35,9 +35,11 @@ ClassNil::~ClassNil()
 }
 
 
-void ClassNil::op_create( VMContext* ctx, int pcount ) const
+bool ClassNil::op_init( VMContext* ctx, void* instance, int pcount ) const
 {
-   ctx->stackResult( pcount + 1, Item( ) );
+   Item* item = static_cast<Item*>(instance);
+   item->setNil();
+   return false;
 }
 
 
@@ -46,11 +48,15 @@ void ClassNil::dispose( void* ) const
 }
 
 
-void* ClassNil::clone( void* ) const
+void* ClassNil::clone( void* inst ) const
+{
+   return inst;
+}
+
+void* ClassNil::createInstance() const
 {
    return 0;
 }
-
 
 void ClassNil::store( VMContext*, DataWriter* , void* ) const
 {

@@ -66,9 +66,32 @@ Error::Error( Class* handler, const ErrorParam &params ):
    m_catchable( params.m_catchable ),
    m_bHasRaised( false )
 {
-   _p = new Error_p;   
+   _p = new Error_p;
 }
 
+
+Error::Error( Class* handler ):
+   m_refCount( 1 ),
+   m_handler( handler )
+{
+   _p = new Error_p;
+}
+
+void Error::set( const ErrorParam& params )
+{
+   m_errorCode = params.m_errorCode ;
+   m_description = params.m_description ;
+   m_extra = params.m_extra ;
+   m_symbol = params.m_symbol ;
+   m_module = params.m_module ;
+   m_handler= handler ;
+   m_line= params.m_line ;
+   m_chr= params.m_chr ;
+   m_sysError= params.m_sysError ;
+   m_origin= params.m_origin ;
+   m_catchable= params.m_catchable ;
+   m_bHasRaised= false ;
+}
 
 Error::~Error()
 {

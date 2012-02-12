@@ -69,7 +69,6 @@
 #include <falcon/errors/linkerror.h>
 
 //--- class headers ---
-#include <falcon/inheritance.h>
 #include <falcon/requirement.h>
 
 #endif	/* FALCON_H */

@@ -28,7 +28,9 @@ ImportDef::ImportDef():
    m_bIsLoad( false ),
    m_bIsUri( false ),
    m_bIsNS( false ),
-   m_bIsDirect( false )
+   m_bIsDirect( false ),
+   m_modreq(0),
+   m_id(0)
 {}
 
 
@@ -38,7 +40,9 @@ ImportDef::ImportDef( const String& path, bool isFsPath, const String& symName,
    m_bIsLoad( false ),
    m_bIsUri( false ),
    m_bIsNS( false ),
-   m_bIsDirect( false )
+   m_bIsDirect( false ),
+   m_modreq(0),
+   m_id(0)
 {
    setImportFrom( path, isFsPath, symName, nsName, bIsNS );      
 }

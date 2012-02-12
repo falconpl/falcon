@@ -346,7 +346,6 @@ Error* ModSpace::linkModuleImports( Module* mod )
    TRACE( "ModSpace::linkModuleImports start on %s", mod->uri().c_ize() );
    Error* link_errors = 0;
    linkImports( mod, link_errors );
-   linkDirectRequests( mod, link_errors );
    
    if( link_errors == 0 )
    {
@@ -430,20 +429,18 @@ void ModSpace::linkImports(Module* mod, Error*& link_errors)
 {
    TRACE1( "ModSpace::linkImports importing requests of %s", mod->name().c_ize());
    
-    
    // scan the dependencies.
    Module::Private* prv = mod->_p;   
-   Module::Private::DepMap &deps = prv->m_deps;
-   
-   Module::Private::DepMap::iterator dep_iter = deps.begin();
+   Module::Private::DepList &deps = prv->m_deplist;
+   Module::Private::DepList::const_iterator dep_iter = deps.begin();
    while( dep_iter != deps.end() )
    {
-      Module::Private::Dependency* dep = dep_iter->second;
+      Module::Private::Dependency* dep = *dep_iter;
       // ignore already resolved symbols (?)
       if( dep->m_resSymbol == 0 )
       {
          // now, we have some symbol to import here. Are they general or specific?
-         if( dep->m_sourceReq != 0 )
+         if( dep->m_idef != 0 )
          {
             linkSpecificDep( mod, dep, link_errors );
          }
@@ -461,11 +458,23 @@ void ModSpace::linkSpecificDep( Module* asker, void* def, Error*& link_errors )
 {
    Module::Private::Dependency* dep = (Module::Private::Dependency*) def;
    
-   fassert( dep->m_sourceReq != 0 );
-   fassert( dep->m_sourceReq->m_module != 0 );
+   Symbol* sym = 0;
+   Module* sourcemod = 0;
+      
+   fassert( dep->m_idef != 0 );
+   if( dep->m_idef->modReq() != 0 )
+   {
+      fassert( dep->m_idef->modReq()->module() != 0 );
+
+      sourcemod = dep->m_idef->modReq()->module();
+
+      // in case we have the module, search the symbol there. 
+      sym = sourcemod->getGlobal( dep->m_sourceName );            
+   }
+   else {
+      sym = findExportedSymbol( dep->m_sourceName, sourcemod );
+   }
    
-   // in case we have the module, search the symbol there. 
-   Symbol* sym = dep->m_sourceReq->m_module->getGlobal( dep->m_sourceName );
    // not found? we have a link error.
    if( sym == 0 )
    {
@@ -477,16 +486,21 @@ void ModSpace::linkSpecificDep( Module* asker, void* def, Error*& link_errors )
       addLinkError( link_errors, em );
       return;
    }
-
+   
    // Ok, we have the symbol. Now we must tell the requester we have found it
-   Error* em = dep->onResolved( asker, dep->m_sourceReq->m_module, sym );
+   Error* em = dep->onResolved( asker, sourcemod, sym );
    if( em != 0 )
    {
       addLinkError( link_errors, em );
+      return;
    }
    
-   // link the value.
-   dep->m_symbol->promoteExtern( sym );
+   // link the value -- if needed
+   if ( dep->m_symbol != 0 )
+   {
+      dep->m_symbol->promoteExtern( sym );
+   }
+
 }
 
 
@@ -519,70 +533,6 @@ void ModSpace::linkGeneralDep(Module* asker, void* def, Error*& link_errors)
    }
 }
 
-
-void ModSpace::linkDirectRequests(Module* mod, Error*& link_errors)
-{
-   TRACE1( "ModSpace::linkDirectRequesets resolving direct requests of %s", mod->name().c_ize());
-      
-   // scan the dependencies.
-   Module::Private* prv = mod->_p;   
-   
-   Module::Private::DirectReqList::iterator ri = prv->m_directReqs.begin();
-   while( ri != prv->m_directReqs.end() )
-   {
-      Module::Private::DirectRequest* dr = *ri;
-      if( dr->m_idef->symbolCount() < 1 )
-      {
-         TRACE( "ModSpace::linkDirectRequesets skipping direct imports on %s", 
-               dr->m_idef->sourceModule().c_ize());
-         ++ri;
-         continue;
-      }
-      
-      Symbol* sym = 0;
-      Module* srcmod;
-      const String& name = dr->m_idef->sourceSymbol(0);
-      if( dr->m_idef->sourceModule().size() != 0 )
-      {
-         Module::Private::ModRequest* mr = prv->m_mrmap[ dr->m_idef->sourceModule() ];
-         if( mr == 0 || mr->m_module == 0 )
-         {
-            TRACE( "ModSpace::linkDirectRequesets modrequest was not resolved for %s", 
-                  dr->m_idef->sourceModule().c_ize());
-            ++ri;
-            continue;
-         }
-         
-         srcmod = mr->m_module;
-         sym = mod->getGlobal( name );
-         
-      }
-      else
-      {
-         sym = findExportedSymbol( name, srcmod );
-      }
-      
-      if( sym == 0 )
-      {
-         addLinkError( link_errors, new LinkError( ErrorParam(e_undef_sym)
-            .module( mod->name())
-            .symbol( name )
-            .extra( "explicit request") ) 
-            );         
-      }
-      else
-      {
-         TRACE2( "ModSpace::linkDirectRequesets resloved symbol %s", name.c_ize() );
-         Error* err = dr->m_cb( mod, srcmod, sym );
-         if( err != 0 )
-         {
-            addLinkError( link_errors, err );
-         }
-      }
-      
-      ++ri;
-   }
-}
 
 
 void ModSpace::linkNSImports(Module* mod )

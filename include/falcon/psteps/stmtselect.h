@@ -23,6 +23,7 @@ namespace Falcon {
 
 class Symbol;
 class Expression;
+class SelectRequirement;
 
 /** Handler for the select statement.
 
@@ -159,47 +160,50 @@ public:
     */
    bool setDefault( SynTree* block );
 
-
-   /** Module (used for error accounting during resolution ) */
-   void module( Module* m ) { m_module = m; }
-
-   Module* module() const { return m_module; }
-
+   /** Returns the count of unresolved forward symbols in block delcarations. */
+   int32 unresolved() const { return m_unresolved; }
+   
 private:
    class Private;
    Private* _p;
 
    Expression* m_expr;
    SynTree* m_defaultBlock;
-   Module* m_module;
-
-   class SelectRequirement: public Requirement
-   {
-   public:
-      SynTree* m_block;
-      Class* m_cls;
-
-      SelectRequirement( const String& name, SynTree* b, StmtSelect* owner ):
-         Requirement( name ),
-         m_block( b ),
-         m_cls( 0 ),
-         m_owner( owner )
-      {}
-
-      virtual ~SelectRequirement() {}
-
-      virtual void onResolved( const Module* source, const Symbol* srcSym, Module* tgt, Symbol* extSym );
-
-   private:
-      StmtSelect* m_owner;
-   };
-
-   friend class SelectRequirement;
-
+   int32 m_unresolved;
 
    static void apply_( const PStep*, VMContext* ctx );
+   
+   // Once a forward class is resolved, this can be used to set it.
+   bool setSelectClass( int id, Class* cls );
+   // Once a forward class is resolved AS A TYPE, this can be used to set it.
+   bool setSelectType( int id, int tid );
+   
+   friend class SelectRequirement;
 };
 
+/** Requirement for forward class declarations in select statements. */
+class SelectRequirement: public Requirement
+{
+public:
+   SelectRequirement( int32 id, int32 line, const String& name, StmtSelect* owner ):
+      Requirement( name ),
+      m_id( id ),
+      m_line( line ),
+      m_owner( owner )
+   {}
+
+   virtual ~SelectRequirement() {}
+
+   virtual void onResolved( const Module* source, const Symbol* srcSym, 
+         Module* tgt, Symbol* extSym );
+
+private:
+   StmtSelect* m_owner;
+   int32 m_id;
+   int32 m_line;
+};
+   
+   
 }
 
 #endif

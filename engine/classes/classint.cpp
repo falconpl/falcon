@@ -43,20 +43,21 @@ ClassInt::~ClassInt()
 }
 
 
-void ClassInt::dispose( void* self ) const
-{
-   Item* data = (Item*) self;
-   delete data;
+void ClassInt::dispose( void* ) const
+{  
 }
 
 
 void* ClassInt::clone( void* source ) const
 {
-   Item* ptr = new Item;
-   *ptr = *(Item*) source;
-   return ptr;
+   return source;
 }
 
+void* ClassInt::createInstance() const
+{
+   // this is a flat class.
+   return 0;
+}
 
 
 void ClassInt::store( VMContext*, DataWriter* dw, void* data ) const
@@ -81,8 +82,10 @@ void ClassInt::describe( void* instance, String& target, int, int ) const
 //=======================================================================
 //
 
-void ClassInt::op_create( VMContext* ctx, int32 pcount ) const
+bool ClassInt::op_init( VMContext* ctx, void* instance, int32 pcount ) const
 {
+   Item* item = static_cast<Item*>(instance);
+   
    if( pcount > 0 )
    {
       Item* param = ctx->opcodeParams(pcount);
@@ -99,7 +102,7 @@ void ClassInt::op_create( VMContext* ctx, int32 pcount ) const
          }
          else
          {
-            ctx->stackResult( pcount + 1, value );
+           item->setInteger( value );
          }
       }
       else
@@ -109,8 +112,10 @@ void ClassInt::op_create( VMContext* ctx, int32 pcount ) const
    }
    else
    {
-      ctx->stackResult( pcount + 1, Item( (int64) 0 ) );
+      item->setInteger(0);
    }
+   
+   return false;
 }
 
 

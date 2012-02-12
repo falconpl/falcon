@@ -59,6 +59,12 @@ void* ClassReference::clone( void* source ) const
    return new ItemReference(*ref);   
 }
 
+void* ClassReference::createInstance() const
+{
+   // This is an abstract class
+   return 0;   
+}
+
 void ClassReference::store( VMContext*, DataWriter*, void* ) const {}
 void ClassReference::restore( VMContext*, DataReader*, void*& empty ) const 
 {
@@ -136,27 +142,11 @@ void ClassReference::describe( void* self, String& target, int depth, int maxlen
    target = "Ref{" + temp + "}";
 }
 
-
    
-void ClassReference::op_create( VMContext* ctx, int32 pcount ) const
+bool ClassReference::op_init( VMContext* ctx, void* instance, int32 pcount ) const
 {
-   if( pcount == 0 )
-   {
-      throw new ParamError( ErrorParam( e_inv_params, __LINE__, SRC )
-         .origin(ErrorParam::e_orig_vm)
-         .extra( "X") );
-   }
-   
-   if( pcount > 1 )
-   {
-      ctx->popData(pcount-1);
-   }
-   
-   if( ! ctx->topData().isReference() )
-   {
-      ItemReference::create(ctx->topData());
-   }
    // topdata has been already turned into a reference by now.
+   return false;
 }
 
 

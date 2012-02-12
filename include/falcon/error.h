@@ -306,6 +306,9 @@ public:
     */
    void decref();
 
+   /** Sets all de values in the error structure. */
+   void set( const ErrorParam& params );
+   
 protected:
 
    /** Minimal constructor.
@@ -313,6 +316,8 @@ protected:
       for the given error code.
    */
    Error( Class* handler, const ErrorParam &params );
+   
+   Error( Class* handler );
 
    mutable int32 m_refCount;
 

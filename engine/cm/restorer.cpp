@@ -82,18 +82,17 @@ ClassRestorer::ClassRestorer():
 ClassRestorer::~ClassRestorer()
 {}
 
-void ClassRestorer::op_create( VMContext* ctx, int32 pcount ) const
+void ClassRestorer::op_init( VMContext* ctx, void* instance, int32 ) const
 {
-   static Collector* coll = Engine::instance()->collector(); 
-   
-   void* instance = new RestorerCarrier( new Restorer(ctx) );
-   ctx->stackResult( pcount + 1, FALCON_GC_STORE( coll, this, instance ) );
+   RestorerCarrier* carrier = static_cast<RestorerCarrier*>(instance);
+   carrier->carried()->context( ctx );
+   return false;
 }
 
 
-void* ClassRestorer::createInstance( Item*, int  ) const
+void* ClassRestorer::createInstance() const
 { 
-   return 0;
+   return new RestorerCarrier(new Restorer);
 }
 
 /*

@@ -90,11 +90,14 @@ ClassTextStream::ClassTextStream( ClassStream* parent ):
 ClassTextStream::~ClassTextStream()
 {}
 
-
-void ClassTextStream::op_create( VMContext* ctx, int32 pcount ) const
+void* ClassTextStream::createInstance() const
 {
-   static Collector* coll = Engine::instance()->collector();
+   return new TextStreamCarrier(0);
+}
+bool ClassTextStream::op_init( VMContext* ctx, void* instance, int32 pcount ) const
+{
    static Engine* eng = Engine::instance();
+   TextStreamCarrier* tsc = static_cast<TextStreamCarrier*>(instance);
    
    StreamCarrier* scarrier = 0;
    String* sEncoding = 0;
@@ -133,7 +136,7 @@ void ClassTextStream::op_create( VMContext* ctx, int32 pcount ) const
       return;
    }
    
-   TextStreamCarrier* tsc;
+   
    if( sEncoding != 0 )
    {
       Transcoder* tcode = eng->getTranscoder(*sEncoding);
@@ -146,17 +149,17 @@ void ClassTextStream::op_create( VMContext* ctx, int32 pcount ) const
          return;
       }
       
-      tsc = new TextStreamCarrier( scarrier->m_underlying->clone() );
+      tsc->m_stream = scarrier->m_underlying->clone();
       tsc->m_reader.setEncoding( tcode );
       tsc->m_writer.setEncoding( tcode ); 
       tsc->m_encoding = *sEncoding;
    }
    else
    {
-      tsc = new TextStreamCarrier( scarrier->m_underlying->clone() );
+      tsc->m_stream = scarrier->m_underlying->clone();
    }   
    
-   ctx->stackResult(pcount+1, FALCON_GC_STORE( coll, this, tsc ) );
+   return false;
 }
 
 

@@ -54,6 +54,11 @@ void* MetaClass::clone( void* source ) const
    return source;
 }
 
+void* MetaClass::createInstance() const
+{
+   return 0;
+}
+
 
 void MetaClass::serialize( DataWriter*, void*  ) const
 {
@@ -95,8 +100,42 @@ void MetaClass::op_toString( VMContext* ctx , void* item ) const
 
 void MetaClass::op_call( VMContext* ctx, int32 pcount, void* self ) const
 {
+   static Collector* coll = Engine::instance()->collector();
+
    Class* fc = static_cast<Class*>(self);
-   fc->op_create( ctx, pcount );
+   void* instance = fc->createInstance();
+   if( instance == 0 )
+   {
+      if( fc->isFlatInstance() )
+      {
+         // ok, nothing to worry about. Pass the right data to the init.
+         fc->op_init( ctx, ctx->opcodeParams( pcount + 1 ), pcount );
+      }
+      else {
+         // non-instantiable class.
+         throw new CodeError( ErrorParam(e_abstract_init, __LINE__, SRC )
+            .extra( fc->name() )
+            .origin( ErrorParam::e_orig_vm ) );
+      }
+   }
+   else 
+   {
+      // save the deep instance and handle it to the collector
+      Item* params = ctx->opcodeParams( pcount + 1 );
+      params->setUser( fc, instance );
+      FALCON_GC_STORE( coll, fc, instance );
+      
+      // finally, invoke init.
+      if( fc->op_init( ctx, pcount ) )
+      {
+         // if init returned true, this means it went deep and will take care 
+         // of the parameters.
+         return;
+      }
+   }
+   
+   // if we're here, we can get rid of the parameters.
+   ctx->popData( pcount );
 }
 
 }

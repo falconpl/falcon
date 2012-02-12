@@ -58,6 +58,10 @@ void* ClassFunction::clone( void* ) const
    return 0;
 }
 
+void* ClassFunction::createInstance() const
+{
+   return 0;
+}
 
 void ClassFunction::store( VMContext* ctx, DataWriter* stream, void* instance ) const
 {

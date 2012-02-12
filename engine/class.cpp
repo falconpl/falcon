@@ -216,9 +216,9 @@ void Class::onInheritanceResolved( Inheritance* )
 // VM Operator override.
 //
 
-void Class::op_create( VMContext* , int32 ) const
+bool Class::op_init( VMContext* , void*, int32 ) const
 {
-   throw new OperandError( ErrorParam( e_invop, __LINE__, SRC ).extra("create") );
+   throw new OperandError( ErrorParam( e_invop, __LINE__, SRC ).extra("init") );
 }
 
 

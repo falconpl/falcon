@@ -24,8 +24,11 @@
 namespace Falcon {
 
 class Module;
+class ModRequest;
 
 /** Structure recording the import definition in modules. 
+ This structure holds all the information that can be expressed in an "import"
+ or "load" module directive.
 */
 class ImportDef {
 public:
@@ -105,6 +108,10 @@ public:
     modules when the module is synthesized from binary data. They passed 
     directly to a resolve handler when the symbol is resolved.
     
+    They are equivalent to the directive "import sym from mod", but won't
+    create a symbol in the host module; instead, when they are resolved
+    this usually triggers a set of Requirement callbacks.
+    
     This version requires explicitly a symbol to be found in a module.
     */
    void setDirect( const String& symName, const String& modName, bool bIsURI );
@@ -120,6 +127,8 @@ public:
     the host ModSpace. Notice that load order declaration is respected; when
     unsure, put a load ImportDef before this direct import reqeust on the 
     target module.
+    
+    \note Direct imports are not shown when rendering a module to string.
     */
    void setDirect( const String& symName );
    
@@ -132,6 +141,32 @@ public:
    const SourceRef& sr() const { return m_sr; }
    SourceRef sr() { return m_sr; }
    
+   /** Returns the module request to which this import request refers to.
+    
+    An import request may or may not refer to a foreign module. If it is a
+    load or import/from it does, otherwise it does not.
+    
+    Module requests are owned by the module owning this same import request.
+    This is a mere reference so that it's easier to find the module request
+    that may be shared by multiple import requests.
+    */
+   ModRequest* modReq() const { return m_modreq; }
+   
+   /** Sets the module request on which this import request insists. */
+   void modReq( ModRequest* mr ) { m_modreq = mr; }
+   
+   /** Position of this entity in the module data.
+   Used for simpler serialization, so that it is possible to reference this
+   entity in the serialized file.
+   */
+   int id() const { return m_id; }
+   
+   /** Sets the position of this entity in the module data.
+   Used for simpler serialization, so that it is possible to reference this
+   entity in the serialized file.
+   */
+   void id( int n ) { m_id = n; }
+   
 private:
    class SymbolList;
    SymbolList* m_sl;
@@ -143,6 +178,9 @@ private:
    
    String m_source;
    String m_tgNameSpace;   
+   
+   ModRequest* m_modreq; 
+   int m_id;
    
    SourceRef m_sr;
 };

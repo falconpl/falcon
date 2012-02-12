@@ -38,6 +38,8 @@ public:
 
    virtual void dispose( void* self ) const;
    virtual void* clone( void* source ) const;
+   virtual void* createInstance() const;
+   
    virtual void serialize( DataWriter* stream, void* self ) const;
    virtual void* deserialize( DataReader* stream ) const;
 
@@ -47,7 +49,7 @@ public:
    virtual bool hasProperty( void* self, const String& prop ) const;
    
    //=============================================================
-   virtual void op_create( VMContext* ctx, int32 pcount ) const;
+   virtual bool op_init( VMContext* ctx, void*, int32 pcount ) const;
    virtual void op_call( VMContext* ctx, int32 paramCount, void* self ) const;
    virtual void op_eval( VMContext* ctx, void* self ) const;
 };

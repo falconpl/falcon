@@ -35,8 +35,8 @@ public:
    ClassStorer();
    virtual ~ClassStorer();
    
-   void op_create( VMContext* ctx, int32 pcount ) const;
-   virtual void* createInstance( Item* params, int pcount ) const;   
+   virtual bool void op_init( VMContext* ctx, void* instance, int32 pcount ) const;
+   virtual void* createInstance() const;   
 private:   
    
    FALCON_DECLARE_METHOD( store, "item:S" );

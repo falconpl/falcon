@@ -26,7 +26,6 @@ namespace Falcon
 {
 
 class FalconInstance;
-class Inheritance;
 class Item;
 class Function;
 class DataReader;
@@ -36,6 +35,9 @@ class Expression;
 class MetaClass;
 class HyperClass;
 class VMContext;
+
+class ExprInherit;
+class ExprParentship;
 
 
 /** Class defined by a Falcon script.
@@ -89,7 +91,7 @@ public:
       {
          size_t id;
          Function* func;
-         Inheritance* inh;
+         ExprInherit* inh;
          FalconState* state;
       } Value;
 
@@ -117,7 +119,7 @@ public:
       Property( const String& name, size_t value, Expression* expr );
 
       Property( Function* value );
-      Property( Inheritance* value );
+      Property( ExprInherit* value );
       Property( FalconState* value );
 
 
@@ -141,12 +143,16 @@ public:
     */
    const String& fc_name() const { return m_fc_name; }
 
+   void* createInstance() const;
+   
    /** Creates a new instance.
     \return A new instance created out of this class.
     The method will return 0 if the class is not completely resolved,
     i.e. if there is some parent that couldn't be found.
    */
-   FalconInstance* createInstance();
+   FalconInstance* createFalconInstance() const { 
+      return static_cast<FalconInstance*>( createInstance() );  
+   }
 
    /** Adds a property.
     \param name The name of the property to be added.
@@ -200,22 +206,6 @@ public:
     */
    bool addMethod( Function* mth );
 
-   /** Adds an init handler.
-      \param init The Function instance that will be used to initialize this class.
-      \return true If the init was not given, false if another init was already set.
-    Notice that FalconClasses have usually initStatements, buy they can also
-    accpet an external init handler.
-
-    This method will return false (and do nothing) if hasInitStatements has
-    been set to true.
-    */
-   bool setInit( Function* init );
-
-   /** Returns the external init handler of this class, if any.
-    \return An external init handler
-    */
-   Function* init() const { return m_init; }
-
    bool hasInit() const { return m_hasInit; }
    void hasInit( bool bMode ) { m_hasInit = bMode; }
 
@@ -233,23 +223,8 @@ public:
     When all the inheritances have been resolved through resolveInheritance,
     the class is automatically finalized (it's components are setup).
     */
-   bool addParent( Inheritance* inh );
+   bool addParent( ExprInherit* inh );
 
-   /** Adds a parent and the parentship declaration.
-    \param name The name of the inheritance.
-    \param parent The parent of this class.
-    \return true If the init was not given, false if another init was already set.
-
-    The parentship delcaration carries also declaration for the parameters
-    and the expressions needed to create the instances.
-
-    The ownership of the inheritance records is held by this FalconClass.
-
-    Inheritances may be initially unresolved; this is accounted by this FalconClass.
-    When all the inheritances have been resolved through resolveInheritance,
-    the class is automatically finalized (it's components are setup).
-    */
-   bool resolveInheritance( const String& name, Class* parent );
 
    /** Gets a member of this class.
     \param name The name of the member to be returned.
@@ -407,23 +382,22 @@ public:
     On a FalconClass instance, this determines if the class is a pure
     FalconClass or needs to be transformed in an HyperClass.
     */
-   virtual void onInheritanceResolved( Inheritance* inh );
+   virtual void onInheritanceResolved( ExprInherit* inh );
 
    //=========================================================
    // Operators.
    //
 
-   virtual void op_create( VMContext* ctx, int32 pcount ) const;
+   virtual void op_init( VMContext* ctx, int32 pcount ) const;
    virtual void op_getProperty( VMContext* ctx, void* self, const String& prop) const;
    virtual void op_setProperty( VMContext* ctx, void* self, const String& prop ) const;
 
 private:
-
    class Private;
    Private* _p;
 
+   ExprParentship* m_parentship;
    String m_fc_name;
-   Function* m_init;
    SynFunc* m_constructor;
 
    Function** m_overrides;

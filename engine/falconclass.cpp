@@ -19,7 +19,6 @@
 #include <falcon/falconclass.h>
 #include <falcon/hyperclass.h>
 #include <falcon/falconinstance.h>
-#include <falcon/inheritance.h>
 #include <falcon/item.h>
 #include <falcon/synfunc.h>
 #include <falcon/function.h>
@@ -36,6 +35,7 @@
 #include <falcon/psteps/stmtreturn.h>
 #include <falcon/psteps/stmtinit.h>
 #include <falcon/psteps/exprself.h>
+#include <falcon/psteps/exprparentship.h>
 
 #include <falcon/errors/operanderror.h>
 
@@ -54,29 +54,19 @@ public:
    typedef std::map<String, Property*> MemberMap;
    MemberMap m_members;
 
-   typedef std::list<Inheritance*> ParentList;
-   ParentList m_inherit;
-
    typedef std::list<FalconState*> StateList;
    StateList m_states;
 
    typedef std::vector<Property*> InitPropList;
    InitPropList m_initExpr;
 
-   ItemArray m_propDefaults;
+   ItemArray m_propDefaults;      
 
    Private()
    {}
 
    ~Private()
-   {
-      ParentList::iterator pi = m_inherit.begin();
-      while( pi != m_inherit.end() )
-      {
-         delete *pi;
-         ++pi;
-      }
-
+   {      
       StateList::iterator si = m_states.begin();
       while( si != m_states.end() )
       {
@@ -93,7 +83,6 @@ public:
 
    }
 };
-
 
 
 FalconClass::Property::Property( const String& name, size_t value, Expression* expr ):
@@ -121,10 +110,10 @@ FalconClass::Property::~Property()
    delete m_expr;
 }
 
-FalconClass::Property::Property( Inheritance* value ):
-   m_name(value->className()),
+FalconClass::Property::Property( const String& name, ExprInherit* value ):
+   m_name(name),
    m_type(t_inh),
-   m_expr(0)
+   m_expr(value)
 {
    m_value.inh = value;
 }
@@ -154,8 +143,8 @@ FalconClass::Property::Property( FalconState* value ):
 
 FalconClass::FalconClass( const String& name ):
    OverridableClass("Object" , FLC_ITEM_USER ),
+   m_parentship(0),
    m_fc_name(name),
-   m_init(0),
    m_constructor(0),
    m_shouldMark(false),
    m_hasInitExpr( false ),
@@ -175,7 +164,7 @@ FalconClass::~FalconClass()
 }
 
 
-FalconInstance* FalconClass::createInstance()
+void* FalconClass::createInstance() const
 {
    // we just need to copy the defaults.
    FalconInstance* inst = new FalconInstance(this);
@@ -286,7 +275,7 @@ Class* FalconClass::getParent( const String& name ) const
    {
       if( iter->second->m_type == Property::t_inh )
       {
-         return iter->second->m_value.inh->parent();
+         return iter->second->m_value.inh->base();
       }
    }
 
@@ -294,24 +283,17 @@ Class* FalconClass::getParent( const String& name ) const
 }
 
 
-bool FalconClass::setInit( Function* init )
+bool FalconClass::addParent( ExprInherit* inh )
 {
-   if( m_init == 0 )
+   // we cannot accept parented expressions.
+   if( inh->parent() != 0 )
    {
-      m_init = init;
-      m_init->methodOf(this);
-      return true;
+      return false;
    }
-
-   return false;
-}
-
-
-bool FalconClass::addParent( Inheritance* inh )
-{
+   
    Private::MemberMap& members = _p->m_members;
 
-   const String& name = inh->className();
+   const String& name = inh->name();
 
    // first time around?
    if ( members.find( name ) != members.end() )
@@ -323,26 +305,33 @@ bool FalconClass::addParent( Inheritance* inh )
    members[name] = new Property( inh );
 
    // increase the number of unresolved parents?
-   if( inh->parent() == 0 )
+   if( inh->base() == 0 )
    {
       m_missingParents ++;
    }
-   else if( ! inh->parent()->isFalconClass() )
+   else if( ! inh->base()->isFalconClass() )
    {
       m_bPureFalcon = false;
    }
 
-   _p->m_inherit.push_back( inh );
-   inh->owner( this );
-
+   // need a new parentship?
+   if( m_parentship == 0 )
+   {
+      m_parentship = new ExprParentship( declaredAt() );
+      // use the constructor as syntactic context.
+      SynFunc* ctr = makeConstructor();
+      m_parentship->setParent( &ctr->syntree() );
+   }
+   
+   m_parentship->add( inh );
    return true;
 }
 
-void FalconClass::onInheritanceResolved( Inheritance* inh )
+void FalconClass::onInheritanceResolved( ExprInherit* inh )
 {
    m_missingParents--;
 
-   if( ! inh->parent()->isFalconClass() )
+   if( ! inh->base()->isFalconClass() )
    {
       m_bPureFalcon = false;
    }
@@ -772,27 +761,29 @@ void FalconClass::describe( void* instance, String& target, int depth, int maxle
 //=========================================================
 // Operators.
 //
-
-void FalconClass::op_create( VMContext* ctx, int32 pcount ) const
+bool FalconClass::op_init( VMContext* ctx, void* instance, int32 pcount ) const
 {
-
-   static Collector* coll = Engine::instance()->collector();
-
    // we just need to copy the defaults.
-   FalconClass* cls = const_cast<FalconClass*>(this);
-   FalconInstance* inst = new FalconInstance(cls);
-   inst->data().merge(_p->m_propDefaults);
+   FalconInstance* inst = static_cast<FalconInstance*>(instance);
 
+   // TODO: Initialize the properties here.
+   
    // we have to invoke the init method, if any
    if( m_constructor != 0 )
    {
-      ctx->call( m_constructor, pcount, FALCON_GC_STORE( coll, this, inst ) );
+      ctx->call( m_constructor, pcount, Item( this, inst ) );
+      
+      // now that we are in the constructor context, we can invoke the inherit sequence.
+      if( m_inheritance != 0 )
+      {
+         ctx->stepIn( m_inheriance );
+      }
+      
+      // the constructor goes deep, and will pop the parameters.
+      return true;
    }
-   else
-   {
-      // nothing to init; just send the self item in the proper stack return
-      ctx->stackResult( pcount+1, FALCON_GC_STORE( coll, this, inst ) );
-   }
+   
+   return false;
 }
 
 

@@ -35,8 +35,8 @@ public:
    ClassRestorer();
    virtual ~ClassRestorer();
    
-   void op_create( VMContext* ctx, int32 pcount ) const;
-   virtual void* createInstance( Item* params, int pcount ) const;
+   virtual bool op_init( VMContext* ctx, void* instance, int32 pcount ) const;
+   virtual void* createInstance() const;
    
    /*
    virtual void op_iter( VMContext* ctx, void* instance ) const;

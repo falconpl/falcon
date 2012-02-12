@@ -88,6 +88,10 @@ void* ClassString::clone( void* source ) const
    return new String( *( static_cast<String*>( source ) ) );
 }
 
+void* ClassString::createInstance() const
+{
+   return new String;
+}
 
 void ClassString::store( VMContext*, DataWriter* dw, void* data ) const
 {
@@ -235,18 +239,15 @@ void ClassString::op_add( VMContext* ctx, void* self ) const
 }
 
 //=======================================================================
-// Auto Addition
+// Operands
 //
 
-void ClassString::op_create( VMContext* ctx, int pcount ) const
+bool ClassString::op_init( VMContext* ctx, void* instance, int pcount ) const
 {
+   String* self = static_cast<String*>(instance);
+   
    // no param?
-   if ( pcount == 0 )
-   {
-      // create a string and put on the stack
-      ctx->stackResult( 1, ( new String )->garbage() );
-   }
-   else
+   if ( pcount > 0 )
    {
       // the parameter is a string?
       Item* itm = ctx->opcodeParams( pcount );
@@ -254,25 +255,37 @@ void ClassString::op_create( VMContext* ctx, int pcount ) const
       if ( itm->isString() )
       {
          // copy it.
-         String* s = new String( *itm->asString() );
-
-         ctx->stackResult( pcount + 1, s->garbage() );
+         self->copy( *itm->asString() );
       }
       else
       {
+         if( pcount > 1 ) {
+            ctx->popData( pcount-1 );
+            // just to be sure.
+            itm = &ctx->topData();
+         }
+         
          // apply the op_toString on the item.
-         Item cpy = *itm;
-
-         ctx->stackResult( pcount + 1, cpy );
-
+         ctx->pushCode( &m_initNext );
+         long depth = ctx->codeDepth();
+         
          Class* cls;
-         void* data;
-
-         cpy.forceClassInst( cls, data );
-
+         void* data;                 
+         itm->forceClassInst( cls, data )
          cls->op_toString( ctx, data );
+         
+         if( depth == ctx->codeDepth() )
+         {
+            ctx->popCode();
+            ctx->popData();
+         }
+         
+         // we took care of the stack.
+         return true;
       }
    }
+   
+   return false;
 }
 
 
@@ -355,25 +368,37 @@ void ClassString::NextOp::apply_( const PStep*, VMContext* ctx )
 
    ctx->operands( op1, op2 ); // we'll discard op2
 
-   String* deep = ctx->regA().asString();
+   String* deep = op2->asString();
    String* self = op1->asString();
 
    if( op1->copied() )
    {
       String* copy = new String( *self );
-
       copy->append( *deep );
-
       ctx->stackResult( 2, copy->garbage() );
    }
    else
    {
       ctx->popData();
-
       self->append( *deep );
    }
+   
+   ctx->popCode();
 }
 
+
+ClassString::InitNext::InitNext()
+{
+   apply = apply_;
+}
+
+
+void ClassString::InitNext::apply_( const PStep*, VMContext* ctx )
+{
+   ctx->opcodeParam(1)->asString()->copy( *ctx->topData().asString() );
+   ctx->popData();
+   ctx->popCode();
+}
 
 void ClassString::op_getIndex( VMContext* ctx, void* self ) const
 {

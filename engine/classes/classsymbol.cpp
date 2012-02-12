@@ -55,18 +55,23 @@ void ClassSymbol::dispose( void* instance ) const
 
 void* ClassSymbol::clone( void* instance ) const
 {
-   return instance;
+   Symbol* sym = static_cast<Symbol*>(instance);   
+   return new Symbol(*sym);
 }
 
-void ClassSymbol::op_create( VMContext* ctx, int32 pcount ) const
+void* ClassSymbol::createInstance() const
 {
-   static Collector* coll = Engine::instance()->collector();
+   return new Symbol;
+}
+
+bool ClassSymbol::op_init( VMContext* ctx, void* instance, int32 pcount ) const
+{   
+   Symbol* sym = static_cast<Symbol*>(instance);   
    
    Item* item = ctx->opcodeParams(pcount);
    if( pcount > 0 || item->isString() )
    {
-      Symbol* sym = new Symbol( *item->asString() );
-      ctx->stackResult( pcount+1, Item( FALCON_GC_STORE(coll, this, sym) ) );
+      sym->name( *item->asString() );      
    }
    else {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__, SRC )
@@ -74,6 +79,7 @@ void ClassSymbol::op_create( VMContext* ctx, int32 pcount ) const
          .extra("S"));
    }
    
+   return false;
 }
 
 void ClassSymbol::enumerateProperties( void*, PropertyEnumerator& cb ) const

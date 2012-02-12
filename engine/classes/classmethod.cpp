@@ -26,26 +26,30 @@ namespace Falcon
 
 ClassMethod::ClassMethod():
    Class("Method", FLC_ITEM_METHOD )
-{}
+{
+   m_bIsFlatInstance = true;
+}
 
 
 ClassMethod::~ClassMethod()
 {}
 
 
-void ClassMethod::dispose( void* self ) const
+void ClassMethod::dispose( void* ) const
 {
-   delete (Item*) self;
 }
 
 
 void* ClassMethod::clone( void* self ) const
-{
-   Item* ptr = new Item;
-   *ptr = *(Item*) self;
-   return ptr;
+{   
+   return self;
 }
 
+void* ClassMethod::createInstance() const
+{
+   // this is a flat class
+   return 0;
+}
 
 void ClassMethod::serialize( DataWriter*, void* ) const
 {
@@ -94,18 +98,19 @@ bool ClassMethod::hasProperty( void*, const String& prop ) const
 }
 
 //=============================================================
-void ClassMethod::op_create( VMContext* ctx, int32 pcount ) const
+bool ClassMethod::op_init( VMContext* ctx, void* instance, int32 pcount ) const
 {
+   Item* item = static_cast<Item*>(instance);
+   
    if( pcount == 2 )
    {
       Item& src = ctx->opcodeParam(1);
       Item& func = ctx->opcodeParam(0);
       if( func.isFunction() )
       {
-         Item mth = src;
-         mth.methodize( func.asFunction() );
-         ctx->stackResult( pcount + 1, mth );
-         return;
+         *item = src;
+         item->methodize( func.asFunction() );
+         return false;
       }
    }
 

@@ -176,6 +176,7 @@ class VMContext;
 class FALCON_DYN_CLASS Storer
 {
 public:
+   Storer();
    Storer( VMContext* ctx );
    virtual ~Storer();
    
@@ -192,6 +193,9 @@ public:
     VM processing. 
     */
    virtual bool commit( Stream* dataStream );
+   
+   VMContext* context() const { return m_ctx; }
+   void context( VMContext* vmc ) { m_ctx = vmc; }
    
 private:      
    class Private;

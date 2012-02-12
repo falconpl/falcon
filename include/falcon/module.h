@@ -43,6 +43,7 @@ class FalconClass;
 class DynUnloader;
 class Requirement;
 class ImportDef;
+class ModRequest;
 
 /** Standard Falcon Execution unit and library.
 
@@ -353,23 +354,7 @@ public:
     
     \note it is NOT legal to export undefined symbols -- to avoid mistyping.
     */
-   Symbol* addExport( const String& name, bool &bAlready );
-
-   /** Adds an inheritance that's supposed to come from outside.
-    \param inh The inheritance to be resolved during the link step.
-    
-    This method adds an inheritance of a FalconClass to the list of things
-    to be resolved during the link phase.
-    
-    When all the external inheritances are resolved, the owner class is
-    generated and readied to be used.
-    
-    \note this method creates an implicit import with the same name of the
-            inherited class.
-    \note This method must be called ONLY if the imported inheritance has not
-            been found in the globals.
-    */
-   void addImportInheritance( Inheritance* inh );
+   Symbol* addExport( const String& name, bool &bAlready );   
    
    /** Adds an inheritance that is pending while the module is being formed.
     \param inh the inheritance to be added.
@@ -412,14 +397,10 @@ public:
    */
    void commitPendingInheritance();
    
-   /** Adds a request for a foreign class not bound with an inheritance.
-    \param cr A RquiredClass that will be filled with the required class.
-    \return The symbol attached to this requirement (usuallyan undefined symbol).
+   /** Adds a request for a foreign entity that shall be resolved at link phase.
     
-    Classes inheriting from other classes are not the only statements
-    specifically searching for classes in other modules. The RquiredClass class
-    represents this fact, allowing statements, or generic third party modules,
-    to ask for a foreign class.
+    \param cr A Requirement that will be called back.
+    \return The symbol attached to this requirement (usually an undefined symbol).       
     
     The caller should not generate a requirement for a global symbol
     that is already defined. However, if there is a global and defined symbol 
@@ -428,6 +409,7 @@ public:
     
     \note The method may throw immeately, as the requirement may throw immediately.
     
+    \see Requirement
     */
    Symbol* addRequirement( Requirement* cr );
    
@@ -519,37 +501,7 @@ public:
     The Symbol is not searched in the
     */
    Symbol* searchInImports( const String& name, Module*& mod );
-   
-   /** Returns a new default value stored in this module.
-    \return A default value ready to be referenced by a symbol.
-    
-    Global, static and default parameter values are stored in the module
-    and referenced by the symbols in their Symbol::defaultValue() field.
-    
-    This method creates a new default value that is stored in the module and
-    stays valid as long as the module is alive. 
-    
-    \note Complex values as functions
-    and classes properly reference back the module they come from, so the module
-    stays alive as long as THEY are valid.
-    */
-   Item* addDefaultValue();
-   
-   /** Returns a new default value stored in this module.
-    \param src The source value where to copy the item from.
-    \return A default value ready to be referenced by a symbol.
-    
-    Global, static and default parameter values are stored in the module
-    and referenced by the symbols in their Symbol::defaultValue() field.
-    
-    This method creates a new default value that is stored in the module and
-    stays valid as long as the module is alive. 
-    
-    \note Complex values as functions
-    and classes properly reference back the module they come from, so the module
-    stays alive as long as THEY are valid.
-    */
-   Item* addDefaultValue( const Item& src );
+     
    
    /** Adds a constant at global level in the module.
     \param name The name of the constant.
@@ -597,7 +549,7 @@ private:
    void checkWaitingFwdDef( Symbol* sym );
    
    // used by various import and load requests.
-   Error* addModuleRequirement( ImportDef* def );
+   Error* addModuleRequirement( ImportDef* def, ModRequest*& req );
    bool removeModuleRequirement( ImportDef* def );
 };
 

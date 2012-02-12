@@ -44,8 +44,10 @@ ClassNumeric::~ClassNumeric()
 { 
 }
 
-void ClassNumeric::op_create( VMContext* ctx, int pcount ) const
+bool ClassNumeric::op_init( VMContext* ctx, void* instance, int pcount ) const
 {
+   Item* item = static_cast<Item*>(instance);
+   
    if( pcount > 0 )
    {
       Item* param = ctx->opcodeParams(pcount);
@@ -63,7 +65,7 @@ void ClassNumeric::op_create( VMContext* ctx, int pcount ) const
          }
          else
          {
-            ctx->stackResult( pcount + 1, value );
+             item->setNumeric( value );
          }
       }
       else
@@ -73,29 +75,27 @@ void ClassNumeric::op_create( VMContext* ctx, int pcount ) const
    }
    else
    {
-      ctx->stackResult( pcount + 1, Item( 0.0 ) );
+      item->setNumeric(0.0);
    }
+   
+   return false;
 }
 
 
-void ClassNumeric::dispose( void *self ) const {
-    
-   Item *data = (Item*)self;
-    
-   delete data;
-    
+void ClassNumeric::dispose( void* ) const
+{  
 }
 
-void *ClassNumeric::clone( void *source ) const {
-    
-   Item *result = new Item;
-    
-   *result = *static_cast<Item*>( source );
-    
-   return result;
-    
+
+void *ClassNumeric::clone( void* source ) const 
+{
+   return source;
 }
 
+void *ClassNumeric::createInstance() const 
+{
+   return 0;
+}
 
 void ClassNumeric::store( VMContext*, DataWriter* dw, void* data ) const
 {

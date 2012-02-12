@@ -87,6 +87,10 @@ void* ClassDict::clone( void* source ) const
    return static_cast<ItemDict*>(source)->clone();
 }
 
+void* ClassDict::createInstance() const
+{
+   return new ItemDict;
+}
 
 void ClassDict::store( VMContext*, DataWriter* stream, void* instance ) const
 {
@@ -197,10 +201,10 @@ void ClassDict::enumeratePV( void*, Class::PVEnumerator& ) const
 
 //=======================================================================
 //
-void ClassDict::op_create( VMContext* ctx, int pcount ) const
+bool ClassDict::op_init( VMContext* ctx, void* instance, int pcount ) const
 {
-   static Collector* coll = Engine::instance()->collector();
-   ctx->stackResult( pcount + 1, FALCON_GC_STORE( coll, this, new ItemDict ) );
+   // TODO: create the dictionary
+   return false;
 }
 
 void ClassDict::op_add( VMContext*, void* ) const

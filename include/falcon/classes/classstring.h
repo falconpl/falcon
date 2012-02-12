@@ -37,6 +37,8 @@ public:
 
    virtual void dispose( void* self ) const;
    virtual void* clone( void* source ) const;
+   virtual void* createInstance() const;
+   
    virtual void store( VMContext*, DataWriter* dw, void* data ) const;
    virtual void restore( VMContext* , DataReader* dr, void*& data ) const;
 
@@ -56,7 +58,7 @@ public:
    virtual bool gcCheck( void* instance, uint32 mark ) const;
 
    //=============================================================
-   virtual void op_create( VMContext* ctx, int32 pcount ) const;
+   virtual bool op_inst( VMContext* ctx, void*, int32 pcount ) const;
 
    virtual void op_add( VMContext* ctx, void* self ) const;
    virtual void op_aadd( VMContext* ctx, void* self ) const;
@@ -76,6 +78,13 @@ private:
       NextOp();
       static void apply_( const PStep*, VMContext* vm );
    } m_nextOp;
+   
+   class FALCON_DYN_CLASS InitNext: public PStep
+   {
+   public:
+      InitNext();
+      static void apply_( const PStep*, VMContext* vm );
+   } m_initNext;
 };
 
 }

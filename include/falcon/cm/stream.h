@@ -69,13 +69,13 @@ public:
    
    virtual void dispose( void* instance ) const;
    virtual void* clone( void* insatnce ) const;
+   virtual void* createInstance() const;
+   
    virtual void gcMark( void* instance, uint32 mark ) const;
    virtual bool gcCheck( void* instance, uint32 mark ) const;
    
    //=============================================================
    //
-   virtual void op_create( VMContext* ctx, int32 pcount ) const;
-   virtual void* createInstance( Item* params, int pcount ) const;
    
 private:   
    

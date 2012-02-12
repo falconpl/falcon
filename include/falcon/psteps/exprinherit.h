@@ -13,14 +13,15 @@
    See LICENSE file for licensing details.
 */
 
-#ifndef _FALCON_INHERITANCE_H_
-#define _FALCON_INHERITANCE_H_
+#ifndef _FALCON_EXPRINHERIT_H_
+#define _FALCON_EXPRINHERIT_H_
 
 #include <falcon/setup.h>
 #include <falcon/string.h>
 #include <falcon/pstep.h>
 #include <falcon/sourceref.h>
 #include <falcon/requirement.h>
+#include <falcon/psteps/exprvector.h>
 
 namespace Falcon
 {
@@ -47,93 +48,35 @@ class VMContext;
 class FALCON_DYN_CLASS ExprInherit: public ExprVector
 {
 public:
-   ExprCall( int line=0, int chr=0 );
-   ExprCall( Class* cls, int line=0, int chr=0 );
-   ExprCall( const ExprCall& other );
-   virtual ~ExprCall();
+   ExprInherit( int line=0, int chr=0 );
+   ExprInherit( const String& name, int line=0, int chr=0 );
+   ExprInherit( Class* base, int line=0, int chr=0 );
+   ExprInherit( const ExprInherit& other );
+   
+   virtual ~ExprInherit();
 
+   const String& name() const { return m_name; }
+   
    /** The parent class.
     \return the Parent class, when resolved, or 0 if still not available.
     */
-   Class* parent() const { return m_parent; }
+   Class* base() const { return m_base; }
 
    /** Sets the parent actually reference by this inheritance.
     \param cls The class that the owner class derivates from.
     */
-   void parent( Class* cls );
-
-   /** Adds a parameter declaration.
-      \param expr The expression that must be evaluated to generate the paramter.
-
-    Inheritance parameters are expressions that must be calculated at runtime
-    before invoking the init method of the subclass.
-    */
-   void addParameter( Expression* expr );
-
-   /** Returns the number of parameters required to construct this inheritance.
-    */
-   size_t paramCount() const;
-   
-   /** Return the nth parameter required to construct this inheritance.
-      \note The method will crash if n is out of range.
-    */
-   Expression* param( size_t n ) const;
-
-   /** Prepare the contentext pushing all the expressions forming the parameters.
-    \param ctx the context where to push the expressions.
-    \return true if some expression were pushed, false otherwise.
-    */
-   bool prepareOnContext( VMContext* ctx );
-   
-   /** Describes this inheritance.
-      \param target A string where to place the description of this class.
-    */
-   void describe( String& target ) const;
-
-   /** Describes this inheritance entry.
-    \return A description of this entry.
-    */
-   String describe() const { 
-      String target;
-      describe( target );
-      return target;
+   void base( Class* cls ) 
+   {
+      m_base = base;
    }
 
-   /** Sets the owner of this inheritance.
-    \param cls The class resolving this inheritance.
-    \see FalconClass::onInheritanceResolved
-    */
-   void owner( Class* cls ) { m_owner = cls; }
-
-   /** Returns the owner of this inheritance.
-    */
-   Class* owner() const { return m_owner; }
-
-   /** Add source line definition for this Inheritance. */
-   void defineAt( int32 line, int32 chr ) { m_sdef.line( line ); m_sdef.chr(chr); }
-   
-   /** sourceRef. */
-   const SourceRef& sourceRef() const { return m_sdef; }
-   
-   /** Return the requirement relative to this inheritance.
-    
-    This returns a functor that gets called back when a pending inheritance
-    is resolved across modules.
-    Used during the link process.
-    */
-   const Requirement& requirement() const { return m_requirer; }
-   Requirement& requirement() { return m_requirer; }
-
+   virtual void describeTo( String& target, int depth = 0 ) const;
+      
 private:
-
-   class Private;
-   Private* _p;
-
+   Class* m_base;
    String m_name;
-   Class* m_parent;
-   Class* m_owner;
-   SourceRef m_sdef;
    
+   /*
    class IRequirement: public Requirement
    {
    public:
@@ -146,10 +89,14 @@ private:
       virtual void onResolved( const Module* source, const Symbol* srcSym, Module* tgt, Symbol* extSym );
    
    private:
-      Inheritance* m_owner;
+      ExprInherit* m_owner;
    }
    m_requirer;
+   
    friend class IRequirement;
+   */
+   
+   static void apply_( const PStep*, VMContext* ctx );
 };
 
 }

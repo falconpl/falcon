@@ -28,12 +28,59 @@ class Symbol;
 
 
 /** Functionoid for delayed resolution of symbols.
+ 
+  Requirements are the Falcon version of a "forward declaration". When a compiler
+    that can accept undefined symbols in some context finds a unresolved name
+    in an expression (i.e. a branch in a switch, or an inheritance in a class),
+    it asks for a requirement, that can be resolved at different times:
+    - immediately, if the entity is actually already defined somewhere.
+    - later on during the compilation of the same module.
+    - at link step when importing symbols from other modules.
+    
+    The requirement class doesn't just take care of requesting for an temporarily 
+    unknown symbol, it's also a callback point that, once the symbol is resolved,
+    gets called and performs the operations that was left pending. For instance,
+    a class inheriting from a requirement will need to check if the imported
+    symbols is really a class itself, and if all the forward declarations get
+    resolved, it will need to create the complete class entity in the host module;
+    if not, it will need to throw an exception.
+ 
+ Third party native modules can create requirements as an easy way to import
+ symbols from the system; for instance, a class or function that is needed by
+ the module to perform some operations might be resolved at link step via
+ a requirement instead of searching for it at runtime.
+ 
+ In that case, the native module writer may want to create a subclass and
+ a static instance of the requirement to access some static data in the 
+ module. The requirement objects are usually dynamic and owned by the 
+ base class Module, but to prevent the base class to destroy the requirement,
+ it can be created with the \b bIsStatic flag set to true.
+ 
+ To add a "generic" requirement, that is, a requirement that can be resolved by
+ the engine via any possible mean (e.g. via other modules exported symbols or
+ via static entities in the engine), just add the requirement to the module
+ via Module::addRequirement.
+ 
+ For more specific requests, for instance, for requirements insisting on symbols
+ directly imported from a specific module, use Module::addImportRequest.
+ 
  */
 class FALCON_DYN_CLASS Requirement
 {
 public:
-   Requirement( const String& name ) :
-      m_name( name )
+   /** Creates the requirement.
+    \param name The symbol name that is expected to be resolved.
+    \param bIsStatic if false (default), the requirement is disposed by the host module.
+    
+    The symbol name shall include namespaces.
+    
+    If this requirement is created statically somewhere, the bIsStatic parameter
+    should be set to true so that the Module class instance where it will be stored
+    won't destroy it.
+    */
+   Requirement( const String& name, bool bIsStatic = false ) :
+      m_name( name ),
+      m_bIsStatic( bIsStatic )
    {}
       
    virtual ~Requirement() {}
@@ -59,7 +106,24 @@ public:
     */
    virtual void onResolved( const Module* source, const Symbol* srcSym, Module* tgt, Symbol* extSym ) = 0;
 
+   /** Returns the symbol name that is associated with this requirement.
+      \return A name.
+    */
    const String& name() const { return m_name; }
+   
+   /** Returns whether this requirement is static or not.
+    Static requirements are statically allocated and should not be deleted
+    by the host module.
+      
+    They can be stored in third party native modules, and destroyed when the
+    module is unloated.
+    
+    The staticity of a requirement is determined at construction.
+    */
+   bool isStatic() const { return m_bIsStatic; }
+
+protected:
+   bool m_bIsStatic;
    
 private:
    String m_name;

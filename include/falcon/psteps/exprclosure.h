@@ -38,6 +38,9 @@ public:
    virtual bool isStatic() const { return false; }
    virtual bool simplify( Item& ) const { return false; }
    
+   Function* closed() const { return m_function; }
+   void closed( Function* f ) { m_function = f; }
+   
 private:
    Function* m_function;
    

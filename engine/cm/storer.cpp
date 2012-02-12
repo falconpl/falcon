@@ -75,18 +75,17 @@ ClassStorer::ClassStorer():
 ClassStorer::~ClassStorer()
 {}
 
-void ClassStorer::op_create( VMContext* ctx, int32 pcount ) const
+bool ClassStorer::op_init( VMContext* ctx,  void* instance, int32 ) const
 {
-   static Collector* coll = Engine::instance()->collector(); 
-   
-   void* instance = new StorerCarrier( new Storer(ctx) );
-   ctx->stackResult( pcount + 1, FALCON_GC_STORE( coll, this, instance ) );
+   StorerCarrier* sc = static_cast<StorerCarrier*>(instance);
+   sc->carried()->context( ctx );
+   return false;
 }
 
 
-void* ClassStorer::createInstance( Item*, int  ) const
+void* ClassStorer::createInstance() const
 { 
-   return 0;
+   return new StorerCarrier( new Storer );
 }
 
 //====================================================
@@ -122,7 +121,6 @@ FALCON_DEFINE_METHOD_P1( ClassStorer, store )
 FALCON_DEFINE_METHOD_P1( ClassStorer, commit )
 {  
    static StdSteps* stdSteps = Engine::instance()->stdSteps();
-   
    static Class* clsStream = methodOf()->module()->getClass( "Stream" );
    fassert( clsStream != 0 );
    
