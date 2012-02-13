@@ -13,18 +13,23 @@
    See LICENSE file for licensing details.
 */
 
+#include "falcon/psteps/exprparentship.h"
+
+
 #undef SRC
 #define SRC "engine/hyperclass.cpp"
 
 #include <falcon/hyperclass.h>
 #include <falcon/itemarray.h>
 #include <falcon/function.h>
+
+#include "falcon/psteps/exprinherit.h"
 #include <falcon/vmcontext.h>
 #include <falcon/fassert.h>
 #include <falcon/trace.h>
-#include <falcon/inheritance.h>
 
 #include "multiclass_private.h"
+#include "falcon/falconclass.h"
 
 #include <map>
 #include <vector>
@@ -33,96 +38,112 @@
 namespace Falcon
 {
 
-class HyperClass::Private: public MultiClass::Private_base
-{
-public:
-   
-   typedef std::vector<Inheritance*> ParentVector;
-   ParentVector m_parents;
 
-   Private() {}
-   ~Private()
-   {
-      // we own our inheritances.
-      ParentVector::iterator piter = m_parents.begin();
-      while( m_parents.end() != piter )
-      {
-         delete *piter;
-         ++piter;
-      }
-   }
-};
-
-
-HyperClass::HyperClass( const String& name, Class* master ):
-   MultiClass(name),   
+HyperClass::HyperClass( FalconClass* master ):
+   MultiClass(master->name()),   
+   m_constructor(0),
    m_master( master ),
    m_nParents(0),
-   m_constructor(0),
-      
-   m_finishCreateStep(this),
-   m_createMasterStep(this),
-   m_parentCreatedStep(this),
-   m_createParentStep(this),
-
-   m_finishInvokeStep(this),
-   m_invokeMasterStep(this),
-   m_createEmptyNext(this)
+   m_initParentsStep( this )
 {
-   _p = new Private;
-   _p_base = _p;
-   addParent( new Inheritance( name, master ) );
+   _p_base = new Private_base;
+   addParentProperties( master );
+   m_nParents++;
+}
+
+
+HyperClass::HyperClass( const String& name ):
+   MultiClass(name),   
+   m_constructor(0),
+   m_master( 0 ),
+   m_nParents(0),
+   m_initParentsStep(this)   
+{
+   _p_base = new Private_base;
+   m_master = new FalconClass("#master$" + name);
+   m_nParents++;
+   
+   // we'd hardly create a hyperclass not to store at least a foreign class.
+   m_parentship = new ExprParentship();
+   m_parentship->setParent( &m_master->makeConstructor() );
 }
 
 
 HyperClass::~HyperClass()
 {
    delete m_master;
-   delete _p;
+   delete m_parentship;
+   delete _p_base;
 }
 
-  
-bool HyperClass::addParent( Inheritance* cls )
+bool HyperClass::addProperty( const String& name, const Item& initValue )
 {
-   Class* parent = cls->parent();
-   
-   // we accept only ready inheritances.
-   if( parent == 0 )
-   {
-      return false;
-   }
+   m_master->addProperty( name, initValue );
+}
 
+bool HyperClass::addProperty( const String& name, Expression* initExpr )
+{
+   m_master->addProperty( name, initExpr );
+}
+
+bool HyperClass::addProperty( const String& name )
+{
+   m_master->addProperty( name );
+}
+
+bool HyperClass::addMethod( Function* mth )
+{
+   m_master->addProperty( mth );
+}
+
+
+bool HyperClass::addParent( Class* cls )
+{   
+   MultiClass::Private_base::PropMap& props = _p_base->m_props;
    // Is the class name shaded?
-   if( _p->m_props.find(cls->className()) != _p->m_props.end() )
+   if( props.find(cls->name()) != props.end() )
    {
       return false;
    }
+   
+   // ... and it must not appare in the inheritance properties.
+   props[cls->name()] = Property( cls->name(), -m_nParents );
 
-   // The master class is added immediately, and has parent ID == 0
-   if( m_nParents > 0 )
-   {
-      // ... and it must not appare in the inheritance properties.
-      _p->m_props[cls->className()] = Property( parent, -m_nParents );
-   }
-
-   addParentProperties( parent );
+   addParentProperties( cls );
    m_nParents++;
-   _p->m_parents.push_back( cls );
+   m_parentship->add( new ExprInherit( cls ) );
    return true;
 }
 
+
+void HyperClass::setParentship( ExprParentship* ps )
+{
+   m_parentship = ps;
+   MultiClass::Private_base::PropMap& props = _p_base->m_props;
+   
+   // adds parents first to last.
+   for( int i = 0; i < m_parentship->arity(); ++i )
+   {  
+      ExprInherit* inh = static_cast<ExprInherit*>(m_parentship->nth(i));
+      Class* cls = inh->cls();
+      
+      // ... Always override names of parent classes.
+      props[cls->name()] = Property( cls->name(), -m_nParents );
+      addParentProperties( cls );
+      m_nParents++;      
+   }
+}
+
+
 Class* HyperClass::getParent( const String& name ) const
 {
-   Private::ParentVector::const_iterator iter = _p->m_parents.begin();
-   while( iter != _p->m_parents.end() )
+   for( int i = 0; i < m_parentship->arity(); ++i )
    {
-      if( name == (*iter)->parent()->name() )
-      {
-         return (*iter)->parent();
+      ExprInherit* inh = static_cast<ExprInherit*>(m_parentship->nth(i));
+      if ( inh->cls()->name() == name ) {
+         return inh->cls();
       }
-
-      ++iter;
-   }
+   }   
    
    return 0;
 }
@@ -161,9 +182,9 @@ void HyperClass::addParentProperties( Class* cls )
 
 void HyperClass::addParentProperty( Class* cls, const String& pname )
 {
-   if( _p->m_props.find( pname ) == _p->m_props.end() )
+   if( _p_base->m_props.find( pname ) == _p_base->m_props.end() )
    {
-      Property &p = (_p->m_props[pname] = Property( cls, m_nParents ));
+      Property &p = (_p_base->m_props[pname] = Property( cls, m_nParents ));
       checkAddOverride( pname, &p );
    }
    // else, the property is masked by an higher priority class.
@@ -180,36 +201,41 @@ void* HyperClass::clone( void* source ) const
    return new ItemArray( *static_cast<ItemArray*>(source) );
 }
 
-
-void HyperClass::serialize( DataWriter*, void* ) const
+void* HyperClass::createInstance() const
 {
-   // TODO.
-}
-
-
-void* HyperClass::deserialize( DataReader* ) const
-{
-   // TODO
-   return 0;
+   static Collector* coll = Engine::instance()->collector();
+   
+   ItemArray* ia = new ItemArray( m_nParents );
+   ia->resize(m_nParents);
+   
+   // TODO: maybe we can posticipate this to init?
+   for( int i = 0; i < m_nParents; ++i ) {
+      Class* cls = i==0 ? m_master : 
+         static_cast<ExprInherit*>( m_parentship->nth[i-1] )->cls();
+      
+      if( ! cls->isFlatInstance() ) {
+         (*ia)[i] = FALCON_GC_STORE( coll, cls, cls->createInstance() );
+      }
+      // else, the init step will fill the object.
+   }
+   
+   // our entity will be put in the garbage as soon as we return.
+   return ia;
 }
 
 
 bool HyperClass::isDerivedFrom( const Class* cls ) const
 {
-   // are we the required class?
-   if ( cls == this ) return true;
+   // are we the required class -- the master is an overkill, should not be visible
+   if ( cls == this || cls == m_master ) return true;
    
    // is the class a parent of one of our parents?
-   Private::ParentVector::const_iterator iter = _p->m_parents.begin();
-   while( iter != _p->m_parents.end() )
-   {
-      Inheritance* inh = *iter;
-      // notice that isDerivedFrom returns true also if cls == parent.
-      if( inh->parent() != 0 && inh->parent()->isDerivedFrom(cls) )
-      {
+   for( int i = 0; i < m_parentship->arity(); ++i ) {
+      Class* pcls = static_cast<ExprInherit*>( m_parentship->nth[i] )->cls();
+      
+      if( cls->isDerivedFrom(pcls) ) {
          return true;
-      }
-      ++iter;
+      }      
    }
    
    return false;
@@ -219,7 +245,7 @@ bool HyperClass::isDerivedFrom( const Class* cls ) const
 void* HyperClass::getParentData( Class* parent, void* data ) const
 {
    // are we the searched parent?
-   if( parent == this )
+   if( parent == this || cls == m_master )
    {
       // then the searched data is the given one.
       return data;
@@ -228,25 +254,25 @@ void* HyperClass::getParentData( Class* parent, void* data ) const
    // else, search the parent data among our parents.
    // parent data is stored in an itemarray in data, 
    // -- parent N data is at position N.
-   ItemArray* ia = static_cast<ItemArray*>(data);
-   Private::ParentVector::const_iterator iter = _p->m_parents.begin();
-   length_t count = 0;
-   // ... so we scan the parent vector...
-   while( iter != _p->m_parents.end() )
-   {
-      Inheritance* inh = *iter;
-      if( inh->parent() != 0 )
+   ItemArray& ia = *static_cast<ItemArray*>(data);
+   
+   // is the class a parent of one of our parents?
+   for( int i = 0; i < ia.length(); ++i ) 
+   {  
+      // get the nth parent from our parent vector
+      // -- be sure to cover also flat instance classes.
+      Class* pcls;
+      void* pinst;
+      ia[i].forceClassInst( pcls, pinst );
+      
+      // Seek parent data recursively
+      void* dp = pcls->getParentData( parent, pinst );
+      if( dp != 0 )
       {
-         // ... and ask each parent to find the parent data in its data.
-         void* dp = inh->parent()->getParentData( parent, ia->at(count).asInst() );
-         if( dp != 0 )
-         {
-            return dp;
-         }
+         // it was either pinst or a fraction of it.
+         return dp;
       }
-      ++iter;
-      ++count;
-   }
+   }   
    
    // no luck.
    return 0;
@@ -258,12 +284,19 @@ void HyperClass::gcMarkMyself( uint32 mark )
    if( m_lastGCMark != mark )
    {
       m_lastGCMark = mark;
-
-      Private::ParentVector::iterator iter = _p->m_parents.begin();
-      while( iter != _p->m_parents.end() )
-      {
-         (*iter)->parent()->gcMarkMyself( mark );
-         ++ iter;
+      m_parentship->gcMark( mark );
+      
+      // shouldn't really care, but just in case...
+      m_master->gcMarkMyself( mark );
+      
+      // Also mark the constructor and finally the module (if any).
+      if( m_module != 0 ) m_module->gcMark(mark);
+      if( m_constructor != 0 ) m_constructor->gcMark( mark );      
+      
+      // finally all our parents
+      for( int i = 0; i < m_parentship->arity(); ++i ) {
+         Class* pcls = static_cast<ExprInherit*>( m_parentship->nth[i] )->cls();
+         pcls->gcMarkMyself( mark );
       }
    }
 }
@@ -271,153 +304,123 @@ void HyperClass::gcMarkMyself( uint32 mark )
 
 void HyperClass::gcMark( void* self, uint32 mark ) const
 {
-   static_cast<ItemArray*>(self)->gcMark( mark );
+   static_cast<ItemArray*>(self)->gcMark( mark ); // which marks also the parent classes
 }
 
 
 void HyperClass::enumerateProperties( void*, PropertyEnumerator& cb ) const
 {
-   Private::PropMap::const_iterator iter = _p->m_props.begin();
-   while( iter != _p->m_props.end() )
+   MultiClass::Private_base::PropMap& props = _p_base->m_props;   
+   MultiClass::Private_base::PropMap::const_iterator iter = props.begin();
+   
+   while( iter != props.end() )
    {
       const String& prop = iter->first;
       ++ iter;
-      cb( prop, iter == _p->m_props.end() );
+      cb( prop, iter == props.end() );
    }
 }
 
 
-void HyperClass::enumeratePV( void* self, PVEnumerator& cb ) const
+void HyperClass::enumeratePV( void* data, PVEnumerator& cb ) const
 {
-   Private::ParentVector::const_reverse_iterator iter = _p->m_parents.rbegin();
-   while( iter != _p->m_parents.rend() )
-   {
-      (*iter)->parent()->enumeratePV( self, cb );
-      ++ iter;
+   ItemArray& ia = *static_cast<ItemArray*>(data);
+   
+   // is the class a parent of one of our parents?
+   for( int i = 0; i < ia.length(); ++i ) 
+   {  
+      // get the nth parent from our parent vector
+      // -- be sure to cover also flat instance classes.
+      Class* pcls;
+      void* pinst;
+      ia[i].forceClassInst( pcls, pinst );
+      
+      pcls->enumeratePV(pinst, cb);
    }
 }
 
 
 bool HyperClass::hasProperty( void*, const String& prop ) const
 {
-   Private::PropMap::iterator iter = _p->m_props.find( prop );
-   return iter != _p->m_props.end();
+   MultiClass::Private_base::PropMap& props = _p_base->m_props;   
+   MultiClass::Private_base::PropMap::const_iterator iter = props.find( prop );
+   return iter != props.end();
 }
 
 
 Class* HyperClass::getParentAt( int pos ) const
 {
-   return _p->m_parents[pos]->parent();
+   Class* pcls = static_cast<ExprInherit*>( m_parentship->nth[pos] )->cls();
+   return pos;
 }
 
 
 void HyperClass::describe( void* instance, String& target, int depth, int maxlen ) const
 {
-   String str;
-   ItemArray& ia = *static_cast<ItemArray*>(instance);
-
-   Class* cls;
-   void* udata;
-   ia[0].forceClassInst( cls, udata );
-
-   m_master->describe( udata, str, depth, maxlen );
-   target = str;
-
-   Private::PropMap::const_iterator iter = _p->m_props.begin();
-   while( iter != _p->m_props.end() )
+   if( depth == 0 ) 
    {
-      const Property& prop = iter->second;
-      if ( prop.m_itemId < 0 )
-      {
-         str = "";
-         ia[ -prop.m_itemId ].forceClassInst( cls, udata );
-         cls->describe( udata, str, depth, maxlen );
-         target += "; " + str;
-      }
-      ++iter;
+      target = name() + "{...}";
+      return;
    }
+   
+   String str = name() + "{";
+   
+   ItemArray& ia = *static_cast<ItemArray*>(instance);
+   
+   // is the class a parent of one of our parents?
+   for( int i = 0; i < ia.length(); ++i ) 
+   {  
+      // get the nth parent from our parent vector
+      // -- be sure to cover also flat instance classes.
+      Class* pcls;
+      void* pinst;
+      ia[i].forceClassInst( pcls, pinst );
+      if( i > 0 )
+      {
+         str += "; ";
+      }
+      
+      String temp;
+      pcls->describe( pinst, temp, depth-1, maxlen );
+      str += temp;
+   }
+   str += "}";
 }
 
 //=========================================================
 // Operators.
 //
 
-void HyperClass::op_create( VMContext* ctx, int32 pcount ) const
-{
-   Collector* coll = Engine::instance()->collector();
-
-   // prepare the space.
-   ItemArray* mData = new ItemArray(m_nParents);
-   mData->resize(m_nParents);
+bool HyperClass::op_init( VMContext* ctx, void* instance, int32 pcount ) const
+{  
+   ItemArray& mData = *static_cast<ItemArray*>(instance);   
    
-   // If we have a constructor in the main class, then we need to create a
-   // -- consistent frame (to find the parameters).
+   // if we have a constructor, call it.
    if( m_constructor )
    {
-      ctx->makeCallFrame( m_constructor, pcount, FALCON_GC_STORE( coll, this, mData ) );
-
-      // now we add a finalization step.
-      ctx->pushCode( &m_finishCreateStep );
-
-      ctx->pushData(Item()); // create a space used for op_create() unary constance
+      ctx->call( m_constructor, pcount, Item( this, &mData ) );
       
-      // repeat the data as local for the master initialization.
-      for( int i = 0; i < pcount; ++i )
+      // we'll have to call also the master constructor. -- if so, repush the params.
+      if( m_master->constructor() != 0 )
       {
-         ctx->pushData( *ctx->param(i) );
-      }
-
-      // Add the master creation step.
-      ctx->pushCode( &m_createMasterStep );
-
-      if( _p->m_parents.size() > 1 )
-      {
-         // invoke the first creation step.
-         Inheritance* bottom = _p->m_parents.back();
-         ctx->pushCode( &m_parentCreatedStep );
-         ctx->currentCode().m_seqId = _p->m_parents.size() - 1;
-
-         if( bottom->paramCount() > 0 )
-         {
-            // ask to create the class...
-            ctx->pushCode( &m_createParentStep );
-            ctx->currentCode().m_seqId = _p->m_parents.size() - 1;
-            //... after having created the parameters.
-            bottom->prepareOnContext( ctx );
-         }
-         else
-         {
-            // just invoke the creation of the class.
-            bottom->parent()->op_create( ctx, 0 );
-         }
+         ctx->forwardParams(pcount);
       }
    }
-   else
+   
+   if( m_master->constructor() != 0 )
    {
-      // We have no constructor -- this is probably a prototype.
-      // all the subclasses must be invoked parameterless.
-
-      // push the required data:
-      ctx->pushData(FALCON_GC_STORE( coll, this, mData ));
-      ctx->pushData( (int64) pcount );
-      ctx->pushData(Item()); // create a space used for op_create() unary constance
+      // good, we have a master class constructor, and very problably some parent.
+      // we also know that the master class has no direct parentship -- we own it.
+      m_master->op_init( ctx, mData[0].asInst() );
       
-      // now we add a finalization step.
-      ctx->pushCode( &m_finishInvokeStep );
-
-      // Add the master creation step.
-      ctx->pushCode( &m_invokeMasterStep );
-
-      // and add the creation of sub-steps.
-      if( _p->m_parents.size() > 1 )
-      {
-         ctx->pushCode( &m_createEmptyNext );
-         ctx->currentCode().m_seqId = _p->m_parents.size() - 1;
-         // now invoke creation.
-         _p->m_parents.back()->parent()->op_create( ctx, 0 );
-      }
-      // let the VM to get the next entry
+      // we finally know that the master op_init went deep, as it has a ctor...
+      ctx->pushCode( &m_initParentsStep );
+      // apply now, it's useless to wait.
+      m_initParentsStep.apply( &m_initParentsStep, ctx );
    }
+      
+   // are we clear -- If we went deep we take care of our params.
+   return m_constructor != 0 || m_master->constructor() != 0;
 }
 
 
@@ -426,169 +429,34 @@ void HyperClass::op_create( VMContext* ctx, int32 pcount ) const
 // Steps
 //
 
-void HyperClass::FinishCreateStep::apply_(const PStep*, VMContext* ctx )
+void HyperClass::InitParentsStep::apply_(const PStep* ps, VMContext* ctx )
 {
-   // we have to set the topmost data returned by create master step...
-   // copy it by value
-   Item self = ctx->currentFrame().m_self;
-   static_cast<ItemArray*>(self.asInst())->at(0) = ctx->topData();
-   // and then return the frame...
-   ctx->returnFrame();
-   // and push the self on top.
-   ctx->pushData( self );
-}
-
-
-void HyperClass::CreateMasterStep::apply_(const PStep* ps, VMContext* ctx )
-{
-   // we're around just once.
-   ctx->popCode();
-   // just invoke the creation. HyperClass::op_create has already pushed the params.
-   HyperClass* h = static_cast<const CreateMasterStep*>(ps)->m_owner;
-   h->m_master->op_create( ctx, ctx->currentFrame().m_paramCount );
-}
-
-
-void HyperClass::ParentCreatedStep::apply_(const PStep* ps, VMContext* ctx )
-{
-   // Save the created parent.
-   Item& self = ctx->currentFrame().m_self;
-   register CodeFrame& cf = ctx->currentCode();
-   static_cast<ItemArray*>(self.asInst())->at(cf.m_seqId) = ctx->topData();
+   const InitParentsStep* self = static_cast<InitParentsStep*>(ps);
+   ItemArray& mData = *static_cast<ItemArray*>(ctx->self().asInst());
    
-   // and we don't need it anymore
-   ctx->popData();
+   CodeFrame& cf = ctx->currentCode();
+   int& pid = cf.m_seqId; 
+   int size = mData.length()-1;
+   ctx->addDataSlot();
    
-   // then see what's nest. Need to create more?
-   if( -- cf.m_seqId == 0 )
+   while( pid < size )
    {
-      // we're done -- parent[0] is the master class.
-      ctx->popCode();
-      return;
-   }
-
-   // get the required parent.
-   HyperClass* h = static_cast<const ParentCreatedStep*>(ps)->m_owner;
-   Inheritance* inh = h->_p->m_parents[cf.m_seqId];
-   if( inh->paramCount() == 0 )
-   {
-      // just create.
-      inh->parent()->op_create( ctx, 0 );
-   }
-   else
-   {
-      // save the needed steps.
-      int seqId = cf.m_seqId;
-      ctx->pushCode( &h->m_createParentStep );
-      ctx->currentCode().m_seqId = seqId;
-      inh->prepareOnContext( ctx );
-   }
-   // let the VM take care of the rest.
-}
-
-
-void HyperClass::CreateParentStep::apply_(const PStep* ps, VMContext* ctx )
-{
-   register CodeFrame& cf = ctx->currentCode();
-
-   // get the required parent.
-   HyperClass* h = static_cast<const CreateParentStep*>(ps)->m_owner;
-   Inheritance* inh = h->_p->m_parents[cf.m_seqId];
-
-   // remove ourselves, we just live once.
-   ctx->popCode();
-
-   // and invoke creation with the required parameters.
-   inh->parent()->op_create( ctx, inh->paramCount() );
-}
-
-
-
-void HyperClass::FinishInvokeStep::apply_(const PStep* ps, VMContext* ctx )
-{
-   // get the data created by the master
-   Item* pstep_params = ctx->opcodeParams(3);
-
-   // get self
-   fassert( pstep_params[0].type() >= FLC_ITEM_USER );
-   ItemArray* inst = static_cast<ItemArray*>(pstep_params[0].asInst());
-   // save the data created by the master class
-   inst->at(0) = pstep_params[2];
-
-   // get the param count.
-   fassert( pstep_params[1].type() == FLC_ITEM_INT );
-   int pcount = (int) pstep_params[1].asInteger();
-
-   // we're not needed anymore
-   ctx->popCode();
-   
-   //remove the params and publish self.
-   HyperClass* h = static_cast<const FinishInvokeStep*>(ps)->m_owner;
-   ctx->stackResult( pcount+1+3, Item( h, inst ) );
-   // declare the data as in need of collection.
-
-}
-
-
-void HyperClass::InvokeMasterStep::apply_(const PStep* ps, VMContext* ctx )
-{
-   Item* pstep_params = ctx->opcodeParams(3);
-   fassert( pstep_params[0].asClass() == static_cast<const InvokeMasterStep*>(ps)->m_owner );
-   fassert( pstep_params[1].isInteger() );
-
-   int pcount = (int) pstep_params[1].asInteger();
-
-   // replicate the parameters.
-   if( pcount > 0 )
-   {
-      // get the real parameters
-      ctx->addSpace(pcount);
-      Item* params = ctx->opcodeParams(2+pcount*2);
-      Item* pdest = ctx->opcodeParams(pcount);
-      Item* pterm = pdest + pcount;
-      while( pdest < pterm )
-      {
-         *pdest = *params;
-         ++pdest;
-         ++params;
+      // ei wants the item before being called.
+      ExprInherit* ei = 
+               static_cast<ExprInherit*>(self->m_owner->m_parentship->nth(pid));
+      // data in mData goes 1..size
+      ++pid;
+      // ExprInherit wants the self object on top of the data stack.
+      ctx->topData() = mData[pid];
+      if( ctx->stepInYield( ei, cf ) ) {
+         return;
       }
    }
 
-   // we're not needed anymore
+   // we're done.
    ctx->popCode();
-
-   HyperClass* h = static_cast<const InvokeMasterStep*>(ps)->m_owner;
-   h->m_master->op_create( ctx, pcount );
-}
-
-   
-void HyperClass::CreateEmptyNext::apply_(const PStep* ps, VMContext* ctx )
-{
-   // we have the 2 pushed stuff plus our newly created item.
-   Item* pstep_params = ctx->opcodeParams(3);
-   fassert( pstep_params[0].asClass() == static_cast<const CreateEmptyNext*>(ps)->m_owner );
-   fassert( pstep_params[1].isInteger() );
-
-   // get self and count
-   ItemArray* inst = static_cast<ItemArray*>(pstep_params[0].asInst());
-
-   // save the topmost item in our instance arrays.
-   register CodeFrame& cf = ctx->currentCode();
-   inst->at(cf.m_seqId) = ctx->topData();
-   // the topmost data will be recycled as op_create unary operator item
-
-   // are we done?
-   if( -- cf.m_seqId == 0 )
-   {
-      // let the VM to finalize us.
-      ctx->popCode();
-   }
-   else
-   {
-      // invoke the next operator
-      HyperClass* h = static_cast<const CreateEmptyNext*>(ps)->m_owner;
-      h->_p->m_parents[cf.m_seqId]->parent()->op_create( ctx, 0 );
-   }
+   // pop also the extra data we pushed to make room
+   ctx->popData();
 }
    
 }

@@ -15,7 +15,7 @@
 
 #include <falcon/falconinstance.h>
 #include <falcon/falconclass.h>
-#include <falcon/inheritance.h>
+#include <falcon/psteps/exprinherit.h>
 
 #include <falcon/errors/accesserror.h>
 #include <falcon/errors/accesstypeerror.h>
@@ -67,7 +67,7 @@ bool FalconInstance::getMember( const String& name, Item& target ) const
          break;
 
       case FalconClass::Property::t_inh:
-         target.setUser( prop->m_value.inh->parent(), const_cast<FalconInstance*>(this) );
+         target.setUser( prop->m_value.inh->base(), const_cast<FalconInstance*>(this) );
          break;
 
       case FalconClass::Property::t_state:

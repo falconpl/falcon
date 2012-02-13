@@ -24,7 +24,6 @@
 #include <falcon/error.h>
 #include <falcon/falconclass.h>
 #include <falcon/synfunc.h>
-#include <falcon/inheritance.h>
 
 #include <falcon/parser/rule.h>
 #include <falcon/parser/parser.h>
@@ -37,6 +36,8 @@
 #include <falcon/parser/lexer.h>
 
 #include <falcon/psteps/exprvalue.h>
+#include <falcon/psteps/exprinherit.h>
+#include <falcon/psteps/exprparentship.h>
 
 #include "private_types.h"
 
@@ -44,7 +45,6 @@
 
 namespace Falcon {
 
-typedef std::list<Inheritance* > InhList;
 
 bool classdecl_errhand(const NonTerminal&, Parser& p)
 {
@@ -76,25 +76,6 @@ bool classdecl_errhand(const NonTerminal&, Parser& p)
    // we need to create a discardable anonymous class if we're a module.   
    return true;
 }
-
-void inh_list_deletor(void* data)
-{
-   InhList* expr = static_cast<InhList*>(data);
-   InhList::iterator iter = expr->begin();
-   while( iter != expr->end() )
-   {
-      delete *iter;
-      ++iter;
-   }
-   delete expr;
-}
-
-
-void inh_deletor(void* data)
-{
-   delete static_cast<Inheritance*>(data);
-}
-
 
 using namespace Parsing;
 
@@ -167,18 +148,8 @@ static void make_class( Parser& p, int tCount,
    // some from clause to take care of?
    if( tfrom != 0 )
    {
-      InhList* flist = static_cast<InhList*>( tfrom->asData() );
-      InhList::iterator iter = flist->begin();
-      while( iter != flist->end() )
-      {
-         Inheritance* inh = *iter;
-         cls->addParent( inh );
-         ctx->onInheritance( inh );
-         ++iter;
-      }
-
-      // preserve the inheritances, but discard the list.
-      flist->clear();
+      ExprParentship* flist = static_cast<ExprParentship*>( tfrom->detachValue() );
+      cls->setParentship( flist );
    }
 
    // remove this stuff from the stack
@@ -303,25 +274,8 @@ void apply_init_expr( const Rule&, Parser& p )
    else
    {
       cls->hasInit(true);
-      SynFunc* init = new SynFunc("init");
-      // but.. we don't really know if the init funciton has been created
-      if( (init = static_cast<SynFunc*>(cls->init())) == 0 )
-      {
-         init = new SynFunc("init");
-         cls->setInit( init );
-      }
-
-      // copy the symbols of the constructor in the function
-      SynFunc* constructor = cls->makeConstructor();
-      for(int pCount = 0; pCount < constructor->symbols().localCount(); ++pCount )
-      {
-         init->symbols().addLocal( 
-            constructor->symbols().getLocal( pCount )->name() );
-      }
-      
-      // the user can add a non-syntree function as init,
-      // ... but we won't be here compiling it.
-      ctx->openFunc( static_cast<SynFunc*>(cls->init()) );
+      SynFunc* ctor = cls->makeConstructor();            
+      ctx->openFunc( static_cast<SynFunc*>(ctor) );
       p.simplify( 2 );
       p.pushState("Main");
    }
@@ -340,11 +294,11 @@ void apply_FromClause_next( const Rule&, Parser& p  )
    TokenInstance* tInh = p.getNextToken(); // FromEntry
 
    // keep the list, but discard the comma and the entry.
-   InhList* inhList = static_cast<InhList*>( tInhList->detachValue() );
-   inhList->push_back( static_cast<Inheritance*>(tInh->detachValue()) );
+   ExprParentship* inhList = static_cast<ExprParentship*>( tInhList->detachValue() );
+   inhList->add( static_cast<ExprInherit*>(tInh->detachValue()) );
 
    TokenInstance* tiNew = new TokenInstance(tInhList->line(), tInhList->chr(), sp.FromClause );
-   tiNew->setValue( inhList, &inh_list_deletor );
+   tiNew->setValue( inhList, &expr_deletor );
    p.simplify(3, tiNew );
 }
 
@@ -357,9 +311,9 @@ void apply_FromClause_first( const Rule&, Parser& p )
    TokenInstance* tInh = p.getNextToken(); // ListExpr
 
    TokenInstance* tlist = new TokenInstance(tInh->line(), tInh->chr(), sp.FromClause );
-   InhList* inh_list = new InhList;
-   inh_list->push_back( static_cast<Inheritance*>(tInh->detachValue()) );
-   tlist->setValue( inh_list, &inh_list_deletor );
+   ExprParentship* ep = new ExprParentship( tInh->line(), tInh->chr() );   
+   ep->add( static_cast<ExprInherit*>(tInh->detachValue()) );
+   tlist->setValue( ep, &expr_deletor );
 
    p.simplify(1, tlist);
 }
@@ -375,17 +329,17 @@ void apply_FromClause_entry_with_expr( const Rule&, Parser& p )
    TokenInstance* tlistExpr = p.getNextToken(); // ListExpr
 
    //TODO Save the token location
-   Inheritance* inh = new Inheritance(*tname->asString());
+   ExprInherit* ei = new ExprInherit( *tname->asString(), tname->line(), tname->chr());
    
    List* list=static_cast<List*>(tlistExpr->asData());
    for(List::const_iterator it=list->begin(),end=list->end();it!=end;++it)
    {
-      inh->addParameter( *it );
+      ei->add( *it );
    }
    list->clear();
 
    TokenInstance* tInh = new TokenInstance(tname->line(), tname->chr(), sp.FromEntry );
-   tInh->setValue( inh, &inh_deletor );
+   tInh->setValue( ei, &expr_deletor );
 
    p.simplify( 4, tInh );
 }
@@ -399,7 +353,8 @@ void apply_FromClause_entry( const Rule&, Parser& p )
    TokenInstance* tname = p.getNextToken(); // T_Name
 
    TokenInstance* tInh = new TokenInstance(tname->line(), tname->chr(), sp.FromEntry );
-   tInh->setValue( new Inheritance(*tname->asString()), &inh_deletor );
+   ExprInherit* ei = new ExprInherit( *tname->asString(), tname->line(), tname->chr());
+   tInh->setValue( ei, expr_deletor );
    p.simplify( 1, tInh );
 }
 

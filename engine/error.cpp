@@ -84,13 +84,11 @@ void Error::set( const ErrorParam& params )
    m_extra = params.m_extra ;
    m_symbol = params.m_symbol ;
    m_module = params.m_module ;
-   m_handler= handler ;
    m_line= params.m_line ;
    m_chr= params.m_chr ;
    m_sysError= params.m_sysError ;
    m_origin= params.m_origin ;
    m_catchable= params.m_catchable ;
-   m_bHasRaised= false ;
 }
 
 Error::~Error()

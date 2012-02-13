@@ -67,7 +67,8 @@ public:
    
    //=============================================================
    //
-   virtual void* createInstance( Item* params, int pcount ) const;   
+   virtual void* createInstance() const;   
+   virtual bool op_init( VMContext* ctx, void* instance, int pcount ) const;
    virtual void op_toString( VMContext* ctx, void* self ) const;
    
 private:

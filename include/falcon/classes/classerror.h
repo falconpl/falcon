@@ -42,8 +42,8 @@ public:
    virtual bool isDerivedFrom( const Class* cls ) const;
 
    virtual void describe( void* instance, String& target, int depth = 3, int maxlen = 60 ) const;
-   // TODO: overload properties.
-
+   
+   bool op_init( VMContext* ctx, void* instance, int32 pcount ) const;
    void op_toString( VMContext* ctx, void* self ) const;
    
 

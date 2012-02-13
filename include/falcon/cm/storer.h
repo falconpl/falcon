@@ -35,7 +35,7 @@ public:
    ClassStorer();
    virtual ~ClassStorer();
    
-   virtual bool void op_init( VMContext* ctx, void* instance, int32 pcount ) const;
+   virtual bool op_init( VMContext* ctx, void* instance, int32 pcount ) const;
    virtual void* createInstance() const;   
 private:   
    

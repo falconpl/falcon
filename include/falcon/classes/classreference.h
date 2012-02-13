@@ -59,7 +59,7 @@ public:
    virtual bool hasProperty( void* self, const String& prop ) const;
    virtual void describe( void* instance, String& target, int depth = 3, int maxlen = 60 ) const;
    
-   virtual void op_init( VMContext* ctx, void* instance, int32 pcount ) const;
+   virtual bool op_init( VMContext* ctx, void* instance, int32 pcount ) const;
    virtual void op_neg( VMContext* ctx, void* self ) const;
    virtual void op_add( VMContext* ctx, void* self ) const;
    virtual void op_sub( VMContext* ctx, void* self ) const;

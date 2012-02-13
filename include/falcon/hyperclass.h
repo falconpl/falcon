@@ -28,7 +28,7 @@ class Function;
 class DataReader;
 class DataWriter;
 class VMContext;
-class Inheritance;
+class FalconClass;
 
 
 /** Class holding more user-type classes.
@@ -60,51 +60,54 @@ class Inheritance;
  */
 class FALCON_DYN_CLASS HyperClass: public MultiClass
 {
-public:
-   /** Creates the hyperclass with a name and a master (final child) class.
+public:   
+   
+   /** Creates a stand-alone hyperclass.
     \param name The name under which this class is known (can be the same as
-           the name of the master class.
-    \param master The master class.
+           the name of the master class.   
 
-    \note The master class is owned by this hyperclass and it's destroyed
-    when the hyperclass is destroyed.
+    This version of the constructor can be used to synthezise a hyperclass 
+    from code obviating the need to create a FalconClass prior to it. It is
+    then possible to directly add parents to this hyperclass. This helps to
+    create derived class from multiple parents in third party modules.
     */
-   HyperClass( const String& name, Class* master );
+   HyperClass( const String& name );
+   
    virtual ~HyperClass();
 
-   /** Adds a parent and the parentship declaration.
-    \param cls The class.
-    \return true If the name of the remote class is free, false if it was
-                 already assigned.
-
-    As the parent is created, all the properties that were not declared elsewhere
-    are imported, as well as a property holding the same name of the parent
-    class that resolves to the class itself.
-
-    \note The priority of the properties is first-to-last. This means you
-          must add as parents classes with higher priority first.
+   Function* constructor() const { return m_constructor; }
+   
+   /** Sets a topmost constructor function.
+    This method can be used to set an initialization function that is
+    called above the master class constructor, in case the hyperclass
+    is synthezized.
     */
-   bool addParent( Inheritance* cls );
+   void constructor( Function* c ) { m_constructor = c; }      
+
+   bool addParent( Class* parent );
+   
+   bool addProperty( const String& name, const Item& initValue );
+   bool addProperty( const String& name, Expression* initExpr );
+   bool addProperty( const String& name );
+   bool addMethod( Function* mth );
 
    //=========================================
    // Instance management
    virtual Class* getParent( const String& ) const;
    virtual void dispose( void* self ) const;
    virtual void* clone( void* source ) const;
-   virtual void serialize( DataWriter* stream, void* self ) const;
-   virtual void* deserialize( DataReader* stream ) const;
+   virtual void* createInstance() const;
+ 
+   
    virtual bool isDerivedFrom( const Class* cls ) const;
    virtual void* getParentData( Class* parent, void* data ) const;
 
-   Function* constructor() const { return m_constructor; }
-   void constructor( Function* c ) { m_constructor = c; }
    
    //=========================================================
    // Class management
    //
 
    virtual void gcMarkMyself( uint32 mark );
-
    virtual void gcMark( void* self, uint32 mark ) const;
 
    /** List all the properties in this class.
@@ -121,118 +124,48 @@ public:
    // Operators.
    //
 
-   virtual void op_create( VMContext* ctx, int32 pcount ) const;
+   virtual bool op_init( VMContext* ctx, void* instance, int32 pcount ) const;
 
 protected:
-   
    void addParentProperties( Class* cls );
    void addParentProperty( Class* cls, const String& pname );
    Class* getParentAt( int pos ) const;
 
 private:
-
-   class Private;
-   friend class Private;
-   Private* _p;
-
-   Class* m_master;
+   Function* m_constructor;
+   ExprParentship* m_parentship;
+   FalconClass* m_master;
    int m_nParents;
-   Function* m_constructor;   
-
-   class FALCON_DYN_CLASS FinishCreateStep: public PStep
+   
+   /** Creates the hyperclass with a name and a master (final child) class.
+    \param master The master class.
+    
+    The master class is owned by this hyperclass and it's destroyed
+    when the hyperclass is destroyed.
+    */
+   HyperClass( FalconClass* master );
+   
+   void setParentship( ExprParentship* ps );
+   
+   class FALCON_DYN_CLASS InitParentsStep: public PStep
    {
    public:
-      FinishCreateStep( HyperClass* o ): m_owner(o) { apply = apply_; }
-      virtual ~FinishCreateStep() {};
+      InitParentsStep( HyperClass* o ): m_owner(o) { apply = apply_; }
+      virtual ~InitParentsStep() {};
+      virtual void describeTo( String& tgt, int ) const { 
+         tgt = "InitParentStep for " + m_owner->name();
+      }
+      
       static void apply_(const PStep* ps, VMContext* ctx );
 
    private:
       HyperClass* m_owner;
    };
 
-   class FALCON_DYN_CLASS CreateMasterStep: public PStep
-   {
-   public:
-      CreateMasterStep( HyperClass* o ): m_owner(o) { apply = apply_; }
-      virtual ~CreateMasterStep() {};
-      static void apply_(const PStep* ps, VMContext* ctx );
+   InitParentsStep m_initParentsStep;
 
-   private:
-      HyperClass* m_owner;
-   };
-
-   class FALCON_DYN_CLASS ParentCreatedStep: public PStep
-   {
-   public:
-      ParentCreatedStep( HyperClass* o ): m_owner(o) { apply = apply_; }
-      virtual ~ParentCreatedStep() {};
-      static void apply_(const PStep* ps, VMContext* ctx );
-
-   private:
-      HyperClass* m_owner;
-   };
-
-   class FALCON_DYN_CLASS CreateParentStep: public PStep
-   {
-   public:
-      CreateParentStep( HyperClass* o ): m_owner(o) { apply = apply_; }
-      virtual ~CreateParentStep() {};
-      static void apply_(const PStep* ps, VMContext* ctx );
-
-   private:
-      HyperClass* m_owner;
-   };
-
-   class FALCON_DYN_CLASS FinishInvokeStep: public PStep
-   {
-   public:
-      FinishInvokeStep( HyperClass* o ): m_owner(o) { apply = apply_; }
-      virtual ~FinishInvokeStep() {};
-      static void apply_(const PStep* ps, VMContext* ctx );
-
-   private:
-      HyperClass* m_owner;
-   };
-
-   class FALCON_DYN_CLASS InvokeMasterStep: public PStep
-   {
-   public:
-      InvokeMasterStep( HyperClass* o ): m_owner(o) { apply = apply_; }
-      virtual ~InvokeMasterStep() {};
-      static void apply_(const PStep* ps, VMContext* ctx );
-
-   private:
-      HyperClass* m_owner;
-   };
-
-   class FALCON_DYN_CLASS CreateEmptyNext: public PStep
-   {
-   public:
-      CreateEmptyNext( HyperClass* o ): m_owner(o) { apply = apply_; }
-      virtual ~CreateEmptyNext() {};
-      static void apply_(const PStep* ps, VMContext* ctx );
-
-   private:
-      HyperClass* m_owner;
-   };
-
-   FinishCreateStep m_finishCreateStep;
-   CreateMasterStep m_createMasterStep;
-   ParentCreatedStep m_parentCreatedStep;
-   CreateParentStep m_createParentStep;
-
-   FinishInvokeStep m_finishInvokeStep;
-   InvokeMasterStep m_invokeMasterStep;
-   CreateEmptyNext m_createEmptyNext;
-
-   friend class FinishCreateStep;
-   friend class CreateMasterStep;
-   friend class ParentCreatedStep;
-   friend class CreateParentStep;
-
-   friend class FinishInvokeStep;
-   friend class InvokeMasterStep;
-   friend class CreateEmptyNext;
+   
+   friend class FalconClass;
 };
 
 }

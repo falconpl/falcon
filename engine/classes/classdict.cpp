@@ -201,7 +201,7 @@ void ClassDict::enumeratePV( void*, Class::PVEnumerator& ) const
 
 //=======================================================================
 //
-bool ClassDict::op_init( VMContext* ctx, void* instance, int pcount ) const
+bool ClassDict::op_init( VMContext*, void*, int ) const
 {
    // TODO: create the dictionary
    return false;

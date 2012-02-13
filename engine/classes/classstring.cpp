@@ -267,17 +267,32 @@ bool ClassString::op_init( VMContext* ctx, void* instance, int pcount ) const
          
          // apply the op_toString on the item.
          ctx->pushCode( &m_initNext );
+         ctx->currentCode().m_seqId = pcount;
          long depth = ctx->codeDepth();
-         
+
+         // first get the required data...
          Class* cls;
-         void* data;                 
-         itm->forceClassInst( cls, data )
-         cls->op_toString( ctx, data );
+         void* data;
+         itm->forceClassInst( cls, data );
+
+         // then ensure that the stack is as we need.
+         ctx->pushData( self );
+         ctx->pushData( *itm );
          
+         // and finally invoke stringify operation.
+         cls->op_toString( ctx, data );         
          if( depth == ctx->codeDepth() )
          {
+            // we can get the string here.
+            fassert( ctx->topData().isString() );
+            fassert( ctx->opcodeParam(1).isString() );
+            
+            String* result = ctx->topData().asString();
+            ctx->opcodeParam(1).asString()->copy( *result );
+            
+            // and clean the stack
+            ctx->popData(2 + pcount);
             ctx->popCode();
-            ctx->popData();
          }
          
          // we took care of the stack.
@@ -395,8 +410,9 @@ ClassString::InitNext::InitNext()
 
 void ClassString::InitNext::apply_( const PStep*, VMContext* ctx )
 {
-   ctx->opcodeParam(1)->asString()->copy( *ctx->topData().asString() );
-   ctx->popData();
+   ctx->opcodeParam(1).asString()->copy( *ctx->topData().asString() );
+   // remove the locally pushed data and the parameters.
+   ctx->popData( 2 + ctx->currentCode().m_seqId );
    ctx->popCode();
 }
 

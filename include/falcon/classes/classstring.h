@@ -58,7 +58,7 @@ public:
    virtual bool gcCheck( void* instance, uint32 mark ) const;
 
    //=============================================================
-   virtual bool op_inst( VMContext* ctx, void*, int32 pcount ) const;
+   virtual bool op_init( VMContext* ctx, void*, int32 pcount ) const;
 
    virtual void op_add( VMContext* ctx, void* self ) const;
    virtual void op_aadd( VMContext* ctx, void* self ) const;

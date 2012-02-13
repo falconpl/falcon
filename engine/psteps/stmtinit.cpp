@@ -14,7 +14,6 @@
 */
 
 #include <falcon/trace.h>
-#include <falcon/inheritance.h>
 #include <falcon/vmcontext.h>
 #include <falcon/falconclass.h>
 

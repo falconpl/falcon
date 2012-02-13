@@ -76,16 +76,21 @@ void ClassPath::restore( VMContext*, DataReader* stream, void*& empty ) const
 }
 
 
-void* ClassPath::createInstance( Item* params, int pcount ) const
+void* ClassPath::createInstance() const
 {
-   PathCarrier* uc;
+   return new PathCarrier( carriedProps() );
+}
+
+
+bool ClassPath::op_init( VMContext* ctx, void* instance, int pcount ) const
+{
+   PathCarrier* uc = static_cast<PathCarrier*>(instance);
    
    if ( pcount >= 1 )
    {
-      Item& other = *params;
+      Item& other = *ctx->opcodeParams(pcount);
       if( other.isString() )
-      {
-         uc = new PathCarrier( carriedProps() );         
+      {        
          if( ! uc->m_path.parse( *other.asString() ) )
          {
             delete uc;
@@ -95,7 +100,7 @@ void* ClassPath::createInstance( Item* params, int pcount ) const
       }
       else if( other.asClass() == this )
       {
-         uc = new PathCarrier( *static_cast<PathCarrier*>(other.asInst()) );
+         uc->m_path = static_cast<PathCarrier*>(other.asInst())->m_path;
       }
       else
       {
@@ -105,12 +110,8 @@ void* ClassPath::createInstance( Item* params, int pcount ) const
       }
       
    }
-   else
-   {
-      uc = new PathCarrier( carriedProps() );
-   }
-      
-   return uc;
+  
+   return false;
 }
 
 

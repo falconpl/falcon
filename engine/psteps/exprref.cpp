@@ -76,7 +76,7 @@ ExprRef::~ExprRef()
    delete m_expr;
 }
 
-void ExprRef::symbol(Symbol* sym) const
+void ExprRef::symbol(Symbol* sym)
 {
    m_symbol = sym;
 }

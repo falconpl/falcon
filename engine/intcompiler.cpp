@@ -36,7 +36,6 @@
 #include <falcon/falconclass.h>
 #include <falcon/hyperclass.h>
 #include <falcon/modloader.h>
-#include <falcon/inheritance.h>
 #include <falcon/requirement.h>
 
 #include <falcon/errors/genericerror.h>

@@ -143,7 +143,7 @@ void ClassReference::describe( void* self, String& target, int depth, int maxlen
 }
 
    
-bool ClassReference::op_init( VMContext* ctx, void* instance, int32 pcount ) const
+bool ClassReference::op_init( VMContext*, void*, int32 ) const
 {
    // topdata has been already turned into a reference by now.
    return false;

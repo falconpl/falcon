@@ -1221,6 +1221,9 @@ public:
    /** Sets the out-of-context nature of the ongoing evaluation. */
    void evalOutOfContext( bool otc ) { currentFrame().m_bEvalOutOfContext = otc; }
 
+   /** Copies pcount parameters from the frame parameters area to the top of the stack. */
+   void forwardParams( int pcount );
+   
 protected:
 
    /** Class holding the dynamic symbol information on a stack. */

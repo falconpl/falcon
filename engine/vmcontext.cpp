@@ -778,6 +778,16 @@ void VMContext::returnFrame( const Item& value )
 }
 
 
+void VMContext::forwardParams( int pcount )
+{
+   if( pcount > 0 )
+   {
+      addSpace( pcount );
+      Item* base = params();
+      memcpy( &topData()-pcount, base, pcount*sizeof(Item) );
+   }
+}
+
 void VMContext::setDynSymbolValue( const Symbol* dyns, const Item& value )
 {
    value.copied();

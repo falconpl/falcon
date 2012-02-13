@@ -47,6 +47,10 @@ public:
    /** Overridden to filter out non-inheritance expressions. */
    virtual bool insert( int32 pos, TreeStep* element );  
 
+   virtual bool isStatic() const { return false; }
+   virtual bool simplify( Item& ) const { return false; }  
+   virtual ExprParentship* clone() const { return new ExprParentship(*this); }
+   
 private:
    
    static void apply_( const PStep*, VMContext* ctx );

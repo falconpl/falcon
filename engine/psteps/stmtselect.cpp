@@ -62,7 +62,7 @@ public:
    Private( StmtSelect* owner, const Private& other ) 
    {
       IntBlocks::const_iterator ibi = other.m_intBlocks.begin();
-      while( ibi != other.m_blocks.end() )
+      while( ibi != other.m_intBlocks.end() )
       {
          SynTree* st = ibi->second->clone();
          st->setParent(owner);
@@ -72,7 +72,7 @@ public:
       }
       
       ClassBlocks::const_iterator cbi = other.m_classBlocks.begin();
-      while( cbi != other.m_blocks.end() )
+      while( cbi != other.m_classBlocks.end() )
       {
          SynTree* st = cbi->second->clone();
          st->setParent(owner);
@@ -145,7 +145,7 @@ StmtSelect::StmtSelect( const StmtSelect& other ):
       m_defaultBlock->setParent(this);
    }
    
-   _p = new Private( this, other._p);
+   _p = new Private( this, *other._p );
 }
 
 StmtSelect::~StmtSelect()
@@ -259,7 +259,7 @@ Requirement* StmtSelect::addSelectName( const String& name, SynTree* block )
    
    // add a requirement pointing to the missing class.
    SelectRequirement* req = new SelectRequirement( 
-         _p->m_classList.size()-1, name, block, this );
+         _p->m_blocks.size()-1, _p->m_classList.size()-1, block->sr().line(), name, this );
    return req;
 }
 
@@ -345,9 +345,11 @@ bool StmtSelect::setDefault( SynTree* block )
    return true;
 }
 
-bool StmtSelect::setSelectClass( int id, Class* cls )
+bool StmtSelect::setSelectClass( int id, int clsId, Class* cls )
 {
-   fassert( id < _p->m_classList.size() );
+   fassert( clsId < (int) _p->m_classList.size() );
+   fassert( id < (int) _p->m_blocks.size() );
+   
    // refuse to add if already existing.
    if ( _p->m_classBlocks.find( cls ) != _p->m_classBlocks.end() )
    {
@@ -355,9 +357,9 @@ bool StmtSelect::setSelectClass( int id, Class* cls )
    }
 
    // anyhow, associate the request.
-   _p->m_classBlocks[ cls ] = block;
+   _p->m_classBlocks[ cls ] = _p->m_blocks[id];
    // and fix the ID in the class list.
-   _p->m_classList[id] = cls;
+   _p->m_classList[clsId] = cls;
    
    m_unresolved--;
    return true;
@@ -365,7 +367,7 @@ bool StmtSelect::setSelectClass( int id, Class* cls )
 
 bool StmtSelect::setSelectType( int id, int typeId )
 {
-   fassert( id < _p->m_classBlocks.size() );
+   fassert( id < (int) _p->m_blocks.size() );
    
    // refuse to add if already existing.
    if ( _p->m_intBlocks.find( typeId ) != _p->m_intBlocks.end() )
@@ -374,7 +376,7 @@ bool StmtSelect::setSelectType( int id, int typeId )
    }
 
    // anyhow, associate the request.
-   _p->m_intBlocks[ typeId ] = block;
+   _p->m_intBlocks[ typeId ] = _p->m_blocks[id];
    // -- there's nothing to fix in the class list, leave it 0.
    m_unresolved--;
    return true;
@@ -448,7 +450,7 @@ void SelectRequirement::onResolved(
    {
       fassert( itm->asClass()->isMetaClass() );
       Class* cls = static_cast<Class*>(itm->asInst());
-      if( ! m_owner->setSelectClass( m_id, cls ) )
+      if( ! m_owner->setSelectClass( m_id, m_clsId, cls ) )
       {
          throw new LinkError( ErrorParam( m_owner->selector() == 0 ? e_catch_clash : e_switch_clash )
             .line( m_line )

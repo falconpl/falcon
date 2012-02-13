@@ -35,7 +35,7 @@ ClassNil::~ClassNil()
 }
 
 
-bool ClassNil::op_init( VMContext* ctx, void* instance, int pcount ) const
+bool ClassNil::op_init( VMContext*, void* instance, int ) const
 {
    Item* item = static_cast<Item*>(instance);
    item->setNil();

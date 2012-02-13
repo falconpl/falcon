@@ -43,7 +43,7 @@ bool ClassBool::op_init( VMContext* ctx, void* instance, int pcount ) const
    Item* item = static_cast<Item*>(instance);
    
    // this will tell us if the instance comes from the stack.
-   bool isInStack = instance == ctx->opcodeParam(pcount+1);
+   bool isInStack = instance == ctx->opcodeParams(pcount+1);
    if ( pcount >= 1 )
    {
       Class* cls;
@@ -54,8 +54,8 @@ bool ClassBool::op_init( VMContext* ctx, void* instance, int pcount ) const
       {
          // put the item in the stack, just in case.
          ctx->pushCode( &m_OP_create_next );
-         ctx->currentCode()->m_seqId = pcount;
-         if ( isInStack ) ctx->currentCode()->m_seqId |=0x80000000;
+         ctx->currentCode().m_seqId = pcount;
+         if ( isInStack ) ctx->currentCode().m_seqId |=0x80000000;
          
          long depth = ctx->codeDepth();
          // we're in charge.
@@ -78,7 +78,7 @@ bool ClassBool::op_init( VMContext* ctx, void* instance, int pcount ) const
          else {
             bool isTrue = ctx->topData().isTrue();
             ctx->popData();
-            ctx->opcodeParam(pcount+1)->setBoolean(isTrue);
+            ctx->opcodeParams(pcount+1)->setBoolean(isTrue);
          }
       }
       else
@@ -112,8 +112,7 @@ void ClassBool::NextOpCreate::apply_( const PStep*, VMContext* ctx )
    }
    else {
       ctx->popCode(); // remove us
-      ctx->popData(); // remove the called entity
-      fassert( ctx->topData().asClass() == this );      
+      ctx->popData(); // remove the called entity     
       static_cast<Item*>(ctx->topData().asInst())->setBoolean( tof );      
       ctx->popData(seqId + 1); // remove the params + the pointer to inst.
    }

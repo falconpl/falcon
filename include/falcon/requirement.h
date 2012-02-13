@@ -79,8 +79,8 @@ public:
     won't destroy it.
     */
    Requirement( const String& name, bool bIsStatic = false ) :
-      m_name( name ),
-      m_bIsStatic( bIsStatic )
+      m_bIsStatic( bIsStatic ),
+      m_name( name )
    {}
       
    virtual ~Requirement() {}

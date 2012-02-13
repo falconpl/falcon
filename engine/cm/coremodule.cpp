@@ -36,11 +36,13 @@
 #include <falcon/cm/stream.h>
 #include <falcon/cm/textstream.h>
 #include <falcon/cm/textwriter.h>
-#include <falcon/cm/datareader.h>
+#include <falcon/cm/textreader.h>
 #include <falcon/cm/datawriter.h>
+#include <falcon/cm/datareader.h>
 
 // the standard error classes
 #include <falcon/errorclasses.h>
+
 
 
 
@@ -76,6 +78,7 @@ CoreModule::CoreModule():
       << classStream
       << new Ext::ClassTextStream( classStream )
       << new Ext::ClassTextWriter( classStream )
+      << new Ext::ClassTextReader( classStream )
       << new Ext::ClassDataWriter()
       << new Ext::ClassDataReader()
       ;

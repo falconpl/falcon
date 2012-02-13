@@ -30,14 +30,14 @@ namespace Falcon
 
 ExprInherit::ExprInherit( int line, int chr ):
    ExprVector( line, chr ),
-   m_base(0),
+   m_base(0)
 {
    FALCON_DECLARE_SYN_CLASS( expr_inherit )
    apply = apply_;
 }
 
 ExprInherit::ExprInherit( const String& name, int line, int chr ):
-   ExprVector( line, chr )
+   ExprVector( line, chr ),
    m_base(0),
    m_name( name )
 {
@@ -119,11 +119,11 @@ void ExprInherit::apply_( const PStep* ps, VMContext* ctx )
    
    // we have expanded all the parameters. Go for init the class.
    ctx->popCode();
-   Item* iinst = ctx->opcodeParam(size+1);
+   Item* iinst = ctx->opcodeParams(size+1);
    // The creation process must have given the instance to us right before
    // -- the parameters were created.
    fassert( iinst->isClass() );
-   fassert( iinst->asClass()->derivedFrom(self->m_base) );
+   fassert( iinst->asClass()->isDerivedFrom(self->m_base) );
    void* instance = iinst->asClass()->getParentData( self->m_base, iinst->asInst());
    
    // invoke the init operator directly

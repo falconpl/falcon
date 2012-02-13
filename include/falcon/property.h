@@ -25,7 +25,6 @@ namespace Falcon {
 class ClassUser;
 class Item;
 
-
 class Property
 {
 public:   

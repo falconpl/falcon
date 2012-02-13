@@ -101,7 +101,7 @@ void ClassError::describe( void* instance, String& target, int, int maxlen ) con
 }
 
 
-bool ClassAccessError::op_init( VMContext* ctx, void* instance, int32 pcount ) const
+bool ClassError::op_init( VMContext* ctx, void* instance, int32 pcount ) const
 {
    Error* error = static_cast<Error*>( instance );
    ErrorParam params;

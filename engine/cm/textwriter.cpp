@@ -71,10 +71,16 @@ ClassTextWriter::~ClassTextWriter()
 {
 }
 
+void* ClassTextWriter::createInstance() const
+{
+   return new TextWriterCarrier( 0 );
+}
 
-void* ClassTextWriter::createInstance( Item* params, int pcount ) const
+bool ClassTextWriter::op_init( VMContext* ctx, void* instance, int pcount ) const
 {
    static Engine* eng = Engine::instance();
+   TextWriterCarrier* twc = static_cast<TextWriterCarrier*>(instance);
+   
    // if we have 2 parameters, the second one is the encoding.
    String* encoding = 0;
    StreamCarrier* stc = 0;
@@ -82,6 +88,8 @@ void* ClassTextWriter::createInstance( Item* params, int pcount ) const
    
    if( pcount > 0 )
    {
+      Item* params = ctx->opcodeParams(pcount);
+      
       Class* cls;
       void* data;
       if( params[0].asClassInst(cls, data) && cls->isDerivedFrom(m_clsStream) )
@@ -117,18 +125,18 @@ void* ClassTextWriter::createInstance( Item* params, int pcount ) const
       if( tc == 0 )
       {
          throw new ParamError( ErrorParam( e_param_range, __LINE__, SRC )
-         .origin(ErrorParam::e_orig_runtime)
-         .extra( "Unknown encoding " + *encoding ) );      
+            .origin(ErrorParam::e_orig_runtime)
+            .extra( "Unknown encoding " + *encoding ) );      
       }
    }
    
-   TextWriterCarrier* twc = new TextWriterCarrier( stc );
+   twc->carried( stc );
    if( tc != 0 )
    {
       twc->m_writer.setEncoding(tc);
    }
    
-   return twc;
+   return false;
 }
 
 //=================================================================

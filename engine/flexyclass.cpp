@@ -147,7 +147,7 @@ void FlexyClass::describe( void* self, String& target, int depth, int maxlen ) c
 }
 
 
-void FlexyClass::op_init( VMContext* ctx, void* instance, int32 pcount ) const
+bool FlexyClass::op_init( VMContext* ctx, void* instance, int32 pcount ) const
 {
    FlexyDict* self = static_cast<FlexyDict*>(instance);
    

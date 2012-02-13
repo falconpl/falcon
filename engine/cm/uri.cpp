@@ -69,16 +69,21 @@ void ClassURI::restore( VMContext*, DataReader* stream, void*& empty ) const
    empty = uc;
 }
    
-void* ClassURI::createInstance( Item* params, int pcount ) const
+void* ClassURI::createInstance() const
 {
-   URICarrier* uc;
+   return new URICarrier( carriedProps() );
+}
+
+
+bool ClassURI::op_init( VMContext* ctx, void* instance, int pcount ) const
+{
+   URICarrier* uc = static_cast<URICarrier*>(instance );
    
    if ( pcount >= 1 )
    {
-      Item& other = *params;
+      Item& other = *ctx->opcodeParams(pcount);
       if( other.isString() )
       {
-         uc = new URICarrier( carriedProps() );         
          if( ! uc->m_uri.parse( *other.asString(), &uc->m_auth, &uc->m_path, &uc->m_query ) )
          {
             delete uc;
@@ -88,7 +93,7 @@ void* ClassURI::createInstance( Item* params, int pcount ) const
       }
       else if( other.asClass() == this )
       {
-         uc = new URICarrier( *static_cast<URICarrier*>(other.asInst()) );
+         uc->m_uri = static_cast<URICarrier*>(other.asInst())->m_uri;
       }
       else
       {
@@ -96,16 +101,10 @@ void* ClassURI::createInstance( Item* params, int pcount ) const
                .extra( "S|URI" )
                .origin(ErrorParam::e_orig_mod) );
       }
-      
    }
-   else
-   {
-      uc = new URICarrier( carriedProps() );
-   }
-      
-   return uc;
+   
+   return false;
 }
-
 
 void ClassURI::op_toString( VMContext* ctx, void* self ) const
 {

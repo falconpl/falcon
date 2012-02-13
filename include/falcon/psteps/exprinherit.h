@@ -67,11 +67,15 @@ public:
     */
    void base( Class* cls ) 
    {
-      m_base = base;
+      m_base = cls;
    }
 
    virtual void describeTo( String& target, int depth = 0 ) const;
-      
+
+   virtual bool isStatic() const { return false; }
+   virtual bool simplify( Item& ) const { return false; }  
+   virtual ExprInherit* clone() const { return new ExprInherit(*this); }
+   
 private:
    Class* m_base;
    String m_name;

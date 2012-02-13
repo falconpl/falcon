@@ -174,7 +174,8 @@ private:
    static void apply_( const PStep*, VMContext* ctx );
    
    // Once a forward class is resolved, this can be used to set it.
-   bool setSelectClass( int id, Class* cls );
+   bool setSelectClass( int id, int clsId, Class* cls );
+   
    // Once a forward class is resolved AS A TYPE, this can be used to set it.
    bool setSelectType( int id, int tid );
    
@@ -185,11 +186,12 @@ private:
 class SelectRequirement: public Requirement
 {
 public:
-   SelectRequirement( int32 id, int32 line, const String& name, StmtSelect* owner ):
+   SelectRequirement( int32 id, int32 clsId, int32 line, const String& name, StmtSelect* owner ):
       Requirement( name ),
+      m_owner( owner ),
       m_id( id ),
-      m_line( line ),
-      m_owner( owner )
+      m_clsId( clsId ),
+      m_line( line )
    {}
 
    virtual ~SelectRequirement() {}
@@ -200,6 +202,7 @@ public:
 private:
    StmtSelect* m_owner;
    int32 m_id;
+   int32 m_clsId;
    int32 m_line;
 };
    

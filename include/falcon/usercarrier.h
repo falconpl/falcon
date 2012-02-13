@@ -76,27 +76,28 @@ protected:
 };
 
 
-template<class __T>
+template<class T__>
 class UserCarrierT: public UserCarrier
 {
 public:
-   UserCarrierT( __T* data ):
+   UserCarrierT( T__* data ):
       m_data( data )
    {}
 
-   UserCarrierT( __T* data, uint32  itemcount ):
+   UserCarrierT( T__* data, uint32  itemcount ):
       m_data( data )
    {}
 
-   UserCarrierT( const UserCarrierT<__T>& other );
+   UserCarrierT( const UserCarrierT<T__>& other );
 
-   __T* carried() const { return m_data; }
+   T__* carried() const { return m_data; }
+   void carried( T__* data) { m_data = data; }
 
 protected:
    virtual void* cloneData() const { return 0; }
 
 private:
-   __T* m_data;
+   T__* m_data;
 };
 
 }

@@ -83,9 +83,15 @@ ClassTextReader::~ClassTextReader()
 }
 
 
-void* ClassTextReader::createInstance( Item* params, int pcount ) const
+void* ClassTextReader::createInstance() const
+{
+   return new TextReaderCarrier( 0 );
+}
+
+bool ClassTextReader::op_init( VMContext* ctx, void* instance, int pcount ) const
 {
    static Engine* eng = Engine::instance();
+   
    // if we have 2 parameters, the second one is the encoding.
    String* encoding = 0;
    StreamCarrier* stc = 0;
@@ -95,6 +101,8 @@ void* ClassTextReader::createInstance( Item* params, int pcount ) const
    {
       Class* cls;
       void* data;
+      Item* params = ctx->opcodeParams(pcount);
+      
       if( params[0].asClassInst(cls, data) && cls->isDerivedFrom(m_clsStream) )
       {
          stc = static_cast<StreamCarrier*>(data);
@@ -128,18 +136,18 @@ void* ClassTextReader::createInstance( Item* params, int pcount ) const
       if( tc == 0 )
       {
          throw new ParamError( ErrorParam( e_param_range, __LINE__, SRC )
-         .origin(ErrorParam::e_orig_runtime)
-         .extra( "Unknown encoding " + *encoding ) );      
+            .origin(ErrorParam::e_orig_runtime)
+            .extra( "Unknown encoding " + *encoding ) );      
       }
    }
    
-   TextReaderCarrier* twc = new TextReaderCarrier( stc );
+   TextReaderCarrier* twc = static_cast<TextReaderCarrier*>( instance );
    if( tc != 0 )
    {
       twc->m_reader.setEncoding(tc);
    }
    
-   return twc;
+   return false;
 }
 
 //=================================================================

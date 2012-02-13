@@ -138,11 +138,6 @@ public:
    FalconClass( const String& name );
    virtual ~FalconClass();
 
-   /** Returns the name of the falcon class.
-    \return the name of this class.
-    */
-   const String& fc_name() const { return m_fc_name; }
-
    void* createInstance() const;
    
    /** Creates a new instance.
@@ -225,6 +220,8 @@ public:
     */
    bool addParent( ExprInherit* inh );
 
+   /** Sets the whole parentship structure. */   
+   bool setParentship( ExprParentship* inh );
 
    /** Gets a member of this class.
     \param name The name of the member to be returned.
@@ -321,25 +318,22 @@ public:
    SynFunc* constructor() const { return m_constructor; }
 
    /** Create the class structure compiling it from its parents.
-    \param bHiddenParents If true, we have some parents that might not
-    be in our parent list.
     \return false if there is still some unknown parent,
             true if the construction process is complete.
 
     This is called by the VM after all the missing parents have been
     found, provided that all the parents are declared as FalconClass subclasses.
 
+    The role of this method is that to build the property list that composes
+    this class, flattening the properties inherited from the base classes.
+    
+    A FalconClass needs to be constructed prior being used. Failing to do so
+    will cause an error at instance creation.
+    
     If some of the parents are not FalconClass, the engine must generate an
     hyperclass out of this falcon class.
-
-    This method may destroy the constructor (or return succesfully without
-    actually creating it) if it detects that we have no parents and we don't
-    have nothing to be initialized. If bHiddenParents If true, we have some
-    parents that might not be in our parent list. This means that the symbol
-    talbe of our constructor might be in use; so it means that the constructor
-    must not be disposed of if already existing.
     */
-   bool construct( bool bHiddenParents = false );
+   bool construct();
 
    /** Return the count of currently unknown parents.
     \return The count of unresolved inheritances.
@@ -384,6 +378,11 @@ public:
     */
    virtual void onInheritanceResolved( ExprInherit* inh );
 
+   /** Pushes a VM step to initialize the instance properties.
+    It expects to be called while inside a constructor frame.
+    */
+   void pushInitExprStep( VMContext* ctx );
+   
    //=========================================================
    // Operators.
    //
@@ -397,7 +396,6 @@ private:
    Private* _p;
 
    ExprParentship* m_parentship;
-   String m_fc_name;
    SynFunc* m_constructor;
 
    Function** m_overrides;
@@ -407,30 +405,21 @@ private:
    bool m_hasInit;
    int m_missingParents;
    bool m_bPureFalcon;
+   
+   bool m_bConstructed;
 
    // This is used to initialize the init expressions.
-   class PStepInitExpr: public Statement
+   class PStepInitExpr: public PStep
    {
    public:
       PStepInitExpr( FalconClass* o );
       static void apply_( const PStep*, VMContext* );
-      virtual PStepInitExpr* clone() const { return 0; }
+      virtual void describeTo( const String&, int depth=0 );
    private:
       FalconClass* m_owner;
    };
-
-   // This is used to invoke
-   class PStepInit: public Statement
-   {
-   public:
-      PStepInit( FalconClass* o );
-      static void apply_( const PStep*, VMContext* );
-      virtual PStepInitExpr* clone() const { return 0; }
-
-   private:
-      FalconClass* m_owner;
-   };
-   friend class PStepInitExpr;
+   
+   PStepInitExpr m_initExprStep;
 };
 
 }

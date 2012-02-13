@@ -23,7 +23,6 @@
 #include <falcon/statement.h>
 #include <falcon/psteps/stmtautoexpr.h>
 #include <falcon/psteps/stmtrule.h>
-#include <falcon/psteps/stmtinit.h>
 
 #include <falcon/stdstreams.h>
 #include <falcon/streambuffer.h>

@@ -64,7 +64,6 @@
 #include <falcon/psteps/stmtfastprint.h>
 #include <falcon/psteps/stmtfor.h>
 #include <falcon/psteps/stmtif.h>
-#include <falcon/psteps/stmtinit.h>
 #include <falcon/psteps/stmtraise.h>
 #include <falcon/psteps/stmtreturn.h>
 #include <falcon/psteps/stmtrule.h>
@@ -668,11 +667,7 @@ FALCON_STANDARD_SYNCLASS_OP_CREATE( Doubt, StmtDoubt, zeroaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( FastPrint, StmtFastPrint, zeroaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( ForIn, StmtForIn, zeroaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( ForTo, StmtForTo, zeroaryExprSet )
-FALCON_STANDARD_SYNCLASS_OP_CREATE( If, StmtIf, zeroaryExprSet )
-   
-// Init should be reviewed as we introduce the class declaration expression.
-FALCON_STANDARD_SYNCLASS_OP_CREATE( Init, StmtInit, zeroaryExprSet )
-   
+FALCON_STANDARD_SYNCLASS_OP_CREATE( If, StmtIf, zeroaryExprSet )   
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Raise, StmtRaise, zeroaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Return, StmtReturn, zeroaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Rule, StmtRule, zeroaryExprSet )

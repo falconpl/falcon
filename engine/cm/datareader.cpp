@@ -90,7 +90,13 @@ bool ClassDataReader::gcCheck( void* instance, uint32 mark ) const
 }
 
 
-void* ClassDataReader::createInstance( Item* params, int pcount ) const
+void* ClassDataReader::createInstance() const
+{
+   return new DataReader;
+}
+
+
+bool ClassDataReader::op_init( VMContext* ctx, void* instance, int pcount ) const
 {
    static Class* streamCls = m_module->getClass("Stream");
    
@@ -98,12 +104,15 @@ void* ClassDataReader::createInstance( Item* params, int pcount ) const
    {
       Class* cls=0;
       void* data=0;
+      
+      Item* params = ctx->opcodeParams(pcount);
       params[0].asClassInst( cls, data );
       if( cls->isDerivedFrom(streamCls) )
       {
-         DataReader* wr = new DataReader( static_cast<StreamCarrier*>(data)->m_underlying );
+         DataReader* wr = static_cast<DataReader*>( instance );
+         wr->changeStream(
+               static_cast<StreamCarrier*>(data)->m_underlying, false, false );
          // this data is going to be added to gc very soon.
-         wr->gcMark(1);
          return wr;
       }      
    }

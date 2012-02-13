@@ -41,16 +41,11 @@ void* ClassGeneric::clone( void* self ) const
    return static_cast<GenericItem*>(self)->clone();
 }
 
-void ClassGeneric::serialize( DataWriter* , void*  ) const
+void* ClassGeneric::createInstance() const
 {
-   // not serializable.
-}
-
-void* ClassGeneric::deserialize( DataReader* ) const
-{
-   // not serializable
    return 0;
 }
+
 
 void ClassGeneric::describe( void* self, String& target, int, int maxlen ) const
 {

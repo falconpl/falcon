@@ -62,11 +62,12 @@ public:
 
    //=============================================================
    //
-   virtual void* createInstance( Item* params, int pcount ) const;
-   
+   virtual void* createInstance() const;
+   virtual bool op_init( VMContext* ctx, void* instance, int pcount ) const;
    
 private:   
    ClassStream* m_clsStream;
+   
    //====================================================
    // Properties.
    //

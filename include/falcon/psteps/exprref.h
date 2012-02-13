@@ -48,7 +48,7 @@ public:
    virtual bool isStatic() const { return false; }
    virtual bool simplify( Item& result ) const;
 
-   void symbol(Symbol* sym) const;
+   void symbol(Symbol* sym);
    inline Symbol* symbol() const { return m_symbol; }
 
    virtual Expression* selector() const;

@@ -50,8 +50,8 @@ public:
 
    virtual void dispose( void* self ) const;
    virtual void* clone( void* self ) const;
-   virtual void serialize( DataWriter* stream, void* self ) const;
-   virtual void* deserialize( DataReader* stream ) const;
+   virtual void* createInstance() const;
+   
    virtual void describe( void* self, String& target, int depth = 3, int maxlen = 60 ) const;
 
    virtual void gcMark( void* instance, uint32 mark ) const;

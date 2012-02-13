@@ -129,11 +129,9 @@ bool ClassTextStream::op_init( VMContext* ctx, void* instance, int32 pcount ) co
          
    if( scarrier == 0 )
    {
-      ctx->raiseError( new ParamError( ErrorParam(e_inv_params, __LINE__,SRC)
+      throw new ParamError( ErrorParam(e_inv_params, __LINE__,SRC)
             .origin(ErrorParam::e_orig_runtime)
-            .extra("Stream,[S]") )
-         );
-      return;
+            .extra("Stream,[S]") );
    }
    
    
@@ -142,11 +140,9 @@ bool ClassTextStream::op_init( VMContext* ctx, void* instance, int32 pcount ) co
       Transcoder* tcode = eng->getTranscoder(*sEncoding);
       if( tcode == 0 )
       {
-         ctx->raiseError( new ParamError( ErrorParam(e_param_range, __LINE__,SRC)
-         .origin(ErrorParam::e_orig_runtime)
-         .extra("Unknown encoding " + *sEncoding) )
-         );
-         return;
+         throw new ParamError( ErrorParam(e_param_range, __LINE__,SRC)
+               .origin(ErrorParam::e_orig_runtime)
+               .extra("Unknown encoding " + *sEncoding) );
       }
       
       tsc->m_stream = scarrier->m_underlying->clone();

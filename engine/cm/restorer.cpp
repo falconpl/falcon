@@ -82,7 +82,7 @@ ClassRestorer::ClassRestorer():
 ClassRestorer::~ClassRestorer()
 {}
 
-void ClassRestorer::op_init( VMContext* ctx, void* instance, int32 ) const
+bool ClassRestorer::op_init( VMContext* ctx, void* instance, int32 ) const
 {
    RestorerCarrier* carrier = static_cast<RestorerCarrier*>(instance);
    carrier->carried()->context( ctx );
