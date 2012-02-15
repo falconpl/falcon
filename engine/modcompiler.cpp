@@ -17,7 +17,6 @@
 #include <falcon/modcompiler.h>
 #include <falcon/module.h>
 #include <falcon/falconclass.h>
-#include <falcon/inheritance.h>
 #include <falcon/requirement.h>
 #include <falcon/vmcontext.h>
 
@@ -217,35 +216,6 @@ Expression* ModCompiler::Context::onStaticData( Class* cls, void* data )
    // stay alive. The talk may be different for code snippets, but we're dealing
    // with modules here. In short. we have no need for GC.
    return new ExprValue( Item( cls, data ) );
-}
-
-
-void ModCompiler::Context::onInheritance( Inheritance* inh  )
-{
-   Module* mod = m_owner->m_module;
-   // In the interactive compiler context, classes must have been already defined...
-   const Symbol* sym = mod->getGlobal(inh->className());
-  
-   // found?
-   if( sym != 0 )
-   {
-      const Item* itm = &sym->defaultValue();
-      // and is that a class?
-      if ( ! itm->isUser() || ! itm->asClass()->isMetaClass() )
-      {
-         m_owner->m_sp.addError( e_inv_inherit, m_owner->m_sp.currentSource(), 
-                 inh->sourceRef().line(), inh->sourceRef().chr(), 0, inh->className() );
-      }
-      else
-      {
-         inh->parent( static_cast<Class*>(itm->asInst()) );
-      }
-   }
-   else
-   {      
-      // add a marker that will tell us about the inheritance when found.
-      mod->addRequirement( &inh->requirement() );
-   }
 }
 
 

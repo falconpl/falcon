@@ -163,7 +163,7 @@ void SynClasses::naryExprSet( VMContext* ctx, int pcount, TreeStep* step, int32 
       }
       
       // Set the nth element.
-      if( ! step->nth(count, ts) )
+      if( ! step->setNth(count, ts) )
       {
          delete step;
          if ( bCreate ) delete ts;
@@ -188,12 +188,12 @@ GCToken* SynClasses::collect( const Class* cls, TreeStep* earr, int line )
 //
 
 #define FALCON_STANDARD_SYNCLASS_OP_CREATE( cls, exprcls, operation ) \
-   virtual void* createInstance() const { return new exprcls; } \
-   virtual bool SynClasses::Class## cls ::op_init( VMContext* ctx, void* instance, int pcount ) const\
+   void* SynClasses::Class## cls ::createInstance() const { return new exprcls; } \
+   bool SynClasses::Class## cls ::op_init( VMContext* ctx, void* instance, int pcount ) const\
    {\
       exprcls* expr = static_cast<exprcls*>(instance); \
       SynClasses::operation ( ctx, pcount, expr ); \
-      return false \
+      return false; \
    }\
    void SynClasses::Class##cls ::restore( VMContext* ctx, DataReader*dr, void*& empty ) const \
    {\
@@ -363,14 +363,15 @@ void SynClasses::ClassDotAccess::restore( VMContext* ctx, DataReader*dr, void*& 
 }
 
 
-bool SynClasses::ClassMUnpack::createInstance() const
+void* SynClasses::ClassMUnpack::createInstance() const
 {       
    return new ExprMultiUnpack;
 }
+
 bool SynClasses::ClassMUnpack::op_init( VMContext* ctx, void* instance, int pcount ) const
 {       
    // TODO -- parse a list of pairs symbol->expression
-   return Class::op_init( ctx, pcount );
+   return Class::op_init( ctx, instance, pcount );
 }
 void SynClasses::ClassMUnpack::restore( VMContext* ctx, DataReader*dr, void*& empty ) const
 {
@@ -379,14 +380,14 @@ void SynClasses::ClassMUnpack::restore( VMContext* ctx, DataReader*dr, void*& em
 }
 
 
-bool SynClasses::ClassGenProto::createInstance() const
+void* SynClasses::ClassGenProto::createInstance() const
 {       
    return new ExprProto;
 }
 bool SynClasses::ClassGenProto::op_init( VMContext* ctx, void* instance, int pcount ) const
 {       
    // TODO -- parse a list of pairs string->expression
-   return Class::op_init( ctx, pcount );
+   return Class::op_init( ctx, instance, pcount );
 }
 void SynClasses::ClassGenProto::restore( VMContext* ctx, DataReader*dr, void*& empty ) const
 {
@@ -395,7 +396,7 @@ void SynClasses::ClassGenProto::restore( VMContext* ctx, DataReader*dr, void*& e
 }
 
 
-bool SynClasses::ClassPseudoCall::createInstance() const
+void* SynClasses::ClassPseudoCall::createInstance() const
 {       
    return new ExprPseudoCall;
 }
@@ -412,7 +413,7 @@ void SynClasses::ClassPseudoCall::restore( VMContext* ctx, DataReader*dr, void*&
 
 }
 
-bool SynClasses::ClassUnpack::createInstance() const
+void* SynClasses::ClassUnpack::createInstance() const
 {       
    return new ExprUnpack;
 }
@@ -427,11 +428,11 @@ void SynClasses::ClassUnpack::restore( VMContext* ctx, DataReader*dr, void*& emp
    m_parent->restore( ctx, dr, empty );
 }
 
-bool SynClasses::ClassGenRange::createInstance() const
+void* SynClasses::ClassGenRange::createInstance() const
 {       
    return new ExprRange;
 }
-bool SynClasses::ClassGenRange::op_create( VMContext* ctx, void* instance, int pcount ) const
+bool SynClasses::ClassGenRange::op_init( VMContext* ctx, void* instance, int pcount ) const
 {
    if( pcount < 3 )
    {
@@ -493,7 +494,7 @@ void* SynClasses::ClassGenRef::createInstance() const
 {
    return new ExprRef;
 }
-bool SynClasses::ClassGenRef::op_init( VMContext* ctx, void* isntance, int pcount ) const
+bool SynClasses::ClassGenRef::op_init( VMContext* ctx, void* instance, int pcount ) const
 {
    static Class* symClass = Engine::instance()->symbolClass();
    static Class* exprClass = Engine::instance()->expressionClass();

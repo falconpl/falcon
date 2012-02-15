@@ -64,7 +64,7 @@ TreeStep* StmtForBase::nth( int32 n ) const
    return 0;
 }
 
-bool StmtForBase::nth( int32 n, TreeStep* ts )
+bool StmtForBase::setNth( int32 n, TreeStep* ts )
 {
    // accept even a 0
    if( ts != 0 )

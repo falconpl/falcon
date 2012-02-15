@@ -39,7 +39,9 @@
 
 // Initialization
 
-#define FALCON_DEFINE_ERROR_CLASSES
-#include <falcon/errorclasses.h>
+namespace Falcon {
+   #define FALCON_DEFINE_ERROR_CLASSES
+   #include <falcon/errors/errorclasses_list.h>
+}
 
 /* end of errorclasses.cpp */

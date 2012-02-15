@@ -28,8 +28,8 @@ public:
    VFSModule();
    virtual ~VFSModule();
    
-   static Falcon::Error* onURIResolved( Falcon::Module*, Falcon::Module* , Falcon::Symbol* );
-   static Falcon::Error* onStreamResolved( Falcon::Module*, Falcon::Module* , Falcon::Symbol* );
+   static Falcon::Error* onURIResolved( Falcon::Module*, const Falcon::Module* , const Falcon::Symbol* );
+   static Falcon::Error* onStreamResolved( Falcon::Module*, const Falcon::Module* , const Falcon::Symbol* );
   
    Class* uriClass() const { return m_uriClass; }
    Class* streamClass() const { return m_streamClass; }

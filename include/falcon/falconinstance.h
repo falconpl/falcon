@@ -42,7 +42,7 @@ public:
    /** Creates the instance.
     \param origin The class from which this object originates.
     */
-   FalconInstance( FalconClass* origin );
+   FalconInstance( const FalconClass* origin );
    FalconInstance( const FalconInstance& other );
    ~FalconInstance();
 
@@ -135,7 +135,7 @@ private:
    FalconInstance();
 
    ItemArray m_data;
-   FalconClass* m_origin;
+   const FalconClass* m_origin;
    uint32 m_mark;
    
    friend class FalconClass;

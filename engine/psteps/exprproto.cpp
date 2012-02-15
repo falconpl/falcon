@@ -82,7 +82,7 @@ TreeStep* ExprProto::nth( int32 n ) const
    return _p->m_defs[n].second;
 }
 
-bool ExprProto::nth( int32 n, TreeStep* ts )
+bool ExprProto::setNth( int32 n, TreeStep* ts )
 {
    if( ts->category() != TreeStep::e_cat_expression ) return false;
    if( n < 0 ) n = (int)_p->m_defs.size() + n;

@@ -139,7 +139,7 @@ public:
 
    virtual int32 arity() const;
    virtual TreeStep* nth( int32 n ) const;
-   virtual bool nth( int32 n, TreeStep* ts );
+   virtual bool setNth( int32 n, TreeStep* ts );
    
    virtual void registerUnquotes( TreeStep* sender );
 
@@ -192,7 +192,7 @@ public:
 
    virtual int32 arity() const;
    virtual TreeStep* nth( int32 n ) const;
-   virtual bool nth( int32 n, TreeStep* ts );
+   virtual bool setNth( int32 n, TreeStep* ts );
    
    virtual void registerUnquotes( TreeStep* sender );
    
@@ -259,7 +259,7 @@ public:
    
    virtual int32 arity() const;
    virtual TreeStep* nth( int32 n ) const;
-   virtual bool nth( int32 n, TreeStep* ts );
+   virtual bool setNth( int32 n, TreeStep* ts );
    
    virtual void registerUnquotes( TreeStep* sender );
 

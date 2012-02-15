@@ -18,6 +18,7 @@
 
 #include <falcon/setup.h>
 #include <falcon/string.h>
+#include <falcon/sourceref.h>
 
 namespace Falcon
 {
@@ -83,6 +84,13 @@ public:
       m_name( name )
    {}
       
+
+   Requirement( const String& name, int line, int chr, bool bIsStatic = false ) :
+      m_bIsStatic( bIsStatic ),
+      m_sr( line, chr ),
+      m_name( name )
+   {}
+      
    virtual ~Requirement() {}
    
    /** Called back when the requirement is resolved.
@@ -121,11 +129,15 @@ public:
     The staticity of a requirement is determined at construction.
     */
    bool isStatic() const { return m_bIsStatic; }
+   
+   const SourceRef& sourceRef() const { return m_sr; }
+   SourceRef& sourceRef() { return m_sr; }
 
 protected:
    bool m_bIsStatic;
    
 private:
+   SourceRef m_sr;
    String m_name;
 };
 

@@ -167,6 +167,15 @@ public:
 //
 //
 
+Storer::Storer():
+   _p(0),
+   m_ctx(0),
+   m_writer( new DataWriter(0) ),
+   m_traverseNext( this ),
+   m_writeNext(this)
+{}
+
+
 Storer::Storer( VMContext* ctx ):
    _p(0),
    m_ctx(ctx),

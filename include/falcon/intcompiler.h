@@ -99,7 +99,6 @@ private:
       virtual Symbol* onUndefinedSymbol( const String& name );
       virtual Symbol* onGlobalDefined( const String& name, bool& bUnique );
       virtual Expression* onStaticData( Class* cls, void* data );
-      virtual void onInheritance( Inheritance* inh  );
       virtual void onRequirement( Requirement* rec );
 
    private:

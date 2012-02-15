@@ -69,16 +69,12 @@ void* ClassError::clone( void* ) const
    return 0;
 }
 
-void ClassError::serialize( DataWriter*, void* ) const
+void* ClassError::createInstance() const
 {
-   // TODO
-}
-
-void* ClassError::deserialize( DataReader* ) const
-{
-   //TODO
+   // ... and we're abstract.
    return 0;
 }
+
 
 
 bool ClassError::isDerivedFrom( const Class* cls ) const 

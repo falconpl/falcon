@@ -55,7 +55,7 @@ TreeStep* ExprVector::nth( int32 n ) const
    return _p->nth(n);
 }
 
-bool ExprVector::nth( int32 n, TreeStep* ts )
+bool ExprVector::setNth( int32 n, TreeStep* ts )
 {
    if( ts == 0 || ts->category() != TreeStep::e_cat_expression ) return false;
    return _p->nth(n, static_cast<Expression*>(ts), this );

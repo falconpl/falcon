@@ -30,7 +30,7 @@ FalconInstance::FalconInstance():
 {
 }
 
-FalconInstance::FalconInstance( FalconClass* origin ):
+FalconInstance::FalconInstance( const FalconClass* origin ):
    m_origin(origin),
    m_mark(0)
 {
@@ -112,7 +112,7 @@ void FalconInstance::gcMark( uint32 mark )
       // also, back-mark our class.
       // possibly, it's our class that's marking ourselves,
       // but we don't care. This will be a no-op in that case.
-      m_origin->gcMarkMyself( mark );
+      const_cast<FalconClass*>(m_origin)->gcMarkMyself( mark );
    }
 }
 

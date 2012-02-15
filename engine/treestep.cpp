@@ -56,7 +56,7 @@ TreeStep* TreeStep::nth( int32 ) const
 }
 
 
-bool TreeStep::nth( int32, TreeStep* )
+bool TreeStep::setNth( int32, TreeStep* )
 {
    return false;
 }

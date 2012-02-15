@@ -167,11 +167,11 @@ FalconClass::~FalconClass()
 
 void* FalconClass::createInstance() const
 {
-   TRACE( "Creating an instance of %s", name().c_str() );
+   TRACE( "Creating an instance of %s", name().c_ize() );
 
    if( ! m_bConstructed )
    {
-      TRACE( "Class %s is not constructed, failing.", name().c_str() );
+      TRACE( "Class %s is not constructed, failing.", name().c_ize() );
       return 0;
    }
    
@@ -351,7 +351,7 @@ bool FalconClass::addParent( ExprInherit* inh )
     m_parentship = inh;
     for( int i = 0; i < inh->arity(); i++ )
     {
-       ExprInherit* ei = static_cast<ExprInherit*>( inh->nth(i) );
+       ExprInherit* ei = static_cast<ExprInherit*>( inh->get(i) );
        fassert( ei->trait() == Expression::e_trait_inheritance );
        
        if( ei->base() == 0)
@@ -487,17 +487,14 @@ bool FalconClass::isDerivedFrom( const Class* cls ) const
 {
    // are we the required class?
    if( this == cls ) return true;
-
-   Private::ParentList::const_iterator iter = _p->m_inherit.begin();
-   while( iter != _p->m_inherit.end() )
+   
+   for( int i = 0; i < m_parentship->arity(); ++i )
    {
-      const Inheritance* inh = *iter;
-      // ... or is the parent derived from the required class?
-      if( inh->parent() != 0 && inh->parent()->isDerivedFrom( cls ) )
+      ExprInherit* inh = static_cast<ExprInherit*>(m_parentship->get(i));
+      if( cls->isDerivedFrom(inh->cls()) )
       {
          return true;
       }
-      ++iter;
    }
 
    return false;
@@ -561,7 +558,7 @@ bool FalconClass::construct()
             if( bp->m_type != FalconClass::Property::t_inh )
             {
                // do we have a property under the same name?
-               if( getProperty(bp->name()) == 0 )
+               if( getProperty(fbpi->first) == 0 )
                {
                   // No? -- then add this
                   Property* np = new Property(*bp);
@@ -596,7 +593,7 @@ HyperClass* FalconClass::hyperConstruct()
       return 0;
    }
    
-   HyperClass* nself = new HyperClass( name(), this );
+   HyperClass* nself = new HyperClass( this );
    if( m_parentship != 0 )
    {
       // give the ownership of the parentship to the hyperclass.
@@ -835,7 +832,7 @@ FalconClass::PStepInitExpr::PStepInitExpr( FalconClass* o ):
    apply = apply_;
 }
 
-void FalconClass::PStepInitExpr::describeTo( const String& tgt, int )
+void FalconClass::PStepInitExpr::describeTo( String& tgt, int ) const
 {
    tgt = "PStepInitExpr for " + m_owner->name();
 }
@@ -859,7 +856,7 @@ void FalconClass::PStepInitExpr::apply_( const PStep* ps, VMContext* ctx )
    if( seqId > 0 )
    {      
       Property* previous = iprops[seqId-1];
-      TRACE2( "Initializing %p from a previous run...", previous->m_name.c_str() );
+      TRACE2( "Initializing '%s' from a previous run...", previous->m_name.c_ize() );
       
       fassert( previous->m_type == FalconClass::Property::t_prop );
       fassert( previous->expression() != 0 );
@@ -873,7 +870,7 @@ void FalconClass::PStepInitExpr::apply_( const PStep* ps, VMContext* ctx )
    {
       Property* prop = iprops[seqId];
       TRACE2( "Initializing property %s at step step %d/%d", 
-                                       prop->m_name.c_str(), seqId, size );
+                                       prop->m_name.c_ize(), seqId, size );
       fassert( prop->m_type == FalconClass::Property::t_prop );
       fassert( prop->expression() != 0 );
       

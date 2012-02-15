@@ -43,7 +43,7 @@ public:
    virtual void describeTo( String& target, int depth = 0 ) const;
    
    /** Overridden to filter out non-inheritance expressions. */
-   virtual bool nth( int32 n, TreeStep* ts );
+   virtual bool setNth( int32 n, TreeStep* ts );
    /** Overridden to filter out non-inheritance expressions. */
    virtual bool insert( int32 pos, TreeStep* element );  
 

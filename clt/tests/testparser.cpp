@@ -15,7 +15,6 @@
 #include <falcon/rulesyntree.h>
 #include <falcon/synfunc.h>
 #include <falcon/extfunc.h>
-#include <falcon/inheritance.h>
 #include <falcon/requirement.h>
 #include <falcon/stdstreams.h>
 #include <falcon/textwriter.h>
@@ -58,7 +57,6 @@ public:
    virtual Symbol* onUndefinedSymbol( const String& name );
    virtual Symbol* onGlobalDefined( const String& name, bool& bUnique );
    virtual Expression* onStaticData( Class* cls, void* data );
-   virtual void onInheritance( Inheritance* );
    virtual void onRequirement( Requirement* rec );
 
 private:
@@ -165,16 +163,6 @@ Symbol* Context::onGlobalDefined( const String& name, bool& )
     return new ExprValue( Item( cls, data ) );
  }
 
-
- void Context::onInheritance( Inheritance* inh )
- {
-    String temp;
-    inh->describe( temp );
-
-    std::cout << "CALLBACK: inheritance data : " <<
-         temp.c_ize() << std::endl;
-    // for now, we'll let it leak.
-}
 
  void Context::onRequirement( Requirement* req )
  {

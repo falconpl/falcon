@@ -341,7 +341,6 @@ private:
    void exportFromModule( Module* mod, Error*& link_errors );
    
    void linkImports(Module* mod, Error*& link_errors);
-   void linkDirectRequests(Module* mod, Error*& link_errors);
    void linkNSImports(Module* mod );
    void addLinkError( Error*& top, Error* newError );
    

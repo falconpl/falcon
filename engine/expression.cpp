@@ -68,7 +68,7 @@ TreeStep* UnaryExpression::nth( int32 n ) const
 }
 
 
-bool UnaryExpression::nth( int32 n, TreeStep* ts )
+bool UnaryExpression::setNth( int32 n, TreeStep* ts )
 {   
    if( n == 0 || n == -1 )
    {
@@ -128,7 +128,7 @@ TreeStep* BinaryExpression::nth( int32 n ) const
 }
 
 
-bool BinaryExpression::nth( int32 n, TreeStep* ts )
+bool BinaryExpression::setNth( int32 n, TreeStep* ts )
 {
    switch( n )
    {
@@ -198,7 +198,7 @@ TreeStep* TernaryExpression::nth( int32 n ) const
 }
 
 
-bool TernaryExpression::nth( int32 n, TreeStep* ts )
+bool TernaryExpression::setNth( int32 n, TreeStep* ts )
 {
    switch( n )
    {

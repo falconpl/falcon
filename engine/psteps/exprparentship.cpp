@@ -100,7 +100,7 @@ void ExprParentship::apply_( const PStep* ps, VMContext* ctx )
 }
 
 
-bool ExprParentship::nth( int32 n, TreeStep* ts )
+bool ExprParentship::setNth( int32 n, TreeStep* ts )
 {
    if( ts == 0 || ts->category() != TreeStep::e_cat_expression ) return false;
    Expression* expr = static_cast<Expression*>(ts);

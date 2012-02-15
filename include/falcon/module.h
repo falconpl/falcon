@@ -329,7 +329,7 @@ public:
     \param sym The resolved symbol.
     */
    
-   typedef Error* (*t_func_import_req)( Module* requester, Module* definer, Symbol* sym );
+   typedef Error* (*t_func_import_req)( Module* requester, const Module* definer, const Symbol* sym );
    
    /** Adds an import request.
     \param cbFunc a t_func_import_req callback that will be notified when this
@@ -343,6 +343,9 @@ public:
     This method requests that a certain callback is invoked when a certain dependency is rsolved.
     */
    void addImportRequest( t_func_import_req cbFunc, const String& symName, 
+               const String& sourceMod="", bool bModIsPath=false );
+   
+   void addImportRequest( Requirement* req, 
                const String& sourceMod="", bool bModIsPath=false );
    
    /** Export a symbol.
@@ -551,6 +554,9 @@ private:
    // used by various import and load requests.
    Error* addModuleRequirement( ImportDef* def, ModRequest*& req );
    bool removeModuleRequirement( ImportDef* def );
+   
+   
+   class FuncRequirement;      
 };
 
 }

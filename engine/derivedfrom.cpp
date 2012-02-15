@@ -121,6 +121,12 @@ void* DerivedFrom::clone( void* instance ) const
    return m_parent->clone( instance );
 }
 
+void* DerivedFrom::createInstance() const
+{
+   return 0;
+}
+
+
 void DerivedFrom::store( VMContext* ctx, DataWriter* stream, void* instance ) const
 {
    m_parent->store( ctx, stream, instance );

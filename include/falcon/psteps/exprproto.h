@@ -38,7 +38,7 @@ public:
 
    virtual int32 arity() const;
    virtual TreeStep* nth( int32 n ) const;   
-   virtual bool nth( int32 n, TreeStep* ts );
+   virtual bool setNth( int32 n, TreeStep* ts );
    
    /** Overridden to remove nth expression and name.. */
    virtual bool remove( int n );

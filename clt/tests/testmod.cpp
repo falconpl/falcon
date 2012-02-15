@@ -22,7 +22,7 @@
 */
 
 #include <falcon/falcon.h>
-
+#include <falcon/requirement.h>
 #include <iostream>
 
 /** A traditional VM-based EXT function.
@@ -118,23 +118,34 @@ public:
    TestFunc3* m_TheTestFunc3;   
    
    /** This callback is invoked when the "printl" function is found.*/
-   static Falcon::Error* onPrintlResolved( Falcon::Module* requester, Falcon::Module* , Falcon::Symbol* sym )
-   {   
-      // printl should really be a function in a global symbol ,but...
-      if( ! sym->defaultValue().isFunction() )
+   class PrintlRequirement: public Falcon::Requirement
+   {
+   public:
+      PrintlRequirement():
+         Requirement( "printl", true )
+      {}
+      
+      virtual ~PrintlRequirement() {}
+      
+      virtual void onResolved( const Falcon::Module*, const Falcon::Symbol* sym, 
+         Falcon::Module* requester, Falcon::Symbol* )
       {
-         return new Falcon::LinkError( Falcon::ErrorParam( 
-               Falcon::e_link_error, __LINE__, requester->name() )
-            .extra( "printl is not a global function!" ) );
+         // printl should really be a function in a global symbol ,but...
+         const Falcon::Item* value = sym->getValue(0);
+         if( value == 0 || ! value->isFunction() )
+         {
+            throw new Falcon::LinkError( Falcon::ErrorParam( 
+                  Falcon::e_link_error, __LINE__, requester->name() )
+               .extra( "printl is not a global function!" ) );
+         }
+
+         // We know the requester is an instance of our module.
+         static_cast<TestModule*>(requester)->m_TheTestFunc3->m_funcPrintl = 
+                                                 sym->defaultValue().asFunction();
       }
-
-      // We know the requester is an instance of our module.
-      static_cast<TestModule*>(requester)->m_TheTestFunc3->m_funcPrintl = 
-                                                      sym->defaultValue().asFunction();
-
-      // we have no error to signal. 
-      return 0;
    }
+   m_myPrintReq;
+   
 
    TestModule():
       Module( "TestModule" )
@@ -151,7 +162,7 @@ public:
       
       // try to add static resolution.
       // by default, symbols are searched in the exported symbol table.
-      addImportRequest( &onPrintlResolved, "printl" );
+      addImportRequest( &m_myPrintReq );
    }
    
    virtual ~TestModule();

@@ -18,87 +18,8 @@
 
 #include <falcon/classes/classerror.h>
 
-#ifdef FALCON_DEFINE_ERROR_CLASSES
-   #define FALCON_DECLARE_ERROR_CLASS( name ) \
-   void* Class##name:: createInstance() const{ return new Class##name; }
-   
-#else
-
-   #define FALCON_DECLARE_ERROR_CLASS( name ) \
-      class Class##name: public ClassError\
-      {\
-      public:\
-         Class##name(): ClassError( #name ) {} \
-         virtual ~Class##name(){} \
-         virtual void* createInstance() const;\
-      };
-#endif
-
 namespace Falcon {
-
-/** Class handler for AccessError exceptions. 
- */
-FALCON_DECLARE_ERROR_CLASS( AccessError )
-
-/** Class handler for AccessTypeError exceptions. 
- */
-FALCON_DECLARE_ERROR_CLASS( AccessTypeError )
-
-/** Class handler for CodeError exceptions. 
- */
-FALCON_DECLARE_ERROR_CLASS( CodeError )
-
-/** Class handler for GenericError exceptions. 
- */
-FALCON_DECLARE_ERROR_CLASS( GenericError )
-
-
-/** Class handler for InterruptedError exceptions. 
- */
-FALCON_DECLARE_ERROR_CLASS( InterruptedError )
-
-/** Class handler for IOError exceptions. 
- */
-
-FALCON_DECLARE_ERROR_CLASS( IOError )
-
-/** Class handler for LinkError exceptions. 
- */
-FALCON_DECLARE_ERROR_CLASS( LinkError )
-
-
-/** Class handler for OperandError exceptions. 
- */
-FALCON_DECLARE_ERROR_CLASS( OperandError )
-
-
-/** Class handler for UnsupportedError exceptions. 
- */
-FALCON_DECLARE_ERROR_CLASS( UnsupportedError )
-
-
-/** Class handler for EncodingError exceptions. 
- */
-FALCON_DECLARE_ERROR_CLASS( EncodingError )
-
-
-/** Class handler for SyntaxError exceptions. 
- */
-FALCON_DECLARE_ERROR_CLASS( SyntaxError )
-
-
-/** Class handler for ParamError exceptions. 
- */
-FALCON_DECLARE_ERROR_CLASS( ParamError )
-
-/** Class handler for MathError exceptions. 
- */
-FALCON_DECLARE_ERROR_CLASS( MathError )
-
-/** Class handler for MathError exceptions. 
- */
-FALCON_DECLARE_ERROR_CLASS( UnserializableError )
-
+   #include <falcon/errors/errorclasses_list.h>
 }
 
 #endif	/* _FALCON_ERRORCLASSES_H_ */

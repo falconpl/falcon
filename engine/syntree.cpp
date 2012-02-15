@@ -197,7 +197,7 @@ TreeStep* SynTree::nth( int pos ) const
    return _p->m_steps.nth( pos );
 }
 
-bool SynTree::nth( int pos, TreeStep* step )
+bool SynTree::setNth( int pos, TreeStep* step )
 {
    if( step == 0 
       || step->category() != TreeStep::e_cat_statement 

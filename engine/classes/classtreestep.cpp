@@ -70,6 +70,12 @@ void* ClassTreeStep::clone( void* instance ) const
    return ts->clone();
 }
 
+void* ClassTreeStep::createInstance() const
+{
+   // we're abstract.
+   return 0;
+}
+
 void ClassTreeStep::gcMark( void* instance, uint32 mark ) const
 {
    TRACE( "ClassTreeStep::gcMark %p, %d ", instance, mark );
@@ -297,7 +303,7 @@ void ClassTreeStep::unflatten( VMContext*, ItemArray& subItems, void* instance )
       void* data = 0;
       if( subItems[i].asClassInst(cls, data) )
       {
-         ts->nth(i-1, static_cast<TreeStep*>( data ) );
+         ts->setNth(i-1, static_cast<TreeStep*>( data ) );
       }
       // else, it was nil and unused.
    }
@@ -363,7 +369,7 @@ void ClassTreeStep::op_setIndex(VMContext* ctx, void* instance ) const
       Item& i_tree = ctx->opcodeParam(2);
       if( i_tree.isNil() )
       {
-         if( ! self->nth( num, 0 ) )
+         if( ! self->setNth( num, 0 ) )
          {
             throw new CodeError( ErrorParam(e_invalid_op, __LINE__, SRC)
                .origin( ErrorParam::e_orig_vm)
@@ -397,7 +403,7 @@ void ClassTreeStep::op_setIndex(VMContext* ctx, void* instance ) const
                .extra( "Parented entity cannot be inserted" ) );
          }
 
-         if( ! self->nth( num, ts ) )
+         if( ! self->setNth( num, ts ) )
          {
             throw new CodeError( ErrorParam(e_invalid_op, __LINE__, SRC)
                .origin( ErrorParam::e_orig_vm)

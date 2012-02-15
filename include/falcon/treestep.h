@@ -263,7 +263,7 @@ public:
     
     If a previous expression occupies this position, it is destroyed.    
     */
-   virtual bool nth( int32 n, TreeStep* ts );
+   virtual bool setNth( int32 n, TreeStep* ts );
    
    /** Inserts a sub-element in this element.
     \param pos The position BEFORE which to insert the new expression.

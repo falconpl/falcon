@@ -150,7 +150,7 @@ TreeStep* StmtWhile::nth( int n ) const
 }
 
 
-bool StmtWhile::nth( int n, TreeStep* st )
+bool StmtWhile::setNth( int n, TreeStep* st )
 {
    if( st == 0 || st->category() != TreeStep::e_cat_syntree || ! st->setParent(this) ) return false;
    

@@ -222,7 +222,7 @@ void ModSpace::resolveImportDef( ImportDef* def, ModLoader* ml, Module* requeste
       
       if ( requester != 0 )
       {
-         Module::Private::ModRequest* req = requester->_p->m_mrmap[def->sourceModule()];
+         ModRequest* req = requester->_p->m_mrmap[def->sourceModule()];
          if( req != 0 )
          {
             req->m_module = sourcemod;
@@ -243,7 +243,7 @@ void ModSpace::resolveDeps( ModLoader* ml, Module* mod)
    Module::Private::ReqList::iterator ri = reqs.begin();
    while( ri != reqs.end() )
    {
-      Module::Private::ModRequest* req = *ri;
+      ModRequest* req = *ri;
       
       // is this a request to load or import a module?
       if ( req->m_module == 0 )
@@ -323,7 +323,6 @@ Error* ModSpace::link()
    {
       Module* mod = (*iter)->m_mod;
       linkImports( mod, link_errors );
-      linkDirectRequests( mod, link_errors );
       linkNSImports( mod );
       ++iter;
    }
@@ -481,7 +480,7 @@ void ModSpace::linkSpecificDep( Module* asker, void* def, Error*& link_errors )
       Error* em = new LinkError( ErrorParam(e_undef_sym, 0, asker->uri() )
          .origin( ErrorParam::e_orig_linker )
          .symbol( dep->m_sourceName )
-         .extra( "in " + dep->m_sourceReq->m_name ) );
+         .extra( "in " + dep->m_sourceName ) );
 
       addLinkError( link_errors, em );
       return;
@@ -551,9 +550,10 @@ void ModSpace::linkNSImports(Module* mod )
       if( ! ns->m_bPerformed )
       {
          ns->m_bPerformed = true;
-         fassert( ns->m_req != 0);
-         fassert( ns->m_req->m_module != 0 );
-         Module* srcMod = ns->m_req->m_module;
+         fassert( ns->m_def != 0);
+         fassert( ns->m_def->modReq() != 0 );
+         fassert( ns->m_def->modReq()->module() != 0 );
+         Module* srcMod = ns->m_def->modReq()->module();
                   
          String srcName, tgName;
          if( ns->m_from.size() != 0 )
@@ -591,11 +591,15 @@ void ModSpace::linkNSImports(Module* mod )
                
                // eventually, make it resolved in dependencies, 
                // -- so we don't search for it elsewhere.
-               Module::Private::DepMap::iterator di = mod->_p->m_deps.find( tgName );
-               if( di != mod->_p->m_deps.end() )
+               Module::Private::DepMap::iterator di = mod->_p->m_depsBySymbol.find( tgName );
+               if( di != mod->_p->m_depsBySymbol.end() )
                {
                   Module::Private::Dependency* dep = di->second;
-                  dep->m_resSymbol = esym;
+                  if( dep->m_resSymbol == 0 )
+                  {
+                     dep->m_resSymbol = esym;
+                     dep->onResolved( mod, srcMod, esym );
+                  }
                }
             }
             
@@ -627,7 +631,7 @@ Symbol* ModSpace::findExportedOrGeneralSymbol( Module* asker, const String& symN
 
       while( geni != asker->_p->m_genericMods.end() )
       {
-         Module::Private::ModRequest* req = *geni;
+         ModRequest* req = *geni;
          
          if ( req->m_module != 0 )
          {
@@ -643,10 +647,10 @@ Symbol* ModSpace::findExportedOrGeneralSymbol( Module* asker, const String& symN
             else
             {
                // search the symbol in a namespace.
-               Module::Private::ImportDefList::iterator iter = req->m_defs.begin();
-               while( iter != req->m_defs.end() )
+               for( int idi = 0; idi < req->importDefCount(); ++ idi )
                {
-                  ImportDef* def = *iter;
+                  ImportDef* def =req->importDefAt( idi );
+                     
                   if ( def->isNameSpace() && def->target() == nspace )
                   {
                      sym = req->m_module->getGlobal( nsname );
@@ -656,7 +660,6 @@ Symbol* ModSpace::findExportedOrGeneralSymbol( Module* asker, const String& symN
                         break;
                      }
                   }
-                  ++iter;
                }
             }
             

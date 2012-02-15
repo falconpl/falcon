@@ -22,6 +22,9 @@
 namespace Falcon {
 
 class Module;
+class ImportDef;
+class Module;
+class ModSpace;
 
 /** Class keeping records of modules requested by a module. 
  This class is used by modules to keep track of the other modules they need
@@ -76,6 +79,7 @@ public:
    
    void addImportDef( ImportDef* id );
    void removeImportDef( ImportDef* id );
+   ImportDef* importDefAt( int n ) const;
    int importDefCount() const;
    
 private:
@@ -88,6 +92,9 @@ private:
    Module* m_module;
   
    int m_id;
+
+   friend class Module;
+   friend class ModSpace;
 };
 
 }

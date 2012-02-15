@@ -13,23 +13,22 @@
    See LICENSE file for licensing details.
 */
 
-#include "falcon/psteps/exprparentship.h"
-
-
 #undef SRC
 #define SRC "engine/hyperclass.cpp"
 
+#include <falcon/trace.h>
 #include <falcon/hyperclass.h>
 #include <falcon/itemarray.h>
 #include <falcon/function.h>
 
-#include "falcon/psteps/exprinherit.h"
+#include <falcon/psteps/exprinherit.h>
+#include <falcon/psteps/exprparentship.h>
 #include <falcon/vmcontext.h>
 #include <falcon/fassert.h>
-#include <falcon/trace.h>
+#include <falcon/falconclass.h>
+#include <falcon/module.h>
 
 #include "multiclass_private.h"
-#include "falcon/falconclass.h"
 
 #include <map>
 #include <vector>
@@ -65,7 +64,7 @@ HyperClass::HyperClass( const String& name ):
    
    // we'd hardly create a hyperclass not to store at least a foreign class.
    m_parentship = new ExprParentship();
-   m_parentship->setParent( &m_master->makeConstructor() );
+   m_parentship->setParent( &m_master->makeConstructor()->syntree() );
 }
 
 
@@ -78,22 +77,22 @@ HyperClass::~HyperClass()
 
 bool HyperClass::addProperty( const String& name, const Item& initValue )
 {
-   m_master->addProperty( name, initValue );
+   return m_master->addProperty( name, initValue );
 }
 
 bool HyperClass::addProperty( const String& name, Expression* initExpr )
 {
-   m_master->addProperty( name, initExpr );
+   return m_master->addProperty( name, initExpr );
 }
 
 bool HyperClass::addProperty( const String& name )
 {
-   m_master->addProperty( name );
+   return m_master->addProperty( name );
 }
 
 bool HyperClass::addMethod( Function* mth )
 {
-   m_master->addProperty( mth );
+   return m_master->addMethod( mth );
 }
 
 
@@ -107,7 +106,7 @@ bool HyperClass::addParent( Class* cls )
    }
    
    // ... and it must not appare in the inheritance properties.
-   props[cls->name()] = Property( cls->name(), -m_nParents );
+   props[cls->name()] = MultiClass::Property( cls, -m_nParents );
 
    addParentProperties( cls );
    m_nParents++;
@@ -124,11 +123,11 @@ void HyperClass::setParentship( ExprParentship* ps )
    // adds parents first to last.
    for( int i = 0; i < m_parentship->arity(); ++i )
    {  
-      ExprInherit* inh = static_cast<ExprInherit*>(m_parentship->nth(i));
+      ExprInherit* inh = static_cast<ExprInherit*>(m_parentship->get(i));
       Class* cls = inh->cls();
       
       // ... Always override names of parent classes.
-      props[cls->name()] = Property( cls->name(), -m_nParents );
+      props[cls->name()] = MultiClass::Property( cls, -m_nParents );
       addParentProperties( cls );
       m_nParents++;      
    }
@@ -211,7 +210,7 @@ void* HyperClass::createInstance() const
    // TODO: maybe we can posticipate this to init?
    for( int i = 0; i < m_nParents; ++i ) {
       Class* cls = i==0 ? m_master : 
-         static_cast<ExprInherit*>( m_parentship->nth[i-1] )->cls();
+         static_cast<ExprInherit*>( m_parentship->get(i-1) )->cls();
       
       if( ! cls->isFlatInstance() ) {
          (*ia)[i] = FALCON_GC_STORE( coll, cls, cls->createInstance() );
@@ -231,7 +230,7 @@ bool HyperClass::isDerivedFrom( const Class* cls ) const
    
    // is the class a parent of one of our parents?
    for( int i = 0; i < m_parentship->arity(); ++i ) {
-      Class* pcls = static_cast<ExprInherit*>( m_parentship->nth[i] )->cls();
+      Class* pcls = static_cast<ExprInherit*>( m_parentship->get(i) )->cls();
       
       if( cls->isDerivedFrom(pcls) ) {
          return true;
@@ -245,7 +244,7 @@ bool HyperClass::isDerivedFrom( const Class* cls ) const
 void* HyperClass::getParentData( Class* parent, void* data ) const
 {
    // are we the searched parent?
-   if( parent == this || cls == m_master )
+   if( parent == this || parent == m_master )
    {
       // then the searched data is the given one.
       return data;
@@ -257,7 +256,7 @@ void* HyperClass::getParentData( Class* parent, void* data ) const
    ItemArray& ia = *static_cast<ItemArray*>(data);
    
    // is the class a parent of one of our parents?
-   for( int i = 0; i < ia.length(); ++i ) 
+   for( uint32 i = 0; i < ia.length(); ++i ) 
    {  
       // get the nth parent from our parent vector
       // -- be sure to cover also flat instance classes.
@@ -295,7 +294,7 @@ void HyperClass::gcMarkMyself( uint32 mark )
       
       // finally all our parents
       for( int i = 0; i < m_parentship->arity(); ++i ) {
-         Class* pcls = static_cast<ExprInherit*>( m_parentship->nth[i] )->cls();
+         Class* pcls = static_cast<ExprInherit*>( m_parentship->get(i) )->cls();
          pcls->gcMarkMyself( mark );
       }
    }
@@ -327,7 +326,7 @@ void HyperClass::enumeratePV( void* data, PVEnumerator& cb ) const
    ItemArray& ia = *static_cast<ItemArray*>(data);
    
    // is the class a parent of one of our parents?
-   for( int i = 0; i < ia.length(); ++i ) 
+   for( uint32 i = 0; i < ia.length(); ++i ) 
    {  
       // get the nth parent from our parent vector
       // -- be sure to cover also flat instance classes.
@@ -350,8 +349,8 @@ bool HyperClass::hasProperty( void*, const String& prop ) const
 
 Class* HyperClass::getParentAt( int pos ) const
 {
-   Class* pcls = static_cast<ExprInherit*>( m_parentship->nth[pos] )->cls();
-   return pos;
+   Class* pcls = static_cast<ExprInherit*>( m_parentship->get(pos) )->cls();
+   return pcls;
 }
 
 
@@ -368,7 +367,7 @@ void HyperClass::describe( void* instance, String& target, int depth, int maxlen
    ItemArray& ia = *static_cast<ItemArray*>(instance);
    
    // is the class a parent of one of our parents?
-   for( int i = 0; i < ia.length(); ++i ) 
+   for( uint32 i = 0; i < ia.length(); ++i ) 
    {  
       // get the nth parent from our parent vector
       // -- be sure to cover also flat instance classes.
@@ -409,9 +408,9 @@ bool HyperClass::op_init( VMContext* ctx, void* instance, int32 pcount ) const
    
    if( m_master->constructor() != 0 )
    {
-      // good, we have a master class constructor, and very problably some parent.
+      // good, we have a master class constructor (but we know we reaped its parents).
       // we also know that the master class has no direct parentship -- we own it.
-      m_master->op_init( ctx, mData[0].asInst() );
+      m_master->op_init( ctx, mData[0].asInst(), pcount );
       
       // we finally know that the master op_init went deep, as it has a ctor...
       ctx->pushCode( &m_initParentsStep );
@@ -431,7 +430,7 @@ bool HyperClass::op_init( VMContext* ctx, void* instance, int32 pcount ) const
 
 void HyperClass::InitParentsStep::apply_(const PStep* ps, VMContext* ctx )
 {
-   const InitParentsStep* self = static_cast<InitParentsStep*>(ps);
+   const InitParentsStep* self = static_cast<const InitParentsStep*>(ps);
    ItemArray& mData = *static_cast<ItemArray*>(ctx->self().asInst());
    
    CodeFrame& cf = ctx->currentCode();

@@ -29,7 +29,8 @@ class DataReader;
 class DataWriter;
 class VMContext;
 class FalconClass;
-
+class Expression;
+class ExprParentship;
 
 /** Class holding more user-type classes.
 

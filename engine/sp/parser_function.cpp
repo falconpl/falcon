@@ -156,7 +156,7 @@ void on_close_lambda( void* thing )
    {
       StmtAutoexpr* aexpr = static_cast<StmtAutoexpr*>( func->syntree().at(0) );
       StmtReturn* ret = new StmtReturn( aexpr->detachExpr() );
-      func->syntree().nth(0, ret);
+      func->syntree().setNth(0, ret);
    }
    
    // was this a closure?

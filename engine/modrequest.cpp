@@ -36,7 +36,7 @@ ModRequest::ModRequest():
    m_id(-1)
 {}
    
-ModRequest::ModRequest( const String& name, bool isUri = false, bool isLoad = false, Module* mod = 0):
+ModRequest::ModRequest( const String& name, bool isUri, bool isLoad, Module* mod):
    m_idl( new ImportDefList ),
    m_name( name ),
    m_isLoad( isLoad ),
@@ -73,6 +73,11 @@ void ModRequest::removeImportDef( ImportDef* id )
    {
       m_idl->erase(pos);
    }
+}
+
+ImportDef* ModRequest::importDefAt( int n ) const
+{
+   return (*m_idl)[n];
 }
 
 int ModRequest::importDefCount() const

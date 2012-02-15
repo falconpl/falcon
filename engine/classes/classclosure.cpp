@@ -43,13 +43,17 @@ void* ClassClosure::clone( void* source ) const
 {
    return static_cast<Closure*>(source)->clone();
 }
-   
+ 
+void* ClassClosure::createInstance() const
+{
+   return new Closure;
+}
+
 void ClassClosure::store( VMContext*, DataWriter*, void* ) const
 {}
 
 void ClassClosure::restore( VMContext*, DataReader*, void*& empty ) const
 {
-   //TODO
    empty = new Closure();
 }
 

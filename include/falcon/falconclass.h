@@ -387,7 +387,7 @@ public:
    // Operators.
    //
 
-   virtual void op_init( VMContext* ctx, int32 pcount ) const;
+   virtual bool op_init( VMContext* ctx, void* instance, int32 pcount ) const;
    virtual void op_getProperty( VMContext* ctx, void* self, const String& prop) const;
    virtual void op_setProperty( VMContext* ctx, void* self, const String& prop ) const;
 
@@ -414,7 +414,7 @@ private:
    public:
       PStepInitExpr( FalconClass* o );
       static void apply_( const PStep*, VMContext* );
-      virtual void describeTo( const String&, int depth=0 );
+      virtual void describeTo( String&, int depth=0 ) const;
    private:
       FalconClass* m_owner;
    };

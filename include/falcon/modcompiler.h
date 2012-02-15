@@ -96,7 +96,6 @@ private:
       virtual Symbol* onGlobalDefined( const String& name, bool& bUnique );
       virtual bool onUnknownSymbol( const String& name );
       virtual Expression* onStaticData( Class* cls, void* data );
-      virtual void onInheritance( Inheritance* inh  );
       virtual void onRequirement( Requirement* rec );
 
    private:

@@ -126,7 +126,7 @@ void MetaClass::op_call( VMContext* ctx, int32 pcount, void* self ) const
       FALCON_GC_STORE( coll, fc, instance );
       
       // finally, invoke init.
-      if( fc->op_init( ctx, pcount ) )
+      if( fc->op_init( ctx, instance, pcount ) )
       {
          // if init returned true, this means it went deep and will take care 
          // of the parameters.

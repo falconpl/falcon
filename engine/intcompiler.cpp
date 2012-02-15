@@ -311,47 +311,14 @@ Expression* IntCompiler::Context::onStaticData( Class* cls, void* data )
 }
 
 
-void IntCompiler::Context::onInheritance( Inheritance* inh )
+void IntCompiler::Context::onRequirement( Requirement* req )
 {
-   Module* mod = m_owner->m_module;
-   // In the interactive compiler context, classes must have been already defined...
-   const Symbol* sym = mod->getGlobal(inh->className());
-  
-   // found?
-   if( sym != 0 )
-   {
-      const Item* itm = sym->getValue(0);
-      if ( ! itm->isUser() || ! itm->asClass()->isMetaClass() )
-      {
-         m_owner->m_sp.addError( e_inv_inherit, m_owner->m_sp.currentSource(), 
-                 inh->sourceRef().line(), inh->sourceRef().chr(), 0, inh->className() );
-      }
-      else
-      {
-         inh->parent( static_cast<Class*>(itm->asInst()) );
-      }
-   }
-   else
-   {      
-      m_owner->m_sp.addError( e_undef_sym, m_owner->m_sp.currentSource(), 
-                 inh->sourceRef().line(), inh->sourceRef().chr(), 0, inh->className() );
-   }  
+   // the incremental compiler cannot store requirements.
+   delete req;
+   m_owner->m_sp.addError( e_undef_sym, m_owner->m_sp.currentSource(), 
+                req->sourceRef().line(), req->sourceRef().chr(), 0, req->name() );
 }
 
-
-void IntCompiler::Context::onRequirement( Requirement* rec )
-{
-   // In the interactive compiler context, classes must have been already defined...
-   try
-   {
-      m_owner->m_module->addRequirement( rec );  
-   }
-   catch( Error *e )
-   {
-      m_owner->m_sp.addError( e );
-      e->decref();
-   }
-}
 
 //=======================================================================
 // Main class

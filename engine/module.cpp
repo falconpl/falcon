@@ -47,6 +47,28 @@
 namespace Falcon 
 {
 
+
+class Module::FuncRequirement: public Requirement
+{
+public:
+   FuncRequirement( const String& symName, t_func_import_req& cbFunc ):
+      Requirement( symName ),
+      m_cbFunc( cbFunc )
+   {}
+
+   virtual ~FuncRequirement() {}
+
+   virtual void onResolved( const Module* source, const Symbol* srcSym, Module* tgt, Symbol* )
+   {
+      Error* err = m_cbFunc( tgt, source, srcSym );
+      if( err != 0 ) throw err;
+   }
+
+private:
+   t_func_import_req m_cbFunc;
+};
+
+
 Module::Private::Dependency::~Dependency()
 {
    WaitingList::iterator iter = m_waitings.begin();
@@ -122,7 +144,7 @@ Module::Private::~Private()
    DepList::iterator req_i = m_deplist.begin();
    while( req_i != m_deplist.end() )
    {
-      delete *m_deplist;
+      delete *req_i;
       ++req_i;
    }
    
@@ -569,7 +591,7 @@ Error* Module::addModuleRequirement( ImportDef* def, ModRequest*& req )
    else
    {
       // create a new entry
-      ModRequest* req = new ModRequest( def->sourceModule(), def->isUri(), def->isLoad() );
+      req = new ModRequest( def->sourceModule(), def->isUri(), def->isLoad() );
       _p->m_mrmap[def->sourceModule()] = req;
       _p->m_mrlist.push_back( req );
    }
@@ -651,11 +673,7 @@ Error* Module::addImport( ImportDef* def )
          _p->m_gSyms[name] = newsym;
          
          // and add a dependency.
-         Private::Dependency* dep = new Private::Dependency( newsym, def );
-         if( def->sourceModule().size() )
-         {
-            dep->m_sourceReq = _p->m_mrmap[ def->sourceModule() ];
-         }
+         Private::Dependency* dep = new Private::Dependency( newsym, def );         
          
          dep->m_sourceName = def->sourceSymbol( i );
          
@@ -673,7 +691,7 @@ Error* Module::addImport( ImportDef* def )
          }
          
          // we should just have added it in addModuleRequirement
-         _p->m_nsimports.push_back( new Private::NSImport( def, req, from, def->target() ) );
+         _p->m_nsimports.push_back( new Private::NSImport( def, from, def->target() ) );
       }
    }
    
@@ -722,13 +740,13 @@ void Module::removeImport( ImportDef* def )
    }
    
    // Remove all the related dependencies
-   Private::DepList::iterator depi = _p->deplist.begin();
-   while( depi != _p->deplist.end() ) 
+   Private::DepList::iterator depi = _p->m_deplist.begin();
+   while( depi != _p->m_deplist.end() ) 
    {
       Private::Dependency* dep = *depi;
       if( dep->m_idef == def )
       {
-         depi = _p->deplist.erase( depi );
+         depi = _p->m_deplist.erase( depi );
          delete dep;
          
       }
@@ -771,7 +789,8 @@ ImportDef* Module::addLoad( const String& name, bool bIsUri )
    ImportDef* id = new ImportDef;
    id->setLoad( name, bIsUri );
    
-   if( ! addModuleRequirement( id ) )
+   ModRequest* req = 0;
+   if( ! addModuleRequirement( id, req ) )
    {
       delete id;
       return 0;
@@ -779,6 +798,33 @@ ImportDef* Module::addLoad( const String& name, bool bIsUri )
    
    _p->m_importDefs.push_back( id );   
    return id;
+}
+
+void Module::addImportRequest( Requirement* req, 
+               const String& sourceMod, bool bModIsPath )
+{
+   ImportDef* id = new ImportDef;
+   id->setDirect( req->name(), sourceMod, bModIsPath );
+   if( sourceMod != "" )
+   {
+      ModRequest* mr;
+      addModuleRequirement( id, mr );
+   }
+   _p->m_importDefs.push_back( id );   
+   
+   // add the dependency to the symbol.
+   Private::Dependency* dep = new Private::Dependency( req->name() );
+   dep->m_idef = id;
+   dep->m_waitings.push_back( req );
+   _p->m_deplist.push_back( dep );
+}
+
+
+void Module::addImportRequest( t_func_import_req cbFunc, const String& symName, 
+         const String& sourceMod, bool bModIsPath )
+{
+   FuncRequirement* r = new FuncRequirement(symName, cbFunc);
+   addImportRequest( r, sourceMod, bModIsPath );
 }
 
 
@@ -807,20 +853,6 @@ Symbol* Module::addImplicitImport( const String& name, bool& isNew )
    _p->m_gSyms[name] = uks;
 
    return uks;
-}
-
-
-void Module::addImportRequest( Module::t_func_import_req func, const String& symName, const String& sourceMod, bool bModIsPath)
-{   
-   ImportDef* def = new ImportDef;
-   def->setDirect( symName, sourceMod, bModIsPath );
-   _p->m_directReqs.push_back( new Private::DirectRequest( def, func ) );
-   
-   if( sourceMod.size() != 0 )
-   {
-      // we don't care if the module is already imported somewhere.
-      addModuleRequirement( def );
-   }
 }
 
 
@@ -969,10 +1001,10 @@ void Module::checkWaitingFwdDef( Symbol* sym )
          // remove the dependency (was just a forward marker)
          _p->m_depsBySymbol.erase( pos );
          Private::DepList::iterator dli =
-            std::find( _p->deplist.begin(), _p->deplist.end(), dep );
-         if( dli != _p->deplist.end() )
+            std::find( _p->m_deplist.begin(), _p->m_deplist.end(), dep );
+         if( dli != _p->m_deplist.end() )
          {
-            _p->deplist.erase( dli );
+            _p->m_deplist.erase( dli );
          }
          delete dep;
 

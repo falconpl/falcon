@@ -64,7 +64,7 @@ VFSModule::VFSModule():
 VFSModule::~VFSModule()
 {}
 
-Falcon::Error* VFSModule::onURIResolved( Falcon::Module* requester, Falcon::Module* , Falcon::Symbol* sym )
+Falcon::Error* VFSModule::onURIResolved( Falcon::Module* requester, const Falcon::Module* , const Falcon::Symbol* sym )
 {   
    // printl should really be a function in a global symbol ,but...
    if( ! sym->defaultValue().isClass() )
@@ -81,7 +81,7 @@ Falcon::Error* VFSModule::onURIResolved( Falcon::Module* requester, Falcon::Modu
    return 0;
 }
 
-Falcon::Error* VFSModule::onStreamResolved( Falcon::Module* requester, Falcon::Module* , Falcon::Symbol* sym )
+Falcon::Error* VFSModule::onStreamResolved( Falcon::Module* requester, const Falcon::Module* , const Falcon::Symbol* sym )
 {   
    // printl should really be a function in a global symbol ,but...
    if( ! sym->defaultValue().isClass() )
