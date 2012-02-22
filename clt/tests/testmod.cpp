@@ -127,6 +127,8 @@ public:
       
       virtual ~PrintlRequirement() {}
       
+      virtual Class* cls() const { return 0; }
+      
       virtual void onResolved( const Falcon::Module*, const Falcon::Symbol* sym, 
          Falcon::Module* requester, Falcon::Symbol* )
       {

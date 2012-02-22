@@ -44,6 +44,7 @@ class DynUnloader;
 class Requirement;
 class ImportDef;
 class ModRequest;
+class ClassModule;
 
 /** Standard Falcon Execution unit and library.
 
@@ -95,16 +96,20 @@ class ModRequest;
 class FALCON_DYN_CLASS Module {
 public:
 
+   Module();
+   
    /** Creates an internal module.
-    \param name The symbolic name of this module..
+    \param name The symbolic name of this module.
+    \param isNative Native modules don't get automatically serialized.
     */
-   Module( const String& name );
+   Module( const String& name, bool isNative = true );
 
    /** Creates an external module.
     \param name The symbolic name of this module.
     \param uri The uri from where this module was created.
+    \param isNative Native modules don't get automatically serialized.
     */
-   Module( const String& name, const String& uri );
+   Module( const String& name, const String& uri, bool isNative = true );
 
    virtual ~Module();
 
@@ -523,6 +528,7 @@ public:
    Function* getMainFunction();
    void setMainFunction( Function* mf );
    
+   bool isNative() const { return m_bNative; }
 private:
    class Private;
    Private* _p;
@@ -538,11 +544,13 @@ private:
    int m_anonFuncs;
    int m_anonClasses;
    Function* m_mainFunc;
+   bool m_bNative;
 
    friend class Private;   
    friend class DynLoader;
    friend class FAMLoader;
    friend class ModSpace;
+   friend class ClassModule;
    
    void name( const String& v ) { m_name = v; }
    void uri( const String& v ) { m_uri = v; }

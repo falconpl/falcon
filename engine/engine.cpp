@@ -535,20 +535,27 @@ void Engine::registerClass( Class* reg )
    String name = reg->module() ? 
       reg->module()->name() + "." + reg->name() :
       reg->name();
-                 
+          
+   m_mtx->lock();
    (*m_regClasses)[name] = reg;
+   m_mtx->unlock();
 }
 
 
 Class* Engine::getRegisteredClass( const String& name ) const
 {
+   m_mtx->lock();
    RegisteredClassesMap::const_iterator iter = m_regClasses->find( name );
    if( iter == m_regClasses->end() )
    {
+      m_mtx->unlock();
       return 0;
    }
    
-   return iter->second;
+   Class* cls = iter->second;
+   m_mtx->unlock();
+   
+   return cls;
 }
 
 

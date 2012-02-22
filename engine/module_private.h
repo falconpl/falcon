@@ -171,7 +171,7 @@ public:
          m_resSymbol( 0 )
       {}
 
-      ~Dependency();
+      ~Dependency() {}
       
       /** Called when the remote symbol is resolved. 
        \param parentMod The module hosting this dependency
@@ -266,6 +266,9 @@ public:
 
    typedef std::map<String, Class*> ClassMap;
    ClassMap m_classes;
+   
+   typedef std::deque<Requirement*> RequirementList;
+   RequirementList m_reqslist;
    
    Private()
    {}

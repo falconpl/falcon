@@ -1,8 +1,8 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: requiredclass.h
+   FILE: requirement.h
 
-   Structure holding information about classes needed elsewhere.
+   ABC holding information about classes needed elsewhere.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: Mon, 15 Aug 2011 13:58:12 +0200
@@ -26,6 +26,9 @@ namespace Falcon
 class Error;
 class Module;
 class Symbol;
+class ItemArray;
+class DataWriter;
+class DataReader;
 
 
 /** Functionoid for delayed resolution of symbols.
@@ -65,6 +68,20 @@ class Symbol;
  For more specific requests, for instance, for requirements insisting on symbols
  directly imported from a specific module, use Module::addImportRequest.
  
+ Requirements have a Class handler called ClassRequirement. The class handler
+ is not meant to be used by scripts (in fact, it's pure abstract at Falcon
+ level), but is used to allow the Requirement to be a part of a Syntree, or
+ in other words, to participate grammar reflection. This is practically used
+ only during storage of entities that need a requirement in the syntactic
+ tree; for instance, in class declaration or forward constrained symbol
+ declarations (i.e. in switch branches).
+ 
+ As such, they support serialization. The base implementation of store, restore,
+ flatten and unflatten do nothing. Requirements used in third party modules
+ rarely need to configure themselves, as only non-native modules require
+ full serialization; native modules just serialize a mean to re-load the
+ module from the source where they was created from (for instance, the URL
+ of their DLL), and don't ask a requirement to be serialized.
  */
 class FALCON_DYN_CLASS Requirement
 {
@@ -133,6 +150,18 @@ public:
    const SourceRef& sourceRef() const { return m_sr; }
    SourceRef& sourceRef() { return m_sr; }
 
+   virtual void store( DataWriter* stream ) const;
+   virtual void restore( DataReader* stream ) const;
+   virtual void flatten( ItemArray& subItems ) const;
+   virtual void unflatten( ItemArray& subItems ) const;
+
+   /** Returns the class handling this kind of requirement. 
+    
+    Subclasses can set this to something returning 0 if this
+    requirement is only used in native modules.
+    */
+   virtual Class* cls() const = 0;
+   
 protected:
    bool m_bIsStatic;
    
@@ -145,4 +174,4 @@ private:
 
 #endif /* _FALCON_REQUIREMENT_H_ */
 
-/* end of requiredclass.h */
+/* end of requirement.h */

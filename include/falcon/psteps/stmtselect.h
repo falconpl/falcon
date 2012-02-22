@@ -199,11 +199,16 @@ public:
    virtual void onResolved( const Module* source, const Symbol* srcSym, 
          Module* tgt, Symbol* extSym );
 
+   virtual Class* cls() const;     
+   
 private:
    StmtSelect* m_owner;
    int32 m_id;
    int32 m_clsId;
    int32 m_line;
+   
+   class ClassSelectRequirement;
+   friend class ClassSelectRequirement;
 };
    
    

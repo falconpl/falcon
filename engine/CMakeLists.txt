@@ -261,6 +261,7 @@ add_library(falcon_engine SHARED
   rampmode.cpp
   reader.cpp
   restorer.cpp
+  requirement.cpp
   rootsyntree.cpp
   rulesyntree.cpp
   sourceref.cpp

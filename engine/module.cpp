@@ -35,6 +35,7 @@
 #include <falcon/errors/codeerror.h>
 #include <falcon/errors/genericerror.h>
 #include <falcon/errors/linkerror.h>
+#include <falcon/classes/classrequirement.h>
 
 #include <stdexcept>
 #include <map>
@@ -46,7 +47,6 @@
 
 namespace Falcon 
 {
-
 
 class Module::FuncRequirement: public Requirement
 {
@@ -63,27 +63,13 @@ public:
       Error* err = m_cbFunc( tgt, source, srcSym );
       if( err != 0 ) throw err;
    }
-
+   
+   // This applies only to native modules, which doesn't store requirementes.
+   virtual Class* cls() const { return 0; }
+   
 private:
-   t_func_import_req m_cbFunc;
+   t_func_import_req m_cbFunc;   
 };
-
-
-Module::Private::Dependency::~Dependency()
-{
-   WaitingList::iterator iter = m_waitings.begin();
-   while( iter != m_waitings.end() );
-   {
-      Requirement* req = *iter;
-      if( ! req->isStatic() )
-      {
-         delete req;
-      }
-      
-      ++iter;
-   }
-}
- 
    
    
 Error* Module::Private::Dependency::onResolved( Module* parentMod, Module* mod, Symbol* sym )
@@ -176,7 +162,25 @@ Module::Private::~Private()
 // Main module class
 //
 
-Module::Module( const String& name ):
+Module::Module():
+   m_modSpace(0),
+   m_name( "$noname" ),
+   m_lastGCMark(0),
+   m_bExportAll( false ),
+   m_unloader( 0 ),
+   m_bMain( false ),
+   m_anonFuncs(0),
+   m_anonClasses(0),
+   m_mainFunc(0),
+   m_bNative( false )
+{
+   TRACE("Creating internal module '%s'", name.c_ize() );
+   m_uri = "internal:" + name;
+   _p = new Private;
+}
+
+
+Module::Module( const String& name, bool bNative ):
    m_modSpace(0),
    m_name( name ),
    m_lastGCMark(0),
@@ -185,7 +189,8 @@ Module::Module( const String& name ):
    m_bMain( false ),
    m_anonFuncs(0),
    m_anonClasses(0),
-   m_mainFunc(0)
+   m_mainFunc(0),
+   m_bNative( bNative )
 {
    TRACE("Creating internal module '%s'", name.c_ize() );
    m_uri = "internal:" + name;
@@ -193,7 +198,7 @@ Module::Module( const String& name ):
 }
 
 
-Module::Module( const String& name, const String& uri ):
+Module::Module( const String& name, const String& uri, bool bNative ):
    m_modSpace(0),
    m_name( name ),
    m_uri(uri),
@@ -203,7 +208,8 @@ Module::Module( const String& name, const String& uri ):
    m_bMain( false ),
    m_anonFuncs(0),
    m_anonClasses(0),
-   m_mainFunc(0)
+   m_mainFunc(0),
+   m_bNative( bNative )
 {
    TRACE("Creating module '%s' from %s",
       name.c_ize(), uri.c_ize() );
@@ -215,7 +221,6 @@ Module::Module( const String& name, const String& uri ):
 Module::~Module()
 {
    TRACE("Deleting module %s", m_name.c_ize() );
-   
    
    fassert2( m_unloader == 0, "A module cannot be destroyed with an active unloader!" );
    if( m_unloader != 0 )
@@ -908,6 +913,7 @@ Symbol* Module::addRequirement( Requirement* cr )
    
    // Record the fact that we have to save transform an unknown symbol...
    dep->m_waitings.push_back( cr );
+   _p->m_reqslist.push_back( cr );
    
    return imported;
 }

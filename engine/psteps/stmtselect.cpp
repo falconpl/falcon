@@ -17,6 +17,7 @@
 #define SRC "engine/psteps/select.cpp"
 
 #include <falcon/expression.h>
+#include <falcon/engine.h>
 #include <falcon/vmcontext.h>
 #include <falcon/syntree.h>
 #include <falcon/symbol.h>
@@ -419,6 +420,8 @@ void StmtSelect::apply_( const PStep* ps, VMContext* ctx )
 void SelectRequirement::onResolved(
          const Module* source, const Symbol* sym, Module* requirer, Symbol*  )
 {
+   fassert( m_owner == 0 );
+   
    const Item* itm = sym->getValue(0);
    if( itm == 0 || (!itm->isOrdinal()&& ! itm->isClass()) )
    {
@@ -463,6 +466,80 @@ void SelectRequirement::onResolved(
    }
 }
 
+
+Class* SelectRequirement::cls() const
+{
+   static Class* theClass = new ClassSelectRequirement;
+   static bool bRegistered = false;
+
+   // a double registration in MT context has no adverse effect.
+   // we just need to have it in the engine to let it to delete it at end.
+   if( ! bRegistered ) {
+      bRegistered = true;
+      Engine::instance()->registerClass(theClass);
+   }
+
+   return theClass;
+}
+
+
+class SelectRequirement::ClassSelectRequirement: public ClassRequirement
+{
+public:
+   ClassSelectRequirement():
+      ClassRequirement("$SelectRequirement")
+   {}
+
+   virtual ~ClassSelectRequirement() {}
+   
+   virtual void store( VMContext*, DataWriter* stream, void* instance ) const
+   {
+      SelectRequirement* s = static_cast<SelectRequirement*>(instance);
+      s->store( stream );
+   }
+   
+   virtual void flatten( VMContext*, ItemArray& subItems, void* instance ) const
+   {
+      SelectRequirement* s = static_cast<SelectRequirement*>(instance);
+      subItems.append( Item(s->m_owner->cls(), s->m_owner ) );
+   }
+   
+   virtual void unflatten( VMContext*, ItemArray& subItems, void* instance ) const
+   {
+      SelectRequirement* s = static_cast<SelectRequirement*>(instance);
+      fassert( subItems.length() == 1 );
+      fassert( subItems[0].asClass()->name() == "Select" );
+      s->m_owner = static_cast<StmtSelect*>(subItems[0].asInst());
+   }
+   
+   virtual void restore( VMContext*, DataReader* stream, void*& empty ) const
+   {
+      SelectRequirement* s = 0;
+      try {
+         s = new SelectRequirement(0,0,0,"",0);
+         empty = s->restore(stream);
+      }
+      catch( ... )
+      {
+         delete s;
+         throw;
+      }
+   }
+   
+   void describe( void* instance, String& target, int, int ) const
+   {
+      SelectRequirement* s = static_cast<SelectRequirement*>(instance);
+      if( s->m_owner == 0 )
+      {
+         target = "<Blank SelectRequirement>";
+      }
+      else {
+         target = "SelectRequirement for \"" + s->name() + "\"";
+      }
+   }
+};
+
+   
 }
 
 /* end of stmtselect.cpp */

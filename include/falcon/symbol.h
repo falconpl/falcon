@@ -127,6 +127,7 @@ public:
     -- Meaningful only if this symbol is local.
     */
    uint32 localId() const { return m_id; }
+   void localId( uint32  id ) { return m_id = id; }
    
    /** Promote an extern symbol. 
     \param other The imported symbol.
