@@ -23,6 +23,7 @@
 
 #include <falcon/falcon.h>
 #include <falcon/requirement.h>
+
 #include <iostream>
 
 /** A traditional VM-based EXT function.
@@ -127,7 +128,7 @@ public:
       
       virtual ~PrintlRequirement() {}
       
-      virtual Class* cls() const { return 0; }
+      virtual Falcon::Class* cls() const { return 0; }
       
       virtual void onResolved( const Falcon::Module*, const Falcon::Symbol* sym, 
          Falcon::Module* requester, Falcon::Symbol* )

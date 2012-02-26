@@ -98,8 +98,8 @@ public:
    // Class management
    //
 
-   virtual void gcMark( void* instance, uint32 mark ) const;
-   virtual bool gcCheck( void* instance, uint32 mark ) const;
+   virtual void gcMarkInstance( void* instance, uint32 mark ) const;
+   virtual bool gcCheckInstance( void* instance, uint32 mark ) const;
 
    //=========================================================
    // Operators.

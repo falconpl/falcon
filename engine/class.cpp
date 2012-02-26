@@ -31,28 +31,48 @@
 namespace Falcon {
 
 Class::Class( const String& name ):
+   Mantra( name, 0, 0, 0 ),
    m_bIsfalconClass( false ),
    m_bIsErrorClass( false ),
    m_bIsFlatInstance(false),
    m_userFlags(0),
-   m_declaredAt(0),
-   m_name( name ),
-   m_typeID( FLC_ITEM_USER ),
-   m_module(0),
-   m_lastGCMark(0)
-{}
+   m_typeID( FLC_ITEM_USER )
+{
+   m_category = e_c_class;
+}
 
 Class::Class( const String& name, int64 tid ):
+   Mantra( name, 0, 0, 0 ),
    m_bIsfalconClass( false ),
    m_bIsErrorClass( false ),
    m_bIsFlatInstance(false),
    m_userFlags(0),
-   m_declaredAt(0),
-   m_name( name ),
-   m_typeID( tid ),
-   m_module(0),
-   m_lastGCMark(0)
-{}
+   m_typeID( tid )
+{
+   m_category = e_c_class;
+}
+
+Class::Class( const String& name, Module* module, int line, int chr ):
+   Mantra( name, module, line, chr ),
+   m_bIsfalconClass( false ),
+   m_bIsErrorClass( false ),
+   m_bIsFlatInstance(false),
+   m_userFlags(0),
+   m_typeID( FLC_ITEM_USER )
+{
+   m_category = e_c_class;
+}
+
+Class::Class( const String& name, int64 tid, Module* module, int line, int chr ):
+   Mantra( name, module, line, chr ),
+   m_bIsfalconClass( false ),
+   m_bIsErrorClass( false ),
+   m_bIsFlatInstance(false),
+   m_userFlags(0),
+   m_typeID( tid )
+{
+   m_category = e_c_class;
+}
 
 
 Class::~Class()
@@ -62,6 +82,12 @@ Class::~Class()
       m_name.c_ize() );
 }
 
+
+Class* Class::handler() const
+{
+   static Class* meta = Engine::instance()->metaClass();
+   return meta;
+}
 
 Class* Class::getParent( const String& ) const
 {
@@ -87,11 +113,6 @@ void* Class::getParentData( Class* parent, void* data ) const
    return 0;
 }
 
-
-void Class::module( Module* m )
-{
-   m_module = m;
-}
 
  
 void Class::store( VMContext*, DataWriter*, void* ) const
@@ -122,36 +143,14 @@ void Class::unflatten( VMContext*, ItemArray&, void* ) const
 }
 
 
-void Class::gcMark( void*, uint32 ) const
+void Class::gcMarkInstance( void*, uint32 ) const
 {
    // normally does nothing
 }
 
 
-bool Class::gcCheck( void*, uint32 ) const
+bool Class::gcCheckInstance( void*, uint32 ) const
 {
-   return true;
-}
-
-
-void Class::gcMarkMyself( uint32 mark )
-{
-   m_lastGCMark = mark;
-   if ( m_module != 0 )
-   {
-      m_module->gcMark( mark );
-   }
-}
-
-
-bool Class::gcCheckMyself( uint32 mark )
-{
-   if( mark > m_lastGCMark )
-   {
-      delete this;
-      return false;
-   }
-
    return true;
 }
 

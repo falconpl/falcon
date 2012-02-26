@@ -52,6 +52,7 @@ class FalconClass::Private
 public:
 
    typedef std::map<String, Property*> MemberMap;
+   MemberMap m_origMembers;
    MemberMap m_members;
 
    typedef std::list<FalconState*> StateList;
@@ -186,6 +187,15 @@ void* FalconClass::createInstance() const
 
 bool FalconClass::addProperty( const String& name, const Item& initValue )
 {
+   TRACE1( "Addong a property \"%s\" to class %s with value.", name.c_ize(), m_name.c_ize() );
+   
+   if( m_bConstructed )
+   {
+      TRACE( "Class %s is ALREADY constructed, failing to add property %s.", 
+               m_name.c_ize(), name.c_ize() );
+      return false;
+   }
+   
    Private::MemberMap& members = _p->m_members;
 
    // first time around?
@@ -211,6 +221,15 @@ bool FalconClass::addProperty( const String& name, const Item& initValue )
 
 bool FalconClass::addProperty( const String& name, Expression* initExpr )
 {
+   TRACE1( "Addong a property \"%s\" to class %s with expression.", name.c_ize(), m_name.c_ize() );
+   
+   if( m_bConstructed )
+   {
+      TRACE( "Class %s is ALREADY constructed, failing to add property %s.", 
+               m_name.c_ize(), name.c_ize() );
+      return false;
+   }
+   
    Private::MemberMap& members = _p->m_members;
 
    // first time around?
@@ -241,7 +260,16 @@ bool FalconClass::addProperty( const String& name, Expression* initExpr )
 
 bool FalconClass::addProperty( const String& name )
 {
-  Private::MemberMap& members = _p->m_members;
+   TRACE1( "Addong a property \"%s\" to class %s.", name.c_ize(), m_name.c_ize() );
+   
+   if( m_bConstructed )
+   {
+      TRACE( "Class %s is ALREADY constructed, failing to add property %s.", 
+               m_name.c_ize(), name.c_ize() );
+      return false;
+   }
+   
+   Private::MemberMap& members = _p->m_members;
 
    // first time around?
    if ( members.find( name ) != members.end() )
@@ -260,6 +288,15 @@ bool FalconClass::addProperty( const String& name )
 
 bool FalconClass::addMethod( Function* mth )
 {
+   TRACE1( "Addong method \"%s\" to class %s.", mth->name().c_ize(), m_name.c_ize() );
+   
+   if( m_bConstructed )
+   {
+      TRACE( "Class %s is ALREADY constructed, failing to add method %s.", 
+               m_name.c_ize(), mth->name().c_ize() );
+      return false;
+   }
+      
    Private::MemberMap& members = _p->m_members;
 
    const String& name = mth->name();
@@ -434,7 +471,7 @@ const FalconClass::Property* FalconClass::getProperty( const String& name ) cons
 }
 
 
-void FalconClass::gcMarkMyself( uint32 mark )
+void FalconClass::gcMark( uint32 mark )
 {
    if ( m_shouldMark )
    {
@@ -654,7 +691,7 @@ void* FalconClass::deserialize( DataReader* stream ) const
 // Class management
 //
 
-void FalconClass::gcMark( void* self, uint32 mark ) const
+void FalconClass::gcMarkInstance( void* self, uint32 mark ) const
 {
    FalconInstance* inst = static_cast<FalconInstance*>(self);
    inst->gcMark( mark );

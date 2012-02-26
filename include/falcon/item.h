@@ -594,7 +594,7 @@ public:
    {
       if( isUser() )
       {
-         asClass()->gcMark( asInst(), mark );
+         asClass()->gcMarkInstance( asInst(), mark );
       }
    }
 

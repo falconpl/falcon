@@ -112,7 +112,7 @@ void FalconInstance::gcMark( uint32 mark )
       // also, back-mark our class.
       // possibly, it's our class that's marking ourselves,
       // but we don't care. This will be a no-op in that case.
-      const_cast<FalconClass*>(m_origin)->gcMarkMyself( mark );
+      const_cast<FalconClass*>(m_origin)->gcMark( mark );
    }
 }
 

@@ -76,7 +76,7 @@ void* ClassTreeStep::createInstance() const
    return 0;
 }
 
-void ClassTreeStep::gcMark( void* instance, uint32 mark ) const
+void ClassTreeStep::gcMarkInstance( void* instance, uint32 mark ) const
 {
    TRACE( "ClassTreeStep::gcMark %p, %d ", instance, mark );
    // the mark is performed on the topmost unparented parent.
@@ -89,7 +89,7 @@ void ClassTreeStep::gcMark( void* instance, uint32 mark ) const
    ts->gcMark( mark );
 }
 
-bool ClassTreeStep::gcCheck( void* instance, uint32 mark ) const
+bool ClassTreeStep::gcCheckInstance( void* instance, uint32 mark ) const
 {
    TRACE( "ClassTreeStep::gcCheck %p, %d ", instance, mark );
 

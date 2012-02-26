@@ -102,14 +102,14 @@ void ClassClosure::describe( void* instance, String& target, int, int) const
 }
 
 
-void ClassClosure::gcMark( void* instance, uint32 mark ) const
+void ClassClosure::gcMarkInstance( void* instance, uint32 mark ) const
 {
    Closure* closure = static_cast<Closure*>(instance);
    closure->gcMark( mark );
 }
 
 
-bool ClassClosure::gcCheck( void* instance, uint32 mark ) const
+bool ClassClosure::gcCheckInstance( void* instance, uint32 mark ) const
 {
    Closure* closure = static_cast<Closure*>(instance);
    return closure->gcMark() >= mark;

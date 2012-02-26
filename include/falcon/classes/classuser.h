@@ -159,7 +159,7 @@ public:
    /** Overridden to mark this class and all the parents through addParent. 
     \param mark A GC mark indicator.    
     */
-   virtual void gcMarkMyself( uint32 mark );
+   virtual void gcMark( uint32 mark );
    
    /** Number of properties carried (to be cached).
     
@@ -209,7 +209,7 @@ public:
     their data. In case of need, it is necessary to derive this method to
     properly handle parent class marking.
     */
-   virtual void gcMark( void* instance, uint32 mark ) const;
+   virtual void gcMarkInstance( void* instance, uint32 mark ) const;
    
    /** Override base Class::gcCheck.
     \param instance the Instance to be checked.
@@ -218,7 +218,7 @@ public:
     \note This class supposes that the instance is derived from UserCarrier.
     if this is not the case, override this method to use your data.
     */
-   virtual bool gcCheck( void* instance, uint32 mark ) const;
+   virtual bool gcCheckInstance( void* instance, uint32 mark ) const;
    
 
    //=====================================================================

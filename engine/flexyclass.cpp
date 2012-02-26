@@ -109,7 +109,7 @@ void* FlexyClass::getParentData( Class* parent, void* data ) const
 }
 
 
-void FlexyClass::gcMark( void* self, uint32 mark ) const
+void FlexyClass::gcMarkInstance( void* self, uint32 mark ) const
 {
    static_cast<FlexyDict*>(self)->gcMark(mark);
 }

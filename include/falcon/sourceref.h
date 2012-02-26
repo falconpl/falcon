@@ -17,12 +17,13 @@
 #define FALCON_SOURCEREF_H
 
 #include <falcon/setup.h>
-#include <falcon/item.h>
+#include <falcon/types.h>
 
 namespace Falcon
 {
 
-class Stream;
+class DataWriter;
+class DataReader;
 
 class FALCON_DYN_CLASS SourceRef
 {

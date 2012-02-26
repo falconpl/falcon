@@ -131,13 +131,13 @@ bool ClassUser::isDerivedFrom( const Class* cls ) const
 }
    
 
-void ClassUser::gcMarkMyself( uint32 mark )
+void ClassUser::gcMark( uint32 mark )
 {
-   Class::gcMarkMyself(mark);
+   Class::gcMark(mark);
    Private::ParentList::iterator iter = _p->m_parents.begin();
    while( iter != _p->m_parents.end() )
    {
-      (*iter)->gcMarkMyself( mark );
+      (*iter)->gcMark( mark );
       ++iter;
    }
 }
@@ -156,13 +156,13 @@ void* ClassUser::clone( void* instance ) const
 }
 
 
-void ClassUser::gcMark( void* instance, uint32 mark ) const
+void ClassUser::gcMarkInstance( void* instance, uint32 mark ) const
 {
    static_cast<UserCarrier*>(instance)->gcMark(mark);
 }
    
 
-bool ClassUser::gcCheck( void* instance, uint32 mark ) const
+bool ClassUser::gcCheckInstance( void* instance, uint32 mark ) const
 {
    return static_cast<UserCarrier*>(instance)->gcMark() < mark;
 }

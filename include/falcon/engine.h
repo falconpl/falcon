@@ -34,7 +34,6 @@ class PseudoFunction;
 class PseudoFunctionMap;
 class PredefMap;
 class RegisteredClassesMap;
-class MetaStorerMap;
 
 class Module;
 class BOM;
@@ -45,7 +44,6 @@ class ModSpace;
 class Item;
 
 class SynClasses;
-class MetaStorer;
 class VMContext;
 
 /** Falcon application global data.
@@ -103,26 +101,7 @@ public:
     handler class, would cause the item to be treated correctly.
     */
    Class* getTypeClass( int type );
-
-   /** Returns a registered meta-storer. 
-    \param name The required MetaStorer name.
-    \return A pointer to a metastorer or 0 if not found. 
-    \see MetaStorer
-    */
-   
-   MetaStorer* getMetaStorer( const String& name );
-   
-   /** Records a storer.
-    \param ms The storer.
-    \return True if the storer was recorded, false if the storer name is already
-    assigned.
-    
-    \see MetaStorer
-    
-    \note The engine becomes owner of the storer.
-    */
-   bool registerMetaStorer( MetaStorer* ms );
-   
+      
    /** True when running on windows system.
     
     File naming convention and other details are different on windows systems.
@@ -218,6 +197,27 @@ public:
     */
    Class* metaClass() const;
    
+   /** Returns the global instance of the MetaClass class.
+   \return the Engine instance of the MetaClass handler.
+
+    Method init() must have been called before.
+
+    @note This method will assert and terminate the program if compiled in debug mode
+    in case the engine has not been initialized. In release, it will just
+    return a null pointer.
+    */
+   Class* mantraClass() const;
+   
+      /** Returns the global instance of the MetaClass class.
+   \return the Engine instance of the MetaClass handler.
+
+    Method init() must have been called before.
+
+    @note This method will assert and terminate the program if compiled in debug mode
+    in case the engine has not been initialized. In release, it will just
+    return a null pointer.
+    */
+   Class* synFuncClass() const;
    
    /** Returns the global instance of the GenericClass class.
    \return the Engine instance of the GenericClass handler.
@@ -504,6 +504,8 @@ protected:
    Class* m_dictClass;
    Class* m_protoClass;
    Class* m_metaClass;
+   Class* m_mantraClass;
+   Class* m_synFuncClass;
    Class* m_genericClass;
    ClassReference* m_referenceClass;
 
@@ -535,7 +537,6 @@ protected:
    SynClasses* m_synClasses;
 
    RegisteredClassesMap* m_regClasses;
-   MetaStorerMap *m_metaStorers;
    
    //===============================================
    // Transcoders

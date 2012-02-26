@@ -13,7 +13,7 @@
    See LICENSE file for licensing details.
 */
 
-#include <falcon/metaclass.h>
+#include <falcon/classes/metaclass.h>
 #include <falcon/itemid.h>
 #include <falcon/vmcontext.h>
 #include <falcon/optoken.h>
@@ -24,7 +24,7 @@
 namespace Falcon {
 
 MetaClass::MetaClass():
-   Class("Class", FLC_CLASS_ID_CLASS )
+   ClassMantra("Class", FLC_CLASS_ID_CLASS )
 {
 }
 
@@ -33,44 +33,6 @@ MetaClass::~MetaClass()
 {
 }
 
-void MetaClass::gcMark( void* self, uint32 mark ) const
-{
-   static_cast<Class*>(self)->gcMarkMyself( mark );
-}
-
-bool MetaClass::gcCheck( void* self, uint32 mark ) const
-{
-   return static_cast<Class*>(self)->gcCheckMyself( mark );
-}
-
-void MetaClass::dispose( void* self ) const
-{
-   delete static_cast<Class*>(self);
-}
-
-
-void* MetaClass::clone( void* source ) const
-{
-   return source;
-}
-
-void* MetaClass::createInstance() const
-{
-   return 0;
-}
-
-
-void MetaClass::serialize( DataWriter*, void*  ) const
-{
-   // TODO
-}
-
-
-void* MetaClass::deserialize( DataReader* ) const
-{
-   // TODO
-   return 0;
-}
 
 void MetaClass::describe( void* instance, String& target, int, int ) const
 {
@@ -78,16 +40,40 @@ void MetaClass::describe( void* instance, String& target, int, int ) const
    target = "Class " + fc->name();
 }
 
+Class* MetaClass::getParent( const String& name ) const
+{
+   Class* cls = Engine::instance()->mantraClass();
+   
+   if( name == cls->name() ) return cls;
+   return 0;
+}
+
+bool MetaClass::isDerivedFrom( const Class* parent ) const
+{
+   Class* cls = Engine::instance()->mantraClass();
+   
+   return parent == cls || parent == this;
+}
+
+void MetaClass::enumerateParents( ClassEnumerator& cb ) const
+{
+   Class* cls = Engine::instance()->mantraClass();
+   
+   cb( cls, true );
+}
+
+void* MetaClass::getParentData( Class* parent, void* data ) const
+{
+   Class* cls = Engine::instance()->mantraClass();
+   
+   if( parent == cls || parent == this ) return data;
+   return 0;
+}
+
 //====================================================================
 // Operator overloads
 //
 
-
-void MetaClass::op_isTrue( VMContext* ctx, void* ) const
-{
-   // classes are always true
-   ctx->topData().setBoolean(true);
-}
 
 void MetaClass::op_toString( VMContext* ctx , void* item ) const
 {

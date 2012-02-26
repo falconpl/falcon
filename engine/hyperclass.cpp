@@ -278,15 +278,15 @@ void* HyperClass::getParentData( Class* parent, void* data ) const
 }
 
 
-void HyperClass::gcMarkMyself( uint32 mark )
+void HyperClass::gcMark( uint32 mark )
 {
-   if( m_lastGCMark != mark )
+   if( m_mark != mark )
    {
-      m_lastGCMark = mark;
+      m_mark = mark;
       m_parentship->gcMark( mark );
       
       // shouldn't really care, but just in case...
-      m_master->gcMarkMyself( mark );
+      m_master->gcMark( mark );
       
       // Also mark the constructor and finally the module (if any).
       if( m_module != 0 ) m_module->gcMark(mark);
@@ -295,13 +295,13 @@ void HyperClass::gcMarkMyself( uint32 mark )
       // finally all our parents
       for( int i = 0; i < m_parentship->arity(); ++i ) {
          Class* pcls = static_cast<ExprInherit*>( m_parentship->get(i) )->cls();
-         pcls->gcMarkMyself( mark );
+         pcls->gcMark( mark );
       }
    }
 }
 
 
-void HyperClass::gcMark( void* self, uint32 mark ) const
+void HyperClass::gcMarkInstance( void* self, uint32 mark ) const
 {
    static_cast<ItemArray*>(self)->gcMark( mark ); // which marks also the parent classes
 }

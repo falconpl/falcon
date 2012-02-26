@@ -178,7 +178,7 @@ void ClassDict::describe( void* instance, String& target, int maxDepth, int maxL
 
 
 
-void ClassDict::gcMark( void* self, uint32 mark ) const
+void ClassDict::gcMarkInstance( void* self, uint32 mark ) const
 {
    ItemDict& dict = *static_cast<ItemDict*>(self);
    dict.gcMark( mark );

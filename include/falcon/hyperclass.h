@@ -108,8 +108,8 @@ public:
    // Class management
    //
 
-   virtual void gcMarkMyself( uint32 mark );
-   virtual void gcMark( void* self, uint32 mark ) const;
+   virtual void gcMark( uint32 mark );
+   virtual void gcMarkInstance( void* self, uint32 mark ) const;
 
    /** List all the properties in this class.
      @param self An instance (actually, it's unused as the class knows its properties).

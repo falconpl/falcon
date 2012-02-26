@@ -76,14 +76,14 @@ void* ClassDataReader::clone( void* instance ) const
 }
 
 
-void ClassDataReader::gcMark( void* instance, uint32 mark ) const
+void ClassDataReader::gcMarkInstance( void* instance, uint32 mark ) const
 {
    DataReader* wr = static_cast<DataReader*>(instance);
    wr->gcMark( mark );
 }
 
 
-bool ClassDataReader::gcCheck( void* instance, uint32 mark ) const
+bool ClassDataReader::gcCheckInstance( void* instance, uint32 mark ) const
 {
    DataReader* wr = static_cast<DataReader*>(instance);
    return wr->gcMark() >= mark;

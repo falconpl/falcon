@@ -172,13 +172,13 @@ bool ClassString::hasProperty( void*, const String& prop ) const
 }
 
 
-void ClassString::gcMark( void* instance, uint32 mark ) const
+void ClassString::gcMarkInstance( void* instance, uint32 mark ) const
 {
    static_cast<String*>( instance )->gcMark( mark );
 }
 
 
-bool ClassString::gcCheck( void* instance, uint32 mark ) const
+bool ClassString::gcCheckInstance( void* instance, uint32 mark ) const
 {
    return static_cast<String*>( instance )->currentMark() >= mark;
 }

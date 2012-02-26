@@ -174,8 +174,8 @@ Module::Module():
    m_mainFunc(0),
    m_bNative( false )
 {
-   TRACE("Creating internal module '%s'", name.c_ize() );
-   m_uri = "internal:" + name;
+   TRACE("Creating internal module '%s'", m_name.c_ize() );
+   m_uri = "";
    _p = new Private;
 }
 
@@ -193,7 +193,7 @@ Module::Module( const String& name, bool bNative ):
    m_bNative( bNative )
 {
    TRACE("Creating internal module '%s'", name.c_ize() );
-   m_uri = "internal:" + name;
+   m_uri = "";
    _p = new Private;
 }
 

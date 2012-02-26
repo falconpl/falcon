@@ -103,7 +103,7 @@ void ClassRange::describe( void* instance, String& target, int maxDepth, int ) c
 }
 
 
-void ClassRange::gcMark( void* self, uint32 mark ) const
+void ClassRange::gcMarkInstance( void* self, uint32 mark ) const
 {
    Range& range = *static_cast<Range*>( self );
 
@@ -111,7 +111,7 @@ void ClassRange::gcMark( void* self, uint32 mark ) const
 }
 
 
-bool ClassRange::gcCheck( void* self, uint32 mark ) const
+bool ClassRange::gcCheckInstance( void* self, uint32 mark ) const
 {
    Range& range = *static_cast<Range*>( self );
    if ( range.gcMark() < mark )

@@ -173,14 +173,18 @@ add_library(falcon_engine SHARED
   classes/classint.cpp
   classes/classgeneric.cpp
   classes/classnil.cpp
+  classes/classmantra.cpp
   classes/classmethod.cpp
   classes/classnumeric.cpp
   classes/classreference.cpp
   classes/classrange.cpp
   classes/classstring.cpp
   classes/classsymbol.cpp
+  classes/classsynfunc.cpp
   classes/classtreestep.cpp
+  classes/classrequirement.cpp
   classes/classuser.cpp
+  classes/metaclass.cpp
   
   classes/classexpression.cpp
   classes/classstatement.cpp
@@ -243,7 +247,7 @@ add_library(falcon_engine SHARED
   itemarray.cpp
   itemdict.cpp
   itemreference.cpp
-  metaclass.cpp
+  mantra.cpp
   method.cpp
   modcompiler.cpp
   modloader.cpp

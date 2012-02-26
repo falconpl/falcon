@@ -17,12 +17,14 @@
 #define FALCON_TREESTEP_H
 
 #include <falcon/pstep.h>
+
 namespace Falcon {
 
 class Class;
 class Expression;
 class Statement;
 class SynTree;
+class Item;
 
 /** PStep extension that can be insereted in an exposable syntactic tree.
  

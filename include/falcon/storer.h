@@ -25,6 +25,7 @@ namespace Falcon {
 class Class;
 class DataWriter;
 class VMContext;
+class Stream;
 
 /** Helper for cyclic joint structure serialization.
  

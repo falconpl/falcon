@@ -32,7 +32,7 @@ void Requirement::store( DataWriter* stream ) const
 }
 
 
-void Requirement::restore( DataReader* stream ) const
+void Requirement::restore( DataReader* stream )
 {   
    stream->read( m_name );
    stream->read( m_bIsStatic );
@@ -40,12 +40,12 @@ void Requirement::restore( DataReader* stream ) const
 }
 
 
-void Requirement::flatten( ItemArray& subItems ) const
+void Requirement::flatten( ItemArray& ) const
 {
 }
 
 
-void Requirement::unflatten( ItemArray& subItems ) const
+void Requirement::unflatten( ItemArray& )
 {
 }
 

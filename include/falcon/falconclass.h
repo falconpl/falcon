@@ -301,9 +301,9 @@ public:
     This is used to mark the default values of the class, if
     there is one or more deep item in the class.
     */
-   virtual void gcMarkMyself( uint32 mark );
+   virtual void gcMark( uint32 mark );
 
-   virtual void gcMark( void* self, uint32 mark ) const;
+   virtual void gcMarkInstance( void* self, uint32 mark ) const;
 
    virtual void enumerateProperties( void* self, PropertyEnumerator& cb ) const;
    virtual void enumeratePV( void* self, PVEnumerator& cb ) const;
@@ -397,8 +397,6 @@ private:
 
    ExprParentship* m_parentship;
    SynFunc* m_constructor;
-
-   Function** m_overrides;
 
    bool m_shouldMark;
    bool m_hasInitExpr;

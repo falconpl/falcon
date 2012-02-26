@@ -83,14 +83,14 @@ void ClassReference::unflatten( VMContext*, ItemArray& subItems, void* instance 
    ref->item() = subItems[0];
 }
 
-void ClassReference::gcMark( void* self, uint32 mark ) const
+void ClassReference::gcMarkInstance( void* self, uint32 mark ) const
 {
    ItemReference* ref = static_cast<ItemReference*>(self);
    ref->gcMark(mark);
 }
 
 
-bool ClassReference::gcCheck( void* self, uint32 mark ) const
+bool ClassReference::gcCheckInstance( void* self, uint32 mark ) const
 {
    ItemReference* ref = static_cast<ItemReference*>(self);
    return ref->gcMark() >= mark;

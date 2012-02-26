@@ -622,7 +622,7 @@ void Collector::markNew()
       while( newRing != 0 )
       {
          newRing->m_mark = mark;
-         newRing->m_cls->gcMark( newRing->m_data, mark );
+         newRing->m_cls->gcMarkInstance( newRing->m_data, mark );
          newRing = newRing->m_next;
       }
 

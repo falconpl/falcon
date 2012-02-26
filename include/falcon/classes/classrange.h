@@ -46,8 +46,8 @@ public:
    
    virtual void describe( void* instance, String& target, int maxDepth = 3, int maxLength = 60 ) const;
 
-   virtual void gcMark( void* self, uint32 mark ) const;
-   virtual bool gcCheck( void* self, uint32 mark ) const;
+   virtual void gcMarkInstance( void* self, uint32 mark ) const;
+   virtual bool gcCheckInstance( void* self, uint32 mark ) const;
    virtual void enumerateProperties( void* self, PropertyEnumerator& cb ) const;
    virtual void enumeratePV( void* self, PVEnumerator& cb ) const;
 

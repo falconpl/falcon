@@ -57,14 +57,14 @@ void ClassGeneric::describe( void* self, String& target, int, int maxlen ) const
 }
 
 
-void ClassGeneric::gcMark( void* self, uint32 mark ) const
+void ClassGeneric::gcMarkInstance( void* self, uint32 mark ) const
 {
    GenericItem* gi = static_cast<GenericItem*>(self);
    gi->gcMark( mark );
 }
 
 
-bool ClassGeneric::gcCheck( void* self, uint32 mark ) const
+bool ClassGeneric::gcCheckInstance( void* self, uint32 mark ) const
 {
    GenericItem* gi = static_cast<GenericItem*>(self);
    return gi->gcCheck( mark );

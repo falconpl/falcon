@@ -24,7 +24,7 @@
 #include <falcon/string.h>
 #include <falcon/enumerator.h>
 #include <falcon/itemid.h>
-
+#include <falcon/mantra.h>
 
 namespace Falcon {
 
@@ -113,10 +113,11 @@ class Error;
  TODO
 */
 
-class FALCON_DYN_CLASS Class
+class FALCON_DYN_CLASS Class: public Mantra
 {
 public:
-
+   Class( const String& name );
+   Class( const String& name, int64 tid );
    /** Creates an item representation of a live class.
       The representation of the class needs a bit of extra informations that are provided by the
       virtual machine, other than the symbol that generated this item.
@@ -130,7 +131,7 @@ public:
     *  Falcon system uses this number in quasi-type classes, as arrays or dictionaries,
     * but the ID is available also for user application, starting from the baseUserID number.
     */
-   Class( const String& name );
+   Class( const String& name, Module* module, int line, int chr );
 
    /** Creates a class defining a type ID
     \param name The name of the class.
@@ -143,7 +144,7 @@ public:
     Strings, Arrays, Dictionaries, Ranges and even Integer or NIL are
     all item types that have a class offering a TID.
     */
-   Class( const String& name, int64 tid );
+   Class( const String& name, int64 tid, Module* module, int line, int chr );
    virtual ~Class();
 
    const static int64 baseUserID = 100;
@@ -247,22 +248,6 @@ public:
     returned even if \b parent is a proper parent of this class.
     */
    virtual void* getParentData( Class* parent, void* data ) const;
-
-   /** Sets the module of this class.
-    \param m The module where this class resides.
-    */
-   void module( Module* m );
-
-   /** Returns the module of this class.
-    \return The module where this class resides, or 0 if the class is module-less.
-    */
-   Module* module() const { return m_module; }
-
-   /** Removes the link between the class and its module.
-    This is used by static modules when explicitly destroying their contents.
-    */
-   void detachModule() { m_module = 0; }
-
 
    //=========================================
    // Instance management
@@ -402,7 +387,7 @@ public:
 
     \note The base version does nothing.
     */
-   virtual void gcMark( void* instance, uint32 mark ) const;
+   virtual void gcMarkInstance( void* instance, uint32 mark ) const;
 
    /** Determines if an instance should be disposed of.
     \parm instance The intance of this class to be marked.
@@ -426,38 +411,7 @@ public:
 
     \note The base version does nothing.
     */
-   virtual bool gcCheck( void* instance, uint32 mark ) const;
-
-
-   /** Called back when this class is subject to GC as a metaclass data.
-      \param The mark of this class.
-
-    Classes may themselves be data for other higher-level metaclasses
-    (i..e the MetaClass handler). Dynamic classes are subject to GC
-    as any other dynamic data.
-
-    This method is called by MetaClass and other
-    class-type handlers, as well as some deep instances that know that their
-    class could theoretically be dynamic.
-
-    The base class sets an hidden mark value in this class.
-    */
-   virtual void gcMarkMyself( uint32 mark );
-
-   /** Called back when this class is subject to GC as a metaclass data.
-      \param The mark of this class.
-
-    Classes may themselves be data for other higher-level metaclasses
-    (i..e the ClassClass handler). Dynamic classes are subject to GC
-    as any other dynamic data.
-
-    This method is called back by metaclass handlers when a GC-enabled data
-    is checked.
-
-    The base class behavior is that to destroy itinstance and return false if
-    \b mark is greater than the last mark seen in gcMarkMyinstance.
-    */
-   virtual bool gcCheckMyself( uint32 mark );
+   virtual bool gcCheckInstance( void* instance, uint32 mark ) const;
 
    /** Callback receiving all the properties in this class. */
    typedef Enumerator<String> PropertyEnumerator;
@@ -995,8 +949,10 @@ public:
 
    void userFlags( int32 uf ) { m_userFlags = uf; }
 
-   int32 declaredAt() const { return m_declaredAt; }
-   void declaredAt( int32 line ) { m_declaredAt = line; }
+   int32 declaredAt() const { return m_sr.line(); }
+   void declaredAt( int32 line ) { m_sr.line(line); }
+   
+   Class* handler() const;
    
 protected:
    bool m_bIsfalconClass;
@@ -1005,13 +961,8 @@ protected:
 
    /** This flags are at disposal of subclasses for special purpose (i.e. cast conversions). */
    int32 m_userFlags;
-   int32 m_declaredAt;
 
-   String m_name;
    int64 m_typeID;
-
-   Module* m_module;
-   uint32 m_lastGCMark;
 };
 
 }

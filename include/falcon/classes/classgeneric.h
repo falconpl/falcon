@@ -54,8 +54,8 @@ public:
    
    virtual void describe( void* self, String& target, int depth = 3, int maxlen = 60 ) const;
 
-   virtual void gcMark( void* instance, uint32 mark ) const;
-   virtual bool gcCheck( void* instance, uint32 mark ) const;
+   virtual void gcMarkInstance( void* instance, uint32 mark ) const;
+   virtual bool gcCheckInstance( void* instance, uint32 mark ) const;
    
    //=============================================================
 };

@@ -136,8 +136,8 @@ public:
       InstanceMap::iterator iinst = m_instMap.begin();
       while( iinst != m_instMap.end() )
       {
-         iinst->first.cls->gcMark( iinst->first.data, mark );
-         iinst->first.cls->gcMarkMyself( mark );
+         iinst->first.cls->gcMarkInstance( iinst->first.data, mark );
+         iinst->first.cls->gcMark( mark );
          iinst->second.gcMark( mark );
          ++iinst;
       }

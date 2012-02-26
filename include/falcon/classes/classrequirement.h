@@ -43,7 +43,7 @@ public:
    virtual void* createInstance() const;
    
    virtual void store( VMContext* ctx, DataWriter* stream, void* instance ) const;
-   // virtual void restore( VMContext* ctx, DataReader* stream, void*& empty ) const;
+   virtual void restore( VMContext* ctx, DataReader* stream, void*& empty ) const;
    virtual void flatten( VMContext* ctx, ItemArray& subItems, void* instance ) const;
    virtual void unflatten( VMContext* ctx, ItemArray& subItems, void* instance ) const;
 

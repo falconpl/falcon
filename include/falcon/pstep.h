@@ -22,6 +22,8 @@
 
 namespace Falcon {
 
+class VMContext;
+
 /** Common interface to VM processing step.
  *
  * This is the common base class for statements, expressions and statement sequences,

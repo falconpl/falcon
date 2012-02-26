@@ -17,7 +17,8 @@
 #define FALCON_CLASSFUNCTION_H_
 
 #include <falcon/setup.h>
-#include <falcon/class.h>
+#include <falcon/classes/classmantra.h>
+
 
 namespace Falcon
 {
@@ -29,26 +30,19 @@ class Module;
  Class handling a function as an item in a falcon script.
  */
 
-class FALCON_DYN_CLASS ClassFunction: public Class
+class FALCON_DYN_CLASS ClassFunction: public ClassMantra
 {
 public:
 
    ClassFunction();
    virtual ~ClassFunction();
-
-   virtual void dispose( void* self ) const;
-   virtual void* clone( void* source ) const;
-   virtual void* createInstance() const;
    
-   virtual void store( VMContext* ctx, DataWriter* stream, void* instance ) const;
-   virtual void restore( VMContext* ctx, DataReader* stream, void*& empty ) const;
-   virtual void flatten( VMContext* ctx, ItemArray& subItems, void* instance ) const;
-   virtual void unflatten( VMContext* ctx, ItemArray& subItems, void* instance ) const;
+   virtual Class* getParent( const String& name ) const;
+   virtual bool isDerivedFrom( const Class* cls ) const;
+   virtual void enumerateParents( ClassEnumerator& cb ) const;
+   virtual void* getParentData( Class* parent, void* data ) const;
    
    virtual void describe( void* instance, String& target, int maxDepth = 3, int maxLength = 60 ) const;
-
-   virtual void gcMark( void* self, uint32 mark ) const;
-   virtual bool gcCheck( void* self, uint32 mark ) const;
 
    //=====================================================
    // Operators.
@@ -57,6 +51,10 @@ public:
    virtual void op_call( VMContext* ctx, int32 paramCount, void* self ) const;
    virtual void op_eval( VMContext* ctx, void* self ) const;
 
+protected:
+   ClassFunction( const String& name, int64 type ):
+      ClassMantra( name, type )
+   {}
 };
 
 }

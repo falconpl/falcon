@@ -378,7 +378,7 @@ void ClassArray::op_setIndex( VMContext* ctx, void* self ) const
 }
 
 
-void ClassArray::gcMark( void* self, uint32 mark ) const
+void ClassArray::gcMarkInstance( void* self, uint32 mark ) const
 {
    ItemArray& array = *static_cast<ItemArray*>( self );
    array.gcMark( mark );

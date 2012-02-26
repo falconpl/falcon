@@ -34,7 +34,7 @@ class Collector;
 class GCToken
 {
 public:
-    void mark(uint32 n) { if( m_mark != n ) { m_mark = n; m_cls->gcMark( m_data, n ); } }
+    void mark(uint32 n) { if( m_mark != n ) { m_mark = n; m_cls->gcMarkInstance( m_data, n ); } }
     void dispose() { m_cls->dispose( m_data ); }
 
     void *data() const { return m_data; }

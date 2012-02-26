@@ -29,6 +29,7 @@ namespace Falcon
 class Class;
 class Expression;
 class VMContext;
+class ItemArray;
 
 /** Structure holding information about inheritance in a class.
  This structure holds the needed information to create automatic inheritance
@@ -76,30 +77,46 @@ public:
    virtual bool simplify( Item& ) const { return false; }  
    virtual ExprInherit* clone() const { return new ExprInherit(*this); }
    
+   /** Creats a dynamic requirement for a missing base class in this expression.
+    This equates to a forward declaration of the base class.
+    */
+   Requirement* makeRequirement( Class* target );
+   
+   /** Specify if this inheritance was involved in a forward definition.
+    Elements that were involved in a requirement shall not serialize
+    their internal data as they were resolved, but as they were originally
+    created.
+    */
+   bool hadRequirement() const { return m_bHadRequirement; }
+   
 private:
    Class* m_base;
    String m_name;
+   bool m_bHadRequirement;
    
-   /*
    class IRequirement: public Requirement
    {
    public:
-      IRequirement( const String& name, Inheritance* owner ): 
-         Requirement( name ),
-         m_owner( owner ) 
+      IRequirement( ExprInherit* owner, Class* target ): 
+         Requirement( owner->name() ),
+         m_owner( owner ),
+         m_target( target )
       {}      
       virtual ~IRequirement() {}
       
-      virtual void onResolved( const Module* source, const Symbol* srcSym, Module* tgt, Symbol* extSym );
-   
+      virtual void onResolved( const Module* source, const Symbol* srcSym, 
+                                             Module* tgt, Symbol* extSym );
+      
+      virtual Class* cls() const;
    private:
+      
       ExprInherit* m_owner;
-   }
-   m_requirer;
+      Class* m_target;
+      class ClassIRequirement;
+      friend class ClassIRequirement;
+   };
    
-   friend class IRequirement;
-   */
-   
+   friend class IRequirement;   
    static void apply_( const PStep*, VMContext* ctx );
 };
 

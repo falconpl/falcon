@@ -17,7 +17,7 @@
 #define _FALCON_METACLASS_H_
 
 #include <falcon/setup.h>
-#include <falcon/class.h>
+#include <falcon/classes/classmantra.h>
 
 namespace Falcon
 {
@@ -30,27 +30,21 @@ namespace Falcon
  are stored.
  
  */
-class FALCON_DYN_CLASS MetaClass: public Class
+class FALCON_DYN_CLASS MetaClass: public ClassMantra
 {
 public:
 
    MetaClass();
    virtual ~MetaClass();
-
-   virtual void dispose( void* self ) const;
-   virtual void* clone( void* source ) const;
-   virtual void* createInstance() const;
    
-   virtual void serialize( DataWriter* stream, void* self ) const;
-   virtual void* deserialize( DataReader* stream ) const;
-
-   virtual void describe( void* instance, String& target, int, int ) const;
-   virtual void gcMark( void* self, uint32 mark ) const;
-   virtual bool gcCheck( void* self, uint32 mark ) const;
+   virtual Class* getParent( const String& name ) const;
+   virtual bool isDerivedFrom( const Class* cls ) const;
+   virtual void enumerateParents( ClassEnumerator& cb ) const;
+   virtual void* getParentData( Class* parent, void* data ) const;
+   
+   void describe( void* instance, String& target, int, int ) const;
    
    //=============================================================
-
-   virtual void op_isTrue( VMContext* ctx, void* self ) const;
    virtual void op_toString( VMContext* ctx, void* self ) const;
    virtual void op_call( VMContext* ctx, int32 pcount, void* self ) const;
 };

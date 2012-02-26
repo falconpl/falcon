@@ -72,14 +72,14 @@ void* ClassDataWriter::clone( void* instance ) const
 }
 
 
-void ClassDataWriter::gcMark( void* instance, uint32 mark ) const
+void ClassDataWriter::gcMarkInstance( void* instance, uint32 mark ) const
 {
    DataWriter* wr = static_cast<DataWriter*>(instance);
    wr->gcMark( mark );
 }
 
 
-bool ClassDataWriter::gcCheck( void* instance, uint32 mark ) const
+bool ClassDataWriter::gcCheckInstance( void* instance, uint32 mark ) const
 {
    DataWriter* wr = static_cast<DataWriter*>(instance);
    return wr->gcMark() >= mark;

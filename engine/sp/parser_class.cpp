@@ -337,6 +337,9 @@ void apply_FromClause_entry_with_expr( const Rule&, Parser& p )
       ei->add( *it );
    }
    list->clear();
+   
+   // eventually add a requirement.
+   
 
    TokenInstance* tInh = new TokenInstance(tname->line(), tname->chr(), sp.FromEntry );
    tInh->setValue( ei, &expr_deletor );

@@ -46,7 +46,6 @@
 
 #include <falcon/bom.h>
 #include <falcon/stdsteps.h>
-#include <falcon/metastorer.h>
 #include <falcon/synfunc.h>
 
 //--- object headers ---
@@ -55,6 +54,7 @@
 
 //--- type headers ---
 #include <falcon/classes/classfunction.h>
+#include <falcon/classes/classsynfunc.h>
 #include <falcon/classes/classnil.h>
 #include <falcon/classes/classbool.h>
 #include <falcon/classes/classclosure.h>
@@ -66,8 +66,10 @@
 #include <falcon/classes/classdict.h>
 #include <falcon/classes/classgeneric.h>
 #include <falcon/classes/classnumeric.h>
+#include <falcon/classes/classmantra.h>
 #include <falcon/classes/classmethod.h>
 #include <falcon/classes/classreference.h>
+#include <falcon/classes/metaclass.h>
 
 #include <falcon/classes/classtreestep.h>
 #include <falcon/classes/classstatement.h>
@@ -77,7 +79,7 @@
 #include <falcon/synclasses.h>
 
 #include <falcon/prototypeclass.h>
-#include <falcon/metaclass.h>
+
 
 #include <falcon/stderrors.h>
 #include <falcon/modspace.h>
@@ -113,9 +115,6 @@ class RegisteredClassesMap: public std::map<String, Class*>
 {
 };
 
-class MetaStorerMap: public std::map<String, MetaStorer*>
-{   
-};
 
 //=======================================================
 // Engine static declarations
@@ -164,6 +163,8 @@ Engine::Engine()
    m_dictClass = new ClassDict;
    m_protoClass = new PrototypeClass;
    m_metaClass = new MetaClass;
+   m_mantraClass = new ClassMantra;
+   m_synFuncClass = new ClassSynFunc;
    m_genericClass = new ClassGeneric;
    m_referenceClass = new ClassReference;
    
@@ -219,7 +220,6 @@ Engine::Engine()
    //
    m_predefs = new PredefMap;
    m_regClasses = new RegisteredClassesMap;
-   m_metaStorers = new MetaStorerMap;
    
    addBuiltin( m_functionClass );
    addBuiltin( m_stringClass );
@@ -227,6 +227,8 @@ Engine::Engine()
    addBuiltin( m_dictClass );
    addBuiltin( m_protoClass );
    addBuiltin( m_metaClass );
+   // addBuiltin( m_mantraClass );  Don't know...
+   addBuiltin( m_synFuncClass );
    addBuiltin( m_genericClass );
    addBuiltin( m_rangeClass  );
    
@@ -287,12 +289,7 @@ Engine::Engine()
    // TODO: Prepare the TLS
    //
    m_currentContext = 0;
-   
-   // ====================================
-   // TODO: Known meta-storers
-   //
-   registerMetaStorer( new SynFunc::SynStorer );
-   
+      
    MESSAGE( "Engine creation complete" );
 }
 
@@ -312,7 +309,9 @@ Engine::~Engine()
    delete m_dictClass;
    delete m_protoClass;
    delete m_metaClass;
+   delete m_mantraClass;
    delete m_functionClass;
+   delete m_synFuncClass;
    delete m_genericClass;
    //delete m_referenceClass;  already deleted in the loop
 
@@ -337,18 +336,6 @@ Engine::~Engine()
       }
    }
    
-   // ======================================
-   // Delete registered meta storers
-   //   
-   {
-      MetaStorerMap::iterator iter = m_metaStorers->begin();
-      while( iter != m_metaStorers->end() )
-      {
-         delete iter->second;
-         ++iter;
-      }
-   }
-
    delete m_tcoders;
    
    // ===============================
@@ -559,37 +546,6 @@ Class* Engine::getRegisteredClass( const String& name ) const
 }
 
 
-MetaStorer* Engine::getMetaStorer( const String& name )
-{
-   MetaStorer* result = 0;
-   m_mtx->lock();
-   MetaStorerMap::const_iterator iter = m_metaStorers->find( name );
-   if( iter != m_metaStorers->end() )
-   {
-      result = iter->second;
-   }
-   m_mtx->unlock();
-   
-   return result;
-}
-   
-
-bool Engine::registerMetaStorer( MetaStorer* ms )
-{
-   m_mtx->lock();
-   MetaStorerMap::const_iterator iter = m_metaStorers->find( ms->name() );
-   if( iter != m_metaStorers->end() )
-   {
-      m_mtx->unlock();
-      return false;
-   }
-   else {
-      (*m_metaStorers)[ms->name()] = ms;
-   }
-   m_mtx->unlock();
-   return true;
-}
-
 //=====================================================
 // Global objects
 //
@@ -661,6 +617,18 @@ Class* Engine::metaClass() const
 {
    fassert( m_instance != 0 );
    return m_instance->m_metaClass;
+}
+
+Class* Engine::mantraClass() const
+{
+   fassert( m_instance != 0 );
+   return m_instance->m_mantraClass;
+}
+
+Class* Engine::synFuncClass() const
+{
+   fassert( m_instance != 0 );
+   return m_instance->m_synFuncClass;
 }
 
 Class* Engine::genericClass() const

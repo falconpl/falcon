@@ -22,6 +22,7 @@ PseudoFunction::PseudoFunction( const String& name, PStep* direct ):
    Function( name ),
    m_step(direct)
 {
+   m_category = e_c_pseudofunction;
 }
 
 PseudoFunction::~PseudoFunction()

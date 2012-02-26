@@ -37,7 +37,7 @@ void ClassRequirement::dispose( void* ) const
    // do nothing
 }
 
-void* ClassRequirement::clone( void* source ) const
+void* ClassRequirement::clone( void* ) const
 {
    // do nothing
    return 0;
@@ -60,7 +60,7 @@ void ClassRequirement::store( VMContext*, DataWriter* stream, void* instance ) c
 void ClassRequirement::restore( VMContext*, DataReader* stream, void*& empty ) const
 {
    Requirement* req = static_cast<Requirement*>(empty);
-   req->store(stream);
+   req->restore(stream);
 }
 
 
@@ -78,14 +78,12 @@ void ClassRequirement::unflatten( VMContext*, ItemArray& subItems, void* instanc
 }
 
 
-void ClassRequirement::describe( void* instance, String& target, int maxDepth, int maxLength ) const
+void ClassRequirement::describe( void* instance, String& target, int, int ) const
 {
    Requirement* req = static_cast<Requirement*>(instance);
    target = "Requirement for \"" + req->name() + "\"";
 }
 
 }
-
-#endif
 
 /* end of classrequirement.cpp */

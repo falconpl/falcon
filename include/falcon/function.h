@@ -20,6 +20,7 @@
 #include <falcon/string.h>
 #include <falcon/symboltable.h>
 #include <falcon/itemreference.h>
+#include <falcon/mantra.h>
 
 namespace Falcon
 {
@@ -29,7 +30,6 @@ class VMContext;
 class Error;
 class Class;
 class Item;
-class MetaStorer;
 class ClassFunction;
 
 /**
@@ -55,26 +55,11 @@ class ClassFunction;
  
 */
 
-class FALCON_DYN_CLASS Function
+class FALCON_DYN_CLASS Function: public Mantra
 {
 public:
    Function( const String& name, Module* owner = 0, int32 line = 0 );
    virtual ~Function();
-   
-   /** Sets the module of this function.
-    Mainly, this information is used for debugging (i.e. to know where a function
-    is declared).
-    */
-   void module( Module* owner );
-
-   /** Return the module where this function is allocated.
-   */
-   Module* module() const { return m_module; }
-
-   /** Removes the link between a function and a module.
-    Used by the module destructor do prevent de-referencing during destruction.
-   */
-   void detachModule() {m_module = 0;}
    
    /** Parses the description of the function.
     \param dsec Descriptive list of parameters and signature.
@@ -113,15 +98,6 @@ public:
    Class* methodOf() const { return m_methodOf; }
 
 
-   /** Returns the name of this function. */
-   const String& name() const { return m_name; }
-
-   /** Renames the function.
-    \param n The new name of the function.
-    \note Will throw an assertion if already stored in a module.
-    */
-   void name( const String& n ) { m_name = n; }
-
    /** Sets the signature of the function.
     \param sign A string with the expected parameters of the function.
     */
@@ -135,17 +111,8 @@ public:
    /** Returns the source line where this function was declared.
     To be used in conjunction with module() to pinpoint the location of a function.
     */
-   int32 declaredAt() const { return m_line; }
+   int32 declaredAt() const { return m_sr.line(); }
 
-   /** Returns the complete identifier for this function.
-
-    The format is:
-         name(line) source/path.fal
-
-    Where a source path is not available, the module full qualified name is used.
-   
-   */
-   String locate() const;   
 
    int32 paramCount() const { return m_paramCount; }
 
@@ -259,48 +226,15 @@ public:
       setEta(true);
       return *this;
    }
-
-   /** GCMark this function.
-      
-    Virtual because some function subclasses having closed items
-      may need to mark their own items.
-
-    The base class version just saves the mark for gcCheck().
-    */
-   virtual void gcMark( uint32 mark );
-
-   /** GCMark this function.
-
-    Virtual because some function subclasses having closed items
-      may need to mark their own items.
-
-    The base class destroys itself and return false if the mark is
-    newer than the one seen in gcMark.
-    */
-   virtual bool gcCheck( uint32 mark );
- 
-   /** Returns a meta-storer to store complex functions.
-    \return 
-    
-    The base class returs 0; this tells the class to just store the function
-    location so that it is restored by looking at the engine or owning
-    module function table.
-    */
-   virtual MetaStorer *metaStorer() const { return 0; }
+   
+   Class* handler() const;
    
 protected:
-   String m_name;
+   SymbolTable m_symtab;
    String m_signature;
    int32 m_paramCount;
-   uint32 m_lastGCMark;
-   
-   Module* m_module;
    Class* m_methodOf;
-
-   int32 m_line;
-
    bool m_bEta;
-   SymbolTable m_symtab;
    
    Function() {}
    friend class ClassFunction;

@@ -151,14 +151,14 @@ void DerivedFrom::unflatten( VMContext* ctx, ItemArray& subItems, void* instance
 // Class management
 //
 
-void DerivedFrom::gcMark( void* instance, uint32 mark ) const
+void DerivedFrom::gcMarkInstance( void* instance, uint32 mark ) const
 {
-   m_parent->gcMark( instance, mark );
+   m_parent->gcMarkInstance( instance, mark );
 }
 
-bool DerivedFrom::gcCheck( void* instance, uint32 mark ) const
+bool DerivedFrom::gcCheckInstance( void* instance, uint32 mark ) const
 {
-   return m_parent->gcCheck( instance, mark );
+   return m_parent->gcCheckInstance( instance, mark );
 }
 
 //=========================================================

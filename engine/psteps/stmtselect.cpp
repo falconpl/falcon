@@ -26,9 +26,11 @@
 #include <falcon/errors/linkerror.h>
 
 #include <falcon/psteps/stmtselect.h>
+#include <falcon/classes/classrequirement.h>
 
 #include <falcon/engine.h>
 #include <falcon/synclasses.h>
+#include <falcon/itemarray.h>
 
 #include <map>
 #include <deque>
@@ -467,22 +469,6 @@ void SelectRequirement::onResolved(
 }
 
 
-Class* SelectRequirement::cls() const
-{
-   static Class* theClass = new ClassSelectRequirement;
-   static bool bRegistered = false;
-
-   // a double registration in MT context has no adverse effect.
-   // we just need to have it in the engine to let it to delete it at end.
-   if( ! bRegistered ) {
-      bRegistered = true;
-      Engine::instance()->registerClass(theClass);
-   }
-
-   return theClass;
-}
-
-
 class SelectRequirement::ClassSelectRequirement: public ClassRequirement
 {
 public:
@@ -517,7 +503,8 @@ public:
       SelectRequirement* s = 0;
       try {
          s = new SelectRequirement(0,0,0,"",0);
-         empty = s->restore(stream);
+         s->restore(stream);
+         empty = s;
       }
       catch( ... )
       {
@@ -539,7 +526,24 @@ public:
    }
 };
 
-   
+
+
+
+Class* SelectRequirement::cls() const
+{
+   static Class* theClass = new ClassSelectRequirement;
+   static bool bRegistered = false;
+
+   // a double registration in MT context has no adverse effect.
+   // we just need to have it in the engine to let it to delete it at end.
+   if( ! bRegistered ) {
+      bRegistered = true;
+      Engine::instance()->registerClass(theClass);
+   }
+
+   return theClass;
+}
+
 }
 
 /* end of stmtselect.cpp */

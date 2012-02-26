@@ -29,7 +29,7 @@ class Symbol;
 class ItemArray;
 class DataWriter;
 class DataReader;
-
+class Class;
 
 /** Functionoid for delayed resolution of symbols.
  
@@ -151,9 +151,9 @@ public:
    SourceRef& sourceRef() { return m_sr; }
 
    virtual void store( DataWriter* stream ) const;
-   virtual void restore( DataReader* stream ) const;
+   virtual void restore( DataReader* stream );
    virtual void flatten( ItemArray& subItems ) const;
-   virtual void unflatten( ItemArray& subItems ) const;
+   virtual void unflatten( ItemArray& subItems );
 
    /** Returns the class handling this kind of requirement. 
     
