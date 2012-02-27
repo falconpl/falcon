@@ -1,0 +1,70 @@
+/*
+   FALCON - The Falcon Programming Language
+
+   Nest - Falcon web applcation engine
+
+   FILE: InfoBox.fal
+
+   AJAX widgeting subsystem -- Inofrmative popup widget.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Sun, 02 Oct 2011 13:53:51 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2011: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+import from nest.widgets.widget in widget
+
+class _InfoBox(id, content) from widget.Widget( id )
+   content = content
+
+   jsMethods = [
+         "show" => "function() { this.style.display = '';}",
+         "hide" => "function() { this.style.display = 'none';}"
+   ]
+   
+   init
+      if self.props == nil: self.props = [=>]
+      self.props["style"] = "display:none"
+   end
+
+   function renderContent()
+      return self.content
+   end
+end
+
+/*# Inofrmative popup widget.
+   @param id The widget ID
+   @param content The HTML content of the text box
+   @optparam icon Icon location used for the informative popup.
+
+   This method generates a popup that gets displayed when the
+   user clicks the given icon (by default, "res/info.png").
+   This 
+*/
+class InfoBox( id, content, icon ) from widget.Widget( id )
+   tag = "img"
+   content = content
+   icon = icon? icon : "res/info.png"
+   isSelfClosing = true
+
+   infobox = _InfoBox( "infobox", content )
+   jsMethods = [
+      "onclick" => self.infobox.makeCall( "show" )
+   ]
+   
+   init
+      // activate effects
+      Nest.jsFX()
+      // add the infobox
+      self.addChild( self.infobox )
+      if self.props == nil: self.props = [=>]
+      self.props["src"] = self.icon
+      self.props["border"] = "0"
+   end
+
+end
+
