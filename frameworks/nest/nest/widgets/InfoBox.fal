@@ -21,15 +21,16 @@ import from nest.widgets.widget in widget
 class _InfoBoxText(id, title, content) from widget.Widget( id )
    content = content
 
-   imgclose=Nest.resLink( "infobox_close.png" );
+   imgclose= Nest.resLink( "infobox_close.png" )
+
    titlestyle = "
       background:#181818;
       color:#E0E0E0;"
    title = title
-      
+
    width = 350
    height = 200
-   
+
    jsMethods = [
          "show" => @'
          function(itemID) {
@@ -56,15 +57,15 @@ class _InfoBoxText(id, title, content) from widget.Widget( id )
             };
             Nest.addTransition( trans );
          }',
-         
+
          "hide" => @'
             function() {
                var self = this;
                var hidef = function() { self.style.display = "none"; }
-               Nest.transite( this, 250, null, {opacity:0}, null, hidef );               
+               Nest.transite( this, 250, {opacity:0}, null, null, hidef );
             }'
    ]
-   
+
    init
       if self.props == nil: self.props = [=>]
       // Start with overflow hidden, will become auto after full transition.
@@ -80,7 +81,7 @@ class _InfoBoxText(id, title, content) from widget.Widget( id )
    end
 
    function renderContent()
-      return @"<div style=\"$(self.titlestyle)\">$(self.title)</div>" +
+      return @"<div style=\"$(self.titlestyle)\">$(self.title) <img src=\"$(self.imgclose)\" onclick=\"Nest.i('"+self.getFullID()+"').hide(); \" style=\"float:right\"/></div>" +
             "<div style=\"padding:4px\">" +self.content + "\n</div>\n"
    end
 end
@@ -92,7 +93,7 @@ end
 
    This method generates a popup that gets displayed when the
    user clicks the given icon (by default, "res/info.png").
-   This 
+   This
 */
 class InfoBox( id, title, content, icon ) from widget.Widget( id )
    tag = "img"
@@ -101,7 +102,7 @@ class InfoBox( id, title, content, icon ) from widget.Widget( id )
    isSelfClosing = true
 
    infobox = _InfoBoxText( "infobox", title, content )
-   
+
    init
       // activate effects
       Nest.requireJS("fx")
