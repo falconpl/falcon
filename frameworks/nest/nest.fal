@@ -526,16 +526,18 @@ object Nest
       end
    end
 
-   /** Selects a resource */   
+   /** Selects a resource */
    function selector_resource( rid )
+      dirs = [self.site_nest_dir + "/" +  res_dir, self.nest_dir + "/" + res_dir ]
       res_file = utils.findFileInDirs(
-            [self.site_nest_dir + "/" +  res_dir, self.nest_dir + "/" + res_dir ],
+            dirs,
             rid
          )
 
       if( res_file )
          if res_file[-3:] == ".js"
             Reply.ctype( "application","javascript" )
+            text = true
          elif ( ext = res_file[-4:] ) == ".png"
             Reply.ctype( "image","png" )
          elif ext == ".jpg"
@@ -545,10 +547,11 @@ object Nest
          else
             Reply.ctype( "octect","stream" )
          end
-         
-         >> readURI( res_file )
+
+         Reply.setHeader( "Content-disposition", @"inline; filename=\"$(rid)\"" )
+         stdOut().write( readURI( res_file, text ? "utf-8" : "C" ) )
       else
-         raise NestError( NestError.res_notfound, "", rid )
+         raise NestError( NestError.res_notfound, "", rid + " in " + dirs.describe())
       end
    end
    
