@@ -1,0 +1,24 @@
+<?
+import Button from nest.widgets.Button as Button
+import from nest.js
+?>
+<h2>Simple JS script generator function.</h2>
+
+<p>JS button utility function test: <? nest.js.button( "Button", "say_hi()" ) ?>.</p>
+<?
+   // JS Script facility test.
+   nest.js.script( "
+         function say_hi() {
+               alert('saying hi!');
+         }" )
+?>
+
+<hr>
+<p>Source code:
+<pre>
+nest.js.script( "
+   function say_hi() {
+         alert('saying hi!');
+   }" )
+</pre>
+</p>

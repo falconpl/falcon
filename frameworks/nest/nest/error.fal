@@ -43,6 +43,8 @@ class NestError( code, desc, extra ) from Error( code, desc, extra )
    no_key_fields = 10023
    unpack_key = 10024
    pcheck = 10025
+   res_notfound = 10026
+   jscomponent_notfound = 10017
    other = 10100
    
    _desc = [ 
@@ -70,7 +72,9 @@ class NestError( code, desc, extra ) from Error( code, desc, extra )
       10022 => i"Entity not found",
       10023 => i"Data entity declared without any KEY fields",
       10024 => i"Key expression doesn't match key field specs in this entity",
-      10025 => i"Optional parameter consistency check falied"
+      10025 => i"Optional parameter consistency check falied",
+      10026 => i"Resource not found",
+      10027 => i"Requested JS component not found"
       ]
 
    init

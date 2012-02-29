@@ -3,8 +3,16 @@
    <title>Nest test site - Ajax</title>
    <? Nest.headings() ?>
 </head>
-<script src="res/json2.js"></script>
 <body>
+<? if Nest.pid != "home" ?>
+<hr>
+<p><a href="<?=Nest.pageLink('home')?>">Return Home</a></p>
+<hr>
+<? end ?>
 <? Nest.content() ?>
+<? if Nest.pid != "home" ?>
+<hr>
+<p><a href="<?=Nest.pageLink('home')?>">Return Home</a></p>
+<? end ?>
 </body>
 </html>

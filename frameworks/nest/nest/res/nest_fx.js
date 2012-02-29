@@ -170,5 +170,20 @@ if(!Nest) { Nest = {}; }
       }
    }
 
+   if (typeof Nest.getStyle !== 'function') { Nest.getStyle = getStyle; }
+   if (typeof Nest.findPos !== 'function') {
+      Nest.findPos = function(obj) {
+         var curleft = 0, curtop = 0;
+
+         if (obj.offsetParent) {
+            do {
+                  curleft += obj.offsetLeft;
+                  curtop += obj.offsetTop;
+            } while (obj = obj.offsetParent);
+
+            return { x: curleft, y: curtop };
+         }
+      }
+   }
 }());
 

@@ -1,0 +1,13 @@
+<h2>Nest Widget test: NameIsAvail</h2>
+
+<p>Names taken on the server are: <?
+   namewid = Nest.widget( "TheNameIsAvail" )()
+   > ", ".merge( namewid.takenNames )
+?>
+</p>
+<p>Please, notice that the names must be at least <?= namewid.minSize ?> characters long.</p>
+<p>Check for availability: <?= namewid.render() ?></p>
+
+<p>This is a test of the NameIsAvail widget, which can be subclassed to specify
+a precise AJAX behavior. The site has a "TheNameIsAvail" subclass that emulates
+a small DB.</p>

@@ -1,0 +1,21 @@
+<?
+import button from nest.js in nest.js
+Nest.requireJS("base")
+?>
+<h2>Test of basic AJAX function call and return.</h2>
+
+<p>AJAX basic function test: <? nest.js.button( "Button", "Nest.ajax('hello', {'p0':'A parameter'}, onHello)" ) ?>.</p>
+<script language="javascript">
+   function onHello( obj ) {
+         alert('Received ajax hello: ' + obj.text +
+            '\nRepeated parameter: ' + obj.p0 );
+   }
+</script>
+
+<p>In this example, Nest generates an AJAX call to a "hello" AJAX function we have on the site.
+The Nest.ajax method instructs javascript to invoke a "onHello" callback with the results
+got via the "hello" call.</p>
+<p>This is the code:</p>
+<pre>
+nest.js.button( "Button", "Nest.ajax('hello', {'p0':'A parameter'}, onHello)" )
+</pre>

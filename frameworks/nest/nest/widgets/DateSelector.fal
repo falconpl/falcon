@@ -43,7 +43,7 @@ class DateSelector( id, yearRange, tagtype, tag_beg, tag_sep, tag_end ) from \
       "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" ]
 
    num_months = [
-      "1", "2", "3", "4", "5", "6",
+      "?", "1", "2", "3", "4", "5", "6",
       "7", "8", "9", "10", "11", "12" ]
 
    //re = Regex( "([0-9]{1,4})-([0-9]{1,2})-([0-9]{1,2})")
@@ -57,8 +57,10 @@ class DateSelector( id, yearRange, tagtype, tag_beg, tag_sep, tag_end ) from \
       self.makeMonths()
       
       self.days = Select( "day" )
+      self.days.addChild(  Option("", "") )
       for i = 1 to 31: self.days.addChild( Option( ""+i, i) )
       self.months = Select( "month" )
+      self.months.addChild(  Option("", "") )
       for i = 1 to 12: self.months.addChild( Option( ""+i, self.months_names[i-1]) )
       self.addChild( self.days )
       self.addChild( self.months )

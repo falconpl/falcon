@@ -1,0 +1,31 @@
+<?
+   import from nest.js in nest.js
+
+   Reply.setCookie( "test", "Test value" )
+   Nest.requireJS( "base" )
+?>
+<h2>Test for cookie persistency across Java.</h2>
+
+<p>Checking for cookie persistency via ajax:
+   <? nest.js.button( "Button", "Nest.ajax('hello', {}, getCookie)" ) ?>.</p>
+<?
+// JS Script facility test.
+nest.js.script( "
+      function getCookie( obj ) {
+            alert('Cookie data via ajax was: ' + obj.Cookie );
+      }" )
+?>
+
+<p>In this test, we check wheter the AJAX "hello" funciton, that we have
+in the site, is able to get the cookie we created in this script and
+show it (it should be "Test value").</p>
+<p>This is the code:
+<pre>
+nest.js.button( "Button", "Nest.ajax('hello', {}, getCookie)" )
+
+nest.js.script( "
+      function getCookie( obj ) {
+            alert('Cookie data via ajax was: ' + obj.Cookie );
+      }" )
+</pre>
+</p>

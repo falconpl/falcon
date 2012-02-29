@@ -252,9 +252,6 @@ object Nest
    /*# For now, use the max authlevel by default. */
    auth_level = AuthLevel.ADMIN
 
-   /*# Script that should be executed at the end of the page. */
-   closingScript = ""
-
    /*# Function called back after routing and before routed page execution.
 
       This is the ideal place to put code that must be always executed.
@@ -429,7 +426,14 @@ object Nest
    // Current stream where the page is generating its output
    _pageStream = nil
 
+   _jsComponents =  [
+      "base" => "nest.js",
+      "fx" => "nest_fx.js"
+   ]
 
+   // widgets subscribed for rendering.
+   _widgets = nil
+   
    //===================================================================
    // Public interface
    //===================================================================
@@ -454,6 +458,12 @@ object Nest
       self._phase = _phase_startup
       // 1. Determine PID
       if not pid
+         if (rid = Request.getField( "r", nil ) )
+            self.logi( "Selecting resource " + rid )
+            self.selector_resource( rid )
+            return
+         end
+         
          aid = Request.getField( "a", nil )
          wid = Request.getField( "w", nil )
          if not aid and not wid
@@ -516,6 +526,32 @@ object Nest
       end
    end
 
+   /** Selects a resource */   
+   function selector_resource( rid )
+      res_file = utils.findFileInDirs(
+            [self.site_nest_dir + "/" +  res_dir, self.nest_dir + "/" + res_dir ],
+            rid
+         )
+
+      if( res_file )
+         if res_file[-3:] == ".js"
+            Reply.ctype( "application","javascript" )
+         elif ( ext = res_file[-4:] ) == ".png"
+            Reply.ctype( "image","png" )
+         elif ext == ".jpg"
+            Reply.ctype( "image","jpg" )
+         elif ext == ".gif"
+            Reply.ctype( "image","gif" )
+         else
+            Reply.ctype( "octect","stream" )
+         end
+         
+         >> readURI( res_file )
+      else
+         raise NestError( NestError.res_notfound, "", rid )
+      end
+   end
+   
    /*# Page function or method selector.
 
       Call this function to get the main ID of the page to be displayed.
@@ -692,9 +728,12 @@ object Nest
       else
          raise NestError( NestError.page_notfound, "", name )
       end
-
    end
 
+   function subscribeWidget( widget )
+      if not self._widgets: self._widgets = []
+      self._widgets += widget
+   end
 
    function selector_ajax_widget( wid )
       widgetClass = self.widget( wid )
@@ -771,9 +810,10 @@ object Nest
          str += "<script type=\"text/javascript\">\n" + item + "\n</script>\n"
       end
 
+      // initializes the widget subsystem
       return str
    end
-
+   
    /*# Create a link to this or another page.
       @optparam pid The pageID of the desired page; leave nil to use the current pid.
       @optparam vars A dictionary of variables to be passed to the given page.
@@ -781,6 +821,13 @@ object Nest
    */
    function pageLink( pid, vars )
       return self.linkVars( self.router.routingURI( self.getURI(), pid ? pid : self.pid ), vars )
+   end
+
+   /*# Create a link to an internal resource file.
+      @param rid Name of the resource to be served.
+   */
+   function resLink( rid )
+      return self.getURI() + "?r=" + rid
    end
 
    /*# Create a link to this page */
@@ -1127,6 +1174,24 @@ object Nest
       return false
    end
 
+   /** Remotely loads a standard javascript in the Nest environment */
+   function requireJS( component )
+      self.logi( "Requiring JS component " + component )
+      jsc = self._jsComponents
+      if component notin jsc
+         raise NestError( NestError.jscomponent_notfound, "", component )
+      end
+
+      fname = jsc[ component ]
+      if fname
+         fname =  self.resLink( fname )
+         self.logd( "Loading JS component " + fname )
+         self.extscripts += fname
+         jsc[ component ] = nil
+      end
+      // else it was already loaded.
+   end
+   
    /*# Gets version/subversion of the Nest system.
        @return A version string in format major.minor
    */
@@ -1441,13 +1506,33 @@ object Nest
    end
 
    function _renderClosingScript()
-      if self.closingScript
-         self.logi( "Rendering closing script -- generating" )
-         self._contentSlices += "<script language=\"javascript\">\n(function(){\n" +
-                  self.closingScript +
-                  "\n}());\n</script>"
-      else
-         self.logi( "Rendering closing script -- skipping" )
+      if self._widgets
+         self.logi( "Rendering widgets setup scripts" )
+
+         onCreate = []
+         str = "<script language=\"javascript\">\n\n/* Nest: Widgets initialization. */\n" +
+                          "(function(){ var element;\n"
+         // first to all the setup...
+         for item in self._widgets
+            value = item.setup()
+            if value: str += value
+            
+            if item.onCreate
+               onCreate += item
+            end
+         end
+
+         str += "}());\n"
+         // then eventually invoke the onCreate script.
+         for item in onCreate
+            forfirst: str+= "\n/* Nest: Execution of onCreate requests. */\n(function(){\n"
+            str += "Nest.i('" + item.getFullID() + "').onCreate();\n"
+            forlast: str+= "}());\n"
+         end
+
+         str += "\n</script>\n"
+         self._contentSlices += str
+
       end
    end
 
@@ -1491,7 +1576,7 @@ object Nest
          else
             // parameters are in Request.getField
             params = Request.getField( "params", nil )
-            if params: params = json.JSONdecode( params )
+            if params and params != "{}": params = json.JSONdecode( params )
             ctx = ajax( params )
             if typeId( ctx ) != DictionaryType
                ctx = [  "error"=>"-2",
@@ -1501,7 +1586,7 @@ object Nest
 
       catch in e
          ctx = [ "error"=>"-3",
-                  "errorDesc"=>"Uncaught error: " + e.toString() ]
+                  "errorDesc"=>"Uncaught error: " + e.toString()+ "\nDATA: " + params ]
       end
 
       // Ok send the output

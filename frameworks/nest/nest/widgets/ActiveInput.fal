@@ -50,7 +50,7 @@ class ActiveInput( id, prompt ) from InputText( id, prompt )
          ]
    end
 
-   function onRender()
+   function onSetup()
       
       // create the onChange callback with preliminary check (if not changed, do nothing).
       checkFunc = "function() { if(this.oldValue == this.value) {return;}\n"
@@ -75,15 +75,14 @@ class ActiveInput( id, prompt ) from InputText( id, prompt )
 
       checkFunc += "this.oldValue = this.value; }\n"
 
-      self.jsMethods = [
-         "activeCheck" => checkFunc
-      ]
+      if not self.jsMethods: self.jsMethods = [=>]
+      self.jsMethods ["activeCheck"] = checkFunc
       
       if self.typeTimeout
          self.jsMethods[ "onActiveChange" ] = "
             function() {
                if( this.timeoutVar ) { clearTimeout( this.timeoutVar ); }
-               this.timeoutVar = setTimeout('document.getElementById(\"' +this.id + '\").activeCheck()', " +
+               this.timeoutVar = setTimeout('Nest.i(\"' +this.id + '\").activeCheck()', " +
                self.typeTimeout + ");}"
       else
          self.jsMethods[ "onActiveChange" ] = "

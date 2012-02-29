@@ -23,10 +23,10 @@ import Image from nest.widgets.Image as Image
 
 
 class ImgAvail( id, name_wid ) from Image( id, "", true )
-   avail_img = "res/name_avail.png"
-   na_img = "res/name_na.png"
-   short_img = "res/name_short.png"
-   loading_img = "res/name_loading.gif"
+   avail_img = Nest.resLink("name_avail.png")
+   na_img = Nest.resLink("name_na.png")
+   short_img = Nest.resLink("name_short.png")
+   loading_img = Nest.resLink("name_loading.gif")
 
    name_wid = name_wid
 
@@ -183,10 +183,13 @@ class NameWithAvail( id, prompt ) from InputText( id, prompt )
       self.name_checked.props = ["type" => "hidden"]
       self.name_wid.typeTimeout = 250
       self.name_wid.checkAjax = true
+      self.name_wid.jsMethods = ["min_size" => self.minSize]
 
       self.addChild( self.name_wid )
       self.addChild( self.avail_wid )
       self.addChild( self.name_checked )
+      
+      self.name_wid.ajaxFilter = "this.min_size > this.value.length"
    end
 
    //#default rendering, not very complex.
@@ -204,6 +207,11 @@ class NameWithAvail( id, prompt ) from InputText( id, prompt )
 
    function setRenderValue( val )
       self.name_wid.props['value'] = val
+   end
+
+   function onSetup()
+      self.name_wid.props["name"] = self.getFullID()
+      
    end
 
 
@@ -225,13 +233,6 @@ class NameWithAvail( id, prompt ) from InputText( id, prompt )
       end
    end
 
-
-   function onRender()
-      self.name_wid.props["name"] = self.getFullID();
-      if not self.name_wid.ajaxFilter
-         self.name_wid.ajaxFilter = @"this.value.length < $(self.minSize)"
-      end
-   end
 
    /*# Overridable Method checking for availability of a name.
       @param name The name to be checked
