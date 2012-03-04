@@ -169,7 +169,14 @@ public:
     Used by handlers when this entity is being checked for vitality.
     */
    inline bool gcCheck( uint32 mark ) { return m_mark >= mark; }
-      
+   
+   /** Checks wether this mantra is compatible with a required category.
+    \param cat A category.
+    \return true if the mantra can be casted to the intended category,
+            false otherwise.
+   */
+   bool isCompatibleWith( t_category cat ) const;
+   
 protected:
    t_category m_category;
    String m_name;

@@ -28,7 +28,7 @@ namespace Ext {
 class ClassDataReader: public ClassUser
 {
 public:
-   ClassDataReader();
+   ClassDataReader( Class* clsStream );
    virtual ~ClassDataReader();
    
    //=============================================================
@@ -47,6 +47,8 @@ public:
    
 private:
    
+   Class* m_clsStream;
+
    //====================================================
    // Properties.
    //

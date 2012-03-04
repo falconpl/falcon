@@ -60,18 +60,21 @@ add_library(falcon_engine SHARED
   parser/state.cpp
   parser/token.cpp
   parser/tokeninstance.cpp
+  
+  builtin/baseclass.cpp
+  builtin/classname.cpp
+  builtin/clone.cpp
+  builtin/compare.cpp
+  builtin/describe.cpp
+  builtin/tostring.cpp
+  builtin/typeid.cpp
+  builtin/len.cpp
+  builtin/minmax.cpp
 
-  cm/baseclass.cpp
-  cm/classname.cpp
-  cm/clone.cpp
-  cm/compare.cpp
   cm/datareader.cpp
   cm/datawriter.cpp
-  cm/describe.cpp
   cm/iff.cpp
   cm/inspect.cpp
-  cm/len.cpp
-  cm/minmax.cpp
   cm/path.cpp
   cm/print.cpp
   cm/restorer.cpp
@@ -80,8 +83,6 @@ add_library(falcon_engine SHARED
   cm/textreader.cpp
   cm/textstream.cpp
   cm/textwriter.cpp
-  cm/tostring.cpp
-  cm/typeid.cpp
   cm/uri.cpp
   cm/coremodule.cpp
 
@@ -175,6 +176,7 @@ add_library(falcon_engine SHARED
   classes/classnil.cpp
   classes/classmantra.cpp
   classes/classmethod.cpp
+  classes/classmodule.cpp
   classes/classnumeric.cpp
   classes/classreference.cpp
   classes/classrange.cpp

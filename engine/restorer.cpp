@@ -237,9 +237,13 @@ bool Restorer::loadClasses( ModSpace* msp, ModLoader* ml )
    while( _p->m_clsVector.end() != iter )
    {
       Private::ClassInfo& cinfo = *iter;
-      cinfo.m_cls = msp->findDynamicClass( 
+      Mantra* mantra = msp->findDynamicMantra( 
             ml, cinfo.m_moduleUri, cinfo.m_moduleName, cinfo.m_className, 
             addedMod );
+      if( mantra->isCompatibleWith( Mantra::e_c_class ) )
+      {
+         cinfo.m_cls = static_cast<Class*>(mantra);
+      }
       
       ++iter;
    }

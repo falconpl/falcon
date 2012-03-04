@@ -81,11 +81,11 @@ void IntCompiler::Context::onNewFunc( Function* function, Symbol* gs )
       // remove the function from the static-data
       if( gs != 0 )
       {
-         m_owner->m_module->addFunction( gs, function );
+         m_owner->m_module->addMantraWithSymbol( function, gs );
       }
       else
       {
-         m_owner->m_module->addAnonFunction( function );
+         m_owner->m_module->addMantra( function );
       }
    }
    catch( Error* e )
@@ -96,15 +96,21 @@ void IntCompiler::Context::onNewFunc( Function* function, Symbol* gs )
 }
 
 
-void IntCompiler::Context::onNewClass( Class* cls, bool isObject, Symbol* gs )
+void IntCompiler::Context::onNewClass( Class* cls, bool, Symbol* gs )
 {
    FalconClass* fcls = static_cast<FalconClass*>(cls);
    if( fcls->missingParents() == 0 )
    {
-      // TODO: Error on failure (?)
       try
       {
-         m_owner->m_module->storeSourceClass( fcls, isObject, gs );        
+         if( ! fcls->construct() )
+         {
+            m_owner->m_module->addMantraWithSymbol( fcls->hyperConstruct(), gs );
+         }
+         else
+         {
+            m_owner->m_module->addMantraWithSymbol( fcls, gs );
+         }
       }
       catch( Error* e )
       {
@@ -332,7 +338,7 @@ IntCompiler::IntCompiler( VMachine* vm ):
 
    m_module = new Module( "Interactive" );
    m_main = new SynFunc("__main__" );
-   m_module->addFunction(m_main, false);
+   m_module->setMainFunction(m_main);
    
    m_vm->modSpace()->add(m_module, true, false);
    

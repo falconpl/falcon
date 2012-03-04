@@ -14,9 +14,9 @@
 */
 
 #undef SRC
-#define SRC "falcon/cm/typeid.cpp"
+#define SRC "falcon/builtin/typeid.cpp"
 
-#include <falcon/cm/typeid.h>
+#include <falcon/builtin/typeid.h>
 #include <falcon/vm.h>
 #include <falcon/vmcontext.h>
 #include <falcon/itemid.h>

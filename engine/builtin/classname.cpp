@@ -1,11 +1,11 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: len.cpp
+   FILE: classname.cpp
 
-   Falcon core module -- len function/method
+   Falcon core module -- Returns the name of the class of an item
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
-   Begin: Sat, 04 Jun 2011 20:52:06 +0200
+   Begin: Wed, 28 Dec 2011 10:54:08 +0100
 
    -------------------------------------------------------------------
    (C) Copyright 2011: the FALCON developers (see list in AUTHORS file)
@@ -14,9 +14,9 @@
 */
 
 #undef SRC
-#define SRC "falcon/cm/len.cpp"
+#define SRC "falcon/builtin/classname.cpp"
 
-#include <falcon/cm/len.h>
+#include <falcon/builtin/classname.h>
 #include <falcon/vm.h>
 #include <falcon/vmcontext.h>
 #include <falcon/itemid.h>
@@ -25,25 +25,24 @@
 namespace Falcon {
 namespace Ext {
 
-Len::Len():
-   PseudoFunction( "len", &m_invoke )
+ClassName::ClassName():
+   PseudoFunction( "className", &m_invoke )
 {
    signature("X");
    addParam("item");
 }
 
-Len::~Len()
+ClassName::~ClassName()
 {
 }
 
-void Len::invoke( VMContext* ctx, int32 nParams )
+void ClassName::invoke( VMContext* ctx, int32 nParams )
 {
    Item *elem;
-   register int64 len;
+   
    if ( ctx->isMethodic() )
    {
       elem = &ctx->self();
-      len = elem->len();
    }
    else
    {
@@ -53,20 +52,25 @@ void Len::invoke( VMContext* ctx, int32 nParams )
       }
 
       elem = ctx->params();
-      len = elem->len();
    }
-
-   ctx->returnFrame(len);
+   
+   Class* cls; void* inst;
+   elem->forceClassInst( cls, inst );
+   ctx->returnFrame((new String(cls->name()))->garbage());
 }
 
-void Len::Invoke::apply_( const PStep*, VMContext* ctx )
+
+void ClassName::Invoke::apply_( const PStep*, VMContext* ctx )
 {
    register Item& top = ctx->topData();
-   top = top.len();
+   Class* cls; void* inst;
+   top.forceClassInst( cls, inst );
+   top = (new String(cls->name()))->garbage();
    ctx->popCode();
 }
 
 }
 }
 
-/* end of len.cpp */
+/* end of classname.cpp */
+

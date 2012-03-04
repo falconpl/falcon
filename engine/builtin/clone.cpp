@@ -1,11 +1,11 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: baseclass.cpp
+   FILE: clone.cpp
 
-   Falcon core module -- Returns the class of an item
+   Falcon core module -- clone function/method
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
-   Begin: Wed, 28 Dec 2011 10:54:08 +0100
+   Begin: Tue, 19 Jul 2011 21:49:29 +0200
 
    -------------------------------------------------------------------
    (C) Copyright 2011: the FALCON developers (see list in AUTHORS file)
@@ -14,34 +14,30 @@
 */
 
 #undef SRC
-#define SRC "falcon/cm/baseclass.cpp"
+#define SRC "falcon/builtin/clone.cpp"
 
-#include <falcon/cm/baseclass.h>
+#include <falcon/builtin/clone.h>
 #include <falcon/vm.h>
 #include <falcon/vmcontext.h>
-#include <falcon/itemid.h>
-#include <falcon/error.h>
+#include <falcon/errors/codeerror.h>
 
 namespace Falcon {
 namespace Ext {
 
-BaseClass::BaseClass():
-   PseudoFunction( "baseClass", &m_invoke )
+Clone::Clone():
+   PseudoFunction( "clone", &m_invoke )
 {
    signature("X");
    addParam("item");
 }
 
-BaseClass::~BaseClass()
+Clone::~Clone()
 {
 }
 
-void BaseClass::invoke( VMContext* ctx, int32 nParams )
+void Clone::invoke( VMContext* ctx, int32 nParams )
 {
-   static Class* metaClass = Engine::instance()->metaClass();
-   
    Item *elem;
-   
    if ( ctx->isMethodic() )
    {
       elem = &ctx->self();
@@ -55,26 +51,37 @@ void BaseClass::invoke( VMContext* ctx, int32 nParams )
 
       elem = ctx->params();
    }
-   
-   Class* cls; void* inst;
+
+   Class* cls;
+   void* inst;
    elem->forceClassInst( cls, inst );
-   ctx->returnFrame( Item(metaClass, cls) );
+   inst = cls->clone(inst);
+   if( inst == 0 )
+   {
+      throw new CodeError(ErrorParam( e_uncloneable, __LINE__, SRC ));
+   }
+
+   Item top( cls, inst );
+   ctx->returnFrame( top );
 }
 
-
-void BaseClass::Invoke::apply_( const PStep*, VMContext* ctx )
+void Clone::Invoke::apply_( const PStep*, VMContext* ctx )
 {
-   static Class* metaClass = Engine::instance()->metaClass();
    register Item& top = ctx->topData();
-   Class* cls; void* inst;
+   Class* cls;
+   void* inst;
    top.forceClassInst( cls, inst );
-   top.setUser( metaClass, cls );
+   inst = cls->clone(inst);
+   if( inst == 0 )
+   {
+      throw new CodeError(ErrorParam( e_uncloneable, __LINE__, SRC ));
+   }
+
+   top.setUser( cls, inst );
    ctx->popCode();
 }
 
 }
 }
 
-/* end of baseclass.cpp */
-
-
+/* end of clone.cpp */

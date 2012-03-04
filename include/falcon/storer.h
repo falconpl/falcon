@@ -26,6 +26,7 @@ class Class;
 class DataWriter;
 class VMContext;
 class Stream;
+class Mantra;
 
 /** Helper for cyclic joint structure serialization.
  
@@ -198,21 +199,25 @@ public:
    VMContext* context() const { return m_ctx; }
    void context( VMContext* vmc ) { m_ctx = vmc; }
    
-private:      
-   class Private;
-   Private* _p;
+   void* topData() const { return m_topData; }
+   Class* topHandler() const { return m_topHandler; }
    
-   VMContext* m_ctx;
-   // internally used during serialization.
-   DataWriter* m_writer;
-      
-   // Using void* because we'll be using private data for that.
-   bool traverse( Class* handler, void* data, bool isTopLevel = false, void** objd = 0 );
-   void writeClassTable( DataWriter* wr );
-   void writeInstanceTable( DataWriter* wr );
-   bool writeObjectTable( DataWriter* wr );
-   void writeObjectDeps( uint32 pos, DataWriter* wr );
-   bool writeObject( VMContext* ctx, uint32 pos, DataWriter* wr );
+   void addFlatMantra( Mantra* mantra );
+   bool isFlatMantra( Mantra* mantra );   
+   
+   class FALCON_DYN_CLASS WriteNext: public PStep
+   {
+   public:
+      WriteNext(Storer* owner): m_owner(owner) { apply = apply_; }
+      virtual ~WriteNext() {}
+      static void apply_( const PStep* ps, VMContext* ctx );
+
+      Storer* storer() const { return m_owner; }
+      virtual uint32 flags() { return 0x1; }
+
+   private:
+      Storer* m_owner; 
+   };
    
    class FALCON_DYN_CLASS TraverseNext: public PStep
    {
@@ -221,22 +226,34 @@ private:
       virtual ~TraverseNext() {}
       static void apply_( const PStep* ps, VMContext* ctx );
    
+      Storer* storer() const { return m_owner; }
+      virtual uint32 flags() { return 0x2; }
+      
    private:
       Storer* m_owner; 
    };
 
+private:      
+   class Private;
+   Private* _p;
+   
+   VMContext* m_ctx;
+   // internally used during serialization.
+   DataWriter* m_writer;
+   
+   void* m_topData;
+   Class* m_topHandler;
+      
+   // Using void* because we'll be using private data for that.
+   bool traverse( Class* handler, void* data, bool isTopLevel = false, void** objd = 0 );
+   void writeClassTable( DataWriter* wr );
+   void writeInstanceTable( DataWriter* wr );
+   bool writeObjectTable( DataWriter* wr );
+   void writeObjectDeps( uint32 pos, DataWriter* wr );
+   bool writeObject( VMContext* ctx, uint32 pos, DataWriter* wr );
+
    friend class TraverseNext;
    TraverseNext m_traverseNext;
-   
-   class FALCON_DYN_CLASS WriteNext: public PStep
-   {
-   public:
-      WriteNext(Storer* owner): m_owner(owner) { apply = apply_; }
-      virtual ~WriteNext() {}
-      static void apply_( const PStep* ps, VMContext* ctx );
-   private:
-      Storer* m_owner; 
-   };
 
    friend class WriteNext;
    WriteNext m_writeNext;

@@ -25,6 +25,8 @@ class Module;
 class ImportDef;
 class Module;
 class ModSpace;
+class DataWriter;
+class DataReader;
 
 /** Class keeping records of modules requested by a module. 
  This class is used by modules to keep track of the other modules they need
@@ -68,19 +70,22 @@ public:
    Used for simpler serialization, so that it is possible to reference this
    entity in the serialized file.
    */
-   inline int id() const { return m_id; }
+   inline int32 id() const { return m_id; }
    
    /** Sets the position of this entity in the module data.
    Used for simpler serialization, so that it is possible to reference this
    entity in the serialized file.
    */
-   inline void id( int n ) { m_id = n; }
+   inline void id( int32 n ) { m_id = n; }
    
    
    void addImportDef( ImportDef* id );
    void removeImportDef( ImportDef* id );
    ImportDef* importDefAt( int n ) const;
    int importDefCount() const;
+   
+   void store( DataWriter* wr ) const;
+   void restore( DataReader* rd );
    
 private:
    class ImportDefList;
@@ -91,7 +96,7 @@ private:
    bool m_bIsURI;
    Module* m_module;
   
-   int m_id;
+   int32 m_id;
 
    friend class Module;
    friend class ModSpace;

@@ -14,6 +14,8 @@
 */
 
 #include <falcon/importdef.h>
+#include <falcon/datawriter.h>
+#include <falcon/datareader.h>
 
 #include <vector>
 
@@ -275,6 +277,34 @@ void ImportDef::describe( String& tgt ) const
 }
 
 
+void ImportDef::store(DataWriter* wr) const
+{
+   wr->write( m_bIsLoad );
+   wr->write( m_bIsUri );
+   wr->write( m_bIsNS );
+   wr->write( m_bIsDirect );
+
+   wr->write( m_source );
+   wr->write( m_tgNameSpace );
+   
+   m_sr.serialize(wr);
+}
+
+
+void ImportDef::restore( DataReader* rd ) 
+{
+   rd->read( m_bIsLoad );
+   rd->read( m_bIsUri );
+   rd->read( m_bIsNS );
+   rd->read( m_bIsDirect );
+
+   rd->read( m_source );
+   rd->read( m_tgNameSpace );
+   
+   m_sr.deserialize(rd);
+}
+
+   
 }
 
 /* end of importdef.cpp */

@@ -14,9 +14,9 @@
 */
 
 #undef SRC
-#define SRC "falcon/cm/compare.cpp"
+#define SRC "falcon/builtin/compare.cpp"
 
-#include <falcon/cm/compare.h>
+#include <falcon/builtin/compare.h>
 #include <falcon/vm.h>
 #include <falcon/vmcontext.h>
 #include <falcon/error.h>

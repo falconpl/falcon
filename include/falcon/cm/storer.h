@@ -39,7 +39,8 @@ public:
    virtual void* createInstance() const;   
 private:   
    
-   FALCON_DECLARE_METHOD( store, "item:S" );
+   FALCON_DECLARE_METHOD( store, "item:X" );
+   FALCON_DECLARE_METHOD( addFlatMantra, "mantra:C" );
    FALCON_DECLARE_METHOD( commit, "stream:Stream" );
 };
 

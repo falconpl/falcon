@@ -538,7 +538,7 @@ Class* SelectRequirement::cls() const
    // we just need to have it in the engine to let it to delete it at end.
    if( ! bRegistered ) {
       bRegistered = true;
-      Engine::instance()->registerClass(theClass);
+      Engine::instance()->addMantra(theClass);
    }
 
    return theClass;

@@ -17,18 +17,9 @@
 #define SRC "falcon/cm/coremodule.cpp"
 
 #include <falcon/cm/coremodule.h>
-#include <falcon/cm/compare.h>
-#include <falcon/cm/describe.h>
-#include <falcon/cm/len.h>
-#include <falcon/cm/baseclass.h>
 #include <falcon/cm/iff.h>
 #include <falcon/cm/inspect.h>
-#include <falcon/cm/classname.h>
-#include <falcon/cm/minmax.h>
 #include <falcon/cm/print.h>
-#include <falcon/cm/tostring.h>
-#include <falcon/cm/typeid.h>
-#include <falcon/cm/clone.h>
 #include <falcon/cm/uri.h>
 #include <falcon/cm/path.h>
 #include <falcon/cm/storer.h>
@@ -44,8 +35,6 @@
 #include <falcon/errorclasses.h>
 
 
-
-
 namespace Falcon {
 
 CoreModule::CoreModule():
@@ -55,18 +44,8 @@ CoreModule::CoreModule():
    
    *this
       // Standard functions
-      << new Ext::Compare
-      << new Ext::Describe
-      << new Ext::Len
       << new Ext::FuncPrintl
       << new Ext::FuncPrint
-      << new Ext::Min
-      << new Ext::Max
-      << new Ext::ToString
-      << new Ext::TypeId
-      << new Ext::Clone
-      << new Ext::ClassName
-      << new Ext::BaseClass
       << new Ext::Inspect
       << new Ext::Iff
       
@@ -79,8 +58,8 @@ CoreModule::CoreModule():
       << new Ext::ClassTextStream( classStream )
       << new Ext::ClassTextWriter( classStream )
       << new Ext::ClassTextReader( classStream )
-      << new Ext::ClassDataWriter()
-      << new Ext::ClassDataReader()
+      << new Ext::ClassDataWriter( classStream )
+      << new Ext::ClassDataReader( classStream )
       ;
 }
 

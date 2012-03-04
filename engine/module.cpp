@@ -155,6 +155,14 @@ Module::Private::~Private()
       delete ns;
       ++nsi;
    }
+   
+   MantraMap::iterator mantrai = m_mantras.begin();
+   while( mantrai != m_mantras.end() )
+   {
+      Mantra* m = mantrai->second;
+      delete m;
+      ++mantrai;
+   }
 }
 
 
@@ -169,8 +177,7 @@ Module::Module():
    m_bExportAll( false ),
    m_unloader( 0 ),
    m_bMain( false ),
-   m_anonFuncs(0),
-   m_anonClasses(0),
+   m_anonMantras(0),
    m_mainFunc(0),
    m_bNative( false )
 {
@@ -187,8 +194,7 @@ Module::Module( const String& name, bool bNative ):
    m_bExportAll( false ),
    m_unloader( 0 ),
    m_bMain( false ),
-   m_anonFuncs(0),
-   m_anonClasses(0),
+   m_anonMantras(0),
    m_mainFunc(0),
    m_bNative( bNative )
 {
@@ -206,8 +212,7 @@ Module::Module( const String& name, const String& uri, bool bNative ):
    m_bExportAll( false ),
    m_unloader( 0 ),
    m_bMain( false ),
-   m_anonFuncs(0),
-   m_anonClasses(0),
+   m_anonMantras(0),
    m_mainFunc(0),
    m_bNative( bNative )
 {
@@ -229,7 +234,8 @@ Module::~Module()
    }
 
    // this is doing to do a bit of stuff; see ~Private()
-   delete _p;   
+   delete _p;
+   delete m_mainFunc;
    TRACE("Module '%s' deletion complete", m_name.c_ize() );
 }
 
@@ -249,26 +255,26 @@ void Module::gcMark( uint32 mark )
 }
 
 
-void Module::addAnonFunction( Function* f )
+void Module::addAnonMantra( Mantra* f )
 {
    // finally add to the function vecotr so that we can account it.
    String name;
    do
    {
-      name = f->isEta() ? "eta#" : "lambda#";
-      name.N(m_anonFuncs++);
-   } while( _p->m_functions.find( name ) != _p->m_functions.end() );
+      name = "anon#";
+      name.N(m_anonMantras++);
+   } while( _p->m_mantras.find( name ) != _p->m_mantras.end() );
 
    f->name(name);
    f->module(this);
 
-   _p->m_functions[name] = f;
+   _p->m_mantras[name] = f;
    
    // by definition, an anonymous function cannot cover forward refs
 }
 
 
-Symbol* Module::addFunction( Function* f, bool bExport )
+Symbol* Module::addMantra( Mantra* f, bool bExport )
 {
    static Class* symClass = Engine::instance()->symbolClass();
    static Collector* coll = Engine::instance()->collector();
@@ -282,13 +288,13 @@ Symbol* Module::addFunction( Function* f, bool bExport )
    }
    
    // add to the function vecotr so that we can account it.
-   _p->m_functions[f->name()] = f;
+   _p->m_mantras[f->name()] = f;
    f->module(this);
 
    // add the symbol to the symbol table.
-   Symbol* sym = new Symbol( f->name(), Symbol::e_st_global, 0, f->declaredAt() );
+   Symbol* sym = new Symbol( f->name(), Symbol::e_st_global, 0, f->sr().line() );
    FALCON_GC_STORE( coll, symClass, sym );
-   sym->defaultValue(f);
+   sym->defaultValue(Item(f->handler(), f));
    syms[f->name()] = sym;
 
    // Eventually export it.
@@ -305,21 +311,29 @@ Symbol* Module::addFunction( Function* f, bool bExport )
 }
 
 
-void Module::addFunction( Symbol* gsym, Function* f )
+bool Module::addMantraWithSymbol( Mantra* f, Symbol* gsym, bool bExport )
 {
-   //static Engine* eng = Engine::instance();
+   if( _p->m_mantras.find( f->name() ) != _p->m_mantras.end() )
+   {
+      return false;
+   }
 
    // finally add to the function vecotr so that we can account it.
-   _p->m_functions[f->name()] = f;
+   _p->m_mantras[f->name()] = f;
    f->module(this);
    
    if(gsym)
    {
-      gsym->defaultValue(f);
+      gsym->defaultValue(Item(f->handler(), f));
+   }
+   
+   if( bExport ) {
+      _p->m_gExports[ f->name() ] = gsym;
    }
    
    // see if this covers a forward declaration.
    checkWaitingFwdDef( gsym );
+   return true;
 }
 
 
@@ -334,7 +348,7 @@ Symbol* Module::addFunction( const String &name, ext_func_t f, bool bExport )
 
    // ok, the name is free; add it
    Function* extfunc = new ExtFunc( name, f, this );
-   return addFunction( extfunc, bExport );
+   return addMantra( extfunc, bExport );
 }
 
 
@@ -344,87 +358,28 @@ Symbol* Module::addVariable( const String& name, bool bExport )
 }
 
 
-void Module::addClass( Symbol* gsym, Class* fc, bool )
+Symbol* Module::addSingleton( Class*, bool )
 {
-   static Class* ccls = Engine::instance()->metaClass();
-
-   // finally add to the function vecotr so that we can account it.
-   _p->m_classes[fc->name()] = fc;
-   fc->module(this);
-
-   if(gsym)
-   {
-      gsym->defaultValue( Item( ccls, fc ) );
-      // see if this covers a forward declaration.
-      checkWaitingFwdDef( gsym );
-   }
+   // TODO
+   return 0;
 }
 
 
-Symbol* Module::addClass( Class* fc, bool, bool bExport )
+Mantra* Module::getMantra( const String& name, Mantra::t_category cat ) const
 {
-   static Class* ccls = Engine::instance()->metaClass();
-   static Class* csym = Engine::instance()->symbolClass();
-   static Collector* coll = Engine::instance()->collector();
-   
-
-   Private::GlobalsMap& syms = _p->m_gSyms;
-   if( syms.find(fc->name()) != syms.end() )
+   Private::MantraMap::const_iterator iter = _p->m_mantras.find(name);
+   if( iter != _p->m_mantras.end() )
    {
-      return 0;
-   }
-
-   // add a proper object in the global vector
-   // add the symbol to the symbol table.
-   Symbol* sym = new Symbol( fc->name(), Symbol::e_st_global, 0, fc->declaredAt() );
-   FALCON_GC_STORE( coll, csym, sym );
-   
-   sym->defaultValue(Item(ccls, fc));
-   syms[fc->name()] = sym;
-
-   // Eventually export it.
-   if( bExport )
-   {
-      // by hypotesis, we can't have a double here, already checked on m_gSyms
-      _p->m_gExports[fc->name()] = sym;
-   }
-
-   // finally add to the function vecotr so that we can account it.
-   _p->m_classes[fc->name()] = fc;
-   fc->module(this);
-   // see if this covers a forward declaration.
-   checkWaitingFwdDef( sym );
-
-   return sym;
-}
-
-Class* Module::getClass( const String& name ) const
-{
-   Private::ClassMap::const_iterator iter = _p->m_classes.find(name);
-   if( iter != _p->m_classes.end() )
-   {
-      return iter->second;
+      Mantra* mantra = iter->second;
+      if( mantra->isCompatibleWith( cat ) )
+      {
+         return mantra;
+      }
    }
    
    return 0;
 }
 
-
-void Module::addAnonClass( Class* cls )
-{
-   // finally add to the function vecotr so that we can account it.
-   String name;
-   do
-   {
-      name = "class#";
-      name.N(m_anonClasses++);
-   } while ( _p->m_classes.find( name ) != _p->m_classes.end() );
-
-   cls->name(name);
-
-   _p->m_classes[name] = cls;
-   cls->module(this);
-}
 
 
 Symbol* Module::addVariable( const String& name, const Item& value, bool bExport )
@@ -465,20 +420,6 @@ Symbol* Module::getGlobal( const String& name ) const
    Private::GlobalsMap::const_iterator iter = syms.find(name);
 
    if( iter == syms.end() )
-   {
-      return 0;
-   }
-
-   return iter->second;
-}
-
-
-Function* Module::getFunction( const String& name ) const
-{
-   const Private::FunctionMap& funcs = _p->m_functions;
-   Private::FunctionMap::const_iterator iter = funcs.find( name );
-
-   if( iter == funcs.end() )
    {
       return 0;
    }
@@ -1028,16 +969,9 @@ Function* Module::getMainFunction()
 {
    if ( m_mainFunc == 0 )
    {
-      // see if someone was nice enough to add it elsewhere.
-      Private::FunctionMap::iterator iter = _p->m_functions.find("__main__");
-      if ( iter != _p->m_functions.end() )
-      {
-         m_mainFunc = iter->second;
-      }
-      else {
-         m_mainFunc = new SynFunc("__main__");
-         _p->m_functions[m_mainFunc->name()] = m_mainFunc;
-      }
+      // see if someone was nice enough to add it elsewhere.      
+      m_mainFunc = new SynFunc("__main__");
+      m_mainFunc->module(this);
    }
    
    return m_mainFunc;
@@ -1050,42 +984,11 @@ void Module::setMainFunction( Function* mf )
    m_mainFunc = mf;
    mf->module(this);
    mf->name("__main__");
-   
-   _p->m_functions[mf->name()] = mf;
 }
 
 //=====================================================================
 // Classes
 //=====================================================================
-
-
-void Module::storeSourceClass( FalconClass* fcls, bool isObject, Symbol* gs )
-{
-   Class* cls = fcls;
-   
-   // The interactive compiler won't call us here if we have some undefined class,
-   // as such, the construct can fail only if some class is not a falcon class.
-   if( !fcls->construct() )
-   {
-      // did we fail to construct because we're incomplete?
-      if( !fcls->missingParents() )
-      {
-         // so, we have to generate an hyper class out of our falcon-class
-         // -- the hyperclass is also owning the FalconClass.
-         cls = fcls->hyperConstruct();         
-      }
-   }
-
-   if( gs == 0 )
-   {
-      addAnonClass( cls );
-   }
-   else
-   {
-      addClass( gs, cls, isObject );
-   }
-}
-
 
 void Module::completeClass(FalconClass* fcls)
 {                  
@@ -1094,7 +997,7 @@ void Module::completeClass(FalconClass* fcls)
    {
       // was not a full falcon class; we must change it into an hyper class.
       HyperClass* hcls = fcls->hyperConstruct();
-      _p->m_classes[hcls->name()] = hcls;
+      _p->m_mantras[hcls->name()] = hcls;
       // anonymous classes cannot have a name in the global symbol table, so...
       Private::GlobalsMap::iterator pos = _p->m_gSyms.find( hcls->name() );
       if( pos != _p->m_gSyms.end() )

@@ -62,7 +62,8 @@ void apply_expr_call( const Rule&, Parser& p )
    {
       // check if the symbol is a pseudofunction   
       ExprSymbol* esym = static_cast<ExprSymbol*>(callee);
-      PseudoFunction* pf = einst->getPseudoFunction( esym->name() );
+      PseudoFunction* pf = static_cast<PseudoFunction*>(
+            einst->getMantra( esym->name(), Mantra::e_c_pseudofunction ));
 
       // if it is, we don't need the callee expression anymore.
       if( pf != 0 )

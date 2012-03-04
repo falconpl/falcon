@@ -46,41 +46,27 @@ StdErrors::StdErrors()
 
 
 StdErrors::~StdErrors()
-{
-   delete m_error;
-   delete m_code;
-   delete m_generic;
-   delete m_operand;
-   delete m_unsupported;
-   delete m_io;
-   delete m_interrupted;
-   delete m_encoding;
-   delete m_access;
-   delete m_accessType;
-   delete m_syntax;
-   delete m_param;
-   delete m_link;
-   delete m_unserializable;
+{  
 }
 
 void StdErrors::addBuiltins() const
 {
    static Engine* eng = Engine::instance();
    
-   eng->addBuiltin(m_error);
-   eng->addBuiltin(m_code);
-   eng->addBuiltin(m_generic);
-   eng->addBuiltin(m_operand);
-   eng->addBuiltin(m_unsupported);
-   eng->addBuiltin(m_io);
-   eng->addBuiltin(m_interrupted);
-   eng->addBuiltin(m_encoding);
-   eng->addBuiltin(m_access);
-   eng->addBuiltin(m_accessType);
-   eng->addBuiltin(m_syntax);
-   eng->addBuiltin(m_param);
-   eng->addBuiltin(m_link);
-   eng->addBuiltin(m_unserializable);
+   eng->addMantra(m_error);
+   eng->addMantra(m_code);
+   eng->addMantra(m_generic);
+   eng->addMantra(m_operand);
+   eng->addMantra(m_unsupported);
+   eng->addMantra(m_io);
+   eng->addMantra(m_interrupted);
+   eng->addMantra(m_encoding);
+   eng->addMantra(m_access);
+   eng->addMantra(m_accessType);
+   eng->addMantra(m_syntax);
+   eng->addMantra(m_param);
+   eng->addMantra(m_link);
+   eng->addMantra(m_unserializable);
 }
    
 }

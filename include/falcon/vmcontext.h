@@ -31,6 +31,7 @@ class SynFunc;
 class StmtTry;
 class SynTree;
 class Symbol;
+class Storer;
 
 /**
  * Structure needed to store VM data.
@@ -1223,6 +1224,9 @@ public:
 
    /** Copies pcount parameters from the frame parameters area to the top of the stack. */
    void forwardParams( int pcount );
+   
+   /** Gets the storer that is currently performing a serialization. */
+   Storer* getTopStorer() const;
    
 protected:
 

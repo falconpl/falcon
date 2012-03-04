@@ -69,6 +69,7 @@ private:
 ClassStorer::ClassStorer():
    ClassUser("Storer"),
    FALCON_INIT_METHOD( store ),
+   FALCON_INIT_METHOD( addFlatMantra ),
    FALCON_INIT_METHOD( commit )
 {}
 
@@ -115,6 +116,29 @@ FALCON_DEFINE_METHOD_P1( ClassStorer, store )
    {
       ctx->returnFrame();
    }
+}
+
+
+FALCON_DEFINE_METHOD_P1( ClassStorer, addFlatMantra )
+{
+   static Class* clsMantra = Engine::instance()->mantraClass();
+   
+   Item* i_item = ctx->param(0);
+   if( i_item == 0 )
+   {
+      throw paramError();
+   }
+   
+   Storer* storer = static_cast<StorerCarrier*>(ctx->self().asInst())->carried();
+   Class* cls; void *data; 
+   i_item->forceClassInst( cls, data );
+   
+   if( ! cls->isDerivedFrom( clsMantra ) )
+   {
+      throw paramError();
+   }
+   
+   storer->addFlatMantra( static_cast<Mantra*>(cls->getParentData( clsMantra, data )) );
 }
 
 

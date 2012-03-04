@@ -44,6 +44,9 @@ public:
    
    void describe( void* instance, String& target, int, int ) const;
    
+   virtual void store( VMContext* ctx, DataWriter* stream, void* instance ) const;
+   virtual void restore( VMContext* ctx, DataReader* stream, void*& empty ) const;
+
    //=============================================================
    virtual void op_toString( VMContext* ctx, void* self ) const;
    virtual void op_call( VMContext* ctx, int32 pcount, void* self ) const;

@@ -1,11 +1,11 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: classname.cpp
+   FILE: len.cpp
 
-   Falcon core module -- Returns the name of the class of an item
+   Falcon core module -- len function/method
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
-   Begin: Wed, 28 Dec 2011 10:54:08 +0100
+   Begin: Sat, 04 Jun 2011 20:52:06 +0200
 
    -------------------------------------------------------------------
    (C) Copyright 2011: the FALCON developers (see list in AUTHORS file)
@@ -14,9 +14,9 @@
 */
 
 #undef SRC
-#define SRC "falcon/cm/classname.cpp"
+#define SRC "falcon/builtin/len.cpp"
 
-#include <falcon/cm/classname.h>
+#include <falcon/builtin/len.h>
 #include <falcon/vm.h>
 #include <falcon/vmcontext.h>
 #include <falcon/itemid.h>
@@ -25,24 +25,25 @@
 namespace Falcon {
 namespace Ext {
 
-ClassName::ClassName():
-   PseudoFunction( "className", &m_invoke )
+Len::Len():
+   PseudoFunction( "len", &m_invoke )
 {
    signature("X");
    addParam("item");
 }
 
-ClassName::~ClassName()
+Len::~Len()
 {
 }
 
-void ClassName::invoke( VMContext* ctx, int32 nParams )
+void Len::invoke( VMContext* ctx, int32 nParams )
 {
    Item *elem;
-   
+   register int64 len;
    if ( ctx->isMethodic() )
    {
       elem = &ctx->self();
+      len = elem->len();
    }
    else
    {
@@ -52,25 +53,20 @@ void ClassName::invoke( VMContext* ctx, int32 nParams )
       }
 
       elem = ctx->params();
+      len = elem->len();
    }
-   
-   Class* cls; void* inst;
-   elem->forceClassInst( cls, inst );
-   ctx->returnFrame((new String(cls->name()))->garbage());
+
+   ctx->returnFrame(len);
 }
 
-
-void ClassName::Invoke::apply_( const PStep*, VMContext* ctx )
+void Len::Invoke::apply_( const PStep*, VMContext* ctx )
 {
    register Item& top = ctx->topData();
-   Class* cls; void* inst;
-   top.forceClassInst( cls, inst );
-   top = (new String(cls->name()))->garbage();
+   top = top.len();
    ctx->popCode();
 }
 
 }
 }
 
-/* end of classname.cpp */
-
+/* end of len.cpp */

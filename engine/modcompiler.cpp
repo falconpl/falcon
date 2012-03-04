@@ -57,15 +57,12 @@ void ModCompiler::Context::onNewFunc( Function* function, Symbol* gs )
    {
       if( gs == 0 )
       {
-         // anonymous function
-         String name = "__lambda#";
-         name.N( m_owner->m_nLambdaCount++);
-         function->name( name );
-         mod->addFunction( function, false );
+         // anonymous function         
+         mod->addAnonMantra( function );
       }
       else
       {
-         mod->addFunction( gs, function );
+         mod->addMantraWithSymbol( function, gs );
       }
    }
    catch( Error* e )
@@ -76,14 +73,15 @@ void ModCompiler::Context::onNewFunc( Function* function, Symbol* gs )
 }
 
 
-void ModCompiler::Context::onNewClass( Class* cls, bool bIsObj, Symbol* gs )
+void ModCompiler::Context::onNewClass( Class* cls, bool, Symbol* gs )
 {
    FalconClass* fcls = static_cast<FalconClass*>(cls);
    Module* mod = m_owner->m_module;
    
    try {
       // save the source class
-      mod->storeSourceClass( fcls, bIsObj, gs );
+      mod->addMantraWithSymbol( fcls, gs, false );
+      // todo 
    }
    catch( Error* e )
    {
@@ -250,7 +248,7 @@ Module* ModCompiler::compile( TextReader* tr, const String& uri, const String& n
    
    // create the main function that will be used by the compiler
    SynFunc* main = new SynFunc("__main__");
-   m_module->addFunction( main, false );
+   m_module->setMainFunction( main );
 
    // and prepare the parser to deal with the main state.
    m_ctx->openMain( &main->syntree() );

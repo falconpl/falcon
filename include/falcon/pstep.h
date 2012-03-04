@@ -79,6 +79,11 @@ public:
       String temp; oneLinerTo(temp); return temp;
    }
    
+   /** Sparsely used function marknig steps with special significance.
+      
+    */
+   inline virtual uint32 flags() const { return 0; }
+   
    /** Apply function. 
     \param self The PStep that was applied here.
     \param ctx The virtual machine context where this apply function was run

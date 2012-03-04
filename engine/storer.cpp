@@ -24,6 +24,7 @@
 #include <map>
 #include <vector>
 #include <list>
+#include <set>
 
 namespace Falcon {
 
@@ -34,13 +35,16 @@ public:
    typedef std::map<Class*, uint32> ClassMap;
    
    /** Map connecting each each object with its own serialization ID. */
-   typedef std::map<void*, uint32> ObjectMap;   
+   typedef std::map<void*, uint32> ObjectMap;
    
    /** Vector of numeric IDs on which an object depends. */
    typedef std::vector<uint32> IDVector;
    
    /** Vector of items, used to store flat instances. */
    typedef std::list<Item> InstanceList;
+   
+   /** Map of objects that the user wants to store as a flat mantra. */
+   typedef std::set<Mantra*> MantraSet;
    
    /** Data relative to a signle serialized item. */
    class ObjectData {
@@ -89,7 +93,9 @@ public:
    // Objects as they are stored.
    IDVector m_storedVector;
    ObjectDataPtrVector m_objTraversing;
-      
+   
+   MantraSet m_flatMantras;
+   
    Private() {
    }
    
@@ -171,6 +177,8 @@ Storer::Storer():
    _p(0),
    m_ctx(0),
    m_writer( new DataWriter(0) ),
+   m_topData(0),
+   m_topHandler(0),
    m_traverseNext( this ),
    m_writeNext(this)
 {}
@@ -180,6 +188,8 @@ Storer::Storer( VMContext* ctx ):
    _p(0),
    m_ctx(ctx),
    m_writer( new DataWriter(0) ),
+   m_topData(0),
+   m_topHandler(0),
    m_traverseNext( this ),
    m_writeNext(this)
 {  
@@ -204,8 +214,22 @@ bool Storer::store( Class* handler, void* data )
       _p = new Private;
    }
    
+   m_topData = data;
+   m_topHandler = handler;
    // First, create the Private that we use to unroll cycles.
    return traverse( handler, data, true );
+}
+
+   
+void Storer::addFlatMantra( Mantra* mantra )
+{
+   _p->m_flatMantras.insert(mantra);
+}
+
+
+bool Storer::isFlatMantra( Mantra* mantra )
+{
+   return _p->m_flatMantras.find( mantra ) != _p->m_flatMantras.end();
 }
 
 

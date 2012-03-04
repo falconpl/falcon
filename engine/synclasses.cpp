@@ -84,16 +84,17 @@ SynClasses::SynClasses( Class* classSynTree, Class* classStatement, Class* class
    m_cls_st( classSynTree ),
    m_cls_stmt( classStatement ),
    m_cls_expr( classExpr ),
-   #include <falcon/synclasses_list.h>
    m_dummy_end(0)
 {
-   m_stmt_forto.userFlags(FALCON_SYNCLASS_ID_FORCLASSES);
-   m_stmt_forin.userFlags(FALCON_SYNCLASS_ID_RULE);
-   m_stmt_if.userFlags(FALCON_SYNCLASS_ID_ELSEHOST);
-   m_stmt_select.userFlags(FALCON_SYNCLASS_ID_CASEHOST);
-   m_stmt_autoexpr.userFlags(FALCON_SYNCLASS_ID_AUTOEXPR);
-   m_expr_call.userFlags(FALCON_SYNCLASS_ID_CALLFUNC);
-   m_expr_pseudocall.userFlags(FALCON_SYNCLASS_ID_CALLFUNC);
+   #include <falcon/synclasses_list.h>
+
+   m_stmt_forto->userFlags(FALCON_SYNCLASS_ID_FORCLASSES);
+   m_stmt_forin->userFlags(FALCON_SYNCLASS_ID_RULE);
+   m_stmt_if->userFlags(FALCON_SYNCLASS_ID_ELSEHOST);
+   m_stmt_select->userFlags(FALCON_SYNCLASS_ID_CASEHOST);
+   m_stmt_autoexpr->userFlags(FALCON_SYNCLASS_ID_AUTOEXPR);
+   m_expr_call->userFlags(FALCON_SYNCLASS_ID_CALLFUNC);
+   m_expr_pseudocall->userFlags(FALCON_SYNCLASS_ID_CALLFUNC);
 }
 
 SynClasses::~SynClasses() {}

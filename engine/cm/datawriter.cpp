@@ -28,8 +28,9 @@
 namespace Falcon {
 namespace Ext {
 
-ClassDataWriter::ClassDataWriter():
+ClassDataWriter::ClassDataWriter( Class* clsStream ):
    ClassUser("DataWriter"),
+   m_clsStream( clsStream ),
    FALCON_INIT_PROPERTY( endianity ),
    FALCON_INIT_PROPERTY( sysEndianity ),
    
@@ -92,9 +93,7 @@ void* ClassDataWriter::createInstance() const
 }
 
 bool ClassDataWriter::op_init( VMContext* ctx, void* instance, int pcount ) const
-{
-   static Class* streamCls = m_module->getClass("Stream");
-   
+{   
    if( pcount >= 1 )
    {
       Class* cls=0;
@@ -102,7 +101,7 @@ bool ClassDataWriter::op_init( VMContext* ctx, void* instance, int pcount ) cons
       
       Item* params = ctx->opcodeParams(pcount);
       params[0].asClassInst( cls, data );
-      if( cls->isDerivedFrom(streamCls) )
+      if( cls->isDerivedFrom(m_clsStream) )
       {
          DataWriter* wr = static_cast<DataWriter*>(instance);            
          wr->changeStream( 

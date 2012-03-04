@@ -94,6 +94,43 @@ void Mantra::gcMark( uint32 mark )
    }
 }
 
+
+bool Mantra::isCompatibleWith( Mantra::t_category cat ) const
+{
+   // are we searching anything?
+   if( cat == Mantra::e_c_none )
+   {
+      return true;
+   }
+   // are we searching a class?
+   else if( cat == Mantra::e_c_class )
+   {
+      if( this->category() == Mantra::e_c_class 
+          || this->category() == Mantra::e_c_falconclass
+          || this->category() == Mantra::e_c_hyperclass
+          || this->category() == Mantra::e_c_metaclass )
+      {
+         return true;
+      }
+   }
+   // are we searching a function?
+   else if( cat == Mantra::e_c_function )
+   {
+      if( this->category() == Mantra::e_c_function 
+          || this->category() == Mantra::e_c_pseudofunction )
+      {
+         return true;
+      }
+   }
+   // are we searching something more specific?
+   else if( cat == this->category() )
+   {
+      return true;
+   }
+   
+   return false;
+}
+
 }
 
 /* end of mantra.cpp */

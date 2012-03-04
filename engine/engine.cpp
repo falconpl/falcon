@@ -35,14 +35,15 @@
 
 //--- core function headers ---
 #include <falcon/cm/coremodule.h>
-#include <falcon/cm/compare.h>
-#include <falcon/cm/len.h>
-#include <falcon/cm/minmax.h>
-#include <falcon/cm/typeid.h>
-#include <falcon/cm/clone.h>
-#include <falcon/cm/classname.h>
-#include <falcon/cm/baseclass.h>
-#include <falcon/cm/describe.h>
+#include <falcon/builtin/compare.h>
+#include <falcon/builtin/len.h>
+#include <falcon/builtin/minmax.h>
+#include <falcon/builtin/typeid.h>
+#include <falcon/builtin/clone.h>
+#include <falcon/builtin/classname.h>
+#include <falcon/builtin/baseclass.h>
+#include <falcon/builtin/describe.h>
+#include <falcon/builtin/tostring.h>
 
 #include <falcon/bom.h>
 #include <falcon/stdsteps.h>
@@ -103,15 +104,11 @@ class TranscoderMap: public std::map<String, Transcoder*>
 {
 };
 
-class PseudoFunctionMap: public std::map<String, PseudoFunction*>
-{
-};
-
 class PredefMap: public std::map<String, Item>
 {
 };
 
-class RegisteredClassesMap: public std::map<String, Class*>
+class MantraMap: public std::map<String, Mantra*>
 {
 };
 
@@ -180,8 +177,7 @@ Engine::Engine()
    
    //===========================================
    // Subsystems initialization
-   //
-   
+   //   
    Item::init( this );
    
 
@@ -193,51 +189,50 @@ Engine::Engine()
    addTranscoder( new TranscoderC );
    addTranscoder( new TranscoderUTF8 );
 
-   //=====================================
-   // Adding standard pseudo functions.
-   //
-
-   m_tpfuncs = new PseudoFunctionMap;
-   addPseudoFunction(new Ext::Compare);
-   addPseudoFunction(new Ext::Len);
-   addPseudoFunction(new Ext::Max);
-   addPseudoFunction(new Ext::Min);
-   addPseudoFunction(new Ext::TypeId);
-   addPseudoFunction(new Ext::Clone);
-   addPseudoFunction(new Ext::ClassName);
-   addPseudoFunction(new Ext::BaseClass);
-   addPseudoFunction(new Ext::Describe);
-
-   //============================================
-   // Creating singletons
-   //
-   
-   m_stdSteps = new StdSteps;
-   m_stdErrors = new StdErrors;
-   
    //============================================
    // Creating predefined symbols
    //
    m_predefs = new PredefMap;
-   m_regClasses = new RegisteredClassesMap;
+   m_stdSteps = new StdSteps;
+   m_stdErrors = new StdErrors;   
+
+   //=====================================
+   // Adding standard pseudo functions.
+   //
+
+   m_mantras = new MantraMap;
+   addMantra(new Ext::Compare);
+   addMantra(new Ext::Len);
+   addMantra(new Ext::Max);
+   addMantra(new Ext::Min);
+   addMantra(new Ext::TypeId);
+   addMantra(new Ext::Clone);
+   addMantra(new Ext::ClassName);
+   addMantra(new Ext::BaseClass);
+   addMantra(new Ext::Describe);
+   addMantra(new Ext::ToString);
+
+   //============================================
+   // Creating singletons
+   //
+      
+   addMantra( m_functionClass );
+   addMantra( m_stringClass );
+   addMantra( m_arrayClass );
+   addMantra( m_dictClass );
+   addMantra( m_protoClass );
+   addMantra( m_metaClass );
+   addMantra( m_mantraClass ); 
+   addMantra( m_synFuncClass );
+   addMantra( m_genericClass );
+   addMantra( m_rangeClass  );
    
-   addBuiltin( m_functionClass );
-   addBuiltin( m_stringClass );
-   addBuiltin( m_arrayClass );
-   addBuiltin( m_dictClass );
-   addBuiltin( m_protoClass );
-   addBuiltin( m_metaClass );
-   // addBuiltin( m_mantraClass );  Don't know...
-   addBuiltin( m_synFuncClass );
-   addBuiltin( m_genericClass );
-   addBuiltin( m_rangeClass  );
-   
-   addBuiltin( m_classes[FLC_ITEM_NIL] );
-   addBuiltin( m_classes[FLC_ITEM_BOOL] );
-   addBuiltin( m_classes[FLC_ITEM_INT] );
-   addBuiltin( m_classes[FLC_ITEM_NUM] );
-   addBuiltin( m_classes[FLC_ITEM_METHOD] );
-   addBuiltin( m_classes[FLC_ITEM_REF] ); // ?
+   addMantra( m_classes[FLC_ITEM_NIL] );
+   addMantra( m_classes[FLC_ITEM_BOOL] );
+   addMantra( m_classes[FLC_ITEM_INT] );
+   addMantra( m_classes[FLC_ITEM_NUM] );
+   addMantra( m_classes[FLC_ITEM_METHOD] );
+   addMantra( m_classes[FLC_ITEM_REF] ); // ?
    
    addBuiltin( "NilType", (int64) FLC_ITEM_NIL );
    addBuiltin( "BoolType", (int64) FLC_ITEM_BOOL );
@@ -269,16 +264,15 @@ Engine::Engine()
    m_exprClass = new ClassExpression(ctreeStep);
    m_syntreeClass = new ClassSynTree(ctreeStep, static_cast<ClassSymbol*>(m_symbolClass));
       
-   addBuiltin(m_closureClass);
-   addBuiltin(m_treeStepClass);
-   addBuiltin(m_statementClass);
-   addBuiltin(m_exprClass);
-   addBuiltin(m_syntreeClass);
-   addBuiltin(m_symbolClass);   
+   addMantra(m_closureClass);
+   addMantra(m_treeStepClass);
+   addMantra(m_statementClass);
+   addMantra(m_exprClass);
+   addMantra(m_syntreeClass);
+   addMantra(m_symbolClass);   
    
    m_synClasses = new SynClasses(m_syntreeClass, m_statementClass, m_exprClass );
    m_synClasses->subscribe( this );
-      
    
    //=====================================
    // The Core Module
@@ -303,18 +297,6 @@ Engine::~Engine()
    /** Bye bye core... */
    delete m_core;
 
-   delete m_stringClass;
-   delete m_rangeClass;
-   delete m_arrayClass;
-   delete m_dictClass;
-   delete m_protoClass;
-   delete m_metaClass;
-   delete m_mantraClass;
-   delete m_functionClass;
-   delete m_synFuncClass;
-   delete m_genericClass;
-   //delete m_referenceClass;  already deleted in the loop
-
    // ===============================
    // Delete standard item classes
    //
@@ -338,19 +320,25 @@ Engine::~Engine()
    
    delete m_tcoders;
    
+    // ===============================
+   // delete mantras transcoders
+   //
+
+   {
+      MantraMap::iterator iter = m_mantras->begin();
+      while( iter != m_mantras->end() )
+      {
+         delete iter->second;
+         ++iter;
+      }
+   }
+   
+   delete m_mantras;
+   
    // ===============================
    // delete builtin symbols
    //   
-   delete m_predefs;
-   delete m_regClasses;
-   
-   delete m_treeStepClass;
-   delete m_statementClass;
-   delete m_exprClass;
-   delete m_syntreeClass;
-   delete m_symbolClass;
-   delete m_closureClass;
-   
+   delete m_predefs;   
    delete m_synClasses;
    
    //============================================
@@ -452,99 +440,81 @@ Transcoder* Engine::getTranscoder( const String& name )
 // Pseudofunctions
 //
 
-bool Engine::addPseudoFunction( PseudoFunction* pf )
+bool Engine::addMantra( Mantra* pf )
 {
    m_mtx->lock();
-   PseudoFunctionMap::iterator iter = m_tpfuncs->find(pf->name());
-   if ( iter != m_tpfuncs->end() )
+   MantraMap::iterator iter = m_mantras->find(pf->name());
+   if ( iter != m_mantras->end() )
    {
       m_mtx->unlock();
       return false;
    }
 
-   (*m_tpfuncs)[pf->name()] = pf;
+   (*m_mantras)[pf->name()] = pf;
+   // force to add the builtin, even if we had it.
+   // mantras have precedence.
+   (*m_predefs)[ pf->name() ] = Item(pf->handler(), pf);   
+   
    m_mtx->unlock();
+   
    return true;
 }
 
-PseudoFunction* Engine::getPseudoFunction( const String& name ) const
+Mantra* Engine::getMantra( const String& name, Mantra::t_category cat ) const
 {
+   // first, see if we have something with that name in the mantras
    m_mtx->lock();
-   PseudoFunctionMap::iterator iter = m_tpfuncs->find(name);
-   if ( iter == m_tpfuncs->end() )
+   MantraMap::iterator iter = m_mantras->find(name);
+   if ( iter == m_mantras->end() )
    {
       m_mtx->unlock();
       return 0;
    }
 
-   PseudoFunction* ret = iter->second;
+   Mantra* ret = iter->second;
    m_mtx->unlock();
-   return ret;
-}
-
-
-bool Engine::addBuiltin( Class* src )
-{
-   if( src->module() == 0 )
+   
+   // then check if the item is what we thought it should be.
+   if( ret->isCompatibleWith( cat ) )
    {
-      registerClass( src );
+      return ret;
    }
    
-   return addBuiltin( src->name(), Item( m_metaClass, src ) );
+   
+   // We found it, but it wasn't what we were searching for.
+   return 0;
 }
 
 
 bool Engine::addBuiltin( const String& name, const Item& value )
 {
+   m_mtx->lock();
    PredefMap::iterator pos = m_predefs->find( name );
    if( pos != m_predefs->end() )
    {
+      m_mtx->unlock();
       return false;
    }
    
-   (*m_predefs)[ name ] = value;   
+   (*m_predefs)[ name ] = value;
+   m_mtx->unlock();
    return true;
 }
 
 const Item* Engine::getBuiltin( const String& name ) const
 {
+   m_mtx->lock();
    PredefMap::iterator pos = m_predefs->find( name );
    if( pos != m_predefs->end() )
    {
-      return &pos->second;
+      const Item* item = &pos->second;
+      m_mtx->unlock();
+      return item;
    }
    
+   m_mtx->unlock();
    return 0;
 }
-
-void Engine::registerClass( Class* reg )
-{
-   String name = reg->module() ? 
-      reg->module()->name() + "." + reg->name() :
-      reg->name();
-          
-   m_mtx->lock();
-   (*m_regClasses)[name] = reg;
-   m_mtx->unlock();
-}
-
-
-Class* Engine::getRegisteredClass( const String& name ) const
-{
-   m_mtx->lock();
-   RegisteredClassesMap::const_iterator iter = m_regClasses->find( name );
-   if( iter == m_regClasses->end() )
-   {
-      m_mtx->unlock();
-      return 0;
-   }
-   
-   Class* cls = iter->second;
-   m_mtx->unlock();
-   
-   return cls;
-}
-
 
 //=====================================================
 // Global objects

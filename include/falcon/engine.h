@@ -22,6 +22,7 @@
 #include <falcon/vfsiface.h>
 
 #include <falcon/vfsprovider.h>
+#include <falcon/mantra.h>
 
 namespace Falcon
 {
@@ -30,10 +31,9 @@ class Collector;
 class Mutex;
 class Transcoder;
 class TranscoderMap;
-class PseudoFunction;
-class PseudoFunctionMap;
+
 class PredefMap;
-class RegisteredClassesMap;
+class MantraMap;
 
 class Module;
 class BOM;
@@ -296,18 +296,7 @@ public:
     return a null pointer.
     */
    Class* symbolClass() const;
-   
-   /** Returns the global instance of the ClassDynSymbol class.
-   \return the Engine instance of the ClassDynSymbol handler.
 
-    Method init() must have been called before.
-
-    @note This method will assert and terminate the program if compiled in debug mode
-    in case the engine has not been initialized. In release, it will just
-    return a null pointer.
-    */
-   Class* dynSymbolClass() const;
-   
    /** Returns the global instance of the ClassClosure class.
    \return the Engine instance of the ClassClosure handler.
 
@@ -362,31 +351,6 @@ public:
    VFSIface& vfs() { return m_vfs; }
    const VFSIface& vfs() const { return m_vfs; }
 
-   /** Adds a pseudofunction to the engine.
-    \param pf The Pseudo function to be added.
-    \return False if another pseudofunction with the same name was already added.
-
-    Pseudo-functions act as built-in with respect to the Falcon source compiler;
-    if found in a call-expression they are substituted with a virtual machine
-    operation on the spot. If accessed in any other way, they behave as
-    normal functions.
-
-    Notice that pseudofunction appare as global symbols in the global context;
-    however, it is possible to create namespaced pseudofunctions setting a
-    name prefix in their name.
-
-    \note the ownership of the pseudofunction is passed to the engine.
-    */
-   bool addPseudoFunction( PseudoFunction* pf );
-
-   /** Returns a previously added pseudo function.
-    \param name The name of the pseudofunction to be searched.
-    \return The pseudofunction coresponding with that name, or 0 if not found.
-    
-    \see addPseudoFunction
-    */
-   PseudoFunction* getPseudoFunction( const String& name ) const;
-
    /** Returns an instance of the core module that is used as read-only.
     \return A singleton instance of the core module.
     
@@ -403,17 +367,6 @@ public:
    /** Archive of standard steps. */
    StdSteps* stdSteps() const { return m_stdSteps; }
    
-   /** Adds a builtin instance of this class.
-    @param src The class of this item.
-    
-    This method adds a "class" item (Item with
-    MetaClass as class, and this Class as value) to the set of common
-    builtin items available to any falcon program.
-    
-    If the class has not a module, it is also automatically inserted
-    into the class register via registerClass().    
-    */
-   bool addBuiltin( Class* src );
    
    /** Adds a builtin item.
     @param name The name under which the builtin is known.
@@ -426,19 +379,18 @@ public:
     */
    const Item* getBuiltin( const String& name ) const;
    
-   /** Centralized repository of publically available classes.
-    @param cls The class to be stored.
+   /** Centralized repository of publically available classes and functions.
+    @param reg The mantra to be stored.
+    \return True if the mantra name wasn't already registered, false otherwise.
     
-    Classes are usually stored in the modules that create them; however, some 
-    classes are not created by modules. It's the case of classe provided by
-    the engine or by embedding applications.
+    A Mantra is a invocation for the engine that is known by name. Usually
+    it's a Class or a Function.
     
-    Usually, the scripts don't need those classes, but some processes may
-    need to access this classes by name. For instance, serialization, or
-    creation of standardized objects, may need to access a class knowing
-    its name.
+    This method controls a central repository for Mantras that are not provided
+    by modules (i.e. built in). are not created by modules. It's the case of classes
+    and functions provided by the engine or by embedding applications.
     
-    Class stored in the engine class register are known only by name, and they
+    Mantras stored in the engine class register are known only by name, and they
     must have a well-known system-wide uinque name. For instance, "Integer",
     "String" and so on. Class having a module might be added to the register;
     in that case, they will be known by their full ID (module logical name
@@ -452,16 +404,22 @@ public:
     dictionary of well known classes that are not directly accessible in modules
     that a VM may be provided with. 
     
-    */
-   void registerClass( Class* reg );
-   
-   /** Gets a previously registered class by name.
-    @param name The name or full class ID of the desired class.
-    @return The class if it had been registered, 0 if the name is not found.
+    \note This method automatically calls addBuiltin to create a item visible
+    by the scripts. In other words, registered mantras become script-visible.
     
-    @see registerClass
+    \note Mantras added this way are owned by the engine; the engine destroys
+    them at destruction.
     */
-   Class* getRegisteredClass( const String& name ) const;
+   bool addMantra( Mantra* reg );
+   
+   /** Gets a previously registered mantra by name.
+    @param name The name or full class ID of the desired class.
+    @param cat A category to filter out undesired mantras.
+    @return The mantra if it had been registered, 0 if the name is not found.
+    
+    @see addMantra
+    */
+   Mantra* getMantra( const String& name, Mantra::t_category cat = Mantra::e_c_none ) const;
    
    /** Returns the context currently active in the current tread.
     \return the context active in the current thread or 0 if the VM is not
@@ -535,8 +493,6 @@ protected:
    Class* m_closureClass;
    
    SynClasses* m_synClasses;
-
-   RegisteredClassesMap* m_regClasses;
    
    //===============================================
    // Transcoders
@@ -549,7 +505,7 @@ protected:
    Module* m_core;
    BOM* m_bom;
 
-   PseudoFunctionMap* m_tpfuncs;
+   MantraMap* m_mantras;
    PredefMap* m_predefs;
    
    StdSteps* m_stdSteps;

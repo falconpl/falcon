@@ -14,9 +14,9 @@
 */
 
 #undef SRC
-#define SRC "falcon/cm/minmax.cpp"
+#define SRC "falcon/builtin/minmax.cpp"
 
-#include <falcon/cm/minmax.h>
+#include <falcon/builtin/minmax.h>
 #include <falcon/error.h>
 #include <falcon/vm.h>
 #include <falcon/vmcontext.h>

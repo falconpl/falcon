@@ -14,9 +14,9 @@
 */
 
 #undef SRC
-#define SRC "falcon/cm/describe.cpp"
+#define SRC "falcon/builtin/describe.cpp"
 
-#include <falcon/cm/describe.h>
+#include <falcon/builtin/describe.h>
 #include <falcon/vm.h>
 #include <falcon/vmcontext.h>
 #include <falcon/error.h>

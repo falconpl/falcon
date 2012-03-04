@@ -99,7 +99,7 @@ namespace BOMH
 
 void len(VMContext* ctx, const Class*, void*)
 {
-   static Function* lenFunc = Engine::instance()->getPseudoFunction("len");
+   static Function* lenFunc = static_cast<Function*>(Engine::instance()->getMantra("len"));
    fassert( lenFunc != 0 );
 
    Item &value = ctx->topData();
@@ -126,7 +126,7 @@ void bound_(VMContext*, const Class*, void*)
 
 void className(VMContext* ctx, const Class* , void*)
 {
-   static Function* classNameFunc = Engine::instance()->getPseudoFunction("className");
+   static Function* classNameFunc = static_cast<Function*>(Engine::instance()->getMantra("className"));
    fassert( classNameFunc != 0 );
 
    Item &value = ctx->topData();
@@ -147,7 +147,7 @@ void className_(VMContext* ctx, const Class*, void* data)
 
 void baseClass(VMContext* ctx, const Class*, void*)
 {
-   static Function* classNameFunc = Engine::instance()->getPseudoFunction("baseClass");
+   static Function* classNameFunc = static_cast<Function*>(Engine::instance()->getMantra("baseClass"));
    fassert( classNameFunc != 0 );
 
    Item &value = ctx->topData();
@@ -168,7 +168,7 @@ void baseClass_(VMContext* ctx, const Class* cls, void*)
 
 void clone(VMContext *ctx, const Class*, void*)
 {
-   static Function* cloneFunc = Engine::instance()->getPseudoFunction("clone");
+   static Function* cloneFunc = static_cast<Function*>(Engine::instance()->getMantra("clone"));
    fassert( cloneFunc != 0 );
 
    Item &value = ctx->topData();
@@ -191,7 +191,7 @@ void clone_(VMContext* ctx, const Class* cls, void* data)
 
 void describe( VMContext* ctx, const Class*, void* )
 {
-   static Function* func = Engine::instance()->getCore()->getFunction("describe");
+   static Function* func = static_cast<Function*>(Engine::instance()->getMantra("describe"));
    fassert( func != 0 );
 
    Item &value = ctx->topData();
@@ -252,7 +252,7 @@ void ptr_(VMContext*, const Class*, void*)
 
 void toString(VMContext* ctx, const Class*, void*)
 {
-   static Function* func = Engine::instance()->getCore()->getFunction("toString");
+   static Function* func = static_cast<Function*>(Engine::instance()->getMantra("toString"));
    fassert( func != 0 );
 
    Item &value = ctx->topData();
@@ -268,7 +268,7 @@ void toString_(VMContext* ctx, const Class* cls, void* data)
 
 void typeId(VMContext* ctx, const Class*, void*)
 {
-   static Function* func = Engine::instance()->getPseudoFunction("typeId");
+   static Function* func = static_cast<Function*>(Engine::instance()->getMantra("typeId"));
    fassert( func != 0 );
 
    Item &value = ctx->topData();
@@ -296,7 +296,7 @@ void typeId_(VMContext* ctx, const Class*, void* data)
 
 void compare(VMContext* ctx, const Class*, void*)
 {
-   static Function* func = Engine::instance()->getPseudoFunction("compare");
+   static Function* func = static_cast<Function*>(Engine::instance()->getMantra("compare"));
    fassert( func != 0 );
 
    Item &value = ctx->topData();

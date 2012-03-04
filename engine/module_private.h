@@ -261,12 +261,9 @@ public:
     */
    GlobalsMap m_gExports;
 
-   typedef std::map<String, Function*> FunctionMap;
-   FunctionMap m_functions;
+   typedef std::map<String, Mantra*> MantraMap;
+   MantraMap m_mantras;
 
-   typedef std::map<String, Class*> ClassMap;
-   ClassMap m_classes;
-   
    typedef std::deque<Requirement*> RequirementList;
    RequirementList m_reqslist;
    

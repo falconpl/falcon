@@ -11,8 +11,8 @@
       virtual bool op_init( VMContext* ctx, void* instance, int32 pcount ) const;\
       virtual void restore( VMContext* ctx, DataReader*dr, void*& empty ) const; \
       extra\
-   } \
-   variable;
+   }; \
+   Class##name * variable;
    
 #define FALCON_SYNCLASS_DECLARATOR( variable, name, type ) \
    FALCON_SYNCLASS_DECLARATOR_EX( variable, name, type,)
@@ -23,7 +23,7 @@
 #undef FALCON_SYNCLASS_DECLARATOR_EX
 #undef FALCON_SYNCLASS_DECLARATOR
 #define FALCON_SYNCLASS_DECLARATOR_EX( variable, name, type, extra ) \
-   variable( m_cls_##type ),
+   variable = new Class##name( m_cls_##type );
    
 #define FALCON_SYNCLASS_DECLARATOR( variable, name, type ) \
    FALCON_SYNCLASS_DECLARATOR_EX( variable, name, type,)
@@ -36,7 +36,7 @@
 #undef FALCON_SYNCLASS_DECLARATOR
 
 #define FALCON_SYNCLASS_DECLARATOR_EX( variable, name, type, extra ) \
-   engine->addBuiltin(& variable);
+   engine->addMantra(variable);
    
 #define FALCON_SYNCLASS_DECLARATOR( variable, name, type ) \
    FALCON_SYNCLASS_DECLARATOR_EX( variable, name, type,)

@@ -20,6 +20,7 @@
 #include <falcon/types.h>
 #include <falcon/function.h>
 #include <falcon/string.h>
+#include <falcon/pstep.h>
 
 namespace Falcon {
 namespace Ext {

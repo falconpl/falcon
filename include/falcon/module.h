@@ -19,11 +19,13 @@
 
 #include <falcon/setup.h>
 #include <falcon/string.h>
-#include <falcon/function.h>
 #include <falcon/enumerator.h>
 #include <falcon/refcounter.h>
 #include <falcon/modmap.h>
 #include <falcon/loadmode.h>
+#include <falcon/mantra.h>
+#include <falcon/class.h>
+#include <falcon/function.h>
 
 #define DEFALUT_FALCON_MODULE_INIT falcon_module_init
 #define DEFALUT_FALCON_MODULE_INIT_NAME "falcon_module_init"
@@ -35,7 +37,6 @@ namespace Falcon {
 
 class Symbol;
 class Item;
-class Class;
 class Inheritance;
 class ModSpace;
 class ModLoader;
@@ -120,29 +121,33 @@ public:
    const String& uri() const {return m_uri;}
 
 
-   /** Adds a global function, possibly exportable.
+   /** Adds a global mantra, possibly exportable.
     \param f The function to be added
     \param bExport if true, the returned symbol will be exported.
     \return A Symbol holding a pointer to the global variable where the
             function is now stored, or 0 if the function name is already present.
     */
-   Symbol* addFunction( Function* f, bool bExport = true );
-
-   /** Adds an anonymous function.
-    \param f The function to be added
-
-    The name of the function will be modified so that it is unique in case
-    it is already present in the module.
-    */
-   void addAnonFunction( Function* f );
-
+   Symbol* addMantra( Mantra* f, bool bExport = true );
+   
    /** Storing it on an already defined symbol.
     \param sym The global symbol that is already stored on this module.
     \param f The function to be added
 
     
     */
-   void addFunction( Symbol* sym, Function* f );
+   bool addMantraWithSymbol( Mantra* f, Symbol* sym, bool bExport = true );
+
+   /** Adds an anonymous mantra.
+    \param f The mantra to be added
+
+    The name of the mantra will be modified so that it is unique in case
+    it is already present in the module.
+    
+    The mantra will not be exported, and there won't be any synbol created
+    for this mantra.
+    */
+   void addAnonMantra( Mantra* f );
+
 
    /** Adds a global function, possibly exportable.
     \param f The function to be added
@@ -153,35 +158,15 @@ public:
     */
    Symbol* addFunction( const String& name, ext_func_t f, bool bExport = true );
 
-   /** Adds a new class to this module.
-    \note This method doesn't seek for existing waiting 
-    */
-   void addClass( Symbol* gsym, Class* fc, bool isObj );
 
-   /** Adds a global class, possibly exportable.
+   /** Creates a singleton object.
     \param fc The class to be added
-    \param isObj If true, there's a singleton instance bound to this class.
     \param bExport if true, the returned symbol will be exported.
     \return A GlobalSymbol holding a pointer to the global variable where the
             function is now stored, or 0 if the function name is already present.
     */
-   Symbol* addClass( Class* fc, bool isObj, bool bExport = true );
+   Symbol* addSingleton( Class* fc, bool bExport = true );
 
-   /** Finds an already registered class.
-    \return A global class or 0 if not found.
-
-    If the given name is present as a global class in the current module.
-    */
-   Class* getClass( const String& name ) const;
-   
-   
-   /** Adds an anonymous class.
-    \param cls The class to be added
-
-    The name of the class will be modified so that it is unique in case
-    it is already present in the module.
-    */
-   void addAnonClass( Class* cls );
 
    /** Adds a global variable, possibly exportable.
     \param name The name of the symbol referencing the variable.
@@ -225,7 +210,7 @@ public:
 
     If the given name is present as a global function in the current module.
     */
-   Function* getFunction( const String& name ) const;
+   Mantra* getMantra( const String& name, Mantra::t_category cat = Mantra::e_c_none ) const;
 
    /** Enumerator receiving symbols in this module. */
    typedef Enumerator<Symbol> SymbolEnumerator;
@@ -241,18 +226,12 @@ public:
    void enumerateExports( SymbolEnumerator& rator ) const;
 
    /** Candy grammar to add exported functions. */
-   Module& operator <<( Function* f )
+   Module& operator <<( Mantra* f )
    {
-      addFunction( f );
+      addMantra( f );
       return *this;
    }
 
-   /** Candy grammar to add exported classes. */
-   Module& operator <<( Class* f )
-   {
-      addClass( f, false );
-      return *this;
-   }
 
    /** Adds a generic import request.
     \param source The source path or logical module name.
@@ -420,21 +399,7 @@ public:
     \see Requirement
     */
    Symbol* addRequirement( Requirement* cr );
-   
-   
-   /** Stores a class coming from a source module.
-    \param fcls The class to be added.
-    \param isObject if true, adds an object instance.
-    \param gs An optional gobal symbol associated with this class.
-    
-    This method decides if a FalconClass should be added as complete (in this
-    case, it may be transformed in a HyperClass if necessary) or if it requires
-    to be posted for later linkage imports.
-    
-    Module compilers and code synthezizing classes that may require external
-    inheritances should use this method.
-    */
-   void storeSourceClass( FalconClass* fcls, bool isObject, Symbol* gs = 0 );
+
    
    /** Perform completion checks on source classes.
     \param fcls The class that have just been completed.
@@ -529,6 +494,13 @@ public:
    void setMainFunction( Function* mf );
    
    bool isNative() const { return m_bNative; }
+   
+   Class* getClass( const String& name ) const { return 
+      static_cast<Class*>( getMantra(name, Mantra::e_c_class) ); }
+      
+   Function* getFunction( const String& name ) const { return 
+      static_cast<Function*>( getMantra(name, Mantra::e_c_function) ); }
+   
 private:
    class Private;
    Private* _p;
@@ -541,8 +513,7 @@ private:
    DynUnloader* m_unloader;
    bool m_bMain;
       
-   int m_anonFuncs;
-   int m_anonClasses;
+   int m_anonMantras;
    Function* m_mainFunc;
    bool m_bNative;
 

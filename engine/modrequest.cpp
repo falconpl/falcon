@@ -16,6 +16,9 @@
 #include <falcon/modrequest.h>
 #include <falcon/importdef.h>
 
+#include <falcon/datawriter.h>
+#include <falcon/datareader.h>
+
 #include <deque>
 #include <algorithm>
 
@@ -85,6 +88,23 @@ int ModRequest::importDefCount() const
    return (int) m_idl->size();
 }
 
+
+void ModRequest::store( DataWriter* wr ) const
+{
+   wr->write( m_name );
+   wr->write( m_isLoad );
+   wr->write( m_bIsURI );
+}
+
+
+void ModRequest::restore( DataReader* rd )
+{
+   rd->read( m_name );
+   rd->read( m_isLoad );
+   rd->read( m_bIsURI );
+}
+
+   
 }
 
 /* end of modrequest.cpp */

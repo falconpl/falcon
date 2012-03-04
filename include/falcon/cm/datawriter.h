@@ -28,7 +28,7 @@ namespace Ext {
 class ClassDataWriter: public ClassUser
 {
 public:
-   ClassDataWriter();
+   ClassDataWriter( Class* clsStream );
    virtual ~ClassDataWriter();
    
    //=============================================================
@@ -46,6 +46,7 @@ public:
    virtual bool op_init( VMContext* ctx, void* instance, int pcount ) const;
    
 private:
+   Class* m_clsStream;
    
    //====================================================
    // Properties.

@@ -30,8 +30,7 @@ class Error;
 class Symbol;
 class ModLoader;
 class ImportDef;
-class Class;
-class Function;
+class Mantra;
 
 /** Collection of (static) modules active in a virtual machine.
  
@@ -202,19 +201,13 @@ public:
    // Service functions
    //===================================================================
    
-   Class* findDynamicClass( 
+   Mantra* findDynamicMantra( 
       ModLoader* ml,
       const String& moduleUri, 
       const String& moduleName, 
       const String& className, 
       bool &addedMod );
    
-   Function* findDynamicFunction( 
-      ModLoader* ml,
-      const String& moduleUri, 
-      const String& moduleName, 
-      const String& functionName, 
-      bool &addedMod );
    
    /** Returns a previously stored module by name.
     \param name The logical name of the module to be searched.

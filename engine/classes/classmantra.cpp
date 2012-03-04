@@ -126,7 +126,7 @@ void ClassMantra::restore( VMContext* ctx, DataReader* stream, void*& empty ) co
       ModSpace* ms = ctx->vm()->modSpace();
       ModLoader* ml = ctx->vm()->modLoader();
       // TODO: Fix Find Mantra
-      Mantra* mantra = ms->findDynamicClass(ml, modUri, modName, name, hasLink );
+      Mantra* mantra = ms->findDynamicMantra(ml, modUri, modName, name, hasLink );
       
       // if 0, would have thrown
       fassert( mantra != 0 );
@@ -142,8 +142,7 @@ void ClassMantra::restore( VMContext* ctx, DataReader* stream, void*& empty ) co
       empty = mantra;
    }
    else {
-      // TODO Fix mantra search
-      Mantra* mantra = eng->getPseudoFunction( name );
+      Mantra* mantra = eng->getMantra( name );
       
       // if 0, would have thrown
       fassert( mantra != 0 );

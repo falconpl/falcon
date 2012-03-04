@@ -46,6 +46,9 @@ public:
    //=============================================================
 
    virtual bool op_init( VMContext* ctx, void* instance, int32 pcount ) const;
+   
+private:
+   void restoreModule( Module* mod, DataReader* stream ) const;
 };
 
 }

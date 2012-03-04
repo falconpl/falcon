@@ -28,6 +28,8 @@
 #include <falcon/module.h>       // For getDynSymbolValue
 #include <falcon/modspace.h>
 
+#include <falcon/storer.h>
+
 #include <falcon/errors/codeerror.h>
 
 #include <falcon/psteps/stmttry.h>      // for catch.
@@ -113,6 +115,34 @@ void VMContext::reset()
    pushReturn();
 }
 
+
+ Storer* VMContext::getTopStorer() const
+ {
+    const CodeFrame* cc = &currentCode();
+    // todo; better check
+    if( cc != 0  )
+    {
+       uint32 flags = cc->m_step->flags();
+       switch( flags )
+       {
+          case 1:
+          {
+             const Storer::WriteNext* wn = static_cast<const Storer::WriteNext*>(cc->m_step);
+             return wn->storer();
+          }
+          break;
+
+          case 2:
+          {
+             const Storer::TraverseNext* tn = static_cast<const Storer::TraverseNext*>(cc->m_step);
+             return tn->storer();
+          }
+          break;
+       }
+    }
+    
+    return 0;
+ }
 
 void VMContext::setSafeCode()
 {

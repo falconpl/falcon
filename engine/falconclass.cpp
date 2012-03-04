@@ -53,10 +53,13 @@ public:
 
    typedef std::map<String, Property*> MemberMap;
    MemberMap m_origMembers;
-   MemberMap m_members;
+   MemberMap m_curMembers;
+   MemberMap* m_members;
 
    typedef std::list<FalconState*> StateList;
-   StateList m_states;
+   StateList m_origStates;
+   StateList m_curStates;
+   StateList* m_states;
 
    typedef std::vector<Property*> InitPropList;
    InitPropList m_initExpr;
@@ -64,24 +67,35 @@ public:
    ItemArray m_propDefaults;      
 
    Private()
-   {}
+   {
+      m_members = &m_origMembers;
+      m_states = &m_origStates;
+   }
 
    ~Private()
    {      
-      StateList::iterator si = m_states.begin();
-      while( si != m_states.end() )
+      StateList::iterator si = m_states->begin();
+      while( si != m_states->end() )
       {
          delete *si;
          ++si;
       }
 
-      MemberMap::iterator mi = m_members.begin();
-      while( mi != m_members.end() )
+      MemberMap::iterator mi = m_members->begin();
+      while( mi != m_members->end() )
       {
          delete mi->second;
          ++mi;
       }
 
+   }
+   
+   void constructing()
+   {
+      m_curMembers = m_origMembers;
+      m_members = &m_curMembers;
+      m_curStates = m_origStates;
+      m_states = &m_curStates;
    }
 };
 
@@ -196,7 +210,7 @@ bool FalconClass::addProperty( const String& name, const Item& initValue )
       return false;
    }
    
-   Private::MemberMap& members = _p->m_members;
+   Private::MemberMap& members = *_p->m_members;
 
    // first time around?
    if ( members.find( name ) != members.end() )
@@ -230,7 +244,7 @@ bool FalconClass::addProperty( const String& name, Expression* initExpr )
       return false;
    }
    
-   Private::MemberMap& members = _p->m_members;
+   Private::MemberMap& members = *_p->m_members;
 
    // first time around?
    if ( members.find( name ) != members.end() || initExpr->parent() != 0 )
@@ -269,7 +283,7 @@ bool FalconClass::addProperty( const String& name )
       return false;
    }
    
-   Private::MemberMap& members = _p->m_members;
+   Private::MemberMap& members = *_p->m_members;
 
    // first time around?
    if ( members.find( name ) != members.end() )
@@ -297,7 +311,7 @@ bool FalconClass::addMethod( Function* mth )
       return false;
    }
       
-   Private::MemberMap& members = _p->m_members;
+   Private::MemberMap& members = *_p->m_members;
 
    const String& name = mth->name();
 
@@ -316,8 +330,8 @@ bool FalconClass::addMethod( Function* mth )
 
 Class* FalconClass::getParent( const String& name ) const
 {
-   Private::MemberMap::const_iterator iter = _p->m_members.find(name);
-   if( iter != _p->m_members.end() )
+   Private::MemberMap::const_iterator iter = _p->m_members->find(name);
+   if( iter != _p->m_members->end() )
    {
       if( iter->second->m_type == Property::t_inh )
       {
@@ -337,7 +351,7 @@ bool FalconClass::addParent( ExprInherit* inh )
       return false;
    }
    
-   Private::MemberMap& members = _p->m_members;
+   Private::MemberMap& members = *_p->m_members;
 
    const String& name = inh->name();
 
@@ -400,7 +414,7 @@ bool FalconClass::addParent( ExprInherit* inh )
           m_bPureFalcon = false;
        }
        
-       _p->m_members[ei->name()] = new Property( ei );
+       (*_p->m_members)[ei->name()] = new Property( ei );
     }
     
     SynFunc* ctr = makeConstructor();
@@ -423,7 +437,7 @@ void FalconClass::onInheritanceResolved( ExprInherit* inh )
 
 bool FalconClass::getProperty( const String& name, Item& target ) const
 {
-   Private::MemberMap& members = _p->m_members;
+   Private::MemberMap& members = *_p->m_members;
    Private::MemberMap::iterator iter = members.find( name );
    // first time around?
    if ( iter == members.end() )
@@ -458,7 +472,7 @@ bool FalconClass::getProperty( const String& name, Item& target ) const
 
 const FalconClass::Property* FalconClass::getProperty( const String& name ) const
 {
-   Private::MemberMap& members = _p->m_members;
+   Private::MemberMap& members = *_p->m_members;
    Private::MemberMap::iterator iter = members.find( name );
    // first time around?
    if ( iter == members.end() )
@@ -482,7 +496,7 @@ void FalconClass::gcMark( uint32 mark )
 
 bool FalconClass::addState( FalconState* state )
 {
-   Private::MemberMap& members = _p->m_members;
+   Private::MemberMap& members = *_p->m_members;
 
    const String& name = state->name();
 
@@ -493,7 +507,7 @@ bool FalconClass::addState( FalconState* state )
    }
 
    // insert a new property with the required ID
-   _p->m_members[name] = new Property( state );
+   members[name] = new Property( state );
 
    return true;
 }
@@ -501,7 +515,7 @@ bool FalconClass::addState( FalconState* state )
 
 void FalconClass::enumeratePropertiesOnly( PropertyEnumerator& cb ) const
 {
-   Private::MemberMap& members = _p->m_members;
+   Private::MemberMap& members = *_p->m_members;
    Private::MemberMap::iterator iter = members.begin();
    while( iter != members.end() )
    {
@@ -574,11 +588,15 @@ bool FalconClass::construct()
       return true;
    }
    
+   // copy the current status
+   _p->constructing();
+   
    // perform property flattening.
    if( m_parentship > 0 )
    {
       // add properties top to bottom.
-      for( int i = 0; i < m_parentship->arity(); i++ )
+      int len =  m_parentship->arity();
+      for( int i = 0; i < len; i++ )
       {
          ExprInherit* inh = static_cast<ExprInherit*>(m_parentship->nth( i ));
          // we checked that we have no missing parents, all the bases should be there.
@@ -588,8 +606,8 @@ bool FalconClass::construct()
          fassert( base->isFalconClass() );
          FalconClass* fbase = static_cast<FalconClass*>(base);
          
-         Private::MemberMap::const_iterator fbpi = fbase->_p->m_members.begin();
-         while( fbpi != fbase->_p->m_members.end() )
+         Private::MemberMap::const_iterator fbpi = fbase->_p->m_members->begin();
+         while( fbpi != fbase->_p->m_members->end() )
          {
             Property* bp = fbpi->second;
             if( bp->m_type != FalconClass::Property::t_inh )
@@ -604,11 +622,11 @@ bool FalconClass::construct()
                   if( np->expression() != 0 )
                   {
                      fassert( np->m_type == FalconClass::Property::t_prop);
-                     np->m_value.id = _p->m_members.size();
+                     np->m_value.id = _p->m_members->size();
                      np->expression()->setParent( &makeConstructor()->syntree() );
                      m_hasInitExpr = true;
                   }
-                  _p->m_members[np->m_name] = np;
+                  (*_p->m_members)[np->m_name] = np;
                }
             }
             
@@ -700,7 +718,7 @@ void FalconClass::gcMarkInstance( void* self, uint32 mark ) const
 
 void FalconClass::enumerateProperties( void* , PropertyEnumerator& cb ) const
 {
-   Private::MemberMap& members = _p->m_members;
+   Private::MemberMap& members = *_p->m_members;
    Private::MemberMap::iterator iter = members.begin();
    while( iter != members.end() )
    {
@@ -715,7 +733,7 @@ void FalconClass::enumerateProperties( void* , PropertyEnumerator& cb ) const
 
 void FalconClass::enumeratePV( void* self, PVEnumerator& cb ) const
 {
-   Private::MemberMap& members = _p->m_members;
+   Private::MemberMap& members = *_p->m_members;
    Private::MemberMap::iterator iter = members.begin();
 
    FalconInstance* inst = static_cast<FalconInstance*>(self);
@@ -734,7 +752,7 @@ void FalconClass::enumeratePV( void* self, PVEnumerator& cb ) const
 
 bool FalconClass::hasProperty( void*, const String& propName ) const
 {
-   Private::MemberMap& members = _p->m_members;
+   Private::MemberMap& members = *_p->m_members;
    Private::MemberMap::iterator iter = members.find( propName );
 
    return members.end() != iter;

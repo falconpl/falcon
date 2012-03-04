@@ -25,6 +25,8 @@ namespace Falcon {
 
 class Module;
 class ModRequest;
+class DataWriter;
+class DataReader;
 
 /** Structure recording the import definition in modules. 
  This structure holds all the information that can be expressed in an "import"
@@ -166,6 +168,12 @@ public:
    entity in the serialized file.
    */
    void id( int n ) { m_id = n; }
+   
+   /** Store this definition on a stream. */
+   void store(DataWriter* wr) const;
+   
+   /** Restore this definition from a stream */
+   void restore( DataReader* rd);
    
 private:
    class SymbolList;

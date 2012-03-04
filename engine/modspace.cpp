@@ -821,7 +821,7 @@ Module* ModSpace::retreiveDynamicModule(
 }
 
 
-Class* ModSpace::findDynamicClass( 
+Mantra* ModSpace::findDynamicMantra( 
       ModLoader* ml,
       const String& moduleUri, 
       const String& moduleName, 
@@ -831,7 +831,7 @@ Class* ModSpace::findDynamicClass(
    static Engine* eng = Engine::instance();
    
    Module* clsContainer = retreiveDynamicModule( ml, moduleUri, moduleName, addedMod );
-   Class* theClass;
+   Mantra* theClass;
 
    // still no luck?
    if( clsContainer == 0 )
@@ -849,33 +849,35 @@ Class* ModSpace::findDynamicClass(
       Symbol* sym = this->findExportedSymbol( className );
       if( sym == 0 )
       {
-         theClass = eng->getRegisteredClass( className );
+         theClass = eng->getMantra( className );
          if( theClass == 0 )
          {
             throw new UnserializableError( ErrorParam(e_deser, __LINE__, SRC )
                .origin( ErrorParam::e_orig_runtime)
-               .extra( "Unavailable class " + className ));
+               .extra( "Unavailable mantra " + className ));
          }
       }
       else 
       {
-         if( ! sym->defaultValue().isClass() )
+         if( sym->defaultValue().isClass() || sym->defaultValue().isFunction() )
+         {
+            theClass = static_cast<Mantra*>(sym->defaultValue().asInst());
+         }
+         else
          {
              throw new UnserializableError( ErrorParam(e_deser, __LINE__, SRC )
                .origin( ErrorParam::e_orig_runtime)
-               .extra( "Symbol is not class " + className ));
+               .extra( "Symbol is not mantra " + className ));
          }
-
-         theClass = sym->defaultValue().asClass();
       }
    }
    else
    {
       // we are sure about the sourceship of the class...
-      theClass = clsContainer->getClass( className );
+      theClass = clsContainer->getMantra( className );
       if( theClass == 0 )
       {
-         String expl = "Unavailable class " + 
+         String expl = "Unavailable mantra " + 
                   className + " in " + clsContainer->uri();
          delete clsContainer; // the module is not going anywhere.
          throw new UnserializableError( ErrorParam(e_deser, __LINE__, SRC )
@@ -892,80 +894,6 @@ Class* ModSpace::findDynamicClass(
    
    return theClass;
 }
-
-
-Function* ModSpace::findDynamicFunction( 
-      ModLoader* ml,
-      const String& moduleUri, 
-      const String& moduleName, 
-      const String& funcName, 
-      bool &addedMod )
-{
-   static Engine* eng = Engine::instance();
-   
-   Module* clsContainer = retreiveDynamicModule( ml, moduleUri, moduleName, addedMod );
-   Function* theFunc = 0;
-
-   // still no luck?
-   if( clsContainer == 0 )
-   {
-      if( moduleName != "" )
-      {
-         // we should have found a module -- and if the module has a URI,
-         // then it has a name.
-         throw new UnserializableError( ErrorParam(e_deser, __LINE__, SRC )
-            .origin( ErrorParam::e_orig_runtime)
-            .extra( "Can't find module " + 
-                  moduleName + " for " + funcName ));
-      }
-
-      Symbol* sym = this->findExportedSymbol( funcName );
-      if( sym == 0 )
-      {
-         theFunc = eng->getPseudoFunction( funcName );
-         if( theFunc == 0 )
-         {
-            throw new UnserializableError( ErrorParam(e_deser, __LINE__, SRC )
-               .origin( ErrorParam::e_orig_runtime)
-               .extra( "Unavailable function " + funcName ));
-         }
-      }
-      else 
-      {
-         if( ! sym->defaultValue().isFunction() )
-         {
-             throw new UnserializableError( ErrorParam(e_deser, __LINE__, SRC )
-               .origin( ErrorParam::e_orig_runtime)
-               .extra( "Symbol is not function " + funcName ));
-         }
-
-         theFunc = sym->defaultValue().asFunction();
-      }
-   }
-   else
-   {
-      // we are sure about the sourceship of the class...
-      theFunc = clsContainer->getFunction( funcName );
-      if( theFunc == 0 )
-      {
-         String expl = "Unavailable function " + 
-                  funcName + " in " + clsContainer->uri();
-         delete clsContainer; // the module is not going anywhere.
-         throw new UnserializableError( ErrorParam(e_deser, __LINE__, SRC )
-            .origin( ErrorParam::e_orig_runtime)
-            .extra( expl ));
-      }
-
-      // shall we link a new module?
-      if( addedMod )
-      {
-         this->resolve( ml, clsContainer, false, true );
-      }
-   }
-   
-   return theFunc;
-}
-
 
 }
 
