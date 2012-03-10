@@ -13,16 +13,16 @@
    See LICENSE file for licensing details.
 */
 #ifndef MULTICLASS_PRIVATE_H
-#define	MULTICLASS_PRIVATE_H
+#define MULTICLASS_PRIVATE_H
 
-#include <falcon/multiclass.h>
+#include <falcon/classes/classmulti.h>
 
 #include <string>
 #include <map>
 
 namespace Falcon {
 
-class MultiClass::Private_base
+class ClassMulti::Private_base
 {
 public:
    typedef std::map<String, Property> PropMap;

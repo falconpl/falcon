@@ -652,14 +652,9 @@ HyperClass* FalconClass::hyperConstruct()
    if( m_parentship != 0 )
    {
       // give the ownership of the parentship to the hyperclass.
-      setParentship( this->m_parentship );
-      this->m_parentship = 0;
+      nself->setParentship( this->m_parentship, false );
    }
    
-   // Now we're complete and pure falcon...
-   m_bPureFalcon = true;
-   m_bConstructed = true;
-
    // it's now duty of the caller to construct the hyperclass.
    return nself;
 }

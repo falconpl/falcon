@@ -38,8 +38,6 @@ BaseClass::~BaseClass()
 
 void BaseClass::invoke( VMContext* ctx, int32 nParams )
 {
-   static Class* metaClass = Engine::instance()->metaClass();
-   
    Item *elem;
    
    if ( ctx->isMethodic() )
@@ -58,17 +56,27 @@ void BaseClass::invoke( VMContext* ctx, int32 nParams )
    
    Class* cls; void* inst;
    elem->forceClassInst( cls, inst );
-   ctx->returnFrame( Item(metaClass, cls) );
+   if( cls->isMetaClass() ) {
+      // already a class
+      ctx->returnFrame(*elem);
+   }
+   else
+   {
+      ctx->returnFrame( Item(cls->handler(), cls) );
+   }
 }
 
 
 void BaseClass::Invoke::apply_( const PStep*, VMContext* ctx )
 {
-   static Class* metaClass = Engine::instance()->metaClass();
    register Item& top = ctx->topData();
    Class* cls; void* inst;
    top.forceClassInst( cls, inst );
-   top.setUser( metaClass, cls );
+   if( ! cls->isMetaClass() )
+   {
+      top.setUser( cls, inst );
+   }
+   // otherwise, the top item is already a class.
    ctx->popCode();
 }
 

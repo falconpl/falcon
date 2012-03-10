@@ -57,8 +57,6 @@ BOM::BOM():
    hm["describe_"] = BOMH::describe_;
    hm["isCallable"] = BOMH::isCallable;
    hm["isCallable_"] = BOMH::isCallable_;
-   hm["metaclass"] = BOMH::metaclass;
-   hm["metaclass_"] = BOMH::metaclass_;
    hm["ptr"] = BOMH::ptr;
    hm["ptr_"] = BOMH::ptr_;
    hm["toString"] = BOMH::toString;
@@ -157,10 +155,11 @@ void baseClass(VMContext* ctx, const Class*, void*)
 
 void baseClass_(VMContext* ctx, const Class* cls, void*)
 {
-   static Class* mc = Engine::instance()->metaClass();
-   static Collector* coll = Engine::instance()->collector();
-   
-   ctx->topData().setUser( FALCON_GC_STORE( coll, mc, cls ) );
+   if( ! cls->isMetaClass() )
+   {
+      ctx->topData().setUser( cls->handler(), const_cast<Class*>(cls) );
+   }
+   // otherwise the topdata is already a class
 }
 
 //======================================================
@@ -217,20 +216,6 @@ void isCallable(VMContext*, const Class*, void*)
 
 
 void isCallable_(VMContext*, const Class*, void*)
-{
-   fassert2( false, "Not implemented" );
-
-}
-
-
-void metaclass(VMContext*, const Class*, void*)
-{
-   fassert2( false, "Not implemented" );
-
-}
-
-
-void metaclass_(VMContext*, const Class*, void*)
 {
    fassert2( false, "Not implemented" );
 

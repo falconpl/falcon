@@ -80,8 +80,6 @@ void describe(VMContext* ctx, const Class* cls, void* data);
 void describe_(VMContext* ctx, const Class* cls, void* data);
 void isCallable(VMContext* ctx, const Class* cls, void* data);
 void isCallable_(VMContext* ctx, const Class* cls, void* data);
-void metaclass(VMContext* ctx, const Class* cls, void* data);
-void metaclass_(VMContext* ctx, const Class* cls, void* data);
 void ptr(VMContext* ctx, const Class* cls, void* data);
 void ptr_(VMContext* ctx, const Class* cls, void* data);
 void toString(VMContext* ctx, const Class* cls, void* data);

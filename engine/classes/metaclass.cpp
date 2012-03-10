@@ -24,7 +24,7 @@
 namespace Falcon {
 
 MetaClass::MetaClass():
-   ClassMantra("Class", FLC_CLASS_ID_CLASS )
+   ClassMantra("$MetaClass", FLC_CLASS_ID_CLASS )
 {
 }
 
@@ -40,25 +40,6 @@ void MetaClass::describe( void* instance, String& target, int, int ) const
    target = "Class " + fc->name();
 }
 
-
-void MetaClass::store( VMContext* ctx, DataWriter* stream, void* instance ) const
-{
-   Class* cls = static_cast<Class*>(instance);
-   
-   if( cls->isFalconClass() ) 
-   {
-   }   
-   else 
-   {
-      ClassMantra::store( ctx, stream, instance );
-   }
-}
-
-
-void MetaClass::restore( VMContext* ctx, DataReader* stream, void*& empty ) const
-{   
-   ClassMantra::restore( ctx, stream, empty );
-}
 
 Class* MetaClass::getParent( const String& name ) const
 {

@@ -28,7 +28,7 @@
 #include <falcon/falconclass.h>
 #include <falcon/module.h>
 
-#include "multiclass_private.h"
+#include "classes/classmulti_private.h"
 
 #include <map>
 #include <vector>
@@ -39,24 +39,27 @@ namespace Falcon
 
 
 HyperClass::HyperClass( FalconClass* master ):
-   MultiClass(master->name()),   
+   ClassMulti(master->name()),   
    m_constructor(0),
    m_master( master ),
    m_nParents(0),
+   m_ownParentship( true ),
    m_initParentsStep( this )
 {
    _p_base = new Private_base;
    addParentProperties( master );
    m_nParents++;
+   m_parentship = new ExprParentship();
 }
 
 
 HyperClass::HyperClass( const String& name ):
-   MultiClass(name),   
+   ClassMulti(name),   
    m_constructor(0),
    m_master( 0 ),
    m_nParents(0),
-   m_initParentsStep(this)   
+   m_ownParentship( true ),
+   m_initParentsStep(this)
 {
    _p_base = new Private_base;
    m_master = new FalconClass("#master$" + name);
@@ -71,7 +74,10 @@ HyperClass::HyperClass( const String& name ):
 HyperClass::~HyperClass()
 {
    delete m_master;
-   delete m_parentship;
+   if( m_ownParentship )
+   {
+      delete m_parentship;
+   }
    delete _p_base;
 }
 
@@ -98,7 +104,7 @@ bool HyperClass::addMethod( Function* mth )
 
 bool HyperClass::addParent( Class* cls )
 {   
-   MultiClass::Private_base::PropMap& props = _p_base->m_props;
+   ClassMulti::Private_base::PropMap& props = _p_base->m_props;
    // Is the class name shaded?
    if( props.find(cls->name()) != props.end() )
    {
@@ -106,7 +112,7 @@ bool HyperClass::addParent( Class* cls )
    }
    
    // ... and it must not appare in the inheritance properties.
-   props[cls->name()] = MultiClass::Property( cls, -m_nParents );
+   props[cls->name()] = ClassMulti::Property( cls, -m_nParents );
 
    addParentProperties( cls );
    m_nParents++;
@@ -115,10 +121,16 @@ bool HyperClass::addParent( Class* cls )
 }
 
 
-void HyperClass::setParentship( ExprParentship* ps )
+void HyperClass::setParentship( ExprParentship* ps, bool bOwn )
 {
+   if( m_ownParentship )
+   {
+      delete m_parentship;
+   }
+   
    m_parentship = ps;
-   MultiClass::Private_base::PropMap& props = _p_base->m_props;
+   m_ownParentship = bOwn;
+   ClassMulti::Private_base::PropMap& props = _p_base->m_props;
    
    // adds parents first to last.
    for( int i = 0; i < m_parentship->arity(); ++i )
@@ -127,7 +139,7 @@ void HyperClass::setParentship( ExprParentship* ps )
       Class* cls = inh->cls();
       
       // ... Always override names of parent classes.
-      props[cls->name()] = MultiClass::Property( cls, -m_nParents );
+      props[cls->name()] = ClassMulti::Property( cls, -m_nParents );
       addParentProperties( cls );
       m_nParents++;      
    }
@@ -309,8 +321,8 @@ void HyperClass::gcMarkInstance( void* self, uint32 mark ) const
 
 void HyperClass::enumerateProperties( void*, PropertyEnumerator& cb ) const
 {
-   MultiClass::Private_base::PropMap& props = _p_base->m_props;   
-   MultiClass::Private_base::PropMap::const_iterator iter = props.begin();
+   ClassMulti::Private_base::PropMap& props = _p_base->m_props;   
+   ClassMulti::Private_base::PropMap::const_iterator iter = props.begin();
    
    while( iter != props.end() )
    {
@@ -341,8 +353,8 @@ void HyperClass::enumeratePV( void* data, PVEnumerator& cb ) const
 
 bool HyperClass::hasProperty( void*, const String& prop ) const
 {
-   MultiClass::Private_base::PropMap& props = _p_base->m_props;   
-   MultiClass::Private_base::PropMap::const_iterator iter = props.find( prop );
+   ClassMulti::Private_base::PropMap& props = _p_base->m_props;   
+   ClassMulti::Private_base::PropMap::const_iterator iter = props.find( prop );
    return iter != props.end();
 }
 

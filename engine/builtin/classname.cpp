@@ -56,7 +56,7 @@ void ClassName::invoke( VMContext* ctx, int32 nParams )
    
    Class* cls; void* inst;
    elem->forceClassInst( cls, inst );
-   ctx->returnFrame((new String(cls->name()))->garbage());
+   ctx->returnFrame(cls->name());
 }
 
 
@@ -65,7 +65,7 @@ void ClassName::Invoke::apply_( const PStep*, VMContext* ctx )
    register Item& top = ctx->topData();
    Class* cls; void* inst;
    top.forceClassInst( cls, inst );
-   top = (new String(cls->name()))->garbage();
+   top.setString(cls->name());
    ctx->popCode();
 }
 

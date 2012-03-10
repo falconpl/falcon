@@ -22,13 +22,11 @@
 namespace Falcon
 {
 
-/** Handler for classes defined by a Falcon script.
+/** Base handler for classes.
 
- This class implements a class handler for classes a Falcon script. In other words,
- it is a handler for the "class type". The content of this type is a FalconClass,
- where properties and methods declared in a Falcon script class declaration
- are stored.
- 
+ This is the base handler for any class exposed as an entity in the system.
+ There are specialized subclasses that perform serialization of entities
+ like FalconClass, HyperClass, FlexyClass and Prototype.
  */
 class FALCON_DYN_CLASS MetaClass: public ClassMantra
 {
@@ -43,10 +41,7 @@ public:
    virtual void* getParentData( Class* parent, void* data ) const;
    
    void describe( void* instance, String& target, int, int ) const;
-   
-   virtual void store( VMContext* ctx, DataWriter* stream, void* instance ) const;
-   virtual void restore( VMContext* ctx, DataReader* stream, void*& empty ) const;
-
+  
    //=============================================================
    virtual void op_toString( VMContext* ctx, void* self ) const;
    virtual void op_call( VMContext* ctx, int32 pcount, void* self ) const;

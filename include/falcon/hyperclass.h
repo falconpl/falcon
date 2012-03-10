@@ -18,7 +18,7 @@
 
 #include <falcon/setup.h>
 #include <falcon/string.h>
-#include <falcon/multiclass.h>
+#include <falcon/classes/classmulti.h>
 #include <falcon/pstep.h>
 
 namespace Falcon
@@ -59,7 +59,7 @@ class ExprParentship;
  the generated self instance not to be marked.
  
  */
-class FALCON_DYN_CLASS HyperClass: public MultiClass
+class FALCON_DYN_CLASS HyperClass: public ClassMulti
 {
 public:   
    
@@ -137,6 +137,7 @@ private:
    ExprParentship* m_parentship;
    FalconClass* m_master;
    int m_nParents;
+   bool m_ownParentship;
    
    /** Creates the hyperclass with a name and a master (final child) class.
     \param master The master class.
@@ -146,7 +147,7 @@ private:
     */
    HyperClass( FalconClass* master );
    
-   void setParentship( ExprParentship* ps );
+   void setParentship( ExprParentship* ps, bool own = true );
    
    class FALCON_DYN_CLASS InitParentsStep: public PStep
    {

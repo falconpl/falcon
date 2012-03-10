@@ -177,6 +177,7 @@ add_library(falcon_engine SHARED
   classes/classmantra.cpp
   classes/classmethod.cpp
   classes/classmodule.cpp
+  classes/classmulti.cpp
   classes/classnumeric.cpp
   classes/classreference.cpp
   classes/classrange.cpp
@@ -187,6 +188,8 @@ add_library(falcon_engine SHARED
   classes/classrequirement.cpp
   classes/classuser.cpp
   classes/metaclass.cpp
+  classes/metafalconclass.cpp
+  classes/metahyperclass.cpp
   
   classes/classexpression.cpp
   classes/classstatement.cpp
@@ -257,7 +260,6 @@ add_library(falcon_engine SHARED
   modrequest.cpp
   modspace.cpp
   module.cpp
-  multiclass.cpp
   overridableclass.cpp
   prototypeclass.cpp
   pseudofunc.cpp

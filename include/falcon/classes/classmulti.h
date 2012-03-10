@@ -31,13 +31,13 @@ namespace Falcon
  \note This is still an abstract base class.
 
  */
-class FALCON_DYN_CLASS MultiClass: public Class
+class FALCON_DYN_CLASS ClassMulti: public Class
 {
 public:
    
-   MultiClass( const String& name );
-   MultiClass( const String& name, int TypeID );
-   virtual ~MultiClass();
+   ClassMulti( const String& name );
+   ClassMulti( const String& name, int TypeID );
+   virtual ~ClassMulti();
 
    //=========================================================
    // Operators.

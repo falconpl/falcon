@@ -16,7 +16,7 @@
 #undef SRC
 #define SRC "engine/multiclass.cpp"
 
-#include <falcon/multiclass.h>
+#include <falcon/classes/classmulti.h>
 #include <falcon/itemarray.h>
 #include <falcon/function.h>
 #include <falcon/ov_names.h>
@@ -28,31 +28,31 @@
 
 #include <cstring>
 
-#include "multiclass_private.h"
+#include "classmulti_private.h"
 
 namespace Falcon {
 
-MultiClass::MultiClass( const String& name, int typeId ):
+ClassMulti::ClassMulti( const String& name, int typeId ):
    Class( name, typeId )
 {
    m_overrides = new Property*[OVERRIDE_OP_COUNT];
    memset( m_overrides, 0, OVERRIDE_OP_COUNT* sizeof( Property* ));
 }
 
-MultiClass::MultiClass( const String& name ):
+ClassMulti::ClassMulti( const String& name ):
    Class( name )
 {
    m_overrides = new Property*[OVERRIDE_OP_COUNT];
    memset( m_overrides, 0, OVERRIDE_OP_COUNT* sizeof( Property* ));
 }
 
-MultiClass::~MultiClass()
+ClassMulti::~ClassMulti()
 {
    delete m_overrides;
 }
 
 
-void MultiClass::checkAddOverride( const String& name, Property* p )
+void ClassMulti::checkAddOverride( const String& name, Property* p )
 {
    if( name == OVERRIDE_OP_NEG ) m_overrides[OVERRIDE_OP_NEG_ID] = p;
 
@@ -101,7 +101,7 @@ void MultiClass::checkAddOverride( const String& name, Property* p )
 }
 
 
-void MultiClass::checkRemoveOverride( const String& name )
+void ClassMulti::checkRemoveOverride( const String& name )
 {
    if( name == OVERRIDE_OP_NEG ) m_overrides[OVERRIDE_OP_NEG_ID] = 0;
 
@@ -149,7 +149,7 @@ void MultiClass::checkRemoveOverride( const String& name )
 }
 
 
-bool MultiClass::getOverride( void* self, int op, Class*& cls, void*& udata ) const
+bool ClassMulti::getOverride( void* self, int op, Class*& cls, void*& udata ) const
 {
    Property* override = m_overrides[op];
 
@@ -165,7 +165,7 @@ bool MultiClass::getOverride( void* self, int op, Class*& cls, void*& udata ) co
 }
 
 
-inline bool MultiClass::inl_get_override( void* self, int op, Class*& cls, void*& udata ) const
+inline bool ClassMulti::inl_get_override( void* self, int op, Class*& cls, void*& udata ) const
 {
    Property* override = m_overrides[op];
 
@@ -181,7 +181,7 @@ inline bool MultiClass::inl_get_override( void* self, int op, Class*& cls, void*
 }
 
 
-void MultiClass::op_neg( VMContext* ctx, void* self ) const
+void ClassMulti::op_neg( VMContext* ctx, void* self ) const
 {
    Class* cls;
    void* udata;
@@ -197,7 +197,7 @@ void MultiClass::op_neg( VMContext* ctx, void* self ) const
 }
 
 
-void MultiClass::op_add( VMContext* ctx, void* self ) const
+void ClassMulti::op_add( VMContext* ctx, void* self ) const
 {
    Class* cls;
    void* udata;
@@ -213,7 +213,7 @@ void MultiClass::op_add( VMContext* ctx, void* self ) const
 }
 
 
-void MultiClass::op_sub( VMContext* ctx, void* self ) const
+void ClassMulti::op_sub( VMContext* ctx, void* self ) const
 {
    Class* cls;
    void* udata;
@@ -229,7 +229,7 @@ void MultiClass::op_sub( VMContext* ctx, void* self ) const
 }
 
 
-void MultiClass::op_mul( VMContext* ctx, void* self ) const
+void ClassMulti::op_mul( VMContext* ctx, void* self ) const
 {
    Class* cls;
    void* udata;
@@ -245,7 +245,7 @@ void MultiClass::op_mul( VMContext* ctx, void* self ) const
 }
 
 
-void MultiClass::op_div( VMContext* ctx, void* self ) const
+void ClassMulti::op_div( VMContext* ctx, void* self ) const
 {
    Class* cls;
    void* udata;
@@ -260,7 +260,7 @@ void MultiClass::op_div( VMContext* ctx, void* self ) const
    }
 }
 
-void MultiClass::op_mod( VMContext* ctx, void* self ) const
+void ClassMulti::op_mod( VMContext* ctx, void* self ) const
 {
    Class* cls;
    void* udata;
@@ -276,7 +276,7 @@ void MultiClass::op_mod( VMContext* ctx, void* self ) const
 }
 
 
-void MultiClass::op_pow( VMContext* ctx, void* self ) const
+void ClassMulti::op_pow( VMContext* ctx, void* self ) const
 {
    Class* cls;
    void* udata;
@@ -291,7 +291,7 @@ void MultiClass::op_pow( VMContext* ctx, void* self ) const
    }
 }
 
-void MultiClass::op_shr( VMContext* ctx, void* self ) const
+void ClassMulti::op_shr( VMContext* ctx, void* self ) const
 {
    Class* cls;
    void* udata;
@@ -306,7 +306,7 @@ void MultiClass::op_shr( VMContext* ctx, void* self ) const
    }
 }
 
-void MultiClass::op_shl( VMContext* ctx, void* self ) const
+void ClassMulti::op_shl( VMContext* ctx, void* self ) const
 {
    Class* cls;
    void* udata;
@@ -322,7 +322,7 @@ void MultiClass::op_shl( VMContext* ctx, void* self ) const
 }
 
 
-void MultiClass::op_aadd( VMContext* ctx, void* self) const
+void ClassMulti::op_aadd( VMContext* ctx, void* self) const
 {
    Class* cls;
    void* udata;
@@ -338,7 +338,7 @@ void MultiClass::op_aadd( VMContext* ctx, void* self) const
 }
 
 
-void MultiClass::op_asub( VMContext* ctx, void* self ) const
+void ClassMulti::op_asub( VMContext* ctx, void* self ) const
 {
    Class* cls;
    void* udata;
@@ -354,7 +354,7 @@ void MultiClass::op_asub( VMContext* ctx, void* self ) const
 }
 
 
-void MultiClass::op_amul( VMContext* ctx, void* self ) const
+void ClassMulti::op_amul( VMContext* ctx, void* self ) const
 {
    Class* cls;
    void* udata;
@@ -370,7 +370,7 @@ void MultiClass::op_amul( VMContext* ctx, void* self ) const
 }
 
 
-void MultiClass::op_adiv( VMContext* ctx, void* self ) const
+void ClassMulti::op_adiv( VMContext* ctx, void* self ) const
 {
    Class* cls;
    void* udata;
@@ -386,7 +386,7 @@ void MultiClass::op_adiv( VMContext* ctx, void* self ) const
 }
 
 
-void MultiClass::op_amod( VMContext* ctx, void* self ) const
+void ClassMulti::op_amod( VMContext* ctx, void* self ) const
 {
    Class* cls;
    void* udata;
@@ -402,7 +402,7 @@ void MultiClass::op_amod( VMContext* ctx, void* self ) const
 }
 
 
-void MultiClass::op_apow( VMContext* ctx, void* self ) const
+void ClassMulti::op_apow( VMContext* ctx, void* self ) const
 {
    Class* cls;
    void* udata;
@@ -418,7 +418,7 @@ void MultiClass::op_apow( VMContext* ctx, void* self ) const
 }
 
 
-void MultiClass::op_ashr( VMContext* ctx, void* self ) const
+void ClassMulti::op_ashr( VMContext* ctx, void* self ) const
 {
    Class* cls;
    void* udata;
@@ -434,7 +434,7 @@ void MultiClass::op_ashr( VMContext* ctx, void* self ) const
 }
 
 
-void MultiClass::op_ashl( VMContext* ctx, void* self ) const
+void ClassMulti::op_ashl( VMContext* ctx, void* self ) const
 {
    Class* cls;
    void* udata;
@@ -451,7 +451,7 @@ void MultiClass::op_ashl( VMContext* ctx, void* self ) const
 
 
 
-void MultiClass::op_inc( VMContext* ctx, void* self ) const
+void ClassMulti::op_inc( VMContext* ctx, void* self ) const
 {
    Class* cls;
    void* udata;
@@ -467,7 +467,7 @@ void MultiClass::op_inc( VMContext* ctx, void* self ) const
 }
 
 
-void MultiClass::op_dec( VMContext* ctx, void* self) const
+void ClassMulti::op_dec( VMContext* ctx, void* self) const
 {
    Class* cls;
    void* udata;
@@ -483,7 +483,7 @@ void MultiClass::op_dec( VMContext* ctx, void* self) const
 }
 
 
-void MultiClass::op_incpost( VMContext* ctx, void* self ) const
+void ClassMulti::op_incpost( VMContext* ctx, void* self ) const
 {
    Class* cls;
    void* udata;
@@ -499,7 +499,7 @@ void MultiClass::op_incpost( VMContext* ctx, void* self ) const
 }
 
 
-void MultiClass::op_decpost( VMContext* ctx, void* self ) const
+void ClassMulti::op_decpost( VMContext* ctx, void* self ) const
 {
    Class* cls;
    void* udata;
@@ -515,7 +515,7 @@ void MultiClass::op_decpost( VMContext* ctx, void* self ) const
 }
 
 
-void MultiClass::op_getIndex( VMContext* ctx, void* self ) const
+void ClassMulti::op_getIndex( VMContext* ctx, void* self ) const
 {
    Class* cls;
    void* udata;
@@ -531,7 +531,7 @@ void MultiClass::op_getIndex( VMContext* ctx, void* self ) const
 }
 
 
-void MultiClass::op_setIndex( VMContext* ctx, void* self ) const
+void ClassMulti::op_setIndex( VMContext* ctx, void* self ) const
 {
    Class* cls;
    void* udata;
@@ -547,7 +547,7 @@ void MultiClass::op_setIndex( VMContext* ctx, void* self ) const
 }
 
 
-void MultiClass::op_getProperty( VMContext* ctx, void* self, const String& propName ) const
+void ClassMulti::op_getProperty( VMContext* ctx, void* self, const String& propName ) const
 {
    Class* cls;
    void* udata;
@@ -586,7 +586,7 @@ void MultiClass::op_getProperty( VMContext* ctx, void* self, const String& propN
 }
 
 
-void MultiClass::op_setProperty( VMContext* ctx, void* self, const String& propName ) const
+void ClassMulti::op_setProperty( VMContext* ctx, void* self, const String& propName ) const
 {
    Class* cls;
    void* udata;
@@ -625,7 +625,7 @@ void MultiClass::op_setProperty( VMContext* ctx, void* self, const String& propN
 }
 
 
-void MultiClass::op_compare( VMContext* ctx, void* self ) const
+void ClassMulti::op_compare( VMContext* ctx, void* self ) const
 {
    Class* cls;
    void* udata;
@@ -653,7 +653,7 @@ void MultiClass::op_compare( VMContext* ctx, void* self ) const
 }
 
 
-void MultiClass::op_isTrue( VMContext* ctx, void* self ) const
+void ClassMulti::op_isTrue( VMContext* ctx, void* self ) const
 {
    Class* cls;
    void* udata;
@@ -670,7 +670,7 @@ void MultiClass::op_isTrue( VMContext* ctx, void* self ) const
 }
 
 
-void MultiClass::op_in( VMContext* ctx, void* self ) const
+void ClassMulti::op_in( VMContext* ctx, void* self ) const
 {
    Class* cls;
    void* udata;
@@ -686,7 +686,7 @@ void MultiClass::op_in( VMContext* ctx, void* self ) const
 }
 
 
-void MultiClass::op_provides( VMContext* ctx, void* self, const String& propName ) const
+void ClassMulti::op_provides( VMContext* ctx, void* self, const String& propName ) const
 {
    Class* cls;
    void* udata;
@@ -702,7 +702,7 @@ void MultiClass::op_provides( VMContext* ctx, void* self, const String& propName
 }
 
 
-void MultiClass::op_call( VMContext* ctx, int32 paramCount, void* self ) const
+void ClassMulti::op_call( VMContext* ctx, int32 paramCount, void* self ) const
 {
    Class* cls;
    void* udata;
@@ -717,7 +717,7 @@ void MultiClass::op_call( VMContext* ctx, int32 paramCount, void* self ) const
    }
 }
 
-void MultiClass::op_eval( VMContext* ctx, void* self ) const
+void ClassMulti::op_eval( VMContext* ctx, void* self ) const
 {
    Class* cls;
    void* udata;
@@ -732,7 +732,7 @@ void MultiClass::op_eval( VMContext* ctx, void* self ) const
 }
 
 
-void MultiClass::op_toString( VMContext* ctx, void* self ) const
+void ClassMulti::op_toString( VMContext* ctx, void* self ) const
 {
    Class* cls;
    void* udata;
@@ -749,7 +749,7 @@ void MultiClass::op_toString( VMContext* ctx, void* self ) const
    }
 }
 
-void MultiClass::op_iter( VMContext* ctx, void* self ) const
+void ClassMulti::op_iter( VMContext* ctx, void* self ) const
 {
    Class* cls;
    void* udata;
@@ -764,7 +764,7 @@ void MultiClass::op_iter( VMContext* ctx, void* self ) const
    }
 }
 
-void MultiClass::op_next( VMContext* ctx, void* self ) const
+void ClassMulti::op_next( VMContext* ctx, void* self ) const
 {
    Class* cls;
    void* udata;
