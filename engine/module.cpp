@@ -235,7 +235,6 @@ Module::~Module()
 
    // this is doing to do a bit of stuff; see ~Private()
    delete _p;
-   delete m_mainFunc;
    TRACE("Module '%s' deletion complete", m_name.c_ize() );
 }
 
