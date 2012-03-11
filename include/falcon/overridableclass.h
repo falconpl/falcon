@@ -18,7 +18,7 @@
 
 #include <falcon/setup.h>
 #include <falcon/string.h>
-#include <falcon/class.h>
+#include <falcon/classes/classmantra.h>
 
 namespace Falcon
 {
@@ -34,7 +34,7 @@ class Function;
 
  FalconClass and FlexyClass are two instances of this class.
  */
-class FALCON_DYN_CLASS OverridableClass: public Class
+class FALCON_DYN_CLASS OverridableClass: public ClassMantra
 {
 public:
 

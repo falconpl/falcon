@@ -197,6 +197,28 @@ public:
     */
    Class* metaClass() const;
    
+    /** Returns the global instance of the MetaFalconClass class.
+   \return the Engine instance of the MetaFalconClass handler.
+
+    Method init() must have been called before.
+
+    @note This method will assert and terminate the program if compiled in debug mode
+    in case the engine has not been initialized. In release, it will just
+    return a null pointer.
+    */
+   Class* metaFalconClass() const;
+    
+   /** Returns the global instance of the MetaHyperClass class.
+   \return the Engine instance of the MetaHyperClass handler.
+
+    Method init() must have been called before.
+
+    @note This method will assert and terminate the program if compiled in debug mode
+    in case the engine has not been initialized. In release, it will just
+    return a null pointer.
+    */
+   Class* metaHyperClass() const;
+   
    /** Returns the global instance of the MetaClass class.
    \return the Engine instance of the MetaClass handler.
 
@@ -462,6 +484,8 @@ protected:
    Class* m_dictClass;
    Class* m_protoClass;
    Class* m_metaClass;
+   Class* m_metaFalconClass;
+   Class* m_metaHyperClass;
    Class* m_mantraClass;
    Class* m_synFuncClass;
    Class* m_genericClass;

@@ -63,6 +63,8 @@ public:
    void setPredicate( bool bmode );
    bool isPredicate() const { return m_bIsPredicate; }
    
+   void setConstructor();
+   
    Class* handler() const;
    
 protected:

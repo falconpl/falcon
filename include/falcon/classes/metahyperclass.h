@@ -39,6 +39,7 @@ public:
 
    virtual void store( VMContext* ctx, DataWriter* stream, void* instance ) const;
    virtual void restore( VMContext* ctx, DataReader* stream, void*& empty ) const;
+   Class* handler() const;
 };
 
 }

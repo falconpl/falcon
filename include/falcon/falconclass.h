@@ -107,7 +107,15 @@ public:
       Value m_value;
 
       Property( const Property& other );
-
+      
+      inline Property( const String& name, Type t ):
+         m_name( name ),
+         m_type(t),
+         m_expr(0)
+      {
+         m_value.id = 0;
+      }
+      
       inline Property( const String& name, size_t value ):
          m_name( name ),
          m_type(t_prop),
@@ -129,6 +137,7 @@ public:
        \return a valid PCode or 0 if this is not an expression.
        */
       Expression* expression() const { return m_expr; }
+      void expression(Expression* e) { m_expr = e; }
 
       Property* clone() const { return new Property(*this); }
    private:
@@ -382,6 +391,17 @@ public:
     It expects to be called while inside a constructor frame.
     */
    void pushInitExprStep( VMContext* ctx );
+   
+   virtual Class* handler() const;
+   
+   //=========================================================
+   // Storer helpers
+   //
+   void storeSelf( DataWriter* wr, bool asConstructed ) const;
+   void restoreSelf( DataReader* wr );
+   
+   void flattenSelf( ItemArray& flatArray, bool asConstructed ) const;
+   void unflattenSelf( ItemArray& flatArray );
    
    //=========================================================
    // Operators.

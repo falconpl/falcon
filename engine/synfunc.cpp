@@ -82,6 +82,28 @@ void SynFunc::setPredicate(bool bmode)
 }
 
 
+void SynFunc::setConstructor()
+{
+   class PStepReturnCtor: public PStep
+   {
+   public:
+      PStepReturnCtor() { apply = apply_; }
+      virtual ~PStepReturnCtor() {}
+      void describeTo( String& v, int ) const { v = "Automatic return constructor value"; }
+      
+   private:
+      static void apply_( const PStep*, VMContext* ctx ) {         
+         ctx->returnFrame( ctx->self() );
+      }
+   };
+   
+   static PStepReturnCtor s_ctorReturn;
+      
+    
+   // reset the default return value
+   m_retStep = &s_ctorReturn;
+}
+
 void SynFunc::invoke( VMContext* ctx, int32 nparams )
 {   
    // nothing to do?
@@ -103,7 +125,7 @@ void SynFunc::invoke( VMContext* ctx, int32 nparams )
       ctx->addLocals( lc - nparams );
    }
    
-   // push a static return in case of problems.   
+   // push a static return in case of problems.
    ctx->pushCode( m_retStep );
    ctx->pushCode( &this->syntree() );
 }

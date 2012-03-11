@@ -30,7 +30,7 @@ namespace Falcon
 {
 
 OverridableClass::OverridableClass( const String& name ):
-   Class(name, FLC_CLASS_ID_PROTO )
+   ClassMantra(name, FLC_CLASS_ID_PROTO )
 {
    m_overrides = new Function*[OVERRIDE_OP_COUNT_ID];
    memset( m_overrides, 0, sizeof( Function* ) * OVERRIDE_OP_COUNT_ID );
@@ -38,7 +38,7 @@ OverridableClass::OverridableClass( const String& name ):
 
 
 OverridableClass::OverridableClass( const String& name, int64 tid ):
-   Class( name, tid )
+   ClassMantra( name, tid )
 {
    m_overrides = new Function*[OVERRIDE_OP_COUNT_ID];
    memset( m_overrides, 0, sizeof( Function* ) * OVERRIDE_OP_COUNT_ID );

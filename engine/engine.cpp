@@ -71,6 +71,8 @@
 #include <falcon/classes/classmethod.h>
 #include <falcon/classes/classreference.h>
 #include <falcon/classes/metaclass.h>
+#include <falcon/classes/metafalconclass.h>
+#include <falcon/classes/metahyperclass.h>
 
 #include <falcon/classes/classtreestep.h>
 #include <falcon/classes/classstatement.h>
@@ -160,6 +162,8 @@ Engine::Engine()
    m_dictClass = new ClassDict;
    m_protoClass = new PrototypeClass;
    m_metaClass = new MetaClass;
+   m_metaFalconClass = new MetaFalconClass;
+   m_metaHyperClass = new MetaHyperClass;
    m_mantraClass = new ClassMantra;
    m_synFuncClass = new ClassSynFunc;
    m_genericClass = new ClassGeneric;
@@ -222,6 +226,8 @@ Engine::Engine()
    addMantra( m_dictClass );
    addMantra( m_protoClass );
    addMantra( m_metaClass );
+   addMantra( m_metaFalconClass );
+   addMantra( m_metaHyperClass );
    addMantra( m_mantraClass ); 
    addMantra( m_synFuncClass );
    addMantra( m_genericClass );
@@ -587,6 +593,18 @@ Class* Engine::metaClass() const
 {
    fassert( m_instance != 0 );
    return m_instance->m_metaClass;
+}
+
+Class* Engine::metaFalconClass() const
+{
+   fassert( m_instance != 0 );
+   return m_instance->m_metaFalconClass;
+}
+
+Class* Engine::metaHyperClass() const
+{
+   fassert( m_instance != 0 );
+   return m_instance->m_metaHyperClass;
 }
 
 Class* Engine::mantraClass() const

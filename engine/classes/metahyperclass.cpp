@@ -15,6 +15,8 @@
 
 #include <falcon/classes/metahyperclass.h>
 
+#include "falcon/engine.h"
+
 namespace Falcon
 {
 
@@ -36,6 +38,12 @@ void MetaHyperClass::store( VMContext* , DataWriter* , void*  ) const
 void MetaHyperClass::restore( VMContext* , DataReader* , void*&  ) const
 {
    
+}
+
+Class* MetaHyperClass::handler() const
+{
+   Class* cls = Engine::instance()->metaHyperClass();
+   return cls;
 }
 
 }

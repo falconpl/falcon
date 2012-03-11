@@ -18,7 +18,7 @@
 
 #include <falcon/setup.h>
 #include <falcon/string.h>
-#include <falcon/class.h>
+#include <falcon/classes/classmantra.h>
 #include <falcon/pstep.h>
 
 namespace Falcon
@@ -31,7 +31,7 @@ namespace Falcon
  \note This is still an abstract base class.
 
  */
-class FALCON_DYN_CLASS ClassMulti: public Class
+class FALCON_DYN_CLASS ClassMulti: public ClassMantra
 {
 public:
    

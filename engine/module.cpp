@@ -860,9 +860,6 @@ Symbol* Module::addRequirement( Requirement* cr )
 }
 
 
-
-
-
 void Module::unload()
 {
    if( m_unloader != 0 )
@@ -877,7 +874,6 @@ void Module::unload()
       delete this;
    }
 }
-
 
 
 void Module::forwardNS( Module* mod, const String& remoteNS, const String& localNS )
@@ -997,7 +993,12 @@ void Module::completeClass(FalconClass* fcls)
    {
       // was not a full falcon class; we must change it into an hyper class.
       HyperClass* hcls = fcls->hyperConstruct();
+      fassert2( hcls != 0, "called completeClass on an incomplete class");
+      
       _p->m_mantras[hcls->name()] = hcls;
+      // save the old falcon class under another name; we need to reference it.
+      _p->m_mantras["$" + fcls->name()] = fcls;
+      
       // anonymous classes cannot have a name in the global symbol table, so...
       Private::GlobalsMap::iterator pos = _p->m_gSyms.find( hcls->name() );
       if( pos != _p->m_gSyms.end() )

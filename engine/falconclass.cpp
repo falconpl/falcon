@@ -64,12 +64,13 @@ public:
    typedef std::vector<Property*> InitPropList;
    InitPropList m_initExpr;
 
-   ItemArray m_propDefaults;      
+   ItemArray* m_propDefaults;      
 
    Private()
    {
       m_members = &m_origMembers;
       m_states = &m_origStates;
+      m_propDefaults = new ItemArray;
    }
 
    ~Private()
@@ -88,6 +89,7 @@ public:
          ++mi;
       }
 
+      delete m_propDefaults;
    }
    
    void constructing()
@@ -170,6 +172,7 @@ FalconClass::FalconClass( const String& name ):
 {
    _p = new Private;
    m_bIsfalconClass = true;
+   m_category = e_c_falconclass;
 }
 
 
@@ -192,7 +195,7 @@ void* FalconClass::createInstance() const
    
    // we just need to copy the defaults.
    FalconInstance* inst = new FalconInstance(this);
-   inst->data().merge(_p->m_propDefaults);
+   inst->data().merge(*_p->m_propDefaults);
 
    // someone else will initialize non-defaultable items.
    return inst;
@@ -219,9 +222,9 @@ bool FalconClass::addProperty( const String& name, const Item& initValue )
    }
 
    // insert a new property with the required ID
-   members[name] = new  Property( name, _p->m_propDefaults.length() );
+   members[name] = new  Property( name, _p->m_propDefaults->length() );
    // the add the init value in the value lists.
-   _p->m_propDefaults.append( initValue );
+   _p->m_propDefaults->append( initValue );
 
    // is this thing deep? -- if it is so, we should mark it
    if( initValue.type() >= FLC_ITEM_METHOD )
@@ -253,11 +256,11 @@ bool FalconClass::addProperty( const String& name, Expression* initExpr )
    }
 
    // insert a new property -- and record its insertion
-   Property* prop = new Property( name, _p->m_propDefaults.length(), initExpr );
+   Property* prop = new Property( name, _p->m_propDefaults->length(), initExpr );
    members[name] = prop;
 
    // expr properties have a default NIL item.
-   _p->m_propDefaults.append( Item() );
+   _p->m_propDefaults->append( Item() );
 
    // declare that we need this expression to be initialized.
    _p->m_initExpr.push_back( prop );
@@ -292,9 +295,9 @@ bool FalconClass::addProperty( const String& name )
    }
 
    // insert a new property with the required ID
-   members[name] = new Property( name, _p->m_propDefaults.length() );
+   members[name] = new Property( name, _p->m_propDefaults->length() );
    // the add the init value in the value lists.
-   _p->m_propDefaults.append( Item() );
+   _p->m_propDefaults->append( Item() );
 
    return true;
 }
@@ -450,7 +453,7 @@ bool FalconClass::getProperty( const String& name, Item& target ) const
    switch( prop.m_type )
    {
       case Property::t_prop:
-         target = _p->m_propDefaults[ prop.m_value.id ];
+         target = (*_p->m_propDefaults)[ prop.m_value.id ];
          break;
 
       case Property::t_func:
@@ -489,7 +492,7 @@ void FalconClass::gcMark( uint32 mark )
 {
    if ( m_shouldMark )
    {
-      _p->m_propDefaults.gcMark( mark );
+      _p->m_propDefaults->gcMark( mark );
    }
 }
 
@@ -570,6 +573,7 @@ SynFunc* FalconClass::makeConstructor()
    {
       m_constructor = new SynFunc( name() + "#constructor" );
       m_constructor->methodOf( this );
+      m_constructor->setConstructor();
    }
 
    return m_constructor;
@@ -811,6 +815,220 @@ void FalconClass::pushInitExprStep( VMContext* ctx )
    }
 }
 
+
+Class* FalconClass::handler() const
+{
+   static Class* cls = Engine::instance()->metaFalconClass();
+   return cls;
+}
+
+void FalconClass::storeSelf( DataWriter* wr, bool asConstructed ) const
+{
+   // name has been already stored by the metaclass.
+   wr->write( asConstructed );
+   wr->write(m_shouldMark);
+   wr->write(m_hasInitExpr);
+   wr->write(m_hasInit);
+   wr->write(m_missingParents); // todo -- orig missing parents
+   wr->write(m_bPureFalcon); 
+   
+   // now write name and type of each member -- for the values, use flatten.
+   // first, always save the original members.
+   Private::MemberMap* members = &_p->m_origMembers;
+   wr->write( (uint32) members->size() );
+   Private::MemberMap::iterator pos = members->begin();
+   while( pos != members->end() )
+   {
+      Property* prop = pos->second;
+      wr->write( prop->m_name);
+      wr->write( (char) prop->m_type );      
+      ++pos;
+   }
+   
+   // then, if we must save the constructed part, save the constructed members as well.
+   if( asConstructed ) {
+      members = &_p->m_curMembers;
+      wr->write( (uint32) members->size() );
+      Private::MemberMap::iterator pos = members->begin();
+      while( pos != members->end() )
+      {
+         Property* prop = pos->second;
+         wr->write( prop->m_name);
+         wr->write( (char) prop->m_type );      
+         ++pos;
+      }
+   }
+   
+}
+   
+
+void FalconClass::restoreSelf( DataReader* rd )
+{
+   // name has been already stored by the metaclass.
+   rd->read( m_bConstructed );
+   rd->read(m_shouldMark);
+   rd->read(m_hasInitExpr);
+   rd->read(m_hasInit);
+   rd->read(m_missingParents); // todo -- orig missing parents
+   rd->read(m_bPureFalcon); 
+   
+   // Read the original members.
+   uint32 count;
+   rd->read( count );
+   for( uint32 i = 0; i < count; ++ i )
+   {
+      String name;
+      char type;
+      rd->read( name );
+      rd->read( type );
+      
+      Property* prop = new Property(name, (Property::Type) type );
+      _p->m_origMembers[name] = prop;
+   }
+   
+   // then restore the constructed, if necessary
+   if( m_bConstructed )
+   {
+      _p->constructing();
+      
+      rd->read( count );
+      for( uint32 i = 0; i < count; ++ i )
+      {
+         String name;
+         char type;
+         rd->read( name );
+         rd->read( type );
+
+         if( _p->m_curMembers.find( name ) == _p->m_curMembers.end() )
+         {
+            Property* prop = new Property(name, (Property::Type) type );
+            _p->m_curMembers[name] = prop;            
+         }
+      }
+   }
+}
+   
+
+void FalconClass::flattenSelf( ItemArray& flatArray, bool asConstructed ) const
+{
+   Private::MemberMap* members = asConstructed ? &_p->m_origMembers : _p->m_members;
+   Private::MemberMap::iterator pos = members->begin();
+   
+   flatArray.reserve( members->size() + 5 );
+   
+   flatArray.append( Item( _p->m_propDefaults ) );
+   
+   if( m_constructor != 0 )
+   {
+      flatArray.append( Item( m_constructor->handler(), m_constructor ) );
+   }
+   else {
+      flatArray.append( Item() );
+   }
+   
+   if( m_parentship != 0 )
+   {
+      flatArray.append( Item( m_parentship->cls(), m_parentship ) );      
+   }
+   else {
+      flatArray.append( Item() );
+   }
+   
+   while( pos != members->end() )
+   {
+      Property* prop = pos->second;
+      switch( prop->m_type )
+      {
+         case Property::t_prop:
+            flatArray.append( Item( (int64) prop->m_value.id ) );
+            if( prop->expression() != 0 )
+            {
+               flatArray.append( Item( prop->expression()->cls(), prop->expression()));                              
+            }
+            else {
+               flatArray.append( Item() );
+            }
+            break;
+            
+         case Property::t_func:
+            flatArray.append( Item( prop->m_value.func->handler(), prop->m_value.func ) );
+            break;
+            
+         case Property::t_inh:
+            flatArray.append( Item( prop->m_value.inh->cls(), prop->m_value.inh ) );
+            break;
+            
+         case Property::t_state:
+            // TODO
+            break;
+      }
+      
+      ++pos;
+   }
+}
+
+
+void FalconClass::unflattenSelf( ItemArray& flatArray )
+{
+   Private::MemberMap* members = ! m_bConstructed ? &_p->m_origMembers : _p->m_members;
+   Private::MemberMap::iterator pos = members->begin();
+   
+   fassert( flatArray.length() >= 2 );
+   
+   Item& arrZero = flatArray[0];
+   fassert( arrZero.isArray() );
+   ItemArray* propDefaults = arrZero.asArray();
+   delete _p->m_propDefaults; // just in case
+   _p->m_propDefaults = propDefaults;
+   
+   if( ! flatArray[1].isNil() )
+   {
+      fassert( flatArray[1].isFunction() );
+      m_constructor = static_cast<SynFunc*>(flatArray[1].asInst());
+      // constructor status is not flattened.
+      m_constructor->setConstructor();
+   }
+   
+   if( ! flatArray[2].isNil() )
+   {
+      m_parentship = static_cast<ExprParentship*>(flatArray[2].asInst());
+   }
+   
+   _p->m_initExpr.clear(); // just in case
+   uint32 count = 3;
+   while( pos != members->end() )
+   {
+      fassert( count < flatArray.length() );
+      Property* prop = pos->second;
+      switch( prop->m_type )
+      {
+         case Property::t_prop:
+            prop->m_value.id = (size_t) flatArray[count++].asInteger();
+            if( flatArray[count].isUser() ) {
+               prop->expression( static_cast<Expression*>( flatArray[count].asInst() ));
+               _p->m_initExpr.push_back( prop );
+               m_hasInitExpr = true;
+            }
+            break;
+            
+         case Property::t_func:
+            prop->m_value.func = static_cast<Function*>(flatArray[count].asInst());
+            break;
+            
+         case Property::t_inh:
+            prop->m_value.inh = static_cast<ExprInherit*>(flatArray[count].asInst());
+            break;
+            
+         case Property::t_state:
+            // TODO
+            break;
+      }
+      
+      ++pos;
+      ++count;
+   }
+}
+   
 //=========================================================
 // Operators.
 //
@@ -818,8 +1036,6 @@ bool FalconClass::op_init( VMContext* ctx, void* instance, int32 pcount ) const
 {
    // we just need to copy the defaults.
    FalconInstance* inst = static_cast<FalconInstance*>(instance);
-
-   // TODO: Initialize the properties here.
    
    // we have to invoke the init method, if any
    if( m_constructor != 0 )

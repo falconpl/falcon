@@ -50,6 +50,7 @@ HyperClass::HyperClass( FalconClass* master ):
    addParentProperties( master );
    m_nParents++;
    m_parentship = new ExprParentship();
+   m_category = e_c_hyperclass;
 }
 
 
@@ -68,6 +69,7 @@ HyperClass::HyperClass( const String& name ):
    // we'd hardly create a hyperclass not to store at least a foreign class.
    m_parentship = new ExprParentship();
    m_parentship->setParent( &m_master->makeConstructor()->syntree() );
+   m_category = e_c_hyperclass;
 }
 
 

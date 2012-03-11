@@ -501,7 +501,15 @@ void ClassModule::flatten( VMContext* ctx, ItemArray& subItems, void* instance )
       while( globi != globs.end() ) {
          Symbol* sym = globi->second;
          const Item* value = sym->getValue( ctx );
-         subItems.append( value == 0 ? Item() : *value );
+         if( value != 0 )
+         {
+            if( ! value->isUser() || !static_cast<Class*>(value->asInst())->isCompatibleWith(Mantra::e_c_hyperclass))
+            {
+               // skip hyperclasses
+               subItems.append( value == 0 ? Item() : *value );
+            }
+         }
+         
          ++globi;
       }
    }
@@ -509,9 +517,14 @@ void ClassModule::flatten( VMContext* ctx, ItemArray& subItems, void* instance )
    {
       Module::Private::MantraMap& mantras = mp->m_mantras;
       Module::Private::MantraMap::iterator fi = mantras.begin();
-      while( fi != mantras.end() ) {
+      while( fi != mantras.end() ) 
+      {
          Mantra* mantra = fi->second;
-         subItems.append( Item(mantra->handler(), mantra) );
+         // skip hyperclasses
+         if( ! mantra->isCompatibleWith( Mantra::e_c_hyperclass ))
+         {
+            subItems.append( Item(mantra->handler(), mantra) );
+         }
          ++fi;
       }
    }   

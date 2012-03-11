@@ -59,6 +59,11 @@ bool FalconInstance::getMember( const String& name, Item& target ) const
    {
       case FalconClass::Property::t_prop:
          target = m_data[ prop->m_value.id ];
+         if( target.isFunction() ) {
+            Function* func = target.asFunction();
+            target.setUser( m_origin, const_cast<FalconInstance*>(this) );
+            target.methodize( func );
+         }
          break;
 
       case FalconClass::Property::t_func:

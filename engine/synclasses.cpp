@@ -357,10 +357,28 @@ bool SynClasses::ClassDotAccess::op_init( VMContext* ctx, void* instance, int pc
    expr->property( *ctx->opcodeParams(pcount)[1].asString() );
    return false;
 }
+
+void SynClasses::ClassDotAccess::store( VMContext* ctx, DataWriter*wr, void* instance ) const
+{
+   ExprDot* dot = static_cast<ExprDot*>( instance );
+   wr->write(dot->property());
+   m_parent->store( ctx, wr, dot );
+}
+
 void SynClasses::ClassDotAccess::restore( VMContext* ctx, DataReader*dr, void*& empty ) const
 {
-   empty = new ExprDot;
-   m_parent->restore( ctx, dr, empty );
+   String prop;
+   dr->read( prop );   
+   ExprDot* dot = new ExprDot;
+   dot->property( prop );
+   try {
+      empty = dot;
+      m_parent->restore( ctx, dr, empty );
+   }
+   catch( ... ) {
+      delete dot;
+      throw;
+   }
 }
 
 

@@ -33,14 +33,14 @@
 namespace Falcon {
 
 ClassMulti::ClassMulti( const String& name, int typeId ):
-   Class( name, typeId )
+   ClassMantra( name, typeId )
 {
    m_overrides = new Property*[OVERRIDE_OP_COUNT];
    memset( m_overrides, 0, OVERRIDE_OP_COUNT* sizeof( Property* ));
 }
 
 ClassMulti::ClassMulti( const String& name ):
-   Class( name )
+   ClassMantra( name, FLC_ITEM_USER )
 {
    m_overrides = new Property*[OVERRIDE_OP_COUNT];
    memset( m_overrides, 0, OVERRIDE_OP_COUNT* sizeof( Property* ));

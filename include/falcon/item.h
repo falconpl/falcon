@@ -218,9 +218,9 @@ public:
    void setString( String* str, bool bGarbage = false, int line=0, const char* source=0 );
 
    /** Creates a boolean item. */
-   explicit inline Item( bool b ) {
+   /*explicit inline Item( bool b ) {
       setBoolean( b );
-   }
+   }*/
 
    /** Sets this item as boolean */
    inline void setBoolean( bool tof )
@@ -314,6 +314,12 @@ public:
       tgt.content.data.ptr.pClass = content.data.ptr.pClass;
    }
 
+   /** Creates an integer item */
+   inline Item( ItemArray* array )
+   {
+      setArray( array );
+   }
+   
    /** Turn this item in to an array (deep).
     \param array The array handled to the vm.
     
