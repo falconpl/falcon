@@ -45,8 +45,8 @@ Class* DerivedFrom::getParent( const String& name ) const
 
 void* DerivedFrom::getParentData( Class* parent, void* data ) const
 {
-   if( parent == m_parent || parent == this ) return data;
-   return 0;
+   if( parent == this ) return data;
+   return m_parent->getParentData( parent, data );
 }
 
 

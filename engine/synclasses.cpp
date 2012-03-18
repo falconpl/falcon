@@ -794,8 +794,9 @@ bool SynClasses::ClassParentship::op_init( VMContext* ctx, void* instance, int p
 {
    static Class* clsParent = 
                static_cast<Class*>( Engine::instance()
-                     ->getMantra("ClassParentship", Mantra::e_c_class ) );
-      
+                     ->getMantra("Inherit", Mantra::e_c_class ) );
+   fassert( clsParent != 0 );
+   
    if( pcount == 0 )
    {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__, SRC )
@@ -815,7 +816,7 @@ bool SynClasses::ClassParentship::op_init( VMContext* ctx, void* instance, int p
       if( ! cls->isDerivedFrom( clsParent ) ) {
          throw new ParamError( ErrorParam( e_param_type, __LINE__, SRC )
             .origin( ErrorParam::e_orig_runtime)
-            .extra( String("Parameter ").N(i).A(" is not an expression") ) );
+            .extra( String("Parameter ").N(i).A(" is not an Inherit expression") ) );
       }
       Expression* expr = static_cast<Expression*>( cls->getParentData(clsParent, data) );
       pship->add(expr);

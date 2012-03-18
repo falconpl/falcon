@@ -42,6 +42,7 @@ ExprInherit::ExprInherit( int line, int chr ):
 {
    FALCON_DECLARE_SYN_CLASS( expr_inherit )
    apply = apply_;
+   m_trait = Expression::e_trait_inheritance;
 }
 
 ExprInherit::ExprInherit( const String& name, int line, int chr ):
@@ -52,6 +53,7 @@ ExprInherit::ExprInherit( const String& name, int line, int chr ):
 {
    FALCON_DECLARE_SYN_CLASS( expr_inherit )
    apply = apply_;
+   m_trait = Expression::e_trait_inheritance;
 }
 
 ExprInherit::ExprInherit( Class* base, int line, int chr ):
@@ -62,6 +64,7 @@ ExprInherit::ExprInherit( Class* base, int line, int chr ):
 {
    FALCON_DECLARE_SYN_CLASS( expr_inherit )
    apply = apply_;
+   m_trait = Expression::e_trait_inheritance;
 }
    
 ExprInherit::ExprInherit( const ExprInherit& other ):
@@ -71,6 +74,7 @@ ExprInherit::ExprInherit( const ExprInherit& other ):
    m_bHadRequirement(false)
 {
    apply = apply_;
+   m_trait = Expression::e_trait_inheritance;
 }
   
 ExprInherit::~ExprInherit()
@@ -97,7 +101,7 @@ void ExprInherit::describeTo( String& target, int depth ) const
       target = prefix + m_name + "(";     
       String temp;
       ExprVector_Private::ExprVector::const_iterator iter = _p->m_exprs.begin();
-      while(  _p->m_exprs.end() != iter )
+      while( _p->m_exprs.end() != iter )
       {
          Expression* param = *iter;
          if( temp.size() >  0 )

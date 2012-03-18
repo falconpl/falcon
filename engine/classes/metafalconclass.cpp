@@ -14,6 +14,7 @@
 */
 
 #include <falcon/classes/metafalconclass.h>
+#include <falcon/hyperclass.h>
 #include <falcon/falconclass.h>
 #include <falcon/engine.h>
 #include <falcon/datawriter.h>
@@ -171,13 +172,18 @@ bool MetaFalconClass::op_init( VMContext* ctx, void* instance, int32 pcount ) co
                      .extra("Init member must be a syntactic function") ); 
                }
                
-               m_flc->setConstructor(static_cast<SynFunc*>(initFunc));
+               SynFunc* sf = static_cast<SynFunc*>(initFunc);
+               sf->methodOf( m_flc );
+               sf->setConstructor();
+               m_flc->setConstructor(sf);
             }
             else {
                if( value.isFunction() )
                {
                   // force the name
-                  m_flc->addMethod( *propName, value.asFunction() );
+                  Function* f = value.asFunction();
+                  f->methodOf(m_flc);
+                  m_flc->addMethod( *propName, f );
                }
                else {
                   // TODO: state values
@@ -194,6 +200,14 @@ bool MetaFalconClass::op_init( VMContext* ctx, void* instance, int32 pcount ) co
       members->enumerate( rator );
    }
    
+   if( ! fcls->construct() )
+   {
+      // we need to hyperconstruct it -- and this means changing the instance.
+      HyperClass* hcls = fcls->hyperConstruct();
+      ctx->popData(pcount);
+      ctx->topData().setUser( hcls->handler(), hcls );
+      return true;
+   }
    return false;
 }
 

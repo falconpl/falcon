@@ -180,6 +180,7 @@ void ExprDict::apply_( const PStep* ps, VMContext* ctx )
    while( iter != mye.end() )
    {
       // generate the expression and eventually yield back.
+      cf.m_seqId++;
       if( ctx->stepInYield( *iter, cf ) )
       {
          return;
