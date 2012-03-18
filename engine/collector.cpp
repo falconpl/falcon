@@ -965,9 +965,10 @@ void Collector::markLocked()
    // temporarily disconnect the lock loop structure
    m_mtx_lockitem.lock();
    GCLock *firstLock = this->m_lockRoot->m_next;
-   GCLock *lastLock = this->m_lockRoot->m_prev;
-   if( firstLock != lastLock )
+   GCLock *lastLock = m_lockRoot->m_prev;
+   if( firstLock != m_lockRoot )
    {
+      // reclose the ring.
       m_lockRoot->m_next = m_lockRoot;
       m_lockRoot->m_prev = m_lockRoot;
       lastLock->m_next = 0;
@@ -980,7 +981,7 @@ void Collector::markLocked()
       return;
    }
 
-   // mark the items
+   // mark the extracted items items
    uint32 mark = m_generation;
    GCLock *lock = firstLock;
    while( lock != 0 )
@@ -988,13 +989,29 @@ void Collector::markLocked()
       // no need to mark this?
       if( lock->m_bDisposed )
       {
-         // advance the head in case we're pointing to it
+         GCLock* next = lock->m_next;
+          
+         // disengage the current lock
+         // advance the head/tail in case we're pointing to it
          if ( firstLock == lock )
          {
             firstLock = lock->m_next;
          }
+         else
+         {
+            lock->m_prev->m_next = lock->m_next;
+         }
          
-         GCLock* next = lock;
+         if( lastLock == lock )
+         {
+            lastLock = lock->m_prev;
+         }
+         else 
+         {
+            lock->m_next->m_prev = lock->m_prev;
+         }
+         
+         // send this lock to the memory pool
          this->disposeLock(lock);
          lock = next;
       }
@@ -1007,7 +1024,7 @@ void Collector::markLocked()
       }
    }
 
-   // re-add the locks that are left
+   // re-add the locks that are left (if any)
    if ( firstLock != 0 )
    {
       m_mtx_lockitem.lock();
@@ -1049,7 +1066,7 @@ GCLock* Collector::lock( const Item& item )
    // do we have a free token?
    if( m_recycleLock != 0 )
    {
-      GCLock* l = m_recycleLock;
+      l = m_recycleLock;
       m_recycleLock = l->m_next;
       m_recycleLockCount--;
       m_mtx_recycle_locks.unlock();
@@ -1069,7 +1086,6 @@ GCLock* Collector::lock( const Item& item )
    l->m_next = m_lockRoot->m_next;
    m_lockRoot->m_next = l;
    l->m_prev = m_lockRoot;
-   m_lockRoot = l;
    m_mtx_lockitem.unlock();
 
    return l;
