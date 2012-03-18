@@ -1067,6 +1067,7 @@ GCLock* Collector::lock( const Item& item )
    m_mtx_lockitem.lock();
    m_lockRoot->m_next->m_prev = l;
    l->m_next = m_lockRoot->m_next;
+   m_lockRoot->m_next = l;
    l->m_prev = m_lockRoot;
    m_lockRoot = l;
    m_mtx_lockitem.unlock();
