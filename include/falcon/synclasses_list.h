@@ -81,8 +81,14 @@ FALCON_SYNCLASS_DECLARATOR(m_expr_postinc, PostInc, expr)
 FALCON_SYNCLASS_DECLARATOR(m_expr_postdec, PostDec, expr)
 //
 FALCON_SYNCLASS_DECLARATOR(m_expr_index, IndexAccess, expr)
-FALCON_SYNCLASS_DECLARATOR(m_expr_inherit, Inherit, expr)
-FALCON_SYNCLASS_DECLARATOR(m_expr_parentship, Parentship, expr)
+
+FALCON_SYNCLASS_DECLARATOR_EX(m_expr_inherit, Inherit, expr, \
+      virtual void store( VMContext*, DataWriter* dw, void* instance ) const; \
+      virtual void flatten( VMContext* ctx, ItemArray& subItems, void* instance ) const;\
+      virtual void unflatten( VMContext* ctx, ItemArray& subItems, void* instance ) const; )
+
+FALCON_SYNCLASS_DECLARATOR(m_expr_parentship, Parentship, expr )
+
 // Logic
 FALCON_SYNCLASS_DECLARATOR(m_expr_not, Not, expr)
 FALCON_SYNCLASS_DECLARATOR(m_expr_and, And, expr)

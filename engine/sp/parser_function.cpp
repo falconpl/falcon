@@ -131,7 +131,7 @@ void on_close_function( void* thing )
    SynFunc* func = ctx->currentFunc();
    if ( func->syntree().size() == 1 )
    {
-      if( func->syntree().at(0)->cls()->userFlags() == FALCON_SYNCLASS_ID_RULE )
+      if( func->syntree().at(0)->handler()->userFlags() == FALCON_SYNCLASS_ID_RULE )
       {
          func->setPredicate( true );
       }
@@ -152,7 +152,7 @@ void on_close_lambda( void* thing )
    SynFunc* func=ctx->currentFunc();
 
    int size = func->syntree().size();
-   if ( size == 1 && func->syntree().at(0)->cls()->userFlags() == FALCON_SYNCLASS_ID_AUTOEXPR )
+   if ( size == 1 && func->syntree().at(0)->handler()->userFlags() == FALCON_SYNCLASS_ID_AUTOEXPR )
    {
       StmtAutoexpr* aexpr = static_cast<StmtAutoexpr*>( func->syntree().at(0) );
       StmtReturn* ret = new StmtReturn( aexpr->detachExpr() );

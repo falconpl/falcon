@@ -43,6 +43,13 @@ public:
    virtual void unflatten( VMContext* ctx, ItemArray& subItems, void* instance ) const;
    
    Class* handler() const;
+
+   //=========================================================================
+   // Initialize
+   //
+   virtual bool op_init( VMContext* ctx, void* instance, int32 pcount ) const;
+   virtual void* createInstance() const; 
+   
 };
 
 }

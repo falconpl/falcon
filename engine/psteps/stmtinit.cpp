@@ -33,7 +33,7 @@ StmtInit::StmtInit( Inheritance* inh, int32 line, int32 chr  ):
    fassert( inh->parent() != 0 && inh->parent()->isFalconClass() );
    
    static Class* mycls = &Engine::instance()->synclasses()->m_stmt_init;
-   m_class = mycls;
+   m_handler = mycls;
    
    apply = apply_;
    inh->defineAt(line, chr);

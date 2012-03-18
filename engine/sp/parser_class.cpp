@@ -150,6 +150,38 @@ static void make_class( Parser& p, int tCount,
    {
       ExprParentship* flist = static_cast<ExprParentship*>( tfrom->detachValue() );
       cls->setParentship( flist );
+      
+      // check symbols in the parentship list
+      for( int i = 0; i < flist->arity(); ++i ) {
+         ExprInherit* inh = static_cast<ExprInherit*>( flist->nth(i) );
+         // ask the owner the required symbol.
+         Symbol* symBaseClass = ctx->findSymbol( inh->name() );
+         // if it's 0, we need a requirement; and we shall also add an externa symbol.
+         if( symBaseClass == 0 ) {
+            ctx->onUndefinedSymbol( inh->name() ); 
+            Requirement* req = inh->makeRequirement( cls );
+            ctx->onRequirement( req );
+         }
+         // was already in but extern?
+         else if( symBaseClass->type() == Symbol::e_st_extern )
+         {
+            // then just add the requirement
+            Requirement* req = inh->makeRequirement( cls );
+            ctx->onRequirement( req );
+         }
+         else {
+            // if it's defined and not a class, we're in trouble
+            const Item* value = symBaseClass->getValue(0);
+            if( value == 0 || ! value->isClass() )
+            {
+               p.addError( e_inv_inherit, p.currentSource(), ti->line(), ti->chr() );
+               p.simplify(tCount);
+               return;
+            }
+            // cool, we can configure the inheritance.
+            inh->base( static_cast<Class*>(value->asInst()) );
+         }
+      }
    }
 
    // remove this stuff from the stack

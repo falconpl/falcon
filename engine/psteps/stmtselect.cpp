@@ -487,7 +487,7 @@ public:
    virtual void flatten( VMContext*, ItemArray& subItems, void* instance ) const
    {
       SelectRequirement* s = static_cast<SelectRequirement*>(instance);
-      subItems.append( Item(s->m_owner->cls(), s->m_owner ) );
+      subItems.append( Item(s->m_owner->handler(), s->m_owner ) );
    }
    
    virtual void unflatten( VMContext*, ItemArray& subItems, void* instance ) const

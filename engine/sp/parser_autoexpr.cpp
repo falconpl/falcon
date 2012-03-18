@@ -75,7 +75,7 @@ void apply_line_expr( const Rule&, Parser& p )
       
       Statement* parent = ctx->currentStmt();
       StmtAutoexpr* line = new StmtAutoexpr(expr, ti->line(), ti->chr());
-      if( parent != 0 && parent->cls()->userFlags() == FALCON_SYNCLASS_ID_RULE )
+      if( parent != 0 && parent->handler()->userFlags() == FALCON_SYNCLASS_ID_RULE )
       {
          line->setInRule( true );
       }

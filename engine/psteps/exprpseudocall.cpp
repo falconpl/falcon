@@ -157,7 +157,7 @@ void ExprPseudoCall::apply_eta_( const PStep* v, VMContext* ctx )
    while( pos < end )
    {
       Expression* expr = *pos;
-      ctx->pushData( Item(expr->cls(), expr) );
+      ctx->pushData( Item(expr->handler(), expr) );
       ++pos;
    }
       

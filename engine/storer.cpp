@@ -227,9 +227,9 @@ void Storer::addFlatMantra( Mantra* mantra )
 }
 
 
-bool Storer::isFlatMantra( Mantra* mantra )
+bool Storer::isFlatMantra( const void* mantra )
 {
-   return _p->m_flatMantras.find( mantra ) != _p->m_flatMantras.end();
+   return _p->m_flatMantras.find( (Mantra*)mantra ) != _p->m_flatMantras.end();
 }
 
 
@@ -271,6 +271,13 @@ bool Storer::traverse( Class* handler, void* data, bool isTopLevel, void** obj )
    if( ! bIsNew )
    {
       //... was already there -- then we have nothing to do.
+      return true;
+   }
+   
+   // now that the object is saved, see if we must just store this as a mantra.
+   if( isFlatMantra(data) )
+   {
+      // yep, no need to flatten
       return true;
    }
       
@@ -453,10 +460,20 @@ void Storer::writeObjectDeps( uint32 pos, DataWriter* wr )
 
 bool Storer::writeObject( VMContext* ctx, uint32 pos, DataWriter* wr )
 {   
+   static Class* clsMantra = Engine::instance()->mantraClass();
+   
    // first, get the class that must serialize us.
    const Private::ObjectData& obd = *_p->m_objVector[pos];
-   uint32 clid = (uint32) obd.m_clsId;
-   Class* cls = _p->m_clsVector[clid];
+   Class* cls = 0;
+   // is this object a flattened mantra?
+   if( isFlatMantra( obd.m_data ) ) {
+      cls = clsMantra; // save only flat
+   }
+   else {
+      uint32 clid = (uint32) obd.m_clsId;
+      cls = _p->m_clsVector[clid];
+   }
+   
    const PStep* ps = ctx->currentCode().m_step;
    
    // then serialize us.

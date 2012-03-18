@@ -487,8 +487,8 @@ Symbol* ParserContext::findSymbol( const String& name )
 void ParserContext::addStatement( Statement* stmt )
 {
    TRACE("ParserContext::addStatement type '%s'",
-         stmt->cls() == 0 ? "none": 
-          stmt->cls()->name().c_ize() );
+         stmt->handler() == 0 ? "none": 
+          stmt->handler()->name().c_ize() );
    fassert( m_st != 0 );
 
    bool result = checkSymbols();
@@ -515,8 +515,8 @@ void ParserContext::addStatement( Statement* stmt )
 void ParserContext::openBlock( Statement* parent, SynTree* branch, bool bAutoClose )
 {
    TRACE("ParserContext::openBlock type '%s'",
-         parent->cls() == 0 ? "none": 
-          parent->cls()->name().c_ize() );
+         parent->handler() == 0 ? "none": 
+          parent->handler()->name().c_ize() );
 
    saveStatus( _p->m_frames.back() );
 

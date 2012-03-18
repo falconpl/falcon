@@ -77,6 +77,13 @@ ExprInherit::~ExprInherit()
 {
 }
 
+void ExprInherit::base( Class* cls )
+{
+   m_base = cls;
+   m_name = cls->name();
+}
+
+
 void ExprInherit::describeTo( String& target, int depth ) const
 {   
    String prefix = String(" ").replicate( depth * depthIndent );
@@ -105,6 +112,7 @@ void ExprInherit::describeTo( String& target, int depth ) const
       target += temp + ")";
    }
 }
+
 
 void ExprInherit::apply_( const PStep* ps, VMContext* ctx )
 {
@@ -211,7 +219,7 @@ public:
       IRequirement* s = static_cast<IRequirement*>(instance);
       
       subItems.resize(2);
-      subItems[0] = Item( s->m_owner->cls(), s->m_owner );
+      subItems[0] = Item( s->m_owner->handler(), s->m_owner );
       subItems[1] = Item( metaClass, s->m_target );
    }
    

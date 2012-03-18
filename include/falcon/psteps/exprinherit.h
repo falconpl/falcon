@@ -66,10 +66,7 @@ public:
    /** Sets the parent actually reference by this inheritance.
     \param cls The class that the owner class derivates from.
     */
-   void base( Class* cls ) 
-   {
-      m_base = cls;
-   }
+   void base( Class* cls );
 
    virtual void describeTo( String& target, int depth = 0 ) const;
 
@@ -88,6 +85,12 @@ public:
     created.
     */
    bool hadRequirement() const { return m_bHadRequirement; }
+   
+   /** Sets the requirement status of this inheritance.
+    Used during de-serialization to restore the status of this inheritance
+    in the host module.
+    */
+   void hadRequirement( bool b ) { m_bHadRequirement = b; }
    
 private:
    Class* m_base;

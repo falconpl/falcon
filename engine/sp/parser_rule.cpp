@@ -67,7 +67,7 @@ static void apply_cut_internal( const Rule&, Parser& p, bool hasExpr )
    ParserContext* st = static_cast<ParserContext*>(p.context());
 
    if ( st->currentStmt() == 0 || 
-      ( st->currentStmt()->cls()->userFlags() != FALCON_SYNCLASS_ID_RULE) )
+      ( st->currentStmt()->handler()->userFlags() != FALCON_SYNCLASS_ID_RULE) )
    {
       p.addError( e_syn_cut, p.currentSource(), trule->line(), trule->chr() );
    }
@@ -103,7 +103,7 @@ void apply_doubt( const Rule&, Parser& p )
    ParserContext* st = static_cast<ParserContext*>(p.context());
 
    if ( st->currentStmt() == 0 || 
-      ( st->currentStmt()->cls()->userFlags() != FALCON_SYNCLASS_ID_RULE) )
+      ( st->currentStmt()->handler()->userFlags() != FALCON_SYNCLASS_ID_RULE) )
    {
       p.addError( e_syn_doubt, p.currentSource(), trule->line(), trule->chr() );
    }

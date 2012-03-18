@@ -76,6 +76,9 @@
 #include <falcon/datareader.h>
 #include <falcon/symbol.h>
 
+#include <falcon/classes/classexpression.h>
+#include <falcon/storer.h>
+
 namespace Falcon {
 #undef FALCON_SYNCLASS_DECLARATOR_DECLARE
 #define FALCON_SYNCLASS_DECLARATOR_APPLY
@@ -230,8 +233,6 @@ FALCON_STANDARD_SYNCLASS_OP_CREATE( PostInc, ExprPostInc, unaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( PostDec, ExprPostDec, unaryExprSet )
    
 FALCON_STANDARD_SYNCLASS_OP_CREATE( IndexAccess, ExprIndex, binaryExprSet )
-FALCON_STANDARD_SYNCLASS_OP_CREATE( Inherit, ExprInherit, varExprInsert )
-FALCON_STANDARD_SYNCLASS_OP_CREATE( Parentship, ExprParentship, varExprInsert )
 
 // Logic
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Not, ExprNot, unaryExprSet )
@@ -672,6 +673,163 @@ void SynClasses::ClassValue::restore( VMContext* ctx, DataReader*dr, void*& empt
    empty = new ExprValue;
    m_parent->restore( ctx, dr, empty );
 }
+
+//=================================================================
+// Parentship / inheritance
+//
+void* SynClasses::ClassInherit::createInstance() const
+{
+   return new ExprInherit;
+}
+bool SynClasses::ClassInherit::op_init( VMContext* ctx, void* instance, int pcount ) const
+{
+   static Class* clsExpr = Engine::instance()->expressionClass();
+      
+   if( pcount < 1 )
+   {
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__, SRC )
+            .origin( ErrorParam::e_orig_runtime)
+            .extra( String("C,...") ) );
+   }
+   
+   Item* operands = ctx->opcodeParams( pcount );
+   Item* clsItem = operands->dereference();
+   // is that really a class?
+   if( ! clsItem->isClass() )
+   {
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__, SRC )
+            .origin( ErrorParam::e_orig_runtime)
+            .extra( String("C,...") ) );
+   }
+   
+   Class* theClass = static_cast<Class*>(clsItem->asInst());
+   ExprInherit* inh = static_cast<ExprInherit*>(instance);
+   inh->base( theClass );
+   
+   // and now, the init expressions
+   for( int i = 1; i < pcount; ++i ) 
+   {
+      Item* exprItem = operands[i].dereference();
+      Class* cls;
+      void* data;
+      exprItem->forceClassInst(cls, data);
+      if( ! cls->isDerivedFrom( clsExpr ) ) {
+         throw new ParamError( ErrorParam( e_param_type, __LINE__, SRC )
+            .origin( ErrorParam::e_orig_runtime)
+            .extra( String("Parameter ").N(i).A(" is not an expression") ) );
+      }
+      Expression* expr = static_cast<Expression*>( cls->getParentData(clsExpr, data) );
+      inh->add(expr);
+   }
+ 
+   return false;
+}
+
+void SynClasses::ClassInherit::flatten( VMContext* ctx, ItemArray& subItems, void* instance ) const
+{
+   ExprInherit* inh = static_cast<ExprInherit*>( instance );
+   Storer* storer = ctx->getTopStorer();
+   
+   subItems.resize(1);
+   Class* baseClass = inh->base();
+   if( baseClass == 0 )
+   {
+      // should not happen, but... keep the item nil.
+      return;
+   }
+   
+   // to decide how to flatten a class, we need to know if we're flattening our module.
+   if( storer != 0 && storer->topData() == baseClass->module() 
+      // Yep, we're storing the module, so  we're not forced to store external classes
+      && ! inh->hadRequirement()
+      )
+   {
+      // so, it's a module and we had a requirement. We're not storing this at all.
+      return;
+   }
+   
+   // in all the other cases, properly store the class.
+   subItems[0].setUser( baseClass->handler(), baseClass );
+}
+void SynClasses::ClassInherit::unflatten( VMContext*, ItemArray& subItems, void* instance ) const
+{
+   fassert(subItems.length() == 1);
+   const Item& item = subItems[0];
+   if( item.isNil() )
+   {
+      return;
+   }
+   
+   ExprInherit* inherit = static_cast<ExprInherit*>( instance );
+   Class* cls = static_cast<Class*>(item.asInst());
+   inherit->base( cls );
+}
+void SynClasses::ClassInherit::store( VMContext* ctx, DataWriter* wr, void* instance ) const
+{
+   ExprInherit* inh = static_cast<ExprInherit*>(instance);
+   wr->write( inh->name() );
+   wr->write( inh->hadRequirement() );
+   m_parent->store( ctx, wr, instance );
+}
+void SynClasses::ClassInherit::restore( VMContext* ctx, DataReader* rd, void*& empty ) const
+{
+   String name;
+   bool bHadReq;
+   rd->read( name );
+   rd->read( bHadReq );
+   
+   ExprInherit* inh = new ExprInherit(name);
+   inh->hadRequirement( bHadReq );
+   empty = inh;
+   m_parent->restore( ctx, rd, empty );
+}
+
+
+
+void* SynClasses::ClassParentship::createInstance() const
+{
+   return new ExprParentship;
+}
+bool SynClasses::ClassParentship::op_init( VMContext* ctx, void* instance, int pcount ) const
+{
+   static Class* clsParent = 
+               static_cast<Class*>( Engine::instance()
+                     ->getMantra("ClassParentship", Mantra::e_c_class ) );
+      
+   if( pcount == 0 )
+   {
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__, SRC )
+            .origin( ErrorParam::e_orig_runtime)
+            .extra( String("...") ) );
+   }
+   
+   Item* operands = ctx->opcodeParams( pcount );
+   ExprParentship* pship = static_cast<ExprParentship*>( instance );
+   // and now, the init expressions
+   for( int i = 0; i < pcount; ++i ) 
+   {
+      Item* exprItem = operands[i].dereference();
+      Class* cls;
+      void* data;
+      exprItem->forceClassInst(cls, data);
+      if( ! cls->isDerivedFrom( clsParent ) ) {
+         throw new ParamError( ErrorParam( e_param_type, __LINE__, SRC )
+            .origin( ErrorParam::e_orig_runtime)
+            .extra( String("Parameter ").N(i).A(" is not an expression") ) );
+      }
+      Expression* expr = static_cast<Expression*>( cls->getParentData(clsParent, data) );
+      pship->add(expr);
+   }
+ 
+   return false;
+}
+void SynClasses::ClassParentship::restore( VMContext* ctx, DataReader* rd, void*& empty ) const
+{
+   ExprParentship* pship = new ExprParentship;
+   empty = pship;
+   m_parent->restore( ctx, rd, empty );
+}
+
 
 //=================================================================
 // Statements

@@ -305,7 +305,12 @@ bool FalconClass::addProperty( const String& name )
 
 bool FalconClass::addMethod( Function* mth )
 {
-   TRACE1( "Addong method \"%s\" to class %s.", mth->name().c_ize(), m_name.c_ize() );
+   return addMethod( mth->name(), mth );
+}
+
+bool FalconClass::addMethod( const String& name, Function* mth )
+{
+   TRACE1( "Addong method \"%s\" to class %s.", name.c_ize(), m_name.c_ize() );
    
    if( m_bConstructed )
    {
@@ -314,9 +319,7 @@ bool FalconClass::addMethod( Function* mth )
       return false;
    }
       
-   Private::MemberMap& members = *_p->m_members;
-
-   const String& name = mth->name();
+   Private::MemberMap& members = *_p->m_members;  
 
    // first time around?
    if ( members.find( name ) != members.end() )
@@ -329,7 +332,6 @@ bool FalconClass::addMethod( Function* mth )
    overrideAddMethod( mth->name(), mth );
    return true;
 }
-
 
 Class* FalconClass::getParent( const String& name ) const
 {
@@ -545,7 +547,7 @@ bool FalconClass::isDerivedFrom( const Class* cls ) const
    for( int i = 0; i < m_parentship->arity(); ++i )
    {
       ExprInherit* inh = static_cast<ExprInherit*>(m_parentship->get(i));
-      if( cls->isDerivedFrom(inh->cls()) )
+      if( cls->isDerivedFrom(inh->handler()) )
       {
          return true;
       }
@@ -928,7 +930,7 @@ void FalconClass::flattenSelf( ItemArray& flatArray, bool asConstructed ) const
    
    if( m_parentship != 0 )
    {
-      flatArray.append( Item( m_parentship->cls(), m_parentship ) );      
+      flatArray.append( Item( m_parentship->handler(), m_parentship ) );      
    }
    else {
       flatArray.append( Item() );
@@ -943,7 +945,7 @@ void FalconClass::flattenSelf( ItemArray& flatArray, bool asConstructed ) const
             flatArray.append( Item( (int64) prop->m_value.id ) );
             if( prop->expression() != 0 )
             {
-               flatArray.append( Item( prop->expression()->cls(), prop->expression()));                              
+               flatArray.append( Item( prop->expression()->handler(), prop->expression()));                              
             }
             else {
                flatArray.append( Item() );
@@ -955,7 +957,7 @@ void FalconClass::flattenSelf( ItemArray& flatArray, bool asConstructed ) const
             break;
             
          case Property::t_inh:
-            flatArray.append( Item( prop->m_value.inh->cls(), prop->m_value.inh ) );
+            flatArray.append( Item( prop->m_value.inh->handler(), prop->m_value.inh ) );
             break;
             
          case Property::t_state:

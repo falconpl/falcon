@@ -126,7 +126,7 @@ void ClassTreeStep::enumeratePV( void* instance, Class::PVEnumerator& cb ) const
    Expression* expr = stmt->selector();
    if( expr != 0 )
    {
-      temp.setUser( expr->cls(), expr );
+      temp.setUser( expr->handler(), expr );
    }
    else
    {
@@ -169,7 +169,7 @@ void ClassTreeStep::op_getProperty( VMContext* ctx, void* instance, const String
       Expression* expr = stmt->selector();
       if( expr != 0 )
       {
-         ctx->topData().setUser( expr->cls(), expr );
+         ctx->topData().setUser( expr->handler(), expr );
       }
       else {
          ctx->topData().setNil();
@@ -184,7 +184,7 @@ void ClassTreeStep::op_getProperty( VMContext* ctx, void* instance, const String
       if( stmt->parent() == 0 )
          ctx->topData().setNil();
       else
-         ctx->topData().setUser( stmt->parent()->cls(), stmt->parent() );
+         ctx->topData().setUser( stmt->parent()->handler(), stmt->parent() );
    }
    else
    {
@@ -267,7 +267,7 @@ void ClassTreeStep::flatten( VMContext*, ItemArray& subItems, void* instance ) c
    subItems.resize( ts->arity() + 1 );
    if( ts->selector() != 0 )
    {
-      subItems.at(0).setUser( ts->selector()->cls(), ts->selector() );
+      subItems.at(0).setUser( ts->selector()->handler(), ts->selector() );
    }
    // else, let it be nil.
 
@@ -278,7 +278,7 @@ void ClassTreeStep::flatten( VMContext*, ItemArray& subItems, void* instance ) c
          TreeStep* element = ts->nth(i);
          if( element != 0 )
          {
-            subItems[i+1].setUser( element->cls(), element );
+            subItems[i+1].setUser( element->handler(), element );
          }
          // else, let it be nil.
       }
@@ -341,7 +341,7 @@ void ClassTreeStep::op_getIndex(VMContext* ctx, void* instance ) const
          ctx->stackResult( 2, Item() );
       }
       else {
-         ctx->stackResult( 2, Item( st->cls(), st ) );
+         ctx->stackResult( 2, Item( st->handler(), st ) );
       }
    }
    else {
@@ -458,7 +458,7 @@ void ClassTreeStep::op_next( VMContext* ctx, void* instance ) const
          ctx->pushData(Item()); // a nil
       }
       else {
-         Item value(st->cls(), st);
+         Item value(st->handler(), st);
          ctx->pushData( value );
          if( pos >= stmt->arity() )
          {

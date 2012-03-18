@@ -93,7 +93,7 @@ void apply_proto_prop(const Rule&, Parser& p)
     ParserContext* ctx = static_cast<ParserContext*>(sp.context());
     StmtTempProto* proto = static_cast<StmtTempProto*>(ctx->currentStmt());
     fassert( proto != 0 );
-    fassert( proto->cls() == 0 ); // temporary statements have no class.
+    fassert( proto->handler() == 0 ); // temporary statements have no class.
 
     TokenInstance* tname = sp.getNextToken();
     sp.getNextToken();

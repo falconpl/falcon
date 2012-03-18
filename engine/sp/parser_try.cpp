@@ -156,7 +156,7 @@ void apply_finally( const Rule&, Parser& p )
    
    ParserContext* ctx = static_cast<ParserContext*>(p.context());
    Statement* stmt = ctx->currentStmt();
-   if( stmt == 0 || stmt->cls()->userFlags() != FALCON_SYNCLASS_ID_CATCHHOST )
+   if( stmt == 0 || stmt->handler()->userFlags() != FALCON_SYNCLASS_ID_CATCHHOST )
    {
       p.addError( e_finally_outside, p.currentSource(), ti->line(), ti->chr() );
    }
@@ -198,7 +198,7 @@ static void internal_apply_catch( int toks, Parser& p, int line, int chr,
 {   
    ParserContext* ctx = static_cast<ParserContext*>(p.context());
    Statement* stmt = ctx->currentStmt();
-   if( stmt == 0 || stmt->cls()->userFlags() != FALCON_SYNCLASS_ID_CATCHHOST )
+   if( stmt == 0 || stmt->handler()->userFlags() != FALCON_SYNCLASS_ID_CATCHHOST )
    {
       p.addError( e_catch_outside, p.currentSource(), line, 0 );
    }
@@ -263,7 +263,7 @@ void apply_catch_all( const Rule&, Parser& p )
    
    ParserContext* ctx = static_cast<ParserContext*>(p.context());
    Statement* stmt = ctx->currentStmt();
-   if( stmt == 0 || stmt->cls()->userFlags() != FALCON_SYNCLASS_ID_CATCHHOST )
+   if( stmt == 0 || stmt->handler()->userFlags() != FALCON_SYNCLASS_ID_CATCHHOST )
    {
       p.addError( e_catch_outside, p.currentSource(), ti->line(), ti->chr() );
    }

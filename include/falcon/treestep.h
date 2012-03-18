@@ -161,7 +161,7 @@ class TreeStep: public PStep
 public:
    inline TreeStep( const TreeStep& other ):
       PStep( other ),
-      m_class( other.m_class ),
+      m_handler( other.m_handler ),
       m_cat( other.m_cat ),
       m_parent( 0 )
    {}
@@ -187,12 +187,12 @@ public:
     
     \note the class is not owned nor 
     */
-   Class* handler() const { return m_class; }
+   Class* handler() const { return m_handler; }
    
    /** Sets the handler of this step.
    \param cls The handler Class of this step.
     */
-   void handler( Class* cls ) { m_class = cls; }
+   void handler( Class* cls ) { m_handler = cls; }
    
    /** Marks this TreeStep, its parent or its function.
     \param mark The GC mark    
@@ -217,9 +217,6 @@ public:
     \return a valid TreeStep or 0 if this TreeStep has no parent. 
     */
    TreeStep* parent() const { return m_parent; }
-   
-   /** Returns the class associated with this TreeStep. */
-   Class* cls() const { return m_class; }     
    
    /** Clone this tree step.
     All the steps in a tree must be cloneable.    
@@ -358,13 +355,13 @@ public:
    
 protected:
    uint32 m_gcMark; 
-   Class* m_class;
+   Class* m_handler;
    t_category m_cat;
    TreeStep* m_parent;
    
    TreeStep( Class* cls, t_category t, int line = 0, int chr = 0 ):
       PStep(line, chr ),
-      m_class( cls ),
+      m_handler( cls ),
       m_cat(t),
       m_parent(0)
    {}
@@ -372,7 +369,7 @@ protected:
    // Unclassesd step, or class provided later on
    TreeStep( t_category t, int line = 0, int chr = 0 ):
       PStep(line, chr ),
-      m_class( 0 ),
+      m_handler( 0 ),
       m_cat(t),
       m_parent(0)
    {}

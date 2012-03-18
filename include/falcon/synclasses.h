@@ -88,7 +88,7 @@ public:
 
 #define FALCON_DECLARE_SYN_CLASS( syntoken ) \
    static Class* syntoken = Engine::instance()->synclasses()->m_##syntoken; \
-   m_class = syntoken;
+   m_handler = syntoken;
 
 #endif	/* SYNCLASSES_H */
 

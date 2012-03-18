@@ -52,7 +52,7 @@ SynTree::SynTree( int line, int chr ):
    m_selector(0)
 {
    static Class* syntoken = Engine::instance()->synclasses()->m_cls_st;
-   m_class = syntoken;
+   m_handler = syntoken;
    
    /** Mark this as a composed class */
    m_bIsComposed = true;

@@ -31,6 +31,7 @@ class VMContext;
 class FalconClass;
 class Expression;
 class ExprParentship;
+class MetaHyperClass;
 
 /** Class holding more user-type classes.
 
@@ -145,7 +146,7 @@ private:
     The master class is owned by this hyperclass and it's destroyed
     when the hyperclass is destroyed.
     */
-   HyperClass( FalconClass* master );
+   HyperClass( FalconClass* master );   
    
    void setParentship( ExprParentship* ps, bool own = true );
    
@@ -166,8 +167,8 @@ private:
 
    InitParentsStep m_initParentsStep;
 
-   
    friend class FalconClass;
+   friend class MetaHyperClass;
 };
 
 }

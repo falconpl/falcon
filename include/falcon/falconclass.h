@@ -209,6 +209,8 @@ public:
     needed anymore.
     */
    bool addMethod( Function* mth );
+   
+   bool addMethod( const String& name, Function* mth );
 
    bool hasInit() const { return m_hasInit; }
    void hasInit( bool bMode ) { m_hasInit = bMode; }
@@ -325,6 +327,8 @@ public:
 
    /** Return the constructor of this class. */
    SynFunc* constructor() const { return m_constructor; }
+   
+   void setConstructor(SynFunc* sf ) { m_constructor = sf; }
 
    /** Create the class structure compiling it from its parents.
     \return false if there is still some unknown parent,

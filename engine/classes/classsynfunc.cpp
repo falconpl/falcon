@@ -124,7 +124,7 @@ void ClassSynFunc::flatten( VMContext*, ItemArray& subItems, void* instance ) co
       
    for( uint32 i = 0; i < synfunc->syntree().size(); ++i ) {
       Statement* stmt = synfunc->syntree().at(i);
-      Class* synClass = stmt->cls();
+      Class* synClass = stmt->handler();
       subItems.append(Item( synClass, stmt ) );
    }
    

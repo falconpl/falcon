@@ -29,6 +29,7 @@ namespace Falcon {
 
 class Function;
 class ItemArray;
+class ItemDict;
 
 /** Basic item abstraction.*/
 class FALCON_DYN_CLASS Item
@@ -646,12 +647,17 @@ public:
 
    ItemArray* asArray() const
    {
-      return (ItemArray*) asInst();
+      return static_cast<ItemArray*>(asInst());
    }
    
    String* asString() const
    {      
       return static_cast<String*>(asInst());
+   }
+   
+   ItemDict* asDict() const
+   {
+      return static_cast<ItemDict*>(asInst());
    }
    
    Item* asReference() const

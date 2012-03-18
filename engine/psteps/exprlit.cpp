@@ -118,7 +118,7 @@ void ExprLit::apply_( const PStep* ps, VMContext* ctx )
    }
    
    ctx->popCode();
-   ctx->pushData( Item( child->cls(), child ) );   
+   ctx->pushData( Item( child->handler(), child ) );   
 }
 
 }

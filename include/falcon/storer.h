@@ -202,8 +202,39 @@ public:
    void* topData() const { return m_topData; }
    Class* topHandler() const { return m_topHandler; }
    
+   /** Ask the storer not to serialize this mantra. 
+    \param The mantra not to be flattened.
+    
+    If the storer finds this mantra while performing flattening,
+    the mantra itself will not be flattened, and will be just stored
+    in the storage output by base mantra storing (e.g. by mantra
+    coordinates).
+    
+    Suppose you want to send an instance to a remote processor; if the base class
+    has parents, the default behavior is that to completely store all the
+    structure of the parents up to where possible (i.e. up to native classes)
+    so that the remote processor can recreate them
+    and construct the instance. But if it's known that the remote processor
+    has knowledge about some or all the base classes of the instance,
+    it can be enough to transfer the instance data. This can be done by
+    explicitly creating a per-instance serialization routine or simply adding
+    the base class (or some base classes) throught this method.
+    In this way, the mantras will just be stored by coordinate, which the
+    remote processor shall try to resolve to bring up them and make them
+    available for this instance, without recreating them anew.    
+    */
    void addFlatMantra( Mantra* mantra );
-   bool isFlatMantra( Mantra* mantra );   
+   
+   /** Returns true if the given mantra was candiate for flat sotrage.
+    \param mantra The mantra to be checked.
+    \return true if the mantra is just stored by mantra coordinates.
+    \see addFlatMantra
+    
+    The parameter is a void pointer; it is not required that the input
+    parameter is actually a mantra, as the set of flat mantras is just
+    maintained by actual pointer value.
+   */
+   bool isFlatMantra( const void* mantra );   
    
    class FALCON_DYN_CLASS WriteNext: public PStep
    {

@@ -300,7 +300,7 @@ static void apply_forfirst_internal( const Rule&, Parser& p, bool bShort )
    Statement* stmt = ctx->currentStmt();
    
    // TODO: Use a typing system?
-   if( stmt == 0 || stmt->cls()->userFlags() != FALCON_SYNCLASS_ID_FORCLASSES )
+   if( stmt == 0 || stmt->handler()->userFlags() != FALCON_SYNCLASS_ID_FORCLASSES )
    {
       TokenInstance* ti = p.getNextToken();
       p.addError( e_forfirst_outside, p.currentSource(), ti->line(), ti->chr() );
@@ -341,7 +341,7 @@ static void apply_formiddle_internal( const Rule&, Parser& p, bool isShort )
    
    Statement* stmt = ctx->currentStmt();
    
-   if( stmt == 0 || stmt->cls()->userFlags() != FALCON_SYNCLASS_ID_FORCLASSES )
+   if( stmt == 0 || stmt->handler()->userFlags() != FALCON_SYNCLASS_ID_FORCLASSES )
    {
       TokenInstance* ti = p.getNextToken();
       p.addError( e_formiddle_outside, p.currentSource(), ti->line(), ti->chr() );
@@ -380,7 +380,7 @@ static void apply_forlast_internal( const Rule&, Parser& p, bool isShort )
    ParserContext* ctx = static_cast<ParserContext*>(p.context());   
    Statement* stmt = ctx->currentStmt();
    
-   if( stmt == 0 || stmt->cls()->userFlags() != FALCON_SYNCLASS_ID_FORCLASSES )
+   if( stmt == 0 || stmt->handler()->userFlags() != FALCON_SYNCLASS_ID_FORCLASSES )
    {
       TokenInstance* ti = p.getNextToken();
       p.addError( e_forlast_outside, p.currentSource(), ti->line(), ti->chr() );

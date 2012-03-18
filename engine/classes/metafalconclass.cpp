@@ -19,6 +19,8 @@
 #include <falcon/datawriter.h>
 #include <falcon/datareader.h>
 #include <falcon/storer.h>
+#include <falcon/errors/paramerror.h>
+#include <falcon/itemdict.h>
 
 namespace Falcon
 {
@@ -81,6 +83,124 @@ void MetaFalconClass::unflatten( VMContext*, ItemArray& subItems, void* instance
 {
    FalconClass* fcls = static_cast<FalconClass*>(instance);
    fcls->unflattenSelf( subItems );
+}
+
+
+bool MetaFalconClass::op_init( VMContext* ctx, void* instance, int32 pcount ) const
+{
+   static Class* classParentship = static_cast<Class*>(
+            Engine::instance()->getMantra("Parentship", Mantra::e_c_class));
+   fassert( classParentship != 0 );
+   
+   Item* operands = ctx->opcodeParams( pcount );
+   // Class constructor:
+   // Class( name, members, parentship )
+   
+   if( pcount < 1 || ! operands->dereference()->isString() )
+   {
+      throw new ParamError( ErrorParam(e_inv_params, __LINE__,SRC)
+            .origin(ErrorParam::e_orig_runtime)
+            .extra("S,[D],[Parentship]") );
+   }
+   
+   
+   String* name = operands->dereference()->asString();
+   ItemDict* members = 0;
+   ExprParentship* ep = 0;
+   
+   if( pcount > 1 )
+   {
+      Item* iDict = operands[1].dereference();
+      if( ! iDict->isDict() ) {
+         throw new ParamError( ErrorParam(e_inv_params, __LINE__,SRC)
+            .origin(ErrorParam::e_orig_runtime)
+            .extra("S,[D],[Parentship]") );
+      }
+      members = iDict->asDict();
+   }
+   
+   if( pcount > 2 )
+   {
+      Item* iParent = operands[2].dereference();
+      Class* cls;
+      void* data;
+      
+      if( ! iParent->asClassInst(cls, data) || ! cls->isDerivedFrom(classParentship) ) {
+         throw new ParamError( ErrorParam(e_inv_params, __LINE__,SRC)
+            .origin(ErrorParam::e_orig_runtime)
+            .extra("S,[D],[Parentship]") );
+      }
+      ep = static_cast<ExprParentship*>( cls->getParentData(classParentship, data ) );
+   }
+   
+   // we have all the needed parameters.
+   FalconClass* fcls = static_cast<FalconClass*>( instance );
+   fcls->name( *name );
+   if( ep != 0 )
+   {
+      fcls->setParentship( ep );
+   }
+   
+   if( members != 0 )
+   {
+      // process the members.
+      class Rator: public ItemDict::Enumerator {
+      public:
+         Rator( FalconClass* theClass ):
+            m_flc( theClass )
+         {}
+            
+         virtual void operator()( const Item& key, Item& value )
+         {
+            if( ! key.isString() )
+            {
+               throw new ParamError( ErrorParam(e_param_type, __LINE__,SRC)
+                  .origin(ErrorParam::e_orig_runtime)
+                  .extra("Member dictionary must have strings for keys") ); 
+            }
+            
+            String* propName = key.asString();
+            if( *propName == "init" )
+            {
+               Function* initFunc;
+               if( ! value.isFunction() || 
+                  (initFunc = value.asFunction())->category() != Mantra::e_c_synfunction )
+               {
+                  throw new ParamError( ErrorParam(e_param_type, __LINE__,SRC)
+                     .origin(ErrorParam::e_orig_runtime)
+                     .extra("Init member must be a syntactic function") ); 
+               }
+               
+               m_flc->setConstructor(static_cast<SynFunc*>(initFunc));
+            }
+            else {
+               if( value.isFunction() )
+               {
+                  // force the name
+                  m_flc->addMethod( *propName, value.asFunction() );
+               }
+               else {
+                  // TODO: state values
+                  m_flc->addProperty( *propName, value );
+               }
+            }            
+         }
+         
+      private:
+         FalconClass* m_flc;
+      };
+      Rator rator( fcls );
+      
+      members->enumerate( rator );
+   }
+   
+   return false;
+}
+
+   
+void* MetaFalconClass::createInstance() const
+{
+   return new FalconClass("anonymous");
 }
 
 }
