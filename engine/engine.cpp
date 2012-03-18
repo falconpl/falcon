@@ -74,6 +74,8 @@
 #include <falcon/classes/metafalconclass.h>
 #include <falcon/classes/metahyperclass.h>
 
+#include <falcon/classes/classmodule.h>
+
 #include <falcon/classes/classtreestep.h>
 #include <falcon/classes/classstatement.h>
 #include <falcon/classes/classexpression.h>
@@ -275,7 +277,8 @@ Engine::Engine()
    addMantra(m_statementClass);
    addMantra(m_exprClass);
    addMantra(m_syntreeClass);
-   addMantra(m_symbolClass);   
+   addMantra(m_symbolClass); 
+   addMantra( new ClassModule );
    
    m_synClasses = new SynClasses(m_syntreeClass, m_statementClass, m_exprClass );
    m_synClasses->subscribe( this );
@@ -304,12 +307,8 @@ Engine::~Engine()
    delete m_core;
 
    // ===============================
-   // Delete standard item classes
+   // DO NOT Delete standard item classes -- they are mantras
    //
-   for ( int count = 0; count < FLC_ITEM_COUNT; ++count )
-   {
-      delete m_classes[count];
-   }
 
    // ===============================
    // delete registered transcoders
