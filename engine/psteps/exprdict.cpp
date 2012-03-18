@@ -167,7 +167,7 @@ bool ExprDict::simplify( Item& ) const
 
 //=====================================================
 
-void ExprDict::apply_( const PStep*ps, VMContext* ctx )
+void ExprDict::apply_( const PStep* ps, VMContext* ctx )
 {
    static Class* cd_class = Engine::instance()->dictClass();
    static Collector* collector = Engine::instance()->collector();
@@ -180,7 +180,7 @@ void ExprDict::apply_( const PStep*ps, VMContext* ctx )
    while( iter != mye.end() )
    {
       // generate the expression and eventually yield back.
-      if( ctx->stepInYield( ps, cf ) )
+      if( ctx->stepInYield( *iter, cf ) )
       {
          return;
       }
