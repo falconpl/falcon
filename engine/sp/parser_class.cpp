@@ -109,15 +109,30 @@ static void make_class( Parser& p, int tCount,
       symclass = ctx->onGlobalDefined( *tname->asString(), alreadyDef );
       if( alreadyDef )
       {
-         // not free!
-         p.addError( e_already_def,  p.currentSource(), tname->line(), tname->chr(), 0,
-            String("at line ").N(symclass->declaredAt()) );
-         p.simplify( tCount );
-         return;
+         if( symclass->type() != Symbol::e_st_extern )
+         {
+            // not free!
+            p.addError( e_already_def,  p.currentSource(), tname->line(), tname->chr(), 0,
+               String("at line ").N(symclass->declaredAt()) );
+            // however, go on with class creation
+            if ( sp.interactive() )
+            {
+               // unless intefactive...
+               p.simplify( tCount );
+               return;
+            }
+            cls = new FalconClass( "anonymous" );
+         }
+         else {
+            cls = new FalconClass( *tname->asString() );
+            symclass->promoteToGlobal();
+         }
+         
       }
-
-      // Ok, we took the symbol.
-      cls = new FalconClass( *tname->asString() );
+      else {
+         // Ok, we took the symbol.
+         cls = new FalconClass( *tname->asString() );
+      }
    }
    else
    {
@@ -158,7 +173,8 @@ static void make_class( Parser& p, int tCount,
          Symbol* symBaseClass = ctx->findSymbol( inh->name() );
          // if it's 0, we need a requirement; and we shall also add an externa symbol.
          if( symBaseClass == 0 ) {
-            ctx->onUndefinedSymbol( inh->name() ); 
+            Symbol* sym = ctx->onUndefinedSymbol( inh->name() ); 
+            sym->declaredAt( p.currentLine() );
             Requirement* req = inh->makeRequirement( cls );
             ctx->onRequirement( req );
          }

@@ -388,12 +388,12 @@ bool ParserContext::checkSymbols()
          // see if it's a global or extern for our sub-class...
          TRACE1("ParserContext::checkSymbols \"%s\" is undefined, up-notifying", esym->name().c_ize() );
          new_sym = onUndefinedSymbol( esym->name() );
-
          // still undefined? -- we surrender, and hope that the subclass has properly raised
          if ( new_sym == 0 )
          {
             TRACE1("ParserContext::checkSymbols \"%s\" leaving this symbol undefined", esym->name().c_ize() );
          }
+         new_sym->declaredAt(m_parser->currentLine());
       }
 
       if( new_sym != 0 )

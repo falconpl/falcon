@@ -151,7 +151,7 @@ bool Restorer::restore( Stream* rd, ModSpace* space, ModLoader* ml )
    try
    {
       readClassTable();  
-      if( ! loadClasses( space, ml ) )
+      if( space != 0 && ml != 0 && ! loadClasses( space, ml ) )
       {
          return false;
       }

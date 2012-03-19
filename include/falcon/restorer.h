@@ -45,7 +45,7 @@ public:
     \throw IoError on error reading from the stream
     \thrown ParseError on semantic errors while reading from the stream.
     */
-   virtual bool restore( Stream* rd, ModSpace* msp, ModLoader* ml );
+   virtual bool restore( Stream* rd, ModSpace* msp=0, ModLoader* ml=0 );
    
    virtual bool next( Class*& handler, void*& data, bool& first );
    virtual bool hasNext() const;

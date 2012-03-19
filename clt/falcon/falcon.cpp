@@ -158,8 +158,13 @@ void FalconApp::launch( const String& script )
       throw linkerr;
    }
    
-   ms->readyVM( vm.currentContext() );
-   vm.run();
+   Function* fmain = module->getFunction("__main__");
+   if( fmain != 0 )
+   {
+      vm.currentContext()->call( fmain,0);
+      ms->readyVM( vm.currentContext() );
+      vm.run();
+   }
 }
 
 

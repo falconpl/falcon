@@ -142,6 +142,14 @@ public:
       m_other = other;
    }
    
+   void promoteToGlobal()
+   {
+      fassert2( m_type == e_st_extern, "Ought to be an extern symbol" );
+      m_type = e_st_global;
+      m_getValue = &getValue_global;
+      m_setValue = &setValue_global;
+   }
+   
    const Item& defaultValue() const {      
       return m_defValue;
    }

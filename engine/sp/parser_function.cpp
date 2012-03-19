@@ -45,7 +45,8 @@ static SynFunc* inner_apply_function( const Rule&, Parser& p, bool bHasExpr, boo
 {
    //<< (r_Expr_function << "Expr_function" << apply_function << T_function << T_Name << T_Openpar << ListSymbol << T_Closepar << T_EOL )
    ParserContext* ctx = static_cast<ParserContext*>(p.context());
-
+   SourceParser& sp = *static_cast<SourceParser*>(&p);
+   
    p.getNextToken();//T_function
    if( isEta ) p.getNextToken();// '*'
    TokenInstance* tname = p.getNextToken();
@@ -78,11 +79,21 @@ static SynFunc* inner_apply_function( const Rule&, Parser& p, bool bHasExpr, boo
       symfunc = ctx->onGlobalDefined( *tname->asString(), alreadyDef );
       if( alreadyDef )
       {
-         // not free!
-         p.addError( e_already_def,  p.currentSource(), tname->line(), tname->chr(), 0,
-            String("at line ").N(symfunc->declaredAt()) );
-         p.simplify(tcount);
-         return 0;
+         if( symfunc->type() != Symbol::e_st_extern )
+         {
+            // not free!
+            p.addError( e_already_def,  p.currentSource(), tname->line(), tname->chr(), 0,
+               String("at line ").N(symfunc->declaredAt()) );
+            if( sp.interactive() )
+            {
+               p.simplify(tcount);
+               return 0;
+            }
+         }
+         else {
+            symfunc->promoteToGlobal();
+         }
+         // otherwise, continue to compile the function.
       }
    }
 

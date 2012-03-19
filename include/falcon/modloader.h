@@ -372,6 +372,7 @@ private:
    
    t_modtype checkFile_internal( const URI& uri, t_modtype type, URI& foundUri );
    Module* load_internal( const String& prefixPath, const URI& uri, t_modtype type );
+   void saveModule_internal( Module* module, const URI& uri, const String& modName );
    Error* makeError( int code, int line, const String &expl="", int fsError=0 );
 };
 

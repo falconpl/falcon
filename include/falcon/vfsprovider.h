@@ -173,7 +173,7 @@ public:
    /** Open a file. */
    virtual Stream* open( const URI &uri, const OParams &p )=0;
 
-   inline Stream* create( const URI &uri ) {
+   inline Stream* createSimple( const URI &uri ) {
       return create( uri, CParams() );
    }
    

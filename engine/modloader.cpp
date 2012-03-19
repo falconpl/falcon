@@ -28,6 +28,7 @@
 #include <falcon/textreader.h>
 #include <falcon/datareader.h>
 #include <falcon/stream.h>
+#include <falcon/storer.h>
 
 #include <falcon/trace.h>
 #include <falcon/fassert.h>
@@ -408,6 +409,29 @@ Module* ModLoader::load_internal(
          {
             throw m_compiler->makeError();
          }
+         
+         // what shoud we do with the newly compiled module?
+         switch( savePC() )
+         {
+            case e_save_no: 
+               // nothing to do.
+               break;  
+               
+            case e_save_try: 
+               try {
+                  saveModule_internal( output, uri, modName );
+               }
+               catch( IOError* err ) {
+                  // dereference.
+                  err->decref();
+               }
+               break;
+            
+            case e_save_mandatory:
+               saveModule_internal( output, uri, modName );
+               break;
+         }
+         
          return output;
       }
          
@@ -420,8 +444,7 @@ Module* ModLoader::load_internal(
          }
          
          ins->shouldThrow(true);
-         DataReader dr( ins, DataReader::e_LE, true );
-         return m_famLoader->load( &dr, uri.encode(), modName );
+         return m_famLoader->load( ins, uri.encode(), modName );
       }
          
       case e_mt_binmod:
@@ -446,6 +469,42 @@ Error* ModLoader::makeError( int code, int line, const String &expl, int fsError
             .origin( ErrorParam::e_orig_loader )
             .sysError( fsError )
          );
+}
+
+
+void ModLoader::saveModule_internal( Module* mod, const URI& srcUri, const String& )
+{
+   return;
+   
+   static VFSIface* vfs = &Engine::instance()->vfs();
+   static Class* clsModule = static_cast<Class*>(
+         Engine::instance()->getMantra("Module", Mantra::e_c_class ));
+   fassert( clsModule != 0 );
+   
+   URI tgtUri = srcUri;
+   Path path( tgtUri.path() );
+   path.ext("fam");
+   tgtUri.path( path.encode() );
+   
+   // get the proper target URI provider
+   Stream* output = vfs->createSimple( tgtUri );
+   
+   try
+   {
+      output->shouldThrow(true);
+      output->write("FM\x4\x1",4);
+      Storer theStorer;
+      theStorer.store( clsModule, mod );
+      theStorer.commit(output);
+      output->close();
+   }
+   catch( ... )
+   {
+      delete output;
+      return;
+   }
+   
+   delete output;
 }
 
 }
