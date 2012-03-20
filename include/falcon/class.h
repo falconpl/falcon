@@ -33,7 +33,7 @@ class Item;
 class DataReader;
 class DataWriter;
 class Module;
-class Inheritance;
+class ExprInherit;
 class ItemArray;
 class Error;
 
@@ -488,7 +488,7 @@ public:
     The default behavior of Class is empty. This is commonly used only in
     FalconClass.
     */
-   virtual void onInheritanceResolved( Inheritance* inh );
+   virtual void onInheritanceResolved( ExprInherit* inh );
    
    //=========================================================
    // Operators.

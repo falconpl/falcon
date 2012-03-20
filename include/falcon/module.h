@@ -37,7 +37,6 @@ namespace Falcon {
 
 class Symbol;
 class Item;
-class Inheritance;
 class ModSpace;
 class ModLoader;
 class FalconClass;
@@ -343,46 +342,6 @@ public:
     */
    Symbol* addExport( const String& name, bool &bAlready );   
    
-   /** Adds an inheritance that is pending while the module is being formed.
-    \param inh the inheritance to be added.
-    
-    In non-interactive compilation mode, it is posible to have forward declarations of 
-    statically declared entities. When this happens with an inheritance clause,
-    this fact must be specially remembered so that further declarations do not
-    break the rules that the given symbol must be considered a class.
-    
-    Other methods checkPendingInheritance() and commitPendingiInheritances() are
-    used to complete the controls on the inheritance system.
-    */
-   void addPendingInheritance( Inheritance* inh );
-   
-   /** Checks the symbol for existing inheritances.
-      \param symName The name if the inheritance that has been created.
-      \param parent The parent class, if defined.
-      \return True if there are pending inheritances with this name, false otherwise.
-    
-    This method is called when statically defining functions or classes in non-interactive
-    compilation. 
-    
-    In case the defined symbol is a class, the parent parameter should
-    be the value of the newly defined classes; inheritances are then considered
-    resolved, and they won't be added as external requests when the module 
-    compilation is closed. 
-    
-    If they are function or objects, or any non-class statically declared
-    entity, the parent parameter should be zero. In that case, the method will
-    just check for the inheritance name to exist, and then return true. The
-    compiler should add an error because a non-class entity has been used as
-    static inheritance for a class.
-    */
-   bool checkPendingInheritance( const String& symName, Class* parent = 0 );
-   
-   /** Commits the inheritances into new external requests.
-    
-    To be called when the compilation of a module is complete. It will repeatedly
-    call addImportInheritance on any existing inheritance.
-   */
-   void commitPendingInheritance();
    
    /** Adds a request for a foreign entity that shall be resolved at link phase.
     

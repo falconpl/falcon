@@ -206,7 +206,7 @@ void Class::op_compare( VMContext* ctx, void* self ) const
 }
 
 
-void Class::onInheritanceResolved( Inheritance* )
+void Class::onInheritanceResolved( ExprInherit* )
 {
    // do nothing
 }

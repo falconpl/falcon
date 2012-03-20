@@ -94,6 +94,8 @@ public:
    
    void constructing()
    {
+      return;
+      
       m_curMembers = m_origMembers;
       m_members = &m_curMembers;
       m_curStates = m_origStates;
@@ -112,6 +114,7 @@ FalconClass::Property::Property( const String& name, size_t value, Expression* e
 
 
 FalconClass::Property::Property( const Property& other ):
+   m_name( other.m_name ),
    m_type( other.m_type ),
    m_value( other.m_value ),
    m_expr( 0 )
@@ -328,6 +331,7 @@ bool FalconClass::addMethod( const String& name, Function* mth )
    }
 
    // insert a new property with the required ID
+   mth->methodOf( this );
    members[name] = new Property( mth );
    overrideAddMethod( mth->name(), mth );
    return true;
@@ -543,13 +547,23 @@ bool FalconClass::isDerivedFrom( const Class* cls ) const
 {
    // are we the required class?
    if( this == cls ) return true;
+   if( m_parentship ==  0 ) return false;
    
    for( int i = 0; i < m_parentship->arity(); ++i )
    {
       ExprInherit* inh = static_cast<ExprInherit*>(m_parentship->get(i));
-      if( cls->isDerivedFrom(inh->handler()) )
+      if( inh->base() != 0 )
       {
-         return true;
+         if( cls->isDerivedFrom(inh->base()) )
+         {
+            return true;
+         }
+      }
+      else {
+         if( inh->name() == cls->name() )
+         {
+            return true;
+         }
       }
    }
 
@@ -1047,7 +1061,7 @@ bool FalconClass::op_init( VMContext* ctx, void* instance, int32 pcount ) const
       // now that we are in the constructor context, we can push the property initializer
       // if we're a base class, we don't need to do this, because property initializers
       // -- are flattened in the topmost child class.
-      if( inst->origin() == this && m_hasInitExpr )
+      if( m_hasInitExpr )
       {
          ctx->pushCode( &m_initExprStep );
       }
@@ -1072,10 +1086,48 @@ void FalconClass::op_getProperty( VMContext* ctx, void* self, const String& prop
 
    if( ! overrideGetProperty( ctx, self, propName ) )
    {
-      if( ! inst->getMember( propName, ctx->topData() ) )
+      const Property* prop = getProperty( propName );
+      
+      if( prop != 0 )
       {
-         Class::op_getProperty( ctx, self, propName );
+         Item& target = ctx->topData();
+         
+         switch( prop->m_type )
+         {
+            case FalconClass::Property::t_prop:
+               if( inst->origin() != this )
+               {
+                  prop = inst->origin()->getProperty( propName );
+                  fassert( prop != 0 );
+                  fassert( prop->m_type == Property::t_prop );
+               }
+               
+               target = inst->data()[ prop->m_value.id ];
+               
+               if( target.isFunction() ) {
+                  Function* func = target.asFunction();
+                  target.setUser( this, const_cast<FalconInstance*>(inst) );
+                  target.methodize( func );
+               }
+               return;
+
+            case FalconClass::Property::t_func:               
+               target.setUser( this, const_cast<FalconInstance*>(inst) );
+               target.methodize( prop->m_value.func );
+               return;
+
+            case FalconClass::Property::t_inh:
+               target.setUser( prop->m_value.inh->base(), const_cast<FalconInstance*>(inst) );
+               return;
+
+            case FalconClass::Property::t_state:
+               //TODO
+               return;
+         }
       }
+
+      // Default to base class
+      Class::op_getProperty( ctx, self, propName );  
    }
 }
 
@@ -1114,6 +1166,8 @@ void FalconClass::PStepInitExpr::apply_( const PStep* ps, VMContext* ctx )
    
    CallFrame& frame = ctx->currentFrame();
    FalconInstance* inst = static_cast<FalconInstance*>( frame.m_self.asInst() );
+   const FalconClass* origin = inst->origin();
+   
    
    int size = (int) iprops.size();
    int& seqId = ccode.m_seqId;
@@ -1126,17 +1180,22 @@ void FalconClass::PStepInitExpr::apply_( const PStep* ps, VMContext* ctx )
       Property* previous = iprops[seqId-1];
       TRACE2( "Initializing '%s' from a previous run...", previous->m_name.c_ize() );
       
-      fassert( previous->m_type == FalconClass::Property::t_prop );
-      fassert( previous->expression() != 0 );
-
-      inst->data()[previous->m_value.id] = ctx->topData();
+         
+      const Property* prop = (origin == step->m_owner) ? 
+               previous : origin->getProperty( previous->m_name );
+      
+      fassert( prop != 0 );
+      fassert( prop->m_type == FalconClass::Property::t_prop );
+      fassert( prop->expression() != 0 );
+      
+      inst->data()[prop->m_value.id] = ctx->topData();
       ctx->popData();
    }
 
    
    while( seqId < size )
    {
-      Property* prop = iprops[seqId];
+      const Property* prop = iprops[seqId];
       TRACE2( "Initializing property %s at step step %d/%d", 
                                        prop->m_name.c_ize(), seqId, size );
       fassert( prop->m_type == FalconClass::Property::t_prop );
@@ -1148,6 +1207,14 @@ void FalconClass::PStepInitExpr::apply_( const PStep* ps, VMContext* ctx )
       {
          TRACE2( "Descending at step step %d/%d", seqId, size );
          return;
+      }
+      
+      if( origin != step->m_owner ) 
+      {
+         prop = origin->getProperty( prop->m_name );
+         fassert( prop != 0 );
+         fassert( prop->m_type == FalconClass::Property::t_prop );
+         fassert( prop->expression() != 0 );
       }
       
       inst->data()[prop->m_value.id] = ctx->topData();

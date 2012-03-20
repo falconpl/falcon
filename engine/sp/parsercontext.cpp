@@ -634,7 +634,11 @@ void ParserContext::closeContext()
          // is this a method?
          if ( m_cclass != 0 )
          {
-            m_cclass->addMethod( bframe.m_elem.func );
+            // unless it's the constructor -- in which case it's already added
+            if ( bframe.m_elem.func->methodOf() != m_cclass )
+            {
+               m_cclass->addMethod( bframe.m_elem.func );
+            }
          }
          else
          {

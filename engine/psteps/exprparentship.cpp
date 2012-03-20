@@ -19,6 +19,7 @@
 #include <falcon/vmcontext.h>
 
 #include "exprvector_private.h"
+#include "falcon/psteps/exprinherit.h"
 
 namespace Falcon
 {
@@ -88,7 +89,17 @@ void ExprParentship::apply_( const PStep* ps, VMContext* ctx )
    while( seqId < size )
    {
       ++seqId;
-      Expression* exp = exprs[size - seqId];
+      ExprInherit* exp = static_cast<ExprInherit*>(exprs[size - seqId]);
+      
+      Item& iinst = ctx->self();
+      fassert( iinst.isUser() );
+      Class* cls = iinst.asClass();
+      fassert( cls->isDerivedFrom(exp->base()) );
+      void* instance = iinst.asClass()->getParentData( exp->base(), iinst.asInst());
+      fassert( instance != 0 );
+      
+      ctx->pushData( Item( exp->base(), instance) );
+   
       if( ctx->stepInYield( exp, cf ) )
       {
          return;

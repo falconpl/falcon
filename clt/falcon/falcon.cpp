@@ -158,7 +158,7 @@ void FalconApp::launch( const String& script )
       throw linkerr;
    }
    
-   Function* fmain = module->getFunction("__main__");
+   Function* fmain = module->getMainFunction();
    if( fmain != 0 )
    {
       vm.currentContext()->call( fmain,0);

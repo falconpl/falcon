@@ -145,12 +145,11 @@ void ExprInherit::apply_( const PStep* ps, VMContext* ctx )
    Item* iinst = ctx->opcodeParams(size+1);
    // The creation process must have given the instance to us right before
    // -- the parameters were created.
-   fassert( iinst->isClass() );
-   fassert( iinst->asClass()->isDerivedFrom(self->m_base) );
-   void* instance = iinst->asClass()->getParentData( self->m_base, iinst->asInst());
+   fassert( iinst->isUser() );
+   fassert( iinst->asClass() == self->m_base );
    
    // invoke the init operator directly
-   if( self->m_base->op_init( ctx, instance, size ) )
+   if( self->m_base->op_init( ctx, iinst->asInst(), size ) )
    {
       // It's deep.
       return;
@@ -186,6 +185,7 @@ void ExprInherit::IRequirement::onResolved( const Module* source, const Symbol* 
    // Ok, we have a valid class.
    Class* newParent = static_cast<Class*>(value->asInst());
    m_owner->base( newParent );
+   m_target->onInheritanceResolved( m_owner );
    
    // is the owner class a Falcon class?
    if( m_target->isFalconClass() )
