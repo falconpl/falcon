@@ -66,6 +66,9 @@ public:
    const ItemArray& base() const { return m_base; }
    ItemArray& base() { return m_base; }
 
+   void setBaseType( bool bIsBaseType ) { m_flags = bIsBaseType ? 1:0; }
+   bool isBaseType() const { return (m_flags & 1) == 1; }
+   
 private:
    class Private;
    Private* _p;

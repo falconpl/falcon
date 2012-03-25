@@ -154,8 +154,6 @@ bool ExprProto::simplify( Item& ) const
    return false;
 }
 
-
-
 void ExprProto::apply_( const PStep* ps, VMContext* ctx )
 {
    static Collector* coll = Engine::instance()->collector();
@@ -179,12 +177,13 @@ void ExprProto::apply_( const PStep* ps, VMContext* ctx )
    
    // we're done with the exrpessions
    FlexyDict *value = new FlexyDict;
+   value->setBaseType(true);
 
    Item* result = ctx->opcodeParams(size);
    Private::DefVector::iterator viter = dv.begin();
    while( viter != dv.end() )
    {
-      // pre-methodize
+      // pre-methodize ?
       if( result->isFunction() )
       {
          Function* f = result->asFunction();

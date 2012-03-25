@@ -206,7 +206,7 @@ void FlexyDict::describe( String& target, int depth, int maxlen ) const
 {
    if( depth == 0 )
    {
-      target = "p{...}";
+      target = "{...}";
       return;
    }
 
@@ -227,7 +227,8 @@ void FlexyDict::describe( String& target, int depth, int maxlen ) const
 
       ++pos;
    }
-
+   
+   /*
    for ( length_t i = 0; i < m_base.length(); ++ i )
    {
       target += "; ";
@@ -238,6 +239,7 @@ void FlexyDict::describe( String& target, int depth, int maxlen ) const
       cls->describe( data, temp, depth-1, maxlen );
       target += temp;
    }
+   */
 }
 
 

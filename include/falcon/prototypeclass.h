@@ -54,15 +54,16 @@ public:
    virtual ~PrototypeClass();
 
    virtual bool hasProperty( void* self, const String& prop ) const;
+   virtual void describe( void* instance, String& target, int depth = 3, int maxlen = 60 ) const;
    
    //=========================================================
    // Operators.
    //
 
    virtual bool op_init( VMContext* ctx, void* instance, int32 pcount ) const;
+   virtual void op_call( VMContext* ctx, int32 paramCount, void* instance ) const;
    virtual void op_getProperty( VMContext* ctx, void* self, const String& prop) const;
    virtual void op_setProperty( VMContext* ctx, void* self, const String& prop ) const;
-
 };
 
 }
