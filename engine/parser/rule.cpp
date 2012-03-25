@@ -193,14 +193,8 @@ bool Rule::match( Parser& parser, bool bIncremental, bool bContinue ) const
          }
       }
 
-      TRACE2( "Rule::match(%s) -- checking '%s' <-> '%s'",
-               m_name.c_ize(), curTok->name().c_ize(), stackToken->name().c_ize()  );
-
       if( curTok->id() != stackToken->id() || bContinue )
       {
-         TRACE3( "Rule::match(%s) -- searching a path from '%s' path to '%s' ",
-            m_name.c_ize(), curTok->name().c_ize(), stackToken->name().c_ize() );
-
          // actually, descendable should always be != 0 when dpos != -1, but just in case...
          if( dpos != -1 && descendable != 0 )
          {
@@ -212,8 +206,7 @@ bool Rule::match( Parser& parser, bool bIncremental, bool bContinue ) const
          }
 
          // match failed
-         TRACE2( "Rule::match(%s) -- failed at %d",
-               m_name.c_ize(), (int)ppos );
+         //TRACE2( "Rule::match(%s) -- failed at %d", m_name.c_ize(), (int)ppos );
          return false;
       }
       else

@@ -189,13 +189,20 @@ void ClassSymbol::restore( VMContext*, DataReader* stream, void*& empty ) const
 
 void ClassSymbol::flatten( VMContext*, ItemArray& subItems, void* instance ) const
 {
-   subItems.reserve(1);
+   
    Symbol* symbol = static_cast<Symbol*>(instance);
    
-   if( symbol->type() == Symbol::e_st_extern ) {
-      subItems.append( Item(this, symbol->externRef() ) );
+   if( symbol->type() == Symbol::e_st_extern ) 
+   {
+      if( symbol->externRef() != 0 )
+      {
+         subItems.reserve(1);
+         subItems.append( Item(this, symbol->externRef() ) );
+      }
+      // other wise, it's an unresolved external symbo, and we don't have to save it.
    }
    else {
+      subItems.reserve(1);
       subItems.append( symbol->defaultValue() );
    }
 }
@@ -204,9 +211,13 @@ void ClassSymbol::flatten( VMContext*, ItemArray& subItems, void* instance ) con
 void ClassSymbol::unflatten( VMContext*, ItemArray& subItems, void* instance ) const
 {
    Symbol* symbol = static_cast<Symbol*>(instance);
-   fassert( subItems.length() == 1 );
-   if( symbol->type() == Symbol::e_st_extern ) {
-      symbol->promoteExtern( static_cast<Symbol*>(subItems[0].asInst()) );
+   fassert( subItems.length() == 1 || symbol->type() == Symbol::e_st_extern );
+   if( symbol->type() == Symbol::e_st_extern ) 
+   {
+      if( subItems.length() > 0 ) {
+         symbol->promoteExtern( static_cast<Symbol*>(subItems[0].asInst()) );
+      }
+      // otherwise, the symbol was flattened when unresolved.
    }
    else {
       symbol->defaultValue( subItems[0] );

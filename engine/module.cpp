@@ -77,6 +77,10 @@ Error* Module::Private::Dependency::onResolved( Module* parentMod, Module* mod, 
    Error* res = 0;
    m_resSymbol = sym;
    bool firstError = true;
+   if( m_symbol != 0 && m_symbol->type() == Symbol::e_st_extern)
+   {
+      m_symbol->promoteExtern( sym );
+   }
    
    Private::Dependency::WaitingList::iterator iter = m_waitings.begin();
    while( m_waitings.end() != iter )

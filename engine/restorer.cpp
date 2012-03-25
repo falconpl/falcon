@@ -163,6 +163,8 @@ bool Restorer::restore( Stream* rd, ModSpace* space )
 
 bool Restorer::next( Class*& handler, void*& data, bool &first )
 {
+   TRACE( "Restorer::next item %d", _p->m_current );
+   
    if( _p != 0 && ( _p->m_current < _p->m_objList.size()) ) 
    {
       uint32 objID = _p->m_objList[_p->m_current];
@@ -181,6 +183,8 @@ bool Restorer::next( Class*& handler, void*& data, bool &first )
       data = objd.m_data;
       first = objd.m_bFirstTime;
       objd.m_bFirstTime = false;
+      
+      TRACE1( "Restorer::next -- restored %s %p", handler->name().c_ize(), data );
       return true;
    }
    
@@ -205,8 +209,11 @@ uint32 Restorer::objCount() const
 
 void Restorer::readClassTable()
 {
+   MESSAGE( "Restorer::readClassTable" );
+
    uint32 classCount;
    _p->m_reader.read( classCount );
+   TRACE1( "Restorer::readClassTable -- reading %d classes", classCount );
    _p->m_clsVector.resize( classCount );
    for (uint32 n = 0; n < classCount; n ++ )
    {
@@ -223,6 +230,7 @@ void Restorer::readClassTable()
 
 bool Restorer::loadClasses( ModSpace* msp )
 {
+   MESSAGE( "Restorer::loadClasses" );
    bool addedMod = false;
    
    Private::ClassVector::iterator iter = _p->m_clsVector.begin();
@@ -265,9 +273,12 @@ bool Restorer::loadClasses( ModSpace* msp )
 
 void Restorer::readInstanceTable()
 {
+   MESSAGE( "Restorer::readInstanceTable" );
    uint32 instCount;
    _p->m_reader.read( instCount );
-   _p->m_objList.resize( instCount );
+   TRACE1( "Restorer::readInstanceTable -- reading %d instances", instCount );
+   
+   _p->m_objList.resize( instCount );   
    for (uint32 n = 0; n < instCount; n ++ )
    {      
       uint32 objID;
@@ -279,8 +290,11 @@ void Restorer::readInstanceTable()
 
 bool Restorer::readObjectTable()
 {
+   MESSAGE( "Restorer::readObjectTable" );
    uint32 instCount;
    _p->m_reader.read( instCount );
+   TRACE1( "Restorer::readObjectTable -- reading %d objects", instCount );
+   
    _p->m_objVector.resize( instCount );
    
    int32 pcount = m_ctx->codeDepth();
@@ -295,6 +309,7 @@ bool Restorer::readObjectTable()
 
 bool Restorer::unflatten()
 {
+   MESSAGE( "Restorer::unflatten" );
    int32 pcount = m_ctx->codeDepth();
    m_ctx->pushCode( &m_unflattenNext );
    // if executing up to the end, unflatten_next will destroy P
@@ -316,12 +331,17 @@ void Restorer::ReadNext::apply_( const PStep* ps, VMContext* ctx )
    Restorer::Private::ObjectDataVector& objects = _p->m_objVector;
    
    int32& seq = ctx->currentCode().m_seqId;
-   while( ((uint32)seq) < objects.size() )
+   uint32 objCount = objects.size();
+   TRACE( "Restorer::ReadNext::apply_ with sequence %d/%d", seq, objCount );
+   
+   while( ((uint32)seq) < objCount )
    {
+      TRACE1( "Restorer::ReadNext::apply_ -- next object %d/%d", seq, objCount );
+      
       Restorer::Private::ObjectData& objd = objects[seq];
       // prepare for next step
-      ++seq;
-      //TODO: check well known classes
+      seq = ((uint32)seq) + 1;
+
       _p->m_reader.read( marker );
       if( marker != 0xFECDBA98)
       {
@@ -331,7 +351,6 @@ void Restorer::ReadNext::apply_( const PStep* ps, VMContext* ctx )
       }
       
       _p->m_reader.read( objd.m_clsId );
-      //TODO: check well known classes
       if( objd.m_clsId >= _p->m_clsVector.size() )
       {
          throw new UnserializableError( ErrorParam( e_deser, __LINE__, SRC )
@@ -340,6 +359,8 @@ void Restorer::ReadNext::apply_( const PStep* ps, VMContext* ctx )
       }
       
       _p->m_reader.read( depsCount );
+      TRACE2( "Restorer::ReadNext::apply_ -- restoring object %d for class %d (%s) depsCount %d ", 
+            seq, objd.m_clsId, _p->m_clsVector[objd.m_clsId].m_className.c_ize(), depsCount);
       if( depsCount > 0 )
       {
          objd.m_deps.resize( depsCount );
@@ -367,10 +388,12 @@ void Restorer::ReadNext::apply_( const PStep* ps, VMContext* ctx )
          objd.m_data = &_p->m_flatItems.back();
       }
       
+      
       cls->restore( ctx, &_p->m_reader, objd.m_data );
       if( ctx->currentCode().m_step != self )
       {
          // we went deep
+         MESSAGE1( "Restorer::ReadNext::apply_ -- went deep." );
          return;
       }
       
@@ -390,7 +413,10 @@ void Restorer::UnflattenNext::apply_( const PStep* ps, VMContext* ctx )
    Restorer::Private::ObjectDataVector& objects = _p->m_objVector;
    
    int32& seq = ctx->currentCode().m_seqId;
-   while( ((uint32)seq) < objects.size() )
+   uint32 objCount = objects.size();
+   TRACE( "Restorer::UnflattenNext::apply_ with sequence %d/%d", seq, objCount );
+   
+   while( ((uint32)seq) < objCount )
    {
       Restorer::Private::ObjectData& objd = objects[seq];
       // prepare for next step
@@ -434,6 +460,8 @@ void Restorer::UnflattenNext::apply_( const PStep* ps, VMContext* ctx )
 
 void Restorer::LinkNext::apply_( const PStep* ps, VMContext* ctx )
 {
+   MESSAGE( "Restorer::LinkNext::apply_" );
+   
    const Restorer::LinkNext* self = static_cast<const Restorer::LinkNext*>(ps);
    // we're not interested in being called again.
    ctx->popCode();

@@ -66,7 +66,7 @@ Symbol::Symbol( const String& name, Symbol::type_t t, uint32 id, int line ):
          break;
          
       case e_st_extern:
-         m_getValue = Symbol::getValue_extern;
+         m_getValue = Symbol::getValue_extern_unpromoted;
          m_setValue = Symbol::setValue_extern;
          break;
          
@@ -140,6 +140,11 @@ const Item* Symbol::getValue_extern( const Symbol* sym, VMContext* )
 {
    fassert( sym->m_other != 0 );
    return &sym->m_other->m_defValue;
+}
+
+const Item* Symbol::getValue_extern_unpromoted( const Symbol*, VMContext* )
+{
+   return 0;
 }
 
 const Item* Symbol::getValue_dyns( const Symbol* sym, VMContext* ctx )

@@ -88,7 +88,7 @@ void Parser::Private::clearStates()
 
 Parser::Private::ParseFrame::~ParseFrame()
 {
-   TRACE2("Destroying ParseFrame at %p", this );
+   //TRACE2("Destroying ParseFrame at %p", this );
 }
 
 

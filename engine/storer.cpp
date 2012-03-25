@@ -244,6 +244,8 @@ bool Storer::commit( Stream* dataStream )
 
 bool Storer::traverse( Class* handler, void* data, bool isTopLevel, void** obj )
 {
+   TRACE( "Entering traverse on handler %s ", handler->name().c_ize() );
+   
    // first, save the item.
    bool bIsNew;
    Storer::Private::ObjectData* objd = _p->addObject( handler, data, bIsNew );
@@ -309,8 +311,12 @@ void Storer::TraverseNext::apply_( const PStep* ps, VMContext* ctx )
    ItemArray& items = objd->m_theArray;
    
    int &i = ctx->currentCode().m_seqId;
+   
+   TRACE1( "Entering traverse next step %i", i );
+   
    // The dependencies are now stored in items array.
-   while( i < (int) items.length() ) 
+   int length = (int) items.length();
+   while( i < length ) 
    {
       Class* cls;
       void* udata;
@@ -318,6 +324,7 @@ void Storer::TraverseNext::apply_( const PStep* ps, VMContext* ctx )
       // get the class that can serialize the item...
       Item& current = items[i];
       current.forceClassInst( cls, udata );
+   
       ++i; // prepare for going deep
       Private::ObjectData* newDep;
       bool bDidAll = self->m_owner->traverse( cls, udata, false, (void**) &newDep );

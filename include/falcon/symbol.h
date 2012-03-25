@@ -138,7 +138,7 @@ public:
    {
       fassert2( m_type == e_st_extern, "Ought to be an extern symbol." );
       fassert2(other->m_type == e_st_global, "Other symbol must be global." );
-      
+      m_getValue = &getValue_extern;
       m_other = other;
    }
    
@@ -189,6 +189,7 @@ protected:
    static const Item* getValue_local( const Symbol* sym, VMContext* ctx );
    static const Item* getValue_closed( const Symbol* sym, VMContext* ctx );
    static const Item* getValue_extern( const Symbol* sym, VMContext* ctx );
+   static const Item* getValue_extern_unpromoted( const Symbol* sym, VMContext* ctx );
    static const Item* getValue_dyns( const Symbol* sym, VMContext* ctx );
    
    static void setValue_global( const Symbol* sym, VMContext* ctx, const Item& value );

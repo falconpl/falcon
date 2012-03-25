@@ -131,6 +131,7 @@ bool Writer::writeRaw( byte* data, size_t size )
    {
       size_t nDone = m_bufSize - m_bufPos;
       memcpy( m_buffer + m_bufPos, data, nDone );
+      m_bufPos += nDone; // flush uses current bufPos to save.
       if( ! flush() )
       {
          return false;

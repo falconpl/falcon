@@ -615,8 +615,9 @@ void SynClasses::ClassGenSym::restore( VMContext*, DataReader*dr, void*& empty )
    
    empty = es;
 }
- void SynClasses::ClassGenSym::flatten( VMContext*, ItemArray& subItems, void* instance ) const
- {
+ 
+void SynClasses::ClassGenSym::flatten( VMContext*, ItemArray& subItems, void* instance ) const
+{
     static Class* sc = Engine::instance()->symbolClass();
     ExprSymbol* es = static_cast<ExprSymbol*>(instance);
     

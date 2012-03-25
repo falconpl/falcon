@@ -24,6 +24,7 @@
 #include <deque>
 #include <list>
 #include <map>
+#include <vector>
 
 namespace Falcon {
 
@@ -266,6 +267,10 @@ public:
 
    typedef std::deque<Requirement*> RequirementList;
    RequirementList m_reqslist;
+   
+   // used during deserialization
+   uint32 m_symCount;
+   std::vector<int32> m_tempExport;
    
    Private()
    {}
