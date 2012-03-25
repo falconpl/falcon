@@ -731,7 +731,7 @@ void SynClasses::ClassInherit::flatten( VMContext* ctx, ItemArray& subItems, voi
    ExprInherit* inh = static_cast<ExprInherit*>( instance );
    Storer* storer = ctx->getTopStorer();
    
-   subItems.resize(1);
+   subItems.resize(1+ inh->arity() );
    Class* baseClass = inh->base();
    if( baseClass == 0 )
    {
@@ -751,10 +751,15 @@ void SynClasses::ClassInherit::flatten( VMContext* ctx, ItemArray& subItems, voi
    
    // in all the other cases, properly store the class.
    subItems[0].setUser( baseClass->handler(), baseClass );
+   for( int i = 0; i < inh->arity(); ++i )
+   {
+      TreeStep* expr = inh->nth( i );
+      subItems[i+1].setUser( expr->handler(), expr );
+   }
 }
 void SynClasses::ClassInherit::unflatten( VMContext*, ItemArray& subItems, void* instance ) const
 {
-   fassert(subItems.length() == 1);
+   fassert(subItems.length() >= 1);
    const Item& item = subItems[0];
    if( item.isNil() )
    {
@@ -764,6 +769,11 @@ void SynClasses::ClassInherit::unflatten( VMContext*, ItemArray& subItems, void*
    ExprInherit* inherit = static_cast<ExprInherit*>( instance );
    Class* cls = static_cast<Class*>(item.asInst());
    inherit->base( cls );
+   for( int i = 1; i < (int) subItems.length(); ++i )
+   {
+      Expression* expr = static_cast<Expression*>( subItems[i].asInst() );
+      inherit->add(expr);
+   }
 }
 void SynClasses::ClassInherit::store( VMContext* ctx, DataWriter* wr, void* instance ) const
 {
