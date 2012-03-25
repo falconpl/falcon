@@ -23,7 +23,6 @@
 
 namespace Falcon {
 
-class VMachine;
 class VMContext;
 class Module;
 class Error;
@@ -80,10 +79,11 @@ class FALCON_DYN_CLASS ModSpace
 public:
    
    /** Creates the module space, eventually linked to a parent module space.
+    \param ctx The VM Context used in this 
     \param parent A parent module space where to look for already loaded modules
     or exported symbols.
     */
-   ModSpace( ModSpace* parent = 0 );
+   ModSpace( VMContext* ctx, ModSpace* parent = 0 );
    virtual ~ModSpace();
    
    /** Adds a new module to the module space. 
@@ -105,7 +105,6 @@ public:
    bool add( Module* mod, bool bExport = false, bool bOnw = true );
    
    /** Adds the given module and recursively tries to load the dependencies.
-    \param ml The ModLoader used to load the modules.
     \param mod The Module that must be added to the space.
     \param bExport whether the space should honor the export request of the
             given module or not.
@@ -121,7 +120,7 @@ public:
     repeatedly calls add() to store in the added modules in the module space.
     
     */
-   void resolve( ModLoader* ml, Module* mod, bool bExport = false, bool bOwn = true );
+   void resolve( Module* mod, bool bExport = false, bool bOwn = true );
    
    
    /** Resolves an import request.
@@ -144,11 +143,10 @@ public:
     of the import directive before actually applying it on a requester at a later
     time.
     */
-   void resolveImportDef( ImportDef* def, ModLoader* ml, Module* requester = 0 );
+   void resolveImportDef( ImportDef* def, Module* requester = 0 );
    
    
    /** Just resolves the dependencies of a module that was separately added.
-    \param ml The ModLoader used to load the modules.
     \param mod The Module that must be added to the space.
     \param bExport whether the space should honor the export request of the
             given module or not.
@@ -157,7 +155,7 @@ public:
     This method is usually called by resolve().
     
     */
-   void resolveDeps( ModLoader* ml, Module* mod);
+   void resolveDeps( Module* mod );
    
    /** Links newly added modules.
     \return A link error containing all the problems in this link
@@ -202,7 +200,6 @@ public:
    //===================================================================
    
    Mantra* findDynamicMantra( 
-      ModLoader* ml,
       const String& moduleUri, 
       const String& moduleName, 
       const String& className, 
@@ -320,6 +317,12 @@ public:
     */
    Error* linkModuleImports( Module* mod );
    
+   /** Gets the module loader associated with this virtual machine. */
+   ModLoader* modLoader() const { return m_loader; }
+   
+   /** Gets the active context bound with this module loader. */
+   VMContext* context() const { return m_ctx; }
+   
 private:      
    class Private;
    Private* _p;
@@ -327,8 +330,11 @@ private:
    
    class ModuleData;
    
+   VMContext* m_ctx;
    ModSpace* m_parent;
    uint32 m_lastGCMark;
+   
+   ModLoader* m_loader;
    
    ModuleData* findModuleData( const String& name, bool isUri ) const;   
    void exportFromModule( Module* mod, Error*& link_errors );
@@ -341,7 +347,6 @@ private:
    void linkGeneralDep( Module* asker, void* def, Error*& link_errors);
    
    Module* retreiveDynamicModule( 
-      ModLoader* ml,
       const String& moduleUri, 
       const String& moduleName,  
       bool &addedMod );

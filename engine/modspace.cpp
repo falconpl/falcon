@@ -115,15 +115,20 @@ public:
 // Main class
 //
 
-ModSpace::ModSpace( ModSpace* parent ):
-   _p( new Private ),      
+ModSpace::ModSpace( VMContext* ctx, ModSpace* parent ):
+   _p( new Private ),   
+   m_ctx( ctx ),
    m_parent(parent),
    m_lastGCMark(0)
-{}
+{
+   m_loader = new ModLoader(this);
+}
+
 
 ModSpace::~ModSpace()
 {
    delete _p;
+   delete m_loader;
 }
 
 
@@ -169,7 +174,7 @@ bool ModSpace::add( Module* mod, bool bExport, bool bOwn )
 }
 
 
-void ModSpace::resolve( ModLoader* ml, Module* mod, bool bExport, bool bOwn )
+void ModSpace::resolve( Module* mod, bool bExport, bool bOwn )
 {
     TRACE( "ModSpace::resolve %s %s",
       mod->name().c_ize(), bExport ? "with export" :  "" 
@@ -178,11 +183,11 @@ void ModSpace::resolve( ModLoader* ml, Module* mod, bool bExport, bool bOwn )
    // save the module as requested.
    add( mod, bExport, bOwn );
 
-   resolveDeps( ml, mod );
+   resolveDeps( mod );
 }
 
 
-void ModSpace::resolveImportDef( ImportDef* def, ModLoader* ml, Module* requester ) 
+void ModSpace::resolveImportDef( ImportDef* def, Module* requester ) 
 {
    TRACE( "ModSpace::resolveImportDef for %s", def->sourceModule().c_ize() );
    
@@ -195,8 +200,8 @@ void ModSpace::resolveImportDef( ImportDef* def, ModLoader* ml, Module* requeste
       
       if ( sourcedt == 0 )
       {
-         sourcemod = def->isUri() ? ml->loadFile( def->sourceModule() ) : 
-                                  ml->loadName( def->sourceModule() );
+         sourcemod = def->isUri() ? m_loader->loadFile( def->sourceModule() ) : 
+                                  m_loader->loadName( def->sourceModule() );
          
          if( sourcemod == 0 )
          {
@@ -214,7 +219,7 @@ void ModSpace::resolveImportDef( ImportDef* def, ModLoader* ml, Module* requeste
          }
          
          // be sure the loaded module deps are resolved as well.
-         resolve( ml, sourcemod, def->isLoad(), true );
+         resolve( sourcemod, def->isLoad(), true );
       }
       else {
          sourcemod = sourcedt->m_mod;
@@ -232,7 +237,7 @@ void ModSpace::resolveImportDef( ImportDef* def, ModLoader* ml, Module* requeste
 }
 
 
-void ModSpace::resolveDeps( ModLoader* ml, Module* mod)
+void ModSpace::resolveDeps( Module* mod)
 {   
    TRACE( "ModSpace::resolveDeps %s", mod->name().c_ize() );
     
@@ -255,8 +260,8 @@ void ModSpace::resolveDeps( ModLoader* ml, Module* mod)
          if( md == 0 )
          {
             req->m_module = req->m_bIsURI ? 
-                                 ml->loadName( req->m_name ) : 
-                                 ml->loadFile( req->m_name );
+                                 m_loader->loadName( req->m_name ) : 
+                                 m_loader->loadFile( req->m_name );
 
             if( req->m_module == 0 )
             {
@@ -273,7 +278,7 @@ void ModSpace::resolveDeps( ModLoader* ml, Module* mod)
             }
 
             // be sure the loaded module deps are resolved as well.
-            resolve( ml, req->m_module, req->m_isLoad, true );
+            resolve( req->m_module, req->m_isLoad, true );
          }
          else 
          {
@@ -704,14 +709,16 @@ bool ModSpace::readyVM( VMContext* ctx )
       const Module* mod = (*imods)->m_mod;
       // TODO -- invoke the init methods.
       
-      // TODO -- specific space for Main.
-      Function* main = mod->getFunction("__main__");
-      if( main != 0 )
+      if( ! mod->isMain() )
       {
-         ctx->call( main, 0 );
-         someRun = true;
+         Function* main = mod->getFunction("__main__");
+         if( main != 0 )
+         {
+            ctx->call( main, 0 );
+            someRun = true;
+         }
       }
-            
+      
       ++imods;
    }
    
@@ -778,7 +785,6 @@ void ModSpace::addLinkError( Error*& top, Error* newError )
 
 
 Module* ModSpace::retreiveDynamicModule( 
-      ModLoader* ml,
       const String& moduleUri, 
       const String& moduleName,  
       bool &addedMod )
@@ -801,7 +807,7 @@ Module* ModSpace::retreiveDynamicModule(
          if( clsContainer == 0 )
          {
             // then try to load the module.
-            clsContainer = ml->loadFile( moduleUri, ModLoader::e_mt_none, true );
+            clsContainer = m_loader->loadFile( moduleUri, ModLoader::e_mt_none, true );
             // to be linked?
             addedMod = clsContainer != 0;
          }
@@ -811,7 +817,7 @@ Module* ModSpace::retreiveDynamicModule(
       if( clsContainer == 0 )
       {
          // then try to load the module.
-         clsContainer = ml->loadName( moduleName );
+         clsContainer = m_loader->loadName( moduleName );
          // to be linked?
          addedMod = clsContainer != 0;
       }
@@ -822,7 +828,6 @@ Module* ModSpace::retreiveDynamicModule(
 
 
 Mantra* ModSpace::findDynamicMantra( 
-      ModLoader* ml,
       const String& moduleUri, 
       const String& moduleName, 
       const String& className, 
@@ -830,7 +835,7 @@ Mantra* ModSpace::findDynamicMantra(
 {
    static Engine* eng = Engine::instance();
    
-   Module* clsContainer = retreiveDynamicModule( ml, moduleUri, moduleName, addedMod );
+   Module* clsContainer = retreiveDynamicModule( moduleUri, moduleName, addedMod );
    Mantra* theClass;
 
    // still no luck?
@@ -888,7 +893,7 @@ Mantra* ModSpace::findDynamicMantra(
       // shall we link a new module?
       if( addedMod )
       {
-         this->resolve( ml, clsContainer, false, true );
+         this->resolve( clsContainer, false, true );
       }
    }
    

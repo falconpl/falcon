@@ -92,7 +92,7 @@ bool ClassRestorer::op_init( VMContext* ctx, void* instance, int32 ) const
 
 void* ClassRestorer::createInstance() const
 { 
-   return new RestorerCarrier(new Restorer);
+   return new RestorerCarrier(new Restorer(0) );
 }
 
 /*
@@ -153,7 +153,7 @@ FALCON_DEFINE_METHOD_P1( ClassRestorer, restore )
    // prepare not to return the frame now but later.
    ctx->pushCode( retStep );
    bool complete =  restorer->restore(streamc->m_underlying, 
-                           ctx->vm()->modSpace(), ctx->vm()->modLoader() );
+                           ctx->vm()->modSpace() );
    if( complete )
    {
       ctx->returnFrame();

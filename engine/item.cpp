@@ -228,7 +228,12 @@ void Item::describe( String &target, int maxDepth, int maxLength ) const
       break;
       
       default:
-         asClass()->describe( asInst(), target, maxDepth, maxLength );
+      {
+         Class* cls = 0;
+         void* inst = 0;
+         asClassInst( cls, inst );
+         cls->describe( inst, target, maxDepth, maxLength );
+      }
    }
 }
 

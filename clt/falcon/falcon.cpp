@@ -82,13 +82,13 @@ void FalconApp::launch( const String& script )
    Stream* fs = Engine::instance()->vfs().openRO( script );   
    if( fs == 0 )
    {
-      vm.textOut()->write( "Can't open " + script+ "\n" );
+      vm.textOut()->write( "Can't open " + script + "\n" );
       return;
    }
    
    // Ok, we opened the file; prepare the space (and most important, the loader) 
    ModSpace* ms = vm.modSpace();
-   ModLoader* loader = vm.modLoader();
+   ModLoader* loader = ms->modLoader();
    
    // do we have a load path?
    loader->setSearchPath(".");
@@ -117,7 +117,7 @@ void FalconApp::launch( const String& script )
    // -- Save modules?
    if( m_options.save_modules )
    {
-      if( m_options.force_recomp)
+      if( m_options.force_recomp )
       {
          loader->savePC( ModLoader::e_save_mandatory );
       }
@@ -149,7 +149,7 @@ void FalconApp::launch( const String& script )
    ms->add( Engine::instance()->getCore(), true, false );
    
    // and start the resolution dance.   
-   ms->resolve( loader, module, true, true );   
+   ms->resolve( module, true, true );   
    
    // throw on error.
    Error* linkerr = ms->link();

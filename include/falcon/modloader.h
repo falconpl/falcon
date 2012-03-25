@@ -83,6 +83,7 @@ public:
    } t_modtype;
    
    /** Creates the ModLoader.
+    \param owner The module space ownwning this loader.
     \param mc An optional previously created and configured ModCompiler.
     \param faml An optional previously created and configured FamLoader.
     \param dld An optional previously created and configured DynLoader.
@@ -95,10 +96,11 @@ public:
     
     This constructor sets the path to the default ("." + system falcon load path)
     */
-   ModLoader( ModCompiler* mc = 0, FAMLoader* faml=0, DynLoader* dld=0 );   
+   ModLoader( ModSpace* owner, ModCompiler* mc = 0, FAMLoader* faml=0, DynLoader* dld=0 );   
    
    /** Creates a module loader with a given path.
     \param path The path where modules will be searched for.
+    \param owner The module space ownwning this loader.
     \param mc An optional previously created and configured ModCompiler.
     \param faml An optional previously created and configured FamLoader.
     \param dld An optional previously created and configured DynLoader.
@@ -116,7 +118,7 @@ public:
       The current directory is \b not included in the default path. If this is desired, add it
       as a single "." entry.
    */
-   ModLoader( const String &path, ModCompiler* mc = 0, FAMLoader* faml=0, DynLoader* dld=0 );
+   ModLoader( const String &path, ModSpace* owner, ModCompiler* mc = 0, FAMLoader* faml=0, DynLoader* dld=0 );
    
    ~ModLoader();
 
@@ -368,7 +370,7 @@ private:
    String m_encName;
    Transcoder* m_tcoder;
    
-   void init ( const String &path, ModCompiler* mc, FAMLoader* faml, DynLoader* dld );
+   void init ( const String &path, ModSpace* ms, ModCompiler* mc, FAMLoader* faml, DynLoader* dld );
    
    t_modtype checkFile_internal( const URI& uri, t_modtype type, URI& foundUri );
    Module* load_internal( const String& prefixPath, const URI& uri, t_modtype type );

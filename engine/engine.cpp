@@ -83,6 +83,9 @@
 #include <falcon/classes/classsymbol.h>
 #include <falcon/synclasses.h>
 
+#include <falcon/psteps/exprinherit.h>
+#include <falcon/psteps/stmtselect.h>
+
 #include <falcon/prototypeclass.h>
 
 
@@ -279,6 +282,9 @@ Engine::Engine()
    addMantra(m_syntreeClass);
    addMantra(m_symbolClass); 
    addMantra( new ClassModule );
+   
+   ExprInherit::IRequirement::registerMantra();
+   SelectRequirement::registerMantra();
    
    m_synClasses = new SynClasses(m_syntreeClass, m_statementClass, m_exprClass );
    m_synClasses->subscribe( this );

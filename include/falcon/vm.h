@@ -287,9 +287,6 @@ public:
 
    /** Gets the module space associated with this virtual machine. */
    ModSpace* modSpace() const { return m_modspace; }
-  
-   /** Gets the module loader associated with this virtual machine. */
-   ModLoader* modLoader() const { return m_loader; }
 
 protected:
 
@@ -305,9 +302,6 @@ protected:
    bool m_bOwnCoder;
    
    ModSpace* m_modspace;
-   
-   // Loader for the incoming modules.
-   ModLoader* m_loader;
 
    /** Called back when an error was thrown directly inside the machine.
     \param e The error being thrown.

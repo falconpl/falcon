@@ -14,7 +14,7 @@
 */
 
 #include "int_mode.h"
-#include "falcon/modloader.h"
+#include <falcon/modloader.h>
 #include <falcon/string.h>
 #include <falcon/trace.h>
 
@@ -43,7 +43,7 @@ void IntMode::run()
    vm.modSpace()->link();
    
    // do we have a load path?
-   ModLoader* loader = vm.modLoader();
+   ModLoader* loader = vm.modSpace()->modLoader();
    loader->setSearchPath(".");
    if( m_owner->m_options.load_path.size() > 0 )
    {

@@ -26,10 +26,6 @@
 #include <falcon/module.h>
 #include <falcon/pseudofunc.h>
 
-#include <falcon/vm.h>
-#include <falcon/modspace.h>
-#include <falcon/modloader.h>
-
 #include <falcon/errors/ioerror.h>
 
 namespace Falcon {

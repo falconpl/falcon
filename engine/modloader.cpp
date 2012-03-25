@@ -53,17 +53,17 @@ public:
 };
 
 
-ModLoader::ModLoader( ModCompiler* mc, FAMLoader* faml, DynLoader* dld ):
+ModLoader::ModLoader( ModSpace* ms, ModCompiler* mc, FAMLoader* faml, DynLoader* dld ):
    _p( new Private )
 {
-   init(".", mc, faml, dld );
+   init(".", ms, mc, faml, dld );
 }
 
 
-ModLoader::ModLoader( const String &path, ModCompiler* mc, FAMLoader* faml, DynLoader* dld ):
+ModLoader::ModLoader( const String &path, ModSpace* ms, ModCompiler* mc, FAMLoader* faml, DynLoader* dld ):
    _p( new Private )
 {
-   init( path, mc, faml, dld );
+   init( path, ms, mc, faml, dld );
 }
 
 
@@ -73,19 +73,22 @@ ModLoader::~ModLoader()
 }
 
 
-void ModLoader::init ( const String &path, ModCompiler* mc, FAMLoader* faml, DynLoader* dld )
+void ModLoader::init ( const String &path, ModSpace* ms,  ModCompiler* mc, FAMLoader* faml, DynLoader* dld )
 {
    static Engine* engine = Engine::instance();
    
    setSearchPath(path);
    if( mc == 0 ) mc = new ModCompiler;
-   if( faml == 0 ) faml = new FAMLoader;
+   if( faml == 0 ) faml = new FAMLoader(ms);
    if( dld == 0 ) dld = new DynLoader;
  
    m_compiler = mc;
    m_famLoader = faml; 
    m_dynLoader = dld;
    m_useSources = e_us_newer;
+   
+   m_famExt = "fam";
+   m_ftdExt = "ftd";
    
    m_encName = "C";
    m_tcoder = engine->getTranscoder( m_encName );
@@ -474,8 +477,6 @@ Error* ModLoader::makeError( int code, int line, const String &expl, int fsError
 
 void ModLoader::saveModule_internal( Module* mod, const URI& srcUri, const String& )
 {
-   return;
-   
    static VFSIface* vfs = &Engine::instance()->vfs();
    static Class* clsModule = static_cast<Class*>(
          Engine::instance()->getMantra("Module", Mantra::e_c_class ));
@@ -493,7 +494,7 @@ void ModLoader::saveModule_internal( Module* mod, const URI& srcUri, const Strin
    {
       output->shouldThrow(true);
       output->write("FM\x4\x1",4);
-      Storer theStorer;
+      Storer theStorer( m_famLoader->modSpace()->context() );
       theStorer.store( clsModule, mod );
       theStorer.commit(output);
       output->close();

@@ -73,8 +73,7 @@ VMachine::VMachine( Stream* stdIn, Stream* stdOut, Stream* stdErr )
    TRACE( "Virtual machine created at %p", this );
    _p = new Private;
    m_context = new VMContext(this);
-   m_modspace = new ModSpace( 0 );
-   m_loader = new ModLoader;
+   m_modspace = new ModSpace( m_context );
 
    if ( stdIn == 0 )
    {
@@ -225,7 +224,7 @@ void VMachine::onRaise( const Item& item )
 
 bool VMachine::run()
 {
-   MESSAGE( "Run called" );
+   TRACE( "Run called with depth %d", (int) currentContext()->callDepth() );
    PARANOID( "Call stack empty", (currentContext()->callDepth() > 0) );
 
    // for now... then it will be a TLS variable.

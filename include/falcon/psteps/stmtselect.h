@@ -201,6 +201,7 @@ public:
 
    virtual Class* cls() const;     
    
+   static void registerMantra();
 private:
    StmtSelect* m_owner;
    int32 m_id;
@@ -209,6 +210,8 @@ private:
    
    class ClassSelectRequirement;
    friend class ClassSelectRequirement;
+   
+   static Class* m_mantraClass;
 };
    
    

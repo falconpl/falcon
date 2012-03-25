@@ -244,7 +244,7 @@ ModCompiler::~ModCompiler()
 
 Module* ModCompiler::compile( TextReader* tr, const String& uri, const String& name )
 {
-   m_module = new Module( name , uri );
+   m_module = new Module( name , uri, false ); // not a native module
    
    // create the main function that will be used by the compiler
    SynFunc* main = new SynFunc("__main__");

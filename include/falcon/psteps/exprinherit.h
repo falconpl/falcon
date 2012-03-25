@@ -92,14 +92,15 @@ public:
     */
    void hadRequirement( bool b ) { m_bHadRequirement = b; }
    
-private:
-   Class* m_base;
-   String m_name;
-   bool m_bHadRequirement;
-   
-   class IRequirement: public Requirement
+   class FALCON_DYN_CLASS IRequirement: public Requirement
    {
    public:
+      IRequirement( const String& name ):
+         Requirement( name ),
+            m_owner(0),
+            m_target(0)         
+         {}
+      
       IRequirement( ExprInherit* owner, Class* target ): 
          Requirement( owner->name() ),
          m_owner( owner ),
@@ -111,13 +112,22 @@ private:
                                              Module* tgt, Symbol* extSym );
       
       virtual Class* cls() const;
+      static void registerMantra();
    private:
       
       ExprInherit* m_owner;
       Class* m_target;
       class ClassIRequirement;
       friend class ClassIRequirement;
+      static Class* m_mantraClass;
    };
+   
+private:
+   Class* m_base;
+   String m_name;
+   bool m_bHadRequirement;
+   
+   
    
    friend class IRequirement;   
    static void apply_( const PStep*, VMContext* ctx );

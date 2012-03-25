@@ -647,6 +647,12 @@ bool FalconClass::construct()
                      m_hasInitExpr = true;
                   }
                   (*_p->m_members)[np->m_name] = np;
+                  
+                  if( np->m_type == Property::t_prop )
+                  {
+                     np->m_value.id = _p->m_propDefaults->length();
+                     _p->m_propDefaults->append( (*fbase->_p->m_propDefaults)[bp->m_value.id] );
+                  }
                }
             }
             
@@ -794,7 +800,8 @@ void FalconClass::describe( void* instance, String& target, int depth, int maxle
          Item theItem;
          if( m_class->getProperty( name )->m_type == Property::t_prop )
          {
-            m_inst->getMember( name, theItem );
+            bool found = m_inst->getMember( name, theItem );
+            fassert2( found, "Required property not found" );
             String temp;
             theItem.describe( temp, m_depth-1, m_maxlen );
             if( m_target != "" )
@@ -932,7 +939,8 @@ void FalconClass::flattenSelf( ItemArray& flatArray, bool asConstructed ) const
    
    flatArray.reserve( members->size() + 5 );
    
-   flatArray.append( Item( _p->m_propDefaults ) );
+   Item pdefs( _p->m_propDefaults );
+   flatArray.append( pdefs );
    
    if( m_constructor != 0 )
    {

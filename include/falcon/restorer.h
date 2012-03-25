@@ -36,7 +36,6 @@ class ModLoader;
 class FALCON_DYN_CLASS Restorer
 {
 public:
-   Restorer();
    Restorer( VMContext* vmc );
    virtual ~Restorer();
    
@@ -45,7 +44,7 @@ public:
     \throw IoError on error reading from the stream
     \thrown ParseError on semantic errors while reading from the stream.
     */
-   virtual bool restore( Stream* rd, ModSpace* msp=0, ModLoader* ml=0 );
+   virtual bool restore( Stream* rd, ModSpace* msp );
    
    virtual bool next( Class*& handler, void*& data, bool& first );
    virtual bool hasNext() const;
@@ -61,7 +60,7 @@ private:
    VMContext* m_ctx;
    
    void readClassTable();
-   bool loadClasses( ModSpace* msp, ModLoader* ml );
+   bool loadClasses( ModSpace* msp );
    void readInstanceTable();
    
    bool readObjectTable();   

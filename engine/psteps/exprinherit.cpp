@@ -28,6 +28,9 @@
 #include <falcon/module.h>
 #include <falcon/falconclass.h>
 
+#include <falcon/datareader.h>
+#include <falcon/datawriter.h>
+
 #include <falcon/string.h>
 #include "exprvector_private.h"
 
@@ -214,6 +217,7 @@ public:
    virtual void store( VMContext*, DataWriter* stream, void* instance ) const
    {
       IRequirement* s = static_cast<IRequirement*>(instance);
+      stream->write( s->name() );
       s->store( stream );
    }
    
@@ -239,8 +243,11 @@ public:
    virtual void restore( VMContext*, DataReader* stream, void*& empty ) const
    {
       IRequirement* s = 0;
+      String name;
+      stream->read( name );
+      
       try {
-         s = new IRequirement(0,0);
+         s = new IRequirement( name );
          s->restore(stream);
          empty = s;
       }
@@ -267,17 +274,18 @@ public:
 
 Class* ExprInherit::IRequirement::cls() const
 {
-   static Class* theClass = new ClassIRequirement;
-   static bool bRegistered = false;
+   return m_mantraClass;
+}
 
-   // a double registration in MT context has no adverse effect.
-   // we just need to have it in the engine to let it to delete it at end.
-   if( ! bRegistered ) {
-      bRegistered = true;
-      Engine::instance()->addMantra(theClass);
+
+Class* ExprInherit::IRequirement::m_mantraClass = 0;
+
+void ExprInherit::IRequirement::registerMantra()
+{
+   if( m_mantraClass == 0 ) {
+      m_mantraClass = new ClassIRequirement;
+      Engine::instance()->addMantra(m_mantraClass);
    }
-
-   return theClass;
 }
 
 }

@@ -975,10 +975,10 @@ Function* Module::getMainFunction()
 
 void Module::setMainFunction( Function* mf )
 {
-   delete m_mainFunc;
    m_mainFunc = mf;
    mf->module(this);
    mf->name("__main__");
+   addMantra( mf, false );
 }
 
 //=====================================================================

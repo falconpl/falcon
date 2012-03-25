@@ -581,8 +581,16 @@ void ClassModule::unflatten( VMContext* ctx, ItemArray& subItems, void* instance
    const Item* current = &subItems[pos];
    while( ! current->isNil() && pos < subItems.length()-2 )
    {
-      Mantra* mantra = static_cast<Mantra*>(current->asInst());         
-      mp->m_mantras[mantra->name()] = mantra;
+      Mantra* mantra = static_cast<Mantra*>(current->asInst());  
+      if( mantra->name() == "__main__" )
+      {
+         mod->setMainFunction( static_cast<Function*>(mantra) );
+      }
+      else {
+         mp->m_mantras[mantra->name()] = mantra;
+      }
+      mantra->module( mod );
+      
       ++pos;
       current = &subItems[pos];
    }

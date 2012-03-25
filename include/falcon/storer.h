@@ -178,7 +178,6 @@ class Mantra;
 class FALCON_DYN_CLASS Storer
 {
 public:
-   Storer();
    Storer( VMContext* ctx );
    virtual ~Storer();
    

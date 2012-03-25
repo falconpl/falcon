@@ -143,13 +143,13 @@ void IntCompiler::Context::onLoad( const String& path, bool isFsPath )
    else
    {
       // just adding it top the module won't be of any help.
-      ModLoader* ml = m_owner->m_vm->modLoader();
+      ModSpace* theSpace = m_owner->m_vm->modSpace();
+      ModLoader* ml = theSpace->modLoader();
       Module* mod = isFsPath ? ml->loadFile( path ) : ml->loadName( path );
       
       if( mod != 0 )
       {
-         ModSpace* theSpace = m_owner->m_vm->modSpace();
-         theSpace->resolve( ml, mod, true, true ); // will throw on error.
+         theSpace->resolve( mod, true, true ); // will throw on error.
          Error* err = theSpace->link();
          if( err != 0 )
          {
@@ -178,7 +178,7 @@ bool IntCompiler::Context::onImportFrom( ImportDef* def )
    // first, update the module space by pre-loading the required module.
    try
    {
-      ms->resolveImportDef( def, m_owner->m_vm->modLoader(), 0 );
+      ms->resolveImportDef( def, 0 );
    }
    catch( Error* e )
    {
@@ -210,7 +210,7 @@ bool IntCompiler::Context::onImportFrom( ImportDef* def )
    try
    {
       //... and put it in place.
-      ms->resolveImportDef( def, m_owner->m_vm->modLoader(), vmmod );
+      ms->resolveImportDef( def, vmmod );
    }
    catch( Error* e )
    {

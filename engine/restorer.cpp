@@ -118,14 +118,6 @@ public:
 //===========================================================
 //
 //
-Restorer::Restorer():
-   _p(0),
-   m_ctx( 0 ),
-   m_readNext( this ),
-   m_unflattenNext( this ),
-   m_linkNext( this )
-{       
-}
 
 Restorer::Restorer( VMContext* ctx ):
    _p(0),
@@ -143,7 +135,7 @@ Restorer::~Restorer()
 }
 
 
-bool Restorer::restore( Stream* rd, ModSpace* space, ModLoader* ml )
+bool Restorer::restore( Stream* rd, ModSpace* space )
 {
    delete _p;
    _p = new Private(rd );
@@ -151,7 +143,7 @@ bool Restorer::restore( Stream* rd, ModSpace* space, ModLoader* ml )
    try
    {
       readClassTable();  
-      if( space != 0 && ml != 0 && ! loadClasses( space, ml ) )
+      if( ! loadClasses( space ) )
       {
          return false;
       }
@@ -229,7 +221,7 @@ void Restorer::readClassTable()
    
 }
 
-bool Restorer::loadClasses( ModSpace* msp, ModLoader* ml )
+bool Restorer::loadClasses( ModSpace* msp )
 {
    bool addedMod = false;
    
@@ -238,7 +230,7 @@ bool Restorer::loadClasses( ModSpace* msp, ModLoader* ml )
    {
       Private::ClassInfo& cinfo = *iter;
       Mantra* mantra = msp->findDynamicMantra( 
-            ml, cinfo.m_moduleUri, cinfo.m_moduleName, cinfo.m_className, 
+            cinfo.m_moduleUri, cinfo.m_moduleName, cinfo.m_className, 
             addedMod );
       if( mantra->isCompatibleWith( Mantra::e_c_class ) )
       {

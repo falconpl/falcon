@@ -528,20 +528,22 @@ public:
 
 
 
-
 Class* SelectRequirement::cls() const
 {
-   static Class* theClass = new ClassSelectRequirement;
-   static bool bRegistered = false;
+   return m_mantraClass;
+}
 
-   // a double registration in MT context has no adverse effect.
-   // we just need to have it in the engine to let it to delete it at end.
-   if( ! bRegistered ) {
-      bRegistered = true;
-      Engine::instance()->addMantra(theClass);
+
+Class* SelectRequirement::m_mantraClass = 0;
+
+
+void SelectRequirement::registerMantra()
+{
+   
+   if( m_mantraClass == 0 ) {
+      m_mantraClass = new ClassSelectRequirement;
+      Engine::instance()->addMantra(m_mantraClass);
    }
-
-   return theClass;
 }
 
 }

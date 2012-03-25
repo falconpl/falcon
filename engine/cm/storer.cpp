@@ -86,7 +86,7 @@ bool ClassStorer::op_init( VMContext* ctx,  void* instance, int32 ) const
 
 void* ClassStorer::createInstance() const
 { 
-   return new StorerCarrier( new Storer );
+   return new StorerCarrier( new Storer(0) );
 }
 
 //====================================================
