@@ -36,6 +36,9 @@ public:
 
    static Falcon::CoreObject* factory( const Falcon::CoreClass* cls, void* ud, bool bDeser );
 
+   Falcon::Stream* makeOut() { return makeOutputStream(); }
+   ApacheOutput* aout() const { return m_aout; }
+   
 protected:
    virtual void startCommit();
    virtual Falcon::Stream* makeOutputStream();

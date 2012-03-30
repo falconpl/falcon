@@ -27,6 +27,7 @@
 #define MAX_UPLOAD_DIR          512
 #define FM_DEFAULT_SESSION_TO   600
 #define FM_DEFAULT_SESSION_MODE 1
+#define FM_DEFAULT_RUN_TIMEOUT  60
 
 #define DEFAULT_HANDLER_NAME    "handler.fal"
 
@@ -51,6 +52,7 @@ typedef struct
    int sessionTimeout;
    int sessionMode;
    int cacheModules;
+   int runTimeout;
 
 } falcon_mod_config;
 
@@ -74,6 +76,7 @@ ext_c const char *falcon_mod_set_handler(cmd_parms *parms, void *mconfig, const 
 ext_c const char *falcon_mod_set_path(cmd_parms *parms, void *mconfig, const char *arg);
 ext_c const char *falcon_mod_set_pdataDir(cmd_parms *parms, void *mconfig, const char *arg);
 ext_c const char *falcon_mod_set_cacheModules(cmd_parms *parms, void *mconfig, const char *arg);
+ext_c const char *falcon_mod_set_runTimeout(cmd_parms *parms, void *mconfig, const char *arg);
 int falcon_mod_load_config( falcon_mod_config *cfg );
 
 #endif

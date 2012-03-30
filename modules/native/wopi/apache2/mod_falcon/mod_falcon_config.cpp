@@ -39,6 +39,7 @@ void *falcon_mod_create_config(apr_pool_t *p, server_rec *s)
    newcfg->sessionTimeout = FM_DEFAULT_SESSION_TO;
    newcfg->sessionMode = FM_DEFAULT_SESSION_MODE;
    newcfg->cacheModules = 0;
+   newcfg->runTimeout = FM_DEFAULT_RUN_TIMEOUT;
 
    apr_cpystrn( newcfg->uploadDir, FM_DEFAULT_UPDIR, MAX_UPLOAD_DIR );
    apr_cpystrn( newcfg->loadPath, "", MAX_UPLOAD_DIR );
@@ -81,6 +82,26 @@ const char *falcon_mod_set_cacheModules(cmd_parms *parms, void *mconfig, const c
    }
    else
       return "FalconCacheModules must be \"on\" or \"off\"";
+
+   return NULL;
+}
+
+
+const char *falcon_mod_set_runTimeout(cmd_parms *parms, void *mconfig, const char *arg)
+{
+   int timeout = atoi( arg );
+   falcon_mod_config *cfg = (falcon_mod_config *)
+   ap_get_module_config( parms->server->module_config, &falcon_module);
+
+   
+   if (timeout == 0 && arg[0] != '\0' )
+   {
+      return "FalconRunTimeout is a number of seconds (0=infinite)";
+   }
+   else
+   {
+      cfg->runTimeout = timeout;
+   }
 
    return NULL;
 }
@@ -366,6 +387,21 @@ int falcon_mod_load_config( falcon_mod_config *cfg )
             else
                correct = false;
          }
+         else if ( apr_strnatcasecmp( token, "RunTimeout" ) == 0 )
+         {
+            // set error log mode
+            token = apr_strtok(NULL,"#",&last);
+            int to = atoi( token );
+            if ( token == NULL )
+               correct = false;
+            else {
+               int timeout = atoi( token );
+               if ( timeout == 0 && token[0] != '0' )
+                  correct = false;
+               else
+                  cfg->runTimeout = timeout;
+            }
+         }
       }
 
       // Was this line correct?
@@ -382,5 +418,29 @@ int falcon_mod_load_config( falcon_mod_config *cfg )
 
    // we're done
    apr_file_close( fd );
+   
+   /*
+   fprintf( stderr, "Falcon WOPI module for Apache2 configuration:\n"
+      "-- Loaded: %s\n"
+      "-- InitFile: %s\n"
+      "-- ErrorMode: %d\n"
+      "-- MaxUpload: %d\n"
+      "-- MaxMemUpload: %d\n"
+      "-- sessionTimeout: %d\n"
+      "-- sessionMode: %d\n"
+      "-- cacheModules: %s\n"
+      "-- runTimeout: %d\n",
+      
+      cfg->loaded ? "Yes" : "No",
+      cfg->init_file,
+      cfg->errorMode,
+      cfg->maxUpload,
+      cfg->maxMemUpload,
+      cfg->sessionTimeout,
+      cfg->sessionMode,
+      cfg->cacheModules ? "Yes" : "No",
+      cfg->runTimeout      
+      );
+    */
    return 1;
 }
