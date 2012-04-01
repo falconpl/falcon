@@ -73,6 +73,17 @@
       See the next section.
    - @b PersistentDataDir: directory where to place persistent application level data. The user owning the server
    process should have write rights on this directory.
+   - @b RunTimeout: A number of seconds after which the scripts are forced to terminate.
+     After RunTimeout seconds are expired, the VM is sent a graceful request to terminate asap;
+     the script receives an InterruptedError exeption, which might even be caught to allow some
+     hopefully fast cleanup operation to be performed. If the VM is not actually exited after 1/4
+     of the RunTimeout value after the graceful termination request is sent, the internal watchdog
+     terminates the apache child process hosting the VM. In MPM apache, this can cause other threads
+     regularly working and currently serving other connections to be terminated as well, but that's
+     better than trying to kill just the thread that went out of control, with the risk to block or
+     provide inconsistent data to the other threads running possibly related falcon scripts. To minimize
+     the risk, use prefork only or reduce the number of threads per worker to a small amount. The
+     @b default value for this setting is 0 (no timeout).
 
    @section mod_falcon_vpath Virtual path support
 
