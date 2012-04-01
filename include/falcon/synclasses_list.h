@@ -114,6 +114,11 @@ FALCON_SYNCLASS_DECLARATOR(m_expr_amod, AutoMod, expr)
 FALCON_SYNCLASS_DECLARATOR(m_expr_apow, AutoPow, expr)
 FALCON_SYNCLASS_DECLARATOR(m_expr_alshift, AutoLShift, expr)
 FALCON_SYNCLASS_DECLARATOR(m_expr_arshift, AutoRShift, expr)
+
+// Functional
+FALCON_SYNCLASS_DECLARATOR(m_expr_compose, Compose, expr )
+FALCON_SYNCLASS_DECLARATOR(m_expr_funcpower, FuncPower, expr )
+
 // 
 FALCON_SYNCLASS_DECLARATOR(m_expr_munpack, MUnpack, expr)
 FALCON_SYNCLASS_DECLARATOR(m_expr_neg, Neg, expr)

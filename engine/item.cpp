@@ -20,6 +20,8 @@
 #include <falcon/itemid.h>
 #include <falcon/engine.h>
 
+#include "falcon/itemarray.h"
+
 
 namespace Falcon
 {
@@ -99,6 +101,11 @@ void Item::setDict( ItemDictionary* dict )
 */
 //===========================================================================
 // Generic item manipulators
+
+bool Item::isCallable() const
+{
+   return isFunction() || (isArray() && asArray()->at(0).isCallable());
+}
 
 bool Item::isTrue() const
 {

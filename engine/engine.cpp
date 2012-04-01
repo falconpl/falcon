@@ -59,6 +59,7 @@
 #include <falcon/classes/classnil.h>
 #include <falcon/classes/classbool.h>
 #include <falcon/classes/classclosure.h>
+#include <falcon/classes/classcomposition.h>
 #include <falcon/classes/classint.h>
 #include <falcon/classes/classnumeric.h>
 #include <falcon/classes/classstring.h>
@@ -282,6 +283,7 @@ Engine::Engine()
    addMantra(m_syntreeClass);
    addMantra(m_symbolClass); 
    addMantra( new ClassModule );
+   addMantra( new ClassComposition );
    
    ExprInherit::IRequirement::registerMantra();
    SelectRequirement::registerMantra();

@@ -78,6 +78,9 @@ public:
    Parsing::Terminal T_EVAL;
    Parsing::Terminal T_LIT;
    Parsing::Terminal T_UNQUOTE;
+   Parsing::Terminal T_COMPOSE;
+   Parsing::Terminal T_FUNCPOWER;
+   
    
    Parsing::Terminal T_Comma;
    Parsing::Terminal T_QMark;
@@ -353,6 +356,8 @@ public:
    Parsing::Rule r_Expr_auto_pow;
    Parsing::Rule r_Expr_auto_shr;
    Parsing::Rule r_Expr_auto_shl;
+   Parsing::Rule r_Expr_expr_compose;
+   Parsing::Rule r_Expr_expr_funcpower;
    
    Parsing::Rule r_Expr_ternary_if;
    Parsing::Rule r_Expr_expr_eval;

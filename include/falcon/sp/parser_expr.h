@@ -61,6 +61,8 @@ void apply_expr_or( const Rule&, Parser& p );
 void apply_expr_band( const Rule&, Parser& p );
 void apply_expr_bor( const Rule&, Parser& p );
 void apply_expr_bxor( const Rule&, Parser& p );
+void apply_expr_compose( const Rule&, Parser& p );
+void apply_expr_funcpower( const Rule&, Parser& p );
 
 void apply_expr_neg( const Rule&, Parser& p );
 void apply_expr_not( const Rule&, Parser& p );

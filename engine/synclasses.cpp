@@ -32,10 +32,12 @@
 #include <falcon/psteps/exprcall.h>
 #include <falcon/psteps/exprclosure.h>
 #include <falcon/psteps/exprcompare.h>
+#include <falcon/psteps/exprcompose.h>
 #include <falcon/psteps/exprdict.h>
 #include <falcon/psteps/exprdot.h>
 #include <falcon/psteps/expreeq.h>
 #include <falcon/psteps/expreval.h>
+#include <falcon/psteps/exprfuncpower.h>
 #include <falcon/psteps/expriif.h>
 #include <falcon/psteps/exprincdec.h>
 #include <falcon/psteps/exprindex.h>
@@ -251,6 +253,7 @@ FALCON_STANDARD_SYNCLASS_OP_CREATE( RShift, ExprRShift, binaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( BAnd, ExprBAND, binaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( BOr, ExprBOR, binaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( BXor, ExprBXOR, binaryExprSet )
+
 //Auto-Math
 FALCON_STANDARD_SYNCLASS_OP_CREATE( AutoPlus, ExprAutoPlus, binaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( AutoMinus, ExprAutoMinus, binaryExprSet )
@@ -260,6 +263,10 @@ FALCON_STANDARD_SYNCLASS_OP_CREATE( AutoMod, ExprAutoMod, binaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( AutoPow, ExprAutoPow, binaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( AutoLShift, ExprAutoLShift, binaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( AutoRShift, ExprAutoRShift, binaryExprSet )
+
+// Functional
+FALCON_STANDARD_SYNCLASS_OP_CREATE( Compose, ExprCompose, binaryExprSet )
+FALCON_STANDARD_SYNCLASS_OP_CREATE( FuncPower, ExprFuncPower, binaryExprSet )
 
 // MUnpack -- separated
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Neg, ExprNeg, unaryExprSet )
@@ -841,7 +848,6 @@ void SynClasses::ClassParentship::restore( VMContext* ctx, DataReader* rd, void*
    empty = pship;
    m_parent->restore( ctx, rd, empty );
 }
-
 
 //=================================================================
 // Statements

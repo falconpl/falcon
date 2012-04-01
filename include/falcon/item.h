@@ -503,6 +503,7 @@ public:
    bool isMethod() const { return type() == FLC_ITEM_METHOD; }
    bool isOrdinal() const { return type() == FLC_ITEM_INT || type() == FLC_ITEM_NUM; }
    bool isReference() const { return type() == FLC_ITEM_REF; }
+   bool isCallable() const;
    
    bool isUser() const { return type() >= FLC_ITEM_USER; }
    bool isClass() const { return type() == FLC_CLASS_ID_CLASS; }

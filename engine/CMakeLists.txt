@@ -123,10 +123,12 @@ add_library(falcon_engine SHARED
   psteps/exprcall.cpp
   psteps/exprclosure.cpp
   psteps/exprcompare.cpp
+  psteps/exprcompose.cpp
   psteps/exprdict.cpp
   psteps/exprdot.cpp
   psteps/expreeq.cpp
   psteps/expreval.cpp
+  psteps/exprfuncpower.cpp
   psteps/expriif.cpp
   psteps/exprincdec.cpp
   psteps/exprindex.cpp
@@ -168,6 +170,7 @@ add_library(falcon_engine SHARED
   classes/classarray.cpp
   classes/classbool.cpp
   classes/classclosure.cpp
+  classes/classcomposition.cpp
   classes/classdict.cpp
   classes/classerror.cpp
   classes/classfunction.cpp

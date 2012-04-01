@@ -745,8 +745,7 @@ Parsing::TokenInstance* SourceLexer::checkWord()
           if ( m_text == "catch" ) return parser->T_catch.makeInstance(m_sline, m_schr);
           if ( m_text == "raise" ) return parser->T_raise.makeInstance(m_sline, m_schr);
           /*
-         if ( m_text == "class" )
-            return CLASS;
+
          if ( m_text == "notin" )
             return OP_NOTIN;
          if ( m_text == "const" )
@@ -915,6 +914,7 @@ Parsing::TokenInstance* SourceLexer::checkOperator()
          if( m_text == "^*" ) return parser->T_EVAL.makeInstance(m_sline, m_schr);
          if( m_text == "^=" ) return parser->T_LIT.makeInstance(m_sline, m_schr);
          if( m_text == "^~" ) return parser->T_UNQUOTE.makeInstance(m_sline, m_schr);
+         if( m_text == "^." ) return parser->T_COMPOSE.makeInstance(m_sline, m_schr);
          break;
 
       case 3:
@@ -922,6 +922,7 @@ Parsing::TokenInstance* SourceLexer::checkOperator()
          if( m_text == "===" ) return parser->T_EEQ.makeInstance(m_sline, m_schr);
          if( m_text == ">>=" ) return parser->T_AutoRShift.makeInstance(m_sline, m_schr);
          if( m_text == "<<=" ) return parser->T_AutoLShift.makeInstance(m_sline, m_schr);
+         if( m_text == "^.." ) return parser->T_FUNCPOWER.makeInstance(m_sline, m_schr);
          break;
    }
 

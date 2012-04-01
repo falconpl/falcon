@@ -34,7 +34,7 @@ void TreeStep::gcMark( uint32 mark )
 
 bool TreeStep::setParent( TreeStep* ts )
 {
-   if( m_parent == 0 )
+   if( m_parent == 0 || ts == 0 )
    {
       m_parent = ts;
       return true;

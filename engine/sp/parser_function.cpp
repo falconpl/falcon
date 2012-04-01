@@ -166,7 +166,8 @@ void on_close_lambda( void* thing )
    if ( size == 1 && func->syntree().at(0)->handler()->userFlags() == FALCON_SYNCLASS_ID_AUTOEXPR )
    {
       StmtAutoexpr* aexpr = static_cast<StmtAutoexpr*>( func->syntree().at(0) );
-      StmtReturn* ret = new StmtReturn( aexpr->detachExpr() );
+      Expression* evaluated = aexpr->detachExpr();
+      StmtReturn* ret = new StmtReturn( evaluated );
       func->syntree().setNth(0, ret);
    }
    

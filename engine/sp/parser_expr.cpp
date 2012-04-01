@@ -41,6 +41,9 @@
 #include <falcon/psteps/exprlit.h>
 #include <falcon/psteps/exprunquote.h>
 
+#include <falcon/psteps/exprcompose.h>
+#include <falcon/psteps/exprfuncpower.h>
+
 namespace Falcon {
 
 using namespace Parsing;
@@ -241,6 +244,16 @@ void apply_expr_bxor( const Rule& r, Parser& p )
    apply_expr_binary(r, p, new ExprBXOR );
 }
 
+void apply_expr_compose( const Rule& r, Parser& p )
+{
+   apply_expr_binary(r, p, new ExprCompose );
+}
+
+void apply_expr_funcpower( const Rule& r, Parser& p )
+{
+   apply_expr_binary(r, p, new ExprFuncPower );
+}
+
 
 //==================================================================
 // Auto expressions
@@ -321,6 +334,7 @@ void apply_expr_auto_shl( const Rule&r, Parser& p )
    apply_expr_auto( r, p, aexpr );
 }
 
+      
 //=======================================================
 // Unary expressions
 //

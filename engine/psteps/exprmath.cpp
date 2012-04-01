@@ -215,6 +215,7 @@ public:
    static void assign( PStep*, VMContext* ) {}
 };
 
+
 //==================================================
 // Autoexprs
 //
@@ -540,7 +541,6 @@ FALCON_IMPLEMENT_MATH_EXPR_CLASS( ExprRShift, ">>", expr_rshift )
 FALCON_IMPLEMENT_MATH_EXPR_CLASS( ExprBAND, "^&", expr_band )
 FALCON_IMPLEMENT_MATH_EXPR_CLASS( ExprBOR, "^|", expr_bor )
 FALCON_IMPLEMENT_MATH_EXPR_CLASS( ExprBXOR, "^^", expr_plus )
-
 
 
 #define FALCON_IMPLEMENT_MATH_AUTOEXPR_CLASS( name, symbol, handler ) \

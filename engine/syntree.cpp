@@ -200,8 +200,7 @@ TreeStep* SynTree::nth( int pos ) const
 bool SynTree::setNth( int pos, TreeStep* step )
 {
    if( step == 0 
-      || step->category() != TreeStep::e_cat_statement 
-      || ! step->setParent(this) ) 
+      || step->category() != TreeStep::e_cat_statement ) 
    {
       return false;
    }
