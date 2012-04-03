@@ -393,7 +393,10 @@ bool ParserContext::checkSymbols()
          {
             TRACE1("ParserContext::checkSymbols \"%s\" leaving this symbol undefined", esym->name().c_ize() );
          }
-         new_sym->declaredAt(m_parser->currentLine());
+         else
+         {
+            new_sym->declaredAt(m_parser->currentLine());
+         }
       }
 
       if( new_sym != 0 )
