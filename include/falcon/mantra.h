@@ -38,7 +38,7 @@ class Module;
  Mantras can be simply "given" in the engine or provided by modules. They
  
  */
-class Mantra
+class FALCON_DYN_CLASS Mantra
 {
 public:
    typedef enum {

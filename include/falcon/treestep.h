@@ -156,7 +156,7 @@ class Item;
  Mainly, TreeStep subclasses should inherit from Statement, Expression or
  SynTree, which also define one of the main categories of tree step.
  */
-class TreeStep: public PStep
+class FALCON_DYN_CLASS TreeStep: public PStep
 {
 public:
    inline TreeStep( const TreeStep& other ):
