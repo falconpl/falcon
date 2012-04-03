@@ -24,6 +24,8 @@
 #include <falcon/string.h>
 #include <falcon/mt.h>
 
+#include <falcon/errors/codeerror.h>
+
 
 //--- Virtual file systems ---
 #include <falcon/vfs_file.h>
