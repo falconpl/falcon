@@ -62,19 +62,21 @@ void UserCarrier::gcMark( uint32 mark )
       item.gcMark(mark);
    }
 }
-   
-template<class _t>
-UserCarrierT<_t>::UserCarrierT( const UserCarrierT<_t>& other ):
-      UserCarrier( other )
-{
-   m_data = other.cloneData();
-   if ( m_data == 0 )
-   {
-      throw new UnsupportedError( ErrorParam( e_uncloneable, __LINE__, SRC ).
-         origin(ErrorParam::e_orig_runtime)
-         );
-   }
-}
+  
+//The following is commented out as it causes Visual Studio to not instantiate copy constructors
+//for templace specialiasations of UserCarrierT
+//template<class _t>
+//UserCarrierT<_t>::UserCarrierT( const UserCarrierT<_t>& other ):
+//      UserCarrier( other )
+//{
+//   m_data = other.cloneData();
+//   if ( m_data == 0 )
+//   {
+//      throw new UnsupportedError( ErrorParam( e_uncloneable, __LINE__, SRC ).
+//         origin(ErrorParam::e_orig_runtime)
+//         );
+//   }
+//}
 
 }
 

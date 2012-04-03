@@ -88,7 +88,7 @@ public:
       m_data( data )
    {}
 
-   UserCarrierT( const UserCarrierT<T__>& other );
+   //UserCarrierT( const UserCarrierT<T__>& other );
 
    T__* carried() const { return m_data; }
    void carried( T__* data) { m_data = data; }
