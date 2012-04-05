@@ -90,7 +90,6 @@ static void watchdog_abort( FALCON_WATCHDOG_TOKEN* failing )
       failing->request->unparsed_uri,
       failing->request->canonical_filename );
    
-   sleep(2);
    exit(1);
 }
 // Checks if there is some VM to be purged.
