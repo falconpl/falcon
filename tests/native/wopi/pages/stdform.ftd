@@ -81,12 +81,12 @@ end
       <input type="checkbox" name="Likes[]" value="Music" <? if "Likes" in posts and "Music" in posts["Likes"]: >>'checked="yes"'?>/>&nbsp;Music
       </td></tr>
 <tr><td>Modes (Exp. one="One", two="Two"):</td><td>
-      Mode one: <input size="4" maxlength="4" type="text" name="Modes[one]"
+      one: <input size="4" maxlength="4" type="text" name="Modes[one]"
                   value="<? if "Modes" in posts and "one" in posts["Modes"]: >> posts["Modes"]["one"] ?>"/>
       &nbsp;&nbsp&nbsp;
-      Mode two: <input size="4" maxlength="4" type="text" name="Modes[two]"
+      two: <input size="4" maxlength="4" type="text" name="Modes[two]"
                   value="<? if "Modes" in posts and "two" in posts["Modes"]: >> posts["Modes"]["two"] ?>"/>
-      Mode three: <input size="4" maxlength="4" type="text" name="Modes[three]"
+      three: <input size="4" maxlength="4" type="text" name="Modes[three]"
                   value="<? if "Modes" in posts and "three" in posts["Modes"]: >> posts["Modes"]["three"] ?>"/>
       </td></tr>
 <tr><td>International (Exp. "国際値"):</td><td><input type="text" value="<?= htmlEscape(posts['入空'])?>" name="入空"/></td></tr>
