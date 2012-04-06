@@ -24,6 +24,7 @@ namespace Falcon {
 class FALCON_DYN_CLASS GenericError: public Error
 {
 public:
+   GenericError( );
    GenericError( const ErrorParam &params );
 
 protected:

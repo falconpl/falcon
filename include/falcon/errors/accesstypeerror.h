@@ -25,6 +25,7 @@ namespace Falcon {
 class FALCON_DYN_CLASS AccessTypeError: public Error
 {
 public:
+   AccessTypeError( );
    AccessTypeError( const ErrorParam &params );
 
 protected:

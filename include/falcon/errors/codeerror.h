@@ -24,6 +24,7 @@ namespace Falcon {
 class FALCON_DYN_CLASS CodeError: public Error
 {
 public:
+   CodeError( );
    CodeError( const ErrorParam &params );
 
 protected:

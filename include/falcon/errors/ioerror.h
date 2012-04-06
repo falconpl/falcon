@@ -26,6 +26,7 @@ namespace Falcon {
 class FALCON_DYN_CLASS IOError: public Error
 {
 public:
+   IOError( );
    IOError( const ErrorParam &params );
 
 protected:

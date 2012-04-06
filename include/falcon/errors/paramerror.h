@@ -24,6 +24,7 @@ namespace Falcon {
 class FALCON_DYN_CLASS ParamError: public Error
 {
 public:
+   ParamError( );
    ParamError( const ErrorParam &params );
 
 protected:

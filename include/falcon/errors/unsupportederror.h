@@ -25,6 +25,7 @@ namespace Falcon {
 class FALCON_DYN_CLASS UnsupportedError: public Error
 {
 public:
+   UnsupportedError( );
    UnsupportedError( const ErrorParam &params );
 
 protected:

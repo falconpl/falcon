@@ -25,6 +25,7 @@ namespace Falcon {
 class FALCON_DYN_CLASS InterruptedError: public Error
 {
 public:
+   InterruptedError( );
    InterruptedError( const ErrorParam &params );
 
 protected:

@@ -18,7 +18,7 @@
 #ifdef FALCON_DEFINE_ERROR_CLASSES
    #undef FALCON_DECLARE_ERROR_CLASS
    #define FALCON_DECLARE_ERROR_CLASS( name ) \
-   void* Class##name:: createInstance() const{ return new Class##name; }
+   void* Class##name:: createInstance() const { return new name; }
    
 #else
 

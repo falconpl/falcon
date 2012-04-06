@@ -20,6 +20,11 @@
 
 namespace Falcon {
 
+IOError::IOError( ):
+   Error( Engine::instance()->stdErrors()->io() )
+{
+}
+
 IOError::IOError( const ErrorParam &params ):
    Error( Engine::instance()->stdErrors()->io(), params )
 {

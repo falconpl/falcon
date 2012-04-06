@@ -20,6 +20,11 @@
 
 namespace Falcon {
 
+MathError::MathError( ):
+   Error( Engine::instance()->stdErrors()->math() )
+{
+}
+
 MathError::MathError( const ErrorParam &params ):
    Error( Engine::instance()->stdErrors()->math(), params )
 {

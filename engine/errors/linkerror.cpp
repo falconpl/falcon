@@ -19,6 +19,11 @@
 
 namespace Falcon {
 
+LinkError::LinkError( ):
+   Error( Engine::instance()->stdErrors()->link() )
+{
+}
+
 LinkError::LinkError( const ErrorParam &params ):
    Error( Engine::instance()->stdErrors()->link(), params )
 {

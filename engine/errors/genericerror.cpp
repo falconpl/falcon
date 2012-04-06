@@ -19,6 +19,11 @@
 
 namespace Falcon {
 
+GenericError::GenericError( ):
+   Error( Engine::instance()->stdErrors()->generic() )
+{
+}
+
 GenericError::GenericError( const ErrorParam &params ):
    Error( Engine::instance()->stdErrors()->generic(), params )
 {

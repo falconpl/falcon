@@ -21,6 +21,11 @@
 
 namespace Falcon {
 
+EncodingError::EncodingError( ):
+   Error( Engine::instance()->stdErrors()->encoding() )
+{
+}
+
 EncodingError::EncodingError( const ErrorParam &params ):
    Error( Engine::instance()->stdErrors()->encoding(), params )
 {

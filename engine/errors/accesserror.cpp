@@ -19,6 +19,11 @@
 
 namespace Falcon {
 
+AccessError::AccessError( ):
+   Error( Engine::instance()->stdErrors()->access() )
+{
+}
+
 AccessError::AccessError( const ErrorParam &params ):
    Error( Engine::instance()->stdErrors()->access(), params )
 {

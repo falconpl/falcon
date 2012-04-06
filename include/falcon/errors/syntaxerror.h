@@ -24,6 +24,7 @@ namespace Falcon {
 class FALCON_DYN_CLASS SyntaxError: public Error
 {
 public:
+   SyntaxError( );
    SyntaxError( const ErrorParam &params );
 
 protected:

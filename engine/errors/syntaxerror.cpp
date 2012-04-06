@@ -20,6 +20,11 @@
 
 namespace Falcon {
 
+SyntaxError::SyntaxError( ):
+   Error( Engine::instance()->stdErrors()->syntax() )
+{
+}
+
 SyntaxError::SyntaxError( const ErrorParam &params ):
    Error( Engine::instance()->stdErrors()->syntax(), params )
 {

@@ -20,6 +20,11 @@
 
 namespace Falcon {
 
+InterruptedError::InterruptedError( ):
+   Error( Engine::instance()->stdErrors()->io() )
+{
+}
+
 InterruptedError::InterruptedError( const ErrorParam &params ):
    Error( Engine::instance()->stdErrors()->io(), params )
 {

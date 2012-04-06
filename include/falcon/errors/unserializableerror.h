@@ -27,6 +27,7 @@ namespace Falcon {
 class FALCON_DYN_CLASS UnserializableError: public Error
 {
 public:
+   UnserializableError( );
    UnserializableError( const ErrorParam &params );
 
 protected:

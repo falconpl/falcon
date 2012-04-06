@@ -20,6 +20,11 @@
 
 namespace Falcon {
 
+UnsupportedError::UnsupportedError( ):
+   Error( Engine::instance()->stdErrors()->unsupported() )
+{
+}
+
 UnsupportedError::UnsupportedError( const ErrorParam &params ):
    Error( Engine::instance()->stdErrors()->unsupported(), params )
 {

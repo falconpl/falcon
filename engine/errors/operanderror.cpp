@@ -20,6 +20,11 @@
 
 namespace Falcon {
 
+OperandError::OperandError( ):
+   Error( Engine::instance()->stdErrors()->operand() )
+{
+}
+
 OperandError::OperandError( const ErrorParam &params ):
    Error( Engine::instance()->stdErrors()->operand(), params )
 {

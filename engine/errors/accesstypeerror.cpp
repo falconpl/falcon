@@ -19,6 +19,11 @@
 
 namespace Falcon {
 
+AccessTypeError::AccessTypeError( ):
+   Error( Engine::instance()->stdErrors()->accessType() )
+{
+}
+
 AccessTypeError::AccessTypeError( const ErrorParam &params ):
    Error( Engine::instance()->stdErrors()->accessType(), params )
 {

@@ -25,6 +25,7 @@ namespace Falcon {
 class FALCON_DYN_CLASS EncodingError: public Error
 {
 public:
+   EncodingError( );
    EncodingError( const ErrorParam &params );
 
 protected:

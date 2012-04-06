@@ -20,6 +20,11 @@
 
 namespace Falcon {
 
+UnserializableError::UnserializableError( ):
+   Error( Engine::instance()->stdErrors()->unserializable() )
+{
+}
+
 UnserializableError::UnserializableError( const ErrorParam &params ):
    Error( Engine::instance()->stdErrors()->unserializable(), params )
 {

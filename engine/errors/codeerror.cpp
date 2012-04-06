@@ -21,6 +21,11 @@
 
 namespace Falcon {
 
+CodeError::CodeError( ):
+   Error( Engine::instance()->stdErrors()->code() )
+{
+}
+
 CodeError::CodeError( const ErrorParam &params ):
    Error( Engine::instance()->stdErrors()->code(), params )
 {
