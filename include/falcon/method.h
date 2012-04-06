@@ -26,7 +26,7 @@ namespace Falcon {
 class ClassUser;
 class Item;
 
-class Method: public Function
+class FALCON_DYN_CLASS Method: public Function
 {
 public:
    Method( ClassUser* cls, const String& name, Module* mod = 0 );

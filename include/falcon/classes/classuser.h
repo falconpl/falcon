@@ -73,7 +73,7 @@ class Property;
  TODO
  
  */
-class ClassUser: public Class
+class FALCON_DYN_CLASS ClassUser: public Class
 {
 public:
    ClassUser( const String& name );

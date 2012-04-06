@@ -25,7 +25,7 @@ namespace Falcon {
 class ClassUser;
 class Item;
 
-class Property
+class FALCON_DYN_CLASS Property
 {
 public:   
    Property( ClassUser* uc, const String &name, bool bCarried = false );
