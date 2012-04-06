@@ -15,6 +15,9 @@
 #include <stdio.h>
 
 #include <falcon/engine.h>
+#include <falcon/vmcontext.h>
+
+#include <falcon/errors/paramerror.h>
 
 #include "zlib.h"
 #include "zlib_ext.h"
@@ -28,23 +31,24 @@ namespace Falcon {
 namespace Ext {
 
 
-static const String &internal_getErrorMsg( VMachine *vm, int error_code )
+static const String &internal_getErrorMsg( VMContext *ctx, int error_code )
 {
    switch ( error_code ) {
       case Z_MEM_ERROR:
-         return FAL_STR(zl_msg_nomem);
+         //return FAL_STR(zl_msg_nomem);
 
       case Z_BUF_ERROR:
-         return  FAL_STR(zl_msg_noroom);
+         //return  FAL_STR(zl_msg_noroom);
 
       case Z_DATA_ERROR:
-         return  FAL_STR( zl_msg_invformat );
+         //return  FAL_STR( zl_msg_invformat );
 
       case Z_VERSION_ERROR:
-         return  FAL_STR( zl_msg_vererr );
+         ;
+         //return  FAL_STR( zl_msg_vererr );
    }
-
-   return  FAL_STR(zl_msg_generic);
+   return "";
+   //return  FAL_STR(zl_msg_generic);
 }
 
 /*#
@@ -56,11 +60,42 @@ static const String &internal_getErrorMsg( VMachine *vm, int error_code )
    is not necessary to create an instance of this class to use its methods.
 */
 
-FALCON_FUNC ZLib_getVersion( ::Falcon::VMachine *vm )
+ClassZLib::ClassZLib():
+   ClassUser("ZLib"),
+
+   FALCON_INIT_METHOD( getVersion ),
+   FALCON_INIT_METHOD( compress ),
+   FALCON_INIT_METHOD( uncompress ),
+   FALCON_INIT_METHOD( compressText ),
+   FALCON_INIT_METHOD( uncompressText )
 {
-   CoreString *gsVersion = new CoreString( zlibVersion() );
+}
+
+ClassZLib::~ClassZLib()
+{}
+
+void ClassZLib::serialize( DataWriter*, void* ) const
+{
+   // TODO
+}
+
+void* ClassZLib::deserialize( DataReader* ) const
+{
+   // TODO
+   return 0;
+}
+
+void* ClassZLib::createInstance(  ) const
+{ 
+   return 0;
+}
+
+
+FALCON_DEFINE_METHOD_P1( ClassZLib, getVersion )
+{
+   String *gsVersion = new String( zlibVersion() );
    gsVersion->bufferize();
-   vm->retval( gsVersion );
+   ctx->returnFrame( gsVersion );
 }
 
 /*#
@@ -81,9 +116,9 @@ FALCON_FUNC ZLib_getVersion( ::Falcon::VMachine *vm )
    For text strings, it is preferrable to use the @a ZLib.compressText
    function.
 */
-FALCON_FUNC ZLib_compress( ::Falcon::VMachine *vm )
+FALCON_DEFINE_METHOD_P1( ClassZLib, compress )
 {
-   Item *dataI = vm->param( 0 );
+   Item *dataI = ctx->param( 0 );
    if ( dataI == 0 || ( ! dataI->isString() && ! dataI->isMemBuf() ) )
    {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
@@ -101,15 +136,15 @@ FALCON_FUNC ZLib_compress( ::Falcon::VMachine *vm )
       dataLen = dataI->asString()->size();
    }
    else {
-      data = dataI->asMemBuf()->data();
-      dataLen = dataI->asMemBuf()->size();
+      //data = dataI->asMemBuf()->data();
+      //dataLen = dataI->asMemBuf()->size();
    }
 
    // for safety, reserve a bit more.
    compLen = dataLen < 512 ? dataLen *2 + 12: dataLen + 512;
 
    allocLen = compLen; // and keep a copy.
-   compData = (Bytef *) memAlloc( compLen );
+   compData = (Bytef *) malloc( compLen );
 
    do {
       err = compress( compData, &compLen, data, dataLen );
@@ -117,10 +152,10 @@ FALCON_FUNC ZLib_compress( ::Falcon::VMachine *vm )
       // Buffer too small? -- try to enlarge it.
       if ( err == Z_BUF_ERROR )
       {
-         memFree( compData );
+         free( compData );
          compLen += dataLen/2;
          allocLen = compLen;
-         compData = (Bytef *) memAlloc( compLen );
+         compData = (Bytef *) malloc( compLen );
       }
       else
          break;
@@ -132,19 +167,19 @@ FALCON_FUNC ZLib_compress( ::Falcon::VMachine *vm )
       // as err is < 0, we reverse it.
       throw new ZLibError(
             ErrorParam( FALCON_ZLIB_ERROR_BASE - err, __LINE__ )
-            .desc( internal_getErrorMsg( vm, err ) ) );
+            .desc( internal_getErrorMsg( ctx, err ) ) );
    }
 
 
    // eventually shrink a bit if we're using too much memory.
    if ( compLen < allocLen )
    {
-      compData = (Bytef *) memRealloc( compData, compLen );
+      compData = (Bytef *) realloc( compData, compLen );
       allocLen = compLen;
    }
 
-   MemBuf *result = new MemBuf_1( compData, allocLen, memFree );
-   vm->retval( result );
+   //MemBuf *result = new MemBuf_1( compData, allocLen, memFree );
+   //ctx->returnFrame( result );
 }
 
 
@@ -158,9 +193,9 @@ FALCON_FUNC ZLib_compress( ::Falcon::VMachine *vm )
    This method will compress the a text so that an @a ZLib.uncompressText
    re-creates the original string.
 */
-FALCON_FUNC ZLib_compressText( ::Falcon::VMachine *vm )
+FALCON_DEFINE_METHOD_P1( ClassZLib, compressText )
 {
-   Item *dataI = vm->param( 0 );
+   Item *dataI = ctx->param( 0 );
    if ( dataI == 0 || ! dataI->isString() )
    {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
@@ -178,7 +213,7 @@ FALCON_FUNC ZLib_compressText( ::Falcon::VMachine *vm )
    compLen = dataLen < 512 ? dataLen *2 + 16: dataLen + 512;
 
    allocLen = compLen; // and keep a copy.
-   compData = (Bytef *) memAlloc( compLen );
+   compData = (Bytef *) malloc( compLen );
    compData[0] = (Bytef) dataI->asString()->manipulator()->charSize();
    compData[1] = (Bytef)(dataLen >> 24);
    compData[2] = (Bytef)((dataLen >> 16) & 0xff);
@@ -192,7 +227,7 @@ FALCON_FUNC ZLib_compressText( ::Falcon::VMachine *vm )
       // Buffer too small? -- try to enlarge it.
       if ( err == Z_BUF_ERROR )
       {
-         memFree( compData );
+         free( compData );
          compLen += dataLen/2;
          allocLen = compLen;
          compData[0] = (Bytef) dataI->asString()->manipulator()->charSize();
@@ -202,7 +237,7 @@ FALCON_FUNC ZLib_compressText( ::Falcon::VMachine *vm )
          compData[4] = (Bytef)((dataLen) & 0xff);
          compLen-=5;
 
-         compData = (Bytef *) memAlloc( compLen );
+         compData = (Bytef *) malloc( compLen );
       }
       else
          break;
@@ -212,19 +247,19 @@ FALCON_FUNC ZLib_compressText( ::Falcon::VMachine *vm )
    if ( err != Z_OK )
    {
       throw new ZLibError( ErrorParam( FALCON_ZLIB_ERROR_BASE -err, __LINE__ )
-               .desc( internal_getErrorMsg( vm, err ) ) );
+               .desc( internal_getErrorMsg( ctx, err ) ) );
    }
 
 
    // eventually shrink a bit if we're using too much memory.
    if ( compLen + 5 < allocLen )
    {
-      compData = (Bytef *) memRealloc( compData, compLen + 5 );
+      compData = (Bytef *) realloc( compData, compLen + 5 );
       allocLen = compLen + 5;
    }
 
-   MemBuf *result = new MemBuf_1( compData, allocLen, memFree );
-   vm->retval( result );
+   //MemBuf *result = new MemBuf_1( compData, allocLen, memFree );
+   //ctx->returnFrame( result );
 }
 
 /*#
@@ -235,9 +270,9 @@ FALCON_FUNC ZLib_compressText( ::Falcon::VMachine *vm )
    @raise ZLibError on decompression error.
 
 */
-FALCON_FUNC ZLib_uncompress( ::Falcon::VMachine *vm )
+FALCON_DEFINE_METHOD_P1( ClassZLib, uncompress )
 {
-   Item *dataI = vm->param( 0 );
+   Item *dataI = ctx->param( 0 );
 
    if ( dataI == 0 || ( ! dataI->isString() && ! dataI->isMemBuf() ) )
    {
@@ -258,9 +293,9 @@ FALCON_FUNC ZLib_uncompress( ::Falcon::VMachine *vm )
       dataInSize = data->size();
    }
    else {
-      MemBuf *data = dataI->asMemBuf();
-      dataIn = data->data();
-      dataInSize = data->size();
+      //MemBuf *data = dataI->asMemBuf();
+      //dataIn = data->data();
+      //dataInSize = data->size();
    }
 
    // preallocate a good default memory
@@ -271,7 +306,7 @@ FALCON_FUNC ZLib_uncompress( ::Falcon::VMachine *vm )
    }
 
    allocLen = compLen;
-   compData = (Bytef *) memAlloc( compLen );
+   compData = (Bytef *) malloc( compLen );
 
    while( true )
    {
@@ -284,8 +319,8 @@ FALCON_FUNC ZLib_uncompress( ::Falcon::VMachine *vm )
          // try with a larger buffer
          compLen += dataInSize < 512 ? 512 : dataInSize * 2;
          allocLen = compLen;
-         memFree( compData );
-         compData = (Bytef *) memAlloc( compLen );
+         free( compData );
+         compData = (Bytef *) malloc( compLen );
       }
       else
          break;
@@ -295,17 +330,17 @@ FALCON_FUNC ZLib_uncompress( ::Falcon::VMachine *vm )
    {
       throw new ZLibError(
                ErrorParam( FALCON_ZLIB_ERROR_BASE-err, __LINE__ )
-               .desc( internal_getErrorMsg( vm, err ) ) );
+               .desc( internal_getErrorMsg( ctx, err ) ) );
    }
 
    if ( compLen < allocLen )
    {
-      compData = (Bytef *) memRealloc( compData, compLen );
+      compData = (Bytef *) realloc( compData, compLen );
       allocLen = compLen;
    }
 
-   MemBuf *result = new MemBuf_1( compData, allocLen, memFree );
-   vm->retval( result );
+   //MemBuf *result = new MemBuf_1( compData, allocLen, memFree );
+   //ctx->returnFrame( result );
 }
 
 /*#
@@ -318,9 +353,9 @@ FALCON_FUNC ZLib_uncompress( ::Falcon::VMachine *vm )
    The input @b buffer must be a string previously compressed
    with the @a ZLib.compressText method, or the function will fail.
 */
-FALCON_FUNC ZLib_uncompressText( ::Falcon::VMachine *vm )
+FALCON_DEFINE_METHOD_P1( ClassZLib, uncompressText )
 {
-   Item *dataI = vm->param( 0 );
+   Item *dataI = ctx->param( 0 );
 
    if ( dataI == 0 || ( ! dataI->isString() && ! dataI->isMemBuf() ) )
    {
@@ -340,22 +375,22 @@ FALCON_FUNC ZLib_uncompressText( ::Falcon::VMachine *vm )
       dataIn = data->getRawStorage();
       dataInSize = data->size();
    }
-   else {
+   /*else {
       MemBuf *data = dataI->asMemBuf();
       dataIn = data->data();
       dataInSize = data->size();
-   }
+   }*/
 
    // type of string
    if ( dataIn[0] != 1 && dataIn[0] != 2 && dataIn[0] != 4 )
    {
-      throw new ZLibError( ErrorParam( FALCON_ZLIB_ERROR_BASE, __LINE__ ).
-               desc( FAL_STR(zl_msg_notct) ) );
+      //throw new ZLibError( ErrorParam( FALCON_ZLIB_ERROR_BASE, __LINE__ ).
+               //desc( FAL_STR(zl_msg_notct) ) );
    }
 
    // get length
    compLen = dataIn[1] << 24 | dataIn[2] << 16 | dataIn[3] << 8 | dataIn[4];
-   compData = (Bytef *) memAlloc( compLen );
+   compData = (Bytef *) malloc( compLen );
 
    err = uncompress( compData, &compLen, dataIn+5, dataInSize-5 );
 
@@ -363,24 +398,25 @@ FALCON_FUNC ZLib_uncompressText( ::Falcon::VMachine *vm )
    {
       throw new ZLibError(
                ErrorParam( FALCON_ZLIB_ERROR_BASE-err, __LINE__ )
-               .desc( internal_getErrorMsg( vm, err ) ) );
+               .desc( internal_getErrorMsg( ctx, err ) ) );
    }
 
-   CoreString *result = new CoreString;
+   String *result = new String;
    result->adopt( (char *) compData, compLen, compLen );
    // set correct manipulator
-   if (dataIn[0] == 2 )
-      result->manipulator( &csh::handler_buffer16 );
-   else if( dataIn[0] == 4 )
-      result->manipulator( &csh::handler_buffer32 );
+   //if (dataIn[0] == 2 )
+      //result->manipulator( &csh::handler_buffer16 );
+   //else if( dataIn[0] == 4 )
+      //result->manipulator( &csh::handler_buffer32 );
 
-   vm->retval( result );
+   ctx->returnFrame( result );
 }
 
 
 //=============================================================
 // Zlib error
 //
+
 
 /*#
    @class ZLibError
@@ -395,14 +431,20 @@ FALCON_FUNC ZLib_uncompressText( ::Falcon::VMachine *vm )
 
    See the Error class in the core module.
 */
-
-FALCON_FUNC  ZLibError_init ( ::Falcon::VMachine *vm )
+void* ClassZLibError::createInstance() const
 {
-   CoreObject *einst = vm->self().asObject();
-   if( einst->getUserData() == 0 )
-      einst->setUserData( new ZLibError );
+   return new ZLibError;
+}
 
-   ::Falcon::core::Error_init( vm );
+ClassZLibError* ClassZLibError::m_instance = NULL;
+
+ClassZLibError* ClassZLibError::singleton()
+{
+   if (m_instance == NULL)
+   {
+      m_instance = new ClassZLibError;
+   }
+   return m_instance;
 }
 
 }

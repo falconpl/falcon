@@ -9,9 +9,13 @@
 #define FLC_ZLIB_EXT_H
 
 #include <falcon/setup.h>
-#include <falcon/module.h>
 #include <falcon/error.h>
+#include <falcon/errorclasses.h>
 #include <falcon/error_base.h>
+
+#include <falcon/classes/classuser.h>
+#include <falcon/property.h>
+#include <falcon/method.h>
 
 #ifndef FALCON_ZLIB_ERROR_BASE
    #define FALCON_ZLIB_ERROR_BASE        1190
@@ -21,25 +25,62 @@
 namespace Falcon {
 namespace Ext {
 
-FALCON_FUNC ZLib_getVersion( ::Falcon::VMachine *vm );
-FALCON_FUNC ZLib_compress( ::Falcon::VMachine *vm );
-FALCON_FUNC ZLib_uncompress( ::Falcon::VMachine *vm );
-FALCON_FUNC ZLib_compressText( ::Falcon::VMachine *vm );
-FALCON_FUNC ZLib_uncompressText( ::Falcon::VMachine *vm );
+class ClassZLib: public ClassUser
+{
+public:
+
+   ClassZLib();
+   virtual ~ClassZLib();
+
+   virtual void serialize( DataWriter* stream, void* self ) const;
+   virtual void* deserialize( DataReader* stream ) const;
+
+   //=============================================================
+   //
+   virtual void* createInstance( ) const;
+
+private:
+
+   //====================================================
+   // Properties.
+   //
+
+
+   //====================================================
+   // Methods.
+   //
+
+
+   FALCON_DECLARE_METHOD( getVersion, "" );
+   FALCON_DECLARE_METHOD( compress, "buffer:M|S" );
+   FALCON_DECLARE_METHOD( uncompress, "buffer:M|S" );
+   FALCON_DECLARE_METHOD( compressText, "text:S" );
+   FALCON_DECLARE_METHOD( uncompressText, "buffer:M|S" );
+
+};
+
+class ClassZLibError: public ClassError
+      {
+      private:
+         static ClassZLibError* m_instance;
+      public:
+         inline ClassZLibError(): ClassError( "ZLibError" ) {} 
+         inline virtual ~ClassZLibError(){} 
+         virtual void* createInstance() const;
+         static inline ClassZLibError* singleton();
+      };
 
 class ZLibError: public ::Falcon::Error
 {
 public:
    ZLibError():
-      Error( "ZLibError" )
+      Error( ClassZLibError::singleton() )
    {}
 
    ZLibError( const ErrorParam &params  ):
-      Error( "ZLibError", params )
+      Error( ClassZLibError::singleton(), params )
       {}
 };
-
-FALCON_FUNC  ZLibError_init ( ::Falcon::VMachine *vm );
 
 }
 }
