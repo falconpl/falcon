@@ -44,7 +44,6 @@ Reply::Reply( const CoreClass* base ):
 {
    // prepare default values
    setContentType( "text/html; charset=utf-8" );
-   setHeader( "Pragma", "no-cache" );
    setHeader( "Cache-Control", "no-cache" );
 
    // and THEN tell we're using the defaults.

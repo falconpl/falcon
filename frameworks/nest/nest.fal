@@ -528,13 +528,17 @@ object Nest
 
    /** Selects a resource */
    function selector_resource( rid )
+      if self.log_level >= 3: self.logd( "Checking resourece for RID: " + rid )
       dirs = [self.site_nest_dir + "/" +  res_dir, self.nest_dir + "/" + res_dir ]
       res_file = utils.findFileInDirs(
             dirs,
             rid
          )
 
-      if( res_file )
+      if( res_file )         
+         // shall we really send it?
+         if utils.checkModifiedSince( res_file ): return
+            
          if res_file[-3:] == ".js"
             Reply.ctype( "application","javascript" )
             text = true
@@ -549,9 +553,12 @@ object Nest
          end
 
          Reply.setHeader( "Content-disposition", @"inline; filename=\"$(rid)\"" )
+         Reply.setHeader( "Cache-Control", "public,max-age=0" )
+         Reply.setHeader( "Pragma" )
          stdOut().write( readURI( res_file, text ? "utf-8" : "C" ) )
       else
-         raise NestError( NestError.res_notfound, "", rid + " in " + dirs.describe())
+         utils.exitReply( 404, "File not found", "The request " + Request.uri +
+                        " is pointing to a resource that couldn't be found")
       end
    end
    

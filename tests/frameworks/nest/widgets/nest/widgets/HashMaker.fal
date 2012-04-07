@@ -12,7 +12,7 @@ class HashButton from wid.Widget( "button" )
    props = ["type"=>"button", "value"=>"Calc SHA" ]
    ajaxReqs = ["onClick"=>wid.AJAXRequest( ["../area/value"] ) ]
    // a custom message handler
-   ajaxMessages = [ 'buttonChange' => '$(this)[''value'']=obj.value;' ]
+   ajaxMessages = [ 'buttonChange' => "function(obj) { this.value = obj.value; }" ]
 end
 
 class HashText from wid.Widget( "sha" )
@@ -23,6 +23,9 @@ class HashMaker( id ) from wid.Widget( id )
    ta = HashInput()
    tb = HashButton()
    outputText = HashText()
+
+   isAJAXHost = true
+   
    init
       self.addChild( self.ta )
       self.addChild( self.tb )
@@ -36,7 +39,7 @@ class HashMaker( id ) from wid.Widget( id )
          self.outputText.msgSetProperty( "innerHTML", sha ),
          self.ta.msgSetProperty("value", value + "\n--Checked--" ),
          // and a custom message
-         [ "message" => "buttonChange", "value" => "click again..." ]
+         wid.Widget.msgGeneric( "buttonChange", ["value" => "click again..."] )
          ]
    end
 

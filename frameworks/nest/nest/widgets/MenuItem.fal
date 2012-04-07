@@ -1,0 +1,63 @@
+/*
+   FALCON - The Falcon Programming Language
+
+   Nest - Falcon web applcation engine
+
+   FILE: Menu.fal
+
+   AJAX widgeting subsystem -- navigation menu
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Mon, 26 Sep 2011 11:55:58 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2011: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+import Widget from nest.widgets.widget as Widget
+import Image from nest.widgets.Image as Image
+import Text from nest.widgets.Text as Text
+
+
+class MenuItem( id, text, icon, submenu, submenu_ind, minAuthLevel ) from Widget( id )
+   tag = "li"
+
+   text = nil
+   icon = nil
+   submenu = submenu
+   submenu_ind = submenu_ind
+   minAuthLevel = minAuthLevel
+   
+   init
+      select text
+         case NilType: self.text = Text( "text", "" )
+         case StringType: self.text = Text( "text", text )
+         default: self.text = text
+      end
+
+      select icon
+         case NilType: self.icon = Image( "icon", "", false )
+         case StringType: self.icon = Image( "icon", icon )
+         default: self.icon = icon
+      end
+
+      select submenu_ind
+         case NilType: self.submenu_ind = Text( "sbind", "" )
+         case StringType: self.submenu_ind = Text( "sbind", submenu_ind )
+         default: self.submenu_ind = submenu_ind
+      end
+      
+      self.addChild( self.icon )
+      self.addChild( self.text )
+      self.addChild( self.submenu_ind )
+      if submenu: self.addChild( submenu )
+   end
+
+   function renderChild( child )
+      return child.render() + "&nbsp;"
+   end
+
+   
+end

@@ -81,6 +81,7 @@ end
    have an @b id parameter as their @b first parameter in the class
    constructor. This @b id parameter will be propagated through the
    widget hierarcy up to this base class, always as first parameter.
+
 */
 
 class Widget( id )
@@ -108,9 +109,18 @@ class Widget( id )
    //# parent of this widget.
    parent = nil
 
-   //# list ov javascript methods to be added to this widget.
+   /*# Dictioanry of javascript methods to be added to this widget.
+      Each entry is a method that can be invoked on the javascript side.
+      The key is the method name, and the value must be a full javascript
+      function declaration.
+   */
    jsMethods = [=>]
 
+   /*# Dictioanry of javascript Listeners
+      Each entry is a method that can be invoked on the javascript side.
+      The key is the method name, and the value must be a full javascript
+      function declaration.
+   */
    jsListeners = [=>]
 
    //# Some widget cannot be closed with the XML self-closing tag.
@@ -120,33 +130,6 @@ class Widget( id )
    onCreate = nil
 
    /*# If true, this is a ajax host, and can receive ajax messages directly.
-
-      Topmost widgets are always considered ajax AJAX, but there can be
-      some widgets included inside parents that can have their own AJAX
-      handler method.
-
-      Is this property is true, the rendere will tell Nest to send AJAX
-      requests to this widget.
-
-      A parent can easily override this setting by setting this property
-      to false even when a widget can manage its own AJAX messages; then
-      the parent can route the messages to the children, if it wants,
-      after having processed them.
-
-      @note AJAX hosts \b must be exposed in a widget module (a file under
-      nest/widget named after the exposed class) \b and must properly
-      fill the @a Widget.initInfos verctor with the parameters that
-      the Nest system must pass to the widget during initialization step. Also,
-      they \b must provide a "tag", that is, they must be real possibly visible
-      entities (or at least, an invisible empty "div"),
-      and not just "widget groups". Notice that the @b id parameter is
-      automatically repeated by the Nest system, so it is not necessary
-      to present it inside the @b Widget.initInfo property.
-
-      @note All the widget subclasses willing to become AJAX hosts MUST
-      have an @b id parameter as their @b first parameter in the class
-      constructor. This @b id parameter will be propagated through the
-      widget hierarcy up to this base class, always as first parameter.
    */
    isAJAXHost = false
 
@@ -170,6 +153,9 @@ class Widget( id )
    //# Set true to put label AFTER the main widget in standard representation
    labelsOnRight = false
 
+   //# Stylesheet for automated stilesheet generation in page
+   css = nil
+   
    init
       Nest.requireJS("base")
       Nest.subscribeWidget( self )
@@ -474,13 +460,7 @@ class Widget( id )
    function renderAJAXMessages()
       rend = ""
       for key, value in self.ajaxMessages
-         forfirst
-            this = "document.getElementById('" + self.getFullID() + "')";
-            rend += "<script language=\"javascript\">\n(function(){"
-         end
-
-         rend += "Nest.messageHandlers['" + key +"']= function(obj){" + @value + "}\n"
-         forlast: rend += "}());</script>"
+         rend += "Nest.messageHandlers['" + key +"']=" + "{ object: element, method: " + value + "};\n"
       end
 
       return rend
@@ -674,7 +654,25 @@ class Widget( id )
    end
    
    //===================================================
+   // CSS batch generator interface
+   //
+   function makeCSS()
+      result = "#" + self.getFullID() + " {\n"
+      for k, v in self.css
+         result += "    "+ k + ": " + v + ";\n"
+      end
+      result += "}\n"
+      return result;
+   end
 
+   function makeCSS_basic()
+      result = "#" + self.getFullID() + "{"
+      for k, v in self.css
+         result += k + ":" + v + ";"
+      end
+      result += "}\n"
+      return result;
+   end
 
    //===================================================
    /*# Route ajax requests.
@@ -705,4 +703,10 @@ class Widget( id )
          "param"=> data ]
    end
 
+   //# Generates a generic message
+   function msgGeneric( message, value )
+      if value == nil: value = [=>]
+      value[ "message" ] = message
+      return value
+   end
 end

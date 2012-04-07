@@ -1,0 +1,237 @@
+/* @page widgets Nest AJAX enabled client-side widgets.
+
+   Nest provides an integrated AJAX visual framework that goes
+   under the name of @i Nest @i Widgets.
+
+   Nest Widgets, can be organized much like GUI widgets being
+   structured into hierarcies and rendered on the final page.
+
+   Other than abstracting the task of creating visual interactive
+   elements on the target page, Nest Widgets offer support for two
+   specific needs:
+
+   - AJAX hosting (automatic server-side reflection of the widgets).
+   - Local inter-widget messaging.
+
+   While most nest wigets come ready to use, a full exploting of them
+   requires to write some Javascript routines (or anyhow server side code)
+   that are needed to integrate them in the browser.
+
+   While offering limited support for visual effects, Nest is mostly
+   client-side agnostic, and provides support for integrating any
+   external client-side Javascript framework. In fact, all the widgets
+   can be configure to be under the domain of a foreign Javascript
+   library (this usually happens setting their 'class' HTML property),
+   or to invoke foreign Javascript code from the AJAX host or local
+   callback points.
+
+   The base class of the Widget system is the @a nest.widget.Widget class.
+
+   @note To load a widget in a document it is possible to use the
+   standard Falcon @b import directive; if the widget also comply
+   to the required interface and naming conventions, it is possible
+   to use the @a Nest.widget method. Notice that widgets acting as AJAX
+   hosts (see below) are required to comply with this conventions,
+   while widgets not exposing an AJAX host interface can simply be
+   placed in any reachable location as loaded as normal Falcon modules.
+   
+@section ajax_hosting AJAX Widget Hosting
+
+   Nest widgets support AJAX hosting, that is, a direct callback
+   to themselves via AJAX. In other words, they can receive requests,
+   and send orders to their counterpart on the user browser page.
+
+   Each HTTP transaction is a standalone operation, so the status
+   of the widget cannot be simply changed to be the same when
+   the remote client asks for the server-side widget to be operate.
+
+   However, accessing a widget via Nest ensures that the session
+   variables and the special Nest session support system are
+   in place when the widget is re-created to serve the ajax request.
+
+   @note AJAX hosts \b must be exposed in a widget module (a file under
+      nest/widget named after the exposed class). Also,
+      they \b must provide a @b tag, that is, they must be real possibly visible
+      entities (or at least, an invisible empty "div"),
+      and not just "widget groups".
+
+   A widget willing to act as an AJAX host must declare it by
+   setting the isAJAXHost property to true. By doing this, it will
+   become responsible to process AJAX requests generated also by
+   child widgets (the ID of the sender child widget will be provided
+   as a parameter of the AJAX handler).
+
+
+   It is also possible to subclass and override the subclass AJAX
+   hosting behavior mechanism by setting its isAJAXHost property to
+   valse from within the init method of the new child, and setting
+   the child's own isAJAXHost to true. In this way, the new derived
+   class might pre-process any message originally directed to the
+   base class, and then invoke the parent's AJAX handler method.
+
+   To help re-create the widgets so that they can be rebuilt upon
+   remote AJAX request, it is necessary to provide an initInfos
+   array, which contains all the parameters used to create this widget,
+   in proper order, except the widget ID, which is mandatory and \b must
+   always be provided and appare as the first parameter of the widget
+   class declaration.
+
+   For example, a simple AJAX host would look like this:
+   @code
+   class ChildHost( id, name, surname, somedata ) from Widget( id )
+
+      isAJAXHost = true
+      initInfos =  [ name, surname, somedata ]
+
+      init
+         ... some init code ...
+      end
+
+      ...
+
+      function AJAX( params )
+         ...
+         return [ message1, message2 ... ]
+      end
+   end
+   @endcode
+
+   @note The initInfos are stored on the remote side side as JSON data;
+   be sure that the data used to initialize the widget can be expressed
+   as a JSON entity (strings, numbers, true/false and nil values, as well as
+   arrays and dictionaries of those values, are safe).
+
+@section ajax_requests Automatic AJAX requests.
+
+   The class AJAXRequest embeds an automatic invocation to the innermost
+   AJAX host which is parent of the entity implementing the requset.
+
+   They have also the ability to extract current information about the
+   status of the document being presented to the user and pack it into
+   JSON for the AJAX host to receive it.
+
+   To generate automatically AJAX requests as method of this widget,
+   it is simply necessary to populate the \b ajaxReqs property with
+   a dictionary of methodName => AJAXRequest instance. Particularly
+   interesting is the case of the method name being the same as a
+   Javascript event name (i.e. onClick). For instance:
+
+   @code
+   class SubWid(id) from Widget(id)
+      ajaxReqs = [
+         "onClick"=> AJAXRequest( ["../tb/value"] ),
+         "invoke_me"=> AJAXRequest( nil )
+         ]
+      ...
+   end
+   @endcode
+
+   If the widget in the example is a AJAX host or added as a child of a host,
+   click action will cause the JS side of the script to invoke immediately the
+   Nest AJAX counterpart. The "invoke_me" Javascript method is available for
+   any other Javascript on the page to be invoked.
+
+   The dictionary received by the AJAX host method will contain the following members:
+   - "id" => the full ID of the widget that generated the message (should be a child of
+      the host, or the host itself).
+   - "msg" => the message that was invoked (in this case, either "onClick" or "invoke_me").
+   - "widget" => the AJAX host widget that should receive this message (it's used by
+      Nest to re-create the widget).
+   - "infos" => dictionary of automatic informations (see below)
+
+@subsection ajax_infos AJAX automatic information retrieval
+
+   As specified, AJAX request can automatically create the code to read and
+   pack current values in the remote document for the AJAX host to receive them.
+
+   The example in the section reads the "value" JS proprty of the sibling "tb" child widget,
+   (notice the ../ in front of the name).
+
+   The informations so obtained are stored in the
+   \b "infos" element of the dictionary that is provided to the AJAX method of the
+   host.
+
+   The "infos" element is a dictionary itself, its keys being the (relative) ID
+   of the widgets where the information was taken, and the values being a string
+   representing the current value of that property in the document. In the above
+   example, it shall be "tb.value". Notice that the informations are extracted
+   using a DOM path locator, while they are provided to the target host widget
+   in the usual dot-accessor notation.
+
+@subsection ajax_messages AJAX actions and message handlers
+
+   The return value of the AJAX callback method is a list of
+   "actions" to perform. This class provides support for some
+   basic actions that can be performed on remote widgets, but
+   it is possible to create custom mesages that can be
+   received by any widget (or Javascript code) in the target page.
+
+   A return message is a dictionary that can contain different
+   elements depending on the message type.
+
+   The following widget methods helps creating messages for the
+   receiving page.
+
+   - \b msgSetProperty creates a message which sends a request to the
+   remote page to change a property of the given widget with the value
+   that is passed.
+   - \b msgInvoke creates a message requiring the remote page to invoke
+   a method, optionally receiving some arbitrary as a single parameter.
+   - \b msgGeneric creates a generic message that can be received by
+      one or more "listeners" in the target page; the receivers can be both
+      nest Widgets on the Javascript side, or arbitrary Javascript code.
+
+   Listeners widgets can register to AJAX generic messages by declaring
+   a dictionary in the ajaxMessages property; the key of the dictionary
+   is the name of the message they respond to, and the value is a full
+   javascript function receiving a single parameter (which is the data
+   passed as extra parameter to msgGeneric on the Falcon server side).
+
+   Javascript code can register to generic AJAX reply messages invoking the
+   Nest.listenAJAX( message, object, method ) function in the Nest.js support
+   script. The object can be null, so that a simple function receives
+   the message.
+
+   An AJAX generic message can be received at most by one receiver (but
+   it is possible to propagate the information locally in the target page via
+   the Nest.listen extension in Javascript).
+
+   See the following example:
+
+   @code
+   class SomeContainer( id ) from wid.Widget( id )
+      ajaxMessages = [ 'changeMe' => "function(obj) { this.value = obj.value; }" ]
+
+      myarea = MyArea()
+      mybutton = mybutton()
+
+   init
+      self.addChild( self.myarea )
+      self.addChild( self.mybutton )
+   end
+
+   function AJAX( params )
+      return [
+         self.myarea.msgSetProperty( "innerHTML", "The new text" ),
+         self.mybutton.msgInvoke( "aMethodOfButton", ["..."=>"..."] ),
+         Widget.msgGeneric( "changeMe", ["value" => "My value is changed." ] )
+         ]
+   end
+   @endcode
+
+   As the generic message is not targetted to a specific widget (but in the example,
+   we're receiving it from the same AJAX host), it is possible to use the msgGeneric
+   method statically from the Widget class. The msgSetProperty and msgInvoke methods
+   are specific of their target widget, so they require the proper target to be
+   specified.
+
+
+   @note To receive callbacks from a msgInvoke AJAX invocation, do not use ajaxMessages,
+   but simply provide a method in jsMethods.
+
+@section local_page_messages Local page widget messaging
+
+   Widgets rendered on the remote browser page can communicate through
+   a method called
+   
+*/

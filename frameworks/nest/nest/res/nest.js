@@ -228,12 +228,19 @@ if(!Nest) { Nest = {}; }
                Nest.onMessageNotFound( obj );
             }
             else {
-               handler( obj );
+               handler.method.call( handler.object, obj );
             }
          }
          else {
             Nest.onWidgetUpdateError( obj );
          }
+      }
+   }
+
+   // Method 'processMessage' -- handling a single request from widget server.
+   if (typeof Nest.listenAJAX !== 'function') {
+      Nest.listenAJAX = function ( msg, obj, func ) {        
+         Nest.messageHandlers[ msg ] = { object: obj, method: func };
       }
    }
    
@@ -284,8 +291,8 @@ if(!Nest) { Nest = {}; }
    // set the default widget server message handlers
    if (! Nest.messageHandlers ) {
       Nest.messageHandlers = {
-         'set': handler_set,
-         'invoke': handler_invoke
+         'set': { object: null, method: handler_set},
+         'invoke': { object: null, method: handler_invoke}
       }
    }
 

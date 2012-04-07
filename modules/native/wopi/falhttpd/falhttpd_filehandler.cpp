@@ -60,7 +60,7 @@ void FileHandler::serve( Falcon::WOPI::Request* req )
    m_client->log()->log( LOGLEVEL_INFO, "Sending file "+ m_sFile );
 
    // ok we can serve the file
-   String sReply = "HTTP/1.0 200 OK\r\n";
+   String sReply = "HTTP/1.1 200 OK\r\n";
 
    TimeStamp now;
    now.currentTime();

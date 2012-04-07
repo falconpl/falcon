@@ -54,10 +54,10 @@ class TableCheckUser from Hook( "check_user" )
    func = function( uid, pwd )
       if uid in self.users
          data = self.users[uid]
-         if not data.derivedFrom( User )
+         /*if not data.derivedFrom( User )
             raise NestError( NestError.other, i"All the entities in the user configuration must be of class User" )
          end
-
+         */
          // eventually hash the incoming password
          if self.hash: pwd = self.hash(pwd)
 
