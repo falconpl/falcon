@@ -338,7 +338,7 @@ object Nest
    /*# Inline scripts to be put before body. */
    scripts = []
 
-   /*# Inline scripts to be put before body. */
+   /*# Inline CSS texts to be put before body. */
    styles = []
 
    /*# Title for the page.
@@ -387,7 +387,9 @@ object Nest
    */
    log_level = 0
 
-
+   //# If true, widget declared @b css properties are rendered in-line
+   genWidgetStyles = true
+   
    //===================================================================
    // Private properties
    //===================================================================
@@ -433,6 +435,9 @@ object Nest
 
    // widgets subscribed for rendering.
    _widgets = nil
+
+   // Styles to be applied by class
+   _classStyles = [=>]
    
    //===================================================================
    // Public interface
@@ -820,7 +825,40 @@ object Nest
          str += "<script type=\"text/javascript\">\n" + item + "\n</script>\n"
       end
 
-      // initializes the widget subsystem
+      // Eventually write the page-specific styles
+      if self._widgets and self.genWidgetStyles
+         self.logi( "Rendering widgets styles" )
+
+         // first to all the setup...
+         styles = ""
+         classCSS = [=>]
+         empty = [=>]
+         for item in self._widgets
+            // first, the CSS per item
+            self.logi( "Rendering styles for widget " + item.id )
+            
+            if item.idStyles
+               item_id =  "#" + strReplace( item.getFullID(), ".", "\\." )
+               styles += self._makeCSSforID( item_id, item.idStyles )
+            end
+
+            //then the CSS for the classes
+            classStyles = item.pickClassStyles( self._classStyles )            
+            if classStyles
+               id = item.CSSClassID()
+               if id notin classCSS
+                  styles += self._makeCSSforID( "." + id, classStyles )
+                  classCSS[id] = 1
+               end
+            end
+         end
+         if styles
+            str += "<style type=\"text/css\">\n" + styles + "</style>\n"
+         end
+
+         self._contentSlices += str
+      end
+      
       return str
    end
    
@@ -1210,6 +1248,37 @@ object Nest
    end
 
    //=============================================================
+   // Style functions
+   //=============================================================
+
+   function addClassStyle( wcls, style )
+      if not self.genWidgetStyles
+         self.logd( "Skipping style \"" + style.name
+            + "\" as widget style generation is not active" )
+         return
+      end
+
+      self.logd( "Adding style \"" + style.name + "\" on class " + wcls )
+      dict = self._classStyles
+      if wcls in dict
+         dict[wcls] += style
+      else
+         dict[wcls] = [style]
+      end
+   end
+
+   function getClassStyles( cls )
+      if cls in self._classStyles: return self._classStyles[cls]
+   end
+
+   function hasOneOfClassStyles( classes )
+      for cls in classes
+         if cls in self._classStyles: return true
+      end
+      return false
+   end
+   
+   //=============================================================
    // Logging functions
    //=============================================================
 
@@ -1309,48 +1378,6 @@ object Nest
 
       return srv
    end
-
-
-   // Service configuration step 2 -- Check online resources
-   /*
-   function _checkOnlineRes( srv )
-
-      if srv.extscripts or srv.stylesheets
-         if fileType( utils.reldir( cnf.homedir, cnf.site_res_dir ) ) == FileStat.DIR
-            onl_res_dir = cnf.site_res_dir
-         elif fileType( utils.reldir( cnf.homedir, cnf.site_srv_dir + "/" + srv.name + "/res" ) ) == FileStat.DIR
-            onl_res_dir = cnf.site_srv_dir + "/" + srv.name +"/res"
-         else
-            raise NestError( NestError.resloc, "", srv.name )
-         end
-      end
-
-      missing_res = []
-      for script in srv.extscripts
-         sf = onl_res_dir + "/" + script
-         if fileType( sf ) != FileStat.NORMAL
-            missing_res += script
-         else
-            self.extscripts += sf
-         end
-      end
-
-      for ss in srv.stylesheets
-         ssf = onl_res_dir + "/" + ss
-         if fileType( ssf ) != FileStat.NORMAL
-            missing_res += ss
-         else
-            self.stylesheets += ssf
-         end
-      end
-
-      if missing_res
-         raise NestError( NestError.misres, "",
-               srv.name + ": " + ", ".merge( missing_res ) )
-      end
-   end
-   */
-
 
    // Service configuration step 3.1 -- load service specific config
    function _configModule( srv, vars, dirs )
@@ -1541,8 +1568,8 @@ object Nest
          end
 
          str += "\n</script>\n"
+         
          self._contentSlices += str
-
       end
    end
 
@@ -1663,6 +1690,28 @@ object Nest
       end
    end
 
+   
+   function _makeCSSforID( id, styles )     
+      results = [=>]
+      for style in styles
+         full_id = style.mode ? (id + ":" + style.mode) : id
+         if full_id in results
+            results[full_id] += style.css
+         else
+            results[full_id] = style.css
+         end
+         
+      end
+
+      result = ""
+      for k,v in results
+         result += k + " {\n" + v + "}\n"
+      end
+      
+      return result
+   end
+
+   
 end
 
 // Re-export relevant Nest elements

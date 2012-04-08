@@ -27,6 +27,9 @@ class InputText( id, prompt ) from widget.Widget( id )
       if self.props == nil: self.props = [=>]
       self.props['name'] = nil   // will be filled at render
       self.props['type'] = "text"
+
+      // TODO: Remove this when we have automatic parentship
+      self.addClassInParentship( InputText )
    end
 end
 

@@ -3,6 +3,8 @@
    AJAX test site.
 */
 load nest
+load test_site_styles
+
 Nest.site_nest_dir = "../nest"
 
 // Uncomment to have debug infos.

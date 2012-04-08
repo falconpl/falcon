@@ -1,0 +1,41 @@
+import Style from nest.widgets.style as Style
+
+rl = Nest.resLink("grad_metal_1.png")
+   
+Style( "Input Background", nil, @'
+   background: url("$(rl)") 30px repeat-x;'
+).applyToClass( "InputText" )
+
+Style( "Base Highlight", nil, '
+      outline: none;
+      transition: all 0.25s ease-in-out;
+      -webkit-transition: all 0.25s ease-in-out;
+      -moz-transition: all 0.25s ease-in-out;
+      border-radius:3px;
+      -webkit-border-radius:3px;
+      -moz-border-radius:3px;'
+).applyToClass( "InputText" ).applyToClass( "HashInput" )
+
+Style( "Blue Highlight", nil, '
+      border:1px solid rgba(30,30,160, 0.3);'
+).applyToClass( "InputText" ).applyToClass( "HashInput" )
+
+Style( "Blue Highlight focus", 'focus', '
+      box-shadow: 0 0 5px rgba(0, 0, 255, 1);
+      -webkit-box-shadow: 0 0 5px rgba(0, 0, 255, 1);
+      -moz-box-shadow: 0 0 5px rgba(0, 0, 255, 1);
+      border:1px solid rgba(0,0,255, 0.8);'
+).applyToClass( "InputText" ).applyToClass( "HashInput" )
+
+
+Style( "Red Highlight", nil, '
+      border:1px solid rgba(160,30,30, 0.3);'
+).applyToClass( "Password" )
+
+Style( "Red Highlight focus", 'focus', '
+      box-shadow: 0 0 5px rgba(255, 0, 0, 1);
+      -webkit-box-shadow: 0 0 5px rgba(255, 0, 0, 1);
+      -moz-box-shadow: 0 0 5px rgba(255, 0, 0, 1);
+      border:1px solid rgba(255,0,0, 0.8);'
+).applyToClass( "Password" )
+
