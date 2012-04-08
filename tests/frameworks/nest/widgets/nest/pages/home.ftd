@@ -16,4 +16,5 @@
 <li><a href="<?=Nest.pageLink('wd-tableform')?>">TableForm</a></li>
 <li><a href="<?=Nest.pageLink('wd-table')?>">Table</a></li>
 <li><a href="<?=Nest.pageLink('wd-menu')?>">Menu</a></li>
+<li><a href="<?=Nest.pageLink('wd-loginmask')?>">Login mask</a></li>
 </ul>

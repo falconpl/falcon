@@ -111,6 +111,12 @@ if(!Nest) { Nest = {}; }
       if( element ) { element[obj.property] = obj.value; }
    }
 
+   // Handler for set message
+   function handler_set_style( obj ) {
+      var element = document.getElementById( obj.id );
+      if( element ) { element.style[obj.property] = obj.value; }
+   }
+   
    // Handler for invoke message
    function handler_invoke( obj ) {
       var element = document.getElementById( obj.id );
@@ -178,7 +184,7 @@ if(!Nest) { Nest = {}; }
    // Method 'message' -- sends a local message to listeners in the page.
    if (typeof Nest.message !== 'function') {
       Nest.message = function ( wid, msg, value ) {
-         var listener = Nest.listeners[wid];
+         var listener = Nest.listeners[wid.id];
          if( listener ) {
             for (var i = 0; i < listener.length; i++) {
                var func = listener[i].func;
@@ -292,6 +298,7 @@ if(!Nest) { Nest = {}; }
    if (! Nest.messageHandlers ) {
       Nest.messageHandlers = {
          'set': { object: null, method: handler_set},
+         'set_style': { object: null, method: handler_set_style},
          'invoke': { object: null, method: handler_invoke}
       }
    }

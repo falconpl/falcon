@@ -855,8 +855,6 @@ object Nest
          if styles
             str += "<style type=\"text/css\">\n" + styles + "</style>\n"
          end
-
-         self._contentSlices += str
       end
       
       return str

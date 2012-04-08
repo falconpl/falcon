@@ -64,7 +64,7 @@ class ActiveInput( id, prompt ) from InputText( id, prompt )
          end
          
          // This is the message for the listener widgets.
-         checkFunc += self.makeMessage( 'change', 'this.value' ) + "\n"
+         checkFunc += self.jsEmit( 'change', 'this.value' ) + "\n"
       end
 
       if self.checkAjax
@@ -85,7 +85,7 @@ class ActiveInput( id, prompt ) from InputText( id, prompt )
          self.jsMethods[ "onActiveChange" ] = "
             function() {
                if( this.timeoutVar ) { clearTimeout( this.timeoutVar ); }
-               this.timeoutVar = setTimeout('Nest.i(\"' +this.id + '\").activeCheck()', " +
+               this.timeoutVar = setTimeout('this.activeCheck()', " +
                self.typeTimeout + ");}"
       else
          self.jsMethods[ "onActiveChange" ] = "

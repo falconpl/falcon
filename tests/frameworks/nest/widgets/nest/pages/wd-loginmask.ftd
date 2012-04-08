@@ -1,0 +1,8 @@
+<h2>Nest Widget test: LoginMask</h2>
+<?= Nest.widget( "LoginMask" )("mask" ).render() ?>
+
+<p>Source code:
+<pre>
+Nest.widget( "LoginMask" )("mask", Nest.pageLink("recover"), Nest.pageLink("login") ).render())
+</pre>
+</p>

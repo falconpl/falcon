@@ -15,8 +15,8 @@ end
 
 class HashButton from wid.Widget( "button" )
    tag = "input"
-   props = ["type"=>"button", "value"=>"Calc SHA" ]
-   ajaxReqs = ["onClick"=>wid.AJAXRequest( ["../area/value"] ) ]
+   props = ["type"=>"button", "value"=>"Calc SHA", "onclick" => "this.excite()" ]
+   ajaxReqs = ["excite"=>wid.AJAXRequest( ["../area/value"] ) ]
    // a custom message handler
    ajaxMessages = [ 'buttonChange' => "function(obj) { this.value = obj.value; }" ]
 

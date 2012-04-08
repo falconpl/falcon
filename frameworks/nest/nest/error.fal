@@ -44,7 +44,8 @@ class NestError( code, desc, extra ) from Error( code, desc, extra )
    unpack_key = 10024
    pcheck = 10025
    res_notfound = 10026
-   jscomponent_notfound = 10017
+   jscomponent_notfound = 10027
+   element_not_in_skin = 10028
    other = 10100
    
    _desc = [ 
@@ -74,7 +75,8 @@ class NestError( code, desc, extra ) from Error( code, desc, extra )
       10024 => i"Key expression doesn't match key field specs in this entity",
       10025 => i"Optional parameter consistency check falied",
       10026 => i"Resource not found",
-      10027 => i"Requested JS component not found"
+      10027 => i"Requested JS component not found",
+      10028 => i"Element not found in skin"
       ]
 
    init
