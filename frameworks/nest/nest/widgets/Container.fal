@@ -43,6 +43,11 @@ class Container( id, tagtype, tag_beg, tag_sep, tag_end ) from widget.Widget( id
    value = nil
    checkName = "checked"
 
+   init
+      // TODO: Remove this when we have automatic parentship
+      self.addClassInParentship( Container )
+   end
+   
    function renderContent()
       res = ""
       for child in self.children
@@ -51,6 +56,7 @@ class Container( id, tagtype, tag_beg, tag_sep, tag_end ) from widget.Widget( id
          formiddle: res += self.tag_sep
          forlast: res += self.tag_end
       end
+
       return res
    end
 

@@ -43,6 +43,9 @@ class CheckBoxSet( id, choices, tagtype, tag_beg, tag_sep, tag_end ) from \
 
    init
       self.autoAddChildren( choices )
+
+      // TODO: Remove this when we have automatic parentship
+      self.addClassInParentship( CheckBoxSet )
    end
 
 

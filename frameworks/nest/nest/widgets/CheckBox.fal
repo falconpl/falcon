@@ -42,6 +42,9 @@ class CheckBox( id, value, text ) from widget.Widget( id )
       self.props['value'] = value
       self.props['name'] = nil   // will be filled at render.
       self.props['type'] = 'checkbox'
+
+      // TODO: Remove this when we have automatic parentship
+      self.addClassInParentship( CheckBox )
    end
 
    function onRender()

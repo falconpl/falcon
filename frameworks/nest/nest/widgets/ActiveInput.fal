@@ -48,6 +48,9 @@ class ActiveInput( id, prompt ) from InputText( id, prompt )
          "onchange" => "this.onActiveChange();",
          "onkeyup" => "this.onActiveChange();"
          ]
+
+      // TODO: Remove this when we have automatic parentship
+      self.addClassInParentship( ActiveInput )
    end
 
    function onSetup()

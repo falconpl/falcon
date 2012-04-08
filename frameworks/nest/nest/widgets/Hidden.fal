@@ -31,5 +31,8 @@ class Hidden( id, value ) from widget.Widget( id )
       self.props['name'] = nil   // will be filled at render
       self.props['type'] = "hidden"
       self.props['value'] = value
+      
+      // TODO: Remove this when we have automatic parentship
+      self.addClassInParentship( Hidden )      
    end
 end

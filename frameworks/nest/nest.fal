@@ -843,7 +843,7 @@ object Nest
             end
 
             //then the CSS for the classes
-            classStyles = item.pickClassStyles( self._classStyles )            
+            classStyles = item.pickClassStyles( self._classStyles )
             if classStyles
                id = item.CSSClassID()
                if id notin classCSS

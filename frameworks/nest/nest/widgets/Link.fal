@@ -33,6 +33,9 @@ class Link( id, href, content, target ) from Widget( id )
       if target: settings["target" ] = target
       
       self.set( settings )
+
+      // TODO: Remove this when we have automatic parentship
+      self.addClassInParentship( Link )   
    end
 
    function renderContent()

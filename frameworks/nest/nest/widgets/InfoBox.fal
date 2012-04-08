@@ -78,6 +78,9 @@ class _InfoBoxText(id, title, content) from widget.Widget( id )
             padding:0px;
             margin:1px;
             "
+
+      // TODO: Remove this when we have automatic parentship
+      self.addClassInParentship( _InfoBoxText )   
    end
 
    function renderContent()
@@ -111,6 +114,9 @@ class InfoBox( id, title, content, icon ) from widget.Widget( id )
       if self.props == nil: self.props = [=>]
       self.props["src"] = self.icon
       self.props["border"] = "0"
+
+      // TODO: Remove this when we have automatic parentship
+      self.addClassInParentship( InfoBox )   
    end
 
    function onSetup()

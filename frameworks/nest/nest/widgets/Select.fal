@@ -51,6 +51,9 @@ class Select( id, options, prompt, multisize ) from widget.Widget( id )
       end
 
       self.autoAddChildren( options )
+
+      // TODO: Remove this when we have automatic parentship
+      self.addClassInParentship( Select )
    end
 
    function makeAutoChild( value, text, checked )

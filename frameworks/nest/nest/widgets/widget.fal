@@ -711,7 +711,7 @@ class Widget( id )
       for item in self._parentship
          if item in classStyleDict
             if not result
-               result = classStyleDict[item]
+               result = [] + classStyleDict[item]
             else
                result += classStyleDict[item]
             end
@@ -719,7 +719,7 @@ class Widget( id )
       end
 
       if result
-         if self.classStyles: result += self.v
+         if self.classStyles: result += self.classStyles
       elif self.classStyles
          result = self.classStyles
       end

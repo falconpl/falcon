@@ -24,6 +24,8 @@ class Text( id, deftext ) from widget.Widget( id )
    
    init
       if self.props == nil: self.props = [=>]
+      // TODO: Remove this when we have automatic parentship
+      self.addClassInParentship( Text )
    end
 
    function renderContent()

@@ -38,6 +38,9 @@ class Form( id, action, method ) from Widget( id )
       self.props["method"] = method ? method : "POST"
       self.props["action"] = action
       self.props["accept-charset"] = "UTF-8"
+      
+      // TODO: Remove this when we have automatic parentship
+      self.addClassInParentship( Form )
    end
 
    /*# Sets the "accept-charset" property.

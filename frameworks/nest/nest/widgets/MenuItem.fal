@@ -53,6 +53,9 @@ class MenuItem( id, text, icon, submenu, submenu_ind, minAuthLevel ) from Widget
       self.addChild( self.text )
       self.addChild( self.submenu_ind )
       if submenu: self.addChild( submenu )
+
+      // TODO: Remove this when we have automatic parentship
+      self.addClassInParentship( MenuItem )  
    end
 
    function renderChild( child )

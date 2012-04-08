@@ -37,6 +37,11 @@ class PairCheck( id, first_widget, second_widget ) from widget.Widget( id )
       second_widget => "function(  wid, msg, value ) { this.checkSecond(value); }"
    ]
 
+   init
+      // TODO: Remove this when we have automatic parentship
+      self.addClassInParentship( PairCheck ) 
+   end
+   
    function onRender()
       // we render the method here to be able to change the text after init.
       self.jsMethods["checkPair"] = @'

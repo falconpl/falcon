@@ -30,6 +30,11 @@ class ImgAvail( id, name_wid ) from Image( id, "", true )
 
    name_wid = name_wid
 
+   init
+      // TODO: Remove this when we have automatic parentship
+      self.addClassInParentship( ImgAvail )
+   end
+
    function onRender()
       self.addStyle( "vertical-align:middle" )
 
@@ -91,6 +96,11 @@ class TextAvail( id, name_wid ) from widget.Widget( id )
    working_prompt = "Checking..."
    first_prompt = ""
    name_wid = name_wid
+
+   init
+      // TODO: Remove this when we have automatic parentship
+      self.addClassInParentship( TextAvail )
+   end
 
    function onRender()
 
@@ -155,6 +165,9 @@ class AvailWidget( id, name_wid ) from widget.Widget( id )
    init
       self.addChild( self.img_wid )
       self.addChild( self.status_wid )
+
+      // TODO: Remove this when we have automatic parentship
+      self.addClassInParentship( AvailWidget )
    end
 
    function renderContent( framing )
@@ -190,6 +203,9 @@ class NameWithAvail( id, prompt ) from InputText( id, prompt )
       self.addChild( self.name_checked )
       
       self.name_wid.ajaxFilter = "this.min_size > this.value.length"
+
+      // TODO: Remove this when we have automatic parentship
+      self.addClassInParentship( NameWithAvail ) 
    end
 
    //#default rendering, not very complex.

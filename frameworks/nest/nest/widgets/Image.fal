@@ -32,6 +32,9 @@ class Image( id, src, status ) from widget.Widget( id )
       else
          self.props['style'] = ""
       end
+
+      // TODO: Remove this when we have automatic parentship
+      self.addClassInParentship( Image )   
    end
    
 end

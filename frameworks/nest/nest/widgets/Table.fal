@@ -528,6 +528,9 @@ class Table( id, itemsPerPage, itemCount, firstItem, orderColumn ) from widget.W
 
       self.makeColumns()
       self.setDataView( int(firstItem / itemsPerPage) + 1 )
+
+      // TODO: Remove this when we have automatic parentship
+      self.addClassInParentship( Table )
    end
 
 

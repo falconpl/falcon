@@ -78,6 +78,9 @@ class DateSelector( id, yearRange, tagtype, tag_beg, tag_sep, tag_end ) from \
       end
 
       self.addChild( self.years )
+
+      // TODO: Remove this when we have automatic parentship
+      self.addClassInParentship( DateSelector )
    end
 
    /*# Override to change the name of the months. */

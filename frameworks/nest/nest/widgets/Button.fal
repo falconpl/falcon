@@ -38,6 +38,9 @@ class Button( id, content, type ) from widget.Widget( id )
       if self.props == nil: self.props = [=>]
       self.props['name'] = nil   // will be filled at render
       self.props['type'] = type ? type : "button"
+
+      // TODO: Remove this when we have automatic parentship
+      self.addClassInParentship( Button )
    end
 
    function renderContent()
