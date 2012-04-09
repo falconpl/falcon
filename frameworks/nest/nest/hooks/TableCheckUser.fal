@@ -20,11 +20,13 @@ import Hook from nest.hook as Hook
 import NestError from nest.error as NestError
 
 /*#
+   @param auth_user authenticated user
    @param password the password to be checked
    @param auth_level Nest authorization level (0 highest, 100 lowest)
    @param auth_data Optional application-specific data associated with this user
 */
-class User( password, auth_level, auth_data )
+class User( auth_user, password, auth_level, auth_data )
+   auth_user = auth_user
    password = password
    auth_level = auth_level
    auth_data = auth_data
@@ -62,13 +64,13 @@ class TableCheckUser from Hook( "check_user" )
          if self.hash: pwd = self.hash(pwd)
 
          if pwd == data.password
-            return ^+ [ data.auth_level, data.auth_data]
+            return ^+ [ data.auth_user, data.auth_level, data.auth_data]
          end
       else
 
          if self.dflt
             // ok, we have a default, but don't consume
-            return [ self.dflt.auth_level, self.dflt.auth_data]
+            return [ self.dflt.auth_user, self.dflt.auth_level, self.dflt.auth_data]
          end
       end
 

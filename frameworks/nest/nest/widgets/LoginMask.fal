@@ -166,14 +166,15 @@ class LoginMask( id, formAction ) from widget.Widget( id )
    end
 
 
-   //# override to decie if we're in busienss or not
-   function checkLogin()
+   //# override to decide if we're in busienss or not
+   function checkLogin( username, password )
       // Check login should set the following variables
-      // auth_user = Nest.ambient( "auth_user" )
-      // auth_level = Nest.ambient( "auth_level" )
-      // auth_data = Nest.ambient( "auth_data" )
-   
-      return nil
+      auth = Nest.emit( "check_user", username, password )
+      if auth
+         Nest.loggedIn( auth[0], auth[1], auth[2], true )
+         return true
+      end
+      return false
    end
    
 end

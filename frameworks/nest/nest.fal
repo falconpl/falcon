@@ -16,7 +16,7 @@
    See LICENSE file for licensing details.
 */
 
-const _version = "1.1"
+const _version = "1.2"
 directive lang = "en_US"
 
 import NestError from self.error as NestError
@@ -252,6 +252,12 @@ object Nest
    /*# For now, use the max authlevel by default. */
    auth_level = AuthLevel.ADMIN
 
+   /*# User that has logged in */
+   auth_user = nil
+   
+   /*# Arbitrary data for logged in entity */
+   auth_data = nil
+   
    /*# Function called back after routing and before routed page execution.
 
       This is the ideal place to put code that must be always executed.
@@ -510,6 +516,15 @@ object Nest
       else
          self.selector_ajax_widget( wid )
       end
+
+      // 5. save session data
+      try
+         self._saveSession()
+      catch Error in e
+         self._manageError(e)
+         if self.debug: self._displayDebug()
+         return
+      end
    end
 
    /*# AJAX function selector.
@@ -647,6 +662,35 @@ object Nest
       dm.configure( vars )
       self._dms[ name ] = dm
       return dm
+   end
+
+   /*# Declare a user.
+      @param uid An identifier for the logged in user.
+      @param level An authentication level.
+      @param data Extra data that is to be associated to the user.
+      @optparam save If true, automatically save the parameters to the session.
+      
+      This method advertises the fact that the remote browsing entity
+      has been recognized as a user.
+
+      If the @b param save is true, the auth_user, auth_level and auth_data are
+      automatically stored in the session data (and then, automatically retrieved
+      when the session is re-accessed). Notice that doing so might cause secuirity
+      breaches or be plainly impossible if the auth_data variable is containing
+      data that cannot be stored to the session. In general, it's better to
+      re-authorize the remote user on the base of partially negotiated session 
+      information.
+   */
+
+   function loggedIn( uid, level, data, save )
+      self.auth_user = uid
+      self.auth_level = level
+      self.auth_data = data
+      if save
+         self.sessionData["auth_user"] = uid
+         self.sessionData["auth_level"] = level
+         self.sessionData["auth_data"] = data
+      end         
    end
 
    /*# Invoke an ambient variable.
@@ -981,7 +1025,7 @@ object Nest
       Nest.logi( "Registering hook on " + hook.name )
       if hook.name in self._hooks
          if before
-            self._hooks[0:0] = hook
+            self._hooks[hook.name][0:0] = hook
          else
             self._hooks[hook.name] += hook
          end
@@ -1026,6 +1070,34 @@ object Nest
       return self.addHook( hook, before )
    end
 
+   function loadHookForEmit( emit_name, vars, before )
+      Nest.logi( "Loading automatic hooks for emit " + emit_name )
+
+      nestDir = self.nest_dir
+      siteNestDir = self.site_nest_dir
+      
+      hook = self._instanceModule( "Hook", name, nil, nil,
+               // using a function instead of an array prevents array generation if not necessary
+               {=> [ nestDir + "/" + hooks_dir + "/" + emit_name,
+                      siteNestDir + "/" + hooks_dir + "/" + emit_name ] })
+
+      dirs = [ self.site_nest_dir + "/" + hooks_dir  + "/" + emit_name,
+               self.nest_dir + "/" + hooks_dir + "/" + emit_name ]
+
+      self.logd( "Hook \"" + name + "\" searching config in " + dirs.describe() )
+      cf1_data = self._loadConfig( dirs, "config" )
+      self.logd( "Config variablers for " + name + ": " + vars.describe() )
+
+      if vars
+         if cf1_data: cf1_data += vars
+      end
+
+      if cf1_data: hook.configure( cf1_data )
+      Nest.logi( "Hook " + name + " of type " + hook.name + " being registered." )
+      // as the first parameter is now a hook instance, everything will go fine.
+      return self.addHook( hook, before )
+   end
+
     /*# Calls a hook.
       @param The name of a previously registered hook
       @optparam ...
@@ -1048,6 +1120,7 @@ object Nest
          return ^- ret
       else
          self.logw( "Can't find hook " + name )
+         // try to load automatic hook
       end
    end
 
@@ -1311,6 +1384,7 @@ object Nest
          self.logd("Calling onStartup function" )
          self.onStartup()
       end
+      self.logd("Calling onStartup function" )
    end
 
 
@@ -1482,9 +1556,6 @@ object Nest
 
          // finalize services
          self._finalizeServices()
-
-         // save session data
-         self._saveSession()
 
          // generate the (last) content slice
          self._contentSlices += self._pageStream.closeToString()
