@@ -1,8 +1,66 @@
 <h2>Nest Widget test: LoginMask</h2>
-<?= Nest.widget( "LoginMask" )("mask" ).render() ?>
+
+<p>The page is composed of a "LoginMask" and a simple "Text" that receives
+a message from the mask containing the data of the logged in users.</p>
+
+<p>This example uses a hook function on "check_user", which is dynamically
+loaded when the login mask needs to know if the user/password pair is valid.
+Alternatively, it is possible to sub-class the LoginMask class. In both cases,
+the server-side part is repsonsible to record the login status in the
+Nest session variables.</p>
+
+<p>The following mask accepts the users "user", "staff" and "admin", all with password "1234"</p>
+
+<?
+   import Link from nest.widgets.Link as Link
+   import Text from nest.widgets.Text as Text
+   
+   wid = Nest.widget( "LoginMask" )("mask" )
+   wid.recover = Link( "recover", "#", "Forgot my password" )
+
+   ok = Text( "onLoginDone", "" )
+   ok.props = ["style" => "display:none"]
+   ok.jsListeners = [ wid => "
+         function( w, m, d ){
+            if ( d == null )  { this.style.display = 'none'; }
+            else {
+               this.style.display = '';
+               this.innerHTML = 'Logged in as ' + d.name +
+                  ' \"' + d.data + '\" (level ' + d.level + ')';
+            }
+         }"
+      ]
+   
+   > wid.render()
+?>
+
+<div>
+   <p>Login status: <b><?= ok.render() ?></b></p>
+</div>
+
+<hr>
 
 <p>Source code:
 <pre>
-Nest.widget( "LoginMask" )("mask", Nest.pageLink("recover"), Nest.pageLink("login") ).render())
+   import Link from nest.widgets.Link as Link
+   import Text from nest.widgets.Text as Text
+
+   wid = Nest.widget( "LoginMask" )("mask" )
+   wid.recover = Link( "recover", "#", "Forgot my password" )
+
+   ok = Text( "onLoginDone", "" )
+   ok.props = ["style" => "display:none"]
+   ok.jsListeners = [ wid => "
+         function( w, m, d ){
+            if ( d == null )  { this.style.display = 'none'; }
+            else {
+               this.style.display = '';
+               this.innerHTML = 'Logged in as ' + d.name +
+                  ' \"' + d.data + '\" (level ' + d.level + ')';
+            }
+         }"
+      ]
+
+   > wid.render()
 </pre>
 </p>

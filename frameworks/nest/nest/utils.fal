@@ -19,8 +19,9 @@
 
 function findFile( dir, rname, exts )
    // search under dir for the file or the file + some of the exts.
-   fname = dir + "/" + rname
-   fpath = Path(fname)
+   fpath = Path()
+   fpath.fulloc = dir
+   fpath.file = rname
 
    for ext in exts 
       fpath.extension = ext
@@ -30,6 +31,7 @@ function findFile( dir, rname, exts )
    end
    
    // no luck with the extension. Have we the file as-is?
+   fname = dir + "/" + rname
    if fileType( fname ) == FileStat.NORMAL
       return fname
    end

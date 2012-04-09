@@ -1,0 +1,16 @@
+
+
+class check_user
+   function invoke( userid, password, remember )
+      if password == "1234"
+         switch userid
+            case 'user': res = [1, Nest.AL.USER, "A User"]
+            case 'staff': res = [2, Nest.AL.STAFF, "A Staff member"]
+            case 'admin': res = [3, Nest.AL.ADMIN, "An admin"]
+         end
+      end
+
+      if res: Nest.loggedIn( res[0], res[1], res[2], true )
+      return res
+   end
+end

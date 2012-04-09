@@ -231,7 +231,42 @@
 
 @section local_page_messages Local page widget messaging
 
-   Widgets rendered on the remote browser page can communicate through
-   a method called
-   
+   Widgets rendered on the remote browser page can communicate by listening messages
+   generated the Javascript side method "Nest.message". The method takes three
+   parameters: the object generating the message, a logical name or id for the message
+   and an arbitrary parameter that can be any Javascript object.
+
+   To listen for all the messages that a Nest widget can emit, the function Nest.listen
+   must be invoked; this method is structured so that it can be invoked in any part
+   of the javascript source, making it easier to create listeners for widgets still
+   not completely created. The method takes three parameters: the emitter object,
+   the id of the listener object and a function receiving three parameters, which
+   is called back when Nest.message is invoked.
+
+   A listener callback can be created automatically via the jsListeners Falcon-side
+   widget member:
+
+   @code
+   x = Button( ... )
+   y = Button( ... )
+
+   class z from Widget(...)
+      jsListeners = [
+         x => "function( emitter, message_id, data ) {....}",  // 1
+         y => "function( emitter, message_id, data ) {....}"   // 2
+      ]
+   end
+         
+   @endcode
+
+   The remote "z" widget will receive a method call each time x or y will emit a
+   message by calling Nest.message. The function 1 would be called after x,
+   and 2 after y.
+
+   @note It is extremely difficult to know the final ID and entity of a widget
+   after all the renderings are completed (also because the widget being created
+   might be parented after its full creation into something else); as such,
+   invoking methods from other widgets directly from a server side Nest widget
+   is impractical. This indirect mechanism allows to create proper callback
+   methods after all the structure of the widgets in the page is setup.
 */

@@ -29,7 +29,7 @@ import Image from nest.widgets.Image as Image
 
 class LoginBtn from Button( "login" )
    ajaxReqs = [
-      "sendLogin"=> widget.AJAXRequest( ["../user-id/value", "../pwd/value"] )
+      "sendLogin"=> widget.AJAXRequest( ["../user-id/value", "../pwd/value", "../rememberMe/checked"] )
    ]
 
    jsMethods = [
@@ -44,12 +44,15 @@ class LoginBtn from Button( "login" )
    end
 end
 
+
+/*# Manages a full login process.
+*/
 class LoginMask( id, formAction ) from widget.Widget( id )
    formAction = formAction
 
    jsMethods = [
-      "onLoginFailed" => "function( params ) { alert( 'Login failed' ); }",
-      "onLoginSuccess" => "function( params ) { alert( 'Login success' ); }"      
+      "onLoginFailed" => "function( params ) { Nest.message( this, 'login', null ); }",
+      "onLoginSuccess" => "function( params ) { Nest.message( this, 'login', params ); }"
    ]
    
    
@@ -63,7 +66,7 @@ class LoginMask( id, formAction ) from widget.Widget( id )
    pwd = Password( "pwd" )   
    rememberMe = CheckBox( "rememberMe" )
    loginBtn = formAction ? Submit("login", "") : LoginBtn()
-   accessStatus = Text( "status", "" )
+   accessStatus = Text( "status", "Login failed!" )
    loginBusy = Image( "busy-ind", Nest.resLink("ajax-loader.gif"), false )
 
    recover = nil // Link( "recover", recoverLink, "Forgot my password" )
@@ -101,7 +104,16 @@ class LoginMask( id, formAction ) from widget.Widget( id )
       self.props = ["style"=>"display:inline-block"]
       self.loginBusy.props["width"] = 16
       self.loginBusy.props["height"] = 16
-      
+      self.accessStatus.set( ["style" => "display:none"] )
+      self.accessStatus.jsListeners = [
+         self => "
+            function( obj, msg, value ) {
+               if( msg == 'login' ) {
+                  this.style.display = value == null ? '' : 'none';
+               }
+            }"
+         ]
+
       // if we're not using a form convention, we're ajax
       if not formAction
          self.isAJAXHost = true
@@ -155,24 +167,37 @@ class LoginMask( id, formAction ) from widget.Widget( id )
       if params["id"].endsWith( ".login" )
          result = self.checkLogin(
             params["infos"]["user-id.value"],
-            params["infos"]["pwd.value"] )
-
+            params["infos"]["pwd.value"],
+            params["infos"]["rememberMe.checked"]
+            )
+            
+         if result
+            res = [
+               "uid" => result[0],
+               "level" => result[1],
+               "data" => result[2],
+               "name" => params["infos"]["user-id.value"]
+            ]
+         end
+         
          return [
             self.loginBusy.msgSetStyle( "display", "none" ),
-            self.msgInvoke( result ? "onLoginSuccess" : "onLoginFailed", ['uid'=>result] )
+            self.msgInvoke( result ? "onLoginSuccess" : "onLoginFailed", res )
             ]
       end
       return []
    end
 
 
-   //# override to decide if we're in busienss or not
-   function checkLogin( username, password )
+   /*# Override to decide if we're in busienss or not.
+
+      The default implementation generates a hook call for "check_user".      
+   */
+   function checkLogin( username, password, rememberMe )
       // Check login should set the following variables
-      auth = Nest.emit( "check_user", username, password )
-      if auth
-         Nest.loggedIn( auth[0], auth[1], auth[2], true )
-         return true
+      auth = Nest.emit( "check_user", username, password, rememberMe )
+      if auth.len() == 3         
+         return auth
       end
       return false
    end

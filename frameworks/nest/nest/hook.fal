@@ -17,30 +17,12 @@
 */
 
 /*# Base class for function hooks.
-
    This class represents the minimal structure of function hooks.
 */
    
-class Hook( funcname, func )
-   name = funcname
-   func = func
-   
-   //# Location of this module; set by Nest on load, if this hook is loaded.
-   homedir = nil
-   
-   config = nil
-
-   /*# Hook to receive the configuration.
-      @param configData A dictionary of key->values from configuration.
-
-      The default behavior of the base class is that to store the incoming data
-      in @a Hook.config.
-   */
-   function configure( configData )
-      self.config = configData
+class Hook()
+   function invoke( /*...*/ )
    end
-
-   function __call(): return passvp(self.func)
 end
 
 export

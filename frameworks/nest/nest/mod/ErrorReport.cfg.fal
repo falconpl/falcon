@@ -1,0 +1,18 @@
+
+skin = '
+<html>
+<head>
+   <title>Nest framework error</title>
+</head>
+<body>
+<h1>Nest Framework error</h1>
+<p>The following error occoured while the Nest Framework was composing the page.</p>
+<pre>
+   $(error)
+</pre>
+
+<p>The error happened while the following context was being formed:</p>
+<textarea cols="80" rows="16">$(context)</textarea>
+</body>
+</html>
+'

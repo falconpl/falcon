@@ -6,7 +6,6 @@ load nest
 load test_site_styles
 
 Nest.site_nest_dir = "../nest"
-Nest.addHook( "TableCheckUser" )
 
 // Uncomment to have debug infos.
 //Nest.debug = true

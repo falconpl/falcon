@@ -1,0 +1,7 @@
+import User from nest.hooks.TableCheckUser as User
+
+users = [
+   "user" => User( 1, "1234", Nest.AL.USER, "Simple User" ),
+   "staff" => User( 2, "1234", Nest.AL.STAFF, "Staff User" ),
+   "user" => User( 3, "1234", Nest.AL.ADMIN, "Admin User" )
+]

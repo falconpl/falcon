@@ -1,0 +1,50 @@
+/*
+   FALCON - The Falcon Programming Language
+
+   Nest - Falcon web applcation engine
+
+   FILE: ErrorReport
+
+   Error report module.
+
+   This module is always loaded and rendered as-is in case of errors.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Mon, 09 Apr 2012 15:32:14 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2012: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+class ErrorReport( error, context )
+   //# The Falcon error that happened
+   error = error
+   
+   //# Text of the page up to the moment where the error was raised
+   context = context
+
+   skin = ""
+
+   init
+      Nest.loadConfig( self )
+   end
+
+   function render()
+      error = self.error.toString().replace("<","&lt;").replace(">", "&gt;")
+      if self.context
+         context = self.context.replace("<","&lt;").replace(">", "&gt;")
+      else
+         context = ""
+      end
+
+      return @ self.skin
+   end
+
+
+   function onConfig( cfg )
+      self.skin = cfg.skin
+   end
+end
+
