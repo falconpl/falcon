@@ -6,6 +6,21 @@ if(!Nest) { Nest = {}; }
 (function () {
    "use strict";
 
+if (!Array.prototype.indexOf) {
+    Array.prototype.indexOf = function (obj, fromIndex) {
+        if (fromIndex == null) {
+            fromIndex = 0;
+        } else if (fromIndex < 0) {
+            fromIndex = Math.max(0, this.length + fromIndex);
+        }
+        for (var i = fromIndex, j = this.length; i < j; i++) {
+            if (this[i] === obj)
+                return i;
+        }
+        return -1;
+    };
+}
+
    //============================================================================ Private part
    function ajax( url, data, callback ) {
       var http = window.XMLHttpRequest ? new XMLHttpRequest() : new ActiveXObject("Microsoft.XMLHTTP");
@@ -132,7 +147,14 @@ if(!Nest) { Nest = {}; }
    // Handler for set message
    function handler_set( obj ) {
       var element = document.getElementById( obj.id );
-      if( element ) { element[obj.property] = obj.value; }
+      if( element ) {
+         if( obj.property == 'value' && element.setValue ) {
+            element.setValue( obj.value )
+         }
+         else {
+            element[obj.property] = obj.value;
+         }
+      }
    }
 
    // Handler for set message

@@ -66,11 +66,15 @@ class Select( id, options, prompt, multisize ) from widget.Widget( id )
    function onRender()
       if "multiple" in self.props
          checks = "var result = Array(); var item;"
+         sets = "var item;"
          for child in self.children
             checks += " item=Nest.i('" + child.getFullID() +
                      "'); if(item.selected) result.push(item.value);"
+            sets += " item=Nest.i('" + child.getFullID() +
+                     "'); item.selected = value.indexOf(item.value) >= 0;"
          end
          self.jsMethods[ "getValue" ] = "function(){" + checks + "; return result;}"
+         self.jsMethods[ "setValue" ] = "function(value){" + sets + ";}"
       end
    end
    
