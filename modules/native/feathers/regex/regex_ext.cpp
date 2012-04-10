@@ -19,9 +19,14 @@
 
 #include <falcon/vm.h>
 #include <falcon/string.h>
+#include <falcon/range.h>
 #include <falcon/memory.h>
 #include <falcon/fassert.h>
 #include <falcon/autocstring.h>
+#include <falcon/engine.h>
+#include <falcon/itemarray.h>
+
+#include <falcon/errors/paramerror.h>
 
 #include <string.h>
 
@@ -111,13 +116,37 @@ namespace Ext {
    required), the constructor will raise an error of class @a RegexError.
 */
 
-FALCON_FUNC Regex_init( ::Falcon::VMachine *vm )
+ClassRegex::ClassRegex() :
+ClassUser("Regex"),
+FALCON_INIT_METHOD(study),
+FALCON_INIT_METHOD(match),
+FALCON_INIT_METHOD(grab),
+FALCON_INIT_METHOD(split),
+FALCON_INIT_METHOD(find),
+FALCON_INIT_METHOD(findAll),
+FALCON_INIT_METHOD(findAllOverlapped),
+FALCON_INIT_METHOD(replace),
+FALCON_INIT_METHOD(replaceAll),
+FALCON_INIT_METHOD(subst),
+FALCON_INIT_METHOD(capturedCount),
+FALCON_INIT_METHOD(captured),
+FALCON_INIT_METHOD(compare),
+FALCON_INIT_METHOD(version)
 {
-   CoreObject *self = vm->self().asObject();
-   Item *param = vm->param(0);
-   Item *options = vm->param(1);
+}
 
-   if( param == 0 || ! param->isString() || ( options != 0 && ! options->isString() ) )
+ClassRegex::~ClassRegex()
+{
+}
+
+bool ClassRegex::op_init( VMContext* ctx, void* instance, int32 pcount ) const
+{
+   RegexCarrier *data = (RegexCarrier *)instance;
+   Item *params = ctx->opcodeParams(pcount);
+   Item* param = &params[0];
+   Item* options = pcount > 1 ? &params[1] : 0;
+
+   if( pcount < 1 || ! param->isString() || ( pcount > 1 && ! options->isString() ) )
    {
       throw new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
          extra( "S, [S]" ) );
@@ -144,7 +173,7 @@ FALCON_FUNC Regex_init( ::Falcon::VMachine *vm )
             case 'S': bStudy = true; break;
             default:
                throw new ParamError( ErrorParam( e_param_range, __LINE__ ).
-                  extra( FAL_STR( re_msg_optunknown ) ) );
+                  extra( ""/*FAL_STR( re_msg_optunknown )*/ ) );
          }
       }
    }
@@ -168,13 +197,12 @@ FALCON_FUNC Regex_init( ::Falcon::VMachine *vm )
    if ( pattern == 0 )
    {
       throw new RegexError( ErrorParam( FALRE_ERR_INVALID, __LINE__ )
-         .desc( FAL_STR( re_msg_invalid ) )
+         .desc( ""/*FAL_STR( re_msg_invalid )*/ )
          .extra( errDesc ) );
-      return;
+      return false;
    }
 
-   RegexCarrier *data = new RegexCarrier( pattern );
-   self->setUserData( data );
+    data->init( pattern );
 
    if ( bStudy )
    {
@@ -182,11 +210,17 @@ FALCON_FUNC Regex_init( ::Falcon::VMachine *vm )
       if ( data->m_extra == 0 && errDesc != 0 )
       {
          throw new RegexError( ErrorParam( FALRE_ERR_STUDY, __LINE__ )
-            .desc( FAL_STR( re_msg_errstudy ) )
+            .desc( ""/*FAL_STR( re_msg_errstudy )*/ )
             .extra( errDesc ) );
-         return;
+         return false;
       }
    }
+   return false;
+}
+
+void* ClassRegex::createInstance() const
+{
+   return new RegexCarrier;
 }
 
 /*#
@@ -196,14 +230,17 @@ FALCON_FUNC Regex_init( ::Falcon::VMachine *vm )
    It perform an extra compilation step; PCRE 7.6 manual suggests that this is
    useful only with recursive pattern.
 */
-FALCON_FUNC Regex_study( ::Falcon::VMachine *vm )
+FALCON_DEFINE_METHOD_P(ClassRegex, study)
 {
-   CoreObject *self = vm->self().asObject();
-   RegexCarrier *data = ( RegexCarrier *) self->getUserData();
+   void *inst;
+   Class *cls;
+   ctx->self().asClassInst(cls, inst);
+   RegexCarrier *data = ( RegexCarrier *) inst;
 
    if( data->m_extra != 0 )
    {
       // already studied
+      ctx->returnFrame(Item());
       return;
    }
 
@@ -212,9 +249,10 @@ FALCON_FUNC Regex_study( ::Falcon::VMachine *vm )
    if ( data->m_extra == 0 && errDesc != 0 )
    {
       throw new RegexError( ErrorParam( FALRE_ERR_STUDY, __LINE__ )
-            .desc( FAL_STR( re_msg_errstudy ) )
+            .desc( ""/*FAL_STR( re_msg_errstudy )*/ )
             .extra( errDesc ) );
    }
+   ctx->returnFrame(Item());
 }
 
 
@@ -338,12 +376,14 @@ static void internal_regex_match( RegexCarrier *data, String *source, int from )
    If the match is successful, the method returns true.
    The match point can then be retrieved using the captured(0) method.
 */
-FALCON_FUNC Regex_match( ::Falcon::VMachine *vm )
+FALCON_DEFINE_METHOD_P(ClassRegex, match)
 {
-   CoreObject *self = vm->self().asObject();
-   RegexCarrier *data = ( RegexCarrier *) self->getUserData();
+   void *inst;
+   Class *cls;
+   ctx->self().asClassInst(cls, inst);
+   RegexCarrier *data = ( RegexCarrier *) inst;
 
-   Item *source = vm->param(0);
+   Item *source = ctx->param(0);
 
    if( source == 0 || ! source->isString() )
    {
@@ -353,22 +393,26 @@ FALCON_FUNC Regex_match( ::Falcon::VMachine *vm )
 
    internal_regex_match( data, source->asString(), 0 );
 
+   Item retval;
+
    if ( data->m_matches == PCRE_ERROR_NOMATCH )
    {
-      vm->regA().setBoolean( false );
+      retval.setBoolean(false);
+      ctx->returnFrame( retval );
       return;
    }
 
    if ( data->m_matches < 0 )
    {
-      String errVal = FAL_STR( re_msg_internal );
+      String errVal = ""/*FAL_STR( re_msg_internal )*/;
       errVal.writeNumber( (int64) data->m_matches );
       throw new RegexError( ErrorParam( FALRE_ERR_ERRMATCH, __LINE__ )
-         .desc( FAL_STR( re_msg_errmatch ) )
+         .desc( ""/*FAL_STR( re_msg_errmatch ) */)
          .extra( errVal ) );
    }
 
-   vm->regA().setBoolean( true );
+   retval.setBoolean(true);
+   ctx->returnFrame( retval );
 }
 
 /*#
@@ -388,13 +432,15 @@ FALCON_FUNC Regex_match( ::Falcon::VMachine *vm )
 
    If the pattern doesn't matches, returns nil.
 */
-FALCON_FUNC Regex_find( ::Falcon::VMachine *vm )
+FALCON_DEFINE_METHOD_P(ClassRegex, find)
 {
-   CoreObject *self = vm->self().asObject();
-   RegexCarrier *data = ( RegexCarrier *) self->getUserData();
+   void *inst;
+   Class *cls;
+   ctx->self().asClassInst(cls, inst);
+   RegexCarrier *data = ( RegexCarrier *) inst;
 
-   Item *source = vm->param(0);
-   Item *from_i = vm->param(1);
+   Item *source = ctx->param(0);
+   Item *from_i = ctx->param(1);
 
    if( source == 0 || ! source->isString() || ( from_i != 0 && ! from_i->isOrdinal() ) )
    {
@@ -416,18 +462,18 @@ FALCON_FUNC Regex_find( ::Falcon::VMachine *vm )
    {
       // we know by hypotesis that oVector is at least 1 entry.
       Item rng;
-      rng.setRange( new CoreRange( data->m_ovector[0], data->m_ovector[1] ) );
-      vm->retval( rng );
+      rng.setUser( (Engine::instance())->rangeClass(), new Range( data->m_ovector[0], data->m_ovector[1] ) );
+      ctx->returnFrame( rng );
    }
    else if ( data->m_matches == PCRE_ERROR_NOMATCH ){
-      vm->retnil();
+      ctx->returnFrame(Item());
    }
    else
    {
-      String errVal = FAL_STR( re_msg_internal );
+      String errVal = ""/*FAL_STR( re_msg_internal )*/;
       errVal.writeNumber( (int64) data->m_matches );
       throw new RegexError( ErrorParam( FALRE_ERR_ERRMATCH, __LINE__ )
-         .desc( FAL_STR( re_msg_errmatch ) )
+         .desc( ""/*FAL_STR( re_msg_errmatch )*/ )
          .extra( errVal ) );
    }
 }
@@ -455,14 +501,16 @@ FALCON_FUNC Regex_find( ::Falcon::VMachine *vm )
 
    If the pattern doesn't matches, this method returns nil.
 */
-FALCON_FUNC Regex_split( ::Falcon::VMachine *vm )
+FALCON_DEFINE_METHOD_P(ClassRegex, split)
 {
-   CoreObject *self = vm->self().asObject();
-   RegexCarrier *data = ( RegexCarrier *) self->getUserData();
+   void *inst;
+   Class *cls;
+   ctx->self().asClassInst(cls, inst);
+   RegexCarrier *data = ( RegexCarrier *) inst;
 
-   Item *source_i = vm->param(0);
-   Item *count_i = vm->param(1);
-   Item *gettoken_i = vm->param(2);
+   Item *source_i = ctx->param(0);
+   Item *count_i = ctx->param(1);
+   Item *gettoken_i = ctx->param(2);
 
    if( source_i == 0 || ! source_i->isString()
       || ( count_i != 0 && ! ( count_i->isOrdinal() || count_i->isNil() ) )
@@ -477,15 +525,15 @@ FALCON_FUNC Regex_split( ::Falcon::VMachine *vm )
    internal_regex_match( data, src, 0 );
 
    if ( data->m_matches == PCRE_ERROR_NOMATCH ){
-      vm->retnil();
+      ctx->returnFrame(Item());
       return;
    }
    else if( data->m_matches < 0 )
    {
-      String errVal = FAL_STR( re_msg_internal );
+      String errVal = ""/*FAL_STR( re_msg_internal )*/;
       errVal.writeNumber( (int64) data->m_matches );
       throw new RegexError( ErrorParam( FALRE_ERR_ERRMATCH, __LINE__ )
-         .desc( FAL_STR( re_msg_errmatch ) )
+         .desc( ""/*FAL_STR( re_msg_errmatch ) */)
          .extra( errVal ) );
    }
 
@@ -499,14 +547,14 @@ FALCON_FUNC Regex_split( ::Falcon::VMachine *vm )
 
    bool bgt = gettoken_i != 0 && gettoken_i->isTrue();
 
-   CoreArray* ret = new CoreArray;
+   ItemArray* ret = new ItemArray;
    uint32 maxLen = src->length();
    uint32 from = 0;
    do
    {
-      ret->append( new CoreString( *src, from, data->m_ovector[0] ) );
+      ret->append( new String( *src, from, data->m_ovector[0] ) );
       if( bgt )
-         ret->append( new CoreString( *src, data->m_ovector[0], data->m_ovector[1] ) );
+         ret->append( new String( *src, data->m_ovector[0], data->m_ovector[1] ) );
 
       from = data->m_ovector[1];
       internal_regex_match( data, src, from );
@@ -515,19 +563,21 @@ FALCON_FUNC Regex_split( ::Falcon::VMachine *vm )
    while( data->m_matches > 0 && count > 0 && from < maxLen );
 
    if( from < maxLen )
-      ret->append( new CoreString( *src, from ) );
+      ret->append( new String( *src, from ) );
 
-   vm->retval( ret );
+   ctx->returnFrame( ret );
 }
 
 
-static void internal_findAll( Falcon::VMachine *vm, bool overlapped )
+static void internal_findAll( Falcon::VMContext *ctx, bool overlapped )
 {
-   CoreObject *self = vm->self().asObject();
-   RegexCarrier *data = ( RegexCarrier *) self->getUserData();
-   Item *source = vm->param(0);
-   Item *from_i = vm->param(1);
-   Item *maxCount_i = vm->param(2);
+   void *inst;
+   Class *cls;
+   ctx->self().asClassInst(cls, inst);
+   RegexCarrier *data = ( RegexCarrier *) inst;
+   Item *source = ctx->param(0);
+   Item *from_i = ctx->param(1);
+   Item *maxCount_i = ctx->param(2);
 
    if( source == 0 || ! source->isString() ||
       ( from_i != 0 && ! from_i->isOrdinal() ) ||
@@ -554,7 +604,7 @@ static void internal_findAll( Falcon::VMachine *vm, bool overlapped )
          max = 0xFFFFFFFF;
    }
 
-   CoreArray *ca = new CoreArray();
+   ItemArray *ca = new ItemArray;
    int frontOrBack = overlapped ? 0 : 1;
    uint32 maxLen = source->asString()->length();
 
@@ -563,7 +613,7 @@ static void internal_findAll( Falcon::VMachine *vm, bool overlapped )
       if( data->m_matches > 0 )
       {
          Item rng;
-         rng.setRange( new CoreRange( data->m_ovector[0], data->m_ovector[1] ) );
+         rng.setUser( (Engine::instance())->rangeClass(), new Range( data->m_ovector[0], data->m_ovector[1] ) );
          ca->append( rng );
          // restart from the end of the patter
          from = data->m_ovector[frontOrBack];
@@ -574,15 +624,15 @@ static void internal_findAll( Falcon::VMachine *vm, bool overlapped )
 
    if ( data->m_matches < 0 && data->m_matches != PCRE_ERROR_NOMATCH )
    {
-      String errVal = FAL_STR( re_msg_internal );
+      String errVal = ""/*FAL_STR( re_msg_internal )*/;
       errVal.writeNumber( (int64) data->m_matches );
       throw new RegexError( ErrorParam( FALRE_ERR_ERRMATCH, __LINE__ )
-         .desc( FAL_STR( re_msg_errmatch ) )
+         .desc( ""/*FAL_STR( re_msg_errmatch )*/ )
          .extra( errVal ) );
    }
 
    // always return an array, even if empty
-   vm->retval( ca );
+   ctx->returnFrame( ca );
 }
 
 /*#
@@ -601,9 +651,9 @@ static void internal_findAll( Falcon::VMachine *vm, bool overlapped )
    expressions.
 */
 
-FALCON_FUNC Regex_findAll( ::Falcon::VMachine *vm )
+FALCON_DEFINE_METHOD_P(ClassRegex, findAll)
 {
-   internal_findAll( vm, false );
+   internal_findAll( ctx, false );
 }
 
 /*#
@@ -621,9 +671,9 @@ FALCON_FUNC Regex_findAll( ::Falcon::VMachine *vm )
    This method only returns the whole match, ignoring parenthesized
    expressions.
 */
-FALCON_FUNC Regex_findAllOverlapped( ::Falcon::VMachine *vm )
+FALCON_DEFINE_METHOD_P(ClassRegex, findAllOverlapped)
 {
-   internal_findAll( vm, true );
+   internal_findAll( ctx, true );
 }
 
 
@@ -642,14 +692,15 @@ FALCON_FUNC Regex_findAllOverlapped( ::Falcon::VMachine *vm )
    start parameter can be given to begin the search for the pattern in
    string from a given position.
 */
-FALCON_FUNC Regex_replace( ::Falcon::VMachine *vm )
+FALCON_DEFINE_METHOD_P(ClassRegex, replace)
 {
-   CoreObject *self = vm->self().asObject();
-   RegexCarrier *data = ( RegexCarrier *) self->getUserData();
-
-   Item *source_i = vm->param(0);
-   Item *dest_i = vm->param(1);
-   Item *from_i = vm->param(2);
+   void *inst;
+   Class *cls;
+   ctx->self().asClassInst(cls, inst);
+   RegexCarrier *data = (RegexCarrier*) inst;
+   Item *source_i = ctx->param(0);
+   Item *dest_i = ctx->param(1);
+   Item *from_i = ctx->param(2);
 
    if( source_i == 0 || ! source_i->isString() || dest_i == 0 || ! dest_i->isString() ||
       ( from_i != 0 && ! from_i->isOrdinal() )
@@ -674,22 +725,22 @@ FALCON_FUNC Regex_replace( ::Falcon::VMachine *vm )
 
    if ( data->m_matches == PCRE_ERROR_NOMATCH )
    {
-      vm->retval( source );
+      ctx->returnFrame( source );
       return;
    }
 
    if ( data->m_matches < 0 )
    {
-      String errVal = FAL_STR( re_msg_internal );
+      String errVal = "";//FAL_STR( re_msg_internal );
       errVal.writeNumber( (int64) data->m_matches );
       throw new RegexError( ErrorParam( FALRE_ERR_ERRMATCH, __LINE__ )
-         .desc( FAL_STR( re_msg_errmatch ) )
+         .desc( /*FAL_STR( re_msg_errmatch )*/"" )
          .extra( errVal ) );
    }
 
-   CoreString* ret = new CoreString(*source);
+   String* ret = new String(*source);
    ret->change( data->m_ovector[0], data->m_ovector[1], *dest );
-   vm->retval( ret );
+   ctx->returnFrame( ret );
 }
 
 
@@ -726,13 +777,15 @@ void s_expand( RegexCarrier *data, const String &orig, String &expanded )
    }
 }
 
-static void s_replaceall( VMachine* vm, bool bExpand )
+static void s_replaceall( VMContext* ctx, bool bExpand )
 {
-   CoreObject *self = vm->self().asObject();
-   RegexCarrier *data = ( RegexCarrier *) self->getUserData();
+   void *inst;
+   Class *cls;
+   ctx->self().asClassInst(cls, inst);
+   RegexCarrier *data = ( RegexCarrier *) inst;
 
-   Item *source_i = vm->param(0);
-   Item *dest_i = vm->param(1);
+   Item *source_i = ctx->param(0);
+   Item *dest_i = ctx->param(1);
 
    if( source_i == 0 || ! source_i->isString() || dest_i == 0 || ! dest_i->isString() )
    {
@@ -755,7 +808,7 @@ static void s_replaceall( VMachine* vm, bool bExpand )
               break;
 
          if ( clone == 0 ) {
-            clone = new CoreString( *source );
+            clone = new String( *source );
             source = clone;
          }
          
@@ -778,17 +831,17 @@ static void s_replaceall( VMachine* vm, bool bExpand )
 
    if ( data->m_matches < 0 && data->m_matches != PCRE_ERROR_NOMATCH )
    {
-      String errVal = FAL_STR( re_msg_internal );
+      String errVal = ""/*FAL_STR( re_msg_internal )*/;
       errVal.writeNumber( (int64) data->m_matches );
       throw new RegexError( ErrorParam( FALRE_ERR_ERRMATCH, __LINE__ )
-         .desc( FAL_STR( re_msg_errmatch ) )
+         .desc( ""/*FAL_STR( re_msg_errmatch )*/ )
          .extra( errVal ) );
    }
 
    if ( clone != 0 )
-      vm->retval( clone );
+      ctx->returnFrame( clone );
    else
-      vm->retval( *source_i );
+      ctx->returnFrame( *source_i );
 }
 
 
@@ -803,9 +856,9 @@ static void s_replaceall( VMachine* vm, bool bExpand )
    replacer parameter. If a change can be performed, a modified instance
    of string is returned, else nil is returned.
 */
-FALCON_FUNC Regex_replaceAll( ::Falcon::VMachine *vm )
+FALCON_DEFINE_METHOD_P(ClassRegex, replaceAll)
 {
-   s_replaceall( vm, false );
+   s_replaceall( ctx, false );
 }
 
 /*#
@@ -829,9 +882,9 @@ FALCON_FUNC Regex_replaceAll( ::Falcon::VMachine *vm )
    
    @note Remember to use double backslash on double quoted strings.
 */
-FALCON_FUNC Regex_subst( ::Falcon::VMachine *vm )
+FALCON_DEFINE_METHOD_P(ClassRegex, subst)
 {
-   s_replaceall( vm, true );
+   s_replaceall( ctx, true );
 }
 
 
@@ -847,15 +900,17 @@ FALCON_FUNC Regex_subst( ::Falcon::VMachine *vm )
    @see Regex.captured
 */
 
-FALCON_FUNC Regex_capturedCount( ::Falcon::VMachine *vm )
+FALCON_DEFINE_METHOD_P(ClassRegex, capturedCount)
 {
-   CoreObject *self = vm->self().asObject();
-   RegexCarrier *data = ( RegexCarrier *) self->getUserData();
+   void *inst;
+   Class *cls;
+   ctx->self().asClassInst(cls, inst);
+   RegexCarrier *data = ( RegexCarrier *) inst;
 
    if( data->m_matches > 0 )
-      vm->retval( (int64) data->m_matches );
+      ctx->returnFrame( (int64) data->m_matches );
    else
-      vm->retval( (int64) 0 );
+      ctx->returnFrame( (int64) 0 );
 }
 
 /*#
@@ -872,12 +927,14 @@ FALCON_FUNC Regex_capturedCount( ::Falcon::VMachine *vm )
    returned value is a closed range describing the area where the capture
    had effect in the target string.
 */
-FALCON_FUNC Regex_captured( ::Falcon::VMachine *vm )
+FALCON_DEFINE_METHOD_P(ClassRegex, captured)
 {
-   CoreObject *self = vm->self().asObject();
-   RegexCarrier *data = ( RegexCarrier *) self->getUserData();
+   void *inst;
+   Class *cls;
+   ctx->self().asClassInst(cls, inst);
+   RegexCarrier *data = ( RegexCarrier *) inst;
 
-   Item *pos_i = vm->param(0);
+   Item *pos_i = ctx->param(0);
    if( pos_i == 0 || ! pos_i->isOrdinal() )
    {
       throw new  ParamError( ErrorParam( e_inv_params, __LINE__ ).
@@ -892,12 +949,12 @@ FALCON_FUNC Regex_captured( ::Falcon::VMachine *vm )
    if ( count < 0 ||  count >= maxCount )
    {
       throw new  ParamError( ErrorParam( e_param_range, __LINE__ )
-         .extra( FAL_STR( re_msg_outofrange ) ) );
+         .extra( ""/*FAL_STR( re_msg_outofrange )*/ ) );
    }
 
    Item rng;
-   rng.setRange( new CoreRange( data->m_ovector[ count * 2 ] , data->m_ovector[ count * 2 + 1 ] ) );
-   vm->retval( rng );
+   rng.setUser( (Engine::instance())->rangeClass(), new Range( data->m_ovector[ count * 2 ] , data->m_ovector[ count * 2 + 1 ] ) );
+   ctx->returnFrame( rng );
 }
 
 
@@ -910,11 +967,13 @@ FALCON_FUNC Regex_captured( ::Falcon::VMachine *vm )
    Searches for the pattern and stores all the captured subexpressions in
    an array that is then returned. If the match is negative, returns nil.
 */
-FALCON_FUNC Regex_grab( Falcon::VMachine *vm )
+FALCON_DEFINE_METHOD_P(ClassRegex, grab)
 {
-   CoreObject *self = vm->self().asObject();
-   RegexCarrier *data = ( RegexCarrier *) self->getUserData();
-   Item *source = vm->param(0);
+   void *inst;
+   Class *cls;
+   ctx->self().asClassInst(cls, inst);
+   RegexCarrier *data = ( RegexCarrier *) inst;
+   Item *source = ctx->param(0);
 
    if( source == 0 || ! source->isString() )
    {
@@ -926,33 +985,33 @@ FALCON_FUNC Regex_grab( Falcon::VMachine *vm )
 
    if ( data->m_matches == PCRE_ERROR_NOMATCH )
    {
-      vm->retnil();
+      ctx->returnFrame(Item());
       return;
    }
 
    if ( data->m_matches < 0 )
    {
-      String errVal = FAL_STR( re_msg_internal );
+      String errVal = ""/*FAL_STR( re_msg_internal )*/;
       errVal.writeNumber( (int64) data->m_matches );
       throw new RegexError( ErrorParam( FALRE_ERR_ERRMATCH, __LINE__ )
-         .desc( FAL_STR( re_msg_errmatch ) )
+         .desc( ""/*FAL_STR( re_msg_errmatch )*/ )
          .extra( errVal ) );
    }
 
    // grab all the strings
 
-   CoreArray *ca = new CoreArray();
+   ItemArray *ca = new ItemArray();
    for( int32 capt = 0; capt < data->m_matches; capt++ )
    {
 
-      String *grabbed = new CoreString(
+      String *grabbed = new String(
             source->asString()->subString(
                data->m_ovector[ capt * 2 ], data->m_ovector[ capt * 2 + 1 ] )
                );
       ca->append( grabbed );
    }
 
-   vm->retval( ca );
+   ctx->returnFrame( ca );
 }
 
 /*#
@@ -965,11 +1024,13 @@ FALCON_FUNC Regex_grab( Falcon::VMachine *vm )
    used in direct comparations. Switch tests and equality tests will succeed if the pattern
    matches agains the given string.
 */
-FALCON_FUNC Regex_compare( Falcon::VMachine *vm )
+FALCON_DEFINE_METHOD_P(ClassRegex, compare)
 {
-   CoreObject *self = vm->self().asObject();
-   RegexCarrier *data = ( RegexCarrier *) self->getUserData();
-   Item *source = vm->param(0);
+   void *inst;
+   Class *cls;
+   ctx->self().asClassInst(cls, inst);
+   RegexCarrier *data = ( RegexCarrier *) inst;
+   Item *source = ctx->param(0);
 
    if( source == 0 )
    {
@@ -997,13 +1058,13 @@ FALCON_FUNC Regex_compare( Falcon::VMachine *vm )
          300 );
 
       if ( match )
-         vm->retval( (int64) 0 ); // zero means compare ==
+         ctx->returnFrame( (int64) 0 ); // zero means compare ==
       else
-         vm->retnil(); // we can't decide. Let the VM do that for us.
+         ctx->returnFrame(Item()); // we can't decide. Let the VM do that for us.
    }
    // Otherwise return nil, that will tell VM to use default matching algos
    else {
-      vm->retnil();
+      ctx->returnFrame(Item());
    }
 }
 
@@ -1015,10 +1076,10 @@ FALCON_FUNC Regex_compare( Falcon::VMachine *vm )
    This function can be used to retreive the PCRE version that is currently
    used by the REGEX module.
 */
-FALCON_FUNC Regex_version( Falcon::VMachine *vm )
+FALCON_DEFINE_METHOD_P(ClassRegex, version)
 {
    const char *ver = pcre_version();
-   vm->retval( new CoreString( ver, -1 ) );
+   ctx->returnFrame( new String( ver, -1 ) );
 }
 
 /*#
@@ -1031,17 +1092,22 @@ FALCON_FUNC Regex_version( Falcon::VMachine *vm )
 
    See the Error class in the core module.
 */
-
-FALCON_FUNC  RegexError_init ( ::Falcon::VMachine *vm )
+void* ClassRegexError::createInstance() const
 {
-   CoreObject *einst = vm->self().asObject();
-   if( einst->getUserData() == 0 )
-      einst->setUserData( new RegexError );
+   return new RegexError;
+}
 
-   ::Falcon::core::Error_init( vm );
+ClassRegexError* ClassRegexError::m_instance = NULL;
+
+ClassRegexError* ClassRegexError::singleton()
+{
+   if (m_instance == NULL)
+   {
+      m_instance = new ClassRegexError;
+   }
+   return m_instance;
 }
 
 }
 }
-
 /* end of regex_ext.cpp */

@@ -23,9 +23,13 @@
 #define flc_regex_ext_H
 
 #include <falcon/setup.h>
-#include <falcon/module.h>
+
 #include <falcon/error.h>
 #include <falcon/error_base.h>
+
+#include <falcon/classes/classerror.h>
+#include <falcon/classes/classuser.h>
+#include <falcon/method.h>
 
 #ifndef FALCON_REGEX_ERROR_BASE
    #define FALCON_REGEX_ERROR_BASE        1160
@@ -38,35 +42,56 @@
 namespace Falcon {
 namespace Ext {
 
-FALCON_FUNC Regex_init( ::Falcon::VMachine *vm );
-FALCON_FUNC Regex_study( ::Falcon::VMachine *vm );
-FALCON_FUNC Regex_match( ::Falcon::VMachine *vm );
-FALCON_FUNC Regex_grab( ::Falcon::VMachine *vm );
-FALCON_FUNC Regex_split( ::Falcon::VMachine *vm );
-FALCON_FUNC Regex_find( ::Falcon::VMachine *vm );
-FALCON_FUNC Regex_findAll( ::Falcon::VMachine *vm );
-FALCON_FUNC Regex_findAllOverlapped( ::Falcon::VMachine *vm );
-FALCON_FUNC Regex_replace( ::Falcon::VMachine *vm );
-FALCON_FUNC Regex_replaceAll( ::Falcon::VMachine *vm );
-FALCON_FUNC Regex_subst( ::Falcon::VMachine *vm );
-FALCON_FUNC Regex_capturedCount( ::Falcon::VMachine *vm );
-FALCON_FUNC Regex_captured( ::Falcon::VMachine *vm );
-FALCON_FUNC Regex_compare( ::Falcon::VMachine *vm );
-FALCON_FUNC Regex_version( ::Falcon::VMachine *vm );
+class ClassRegex : public ClassUser
+{
+public:
+   ClassRegex();
+   virtual ~ClassRegex();
+
+   virtual bool op_init( VMContext* ctx, void* instance, int32 pcount ) const;
+   virtual void* createInstance() const; 
+
+private:
+
+FALCON_DECLARE_METHOD(study, "");
+FALCON_DECLARE_METHOD(match, "");
+FALCON_DECLARE_METHOD(grab, "");
+FALCON_DECLARE_METHOD(split, "S, [N], [B]");
+FALCON_DECLARE_METHOD(find, "");
+FALCON_DECLARE_METHOD(findAll, "S, [I], [I]");
+FALCON_DECLARE_METHOD(findAllOverlapped, "S, [I], [I]");
+FALCON_DECLARE_METHOD(replace, "");
+FALCON_DECLARE_METHOD(replaceAll, "");
+FALCON_DECLARE_METHOD(subst, "");
+FALCON_DECLARE_METHOD(capturedCount, "");
+FALCON_DECLARE_METHOD(captured, "");
+FALCON_DECLARE_METHOD(compare, "");
+FALCON_DECLARE_METHOD(version, "");
+
+};
+
+class ClassRegexError: public ClassError
+      {
+      private:
+         static ClassRegexError* m_instance;
+      public:
+         inline ClassRegexError(): ClassError( "RegexError" ) {} 
+         inline virtual ~ClassRegexError(){} 
+         virtual void* createInstance() const;
+         static ClassRegexError* singleton();
+      };
 
 class RegexError: public ::Falcon::Error
 {
 public:
    RegexError():
-      Error( "RegexError" )
+      Error( ClassRegexError::singleton() )
    {}
 
    RegexError( const ErrorParam &params  ):
-      Error( "RegexError", params )
+      Error( ClassRegexError::singleton(), params )
       {}
 };
-
-FALCON_FUNC  RegexError_init ( ::Falcon::VMachine *vm );
 
 }
 }
