@@ -64,7 +64,7 @@ class VMContext;
  in a single-thread context.
  
  */
-class FALCON_DYN_SYM Engine
+class FALCON_DYN_CLASS Engine
 {
 public:
 
