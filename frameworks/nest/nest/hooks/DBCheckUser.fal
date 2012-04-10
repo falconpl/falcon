@@ -33,10 +33,11 @@ import DBEntity from nest.dbentity as DBEntity
    used to obfuscate the passwords.
 
    Known configuration keys are:
-   
+
    - **entity**: DBEntity providing the user table. The table must be searchable
                  so that the user id is also a valid __eid__ for the table.
    - **password_field**: Name of the field where the password is stored.
+   - **uid_field**: Optional;The field with an UID different from the user name received in input.
    - **level_field**: Optional; if given, the logged in users will receive the level specified in this field.
                      the field should be an integer, with higher levels represented as lower number
                      (0 = admin); or, it may be a string that is mapped through the **levels** configuration
@@ -56,6 +57,7 @@ class DBCheckUser from Hook( "check_user" )
    entity = nil
    password_field = nil
 
+   uid_field = nil
    levels = nil
    level_field = nil
    data_maker = nil
@@ -85,10 +87,14 @@ class DBCheckUser from Hook( "check_user" )
                   level = Nest.AL.NONE
                end
 
+               if self.uid_field
+                  uid = record.data[ self.uid_field ]
+               end
+               
                if self.data_maker
-                  return ^+ [level, self.data_maker(record.data) ]
+                  return ^+ [uid, level, self.data_maker(record.data) ]
                else
-                  return ^+ [level, record.data ]
+                  return ^+ [uid, level, record.data ]
                end
             end
          end
@@ -115,7 +121,8 @@ class DBCheckUser from Hook( "check_user" )
       self.level_field = "level_field" in config ? config["level_field"] : nil
       self.data_maker = "data_maker" in config ? config["data_maker"] : nil
       self.hash = "hash" in config ? config["hash"] : nil
-
+      self.uid_field = "uid_field" in config ? config["uid_field"] : nil
+      
       if Nest.pcheck
          if self.levels and self.levels.typeId() != DictionaryType
             raise NestError( NestError.other, i"Configuration key 'levels' must be a dictionary" )
@@ -127,7 +134,7 @@ class DBCheckUser from Hook( "check_user" )
             raise NestError( NestError.other, i"Configuration key 'data_maker' must callable item" )
          end
          if self.hash and not self.hash.isCallable()
-            raise NestError( NestError.other, i"Configuration key 'data_maker' must callable item" )
+            raise NestError( NestError.other, i"Configuration key 'hash' must callable item" )
          end
       end
    end

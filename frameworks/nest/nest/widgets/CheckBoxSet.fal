@@ -38,11 +38,31 @@ import CheckBox from nest.widgets.CheckBox as CheckBox
    on the apparence of each choice.
 */
 class CheckBoxSet( id, choices, tagtype, tag_beg, tag_sep, tag_end ) from \
-            Container( id, tagtype, tag_beg, tag_sep, tag_end )   
+            Container( id, tagtype, tag_beg, tag_sep, tag_end )
    isCheckBoxSet = true
+
+   isValueHost = true
 
    init
       self.autoAddChildren( choices )
+
+      // TODO: Remove this when we have automatic parentship
+      self.addClassInParentship( CheckBoxSet )
+   end
+
+
+   function onRender()
+      checks = "var result = Array(); var item;"
+      sets = "var item;"
+      for child in self.children
+         checks += " item=Nest.i('" + child.getFullID() +
+                  "'); if(item.checked) result.push(item.value);"
+         sets += " item=Nest.i('" + child.getFullID() +
+                  "'); item.checked = value.indexOf(item.value) >= 0;"
+      end
+      self.jsMethods[ "getValue" ] = "function(){" + checks + "; return result;}"
+      self.jsMethods[ "setValue" ] = "function(value){" + sets + "}"
+      self.jsMethods[ "name" ] = "'" + self.getFullID() + "'"
    end
 
 

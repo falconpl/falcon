@@ -66,7 +66,7 @@ void DirHandler::serve( Falcon::WOPI::Request* req )
    {
       if ( fname == "." )
          continue;
-
+      
       Falcon::String loc;
       if( fname == ".." )
       {
@@ -75,16 +75,19 @@ void DirHandler::serve( Falcon::WOPI::Request* req )
 
          Falcon::uint32 pos = thisDir.rfind("/");
          if ( pos == Falcon::String::npos )
-            loc = "";
+            loc = "/";
          else
-            loc = thisDir.subString(0,pos);
+            loc = thisDir.subString(0,pos) + "/";
       }
-      else
+      else if (thisDir != "/" )
       {
+         loc = thisDir +"/";
+      }
+      else {
          loc = thisDir;
       }
-
-      Falcon::String entry = "<br/><a href=\""+ loc + "/" + fname +"\">" + fname + "</a>\n";
+      
+      Falcon::String entry = "<br/><a href=\""+ loc + fname +"\">" + fname + "</a>\n";
       m_client->sendData( entry );
    }
 

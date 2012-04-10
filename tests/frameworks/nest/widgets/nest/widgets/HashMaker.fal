@@ -4,18 +4,36 @@ import from hash in hash
 class HashInput from wid.Widget( "area" )
    tag = "textarea"
    isSelfClosing = false
-   props = ["rows"=>5, "cols"=>20, "name"=>"text" ]   
+   props = ["rows"=>5, "cols"=>20, "name"=>"text" ]
+
+    init
+      // TODO: Remove this when we have automatic parentship
+      self.addClassInParentship( HashInput )
+   end
 end
+
 
 class HashButton from wid.Widget( "button" )
    tag = "input"
-   props = ["type"=>"button", "value"=>"Calc SHA" ]
-   ajaxReqs = ["onClick"=>wid.AJAXRequest( ["../area/value"] ) ]
+   props = ["type"=>"button", "value"=>"Calc SHA", "onclick" => "this.excite()" ]
+   ajaxReqs = ["excite"=>wid.AJAXRequest( ["../area/value"] ) ]
    // a custom message handler
-   ajaxMessages = [ 'buttonChange' => '$(this)[''value'']=obj.value;' ]
+   ajaxMessages = [ 'buttonChange' => "function(obj) { this.value = obj.value; }" ]
+
+   init
+      // TODO: Remove this when we have automatic parentship
+      self.addClassInParentship( HashButton )
+   end
+
 end
 
 class HashText from wid.Widget( "sha" )
+
+   init
+      // TODO: Remove this when we have automatic parentship
+      self.addClassInParentship( HashText )
+   end
+
 end
 
 
@@ -23,10 +41,16 @@ class HashMaker( id ) from wid.Widget( id )
    ta = HashInput()
    tb = HashButton()
    outputText = HashText()
+
+   isAJAXHost = true
+   
    init
       self.addChild( self.ta )
       self.addChild( self.tb )
       self.addChild( self.outputText )
+      
+      // TODO: Remove this when we have automatic parentship
+      self.addClassInParentship( HashMaker )
    end
 
    function AJAX( params )
@@ -36,7 +60,7 @@ class HashMaker( id ) from wid.Widget( id )
          self.outputText.msgSetProperty( "innerHTML", sha ),
          self.ta.msgSetProperty("value", value + "\n--Checked--" ),
          // and a custom message
-         [ "message" => "buttonChange", "value" => "click again..." ]
+         wid.Widget.msgGeneric( "buttonChange", ["value" => "click again..."] )
          ]
    end
 

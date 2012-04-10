@@ -1,0 +1,96 @@
+import Style from nest.widgets.style as Style
+
+rl = Nest.resLink("grad_metal_1.png")
+mtl2 = Nest.resLink("grad_metal_2.png")
+
+
+Style( "Input Background", nil, @'
+   background: url("$(rl)") 30px repeat-x;
+   '
+).applyToClass( "InputText" )
+
+Style( "Input Background", nil, @'
+   background: white;
+   '
+).applyToClass( "ActiveTextArea" )
+
+
+Style( "Base Highlight", nil, '
+      outline: none;
+      transition: all 0.25s ease-in-out;
+      -webkit-transition: all 0.25s ease-in-out;
+      -moz-transition: all 0.25s ease-in-out;
+      border-radius:3px;
+      -webkit-border-radius:3px;
+      -moz-border-radius:3px;
+      '
+).applyToClass( "InputText" ).applyToClass( "HashInput" )
+
+Style( "Blue Highlight", nil, '
+      border: 1px solid rgba(30,30,160, 0.3);
+      '
+).applyToClass( "InputText" ).applyToClass( "HashInput" )
+
+Style( "Blue Highlight focus", 'focus', '
+      box-shadow: 0 0 5px rgba(0, 0, 255, 1);
+      -webkit-box-shadow: 0 0 5px rgba(0, 0, 255, 1);
+      -moz-box-shadow: 0 0 5px rgba(0, 0, 255, 1);
+      border:1px solid rgba(0,0,255, 0.8);
+      '
+).applyToClass( "InputText" ).applyToClass( "HashInput" )
+
+
+Style( "Button", nil, @'
+         border:1px solid rgba(0,0,128, 1);
+         background: url("$(mtl2)") repeat-x;
+         background-size: 1px 40px;
+
+         transition: all 0.25s ease-in-out;
+         -webkit-transition: all 0.25s ease-in-out;
+         -moz-transition: all 0.25s ease-in-out;
+
+         border-radius:5px;
+         -webkit-border-radius:5px;
+         -moz-border-radius:5px;
+      '
+).applyToClass( "Button" )
+
+Style( "Button with mouse over", 'hover', @'
+         box-shadow: 0 0 3px rgba(128, 128, 255, 1);
+         -webkit-box-shadow: 0 0 3px rgba(128, 128, 255, 1);
+         -moz-box-shadow: 0 0 3px rgba(128, 128, 255, 1);
+      '
+).applyToClass( "Button" )
+
+
+
+
+Style( "Red Highlight focus", 'focus', '
+      box-shadow: 0 0 5px rgba(255, 0, 0, 1);
+      -webkit-box-shadow: 0 0 5px rgba(255, 0, 0, 1);
+      -moz-box-shadow: 0 0 5px rgba(255, 0, 0, 1);
+      border:1px solid rgba(255,0,0, 0.8);
+      '
+).applyToClass( "Password" )
+
+
+Style( "Button style", 'focus', '
+      box-shadow: 0 0 5px rgba(255, 0, 0, 1);
+      -webkit-box-shadow: 0 0 5px rgba(255, 0, 0, 1);
+      -moz-box-shadow: 0 0 5px rgba(255, 0, 0, 1);
+      border:1px solid rgba(255,0,0, 0.8);
+      '
+).applyToClass( "Password" )
+
+Style( "Bordered box with shade", nil, '
+   border: 1px solid;
+   padding: 5px;
+   border-radius: 15px 15px;
+   -webkit-border-radius: 15px 15px;
+   -moz-border-radius: 15px 15px;
+
+   box-shadow: 3px 3px 2px rgba(50, 50, 50, 0.8);
+   -webkit-box-shadow: 3px 3px 2px rgba(50, 50, 50, 0.8);
+   -moz-box-shadow: 3px 3px 2px rgba(50, 50, 50, 0.8);
+   '
+).applyToClass("LoginMask")

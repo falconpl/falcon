@@ -27,7 +27,10 @@ import from nest.widgets.widget in widget
    rely to Submit or Reset fields in forms, as they generate the same
    controlled values in froms submits in different browsers, while
    button tag based submits can differ (some use the value attribute,
-   some use the contents of the tag). 
+   some use the contents of the tag).
+
+   To attach actions to this button, use the @a nest.widget.Widget.jsListeners
+   method
 */
 class Button( id, content, type ) from widget.Widget( id )
    tag = "button"
@@ -38,11 +41,24 @@ class Button( id, content, type ) from widget.Widget( id )
       if self.props == nil: self.props = [=>]
       self.props['name'] = nil   // will be filled at render
       self.props['type'] = type ? type : "button"
+
+      // TODO: Remove this when we have automatic parentship
+      self.addClassInParentship( Button )
    end
 
    function renderContent()
       return self.content
    end
    
+   function makeSendFormAJAX( w, confirmFunc )
+      id = w.getFullID()
+      xcall = @"Nest.i('$(id)').sendFormAJAX()"
+      if confirmFunc
+         xcall = "if(" + confirmFunc + "){" + xcall + ";}"
+      end
+      
+      self.props['onclick'] = xcall
+      return self
+   end
 end
 

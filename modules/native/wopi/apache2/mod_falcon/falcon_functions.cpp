@@ -30,6 +30,9 @@
 #include "mod_falcon.h"
 #include "mod_falcon_config.h"
 #include "mod_falcon_error.h"
+#include "mod_falcon_vm.h"
+#include "mod_falcon_watchdog.h"
+
 #include "apache_errhand.h"
 #include "apache_output.h"
 #include "apache_stream.h"
@@ -55,8 +58,37 @@ void ap_log_error_cb( const Falcon::String& msg, void* data )
 static Falcon::Module *s_core =0;
 static Falcon::Module *s_ext =0;
 static Falcon::WOPI::SessionManager *s_session = 0;
-
 static unsigned int s_entropy = 0;
+
+
+// Startup this module
+static void module_startup()
+{
+   Falcon::Engine::Init();
+   Falcon::memPool->rampMode( RAMP_MODE_STRICT_ID );
+
+   // create also the core; we know it's empty.
+   s_core = Falcon::core_module_init();
+
+   // tell the VM to create our request and reply object
+   s_ext = Falcon::WOPI::wopi_module_init( ApacheRequest::factory , ApacheReply::factory );
+
+   if( the_falcon_config->cacheModules )
+   {
+      Falcon::Engine::cacheModules( true );
+   }
+         
+   apr_pool_create(&falconWatchdogData.threadPool, NULL);      
+   apr_status_t rv = apr_thread_create( 
+         &falconWatchdogData.watchdogThread, 
+         NULL, 
+         &watchdog, 
+         &falconWatchdogData, falconWatchdogData.threadPool );
+  
+   fprintf( stderr, "Falcon WOPI module for Apache2 %d(%s)\n", rv,
+          rv == APR_SUCCESS ? "launched watchdog" : "failed to launch watchdog");
+
+}
 
 extern "C" {
 
@@ -86,20 +118,7 @@ static int falcon_handler(request_rec *request)
    // first time in this process?
    if( s_core == 0 )
    {
-      Falcon::Engine::Init();
-      Falcon::memPool->rampMode( RAMP_MODE_STRICT_ID );
-
-      // create also the core; we know it's empty.
-      s_core = Falcon::core_module_init();
-
-      // tell the VM to create our request and reply object
-      s_ext = Falcon::WOPI::wopi_module_init( ApacheRequest::factory , ApacheReply::factory );
-
-      if( the_falcon_config->cacheModules )
-      {
-         Falcon::Engine::cacheModules( true );
-      }
-
+      module_startup();
    }
 
    Falcon::numeric startedAt = Falcon::Sys::Time::seconds();
@@ -233,7 +252,7 @@ static int falcon_handler(request_rec *request)
 
    // We are ready to go. Let's create our VM and link in minimal stuff
    // we'll handle errors here
-   Falcon::VMachine* vm = new Falcon::VMachine();
+   ApacheVMachine* vm = new ApacheVMachine();
 
    // perform link of standard modules.
    vm->link( s_core );  // add the core module
@@ -299,11 +318,21 @@ static int falcon_handler(request_rec *request)
       int fs;
       Falcon::Sys::fal_chdir( *spath, fs );
    }
-
+   
+   FALCON_WATCHDOG_TOKEN* wdt = 0;
    try {
       Falcon::Runtime rt( &theLoader );
       rt.loadFile( script_name );
 
+      // tell the watchdog we're going to 
+      if( the_falcon_config->runTimeout > 0 )
+      {
+         // approximate good size.
+         int cbloops = the_falcon_config->runTimeout * 1000;
+         vm->callbackLoops( cbloops > 10000 ? 10000 : cbloops );
+
+         wdt = watchdog_push_vm( request, vm, the_falcon_config->runTimeout, reply );
+      }
       // try to link our module and its dependencies.
       // -- It may fail if there are some undefined symbols
       vm->link( &rt );
@@ -317,6 +346,10 @@ static int falcon_handler(request_rec *request)
       reply->commit();
       errhand.handleError( error );
       aoutput.close();
+   }
+   
+   if ( wdt != 0 ) {
+      watchdog_vm_is_done( wdt );
    }
 
    // release all our sessions
@@ -340,8 +373,25 @@ static int falcon_handler(request_rec *request)
 //========================================
 // Falcon module registration
 //
-void falcon_register_hook( apr_pool_t *p )
+void falcon_register_hook( apr_pool_t *mp )
 {
+   apr_status_t rv;
+   
+   fprintf( stderr, "Falcon " VERSION " -- WOPI module for Apache2 startup.");
+   
+   // Inititialize watchdog data
+   falconWatchdogData.terminate = 0;
+   falconWatchdogData.incomingVM = 0;
+   falconWatchdogData.lastIncomingVM = 0;
+   
+   apr_thread_mutex_create(&falconWatchdogData.mutex, APR_THREAD_MUTEX_UNNESTED, mp);
+   apr_thread_cond_create(&falconWatchdogData.cond, mp);
+   
+   
+   
+   // Launch the watchdog thread
+   
+   
    // create falcon standard modules.
    ap_hook_handler(falcon_handler, NULL, NULL, APR_HOOK_MIDDLE);
 }

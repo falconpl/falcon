@@ -1,0 +1,7 @@
+
+
+class check_user 
+   function invoke()
+      return false
+   end
+end

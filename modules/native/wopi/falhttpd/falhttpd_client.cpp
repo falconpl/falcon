@@ -190,7 +190,7 @@ void FalhttpdClient::replyError( int errorID, const String& explain )
    String sErrorDesc = codeDesc( errorID );
    String sReply;
    String sError;
-   sReply.A("HTTP/1.0 ").N( errorID ).A( " " + sErrorDesc + "\r\n");
+   sReply.A("HTTP/1.1 ").N( errorID ).A( " " + sErrorDesc + "\r\n");
    sError.N(errorID ).A( ": " + sErrorDesc );
 
    // for now, we create the docuemnt here.

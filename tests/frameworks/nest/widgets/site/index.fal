@@ -3,6 +3,8 @@
    AJAX test site.
 */
 load nest
+load test_site_styles
+
 Nest.site_nest_dir = "../nest"
 
 // Uncomment to have debug infos.
@@ -11,10 +13,6 @@ Nest.site_nest_dir = "../nest"
 
 // Stylesheet
 // Nest.stylesheets += "some_style.css"
-
-// Scripts
-Nest.extscripts += "res/json2.js"
-Nest.extscripts += "res/nest.js"
 
 Nest.auth_level = Nest.AL.NONE
 // framing functions

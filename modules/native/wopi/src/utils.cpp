@@ -201,14 +201,10 @@ void parseQueryEntry( const String &query, ItemDict& dict )
 void addQueryVariable( const String &key, const Item& value, ItemDict& dict )
 {
    // is this a dictionary?
-   if( ! key.endsWith("[]") )
-   {
-      dict.put( new CoreString(key), value );
-   }
-   else
+   if( key.endsWith("[]") )
    {
       String short_key = key.subString(0, key.length()-2);
-      // else, create an array with the given keys.
+      // create an array
       Item *arr = dict.find( short_key );
 
       if ( arr != 0 )
@@ -227,6 +223,55 @@ void addQueryVariable( const String &key, const Item& value, ItemDict& dict )
          carr->append( value );
          dict.put( new CoreString( short_key ), carr );
       }
+   }
+   else if ( key.endsWith("]") )
+   {
+      // must be a dictionary entry.
+      uint32 pos = key.find("[");
+      if( pos == 0 || pos == String::npos )
+      {
+         // ignore and go on
+         dict.put( new CoreString(key), value );
+      }
+      else 
+      {
+         String genPart = key.subString( 0, pos );
+         String specPart = key.subString( pos+1, key.length()-1 );
+         specPart.trim();
+         if( (specPart[0] == '"' && specPart[specPart.length()-1] == '"') 
+            || (specPart[0] == '\'' && specPart[specPart.length()-1] == '\'') )
+         {
+            specPart = specPart.subString(1,specPart.length()-1);
+         }
+         
+         // else, create a dictionary
+         Item *arr = dict.find( genPart );
+         ItemDict* keyDict;
+         if( arr == 0 )
+         {
+            keyDict = new LinearDict;
+            dict.put( new CoreString( genPart), Item(new CoreDict(keyDict)) );
+         }
+         else 
+         {
+            if( ! arr->isDict() )
+            {
+               keyDict = new LinearDict;
+               keyDict->put( Item(), *arr );
+               dict.put( new CoreString(genPart), Item(new CoreDict(keyDict)) ); 
+            }
+            else 
+            {
+               keyDict = &arr->asDict()->items();
+            }
+         }
+         
+         keyDict->put( new CoreString(specPart), value );
+      }
+   }
+   else
+   {
+      dict.put( new CoreString(key), value );
    }
 }
 

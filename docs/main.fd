@@ -40,18 +40,18 @@ termination of the signaled VM. Also, a full Falcon error instance is not
 created for them, and embedding application can access the exception that
 terminated the execution through a standard Falcon::Error C++ interface.
 
-Not all the blocking waits are instrumented to respect interrupt requets and raise this error, as some
+Not all the blocking waits are instrumented to respect interrupt requests and raise this error, as some
 waiting operations may be caused by external module that are not required
 to adopt the vm interruption protocol.
 
 Compliant waiting functions are mainly @a sleep, @a Stream.readAvailable,
-@a Stream.writeAvailable and a few others. Compliancy to interruption protocol
+@a Stream.writeAvailable and a few others. Compliance to interruption protocol
 is specified in the item descriptions.
 
 @section suspend_on_sleep Suspension on sleep request.
 
 Embedding applications may also require the VM to suspend its execution on sleep
-requests coming from the scripts or from extension modules. It is usefull to have
+requests coming from the scripts or from extension modules. It is useful to have
 the VM instruct the embedding application on how much sleep time has been required,
 and let the embedding application manage this idle time.
 

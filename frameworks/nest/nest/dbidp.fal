@@ -1,0 +1,105 @@
+/*
+   FALCON - The Falcon Programming Language
+
+   Nest - Falcon web applcation engine
+
+   FILE: dbidp.fal
+
+   Data provider for widgets interfacing simple DBI tables.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Mon, 09 Aug 2010 15:33:56 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+import NestError from nest.error as NestError
+
+class DBIDataProvider( dbh, table, keyfield )
+   dbh = dbh
+   table = table
+   keyfield = keyfield
+
+   _curvalues = nil
+   _curop = nil
+   _curkey = nil
+   
+   function openNew()
+      _curop = 'new'
+      return true
+   end
+
+   function openGet( keyvalue )
+      sql = "select " + ",".merge(self.fields) + " from " + self.table +
+         " where " + self.keyfield + "=?"
+      
+      res = self.dbh.query( sql, keyvalue )
+      self._curvalues = res.fetch([=>])
+      if self.curValues == nil
+         return false
+      end
+
+      self._curop = 'get'
+      return true
+   end
+
+   
+   function openSet( keyvalue )
+      self._curvalues = [=>]
+      self._curop = 'set'
+      self._curkey = keyvalue
+      return true
+   end
+
+   function openDelete( keyvalue )
+      self._curop = 'del'
+      self._curkey = keyvalue
+      return true
+   end
+
+   function apply()
+      if self._curop == 'del'
+         sql = "delete from " + self.table + " where " + self.keyfield " = ?"
+         self.dbh.query( sql, self._curkey )
+      elif self._curvalues and self._curop != 'get'
+         fnames = self._curvalues.keys()
+         values = self._curvalues.values()
+            
+         if self._curop == 'new'            
+            sql = "insert into " + self.table + "(" +
+               ",".merge(fnames) + ") " +
+               "values( ? " + ",?" * (fnames.len() - 1) ")"
+
+         elif self._curop == 'set'
+            sql = "update " + self.table + " set " + "=?,".merge(fnames) + "=? "+
+                  "where " + self.keyfield + " = ?" 
+            values += self._curkey
+         end
+         
+         if sql: self.dbh.aquery( sql, values )            
+      end
+
+      self._curop = nil
+   end
+
+   function discard()
+      // do nothing
+      self._curop = nil
+   end
+
+   function set( fname, value )
+      if self._curvalues == nil: self._curvalues = [=>]
+      self._curvalues[fname] = value
+   end
+   
+   function get( fname )
+      if fname notin self._curvalues
+         raise NestError( NestError.get_field_not_found, nil, fname )
+      end
+         
+      return self._curvalues[fname]
+   end
+end

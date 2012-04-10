@@ -16,13 +16,13 @@
    See LICENSE file for licensing details.
 */
 
-import from nest.widgets.widget in widget
+import from nest.widgets.Button in widget
 
 /*# Submit input tag.
    @param id The widget ID
    @param value The value attribute of the input tag.
 */
-class Submit( id, value ) from widget.Widget( id )
+class Submit( id, value ) from widget.Button( id )
    tag = "input"
    isSelfClosing = true
    
@@ -31,6 +31,9 @@ class Submit( id, value ) from widget.Widget( id )
       self.props['name'] = nil   // will be filled at render
       self.props['type'] = "submit"
       self.props['value'] = value
+      
+      // TODO: Remove this when we have automatic parentship
+      self.addClassInParentship( Submit )      
    end   
 end
 

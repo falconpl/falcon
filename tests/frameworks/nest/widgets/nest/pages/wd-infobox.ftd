@@ -1,0 +1,21 @@
+<h2>Nest Widget test: InfoBox</h2>
+
+<?
+   text = "
+      <h2>This is an InfoBox!</h2>
+      <p>InfoBox is a relatively simple and self contained wiget,
+      that can be used to create hovering boxes near an arbitrarily placed image
+      on the page.</p>
+      <p>They use the Nest FX module, which has support for javascript transitions
+      and visual effects.</p>
+      <p>InfoBox is actually a composite widget, witjh an icon widget being parent
+         of the real box.</p>
+      <p>The box Nest widget can be accessed at Falcon level via the infobox property,
+         while at Javascript level it can be accesseed via Nest.i('parentid.infobox'),
+         where 'parentid' is the id given to the InfoBox main widget.</p>"
+         
+   ibox = Nest.widget( "InfoBox" )("ibox", "Basic Infos", text)
+?>
+
+<p>Click to get more info... <?= ibox.render() ?></p>
+

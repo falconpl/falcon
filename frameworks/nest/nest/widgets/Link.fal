@@ -1,0 +1,47 @@
+/*
+   FALCON - The Falcon Programming Language
+
+   Nest - Falcon web applcation engine
+
+   FILE: Link.fal
+
+   AJAX widgeting subsystem -- Simple widget implementation of A tag
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Sun, 02 Oct 2011 13:53:51 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2011: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+import Widget from nest.widgets.widget as Widget
+
+class Link( id, href, content, target ) from Widget( id )
+   tag = "a"
+   target = target
+   href = href
+   content = content
+
+   init
+      if content provides addChild
+         self.addChild( content )
+      end
+
+      settings = ["href" => href]
+      if target: settings["target" ] = target
+      
+      self.set( settings )
+
+      // TODO: Remove this when we have automatic parentship
+      self.addClassInParentship( Link )   
+   end
+
+   function renderContent()
+      if not self.content provides addChild
+         return self.content
+      end
+   end
+   
+end

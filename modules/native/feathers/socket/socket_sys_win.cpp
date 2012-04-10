@@ -176,6 +176,12 @@ bool getErrorDesc( int64 error, String &ret )
    ret = errordesc;
    return true;
 }
+
+bool getErrorDesc_GAI( int64 error, String &ret )
+{
+   return getErrorDesc( error, ret );
+}
+
 //================================================
 // Address
 //================================================

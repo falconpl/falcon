@@ -17,11 +17,12 @@
 */
 
 import Widget from nest.widgets.widget as Widget
+import AJAXRequest from nest.widgets.widget as AR
 import Hidden from nest.widgets.Hidden as Hidden
 
 /*# Class presenting multiple widget for posting as a form.
    @param id The ID of the form.
-   @param action The action of the form at submit.
+   @optparam action The action of the form at submit.
    @optparam method The method (GET or POST), defaults to "POST".
 
    This class has support to route the input variables filling them
@@ -29,15 +30,45 @@ import Hidden from nest.widgets.Hidden as Hidden
    callbacks with the value the Form expects them to receive,
    and may use this callback to check for correct values and eventually
    prepare their @b fieldInfo property with an error message.
+
+   If the @b action is nil, the form is intended as generating an
+   AJAX request that is sent to this widget. The default action
+   of this widget is calling the hook "handle_form", which receives
+   this form and the incoming data in a dictionary. The handler
+   might then decide to apply the values via @a nest.Widget.routeValues
+   or check the values directly from the dictionary.
+
+   The routeValues method comes particularly handy when used in
+   combination with a @a DataManager, as the data collected via
+   routing can then be applied directly to the data manager.
+
+   @note If the form is AJAX, it is given a method named "sendFormAJAX" on the
+   Javascript side, and the onsubmit method is forcefully set to this method.
+   it might be useful to use the onclick property of a button to invoke
+   this method directly via 'Nest.i("form-id").sendFormAJAX()'.
+   
 */
 class Form( id, action, method ) from Widget( id )
    tag = "form"
 
+   // we need a proxy for isAJAXHost, as a parent might remove it
+   // while we still need it for rendering purposes
+   _isAJAXForm = false
+
    init
       if self.props == nil: self.props = [=>]
-      self.props["method"] = method ? method : "POST"
-      self.props["action"] = action
+      
       self.props["accept-charset"] = "UTF-8"
+      if action
+         self.props["method"] = method ? method : "POST"
+         self.props["action"] = action         
+      else
+         self._isAJAXForm = true
+         self.isAJAXHost = true
+      end
+      
+      // TODO: Remove this when we have automatic parentship
+      self.addClassInParentship( Form )
    end
 
    /*# Sets the "accept-charset" property.
@@ -112,6 +143,29 @@ class Form( id, action, method ) from Widget( id )
             self.addChild( field )
       end
    end
+
+   function onRender()
+      if self._isAJAXForm
+         reqs = []
+         for child in self.children
+            self._addChildValuesAR( reqs, child )            
+         end
+
+         self.ajaxReqs = [
+            "sendFormAJAX"=> AR( reqs )
+         ]
+
+         self.props['onsubmit'] = "this.sendFormAJAX(); return false;"
+      end
+   end
+
+   function _addChildValuesAR( reqs, child )
+      // use */ to send by name and not by ID
+      if child.isValueHost: reqs += "*/" + child.getFullID() + "/value"
+      for subchild in child.children
+         self._addChildValuesAR( reqs, subchild )         
+      end
+   end
    
    /*# Overrides the base widget render content.
       This version calls:
@@ -153,6 +207,14 @@ class Form( id, action, method ) from Widget( id )
    */
    function renderFormEnd()
       return ""
+   end
+
+   /*# Base implementation of the AJAX form callback.
+   */
+   function AJAX( params )
+      data = Nest.emit( "handle_form", self, params )
+      if data: return data
+      return [=>]
    end
 
 end

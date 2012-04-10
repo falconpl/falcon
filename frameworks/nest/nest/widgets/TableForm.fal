@@ -27,6 +27,11 @@ import from nest.widgets.Form in wid
 */
 class TableForm( id, action, method ) from wid.Form( id, action, method )
 
+   init
+      // TODO: Remove this when we have automatic parentship
+      self.addClassInParentship( TableForm )
+   end
+   
    /*# Called back in rendering each element of the form.
       @param child A child widget of this form.
 

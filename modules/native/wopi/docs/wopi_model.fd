@@ -169,6 +169,7 @@
             Request.posts["Occupation"] = ""
             Request.posts["Gender"] = "M"
             Request.posts["Likes"] = []
+            Request.posts["Modes"] = [=>]
          ?>
       <? else ?>
          <p><b>Already filled form:</b></p>
@@ -198,6 +199,15 @@
             &nbsp;&nbsp&nbsp;
             <input type="checkbox" name="Likes[]" value="Music" <? if "Music" in Request.posts["Likes"]: >>'checked="yes"'?>/>&nbsp;Music
             </td></tr>
+      <tr><td>Modes (Exp. one="One", two="Two"):</td><td>
+            one: <input size="4" maxlength="4" type="text" name="Modes[one]"
+                        value="<? if "Modes" in Request.posts and "one" in Request.posts["Modes"]: >> Request.posts["Modes"]["one"] ?>"/>
+            &nbsp;&nbsp&nbsp;
+            two: <input size="4" maxlength="4" type="text" name="Modes[two]"
+                        value="<? if "Modes" in Request.posts and "two" in Request.posts["Modes"]: >> Request.posts["Modes"]["two"] ?>"/>
+            three: <input size="4" maxlength="4" type="text" name="Modes[three]"
+                        value="<? if "Modes" in Request.posts and "three" in Request.posts["Modes"]: >> Request.posts["Modes"]["three"] ?>"/>
+      </td></tr>            
       <tr><td col span="2"><input type="submit" value="send"/></td></tr>
       </form>
       </table>
@@ -221,6 +231,15 @@
    strings, each being an option in the checkbox list.
 
    @note It is possible to create arrays of values also in GET fields, appending the "[]" to the variable names in the URI query part.
+
+   When something is placed within the square brackets, for example "[some_name]",
+   all the values associated with that field are stored in a dictionary, under the key represented by the given name. In the
+   above example, we have the "Modes" field created with a set of interrelated text vields, which value is filled with 0 or more
+   strings, each being stored under the "Modes" dictionary, and associated with the string key value indicated in the field
+   name. For instance, <input ... name="Modes[one]" ...> will cause the value associated to this input to be provided to the
+   receiver script under Request.post["Modes"]["one"].
+
+   @note Similarly, the same can be done for GET fields, appending a "[...]" descriptor to a variable name in the URI query part.
    
    Consider using the @a Request.getField method to access a field that may come from GET or POST fields. This method
    can also provide a simple default in case the field is not given. For example, a variable that is vital for your script
@@ -269,8 +288,8 @@
    }
    @endcode
 
-   @note Notice the @b accept-charset parameter of the @b form tag. As MIME type doesn't specify an
-   encoding standard for multipart data, the falcon-apache2 module assumes that all the fields
+   @note Notice the @b accept-charset parameter of the @b form tag. As MIME doesn't specify an
+   encoding standard for multipart data, the WOPI back end modules assumes that all the fields
    in multipart posted forms (except the file entries) are encoded in utf-8. Please, use the
    accept-charset="utf-8" in every multipart form when sending data to Falcon modules.
 
@@ -280,13 +299,13 @@
    Different front-ends have different defaults, and different means to set this parameters; however, 
    the meaning of the parameters stays unchanged across all the frontends:
 
-   - Maximum size for uploads: it's the maximum upload size allowed, in kilobytes (1024 bytes).
+   - @b Maximum size for uploads: it's the maximum upload size allowed, in kilobytes (1024 bytes).
          The upload size is applied globally to the incoming form data; it's the total
          size of the uploaded files plus the overhead for headers and multipart boundaries.
          If the size of the incoming data is above this limit, the script receive a notify
          in the ":error" @a Request.posts dictionary, explaining the problem. The script
          can then notify the problem to the user.
-   - Maximum size for uploads stored in memory: Limit for direct-to-memory upload; see below.
+   - @b Maximum size for uploads stored in memory: Limit for direct-to-memory upload; see below.
    - @b UploadDir: Where to place temporary files for uploads. This must be a directory
         present on the system and writable by the web server process. This directory
         is used also by @a Request.tempFile to create temporary files. If the server cannot

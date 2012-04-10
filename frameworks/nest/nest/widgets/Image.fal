@@ -27,11 +27,14 @@ class Image( id, src, status ) from widget.Widget( id )
    init
       if self.props == nil: self.props = [=>]
       self.props['src'] = src
-      if not status
+      if status != nil and not status
          self.props['style'] = "display:none"
       else
          self.props['style'] = ""
       end
+
+      // TODO: Remove this when we have automatic parentship
+      self.addClassInParentship( Image )   
    end
    
 end

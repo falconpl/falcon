@@ -37,6 +37,8 @@ class RadioButton( id, name, value, text ) from widget.Widget( id )
       if self.props == nil: self.props = [=>]
       self.props['value'] = value
       self.props['type'] = 'radio'
+      // TODO: Remove this when we have automatic parentship
+      self.addClassInParentship( RadioButton )
    end
 
    function onRender()

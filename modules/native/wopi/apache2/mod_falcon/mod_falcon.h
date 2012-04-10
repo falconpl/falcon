@@ -17,6 +17,8 @@
 #ifndef FALCON_MOD_H
 #define FALCON_MOD_H
 
+#define VERSION   "0.8.6"
+
 #include <httpd.h>
 #include <http_config.h>
 

@@ -35,6 +35,9 @@ class Option( value, text, selected ) from widget.Widget( value )
    init
       self.props = ["value" => value ]
       if selected: self.props["selected"] = "selected"
+
+      // TODO: Remove this when we have automatic parentship
+      self.addClassInParentship( Option ) 
    end
 
    function renderContent()

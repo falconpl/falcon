@@ -35,6 +35,7 @@ Input.extra=config.fd
 Input.extra=overview.fd 
 Input.extra=quickstart.fd
 Input.extra=service.fd
+Input.extra=widget.fd
 
 ################################################
 # Faldoc Output settings

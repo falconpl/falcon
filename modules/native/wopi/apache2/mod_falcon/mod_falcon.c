@@ -64,6 +64,13 @@ static const command_rec mod_falcon_cmds[] =
            RSRC_CONF,
            "Whether the Falcon engine should cache its modules or not."
            ),
+   AP_INIT_TAKE1(
+       "FalconRunTimeout",
+           (const char *(*)())falcon_mod_set_runTimeout,
+           NULL,
+           RSRC_CONF,
+           "Whether the Falcon engine should cache its modules or not."
+           ),
    {NULL}
 };
 

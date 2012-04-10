@@ -1,0 +1,13 @@
+<h2>Custom AJAX enabled widget test</h2>
+
+<?= Nest.widget( "HashMaker" )("hm").render() ?>
+
+<p>This test just renders a "HashMaker" widget, which extends directly the base
+Nest.widget class, and implements multiple components. Transformations of the
+text into a hash is done via an automatic AJAX call.</p>
+
+<p>The invocation code is just:
+<pre>
+Nest.widget( "HashMaker" )("hm").render()
+</pre>
+</p>

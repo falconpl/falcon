@@ -38,6 +38,9 @@ import from json in json
    - "/a/b/value" is the text value of a widget "b" under widget "a" in the
      topmost widget parent of this one.
 
+   If the path starts with a "*", then the NAME of the target item is
+   used to return the value.
+
    Any DOM element property can be queried this way and sent back to the receiving
    application, that will receive it in a "infos" entry, named after the relative
    property name that has been given ("value" => value,
@@ -81,6 +84,7 @@ end
    have an @b id parameter as their @b first parameter in the class
    constructor. This @b id parameter will be propagated through the
    widget hierarcy up to this base class, always as first parameter.
+
 */
 
 class Widget( id )
@@ -108,9 +112,18 @@ class Widget( id )
    //# parent of this widget.
    parent = nil
 
-   //# list ov javascript methods to be added to this widget.
+   /*# Dictioanry of javascript methods to be added to this widget.
+      Each entry is a method that can be invoked on the javascript side.
+      The key is the method name, and the value must be a full javascript
+      function declaration.
+   */
    jsMethods = [=>]
 
+   /*# Dictioanry of javascript Listeners
+      Each entry is a method that can be invoked on the javascript side.
+      The key is the method name, and the value must be a full javascript
+      function declaration.
+   */
    jsListeners = [=>]
 
    //# Some widget cannot be closed with the XML self-closing tag.
@@ -120,35 +133,12 @@ class Widget( id )
    onCreate = nil
 
    /*# If true, this is a ajax host, and can receive ajax messages directly.
-
-      Topmost widgets are always considered ajax AJAX, but there can be
-      some widgets included inside parents that can have their own AJAX
-      handler method.
-
-      Is this property is true, the rendere will tell Nest to send AJAX
-      requests to this widget.
-
-      A parent can easily override this setting by setting this property
-      to false even when a widget can manage its own AJAX messages; then
-      the parent can route the messages to the children, if it wants,
-      after having processed them.
-
-      @note AJAX hosts \b must be exposed in a widget module (a file under
-      nest/widget named after the exposed class) \b and must properly
-      fill the @a Widget.initInfos verctor with the parameters that
-      the Nest system must pass to the widget during initialization step. Also,
-      they \b must provide a "tag", that is, they must be real possibly visible
-      entities (or at least, an invisible empty "div"),
-      and not just "widget groups". Notice that the @b id parameter is
-      automatically repeated by the Nest system, so it is not necessary
-      to present it inside the @b Widget.initInfo property.
-
-      @note All the widget subclasses willing to become AJAX hosts MUST
-      have an @b id parameter as their @b first parameter in the class
-      constructor. This @b id parameter will be propagated through the
-      widget hierarcy up to this base class, always as first parameter.
    */
    isAJAXHost = false
+
+   /*# If true, this widget is also a value host (i.e. has value in forms).
+   */
+   isValueHost = false
 
    /*# Init informations.
       This are the parameters that must be repeated to create a copy of this widget.
@@ -158,6 +148,9 @@ class Widget( id )
    */
    initInfos = nil
 
+   //# Name of the field in a data provider associated with this widget
+   datafield = nil
+   
    //# Text or widget used as label/prompt form or form-like widgets
    label = nil
 
@@ -170,8 +163,58 @@ class Widget( id )
    //# Set true to put label AFTER the main widget in standard representation
    labelsOnRight = false
 
-   //# Set true when the widget JSON part of the widget requires Nest_id.
-   needID = false
+   //# Stylesheet for this item for automated stilesheet generation in page
+   idStyles = nil
+   
+   //# Stylesheet for this class of items, for automated stilesheet generation in page
+   classStyles = nil
+
+   //# TODO: remove when we have automatic parentship
+   _parentship = []
+   
+   init
+      Nest.requireJS("base")      
+      Nest.subscribeWidget( self )
+
+      // TODO: use parentship in new engine to have Nest do it automagically
+      self.addClassInParentship( Widget )
+   end
+
+   //# Invoked by widget creation in Nest framework
+   function setup()
+      self.onSetup()
+      
+      rend = self.renderJSMethods()
+      rend += self.renderAJAXReqs()
+      // Listeners go after methods, as listener usually refer to methods.
+      rend += self.renderAJAXMessages()
+      rend += self.renderJSListeners()
+      if self.isAJAXHost
+         rend += self.renderInitInfos()
+      end
+      
+      if self.onCreate
+         if self.onCreate.isCallable()
+            value = self.onCreate()
+         else
+            value = self.onCreate
+         end
+         rend += "element.onCreate = function(){"+ value + ";}\n"
+      end
+      
+      if rend: return "element=Nest.i('" + self.getFullID() + "');\n" + rend
+   end
+
+   /*# Called back at widget creation.
+      This is invoked when all the structure of the widget is complete.
+      Here the widget should initialize:
+      - jsMethods
+      - jsListeners
+      - ajaxMessages
+      - ajaxReqs
+   */
+   function onSetup()
+   end
 
    //# Adds a child to this widget.
    function addChild( wid )
@@ -285,6 +328,10 @@ class Widget( id )
          if self.addName: name += self.addName
          self.props['name'] = name
       end
+
+      // and the class for the CSS
+      // TODO: use the proper parentship on the new engine.
+      if self.classStyles or Nest.hasOneOfClassStyles( self._parentship ): self.CSSClassID()
       
       // ... then allow the widget to self-render.
       self.onRender()
@@ -293,7 +340,6 @@ class Widget( id )
       if self.tag
          rend = "<" + self.tag + " id=\"" + id + "\" "
          rend += self.renderProps()
-         rend += self.renderAJAXReqs()
 
          if self.isSelfClosing and not self.children
             rend += "/>"
@@ -302,25 +348,17 @@ class Widget( id )
             rend += self.renderContent()
             rend += "</" + self.tag +">\n"
          end
-         if self.isAJAXHost or not self.parent
-            rend += self.renderInitInfos()
-         end
       else
          rend = ""
          if self.isAJAXHost
             // in case of ajax hosting, we need a "mute div" to have a document entity with our name.
             rend +="<div id=\""+id+"\" style=\"display:none\"></div>"
-            rend += self.renderInitInfos()
          end
+         
          // otherwise we're just a set of children entities.
          rend += self.renderContent()
       end
 
-      // finally, render JS methods that this class may have
-      rend += self.renderJSMethods()
-      // Listeners go after methods, as listener usually refer to methods.
-      rend += self.renderAJAXMessages()
-      rend += self.renderJSListeners()
       return rend
    end
 
@@ -330,34 +368,35 @@ class Widget( id )
 
       for mthName, mthDef in self.jsMethods
          // Add a ; just in case
+         if mthDef.isCallable()
+            mthDef = mthDef()
+         end
          rend += "element." + mthName + "=" + mthDef + ";\n"
       end
 
-      if self.onCreate
-         rend += "element.onCreate = function(){" + self.onCreate +";}\n"
-         Nest.closingScript += "document.getElementById('" + self.getFullID() + "').onCreate();\n"
-      end
+      return rend
+   end
 
-      if self.needID
-         rend +="element.Nest_id = '" + self.getFullID() + "';\n"
-      end
-      
-      if rend
-         rend = "<script language=\"javascript\">\n"+
-                "(function(){ var element = document.getElementById('" + self.getFullID() + "');\n" +          
-                rend +
-                "}());</script>\n"
+
+   function renderAJAXReqs()
+      rend = ""
+      for key, value in self.ajaxReqs
+         forfirst
+            id = self.getFullID()
+            hostName = self.ajaxHostName()
+         end
+
+         req = value.render( hostName, id, key )
+         rend += "element." + key + "=function(){" + req + ";};\n"
       end
       return rend
    end
+   
 
    function renderJSListeners()
       rend = ""
       for widget, mthDef in self.jsListeners
-         forfirst: rend = "<script language=\"javascript\">\n" +
-                          "(function(){ var element = document.getElementById('" + self.getFullID() + "');\n"
          rend += "Nest.listen( element, '"+ widget.getFullID() + "'," + mthDef + ");\n"
-         forlast: rend += "}());</script>\n"
       end
       return rend
    end
@@ -416,7 +455,7 @@ class Widget( id )
 
    //# private
    function renderInitInfos()
-      id = self.getFullID()
+      id = self.getFullID()         
 
       if self.initInfos
          obj = json.JSONencode( [id] + self.initInfos )
@@ -424,11 +463,7 @@ class Widget( id )
          obj =  "[\"" + id +"\"]"
       end
 
-      rend = @"
-         <script language=\"javascript\">\n
-         document.getElementById('$(id)').Nest_initInfo = $(obj);\n
-         </script>\n"
-
+      rend = @"element.Nest_initInfo = $(obj);\n"
       return rend
    end
 
@@ -443,34 +478,13 @@ class Widget( id )
    end
 
 
-   //# private
-   function renderAJAXReqs()
-      rend = ""
-      for key, value in self.ajaxReqs
-         forfirst
-            id = self.getFullID()
-            hostName = self.ajaxHostName()
-            rend = " "
-         end
 
-         req = value.render( hostName, id, key )
-         rend += key + "=\"" + req + ";\""
-         formiddle: rend += " "
-      end
-      return rend
-   end
 
    //# private
    function renderAJAXMessages()
       rend = ""
       for key, value in self.ajaxMessages
-         forfirst
-            this = "document.getElementById('" + self.getFullID() + "')";
-            rend += "<script language=\"javascript\">\n(function(){"
-         end
-
-         rend += "Nest.messageHandlers['" + key +"']= function(obj){" + @value + "}\n"
-         forlast: rend += "}());</script>"
+         rend += "Nest.messageHandlers['" + key +"']=" + "{ object: element, method: " + value + "};\n"
       end
 
       return rend
@@ -507,16 +521,6 @@ class Widget( id )
       end
    end
 
-   /*# Utility to create the code to invoke a nest javascript local message.
-      @param msg The name of the message generated by the widget in the browser page.
-      @param value A value associated with the message (may be any valid javascript expression).
-
-      @note The value member is directly placed in the javascript invocation; if it's meant to
-      be a string, proper quotes must be added inside the string.
-   */
-   function makeMessage( msg, value )
-      return "Nest.message('"+self.getFullID()+ "', '" + msg + "', " + value +");"
-   end
 
    /*# Utility get ourselevs at Javascript level during render.
       Returns a string defined as document.getElementById('"+self.getFullID()+ "')
@@ -538,14 +542,92 @@ class Widget( id )
       @endcode
    */
    function makeEmit( msg, value )
-      self.needID = true
-      return "function(){ Nest.message(this.Nest_id, '" + msg + "', " + value +"); }"
+      return "function(){ Nest.message(this, '" + msg + "', " + value +"); }"
    end
 
-   /*# Emit a message directly from within a js script. */
+   function makeInvoke( method, param )
+      param = json.JSONencode( param )
+      id = self.getFullID()
+      return @"function() { Nest.processMessage({ message:'invoke', id:\"$(id)\", method:\"$(method)\", param:$(param)});}"
+   end
+
+   function makeSetProperty( prop, value )
+      id = self.getFullID()
+      return @"function(){Nest.processMessage({ message:'set', id:\"$(id)\", property:\"$(prop)\", value:\"$(value)\"});}"
+   end
+
+   function makeSetStyle( prop, value )
+      id = self.getFullID()
+      return @"function(){Nest.processMessage({ message:'set_style', id:\"$(id)\", property:\"$(prop)\", value:\"$(value)\"});}"
+   end
+
+    /*# Utility to create the code to invoke a nest javascript local message.
+      @param msg The name of the message generated by the widget in the browser page.
+      @param value A value associated with the message (may be any valid javascript expression).
+
+      @note The value member is directly placed in the javascript invocation; if it's meant to
+      be a string, proper quotes must be added inside the string.
+   */
    function jsEmit( msg, value )
-      self.needID = true
-      return "Nest.message(this.Nest_id, '" + msg + "', " + value +");"
+      return "Nest.message(this, '" + msg + "', " + value +");"
+   end
+
+   function jsInvoke( method, param )
+      param = json.JSONencode( param )
+      id = self.getFullID()
+      return @"Nest.processMessage({ message:'invoke', id:\"$(id)\", method:\"$(method)\", param:$(param)});"
+   end
+
+   function jsSetProperty( prop, value )
+      id = self.getFullID()
+      return @"Nest.processMessage({ message:'set', id:\"$(id)\", property:\"$(prop)\", value:\"$(value)\"});"
+   end
+
+   function jsSetStyle( prop, value )
+      id = self.getFullID()
+      return @"Nest.processMessage({ message:'set_style', id:\"$(id)\", property:\"$(prop)\", value:\"$(value)\"});"
+   end
+   
+   /*# Utility to generate a method calling another method.
+      @param funcname The name of the message generated by the widget in the browser page.
+      @optparam ... Other values to be passed in the call.
+
+      Can be put into any nest widget.
+      @code
+      wid.jsMethods = [
+         "onclick" => wid.makeCall( "onclick", "this.value" )
+      ]
+      @endcode
+   */
+   function makeCall( funcname )
+      v = passvp()
+      if v
+         vals = ",".merge(map({x=>"\""+toString(x).escape()+"\""}, v))
+      else
+         vals = ""
+      end
+      return "function(){Nest.i(\""+self.getFullID()+"\")."+funcname+"("+ vals +");}"
+   end
+   
+   /*# Utility to generate a direct JS call to this nest widget.
+      @param funcname The name of the message generated by the widget in the browser page.
+      @optparam ... Other values to be passed in the call.
+
+      Can be put into any nest widget.
+      @code
+      wid.jsMethods = [
+         "..." => "function(){ ...." +  wid.jCall( "onclick", "this.value" ) +".something; ...}"
+      ]
+      @endcode
+   */
+   function jsCall( funcname )
+      v = passvp()
+      if v
+         vals = ",".merge(map({x=>"\""+toString(x).escape()+"\""}))
+      else
+         vals = ""
+      end
+      return "Nest.i(\""+self.getFullID()+"\")."+funcname+"("+ vals +")"
    end
    
    /*# Called back right before rendering.
@@ -622,10 +704,95 @@ class Widget( id )
                "', '" + self.getFullID() + "', '" + msg + "', " +
                infos_s + ", " + extra_s + ");"
    end
+
+   //===================================================
+   // Data management
+   //
+
+   function setData( provider )
+      if self.datafield
+         provider.set( self.datafield, self.getValue() )
+      end
+
+      for child in self.children
+         child.setData( provider )
+      end
+   end
+
+   function getData( provider )
+      if self.datafield
+         // the data provider is bound to raise if the field is not valid.
+         self.setRenderValue( provider.get( self.datafield ) )
+      end
+
+      for child in self.children
+         child.getData( provider )
+      end
+   end
+   
+         
    
    //===================================================
+   // CSS batch generator interface
+   //
 
+   function CSSClassID()
+      if self.props == nil
+         CSS_id = "nest_widget_" + self.className()
+         self.props = ["class"=> CSS_id]
+      elif "class" notin self.props
+         CSS_id = "nest_widget_" + self.className()
+         self.props["class"] = CSS_id
+      else
+         CSS_id = self.props["class"]
+      end
 
+      return CSS_id
+   end
+
+   // TODO: use parentship in new engine to have Nest do it automagically
+   function addClassInParentship( cls )
+      name = cls.className()
+      self._parentship += name
+   end
+
+   function addStyleAsID( style )
+      if self.idStyles
+         self.idStyles += style
+      else
+         self.idStyles = [style]
+      end
+   end
+
+   function addStyleAsClass( style )
+      if self.classStyles
+         self.classStyles += style
+      else
+         self.classStyles = [style]
+      end
+   end
+
+   function pickClassStyles( classStyleDict )
+      result = nil
+      for item in self._parentship
+         if item in classStyleDict
+            if not result
+               result = [] + classStyleDict[item]
+            else
+               result += classStyleDict[item]
+            end
+         end
+      end
+
+      if result
+         if self.classStyles: result += self.classStyles
+      elif self.classStyles
+         result = self.classStyles
+      end
+
+      return result
+   end
+   
    //===================================================
    /*# Route ajax requests.
       @params The parameters generated by the remote ajax request.
@@ -646,6 +813,15 @@ class Widget( id )
          "value"=>value ]
    end
 
+   //# Generates a set-property message
+   function msgSetStyle( prop, value )
+      return [
+         "message" => "set_style",
+         "id" => self.getFullID(),
+         "property" => prop,
+         "value"=>value ]
+   end
+
    //# Generates a invoke method message
    function msgInvoke( method, data )
       return [
@@ -655,4 +831,10 @@ class Widget( id )
          "param"=> data ]
    end
 
+   //# Generates a generic message
+   function msgGeneric( message, value )
+      if value == nil: value = [=>]
+      value[ "message" ] = message
+      return value
+   end
 end

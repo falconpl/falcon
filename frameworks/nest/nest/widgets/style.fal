@@ -1,0 +1,69 @@
+/*
+   FALCON - The Falcon Programming Language
+
+   Nest - Falcon web applcation engine
+
+   FILE: style.fal
+
+   AJAX widgeting subsystem -- stylesheet generator
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Mon, 26 Sep 2011 11:55:58 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2011: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+
+/*# Entity representing a CSS style to be applied to one or more widgets.
+   @param name A logical name for the style
+   @optparam mode The CSS pseudo-class for the style ("hover", "focus" etc.)
+   @optparam css The css declarations
+*/
+class Style( name, mode, css )
+   name = name
+   css = css
+   mode = mode
+
+   /**# Apply this CSS to the given widget by ID
+      @param widget The widget to which this CSS elements must be applied.
+      @return self to allow chains of calls
+   */
+   function setToID( widget )
+      widget.addStyleAsID( self )
+      return self
+   end
+
+   /**# Apply this CSS to the given widget by class.   
+      @param widget The widget to which this CSS elements must be applied.
+      @return self to allow chains of calls
+      
+      When this widget is rendered, the style is made valid for all the widgets
+      of this same class.
+   */
+   function setToClass( widget )
+      widget.addStyleAsClass( self )
+      return self
+   end
+
+
+   /**# Apply to all the widgets that have a certain Widget (Falcon) class or inherit from that.
+      @param wcls The class
+      @return self to allow chains of calls
+      
+      When a widget with this class is created, Nest will automatically add this
+      style to the CSS class styles of the newly added widget.
+
+      The @b wcls parameter is the class of the widget as known by Falcon, not the CSS class
+      that the widget declares. If two widgets of the same Falcon class declare a different
+      CSS class, Nest generates a copy of the declaration to make sure both the CSS classes
+      are covered.
+   */
+   function applyToClass( wcls )
+      Nest.addClassStyle( wcls, self )
+      return self
+   end
+
+end

@@ -1098,7 +1098,7 @@ void usage()
    stdOut->writeString( "\t-S: Write the strings inline instead of using #strid\n" );
    stdOut->writeString( "\t-y: Dump the symbol table\n" );
    stdOut->writeString( "\t-d: Dump the dependency table\n" );
-   stdOut->writeString( "\t-l: add line informations\n" );
+   stdOut->writeString( "\t-l: add line information\n" );
    stdOut->writeString( "\t-h: show this help\n" );
    stdOut->writeString( "\t-i: create an isomorphic version of the original assembly\n" );
    stdOut->writeString( "\tIf 'filename' is '-' or missing, read from stdin\n" );

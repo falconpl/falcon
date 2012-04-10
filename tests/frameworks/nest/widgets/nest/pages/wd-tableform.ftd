@@ -1,0 +1,153 @@
+<?
+   import CheckBoxSet from nest.widgets.CheckBoxSet as CheckBoxSet
+?>
+
+<h2>Nest Widget test: TableForm</h2>
+<?
+   form = Nest.widget( "TableForm" )("tableform", "#")
+   form.addHidden( "hasForm", "true" )
+
+   wid = Nest.widget( "ActiveTextArea" )("enter_text", "Enter text", 3, 30)
+   widtext = Nest.widget("Text")("counter","0")
+   widtext.addStyle( "color:red; font-weight:bold" )
+   widtext.jsListeners = [
+      wid => " function( source, msg, value ) { this.innerHTML = value.length; }"
+      ]
+
+   th = Nest.widget( "TheNameIsAvail" )( "the_other_name" )
+   form.addChild( th )
+   form.addChild( Nest.widget( "RichPassword" )("my_password", "Enter password", "Repeat password") )
+   form.addChild( wid )
+   form.addChild( widtext )
+   form.setConfirmReset( "Sure you want to reset?" )
+   form.setConfirmSubmit( "Sure you want to submit?" )
+
+   class MyCBSet from CheckBoxSet( "choice",
+               ["one:First choice$", "two:Second choice$", "three:Third choice$"])
+
+      function setRenderValue( val )
+         self.CheckBoxSet.setRenderValue( val )
+         if self.value.len() < 2
+            self.fieldInfo = "<b>Please, select at least 2 items!</b>"
+         end
+      end
+   end
+   cbox = MyCBSet()
+
+   cbox.label = "Pick one or more..."
+   form.addChild( cbox )
+
+   rbox = Nest.widget( "RadioButtonSet" )( "pick",
+               ["one:Alpha", "two:Beta", "three:Gamma"])
+   rbox.label = "Hello"
+   form.addChild( rbox )
+
+   selbox = Nest.widget( "Select" )( "selopt",
+               [ ": -- Pick one plz --", "one:Option One", "two:Option Two", "three:Option Three"],
+               "Pick one" )
+
+   mselbox = Nest.widget( "Select" )( "selmulti",
+               ["one:Option One", "two:Option Two",
+                "three:Option Three",
+                "four:Option four" ],
+                "Pick many", -1 )
+   form.addChild( selbox )
+   form.addChild( mselbox )
+
+   datesel = Nest.widget( "DateSelector" )( "datesel" )
+   form.addChild( datesel )
+
+   // bottom line...
+   contSub = Nest.widget( "Container" )( "sub" )
+   contSub.addChild( Nest.widget("Submit")("sb", "Send data") )
+   contSub.addChild( Nest.widget("Reset")("rb", "Reset data") )
+   form.addChild( contSub )
+
+   if "tableform.hasForm" in Request.posts
+      > "Receiving form data from a post"
+      form.routeValues( Request.posts )
+      if not rbox.getValue()
+         rbox.fieldInfo= "<b>Please, set one!</b>"
+      end
+      datesel.fieldInfo = "You entered " + datesel.getValue()
+   end
+?>
+<?= form.render() ?>
+
+
+<p>This test is used to check for Nest TableForm widget and several
+form-related widget. Submitting the form causes the data to be re-loaded into
+the widgets, so the correct behavior is that of seeing the same data that
+was inserted before sending the form.</p>
+
+<p>Soruce code:
+<pre>
+   form = Nest.widget( "TableForm" )("tableform", "#")
+   form.addHidden( "hasForm", "true" )
+
+   wid = Nest.widget( "ActiveTextArea" )("enter_text", "Enter text", 3, 30)
+   widtext = Nest.widget("Text")("counter","0")
+   widtext.addStyle( "color:red; font-weight:bold" )
+   widtext.jsListeners = [
+      wid =&gt; " function( source, msg, value ) { this.innerHTML = value.length; }"
+      ]
+
+   th = Nest.widget( "TheNameIsAvail" )( "the_other_name" )
+   form.addChild( th )
+   form.addChild( Nest.widget( "RichPassword" )("my_password", "Enter password", "Repeat password") )
+   form.addChild( wid )
+   form.addChild( widtext )
+   form.setConfirmReset( "Sure you want to reset?" )
+   form.setConfirmSubmit( "Sure you want to submit?" )
+
+   class MyCBSet from CheckBoxSet( "choice",
+               ["one:First choice$", "two:Second choice$", "three:Third choice$"])
+
+      function setRenderValue( val )
+         self.CheckBoxSet.setRenderValue( val )
+         if self.value.len() &lt; 2
+            self.fieldInfo = "&lt;b&gt;Please, select at least 2 items!&lt;/b&gt;"
+         end
+      end
+   end
+   cbox = MyCBSet()
+
+   cbox.label = "Pick one or more..."
+   form.addChild( cbox )
+
+   rbox = Nest.widget( "RadioButtonSet" )( "pick",
+               ["one:Alpha", "two:Beta", "three:Gamma"])
+   rbox.label = "Hello"
+   form.addChild( rbox )
+
+   selbox = Nest.widget( "Select" )( "selopt",
+               [ ": -- Pick one plz --", "one:Option One", "two:Option Two", "three:Option Three"],
+               "Pick one" )
+
+   mselbox = Nest.widget( "Select" )( "selmulti",
+               ["one:Option One", "two:Option Two",
+                "three:Option Three",
+                "four:Option four" ],
+                "Pick many", -1 )
+   form.addChild( selbox )
+   form.addChild( mselbox )
+
+   datesel = Nest.widget( "DateSelector" )( "datesel" )
+   form.addChild( datesel )
+
+   // bottom line...
+   contSub = Nest.widget( "Container" )( "sub" )
+   contSub.addChild( Nest.widget("Submit")("sb", "Send data") )
+   contSub.addChild( Nest.widget("Reset")("rb", "Reset data") )
+   form.addChild( contSub )
+
+   if "tableform.hasForm" in Request.posts
+      &gt; "Receiving form data from a post"
+      form.routeValues( Request.posts )
+      if not rbox.getValue()
+         rbox.fieldInfo= "&lt;b&gt;Please, set one!&lt;/b&gt;"
+      end
+      datesel.fieldInfo = "You entered " + datesel.getValue()
+   end
+</pre>
+</p>

@@ -38,6 +38,9 @@ class ActiveTextArea( id, prompt, rows, cols ) from ActiveInput( id, prompt )
          self.props["rows"] = rows
          self.props["cols"] = cols
       end
+
+      // TODO: Remove this when we have automatic parentship
+      self.addClassInParentship( ActiveTextArea )
    end
 
    function setRenderValue( val )

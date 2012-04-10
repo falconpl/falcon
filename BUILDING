@@ -53,7 +53,7 @@ open up a menu through which you can cherry-pick the components to be built and 
 
   Many complex components, as SDL and DBI require a finetune configuration after their
 switch on. To do that, first perform a configuration (use the 'c' key) and then change the
-new settings that appare.
+new settings that appear.
 
   Relevant variables affecting the outcome of the build and installation processes
 are:

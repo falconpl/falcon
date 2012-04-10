@@ -1,0 +1,17 @@
+class handle_form
+   function invoke( form, values )
+      res = ""
+      for k, v in values["infos"]
+         res += k + " = " + htmlEscape(v.describe()) + "\n"
+      end
+      
+      return [
+         [ "message" => "set", "id" => "formResult", "property" => "innerHTML", "value" => res ],
+         [ "message" => "set", "id" => "tableform.enter_text", "property" => "value", "value" => "Forcefully reset" ],
+         [ "message" => "set", "id" => "tableform.choice", "property" => "value", "value" => ["one","three"] ],
+         [ "message" => "set", "id" => "tableform.pick", "property" => "value", "value" => "beta" ],
+         [ "message" => "set", "id" => "tableform.selmulti", "property" => "value", "value" => ["two", "four"] ]
+      ]
+         
+   end
+end

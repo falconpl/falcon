@@ -1,0 +1,37 @@
+/*
+   FALCON - The Falcon Programming Language
+
+   Nest - Falcon web applcation engine
+
+   FILE: Menu.fal
+
+   AJAX widgeting subsystem -- navigation menu
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Mon, 26 Sep 2011 11:55:58 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2011: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+import Widget from nest.widgets.widget as Widget
+
+class Menu( id ) from Widget( id )
+   tag = "ul"
+
+   init
+      // TODO: Remove this when we have automatic parentship
+      self.addClassInParentship( Menu )
+   end
+   
+   function renderChild( child )
+      auth_level = Nest.ambient( "auth_level" )
+      if child provides minAuthLevel and child.minAuthLevel and child.minAuthLevel < auth_level
+         return ""
+      end
+      
+      return child.render() + "\n"
+   end
+end

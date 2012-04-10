@@ -19,8 +19,9 @@
 
 function findFile( dir, rname, exts )
    // search under dir for the file or the file + some of the exts.
-   fname = dir + "/" + rname
-   fpath = Path(fname)
+   fpath = Path()
+   fpath.fulloc = dir
+   fpath.file = rname
 
    for ext in exts 
       fpath.extension = ext
@@ -30,6 +31,7 @@ function findFile( dir, rname, exts )
    end
    
    // no luck with the extension. Have we the file as-is?
+   fname = dir + "/" + rname
    if fileType( fname ) == FileStat.NORMAL
       return fname
    end
@@ -56,6 +58,42 @@ function reldir( parent, child )
    if not parent.endsWith("/"): parent += "/"
    return parent + child
 end
+
+
+function checkModifiedSince( res_file )
+   if "If-Modified-Since" in Request.headers
+      try
+         // don't bother too much if we don't succeed at first.
+         since = TimeStamp()
+         date = Request.headers["If-Modified-Since"]
+         since.fromRFC2822(date)
+         fs = FileStat(res_file)
+         if fs.mtime <= since
+            Reply.status = 304
+            Reply.reason = "Not modified"
+            Reply.setHeader( "Content-Type" )
+            Reply.setHeader( "Cache-Control" )
+            return true
+         end
+      catch in e
+         Nest.logw( "Error during If-Modified-Since check request: " + e )
+      end
+   else
+      // else, save the timestamp
+      fs = FileStat(res_file)
+      Reply.setHeader("Last-Modified", fs.mtime.toRFC2822() )
+   end
+
+end
+
+
+function exitReply( status, reason, text )
+   Reply.status = status
+   Reply.reason = reason
+   Reply.ctype("text","html","utf-8")
+   stdOut().writeText( @"<body><h1>$(status) $(reason)<h1>\n<p>$(text)</p>\n</body>")
+end
+
 
 /*# Site setup.
    @param tgtdir Target directory where to create the site.

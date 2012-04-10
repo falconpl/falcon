@@ -1,0 +1,31 @@
+<?
+   import Menu from nest.widgets.Menu as Menu
+   import MenuItem from nest.widgets.MenuItem as MenuItem
+   import Link from nest.widgets.Link as Link
+?>
+<h2>Nest Widget test: Menu</h2>
+
+<?
+   rl = Nest.resLink
+   
+   submenu = Menu( "sub_menu" )
+   submenu.addChildren(
+       MenuItem( "itm5", "First sub choice", nil, nil, nil, Nest.AL.USER ),
+       MenuItem( "itm6", "Second sub choice", rl("icon_choice6") )
+   )
+   submenu.set( ["class"=>'submenu'] )
+      
+   menu = Menu( "mymenu" )
+   menu.addChildren( 
+      MenuItem( "itm1", Link( "idl1", "#", "First link" ), rl("icon_choice1") ),
+      MenuItem( "itm2", "Submenu", rl("icon_choice2"), submenu, "|&gt;" ),
+      MenuItem( "itm3", Link( "idl2", "#", "Second link" ), rl("icon_choice3") ),
+      MenuItem( "itm4", Link( "idl3", "#", "Third link" ), rl("icon_choice4") )
+   )
+
+   menu.set( ["class"=>'mainmenu'] )
+   
+   > menu.render()
+   
+?>
+

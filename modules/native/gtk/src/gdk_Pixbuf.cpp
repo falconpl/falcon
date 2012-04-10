@@ -215,7 +215,7 @@ FALCON_FUNC Pixbuf::new_from_file( VMARG )
     GdkPixbuf* pixbuf = gdk_pixbuf_new_from_file( s.c_str(), &err );
     if ( err != NULL )
     { // TODO should throw
-        g_print( err->message );
+        g_print( "%s", err->message );
         g_error_free( err  );
     }
     vm->retval( new Pixbuf( vm->findWKI( "GdkPixbuf" )->asClass(),
@@ -246,7 +246,7 @@ FALCON_FUNC Pixbuf::new_from_file_at_size( VMARG )
         &err );
     if ( err != NULL )
     { // TODO should throw
-        g_print( err->message );
+        g_print( "%s", err->message );
         g_error_free( err  );
     }
     vm->retval( new Gdk::Pixbuf( vm->findWKI( "GdkPixbuf" )->asClass(),
@@ -280,7 +280,7 @@ FALCON_FUNC Pixbuf::new_from_file_at_scale( VMARG )
         &err );
     if ( err != NULL )
     { // TODO should throw
-        g_print( err->message );
+        g_print( "%s", err->message );
         g_error_free( err  );
     }
     vm->retval( new Gdk::Pixbuf( vm->findWKI( "GdkPixbuf" )->asClass(),

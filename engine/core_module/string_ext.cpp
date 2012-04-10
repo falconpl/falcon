@@ -114,9 +114,9 @@ FALCON_FUNC String_charSize( VMachine *vm )
 /*#
    @method front String
    @brief Returns the first character in a string.
-   @optparam count Number of characters to be returned (1 by default).
+   @optparam count Number of characters to be returned (defaults to 1).
    @optparam numeric If true, returns a character value instead of a string.
-   @optparam remove If true, remove also the character.
+   @optparam remove If true, also remove the character.
    @return The first element or nil if the string is empty.
 
    This method returns a string containing one character from the beginning of the string,
@@ -133,10 +133,10 @@ FALCON_FUNC String_charSize( VMachine *vm )
 
 /*#
    @function strFront
-   @brief Returns the first character in a string.
+   @brief Returns the first character(s) in a string.
    @param str The string on which to operate.
    @optparam count Number of characters to be taken (defaults to 1).
-   @optparam remove If true, remove also the character.
+   @optparam remove If true, also remove the character.
    @optparam numeric If true, returns a character value instead of a string.
    @return The first element or nil if the string is empty.
 
@@ -194,13 +194,13 @@ FALCON_FUNC mth_strFront( VMachine *vm )
 
 /*#
    @method back String
-   @brief Returns the first character in a string.
+   @brief Returns the last character in a string.
    @optparam count Number of characters to be taken (defaults to 1).
    @optparam numeric If true, returns a character value instead of a string.
    @optparam remove If true, remove also the character.
-   @return The first element or nil if the string is empty.
+   @return The last element or nil if the string is empty.
 
-   This function returns a string containing one character from the end of this string,
+   This function returns a string containing one character from the end of the string,
    or eventually more characters in case a number > 1 is specified in @b count.
 
    If @b remove is true, then the character is removed and the string is shrunk.
@@ -217,15 +217,15 @@ FALCON_FUNC mth_strFront( VMachine *vm )
    @brief Returns the last character(s) in a string.
    @param str The string on which to operate.
    @optparam count Number of characters to be taken (defaults to 1).
-   @optparam remove If true, remove also the character.
+   @optparam remove If true, also remove the character.
    @optparam numeric If true, returns a character value instead of a string.
-   @return The first element or nil if the string is empty.
+   @return The last element or nil if the string is empty.
 
    This function returns a string containing one character from the end of @b str,
    or eventually more characters in case a number > 1 is specified in @b count.
 
    If @b remove is true, then the characters are removed and the string is shrunk.
-   @see String.front
+   @see String.back
 
    If @b numeric is true,
    the UNICODE value of the string character will be returned, otherwise the caller
@@ -272,7 +272,6 @@ FALCON_FUNC mth_strBack( VMachine *vm )
 
       if( bRemove )
          str->remove( strLen-len, len );
-
    }
 }
 

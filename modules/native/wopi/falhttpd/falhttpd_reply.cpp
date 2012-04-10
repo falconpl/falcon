@@ -38,7 +38,7 @@ void FalhttpdReply::init( SOCKET s )
 
 void FalhttpdReply::startCommit()
 {
-   m_headers.A("HTTP/1.1 ").N( m_nStatus ).A( m_sReason ).A("\r\n");
+   m_headers.A("HTTP/1.1 ").N( m_nStatus ).A(" ").A( m_sReason ).A("\r\n");
 }
 
 

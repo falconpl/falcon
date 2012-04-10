@@ -1,0 +1,206 @@
+/*
+   FALCON - The Falcon Programming Language
+
+   Nest - Falcon web applcation engine
+
+   FILE: LoginMask.fal
+
+   AJAX widgeting subsystem -- A standard login mask.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Sun, 08 Apr 2012 15:30:25 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2011: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+import from nest.widgets.widget in widget
+import InputText from nest.widgets.InputText as InputText
+import Password from nest.widgets.Password as Password
+import CheckBox from nest.widgets.CheckBox as CheckBox
+import Link from nest.widgets.Link as Link
+import Button from nest.widgets.Button as Button
+import Submit from nest.widgets.Submit as Submit
+import Text from nest.widgets.Text as Text
+import Image from nest.widgets.Image as Image
+
+
+class LoginBtn from Button( "login" )
+   ajaxReqs = [
+      "sendLogin"=> widget.AJAXRequest( ["../user-id/value", "../pwd/value", "../rememberMe/checked"] )
+   ]
+
+   jsMethods = [
+      "onRequest"=> self.makeEmit( 'change', 'this.value' )
+   ]
+
+   props = ["onclick" =>"this.onRequest();this.sendLogin();" ]
+
+   init
+      // TODO: Remove this when we have automatic parentship
+      self.addClassInParentship( LoginBtn )
+   end
+end
+
+
+/*# Manages a full login process.
+*/
+class LoginMask( id, formAction ) from widget.Widget( id )
+   formAction = formAction
+
+   jsMethods = [
+      "onLoginFailed" => "function( params ) { Nest.message( this, 'login', null ); }",
+      "onLoginSuccess" => "function( params ) { Nest.message( this, 'login', params ); }"
+   ]
+   
+   
+   userid_prompt = "User ID"
+   pwd_prompt = "Password"
+   remember_prompt = "Remember me"
+   login_prompt = "Login"
+   
+   tag = "span"
+   userID = InputText( "user-id" )
+   pwd = Password( "pwd" )   
+   rememberMe = CheckBox( "rememberMe" )
+   loginBtn = formAction ? Submit("login", "") : LoginBtn()
+   accessStatus = Text( "status", "Login failed!" )
+   loginBusy = Image( "busy-ind", Nest.resLink("ajax-loader.gif"), false )
+
+   recover = nil // Link( "recover", recoverLink, "Forgot my password" )
+   
+   //# A default skin (to be configured)
+   recover_skin = "<tr><td colspan=\"2\">$(recover)</td></tr>"
+
+   //# A default skin (to be configured)
+   skin = "
+      $(form_begin)
+      <table border=\"0\">
+         <tbody>
+         <tr><td colspan=\"2\">$(accessStatus)</td></tr>
+         <tr><td>$(userid_prompt)</td><td>$(userID)</td></tr>
+         <tr><td>$(pwd_prompt)</td><td>$(pwd)</td></tr>
+         <tr><td colspan=\"2\" style=\"clear:both\"><span style=\"float:left\">$(remember_prompt) $(rememberMe)</span>
+                        <span style=\"float:right\">$(loginBusy) $(loginBtn)</span></td></tr>
+         $(recover_skin)
+         </tbody>
+      </table>
+      $(form_end)"
+         
+   jsListeners = [
+      self.loginBtn => "function( item, msg, params ){ Nest.i(this.id+'.busy-ind').style.display=''; }"
+   ]
+   
+   init
+      self.addChild( self.userID )
+      self.addChild( self.pwd )
+      self.addChild( self.rememberMe )
+      self.addChild( self.loginBtn )
+      self.addChild( self.accessStatus )
+      self.addChild( self.loginBusy )
+
+      self.props = ["style"=>"display:inline-block"]
+      self.loginBusy.props["width"] = 16
+      self.loginBusy.props["height"] = 16
+      self.accessStatus.set( ["style" => "display:none"] )
+      self.accessStatus.jsListeners = [
+         self => "
+            function( obj, msg, value ) {
+               if( msg == 'login' ) {
+                  this.style.display = value == null ? '' : 'none';
+               }
+            }"
+         ]
+
+      // if we're not using a form convention, we're ajax
+      if not formAction
+         self.isAJAXHost = true
+         jsListeners = [
+               self.loginBtn => "function( item, msg, params ){ Nest.i(this.id+'.busy-ind').style.display=''; }"
+            ]
+      end
+      
+      // TODO: Remove this when we have automatic parentship
+      self.addClassInParentship( LoginMask )
+   end
+
+   function renderContent()
+      if( self.formAction )
+         self.loginBtn.props["value"] = self.login_prompt
+      else
+         self.loginBtn.content = self.login_prompt
+      end
+      
+      if self.recover
+         self.addChild( self.recover )
+         recover = self.recover.render()
+         recover_skin = @ self.recover_skin
+      else
+         recover_skin = ""
+      end
+
+      if self.formAction
+         form_begin = "<form action=\"$(self.form_action)\" method=\"POST\" accept-charset=\"UTF-8\">"
+         form_end = "</form>"
+      else
+         form_begin = ""
+         form_end = ""
+      end
+      
+      userid_prompt = self.userid_prompt
+      pwd_prompt = self.pwd_prompt
+      remember_prompt = self.remember_prompt
+      
+      userID = self.userID.render()
+      pwd = self.pwd.render()
+      rememberMe = self.rememberMe.render()
+      loginBtn = self.loginBtn.render()
+      accessStatus = self.accessStatus.render()
+      loginBusy = self.loginBusy.render()
+
+      return @self.skin
+   end
+
+   function AJAX( params )
+      if params["id"].endsWith( ".login" )
+         result = self.checkLogin(
+            params["infos"]["user-id.value"],
+            params["infos"]["pwd.value"],
+            params["infos"]["rememberMe.checked"]
+            )
+            
+         if result
+            res = [
+               "uid" => result[0],
+               "level" => result[1],
+               "data" => result[2],
+               "name" => params["infos"]["user-id.value"]
+            ]
+         end
+         
+         return [
+            self.loginBusy.msgSetStyle( "display", "none" ),
+            self.msgInvoke( result ? "onLoginSuccess" : "onLoginFailed", res )
+            ]
+      end
+      return []
+   end
+
+
+   /*# Override to decide if we're in busienss or not.
+
+      The default implementation generates a hook call for "check_user".      
+   */
+   function checkLogin( username, password, rememberMe )
+      // Check login should set the following variables
+      auth = Nest.emit( "check_user", username, password, rememberMe )
+      if auth.len() == 3         
+         return auth
+      end
+      return false
+   end
+   
+end
+

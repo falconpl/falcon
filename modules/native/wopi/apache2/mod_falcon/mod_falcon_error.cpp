@@ -34,7 +34,7 @@ static apr_status_t s_errordoc_sendHeaders( apr_bucket_brigade *bb, void *ctx )
    apr_table_t *h = request->headers_out;
 
    apr_table_set( h, "Content-type", "text/html;charset=utf-8" );
-   apr_table_set( h, "Pragma", "no-cache");
+   //apr_table_set( h, "Pragma", "no-cache");
    apr_table_set( h, "Cache-Control", "no-cache");
    request->content_type = "text/html;charset=utf-8";
 
