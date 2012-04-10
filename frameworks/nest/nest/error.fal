@@ -23,29 +23,14 @@ class NestError( code, desc, extra ) from Error( code, desc, extra )
    undef_var = 10003
    invalid_var = 10004
    mod_notfound = 10005
-   no_mod_class = 10006
-   novar = 10007
-   econfig = 10008
-   emisconfig = 10009
-   eparam = 10010
-   misres = 10011
-   unknown_vars = 10012
-   no_route = 10013
-   no_fields = 10014
-   noskin = 10015
-   mf_fdef = 10016
-   no_dm = 10017
-   db_create = 10018
-   not_in_frame = 10019
-   no_dm_type = 10020
-   wrong_dm_type = 10021
-   entity_not_found = 10022
-   no_key_fields = 10023
-   unpack_key = 10024
-   pcheck = 10025
-   res_notfound = 10026
-   jscomponent_notfound = 10027
-   element_not_in_skin = 10028
+   no_mod_class = 10006   
+   pcheck = 10008   
+   res_notfound = 10009
+   jscomponent_notfound = 10010
+   element_not_in_skin = 10011
+   set_field_not_found = 10012
+   get_field_not_found = 10013
+   
    other = 10100
    
    _desc = [ 
@@ -54,29 +39,16 @@ class NestError( code, desc, extra ) from Error( code, desc, extra )
       10003 => i"Accessing undeclared service variable",
       10004 => i"Given value has failed validation test",
       10005 => i"Required module not found",
-      10006 => i"The module must expose a class with its name",
-      10007 => i"Missing required variable for service",
-      10008 => i"Error while reading configuration",
-      10009 => i"Missing or incorrect parameter in service",
-      10010 => i"Wrong parameters for this call",
-      10011 => i"Missing web resources declared by the service",
-      10012 => i"Unknown configuration variables for this service",
-      10013 => i"The system couldn't detect a route for a page",
-      10014 => i"Data entity declared without fields",
-      10015 => i"Skin declared but not found",
-      10016 => i"Malformed field definition in DBEntity",
-      10017 => i"This service requires a data manager to be set",
-      10018 => i"Caught DBI error while creating entity",
-      10019 => i"This method can be invoked only within a frame, and just once",
-      10020 => i"The configuration of this Data Manager must contain a 'type' key",
-      10021 => i"The value of the type key must be a class derived from Nest.DataManager",
-      10022 => i"Entity not found",
-      10023 => i"Data entity declared without any KEY fields",
-      10024 => i"Key expression doesn't match key field specs in this entity",
-      10025 => i"Optional parameter consistency check falied",
-      10026 => i"Resource not found",
-      10027 => i"Requested JS component not found",
-      10028 => i"Element not found in skin"
+      10006 => i"The module must expose a class with its name",      
+      10007 => i"This method can be invoked only within a frame, and just once",
+      10008 => i"Optional parameter consistency check falied",
+      10009 => i"Resource not found",
+      10010 => i"Requested JS component not found",
+      10011 => i"Element not found in skin",
+      10012 => i"Field required in a DataProvider-set operation not found",
+      10013 => i"Field required in a DataProvider-get operation not found",
+      
+      0 => i"Dummy"
       ]
 
    init

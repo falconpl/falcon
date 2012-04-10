@@ -1,0 +1,14 @@
+class handle_form
+   function invoke( form, values )
+      res = ""
+      for k, v in values["infos"]
+         res += k + " = " + htmlEscape(v.describe()) + "\n"
+      end
+      
+      return [
+         "message" => "set",
+         "id" => "formResult",
+         "property" => "innerHTML",
+         "value" => res ]
+   end
+end

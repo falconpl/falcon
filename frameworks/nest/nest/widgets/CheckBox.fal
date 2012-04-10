@@ -36,7 +36,7 @@ class CheckBox( id, value, text ) from widget.Widget( id )
    label = text
    tag = "input"
    checkName = "checked"
-   
+
    init
       if self.props == nil: self.props = [=>]
       self.props['value'] = value

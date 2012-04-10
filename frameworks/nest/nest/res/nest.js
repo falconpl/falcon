@@ -71,6 +71,12 @@ if(!Nest) { Nest = {}; }
       var element;
       while( i < infosToSend.length ) {
          var info = infosToSend[i];
+         var useName = false;
+         if( info.substring( 0, 1 ) == '*' )
+         {
+            useName = true;
+            info = info.substring(1);
+         }
          var idArr = info.split("/");
          var valname = idArr.pop();
 
@@ -95,10 +101,28 @@ if(!Nest) { Nest = {}; }
             }
          }
          
-         if (element[valname] != null) {
+         if (element != null) {
+            // get the proper value
+            var value;
+            if ( valname == 'value' && element.getValue != null )
+                value = element.getValue();
+            else
+               value = element[valname];
+
             // recreate the full entity name, re-localized after .. purging.
-            idArr.push( valname );
-            obj[idArr.join(".")] = element[valname];
+            
+            var fieldName;
+            if( useName ) {
+               fieldName = element.name;               
+            }
+            if ( ! useName || fieldName == null )
+            {
+               idArr.push( valname );
+               fieldName = idArr.join(".");
+            }
+            
+            // save the field
+            obj[fieldName.replace("[]", "")] = value;
          }
 
          i = i + 1;

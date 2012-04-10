@@ -82,10 +82,11 @@ class ActiveInput( id, prompt ) from InputText( id, prompt )
       self.jsMethods ["activeCheck"] = checkFunc
       
       if self.typeTimeout
+         id = self.getFullID()
          self.jsMethods[ "onActiveChange" ] = "
             function() {
                if( this.timeoutVar ) { clearTimeout( this.timeoutVar ); }
-               this.timeoutVar = setTimeout('this.activeCheck()', " +
+               this.timeoutVar = setTimeout('Nest.i(\"" + id + "\").activeCheck()', " +
                self.typeTimeout + ");}"
       else
          self.jsMethods[ "onActiveChange" ] = "

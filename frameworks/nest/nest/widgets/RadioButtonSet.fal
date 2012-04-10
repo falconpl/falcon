@@ -41,7 +41,9 @@ class RadioButtonSet( id, choices, tagtype, tag_beg, tag_sep, tag_end ) from \
             Container( id, tagtype, tag_beg, tag_sep, tag_end )
    //# Value of the radio button set (that is, the active radio button)
    value = nil
-   
+
+   isValueHost = true
+
    init
       self.autoAddChildren( choices )
       // TODO: Remove this when we have automatic parentship
@@ -59,6 +61,16 @@ class RadioButtonSet( id, choices, tagtype, tag_beg, tag_sep, tag_end ) from \
          self.value = val
          self.childrenById[val].props["checked"] = "checked"
       end
+   end
+
+   function onRender()
+      checks = "var item;"
+      for child in self.children
+         checks += " item=Nest.i('" + child.getFullID() +
+                  "'); if(item.checked) return item.value;"
+      end
+      self.jsMethods[ "getValue" ] = "function(){" + checks + " }"
+      self.jsMethods[ "name" ] = "'" + self.getFullID() + "'"
    end
 
    function getValue()

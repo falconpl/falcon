@@ -40,7 +40,10 @@ class Select( id, options, prompt, multisize ) from widget.Widget( id )
    isSelfClosing = false
    label = prompt ? prompt : ""
    value = nil
-   
+
+   //# in forms, we do have values
+   isValueHost = true
+
    init
       if self.props == nil: self.props = [=>]
       self.props['name'] = nil   // will be filled at render
@@ -60,6 +63,17 @@ class Select( id, options, prompt, multisize ) from widget.Widget( id )
       return Option( value, text, checked )
    end
 
+   function onRender()
+      if "multiple" in self.props
+         checks = "var result = Array(); var item;"
+         for child in self.children
+            checks += " item=Nest.i('" + child.getFullID() +
+                     "'); if(item.selected) result.push(item.value);"
+         end
+         self.jsMethods[ "getValue" ] = "function(){" + checks + "; return result;}"
+      end
+   end
+   
    function setRenderValue( val )      
       if "multiple" in self.props and val.typeId() == ArrayType
          for item in val

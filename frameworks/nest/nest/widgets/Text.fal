@@ -21,6 +21,9 @@ import from nest.widgets.widget in widget
 class Text( id, deftext ) from widget.Widget( id )
    tag = "span"
    content = deftext ? deftext : ""
+
+   //# in forms, we do have values
+   isValueHost = true
    
    init
       // TODO: Remove this when we have automatic parentship

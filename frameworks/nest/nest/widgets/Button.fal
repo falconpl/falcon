@@ -50,5 +50,15 @@ class Button( id, content, type ) from widget.Widget( id )
       return self.content
    end
    
+   function makeSendFormAJAX( w, confirmFunc )
+      id = w.getFullID()
+      xcall = @"Nest.i('$(id)').sendFormAJAX()"
+      if confirmFunc
+         xcall = "if(" + confirmFunc + "){" + xcall + ";}"
+      end
+      
+      self.props['onclick'] = xcall
+      return self
+   end
 end
 

@@ -38,6 +38,9 @@ import from json in json
    - "/a/b/value" is the text value of a widget "b" under widget "a" in the
      topmost widget parent of this one.
 
+   If the path starts with a "*", then the NAME of the target item is
+   used to return the value.
+
    Any DOM element property can be queried this way and sent back to the receiving
    application, that will receive it in a "infos" entry, named after the relative
    property name that has been given ("value" => value,
@@ -133,6 +136,10 @@ class Widget( id )
    */
    isAJAXHost = false
 
+   /*# If true, this widget is also a value host (i.e. has value in forms).
+   */
+   isValueHost = false
+
    /*# Init informations.
       This are the parameters that must be repeated to create a copy of this widget.
       The @b id field alone needs not to be repeated as it is automatically
@@ -141,6 +148,9 @@ class Widget( id )
    */
    initInfos = nil
 
+   //# Name of the field in a data provider associated with this widget
+   datafield = nil
+   
    //# Text or widget used as label/prompt form or form-like widgets
    label = nil
 
@@ -694,6 +704,33 @@ class Widget( id )
                "', '" + self.getFullID() + "', '" + msg + "', " +
                infos_s + ", " + extra_s + ");"
    end
+
+   //===================================================
+   // Data management
+   //
+
+   function setData( provider )
+      if self.datafield
+         provider.set( self.datafield, self.getValue() )
+      end
+
+      for child in self.children
+         child.setData( provider )
+      end
+   end
+
+   function getData( provider )
+      if self.datafield
+         // the data provider is bound to raise if the field is not valid.
+         self.setRenderValue( provider.get( self.datafield ) )
+      end
+
+      for child in self.children
+         child.getData( provider )
+      end
+   end
+   
+         
    
    //===================================================
    // CSS batch generator interface

@@ -34,6 +34,9 @@ import InputText from nest.widgets.InputText as InputText
 class DateSelector( id, yearRange, tagtype, tag_beg, tag_sep, tag_end ) from \
             Container( id, tagtype, tag_beg, tag_sep, tag_end )
 
+   // declare we're not holding a value in AJAX
+   isValueHost = false
+   
    months_names = [
       "January", "February", "March", "April", "May", "June",
       "July", "August", "September", "October", "November", "December" ]

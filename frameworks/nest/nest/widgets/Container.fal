@@ -32,13 +32,13 @@ import from nest.widgets.widget in widget
    overload the class or reset it to another 
 */
 class Container( id, tagtype, tag_beg, tag_sep, tag_end ) from widget.Widget( id )
-   tag = tagtype ? "fieldset" : tagtype
+   tag = tagtype ? tagtype : "span"
    isSelfClosing = false
 
    tag_beg = tag_beg ? tag_beg : ""
    tag_sep = tag_sep ? tag_sep : "&nbsp;"
    tag_end = tag_end ? tag_end : ""
-
+   
    //# value of the checkbox set (array of checked box values)
    value = nil
    checkName = "checked"
@@ -47,7 +47,8 @@ class Container( id, tagtype, tag_beg, tag_sep, tag_end ) from widget.Widget( id
       // TODO: Remove this when we have automatic parentship
       self.addClassInParentship( Container )
    end
-   
+
+
    function renderContent()
       res = ""
       for child in self.children
