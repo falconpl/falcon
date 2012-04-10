@@ -112,14 +112,14 @@ class Widget( id )
    //# parent of this widget.
    parent = nil
 
-   /*# Dictioanry of javascript methods to be added to this widget.
+   /*# Dictionary of javascript methods to be added to this widget.
       Each entry is a method that can be invoked on the javascript side.
       The key is the method name, and the value must be a full javascript
       function declaration.
    */
    jsMethods = [=>]
 
-   /*# Dictioanry of javascript Listeners
+   /*# Dictionary of javascript Listeners
       Each entry is a method that can be invoked on the javascript side.
       The key is the method name, and the value must be a full javascript
       function declaration.
