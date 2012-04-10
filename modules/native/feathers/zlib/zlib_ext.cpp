@@ -60,38 +60,10 @@ static const String &internal_getErrorMsg( VMContext *ctx, int error_code )
    is not necessary to create an instance of this class to use its methods.
 */
 
-ClassZLib::ClassZLib():
-   ClassUser("ZLib"),
-
-   FALCON_INIT_METHOD( getVersion ),
-   FALCON_INIT_METHOD( compress ),
-   FALCON_INIT_METHOD( uncompress ),
-   FALCON_INIT_METHOD( compressText ),
-   FALCON_INIT_METHOD( uncompressText )
-{
-}
-
-ClassZLib::~ClassZLib()
-{}
-
-void ClassZLib::serialize( DataWriter*, void* ) const
-{
-   // TODO
-}
-
-void* ClassZLib::deserialize( DataReader* ) const
-{
-   // TODO
-   return 0;
-}
-
-void* ClassZLib::createInstance(  ) const
-{ 
-   return 0;
-}
 
 
-FALCON_DEFINE_METHOD_P1( ClassZLib, getVersion )
+
+FALCON_DEFINE_FUNCTION_P1( getVersion )
 {
    String *gsVersion = new String( zlibVersion() );
    gsVersion->bufferize();
@@ -116,7 +88,7 @@ FALCON_DEFINE_METHOD_P1( ClassZLib, getVersion )
    For text strings, it is preferrable to use the @a ZLib.compressText
    function.
 */
-FALCON_DEFINE_METHOD_P1( ClassZLib, compress )
+FALCON_DEFINE_FUNCTION_P1( compress )
 {
    Item *dataI = ctx->param( 0 );
    if ( dataI == 0 || ( ! dataI->isString() && ! dataI->isMemBuf() ) )
@@ -193,7 +165,7 @@ FALCON_DEFINE_METHOD_P1( ClassZLib, compress )
    This method will compress the a text so that an @a ZLib.uncompressText
    re-creates the original string.
 */
-FALCON_DEFINE_METHOD_P1( ClassZLib, compressText )
+FALCON_DEFINE_FUNCTION_P1( compressText )
 {
    Item *dataI = ctx->param( 0 );
    if ( dataI == 0 || ! dataI->isString() )
@@ -270,7 +242,7 @@ FALCON_DEFINE_METHOD_P1( ClassZLib, compressText )
    @raise ZLibError on decompression error.
 
 */
-FALCON_DEFINE_METHOD_P1( ClassZLib, uncompress )
+FALCON_DEFINE_FUNCTION_P1( uncompress )
 {
    Item *dataI = ctx->param( 0 );
 
@@ -353,7 +325,7 @@ FALCON_DEFINE_METHOD_P1( ClassZLib, uncompress )
    The input @b buffer must be a string previously compressed
    with the @a ZLib.compressText method, or the function will fail.
 */
-FALCON_DEFINE_METHOD_P1( ClassZLib, uncompressText )
+FALCON_DEFINE_FUNCTION_P1( uncompressText )
 {
    Item *dataI = ctx->param( 0 );
 

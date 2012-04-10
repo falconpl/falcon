@@ -105,16 +105,16 @@ public:
       //====================================
       // ZLib class
 
-      addMantra( new Falcon::Ext::ClassZLib);
+      addMantra( new Falcon::Ext::Function_getVersion);
+      addMantra( new Falcon::Ext::Function_compress);
+      addMantra( new Falcon::Ext::Function_compressText);
+      addMantra( new Falcon::Ext::Function_uncompress);
+      addMantra( new Falcon::Ext::Function_uncompressText);
       
 
       ////============================================================
       //// ZlibError class
-      //Falcon::Symbol *error_class = addExternalRef( "Error" ); // it's external
-      //Falcon::Symbol *procerr_cls = addClass( "ZLibError", Falcon::Ext::ZLibError_init )
-      //   ->addParam( "code" )->addParam( "description")->addParam( "extra" );
-      //procerr_cls->setWKS( true );
-      //procerr_cls->getClassDef()->addInheritance(  new Falcon::InheritDef( error_class ) );
+      
       addMantra(Falcon::Ext::ClassZLibError::singleton());
    }
 
