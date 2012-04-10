@@ -1,0 +1,10 @@
+<h2>Nest Widget test: Calendar</h2>
+
+<?         
+   iCalendar = Nest.widget( "Calendar" )("iCal")
+?>
+<?= iCalendar.render() ?>
+
+<script language="javascript">
+	createCalendar();
+</script>
