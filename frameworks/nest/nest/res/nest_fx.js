@@ -30,7 +30,7 @@ if(!Nest) { Nest = {}; }
       if( typeof string == 'string' ) {
          var value = string.match(/\|([0-9.]+)\|/);
          if( value )
-            return parseInt(value[1]);
+            return parseFloat(value[1]);
          return null;
       }
 
@@ -42,11 +42,11 @@ if(!Nest) { Nest = {}; }
       if( typeof string == 'string' ) {
          var pos = string.search(/\|([0-9.]+)\|/);
          if( pos >= 0 )
-            return parseInt(source.substr(pos));
+            return parseFloat(source.substr(pos));
 
       }
 
-      return parseInt(source);
+      return parseFloat(source);
    }
 
    function setNumValue( string, value )
@@ -78,7 +78,8 @@ if(!Nest) { Nest = {}; }
          if( trans.elapsed >= trans.time ) {
             var tostyle = trans.tostyle;
             for( var key in tostyle) {
-               trans.object.style[key] = tostyle[key];
+               var toValue = getNumValue( tostyle[key] );
+               trans.object.style[key] = setNumValue( tostyle[key], toValue );
             }
 
             if( trans.next ) {

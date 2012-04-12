@@ -1390,7 +1390,7 @@ object Nest
    
    function _makeCSSforID( cssid, styles, item )     
       results = [=>]
-      id = item.id
+      id = strReplace(item.getFullID(), ".", "\\.")
       for style in styles
          full_id = style.mode ? (cssid + ":" + style.mode) : cssid
          if style.spec: full_id += " " + style.spec

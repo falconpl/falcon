@@ -23,26 +23,31 @@ class _InfoBoxText(id, title, content) from widget.Widget( id )
 
    imgclose= Nest.resLink( "infobox_close.png" )
 
-   titlestyle = "
-      background:#181818;
-      color:#E0E0E0;"
    title = title
+   titleHeight = 23
 
    width = 350
    height = 200
+   fadeInTime = 600
+   fadeOutTime = 250
 
    jsMethods = [
          "show" => @'
          function(itemID) {
             var pos = Nest.findPos(Nest.i(itemID));
+            var scroller = Nest.i(this.id + ".scroller" );
             this.style.left = pos.x+20;
             this.style.top = pos.y+20;
+            if( document.height <= pos.y+20 + $(self.height) ) {
+               this.style.top = document.height - $(self.height) - 10;
+            }
             this.style.display = "";
             this.style.overflow= "hidden";
+            scroller.style.overflow= "hidden";
             var self = this;
             var trans = {
                object: this,
-               time: 1000,
+               time: $(self.fadeInTime),
                fromstyle: {
                   "width": 30,
                   "height": 10,
@@ -53,7 +58,9 @@ class _InfoBoxText(id, title, content) from widget.Widget( id )
                   "height": "|$(self.height)|px",
                   "opacity": 0.9
                },
-               ondone: function(){ self.style.overflow = "auto"; }
+               ondone: function(){
+                     scroller.style.overflow = "auto";
+                  }
             };
             Nest.addTransition( trans );
          }',
@@ -62,21 +69,17 @@ class _InfoBoxText(id, title, content) from widget.Widget( id )
             function() {
                var self = this;
                var hidef = function() { self.style.display = "none"; }
-               Nest.transite( this, 250, {opacity:0}, null, null, hidef );
+               Nest.transite( this, $(self.fadeOutTime), {"opacity":0}, {"opacity":0.9}, null, hidef );
             }'
    ]
 
    init
       if self.props == nil: self.props = [=>]
-      // Start with overflow hidden, will become auto after full transition.
-      self.props["style"] = @"
+      self.props["style"] = "
             display:none;
+            padding:0;
+            margin:0;
             position:absolute;
-            border:1px solid;
-            background:white;
-            alpha:0.5;
-            padding:0px;
-            margin:1px;
             "
 
       // TODO: Remove this when we have automatic parentship
@@ -84,8 +87,17 @@ class _InfoBoxText(id, title, content) from widget.Widget( id )
    end
 
    function renderContent()
-      return @"<div style=\"$(self.titlestyle)\">$(self.title) <img src=\"$(self.imgclose)\" onclick=\"Nest.i('"+self.getFullID()+"').hide(); \" style=\"float:right;cursor: pointer;cursor: hand;\"/></div>" +
-            "<div style=\"padding:4px\">" +self.content + "\n</div>\n"
+      fullID = self.getFullID()
+      hc = self.height - self.titleHeight 
+      return @"
+         <div id=\"$(fullID).titlebar_out\" style=\"height:$(self.titleHeight)px\">
+            <div id=\"$(fullID).titlebar\" class=\"titlebar\">$(self.title)
+               <img src=\"$(self.imgclose)\" onclick=\"Nest.i('$(fullID)').hide(); \" style=\"float:right;cursor: hand;\"/>
+            </div>
+         </div>
+         <div id=\"$(fullID).scroller\" style=\"padding:0px;height:$(hc)px\">
+            <div id=\"$(fullID).contentbox\" class=\"contentbox\">$(self.content)</div>
+         </div>"
    end
 end
 
@@ -96,7 +108,23 @@ end
 
    This method generates a popup that gets displayed when the
    user clicks the given icon (by default, "res/info.png").
-   This
+
+   Style components:
+@code
+   (I)   << img id=[widget id]   widget class InfoBox
+   
+   +++++++++++++++++++++++++++++++++++++++++ << widget class  _InfoBoxText
+   + Title bar                         [X] + << div id=[widget id].titlebar class=titlebar
+   +++++++++++++++++++++++++++++++++++++++++
+   +                                       + << div id=[widget id].contentbox class=contentbox
+   +                                       +
+   +                                       +
+   +                                       +
+   +                                       +
+   +                                       +
+   +                                       +
+   +++++++++++++++++++++++++++++++++++++++++
+@endcode
 */
 class InfoBox( id, title, content, icon ) from widget.Widget( id )
    tag = "img"
@@ -115,7 +143,6 @@ class InfoBox( id, title, content, icon ) from widget.Widget( id )
       self.props["src"] = self.icon
       self.props["border"] = "0"
 
-	  self.addStyle( "cursor: pointer;cursor: hand;" )
       // TODO: Remove this when we have automatic parentship
       self.addClassInParentship( InfoBox )   
    end

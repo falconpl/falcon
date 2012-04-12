@@ -15,7 +15,31 @@
          where 'parentid' is the id given to the InfoBox main widget.</p>"
          
    ibox = Nest.widget( "InfoBox" )("ibox", "Basic Infos", text)
+   ibox2 = Nest.widget( "InfoBox" )("ibox2", "Basic Infos -- at the end", text)
 ?>
 
 <p>Click to get more info... <?= ibox.render() ?></p>
+<p> space... </p>
+
+<p> space... </p>
+<p> space... </p>
+<p> space... </p>
+<p> space... </p>
+<p> space... </p>
+<p> space... </p>
+<p> space... </p>
+<p> space... </p>
+<p> space... </p>
+<p> space... </p>
+<p> space... </p>
+<p> space... </p>
+<p> space... </p>
+<p> space... </p>
+<p> space... </p>
+<p> space... </p>
+<p> space... </p>
+<p> space... </p>
+
+<p>Click to get more at the end of the page <?= ibox2.render() ?></p>
+
 

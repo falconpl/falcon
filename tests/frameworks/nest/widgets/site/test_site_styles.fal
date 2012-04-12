@@ -223,3 +223,36 @@ Style( "Calendar current date", nil, '
    width:120px;
 ', 'span.curdate'
 ).applyToClass("Calendar")
+
+
+//=============================================================
+// Info box
+//
+
+Style( "InfoBox style", nil, '
+   background: #F0F0FF;
+   border: 1px solid;
+   border-radius: 5px 5px;
+   -webkit-border-radius: 5px 5px;
+   -moz-border-radius: 5px 5px;
+   box-shadow: 3px 3px 6px rgba(50, 50, 90, 0.8);
+   -webkit-box-shadow: 3px 3px 6px rgba(50, 50, 90, 0.8);
+   -moz-box-shadow: 3px 3px 6px rgba(50, 50, 90, 0.8);
+'
+).applyToClass("_InfoBoxText")
+
+Style( "InfoBox Title bar", nil, '
+   background: #202060;
+   color: #FFFFFF;
+   font-family: arial, sans-serif;
+   font-weight: bold;
+   padding: 2px;
+', 'div.titlebar'
+).applyToClass("_InfoBoxText")
+
+Style( "InfoBox Title bar", nil, '
+   padding:5px;
+', 'div.contentbox'
+).applyToClass("_InfoBoxText")
+
+
