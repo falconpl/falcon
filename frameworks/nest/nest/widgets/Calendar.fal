@@ -1,3 +1,21 @@
+/*
+   FALCON - The Falcon Programming Language
+
+   Nest - Falcon web applcation engine
+
+   FILE: Calendar.fal
+
+   AJAX widgeting subsystem -- Calendar for date picking
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Thu, 12 Apr 2012 22:53:31 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2012: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
 import from nest.widgets.widget in wid
 import from nest.js
 

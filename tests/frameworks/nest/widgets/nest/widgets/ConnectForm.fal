@@ -19,7 +19,7 @@ class ConnectForm( id ) from TableForm( id )
             "sqlite3:db=/tmp/test-blog.db"
       end
       
-      self.conn.setRenderValue( connect )
+      self.conn.setValue( connect )
       self.conn.set( ["size"=>60] )
 
       self.btn.makeSendFormAJAX(self)
