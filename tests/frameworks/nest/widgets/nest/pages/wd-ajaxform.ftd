@@ -72,7 +72,8 @@
 <p>This test is used to check for Nest TableForm widget and several
 form-related widget. Submitting the form causes the data to be re-loaded into
 the widgets, so the correct behavior is that of seeing the same data that
-was inserted before sending the form.</p>
+was inserted before sending the form. Moreover, some data is forcefully
+changed or updated upon ajax request retreival.</p>
 
 <p>Soruce code:
 <pre>

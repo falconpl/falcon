@@ -130,8 +130,9 @@ class BasicSessionManager
    function save( sessionData )
       if not Request.hasSession()
          self._session = Request.getSession()
+         
       end
-
+      //inspect( Reply )
       self._session["_Nest"] = sessionData
    end
 
@@ -458,14 +459,6 @@ object Nest
          self.selector_ajax_widget( wid )
       end
 
-      // 5. save session data
-      try
-         self._saveSession()
-      catch Error in e
-         self._manageError(e)
-         if self.debug: self._displayDebug()
-         return
-      end
    end
 
    /*# Adds a startup function.
@@ -651,7 +644,7 @@ object Nest
    function loadConfig( entity, name )
       modName = entity.className()
       if name: modName += "." + name
-      modName += ".cfg"
+      modName += "_cfg"
 
       w_file = utils.findFileInDirs(
             .[
@@ -722,6 +715,8 @@ object Nest
                         ]
             end
          end
+         
+         self._saveSession()
       catch in e
          ctx = [ "error"=>"-3",
                   "errorDesc"=>"Uncaught error: " + e.toString() ]
@@ -1212,9 +1207,11 @@ object Nest
          self._contentSlices += self._pageStream.closeToString()
 
          // save an eventual error for later
+         self._saveSession()
       catch in e
       end
-
+      
+      
       // Return to standard output
       stdOut( old )
       // Save what we have achieved up to date.
@@ -1322,6 +1319,7 @@ object Nest
             end
          end
 
+         self._saveSession()
       catch in e
          ctx = [ "error"=>"-3",
                   "errorDesc"=>"Uncaught error: " + e.toString()+ "\nDATA: " + params ]
@@ -1374,7 +1372,7 @@ object Nest
    // save session data
    function _saveSession()
       if self.sessionData
-         if self.log_level >= 3: self.logd( @"Saving session data: "+ self.sessionData.describe() )
+         if self.log_level >= 3: self.logd( "Saving session data: "+ self.sessionData.describe() )
          self.sessionManager.save( self.sessionData )
       end
    end

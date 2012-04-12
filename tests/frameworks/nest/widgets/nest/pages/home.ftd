@@ -1,5 +1,6 @@
 <h1>Nest widgets subsystem test.</h1>
 <h2>Generic Nest/AJAX and JS tests.</h2>
+<? Nest.sessionData -= "miniblog.connstr" ?>
 <ul>
 <li><a href="<?=Nest.pageLink('jsscript')?>">Simple JS script generator function</a></li>
 <li><a href="<?=Nest.pageLink('basic-ajax')?>">Basic AJAX function invocation</a></li>
@@ -18,4 +19,5 @@
 <li><a href="<?=Nest.pageLink('wd-menu')?>">Menu</a></li>
 <li><a href="<?=Nest.pageLink('wd-loginmask')?>">Login mask</a></li>
 <li><a href="<?=Nest.pageLink('wd-ajaxform')?>">AJAX enabled form</a></li>
+<li><a href="<?=Nest.pageLink('wd-miniblog')?>">Small embedded blog</a></li>
 </ul>

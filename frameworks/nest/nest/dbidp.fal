@@ -28,21 +28,14 @@ class DBIDataProvider( dbh, table, keyfield )
    _curkey = nil
    
    function openNew()
-      _curop = 'new'
+      self._curop = 'new'
       return true
    end
 
    function openGet( keyvalue )
-      sql = "select " + ",".merge(self.fields) + " from " + self.table +
-         " where " + self.keyfield + "=?"
-      
-      res = self.dbh.query( sql, keyvalue )
-      self._curvalues = res.fetch([=>])
-      if self.curValues == nil
-         return false
-      end
-
+      self._curkey = keyvalue
       self._curop = 'get'
+      self._curvalues = [=>]
       return true
    end
 
@@ -62,16 +55,23 @@ class DBIDataProvider( dbh, table, keyfield )
 
    function apply()
       if self._curop == 'del'
-         sql = "delete from " + self.table + " where " + self.keyfield " = ?"
+         sql = "delete from " + self.table + " where " + self.keyfield + " = ?"
          self.dbh.query( sql, self._curkey )
-      elif self._curvalues and self._curop != 'get'
+      elif self._curvalues
          fnames = self._curvalues.keys()
          values = self._curvalues.values()
-            
-         if self._curop == 'new'            
+               
+         if self._curop == 'new'
             sql = "insert into " + self.table + "(" +
                ",".merge(fnames) + ") " +
-               "values( ? " + ",?" * (fnames.len() - 1) ")"
+               "values( ? " + (",?" * (fnames.len() - 1) ) + ")"
+         elif self._curop == 'get'
+            sql = "select " + ",".merge(fnames) + " from " + self.table +
+               " where " + self.keyfield + "=?"
+
+            res = self.dbh.query( sql, self._curkey )
+            self._curvalues = res.fetch([=>])
+            res.close()
 
          elif self._curop == 'set'
             sql = "update " + self.table + " set " + "=?,".merge(fnames) + "=? "+
@@ -79,7 +79,9 @@ class DBIDataProvider( dbh, table, keyfield )
             values += self._curkey
          end
          
-         if sql: self.dbh.aquery( sql, values )            
+         if sql
+            self.dbh.aquery( sql, values )
+         end
       end
 
       self._curop = nil

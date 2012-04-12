@@ -65,7 +65,7 @@ class AJAXRequest( rp, extra, jsPrefix )
    function render( hostName, id, message )
       rps = self.renderReqProps()
       extra = self.renderExtra()
-      rend = "Nest.widgetMsg('" + hostName + "', '" +
+      rend = "Nest.widgetAJAX('" + hostName + "', '" +
                        id + "', '"+message+"', " +rps+ ", " + extra +")"
 
       if self.jsPrefix
@@ -498,7 +498,11 @@ class Widget( id )
    */
    function getFullID()
       if self.parent
-         return self.parent.getFullID() + "." + self.id
+         pid = self.parent.getFullID()
+         if pid.typeId() != StringType
+            inspect( pid )
+         end
+         return  pid + "." + self.id
       end
 
       return self.id
@@ -691,7 +695,7 @@ class Widget( id )
       infos_s = infos ? json.JSONencode( infos ) : "null"
       extra_s = extra ? json.JSONencode( extra ) : "null"
 
-      return "Nest.widgetMsg('" + self.ajaxHostName() +
+      return "Nest.widgetAJAX('" + self.ajaxHostName() +
                "', '" + self.getFullID() + "', '" + msg + "', " +
                infos_s + ", " + extra_s + ");"
    end
@@ -700,7 +704,7 @@ class Widget( id )
       infos_s = infos ? infos : "null"
       extra_s = extra ? extra : "null"
 
-      return "Nest.widgetMsg('" + self.ajaxHostName() +
+      return "Nest.widgetAJAX('" + self.ajaxHostName() +
                "', '" + self.getFullID() + "', '" + msg + "', " +
                infos_s + ", " + extra_s + ");"
    end
@@ -836,5 +840,23 @@ class Widget( id )
       if value == nil: value = [=>]
       value[ "message" ] = message
       return value
+   end
+
+   //# Generates a message to reset the values of all the children
+   function msgSetAllValues( arr )
+      if not arr: arr = []
+      if self.isValueHost
+         arr.add(
+            [ "message" => "set",
+               "id" => self.getFullID(),
+               "property" => "value",
+               "value" => self.getValue() ] );
+      end
+
+      for child in self.children
+         child.msgSetAllValues( arr )
+      end
+      
+      return arr
    end
 end

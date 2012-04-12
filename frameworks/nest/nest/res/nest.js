@@ -205,17 +205,31 @@ if (!Array.prototype.indexOf) {
       }
    }
 
+   if (typeof Nest.setWidVal !== 'function') {
+      Nest.setWidVal = function ( wid, value ) {
+         var element = Nest.i(wid);
+         if( element != null ) {
+            if( element.setValue != null ) {
+               element.setValue( value );
+            }
+            else {
+               element.value = value;
+            }
+         }         
+      }
+   }
+
    // Method 'widgetMsg' -- Sending AJAX requests to remote widget server.
-   if (typeof Nest.widgetMsg !== 'function') {
-      Nest.widgetMsg = function ( widClass, widID, msg, infosToSend, extraParams ) {
+   if (typeof Nest.widgetAJAX !== 'function') {
+      Nest.widgetAJAX = function ( widClass, widID, msg, infosToSend, extraParams ) {
          // the object to be sent.
          var objToSend = { 'widget': widClass, 'id': widID, 'msg': msg };
          // let's get rid of the details now -- this is extra data to send as-is
-         if( extraParams ) {objToSend.extra = extraParams;}
+         if( extraParams != null ) {objToSend.extra = extraParams;}
          prepareInit( widID, objToSend );
          
          // read the infos and store them away
-         if( infosToSend ) {
+         if( infosToSend != null) {
             var infos = {};
             prepareInfos( widID, infos, infosToSend );
             objToSend["infos"] = infos;
@@ -233,8 +247,9 @@ if (!Array.prototype.indexOf) {
          var listener = Nest.listeners[wid.id];
          if( listener ) {
             for (var i = 0; i < listener.length; i++) {
-               var func = listener[i].func;
-               var tgtid = listener[i].tgt;
+               var lrec = listener[i];
+               var func = lrec.func;
+               var tgtid = lrec.tgt;
                func.call( tgtid, wid, msg, value );
             }
          }

@@ -560,7 +560,7 @@ void TimeStamp::add( const TimeStamp &ts )
 
 void TimeStamp::add( int32 days, int32 hours, int32 mins, int32 secs, int32 msecs )
 {
-   m_day = days + dayOfYear();
+   m_day += days;
    m_hour += hours;
    m_minute += mins;
    m_second += secs;

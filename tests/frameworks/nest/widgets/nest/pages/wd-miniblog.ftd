@@ -1,0 +1,58 @@
+<H2>Small embedded blog test</H2>
+
+<p>This site has just demonstrative purposes, it's by no mean complete.
+It's purpose is that to demonstrate how to feed data in a form
+directly through a <b>DataProvider</b> class. In this case, we're using a
+DBI data provider, which links a form with SQL tables provided by a DBI
+interface.</p>
+
+<?
+   connect_form = Nest.widget("ConnectForm")( "connect_form" )
+   > connect_form.render()
+?>
+
+<div id='datatable-div' style="display:none">
+<?
+   import Widget from nest.widgets.widget as Widget
+   
+   table = Nest.widget("BlogTable")('blogtable', 10 )
+   > table.render()
+   
+   tadder = Nest.widget("Button")( 'tabtest.adder', "Add" )
+   tadder.props = [ "onclick" => tadder.jsEmit('onclick', "null") ]
+   > tadder.render()
+
+   // Adding a separate widget to manage the delete request.
+   deletor = Widget( 'deletor' )
+   deletor.jsListeners += [      
+      table => "
+         function( sender, msg, params ){
+         if( msg == 'del') {
+            if( confirm( 'Really want to delete \"' + params.comment + '\"?' ) ) {
+               Nest.message( this, 'del-confirm', params );
+            }
+         }
+      }"
+   ]
+   > deletor.render()
+?>
+</div>
+
+<?   
+   form = Nest.widget("BlogForm")( 'edit' ).set(["style"=>"display:none"])
+   form.jsListeners += [
+      tadder => "function(){ this.clearFields(); this.style.display = ''; }",
+      table => "function( sender, msg, params ){ if( msg == 'upd') Nest.widgetAJAX( 'BlogForm', this.id, msg, null, params ); }",
+      deletor => "function( sender, msg, params ){ Nest.widgetAJAX( 'BlogForm', this.id, 'del', null, params ); }"
+   ]
+   
+   form.mode.jsListeners += [
+      tadder => "function(){ this.value = 'add'; }"
+   ]
+   
+   form.confirm.jsListeners += [
+      tadder => "function(){ this.innerHTML='Add record'; }"
+   ]
+   
+   > form.render()
+?>

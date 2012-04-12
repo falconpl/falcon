@@ -25,12 +25,13 @@ import from nest.widgets.widget in widget
 class Hidden( id, value ) from widget.Widget( id )
    tag = "input"
    isSelfClosing = true
+   isValueHost = true
 
    init
       if self.props == nil: self.props = [=>]
       self.props['name'] = nil   // will be filled at render
       self.props['type'] = "hidden"
-      self.props['value'] = value
+      self.props['value'] = value ? value : ""
       
       // TODO: Remove this when we have automatic parentship
       self.addClassInParentship( Hidden )      

@@ -1,0 +1,75 @@
+import Table from nest.widgets.Table in widgets
+import from nest.widgets.action in action
+import from dbi in dbi
+
+/* Specialized table for Nest-widgets test site */
+class BlogTable( id, itemsPerPage, itemCount, firstItem, orderColumn ) from \
+   widgets.Table( id, itemsPerPage, itemCount, firstItem, orderColumn )
+
+   orderBy = ""
+   
+   function makeColumns()
+      //self.addCheckboxColumn( "sel", "Select", ["idblog"], ["Title"] )
+      self.columsFromHeadings(
+         ["idblog|ID", "Title|Title", "Date|Date", "Content|Content", "Tags|Tags" ]
+      )
+      self.addActionColumn( "Actions", ["idblog"], ["Title"], .[
+         action.ActionButton("Update", self, "upd" )
+         action.ActionLink("Delete", self, "del" )
+      ])
+   end
+
+   function setDataView()
+      itemsPerPage = self.itemsPerPage
+      firstItem = self.firstItem
+      
+      // todo -- filter
+      flt = self.filter
+
+      // filter table
+      if flt
+         // todo -- filter
+      end
+
+      // order the table.
+      if self.orderColumn != 0
+         col = self.orderColumn
+         if col < 0
+            self.orderBy = "order by " + self.headers[-col-1].fieldName + " desc"
+         else
+            self.orderBy = "order by " + self.headers[col-1].fieldName
+            
+         end            
+      else
+         self.orderBy = ""
+      end
+
+      if "miniblog.connstr" in Nest.sessionData
+         self.makeData()
+      end
+   end
+
+   function makeData( )
+      dbh = dbi.connect( Nest.sessionData["miniblog.connstr"] )
+
+      // get the table size
+      rset = dbh.query( "select count(*) from blogtable" )
+      self.itemCount = int(rset.fetch([])[0])
+      rset.close()
+
+      // get the table portion in this size.
+      
+      rset = dbh.query( dbh.lselect( " * from blogtable " + self.orderBy, self.firstItem, self.itemsPerPage ) )
+      sdata = [=>]
+      self.data = []
+      while rset.fetch( sdata )
+         content = sdata["Content"]
+         if content.len() > 40: content = content[0:40]         
+         self.data += [ "idblog"=>sdata["idblog"], "Title"=>sdata["Title"], "Date" => sdata["Date"], "Content"=>content, "Tags"=>sdata["Tags"] ]
+      end
+      rset.close()
+   end
+   
+end
+
+

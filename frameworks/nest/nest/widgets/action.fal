@@ -25,7 +25,7 @@ class Action( owner, message, props )
       id = self.owner.getFullID()
       msg = self.message
       keyvalue = htmlEscape( keyvalue )
-      return @"Nest.message('$(id)', '$(msg)', $(keyvalue) )"
+      return @"Nest.message(Nest.i('$(id)'), '$(msg)', $(keyvalue) )"
    end
 
 

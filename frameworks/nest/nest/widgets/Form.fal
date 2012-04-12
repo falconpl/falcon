@@ -145,25 +145,57 @@ class Form( id, action, method ) from Widget( id )
    end
 
    function onRender()
+      vns = []
+      for child in self.children
+         self._getValueNodes( vns, child )
+      end
+         
       if self._isAJAXForm
-         reqs = []
-         for child in self.children
-            self._addChildValuesAR( reqs, child )            
-         end
-
+         reqs = map( {child => "*/" + child.getFullID() + "/value" }, vns )
          self.ajaxReqs = [
             "sendFormAJAX"=> AR( reqs )
          ]
 
          self.props['onsubmit'] = "this.sendFormAJAX(); return false;"
       end
+
+      clearFields = map( { child => "Nest.setWidVal('" + child.getFullID() +"', '');" },
+            vns )
+         
+      self.jsMethods += [
+         "clearFields"=> "function(){" + "".merge(clearFields) + "}",
+         "setFields"=> "
+            function( vals ) {
+               var item;
+               for( item in vals ) {
+                  Nest.setWidVal(this.id + '.' + item, vals[item] );
+               }
+            }"
+      ]
+
    end
 
-   function _addChildValuesAR( reqs, child )
+   function getAllValues()
+      vns = []
+      self._getValueNodes( vns, self )
+      data = [=>]
+      for child in vns
+         data[child.id] = child.getValue()
+      end
+
+      return data
+   end
+
+   function msgSetAllFields()
+      data = self.getAllValues()
+      return self.msgInvoke( "setFields", data )
+   end
+
+   function _getValueNodes( vns, child )
       // use */ to send by name and not by ID
-      if child.isValueHost: reqs += "*/" + child.getFullID() + "/value"
+      if child.isValueHost: vns += child
       for subchild in child.children
-         self._addChildValuesAR( reqs, subchild )         
+         self._getValueNodes( vns, subchild )
       end
    end
    

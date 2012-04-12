@@ -213,7 +213,7 @@ class TableBody( id ) from widget.Widget( id + ".tb" )
    
    function renderContent()
       str = "<table>\n"
-      str += "<tr>"
+      str += "<thead><tr>"
 
       headers = self.parent.headers
       data = self.parent.data
@@ -251,7 +251,7 @@ class TableBody( id ) from widget.Widget( id + ".tb" )
          col++
       end
       
-      str += "</tr>\n"
+      str += "</tr></thead>\n<tbody>"
 
       // now read the data.
       for row in data
@@ -273,7 +273,7 @@ class TableBody( id ) from widget.Widget( id + ".tb" )
          end
          str += "</tr>\n"
       end
-      str +="<table>\n"
+      str +="</tbody></table>\n"
 
       return str
    end
@@ -491,16 +491,16 @@ class Table( id, itemsPerPage, itemCount, firstItem, orderColumn ) from widget.W
    data = nil
 
    /*# First item in view */
-   firstItem = firstItem
+   firstItem = firstItem ? firstItem : 0
    
    /*# Count of items in view -- defaults to 20 */
-   itemsPerPage = itemsPerPage
+   itemsPerPage = itemsPerPage ? itemsPerPage : 20
 
-   /*# Count of total items in the dataset (set to -1 to get data.len()) */
-   itemCount = itemCount
+   /*# Count of total items in the dataset */
+   itemCount = itemCount ? itemCount : 0
 
    /*# Column to be ordered. */
-   orderColumn = orderColumn
+   orderColumn = orderColumn ? orderColumn : 0
 
    /*# Methods for the javascript part */
    jsMethods = [=>]
@@ -511,14 +511,14 @@ class Table( id, itemsPerPage, itemCount, firstItem, orderColumn ) from widget.W
    checboxData = [=>]
    
    init
-      self.initInfos = [itemsPerPage, itemCount, firstItem, orderColumn]
+      self.initInfos = [self.itemsPerPage, self.itemCount, self.firstItem, self.orderColumn]
 
       // initialize our javascript counterpart
       self.onCreate = @"
          if ( ! this.itemsPerPage ) {
-            this.itemsPerPage = $(itemsPerPage);
-            this.firstItem = $(firstItem);
-            this.column = $(orderColumn);
+            this.itemsPerPage = $(self.itemsPerPage);
+            this.firstItem = $(self.firstItem);
+            this.column = $(self.orderColumn);
             this.filter = \"$(self.filter)\";
          }
          "
@@ -527,7 +527,7 @@ class Table( id, itemsPerPage, itemCount, firstItem, orderColumn ) from widget.W
       self.addChild( self.pagecursor )
 
       self.makeColumns()
-      self.setDataView( int(firstItem / itemsPerPage) + 1 )
+      self.setDataView()
 
       // TODO: Remove this when we have automatic parentship
       self.addClassInParentship( Table )
@@ -535,7 +535,7 @@ class Table( id, itemsPerPage, itemCount, firstItem, orderColumn ) from widget.W
 
 
    function AJAX( params )
-
+      
       msg = params["msg"]
       
       self.firstItem = int(params["extra"]["fi"])
@@ -730,7 +730,7 @@ class Table( id, itemsPerPage, itemCount, firstItem, orderColumn ) from widget.W
    end
 
    /*# Called back to create the table heading.
-d
+
       This method should put a set of TableColumn instances in the
       @a Table.headers array.
       

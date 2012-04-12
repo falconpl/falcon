@@ -1,0 +1,62 @@
+
+import from dbi in dbi
+
+import TableForm from nest.widgets.TableForm as TableForm
+import InputText from nest.widgets.InputText as InputText
+import Button from nest.widgets.Button as Button
+
+class ConnectForm( id ) from TableForm( id )
+
+   conn = InputText( "conn" )
+   btn = Button( "send", "Connect" )
+
+   init
+      if "miniblog.connstr" in Nest.sessionData
+         connect = Nest.sessionData["miniblog.connstr"]
+      else
+         connect =  vmSystemType() == "WIN" ? \
+            "sqlite3:db=C:\\Temp\\test-blog.db" : \
+            "sqlite3:db=/tmp/test-blog.db"
+      end
+      
+      self.conn.setRenderValue( connect )
+      self.conn.set( ["size"=>60] )
+
+      self.btn.makeSendFormAJAX(self)
+      self.addChild( self.conn )
+      self.addChild( self.btn )
+   end
+
+   function AJAX( params )
+      data = params["infos"]
+      self.routeValues( data )
+      connstr = self.conn.getValue()
+      dbh = dbi.connect( connstr + ";create=cond" )
+
+      // if the connection was succesful, save it
+      Nest.sessionData["miniblog.connstr"] = connstr
+
+      // eventually, setup the database
+      try
+         dbr = dbh.query("select count(*) from blogtable")
+         dbr.close()
+      catch in e
+         // ok, we must create it
+         dbh.query("
+            create table blogtable(
+               idblog      INTEGER PRIMARY key AUTOINCREMENT,
+               Title       TEXT NOT NULL,
+               Content     TEXT NOT NULL,
+               Tags        TEXT,
+               Date        String(20) NOT NULL DEFAULT CURRENT_TIMESTAMP );
+            ")
+      end
+
+      dbh.close()
+      // hide us and show the table entry
+      msg1 = self.msgSetStyle( "display", "none" )
+      msg2 = ["message" => "set_style", "id" => 'datatable-div', "property" => 'display', "value" => "" ]
+      msg3 = ["message" => "invoke", "id" => 'blogtable', "method" => 'refresh', "param" => "" ]
+      return  [msg1, msg2, msg3]
+   end
+end

@@ -1,0 +1,98 @@
+import from dbi in dbi
+import DBIDataProvider from nest.dbidp as DBIDataProvider
+import NestError from nest.error as NestError
+import Button from nest.widgets.Button as Button
+import TableForm from nest.widgets.TableForm as TableForm
+
+import ActiveTextArea from nest.widgets.ActiveTextArea as ActiveTextArea
+import InputText from nest.widgets.InputText as InputText
+import Hidden from nest.widgets.Hidden as Hidden
+
+class BlogForm( id ) from TableForm( id )   
+   mode = Hidden('mode')
+   idblog = Hidden('id')
+
+   title = InputText('title', 'Title').set( ["size"=>60] )
+   ctx = ActiveTextArea('content', 'Content', 5, 60 )
+   tags = InputText('tags', 'Tags' )
+   confirm = Button('confirm', 'Update' )
+      
+   init
+      self.idblog.datafield = 'idblog'
+      self.title.datafield = 'Title'
+      self.ctx.datafield = 'Content'
+      self.tags.datafield = 'Tags'
+
+      self.confirm.makeSendFormAJAX( self )
+
+      self.addChildren(
+         self.mode,
+         self.idblog,
+         self.title,
+         self.ctx,
+         self.tags,
+         self.confirm )
+   end
+
+   function AJAX( params )
+      //connect to the database
+      dbh = dbi.connect( Nest.sessionData["miniblog.connstr"] )
+      dp = DBIDataProvider( dbh, "blogtable", "idblog" )
+
+      if params["msg"] == 'upd'
+         return self.startUpdate( dp, params["extra"]["key"] )
+      elif params["msg"] == 'del'
+         return self.performDelete( dp, params["extra"]["key"] )
+      end
+      
+      data = params['infos']
+      idblog = data[self.id + '.id']
+      // save the data in ourselves
+      self.routeValues( data )
+      
+      // apply      
+      if data[self.id + ".mode"] == 'upd'
+         dp.openSet( idblog )
+         
+      elif data[self.id + ".mode"] == 'add'
+         self.routeValues( data )
+         self.idblog.datafield = nil // let the database to create an id
+         
+         dp.openNew()
+      else
+         raise NestError( NestError.other, "Mode not valid", data[self.id + ".mode"] )
+      end
+
+      self.setData( dp )
+      dp.apply()
+      return [
+         ["message"=>"invoke", "id"=>"blogtable", "method"=>"refresh", "params"=>""],
+         self.msgSetStyle( "display", "none" )
+         ]
+   end
+
+   function startUpdate( dp, key )
+         dp.openGet( key, self )
+         self.setData( dp )
+         dp.apply()
+         self.getData(dp)
+
+         self.mode.setRenderValue( "upd" )
+
+         return [
+            self.msgSetStyle( "display", "" ),
+            self.confirm.msgSetProperty( "innerHTML", "Update" ),
+            self.msgSetAllFields()
+            ]
+   end
+
+   function performDelete( dp, key )
+         dp.openDelete( key )
+         dp.apply()
+
+         return [
+            ["message"=>"invoke", "id"=>"blogtable", "method"=>"refresh", "params"=>""]
+            ]
+   end
+end
+

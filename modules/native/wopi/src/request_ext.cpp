@@ -21,6 +21,7 @@
 #include <falcon/wopi/error_ext.h>
 #include <falcon/wopi/session_manager.h>
 #include <falcon/wopi/utils.h>
+#include <falcon/time_sys.h>
 
 /*#
    @beginmodule WOPI
@@ -362,11 +363,19 @@ FALCON_FUNC Request_getSession( VMachine *vm )
    // ok; now, should we replicate the session on the cookies?
    if( self->autoSession() && i_sid == 0 )
    {
-      self->reply()->setCookie( fieldName,
-         CookieParams()
-            .value( sd->sID() )
-            .max_age( self->smgr()->timeout() > 0 ? self->smgr()->timeout() : -1 )
-         );
+      TimeStamp expirets;
+      CookieParams cpar;
+      cpar.value( sd->sID() );            
+         
+      if ( self->smgr()->timeout() > 0 )
+      {
+         expirets.currentTime();
+         expirets.changeTimezone(tz_UTC);
+         expirets.add(0,0,0,self->smgr()->timeout());
+         cpar.expire( &expirets );
+      }
+      
+      self->reply()->setCookie( fieldName, cpar );
    }
    vm->retval( sd->data() );
 }
