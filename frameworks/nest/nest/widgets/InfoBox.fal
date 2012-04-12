@@ -84,7 +84,7 @@ class _InfoBoxText(id, title, content) from widget.Widget( id )
    end
 
    function renderContent()
-      return @"<div style=\"$(self.titlestyle)\">$(self.title) <img src=\"$(self.imgclose)\" onclick=\"Nest.i('"+self.getFullID()+"').hide(); \" style=\"float:right\"/></div>" +
+      return @"<div style=\"$(self.titlestyle)\">$(self.title) <img src=\"$(self.imgclose)\" onclick=\"Nest.i('"+self.getFullID()+"').hide(); \" style=\"float:right;cursor: pointer;cursor: hand;\"/></div>" +
             "<div style=\"padding:4px\">" +self.content + "\n</div>\n"
    end
 end
@@ -115,6 +115,7 @@ class InfoBox( id, title, content, icon ) from widget.Widget( id )
       self.props["src"] = self.icon
       self.props["border"] = "0"
 
+	  self.addStyle( "cursor: pointer;cursor: hand;" )
       // TODO: Remove this when we have automatic parentship
       self.addClassInParentship( InfoBox )   
    end

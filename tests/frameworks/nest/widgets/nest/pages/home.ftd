@@ -20,4 +20,5 @@
 <li><a href="<?=Nest.pageLink('wd-loginmask')?>">Login mask</a></li>
 <li><a href="<?=Nest.pageLink('wd-ajaxform')?>">AJAX enabled form</a></li>
 <li><a href="<?=Nest.pageLink('wd-miniblog')?>">Small embedded blog</a></li>
+<li><a href="<?=Nest.pageLink('wd-calendar')?>">AJAX enabled calendar</a></li>
 </ul>

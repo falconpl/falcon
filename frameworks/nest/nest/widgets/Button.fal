@@ -21,11 +21,11 @@ import from nest.widgets.widget in widget
 /*# Basic button (not for form submits).
    @param id The widget ID
    @param content The HTML content displayed in the button.
-   @optparam type Optional type (defautls to 'button')
+   @optparam type Optional type (default: 'button')
 
    This generates an HTML button. Normally, you should
    rely to Submit or Reset fields in forms, as they generate the same
-   controlled values in froms submits in different browsers, while
+   controlled values in form submits in different browsers, while
    button tag based submits can differ (some use the value attribute,
    some use the contents of the tag).
 

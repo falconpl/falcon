@@ -1,0 +1,174 @@
+import from nest.widgets.widget in wid
+import from nest.js
+
+/*# Calendar form widget.
+   @param id The widget ID
+   @param currentDate the Date on which to "center" the Calendar default is today
+
+   This widget shows a calendar centered on a date.
+
+*/
+
+jscript = "
+var thisDate = 1;					
+var wordMonth = new Array('January','February','March','April','May','June','July','August','September','October','November','December');
+var today = new Date();
+var todaysDay = today.getDay() + 1;
+var todaysDate = today.getDate();	
+var todaysMonth = today.getUTCMonth() + 1;		
+var todaysYear = today.getFullYear();			
+var monthNum = todaysMonth;						
+var yearNum = todaysYear;						
+var firstDate = new Date(String(monthNum)+'/1/'+String(yearNum));	
+var firstDay = firstDate.getUTCDay();								
+var lastDate = new Date(String(monthNum+1)+'/0/'+String(yearNum));	
+var numbDays = lastDate.getDate();
+var calendarString = '';
+
+function changedate(buttonpressed) {
+	if (buttonpressed == 'prevyr') yearNum--;
+	else if (buttonpressed == 'nextyr') yearNum++;
+	else if (buttonpressed == 'prevmo') monthNum--;
+	else if (buttonpressed == 'nextmo') monthNum++;
+	else  if (buttonpressed == 'return') { 
+		monthNum = todaysMonth;
+		yearNum = todaysYear;
+	}
+
+	if (monthNum == 0) {
+		monthNum = 12;
+		yearNum--;
+	}
+	else if (monthNum == 13) {
+		monthNum = 1;
+		yearNum++
+	}
+
+	lastDate = new Date(String(monthNum+1)+'/0/'+String(yearNum));
+	numbDays = lastDate.getDate();
+	firstDate = new Date(String(monthNum)+'/1/'+String(yearNum));
+	firstDay = firstDate.getDay() + 1;
+	createCalendar();
+	return;
+}
+function isleap( year ) {
+
+   var yr = year;
+
+   if ((parseInt(yr)%4) == 0) {
+   
+      if (parseInt(yr)%100 == 0) {
+         if (parseInt(yr)%400 != 0) 
+    		return false;
+         
+         if (parseInt(yr)%400 == 0) 
+            return true;
+      }
+   }
+   
+   if (parseInt(yr)%100 != 0) 
+      return true;
+  
+   if ((parseInt(yr)%4) != 0)
+      return false;
+      
+}
+
+function getMonthDays( month, year ) {
+	switch ( month ) {
+		case 11:
+		case 4:
+		case 6:
+		case 9:
+			return 30;
+			break;
+		case 2:
+			return isleap( year) ? 29 : 28;
+			break;
+		default:
+			return 31;
+	}
+}
+
+function createCalendar() { 	
+	var daycounter = 0;
+	calendarString = '<table width=\"312\" border=\"1\" cellpadding=\"0\" cellspacing=\"1\">';
+	calendarString += '<tr>';
+	calendarString += '<td align=\"center\" valign=\"center\" width=\"40\" height=\"40\">';
+	calendarString += '<button onClick=\\'changedate(\"prevyr\")\\'>&lt;&lt;</button></td>';
+	calendarString += '<td align=\"center\" valign=\"center\" width=\"40\" height=\"40\">';
+	calendarString += '<button onClick=\\'changedate(\"prevmo\")\\'>&lt;</button></td>';	
+	calendarString += '<td bgcolor=\"#C8C896\" align=\"center\" valign=\"center\" width=\"128\" height=\"40\" colspan=\"3\">';
+	calendarString += '<b>' + wordMonth[monthNum-1] + '&nbsp;&nbsp;' + yearNum + '</b></td>';
+	calendarString += '<td align=\"center\" valign=\"center\" width=\"40\" height=\"40\">';
+	calendarString += '<button onClick=\\'changedate(\"nextmo\")\\'>&gt;</button></td>';
+	calendarString += '<td align=\"center\" valign=\"center\" width=\"40\" height=\"40\">';
+	calendarString += '<button onClick=\\'changedate(\"nextyr\")\\'>&gt;&gt;</button></td>';
+	calendarString += '</tr>';
+	calendarString += '<tr>';
+	calendarString += '<td bgcolor=\"#DDDDDD\" align=\"center\" valign=\"center\" width=\"40\" height=\"22\">Sun</td>';
+	calendarString += '<td bgcolor=\"#DDDDDD\" align=\"center\" valign=\"center\" width=\"40\" height=\"22\">Mon</td>';
+	calendarString += '<td bgcolor=\"#DDDDDD\" align=\"center\" valign=\"center\" width=\"40\" height=\"22\">Tue</td>';
+	calendarString += '<td bgcolor=\"#DDDDDD\" align=\"center\" valign=\"center\" width=\"40\" height=\"22\">Wed</td>';
+	calendarString += '<td bgcolor=\"#DDDDDD\" align=\"center\" valign=\"center\" width=\"40\" height=\"22\">Thu</td>';
+	calendarString += '<td bgcolor=\"#DDDDDD\" align=\"center\" valign=\"center\" width=\"40\" height=\"22\">Fri</td>';
+	calendarString += '<td bgcolor=\"#DDDDDD\" align=\"center\" valign=\"center\" width=\"40\" height=\"22\">Sat</td>';
+	calendarString += '</tr>';
+
+	thisDate = 1;	
+
+	for (var i = 0; i < 6; i++) {
+		calendarString += '<tr>';
+		for (var x = 1; x <= 7; x++) {
+
+		   daycounter = (thisDate - firstDay)+1;
+		   ++thisDate;		  
+		    
+		   if (( daycounter > numbDays ) || ( daycounter < 1 )) {
+		      calendarString += '<td align=\"center\" bgcolor=\"#888888\" height=\"30\" width=\"40\">&nbsp;';  
+		   } else {		   	  
+		      calendarString += '<td align=\"center\" bgcolor=\"#DDFFFF\" height=\"30\" width=\"40\">' + daycounter + '</td>';
+		   }		   
+		   calendarString += '</td>';
+		}		
+		calendarString += '</tr>';
+		
+		if (daycounter >= numbDays)
+			i = 10;
+
+	}
+
+	var object=document.getElementById('##MYID##');		
+	object.innerHTML= calendarString;
+}
+"
+
+
+class Calendar(id, currentDate) from wid.Widget( "Calendar" )
+   tag = "div"		
+   currentDate   = nil
+   isSelfClosing = true
+   
+   init
+   	  self.id = id
+      if currentDate 
+         self.currentDate = currentDate 
+      else 
+      	 self.currentDate = TimeStamp()
+      	 self.currentDate.currentTime()
+      end 
+      if self.props == nil: self.props = [=>]
+      self.props['name'] = nil   // will be filled at render.
+      
+      // TODO: Remove this when we have automatic parentship
+      self.addClassInParentship( Calendar )
+      
+      nest.js.script( jscript.replace("##MYID##", self.id ))
+      
+   end
+   
+   function onRender()   	
+      self.props['name'] = self.getFullID()      
+   end
+
+end   

@@ -1147,16 +1147,16 @@ static void internal_handle_add( VMachine*vm, Item* i_handle )
 }
 
 /*#
-	@class Multi
-	@brief Interface to CURL multi_* operations.
-	@optparam ... @a Handle instances to be immediately added.
+    @class Multi
+    @brief Interface to CURL multi_* operations.
+    @optparam ... @a Handle instances to be immediately added.
 
-	The Multi interface is meant to perform multiple CURL connections
-	handled by a single application.
+    The Multi interface is meant to perform multiple CURL connections
+    handled by a single application.
 
-	A @b Multi instance lifetime is usually like the following:
-	- Add one or more pre-configured @a Handle instances.
-	- Loop on  @a Multi.perform() up to when it returns 0 indicating that all transfers are complete.
+    A @b Multi instance lifetime is usually like the following:
+    - Add one or more pre-configured @a Handle instances.
+    - Loop on  @a Multi.perform() up to when it returns 0 indicating that all transfers are complete.
 
    For example, a minimal operation may be like the following:
    @code
