@@ -221,7 +221,7 @@ class NameWithAvail( id, prompt ) from InputText( id, prompt )
       return self.name_checked.render() + self.name_wid.renderCore()
    end
 
-   function setRenderValue( val )
+   function setValue( val )
       self.name_wid.props['value'] = val
    end
 

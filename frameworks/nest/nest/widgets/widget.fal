@@ -645,7 +645,7 @@ class Widget( id )
 
    /*# Sets the value of the widget before its rendering.
    */
-   function setRenderValue( val )
+   function setValue( val )
       if self.props == nil: self.props = [=>]
       self.props['value'] = val
    end
@@ -670,7 +670,7 @@ class Widget( id )
       current = top ? top+"."+self.id : self.id
       if current in vals
          //> "Rendering "+vals[current]+"<br/>"
-         self.setRenderValue( vals[current] )
+         self.setValue( vals[current] )
       end
       //> "Subroutong... <br/>"
       for item in self.children
@@ -726,7 +726,7 @@ class Widget( id )
    function getData( provider )
       if self.datafield
          // the data provider is bound to raise if the field is not valid.
-         self.setRenderValue( provider.get( self.datafield ) )
+         self.setValue( provider.get( self.datafield ) )
       end
 
       for child in self.children

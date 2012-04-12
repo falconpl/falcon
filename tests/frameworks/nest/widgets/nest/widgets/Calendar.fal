@@ -9,166 +9,307 @@ import from nest.js
 
 */
 
-jscript = "
-var thisDate = 1;					
-var wordMonth = new Array('January','February','March','April','May','June','July','August','September','October','November','December');
-var today = new Date();
-var todaysDay = today.getDay() + 1;
-var todaysDate = today.getDate();	
-var todaysMonth = today.getUTCMonth() + 1;		
-var todaysYear = today.getFullYear();			
-var monthNum = todaysMonth;						
-var yearNum = todaysYear;						
-var firstDate = new Date(String(monthNum)+'/1/'+String(yearNum));	
-var firstDay = firstDate.getUTCDay();								
-var lastDate = new Date(String(monthNum+1)+'/0/'+String(yearNum));	
-var numbDays = lastDate.getDate();
-var calendarString = '';
+/*#
 
-function changedate(buttonpressed) {
-	if (buttonpressed == 'prevyr') yearNum--;
-	else if (buttonpressed == 'nextyr') yearNum++;
-	else if (buttonpressed == 'prevmo') monthNum--;
-	else if (buttonpressed == 'nextmo') monthNum++;
-	else  if (buttonpressed == 'return') { 
-		monthNum = todaysMonth;
-		yearNum = todaysYear;
-	}
+@code
++=============================+  << span id == [widgetid]
++                        [X]  +  << div id == [widgetid].bar  class="windowbar"
++ |<< <|  month / year |> >>| +  << div id == [widgetid].head -> ...
++                             +
++ Sun Mon ...             Sat + << div id == [widgetid].intest (each span class="intest")
++ [  ]  [  ]  1  2         .. + << div id == [widgetid].body
++  ...                        + << each row div id == [widgetid].row
++  ...                        + << each cell: span class='day' (or 'noday' if empty), 'today' or 'busyday'
++      [ 15 ]                 + << span class='today'
++ ...         [25!]           + << span class='xday'
++=============================+
+@endcode
 
-	if (monthNum == 0) {
-		monthNum = 12;
-		yearNum--;
-	}
-	else if (monthNum == 13) {
-		monthNum = 1;
-		yearNum++
-	}
+The buttons generate a message from current widget with message id:
+- nexty
+- nextm
+- prevy
+- prevm
 
-	lastDate = new Date(String(monthNum+1)+'/0/'+String(yearNum));
-	numbDays = lastDate.getDate();
-	firstDate = new Date(String(monthNum)+'/1/'+String(yearNum));
-	firstDay = firstDate.getDay() + 1;
-	createCalendar();
-	return;
-}
-function isleap( year ) {
+The div [widgetid].head is divided into 3 parts:
+- class = btnprev
+- class = curdate
+- class = btnnext
 
-   var yr = year;
+Buttons id in order:
+- [widgetid].back1y  (under span id=btnprev)
+- [widgetid].back1m  (under span id=btnprev)
+- [widgetid].fwd1m   (under span id=btnnext)
+- [widgetid].fwd1y   (under span id=btnnext)
 
-   if ((parseInt(yr)%4) == 0) {
-   
-      if (parseInt(yr)%100 == 0) {
-         if (parseInt(yr)%400 != 0) 
-    		return false;
-         
-         if (parseInt(yr)%400 == 0) 
-            return true;
-      }
-   }
-   
-   if (parseInt(yr)%100 != 0) 
-      return true;
-  
-   if ((parseInt(yr)%4) != 0)
-      return false;
-      
-}
-
-function getMonthDays( month, year ) {
-	switch ( month ) {
-		case 11:
-		case 4:
-		case 6:
-		case 9:
-			return 30;
-			break;
-		case 2:
-			return isleap( year) ? 29 : 28;
-			break;
-		default:
-			return 31;
-	}
-}
-
-function createCalendar() { 	
-	var daycounter = 0;
-	calendarString = '<table width=\"312\" border=\"1\" cellpadding=\"0\" cellspacing=\"1\">';
-	calendarString += '<tr>';
-	calendarString += '<td align=\"center\" valign=\"center\" width=\"40\" height=\"40\">';
-	calendarString += '<button onClick=\\'changedate(\"prevyr\")\\'>&lt;&lt;</button></td>';
-	calendarString += '<td align=\"center\" valign=\"center\" width=\"40\" height=\"40\">';
-	calendarString += '<button onClick=\\'changedate(\"prevmo\")\\'>&lt;</button></td>';	
-	calendarString += '<td bgcolor=\"#C8C896\" align=\"center\" valign=\"center\" width=\"128\" height=\"40\" colspan=\"3\">';
-	calendarString += '<b>' + wordMonth[monthNum-1] + '&nbsp;&nbsp;' + yearNum + '</b></td>';
-	calendarString += '<td align=\"center\" valign=\"center\" width=\"40\" height=\"40\">';
-	calendarString += '<button onClick=\\'changedate(\"nextmo\")\\'>&gt;</button></td>';
-	calendarString += '<td align=\"center\" valign=\"center\" width=\"40\" height=\"40\">';
-	calendarString += '<button onClick=\\'changedate(\"nextyr\")\\'>&gt;&gt;</button></td>';
-	calendarString += '</tr>';
-	calendarString += '<tr>';
-	calendarString += '<td bgcolor=\"#DDDDDD\" align=\"center\" valign=\"center\" width=\"40\" height=\"22\">Sun</td>';
-	calendarString += '<td bgcolor=\"#DDDDDD\" align=\"center\" valign=\"center\" width=\"40\" height=\"22\">Mon</td>';
-	calendarString += '<td bgcolor=\"#DDDDDD\" align=\"center\" valign=\"center\" width=\"40\" height=\"22\">Tue</td>';
-	calendarString += '<td bgcolor=\"#DDDDDD\" align=\"center\" valign=\"center\" width=\"40\" height=\"22\">Wed</td>';
-	calendarString += '<td bgcolor=\"#DDDDDD\" align=\"center\" valign=\"center\" width=\"40\" height=\"22\">Thu</td>';
-	calendarString += '<td bgcolor=\"#DDDDDD\" align=\"center\" valign=\"center\" width=\"40\" height=\"22\">Fri</td>';
-	calendarString += '<td bgcolor=\"#DDDDDD\" align=\"center\" valign=\"center\" width=\"40\" height=\"22\">Sat</td>';
-	calendarString += '</tr>';
-
-	thisDate = 1;	
-
-	for (var i = 0; i < 6; i++) {
-		calendarString += '<tr>';
-		for (var x = 1; x <= 7; x++) {
-
-		   daycounter = (thisDate - firstDay)+1;
-		   ++thisDate;		  
-		    
-		   if (( daycounter > numbDays ) || ( daycounter < 1 )) {
-		      calendarString += '<td align=\"center\" bgcolor=\"#888888\" height=\"30\" width=\"40\">&nbsp;';  
-		   } else {		   	  
-		      calendarString += '<td align=\"center\" bgcolor=\"#DDFFFF\" height=\"30\" width=\"40\">' + daycounter + '</td>';
-		   }		   
-		   calendarString += '</td>';
-		}		
-		calendarString += '</tr>';
-		
-		if (daycounter >= numbDays)
-			i = 10;
-
-	}
-
-	var object=document.getElementById('##MYID##');		
-	object.innerHTML= calendarString;
-}
-"
-
-
-class Calendar(id, currentDate) from wid.Widget( "Calendar" )
-   tag = "div"		
+*/
+class Calendar(id, currentDate) from wid.Widget( id )
+   tag = "span"
    currentDate   = nil
-   isSelfClosing = true
+   isSelfClosing = false
+   isAJAXHost = true
+
+   cellWidth = 35
+   cellHeight = 30
+   
+   monthNames = .[
+      i"January"
+      i"February"
+      i"March"
+      i"April"
+      i"May"
+      i"June"
+      i"July"
+      i"August"
+      i"September"
+      i"October"
+      i"November"
+      i"December"]
+
+   dayNames = .[
+      i"Sun"
+      i"Mon"
+      i"Tru"
+      i"Wed"
+      i"Thu"
+      i"Fri"
+      i"Sat"]
+
+   firstDay = 0
+
+   jsMethods = [
+      "busyDays" => "Array()",
+      
+      "daysPerMonth" => "
+         function( month, year ) {
+            var dpm = Array(31,28,31,30,31,30,31,31,30,31,30,31);
+            var days = dpm[month-1];
+            if ( days == 28 && this.isLeapYear( year ) ) days = 29;
+            return days;
+         }",
+         
+      "isLeapYear" => "
+         function isleap( year ) {
+            var yr = parseInt(yr);
+            if (yr%4 == 0) {
+               if (yr%100 == 0) {
+                  return yr%100 != 0 || yr%400 == 0;
+               }
+               return true;
+            }
+            return false;
+         }",
+         
+      "create" => "
+         function() {
+            this.style.paddingTop=0;
+            var bar = document.createElement('div');
+            bar.id = this.id + '.bar';
+            bar.style.height='16px';            
+            bar.style.paddingRight='9px';
+            bar.style.paddingLeft='9px';
+            bar.className = 'windowbar';
+            
+            var closebtn = document.createElement('button');
+            closebtn.id = this.id + '.closebtn';
+            closebtn.innerHTML='X';
+            closebtn.style.width = '30px';
+            closebtn.style.height = '13px';
+            closebtn.style.fontSize = '8pt';
+            closebtn.style.padding = '0';
+            closebtn.style.margin = '0pt';
+            closebtn.style.fontWeight = 'bold';
+            closebtn.style.fontFamily = 'arial, sans';
+            closebtn.style.float = 'right';
+            
+            bar.appendChild( closebtn );
+            
+            var head = document.createElement('div');
+            head.style.clear = 'both';
+            head.id = this.id + '.head';
+            this.createHead( head );
+         
+            var intest = document.createElement('div');
+            intest.id = this.id + '.intest';
+            this.createIntest( intest );
+            
+            this.appendChild( bar );
+            this.appendChild( head );
+            this.appendChild( intest );
+         }",
+
+      "createHead" => "
+         function( headDiv ) {
+            var btnBack1Year = document.createElement('button');
+            btnBack1Year.id = this.id + '.back1y';
+            btnBack1Year.innerHTML ='&lt;&lt;';
+            var btnBack1Month = document.createElement('button');
+            btnBack1Month.id = this.id + '.back1m';
+            btnBack1Month.innerHTML ='&lt;';
+            var btnprev = document.createElement('span');
+            btnprev.className = 'btnprev';
+
+            this.curMonthSpan = document.createElement('span');
+            this.curMonthSpan.id = this.id + '.current';
+            this.curMonthSpan.className = 'curdate';
+            
+            var btnFwd1Month = document.createElement('button');
+            btnFwd1Month.id = this.id + '.fwd1m';
+            btnFwd1Month.innerHTML ='&gt;';
+            var btnFwd1Year = document.createElement('button');
+            btnFwd1Year.id = this.id + '.fwd1y';
+            btnFwd1Year.innerHTML ='&gt;&gt;';
+
+            var btnnext = document.createElement('span');
+            btnnext.className = 'btnnext';
+            
+            btnprev.appendChild( btnBack1Year );
+            btnprev.appendChild( btnBack1Month );
+            btnnext.appendChild( btnFwd1Month );
+            btnnext.appendChild( btnFwd1Year );
+
+            headDiv.appendChild( btnprev );
+            headDiv.appendChild( this.curMonthSpan );
+            headDiv.appendChild( btnnext );
+
+            this.setCurMonth();
+         }
+      ",
+
+      "setCurMonth" => "
+         function() {
+            var mname = this.monthNames[ this.month - 1 ];
+            this.curMonthSpan.innerHTML = mname + \" \" + this.year; 
+         }
+      ",
+
+      "refresh" => "
+         function() {
+            if( this.body ) {
+               this.removeChild( this.body );
+            }
+            this.body = document.createElement('div');
+            this.body.id = this.id + '.body';
+            this.appendChild( this.body );
+
+            var days = this.daysPerMonth( this.month, this.year );
+            var curday = 1;
+
+            /* put in the first row */
+            var row = document.createElement('div');
+            row.className = 'row';
+
+            /* calculate the first day of this month */
+            var today_date = new Date();
+            var today = 0;
+            if( this.month == today_date.getMonth()+1 && this.year == today_date.getFullYear() )
+            {
+               today = today_date.getDate();
+            }
+            var d = new Date( this.year, this.month-1, 1 );
+            var dow = d.getDay() + this.firstDay;
+            var rowday = 0;
+
+            /* fill with nodays */
+            var nodays = this.firstDay;
+            while( nodays < dow ) {
+               var noday = document.createElement('span');
+               noday.className = 'noday';
+               noday.style.width= this.cellWidth + 'px';
+               noday.style.height= this.cellHeight+ 'px';
+               nodaay.style.display='inline-block';
+               noday.innerHTML = '&nbsp;';
+               row.addChild( noday );
+               ++nodays;
+               ++rowday;
+            }
+            
+            while( curday <= days ) {
+               var day = document.createElement('span');
+               day.className = 'day';
+               if ( curday == today )
+               {
+                  day.id = this.id + '.today';
+               }
+               if( this.busyDays.indexOf(curday) != -1 ) {
+                  day.className = 'busyday';
+               }
+
+               day.innerHTML = curday;
+               day.style.width= this.cellWidth + 'px';
+               day.style.height= this.cellHeight+ 'px';
+               day.style.display='inline-block';
+               row.appendChild( day );
+               ++curday;
+               ++rowday;
+               if( rowday == 7 ) {
+                  this.appendChild( row );
+                  var row = document.createElement('div');
+                  row.className = 'row';
+                  rowday = 0;
+               }
+            }
+
+            this.appendChild( row );
+         }
+      ",
+       
+      "createIntest" => "
+         function( headDiv ) {
+            for( var i = this.firstDay; i < 7+this.firstDay; i = i + 1 ) {
+               var dname = i;
+               if ( dname > 6 ) dname = dname - 7;
+               var inner = document.createElement('span');
+               inner.style.width= this.cellWidth + 'px';
+               inner.style.display='inline-block';
+               inner.className = 'intest';
+               inner.innerHTML = this.dayNames[dname];
+               inner.style.width= this.cellWidth + 'px';
+               headDiv.appendChild( inner );
+            }
+         }
+      ",
+
+      "goto" => "
+         function( month, year ) {
+            this.month = month;
+            this.year = year;
+            this.refresh();
+         }"
+   ]
+
+   onCreate = "this.create(); this.refresh();"
    
    init
-   	  self.id = id
+      self.set( ["class" => "calendar", "style" => "display: inline-block"] )
+      
       if currentDate 
          self.currentDate = currentDate 
       else 
-      	 self.currentDate = TimeStamp()
-      	 self.currentDate.currentTime()
-      end 
-      if self.props == nil: self.props = [=>]
-      self.props['name'] = nil   // will be filled at render.
+         self.currentDate = TimeStamp()
+         self.currentDate.currentTime()
+      end
+
+      self.jsMethods["month"] = self.currentDate.month
+      self.jsMethods["year"] = self.currentDate.year
+      self.jsMethods["firstDay"] = self.firstDay
+      self.jsMethods["cellWidth"] = self.cellWidth
+      self.jsMethods["cellHeight"] = self.cellHeight
+
+      self.jsMethods["dayNames"] = "Array('" + "','".merge( self.dayNames ) + "')"
+      self.jsMethods["monthNames"] = "Array('" + "','".merge( self.monthNames ) + "')"
       
       // TODO: Remove this when we have automatic parentship
-      self.addClassInParentship( Calendar )
-      
-      nest.js.script( jscript.replace("##MYID##", self.id ))
-      
-   end
-   
-   function onRender()   	
-      self.props['name'] = self.getFullID()      
+      self.addClassInParentship( Calendar )      
    end
 
+
+   function renderContent()
+      return ""
+   end
+
+   function AJAX( params )
+      inspect( params )
+   end
+   
 end   

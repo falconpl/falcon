@@ -67,7 +67,7 @@ class Container( id, tagtype, tag_beg, tag_sep, tag_end ) from widget.Widget( id
    end
 
 
-   function setRenderValue( val )
+   function setValue( val )
       if val.typeId() == ArrayType
          for item in val
             if item in self.childrenById

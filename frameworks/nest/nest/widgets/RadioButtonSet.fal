@@ -56,7 +56,7 @@ class RadioButtonSet( id, choices, tagtype, tag_beg, tag_sep, tag_end ) from \
       return child
    end
 
-   function setRenderValue( val )
+   function setValue( val )
       if val in self.childrenById
          self.value = val
          self.childrenById[val].props["checked"] = "checked"

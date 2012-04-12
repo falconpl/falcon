@@ -43,7 +43,7 @@ class ActiveTextArea( id, prompt, rows, cols ) from ActiveInput( id, prompt )
       self.addClassInParentship( ActiveTextArea )
    end
 
-   function setRenderValue( val )
+   function setValue( val )
       self.content = val
    end
 

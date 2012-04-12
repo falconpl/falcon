@@ -90,7 +90,7 @@ class DateSelector( id, yearRange, tagtype, tag_beg, tag_sep, tag_end ) from \
    function makeMonths()
    end
 
-   function setRenderValue( val )
+   function setValue( val )
       if val
          if val.typeId() == StringType
             vect = val.split('-')
@@ -99,9 +99,9 @@ class DateSelector( id, yearRange, tagtype, tag_beg, tag_sep, tag_end ) from \
          end
          
          if(vect.len() == 3)
-            self.years.setRenderValue( vect[0].trim() )
-            self.months.setRenderValue( vect[1].trim() )
-            self.days.setRenderValue( vect[2].trim() )
+            self.years.setValue( vect[0].trim() )
+            self.months.setValue( vect[1].trim() )
+            self.days.setValue( vect[2].trim() )
          end
       end
    end

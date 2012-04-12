@@ -21,11 +21,13 @@
    @param name A logical name for the style
    @optparam mode The CSS pseudo-class for the style ("hover", "focus" etc.)
    @optparam css The css declarations
+   @optparam spec The Extra specification for the style (sub-class, sub-ids)
 */
-class Style( name, mode, css )
+class Style( name, mode, css, spec )
    name = name
    css = css
    mode = mode
+   spec = spec
 
    /**# Apply this CSS to the given widget by ID
       @param widget The widget to which this CSS elements must be applied.

@@ -26,7 +26,7 @@ import Hidden from nest.widgets.Hidden as Hidden
    @optparam method The method (GET or POST), defaults to "POST".
 
    This class has support to route the input variables filling them
-   into its children. The children will receive setRenderValue
+   into its children. The children will receive setValue
    callbacks with the value the Form expects them to receive,
    and may use this callback to check for correct values and eventually
    prepare their @b fieldInfo property with an error message.

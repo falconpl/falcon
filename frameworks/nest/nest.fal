@@ -780,7 +780,7 @@ object Nest
             
             if item.idStyles
                item_id =  "#" + strReplace( item.getFullID(), ".", "\\." )
-               styles += self._makeCSSforID( item_id, item.idStyles )
+               styles += self._makeCSSforID( item_id, item.idStyles, item )
             end
 
             //then the CSS for the classes
@@ -788,7 +788,7 @@ object Nest
             if classStyles
                id = item.CSSClassID()
                if id notin classCSS
-                  styles += self._makeCSSforID( "." + id, classStyles )
+                  styles += self._makeCSSforID( "." + id, classStyles, item )
                   classCSS[id] = 1
                end
             end
@@ -1388,10 +1388,12 @@ object Nest
    end
 
    
-   function _makeCSSforID( id, styles )     
+   function _makeCSSforID( cssid, styles, item )     
       results = [=>]
+      id = item.id
       for style in styles
-         full_id = style.mode ? (id + ":" + style.mode) : id
+         full_id = style.mode ? (cssid + ":" + style.mode) : cssid
+         if style.spec: full_id += " " + style.spec
          if full_id in results
             results[full_id] += style.css
          else
@@ -1402,7 +1404,7 @@ object Nest
 
       result = ""
       for k,v in results
-         result += k + " {\n" + v + "}\n"
+         result += @k + " {\n" + v + "}\n"
       end
       
       return result

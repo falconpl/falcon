@@ -1,10 +1,11 @@
 <h2>Nest Widget test: Calendar</h2>
-
+<style>
+#iCal\.today {
+   text-color: #602020;
+   text-weight: bold;
+   }
+</style>   
 <?         
    iCalendar = Nest.widget( "Calendar" )("iCal")
 ?>
 <?= iCalendar.render() ?>
-
-<script language="javascript">
-	createCalendar();
-</script>

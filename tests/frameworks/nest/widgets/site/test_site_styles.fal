@@ -94,3 +94,132 @@ Style( "Bordered box with shade", nil, '
    -moz-box-shadow: 3px 3px 2px rgba(50, 50, 50, 0.8);
    '
 ).applyToClass("LoginMask")
+
+
+//=============================================================
+// Calendar styles
+//
+
+Style( "Calendar outline", nil, '
+   border: 1px solid;
+   padding: 5px;
+   background: #f9F9FF;
+   border-radius: 15px 15px;
+   -webkit-border-radius: 15px 15px;
+   -moz-border-radius: 15px 15px;
+
+   box-shadow: 2px 2px 10px rgba(50, 50, 90, 0.8);
+   -webkit-box-shadow: 2px 2px 10px rgba(50, 50, 90, 0.8);
+   -moz-box-shadow: 2px 2px 10px rgba(50, 50, 90, 0.8);
+   '
+).applyToClass("Calendar")
+
+daystyle = '
+   border: 1px;
+   padding: 0px;
+   margin: 1px;
+   text-align: center;
+   vertical-align: middle;
+   background: #e0e0ff;
+   border-radius: 3px 3px;
+   -webkit-border-radius: 3px 3px;
+   -moz-border-radius: 3px 3px;
+   '
+
+Style( "Calendar days 2", nil, daystyle, 'span.day'
+).applyToClass("Calendar")
+
+Style( "Calendar days", nil, '
+   background: #a0a0ef;
+   ', 'span.day:active'
+).applyToClass("Calendar")
+
+Style( "Calendar days -- today", nil, '
+   color: #602020;
+   background: #e0c0f0;
+   font-weight: bold;
+   ', '#$(id)\.today'
+).applyToClass("Calendar")
+
+Style( "Calendar days -- today", nil, '
+   background:#a0a0ef;
+   ', '#$(id)\.today:active'
+).applyToClass("Calendar")
+
+Style( "Calendar days -- busy day", nil, daystyle + '
+   background:#e0c0f0;
+   ', 'span.busyDay'
+).applyToClass("Calendar")
+
+Style( "Calendar days -- busy day -- active", nil, daystyle + '
+   background:#a0a0ef;
+   ', 'span.busyDay:active'
+).applyToClass("Calendar")
+
+Style( "Calendar intestation", nil, '
+   border: 1px;
+   border-bottom: 3px solid #6060a0;
+   padding: 0px;
+   margin: 1px;
+   text-align: center;
+   vertical-align: middle;
+   background: #e0c0ff;
+   border-radius: 3px 3px;
+   -webkit-border-radius: 3px 3px;
+   -moz-border-radius: 3px 3px;
+   ', 'span.intest'
+).applyToClass("Calendar")
+
+Style( "Calendar Buttons", nil, '
+   width: 30px;
+   height: 20px;
+   margin: 1px;
+   font-face: arial, sans;
+   font-size: 10px;
+   border: 1px solid;
+   background: #9090B0;
+', 'button'
+).applyToClass("Calendar")
+
+Style( "Calendar Buttons -- close", nil, '
+   border-top: 0;
+   border-bottom-left-radius: 6px;
+   border-bottom-right-radius: 6px;
+   -webkit-border-radius-bottomleft: 6px;
+   -webkit-border-radius-bottomright: 6px;
+   -moz-border-radius-bottomleft: 6px;
+   -moz-border-radius-bottomright: 6px;
+   background: #b0b0b0;
+', '#$(id)\.closebtn'
+).applyToClass("Calendar")
+
+Style( "Calendar Buttons -- close active", "active", '
+
+   background: #909090;
+', '#$(id)\.closebtn:active'
+).applyToClass("Calendar")
+
+Style( "Calendar Buttons hover", nil, '
+   background: #A0A0F0;
+', 'button:hover'
+).applyToClass("Calendar")
+
+Style( "Calendar Buttons active", "active", '
+   background: #8080C0;
+', 'button:active'
+).applyToClass("Calendar")
+
+
+Style( "Calendar Button right", nil, '
+   float:right;
+', 'span.btnnext'
+).applyToClass("Calendar")
+
+Style( "Calendar current date", nil, '
+   font-weight: bold;
+   font-size:16px;
+   text-align: center;
+   display: inline-block;
+   width:120px;
+', 'span.curdate'
+).applyToClass("Calendar")
