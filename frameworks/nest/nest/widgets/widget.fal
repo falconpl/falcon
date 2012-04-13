@@ -434,7 +434,7 @@ class Widget( id )
       The default is to put a br tag after each child.
    */
    function renderChild( child )
-      return child.render() + "<br/>"
+      return child.render()
    end
 
    function renderLabel()

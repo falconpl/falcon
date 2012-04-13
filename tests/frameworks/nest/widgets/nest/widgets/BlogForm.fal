@@ -77,7 +77,7 @@ class BlogForm( id ) from TableForm( id )
          dp.apply()
          self.getData(dp)
 
-         self.mode.setRenderValue( "upd" )
+         self.mode.setValue( "upd" )
 
          return [
             self.msgSetStyle( "display", "" ),

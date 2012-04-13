@@ -1,0 +1,79 @@
+<h2>Nest Widget test: Popup Windows</h2>
+
+<p>This is a test for some popup windows.</p>
+<?
+   btn1 = Nest.widget( "Button" )("btn1", "this")
+   
+   wnd = Nest.widget( "PopupWindow" )("wnd1", "Standard window", 400, 50, 300, 200 )
+   text = Nest.widget( "Text" )("txt",
+      "
+         This is a fixed position window, placed at 400,50 coordinares in the page.<br/>
+         Notice that if the text spawns in more space, the window is automatically made
+         scrolable.<br/>
+         <p>More text...</p>
+         <p>More text..</p>
+         <p>More text..</p>
+         <p>More text..</p>
+         <p>Text complete.</p>"
+      )
+   wnd.container.addChild( text )
+   wnd.jsListeners[btn1] = "function(){ this.show(); }"
+   > wnd.render()
+?>
+
+<p>Click <?= btn1.render() ?> to open an absolute window.</p>
+
+<hr/>
+
+<?
+   btn2 = Nest.widget( "Button" )("btn2", "this")
+
+   wnd = Nest.widget( "PopupWindow" )("wnd2", "Centered window", 0, 0, 300, 200 )
+   text = Nest.widget( "Text" )("txt", "
+      This is a window centered in the screen.
+      Whenever you resize the browser window, it always stays centered on the current
+      viewport." )
+   wnd.container.addChild( text )
+   wnd.center = true
+   wnd.fixed = true
+   wnd.jsListeners[btn2] = "function(){ this.show(); }"
+   > wnd.render()
+?>
+
+<p>Click <?= btn2.render() ?> to open a window centered in the screen.</p>
+
+<hr/>
+
+<?
+   btn3 = Nest.widget( "Button" )("btn3", "this")
+
+   wnd = Nest.widget( "PopupWindow" )("wnd3", "Fixed window", 70, 30, 300, 200 )
+   text = Nest.widget( "Text" )("txt", "
+         This is a fixed winodow; it always stays at the same position in the browser window." )
+   wnd.container.addChild( text )
+   wnd.fixed = true
+   wnd.jsListeners[btn3] = "function(){ this.show(); }"
+   > wnd.render()
+?>
+
+<p>Click <?= btn3.render() ?> to open a window fixed on the scrren.</p>
+<hr/>
+<p>This is a bit of text to allow scrolling...</p>
+<p>This is a bit of text to allow scrolling...</p>
+<p>This is a bit of text to allow scrolling...</p>
+<p>This is a bit of text to allow scrolling...</p>
+<p>This is a bit of text to allow scrolling...</p>
+<p>This is a bit of text to allow scrolling...</p>
+<p>This is a bit of text to allow scrolling...</p>
+<p>This is a bit of text to allow scrolling...</p>
+<p>This is a bit of text to allow scrolling...</p>
+<p>This is a bit of text to allow scrolling...</p>
+<p>This is a bit of text to allow scrolling...</p>
+<p>This is a bit of text to allow scrolling...</p>
+<p>This is a bit of text to allow scrolling...</p>
+<p>This is a bit of text to allow scrolling...</p>
+<p>This is a bit of text to allow scrolling...</p>
+<p>This is a bit of text to allow scrolling...</p>
+<p>This is a bit of text to allow scrolling...</p>
+<p>This is a bit of text to allow scrolling...</p>
+<p>End of scroll text</p>

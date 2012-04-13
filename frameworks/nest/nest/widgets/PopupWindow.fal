@@ -1,0 +1,87 @@
+/*
+   FALCON - The Falcon Programming Language
+
+   Nest - Falcon web applcation engine
+
+   FILE: PopupWindow.fal
+
+   AJAX widgeting subsystem -- Base class for popup widgets
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Thu, 12 Apr 2012 22:53:31 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2012: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+import Popup from nest.widgets.Popup as Popup
+import Widget from nest.widgets.widget as Widget
+import Image from nest.widgets.Image as Image
+import Container from nest.widgets.Container as Container
+
+class TitleBar( id, title, height, icon, closeIcon ) from Widget( id )
+   title = title
+   icon = icon
+   height = height
+   closeIcon = closeIcon ? closeIcon : Image( 'close', Nest.resLink( "infobox_close.png" ) )
+
+   init
+      self.addStyle( @"height: $(height)px; padding:0; margin:0;" )
+      if icon: self.addChild( icon )
+      self.addChild( self.closeIcon )
+      self.closeIcon.addStyle( "float: right" )
+
+      self.closeIcon.jsMethods["onclick"] = self.closeIcon.makeEmit( 'onclick', "{}" )
+      self.jsListeners[self.closeIcon] = self.makeEmit( 'close', "{}" )
+         
+      self.addClassInParentship( TitleBar )
+   end
+
+   function renderContent()
+      str = ""
+      if self.icon: str += self.icon.render()
+      id = self.getFullID()
+      str += @"<span id='$(id).content' class='titletext'>$(self.title)</span>"
+      str += self.closeIcon.render()
+
+      return str
+   end
+   
+end
+
+
+/*# Window popup widget.
+   @param id The widget ID
+
+*/
+class PopupWindow( id, title, left, top, width, height ) from Popup( id, left, top, width, height )
+   title = title
+   titleWidget = nil
+   scroller = Widget( "scroller" )
+   container = Widget( "container" )
+
+   init
+      if self.props == nil: self.props = [=>]
+      if title.typeId() == StringType
+         self.titleWidget = TitleBar( "titlebar", title, 23 )
+      else
+         self.titleWidget = title
+      end
+
+      height = self.height
+      if self.titleWidget.height: height -= self.titleWidget.height
+      self.scroller.addChild( self.container )
+      self.scroller.addStyle( @"overflow: auto; height:$(height); padding:0;margin:0;" )
+      self.container.set(["class"=>"container"])
+      self.addChild( self.titleWidget )
+      self.addChild( self.scroller )
+
+      self.jsListeners[self.titleWidget] = "function(){ this.hide(); }"
+      
+      // TODO: Remove this when we have automatic parentship
+      self.addClassInParentship( PopupWindow )
+   end
+
+end

@@ -1,0 +1,96 @@
+/*
+   FALCON - The Falcon Programming Language
+
+   Nest - Falcon web applcation engine
+
+   FILE: Popup.fal
+
+   AJAX widgeting subsystem -- Base class for popup widgets
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Thu, 12 Apr 2012 22:53:31 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2012: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+import from nest.widgets.widget in widget
+
+/*# Generic popup widget.
+   @param id The widget ID
+
+   This is the base class for widgets that have the capability to be
+   popped up.
+
+   As they are meant to be absolutely placed on the page, they
+   are represented as 'div' entities.
+
+   They offer an onShow and onHide callback pair that can be used to
+   provide some special effect for fade-in/fade-out.
+*/
+class Popup( id, left, top, width, height ) from widget.Widget( id )
+
+   top = top
+   left = left
+   width = width
+   height = height
+
+   center = false
+   fixed = false
+   
+   jsMethods = [
+      "shown" => "false",
+      "show" => "
+         function() {
+            if( ! this.shown && this.onShow() ) {
+               this.shown = true;
+               this.style.display = '';
+            }
+         }",
+         
+      "hide" => "
+         function() {
+            if( this.shown && this.onHide() ) {
+               this.shown = false;
+               this.style.display = 'none';
+            }
+         }",
+
+      "onShow" => "function(){ return true; }",
+      "onHide" => "function(){ return true; }"
+      ]
+      
+   init
+      if self.props == nil: self.props = [=>]
+      self.props["style"] = @"padding:0; margin:0; display: none; overflow:hidden;"
+
+      // TODO: Remove this when we have automatic parentship
+      self.addClassInParentship( Popup )
+   end
+
+
+   function onRender()
+      if self.center
+         marginleft = - (self.width/2)
+         margintop = - (self.height/2)
+         self.addStyle( @"
+            width: $(self.width)px;
+            height: $(self.height)px;
+            top: 50%;
+            left: 50%;
+            margin-left: $(marginleft)px;
+            margin-top: $(margintop)px;
+         " )
+      else
+         self.addStyle( @"top:$(self.top)px; left:$(self.left)px; width:$(self.width)px; height:$(self.height)px;" )
+      end
+
+      if self.fixed
+         self.addStyle( "position: fixed" )
+      else
+         self.addStyle( "position: absolute" )
+      end
+   end
+end

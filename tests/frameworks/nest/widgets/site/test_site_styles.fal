@@ -262,3 +262,44 @@ Style( "InfoBox Title bar", nil, '
 ).applyToClass("_InfoBoxText")
 
 
+//=============================================================
+// Popup windowsWindow
+//
+
+Style( "Popup", nil, '
+   background: #F8F8FF;
+   border: 2px solid rgba(30, 30, 50, 0.8);
+   border-radius: 3px 3px;
+   -webkit-border-radius: 3px 3px;
+   -moz-border-radius: 3px 3px;
+   box-shadow: 3px 3px 12px rgba(30, 30, 50, 0.6);
+   -webkit-box-shadow: 3px 3px 12px rgba(30, 30, 50, 0.6);
+   -moz-box-shadow: 3px 3px 12px rgba(30, 30, 50, 0.6);
+'
+).applyToClass("Popup")
+
+Style( "Popup container", nil, '
+   padding: 6px
+', "div.container"
+).applyToClass("Popup")
+
+Style( "Window Title bar", nil, '
+   background: #202080;
+   color: #FFFFFF;
+   font-family: arial, sans-serif;
+   font-weight: bold;
+   font-size:11pt;
+'
+).applyToClass("TitleBar")
+
+Style( "Icon in title bar", nil, '
+   cursor: hand;
+', 'img'
+).applyToClass("TitleBar")
+
+Style( "Text inside the titlebar", nil, '
+   padding:6px;
+   text-shadow: 0.1em 0.1em 0.2em rgba(200,200,200, 0.8);
+', 'span.titletext'
+).applyToClass("TitleBar")
+

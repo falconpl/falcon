@@ -11,6 +11,7 @@
 <h2>Widget specific tests</h2>
 <ul>
 <li><a href="<?=Nest.pageLink('wd-infobox')?>">InfoBox</a></li>
+<li><a href="<?=Nest.pageLink('wd-popup')?>">Popup windows</a></li>
 <li><a href="<?=Nest.pageLink('wd-richpassword')?>">RichPassword</a></li>
 <li><a href="<?=Nest.pageLink('wd-nameisavail')?>">NameIsAvail</a></li>
 <li><a href="<?=Nest.pageLink('wd-listform')?>">ListForm</a></li>
