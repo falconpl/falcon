@@ -34,13 +34,8 @@ class _InfoBoxText(id, title, content) from widget.Widget( id )
    jsMethods = [
          "show" => @'
          function(itemID) {
-            var pos = Nest.findPos(Nest.i(itemID));
+            Nest.reposition( Nest.i(itemID), this, 20, 20, $(self.height) );
             var scroller = Nest.i(this.id + ".scroller" );
-            this.style.left = pos.x+20;
-            this.style.top = pos.y+20;
-            if( document.height <= pos.y+20 + $(self.height) ) {
-               this.style.top = document.height - $(self.height) - 10;
-            }
             this.style.display = "";
             this.style.overflow= "hidden";
             scroller.style.overflow= "hidden";

@@ -19,15 +19,14 @@
 import from nest.widgets.widget in wid
 import from nest.js
 
+
 /*# Calendar form widget.
    @param id The widget ID
-   @param currentDate the Date on which to "center" the Calendar default is today
+   @optparam currentDate the Date on which to "center" the Calendar default is today
+   @optparam subject Another Nest widget that is used as "popup" base for this widget.
+   @optparam popup set to true to force a popup behavior even without subject widget.
 
    This widget shows a calendar centered on a date.
-
-*/
-
-/*#
 
 @code
 +=============================+  << span id == [widgetid]
@@ -60,15 +59,78 @@ Buttons id in order:
 - [widgetid].fwd1m   (under span id=btnnext)
 - [widgetid].fwd1y   (under span id=btnnext)
 
+@section base_inter Basic interaction
+
+The widget can be controlled through the following methoss:
+- 'goto( month, year)': Moves the current month/year as specified, or invokes the AJAX
+   'goto' message if this is an AJAX enabled widget.
+- 'selectDay( year, month, day )': Selects the given day. If the widget is AJAX enabled,
+   it sends a 'selectDay' AJAX message to the host widget. If the widget is in popup
+   mode, it is also closed.
+- 'close()': Closes the widget. If the widget is AJAX enabled,
+   it sends a 'close' AJAX message to the host widget. If the widget is in popup
+   mode, it is also closed.
+
+The following callbacks can be overriden to change the default behavior:
+- onGoto( month, year ): when the a goto action is performed; if the method returns
+   false, no action is taken.
+- onDaySelected( year, month, day ): when a day is selected and is going to be
+   communicated to a subject widget (if any). If the method returns false, no
+   action is performed, otherwise, if the widget is in popup mode, it will be
+   hidden.
+- onClose(): called back when the user is explicitly closing the widget in popup
+   mode. If the method returns false, no action is taken.
+
+AJAX processing takes precedence with respect to calling this callbacks; if the
+widget is AJAX enabled, the AJAX messages are invoked, and then, if the AJAX
+processor confirms the action, the above callbacks are called.
+
+When the action is actually confirmed and performed, the following Nest messages
+are invoked.
+
+- 'onCreate': after the widget is initialized
+- 'onGoto': with parameter {year, month} whenever the date is changed.
+- 'onDaySelected': {year, month, day} when a certain day is selected.
+- 'onClose': when the calendar is explicitly closed; it has also a {year, month} parameter,
+   which indicates from which month/year it was closed.
+
+
+@section ajax AJAX interaction.
+
+If the isAJAXHost property is true, then this calendar is considered an AJAX enabled calendar.
+
+Calls to goto(), selectDay() and close() JS methods are deviated to the ajax host as described
+in the previous section. To confirm the actions the following methods can be invoked via an
+AJAX @a Widget.msgInvoke request:
+
+- AJAXgoto( {year, month, busyDays}): busyDays is an array of numbers (1-31) that
+   indicates which days in the calendar are to be marked as "busy". Can be not given or null
+   if there aren't busy days.
+- AJAXselectDay( {year, month day}): confirms the selection of the day.
+- AJAXclose(): confirms the action of closing this widget.
+
+@section subject_widget Actions on a subject widget.
+
+If a subject widget is provided, it is altered at javascript side adding two methods:
+- onfocus: event callback, to be called when the widget is onfocus; the effect is that of popping up
+   the calendar at an adequate position and using the date that was previously set. It's default action
+   is that of calling this widget's 'popup(month,year)'.
+- onDaySelected( year, month, day ): called back when a day is selected in the engine; it's default effect
+   is that of setting the year, month and day properties in the widget, and setting it's value as a
+   YYYY-MM-DD string.
+
+If the widget has jsMethods for "onfocus" and/or "onDaySelected", then the relative method is not created.
 */
-class Calendar(id, currentDate) from wid.Widget( id )
+class Calendar(id, currentDate, subject, popup) from wid.Widget( id )
    tag = "span"
    currentDate   = nil
    isSelfClosing = false
-   isAJAXHost = true
+   isAJAXHost = false
 
    cellWidth = 35
    cellHeight = 30
+   subject = subject
+   
    
    monthNames = .[
       i"January"
@@ -97,6 +159,9 @@ class Calendar(id, currentDate) from wid.Widget( id )
 
    jsMethods = [
       "busyDays" => "Array()",
+      "subject" => "null",
+      "useAjax" => "false",
+      "isPopup" => subject or popup ? "true" : "false",
       
       "daysPerMonth" => "
          function( month, year ) {
@@ -108,7 +173,7 @@ class Calendar(id, currentDate) from wid.Widget( id )
          
       "isLeapYear" => "
          function isleap( year ) {
-            var yr = parseInt(yr);
+            var yr = parseInt(year);
             if (yr%4 == 0) {
                if (yr%100 == 0) {
                   return yr%100 != 0 || yr%400 == 0;
@@ -120,6 +185,7 @@ class Calendar(id, currentDate) from wid.Widget( id )
          
       "create" => "
          function() {
+            var self = this;
             this.style.paddingTop=0;
             var bar = document.createElement('div');
             bar.id = this.id + '.bar';
@@ -127,20 +193,25 @@ class Calendar(id, currentDate) from wid.Widget( id )
             bar.style.paddingRight='9px';
             bar.style.paddingLeft='9px';
             bar.className = 'windowbar';
-            
-            var closebtn = document.createElement('button');
-            closebtn.id = this.id + '.closebtn';
-            closebtn.innerHTML='X';
-            closebtn.style.width = '30px';
-            closebtn.style.height = '13px';
-            closebtn.style.fontSize = '8pt';
-            closebtn.style.padding = '0';
-            closebtn.style.margin = '0pt';
-            closebtn.style.fontWeight = 'bold';
-            closebtn.style.fontFamily = 'arial, sans';
-            closebtn.style.float = 'right';
-            
-            bar.appendChild( closebtn );
+
+            if( this.isPopup ) {
+               var closebtn = document.createElement('button');
+               closebtn.id = this.id + '.closebtn';
+               closebtn.className = 'closebtn';
+               closebtn.innerHTML='X';
+               closebtn.style.width = '30px';
+               closebtn.style.height = '13px';
+               closebtn.style.fontSize = '8pt';
+               closebtn.style.padding = '0';
+               closebtn.style.margin = '0pt';
+               closebtn.style.fontWeight = 'bold';
+               closebtn.style.fontFamily = 'arial, sans';
+               closebtn.style.float = 'right';
+               closebtn.onclick = function() { self.close(); };
+               bar.appendChild( closebtn );
+
+               this.style.display = 'none';
+            }
             
             var head = document.createElement('div');
             head.style.clear = 'both';
@@ -154,16 +225,25 @@ class Calendar(id, currentDate) from wid.Widget( id )
             this.appendChild( bar );
             this.appendChild( head );
             this.appendChild( intest );
+
+            Nest.message( this, 'onCreate', {year:this.year, month:this.month} );
+            if( ! this.isPopup ) this.goto( this.month, this.year);
          }",
 
       "createHead" => "
          function( headDiv ) {
+            var self = this;
+            
             var btnBack1Year = document.createElement('button');
             btnBack1Year.id = this.id + '.back1y';
             btnBack1Year.innerHTML ='&lt;&lt;';
+            btnBack1Year.onclick = function(){ self.backOneYear(); };
+            
             var btnBack1Month = document.createElement('button');
             btnBack1Month.id = this.id + '.back1m';
             btnBack1Month.innerHTML ='&lt;';
+            btnBack1Month.onclick = function(){ self.backOneMonth(); };
+            
             var btnprev = document.createElement('span');
             btnprev.className = 'btnprev';
 
@@ -174,9 +254,11 @@ class Calendar(id, currentDate) from wid.Widget( id )
             var btnFwd1Month = document.createElement('button');
             btnFwd1Month.id = this.id + '.fwd1m';
             btnFwd1Month.innerHTML ='&gt;';
+            btnFwd1Month.onclick = function(){ self.fwdOneMonth(); };
             var btnFwd1Year = document.createElement('button');
             btnFwd1Year.id = this.id + '.fwd1y';
             btnFwd1Year.innerHTML ='&gt;&gt;';
+            btnFwd1Year.onclick = function(){ self.fwdOneYear(); };
 
             var btnnext = document.createElement('span');
             btnnext.className = 'btnnext';
@@ -203,9 +285,11 @@ class Calendar(id, currentDate) from wid.Widget( id )
 
       "refresh" => "
          function() {
+            var self = this;
             if( this.body ) {
                this.removeChild( this.body );
             }
+            
             this.body = document.createElement('div');
             this.body.id = this.id + '.body';
             this.appendChild( this.body );
@@ -225,19 +309,20 @@ class Calendar(id, currentDate) from wid.Widget( id )
                today = today_date.getDate();
             }
             var d = new Date( this.year, this.month-1, 1 );
-            var dow = d.getDay() + this.firstDay;
+            var dow = d.getDay() - this.firstDay;
+            if( dow < 0 ) dow = 6;
             var rowday = 0;
 
             /* fill with nodays */
-            var nodays = this.firstDay;
+            var nodays = 0;
             while( nodays < dow ) {
                var noday = document.createElement('span');
                noday.className = 'noday';
                noday.style.width= this.cellWidth + 'px';
                noday.style.height= this.cellHeight+ 'px';
-               nodaay.style.display='inline-block';
+               noday.style.display='inline-block';
                noday.innerHTML = '&nbsp;';
-               row.addChild( noday );
+               row.appendChild( noday );
                ++nodays;
                ++rowday;
             }
@@ -248,6 +333,7 @@ class Calendar(id, currentDate) from wid.Widget( id )
                if ( curday == today )
                {
                   day.id = this.id + '.today';
+                  day.className = 'today';
                }
                if( this.busyDays.indexOf(curday) != -1 ) {
                   day.className = 'busyday';
@@ -257,18 +343,21 @@ class Calendar(id, currentDate) from wid.Widget( id )
                day.style.width= this.cellWidth + 'px';
                day.style.height= this.cellHeight+ 'px';
                day.style.display='inline-block';
+               day.day = curday;
+               day.onclick = function() { self.selectDay( self.year, self.month, this.day ); };
                row.appendChild( day );
                ++curday;
                ++rowday;
                if( rowday == 7 ) {
-                  this.appendChild( row );
+                  this.body.appendChild( row );
                   var row = document.createElement('div');
                   row.className = 'row';
                   rowday = 0;
                }
             }
 
-            this.appendChild( row );
+            this.body.appendChild( row );
+            this.setCurMonth();
          }
       ",
        
@@ -290,15 +379,179 @@ class Calendar(id, currentDate) from wid.Widget( id )
 
       "goto" => "
          function( month, year ) {
-            this.month = month;
-            this.year = year;
-            this.refresh();
+            if( this.useAjax ) {
+               Nest.widgetAJAX( '" + self.className() + "'"+"
+               , this.id, 'goto', null, {month: month, year: year } );
+            }
+            else if( this.onGoto( month, year ) ) {
+               Nest.message( this, 'onGoto', {year:year, month:month } );
+               this.month = month;
+               this.year = year;
+               this.refresh();
+            }
+         }",
+         
+      "selectDay" => "
+         function( year, month, day ) {
+            if( this.useAjax ) {
+               Nest.widgetAJAX( '" + self.className() + "'"+"
+               , this.id, 'selectDay', null, {month: month, year: year, day:day } );
+            }
+            else if( this.onDaySelected( year, month, day ) ) {
+               Nest.message( this, 'onDaySelected', {month: month, year: year, day:day} );
+               if (this.subject && subject.onDaySelected ) {
+                  subject.onDaySelected( year, month, day );
+               }
+
+               if( this.isPopup ) this.style.display = 'none';
+            }
+         }",
+
+      "close" => "
+         function() {
+            if( this.useAjax ) {
+               Nest.widgetAJAX( '" + self.className() + "'"+"
+               , this.id, 'close', null, {month: this.month, year: this.year } );
+            }
+            else if( this.onClose() ) {
+               Nest.message( this, 'onClose', {year:this.year, month:this.month} );
+               if( this.isPopup ) this.style.display = 'none';
+            }
+         }",
+
+      "AJAXgoto" => "
+         function( params ) {
+            if( this.onGoto( params.month, params.year ) ) {
+               Nest.message( this, 'onGoto', {year:params.year, month:params.month } );
+               if( params.busyDays != null ){
+                  this.busyDays = params.busyDays;
+               }
+               this.month = params.month;
+               this.year = params.year;
+               this.refresh();
+            }
+         }",
+
+      "AJAXselectDay" => "
+         function( params ) {
+            if( this.onDaySelected( params.year, params.month, params.day ) ) {
+               Nest.message( this, 'onDaySelected', {month: params.month, year: params.year, day:params.day} );
+               if (this.subject && subject.onDaySelected ) {
+                  subject.onDaySelected( params.year, params.month, params.day );
+               }
+
+               if( this.isPopup ) this.style.display = 'none';
+            }
+         }",
+
+      "AJAXclose" => "
+         function() {
+            if( this.onClose() ) {
+               Nest.message( this, 'onClose', {year:this.year, month:this.month} );
+               if( this.isPopup ) this.style.display = 'none';
+            }
+         }",
+
+      "onGoto" => "
+         function( year, month ) {            
+            return true;
+         }
+         ",
+
+      "onDaySelected" => "
+         function( year, month, day ) {
+           
+           return true;
+         }",
+
+      "onClose" => "
+         function() {
+            return true;
+         }
+         ",
+
+      "popup" => "
+         function( year, month, day ) {
+            this.style.position = 'absolute';
+            Nest.reposition( Nest.i(this.subject), this, 20, 20, this.cellHeight*7 );
+            if( year != null && month != null ) {
+               this.goto( month, year );
+            }
+            this.goto( this.month, this.year);
+            this.style.display = '';
+         }",
+
+      "backOneYear" => "function(){ this.goto( this.month, this.year -1 ); }",
+         
+      "backOneMonth" => "
+         function(){
+            var month = this.month - 1;
+            var year = this.year;
+            if (month == 0 ) {
+               year = year - 1;
+               month = 12;
+            }
+            this.goto( month, year);
+         }",
+
+      "fwdOneMonth" => "
+         function(){
+            var month = this.month + 1;
+            var year = this.year;
+            if (month == 13 ) {
+               year = year + 1;
+               month = 1;
+            }
+            this.goto( month, year );
+         }",
+         
+      "fwdOneYear" => "function() { this.goto( this.month, this.year +1 );}",
+
+      "configSubject" => "
+         function() {
+           if( this.subject != null ) {
+            var subject = Nest.i( this.subject );
+            subject.year = null;
+            subject.momth = null;
+            subject.day = null;
+            
+            var self = this;
+            if( subject.onfocus == null ) {
+               subject.onfocus = function() {
+                  self.popup(this.year, this.month, this.day);
+               }
+            }
+            if( subject.onclick == null ) {
+               subject.onclick = function() {
+                  self.popup(this.year, this.month, this.day);
+               }
+            }
+            if( subject.onkeyup == null ) {
+               subject.onkeyup = function( event ) {
+                  if ( event.which == 27 ) {
+                     if( self.style.display == '' ) self.close();
+                  }
+               }
+            }
+            
+            if( subject.onDaySelected == null ) {
+               subject.onDaySelected = function( year, month, day ) {
+                  this.year = year;
+                  this.month = month;
+                  this.day = day;
+                  this.value = year +'-'+month+'-'+day;
+               }
+            }
+           }
          }"
    ]
 
-   onCreate = "this.create(); this.refresh();"
+   onCreate = "this.configSubject(); this.create();"
    
    init
+      // activate effects
+      Nest.requireJS("fx")
+      
       self.set( ["class" => "calendar", "style" => "display: inline-block"] )
       
       if currentDate 
@@ -307,7 +560,12 @@ class Calendar(id, currentDate) from wid.Widget( id )
          self.currentDate = TimeStamp()
          self.currentDate.currentTime()
       end
+      
+      // TODO: Remove this when we have automatic parentship
+      self.addClassInParentship( Calendar )      
+   end
 
+   function onRender()
       self.jsMethods["month"] = self.currentDate.month
       self.jsMethods["year"] = self.currentDate.year
       self.jsMethods["firstDay"] = self.firstDay
@@ -316,18 +574,22 @@ class Calendar(id, currentDate) from wid.Widget( id )
 
       self.jsMethods["dayNames"] = "Array('" + "','".merge( self.dayNames ) + "')"
       self.jsMethods["monthNames"] = "Array('" + "','".merge( self.monthNames ) + "')"
+      if self.subject
+         self.jsMethods["subject"] = '"' + self.subject.getFullID() +'"'
+         self.jsMethods["isPopup"] = "true"
+      end
       
-      // TODO: Remove this when we have automatic parentship
-      self.addClassInParentship( Calendar )      
+      if self.isAJAXHost
+         self.jsMethods["useAjax"] = true
+      end
    end
-
-
+   
    function renderContent()
       return ""
    end
 
    function AJAX( params )
-      inspect( params )
+      raise "Please override the AJAX method"
    end
    
 end   

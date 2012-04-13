@@ -1,11 +1,47 @@
 <h2>Nest Widget test: Calendar</h2>
-<style>
-#iCal\.today {
-   text-color: #602020;
-   text-weight: bold;
-   }
-</style>   
-<?         
+
+<div>
+<?
    iCalendar = Nest.widget( "Calendar" )("iCal")
+   listener = Nest.widget("InputText")("iCalListener")
+   listener.jsListeners[iCalendar] = "
+      function( wid, msg, params ) {
+         if( msg == 'onDaySelected' ) {
+            this.value = params.year + '-' + params.month + '-' + params.day;
+         }
+      }"
 ?>
-<?= iCalendar.render() ?>
+<p> A calendar with a Nest listener waiting for messages.</p>
+<p>Selected date: <?= listener.render() ?></p>
+<p><?= iCalendar.render() ?></p>
+</div>
+
+<hr/>
+<div>
+<p>A popup calendar.</p>
+<?
+   subject = Nest.widget("InputText")("subject")
+   popCalendar = Nest.widget( "Calendar" )("popCal", nil, subject)
+?>
+<p>Selected date: <?= subject.render() ?></p>
+<p><?= popCalendar.render() ?></p>
+</div>
+
+<hr/>
+<div>
+<p>An ajax enabled calendar. The ajax routine returns some busy days at the beginning of the months.
+The selected date will be changed by the AJAX routine so that the day is always the 1st.</p>
+<p>Also, notice that this calendar starts from "monday".</p>
+<?
+   ajCalendar = Nest.widget( "AJAXCalendar" )("aCal")
+   ajlistener = Nest.widget("InputText")("aCalListener")
+   ajlistener.jsListeners[ajCalendar] = "
+      function( wid, msg, params ) {
+         if( msg == 'onDaySelected' ) {
+            this.value = params.year + '-' + params.month + '-' + params.day;
+         }
+      }"
+?>
+<p>Selected date: <?= ajlistener.render() ?></p>
+<p><?= ajCalendar.render() ?></p>
+</div>

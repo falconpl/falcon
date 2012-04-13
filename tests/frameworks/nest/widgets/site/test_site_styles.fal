@@ -121,12 +121,18 @@ daystyle = '
    text-align: center;
    vertical-align: middle;
    background: #e0e0ff;
+   cursor: hand;
    border-radius: 3px 3px;
    -webkit-border-radius: 3px 3px;
    -moz-border-radius: 3px 3px;
    '
 
-Style( "Calendar days 2", nil, daystyle, 'span.day'
+Style( "Calendar days 2", nil,
+   daystyle,
+   'span.day'
+).applyToClass("Calendar")
+
+Style( "Calendar days 3", nil, daystyle+"background: #FaFaFa;", 'span.noday'
 ).applyToClass("Calendar")
 
 Style( "Calendar days", nil, '
@@ -134,16 +140,16 @@ Style( "Calendar days", nil, '
    ', 'span.day:active'
 ).applyToClass("Calendar")
 
-Style( "Calendar days -- today", nil, '
+Style( "Calendar days -- today", nil, daystyle + '
    color: #602020;
    background: #e0c0f0;
    font-weight: bold;
-   ', '#$(id)\.today'
+   ', 'span.today'
 ).applyToClass("Calendar")
 
 Style( "Calendar days -- today", nil, '
    background:#a0a0ef;
-   ', '#$(id)\.today:active'
+   ', 'span.today:active'
 ).applyToClass("Calendar")
 
 Style( "Calendar days -- busy day", nil, daystyle + '
@@ -190,13 +196,13 @@ Style( "Calendar Buttons -- close", nil, '
    -moz-border-radius-bottomleft: 6px;
    -moz-border-radius-bottomright: 6px;
    background: #b0b0b0;
-', '#$(id)\.closebtn'
+', 'button.closebtn'
 ).applyToClass("Calendar")
 
 Style( "Calendar Buttons -- close active", "active", '
 
    background: #909090;
-', '#$(id)\.closebtn:active'
+', 'button.closebtn:active'
 ).applyToClass("Calendar")
 
 Style( "Calendar Buttons hover", nil, '

@@ -186,5 +186,19 @@ if(!Nest) { Nest = {}; }
          }
       }
    }
+   
+   if (typeof Nest.reposition !== 'function') {
+      Nest.reposition = function(objSrc, objTgt, dispx, dispy, height ) {
+         var curleft = 0, curtop = 0;
+         var pos = Nest.findPos(objSrc);
+         objTgt.style.left = pos.x + dispx;
+         objTgt.style.top = pos.y + dispy;
+         if ( height == null ) height = objTgt.offsetHeight;
+         if( document.height <= pos.y + dispx + height ) {
+            objTgt.style.top = document.height - height - (dispy/2);
+         }
+      }
+   }
+
 }());
 
