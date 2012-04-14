@@ -599,10 +599,14 @@ object Nest
 
       Ambient variables are service variables which are immediately repeated to all the system.
    */
-   function ambient( aname )
+   function ambient( aname, val )
       if aname in self._ambient
          s = self._ambient[aname]
+      elif val != nil
+         s = val
+         self._ambient[aname] = s
       end
+
 
       return s
    end
@@ -1393,18 +1397,33 @@ object Nest
       id = strReplace(item.getFullID(), ".", "\\.")
       for style in styles
          full_id = style.mode ? (cssid + ":" + style.mode) : cssid
-         if style.spec: full_id += " " + style.spec
+         if style.spec
+            if style.spec.typeId() == ArrayType
+               newid = ",".merge(map({v=> full_id+" " + v}, style.spec))
+               full_id = newid
+            else
+               full_id += " " + style.spec
+            end
+         end
+         
          if full_id in results
-            results[full_id] += style.css
+            res_by_id = results[full_id]
+            if style notin res_by_id: res_by_id += style
          else
-            results[full_id] = style.css
+            results[full_id] = [style]
          end
          
       end
 
       result = ""
       for k,v in results
-         result += @k + " {\n" + v + "}\n"
+         singleCSS = ""
+         for style in v
+            singleCSS += style.css
+            if not singleCSS.endsWith(";"): singleCSS += ";"
+         end
+         
+         result += @k + " {\n" + singleCSS + "}\n"
       end
       
       return result

@@ -303,3 +303,120 @@ Style( "Text inside the titlebar", nil, '
 ', 'span.titletext'
 ).applyToClass("TitleBar")
 
+
+
+//=============================================================
+// Menus 
+//
+
+menu_style = '
+   text-transform:uppercase;
+   font-size:12px;
+   font-weight:bold;
+   font-family:Helvetica,Arial,Verdana,sans-serif;
+
+   margin:0;padding:5px;
+
+   -moz-border-radius:5px;
+   -webkit-border-radius:5px;
+   border-radius:5px;
+
+   -moz-box-shadow:3.5px 3.5px 5px #000000;
+   -webkit-box-shadow:3.5px 3.5px 5px #000000;
+   box-shadow:3.5px 3.5px 5px #000000;
+
+   border-width:2px;
+   border-radius:6px;
+   -moz-border-radius:6px;
+   -webkit-border-radius:6px;
+   border-color:#EEE;
+   '
+
+Style( "Outer look of the menus", nil, menu_style + '
+   background-color:#503030;'
+).applyToClass("Menu")
+
+Style( "Outer look of the menus", nil, '
+   height:35px;', '.nest_horizontal_menu'
+).applyToClass("Menu")
+
+Style( "Text in menus", nil, '
+   transition: color 1s, background-color 1s;
+   -moz-transition: color 1s, background-color 1s; /* Firefox 4 */
+   -webkit-transition: color 1s, background-color 1s; /* Safari and Chrome */
+   -o-transition: color 1s, background-color 1s; /* Opera */
+   padding: 4px;
+   color: #E0E0E0;
+   vertical-align:middle', ["li.first_item", "li.item", "li.last_item"]
+).applyToClass("Menu")
+
+Style( "Icons", nil, '
+   vertical-align: middle
+   ', "img"
+).applyToClass("Menu")
+
+Style( "Link Text in menus", nil, '
+
+   color: #E0E0E0;
+   transition: color 1s;
+   -moz-transition: color 1s; /* Firefox 4 */
+   -webkit-transition: color 1s; /* Safari and Chrome */
+   -o-transition: color 1s; /* Opera */
+   ', "li > a"
+).applyToClass("Menu")
+
+
+Style( "Baloon on menu items", nil, '
+   background-color:#F0E0E0;
+   color: #101010;
+   border-color:#FFF;
+   border-width:2px;
+   border-radius:3px;
+   -moz-border-radius:3px;
+   -webkit-border-radius:3px;
+   ',
+   ["li.first_item:hover", "li.item:hover", "li.last_item:hover"]
+).applyToClass("Menu")
+
+Style( "Baloon on menu items", nil, '
+   padding:10px;
+   ',
+   "li.separator"
+).applyToClass("Menu")
+
+Style( "Baloon on menu items on links", nil, '
+   color: #101010;
+   ', "li:hover > a"
+).applyToClass("Menu")
+
+
+Style( "Outer look of the sub-menus", nil, menu_style + '
+   background-color:#402020;   
+   width: 200px;'
+   , 'ul'
+).applyToClass("Menu")
+
+
+Style( "Transition from submenus", nil, '
+   opacity: 0;
+   height: 0;
+   display: block;
+   transition: opacity 0s;
+   -moz-transition:  opacity 0s;
+   -webkit-transition:  opacity 0s;
+   -o-transition:  opacity 0s;
+   '
+   , 'li> ul'
+).applyToClass("Menu")
+
+
+Style( "Transition to submenus", nil, '
+   height:auto;
+   -transition-duration: 1s;
+   -moz-transition-duration: 1s; 
+   -webkit-transition-duration: 1s;
+   -o-transition-duration: 1s;
+   opacity: 0.92;
+   '
+   , 'li:hover > ul'
+).applyToClass("Menu")

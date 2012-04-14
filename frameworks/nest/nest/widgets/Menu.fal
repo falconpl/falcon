@@ -18,20 +18,137 @@
 
 import Widget from nest.widgets.widget as Widget
 
-class Menu( id ) from Widget( id )
+import MenuStyles from nest.widgets.menustyles as MenuStyles
+
+/*# Menu bar widget.
+   @param id The id of this widget.
+   @param mode nil/false for horizontal, true for vertical menus.
+   @param separator nil for nothing, any string (including an empty string)
+      to create a separator item between the shown item.
+   
+   This class creates a context-sensible menu that is also minimally styled
+   to support CSS3 menu facilities. Submenus are automatically rendered as
+   the mouse hovers over the menu voice. Except for this minimal functionality,
+   the menu is completely unstyled, and requires custom styling to be minimally
+   useable.
+
+   The menu is created by adding @a nest.widget.MenuItem entities to this widget.
+
+   The MenuItem widget has support to accept dynamically created entries (plugin),
+   and to be automatically shown on a per-authorization-level basis; see the
+   @a nest.widget.MenuItem for further details.
+
+@section style Styling
+
+   Toplevel Menu Widgets is rendered as a @b ul  HTML element,
+   and it receives forcefully a CSS class called "nest_horizontal_menu"
+   or "nest_vertical_menu" depending on their @b mode property.
+   
+   Items in the menu are rendered as @b li HTML elements, and receive
+   a CSS class as "first_item", "item" or "last_item" depending on their
+   position.
+
+   @note Items that are hidden because of the automatic
+   authorization level filters might be the first one or the last one; in
+   case this class information is used to specially render the first
+   and last elements of a menu, be sure not to set a maskable menu item
+   as first or last choice. Notice also that this CSS class information
+   is not used by Nest, it's just provided for the final implementor to
+   finetune the rendering of the elements in case of need.
+
+   The menu item CSS classes can be overridden by setting explicitly the
+   "class" entry in the Widget.props dictionary.
+
+   If a separator is set in this menu, it is rendered by surrounding it
+   by a @b li element of CSS class "separator".
+
+   The menus are rendered as inline-block display. This means that they
+   occupy the space indicated by their components only; if this is not
+   desired, the display: CSS property of the main menu can be overridden,
+   or preferabily, the menu can be embedded in a outer widget that
+   is then styled as desired.
+
+   It is particularly important to set the height CSS property of horizontal
+   menus, and the CSS width property of submenus as appropriate.
+
+   When styling the menus through the @a nest.widget.Style inteface, it is
+   preferabily to apply the style to the outer widget or class, and then
+   use the sub-specifier to target a precise element or submenu entity.
+*/
+class Menu( id, mode, separator ) from Widget( id )
    tag = "ul"
+   //# false = horizontal, true = vertical
+   mode = mode
+   //# if not nil causes a li of class separator to be generated.
+   separator = separator
 
    init
+      if self.props == nil: self.props = [=>]      
+      if self.mode
+         self.props["class"] = 'nest_vertical_menu'
+      else
+         self.props["class"] = 'nest_horizontal_menu'
+      end
+      
       // TODO: Remove this when we have automatic parentship
       self.addClassInParentship( Menu )
    end
+
+   function addChild( child )
+      if "class" notin child.props
+         if not self.children
+            child.props["class"] = "first_item"
+         else
+            child.props["class"] = "last_item"
+         end
+      end
+
+      if self.children and  self.children[-1].props["class"] == "last_item"
+         self.children[-1].props["class"] = "item"
+      end
+
+      self.Widget.addChild( child )
+   end
+
+   function onRender()
+      if "class" in self.props
+      
+         msty = Nest.ambient( "MenuStyles" )
+         if not msty
+            msty = Nest.ambient( "MenuStyles", MenuStyles() )
+         end
+         
+         for style in msty.menu_styles_common: style.setToClass( self )
+         if self.props["class"] == 'nest_vertical_menu' 
+            for style in msty.menu_styles_vert: style.setToClass( self )
+         else
+            for style in msty.menu_styles_horiz: style.setToClass( self )
+         end
+
+      end
+   end
+   
+   function renderContent()
+      rprev = ""
+      rend = ""
+      for child in self.children         
+         rchild = child.renderInParent( self )
+         if rprev
+            rend += rprev + "\n"
+            if self.separator != nil: rend += "<li class='separator'>" + self.separator + "</li>\n"
+         end
+         rprev = rchild
+      end
+      rend += rprev
+      return rend
+   end
    
    function renderChild( child )
-      auth_level = Nest.ambient( "auth_level" )
+      auth_level = Nest.auth_level
       if child provides minAuthLevel and child.minAuthLevel and child.minAuthLevel < auth_level
          return ""
       end
       
-      return child.render() + "\n"
+      return child.render()
    end
 end

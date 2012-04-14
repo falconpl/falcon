@@ -29,6 +29,9 @@
    btn2 = Nest.widget( "Button" )("btn2", "this")
 
    wnd = Nest.widget( "PopupWindow" )("wnd2", "Centered window", 0, 0, 300, 200 )
+   wnd.fadeInTime = 350
+   wnd.fadeOutTime = 250
+   
    text = Nest.widget( "Text" )("txt", "
       This is a window centered in the screen.
       Whenever you resize the browser window, it always stays centered on the current
@@ -40,7 +43,7 @@
    > wnd.render()
 ?>
 
-<p>Click <?= btn2.render() ?> to open a window centered in the screen.</p>
+<p>Click <?= btn2.render() ?> to open a window centered in the screen, and with a fade transition.</p>
 
 <hr/>
 

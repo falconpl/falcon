@@ -27,13 +27,16 @@ class MenuItem( id, text, icon, submenu, submenu_ind, minAuthLevel ) from Widget
    text = nil
    icon = nil
    submenu = submenu
-   submenu_ind = submenu_ind
+   submenu_ind = nil
    minAuthLevel = minAuthLevel
    
    init
+      if not self.props: self.props = [=>]
       select text
          case NilType: self.text = Text( "text", "" )
-         case StringType: self.text = Text( "text", text )
+         case StringType
+            self.text = Text( "text", text )
+            self.text.tag = nil
          default: self.text = text
       end
 
@@ -44,23 +47,20 @@ class MenuItem( id, text, icon, submenu, submenu_ind, minAuthLevel ) from Widget
       end
 
       select submenu_ind
-         case NilType: self.submenu_ind = Text( "sbind", "" )
          case StringType: self.submenu_ind = Text( "sbind", submenu_ind )
          default: self.submenu_ind = submenu_ind
       end
       
       self.addChild( self.icon )
       self.addChild( self.text )
-      self.addChild( self.submenu_ind )
-      if submenu: self.addChild( submenu )
-
+      if submenu_ind: self.addChild( self.submenu_ind )
+      if submenu
+         submenu.props -= "class"
+         self.addChild( submenu )
+      end
+      
       // TODO: Remove this when we have automatic parentship
       self.addClassInParentship( MenuItem )  
    end
-
-   function renderChild( child )
-      return child.render() + "&nbsp;"
-   end
-
    
 end

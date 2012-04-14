@@ -52,7 +52,7 @@ class Style( name, mode, css, spec )
 
 
    /**# Apply to all the widgets that have a certain Widget (Falcon) class or inherit from that.
-      @param wcls The class
+      @param wcls The class (by name; it's the class name as a string).
       @return self to allow chains of calls
       
       When a widget with this class is created, Nest will automatically add this

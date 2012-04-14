@@ -1,31 +1,84 @@
 <?
    import Menu from nest.widgets.Menu as Menu
    import MenuItem from nest.widgets.MenuItem as MenuItem
+   import Image from nest.widgets.Image as Image
    import Link from nest.widgets.Link as Link
 ?>
 <h2>Nest Widget test: Menu</h2>
 
+<div>
+<p>Example of horizontal menu:</p>
 <?
    rl = Nest.resLink
    
-   submenu = Menu( "sub_menu" )
+   submenu = Menu( "sub_menu1" )
    submenu.addChildren(
-       MenuItem( "itm5", "First sub choice", nil, nil, nil, Nest.AL.USER ),
-       MenuItem( "itm6", "Second sub choice", rl("icon_choice6") )
+       MenuItem( "itm5", "First sub choice", rl("icon_choice5.png"), nil, nil, Nest.AL.USER ),
+       MenuItem( "itm6", "Second sub choice", rl("icon_choice6.png") )
    )
    submenu.set( ["class"=>'submenu'] )
-      
-   menu = Menu( "mymenu" )
+
+   submenu3 = Menu( "sub_menu3" )
+   submenu3.addChildren(
+       MenuItem( "itm10", "First sub sub choice", rl("icon_choice1.png") ),
+       MenuItem( "itm11", "Second sub sub choice", rl("icon_choice2.png") )
+   )
+   submenu3.set( ["class"=>'submenu'] )
+   
+   submenu2 = Menu( "sub_menu2" )
+   submenu2.addChildren(
+       MenuItem( "itm7", "Third sub choice", rl("icon_choice7.png"), submenu3, "|-&gt;" ),
+       MenuItem( "itm8", "Fourth sub choice", rl("icon_choice8.png") )
+   )
+   submenu2.set( ["class"=>'submenu'] )
+
+   menu = Menu( "mymenu", false, "|" )
    menu.addChildren( 
-      MenuItem( "itm1", Link( "idl1", "#", "First link" ), rl("icon_choice1") ),
-      MenuItem( "itm2", "Submenu", rl("icon_choice2"), submenu, "|&gt;" ),
-      MenuItem( "itm3", Link( "idl2", "#", "Second link" ), rl("icon_choice3") ),
-      MenuItem( "itm4", Link( "idl3", "#", "Third link" ), rl("icon_choice4") )
+      MenuItem( "itm1", Link( "idl1", "#", "First link" ), rl("icon_choice1.png") ),
+      MenuItem( "itm2", "Submenu", rl("icon_choice2.png"), submenu, "|-&gt;" ),
+      MenuItem( "itm3", Link( "idl2", "#", "Second link" ), rl("icon_choice3.png"), submenu2, Image( "imgl", rl("icon_submenu.png") ) ),
+      MenuItem( "itm4", Link( "idl3", "#", "Third link" ), rl("icon_choice4.png") )
    )
 
-   menu.set( ["class"=>'mainmenu'] )
-   
    > menu.render()
-   
 ?>
+</div>
 
+<hr>
+<div>
+<p>Example of vertical menu:</p>
+<?
+   rl = Nest.resLink
+
+   submenu = Menu( "sub_menu1" )
+   submenu.addChildren(
+       MenuItem( "itm5", "First sub choice", rl("icon_choice5.png"), nil, nil, Nest.AL.USER ),
+       MenuItem( "itm6", "Second sub choice", rl("icon_choice6.png") )
+   )
+   submenu.set( ["class"=>'submenu'] )
+
+   submenu3 = Menu( "sub_menu3" )
+   submenu3.addChildren(
+       MenuItem( "itm10", "First sub sub choice", rl("icon_choice1.png") ),
+       MenuItem( "itm11", "Second sub sub choice", rl("icon_choice2.png") )
+   )
+   submenu3.set( ["class"=>'submenu'] )
+
+   submenu2 = Menu( "sub_menu2" )
+   submenu2.addChildren(
+       MenuItem( "itm7", "Third sub choice", rl("icon_choice7.png"), submenu3, "|-&gt;" ),
+       MenuItem( "itm8", "Fourth sub choice", rl("icon_choice8.png") )
+   )
+   submenu2.set( ["class"=>'submenu'] )
+
+   menu = Menu( "mymenu", true )
+   menu.addChildren(
+      MenuItem( "itm1", Link( "idl1", "#", "First link" ), rl("icon_choice1.png") ),
+      MenuItem( "itm2", "Submenu", rl("icon_choice2.png"), submenu, "|-&gt;" ),
+      MenuItem( "itm3", Link( "idl2", "#", "Second link" ), rl("icon_choice3.png"), submenu2, Image( "imgl", rl("icon_submenu.png") ) ),
+      MenuItem( "itm4", Link( "idl3", "#", "Third link" ), rl("icon_choice4.png") )
+   )
+
+   > menu.render()
+?>
+</div>

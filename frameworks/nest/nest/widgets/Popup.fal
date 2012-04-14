@@ -27,8 +27,26 @@ import from nest.widgets.widget in widget
    As they are meant to be absolutely placed on the page, they
    are represented as 'div' entities.
 
+@section jscript Interface to Javascript
+
+   The widget offers the following JS methods and properties:
+   - show(): makes the widget visible.
+   - hide(): hides the widget.
+   - onShow(): callback invoked when show() is called; if it returns false,
+      the widget is not shown.
+   - onHide(): callback invoked when hide() is called; if it returns false,
+      the widget is not hidden.
+   - fadeInTime: if > 0, the widget fades in when show() is called.
+   - fadeOutTime: if > 0, the widget fades out when hide() is called.
+   - shown: false if currently hidden, true if currently visible.
+   
    They offer an onShow and onHide callback pair that can be used to
-   provide some special effect for fade-in/fade-out.
+   prevent the 
+
+@section messages Messages
+   When the window changes its visibility, a 'visibility' Nest message is
+   generated, with an object {visible: <bool>} as parameter. The message
+   is generated after transitions (fade-in, fade-out) are completed
 */
 class Popup( id, left, top, width, height ) from widget.Widget( id )
 
@@ -39,14 +57,18 @@ class Popup( id, left, top, width, height ) from widget.Widget( id )
 
    center = false
    fixed = false
+   fadeInTime = 0
+   fadeOutTime = 0
    
    jsMethods = [
+      "fadeInTime" => "0",
+      "fadeOutTime" => "0",
       "shown" => "false",
       "show" => "
          function() {
             if( ! this.shown && this.onShow() ) {
                this.shown = true;
-               this.style.display = '';
+               this.showTransition();
             }
          }",
          
@@ -54,17 +76,50 @@ class Popup( id, left, top, width, height ) from widget.Widget( id )
          function() {
             if( this.shown && this.onHide() ) {
                this.shown = false;
-               this.style.display = 'none';
+               this.showTransition();
             }
          }",
 
       "onShow" => "function(){ return true; }",
-      "onHide" => "function(){ return true; }"
-      ]
+      "onHide" => "function(){ return true; }",
+      "showTransition" => "
+         function() {
+            var self = this;
+            if( this.shown ) {
+               this.style.display = '';
+               if( this.fadeInTime > 0 )
+               {                  
+                  Nest.transite( this, this.fadeInTime, {'opacity':1}, {'opacity':0}, null, function(){self.endTransition();} );
+               }
+               else {
+                  this.endTransition();
+               }
+            }
+            else {
+               if( this.fadeOutTime > 0 )
+               {
+                  Nest.transite(this, this.fadeOutTime, {'opacity':0}, {'opacity':1}, null, function(){self.endTransition();} );
+               }
+               else {
+                  this.endTransition();
+               }
+            }
+         }",
+      
+      "endTransition" => "
+         function() {
+            if( ! this.shown ) {
+               this.style.display = 'none';
+            }
+            Nest.message( this, 'visibility', {visible: this.shown} );
+         }"
+   ]
       
    init
       if self.props == nil: self.props = [=>]
       self.props["style"] = @"padding:0; margin:0; display: none; overflow:hidden;"
+      // activate effects
+      Nest.requireJS("fx")
 
       // TODO: Remove this when we have automatic parentship
       self.addClassInParentship( Popup )
@@ -72,6 +127,13 @@ class Popup( id, left, top, width, height ) from widget.Widget( id )
 
 
    function onRender()
+      if self.fadeInTime
+         self.jsMethods["fadeInTime"] = self.fadeInTime
+      end
+      if self.fadeOutTime
+         self.jsMethods["fadeOutTime"] = self.fadeOutTime
+      end
+         
       if self.center
          marginleft = - (self.width/2)
          margintop = - (self.height/2)
