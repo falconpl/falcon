@@ -71,7 +71,7 @@
    )
    submenu2.set( ["class"=>'submenu'] )
 
-   menu = Menu( "mymenu", true )
+   menu = Menu( "mymenu2", true )
    menu.addChildren(
       MenuItem( "itm1", Link( "idl1", "#", "First link" ), rl("icon_choice1.png") ),
       MenuItem( "itm2", "Submenu", rl("icon_choice2.png"), submenu, "|-&gt;" ),
@@ -81,4 +81,29 @@
 
    > menu.render()
 ?>
+</div>
+
+<hr>
+<div>
+<p>Example of a menu with plugin ability:</p>
+<?
+   submenu = Menu( "plugins", false, nil, "plugins" )
+   menu = Menu( "mymenu3", true )
+   menu.addChildren(
+      MenuItem( "itm1", "First voice", rl("icon_choice1.png") ),
+      MenuItem( "itm2", "Plugin menu", rl("icon_choice2.png"), submenu, Image( "imgl", rl("icon_submenu.png") ) )
+   )
+
+   // Add the plugin?
+   if Request.getField( "plugin", nil )
+      Nest.module( 'MyPlugin' )()
+   end
+   
+   pluglink = Link( "idl1", Nest.pageLink( nil, ['plugin'=>'yes'] ), "this page with plugin" )
+?>
+
+<p> If you click on <?= pluglink.render() ?>, a new menu item will be dynamically added to the plugin menu:</p>
+<div>
+<?= menu.render() ?>
+</div>
 </div>

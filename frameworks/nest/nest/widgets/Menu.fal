@@ -25,6 +25,8 @@ import MenuStyles from nest.widgets.menustyles as MenuStyles
    @param mode nil/false for horizontal, true for vertical menus.
    @param separator nil for nothing, any string (including an empty string)
       to create a separator item between the shown item.
+   @param socket Public name of the menu that is used to hook menu requests
+   from plugins.
    
    This class creates a context-sensible menu that is also minimally styled
    to support CSS3 menu facilities. Submenus are automatically rendered as
@@ -75,12 +77,14 @@ import MenuStyles from nest.widgets.menustyles as MenuStyles
    preferabily to apply the style to the outer widget or class, and then
    use the sub-specifier to target a precise element or submenu entity.
 */
-class Menu( id, mode, separator ) from Widget( id )
+class Menu( id, mode, separator, socket ) from Widget( id )
    tag = "ul"
    //# false = horizontal, true = vertical
    mode = mode
    //# if not nil causes a li of class separator to be generated.
    separator = separator
+   
+   socket = socket
 
    init
       if self.props == nil: self.props = [=>]      
@@ -88,6 +92,10 @@ class Menu( id, mode, separator ) from Widget( id )
          self.props["class"] = 'nest_vertical_menu'
       else
          self.props["class"] = 'nest_horizontal_menu'
+      end
+
+      if self.socket
+         Nest.registerMenu(self)
       end
       
       // TODO: Remove this when we have automatic parentship
@@ -125,6 +133,10 @@ class Menu( id, mode, separator ) from Widget( id )
             for style in msty.menu_styles_horiz: style.setToClass( self )
          end
 
+      end
+      // hide ourselves?
+      if not self.children
+         self.tag = ""
       end
    end
    

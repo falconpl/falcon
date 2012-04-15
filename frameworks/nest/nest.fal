@@ -392,7 +392,10 @@ object Nest
 
    // Hook functions invoked by direct emit("...") requests
    _hooks = [=>]
-   
+
+   _menus = [=>]
+   _menu_registar = [=>]
+
    //===================================================================
    // Public interface
    //===================================================================
@@ -1074,6 +1077,37 @@ object Nest
       return _version
    end
 
+   /*# Register a menu item for dynamic menu instantation.
+      @param menuName The socket (public) name of the menu where the item is to be registered.
+      @param menuItem The item to be registered.
+
+      This method allows to dynamically create new menu items when/if a target menu is created.
+   */
+   function registerMenuItem( menuName, menuItem )
+      if menuName in self._menus
+         self._menus[menuName].addChild( menuItem )
+      else
+         if menuName notin self.menu_registar
+            self._menu_registar = [menuItem]
+         else
+            self._menu_registar += menuItem
+         end
+      end
+   end
+
+   /*# Registers a public menu.
+      This method is automatically called by the menu class during its initialization process. 
+   */
+   function registerMenu( menu )
+      if menu.socket in self._menu_registar
+         for item in self._menu_registar[menu.socket]
+            menu.addChild( item )
+         end
+      end
+      self._menus[ menu.socket ] = menu
+   end
+      
+   
    //=============================================================
    // Style functions
    //=============================================================

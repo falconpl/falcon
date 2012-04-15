@@ -1,0 +1,14 @@
+
+import MenuItem from nest.widgets.MenuItem as MenuItem
+import Link from nest.widgets.Link as Link
+
+class MyPlugin
+   init
+      mi = MenuItem( "pluginItem", Link( "idl1", "http://www.falconpl.org", "Go to falcon" ),
+         Nest.resLink("icon_choice1.png") )
+         
+      Nest.registerMenuItem( "plugins", mi )
+   end
+end
+
+
