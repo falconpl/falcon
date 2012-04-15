@@ -56,7 +56,7 @@ end
    @param id The widget ID
 
 */
-class PopupWindow( id, title, left, top, width, height ) from Popup( id, left, top, width, height )
+class PopupWindow( id, title, left, top, width, height, fixed, center ) from Popup( id, left, top, width, height, fixed, center )
    title = title
    titleWidget = nil
    scroller = Widget( "scroller" )

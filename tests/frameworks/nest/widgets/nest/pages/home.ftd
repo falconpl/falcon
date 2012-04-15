@@ -18,6 +18,7 @@
 <li><a href="<?=Nest.pageLink('wd-tableform')?>">TableForm</a></li>
 <li><a href="<?=Nest.pageLink('wd-table')?>">Table</a></li>
 <li><a href="<?=Nest.pageLink('wd-menu')?>">Menu</a></li>
+<li><a href="<?=Nest.pageLink('wd-pickshelf')?>">Graphic menu (PickShelf)</a></li>
 <li><a href="<?=Nest.pageLink('wd-loginmask')?>">Login mask</a></li>
 <li><a href="<?=Nest.pageLink('wd-ajaxform')?>">AJAX enabled form</a></li>
 <li><a href="<?=Nest.pageLink('wd-miniblog')?>">Small embedded blog</a></li>

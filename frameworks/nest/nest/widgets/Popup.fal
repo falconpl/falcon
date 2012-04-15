@@ -48,15 +48,15 @@ import from nest.widgets.widget in widget
    generated, with an object {visible: <bool>} as parameter. The message
    is generated after transitions (fade-in, fade-out) are completed
 */
-class Popup( id, left, top, width, height ) from widget.Widget( id )
+class Popup( id, left, top, width, height, fixed, center ) from widget.Widget( id )
 
    top = top
    left = left
    width = width
    height = height
 
-   center = false
-   fixed = false
+   center = center
+   fixed = fixed
    fadeInTime = 0
    fadeOutTime = 0
    

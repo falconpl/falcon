@@ -1,0 +1,141 @@
+/*
+   FALCON - The Falcon Programming Language
+
+   Nest - Falcon web applcation engine
+
+   FILE: PickItem.fal
+
+   AJAX widgeting subsystem -- A single item for large visual menus
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Sun, 15 Apr 2012 18:03:41 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2011: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+import Widget from nest.widgets.widget as Widget
+
+/*# A single item for large visual menus
+   @param id The widget ID
+   @param title A string or widget representing the title of the item.
+   @param detail A string or widget representing a detail description of the item.
+   @optparam icon A resource name or Image widget to be rendered besides the title.
+   @optparam link A link to open on item click.
+
+   A pick shelf is a large, page-wide menu that displays  a collection of PickItem
+   entities. Each pick item automatically generates a nest message when clicked
+   in any part, or can excite a link if required.
+
+   An optional separator widget can be passed to be automatically rendered
+   between each pickshelf entity.
+
+   Actually, the content of this widget is not restricted to PickShelf items,
+   it could be any widget; however, PickShelf has a nice support to represent
+   a pickable item and send a Nest message when an item is chosen.
+
+   The pick item automatically emits a Nest.message at javascript side; to react
+   to the clicking of an item, just set a Widget.jsListener on the listening
+   widget.
+
+@section link PickItem automatic link.
+
+   The preferred way to use a PickItem is that to react to the Nest message it
+   generates; however, it is possible to set the @b link property to generate
+   a window.open JS call on a click over PickItem. The property can be:
+
+   - A string: will open the new page in the _blank target, usually causing
+     the browser to open the given link in a new tab.
+   - A string prefixed with '*'; will open the given link in place of this
+     document
+   - A string prefixed with '!'; will consider the rest of the string as a
+      Nest page ID, and open it in this document.
+
+@section styling PickItem styling
+
+The pickitem has the following CSS structure:
+@code
+   ++++++++++++++++++++++++++++++++   << div (class defaults to nest_pickitem)
+   + *--------------------------* +   << div class = nest_pickitem_title 
+   + * |ICON|  TITLE            * +   << img & span
+   + * ------------------------ * +   << div class = nest_pickitem_detail
+   + * Description of this item * +
+   + *--------------------------* +        
+   ++++++++++++++++++++++++++++++++ 
+@endcode
+
+   The class to the title and detail boxes is set only if the respective entity
+   is created through a simple string. Similarly, a "span" is automatically created
+   for the title text only if the text was given as a plain string.
+
+   In case the title or detail elements are given as widget, this element just renders
+   them.
+
+   Notice that the icon is not rendered if the title is set as a widget.
+
+   @note You may float the ICON image right to make it to appare to the right
+   of the title, and you might set the relative position of the
+   div class=nest_pickitem_detail
+   to align it with the title.
+*/
+class PickItem( id, title, detail, icon, link ) from Widget(id)
+   title = title
+   detail = detail
+   icon = icon
+   link = link
+   
+   init
+      if title provides addChild: self.addChild( title )
+      if detail provides addChild: self.addChild( detail )
+      if icon provides addChild: self.addChild( icon )
+
+      if self.props == nil: self.props = [=>]
+      self.props["class"] = "nest_pickitem"
+      self.props["onclick"] = "Nest.message( this, 'clicked', null)"
+
+      if link
+         if link.startsWith( "!" )
+            link = Nest.pageLink( link[1:] )
+            self.props["onclick"] += @";window.open(\"$(link)\")"
+         elif link.startsWith( "*" )
+            link = link[1:]
+            self.props["onclick"] += @";window.open(\"$(link)\")"
+         else
+            self.props["onclick"] += @";window.open(\"$(link)\", \"_blank\" )"
+         end
+      end
+         
+      self.addClassInParentship( PickItem )
+   end
+
+   function renderContent()
+      rend = ""
+
+      // is title a widget?
+      if self.title provides render
+         rend += self.title.render()
+      else
+         rend += "<div class=\"nest_pickitem_title\">\n"
+         if self.icon provides render
+            rend += self.icon.render()
+         else
+            rend += "<img src=\""+ self.icon + "\"/>"
+         end
+         rend += "<span>" + self.title + "</span>\n"
+         rend += "</div>\n"
+      end
+
+      // is detail a widget?
+      if self.detail provides render
+         rend += self.detail.render()
+      else
+         rend += "<div class=\"nest_pickitem_detail\">\n"
+         rend += self.detail
+         rend += "</div>\n"
+      end
+      
+      return rend
+   end
+end

@@ -18,6 +18,15 @@
 
 import Widget from nest.widgets.widget as Widget
 
+/*# Widget representing an hyperlink ('a' HTML tag).
+   @param id The id of the link
+   @param href The location where the link is pointing to.
+   @param content A string or a widget that will be rendered as link target.
+   @optparam target A "target" property to be set in the 'a' HTML element.
+
+   If the @b href is prefixed with "!", then the target is intended to be a
+   link to a Nest page.
+*/
 class Link( id, href, content, target ) from Widget( id )
    tag = "a"
    target = target
@@ -29,6 +38,10 @@ class Link( id, href, content, target ) from Widget( id )
          self.addChild( content )
       end
 
+      if href.startsWith( "!" )
+         href = Nest.pageLink( href[1:] )
+      end
+      
       settings = ["href" => href]
       if target: settings["target" ] = target
       
@@ -39,8 +52,10 @@ class Link( id, href, content, target ) from Widget( id )
    end
 
    function renderContent()
-      if not self.content provides addChild
+      if not self.content provides render
          return self.content
+      else
+         return self.content.render()
       end
    end
    

@@ -1,0 +1,119 @@
+<?
+   import PickShelf from nest.widgets.PickShelf as PickShelf
+   import PickItem from nest.widgets.PickItem as PickItem
+   import PopupWindow from nest.widgets.PopupWindow as PopupWindow
+   import Text from nest.widgets.Text as Text
+   import Widget from nest.widgets.widget as Widget
+   
+   // We'll style directly.
+   import Style from nest.widgets.style as Style
+?>
+<h2>Nest Widget test: Pick Shelf</h2>
+<p>A PickShelf is a graphic large menu where items (mostly PickItem instances) can be
+inserted and selected by the user.</p>
+
+<?
+   popup1 = PopupWindow( '1st', "First choice", 0, 0, 400, 200, true, true )
+   popup1.container.addChild( Text( 't0', "You picked the first choice" ) )
+   popup2 = PopupWindow( '2nd', "Second choice", 0, 0, 400, 200, true, true )
+   popup2.container.addChild( Text( 't0', "You picked the second choice" ) )
+
+   pick1 = PickItem( 'p1', "First", "This is the first available choice", Nest.resLink("icon_choice1.png" ) )
+   pick2 = PickItem( 'p2', "Second", "This is the second available choice", Nest.resLink("icon_choice2.png" ) )
+   pick3 = PickItem( 'p3', "Return", "You can use this choice to go back to the main page",
+         Nest.resLink("icon_choice3.png" ), "!home" )
+   pick4 = PickItem( 'p4', "Go Falcon", "You can use this option to go to the Falcon home site",
+         Nest.resLink("icon_choice4.png" ), "http://www.falconpl.org" )
+
+   popup1.jsListeners[pick1] = "function(){this.show();}"
+   popup1.jsListeners[pick2] = "function(){this.hide();}"
+   popup2.jsListeners[pick2] = "function(){this.show();}"
+   popup2.jsListeners[pick1] = "function(){this.hide();}"
+
+   // Create a nice separator
+   class MySep from Widget('sep')
+      tag = "hr"
+      isSelfClosing = true      
+   end
+   
+   ps = PickShelf( 'shelf', MySep() )
+   ps.addChildren( pick1, pick2, pick3, pick4 )
+
+   Style( "PickShelfStyle", nil, "
+      display: inline-block;
+      width: 250px;
+      border: 2px solid #CCC;
+      background: #EEE;
+      padding 5px;      
+
+      border-radius: 8px;
+      -webkit-border-radius: 8px;
+      -moz-border-radius: 8px;
+      
+      box-shadow: 3px 4px 12px #111;
+      -webkit-box-shadow:  3px 4px 12px #111;
+      -moz-box-shadow:  3px 4px 12px #111;
+      "
+   ).setToID( ps )
+
+   Style( "PickItem style", nil, "
+      padding: 0;
+      margin: 4px;
+      border-radius: 4px;
+      -webkit-border-radius: 4px;
+      -moz-border-radius: 4px;
+      ", "div.nest_pickitem"
+   ).setToID( ps )
+
+   Style( "PickItem style hover", nil, "
+      background: #FFF;
+      cursor: hand;
+      ", "div.nest_pickitem:hover"
+   ).setToID( ps )
+   
+   Style( "PickItem title", nil, "
+      padding: 5px;
+      font-family: arial, verdana, sans-serif, sans;
+      font-weight: bold;
+      font-size; 16;
+      ", "div.nest_pickitem_title"
+   ).setToID( ps )
+
+   Style( "PickItem title text", nil, "
+         margin-left: 16px;
+      ", "div.nest_pickitem_title span"
+   ).setToID( ps )
+
+   Style( "PickItem title image", nil, "
+         position: relative;
+         top: 12px;
+      ", "div.nest_pickitem_title img"
+   ).setToID( ps )
+
+   Style( "PickItem description", nil, "
+      padding: 2px;
+      font-family: times new roman, times, serif;
+      font-style: italic;
+      margin-left:40px;
+      border-top:  solid 1px #DDD;
+      
+      ", "div.nest_pickitem_detail"
+   ).setToID( ps )
+
+   Style( "PickItem separator", nil, "
+      width:40%;
+      border: 0;
+      height: 2px;
+      color: #A33;
+      background-color: #A33;
+
+      box-shadow: 2px 2px 3px #222;
+      -webkit-box-shadow:  2px 2px 3px #222;
+      -moz-box-shadow:  2px 2px 3px #222;
+      ", "hr.nest_pickshelf_separator"
+   ).setToID( ps )
+?>
+
+<?= popup1.render() ?>
+<?= popup2.render() ?>
+<?= ps.render() ?>

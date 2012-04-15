@@ -54,6 +54,11 @@ class TableColumn( name, heading, fmt, nullrep )
       end
    }
 
+   init
+      // TODO: Remove this when we have automatic parentship
+      self.addClassInParentship( TableColumn )
+   end   
+
    /*# Uses a column definition string to fill the information about this column.
       @param initData The column definition
       
@@ -122,6 +127,11 @@ class ActionTableColumn( heading, keyFields, commentFields, actions )
       ++self.number
       return str
    }
+
+   init
+      // TODO: Remove this when we have automatic parentship
+      self.addClassInParentship( ActionTableColumn )
+   end   
 end
 
 
@@ -135,6 +145,12 @@ class CheckTableColumn( colName, heading, keyFields, commentFields )
    // This is automatically filled on render by our owner.
    table = nil
    number = 0
+
+   init
+      // TODO: Remove this when we have automatic parentship
+      self.addClassInParentship( CheckTableColumn )
+   end
+
 
    combineComment = { data, fields =>
       values = map( {v=> data[v]}, fields )
@@ -210,6 +226,11 @@ class TableBody( id ) from widget.Widget( id + ".tb" )
    textActiveDesc = "[<b>V</b>]"
 
    textAfterDesc = "&nbsp;"
+
+   init
+      // TODO: Remove this when we have automatic parentship
+      self.addClassInParentship( TableBody )
+   end
    
    function renderContent()
       str = "<table>\n"

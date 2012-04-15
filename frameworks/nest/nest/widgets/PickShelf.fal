@@ -1,0 +1,87 @@
+/*
+   FALCON - The Falcon Programming Language
+
+   Nest - Falcon web applcation engine
+
+   FILE: PickShelf.fal
+
+   AJAX widgeting subsystem -- Container for large menu items.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Sun, 15 Apr 2012 18:03:41 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2011: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+import Widget from nest.widgets.widget as Widget
+
+/*# Container for PickItem
+   @param id The widget ID
+   @optparam separator A separator widget to be inserted between each element.
+
+   A pick shelf is a large, page-wide menu that displays  a collection of PickItem
+   entities. Each pick item automatically generates a nest message when clicked
+   in any part, or can excite a link if required.
+
+   An optional separator widget can be passed to be automatically rendered
+   between each pickshelf entity.
+
+   Actually, the content of this widget is not restricted to PickShelf items,
+   it could be any widget; however, PickShelf has a nice support to represent
+   a pickable item and send a Nest message when an item is chosen.
+   
+@section styling PickShelf styling
+
+The pickshelf has the following CSS structure:
+@code
+   +++++++++++++++++++++++++++++++   << div (id and class user-defined)
+   + *-------------------------* +   << div class=nest_pickitem
+   + * A pick item...          * +
+   + *-------------------------* +
+   + //-------- separator -----//+   << usually div, class=nest_pickshelf_separator
+   + *-------------------------* +   ....
+   + * A pick item...          * +
+   + *-------------------------* +
+   + //-------- separator -----//+   
+   ..    ....                   ..
+   ..    ....                   ..
+   +++++++++++++++++++++++++++++++
+@endcode
+
+   Notice that this widget doesn't offer any default styling; usually, you'll want
+   to add the inline-block display style.
+
+*/
+class PickShelf( id, separator ) from Widget(id)
+   separator = separator
+
+   init
+      self.addClassInParentship( PickShelf )
+   end
+
+   function renderContent()
+      rend = ""
+      if self.separator
+         if not self.separator.props
+            self.separator.props = ["class" => "nest_pickshelf_separator"]
+         elif "class" notin self.separator.props
+            self.separator.props["class"] = "separator"
+         end
+         seprend = self.separator.render()
+         
+         for child in self.children
+            if rend: rend += seprend
+            rend += child.render()
+         end
+      else
+         for child in self.children
+            rend += child.render()
+         end
+      end
+
+      return rend
+   end
+end

@@ -23,15 +23,15 @@ class MenuStyles
    lms1 = Style( "Submenu", nil, "list-style:none;", "ul" )
    lms2 = Style( "Menu item hover", nil, "position: relative;", "li:hover" )
    lms3 = Style( "Menu item hover to submenu", nil, "display:block;", "li:hover> ul" )
-   //lms4 = Style( "Submenu hover", nil, "display:block;", "ul:active" )
-   lms5 = Style( "Submenu for submenu", nil, "position: absolute; left: 96%; top: 0;", "ul ul" )
+
+   lms5 = Style( "Submenu for submenu", nil, "position: absolute; left: 100%; top: 0;", "ul ul" )
    lms6 = Style( "Submenu items", nil, "display: block; float: none;", "ul li" )
 
    lmsh0 = Style( "Horizontal submenu", nil, "
       display: none;
       position: absolute;
       left: 0;
-      top: 96%;
+      top: 100%;
       ",
       "ul" )
 
@@ -46,7 +46,7 @@ class MenuStyles
    lmsv0 = Style( "Vertical submenu", nil, "
       display: none;
       position: absolute;
-      left: 98%;
+      left: 100%;
       top: 0;
       ",
       "ul" )
@@ -63,7 +63,7 @@ class MenuStyles
    menu_styles_vert = nil
 
    init
-      self.menu_styles_common = .[self.lms0 self.lms1 self.lms2 self.lms3  /*self.lms4 */ self.lms5 self.lms6 ]
+      self.menu_styles_common = .[self.lms0 self.lms1 self.lms2 self.lms3  self.lms5 self.lms6 ]
       self.menu_styles_horiz = .[self.lmsh0 self.lmsh1]
       self.menu_styles_vert = .[self.lmsv0 self.lmsv1]
    end
