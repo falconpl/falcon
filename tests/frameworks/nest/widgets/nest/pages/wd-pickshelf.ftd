@@ -68,6 +68,7 @@ inserted and selected by the user.</p>
    Style( "PickItem style hover", nil, "
       background: #FFF;
       cursor: hand;
+      cursor: pointer;
       ", "div.nest_pickitem:hover"
    ).setToID( ps )
    

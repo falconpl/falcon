@@ -98,10 +98,10 @@ class PickItem( id, title, detail, icon, link ) from Widget(id)
       if link
          if link.startsWith( "!" )
             link = Nest.pageLink( link[1:] )
-            self.props["onclick"] += @";window.open(\"$(link)\")"
+            self.props["onclick"] += @";window.location.href=\"$(link)\""
          elif link.startsWith( "*" )
             link = link[1:]
-            self.props["onclick"] += @";window.open(\"$(link)\")"
+            self.props["onclick"] += @";window.location.href=\"$(link)\""
          else
             self.props["onclick"] += @";window.open(\"$(link)\", \"_blank\" )"
          end

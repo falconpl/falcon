@@ -85,10 +85,8 @@ class _InfoBoxText(id, title, content) from widget.Widget( id )
       fullID = self.getFullID()
       hc = self.height - self.titleHeight 
       return @"
-         <div id=\"$(fullID).titlebar_out\" style=\"height:$(self.titleHeight)px\">
-            <div id=\"$(fullID).titlebar\" class=\"titlebar\">$(self.title)
-               <img src=\"$(self.imgclose)\" onclick=\"Nest.i('$(fullID)').hide(); \" style=\"float:right;cursor: hand;\"/>
-            </div>
+         <div id=\"$(fullID).titlebar\" class=\"titlebar\" style=\"height:$(self.titleHeight)px\"><span style=\"float:left\">$(self.title)</span>
+            <img src=\"$(self.imgclose)\" onclick=\"Nest.i('$(fullID)').hide(); \" style=\"float:right;cursor: hand; display:inline;\"/>
          </div>
          <div id=\"$(fullID).scroller\" style=\"padding:0px;height:$(hc)px\">
             <div id=\"$(fullID).contentbox\" class=\"contentbox\">$(self.content)</div>

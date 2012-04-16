@@ -112,9 +112,9 @@
    // Multiple deletor
    //
    tmdeletor = Button( 'tabtest.multideletor', "Delete selected" )
-   tmdeletor.props =[ "onclick" => "Nest.i('tabtest').withSelected('sel', function( vals ){Nest.i('tabtest.deletor').delete(vals);})" ]
+   tmdeletor.props =[ "onclick" => "Nest.i('tabtest').withSelected('sel', function( vals ){Nest.i('tabtest.multideletor').remove(vals);})" ]
    tmdeletor.jsMethods = [
-      "delete" => "
+      "remove" => "
       function(vals) {
          if (vals.length == 0) {
             alert( 'No selected item!' );

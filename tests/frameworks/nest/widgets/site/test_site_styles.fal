@@ -104,6 +104,7 @@ Style( "Calendar outline", nil, '
    border: 1px solid;
    padding: 5px;
    background: #f9F9FF;
+   width: 259px;
    border-radius: 15px 15px;
    -webkit-border-radius: 15px 15px;
    -moz-border-radius: 15px 15px;
@@ -116,11 +117,12 @@ Style( "Calendar outline", nil, '
 
 daystyle = '
    border: 1px;
-   padding: 0px;
+   padding: 0;
    margin: 1px;
    text-align: center;
    vertical-align: middle;
    background: #e0e0ff;
+   cursor: pointer;
    cursor: hand;
    border-radius: 3px 3px;
    -webkit-border-radius: 3px 3px;
@@ -154,12 +156,12 @@ Style( "Calendar days -- today", nil, '
 
 Style( "Calendar days -- busy day", nil, daystyle + '
    background:#e0c0f0;
-   ', 'span.busyDay'
+   ', 'span.busyday'
 ).applyToClass("Calendar")
 
-Style( "Calendar days -- busy day -- active", nil, daystyle + '
+Style( "Calendar days -- busy day -- active", nil, '
    background:#a0a0ef;
-   ', 'span.busyDay:active'
+   ', 'span.busyday:active'
 ).applyToClass("Calendar")
 
 Style( "Calendar intestation", nil, '
@@ -216,17 +218,13 @@ Style( "Calendar Buttons active", "active", '
 ).applyToClass("Calendar")
 
 
-Style( "Calendar Button right", nil, '
-   float:right;
-', 'span.btnnext'
-).applyToClass("Calendar")
-
 Style( "Calendar current date", nil, '
    font-weight: bold;
    font-size:16px;
    text-align: center;
    display: inline-block;
-   width:120px;
+   width: 120px;
+   margin-left: auto; margin-right: auto;
 ', 'span.curdate'
 ).applyToClass("Calendar")
 
@@ -268,7 +266,7 @@ Style( "InfoBox Title bar", nil, '
 
 Style( "Popup", nil, '
    background: #F8F8FF;
-   border: 2px solid rgba(30, 30, 50, 0.8);
+   border:2px solid #335;
    border-radius: 3px 3px;
    -webkit-border-radius: 3px 3px;
    -moz-border-radius: 3px 3px;
@@ -294,6 +292,7 @@ Style( "Window Title bar", nil, '
 
 Style( "Icon in title bar", nil, '
    cursor: hand;
+   cursor: pointer;
 ', 'img'
 ).applyToClass("TitleBar")
 

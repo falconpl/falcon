@@ -206,7 +206,10 @@ class Calendar(id, currentDate, subject, popup) from wid.Widget( id )
                closebtn.style.margin = '0pt';
                closebtn.style.fontWeight = 'bold';
                closebtn.style.fontFamily = 'arial, sans';
-               closebtn.style.float = 'right';
+               closebtn.style.position = 'absolute';
+               closebtn.style.top = '0';
+               closebtn.style.right = '20px';
+               
                closebtn.onclick = function() { self.close(); };
                bar.appendChild( closebtn );
 
@@ -217,6 +220,7 @@ class Calendar(id, currentDate, subject, popup) from wid.Widget( id )
             head.style.clear = 'both';
             head.id = this.id + '.head';
             this.createHead( head );
+            this.head = head;
          
             var intest = document.createElement('div');
             intest.id = this.id + '.intest';
@@ -262,6 +266,7 @@ class Calendar(id, currentDate, subject, popup) from wid.Widget( id )
 
             var btnnext = document.createElement('span');
             btnnext.className = 'btnnext';
+            btnnext.style.float = 'right';
             
             btnprev.appendChild( btnBack1Year );
             btnprev.appendChild( btnBack1Month );
@@ -275,11 +280,27 @@ class Calendar(id, currentDate, subject, popup) from wid.Widget( id )
             this.setCurMonth();
          }
       ",
-
+      
       "setCurMonth" => "
          function() {
+            if (navigator.appName == 'Microsoft Internet Explorer') {
+               setTimeout( 'Nest.i(\"' + this.id + '\").resetCurMonth()', 1 );
+            }
+            else {
+               var mname = this.monthNames[ this.month - 1 ];
+               this.curMonthSpan.innerHTML = mname + \" \" + this.year;
+            }
+         }",
+         
+      "resetCurMonth" => "
+         function() {
             var mname = this.monthNames[ this.month - 1 ];
-            this.curMonthSpan.innerHTML = mname + \" \" + this.year; 
+            var nMonthSpan = document.createElement('span');
+            nMonthSpan.id = this.id + '.current';
+            nMonthSpan.className = 'curdate';
+            nMonthSpan.innerHTML = mname + \" \" + this.year;
+            this.head.replaceChild( nMonthSpan, this.curMonthSpan );
+            this.curMonthSpan = nMonthSpan;
          }
       ",
 
@@ -477,8 +498,10 @@ class Calendar(id, currentDate, subject, popup) from wid.Widget( id )
             if( year != null && month != null ) {
                this.goto( month, year );
             }
-            this.goto( this.month, this.year);
-            this.style.display = '';
+            else {
+               this.goto( this.month, this.year);
+            }
+            this.style.display = 'inline-block';
          }",
 
       "backOneYear" => "function(){ this.goto( this.month, this.year -1 ); }",
@@ -516,20 +539,12 @@ class Calendar(id, currentDate, subject, popup) from wid.Widget( id )
             subject.day = null;
             
             var self = this;
-            if( subject.onfocus == null ) {
-               subject.onfocus = function() {
-                  self.popup(this.year, this.month, this.day);
-               }
-            }
-            if( subject.onclick == null ) {
-               subject.onclick = function() {
-                  self.popup(this.year, this.month, this.day);
-               }
-            }
+            subject.setAttribute('onfocus', 'var v=Nest.i(\"' +self.id +'\"); if(v) v.popup()');
+            subject.setAttribute('onclick', 'Nest.i(\"' +self.id +'\").popup()');
             if( subject.onkeyup == null ) {
                subject.onkeyup = function( event ) {
                   if ( event.which == 27 ) {
-                     if( self.style.display == '' ) self.close();
+                     if( self.style.display == 'inline-block' ) self.close();
                   }
                }
             }
@@ -552,7 +567,7 @@ class Calendar(id, currentDate, subject, popup) from wid.Widget( id )
       // activate effects
       Nest.requireJS("fx")
       
-      self.set( ["class" => "calendar", "style" => "display: inline-block"] )
+      self.set( ["class" => "calendar", "style" => "display: inline-block; zoom:1;"] )
       
       if currentDate 
          self.currentDate = currentDate 
