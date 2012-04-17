@@ -44,7 +44,13 @@ ENDIF()
 OPTION( FALCON_DBI_BUILD_ORACLE "Include Oracle DBI Module" ${_oracle} )
 
 # Firebird
-OPTION(FALCON_DBI_BUILD_FIREBIRD "Include Firebird DBI Module" OFF)
+FIND_PATH( FIREBIRD_INCLUDE_DIR ibase.h HINTS /usr/include /usr/local/include)
+IF ( FIREBIRD_INCLUDE_DIR )
+  set( _fbsql ON )
+ELSE()
+  set(_fbsql OFF)
+ENDIF()
+OPTION(FALCON_DBI_BUILD_FIREBIRD "Include Firebird DBI Module" ${_fbsql} )
 
 # For now, activate ODBC on windows
 IF(MSVC)
