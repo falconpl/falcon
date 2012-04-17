@@ -63,7 +63,7 @@ namespace Falcon {
    static double atanh( double value ) { return __inverse_call( value, tanh ); }
 #endif
 
-        // Hyperbolic          
+        // Hyperbolic
         /*#
           @function cosh
           @brief Returns the hyperbolic cosine of the argument.
@@ -224,6 +224,37 @@ namespace Falcon {
 
             errno = 0;
             numeric res = atanh( num1->forceNumeric() );
+            if ( errno != 0 )
+            {
+                throw new MathError( ErrorParam( e_domain, __LINE__).origin( e_orig_runtime ) );
+            }
+            else {                 
+                vm->retval( res );
+            }
+        }
+
+        /*#
+          @function atan2
+          @brief Returns the angle in radians between a positive x and positive y.
+          @return The angle in radians between a positive x and positive y.
+          @raise MathError If the arguments are out of domain.
+
+          The function may raise an error if the value cannot
+          be computed because of a domain or overflow error.
+          */
+        FALCON_FUNC Func_atan2( ::Falcon::VMachine *vm )
+        {
+            Item *num1 = vm->param( 0 );
+            Item *num2 = vm->param( 1 );
+
+            // The arguments must be ordinal and must be greater than 0
+            if ( num1 <= 0 || ! num1->isOrdinal() || num2 <= 0 || ! num2->isOrdinal() )
+            {
+                throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).origin( e_orig_runtime ).extra("N") );
+            }
+
+            errno = 0;
+            numeric res = atan2( num1->forceNumeric(), num2->forceNumeric() );
             if ( errno != 0 )
             {
                 throw new MathError( ErrorParam( e_domain, __LINE__).origin( e_orig_runtime ) );

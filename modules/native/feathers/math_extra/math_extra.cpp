@@ -67,6 +67,7 @@ FALCON_MODULE_DECL
    self->addExtFunc( "acosh",  Falcon::Ext::Func_acosh );
    self->addExtFunc( "asinh",  Falcon::Ext::Func_asinh );
    self->addExtFunc( "atanh",  Falcon::Ext::Func_atanh );
+   self->addExtFunc( "atan2",  Falcon::Ext::Func_atan2 );
 
    // Reciprocal trigonometric function
    self->addExtFunc( "sec",  Falcon::Ext::Func_sec );
