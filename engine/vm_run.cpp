@@ -126,7 +126,8 @@ Item *VMachine::getOpcodeParam( register uint32 bc_pos )
       case P_PARAM_REGB: return &regB();
       case P_PARAM_REGS1: return &self();
       case P_PARAM_REGL1: return &latch();
-      case P_PARAM_REGL2: return &latcher();
+      case P_PARAM_REGL2: return &latcher();      
+      case P_PARAM_FSELF: return &m_currentContext->fself();
    }
 
    // we should not be here.

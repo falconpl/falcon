@@ -277,12 +277,12 @@
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union 
 /* Line 1676 of yacc.c  */
-#line 61 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+#line 61 "/home/gian/Progetti/FalconRepo/falcon_master/engine/src_parser.yy"
 lex_value_t
 {
 
 /* Line 1676 of yacc.c  */
-#line 61 "/home/gian/Progetti/falcon/core/engine/src_parser.yy"
+#line 61 "/home/gian/Progetti/FalconRepo/falcon_master/engine/src_parser.yy"
 
    Falcon::int64 integer;
    Falcon::numeric numeric;
@@ -300,7 +300,7 @@ lex_value_t
 
 
 /* Line 1676 of yacc.c  */
-#line 304 "/home/gian/Progetti/falcon/core/engine/src_parser.hpp"
+#line 304 "/home/gian/Progetti/FalconRepo/falcon_master/engine/src_parser.hpp"
 } YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */

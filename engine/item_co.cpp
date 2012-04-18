@@ -2096,6 +2096,7 @@ void co_call_function( const Item &itm, VMachine *vm, uint32 paramCount )
 {
    // fill - in the missing parameters.
    vm->prepareFrame( itm.asFunction(), paramCount );
+   vm->currentContext()->fself() = itm;
    // leave self as is.
 }
 
@@ -2117,6 +2118,8 @@ void co_call_array( const Item &itm, VMachine *vm, uint32 paramCount )
       if ( carr.asArray() != arr && carr.isCallable() )
       {
          vm->prepareFrame( arr, paramCount );
+         vm->currentContext()->fself() = itm;
+
 
          // the prepare for array already checks for self -- tables
          if ( arr->table() != 0 )
@@ -2214,6 +2217,7 @@ void co_call_class( const Item &itm, VMachine *vm, uint32 paramCount )
          if( inst->getProperty( "__enter", initEnter ) && initEnter.isFunction() )
          {
             vm->prepareFrame( initEnter.asFunction(), 0 );
+            vm->currentContext()->fself() = itm;
             vm->self() = inst;
             inst->gcMark( memPool->generation() );
             vm->returnHandler( __call_init_enter_last );
@@ -2224,6 +2228,7 @@ void co_call_class( const Item &itm, VMachine *vm, uint32 paramCount )
    }
 
    vm->prepareFrame( cls->constructor().asFunction(), paramCount );
+   vm->currentContext()->fself() = itm;
    vm->self() = inst;
    inst->gcMark( memPool->generation() );
 

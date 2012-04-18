@@ -2361,17 +2361,7 @@ atomic_symbol:
 var_atom:
    atomic_symbol
    | SELF { $$ = new Falcon::Value(); $$->setSelf(); }
-   | FSELF {
-      Falcon::StmtFunction *sfunc = COMPILER->getFunctionContext();
-      if ( sfunc == 0 ) {
-         COMPILER->raiseError(Falcon::e_fself_outside, COMPILER->tempLine() );
-         $$ = new Falcon::Value();
-      }
-      else
-      {
-         $$ = new Falcon::Value( sfunc->symbol() );
-      }
-   }
+   | FSELF { $$ = new Falcon::Value(); $$->setFself(); }
 ;
 
 /* Currently not needed

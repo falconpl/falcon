@@ -33,6 +33,7 @@ CoreFunc::~CoreFunc()
 void CoreFunc::readyFrame( VMachine* vm, uint32 paramCount )
 {
    vm->prepareFrame( this, paramCount );
+   vm->currentContext()->fself() = this;
 }
 
 void CoreFunc::gcMark( uint32 gen )
