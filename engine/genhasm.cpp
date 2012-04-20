@@ -1507,6 +1507,9 @@ void GenHAsm::gen_operand( const Value *stmt )
       case Value::t_self:
          m_out->writeString( "S1" );
       break;
+      case Value::t_fself:
+         m_out->writeString( "FSELF" );
+      break;
 
       default:
          m_out->writeString( "???" );

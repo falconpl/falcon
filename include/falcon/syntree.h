@@ -103,6 +103,7 @@ public:
       t_symbol,
       t_symdef,
       t_self,
+      t_fself,
       t_lbind,
 
       t_byref,
@@ -246,7 +247,7 @@ public:
    bool isSimple() const {
       return isImmediate() ||
              m_type == t_symbol || m_type == t_symdef || m_type == t_lbind ||
-             m_type == t_self;
+             m_type == t_self || m_type == t_fself;
    }
 
    bool isTrue() const {
@@ -286,6 +287,7 @@ public:
    void setDict( DictDecl *val ) { m_type = t_dict_decl; m_content.asDict = val; }
    void setRange( RangeDecl *val ) { m_type = t_range_decl; m_content.asRange = val; }
    void setSelf() { m_type = t_self; }
+   void setFself() { m_type = t_fself; }
    void setLBind( String *val ) { m_type = t_lbind; m_content.asString = val; }
 
    bool isNil() const { return m_type == t_nil; }

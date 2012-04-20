@@ -327,6 +327,7 @@ void GenCode::gen_operand( const Value *stmt )
 
       case Value::t_imm_bool:
       case Value::t_self:
+      case Value::t_fself:
          // do nothing
       break;
 
@@ -353,6 +354,7 @@ byte GenCode::gen_pdef( const c_varpar &elem )
             case Value::t_imm_string: return P_PARAM_STRID;
             case Value::t_imm_num: return P_PARAM_NUM;
             case Value::t_self: return P_PARAM_REGS1;
+            case Value::t_fself: return P_PARAM_FSELF;
             case Value::t_lbind: return P_PARAM_LBIND;
 
             case Value::t_symbol:

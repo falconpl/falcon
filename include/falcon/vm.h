@@ -1189,6 +1189,8 @@ public:
 
    const Item &self() const { return m_currentContext->self(); }
    Item &self() { return m_currentContext->self(); }
+   const Item &felf() const { return m_currentContext->fself(); }
+   Item &fself() { return m_currentContext->fself(); }
 
    /** Latch item.
       Generated on load property/vector instructions, it stores the accessed object.

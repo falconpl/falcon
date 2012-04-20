@@ -87,6 +87,7 @@ while it will fill OP2 with an integer item containing 15H.
 #define P_PARAM_REGA    0x10
 #define P_PARAM_REGB    0x11
 #define P_PARAM_REGS1   0x12
+#define P_PARAM_FSELF   0x13
 #define P_PARAM_REGL1   0x14
 #define P_PARAM_REGL2   0x15
 #define P_PARAM_UNB     0x16

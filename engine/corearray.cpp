@@ -84,6 +84,7 @@ const String& CoreArray::name() const {
 void CoreArray::readyFrame( VMachine* vm, uint32 paramCount )
 {
    vm->prepareFrame( this, paramCount );
+   vm->currentContext()->fself() = this;
 }
 
 

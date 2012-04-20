@@ -35,7 +35,9 @@
 #define MESSAGE( fmt ) if( _falcon_trace_fp != 0 ) fprintf( _falcon_trace_fp, "%s:%d: " fmt "\n", __FILE__, __LINE__ );
 #define TRACEVAR( type, var ) if( _falcon_trace_fp != 0 ) fprintf( _falcon_trace_fp, "%s:%d: %s=%" type "\n", __FILE__, __LINE__, #var, var );
 
+extern "C" {
 extern FALCON_DYN_SYM FILE* _falcon_trace_fp;
+}
 
 #endif
 

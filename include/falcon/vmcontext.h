@@ -151,6 +151,8 @@ public:
 
    Item &self() { return currentFrame()->m_self; }
    const Item &self() const { return currentFrame()->m_self; }
+   Item &fself() { return currentFrame()->m_fself; }
+   const Item &fself() const { return currentFrame()->m_fself; }
 
 
    /** Latch item.

@@ -559,6 +559,7 @@ void GenTree::gen_value( const Value *val )
 
       case Value::t_symbol: m_out->writeString( val->asSymbol()->name() ); break;
       case Value::t_self: m_out->writeString( "self" ); break;
+      case Value::t_fself: m_out->writeString( "fself" ); break;
       case Value::t_array_decl:
          m_out->writeString( "Array: [ " );
             gen_array( val->asArray() );

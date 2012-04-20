@@ -51,6 +51,7 @@ public:
    StackFrame* m_prevTryFrame;
 
    Item m_self;
+   Item m_fself;
    Item m_binding;
 
    // points to the parameter part in the previous area.

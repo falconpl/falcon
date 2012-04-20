@@ -92,6 +92,7 @@ uint32 PCODE::advanceParam( uint32 paramType )
    case P_PARAM_REGA:
    case P_PARAM_REGB:
    case P_PARAM_REGS1:
+   case P_PARAM_FSELF:
    case P_PARAM_REGL1:
    case P_PARAM_REGL2:
       offset = 0;
