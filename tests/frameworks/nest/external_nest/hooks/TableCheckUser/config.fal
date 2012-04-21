@@ -1,9 +1,0 @@
-// Configuration for a TableCheckUser
-
-import from nest.hooks.TableCheckUser in tab
-
-users = [
-   "admin" => tab.User( "admin", Nest.AL.ADMIN, "Administrator" ),
-   "staff" => tab.User( "staff", Nest.AL.STAFF, "Staff member" ),
-   "user" => tab.User( "user", Nest.AL.USER, "Generic user" )
-]

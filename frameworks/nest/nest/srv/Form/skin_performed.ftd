@@ -1,3 +1,0 @@
-<? function skin( vars, srv ) ?>
-   <div id="performed_<?=vars.css_id?>"><?=vars.result?></div>
-<? end ?>

@@ -1,3 +1,0 @@
-
-apidir = "."  // relative to the index page.
-detail_pid = "detail"

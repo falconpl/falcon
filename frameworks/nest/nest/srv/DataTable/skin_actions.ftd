@@ -1,9 +1,0 @@
-<? function skin(s, srv, actions ) ?>
-   <table border="0" class="nest_table_act">
-   <tr>
-      <? for action in actions ?>
-      <? if action.allowed() ?><td><?= action.render() ?></td><? end ?>
-      <? end ?>
-   </tr>
-   </table>
-<? end ?>

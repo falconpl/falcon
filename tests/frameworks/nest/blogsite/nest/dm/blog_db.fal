@@ -1,3 +1,0 @@
-type = Nest.DM.DBI
-
-connect = vmSystemType() == "WIN" ? "sqlite3:db=.\\blog.db" : "sqlite3:db=./blog.db"

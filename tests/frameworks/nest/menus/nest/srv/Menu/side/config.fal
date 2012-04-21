@@ -1,9 +1,0 @@
-/* Configuration for the Menu service -- "side" */
-
-import MenuItem from nest.srv.Menu as MenuItem
-
-items = .[
-   MenuItem( "First section", "#first" )
-   MenuItem( "Second section", "#second" )
-   MenuItem( "Third section", "#third" )
-]

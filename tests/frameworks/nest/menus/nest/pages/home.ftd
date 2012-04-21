@@ -1,8 +1,0 @@
-<h1>Home</h1>
-<p>This is the home in the frame</p>
-<? login = Nest.ambient( "auth_data" ).value ?>
-<? if login ?>
-   <p>You are currently logged in as <?= login ?>.</p>
-<? else ?>
-   <p>You are <b>not</b> currently logged in</p>
-<? end ?>

@@ -1,8 +1,0 @@
-<?fal function skin( data ) ?>
-   <table>
-   <tr><th>Filename</th><th>Size</th><th>Date</th></tr>
-   <? for entry in data.dircont ?>
-      <tr><td><?= entry.name ?></td><td><?= entry.size ?></td><td><?= entry.date ?></td></tr>
-   <? end ?>
-   </table>
-<? end ?>

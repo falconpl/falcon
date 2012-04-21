@@ -1,5 +1,0 @@
-// calendar page
-// Generating a pure AJAX content.
-
-nest_frame: false
-Nest.service("Calendar").render()
