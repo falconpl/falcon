@@ -16,17 +16,12 @@ Vital elements of web based applications as session handling, login management,
 page routing are all supported and flexible but efficient site-specific expansion
 hooks are provided.
 
-The number of built-in services (web application modules) is still low, but all essential
-services plus a number of complex services (that can be used as a template for user designed
-modules) are provided.
-
-The ORM data model is essential, but effective for simple uses, while it can be diretly
-bypassed (or better, integrated) with direct database interaction via Falcon DBI modules.
-
-There isn't still any native and integrated support for AJAX, but where necessary it is possible
-to use third party Javascript libraries (as MooTools or JQuery) to add AJAX features to a Nest
-based application. Also, a web-server AJAX aware API support is already provided, even if
-essential.
+Thie release 2.0 of Nest had steered the development approach from a concept of
+"service" (server-side application element) to Widget (client-side application
+element), with a great attention to AJAX. ORM elements have been removed from
+the Nest tree and moved into the main Falcon development system. In other words,
+Nest, as a web application framework, doesn't include itself an Object-Relation-Model,
+but relies on the Falcon language framework to provide one.
 
 @section phylosophy Philosophy
 
@@ -38,9 +33,7 @@ live code that must be written to obtain a complete web application. Minimal ove
 that Nest doesn't "cover" the standards of the system hosting it (Falcon and WOPI), but
 instead adds new features to it. This means that, although Nest offers powerful features
 in top of WOPI, all the features of the standard web interface are at disposal of the final
-implementor. Even if offering an ORM (Object Relational Model), it doesn't prevent the implementor
-from using raw SQL commands, and even generating its own tables or databases outside Nest
-support, so to use all the performance-wise features that an abstract model would lose.
+implementor.
 
 Other than the two cardinal concepts, Nest is based on __modular design__. Nest exposes some
 components that can be separately configured, integrated or eventually completely reimplemented

@@ -393,6 +393,9 @@ object Nest
    // Hook functions invoked by direct emit("...") requests
    _hooks = [=>]
 
+   // Modules
+   _modules = [=>]
+
    _menus = [=>]
    _menu_registar = [=>]
 
@@ -634,23 +637,49 @@ object Nest
    end
 
 
-   /*# Invoke a module class.
+   /*# Invoke a module.
       @param name The logical name of the module class to be invoked.
-      @return A @a Module class.
+      @return A @a Module instance.
 
       A @a nest.Module class instance is a dynamic plugin that can be loaded
       on demand when necessary. This method is actually a simple helper
       that searches for the module in standard "mod" directories.
+
+      If already loaded, the previously created instance is returned.
+
+      When loaded, a [modname]_cfg.fal file is searched in the modules directory
+      as well. If found, it is loaded and each global variable in the _cfg
+      module is set in a pseoudo-object that is then passed to the
+      onConfig() methdod of the module instance.
    */
    function module( name )
-      wid = self._internal_module( name, mod_dir );
-      if not wid: raise NestError( NestError.mod_notfound, "", name )
-      return wid
+      if name in self._modules
+         return self._modules[name]
+      end
+      
+      modc = self._internal_module( name, mod_dir );
+      if not modc: raise NestError( NestError.mod_notfound, "", name )
+      mod = modc()
+      self.loadConfig( mod )
+      self._modules[name] = mod
+      
+      return mod
+   end
+
+   /*# Loads a module class without creating an instance.
+      @param name The logical name of the module class to be invoked.
+      @return A @a Module class.
+      
+   */
+   function moduleClass( name )
+      modc = self._internal_module( name, mod_dir );
+      if not modc: raise NestError( NestError.mod_notfound, "", name )
+      return modc
    end
 
    function loadConfig( entity, name )
       modName = entity.className()
-      if name: modName += "." + name
+      if name: modName += "_" + name
       modName += "_cfg"
 
       w_file = utils.findFileInDirs(
@@ -1382,8 +1411,8 @@ object Nest
       try
          // force excluding bindings
          self.title = "Nest Framework Error"
-         ereport = self.module( self.ereport_module )( e, ctx )
-
+         ereport = self.moduleClass( self.ereport_module )( e, ctx )
+         self.loadConfig( ereport )
          > ereport.render()
       catch in f
          self._defErrorReport( e, ctx, f )

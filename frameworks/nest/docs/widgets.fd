@@ -1,4 +1,5 @@
-/* @page widgets Nest AJAX enabled client-side widgets.
+/*#
+   @page widgets Nest AJAX enabled client-side widgets.
 
    Nest provides an integrated AJAX visual framework that goes
    under the name of @i Nest @i Widgets.

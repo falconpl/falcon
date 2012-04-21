@@ -33,8 +33,7 @@ Input.recursive=true
 Input.extra=main.fd
 Input.extra=config.fd
 Input.extra=overview.fd 
-Input.extra=quickstart.fd
-Input.extra=service.fd
+#Input.extra=quickstart.fd
 Input.extra=widget.fd
 
 ################################################
@@ -50,7 +49,7 @@ Output.module=docbook
 # Output.<module>.<parameters> configs
 ################################################
 
-Output.html.directory=Nest_docs-1.0
+Output.html.directory=Nest_docs-2.0
 Output.html.url=.
 Output.html.doctitle=Nest Web Framework developer manual
 
@@ -60,7 +59,7 @@ Output.html.doctitle=Nest Web Framework developer manual
 
 Output.docbook.file = Nest_doc.xml
 Output.docbook.encoding = utf-8
-Output.docbook.copyright.year = 2010
+Output.docbook.copyright.year = 2012
 Output.docbook.copyright.holder = The Falcon Committee
 Output.docbook.frame = book
 Output.docbook.detailed = false

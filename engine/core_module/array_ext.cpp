@@ -872,7 +872,7 @@ FALCON_FUNC  mth_arrayCompact ( ::Falcon::VMachine *vm )
 */
 
 /*#
-   @method copyFrom
+   @method copyFrom Array
    @brief Copies an array into another array.
    @param from Starting position in the array.
    @param src The source array.

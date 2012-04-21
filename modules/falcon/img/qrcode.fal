@@ -69,8 +69,7 @@ ECL = qr.QrEcl
    an arbitrary stream.
 */
 class Maker
-   /*#
-   * Cache directory -- set to nil to disable caching.
+   /*# Cache directory -- set to nil to disable caching.
    */
    cache_dir = nil
 
@@ -79,27 +78,23 @@ class Maker
    */
    encoding = "utf-8"
 
-   /*#
-   * Specifies whether or not to estimate best mask.
+   /*# Specifies whether or not to estimate best mask.
    *
    * Set this attribute to false if performance is an issue.
    */
    find_best_mask = true
 
-   /*#
-   * The number of masks to be checked -- mask ids are generated randomly.
+   /*# The number of masks to be checked -- mask ids are generated randomly.
    */
    find_from_random = 0
 
-   /*#
-   * Default mask.
+   /*# Default mask.
    *
    * Only used when best mask estimation is disabled.
    */
    default_mask = 2
 
-   /*#
-   * Max width (in pixels) allowed for png images.
+   /*# Max width (in pixels) allowed for png images.
    */
    png_max_size = 1024
 
@@ -136,22 +131,18 @@ class Maker
       return self._encodeInput(input)
    end
 
-   /*# @ignore */
    function encodeNum(data, ecl)
       raise qr.QrError(qr.QrError.functionality_not_supported, "encodeNum")
    end
 
-   /*# @ignore */
    function encodeAn(data, ecl)
       raise qr.QrError(qr.QrError.functionality_not_supported, "encodeAn")
    end
 
-   /*# @ignore */
    function encodeKanji(data, ecl)
       raise qr.QrError(qr.QrError.functionality_not_supported, "encodeKanji")
    end
 
-   /*# @ignore */
    function encodeStruct(data, ecl)
       raise qr.QrError(qr.QrError.functionality_not_supported, "encodeStruct")
    end

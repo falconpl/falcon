@@ -5,6 +5,10 @@ Falcon (0.9.6.9)
            an invalid property was requested
   * fixed: dbi-mysql now manages non-prepareable queries.
   * fixed: dbi-mysql now manages stored-procedure recordsets.
+  * fixed: fself din't get access to the current closure.
+  * fixed: Several doc reference missing.
+  * fixed: Fix for broken recvAll in IMAP module.
+  * added: Nest to version 2.0
 
 Falcon (0.9.6.7)
   * fixed: pow() din't reset the numeric error on startup.
