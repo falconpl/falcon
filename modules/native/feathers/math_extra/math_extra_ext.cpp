@@ -37,8 +37,8 @@
 #include <falcon/engine.h>
 #include <falcon/vmcontext.h>
 #include <falcon/error.h>
-#include <falcon/paramerror.h>
-#include <falcon/matherror.h>
+#include <falcon/errors/paramerror.h>
+#include <falcon/errors/matherror.h>
 
 #include "math_extra_ext.h"
 #include "math_extra_mod.h"

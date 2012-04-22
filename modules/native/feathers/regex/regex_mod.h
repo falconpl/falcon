@@ -20,7 +20,7 @@
 #ifndef flc_regex_mod_H
 #define flc_regex_mod_H
 
-#include <falcon/falcondata.h>
+#include <falcon/types.h>
 #include <pcre.h>
 
 #define OVECTOR_SIZE 60
@@ -32,7 +32,7 @@ namespace Falcon {
    module to carry around the pre-compiled pattern.
 */
 
-class RegexCarrier: public FalconData
+class RegexCarrier
 {
 public:
    pcre *m_pattern;
@@ -43,12 +43,12 @@ public:
    int m_ovectorSize;
    int m_matches;
 
-   RegexCarrier( pcre *pattern );
+   uint32 m_mark;
+
+   RegexCarrier();
+   void init( pcre *pattern );
 
    virtual ~RegexCarrier();
-
-   virtual void gcMark( uint32 mk ) {};
-   virtual FalconData *clone() const {return 0;}
 };
 
 }

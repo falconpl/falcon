@@ -61,22 +61,22 @@ public:
       //
       
       // Hyperbolic
-      addFunction( new Falcon::Ext::FALCON_FUNCTION_NAME(cosh) );
-      addFunction( new Falcon::Ext::FALCON_FUNCTION_NAME(sinh) );
-      addFunction( new Falcon::Ext::FALCON_FUNCTION_NAME(tanh) );
+      addMantra( new Falcon::Ext::FALCON_FUNCTION_NAME(cosh) );
+      addMantra( new Falcon::Ext::FALCON_FUNCTION_NAME(sinh) );
+      addMantra( new Falcon::Ext::FALCON_FUNCTION_NAME(tanh) );
       
       // Inverse Hyperbolic
-      addFunction( new Falcon::Ext::FALCON_FUNCTION_NAME(acosh) );
-      addFunction( new Falcon::Ext::FALCON_FUNCTION_NAME(asinh) );
-      addFunction( new Falcon::Ext::FALCON_FUNCTION_NAME(atanh) );
+      addMantra( new Falcon::Ext::FALCON_FUNCTION_NAME(acosh) );
+      addMantra( new Falcon::Ext::FALCON_FUNCTION_NAME(asinh) );
+      addMantra( new Falcon::Ext::FALCON_FUNCTION_NAME(atanh) );
 
       // Reciprocal trigonometric function
-      addFunction( new Falcon::Ext::FALCON_FUNCTION_NAME(sec) );
-      addFunction( new Falcon::Ext::FALCON_FUNCTION_NAME(cosec) );
-      addFunction( new Falcon::Ext::FALCON_FUNCTION_NAME(cotan) );
+      addMantra( new Falcon::Ext::FALCON_FUNCTION_NAME(sec) );
+      addMantra( new Falcon::Ext::FALCON_FUNCTION_NAME(cosec) );
+      addMantra( new Falcon::Ext::FALCON_FUNCTION_NAME(cotan) );
 
       // Other
-      addFunction( new Falcon::Ext::FALCON_FUNCTION_NAME(lambda) );
+      addMantra( new Falcon::Ext::FALCON_FUNCTION_NAME(lambda) );
 
    }
    virtual ~MathExtraModule() {}
