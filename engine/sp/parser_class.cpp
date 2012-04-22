@@ -141,7 +141,7 @@ static void make_class( Parser& p, int tCount,
       symclass = 0;
       
       // ... but we have an expression value
-      ti = new TokenInstance( p.currentLine(), p.currentLexer()->character(), sp.Expr);
+      ti = TokenInstance::alloc( p.currentLine(), p.currentLexer()->character(), sp.Expr);
       Expression* expr = ctx->onStaticData( ccls, cls );   
       ti->setValue( expr, expr_deletor );
    }
@@ -345,7 +345,7 @@ void apply_FromClause_next( const Rule&, Parser& p  )
    ExprParentship* inhList = static_cast<ExprParentship*>( tInhList->detachValue() );
    inhList->add( static_cast<ExprInherit*>(tInh->detachValue()) );
 
-   TokenInstance* tiNew = new TokenInstance(tInhList->line(), tInhList->chr(), sp.FromClause );
+   TokenInstance* tiNew = TokenInstance::alloc(tInhList->line(), tInhList->chr(), sp.FromClause );
    tiNew->setValue( inhList, &expr_deletor );
    p.simplify(3, tiNew );
 }
@@ -358,7 +358,7 @@ void apply_FromClause_first( const Rule&, Parser& p )
 
    TokenInstance* tInh = p.getNextToken(); // ListExpr
 
-   TokenInstance* tlist = new TokenInstance(tInh->line(), tInh->chr(), sp.FromClause );
+   TokenInstance* tlist = TokenInstance::alloc(tInh->line(), tInh->chr(), sp.FromClause );
    ExprParentship* ep = new ExprParentship( tInh->line(), tInh->chr() );   
    ep->add( static_cast<ExprInherit*>(tInh->detachValue()) );
    tlist->setValue( ep, &expr_deletor );
@@ -389,7 +389,7 @@ void apply_FromClause_entry_with_expr( const Rule&, Parser& p )
    // eventually add a requirement.
    
 
-   TokenInstance* tInh = new TokenInstance(tname->line(), tname->chr(), sp.FromEntry );
+   TokenInstance* tInh = TokenInstance::alloc(tname->line(), tname->chr(), sp.FromEntry );
    tInh->setValue( ei, &expr_deletor );
 
    p.simplify( 4, tInh );
@@ -403,7 +403,7 @@ void apply_FromClause_entry( const Rule&, Parser& p )
 
    TokenInstance* tname = p.getNextToken(); // T_Name
 
-   TokenInstance* tInh = new TokenInstance(tname->line(), tname->chr(), sp.FromEntry );
+   TokenInstance* tInh = TokenInstance::alloc(tname->line(), tname->chr(), sp.FromEntry );
    ExprInherit* ei = new ExprInherit( *tname->asString(), tname->line(), tname->chr());
    tInh->setValue( ei, expr_deletor );
    p.simplify( 1, tInh );

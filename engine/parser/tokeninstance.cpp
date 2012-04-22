@@ -18,6 +18,11 @@
 #include <falcon/parser/token.h>
 #include <falcon/parser/tokeninstance.h>
 #include <falcon/string.h>
+#include <falcon/pool.h>
+
+#include <map>
+
+#include <falcon/engine.h>
 
 namespace Falcon {
 namespace Parsing {
@@ -36,6 +41,32 @@ TokenInstance::~TokenInstance()
    clear();
 }
 
+
+TokenInstance* TokenInstance::alloc( int line, int chr, const Token& tok )
+{
+   static Pool* pool = 0;
+   if( pool == 0 )
+   {
+      pool = new Pool(100);
+      Engine::instance()->addPool( pool );
+   }
+   
+   TokenInstance* ti = static_cast<TokenInstance*>(pool->get());
+   if( ti == 0 ) {
+      ti = new TokenInstance(line, chr, tok);
+      ti->assignToPool( pool );
+   }
+   else {
+      ti->~TokenInstance();
+      try {
+         ti = new(ti) TokenInstance( line, chr, tok );
+      }
+      catch( ... ) {
+         delete ti;
+      }
+   }
+   return ti;
+}
 
 
 void TokenInstance::setValue( void* v, TokenInstance::deletor d )

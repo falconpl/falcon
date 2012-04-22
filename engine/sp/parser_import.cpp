@@ -445,7 +445,7 @@ void apply_ImportSpec_next( const Rule&, Parser& p )
    NameList* list=static_cast<NameList*>(tlist->detachValue());
    list->push_back(*tname->asString());
 
-   TokenInstance* ti_list = new TokenInstance(tlist->line(), tlist->chr(), sp.ImportSpec );
+   TokenInstance* ti_list = TokenInstance::alloc(tlist->line(), tlist->chr(), sp.ImportSpec );
    ti_list->setValue( list, name_list_deletor );
 
    p.simplify( 3, ti_list );   
@@ -460,7 +460,7 @@ void apply_ImportSpec_attach_last( const Rule&, Parser& p )
    NameList* list=static_cast<NameList*>(tlist->detachValue());
    list->back().A(".*");
 
-   TokenInstance* ti_list = new TokenInstance(tlist->line(), tlist->chr(), sp.ImportSpec );
+   TokenInstance* ti_list = TokenInstance::alloc(tlist->line(), tlist->chr(), sp.ImportSpec );
    ti_list->setValue( list, name_list_deletor );
 
    p.simplify( 3, ti_list );  
@@ -478,7 +478,7 @@ void apply_ImportSpec_attach_next( const Rule&, Parser& p )
    NameList* list=static_cast<NameList*>(tlist->detachValue());
    list->back().A(".").A(*tname->asString());
 
-   TokenInstance* ti_list = new TokenInstance(tlist->line(), tlist->chr(), sp.ImportSpec );
+   TokenInstance* ti_list = TokenInstance::alloc(tlist->line(), tlist->chr(), sp.ImportSpec );
    ti_list->setValue( list, name_list_deletor );
 
    p.simplify( 3, ti_list );   
@@ -490,7 +490,7 @@ void apply_ImportSpec_first( const Rule&, Parser& p )
    SourceParser& sp = static_cast<SourceParser&>(p);
    TokenInstance* tname = p.getNextToken();
 
-   TokenInstance* ti_list = new TokenInstance(tname->line(), tname->chr(), sp.ImportSpec );
+   TokenInstance* ti_list = TokenInstance::alloc(tname->line(), tname->chr(), sp.ImportSpec );
 
    NameList* list = new NameList;
    list->push_back(*tname->asString());
@@ -504,7 +504,7 @@ void apply_ImportSpec_empty( const Rule&, Parser& p )
 {
    SourceParser& sp = static_cast<SourceParser&>(p);
    //TODO: Get current lexer char/line
-   TokenInstance* ti_list = new TokenInstance(0, 0, sp.ImportSpec );
+   TokenInstance* ti_list = TokenInstance::alloc(0, 0, sp.ImportSpec );
 
    NameList* list = new NameList;
    ti_list->setValue( list, name_list_deletor );
@@ -520,7 +520,7 @@ void apply_nsspec_last( const Rule&, Parser& p )
    SourceParser* sp = static_cast<SourceParser*>(&p);
    
    TokenInstance* tspec = p.getNextToken();
-   TokenInstance* tspec_new = new TokenInstance( tspec->line(), tspec->chr(), sp->NameSpaceSpec );
+   TokenInstance* tspec_new = TokenInstance::alloc( tspec->line(), tspec->chr(), sp->NameSpaceSpec );
    // put the cumulated spec in the last token.
    tspec_new->setValue( *tspec->asString() + ".*" );
    p.simplify(3, tspec_new);
@@ -536,7 +536,7 @@ void apply_nsspec_next( const Rule&, Parser& p )
    p.getNextToken();
    TokenInstance* tspec_cont = p.getNextToken();
    
-   TokenInstance* tspec_new = new TokenInstance( tspec->line(), tspec->chr(), sp->NameSpaceSpec );
+   TokenInstance* tspec_new = TokenInstance::alloc( tspec->line(), tspec->chr(), sp->NameSpaceSpec );
    // put the cumulated spec in the last token.
    tspec_new->setValue( *tspec->asString() + "." + *tspec_cont->asString() );
    p.simplify(3, tspec_new);

@@ -201,7 +201,7 @@ static void internal_expr_func(const Rule&, Parser& p, bool isEta )
       func->addParam(*it);
    }
 
-   TokenInstance* ti=new TokenInstance(tf->line(),tf->chr(), sp.Expr);
+   TokenInstance* ti= TokenInstance::alloc(tf->line(),tf->chr(), sp.Expr);
 
    // give the context the occasion to say something about this item
    Expression* expr= ctx->onStaticData( fcls, func );
@@ -310,7 +310,7 @@ static void internal_lambda_params(const Rule&, Parser& p, bool isEta )
       func->addParam(*it);
    }
 
-   TokenInstance* ti = new TokenInstance(lsym->line(),lsym->chr(), sp.Expr);
+   TokenInstance* ti = TokenInstance::alloc(lsym->line(),lsym->chr(), sp.Expr);
    Expression* expr = ctx->onStaticData( fcls, func );   
    ti->setValue(expr,expr_deletor);
 

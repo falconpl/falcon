@@ -78,7 +78,7 @@ static void apply_expr_binary( const Rule&, Parser& p, BinaryExpression* bexpr )
    TokenInstance* v2 = p.getNextToken();
 
    // Todo: set lvalues and define symbols in the module
-   TokenInstance* ti = new TokenInstance(v1->line(), v1->chr(), sp.Expr);
+   TokenInstance* ti = TokenInstance::alloc(v1->line(), v1->chr(), sp.Expr);
    bexpr->first(static_cast<Expression*>(v1->detachValue()));
    bexpr->second(static_cast<Expression*>(v2->detachValue()));
    ti->setValue( bexpr, expr_deletor );
@@ -139,7 +139,7 @@ void apply_expr_preinc(const Rule&, Parser& p )
    TokenInstance* plpl  = p.getNextToken();
    TokenInstance* value = p.getNextToken();
 
-   TokenInstance* ti2 = new TokenInstance( plpl->line(), plpl->chr(), sp.Expr );
+   TokenInstance* ti2 = TokenInstance::alloc( plpl->line(), plpl->chr(), sp.Expr );
    ti2->setValue( new ExprPreInc(static_cast<Expression*>(value->detachValue())), expr_deletor );
 
    p.simplify(2,ti2);
@@ -152,7 +152,7 @@ void apply_expr_preinc(const Rule&, Parser& p )
    TokenInstance* value = p.getNextToken();
    /*TokenInstance* plpl  =*/ p.getNextToken();
 
-   TokenInstance* ti2 = new TokenInstance( value->line(), value->chr(), sp.Expr );
+   TokenInstance* ti2 = TokenInstance::alloc( value->line(), value->chr(), sp.Expr );
    ti2->setValue( new ExprPostInc(static_cast<Expression*>(value->detachValue())), expr_deletor );
 
    p.simplify(2,ti2);
@@ -165,7 +165,7 @@ void apply_expr_preinc(const Rule&, Parser& p )
    TokenInstance* plpl  = p.getNextToken();
    TokenInstance* value = p.getNextToken();
 
-   TokenInstance* ti2 = new TokenInstance( plpl->line(), plpl->chr(), sp.Expr );
+   TokenInstance* ti2 = TokenInstance::alloc( plpl->line(), plpl->chr(), sp.Expr );
    ti2->setValue( new ExprPreDec(static_cast<Expression*>(value->detachValue())), expr_deletor );
 
    p.simplify(2,ti2);
@@ -178,7 +178,7 @@ void apply_expr_preinc(const Rule&, Parser& p )
    TokenInstance* value = p.getNextToken();
    /*TokenInstance* plpl  =*/ p.getNextToken();
 
-   TokenInstance* ti2 = new TokenInstance( value->line(), value->chr(), sp.Expr );
+   TokenInstance* ti2 = TokenInstance::alloc( value->line(), value->chr(), sp.Expr );
    ti2->setValue( new ExprPostDec(static_cast<Expression*>(value->detachValue())), expr_deletor );
 
    p.simplify(2,ti2);
@@ -279,7 +279,7 @@ void apply_expr_auto( const Rule&, Parser& p, BinaryExpression* aexpr )
    Expression* secondPart = static_cast<Expression*>(tsecond->detachValue());
    aexpr->first( firstPart );
    aexpr->second( secondPart );
-   TokenInstance* ti = new TokenInstance(tfirst->line(), tfirst->chr(), sp.Expr);
+   TokenInstance* ti = TokenInstance::alloc(tfirst->line(), tfirst->chr(), sp.Expr);
    ti->setValue( aexpr, expr_deletor );
    p.simplify( 3, ti );
 }
@@ -434,7 +434,7 @@ void apply_expr_pars( const Rule&, Parser& p )
    TokenInstance* ti = p.getNextToken();
    p.getNextToken();
 
-   TokenInstance* ti2 = new TokenInstance(ti->line(), ti->chr(), sp.Expr);
+   TokenInstance* ti2 = TokenInstance::alloc(ti->line(), ti->chr(), sp.Expr);
    ti2->setValue( ti->detachValue(), expr_deletor );
    p.simplify(3,ti2);
 }
@@ -448,7 +448,7 @@ void apply_expr_dot( const Rule&, Parser& p )
    p.getNextToken();
    TokenInstance* v2 = p.getNextToken();
 
-   TokenInstance* ti = new TokenInstance(v1->line(), v1->chr(), sp.Expr);
+   TokenInstance* ti = TokenInstance::alloc(v1->line(), v1->chr(), sp.Expr);
    ti->setValue( new ExprDot(
          *v2->asString(),
          static_cast<Expression*>(v1->detachValue())

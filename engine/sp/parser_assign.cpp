@@ -62,7 +62,7 @@ void apply_expr_assign( const Rule&, Parser& p )
       ctx->defineSymbols(firstPart);
    }
    
-   TokenInstance* ti = new TokenInstance(v1->line(), v1->chr(), sp.Expr);
+   TokenInstance* ti = TokenInstance::alloc(v1->line(), v1->chr(), sp.Expr);
 
    // do not detach, we don't care about the list
    List* list = static_cast<List*>(v2->asData());
@@ -116,7 +116,7 @@ static void apply_expr_list( const Rule&, Parser& p )
       array->add(*iter);
       ++iter;
    }
-   TokenInstance* ti = new TokenInstance(v1->line(), v1->chr(), sp.Expr);
+   TokenInstance* ti = TokenInstance::alloc(v1->line(), v1->chr(), sp.Expr);
    ti->setValue( array, expr_deletor );
 
    // free the expressions in the list

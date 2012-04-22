@@ -52,7 +52,7 @@ void apply_expr_ref( const Rule&, Parser& p )
    Expression* reference = new ExprRef( refexpr );
    
    // update the result token
-   TokenInstance* ti = new TokenInstance( tref->line(), tref->chr(), sp.Expr );
+   TokenInstance* ti = TokenInstance::alloc( tref->line(), tref->chr(), sp.Expr );
    ti->setValue( reference, expr_deletor );   
    p.simplify(2, ti); 
 }

@@ -117,7 +117,7 @@ void apply_stmt_assign_list( const Rule&, Parser& p )
    fassert( ! listRight->empty() );
    fassert( ! listLeft->empty() );
 
-   TokenInstance *ti = new TokenInstance( v3->line(), v3->chr(), sp.S_MultiAssign );
+   TokenInstance *ti = TokenInstance::alloc( v3->line(), v3->chr(), sp.S_MultiAssign );
 
    // simplify the code down by considering the first token an element of the list
    //listRight->push_back(static_cast<Expression*>( v1->detachValue() ) );

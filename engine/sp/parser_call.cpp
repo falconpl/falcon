@@ -56,7 +56,7 @@ void apply_expr_call( const Rule&, Parser& p )
    ExprCall* call = 0;
    ExprPseudoCall *callps = 0;
 
-   TokenInstance* ti = new TokenInstance(v1->line(), v1->chr(), sp.Expr);
+   TokenInstance* ti = TokenInstance::alloc(v1->line(), v1->chr(), sp.Expr);
    Expression* callee = static_cast<Expression*>(v1->detachValue());
    if( callee->trait() == Expression::e_trait_symbol )
    {

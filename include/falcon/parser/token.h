@@ -14,7 +14,7 @@
 */
 
 #ifndef _FALCON_PARSER_TOKEN_H_
-#define	_FALCON_PARSER_TOKEN_H_
+#define _FALCON_PARSER_TOKEN_H_
 
 #include <falcon/setup.h>
 #include <falcon/string.h>

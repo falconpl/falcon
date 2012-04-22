@@ -31,6 +31,8 @@ class Collector;
 class Mutex;
 class Transcoder;
 class TranscoderMap;
+class PoolList;
+class Pool;
 
 class PredefMap;
 class MantraMap;
@@ -459,6 +461,12 @@ public:
     */
    void setCurrentContext( VMContext* ctx );
    
+   /** Adds an object-specific memory pool.
+    
+    The pool will be destroyed at engine exit.
+    */
+   void addPool( Pool* p );
+   
 protected:
    Engine();
    ~Engine();
@@ -522,6 +530,11 @@ protected:
    // Transcoders
    //
    TranscoderMap* m_tcoders;
+   
+   //===============================================
+   // Pools
+   //
+   PoolList* m_pools;
 
    //===============================================
    // The core module.

@@ -82,7 +82,7 @@ void apply_modspec_next( const Rule&, Parser& p )
    p.getNextToken();
    TokenInstance* tspec_cont = p.getNextToken();
    
-   TokenInstance* tspec_new = new TokenInstance( tspec->line(), tspec->chr(), sp->ModSpec );
+   TokenInstance* tspec_new = TokenInstance::alloc( tspec->line(), tspec->chr(), sp->ModSpec );
    // put the cumulated spec in the last token.
    tspec_new->setValue( *tspec->asString() + "." + *tspec_cont->asString() );
    p.simplify(3, tspec_new);
@@ -94,7 +94,7 @@ void apply_modspec_first( const Rule&, Parser& p )
    // T_Name
    SourceParser* sp = static_cast<SourceParser*>(&p);
    TokenInstance* tfirst = p.getNextToken();
-   TokenInstance* tspec = new TokenInstance( tfirst->line(), tfirst->chr(), sp->ModSpec );
+   TokenInstance* tspec = TokenInstance::alloc( tfirst->line(), tfirst->chr(), sp->ModSpec );
    tspec->setValue( *tfirst->asString() );
    
    p.simplify(1, tspec);
@@ -105,7 +105,7 @@ void apply_modspec_first_self( const Rule&, Parser& p)
    // T_Name
    SourceParser* sp = static_cast<SourceParser*>(&p);
    TokenInstance* tfirst = p.getNextToken();
-   TokenInstance* tspec = new TokenInstance( tfirst->line(), tfirst->chr(), sp->ModSpec );
+   TokenInstance* tspec = TokenInstance::alloc( tfirst->line(), tfirst->chr(), sp->ModSpec );
    tspec->setValue( String("self") );
    
    p.simplify(1, tspec);
@@ -116,7 +116,7 @@ void apply_modspec_first_dot( const Rule&, Parser& p)
    // T_Dot
    SourceParser* sp = static_cast<SourceParser*>(&p);
    TokenInstance* tfirst = p.getNextToken();
-   TokenInstance* tspec = new TokenInstance( tfirst->line(), tfirst->chr(), sp->ModSpec );
+   TokenInstance* tspec = TokenInstance::alloc( tfirst->line(), tfirst->chr(), sp->ModSpec );
    tspec->setValue( String(".") );
    p.simplify(1, tspec);
 }

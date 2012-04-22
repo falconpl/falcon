@@ -14,9 +14,10 @@
 */
 
 #ifndef _FALCON_PARSER_TOKENINSTANCE_H
-#define	_FALCON_PARSER_TOKENINSTANCE_H
+#define _FALCON_PARSER_TOKENINSTANCE_H
 
 #include <falcon/setup.h>
+#include <falcon/poolable.h>
 
 namespace Falcon {
 
@@ -51,18 +52,10 @@ class Token;
  case the token instance is destroyed, together with its contents.
 
  */
-class FALCON_DYN_CLASS TokenInstance
+class FALCON_DYN_CLASS TokenInstance: public Poolable
 {
 public:
    typedef void(*deletor)(void*);
-
-   /** Creates a new token instance.
-    \param line The line where the token was detected by the parser.
-    \param chr The character where the token was detected by the parser.
-    \param tok A static reference to the token of which this entity is an instance.
-    */
-   TokenInstance( int line, int chr, const Token& tok );
-   ~TokenInstance();
 
    /** Detach a value associated with this token instance.
       \return Previously associated value.
@@ -149,7 +142,19 @@ public:
    int line() const { return m_line; }
    int chr() const { return m_chr; }
    
+   static TokenInstance* alloc( int line, int chr, const Token& tok );
+   
 private:
+    /** Creates a new token instance.
+    \param line The line where the token was detected by the parser.
+    \param chr The character where the token was detected by the parser.
+    \param tok A static reference to the token of which this entity is an instance.
+    */
+   TokenInstance( int line, int chr, const Token& tok );
+   
+   virtual ~TokenInstance();
+
+   
    int m_line;
    int m_chr;
    typedef union {
@@ -171,6 +176,8 @@ private:
       }
       m_deletor = 0;
    }
+   
+   friend class Pool;
 };
 
 }

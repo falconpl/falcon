@@ -23,6 +23,7 @@
 #include <falcon/fassert.h>
 #include <falcon/string.h>
 #include <falcon/mt.h>
+#include <falcon/pool.h>
 
 #include <falcon/errors/codeerror.h>
 
@@ -91,16 +92,14 @@
 
 #include <falcon/prototypeclass.h>
 
-
 #include <falcon/stderrors.h>
 #include <falcon/modspace.h>
 
 #include <falcon/item.h>         // for builtin
 
-
 #include <falcon/paranoid.h>
 #include <map>
-
+#include <deque>
 
 namespace Falcon
 {
@@ -122,6 +121,9 @@ class MantraMap: public std::map<String, Mantra*>
 {
 };
 
+class PoolList: public std::deque<Pool* >
+{
+};
 
 //=======================================================
 // Engine static declarations
@@ -192,6 +194,7 @@ Engine::Engine()
    //   
    Item::init( this );
    
+   m_pools = new PoolList;
 
    //=====================================
    // Adding standard transcoders.
@@ -206,7 +209,7 @@ Engine::Engine()
    //
    m_predefs = new PredefMap;
    m_stdSteps = new StdSteps;
-   m_stdErrors = new StdErrors;   
+   m_stdErrors = new StdErrors; 
 
    //=====================================
    // Adding standard pseudo functions.
@@ -365,6 +368,20 @@ Engine::~Engine()
 
    delete m_collector;
    delete m_mtx;
+   
+   //============================================
+   // Delete pools
+   //
+   {
+      PoolList::iterator iter = m_pools->begin();
+      while( iter != m_pools->end() )
+      {
+         delete *iter;
+         ++iter;
+      }
+      
+      delete m_pools;
+   }
 
    MESSAGE( "Engine destroyed" );
 }
@@ -530,6 +547,14 @@ const Item* Engine::getBuiltin( const String& name ) const
    m_mtx->unlock();
    return 0;
 }
+
+void Engine::addPool( Pool* p ) 
+{
+   m_mtx->lock();
+   m_pools->push_back( p );
+   m_mtx->unlock();
+}
+
 
 //=====================================================
 // Global objects
@@ -698,6 +723,7 @@ void Engine::setCurrentContext( VMContext* ctx )
    fassert( m_instance != 0 );
    m_instance->m_currentContext = ctx;
 }
+
 
 }
 

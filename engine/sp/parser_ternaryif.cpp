@@ -57,7 +57,7 @@ void apply_expr_ternary_if( const Rule&, Parser& p )
       static_cast<Expression*>(tthird->detachValue()),
       tselector->line(), tselector->chr() );
    
-   TokenInstance* ti = new TokenInstance( tselector->line(), tselector->chr(), sp.Expr );
+   TokenInstance* ti = TokenInstance::alloc( tselector->line(), tselector->chr(), sp.Expr );
    ti->setValue( exprIIf, expr_deletor );
    // clear the stack -- leave tselector
    p.simplify(5, ti);

@@ -31,8 +31,9 @@ namespace Falcon {
 namespace Ext {
 
 
-static const String &internal_getErrorMsg( VMContext *ctx, int error_code )
+static const String &internal_getErrorMsg( VMContext *, int error_code )
 {
+   static String none("");
    switch ( error_code ) {
       case Z_MEM_ERROR:
          //return FAL_STR(zl_msg_nomem);
@@ -47,7 +48,7 @@ static const String &internal_getErrorMsg( VMContext *ctx, int error_code )
          ;
          //return  FAL_STR( zl_msg_vererr );
    }
-   return "";
+   return none;
    //return  FAL_STR(zl_msg_generic);
 }
 

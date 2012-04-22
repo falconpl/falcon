@@ -63,7 +63,7 @@ void apply_expr_amper( const Rule&, Parser& p )
    esyn->safeGuard( nsym );
    
    // update the result token
-   TokenInstance* ti = new TokenInstance( tref->line(), tref->chr(), sp.Expr );
+   TokenInstance* ti = TokenInstance::alloc( tref->line(), tref->chr(), sp.Expr );
    ti->setValue( esyn, expr_deletor );   
    p.simplify(2, ti); 
 }

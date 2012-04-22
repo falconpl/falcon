@@ -81,55 +81,55 @@ Token::~Token()
 
 TokenInstance* Token::makeInstance( int line, int chr )
 {
-   TokenInstance* ti = new TokenInstance( line, chr, *this);
+   TokenInstance* ti = TokenInstance::alloc( line, chr, *this);
    return ti;
 }
 
 TokenInstance* Token::makeInstance( int line, int chr, void* data, deletor d )
 {
-   TokenInstance* ti = new TokenInstance( line, chr, *this);
+   TokenInstance* ti = TokenInstance::alloc( line, chr, *this);
    ti->setValue( data, d );
    return ti;
 }
 
 TokenInstance* Token::makeInstance( int line, int chr, int32 v )
 {
-   TokenInstance* ti = new TokenInstance( line, chr, *this);
+   TokenInstance* ti = TokenInstance::alloc( line, chr, *this);
    ti->setValue( v );
    return ti;
 }
 
 TokenInstance* Token::makeInstance( int line, int chr, uint32 v )
 {
-   TokenInstance* ti = new TokenInstance( line, chr, *this);
+   TokenInstance* ti = TokenInstance::alloc( line, chr, *this);
    ti->setValue( v );
    return ti;
 }
 
 TokenInstance* Token::makeInstance( int line, int chr, int64 v )
 {
-   TokenInstance* ti = new TokenInstance(  line, chr, *this);
+   TokenInstance* ti = TokenInstance::alloc(  line, chr, *this);
    ti->setValue( v );
    return ti;
 }
 
 TokenInstance* Token::makeInstance( int line, int chr, numeric v )
 {
-   TokenInstance* ti = new TokenInstance( line, chr, *this);
+   TokenInstance* ti = TokenInstance::alloc( line, chr, *this);
    ti->setValue( v );
    return ti;
 }
 
 TokenInstance* Token::makeInstance( int line, int chr, bool v )
 {
-   TokenInstance* ti = new TokenInstance( line, chr, *this);
+   TokenInstance* ti = TokenInstance::alloc( line, chr, *this);
    ti->setValue( v );
    return ti;
 }
 
 TokenInstance* Token::makeInstance( int line, int chr, const String& v )
 {
-   TokenInstance* ti = new TokenInstance( line, chr, *this);
+   TokenInstance* ti = TokenInstance::alloc( line, chr, *this);
    ti->setValue( v );
    return ti;
 }

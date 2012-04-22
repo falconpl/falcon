@@ -54,7 +54,7 @@ SourceLexer::SourceLexer( const String& uri, Parsing::Parser* p, TextReader* rea
 
 SourceLexer::~SourceLexer()
 {
-   delete m_nextToken;
+   if( m_nextToken != 0 ) m_nextToken->dispose();
    delete _p;
 }
 

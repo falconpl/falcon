@@ -42,7 +42,7 @@ void apply_Atom_Int ( const Rule&, Parser& p )
 
    TokenInstance* ti = p.getNextToken();
 
-   TokenInstance* ti2 = new TokenInstance(ti->line(), ti->chr(), sp.Atom );
+   TokenInstance* ti2 = TokenInstance::alloc(ti->line(), ti->chr(), sp.Atom );
    ti2->setValue( new ExprValue((int64) ti->asInteger(), ti->line(), ti->chr()), expr_deletor );
    p.simplify(1,ti2);
 }
@@ -54,7 +54,7 @@ void apply_Atom_Float ( const Rule&, Parser& p )
    SourceParser& sp = static_cast<SourceParser&>(p);
 
    TokenInstance* ti = p.getNextToken();
-   TokenInstance* ti2 = new TokenInstance(ti->line(), ti->chr(), sp.Atom );
+   TokenInstance* ti2 = TokenInstance::alloc(ti->line(), ti->chr(), sp.Atom );
    ti2->setValue( new ExprValue(ti->asNumeric(), ti->line(), ti->chr()), expr_deletor );
    p.simplify(1,ti2);
 }
@@ -81,7 +81,7 @@ void apply_Atom_Name ( const Rule&, Parser& p )
       sym = ctx->addVariable(*ti->asString()); 
    }
 
-   TokenInstance* ti2 = new TokenInstance(ti->line(), ti->chr(), sp.Atom );
+   TokenInstance* ti2 = TokenInstance::alloc(ti->line(), ti->chr(), sp.Atom );
    ti2->setValue( sym, expr_deletor );
    p.simplify(1,ti2);
 }
@@ -96,7 +96,7 @@ void apply_Atom_String ( const Rule&, Parser& p )
    ParserContext* ctx = static_cast<ParserContext*>(p.context());
    TokenInstance* ti = p.getNextToken();
 
-   TokenInstance* ti2 = new TokenInstance(ti->line(), ti->chr(), sp.Atom );
+   TokenInstance* ti2 = TokenInstance::alloc(ti->line(), ti->chr(), sp.Atom );
 
    // get the string and it's class, to generate a static UserValue
    String* s = ti->detachString();
@@ -116,7 +116,7 @@ void apply_Atom_False ( const Rule&, Parser& p )
    SourceParser& sp = static_cast<SourceParser&>(p);
 
    TokenInstance* ti = p.getNextToken();
-   TokenInstance* ti2 = new TokenInstance(ti->line(), ti->chr(), sp.Atom );
+   TokenInstance* ti2 = TokenInstance::alloc(ti->line(), ti->chr(), sp.Atom );
    ti2->setValue( new ExprValue(Item(false), ti->line(), ti->chr() ), expr_deletor );
    p.simplify(1,ti2);
 }
@@ -128,7 +128,7 @@ void apply_Atom_True ( const Rule&, Parser& p )
    SourceParser& sp = static_cast<SourceParser&>(p);
 
    TokenInstance* ti = p.getNextToken();
-   TokenInstance* ti2 = new TokenInstance(ti->line(), ti->chr(), sp.Atom );
+   TokenInstance* ti2 = TokenInstance::alloc(ti->line(), ti->chr(), sp.Atom );
    ti2->setValue( new ExprValue(Item(true), ti->line(), ti->chr()), expr_deletor );
    p.simplify(1,ti2);
 }
@@ -139,7 +139,7 @@ void apply_Atom_Self ( const Rule&, Parser& p )
    SourceParser& sp = static_cast<SourceParser&>(p);
 
    TokenInstance* ti = p.getNextToken();
-   TokenInstance* ti2 = new TokenInstance(ti->line(), ti->chr(), sp.Atom );
+   TokenInstance* ti2 = TokenInstance::alloc(ti->line(), ti->chr(), sp.Atom );
    ti2->setValue( new ExprSelf, expr_deletor );
    p.simplify(1,ti2);
 }
@@ -172,7 +172,7 @@ void apply_Atom_Nil ( const Rule&, Parser& p )
    SourceParser& sp = static_cast<SourceParser&>(p);
 
    TokenInstance* ti = p.getNextToken();
-   TokenInstance* ti2 = new TokenInstance(ti->line(), ti->chr(), sp.Atom );
+   TokenInstance* ti2 = TokenInstance::alloc(ti->line(), ti->chr(), sp.Atom );
    ti2->setValue( new ExprValue(Item(), ti->line(), ti->chr()), expr_deletor );
    p.simplify(1,ti2);
 }
@@ -183,7 +183,7 @@ void apply_expr_atom( const Rule&, Parser& p )
 
    TokenInstance* ti = p.getNextToken();
 
-   TokenInstance* ti2 = new TokenInstance(ti->line(), ti->chr(), sp.Expr );
+   TokenInstance* ti2 = TokenInstance::alloc(ti->line(), ti->chr(), sp.Expr );
    ti2->setValue( ti->detachValue(), expr_deletor );
    p.simplify(1,ti2);
 }

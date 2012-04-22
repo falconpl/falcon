@@ -67,7 +67,7 @@ class ClassZLibError: public ClassError
          inline ClassZLibError(): ClassError( "ZLibError" ) {} 
          inline virtual ~ClassZLibError(){} 
          virtual void* createInstance() const;
-         static inline ClassZLibError* singleton();
+         static ClassZLibError* singleton();
       };
 
 class ZLibError: public ::Falcon::Error

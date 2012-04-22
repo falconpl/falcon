@@ -63,7 +63,7 @@ void Parser::Private::clearTokens()
       TokenStack::iterator iter = m_tokenStack->begin();
       while( iter != m_tokenStack->end() )
       {
-         delete *iter;
+         (*iter)->dispose();
          ++iter;
       }
       m_tokenStack->clear();
@@ -84,6 +84,7 @@ void Parser::Private::clearStates()
    m_pframes = 0;
    m_pErrorFrames = 0;
 }
+
 
 
 Parser::Private::ParseFrame::~ParseFrame()
@@ -502,7 +503,7 @@ void Parser::simplify( int32 tcount, TokenInstance* newtoken )
       size_t end = nDepth + tcount;
       for( size_t pos = nDepth; pos < end; ++pos )
       {
-         delete (*_p->m_tokenStack)[pos];
+         (*_p->m_tokenStack)[pos]->dispose();
       }
 
       _p->m_tokenStack->erase( _p->m_tokenStack->begin() + nDepth, _p->m_tokenStack->begin() + end );
@@ -723,7 +724,7 @@ void Parser::parserLoop()
       {
          MESSAGE2( "Parser::parserLoop -- Last loop with EOF as next" );
          return;
-         ti = new TokenInstance(0, 0, T_EOF );
+         ti = TokenInstance::alloc(0, 0, T_EOF );
       }
 
       if( m_consumeToken != 0 )

@@ -265,10 +265,11 @@ add_library(falcon_engine SHARED
   module.cpp
   overridableclass.cpp
   prototypeclass.cpp
+  path.cpp
+  pool.cpp
+  property.cpp
   pseudofunc.cpp
   pstep.cpp
-  path.cpp
-  property.cpp
   rampmode.cpp
   reader.cpp
   restorer.cpp

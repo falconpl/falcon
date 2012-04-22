@@ -14,7 +14,7 @@
 */
 
 #ifndef _FALCON_PARSER_PRIVATE_H_
-#define	_FALCON_PARSER_PRIVATE_H_
+#define _FALCON_PARSER_PRIVATE_H_
 
 #include <falcon/parser/parser.h>
 #include <deque>
@@ -64,7 +64,7 @@ class Parser::Private
 
       RulePath m_path;
       //Alternatives m_candidates;
-
+      
       ParseFrame( const NonTerminal* nt=0, int nd=0 ):
          m_owningToken(nt),
          m_nStackDepth(nd),
@@ -72,8 +72,9 @@ class Parser::Private
          m_bIsRightAssoc(false),
          m_prioFrame(0)
       {}
-
-      ~ParseFrame();
+         
+      virtual ~ParseFrame();
+      
    };
 
     // stack of read tokens.

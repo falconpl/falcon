@@ -73,7 +73,7 @@ void apply_expr_proto(const Rule&, Parser& p)
    SourceParser& sp = *static_cast<SourceParser*>(&p);
    ParserContext* ctx = static_cast<ParserContext*>(sp.context());
 
-   TokenInstance* ti = new TokenInstance( 0,0, sp.Expr );
+   TokenInstance* ti = TokenInstance::alloc( 0,0, sp.Expr );
    ExprProto* eproto = new ExprProto;
    ti->setValue( eproto, expr_deletor );
    p.simplify( 1, ti );

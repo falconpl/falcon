@@ -44,7 +44,7 @@ void apply_expr_index( const Rule&, Parser& p )
    TokenInstance* v2 = p.getNextToken();
    p.getNextToken();
 
-   TokenInstance* ti = new TokenInstance( v1->line(), v1->chr(), sp.Expr );
+   TokenInstance* ti = TokenInstance::alloc( v1->line(), v1->chr(), sp.Expr );
 
    ti->setValue( new ExprIndex( static_cast<Expression*>( v1->detachValue() ),
          static_cast<Expression*>( v2->detachValue() ),
@@ -68,7 +68,7 @@ void apply_expr_star_index( const Rule&, Parser& p )
    p.getNextToken();
 
    // Todo: set lvalues and define symbols in the module
-   TokenInstance* ti = new TokenInstance( v1->line(), v1->chr(), sp.Expr );
+   TokenInstance* ti = TokenInstance::alloc( v1->line(), v1->chr(), sp.Expr );
 
    ti->setValue( new ExprStarIndex( static_cast<Expression*>( v1->detachValue() ),
          static_cast<Expression*>( v2->detachValue() ),
@@ -101,7 +101,7 @@ void apply_expr_range_index3( const Rule&, Parser& p )
          v1->chr()
       );
    
-   TokenInstance* ti = new TokenInstance( v1->line(), v1->chr(), sp.Expr );
+   TokenInstance* ti = TokenInstance::alloc( v1->line(), v1->chr(), sp.Expr );
 
    ti->setValue( new ExprIndex( static_cast<Expression*>( v1->detachValue() ),
          rng,
@@ -131,7 +131,7 @@ void apply_expr_range_index3open( const Rule&, Parser& p )
       0,
       static_cast<Expression*>( tstep->detachValue() ) );
    
-   TokenInstance* ti = new TokenInstance(v1->line(), v1->chr(), sp.Expr);
+   TokenInstance* ti = TokenInstance::alloc(v1->line(), v1->chr(), sp.Expr);
 
    ti->setValue( new ExprIndex( static_cast<Expression*>( v1->detachValue() ),
          rng,
@@ -161,7 +161,7 @@ void apply_expr_range_index2( const Rule&, Parser& p )
       v1->line(),
       v1->chr() );
    
-   TokenInstance* ti = new TokenInstance( v1->line(), v1->chr(), sp.Expr );
+   TokenInstance* ti = TokenInstance::alloc( v1->line(), v1->chr(), sp.Expr );
 
    ti->setValue( new ExprIndex( static_cast<Expression*>( v1->detachValue() ),
          rng,
@@ -189,7 +189,7 @@ void apply_expr_range_index1( const Rule&, Parser& p )
       v1->line(),
       v1->chr() );
    
-   TokenInstance* ti = new TokenInstance( v1->line(), v1->chr(), sp.Expr );
+   TokenInstance* ti = TokenInstance::alloc( v1->line(), v1->chr(), sp.Expr );
 
    ti->setValue( new ExprIndex(
          static_cast<Expression*>( v1->detachValue() ),
@@ -216,7 +216,7 @@ void apply_expr_range_index0( const Rule&, Parser& p )
          v1->line(), v1->chr()
       );
 
-   TokenInstance* ti = new TokenInstance( v1->line(), v1->chr(), sp.Expr );
+   TokenInstance* ti = TokenInstance::alloc( v1->line(), v1->chr(), sp.Expr );
 
    ti->setValue( new ExprIndex( static_cast<Expression*>( v1->detachValue() ),
          rng,
