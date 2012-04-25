@@ -47,7 +47,7 @@ class ImgAvail( id, name_wid ) from Image( id, "", true )
       end
 
       // Create a property that stores the minimum size
-      self.jsMethods = [
+      self.jsMethods += [
             "minsize" => "" + self.parent.parent.minSize + ";",
             "setAvailable" => @"
                function( obj ) {
@@ -103,7 +103,7 @@ class TextAvail( id, name_wid ) from widget.Widget( id )
    end
 
    function onRender()
-
+      
       short_prompt = htmlEscape(self.short_prompt)
       working_prompt = htmlEscape(self.working_prompt)
       avail_prompt = htmlEscape(self.avail_prompt)
@@ -113,7 +113,7 @@ class TextAvail( id, name_wid ) from widget.Widget( id )
       end
       
       // Create a property that stores the minimum size
-      self.jsMethods = [
+      self.jsMethods += [
          "minsize" => "" + self.parent.parent.minSize + ";",
          "setAvailable" => @"
                function(obj){
@@ -180,14 +180,14 @@ end
 
 /*# Class checking for a name to be available.
 */
-class NameWithAvail( id, prompt ) from InputText( id, prompt )
+class NameWithAvail( id, prompt, iPrompt ) from widget.Widget( id )
    tag = nil
    isAJAXHost = true
    initInfos = [prompt]
 
    minSize = 6
 
-   name_wid = ActiveInput( "name", prompt )
+   name_wid = ActiveInput( "name", prompt, iPrompt )
    avail_wid = AvailWidget( "avail", self.name_wid )
    name_checked = widget.Widget( "name_checked" )
 
@@ -196,7 +196,7 @@ class NameWithAvail( id, prompt ) from InputText( id, prompt )
       self.name_checked.props = ["type" => "hidden"]
       self.name_wid.typeTimeout = 250
       self.name_wid.checkAjax = true
-      self.name_wid.jsMethods = ["min_size" => self.minSize]
+      self.name_wid.jsMethods += ["min_size" => self.minSize]
 
       self.addChild( self.name_wid )
       self.addChild( self.avail_wid )

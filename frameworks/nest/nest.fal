@@ -305,6 +305,9 @@ object Nest
    /*# Inline CSS texts to be put before body. */
    styles = []
 
+   /*# Javascript functions to be executed after all the widgets inits */
+   onLoad = []
+
    /*# Title for the page.
       This will be renedered as \<title>\<?=Nest.title?>\</title> when
       Nest.headings are called.
@@ -1269,7 +1272,8 @@ object Nest
 
          // render the closeScripts
          self._renderClosingScript()
-
+         self._renderOnLoad()
+         
          // generate the (last) content slice
          self._contentSlices += self._pageStream.closeToString()
 
@@ -1318,7 +1322,7 @@ object Nest
          self.logi( "Rendering widgets setup scripts" )
 
          onCreate = []
-         str = "<script language=\"javascript\">\n\n/* Nest: Widgets initialization. */\n" +
+         str = "<script language=\"javascript\">\n/* Nest: Widgets initialization. */\n" +
                           "(function(){ var element;\n"
          // first to all the setup...
          for item in self._widgets
@@ -1340,6 +1344,19 @@ object Nest
 
          str += "\n</script>\n"
          
+         self._contentSlices += str
+      end
+   end
+
+   function _renderOnLoad()
+      if self.onLoad
+         self.logi( "Rendering onLoad script requests" )
+          str = "<script language=\"javascript\">\n/* Nest: explicit onLoad requests. */\n"
+         for item in self.onLoad
+            str += item + ";\n"
+         end
+
+         str += "\n</script>\n"
          self._contentSlices += str
       end
    end

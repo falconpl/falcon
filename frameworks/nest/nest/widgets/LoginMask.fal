@@ -58,15 +58,18 @@ class LoginMask( id, formAction ) from widget.Widget( id )
       "onLoginSuccess" => "function( params ) { Nest.message( this, 'login', params ); }"
    ]
    
-   
+
+   userID = InputText( "user-id")
+   pwd = Password( "pwd" )
    userid_prompt = "User ID"
    pwd_prompt = "Password"
    remember_prompt = "Remember me"
    login_prompt = "Login"
+
+   userid_iprompt = nil
+   pwd_iprompt = nil
    
    tag = "span"
-   userID = InputText( "user-id" )
-   pwd = Password( "pwd" )   
    rememberMe = CheckBox( "rememberMe" )
    loginBtn = formAction ? Submit("login", "") : LoginBtn()
    accessStatus = Text( "status", "Login failed!" )
@@ -128,8 +131,9 @@ class LoginMask( id, formAction ) from widget.Widget( id )
       // TODO: Remove this when we have automatic parentship
       self.addClassInParentship( LoginMask )
    end
-
+   
    function renderContent()
+
       if( self.formAction )
          self.loginBtn.props["value"] = self.login_prompt
       else

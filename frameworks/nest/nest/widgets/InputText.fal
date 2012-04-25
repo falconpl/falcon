@@ -18,10 +18,15 @@
 
 import from nest.widgets.widget in widget
 
-class InputText( id, prompt ) from widget.Widget( id )
+/*# Input text
+*/
+class InputText( id, prompt, iPrompt ) from widget.Widget( id )
    tag = "input"
    isSelfClosing = true
+   iPrompt = iPrompt
    label = prompt ? prompt : ""
+   //# Style color to be applied on the "empty field" entity
+   blurcolor = "#999"
 
    //# in forms, we do have values
    isValueHost = true
@@ -30,9 +35,49 @@ class InputText( id, prompt ) from widget.Widget( id )
       if self.props == nil: self.props = [=>]
       self.props['name'] = nil   // will be filled at render
       self.props['type'] = "text"
-
       // TODO: Remove this when we have automatic parentship
       self.addClassInParentship( InputText )
    end
+
+   function onRender()
+      if self.iPrompt
+         self.props['onblur'] = "this.checkIPrompt();"
+         self.props['onfocus'] = "this.disableIPrompt();"
+
+         if self.onCreate
+            self.onCreate += "this.checkIPrompt();"
+         else
+            self.onCreate = "this.checkIPrompt();"
+         end
+         self.jsMethods["checkIPrompt"] = @"
+            function() {
+               if(this.savedColor == null) {
+                  this.savedColor = this.style.color;
+                  this.origType = this.getAttribute('type');
+               }
+               
+               if(this.value.length == 0 ) {
+                  this.value = \"$(self.iPrompt)\";
+                  this.style.color = \"$(self.blurcolor)\";
+                  this.ipromptMode = true;
+                  this.setAttribute('type', 'text');
+               }
+               else {
+                  this.style.color = this.savedColor;
+                  this.ipromptMode = false;
+               }
+            }"
+         self.jsMethods["disableIPrompt"] = "
+            function() {
+               if( this.ipromptMode ) {
+                  this.value = '';
+                  this.setAttribute('type', this.origType);
+                  this.style.color = this.savedColor;
+                  this.ipromptMode = false;
+               }
+            }"
+      end
+   end
+   
 end
 

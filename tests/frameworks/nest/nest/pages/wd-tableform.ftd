@@ -16,6 +16,7 @@
 
    th = Nest.widget( "TheNameIsAvail" )( "the_other_name" )
    form.addChild( th )
+   form.addChild( Nest.widget("InputText")('genin', "Generic input", "Write something" ) )
    form.addChild( Nest.widget( "RichPassword" )("my_password", "Enter password", "Repeat password") )
    form.addChild( wid )
    form.addChild( widtext )

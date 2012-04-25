@@ -24,7 +24,7 @@ import InputText from nest.widgets.InputText as InputText
    textarea) field that can send a 'change' message to local listeners
    and to ajax listeners.
 */
-class ActiveInput( id, prompt ) from InputText( id, prompt )
+class ActiveInput( id, prompt, iPrompt ) from InputText( id, prompt, iPrompt )
 
    //# Timeout before starting to check updates
    typeTimeout = 0
@@ -40,15 +40,21 @@ class ActiveInput( id, prompt ) from InputText( id, prompt )
 
    //# code used to prevent generating ajax messages.
    ajaxFilter = nil
-
-   onCreate = "this.activeCheck()"
    
    init
-      self.props += [
-         "onchange" => "this.onActiveChange();",
-         "onkeyup" => "this.onActiveChange();"
-         ]
+      if "onchange" in self.props
+         self.props["onchange"] += "this.onActiveChange();"
+      else
+         self.props["onchange"] = "this.onActiveChange();"
+      end
+      
+      self.props["onkeyup"]  = "this.onActiveChange();"
 
+      if self.onCreate
+         self.onCreate += "this.activeCheck();"
+      else
+         self.onCreate = "this.activeCheck();"
+      end
       // TODO: Remove this when we have automatic parentship
       self.addClassInParentship( ActiveInput )
    end
@@ -78,8 +84,7 @@ class ActiveInput( id, prompt ) from InputText( id, prompt )
 
       checkFunc += "this.oldValue = this.value; }\n"
 
-      if not self.jsMethods: self.jsMethods = [=>]
-      self.jsMethods ["activeCheck"] = checkFunc
+      self.jsMethods["activeCheck"] = checkFunc
       
       if self.typeTimeout
          id = self.getFullID()
