@@ -46,6 +46,9 @@ end
 
 
 /*# Manages a full login process.
+   @param id The id of logins.
+   @param formAction If not nil, use a form for logins, and send the login data to that action.
+   
 */
 class LoginMask( id, formAction ) from widget.Widget( id )
    formAction = formAction
@@ -79,10 +82,10 @@ class LoginMask( id, formAction ) from widget.Widget( id )
       $(form_begin)
       <table border=\"0\">
          <tbody>
-         <tr><td colspan=\"2\">$(accessStatus)</td></tr>
-         <tr><td>$(userid_prompt)</td><td>$(userID)</td></tr>
-         <tr><td>$(pwd_prompt)</td><td>$(pwd)</td></tr>
-         <tr><td colspan=\"2\" style=\"clear:both\"><span style=\"float:left\">$(remember_prompt) $(rememberMe)</span>
+         <tr class='nest_login_accessstatus'><td colspan=\"2\" >$(accessStatus)</td></tr>
+         <tr class='nest_login_uid'><td>$(userid_prompt)</td><td>$(userID)</td></tr>
+         <tr class='nest_login_pwd'><td>$(pwd_prompt)</td><td>$(pwd)</td></tr>
+         <tr class='nest_login_send'><td colspan=\"2\" style=\"clear:both\"><span style=\"float:left\">$(remember_prompt) $(rememberMe)</span>
                         <span style=\"float:right\">$(loginBusy) $(loginBtn)</span></td></tr>
          $(recover_skin)
          </tbody>
@@ -142,7 +145,7 @@ class LoginMask( id, formAction ) from widget.Widget( id )
       end
 
       if self.formAction
-         form_begin = "<form action=\"$(self.form_action)\" method=\"POST\" accept-charset=\"UTF-8\">"
+         form_begin = @"<form action=\"$(self.formAction)\" method=\"POST\" accept-charset=\"UTF-8\">"
          form_end = "</form>"
       else
          form_begin = ""

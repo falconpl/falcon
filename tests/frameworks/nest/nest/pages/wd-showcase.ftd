@@ -1,0 +1,68 @@
+<?
+   import Showcase from nest.widgets.Showcase as Showcase
+   import Widget from nest.widgets.widget as Widget
+   import Text from nest.widgets.Text as Text
+   import Image from nest.widgets.Image as Image
+?>
+<h2>Nest Widget test: Showcase</h2>
+<p>The showcase widget is a rotating display.</p>
+
+<?
+   cs = Showcase('showcase1', 450, 300, 4000, 1000, 0, 1 )
+   text0 = Text('text0', "
+      <h2>First show item</h2>
+      <p>This is a show item. You can put actually any text here.</p>
+      <p>To demonstrate click ability, a click returns to main page</p>" ).addStyle(
+         "position: absolute; top:0; width:450px; display:inline-block;color:#FFFFFF" )
+   image0 = Image('image0', "/images/first_panel.jpg").addStyle(
+         "position: absolute; top:0;" )
+   page0 = Widget('page0').set(["onclick"=>"window.location='"+Nest.pageLink('home')+"'"])
+   page0.addChildren( image0, text0)
+
+   text1 = Text('text1', "
+      <h2>Second Item</h2>
+      <p>This is a show item. You can put actually any text here.</p>
+      <p>To demonstrate click ability, a click returns to main page</p>"
+      ).set(["class"=>"present_text"]).addStyle(
+         "position: absolute; top:0; width:450px; display:inline-block;color:#FFFFFF" )
+   image1 = Image('image1', "/images/second_panel.jpg").addStyle(
+         "position: absolute; top:0;" )
+   page1 = Widget('page1').set(["onclick"=>"window.location='"+Nest.pageLink('home')+"'"])
+   page1.addChildren(image1, text1)
+
+   text2 = Text('text2', "
+      <h2>Third item</h2>
+      <p>This is a show item. You can put actually any text here.</p>
+      <p>To demonstrate click ability, a click returns to main page</p>"
+      ).set(["class"=>"present_text"]).addStyle(
+         "position: absolute; top:0; width:450px; display:inline-block;color:#FFFFFF" )
+   image2 = Image('image2', "/images/third_panel.jpg").addStyle(
+         "position: absolute; top:0;" )
+   page2 = Widget('page2').set(["onclick"=>"window.location='"+Nest.pageLink('home')+"'"])
+   page2.addChildren( image2, text2 )
+?>
+
+<hr/>
+<p>Example with mode 0: slide pushing the previous image.</p>
+<?
+   cs.addChildren( page0, page1, page2 )
+   cs.sslot.addStyle("top:90%;left:38%")
+   > cs.render()
+?>
+<hr/>
+<p>Example with mode 1: slide over the previous image.</p>
+<?
+   cs = Showcase('showcase2', 450, 300, 5000, 1000, 1, 1 )
+   cs.addChildren( page0.clone(), page1.clone(), page2.clone() )
+   cs.sslot.addStyle("top:90%;left:38%")
+   > cs.render()
+?>
+
+<hr/>
+<p>Example with mode 2: Cross fade images.</p>
+<?
+   cs = Showcase('showcase3', 450, 300, 6000, 1000, 2, 1 )
+   cs.addChildren( page0.clone(), page1.clone(), page2.clone() )
+   cs.sslot.addStyle("top:90%;left:38%")
+   > cs.render()
+?>

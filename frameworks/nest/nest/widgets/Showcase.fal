@@ -1,0 +1,259 @@
+/*
+   FALCON - The Falcon Programming Language
+
+   Nest - Falcon web applcation engine
+
+   FILE: Menu.fal
+
+   AJAX widgeting subsystem -- navigation menu
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Mon, 26 Sep 2011 11:55:58 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2011: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+import Widget from nest.widgets.widget as Widget
+import Style from nest.widgets.style as Style
+
+class ShowcaseSlots(id, mode) from Widget(id)
+
+   mode = mode
+   jsMethods = [
+      "activate" => "
+         function( id ) {
+            for( var i = 0; i < this.count; i++ ) {
+               var item = Nest.i(this.id + '.' + i );
+               if (i!=id) {
+                  item.className = 'nest_showcase_slot';
+               }
+               else {
+                  item.className = 'nest_showcase_current';
+               }
+            }
+         }
+         "
+   ]
+   
+   init
+      self.addStyle( "z-index:10; position:absolute;" )
+      
+       if self.mode == 1
+         res = Nest.resLink("showcase_normal.png")
+         style1 = Style( "Style for showcase slots items", nil, @"
+               background-image: url('$(res)');
+            ",
+            "span.nest_showcase_slot" ).setToClass( self )
+         res = Nest.resLink("showcase_current.png")
+         style2 = Style( "Style for showcase currently shown slots items", nil, @"
+               background-image: url('$(res)');
+            ",
+            "span.nest_showcase_current" ).setToClass( self )
+         res = Nest.resLink("showcase_hover.png")
+         style3 = Style( "Style for showcase slots items - hover", nil, @"
+               background-image: url('$(res)');
+            ",
+            "span.nest_showcase_slot:hover" ).setToClass( self )
+      end
+   end
+
+   function onRender()
+      self.jsMethods["count"] = self.parent.children.len()-1
+   end
+   
+   function renderContent()
+      res = ""
+      p = self.parent
+      pid = p.getFullID()
+      count = p.children.len()-1
+      curID = self.getFullID()
+      for i = 0 to count-1
+         id = curID + "." + i
+         switch self.mode
+            case 0
+               res += @"
+                     <span id=\"$(id)\" class=\"nest_showcase_slot\">
+                     <a href=\"#\" onclick=\"Nest.i('$(pid)').slideTo($i)\">$(i)</a></span>"
+            case 1
+               res += @"
+                     <span id=\"$(id)\" class=\"nest_showcase_slot\"
+                     style=\"display:inline-block;width:24px;height:24px;\"
+                     onclick=\"Nest.i('$(pid)').slideTo($i)\">&nbsp;</span>"
+         end
+      end
+      return res
+   end
+   
+end
+
+/*# Showcase with timed show slots for rotating promotional messages.
+@param id Widget ID
+@param width width of the display area of the widget.
+@param height height of the display area of the widget.
+@optparam autoWait Automatic wait before rotating page (in ms)
+@optparam autoSpeed Length of the transition (in ms)
+@optparam transType Kind of transition (0-2)
+@optparam slotsMode text of the items in the ShowcaseSlots rack -- set nil to use stack images.
+
+   This widget
+
+- 
+
+@section styling Styling of the widget
+
+- nest_showcase_slot
+- nest_showcase_current
+
+@section Links from panels
+
+Links from the panels going to a certain location can be implemented directly by inserting
+links or click-sensible objects (images, buttons, etc.) as a child of the page widgets.
+
+However, if the the panel structure is self-explanatory enough for the user to understand
+that a click may generate a link to another page, it might be interesting to create a
+widget that is click-sensible.
+
+The simplest way to achieve this is just to set the \b onclick property on the widget
+that will be used as the showcase page, like in the following example.
+
+@code
+   text0 = Text('text0', " Some text" )
+   image0 = Image('image0', "some_image.png")
+   page0 = Widget('page0').set(["onclick"=>"window.location.href='"+Nest.pageLink('test')+"'"])
+   page0.addChildren( text0, image0 )
+   ...
+   showcase.addChildren( page0, ... )
+@endcode
+
+*/
+class Showcase(id, width, height, autoWait, autoSpeed, transType, slotsMode) from Widget(id)
+
+   jsMethods = [
+      "slideNext" => "function(){}",
+      "current" => "0",
+      "transtype" => transType == 0 or transType == 1 or transType== 2 ? transType : 0,
+      "intrans" => "false",
+      "autoWait" => autoWait ? autoWait:0,
+      "autoSpeed" => autoSpeed ? autoSpeed : 1000,
+      "hideAll" => "
+         function() {
+            for( var item in this.pages ) {
+               var div = this.pages[item];
+               div.style.display = 'inline-block';
+            }
+         }",
+         
+      "setup" => "
+         function() {
+            for( var item in this.pages ) {
+               var div = this.pages[item];
+               div.style.display = 'inline-block';
+               div.style.position = 'absolute';
+               div.style.top = '0';
+               div.style.left = '100%';
+               div.style.zIndex = 1;
+            }
+            
+            var ent1 = this.pages[0];
+            if( this.autoWait > 0 ) {
+               this.waitingFor = setTimeout('Nest.i(\"' + this.id +'\").slideNext()', this.autoWait );
+            }
+            ent1.style.left = '0';
+            ent1.style.zIndex = 2;
+            Nest.i( this.id + '.slots.0' ).className = 'nest_showcase_current';            
+         }",
+
+      "slideTo" => "
+         function(pos) {
+            if( this.current == pos || this.intrans ) return;
+            if( this.waitingFor != null ) {
+               clearTimeout( this.waitingFor );
+               this.waitingFor = null;
+            }
+
+            var ent1 = this.pages[this.current];
+            var entity = this.pages[pos];            
+
+            this.current = pos;
+            Nest.i(this.id + '.slots').activate( pos );
+
+            entity.style.zIndex=2;
+            ent1.style.zIndex=1;
+            Nest.i( this.id + '.slots' ).style.zIndex = 3;
+            
+            if( this.transtype == 0 || this.transtype == 1) {
+               this.showSlide( entity, ent1 );
+            }
+            else {
+               entity.style.left = '0';
+               this.showXFade( entity, ent1 );
+            }
+            
+            if( this.autoWait > 0 ) {
+               this.waitingFor = setTimeout('Nest.i(\"' + this.id +'\").slideNext()', this.autoWait+this.autoSpeed );
+            }
+         }",
+
+
+      "slideNext" => "
+         function() {
+            var pos1 = this.current + 1;
+            if( pos1 >= this.pageCount ) pos1 = 0;
+            this.waitingFor = null;
+            this.slideTo(pos1);
+         }
+         ",
+
+      "showXFade" => "
+         function(entity, ent1) {
+            this.intrans = true;
+            var self = this;
+            Nest.transite( ent1, this.autoSpeed, {'opacity':'|0.0|'}, {'opacity':'1.0'}, null, null );
+            Nest.transite( entity, this.autoSpeed, {'opacity':'|1.0|'}, {'opacity':'0.0'}, null, function(){self.intrans = false;} );
+         }",
+
+      "showSlide" => "
+         function(entity, ent1) {
+            this.intrans = true;
+            var self = this;
+            var endfunc = function() { self.intrans = false; ent1.style.left = '100%';};
+            Nest.transite( entity, this.autoSpeed, {'left':'|0|%'}, {'left':'100%'}, null, endfunc );
+            if( this.transtype == 0 ) {
+               Nest.transite( ent1, this.autoSpeed, {'left':'|-100|%'}, {'left':'0%'}, null, function(){ent1.style.left = '100%';} );
+            }
+         }"
+   ]
+
+   onCreate = "this.setup();"
+   sslot = ShowcaseSlots("slots", slotsMode)
+   width = width
+   height = height
+   
+   init
+      Nest.requireJS("fx")
+      self.addChild( self.sslot )
+      self.addClassInParentship( Showcase )
+      if width.typeId() != StringType: width = width.toString() + "px"
+      if height.typeId() != StringType: height = height.toString() + "px"
+      
+      self.addStyle( @"display: inline-block; width:$(width); height:$(height); overflow:hidden; position:relative;" );
+   end
+
+   function onRender()
+      jsMethods = self.jsMethods
+      jsMethods["pageCount"] = self.children.len()-1
+      jsMethods["pages"] = "Array()"
+
+      count = 0;
+      for child in self.children
+         if child.baseClass() != ShowcaseSlots
+            child.addStyle( "display: inline-block; position:absolute;z-index:0" )
+            jsMethods[@"pages[$(count)]"] = "Nest.i('" + child.getFullID() + "')"
+            ++count
+         end
+      end      
+   end   
+end

@@ -9,7 +9,7 @@ if(!Nest) { Nest = {}; }
    var transArray = new Array();
    var tempArray = new Array();
    var nextArray = new Array();
-   var fps = 50;
+   var fps = 20;
 
    function getStyle(oElm, strCssRule){
       var strValue = "";
@@ -28,7 +28,7 @@ if(!Nest) { Nest = {}; }
    function getNumValue( string )
    {
       if( typeof string == 'string' ) {
-         var value = string.match(/\|([0-9.]+)\|/);
+         var value = string.match(/\|([0-9.-]+)\|/);
          if( value )
             return parseFloat(value[1]);
          return null;
@@ -40,7 +40,7 @@ if(!Nest) { Nest = {}; }
    function getNumFromValue( string, source )
    {
       if( typeof string == 'string' ) {
-         var pos = string.search(/\|([0-9.]+)\|/);
+         var pos = string.search(/\|([0-9.-]+)\|/);
          if( pos >= 0 )
             return parseFloat(source.substr(pos));
 
@@ -52,7 +52,7 @@ if(!Nest) { Nest = {}; }
    function setNumValue( string, value )
    {
       if( typeof string == 'string' ) {
-         return string.replace(/\|([0-9.]+)\|/, value);
+         return string.replace(/\|([0-9.-]+)\|/, value);
       }
       return value;
    }

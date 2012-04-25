@@ -73,6 +73,7 @@ function checkModifiedSince( res_file )
             Reply.reason = "Not modified"
             Reply.setHeader( "Content-Type" )
             Reply.setHeader( "Cache-Control" )
+            stdOut().close() // otherwise, we won't send coherent output
             return true
          end
       catch in e

@@ -689,6 +689,8 @@ class Widget( id )
             self.props["style"] = style
          end
       end
+
+      return self
    end
 
    function ajaxMsg( msg, infos, extra )

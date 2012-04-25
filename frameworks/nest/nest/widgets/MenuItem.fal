@@ -21,6 +21,28 @@ import Image from nest.widgets.Image as Image
 import Text from nest.widgets.Text as Text
 
 
+/*#
+@param id
+@param text Text for the menu entry
+@optparam icon
+@optparam submenu
+@optparam submenu_ind
+@optparam minAuthLevel
+
+The @b text param may be:
+- "Text" A text to be viewed
+- "link:Text" A link to be opened on click.
+- Any widget. A widget to be shown in the text area.
+
+
+Link can start with:
+- '!' A link to a Nest page
+- '[target]' Open on a different (new) target.
+- '[target]!...' Open a nest page in a different target.
+
+If the @b text parameter is a widget,  "target" and "href" properties are queried
+and they are used in this widget.
+*/
 class MenuItem( id, text, icon, submenu, submenu_ind, minAuthLevel ) from Widget( id )
    tag = "li"
 
@@ -29,15 +51,41 @@ class MenuItem( id, text, icon, submenu, submenu_ind, minAuthLevel ) from Widget
    submenu = submenu
    submenu_ind = nil
    minAuthLevel = minAuthLevel
+
+   href = nil
+   target = nil
    
    init
       if not self.props: self.props = [=>]
       select text
          case NilType: self.text = Text( "text", "" )
          case StringType
+            if ":" in text
+               link, text = text.split(":")
+
+               if link.startsWith('[')
+                  self.target = link[1:link.find(']')]
+                  link = link[self.target.len()+2:]
+               end
+               
+               if link.startsWith('!')
+                  self.href = Nest.pageLink(link[1:])
+               else
+                  self.href = text
+               end
+            end
+            
             self.text = Text( "text", text )
             self.text.tag = nil
-         default: self.text = text
+
+         default
+            self.text = text
+            if "href" in text
+               self.href = text.href
+            end
+            if "target" in text
+               self.target = text.target
+            end
       end
 
       select icon
@@ -58,9 +106,19 @@ class MenuItem( id, text, icon, submenu, submenu_ind, minAuthLevel ) from Widget
          submenu.props -= "class"
          self.addChild( submenu )
       end
-      
+
       // TODO: Remove this when we have automatic parentship
       self.addClassInParentship( MenuItem )  
+   end
+
+   function onRender()
+      if self.href
+         if self.target
+            self.set(["onclick"=>@"window.open('$(self.href)','$(self.target)')"])
+         else
+            self.set(["onclick"=>@"window.location.href=\"$(self.href)\""])
+         end
+      end
    end
    
 end
