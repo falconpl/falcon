@@ -269,7 +269,6 @@ ModuleLoader::t_filetype ModuleLoader::fileType( const String &fext )
 
 Module *ModuleLoader::loadName( const String &module_name, const String &parent_name )
 {
-   String file_path;
    String nmodName;
 
    // prevent doing a crashy thing.
@@ -277,9 +276,8 @@ Module *ModuleLoader::loadName( const String &module_name, const String &parent_
       throw new CodeError( ErrorParam( e_modname_inv ).extra( module_name ).origin( e_orig_loader ).
             module( "(loader)" ) );
 
-   nmodName = Module::absoluteName( module_name, parent_name );
+   Module::absoluteName( module_name, parent_name, nmodName );
 
-   String path_name;
    String expName = nmodName;
 
    // expand "." names into "/"

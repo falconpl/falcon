@@ -574,32 +574,32 @@ bool Module::saveTableTemplate( Stream *stream, const String &encoding ) const
 }
 
 
-String Module::absoluteName( const String &module_name, const String &parent_name )
+void Module::absoluteName( const String &module_name, const String &parent_name, String& result )
 {
    if ( module_name.getCharAt(0) == '.' )
    {
       // notation .name
       if ( parent_name.size() == 0 )
-         return module_name.subString( 1 );
+         result = module_name.subString( 1 );
       else {
          // remove last part of parent name
          uint32 posDot = parent_name.rfind( "." );
          // are there no dot? -- we're at root elements
          if ( posDot == String::npos )
-            return module_name.subString( 1 );
+            result = module_name.subString( 1 );
          else
-            return parent_name.subString( 0, posDot ) + module_name; // "." is included.
+            result = parent_name.subString( 0, posDot ) + module_name; // "." is included.
       }
    }
    else if ( module_name.find( "self." ) == 0 )
    {
       if ( parent_name.size() == 0 )
-         return module_name.subString( 5 );
+         result = module_name.subString( 5 );
       else
-         return parent_name + "." + module_name.subString( 5 );
+         result = parent_name + "." + module_name.subString( 5 );
    }
    else
-      return module_name;
+      result = module_name;
 }
 
 

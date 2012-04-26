@@ -669,9 +669,11 @@ bool VMachine::linkUndefinedSymbol( const Symbol *sym, LiveModule *livemod )
       if ( depData != 0 )
       {
          // ... then find the module in the item
-         lmod = findModule( Module::absoluteName(
+         String absName;
+         Module::absoluteName(
                depData->isFile() ? nameSpace: depData->moduleName(),
-               mod->name() ));
+               mod->name(), absName );
+         lmod = findModule( absName );
 
          // we must convert the name if it contains self or if it starts with "."
          if ( lmod != 0 )
@@ -685,8 +687,9 @@ bool VMachine::linkUndefinedSymbol( const Symbol *sym, LiveModule *livemod )
       fassert( depData != 0 );
 
       // ... then find the module in the item
-      lmod = findModule( Module::absoluteName(
-            depData->moduleName(), mod->name() ));
+      String absName;
+      Module::absoluteName( depData->moduleName(), mod->name(), absName );
+      lmod = findModule( absName );
 
       if( lmod != 0 )
          localSymName = sym->getImportAlias()->name();

@@ -73,7 +73,7 @@ function checkModifiedSince( res_file )
             Reply.reason = "Not modified"
             Reply.setHeader( "Content-Type" )
             Reply.setHeader( "Cache-Control" )
-            stdOut().close() // otherwise, we won't send coherent output
+            Reply.commit()
             return true
          end
       catch in e
@@ -95,99 +95,3 @@ function exitReply( status, reason, text )
    stdOut().writeText( @"<body><h1>$(status) $(reason)<h1>\n<p>$(text)</p>\n</body>")
 end
 
-
-/*# Site setup.
-   @param tgtdir Target directory where to create the site.
-
-   This function sets up a standard nest site, creating the following
-   standard file or directories:
-   
-   @code
-      site/
-      site/index.fal
-      site/res
-      nest/ajax
-      nest/dm
-      nest/pages
-      nest/pages/home.fal
-      nest/srv
-      nest/widgets
-   @endcode
-
-   Files in res will be copied from system Nest resource directory, and
-   contain useful javascripts, images, etc.
-
-   @note Existing files won't be overwritten. Delete them if you want
-   to update them to new versions.
-*/
-
-function makeSite( tgtdir )
-   if not tgtdir
-      tgtdir = "./"
-   else
-      if not tgtdir.endsWith("/"): tgtdir += "/"
-   end
-
-   dirMake( tgtdir, true )
-   dirMake( tgtdir + "site", true )
-   dirMake( tgtdir + "site/res", true )
-   dirMake( tgtdir + "nest", true )
-   dirMake( tgtdir + "nest/pages", true )
-   dirMake( tgtdir + "nest/srv", true )
-   dirMake( tgtdir + "nest/dm", true )
-   dirMake( tgtdir + "nest/widgets", true )
-   dirMake( tgtdir + "nest/ajax", true )
-
-   if fileType( tgtdir + "/site/index.fal" ) == FileStat.NOTFOUND
-      index = OutputStream( tgtdir + "/site/index.fal" )
-
-      index.writeText( @'
-/* Nest default site, index */
-load nest
-Nest.site_nest_dir = "../nest"
-
-// Uncomment to have debug infos.
-//Nest.debug = true
-//Nest.log_level = 3
-
-// Stylesheet
-// Nest.stylesheets += "some_style.css"
-
-// Scripts
-Nest.extscripts += "res/json2.js"
-Nest.extscripts += "res/nest.js"
-
-Nest.auth_level = Nest.AL.NONE
-// framing functions
-// Nest.frame = .[include "jinkey_frame.ftd" ]
-
-/*
-Nest.onStartup = function()
-   // Login and language are usually checked here or in the frame.
-end
-*/
-
-// We can start processing Nest request
-Nest.route()
-         ' )
-      index.close()
-   end
-
-   if fileType( tgtdir + "/nest/pages/home.ftd" ) == FileStat.NOTFOUND
-      home = OutputStream( tgtdir + "/nest/pages/home.ftd" )
-      home.writeText( "<h1>Hello world!</h1>\n" )
-      home.close()
-   end
-
-   modPath = Path( vmModulePath() )
-   srcdir = modPath.fulloc + "/res/"
-   resdir = Directory( srcdir )
-   while (entry = resdir.read())
-      if not entry.startsWith( "." ) and \
-             fileType( tgtdir + "site/res/" + entry ) == FileStat.NOTFOUND
-             
-         fileCopy( srcdir + "/" + entry, tgtdir + "site/res/" + entry )
-      end
-   end
-
-end

@@ -409,6 +409,7 @@ object Nest
    init
       self.nest_dir = Path(vmModulePath()).fulloc + "/nest"
       self._comp.launchAtLink = true
+      self._comp.sourceEncoding = 'utf-8'
    end
 
    /*# Nest entry point.

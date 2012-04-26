@@ -646,7 +646,7 @@ public:
    bool saveTableTemplate( Stream *stream, const String &encoding ) const;
 
    /** Extract the full logical module name from current module name and parent loader. */
-   static String absoluteName( const String &module_name, const String &parent_name );
+   static void absoluteName( const String &module_name, const String &parent_name, String& res );
 
    /** Adds a module-wide attribute. */
    void addAttribute( const String &name, VarDef* vd );

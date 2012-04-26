@@ -67,6 +67,10 @@ class Popup( id, left, top, width, height, fixed, center ) from widget.Widget( i
       "show" => "
          function() {
             if( ! this.shown && this.onShow() ) {
+               if ( this.relativeTo != null ) {
+                  this.style.position='absolute';
+                  Nest.reposition( Nest.i(this.relativeTo), this, this.left, this.top, this.heigth );
+               }
                this.shown = true;
                this.showTransition();
             }
@@ -79,6 +83,14 @@ class Popup( id, left, top, width, height, fixed, center ) from widget.Widget( i
                this.showTransition();
             }
          }",
+      "switchShow" => "
+         function() {
+            if( this.shown )
+               this.hide();
+            else
+               this.show();
+         }
+      ",
 
       "onShow" => "function(){ return true; }",
       "onHide" => "function(){ return true; }",
@@ -117,7 +129,7 @@ class Popup( id, left, top, width, height, fixed, center ) from widget.Widget( i
       
    init
       if self.props == nil: self.props = [=>]
-      self.props["style"] = @"padding:0; margin:0; display: none; overflow:hidden;"
+      self.props["style"] = @"display: none; overflow:hidden;"
       // activate effects
       Nest.requireJS("fx")
 
@@ -125,7 +137,14 @@ class Popup( id, left, top, width, height, fixed, center ) from widget.Widget( i
       self.addClassInParentship( Popup )
    end
 
-
+   function setRelativeTo( widgetID )
+      self.jsMethods["left"] = self.left
+      self.jsMethods["top"] = self.top
+      self.jsMethods["width"] = self.width
+      self.jsMethods["height"] = self.height
+      self.jsMethods["relativeTo"] = @'"$widgetID"'
+   end
+   
    function onRender()
       if self.fadeInTime
          self.jsMethods["fadeInTime"] = self.fadeInTime

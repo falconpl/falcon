@@ -438,9 +438,10 @@ FALCON_FUNC Compiler_loadFile( ::Falcon::VMachine *vm )
       String parent_name;
       if ( vm->getCaller( caller_sym, caller_mod ) )
          parent_name = caller_mod->name();
-      String nmodName = Module::absoluteName(
+      String nmodName; 
+      Module::absoluteName(
                i_alias == 0 ? mod->name() : *i_alias->asString(),
-               parent_name );
+               parent_name, nmodName );
       mod->name( nmodName );
 
       internal_link( vm, mod, iface );
