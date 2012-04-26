@@ -78,7 +78,7 @@ namespace Falcon {
           The function may raise an error if the value cannot
           be computed because of a domain or overflow error.
           */
-        FALCON_DEFINE_FUNCTION_P(cosh)
+        FALCON_DEFINE_FUNCTION_P1(cosh)
         {
             Item *num1 = ctx->param( 0 );         
             if ( num1 == 0 || ! num1->isOrdinal() )
@@ -106,7 +106,7 @@ namespace Falcon {
           The function may raise an error if the value cannot
           be computed because of a domain or overflow error.
           */
-        FALCON_DEFINE_FUNCTION_P(sinh)
+        FALCON_DEFINE_FUNCTION_P1(sinh)
         {
             Item *num1 = ctx->param( 0 );
             if ( num1 == 0 || ! num1->isOrdinal() )
@@ -134,7 +134,7 @@ namespace Falcon {
           The function may raise an error if the value cannot
           be computed because of a domain or overflow error.
           */
-        FALCON_DEFINE_FUNCTION_P(tanh)
+        FALCON_DEFINE_FUNCTION_P1(tanh)
         {
             Item *num1 = ctx->param( 0 );
             if ( num1 == 0 || ! num1->isOrdinal() )
@@ -163,7 +163,7 @@ namespace Falcon {
           The function may raise an error if the value cannot
           be computed because of a domain or overflow error.
           */
-        FALCON_DEFINE_FUNCTION_P(acosh)
+        FALCON_DEFINE_FUNCTION_P1(acosh)
         {
             Item *num1 = ctx->param( 0 );         
             if ( num1 == 0 || ! num1->isOrdinal() )
@@ -191,7 +191,7 @@ namespace Falcon {
           The function may raise an error if the value cannot
           be computed because of a domain or overflow error.
           */
-        FALCON_DEFINE_FUNCTION_P(asinh)
+        FALCON_DEFINE_FUNCTION_P1(asinh)
         {
             Item *num1 = ctx->param( 0 );
             if ( num1 == 0 || ! num1->isOrdinal() )
@@ -219,7 +219,7 @@ namespace Falcon {
           The function may raise an error if the value cannot
           be computed because of a domain or overflow error.
           */
-        FALCON_DEFINE_FUNCTION_P(atanh)
+        FALCON_DEFINE_FUNCTION_P1(atanh)
         {
             Item *num1 = ctx->param( 0 );
             if ( num1 == 0 || ! num1->isOrdinal() )
@@ -247,7 +247,7 @@ namespace Falcon {
           The function may raise an error if the value cannot
           be computed because of an overflow error.
           */
-        FALCON_DEFINE_FUNCTION_P(lambda)
+        FALCON_DEFINE_FUNCTION_P1(lambda)
         {
             Item *num1 = ctx->param( 0 );
             Item *num2 = ctx->param( 1 );
@@ -277,7 +277,7 @@ namespace Falcon {
           The function may raise an error if the value cannot
           be computed because of a domain or overflow error.
           */
-        FALCON_DEFINE_FUNCTION_P(sec)
+        FALCON_DEFINE_FUNCTION_P1(sec)
         {
             Item *num1 = ctx->param( 0 );
             if ( num1 == 0 || ! num1->isOrdinal() )
@@ -305,7 +305,7 @@ namespace Falcon {
           The function may raise an error if the value cannot
           be computed because of a domain or overflow error.
           */
-        FALCON_DEFINE_FUNCTION_P(cosec)
+        FALCON_DEFINE_FUNCTION_P1(cosec)
         {
             Item *num1 = ctx->param( 0 );
             if ( num1 == 0 || ! num1->isOrdinal() )
@@ -333,7 +333,7 @@ namespace Falcon {
           The function may raise an error if the value cannot
           be computed because of a domain or overflow error.
           */
-        FALCON_DEFINE_FUNCTION_P(cotan)
+        FALCON_DEFINE_FUNCTION_P1(cotan)
         {
             Item *num1 = ctx->param( 0 );
             if ( num1 == 0 || ! num1->isOrdinal() )
