@@ -76,6 +76,7 @@ class _InfoBoxText(id, title, content) from widget.Widget( id )
             margin:0;
             position:absolute;
             "
+      self.props["class"] = "nest_InfoBoxText"
 
       // TODO: Remove this when we have automatic parentship
       self.addClassInParentship( _InfoBoxText )   
@@ -85,8 +86,9 @@ class _InfoBoxText(id, title, content) from widget.Widget( id )
       fullID = self.getFullID()
       hc = self.height - self.titleHeight 
       return @"
-         <div id=\"$(fullID).titlebar\" class=\"titlebar\" style=\"height:$(self.titleHeight)px\"><span style=\"float:left\">$(self.title)</span>
-            <img src=\"$(self.imgclose)\" onclick=\"Nest.i('$(fullID)').hide(); \" style=\"float:right;cursor: hand; display:inline;\"/>
+         <div id=\"$(fullID).titlebar\" class=\"titlebar\" style=\"height:$(self.titleHeight)px\"><span\">$(self.title)</span>
+            <img src=\"$(self.imgclose)\" onclick=\"Nest.i('$(fullID)').hide(); event.cancelBubble = true; if(event.stopPropagation) event.stopPropagation();\"
+                  style=\"position:absolute; top:3px; right:3px; cursor: hand; cursor: pointer; display:inline;\"/>
          </div>
          <div id=\"$(fullID).scroller\" style=\"padding:0px;height:$(hc)px\">
             <div id=\"$(fullID).contentbox\" class=\"contentbox\">$(self.content)</div>
@@ -133,7 +135,6 @@ class InfoBox( id, title, content, icon ) from widget.Widget( id )
       // add the infobox
       self.addChild( self.infobox )
       if self.props == nil: self.props = [=>]
-      self.props["src"] = self.icon
       self.props["border"] = "0"
 
       // TODO: Remove this when we have automatic parentship
@@ -142,8 +143,15 @@ class InfoBox( id, title, content, icon ) from widget.Widget( id )
 
    function onSetup()
       self.jsMethods = [
-            "onclick" => self.infobox.makeCall( "show", self.getFullID() )
+            "onclick" => "function() {" + self.infobox.jsCall( 'show', self.getFullID() ) +"
+                  ;event.cancelBubble = true;
+                  if(event.stopPropagation) event.stopPropagation();
+               }"
          ]
+   end
+
+   function onRender()
+      self.props["src"] = self.icon
    end
 end
 

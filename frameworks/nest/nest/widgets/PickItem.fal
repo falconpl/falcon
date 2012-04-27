@@ -120,7 +120,7 @@ class PickItem( id, title, detail, icon, link ) from Widget(id)
          rend += "<div class=\"nest_pickitem_title\">\n"
          if self.icon provides render
             rend += self.icon.render()
-         else
+         elif self.icon
             rend += "<img src=\""+ self.icon + "\"/>"
          end
          rend += "<span>" + self.title + "</span>\n"

@@ -627,7 +627,7 @@ class Widget( id )
    function jsCall( funcname )
       v = passvp()
       if v
-         vals = ",".merge(map({x=>"\""+toString(x).escape()+"\""}))
+         vals = ",".merge(map({x=>"\""+toString(x).escape()+"\""},v))
       else
          vals = ""
       end
