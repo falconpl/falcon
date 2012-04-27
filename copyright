@@ -8,7 +8,23 @@ Open Source and Free Software products. It's a relative strict license
 which is not particularly adequate for virtual machine based scripting
 languge interpreters and engines, but it can be chosen to develop
 pure GPL applications or to favor integration with already
-existing GPL embedding applications.
+existing GPL embedding applications. 
+
+Falcon 0.9 and following grant the so called "OpenSSL exception to
+GPL" were applicable:
+
+ In addition, as a special exception, the author of this
+ program gives permission to link the code of its 
+ release with the OpenSSL project's "OpenSSL" library (or
+ with modified versions of it that use the same license as
+ the "OpenSSL" library), and distribute the linked
+ executables. You must obey the GNU General Public 
+ License in all respects for all of the code used other 
+ than "OpenSSL".  If you modify this file, you may extend
+ this exception to your version of the file, but you are
+ not obligated to do so.  If you do not wish to do so,
+ delete this exception statement from your version.
+
 
 The Falcon Programming Language License is specifically designed
 around the concept of an open source scripting language engine.
@@ -17,8 +33,8 @@ as it supports applying different and incompatible licenses to
 embedding and extension elements, while ensuring the openness of
 the core engine and of any work derived directly from it.
 
-Falcon 0.8.10 and followings are released under one of GPLv2 or
-FPLLv1.1, at your choice.
+Falcon 0.8.10 and followings are released under one of GPLv2+OpenSSL
+exception or FPLLv1.1, at your choice.
 
 The GPLv2 license can be found at:
    http://www.gnu.org/licenses/old-licenses/gpl-2.0.html
