@@ -543,7 +543,7 @@ class Calendar(id, currentDate, subject, popup) from wid.Widget( id )
             subject.setAttribute('onclick', 'Nest.i(\"' +self.id +'\").popup()');
             if( subject.onkeyup == null ) {
                subject.onkeyup = function( event ) {
-                  if ( event.which == 27 ) {
+                  if ( event.which == 27 || event.keyCode == 27 ) {
                      if( self.style.display == 'inline-block' ) self.close();
                   }
                }

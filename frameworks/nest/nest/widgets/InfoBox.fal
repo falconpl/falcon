@@ -87,7 +87,7 @@ class _InfoBoxText(id, title, content) from widget.Widget( id )
       hc = self.height - self.titleHeight 
       return @"
          <div id=\"$(fullID).titlebar\" class=\"titlebar\" style=\"height:$(self.titleHeight)px\"><span\">$(self.title)</span>
-            <img src=\"$(self.imgclose)\" onclick=\"Nest.i('$(fullID)').hide(); event.cancelBubble = true; if(event.stopPropagation) event.stopPropagation();\"
+            <img src=\"$(self.imgclose)\" onclick=\"Nest.i('$(fullID)').hide(); Nest.eatEvent();\"
                   style=\"position:absolute; top:3px; right:3px; cursor: hand; cursor: pointer; display:inline;\"/>
          </div>
          <div id=\"$(fullID).scroller\" style=\"padding:0px;height:$(hc)px\">
@@ -144,8 +144,7 @@ class InfoBox( id, title, content, icon ) from widget.Widget( id )
    function onSetup()
       self.jsMethods = [
             "onclick" => "function() {" + self.infobox.jsCall( 'show', self.getFullID() ) +"
-                  ;event.cancelBubble = true;
-                  if(event.stopPropagation) event.stopPropagation();
+                  ;Nest.eatEvent();
                }"
          ]
    end

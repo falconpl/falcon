@@ -193,8 +193,26 @@ if (!Array.prototype.indexOf) {
       Nest.i = function ( id ) { return document.getElementById( id ); }
    }
 
-   if (!Nest.w) {
-      Nest.w = new Array();
+   // Stop event propagation
+   Nest.eatEvent = function(){event.cancelBubble = true; if(event.stopPropagation) event.stopPropagation();}
+   
+   // All the widgets declared by nest
+   if (!Nest.w) { Nest.w = new Array();}
+
+   // Method 'rw' -- relative widget.
+   if (typeof Nest.rw !== 'function') {
+      Nest.rw = function ( wid, path ) {
+         var pathArr = path.split("/")
+         var widIdArr = wid.id.split( "." );
+         while( pathArr.length > 0 && pathArr[0] == '..' ) {
+            widIdArr.pop();
+            pathArr.shift();
+         }
+         widIdArr = widIdArr.concat( pathArr );
+         var widID = widIdArr.join( "." );
+         wid = document.getElementById( widID );
+         return wid;
+      }
    }
    
    // Method 'ajax'

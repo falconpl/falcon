@@ -78,6 +78,27 @@ class InputText( id, prompt, iPrompt ) from widget.Widget( id )
             }"
       end
    end
+
+   function onEnter( jsFunc )
+      onkeydown = "if( event.which == 13 || event.keyCode == 13 ) this.onEnter();"
+      if 'onkeydown' in self.props
+         self.props['onkeydown'] += onkeydown
+      else
+         self.props['onkeydown'] = onkeydown
+      end
+      self.jsMethods["onEnter"] = jsFunc
+   end
+   
+   function onEsc( jsFunc )
+      onkeydown = "if( event.which == 27 || event.keyCode == 27) this.onEsc();"
+      if 'onkeydown' in self.props
+         self.props['onkeydown'] += onkeydown
+      else
+         self.props['onkeydown'] = onkeydown
+      end
+      self.jsMethods["onEsc"] = jsFunc
+   end
+   
    
 end
 

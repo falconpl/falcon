@@ -52,6 +52,19 @@ class TitleBar( id, title, height, icon, closeIcon ) from Widget( id )
 end
 
 
+class _ContainerWidget( id,popup ) from Widget( id )
+   popup = popup
+   init
+      // TODO: Remove this when we have automatic parentship
+      self.addClassInParentship( _ContainerWidget )
+   end
+
+   function renderContent()
+      return self.popup.renderContainerWidget()
+   end
+end
+
+
 /*# Window popup widget.
    @param id The widget ID
 
@@ -60,7 +73,7 @@ class PopupWindow( id, title, left, top, width, height, fixed, center ) from Pop
    title = title
    titleWidget = nil
    scroller = Widget( "scroller" )
-   container = Widget( "container" )
+   container = _ContainerWidget( "container", self )
 
    init
       if self.props == nil: self.props = [=>]
@@ -84,4 +97,7 @@ class PopupWindow( id, title, left, top, width, height, fixed, center ) from Pop
       self.addClassInParentship( PopupWindow )
    end
 
+   function renderContainerWidget()
+      return self.container.Widget.renderContent()
+   end
 end
