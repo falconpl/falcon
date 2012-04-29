@@ -57,7 +57,6 @@ class LoginMask( id, formAction ) from widget.Widget( id )
       "onLoginFailed" => "function( params ) { Nest.message( this, 'login', null ); }",
       "onLoginSuccess" => "function( params ) { Nest.message( this, 'login', params ); }"
    ]
-   
 
    userID = InputText( "user-id")
    pwd = Password( "pwd" )

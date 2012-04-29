@@ -50,7 +50,11 @@ class Button( id, content, type ) from widget.Widget( id )
    function renderContent()
       return self.content
    end
-   
+
+   /*# Turns this button in an AJAX form submitting button.
+      @param w the form widget that is to be sent.
+      @optparam confirmFunc A javascript function used to check if the form should be really sent.
+   */
    function makeSendFormAJAX( w, confirmFunc )
       id = w.getFullID()
       xcall = @"Nest.i('$(id)').sendFormAJAX()"
