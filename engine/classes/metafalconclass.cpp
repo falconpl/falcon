@@ -12,6 +12,8 @@
 
    See LICENSE file for licensing details.
 */
+#undef SRC
+#define SRC "engine/metafalconclass.cpp"
 
 #include <falcon/classes/metafalconclass.h>
 #include <falcon/hyperclass.h>

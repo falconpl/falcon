@@ -12,6 +12,8 @@
 
    See LICENSE file for licensing details.
 */
+#undef SRC
+#define SRC "engine/engine.cpp"
 
 #include <map>
 #include <stdio.h>

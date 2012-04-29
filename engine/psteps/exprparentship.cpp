@@ -95,7 +95,7 @@ void ExprParentship::apply_( const PStep* ps, VMContext* ctx )
       fassert( iinst.isUser() );
       Class* cls = iinst.asClass();
       fassert( cls->isDerivedFrom(exp->base()) );
-      void* instance = iinst.asClass()->getParentData( exp->base(), iinst.asInst());
+      void* instance = cls->getParentData( exp->base(), iinst.asInst());
       fassert( instance != 0 );
       
       ctx->pushData( Item( exp->base(), instance) );

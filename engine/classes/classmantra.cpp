@@ -14,6 +14,7 @@
 */
 
 #include <falcon/classes/classmantra.h>
+#include <falcon/error.h>
 #include <falcon/mantra.h>
 #include <falcon/itemid.h>
 #include <falcon/vmcontext.h>

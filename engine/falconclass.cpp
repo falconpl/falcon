@@ -800,8 +800,12 @@ void FalconClass::describe( void* instance, String& target, int depth, int maxle
          Item theItem;
          if( m_class->getProperty( name )->m_type == Property::t_prop )
          {
+            #ifndef NDEBUG
             bool found = m_inst->getMember( name, theItem );
             fassert2( found, "Required property not found" );
+            #else
+            m_inst->getMember( name, theItem );
+            #endif
             String temp;
             theItem.describe( temp, m_depth-1, m_maxlen );
             if( m_target != "" )
