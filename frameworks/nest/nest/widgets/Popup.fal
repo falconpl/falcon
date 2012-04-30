@@ -41,7 +41,7 @@ import from nest.widgets.widget in widget
    - shown: false if currently hidden, true if currently visible.
    
    They offer an onShow and onHide callback pair that can be used to
-   prevent the 
+   prevent the action to be actually performed if they return false.
 
 @section messages Messages
    When the window changes its visibility, a 'visibility' Nest message is

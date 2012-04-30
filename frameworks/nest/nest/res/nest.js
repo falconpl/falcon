@@ -194,7 +194,7 @@ if (!Array.prototype.indexOf) {
    }
 
    // Stop event propagation
-   Nest.eatEvent = function(){event.cancelBubble = true; if(event.stopPropagation) event.stopPropagation();}
+   Nest.eatEvent = function(event){event.cancelBubble = true; if(event.stopPropagation) event.stopPropagation();}
    
    // All the widgets declared by nest
    if (!Nest.w) { Nest.w = new Array();}
