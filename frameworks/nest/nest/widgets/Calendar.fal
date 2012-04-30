@@ -539,8 +539,14 @@ class Calendar(id, currentDate, subject, popup) from wid.Widget( id )
             subject.day = null;
             
             var self = this;
-            subject.setAttribute('onfocus', 'var v=Nest.i(\"' +self.id +'\"); if(v) v.popup()');
-            subject.setAttribute('onclick', 'Nest.i(\"' +self.id +'\").popup()');
+            if( subject.setAttribute == undefined ) {
+               subject.onfocus = 'var v=Nest.i(\"' +self.id +'\"); if(v) v.popup()';
+               subject.onclick = 'Nest.i(\"' +self.id +'\").popup()';
+            }
+            else {
+               subject.setAttribute('onfocus', 'var v=Nest.i(\"' +self.id +'\"); if(v) v.popup()');
+               subject.setAttribute('onclick', 'Nest.i(\"' +self.id +'\").popup()');
+            }
             if( subject.onkeyup == null ) {
                subject.onkeyup = function( event ) {
                   if ( event.which == 27 || event.keyCode == 27 ) {

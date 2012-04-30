@@ -49,35 +49,48 @@ class InputText( id, prompt, iPrompt ) from widget.Widget( id )
          else
             self.onCreate = "this.checkIPrompt();"
          end
+         
          self.jsMethods["checkIPrompt"] = @"
             function() {
-               if(this.savedColor == null) {
-                  this.savedColor = this.style.color;
-                  this.origType = this.getAttribute('type');
-               }
-               
+               var other = Nest.i(this.id + '.iprompt');
                if(this.value.length == 0 ) {
-                  this.value = \"$(self.iPrompt)\";
-                  this.style.color = \"$(self.blurcolor)\";
-                  this.ipromptMode = true;
-                  this.setAttribute('type', 'text');
+                  this.style.display = 'none';
+                  other.style.display = '';
                }
                else {
-                  this.style.color = this.savedColor;
-                  this.ipromptMode = false;
+                  other.style.display = 'none';
+                  this.style.display = '';
                }
             }"
+            
          self.jsMethods["disableIPrompt"] = "
             function() {
-               if( this.ipromptMode ) {
-                  this.value = '';
-                  this.setAttribute('type', this.origType);
-                  this.style.color = this.savedColor;
-                  this.ipromptMode = false;
-               }
+               Nest.i(this.id + '.iprompt').style.display = 'none';
+               this.style.display = '';
+               this.focus();
             }"
       end
    end
+
+   function render()
+      res = self.widget.Widget.render()
+      if self.iPrompt
+         id = self.getFullID()
+         res += @"<input id=\"$(id).iprompt\" type=\"text\" value=\"$(self.iPrompt)\""
+         if 'class' in self.props: res += " class=\""+self.props['class']+"\""
+         if 'size' in self.props: res += " size=\""+self.props['size']+"\""
+         if 'style' in self.props
+            res += @" style=\""+self.props['style']+";display:none;color:$(self.blurcolor)\""
+         else
+            res += @" style=\"display:none;color:$(self.blurcolor)\""
+         end
+         
+         res += @" onfocus=\"Nest.i('$(id)').disableIPrompt()\"/>"
+      end
+
+      return res
+   end
+   
 
    function onEnter( jsFunc )
       onkeydown = "if( event.which == 13 || event.keyCode == 13 ) this.onEnter();"
