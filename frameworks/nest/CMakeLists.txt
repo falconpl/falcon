@@ -7,4 +7,4 @@ set( module_dirs
 )
 
 falcon_install_moddirs( ${module_dirs} )
-file( INSTALL nest/res DESTINATION "nest" )
+install( DIRECTORY nest/res DESTINATION "${FALCON_MOD_DIR}/nest" )

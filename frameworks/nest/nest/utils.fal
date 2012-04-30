@@ -92,6 +92,6 @@ function exitReply( status, reason, text )
    Reply.status = status
    Reply.reason = reason
    Reply.ctype("text","html","utf-8")
-   stdOut().writeText( @"<body><h1>$(status) $(reason)<h1>\n<p>$(text)</p>\n</body>")
+   stdOut().writeText( @"<body><h1>$(status) $(reason)</h1>\n<p>$(text)</p>\n</body>")
 end
 

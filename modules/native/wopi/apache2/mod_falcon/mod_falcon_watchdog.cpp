@@ -19,7 +19,7 @@
 #include "apache_stream.h"
 #include <stdio.h>
 #include <stdlib.h>
-#include <apache2/httpd.h>
+#include <httpd.h>
 
 #include <falcon/stream.h>
 
@@ -57,6 +57,8 @@ FALCON_WATCHDOG_TOKEN* watchdog_push_vm(
    
    apr_thread_cond_signal( falconWatchdogData.cond );
    apr_thread_mutex_unlock( falconWatchdogData.mutex );
+
+   return token;
 }
 
 
