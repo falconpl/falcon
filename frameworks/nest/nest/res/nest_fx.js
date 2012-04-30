@@ -180,6 +180,21 @@ if(!Nest) { Nest = {}; }
             do {
                   curleft += obj.offsetLeft;
                   curtop += obj.offsetTop;
+            } while (obj = obj.offsetParent && (obj.style.display=='static'));
+
+            return { x: curleft, y: curtop };
+         }
+      }
+   }
+
+    if (typeof Nest.findPagePos !== 'function') {
+      Nest.findPagePos = function(obj) {
+         var curleft = 0, curtop = 0;
+
+         if (obj.offsetParent) {
+            do {
+                  curleft += obj.offsetLeft;
+                  curtop += obj.offsetTop;
             } while (obj = obj.offsetParent);
 
             return { x: curleft, y: curtop };
@@ -191,12 +206,21 @@ if(!Nest) { Nest = {}; }
       Nest.reposition = function(objSrc, objTgt, dispx, dispy, height ) {
          var curleft = 0, curtop = 0;
          var pos = Nest.findPos(objSrc);
-         objTgt.style.left = (pos.x + dispx) +"px";
-         objTgt.style.top = (pos.y + dispy) + "px";
-         if ( height == null ) height = objTgt.offsetHeight;
-         if( document.height <= pos.y + dispx + height ) {
-            objTgt.style.top = document.height - height - (dispy/2);
+         var top = (pos.y + dispy);
+         var left = (pos.x + dispx);
+         if ( height == null ) height = objTgt.height;
+         var width = objTgt.width;
+         /* Find absolute positioning in page and see if we're out */
+         pos = Nest.findPagePos(objSrc);
+         if( document.height <= pos.y + dispy + height ) {
+            top = (top - ((pos.y + dispy + height) - document.height) - 10 );
          }
+         if( document.width <= pos.x + dispx + width ) {
+            left = (left - ((pos.x + dispx + width) - document.width) - 10 );
+         }
+         
+         objTgt.style.left = left+"px";
+         objTgt.style.top = top+"px";
       }
    }
 
