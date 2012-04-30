@@ -63,7 +63,7 @@ if (!Array.prototype.indexOf) {
                if( obj ) {
                   // application error?
                   if ( obj.error ) { Nest.onAPIError( obj ); }
-                  else { callback( obj ); }
+                  else if (callback) { callback( obj ); }
                }
             }
             else {
