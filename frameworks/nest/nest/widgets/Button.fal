@@ -22,6 +22,8 @@ import from nest.widgets.widget in widget
    @param id The widget ID
    @param content The HTML content displayed in the button.
    @optparam type Optional type (default: 'button')
+   @optparam onclick A JS routine to call on click
+            (if not specified, will emit a Nest onclick message)
 
    This generates an HTML button. Normally, you should
    rely to Submit or Reset fields in forms, as they generate the same
@@ -32,7 +34,7 @@ import from nest.widgets.widget in widget
    To attach actions to this button, use the @a nest.widget.Widget.jsListeners
    method.
 */
-class Button( id, content, type ) from widget.Widget( id )
+class Button( id, content, type, onclick ) from widget.Widget( id )
    tag = "button"
    content = content
    isSelfClosing = false
@@ -41,7 +43,7 @@ class Button( id, content, type ) from widget.Widget( id )
       if self.props == nil: self.props = [=>]
       self.props['name'] = nil   // will be filled at render
       self.props['type'] = type ? type : "button"
-      self.props['onclick'] = self.jsEmit( 'onclick', "null")
+      self.props['onclick'] = onclick ? onclick : self.jsEmit( 'onclick', "null")
 
       // TODO: Remove this when we have automatic parentship
       self.addClassInParentship( Button )

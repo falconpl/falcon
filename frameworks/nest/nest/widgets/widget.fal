@@ -225,6 +225,7 @@ class Widget( id )
       else
          self.childrenById = [ wid.id =>wid ]
       end
+      return self
    end
 
    //# Shortcut to add multiple children
@@ -232,6 +233,8 @@ class Widget( id )
       for child in passvp()
          self.addChild( child )
       end
+
+      return self
    end
 
    /*# Adds children to this widget using a list of string.
