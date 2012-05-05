@@ -184,10 +184,11 @@ class NameWithAvail( id, prompt, iPrompt ) from widget.Widget( id )
    tag = nil
    isAJAXHost = true
    initInfos = [prompt]
-
+   prompt = prompt
+   
    minSize = 6
 
-   name_wid = ActiveInput( "name", prompt, iPrompt )
+   name_wid = ActiveInput( "name", nil, iPrompt )
    avail_wid = AvailWidget( "avail", self.name_wid )
    name_checked = widget.Widget( "name_checked" )
 
@@ -210,7 +211,11 @@ class NameWithAvail( id, prompt, iPrompt ) from widget.Widget( id )
 
    //#default rendering, not very complex.
    function renderLabel()
-      return self.name_wid.renderLabel()
+      if self.prompt provides render
+         return self.prompt.render
+      else
+         return self.prompt
+      end
    end
 
    function renderInfo()
@@ -218,7 +223,7 @@ class NameWithAvail( id, prompt, iPrompt ) from widget.Widget( id )
    end
 
    function renderContent()
-      return self.name_checked.render() + self.name_wid.renderCore()
+      return self.name_checked.render() + self.name_wid.render()
    end
 
    function setValue( val )
