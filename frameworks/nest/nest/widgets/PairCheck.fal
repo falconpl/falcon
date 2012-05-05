@@ -44,18 +44,20 @@ class PairCheck( id, first_widget, second_widget ) from widget.Widget( id )
    
    function onRender()
       // we render the method here to be able to change the text after init.
-      self.jsMethods["checkPair"] = @'
+      self.jsMethods["checkPair"] = @"
          function(){
-            var match = "";
+            var match = '';
             if( this.valueOfFirst == this.valueOfSecond ) {
-               this.innerHTML="$(self.text_match)";
-               match = "ok";
+               this.innerHTML='$(self.text_match)';
+               match = 'ok';
             }
             else {
-               this.innerHTML="$(self.text_no_match)";
-               match = "";
+               this.innerHTML='$(self.text_no_match)';
+               match = '';
             }
-         }'
+            
+            Nest.message(this, 'pair', match);
+         }"
    end
 
    function renderContent()
