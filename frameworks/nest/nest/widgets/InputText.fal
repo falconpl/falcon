@@ -49,7 +49,14 @@ class InputText( id, prompt, iPrompt ) from widget.Widget( id )
          else
             self.onCreate = "this.checkIPrompt();"
          end
-         
+
+         self.jsMethods["setfocus"] = "
+            function(){
+               var other = Nest.i(this.id + '.iprompt');
+               if ( other != null && other.style.display != 'none' ){other.focus();}
+               else{ this.focus();}
+            }"
+            
          self.jsMethods["checkIPrompt"] = @"
             function() {
                var other = Nest.i(this.id + '.iprompt');
@@ -69,6 +76,8 @@ class InputText( id, prompt, iPrompt ) from widget.Widget( id )
                this.style.display = '';
                this.focus();
             }"
+      else
+         self.jsMethods["setfocus"] = "function(){this.focus();}"
       end
    end
 

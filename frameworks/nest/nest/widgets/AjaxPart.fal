@@ -1,0 +1,145 @@
+/*
+   FALCON - The Falcon Programming Language
+
+   Nest - Falcon web applcation engine
+
+   FILE: AjaxPart.fal
+
+   AJAX widgeting subsystem -- Generic dynamic openable component.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Sat, 05 May 2012 20:40:37 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2012: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+import Widget from nest.widgets.widget as Widget
+
+/*# Openable dynamic AJAX content.
+   @param id The ID of this widget.
+   @param closedWidget The widget to be displayed when closed.
+   @optparam loadingMsg An HTML text to be displayed as the pane is being loaded.
+   @optparam autoOpen Click on this closed part will open it.
+   @initOpen initOpen if true, the widget will be initially open.
+   
+   The AjaxPart is a dynamically openable pane, whose content when "open"
+   is retrieved as a pane of an @a AjaxPane widget.
+
+   If @b autoOpen is set, then a click on the widget in the closed status
+   will be considered a request to open it, otherwise the javascript
+   open() method exposed by this widget shall be called.
+
+   The default name for the pane when open is @b "open".
+*/
+class AjaxPart( id, closedWid, loadingMsg, autoOpen, initOpen ) from Widget(id)
+   closedWid = closedWid
+   openWid = Widget( 'open' )
+   
+   //# This is not an ajax host. Subclasses should become.
+   isAJAXHost = false
+
+   //# The subclass should define the panes contents (text or functions).
+   paneData = [=>]
+
+   loadingMsg = loadingMsg
+
+   init
+      self.addChildren( self.closedWid, self.openWid )
+      if autoOpen: self.closedWid.set(["onclick"=> "Nest.rw(this,'..').open();"])
+      
+      if initOpen
+         self.closedWid.addStyle("display:none")
+         self.onCreate = "this.open();"
+      else
+         self.openWid.addStyle("display:none")
+      end
+      
+      // TODO: Remove this when we have automatic parentship
+      self.addClassInParentship( AjaxPart )
+   end
+
+   function onRender()
+      msg = self.ajaxMsgLiteral( "open", nil, "extra" )
+      clID = self.closedWid.getFullID()
+      
+      if( self.loadingMsg )
+         self.jsMethods["loadingMsg"] = '"' + self.loadingMsg.replace('"', '\"') + '"'
+      end
+
+      
+      self.jsMethods["open"] = "
+         function( pane ) {
+            if( this.isOpen ) return;
+            this.isOpen = true;
+            if( this.loadingMsg ) {
+               
+               var op = Nest.rw(this,'open');
+               var cp = Nest.i('" + clID + "');" +"
+               op.style.width = cp.style.width;
+               op.style.height = cp.style.height;
+               op.innerHTML = this.loadingMsg;
+               op.style.display = '';
+               cp.style.display='none';"+"
+            }
+            
+            if( pane == null ) pane = 'open';
+            var extra = {'pane':pane};" + msg + ";}"
+         
+      self.jsMethods["close"] = "
+         function() {
+               if( ! this.isOpen ) return;
+               this.isOpen = false;
+               Nest.i(this.id + '.open').style.display='none';
+               Nest.i('" + clID + "').style.display='';"+"
+            }"
+
+      self.jsMethods["setOpenView"] = "
+         function( data ) {
+            var op = Nest.rw(this,'open');
+            var cp = Nest.i('" + clID + "');"+"
+            op.innerHTML = data.content;
+            if ( data.width && data.height ) {
+               op.style.width = data.width + 'px';
+               op.style.height = data.height + 'px';
+               op.style.display = 'inline-block';
+            }
+            else { 
+               op.style.display = '';
+            }
+            cp.style.display = 'none';
+         }"
+   end
+
+   function AJAX( data )
+      if data['msg'] == "open"
+         pane = data['extra']['pane'];
+         if pane in self.paneData
+            data = self.paneData[pane]
+            if data.isCallable(): data = data()
+         else
+            data = self.onUnknownPane( pane )
+         end
+
+         if data.typeId() == StringType
+            ret = ["content"=>data]
+         else
+            ret = ["content"=>data[2], "width"=>data[0], "height"=>data[1]]
+         end
+         
+         return [self.msgInvoke('setOpenView', ret)]
+      end
+      return []
+   end
+
+   /*# Function called when a required pane is not found in the paneData dictionrary.
+      @param pane The pane ID that was not found.
+      @return A string to be sent remotely.
+   */
+   function onUnknownPane( pane )
+      return @"AjaxPart: pane \"$(pane)\" not found."
+   end
+
+end

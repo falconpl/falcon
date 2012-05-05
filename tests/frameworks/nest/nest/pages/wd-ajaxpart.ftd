@@ -1,0 +1,39 @@
+<?
+   import Button from nest.widgets.Button as Button
+?>
+
+<h2>Nest Widget test: AJAX part</h2>
+<style>
+div#tap1 {
+   border: 1px solid black;
+   cursor: pointer;
+   cursor: hand;
+}
+
+div#tap2 {
+   display: inline-block;
+   width: auto;
+   border: 1px solid black;
+   overflow: auto;
+}
+</style>
+<?
+   tap1 = Nest.widget('TestAjaxPart1')('tap1')
+   >tap1.render()
+?>
+<br/>
+<hr/>
+<?
+   tap2 = Nest.widget('TestAjaxPart2')('tap2')
+   btn2 = Button( "btnOpenPart2", "Open part 2" )
+   tap2.jsListeners[btn2] = "function(){this.open();}"
+   > tap2.render()
+   > "<p>", btn2.render(), "</p>"
+?>
+<hr/>
+
+<p>The above test shows two AJAX enable "parts", that is, expandible widgts that are shown
+inline in a page. The first area is auto-expandible (it can be directly clicked). The
+second area is expandible by clicking the button below it.</p>
+<p>The second part shows how the AJAX routine of the part can set a specific
+size for the opened widget.</p>

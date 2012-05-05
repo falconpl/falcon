@@ -24,4 +24,6 @@
 <li><a href="<?=Nest.pageLink('wd-miniblog')?>">Small embedded blog</a></li>
 <li><a href="<?=Nest.pageLink('wd-calendar')?>">AJAX enabled calendar</a></li>
 <li><a href="<?=Nest.pageLink('wd-showcase')?>">Showcase</a></li>
+<li><a href="<?=Nest.pageLink('wd-ajaxpane')?>">Ajax Pane</a></li>
+<li><a href="<?=Nest.pageLink('wd-ajaxpart')?>">Ajax Part</a></li>
 </ul>

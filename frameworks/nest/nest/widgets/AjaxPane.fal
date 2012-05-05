@@ -1,0 +1,96 @@
+/*
+   FALCON - The Falcon Programming Language
+
+   Nest - Falcon web applcation engine
+
+   FILE: AjaxPane.fal
+
+   AJAX widgeting subsystem -- Pane loading AJAX content.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Sat, 05 May 2012 20:40:37 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2012: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+import from nest.widgets.widget in widget
+
+/*# Pane ready to load AJAX content.
+   @param id The ID of this widget.
+   @optparam loadingMsg An HTML text to be displayed as the pane is being loaded.
+   
+   The AjaxPane is simply a DIV that has a simple pre-disposition to load
+   dynamic content from its subclasses.
+
+   The subclasses are supposed to become AJAX host by setting the
+   isAJAXHost property to true, and to define the @b paneData dictionrary.
+
+   Each entry in the @b paneData property is a pane name, and it can be
+   associated with a string or a function returning a string.
+
+   The class offers a simple javascript-side method called loadPane, that
+   receives a string that must match with one paneData entry.
+   
+   The AJAX method of this class resoponds to the "load-pane" message and
+   searches for an entry to be read or called in the subclass's pageData
+   dictionary. If not found, the overridable onUnknownPane method will
+   be called, and its return value will be used instead.
+
+   Once the content is determined, the widget sets the innerHTML property
+   of the remote side script accordingly.
+*/
+class AjaxPane( id, loadingMsg ) from widget.Widget( id )
+
+   //# This is not an ajax host. Subclasses should become.
+   isAJAXHost = false
+   
+   //# The subclass should define the panes contents (text or functions).
+   paneData = [=>]
+
+   loadingMsg = loadingMsg
+   
+   init
+      // TODO: Remove this when we have automatic parentship      
+      self.addClassInParentship( AjaxPane )
+   end
+
+   function onRender()
+      msg = self.ajaxMsgLiteral( "load-pane", nil, "extra" )
+      if( self.loadingMsg )
+         self.jsMethods["loadingMsg"] = '"' + self.loadingMsg.replace('"', '\"') + '"'
+      end
+      self.jsMethods["loadPane"] = @"
+         function( pane ) {
+            if( this.loadingMsg ) this.innerHTML = this.loadingMsg;
+            var extra = {'pane':pane};
+            $(msg);
+         }"
+   end
+
+   function AJAX( data )
+      if data['msg'] == "load-pane"
+         pane = data['extra']['pane'];
+         if pane in self.paneData
+            data = self.paneData[pane]
+            if data.isCallable(): data = data()
+         else
+            data = self.onUnknownPane( pane )
+         end
+
+         return [self.msgSetProperty('innerHTML', data)]
+      end
+      return []
+   end
+
+   /*# Function called when a required pane is not found in the paneData dictionrary.
+      @param pane The pane ID that was not found.
+      @return A string to be sent remotely.
+   */
+   function onUnknownPane( pane )
+      return @"AjaxPane: pane \"$(pane)\" not found."
+   end
+
+end

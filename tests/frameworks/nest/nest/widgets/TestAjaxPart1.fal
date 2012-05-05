@@ -1,0 +1,20 @@
+import AjaxPart from nest.widgets.AjaxPart as AjaxPart
+import Button from nest.widgets.Button as Button
+import Text from nest.widgets.Text as Text
+
+class TestAjaxPart1(id) from AjaxPart(id, Text('closed', "Try to open me..."),
+            "<p>Simulating some wait... <img src=\"/?r=ajax-loader.gif\"></p>",
+            true)
+            
+   isAJAXHost = true
+
+   init
+      btn = Button('_.btn', "Close me...", nil, @" Nest.i('$(id)').close()" )
+      
+      self.paneData['open'] = {=>
+         sleep(1)
+         return "<h1>This is the first opened data.</h1><p>" +
+            btn.render() + "</p>"
+         }
+   end
+end

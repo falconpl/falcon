@@ -1,0 +1,35 @@
+<?
+   import Button from nest.widgets.Button as Button
+?>
+
+<h2>Nest Widget test: AJAX pane</h2>
+<style>
+#tap1.closed{
+   width: 600px;
+   height: 150px;
+   margin: 10px;
+   padding: 5px;
+   border: 1px solid black;
+   overflow: auto;
+}
+</style>
+<?
+   tap = Nest.widget('TestAjaxPane')('tap')
+   btn1 = Button( 'btn1', 'First pane')
+   btn2 = Button( 'btn2', 'Second pane')
+   btn3 = Button( 'btn3', 'Third pane')
+   btn4 = Button( 'btn4', 'Fourth pane')
+
+   tap.jsListeners[btn1] = "function(){ this.loadPane('first'); }"
+   tap.jsListeners[btn2] = "function(){ this.loadPane('second'); }"
+   tap.jsListeners[btn3] = "function(){ this.loadPane('third'); }"
+   tap.jsListeners[btn4] = "function(){ this.loadPane('fourth'); }"
+   >tap.render()
+?>
+<p>The above pane can be used to load dynamic AJAX content by pressing one of the wollowing buttons:</p>
+<ul>
+<li><?=btn1.render()?></li>
+<li><?=btn2.render()?></li>
+<li><?=btn3.render()?> (<b>Note</b>: this page doesn't exist)</li>
+<li><?=btn4.render()?> (<b>Note</b>: this page doesn't exist)</li>
+</ul>

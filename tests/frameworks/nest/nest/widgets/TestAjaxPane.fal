@@ -1,0 +1,42 @@
+import AjaxPane from nest.widgets.AjaxPane as AjaxPane
+
+class TestAjaxPane(id) from AjaxPane(id,
+            "<p>Simulating some wait... <img src=\"/?r=ajax-loader.gif\"></p>")
+   isAJAXHost = true
+   paneData = [
+      'first' => "<h1>This is the first page</h1><p>This is the AJAX content of the first page.</p>",
+      'second' => {=>
+         sleep(1)
+         if 'TestAjaxPane' notin Nest.sessionData
+            data = 1
+            Nest.sessionData['TestAjaxPane'] = 1
+         else
+            data = Nest.sessionData['TestAjaxPane']
+            Nest.sessionData['TestAjaxPane'] = data + 1
+         end
+
+         extra = "<p>"
+         for n = 1 to data
+            extra+= @"Extra text to activate scrolling... $n<br/>"
+         end
+         extra += "</p>"
+         
+         return @"
+               <h1>This is the second page</h1>
+               <p>This page has been generated dynamically $(data) times.</p>" + extra
+         }
+   ]
+
+   function renderContent()
+      return "<p>Still nothing here...</p>"
+   end
+
+   function onUnknownPage( page )
+      if page and page[0] == 't'
+         return @"<p>TextAjaxPane (overriding AjaxPane): page \"<b>$(page)</b>\" not found.</p>"
+      else
+         return AjaxPane.onUnknownPage( page )
+      end
+   end
+   
+end

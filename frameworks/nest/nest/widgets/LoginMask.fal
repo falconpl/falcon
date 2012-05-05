@@ -77,7 +77,7 @@ class LoginMask( id, formAction ) from widget.Widget( id )
    recover = nil // Link( "recover", recoverLink, "Forgot my password" )
    
    //# A default skin (to be configured)
-   recover_skin = "<tr><td colspan=\"2\">$(recover)</td></tr>"
+   recover_skin = "<tr class='nest_login_recover'><td colspan=\"2\">$(recover)</td></tr>"
 
    //# A default skin (to be configured)
    skin = "
@@ -99,12 +99,8 @@ class LoginMask( id, formAction ) from widget.Widget( id )
    ]
    
    init
-      self.addChild( self.userID )
-      self.addChild( self.pwd )
-      self.addChild( self.rememberMe )
-      self.addChild( self.loginBtn )
-      self.addChild( self.accessStatus )
-      self.addChild( self.loginBusy )
+      self.addChildren( self.userID, self.pwd, self.rememberMe, self.loginBtn, 
+                        self.accessStatus, self.loginBusy )
 
       self.props = ["style"=>"display:inline-block"]
       self.loginBusy.props["width"] = 16
@@ -114,11 +110,24 @@ class LoginMask( id, formAction ) from widget.Widget( id )
          self => "
             function( obj, msg, value ) {
                if( msg == 'login' ) {
-                  this.style.display = value == null ? '' : 'none';
+                  if( value == null ) {
+                  this.style.display = '';
+                  Nest.rw(this,'../user-id').value='';
+                  Nest.rw(this,'../pwd').value='';
+                  Nest.rw(this,'../user-id').setfocus();                  
+               }
+               else {
+                  this.style.display = 'none';   
+               }
                }
             }"
          ]
 
+      self.userID.onEnter( "function(){ if( this.value.length >0 ) Nest.rw(this,'../pwd').setfocus();}" )
+      self.pwd.onEnter( formAction ?
+         "function(){ if( this.value.length >0 ) Nest.rw(this,'../').submit();}" :
+         "function(){ if( this.value.length >0 ) Nest.rw(this,'../login').sendLogin();}")
+         
       // if we're not using a form convention, we're ajax
       if not formAction
          self.isAJAXHost = true
@@ -165,7 +174,7 @@ class LoginMask( id, formAction ) from widget.Widget( id )
       loginBtn = self.loginBtn.render()
       accessStatus = self.accessStatus.render()
       loginBusy = self.loginBusy.render()
-
+      
       return @self.skin
    end
 
