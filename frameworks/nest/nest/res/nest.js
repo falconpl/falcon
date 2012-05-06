@@ -22,9 +22,36 @@ if (!Array.prototype.indexOf) {
 }
 
    //============================================================================ Private part
-   function ajax( url, data, callback ) {
+   var pendingAjaxReqs = new Array();
+   
+   function ajax( url, data, callback, errCallback ) {
       var http = window.XMLHttpRequest ? new XMLHttpRequest() : new ActiveXObject("Microsoft.XMLHTTP");
+      http.onreadystatechange = function() { //Call a function when the state changes.
+         if(http.readyState == 4 ) {
+            if ( http.status == 200 ) {
+               var obj;
+               try {
+                  // try to understand as json.
+                  obj = JSON.parse(http.responseText);
+               }
+               catch( err ) {
+                  // if not json, raise proper error.
+                  Nest.onJSONError( http.responseText, err )
+               }
 
+               if( obj ) {
+                  // application error?
+                  if ( obj.error ) { Nest.onAPIError( obj ); }
+                  else if (callback) { callback( obj ); }
+               }
+            }
+            else {
+               if( errCallback ) errCallback( http.status, http.responseText );
+               else Nest.onAJAXError( http.status, http.responseText );
+            }
+         }
+      }
+      
       var params = "";
       if(data) {
          /*
@@ -47,36 +74,44 @@ if (!Array.prototype.indexOf) {
          http.open("GET", url, true);
       }
 
-      http.onreadystatechange = function() { //Call a function when the state changes.
-         if(http.readyState == 4 ) {
-            if ( http.status == 200 ) {
-               var obj;
-               try {
-                  // try to understand as json.
-                  obj = JSON.parse(http.responseText);
-               }
-               catch( err ) {
-                  // if not json, raise proper error.
-                  Nest.onJSONError( http.responseText, err )
-               }
-
-               if( obj ) {
-                  // application error?
-                  if ( obj.error ) { Nest.onAPIError( obj ); }
-                  else if (callback) { callback( obj ); }
-               }
-            }
-            else {
-               Nest.onAJAXError( http.status, http.responseText );
-            }
-         }
-      }
-
       if( data ) {
          http.send(params);
       }
       else {
          http.send(null);
+      }
+   }
+
+   function onAjaxDone( obj ) {
+      var req = pendingAjaxReqs[0]; /* Do not shift now to prevent the callback to re-fire */
+      if( req.callback ) req.callback( obj );
+      pendingAjaxReqs.shift();
+      if( pendingAjaxReqs.length > 0 ) {
+         req = pendingAjaxReqs[0];
+         ajax( req.url, req.data, onAjaxDone, onAjaxFailed );
+      }
+   }
+   
+   function onAjaxFailed( status, response ) {
+      /* Try again? */
+      var req = pendingAjaxReqs[0];
+      if (req.errCount < 2 && status == 0) {
+         req.errCount = req.errCount + 1;
+         ajax( req.url, req.data, onAjaxDone, onAjaxFailed );
+      }
+      else {
+         /* Don't bother processing other pending requests */
+         pendingAjaxReqs = new Array();
+         if( req.errCallback ) req.errCallback( status, response );
+         else Nest.onAJAXError( status, response );
+      }
+   }
+   
+   function addAjaxRequest( url_, data_, callback_, errCallback_ ) {
+      var req = {url: url_, data: data_, callback: callback_, errCallback: errCallback_, errCount: 0 };
+      pendingAjaxReqs.push( req );
+      if( pendingAjaxReqs.length == 1 ) {
+         ajax( url_, data_, onAjaxDone, onAjaxFailed );
       }
    }
 
@@ -222,7 +257,7 @@ if (!Array.prototype.indexOf) {
    if (typeof Nest.ajax !== 'function') {
       Nest.ajax = function ( req_id, params, callback ) {
          var url = "./?a=" + req_id;
-         ajax( url, params, callback );
+         addAjaxRequest( url, params, callback );
       }
    }
 
@@ -258,7 +293,7 @@ if (!Array.prototype.indexOf) {
 
          var url = "./?w=" + widClass;
          //alert( JSON.stringify( objToSend ) );
-         ajax( url, objToSend, Nest.widgetUpdate );
+         addAjaxRequest( url, objToSend, Nest.widgetUpdate );
       }
    }
 

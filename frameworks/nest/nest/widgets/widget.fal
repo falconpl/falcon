@@ -334,7 +334,9 @@ class Widget( id )
 
       // and the class for the CSS
       // TODO: use the proper parentship on the new engine.
-      if self.classStyles or Nest.hasOneOfClassStyles( self._parentship ): self.CSSClassID()
+      if not Nest.genWidgetStyles or self.classStyles or Nest.hasOneOfClassStyles( self._parentship )
+         self.CSSClassID()
+      end
       
       // ... then allow the widget to self-render.
       self.onRender()

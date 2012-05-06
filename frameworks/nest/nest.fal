@@ -471,6 +471,27 @@ object Nest
 
    end
 
+   /*# Nest redirect function.
+      @param url An URL or Page ID where to redirect the page.
+      @optparam values A dictionary of values to be added to the page id.
+      
+      This method kills the current processing of the Nest page,
+      and invokes WOPI Reply.redirect request. The redirection
+      request will be sent as an HTTP header, and all the parts
+      of the document generated up to date will be discarded.
+
+      @note If URL begins with a "!", then is inteded as a nest PID. 
+   */
+   function redirect( url, values )
+      if url.startsWith('!')
+         url = self.pageLink(url[1:], values)         
+      end
+
+      Reply.redirect(url)
+      Reply.commit()
+      exit(0)
+   end
+
    /*# Adds a startup function.
       @param func a function that must be invoked at startup.
       

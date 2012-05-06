@@ -2,8 +2,10 @@ import AjaxPart from nest.widgets.AjaxPart as AjaxPart
 import Button from nest.widgets.Button as Button
 import Text from nest.widgets.Text as Text
 
-class TestAjaxPart2(id) from AjaxPart(id, Text('closed', "You got to click the button below to open this part..."),
-            "<p>Simulating some wait... <img src=\"/?r=ajax-loader.gif\"></p>" )
+class TestAjaxPart2(id) from AjaxPart(id,
+         Text('closed', "You got to click the button below to open this part..."),
+         nil,
+         "<p>Simulating some wait... <img src=\"/?r=ajax-loader.gif\"></p>" )
 
    isAJAXHost = true
 

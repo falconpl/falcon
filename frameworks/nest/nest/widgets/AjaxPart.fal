@@ -20,7 +20,9 @@ import Widget from nest.widgets.widget as Widget
 
 /*# Openable dynamic AJAX content.
    @param id The ID of this widget.
-   @param closedWidget The widget to be displayed when closed.
+   @param closedWid The widget to be displayed when closed.
+   @optparam openWid The widget to be displayed when open.
+   
    @optparam loadingMsg An HTML text to be displayed as the pane is being loaded.
    @optparam autoOpen Click on this closed part will open it.
    @initOpen initOpen if true, the widget will be initially open.
@@ -34,9 +36,9 @@ import Widget from nest.widgets.widget as Widget
 
    The default name for the pane when open is @b "open".
 */
-class AjaxPart( id, closedWid, loadingMsg, autoOpen, initOpen ) from Widget(id)
+class AjaxPart( id, closedWid, openWid, loadingMsg, autoOpen, initOpen ) from Widget(id)
    closedWid = closedWid
-   openWid = Widget( 'open' )
+   openWid = openWid ? openWid : Widget( 'open' )
    
    //# This is not an ajax host. Subclasses should become.
    isAJAXHost = false
@@ -75,7 +77,6 @@ class AjaxPart( id, closedWid, loadingMsg, autoOpen, initOpen ) from Widget(id)
             if( this.isOpen ) return;
             this.isOpen = true;
             if( this.loadingMsg ) {
-               
                var op = Nest.rw(this,'open');
                var cp = Nest.i('" + clID + "');" +"
                op.style.width = cp.style.width;
@@ -107,7 +108,7 @@ class AjaxPart( id, closedWid, loadingMsg, autoOpen, initOpen ) from Widget(id)
                op.style.display = 'inline-block';
             }
             else { 
-               op.style.display = '';
+               op.style.display = 'block';
             }
             cp.style.display = 'none';
          }"

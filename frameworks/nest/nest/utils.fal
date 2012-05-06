@@ -74,6 +74,7 @@ function checkModifiedSince( res_file )
             Reply.setHeader( "Content-Type" )
             Reply.setHeader( "Cache-Control" )
             Reply.commit()
+            exit(0)
             return true
          end
       catch in e
