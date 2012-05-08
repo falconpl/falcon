@@ -212,7 +212,7 @@ class NameWithAvail( id, prompt, iPrompt ) from widget.Widget( id )
    //#default rendering, not very complex.
    function renderLabel()
       if self.prompt provides render
-         return self.prompt.render
+         return self.prompt.render()
       else
          return self.prompt
       end
