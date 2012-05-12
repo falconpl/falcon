@@ -130,6 +130,7 @@ add_library(falcon_engine SHARED
   psteps/expreval.cpp
   psteps/exprfuncpower.cpp
   psteps/expriif.cpp
+  psteps/exprin.cpp
   psteps/exprincdec.cpp
   psteps/exprindex.cpp
   psteps/exprinherit.cpp
@@ -138,6 +139,7 @@ add_library(falcon_engine SHARED
   psteps/exprmath.cpp
   psteps/exprmultiunpack.cpp
   psteps/exprneg.cpp
+  psteps/exprnotin.cpp
   psteps/exproob.cpp
   psteps/exprparentship.cpp
   psteps/exprrange.cpp
