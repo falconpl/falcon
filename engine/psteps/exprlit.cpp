@@ -2,7 +2,7 @@
    FALCON - The Falcon Programming Language.
    FILE: exprlit.cpp
 
-   Literla expression (*= expr) 
+   Literal expression (^= expr) 
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: Wed, 04 Jan 2012 00:55:18 +0100
