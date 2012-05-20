@@ -121,6 +121,7 @@ public:
    Parsing::Terminal T_nil;
    Parsing::Terminal T_try;
    Parsing::Terminal T_catch;
+   Parsing::Terminal T_notin;
    Parsing::Terminal T_finally;
    Parsing::Terminal T_raise;
    Parsing::Terminal T_elif;
@@ -323,6 +324,8 @@ public:
    Parsing::Rule r_Expr_le;
    Parsing::Rule r_Expr_ge;
    Parsing::Rule r_Expr_eeq;
+   Parsing::Rule r_Expr_in;
+   Parsing::Rule r_Expr_notin;
 
    Parsing::Rule r_Expr_call;
    Parsing::Rule r_Expr_index;

@@ -612,7 +612,7 @@ bool FalconClass::construct()
    _p->constructing();
    
    // perform property flattening.
-   if( m_parentship > 0 )
+   if( m_parentship != 0 )
    {
       // add properties top to bottom.
       int len =  m_parentship->arity();

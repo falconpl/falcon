@@ -40,6 +40,8 @@ void apply_expr_le( const Rule& r, Parser& p );
 void apply_expr_ge( const Rule& r, Parser& p );
 void apply_expr_eeq( const Rule& r, Parser& p );
 void apply_expr_plus( const Rule& r, Parser& p );
+void apply_expr_in( const Rule& r, Parser& p );
+void apply_expr_notin( const Rule& r, Parser& p );
 
 void apply_expr_preinc(const Rule&, Parser& p );
 void apply_expr_postinc(const Rule&, Parser& p );

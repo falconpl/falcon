@@ -154,6 +154,7 @@ SourceParser::SourceParser():
    T_nil("nil"),
    T_try("try"),
    T_catch("catch"),
+   T_notin("notin", 20),
    T_finally("finally"),
    T_raise("raise"),
 
@@ -418,6 +419,8 @@ SourceParser::SourceParser():
    Expr<< (r_Expr_le << "Expr_le" << apply_expr_le << Expr << T_LE << Expr);
    Expr<< (r_Expr_ge << "Expr_ge" << apply_expr_ge << Expr << T_GE << Expr);
    Expr<< (r_Expr_eeq << "Expr_eeq" << apply_expr_eeq << Expr << T_eq << Expr);
+   Expr<< (r_Expr_in << "Expr in" << apply_expr_in << Expr << T_in << Expr);
+   Expr<< (r_Expr_notin << "Expr notin" << apply_expr_notin << Expr << T_notin << Expr);
 
    Expr<< (r_Expr_call << "Expr_call" << apply_expr_call << Expr << T_Openpar << ListExpr << T_Closepar );
    Expr<< (r_Expr_index << "Expr_index" << apply_expr_index << Expr << T_OpenSquare << Expr << T_CloseSquare );

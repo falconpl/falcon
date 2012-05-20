@@ -31,6 +31,8 @@
 #include <falcon/psteps/exprvalue.h>
 #include <falcon/psteps/exprcompare.h>
 #include <falcon/psteps/exprmath.h>
+#include <falcon/psteps/exprin.h>
+#include <falcon/psteps/exprnotin.h>
 #include <falcon/psteps/exprdot.h>
 #include <falcon/psteps/expreeq.h>
 #include <falcon/psteps/exprneg.h>
@@ -126,6 +128,15 @@ void apply_expr_equal( const Rule& r, Parser& p )
   apply_expr_binary( r, p, new ExprEEQ );
 }
 
+void apply_expr_in( const Rule& r, Parser& p )
+{
+  apply_expr_binary( r, p, new ExprIn );
+}
+
+void apply_expr_notin( const Rule& r, Parser& p )
+{
+  apply_expr_binary( r, p, new ExprNotin );
+}
 
 void apply_expr_plus( const Rule& r, Parser& p )
 {
