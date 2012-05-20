@@ -71,7 +71,6 @@ public:
    virtual void op_compare( VMContext* ctx, void* self ) const;
    virtual void op_isTrue( VMContext* ctx, void* self ) const;
    virtual void op_in( VMContext* ctx, void* self ) const;
-   virtual void op_provides( VMContext* ctx, void* self, const String& property ) const;
    virtual void op_call( VMContext* ctx, int32 paramCount, void* self ) const;
    virtual void op_eval( VMContext* ctx, void* self ) const;
    virtual void op_toString( VMContext* ctx, void* self ) const;

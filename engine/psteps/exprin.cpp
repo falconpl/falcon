@@ -87,15 +87,8 @@ void ExprIn::describeTo( String& ret, int depth ) const
    ret = "(" + m_first->describe(depth+1) + " in " + m_second->describe(depth+1) + ")";
 }
 
-bool ExprIn::simplify( Item& value ) const
+bool ExprIn::simplify( Item& ) const
 {
-   Item d1, d2;
-   if( m_first->simplify(d1) && m_second->simplify(d2) )
-   {
-      value.setBoolean( d1.compare(d2) == 0 );
-      return true;
-   }
-   
    return false;
 }
 

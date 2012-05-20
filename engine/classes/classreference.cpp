@@ -426,17 +426,6 @@ void ClassReference::op_in( VMContext* ctx, void* self ) const
    cls->op_in( ctx, data );   
 }
 
-
-void ClassReference::op_provides( VMContext* ctx, void* self, const String& property ) const
-{
-   ItemReference* ref = static_cast<ItemReference*>(self);
-   Class* cls;
-   void* data;
-   ref->item().forceClassInst( cls, data );
-   cls->op_provides( ctx, data, property );   
-}
-
-
 void ClassReference::op_call( VMContext* ctx, int32 paramCount, void* self ) const
 {
    ItemReference* ref = static_cast<ItemReference*>(self);

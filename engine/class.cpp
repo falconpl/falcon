@@ -401,12 +401,6 @@ void Class::op_in( VMContext* , void*) const
    throw new OperandError( ErrorParam( e_invop, __LINE__, SRC ).extra("in") );
 }
 
-
-void Class::op_provides( VMContext* ctx, void*, const String& ) const
-{
-   ctx->stackResult(1, false);
-}
-
 void Class::op_toString( VMContext* ctx, void *self ) const
 {
    String *descr = new String();

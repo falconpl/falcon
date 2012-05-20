@@ -316,13 +316,6 @@ void DerivedFrom::op_in( VMContext* ctx, void* instance ) const
    return m_parent->op_in( ctx, instance );
 }
 
-
-void DerivedFrom::op_provides( VMContext* ctx, void* instance, const String& property ) const
-{
-   return m_parent->op_provides( ctx, instance, property );
-}
-
-
 void DerivedFrom::op_call( VMContext* ctx, int32 paramCount, void* instance ) const
 {
    return m_parent->op_call( ctx, paramCount, instance );

@@ -817,17 +817,6 @@ public:
     */
    virtual void op_in( VMContext* ctx, void* instance ) const;
 
-   /** Called back when the vm wants to know if a certain item provides a certain property.
-     \param vm the virtual machine that will receive the result.
-     \param instance the instance (or 0 on flat items).
-     \param property The property that should be accessed.
-
-    \note The operand is unary -- requires OpToken with 1 parameter.
-
-    The result placed in target should be a boolean true or false value.
-    */
-   virtual void op_provides( VMContext* ctx, void* instance, const String& property ) const;
-
    /** Call the instance.
     \param ctx A virutal machine where the call is performed.
     \param instance An instance of this class

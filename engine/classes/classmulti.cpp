@@ -89,7 +89,6 @@ void ClassMulti::checkAddOverride( const String& name, Property* p )
    else if( name == OVERRIDE_OP_COMPARE ) m_overrides[OVERRIDE_OP_COMPARE_ID] = p;
    else if( name == OVERRIDE_OP_ISTRUE ) m_overrides[OVERRIDE_OP_ISTRUE_ID] = p;
    else if( name == OVERRIDE_OP_IN ) m_overrides[OVERRIDE_OP_IN_ID] = p;
-   else if( name == OVERRIDE_OP_PROVIDES ) m_overrides[OVERRIDE_OP_PROVIDES_ID] = p;
    else if( name == OVERRIDE_OP_TOSTRING ) m_overrides[OVERRIDE_OP_TOSTRING_ID] = p;
    else if( name == OVERRIDE_OP_ITER ) m_overrides[OVERRIDE_OP_ITER_ID] = p;
    else if( name == OVERRIDE_OP_NEXT ) m_overrides[OVERRIDE_OP_NEXT_ID] = p;
@@ -138,7 +137,6 @@ void ClassMulti::checkRemoveOverride( const String& name )
    else if( name == OVERRIDE_OP_COMPARE ) m_overrides[OVERRIDE_OP_COMPARE_ID] = 0;
    else if( name == OVERRIDE_OP_ISTRUE ) m_overrides[OVERRIDE_OP_ISTRUE_ID] = 0;
    else if( name == OVERRIDE_OP_IN ) m_overrides[OVERRIDE_OP_IN_ID] = 0;
-   else if( name == OVERRIDE_OP_PROVIDES ) m_overrides[OVERRIDE_OP_PROVIDES_ID] = 0;
    else if( name == OVERRIDE_OP_TOSTRING ) m_overrides[OVERRIDE_OP_TOSTRING_ID] = 0;
    else if( name == OVERRIDE_OP_ITER ) m_overrides[OVERRIDE_OP_ITER_ID] = 0;
    else if( name == OVERRIDE_OP_NEXT ) m_overrides[OVERRIDE_OP_NEXT_ID] = 0;
@@ -682,22 +680,6 @@ void ClassMulti::op_in( VMContext* ctx, void* self ) const
    else
    {
       throw new OperandError( ErrorParam(e_invop, __LINE__, SRC ).extra(OVERRIDE_OP_IN) );
-   }
-}
-
-
-void ClassMulti::op_provides( VMContext* ctx, void* self, const String& propName ) const
-{
-   Class* cls;
-   void* udata;
-
-   if( inl_get_override( self, OVERRIDE_OP_PROVIDES_ID, cls, udata ) )
-   {
-      cls->op_provides( ctx, udata, propName );
-   }
-   else
-   {
-      ctx->topData().setBoolean( hasProperty( self, propName ) );
    }
 }
 
