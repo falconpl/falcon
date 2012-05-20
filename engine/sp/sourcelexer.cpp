@@ -726,10 +726,9 @@ Parsing::TokenInstance* SourceLexer::checkWord()
          if ( m_text == "true" ) return parser->T_true.makeInstance(m_sline, m_schr);
          if ( m_text == "from" ) return parser->T_from.makeInstance(m_sline, m_schr);
          if ( m_text == "load" ) return parser->T_load.makeInstance(m_sline, m_schr);
-
+         if ( m_text == "case" ) return parser->T_case.makeInstance(m_sline, m_schr);
+         
          /*
-         if ( m_text == "case" )
-            return CASE;
          if ( m_text == "loop" )
             return LOOP;
          if ( m_text == "enum" )
@@ -750,8 +749,6 @@ Parsing::TokenInstance* SourceLexer::checkWord()
             return OP_NOTIN;
          if ( m_text == "const" )
             return CONST_KW;
-         if ( m_text == "while" )
-            return WHILE;
          if ( m_text == "false" )
             return FALSE_TOKEN;
          if ( m_text == "fself" )
@@ -767,10 +764,6 @@ Parsing::TokenInstance* SourceLexer::checkWord()
 
       case 6:
          /*
-         if ( m_text == "switch" )
-            return SWITCH;
-         if ( m_text == "select" )
-            return SELECT;
          if ( m_text == "global" )
             return GLOBAL;
          if ( m_text == "launch" )
@@ -778,6 +771,8 @@ Parsing::TokenInstance* SourceLexer::checkWord()
          if ( m_text == "object" )
             return OBJECT;
             */
+         if ( m_text == "switch" ) return parser->T_switch.makeInstance(m_sline, m_schr);
+         if ( m_text == "select" ) return parser->T_select.makeInstance(m_sline, m_schr);
          if ( m_text == "return" ) return parser->T_return.makeInstance(m_sline, m_schr);
          if ( m_text == "export" ) return parser->T_export.makeInstance(m_sline, m_schr);
          if ( m_text == "import" ) 
@@ -795,10 +790,7 @@ Parsing::TokenInstance* SourceLexer::checkWord()
       case 7:
          if ( m_text == "forlast" ) return parser->T_forlast.makeInstance(m_sline, m_schr);
          if ( m_text == "finally" ) return parser->T_finally.makeInstance(m_sline, m_schr);
-         /*
-         if ( m_text == "default" )
-            return DEFAULT;
-         */
+         if ( m_text == "default" ) return parser->T_default.makeInstance(m_sline, m_schr);
       break;
 
 

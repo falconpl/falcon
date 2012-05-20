@@ -511,7 +511,7 @@ private:
    class Private;
 
    // Data that requires local instantation
-   Private* _p;
+   Parser::Private* _p;
 
    const Token* m_consumeToken;
 };

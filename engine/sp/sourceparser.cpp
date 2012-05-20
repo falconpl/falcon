@@ -44,6 +44,7 @@
 #include <falcon/sp/parser_proto.h>
 #include <falcon/sp/parser_reference.h>
 #include <falcon/sp/parser_rule.h>
+#include <falcon/sp/parser_switch.h>
 #include <falcon/sp/parser_ternaryif.h>
 #include <falcon/sp/parser_try.h>
 #include <falcon/sp/parser_while.h>
@@ -180,7 +181,12 @@ SourceParser::SourceParser():
    T_formiddle( "formiddle" ),
    T_forlast( "forlast" ),
    T_break( "break" ),
-   T_continue( "continue" )   
+   T_continue( "continue" ),
+   
+   T_switch("switch"),
+   T_case("case"),
+   T_default("default"),
+   T_select("select")
    
 {
    S_Autoexpr << "Autoexpr"
@@ -239,6 +245,24 @@ SourceParser::SourceParser():
             << T_forlast << T_Colon )
       ;
    
+   S_Switch << "switch";
+   S_Switch << (r_switch << "r_switch" << apply_switch << T_switch << Expr << T_EOL )
+      ;
+   
+   S_Select << "select";
+   S_Select << (r_select << "r_select" << apply_select << T_select << Expr << T_EOL )
+      ;
+   
+   S_Case << "case";
+   S_Case << (r_case << "r_case" << apply_case << T_case << CaseList << T_EOL )
+          << (r_case_short << "r_case_short" << apply_case_short << T_case << CaseList << T_Colon )
+      ;
+   
+   S_Default << "default";
+   S_Default << (r_default << "r_default" << apply_default << T_default << T_EOL )
+             << (r_default_short << "r_default_short" << apply_default_short << T_default << T_Colon )
+      ;
+
    S_Rule << "RULE"
       << (r_rule << "rule" << apply_rule << T_rule << T_EOL )
       ;
@@ -257,7 +281,7 @@ SourceParser::SourceParser():
       << (r_end << "end" << apply_end << T_end << T_EOL)
       ;
 
-   S_SmallEnd << "END"
+   S_SmallEnd << "Small END"
       << (r_end_small << "end_small" << apply_end_small << T_end )
       ;
 
@@ -507,6 +531,23 @@ SourceParser::SourceParser():
    NeListExpr<< (r_NeListExpr_next << "NeListExpr_next" << apply_NeListExpr_next << NeListExpr << T_Comma << Expr );
    NeListExpr<< (r_NeListExpr_first << "NeListExpr_first" << apply_NeListExpr_first << Expr );
 
+   CaseListRange << "CaseListRange";
+   CaseListRange << (r_CaseListRange_int << "CaseListRange int" << apply_CaseListRange_int << T_Int << T_to << T_Int );
+   CaseListRange << (r_CaseListRange_string << "CaseListRange string" << apply_CaseListRange_string << T_String << T_to << T_String );
+   
+   CaseListToken << "CaseListToken";
+   CaseListToken << (r_CaseListToken_range << "CaseListRange" << apply_CaseListToken_range << CaseListRange );
+   CaseListToken << (r_CaseListToken_nil << "CaseListToken nil" << apply_CaseListToken_nil << T_nil );
+   CaseListToken << (r_CaseListToken_true << "CaseListToken true" << apply_CaseListToken_true << T_true );
+   CaseListToken << (r_CaseListToken_false << "CaseListToken false" << apply_CaseListToken_false << T_false );
+   CaseListToken << (r_CaseListToken_int << "CaseListToken int" << apply_CaseListToken_int << T_Int );
+   CaseListToken << (r_CaseListToken_string << "CaseListToken string" << apply_CaseListToken_string << T_String );
+   CaseListToken << (r_CaseListToken_sym << "CaseListToken sym" << apply_CaseListToken_sym << T_Name );
+   
+   CaseList << "CaseList";
+   CaseList<< (r_CaseList_next << "CaseList_next" << apply_CaseList_next << CaseList << T_Comma << CaseListToken );
+   CaseList<< (r_CaseList_first << "CaseList_first" << apply_CaseList_first << CaseListToken );
+   
 
    NeListExpr_ungreed << "NeListExpr_ungreed" << expr_errhand;
    NeListExpr_ungreed<< (r_NeListExpr_ungreed_next << "NeListExpr_ungreed_next" << apply_NeListExpr_ungreed_next << NeListExpr_ungreed << T_Comma << Expr );
@@ -643,6 +684,10 @@ SourceParser::SourceParser():
       << S_Forfirst
       << S_Formiddle
       << S_Forlast
+      << S_Switch
+      << S_Case
+      << S_Default
+      << S_Select
       << S_Try
       << S_Catch
       << S_Finally   
@@ -662,6 +707,7 @@ SourceParser::SourceParser():
       << S_End
       << S_EmptyLine
       ;
+   
 
    s_InlineFunc << "InlineFunc"
       << S_EmptyLine
@@ -676,6 +722,10 @@ SourceParser::SourceParser():
       << S_Forfirst
       << S_Formiddle
       << S_Forlast
+      << S_Switch
+      << S_Case
+      << S_Default
+      << S_Select
       << S_Try
       << S_Catch
       << S_Finally

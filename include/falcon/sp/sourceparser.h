@@ -147,6 +147,11 @@ public:
    Parsing::Terminal T_break;
    Parsing::Terminal T_continue;
    
+   Parsing::Terminal T_switch;
+   Parsing::Terminal T_case;
+   Parsing::Terminal T_default;
+   Parsing::Terminal T_select;
+   
    //================================================
    // Statements
    //
@@ -195,6 +200,20 @@ public:
    Parsing::NonTerminal S_Forlast;
    Parsing::Rule r_forlast;
    Parsing::Rule r_forlast_short;
+   
+   Parsing::NonTerminal S_Switch;
+   Parsing::Rule r_switch;
+   
+   Parsing::NonTerminal S_Select;
+   Parsing::Rule r_select;
+   
+   Parsing::NonTerminal S_Case;
+   Parsing::Rule r_case;
+   Parsing::Rule r_case_short;
+   
+   Parsing::NonTerminal S_Default;
+   Parsing::Rule r_default;
+   Parsing::Rule r_default_short;
    
    Parsing::NonTerminal S_Rule;
    Parsing::Rule r_rule;
@@ -440,6 +459,24 @@ public:
    Parsing::Rule r_ListExpr_next;
    Parsing::Rule r_ListExpr_first;
    Parsing::Rule r_ListExpr_empty;
+   
+   Parsing::NonTerminal CaseListRange;
+   Parsing::Rule r_CaseListRange_int;
+   Parsing::Rule r_CaseListRange_string;
+      
+   Parsing::NonTerminal CaseListToken;
+   Parsing::Rule r_CaseListToken_range;
+   Parsing::Rule r_CaseListToken_nil;
+   Parsing::Rule r_CaseListToken_true;
+   Parsing::Rule r_CaseListToken_false;
+   Parsing::Rule r_CaseListToken_int;
+   Parsing::Rule r_CaseListToken_string;
+   Parsing::Rule r_CaseListToken_sym;
+   
+   
+   Parsing::NonTerminal CaseList;
+   Parsing::Rule r_CaseList_next;
+   Parsing::Rule r_CaseList_first;
 
    Parsing::NonTerminal NeListExpr;
    Parsing::Rule r_NeListExpr_next;

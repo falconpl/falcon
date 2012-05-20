@@ -77,7 +77,7 @@ FAL_ERRORDECL( e_nonsym_ref, 39, "Trying to get a reference from a constant valu
 
 FAL_ERRORDECL( e_no_cls_inst, 40, "No internal class found for standalone object" );
 FAL_ERRORDECL( e_switch_clash, 41, "Duplicate or clashing switch/select case" );
-FAL_ERRORDECL( e_switch_default, 42, "Default block already defined in switch" );
+FAL_ERRORDECL( e_switch_default, 42, "Default block already defined in switch/select" );
 FAL_ERRORDECL( e_service_adef, 43, "Service already published" );
 FAL_ERRORDECL( e_service_undef, 44, "Required service has not been published" );
 FAL_ERRORDECL( e_file_output, 46, "Can't create output file" );

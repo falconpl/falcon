@@ -476,6 +476,8 @@ public:
 
    /** Clear the current parser context. */
    virtual void reset();
+   
+   void openTempBlock( SynTree* oldBranch, SynTree* newBranch );
 
 private:
    class CCFrame; // forward decl for Context Frames.

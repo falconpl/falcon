@@ -47,6 +47,7 @@ class ParserContext::CCFrame
       FalconClass* cls;
       SynFunc* func;
       Statement* stmt;
+      SynTree* synTree;
       void* raw;
    } t_elem;
 
@@ -56,6 +57,7 @@ class ParserContext::CCFrame
       t_object_type,
       t_func_type,
       t_stmt_type,
+      t_temp_type,
       t_base_type
    } t_type;
 
@@ -63,6 +65,7 @@ class ParserContext::CCFrame
    CCFrame( FalconClass* cls, bool bIsObject, Symbol* gs );
    CCFrame( SynFunc* func, Symbol* gs );
    CCFrame( Statement* stmt, bool bAutoClose = false );
+   CCFrame( SynTree* st );
 
    void setup();
 
@@ -140,6 +143,17 @@ ParserContext::CCFrame::CCFrame( Statement* stmt, bool bAutoClose ):
    m_elem.stmt = stmt;
    setup();
 }
+
+ParserContext::CCFrame::CCFrame( SynTree* oldST ):
+   m_type( t_temp_type ),
+   m_bStatePushed( false ),
+   m_bAutoClose( true ),
+   m_sym(0)
+{
+   m_elem.synTree = oldST;
+   setup();
+}
+
 
 void ParserContext::CCFrame::setup()
 {
@@ -539,6 +553,17 @@ void ParserContext::openBlock( Statement* parent, SynTree* branch, bool bAutoClo
    }
 }
 
+void ParserContext::openTempBlock( SynTree* oldBranch, SynTree* newBranch )
+{   
+   MESSAGE("ParserContext::openTempBlock");
+
+   saveStatus( _p->m_frames.back() );
+
+   // if the pareser is not interactive, append the statement even after undefined errors.
+   _p->m_frames.push_back( CCFrame( oldBranch ) );
+   m_st = newBranch;
+}
+
 
 SynTree* ParserContext::changeBranch()
 {
@@ -625,6 +650,13 @@ void ParserContext::closeContext()
 
       // if it's a base, there's nothing to do (but it's also strange...)
       case CCFrame::t_base_type: break;
+      
+      // If it's a temporary frame, restore the requested tree.
+      case CCFrame::t_temp_type:
+         if( bframe.m_elem.synTree != 0 ) {
+            m_st = bframe.m_elem.synTree;
+         }
+         break;
 
       // if it's a class...
       case CCFrame::t_object_type:

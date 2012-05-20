@@ -26,9 +26,9 @@ namespace Falcon {
 RegexCarrier::RegexCarrier():
    m_pattern( 0 ),
    m_extra( 0 ),
-   m_matches(0),
-   m_ovectorSize(0),
    m_ovector(0),
+   m_ovectorSize(0),
+   m_matches(0),
    m_mark(0)
 {
    

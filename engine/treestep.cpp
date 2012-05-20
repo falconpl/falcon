@@ -22,9 +22,10 @@
 
 #include <falcon/statement.h>
 #include <falcon/syntree.h>
+#include <falcon/trace.h>
+
 
 namespace Falcon {
-
 
 void TreeStep::gcMark( uint32 mark )
 {
@@ -34,7 +35,9 @@ void TreeStep::gcMark( uint32 mark )
 
 bool TreeStep::setParent( TreeStep* ts )
 {
-   if( m_parent == 0 || ts == 0 )
+   TRACE1( "Setting parent of %p to %p (now %p)", this, ts, m_parent );
+   
+   if( m_parent == 0 || ts == 0 || m_parent == ts )
    {
       m_parent = ts;
       return true;

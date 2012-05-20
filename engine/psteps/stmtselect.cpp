@@ -36,13 +36,15 @@
 #include <deque>
 #include <vector>
 
+#include "falcon/psteps/switchlike.h"
+
 namespace Falcon {
 
 class StmtSelect::Private
 {
 public:
    // blocks are kept separate for easier destruction and accounting.
-   typedef std::deque<SynTree*> BlockList;   
+   typedef std::deque<SynTree*> BlockSet;   
 
    // blocks ordered for int
    typedef std::map<int64, SynTree*> IntBlocks;
@@ -56,7 +58,7 @@ public:
    IntBlocks m_intBlocks;
    ClassBlocks m_classBlocks;
    
-   BlockList m_blocks;
+   BlockSet m_blocks;
    ClassList m_classList;
 
 
@@ -90,7 +92,7 @@ public:
    
    ~Private()
    {
-      BlockList::iterator iter = m_blocks.begin();
+      BlockSet::iterator iter = m_blocks.begin();
       while( iter != m_blocks.end() )
       {
          delete *iter;
@@ -101,10 +103,9 @@ public:
 
 
 StmtSelect::StmtSelect( Expression* expr, int32 line, int32 chr ):
-   Statement( line, chr ),
+   SwitchlikeStatement( line, chr ),
    _p( new Private ),
    m_expr( expr ),
-   m_defaultBlock(0),
    m_unresolved(0)
 {
    FALCON_DECLARE_SYN_CLASS( stmt_select );
@@ -122,9 +123,8 @@ StmtSelect::StmtSelect( Expression* expr, int32 line, int32 chr ):
 }
 
 StmtSelect::StmtSelect( const StmtSelect& other ):
-   Statement( other ),
+   SwitchlikeStatement( other ),
    m_expr(0),
-   m_defaultBlock(0),
    m_unresolved( other.m_unresolved )
 {
    // we can't duplicate unresolved symbols.
@@ -154,7 +154,6 @@ StmtSelect::StmtSelect( const StmtSelect& other ):
 StmtSelect::~StmtSelect()
 {
    delete m_expr;
-   delete m_defaultBlock;
    delete _p;
 }
 
@@ -335,18 +334,6 @@ SynTree* StmtSelect::findBlockForItem( const Item& itm ) const
    return m_defaultBlock;
 }
 
-
-bool StmtSelect::setDefault( SynTree* block )
-{
-   if( ! block->setParent(this) )
-   {
-      return false;
-   }
-
-   delete m_defaultBlock;
-   m_defaultBlock = block;
-   return true;
-}
 
 bool StmtSelect::setSelectClass( int id, int clsId, Class* cls )
 {

@@ -230,7 +230,7 @@ void* ClassRegex::createInstance() const
    It perform an extra compilation step; PCRE 7.6 manual suggests that this is
    useful only with recursive pattern.
 */
-FALCON_DEFINE_METHOD_P(ClassRegex, study)
+FALCON_DEFINE_METHOD_P1(ClassRegex, study)
 {
    void *inst;
    Class *cls;
@@ -376,7 +376,7 @@ static void internal_regex_match( RegexCarrier *data, String *source, int from )
    If the match is successful, the method returns true.
    The match point can then be retrieved using the captured(0) method.
 */
-FALCON_DEFINE_METHOD_P(ClassRegex, match)
+FALCON_DEFINE_METHOD_P1(ClassRegex, match)
 {
    void *inst;
    Class *cls;
@@ -432,7 +432,7 @@ FALCON_DEFINE_METHOD_P(ClassRegex, match)
 
    If the pattern doesn't matches, returns nil.
 */
-FALCON_DEFINE_METHOD_P(ClassRegex, find)
+FALCON_DEFINE_METHOD_P1(ClassRegex, find)
 {
    void *inst;
    Class *cls;
@@ -501,7 +501,7 @@ FALCON_DEFINE_METHOD_P(ClassRegex, find)
 
    If the pattern doesn't matches, this method returns nil.
 */
-FALCON_DEFINE_METHOD_P(ClassRegex, split)
+FALCON_DEFINE_METHOD_P1(ClassRegex, split)
 {
    void *inst;
    Class *cls;
@@ -651,7 +651,7 @@ static void internal_findAll( Falcon::VMContext *ctx, bool overlapped )
    expressions.
 */
 
-FALCON_DEFINE_METHOD_P(ClassRegex, findAll)
+FALCON_DEFINE_METHOD_P1(ClassRegex, findAll)
 {
    internal_findAll( ctx, false );
 }
@@ -671,7 +671,7 @@ FALCON_DEFINE_METHOD_P(ClassRegex, findAll)
    This method only returns the whole match, ignoring parenthesized
    expressions.
 */
-FALCON_DEFINE_METHOD_P(ClassRegex, findAllOverlapped)
+FALCON_DEFINE_METHOD_P1(ClassRegex, findAllOverlapped)
 {
    internal_findAll( ctx, true );
 }
@@ -692,7 +692,7 @@ FALCON_DEFINE_METHOD_P(ClassRegex, findAllOverlapped)
    start parameter can be given to begin the search for the pattern in
    string from a given position.
 */
-FALCON_DEFINE_METHOD_P(ClassRegex, replace)
+FALCON_DEFINE_METHOD_P1(ClassRegex, replace)
 {
    void *inst;
    Class *cls;
@@ -856,7 +856,7 @@ static void s_replaceall( VMContext* ctx, bool bExpand )
    replacer parameter. If a change can be performed, a modified instance
    of string is returned, else nil is returned.
 */
-FALCON_DEFINE_METHOD_P(ClassRegex, replaceAll)
+FALCON_DEFINE_METHOD_P1(ClassRegex, replaceAll)
 {
    s_replaceall( ctx, false );
 }
@@ -882,7 +882,7 @@ FALCON_DEFINE_METHOD_P(ClassRegex, replaceAll)
    
    @note Remember to use double backslash on double quoted strings.
 */
-FALCON_DEFINE_METHOD_P(ClassRegex, subst)
+FALCON_DEFINE_METHOD_P1(ClassRegex, subst)
 {
    s_replaceall( ctx, true );
 }
@@ -900,7 +900,7 @@ FALCON_DEFINE_METHOD_P(ClassRegex, subst)
    @see Regex.captured
 */
 
-FALCON_DEFINE_METHOD_P(ClassRegex, capturedCount)
+FALCON_DEFINE_METHOD_P1(ClassRegex, capturedCount)
 {
    void *inst;
    Class *cls;
@@ -927,7 +927,7 @@ FALCON_DEFINE_METHOD_P(ClassRegex, capturedCount)
    returned value is a closed range describing the area where the capture
    had effect in the target string.
 */
-FALCON_DEFINE_METHOD_P(ClassRegex, captured)
+FALCON_DEFINE_METHOD_P1(ClassRegex, captured)
 {
    void *inst;
    Class *cls;
@@ -967,7 +967,7 @@ FALCON_DEFINE_METHOD_P(ClassRegex, captured)
    Searches for the pattern and stores all the captured subexpressions in
    an array that is then returned. If the match is negative, returns nil.
 */
-FALCON_DEFINE_METHOD_P(ClassRegex, grab)
+FALCON_DEFINE_METHOD_P1(ClassRegex, grab)
 {
    void *inst;
    Class *cls;
@@ -1024,7 +1024,7 @@ FALCON_DEFINE_METHOD_P(ClassRegex, grab)
    used in direct comparations. Switch tests and equality tests will succeed if the pattern
    matches agains the given string.
 */
-FALCON_DEFINE_METHOD_P(ClassRegex, compare)
+FALCON_DEFINE_METHOD_P1(ClassRegex, compare)
 {
    void *inst;
    Class *cls;
@@ -1076,7 +1076,7 @@ FALCON_DEFINE_METHOD_P(ClassRegex, compare)
    This function can be used to retreive the PCRE version that is currently
    used by the REGEX module.
 */
-FALCON_DEFINE_METHOD_P(ClassRegex, version)
+FALCON_DEFINE_METHOD_P1(ClassRegex, version)
 {
    const char *ver = pcre_version();
    ctx->returnFrame( new String( ver, -1 ) );

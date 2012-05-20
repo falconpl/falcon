@@ -70,6 +70,7 @@
 #include <falcon/psteps/stmtreturn.h>
 #include <falcon/psteps/stmtrule.h>
 #include <falcon/psteps/stmtselect.h>
+#include <falcon/psteps/stmtswitch.h>
 #include <falcon/psteps/stmttry.h>
 #include <falcon/psteps/stmtwhile.h>
 
@@ -94,9 +95,11 @@ SynClasses::SynClasses( Class* classSynTree, Class* classStatement, Class* class
    #include <falcon/synclasses_list.h>
 
    m_stmt_forto->userFlags(FALCON_SYNCLASS_ID_FORCLASSES);
-   m_stmt_forin->userFlags(FALCON_SYNCLASS_ID_RULE);
+   m_stmt_forin->userFlags(FALCON_SYNCLASS_ID_FORCLASSES);
+   m_stmt_rule->userFlags(FALCON_SYNCLASS_ID_RULE);
    m_stmt_if->userFlags(FALCON_SYNCLASS_ID_ELSEHOST);
-   m_stmt_select->userFlags(FALCON_SYNCLASS_ID_CASEHOST);
+   m_stmt_select->userFlags(FALCON_SYNCLASS_ID_CASEHOST );
+   m_stmt_switch->userFlags(FALCON_SYNCLASS_ID_SWITCH );
    m_stmt_autoexpr->userFlags(FALCON_SYNCLASS_ID_AUTOEXPR);
    m_expr_call->userFlags(FALCON_SYNCLASS_ID_CALLFUNC);
    m_expr_pseudocall->userFlags(FALCON_SYNCLASS_ID_CALLFUNC);
@@ -789,6 +792,8 @@ void SynClasses::ClassInherit::store( VMContext* ctx, DataWriter* wr, void* inst
    wr->write( inh->hadRequirement() );
    m_parent->store( ctx, wr, instance );
 }
+
+
 void SynClasses::ClassInherit::restore( VMContext* ctx, DataReader* rd, void*& empty ) const
 {
    String name;
@@ -868,6 +873,7 @@ FALCON_STANDARD_SYNCLASS_OP_CREATE( Raise, StmtRaise, zeroaryExprSet ) //
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Return, StmtReturn, zeroaryExprSet ) //
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Rule, StmtRule, zeroaryExprSet ) //
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Select, StmtSelect, zeroaryExprSet ) //
+FALCON_STANDARD_SYNCLASS_OP_CREATE( Switch, StmtSwitch, zeroaryExprSet ) //
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Try, StmtTry, zeroaryExprSet ) //
 FALCON_STANDARD_SYNCLASS_OP_CREATE( While, StmtWhile, zeroaryExprSet ) //
 

@@ -109,6 +109,7 @@ add_library(falcon_engine SHARED
   sp/parser_proto.cpp
   sp/parser_reference.cpp
   sp/parser_rule.cpp
+  sp/parser_switch.cpp
   sp/parser_ternaryif.cpp
   sp/parser_try.cpp
   sp/parser_while.cpp
@@ -164,8 +165,10 @@ add_library(falcon_engine SHARED
   psteps/stmtreturn.cpp
   psteps/stmtrule.cpp
   psteps/stmtselect.cpp
+  psteps/stmtswitch.cpp
   psteps/stmttry.cpp
   psteps/stmtwhile.cpp
+  psteps/switchlike.cpp
 
   classes/classarray.cpp
   classes/classbool.cpp

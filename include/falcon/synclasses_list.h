@@ -169,6 +169,7 @@ FALCON_SYNCLASS_DECLARATOR(m_stmt_raise, Raise, stmt)
 FALCON_SYNCLASS_DECLARATOR(m_stmt_return, Return, stmt)
 FALCON_SYNCLASS_DECLARATOR(m_stmt_rule, Rule, stmt)
 FALCON_SYNCLASS_DECLARATOR(m_stmt_select, Select, stmt)
+FALCON_SYNCLASS_DECLARATOR(m_stmt_switch, Switch, stmt)
 FALCON_SYNCLASS_DECLARATOR(m_stmt_try, Try, stmt)
 FALCON_SYNCLASS_DECLARATOR(m_stmt_while, While, stmt)
 

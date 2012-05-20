@@ -1,20 +1,20 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: stmtselect.cpp
+   FILE: stmtswitch.cpp
 
-   Syntactic tree item definitions -- select statement.
+   Syntactic tree item definitions -- switch statement.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
-   Begin: Mon, 15 Aug 2011 13:58:12 +0200
+   Begin: Sat, 19 May 2012 16:33:59 +0200
 
    -------------------------------------------------------------------
-   (C) Copyright 2011: the FALCON developers (see list in AUTHORS file)
+   (C) Copyright 2012: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
 */
 
 #undef SRC
-#define SRC "engine/psteps/select.cpp"
+#define SRC "engine/psteps/stmtswitch.cpp"
 
 #include <falcon/expression.h>
 #include <falcon/engine.h>
@@ -22,10 +22,12 @@
 #include <falcon/syntree.h>
 #include <falcon/symbol.h>
 #include <falcon/module.h>
+#include <falcon/itemid.h>
+#include <falcon/vmcontext.h>
 
 #include <falcon/errors/linkerror.h>
 
-#include <falcon/psteps/stmtselect.h>
+#include <falcon/psteps/stmtswitch.h>
 #include <falcon/classes/classrequirement.h>
 
 #include <falcon/engine.h>
@@ -33,114 +35,122 @@
 #include <falcon/itemarray.h>
 
 #include <map>
-#include <deque>
+#include <set>
 #include <vector>
+#include <algorithm>
 
 namespace Falcon {
 
-class StmtSelect::Private
+class StmtSwitch::Private
 {
 public:
-   // blocks are kept separate for easier destruction and accounting.
-   typedef std::deque<SynTree*> BlockList;   
+   // blocks are kept separate for easier destruction and replication.
+   typedef std::vector<SynTree*> BlockVector; 
+   typedef std::map<SynTree*, size_t> BlockSet;   
+   
+   typedef std::pair <int64, size_t> BlockIntLimit; 
+   typedef std::pair <String, size_t> BlockStringLimit; 
 
    // blocks ordered for int
-   typedef std::map<int64, SynTree*> IntBlocks;
+   typedef std::map<int64, BlockIntLimit> IntBlocks;
 
-   // blocks ordered for class -- used only in case of perfect matches.
-   typedef std::map<Class*, SynTree*> ClassBlocks;
+   // blocks ordered for strings.
+   typedef std::map<String, BlockStringLimit> StringBlocks;
 
-   // Declaration-ordered list of classes.
-   typedef std::vector< Class* > ClassList;
+   // Declaration-ordered list of discrete variable values.
+   typedef std::pair<Symbol*, size_t> VarBlockLimit;
+   typedef std::vector< VarBlockLimit > ItemBlockList;
 
    IntBlocks m_intBlocks;
-   ClassBlocks m_classBlocks;
-   
-   BlockList m_blocks;
-   ClassList m_classList;
-
+   StringBlocks m_stringBlocks;   
+   ItemBlockList m_itemBlocks;   
+   BlockVector m_blocks;
+   BlockSet m_blocksSet;
 
    Private() {}
    
-   Private( StmtSelect* owner, const Private& other ) 
+   Private( StmtSwitch* owner, const StmtSwitch::Private& other ) 
    {
-      IntBlocks::const_iterator ibi = other.m_intBlocks.begin();
-      while( ibi != other.m_intBlocks.end() )
+      // deep copy of the syntree references.
+      const BlockVector& bl = other.m_blocks;
       {
-         SynTree* st = ibi->second->clone();
-         st->setParent(owner);
-         m_intBlocks[ibi->first] = st;
-         m_blocks.push_back( st );
-         ++ibi;
+         BlockVector::const_iterator pos = bl.begin();
+         while( pos != bl.end() ) {
+            SynTree* copy = (*pos)->clone();
+            copy->setParent(owner);
+            m_blocks.push_back( copy );
+            ++pos;
+         }
       }
       
-      ClassBlocks::const_iterator cbi = other.m_classBlocks.begin();
-      while( cbi != other.m_classBlocks.end() )
-      {
-         SynTree* st = cbi->second->clone();
-         st->setParent(owner);
-         m_classBlocks[cbi->first] = st;
-         m_blocks.push_back( st );
-         ++cbi;
-      }
-    
-      // class list can be a flat copy, classes are in the engine.
-      m_classList = other.m_classList;
+      // flat copy of the rest.
+      m_blocksSet = other.m_blocksSet;
+      m_intBlocks = other.m_intBlocks;
+      m_stringBlocks = other.m_stringBlocks;
+      m_itemBlocks = other.m_itemBlocks;
    }
    
    ~Private()
    {
-      BlockList::iterator iter = m_blocks.begin();
+      BlockVector::iterator iter = m_blocks.begin();
       while( iter != m_blocks.end() )
       {
          delete *iter;
          ++iter;
+      }
+   }
+   
+   void gcMark( uint32 mark ) 
+   {
+      BlockVector::iterator iter = m_blocks.begin();
+      while( iter != m_blocks.end() )
+      {
+         SynTree* st = *iter;
+         st->gcMark( mark );
+         ++iter;
+      }
+      
+      ItemBlockList::iterator bli = m_itemBlocks.begin();
+      while( bli != m_itemBlocks.end() ) {
+         VarBlockLimit& blv = *bli;
+         blv.first->gcMark( mark );
+         ++bli;
       }      
    }
 };
 
 
-StmtSelect::StmtSelect( Expression* expr, int32 line, int32 chr ):
-   Statement( line, chr ),
+StmtSwitch::StmtSwitch( Expression* expr, int32 line, int32 chr ):
+   SwitchlikeStatement( line, chr ),
    _p( new Private ),
    m_expr( expr ),
-   m_defaultBlock(0),
-   m_unresolved(0)
+   m_nilBlock(0),
+   m_trueBlock(0),
+   m_falseBlock(0)
 {
-   FALCON_DECLARE_SYN_CLASS( stmt_select );
-
+   FALCON_DECLARE_SYN_CLASS( stmt_switch );
+   apply = apply_;
+   
    if (expr != 0 )
    {
-      expr->setParent(this);
-      apply = apply_;
-   }
-   else
-   {
-      // we're used just as a dictionary.
-      apply = 0;
+      expr->setParent(this);      
    }
 }
 
-StmtSelect::StmtSelect( const StmtSelect& other ):
-   Statement( other ),
+StmtSwitch::StmtSwitch( const StmtSwitch& other ):
+   SwitchlikeStatement( other ),
    m_expr(0),
-   m_defaultBlock(0),
-   m_unresolved( other.m_unresolved )
+   m_nilBlock(0),
+   m_trueBlock(0),
+   m_falseBlock(0)
 {
-   // we can't duplicate unresolved symbols.
-   fassert( m_unresolved == 0 );
+   apply = apply_;
    
    if ( other.m_expr != 0 )
    {
       m_expr = other.m_expr->clone();
       m_expr->setParent(this);
-      apply = apply_;
-   }
-   else
-   {
-      // we're used just as a dictionary.
-      apply = 0;
-   }
+   }  
 
    if ( other.m_defaultBlock != 0 )
    {
@@ -148,404 +158,405 @@ StmtSelect::StmtSelect( const StmtSelect& other ):
       m_defaultBlock->setParent(this);
    }
    
+   if ( other.m_nilBlock != 0 )
+   {
+      m_nilBlock = other.m_nilBlock->clone();
+      m_nilBlock->setParent(this);
+   }
+   
+   if ( other.m_trueBlock != 0 )
+   {
+      m_trueBlock = other.m_trueBlock->clone();
+      m_trueBlock->setParent(this);
+   }
+   
+   if ( other.m_falseBlock != 0 )
+   {
+      m_falseBlock = other.m_falseBlock->clone();
+      m_falseBlock->setParent(this);
+   }
+   
    _p = new Private( this, *other._p );
 }
 
-StmtSelect::~StmtSelect()
+
+StmtSwitch::~StmtSwitch()
 {
    delete m_expr;
-   delete m_defaultBlock;
+   delete m_trueBlock;
+   delete m_falseBlock;
+   delete m_nilBlock;
+   
    delete _p;
 }
 
 
-void StmtSelect::describeTo( String& tgt, int depth ) const
+void StmtSwitch::describeTo( String& tgt, int depth ) const
 {
-   if( m_expr != 0 )
+   if( m_expr == 0 )
    {
-      String prefix = String(" ").replicate( depth * depthIndent );
-      tgt = prefix + "select " + m_expr->describe() +"\n";
+      tgt = "<Blank switch>";
+      return;
    }
-
-   //TODO...
+   
+   String prefix = String(" ").replicate( depth * depthIndent );
+   tgt = prefix + "switch " + m_expr->describe() +"\n";
+   
+   
 }
 
 
-Expression* StmtSelect::selector() const
+Expression* StmtSwitch::selector() const
 {
    return m_expr;
 }
 
 
-bool StmtSelect::selector( Expression* expr )
+bool StmtSwitch::selector( Expression* expr )
 {
    if( expr == 0 )
    {
       delete m_expr;
-      m_expr = 0;
-      // we're used just as a dictionary.
-      apply = 0;
+      m_expr = 0;      
    }
    else {
       if( ! expr->setParent(this) ) return false;
       delete m_expr;
-      m_expr = expr;
-      apply = apply_;
+      m_expr = expr;     
    }
    return true;
 }
 
-void StmtSelect::oneLinerTo( String& tgt ) const
+void StmtSwitch::oneLinerTo( String& tgt ) const
 {
    if( m_expr != 0 )
    {
-      tgt = "select " + m_expr->oneLiner();
+      tgt = "switch " + m_expr->oneLiner();
    }
 }
 
-bool StmtSelect::addSelectType( int64 typeId, SynTree* block )
+
+bool StmtSwitch::addNilBlock( SynTree* block )
 {
-   // refuse to add if already existing.
-   if ( _p->m_intBlocks.find( typeId ) != _p->m_intBlocks.end() )
+   if( m_nilBlock != 0 ) 
    {
       return false;
    }
-
-   // save the block only if not just pushed in the last operation.
-   if( _p->m_blocks.empty() || _p->m_blocks.back() != block )
-   {
-      if( ! block->setParent(this) ) return false;
-      _p->m_blocks.push_back( block );
-   }
-
-   // anyhow, associate the request.
-   _p->m_intBlocks[typeId ] = block;
+   m_nilBlock = block;
+   // ignore the result, we might have already added this elsewhere.
+   block->setParent(this);
    return true;
 }
 
-bool StmtSelect::addSelectClass( Class* cls, SynTree* block )
+
+bool StmtSwitch::addBoolBlock( bool value, SynTree* block )
 {
-   // refuse to add if already existing.
-   if ( _p->m_classBlocks.find( cls ) != _p->m_classBlocks.end() )
-   {
-      return false;
+   if( value ) {
+      if( m_trueBlock == 0 ) {
+         return false;
+      }
+      m_trueBlock = block;
    }
-
-   // save the block only if not just pushed in the last operation.
-   if( _p->m_blocks.empty() || _p->m_blocks.back() != block )
-   {
-      if( ! block->setParent(this) ) return false;
-      _p->m_blocks.push_back( block );
+   else {
+      if( m_falseBlock == 0 ) {
+         return false;
+      }
+      m_falseBlock = block;
    }
-
-   // anyhow, associate the request.
-   _p->m_classBlocks[ cls ] = block;
-
-   // Add the class in order -- as already resolved.   
-   _p->m_classList.push_back( cls );
-
+   // ignore the result, we might have already added this elsewhere.
+   block->setParent(this);   
    return true;
 }
 
-Requirement* StmtSelect::addSelectName( const String& name, SynTree* block )
-{
-   // save the block only if not just pushed in the last operation.
-   if( _p->m_blocks.empty() || _p->m_blocks.back() != block )
-   {
-      if( ! block->setParent(this) ) return 0;
-      _p->m_blocks.push_back( block );
-   }
 
-   // add an empty class as a placeholder.
-   _p->m_classList.push_back( 0 );
-   m_unresolved++;
+bool StmtSwitch::addIntBlock( int64 iValue, SynTree* block )
+{
+   return addRangeBlock( iValue, iValue, block );   
+}
+
+
+bool StmtSwitch::addRangeBlock( int64 iLow, int64 iHigh, SynTree* block )
+{   
+   // see if we have this block.
+   Private::IntBlocks::iterator ithigh = _p->m_intBlocks.lower_bound( iHigh );
    
-   // add a requirement pointing to the missing class.
-   SelectRequirement* req = new SelectRequirement( 
-         _p->m_blocks.size()-1, _p->m_classList.size()-1, block->sr().line(), name, this );
-   return req;
+   if(ithigh == _p->m_intBlocks.end() || ithigh->second.first > iLow ) 
+   {
+      // ok, proceed
+      size_t blockID;
+      Private::BlockSet::iterator blockPos = _p->m_blocksSet.find( block );
+      if( blockPos == _p->m_blocksSet.end() ) {
+         blockID = _p->m_blocks.size();
+         // TODO: Check result?
+         block->setParent( this );
+         
+         _p->m_blocks.push_back( block );
+         _p->m_blocksSet[block] = blockID;         
+      }
+      else {
+         blockID = blockPos->second;
+      }
+      _p->m_intBlocks[iHigh] = std::make_pair( iLow, blockID );
+      
+      return true;
+   }
+   
+   // Nope, the data is taken.
+   return false;
 }
 
 
-SynTree* StmtSelect::findBlockForType( int64 typeId ) const
+bool StmtSwitch::addStringBlock( const String& strLow, SynTree* block )
 {
-   Private::IntBlocks::iterator pos = _p->m_intBlocks.find( typeId );
-   if( pos != _p->m_intBlocks.end() )
+   return addStringRangeBlock( strLow, strLow, block );
+}
+
+
+bool StmtSwitch::addStringRangeBlock( const String& strLow, const String& strHigh, SynTree* block )
+{
+   // see if we have this block.
+   Private::StringBlocks::iterator ithigh = _p->m_stringBlocks.lower_bound( strHigh );
+   
+   if( ithigh == _p->m_stringBlocks.end() || ithigh->second.first > strLow ) 
    {
-      return pos->second;
+      // ok, proceed
+      size_t blockID;
+      Private::BlockSet::iterator blockPos = _p->m_blocksSet.find( block );
+      if( blockPos == _p->m_blocksSet.end() ) {
+         blockID = _p->m_blocks.size();
+         // TODO: Check result?
+         block->setParent( this );
+         
+         _p->m_blocks.push_back( block );
+         _p->m_blocksSet[block] = blockID;         
+      }
+      else {
+         blockID = blockPos->second;
+      }
+      _p->m_stringBlocks[strLow] = std::make_pair( strHigh, blockID );
+      
+      return true;
    }
+   
+   // Nope, the data is taken.
+   return false;
+}
+
+
+bool StmtSwitch::addSymbolBlock( Symbol* var, SynTree* block )
+{
+   // check if the block is already there.
+   Private::ItemBlockList::iterator bli = _p->m_itemBlocks.begin();
+   while( bli != _p->m_itemBlocks.end() ) {
+      Private::VarBlockLimit& blk = *bli;
+      if( var == blk.first ) {
+         return false;
+      }
+      bli++;
+   }
+   
+   // ok, proceed
+   size_t blockID;
+   Private::BlockSet::iterator blockPos = _p->m_blocksSet.find( block );
+   if( blockPos == _p->m_blocksSet.end() ) {
+      blockID = _p->m_blocks.size();
+      // TODO: Check result?
+      block->setParent( this );
+
+      _p->m_blocks.push_back( block );
+      _p->m_blocksSet[block] = blockID;         
+   }
+   else {
+      blockID = blockPos->second;
+   }
+   
+   _p->m_itemBlocks.push_back( std::make_pair( var, blockID ) );
+   return true;
+}
+
+
+SynTree* StmtSwitch::findBlockForNumber( int64 value ) const
+{
+   // see if we have this block.
+   Private::IntBlocks::iterator it = _p->m_intBlocks.lower_bound( value );
+   
+   if( it == _p->m_intBlocks.end() || it->second.first > value ) 
+   {
+      return m_defaultBlock;
+   }
+   return _p->m_blocks[ it->second.second ];
+}
+
+
+SynTree* StmtSwitch::findBlockForString( const String& value ) const
+{
+   // see if we have this block.
+   Private::StringBlocks::iterator it = _p->m_stringBlocks.lower_bound( value );
+   
+   if( it == _p->m_stringBlocks.end() || it->second.first > value ) 
+   {  
+      return m_defaultBlock;
+   }
+   
+   return _p->m_blocks[ it->second.second ];
+}
+
+
+SynTree* StmtSwitch::findBlockForItem( const Item& value ) const
+{
+   switch( value.type() ) {
+      case FLC_ITEM_NIL:
+         if( m_nilBlock ) {
+            return m_nilBlock;
+         }
+         break;
+         
+      case FLC_ITEM_BOOL:
+         if( value.asBoolean() ) {
+            if( m_trueBlock ) { return m_trueBlock; }
+         }
+         else {
+            if( m_falseBlock ) { return m_trueBlock; }
+         }
+         break;
+         
+      case FLC_ITEM_INT: case FLC_ITEM_NUM:
+      {
+         int64 vl = value.forceInteger();
+         // see if we have this block.
+         Private::IntBlocks::iterator it = _p->m_intBlocks.lower_bound( vl );
+
+         if( it != _p->m_intBlocks.end() ) 
+         {
+            register int64 low = it->second.first;
+            if( low <= vl ) {
+               return _p->m_blocks[ it->second.second ];
+            }
+         }
+      }
+      break;
+      
+      case FLC_ITEM_USER:
+      if( value.isString() ) {
+         String* vl = value.asString();
+         // see if we have this block.
+         Private::StringBlocks::iterator it = _p->m_stringBlocks.lower_bound( *vl );
+
+         if( it != _p->m_stringBlocks.end() && it->second.first >= *vl ) 
+         {
+            return _p->m_blocks[ it->second.second ];
+         }         
+      }
+      break;
+   }   
+   
    return 0;
 }
 
 
-SynTree* StmtSelect::findBlockForClass( Class* cls ) const
+void StmtSwitch::apply_( const PStep* ps, VMContext* ctx )
 {
-   Private::ClassBlocks::iterator pos = _p->m_classBlocks.find( cls );
-   if( pos != _p->m_classBlocks.end() )
-   {
-      return pos->second;
-   }
-
-   // the class wasn't found; but we may have a predecessor in our list.
-   Private::ClassList::iterator iter = _p->m_classList.begin();
-   while( iter != _p->m_classList.end() )
-   {
-      Class* base = (*iter);
-      // base can be 0 if the class was resolved as actually being an integer.
-      if( base != 0 && cls->isDerivedFrom( base ) )
-      {
-         Private::ClassBlocks::iterator pos = _p->m_classBlocks.find( cls );
-         fassert( pos != _p->m_classBlocks.end() );
-         return pos->second;
-      }
-      ++iter;
-   }
-
-   // no luck
-   return 0;
-}
-
-
-SynTree* StmtSelect::findBlockForItem( const Item& itm ) const
-{
-   // fist try with the types.
-   if( _p->m_intBlocks.size() > 0 )
-   {
-      // The type is that for the item...
-      int64 tid = itm.dereference()->type();      
-
-      Private::IntBlocks::iterator pos = _p->m_intBlocks.find( tid );
-      if( pos != _p->m_intBlocks.end() )
-      {
-         return pos->second;
-      }
-   }
-
-   // no luck with integer representing type ids -- try to find a class.
-   Class* cls;
-   void* data;
-   itm.forceClassInst( cls, data );
-   SynTree* res = findBlockForClass( cls );
-   if( res != 0 )
-   {
-      return res;
-   }
-
-   // the only hope left is the default block
-   return m_defaultBlock;
-}
-
-
-bool StmtSelect::setDefault( SynTree* block )
-{
-   if( ! block->setParent(this) )
-   {
-      return false;
-   }
-
-   delete m_defaultBlock;
-   m_defaultBlock = block;
-   return true;
-}
-
-bool StmtSelect::setSelectClass( int id, int clsId, Class* cls )
-{
-   fassert( clsId < (int) _p->m_classList.size() );
-   fassert( id < (int) _p->m_blocks.size() );
-   
-   // refuse to add if already existing.
-   if ( _p->m_classBlocks.find( cls ) != _p->m_classBlocks.end() )
-   {
-      return false;
-   }
-
-   // anyhow, associate the request.
-   _p->m_classBlocks[ cls ] = _p->m_blocks[id];
-   // and fix the ID in the class list.
-   _p->m_classList[clsId] = cls;
-   
-   m_unresolved--;
-   return true;
-}
-
-bool StmtSelect::setSelectType( int id, int typeId )
-{
-   fassert( id < (int) _p->m_blocks.size() );
-   
-   // refuse to add if already existing.
-   if ( _p->m_intBlocks.find( typeId ) != _p->m_intBlocks.end() )
-   {
-      return false;
-   }
-
-   // anyhow, associate the request.
-   _p->m_intBlocks[ typeId ] = _p->m_blocks[id];
-   // -- there's nothing to fix in the class list, leave it 0.
-   m_unresolved--;
-   return true;
-}
-
-
-void StmtSelect::apply_( const PStep* ps, VMContext* ctx )
-{
-   const StmtSelect* self = static_cast<const StmtSelect*>(ps);
+   const StmtSwitch* self = static_cast<const StmtSwitch*>(ps);
 
    CodeFrame& cf = ctx->currentCode();
    // first time around? -- call the expression.
-   if( cf.m_seqId == 0 )
+   switch( cf.m_seqId )
    {
-      cf.m_seqId = 1;
-      if( ctx->stepInYield( self->m_expr, cf ) )
-      {
-         return;
+      case 0:
+         cf.m_seqId = 1;
+         if( ctx->stepInYield( self->m_expr, cf ) )
+         {
+            return;
+         }
+         //fallthrough
+        
+      case 1:         
+         {
+            SynTree* selectedBlock = self->findBlockForItem( ctx->topData() );
+            // found?
+            if( selectedBlock != 0 ) {
+               // -- we're done.
+               ctx->popCode();
+               ctx->popData();
+               ctx->stepIn( selectedBlock );
+               return;
+            }
+         }
+         cf.m_seqId = 2;
+         // falltrough
+         
+      default:
+      {            
+         Private::ItemBlockList& lst = self->_p->m_itemBlocks;
+         // eventually descend if we need to descend to do a compare.
+         if( cf.m_seqId > 2 ) {
+            Private::VarBlockLimit& lmt = lst[cf.m_seqId-3]; // already advanced by 1
+            bool isEqual = ctx->topData().asInteger() == 0;
+            if( isEqual ) {
+               // found!
+               ctx->popCode();
+               ctx->popData(2);
+               ctx->stepIn(self->_p->m_blocks[lmt.second]);
+               return;
+            }
+         }
+         
+         Item copy = ctx->topData();
+         Class* cls; 
+         void* data;
+         copy.forceClassInst( cls, data );
+         
+         while( ((unsigned)cf.m_seqId) < lst.size() + 2 ) {
+            Private::VarBlockLimit& lmt = lst[cf.m_seqId-2];
+            cf.m_seqId++;
+            Symbol* sym = lmt.first;
+            const Item* vcomp = sym->getValue(ctx);
+            // found?
+            if( vcomp != 0 )
+            {               
+               ctx->pushData( copy );
+               ctx->pushData( *vcomp );
+               // launch te compare.
+               cls->op_compare( ctx, data );
+               // Went deep?
+               if( &cf != &ctx->currentCode() ) {
+                  return;
+               }
+               
+               bool isEqual = ctx->topData().asInteger() == 0;
+               if( isEqual ) {
+                  // found!
+                  ctx->popCode();
+                  ctx->popData(2);
+                  ctx->stepIn(self->_p->m_blocks[lmt.second]);
+                  return;
+               }
+               // try next
+               ctx->popData();
+            }
+         }                  
       }
    }
 
-   SynTree* res = self->findBlockForItem( ctx->topData() );
-
-   // we're gone
+   // nope, we didn't find it.
+   // anyway, we're done...
    ctx->popCode();
-   // and so is the topdata.
    ctx->popData();
-
-   // but if the syntree wants to do something...
-   if( res != 0 )
-   {
-      ctx->pushCode( res );
+   //... eventually push in the default block
+   if( self->m_defaultBlock ) {
+      ctx->stepIn(self->m_defaultBlock);
    }
 }
 
-//================================================================
-// The requirer
-//
 
-void SelectRequirement::onResolved(
-         const Module* source, const Symbol* sym, Module* requirer, Symbol*  )
+void StmtSwitch::gcMark( uint32 mark )
 {
-   fassert( m_owner == 0 );
-   
-   const Item* itm = sym->getValue(0);
-   if( itm == 0 || (!itm->isOrdinal()&& ! itm->isClass()) )
-   {
-      throw new LinkError( ErrorParam( m_owner->selector() == 0 ? e_catch_invtype : e_select_invtype )
-         .line( m_line )
-         .module( requirer->uri() )
-         .origin( ErrorParam::e_orig_linker )
-         .symbol( sym->name() )
-         .extra( String("declared in ") + (source != 0 ? source->uri() : "<internal>" ) )
-         );
-   }
-
-   // an integer?
-   if( itm->isOrdinal() )
-   {
-      int64 tid = itm->forceInteger();
-      if( ! m_owner->setSelectType( m_id, tid ) )
-      {
-         throw new LinkError( ErrorParam( m_owner->selector() == 0 ? e_catch_clash : e_switch_clash )
-            .line( m_line )
-            .module( requirer->uri() )
-            .origin( ErrorParam::e_orig_linker )
-            .symbol( sym->name() )
-            .extra( String("declared in ") + (source != 0 ? source->uri() : "<internal>" ) )
-            );
-      }      
-   }
-   else
-   {
-      fassert( itm->asClass()->isMetaClass() );
-      Class* cls = static_cast<Class*>(itm->asInst());
-      if( ! m_owner->setSelectClass( m_id, m_clsId, cls ) )
-      {
-         throw new LinkError( ErrorParam( m_owner->selector() == 0 ? e_catch_clash : e_switch_clash )
-            .line( m_line )
-            .module( requirer->uri() )
-            .origin( ErrorParam::e_orig_linker )
-            .symbol( sym->name() )
-            .extra( String("declared in ") + (source != 0 ? source->uri() : "<internal>" ) )
-            );
-      }
-   }
-}
-
-
-class SelectRequirement::ClassSelectRequirement: public ClassRequirement
-{
-public:
-   ClassSelectRequirement():
-      ClassRequirement("$SelectRequirement")
-   {}
-
-   virtual ~ClassSelectRequirement() {}
-   
-   virtual void store( VMContext*, DataWriter* stream, void* instance ) const
-   {
-      SelectRequirement* s = static_cast<SelectRequirement*>(instance);
-      s->store( stream );
-   }
-   
-   virtual void flatten( VMContext*, ItemArray& subItems, void* instance ) const
-   {
-      SelectRequirement* s = static_cast<SelectRequirement*>(instance);
-      subItems.append( Item(s->m_owner->handler(), s->m_owner ) );
-   }
-   
-   virtual void unflatten( VMContext*, ItemArray& subItems, void* instance ) const
-   {
-      SelectRequirement* s = static_cast<SelectRequirement*>(instance);
-      fassert( subItems.length() == 1 );
-      fassert( subItems[0].asClass()->name() == "Select" );
-      s->m_owner = static_cast<StmtSelect*>(subItems[0].asInst());
-   }
-   
-   virtual void restore( VMContext*, DataReader* stream, void*& empty ) const
-   {
-      SelectRequirement* s = 0;
-      try {
-         s = new SelectRequirement(0,0,0,"",0);
-         s->restore(stream);
-         empty = s;
-      }
-      catch( ... )
-      {
-         delete s;
-         throw;
-      }
-   }
-   
-   void describe( void* instance, String& target, int, int ) const
-   {
-      SelectRequirement* s = static_cast<SelectRequirement*>(instance);
-      if( s->m_owner == 0 )
-      {
-         target = "<Blank SelectRequirement>";
-      }
-      else {
-         target = "SelectRequirement for \"" + s->name() + "\"";
-      }
-   }
-};
-
-
-
-Class* SelectRequirement::cls() const
-{
-   return m_mantraClass;
-}
-
-
-Class* SelectRequirement::m_mantraClass = 0;
-
-
-void SelectRequirement::registerMantra()
-{
-   
-   if( m_mantraClass == 0 ) {
-      m_mantraClass = new ClassSelectRequirement;
-      Engine::instance()->addMantra(m_mantraClass);
+   if( m_gcMark != mark ) {
+      m_gcMark = mark;
+      _p->gcMark( mark );
    }
 }
 
 }
 
-/* end of stmtselect.cpp */
+/* end of stmtswitch.cpp */
