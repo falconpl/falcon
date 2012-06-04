@@ -203,22 +203,22 @@ if(!Nest) { Nest = {}; }
    }
    
    if (typeof Nest.reposition !== 'function') {
-      Nest.reposition = function(objSrc, objTgt, dispx, dispy, height ) {
+      Nest.reposition = function(objSrc, objTgt, dispx, dispy, height, width ) {
          var curleft = 0, curtop = 0;
          var pos = Nest.findPos(objSrc);
          var top = (pos.y + dispy);
          var left = (pos.x + dispx);
-         if ( height == null ) height = objTgt.height;
-         var width = objTgt.width;
+         if ( height == null ) height = objTgt.offsetHeight;
+         if ( width == null ) width = objTgt.offsetWidth;
          /* Find absolute positioning in page and see if we're out */
          pos = Nest.findPagePos(objSrc);
-         if( document.height <= pos.y + dispy + height ) {
-            top = (top - ((pos.y + dispy + height) - document.height) - 10 );
+         if( document.body.clientHeight <= pos.y + dispy + height ) {
+            top = (top - ((pos.y + dispy + height) - document.body.clientHeight) - 10 );
          }
-         if( document.width <= pos.x + dispx + width ) {
-            left = (left - ((pos.x + dispx + width) - document.width) - 10 );
+         if( document.body.clientWidth <= pos.x + dispx + width ) {
+            left = (left - ((pos.x + dispx + width) - document.body.clientWidth) - 10 );
          }
-         
+
          objTgt.style.left = left+"px";
          objTgt.style.top = top+"px";
       }
