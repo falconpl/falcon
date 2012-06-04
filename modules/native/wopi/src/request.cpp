@@ -28,6 +28,8 @@
 #include <string.h>
 #include <stdio.h>
 
+//#define TRACE( fmt, ... ) fprintf( stderr, "%d: " fmt "\n", __LINE__, __VA_ARGS__ ); fflush(stderr);
+#define TRACE( fmt, ... ) 
 
 namespace Falcon {
 namespace WOPI {
@@ -82,9 +84,11 @@ Request::~Request()
 
 bool Request::parse( Stream* input )
 {
+   TRACE( "Parsing request %s","" );
    if( ! parseHeader( input ) )
       return false;
 
+   TRACE( "Parsing request found content length %d", (int)m_content_length );
    if( m_content_length > 0 )
       return parseBody( input );
 
@@ -93,6 +97,7 @@ bool Request::parse( Stream* input )
 
 bool Request::parseHeader( Stream* input )
 {
+   TRACE( "Parsing headers%s", "" );
    if ( ! m_MainPart.parseHeader( input ) )
    {
       m_posts->put( SafeItem(new CoreString(":error")),
@@ -102,6 +107,7 @@ bool Request::parseHeader( Stream* input )
 
    // get the content type and encoding
    PartHandler::HeaderMap::const_iterator ci = m_MainPart.headers().find( "Content-Type" );
+   TRACE( "Parsing headers %s", "" );
    if( ci != m_MainPart.headers().end() )
    {
       m_content_type = ci->second.rawValue();
@@ -152,6 +158,8 @@ bool Request::parseHeader( Stream* input )
 
 bool Request::parseBody( Stream* input )
 {
+   TRACE( "Parsing body%s", "" );
+   
    // prepare the POST data receive area
    m_MainPart.startMemoryUpload();
    //fprintf( stderr, "Content length: %d / %d\n", (int) m_content_length, (int) m_nMaxMemUpload );
@@ -178,6 +186,7 @@ bool Request::parseBody( Stream* input )
 
    // shouldn't be necessary as we started the upload in memory mode.
    m_MainPart.closeUpload();
+   TRACE( "Parsing body -- starting parsing parts%s", "" );
 
    // it's a singlepart or multipart?
    PartHandler* child = m_MainPart.child();

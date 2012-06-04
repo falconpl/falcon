@@ -23,8 +23,10 @@
 #include <falcon/membuf.h>
 
 #include <cstring>
-
 #include <stdio.h>
+
+//#define TRACE( fmt, ... ) fprintf( stderr, "%d: " fmt "\n", __LINE__, __VA_ARGS__ ); fflush(stderr);
+#define TRACE( fmt, ... ) 
 
 namespace Falcon {
 namespace WOPI {
@@ -50,6 +52,8 @@ HeaderValue::~HeaderValue()
 
 bool HeaderValue::parseValue( const String& v )
 {
+   TRACE( "parseValue: %s", v.getRawStorage() );
+   
    m_sRawValue = v;
 
    uint32 pos=0, pos1=0;
@@ -90,6 +94,8 @@ bool HeaderValue::parseValue( const String& v )
 
 bool HeaderValue::parseValuePart( const String& v )
 {
+   TRACE( "parseValuePart: %s", v.getRawStorage() );
+   
    uint32 pos=0, pos1=0;
    // now parse all the parameters
    while( (pos1 = v.find(",", pos) ) != String::npos )
@@ -107,6 +113,7 @@ bool HeaderValue::parseValuePart( const String& v )
 
 bool HeaderValue::parseParamPart( const String& v )
 {
+   TRACE( "parseParamPart: %s", v.getRawStorage() );
    uint32 pos = v.find( "=" );
 
    if( pos == String::npos )
@@ -152,6 +159,7 @@ bool HeaderValue::parseParamPart( const String& v )
 
 void HeaderValue::setRawValue( const String& v )
 {
+   TRACE( "setRawValue: %s", v.getRawStorage() );
    m_sRawValue = v;
    m_lValues.push_front( v );
 }
@@ -251,6 +259,7 @@ bool PartHandler::startFileUpload()
 
 void PartHandler::closeUpload()
 {
+   TRACE( "PartHandler closing upload%s", "" );
    m_nPartSize = m_nReceived = m_stream->tell();
 
    if( m_str_stream == 0 && m_stream != 0 )
@@ -291,6 +300,8 @@ bool PartHandler::getMemoryData( MemBuf& target )
 
 bool PartHandler::startUpload()
 {
+   TRACE( "PartHandler starting upload%s", "" );
+
    if ( m_bUseMemoryUpload || ! m_bPartIsFile )
    {
       startMemoryUpload();
@@ -305,6 +316,7 @@ bool PartHandler::startUpload()
 
 bool PartHandler::parse( Stream* input, bool& isLast )
 {
+   TRACE( "Parsing...%s", "" );
    // read the header and the body
    if ( ! parseHeader( input ) )
       return false;
@@ -419,21 +431,35 @@ bool PartHandler::parseMultipartBody( Stream* input )
 
 bool PartHandler::scanForBound( const String& boundary, Stream* input, bool& isLast )
 {
+   TRACE( "ScanForBound... %s", boundary.getRawStorage() );
+   
+   // the boundary is valid only if followed by 2 characters, either \r\n or --
+   uint32 boundSize = boundary.size()+2;
+   
    m_pBuffer->fill( input );
-
    uint32 nBoundPos = m_pBuffer->find( boundary );
 
    while( nBoundPos == String::npos )
    {
-      if( *m_pToBodyLeft == 0 || input->eof() || m_pBuffer->m_nBufPos + boundary.size() + 2 > m_pBuffer->m_nBufSize )
+      // end of the game?
+      if( *m_pToBodyLeft == 0 || input->eof() )
       {
          m_sError = "Malformed part (missing boundary)";
          return false;
       }
-
-      m_pBuffer->m_nBufPos = m_pBuffer->m_nBufSize - (boundary.size() + 2);
-      m_pBuffer->flush( m_stream );
+      
+      // Do we have too much data in?
+      // -- of course, we don't want to commit if we don't have enough data
+      // even for the boundary.
+      if( m_pBuffer->m_nBufPos + boundSize < m_pBuffer->m_nBufSize ) {
+         // commit the extra data and reduce the buffer size.
+         m_pBuffer->m_nBufPos = m_pBuffer->m_nBufSize - boundSize;
+         m_pBuffer->flush( m_stream );
+      }
+      
+      // get new data in.
       m_pBuffer->fill( input );
+      // find again
       nBoundPos = m_pBuffer->find( boundary );
    }
 
@@ -489,6 +515,8 @@ bool PartHandler::scanForBound( const String& boundary, Stream* input, bool& isL
 
 bool PartHandler::parseHeader( Stream* input )
 {
+   TRACE( "Parse header...%s", "" );
+      
    // if we're not given a buffer, create it now
    if ( m_pBuffer == 0 )
       initBuffer();
@@ -561,6 +589,8 @@ bool PartHandler::parseHeader( Stream* input )
 
 bool PartHandler::parseHeaderField( const String& line )
 {
+   TRACE( "Parse field...%s", "" );
+
    String sKey, sValue;
    if( ! Utils::parseHeaderEntry( line, sKey, sValue ) )
    {
@@ -574,6 +604,8 @@ bool PartHandler::parseHeaderField( const String& line )
 
 bool PartHandler::addHeader( const String& sKeyu, const String& sValue )
 {
+   TRACE( "Adding header: %s: %s", sKeyu.getRawStorage(), sValue.getRawStorage() );
+
    // probably this is an overkill
    String sKey = URI::URLDecode( sKeyu );
 
@@ -640,6 +672,7 @@ bool PartHandler::addHeader( const String& sKeyu, const String& sValue )
       if( m_sPartContentType.startsWith("multipart/") )
       {
          m_sBoundary = hv.parameters()["boundary"];
+         TRACE( "found boundary header: %s", m_sBoundary.getRawStorage() );
          if( m_sBoundary.size() == 0 )
          {
             m_sError = "Missing boundary in multipart Content-Type";
@@ -740,9 +773,11 @@ void PartHandler::PartHandlerBuffer::flush( Stream* output )
 
 uint32 PartHandler::PartHandlerBuffer::find( const String& str )
 {
+   TRACE( "FIND: finding %s", str.getRawStorage() );
    if( m_nBufPos >= m_nBufSize )
       return String::npos;
 
+   // do not create a new string, just scan in the buffer.
    String temp;
    temp.adopt( (char*) m_buffer + m_nBufPos, m_nBufSize - m_nBufPos, 0 );
    return temp.find( str );
@@ -751,6 +786,7 @@ uint32 PartHandler::PartHandlerBuffer::find( const String& str )
 
 bool PartHandler::PartHandlerBuffer::fill( Stream* input )
 {
+   TRACE( "PartHandlerBuffer Filling: %d", (int) m_nDataLeft );
    if ( *m_nDataLeft > 0 && (! input->eof()) )
    {
       int32 toRead = buffer_size - m_nBufSize;
@@ -760,6 +796,7 @@ bool PartHandler::PartHandlerBuffer::fill( Stream* input )
       }
 
       int32 size = input->read( m_buffer+m_nBufSize, toRead );
+      TRACE( "PartHandlerBuffer Grabbed: %d", size );
       if( size <= 0 )
          return false;
 
@@ -773,16 +810,19 @@ bool PartHandler::PartHandlerBuffer::fill( Stream* input )
 
 void PartHandler::PartHandlerBuffer::grab( String& target, int posEnd )
 {
+   TRACE( "Grab: %d", posEnd );
    target.adopt( (char*) m_buffer + m_nBufPos, posEnd - m_nBufPos, 0 );
 }
 
 void PartHandler::PartHandlerBuffer::grabMore( String& target, int size )
 {
+   TRACE( "GrabMore: %d", size );
    target.adopt( (char*) m_buffer + m_nBufPos, size, 0 );
 }
 
 bool PartHandler::PartHandlerBuffer::hasMore( int count, Stream* input, Stream* output )
 {
+   TRACE( "Has more...%d+%d < %d", m_nBufPos, count, m_nBufSize );
    if( (m_nBufPos + count) < m_nBufSize )
    {
       return true;
@@ -791,9 +831,15 @@ bool PartHandler::PartHandlerBuffer::hasMore( int count, Stream* input, Stream* 
    if( (m_nBufPos + count) > buffer_size )
       flush(output);
 
-   fill( input );
+   // NOTE: we're under the hypotesis that buffer_size >> count
+   bool largeEnough;
+   do{      
+      fill( input );
+      largeEnough = (m_nBufPos + count) < m_nBufSize;
+   }
+   while ( !largeEnough && !input->eof() );    
 
-   return (m_nBufPos + count) < m_nBufSize;
+   return largeEnough;
 }
 
 }

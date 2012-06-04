@@ -161,7 +161,7 @@ void* APR_THREAD_FUNC watchdog(apr_thread_t *thd, void *data)
    falconWatchdogData.activeVM = NULL;
    apr_time_t maxWait = 0;
    
-   fprintf(stderr, "Falcon module -- Watchdog start\n" );
+   //fprintf(stderr, "Falcon module -- Watchdog start\n" );
    
    // While we're active, we want the lock for us.
    while( true )
