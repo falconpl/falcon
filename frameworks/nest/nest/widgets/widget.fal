@@ -325,11 +325,14 @@ class Widget( id )
    function renderCore()
       id = self.getFullID()
       
-      // first calculate a default name, if required ...
+      // calculate a default name, if required ...
       if 'name' in self.props
-         name = id
-         if self.addName: name += self.addName
-         self.props['name'] = name
+         // then, if the name was set to nil...
+         if not self.props['name']
+            name = id
+            if self.addName: name += self.addName
+            self.props['name'] = name
+         end
       end
 
       // and the class for the CSS
