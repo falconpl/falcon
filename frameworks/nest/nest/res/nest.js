@@ -115,70 +115,6 @@ if (!Array.prototype.indexOf) {
       }
    }
 
-   // prepare the information to be sent.
-   function prepareInfos( widID, obj, infosToSend ) {
-      var i = 0;
-      var element;
-      while( i < infosToSend.length ) {
-         var info = infosToSend[i];
-         var useName = false;
-         if( info.substring( 0, 1 ) == '*' )
-         {
-            useName = true;
-            info = info.substring(1);
-         }
-         var idArr = info.split("/");
-         var valname = idArr.pop();
-
-         if( idArr.length == 0 ) {
-            element = document.getElementById( widID );
-         }
-         else {
-            if( idArr[0] == "" ) {
-               // the path is absolute
-               idArr.shift();
-               element = document.getElementById( idArr.join(".") );
-            }
-            else {
-               var widIdArr = widID.split( "." );
-               while( idArr.length > 0 && idArr[0] == '..' ) {
-                  widIdArr.pop();
-                  idArr.shift();
-               }
-               widIdArr = widIdArr.concat( idArr );
-               var wid = widIdArr.join( "." );
-               element = document.getElementById( wid );
-            }
-         }
-         
-         if (element != null) {
-            // get the proper value
-            var value;
-            if ( valname == 'value' && element.getValue != null )
-                value = element.getValue();
-            else
-               value = element[valname];
-
-            // recreate the full entity name, re-localized after .. purging.
-            
-            var fieldName;
-            if( useName ) {
-               fieldName = element.name;               
-            }
-            if ( ! useName || fieldName == null )
-            {
-               idArr.push( valname );
-               fieldName = idArr.join(".");
-            }
-            
-            // save the field
-            obj[fieldName.replace("[]", "")] = value;
-         }
-
-         i = i + 1;
-      }
-   }
-
    // Handler for set message
    function handler_set( obj ) {
       var element = document.getElementById( obj.id );
@@ -252,7 +188,69 @@ if (!Array.prototype.indexOf) {
          return wid;
       }
    }
-   
+
+   // Method rp - relative property
+   // Get a property in a relative widget.
+   // info: the live property to be taken.
+   // widID: optional entity ID to which we are relative
+   // objName: optional; if given will be filled with:
+   //  - name: the value of the "name" property in the target item.
+   //  - id: document ID of the target property
+   //  - path: relative path in info, transformed into local ID
+   // Returns the value of the property.
+   //
+   Nest.rp = function( info, widID, objName ) {
+      var element;
+      var useName = false;
+
+      var idArr = info.split("/");
+      var valname = idArr.pop();
+
+      if( idArr.length == 0 && widID != null ) {
+         element = document.getElementById( widID );
+      }
+      else {
+         if( idArr[0] == "" ) {
+            // the path is absolute
+            idArr.shift();
+            element = document.getElementById( idArr.join(".") );
+         }
+         else {
+            var widIdArr = widID == null? [] : widID.split( "." );
+            while( idArr.length > 0 && idArr[0] == '..' ) {
+               widIdArr.pop();
+               idArr.shift();
+            }
+            widIdArr = widIdArr.concat( idArr );
+            var wid = widIdArr.join( "." );
+            element = document.getElementById( wid );
+         }
+      }
+
+      if (element != null) {
+         // get the proper value
+         var value;
+         if ( valname == 'value' && element.getValue != null )
+            value = element.getValue();
+         else
+            value = element[valname];
+
+         // recreate the full entity name, re-localized after .. purging.
+         // if the object was given, we want name, property name and path name
+         if( objName != null ) {
+            var name = element.name;
+            if( name ) objName['name'] = name.replace("[]", "")
+            objName['id'] = element.id;
+            // empty if we didn't pop ../
+            if( widIdArr == null ) { widIdArr = idArr; }
+            widIdArr.push( valname );
+            objName['path'] = widIdArr.join(".");
+         }
+
+         return value;
+      }
+   }
+
    // Method 'ajax'
    if (typeof Nest.ajax !== 'function') {
       Nest.ajax = function ( req_id, params, callback ) {
@@ -261,6 +259,7 @@ if (!Array.prototype.indexOf) {
       }
    }
 
+   
    if (typeof Nest.setWidVal !== 'function') {
       Nest.setWidVal = function ( wid, value ) {
          var element = Nest.i(wid);
@@ -277,18 +276,15 @@ if (!Array.prototype.indexOf) {
 
    // Method 'widgetMsg' -- Sending AJAX requests to remote widget server.
    if (typeof Nest.widgetAJAX !== 'function') {
-      Nest.widgetAJAX = function ( widClass, widID, msg, infosToSend, extraParams ) {
+      Nest.widgetAJAX = function ( widClass, widID, msg, params ) {
          // the object to be sent.
          var objToSend = { 'widget': widClass, 'id': widID, 'msg': msg };
          // let's get rid of the details now -- this is extra data to send as-is
-         if( extraParams != null ) {objToSend.extra = extraParams;}
          prepareInit( widID, objToSend );
          
-         // read the infos and store them away
-         if( infosToSend != null) {
-            var infos = {};
-            prepareInfos( widID, infos, infosToSend );
-            objToSend["infos"] = infos;
+         // Params
+         if( params != null) {
+            objToSend["params"] = params;
          }
 
          var url = "./?w=" + widClass;
@@ -394,7 +390,7 @@ if (!Array.prototype.indexOf) {
       }
    }
 
-    if (typeof Nest.onMessageNotFound !== 'function') {
+   if (typeof Nest.onMessageNotFound !== 'function') {
       Nest.onMessageNotFound = function( obj ){
          alert( "No handler registered for Nest widget message '" + obj.message + "'.\n" +
             "Received: " + obj +"\n"
@@ -402,13 +398,45 @@ if (!Array.prototype.indexOf) {
       }
    }
 
-    if (typeof Nest.onWidgetUpdateError !== 'function') {
+   if (typeof Nest.onWidgetUpdateError !== 'function') {
       Nest.onWidgetUpdateError = function( obj ) {
          alert( "Not a widget update message in Nest widget update.\n" +
             "Received: " + obj +"\n"
             );
       }
    }
+   //=========================================================================== DynParams API
+   if (typeof Nest.startPar !== 'function') {
+      Nest.startPar = function(wid) {
+         return {
+               params: {},
+               add: function( key, value ) {
+                     this.params[key] = value; return this; },
+               addPath: function( key, value ) {
+                     this.params[key] = Nest.rp(value,wid); return this; },
+               addTPath: function( value ) {
+                     var names = {};
+                     var v = Nest.rp(value,wid,names);
+                     this.params[names.path] = v;
+                     return this; },
+               addName: function( value ) {
+                     var names = {};
+                     var v = Nest.rp(value,wid,names);
+                     this.params[names.name] = v;
+                     return this;
+                  },
+               addId: function( value ) {
+                     var names = {};
+                     var v = Nest.rp(value,wid,names);
+                     this.params[names.id] = v;
+                     return this;
+                  },
+               gen: function() {
+                  return this.params; }
+         }
+      }
+   }
+   
 
    //=========================================================================== Object initialization.
    // set the default widget server message handlers

@@ -96,7 +96,8 @@
 
    // Add the plugin?
    if Request.getField( "plugin", nil )
-      Nest.module( 'MyPlugin' )()
+      Nest.module( 'MyPlugin' )
+      // or Nest.moduleClass
    end
    
    pluglink = Link( "idl1", Nest.pageLink( nil, ['plugin'=>'yes'] ), "this page with plugin" )

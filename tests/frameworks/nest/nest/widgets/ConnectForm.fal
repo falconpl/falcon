@@ -28,7 +28,7 @@ class ConnectForm( id ) from TableForm( id )
    end
 
    function AJAX( params )
-      data = params["infos"]
+      data = params["params"]
       self.routeValues( data )
       connstr = self.conn.getValue()
       dbh = dbi.connect( connstr + ";create=cond" )

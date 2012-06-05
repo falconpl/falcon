@@ -402,7 +402,7 @@ class Calendar(id, currentDate, subject, popup) from wid.Widget( id )
          function( month, year ) {
             if( this.useAjax ) {
                Nest.widgetAJAX( '" + self.className() + "'"+"
-               , this.id, 'goto', null, {month: month, year: year } );
+               , this.id, 'goto', {month: month, year: year } );
             }
             else if( this.onGoto( month, year ) ) {
                Nest.message( this, 'onGoto', {year:year, month:month } );
@@ -416,7 +416,7 @@ class Calendar(id, currentDate, subject, popup) from wid.Widget( id )
          function( year, month, day ) {
             if( this.useAjax ) {
                Nest.widgetAJAX( '" + self.className() + "'"+"
-               , this.id, 'selectDay', null, {month: month, year: year, day:day } );
+               , this.id, 'selectDay', {month: month, year: year, day:day } );
             }
             else if( this.onDaySelected( year, month, day ) ) {
                Nest.message( this, 'onDaySelected', {month: month, year: year, day:day} );
@@ -432,7 +432,7 @@ class Calendar(id, currentDate, subject, popup) from wid.Widget( id )
          function() {
             if( this.useAjax ) {
                Nest.widgetAJAX( '" + self.className() + "'"+"
-               , this.id, 'close', null, {month: this.month, year: this.year } );
+               , this.id, 'close', {month: this.month, year: this.year } );
             }
             else if( this.onClose() ) {
                Nest.message( this, 'onClose', {year:this.year, month:this.month} );

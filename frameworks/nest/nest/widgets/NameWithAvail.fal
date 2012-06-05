@@ -237,7 +237,7 @@ class NameWithAvail( id, prompt, iPrompt ) from widget.Widget( id )
 
 
    function AJAX( params )
-      name = params["infos"]["value"]
+      name = params["params"]["value"]
 
       swid = self.avail_wid.status_wid
       iwid = self.avail_wid.img_wid

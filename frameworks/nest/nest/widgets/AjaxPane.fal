@@ -58,7 +58,7 @@ class AjaxPane( id, loadingMsg ) from widget.Widget( id )
    end
 
    function onRender()
-      msg = self.ajaxMsgLiteral( "load-pane", nil, "extra" )
+      msg = self.ajaxMsg( "load-pane", "extra" )
       if( self.loadingMsg )
          self.jsMethods["loadingMsg"] = '"' + self.loadingMsg.replace('"', '\"') + '"'
       end
@@ -72,7 +72,7 @@ class AjaxPane( id, loadingMsg ) from widget.Widget( id )
 
    function AJAX( data )
       if data['msg'] == "load-pane"
-         pane = data['extra']['pane'];
+         pane = data['params']['pane'];
          if pane in self.paneData
             data = self.paneData[pane]
             if data.isCallable(): data = data()

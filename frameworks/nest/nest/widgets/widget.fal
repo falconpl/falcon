@@ -18,63 +18,144 @@
 
 import from json in json
 
-/*# Represents a request that could be sent via AJAX back to a widget.
-   @optparam rp Required properties (data that must be sent back to us).
-   @optparam extra Extra parameters that should be sent back here.
-   @potparam jsPrefix A javascript code that should be invoked before launching the ajax request.
 
-   This class is used to store the parameters of AJAX requests that the widgets
-   rendered on a web site could send back to to their server-side counterparts.
+/*#
+   @brief Parameter indicator to be used in AJAX and Javascript composite calls.
+   @param name The name of the parameter
+   @param value The value to be associated to the parameter.
 
-   It has a set of required properties and a set of extra fixed parameters.
-   The properties are a list of strings that represent a property in the rendered
-   widget or in a sibling or parent widget.
+   This object is rendered so that the JavaSript side creates
+   an object containing the required name and value. Special
+   prefixes of the @name property allows to access to runtime values
+   in the remote page.
+   
+   The object is then passed as a parameter to AJAX or JavaScript
+   functions. Many Nest widgets consider their parameter to be an
+   array of JSP instances, that are then rendered to an object for
+   the JavaScript and AJAX functions to use.
 
-   Property names are represented as path, relative to this widget. For instance,
-   - "value" reprsents the text value of this object.
-   - "../value" represents the text value of the parent object.
+   This is a typical usage in a Falcon side script:
+
+   @code
+      &lt;?
+      infos = .[
+         JSP("string", "hello world")
+         JSP("!number", 20 )
+         JSP("!variable", "js_expr() + varname" )
+         JSP(".jsonObject", [ "json_dict" => [1,true,nil] ] )
+         JSP("/live_property", "../widget1/property1")
+         JSP("*property_as_name", "../form/input/value")
+         JSP("#property_as_path", "../some/widget/value")
+         ]
+         
+      print( myWidget.ajaxMsg( "message", infos ) )
+      ?&gt;
+   @endcode
+
+   If @b name doesn't start with any marker, then @b value is passed
+   in the resulting dictionary as a string (string characters get escaped).
+
+   If @name starts with "!", then @b value is considered a literal expression
+   to be placed in the javascript. For instance
+
+   If @name starts with a dot, ".", then the value will be considered
+   an expression to be placed as a json object.
+   
+   If @b name starts with "/" then the @b value is considered a path to a
+   property relative to the widget where the parameters are used. For instance,
+   - "value" reprsents the property "value" of this object.
+   - "../value" represents the property "value" of the parent object.
    - "../sibling/value" represents the text value of an object called "sibling"
      being rendered at the same level of this widget.
    - "/a/b/value" is the text value of a widget "b" under widget "a" in the
      topmost widget parent of this one.
 
-   If the path starts with a "*", then the NAME of the target item is
-   used to return the value.
+   Normally, the found value is stored as a part of a dictionary given to the
+   target AJAX or JS function, with the @b name parameter as the JS dictionary
+   key.
+   
+   If @name is "*", the @b value is still a path to a live property in the page,
+   but the key is derived from the NAME property in the target item.
 
-   Any DOM element property can be queried this way and sent back to the receiving
-   application, that will receive it in a "infos" entry, named after the relative
-   property name that has been given ("value" => value,
-   "../sibling/value" => "sibling.value" and so on).
+   If @name is "#", the @b value is still a path to a live property in the page,
+   but the key is the document ID of the target widget.
+   
 */
-class AJAXRequest( rp, extra, jsPrefix )
-   reqProps = rp
-   extra = extra
-   jsPrefix = jsPrefix
+class JSP( name, value )
+   name = name
+   value = value
 
-   function renderReqProps()
-      if self.reqProps: return json.JSONencode( self.reqProps ).replace( "\"", "'" )
-      return "null"
+   /*#
+      @brief Creates a JS script to generate this JSP in JavaScript
+      @optparam widId if given, paths are relative to that widget ID.
+      @return A string containing a Nest invocation to create this parameter.
+   */
+   function render( widId )
+      if widId: return "(Nest.startPar('"+widId+"')." + self.renderInner() + ".gen())"
+      return "(Nest.startPar()." + self.renderInner() + ".gen())"
    end
 
-   function renderExtra()
-      if self.extra: return htmlEscape(json.JSONencode( self.extra )).replace( "\"", "'" )
-      return "null"
+   /*# Render only the inner part of the parameter generator */
+   function renderInner()
+      name = self.name
+      value = self.value
+      switch name[0:1]
+         // JS expression
+         case "!": return "add('" + name[1:] + "',"+ value + ")"
+         
+         // Objects
+         case ".": return "add('" + name[1:] + "',"+ json.JSONencode( value )+ ")"
+
+         // Paths
+         case "/": return "addPath('" + name[1:] + "', '"+ value + "')"
+
+         // Paths -- as name
+         case "*": return "addName('" + value + "')"
+         // Paths -- as ID
+         case "#": return "addId('"+ value + "')"
+
+         default           
+            return "add('"+ name + "','"+ value.toString().replace("'", "\\'") + "')"
+      end      
    end
 
-   /*# Renders an AJAX request bound with this widget. */
-   function render( hostName, id, message )
-      rps = self.renderReqProps()
-      extra = self.renderExtra()
-      rend = "Nest.widgetAJAX('" + hostName + "', '" +
-                       id + "', '"+message+"', " +rps+ ", " + extra +")"
+   
+   /*#
+      @brief Creates a JS script to generate the JSP list (static)
+      @param list An array or sequence of JSP entities or strings.
+      @optparam widId if given, paths are relative to that widget ID.
 
-      if self.jsPrefix
-         return self.jsPrefix +";"+ rend
-      else
-         return rend
+      If the entry is providing a renderInner (as JSP), that method is called,
+      otherwise the string is rendered as a JS call to "Nest.addTPath()".
+
+      This causes the string to be interpreted as a relative path, and the
+      name of the variable as passed in the parameters will be the "inner id":
+      the relative path stripped of initial parent references "../" and with
+      "/" changed into ".".
+      
+      @return A string containing a Nest invocation to create a parameter list
+   */
+   function renderList( list, widId )
+      for jsp in list
+         forfirst
+            res = widId ? @"(Nest.startPar('$(widId)')." : "(Nest.startPar()."
+         end
+         
+         res += jsp provides renderInner ? jsp.renderInner() : "addTPath('"+jsp+"')"
+
+         formiddle
+            res += "."
+         end
+
+         forlast
+            res += ".gen())"
+         end
       end
-   end
 
+      if not res: res = "null"
+      return res
+   end
+   
 end
 
 /*# Base class for the widgeting system.
@@ -96,10 +177,7 @@ class Widget( id )
 
    //# HTML properties associated with this widget at DOM level.
    props = nil
-
-   //# Javascript callbacks resolving in a NEST widget ajax request.
-   ajaxReqs = nil
-
+   
    //# Custom message handlers.
    ajaxMessages = nil
 
@@ -185,7 +263,6 @@ class Widget( id )
       self.onSetup()
       
       rend = self.renderJSMethods()
-      rend += self.renderAJAXReqs()
       // Listeners go after methods, as listener usually refer to methods.
       rend += self.renderAJAXMessages()
       rend += self.renderJSListeners()
@@ -211,7 +288,6 @@ class Widget( id )
       - jsMethods
       - jsListeners
       - ajaxMessages
-      - ajaxReqs
    */
    function onSetup()
    end
@@ -385,25 +461,12 @@ class Widget( id )
       return rend
    end
 
-
-   function renderAJAXReqs()
-      rend = ""
-      for key, value in self.ajaxReqs
-         forfirst
-            id = self.getFullID()
-            hostName = self.ajaxHostName()
-         end
-
-         req = value.render( hostName, id, key )
-         rend += "element." + key + "=function(){" + req + ";};\n"
-      end
-      return rend
-   end
-   
-
    function renderJSListeners()
       rend = ""
       for widget, mthDef in self.jsListeners
+         if mthDef.isCallable()
+            mthDef = mthDef()
+         end
          rend += "Nest.listen( element, '"+ widget.getFullID() + "'," + mthDef + ");\n"
       end
       return rend
@@ -484,9 +547,6 @@ class Widget( id )
       end
       return rend
    end
-
-
-
 
    //# private
    function renderAJAXMessages()
@@ -701,22 +761,22 @@ class Widget( id )
       return self
    end
 
-   function ajaxMsg( msg, infos, extra )
-      infos_s = infos ? json.JSONencode( infos ) : "null"
-      extra_s = extra ? json.JSONencode( extra ) : "null"
-
+   /*#
+      Creates a method that sends a request remotely.
+      @param msg The message to be sent to this widget
+      @optparam params An array of @a JSP instances or a pre-formatted string
+   */   
+   function ajaxMsg( msg, params )
+      id = self.getFullID()
+      infos_s = params.typeId() == StringType ? params : JSP.renderList(params,id)
+      
       return "Nest.widgetAJAX('" + self.ajaxHostName() +
-               "', '" + self.getFullID() + "', '" + msg + "', " +
-               infos_s + ", " + extra_s + ");"
+               "', '" + id + "', '" + msg + "', " +
+               infos_s + ");"
    end
 
-   function ajaxMsgLiteral( msg, infos, extra )
-      infos_s = infos ? infos : "null"
-      extra_s = extra ? extra : "null"
-
-      return "Nest.widgetAJAX('" + self.ajaxHostName() +
-               "', '" + self.getFullID() + "', '" + msg + "', " +
-               infos_s + ", " + extra_s + ");"
+   function makeAjaxMsg( msg, params )
+      return "function(){" + self.ajaxMsg(msg, params) + ";}"
    end
 
    //===================================================

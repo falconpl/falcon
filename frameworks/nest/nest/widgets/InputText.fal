@@ -81,8 +81,8 @@ class InputText( id, prompt, iPrompt ) from widget.Widget( id )
       end
    end
 
-   function render()
-      res = self.widget.Widget.render()
+   function renderCore()
+      res = self.widget.Widget.renderCore()
       if self.iPrompt
          id = self.getFullID()
          res += @"<input id=\"$(id).iprompt\" type=\"text\" value=\"$(self.iPrompt)\""

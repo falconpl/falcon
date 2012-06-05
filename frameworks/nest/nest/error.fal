@@ -3,9 +3,9 @@
    
    Nest - Falcon web applcation engine
    
-   FILE: page.fal
+   FILE: error.fal
 
-   Definition of the page class.
+   Common Nest Errors
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: Fri, 25 Jun 2010 10:52:46 +0200
@@ -30,6 +30,7 @@ class NestError( code, desc, extra ) from Error( code, desc, extra )
    element_not_in_skin = 10011
    set_field_not_found = 10012
    get_field_not_found = 10013
+   config_not_found = 10014
    
    other = 10100
    
@@ -47,6 +48,7 @@ class NestError( code, desc, extra ) from Error( code, desc, extra )
       10011 => i"Element not found in skin",
       10012 => i"Field required in a DataProvider-set operation not found",
       10013 => i"Field required in a DataProvider-get operation not found",
+      10014 => i"Required configuration file not found",
       
       0 => i"Dummy"
       ]

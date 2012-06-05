@@ -6,7 +6,7 @@ class AJAXCalendar( id, date, subject ) from Calendar( id, date, subject )
    firstDay = 1
    
    function AJAX( params )
-      extra = params["extra"]
+      extra = params["params"]
       msg = params["msg"]
       if msg == 'goto'
          return [

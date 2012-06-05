@@ -28,13 +28,13 @@ import Image from nest.widgets.Image as Image
 
 
 class LoginBtn from Button( "login" )
-   ajaxReqs = [
-      "sendLogin"=> widget.AJAXRequest( ["../user-id/value", "../pwd/value", "../rememberMe/checked"] )
-   ]
-
    jsMethods = [
-      "onRequest"=> self.makeEmit( 'change', 'this.value' )
-   ]
+      "onRequest"=> self.makeEmit( 'change', 'this.value' ),
+      "sendLogin"=> .[self.makeAjaxMsg "sendLogin"
+             .[ widget.JSP("/uid", "../user-id/value")
+               widget.JSP("/pwd","../pwd/value")
+               widget.JSP("/remember","../rememberMe/checked")]]
+               ]
 
    props = ["onclick" =>"this.onRequest();this.sendLogin();" ]
 
@@ -181,9 +181,9 @@ class LoginMask( id, formAction ) from widget.Widget( id )
    function AJAX( params )
       if params["id"].endsWith( ".login" )
          result = self.checkLogin(
-            params["infos"]["user-id.value"],
-            params["infos"]["pwd.value"],
-            params["infos"]["rememberMe.checked"]
+            params["params"]["uid"],
+            params["params"]["pwd"],
+            params["params"]["remember"]
             )
             
          if result
@@ -191,7 +191,7 @@ class LoginMask( id, formAction ) from widget.Widget( id )
                "uid" => result[0],
                "level" => result[1],
                "data" => result[2],
-               "name" => params["infos"]["user-id.value"]
+               "name" => params["params"]["uid"]
             ]
          end
          

@@ -542,11 +542,11 @@ class Table( id, itemsPerPage, itemCount, firstItem, orderColumn ) from widget.W
    function AJAX( params )
       
       msg = params["msg"]
-      
-      self.firstItem = int(params["extra"]["fi"])
-      self.itemsPerPage = int(params["extra"]["ipp"])
-      self.orderColumn = int(params["extra"]["column"])
-      self.filter = params["extra"]["filter"]
+      pars = params["params"]
+      self.firstItem = int(pars["fi"])
+      self.itemsPerPage = int(pars["ipp"])
+      self.orderColumn = int(pars["column"])
+      self.filter = pars["filter"]
       
       if msg == "goto" or msg == "order" or msg == 'filter' or msg == 'refresh'
          self.setDataView()
@@ -571,18 +571,18 @@ class Table( id, itemsPerPage, itemCount, firstItem, orderColumn ) from widget.W
       // As messages may be called on create, force to call onCreate()
       self.jsMethods['goToPage'] = \
             "function( page ) { this.firstItem = (page-1)*this.itemsPerPage; " +
-               self.ajaxMsgLiteral( "goto", nil, self._makeAjaxDict() ) + "; }"
+               self.ajaxMsg( "goto", self._makeAjaxDict() ) + "; }"
 
       self.jsMethods['refresh'] = \
-            "function() {" + self.ajaxMsgLiteral( "refresh", nil, self._makeAjaxDict() ) + "; }"
+            "function() {" + self.ajaxMsg( "refresh", self._makeAjaxDict() ) + "; }"
                
       self.jsMethods['setOrder'] = \
             "function( col ) { this.column=col; " +
-            self.ajaxMsgLiteral( "order", nil, self._makeAjaxDict() ) + "; }"
+            self.ajaxMsg( "order", self._makeAjaxDict() ) + "; }"
 
       self.jsMethods['setFilter'] = \
             "function( filter ) { this.onCreate(); this.filter=filter; " +
-            self.ajaxMsgLiteral( "filter", nil, self._makeAjaxDict() ) + "; }"            
+            self.ajaxMsg( "filter", self._makeAjaxDict() ) + "; }"
 
       self.jsMethods['onCheckCol'] = "
          function( cb, num, name ) {

@@ -26,4 +26,5 @@
 <li><a href="<?=Nest.pageLink('wd-showcase')?>">Showcase</a></li>
 <li><a href="<?=Nest.pageLink('wd-ajaxpane')?>">Ajax Pane</a></li>
 <li><a href="<?=Nest.pageLink('wd-ajaxpart')?>">Ajax Part</a></li>
+<li><a href="<?=Nest.pageLink('wd-uploader')?>">Ajax Uploader</a></li>
 </ul>

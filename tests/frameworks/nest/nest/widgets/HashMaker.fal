@@ -6,7 +6,7 @@ class HashInput from wid.Widget( "area" )
    isSelfClosing = false
    props = ["rows"=>5, "cols"=>20, "name"=>"text" ]
 
-    init
+   init
       // TODO: Remove this when we have automatic parentship
       self.addClassInParentship( HashInput )
    end
@@ -16,7 +16,7 @@ end
 class HashButton from wid.Widget( "button" )
    tag = "input"
    props = ["type"=>"button", "value"=>"Calc SHA", "onclick" => "this.excite()" ]
-   ajaxReqs = ["excite"=>wid.AJAXRequest( ["../area/value"] ) ]
+   jsMethods = ["excite" => .[self.makeAjaxMsg "excite" .[wid.JSP("/area","../area/value")]] ]
    // a custom message handler
    ajaxMessages = [ 'buttonChange' => "function(obj) { this.value = obj.value; }" ]
 
@@ -54,7 +54,7 @@ class HashMaker( id ) from wid.Widget( id )
    end
 
    function AJAX( params )
-      value = params["infos"]["area.value"]
+      value = params["params"]["area"]
       sha = hash.sha256( value )
       return [
          self.outputText.msgSetProperty( "innerHTML", sha ),

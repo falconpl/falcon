@@ -1,7 +1,7 @@
 class handle_form
    function invoke( form, values )
       res = ""
-      for k, v in values["infos"]
+      for k, v in values["params"]
          res += k + " = " + htmlEscape(v.describe()) + "\n"
       end
       

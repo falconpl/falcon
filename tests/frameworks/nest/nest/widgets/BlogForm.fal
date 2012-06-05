@@ -39,13 +39,13 @@ class BlogForm( id ) from TableForm( id )
       dbh = dbi.connect( Nest.sessionData["miniblog.connstr"] )
       dp = DBIDataProvider( dbh, "blogtable", "idblog" )
 
+      data = params["params"]
       if params["msg"] == 'upd'
-         return self.startUpdate( dp, params["extra"]["key"] )
+         return self.startUpdate( dp, data["key"] )
       elif params["msg"] == 'del'
-         return self.performDelete( dp, params["extra"]["key"] )
+         return self.performDelete( dp, data["key"] )
       end
-      
-      data = params['infos']
+
       idblog = data[self.id + '.id']
       // save the data in ourselves
       self.routeValues( data )

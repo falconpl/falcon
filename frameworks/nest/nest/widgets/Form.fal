@@ -17,7 +17,7 @@
 */
 
 import Widget from nest.widgets.widget as Widget
-import AJAXRequest from nest.widgets.widget as AR
+import JSP from nest.widgets.widget as JSP
 import Hidden from nest.widgets.Hidden as Hidden
 
 /*# Class presenting multiple widget for posting as a form.
@@ -151,9 +151,9 @@ class Form( id, action, method ) from Widget( id )
       end
          
       if self._isAJAXForm
-         reqs = map( {child => "*/" + child.getFullID() + "/value" }, vns )
-         self.ajaxReqs = [
-            "sendFormAJAX"=> AR( reqs )
+         reqs = map( {child => JSP("*", "/" + child.getFullID() + "/value") }, vns )
+         self.jsMethods += [
+            "sendFormAJAX"=> "function(){" + self.ajaxMsg("sendFormAJAX", reqs ) + ";}"
          ]
 
          self.props['onsubmit'] = "this.sendFormAJAX(); return false;"

@@ -64,7 +64,7 @@ class AjaxPart( id, closedWid, openWid, loadingMsg, autoOpen, initOpen ) from Wi
    end
 
    function onRender()
-      msg = self.ajaxMsgLiteral( "open", nil, "extra" )
+      msg = self.ajaxMsg( "open", "extra" )
       clID = self.closedWid.getFullID()
       
       if( self.loadingMsg )
@@ -116,7 +116,7 @@ class AjaxPart( id, closedWid, openWid, loadingMsg, autoOpen, initOpen ) from Wi
 
    function AJAX( data )
       if data['msg'] == "open"
-         pane = data['extra']['pane'];
+         pane = data['params']['pane'];
          if pane in self.paneData
             data = self.paneData[pane]
             if data.isCallable(): data = data()

@@ -638,7 +638,6 @@ object Nest
          self._ambient[aname] = s
       end
 
-
       return s
    end
 
@@ -741,7 +740,11 @@ object Nest
          end
          
       else
-         raise NestError( NestError.page_notfound, "", name )
+         self.logi( "Configuration module not found " + modName )
+         if name
+            raise NestError( NestError.config_notfound, "", modName )
+         end
+         // else, we simply didn't want any configuration
       end
    end
    
@@ -871,6 +874,15 @@ object Nest
       return self.linkVars( self.router.routingURI( self.getURI(), pid ? pid : self.pid ), vars )
    end
 
+   /*# Create a link to an ajax function.
+      @param ajax The name of the Ajax function.
+      @optparam vars A dictionary of variables to be passed to the given function.
+
+   */
+   function ajaxLink( ajax, vars )
+      return self.linkVars( self.getURI() + "?a=" + ajax, vars )
+   end
+   
    /*# Create a link to an internal resource file.
       @param rid Name of the resource to be served.
    */
