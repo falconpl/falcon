@@ -273,6 +273,15 @@ if (!Array.prototype.indexOf) {
       }
    }
 
+   if (typeof Nest.makeproto !== 'function') {
+      Nest.makeproto = function ( proto, target ) {
+         var f;
+         for (f in proto) {
+            target[f] = proto[f];
+         }
+      }
+   }
+
    // Method 'widgetMsg' -- Sending AJAX requests to remote widget server.
    if (typeof Nest.widgetAJAX !== 'function') {
       Nest.widgetAJAX = function ( widClass, widID, msg, params ) {

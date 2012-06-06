@@ -2,15 +2,31 @@
    import Uploader from nest.widgets.Uploader as Uploader
    import JSP from nest.widgets.widget as JSP
    import Text from nest.widgets.Text as Text
+   import Button from nest.widgets.Button as Button
+   import Listener from nest.widgets.Listener as Listener
 ?>
 
 <h2>Nest Widget test: Uploader</h2>
 <?
-   file_one = Uploader( "file_one", "Upload", Text("prompt_one", "First file: "), [JSP("/oldMD5", "/md5csum/innerHTML")] )
+   file_one = Uploader( "file_one", "Upload", [JSP("/oldMD5", "/md5csum/innerHTML")], true )
+   file_two = Uploader( "file_two", "Upload", [JSP("/oldMD5", "/md5csum/innerHTML")], false )
+   btnUpload = Button( "sendfile", "Send file" )
+   file_two.jsListeners[btnUpload] = "function(){this.sendFile();}"
 
+   file_three = Uploader( "file_three", "Upload", nil, true )
+   
    // listeners
+   
+   upload_selected = Text("selected", "")
+   Listener( upload_selected, .[file_one file_two file_three], "
+      function( wid, msg, data ) {
+         if( msg == 'changed' ) {
+            this.innerHTML='Picked ' + data.file;
+         }
+      }")
+      
    upload_status = Text("status", "Wating for the user to upload...")
-   upload_status.jsListeners[file_one] ="
+   Listener( upload_status, .[file_one file_two file_three], "
       function( wid, msg, data ) {
          if( msg == 'start' ) {
             this.innerHTML='Loading ' + data.file + ' ...';
@@ -18,38 +34,57 @@
          else if( msg == 'complete' ) {
             this.innerHTML='Complete.';
          }
-      }"
+      }")
       
    md5csum = Text( "md5csum", "" )
-   md5csum.jsListeners[file_one] ="
+   Listener( md5csum, .[file_one file_two file_three], "
       function( wid, msg, data ) {
          if( msg == 'complete' ) {
             this.innerHTML=data.md5;
          }
-      }"
+      }")
       
    shacsum = Text( "shacsum", "" )
-   shacsum.jsListeners[file_one] ="
+   Listener( shacsum, .[file_one file_two file_three], "
       function( wid, msg, data ) {
          if( msg == 'complete' ) {
              this.innerHTML=data.sha;
          }
-      }"
+      }")
 
    oldmd5 = Text( "oldmd5", "" )
-   oldmd5.jsListeners[file_one] ="
+   Listener( oldmd5, .[file_one file_two file_three], "
       function( wid, msg, data ) {
          if( msg == 'complete' ) {
              this.innerHTML=data.oldMD5;
          }
-      }"
+      }")
+
+   errorReport = Text( "error", "None" )
+   Listener( errorReport, .[file_one file_two file_three], "
+      function( wid, msg, data ) {
+         if( msg == 'error' ) {
+             this.innerHTML=''+data.error + ': ' + data.errorDesc;
+         }
+         else if( msg == 'hardError' ) {
+            this.innerHTML= 'Hard error detected: ' + data.content;
+         }
+         else {
+            this.innerHTML='None';
+         }
+      }")
 ?>
 
-<?= file_one.render() ?>
-<p>Status: <?= upload_status.render() ?></p>
-<p>MD5: <?= md5csum.render() ?></p>
-<p>SHA: <?= shacsum.render() ?></p>
-<p>Previoius MD5: <?= oldmd5.render() ?></p>
+<p>First file (direct upload):<?= file_one.render() ?></p>
+<p>Second file (use button):<?= file_two.render() ?> &nbsp; <?= btnUpload.render() ?></p>
+<p>Third file (generate error):<?= file_three.render() ?></p>
+
+<p>Selected: <?= upload_selected.render() ?><br/>
+<p>Status: <?= upload_status.render() ?><br/>
+<p>MD5: <?= md5csum.render() ?><br/>
+<p>SHA: <?= shacsum.render() ?><br/>
+<p>Previoius MD5: <?= oldmd5.render() ?><br/>
+<p>ERROR: <?= errorReport.render() ?></p>
 
 <hr>
 <p>Uploading files</p>

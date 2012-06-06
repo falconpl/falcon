@@ -4,7 +4,8 @@ function Upload( params )
    // have we an old md5?
    oldmd5 = params["oldMD5"]
    
-   file = Request.getField("file_one")
+   file = Request.getField("file_one", nil)
+   if not file: file = Request.getField("file_two", nil)
    file.read()
    data = file.data
    

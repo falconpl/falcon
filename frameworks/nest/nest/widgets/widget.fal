@@ -267,6 +267,8 @@ class Widget( id )
 
    //# TODO: remove when we have automatic parentship
    _parentship = []
+
+   prototype = nil
    
    init
       Nest.requireJS("base")      
@@ -279,8 +281,21 @@ class Widget( id )
    //# Invoked by widget creation in Nest framework
    function setup()
       self.onSetup()
-      
-      rend = self.renderJSMethods()
+
+      protostr = ""
+      protoend = ""
+      if self.prototype
+         proto = self.prototype
+         if not proto.fieldInfo
+            proto.fieldInfo = true
+            protostr = "var " + proto.id + "={};\nelement=" +proto.id +";\n" +
+            proto.setup()
+         end
+         protoend = "Nest.makeproto( "+self.prototype.id+",element);\n"
+      end
+
+      rend = ""
+      rend += self.renderJSMethods()
       // Listeners go after methods, as listener usually refer to methods.
       rend += self.renderAJAXMessages()
       rend += self.renderJSListeners()
@@ -297,7 +312,11 @@ class Widget( id )
          rend += "element.onCreate = function(){"+ value + ";}\n"
       end
       
-      if rend: return "element=Nest.i('" + self.getFullID() + "');\n" + rend
+      if rend and self.prototype != 0
+         rend = "element=Nest.i('" + self.getFullID() + "');\n" + rend
+      end
+     
+     return protostr + rend + protoend
    end
 
    /*# Called back at widget creation.
@@ -407,6 +426,19 @@ class Widget( id )
       return self
    end
 
+   function setPrototype( cls )
+      name = "Prototype:" + cls.className()
+      proto = Nest.ambient( name )
+      if not proto
+         proto = cls()
+         proto.id = cls.className()
+         proto.prototype = 0
+         Nest.ambient( name, proto )
+      end
+      
+      self.prototype = proto
+   end
+
    //# Renders an XHTML representation of this widget.
    function render()
       if self.labelsOnRight
@@ -444,7 +476,7 @@ class Widget( id )
          rend += self.renderProps()
 
          if self.isSelfClosing and not self.children
-            rend += "/>"
+            rend += "/>" + self.renderContent()
          else
             rend += ">"
             rend += self.renderContent()
@@ -489,7 +521,7 @@ class Widget( id )
       end
       return rend
    end
-
+   
    /*# Renders the contents of this widget.
       @return A string with the full HTML contents of this widget rendered.
 

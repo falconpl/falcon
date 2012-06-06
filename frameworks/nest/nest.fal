@@ -1360,11 +1360,13 @@ object Nest
                           "(function(){ var element;\n"
          // first to all the setup...
          for item in self._widgets
-            value = item.setup()
-            if value: str += value
-            
-            if item.onCreate
-               onCreate += item
+            if item.prototype != 0  // skip protos
+               value = item.setup()
+               if value: str += value
+
+               if item.onCreate
+                  onCreate += item
+               end
             end
          end
 
