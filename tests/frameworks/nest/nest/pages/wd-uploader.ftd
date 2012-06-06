@@ -6,7 +6,7 @@
 
 <h2>Nest Widget test: Uploader</h2>
 <?
-   file_one = Uploader( "file_one", "Upload", Text("prompt_one", "First file: ") )
+   file_one = Uploader( "file_one", "Upload", Text("prompt_one", "First file: "), [JSP("/oldMD5", "/md5sum")] )
 
    // listeners
    upload_status = Text("status", "Wating for the user to upload...")
