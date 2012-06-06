@@ -6,7 +6,7 @@
 
 <h2>Nest Widget test: Uploader</h2>
 <?
-   file_one = Uploader( "file_one", "Upload", Text("prompt_one", "First file: "), [JSP("/oldMD5", "/md5sum")] )
+   file_one = Uploader( "file_one", "Upload", Text("prompt_one", "First file: "), [JSP("/oldMD5", "/md5csum/innerHTML")] )
 
    // listeners
    upload_status = Text("status", "Wating for the user to upload...")
@@ -49,6 +49,7 @@
 <p>Status: <?= upload_status.render() ?></p>
 <p>MD5: <?= md5csum.render() ?></p>
 <p>SHA: <?= shacsum.render() ?></p>
+<p>Previoius MD5: <?= oldmd5.render() ?></p>
 
 <hr>
 <p>Uploading files</p>
