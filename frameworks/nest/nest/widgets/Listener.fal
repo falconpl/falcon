@@ -1,0 +1,68 @@
+/*
+   FALCON - The Falcon Programming Language
+
+   Nest - Falcon web applcation engine
+
+   FILE: Listener.fal
+
+   AJAX widgeting subsystem -- Automated listen request generator
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Mon, 04 Jun 2012 23:13:14 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2011: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+/*#
+   @brief Automated listen request generator.
+   @param listener A widget willing to listen for more widgets.
+   @param widgetList The list of widgets that are to be listened.
+   @param jsFunc A callback invoked when one of the widgets
+         in widgetList emits a message..
+   
+   This class helps to minimize the generated code (and typing)
+   needed to listen multiple widgets throuhg the same message
+   handler.
+*/
+
+class Listener( listener, widgetList, jsFunc )
+   listener = listener
+   jsFunc = jsFunc
+   autoMethod = nil
+
+   init
+      idcount = 1
+      methods = listener.jsMethods
+      
+      while (autoid = "auto_listener" + idcount) in methods
+         idcount++
+      end
+
+      self.autoMethod = autoid
+      listener.jsMethods[autoid] = jsFunc
+      /*
+      this = self
+      listener.jsMethods[autoid] = {=>this.jsFunc}
+      */
+      //id = listener.getFullID()
+      for source in widgetList
+         // little trick: the listener is called element during rendering
+         listener.jsListeners[source] = @"element.$(autoid)"
+      end
+
+   end
+
+   /*#
+      @brief Add more listened source
+      @param source The new source widget.
+      @return self to allow call chains.
+   */
+   function add(source)
+      // little trick: the listener is called element during rendering
+      self.listener.jsListeners[source] = @"element.$(self.autoMethod)"
+      return self
+   end
+end
