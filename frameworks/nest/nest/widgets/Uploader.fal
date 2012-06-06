@@ -119,10 +119,10 @@ class Uploader( id, receiverFunc, prompt, extra ) from Widget( id )
                }"
          }
 
-         // a function to be overridden.
-       self.jsMethods["onStart"] = "function(data){Nest.message(this, 'start', {file:this.value});}"
-       self.jsMethods["onComplete"] = "function(data){Nest.message(this, 'complete', JSON.parse(data));}"
-       self.jsMethods["watchUpload"] = {=>
+      // a function to be overridden.
+      self.jsMethods["onStart"] = "function(data){Nest.message(this, 'start', {file:this.value});}"
+      self.jsMethods["onComplete"] = "function(data){Nest.message(this, 'complete', JSON.parse(data));}"
+      self.jsMethods["watchUpload"] = {=>
          id = this.getFullID()
          return @"
          function() {
@@ -157,7 +157,7 @@ class Uploader( id, receiverFunc, prompt, extra ) from Widget( id )
       link = Nest.ajaxLink( self.ajaxFunc )
       
       res = @"
-         <iframe id=\"$(id).iframe\" style=\"visibility:hidden\" width=0 height=0></iframe>
+         <iframe name=\"$(id).iframe\" id=\"$(id).iframe\" style=\"visibility:hidden\" width=0 height=0></iframe>
          <form id=\"$(id).form\" target=\"$(id).iframe\" action=\"$(link)\" method=\"POST\" enctype=\"multipart/form-data\" accept-charset=\"utf-8\">
          "
       res +="<input type=\"hidden\" name=\"id\" value\=" + self.getFullID() +"\"/>\n"
