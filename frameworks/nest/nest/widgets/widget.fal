@@ -44,8 +44,9 @@ import from json in json
          JSP("!variable", "js_expr() + varname" )
          JSP(".jsonObject", [ "json_dict" => [1,true,nil] ] )
          JSP("/live_property", "../widget1/property1")
-         JSP("*property_as_name", "../form/input/value")
-         JSP("#property_as_path", "../some/widget/value")
+         JSP("*", "../form/input/value")
+         JSP("#", "../some/widget/value")
+         JSP("@", "../some/widget/value")
          ]
          
       print( myWidget.ajaxMsg( "message", infos ) )
@@ -79,6 +80,12 @@ import from json in json
 
    If @name is "#", the @b value is still a path to a live property in the page,
    but the key is the document ID of the target widget.
+
+   If @name is "@", the @b value is still a path to a live property in the page,
+   but the key is the path in @value, normalized with leading "../" removed
+   and each other slash transformed into a dot. For instance,
+   JSP("@","../wid/value") adds the value property under the "wid.value" key.
+   
    
 */
 class JSP( name, value )
@@ -113,6 +120,8 @@ class JSP( name, value )
          case "*": return "addName('" + value + "')"
          // Paths -- as ID
          case "#": return "addId('"+ value + "')"
+         // Paths -- as ID
+         case "@": return "addTPath('"+ value + "')"
 
          default           
             return "add('"+ name + "','"+ value.toString().replace("'", "\\'") + "')"
@@ -126,13 +135,22 @@ class JSP( name, value )
       @optparam widId if given, paths are relative to that widget ID.
 
       If the entry is providing a renderInner (as JSP), that method is called,
-      otherwise the string is rendered as a JS call to "Nest.addTPath()".
-
-      This causes the string to be interpreted as a relative path, and the
-      name of the variable as passed in the parameters will be the "inner id":
-      the relative path stripped of initial parent references "../" and with
-      "/" changed into ".".
+      otherwise the string is rendered as if it was a JSP entry created
+      with JSP("@", the_entry).
       
+      As the "@" key in JSP indicates to create the key as the relative path,
+      the name of the variable as passed in the parameters will be the "inner id":
+      the relative path stripped of initial parent references "../" and with
+      "/" changed into ".". For instance,
+      @code
+         JSP.renderList( ["../wid1/value", "/wid2/body/innerHTML"], myWidget )         
+      @endcode
+
+      will cause the following entry to be generated at runtime:
+      @code
+         {wid1.value: "some value", wid2.body.innerHTML: "inner html"}
+      @endcode
+
       @return A string containing a Nest invocation to create a parameter list
    */
    function renderList( list, widId )

@@ -242,9 +242,8 @@ if (!Array.prototype.indexOf) {
             if( name ) objName['name'] = name.replace("[]", "")
             objName['id'] = element.id;
             // empty if we didn't pop ../
-            if( widIdArr == null ) { widIdArr = idArr; }
-            widIdArr.push( valname );
-            objName['path'] = widIdArr.join(".");
+            idArr.push( valname );
+            objName['path'] = idArr.join(".");
          }
 
          return value;
