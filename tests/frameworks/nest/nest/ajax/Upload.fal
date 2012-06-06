@@ -1,0 +1,12 @@
+load hash
+
+function Upload( params )
+   // have we an old md5?
+   //oldmd5 = params["oldid"]
+   
+   file = Request.getField("file_one")
+   file.read()
+   data = file.data
+   
+   return ["md5" => md5( data ), "sha" => sha256(data) /*, "oldMD5" => oldmd5 */]
+end

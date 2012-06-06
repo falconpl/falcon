@@ -17,8 +17,6 @@ s
 */
 #include "falhttpd_istream.h"
 
-#include "falhttpd_istream.h"
-
 #ifndef FALCON_SYSTEM_WIN
 #include <errno.h>
 #include <unistd.h>
@@ -49,7 +47,7 @@ Falcon::int32 SocketInputStream::read( void *buffer, Falcon::int32 size )
 
    if( rin == 0 )
    {
-      status(t_eof);
+      status(status()|t_eof);      
    }
    else if( rin < 0 )
    {

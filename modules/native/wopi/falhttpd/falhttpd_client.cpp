@@ -156,7 +156,8 @@ void FalhttpdClient::serveRequest(
       delete req;
       return;
    }
-
+   
+   m_log->log( LOGLEVEL_DEBUG, "Request parsed from "+ m_sRemote + " URI: " + sUri );
    req->setURI( sUri );
    req->m_remote_ip = m_sRemote;
 

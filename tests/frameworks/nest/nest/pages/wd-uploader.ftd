@@ -1,0 +1,54 @@
+<?
+   import Uploader from nest.widgets.Uploader as Uploader
+   import JSP from nest.widgets.widget as JSP
+   import Text from nest.widgets.Text as Text
+?>
+
+<h2>Nest Widget test: Uploader</h2>
+<?
+   file_one = Uploader( "file_one", "Upload", Text("prompt_one", "First file: ") )
+
+   // listeners
+   upload_status = Text("status", "Wating for the user to upload...")
+   upload_status.jsListeners[file_one] ="
+      function( wid, msg, data ) {
+         if( msg == 'start' ) {
+            this.innerHTML='Loading ' + data.file + ' ...';
+         }
+         else if( msg == 'complete' ) {
+            this.innerHTML='Complete.';
+         }
+      }"
+      
+   md5csum = Text( "md5csum", "" )
+   md5csum.jsListeners[file_one] ="
+      function( wid, msg, data ) {
+         if( msg == 'complete' ) {
+            this.innerHTML=data.md5;
+         }
+      }"
+      
+   shacsum = Text( "shacsum", "" )
+   shacsum.jsListeners[file_one] ="
+      function( wid, msg, data ) {
+         if( msg == 'complete' ) {
+             this.innerHTML=data.sha;
+         }
+      }"
+
+   oldmd5 = Text( "oldmd5", "" )
+   oldmd5.jsListeners[file_one] ="
+      function( wid, msg, data ) {
+         if( msg == 'complete' ) {
+             this.innerHTML=data.oldMD5;
+         }
+      }"
+?>
+
+<?= file_one.render() ?>
+<p>Status: <?= upload_status.render() ?></p>
+<p>MD5: <?= md5csum.render() ?></p>
+<p>SHA: <?= shacsum.render() ?></p>
+
+<hr>
+<p>Uploading files</p>

@@ -374,6 +374,8 @@ bool PartHandler::parseBody( Stream* input, bool& isLast )
       {
          m_pBuffer->fill( input );
          m_pBuffer->allFlush( m_stream );
+         
+         TRACE("Input status: %d -- eof: %d", input->status(), input->eof() );
 
          if( ! ( input->good() && m_stream->good() ) )
          {
@@ -445,6 +447,11 @@ bool PartHandler::scanForBound( const String& boundary, Stream* input, bool& isL
       if( *m_pToBodyLeft == 0 || input->eof() )
       {
          m_sError = "Malformed part (missing boundary)";
+         return false;
+      }
+      
+      if( !input->good() ) {
+         m_sError = "I/O error while scanning for boundary in part";
          return false;
       }
       
@@ -552,7 +559,7 @@ bool PartHandler::parseHeader( Stream* input )
          // read error?
          if( ! input->good() )
          {
-            m_sError = "I/O Error while reading from input stream";
+            m_sError = "I/O Error while reading header from input stream";
             return false;
          }
 
@@ -786,7 +793,7 @@ uint32 PartHandler::PartHandlerBuffer::find( const String& str )
 
 bool PartHandler::PartHandlerBuffer::fill( Stream* input )
 {
-   TRACE( "PartHandlerBuffer Filling: %d", (int) m_nDataLeft );
+   TRACE( "PartHandlerBuffer eof: %d Filling: %d", input->eof(), (int) *m_nDataLeft );
    if ( *m_nDataLeft > 0 && (! input->eof()) )
    {
       int32 toRead = buffer_size - m_nBufSize;
@@ -804,7 +811,7 @@ bool PartHandler::PartHandlerBuffer::fill( Stream* input )
       *m_nDataLeft -= size;
       return true;
    }
-
+   
    return false;
 }
 
@@ -837,7 +844,7 @@ bool PartHandler::PartHandlerBuffer::hasMore( int count, Stream* input, Stream* 
       fill( input );
       largeEnough = (m_nBufPos + count) < m_nBufSize;
    }
-   while ( !largeEnough && !input->eof() );    
+   while ( !largeEnough && *m_nDataLeft > 0 && !input->eof() && input->good() );    
 
    return largeEnough;
 }
