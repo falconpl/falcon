@@ -107,11 +107,11 @@ end
    are either a string or a list/array of @a JSP instances.
 
    In case they are a string, they're considered pre-processed
-   and passed as-is as ["extra"] in the function params
-   dictionary. If they are a list of JSP instances, they are
+   and passed as-is as the dictionary that the function receives
+   as parametrs. If they are a list of JSP instances, they are
    parsed live by Nest and their value can be configured runtime;
    their result (a dictionary of values) will be sent in the
-   "extra" field of the params dictionary in the target function.
+   dictionary parameter of the target function.
 
 @section msg Messages
 
@@ -169,7 +169,11 @@ class Uploader( id, receiverFunc, extra, isDirect, finput ) from Widget( id )
       self.jsMethods["sendFile"] = {=>
             id = this.getFullID()
             if this.extra
-               params = @"Nest.i('$(id).params').value = JSON.stringify("+JSP.renderList(this.extra, id)+");"
+               if this.extra.typeId() == StringType
+                  params = this.extra
+               else
+                  params = @"Nest.i('$(id).params').value = JSON.stringify("+JSP.renderList(this.extra, id)+");"
+               end
             else
                params = ""
             end
