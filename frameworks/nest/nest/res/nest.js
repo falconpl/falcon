@@ -35,19 +35,29 @@ if (!Array.prototype.indexOf) {
                   obj = JSON.parse(http.responseText);
                }
                catch( err ) {
+                  // don't bother fulfilling other requests.
+                  pendingAjaxReqs = new Array();
                   // if not json, raise proper error.
                   Nest.onJSONError( http.responseText, err )
                }
 
                if( obj ) {
                   // application error?
-                  if ( obj.error ) { Nest.onAPIError( obj ); }
+                  if ( obj.error ) {
+                     // don't bother fulfilling other requests.
+                     pendingAjaxReqs = new Array();
+                     Nest.onAPIError( obj );
+                  }
                   else if (callback) { callback( obj ); }
                }
             }
             else {
                if( errCallback ) errCallback( http.status, http.responseText );
-               else Nest.onAJAXError( http.status, http.responseText );
+               else {
+                  // don't bother fulfilling other requests.
+                  pendingAjaxReqs = new Array();
+                  Nest.onAJAXError( http.status, http.responseText );
+               }
             }
          }
       }
