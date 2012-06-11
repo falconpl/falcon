@@ -45,9 +45,9 @@ class UploaderProto from Widget("proto")
             }"
       self.jsMethods["onStart"] = "function(data){Nest.message(this, 'start', {file:Nest.rw(this,'file').value});}"
       self.jsMethods["onComplete"] = "function(jdata){Nest.message(this, 'complete', jdata );}"
-      self.jsMethods["onReceived"] = "function(jdata){Nest.message(this, 'received', jdata);}"
+      self.jsMethods["onReceived"] = "function(jdata){Nest.message(this, 'received', jdata); return false;}"
       self.jsMethods["onError"] = "function(data){Nest.message(this, 'error', data);}"
-      self.jsMethods["onHardDerror"] = "function(data){Nest.message(this, 'hardError', data);}"
+      self.jsMethods["onHardError"] = "function(data){Nest.message(this, 'hardError', data);}"
       self.jsMethods["watchUpload"] = "
             function() {
                var content = Nest.rw(this,'iframe').contentDocument.body.innerHTML;
