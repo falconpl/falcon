@@ -356,6 +356,9 @@ object Nest
 
    //# If true, widget declared @b css properties are rendered in-line
    genWidgetStyles = true
+
+   //# Old STDOUT when its get changed for page streaming.
+   std_out = nil
    
    //===================================================================
    // Private properties
@@ -1278,6 +1281,7 @@ object Nest
       // prepare the output stream
       self._pageStream = StringStream()
       old = stdOut( self._pageStream )
+      self.std_out = old
 
       // prepare the content slices
       self._contentSlices = []
