@@ -20,7 +20,6 @@
 #include <falcon/module.h>
 #include <falcon/memory.h>
 #include "regex_ext.h"
-#include "regex_st.h"
 #include "version.h"
 
 #include <stdio.h>

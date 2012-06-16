@@ -56,13 +56,12 @@ else()
    find_package(PCRE REQUIRED)   
    # Force ignoring OUR pcre
    include_directories(${PCRE_INCLUDE_DIR}) 
-endif(FALCON_WITH_INTERNAL_PCRE)
+endif()
 
 add_library(regex_fm MODULE
   regex.cpp
   regex_ext.cpp
   regex_mod.cpp
-  regex_st.cpp
   ${PCRE_SOURCE}
   ${SYS_RC}
 )

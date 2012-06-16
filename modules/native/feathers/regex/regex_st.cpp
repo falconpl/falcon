@@ -18,6 +18,6 @@
 */
 
 #define FALCON_REALIZE_STRTAB
-#include "regex_st.h"
+#include "./regex_st.h"
 
 /* regex_st.cpp */

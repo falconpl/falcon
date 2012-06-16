@@ -25,7 +25,6 @@
 #include <falcon/setup.h>
 
 #include <falcon/error.h>
-#include <falcon/error_base.h>
 
 #include <falcon/classes/classerror.h>
 #include <falcon/classes/classuser.h>

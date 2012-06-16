@@ -91,6 +91,7 @@ endif()
 ##################################################################
 # CMAKE environment setup
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules)
+add_subdirectory( devtools )
 
 #########################################################à
 # List of files to be installed as docs

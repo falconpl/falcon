@@ -32,7 +32,6 @@
 
 #include "regex_ext.h"
 #include "regex_mod.h"
-#include "regex_st.h"
 
 /*#
    @beginmodule feathers.regex
@@ -799,7 +798,6 @@ static void s_replaceall( VMContext* ctx, bool bExpand )
    uint32 destLen = dest->length();
 
    int from = 0;
-   int oldFrom = 0;
    do {
       internal_regex_match( data, source, from );
       if( data->m_matches > 0 )
@@ -822,7 +820,6 @@ static void s_replaceall( VMContext* ctx, bool bExpand )
          else
             source->change( data->m_ovector[0], data->m_ovector[1], *dest );
 
-         oldFrom = from;
          from = data->m_ovector[0] + destLen + 1;
          // as we're going to exit.
       }
