@@ -39,7 +39,7 @@ class MantraMap;
 
 class Module;
 class BOM;
-class ClassReference;
+class ClassRawMem;
 class StdSteps;
 class StdErrors;
 class ModSpace;
@@ -253,18 +253,6 @@ public:
     return a null pointer.
     */
    Class* genericClass() const;
-
-   /** Returns the global instance of the ClassReference class.
-   \return the Engine instance of the ClassReference handler.
-
-    Method init() must have been called before.
-
-    @note This method will assert and terminate the program if compiled in debug mode
-    in case the engine has not been initialized. In release, it will just
-    return a null pointer.
-    */
-   ClassReference* referenceClass() const;
-   
    
    /** Returns the global instance of the ClassTreeStep class.
    \return the Engine instance of the ClassTreeStep handler.
@@ -331,6 +319,22 @@ public:
     return a null pointer.
     */
    Class* closureClass() const;
+   
+   /** Returns the global instance of the ClassRawMem class.
+   \return the Engine instance of the ClassRawMem handler.
+
+    Method init() must have been called before.
+
+    Notice that the ClassRawMem is not reflected in the language:
+    is just used internally by the engine as it at disposal of embedders
+    and third party module writers to write extensions that require to pass
+    some raw data to the Falcon garbage collector.
+    
+    @note This method will assert and terminate the program if compiled in debug mode
+    in case the engine has not been initialized. In release, it will just
+    return a null pointer.
+    */   
+   ClassRawMem* rawMemClass() const;
    
    /** Returns the collection of standard syntactic tree classes.
    \return the Engine instance of the SynClasses class collection.
@@ -497,8 +501,9 @@ protected:
    Class* m_mantraClass;
    Class* m_synFuncClass;
    Class* m_genericClass;
-   ClassReference* m_referenceClass;
 
+   ClassRawMem* m_rawMemClass;
+   
    //===============================================
    // Standard error handlers
    //

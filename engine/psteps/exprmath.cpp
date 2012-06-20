@@ -394,16 +394,6 @@ void generic_apply_( const PStep* ps, VMContext* ctx )
          }
 
          // we dereference also op1 to help copy-on-write decisions from overrides
-         if( op1->isReference() )
-         {
-            *op1 = *op1->dereference();
-         }
-
-         if( op2->isReference() )
-         {
-            *op2 = *op2->dereference();
-         }
-
          switch ( op1->type() << 8 | op2->type() )
          {
          case FLC_ITEM_INT << 8 | FLC_ITEM_INT:
@@ -422,9 +412,6 @@ void generic_apply_( const PStep* ps, VMContext* ctx )
          case FLC_ITEM_NUM << 8 | FLC_ITEM_NUM:
             op1->content.data.number = _cpr::operaten(op1->asNumeric(), op2->asNumeric());
             ctx->popData();
-            break;
-
-            
             break;
 
          default:

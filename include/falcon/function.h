@@ -19,7 +19,6 @@
 #include <falcon/setup.h>
 #include <falcon/string.h>
 #include <falcon/symboltable.h>
-#include <falcon/itemreference.h>
 #include <falcon/mantra.h>
 
 namespace Falcon

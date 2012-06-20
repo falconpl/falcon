@@ -51,6 +51,15 @@ void VMContext::LinearStack<datatype__>::init( int base )
 }
 
 template<class datatype__>
+void VMContext::LinearStack<datatype__>::init( int base, uint32 allocSize )
+{
+   m_base = (datatype__*) malloc( allocSize * sizeof(datatype__) );
+   m_top = m_base + base;
+   m_max = m_base + allocSize;
+   m_allocSize = allocSize;
+}
+
+template<class datatype__>
 VMContext::LinearStack<datatype__>::~LinearStack()
 {
    if( m_base != 0 ) free( m_base );
@@ -73,7 +82,8 @@ VMContext::VMContext( VMachine* vm ):
    m_dynsStack.init();
    m_codeStack.init();
    m_callStack.init();
-   m_dataStack.init(0);
+   m_locsStack.init();
+   m_dataStack.init(0, m_dataStack.INITIAL_STACK_ALLOC*100);
 
    pushReturn();
 }
@@ -109,6 +119,7 @@ void VMContext::reset()
    m_dynsStack.reset();
    m_codeStack.reset();
    m_callStack.reset();
+   m_locsStack.reset();
    m_dataStack.reset(0);
 
    // prepare a low-limit VM terminator request.
@@ -245,6 +256,7 @@ bool VMContext::unrollToNext( const _checker& check )
    register CodeFrame* curCode = m_codeStack.m_top;
    register Item* curData = m_dataStack.m_top;
    register DynsData* curDyns = m_dynsStack.m_top;
+   register Variable* curLocs = m_locsStack.m_top;
 
    while( m_callStack.m_base <= curFrame )
    {
@@ -259,6 +271,7 @@ bool VMContext::unrollToNext( const _checker& check )
             m_dataStack.m_top = curData;
             m_codeStack.m_top = curCode;
             m_dynsStack.m_top = curDyns;
+            m_locsStack.m_top = curLocs;
             return true;
          }
          --curCode;
@@ -470,7 +483,7 @@ void VMContext::raiseItem( const Item& item )
          Symbol* sym = m_catchBlock->target();
          if( sym != 0 )
          {
-            sym->setValue(this, item);
+            *sym->getValue(this) = item;
          }
          m_raised.setNil();
       }
@@ -524,7 +537,7 @@ void VMContext::raiseError( Error* ce )
          // assign the error to the required item.
          if( m_catchBlock->target() != 0 )
          {
-            m_catchBlock->target()->setValue(this, Item( ce->handler(), ce ));            
+            *m_catchBlock->target()->getValue(this) = Item( ce->handler(), ce );            
             ce->decref();
          }
       }
@@ -714,12 +727,13 @@ void VMContext::call( Function* function, int nparams )
 }
 
 
-void VMContext::call( Function* function, ItemArray* closedData, int nparams )
+void VMContext::call( Closure* closure, int nparams )
 {
+   Function* function = closure->function();
    TRACE( "Calling function %s -- call frame code:%p, data:%p, call:%p",
          function->locate().c_ize(),m_codeStack.m_top, m_dataStack.m_top, m_callStack.m_top  );
 
-   makeCallFrame( function, closedData, nparams );
+   makeCallFrame( closure, nparams );
    TRACE3( "-- codebase:%d, stackBase:%d ", \
          m_callStack.m_top->m_codeBase, m_callStack.m_top->m_stackBase );
 
@@ -791,6 +805,9 @@ void VMContext::returnFrame( const Item& value )
    m_dynsStack.unroll( topCall->m_dynsBase );
    PARANOID( "Dynamic Symbols stack underflow at return", (m_dynsStack.m_top >= m_dynsStack.m_base-1) );
 
+   m_locsStack.unroll( topCall->m_locsBase );
+   PARANOID( "Local Symbols stack underflow at return", (m_locsStack.m_top >= m_locsStack.m_base-1) );
+
    // Forward the return value
    *m_dataStack.m_top = value;
 
@@ -818,13 +835,7 @@ void VMContext::forwardParams( int pcount )
    }
 }
 
-void VMContext::setDynSymbolValue( const Symbol* dyns, const Item& value )
-{
-   value.copied();
-   *getDynSymbolValue(dyns) = value;
-}
-
-Item* VMContext::getDynSymbolValue( const Symbol* dyns )
+Variable* VMContext::getDynSymbolVariable( const Symbol* dyns )
 {
    // search for the dynsymbol in the current context.
    const CallFrame* cf = &currentFrame();
@@ -839,7 +850,7 @@ Item* VMContext::getDynSymbolValue( const Symbol* dyns )
          if ( dyns->name() == dd->m_sym->name() )
          {
             // Found!
-            return dd->m_item.dereference();
+            return &dd->m_var;
          }
          --dd;
       }
@@ -852,10 +863,8 @@ Item* VMContext::getDynSymbolValue( const Symbol* dyns )
          DynsData* newData = m_dynsStack.addSlot();
          newData->m_sym = dyns;
          // reference the target local variable into our slot.
-         ItemReference::create(
-            m_dataStack.m_base[cf->m_initBase + locsym->localId()],
-            newData->m_item );
-         return newData->m_item.dereference();
+         newData->m_var.makeReference(locsym->getVariable(this));
+         return &newData->m_var;
       }
       
       // no luck? Try with module globals.
@@ -865,19 +874,19 @@ Item* VMContext::getDynSymbolValue( const Symbol* dyns )
          Symbol* globsym = master->getGlobal( dyns->name() );
          if( globsym != 0 )
          {
-            
             DynsData* newData = m_dynsStack.addSlot();
             newData->m_sym = dyns;
+            
             // reference the target local variable into our slot.
-            ItemReference::create( newData->m_item );
-            globsym->setValue(this,newData->m_item );
-            return newData->m_item.dereference();
+            newData->m_var.makeReference(globsym->getVariable(this));
+            return &newData->m_var;
          }
       }
       --cf;
    }   
 
    // still no luck? -- what about exporeted symbols in VM?
+   // TODO: Correct interlocking.
    ModSpace* ms = vm()->modSpace();
    if( ms != 0 )
    {
@@ -887,16 +896,21 @@ Item* VMContext::getDynSymbolValue( const Symbol* dyns )
          DynsData* newData = m_dynsStack.addSlot();
          newData->m_sym = dyns;
          // reference the target local variable into our slot.
-         ItemReference::create( newData->m_item );
-         expsym->setValue(this,newData->m_item );
-         return newData->m_item.dereference();
+         // we're not the context for the exported symbols
+         newData->m_var.makeReference(expsym->getVariable(0));
+         return &newData->m_var;
       }
    }
 
    // No luck at all.
    DynsData* newData = m_dynsStack.addSlot();
+   
+   // save the data in the stack
    newData->m_sym = dyns;
-   return newData->m_item.dereference();
+   newData->m_var.base(0);
+   newData->m_var.value(&addDataSlot());
+   
+   return &newData->m_var;
 }
 
 

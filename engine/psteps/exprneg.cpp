@@ -56,7 +56,7 @@ void ExprNeg::apply_( const PStep* ps, VMContext* ctx )
       case 1:
       {
          cf.m_seqId = 2;
-         Item* item = ctx->topData().dereference();
+         register Item* item = &ctx->topData();
 
          switch( item->type() )
          {

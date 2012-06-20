@@ -181,12 +181,7 @@ void StmtFastPrint::apply_( const PStep* ps, VMContext* ctx )
    if( seqId > 0 )
    {
       register Item& top = ctx->topData();
-      
-      if( top.isReference() ) 
-      {
-         top = *top.asReference();
-      }
-      
+            
       if( top.isString() )
       {
          ctx->vm()->textOut()->write( *top.asString() );

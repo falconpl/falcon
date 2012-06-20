@@ -99,7 +99,7 @@ bool MetaFalconClass::op_init( VMContext* ctx, void* instance, int32 pcount ) co
    // Class constructor:
    // Class( name, members, parentship )
    
-   if( pcount < 1 || ! operands->dereference()->isString() )
+   if( pcount < 1 || ! operands->isString() )
    {
       throw new ParamError( ErrorParam(e_inv_params, __LINE__,SRC)
             .origin(ErrorParam::e_orig_runtime)
@@ -107,13 +107,13 @@ bool MetaFalconClass::op_init( VMContext* ctx, void* instance, int32 pcount ) co
    }
    
    
-   String* name = operands->dereference()->asString();
+   String* name = operands->asString();
    ItemDict* members = 0;
    ExprParentship* ep = 0;
    
    if( pcount > 1 )
    {
-      Item* iDict = operands[1].dereference();
+      register Item* iDict = operands + 1;
       if( ! iDict->isDict() ) {
          throw new ParamError( ErrorParam(e_inv_params, __LINE__,SRC)
             .origin(ErrorParam::e_orig_runtime)
@@ -124,7 +124,7 @@ bool MetaFalconClass::op_init( VMContext* ctx, void* instance, int32 pcount ) co
    
    if( pcount > 2 )
    {
-      Item* iParent = operands[2].dereference();
+      register Item* iParent = operands + 2;
       Class* cls;
       void* data;
       

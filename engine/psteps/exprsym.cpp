@@ -78,14 +78,17 @@ ExprSymbol::ExprSymbol( const ExprSymbol& other ):
    m_pstep_lvalue = &m_pslv;
    m_pstep_lvalue->apply = other.m_pstep_lvalue->apply;
    m_trait = e_trait_symbol;
+   m_gcLock = 0;
    
    if( other.m_symbol == 0 ) {
       m_symbol = 0;
-      m_gcLock = 0;
+   }
+   else if( other.m_symbol->type() == Symbol::e_st_dynamic ) {
+      safeGuard( other.m_symbol );
    }
    else {
-      m_gcLock = 0;
-      safeGuard( other.m_symbol );
+      // we're in the same tree where the symbol is recorded.
+      m_symbol = other.m_symbol;
    }
 }
 
@@ -157,27 +160,7 @@ void ExprSymbol::apply_( const PStep* ps, VMContext* ctx )
    fassert( es->m_symbol != 0 );
    ctx->popCode();
    
-   if( ctx->evalOutOfContext() )
-   {
-      ctx->pushData(*ctx->getDynSymbolValue(es->m_symbol));
-   }
-   else
-   {
-      ctx->pushData(*es->m_symbol->getValue(ctx));
-   }
-   /*
-   register Symbol* sym = es->m_symbol;
-   switch( sym->type() )
-   {
-      case Symbol::e_st_global: ctx->pushData(*sym->m_defvalue.asItem); break;
-      case Symbol::e_st_local: ctx->pushData(ctx->localVar(sym->m_defvalue.asId)); break;
-      case Symbol::e_st_closed: ctx->pushData(((*ctx->currentFrame().m_closedData)[sym->m_defvalue.asId])); break;
-      case Symbol::e_st_extern: 
-      case Symbol::e_st_dynamic:
-         // operate as a dynamic value
-         ctx->pushData(*ctx->getDynSymbolValue( sym ));
-         break;
-   }*/
+   ctx->pushData(*es->m_symbol->getValue(ctx));
 }
 
 
@@ -187,14 +170,7 @@ void ExprSymbol::PStepLValue::apply_( const PStep* ps, VMContext* ctx )
    fassert( es->m_owner->m_symbol != 0 );
    ctx->popCode();
       
-   if( ctx->evalOutOfContext() )
-   {
-      ctx->setDynSymbolValue(es->m_owner->m_symbol, ctx->topData());
-   }
-   else
-   {
-      es->m_owner->m_symbol->setValue(ctx, ctx->topData());
-   }
+   *es->m_owner->m_symbol->getValue(ctx) = ctx->topData();
 }
    
 }

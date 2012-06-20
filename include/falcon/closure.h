@@ -19,12 +19,11 @@
 
 #include <falcon/setup.h>
 #include <falcon/types.h>
-#include <falcon/itemarray.h>
+#include <falcon/variable.h>
 
 namespace Falcon {
 
 class Function;
-class ItemReference;
 class VMContext;
 class ClassClosure;
 
@@ -69,15 +68,15 @@ public:
    Function* function() const { return m_function; }
    
    /** Gets the data associated with this closure. */
-   const ItemArray& closedData() const { return m_closedData; }
-   ItemArray& closedData() { return m_closedData; }
-   
+   const Variable* closedData() const { return m_closedData; }
+   Variable* closedData() { return m_closedData; }   
    Closure* clone() const { return new Closure(*this); }
    
 private:
 
    Function* m_function;
-   ItemArray m_closedData;
+   Variable* m_closedData;
+   uint32 m_closedDataSize;
    uint32 m_mark;
    
    friend class ClassClosure;

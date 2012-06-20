@@ -128,7 +128,7 @@ void generic_apply_( const PStep* ps, VMContext* ctx )
       {   
          // eventually save the result if necessary
          _cpr::preAssign( ctx );
-         Item *op = ctx->topData().dereference();
+         register Item *op = &ctx->topData();
          
          switch( op->type() )
          {

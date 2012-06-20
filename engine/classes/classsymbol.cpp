@@ -115,7 +115,7 @@ void ClassSymbol::op_getProperty( VMContext* ctx, void* instance, const String& 
    }
    else if( prop == "value" )
    {
-      ctx->stackResult(1, *ctx->getDynSymbolValue( sym ) );
+      ctx->stackResult(1, *ctx->getDynSymbolVariable(sym)->value() );
       ctx->topData().copied();
    }
    else {
@@ -134,8 +134,7 @@ void ClassSymbol::op_setProperty( VMContext* ctx, void* instance, const String& 
    }
    else if( prop == "value" )
    {
-      ctx->setDynSymbolValue( sym, ctx->opcodeParam(3) );
-      ctx->topData().copied();
+      ctx->getDynSymbolVariable( sym )->value()->assign(ctx->opcodeParam(3));
    }
    else {
       Class::op_setProperty(ctx, instance, prop);
@@ -146,7 +145,7 @@ void ClassSymbol::op_setProperty( VMContext* ctx, void* instance, const String& 
 void ClassSymbol::op_eval( VMContext* ctx, void* instance ) const
 {
    Symbol* sym = static_cast<Symbol*>( instance );   
-   ctx->topData() = *ctx->getDynSymbolValue( sym );
+   ctx->topData() = *ctx->getDynSymbolVariable(sym)->value();
 }
 
 
@@ -193,13 +192,8 @@ void ClassSymbol::flatten( VMContext*, ItemArray& subItems, void* instance ) con
    Symbol* symbol = static_cast<Symbol*>(instance);
    
    if( symbol->type() == Symbol::e_st_extern ) 
-   {
-      if( symbol->externRef() != 0 )
-      {
-         subItems.reserve(1);
-         subItems.append( Item(this, symbol->externRef() ) );
-      }
-      // other wise, it's an unresolved external symbo, and we don't have to save it.
+   {      
+      // it's an unresolved external symbol, and we don't have to save it.
    }
    else {
       subItems.reserve(1);
@@ -214,10 +208,7 @@ void ClassSymbol::unflatten( VMContext*, ItemArray& subItems, void* instance ) c
    fassert( subItems.length() == 1 || symbol->type() == Symbol::e_st_extern );
    if( symbol->type() == Symbol::e_st_extern ) 
    {
-      if( subItems.length() > 0 ) {
-         symbol->promoteExtern( static_cast<Symbol*>(subItems[0].asInst()) );
-      }
-      // otherwise, the symbol was flattened when unresolved.
+      // the symbol was flattened when unresolved.
    }
    else {
       symbol->defaultValue( subItems[0] );

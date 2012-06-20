@@ -180,13 +180,7 @@ void ItemDict::gcMark( uint32 mark )
 
 
 void ItemDict::insert( const Item& key, const Item& value )
-{  
-   if( key.isReference() )
-   {
-      insert( *key.dereference(), value );
-      return;
-   }
-   
+{     
    switch( key.type() )
    {      
       case FLC_ITEM_NIL:
@@ -242,13 +236,7 @@ void ItemDict::insert( const Item& key, const Item& value )
 
 
 void ItemDict::remove( const Item& key )
-{
-   if( key.isReference() )
-   {
-      remove( *key.dereference() );
-      return;
-   }
-   
+{   
    switch( key.type() )
    {      
       case FLC_ITEM_NIL:
@@ -307,7 +295,7 @@ void ItemDict::remove( const Item& key )
 Item* ItemDict::find( const Item& key )
 {
 
-   switch( key.dereference()->type() )
+   switch( key.type() )
    {      
       case FLC_ITEM_NIL:
          if( _p->m_bHasNil )

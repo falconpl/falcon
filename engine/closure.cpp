@@ -22,25 +22,30 @@
 #include <falcon/vmcontext.h>
 #include <falcon/symbol.h>
 
+#include <string.h>
+
 namespace Falcon {
 
 Closure::Closure( Function* func ):
    m_function(func)
 {
    // it's pretty stupid to create a closure if you don't have closed symbols, but...
-   uint32 size = func->symbols().closedCount();
-   m_closedData.resize(size);
+   m_closedDataSize = func->symbols().closedCount();
+   m_closedData = new Variable[m_closedDataSize];
 }
 
 
 Closure::Closure( const Closure& other ):
-   m_function( other.m_function ),
-   m_closedData( other.closedData() )
+   m_function( other.m_function )
 {
+   m_closedDataSize = m_function->symbols().closedCount();
+   m_closedData = new Variable[m_closedDataSize];
+   memcpy( m_closedData, other.m_closedData, m_closedDataSize * sizeof(Variable));
 }
 
 Closure::~Closure()
 {
+   delete[] m_closedData;
 }
 
 void Closure::gcMark( uint32 mark )
@@ -49,7 +54,10 @@ void Closure::gcMark( uint32 mark )
    {
       m_mark = mark;
       m_function->gcMark( mark );
-      m_closedData.gcMark( mark );
+      for( uint32 i = 0; i < m_closedDataSize; ++i ) {         
+         m_closedData[i].gcMark( mark );
+         m_closedData[i].value()->gcMark(mark);
+      }
    }
 }
 
@@ -77,15 +85,13 @@ void Closure::close( VMContext* ctx )
             if( tgtsym != 0 )
             {
                // we found it. get the item.
-               const Item* theItem = tgtsym->getValue(ctx);
-               fassert( theItem != 0 );
+               Variable* variable = tgtsym->getVariable(ctx);
+               fassert( variable != 0 );
                // now reference it in our closure array
-               m_closedData[i] = *theItem;
-               ItemReference::create(m_closedData[i]);
-               tgtsym->setValue(ctx, m_closedData[i]);
+               m_closedData[i].makeReference(variable);
                // and since we're done, we can break;
                TRACE2( "Closure::close -- closed symbol %s at depth %d => \"%s\"",
-                  closed->name().c_ize(), (int)i, theItem->describe().c_ize() );
+                  closed->name().c_ize(), (int)i, variable->value()->describe().c_ize() );
                break;
             }
             // better luck with next time.
@@ -105,7 +111,9 @@ void Closure::function( Function* func )
    m_function = func;
    // it's pretty stupid to create a closure if you don't have closed symbols, but...
    uint32 size = func->symbols().closedCount();
-   m_closedData.resize( size );
+   m_closedDataSize = size;
+   delete[] m_closedData;
+   m_closedData = new Variable[size];
 }
 
 }

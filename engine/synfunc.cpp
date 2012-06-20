@@ -105,7 +105,9 @@ void SynFunc::setConstructor()
 }
 
 void SynFunc::invoke( VMContext* ctx, int32 nparams )
-{   
+{  
+   register int i;
+   
    // nothing to do?
    if( syntree().empty() )
    {
@@ -114,16 +116,38 @@ void SynFunc::invoke( VMContext* ctx, int32 nparams )
       return;
    }
    
+   register int paramCount = (int) this->paramCount();
+   register int localCount = (int) this->symbols().localCount() - paramCount;
+   
    // fill the parameters
    TRACE1( "-- filing parameters: %d/%d, and locals %d",
-         nparams, this->paramCount(),
-         this->symbols().localCount() - this->paramCount() );
+         nparams, paramCount,
+         localCount );
 
-   register int lc = (int) this->symbols().localCount();
-   if( lc > nparams )
+   // fill the named parameters if not enough
+   if( paramCount > nparams )
    {
-      ctx->addLocals( lc - nparams );
+      ctx->addLocals( paramCount - nparams );
    }
+   
+   // then add items to be stored in the local variables.
+   ctx->addLocals( localCount );
+   
+   // Structure in data stack is:
+   // [np0] [np1] [..] [..] [l0] [l1] 
+   
+   // Add the variables in reverse order -- first the locals
+   Item* itemBase = &ctx->topData();
+   for( i = localCount; i > 0; --i ) {
+      ctx->addLocalVariable(itemBase--);
+   }
+   
+   // then the named parameters
+   itemBase = ctx->params() + paramCount;
+   for( i = paramCount; i > 0; --i ) {
+      // we're 1 past end; use prefix decrement
+      ctx->addLocalVariable(--itemBase);
+   }    
    
    // push a static return in case of problems.
    ctx->pushCode( m_retStep );

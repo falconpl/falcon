@@ -23,8 +23,7 @@
 #define FLC_ITEM_INT          2
 #define FLC_ITEM_NUM          3
 #define FLC_ITEM_METHOD       4
-#define FLC_ITEM_REF          5
-#define FLC_ITEM_COUNT        6
+#define FLC_ITEM_COUNT        5
 
 /** Framing items are special markers in data stack for rules. */
 #define FLC_ITEM_FRAMING      6

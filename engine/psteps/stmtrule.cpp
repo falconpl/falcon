@@ -320,7 +320,7 @@ void StmtCut::apply_cut_expr_( const PStep* ps, VMContext* ctx )
    ctx->popCode(); // use us just once.
    
    // we're inside a rule, or we wouldn't be called.
-   register Item* td = ctx->topData().dereference();
+   register Item* td = &ctx->topData();
    
    // set to false only if the last op result was a boolean false.
    ctx->ruleEntryResult( !(td->isBoolean() && td->asBoolean() == false) );
@@ -414,7 +414,7 @@ void StmtDoubt::apply_( const PStep* ps, VMContext* ctx )
    ctx->popCode(); // use us just once.
    
    // we're inside a rule, or we wouldn't be called.
-   register Item* td = ctx->topData().dereference();
+   register Item* td = &ctx->topData();
    
    // set to false only if the last op result was a boolean false.
    ctx->ruleEntryResult( !(td->isBoolean() && td->asBoolean() == false) );

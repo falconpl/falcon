@@ -85,10 +85,6 @@ void ExprEEQ::apply_( const PStep* ps, VMContext* ctx )
          && op1->asInst() == op2->asInst());
       break;
       
-   case FLC_ITEM_REF << 8 | FLC_ITEM_REF:
-      op1->setBoolean( op1->dereference() == op2->dereference() );
-      break;
-
    default:
       op1->setBoolean(op1->asInst() == op2->asInst());
    }

@@ -288,7 +288,9 @@ Symbol* IntCompiler::Context::onUndefinedSymbol( const String& name )
       gsym = mod->addImplicitImport( name );  
       
       // no need to "define" it, it stays an extern.
-      gsym->promoteExtern(exp);
+      Variable* var = exp->getVariable(0);
+      fassert( var != 0 );
+      gsym->resolved( var );
    }
    return gsym;
 }

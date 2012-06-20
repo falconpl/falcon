@@ -79,7 +79,10 @@ Error* Module::Private::Dependency::onResolved( Module* parentMod, Module* mod, 
    bool firstError = true;
    if( m_symbol != 0 && m_symbol->type() == Symbol::e_st_extern)
    {
-      m_symbol->promoteExtern( sym );
+      Variable* remoteVar = sym->getVariable(0);
+      fassert( remoteVar != 0 );
+      // congrats, we just became global.
+      m_symbol->resolved( remoteVar ); 
    }
    
    Private::Dependency::WaitingList::iterator iter = m_waitings.begin();
@@ -279,9 +282,6 @@ void Module::addAnonMantra( Mantra* f )
 
 Symbol* Module::addMantra( Mantra* f, bool bExport )
 {
-   static Class* symClass = Engine::instance()->symbolClass();
-   static Collector* coll = Engine::instance()->collector();
-
    //static Engine* eng = Engine::instance();
 
    Private::GlobalsMap& syms = _p->m_gSyms;
@@ -296,7 +296,7 @@ Symbol* Module::addMantra( Mantra* f, bool bExport )
 
    // add the symbol to the symbol table.
    Symbol* sym = new Symbol( f->name(), Symbol::e_st_global, 0, f->sr().line() );
-   FALCON_GC_STORE( coll, symClass, sym );
+   //FALCON_GC_STORE( coll, symClass, sym );
    sym->defaultValue(Item(f->handler(), f));
    syms[f->name()] = sym;
 
@@ -387,9 +387,6 @@ Mantra* Module::getMantra( const String& name, Mantra::t_category cat ) const
 
 Symbol* Module::addVariable( const String& name, const Item& value, bool bExport )
 {
-   static Class* symClass = Engine::instance()->symbolClass();
-   static Collector* coll = Engine::instance()->collector();
-
    Symbol* sym;
    
    // check if the name is free.
@@ -403,7 +400,7 @@ Symbol* Module::addVariable( const String& name, const Item& value, bool bExport
    {
       // add the symbol to the symbol table.
       sym = new Symbol( name, Symbol::e_st_global, 0, 0);
-      FALCON_GC_STORE( coll, symClass, sym );
+      //FALCON_GC_STORE( coll, symClass, sym );
       sym->defaultValue(value);
       syms[name] = sym;
       if( bExport )
@@ -779,9 +776,6 @@ void Module::addImportRequest( t_func_import_req cbFunc, const String& symName,
 
 Symbol* Module::addImplicitImport( const String& name, bool& isNew )
 {
-   static Class* symClass = Engine::instance()->symbolClass();
-   static Collector* coll = Engine::instance()->collector();
-
    // We can't be called if the symbol is alredy declared elsewhere.
    Private::GlobalsMap::iterator pos = _p->m_gSyms.find( name );
    if( _p->m_gSyms.find( name ) != _p->m_gSyms.end() )
@@ -793,7 +787,7 @@ Symbol* Module::addImplicitImport( const String& name, bool& isNew )
    isNew = true;
    // Record the fact that we have to save transform an unknown symbol...
    Symbol* uks = new Symbol( name, Symbol::e_st_extern, 0, 0);
-   FALCON_GC_STORE( coll, symClass, uks );
+   //FALCON_GC_STORE( coll, symClass, uks );
    Private::Dependency* dep = new Private::Dependency(uks);
    dep->m_sourceName = name;
    _p->m_deplist.push_back(dep);
@@ -881,9 +875,6 @@ void Module::unload()
 
 void Module::forwardNS( Module* mod, const String& remoteNS, const String& localNS )
 {
-   static Collector* coll = Engine::instance()->collector();
-   static Class* symClass = Engine::instance()->symbolClass();
-   
    Private::GlobalsMap& globs = mod->_p->m_gSyms;
    
    // search the symbols in the remote namespace.
@@ -895,7 +886,7 @@ void Module::forwardNS( Module* mod, const String& remoteNS, const String& local
       if( _p->m_gSyms.find(localName) == _p->m_gSyms.end())
       {
          Symbol* gs = new Symbol(*gi->second);
-         FALCON_GC_STORE( coll, symClass, gs );
+         //FALCON_GC_STORE( coll, symClass, gs );
          _p->m_gSyms[localName] = gs;
       }
       ++gi;
@@ -929,7 +920,7 @@ void Module::checkWaitingFwdDef( Symbol* sym )
    if( pos != _p->m_depsBySymbol.end() )
    {
       // if the request covers an explicit import, this is an error.
-      Private::Dependency* dep = pos->second;
+      Module::Private::Dependency* dep = pos->second;
       if( dep->m_idef != 0 )
       {
          throw new CodeError( 
@@ -941,7 +932,8 @@ void Module::checkWaitingFwdDef( Symbol* sym )
       }
       else
       {
-         // a genuine forward definition
+         // a genuine forward definition;
+         // by setting the symbol as not extern anymore, we prevent an useless promotion
          Error* err = dep->onResolved( this, this, sym );
 
          // remove the dependency (was just a forward marker)

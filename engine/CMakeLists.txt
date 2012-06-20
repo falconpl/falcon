@@ -189,6 +189,7 @@ add_library(falcon_engine SHARED
   classes/classnumeric.cpp
   classes/classreference.cpp
   classes/classrange.cpp
+  classes/classrawmem.cpp
   classes/classstring.cpp
   classes/classsymbol.cpp
   classes/classsynfunc.cpp
@@ -259,7 +260,6 @@ add_library(falcon_engine SHARED
   item_util.cpp
   itemarray.cpp
   itemdict.cpp
-  itemreference.cpp
   mantra.cpp
   method.cpp
   modcompiler.cpp
@@ -306,6 +306,7 @@ add_library(falcon_engine SHARED
   treestep.cpp
   uri.cpp
   usercarrier.cpp
+  variable.cpp
   vfsiface.cpp
   vfsprovider.cpp
   vm.cpp

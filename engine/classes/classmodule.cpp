@@ -545,7 +545,7 @@ void ClassModule::flatten( VMContext* ctx, ItemArray& subItems, void* instance )
 }
 
 
-void ClassModule::unflatten( VMContext* ctx, ItemArray& subItems, void* instance ) const
+void ClassModule::unflatten( VMContext*, ItemArray& subItems, void* instance ) const
 {
    Module* mod = static_cast<Module*>(instance);
    TRACE( "Unflattening module %p %s (%s - %s)", 
@@ -576,10 +576,7 @@ void ClassModule::unflatten( VMContext* ctx, ItemArray& subItems, void* instance
       
       Item& value = subItems[pos++];
       // don't bother with nil values, as they could be associated with externs
-      if( ! value.isNil() )
-      {
-         sym->setValue( ctx, value );
-      }
+      sym->globalWithValue( value );
    }
    
    // unflatten exports and dependencies.

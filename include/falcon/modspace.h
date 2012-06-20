@@ -325,7 +325,7 @@ public:
    
 private:      
    class Private;
-   Private* _p;
+   ModSpace::Private* _p;
    friend class Private;
    
    class ModuleData;

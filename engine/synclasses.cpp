@@ -665,7 +665,7 @@ bool SynClasses::ClassValue::op_init( VMContext* ctx, void* instance, int pcount
    }
    
    ExprValue* expr = static_cast<ExprValue*>(instance);
-   expr->item( *ctx->topData().dereference() );
+   expr->item( ctx->topData() );
    return false;
 }
 
@@ -708,7 +708,7 @@ bool SynClasses::ClassInherit::op_init( VMContext* ctx, void* instance, int pcou
    }
    
    Item* operands = ctx->opcodeParams( pcount );
-   Item* clsItem = operands->dereference();
+   register Item* clsItem = operands;
    // is that really a class?
    if( ! clsItem->isClass() )
    {
@@ -724,7 +724,7 @@ bool SynClasses::ClassInherit::op_init( VMContext* ctx, void* instance, int pcou
    // and now, the init expressions
    for( int i = 1; i < pcount; ++i ) 
    {
-      Item* exprItem = operands[i].dereference();
+      register Item* exprItem = operands + i;
       Class* cls;
       void* data;
       exprItem->forceClassInst(cls, data);
@@ -836,7 +836,7 @@ bool SynClasses::ClassParentship::op_init( VMContext* ctx, void* instance, int p
    // and now, the init expressions
    for( int i = 0; i < pcount; ++i ) 
    {
-      Item* exprItem = operands[i].dereference();
+      register Item* exprItem = operands + i;
       Class* cls;
       void* data;
       exprItem->forceClassInst(cls, data);

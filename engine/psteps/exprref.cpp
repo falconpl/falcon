@@ -27,9 +27,6 @@
 #include <falcon/synclasses.h>
 #include <falcon/engine.h>
 
-#include <falcon/itemreference.h>
-
-
 namespace Falcon
 {
 
@@ -98,7 +95,7 @@ bool ExprRef::selector( Expression* expr )
 }
 
 
-void ExprRef::apply_( const PStep* ps, VMContext* ctx )
+void ExprRef::apply_( const PStep* ps, VMContext*  )
 {
    const ExprRef* self = static_cast<const ExprRef*>(ps);
    
@@ -117,15 +114,18 @@ void ExprRef::apply_( const PStep* ps, VMContext* ctx )
    }
    
    // get the class/data pair of the item.
+   //TODO: Use the new reference system.
+   /*
    const Item &value = (*self->m_symbol->getValue(ctx));
    fassert( &value != 0 );
+
    Item copy = value; 
    ItemReference::create( copy );
-   self->m_symbol->setValue(ctx, copy );
-   
+   *self->m_symbol->getValue(ctx) = copy;
    ctx->popCode();
    // prevent stack corruption (value may be on the stack)
    ctx->pushData(copy);
+   */
 }
 
 

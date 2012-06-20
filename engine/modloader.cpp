@@ -425,7 +425,7 @@ Module* ModLoader::load_internal(
                   saveModule_internal( output, uri, modName );
                }
                catch( IOError* err ) {
-                  // dereference.
+                  // decrement reference.
                   err->decref();
                }
                break;

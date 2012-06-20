@@ -87,6 +87,7 @@
 #include <falcon/classes/classexpression.h>
 #include <falcon/classes/classsyntree.h>
 #include <falcon/classes/classsymbol.h>
+#include <falcon/classes/classrawmem.h>
 #include <falcon/synclasses.h>
 
 #include <falcon/psteps/exprinherit.h>
@@ -179,7 +180,9 @@ Engine::Engine()
    m_mantraClass = new ClassMantra;
    m_synFuncClass = new ClassSynFunc;
    m_genericClass = new ClassGeneric;
-   m_referenceClass = new ClassReference;
+   
+   // Notice: rawMem is not reflected, is used only in extensions.
+   m_rawMemClass = new ClassRawMem();
    
    // Initialization of the class vector.
    m_classes[FLC_ITEM_NIL] = new ClassNil;
@@ -187,7 +190,6 @@ Engine::Engine()
    m_classes[FLC_ITEM_INT] = new ClassInt;
    m_classes[FLC_ITEM_NUM] = new ClassNumeric;
    m_classes[FLC_ITEM_METHOD] = new ClassMethod;
-   m_classes[FLC_ITEM_REF] = m_referenceClass;
    
    m_bom = new BOM;
    
@@ -251,14 +253,12 @@ Engine::Engine()
    addMantra( m_classes[FLC_ITEM_INT] );
    addMantra( m_classes[FLC_ITEM_NUM] );
    addMantra( m_classes[FLC_ITEM_METHOD] );
-   addMantra( m_classes[FLC_ITEM_REF] ); // ?
    
    addBuiltin( "NilType", (int64) FLC_ITEM_NIL );
    addBuiltin( "BoolType", (int64) FLC_ITEM_BOOL );
    addBuiltin( "IntType", (int64) FLC_ITEM_INT );
    addBuiltin( "NumericType", (int64) FLC_ITEM_INT ); // same as int
    addBuiltin( "MethodType", (int64) FLC_ITEM_METHOD );
-   addBuiltin( "ReferenceType", (int64) FLC_ITEM_REF ); // ?
    
    addBuiltin( "ObjectType", (int64) FLC_ITEM_USER );
    addBuiltin( "FunctionType", (int64) FLC_CLASS_ID_FUNC );
@@ -661,13 +661,6 @@ Class* Engine::genericClass() const
    return m_instance->m_genericClass;
 }
 
-ClassReference* Engine::referenceClass() const
-{
-   fassert( m_instance != 0 );
-   return m_instance->m_referenceClass;
-}
-
-
 Class* Engine::treeStepClass() const
 {
    fassert( m_instance != 0 );
@@ -705,6 +698,12 @@ Class* Engine::closureClass() const
 }
 
 
+ClassRawMem* Engine::rawMemClass() const
+{
+   fassert( m_instance != 0 );
+   return m_instance->m_rawMemClass;
+}
+
 
 SynClasses* Engine::synclasses() const
 {
@@ -725,7 +724,6 @@ void Engine::setCurrentContext( VMContext* ctx )
    fassert( m_instance != 0 );
    m_instance->m_currentContext = ctx;
 }
-
 
 }
 

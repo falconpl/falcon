@@ -449,7 +449,7 @@ public:
    void assign( const Item& other )
    {
       other.copied(true);
-      dereference()->copy(other);
+      copy(other);
    }
 
    bool asBoolean() const { return content.data.val32 != 0; }
@@ -481,19 +481,7 @@ public:
       This operations is usually done on integers, numeric and CoreStrings.
       It will do nothing meaningfull on other types.
    */
-   numeric forceNumeric() const ;
-   
-   const Item* dereference() const { 
-      return type() == FLC_ITEM_REF ? 
-            content.mth.ref :
-            this; 
-   }
-
-   Item* dereference() { 
-      return type() == FLC_ITEM_REF ? 
-            content.mth.ref :
-            this; 
-   }
+   numeric forceNumeric() const ;  
    
    bool isNil() const { return type() == FLC_ITEM_NIL; }
    bool isBoolean() const { return type() == FLC_ITEM_BOOL; }
@@ -502,7 +490,6 @@ public:
    bool isFunction() const { return type() == FLC_CLASS_ID_FUNC; }
    bool isMethod() const { return type() == FLC_ITEM_METHOD; }
    bool isOrdinal() const { return type() == FLC_ITEM_INT || type() == FLC_ITEM_NUM; }
-   bool isReference() const { return type() == FLC_ITEM_REF; }
    bool isCallable() const;
    
    bool isUser() const { return type() >= FLC_ITEM_USER; }

@@ -16,6 +16,7 @@
 
 #include <falcon/mantra.h>
 #include <falcon/module.h>
+#include <falcon/engine.h>
 
 namespace Falcon 
 {

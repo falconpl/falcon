@@ -172,9 +172,11 @@ Requirement* ExprInherit::makeRequirement( Class* target )
 void ExprInherit::IRequirement::onResolved( const Module* source, const Symbol* srcSym,  
       Module* tgt, Symbol* )
 {
+   const Variable* variable;
    const Item* value;
    
-   if( (value = srcSym->getValue( 0 )) == 0 || ! value->isClass() )
+   if( (variable = srcSym->getVariable( 0 )) == 0 
+       || ! (value = variable->value())->isClass() )
    {
       // the symbol is not a class?   
       throw new CodeError( ErrorParam( e_inv_inherit ) 

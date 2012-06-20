@@ -21,8 +21,9 @@
 #include <falcon/item.h>
 #include <falcon/codeframe.h>
 #include <falcon/callframe.h>
-
+#include <falcon/variable.h>
 #include <falcon/paranoid.h>
+#include <falcon/closure.h>
 
 namespace Falcon {
 
@@ -89,14 +90,14 @@ public:
     * - 0...N-1 are the parameters
     * - N... are local variables.
     */
-   const Item& localVar( int id ) const
+   const Variable* localVar( int id ) const
    {
-      return m_dataStack.m_base[ id + currentFrame().m_stackBase ];
+      return m_locsStack.m_top - id;
    }
 
-   Item& localVar( int id )
+   Variable* localVar( int id )
    {
-      return m_dataStack.m_base[ id + currentFrame().m_stackBase ];
+      return m_locsStack.m_top - id;
    }
 
    /** Return the nth parameter in the local context.
@@ -106,7 +107,7 @@ public:
    inline const Item* param( uint32 n ) const {
       fassert(m_dataStack.m_base+(n + currentFrame().m_stackBase) < m_dataStack.m_max );
       if( currentFrame().m_paramCount <= n ) return 0;
-      return m_dataStack.m_base[ n + currentFrame().m_stackBase ].dereference();
+      return &m_dataStack.m_base[ n + currentFrame().m_stackBase ];
    }
 
    /** Return the nth parameter in the local context (non-const).
@@ -116,22 +117,13 @@ public:
    inline Item* param( uint32 n )  {
       fassert(m_dataStack.m_base+(n + currentFrame().m_stackBase) < m_dataStack.m_max );
       if( currentFrame().m_paramCount <= n ) return 0;
-      return m_dataStack.m_base[ n + currentFrame().m_stackBase ].dereference();
+      return &m_dataStack.m_base[ n + currentFrame().m_stackBase ];
    }
    
-   /** Return the nth parameter in the local context - not dereferenced.
-   \param n The parameter number, starting from 0.
-   \return A pointer to the nth parameter in the stack, or 0 if out of range.
-    
-    Normally, Context::param() returns the parameter derefererenced; at times,
-    extension functions may want to access to a parameter passed by reference
-    instead, so to change it. This method doesn't dereference the required
-    parameters.
+   /** Now alias to param.
     */
    inline Item* paramRef( uint32 n )  {
-      fassert(m_dataStack.m_base+(n + currentFrame().m_stackBase) < m_dataStack.m_max );
-      if( currentFrame().m_paramCount <= n ) return 0;
-      return &m_dataStack.m_base[ n + currentFrame().m_stackBase ];
+      return param(n);
    }
 
   /** Returns the parameter array in the current frame.
@@ -186,6 +178,8 @@ public:
     */
    inline void pushData( const Item& data ) {
       ++m_dataStack.m_top;
+      *m_dataStack.m_top = data;
+      /*
       if( m_dataStack.m_top >= m_dataStack.m_max )
       {
          Item temp = data;
@@ -195,6 +189,7 @@ public:
       else {
          *m_dataStack.m_top = data;
       }
+      */
    }
 
    /** Add more variables on top of the stack.
@@ -204,11 +199,13 @@ public:
    inline void addLocals( size_t count ) {
       Item* base = m_dataStack.m_top+1;
       m_dataStack.m_top += count;
+      /*
       if( m_dataStack.m_top >= m_dataStack.m_max )
       {
          m_dataStack.more();
          base = m_dataStack.m_top - count;
       }
+       */
       while( base <= m_dataStack.m_top )
       {
          base->setNil();
@@ -216,6 +213,15 @@ public:
       }
    }
 
+   /** Adds the variable pointer reference needed for locals to work.
+    
+    This is called repeatedly by synfunctions to create pointers to
+    the stack space where the local symbols are allocated.
+    */
+   inline void addLocalVariable( Item* ptr ) {
+      m_locsStack.addSlot()->value(ptr); 
+   }
+   
    /** Add more variables on top of the stack -- without initializing them to nil.
     \param count Number of variables to be added.
 
@@ -223,10 +229,12 @@ public:
     */
    inline void addSpace( size_t count ) {
       m_dataStack.m_top += count;
+      /*
       if( m_dataStack.m_top >= m_dataStack.m_max )
       {
          m_dataStack.more();
       }
+      */
    }
 
    /** Insert some data at some point in the stack.
@@ -541,11 +549,12 @@ public:
    {
       register CallFrame* topCall = m_callStack.addSlot();
       topCall->m_function = function;
-      topCall->m_closedData = 0;
+      topCall->m_closure = 0;
       topCall->m_codeBase = codeDepth();
       // initialize also initBase, as stackBase may move
       topCall->m_initBase = topCall->m_stackBase = dataSize()-nparams;
       // TODO: enable rule application with dynsymbols?
+      topCall->m_locsBase = m_locsStack.depth();
       topCall->m_dynsBase = m_dynsStack.depth();
       topCall->m_paramCount = nparams;
       topCall->m_self = self;
@@ -561,10 +570,11 @@ public:
    {
       register CallFrame* topCall = m_callStack.addSlot();
       topCall->m_function = function;
-      topCall->m_closedData = 0;
+      topCall->m_closure = 0;
       topCall->m_codeBase = codeDepth();
       // initialize also initBase, as stackBase may move
       topCall->m_initBase = topCall->m_stackBase = dataSize()-nparams;
+      topCall->m_locsBase = m_locsStack.depth();
       // TODO: enable rule application with dynsymbols?
       topCall->m_dynsBase = m_dynsStack.depth();
 
@@ -578,15 +588,17 @@ public:
    }
 
    /** Prepares a new non-methodic closure call frame. */
-   inline CallFrame* makeCallFrame( Function* function, ItemArray* cd, int nparams )
+   inline CallFrame* makeCallFrame( Closure* cd, int nparams )
    {
       register CallFrame* topCall = m_callStack.addSlot();
-      topCall->m_function = function;
-      topCall->m_closedData = cd;
+      topCall->m_function = cd->function();
+      topCall->m_closure = cd;
       topCall->m_codeBase = codeDepth();
       // initialize also initBase, as stackBase may move
       topCall->m_initBase = topCall->m_stackBase = dataSize()-nparams;
       // TODO: enable rule application with dynsymbols?
+      
+      topCall->m_locsBase = m_locsStack.depth();      
       topCall->m_dynsBase = m_dynsStack.depth();
       topCall->m_paramCount = nparams;
       topCall->m_self.setNil();
@@ -866,7 +878,7 @@ public:
    /** Invokes a function passing closure data.
     \see ClassClosure
     */
-   void call( Function* function, ItemArray* closedData, int nparams );
+   void call( Closure* closure, int nparams );
 
    /** Calls an item without parameters.
     \see callItem( const Item&, ... )
@@ -1143,7 +1155,7 @@ public:
    inline bool boolTopData()
    {
 
-      switch( topData().dereference()->type() )
+      switch( topData().type() )
       {
       case FLC_ITEM_NIL:
          return false;
@@ -1158,9 +1170,6 @@ public:
          return topData().asNumeric() != 0.0;      
 
       case FLC_ITEM_METHOD:
-         return true;
-         
-      case FLC_ITEM_REF:
          return true;
 
       default:
@@ -1177,18 +1186,7 @@ public:
    //===============================================================
    // Dynamic Symbols
    //
-   /** Sets the value associated with a dynamic symbol.
-    \param name the name of the dynsymbol to be associated.
-    \param value The new value to be associated with the symbol.
-
-    If the symbol exists in the local context, it is updated. If it does
-    not exist, it is created and the value is stored as the symbol item.
-
-    \note The value is set through Item::assign, respecting referencing and
-    copy semantics.
-    */
-   void setDynSymbolValue( const Symbol* dyns, const Item& value );
-
+   
    /** Gets the the value associated with a dynamic symbol.
     \param name the name of the dynsymbol to be associated.
     \return A pointer to the item associated with the symbol.
@@ -1214,7 +1212,7 @@ public:
 
     \note Symbols marked as constant are returned by value; they aren't referenced.
     */
-   Item* getDynSymbolValue( const Symbol* dyns );
+   Variable* getDynSymbolVariable( const Symbol* dyns );
    
    /** Returns true if the current frame is being evaluated out of context. */
    bool evalOutOfContext() const { return currentFrame().m_bEvalOutOfContext; }
@@ -1234,7 +1232,7 @@ protected:
    class DynsData {
    public:
       const Symbol* m_sym;
-      Item m_item;
+      Variable m_var;
 
       DynsData():
          m_sym(0)
@@ -1244,15 +1242,17 @@ protected:
          m_sym(sym)
       {}
 
-      DynsData( const Symbol* sym, const Item& data ):
-         m_sym(sym),
-         m_item(data)
-      {}
+      DynsData( const Symbol* sym, Variable* other ):
+         m_sym(sym)
+      {
+         m_var.makeReference(other);
+      }
 
       DynsData( const DynsData& other ):
          m_sym(other.m_sym),
-         m_item(other.m_item)
-      {}
+         m_var(other.m_var)
+      {
+      }
 
       ~DynsData() {}
    };
@@ -1263,7 +1263,8 @@ protected:
    public:
       static const int INITIAL_STACK_ALLOC = 512;
       static const int INCREMENT_STACK_ALLOC = 256;
-
+      uint32 m_allocSize;
+      
       datatype__* m_base;
       datatype__* m_top;
       datatype__* m_max;
@@ -1272,6 +1273,7 @@ protected:
       ~LinearStack();
 
       void init( int base = -1 );
+      void init( int base, uint32 allocSize );
 
       inline void reset( int base = -1)
       {
@@ -1336,6 +1338,7 @@ protected:
    LinearStack<CallFrame> m_callStack;
    LinearStack<Item> m_dataStack;
    LinearStack<DynsData> m_dynsStack;
+   LinearStack<Variable> m_locsStack;
 
    Item m_regA;
    uint64 m_safeCode;

@@ -417,8 +417,7 @@ Error* ModSpace::exportSymbol( Module* mod, Symbol* sym )
    // if the symbol is an extern symbol, then we have to get its
    // reference.
    
-   _p->m_symMap[ sym->name() ] = Private::ExportSymEntry(mod,
-      sym->type() == Symbol::e_st_extern ? sym->externRef() : sym);
+   _p->m_symMap[ sym->name() ] = Private::ExportSymEntry(mod, sym);
    return 0;
 }
 
@@ -502,7 +501,9 @@ void ModSpace::linkSpecificDep( Module* asker, void* def, Error*& link_errors )
    // link the value -- if needed
    if ( dep->m_symbol != 0 )
    {
-      dep->m_symbol->promoteExtern( sym );
+      Variable* variable = sym->getVariable(0);
+      fassert( variable != 0 );
+      dep->m_symbol->resolved( variable );
    }
 
 }
@@ -586,13 +587,17 @@ void ModSpace::linkNSImports(Module* mod )
                // new symbol, make it external -- declared in main function of the module
                Symbol* esym = new Symbol( tgName, Symbol::e_st_extern );
                mod->_p->m_gSyms[tgName] = esym;
-               esym->promoteExtern( sym );
+               Variable* var = sym->getVariable(0);
+               fassert( var != 0 );
+               esym->resolved( var );
             }
             else
             {
                // just link it 
                Symbol* esym = myglb->second;
-               esym->promoteExtern( sym );
+               Variable* var = sym->getVariable(0);
+               fassert( var != 0 );
+               esym->resolved( var );
                
                // eventually, make it resolved in dependencies, 
                // -- so we don't search for it elsewhere.

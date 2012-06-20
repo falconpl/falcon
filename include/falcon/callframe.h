@@ -22,8 +22,7 @@
 namespace Falcon {
 
 class Function;
-class ItemArray;
-
+class Closure;
 
 /** Call Frame for the Falcon virtual machine.
  *
@@ -41,8 +40,8 @@ public:
    /** Function calling this frame. */
    Function* m_function;
    
-   /** Data closed in closures.. */
-   ItemArray* m_closedData;
+   /** Data closed in closures. */
+   Closure* m_closure;
 
    /** Number of parameters used for the effective call. */
    uint32 m_paramCount;
@@ -55,7 +54,13 @@ public:
     to be the initial stack base of the function.
     */
    uint32 m_initBase;
-   
+
+   /** Local symbols stack base.
+    \TODO This might be a temporary solution. Needs to be tested for performance
+    and alternatives.
+    */
+   uint32 m_locsBase;
+
    /** Dynamic symbols stack base.
     \TODO This might be a temporary solution. Needs to be tested for performance
     and alternatives.
@@ -90,13 +95,14 @@ public:
    CallFrame()
    {}
 
-   CallFrame( Function* f, int pc, int sb, int cb, const Item& self ):
+   CallFrame( Function* f, uint32 pc, uint32 sb, uint32 cb, uint32 dynb, uint32 locb, const Item& self ):
       m_function(f),
-      m_closedData(0),
+      m_closure(0),
       m_paramCount( pc ),
       m_stackBase( sb ),
       m_initBase( sb ),
-      m_dynsBase( 0 ),
+      m_locsBase( locb ),
+      m_dynsBase( dynb ),
       m_codeBase( cb ),
       m_self(self),
       m_finallyCount(0),
@@ -104,13 +110,14 @@ public:
       m_bEvalOutOfContext(false)
    {}
 
-   CallFrame( Function* f, int pc, int sb, int cb):
+   CallFrame( Function* f, uint32 pc, uint32 sb, uint32 cb, uint32 dynb, uint32 locb ):
       m_function(f),
-      m_closedData(0),
+      m_closure(0),
       m_paramCount( pc ),
       m_stackBase( sb ),
       m_initBase( sb ),
-      m_dynsBase( 0 ),
+      m_locsBase( locb ),
+      m_dynsBase( dynb ),
       m_codeBase( cb ),
       m_finallyCount(0),
       m_bMethodic( false ),

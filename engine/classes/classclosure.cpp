@@ -71,7 +71,7 @@ void ClassClosure::flatten( VMContext*, ItemArray& subItems, void* instance ) co
    subItems[0].setFunction( func );
    for(uint32 i = 0; i < size; ++i )
    {
-      subItems[i+1] = closure->closedData()[i];
+      subItems[i+1] = *closure->closedData()[i].value();
    }
 }
 
@@ -84,8 +84,9 @@ void ClassClosure::unflatten( VMContext*, ItemArray& subItems, void* instance ) 
    
    closure->function( subItems[0].asFunction() );  
    for(uint32 i = 1; i < subItems.length(); ++i )
-   {      
-      closure->closedData()[i-1] = subItems[i];
+   {    
+      //TODO: Work 
+      //closure->closedData()[i-1] = subItems[i];
    }
 }
    
@@ -119,7 +120,7 @@ bool ClassClosure::gcCheckInstance( void* instance, uint32 mark ) const
 void ClassClosure::op_call( VMContext* ctx, int32 paramCount, void* instance ) const
 {
    Closure* closure = static_cast<Closure*>(instance);
-   ctx->call( closure->function(), &closure->closedData(), paramCount );
+   ctx->call( closure, paramCount );
 }
 
 }

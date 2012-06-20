@@ -317,11 +317,11 @@ void StmtForIn::expandItem( Item& itm, VMContext* ctx ) const
 {
    if( _p->m_params.size() == 1 )
    {
-      _p->m_params[0]->setValue( ctx, itm );
+      *_p->m_params[0]->getValue( ctx ) = itm;
    }
    else
    {
-      Item* dr = itm.dereference();   
+      register Item* dr = &itm;   
       if( dr->isArray() )
       {
          ItemArray* ar = dr->asArray();
@@ -329,7 +329,7 @@ void StmtForIn::expandItem( Item& itm, VMContext* ctx ) const
          {
             for( length_t i = 0; i < ar->length(); ++i )
             {
-               _p->m_params[i]->setValue( ctx, (*ar)[i] );               
+               *_p->m_params[i]->getValue( ctx ) = (*ar)[i];               
             }
             return;
          }
@@ -668,7 +668,7 @@ void StmtForTo::apply_( const PStep* ps, VMContext* ctx )
    
    // Prepare the start value   
    Symbol* target = self->m_target;
-   target->setValue( ctx, start );
+   *target->getValue( ctx ) = start;
    
    // eventually, push the first opode in top of all.
    if( self->m_forFirst != 0 )
@@ -688,7 +688,7 @@ void StmtForTo::PStepNext::apply_( const PStep* ps, VMContext* ctx )
    
    // the start, at minimum, will be done.
    Symbol* target = self->m_target;
-   target->setValue( ctx, start );   
+   *target->getValue( ctx ) = start;   
    
    // step cannot be 0 as it has been sanitized by our main step.
    if( (step > 0 && start >= end) || ( step < 0 && start <= end ) )

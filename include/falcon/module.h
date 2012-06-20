@@ -462,7 +462,7 @@ public:
    
 private:
    class Private;
-   Private* _p;
+   Module::Private* _p;
    
    ModSpace* m_modSpace;
    String m_name;

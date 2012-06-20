@@ -226,13 +226,6 @@ void Item::describe( String &target, int maxDepth, int maxLength ) const
          target += ")";
       }
       break;
-
-      case FLC_ITEM_REF:
-      {
-         asReference()->describe( target, maxDepth, maxLength );
-         target = "Ref {" + target + "}";
-      }
-      break;
       
       default:
       {
@@ -266,8 +259,8 @@ bool Item::clone( Item& target ) const
 
 int Item::compare( const Item& other ) const
 {
-   const Item* i1 = dereference();
-   const Item* i2 = other.dereference();
+   register const Item* i1 = this;
+   register const Item* i2 = &other;
    
    int typeDiff = i1->type() - i2->type();
    if( typeDiff == 0 )

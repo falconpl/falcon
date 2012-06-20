@@ -57,7 +57,7 @@ void ExprNotin::apply_( const PStep* ps, VMContext* ctx )
       // fallthrough
    }
    
-   Item* item = ctx->topData().dereference();
+   register Item* item = &ctx->topData();
    
    Class* cls;
    void* data;
