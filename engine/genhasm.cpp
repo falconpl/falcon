@@ -736,7 +736,7 @@ void GenHAsm::gen_statement( const Statement *stmt )
          int branch = m_branch_id++;
          String branchStr;
          branchStr.writeNumber( (int64) branch );
-         m_branches.pushBack( (void *) branch );
+         m_branches.pushBack( (void *) &branch );
          gen_condition( elem->condition() );
          if( ! elem->children().empty() ) {
             gen_block( &elem->children() );
