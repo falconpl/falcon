@@ -388,7 +388,6 @@ void Restorer::ReadNext::apply_( const PStep* ps, VMContext* ctx )
          objd.m_data = &_p->m_flatItems.back();
       }
       
-      
       cls->restore( ctx, &_p->m_reader, objd.m_data );
       if( ctx->currentCode().m_step != self )
       {

@@ -159,7 +159,7 @@ void SynTree::apply_( const PStep* ps, VMContext* ctx )
       if( ctx->stepInYield(step, cf) )
       {
          TRACE2( "Syntree::apply -- going deep at step %d \"%s\"", 
-                     seqId-1, 
+                     ctx->currentCode().m_seqId-1, 
                      step->oneLiner().c_ize() );
          return;
       }

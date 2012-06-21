@@ -35,7 +35,13 @@ class ClassSynTree: public DerivedFrom // TreeStep
 public:
    ClassSynTree( ClassTreeStep* parent, ClassSymbol* sym );
    virtual ~ClassSynTree(); 
-   
+
+   virtual void* createInstance() const;
+   virtual void dispose( void* instance ) const;
+   virtual void* clone( void* instance ) const;
+
+   virtual void restore( VMContext* ctx, DataReader* stream, void*& empty ) const;
+
    virtual void enumerateProperties( void* instance, PropertyEnumerator& cb ) const;
    virtual void enumeratePV( void* instance, PVEnumerator& cb ) const;
    virtual bool hasProperty( void* instance, const String& prop ) const;

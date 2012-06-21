@@ -36,6 +36,33 @@ ClassSynTree::ClassSynTree( ClassTreeStep* parent, ClassSymbol* sym ):
 ClassSynTree::~ClassSynTree(){}
 
 
+void* ClassSynTree::createInstance() const
+{
+   return new SynTree;
+}
+
+
+void ClassSynTree::dispose( void* instance ) const
+{
+   SynTree* st = static_cast<SynTree*>(instance);
+   delete st;
+}
+
+
+void* ClassSynTree::clone( void* instance ) const
+{
+   SynTree* st = static_cast<SynTree*>(instance);
+   return st->clone();
+}
+
+
+void ClassSynTree::restore( VMContext* ctx, DataReader* stream, void*& empty ) const
+{
+   empty = new SynTree;
+   m_parent->restore( ctx, stream, empty );
+}
+
+
 void ClassSynTree::enumerateProperties( void* instance, Class::PropertyEnumerator& cb ) const
 {
    cb("target", false);

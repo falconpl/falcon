@@ -29,9 +29,7 @@
 #include <falcon/modspace.h>
 
 #include <falcon/storer.h>
-
 #include <falcon/errors/codeerror.h>
-
 #include <falcon/psteps/stmttry.h>      // for catch.
 
 
@@ -40,7 +38,6 @@
 
 
 namespace Falcon {
-
 
 template<class datatype__>
 void VMContext::LinearStack<datatype__>::init( int base )
@@ -83,7 +80,7 @@ VMContext::VMContext( VMachine* vm ):
    m_codeStack.init();
    m_callStack.init();
    m_locsStack.init();
-   m_dataStack.init(0, m_dataStack.INITIAL_STACK_ALLOC*100);
+   m_dataStack.init(0, m_dataStack.INITIAL_STACK_ALLOC*1000);
 
    pushReturn();
 }
@@ -912,8 +909,6 @@ Variable* VMContext::getDynSymbolVariable( const Symbol* dyns )
    
    return &newData->m_var;
 }
-
-
 
 }
 

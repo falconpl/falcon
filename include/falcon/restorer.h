@@ -55,7 +55,7 @@ public:
    
 private:
    class Private;
-   Private* _p;
+   Restorer::Private* _p;
    
    VMContext* m_ctx;
    
