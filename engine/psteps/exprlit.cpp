@@ -20,8 +20,13 @@
 #include <falcon/synclasses.h>
 #include <falcon/trace.h>
 #include <falcon/vmcontext.h>
+#include <falcon/symbol.h>
+#include <falcon/gclock.h>
 
 #include <vector>
+#include <map>
+#include <deque>
+
 
 namespace Falcon {
 
@@ -29,7 +34,20 @@ class ExprLit::Private
 {
 public:
    typedef std::vector<Expression*> ExprVector;
+   typedef std::map<String,Symbol*> DynSymMap;
+   typedef std::deque<GCLock*> LockList;
+   
    ExprVector m_exprs;
+   DynSymMap m_dynSyms;
+   LockList m_locks;
+   
+   ~Private() {
+      LockList::iterator iter = m_locks.begin();
+      while( iter != m_locks.end() ) {
+         (*iter)->dispose();
+         ++iter;
+      }
+   }
 };
 
 
@@ -67,7 +85,7 @@ void ExprLit::describeTo( String& str, int depth ) const
       return;
    }
    
-   str += "^= " + first()->describe( depth + 1 );
+   str += "{~" + first()->describe( depth ) +"}";
 }
 
 
@@ -78,6 +96,27 @@ void ExprLit::setExpression( Expression* expr )
    expr->registerUnquotes(this);
 }
 
+void ExprLit::setTree( SynTree*  )
+{
+   
+}
+
+Symbol* ExprLit::makeSymbol( const String& name, int line ) 
+{
+   static Collector* coll = Engine::instance()->collector();
+   static Class* cls = Engine::instance()->symbolClass();
+   
+   Private::DynSymMap::iterator item = _p->m_dynSyms.find(name);
+   if( item != _p->m_dynSyms.end() ) {
+      return item->second;
+   }
+   
+   Symbol* sym = new Symbol( name, line );
+   GCLock* lock = FALCON_GC_STORELOCKED(coll, cls, sym);
+   _p->m_locks.push_back( lock );
+   _p->m_dynSyms[name] = sym;
+   return sym;
+}
 
 void ExprLit::subscribeUnquote( Expression* expr )
 {

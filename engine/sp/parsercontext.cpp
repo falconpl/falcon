@@ -28,11 +28,14 @@
 #include <falcon/sp/sourceparser.h>
 
 #include <falcon/psteps/exprsym.h>
+#include <falcon/psteps/exprlit.h>
 
 #include <vector>
 #include <map>
 #include <list>
 #include <deque>
+
+#include "falcon/psteps/exprcompare.h"
 
 
 namespace Falcon {
@@ -181,8 +184,17 @@ private:
    typedef std::vector<ParserContext::CCFrame> FrameVector;
    FrameVector m_frames;
 
+   typedef std::deque<ExprLit*> LitContexts;
+   LitContexts m_litContexts;
+   
    Private() {}
-   ~Private() {}
+   ~Private() {
+      LitContexts::iterator lciter = m_litContexts.begin();
+      while( lciter != m_litContexts.end() ) {
+         delete *lciter;
+         ++lciter;
+      }
+   }
 };
 
 
@@ -251,15 +263,27 @@ void ParserContext::onStatePopped()
 ExprSymbol* ParserContext::addVariable( const String& variable )
 {
    TRACE("ParserContext::addVariable %s", variable.c_ize() );
-
-   ExprSymbol* expr = new ExprSymbol( variable );   
-   _p->m_unknown.back().push_back( expr );
-   return expr;
+   if( ! _p->m_litContexts.empty() ) {
+      ExprLit* lit = _p->m_litContexts.back();
+      Symbol* sym = lit->makeSymbol( variable, m_parser->currentLine() );
+      return new ExprSymbol( sym );
+   }
+   else {
+      ExprSymbol* expr = new ExprSymbol( variable );   
+      _p->m_unknown.back().push_back( expr );
+      return expr;
+   }
 }
 
 Symbol* ParserContext::addDefineSymbol( const String& variable )
 {
    Symbol* nuks;
+   
+   if( ! _p->m_litContexts.empty() ) {
+      ExprLit* lit = _p->m_litContexts.back();
+      Symbol* sym = lit->makeSymbol( variable, m_parser->currentLine() );
+      return sym;
+   }
    
    if( m_symtab == 0 )
    {
@@ -526,6 +550,26 @@ void ParserContext::addStatement( Statement* stmt )
       // when interactive, we don't want to have useless statements.
       delete stmt;
    }
+}
+
+void ParserContext::openLitContext( ExprLit* el ) {
+   _p->m_litContexts.push_back(el);
+}
+
+ExprLit* ParserContext::closeLitContext() 
+{
+   if( ! _p->m_litContexts.empty() ) {
+      ExprLit* current = _p->m_litContexts.back();
+      _p->m_litContexts.pop_back();
+      return current;
+   }
+   
+   return 0;
+}
+
+bool ParserContext::isLitContext() const
+{
+   return ! _p->m_litContexts.empty();
 }
 
 

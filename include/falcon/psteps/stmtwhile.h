@@ -47,6 +47,8 @@ public:
    static void apply_( const PStep*, VMContext* ctx );
 
    SynTree* mainBlock() const { return m_stmts; }
+   void mainBlock(SynTree* st);
+   SynTree* detachMainBlock();
    
    virtual int32 arity() const;
    virtual TreeStep* nth( int32 n ) const;

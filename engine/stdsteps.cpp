@@ -257,7 +257,7 @@ void StdSteps::PStepReturnFrameWithTopEval::apply_( const PStep*, VMContext* ctx
    Class* cls = 0;
    void* data = 0;
    ctx->topData().forceClassInst(cls, data);
-   cls->op_eval( ctx, data );
+   cls->op_call( ctx, 0, data );
 }
 
 void StdSteps::PStepReturnFrameWithTopEval::describeTo( String& s, int ) const
@@ -280,7 +280,7 @@ void StdSteps::PStepReturnFrameWithTopDoubtEval::apply_( const PStep*, VMContext
    Class* cls = 0;
    void* data = 0;
    ctx->topData().forceClassInst(cls, data);
-   cls->op_eval( ctx, data );
+   cls->op_call( ctx, 0, data );
 }
 
 void StdSteps::PStepReturnFrameWithTopDoubtEval::describeTo( String& s, int ) const
@@ -302,7 +302,7 @@ void StdSteps::PStepEvalTop::apply_( const PStep*, VMContext* ctx )
    Class* cls = 0;
    void* data = 0;
    ctx->topData().forceClassInst(cls, data);
-   cls->op_eval( ctx, data );
+   cls->op_call( ctx, 0, data );
 }
 
 void StdSteps::PStepEvalTop::describeTo( String& s, int ) const

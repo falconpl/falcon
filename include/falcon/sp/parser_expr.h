@@ -74,7 +74,6 @@ void apply_expr_deoob( const Rule&, Parser& p );
 void apply_expr_xoob( const Rule&, Parser& p );
 void apply_expr_isoob( const Rule&, Parser& p );
 void apply_expr_eval( const Rule&, Parser& p );
-void apply_expr_lit( const Rule&, Parser& p );
 void apply_expr_unquote( const Rule&, Parser& p );
 
 

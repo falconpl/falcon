@@ -54,6 +54,8 @@ public:
    Parsing::Terminal T_CloseSquare;
    Parsing::Terminal T_OpenGraph;
    Parsing::Terminal T_OpenProto;
+   Parsing::Terminal T_OpenLit;
+   Parsing::Terminal T_OpenParamLit;
    Parsing::Terminal T_CloseGraph;
    Parsing::Terminal T_Dot;
    Parsing::Terminal T_Arrow;
@@ -75,8 +77,6 @@ public:
    Parsing::Terminal T_DEOOB;
    Parsing::Terminal T_XOOB;
    Parsing::Terminal T_ISOOB;
-   Parsing::Terminal T_EVAL;
-   Parsing::Terminal T_LIT;
    Parsing::Terminal T_UNQUOTE;
    Parsing::Terminal T_COMPOSE;
    Parsing::Terminal T_FUNCPOWER;
@@ -397,6 +397,8 @@ public:
    Parsing::Rule r_Expr_lambda;
    Parsing::Rule r_Expr_class;
    Parsing::Rule r_Expr_proto;
+   Parsing::Rule r_Expr_lit;
+   Parsing::Rule r_Expr_parametric_lit;
 
    //================================================
    // Function

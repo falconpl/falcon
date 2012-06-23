@@ -30,8 +30,7 @@ class ClassExpression: public DerivedFrom // TreeStep
 public:
    ClassExpression( ClassTreeStep* parent );
    virtual ~ClassExpression();
-   
-   void op_eval( VMContext* ctx, void* self ) const;
+   void op_call( VMContext* ctx, int pcount, void* self ) const;
 };
 
 }

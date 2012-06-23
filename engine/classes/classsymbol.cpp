@@ -141,13 +141,12 @@ void ClassSymbol::op_setProperty( VMContext* ctx, void* instance, const String& 
    }
 }
 
-
-void ClassSymbol::op_eval( VMContext* ctx, void* instance ) const
+void ClassSymbol::op_call( VMContext* ctx, int pcount, void* instance ) const
 {
-   Symbol* sym = static_cast<Symbol*>( instance );   
+   Symbol* sym = static_cast<Symbol*>( instance );
+   ctx->popData(pcount);
    ctx->topData() = *ctx->getDynSymbolVariable(sym)->value();
 }
-
 
 
 void ClassSymbol::store( VMContext*, DataWriter* stream, void* instance ) const

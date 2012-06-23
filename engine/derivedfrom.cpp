@@ -322,12 +322,6 @@ void DerivedFrom::op_call( VMContext* ctx, int32 paramCount, void* instance ) co
 }
 
 
-void DerivedFrom::op_eval( VMContext* ctx, void* instance ) const
-{
-   return m_parent->op_eval( ctx, instance );
-}
-
-
 void DerivedFrom::op_toString( VMContext* ctx, void* instance ) const
 {
    return m_parent->op_toString( ctx, instance );

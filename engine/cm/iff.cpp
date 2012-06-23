@@ -60,8 +60,7 @@ void Iff::invoke( VMContext* ctx, int32 paramCount  )
 
    ctx->pushData(check);
    // we are a function, so the context has just started.
-   ctx->evalOutOfContext(true);
-   cls->op_eval( ctx, data ); 
+   cls->op_call( ctx, 0, data ); 
 } 
   
 
@@ -86,7 +85,7 @@ void Iff::PStepChoice::apply_(const PStep*, VMContext* ctx)
       // we're out of business
       ctx->returnFrame(*branch);
       // evaluate the expression in the owner's stack.
-      cls->op_eval( ctx, data );
+      cls->op_call( ctx, 0, data );
    }
    else {
       MESSAGE2("Retunring nil on false");

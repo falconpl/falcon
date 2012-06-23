@@ -205,7 +205,7 @@ void StmtReturn::apply_expr_( const PStep* ps, VMContext* ctx )
       Class* cls = 0;
       void * data = 0;
       ctx->topData().forceClassInst( cls, data );
-      cls->op_eval( ctx, data );
+      cls->op_call( ctx, 0, data );
    }
 }
 
@@ -254,7 +254,7 @@ void StmtReturn::apply_expr_doubt_( const PStep* ps, VMContext* ctx )
       Class* cls = 0;
       void * data = 0;
       ctx->topData().forceClassInst( cls, data );
-      cls->op_eval( ctx, data );
+      cls->op_call( ctx, 0, data );
    }
 }
 

@@ -699,20 +699,6 @@ void ClassMulti::op_call( VMContext* ctx, int32 paramCount, void* self ) const
    }
 }
 
-void ClassMulti::op_eval( VMContext* ctx, void* self ) const
-{
-   Class* cls;
-   void* udata;
-
-   // called object is on top of the stack
-   // eval override is served through __call
-   if( inl_get_override( self, OVERRIDE_OP_CALL_ID, cls, udata ) )
-   {
-      cls->op_call( ctx, 0, udata );
-   } 
-   // let us to go through
-}
-
 
 void ClassMulti::op_toString( VMContext* ctx, void* self ) const
 {

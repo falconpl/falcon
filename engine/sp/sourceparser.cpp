@@ -77,8 +77,10 @@ SourceParser::SourceParser():
    T_DotPar(".("),
    T_DotSquare(".["),
    T_CloseSquare("]"),
-   T_OpenGraph("{"),
+   T_OpenGraph("{",20),
    T_OpenProto("p{"),
+   T_OpenLit("{~",20),
+   T_OpenParamLit("{~~",20),
    T_CloseGraph("}"),
 
    T_Dot(".",15),
@@ -102,14 +104,12 @@ SourceParser::SourceParser():
    T_DEOOB("^-", 24),
    T_XOOB("^%", 24),
    T_ISOOB("^?", 24),
-   T_EVAL("^*", 80),
-   T_LIT("^=", 175),
    T_UNQUOTE("^~", 24 ),
    T_COMPOSE("^.", 60),
    T_FUNCPOWER("^..", 60),
    
    T_Comma( "," , 180 ),
-   T_QMark( "?" , 170 ),
+   T_QMark( "?" , 175 ),
    T_Bang("!"),
 
    T_UnaryMinus("(neg)",23),
@@ -399,7 +399,7 @@ SourceParser::SourceParser():
 
    // Unary operators
    // the lexer may find a non-unary minus when parsing it not after an operator...;   
-   Expr<< (r_Expr_neg   << "Expr_neg"   << apply_expr_neg << T_Minus << Expr );
+   //Expr<< (r_Expr_neg   << "Expr_neg"   << apply_expr_neg << T_Minus << Expr );
    // ... or find an unary minus when getting it after another operator.;
    Expr<< (r_Expr_neg2   << "Expr_neg2"   << apply_expr_neg << T_UnaryMinus << Expr );   
    Expr<< (r_Expr_not   << "Expr_not"  << apply_expr_not  << T_not << Expr );
@@ -479,9 +479,8 @@ SourceParser::SourceParser():
    
    Expr<< (r_Expr_ternary_if << "Expr_ternary_if"   << apply_expr_ternary_if  
             << Expr << T_QMark << Expr << T_Colon << Expr );
+   r_Expr_ternary_if.setGreedy(true);
    
-   Expr<< (r_Expr_expr_eval << "Expr_eval"  << apply_expr_eval << T_EVAL << Expr );
-   Expr<< (r_Expr_expr_lit << "Expr_lit"  << apply_expr_lit << T_LIT << Expr );
    Expr<< (r_Expr_expr_unquote << "Expr_unquote"  << apply_expr_unquote << T_UNQUOTE << Expr );
    
    
@@ -492,6 +491,8 @@ SourceParser::SourceParser():
    Expr<< (r_Expr_lambda << "Expr_lambda" << apply_expr_lambda << T_OpenGraph );
    Expr<< (r_Expr_class << "Expr_class" << apply_expr_class << T_class );
    Expr<< (r_Expr_proto << "Expr_proto" << apply_expr_proto << T_OpenProto );
+   Expr<< (r_Expr_lit << "Expr_lit" << apply_expr_lit << T_OpenLit );
+   Expr<< (r_Expr_parametric_lit << "Expr_paramlit" << apply_expr_parametric_lit << T_OpenParamLit );
 
    S_Function << "Function"
       /* This requires a bit of work << (r_function_short << "Function short" << apply_function_short
@@ -600,8 +601,8 @@ SourceParser::SourceParser():
    //
 
    LambdaParams << "LambdaParams";
-   /*LambdaParams << ( r_lambda_params_eta << "Params in lambda eta" << apply_lambda_params_eta
-                       << T_Times << ListSymbol << T_Arrow );*/
+   LambdaParams << ( r_lambda_params_eta << "Params in lambda eta" << apply_lambda_params_eta
+                        << ListSymbol << T_RShift );
    LambdaParams << ( r_lambda_params << "Params in lambda" << apply_lambda_params 
                         << ListSymbol << T_Arrow );
 

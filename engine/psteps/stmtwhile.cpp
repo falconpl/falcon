@@ -163,6 +163,20 @@ bool StmtWhile::setNth( int n, TreeStep* st )
    return 0;
 }
 
+void StmtWhile::mainBlock(SynTree* st) {
+   delete m_stmts;
+   st->setParent(this);
+   m_stmts = st;
+}
+
+SynTree* StmtWhile::detachMainBlock()
+{
+   m_stmts->setParent(0);
+   SynTree* ret = m_stmts;
+   m_stmts = 0;
+   return ret;
+}
+
 
 void StmtWhile::apply_( const PStep* s1, VMContext* ctx )
 {

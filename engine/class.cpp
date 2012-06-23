@@ -341,15 +341,9 @@ void Class::op_decpost( VMContext* , void* ) const
 }
 
 
-void Class::op_call( VMContext* , int32, void* ) const
+void Class::op_call( VMContext* ctx, int32 count, void* ) const
 {
-   throw new OperandError( ErrorParam( e_non_callable, __LINE__, SRC ) );
-}
-
-
-void Class::op_eval( VMContext*, void* ) const
-{
-   // we have nothing to do: just leave the data on the stack.
+   ctx->popData(count);
 }
 
 

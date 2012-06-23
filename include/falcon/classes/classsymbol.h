@@ -47,7 +47,7 @@ public:
    virtual void op_getProperty( VMContext* ctx, void* instance, const String& prop) const;
    virtual void op_setProperty( VMContext* ctx, void* instance, const String& prop) const;
 
-   virtual void op_eval( VMContext* ctx, void* instance ) const;
+   virtual void op_call( VMContext* ctx, int pcount, void* instance ) const;
    
    void store( VMContext*, DataWriter* stream, void* instance ) const;
    void restore( VMContext*, DataReader* stream, void*& empty ) const;

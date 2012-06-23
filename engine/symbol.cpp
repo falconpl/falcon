@@ -150,11 +150,9 @@ Variable* Symbol::getVariable_extern( Symbol*, VMContext* )
    return 0;
 }
 
-Variable* Symbol::getVariable_dyns( Symbol* , VMContext*  )
+Variable* Symbol::getVariable_dyns( Symbol* sym, VMContext* ctx )
 {
-   //TODO: Return the proper value;
-   //return ctx->getDynSymbolValue( sym );
-   return 0;
+   return ctx->getDynSymbolVariable( sym );
 }
 
 }

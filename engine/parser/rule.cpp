@@ -135,9 +135,10 @@ Token* Rule::getTokenAt( uint32 pos ) const
 
 bool Rule::match( Parser& parser, bool bIncremental, bool bContinue ) const
 {
+   /*
    TRACE2( "Rule::match(%s) -- %s/%s", m_name.c_ize(),
             bIncremental ? "incremental" : "full", bContinue ? "cont" : "anew" );
-
+*/
    Parser::Private* pp = parser._p;
    size_t begin = pp->m_pframes->back().m_nStackDepth;
    size_t ppos = bIncremental ? pp->m_tokenStack->size() - 1 : pp->m_pframes->back().m_nStackDepth;

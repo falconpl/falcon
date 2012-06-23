@@ -33,6 +33,7 @@ class Statement;
 class FalconClass;
 class Requirement;
 class ImportDef;
+class ExprLit;
 
 /** Compilation context for Falcon source file compiler (ABC).
 
@@ -479,6 +480,25 @@ public:
    
    void openTempBlock( SynTree* oldBranch, SynTree* newBranch );
 
+   /**
+    Opens a literal context.
+    
+    When the count of opened literal context is > 0, the symbols are
+    not searched in in the context symbol tables, but are always generated
+    as dynamic and stored in the topmost literal context for garbage collection.
+    
+    */
+   void openLitContext( ExprLit* lit );
+   /**
+    Pops a previously opened literal context.
+    */
+   ExprLit* closeLitContext();
+   
+   /** 
+    True if currently we're in a literal context.
+    */
+   bool isLitContext() const;
+   
 private:
    class CCFrame; // forward decl for Context Frames.
 
@@ -503,7 +523,7 @@ private:
    void restoreStatus( const CCFrame& cf );
 
    class Private;
-   Private* _p;
+   ParserContext::Private* _p;
 };
 
 }

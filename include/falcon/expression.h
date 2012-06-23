@@ -366,14 +366,6 @@ public:
 };
 
 
-/** Fast-evaluate expression. */
-class FALCON_DYN_CLASS ExprEval: public UnaryExpression
-{
-public:
-   FALCON_UNARY_EXPRESSION_CLASS_DECLARATOR( ExprEval, t_eval );
-   inline virtual bool isStandAlone() const { return true; }
-};
-
 #endif
 
 }

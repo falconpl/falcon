@@ -39,7 +39,6 @@
 #include <falcon/psteps/exprbitwise.h>
 #include <falcon/psteps/exproob.h>
 #include <falcon/psteps/exprlogic.h>
-#include <falcon/psteps/expreval.h>
 #include <falcon/psteps/exprlit.h>
 #include <falcon/psteps/exprunquote.h>
 
@@ -404,28 +403,6 @@ void apply_expr_isoob( const Rule& r, Parser& p )
    apply_expr_unary( r, p, new ExprIsOob );
 }
 
-void apply_expr_eval( const Rule&r, Parser& p )
-{
-   apply_expr_unary( r, p, new ExprEval );
-}
-
-void apply_expr_lit( const Rule&, Parser& p )
-{
-   SourceParser& sp = static_cast<SourceParser&>(p);
-   
-   (void) p.getNextToken();
-   TokenInstance* value = p.getNextToken();  // expr   
-   
-   // get the expression coming from the value and unarize it.
-   Expression* other = static_cast<Expression*>(value->detachValue());
-   ExprLit* un = new ExprLit( other, value->line(), value->chr() );
-   
-   // Complexify the value
-   value->token( sp.Expr );   // be sure to change it
-   value->setValue( un, expr_deletor );
-   p.simplify(1); // remove 1 token and keep the value.
-   
-}
 
 void apply_expr_unquote( const Rule&r, Parser& p )
 {

@@ -436,16 +436,6 @@ void ClassReference::op_call( VMContext* ctx, int32 paramCount, void* self ) con
 }
 
 
-void ClassReference::op_eval( VMContext* ctx, void* self ) const
-{
-   Variable* ref = static_cast<Variable*>(self);
-   Class* cls;
-   void* data;
-   ref->value()->forceClassInst( cls, data );
-   cls->op_eval( ctx, data );
-}
-
-
 void ClassReference::op_toString( VMContext* ctx, void* self ) const
 {
    Variable* ref = static_cast<Variable*>(self);

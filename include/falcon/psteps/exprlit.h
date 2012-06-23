@@ -21,13 +21,16 @@
 
 namespace Falcon {
 
-/** Literal expression (^= expr) 
+class Symbol;
+
+/** Literal expression {~ expr } 
  */
 class ExprLit: public UnaryExpression
 {
 public:
    ExprLit( int line=0, int chr=0 );
    ExprLit( Expression* expr, int line=0, int chr=0 );
+   ExprLit( SynTree* st, int line=0, int chr=0 );
    ExprLit( const ExprLit& other );
    
    virtual ~ExprLit() {};   
@@ -41,11 +44,18 @@ public:
    
    /** This is actually a proxy to first() used during deserialization. */
    void setExpression( Expression* expr );
+   /** This is actually a proxy to first() used during deserialization. */
+   void setTree( SynTree* st );
+
+   /** Creates a new dynamic symbol, or returns a previously created one.
+    
+    */
+   Symbol* makeSymbol( const String& name, int declLine );
    
    virtual void subscribeUnquote( Expression* expr );
 public:
    class Private;
-   Private* _p;
+   ExprLit::Private* _p;
    
    static void apply_( const PStep*, VMContext* ctx );
 };

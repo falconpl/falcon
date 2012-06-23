@@ -128,7 +128,6 @@ add_library(falcon_engine SHARED
   psteps/exprdict.cpp
   psteps/exprdot.cpp
   psteps/expreeq.cpp
-  psteps/expreval.cpp
   psteps/exprfuncpower.cpp
   psteps/expriif.cpp
   psteps/exprin.cpp

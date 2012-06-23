@@ -49,7 +49,6 @@ public:
    //
    // Can a function instance be created?
    virtual void op_call( VMContext* ctx, int32 paramCount, void* self ) const;
-   virtual void op_eval( VMContext* ctx, void* self ) const;
 
 protected:
    ClassFunction( const String& name, int64 type ):

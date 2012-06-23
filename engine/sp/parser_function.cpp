@@ -36,8 +36,37 @@
 #include "private_types.h"
 #include "falcon/psteps/exprclosure.h"
 #include "falcon/psteps/exprsym.h"
+#include "falcon/psteps/exprlit.h"
+#include "falcon/psteps/stmtwhile.h"
+#include "falcon/classes/classsyntree.h"
 
 namespace Falcon {
+
+
+// temporary statement used to keep track of the forming literal expression
+class StmtTempLit: public Statement
+{
+public:
+   SynTree* m_forming;
+
+   StmtTempLit():
+      Statement( 0,0 )
+   {
+      static Class* cls = Engine::instance()->syntreeClass();
+      // don't record us, we're temp.
+      m_forming = 0; // you can never know.
+      m_discardable = true;
+      handler(cls);
+   }
+
+   ~StmtTempLit()
+   {
+      delete m_forming;
+   }
+   
+   virtual StmtTempLit* clone() const { return 0; }
+};
+
 
 using namespace Parsing;
 
@@ -178,6 +207,34 @@ void on_close_lambda( void* thing )
    }  
 }
 
+void on_close_lit( void* thing )
+{
+   // ensure single expressions to be considered returns.
+   SourceParser& sp = *static_cast<SourceParser*>(thing);
+   ParserContext* ctx = static_cast<ParserContext*>(sp.context());
+   StmtTempLit* lit = static_cast<StmtTempLit*>(ctx->currentStmt());
+
+   ExprLit* elit = ctx->closeLitContext();
+   SynTree* st = lit->m_forming;
+   int size = st->size();
+   if ( size == 1 && st->at(0)->handler()->userFlags() == FALCON_SYNCLASS_ID_AUTOEXPR )
+   {
+      StmtAutoexpr* aexpr = static_cast<StmtAutoexpr*>( st->at(0) );
+      Expression* evaluated = aexpr->detachExpr();
+      elit->setExpression(evaluated);
+   }
+   else {
+      lit->m_forming = 0;
+      elit->setTree(st);
+   }
+   
+   // The token was {~ (open lit expr), now we change it into an expression
+   TokenInstance* ti = sp.getLastToken();
+   ti->token(sp.Expr);
+   ti->setValue( elit, expr_deletor );
+   ctx->closeLitContext();
+}
+
 
 static void internal_expr_func(const Rule&, Parser& p, bool isEta )
 {
@@ -192,7 +249,7 @@ static void internal_expr_func(const Rule&, Parser& p, bool isEta )
    TokenInstance* targs = p.getNextToken();
 
    // todo: generate an anonymous name
-   SynFunc* func = new SynFunc( "anonymous", 0, tf->line() );
+   SynFunc* func = new SynFunc( "#anonymous", 0, tf->line() );
    if( isEta ) func->setEta(true);
    NameList* list=static_cast<NameList*>(targs->asData());
 
@@ -288,6 +345,29 @@ void apply_expr_lambda(const Rule&, Parser& p)
    p.pushState( "LambdaStart", false );
 }
 
+void apply_expr_lit(const Rule&, Parser& p)
+{
+   // T_OpenLit
+   
+   ParserContext* ctx = static_cast<ParserContext*>(p.context());
+   // keep the token; we'll be converting it into the exprlit when done.
+   TokenInstance* ti = p.getNextToken();
+   StmtTempLit* tlit = new StmtTempLit;
+   tlit->m_forming = new SynTree(ti->line(), ti->chr());
+
+   ctx->openBlock( tlit, tlit->m_forming );
+   ExprLit* lit = new ExprLit(tlit->line(),tlit->chr());
+   lit->setTree(tlit->m_forming);
+   ctx->openLitContext(lit);
+   p.pushState( "InlineFunc", on_close_lit , &p );
+}
+
+void apply_expr_parametric_lit(const Rule&, Parser& p)
+{
+   // T_OpenLit
+   p.simplify(1);
+   p.pushState( "LambdaStart", false );
+}
 
 static void internal_lambda_params(const Rule&, Parser& p, bool isEta )
 {
@@ -296,12 +376,11 @@ static void internal_lambda_params(const Rule&, Parser& p, bool isEta )
    SourceParser& sp = static_cast<SourceParser&>(p);
 
    ParserContext* ctx = static_cast<ParserContext*>(p.context());
-   if( isEta ) sp.getNextToken(); // '*';
    TokenInstance* lsym = sp.getNextToken();
 
 
    // and add the function state.
-   SynFunc* func=new SynFunc("anonymous", 0, lsym->line());
+   SynFunc* func=new SynFunc("#anonymous", 0, lsym->line());
    if( isEta ) func->setEta(true);
    NameList* list=static_cast<NameList*>(lsym->asData());
 

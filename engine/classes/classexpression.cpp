@@ -30,10 +30,10 @@ ClassExpression::ClassExpression( ClassTreeStep* parent ):
    
 ClassExpression::~ClassExpression(){}
 
-void ClassExpression::op_eval( VMContext* ctx, void* self ) const
+void ClassExpression::op_call( VMContext* ctx, int pcount, void* self ) const
 {
    // Remove the top of the stack because our expression will do its own.
-   ctx->popData();
+   ctx->popData(pcount+1);
    ctx->pushCode( static_cast<Expression*>(self) );
 }
 

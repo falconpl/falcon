@@ -36,7 +36,6 @@
 #include <falcon/psteps/exprdict.h>
 #include <falcon/psteps/exprdot.h>
 #include <falcon/psteps/expreeq.h>
-#include <falcon/psteps/expreval.h>
 #include <falcon/psteps/exprfuncpower.h>
 #include <falcon/psteps/exprin.h>
 #include <falcon/psteps/exprnotin.h>
@@ -231,7 +230,6 @@ FALCON_STANDARD_SYNCLASS_OP_CREATE( NE, ExprNE, binaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( EEQ, ExprEEQ, binaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( In, ExprIn, binaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Notin, ExprNotin, binaryExprSet )
-FALCON_STANDARD_SYNCLASS_OP_CREATE( Eval, ExprEval, unaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( IIF, ExprIIF, ternaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Lit, ExprLit, unaryExprSet )
 
