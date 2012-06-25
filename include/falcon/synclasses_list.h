@@ -74,7 +74,13 @@ FALCON_SYNCLASS_DECLARATOR(m_expr_eeq, EEQ, expr)
 FALCON_SYNCLASS_DECLARATOR(m_expr_in, In, expr)
 FALCON_SYNCLASS_DECLARATOR(m_expr_notin, Notin, expr)
 FALCON_SYNCLASS_DECLARATOR(m_expr_iif, IIF, expr)
-FALCON_SYNCLASS_DECLARATOR(m_expr_lit, Lit, expr)
+
+FALCON_SYNCLASS_DECLARATOR_EX(m_expr_lit, Lit, expr, \
+      virtual void op_call( VMContext* ctx, int pcount, void* instance ) const;\
+      virtual void store( VMContext*, DataWriter* dw, void* instance ) const; \
+      virtual void flatten( VMContext* ctx, ItemArray& subItems, void* instance ) const;\
+      virtual void unflatten( VMContext* ctx, ItemArray& subItems, void* instance ) const; )
+
 // inc-dec
 FALCON_SYNCLASS_DECLARATOR(m_expr_preinc, PreInc, expr)
 FALCON_SYNCLASS_DECLARATOR(m_expr_predec, PreDec, expr)
@@ -137,6 +143,7 @@ FALCON_SYNCLASS_DECLARATOR(m_expr_self, Self, expr)
 FALCON_SYNCLASS_DECLARATOR(m_expr_starindex, StarIndexAccess, expr)
 FALCON_SYNCLASS_DECLARATOR(m_expr_unpack, Unpack, expr)
 FALCON_SYNCLASS_DECLARATOR(m_expr_unquote, Unquote, expr)
+
 
 FALCON_SYNCLASS_DECLARATOR_EX(m_expr_sym, GenSym, expr, \
       virtual void store( VMContext*, DataWriter* dw, void* instance ) const; \

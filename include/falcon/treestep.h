@@ -336,16 +336,6 @@ public:
          || (m_cat == e_cat_expression && cat == e_cat_expression);
    }
    
-   /** Searches for unquoted expressions in literal statements. 
-    \param sender The treestep requiring unquotes to declare themselves.
-    
-    The default behavior is that of invoking registerUnquote on all the
-    arity-visible children and on the selectors.
-    
-    Unquoted expressions should call subscribeUnquote on the sender.
-    */
-   virtual void registerUnquotes( TreeStep* sender ); 
-   
    /** Subscribes an unquoted expression to the sender.
     \param unquote The unquote expression being registered.
     

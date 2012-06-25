@@ -130,6 +130,15 @@ void ClassSynTree::op_setProperty( VMContext* ctx, void* instance, const String&
    }
 }
 
+
+void ClassSynTree::op_call(VMContext* ctx, int pcount, void* instance) const
+{
+   ctx->popData(pcount);
+   // the result of a SynTree call will ALWAYS be nil.
+   ctx->topData().setNil(); 
+   ctx->pushCode( static_cast<SynTree*>(instance) );
+}
+
 }
 
 /* end of classsyntree.cpp */

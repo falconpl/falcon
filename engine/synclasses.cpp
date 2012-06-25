@@ -231,7 +231,8 @@ FALCON_STANDARD_SYNCLASS_OP_CREATE( EEQ, ExprEEQ, binaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( In, ExprIn, binaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Notin, ExprNotin, binaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( IIF, ExprIIF, ternaryExprSet )
-FALCON_STANDARD_SYNCLASS_OP_CREATE( Lit, ExprLit, unaryExprSet )
+// TODO: Manage lit
+//FALCON_STANDARD_SYNCLASS_OP_CREATE( Lit, ExprLit, unaryExprSet )
 
 // inc-dec
 FALCON_STANDARD_SYNCLASS_OP_CREATE( PreInc, ExprPreInc, unaryExprSet )
@@ -794,8 +795,6 @@ void SynClasses::ClassInherit::store( VMContext* ctx, DataWriter* wr, void* inst
    wr->write( inh->hadRequirement() );
    m_parent->store( ctx, wr, instance );
 }
-
-
 void SynClasses::ClassInherit::restore( VMContext* ctx, DataReader* rd, void*& empty ) const
 {
    String name;
@@ -856,6 +855,57 @@ void SynClasses::ClassParentship::restore( VMContext* ctx, DataReader* rd, void*
    m_parent->restore( ctx, rd, empty );
 }
 
+//=========================================
+// Class LIT
+//
+
+void* SynClasses::ClassLit::createInstance() const
+{
+   return new ExprLit;
+}
+bool SynClasses::ClassLit::op_init( VMContext*, void* , int  ) const
+{
+   return true;
+}
+void SynClasses::ClassLit::op_call( VMContext* ctx, int pcount, void* instance ) const
+{
+   ExprLit* lit = static_cast<ExprLit*>(instance);
+   fassert( lit->child() != 0 );
+   TRACE1( "Lit CALL on %s", lit->child()->oneLiner().c_ize() );
+   lit->child()->handler()->op_call( ctx, pcount, lit->child() );
+}
+void SynClasses::ClassLit::store( VMContext* ctx, DataWriter* wr, void* instance ) const
+{
+   ExprLit* lit = static_cast<ExprLit*>(instance);
+   wr->write( lit->isEta() );
+   // todo: save parameters and unquotes
+   m_parent->store( ctx, wr, instance );
+}
+void SynClasses::ClassLit::restore( VMContext* ctx, DataReader* rd, void*& empty ) const
+{
+   ExprLit* lit = new ExprLit();
+   empty = lit;
+   bool isEta;
+   rd->read( isEta );
+   lit->setEta(isEta);
+   // todo: load parameters and unquotes
+   m_parent->restore( ctx, rd, empty);
+}
+void SynClasses::ClassLit::flatten( VMContext*, ItemArray& subItems, void* instance ) const
+{
+   ExprLit* lit = static_cast<ExprLit*>(instance);
+   if( lit->child() != 0 ) {
+      subItems.append( Item( lit->child()->handler(), lit->child()) );
+   }
+}
+void SynClasses::ClassLit::unflatten( VMContext*, ItemArray& subItems, void* instance ) const
+{
+   ExprLit* lit = static_cast<ExprLit*>(instance);
+   if( subItems.length() == 1 ) {
+      lit->setChild( static_cast<TreeStep*>(subItems.at(0).asInst()) );
+   }
+}
+   
 //=================================================================
 // Statements
 //

@@ -59,7 +59,6 @@ public:
    /** Returns true if the expression can be found alone in a statement. */
    inline virtual bool isStandAlone() const { return true; }   
    
-   virtual void registerUnquotes( TreeStep* sender );
    virtual void describeTo( String& str, int depth ) const;
    
    virtual bool simplify(Falcon::Item&) const;

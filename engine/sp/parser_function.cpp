@@ -221,11 +221,11 @@ void on_close_lit( void* thing )
    {
       StmtAutoexpr* aexpr = static_cast<StmtAutoexpr*>( st->at(0) );
       Expression* evaluated = aexpr->detachExpr();
-      elit->setExpression(evaluated);
+      elit->setChild(evaluated);
    }
    else {
       lit->m_forming = 0;
-      elit->setTree(st);
+      elit->setChild(st);
    }
    
    // The token was {~ (open lit expr), now we change it into an expression
@@ -357,7 +357,6 @@ void apply_expr_lit(const Rule&, Parser& p)
 
    ctx->openBlock( tlit, tlit->m_forming );
    ExprLit* lit = new ExprLit(tlit->line(),tlit->chr());
-   lit->setTree(tlit->m_forming);
    ctx->openLitContext(lit);
    p.pushState( "InlineFunc", on_close_lit , &p );
 }

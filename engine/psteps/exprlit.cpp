@@ -27,6 +27,9 @@
 #include <map>
 #include <deque>
 
+#include "falcon/syntree.h"
+#include "falcon/symboltable.h"
+
 
 namespace Falcon {
 
@@ -52,54 +55,75 @@ public:
 
 
 ExprLit::ExprLit( int line, int chr ):
-   UnaryExpression( line, chr ),
-   _p( new Private )
+   Expression( line, chr ),
+   _p( new Private ),
+   m_child(0),
+   m_isEta(false)
 {
    FALCON_DECLARE_SYN_CLASS( expr_lit );
    apply = apply_;   
 }
 
 
-ExprLit::ExprLit( Expression* expr, int line, int chr ):
-   UnaryExpression( expr, line, chr ),
-   _p( new Private )
+ExprLit::ExprLit( TreeStep* st, int line, int chr ):
+   Expression( line, chr ),
+   _p( new Private ),
+   m_child(st),
+   m_isEta(false)
 {
    FALCON_DECLARE_SYN_CLASS( expr_lit );
    apply = apply_;
-   if ( expr != 0 ) expr->registerUnquotes( this );
+   st->setParent(this);
 }
 
 ExprLit::ExprLit( const ExprLit& other ):
-   UnaryExpression( other ),
-   _p( new Private )
+   Expression( other ),
+   _p( new Private ),
+   m_child(0),
+   m_isEta(false)
 {
    apply = apply_;
-   if ( first() != 0 ) first()->registerUnquotes( this );
+   if( other.m_child != 0 ) {
+      m_child = other.m_child->clone();
+      m_child->setParent(this);
+   }
 }
      
     
 void ExprLit::describeTo( String& str, int depth ) const
 {
-   if( first() == 0 ) {
+   if( m_child == 0) {
       str = "<Blank ExprLit>";
       return;
    }
-   
-   str += "{~" + first()->describe( depth ) +"}";
+
+   if( m_paramTable.localCount() > 0 ) {
+      str = "{~~ "; 
+      for( int i = 0; i < m_paramTable.localCount(); ++i ) {
+         Symbol* param = m_paramTable.getLocal(i);
+         if( i > 0 ) {
+            str += ", ";
+         }
+         str += param->name();
+      }
+      str += " => ";
+   }
+   else {
+      str = "{~ ";
+   }
+
+   str += "\n";
+   str += m_child->describe(depth+1) + "\n";
+   str += String( " " ).replicate( depth * depthIndent ) + "}";
 }
 
-
-void ExprLit::setExpression( Expression* expr )
+void ExprLit::setChild( TreeStep* st )
 {
-   first(expr);
-   _p->m_exprs.clear();
-   expr->registerUnquotes(this);
+   delete m_child;
+   m_child = st;
+   st->setParent(this);
 }
 
-void ExprLit::setTree( SynTree*  )
-{
-   
-}
 
 Symbol* ExprLit::makeSymbol( const String& name, int line ) 
 {
@@ -118,6 +142,7 @@ Symbol* ExprLit::makeSymbol( const String& name, int line )
    return sym;
 }
 
+
 void ExprLit::subscribeUnquote( Expression* expr )
 {
    _p->m_exprs.push_back( expr );
@@ -128,14 +153,25 @@ void ExprLit::apply_( const PStep* ps, VMContext* ctx )
 {
    const ExprLit* self = static_cast<const ExprLit*>( ps );
    TRACE1( "Apply \"%s\"", self->describe().c_ize() );   
-   fassert( self->first() != 0 );
+   fassert( self->m_child != 0 );
+   // ExprLit always evaluate to its child
+   ctx->popCode();
+   register TreeStep* child = self->child();
+   ctx->pushData( Item(child->handler(), child) );
    
+   /*
    TreeStep* child;
    Private::ExprVector& ev = self->_p->m_exprs;
    
    if( ev.empty() ) {
       // Not unquoted expression
-      child = self->first();
+      if( self->first() == 0 ) {
+         child = self->m_syntree;
+      }
+      else {
+         child = self->first();
+      }
+         
    }
    else {
       // We have unquoted expressions, so we have to generate them.
@@ -157,7 +193,8 @@ void ExprLit::apply_( const PStep* ps, VMContext* ctx )
    }
    
    ctx->popCode();
-   ctx->pushData( Item( child->handler(), child ) );   
+   ctx->pushData( Item( child->handler(), child ) );
+   */
 }
 
 }

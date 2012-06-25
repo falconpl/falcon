@@ -91,13 +91,6 @@ void ExprUnquote::describeTo( String& str, int depth ) const
 }
 
 
-void ExprUnquote::registerUnquotes( TreeStep* sender )
-{
-   m_registerer = sender;
-   sender->subscribeUnquote( this );
-}
-
-
 bool ExprUnquote::simplify(Falcon::Item& result) const
 {
    return first()->simplify(result);

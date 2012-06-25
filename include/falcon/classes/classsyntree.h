@@ -47,7 +47,9 @@ public:
    virtual bool hasProperty( void* instance, const String& prop ) const;
    virtual void op_getProperty( VMContext* ctx, void* instance, const String& prop) const;
    virtual void op_setProperty( VMContext* ctx, void* instance, const String& prop) const;
-   
+
+   virtual void op_call( VMContext* ctx, int pcount, void* instance) const;
+
 private:
    ClassSymbol* m_classSymbol;
 };
