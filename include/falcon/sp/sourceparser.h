@@ -505,6 +505,8 @@ public:
    Parsing::Rule r_NeListSymbol_first;
 
    Parsing::NonTerminal LambdaParams;
+   Parsing::Rule r_lit_params;
+   Parsing::Rule r_lit_params_eta;
    Parsing::Rule r_lambda_params;
    Parsing::Rule r_lambda_params_eta;
 

@@ -228,11 +228,10 @@ void on_close_lit( void* thing )
       elit->setChild(st);
    }
    
-   // The token was {~ (open lit expr), now we change it into an expression
+   // The token was "(", now we change it into an expression
    TokenInstance* ti = sp.getLastToken();
    ti->token(sp.Expr);
    ti->setValue( elit, expr_deletor );
-   ctx->closeLitContext();
 }
 
 
@@ -345,28 +344,6 @@ void apply_expr_lambda(const Rule&, Parser& p)
    p.pushState( "LambdaStart", false );
 }
 
-void apply_expr_lit(const Rule&, Parser& p)
-{
-   // T_OpenLit
-   
-   ParserContext* ctx = static_cast<ParserContext*>(p.context());
-   // keep the token; we'll be converting it into the exprlit when done.
-   TokenInstance* ti = p.getNextToken();
-   StmtTempLit* tlit = new StmtTempLit;
-   tlit->m_forming = new SynTree(ti->line(), ti->chr());
-
-   ctx->openBlock( tlit, tlit->m_forming );
-   ExprLit* lit = new ExprLit(tlit->line(),tlit->chr());
-   ctx->openLitContext(lit);
-   p.pushState( "InlineFunc", on_close_lit , &p );
-}
-
-void apply_expr_parametric_lit(const Rule&, Parser& p)
-{
-   // T_OpenLit
-   p.simplify(1);
-   p.pushState( "LambdaStart", false );
-}
 
 static void internal_lambda_params(const Rule&, Parser& p, bool isEta )
 {
@@ -376,8 +353,7 @@ static void internal_lambda_params(const Rule&, Parser& p, bool isEta )
 
    ParserContext* ctx = static_cast<ParserContext*>(p.context());
    TokenInstance* lsym = sp.getNextToken();
-
-
+   
    // and add the function state.
    SynFunc* func=new SynFunc("#anonymous", 0, lsym->line());
    if( isEta ) func->setEta(true);
@@ -393,7 +369,7 @@ static void internal_lambda_params(const Rule&, Parser& p, bool isEta )
    ti->setValue(expr,expr_deletor);
 
    // remove this stuff from the stack
-   p.simplify(2,ti);
+   p.simplify(3);
    // remove the lambdastart state
    p.popState();
    
@@ -410,6 +386,48 @@ void apply_lambda_params(const Rule& r, Parser& p)
 void apply_lambda_params_eta(const Rule& r, Parser& p)
 {
    internal_lambda_params( r, p, true );
+}
+
+
+void internal_lit_params(const Rule&, Parser& p, bool isEta )
+{
+   // << T_Openpar << ListSymbol << T_Closepar
+   ParserContext* ctx = static_cast<ParserContext*>(p.context());
+   p.getNextToken();
+   TokenInstance* tparams = p.getNextToken();
+   TokenInstance* ti = p.getNextToken(); 
+   
+   StmtTempLit* tlit = new StmtTempLit;
+   tlit->m_forming = new SynTree(ti->line(), ti->chr());
+
+   ctx->openBlock( tlit, tlit->m_forming );
+   ExprLit* lit = new ExprLit(tlit->line(),tlit->chr());
+   lit->setEta(isEta);
+   
+   NameList* list=static_cast<NameList*>(tparams->asData());
+   for(NameList::const_iterator it=list->begin(),end=list->end();it!=end;++it)
+   {
+      lit->addParam(*it, tlit->line());
+   }
+   
+   // we're keeping a token that we'll use when we close the expression.
+   // remove this stuff from the stack
+   p.simplify(3, ti);
+   // remove the lambdastart state
+   p.popState();
+   
+   ctx->openLitContext(lit);
+   p.pushState( "InlineFunc", on_close_lit , &p );
+}
+
+void apply_lit_params_eta(const Rule& r, Parser& p)
+{
+   internal_lit_params( r, p, true );
+}
+
+void apply_lit_params(const Rule& r, Parser& p)
+{
+   internal_lit_params( r, p, false );
 }
 
 }

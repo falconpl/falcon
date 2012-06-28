@@ -497,7 +497,6 @@ void Parser::simplify( int32 tcount, TokenInstance* newtoken )
             .extra("Parser::simplify - tcount out of range"));
    }
 
-
    if( tcount != 0 )
    {
       size_t end = nDepth + tcount;

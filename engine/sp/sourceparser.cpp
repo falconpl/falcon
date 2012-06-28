@@ -491,8 +491,6 @@ SourceParser::SourceParser():
    Expr<< (r_Expr_lambda << "Expr_lambda" << apply_expr_lambda << T_OpenGraph );
    Expr<< (r_Expr_class << "Expr_class" << apply_expr_class << T_class );
    Expr<< (r_Expr_proto << "Expr_proto" << apply_expr_proto << T_OpenProto );
-   Expr<< (r_Expr_lit << "Expr_lit" << apply_expr_lit << T_OpenLit );
-   Expr<< (r_Expr_parametric_lit << "Expr_paramlit" << apply_expr_parametric_lit << T_OpenParamLit );
 
    S_Function << "Function"
       /* This requires a bit of work << (r_function_short << "Function short" << apply_function_short
@@ -601,7 +599,12 @@ SourceParser::SourceParser():
    //
 
    LambdaParams << "LambdaParams";
-   LambdaParams << ( r_lambda_params_eta << "Params in lambda eta" << apply_lambda_params_eta
+   LambdaParams << ( r_lit_params << "Params in lit" << apply_lit_params 
+                        << T_Openpar << ListSymbol << T_Closepar );
+   LambdaParams << ( r_lit_params_eta << "Params in lit ETA" << apply_lit_params_eta 
+                        << T_OpenSquare << ListSymbol << T_CloseSquare );
+   
+   LambdaParams << ( r_lambda_params_eta << "Params in lambda ETA" << apply_lambda_params_eta
                         << ListSymbol << T_RShift );
    LambdaParams << ( r_lambda_params << "Params in lambda" << apply_lambda_params 
                         << ListSymbol << T_Arrow );

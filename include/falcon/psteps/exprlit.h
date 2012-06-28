@@ -62,7 +62,7 @@ public:
    /**
     Adds a parameter to this parametric  expression.
     */
-   void addParam( const String& name );
+   void addParam( const String& name, int line ) { m_paramTable.addLocal(name,line); }
    
    /**
     Retrns the count of parameters.
