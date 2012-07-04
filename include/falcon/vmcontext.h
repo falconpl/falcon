@@ -33,6 +33,7 @@ class StmtTry;
 class SynTree;
 class Symbol;
 class Storer;
+class SymbolTable;
 
 /**
  * Structure needed to store VM data.
@@ -559,7 +560,6 @@ public:
       topCall->m_paramCount = nparams;
       topCall->m_self = self;
       topCall->m_bMethodic = true;
-      topCall->m_bEvalOutOfContext = false;
       topCall->m_finallyCount = 0;
 
       return topCall;
@@ -581,7 +581,6 @@ public:
       topCall->m_paramCount = nparams;
       topCall->m_self.setNil();
       topCall->m_bMethodic = false;
-      topCall->m_bEvalOutOfContext = false;
       topCall->m_finallyCount = 0;
 
       return topCall;
@@ -603,7 +602,6 @@ public:
       topCall->m_paramCount = nparams;
       topCall->m_self.setNil();
       topCall->m_bMethodic = false;
-      topCall->m_bEvalOutOfContext = false;
       topCall->m_finallyCount = 0;
 
       return topCall;
@@ -924,6 +922,15 @@ public:
     */
    void callItem( const Item& item, int pcount, Item const* params );
 
+   
+   /** Adds a local symbol table. 
+    This creates an empty symbol entry in the symbol stack to store the
+    current data depth.
+    \param st The symbol table containing the Local Symbols to be added.
+    \param pcount The count of the parameters that have been pushed for this frame.
+    */
+   void addLocalFrame( SymbolTable* st, int pcount );
+
    /** Returns from the current frame.
     \param value The value considered as "exit value" of this frame.
 
@@ -1065,8 +1072,13 @@ public:
 
    void setFinallyContinuation( t_fin_mode fm ) { m_finMode = fm; }
 
+   /** Sets the catch block for the current finally unroll. */
    void setCatchBlock( const SynTree* ps ) { m_catchBlock = ps; }
 
+   /** Unroll dynsymbols pushed for local evaluations. 
+    \param symBase Number of symbols LEFT in the stack after unroll.
+    */
+   void unrollLocalFrame( int symBase );
 //==========================================================
 // Status management
 //
@@ -1214,12 +1226,6 @@ public:
     */
    Variable* getDynSymbolVariable( const Symbol* dyns );
    
-   /** Returns true if the current frame is being evaluated out of context. */
-   bool evalOutOfContext() const { return currentFrame().m_bEvalOutOfContext; }
-   
-   /** Sets the out-of-context nature of the ongoing evaluation. */
-   void evalOutOfContext( bool otc ) { currentFrame().m_bEvalOutOfContext = otc; }
-
    /** Copies pcount parameters from the frame parameters area to the top of the stack. */
    void forwardParams( int pcount );
    

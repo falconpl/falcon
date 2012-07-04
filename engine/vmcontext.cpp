@@ -24,6 +24,7 @@
 #include <falcon/syntree.h>       // for catch -- error check
 #include <falcon/symbol.h>
 #include <falcon/dynsymbol.h>
+#include <falcon/stdsteps.h>
 
 #include <falcon/module.h>       // For getDynSymbolValue
 #include <falcon/modspace.h>
@@ -756,6 +757,53 @@ void VMContext::callItem( const Item& item, int pcount, Item const* params )
    }
 
    cls->op_call( this, pcount, data );
+}
+
+
+void VMContext::addLocalFrame( SymbolTable* st, int pcount )
+{
+   static StdSteps* stdSteps = Engine::instance()->stdSteps();
+
+   if( st == 0 ) {
+      pushCode( &stdSteps->m_localFrame );
+      return;
+   }
+   
+   Item* top = &topData()-pcount+1;
+   if( pcount < st->localCount() ) 
+   {
+      addSpace(st->localCount() - pcount);
+   }
+
+   pushCode( &stdSteps->m_localFrame );
+   // ... that will remove the required symbols & unroll the data stack.
+   currentCode().m_seqId = m_dynsStack.depth();
+   // create the local frame in the stacks.
+
+   // add a base marker.
+   //TODO: save this symbol somewhere
+   Symbol* base = new Symbol("$base");
+   DynsData* baseDyn = m_dynsStack.addSlot();
+   baseDyn->m_sym = base;
+   baseDyn->m_var.value(top);
+   
+   for( int i = 0; i < st->localCount(); ++i ) 
+   {
+      DynsData* dd = m_dynsStack.addSlot();
+      dd->m_sym = st->getLocal(i);
+      dd->m_var.value(top);
+      ++top;
+   }
+}
+
+
+void VMContext::unrollLocalFrame( int dynsCount )
+{
+   // Descend into the dynsymbol stack until we find our base.
+   register DynsData* base = m_dynsStack.offset( dynsCount );
+   fassert( "$base" == base->m_sym->name() );
+   m_dataStack.m_top = base->m_var.value()+1;
+   m_dynsStack.m_top = base-1;
 }
 
 

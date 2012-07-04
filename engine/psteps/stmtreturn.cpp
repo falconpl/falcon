@@ -196,12 +196,6 @@ void StmtReturn::apply_expr_( const PStep* ps, VMContext* ctx )
    
    if( self->m_bHasEval )
    {
-      if (!ctx->evalOutOfContext())
-      {
-         ctx->traverseFinally();
-         ctx->pushCode( &steps->m_resetOC );
-         ctx->evalOutOfContext(true);
-      }
       Class* cls = 0;
       void * data = 0;
       ctx->topData().forceClassInst( cls, data );
@@ -245,12 +239,6 @@ void StmtReturn::apply_expr_doubt_( const PStep* ps, VMContext* ctx )
    
    if( self->m_bHasEval )
    {
-      if (!ctx->evalOutOfContext())
-      {
-         ctx->traverseFinally();
-         ctx->pushCode( &steps->m_resetOC );
-         ctx->evalOutOfContext(true);
-      }
       Class* cls = 0;
       void * data = 0;
       ctx->topData().forceClassInst( cls, data );

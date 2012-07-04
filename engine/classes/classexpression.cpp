@@ -30,11 +30,22 @@ ClassExpression::ClassExpression( ClassTreeStep* parent ):
    
 ClassExpression::~ClassExpression(){}
 
-void ClassExpression::op_call( VMContext* ctx, int pcount, void* self ) const
+void ClassExpression::op_call( VMContext* ctx, int pcount, void* instance ) const
 {
    // Remove the top of the stack because our expression will do its own.
-   ctx->popData(pcount+1);
-   ctx->pushCode( static_cast<Expression*>(self) );
+   Expression* self = static_cast<Expression*>(instance);
+   SymbolTable* st = self->symbolTable();
+   // Do we have a symbol table?
+   if( st == 0 )
+   {
+      ctx->popData(pcount+1);
+      ctx->addLocalFrame(0,0);
+   }
+   else {
+      ctx->addLocalFrame(st,pcount);
+   }
+   
+   ctx->pushCode( self );
 }
 
 }

@@ -245,15 +245,7 @@ void StdSteps::PStepReturnFrameWithTopDoubt::describeTo( String& s, int ) const
 
 void StdSteps::PStepReturnFrameWithTopEval::apply_( const PStep*, VMContext* ctx )
 {
-   static PStep* resetOC = &Engine::instance()->stdSteps()->m_resetOC;
-   ctx->returnFrame( ctx->topData() );
-   
-   if( !ctx->evalOutOfContext() )
-   {
-      ctx->evalOutOfContext(true);
-      ctx->resetCode( resetOC );
-   }
-   
+   ctx->returnFrame( ctx->topData() );      
    Class* cls = 0;
    void* data = 0;
    ctx->topData().forceClassInst(cls, data);
@@ -267,15 +259,8 @@ void StdSteps::PStepReturnFrameWithTopEval::describeTo( String& s, int ) const
 
 void StdSteps::PStepReturnFrameWithTopDoubtEval::apply_( const PStep*, VMContext* ctx )
 {
-   static PStep* resetOC = &Engine::instance()->stdSteps()->m_resetOC;
    ctx->returnFrame( ctx->topData() );
    ctx->SetNDContext();
-   
-   if( !ctx->evalOutOfContext() )
-   {
-      ctx->evalOutOfContext(true);
-      ctx->resetCode( resetOC );
-   }
    
    Class* cls = 0;
    void* data = 0;
@@ -289,38 +274,23 @@ void StdSteps::PStepReturnFrameWithTopDoubtEval::describeTo( String& s, int ) co
 }
 
 
-void StdSteps::PStepEvalTop::apply_( const PStep*, VMContext* ctx )
-{
-   static PStep* resetOC = &Engine::instance()->stdSteps()->m_resetOC;
-   
-   if( !ctx->evalOutOfContext() )
-   {
-      ctx->evalOutOfContext(true);
-      ctx->resetCode( resetOC );
-   }
-   
-   Class* cls = 0;
-   void* data = 0;
-   ctx->topData().forceClassInst(cls, data);
-   cls->op_call( ctx, 0, data );
-}
 
-void StdSteps::PStepEvalTop::describeTo( String& s, int ) const
+void StdSteps::PStepLocalFrame::apply_( const PStep*, VMContext* ctx )
 {
-   s = "PStepEvalTop";
-}
-
-void StdSteps::PStepResetOC::apply_( const PStep*, VMContext* ctx )
-{
+   register int base = ctx->currentCode().m_seqId;
    ctx->popCode();
-   ctx->enterFinally();
-   ctx->evalOutOfContext(false);
+   if( base > 0 ) {
+      Item top = ctx->topData();
+      ctx->unrollLocalFrame( base );
+      ctx->pushData(top);
+   }
 }
 
-void StdSteps::PStepResetOC::describeTo( String& s, int ) const
+void StdSteps::PStepLocalFrame::describeTo( String& s, int ) const
 {
-   s = "PStepResetOC";
+   s = "PStepLocalFrame";
 }
+
 }
 
 /* end of stdsteps.cpp */

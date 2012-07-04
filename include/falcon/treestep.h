@@ -18,6 +18,8 @@
 
 #include <falcon/pstep.h>
 
+#include "symboltable.h"
+
 namespace Falcon {
 
 class Class;
@@ -162,11 +164,13 @@ public:
    inline TreeStep( const TreeStep& other ):
       PStep( other ),
       m_handler( other.m_handler ),
+      m_parent(0),
+      m_symtab(0),
       m_cat( other.m_cat ),
-      m_parent( 0 )
+      m_bOwnSymTab(false)
    {}
       
-   virtual ~TreeStep() {}
+   virtual ~TreeStep();
    
    typedef enum {
       e_cat_statement,
@@ -336,32 +340,43 @@ public:
          || (m_cat == e_cat_expression && cat == e_cat_expression);
    }
    
-   /** Subscribes an unquoted expression to the sender.
-    \param unquote The unquote expression being registered.
-    
-    The base method does nothing.
+   /**
+    Set the symbol table associated with this treestep.
     */
-   virtual void subscribeUnquote( Expression* unquote ); 
-   
+   void setSymbolTable( SymbolTable* st, bool own = false );
+
+   /**
+    Gets the symbol table associated with this treestep.
+    
+    \note Normally, the symbol table is 0.
+    */
+   SymbolTable* symbolTable() const { return m_symtab; }
+
 protected:
    uint32 m_gcMark; 
    Class* m_handler;
-   t_category m_cat;
    TreeStep* m_parent;
+   SymbolTable* m_symtab;
+   t_category m_cat;
+   bool m_bOwnSymTab;
    
    TreeStep( Class* cls, t_category t, int line = 0, int chr = 0 ):
       PStep(line, chr ),
       m_handler( cls ),
+      m_parent(0),
+      m_symtab(0),
       m_cat(t),
-      m_parent(0)
+      m_bOwnSymTab(false)
    {}
    
    // Unclassesd step, or class provided later on
    TreeStep( t_category t, int line = 0, int chr = 0 ):
       PStep(line, chr ),
       m_handler( 0 ),
+      m_parent(0),
+      m_symtab(0),
       m_cat(t),
-      m_parent(0)
+      m_bOwnSymTab(false)
    {}
 
 };

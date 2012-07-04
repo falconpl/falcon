@@ -228,10 +228,10 @@ void on_close_lit( void* thing )
       elit->setChild(st);
    }
    
-   // The token was "(", now we change it into an expression
-   TokenInstance* ti = sp.getLastToken();
-   ti->token(sp.Expr);
+   // The token was ")", now we change it into an expression
+   TokenInstance* ti = TokenInstance::alloc( lit->line(), lit->chr(), sp.Expr);
    ti->setValue( elit, expr_deletor );
+   sp.simplify(0, ti);
 }
 
 
@@ -369,10 +369,10 @@ static void internal_lambda_params(const Rule&, Parser& p, bool isEta )
    ti->setValue(expr,expr_deletor);
 
    // remove this stuff from the stack
-   p.simplify(3);
+   p.simplify(2,ti);
    // remove the lambdastart state
    p.popState();
-   
+
    // open a new main state for the function
    ctx->openFunc(func);
    p.pushState( "InlineFunc", on_close_lambda , &p );
@@ -400,7 +400,6 @@ void internal_lit_params(const Rule&, Parser& p, bool isEta )
    StmtTempLit* tlit = new StmtTempLit;
    tlit->m_forming = new SynTree(ti->line(), ti->chr());
 
-   ctx->openBlock( tlit, tlit->m_forming );
    ExprLit* lit = new ExprLit(tlit->line(),tlit->chr());
    lit->setEta(isEta);
    
@@ -410,13 +409,12 @@ void internal_lit_params(const Rule&, Parser& p, bool isEta )
       lit->addParam(*it, tlit->line());
    }
    
-   // we're keeping a token that we'll use when we close the expression.
-   // remove this stuff from the stack
-   p.simplify(3, ti);
+   p.simplify(3);
    // remove the lambdastart state
    p.popState();
    
    ctx->openLitContext(lit);
+   ctx->openBlock( tlit, tlit->m_forming );
    p.pushState( "InlineFunc", on_close_lit , &p );
 }
 

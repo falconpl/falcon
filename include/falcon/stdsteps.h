@@ -286,25 +286,18 @@ public:
    };
    PStepReturnFrameWithTopDoubtEval PStepReturnFrameWithTopDoubtEval;
    
-   class PStepEvalTop: public PStep
+   /** Unrolls a local evaluation frame.
+    */
+   class PStepLocalFrame: public PStep
    {
    public:
-      PStepEvalTop() {apply = apply_; }
-      virtual ~PStepEvalTop() {}
+      PStepLocalFrame() {apply = apply_; m_bIsFinally = true; }
+      virtual ~PStepLocalFrame() {}
       static void apply_( const PStep*, VMContext* ctx );
       virtual void describeTo( String&, int =0 ) const;
    };
-   PStepEvalTop m_evalTop;
-   
-   class PStepResetOC: public PStep
-   {
-   public:
-      PStepResetOC() {apply = apply_; m_bIsFinally = true; }
-      virtual ~PStepResetOC() {}
-      static void apply_( const PStep*, VMContext* ctx );
-      virtual void describeTo( String&, int =0 ) const;
-   };
-   PStepResetOC m_resetOC;
+   PStepLocalFrame m_localFrame;
+
 };
 
 }

@@ -27,6 +27,13 @@
 
 namespace Falcon {
 
+TreeStep::~TreeStep()
+{
+   if( m_bOwnSymTab ) {
+      delete m_symtab;
+   }
+}
+
 void TreeStep::gcMark( uint32 mark )
 {
    m_gcMark = mark;
@@ -176,11 +183,16 @@ SynTree* TreeStep::checkSyntree( const Item& item )
    return 0;
 }
     
-   
-void TreeStep::subscribeUnquote( Expression* )
+
+void TreeStep::setSymbolTable( SymbolTable* st, bool own )
 {
-   // The base class implementation does nothing.
+   if( m_bOwnSymTab ) {
+      delete m_symtab;
+   }
+   m_symtab = st;
+   m_bOwnSymTab = own;
 }
+
 
 }
 

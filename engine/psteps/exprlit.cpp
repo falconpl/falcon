@@ -97,8 +97,12 @@ void ExprLit::describeTo( String& str, int depth ) const
       return;
    }
 
+   const char* etaOpen = m_isEta ? "[" : "(";
+   const char* etaClose = m_isEta ? "]" : ")";
+   str = "{";
+   str += etaOpen; 
+   
    if( m_paramTable.localCount() > 0 ) {
-      str = "{~~ "; 
       for( int i = 0; i < m_paramTable.localCount(); ++i ) {
          Symbol* param = m_paramTable.getLocal(i);
          if( i > 0 ) {
@@ -106,12 +110,9 @@ void ExprLit::describeTo( String& str, int depth ) const
          }
          str += param->name();
       }
-      str += " => ";
    }
-   else {
-      str = "{~ ";
-   }
-
+   str += etaClose;
+   
    str += "\n";
    str += m_child->describe(depth+1) + "\n";
    str += String( " " ).replicate( depth * depthIndent ) + "}";
@@ -157,6 +158,9 @@ void ExprLit::apply_( const PStep* ps, VMContext* ctx )
    // ExprLit always evaluate to its child
    ctx->popCode();
    register TreeStep* child = self->child();
+   
+   // TODO: if there is some unquote, expand it.
+   child->setSymbolTable(const_cast<SymbolTable*>(&self->m_paramTable), false);
    ctx->pushData( Item(child->handler(), child) );
    
    /*
