@@ -1079,6 +1079,14 @@ public:
     \param symBase Number of symbols LEFT in the stack after unroll.
     */
    void unrollLocalFrame( int symBase );
+   
+   /** Finds the upstream local evaluation frame and pops it.
+    
+    If a local frame is not found up to the next code function frame,
+    the operation is silently aborted.
+    
+   */
+   void exitLocalFrame();
 //==========================================================
 // Status management
 //

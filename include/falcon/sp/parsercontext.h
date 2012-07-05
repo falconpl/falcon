@@ -494,6 +494,10 @@ public:
     */
    ExprLit* closeLitContext();
    
+   /** Returns the current opened literal context, if any, or 0.
+    */
+   ExprLit* currentLitContext();
+   
    /** 
     True if currently we're in a literal context.
     */

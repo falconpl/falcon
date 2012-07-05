@@ -88,9 +88,9 @@ public:
     Returns true if the expression is eta.    
     Eta expressions pass untranslated parameters to the evaluation.
     */
-   bool isEta() const { return m_isEta; }
+   bool isEta() const { return m_paramTable.isEta(); }
    
-   void setEta( bool e ) { m_isEta = e; }
+   void setEta( bool e ) { m_paramTable.setEta(e); }
    
 public:
    class Private;
@@ -98,7 +98,6 @@ public:
   
    TreeStep* m_child;
    SymbolTable m_paramTable;
-   bool m_isEta;
    
    static void apply_( const PStep*, VMContext* ctx );
 };

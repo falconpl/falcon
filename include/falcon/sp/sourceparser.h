@@ -80,7 +80,9 @@ public:
    Parsing::Terminal T_UNQUOTE;
    Parsing::Terminal T_COMPOSE;
    Parsing::Terminal T_FUNCPOWER;
-   
+   Parsing::Terminal T_EVALRET;
+   Parsing::Terminal T_EVALRET_EXEC;
+   Parsing::Terminal T_STARARROW;
    
    Parsing::Terminal T_Comma;
    Parsing::Terminal T_QMark;
@@ -370,6 +372,9 @@ public:
    Parsing::Rule r_Expr_deoob;
    Parsing::Rule r_Expr_xoob;
    Parsing::Rule r_Expr_isoob;
+
+   Parsing::Rule r_Expr_expr_evalret;
+   Parsing::Rule r_Expr_expr_evalret_exec;
    
    Parsing::Rule r_Expr_auto_add;
    Parsing::Rule r_Expr_auto_sub;

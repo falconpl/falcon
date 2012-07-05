@@ -148,13 +148,17 @@ public:
    void flatten( ItemArray& arr );
    void unflatten( ItemArray& arr );
    
+   bool isEta() const { return m_isEta; }
+   void setEta( bool mode ) { m_isEta = mode; }
 private:
    class Private;
-   Private* _p;
+   SymbolTable::Private* _p;
    
    // used only during deserialization.
    uint32 m_localCount;
    uint32 m_closedCount;
+   
+   bool m_isEta;
 };
 
 }

@@ -57,8 +57,7 @@ public:
 ExprLit::ExprLit( int line, int chr ):
    Expression( line, chr ),
    _p( new Private ),
-   m_child(0),
-   m_isEta(false)
+   m_child(0)
 {
    FALCON_DECLARE_SYN_CLASS( expr_lit );
    apply = apply_;   
@@ -68,8 +67,7 @@ ExprLit::ExprLit( int line, int chr ):
 ExprLit::ExprLit( TreeStep* st, int line, int chr ):
    Expression( line, chr ),
    _p( new Private ),
-   m_child(st),
-   m_isEta(false)
+   m_child(st)
 {
    FALCON_DECLARE_SYN_CLASS( expr_lit );
    apply = apply_;
@@ -79,8 +77,7 @@ ExprLit::ExprLit( TreeStep* st, int line, int chr ):
 ExprLit::ExprLit( const ExprLit& other ):
    Expression( other ),
    _p( new Private ),
-   m_child(0),
-   m_isEta(false)
+   m_child(0)
 {
    apply = apply_;
    if( other.m_child != 0 ) {
@@ -97,8 +94,8 @@ void ExprLit::describeTo( String& str, int depth ) const
       return;
    }
 
-   const char* etaOpen = m_isEta ? "[" : "(";
-   const char* etaClose = m_isEta ? "]" : ")";
+   const char* etaOpen = m_paramTable.isEta() ? "[" : "(";
+   const char* etaClose = m_paramTable.isEta() ? "]" : ")";
    str = "{";
    str += etaOpen; 
    

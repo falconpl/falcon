@@ -806,6 +806,36 @@ void VMContext::unrollLocalFrame( int dynsCount )
 }
 
 
+void VMContext::exitLocalFrame()
+{
+   static PStep* localFrame = &Engine::instance()->stdSteps()->m_localFrame;
+   
+   // Descend into the code stack until we find our local stack marker.
+   register CodeFrame* base = m_codeStack.offset(currentFrame().m_codeBase);
+   register CodeFrame* top = m_codeStack.m_top;
+   while( top > base ) 
+   {
+      if( top->m_step == localFrame) 
+      {
+         m_codeStack.m_top = top-1;
+
+         // if there are symbols to unroll, do it.
+         // don't call unrollLocalFrame to save this call.
+         if( top->m_seqId > 0 )
+         {
+            register DynsData* base = m_dynsStack.offset( top->m_seqId );
+            fassert( "$base" == base->m_sym->name() );
+            m_dataStack.m_top = base->m_var.value();
+            m_dynsStack.m_top = base-1;
+         }
+         
+         break;
+      }
+      --top;
+   }   
+}
+
+
 void VMContext::insertData(int32 pos, Item* data, int32 dataSize, int32 replSize )
 {
    addSpace( dataSize - replSize );

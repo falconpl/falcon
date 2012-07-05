@@ -61,6 +61,8 @@
 #include <falcon/psteps/exprunpack.h>
 #include <falcon/psteps/exprunquote.h>
 #include <falcon/psteps/exprvalue.h>
+#include <falcon/psteps/exprevalret.h>
+#include <falcon/psteps/exprevalretexec.h>
 
 #include <falcon/psteps/stmtautoexpr.h>
 #include <falcon/psteps/stmtbreak.h>
@@ -296,6 +298,8 @@ FALCON_STANDARD_SYNCLASS_OP_CREATE( StarIndexAccess, ExprStarIndex, binaryExprSe
 // Sym -- separated
 // Unpack -- separated
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Unquote, ExprUnquote, unaryExprSet )
+FALCON_STANDARD_SYNCLASS_OP_CREATE( EvalRet, ExprEvalRet, unaryExprSet )
+FALCON_STANDARD_SYNCLASS_OP_CREATE( EvalRetExec, ExprEvalRetExec, unaryExprSet )
 // Value -- separated
    
 //=================================================================

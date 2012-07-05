@@ -107,7 +107,10 @@ SourceParser::SourceParser():
    T_UNQUOTE("^~", 24 ),
    T_COMPOSE("^.", 60),
    T_FUNCPOWER("^..", 60),
-   
+   T_EVALRET( "^=", 150),
+   T_EVALRET_EXEC( "^*", 150),
+   T_STARARROW( "*=>", 170),
+
    T_Comma( "," , 180 ),
    T_QMark( "?" , 175 ),
    T_Bang("!"),
@@ -411,6 +414,9 @@ SourceParser::SourceParser():
    Expr<< (r_Expr_xoob  << "Expr_xoob" << apply_expr_xoob << T_XOOB << Expr );
    Expr<< (r_Expr_isoob  << "Expr_isoob" << apply_expr_isoob << T_ISOOB << Expr );
 
+   Expr<< (r_Expr_expr_evalret << "Expr_evarlet"  << apply_expr_evalret << T_EVALRET << Expr );
+   Expr<< (r_Expr_expr_evalret_exec << "Expr_evarlet_exec"  << apply_expr_evalret_exec << T_EVALRET_EXEC << Expr );
+
    Expr << (r_Expr_assign << "Expr_assign" << apply_expr_assign << Expr << T_EqSign << NeListExpr );
 
    Expr<< (r_Expr_equal << "Expr_equal" << apply_expr_equal << Expr << T_DblEq << Expr);
@@ -474,7 +480,7 @@ SourceParser::SourceParser():
    Expr<< (r_Expr_auto_mod << "Expr_auto_mod"   << apply_expr_auto_mod   << Expr << T_AutoMod << Expr );
    Expr<< (r_Expr_auto_pow << "Expr_auto_pow"   << apply_expr_auto_pow   << Expr << T_AutoPow << Expr );
    Expr<< (r_Expr_auto_shl << "Expr_auto_shr"   << apply_expr_auto_shr  << Expr << T_AutoRShift << Expr );
-   Expr<< (r_Expr_auto_shr << "Expr_auto_shl"   << apply_expr_auto_shl   << Expr << T_AutoLShift << Expr );
+   Expr<< (r_Expr_auto_shr << "Expr_auto_shl"   << apply_expr_auto_shl   << Expr << T_AutoLShift << Expr );   
    Expr<< (r_Expr_expr_compose << "Expr_compose"  << apply_expr_compose << Expr << T_COMPOSE << Expr );
    Expr<< (r_Expr_expr_funcpower << "Expr_funcpower"  << apply_expr_funcpower << Expr << T_FUNCPOWER << Expr );
    
@@ -607,7 +613,7 @@ SourceParser::SourceParser():
                         << T_OpenSquare << ListSymbol << T_CloseSquare );
    
    LambdaParams << ( r_lambda_params_eta << "Params in lambda ETA" << apply_lambda_params_eta
-                        << ListSymbol << T_RShift );
+                        << ListSymbol << T_STARARROW );
    LambdaParams << ( r_lambda_params << "Params in lambda" << apply_lambda_params 
                         << ListSymbol << T_Arrow );
 

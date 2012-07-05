@@ -33,7 +33,7 @@
 namespace Falcon {
 
 ClassTreeStep::ClassTreeStep():
-   Class("TreeStep - abstract")
+   Class("TreeStep - abstract", FLC_CLASS_ID_TREESTEP)
 {
    m_lenMethod.methodOf(this);
    m_insertMethod.methodOf(this);

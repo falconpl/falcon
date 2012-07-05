@@ -144,6 +144,8 @@ FALCON_SYNCLASS_DECLARATOR(m_expr_fself, FSelf, expr)
 FALCON_SYNCLASS_DECLARATOR(m_expr_starindex, StarIndexAccess, expr)
 FALCON_SYNCLASS_DECLARATOR(m_expr_unpack, Unpack, expr)
 FALCON_SYNCLASS_DECLARATOR(m_expr_unquote, Unquote, expr)
+FALCON_SYNCLASS_DECLARATOR(m_expr_evalret, EvalRet, expr)
+FALCON_SYNCLASS_DECLARATOR(m_expr_evalretexec, EvalRetExec, expr)
 
 
 FALCON_SYNCLASS_DECLARATOR_EX(m_expr_sym, GenSym, expr, \

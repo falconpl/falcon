@@ -29,7 +29,7 @@
 #define FLC_ITEM_FRAMING      6
 
 /** User items are non-standard items. */
-#define FLC_ITEM_USER         8
+#define FLC_ITEM_USER         7
 
 
 // Theese are the class IDs, used to get the typeID of this item.
@@ -40,6 +40,7 @@
 #define FLC_CLASS_ID_RANGE    13
 #define FLC_CLASS_ID_CLASS    14
 #define FLC_CLASS_ID_PROTO    15
+#define FLC_CLASS_ID_TREESTEP  16
 
 
 #define FLC_ITEM_INVALID      99

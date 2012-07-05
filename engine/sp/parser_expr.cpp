@@ -41,9 +41,13 @@
 #include <falcon/psteps/exprlogic.h>
 #include <falcon/psteps/exprlit.h>
 #include <falcon/psteps/exprunquote.h>
+#include <falcon/psteps/exprevalret.h>
+#include <falcon/psteps/exprevalretexec.h>
 
 #include <falcon/psteps/exprcompose.h>
 #include <falcon/psteps/exprfuncpower.h>
+
+#include "falcon/parser/lexer.h"
 
 namespace Falcon {
 
@@ -407,6 +411,29 @@ void apply_expr_isoob( const Rule& r, Parser& p )
 void apply_expr_unquote( const Rule&r, Parser& p )
 {
    apply_expr_unary( r, p, new ExprUnquote );
+}
+
+void apply_expr_evalret( const Rule&r, Parser& p )
+{
+   ParserContext* ctx = static_cast<ParserContext*>(p.context());
+   if( ctx->currentLitContext() == 0 ) {
+      p.addError(e_syn_evalret_out, p.currentSource(), p.currentLine(), p.currentLexer()->character(), 0);
+   }
+   
+   // add the expression nevertheless.
+   apply_expr_unary( r, p, new ExprEvalRet );
+   
+}
+
+void apply_expr_evalret_exec( const Rule&r, Parser& p )
+{
+   ParserContext* ctx = static_cast<ParserContext*>(p.context());
+   if( ctx->currentLitContext() == 0 ) {
+      p.addError(e_syn_evalret_out, p.currentSource(), p.currentLine(), p.currentLexer()->character(), 0);
+   }
+   
+   // add the expression nevertheless.
+   apply_expr_unary( r, p, new ExprEvalRetExec );
 }
 
 

@@ -24,7 +24,9 @@ namespace Falcon {
 DerivedFrom::DerivedFrom( Class* parent, const String& name ):
    Class(name),
    m_parent( parent )
-{}
+{
+   m_typeID = parent->typeID();
+}
 
 void DerivedFrom::describe( void* instance, String& target, int depth, int maxlen ) const
 {

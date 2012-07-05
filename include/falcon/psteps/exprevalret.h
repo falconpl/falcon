@@ -1,11 +1,11 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: exprneg.h
+   FILE: exprevalret.h
 
-   Syntactic tree item definitions -- Numeric unary negator
+   Syntactic tree item definitions -- Return from evaluation
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
-   Begin: Fri, 30 Dec 2011 13:22:21 +0100
+   Begin: Thu, 05 Jul 2012 15:06:59 +0200
 
    -------------------------------------------------------------------
    (C) Copyright 2011: the FALCON developers (see list in AUTHORS file)
@@ -13,8 +13,8 @@
    See LICENSE file for licensing details.
 */
 
-#ifndef FALCON_EXPRNEG_H
-#define FALCON_EXPRNEG_H
+#ifndef FALCON_EXPREVALRET_H
+#define FALCON_EXPREVALRET_H
 
 #include <falcon/expression.h>
 #include <falcon/synclasses.h>
@@ -23,14 +23,14 @@
 namespace Falcon {
 
 /** Unary negative. */
-class FALCON_DYN_CLASS ExprNeg: public UnaryExpression
+class FALCON_DYN_CLASS ExprEvalRet: public UnaryExpression
 {
 public:
-   FALCON_UNARY_EXPRESSION_CLASS_DECLARATOR( ExprNeg, expr_neg );
+   FALCON_UNARY_EXPRESSION_CLASS_DECLARATOR( ExprEvalRet, expr_evalret );
 };
 
 }
 
 #endif	/* EXPRNEG_H */
 
-/* end of exprneg.h */
+/* end of exprevalret.h */

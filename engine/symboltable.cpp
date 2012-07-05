@@ -56,7 +56,8 @@ private:
    ~Private() {}
 };
 
-SymbolTable::SymbolTable()
+SymbolTable::SymbolTable():
+   m_isEta(false)
 {  
    m_localCount = 0;
    m_closedCount = 0;
@@ -65,6 +66,7 @@ SymbolTable::SymbolTable()
 
 SymbolTable::SymbolTable( const SymbolTable& other)
 {
+   m_isEta = other.m_isEta;
    m_localCount = 0;
    m_closedCount = 0;
    _p = new Private( *other._p );

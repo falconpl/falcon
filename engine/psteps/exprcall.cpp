@@ -93,8 +93,12 @@ void ExprCall::apply_( const PStep* v, VMContext* ctx )
          // no need to increase seqID, we won't be here with seqId=1 anymore
          if (pcount > 0)
          {
+            Class* cls = 0;
+            void* vts = 0;
             register Item& top = ctx->topData();
-            switch(top.type())
+            top.forceClassInst(cls, vts);
+            
+            switch(cls->typeID())
             {
                case FLC_CLASS_ID_FUNC:
                {
@@ -107,6 +111,15 @@ void ExprCall::apply_( const PStep* v, VMContext* ctx )
                {
                   Function* f = top.asMethodFunction();
                   bHaveEta = f->isEta();
+               }
+               break;
+               
+               case FLC_CLASS_ID_TREESTEP: 
+               {
+                  SymbolTable* st = static_cast<TreeStep*>(vts)->symbolTable();
+                  if( st != 0 ) {
+                     bHaveEta = st->isEta();
+                  }
                }
             }
          }

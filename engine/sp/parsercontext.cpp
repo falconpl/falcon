@@ -563,6 +563,16 @@ ExprLit* ParserContext::closeLitContext()
    return 0;
 }
 
+ExprLit* ParserContext::currentLitContext() 
+{
+   if( ! _p->m_litContexts.empty() ) {
+      return _p->m_litContexts.back();
+   }
+   
+   return 0;
+}
+
+
 bool ParserContext::isLitContext() const
 {
    return ! _p->m_litContexts.empty();
