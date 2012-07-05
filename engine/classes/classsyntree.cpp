@@ -144,7 +144,8 @@ void ClassSynTree::op_call(VMContext* ctx, int pcount, void* instance) const
    {
       // Then we don't need parameters.
       ctx->popData(pcount+1);
-      ctx->addLocalFrame(0,0);
+      //ctx->addLocalFrame(0,0);
+      ctx->pushCode(&steps->m_localFrame);
    }
    else {
       // otherwise we must push a local frame...

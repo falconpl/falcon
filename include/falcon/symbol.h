@@ -107,18 +107,38 @@ public:
     \param target Where to store the symbol value.
     \throw An exception if the symbol is undefined.
    */
-   inline Item* getValue( VMContext* ctx ) { return m_getVariable( this, ctx )->value(); }
    inline const Item* getValue( VMContext* ctx ) const { 
       return m_getVariable( const_cast<Symbol*>(this), ctx )->value(); }
+   
+   inline Item* lvalueValue( VMContext* ctx ) { return m_setVariable( this, ctx )->value(); }
 
    /** Retreive the value associated with this symbol on this context.
     \param ctx The context where the symbol value is to be determined.
     \param target Where to store the symbol value.
     \throw An exception if the symbol is undefined.
    */
-   inline Variable* getVariable( VMContext* ctx ) { return m_getVariable( this, ctx ); }
    inline const Variable* getVariable( VMContext* ctx ) const { return m_getVariable( const_cast<Symbol*>(this), ctx ); }
-
+   /** Retreive the value associated with this symbol on this context (non-const).
+    \param ctx The context where the symbol value is to be determined.
+    \param target Where to store the symbol value.
+    \throw An exception if the symbol is undefined.
+   */
+   inline Variable* getVariable( VMContext* ctx ) { return m_getVariable( const_cast<Symbol*>(this), ctx ); }
+   
+   /** Retreive the value associated with this symbol, in L-value expressions.
+    
+    This method returns a variable associated with a symbol when the symbol
+    is going to be assined a value (l-value expression). In case of dynsymbols,
+    the resolution algorithm to find a value that is to be assigned is
+    is fundamentally different (local binding) from the algorithm employed when
+    the value is to be found for reference or read.
+    
+    \param ctx The context where the symbol value is to be determined.
+    \param target Where to store the symbol value.
+    \throw An exception if the symbol is undefined.
+   */
+   inline Variable* lvalueVariable( VMContext* ctx ) { return m_setVariable( this, ctx ); }
+   
    Symbol* clone() const { return new Symbol(*this); }
    
    void setConstant( bool bMode = true ) { m_bConstant = bMode; }
@@ -180,6 +200,7 @@ protected:
    int32 m_id;
    
    Variable* (*m_getVariable)( Symbol* sym, VMContext* ctx );
+   Variable* (*m_setVariable)( Symbol* sym, VMContext* ctx );
    
    type_t m_type;
    bool m_bConstant;
@@ -189,6 +210,7 @@ protected:
    static Variable* getVariable_closed( Symbol* sym, VMContext* ctx );
    static Variable* getVariable_extern( Symbol* sym, VMContext* ctx );
    static Variable* getVariable_dyns( Symbol* sym, VMContext* ctx );
+   static Variable* setVariable_dyns( Symbol* sym, VMContext* ctx );
 
    friend class ExprSymbol;
 };

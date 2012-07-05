@@ -55,6 +55,7 @@
 #include <falcon/psteps/exprrange.h>
 #include <falcon/psteps/exprref.h>
 #include <falcon/psteps/exprself.h>
+#include <falcon/psteps/exprfself.h>
 #include <falcon/psteps/exprstarindex.h>
 #include <falcon/psteps/exprsym.h>
 #include <falcon/psteps/exprunpack.h>
@@ -288,6 +289,7 @@ FALCON_STANDARD_SYNCLASS_OP_CREATE( XorOob, ExprXorOob, unaryExprSet )
 // GenRange -- seperated
 // GenRef -- separated
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Self, ExprSelf, zeroaryExprSet )
+FALCON_STANDARD_SYNCLASS_OP_CREATE( FSelf, ExprFSelf, zeroaryExprSet )
 
 FALCON_STANDARD_SYNCLASS_OP_CREATE( StarIndexAccess, ExprStarIndex, binaryExprSet )
 

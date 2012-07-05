@@ -97,6 +97,7 @@
 
 #include <falcon/stderrors.h>
 #include <falcon/modspace.h>
+#include <falcon/symbol.h>
 
 #include <falcon/item.h>         // for builtin
 
@@ -168,6 +169,7 @@ Engine::Engine()
    //=====================================
    // Initialization of standard deep types.
    //
+   m_baseSymbol = new Symbol("$base");
    m_functionClass = new ClassFunction;
    m_stringClass = new ClassString;
    m_rangeClass = new ClassRange;
@@ -324,7 +326,8 @@ Engine::~Engine()
    // ===============================
    // DO NOT Delete standard item classes -- they are mantras
    //
-
+   delete m_baseSymbol;
+   
    // ===============================
    // delete registered transcoders
    //
@@ -723,6 +726,11 @@ void Engine::setCurrentContext( VMContext* ctx )
 {
    fassert( m_instance != 0 );
    m_instance->m_currentContext = ctx;
+}
+
+Symbol* Engine::baseSymbol() const 
+{
+   return m_baseSymbol;
 }
 
 }

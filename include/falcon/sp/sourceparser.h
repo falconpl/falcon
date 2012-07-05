@@ -124,6 +124,7 @@ public:
    Parsing::Terminal T_notin;
    Parsing::Terminal T_finally;
    Parsing::Terminal T_raise;
+   Parsing::Terminal T_fself;
    Parsing::Terminal T_elif;
    Parsing::Terminal T_else;
    Parsing::Terminal T_rule;
@@ -453,6 +454,7 @@ public:
    Parsing::Rule r_Atom_False;
    Parsing::Rule r_Atom_True;
    Parsing::Rule r_Atom_self;
+   Parsing::Rule r_Atom_fself;
    Parsing::Rule r_Atom_continue;
    Parsing::Rule r_Atom_break;
    Parsing::Rule r_Atom_Nil;

@@ -25,6 +25,7 @@
 #include <falcon/parser/parser.h>
 
 #include <falcon/psteps/exprself.h>
+#include <falcon/psteps/exprfself.h>
 #include <falcon/psteps/exprsym.h>
 #include <falcon/psteps/exprvalue.h>
 
@@ -42,9 +43,8 @@ void apply_Atom_Int ( const Rule&, Parser& p )
 
    TokenInstance* ti = p.getNextToken();
 
-   TokenInstance* ti2 = TokenInstance::alloc(ti->line(), ti->chr(), sp.Atom );
-   ti2->setValue( new ExprValue((int64) ti->asInteger(), ti->line(), ti->chr()), expr_deletor );
-   p.simplify(1,ti2);
+   ti->token( sp.Atom );
+   ti->setValue( new ExprValue((int64) ti->asInteger(), ti->line(), ti->chr()), expr_deletor );
 }
 
 
@@ -54,9 +54,8 @@ void apply_Atom_Float ( const Rule&, Parser& p )
    SourceParser& sp = static_cast<SourceParser&>(p);
 
    TokenInstance* ti = p.getNextToken();
-   TokenInstance* ti2 = TokenInstance::alloc(ti->line(), ti->chr(), sp.Atom );
-   ti2->setValue( new ExprValue(ti->asNumeric(), ti->line(), ti->chr()), expr_deletor );
-   p.simplify(1,ti2);
+   ti->token( sp.Atom );
+   ti->setValue( new ExprValue(ti->asNumeric(), ti->line(), ti->chr()), expr_deletor );
 }
 
 
@@ -81,9 +80,8 @@ void apply_Atom_Name ( const Rule&, Parser& p )
       sym = ctx->addVariable(*ti->asString()); 
    }
 
-   TokenInstance* ti2 = TokenInstance::alloc(ti->line(), ti->chr(), sp.Atom );
-   ti2->setValue( sym, expr_deletor );
-   p.simplify(1,ti2);
+   ti->token( sp.Atom );
+   ti->setValue( sym, expr_deletor );
 }
 
 
@@ -96,17 +94,13 @@ void apply_Atom_String ( const Rule&, Parser& p )
    ParserContext* ctx = static_cast<ParserContext*>(p.context());
    TokenInstance* ti = p.getNextToken();
 
-   TokenInstance* ti2 = TokenInstance::alloc(ti->line(), ti->chr(), sp.Atom );
-
    // get the string and it's class, to generate a static UserValue
    String* s = ti->detachString();
    // tell the context that we have a new string around.
    Expression* res = ctx->onStaticData( sc, s );
    res->decl( ti->line(), ti->chr() );
-   ti2->setValue( res, expr_deletor );
-
-   // remove the token in the stack.
-   p.simplify(1,ti2);
+   ti->token( sp.Atom );
+   ti->setValue( res, expr_deletor );
 }
 
 
@@ -116,9 +110,8 @@ void apply_Atom_False ( const Rule&, Parser& p )
    SourceParser& sp = static_cast<SourceParser&>(p);
 
    TokenInstance* ti = p.getNextToken();
-   TokenInstance* ti2 = TokenInstance::alloc(ti->line(), ti->chr(), sp.Atom );
-   ti2->setValue( new ExprValue(Item(false), ti->line(), ti->chr() ), expr_deletor );
-   p.simplify(1,ti2);
+   ti->token( sp.Atom );
+   ti->setValue( new ExprValue(Item(false), ti->line(), ti->chr() ), expr_deletor );
 }
 
 
@@ -128,20 +121,28 @@ void apply_Atom_True ( const Rule&, Parser& p )
    SourceParser& sp = static_cast<SourceParser&>(p);
 
    TokenInstance* ti = p.getNextToken();
-   TokenInstance* ti2 = TokenInstance::alloc(ti->line(), ti->chr(), sp.Atom );
-   ti2->setValue( new ExprValue(Item(true), ti->line(), ti->chr()), expr_deletor );
-   p.simplify(1,ti2);
+   ti->token( sp.Atom );
+   ti->setValue( new ExprValue(Item(true), ti->line(), ti->chr()), expr_deletor );
 }
 
 void apply_Atom_Self ( const Rule&, Parser& p )
 {
-   // << (r_Atom_Nil << "Atom_Self" << apply_Atom_Delf << T_Nil )
+   // << (r_Atom_Nil << "Atom_Self" << apply_Atom_Delf << T_self )
    SourceParser& sp = static_cast<SourceParser&>(p);
 
    TokenInstance* ti = p.getNextToken();
-   TokenInstance* ti2 = TokenInstance::alloc(ti->line(), ti->chr(), sp.Atom );
-   ti2->setValue( new ExprSelf, expr_deletor );
-   p.simplify(1,ti2);
+   ti->token(sp.Atom);
+   ti->setValue( new ExprSelf, expr_deletor );
+}
+
+void apply_Atom_FSelf ( const Rule&, Parser& p )
+{
+   // << (r_Atom_Nil << "Atom_Self" << apply_Atom_Delf << T_fself )
+   SourceParser& sp = static_cast<SourceParser&>(p);
+
+   TokenInstance* ti = p.getNextToken();
+   ti->token(sp.Atom);
+   ti->setValue( new ExprFSelf, expr_deletor );
 }
 
 void apply_Atom_Continue( const Rule&, Parser& p )
@@ -172,9 +173,8 @@ void apply_Atom_Nil ( const Rule&, Parser& p )
    SourceParser& sp = static_cast<SourceParser&>(p);
 
    TokenInstance* ti = p.getNextToken();
-   TokenInstance* ti2 = TokenInstance::alloc(ti->line(), ti->chr(), sp.Atom );
-   ti2->setValue( new ExprValue(Item(), ti->line(), ti->chr()), expr_deletor );
-   p.simplify(1,ti2);
+   ti->token( sp.Atom );
+   ti->setValue( new ExprValue(Item(), ti->line(), ti->chr()), expr_deletor );
 }
 
 void apply_expr_atom( const Rule&, Parser& p )
@@ -182,12 +182,11 @@ void apply_expr_atom( const Rule&, Parser& p )
    SourceParser& sp = static_cast<SourceParser&>(p);
 
    TokenInstance* ti = p.getNextToken();
-
-   TokenInstance* ti2 = TokenInstance::alloc(ti->line(), ti->chr(), sp.Expr );
-   ti2->setValue( ti->detachValue(), expr_deletor );
-   p.simplify(1,ti2);
+   Expression* expr = (Expression*) ti->detachValue();
+   
+   ti->token( sp.Expr );
+   ti->setValue( expr, expr_deletor );
 }
-
 
 }
 

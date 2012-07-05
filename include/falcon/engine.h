@@ -44,6 +44,7 @@ class StdSteps;
 class StdErrors;
 class ModSpace;
 class Item;
+class Symbol;
 
 class SynClasses;
 class VMContext;
@@ -470,6 +471,14 @@ public:
     The pool will be destroyed at engine exit.
     */
    void addPool( Pool* p );
+
+   /** Returns a pointer to the base dynsymbol.
+    
+    The base dynsymbol is a symbol that is inserted
+    at the head of each evaluation frame to save the corresponding
+    data stack frame.
+    */
+   Symbol* baseSymbol() const;
    
 protected:
    Engine();
@@ -552,6 +561,7 @@ protected:
    
    StdSteps* m_stdSteps;
    StdErrors* m_stdErrors;
+   Symbol* m_baseSymbol;
    
    // TODO: In MT, set this as TLS data.
    VMContext* m_currentContext;

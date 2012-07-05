@@ -481,7 +481,7 @@ void VMContext::raiseItem( const Item& item )
          Symbol* sym = m_catchBlock->target();
          if( sym != 0 )
          {
-            *sym->getValue(this) = item;
+            *sym->lvalueValue(this) = item;
          }
          m_raised.setNil();
       }
@@ -535,7 +535,7 @@ void VMContext::raiseError( Error* ce )
          // assign the error to the required item.
          if( m_catchBlock->target() != 0 )
          {
-            *m_catchBlock->target()->getValue(this) = Item( ce->handler(), ce );            
+            *m_catchBlock->target()->lvalueValue(this) = Item( ce->handler(), ce );            
             ce->decref();
          }
       }
@@ -763,7 +763,8 @@ void VMContext::callItem( const Item& item, int pcount, Item const* params )
 void VMContext::addLocalFrame( SymbolTable* st, int pcount )
 {
    static StdSteps* stdSteps = Engine::instance()->stdSteps();
-
+   static Symbol* base = Engine::instance()->baseSymbol();
+   
    if( st == 0 ) {
       pushCode( &stdSteps->m_localFrame );
       return;
@@ -781,8 +782,6 @@ void VMContext::addLocalFrame( SymbolTable* st, int pcount )
    // create the local frame in the stacks.
 
    // add a base marker.
-   //TODO: save this symbol somewhere
-   Symbol* base = new Symbol("$base");
    DynsData* baseDyn = m_dynsStack.addSlot();
    baseDyn->m_sym = base;
    baseDyn->m_var.value(top);
@@ -802,7 +801,7 @@ void VMContext::unrollLocalFrame( int dynsCount )
    // Descend into the dynsymbol stack until we find our base.
    register DynsData* base = m_dynsStack.offset( dynsCount );
    fassert( "$base" == base->m_sym->name() );
-   m_dataStack.m_top = base->m_var.value()+1;
+   m_dataStack.m_top = base->m_var.value();
    m_dynsStack.m_top = base-1;
 }
 
@@ -880,6 +879,55 @@ void VMContext::forwardParams( int pcount )
    }
 }
 
+Variable* VMContext::getLValueDynSymbolVariable( const Symbol* dyns )
+{
+   // search for the dynsymbol in the current context.
+   const CallFrame* cf = &currentFrame();
+   register DynsData* dd = m_dynsStack.m_top;
+   
+   // keep dd from previous loop
+   register DynsData* base = m_dynsStack.offset( cf->m_dynsBase );
+   while( dd > base ) {
+      if ( dyns->name() == dd->m_sym->name() )
+      {
+         // Found!
+         return &dd->m_var;
+      }
+      
+      // definitely not found?
+      if( dd->m_sym->name() == "$base" ) {
+         goto not_found;
+      }
+      --dd;      
+   }
+   
+   // try with the locals
+   fassert( cf->m_function != 0 );
+   {
+      Symbol* locsym = cf->m_function->symbols().findSymbol( dyns->name() );
+      if( locsym != 0 )
+      {
+         DynsData* newData = m_dynsStack.addSlot();
+         newData->m_sym = dyns;
+         // reference the target local variable into our slot.
+         Variable* lv = locsym->getVariable(this);
+         newData->m_var.set(lv->base(), lv->value());
+         return &newData->m_var;
+      }
+   }
+   
+not_found:
+   // not found, adding at top.
+   DynsData* newData = m_dynsStack.addSlot();
+   
+   // save the data in the stack
+   newData->m_sym = dyns;
+   newData->m_var.base(0);
+   newData->m_var.value(&addDataSlot());
+   
+   return &newData->m_var;   
+}
+      
 Variable* VMContext::getDynSymbolVariable( const Symbol* dyns )
 {
    // search for the dynsymbol in the current context.
@@ -907,8 +955,9 @@ Variable* VMContext::getDynSymbolVariable( const Symbol* dyns )
       {
          DynsData* newData = m_dynsStack.addSlot();
          newData->m_sym = dyns;
-         // reference the target local variable into our slot.
-         newData->m_var.makeReference(locsym->getVariable(this));
+         // We're in the same frame of the local variable.
+         Variable* lv = locsym->getVariable(this);
+         newData->m_var.set(lv->base(), lv->value());
          return &newData->m_var;
       }
       

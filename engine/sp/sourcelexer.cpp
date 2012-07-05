@@ -744,16 +744,11 @@ Parsing::TokenInstance* SourceLexer::checkWord()
           if ( m_text == "notin" ) return parser->T_notin.makeInstance(m_sline, m_schr);
           if ( m_text == "catch" ) return parser->T_catch.makeInstance(m_sline, m_schr);
           if ( m_text == "raise" ) return parser->T_raise.makeInstance(m_sline, m_schr);
+          if ( m_text == "fself" ) return parser->T_fself.makeInstance(m_sline, m_schr);
+          
           /*
-
-         if ( m_text == "notin" )
-            return OP_NOTIN;
          if ( m_text == "const" )
             return CONST_KW;
-         if ( m_text == "false" )
-            return FALSE_TOKEN;
-         if ( m_text == "fself" )
-            return FSELF;
          if( m_text == "macro" )
          {
             m_text.size(0);

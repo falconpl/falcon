@@ -22,6 +22,8 @@
 #include <falcon/vmcontext.h>
 #include <falcon/expression.h>
 
+#include "falcon/stdsteps.h"
+
 namespace Falcon {
 
 ClassExpression::ClassExpression( ClassTreeStep* parent ):
@@ -32,6 +34,8 @@ ClassExpression::~ClassExpression(){}
 
 void ClassExpression::op_call( VMContext* ctx, int pcount, void* instance ) const
 {
+   static StdSteps* steps = Engine::instance()->stdSteps();
+
    // Remove the top of the stack because our expression will do its own.
    Expression* self = static_cast<Expression*>(instance);
    SymbolTable* st = self->symbolTable();
@@ -39,7 +43,8 @@ void ClassExpression::op_call( VMContext* ctx, int pcount, void* instance ) cons
    if( st == 0 )
    {
       ctx->popData(pcount+1);
-      ctx->addLocalFrame(0,0);
+      //ctx->addLocalFrame(0,0);
+      ctx->pushCode(&steps->m_localFrame);
    }
    else {
       ctx->addLocalFrame(st,pcount);

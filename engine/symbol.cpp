@@ -38,6 +38,7 @@ Symbol::Symbol( const String& name, int line ):
 {
    m_id = 0;
    m_getVariable = Symbol::getVariable_dyns;
+   m_setVariable = Symbol::setVariable_dyns;
 }
    
 Symbol::Symbol( const String& name, Symbol::type_t t, uint32 id, int line ):
@@ -51,28 +52,28 @@ Symbol::Symbol( const String& name, Symbol::type_t t, uint32 id, int line ):
    switch(t)
    {
       case e_st_local:
-         m_getVariable = Symbol::getVariable_local;
+         m_setVariable = m_getVariable = Symbol::getVariable_local;
          break;
          
       case e_st_global:
-         m_getVariable = Symbol::getVariable_global;
+         m_setVariable = m_getVariable = Symbol::getVariable_global;
          m_realValue.base(0);
          m_realValue.value(&m_defValue);
          break;
          
       case e_st_closed:
-         m_getVariable = Symbol::getVariable_closed;
+         m_setVariable = m_getVariable = Symbol::getVariable_closed;
          break;
          
       case e_st_extern:
-         m_getVariable = Symbol::getVariable_extern;
+         m_setVariable = m_getVariable = Symbol::getVariable_extern;
          break;
          
       case e_st_dynamic:
          m_getVariable = Symbol::getVariable_dyns;
+         m_setVariable = Symbol::setVariable_dyns;
          break;
-   }
-   
+   }   
 }
    
 
@@ -153,6 +154,11 @@ Variable* Symbol::getVariable_extern( Symbol*, VMContext* )
 Variable* Symbol::getVariable_dyns( Symbol* sym, VMContext* ctx )
 {
    return ctx->getDynSymbolVariable( sym );
+}
+
+Variable* Symbol::setVariable_dyns( Symbol* sym, VMContext* ctx )
+{
+   return ctx->getLValueDynSymbolVariable( sym );
 }
 
 }

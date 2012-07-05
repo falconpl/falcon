@@ -1,6 +1,6 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: exprself.cpp
+   FILE: ExprFSelf.cpp
 
    Syntactic tree item definitions -- Self accessor expression.
    -------------------------------------------------------------------
@@ -13,7 +13,7 @@
    See LICENSE file for licensing details.
 */
 
-#include <falcon/psteps/exprself.h>
+#include <falcon/psteps/exprfself.h>
 #include <falcon/trace.h>
 #include <falcon/vmcontext.h>
 #include <falcon/pstep.h>
@@ -21,55 +21,60 @@
 #include <falcon/synclasses.h>
 #include <falcon/engine.h>
 
+#include "falcon/function.h"
+
 namespace Falcon {
 
-ExprSelf::ExprSelf( int line, int chr ):
+ExprFSelf::ExprFSelf( int line, int chr ):
    Expression( line, chr )
 {
-   FALCON_DECLARE_SYN_CLASS( expr_self )
+   FALCON_DECLARE_SYN_CLASS( expr_fself )
    apply = apply_;
 }
 
-ExprSelf::ExprSelf( const ExprSelf &other ):
+ExprFSelf::ExprFSelf( const ExprFSelf &other ):
    Expression(other)
 {
    apply = apply_;
 }
 
-ExprSelf::~ExprSelf() {}
+ExprFSelf::~ExprFSelf() {}
 
 
-bool ExprSelf::isStatic() const
+bool ExprFSelf::isStatic() const
 {
    return false;
 }
 
-ExprSelf* ExprSelf::clone() const
+ExprFSelf* ExprFSelf::clone() const
 {
-   return new ExprSelf( *this );
+   return new ExprFSelf( *this );
 }
 
-bool ExprSelf::simplify( Item& ) const
+bool ExprFSelf::simplify( Item& ) const
 {
    return false;
 }
 
-void ExprSelf::describeTo( String & str, int ) const
+void ExprFSelf::describeTo( String & str, int ) const
 {
-   str = "self";
+   str = "fself";
 }
 
-void ExprSelf::apply_( const PStep*, VMContext* ctx )
+void ExprFSelf::apply_( const PStep*, VMContext* ctx )
 {
    ctx->popCode();
-   if( ctx->codeDepth() >= 1 ) {
-      ctx->pushData(ctx->currentFrame().m_self);
+   if( ctx->callDepth()>=1 ) 
+   {
+      register Function* func = ctx->currentFrame().m_function;
+      ctx->pushData( Item( func->handler(), func ) );
    }
-   else {
+   else 
+   {
       ctx->pushData(Item());
    }
 }
 
 }
 
-/* end of exprself.cpp */
+/* end of ExprFSelf.cpp */

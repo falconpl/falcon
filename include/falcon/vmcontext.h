@@ -1225,6 +1225,7 @@ public:
     \note Symbols marked as constant are returned by value; they aren't referenced.
     */
    Variable* getDynSymbolVariable( const Symbol* dyns );
+   Variable* getLValueDynSymbolVariable( const Symbol* dyns );
    
    /** Copies pcount parameters from the frame parameters area to the top of the stack. */
    void forwardParams( int pcount );

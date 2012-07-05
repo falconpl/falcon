@@ -282,7 +282,10 @@ void StdSteps::PStepLocalFrame::apply_( const PStep*, VMContext* ctx )
    if( base > 0 ) {
       Item top = ctx->topData();
       ctx->unrollLocalFrame( base );
-      ctx->pushData(top);
+      ctx->topData() = top;
+   }
+   else {
+      ctx->popData();
    }
 }
 

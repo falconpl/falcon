@@ -157,6 +157,7 @@ SourceParser::SourceParser():
    T_notin("notin", 20),
    T_finally("finally"),
    T_raise("raise"),
+   T_fself("fself"),
 
    T_elif("elif"),
    T_else("else"),
@@ -517,6 +518,7 @@ SourceParser::SourceParser():
       << (r_Atom_False<< "Atom_False" << apply_Atom_False << T_false )
       << (r_Atom_True<< "Atom_True" << apply_Atom_True << T_true )
       << (r_Atom_self<< "Atom_Self" << apply_Atom_Self << T_self )
+      << (r_Atom_fself<< "Atom_FSelf" << apply_Atom_FSelf << T_fself )
       << (r_Atom_continue<< "Atom_continue" << apply_Atom_Continue << T_continue )
       << (r_Atom_break<< "Atom_break" << apply_Atom_Break << T_break )
       << (r_Atom_Nil<< "Atom_Nil" << apply_Atom_Nil << T_nil )

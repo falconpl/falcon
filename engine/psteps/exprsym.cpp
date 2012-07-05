@@ -170,7 +170,7 @@ void ExprSymbol::PStepLValue::apply_( const PStep* ps, VMContext* ctx )
    fassert( es->m_owner->m_symbol != 0 );
    ctx->popCode();
       
-   *es->m_owner->m_symbol->getValue(ctx) = ctx->topData();
+   *es->m_owner->m_symbol->lvalueValue(ctx) = ctx->topData();
 }
    
 }
