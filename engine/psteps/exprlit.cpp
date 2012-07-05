@@ -160,7 +160,9 @@ void ExprLit::apply_( const PStep* ps, VMContext* ctx )
    register TreeStep* child = self->child();
    
    // TODO: if there is some unquote, expand it.
-   child->setSymbolTable(const_cast<SymbolTable*>(&self->m_paramTable), false);
+   if( self->m_paramTable.localCount() ) {
+      child->setSymbolTable(const_cast<SymbolTable*>(&self->m_paramTable), false);
+   }
    ctx->pushData( Item(child->handler(), child) );
    
    /*
