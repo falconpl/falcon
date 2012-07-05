@@ -284,9 +284,6 @@ void StdSteps::PStepLocalFrame::apply_( const PStep*, VMContext* ctx )
       ctx->unrollLocalFrame( base );
       ctx->topData() = top;
    }
-   else {
-      ctx->popData();
-   }
 }
 
 void StdSteps::PStepLocalFrame::describeTo( String& s, int ) const

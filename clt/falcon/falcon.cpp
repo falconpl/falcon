@@ -156,6 +156,7 @@ void FalconApp::launch( const String& script )
    if( linkerr != 0 )
    {
       throw linkerr;
+      
    }
    
    Function* fmain = module->getMainFunction();

@@ -94,7 +94,7 @@ NonTerminal& NonTerminal::r(Rule& rule)
 
 bool NonTerminal::findPaths( Parser& p ) const
 {
-   TRACE1( "NonTerminal::findPaths -- scanning '%s'", name().c_ize() );
+   //TRACE1( "NonTerminal::findPaths -- scanning '%s'", name().c_ize() );
 
    // initialize frame status
    int nBaseFrames = p.frameDepth();
@@ -121,7 +121,7 @@ bool NonTerminal::findPaths( Parser& p ) const
       ++iter;
    }
 
-   TRACE1( "NonTerminal::findPaths(%s) -- no match", name().c_ize() );
+   //TRACE1( "NonTerminal::findPaths(%s) -- no match", name().c_ize() );
    return false;
 }
 

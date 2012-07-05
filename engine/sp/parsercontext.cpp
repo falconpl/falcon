@@ -189,11 +189,7 @@ private:
    
    Private() {}
    ~Private() {
-      LitContexts::iterator lciter = m_litContexts.begin();
-      while( lciter != m_litContexts.end() ) {
-         delete *lciter;
-         ++lciter;
-      }
+      // do not delete lit contexts; they are in the parser token stack.
    }
 };
 

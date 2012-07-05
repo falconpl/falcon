@@ -67,7 +67,6 @@ public:
    virtual StmtTempLit* clone() const { return 0; }
 };
 
-
 using namespace Parsing;
 
 static SynFunc* inner_apply_function( const Rule&, Parser& p, bool bHasExpr, bool isEta )
@@ -227,11 +226,6 @@ void on_close_lit( void* thing )
       lit->m_forming = 0;
       elit->setChild(st);
    }
-   
-   // The token was ")", now we change it into an expression
-   TokenInstance* ti = TokenInstance::alloc( lit->line(), lit->chr(), sp.Expr);
-   ti->setValue( elit, expr_deletor );
-   sp.simplify(0, ti);
 }
 
 
@@ -353,9 +347,13 @@ static void internal_lambda_params(const Rule&, Parser& p, bool isEta )
 
    ParserContext* ctx = static_cast<ParserContext*>(p.context());
    TokenInstance* lsym = sp.getNextToken();
+   // always use a real token to forward the line/char pair,
+   // as the ListSymbol token may be generated and have 0.
+   // that would kill autoexpression generation.
+   TokenInstance* tarr = sp.getNextToken();
    
    // and add the function state.
-   SynFunc* func=new SynFunc("#anonymous", 0, lsym->line());
+   SynFunc* func=new SynFunc("#anonymous", 0, tarr->line());
    if( isEta ) func->setEta(true);
    NameList* list=static_cast<NameList*>(lsym->asData());
 
@@ -364,7 +362,7 @@ static void internal_lambda_params(const Rule&, Parser& p, bool isEta )
       func->addParam(*it);
    }
 
-   TokenInstance* ti = TokenInstance::alloc(lsym->line(),lsym->chr(), sp.Expr);
+   TokenInstance* ti = TokenInstance::alloc(tarr->line(),tarr->chr(), sp.Expr);
    Expression* expr = ctx->onStaticData( fcls, func );   
    ti->setValue(expr,expr_deletor);
 
@@ -392,15 +390,17 @@ void apply_lambda_params_eta(const Rule& r, Parser& p)
 void internal_lit_params(const Rule&, Parser& p, bool isEta )
 {
    // << T_Openpar << ListSymbol << T_Closepar
+   SourceParser& sp = static_cast<SourceParser&>(p);
    ParserContext* ctx = static_cast<ParserContext*>(p.context());
-   p.getNextToken();
+   TokenInstance* ti = p.getNextToken();
    TokenInstance* tparams = p.getNextToken();
-   TokenInstance* ti = p.getNextToken(); 
    
-   StmtTempLit* tlit = new StmtTempLit;
+   // open a fake statement context
+   StmtTempLit* tlit = new StmtTempLit();
    tlit->m_forming = new SynTree(ti->line(), ti->chr());
 
-   ExprLit* lit = new ExprLit(tlit->line(),tlit->chr());
+   // but actually we'll be using our lit
+   ExprLit* lit = new ExprLit(ti->line(),ti->chr());
    lit->setEta(isEta);
    
    NameList* list=static_cast<NameList*>(tparams->asData());
@@ -409,7 +409,12 @@ void internal_lit_params(const Rule&, Parser& p, bool isEta )
       lit->addParam(*it, tlit->line());
    }
    
-   p.simplify(3);
+   // (,list,)
+   ti = TokenInstance::alloc( ti->line(), ti->chr(), sp.Expr);
+   ti->setValue( lit, expr_deletor );
+   p.simplify(3,ti);
+   // Use the left "(" as our expression.
+   
    // remove the lambdastart state
    p.popState();
    
