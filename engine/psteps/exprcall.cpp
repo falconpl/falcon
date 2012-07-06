@@ -220,11 +220,10 @@ void ExprCall::describeTo( String& ret, int depth ) const
    }
    
    ret = m_callExpr->describe(depth+1) + "(";
-   String params;
    // and generate all the expressions, in inverse order.
    for( unsigned int i = 0; i < _p->m_exprs.size(); ++i )
    {
-      if ( params.size() )
+      if ( i > 0 )
       {
          ret += ", ";
       }

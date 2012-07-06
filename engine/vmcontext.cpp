@@ -789,7 +789,8 @@ void VMContext::addLocalFrame( SymbolTable* st, int pcount )
       return;
    }
    
-   Item* top = &topData()-pcount+1;
+   // point to the item that was pushed before the parameters
+   Item* top = &topData() - pcount;
    if( pcount < st->localCount() ) 
    {
       addSpace(st->localCount() - pcount);
@@ -805,6 +806,8 @@ void VMContext::addLocalFrame( SymbolTable* st, int pcount )
    baseDyn->m_sym = base;
    baseDyn->m_var.value(top);
    
+   // now point to the first parameter.
+   ++top;
    for( int i = 0; i < st->localCount(); ++i ) 
    {
       DynsData* dd = m_dynsStack.addSlot();
@@ -996,7 +999,8 @@ Variable* VMContext::getDynSymbolVariable( const Symbol* dyns )
    {
       // keep dd from previous loop
       register DynsData* base = m_dynsStack.offset( cf->m_dynsBase );
-      while( dd > base ) {
+      // on stack empty, top = base -1;
+      while( dd >= base ) {
          if ( dyns->name() == dd->m_sym->name() )
          {
             // Found!

@@ -39,7 +39,8 @@ StmtReturn::StmtReturn( int32 line, int32 chr ):
 StmtReturn::StmtReturn( Expression* expr, int32 line, int32 chr ):
    Statement( line, chr ),
    m_expr( expr ),
-   m_bHasDoubt( false )
+   m_bHasDoubt( false ),
+   m_bHasEval(false)
 {
    FALCON_DECLARE_SYN_CLASS( stmt_return );   
    

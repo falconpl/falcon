@@ -80,7 +80,6 @@ FALCON_SYNCLASS_DECLARATOR(m_expr_notin, Notin, expr)
 FALCON_SYNCLASS_DECLARATOR(m_expr_iif, IIF, expr)
 
 FALCON_SYNCLASS_DECLARATOR_EX(m_expr_lit, Lit, expr, \
-      virtual void op_call( VMContext* ctx, int pcount, void* instance ) const;\
       virtual void store( VMContext*, DataWriter* dw, void* instance ) const; \
       virtual void flatten( VMContext* ctx, ItemArray& subItems, void* instance ) const;\
       virtual void unflatten( VMContext* ctx, ItemArray& subItems, void* instance ) const; )

@@ -915,13 +915,6 @@ bool SynClasses::ClassLit::op_init( VMContext* ctx, void* instance, int pcount )
    // we already managed.
    return false;
 }
-void SynClasses::ClassLit::op_call( VMContext* ctx, int pcount, void* instance ) const
-{
-   ExprLit* lit = static_cast<ExprLit*>(instance);
-   fassert( lit->child() != 0 );
-   TRACE1( "Lit CALL on %s", lit->child()->oneLiner().c_ize() );
-   lit->child()->handler()->op_call( ctx, pcount, lit->child() );
-}
 void SynClasses::ClassLit::store( VMContext* ctx, DataWriter* wr, void* instance ) const
 {
    ExprLit* lit = static_cast<ExprLit*>(instance);
@@ -952,7 +945,6 @@ void SynClasses::ClassLit::restore( VMContext* ctx, DataReader* rd, void*& empty
    }
    
    lit->setEta(isEta);
-   // todo: load unquotes
    m_parent->restore( ctx, rd, empty);
 }
 void SynClasses::ClassLit::flatten( VMContext*, ItemArray& subItems, void* instance ) const
