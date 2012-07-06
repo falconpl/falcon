@@ -590,7 +590,7 @@ public:
    inline CallFrame* makeCallFrame( Closure* cd, int nparams )
    {
       register CallFrame* topCall = m_callStack.addSlot();
-      topCall->m_function = cd->function();
+      topCall->m_function = static_cast<Function*>(cd->closed());
       topCall->m_closure = cd;
       topCall->m_codeBase = codeDepth();
       // initialize also initBase, as stackBase may move
@@ -844,7 +844,7 @@ public:
     @param function The function to be invoked.
     @param np Number of parameters that must be already in the stack.
     */
-   void call( Function* f, int np );
+   void call( Function* f, int32 np );
 
    /** Prepares the VM to execute a function (actually, a method).
 

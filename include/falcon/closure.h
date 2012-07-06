@@ -20,12 +20,14 @@
 #include <falcon/setup.h>
 #include <falcon/types.h>
 #include <falcon/variable.h>
+#include <falcon/symboltable.h>
 
 namespace Falcon {
 
 class Function;
 class VMContext;
 class ClassClosure;
+class Class;
 
 /** Closure abstraction.
  
@@ -46,11 +48,12 @@ class Closure
 {
 public:
    /** Creates the closure giving a function to it. 
-    \param func The function to be closed.
+    \param handler The handler for the closed data.
+    \param data The closed data/code (function, syntree or any executable code).
     The function needs not to be fully configured right now. The actual
     closure is performed later by the close() method.
     */
-   Closure( Function* func );
+   Closure( Class* handler, void* data );
       
    Closure( const Closure& other );
    
@@ -61,30 +64,36 @@ public:
    
    /** Analyzes the function and the context and closes the needed values. 
     \param ctx the context where the closed data is to be found.
+    \param A symbol table containing the symbols to be closed.
     */
-   void close( VMContext* ctx );
+   void close( VMContext* ctx, const SymbolTable* st );
    
-   /** Gets the function associated with this closure. */
-   Function* function() const { return m_function; }
+   /** Gets the function or closed code associated with this closure. */
+   void* closed() const { return m_closed; }
+   /** Gets the handler of the function or closed code associated with this closure. */
+   Class* closedHandler() const { return m_handler; }
    
    /** Gets the data associated with this closure. */
    const Variable* closedData() const { return m_closedData; }
    Variable* closedData() { return m_closedData; }   
    Closure* clone() const { return new Closure(*this); }
+
+   uint32 pushClosedData( VMContext* ctx );
    
+   uint32 closedLocals() const { return m_closedLocals; }
 private:
 
-   Function* m_function;
+   void* m_closed;
+   Class* m_handler;
    Variable* m_closedData;
    uint32 m_closedDataSize;
+   uint32 m_closedLocals;
    uint32 m_mark;
-   
+
    friend class ClassClosure;
    
    // can be used only by ClassClosure
-   Closure() {}
-   // can be used only by ClassClosure
-   void function( Function* f );
+   Closure();
 };
 
 }

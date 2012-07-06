@@ -279,9 +279,10 @@ void StdSteps::PStepLocalFrame::apply_( const PStep*, VMContext* ctx )
 {
    register int base = ctx->currentCode().m_seqId;
    ctx->popCode();
+   // 0 is marker for unused. The real base is seqId - 1.
    if( base > 0 ) {
       Item top = ctx->topData();
-      ctx->unrollLocalFrame( base );
+      ctx->unrollLocalFrame( base-1 );
       ctx->topData() = top;
    }
 }

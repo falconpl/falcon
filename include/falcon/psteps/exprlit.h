@@ -2,7 +2,7 @@
    FALCON - The Falcon Programming Language.
    FILE: exprlit.h
 
-   Evaluation expression (^* expr) 
+   Literal expression {(...)  expr } 
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: Wed, 04 Jan 2012 00:55:18 +0100
@@ -19,6 +19,7 @@
 #include <falcon/setup.h>
 #include <falcon/expression.h>
 #include <falcon/symboltable.h>
+#include <falcon/psteps/exprunquote.h>
 
 namespace Falcon {
 
@@ -28,13 +29,11 @@ class Symbol;
  
  Can assume the following forms:
  \code
-   {~ expr }
-   {~ statement; statement ... }
-   {~~ par1, par2, ... => expr }
-   {~~ par1, par2, ... => statement; statement ... }
-   {~~ par1, par2, ... >> expr }
-   {~~ par1, par2, ... >> statement; statement ... }
- 
+   {( par1, par2, ... ) expr }
+   {( par1, par2, ... ) statement; statement ... }
+   {[par1, par2, ...]  expr }
+   {[par1, par2, ...]  statement; statement ... }
+ \endcode
  */
 class ExprLit: public Expression
 {
@@ -43,7 +42,7 @@ public:
    ExprLit( TreeStep* expr, int line=0, int chr=0 );
    ExprLit( const ExprLit& other );
    
-   virtual ~ExprLit() {};   
+   virtual ~ExprLit();   
     
    virtual void describeTo( String&, int depth = 0 ) const;
     
@@ -54,11 +53,7 @@ public:
       
    /** This is actually a proxy to first() used during deserialization. */
    void setChild( TreeStep* st );   
-   
-   /** Creates a new dynamic symbol, or returns a previously created one.    
-    */
-   Symbol* makeSymbol( const String& name, int declLine );
-   
+      
    /**
     Adds a parameter to this parametric  expression.
     */
@@ -77,10 +72,9 @@ public:
    /**
     Declares an unquoted expression in the scope of this literal.
     */
-   virtual void subscribeUnquote( Expression* expr );
+   void registerUnquote( ExprUnquote* expr );
    
-   /** Return the child attached to this literal.
-    
+   /** Return the child attached to this literal.    
     */
    TreeStep* child() const { return m_child; }
 
@@ -91,11 +85,19 @@ public:
    bool isEta() const { return m_paramTable.isEta(); }
    
    void setEta( bool e ) { m_paramTable.setEta(e); }
-   
-public:
+
+   virtual int32 arity() const;
+   virtual TreeStep* nth( int32 n ) const;
+   virtual bool setNth( int32 n, TreeStep* ts );
+
+   /** Used by the parser to create symbols.
+    */
+   Symbol* makeSymbol( const String& name, int line ); 
+
+private:
    class Private;
    ExprLit::Private* _p;
-  
+   
    TreeStep* m_child;
    SymbolTable m_paramTable;
    

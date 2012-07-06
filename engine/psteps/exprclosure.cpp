@@ -75,8 +75,9 @@ void ExprClosure::apply_( const PStep* ps, VMContext* ctx )
    
    if( self->m_function->symbols().closedCount() > 0 ) {
       // Create the closure and close it.
-      Closure* cls = new Closure( self->m_function );
-      cls->close( ctx );
+      register Function* func = self->m_function;
+      Closure* cls = new Closure( func->handler(), func );
+      cls->close( ctx, &func->symbols() );
 
       // and return it.
       ctx->pushData( FALCON_GC_STORE( coll , closureClass, cls ) );         

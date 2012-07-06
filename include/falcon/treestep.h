@@ -161,14 +161,7 @@ class Item;
 class FALCON_DYN_CLASS TreeStep: public PStep
 {
 public:
-   inline TreeStep( const TreeStep& other ):
-      PStep( other ),
-      m_handler( other.m_handler ),
-      m_parent(0),
-      m_symtab(0),
-      m_cat( other.m_cat ),
-      m_bOwnSymTab(false)
-   {}
+   TreeStep( const TreeStep& other );
       
    virtual ~TreeStep();
    

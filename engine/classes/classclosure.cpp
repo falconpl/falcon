@@ -21,6 +21,8 @@
 #include <falcon/itemarray.h>
 #include <falcon/vmcontext.h>
 
+#include <falcon/datawriter.h>
+#include <falcon/datareader.h>
 
 
 namespace Falcon {
@@ -49,26 +51,30 @@ void* ClassClosure::createInstance() const
    return new Closure;
 }
 
-void ClassClosure::store( VMContext*, DataWriter*, void* ) const
-{}
-
-void ClassClosure::restore( VMContext*, DataReader*, void*& empty ) const
+void ClassClosure::store( VMContext*, DataWriter* wr, void* instance ) const
 {
-   empty = new Closure();
+   Closure* cls = static_cast<Closure*>(instance);
+   wr->write( cls->m_closedLocals );
+}
+
+void ClassClosure::restore( VMContext*, DataReader* rd, void*& empty ) const
+{
+   Closure* cls = new Closure();
+   uint32 locals;
+   rd->read( locals );
+   cls->m_closedLocals = locals;
+   empty = cls;
 }
 
 void ClassClosure::flatten( VMContext*, ItemArray& subItems, void* instance ) const
 {
-   Closure* closure = static_cast<Closure*>(instance);
-   Function* func = closure->function();
-   
-   SymbolTable& symtab = func->symbols();
-   uint32 size = symtab.closedCount();
+   Closure* closure = static_cast<Closure*>(instance);   
+   uint32 size = closure->m_closedDataSize;
    // save also the current values of the items
    // TODO: If we save the ItemReference, the flattening mechanism should be able
    // to preserve the references in unflatten.
    subItems.resize( 1 + size );
-   subItems[0].setFunction( func );
+   subItems[0] = Item( closure->m_handler, closure->m_closed );
    for(uint32 i = 0; i < size; ++i )
    {
       subItems[i+1] = *closure->closedData()[i].value();
@@ -80,25 +86,32 @@ void ClassClosure::unflatten( VMContext*, ItemArray& subItems, void* instance ) 
 {   
    Closure* closure = static_cast<Closure*>(instance);
    fassert( subItems.length() > 0 );
-   fassert( subItems[0].isFunction() );
    
-   closure->function( subItems[0].asFunction() );  
-   for(uint32 i = 1; i < subItems.length(); ++i )
-   {    
-      //TODO: Work 
-      //closure->closedData()[i-1] = subItems[i];
+   subItems[0].forceClassInst( closure->m_handler, closure->m_closed );
+   if( subItems.length() > 1 ) {
+      closure->m_closedDataSize = subItems.length()-1;
+      closure->m_closedData = new Variable[closure->m_closedDataSize];
+      for(uint32 i = 1; i < subItems.length(); ++i )
+      {  
+         //TODO: Save as class Reference
+         Variable v;
+         v.value(&subItems[i]);
+         closure->m_closedData[i-1].makeReference(&v);
+      }      
    }
 }
    
-void ClassClosure::describe( void* instance, String& target, int, int) const
+void ClassClosure::describe( void* instance, String& target, int depth, int maxlen) const
 {
    Closure* closure = static_cast<Closure*>(instance);
-   if( closure->function() == 0 )
+   if( closure->m_handler == 0 || closure->m_closed == 0 )
    {
       target = "<Blank Closure>";
    }
    else {
-      target = "<Closure for " + closure->function()->name() + ">";
+      String temp;
+      closure->m_handler->describe(closure->m_closed, temp, depth+1, maxlen );
+      target = "/* Closure for */" + temp;
    }
 }
 

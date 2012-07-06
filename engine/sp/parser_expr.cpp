@@ -408,9 +408,28 @@ void apply_expr_isoob( const Rule& r, Parser& p )
 }
 
 
-void apply_expr_unquote( const Rule&r, Parser& p )
+void apply_expr_unquote( const Rule&, Parser& p )
 {
-   apply_expr_unary( r, p, new ExprUnquote );
+   SourceParser& sp = static_cast<SourceParser&>(p);   
+   TokenInstance* ti = p.getNextToken();
+   TokenInstance* value = p.getNextToken();  // symbol 
+   
+   ExprUnquote* un = new ExprUnquote(*value->asString(), value->line(), value->chr());
+   // Complexify the value
+   value->token( sp.Expr );   // be sure to change it
+   value->setValue( un, expr_deletor );
+   p.simplify(1); // remove 1 token and keep the value.
+
+   // now, was it ok?
+   ParserContext* ctx = static_cast<ParserContext*>(p.context()); 
+   ExprLit* lit = ctx->currentLitContext();
+   if( lit == 0 ) {
+      p.addError(e_enc_fail, p.currentSource(), ti->line(), ti->chr(), 0);
+   }
+   else {
+      lit->registerUnquote(un);
+   }
+
 }
 
 void apply_expr_evalret( const Rule&r, Parser& p )

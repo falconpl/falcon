@@ -725,18 +725,37 @@ void VMContext::call( Function* function, int nparams )
 }
 
 
-void VMContext::call( Closure* closure, int nparams )
+void VMContext::call( Closure* closure, int32 nparams )
 {
-   Function* function = closure->function();
-   TRACE( "Calling function %s -- call frame code:%p, data:%p, call:%p",
-         function->locate().c_ize(),m_codeStack.m_top, m_dataStack.m_top, m_callStack.m_top  );
+   // shall we create a full call frame?
+   if( closure->closedHandler()->typeID() == FLC_CLASS_ID_FUNC ) 
+   {
+      Function* function = static_cast<Function*>(closure->closed());
+      TRACE( "Calling function %s -- call frame code:%p, data:%p, call:%p",
+            function->locate().c_ize(),m_codeStack.m_top, m_dataStack.m_top, m_callStack.m_top  );
 
-   makeCallFrame( closure, nparams );
-   TRACE3( "-- codebase:%d, stackBase:%d ", \
-         m_callStack.m_top->m_codeBase, m_callStack.m_top->m_stackBase );
+      makeCallFrame( closure, nparams );
+      TRACE3( "-- codebase:%d, stackBase:%d ", \
+            m_callStack.m_top->m_codeBase, m_callStack.m_top->m_stackBase );
 
-   // do the call
-   function->invoke( this, nparams );
+      // do the call
+      function->invoke( this, nparams );
+   }
+   else {
+      int32 locCount = (int32) closure->closedLocals();
+      if( nparams < locCount ) {
+         addLocals( locCount - nparams );
+      }
+      else if( nparams > locCount ) { 
+         popData(nparams-locCount);
+      }
+            
+      // add the closure data to the parameters.
+      int totParams = locCount + closure->pushClosedData( this );
+      // only functions support variable parameter call protocol;
+      // -- all the others are bound to have extra params as closed data.
+      closure->closedHandler()->op_call(this, totParams, closure->closed());
+   }
 }
 
 
@@ -777,8 +796,8 @@ void VMContext::addLocalFrame( SymbolTable* st, int pcount )
    }
 
    pushCode( &stdSteps->m_localFrame );
-   // ... that will remove the required symbols & unroll the data stack.
-   currentCode().m_seqId = m_dynsStack.depth();
+   // 0 is marker for unused. The real base is seqId - 1.
+   currentCode().m_seqId = m_dynsStack.depth()+1;
    // create the local frame in the stacks.
 
    // add a base marker.
@@ -790,6 +809,14 @@ void VMContext::addLocalFrame( SymbolTable* st, int pcount )
    {
       DynsData* dd = m_dynsStack.addSlot();
       dd->m_sym = st->getLocal(i);
+      dd->m_var.value(top);
+      ++top;
+   }
+   
+   for( int i = 0; i < st->closedCount(); ++i ) 
+   {
+      DynsData* dd = m_dynsStack.addSlot();
+      dd->m_sym = st->getClosed(i);
       dd->m_var.value(top);
       ++top;
    }

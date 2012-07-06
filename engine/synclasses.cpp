@@ -310,7 +310,6 @@ void*  SynClasses::ClassGenClosure::createInstance() const
 {
    return new ExprClosure;
 }
-
 bool SynClasses::ClassGenClosure::op_init( VMContext* ctx, void* instance, int pcount ) const
 {
    ExprClosure* expr = static_cast<ExprClosure*>(instance);
@@ -319,18 +318,33 @@ bool SynClasses::ClassGenClosure::op_init( VMContext* ctx, void* instance, int p
    {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__, SRC )
             .origin( ErrorParam::e_orig_runtime)
-            .extra( String("C") ) );
+            .extra( String("Function") ) );
    }
    
-   expr->closed( ctx->topData().asFunction() );
+   expr->function( ctx->topData().asFunction() );
    return false;
 }
-
 void SynClasses::ClassGenClosure::restore( VMContext* ctx, DataReader*dr, void*& empty ) const
 {
-   // TODO
    empty = new ExprClosure;
    m_parent->restore( ctx, dr, empty );
+}
+void SynClasses::ClassGenClosure::flatten( VMContext*, ItemArray& subItems, void* instance ) const
+{
+    ExprClosure* cl = static_cast<ExprClosure*>(instance);
+    
+    if( cl->function() != 0 ) {
+       subItems.reserve(1);
+       subItems.append( Item(cl->function()->handler(), cl->function() ) );
+    }
+}
+void SynClasses::ClassGenClosure::unflatten( VMContext*, ItemArray& subItems, void* instance ) const
+{
+   if( subItems.length() > 0 ) {
+      Function* func = static_cast<Function*>( subItems[0].asInst() );
+      ExprClosure* cl = static_cast<ExprClosure*>(instance);
+      cl->function(func);
+   }
 }
 
 
@@ -869,9 +883,37 @@ void* SynClasses::ClassLit::createInstance() const
 {
    return new ExprLit;
 }
-bool SynClasses::ClassLit::op_init( VMContext*, void* , int  ) const
+bool SynClasses::ClassLit::op_init( VMContext* ctx, void* instance, int pcount ) const
 {
-   return true;
+   // the first parameter must be a tree step.
+   Item* i_tree = ctx->opcodeParams(pcount);
+   if ( pcount == 0 || (i_tree->type() != FLC_CLASS_ID_TREESTEP) ) 
+   {
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__, SRC )
+            .origin( ErrorParam::e_orig_runtime )
+            .extra( "TreeStep,[S]..." ) );
+   }
+   
+   // put in the treestep
+   ExprLit* self = static_cast<ExprLit*>(instance);   
+   TreeStep* ts = static_cast<TreeStep*>(i_tree->asInst());
+   self->setChild(ts);
+   
+   // And now the parameters.
+   for( int i = 1; i < pcount; ++ i) {
+      Item* param = i_tree+i;
+      if( ! param->isString() ) 
+      {
+         throw new ParamError( ErrorParam( e_param_type, __LINE__, SRC )
+            .origin( ErrorParam::e_orig_runtime)
+            .extra( String("Parameter ").N(i).A(" is not an Inherit expression") ) );
+   
+      }
+      self->addParam(*param->asString(), 0);
+   }
+   
+   // we already managed.
+   return false;
 }
 void SynClasses::ClassLit::op_call( VMContext* ctx, int pcount, void* instance ) const
 {
@@ -884,7 +926,13 @@ void SynClasses::ClassLit::store( VMContext* ctx, DataWriter* wr, void* instance
 {
    ExprLit* lit = static_cast<ExprLit*>(instance);
    wr->write( lit->isEta() );
-   // todo: save parameters and unquotes
+   
+   wr->write( (int32) lit->paramCount() );   
+   for( int i = 0; i < lit->paramCount(); ++ i) {
+      const String& param = lit->param(i)->name();
+      wr->write( param );
+   }
+   
    m_parent->store( ctx, wr, instance );
 }
 void SynClasses::ClassLit::restore( VMContext* ctx, DataReader* rd, void*& empty ) const
@@ -892,9 +940,19 @@ void SynClasses::ClassLit::restore( VMContext* ctx, DataReader* rd, void*& empty
    ExprLit* lit = new ExprLit();
    empty = lit;
    bool isEta;
+   int32 pcount;
    rd->read( isEta );
+   rd->read(pcount);
+   
+   // declare it outside so we recycle memory
+   String param;
+   for( int i = 0; i < pcount; ++ i) {
+      rd->read( param );
+      lit->addParam(param,0);
+   }
+   
    lit->setEta(isEta);
-   // todo: load parameters and unquotes
+   // todo: load unquotes
    m_parent->restore( ctx, rd, empty);
 }
 void SynClasses::ClassLit::flatten( VMContext*, ItemArray& subItems, void* instance ) const

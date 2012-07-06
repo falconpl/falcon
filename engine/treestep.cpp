@@ -27,6 +27,23 @@
 
 namespace Falcon {
 
+TreeStep::TreeStep( const TreeStep& other ):
+   PStep( other ),
+   m_handler( other.m_handler ),
+   m_parent(0),
+   m_symtab(0),
+   m_cat( other.m_cat )
+{
+   if( other.m_symtab ) {
+      m_symtab = new SymbolTable(*other.m_symtab);
+      m_bOwnSymTab = true;
+   }
+   else {
+      m_symtab = 0;
+      m_bOwnSymTab = false;      
+   }
+}
+
 TreeStep::~TreeStep()
 {
    if( m_bOwnSymTab ) {

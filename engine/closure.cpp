@@ -26,21 +26,44 @@
 
 namespace Falcon {
 
-Closure::Closure( Function* func ):
-   m_function(func)
+Closure::Closure( Class* handler, void *closed ):
+   m_closed(closed),
+   m_handler( handler ),
+   m_closedData(0),
+   m_closedDataSize(0),
+   m_closedLocals(0),
+   m_mark(0)
 {
-   // it's pretty stupid to create a closure if you don't have closed symbols, but...
-   m_closedDataSize = func->symbols().closedCount();
-   m_closedData = new Variable[m_closedDataSize];
 }
 
-
-Closure::Closure( const Closure& other ):
-   m_function( other.m_function )
+Closure::Closure():
+   m_closed(0),
+   m_handler(0),
+   m_closedData(0),
+   m_closedDataSize(0),
+   m_closedLocals(0),
+   m_mark(0)
 {
-   m_closedDataSize = m_function->symbols().closedCount();
-   m_closedData = new Variable[m_closedDataSize];
-   memcpy( m_closedData, other.m_closedData, m_closedDataSize * sizeof(Variable));
+}
+
+Closure::Closure( const Closure& other )
+{
+   if( other.m_handler != 0 && other.m_closed != 0 ) {
+      m_handler = other.m_handler;
+      m_closed = m_handler->clone(other.m_closed);
+      m_closedDataSize = other.m_closedDataSize;      
+      m_closedData = new Variable[m_closedDataSize];
+      m_closedLocals = other.m_closedLocals;
+      // the variables in a closure are SURELY references, so we can flat-copy them.
+      memcpy( m_closedData, other.m_closedData, m_closedDataSize * sizeof(Variable));
+   }
+   else {
+      m_handler = 0;
+      m_closed = 0;
+      m_closedDataSize = 0;      
+      m_closedData = 0;
+      m_closedLocals = 0;
+   }
 }
 
 Closure::~Closure()
@@ -53,7 +76,8 @@ void Closure::gcMark( uint32 mark )
    if( m_mark < mark )
    {
       m_mark = mark;
-      m_function->gcMark( mark );
+      m_handler->gcMark(mark);
+      m_handler->gcMarkInstance(m_closed, mark);
       for( uint32 i = 0; i < m_closedDataSize; ++i ) {         
          m_closedData[i].gcMark( mark );
          m_closedData[i].value()->gcMark(mark);
@@ -61,25 +85,39 @@ void Closure::gcMark( uint32 mark )
    }
 }
 
-
-void Closure::close( VMContext* ctx )
+uint32 Closure::pushClosedData( VMContext* ctx )
 {
-   fassert( m_function != 0 );
-   TRACE( "Closure::close %s", m_function->name().c_ize() );
+   for( uint32 i = 0; i < m_closedDataSize; ++ i ) 
+   {
+      ctx->pushData( *m_closedData[i].value() );
+   }
+   
+   return m_closedDataSize;
+}
 
-   SymbolTable& symtab = m_function->symbols();
-   uint32 size = symtab.closedCount();
+
+void Closure::close( VMContext* ctx, const SymbolTable* st )
+{
+   fassert( m_closed != 0 );
+   TRACE( "Closure::close %p", m_closed );
+
+   delete[] m_closedData;
+   uint32 size = st->closedCount();
+   m_closedDataSize = size;
+   m_closedData = new Variable[size];
+   m_closedLocals = st->localCount();
+   
    for( uint32 i = 0; i < size; ++i )
    {
-      Symbol* closed = symtab.getClosed(i);
+      Symbol* closed = st->getClosed(i);
       TRACE1( "Closure::close -- closing symbol %s", closed->name().c_ize() );
       // navigate through the parent symbol tables till finding the desired symbols.
       long depth = ctx->callDepth();
       {
-         long i = 0;
-         while( i < depth )
+         long curDepth = 0;
+         while( curDepth < depth )
          {
-            const CallFrame& cf = ctx->previousFrame( i );
+            const CallFrame& cf = ctx->previousFrame( curDepth );
             fassert( cf.m_function != 0 )
             Symbol* tgtsym = cf.m_function->symbols().findSymbol( closed->name() );
             if( tgtsym != 0 )
@@ -88,32 +126,19 @@ void Closure::close( VMContext* ctx )
                Variable* variable = tgtsym->getVariable(ctx);
                fassert( variable != 0 );
                // now reference it in our closure array
-               m_closedData[i].makeReference(variable);
+               m_closedData[closed->localId()].makeReference(variable);
                // and since we're done, we can break;
                TRACE2( "Closure::close -- closed symbol %s at depth %d => \"%s\"",
-                  closed->name().c_ize(), (int)i, variable->value()->describe().c_ize() );
+                  closed->name().c_ize(), (int)curDepth, variable->value()->describe().c_ize() );
                break;
             }
             // better luck with next time.
-            ++i;
+            curDepth++;
          }
       }
       // if we didn't find the symbol, we just reference a nil -- that's ok
       // (weird, but ok)
    }
-}
-
-
-// can be used only by ClassClosure
-void Closure::function( Function* func )
-{
-   // don't care about previous values; this is a function internally used by ClassClosure
-   m_function = func;
-   // it's pretty stupid to create a closure if you don't have closed symbols, but...
-   uint32 size = func->symbols().closedCount();
-   m_closedDataSize = size;
-   delete[] m_closedData;
-   m_closedData = new Variable[size];
 }
 
 }

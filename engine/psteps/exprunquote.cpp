@@ -21,90 +21,81 @@
 #include <falcon/synclasses.h>
 #include <falcon/trace.h>
 #include <falcon/vmcontext.h>
-
-#include "falcon/psteps/exprvalue.h"
+#include <falcon/symbol.h>
 
 namespace Falcon {
 
 ExprUnquote::ExprUnquote( int line, int chr ):
-   UnaryExpression( line, chr ),
-   m_registerer(0)
+   Expression( line, chr ),
+   m_regID(-1),
+   m_dynsym(0)
 {
    FALCON_DECLARE_SYN_CLASS( expr_unquote );
    apply = apply_;   
 }
 
 
-ExprUnquote::ExprUnquote( Expression* expr, int line, int chr ):
-   UnaryExpression( expr, line, chr ),
-   m_registerer(0)
+ExprUnquote::ExprUnquote( const String& symbol, int line, int chr ):
+   Expression( line, chr ),
+   m_regID(-1),
+   m_dynsym(0)
 {
    FALCON_DECLARE_SYN_CLASS( expr_unquote );
    apply = apply_;
+   symbolName( symbol );
 }
 
 ExprUnquote::ExprUnquote( const ExprUnquote& other ):
-   UnaryExpression( other ),
-   m_registerer(0)
+   Expression( other ),
+   // still unregistered!
+   m_regID(-1),
+   m_dynsym(0)  
 {
    apply = apply_;
+   symbolName(other.m_symbolName);
+}
+
+void ExprUnquote::symbolName(const String& s) 
+{
+   m_symbolName = s;
+   delete m_dynsym;
+   m_dynsym = new Symbol(s);
+}
+
+ExprUnquote::~ExprUnquote()
+{
+   delete m_dynsym;
 }
 
 
-Expression* ExprUnquote::clone() const
+void ExprUnquote::describeTo( String& str, int ) const
 {
-   static Class* clsExp = Engine::instance()->expressionClass();
-   VMContext* ctx = Engine::instance()->currentContext();
-   
-   if( ctx == 0 || ctx->currentCode().m_step != m_registerer )
-   {
-      return new ExprUnquote(*this);
-   }
-   else {
-      // it's the registerer asking for a smart clone.
-      CodeFrame& cf = ctx->currentCode();
-      fassert( cf.m_seqId > 0 );
-      
-      Item& item = ctx->opcodeParam(--cf.m_seqId);
-      Class* cls = 0;
-      void* data = 0;
-      if( item.asClassInst( cls, data ) && cls->isDerivedFrom(clsExp) )
-      {
-         Expression* expr = static_cast<Expression*>(cls->getParentData( clsExp, data ));
-         return expr->clone();
-      }
-      else {
-         return new ExprValue( item );
-      }
-   }
-}
-
-
-void ExprUnquote::describeTo( String& str, int depth ) const
-{
-   if( first() == 0 ) {
+   if( m_regID == -1 ) {
       str = "<Blank ExprUnquote>";
       return;
    }
    
-   str += "^~ " + first()->describe( depth + 1 );
+   str += "^~" + m_symbolName;
 }
 
 
-bool ExprUnquote::simplify(Falcon::Item& result) const
+bool ExprUnquote::simplify(Falcon::Item& ) const
 {
-   return first()->simplify(result);
+   return false;
 }
 
 void ExprUnquote::apply_( const PStep* ps, VMContext* ctx )
 {
    const ExprUnquote* self = static_cast<const ExprUnquote*>( ps );
    TRACE1( "Apply \"%s\"", self->describe().c_ize() );
-   register Expression* first = self->first();
-   fassert( first != 0 );   
-   
-   ctx->resetCode( first );
-   first->apply( first, ctx );
+   ctx->popCode();
+   Variable* var = ctx->getDynSymbolVariable( self->m_dynsym );
+   if( var == 0 ) {
+      ctx->pushData( Item() );
+   }
+   else {
+      ctx->pushData( *var->value() );
+   }
 }
 
 }
