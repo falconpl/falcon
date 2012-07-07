@@ -704,8 +704,6 @@ void VMContext::call( Function* function, int nparams, const Item& self )
          m_codeStack.m_top, m_dataStack.m_top, m_callStack.m_top  );
 
    makeCallFrame( function, nparams, self );
-   TRACE1( "-- codebase:%d, stackBase:%d, self: %s ", \
-         m_callStack.m_top->m_codeBase, m_callStack.m_top->m_stackBase, self.isNil() ? "nil" : "value"  );
 
    // do the call
    function->invoke( this, nparams );
@@ -714,12 +712,18 @@ void VMContext::call( Function* function, int nparams, const Item& self )
 
 void VMContext::call( Function* function, int nparams )
 {
-   TRACE( "Calling function %s -- call frame code:%p, data:%p, call:%p",
-         function->locate().c_ize(),m_codeStack.m_top, m_dataStack.m_top, m_callStack.m_top  );
+   TRACE( "Calling function %s -- codebase:%d, dynsBase:%d, stackBase:%d",
+         function->locate().c_ize(),
+         m_callStack.m_top->m_codeBase, 
+         m_callStack.m_top->m_dynsBase, 
+         m_callStack.m_top->m_stackBase );
+
 
    makeCallFrame( function, nparams );
-   TRACE3( "-- codebase:%d, stackBase:%d ", \
-         m_callStack.m_top->m_codeBase, m_callStack.m_top->m_stackBase );
+   TRACE3( "-- codebase:%d, dynsBase:%d, stackBase:%d",
+         m_callStack.m_top->m_codeBase, 
+         m_callStack.m_top->m_dynsBase, 
+         m_callStack.m_top->m_stackBase );
 
    // do the call
    function->invoke( this, nparams );
@@ -732,12 +736,17 @@ void VMContext::call( Closure* closure, int32 nparams )
    if( closure->closedHandler()->typeID() == FLC_CLASS_ID_FUNC ) 
    {
       Function* function = static_cast<Function*>(closure->closed());
-      TRACE( "Calling function %s -- call frame code:%p, data:%p, call:%p",
-            function->locate().c_ize(),m_codeStack.m_top, m_dataStack.m_top, m_callStack.m_top  );
+      TRACE( "Calling closure function %s -- codebase:%d, dynsBase:%d, stackBase:%d",
+         function->locate().c_ize(),
+         m_callStack.m_top->m_codeBase, 
+         m_callStack.m_top->m_dynsBase, 
+         m_callStack.m_top->m_stackBase );
 
       makeCallFrame( closure, nparams );
-      TRACE3( "-- codebase:%d, stackBase:%d ", \
-            m_callStack.m_top->m_codeBase, m_callStack.m_top->m_stackBase );
+      TRACE3( "-- codebase:%d, dynsBase:%d, stackBase:%d",
+         m_callStack.m_top->m_codeBase, 
+         m_callStack.m_top->m_dynsBase, 
+         m_callStack.m_top->m_stackBase );
 
       // do the call
       function->invoke( this, nparams );

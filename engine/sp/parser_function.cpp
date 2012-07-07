@@ -34,11 +34,11 @@
 #include <falcon/synclasses_id.h>
 
 #include "private_types.h"
-#include "falcon/psteps/exprclosure.h"
-#include "falcon/psteps/exprsym.h"
-#include "falcon/psteps/exprlit.h"
-#include "falcon/psteps/stmtwhile.h"
-#include "falcon/classes/classsyntree.h"
+#include <falcon/psteps/exprclosure.h>
+#include <falcon/psteps/exprsym.h>
+#include <falcon/psteps/exprlit.h>
+#include <falcon/psteps/stmtwhile.h>
+#include <falcon/classes/classsyntree.h>
 
 namespace Falcon {
 

@@ -633,7 +633,7 @@ String Parser::dumpStack() const
 
 void Parser::addParseFrame( const NonTerminal* token, int pos )
 {
-   TRACE1("Parser::addParseFrame -- %s at %d",token->name().c_ize(),pos);
+   //TRACE1("Parser::addParseFrame -- %s at %d",token->name().c_ize(),pos);
    if( pos < 0 )
    {
       pos = _p->m_tokenStack->size()-1;

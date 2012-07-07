@@ -220,7 +220,9 @@ public:
     the stack space where the local symbols are allocated.
     */
    inline void addLocalVariable( Item* ptr ) {
-      m_locsStack.addSlot()->value(ptr); 
+      register Variable* top = m_locsStack.addSlot();
+      top->value(ptr);
+      top->base(0);
    }
    
    /** Add more variables on top of the stack -- without initializing them to nil.

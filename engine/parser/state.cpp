@@ -68,7 +68,7 @@ bool State::findPaths( Parser& parser )
    while( iter != _p->m_nt.end() )
    {
       NonTerminal* nt = *iter;
-      TRACE2("State::findPaths -- checking %s", nt->name().c_ize() );
+      //TRACE2("State::findPaths -- checking %s", nt->name().c_ize() );
 
       parser.addParseFrame(nt,0);
 
