@@ -110,34 +110,21 @@ void Closure::close( VMContext* ctx, const SymbolTable* st )
    for( uint32 i = 0; i < size; ++i )
    {
       Symbol* closed = st->getClosed(i);
+      const String& closedName = closed->name();
+      
       TRACE1( "Closure::close -- closing symbol %s", closed->name().c_ize() );
-      // navigate through the parent symbol tables till finding the desired symbols.
-      long depth = ctx->callDepth();
-      {
-         long curDepth = 0;
-         while( curDepth < depth )
-         {
-            const CallFrame& cf = ctx->previousFrame( curDepth );
-            fassert( cf.m_function != 0 )
-            Symbol* tgtsym = cf.m_function->symbols().findSymbol( closed->name() );
-            if( tgtsym != 0 )
-            {
-               // we found it. get the item.
-               Variable* variable = tgtsym->getVariable(ctx);
-               fassert( variable != 0 );
-               // now reference it in our closure array
-               m_closedData[closed->localId()].makeReference(variable);
-               // and since we're done, we can break;
-               TRACE2( "Closure::close -- closed symbol %s at depth %d => \"%s\"",
-                  closed->name().c_ize(), (int)curDepth, variable->value()->describe().c_ize() );
-               break;
-            }
-            // better luck with next time.
-            curDepth++;
-         }
+      
+      Variable* variable = ctx->findLocalVariable( closedName );
+      if( variable != 0 ) {
+         TRACE2( "Closure::close -- closed symbol %s => \"%s\"",
+            closed->name().c_ize(), variable->value()->describe().c_ize() );
+
+         m_closedData[closed->localId()].makeReference(variable);
       }
-      // if we didn't find the symbol, we just reference a nil -- that's ok
-      // (weird, but ok)
+      else {
+         TRACE2( "Closure::close -- didn't find symbol to close %s", closed->name().c_ize() );
+         Variable::makeFreeVariable(m_closedData[closed->localId()]);
+      }
    }
 }
 

@@ -285,6 +285,8 @@ void StdSteps::PStepLocalFrame::apply_( const PStep*, VMContext* ctx )
       ctx->unrollLocalFrame( base-1 );
       ctx->topData() = top;
    }
+   // we're a finally barrier.
+   ctx->finallyComplete();
 }
 
 void StdSteps::PStepLocalFrame::describeTo( String& s, int ) const

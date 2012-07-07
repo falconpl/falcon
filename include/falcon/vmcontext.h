@@ -1233,7 +1233,40 @@ public:
     \note Symbols marked as constant are returned by value; they aren't referenced.
     */
    Variable* getDynSymbolVariable( const Symbol* dyns );
+   
+   
+   /** Gets the the value associated with a dynamic symbol -- ready for store.
+    \param name the name of the dynsymbol to be associated.
+    \return A pointer to the item associated with the symbol.
+
+    If the symbol exists in the local context, its associated value is returned.
+    if it doesn't exist, it is searched through the local context from the current
+    function to the topmost function.
+
+    If a local symbol corresponding to the given name is found, its value is
+    referenced and the reference item is associated with the name; the referenced
+    item (already de-referenced) is returned.
+
+    If a local symbol is not found, then the global symbol table of the module
+    of the topmost function is searched. If the symbol is found the same operation
+    as above is performed.
+    
+    Globals and extern sybmols are not searched, as they cannot be assigned
+    in the contexts where dynsymbols can be assigned.
+
+    If the search finally fails, a NIL item is created in the local dynsymbol    context and associated to the symbol, and that is returned.
+
+    */
    Variable* getLValueDynSymbolVariable( const Symbol* dyns );
+   
+   /** Returns a variable responding to the given name.
+    \param name The name of the variable to be found.
+    \return A variable if a symbol with that name is defined or 0 if not.
+    
+    Returns a variable (local, parameter or dyn) visible in the stack with
+    the given name.    
+    */
+   Variable* findLocalVariable( const String& name ) const;
    
    /** Copies pcount parameters from the frame parameters area to the top of the stack. */
    void forwardParams( int pcount );

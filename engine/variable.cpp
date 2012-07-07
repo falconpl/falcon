@@ -39,6 +39,7 @@ void Variable::makeReference( Variable* original, Variable* copy )
       copy->m_base = &aligned_variable->count;
       copy->m_value = &aligned_variable->value;
       // copy the original item.
+      aligned_variable->count = 0;
       *copy->m_value = *original->m_value;
       
       // fix the original item to point to the new location.
@@ -48,6 +49,26 @@ void Variable::makeReference( Variable* original, Variable* copy )
       // assign to the collector.
       FALCON_GC_STORE(coll, rawMem, aligned_variable);
    }
+}
+
+void Variable::makeFreeVariable( Variable& var )
+{
+   static Collector* coll = Engine::instance()->collector();
+   static ClassRawMem* rawMem = Engine::instance()->rawMemClass();
+   
+   // craete  a place in memory that is sure to be properly aligned
+   Variable::t_aligned_variable *aligned_variable;      
+   aligned_variable = (t_aligned_variable*) rawMem->allocate( sizeof(t_aligned_variable) );
+
+   // get the pointers to this aligned memory
+   aligned_variable->count = 0;
+   aligned_variable->value.setNil();
+
+   // assign to the collector.
+   FALCON_GC_STORE(coll, rawMem, aligned_variable);
+   
+   var.m_base = &aligned_variable->count;
+   var.m_value = &aligned_variable->value;
 }
 
 }

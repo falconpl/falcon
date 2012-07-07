@@ -99,7 +99,12 @@ public:
     objects.
     */
    static void makeReference( Variable* original, Variable* copy );
-   
+      
+   /** Creates a garbage collected variable that is free in memory.
+    \param var a place where A GC allocated and aligned variable ready for use is stored.
+    */
+   static void makeFreeVariable( Variable& var );
+
 private:
    Item* m_value;
    uint32* m_base;

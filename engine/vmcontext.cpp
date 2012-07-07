@@ -711,6 +711,7 @@ void VMContext::call( Function* function, int nparams, const Item& self )
    function->invoke( this, nparams );
 }
 
+
 void VMContext::call( Function* function, int nparams )
 {
    TRACE( "Calling function %s -- call frame code:%p, data:%p, call:%p",
@@ -939,6 +940,7 @@ void VMContext::forwardParams( int pcount )
    }
 }
 
+
 Variable* VMContext::getLValueDynSymbolVariable( const Symbol* dyns )
 {
    // search for the dynsymbol in the current context.
@@ -947,7 +949,8 @@ Variable* VMContext::getLValueDynSymbolVariable( const Symbol* dyns )
    
    // keep dd from previous loop
    register DynsData* base = m_dynsStack.offset( cf->m_dynsBase );
-   while( dd > base ) {
+   // on stack empty, top = base -1;
+   while( dd >= base ) {
       if ( dyns->name() == dd->m_sym->name() )
       {
          // Found!
@@ -987,6 +990,7 @@ not_found:
    
    return &newData->m_var;   
 }
+
       
 Variable* VMContext::getDynSymbolVariable( const Symbol* dyns )
 {
@@ -1066,6 +1070,45 @@ Variable* VMContext::getDynSymbolVariable( const Symbol* dyns )
    newData->m_var.value(&addDataSlot());
    
    return &newData->m_var;
+}
+
+
+Variable* VMContext::findLocalVariable( const String& name ) const
+{
+   // navigate through the parent symbol tables till finding the desired symbols.
+   const CallFrame* cf = m_callStack.m_top;
+   DynsData* dynsd = m_dynsStack.m_top;
+   const CallFrame* base = m_callStack.m_base;
+   
+   while( cf >= base )
+   {      
+      fassert( cf->m_function != 0 )
+      Symbol* tgtsym = cf->m_function->symbols().findSymbol( name );
+
+      if( tgtsym != 0 )
+      {
+         return &m_locsStack.m_base[cf->m_locsBase + tgtsym->localId()];         
+      }
+      
+      // no private symbol? Try with dynsyms.
+      // Notice that we could do it once and for all once we fail the privates
+      // but it's more likely to find the dynsym near where we're searching it,
+      // and there's no extra cost in doing the search a bit at a time.
+      register const DynsData* locbase = m_dynsStack.m_base + cf->m_dynsBase;      
+      while( dynsd >= locbase )
+      {
+         if( dynsd->m_sym->name() == name ) {
+            return &dynsd->m_var;
+         }
+         --dynsd;
+      }
+      
+      // better luck with next time.
+      --cf;
+   }
+   
+   // not found
+   return 0;
 }
 
 }
