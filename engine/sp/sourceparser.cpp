@@ -112,7 +112,7 @@ SourceParser::SourceParser():
    T_STARARROW( "*=>", 170),
 
    T_Comma( "," , 180 ),
-   T_QMark( "?" , 175 ),
+   T_QMark( "?" , 175, true ),
    T_Bang("!"),
 
    T_UnaryMinus("(neg)",23),
