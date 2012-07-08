@@ -43,26 +43,16 @@ BOM::BOM():
    Private::HandlerMap& hm = _p->m_handlers;
 
    hm["len"] = BOMH::len;
-   hm["len_"] = BOMH::len_;
 
    hm["baseClass"] = &BOMH::baseClass;
-   hm["baseClass_"] = BOMH::baseClass_;
    hm["bound"] = BOMH::bound;
-   hm["bound_"] = BOMH::bound_;
    hm["className"] = BOMH::className;
-   hm["className_"] = BOMH::className_;
    hm["clone"] = BOMH::clone;
-   hm["clone_"] = BOMH::clone_;
    hm["describe"] = BOMH::describe;
-   hm["describe_"] = BOMH::describe_;
    hm["isCallable"] = BOMH::isCallable;
-   hm["isCallable_"] = BOMH::isCallable_;
    hm["ptr"] = BOMH::ptr;
-   hm["ptr_"] = BOMH::ptr_;
    hm["toString"] = BOMH::toString;
-   hm["toString_"] = BOMH::toString_;
    hm["typeId"] = BOMH::typeId;
-   hm["typeId_"] = BOMH::typeId_;
    
    hm["compare"] = BOMH::compare;
    hm["derivedFrom"] = BOMH::derivedFrom;
@@ -97,16 +87,6 @@ namespace BOMH
 
 void len(VMContext* ctx, const Class*, void*)
 {
-   static Function* lenFunc = static_cast<Function*>(Engine::instance()->getMantra("len"));
-   fassert( lenFunc != 0 );
-
-   Item &value = ctx->topData();
-   value.methodize(lenFunc);
-}
-
-
-void len_(VMContext* ctx, const Class*, void*)
-{
    Item& topData = ctx->topData();
    topData = topData.len();
 }
@@ -117,22 +97,8 @@ void bound(VMContext*, const Class*, void*)
    fassert2( false, "Not implemented" );
 }
 
-void bound_(VMContext*, const Class*, void*)
-{
-   fassert2( false, "Not implemented" );
-}  
 
-void className(VMContext* ctx, const Class* , void*)
-{
-   static Function* classNameFunc = static_cast<Function*>(Engine::instance()->getMantra("className"));
-   fassert( classNameFunc != 0 );
-
-   Item &value = ctx->topData();
-   value.methodize(classNameFunc);
-}
-
-
-void className_(VMContext* ctx, const Class*, void* data)
+void className(VMContext* ctx, const Class*, void* data)
 {
    Item* pself;
    OpToken token( ctx, pself );
@@ -143,17 +109,7 @@ void className_(VMContext* ctx, const Class*, void* data)
    token.exit(cls1->name()); // garbage this string
 }
 
-void baseClass(VMContext* ctx, const Class*, void*)
-{
-   static Function* classNameFunc = static_cast<Function*>(Engine::instance()->getMantra("baseClass"));
-   fassert( classNameFunc != 0 );
-
-   Item &value = ctx->topData();
-   value.methodize(classNameFunc);
-}
-
-
-void baseClass_(VMContext* ctx, const Class* cls, void*)
+void baseClass(VMContext* ctx, const Class* cls, void*)
 {
    if( ! cls->isMetaClass() )
    {
@@ -175,30 +131,7 @@ void clone(VMContext *ctx, const Class*, void*)
 }
 
 
-void clone_(VMContext* ctx, const Class* cls, void* data)
-{
-   void* clone = cls->clone(data);
-   if( clone == 0 )
-   {
-      throw new CodeError( ErrorParam(e_uncloneable, __LINE__, SRC ) );
-   }
-
-   ctx->topData().setUser( cls, clone );
-
-}
-
-
-void describe( VMContext* ctx, const Class*, void* )
-{
-   static Function* func = static_cast<Function*>(Engine::instance()->getMantra("describe"));
-   fassert( func != 0 );
-
-   Item &value = ctx->topData();
-   value.methodize(func);
-}
-
-
-void describe_(VMContext* ctx, const Class* cls, void* data)
+void describe(VMContext* ctx, const Class* cls, void* data)
 {
    String* target = new String;
    cls->describe( data, *target );
@@ -208,60 +141,28 @@ void describe_(VMContext* ctx, const Class* cls, void* data)
 }
 
 
-void isCallable(VMContext*, const Class*, void*)
+void isCallable(VMContext* ctx, const Class* cls, void* )
 {
-   fassert2( false, "Not implemented" );
-
-}
-
-
-void isCallable_(VMContext*, const Class*, void*)
-{
-   fassert2( false, "Not implemented" );
-
+   ctx->topData().setBoolean(
+       cls->typeID() == FLC_CLASS_ID_FUNC
+       || cls->typeID() == FLC_CLASS_ID_TREESTEP
+       || cls->typeID() == FLC_ITEM_METHOD );
 }
 
 
 void ptr(VMContext*, const Class*, void*)
 {
    fassert2( false, "Not implemented" );
-
-}
-
-void ptr_(VMContext*, const Class*, void*)
-{
-   fassert2( false, "Not implemented" );
-
 }
 
 
-void toString(VMContext* ctx, const Class*, void*)
-{
-   static Function* func = static_cast<Function*>(Engine::instance()->getMantra("toString"));
-   fassert( func != 0 );
-
-   Item &value = ctx->topData();
-   value.methodize(func);
-}
-
-
-void toString_(VMContext* ctx, const Class* cls, void* data)
+void toString(VMContext* ctx, const Class* cls, void* data)
 {
    cls->op_toString( ctx, data );
 }
 
 
-void typeId(VMContext* ctx, const Class*, void*)
-{
-   static Function* func = static_cast<Function*>(Engine::instance()->getMantra("typeId"));
-   fassert( func != 0 );
-
-   Item &value = ctx->topData();
-   value.methodize(func);
-}
-
-
-void typeId_(VMContext* ctx, const Class*, void* data)
+void typeId(VMContext* ctx, const Class*, void* data)
 {
    Item* pself;
    OpToken token( ctx, pself );
@@ -278,7 +179,6 @@ void typeId_(VMContext* ctx, const Class*, void* data)
 }
 
 
-
 void compare(VMContext* ctx, const Class*, void*)
 {
    static Function* func = static_cast<Function*>(Engine::instance()->getMantra("compare"));
@@ -289,9 +189,13 @@ void compare(VMContext* ctx, const Class*, void*)
 }
 
 
-void derivedFrom(VMContext*, const Class*, void*)
+void derivedFrom(VMContext* ctx, const Class*, void*)
 {
-   fassert2( false, "Not implemented" );
+  static Function* func = static_cast<Function*>(Engine::instance()->getMantra("derivedFrom"));
+  fassert( func != 0 );
+
+  Item &value = ctx->topData();
+  value.methodize(func);
 }
 
 }

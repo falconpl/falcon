@@ -66,26 +66,16 @@ private:
 namespace BOMH
 {
 void len(VMContext* ctx, const Class* cls, void* data);
-void len_(VMContext* ctx, const Class* cls, void* data);
-
 void baseClass(VMContext* ctx, const Class* cls, void* data);
-void baseClass_(VMContext* ctx, const Class* cls, void* data);
 void bound(VMContext* ctx, const Class* cls, void* data);
-void bound_(VMContext* ctx, const Class* cls, void* data);
 void className(VMContext* ctx, const Class* cls, void* data);
-void className_(VMContext* ctx, const Class* cls, void* data);
 void clone(VMContext* ctx, const Class* cls, void* data);
 void clone_(VMContext* ctx, const Class* cls, void* data);
 void describe(VMContext* ctx, const Class* cls, void* data);
-void describe_(VMContext* ctx, const Class* cls, void* data);
 void isCallable(VMContext* ctx, const Class* cls, void* data);
-void isCallable_(VMContext* ctx, const Class* cls, void* data);
 void ptr(VMContext* ctx, const Class* cls, void* data);
-void ptr_(VMContext* ctx, const Class* cls, void* data);
 void toString(VMContext* ctx, const Class* cls, void* data);
-void toString_(VMContext* ctx, const Class* cls, void* data);
 void typeId(VMContext* ctx, const Class* cls, void* data);
-void typeId_(VMContext* ctx, const Class* cls, void* data);
 
 // Theese are proper functions
 void compare(VMContext* ctx, const Class* cls, void* data);

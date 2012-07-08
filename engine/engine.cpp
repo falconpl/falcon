@@ -41,6 +41,7 @@
 //--- core function headers ---
 #include <falcon/cm/coremodule.h>
 #include <falcon/builtin/compare.h>
+#include <falcon/builtin/derivedfrom.h>
 #include <falcon/builtin/len.h>
 #include <falcon/builtin/minmax.h>
 #include <falcon/builtin/typeid.h>
@@ -223,6 +224,7 @@ Engine::Engine()
 
    m_mantras = new MantraMap;
    addMantra(new Ext::Compare);
+   addMantra(new Ext::DerivedFrom);
    addMantra(new Ext::Len);
    addMantra(new Ext::Max);
    addMantra(new Ext::Min);
