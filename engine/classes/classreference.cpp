@@ -18,11 +18,13 @@
 
 #include <falcon/fassert.h>
 #include <falcon/classes/classreference.h>
+#include <falcon/classes/classrawmem.h>
 #include <falcon/vmcontext.h>
 #include <falcon/item.h>
 #include <falcon/itemid.h>
 #include <falcon/errors/paramerror.h>
 #include <falcon/variable.h>
+#include <falcon/engine.h>
 
 #include <falcon/itemarray.h>
 
@@ -30,7 +32,7 @@ namespace Falcon
 {
 
 ClassReference::ClassReference():
-   Class("Reference")
+   Class("Reference", FLC_CLASS_ID_REF)
 {   
 }
 
@@ -48,6 +50,7 @@ void ClassReference::dispose( void* self ) const
 {
    Variable* ref = static_cast<Variable*>(self);
    // TODO: pool references
+   // Do not delete the base: it's differently accounted.
    delete ref;
 }
 
@@ -56,31 +59,37 @@ void* ClassReference::clone( void* source ) const
 {
    Variable* ref = static_cast<Variable*>(source);
    // TODO: pool references
-   return new Variable(*ref);   
+   return new Variable(ref->base(), ref->value());
 }
 
 void* ClassReference::createInstance() const
 {
-   // This is an abstract class
-   return 0;   
+   Variable* ref = new Variable();
+   return ref;
 }
 
 void ClassReference::store( VMContext*, DataWriter*, void* ) const {}
 void ClassReference::restore( VMContext*, DataReader*, void*& empty ) const 
 {
-   empty = new Variable;
+   empty = new Variable; // but don't set the base; that will be restored later.
 }
 
 void ClassReference::flatten( VMContext*, ItemArray& subItems, void* instance ) const
 {
+   static ClassRawMem* rm = Engine::instance()->rawMemClass();
    Variable* ref = static_cast<Variable*>(instance);
-   subItems.append(*ref->value());
+
+   // save the raw memory we use to set the variable,
+   // so different variables pointing to the same memory will be restored properly
+   subItems.append(Item(rm, ref->base()));
 }
 
 void ClassReference::unflatten( VMContext*, ItemArray& subItems, void* instance ) const
 {
    Variable* ref = static_cast<Variable*>(instance);
-   *ref->value() = subItems[0];
+   Variable::t_aligned_variable* aligned = static_cast<Variable::t_aligned_variable*>(subItems[0].asInst());
+   ref->base(&aligned->count);
+   ref->value(&aligned->value);
 }
 
 void ClassReference::gcMarkInstance( void* self, uint32 mark ) const
@@ -97,36 +106,22 @@ bool ClassReference::gcCheckInstance( void* self, uint32 mark ) const
 }
 
 
-void ClassReference::enumerateProperties( void* self, PropertyEnumerator& cb ) const
+void ClassReference::enumerateProperties( void*, PropertyEnumerator& cb ) const
 {
-   Variable* ref = static_cast<Variable*>(self);
-
-   Class* cls;
-   void* data;
-   ref->value()->forceClassInst( cls, data );
-   cls->enumerateProperties( data, cb );
+   cb("value", false);
 }
 
 
 void ClassReference::enumeratePV( void* self, PVEnumerator& cb ) const
 {
    Variable* ref = static_cast<Variable*>(self);
-   
-   Class* cls;
-   void* data;
-   ref->value()->forceClassInst( cls, data );
-   cls->enumeratePV( data, cb );
+   cb( "value", *ref->value() );
 }
 
 
-bool ClassReference::hasProperty( void* self, const String& prop ) const
+bool ClassReference::hasProperty( void*, const String& prop ) const
 {
-   Variable* ref = static_cast<Variable*>(self);
-   
-   Class* cls;
-   void* data;
-   ref->value()->forceClassInst( cls, data );
-   return cls->hasProperty( data, prop );
+   return prop == "value";
 }
 
 
@@ -138,333 +133,77 @@ void ClassReference::describe( void* self, String& target, int depth, int maxlen
    ref->value()->forceClassInst( cls, data );
 
    String temp;
-   cls->describe( data, temp, depth, maxlen );
+   cls->describe( data, temp, depth+1, maxlen );
    target = "Ref{" + temp + "}";
 }
 
    
-bool ClassReference::op_init( VMContext*, void*, int32 ) const
+bool ClassReference::op_init( VMContext* ctx, void* self, int32 pcount ) const
 {
-   // topdata has been already turned into a reference by now.
+   Variable* ref = static_cast<Variable*>(self);
+   if( pcount > 0 ) {
+      Item* top = ctx->opcodeParams(pcount);
+      // if the incoming data is a reference, reference it.
+      if( typeID() == top->type() ) {
+         Variable* otherRef = static_cast<Variable*>(top->asInst());
+         ref->makeReference(otherRef);
+      }
+      else {
+         Variable::makeFreeVariable(*ref);
+         ref->value()->assign(*top);
+      }
+   }
+
+   ctx->stackResult(pcount, Item(this, ref));
    return false;
-}
-
-
-void ClassReference::op_neg( VMContext* ctx, void* self ) const
-{
-   Variable* ref = static_cast<Variable*>(self);
-   Class* cls;
-   void* data;
-   ref->value()->forceClassInst( cls, data );
-   cls->op_neg( ctx, data );
-}
-
-
-void ClassReference::op_add( VMContext* ctx, void* self ) const
-{
-   Variable* ref = static_cast<Variable*>(self);
-   Class* cls;
-   void* data;
-   ref->value()->forceClassInst( cls, data );
-   cls->op_add( ctx, data );   
-}
-
-
-void ClassReference::op_sub( VMContext* ctx, void* self ) const
-{
-   Variable* ref = static_cast<Variable*>(self);
-   Class* cls;
-   void* data;
-   ref->value()->forceClassInst( cls, data );
-   cls->op_sub( ctx, data );      
-}
-
-
-void ClassReference::op_mul( VMContext* ctx, void* self ) const
-{
-   Variable* ref = static_cast<Variable*>(self);
-   Class* cls;
-   void* data;
-   ref->value()->forceClassInst( cls, data );
-   cls->op_mul( ctx, data );   
-}
-
-
-void ClassReference::op_div( VMContext* ctx, void* self ) const
-{
-   Variable* ref = static_cast<Variable*>(self);
-   Class* cls;
-   void* data;
-   ref->value()->forceClassInst( cls, data );
-   cls->op_div( ctx, data );   
-}
-
-
-void ClassReference::op_mod( VMContext* ctx, void* self ) const
-{
-   Variable* ref = static_cast<Variable*>(self);
-   Class* cls;
-   void* data;
-   ref->value()->forceClassInst( cls, data );
-   cls->op_mod( ctx, data );   
-}
-
-
-void ClassReference::op_pow( VMContext* ctx, void* self ) const
-{
-   Variable* ref = static_cast<Variable*>(self);
-   Class* cls;
-   void* data;
-   ref->value()->forceClassInst( cls, data );
-   cls->op_pow( ctx, data );   
-}
-
-
-void ClassReference::op_shr( VMContext* ctx, void* self ) const
-{
-   Variable* ref = static_cast<Variable*>(self);
-   Class* cls;
-   void* data;
-   ref->value()->forceClassInst( cls, data );
-   cls->op_shr( ctx, data );   
-}
-
-
-void ClassReference::op_shl( VMContext* ctx, void* self ) const
-{
-   Variable* ref = static_cast<Variable*>(self);
-   Class* cls;
-   void* data;
-   ref->value()->forceClassInst( cls, data );
-   cls->op_shl( ctx, data );   
-}
-
-
-void ClassReference::op_aadd( VMContext* ctx, void* self) const
-{
-   Variable* ref = static_cast<Variable*>(self);
-   Class* cls;
-   void* data;
-   ref->value()->forceClassInst( cls, data );
-   cls->op_aadd( ctx, data );   
-}
-
-
-void ClassReference::op_asub( VMContext* ctx, void* self ) const
-{
-   Variable* ref = static_cast<Variable*>(self);
-   Class* cls;
-   void* data;
-   ref->value()->forceClassInst( cls, data );
-   cls->op_asub( ctx, data );   
-}
-
-
-void ClassReference::op_amul( VMContext* ctx, void* self ) const
-{
-   Variable* ref = static_cast<Variable*>(self);
-   Class* cls;
-   void* data;
-   ref->value()->forceClassInst( cls, data );
-   cls->op_amul( ctx, data );   
-}
-
-
-void ClassReference::op_adiv( VMContext* ctx, void* self ) const
-{
-   Variable* ref = static_cast<Variable*>(self);
-   Class* cls;
-   void* data;
-   ref->value()->forceClassInst( cls, data );
-   cls->op_adiv( ctx, data );   
-}
-
-
-void ClassReference::op_amod( VMContext* ctx, void* self ) const
-{
-   Variable* ref = static_cast<Variable*>(self);
-   Class* cls;
-   void* data;
-   ref->value()->forceClassInst( cls, data );
-   cls->op_amod( ctx, data );   
-}
-
-
-void ClassReference::op_apow( VMContext* ctx, void* self ) const
-{
-   Variable* ref = static_cast<Variable*>(self);
-   Class* cls;
-   void* data;
-   ref->value()->forceClassInst( cls, data );
-   cls->op_apow( ctx, data );   
-}
-
-void ClassReference::op_ashr( VMContext* ctx, void* self ) const
-{
-   Variable* ref = static_cast<Variable*>(self);
-   Class* cls;
-   void* data;
-   ref->value()->forceClassInst( cls, data );
-   cls->op_ashr( ctx, data );   
-}
-
-void ClassReference::op_ashl( VMContext* ctx, void* self ) const
-{
-   Variable* ref = static_cast<Variable*>(self);
-   Class* cls;
-   void* data;
-   ref->value()->forceClassInst( cls, data );
-   cls->op_ashl( ctx, data );   
-}
-
-void ClassReference::op_inc( VMContext* ctx, void* self ) const
-{
-   Variable* ref = static_cast<Variable*>(self);
-   Class* cls;
-   void* data;
-   ref->value()->forceClassInst( cls, data );
-   cls->op_inc( ctx, data );   
-}
-
-
-void ClassReference::op_dec(VMContext* ctx, void* self) const
-{
-   Variable* ref = static_cast<Variable*>(self);
-   Class* cls;
-   void* data;
-   ref->value()->forceClassInst( cls, data );
-   cls->op_dec( ctx, data );   
-}
-
-
-void ClassReference::op_incpost(VMContext* ctx, void* self ) const
-{
-   Variable* ref = static_cast<Variable*>(self);
-   Class* cls;
-   void* data;
-   ref->value()->forceClassInst( cls, data );
-   cls->op_incpost( ctx, data );   
-}
-
-
-void ClassReference::op_decpost(VMContext* ctx, void* self ) const
-{
-   Variable* ref = static_cast<Variable*>(self);
-   Class* cls;
-   void* data;
-   ref->value()->forceClassInst( cls, data );
-   cls->op_decpost( ctx, data );   
-}
-
-
-void ClassReference::op_getIndex(VMContext* ctx, void* self ) const
-{
-   Variable* ref = static_cast<Variable*>(self);
-   Class* cls;
-   void* data;
-   ref->value()->forceClassInst( cls, data );
-   cls->op_getIndex( ctx, data );   
-}
-
-
-void ClassReference::op_setIndex(VMContext* ctx, void* self ) const
-{
-   Variable* ref = static_cast<Variable*>(self);
-   Class* cls;
-   void* data;
-   ref->value()->forceClassInst( cls, data );
-   cls->op_setIndex( ctx, data );   
 }
 
 
 void ClassReference::op_getProperty( VMContext* ctx, void* self, const String& prop) const
 {
-   Variable* ref = static_cast<Variable*>(self);
-   Class* cls;
-   void* data;
-   ref->value()->forceClassInst( cls, data );
-   cls->op_getProperty( ctx, data, prop );   
+   if( prop == "value" ) {
+      Variable* ref = static_cast<Variable*>(self);
+      ctx->topData() = *ref->value();
+   }
+   else
+   {
+      Class::op_getProperty(ctx, self, prop);
+   }
 }
 
 
 void ClassReference::op_setProperty( VMContext* ctx, void* self, const String& prop ) const
 {
-   Variable* ref = static_cast<Variable*>(self);
-   Class* cls;
-   void* data;
-   ref->value()->forceClassInst( cls, data );
-   cls->op_setProperty( ctx, data, prop );   
+   ctx->popData();
+
+   if( prop == "value" ) {
+      Variable* ref = static_cast<Variable*>(self);
+      Item& top = ctx->topData();
+      if( top.type() == typeID() )
+      {
+         // we got a reference. Great.
+         Variable* ref2 = static_cast<Variable*>(top.asInst());
+         ref->makeReference( ref2 );
+      }
+      else {
+         ref->value()->assign(top);
+      }
+      // Dereference the output
+      top = *ref->value();
+   }
+   else
+   {
+      Class::op_getProperty(ctx, self, prop);
+   }
 }
 
-
-void ClassReference::op_compare( VMContext* ctx, void* self ) const
-{
-   Variable* ref = static_cast<Variable*>(self);
-   Class* cls;
-   void* data;
-   ref->value()->forceClassInst( cls, data );
-   cls->op_compare( ctx, data );   
-}
-
-
-void ClassReference::op_isTrue( VMContext* ctx, void* self ) const
-{
-   Variable* ref = static_cast<Variable*>(self);
-   Class* cls;
-   void* data;
-   ref->value()->forceClassInst( cls, data );
-   cls->op_isTrue( ctx, data );   
-}
-
-
-void ClassReference::op_in( VMContext* ctx, void* self ) const
-{
-   Variable* ref = static_cast<Variable*>(self);
-   Class* cls;
-   void* data;
-   ref->value()->forceClassInst( cls, data );
-   cls->op_in( ctx, data );   
-}
 
 void ClassReference::op_call( VMContext* ctx, int32 paramCount, void* self ) const
 {
    Variable* ref = static_cast<Variable*>(self);
-   Class* cls;
-   void* data;
-   ref->value()->forceClassInst( cls, data );
-   cls->op_call( ctx, paramCount, data );
+   ctx->popData(paramCount);
+   ctx->topData() = *ref->value();
 }
-
-
-void ClassReference::op_toString( VMContext* ctx, void* self ) const
-{
-   Variable* ref = static_cast<Variable*>(self);
-   Class* cls;
-   void* data;
-   ref->value()->forceClassInst( cls, data );
-   cls->op_toString( ctx, data );   
-}
-
-
-void ClassReference::op_iter( VMContext* ctx, void* self ) const
-{
-   Variable* ref = static_cast<Variable*>(self);
-   Class* cls;
-   void* data;
-   ref->value()->forceClassInst( cls, data );
-   cls->op_iter( ctx, data );   
-}
-
-
-void ClassReference::op_next( VMContext* ctx, void* self ) const
-{
-   Variable* ref = static_cast<Variable*>(self);
-   Class* cls;
-   void* data;
-   ref->value()->forceClassInst( cls, data );
-   cls->op_next( ctx, data );   
-}
-
 
 }
 

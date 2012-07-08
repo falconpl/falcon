@@ -183,6 +183,7 @@ Engine::Engine()
    m_mantraClass = new ClassMantra;
    m_synFuncClass = new ClassSynFunc;
    m_genericClass = new ClassGeneric;
+   m_referenceClass = new ClassReference;
    
    // Notice: rawMem is not reflected, is used only in extensions.
    m_rawMemClass = new ClassRawMem();
@@ -251,6 +252,7 @@ Engine::Engine()
    addMantra( m_synFuncClass );
    addMantra( m_genericClass );
    addMantra( m_rangeClass  );
+   addMantra( m_referenceClass );
    
    addMantra( m_classes[FLC_ITEM_NIL] );
    addMantra( m_classes[FLC_ITEM_BOOL] );
@@ -709,6 +711,11 @@ ClassRawMem* Engine::rawMemClass() const
    return m_instance->m_rawMemClass;
 }
 
+ClassReference* Engine::referenceClass() const
+{
+   fassert( m_instance != 0 );
+   return m_instance->m_referenceClass;
+}
 
 SynClasses* Engine::synclasses() const
 {

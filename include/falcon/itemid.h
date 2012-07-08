@@ -33,6 +33,7 @@
 
 
 // Theese are the class IDs, used to get the typeID of this item.
+#define FLC_CLASS_ID_REF      8
 #define FLC_CLASS_ID_FUNC     9
 #define FLC_CLASS_ID_STRING   10
 #define FLC_CLASS_ID_ARRAY    11

@@ -1200,6 +1200,7 @@ public:
          {
             return topData().asBoolean();
          }
+         break;
       }
 
       return false;

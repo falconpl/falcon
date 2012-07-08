@@ -95,12 +95,14 @@ bool ExprRef::selector( Expression* expr )
 }
 
 
-void ExprRef::apply_( const PStep* ps, VMContext*  )
+void ExprRef::apply_( const PStep* ps, VMContext* ctx )
 {
+   static Class* ref = Engine::instance()->referenceClass();
    const ExprRef* self = static_cast<const ExprRef*>(ps);
    
    fassert( self->m_symbol != 0 || self->m_expr != 0 );
    
+   ctx->popCode();
    if( self->m_symbol == 0 )
    {
       const_cast<ExprRef*>(self)->m_symbol = self->m_expr->symbol();
@@ -113,19 +115,14 @@ void ExprRef::apply_( const PStep* ps, VMContext*  )
          .extra( self->m_symbol->name() ) );
    }
    
-   // get the class/data pair of the item.
-   //TODO: Use the new reference system.
-   /*
-   const Item &value = (*self->m_symbol->getValue(ctx));
-   fassert( &value != 0 );
-
-   Item copy = value; 
-   ItemReference::create( copy );
-   *self->m_symbol->getValue(ctx) = copy;
-   ctx->popCode();
-   // prevent stack corruption (value may be on the stack)
-   ctx->pushData(copy);
-   */
+   Variable* var = self->m_symbol->getVariable(ctx);
+   Variable* newVar = new Variable();
+   // dereference ?
+   if( var->value()->type() == ref->typeID() ) {
+      var = static_cast<Variable*>(var->value()->asInst());
+   }
+   newVar->makeReference( var );
+   ctx->pushData( Item( ref, newVar ) );
 }
 
 

@@ -33,6 +33,7 @@ class Transcoder;
 class TranscoderMap;
 class PoolList;
 class Pool;
+class ClassReference;
 
 class PredefMap;
 class MantraMap;
@@ -336,7 +337,18 @@ public:
     return a null pointer.
     */   
    ClassRawMem* rawMemClass() const;
-   
+
+   /** Returns the global instance of the ClassReference class.
+   \return the Engine instance of the ClassReference handler.
+
+    Method init() must have been called before.
+
+    @note This method will assert and terminate the program if compiled in debug mode
+    in case the engine has not been initialized. In release, it will just
+    return a null pointer.
+    */
+   ClassReference* referenceClass() const;
+
    /** Returns the collection of standard syntactic tree classes.
    \return the Engine instance of the SynClasses class collection.
 
@@ -512,6 +524,7 @@ protected:
    Class* m_genericClass;
 
    ClassRawMem* m_rawMemClass;
+   ClassReference* m_referenceClass;
    
    //===============================================
    // Standard error handlers
