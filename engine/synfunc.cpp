@@ -128,26 +128,29 @@ void SynFunc::invoke( VMContext* ctx, int32 nparams )
    if( paramCount > nparams )
    {
       ctx->addLocals( paramCount - nparams );
+      // equalized the passed parameters.
+      nparams = paramCount;
    }
-   
-   // then add items to be stored in the local variables.
-   ctx->addLocals( localCount );
-   
+
    // Structure in data stack is:
-   // [np0] [np1] [..] [..] [l0] [l1] 
-   
-   // Add the variables in reverse order -- first the locals
-   Item* itemBase = &ctx->topData();
-   for( i = localCount; i > 0; --i ) {
-      ctx->addLocalVariable(itemBase--);
-   }
-   
-   // then the named parameters
-   itemBase = ctx->params() + paramCount;
-   for( i = paramCount; i > 0; --i ) {
+   // [np0] [np1] [..] [..] [l0] [l1] [..]
+
+   // Add the variables for the parameters.
+   Item* itemBase = (&ctx->topData())-nparams;
+   for( i = 0; i < paramCount; ++i ) {
       // we're 1 past end; use prefix decrement
-      ctx->addLocalVariable(--itemBase);
+      ctx->addLocalVariable(++itemBase);
    }    
+
+   // then add items to be stored in the local variables.
+   if( localCount > 0 ) {
+      ctx->addLocals( localCount );
+      itemBase = (&ctx->topData())-localCount;
+
+      for( i = 0; i < localCount; ++i ) {
+         ctx->addLocalVariable(++itemBase);
+      }
+   }
    
    // push a static return in case of problems.
    ctx->pushCode( m_retStep );

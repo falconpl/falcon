@@ -794,6 +794,8 @@ void VMContext::addLocalFrame( SymbolTable* st, int pcount )
    static StdSteps* stdSteps = Engine::instance()->stdSteps();
    static Symbol* base = Engine::instance()->baseSymbol();
    
+   TRACE("Add local frame PCOUNT: %d, Symbol table locals: %d, closed: %d",
+      pcount, st->localCount(), st->closedCount() );
    if( st == 0 ) {
       pushCode( &stdSteps->m_localFrame );
       return;
@@ -815,6 +817,7 @@ void VMContext::addLocalFrame( SymbolTable* st, int pcount )
    DynsData* baseDyn = m_dynsStack.addSlot();
    baseDyn->m_sym = base;
    baseDyn->m_var.value(top);
+   baseDyn->m_var.base(0);
    
    // now point to the first parameter.
    ++top;
@@ -823,6 +826,7 @@ void VMContext::addLocalFrame( SymbolTable* st, int pcount )
       DynsData* dd = m_dynsStack.addSlot();
       dd->m_sym = st->getLocal(i);
       dd->m_var.value(top);
+      dd->m_var.base(0);
       ++top;
    }
    
@@ -831,6 +835,7 @@ void VMContext::addLocalFrame( SymbolTable* st, int pcount )
       DynsData* dd = m_dynsStack.addSlot();
       dd->m_sym = st->getClosed(i);
       dd->m_var.value(top);
+      dd->m_var.base(0);
       ++top;
    }
 }
@@ -850,6 +855,8 @@ void VMContext::exitLocalFrame()
 {
    static PStep* localFrame = &Engine::instance()->stdSteps()->m_localFrame;
    
+   MESSAGE( "Exit local frame." );
+   
    // Descend into the code stack until we find our local stack marker.
    register CodeFrame* base = m_codeStack.offset(currentFrame().m_codeBase);
    register CodeFrame* top = m_codeStack.m_top;
@@ -863,8 +870,11 @@ void VMContext::exitLocalFrame()
          // don't call unrollLocalFrame to save this call.
          if( top->m_seqId > 0 )
          {
-            register DynsData* base = m_dynsStack.offset( top->m_seqId );
+            // the real frame is at seqId-1 as 0 is used as a marker.
+            register DynsData* base = m_dynsStack.offset( top->m_seqId-1 );
             fassert( "$base" == base->m_sym->name() );
+            TRACE( "Exiting with seq ID %d, data depth %d", top->m_seqId,
+                 (int)(base->m_var.value() - m_dataStack.m_base) );
             m_dataStack.m_top = base->m_var.value();
             m_dynsStack.m_top = base-1;
          }

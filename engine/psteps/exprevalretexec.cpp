@@ -50,7 +50,7 @@ void ExprEvalRetExec::apply_( const PStep* ps, VMContext* ctx )
          ctx->popCode();     
          Item item = ctx->topData();
          ctx->exitLocalFrame();
-         ctx->pushData(item);
+         ctx->topData() = item;
          ctx->callItem(item);
       }
    }

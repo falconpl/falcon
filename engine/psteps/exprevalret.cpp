@@ -52,7 +52,7 @@ void ExprEvalRet::apply_( const PStep* ps, VMContext* ctx )
 
          Item item = ctx->topData();
          ctx->exitLocalFrame();
-         ctx->pushData(item);
+         ctx->topData() = item;
       }
    }
 }

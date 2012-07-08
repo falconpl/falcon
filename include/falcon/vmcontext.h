@@ -93,12 +93,12 @@ public:
     */
    const Variable* localVar( int id ) const
    {
-      return m_locsStack.m_top - id;
+      return m_locsStack.m_base + currentFrame().m_locsBase + id;
    }
 
    Variable* localVar( int id )
    {
-      return m_locsStack.m_top - id;
+      return m_locsStack.m_base + currentFrame().m_locsBase + id;
    }
 
    /** Return the nth parameter in the local context.
