@@ -50,7 +50,7 @@ class Button( id, content, type, onclick ) from widget.Widget( id )
    end
 
    function renderContent()
-      return self.content
+      return self.content ? self.content : ""
    end
 
    /*# Turns this button in an AJAX form submitting button.
