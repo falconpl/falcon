@@ -92,7 +92,7 @@ FALCON_FUNC MessageDialog::init( VMARG )
     GtkWindow* parent = o_parent ? (GtkWindow*) o_parent->getObject() : NULL;
     GtkWidget* wdt = gtk_message_dialog_new( parent,
         (GtkDialogFlags) flags, (GtkMessageType) type, (GtkButtonsType) buttons,
-        msg ); // can emit a warning, safely ignore.
+        "%s", msg ); // can emit a warning, safely ignore.
     MYSELF;
     self->setObject( (GObject*) wdt );
 }
@@ -131,7 +131,7 @@ FALCON_FUNC MessageDialog::new_with_markup( VMARG )
     GtkWindow* parent = o_parent ? (GtkWindow*) o_parent->getObject() : NULL;
     GtkWidget* wdt = gtk_message_dialog_new_with_markup( parent,
         (GtkDialogFlags) flags, (GtkMessageType) type, (GtkButtonsType) buttons,
-        msg ); // can emit a warning, safely ignore.
+        "%s", msg ); // can emit a warning, safely ignore.
     vm->retval( new Gtk::MessageDialog(
             vm->findWKI( "GtkMessageDialog" )->asClass(), (GtkMessageDialog*) wdt ) );
 }

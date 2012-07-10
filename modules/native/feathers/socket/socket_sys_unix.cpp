@@ -1006,7 +1006,7 @@ TCPSocket *ServerSocket::accept()
       }
 
       int skt = ::accept( srv, address, &addrlen );
-      TCPSocket *s = new TCPSocket( (void *)skt );
+      TCPSocket *s = new TCPSocket( (void *) &skt );
 
       char hostName[64];
       char servName[64];
