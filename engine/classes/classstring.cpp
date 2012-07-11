@@ -515,7 +515,7 @@ void ClassString::op_setIndex( VMContext* ctx, void* self ) const
       }
       ctx->stackResult( 3, *value );
    }
-   else if ( ! index->isRange() )
+   else if ( index->isRange() )
    {
       Range& rng = *static_cast<Range*>( index->asInst() );
 
@@ -528,7 +528,7 @@ void ClassString::op_setIndex( VMContext* ctx, void* self ) const
       if ( end < 0 ) end = strLen + end;
 
       // do some validation checks before proceeding
-      if ( start >= strLen || start < ( strLen * -1 )  || end > strLen || end < ( strLen * -1 ) )
+      if ( start >= strLen  || end > strLen )
       {
          throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra("index out of range") );
       }
