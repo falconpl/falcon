@@ -28,46 +28,14 @@
 
 namespace Falcon {
 
-namespace StringProperties {
-//
+   //
 // Class properties used for enumeration
 //
-const int NUM_OF_PROPERTIES   = 26;
-
-char properties[ ][ 12 ] = {
-   "back",  // 1
-   "charSize",
-   "cmpi",
-   "endsWith",
-   "escape",
-   "esq",
-   "fill",
-   "find",
-   "ftrim",
-   "join",  // 10
-   "lower",
-   "merge",
-   "ptr",
-   "replace",
-   "replicate",
-   "rfind",
-   "rtrim",
-   "split",
-   "splittr",
-   "startsWith",  // 20
-   "toMemBuf",
-   "trim",
-   "unescape",
-   "unesq",
-   "upper",
-   "wmatch" // 26
-};
-
-}
-
 
 ClassString::ClassString():
-   Class( "String", FLC_CLASS_ID_STRING )
+   ClassUser( "String", FLC_CLASS_ID_STRING ),
+   FALCON_INIT_PROPERTY( isText ),
+   FALCON_INIT_PROPERTY( len )
 {
 }
 
@@ -121,54 +89,34 @@ void ClassString::describe( void* instance, String& target, int, int maxlen ) co
    String* self = static_cast<String*>( instance );
 
    target.size( 0 );
-   target.append( '"' );
 
-   // if ( (int) self->length() > maxlen )
-   if ( (int) ( static_cast<String*>( instance ) )->length() > maxlen )
+   if( self->isText() )
    {
-      target.append( self->subString( 0, maxlen ) );
-      target.append( "..." );
-   }
-   else
-   {
-      target.append( *self );
-   }
-
-   target.append( '"' );
-}
-
-
-void ClassString::enumerateProperties( void*, Class::PropertyEnumerator& cb ) const
-{
-   for ( int cnt = 0; cnt < ( StringProperties::NUM_OF_PROPERTIES - 1 ); cnt++ )
-   {
-      cb( StringProperties::properties[ cnt ], false );
-   }
-
-   cb( StringProperties::properties[ StringProperties::NUM_OF_PROPERTIES - 1 ], true );
-}
-
-
-void ClassString::enumeratePV( void* self, Class::PVEnumerator& cb ) const
-{
-   // static_cast to string then get length
-   Item temp = ( (int64)( static_cast<String*>( self ) )->length() );
-
-   cb( "len_", temp );
-}
-
-
-bool ClassString::hasProperty( void*, const String& prop ) const
-{
-   for ( int cnt = 0; cnt < StringProperties::NUM_OF_PROPERTIES; cnt++ )
-   {
-      if ( prop == StringProperties::properties[ cnt ] )
+      target.append( '"' );
+      if ( (int) self->length() > maxlen && maxlen > 0 )
       {
-         return true;
+         target.append( self->subString( 0, maxlen ) );
+         target.append( "..." );
       }
+      else
+      {
+         target.append( *self );
+      }
+      target.append( '"' );
    }
+   else {
+      target.append( "m{" );
 
-   return false;
+      length_t pos = 0;
+      byte* data = self->getRawStorage();
+      while( pos < self->size() && (maxlen <0 || pos*3 < (unsigned int) maxlen) ) {
+         if( pos > 0 ) target.append(' ');
+         target.writeNumberHex( data[pos], true );
+         ++pos;
+      }
+
+      target.append( '}' );
+   }
 }
 
 
@@ -435,11 +383,14 @@ void ClassString::op_getIndex( VMContext* ctx, void* self ) const
          throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra( "index out of range" ) );
       }
 
-      String *s = new String();
-
-      s->append( str.getCharAt( v ) );
-
-      ctx->stackResult( 2, s->garbage() );
+      if( str.isText() ) {
+         String *s = new String();
+         s->append( str.getCharAt( v ) );
+         ctx->stackResult( 2, s->garbage() );
+      }
+      else {
+         ctx->stackResult(2, Item((int64) str.getCharAt(v)) );
+      }
    }
    else if ( index->isUser() ) // index is a range
    {
@@ -516,6 +467,11 @@ void ClassString::op_getIndex( VMContext* ctx, void* self ) const
          }
       }
 
+      if( ! str.isText() )
+      {
+         s->toMemBuf();
+      }
+
       ctx->stackResult( 2, s->garbage() );
    }
    else
@@ -533,12 +489,10 @@ void ClassString::op_setIndex( VMContext* ctx, void* self ) const
 
    String& str = *static_cast<String*>( self );
 
-   if ( ! value->isString() )
+   if ( ! value->isString() && ! value->isOrdinal())
    {
       throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra("non string/char being assigned") );
    }
-
-   String& strData = *( value->asString() );
 
    if ( index->isOrdinal() )
    {
@@ -553,74 +507,43 @@ void ClassString::op_setIndex( VMContext* ctx, void* self ) const
          throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra("index out of range") );
       }
 
-      value->copied( true ); // the value is copied here.
-
-      str.setCharAt( v, strData.getCharAt( 0 ) );
-
+      if( value->isOrdinal() ) {
+         str.setCharAt(v, value->forceInteger() );
+      }
+      else {
+         str.setCharAt( v, value->asString()->getCharAt( 0 ) );
+      }
       ctx->stackResult( 3, *value );
    }
-   else if ( ! index->isUser() )
+   else if ( ! index->isRange() )
    {
-      throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra("invalid assignment to string") );
-   }
+      Range& rng = *static_cast<Range*>( index->asInst() );
 
-   Class *rangeClass, *rhs;
-   void *udataRangeInst, *udataRhs;
+      int64 strLen = str.length();
+      int64 start = rng.start();
+      int64 end = ( rng.isOpen() ) ? strLen : rng.end();
 
-   if ( ! index->asClassInst( rangeClass, udataRangeInst ) )
-   {
-      throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra("lhs index error") );
-   }
+      // handle negative indexes
+      if ( start < 0 ) start = strLen + start;
+      if ( end < 0 ) end = strLen + end;
 
-   if ( rangeClass->typeID() != FLC_CLASS_ID_RANGE )
-   {
-      throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra("unknown index range") );
-   }
-
-   if ( ! value->asClassInst( rhs, udataRhs ) ) // Get the rhs class and instance
-   {
-      // Something is not right
-      throw new AccessError( ErrorParam( e_arracc, __LINE__ ) );
-   }
-
-   Range& rng = *static_cast<Range*>( udataRangeInst );
-
-   int64 strLen = str.length();
-   int64 start = rng.start();
-   int64 end = ( rng.isOpen() ) ? strLen : rng.end();
-
-   // handle negative indexes
-   if ( start < 0 ) start = strLen + start;
-   if ( end < 0 ) end = strLen + end;
-
-   int64 rangeLen = ( rng.isOpen() ) ? strLen - start : end - start;
-
-   // do some validation checks before proceeding
-   if ( start >= strLen || start < ( strLen * -1 )  || end > strLen || end < ( strLen * -1 ) )
-   {
-      throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra("index out of range") );
-   }
-
-   if ( rhs->typeID() == FLC_CLASS_ID_STRING )  // should be a string
-   {
-      String& strVal = *static_cast<String*>( udataRhs );
-
-      int64 rhsLen = strVal.length();
-
-      if ( rangeLen < rhsLen )
+      // do some validation checks before proceeding
+      if ( start >= strLen || start < ( strLen * -1 )  || end > strLen || end < ( strLen * -1 ) )
       {
+         throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra("index out of range") );
+      }
+
+      if ( value->isString() )  // should be a string
+      {
+         String& strVal = *value->asString();
          str.change( (Falcon::length_t)start, (Falcon::length_t)end, strVal );
       }
-      else if ( rangeLen > rhsLen )
+      else
       {
-         str.change( (Falcon::length_t)start, (Falcon::length_t)end, strData );
+         String temp;
+         temp.append(value->forceInteger());
+         str.change((Falcon::length_t)start, (Falcon::length_t)end, temp );
       }
-      else // rangeLen == rhsLen
-      {
-         str.copy( strData );
-      }
-
-      value->copied( true ); // the value is copied here.
 
       ctx->stackResult( 3, *value );
    }
@@ -676,6 +599,38 @@ void ClassString::op_toString( VMContext* ctx, void* data ) const
 void ClassString::op_isTrue( VMContext* ctx, void* str ) const
 {
    ctx->topData().setBoolean( static_cast<String*>( str )->size() != 0 );
+}
+
+//=====================================================================
+// Properties
+//
+FALCON_DEFINE_PROPERTY_SET(ClassString, len)( void* , const Item& )
+{
+}
+
+
+FALCON_DEFINE_PROPERTY_GET(ClassString, len)( void* instance, Item& value )
+{
+   value = (int64) static_cast<String*>( instance )->length();
+}
+
+FALCON_DEFINE_PROPERTY_SET(ClassString, isText)( void* instance, const Item& value )
+{
+   String* str = static_cast<String*>( instance );
+   if( value.isTrue() ) {
+      if( ! str->isText() ) {
+         str->manipulator( str->manipulator()->bufferedManipulator() );
+      }
+   }
+   else {
+      str->toMemBuf();
+   }
+}
+
+
+FALCON_DEFINE_PROPERTY_GET(ClassString, isText)( void* instance, Item& value )
+{
+   value.setBoolean( static_cast<String*>( instance )->isText() );
 }
 
 }

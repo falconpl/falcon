@@ -56,7 +56,7 @@ void Item::setString( const String& str )
 
 void Item::setString( String* str, bool bGarbage, int line, const char* src )
 {
-   if( line ) line = line;
+   (void) sizeof(line);
    
    static Class* strClass = Engine::instance()->stringClass();
    static Collector* coll = Engine::instance()->collector();

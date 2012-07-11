@@ -13,6 +13,7 @@
    See LICENSE file for licensing details.
 */
 
+#define SRC "engine/variable.cpp"
 
 #include <falcon/variable.h>
 #include <falcon/engine.h>

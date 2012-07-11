@@ -44,10 +44,13 @@ namespace csh {
 
 Static handler_static;
 Buffer handler_buffer;
+MemBuf handler_membuf;
 Static16 handler_static16;
 Buffer16 handler_buffer16;
+MemBuf16 handler_membuf16;
 Static32 handler_static32;
 Buffer32 handler_buffer32;
+MemBuf32 handler_membuf32;
 
 
 template<typename t1, typename t2>
@@ -298,6 +301,7 @@ void Byte::bufferize( String *str ) const
    }
 }
 
+
 void Byte::bufferize( String *str, const String *strOrig ) const
 {
    // copy the other string contents.
@@ -334,8 +338,24 @@ void Byte::bufferize( String *str, const String *strOrig ) const
       str->setRawStorage( mem, size );
       str->m_class = strOrig->m_class->bufferedManipulator();
    }
-
 }
+
+
+void Byte::toMemBuf( String *str ) const
+{
+   // already buffered?
+   bufferize(str);
+   str->m_class = str->m_class->membufManipulator();
+}
+
+
+void Byte::toMemBuf( String *str, const String* strOrig ) const
+{
+   // already buffered?
+   bufferize(str, strOrig);
+   str->m_class = str->m_class->membufManipulator();
+}
+
 
 //============================================================0
 
@@ -357,6 +377,22 @@ const Base *Static16::bufferedManipulator() const
 const Base *Static32::bufferedManipulator() const
 {
    return  &handler_buffer32;
+}
+
+
+const Base *Static::membufManipulator() const
+{
+   return  &handler_membuf;
+}
+
+const Base *Static16::membufManipulator() const
+{
+   return  &handler_membuf16;
+}
+
+const Base *Static32::membufManipulator() const
+{
+   return  &handler_membuf32;
 }
 
 void Static::setCharAt( String *str, length_t pos, char_t chr ) const
@@ -523,6 +559,22 @@ void Buffer32::setCharAt( String *str, length_t pos, char_t chr ) const
 {
    uint32 *buf32 = (uint32 *) str->getRawStorage();
    buf32[ pos ] = chr;
+}
+
+
+const Base *Buffer::membufManipulator() const
+{
+   return  &handler_membuf;
+}
+
+const Base *Buffer16::membufManipulator() const
+{
+   return  &handler_membuf16;
+}
+
+const Base *Buffer32::membufManipulator() const
+{
+   return  &handler_membuf32;
 }
 
 
@@ -720,6 +772,48 @@ void Buffer::destroy( String *str ) const
    }
 }
 
+
+void MemBuf::setCharAt( String *str, length_t pos, char_t chr ) const
+{
+   str->getRawStorage()[pos] = (byte) chr;
+}
+
+void MemBuf::insert( String *str, length_t pos, length_t len, const String *source ) const
+{
+   byte* dest = str->getRawStorage();
+   byte* src = source->getRawStorage();
+   length_t fl = str->size() - source->size()-len;
+   if( fl > str->allocated() ) {
+      byte* dest2 = (byte*) malloc( fl );
+      memcpy(dest2, dest, pos );
+      memcpy(dest2 + pos, src, source->size());
+      memcpy(dest2 + pos + source->size(), dest +pos + len, str->size() - pos - len );
+      destroy(str);
+   }
+   else {
+      memmove( dest + pos + source->size(), dest + pos + len, str->size() - pos - len );
+      memcpy( dest+pos, source, source->size() );
+   }
+}
+
+const Base *MemBuf::bufferedManipulator() const
+{
+   return &handler_buffer;
+}
+
+
+const Base *MemBuf16::bufferedManipulator() const
+{
+   return &handler_buffer16;
+}
+
+
+const Base *MemBuf32::bufferedManipulator() const
+{
+   return &handler_buffer32;
+}
+
+
 } // namespace csh
 
 
@@ -866,6 +960,20 @@ String &String::adopt( char *buffer, length_t size, length_t allocated )
    m_allocated = allocated;
    m_storage = (byte *) buffer;
 
+
+   return *this;
+}
+
+
+String &String::adoptMemBuf( byte *buffer, length_t size, length_t allocated )
+{
+   if ( m_allocated != 0 )
+      m_class->destroy( this );
+
+   m_class = &csh::handler_membuf;
+   m_size = size;
+   m_allocated = allocated;
+   m_storage = (byte *) buffer;
 
    return *this;
 }
@@ -1343,6 +1451,7 @@ void String::internal_escape( String &strout, bool full ) const
             else{
                strout += chat;
             }
+            break;
       }
       pos++;
    }
@@ -1828,6 +1937,20 @@ String &String::bufferize()
 }
 
 
+String &String::toMemBuf( const String &other )
+{
+   m_class->toMemBuf( this, &other );
+   return *this;
+}
+
+
+String &String::toMemBuf()
+{
+   m_class->toMemBuf( this );
+   return *this;
+}
+
+
 void String::trim( int mode )
 {
    length_t front = 0;
@@ -2173,6 +2296,7 @@ bool String::wildcardMatch( const String& wildcard, bool bIcase ) const
                   return false;
                }
             }
+            break;
       }
    }
 
@@ -2198,6 +2322,7 @@ void String::escapeQuotes()
 
       default:
          ++i;
+         break;
       }
    }
 }
@@ -2229,6 +2354,7 @@ void String::unescapeQuotes()
       default:
          state = false;
          ++i;
+         break;
       }
    }
 }

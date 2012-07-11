@@ -50,6 +50,13 @@ ClassUser::ClassUser( const String& name ):
 {
 }
 
+ClassUser::ClassUser( const String& name, int type ):
+   Class(name, type ),
+   _p( new Private ),
+   m_carriedProps(0)
+{
+}
+
 
 ClassUser::~ClassUser()
 {

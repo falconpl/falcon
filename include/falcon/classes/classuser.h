@@ -77,6 +77,7 @@ class FALCON_DYN_CLASS ClassUser: public Class
 {
 public:
    ClassUser( const String& name );
+   ClassUser( const String& name, int type );
    virtual ~ClassUser();
    
    /** Adds a property. 
@@ -163,7 +164,7 @@ public:
    
    /** Number of properties carried (to be cached).
     
-    Carried properties are those properties that requrie separate caching,
+    Carried properties are those properties that require separate caching,
     usually but not necessarily performed automatically or semi-automatically 
     through UserCarrier.
     */

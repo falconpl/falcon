@@ -225,8 +225,10 @@ bool DataWriter::write( double value )
 bool DataWriter::write( const String& tgt )
 {
    byte nCharCount=(byte) tgt.manipulator()->charSize();
+   byte nIsText = (byte) tgt.isText() ? 1:0;
    length_t size = tgt.size();
 
+   write( nIsText );
    write( nCharCount );
    write( size );
 

@@ -214,24 +214,41 @@ bool DataReader::read( byte* buffer, length_t size )
 
 bool DataReader::read( String& tgt )
 {
-   byte nCharCount=0;
+   byte nCharCount=0, nIsText = 0;
    length_t size = (length_t)-1;
 
    try
    {
+      if( ! read(nIsText) ) return false;
       if( ! read(nCharCount) ) return false;
       
-      switch( nCharCount )
-      {
-         case 1: tgt.manipulator(&csh::handler_buffer); break;
-         case 2: tgt.manipulator(&csh::handler_buffer16); break;
-         case 4: tgt.manipulator(&csh::handler_buffer32); break;
-         default:
-            if( m_stream->shouldThrow() )
-            {
-               throw new IOError( ErrorParam(e_deser, __LINE__, __FILE__ ));
-            }
-            return false;
+      if( nIsText ) {
+         switch( nCharCount )
+         {
+            case 1: tgt.manipulator(&csh::handler_buffer); break;
+            case 2: tgt.manipulator(&csh::handler_buffer16); break;
+            case 4: tgt.manipulator(&csh::handler_buffer32); break;
+            default:
+               if( m_stream->shouldThrow() )
+               {
+                  throw new IOError( ErrorParam(e_deser, __LINE__, __FILE__ ));
+               }
+               return false;
+         }
+      }
+      else {
+         switch( nCharCount )
+         {
+            case 1: tgt.manipulator(&csh::handler_membuf); break;
+            case 2: tgt.manipulator(&csh::handler_membuf16); break;
+            case 4: tgt.manipulator(&csh::handler_membuf32); break;
+            default:
+               if( m_stream->shouldThrow() )
+               {
+                  throw new IOError( ErrorParam(e_deser, __LINE__, __FILE__ ));
+               }
+               return false;
+         }
       }
 
       if( !read(size) ) return false;

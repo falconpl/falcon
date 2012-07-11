@@ -80,6 +80,7 @@ typedef enum
 {
    cs_static,
    cs_buffer,
+   cs_membuf
 } t_type;
 
 /** Invalid position for core strings. */
@@ -107,9 +108,12 @@ public:
 
    virtual void bufferize( String *str ) const =0;
    virtual void bufferize( String *str, const String *strOrig ) const =0;
+   virtual void toMemBuf( String *str ) const = 0;
+   virtual void toMemBuf( String *str, const String *strOrig ) const = 0;
    virtual void shrink( String *str ) const = 0;
 
    virtual const Base *bufferedManipulator() const =0;
+   virtual const Base *membufManipulator() const =0;
 
 protected:
    t_type m_type;
@@ -125,7 +129,7 @@ class FALCON_DYN_CLASS Byte: public Base
 public:
    virtual ~ Byte() {}
    
-   // Todo: fix this incongruency
+   // Todo: fix this incongruence
    virtual void subString( const String *str, int32 start, int32 end, String *target ) const;
    virtual bool change( String *str, length_t pos, length_t end, const String *source ) const;
    virtual String *clone( const String *str ) const;
@@ -134,12 +138,16 @@ public:
    virtual void bufferize( String *str ) const;
    virtual void bufferize( String *str, const String *strOrig ) const;
 
+   virtual void toMemBuf( String *str ) const;
+   virtual void toMemBuf( String *str, const String *strOrig ) const;
+
    virtual const Base *bufferedManipulator() const { return this; }
+   virtual const Base *membufManipulator() const { return this; }
 };
 
 
 /** Static byte oriented string manager.
-   Useful to instantiante and manage strings whose content is byte oriented and whose size is
+   Useful to instantiate and manage strings whose content is byte oriented and whose size is
    known in advance; for example, symbol names in the Falcon module are easily managed with this class.
 
    Every write operation on strings managed by this class will cause its manager to be changed
@@ -163,6 +171,7 @@ public:
 
    virtual void shrink( String *str ) const;
    virtual const Base *bufferedManipulator() const;
+   virtual const Base *membufManipulator() const;
 };
 
 
@@ -189,7 +198,7 @@ public:
    virtual void insert( String *str, length_t pos, length_t len, const String *source ) const;
    virtual void destroy( String *str ) const;
    virtual void shrink( String *str ) const;
-
+   virtual const Base *membufManipulator() const;
 };
 
 class FALCON_DYN_CLASS Static16: public Static
@@ -204,6 +213,7 @@ public:
    virtual void setCharAt( String *str, length_t pos, char_t chr ) const;
    virtual void remove( String *str, length_t pos, length_t len ) const;
    virtual const Base *bufferedManipulator() const;
+   virtual const Base *membufManipulator() const;
 };
 
 class FALCON_DYN_CLASS Static32: public Static16
@@ -218,6 +228,7 @@ public:
    virtual void setCharAt( String *str, length_t pos, char_t chr ) const;
    virtual void remove( String *str, length_t pos, length_t len ) const;
    virtual const Base *bufferedManipulator() const;
+   virtual const Base *membufManipulator() const;
 };
 
 class FALCON_DYN_CLASS Buffer16: public Buffer
@@ -231,6 +242,7 @@ public:
    virtual ~Buffer16() {}
    
    virtual void setCharAt( String *str, length_t pos, char_t chr ) const;
+   virtual const Base *membufManipulator() const;
 };
 
 class FALCON_DYN_CLASS Buffer32: public Buffer16
@@ -243,7 +255,43 @@ public:
    virtual ~Buffer32() {}
    
    virtual void setCharAt( String *str, length_t pos, char_t chr ) const;
+   virtual const Base *membufManipulator() const;
 };
+
+
+class FALCON_DYN_CLASS MemBuf: public Buffer
+{
+public:
+   MemBuf()
+   {
+      m_type = cs_membuf;
+      m_charSize = 1;
+   }
+
+   virtual ~MemBuf() {}
+
+   virtual void setCharAt( String *str, length_t pos, char_t chr ) const;
+   virtual void insert( String *str, length_t pos, length_t len, const String *source ) const;
+   virtual const Base *bufferedManipulator() const;
+};
+
+
+class FALCON_DYN_CLASS MemBuf16: public MemBuf
+{
+public:
+   MemBuf16():MemBuf(){}
+   virtual ~MemBuf16() {}
+   virtual const Base *bufferedManipulator() const;
+};
+
+class FALCON_DYN_CLASS MemBuf32: public MemBuf
+{
+public:
+   MemBuf32():MemBuf(){}
+   virtual ~MemBuf32() {}
+   virtual const Base *bufferedManipulator() const;
+};
+
 
 extern FALCON_DYN_SYM Static handler_static;
 extern FALCON_DYN_SYM Buffer handler_buffer;
@@ -252,37 +300,13 @@ extern FALCON_DYN_SYM Buffer16 handler_buffer16;
 extern FALCON_DYN_SYM Static32 handler_static32;
 extern FALCON_DYN_SYM Buffer32 handler_buffer32;
 
+extern FALCON_DYN_SYM MemBuf handler_membuf;
+extern FALCON_DYN_SYM MemBuf16 handler_membuf16;
+extern FALCON_DYN_SYM MemBuf32 handler_membuf32;
+
 } // namespace csh
 
-/** Core string
-   This class is called "Core String" because it represents the strings as the internal VM and engine
-   sees them. This class is highly configurable and may manage any string that Falcon will ever need
-   to mangle with.
 
-   A set of fields is used to store the informations about the memory buffer where the string is
-   actually held. The "kind" of string is determined by its manager. The manager is a special friend
-   class that is in charge to effect all the needed operations on a particular kind of string. In
-   example, there's a manager for static C strings, one for memAlloc() allocated strings, and in
-   future also for chunked (multi buffer) stings and a parallel set of managers for international
-   strings.
-
-   The kind of the string can be changed by just changing its manager; this is often done automatically
-   by an appropriate constructor or when some operation occour (i.e. a static string may be turned into
-   a chunked one at write operations, and a chunked may get transformed into a buffered one if a linear
-   access on the whole string is needed.
-
-   String have a set of specialized subclasses which actually does nothing if not construct the
-   base String with the appropriate string manager. Every corestring class is BOUND having not
-   any private data member, because the derived String may be turned in something else at every moment
-   without changing its memory position or layout. There's no RTTI information about this changes; all
-   the polimorphism needed is applied by changing the string manager.
-
-   However, String sublcass may define some new function members to handle initialization steps
-   before "unmasking" the String structure and handle it back to the rest of the system. Also,
-   as the String subclass may be determined by looking at the manager, a subclass with special
-   operations (new member function) may be casted later on safely. The only requisite is that there's a 1:1
-   mapping between corestring subclasses and the manager they use.
-*/
 
 class FALCON_DYN_CLASS String
 {
@@ -303,8 +327,8 @@ protected:
    byte *m_storage;
    uint32 m_lastMark;
 
-   /**sym
-    * Creates the core string.
+   /**
+    * Creates the string.
     *
     * This method is protected. It can be accessed only by subclasses.
     */
@@ -495,6 +519,16 @@ public:
    */
    String &bufferize();
 
+   /** Copies the other string in a buffer.
+      \return itself
+   */
+   String &toMemBuf( const String& other );
+
+   /** Forces this string to get buffer space AND sets it to non-textual content.
+      \return itself
+   */
+   String &toMemBuf();
+
     /** Adopt a pre-allocated dynamic buffer.
       This function takes the content of the given buffer and sets it as the
       internal storage of the string. The buffer is considered dynamically
@@ -511,6 +545,23 @@ public:
       \return itself
    */
    String &adopt( char *buffer, length_t size, length_t allocated );
+
+   /** Adopt a pre-allocated dynamic buffer as non-textual content.
+     This function takes the content of the given buffer and sets it as the
+     internal storage of the string. The buffer is considered dynamically
+     allocated with memAlloc(), and will be destroyed with memFree().
+
+     This string is internally transformed in a raw buffer of non-text data;
+     any previous content is destroyed.
+
+     String is considered a single byte char width string.
+
+     \param buffer the buffer to be adopted
+     \param size the size of the string contained in the buffer (in bytes)
+     \param allocated the size of the buffer as it was allocated (in bytes)
+     \return itself
+  */
+   String &adoptMemBuf( byte *buffer, length_t size, length_t allocated );
 
    /** Adopt a pre-allocated dynamic buffer (wide char version).
       This function takes the content of the given buffer and sets it as the
@@ -543,7 +594,7 @@ public:
       Actually this method should be called only by internal functions, or only if you are
       really knowing what you are doing.
    */
-   void manipulator( csh::Base *m ) { m_class = m; }
+   void manipulator( const csh::Base *m ) { m_class = m; }
 
    /** Return the type of the string.
       The type is determined by the manipulator. Warning: this method calls a function virtually,
@@ -551,6 +602,24 @@ public:
       manipulator pointer with the standard manipulators.
    */
    csh::t_type type() const { return m_class->type(); }
+
+   /**
+       Returns true if the string is meant to hold text.
+
+       This returns true if the string was created as holding
+       textual data (either static or buffered).
+
+       \return true if the content is textual, false if it's an arbitrary
+       binary data memory buffer.
+    */
+   bool isText() const { return m_class->type() != csh::cs_membuf; }
+
+   /**
+       Return true if the string is static.
+
+       \return true if the string is using a static buffer.
+    */
+   bool isStatic() const { return m_class->type() == csh::cs_static; }
 
    /** Returns the amount of allocated memory in the deep buffer.
       Used in buffers strings or in general in contiguous memory strings. Other kind of strings
@@ -605,28 +674,39 @@ public:
    */
    length_t length() const { return m_class->length( this ); }
 
-   /** Tranforms the string into a zero-terminated string.
-      This function fills a buffer that can be fed in libc and STL function requiring a zero
-      terminated string. The string manager will ensure that the data returned has one zero
+   /** Transforms the string into a zero-terminated string.
+      This function fills a buffer that can be fed in libc and STL function
+      requiring a zero terminated string.
+      The string manager will ensure that the data returned has one zero
       at the end of the string.
-
-      8-bit strings are left unchanged.
 
       International strings are turned into UTF-8 strings (so that they can be fed
       into internationalized STL and libc functions).
 
-      The operation is relatively slow. Use when no other option is avalaible, and cache
-      the result.
+      The operation is relatively slow. Use when no other option is available,
+      and cache the result.
 
       Provide a reasonable space. Safe space is size() * 4 + 1.
+
+      \note Consider using AutoCString helper class for automated allocation
+      in stack or in heap of the needed memory.
 
       \param target the buffer where to place the C string.
       \param bufsize the size of the target buffer in bytes.
       \return npos if the buffer is not long enough, else returns the used size.
    */
+   length_t toUTF8String( char *target, length_t bufsize ) const;
+
+   /**
+     Alias to toUTF8String.
+
+      \param target the buffer where to place the C string.
+      \param bufsize the size of the target buffer in bytes.
+      \return npos if the buffer is not long enough, else returns the used size.
+    */
    length_t toCString( char *target, length_t bufsize ) const;
 
-   /** Tranforms the string into a zero-terminated wide string.
+   /** Transforms the string into a zero-terminated wide string.
       This function returns fills a buffer that can be fed in functions accpeting
       wchar_t strings. Returned strings are encoded in fixed lenght UTF-16, with
       endianity equivalent to native platform endianity.
@@ -637,6 +717,9 @@ public:
 
       Required space is constant, and exactly (lenght() + 1) * sizeof(wchar_t)  bytes
       (last "+1" is for final wchar_t "0" marker).
+
+      \note Consider using AutoWString helper class for automated allocation
+      in stack or in heap of the needed memory.
 
       \param target the buffer where to place the wchar_t string.
       \param bufsize the size of the target buffer in bytes.
@@ -1153,9 +1236,6 @@ public:
     */
    void upper();
 
-   bool isStatic() const {
-      return manipulator()->type() == csh::cs_static;
-   }
 
    /** Bufferize an UTF-8 string.
 

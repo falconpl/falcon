@@ -219,9 +219,9 @@ public:
    void setString( String* str, bool bGarbage = false, int line=0, const char* source=0 );
 
    /** Creates a boolean item. */
-   /*explicit inline Item( bool b ) {
+   explicit inline Item( bool b ) {
       setBoolean( b );
-   }*/
+   }
 
    /** Sets this item as boolean */
    inline void setBoolean( bool tof )
@@ -499,6 +499,10 @@ public:
    bool isMemBuf() const { return false; } 
    bool isString() const {
       return (type() == FLC_CLASS_ID_STRING);
+   }
+
+   bool isRange() const {
+      return (type() == FLC_CLASS_ID_RANGE);
    }
 
    bool isArray() const {

@@ -122,7 +122,9 @@ void apply_Atom_True ( const Rule&, Parser& p )
 
    TokenInstance* ti = p.getNextToken();
    ti->token( sp.Atom );
-   ti->setValue( new ExprValue(Item(true), ti->line(), ti->chr()), expr_deletor );
+   Item val;
+   val.setBoolean(true);
+   ti->setValue( new ExprValue(val, ti->line(), ti->chr()), expr_deletor );
 }
 
 void apply_Atom_Self ( const Rule&, Parser& p )

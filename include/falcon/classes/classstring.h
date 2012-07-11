@@ -17,7 +17,9 @@
 #define _FALCON_CLASSSTRING_H_
 
 #include <falcon/setup.h>
-#include <falcon/class.h>
+#include <falcon/classes/classuser.h>
+#include <falcon/property.h>
+#include <falcon/method.h>
 #include <falcon/string.h>
 
 #include <falcon/pstep.h>
@@ -28,7 +30,7 @@ namespace Falcon
  Class handling a string as an item in a falcon script.
  */
 
-class FALCON_DYN_CLASS ClassString: public Class
+class FALCON_DYN_CLASS ClassString: public ClassUser
 {
 public:
 
@@ -43,16 +45,6 @@ public:
    virtual void restore( VMContext* , DataReader* dr, void*& data ) const;
 
    virtual void describe( void* instance, String& target, int, int ) const;
-
-   // enumerateProperties enumerates everything, methods included
-   // used by the vm to determine everything in a class
-   virtual void enumerateProperties( void* self, PropertyEnumerator& cb ) const;
-
-   // enumeratePV should enumerate only those properties that have a value
-   // and should be visible to the user.
-   virtual void enumeratePV( void* self, PVEnumerator& cb ) const;
-
-   virtual bool hasProperty( void* self, const String& prop ) const;
 
    virtual void gcMarkInstance( void* instance, uint32 mark ) const;
    virtual bool gcCheckInstance( void* instance, uint32 mark ) const;
@@ -72,6 +64,41 @@ public:
 
 private:
 
+   //====================================================
+   // Properties.
+   //
+
+   FALCON_DECLARE_PROPERTY( isText );
+   FALCON_DECLARE_PROPERTY( len );
+
+   /*
+   FALCON_DECLARE_PROPERTY( back );
+   FALCON_DECLARE_PROPERTY( charSize );
+   FALCON_DECLARE_PROPERTY( escape );
+   FALCON_DECLARE_PROPERTY( esq );
+   FALCON_DECLARE_PROPERTY( ftrim );
+   FALCON_DECLARE_PROPERTY( isText );
+   FALCON_DECLARE_PROPERTY( len );
+   FALCON_DECLARE_PROPERTY( lower );
+   FALCON_DECLARE_PROPERTY( rtrim );
+   FALCON_DECLARE_PROPERTY( trim );
+   FALCON_DECLARE_PROPERTY( unescape );
+   FALCON_DECLARE_PROPERTY( unesq );
+   FALCON_DECLARE_PROPERTY( upper );
+
+   FALCON_DECLARE_METHOD( cmpi, "S" );
+   FALCON_DECLARE_METHOD( endsWith, "S" );
+   FALCON_DECLARE_METHOD( fill, "S" );
+   FALCON_DECLARE_METHOD( join, "..." );
+   FALCON_DECLARE_METHOD( merge, "A" );
+   FALCON_DECLARE_METHOD( replace, "S,S" );
+   FALCON_DECLARE_METHOD( replicate, "N" );
+   FALCON_DECLARE_METHOD( rfind, "S" );
+   FALCON_DECLARE_METHOD( rsplit, "S" );
+   FALCON_DECLARE_METHOD( splittr, "S" );
+   FALCON_DECLARE_METHOD( startsWith, "S" );
+   FALCON_DECLARE_METHOD( wmatch, "S" );
+   */
    class FALCON_DYN_CLASS NextOp: public PStep
    {
    public:
