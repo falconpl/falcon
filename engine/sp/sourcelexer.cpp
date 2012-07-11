@@ -112,6 +112,7 @@ Parsing::TokenInstance* SourceLexer::nextToken()
                default:
                   unget(chr);
                   resetState();
+                  //m_hadOperator = true;
             }
             break;
 
@@ -139,17 +140,17 @@ Parsing::TokenInstance* SourceLexer::nextToken()
                   break;
                }
                
-               case ';': return m_parser->T_EOL.makeInstance(m_line, m_chr++);
-               case ':': return parser->T_Colon.makeInstance(m_line, m_chr++);
-               case ',': return parser->T_Comma.makeInstance(m_line, m_chr++);
+               case ';': m_hadOperator = true; return m_parser->T_EOL.makeInstance(m_line, m_chr++);
+               case ':': m_hadOperator = true; return parser->T_Colon.makeInstance(m_line, m_chr++);
+               case ',': m_hadOperator = true; return parser->T_Comma.makeInstance(m_line, m_chr++);
                case '"':  m_stringML = false; m_stringStart = true; m_state = state_double_string; break;
                case '\'': m_stringML = false; m_stringStart = true; m_state = state_single_string; break;
                case '0': m_state = state_zero_prefix; break;
-               case '(': m_chr++; return parser->T_Openpar.makeInstance(m_line,m_chr); break;
+               case '(': m_chr++; m_hadOperator = true; return parser->T_Openpar.makeInstance(m_line,m_chr); break;
                case ')': m_chr++; resetState(); return parser->T_Closepar.makeInstance(m_line,m_chr); break;
-               case '[': m_chr++; return parser->T_OpenSquare.makeInstance(m_line,m_chr); break;
+               case '[': m_chr++; m_hadOperator = true; return parser->T_OpenSquare.makeInstance(m_line,m_chr); break;
                case ']': m_chr++; resetState(); return parser->T_CloseSquare.makeInstance(m_line,m_chr); break;
-               case '{': m_chr++; return parser->T_OpenGraph.makeInstance(m_line,m_chr); break;
+               case '{': m_chr++; m_hadOperator = true; return parser->T_OpenGraph.makeInstance(m_line,m_chr); break;
                case '}': m_chr++;
                   resetState();
                   m_nextToken = parser->T_end.makeInstance(m_line,m_chr);
@@ -625,12 +626,14 @@ Parsing::TokenInstance* SourceLexer::nextToken()
                   {
                      m_chr++;
                      resetState();
+                     m_hadOperator = true;
                      return parser->T_DotSquare.makeInstance(m_sline, m_schr );
                   }
                   else if ( chr == '(' )
                   {
                      m_chr++;
                      resetState();
+                     m_hadOperator = true;
                      return parser->T_DotPar.makeInstance(m_sline, m_schr );
                   }
                }               
@@ -832,7 +835,7 @@ Parsing::TokenInstance* SourceLexer::checkOperator()
 {
    SourceParser* parser = static_cast<SourceParser*>(m_parser);
 
-   bool bOp = m_hadOperator;
+   bool bOp = m_hadOperator || m_state == state_none;
    m_hadOperator = true;
    switch(m_text.length())
    {

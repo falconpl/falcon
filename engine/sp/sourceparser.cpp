@@ -403,7 +403,7 @@ SourceParser::SourceParser():
 
    // Unary operators
    // the lexer may find a non-unary minus when parsing it not after an operator...;   
-   //Expr<< (r_Expr_neg   << "Expr_neg"   << apply_expr_neg << T_Minus << Expr );
+   Expr<< (r_Expr_neg   << "Expr_neg"   << apply_expr_neg << T_Minus << Expr );
    // ... or find an unary minus when getting it after another operator.;
    Expr<< (r_Expr_neg2   << "Expr_neg2"   << apply_expr_neg << T_UnaryMinus << Expr );   
    Expr<< (r_Expr_not   << "Expr_not"  << apply_expr_not  << T_not << Expr );
