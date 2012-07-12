@@ -1,6 +1,9 @@
 .directory
 *.fam
 nbproject
+.cproject
+.project
+.settings
 
 # emacs
 .#*
