@@ -173,7 +173,7 @@ public:
 class ExprBAND::ops
 {
 public:
-   static int64 operate( int64 a, int64 b ) { return ((uint64)a) & ((uint64)b);; }
+   static int64 operate( int64 a, int64 b ) { return ((uint64)a) & ((uint64)b); }
    static void operate( VMContext*, Class*, void* ) { 
       throw new OperandError( ErrorParam( e_invop, __LINE__, SRC )
          .extra("^&")
@@ -188,7 +188,7 @@ public:
 class ExprBOR::ops
 {
 public:
-   static int64 operate( int64 a, int64 b ) { return ((uint64)a) | ((uint64)b);; }
+   static int64 operate( int64 a, int64 b ) { return ((uint64)a) | ((uint64)b); }
    static void operate( VMContext*, Class*, void* ) { 
       throw new OperandError( ErrorParam( e_invop, __LINE__, SRC )
          .extra("^|")
@@ -227,7 +227,7 @@ public:
    static void operate( VMContext* ctx, Class* cls, void* inst ) { cls->op_aadd(ctx, inst); }
    static numeric operaten( numeric a, numeric b ) { return a + b; }
    static bool zeroCheck( const Item& ) { return false; }
-   static void swapper( Item& op1, Item& op2 ) { op1.swap(op2); }   
+   static void swapper( Item& , Item&  ) {  }
    static void assign( PStep* lvalue, VMContext* ctx ) {if( lvalue != 0 ) { ctx->stepIn( lvalue ); } }
 };
 
@@ -238,7 +238,7 @@ public:
    static void operate( VMContext* ctx, Class* cls, void* inst ) { cls->op_asub(ctx, inst); }
    static numeric operaten( numeric a, numeric b ) { return a - b; }
    static bool zeroCheck( const Item& ) { return false; }
-   static void swapper( Item& op1, Item& op2 ) { op1.swap(op2); }   
+   static void swapper( Item&, Item& ) { }
    static void assign( PStep* lvalue, VMContext* ctx ) {if( lvalue != 0 ) { ctx->stepIn( lvalue ); } }
 };
 
@@ -249,7 +249,7 @@ public:
    static void operate( VMContext* ctx, Class* cls, void* inst ) { cls->op_amul(ctx, inst); }
    static numeric operaten( numeric a, numeric b ) { return a * b; }
    static bool zeroCheck( const Item& ) { return false; }
-   static void swapper( Item& op1, Item& op2 ) { op1.swap(op2); }   
+   static void swapper( Item& , Item&  ) {}
    static void assign( PStep* lvalue, VMContext* ctx ) {if( lvalue != 0 ) { ctx->stepIn( lvalue ); } }
 };
 
@@ -260,8 +260,7 @@ public:
    static void operate( VMContext* ctx, Class* cls, void* inst ) { cls->op_adiv(ctx, inst); }
    static numeric operaten( numeric a, numeric b ) { return a / b; }
    static bool zeroCheck( const Item& n ) { return n.isOrdinal() && n.forceInteger() == 0; }
-   static void swapper( Item& op1, Item& op2 ) { 
-      op1.swap(op2); 
+   static void swapper( Item&, Item& op2 ) {
       if( op2.isInteger() ) {op2.setNumeric( op2.asInteger());} 
    }   
    static void assign( PStep* lvalue, VMContext* ctx ) {if( lvalue != 0 ) { ctx->stepIn( lvalue ); } }
@@ -274,7 +273,7 @@ public:
    static void operate( VMContext* ctx, Class* cls, void* inst ) { cls->op_amod(ctx, inst); }
    static numeric operaten( numeric a, numeric b ) { return ((int64)a) % ((int64)b); }
    static bool zeroCheck( const Item& n ) { return n.isOrdinal() && n.forceInteger() == 0; }
-   static void swapper( Item& op1, Item& op2 ) { op1.swap(op2); }   
+   static void swapper( Item&, Item& ) { }
    static void assign( PStep* lvalue, VMContext* ctx ) {if( lvalue != 0 ) { ctx->stepIn( lvalue ); } }
 };
 
@@ -285,8 +284,7 @@ public:
    static void operate( VMContext* ctx, Class* cls, void* inst ) { cls->op_apow(ctx, inst); }
    static numeric operaten( numeric a, numeric b ) { return pow(a,b); }
    static bool zeroCheck( const Item& ) { return false; }
-   static void swapper( Item& op1, Item& op2 ) {
-      op1.swap(op2);
+   static void swapper( Item&, Item& op2 ) {
       if( op2.isInteger() ) {op2.setNumeric( op2.asInteger());}
    }
    static void assign( PStep* lvalue, VMContext* ctx ) {if( lvalue != 0 ) { ctx->stepIn( lvalue ); } }
@@ -295,22 +293,22 @@ public:
 class ExprAutoRShift::ops
 {
 public:
-   static int64 operate( int64 a, int64 b ) { return ((uint64)a) >> ((uint64)b);; }
+   static int64 operate( int64 a, int64 b ) { return ((uint64)a) >> ((uint64)b); }
    static void operate( VMContext* ctx, Class* cls, void* inst ) { cls->op_ashr(ctx, inst); }
    static numeric operaten( numeric a, numeric b ) { return ((uint64)a) >> ((uint64)b); }
    static bool zeroCheck( const Item& ) { return false; }
-   static void swapper( Item& op1, Item& op2 ) {op1.swap(op2);}
+   static void swapper( Item& , Item&  ) {}
    static void assign( PStep* lvalue, VMContext* ctx ) {if( lvalue != 0 ) { ctx->stepIn( lvalue ); } }
 };
 
 class ExprAutoLShift::ops
 {
 public:
-   static int64 operate( int64 a, int64 b ) { return ((uint64)a) << ((uint64)b);; }
+   static int64 operate( int64 a, int64 b ) { return ((uint64)a) << ((uint64)b); }
    static void operate( VMContext* ctx, Class* cls, void* inst ) { cls->op_ashl(ctx, inst); }
    static numeric operaten( numeric a, numeric b ) { return ((uint64)a) << ((uint64)b); }
    static bool zeroCheck( const Item& ) { return false; }
-   static void swapper( Item& op1, Item& op2 ) { op1.swap(op2); }   
+   static void swapper( Item&, Item& ) { }
    static void assign( PStep* lvalue, VMContext* ctx ) {if( lvalue != 0 ) { ctx->stepIn( lvalue ); } }
 };
 
