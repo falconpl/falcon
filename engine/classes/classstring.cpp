@@ -111,6 +111,10 @@ void ClassString::describe( void* instance, String& target, int, int maxlen ) co
       byte* data = self->getRawStorage();
       while( pos < self->size() && (maxlen <0 || pos*3 < (unsigned int) maxlen) ) {
          if( pos > 0 ) target.append(' ');
+         if( data[pos] < 16 )
+         {
+            target.append('0');
+         }
          target.writeNumberHex( data[pos], true );
          ++pos;
       }
@@ -257,48 +261,41 @@ void ClassString::op_aadd( VMContext* ctx, void* self ) const
    String* str = static_cast<String*>( self );
 
    Item* op1, *op2;
-
    ctx->operands( op1, op2 );
 
    Class* cls;
    void* inst;
 
-   if ( ! op2->asClassInst( cls, inst ) )
+   if ( op2->isString() )
    {
       if ( op1->copied() )
       {
          String* copy = new String( *str );
+         copy->append( *op2->asString() );
+         ctx->stackResult( 2, copy->garbage() );
+      }
+      else
+      {
+         op1->asString()->append( *op2->asString() );
+      }
 
+      return;
+   }
+   else if ( ! op2->asClassInst( cls, inst ) )
+   {
+      // a flat entity
+      if ( op1->copied() )
+      {
+         String* copy = new String( *str );
          copy->append( op2->describe() );
-
          ctx->stackResult( 2, copy->garbage() );
       }
       else
       {
          op1->asString()->append( op2->describe() );
       }
-
-      return;
    }
 
-   if ( cls->typeID() == typeID() )
-   {
-      // it's a string!
-      if ( op1->copied() )
-      {
-         String *copy = new String( *static_cast<String*>( inst ) );
-
-         copy->append( *str );
-
-         ctx->stackResult( 2, copy->garbage() );
-      }
-      else
-      {
-         op1->asString()->append( *static_cast<String*>( inst ) );
-      }
-
-      return;
-   }
 
    // else we surrender, and we let the virtual system to find a way.
    ctx->pushCode( &m_nextOp );

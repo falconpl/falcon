@@ -201,6 +201,7 @@ FAL_ERRORDECL( e_formiddle_outside, 193, "Block 'formiddle' declared outside 'fo
 FAL_ERRORDECL( e_syn_doubt, 194, "Rule doubt '?' not under rule" );
 FAL_ERRORDECL( e_catch_invtype, 195, "Invalid type in catch clause" );
 FAL_ERRORDECL( e_select_invtype, 196, "Invalid type in select clause" );
+FAL_ERRORDECL( e_membuf_def, 197, "Invalid character in membuf definition" );
 
 
 FAL_ERRORDECL( e_io_error, 200, "Generic I/O Error" );

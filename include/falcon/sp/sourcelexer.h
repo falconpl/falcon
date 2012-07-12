@@ -84,7 +84,10 @@ private:
       state_float_exp,
 
       state_name,
-      state_operator
+      state_operator,
+      state_membuf,
+      state_membuf2,
+      state_membuf3
    } t_state;
 
    t_state m_state;

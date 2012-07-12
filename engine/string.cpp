@@ -782,18 +782,25 @@ void MemBuf::insert( String *str, length_t pos, length_t len, const String *sour
 {
    byte* dest = str->getRawStorage();
    byte* src = source->getRawStorage();
-   length_t fl = str->size() - source->size()-len;
+   length_t srcsize = source->size();
+   length_t fl = str->size() + srcsize-len;
    if( fl > str->allocated() ) {
       byte* dest2 = (byte*) malloc( fl );
       memcpy(dest2, dest, pos );
-      memcpy(dest2 + pos, src, source->size());
-      memcpy(dest2 + pos + source->size(), dest +pos + len, str->size() - pos - len );
+      memcpy(dest2 + pos, src, srcsize);
+      memcpy(dest2 + pos + srcsize, dest +pos + len, str->size() - pos - len );
       destroy(str);
+      str->setRawStorage(dest2);
+      str->allocated(fl);
    }
    else {
-      memmove( dest + pos + source->size(), dest + pos + len, str->size() - pos - len );
-      memcpy( dest+pos, source, source->size() );
+
+      if( srcsize > 0 || len > 0 ) {
+         memmove( dest + pos + srcsize, dest + pos + srcsize + len, str->size() - pos - len );
+         memcpy( dest+pos, source->getRawStorage(), srcsize );
+      }
    }
+   str->size( fl );
 }
 
 const Base *MemBuf::bufferedManipulator() const

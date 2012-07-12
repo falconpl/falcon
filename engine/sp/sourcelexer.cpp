@@ -64,6 +64,7 @@ Parsing::TokenInstance* SourceLexer::nextToken()
    String tempString;
    char_t chr;
    t_state previousState = state_none;
+   int curMemChr = 0;
 
    if ( m_nextToken != 0 )
    {
@@ -496,6 +497,95 @@ Parsing::TokenInstance* SourceLexer::nextToken()
             }
          break;
 
+
+         case state_membuf:
+            if ( chr >= '0' && chr <= '9' )
+            {
+               curMemChr = chr - '0';
+            }
+            else if (chr >= 'a' && chr <= 'f') {
+               curMemChr = chr - 'a' + 10;
+            }
+            else if(chr >= 'A' && chr <= 'F' ) {
+               curMemChr = chr - 'A' + 10;
+            }
+            else if( chr == '}' ) {
+               // we're done
+               m_chr++;
+               resetState();
+               Parsing::TokenInstance* ti = m_parser->T_String.makeInstance( m_sline, m_schr, m_text );
+               ti->asString()->toMemBuf();
+               return ti;
+            }
+            else if(chr == '\n' ) {
+               // ignore \n, but add newline.
+               m_line++;
+               m_chr = 0;
+               break;
+            }
+            else if( chr == '_' || chr == ' ' || chr =='\r' || chr =='\t' ) {
+               // ignore whitespaces.
+               m_chr++;
+               break;
+            }
+            else {
+               m_parser->addError(e_membuf_def, m_parser->currentSource(), m_line, m_chr, 0);
+               // proceed till '}'
+               m_state = state_membuf3;
+               break;
+            }
+
+            // normally, change state
+            m_state = state_membuf2;
+            m_chr++;
+         break;
+
+         case state_membuf2:
+            if ( chr >= '0' && chr <= '9' )
+            {
+               curMemChr = curMemChr << 4 | (chr - '0');
+            }
+            else if (chr >= 'a' && chr <= 'f') {
+               curMemChr = curMemChr << 4 | (chr - 'a' + 10);
+            }
+            else if(chr >= 'A' && chr <= 'F' ) {
+               curMemChr = curMemChr << 4 | (chr - 'A' + 10);
+            }
+            else if(chr == '\n' ) {
+               m_parser->addError(e_membuf_def, m_parser->currentSource(), m_line, m_chr, 0);
+               m_state = state_membuf3;
+               m_line++;
+               m_chr = 0;
+            }
+            else {
+               m_parser->addError(e_membuf_def, m_parser->currentSource(), m_line, m_chr, 0);
+               // proceed till '}'
+               m_state = state_membuf3;
+            }
+            m_text.append( curMemChr );
+            curMemChr = 0;
+            m_state = state_membuf;
+         break;
+
+         // consume up to }
+         case state_membuf3:
+            if(chr == '\n' ) {
+               m_line++;
+               m_chr = 0;
+            }
+            else if( chr == '}' ) {
+               m_chr++;
+               resetState();
+               Parsing::TokenInstance* ti = m_parser->T_String.makeInstance( m_sline, m_schr, m_text );
+               ti->asString()->toMemBuf();
+               return ti;
+            }
+            else {
+               m_chr++;
+            }
+            break;
+
+
          case state_integer:
             if (  (chr >= '0' && chr <= '9') )
             {
@@ -601,9 +691,16 @@ Parsing::TokenInstance* SourceLexer::nextToken()
                   m_text.size(0);
                   return parser->T_OpenProto.makeInstance( m_sline, m_schr );
                }
+               else if( m_text == "m" && chr == '{' )
+               {
+                  m_chr++;
+                  m_state = state_membuf;
+                  m_text.size(0);
+                  break;
+               }
                
                // namespace check
-               if( chr != '.' || ! isNameSpace( m_text ) )
+               else if( chr != '.' || ! isNameSpace( m_text ) )
                {
                   unget(chr);
                   resetState();
