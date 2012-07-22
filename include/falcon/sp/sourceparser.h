@@ -54,8 +54,6 @@ public:
    Parsing::Terminal T_CloseSquare;
    Parsing::Terminal T_OpenGraph;
    Parsing::Terminal T_OpenProto;
-   Parsing::Terminal T_OpenLit;
-   Parsing::Terminal T_OpenParamLit;
    Parsing::Terminal T_CloseGraph;
    Parsing::Terminal T_Dot;
    Parsing::Terminal T_Arrow;
@@ -110,7 +108,6 @@ public:
    Parsing::Terminal T_EqSign;
    Parsing::Terminal T_EqSign2;
    Parsing::Terminal T_as;
-   Parsing::Terminal T_eq;
    Parsing::Terminal T_if;
    Parsing::Terminal T_in;
    Parsing::Terminal T_or;

@@ -800,7 +800,6 @@ Parsing::TokenInstance* SourceLexer::checkWord()
 
       case 2:
          if ( m_text == "as" ) return parser->T_as.makeInstance(m_sline, m_schr);
-         if ( m_text == "eq" ) return parser->T_eq.makeInstance(m_sline, m_schr);
          if ( m_text == "in" ) return parser->T_in.makeInstance(m_sline, m_schr);
          if ( m_text == "if" ) return parser->T_if.makeInstance(m_sline, m_schr);
          if ( m_text == "or" ) return parser->T_or.makeInstance(m_sline, m_schr);

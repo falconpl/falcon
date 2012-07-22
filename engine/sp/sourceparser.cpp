@@ -79,8 +79,6 @@ SourceParser::SourceParser():
    T_CloseSquare("]"),
    T_OpenGraph("{",20),
    T_OpenProto("p{"),
-   T_OpenLit("{~",20),
-   T_OpenParamLit("{~~",20),
    T_CloseGraph("}"),
 
    T_Dot(".",15),
@@ -143,7 +141,6 @@ SourceParser::SourceParser():
 
 
    T_as("as"),
-   T_eq("eq", 70 ),
    T_if("if"),
    T_in("in", 20),
    T_or("or", 130),
@@ -425,7 +422,7 @@ SourceParser::SourceParser():
    Expr<< (r_Expr_greater << "Expr_greater" << apply_expr_greater << Expr << T_Greater << Expr);
    Expr<< (r_Expr_le << "Expr_le" << apply_expr_le << Expr << T_LE << Expr);
    Expr<< (r_Expr_ge << "Expr_ge" << apply_expr_ge << Expr << T_GE << Expr);
-   Expr<< (r_Expr_eeq << "Expr_eeq" << apply_expr_eeq << Expr << T_eq << Expr);
+   Expr<< (r_Expr_eeq << "Expr_eeq" << apply_expr_eeq << Expr << T_EEQ << Expr);
    Expr<< (r_Expr_in << "Expr in" << apply_expr_in << Expr << T_in << Expr);
    Expr<< (r_Expr_notin << "Expr notin" << apply_expr_notin << Expr << T_notin << Expr);
 
