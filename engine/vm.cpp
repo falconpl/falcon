@@ -14,6 +14,7 @@
 */
 
 #include <falcon/vm.h>
+#include <falcon/scheduler.h>
 #include <falcon/symbol.h>
 #include <falcon/syntree.h>
 #include <falcon/statement.h>
@@ -51,23 +52,56 @@ namespace Falcon
 class VMachine::Private
 {
 public:
-
-   Private()
-   {}
-
-   ~Private()
-   {
-   }
    
    typedef std::vector<int32> IntVector;
    IntVector m_globIds;
    int32 m_nextGlobalId;
    mutable Mutex m_mtxGlobIds;
    
+
+   typedef std::set<VMContext*> ContextSet;
+   typedef std::deque<VMContext*> ContextList;
+   typedef std::vector<Processor*> ProcessorVector;
+
+   typedef std::multimap<int64, VMContext*> ScheduleMap;
+
+   Mutex m_mtxContexts;
+   Mutex m_mtxReadyContexts;
+   Event m_evtCtxReady;
+
+   /**
+    * Set of all contexts.
+    */
+   ContextSet m_contexts;
+
+   /**
+    * Context ready to be scheduled.
+    */
+   ContextList m_readyContexts;
+
+   /**
+    * Processors used by this scheduler.
+    */
+   ProcessorVector m_processors;
+
+   bool m_terminate;
+
+   Private():
+      m_evtCtxReady( false, false ),
+      m_terminate( true )
+   {}
+
+   virtual ~Private()
+   {
+
+   }
+
 };
 
 
-VMachine::VMachine( Stream* stdIn, Stream* stdOut, Stream* stdErr )
+VMachine::VMachine( Stream* stdIn, Stream* stdOut, Stream* stdErr ):
+         m_scheduler(0),
+         m_lastID(1)
 {
    // create the first context
    TRACE( "Virtual machine created at %p", this );
@@ -120,7 +154,9 @@ VMachine::VMachine( Stream* stdIn, Stream* stdOut, Stream* stdErr )
 #endif
 
    m_textOut->lineFlush(true);
-   m_textErr->lineFlush(true);  
+   m_textErr->lineFlush(true);
+
+   m_scheduler = new Scheduler;
 }
 
 
@@ -143,6 +179,9 @@ VMachine::~VMachine()
    
    delete m_context;
    delete m_modspace;
+
+   TRACE1( "Deleting scheduler %p", m_scheduler );
+   delete m_scheduler;
 
    delete _p;
    
@@ -221,319 +260,82 @@ void VMachine::onRaise( const Item& item )
 }
 
 
-
-bool VMachine::run()
+VMContext* VMachine::getNextReadyContext()
 {
-   TRACE( "Run called with depth %d", (int) currentContext()->callDepth() );
-   PARANOID( "Call stack empty", (currentContext()->callDepth() > 0) );
+   VMContext ctx = 0;
 
-   // for now... then it will be a TLS variable.
-   VMContext* ctx = currentContext();
-   Engine::instance()->setCurrentContext(ctx);
-   ctx->clearEvent();
-   
-   while( true )
+   while(ctx == 0)
    {
-      // the code should never be empty.
-      // to stop the VM the caller should push a terminator, at least.
-      fassert( ! codeEmpty() );
-
-      // BEGIN STEP
-      const PStep* ps = ctx->currentCode().m_step;
-
-      try
+      // pick next ready to run context.
+      _p->m_mtxReadyContexts.lock();
+      // check if we've been asked to stop.
+      if( _p->m_terminate )
       {
-         ps->apply( ps, ctx );
-      }
-      catch( Error* e )
-      {
-         ctx->raiseError( e );
-      }
-
-      switch( ctx->event() )
-      {
-         case VMContext::eventNone: break;
-
-         case VMContext::eventBreak:
-            TRACE( "Hit breakpoint before %s ", location().c_ize() );
-            return false;
-
-         case VMContext::eventComplete:
-            MESSAGE( "Run terminated because lower-level complete detected" );
-            return true;
-
-         case VMContext::eventTerminate:
-            MESSAGE( "Terminating on explicit termination request" );
-            return true;
-
-         case VMContext::eventReturn:
-            MESSAGE( "Retnring on setReturn request" );
-            ctx->clearEvent();
-            return false;
-
-         case VMContext::eventRaise:
-            // for now, just throw the unhandled error.
-         {
-            Error* e = ctx->detachThrownError();
-            onError(e);
-         }
-            break;
-      }
-      
-      // END STEP
-   }
-
-   MESSAGE( "Run terminated because of code exaustion" );
-   ctx->setComplete();
-   return true;
-}
-
-
-const PStep* VMachine::nextStep() const
-{
-   MESSAGE( "Next step" );
-   if( codeEmpty() )
-   {
-      return 0;
-   }
-   PARANOID( "Call stack empty", (currentContext()->callDepth() > 0) );
-
-
-   CodeFrame& cframe = currentContext()->currentCode();
-   const PStep* ps = cframe.m_step;
-
-   if( ps->isComposed() )
-   {
-      const SynTree* st = static_cast<const SynTree*>(ps);
-      return st->at(cframe.m_seqId);
-   }
-   return ps;
-}
-
-
-
-String VMachine::report()
-{
-   register VMContext* ctx = m_context;
-
-   String data = String("Call: ").N( (int32) ctx->callDepth() )
-         .A("; Code: ").N((int32)ctx->codeDepth()).A("/").N(ctx->currentCode().m_seqId)
-         .A("; Data: ").N((int32)ctx->dataSize());
-
-   String tmp;
-
-   if( ctx->dataSize() > 0 )
-   {
-      ctx->topData().describe(tmp);
-      data += " (" + tmp + ")";
-   }
-
-   data.A("; A: ");
-   ctx->m_regA.describe(tmp);
-   data += tmp;
-
-   return data;
-}
-
-
-String VMachine::location() const
-{
-   LocationInfo infos;
-   if ( ! location(infos) )
-   {
-      return "terminated";
-   }
-
-   String temp;
-   if( infos.m_moduleUri != "" )
-   {
-      temp = infos.m_moduleUri;
-   }
-   else
-   {
-      temp = infos.m_moduleName != "" ? infos.m_moduleName : "<no module>";
-   }
-
-   temp += ":" + (infos.m_function == "" ? "<no func>" : infos.m_function);
-   if( infos.m_line )
-   {
-      temp.A(" (").N(infos.m_line);
-      if ( infos.m_char )
-      {
-         temp.A(":").N(infos.m_char);
-      }
-      temp.A(")");
-   }
-
-   return temp;
-}
-
-
-bool VMachine::location( LocationInfo& infos ) const
-{
-   // location is given by current function and its module plus current source line.
-   if( codeEmpty() )
-   {
-      return false;
-   }
-
-   VMContext* vmc = currentContext();
-
-   if( vmc->callDepth() > 0 && vmc->currentFrame().m_function != 0 )
-   {
-      Function* f = vmc->currentFrame().m_function;
-      if ( f->module() != 0 )
-      {
-         infos.m_moduleName = f->module()->name();
-         infos.m_moduleUri = f->module()->uri();
-      }
-      else
-      {
-         infos.m_moduleName = "";
-         infos.m_moduleUri = "";
-      }
-
-      infos.m_function = f->name();
-   }
-   else 
-   {
-      infos.m_moduleName = "";
-      infos.m_moduleUri = "";
-      infos.m_function = "";
-   }
-
-   
-   const PStep* ps = nextStep();
-   if( ps != 0 )
-   {
-      infos.m_line = ps->line();
-      infos.m_char = ps->chr();
-   }
-   else
-   {
-      infos.m_line = 0;
-      infos.m_char = 0;
-   }
-
-   return true;
-}
-
-
-bool VMachine::step()
-{
-   if ( codeEmpty() )
-   {
-      MESSAGE( "Step terminated" );
-      return true;
-   }
-   
-   VMContext* ctx = currentContext();
-   Engine::instance()->setCurrentContext(ctx);
-
-   PARANOID( "Call stack empty", (ctx->callDepth() > 0) );
-
-   // NOTE: This code must be manually coordinated with vm::run()
-   // other solutions, as inline() or macros are either unsafe or
-   // clumsy.
-   
-   // In short, each time vm::run is touched, copy here everything between
-   // BEGIN OF STEP - END OF STEP
-
-   // BEGIN OF STEP
-   const PStep* ps = ctx->currentCode().m_step;
-   TRACE( "Step at %s", location().c_ize() );  // this is not in VM::Run
-   try
-   {
-      ps->apply( ps, ctx );
-   }
-   catch( Error* e )
-   {
-      ctx->raiseError( e );
-   }
-
-   switch( ctx->event() )
-   {
-      case VMContext::eventNone: break;
-
-      case VMContext::eventBreak:
-         TRACE( "Hit breakpoint before %s ", location().c_ize() );
-         return false;
-
-      case VMContext::eventComplete:
-         MESSAGE( "Run terminated because lower-level complete detected" );
-         return true;
-
-      case VMContext::eventTerminate:
-         MESSAGE( "Terminating on explicit termination request" );
-         return true;
-
-      case VMContext::eventReturn:
-         MESSAGE( "Retnring on setReturn request" );
-         ctx->clearEvent();
-         return false;
-
-      case VMContext::eventRaise:
-         // for now, just throw the unhandled error.
-         onError(ctx->thrownError());
+         _p->m_mtxReadyContexts.unlock();
          break;
-   }
-   // END OF STEP
-
-   return codeEmpty();  // more data waiting ?
-}
-
-
-Item* VMachine::findLocalItem( const String& ) const
-{
-   //TODO
-   return 0;
-}
-
-/*
-int32 VMachine::getGlobalID()
-{
-   int32 id;
-   
-   _p->m_mtxGlobIds.lock();
-   if ( _p->m_globIds.empty() )
-   {
-      id = _p->m_nextGlobalId++;
-      if ( id + m_globals >= m_globalsMax )
-      {
-         moreGlobals();
       }
+
+      if( _p->m_readyContexts.empty() )
+      {
+         _p->m_mtxReadyContexts.unlock();
+         _p->m_evtCtxReady.wait();
+         continue;
+      }
+
+      VMContext* ctx = _p->m_readyContexts.front();
+      _p->m_readyContexts.pop_front();
+      // no more contexts to run?
+      if( _p->m_readyContexts.empty() )
+      {
+         // in case we're asked to terminate, do not switch the signal off.
+         if( _p->m_terminate )
+         {
+            _p->m_mtxReadyContexts.unlock();
+            ctx = 0;
+            break;
+         }
+
+         // else, just tell everyone there's nothing ready.
+         _p->m_evtCtxReady.reset();
+      }
+      _p->m_mtxReadyContexts.unlock();
    }
-   else
-   {
-      id = _p->m_globIds.back();
-      _p->m_globIds.pop_back();
+
+   return ctx;
+}
+
+
+void VMachine::pushReadyContext(VMContext* ctx)
+{
+    _p->m_mtxReadyContexts.lock();
+    _p->m_readyContexts.push_back( ctx );
+    _p->m_evtCtxReady.set();
+    _p->m_mtxReadyContexts.unlock();
+}
+
+
+void VMachine::terminate()
+{
+   _p->m_mtxReadyContexts.lock();
+   _p->m_terminate = true;
+   _p->m_evtCtxReady.set();
+   _p->m_mtxReadyContexts.unlock();
+}
+
+
+void VMachine::addContext( VMContext *ctx )
+{
+   // first, save the context.
+   _p->m_mtxContexts.lock();
+   std::pair<Private::ContextSet::iterator, bool> wasNew =
+               _p->m_contexts.insert(ctx);
+   _p->m_mtxContexts.unlock();
+
+   // if it was a new context, ready it for run.
+   if( wasNew.second ) {
+      pushReadyContext(ctx);
    }
-   _p->m_mtxGlobIds.unlock();
-   
-   return id;
-}
- 
-
-void VMachine::freeGlobalID( int32 id )
-{
-   _p->m_mtxGlobIds.lock();   
-   _p->m_globIds.push_back( id );
-   _p->m_mtxGlobIds.unlock();
 }
 
-
-void VMachine::moreGlobals()
-{
-   size_t currentSize = m_globalsMax - m_globals;
-   size_t finalSize = (((currentSize + INCREMENT_GLOBAL_ALLOC)/INCREMENT_GLOBAL_ALLOC)+1)
-                           *INCREMENT_GLOBAL_ALLOC;   
-   TRACE("Reallocating %p: %d -> %d", 
-      m_globals, (int)(m_globalsMax - m_globals), finalSize );
-
-   m_globals = (Item*) realloc( m_globals, finalSize * sizeof(Item) );
-   m_globalsMax = m_globals + finalSize;
 }
-*/
-}
-
 /* end of vm.cpp */

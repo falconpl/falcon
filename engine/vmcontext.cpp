@@ -2,7 +2,7 @@
    FALCON - The Falcon Programming Language.
    FILE: vmcontext.cpp
 
-   Falcon virtual machine.
+   Single agent in a virtual machine.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: Sat, 15 Jan 2011 11:36:42 +0100
@@ -25,6 +25,8 @@
 #include <falcon/symbol.h>
 #include <falcon/dynsymbol.h>
 #include <falcon/stdsteps.h>
+#include <falcon/shared.h>
+#include <falcon/sys.h>
 
 #include <falcon/module.h>       // For getDynSymbolValue
 #include <falcon/modspace.h>
@@ -74,7 +76,15 @@ VMContext::VMContext( VMachine* vm ):
    m_vm(vm),
    m_ruleEntryResult(false),
    m_catchBlock(0),
-   m_event(eventNone)
+   m_id(0),
+   m_next_schedule(0),
+
+   m_hadEvent(0),
+   m_evtBreak(0),
+   m_evtTerminate(0),
+   m_evtSwap(0),
+   m_evtComplete(0),
+   m_evtRaise(0)
 {
    // prepare a low-limit VM terminator request.
    m_dynsStack.init();
@@ -82,6 +92,9 @@ VMContext::VMContext( VMachine* vm ):
    m_callStack.init();
    m_locsStack.init();
    m_dataStack.init(0, m_dataStack.INITIAL_STACK_ALLOC*1000);
+
+   m_waiting.init();
+   m_acquired = 0;
 
    pushReturn();
 }
@@ -94,9 +107,19 @@ VMContext::VMContext( bool ):
    m_vm(0),
    m_ruleEntryResult(false),
    m_catchBlock(0),
-   m_event(eventNone)
+   m_id(0),
+   m_next_schedule(0),
+
+   m_hadEvent(0),
+   m_evtBreak(0),
+   m_evtTerminate(0),
+   m_evtSwap(0),
+   m_evtComplete(0),
+   m_evtRaise(0)
 {
+   m_acquired = 0;
 }
+
 
 VMContext::~VMContext()
 {
@@ -104,12 +127,28 @@ VMContext::~VMContext()
 }
 
 
+bool VMContext::assign( VMachine* vm )
+{
+   if( m_vm == 0 ) {
+      m_vm = vm;
+      vm->addContext(this);
+      return true;
+   }
+   return false;
+}
+
 void VMContext::reset()
 {
    if( m_thrown != 0 ) m_thrown->decref();
    m_thrown = 0;
 
-   m_event = eventNone;
+   m_hadEvent = 0;
+   m_evtBreak = 0;
+   m_evtTerminate = 0;
+   m_evtSwap = 0;
+   m_evtComplete = 0;
+   m_evtRaise = 0;
+
    m_catchBlock = 0;
    m_ruleEntryResult = false;
    m_finMode = e_fin_none;
@@ -120,8 +159,141 @@ void VMContext::reset()
    m_locsStack.reset();
    m_dataStack.reset(0);
 
+   abortWaits();
+   if( m_acquired != 0 ) {
+      m_acquired->signal();
+   }
+   m_waiting.init();
+   m_acquired = 0;
+
    // prepare a low-limit VM terminator request.
    pushReturn();
+}
+
+
+
+bool VMContext::location( LocationInfo& infos ) const
+{
+   // location is given by current function and its module plus current source line.
+   if( codeEmpty() )
+   {
+      return false;
+   }
+
+   if( callDepth() > 0 && currentFrame().m_function != 0 )
+   {
+      Function* f = currentFrame().m_function;
+      if ( f->module() != 0 )
+      {
+         infos.m_moduleName = f->module()->name();
+         infos.m_moduleUri = f->module()->uri();
+      }
+      else
+      {
+         infos.m_moduleName = "";
+         infos.m_moduleUri = "";
+      }
+
+      infos.m_function = f->name();
+   }
+   else
+   {
+      infos.m_moduleName = "";
+      infos.m_moduleUri = "";
+      infos.m_function = "";
+   }
+
+
+   const PStep* ps = nextStep();
+   if( ps != 0 )
+   {
+      infos.m_line = ps->line();
+      infos.m_char = ps->chr();
+   }
+   else
+   {
+      infos.m_line = 0;
+      infos.m_char = 0;
+   }
+
+   return true;
+}
+
+
+String VMContext::location() const
+{
+   LocationInfo infos;
+   if ( ! location(infos) )
+   {
+      return "terminated";
+   }
+
+   String temp;
+   if( infos.m_moduleUri != "" )
+   {
+      temp = infos.m_moduleUri;
+   }
+   else
+   {
+      temp = infos.m_moduleName != "" ? infos.m_moduleName : "<no module>";
+   }
+
+   temp += ":" + (infos.m_function == "" ? "<no func>" : infos.m_function);
+   if( infos.m_line )
+   {
+      temp.A(" (").N(infos.m_line);
+      if ( infos.m_char )
+      {
+         temp.A(":").N(infos.m_char);
+      }
+      temp.A(")");
+   }
+
+   return temp;
+}
+
+
+String VMContext::report()
+{
+   register VMContext* ctx = this;
+
+   String data = String("Call: ").N( (int32) ctx->callDepth() )
+         .A("; Code: ").N((int32)ctx->codeDepth()).A("/").N(ctx->currentCode().m_seqId)
+         .A("; Data: ").N((int32)ctx->dataSize());
+
+   String tmp;
+
+   if( ctx->dataSize() > 0 )
+   {
+      ctx->topData().describe(tmp);
+      data += " (" + tmp + ")";
+   }
+
+   data += tmp;
+
+   return data;
+}
+
+
+const PStep* VMContext::nextStep() const
+{
+   MESSAGE( "Next step" );
+   if( codeEmpty() )
+   {
+      return 0;
+   }
+   PARANOID( "Call stack empty", (this->callDepth() > 0) );
+
+
+   CodeFrame& cframe = this->currentCode();
+   const PStep* ps = cframe.m_step;
+
+   if( ps->isComposed() )
+   {
+      const SynTree* st = static_cast<const SynTree*>(ps);
+      return st->at(cframe.m_seqId);
+   }
+   return ps;
 }
 
 
@@ -156,6 +328,53 @@ void VMContext::reset()
 void VMContext::setSafeCode()
 {
    m_safeCode = m_codeStack.m_top - m_codeStack.m_base;
+}
+
+
+void VMContext::abortWaits()
+{
+   Shared** base,** top;
+
+   base = m_waiting.m_base;
+   top = m_waiting.m_top;
+   while( base != top ) {
+      (*base)->dropWaiting( this );
+      ++base;
+   }
+   m_waiting.m_top = m_waiting.m_base;
+}
+
+
+void VMContext::initWait()
+{
+   m_next_schedule = -1;
+   m_waiting.m_top = m_waiting.m_base;
+}
+
+void VMContext::addWait( Shared* resource )
+{
+   *m_waiting.addSlot() = resource;
+}
+
+Shared* VMContext::engageWait( int64 timeout )
+{
+   Shared** base = m_waiting.m_base;
+   Shared** top = m_waiting.m_top;
+   while( base != top ) {
+      if ((*base)->consumeSignal()) {
+         m_waiting.m_top = m_waiting.m_base;
+         TRACE( "VMContext::engageWait got signaled %p", *base);
+         return *base;
+      }
+      ++base;
+   }
+   MESSAGE( "VMContext::engageWait nothing signaled, will go wait");
+
+   // nothing free right now, put us at sleep.
+   setSwapEvent();
+   m_next_schedule = timeout > 0 ? Sys::_milliseconds() + timeout : timeout;
+
+   return 0;
 }
 
 void VMContext::copyData( Item* target, size_t count, size_t start)
@@ -550,7 +769,7 @@ void VMContext::raiseError( Error* ce )
    {
       // prevent script-bound re-catching.
       m_thrown = ce;
-      m_event = eventRaise;
+      m_raised = 1; m_hadEvent = 1;
    }
 }
 
@@ -560,7 +779,7 @@ void VMContext::unhandledError( Error* ce )
    if( m_thrown != 0 ) m_thrown->decref();
    m_thrown = ce;
 
-   m_event = eventRaise;
+   m_raised = 1; m_hadEvent = 1;
 }
 
 
@@ -625,7 +844,7 @@ void VMContext::pushQuit()
       static void apply_( const PStep*, VMContext *ctx )
       {
          ctx->popCode();
-         ctx->quit();
+         ctx->setTerminateEvent();
       }
    };
 
@@ -646,7 +865,7 @@ void VMContext::pushComplete()
       static void apply_( const PStep*, VMContext *ctx )
       {
          ctx->popCode();
-         ctx->quit();
+         ctx->setCompleteEvent();
       }
    };
 
@@ -667,7 +886,7 @@ void VMContext::pushReturn()
       static void apply_( const PStep*, VMContext *ctx )
       {
          ctx->popCode();
-         ctx->setReturn();
+         ctx->returnFrame(Item());
       }
    };
 
@@ -688,7 +907,7 @@ void VMContext::pushBreak()
       static void apply_( const PStep*, VMContext *ctx )
       {
          ctx->popCode();
-         ctx->breakpoint();
+         ctx->setBreakpointEvent();
       }
    };
 
@@ -940,7 +1159,7 @@ void VMContext::returnFrame( const Item& value )
    // specific returnFrame for the interactive mode to achieve this.
    if( m_callStack.m_top-- ==  m_callStack.m_base )
    {
-      setComplete();
+      setCompleteEvent();
       MESSAGE( "Returned from last frame -- declaring complete." );
    }
 

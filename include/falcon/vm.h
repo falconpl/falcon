@@ -37,6 +37,7 @@ class Module;
 class Symbol;
 class ModSpace;
 class ModLoader;
+class Scheduler;
 
 /** The Falcon virtual machine.
 */
@@ -63,6 +64,20 @@ public:
     */
    VMachine( Stream* stdIn = 0, Stream* stdOut=0, Stream* stdErr = 0 );
    virtual ~VMachine();
+
+   Scheduler* scheduler() const { return m_scheduler; }
+
+   /** Assigns a context to this virtual machine.
+
+       The context is put in the scheduler for immediate execution,
+       and a new ID is assigned to it.
+
+       The context should not be assigned to another VM, or the process
+       will die.
+
+       \param ctx The context being assigned.
+    */
+   void addContext( VMContext* ctx );
 
    //=========================================================
    // Context management
@@ -93,10 +108,6 @@ public:
    // Debug support
    //=========================================================
 
-   /** Returns the step that is going to be executed next, or null if none.
-    \return The next step that will be executed.
-    */
-   const PStep* nextStep() const;
 
    /** Performs a single step.
       @return true if there is another step ready to be executed,
@@ -104,58 +115,11 @@ public:
     */
    bool step();
 
-      /** Gives a description of the location of the next step being executed.
-    @return A string with a textual description of the source position of the
-            next step being executed.
-
-    This is a debug function used to indicate where is the next step being
-    executed in a source file.
-   */
-   String location() const;
-
-   /** Outlines VM status in a string.
-    @return A string with a textual description of the VM status.
-
-    This is a debug function used to indicate what's the current status of the
-    virtual machine.
-   */
-   String report();
-
-   /** Gives a description of the location of the next step being executed.
-    @param infos An instance of LocationInfo receiving the debug information about
-           the location in the source files of the next step.
-
-    This information is more detailed and GUI oriented than the information
-    returned by location().
-    */
-   bool location( LocationInfo& infos ) const;
 
 
    //=========================================================
    // General information.
    //=========================================================
-
-   /** Raises a VM error.
-    *
-    * The method finds a try frame back in the code stack, and if it is found,
-    * the control is moved to a suitable catch item.
-    *
-    * If a suitable catch frame is not found, the error is thrown as a C++ exception.
-    *
-    * \note Falcon exceptions are thrown by pointer. This is because the error entity
-    * can be stored in several places, and in several threads, by the time it
-    * surfaces to user code. This calls for reference management.
-    */
-   //void raiseError( Error* theError );
-
-
-   /** Finds the variable corresponding to a symbol name in the current context.
-    * @return A pointer to the item if found, 0 if not found.
-    *
-    * The search will be extended to global and imported symbols if the search
-    * in the local symbol tables fails.
-    */
-   Item* findLocalItem( const String& name ) const;
 
    /** Returns true if the current has not any code.
 
@@ -288,6 +252,22 @@ public:
    /** Gets the module space associated with this virtual machine. */
    ModSpace* modSpace() const { return m_modspace; }
 
+
+   /** Blocks until there is a context to be served.
+      This method is called by processors to dequeue the next context
+      that is waiting ready to run.
+
+      It blocks until a context is available, or until the virtual
+      machine is asked to terminate.
+
+      \return a 0 if the calling processor should terminate, a valid
+      context otherwise.
+    */
+   VMContext* getNextReadyContext();
+
+   void pushReadyContext( VMContext* ctx );
+   void terminate();
+
 protected:
 
    Stream *m_stdIn;
@@ -302,6 +282,8 @@ protected:
    bool m_bOwnCoder;
    
    ModSpace* m_modspace;
+   Scheduler* m_scheduler;
+   volatile int32 m_lastID;
 
    /** Called back when an error was thrown directly inside the machine.
     \param e The error being thrown.
@@ -316,8 +298,6 @@ protected:
 private:
    // current context
    VMContext* m_context;
-   
-   
    
    class Private;
    Private* _p;   

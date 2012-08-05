@@ -236,6 +236,7 @@ add_library(falcon_engine SHARED
   closure.cpp
   collector.cpp
   collector_history.cpp
+  contextgroup.cpp
   datareader.cpp
   datawriter.cpp
   derivedfrom.cpp

@@ -109,6 +109,54 @@ numeric SYSTEMTIME_TO_SECONDS( const SYSTEMTIME &st )
 }
 
 
+int64 SYSTEMTIME_TO_MILLISECONDS( const SYSTEMTIME &st )
+{
+   int secsAt[12];
+   secsAt[0 ] = 0;
+   secsAt[1 ] = 31 * SECS_IN_DAY;
+   secsAt[2 ] = secsAt[1 ] + 28 * SECS_IN_DAY;
+   if( st.wYear % 4 == 0 )
+      secsAt[2 ] += SECS_IN_DAY;
+
+   secsAt[3 ] = secsAt[2 ] + 31 * SECS_IN_DAY;
+   secsAt[4 ] = secsAt[3 ] + 30 * SECS_IN_DAY;
+   secsAt[5 ] = secsAt[4 ] + 31 * SECS_IN_DAY;
+   secsAt[6 ] = secsAt[5 ] + 30 * SECS_IN_DAY;
+   secsAt[7 ] = secsAt[6 ] + 31 * SECS_IN_DAY;
+   secsAt[8 ] = secsAt[7 ] + 31 * SECS_IN_DAY;
+   secsAt[9 ] = secsAt[8 ] + 30 * SECS_IN_DAY;
+   secsAt[10] = secsAt[9 ] + 31 * SECS_IN_DAY;
+   secsAt[11] = secsAt[10] + 31 * SECS_IN_DAY;
+
+   if( st.wYear < 1970 ) {
+      int leapSeconds = (1969 - st.wYear)/4 * SECS_IN_DAY;
+      return
+         (1969 - st.wYear) * SECS_IN_YEAR *1000+
+         secsAt[st.wMonth-1] *1000+
+         st.wDay * SECS_IN_DAY*1000 +
+         st.wHour * SECS_IN_HOUR*1000 +
+         st.wMinute * 60*1000 +
+         st.wSecond *1000+
+         leapSeconds *1000 +
+         st.wMilliseconds;
+   }
+   else {
+      // good also if wYear is 1970: /4 will neutralize it.
+      int leapSeconds = ((st.wYear-1)-1970)/4 * SECS_IN_DAY;
+
+      return
+         (st.wYear-1970 ) * SECS_IN_YEAR *1000+
+         secsAt[st.wMonth-1] *1000+
+         st.wDay * SECS_IN_DAY *1000+
+         st.wHour * SECS_IN_HOUR *1000+
+         st.wMinute * 60*1000 +
+         st.wSecond *1000+
+         leapSeconds *1000+
+         st.wMilliseconds;
+   }
+}
+
+
 void _sleep( numeric time )
 {
    Sleep( long( time * 1000 ) );
@@ -130,9 +178,10 @@ numeric _localSeconds()
    return SYSTEMTIME_TO_SECONDS( st );
 }
 
-uint32 _milliseconds()
+int64 _milliseconds()
 {
-   return (uint32) GetTickCount();
+   GetSystemTime( &st );
+   return SYSTEMTIME_TO_MILLISECONDS( st );
 }
 
 int64 _epoch()

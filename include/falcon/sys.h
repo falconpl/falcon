@@ -58,7 +58,7 @@ FALCON_DYN_SYM numeric _localSeconds();
 
    \return millisecond counter value.
 */
-FALCON_DYN_SYM uint32 _milliseconds();
+FALCON_DYN_SYM int64 _milliseconds();
 
 /** Returns a valid and possibly unique temporary file name.
    Just a haky test for now, final version must OPEN the stream and return it.

@@ -73,7 +73,7 @@ numeric _localSeconds()
    return leap + current.tv_sec + (current.tv_usec / 1000000.0 );
 }
 
-uint32 _milliseconds()
+int64 _milliseconds()
 {
 #if POSIX_TIMERS > 0
    struct timespec time;
