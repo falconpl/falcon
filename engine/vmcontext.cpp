@@ -78,13 +78,7 @@ VMContext::VMContext( VMachine* vm ):
    m_catchBlock(0),
    m_id(0),
    m_next_schedule(0),
-
-   m_hadEvent(0),
-   m_evtBreak(0),
-   m_evtTerminate(0),
-   m_evtSwap(0),
-   m_evtComplete(0),
-   m_evtRaise(0)
+   m_inGroup(0)
 {
    // prepare a low-limit VM terminator request.
    m_dynsStack.init();
@@ -95,7 +89,7 @@ VMContext::VMContext( VMachine* vm ):
 
    m_waiting.init();
    m_acquired = 0;
-
+   atomicSet(m_events,0);
    pushReturn();
 }
 
@@ -109,14 +103,9 @@ VMContext::VMContext( bool ):
    m_catchBlock(0),
    m_id(0),
    m_next_schedule(0),
-
-   m_hadEvent(0),
-   m_evtBreak(0),
-   m_evtTerminate(0),
-   m_evtSwap(0),
-   m_evtComplete(0),
-   m_evtRaise(0)
+   m_inGroup(0)
 {
+   atomicSet(m_events,0);
    m_acquired = 0;
 }
 
@@ -141,13 +130,9 @@ void VMContext::reset()
 {
    if( m_thrown != 0 ) m_thrown->decref();
    m_thrown = 0;
+   atomicSet(m_events, 0);
 
-   m_hadEvent = 0;
-   m_evtBreak = 0;
-   m_evtTerminate = 0;
-   m_evtSwap = 0;
-   m_evtComplete = 0;
-   m_evtRaise = 0;
+   // do not reset ingroup.
 
    m_catchBlock = 0;
    m_ruleEntryResult = false;
@@ -769,7 +754,7 @@ void VMContext::raiseError( Error* ce )
    {
       // prevent script-bound re-catching.
       m_thrown = ce;
-      m_raised = 1; m_hadEvent = 1;
+      atomicOr(m_events, evtRaise);
    }
 }
 
@@ -779,7 +764,7 @@ void VMContext::unhandledError( Error* ce )
    if( m_thrown != 0 ) m_thrown->decref();
    m_thrown = ce;
 
-   m_raised = 1; m_hadEvent = 1;
+   atomicOr(m_events, evtRaise);
 }
 
 
@@ -1347,6 +1332,13 @@ Variable* VMContext::findLocalVariable( const String& name ) const
    
    // not found
    return 0;
+}
+
+void VMContext::terminated()
+{
+   if( m_inGroup != 0 ) {
+      m_inGroup->onContextTerminated();
+   }
 }
 
 }

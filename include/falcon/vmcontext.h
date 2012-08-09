@@ -26,6 +26,8 @@
 #include <falcon/closure.h>
 #include <falcon/locationinfo.h>
 
+#include <falcon/atomic.h>
+
 namespace Falcon {
 
 class VMachine;
@@ -37,6 +39,7 @@ class Storer;
 class SymbolTable;
 class Shared;
 class Scheduler;
+class ContextGroup;
 
 /**
  * Structure needed to store VM data.
@@ -47,8 +50,15 @@ class Scheduler;
 class FALCON_DYN_CLASS VMContext
 {
 public:
+   const static int32 evtTerminate = 0x1;
+   const static int32 evtComplete = 0x2;
+   const static int32 evtBreak = 0x4;
+   const static int32 evtSwap = 0x8;
+   const static int32 evtRaise = 0x10;
+
+
    VMContext( VMachine* owner = 0 );
-   ~VMContext();
+   virtual ~VMContext();
 
    /**
     Returns the unique ID of this context.
@@ -811,7 +821,7 @@ public:
       const CodeFrame* top = m_codeStack.m_top;
       pushCode( ps );
       ps->apply( ps, this );
-      return top != m_codeStack.m_top || m_hadEvent;
+      return top != m_codeStack.m_top || atomicFetch(m_events);
    }
 
    /** Step in and check if the caller should yield the control (optimized).
@@ -830,7 +840,7 @@ public:
    inline bool stepInYield( const PStep* ps, const CodeFrame& top ) {
       pushCode( ps );
       ps->apply( ps, this );
-      return &top != m_codeStack.m_top | m_hadEvent;
+      return &top != m_codeStack.m_top || atomicFetch(m_events);
    }
 
    /** Step in and check if the caller should yield the control (optimized).
@@ -849,7 +859,7 @@ public:
    inline bool stepInYield( const PStep* ps, long depth ) {
       pushCode( ps );
       ps->apply( ps, this );
-      return (depth != (m_codeStack.m_top-m_codeStack.m_base+1)) || m_hadEvent;
+      return (depth != (m_codeStack.m_top-m_codeStack.m_base+1)) || atomicFetch(m_events);
    }
 
    /** Pushes a quit step at current position in the code stack.
@@ -1143,20 +1153,22 @@ public:
    /** Returns the last event that was raised in this VM.
       @return True if the
     */
-   inline bool hadEvent() const { return m_hadEvent != 0; }
+   inline bool hadEvent() const { return atomicFetch(m_events) != 0; }
+
+   inline int32 events() const { return atomicFetch(m_events); }
 
    /** Clear all thread-specific and non-fatal events. */
-   void clearEvents();
+   void clearEvents() { atomicSet( m_events, 0 ); }
 
    /** Asks for this context to be terminated asap.
        This event is never reset.
     */
-   inline void setTerminateEvent() { m_evtTerminate = 1; m_hadEvent = 1; }
+   inline void setTerminateEvent() { atomicOr(m_events, evtTerminate); }
 
 
    /** Sets the complete event
    */
-   inline void setCompleteEvent() { m_evtComplete = 1; m_hadEvent = 1;  }
+   inline void setCompleteEvent() { atomicOr(m_events, evtComplete);  }
 
    /** Activates a breakpoint.
 
@@ -1170,12 +1182,12 @@ public:
 
       The StmtBreakpoint can be inserted in source flows for this purpose.
      */
-   inline void setBreakpointEvent() { m_evtBreak = 1; m_hadEvent = 1;  }
+   inline void setBreakpointEvent() { atomicOr(m_events, evtBreak);  }
 
    /** Sets the swap event.
     This event ask the processor to swap the context out as soon as possible.
    */
-   inline void setSwapEvent() { m_evtSwap = 1; m_hadEvent = 1;  }
+   inline void setSwapEvent() { atomicOr(m_events, evtSwap);  }
 
 
    Error* thrownError() const { return m_thrown; }
@@ -1338,6 +1350,14 @@ public:
    void addWait( Shared* resource );
    Shared* engageWait( int64 timeout );
 
+   /** Called back when this context is declared dead.
+    */
+   virtual void terminated();
+
+   void inGroup( ContextGroup* grp ) { m_inGroup = grp; }
+
+   ContextGroup* inGroup() const {return m_inGroup;}
+
 protected:
 
    /** Class holding the dynamic symbol information on a stack. */
@@ -1492,22 +1512,9 @@ protected:
    int64 m_next_schedule;
 
    /** Set whenever an event was activated. */
-   volatile int32 m_hadEvent;
+   atomic_int m_events;
 
-   /** Debug Breakpoint reached -- return. */
-   volatile int32 m_evtBreak;
-
-   /** Quit request -- get out. */
-   volatile int32 m_evtTerminate;
-
-   /** Wait or other circumstances requires the processor to drop us */
-   volatile int32 m_evtSwap;
-
-   /** All the code has been processed -- get out. */
-   volatile int32 m_evtComplete;
-
-   /** Soft error raised -- manage it internally if possible. */
-   volatile int32 m_evtRaise;
+   ContextGroup* m_inGroup;
 };
 
 }

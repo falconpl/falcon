@@ -37,10 +37,12 @@ public:
    ContextList m_readyCtx;
    ContextList m_contexts;
    Mutex m_mtxReadyCtx;
+   uint32 m_running;
 
    Error* m_error;
 
    Private():
+      m_running(0),
       m_error(0)
    {}
 
@@ -53,11 +55,10 @@ public:
 };
 
 
-ContextGroup::ContextGroup( VMachine* owner, VMContext* parent, int32 processors ):
+ContextGroup::ContextGroup( VMachine* owner, VMContext* parent, uint32 processors ):
    m_owner(owner),
    m_parent( parent ),
    m_processors( processors ),
-   m_running(0),
    m_terminated(0)
 {
    // if we have a parent, it must be in the same vm.
@@ -76,30 +77,47 @@ ContextGroup::~ContextGroup()
 
 void ContextGroup::setError( Error* error )
 {
+   // see if we're already throwing an error.
    error->incref();
    _p->m_mtxReadyCtx.lock();
    if( _p->m_error != 0 ) {
       _p->m_mtxReadyCtx.unlock();
+      // if so, the first one wins.
       error->decref();
       return;
    }
    _p->m_error = error;
    _p->m_mtxReadyCtx.unlock();
 
+   // signal all the contexts to terminate asap
+   // -- the failing context, if any, has already been terminated.
    Private::ContextList::iterator iter = _p->m_contexts.begin();
    while( _p->m_contexts.end() != iter ) {
       VMContext* ctx = *iter;
-      ctx->quit();
+      ctx->setTerminateEvent();
+      // remove sleeping or ready contexts.
+      ctx->vm()->removePausedContext(ctx);
       ++iter;
    }
 }
+
 
 Error* ContextGroup::error() const
 {
    return _p->m_error;
 }
 
-bool ContextGroup::terminateContext()
+
+uint32 ContextGroup::runningContexts() const
+{
+   _p->m_mtxReadyCtx.lock();
+   uint32 result = _p->m_running;
+   _p->m_mtxReadyCtx.unlock();
+   return result;
+}
+
+
+bool ContextGroup::onContextTerminated( VMContext* )
 {
    m_terminated++;
    return m_terminated == (int32) _p->m_contexts.size();
@@ -108,7 +126,18 @@ bool ContextGroup::terminateContext()
 void ContextGroup::addContext( VMContext* ctx )
 {
    _p->m_contexts.push_back( ctx );
-   addReadyContext(ctx);
+   pushReadyContext(ctx);
+}
+
+
+void ContextGroup::readyAllContexts()
+{
+   Private::ContextList::const_iterator iter = _p->m_contexts.begin();
+   while( iter != _p->m_contexts.end() ) {
+      VMContext* ctx = *iter;
+      pushReadyContext(ctx);
+      ++iter;
+   }
 }
 
 
@@ -126,32 +155,40 @@ ItemArray* ContextGroup::results() const
    return new ItemArray;
 }
 
-VMContext* ContextGroup::nextReadyContext()
-{
-   VMContext* retval;
 
+void ContextGroup::pushReadyContext( VMContext* ctx )
+{
    _p->m_mtxReadyCtx.lock();
-   if( _p->m_readyCtx.empty() ||
-            ( m_processors != 0 && m_running >= m_processors)
-            || _p->m_error != 0 )
+   if( _p->m_running < m_processors )
    {
-      retval = 0;
+      _p->m_running++;
+      _p->m_mtxReadyCtx.unlock();
+
+      m_owner->pushReadyContext( ctx );
    }
    else {
-      retval = _p->m_contexts.front();
-      _p->m_contexts.pop_front();
+      _p->m_readyCtx.push_back( ctx );
+      _p->m_mtxReadyCtx.unlock();
    }
-   _p->m_mtxReadyCtx.unlock();
-
-   return retval;
 }
 
-
-void ContextGroup::addReadyContext( VMContext* ctx )
+/** Called back when a context is swapped out from a processor. */
+void ContextGroup::onContextIdle( VMContext* ctx )
 {
    _p->m_mtxReadyCtx.lock();
-   _p->m_readyCtx.push_back( ctx );
-   _p->m_mtxReadyCtx.unlock();
+   --_p->m_running;
+   if( ! _p->m_readyCtx.empty() && _p->m_running < m_processors )
+   {
+     ++_p->m_running;
+     ctx = _p->m_readyCtx.front();
+     _p->m_readyCtx.pop_front();
+     _p->m_mtxReadyCtx.unlock();
+
+     m_owner->pushReadyContext( ctx );
+   }
+   else {
+     _p->m_mtxReadyCtx.unlock();
+   }
 }
 
 }

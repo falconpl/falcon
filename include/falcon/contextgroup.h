@@ -20,6 +20,8 @@
 #include <falcon/setup.h>
 #include <falcon/types.h>
 
+#include  <falcon/atomic.h>
+
 namespace Falcon {
 
 class VMachine;
@@ -53,13 +55,15 @@ class ItemArray;
 class FALCON_DYN_CLASS ContextGroup {
 
 public:
+   const static uint32 ANY_PROCESSOR=0xFFFFFFFF;
+
    /** Creates the group with a number of processors.
     \param owner The virtual machine owning this group.
     \param parent The context that started this group, if any.
     \param processors Maximum number of processors that are allowed to run contexts
     from this group (0 means unlimited).
     */
-   ContextGroup( VMachine* owner, VMContext* parent=0, int32 processors=0 );
+   ContextGroup( VMachine* owner, VMContext* parent=0, uint32 processors=ANY_PROCESSOR );
    virtual ~ContextGroup();
 
    /**
@@ -74,35 +78,53 @@ public:
    VMContext* parent() const { return m_parent; }
 
    /** Returns the count of contexts that can be run simultaneously.
-       \note this method is used within the single-thread context manager only.
+       \note This number is never changed once assigned at creation,
+       or anyhow after the group is added to the virtual machine.
     */
-   int32 assignedProcessors() const { return m_processors; }
+   uint32 assignedProcessors() const { return m_processors; }
 
    /** Change the count of contexts that can be run simultaneously.
-       \note this method is used within the single-thread context manager only.
+       \note This number is never changed once assigned at creation,
+       or anyhow after the group is added to the virtual machine.
     */
-   void assignedProcessors( int32 processors ) {m_processors = processors;}
+   void assignedProcessors( uint32 processors ) {m_processors = processors;}
 
    /** Returns the count of contexts that are running in this group.
        \note this method is used within the single-thread context manager only.
     */
-   int32 runningContexts() const { return m_running; }
-
-   /** Returns the count of contexts that are running in this group.
-       \note this method is used within the single-thread context manager only.
-    */
-   void runningContexts(int32 v) const { m_running = v; }
+   uint32 runningContexts() const;
 
    /** Increments the counter of the terminating contexts.
-    \note this method is used within the single-thread context manager only.
 
     When all the contexts are terminated, the terminated() shared must be
     signaled by the caller.
 
     \return true if this was the last context.
     */
-   bool terminateContext();
+   bool onContextTerminated(VMContext* ctx);
+
+   /** Adds a new context to the group.
+    \param ctx The context to be added to this group.
+
+    \note This method is not interlocked; it should be invoked just
+    while the group is being prepared to be sent to a virtual machine.
+    It is not meant to add new contexts to the group while it is being
+    actively managed by a virtual machine.
+
+    */
    void addContext( VMContext* ctx );
+
+   /** Called by the virtual machine as soon as the group is added.
+    This method readies all the contexts, eventually handling all the contexts
+    that can be immediately processed to the virtual machine.
+
+    If the number of the processors allocated for this group is less
+    than the context
+    */
+   void readyAllContexts();
+
+   /** Called back when a context is swapped out from a processor. */
+   void onContextIdle( VMContext* ctx );
 
    /** Returns the results of all the contexts in the group.
     */
@@ -118,21 +140,14 @@ public:
    Shared* terminated() const { return m_termEvent; }
 
    /**
-    Gets the next context ready to run in this group.
-    \return The context ready to run or 0 if none.
-    */
-   VMContext* nextReadyContext();
-   /**
     Puts a context in ready-to-run state.
 
-    \note This method doesn't generate any signal to wake up processors that
-    may want to run the readied context. It's the context manager that must
-    add the group in the ready groups lists and then notify the processors.
-    However, if a processor was already looking at this group to get a
-    ready context, it is possible that the context get assigned before
-    the signaling is performed.
+    If the group processor limit is not hit, the context is immediately sent
+    to the VM as a ready context; otherwise, the context is put in a
+    list and will be forwarded to the virtual machine when other
+    contexts from this group are idle.
     */
-   void addReadyContext( VMContext* ctx );
+   void pushReadyContext( VMContext* ctx );
 
    /**
     Indicates that this thread group is to be terminated with error.
@@ -156,8 +171,7 @@ private:
    VMachine* m_owner;
    VMContext* m_parent;
    Shared* m_termEvent;
-   int32 m_processors;
-   int32 m_running;
+   uint32 m_processors;
    int32 m_terminated;
 };
 

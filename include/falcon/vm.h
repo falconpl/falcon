@@ -77,13 +77,7 @@ public:
 
        \param ctx The context being assigned.
     */
-   void addContext( VMContext* ctx );
-
-   //=========================================================
-   // Context management
-   //=========================================================
-
-   inline VMContext* currentContext() const { return m_context; }
+   void addContextGroup( ContextGroup* grp );
 
    //=========================================================
    // Execution management.
@@ -118,37 +112,36 @@ public:
 
 
    //=========================================================
-   // General information.
+   // Backward compatiblity
    //=========================================================
-
-   /** Returns true if the current has not any code.
-
-    */
-   inline bool codeEmpty() const { return m_context->codeEmpty(); }
 
    /** Sets a value in the A register of the current context.
     \param v The return value.
     \deprecated  Kept for compatibility with engine 0.9.x
 
-    This method sets a value in the A register of the current context.
-    In the old vm 0.9.x this worked as a return value, and it is still
-    interpreted this way in the implementation of the ExtFunction 
-    class (which wraps the old functions).
-
-    New code should use VMContext::returnFrame().
     */
-   void retval( const Item& v ) { currentContext()->regA() = v; }
+   void retval( const Item& v );
 
+   /** Access the current context accumulator.
+     \deprecated  Kept for compatibility with engine 0.9.x
 
-   /** Access the current context accumulator. */
-   const Item& regA() const { return m_context->regA(); }
-   /** Access the current context accumulator. */
-   Item& regA() { return m_context->regA(); }
+    */
+   const Item& regA() const;
+   /** Access the current context accumulator.
+    \deprecated  Kept for compatibility with engine 0.9.x
+    */
+   Item& regA();
 
-   /** Access the current "self" item. */
-   const Item& self() const { return m_context->self(); }
-   /** Access the current context "self" item. */
-   Item& self() { return m_context->self(); }
+   /** Access the current "self" item.
+        \deprecated  Kept for compatibility with engine 0.9.x
+
+    */
+   const Item& self() const;
+   /** Access the current context "self" item.
+     \deprecated  Kept for compatibility with engine 0.9.x
+
+    */
+   Item& self();
 
 
    //=========================================================
@@ -253,6 +246,10 @@ public:
    ModSpace* modSpace() const { return m_modspace; }
 
 
+   //=========================================================
+   // Context management
+   //=========================================================
+
    /** Blocks until there is a context to be served.
       This method is called by processors to dequeue the next context
       that is waiting ready to run.
@@ -265,7 +262,32 @@ public:
     */
    VMContext* getNextReadyContext();
 
+   /** Adds a context ready to be executed
+
+    The scheduler calls this method when a context in a group is ready to be executed.
+    Prior calling this method, the scheduler dequeues a ready context from the group.
+    */
    void pushReadyContext( VMContext* ctx );
+
+   /** Removes a context from sleeping and ready contexts.
+
+    A context that was asleep or ready to run is might be removed
+    if its group is invalidated (i.e. because one of the contexts
+    in the group has thrown an uncaught error).
+
+    A context that should be removed is also marked as terminated by
+    the caller.  In this way, if traveling to the scheduler, held by
+    the GC, or being picked by a processor, this method will have no
+    effect but the context will be removed as soon as it reaches a
+    checkpoint.
+    */
+   void removePausedContext( VMContext* ctx );
+
+   /** Cleanly terminates the virtual machine.
+    *
+    The scheduler and all the processors are sent a request
+    to terminate any operation as soon as possible.
+    */
    void terminate();
 
 protected:
@@ -285,16 +307,6 @@ protected:
    Scheduler* m_scheduler;
    volatile int32 m_lastID;
 
-   /** Called back when an error was thrown directly inside the machine.
-    \param e The error being thrown.
-    */
-   void onError( Error* e );
-
-   /** Called back after the main loop gets a raiseItem().
-    \param item The item being raised.
-    */
-   void onRaise( const Item& item );
-   
 private:
    // current context
    VMContext* m_context;

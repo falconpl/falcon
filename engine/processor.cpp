@@ -59,8 +59,15 @@ Processor::~Processor()
 
 void Processor::onError( Error* e )
 {
-   // for now, just send to the VM.
-
+   if( m_currentContext->inGroup() != 0 )
+   {
+      m_currentContext->inGroup()->setError( e );
+      m_currentContext->terminated();
+   }
+   else {
+      // this is the top context. We're done.
+      throw e;
+   }
 }
 
 
@@ -83,6 +90,7 @@ void Processor::onRaise( const Item& item )
 void* Processor::run()
 {
    m_me.set(this);
+   m_currentContext = 0;
 
    TRACE("Processor %p (id %d) starting", this, this->id() );
    Scheduler::Private* p = m_owner->_p;
@@ -94,6 +102,7 @@ void* Processor::run()
          break;
       }
 
+      m_currentContext = ctx;
       // proceed running with this context
       TRACE("Processor %p (id %d) running context %p(%d)",
                this, this->id(), ctx, ctx->id() );
@@ -101,6 +110,42 @@ void* Processor::run()
    }
 
    return 0;
+}
+
+
+void Processor::manageEvents( VMContext* ctx, int32 events )
+{
+   if( (events & VMContext::evtSwap) ) {
+      if ( ctx->nextSchedule() >= 0 ) {
+         TRACE( "Scheduler::Processor::execute processor %p(%d) descheduled context %p(%d) for a while",
+                  this, this->id(), ctx, ctx->id() );
+         m_owner->putInWait( ctx, ctx->nextSchedule() );
+      }
+      else {
+         TRACE( "Scheduler::Processor::execute processor %p(%d) descheduled forever context %p(%d)",
+                  this, this->id(), ctx, ctx->id() );
+         m_owner->putInWait(ctx);
+      }
+   }
+
+   if( (events & VMContext::evtBreak) ) {
+      TRACE( "Hit breakpoint before %s ", ctx->location().c_ize() );
+   }
+
+   if( (events & VMContext::evtComplete) ) {
+      TRACE( "Code completion before %s ", ctx->location().c_ize() );
+      ctx->terminated();
+   }
+
+   if( (events & VMContext::evtTerminate) ) {
+      TRACE( "Termination requset before %s ", ctx->location().c_ize() );
+      ctx->terminated();
+   }
+
+   if( (events & VMContext::evtRaise) ) {
+      Error* e = ctx->detachThrownError();
+      onError(e);
+   }
 }
 
 
@@ -123,54 +168,48 @@ void Processor::execute( VMContext* ctx )
          ctx->raiseError( e );
       }
 
-
-      if( ctx->hadEvent() )
+      register int32 events;
+      if( (events = ctx->events()) != 0 )
       {
-         // TODO.
-         /*
-         case VMContext::eventDeschedule:
-            if ( ctx->nextSchedule() >= 0 ) {
-               TRACE( "Scheduler::Processor::execute processor %p(%d) descheduled context %p(%d) for a while",
-                        this, this->id(), ctx, ctx->id() );
-               m_owner->putInWait( ctx, ctx->nextSchedule() );
-            }
-            else {
-               TRACE( "Scheduler::Processor::execute processor %p(%d) descheduled forever context %p(%d)",
-                        this, this->id(), ctx, ctx->id() );
-               m_owner->putInWait(ctx);
-            }
-            return;
-
-         case VMContext::eventBreak:
-            TRACE( "Hit breakpoint before %s ", ctx->location().c_ize() );
-            return;
-
-         case VMContext::eventComplete:
-            MESSAGE( "Run terminated because lower-level complete detected" );
-            return;
-
-         case VMContext::eventTerminate:
-            MESSAGE( "Terminating on explicit termination request" );
-            return;
-
-         case VMContext::eventReturn:
-            MESSAGE( "Returning on setReturn request" );
-            ctx->clearEvent();
-            return;
-
-         case VMContext::eventRaise:
-            // for now, just throw the unhandled error.
-         {
-            Error* e = ctx->detachThrownError();
-            //onError(e);
-         }
+         manageEvents( ctx, events );
          break;
-         */
       }
-
       // END STEP
    }
+}
 
+bool Processor::step()
+{
+   if( m_currentContext == 0 ) {
+      m_currentContext = m_owner->getNextReadyContext();
+      if( m_currentContext == 0 ) {
+         return false;
+      }
+   }
+
+   register VMContext* ctx = currentContext();
+   TRACE( "Scheduler::Processor::step", (int) ctx->callDepth() );
+   PARANOID( "Call stack empty", (ctx->callDepth() > 0) );
+
+   // BEGIN STEP
+   register const PStep* ps = ctx->currentCode().m_step;
+
+   try
+   {
+      ps->apply( ps, ctx );
+   }
+   catch( Error* e )
+   {
+      ctx->raiseError( e );
+   }
+
+   register int32 events;
+   if( (events = ctx->events()) != 0 )
+   {
+      manageEvents( ctx, events );
+   }
+
+   return true;
 }
 
 Processor* Processor::currentProcessor()

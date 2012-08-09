@@ -320,12 +320,6 @@ struct SYSTH_DATA {
    int m_lastError;
 };
 
-/** Performs an atomic thread safe increment. */
-int32 atomicInc( volatile int32 &data );
-
-/** Performs an atomic thread safe decrement. */
-int32 atomicDec( volatile int32 &data );
-
 }
 
 #endif

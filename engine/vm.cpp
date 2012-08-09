@@ -52,27 +52,19 @@ namespace Falcon
 class VMachine::Private
 {
 public:
-   
-   typedef std::vector<int32> IntVector;
-   IntVector m_globIds;
-   int32 m_nextGlobalId;
-   mutable Mutex m_mtxGlobIds;
-   
 
-   typedef std::set<VMContext*> ContextSet;
+   typedef std::set<ContextGroup*> ContextGroupSet;
    typedef std::deque<VMContext*> ContextList;
    typedef std::vector<Processor*> ProcessorVector;
 
-   typedef std::multimap<int64, VMContext*> ScheduleMap;
-
-   Mutex m_mtxContexts;
+   Mutex m_mtxGroups;
    Mutex m_mtxReadyContexts;
    Event m_evtCtxReady;
 
    /**
-    * Set of all contexts.
+    * Set of all contexts group.
     */
-   ContextSet m_contexts;
+   ContextGroupSet m_groups;
 
    /**
     * Context ready to be scheduled.
@@ -240,26 +232,6 @@ void VMachine::setStdEncoding( Transcoder* ts, bool bOwn )
    m_textErr->setEncoding( ts );
 }
 
-
-void VMachine::onError( Error* e )
-{
-   // for now, just raise.
-   throw e;
-}
-
-
-void VMachine::onRaise( const Item& item )
-{
-   // for now, just wrap and raise.
-
-   //TODO: extract the error if the item is an instance of error.
-   Error* e = new GenericError( ErrorParam(e_uncaught,__LINE__)
-         .module("VM") );
-   e->raised( item );
-   onError( e );
-}
-
-
 VMContext* VMachine::getNextReadyContext()
 {
    VMContext ctx = 0;
@@ -323,17 +295,85 @@ void VMachine::terminate()
 }
 
 
-void VMachine::addContext( VMContext *ctx )
+void VMachine::addContextGroup(ContextGroup *grp)
 {
    // first, save the context.
-   _p->m_mtxContexts.lock();
-   std::pair<Private::ContextSet::iterator, bool> wasNew =
-               _p->m_contexts.insert(ctx);
-   _p->m_mtxContexts.unlock();
+   _p->m_mtxGroups.lock();
+   std::pair<Private::ContextGroupSet::iterator, bool> wasNew =
+               _p->m_groups.insert(grp);
+   _p->m_mtxGroups.unlock();
 
    // if it was a new context, ready it for run.
    if( wasNew.second ) {
-      pushReadyContext(ctx);
+      grp->readyAllContexts();
+   }
+}
+
+
+
+void VMachine::retval( const Item& v )
+{
+   // get the thread-specific processor
+   Processor* p = Processor::currentProcessor();
+   if( p != 0  )
+   {
+      p->currentContext()->topData() = v;
+   }
+}
+
+
+const Item& VMachine::regA() const
+{
+   static Item fakeA;
+
+   Processor* p = Processor::currentProcessor();
+   if( p != 0  )
+   {
+      return p->currentContext()->topData();
+   }
+   else {
+      return fakeA;
+   }
+}
+
+Item& VMachine::regA()
+{
+   static Item fakeA;
+
+   Processor* p = Processor::currentProcessor();
+   if( p != 0  )
+   {
+      return p->currentContext()->topData();
+   }
+   else {
+      return fakeA;
+   }
+}
+
+const Item& self() const {
+   static Item fakeA;
+
+   Processor* p = Processor::currentProcessor();
+   if( p != 0  )
+   {
+      return p->currentContext()->self();
+   }
+   else {
+      return fakeA;
+   }
+}
+
+
+Item& self() {
+   static Item fakeA;
+
+   Processor* p = Processor::currentProcessor();
+   if( p != 0  )
+   {
+      return p->currentContext()->self();
+   }
+   else {
+      return fakeA;
    }
 }
 

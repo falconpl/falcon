@@ -30,12 +30,17 @@ class VMachine;
  */
 class FALCON_DYN_CLASS Processor: public Runnable
 {
+public:
    Processor( int32 id, VMachine* owner );
    virtual ~Processor();
    int32 id() const { return m_id; }
 
    virtual void* run();
    void execute(VMContext* ctx);
+   void manageEvents( VMContext* ctx, int32 events );
+
+   bool step();
+
    static Processor* currentProcessor();
 
    void start();
