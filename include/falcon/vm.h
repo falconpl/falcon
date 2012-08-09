@@ -65,8 +65,6 @@ public:
    VMachine( Stream* stdIn = 0, Stream* stdOut=0, Stream* stdErr = 0 );
    virtual ~VMachine();
 
-   Scheduler* scheduler() const { return m_scheduler; }
-
    /** Assigns a context to this virtual machine.
 
        The context is put in the scheduler for immediate execution,
@@ -82,32 +80,6 @@ public:
    //=========================================================
    // Execution management.
    //=========================================================
-
-   /** Runs a prepared code, or continues running.
-    * @return True if all the code was executed, false if a breakpoint forced to stop.
-    *
-    * This method runs the virtual machine until:
-    * - All the code in the code stack is executed; or
-    * - a break flag is set.
-    *
-    * In the second case, the method returns false.
-    *
-    * Notice that the effect of exit() is that of terminating the VM
-    * cleanly; this will make this function to return true.
-    */
-   bool run();
-
-
-   //=========================================================
-   // Debug support
-   //=========================================================
-
-
-   /** Performs a single step.
-      @return true if there is another step ready to be executed,
-         false if this was the last (i.e. if the VM is terminated).
-    */
-   bool step();
 
 
 
@@ -290,6 +262,14 @@ public:
     */
    void terminate();
 
+   //=========================================================
+   // Utilities
+   //=========================================================
+
+   int32 getNextProcessID();
+   int32 getNextContextID();
+   int32 getNextGroupID();
+
 protected:
 
    Stream *m_stdIn;
@@ -304,13 +284,8 @@ protected:
    bool m_bOwnCoder;
    
    ModSpace* m_modspace;
-   Scheduler* m_scheduler;
-   volatile int32 m_lastID;
 
 private:
-   // current context
-   VMContext* m_context;
-   
    class Private;
    Private* _p;   
 };

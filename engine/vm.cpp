@@ -30,6 +30,7 @@
 #include <falcon/trace.h>
 #include <falcon/autocstring.h>
 #include <falcon/mt.h>
+#include <falcon/atomic.h>
 #include <falcon/modspace.h>
 #include <falcon/modloader.h>
 
@@ -61,6 +62,10 @@ public:
    Mutex m_mtxReadyContexts;
    Event m_evtCtxReady;
 
+   atomic_int m_proc_id;
+   atomic_int m_ctx_id;
+   atomic_int m_group_id;
+
    /**
     * Set of all contexts group.
     */
@@ -91,15 +96,12 @@ public:
 };
 
 
-VMachine::VMachine( Stream* stdIn, Stream* stdOut, Stream* stdErr ):
-         m_scheduler(0),
-         m_lastID(1)
+VMachine::VMachine( Stream* stdIn, Stream* stdOut, Stream* stdErr )
 {
    // create the first context
    TRACE( "Virtual machine created at %p", this );
    _p = new Private;
-   m_context = new VMContext(this);
-   m_modspace = new ModSpace( m_context );
+   m_modspace = new ModSpace;
 
    if ( stdIn == 0 )
    {
@@ -147,8 +149,6 @@ VMachine::VMachine( Stream* stdIn, Stream* stdOut, Stream* stdErr ):
 
    m_textOut->lineFlush(true);
    m_textErr->lineFlush(true);
-
-   m_scheduler = new Scheduler;
 }
 
 
@@ -169,11 +169,7 @@ VMachine::~VMachine()
       delete m_stdCoder;
    }
    
-   delete m_context;
    delete m_modspace;
-
-   TRACE1( "Deleting scheduler %p", m_scheduler );
-   delete m_scheduler;
 
    delete _p;
    
@@ -309,6 +305,21 @@ void VMachine::addContextGroup(ContextGroup *grp)
    }
 }
 
+
+int32 VMachine::getNextProcessID()
+{
+   return atomicInc(_p->m_proc_id);
+}
+
+int32 VMachine::getNextContextID()
+{
+   return atomicInc(_p->m_ctx_id);
+}
+
+int32 VMachine::getNextGroupID()
+{
+   return atomicInc(_p->m_group_id);
+}
 
 
 void VMachine::retval( const Item& v )

@@ -262,7 +262,6 @@ public:
    bool wait( int32 to = -1 );
 };
 
-
 /**
    Thread Specific data.
 

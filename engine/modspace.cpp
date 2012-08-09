@@ -115,9 +115,8 @@ public:
 // Main class
 //
 
-ModSpace::ModSpace( VMContext* ctx, ModSpace* parent ):
+ModSpace::ModSpace( ModSpace* parent ):
    _p( new Private ),   
-   m_ctx( ctx ),
    m_parent(parent),
    m_lastGCMark(0)
 {

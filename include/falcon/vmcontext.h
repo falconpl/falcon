@@ -27,6 +27,7 @@
 #include <falcon/locationinfo.h>
 
 #include <falcon/atomic.h>
+#include <falcon/refcounter.h>
 
 namespace Falcon {
 
@@ -56,9 +57,7 @@ public:
    const static int32 evtSwap = 0x8;
    const static int32 evtRaise = 0x10;
 
-
-   VMContext( VMachine* owner = 0 );
-   virtual ~VMContext();
+   VMContext( Process* prc, ContextGroup* grp=0 );
 
    /**
     Returns the unique ID of this context.
@@ -70,13 +69,6 @@ public:
 
     */
    uint32 id() const { return m_id; }
-
-   /**
-    * Assigns this context to a virtual machine.
-    */
-   bool assign( VMachine* vm );
-
-   VMachine* vm() const { return m_vm; }
 
    /** Gives a description of the location of the next step being executed.
     @return A string with a textual description of the source position of the
@@ -1358,6 +1350,11 @@ public:
 
    ContextGroup* inGroup() const {return m_inGroup;}
 
+   /** The process in which this context moves.
+    */
+   Process* process() const { return m_process; }
+
+
 protected:
 
    /** Class holding the dynamic symbol information on a stack. */
@@ -1463,9 +1460,6 @@ protected:
       }
    };
 
-   // Inner constructor to create subclasses
-   VMContext( bool );
-
    LinearStack<CodeFrame> m_codeStack;
    LinearStack<CallFrame> m_callStack;
    LinearStack<Item> m_dataStack;
@@ -1515,6 +1509,11 @@ protected:
    atomic_int m_events;
 
    ContextGroup* m_inGroup;
+   Process* m_process;
+
+private:
+   virtual ~VMContext();
+   FALCON_REFERENCECOUNT_DECLARE_INCDEC(VMContext)
 };
 
 }

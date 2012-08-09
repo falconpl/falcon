@@ -178,6 +178,61 @@ public:
    void disengage();
 };
 
+
+/**
+   An event on which the wait can be interrupted asynchronously.
+*/
+class InterruptibleEvent
+{
+public:
+   /** Creates the mutex.
+      Will assert on failure.
+   */
+   InterruptibleEvent();
+
+   /**
+      Destroys the event.
+
+      Will assert on failure.
+   */
+   ~InterruptibleEvent();
+
+   /**
+      Signals the event.
+   */
+   void set();
+
+   /**
+      Waits on the given event.
+
+      The wait is not interruptible. If a thread is blocked on this wait, the event must
+      be signaled somewhere else to allow it to proceed and check for closure request.
+
+      Falcon script level have better semantics, but this object is meant for fairly basic
+      and low-level system related activites.
+
+      If the event is auto-reset, only one waiting thread is woken up, and after the
+      wakeup the event is automatically reset.
+      \param to The timeout; set to < 0 for infinite timeout, 0 to check without blocking and
+         > 0 for a number of MSecs wait.
+      \return True if the event was signaled, false otherwise.
+   */
+   bool wait( int32 to = -1 );
+
+   /** Interrupts the wait on the event.
+
+    Interrupt is lazy: will notify the wait being interrupted even if the wait
+    is entered after the interrupt is issued.
+
+    Also, it's sticy: once interrupted, any subsequent wait will fail.
+    */
+   void interrupt();
+
+private:
+   void* m_sysdata;
+};
+
+
 }
 
 #endif

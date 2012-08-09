@@ -307,6 +307,82 @@ void *SysThread::run()
    return data;
 }
 
+
+//==========================================================
+// Interruptible event
+//==========================================================
+
+InterruptibleEvent::InterruptibleEvent()
+{
+   int* sockets = new int[4];
+   m_sysdata = sockets;
+   // the event set sockets
+   pipe(sockets);
+   // the event interrupted sockets
+   pipe(sockets+2);
+}
+
+
+InterruptibleEvent::~InterruptibleEvent()
+{
+   int* sockets = (int*) m_sysdata;
+   delete[] sockets;
+}
+
+
+void InterruptibleEvent::set()
+{
+   int* sockets = (int*) m_sysdata;
+   int data = 0;
+   write(*sockets, &data, sizeof(data) );
+}
+
+
+bool InterruptibleEvent::wait( int32 to = -1 )
+{
+   fd_set inset;
+   struct timeval tv;
+   struct timeval* timeoutptr = 0;
+   int* sockets = (int*) m_sysdata;
+   int eventDone = sockets[1];
+   int eventIntr = sockets[3];
+   int max = (eventDone > eventIntr ? eventDone : eventIntr ) + 1;
+   int dt = 0;
+
+   if( to >= 0 ) {
+      timeoutptr = &tv;
+      tv.tv_sec = to/1000;
+      tv.tv_usec = (to%1000)*1000;
+   }
+   FD_ZERO( inset );
+   FD_SET( eventDone, &inset);
+   FD_SET( eventIntr, &inset);
+
+   int count = select( max, &inset, 0, 0, timeoutptr );
+
+   // timed out, or interrupted?
+   if( count == 0 || FD_ISSET(eventIntr, &inset) ) {
+      return false;
+   }
+
+   // success -- read the incoming data and move on.
+   // we should consume all the signals that were sent, we're an event, not a sema.
+   while( read( eventDone, &dt, sizeof(dt) ) > 0 )
+   {
+      /* go on */;
+   }
+
+   return true;
+}
+
+
+void InterruptibleEvent::interrupt()
+{
+   int* sockets = (int*) m_sysdata;
+   int data = 0;
+   write(sockets[2], &data, sizeof(data) );
+}
+
 }
 
 /* end of mt_posix.cpp */

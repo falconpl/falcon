@@ -69,16 +69,16 @@ VMContext::LinearStack<datatype__>::~LinearStack()
 //
 
 
-VMContext::VMContext( VMachine* vm ):
+VMContext::VMContext( Process* prc, ContextGroup* grp ):
    m_safeCode(0),
    m_thrown(0),
    m_finMode( e_fin_none ),
-   m_vm(vm),
    m_ruleEntryResult(false),
    m_catchBlock(0),
    m_id(0),
    m_next_schedule(0),
-   m_inGroup(0)
+   m_inGroup(0),
+   m_process(prc)
 {
    // prepare a low-limit VM terminator request.
    m_dynsStack.init();
@@ -94,37 +94,11 @@ VMContext::VMContext( VMachine* vm ):
 }
 
 
-VMContext::VMContext( bool ):
-   m_safeCode(0),
-   m_thrown(0),
-   m_finMode( e_fin_none ),
-   m_vm(0),
-   m_ruleEntryResult(false),
-   m_catchBlock(0),
-   m_id(0),
-   m_next_schedule(0),
-   m_inGroup(0)
-{
-   atomicSet(m_events,0);
-   m_acquired = 0;
-}
-
-
 VMContext::~VMContext()
 {
    if( m_thrown != 0 ) m_thrown->decref();
 }
 
-
-bool VMContext::assign( VMachine* vm )
-{
-   if( m_vm == 0 ) {
-      m_vm = vm;
-      vm->addContext(this);
-      return true;
-   }
-   return false;
-}
 
 void VMContext::reset()
 {
@@ -1269,7 +1243,7 @@ Variable* VMContext::getDynSymbolVariable( const Symbol* dyns )
 
    // still no luck? -- what about exporeted symbols in VM?
    // TODO: Correct interlocking.
-   ModSpace* ms = vm()->modSpace();
+   ModSpace* ms = process()->vm()->modSpace();
    if( ms != 0 )
    {
       Symbol* expsym = ms->findExportedSymbol( dyns->name() );
@@ -1337,7 +1311,11 @@ Variable* VMContext::findLocalVariable( const String& name ) const
 void VMContext::terminated()
 {
    if( m_inGroup != 0 ) {
-      m_inGroup->onContextTerminated();
+      m_inGroup->onContextTerminated(this);
+   }
+   else {
+      // we're the main context.
+      m_process->completed();
    }
 }
 

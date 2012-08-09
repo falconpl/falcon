@@ -31,23 +31,21 @@ namespace Falcon {
  class InNeedOfRC
  {
  public:
-   RefCounter<InNeedOfRc> rc;
 
-   InNeedOfRC():
-      rc(this)
-   {}
+   ....
 
  private:
-    ~InNeedOfRC() {}
-    friend class RefCounter<InNeedOfRc>;
+   // IMPORTANT: It should be in PRIVATE
+   \/\* virtual or not \*\/ ~InNeedOfRC() {}
+   FALCON_REFERENCECOUNT_DECLARE_INCDEC(InNeedOfRC)
  };
 
  // ... user code ...
  InNeedOfRC item;
- item.rc.inc();
+ item.incref();
  ...
  ...
- item.rc.dec();
+ item.decref();
  \endcode
 
 */
@@ -60,9 +58,8 @@ public:
     \param owner The instance that will be destroyed as reference count hits 0.
     \param initCount Initial reference count (usually 1).
     */
-   RefCounter( __T* owner, int32 initCount=1 ):
-      m_count( initCount ),
-      m_data(owner)
+   RefCounter( int32 initCount=1 ):
+      m_count( initCount )
    {}
 
    /** Increments the reference count by one. */
@@ -71,12 +68,20 @@ public:
    /** Decrements the reference count by one.
     \this method may destroy the owner of the reference counter (and this item with it).
     */
-   void dec() { if( atomicDec(m_count)<= 0) delete m_data; }
+   void dec(__T* data) { if( atomicDec(m_count)<= 0) delete data; }
 
 private:
-   mutable int32 m_count;
-   __T* m_data;
+   mutable atomic_int m_count;
 };
+
+#define FALCON_REFERENCECOUNT_DECLARE_INCDEC(clsname) \
+   private:\
+      RefCounter<clsname> m_refcounter_##clsname; \
+   public:\
+   void incref() { m_refcounter_##clsname.inc(); }\
+   void decref() { m_refcounter_##clsname.dec(this); }\
+   friend class RefCounter<clsname>;\
+   private:
 
 }
 

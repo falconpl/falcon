@@ -79,11 +79,10 @@ class FALCON_DYN_CLASS ModSpace
 public:
    
    /** Creates the module space, eventually linked to a parent module space.
-    \param ctx The VM Context used in this 
     \param parent A parent module space where to look for already loaded modules
     or exported symbols.
     */
-   ModSpace( VMContext* ctx, ModSpace* parent = 0 );
+   ModSpace( ModSpace* parent = 0 );
    virtual ~ModSpace();
    
    /** Adds a new module to the module space. 
