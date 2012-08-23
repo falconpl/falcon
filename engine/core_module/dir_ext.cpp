@@ -412,7 +412,7 @@ FALCON_FUNC  dirMakeLink( ::Falcon::VMachine *vm )
          .origin( e_orig_runtime ) );
    }
 
-   if ( ! Sys::fal_readlink( *name->asString(), *dest->asString() ) ) {
+   if ( ! Sys::fal_writelink( *name->asString(), *dest->asString() ) ) {
       vm->regA().setBoolean( false );
    }
    else {
