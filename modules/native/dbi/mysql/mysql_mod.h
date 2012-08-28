@@ -158,6 +158,8 @@ public:
    DBIRecordsetMySQL_RES_STR( DBIHandleMySQL *dbt, MYSQL_RES *res, bool bCanSeek = false );
    virtual ~DBIRecordsetMySQL_RES_STR();
 
+   virtual void close();
+
    virtual bool getColumnValue( int nCol, Item& value );
 };
 

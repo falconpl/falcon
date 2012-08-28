@@ -520,17 +520,40 @@ void DBIRecordsetMySQL_STMT::close()
 
    if ( m_stmt != 0 ) 
    {
-      while( mysql_next_result( m_pConn->handle() ) == 0 )
+	   int status = 0;
+	#if MYSQL_VERSION_ID > 50500
+      do {
+         mysql_stmt_free_result(m_stmt);
+      }
+      while( (status = mysql_stmt_next_result( m_stmt )) == 0 );
+
+      if( status != -1 )
       {
-         MYSQL_RES *res = mysql_use_result( m_pConn->handle() );
+         const char* text = mysql_stmt_error(m_stmt);
+         static_cast< DBIHandleMySQL *>(m_dbh)
+                ->throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_CLOSING );
+      }
+      // must be closed in the statement handler
+      status = mysql_stmt_close(m_stmt);
+      #else
+
+      while( mysql_next_result( m_pConn ) == 0 )
+      {
+         MYSQL_RES *res = mysql_use_result( m_pConn );
          if( res != NULL )
          {
             mysql_free_result( res );
          }
       }
+      #endif
 
       m_stmt = 0;
-      m_pStmt->decref();
+      if( status != 0 )
+      {
+         const char* text = mysql_error(m_pConn->handle());
+         static_cast< DBIHandleMySQL *>(m_dbh)
+                ->throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_CLOSING );
+      }
    }
 }
 
@@ -781,6 +804,26 @@ DBIRecordsetMySQL_RES_STR::DBIRecordsetMySQL_RES_STR( DBIHandleMySQL *dbh, MYSQL
 
 DBIRecordsetMySQL_RES_STR::~DBIRecordsetMySQL_RES_STR()
 {
+	DBIRecordsetMySQL_RES_STR::close();
+}
+
+
+void DBIRecordsetMySQL_RES_STR::close()
+{
+   if ( m_res != 0 ) {
+      int result;
+      while( (result = mysql_next_result( m_pConn->handle() )) == 0)
+      {
+         m_res = mysql_use_result( m_pConn->handle() );
+         mysql_free_result( m_res );
+      }
+
+      m_res = 0;
+      if( result != -1 &&  mysql_errno( m_pConn->handle() ) != 0 ) {
+    	  static_cast< DBIHandleMySQL *>(m_dbh)
+                 ->throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_CLOSING );
+      }
+   }
 }
 
 
@@ -1035,6 +1078,13 @@ DBIRecordset *DBIHandleMySQL::query( const String &sql, ItemArray* params )
             meta = mysql_stmt_result_metadata( stmt );
             if( meta == 0 )
             {
+			#if MYSQL_VERSION_ID > 50500
+			   do {
+				  mysql_stmt_free_result( stmt );
+			   }
+			   while( mysql_stmt_next_result(stmt) == 0);
+	  	    #endif
+			   mysql_stmt_close( stmt );
                return 0;
             }
 
@@ -1063,6 +1113,12 @@ DBIRecordset *DBIHandleMySQL::query( const String &sql, ItemArray* params )
             }
             else
             {
+			#if MYSQL_VERSION_ID > 50500
+			   do {
+				  mysql_stmt_free_result( stmt );
+			   }
+			   while( mysql_stmt_next_result(stmt) == 0);
+	  	    #endif
                mysql_stmt_close( stmt );
             }
             throw;
