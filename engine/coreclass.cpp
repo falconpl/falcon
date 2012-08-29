@@ -46,7 +46,7 @@ bool CoreClass::derivedFrom( const String &className ) const
    for( uint32 i = 0; i < properties().added(); ++i )
    {
       const Item& p = *properties().getValue(i)->dereference();
-      if( p.isClass() && p.asClass()->derivedFrom( className ) )
+      if( p.isClass() && p.asClass()!=this && p.asClass()->derivedFrom( className ) )
       {
          return true;
       }
@@ -69,7 +69,7 @@ bool CoreClass::derivedFrom( const Symbol *sym ) const
    for( uint32 i = 0; i < properties().added(); ++i )
    {
       const Item& p = *properties().getValue(i)->dereference();
-      if( p.isClass() && p.asClass()->derivedFrom( sym ) )
+      if( p.isClass() && p.asClass()!=this && p.asClass()->derivedFrom( sym ) )
       {
          return true;
       }
