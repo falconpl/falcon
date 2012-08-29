@@ -16,6 +16,7 @@
 #include "sqlite3_mod.h"
 #include <string.h>
 
+#include <stdio.h>
 namespace Falcon
 {
 
@@ -402,10 +403,11 @@ const DBISettingParams* DBIHandleSQLite3::options() const
    return &m_settings;
 }
 
-DBIRecordset *DBIHandleSQLite3::query( const String &sql, ItemArray* params )
+
+sqlite3_stmt* DBIHandleSQLite3::internal_query ( const String &sql, ItemArray* params )
 {
    sqlite3_stmt* pStmt = int_prepare( sql );
-   
+
    int res;
    if( params != 0 )
    {
@@ -431,14 +433,56 @@ DBIRecordset *DBIHandleSQLite3::query( const String &sql, ItemArray* params )
    if( count == 0 )
    {
       sqlite3_finalize( pStmt );
-      return 0;
+      pStmt = 0;
    }
    else
    {
       sqlite3_reset( pStmt );
-      // the bindings must stay with the recordset...
-      return new DBIRecordsetSQLite3( this, pStmt );
    }
+
+   return pStmt;
+}
+
+
+
+void DBIHandleSQLite3::result( const String &sql, Item& res, ItemArray* params )
+{
+   res.setNil();
+
+   sqlite3_stmt* pStmt = internal_query( sql, params );
+   if( pStmt != 0 )
+   {
+	   DBIRecordsetSQLite3 rs(this, pStmt);
+
+	   if( rs.fetchRow() )
+	   {
+		   int count = rs.getColumnCount();
+		   if( count == 1 ) {
+			   rs.getColumnValue(0,res);
+		   }
+		   else {
+			   CoreArray* arr = new CoreArray();
+			   arr->resize(count);
+			   for( int i = 0; i < count; ++i ) {
+				   rs.getColumnValue(i, arr->at(i));
+			   }
+			   res = arr;
+		   }
+	   }
+	   sqlite3_finalize( pStmt );
+   }
+}
+
+
+DBIRecordset *DBIHandleSQLite3::query( const String &sql, ItemArray* params )
+{
+   sqlite3_stmt* pStmt = internal_query( sql, params );
+   if( pStmt == 0 )
+   {
+	   return 0;
+   }
+
+   return new DBIRecordsetSQLite3(this, pStmt);
 }
 
 

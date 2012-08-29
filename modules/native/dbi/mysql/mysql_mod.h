@@ -174,6 +174,8 @@ protected:
    MYSQL_STMT* my_prepare( const String &query, bool bCanFallback = false );
    int64 my_execute( MYSQL_STMT* stmt, MyDBIInBind& bindings, ItemArray* params );
 
+   DBIRecordset *query_internal( const String &sql, ItemArray* params=0 );
+
 public:
    DBIHandleMySQL();
    DBIHandleMySQL( MYSQL *conn );
@@ -183,7 +185,9 @@ public:
    virtual const DBISettingParams* options() const;
    virtual void close();
 
-   virtual DBIRecordset *query( const String &sql, ItemArray* params );
+   virtual DBIRecordset *query( const String &sql, ItemArray* params=0 );
+   virtual void result( const String &sql, Item& res, ItemArray* params =0 );
+
    virtual DBIStatement* prepare( const String &query );
    virtual int64 getLastInsertedId( const String& name = "" );
 

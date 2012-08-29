@@ -126,6 +126,7 @@ public:
     virtual void rollback();
 
     virtual DBIRecordset* query( const String &sql, ItemArray* params = 0 );
+    virtual void result( const String &sql, Item& target, ItemArray* params=0 );
     virtual DBIStatement* prepare( const String &query );
     virtual DBIStatement* prepareNamed( const String &name, const String& query );
     virtual int64 getLastInsertedId( const String& name = "" );
@@ -138,6 +139,10 @@ public:
     PGresult* internal_exec( const String& sql, int64& affectedRows );
 
     PgSQLHandlerRef* getConnRef() const { return m_pConn; }
+
+private:
+    virtual DBIRecordset* internal_query( const String &sql, ItemArray* params = 0 );
+
 };
 
 

@@ -17,6 +17,8 @@
 #include <falcon/dbi_error.h>
 #include <falcon/dbi_common.h>
 #include <falcon/itemarray.h>
+#include <falcon/item.h>
+#include <falcon/carray.h>
 
 namespace Falcon
 {
@@ -45,6 +47,36 @@ void DBIHandle::sqlExpand( const String& sql, String& tgt, const ItemArray& para
 }
 
 
+void DBIHandle::std_result( DBIRecordset* rs, Item& res )
+{
+	res.setNil();
+	try {
+		  if( rs != 0 )
+		  {
+			   if( rs->fetchRow() )
+			   {
+				   int count = rs->getColumnCount();
+				   if( count == 1 ) {
+					   rs->getColumnValue(0,res);
+				   }
+				   else {
+					   CoreArray* arr = new CoreArray();
+					   arr->resize(count);
+					   for( int i = 0; i < count; ++i ) {
+						   rs->getColumnValue(i, arr->at(i));
+					   }
+					   res = arr;
+				   }
+			   }
+		  }
+
+		  delete rs;
+	}
+	catch( ... ) {
+		   delete rs;
+		   throw;
+	}
+}
 
 void DBIHandle::gcMark( uint32 )
 {

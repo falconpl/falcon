@@ -111,6 +111,7 @@ public:
     *     NULL if the query has an error.
     */
    virtual DBIRecordset *query( const String &sql, ItemArray* params=0 )=0;
+   virtual void result( const String &sql, Item& res, ItemArray* params=0 )=0;
 
    /** Prepare/execute step1
     */
@@ -148,6 +149,12 @@ public:
    int64 affectedRows();
 
 protected:
+   /**
+    Stanadrd method to generate a "Handle.result" reply.
+    /param rs the queried recordset (will be destroyed)
+    /param res the target item.
+    */
+   void std_result( DBIRecordset* rs, Item& res );
    int64 m_nLastAffected;
 };
 

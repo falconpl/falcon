@@ -876,7 +876,12 @@ DBIRecordset *DBIHandleODBC::query( const String &sql, ItemArray* params )
    }	
 }
 
-
+void DBIHandleODBC::result(const String &sql, Item& target, ItemArray* params )
+{
+	target.setNil();
+	DBIRecordset *rs = query( sql, params );
+	std_result(rs, target);
+}
 
 DBIStatement* DBIHandleODBC::prepare( const String &query )
 {

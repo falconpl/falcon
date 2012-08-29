@@ -533,7 +533,7 @@ static void internal_stmt_open( VMachine* vm, DBIStatement* trans )
    @return an instance of @a Recordset, or nil.
    @raise DBIError if the database engine reports an error.
 
-   On a succesful query, the property @a Handle.affected is 
+   On a successful query, the property @a Handle.affected is
    assumes the count of affected rows, or -1 if the driver can't
    provide this information.
 
@@ -584,6 +584,68 @@ void Handle_query( VMachine *vm )
    }
 }
 
+
+/*#
+   @method result Handle
+   @brief Execute a SQL query bound to return a single value.
+   @param sql The SQL query
+   @optparam ... Parameters for the query
+   @return an array or a string.
+   @raise DBIError if the database engine reports an error.
+
+	This method executes the query, and if it returns a recordset,
+	then an array containing the first result is returned.
+	If the recordset has just one variable, then the value is returned
+	directly, not being bound in an 1 element array.
+
+	This mehtod is meant to provide the most efficient possible way
+	to query a database for a single result, so that you can do:
+
+	@code
+		dbh = connect("...")
+		x =	dbh.result( "select field from table where...")
+		x,y,z = dbh.result( "select f1, f2, f3 from table where ...")
+	@endcode
+
+   On a successful query, the property @a Handle.affected is
+   assumes the count of affected rows, or -1 if the driver can't
+   provide this information.
+
+*/
+
+void Handle_result( VMachine *vm )
+{
+   Item* i_sql = vm->param(0);
+
+   if ( i_sql == 0 || ! i_sql->isString() )
+   {
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__ )
+                                        .extra( "S, ..." ) );
+   }
+
+   CoreObject *self = vm->self().asObject();
+   DBIHandle *dbt = static_cast<DBIHandle *>( self->getUserData() );
+
+   int32 pCount = vm->paramCount();
+   Item result;
+   if( pCount > 1 )
+   {
+      ItemArray params( pCount - 1 );
+      for( int32 i = 1; i < vm->paramCount(); i++)
+      {
+         params.append( *vm->param(i) );
+      }
+
+      // Query may throw.
+      dbt->result( *i_sql->asString(), result, &params );
+   }
+   else
+   {
+	  dbt->result( *i_sql->asString(), result );
+   }
+
+   vm->retval(result);
+}
 
 /*#
    @method aquery Handle

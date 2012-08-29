@@ -123,6 +123,9 @@ void DBIError::describeError()
       this->errorDescription( "Unable to create the database as required" );
       break;
 
+   case FALCON_DBI_ERROR_CLOSING:
+      this->errorDescription( "Error while closing the recordset" );
+      break;
 
       // by default, do nothing -- let the base system to put an appropriate description
    }

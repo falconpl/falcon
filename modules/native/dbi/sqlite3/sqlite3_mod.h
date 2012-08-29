@@ -128,6 +128,7 @@ protected:
    bool m_bInTrans;
 
    sqlite3_stmt* int_prepare( const String &query ) const;
+   sqlite3_stmt* internal_query ( const String &sql, ItemArray* params=0 );
 
 public:
    DBIHandleSQLite3();
@@ -139,6 +140,7 @@ public:
    virtual void close();
 
    virtual DBIRecordset *query( const String &sql, ItemArray* params=0 );
+   virtual void result( const String &sql, Item& res, ItemArray* params=0 );
    virtual DBIStatement* prepare( const String &query );
    virtual int64 getLastInsertedId( const String& name = "" );
 

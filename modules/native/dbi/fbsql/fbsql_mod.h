@@ -210,6 +210,7 @@ public:
    virtual void close();
 
    virtual DBIRecordset *query( const String &sql, ItemArray* params = 0 );
+   void result( const String &sql, Item& target, ItemArray* params );
    virtual DBIStatement* prepare( const String &query );
    virtual int64 getLastInsertedId( const String& name = "" );
 

@@ -1051,7 +1051,8 @@ DBIHandleMySQL::DBIHandleMySQL( MYSQL *conn )
    mysql_autocommit( m_conn, m_settings.m_bAutocommit ? 1 : 0 );
 }
 
-DBIRecordset *DBIHandleMySQL::query( const String &sql, ItemArray* params )
+
+DBIRecordset *DBIHandleMySQL::query_internal( const String &sql, ItemArray* params )
 {
    if( m_conn == 0 )
      throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
@@ -1159,6 +1160,19 @@ DBIRecordset *DBIHandleMySQL::query( const String &sql, ItemArray* params )
    }
 
    return new DBIRecordsetMySQL_RES_STR( this, rec );
+}
+
+
+
+DBIRecordset *DBIHandleMySQL::query( const String &sql, ItemArray* params )
+{
+   return query_internal( sql, params );
+}
+
+void DBIHandleMySQL::result( const String &sql, Item& res, ItemArray* params )
+{
+   DBIRecordset* rs = query_internal( sql, params );
+   std_result( rs, res );
 }
 
 

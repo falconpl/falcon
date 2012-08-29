@@ -46,6 +46,7 @@ void Statement_affected(CoreObject *instance, void *user_data, Item &property, c
 //=====================
 
 void Handle_query( VMachine *vm );
+void Handle_result( VMachine *vm );
 void Handle_aquery( VMachine *vm );
 void Handle_options( VMachine *vm );
 void Handle_prepare( VMachine *vm );

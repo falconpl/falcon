@@ -979,7 +979,11 @@ DBIRecordset *DBIHandleFB::query( const String &sql, ItemArray* params )
    }
 }
 
-
+void DBIHandleFB::result( const String &sql, Item& target, ItemArray* params )
+{
+   DBIRecordset* rs = query( sql, params );
+   std_result( rs, target );
+}
 
 isc_stmt_handle DBIHandleFB::internal_prepare( const String& query )
 {

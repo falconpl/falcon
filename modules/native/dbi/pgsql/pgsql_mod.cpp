@@ -571,7 +571,7 @@ PGresult* DBIHandlePgSQL::internal_exec( const String& sql, int64& affectedRows 
 }
 
 
-DBIRecordset* DBIHandlePgSQL::query( const String &sql, ItemArray* params )
+PGresult* DBIHandlePgSQL::internal_query( const String &sql, ItemArray* params )
 {
     if ( m_conn == 0 )
         throw new DBIError( ErrorParam( FALCON_DBI_ERROR_CLOSED_DB, __LINE__ ) );
@@ -597,7 +597,7 @@ DBIRecordset* DBIHandlePgSQL::query( const String &sql, ItemArray* params )
     // have we a resultset?
     if ( st == PGRES_TUPLES_OK  )
     {
-       return new DBIRecordsetPgSQL( this, res );
+       return res;
     }
 
     // no result
@@ -606,6 +606,41 @@ DBIRecordset* DBIHandlePgSQL::query( const String &sql, ItemArray* params )
     return 0;
 }
 
+
+DBIRecordset* DBIHandlePgSQL::query( const String &sql, ItemArray* params )
+{
+	PGresult* res = internal_query( sql, params );
+	if( res == 0 ) {
+		return 0;
+	}
+
+    return new DBIRecordsetPgSQL( this, res );
+}
+
+void DBIHandlePgSQL::result( const String &sql, Item& target, ItemArray* params )
+{
+	target.setNil();
+
+	PGresult* res = internal_query( sql, params );
+	if( res != 0 )
+	{
+	     DBIRecordsetPgSQL rs( this, res );
+	     if( rs.fetchRow() ) {
+		   int count = rs.getColumnCount();
+		   if( count == 1 ) {
+			   rs.getColumnValue(0,target);
+		   }
+		   else {
+			   CoreArray* arr = new CoreArray();
+			   arr->resize(count);
+			   for( int i = 0; i < count; ++i ) {
+				   rs.getColumnValue(i, arr->at(i));
+			   }
+			   target = arr;
+		   }
+	     }
+	}
+}
 
 DBIStatement* DBIHandlePgSQL::prepare( const String &query )
 {

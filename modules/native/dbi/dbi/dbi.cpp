@@ -77,6 +77,14 @@
    - **port**: TCP Port where to connect, in case the database engine is network based. It is passed
               untraslated to the engine, so it must respect the values that the engine may accept.
               If not given, the default setting for the required engine is used.
+   - **create**: Action to perform if the database is not created. It
+   	   can be "**always**" to try to create the required database, eventually
+   	   dropping it if it exists; "**cond**" to try to open it, and if it
+   	   doesn't exist, try to create it. If the string is not given or
+   	   set to nothing, i.e. "cond=;", the database is opened only if
+   	   already existing. Other means need to be employed to determine if the
+   	   database was created anew (i.e. trying to select from a table that
+   	   should exist, or trying to query the engine system tables).
 
    @section dbi_settings Common DBI settings
 
@@ -324,6 +332,8 @@ FALCON_MODULE_DECL
    self->addClassMethod( handler_class, "options", &Falcon::Ext::Handle_options ).asSymbol()
       ->addParam("options");
    self->addClassMethod( handler_class, "query", &Falcon::Ext::Handle_query ).asSymbol()->
+         addParam("sql");
+   self->addClassMethod( handler_class, "result", &Falcon::Ext::Handle_result ).asSymbol()->
          addParam("sql");
    self->addClassMethod( handler_class, "aquery", &Falcon::Ext::Handle_aquery ).asSymbol()->
          addParam("sql")->addParam("params");
