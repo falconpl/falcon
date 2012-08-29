@@ -580,8 +580,21 @@ class Table( id, itemsPerPage, itemCount, firstItem, orderColumn ) from widget.W
             "function( col ) { this.column=col; " +
             self.ajaxMsg( "order", self._makeAjaxDict() ) + "; }"
 
-      self.jsMethods['setFilter'] = \
-            "function( filter ) { this.onCreate(); this.filter=filter; " +
+      self.jsMethods['setFilter'] = "
+            function( filter, fname ) { 
+               this.onCreate(); 
+               if( fname != '' ) {
+                  if( this.filter ) {
+                     this.filter[fname] = filter;
+                  }
+                  else {
+                     this.filter = { fname: filter };
+                  }
+               }
+               else {
+                  this.filter = filter;
+               }
+               " +
             self.ajaxMsg( "filter", self._makeAjaxDict() ) + "; }"
 
       self.jsMethods['onCheckCol'] = "
@@ -671,10 +684,10 @@ class Table( id, itemsPerPage, itemCount, firstItem, orderColumn ) from widget.W
    */
    function addFilterWidget( wid, filterPrefix )
       if not self.jsListeners: self.jsListeners = [=>]
-      
+      if not filterPrefix: filterPrefix = ""
       self.jsListeners[wid] = \
-            "function( source, msg, value ) { if (msg == 'change') { this.setFilter( " +
-            (filterPrefix ? "\"" + filterPrefix + ":\"+": "" ) + "value );} }"
+            "function( source, msg, value ) { if (msg == 'change') { this.setFilter( value, '"+
+            filterPrefix + "');} }"
    end
 
    /*# Fixes the first item and return a last item according to itemCount and ItemPerPage.

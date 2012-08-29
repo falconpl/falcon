@@ -50,15 +50,12 @@ class NameTable( id, itemsPerPage, itemCount, firstItem, orderColumn ) from \
 
       // filter table
       if flt
-         if " " in flt
-            surname, name = map( {v=>strLower(v)}, flt.split( " ", 2 ))
-         else
-            surname = strLower(flt)
-         end
+         name = "name" in flt ? flt["name"]:nil
+         sname= "surname" in flt? flt["surname"]: nil
          
          data = filter( { val =>
-               if not strLower(val['sname']).startsWith(surname): return false
-               if name and not strLower(val['name']).startsWith( name ): return false
+               if sname and not strLower(val['sname']).startsWith(strLower(sname)): return false
+               if name and not strLower(val['name']).startsWith( strLower(name) ): return false
                return true
                }, data)
       end

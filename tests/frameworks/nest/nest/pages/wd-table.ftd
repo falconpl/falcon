@@ -8,10 +8,15 @@
 <h2>Nest Widget test: Table</h2>
 
 <?
-   filterText = Nest.widget("ActiveInput" )( "TabNamefilter", "Filter Surname Name" )
+   filterText = Nest.widget("ActiveInput" )( "TabNameFilter" )   
    filterText.typeTimeout = 300
+   
+   filterSur = Nest.widget("ActiveInput" )( "TabSurFilter" )
+   filterSur.typeTimeout = 300
+   
    table = Nest.widget( "NameTable" )( "tabtest", 10, -1, 0, 0 )
-   table.addFilterWidget( filterText )
+   table.addFilterWidget( filterText, "name" )
+   table.addFilterWidget( filterSur, "surname" )
 
    //=================================================================
    // Deletor
@@ -139,7 +144,9 @@
    tadder.props =[ "onclick" => "Nest.i('tabtest.updater').newData()" ]
 
 ?>
-<?= filterText.render() ?><br/>
+<p>Filter by surname and name: <?= filterSur.render() ?>&nbsp;<?= filterText.render() ?>
+</p>
+
 <?= table.render() ?>
 <?= tmdeletor.render() ?>
 <?= tadder.render() ?>
