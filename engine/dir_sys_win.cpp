@@ -405,7 +405,7 @@ bool fal_readlink( const String &fname, String &link )
    return false;
 }
 
-bool fal_writelink( const String &fname, String &link )
+bool fal_writelink( const String &fname, const String &link )
 {
    /** TODO: implement on windows */
    return false;
