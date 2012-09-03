@@ -185,10 +185,15 @@ void DBIRecordsetSQLite3::close()
 {
    if( m_stmt != 0 )
    {
-      m_pDbh->decref();
+	  // first decref the statement
       m_pStmt->decref();
+
+      // then the database
+      m_pDbh->decref();
+
       m_pStmt = 0;
       m_stmt = 0;
+      m_pDbh = 0;
    }
 }
 
@@ -351,10 +356,13 @@ void DBIStatementSQLite3::close()
 {
    if( m_statement != 0 )
    {
-      m_pDbh->decref();
+	  // first decref the statement
       m_pStmt->decref();
+      // then the database.
+      m_pDbh->decref();
       m_pStmt = 0;
       m_statement = 0;
+      m_pDbh = 0;
    }
 }
 
