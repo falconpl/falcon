@@ -477,7 +477,7 @@ void DBIHandleSQLite3::result( const String &sql, Item& res, ItemArray* params )
 			   res = arr;
 		   }
 	   }
-	   sqlite3_finalize( pStmt );
+	   // the statement gets finalized by the recordset destructor.
    }
 }
 
