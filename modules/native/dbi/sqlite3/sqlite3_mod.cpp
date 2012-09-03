@@ -16,7 +16,6 @@
 #include "sqlite3_mod.h"
 #include <string.h>
 
-#include <stdio.h>
 namespace Falcon
 {
 
@@ -244,7 +243,8 @@ bool DBIRecordsetSQLite3::getColumnValue( int nCol, Item& value )
    case SQLITE_TEXT:
       {
          CoreString* cs = new CoreString;
-         cs->fromUTF8( (const char*) sqlite3_column_text( m_stmt, nCol ) );
+         const char* text = (const char*) sqlite3_column_text( m_stmt, nCol );
+         cs->fromUTF8( text );
          value = cs;
       }
       return true;
