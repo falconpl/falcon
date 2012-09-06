@@ -152,7 +152,7 @@ class Part( headers, body )
       self._isMulti = true
       if not boundary: boundary = self.makeBoundary()
       self._boundary = boundary
-      self.headers["Content-Type"] = [""=> @"multipart/$partMode", "boundary" => boundary]
+      self.headers["Content-Type"] = [""=> @"multipart/$partMode", "boundary" => '"'+boundary+'"']
       return self
    end
 
@@ -400,7 +400,7 @@ class Part( headers, body )
             // as the main header is "", we can always be sure that it will be the first
             for key, val in value
                if key: stream.write( key + "=" )
-               if '"' in val or ';' in val or " " in val
+               if ('"' in val or ';' in val or " " in val) and not (val.startsWith('"'))
                   val = '"' + val.replace( '"', '\"' ) + '"'
                end
                stream.write( val )
