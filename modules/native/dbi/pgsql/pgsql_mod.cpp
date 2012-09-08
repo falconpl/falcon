@@ -597,7 +597,7 @@ PGresult* DBIHandlePgSQL::internal_query( const String &sql, ItemArray* params )
     // have we a resultset?
     if ( st == PGRES_TUPLES_OK  )
     {
-       return res;
+        return res;
     }
 
     // no result
