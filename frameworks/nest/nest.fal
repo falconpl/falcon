@@ -1364,7 +1364,8 @@ object Nest
                           "(function(){ var element;\n"
          // first to all the setup...
          for item in self._widgets
-            if item.prototype != 0  // skip protos
+            // skip protos and disabled widgets.
+            if item.prototype != 0 and not item.disabled
                value = item.setup()
                if value: str += value
 

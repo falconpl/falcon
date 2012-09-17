@@ -270,6 +270,9 @@ class Widget( id )
 
    prototype = nil
    
+   //# A disabled widget is not rendered in Nest close scripting.
+   disabled = false
+   
    init
       Nest.requireJS("base")      
       Nest.subscribeWidget( self )
@@ -979,4 +982,12 @@ class Widget( id )
       
       return arr
    end
+   
+   function disable()
+      self.disabled = true
+      for child in self.children
+         child.disable()
+      end
+   end
+   
 end

@@ -141,7 +141,7 @@ public:
     PgSQLHandlerRef* getConnRef() const { return m_pConn; }
 
 private:
-    virtual DBIRecordset* internal_query( const String &sql, ItemArray* params = 0 );
+    virtual PGresult* internal_query( const String &sql, ItemArray* params = 0 );
 
 };
 

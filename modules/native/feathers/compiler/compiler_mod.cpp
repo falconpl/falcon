@@ -107,7 +107,7 @@ bool CompilerIface::getProperty( const String &propName, Item &prop ) const
    {
       prop.setBoolean( m_bLaunchAtLink );
    }
-   else if( propName == "langauge" )
+   else if( propName == "language" )
    {
       if ( ! prop.isString() )
          prop = new CoreString;
