@@ -240,12 +240,12 @@ public:
    virtual void setCharAt( String *str, uint32 pos, uint32 chr ) const;
 };
 
-extern FALCON_DYN_SYM Static handler_static;
-extern FALCON_DYN_SYM Buffer handler_buffer;
-extern FALCON_DYN_SYM Static16 handler_static16;
-extern FALCON_DYN_SYM Buffer16 handler_buffer16;
-extern FALCON_DYN_SYM Static32 handler_static32;
-extern FALCON_DYN_SYM Buffer32 handler_buffer32;
+extern FALCON_DYN_SYM Byte *f_handler_static();
+extern FALCON_DYN_SYM Byte *f_handler_buffer();
+extern FALCON_DYN_SYM Byte *f_handler_static16();
+extern FALCON_DYN_SYM Byte *f_handler_buffer16();
+extern FALCON_DYN_SYM Byte *f_handler_static32();
+extern FALCON_DYN_SYM Byte *f_handler_buffer32();
 
 } // namespace csh
 
@@ -325,22 +325,13 @@ public:
       npos = csh::npos
    };
 
-
    /**
     * Creates an empty string.
     *
     * The string is created non-zero terminated with length 0. It has also
     * no valid internal storage at creation time.
     */
-   String():
-      m_class( &csh::handler_static ),
-      m_allocated( 0 ),
-      m_size( 0 ),
-      m_storage( 0 ),
-      m_bExported( false ),
-      m_bCore( false )
-   {
-   }
+   String();
 
 
    /** Adopt a static buffer as the internal buffer.
@@ -1245,6 +1236,9 @@ public:
    {
       return chr == ' ' || chr == '\t' || chr == '\r' || chr == '\n';
    }
+
+   /** empties the string and sets a static manipulator */
+   void clear();
 };
 
 

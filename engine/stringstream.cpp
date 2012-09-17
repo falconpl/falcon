@@ -119,10 +119,10 @@ void StringStream::setBuffer( const char* source, int size )
    {
       m_b->m_str = new String;
    }
+   // reserve does bufferize.
    m_b->m_str->reserve(size);
    memcpy( m_b->m_str->getRawStorage(), source, size );
    m_b->m_str->size( size );
-   m_b->m_str->manipulator( &csh::handler_buffer );
    m_lastError = 0;
    m_b->m_mtx.unlock();
 }
@@ -132,10 +132,12 @@ bool StringStream::detachBuffer()
 {
    m_b->m_mtx.lock();
    if( m_b->m_str != 0 ) {
+	  // So clear won't destroy the string...
       m_b->m_str->setRawStorage(0);
       m_b->m_str->size(0);
       m_b->m_str->allocated(0);
-      m_b->m_str->manipulator( &csh::handler_static );
+      // ... but just set the manipulator
+      m_b->m_str->clear();
       m_b->m_mtx.unlock();
       
       status( t_none );
@@ -246,7 +248,7 @@ bool StringStream::readString( String &target, uint32 size )
 {
    uint32 chr;
    target.size(0);
-   target.manipulator( &csh::handler_buffer );
+   target.bufferize();
 
    while ( size > 0 && popBuffer(chr) )
    {

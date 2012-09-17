@@ -35,7 +35,7 @@ class NameTable( id, itemsPerPage, itemCount, firstItem, orderColumn ) from \
       self.addActionColumn( "Actions", ["id"], ["name","sname"], .[
       action.ActionButton("Update", self, "upd" )
       action.ActionLink("Delete", self, "del" )
-      ])
+      ])      
    end
    
    function setDataView()

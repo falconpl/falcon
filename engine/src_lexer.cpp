@@ -420,7 +420,7 @@ int SrcLexer::lex_normal()
    // reset previous token
    m_lineContContext = false;
    m_string.size(0);
-   m_string.manipulator( &csh::handler_buffer );
+   m_string.bufferize();
 
    String tempString;
    uint32 chr;

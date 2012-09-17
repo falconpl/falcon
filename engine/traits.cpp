@@ -160,7 +160,7 @@ void StringTraits::init( void *targetZone ) const
    String *target = (String *) targetZone;
    // do minimal initialization
    memset( target, 0, sizeof( String ) ); // all values to zero and false.
-   target->manipulator( &csh::handler_static );
+   target->manipulator( csh::f_handler_static() );
 }
 
 void StringTraits::copy( void *targetZone, const void *sourceZone ) const
@@ -170,7 +170,7 @@ void StringTraits::copy( void *targetZone, const void *sourceZone ) const
 
    // init so that bufferize won't do fancy deletes
    memset( target, 0, sizeof( String ) ); // all values to zero and false.
-   target->manipulator( &csh::handler_static );
+   target->manipulator( csh::f_handler_static() );
 
 
    // then deep copy the other
