@@ -33,8 +33,8 @@ class _InfoBoxText(id, title, content) from widget.Widget( id )
 
    jsMethods = [
          "show" => @'
-         function(itemID) {
-            Nest.reposition( Nest.i(itemID), this, 10, 10, $(self.height), $(self.width) );
+         function(event) {
+            Nest.reposition(event, this, 10, 10, $(self.height), $(self.width) );
             var scroller = Nest.i(this.id + ".scroller" );
             this.style.display = "";
             this.style.overflow= "hidden";
@@ -122,6 +122,7 @@ end
 @endcode
 */
 class InfoBox( id, title, content, icon ) from widget.Widget( id )
+
    tag = "img"
    content = content
    icon = icon? icon : Nest.resLink("info.png")
@@ -136,16 +137,20 @@ class InfoBox( id, title, content, icon ) from widget.Widget( id )
       self.addChild( self.infobox )
       if self.props == nil: self.props = [=>]
       self.props["border"] = "0"
+      self.props["style"] = "cursor:pointer"
 
       // TODO: Remove this when we have automatic parentship
       self.addClassInParentship( InfoBox )   
    end
 
    function onSetup()
-      self.jsMethods = [
-            "onclick" => "function(event) {" + self.infobox.jsCall( 'show', self.getFullID() ) +"
+/*      self.jsMethods = [
+            "onclick" => "function(event) {" + self.infobox.jsCall( 'show', 'event', self.getFullID() ) +"
                   ;Nest.eatEvent(event);
                }"
+         ]*/
+      self.jsMethods = [
+            "onclick" => "function(event) {Nest.i('" + self.infobox.getFullID() + "').show(event); Nest.eatEvent(event); }"
          ]
    end
 
