@@ -685,12 +685,6 @@ void* MemPool::run()
          m_mtx_vms.unlock();
       }
 
-      if ( ! active ) {
-    	  MESSAGE( "Currently not active" );
-    	  m_eRequest.wait(GC_IDLE_TIME);
-    	  continue;
-      }
-
       VMachine* vm = 0;
       bool bPriority = false;
 
