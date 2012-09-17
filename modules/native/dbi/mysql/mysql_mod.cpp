@@ -516,8 +516,6 @@ bool DBIRecordsetMySQL_STMT::fetchRow()
 
 void DBIRecordsetMySQL_STMT::close()
 {
-   DBIRecordsetMySQL::close();
-
    if ( m_stmt != 0 ) 
    {
 	   int status = 0;
@@ -555,6 +553,8 @@ void DBIRecordsetMySQL_STMT::close()
                 ->throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_CLOSING );
       }
    }
+
+   DBIRecordsetMySQL::close();
 }
 
 DBIRecordset* DBIRecordsetMySQL_STMT::getNext()
@@ -823,6 +823,7 @@ void DBIRecordsetMySQL_RES_STR::close()
     	  static_cast< DBIHandleMySQL *>(m_dbh)
                  ->throwError( __FILE__, __LINE__, FALCON_DBI_ERROR_CLOSING );
       }
+      m_pConn->decref();
    }
 }
 

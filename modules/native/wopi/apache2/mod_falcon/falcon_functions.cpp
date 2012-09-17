@@ -65,7 +65,8 @@ static unsigned int s_entropy = 0;
 static void module_startup()
 {
    Falcon::Engine::Init();
-   Falcon::memPool->rampMode( RAMP_MODE_STRICT_ID );
+   Falcon::memPool->stop();
+   //Falcon::memPool->rampMode( RAMP_MODE_STRICT_ID );
 
    // create also the core; we know it's empty.
    s_core = Falcon::core_module_init();
@@ -359,7 +360,7 @@ static int falcon_handler(request_rec *request)
    {      
       void *temp_files = ar->base()->getTempFiles();
       vm->finalize();
-      //For debug: not needed in a real environment, activate this:
+      Falcon::memPool->start();
       //Falcon::memPool->performGC();
 
       if ( temp_files != 0 )

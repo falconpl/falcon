@@ -549,8 +549,8 @@ bool Transcoder::writeString( const String &source, uint32 begin, uint32 end )
 bool Transcoder::readString( String &source, uint32 size )
 {
    bool exitStatus = true;
-   source.manipulator( &csh::handler_buffer );
    source.size(0);
+   source.bufferize();
    uint32 chr;
 
    while( size > 0 && get(chr) ) {

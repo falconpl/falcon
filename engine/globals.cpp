@@ -153,7 +153,7 @@ namespace Engine
       }
       s_mtx.unlock();
 
-	  traits::releaseTraits();
+	  //traits::releaseTraits();
 
 	  gcMemShutdown(); 
    }

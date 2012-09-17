@@ -127,8 +127,8 @@ public:
       If a SymbolTable is not provided here, an empty one is immediately created.
    */
    Module();
-   Module &name( const String &n ) { m_name.bufferize( n ); return *this; }
-   Module &path( const String &p ) { m_path.bufferize( p ); return *this; }
+   Module &name( const String &n ) { m_name = n; return *this; }
+   Module &path( const String &p ) { m_path = p; return *this; }
    Module &language( const String &lang ) { m_language = lang; return *this; }
 
 

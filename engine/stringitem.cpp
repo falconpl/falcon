@@ -202,8 +202,6 @@ void String::writeIndex( const Item &index, const Item &target )
    throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra( "string" ) );
 }
 
-
-
 }
 
 /* end of stringitem.cpp */

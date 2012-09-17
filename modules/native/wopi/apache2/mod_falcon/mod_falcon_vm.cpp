@@ -46,4 +46,3 @@ ApacheVMachine::~ApacheVMachine()
           .extra("Interrupted due timeout") );
     }
  }
- 

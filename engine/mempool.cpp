@@ -657,6 +657,7 @@ void* MemPool::run()
       }
 
       // if we're in active mode, send a block request to all the enabled vms.
+      bool active = false;
       if ( state == 2 )
       {
          m_mtx_vms.lock();
@@ -667,6 +668,7 @@ void* MemPool::run()
             {
                TRACE( "Activating blocking request vm %p", vm );
                vm->baton().block();
+               active = true;
             }
             vm = vm->m_nextVM;
             while( vm != m_vmRing )
@@ -675,11 +677,18 @@ void* MemPool::run()
                {
                   TRACE( "Activating blocking request vm %p", vm );
                   vm->baton().block();
+                  active = true;
                }
                vm = vm->m_nextVM;
             }
          }
          m_mtx_vms.unlock();
+      }
+
+      if ( ! active ) {
+    	  MESSAGE( "Currently not active" );
+    	  m_eRequest.wait(GC_IDLE_TIME);
+    	  continue;
       }
 
       VMachine* vm = 0;
@@ -946,10 +955,13 @@ void MemPool::promote( uint32 oldgen, uint32 curgen )
 
 void MemPool::addGarbageLock( GarbageLock* ptr )
 {
+   fassert( m_lockRoot != 0 );
+
    m_mtx_lockitem.lock();
-   ptr->next( m_lockRoot->next() );
+   GarbageLock* next = m_lockRoot->next();
+   ptr->next( next );
    ptr->prev( m_lockRoot );
-   m_lockRoot->next()->prev( ptr );
+   next->prev( ptr );
    m_lockRoot->next( ptr );
    m_mtx_lockitem.unlock();
 
@@ -959,10 +971,17 @@ void MemPool::addGarbageLock( GarbageLock* ptr )
 
 void MemPool::removeGarbageLock( GarbageLock *ptr )
 {
-   // frirst: remove the item from the availability pool
+   fassert( m_lockRoot != ptr );
+
    m_mtx_lockitem.lock();
-   ptr->next()->prev( ptr->prev() );
-   ptr->prev()->next( ptr->next() );
+   GarbageLock* next = ptr->next();
+   GarbageLock* prev = ptr->prev();
+   next->prev(prev);
+   prev->next(next);
+#ifndef NDEBUG
+   	   ptr->next(0);
+   	   ptr->prev(0);
+#endif
    m_mtx_lockitem.unlock();
 }
 

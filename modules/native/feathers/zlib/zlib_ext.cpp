@@ -370,9 +370,9 @@ FALCON_FUNC ZLib_uncompressText( ::Falcon::VMachine *vm )
    result->adopt( (char *) compData, compLen, compLen );
    // set correct manipulator
    if (dataIn[0] == 2 )
-      result->manipulator( &csh::handler_buffer16 );
+      result->manipulator( csh::f_handler_buffer16() );
    else if( dataIn[0] == 4 )
-      result->manipulator( &csh::handler_buffer32 );
+      result->manipulator( csh::f_handler_buffer32() );
 
    vm->retval( result );
 }

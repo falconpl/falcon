@@ -32,13 +32,40 @@ namespace Falcon {
 
 namespace csh {
 
-Static handler_static;
-Buffer handler_buffer;
-Static16 handler_static16;
-Buffer16 handler_buffer16;
-Static32 handler_static32;
-Buffer32 handler_buffer32;
+Byte* f_handler_static() {
+	static Static* handler_static = new Static;
+	return handler_static;
+}
 
+Byte* f_handler_static16()
+{
+	static Static16* handler_static16 = new Static16;
+	return handler_static16;
+}
+
+Byte* f_handler_static32()
+{
+	static Static32* handler_static32 = new Static32;
+	return handler_static32;
+}
+
+Byte* f_handler_buffer()
+{
+	static Byte* handler = new Buffer;
+	return handler;
+}
+
+Byte* f_handler_buffer16()
+{
+	static Byte* handler = new Buffer16;
+	return handler;
+}
+
+Byte* f_handler_buffer32()
+{
+	static Byte* handler = new Buffer32;
+	return handler;
+}
 
 template<typename t1, typename t2>
 inline void copySized( byte* dest_, byte* src_, uint32 size )
@@ -94,7 +121,7 @@ static Base* adaptBuffer( byte *srcBuffer, uint32 srcPos, uint32 srcCharLen,
             case 2: copySized<byte, uint16>( destBuffer, srcBuffer, srcLen ); break;
             case 4: copySized<byte, uint32>( destBuffer, srcBuffer, srcLen ); break;
          }
-         return &handler_buffer;
+         return f_handler_buffer();
 
       case 2:
          switch( srcCharLen ) {
@@ -102,7 +129,7 @@ static Base* adaptBuffer( byte *srcBuffer, uint32 srcPos, uint32 srcCharLen,
             case 2: copySame<uint16>( destBuffer, srcBuffer, srcLen ); break;
             case 4: copySized<uint16, uint32>( destBuffer, srcBuffer, srcLen ); break;
          }
-         return &handler_buffer16;
+         return f_handler_buffer16();
 
       case 4:
          switch( srcCharLen ) {
@@ -110,7 +137,7 @@ static Base* adaptBuffer( byte *srcBuffer, uint32 srcPos, uint32 srcCharLen,
             case 2: copySized<uint32,uint16>( destBuffer, srcBuffer, srcLen ); break;
             case 4: copySame<uint32>( destBuffer, srcBuffer, srcLen ); break;
          }
-         return &handler_buffer32;
+         return f_handler_buffer32();
    }
 
    return 0;
@@ -254,9 +281,9 @@ void Byte::subString( const String *str, int32 start, int32 end, String *tgt ) c
 
    switch( cs )
    {
-      case 1: tgt->manipulator( &handler_buffer ); break;
-      case 2: tgt->manipulator( &handler_buffer16 ); break;
-      case 4: tgt->manipulator( &handler_buffer32 ); break;
+      case 1: tgt->manipulator( f_handler_buffer() ); break;
+      case 2: tgt->manipulator( f_handler_buffer16() ); break;
+      case 4: tgt->manipulator( f_handler_buffer32() ); break;
    }
 }
 
@@ -411,8 +438,8 @@ void Byte::bufferize( String *str ) const
       }
 
       str->setRawStorage( mem, size );
-      str->m_class = str->m_class->bufferedManipulator();
    }
+   str->m_class = str->m_class->bufferedManipulator();
 }
 
 void Byte::bufferize( String *str, const String *strOrig ) const
@@ -423,7 +450,7 @@ void Byte::bufferize( String *str, const String *strOrig ) const
 
    uint32 size = strOrig->m_size;
    if ( size == 0 ) {
-      str->m_class = &handler_static;
+      str->m_class = f_handler_static();
       str->setRawStorage( 0, 0 );
    }
    else {
@@ -484,34 +511,34 @@ void Static::shrink( String *str ) const
 void Static::reserve( String *str, uint32 size, bool relative, bool block ) const
 {
    Byte::reserve( str, size, relative, block );
-   str->m_class = &handler_buffer;
+   str->m_class = f_handler_buffer();
 }
 
 const Base *Static::bufferedManipulator() const
 {
-   return  &handler_buffer;
+   return f_handler_buffer();
 }
 
 void Static16::reserve( String *str, uint32 size, bool relative, bool block ) const
 {
    Byte::reserve( str, size, relative, block );
-   str->m_class = &handler_buffer16;
+   str->m_class = f_handler_buffer16();
 }
 
 const Base *Static16::bufferedManipulator() const
 {
-   return  &handler_buffer16;
+   return  f_handler_buffer16();
 }
 
 void Static32::reserve( String *str, uint32 size, bool relative, bool block ) const
 {
    Byte::reserve( str, size, relative, block );
-   str->m_class = &handler_buffer32;
+   str->m_class = f_handler_buffer32();
 }
 
 const Base *Static32::bufferedManipulator() const
 {
-   return  &handler_buffer32;
+   return  f_handler_buffer32();
 }
 
 void Static::setCharAt( String *str, uint32 pos, uint32 chr ) const
@@ -525,7 +552,7 @@ void Static::setCharAt( String *str, uint32 pos, uint32 chr ) const
       buffer = (byte *) memAlloc( size );
       memcpy( buffer, str->getRawStorage(), size );
       buffer[ pos ] = (byte) chr;
-      str->manipulator( &handler_buffer );
+      str->manipulator( f_handler_buffer() );
    }
    else if ( chr <= 0xFFFF )
    {
@@ -537,7 +564,7 @@ void Static::setCharAt( String *str, uint32 pos, uint32 chr ) const
       buf16[ pos ] = (uint16) chr;
       buffer = (byte *) buf16;
       size *= 2;
-      str->manipulator( &handler_buffer16 );
+      str->manipulator( f_handler_buffer16() );
    }
    else
    {
@@ -549,7 +576,7 @@ void Static::setCharAt( String *str, uint32 pos, uint32 chr ) const
       buf32[ pos ] = chr;
       buffer = (byte *) buf32;
       size *= 4;
-      str->manipulator( &handler_buffer32 );
+      str->manipulator( f_handler_buffer32() );
    }
 
    uint32 oldSize = str->allocated();
@@ -571,7 +598,7 @@ void Static16::setCharAt( String *str, uint32 pos, uint32 chr ) const
       memcpy( buf16, str->getRawStorage(), size );
       buf16[ pos ] = (uint16) chr;
       buffer = (byte *) buf16;
-      str->manipulator( &handler_buffer16 );
+      str->manipulator( f_handler_buffer16() );
    }
    else
    {
@@ -583,7 +610,7 @@ void Static16::setCharAt( String *str, uint32 pos, uint32 chr ) const
       buf32[ pos ] = chr;
       buffer = (byte *) buf32;
       size *= 2;
-      str->manipulator( &handler_buffer32 );
+      str->manipulator( f_handler_buffer32() );
    }
 
    uint32 oldSize = str->allocated();
@@ -602,7 +629,7 @@ void Static32::setCharAt( String *str, uint32 pos, uint32 chr ) const
 
    buf32[ pos ] = chr;
    buffer = (byte *) buf32;
-   str->manipulator( &handler_buffer32 );
+   str->manipulator( f_handler_buffer32() );
    uint32 oldSize = str->allocated();
    str->setRawStorage( buffer, size );
    if( oldSize != 0 )
@@ -627,7 +654,7 @@ void Buffer::setCharAt( String *str, uint32 pos, uint32 chr ) const
 
       buf16[ pos ] = (uint16) chr;
       size *= 2;
-      str->manipulator( &handler_buffer16 );
+      str->manipulator( f_handler_buffer16() );
       if( str->allocated() > 0 )
          memFree( buffer );
       str->setRawStorage( (byte *) buf16, size );
@@ -641,7 +668,7 @@ void Buffer::setCharAt( String *str, uint32 pos, uint32 chr ) const
 
       buf32[ pos ] = chr;
       size *= 4;
-      str->manipulator( &handler_buffer32 );
+      str->manipulator( f_handler_buffer32() );
       if( str->allocated() > 0 )
          memFree( buffer );
       str->setRawStorage( (byte *) buf32, size );
@@ -666,7 +693,7 @@ void Buffer16::setCharAt( String *str, uint32 pos, uint32 chr ) const
 
       buf32[ pos ] = chr;
       size *= 2;
-      str->manipulator( &handler_buffer32 );
+      str->manipulator( f_handler_buffer32() );
       if( str->allocated() > 0 )
          memFree( buf16 );
       str->setRawStorage( (byte *) buf32, size );
@@ -816,21 +843,21 @@ void Static::remove( String *str, uint32 pos, uint32 len ) const
 {
    Byte::remove( str, pos, len );
    // changing string type.
-   str->manipulator( &handler_buffer );
+   str->manipulator( f_handler_buffer() );
 }
 
 void Static16::remove( String *str, uint32 pos, uint32 len ) const
 {
    Byte::remove( str, pos, len );
    // changing string type.
-   str->manipulator( &handler_buffer16 );
+   str->manipulator( f_handler_buffer16() );
 }
 
 void Static32::remove( String *str, uint32 pos, uint32 len ) const
 {
    Byte::remove( str, pos, len );
    // changing string type.
-   str->manipulator( &handler_buffer32 );
+   str->manipulator( f_handler_buffer32() );
 }
 
 
@@ -887,9 +914,19 @@ void Buffer::destroy( String *str ) const
 // The string class
 //=================================================================
 
+String::String() :
+  m_class( csh::f_handler_static() ),
+  m_allocated( 0 ),
+  m_size( 0 ),
+  m_storage( 0 ),
+  m_bExported( false ),
+  m_bCore( false )
+{
+}
+
 
 String::String( uint32 size ):
-   m_class( &csh::handler_buffer ),
+   m_class( csh::f_handler_buffer() ),
    m_bExported( false ),
    m_bCore( false )
 {
@@ -899,7 +936,7 @@ String::String( uint32 size ):
 }
 
 String::String( const char *data ):
-   m_class( &csh::handler_static ),
+   m_class( csh::f_handler_static() ),
    m_allocated( 0 ),
    m_storage( (byte*) const_cast< char *>(data) ),
    m_bExported( false ),
@@ -909,7 +946,7 @@ String::String( const char *data ):
 }
 
 String::String( const char *data, int32 len ):
-   m_class( &csh::handler_buffer ),
+   m_class( csh::f_handler_buffer() ),
    m_bExported( false ),
    m_bCore( false )
 {
@@ -927,9 +964,9 @@ String::String( const wchar_t *data ):
    m_bCore( false )
 {
    if ( sizeof( wchar_t ) == 2 )
-      m_class = &csh::handler_static16;
+      m_class = csh::f_handler_static16();
    else
-      m_class = &csh::handler_static32;
+      m_class = csh::f_handler_static32();
 
    uint32 s = 0;
    while( data[s] != 0 )
@@ -945,9 +982,9 @@ String::String( const wchar_t *data, int32 len ):
    m_bCore( false )
 {
    if ( sizeof( wchar_t ) == 2 )
-      m_class = &csh::handler_buffer16;
+      m_class = csh::f_handler_buffer16();
    else
-      m_class = &csh::handler_buffer32;
+      m_class = csh::f_handler_buffer32();
 
    if ( len >= 0 )
    {
@@ -1027,7 +1064,7 @@ String &String::adopt( char *buffer, uint32 size, uint32 allocated )
    if ( m_allocated != 0 )
       m_class->destroy( this );
 
-   m_class = &csh::handler_buffer;
+   m_class = csh::f_handler_buffer();
    m_size = size;
    m_allocated = allocated;
    m_storage = (byte *) buffer;
@@ -1042,9 +1079,9 @@ String &String::adopt( wchar_t *buffer, uint32 size, uint32 allocated )
       m_class->destroy( this );
 
    if ( sizeof( wchar_t ) == 2 )
-      m_class = &csh::handler_buffer16;
+      m_class = csh::f_handler_buffer16();
    else
-      m_class = &csh::handler_buffer32;
+      m_class = csh::f_handler_buffer32();
 
    m_size = size * sizeof( wchar_t );
    m_allocated = allocated;
@@ -1555,7 +1592,7 @@ bool String::deserialize( Stream *in, bool bStatic )
       }
 
       // anyhow, set the handler to static and return.
-      manipulator(&csh::handler_static);
+      manipulator(csh::f_handler_static());
       return true;
    }
 
@@ -1575,18 +1612,18 @@ bool String::deserialize( Stream *in, bool bStatic )
          m_size = size;
          switch( chars )
          {
-            case 1: manipulator( &csh::handler_static ); break;
-            case 2: manipulator( &csh::handler_static16 ); break;
-            case 4: manipulator( &csh::handler_static32 ); break;
+            case 1: manipulator( csh::f_handler_static() ); break;
+            case 2: manipulator( csh::f_handler_static16() ); break;
+            case 4: manipulator( csh::f_handler_static32() ); break;
             default: return false;
          }
       }
       else {
          switch( chars )
          {
-            case 1: manipulator( &csh::handler_buffer ); break;
-            case 2: manipulator( &csh::handler_buffer16 ); break;
-            case 4: manipulator( &csh::handler_buffer32 ); break;
+            case 1: manipulator( csh::f_handler_buffer() ); break;
+            case 2: manipulator( csh::f_handler_buffer16() ); break;
+            case 4: manipulator( csh::f_handler_buffer32() ); break;
             default: return false;
          }
 
@@ -1651,9 +1688,9 @@ bool String::setCharSize( uint32 nsize, uint32 subst )
       m_class->destroy( this ); // dispose anyhow
       allocated(0);
       switch( nsize ) {
-         case 1: m_class = &csh::handler_buffer; break;
-         case 2: m_class = &csh::handler_buffer16; break;
-         case 4: m_class = &csh::handler_buffer32; break;
+         case 1: m_class = csh::f_handler_buffer(); break;
+         case 2: m_class = csh::f_handler_buffer16(); break;
+         case 4: m_class = csh::f_handler_buffer32(); break;
          default: return false;
       }
 
@@ -2095,7 +2132,7 @@ bool String::fromUTF8( const char *utf8, int len )
    // empty string?
    if ( len == 0 || *utf8 == 0 )
    {
-      m_class = &csh::handler_static;
+      m_class = csh::f_handler_static();
       return true;
    }
 
@@ -2384,6 +2421,16 @@ void String::unescapeQuotes()
          ++i;
       }
    }
+}
+
+
+void String::clear()
+{
+	m_class->destroy(this);
+	m_class = csh::f_handler_static();
+	m_storage = 0;
+	m_size = 0;
+	m_allocated = 0;
 }
 
 
