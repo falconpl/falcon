@@ -516,7 +516,7 @@ bool DBIRecordsetMySQL_STMT::fetchRow()
 
 void DBIRecordsetMySQL_STMT::close()
 {
-   if ( m_stmt != 0 ) 
+   if ( m_stmt != 0 && m_pConn != 0)
    {
 	   int status = 0;
 	#if MYSQL_VERSION_ID > 50500
@@ -1348,7 +1348,9 @@ void DBIHandleMySQL::close()
 
 void DBIHandleMySQL::throwError( const char* file, int line, int code )
 {
-   fassert( m_conn != 0 );
+   if( m_conn == 0 ){
+	   return;
+   }
 
    const char *errorMessage = mysql_error( m_conn );
 
