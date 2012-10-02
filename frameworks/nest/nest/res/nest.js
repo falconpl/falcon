@@ -3,6 +3,7 @@
 var Nest;
 if(!Nest) { Nest = {}; }
 
+
 (function () {
    "use strict";
 
@@ -22,45 +23,65 @@ if (!Array.prototype.indexOf) {
 }
 
    //============================================================================ Private part
-   var pendingAjaxReqs = new Array();
+   /* array of {func:, obj:, params:, isAjax:, errorCount:} */
+   var pendingFuncs = new Array();
+   var isDequeueing = false;
+   var currentPendingFunc = null;
    
-   function ajax( url, data, callback, errCallback ) {
-      var http = window.XMLHttpRequest ? new XMLHttpRequest() : new ActiveXObject("Microsoft.XMLHTTP");
-      http.onreadystatechange = function() { //Call a function when the state changes.
-         if(http.readyState == 4 ) {
-            if ( http.status == 200 ) {
-               var obj;
-               try {
-                  // try to understand as json.
-                  obj = JSON.parse(http.responseText);
-               }
-               catch( err ) {
-                  // don't bother fulfilling other requests.
-                  pendingAjaxReqs = new Array();
-                  // if not json, raise proper error.
-                  Nest.onJSONError( http.responseText, err )
-               }
+   function onAjaxResult( http, callback, errCallback )
+   {
+      var err = null;
+      
+      if(http.readyState == 4 ) {
+         if ( http.status == 200 ) {
+            var obj;
+            try {
+               // try to understand as json.
+               obj = JSON.parse(http.responseText);
+            }
+            catch( err ) {
+               // don't bother fulfilling other requests.
+               Nest.clearAjaxReqs();
+               // if not json, raise proper error.
+               Nest.onJSONError( http.responseText, err )
+            }
 
-               if( obj ) {
-                  // application error?
-                  if ( obj.error ) {
-                     // don't bother fulfilling other requests.
-                     pendingAjaxReqs = new Array();
-                     Nest.onAPIError( obj );
-                  }
-                  else if (callback) { callback( obj ); }
+            if( obj ) {
+               // application error?
+               if ( obj.error ) {
+                  // don't bother fulfilling other requests.
+                  clearAjaxReqs();
+                  Nest.onAPIError( obj );
                }
+               else if (callback) {
+                  callback( obj );
+               }
+            }
+         }
+         else {
+            if( currentPendingFunc && currentPendingFunc.errorCount < 2 ) {
+               currentPendingFunc.errorCount = currentPendingFunc.errorCount + 1;
+               Nest.requeue();
             }
             else {
                if( errCallback ) errCallback( http.status, http.responseText );
                else {
                   // don't bother fulfilling other requests.
-                  pendingAjaxReqs = new Array();
+                  Nest.clearAjaxReqs();
                   Nest.onAJAXError( http.status, http.responseText );
                }
             }
+            
          }
       }
+
+      // continue the suspended dequeue process.
+      Nest.dequeue();
+   }
+   
+   function ajax( url, data, callback, errCallback ) {
+      var http = window.XMLHttpRequest ? new XMLHttpRequest() : new ActiveXObject("Microsoft.XMLHTTP");
+      http.onreadystatechange = function() {onAjaxResult(http, callback, errCallback); };
       
       var params = "";
       if(data) {
@@ -91,38 +112,13 @@ if (!Array.prototype.indexOf) {
          http.send(null);
       }
    }
-
-   function onAjaxDone( obj ) {
-      var req = pendingAjaxReqs[0]; /* Do not shift now to prevent the callback to re-fire */
-      if( req.callback ) req.callback( obj );
-      pendingAjaxReqs.shift();
-      if( pendingAjaxReqs.length > 0 ) {
-         req = pendingAjaxReqs[0];
-         ajax( req.url, req.data, onAjaxDone, onAjaxFailed );
-      }
-   }
    
-   function onAjaxFailed( status, response ) {
-      /* Try again? */
-      var req = pendingAjaxReqs[0];
-      if (req.errCount < 2 && status == 0) {
-         req.errCount = req.errCount + 1;
-         ajax( req.url, req.data, onAjaxDone, onAjaxFailed );
-      }
-      else {
-         /* Don't bother processing other pending requests */
-         pendingAjaxReqs = new Array();
-         if( req.errCallback ) req.errCallback( status, response );
-         else Nest.onAJAXError( status, response );
-      }
-   }
-   
-   function addAjaxRequest( url_, data_, callback_, errCallback_ ) {
-      var req = {url: url_, data: data_, callback: callback_, errCallback: errCallback_, errCount: 0 };
-      pendingAjaxReqs.push( req );
-      if( pendingAjaxReqs.length == 1 ) {
-         ajax( url_, data_, onAjaxDone, onAjaxFailed );
-      }
+   function addAjaxRequest( url_, data_, callback_, errCallback_ )
+   {      
+      // enqueue function that will invoke ajax() and suspend queued functions handling
+      Nest.enqueue(
+            function(){ ajax( url_, data_, callback_, errCallback_); return true; },
+            null, null, true );
    }
 
    // Handler for set message
@@ -149,7 +145,12 @@ if (!Array.prototype.indexOf) {
       var element = document.getElementById( obj.id );
       if( element ) { element[obj.method].call( element, obj.param ); }
    }
-
+   
+   // Handler for call message
+   function handler_call( obj ) {
+      if( element ) { document[obj.method].call( null, obj.param ); }
+   }
+   
    function prepareInit( widID, obj ) {
       // get the root widget.
       
@@ -260,14 +261,79 @@ if (!Array.prototype.indexOf) {
       }
    }
 
-   // Method 'ajax'
+   // Method 'ajax' -- enqueues a request to perform an AJAX query.
    if (typeof Nest.ajax !== 'function') {
       Nest.ajax = function ( req_id, params, callback ) {
          var url = "./?a=" + req_id;
          addAjaxRequest( url, params, callback );
       }
    }
+   
+   // Method 'enqueue' -- puts a function in a queue and execute when dequeue is invoked.
+   // -- If the enqueue function returns true, dequeueing is suspended and then Nest.dequeue()
+   // -- must be explicitly called again to continue the process.
+   if (typeof Nest.enqueue !== 'function') {
+      Nest.enqueue = function ( func_, params_, obj_, isAjax_ ) {
+         pendingFuncs.push( {func: func_, params: params_, obj: obj_, isAjax: isAjax_, errCount:0 } );
+         this.dequeue();
+      }
+   }
+   
+   // Method 'posticipate' -- Like enequeue, but doesn't statr a dequeue automatically.
+   if (typeof Nest.posticipate !== 'function') {
+      Nest.posticipate = function ( func_, params_, obj_, isAjax_ ) {
+         pendingFuncs.push( {func: func_, params: params_, obj: obj_, isAjax: isAjax_, errCount:0 } );
+      }
+   }
 
+   // Method 'dequeue' -- starts executing functions in queue; does nothing is already dequeueing.
+   if (typeof Nest.dequeue !== 'function') {
+      Nest.dequeue = function ( func_, params_, obj_, isAjax_ ) {
+         if( isDequeueing ) {return;}
+         
+         isDequeueing = true;
+         var suspend =  false;
+         while( pendingFuncs.length > 0 ) {
+            currentPendingFunc = pendingFuncs.shift();
+            suspend = currentPendingFunc.func.call( currentPendingFunc.obj, currentPendingFunc.params );
+            if( suspend ) { break; }
+         }
+         // if we're suspended, we must keep currentPendingFunc, else we must clear it
+         if( ! suspend ) currentPendingFunc = null;
+         isDequeueing = false;
+      }
+   }
+   
+   // Method 'requeue' -- resubmits immediately the queued function that is currently being executed.
+   if (typeof Nest.requeue !== 'function') {
+      Nest.requeue = function ( func_, params_, obj_, isAjax_ ) {
+         if( currentPendingFunc ) {
+            pendingFuncs.unshift( currentPendingFunc );
+         }
+      }
+   }
+   
+   //Method clearAjaxReqs -- removes queued ajax requests, keeping other queued functions.
+   if (typeof Nest.clearAjaxReqs !== 'function') {
+      Nest.clearAjaxReqs = function() {
+         var tempArr = new Array();
+         for( var i in pendingFuncs ) {
+            var req = pendingFuncs[i];
+            if( ! req.isAjax ) {
+               tempArr.push(req);
+            }
+         }
+         
+         pendingFuncs = tempArr;
+      }
+   }
+   
+   //Method clearQueued -- removes all the queued functions.
+   if (typeof Nest.clearQueued !== 'function') {
+      Nest.clearQueued = function() {
+         pendingFuncs = new Array();
+      }
+   }
    
    if (typeof Nest.setWidVal !== 'function') {
       Nest.setWidVal = function ( wid, value ) {
@@ -314,15 +380,19 @@ if (!Array.prototype.indexOf) {
    // Method 'message' -- sends a local message to listeners in the page.
    if (typeof Nest.message !== 'function') {
       Nest.message = function ( wid, msg, value ) {
-         var listener = Nest.listeners[wid.id];
-         if( listener ) {
-            for (var i = 0; i < listener.length; i++) {
-               var lrec = listener[i];
-               var func = lrec.func;
-               var tgtid = lrec.tgt;
-               func.call( tgtid, wid, msg, value );
+         // enqueue the whole processing, so that a subscribe in front of the queue is correctly honoured.
+         Nest.enqueue( function() {
+            var listener = Nest.listeners[wid.id];
+            if( listener ) {
+               for (var i = 0; i < listener.length; i++) {
+                  var lrec = listener[i];
+                  var func = lrec.func;
+                  var tgtid = lrec.tgt;
+                  
+                  func.call( tgtid, wid, msg, value );
+               }
             }
-         }
+         } );
       }
    }
 
@@ -330,29 +400,33 @@ if (!Array.prototype.indexOf) {
    // callbacks are in this prototype: func( target, source_wid, msg, value );
    if (typeof Nest.listen !== 'function') {
       Nest.listen = function ( target, wid, cbfunc ) {
-         var listener = Nest.listeners[wid];
-         var listenRecord = { "tgt": target, "func": cbfunc };
-         if( listener ) {
-            listener.push( listenRecord );
-         }
-         else {
-            Nest.listeners[wid] = Array( listenRecord );
-         }
-      }
+         Nest.enqueue( function() {
+            var listener = Nest.listeners[wid];
+            var listenRecord = { "tgt": target, "func": cbfunc };
+            if( listener ) {
+               listener.push( listenRecord );
+            }
+            else {
+               Nest.listeners[wid] = Array( listenRecord );
+            }
+         } );
+      } 
    }   
    
    
    // Method 'widgetUpdate' -- handling requests from widget server.
    if (typeof Nest.widgetUpdate !== 'function') {
       Nest.widgetUpdate = function ( obj ) {
-         // handle multiple messages.
-         if( typeof obj == 'object' && obj.length ) {
-            var i = 0;
-            while( i < obj.length ) { Nest.processMessage( obj[i] ); i = i + 1; }
-         }
-         else {
-            Nest.processMessage( obj );
-         }
+         Nest.enqueue( function() {
+            // handle multiple messages.
+            if( typeof obj == 'object' && obj.length ) {
+               var i = 0;
+               while( i < obj.length ) { Nest.processMessage( obj[i] ); i = i + 1; }
+            }
+            else {
+               Nest.processMessage( obj );
+            }
+         });
       }
    }
 
@@ -365,7 +439,9 @@ if (!Array.prototype.indexOf) {
                Nest.onMessageNotFound( obj );
             }
             else {
-               handler.method.call( handler.object, obj );
+               Nest.enqueue( function() {
+                  handler.method.call( handler.object, obj );
+               });
             }
          }
          else {
@@ -462,7 +538,8 @@ if (!Array.prototype.indexOf) {
       Nest.messageHandlers = {
          'set': { object: null, method: handler_set},
          'set_style': { object: null, method: handler_set_style},
-         'invoke': { object: null, method: handler_invoke}
+         'invoke': { object: null, method: handler_invoke},
+         'call': { object: null, method: handler_call}
       }
    }
 
