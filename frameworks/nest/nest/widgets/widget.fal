@@ -486,14 +486,11 @@ class Widget( id )
             rend += "</" + self.tag +">\n"
          end
       else
-         rend = ""
-         if self.isAJAXHost
+         rend = self.renderContent()
+         if (self.isAJAXHost and not rend) or not ' id="'+id+'"' in rend
             // in case of ajax hosting, we need a "mute div" to have a document entity with our name.
-            rend +="<div id=\""+id+"\" style=\"display:none\"></div>"
+            rend ="<div id=\""+id+"\" style=\"display:none\"></div>" + rend
          end
-         
-         // otherwise we're just a set of children entities.
-         rend += self.renderContent()
       end
 
       return rend
@@ -527,7 +524,31 @@ class Widget( id )
    
    /*# Renders the contents of this widget.
       @return A string with the full HTML contents of this widget rendered.
+      
+      This method is meant to render the contents of the widget in the final
+      HTML page. The invoker will then surround the returned text with
+      the rendering of the @b tag element declared in the Widget class.
 
+      This method can be overriden to create custom content for the widget.
+      
+      The default behavior of this method is that of invoking the
+      @a Widget.renderInParent methods of all its children, and then returning
+      the result.
+            
+      If the @b tag property of this class is set to nil, 
+      this method should also render the tag that is meant to represnt
+      this widget in the final page, if sensible and necessary. In fact,
+      a widget might just be a collection of elements to be rendered in
+      place, and does not necessarily require a direct DOM representation.
+      
+      In case this widget is an ajax host, and the @b tag property is set
+      to nil, then the returned string should contain a valid DOM HTML id in 
+      form id="complete_id" (using double quotes, and the 'id', '=' and first quote
+      must not be separated by any space). If not, the caller code will
+      automatically add an empty and invisible div element in front of
+      the returned text, to ensure that the final DOM conains the target
+      of the various messages sent to ajax hosts.
+      
       @note A sub-widget may define renderPrompt method to differentiate
       the prompt from the main body.
    */

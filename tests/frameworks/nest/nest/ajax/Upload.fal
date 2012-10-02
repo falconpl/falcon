@@ -2,12 +2,17 @@ load hash
 
 function Upload( params )
    // have we an old md5?
-   oldmd5 = params["oldMD5"]
+   if "oldMD5" in params
+      oldmd5 = params["oldMD5"]
+   else
+      oldmd5 = "... none ..."
+   end
    
    file = Request.getField("file_one", nil)
    if not file: file = Request.getField("file_two", nil)
-   file.read()
-   data = file.data
    
-   return ["md5" => md5( data ), "sha" => sha256(data), "oldMD5" => oldmd5 ]
+   // willfully generating an error in case file is not up:
+   file.read()
+   data = file.data   
+   return ["md5" => md5( data ), "sha" => sha256(data), "oldMD5" => oldmd5 ]      
 end
