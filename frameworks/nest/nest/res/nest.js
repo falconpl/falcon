@@ -50,7 +50,7 @@ if (!Array.prototype.indexOf) {
                // application error?
                if ( obj.error ) {
                   // don't bother fulfilling other requests.
-                  clearAjaxReqs();
+                  Nest.clearAjaxReqs();
                   Nest.onAPIError( obj );
                }
                else if (callback) {
