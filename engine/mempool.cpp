@@ -965,18 +965,29 @@ void MemPool::addGarbageLock( GarbageLock* ptr )
 
 void MemPool::removeGarbageLock( GarbageLock *ptr )
 {
-   fassert( m_lockRoot != ptr );
+   // a nice assert, but at some point we must remove the garbage root as well.
+   //fassert( m_lockRoot != ptr );
 
-   m_mtx_lockitem.lock();
-   GarbageLock* next = ptr->next();
-   GarbageLock* prev = ptr->prev();
-   next->prev(prev);
-   prev->next(next);
-#ifndef NDEBUG
-   	   ptr->next(0);
-   	   ptr->prev(0);
-#endif
-   m_mtx_lockitem.unlock();
+   fassert( m_lockRoot != 0 );
+   if( m_lockRoot == ptr )
+   {
+	   m_lockRoot = 0;
+   }
+   else
+   {
+	   m_mtx_lockitem.lock();
+
+	   GarbageLock* next = ptr->next();
+	   GarbageLock* prev = ptr->prev();
+	   next->prev(prev);
+	   prev->next(next);
+	#ifndef NDEBUG
+		   ptr->next(0);
+		   ptr->prev(0);
+	#endif
+
+       m_mtx_lockitem.unlock();
+   }
 }
 
 
