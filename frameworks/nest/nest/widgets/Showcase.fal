@@ -140,7 +140,9 @@ class Showcase(id, width, height, autoWait, autoSpeed, transType, slotsMode) fro
       "autoSpeed" => autoSpeed ? autoSpeed : 1000,
       "hideAll" => "
          function() {
-            for( var item in this.pages ) {
+/*            for( var item in this.pages ) {
+ error: traversing an array must be done 'cross-browsers' as:   */
+              for( var item=0; item<this.pages.length; item++ ) { 
                var div = this.pages[item];
                div.style.display = 'inline-block';
             }
@@ -148,7 +150,9 @@ class Showcase(id, width, height, autoWait, autoSpeed, transType, slotsMode) fro
          
       "setup" => "
          function() {
-            for( var item in this.pages ) {
+/*            for( var item in this.pages ) {
+ error: traversing an array must be done 'cross-browsers' as:   */
+              for( var item=0; item<this.pages.length; item++ ) { 
                var div = this.pages[item];
                div.style.display = 'inline-block';
                div.style.position = 'absolute';

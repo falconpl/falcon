@@ -36,10 +36,14 @@ class TableColumn( name, heading, fmt, nullrep )
    cls = name
 
    /*# Override or re-assign to provide column-specific data rendering */
-   renderData = { value =>
+   function renderData(value,num) 
+
       if value == nil
          return self.nullRep ? self.nullRep : ""
       end
+      id = " id='"+self.fieldName
+      if num != nil: id += "."+num
+      id += "'"
 
       if self.cls
          cls=" class=\"" + self.cls + "\""
@@ -48,11 +52,11 @@ class TableColumn( name, heading, fmt, nullrep )
       end
       
       if self.format
-         return @"<td$(cls)>" + (@("$("+htmlEscape(toString(value))+":" + self.format + ")")) + "</td>"
+         return @ "<td$(id)$(cls)>" + (@("$("+htmlEscape(toString(value))+":" + self.format + ")")) + "</td>"
       else
-         return "<td>" + value + "</td>"
+         return @ "<td$(id)>" + value + "</td>"
       end
-   }
+   end
 
    /*# Uses a column definition string to fill the information about this column.
       @param initData The column definition
@@ -73,7 +77,7 @@ class TableColumn( name, heading, fmt, nullrep )
       recs = strSplit( initData, "|" )
       rlen = recs.len()
       self.fieldName = recs[0]
-      self.heading = rlen > 1 ? recs[1] : recs[0]
+      self.heading = rlen > 1 ? t_(recs[1]) : recs[0]
       if rlen > 2: self.format = rlen[2]
       if rlen > 3: self.nullRep = rlen[3]
    end
@@ -102,7 +106,7 @@ class ActionTableColumn( heading, keyFields, commentFields, actions )
          
       
    renderData = { data =>
-      str = "<td>"
+      str = "<td id='actions." + self.number + "'>"
       dict = [=>]
       if self.commentFields
          comment= self.combineComment( data, self.commentFields )
@@ -185,31 +189,16 @@ end
 
 class TableBody( id ) from widget.Widget( id + ".tb" )
 
-   /*# Side on which to print the order text.
-      - -1 = left
-      - 0 = None
-      - 1 = right
-   */
+   /*
+      Side on which to print the order text.
+      -1 = left
+       1 = right
+  
+
    orderSide = 1
-
-   textBeforeAsc = "&nbsp;"
-   /*# Text to print to put the ascending order.
-   */
-   textOrderAsc = "(^)"
-
-   /*# Text to print to put the descending order.
-   */
-   textOrderDesc = "(V)"
-   
-   /*# Text for active order ascending
-   */
-   textActiveAsc = "[<b>^</b>]"
-
-   /*# Text for active descending order.
-   */
-   textActiveDesc = "[<b>V</b>]"
-
-   textAfterDesc = "&nbsp;"
+   asc_ord_tag = "<img src='/images/asc_ord.gif' align=absmiddle>"
+   desc_ord_tag = "<img src='/images/desc_ord.gif' align=absmiddle>"
+   no_ord_tag = "<img src='/images/no_ord.gif' align=absmiddle>" */
 
    init
       // TODO: Remove this when we have automatic parentship
@@ -226,45 +215,43 @@ class TableBody( id ) from widget.Widget( id + ".tb" )
       // prepare the header row
       col = 1
       for tc in headers
-         ordering = nil
-         if self.orderSide != 0 and tc provides ordering and tc.ordering
-            ordering = self.textBeforeAsc
-            if col == self.parent.orderColumn // positive
-               ordering += self.textActiveAsc
+         css = 'unordered'
+         strord = ''
+         title = ((tc provides makeHeading) ?  tc.makeHeading() : tc.heading)
+         if tc provides ordering
+            if col==self.parent.orderColumn
+               css='ordered'
+               flag = -col
+               tooltip = t_('invert order')
+               img = self.parent.asc_ord_tag
+            elif col==-self.parent.orderColumn
+               css='ordered'
+               flag = 0
+               tooltip = t_('remove order')
+               img = self.parent.desc_ord_tag
             else
-               ordering += "<a href=\"javascript:" +
-                  self.parent.getJSSelf() +".setOrder(" + col + ");\">" +
-                  self.textOrderAsc + "</a>"
+               flag = col
+               tooltip = t_('order by')+" "+title
+               img = self.parent.no_ord_tag
             end
-
-            if col == -self.parent.orderColumn // negative
-               ordering += self.textActiveDesc
-            else
-               ordering += "<a href=\"javascript:" +
-                  self.parent.getJSSelf() +".setOrder(" + (-col) + ");\">" +
-                  self.textOrderDesc + "</a>"
-            end
- 
-            ordering += self.textAfterDesc         
+            strord = @ "<a class='$css' href=\"javascript:" + self.parent.getJSSelf() + 
+               @ ".setOrder($flag);\" title=\"$tooltip\">" + img + "</a>" 
          end
-         
-         str += "<th>"
-         if ordering and self.orderSide < 0: str += ordering
-         str += tc provides makeHeading ?  tc.makeHeading() : tc.heading
-         if ordering and self.orderSide > 0: str += ordering
-         str += "</th>"
+         str += @ "<th class='$css'>" + ((self.parent.orderSide==-1)? strord : '') + title + 
+            ((self.parent.orderSide==1)? strord : '') + "</th>"
          col++
       end
       
       str += "</tr></thead>\n<tbody>"
 
       // now read the data.
+      num = 0
       for row in data
          str += "<tr>"
          for tc in headers
             if tc provides fieldName
                if tc.fieldName in row
-                  str += tc.renderData( row[tc.fieldName] )
+                  str += tc.renderData( row[tc.fieldName], num )
                else
                   str += tc.renderData( nil )
                end
@@ -277,6 +264,7 @@ class TableBody( id ) from widget.Widget( id + ".tb" )
             end
          end
          str += "</tr>\n"
+         num++
       end
       str +="</tbody></table>\n"
 
@@ -513,7 +501,18 @@ class Table( id, itemsPerPage, itemCount, firstItem, orderColumn ) from widget.W
    /* A filter in format field:string */
    filter = ""
 
-   checboxData = [=>]
+   /* Side on which to print the order text.
+      -1 = left
+       1 = right
+
+     and tags/characters/images to use 
+   */
+   orderSide = 1
+   asc_ord_tag = "[V]"
+   desc_ord_tag = "[^]"
+   no_ord_tag = "[-]"
+
+   checkboxData = [=>]
    
    init
       self.initInfos = [self.itemsPerPage, self.itemCount, self.firstItem, self.orderColumn]
@@ -551,19 +550,20 @@ class Table( id, itemsPerPage, itemCount, firstItem, orderColumn ) from widget.W
       if msg == "goto" or msg == "order" or msg == 'filter' or msg == 'refresh'
          self.setDataView()
       end
-      
+
       retval = [
          self.msgSetProperty( 'innerHTML', self.render() )
          ]
-      if self.checboxData
-         retval += self.msgInvoke( 'setCheckboxData', self.checboxData )
+      if self.checkboxData
+         retval += self.msgInvoke( 'setCheckboxData', self.checkboxData )
       end
       return retval
    end
 
    function onRender()
+
       // hook for check columns
-      self.checboxData = [=>]
+      self.checkboxData = [=>]
 
       if self.jsMethods: return
       self.jsMethods['ckcols'] = "{};"
@@ -605,7 +605,6 @@ class Table( id, itemsPerPage, itemCount, firstItem, orderColumn ) from widget.W
 
        self.jsMethods['setCheckboxData'] = "
          function( value ) {this.ckcols = value;}"
-      
 
       self.jsMethods['onCheckAllCol'] = "
          function( cb, name ) {
@@ -637,6 +636,7 @@ class Table( id, itemsPerPage, itemCount, firstItem, orderColumn ) from widget.W
             }
             callback( res );
          }"
+
    end
 
    function _makeAjaxDict()
@@ -724,11 +724,11 @@ class Table( id, itemsPerPage, itemCount, firstItem, orderColumn ) from widget.W
    end
 
    function addCheckboxData( colName, key, comment )
-      if colName notin self.checboxData
+      if colName notin self.checkboxData
          arr = []
-         self.checboxData[colName] = arr
+         self.checkboxData[colName] = arr
       else
-         arr = self.checboxData[colName]
+         arr = self.checkboxData[colName]
       end
       arr += [ "key" => key, "comment" => comment ]
    end      

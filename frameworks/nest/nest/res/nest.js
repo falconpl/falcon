@@ -168,12 +168,99 @@ if (!Array.prototype.indexOf) {
          list.pop();
       }
    }
+   
+   
+   // utility properties and methods for Nest.i
+   
+   var cssRegExp = /([#\.])?(\w+)\.?(.+)?/;
+   
+   function selectByClass(context,name)  {
+       // compatibiliy function for getElementsByClassName (unsupported by IE8)
+       if (typeof context.getElementsByClassName == 'undefined')  {
+           var obj=[], n=0, re=new RegExp(name);
+           if (!context.length) context=new Array(context);
+           if (context[0] == document) context = document.all;
+           for (var i=0; i<context.length; i++)  {
+               if (re.test(context[i].className)) obj[n++]=context[i];
+                }
+            return obj; 
+        }
+        else return context.getElementsByClassName(name);
+    }
+   
+   function parseCSS(selector,context)  {
+        // parse a CSS selector and return matching DOM nodes       
+        if (!context) context=document;
+        if (!context.length) context=new Array(context);
+        var elems = cssRegExp.exec(selector);
+        var obj = [], n=0;
+        var elId=elems[2]; if (elems[3]) elId+='.'+elems[3];
+        switch(elems[1])  {
+            case '#': 
+                // selector is an unique id
+                var node;
+                if (context[0]==document)  {
+                    node = context[i].getElementById(elId); 
+                    if (node) obj[n++]=node;
+                    break;
+                    }
+                for (var i=0; i<context.length; i++) {
+                    node = context[i]; 
+                    if (node.id==elId) obj[n++]=node;
+                    }
+                break;
+            case '.': 
+                // selector is a class
+                var nodes;
+                for (var i=0; i<context.length; i++) {
+                    nodes = selectByClass(context[i],elems[2]); 
+                    for (var j=0; j<nodes.length; j++) obj[n++]=nodes[j];
+                }
+                break;  
+            default:
+                var node, nodes, subnodes;          
+                // selector may be an unique id (old behaviour)
+                if (context[0]==document)  {
+                    node = document.getElementById(elId); 
+                    if (node) return node;
+                    }
+                // or an html tag (css compliant)
+                for (var i=0; i<context.length; i++) {
+                    nodes = context[i].getElementsByTagName(elems[2]);
+                    for (var j=0; j<nodes.length; j++) {
+                   // there is a subclass for this tag?
+                        if (!elems[3]) obj[n++]=nodes[j];
+                        else  {
+                            subnodes = selectByClass(nodes[j],elems[3]);
+                            for (var k=0; k<subnodes.length; k++) obj[n++]=subnodes[k];
+                        }
+                    }
+                }
+            }
+        switch (obj.length) {
+            case 0: return null;
+            case 1: return obj[0];
+            default: return obj;
+        }
+    }   
+   
 
    //=================================================================================== Public interace
-   // Method 'i' -- shortcut for document.getElementByID
+
+   // Method 'i' -- shortcut for various CSS selections
+   if (typeof Nest.i !== 'function') {
+       Nest.i = function ( id ) { 
+            var obj = null;
+            var selectors = id.split(/\s+/);
+            while (id = selectors.shift()) obj = parseCSS(id, obj);
+            return obj;
+        }
+   }   
+   
+/* Method 'i' -- shortcut for document.getElementByID - old version
    if (typeof Nest.i !== 'function') {
       Nest.i = function ( id ) { return document.getElementById( id ); }
-   }
+   }  */
 
    // Stop event propagation
    Nest.eatEvent = function(evt){
