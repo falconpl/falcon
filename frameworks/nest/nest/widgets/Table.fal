@@ -218,7 +218,7 @@ class TableBody( id ) from widget.Widget( id + ".tb" )
          css = 'unordered'
          strord = ''
          title = ((tc provides makeHeading) ?  tc.makeHeading() : tc.heading)
-         if tc provides ordering
+         if tc provides ordering and tc.ordering
             if col==self.parent.orderColumn
                css='ordered'
                flag = -col
