@@ -200,14 +200,14 @@ if (!Array.prototype.indexOf) {
                 // selector is an unique id
                 var node;
                 if (context[0]==document)  {
-                    node = context[i].getElementById(elId); 
+                    node = document.getElementById(elId); 
                     if (node) obj[n++]=node;
                     break;
-                    }
+                }
                 for (var i=0; i<context.length; i++) {
                     node = context[i]; 
                     if (node.id==elId) obj[n++]=node;
-                    }
+                }
                 break;
             case '.': 
                 // selector is a class
