@@ -18,9 +18,8 @@
 
 import from nest.widgets.widget in widget
 
-class _InfoBoxText(id, title, content) from widget.Widget( id )
+class _InfoBoxText(id, title, content, mouseMode) from widget.Widget( id )
    content = content
-
    imgclose= Nest.resLink( "infobox_close.png" )
 
    title = title
@@ -32,9 +31,33 @@ class _InfoBoxText(id, title, content) from widget.Widget( id )
    fadeOutTime = 250
 
    jsMethods = [
-         "show" => @'
+         "hide" => @'
+            function() {
+               var self = this;
+               var hidef = function() { self.style.display = "none"; }
+               Nest.transite( this, $(self.fadeOutTime), {"opacity":0}, {"opacity":0.9}, null, hidef );
+            }'
+   ]
+
+   init
+      if self.props == nil: self.props = [=>]
+      self.props["style"] = "
+            display:none;
+            padding:0;
+            margin:0;
+            position:absolute;
+            "
+      self.props["class"] = "nest_InfoBoxText"
+   end
+   
+   function onRender()
+      showjs = (self.parent.mouseMode)? @'
          function(event) {
-            Nest.reposition(event, this, 10, 10, $(self.height), $(self.width) );
+            Nest.reposition(event, this, 10, 10, $(self.height), $(self.width) );' : @'
+         function(itemID) {
+            Nest.reposition(Nest.i(itemID), this, 10, 10, $(self.height), $(self.width) );'
+
+      showjs += @'
             var scroller = Nest.i(this.id + ".scroller" );
             this.style.display = "";
             this.style.overflow= "hidden";
@@ -58,25 +81,9 @@ class _InfoBoxText(id, title, content) from widget.Widget( id )
                   }
             };
             Nest.addTransition( trans );
-         }',
+         }'
 
-         "hide" => @'
-            function() {
-               var self = this;
-               var hidef = function() { self.style.display = "none"; }
-               Nest.transite( this, $(self.fadeOutTime), {"opacity":0}, {"opacity":0.9}, null, hidef );
-            }'
-   ]
-
-   init
-      if self.props == nil: self.props = [=>]
-      self.props["style"] = "
-            display:none;
-            padding:0;
-            margin:0;
-            position:absolute;
-            "
-      self.props["class"] = "nest_InfoBoxText"
+      self.jsMethods['show'] = showjs
 
       // TODO: Remove this when we have automatic parentship
       self.addClassInParentship( _InfoBoxText )   
@@ -100,6 +107,7 @@ end
    @param id The widget ID
    @param content The HTML content of the text box
    @optparam icon Icon location used for the informative popup.
+   @optparam mouseMode  use event click coordinates instead of node cumulative offset  (default false)
 
    This method generates a popup that gets displayed when the
    user clicks the given icon (by default, "res/info.png").
@@ -121,37 +129,35 @@ end
    +++++++++++++++++++++++++++++++++++++++++
 @endcode
 */
-class InfoBox( id, title, content, icon ) from widget.Widget( id )
-
+class InfoBox( id, title, content, icon, mouseMode ) from widget.Widget( id )
    tag = "img"
    content = content
    icon = icon? icon : Nest.resLink("info.png")
    isSelfClosing = true
-
-   infobox = _InfoBoxText( "infobox", title, content )
+   infobox = nil
+   mouseMode = mouseMode
 
    init
       // activate effects
       Nest.requireJS("fx")
+
+      self.set(["border"=>"0"])
+
       // add the infobox
+      self.infobox = _InfoBoxText( "infobox", title, content, mouseMode )
       self.addChild( self.infobox )
-      if self.props == nil: self.props = [=>]
-      self.props["border"] = "0"
-      self.props["style"] = "cursor:pointer"
 
       // TODO: Remove this when we have automatic parentship
-      self.addClassInParentship( InfoBox )   
+      self.addClassInParentship( InfoBox )
    end
 
    function onSetup()
-/*      self.jsMethods = [
-            "onclick" => "function(event) {" + self.infobox.jsCall( 'show', 'event', self.getFullID() ) +"
-                  ;Nest.eatEvent(event);
-               }"
-         ]*/
-      self.jsMethods = [
-            "onclick" => "function(event) {Nest.i('" + self.infobox.getFullID() + "').show(event); Nest.eatEvent(event); }"
-         ]
+      if self.mouseMode
+         js = "Nest.i('" + self.infobox.getFullID() + "').show(event)"
+      else
+         js = self.infobox.jsCall('show',self.getFullID())
+      end 
+      self.jsMethods = [ "onclick" => "function(event) {" + js + "; Nest.eatEvent(event);}" ]
    end
 
    function onRender()
