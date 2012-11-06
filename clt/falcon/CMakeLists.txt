@@ -11,7 +11,9 @@ option(FALCON_WITH_INTERNAL_EDITLINE "If using Editline, compile the one interna
 
 if(WIN32)
    set(readline_SRC readline_simple.cpp)
-   set( SYSTEM_RC falcon.rc)
+   if(NOT MINGW)
+      set( SYSTEM_RC falcon.rc)
+   endif(NOT MINGW)
 else()  
    if(FALCON_READLINE_MODE STREQUAL "readline")
      set(readline_SRC readline_readline.cpp)
