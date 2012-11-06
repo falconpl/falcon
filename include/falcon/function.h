@@ -247,14 +247,14 @@ protected:
          Function( #FN_NAME ) \
       { parseDescription( SIGNATURE ); } \
       virtual ~Function_ ## FN_NAME() {} \
-      virtual void invoke( VMContext* ctx, int32 pCount = 0 ); \
+      virtual void invoke( ::Falcon::VMContext* ctx, ::Falcon::int32 pCount = 0 ); \
    };
 
 #define FALCON_DEFINE_FUNCTION(FN_NAME) void Function_ ## FN_NAME::invoke
 #define FALCON_DEFINE_FUNCTION_P(FN_NAME) \
-      void Function_ ## FN_NAME::invoke( VMContext* ctx, int pCount )
+      void Function_ ## FN_NAME::invoke( ::Falcon::VMContext* ctx, ::Falcon::int32 pCount )
 #define FALCON_DEFINE_FUNCTION_P1(FN_NAME) \
-      void Function_ ## FN_NAME::invoke( VMContext* ctx, int )
+      void Function_ ## FN_NAME::invoke( ::Falcon::VMContext* ctx, ::Falcon::int32 )
 #define FALCON_FUNCTION_NAME(FN_NAME) Function_ ## FN_NAME
 
 }
