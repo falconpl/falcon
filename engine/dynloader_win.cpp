@@ -43,7 +43,7 @@ Module* DynLoader::load_sys( const String& filePath )
    HMODULE module = LoadLibraryW( dll_name_wc );
    DWORD error;
 
-   if ( module == NULL ) 
+   if ( module == NULL )
    {
       error = GetLastError();
       if (  error  == ERROR_CALL_NOT_IMPLEMENTED )
@@ -62,7 +62,7 @@ Module* DynLoader::load_sys( const String& filePath )
                          .origin( ErrorParam::e_orig_loader )
                          .sysError( GetLastError() )
                          .extra( filePath ) );
-      return false;
+      return NULL;
    }
 
    typedef Module* (*module_init_type)();
