@@ -28,9 +28,9 @@ if(WIN32)
    #mingw requires -mthreads global option
    if(CMAKE_GENERATOR STREQUAL "MinGW Makefiles")
       message( "MINGW make detected, adding -mthreads flag" )
-      list(APPEND CMAKE_EXE_LINKER_FLAGS -mthreads )
-      list(APPEND CMAKE_SHARED_LINKER_FLAGS -mthreads )
-      list(APPEND CMAKE_MODULE_LINKER_FLAGS -mthreads )
+      set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -mthreads" )
+      set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -mthreads" )
+      set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -mthreads" )
    endif()
 endif(WIN32)
 #
