@@ -441,6 +441,21 @@ void Module::enumerateGlobals( SymbolEnumerator& rator ) const
    }
 }
 
+/** Enumerate all functions and classes in this module.
+*/
+void Module::enumerateMantras( Module::MantraEnumerator& rator ) const
+{
+   Private::MantraMap::const_iterator iter = _p->m_mantras.begin();
+   Private::MantraMap::const_iterator end = _p->m_mantras.end();
+
+   while( iter != end )
+   {
+      const Mantra* m = iter->second;
+      if( ! rator( *m, ++iter == end) )
+         break;
+   }
+}
+
 
 void Module::enumerateExports( SymbolEnumerator& rator ) const
 {

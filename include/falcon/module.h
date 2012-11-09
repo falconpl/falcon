@@ -51,7 +51,7 @@ class ClassModule;
  Falcon modules are used to transiently store code and data that can then
  be executed by a virtual machine (usually, a single virtual machine, and just once).
 
- The contents of modules is dinamyc in the sense that it might be altered at
+ The contents of modules is dynamic in the sense that it might be altered at
  any stage of their lifetime.
 
  Modules can be linked in a virtual machine statically or dynamically.
@@ -63,8 +63,8 @@ class ClassModule;
  Dynamic modules can be loaded and unloaded multiple times during the lifetime
  of their own VM.
  
- The main differece between the two type of modules is that dynamic modules need
- to create entities that might surivive their own lifetime, and that need to be
+ The main difference between the two type of modules is that dynamic modules need
+ to create entities that might survive their own lifetime, and that need to be
  accounted separately for garbage reclaim.
  
  The advantage of statically link a module is that all the items it declares
@@ -214,6 +214,9 @@ public:
    /** Enumerator receiving symbols in this module. */
    typedef Enumerator<Symbol> SymbolEnumerator;
 
+   /** Enumerator receiving mantras in this module. */
+   typedef Enumerator<Mantra> MantraEnumerator;
+
    /** Enumerate all the globals known by this module.
       \note The enumerated symbol might be a GlobalSymbol or an UnknownSymbol.
     */
@@ -223,6 +226,10 @@ public:
           \note The enumerated symbol might be a GlobalSymbol or an UnknownSymbol.
     */
    void enumerateExports( SymbolEnumerator& rator ) const;
+
+   /** Enumerate all functions and classes in this module.
+    */
+   void enumerateMantras( MantraEnumerator& rator ) const;
 
    /** Candy grammar to add exported functions. */
    Module& operator <<( Mantra* f )
@@ -364,7 +371,7 @@ public:
     \param fcls The class that have just been completed.
     
     This method is called when all the inheritances of a FalconClass are
-    (succesfully) resolved. In case it's necessary to create a HyperClass
+    (successfully) resolved. In case it's necessary to create a HyperClass
     out of this FalconClass, the class ID and eventually the global symbol
     bound to this class are updated.
     */
@@ -383,7 +390,7 @@ public:
    
    /** Unloads a dynamically loaded module.
     This method destroys the current module. In case the module has been
-    crated through a dynamic shared object loader, the module is also unloaded.
+    created through a dynamic shared object loader, the module is also unloaded.
     
     The system keeps a reference of loaded shared objects, so if the underlying
     shared library has been used to generate more modules, the other modules
