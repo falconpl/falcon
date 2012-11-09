@@ -162,9 +162,9 @@ void FalconApp::launch( const String& script )
    Function* fmain = module->getMainFunction();
    if( fmain != 0 )
    {
-      vm.currentContext()->call( fmain,0);
-      ms->readyVM( vm.currentContext() );
-      vm.run();
+      std::auto_ptr<Process> prc = vm.createProcess(fmain);
+      prc->start();
+      prc->wait();
    }
 }
 
