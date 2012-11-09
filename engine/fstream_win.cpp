@@ -34,6 +34,7 @@ namespace Falcon {
 FStream::FStream( void* data ):
    m_fsData(data)
 {
+   m_status = t_open;
 }
 
 FStream::FStream( const FStream &other ):
@@ -45,18 +46,18 @@ FStream::FStream( const FStream &other ):
    HANDLE hTarget;
    HANDLE hOrig = data->hFile;
    HANDLE curProc = GetCurrentProcess();
-   
+
    BOOL bRes = ::DuplicateHandle(
-                    curProc, 
-                    hOrig, 
                     curProc,
-                    &hTarget, 
+                    hOrig,
+                    curProc,
+                    &hTarget,
                     0,
                     FALSE,
                     DUPLICATE_SAME_ACCESS);
    if ( ! bRes )
    {
-      throw new IOError( 
+      throw new IOError(
          ErrorParam(e_io_dup, __LINE__, __FILE__ )
          .sysError( ::GetLastError() ) );
    }
@@ -80,7 +81,7 @@ bool FStream::close()
 
    if ( m_status & Stream::t_open )
    {
-      if( ! ::CloseHandle( hFile ) ) 
+      if( ! ::CloseHandle( hFile ) )
       {
          m_lastError = (size_t) GetLastError();
          m_status = m_status | t_error;
@@ -106,7 +107,7 @@ size_t FStream::read( void *buffer, size_t size )
    HANDLE hFile = data->hFile;
 
    DWORD result;
-   if ( ! ::ReadFile( hFile, buffer, size, &result, NULL ) ) 
+   if ( ! ::ReadFile( hFile, buffer, size, &result, NULL ) )
    {
       m_lastError = (size_t) ::GetLastError();
       m_status = m_status | t_error;
@@ -133,7 +134,7 @@ size_t FStream::write( const void *buffer, size_t size )
    HANDLE hFile = data->hFile;
 
    DWORD result;
-   if ( ! ::WriteFile( hFile, buffer, size, &result, NULL ) ) 
+   if ( ! ::WriteFile( hFile, buffer, size, &result, NULL ) )
    {
       m_lastError = (size_t) ::GetLastError();
       m_status = m_status | t_error;
@@ -225,7 +226,7 @@ bool FStream::truncate( off_t pos )
    LONG savePosHI = 0;
    LONG savePosLow = 0;
    off_t oldPos;
-   
+
    if ( pos >= 0 )
    {
 
@@ -234,7 +235,7 @@ bool FStream::truncate( off_t pos )
 
       // Get current position.
       savePosLow = SetFilePointer( hFile, 0, &savePosHI, FILE_CURRENT );
-      if( ::GetLastError() != NO_ERROR ) 
+      if( ::GetLastError() != NO_ERROR )
       {
          goto on_error;
       }
@@ -243,19 +244,19 @@ bool FStream::truncate( off_t pos )
       oldPos |= posLow;
 
       SetFilePointer( hFile, posLow, &posHI, FILE_BEGIN );
-      if( ::GetLastError() != NO_ERROR ) 
+      if( ::GetLastError() != NO_ERROR )
       {
          goto on_error;
       }
    }
 
-   if( ! SetEndOfFile( hFile ) ) 
+   if( ! SetEndOfFile( hFile ) )
    {
       goto on_error;
    }
 
    // Need to move the file pointer back?
-   if( pos > oldPos ) 
+   if( pos > oldPos )
    {
       SetFilePointer( hFile, savePosLow, &savePosHI, FILE_BEGIN );
       if( ::GetLastError() != NO_ERROR )
@@ -270,7 +271,7 @@ bool FStream::truncate( off_t pos )
 on_error:
    m_lastError = ::GetLastError();
    m_status = m_status | Stream::t_error;
-   
+
    if( m_bShouldThrow )
    {
       throw new IOError( ErrorParam( e_io_write, __LINE__, __FILE__ )
@@ -280,7 +281,7 @@ on_error:
 }
 
 size_t FStream::readAvailable( int32 msec )
-{   
+{
    WinFStreamData* data = (WinFStreamData*) m_fsData;
    if( data->bIsFile )
    {
@@ -290,16 +291,16 @@ size_t FStream::readAvailable( int32 msec )
 
    HANDLE hFile = data->hFile;
    HANDLE waiting[2];
-   DWORD nWaitingCount = 1;
+   //DWORD nWaitingCount = 1;
    DWORD waitTime = msec < 0 ? INFINITE : msec;
 
    waiting[0] = hFile;
    if( m_ptrIntr.assigned() )
    {
-      nWaitingCount = 2;
+      //nWaitingCount = 2;
       waiting[1] = (HANDLE) m_ptrIntr->sysData();
    }
-         
+
    DWORD res = WaitForMultipleObjects( 2, waiting, FALSE, waitTime );
 
    if ( res == WAIT_OBJECT_0 )
@@ -334,16 +335,16 @@ size_t FStream::writeAvailable( int32 msec )
 
    HANDLE hFile = data->hFile;
    HANDLE waiting[2];
-   DWORD nWaitingCount = 1;
+   //DWORD nWaitingCount = 1;
    DWORD waitTime = msec < 0 ? INFINITE : msec;
 
    waiting[0] = hFile;
    if( m_ptrIntr.assigned() )
    {
-      nWaitingCount = 2;
+      //nWaitingCount = 2;
       waiting[1] = (HANDLE) m_ptrIntr->sysData();
    }
-         
+
    DWORD res = WaitForMultipleObjects( 2, waiting, FALSE, waitTime );
 
    if ( res == WAIT_OBJECT_0 )

@@ -46,6 +46,32 @@ ModCompiler::Context::~Context()
 
 void ModCompiler::Context::onInputOver()
 {
+   Module* mod = m_owner->m_module;
+
+   class Rator: public Module::MantraEnumerator
+   {
+   public:
+      Rator(Module *mod) : m_mod(mod) {};
+      virtual ~Rator() {}
+      virtual bool operator()( const Mantra& data, bool )
+      {
+         if( data.category() == Mantra::e_c_falconclass )
+         {
+            FalconClass* fcls = const_cast<FalconClass*>(static_cast<const FalconClass*>(&data));
+
+            if( fcls->missingParents() == 0 )
+            {
+               mod->completeClass(fcls);
+            }
+         }
+         return true;
+      }
+   private:
+      Module* m_mod;
+   }
+   rator(mod);
+
+   mod->enumerateMantras(rator);
 }
 
 

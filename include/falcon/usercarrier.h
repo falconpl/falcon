@@ -50,7 +50,7 @@ class Item;
  Subclasses \b must provide a way to clone the data, or return 0 from the
  clone() abstract virtual method if it is not possible to clone it.
  */
-class UserCarrier
+class FALCON_DYN_CLASS UserCarrier
 {
 public:
    UserCarrier();
@@ -81,10 +81,12 @@ class UserCarrierT: public UserCarrier
 {
 public:
    UserCarrierT( T__* data ):
+      UserCarrier(),
       m_data( data )
    {}
 
    UserCarrierT( T__* data, uint32  itemcount ):
+      UserCarrier(itemcount),
       m_data( data )
    {}
 

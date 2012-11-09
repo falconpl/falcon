@@ -37,9 +37,9 @@ void FalconApp::guardAndGo( int argc, char* argv[] )
    {
       return;
    }
-   
+
    TextWriter out(new StdOutStream);
-   try 
+   try
    {
       if( m_options.interactive )
       {
@@ -52,7 +52,7 @@ void FalconApp::guardAndGo( int argc, char* argv[] )
             out.write( "Please, add a filename (for now)\n" );
             return;
          }
-         
+
          String script = argv[scriptPos-1];
          launch( script );
       }
@@ -77,19 +77,20 @@ void FalconApp::launch( const String& script )
    // Create the virtual machine -- that is used also for textual output.
    VMachine vm;
    vm.setStdEncoding( m_options.io_encoding );
-   
+
    // can we access the required module?
-   Stream* fs = Engine::instance()->vfs().openRO( script );   
+   Stream* fs = Engine::instance()->vfs().openRO( script );
    if( fs == 0 )
    {
       vm.textOut()->write( "Can't open " + script + "\n" );
       return;
    }
-   
-   // Ok, we opened the file; prepare the space (and most important, the loader) 
+   fs->close();
+
+   // Ok, we opened the file; prepare the space (and most important, the loader)
    ModSpace* ms = vm.modSpace();
    ModLoader* loader = ms->modLoader();
-   
+
    // do we have a load path?
    loader->setSearchPath(".");
    if( m_options.load_path.size() > 0 )
@@ -97,12 +98,12 @@ void FalconApp::launch( const String& script )
       // Is the load path totally substituting?
       loader->addSearchPath(m_options.load_path);
    }
-   
+
    if( ! m_options.ignore_syspath )
    {
       loader->addFalconPath();
    }
-   
+
    // Now configure other options of the lodaer.
    // -- How to treat sources?
    if( m_options.ignore_sources )
@@ -113,7 +114,7 @@ void FalconApp::launch( const String& script )
    {
       loader->useSources( ModLoader::e_us_always );
    }
-   
+
    // -- Save modules?
    if( m_options.save_modules )
    {
@@ -129,8 +130,8 @@ void FalconApp::launch( const String& script )
    else
    {
       loader->savePC( ModLoader::e_save_no );
-   }   
-   
+   }
+
    // What kind of module we are loading here?
    ModLoader::t_modtype type = ModLoader::e_mt_none;
    if( m_options.run_only )
@@ -141,24 +142,28 @@ void FalconApp::launch( const String& script )
    {
       type = ModLoader::e_mt_source;
    }
-         
+
    // TODO -- FIX ftds
    Module* module = loader->loadFile( script, type );
+   if (module == NULL)
+   {
+
+   }
    module->setMain();
-   
+
    ms->add( Engine::instance()->getCore(), true, false );
-   
-   // and start the resolution dance.   
-   ms->resolve( module, true, true );   
-   
+
+   // and start the resolution dance.
+   ms->resolve( module, true, true );
+
    // throw on error.
    Error* linkerr = ms->link();
    if( linkerr != 0 )
    {
       throw linkerr;
-      
+
    }
-   
+
    Function* fmain = module->getMainFunction();
    if( fmain != 0 )
    {
@@ -175,7 +180,7 @@ int main( int argc, char* argv[] )
 
    FalconApp app;
    app.guardAndGo( argc, argv );
-   
+
    return app.m_exitValue;
 }
 

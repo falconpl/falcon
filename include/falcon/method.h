@@ -33,18 +33,18 @@ public:
    virtual ~Method() {}
 
 private:
-   class MethodProp: public Property
+   class FALCON_DYN_CLASS MethodProp: public Property
    {
    public:
       MethodProp( Method* mth, ClassUser* owner, const String& name );
       virtual ~MethodProp() {}
-      
+
       virtual void set( void* instance, const Item& value );
       virtual void get( void* instance, Item& target );
    private:
       Method* m_mth;
    };
-   
+
    MethodProp m_prop;
 };
 
@@ -53,19 +53,19 @@ private:
    class Method_ ## MTH_NAME: public ::Falcon::Method \
    { \
    public: \
-      Method_ ## MTH_NAME( ClassUser* u ): \
+      Method_ ## MTH_NAME( ::Falcon::ClassUser* u ): \
          Method( u, #MTH_NAME ) \
       { parseDescription( SIGNATURE ); } \
       virtual ~Method_ ## MTH_NAME() {} \
-      virtual void invoke( VMContext* ctx, int32 pCount = 0 ); \
+      virtual void invoke( ::Falcon::VMContext* ctx, ::Falcon::int32 pCount = 0 ); \
    } m_Method_ ## MTH_NAME;
 
 #define FALCON_INIT_METHOD(MTH_NAME) m_Method_ ## MTH_NAME(this)
 #define FALCON_DEFINE_METHOD(CLASS_NAME, MTH_NAME) void CLASS_NAME :: Method_ ## MTH_NAME::invoke
 #define FALCON_DEFINE_METHOD_P(CLASS_NAME, MTH_NAME) \
-      void CLASS_NAME :: Method_ ## MTH_NAME::invoke( VMContext* ctx, int pCount )
+      void CLASS_NAME :: Method_ ## MTH_NAME::invoke( ::Falcon::VMContext* ctx, ::Falcon::int32 pCount )
 #define FALCON_DEFINE_METHOD_P1(CLASS_NAME, MTH_NAME) \
-      void CLASS_NAME :: Method_ ## MTH_NAME::invoke( VMContext* ctx, int )
+      void CLASS_NAME :: Method_ ## MTH_NAME::invoke( ::Falcon::VMContext* ctx, ::Falcon::int32 )
 
 }
 

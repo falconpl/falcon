@@ -13,7 +13,7 @@
    See LICENSE file for licensing details.
 */
 #undef SRC
-#define SRC "engine/metaclass.cpp"
+#define SRC "engine/classes/metaclass.cpp"
 
 #include <falcon/classes/metaclass.h>
 #include <falcon/itemid.h>

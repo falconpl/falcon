@@ -799,7 +799,12 @@ bool SourceParser::parse()
       throw new CodeError( ErrorParam( e_setup, __LINE__, SRC ).extra("SourceParser::parse - setContext") );
    }
 
-   return Parser::parse("Main");
+   bool result =  Parser::parse("Main");
+   if( result ) {
+      ParserContext* pc = static_cast<ParserContext*>(m_ctx);
+      pc->onInputOver();
+   }
+   return result;
 }
 
 void SourceParser::reset()

@@ -35,7 +35,7 @@ public:
    virtual ~Directory_file();
    virtual void close();
    virtual bool read( String& tgt );
-   
+
 private:
    HANDLE m_handle;
    WIN32_FIND_DATAW m_raw_dir;
@@ -48,7 +48,7 @@ Directory_file::Directory_file( const URI& location, HANDLE md, WIN32_FIND_DATAW
    m_handle(md),
    m_raw_dir( fd ),
    m_first( true )
-{     
+{
 }
 
 Directory_file::~Directory_file()
@@ -81,7 +81,7 @@ bool Directory_file::read( String& str )
    if ( m_first ) {
       m_first = false;
    }
-   else 
+   else
    {
       if ( ! FindNextFileW( m_handle, &m_raw_dir ) )
 		{
@@ -113,10 +113,10 @@ static DWORD win_paramsToMode( VFSFile::OParams p )
 
    if ( p.isRdwr() )
       omode = GENERIC_READ | GENERIC_WRITE;
-   else if ( p.isRdOnly() )
-      omode = GENERIC_READ;
-   else
+   else if ( p.isWrOnly() )
       omode = GENERIC_WRITE;
+   else
+      omode = GENERIC_READ;
 
    return omode;
 }
@@ -133,7 +133,7 @@ static DWORD win_paramsToShare( VFSFile::OParams p )
 		shmode = FILE_SHARE_READ;
 	else
 		shmode = FILE_SHARE_READ | FILE_SHARE_WRITE;
-   
+
    return shmode;
 }
 
@@ -199,8 +199,8 @@ Stream *VFSFile::create( const URI& uri, const CParams &p )
    DWORD omode = win_paramsToMode( p );
    DWORD oshare = win_paramsToShare( p );
    DWORD ocreate = p.isNoOvr() ? 0 : CREATE_ALWAYS;
-   
-   // turn the xxx bytes 
+
+   // turn the xxx bytes
    DWORD oattribs = FILE_ATTRIBUTE_NORMAL | FILE_ATTRIBUTE_ARCHIVE;
 
    String path = uri.path();
@@ -245,7 +245,7 @@ Stream *VFSFile::create( const URI& uri, const CParams &p )
       CloseHandle( handle );
       return 0;
    }
-      
+
    return new FStream( new WinFStreamData(handle) );
 }
 
@@ -270,7 +270,7 @@ Directory* VFSFile::openDir( const URI& uri )
          .extra(fname)
          .sysError( GetLastError() ) );
    }
-      
+
    return new Directory_file( uri.path(), handle, dir_data );
 }
 
@@ -293,9 +293,9 @@ FileStat::t_fileType VFSFile::fileType( const URI& uri, bool )
          {
             WIN32_FIND_DATAA aFindData;
             AutoCString cBuffer( fname );
-            
+
             hFound = FindFirstFileA( cBuffer.c_str(), &aFindData );
-            
+
             if ( hFound == INVALID_HANDLE_VALUE )
                return FileStat::_notFound;
 
@@ -309,9 +309,9 @@ FileStat::t_fileType VFSFile::fileType( const URI& uri, bool )
          else
             return FileStat::_notFound;
       }
-      
+
       FindClose( hFound );
-      
+
       // Then, see if the case matches.
       String ffound(wFindData.cFileName);
       if( fname.subString( fname.length() - ffound.length() ) != ffound )
@@ -340,10 +340,10 @@ FileStat::t_fileType VFSFile::fileType( const URI& uri, bool )
 				NULL );
 	}
 
-   if( temp == INVALID_HANDLE_VALUE ) 
+   if( temp == INVALID_HANDLE_VALUE )
    {
       // on win 95/98, we can't normally access directory data.
-		
+
       DWORD attribs = GetFileAttributesW( wBuffer.w_str() );
 		if(  attribs == INVALID_FILE_ATTRIBUTES && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED )
 		{
@@ -393,9 +393,9 @@ bool VFSFile::readStats( const URI& uri, FileStat &sts, bool )
          {
             WIN32_FIND_DATAA aFindData;
             AutoCString cBuffer( fname );
-            
+
             hFound = FindFirstFileA( cBuffer.c_str(), &aFindData );
-            
+
             if ( hFound == INVALID_HANDLE_VALUE )
                return false;
 
@@ -409,9 +409,9 @@ bool VFSFile::readStats( const URI& uri, FileStat &sts, bool )
          else
             return false;
       }
-      
+
       FindClose( hFound );
-      
+
       // Then, see if the case matches.
       String ffound(wFindData.cFileName);
       if( fname.subString( fname.length() - ffound.length() ) != ffound )
@@ -440,10 +440,10 @@ bool VFSFile::readStats( const URI& uri, FileStat &sts, bool )
 				NULL );
 	}
 
-   if( temp == INVALID_HANDLE_VALUE ) 
+   if( temp == INVALID_HANDLE_VALUE )
    {
       // on win 95/98, we can't normally access directory data.
-		
+
       DWORD attribs = GetFileAttributesW( wBuffer.w_str() );
 		if(  attribs == INVALID_FILE_ATTRIBUTES && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED )
 		{
@@ -494,7 +494,7 @@ bool VFSFile::readStats( const URI& uri, FileStat &sts, bool )
    size <<= 32;
    size |= info.nFileSizeLow;
    sts.size(size);
-   
+
    CloseHandle( temp );
 
    return true;
@@ -516,7 +516,7 @@ void VFSFile::erase( const URI &uri )
 
    if ( ! res ) {
       throw new IOError( ErrorParam( e_io_error, __LINE__, __FILE__ )
-         .extra( fname ) 
+         .extra( fname )
          .sysError(::GetLastError()));
    }
 }
@@ -529,16 +529,16 @@ void VFSFile::move( const URI &suri, const URI &duri )
    String destPath = duri.path();
    Path::uriToWin( destPath );
 
-   BOOL res = ::MoveFileW(AutoWString(srcPath).w_str(), AutoWString( destPath ).w_str() );   
+   BOOL res = ::MoveFileW(AutoWString(srcPath).w_str(), AutoWString( destPath ).w_str() );
    if( ! res && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED )
    {
       res = ::MoveFileA(AutoCString(srcPath).c_str(), AutoCString( destPath ).c_str() );
    }
 
-   if ( ! res ) 
+   if ( ! res )
    {
       throw new IOError( ErrorParam( e_io_error, __LINE__, __FILE__ )
-         .extra( "move" ) 
+         .extra( "move" )
          .sysError(::GetLastError()));
    }
 }
@@ -555,7 +555,7 @@ static void _mkdir( const String& fname )
       res = CreateDirectory( cBuffer.c_str(), NULL );
 	}
 
-   if ( ! res ) 
+   if ( ! res )
    {
       new IOError( ErrorParam( e_io_error, __LINE__, __FILE__ )
          .extra( fname )
