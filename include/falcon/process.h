@@ -39,14 +39,19 @@ class VMContext;
 class FALCON_DYN_CLASS Process
 {
 public:
+   Process( VMachine* owner );
    Process( VMachine* owner, VMContext* mainContext );
    virtual ~Process();
 
-   int32 ProcessId() const { return m_id; }
-   void ProcessId( int32 i ) { m_id = i; }
+   int32 id() const { return m_id; }
+   void id( int32 i ) { m_id = i; }
 
    VMachine* vm() const { return m_vm; }
-   VMContext* context() const { return m_context; }
+   VMContext* mainContext() const { return m_context; }
+
+   void start( Function* main, int pcount = 0 );
+   void start( Closure* main, int pcount = 0);
+   void startItem( Item& main, int pcount, Item* params );
 
    /** Returns the result of the evaluation.
     This is actually the topmost value in the stack of the main context.

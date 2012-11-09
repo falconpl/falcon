@@ -113,9 +113,10 @@ void* Processor::run()
 }
 
 
-void Processor::manageEvents( VMContext* ctx, int32 events )
+void Processor::manageEvents( VMContext* ctx, register int32 &events )
 {
-   if( (events & VMContext::evtSwap) ) {
+   if( (events & VMContext::evtSwap) )
+   {
       if ( ctx->nextSchedule() >= 0 ) {
          TRACE( "Scheduler::Processor::execute processor %p(%d) descheduled context %p(%d) for a while",
                   this, this->id(), ctx, ctx->id() );
@@ -172,7 +173,12 @@ void Processor::execute( VMContext* ctx )
       if( (events = ctx->events()) != 0 )
       {
          manageEvents( ctx, events );
-         break;
+         // did we reset the event?
+         if ( events != 0 ) {
+            break;
+         }
+
+         ctx->clearEvents();
       }
       // END STEP
    }

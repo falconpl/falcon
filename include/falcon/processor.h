@@ -37,7 +37,7 @@ public:
 
    virtual void* run();
    void execute(VMContext* ctx);
-   void manageEvents( VMContext* ctx, int32 events );
+   void manageEvents( VMContext* ctx, register int32 &events );
 
    bool step();
 

@@ -38,6 +38,7 @@ class Symbol;
 class ModSpace;
 class ModLoader;
 class Scheduler;
+class Function;
 
 /** The Falcon virtual machine.
 */
@@ -76,11 +77,6 @@ public:
        \param ctx The context being assigned.
     */
    void addContextGroup( ContextGroup* grp );
-
-   //=========================================================
-   // Execution management.
-   //=========================================================
-
 
 
    //=========================================================
@@ -222,45 +218,53 @@ public:
    // Context management
    //=========================================================
 
-   /** Blocks until there is a context to be served.
-      This method is called by processors to dequeue the next context
-      that is waiting ready to run.
-
-      It blocks until a context is available, or until the virtual
-      machine is asked to terminate.
-
-      \return a 0 if the calling processor should terminate, a valid
-      context otherwise.
-    */
-   VMContext* getNextReadyContext();
-
-   /** Adds a context ready to be executed
-
-    The scheduler calls this method when a context in a group is ready to be executed.
-    Prior calling this method, the scheduler dequeues a ready context from the group.
-    */
-   void pushReadyContext( VMContext* ctx );
-
-   /** Removes a context from sleeping and ready contexts.
-
-    A context that was asleep or ready to run is might be removed
-    if its group is invalidated (i.e. because one of the contexts
-    in the group has thrown an uncaught error).
-
-    A context that should be removed is also marked as terminated by
-    the caller.  In this way, if traveling to the scheduler, held by
-    the GC, or being picked by a processor, this method will have no
-    effect but the context will be removed as soon as it reaches a
-    checkpoint.
-    */
-   void removePausedContext( VMContext* ctx );
-
    /** Cleanly terminates the virtual machine.
     *
     The scheduler and all the processors are sent a request
     to terminate any operation as soon as possible.
     */
-   void terminate();
+   void quit();
+
+   /** Creates a new non configured process process.
+    The new process is not started until explicitly requested.
+
+    The returned process has 1 extra reference count for the caller;
+    if the caller is not interested in the process, it should dereference
+    it before leaving the invoking function.
+
+    The created process is not ready to be run. It
+      \note The ID of the returned process is atomically increased at each
+      invocation. ID of terminated processes are not recycled.
+    */
+   Process* createProcess();
+
+   /** Gets a VM process by id, or 0 if not found.
+       \return A valid process entity, or 0 if the process with that
+       ID is currently terminated or not available.
+   */
+   Process* getProcessByID( int32 pid );
+
+   /** Changes the active processor count.
+    \param count new processor count or 0 for default processor count.
+
+    If set to 0, the processor count will be set to a suitable default on
+    this target platform.
+
+    If set to 1, processing will be forced to be single-threaded.
+
+    The initial default is 0.
+    */
+   void setProcessorCount( int32 count );
+
+   /** Returns the count of actual processors used by this VM.
+       \return number of actual processors.
+
+   In case the caller set the processor count to 0, a default count
+   of processors is selected instead. That number is returned
+   by this method (not the 0 setting).
+
+   */
+   int32 getProcessorCount() const;
 
    //=========================================================
    // Utilities
@@ -284,6 +288,7 @@ protected:
    bool m_bOwnCoder;
    
    ModSpace* m_modspace;
+   int32 m_processorCount;
 
 private:
    class Private;

@@ -33,6 +33,7 @@
 #include <falcon/atomic.h>
 #include <falcon/modspace.h>
 #include <falcon/modloader.h>
+#include <falcon/process.h>
 
 #include <falcon/errors/codeerror.h>
 #include <falcon/errors/genericerror.h>
@@ -46,6 +47,8 @@
 #define INITIAL_GLOBAL_ALLOC 64
 #define INCREMENT_GLOBAL_ALLOC 64
 
+#define DEFAULT_CPU_COUNT 4
+
 namespace Falcon
 {
 
@@ -53,7 +56,12 @@ namespace Falcon
 class VMachine::Private
 {
 public:
+   typedef std::map<int32, Process*> ProcessMap;
 
+   ProcessMap m_procmap;
+   Mutex m_mtxProc;
+
+   // TODO: check this
    typedef std::set<ContextGroup*> ContextGroupSet;
    typedef std::deque<VMContext*> ContextList;
    typedef std::vector<Processor*> ProcessorVector;
@@ -228,6 +236,10 @@ void VMachine::setStdEncoding( Transcoder* ts, bool bOwn )
    m_textErr->setEncoding( ts );
 }
 
+/*
+ *
+ * TODO: move this in the manager.
+
 VMContext* VMachine::getNextReadyContext()
 {
    VMContext ctx = 0;
@@ -281,16 +293,6 @@ void VMachine::pushReadyContext(VMContext* ctx)
     _p->m_mtxReadyContexts.unlock();
 }
 
-
-void VMachine::terminate()
-{
-   _p->m_mtxReadyContexts.lock();
-   _p->m_terminate = true;
-   _p->m_evtCtxReady.set();
-   _p->m_mtxReadyContexts.unlock();
-}
-
-
 void VMachine::addContextGroup(ContextGroup *grp)
 {
    // first, save the context.
@@ -303,6 +305,53 @@ void VMachine::addContextGroup(ContextGroup *grp)
    if( wasNew.second ) {
       grp->readyAllContexts();
    }
+}
+
+*/
+
+
+void VMachine::quit()
+{
+   //TODO
+}
+
+
+Process* VMachine::createProcess()
+{
+   Process* proc = new Process(this);
+   _p->m_procmap.insert( std::make_pair( proc->id(), proc ) );
+   proc->incref(); // for the target
+   modSpace()->readyVM( proc->mainContext() );
+   return proc;
+}
+
+
+Process* VMachine::getProcessByID( int32 pid )
+{
+   _p->m_mtxProc.lock();
+   Private::ProcessMap::iterator iter = _p->m_procmap.find(pid);
+   if( iter == _p->m_procmap.end() ) {
+      _p->m_mtxProc.unlock();
+      return iter->second;
+   }
+   _p->m_mtxProc.unlock();
+   return 0;
+}
+
+
+void VMachine::setProcessorCount( int32 count )
+{
+   //TODO: get the CPU count.
+   if( count == 0 ) {
+      count = DEFAULT_CPU_COUNT;
+   }
+   m_processorCount = count;
+}
+
+
+int32 VMachine::getProcessorCount() const
+{
+   return m_processorCount;
 }
 
 
