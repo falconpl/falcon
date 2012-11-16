@@ -61,7 +61,7 @@ void ModCompiler::Context::onInputOver()
 
             if( fcls->missingParents() == 0 )
             {
-               mod->completeClass(fcls);
+               m_mod->completeClass(fcls);
             }
          }
          return true;
