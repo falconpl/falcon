@@ -64,12 +64,12 @@ public:
          m_oflags( flags ),
          m_shflags(0)
       {}
-               
+
       static const unsigned int e_oflag_rd = 0x1;
       static const unsigned int e_oflag_wr = 0x2;
       static const unsigned int e_oflag_append = 0x4;
-      static const unsigned int e_oflag_trunc = 0x8;         
-      
+      static const unsigned int e_oflag_trunc = 0x8;
+
       static const unsigned int e_sflag_nr = 0x1;
       static const unsigned int e_sflag_nw = 0x2;
 
@@ -136,7 +136,7 @@ public:
       CParams( uint32 cflags = 0):
          m_cflags( cflags )
       {}
-         
+
       static const unsigned int e_cflag_noovr = 0x1;
       static const unsigned int e_cflag_nostream = 0x2;
 
@@ -174,9 +174,12 @@ public:
    virtual Stream* open( const URI &uri, const OParams &p )=0;
 
    inline Stream* createSimple( const URI &uri ) {
-      return create( uri, CParams() );
+      CParams params;
+      params.wrOnly();
+      params.truncate();
+      return create( uri, params );
    }
-   
+
    virtual Stream *create( const URI &uri, const CParams &p )=0;
    virtual Directory* openDir( const URI &uri )=0;
 
@@ -191,7 +194,7 @@ public:
     */
    virtual bool readStats( const URI &uri, FileStat &s, bool delink = true )=0;
 
-   /** Checks if a file exists, and in that case, returns the type of the file. 
+   /** Checks if a file exists, and in that case, returns the type of the file.
       \param uri the file of which to get thes stats.
       \param delink if true, resolve symbolic links before returning the file stats.
       \return The file type as it would be returned in the file stats.

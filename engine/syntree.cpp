@@ -101,7 +101,7 @@ SynTree::~SynTree()
 
 bool SynTree::selector( Expression* expr )
 {
-   if ( ! expr->setParent( this ) )
+   if ( expr != 0 && ! expr->setParent( this ) )
    {
       return false;
    }
