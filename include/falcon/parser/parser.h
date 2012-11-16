@@ -338,6 +338,11 @@ public:
     */
    void trimFromCurrentToken();
 
+   /** Trims the topmost (last) n parsed stack elements away.
+    \param count Count of element to remove from the top (latest) parsed stack elements.
+    */
+   void trim( unsigned int count );
+
    /** Reposition the token index for getNextToken at top.
     \see getNextToken
     */

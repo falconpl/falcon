@@ -405,6 +405,16 @@ void Parser::trimFromCurrentToken()
    }
 }
 
+void Parser::trim( unsigned int count )
+{
+   if ( count >  _p->m_tokenStack->size() )
+   {
+      count = _p->m_tokenStack->size();
+   }
+
+   _p->m_tokenStack->resize( _p->m_tokenStack->size() - count );
+}
+
 void Parser::resetNextToken()
 {
    int nDepth = _p->m_pframes->empty() ? 0 : _p->m_pframes->back().m_nStackDepth;
