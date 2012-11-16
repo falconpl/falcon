@@ -165,7 +165,7 @@ static void on_switch_closed(void* parser_void)
    fassert( stmt != 0 );
    fassert( (stmt->handler()->userFlags() == FALCON_SYNCLASS_ID_CASEHOST)
             || (stmt->handler()->userFlags() == FALCON_SYNCLASS_ID_SWITCH) );
-   StmtSwitch* swc = static_cast<StmtSwitch*>( stmt );
+   SwitchlikeStatement* swc = static_cast<StmtSwitch*>( stmt );
    
    if( swc->dummyTree() != 0 ) {
       SynTree* dummytree = swc->dummyTree();
@@ -199,7 +199,7 @@ void apply_switch( const Rule&, Parser& p )
 
 void apply_select( const Rule&, Parser& p )
 {
-   // << T_switch << Expr << T_EOL
+   // << T_select << Expr << T_EOL
    TokenInstance* tswch = p.getNextToken();
    TokenInstance* texpr = p.getNextToken();
 
@@ -207,11 +207,13 @@ void apply_select( const Rule&, Parser& p )
 
    StmtSelect* stmt_sel = new StmtSelect( 
          static_cast<Expression*>(texpr->detachValue()), tswch->line(), tswch->chr() );
-   st->openBlock( stmt_sel, 0 );
-   p.pushState( "InlineFunc" );
 
    // clear the stack
    p.simplify(3);
+
+   st->openBlock( stmt_sel, stmt_sel->dummyTree() );
+   p.pushState( "InlineFunc", &on_switch_closed, &p);
+
 }
 
 
@@ -502,10 +504,10 @@ void apply_CaseList_next( const Rule&, Parser& p )
    p.getNextToken();
    TokenInstance* tit = p.getNextToken();
    
-   CaseList* lst = static_cast<CaseList*>(til->asData());   
+   CaseList* lst = static_cast<CaseList*>(til->asData());
    CaseItem* itm = static_cast<CaseItem*>(tit->detachValue());
    lst->push_back(itm);
-   p.simplify(2);
+   p.trim(2);
 }
 
 
