@@ -78,12 +78,12 @@ void ModCompiler::Context::onInputOver()
 void ModCompiler::Context::onNewFunc( Function* function, Symbol* gs )
 {
    Module* mod = m_owner->m_module;
-   
+
    try
    {
       if( gs == 0 )
       {
-         // anonymous function         
+         // anonymous function
          mod->addAnonMantra( function );
       }
       else
@@ -103,11 +103,11 @@ void ModCompiler::Context::onNewClass( Class* cls, bool, Symbol* gs )
 {
    FalconClass* fcls = static_cast<FalconClass*>(cls);
    Module* mod = m_owner->m_module;
-   
+
    try {
       // save the source class
       mod->addMantraWithSymbol( fcls, gs, false );
-      // todo 
+      // todo
    }
    catch( Error* e )
    {
@@ -126,7 +126,7 @@ void ModCompiler::Context::onNewStatement( Statement* )
 void ModCompiler::Context::onLoad( const String& path, bool isFsPath )
 {
    SourceParser& sp = m_owner->m_sp;
-   
+
    if( m_owner->m_module->addLoad( path, isFsPath ) == 0 )
    {
       sp.addError( e_load_already, sp.currentSource(), sp.currentLine()-1, 0, 0, path );
@@ -142,7 +142,7 @@ bool ModCompiler::Context::onImportFrom( ImportDef* def )
       sp.addError( e_import_already_mod, sp.currentSource(), sp.currentLine()-1, 0, 0, def->sourceModule() );
       return false;
    }
-   
+
    return true;
 }
 
@@ -151,12 +151,12 @@ void ModCompiler::Context::onExport(const String& symName)
 {
    Module& mod = *m_owner->m_module;
    SourceParser& sp = m_owner->m_sp;
-      
+
    // Already exporting all?
    if( mod.exportAll() )
    {
       sp.addError( e_export_all, sp.currentSource(), sp.currentLine()-1, 0, 0 );
-   }      
+   }
    else if( symName == "" )
    {
       mod.exportAll( true );
@@ -200,7 +200,7 @@ Symbol* ModCompiler::Context::onUndefinedSymbol( const String& name )
    if (gsym == 0)
    {
       // no? -- create it as an implicit import.
-      gsym = mod->addImplicitImport( name );      
+      gsym = mod->addImplicitImport( name );
    }
    return gsym;
 }
@@ -228,7 +228,7 @@ bool ModCompiler::Context::onUnknownSymbol( const String& uks )
    {
       return false;
    }
-   
+
    return true;
 }
 
@@ -271,7 +271,7 @@ ModCompiler::~ModCompiler()
 Module* ModCompiler::compile( TextReader* tr, const String& uri, const String& name )
 {
    m_module = new Module( name , uri, false ); // not a native module
-   
+
    // create the main function that will be used by the compiler
    SynFunc* main = new SynFunc("__main__");
    m_module->setMainFunction( main );
@@ -280,7 +280,7 @@ Module* ModCompiler::compile( TextReader* tr, const String& uri, const String& n
    m_ctx->openMain( &main->syntree() );
 
    // start parsing.
-   m_sp.pushLexer( new SourceLexer( uri, &m_sp, tr ) );      
+   m_sp.pushLexer( new SourceLexer( uri, &m_sp, tr ) );
    if ( !m_sp.parse() )
    {
       // we failed.
