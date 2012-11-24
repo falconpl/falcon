@@ -22,7 +22,7 @@ namespace Falcon {
 
 class Poolable;
 
-/** Generic pool for recycleable instances. 
+/** Generic pool for recyclable instances.
  
  This class has basic support for recycling commonly used small data slices.
  

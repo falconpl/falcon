@@ -96,7 +96,8 @@ void ContextGroup::setError( Error* error )
       VMContext* ctx = *iter;
       ctx->setTerminateEvent();
       // remove sleeping or ready contexts.
-      ctx->vm()->removePausedContext(ctx);
+      //TODO: probably not the best plae where to put this
+      ctx->vm()->contextManager().onContextTerminated(ctx);
       ++iter;
    }
 }
@@ -164,7 +165,8 @@ void ContextGroup::pushReadyContext( VMContext* ctx )
       _p->m_running++;
       _p->m_mtxReadyCtx.unlock();
 
-      m_owner->pushReadyContext( ctx );
+      //TODO
+      //m_owner->pushReadyContext( ctx );
    }
    else {
       _p->m_readyCtx.push_back( ctx );
@@ -184,7 +186,8 @@ void ContextGroup::onContextIdle( VMContext* ctx )
      _p->m_readyCtx.pop_front();
      _p->m_mtxReadyCtx.unlock();
 
-     m_owner->pushReadyContext( ctx );
+     //TODO
+     //m_owner->pushReadyContext( ctx );
    }
    else {
      _p->m_mtxReadyCtx.unlock();

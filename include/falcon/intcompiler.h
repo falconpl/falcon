@@ -36,28 +36,39 @@ it as a Falcon program as it's being completed. It's meant to support the
 interactive mode, where programs are tested or modules are used from the
 command prompt.
 
- The interactive compiler takes a Virtual Machine that is then use to execute
- the code that is getting completed in the meanwhile. It never creates a module
- out of the code it's compiling, and usually discards it after it's executed.
+The interactive compiler actually lives inside a host context in a live
+process of a virtual machine. A PStep constantly invokes the interactive
+compiler and eventually manages error that are raised from within.
 
- Functions and classes declared in the process are stored directly in the
- compiler itself.
  */
 class FALCON_DYN_CLASS IntCompiler
 {
 
 public:
-   IntCompiler( VMachine *vm );
+   IntCompiler( bool allowDirectives = true );
    virtual ~IntCompiler();
 
-   typedef enum compile_status_t {
-      ok_t,
-      incomplete_t,
-      eval_t,
-      eval_direct_t
-   } compile_status;
+   typedef enum {
+      /** The statement is incomplete; more input is needed. */
+      e_incomplete,
+      /** The statement is an (auto) expression that should be evaluated (and result told to the user). */
+      e_expression,
+      /** The statement is a single call expression; typically, if it returns nil the user should not be told. */
+      e_expr_call,
+      /** The statement is not an expression and it doesn't require to generate a result */
+      e_statement,
+      /** The statement was a mantra definition (code will be 0). */
+      e_definition
+   } t_compile_status;
 
-   compile_status compileNext( const String& value );
+   /** Compile available data.
+    This method returns as soon as a complete statement, definition or expression is parsed,
+    or as soon as the input stream is exhausted (or, if it's non-blocking, as soon as
+    the stream has nothing available).
+
+    The method might return a valid data even in case some errors were detected.
+    */
+   t_compile_status compileNext( Stream* input, SynTree*& code, Mantra*& definition );
    
    /** Clear the currently compiled items.
 
@@ -66,23 +77,30 @@ public:
     */
    void resetTree();
 
-   /** Tell wether the current code is self-consistent or needs more data.
+   /** Tell whether the current code is self-consistent or needs more data.
     \return true if the curent compiler is in a clean state, false if it's
     waiting for more data before processing the input.
     */
    bool isComplete() const;
-   
-   /** Completely resets the current context of the VM of the interactive compiler.
-    To be used after a error to put the current VM context in initial
-    state.
-    
-    */
-   void resetVM();
-   
+
+   bool areDirectivesAllowed() const { return m_bAllowDirective; }
+   void setDirectivesAllowed(bool mode ) { m_bAllowDirective = mode; }
+
+   /** helper to generate Interactive Compiler errors. */
+   void throwCompileErrors() const;
+
+   /** True if the last compileNext() generated some errors. */
+   bool hasErrors() const;
+
+   void setCompilationContext( Function * function, Module* mod, VMContext* ctx );
+   Function* getFunction() const { return m_compf; }
+   Module* getModule() const { return m_mod; }
+
 private:
 
    /** Class used to notify the intcompiler about relevant facts in parsing. */
-   class Context: public ParserContext {
+   class Context: public ParserContext
+   {
    public:
       Context( IntCompiler* owner );
       virtual ~Context();
@@ -104,29 +122,26 @@ private:
    private:
       IntCompiler* m_owner;
    };
-
-   // helper to generate Interactive Compiler errors.
-   void throwCompileErrors() const;
    
    // adds a compiler error for later throwing.
    void addError( Error* e );
 
+
    SourceParser m_sp;
-   VMachine* m_vm;
    SynTree* m_currentTree;
+   Mantra* m_currentMantra;
 
-   StringStream* m_stream;
-   TextWriter* m_writer;
+   // Should we allow directives or not.
+   bool m_bAllowDirective;
 
-   /** Used to keep non-transient data. */
-   Module* m_module;
-   Function* m_main;
-   
+   Function* m_compf;
+   Module* m_mod;
+   VMContext* m_vmctx;
+
    // better for the context to be a pointer, so we can control it's init order.
    Context* m_ctx;
+   Parsing::Lexer* m_lexer;
    friend class Context;
-
-   
 };
 
 }

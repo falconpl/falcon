@@ -28,6 +28,7 @@
 
 #include <falcon/atomic.h>
 #include <falcon/refcounter.h>
+#include <falcon/process.h>
 
 namespace Falcon {
 
@@ -41,6 +42,7 @@ class SymbolTable;
 class Shared;
 class Scheduler;
 class ContextGroup;
+class Process;
 
 /**
  * Structure needed to store VM data.
@@ -1354,6 +1356,8 @@ public:
     */
    Process* process() const { return m_process; }
 
+   /** The virtual machine on which the process running this context is on. */
+   VMachine* vm() const { return m_process->vm(); }
 
 protected:
 
@@ -1482,8 +1486,6 @@ protected:
 
    // finally continuation mode.
    t_fin_mode m_finMode;
-
-   VMachine* m_vm;
 
    friend class VMachine;
    friend class SynFunc;

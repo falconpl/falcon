@@ -20,6 +20,7 @@
 #include <falcon/paranoid.h>
 #include <falcon/trace.h>
 #include <falcon/mt.h>
+#include <falcon/contextmanager.h>
 
 namespace Falcon {
 
@@ -28,8 +29,10 @@ ThreadSpecific Processor::m_me;
 
 Processor::Processor( int32 id, VMachine* owner ):
       m_id(id),
-      m_owner( owner )
-{}
+      m_owner( owner ),
+      m_onTimeSliceExpired( this )
+{
+}
 
 
 void Processor::start()
@@ -91,14 +94,20 @@ void* Processor::run()
 {
    m_me.set(this);
    m_currentContext = 0;
+   VMachine::ReadyContextQueue& rctx = m_owner->readyContexts();
 
    TRACE("Processor %p (id %d) starting", this, this->id() );
-   Scheduler::Private* p = m_owner->_p;
 
    VMContext* ctx;
-   while( true ) {
-      VMContext* ctx = m_owner->getNextReadyContext();
-      if( ctx == 0 ) {
+   int wasTerminated = 0;
+   while( true )
+   {
+      TRACE("Processor %p (id %d) waiting for context", this, this->id() );
+      VMContext* ctx;
+      rctx.get( ctx, &wasTerminated);
+
+      if( wasTerminated != 0 ) {
+         TRACE("Processor %p (id %d) being terminated", this, this->id() );
          break;
       }
 
@@ -118,14 +127,14 @@ void Processor::manageEvents( VMContext* ctx, register int32 &events )
    if( (events & VMContext::evtSwap) )
    {
       if ( ctx->nextSchedule() >= 0 ) {
-         TRACE( "Scheduler::Processor::execute processor %p(%d) descheduled context %p(%d) for a while",
+         TRACE( "Processor::execute processor %p(%d) descheduled context %p(%d) for a while",
                   this, this->id(), ctx, ctx->id() );
-         m_owner->putInWait( ctx, ctx->nextSchedule() );
+         m_owner->contextManager().onContextDescheduled( ctx );
       }
       else {
-         TRACE( "Scheduler::Processor::execute processor %p(%d) descheduled forever context %p(%d)",
+         TRACE( "Processor::execute processor %p(%d) descheduled forever context %p(%d)",
                   this, this->id(), ctx, ctx->id() );
-         m_owner->putInWait(ctx);
+         m_owner->contextManager().onContextDescheduled( ctx );
       }
    }
 
@@ -136,11 +145,13 @@ void Processor::manageEvents( VMContext* ctx, register int32 &events )
    if( (events & VMContext::evtComplete) ) {
       TRACE( "Code completion before %s ", ctx->location().c_ize() );
       ctx->terminated();
+      m_owner->contextManager().onContextTerminated( ctx );
    }
 
    if( (events & VMContext::evtTerminate) ) {
-      TRACE( "Termination requset before %s ", ctx->location().c_ize() );
+      TRACE( "Termination request before %s ", ctx->location().c_ize() );
       ctx->terminated();
+      m_owner->contextManager().onContextTerminated( ctx );
    }
 
    if( (events & VMContext::evtRaise) ) {
@@ -186,9 +197,17 @@ void Processor::execute( VMContext* ctx )
 
 bool Processor::step()
 {
-   if( m_currentContext == 0 ) {
-      m_currentContext = m_owner->getNextReadyContext();
-      if( m_currentContext == 0 ) {
+   TRACE("Processor %p (id %d) single stepping", this, this->id() );
+
+   int wasTerminated = 0;
+   if( m_currentContext == 0 )
+   {
+      TRACE("Processor %p (id %d) single stepping -- loading a new context.", this, this->id() );
+      m_owner->readyContexts().tryGet( m_currentContext, &wasTerminated );
+
+      if( m_currentContext == 0 )
+      {
+         TRACE("Processor %p (id %d) single stepping -- Can't load a new context", this, this->id() );
          return false;
       }
    }
@@ -221,6 +240,22 @@ bool Processor::step()
 Processor* Processor::currentProcessor()
 {
    return (Processor*) m_me.get();
+}
+
+void Processor::onTimeSliceExpired()
+{
+   m_currentContext->setSwapEvent();
+}
+
+
+Processor::OnTimeSliceExpired::OnTimeSliceExpired( Processor* owner ):
+         m_owner( owner )
+{}
+
+bool Processor::OnTimeSliceExpired::operator()()
+{
+   m_owner->onTimeSliceExpired();
+   return false;
 }
 
 }

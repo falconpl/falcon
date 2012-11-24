@@ -701,7 +701,7 @@ Symbol* ModSpace::findExportedSymbol( const String& symName, Module*& declarer )
 }
 
 
-bool ModSpace::readyVM( VMContext* ctx )
+bool ModSpace::readyContext( VMContext* ctx )
 {
    bool someRun = false;
    Private::ModList& mods = _p->m_invokeOrder;

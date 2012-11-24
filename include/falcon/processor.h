@@ -18,10 +18,12 @@
 
 #include <falcon/setup.h>
 #include <falcon/mt.h>
+#include <falcon/vmtimer.h>
 
 namespace Falcon {
 
 class VMachine;
+class VMContext;
 
 /**
  Class representing a Virtual machine processor.
@@ -49,11 +51,11 @@ public:
 
    /** Handles an error that reached the toplevel in this processor.
     */
-   void Processor::onError( Error* e );
+   void onError( Error* e );
 
    /** Handles a raised item error that reached the toplevel in this processor.
     */
-   void Processor::onRaise( const Item& item );
+   void onRaise( const Item& item );
 
    /**
     Context currently being run by the processor.
@@ -62,6 +64,9 @@ public:
     thread running the ::run() method of the processor.
     */
    VMContext* currentContext() const { return m_currentContext;  }
+
+   void onTimeSliceExpired();
+
 private:
    int32 m_id;
    VMachine* m_owner;
@@ -70,6 +75,16 @@ private:
    VMContext* m_currentContext;
 
    static ThreadSpecific m_me;
+
+   class OnTimeSliceExpired: public VMTimer::Callback {
+   public:
+      OnTimeSliceExpired( Processor* owner );
+      virtual bool operator() ();
+   private:
+      Processor* m_owner;
+   }
+   m_onTimeSliceExpired;
+
 };
 
 }

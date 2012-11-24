@@ -33,21 +33,31 @@ class Parser;
  This is the base class that must be derived in order to provide the parser with
  a stream of tokens that then have to be interpreted.
 
- The data input is granted by a TextReader that is owned by the lexer (destroyed
- at lexer destruction).
+ The data input is granted by a TextReader that is NOT normally owned by the lexer
+ (ownership can be set to a speific base).
+
  
  */
 class FALCON_DYN_CLASS Lexer
 {
 public:
-   
-   Lexer( const String& uri, Parser* p, TextReader* reader );
+   /** Creates the lexer.
+    * \param uri The URI identifying the source from which this data is read.
+    * \param p The parser owning this lexer.
+    * \param reader The new text reader.
+    * \param bOwn if true, the reader will be automatically destroyed with this
+    *        lexer, or at next setReader() invocation.
+    *    The input text reader can be specified or changed at a later time.
+    *
+    */
+   Lexer( const String& uri, Parser* p, TextReader* reader = 0, bool bown = false );
    virtual ~Lexer();
 
    /** Return the next token.
       \return the next token in the stream.
     At stream end, this method returns 0.
 
+   Implementations should return 0 if the current textreader is 0.
     */
    virtual TokenInstance* nextToken() = 0;
 
@@ -68,6 +78,13 @@ public:
 
    const String& uri() const { return m_uri; }
    
+   /** Sets the reader (and reader ownership) for this lexer.
+    * \param r The new text reader.
+    * \param bOwn if true, the reader will be automatically destroyed with this
+    *        lexer, or at next setReader() invocation.
+    **/
+   void setReader( TextReader* r, bool bOwn = false );
+
 protected:
    String m_uri;
    Parser* m_parser;
@@ -75,6 +92,8 @@ protected:
 
    int32 m_line;
    int32 m_chr;
+   bool m_bOwn;
+   bool m_bReturnOnUnavail;
  };
 
 }

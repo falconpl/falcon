@@ -257,7 +257,7 @@ bool Restorer::loadClasses( ModSpace* msp )
       // prepare a step to be on the bright side in case of linking
       m_ctx->pushCode( &m_linkNext );
       // see if the loaded modules (if any) need a startup.
-      if( msp->readyVM( m_ctx ) )
+      if( msp->readyContext( m_ctx ) )
       {
          // we must return the control to the caller as the modules require 
          // initialization.

@@ -50,7 +50,8 @@ public:
       e_c_class,
       e_c_falconclass,
       e_c_hyperclass,
-      e_c_metaclass
+      e_c_metaclass,
+      e_c_object
    }
    t_category;
    

@@ -15,10 +15,12 @@
 
 
 #include <falcon/falcon.h>
+#include <falcon/modloader.h>
 #include <falcon/trace.h>
 
 #include "int_mode.h"
-#include "falcon/modloader.h"
+
+#include <memory>
 
 using namespace Falcon;
 
@@ -167,9 +169,18 @@ void FalconApp::launch( const String& script )
    Function* fmain = module->getMainFunction();
    if( fmain != 0 )
    {
-      std::auto_ptr<Process> prc = vm.createProcess(fmain);
-      prc->start();
-      prc->wait();
+      Process* prc = vm.createProcess();
+      try {
+         prc->start(fmain);
+         prc->wait();
+      }
+      catch( Error* e )
+      {
+         //TODO
+         e->decref();
+      }
+
+      prc->decref();
    }
 }
 

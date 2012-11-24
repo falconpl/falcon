@@ -400,7 +400,7 @@ char_t TextReader::getChar()
       decoded = m_decoder->decode(m_buffer + m_bufPos, m_bufLength-m_bufPos, str, 1, true );
    }
 
-   // not enough lenght or decode failed?
+   // not enough length or decode failed?
    if( decoded == 0 )
    {
       // try again refetching -- if the failure may be a close call.

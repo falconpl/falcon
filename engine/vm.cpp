@@ -14,7 +14,6 @@
 */
 
 #include <falcon/vm.h>
-#include <falcon/scheduler.h>
 #include <falcon/symbol.h>
 #include <falcon/syntree.h>
 #include <falcon/statement.h>
@@ -34,6 +33,7 @@
 #include <falcon/modspace.h>
 #include <falcon/modloader.h>
 #include <falcon/process.h>
+#include <falcon/processor.h>
 
 #include <falcon/errors/codeerror.h>
 #include <falcon/errors/genericerror.h>
@@ -61,44 +61,26 @@ public:
    ProcessMap m_procmap;
    Mutex m_mtxProc;
 
-   // TODO: check this
-   typedef std::set<ContextGroup*> ContextGroupSet;
-   typedef std::deque<VMContext*> ContextList;
    typedef std::vector<Processor*> ProcessorVector;
-
-   Mutex m_mtxGroups;
-   Mutex m_mtxReadyContexts;
-   Event m_evtCtxReady;
 
    atomic_int m_proc_id;
    atomic_int m_ctx_id;
    atomic_int m_group_id;
 
    /**
-    * Set of all contexts group.
-    */
-   ContextGroupSet m_groups;
-
-   /**
-    * Context ready to be scheduled.
-    */
-   ContextList m_readyContexts;
-
-   /**
     * Processors used by this scheduler.
     */
+   Mutex m_mtxProcessors;
    ProcessorVector m_processors;
 
    bool m_terminate;
 
    Private():
-      m_evtCtxReady( false, false ),
       m_terminate( true )
    {}
 
    virtual ~Private()
    {
-
    }
 
 };
@@ -157,12 +139,25 @@ VMachine::VMachine( Stream* stdIn, Stream* stdOut, Stream* stdErr )
 
    m_textOut->lineFlush(true);
    m_textErr->lineFlush(true);
+
+   // start the context manager
+   m_ctxMan.start();
+
+   // start the processors
+   setProcessorCount(0);
+   // TODO: start timer and context manager.
 }
 
 
 VMachine::~VMachine()
 {
    TRACE( "Virtual machine being destroyed at %p", this );
+
+   // join all the processors
+   joinProcessors();
+
+   // stop the context manager
+   m_ctxMan.stop();
 
    delete m_textIn;
    delete m_textOut;
@@ -184,6 +179,24 @@ VMachine::~VMachine()
    TRACE( "Virtual machine destroyed at %p", this );
 }
 
+
+void VMachine::joinProcessors()
+{
+   // ask the processors to terminate
+   m_readyContexts.terminateWaiters();
+
+   Private::ProcessorVector::iterator begin, end;
+   begin = _p->m_processors.begin();
+   end = _p->m_processors.end();
+   while( begin != end ) {
+      Processor* p = *begin;
+      p->join();
+      delete p;
+      ++begin;
+   }
+
+   _p->m_processors.clear();
+}
 
 void VMachine::stdIn( Stream* s )
 {
@@ -321,7 +334,6 @@ Process* VMachine::createProcess()
    Process* proc = new Process(this);
    _p->m_procmap.insert( std::make_pair( proc->id(), proc ) );
    proc->incref(); // for the target
-   modSpace()->readyVM( proc->mainContext() );
    return proc;
 }
 
@@ -346,8 +358,28 @@ void VMachine::setProcessorCount( int32 count )
       count = DEFAULT_CPU_COUNT;
    }
    m_processorCount = count;
+
+   updateProcessors();
 }
 
+
+void VMachine::updateProcessors()
+{
+   // TODO: reduce processors count
+   /* Check. Do we have enough processors? */
+   _p->m_mtxProcessors.lock();
+   while( _p->m_processors.size() < (unsigned) m_processorCount )
+   {
+      Processor* p = new Processor(_p->m_processors.size(), this);
+      _p->m_processors.push_back( p );
+      _p->m_mtxProcessors.unlock();
+
+      p->start();
+
+      _p->m_mtxProcessors.lock();
+   }
+   _p->m_mtxProcessors.unlock();
+}
 
 int32 VMachine::getProcessorCount() const
 {
@@ -410,7 +442,7 @@ Item& VMachine::regA()
    }
 }
 
-const Item& self() const {
+const Item& VMachine::self() const {
    static Item fakeA;
 
    Processor* p = Processor::currentProcessor();
@@ -424,7 +456,7 @@ const Item& self() const {
 }
 
 
-Item& self() {
+Item& VMachine::self() {
    static Item fakeA;
 
    Processor* p = Processor::currentProcessor();

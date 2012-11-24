@@ -236,7 +236,7 @@ add_library(falcon_engine SHARED
   closure.cpp
   collector.cpp
   collector_history.cpp
-  contextgroup.cpp
+  #contextgroup.cpp
   datareader.cpp
   datawriter.cpp
   derivedfrom.cpp
@@ -303,7 +303,7 @@ add_library(falcon_engine SHARED
   syntree.cpp
   textreader.cpp
   textwriter.cpp
-  timestamp.cpp
+  timestamp.cpp  
   transcoder.cpp
   trace.cpp
   tracestep.cpp
@@ -315,6 +315,7 @@ add_library(falcon_engine SHARED
   vfsprovider.cpp
   vm.cpp
   vmcontext.cpp
+  vmtimer.cpp
   writer.cpp
 )
 

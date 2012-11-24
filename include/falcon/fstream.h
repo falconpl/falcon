@@ -47,6 +47,9 @@ public:
    virtual size_t read( void *buffer, size_t size );
    virtual size_t write( const void *buffer, size_t size );
 
+   bool setNonblocking( bool );
+   bool isNonbloking() const;
+
    virtual off_t seek( off_t pos, Stream::e_whence whence );
    virtual off_t tell();
    virtual bool truncate(off_t pos = - 1);

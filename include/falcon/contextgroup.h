@@ -28,6 +28,7 @@ class VMachine;
 class Shared;
 class VMContext;
 class ItemArray;
+class Error;
 
 /**
  Group of contexts sharing the same parallel execution context.

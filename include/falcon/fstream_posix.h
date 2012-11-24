@@ -27,9 +27,11 @@ namespace Falcon {
 class PosixFStreamData {
 public:
    int fdFile;
+   bool m_nonBloking;
 
-   PosixFStreamData( int fd ):
-      fdFile( fd )
+   PosixFStreamData( int fd, bool nb=false):
+      fdFile( fd ),
+      m_nonBloking(nb)
    {}
 };
 

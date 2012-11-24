@@ -32,7 +32,7 @@ void Variable::makeReference( Variable* original, Variable* copy )
       copy->m_value = original->m_value;
    }
    else {
-      // craete  a place in memory that is sure to be properly aligned
+      // create a place in memory that is sure to be properly aligned
       Variable::t_aligned_variable *aligned_variable;      
       aligned_variable = (t_aligned_variable*) rawMem->allocate( sizeof(t_aligned_variable) );
       

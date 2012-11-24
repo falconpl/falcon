@@ -140,53 +140,6 @@ public:
       op1 = op3 - 2;
    }
 
-   /** Open an operator contet with a single operand.
-    \param vm The virtual machine passed to the operator.
-    \param op1 Where to store the first operand.
-    */
-   inline OpToken( VMachine* vm, Item*& op1 ):
-      m_vmc( vm->currentContext() ),
-      m_ops(0)
-#ifndef NDEBUG
-      , m_bExited(false)
-#endif
-   {
-      op1 = &m_vmc->topData();
-   }
-
-   /** Open an operator contet with a single operand.
-    \param vm The virtual machine passed to the operator.
-    \param op1 Where to store the first operand.
-    \param op2 Where to store the second operand.
-    */
-   inline OpToken( VMachine* vm, Item*& op1, Item*& op2 ):
-      m_vmc( vm->currentContext() ),
-      m_ops( 1 )
-#ifndef NDEBUG
-      , m_bExited(false)
-#endif
-   {
-      op2 = &m_vmc->topData();
-      op1 = op2 - 1;
-   }
-
-   /** Open an operator contet with a single operand.
-    \param vm The virtual machine passed to the operator.
-    \param op1 Where to store the first operand.
-    \param op2 Where to store the second operand.
-    \param op3 Where to store the third operand.
-    */
-   inline OpToken( VMachine* vm, Item*& op1, Item*& op2, Item*& op3 ):
-      m_vmc( vm->currentContext() ),
-      m_ops( 2 )
-#ifndef NDEBUG
-      , m_bExited(false)
-#endif
-   {
-      op3 = &m_vmc->topData();
-      op2 = op3 - 1;
-      op1 = op3 - 2;
-   }
 
     /** Destructor.
     In debug, the destructor asserts if you forgot to call the exit()

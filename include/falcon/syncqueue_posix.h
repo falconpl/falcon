@@ -33,7 +33,9 @@ namespace Falcon
 
  */
 template<class __T>
-class SyncQueue {
+class SyncQueue
+{
+public:
    SyncQueue() {
       m_terminateWaiters = false;
       pthread_cond_init(&m_filled, NULL);

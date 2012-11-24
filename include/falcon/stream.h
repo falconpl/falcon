@@ -129,14 +129,16 @@ public:
 
     The returned read size may be smaller than the required size if there aren't
     enough bytes available on the stream. If there isn't any data currently
-    available, the call blocks (should respect VM interruption protocol, if
-    possible and efficient, but this is not required).
+    available, the call blocks if the stream has blocking semantics, and it
+    returns zero if it's nonblocking. In this latter case, check the eof() status
+    to determine if the stream is completely read.
 
-    Use readAvailable() to determine if the next read on this stream might block.
+    Use readAvailable() and nonblocking semantics to determine if the next
+    read on this stream might block.
     
       \param buffer the buffer where read data will be stored.
       \param size the amount of bytes to read.
-      \return Count of read data; 0 on stream end, (size_t) -1 on error.
+      \return Count of read data; 0 on stream end or read not available, (size_t) -1 on error.
    */
    virtual size_t read( void *buffer, size_t size )=0;
 
@@ -146,6 +148,15 @@ public:
      \param size the maximum amount of bytes to write.
     */
    virtual size_t write( const void *buffer, size_t size )=0;
+
+   /** Sets the nonblocking semantics for this stream.
+    * \return true if nonblocking semantics are supported on this stream, false otherwise.
+    */
+   virtual bool setNonblocking( bool mode ) = 0;
+
+   /** Return true if this stream has nonblocking semantics.
+    */
+   virtual bool isNonbloking() const = 0;
 
    /** Close target stream. */
    virtual bool close() = 0;

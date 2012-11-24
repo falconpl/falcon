@@ -135,7 +135,7 @@ void ClassMantra::restore( VMContext* ctx, DataReader* stream, void*& empty ) co
       {
          Error* err = ms->link();
          if( err != 0 ) throw err;            
-         ms->readyVM( ctx );
+         ms->readyContext( ctx );
       }
 
       empty = mantra;

@@ -25,7 +25,7 @@ namespace Falcon {
 class FALCON_DYN_CLASS SourceLexer: public Parsing::Lexer
 {
 public:
-   SourceLexer( const String& uri, Parsing::Parser* p, TextReader* reader );
+   SourceLexer( const String& uri, Parsing::Parser* p, TextReader* reader=0, bool bOwn = false );
    virtual ~SourceLexer();
    
    bool isNameSpace( const String& name );

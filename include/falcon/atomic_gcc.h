@@ -18,64 +18,65 @@
 
 #include <falcon/setup.h>
 #include <falcon/types.h>
-#include <atomic>
 
 namespace Falcon {
 /**  An alias to the atomic integer type.
  */
-typedef std::atomic_int atomic_int;
+typedef int32 atomic_int;
 
 /** Performs an atomic thread safe increment. */
 inline int32 atomicInc( atomic_int& atomic )
 {
-   return ++atomic;
+   return __sync_add_and_fetch( &atomic, 1);
 }
 
 /** Performs an atomic thread safe decrement. */
 inline int32 atomicDec( atomic_int& atomic )
 {
-   return --atomic;
+   return __sync_add_and_fetch( &atomic, -1);
 }
 
 /** Performs an atomic thread safe addition. */
-inline int32 atomicAdd( atomic_int& atomic, int32 value )
+inline int32 atomicAdd( atomic_int& atomic, atomic_int value )
 {
-   return std::atomic_fetch_add(&atomic, value);
+   return __sync_add_and_fetch( &atomic, value );
 }
 
 /** Perform a threadsafe fetch */
 inline int32 atomicFetch( const atomic_int& atomic ) {
-   return atomic.load(std::memory_order_acquire);
+   __sync_synchronize ();
+   return atomic;
 }
 
-/** Perform a threadsafe fetch */
-inline void atomicSet( atomic_int& atomic, int32 value ) {
-   atomic = value;
+/** Perform a threadsafe set.*/
+inline void atomicSet( atomic_int& atomic, atomic_int value ) {
+   __sync_lock_test_and_set( &atomic, value );
 }
 
-inline int32 atomicExchange( atomic_int& atomic1, int32 value )
+/** Sets the given value in atomic, and returns the previous value. */
+inline atomic_int atomicExchange( atomic_int& atomic, atomic_int value )
 {
-   return atomic1.exchange(value);
+   return (int32) __sync_lock_test_and_set( &atomic, value );
 }
 
-inline bool atomicCAS( atomic_int& target, int32 compareTo, int32 newVal )
+inline bool atomicCAS( atomic_int& target, atomic_int compareTo, atomic_int newVal )
 {
-   return target.compare_exchange_strong( compareTo, newVal );
+   return __sync_bool_compare_and_swap( &target, compareTo, newVal );
 }
 
-inline bool atomicXor( atomic_int& target, int32 value )
+inline atomic_int atomicXor( atomic_int& target, atomic_int value )
 {
-   return target ^= value;
+   return __sync_fetch_and_xor(&target, value);
 }
 
-inline bool atomicAnd( atomic_int& target, int32 value )
+inline atomic_int atomicAnd( atomic_int& target, atomic_int value )
 {
-   return target &= value;
+   return __sync_fetch_and_and(&target, value);
 }
 
-inline bool atomicOr( atomic_int& target, int32 value )
+inline atomic_int atomicOr( atomic_int& target, atomic_int value )
 {
-   return target |= value;
+   return __sync_fetch_and_or(&target, value);
 }
 
 

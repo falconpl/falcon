@@ -122,10 +122,11 @@ void IntMode::run()
             }
             
             e->decref();
-            if( ! vm.currentContext()->unrollToSafeCode() )
+            /*if( ! vm.currentContext()->unrollToSafeCode() )
             {
                intComp.resetVM();
             }
+            */
          }
 
          // resets the prompt

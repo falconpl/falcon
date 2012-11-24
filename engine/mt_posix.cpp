@@ -62,23 +62,13 @@ void Event::set()
    #ifdef NDEBUG
    pthread_mutex_lock( &m_mtx );
    m_bIsSet = true;
-
-   if ( m_bAutoReset )
-      pthread_cond_signal( &m_cv );
-   else
-      pthread_cond_broadcast( &m_cv );
-
    pthread_mutex_unlock( &m_mtx );
+   pthread_cond_broadcast( &m_cv );
    #else
    int result = pthread_mutex_lock( &m_mtx );
    fassert( result == 0 );
    m_bIsSet = true;
-
-   if ( m_bAutoReset )
-      result = pthread_cond_signal( &m_cv );
-   else
-      result = pthread_cond_broadcast( &m_cv );
-
+   result = pthread_cond_broadcast( &m_cv );
    fassert( result == 0 );
    result = pthread_mutex_unlock( &m_mtx );
    fassert( result == 0 );
@@ -88,76 +78,41 @@ void Event::set()
 
 bool Event::wait( int32 to )
 {
-   pthread_mutex_lock( &m_mtx );
-
-   // are we lucky?
-   if( m_bIsSet )
+   if( to == 0 )
    {
-      if ( m_bAutoReset )
-         m_bIsSet = false;
-      pthread_mutex_unlock( &m_mtx );
-      return true;
-   }
-
-   // No? -- then are we unlucky?
-   if ( to == 0 )
-   {
-      pthread_mutex_unlock( &m_mtx );
-      return false;
-   }
-
-   // neither? -- then let's wait. How much?
-   if ( to <  0 )
-   {
-      do {
-         pthread_cond_wait( &m_cv, &m_mtx );
-
-      } while( ! m_bIsSet );
-   }
-   else
-   {
-      // release the mutex for a while
-      pthread_mutex_unlock( &m_mtx );
-
-      struct timespec ts;
-      #if _POSIX_TIMERS > 0
-         clock_gettime(CLOCK_REALTIME, &ts);
-      #else
-          struct timeval tv;
-          gettimeofday(&tv, NULL);
-          ts.tv_sec = tv.tv_sec;
-          ts.tv_nsec = tv.tv_usec*1000;
-      #endif
-
-      ts.tv_sec += to/1000;
-      ts.tv_nsec += (to%1000) * 1000000;
-      if( ts.tv_nsec >= 1000000000 )
-      {
-         ++ts.tv_sec;
-         ts.tv_nsec -= 1000000000;
-      }
-
       pthread_mutex_lock( &m_mtx );
-      while( ! m_bIsSet )
-      {
-         int res;
-         if( (res = pthread_cond_timedwait( &m_cv, &m_mtx, &ts )) == ETIMEDOUT )
-         {
-            // wait failed
-            pthread_mutex_unlock( &m_mtx );
-            return false;
+   }
+   else if( to < 0 )
+   {
+      pthread_mutex_lock( &m_mtx );
+      while( ! m_bIsSet ) {
+         pthread_cond_wait( &m_cv, &m_mtx );
+      }
+   }
+   else {
+      struct timeval tv;
+      struct timespec ts;
+      gettimeofday( &tv, NULL );
+
+      ts.tv_nsec = (tv.tv_usec + ((to%1000)*1000))*1000;
+      ts.tv_sec = tv.tv_sec + (to/1000);
+      pthread_mutex_lock( &m_mtx );
+
+      while( ! m_bIsSet ) {
+         int res = pthread_cond_timedwait( &m_cv, &m_mtx, &ts );
+         if( res == ETIMEDOUT ) {
+            break;
          }
-         // be sure that we haven't got other reasons to fail.
-         fassert( res == 0 );
       }
    }
 
-   // here, m_bIsSet is set...
-   if ( m_bAutoReset )
+   bool result = m_bIsSet;
+   if( m_bAutoReset ) {
       m_bIsSet = false;
+   }
    pthread_mutex_unlock( &m_mtx );
 
-   return true;
+   return result;
 }
 
 //==================================================================================
@@ -312,75 +267,121 @@ void *SysThread::run()
 // Interruptible event
 //==========================================================
 
-InterruptibleEvent::InterruptibleEvent()
+struct int_evt
 {
-   int* sockets = new int[4];
-   m_sysdata = sockets;
-   // the event set sockets
-   pipe(sockets);
-   // the event interrupted sockets
-   pipe(sockets+2);
+   pthread_cond_t cond;
+   pthread_mutex_t mtx;
+
+   bool autoReset;
+   bool isSet;
+   bool isInterrupted;
+
+};
+
+
+InterruptibleEvent::InterruptibleEvent( bool bManualReset, bool initState )
+{
+   struct int_evt* evt = new struct int_evt;
+   m_sysdata = evt;
+   evt->isInterrupted = false;
+   evt->isSet = initState;
+   evt->autoReset = !bManualReset;
+
+   pthread_cond_init( &evt->cond, 0);
+   pthread_mutex_init( &evt->mtx, 0);
 }
 
 
 InterruptibleEvent::~InterruptibleEvent()
 {
-   int* sockets = (int*) m_sysdata;
-   delete[] sockets;
+   struct int_evt* evt = (struct int_evt*) m_sysdata;
+   pthread_cond_destroy(&evt->cond);
+   pthread_mutex_destroy(&evt->mtx);
+
+   delete evt;
 }
 
 
 void InterruptibleEvent::set()
 {
-   int* sockets = (int*) m_sysdata;
-   int data = 0;
-   write(*sockets, &data, sizeof(data) );
+   struct int_evt* evt = (struct int_evt*) m_sysdata;
+
+   pthread_mutex_lock( &evt->mtx );
+   evt->isSet = true;
+   pthread_mutex_unlock( &evt->mtx );
+   pthread_cond_broadcast( &evt->cond );
 }
 
 
-bool InterruptibleEvent::wait( int32 to = -1 )
+InterruptibleEvent::wait_result_t InterruptibleEvent::wait( int32 to )
 {
-   fd_set inset;
-   struct timeval tv;
-   struct timeval* timeoutptr = 0;
-   int* sockets = (int*) m_sysdata;
-   int eventDone = sockets[1];
-   int eventIntr = sockets[3];
-   int max = (eventDone > eventIntr ? eventDone : eventIntr ) + 1;
-   int dt = 0;
+   struct int_evt* evt = (struct int_evt*) m_sysdata;
+   wait_result_t result;
 
-   if( to >= 0 ) {
-      timeoutptr = &tv;
-      tv.tv_sec = to/1000;
-      tv.tv_usec = (to%1000)*1000;
-   }
-   FD_ZERO( inset );
-   FD_SET( eventDone, &inset);
-   FD_SET( eventIntr, &inset);
-
-   int count = select( max, &inset, 0, 0, timeoutptr );
-
-   // timed out, or interrupted?
-   if( count == 0 || FD_ISSET(eventIntr, &inset) ) {
-      return false;
-   }
-
-   // success -- read the incoming data and move on.
-   // we should consume all the signals that were sent, we're an event, not a sema.
-   while( read( eventDone, &dt, sizeof(dt) ) > 0 )
+   if( to == 0 )
    {
-      /* go on */;
+      pthread_mutex_lock( &evt->mtx );
+
+   }
+   else if( to < 0 )
+   {
+      pthread_mutex_lock( &evt->mtx );
+      while( !(evt->isInterrupted|| evt->isSet) ) {
+         pthread_cond_wait( &evt->cond, &evt->mtx );
+      }
+   }
+   else {
+      struct timeval tv;
+      struct timespec ts;
+      gettimeofday( &tv, NULL );
+
+      ts.tv_nsec = (tv.tv_usec + ((to%1000)*1000))*1000;
+      ts.tv_sec = tv.tv_sec + (to/1000);
+      pthread_mutex_lock( &evt->mtx );
+
+      while( !(evt->isInterrupted|| evt->isSet) ) {
+         int res = pthread_cond_timedwait( &evt->cond, &evt->mtx, &ts );
+         if( res == ETIMEDOUT ) {
+            break;
+         }
+      }
    }
 
-   return true;
+   if( evt->isInterrupted ) {
+      result = wait_interrupted;
+   }
+   else if( evt->isSet ) {
+      result = wait_success;
+      if( evt->autoReset ) {
+         evt->isSet = false;
+      }
+   }
+   else {
+      result = wait_timedout;
+   }
+   pthread_mutex_unlock( &evt->mtx );
+
+   return result;
 }
 
 
 void InterruptibleEvent::interrupt()
 {
-   int* sockets = (int*) m_sysdata;
-   int data = 0;
-   write(sockets[2], &data, sizeof(data) );
+   struct int_evt* evt = (struct int_evt*) m_sysdata;
+
+   pthread_mutex_lock( &evt->mtx );
+   evt->isInterrupted = true;
+   pthread_mutex_unlock( &evt->mtx );
+   pthread_cond_broadcast( &evt->cond );
+}
+
+void InterruptibleEvent::reset()
+{
+   struct int_evt* evt = (struct int_evt*) m_sysdata;
+
+   pthread_mutex_lock( &evt->mtx );
+   evt->isInterrupted = false;
+   pthread_mutex_unlock( &evt->mtx );
 }
 
 }

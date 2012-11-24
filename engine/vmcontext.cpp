@@ -27,6 +27,7 @@
 #include <falcon/stdsteps.h>
 #include <falcon/shared.h>
 #include <falcon/sys.h>
+#include <falcon/contextgroup.h>
 
 #include <falcon/module.h>       // For getDynSymbolValue
 #include <falcon/modspace.h>
@@ -77,7 +78,7 @@ VMContext::VMContext( Process* prc, ContextGroup* grp ):
    m_catchBlock(0),
    m_id(0),
    m_next_schedule(0),
-   m_inGroup(0),
+   m_inGroup(grp),
    m_process(prc)
 {
    // prepare a low-limit VM terminator request.
@@ -244,7 +245,7 @@ const PStep* VMContext::nextStep() const
    PARANOID( "Call stack empty", (this->callDepth() > 0) );
 
 
-   CodeFrame& cframe = this->currentCode();
+   const CodeFrame& cframe = this->currentCode();
    const PStep* ps = cframe.m_step;
 
    if( ps->isComposed() )

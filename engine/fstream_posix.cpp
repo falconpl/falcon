@@ -43,7 +43,7 @@ FStream::FStream( void* data ):
 FStream::FStream( const FStream &other ):
    Stream( other )
 {
-
+   PosixFStreamData* data = static_cast<PosixFStreamData*>(other.m_fsData);
    int fd = static_cast<PosixFStreamData*>(other.m_fsData)->fdFile;
    int fd2 = ::dup( fd );
    if ( fd2 < 0 )
@@ -51,7 +51,7 @@ FStream::FStream( const FStream &other ):
       throw new IOError (ErrorParam(e_io_dup, __LINE__, __FILE__ ).sysError(errno) );
    }
 
-   m_fsData = new PosixFStreamData(fd2);
+   m_fsData = new PosixFStreamData(fd2, data->m_nonBloking);
 }
 
 
@@ -86,10 +86,27 @@ bool FStream::close()
 }
 
 
+bool FStream::setNonblocking( bool mode )
+{
+   static_cast<PosixFStreamData*>(m_fsData)->m_nonBloking = mode;
+   return true;
+}
+
+
+bool FStream::isNonbloking() const
+{
+   return static_cast<PosixFStreamData*>(m_fsData)->m_nonBloking;
+}
+
+
 size_t FStream::read( void *buffer, size_t size )
 {
-   int fd = static_cast<PosixFStreamData*>(m_fsData)->fdFile;
+   PosixFStreamData* data = static_cast<PosixFStreamData*>(m_fsData);
+   if( data->m_nonBloking && ! readAvailable(0) ) {
+      return 0;
+   }
 
+   int fd = data->fdFile;
    int result = ::read( fd, buffer, size );
    if ( result < 0 ) {
       m_lastError = (size_t) errno;
@@ -113,7 +130,12 @@ size_t FStream::read( void *buffer, size_t size )
 
 size_t FStream::write( const void *buffer, size_t size )
 {
-   int fd = static_cast<PosixFStreamData*>(m_fsData)->fdFile;
+   PosixFStreamData* data = static_cast<PosixFStreamData*>(m_fsData);
+   if( data->m_nonBloking && ! writeAvailable(0) ) {
+      return 0;
+   }
+
+   int fd = data->fdFile;
 
    int result = ::write( fd, buffer, size );
    if ( result < 0 ) {
@@ -217,7 +239,7 @@ bool FStream::truncate( off_t pos )
 
 size_t FStream::readAvailable( int32 msec )
 {
-   /* Temporarily turned off because a darwin flaw
+   /* Temporarily turned off because of a darwin flaw
 
    struct pollfd poller;
    poller.fd = data->m_handle;

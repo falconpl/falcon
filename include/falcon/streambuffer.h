@@ -59,7 +59,9 @@ public:
    
    virtual StreamBuffer *clone() const;
    virtual bool isStreamBuffer() const { return true; }
-   
+
+   virtual bool setNonblocking(bool);
+   virtual bool isNonbloking() const;
 
    /** Returns the underlying stream used by this transcoder.
    \return the underlying stream.

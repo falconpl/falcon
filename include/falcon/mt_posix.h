@@ -186,9 +186,9 @@ public:
    /** Creates the mutex.
       Will assert on failure.
    */
-   inline Event( bool bAutoReset = true, bool initState = false ):
+   inline Event( bool bManualReset = false, bool initState = false ):
       m_bIsSet( initState ),
-      m_bAutoReset( bAutoReset )
+      m_bAutoReset( !bManualReset )
    {
       #ifdef NDEBUG
       pthread_mutex_init( &m_mtx, 0 );

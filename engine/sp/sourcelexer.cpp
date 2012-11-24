@@ -38,8 +38,8 @@ public:
 };
 
 
-SourceLexer::SourceLexer( const String& uri, Parsing::Parser* p, TextReader* reader ):
-   Parsing::Lexer( uri, p, reader ),
+SourceLexer::SourceLexer( const String& uri, Parsing::Parser* p, TextReader* reader, bool bOwn ):
+   Parsing::Lexer( uri, p, reader, bOwn ),
    _p( new Private ),
    m_sline( 0 ),
    m_schr( 0 ),
@@ -60,6 +60,11 @@ SourceLexer::~SourceLexer()
 
 Parsing::TokenInstance* SourceLexer::nextToken()
 {
+   if( m_reader == 0)
+   {
+      return 0;
+   }
+
    SourceParser* parser = static_cast<SourceParser*>(m_parser);
    String tempString;
    char_t chr;

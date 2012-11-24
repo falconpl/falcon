@@ -36,6 +36,9 @@ public:
    virtual size_t readAvailable( int32 msecs_timeout=0 );
    virtual size_t writeAvailable( int32 msecs_timeout=0 );
 
+   virtual bool setNonblocking( bool ) { return true; }
+   virtual bool isNonbloking() const { return true; }
+
    virtual int64 tell();
    virtual bool truncate( int64 pos=-1 );
 

@@ -17,6 +17,7 @@
 #define FALCON_REFCOUNTER_H_
 
 #include <falcon/mt.h>
+#include <falcon/atomic.h>
 
 namespace Falcon {
 

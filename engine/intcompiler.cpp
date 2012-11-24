@@ -50,7 +50,7 @@
 #include <falcon/datareader.h>
 #include <falcon/importdef.h>
 #include <falcon/synclasses_id.h>
-
+#include <falcon/process.h>
 
 namespace Falcon {
 
@@ -77,27 +77,31 @@ void IntCompiler::Context::onInputOver()
 
 void IntCompiler::Context::onNewFunc( Function* function, Symbol* gs )
 {
-   try {
-      // remove the function from the static-data
-      if( gs != 0 )
-      {
-         m_owner->m_module->addMantraWithSymbol( function, gs );
-      }
-      else
-      {
-         m_owner->m_module->addMantra( function );
+   SourceParser& sp = m_owner->m_sp;
+
+   if( gs != 0 ) {
+      if( ! m_owner->m_mod->addMantraWithSymbol(function, gs, false) ) {
+         m_owner->m_sp.addError( e_already_def, sp.currentSource(), sp.currentLine()-1, 0, 0, function->name() );
+         delete function;
+         return;
       }
    }
-   catch( Error* e )
-   {
-      m_owner->m_sp.addError( e );
-      e->decref();
-   }
+
+   m_owner->m_currentMantra = function;
 }
 
 
 void IntCompiler::Context::onNewClass( Class* cls, bool, Symbol* gs )
 {
+   SourceParser& sp = m_owner->m_sp;
+
+   if( gs != 0 ) {
+      if( ! m_owner->m_mod->addMantraWithSymbol(cls, gs, false) ) {
+         m_owner->m_sp.addError( e_already_def, sp.currentSource(), sp.currentLine()-1, 0, 0, cls->name() );
+         return;
+      }
+   }
+
    FalconClass* fcls = static_cast<FalconClass*>(cls);
    if( fcls->missingParents() == 0 )
    {
@@ -105,11 +109,11 @@ void IntCompiler::Context::onNewClass( Class* cls, bool, Symbol* gs )
       {
          if( ! fcls->construct() )
          {
-            m_owner->m_module->addMantraWithSymbol( fcls->hyperConstruct(), gs );
+            m_owner->m_currentMantra = fcls->hyperConstruct();
          }
          else
          {
-            m_owner->m_module->addMantraWithSymbol( fcls, gs );
+            m_owner->m_currentMantra = fcls;
          }
       }
       catch( Error* e )
@@ -129,40 +133,48 @@ void IntCompiler::Context::onNewClass( Class* cls, bool, Symbol* gs )
 
 void IntCompiler::Context::onNewStatement( Statement* )
 {
-   // actually nothing to do
+   // suspend parsing if we're at top level.
 }
 
 
 void IntCompiler::Context::onLoad( const String& path, bool isFsPath )
 {
    SourceParser& sp = m_owner->m_sp;
-   if( ! m_owner->m_module->addLoad( path, isFsPath ) )
+   if( ! m_owner->m_bAllowDirective )
+   {
+      sp.addError( e_directive_not_allowed, sp.currentSource(), sp.currentLine()-1, 0, 0 );
+      return;
+   }
+
+   // get the module space
+   ModSpace* theSpace = m_owner->m_mod->moduleSpace();
+
+   // do we have a module?
+   if( m_owner->m_mod->addLoad( path, isFsPath ) )
    {
       sp.addError( e_load_already, sp.currentSource(), sp.currentLine()-1, 0, 0, path );
+      return;
+   }
+
+   // just adding it top the module won't be of any help.
+   ModLoader* ml = theSpace->modLoader();
+   Module* mod = isFsPath ? ml->loadFile( path ) : ml->loadName( path );
+
+   if( mod != 0 )
+   {
+      theSpace->resolve( mod, true, true ); // will throw on error.
+      Error* err = theSpace->link();
+      if( err != 0 )
+      {
+         sp.addError( err );
+         err->decref();
+      }
+
+      theSpace->readyContext( m_owner->m_vmctx );
    }
    else
    {
-      // just adding it top the module won't be of any help.
-      ModSpace* theSpace = m_owner->m_vm->modSpace();
-      ModLoader* ml = theSpace->modLoader();
-      Module* mod = isFsPath ? ml->loadFile( path ) : ml->loadName( path );
-      
-      if( mod != 0 )
-      {
-         theSpace->resolve( mod, true, true ); // will throw on error.
-         Error* err = theSpace->link();
-         if( err != 0 )
-         {
-            sp.addError( err );
-            err->decref();
-         }
-         
-         theSpace->readyVM( m_owner->m_vm->currentContext() );
-      }
-      else
-      {
-         sp.addError( e_mod_notfound, sp.currentSource(), sp.currentLine(), 0, 0, path );
-      }
+      sp.addError( e_mod_notfound, sp.currentSource(), sp.currentLine(), 0, 0, path );
    }
 }
 
@@ -170,11 +182,18 @@ void IntCompiler::Context::onLoad( const String& path, bool isFsPath )
 bool IntCompiler::Context::onImportFrom( ImportDef* def )
 {
    SourceParser& sp = m_owner->m_sp;
+   if( ! m_owner->m_bAllowDirective )
+   {
+      sp.addError( e_directive_not_allowed, sp.currentSource(), sp.currentLine()-1, 0, 0 );
+      return false;
+   }
 
    // have we already a module group for the module?
-   Module* vmmod = m_owner->m_module;
-   ModSpace* ms = vmmod->moduleSpace(); 
-   
+   // get the module space
+   VMContext* cctx = m_owner->m_vmctx;
+   Module* mod = m_owner->m_mod;
+   ModSpace* ms = cctx->vm()->modSpace();
+
    // first, update the module space by pre-loading the required module.
    try
    {
@@ -186,31 +205,32 @@ bool IntCompiler::Context::onImportFrom( ImportDef* def )
       sp.addError(e);
       return false;
    }
-   
+
+
    // Now that we know that the module is ok, we can add the import entry to the module.
-   Error* linkErrors = vmmod->addImport( def );
-   
+   Error* linkErrors = mod->addImport( def );
+
    // if the import was already handled, we should warn he user.
    if( linkErrors != 0 )
    {
       sp.addError( linkErrors );
       return false;
    }
-   
+
    // the link will resolve newly undefined symbols.
    linkErrors = ms->link();
-   if( linkErrors != 0) 
+   if( linkErrors != 0)
    {
-      vmmod->removeImport( def );
+      mod->removeImport( def );
       sp.addError(linkErrors);
       return true;
    }
-   
-   // When called again, we get the module we just loaded in the ms.    
+
+   // When called again, we get the module we just loaded in the ms.
    try
    {
       //... and put it in place.
-      ms->resolveImportDef( def, vmmod );
+      ms->resolveImportDef( def, mod );
    }
    catch( Error* e )
    {
@@ -220,39 +240,47 @@ bool IntCompiler::Context::onImportFrom( ImportDef* def )
    }
 
    /** Complete missing imports */
-   linkErrors = ms->linkModuleImports( vmmod );
-   if( linkErrors != 0) 
+   linkErrors = ms->linkModuleImports( mod );
+   if( linkErrors != 0)
    {
       sp.addError(linkErrors);
       return false;
    }
-   
-   ms->readyVM( m_owner->m_vm->currentContext() );
+
+   ms->readyContext( cctx );
    return true;
 }
 
 
 void IntCompiler::Context::onExport(const String& symName )
 {
+   SourceParser& sp = m_owner->m_sp;
+   if( ! m_owner->m_bAllowDirective )
+   {
+      sp.addError( e_directive_not_allowed, sp.currentSource(), sp.currentLine()-1, 0, 0 );
+      return;
+   }
+
+   Module* mod = m_owner->m_mod;
+
+   // do we have a module?
+   Symbol* sym = 0;
    bool already;
-   Symbol* sym = m_owner->m_module->addExport( symName, already );
-   
+   sym = mod->addExport( symName, already );
+
    // already exported?
    if( already )
    {
-      m_owner->m_sp.addError( e_export_already, m_owner->m_sp.currentSource(), 
+      sp.addError( e_export_already, m_owner->m_sp.currentSource(),
            sym->declaredAt(), 0, 0 );
+      return;
    }
-   else
+
+   Error* e = mod->moduleSpace()->exportSymbol( mod, sym );
+   if( e != 0 )
    {
-      
-      Error* e = m_owner->m_vm->modSpace()->exportSymbol( m_owner->m_module, sym );
-      if( e != 0 )
-      {
-         SourceParser& sp = m_owner->m_sp;
-         sp.addError( e );
-         e->decref();
-      }
+      sp.addError( e );
+      e->decref();
    }
 }
 
@@ -260,18 +288,31 @@ void IntCompiler::Context::onExport(const String& symName )
 void IntCompiler::Context::onDirective(const String&, const String&)
 {
    // TODO
+   SourceParser& sp = m_owner->m_sp;
+   if( ! m_owner->m_bAllowDirective )
+   {
+      sp.addError( e_directive_not_allowed, sp.currentSource(), sp.currentLine()-1, 0, 0 );
+      return;
+   }
 }
 
 
 void IntCompiler::Context::onGlobal( const String& )
 {
    // TODO
+   SourceParser& sp = m_owner->m_sp;
+   if( ! m_owner->m_bAllowDirective )
+   {
+      sp.addError( e_directive_not_allowed, sp.currentSource(), sp.currentLine()-1, 0, 0 );
+      return;
+   }
 }
 
 
 Symbol* IntCompiler::Context::onUndefinedSymbol( const String& name )
 {
-   Module* mod = m_owner->m_module;
+   Module* mod = m_owner->m_mod;
+
    // Is this a global symbol?
    Symbol* gsym = mod->getGlobal( name );
    if (gsym == 0)
@@ -285,8 +326,8 @@ Symbol* IntCompiler::Context::onUndefinedSymbol( const String& name )
       {
          return 0;
       }
-      gsym = mod->addImplicitImport( name );  
-      
+      gsym = mod->addImplicitImport( name );
+
       // no need to "define" it, it stays an extern.
       Variable* var = exp->getVariable(0);
       fassert( var != 0 );
@@ -298,16 +339,18 @@ Symbol* IntCompiler::Context::onUndefinedSymbol( const String& name )
 
 Symbol* IntCompiler::Context::onGlobalDefined( const String& name, bool &adef )
 {
-   Symbol* sym = m_owner->m_module->getGlobal(name);
+   Module* mod = m_owner->m_mod;
+
+   Symbol* sym = mod->getGlobal(name);
    if( sym == 0 )
    {
       adef = false;
-      Symbol* s = m_owner->m_module->addVariable( name );
+      Symbol* s = mod->addVariable( name );
       s->declaredAt( m_owner->m_sp.currentLine() );
       return s;
    }
-   // The interactive compiler never adds an undefined symbol
 
+   // The interactive compiler never adds an undefined symbol
    adef = true;
    return sym;
 }
@@ -332,55 +375,43 @@ void IntCompiler::Context::onRequirement( Requirement* req )
 // Main class
 //
 
-IntCompiler::IntCompiler( VMachine* vm ):
-   m_currentTree(0)
+IntCompiler::IntCompiler( bool allowDirective ):
+   m_currentTree(0),
+   m_bAllowDirective( allowDirective )
 {
-   // prepare the virtual machine.
-   m_vm = vm;
-
-   m_module = new Module( "Interactive" );
-   m_main = new SynFunc("__main__" );
-   m_module->setMainFunction(m_main);
-   
-   m_vm->modSpace()->add(m_module, true, false);
-   
-   // we'll never abandon the main frame in the virtual machine
-   m_vm->currentContext()->makeCallFrame( m_main, 0, Item() );
-   // and we know the code up to here is safe.
-   m_vm->currentContext()->setSafeCode();
-
    // Prepare the compiler and the context.
    m_ctx = new Context( this );
    m_sp.setContext(m_ctx);
    m_sp.interactive(true);
+   m_compf = 0;
+   m_mod = 0;
+   m_vmctx = 0;
 
-   // create the streams we're using internally
-   m_stream = new StringStream;
-   m_writer = new TextWriter( m_stream );
-
-   m_sp.pushLexer(new SourceLexer( "(interactive)", &m_sp, new TextReader( m_stream ) ) );
+   m_lexer = new SourceLexer( "(interactive)", &m_sp );
+   m_sp.pushLexer( m_lexer );
 }
 
 
 IntCompiler::~IntCompiler()
 {
-   delete m_module; 
-
-   delete m_writer;
-   delete m_stream;
    delete m_ctx;
-
    delete m_currentTree;
 }
 
 
-IntCompiler::compile_status IntCompiler::compileNext( const String& value)
+void IntCompiler::setCompilationContext( Function * function, Module* mod, VMContext* vmctx )
 {
-   // write the new data on the stream.
-   int64 current = m_stream->seekCurrent(0);
-   m_writer->write(value);
-   m_writer->flush();
-   m_stream->seekBegin(current);
+   m_compf = function;
+   m_mod = mod;
+   m_vmctx = vmctx;
+}
+
+
+IntCompiler::t_compile_status IntCompiler::compileNext( Stream* input, SynTree*& code, Mantra*& definition )
+{
+   TextReader tr (input);
+   m_lexer->setReader(&tr);
+   t_compile_status status;
 
    // create a new syntree if it was emptied
    if( m_currentTree == 0 )
@@ -391,19 +422,12 @@ IntCompiler::compile_status IntCompiler::compileNext( const String& value)
    }
 
    // if there is a compilation error, throw it
-   if( ! m_sp.step() )
-   {
-      throwCompileErrors();
-   }
+   m_sp.step();
 
    if( isComplete() )
    {
-      compile_status ret = ok_t;
       if( ! m_currentTree->empty() )
       {
-         VMContext* ctx = m_vm->currentContext();
-         ctx->pushReturn();
-         ctx->pushCode(m_currentTree);
          if ( m_currentTree->at(0)->handler()->userFlags() == FALCON_SYNCLASS_ID_AUTOEXPR )
          {
             // this requires evaluation; but is this a direct call?
@@ -411,39 +435,34 @@ IntCompiler::compile_status IntCompiler::compileNext( const String& value)
             Expression* expr = stmt->selector();
             if( expr != 0 && expr->handler()->userFlags() == FALCON_SYNCLASS_ID_CALLFUNC )
             {
-               ret = eval_direct_t;
+               status = e_expr_call;
             }
             else
             {
-               ret = eval_t;
+               status = e_expression;
             }
          }
-         // else ret can stay ok         
-         //m_vm->textOut()->write( m_currentTree->describe() );
-
-         try {
-            m_vm->run();
+         else {
+            status = e_statement;
          }
-         catch(...)
-         {
-            m_sp.reset();
-            delete m_currentTree;
-            m_currentTree = 0;
-            throw;
-         }
+         // else ret can stay ok
 
          m_sp.reset();
          // where to put the tree now?
          // it might be reflected?
-         //TODO: Good thing is to GC it.
-         //delete m_currentTree;
+         code = m_currentTree;
          m_currentTree = 0;
       }
-
-      return ret;
+      else {
+         status= e_definition;
+         definition = m_currentMantra;
+      }
+   }
+   else {
+      status = e_incomplete;
    }
 
-   return incomplete_t;
+   return status;
 }
 
 
@@ -494,14 +513,10 @@ void IntCompiler::throwCompileErrors() const
 void IntCompiler::resetTree()
 {
    m_sp.reset();
-}
-
-
-void IntCompiler::resetVM()
-{
-   VMContext* ctx = m_vm->currentContext();
-   ctx->reset();
-   ctx->makeCallFrame( m_main, 0, Item() );
+   delete m_currentTree;
+   delete m_currentMantra;
+   m_currentTree = 0;
+   m_currentMantra = 0;
 }
 
 

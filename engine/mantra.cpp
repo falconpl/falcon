@@ -109,7 +109,8 @@ bool Mantra::isCompatibleWith( Mantra::t_category cat ) const
       if( this->category() == Mantra::e_c_class
           || this->category() == Mantra::e_c_falconclass
           || this->category() == Mantra::e_c_hyperclass
-          || this->category() == Mantra::e_c_metaclass )
+          || this->category() == Mantra::e_c_metaclass
+          || this->category() == Mantra::e_c_object )
       {
          return true;
       }

@@ -13,6 +13,8 @@
    See LICENSE file for licensing details.
 */
 
+#define SRC "engine/ps/breakpoint.cpp"
+
 #include <falcon/trace.h>
 #include <falcon/psteps/breakpoint.h>
 #include <falcon/synclasses.h>
@@ -49,7 +51,7 @@ void Breakpoint::describeTo( String& tgt, int ) const
 
 void Breakpoint::apply_( const PStep*, VMContext* ctx )
 {
-   ctx->breakpoint();
+   ctx->setBreakpointEvent();
    ctx->popCode();
 }
 

@@ -39,9 +39,6 @@ class VMContext;
 class FALCON_DYN_CLASS Process
 {
 public:
-   Process( VMachine* owner );
-   Process( VMachine* owner, VMContext* mainContext );
-   virtual ~Process();
 
    int32 id() const { return m_id; }
    void id( int32 i ) { m_id = i; }
@@ -49,9 +46,9 @@ public:
    VMachine* vm() const { return m_vm; }
    VMContext* mainContext() const { return m_context; }
 
-   void start( Function* main, int pcount = 0 );
-   void start( Closure* main, int pcount = 0);
-   void startItem( Item& main, int pcount, Item* params );
+   bool start( Function* main, int pcount = 0 );
+   bool start( Closure* main, int pcount = 0);
+   bool startItem( Item& main, int pcount, Item* params );
 
    /** Returns the result of the evaluation.
     This is actually the topmost value in the stack of the main context.
@@ -76,11 +73,22 @@ public:
    bool terminated() const { return atomicFetch(m_terminated); }
 
 private:
+   Process( VMachine* owner );
+   Process( VMachine* owner, VMContext* mainContext );
+   virtual ~Process();
+
+   void launch();
+   bool checkRunning();
+
+   friend class VMachine;
    int32 m_id;
    VMachine* m_vm;
    VMContext *m_context;
    InterruptibleEvent m_event;
    atomic_int m_terminated;
+
+   bool m_running;
+   Mutex m_mtxRunning;
 
    FALCON_REFERENCECOUNT_DECLARE_INCDEC(Process)
 };

@@ -74,6 +74,19 @@ StreamBuffer *StreamBuffer::clone() const
    return new StreamBuffer( *this );
 }
 
+
+bool StreamBuffer::setNonblocking(bool mode)
+{
+   m_stream->setNonblocking(mode);
+   return true;
+}
+
+
+bool StreamBuffer::isNonbloking() const
+{
+   return m_stream->isNonbloking();
+}
+
 bool StreamBuffer::refill()
 {
    if ( ! flush() )

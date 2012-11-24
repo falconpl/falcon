@@ -29,10 +29,12 @@ class WinFStreamData {
 public:      
    HANDLE hFile;
    bool bIsFile;
+   bool bNonBlocking;
 
-   WinFStreamData( HANDLE hf, bool bf = true ):
+   WinFStreamData( HANDLE hf, bool bf = true, bool nb ):
       hFile( hf ),
-      bIsFile( bf )
+      bIsFile( bf ),
+      bNonBlocking( nb )
    {}
 };
 

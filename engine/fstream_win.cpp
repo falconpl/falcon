@@ -62,7 +62,7 @@ FStream::FStream( const FStream &other ):
          .sysError( ::GetLastError() ) );
    }
 
-   m_fsData = new WinFStreamData( hTarget, data->bIsFile );
+   m_fsData = new WinFStreamData( hTarget, data->bIsFile, data->bNonBlocking );
 }
 
 
@@ -105,6 +105,9 @@ size_t FStream::read( void *buffer, size_t size )
 {
    WinFStreamData* data = (WinFStreamData*) m_fsData;
    HANDLE hFile = data->hFile;
+   if( data->bNonBlocking && ! readAvailable(0) ) {
+      return 0;
+   }
 
    DWORD result;
    if ( ! ::ReadFile( hFile, buffer, size, &result, NULL ) )
@@ -132,6 +135,10 @@ size_t FStream::write( const void *buffer, size_t size )
 {
    WinFStreamData* data = (WinFStreamData*) m_fsData;
    HANDLE hFile = data->hFile;
+
+   if( data->bNonBlocking && ! writeAvailable(0) ) {
+      return 0;
+   }
 
    DWORD result;
    if ( ! ::WriteFile( hFile, buffer, size, &result, NULL ) )

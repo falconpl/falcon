@@ -22,6 +22,8 @@
 #include <falcon/callframe.h>
 #include <falcon/vmcontext.h>
 #include <falcon/string.h>
+#include <falcon/syncqueue.h>
+#include <falcon/contextmanager.h>
 
 #define FALCON_VM_DFAULT_CHECK_LOOPS 5000
 
@@ -266,6 +268,17 @@ public:
    */
    int32 getProcessorCount() const;
 
+   /** Starts and stops processors accordingly to current processor settings.
+    */
+   void updateProcessors();
+
+   typedef SyncQueue<VMContext*> ReadyContextQueue;
+   /** Returns the synchronized queue of contexts being ready to run. */
+   ReadyContextQueue& readyContexts() { return m_readyContexts; }
+
+   /** Gets the context manager associated with this virtual machine.  */
+   ContextManager& contextManager() { return m_ctxMan; }
+
    //=========================================================
    // Utilities
    //=========================================================
@@ -288,11 +301,15 @@ protected:
    bool m_bOwnCoder;
    
    ModSpace* m_modspace;
-   int32 m_processorCount;
+   ContextManager m_ctxMan;
 
 private:
+   void joinProcessors();
+
+   ReadyContextQueue m_readyContexts;
+   int32 m_processorCount;
    class Private;
-   Private* _p;   
+   VMachine::Private* _p;
 };
 
 }

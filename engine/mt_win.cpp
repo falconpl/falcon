@@ -249,6 +249,77 @@ void *SysThread::run()
    return data;
 }
 
+
+
+//==========================================================
+// Interruptible event
+//==========================================================
+
+struct int_evt
+{
+   HANDLE evtMain;
+   HANDLE evtIntr;
+};
+
+
+InterruptibleEvent::InterruptibleEvent( bool bManualReset, bool initState )
+{
+   struct int_evt* evt = new struct int_evt;
+   m_sysdata = evt;
+   evt->evtMain = CreateEvent( NULL, bManualReset ? TRUE :FALSE, initState ? TRUE : FALSE, NULL );
+   evt->evtIntr = CreateEvent( NULL, TRUE, FALSE, NULL );
+}
+
+
+InterruptibleEvent::~InterruptibleEvent()
+{
+   struct int_evt* evt = (struct int_evt*) m_sysdata;
+   CloseHandle( evt->evtMain );
+   CloseHandle( evt->evtIntr );
+   delete evt;
+}
+
+
+void InterruptibleEvent::set()
+{
+   struct int_evt* evt = (struct int_evt*) m_sysdata;
+   SetEvent( evt->evtMain );
+}
+
+
+InterruptibleEvent::wait_result_t InterruptibleEvent::wait( int32 to = -1 )
+{
+   struct int_evt* evt = (struct int_evt*) m_sysdata;
+   wait_result_t result;
+
+   HANDLE hs[] = { evt->evtIntr, evt->evtMain };
+   DWORD wres = WaitForMultipleObjects( 2, hs, FALSE, to < 0 ? INFINITE : to );
+
+   if( wres == WAIT_OBJECT_0 )
+   {
+      return wait_interrupted;
+   }
+   else if( wres == WAIT_TIMEOUT )
+   {
+      return wait_timedout;
+   }
+
+   return wait_success;
+}
+
+
+void InterruptibleEvent::interrupt()
+{
+   struct int_evt* evt = (struct int_evt*) m_sysdata;
+   SetEvent( evt->evtIntr );
+}
+
+void InterruptibleEvent::reset()
+{
+   struct int_evt* evt = (struct int_evt*) m_sysdata;
+   ResetEvent( evt->evtMain );
+}
+
 }
 
 /* end of mt_win.cpp */

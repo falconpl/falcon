@@ -14,7 +14,7 @@
 */
 
 #undef SRC
-#define SRC "engine/project.cpp"
+#define SRC "engine/process.cpp"
 
 #include <falcon/process.h>
 #include <falcon/vmcontext.h>
@@ -24,7 +24,8 @@
 namespace Falcon {
 
 Process::Process( VMachine* owner ):
-   m_vm(owner)
+   m_vm(owner),
+   m_running(false)
 {
    m_context = new VMContext(this, 0);
    m_id = m_vm->getNextProcessID();
@@ -33,7 +34,8 @@ Process::Process( VMachine* owner ):
 
 Process::Process( VMachine* owner, VMContext* mainContext ):
          m_vm(owner),
-         m_context(mainContext)
+         m_context(mainContext),
+         m_running(false)
 {
    mainContext->incref();
    m_id = m_vm->getNextProcessID();
@@ -44,19 +46,43 @@ Process::~Process() {
 }
 
 
-void Process::start( Function* main, int pcount )
+bool Process::start( Function* main, int pcount )
 {
+   if (! checkRunning() ) {
+      return false;
+   }
+
    m_context->call(main, pcount);
+   // launch is to be called after call,
+   // as it may stack higher priority calls for base modules.
+   launch();
+   return true;
 }
 
-void Process::start( Closure* main, int pcount )
+bool Process::start( Closure* main, int pcount )
 {
+   if (! checkRunning() ) {
+      return false;
+   }
+
    m_context->call(main, pcount);
+   // launch is to be called after call,
+   // as it may stack higher priority calls for base modules.
+   launch();
+   return true;
 }
 
-void Process::startItem( Item& main, int pcount, Item* params )
+bool Process::startItem( Item& main, int pcount, Item* params )
 {
+   if (! checkRunning() ) {
+      return false;
+   }
+
    m_context->callItem(main, pcount, params);
+   // launch is to be called after call,
+   // as it may stack higher priority calls for base modules.
+   launch();
+   return true;
 }
 
 const Item& Process::result() const
@@ -80,6 +106,33 @@ void Process::interrupt()
 {
    //TODO
 }
+
+void Process::launch()
+{
+   VMContext* ctx = mainContext();
+   m_vm->modSpace()->readyContext( ctx );
+   // we're assigning the context to the processor/vm/manager system.
+   ctx->incref();
+   // processors are synchronized on the context queue.
+   m_vm->readyContexts().add( ctx );
+}
+
+
+bool Process::checkRunning()
+{
+   m_mtxRunning.lock();
+
+   if( m_running ) {
+      m_mtxRunning.unlock();
+      return false;
+   }
+
+   m_running = true;
+   m_mtxRunning.unlock();
+
+   return true;
+}
+
 
 }
 

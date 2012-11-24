@@ -192,7 +192,7 @@ public:
      
      \note This is the fourth step of creating the module space.     
     */
-   bool readyVM( VMContext* ctx );
+   bool readyContext( VMContext* ctx );
     
    //===================================================================
    // Service functions

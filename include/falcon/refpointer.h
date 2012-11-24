@@ -17,6 +17,7 @@
 #define FALCON_REFPOINTER_H_
 
 #include <falcon/mt.h>
+#include <falcon/atomic.h>
 
 namespace Falcon {
 
@@ -104,7 +105,7 @@ private:
 
    class Refcount
    {
-      int32 m_count;
+      atomic_int m_count;
 
    public:
       Refcount():
