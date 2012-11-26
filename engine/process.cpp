@@ -21,10 +21,18 @@
 #include <falcon/vm.h>
 #include <falcon/mt.h>
 
+#include <falcon/item.h>
+#include <falcon/function.h>
+#include <falcon/closure.h>
+#include <falcon/modspace.h>
+
+
 namespace Falcon {
 
 Process::Process( VMachine* owner ):
    m_vm(owner),
+   m_context( new VMContext( this ) ),
+   m_event( true, false ),
    m_running(false)
 {
    m_context = new VMContext(this, 0);
@@ -32,19 +40,20 @@ Process::Process( VMachine* owner ):
 }
 
 
-Process::Process( VMachine* owner, VMContext* mainContext ):
-         m_vm(owner),
-         m_context(mainContext),
-         m_running(false)
-{
-   mainContext->incref();
-   m_id = m_vm->getNextProcessID();
-}
-
 Process::~Process() {
    m_context->decref();
 }
 
+bool Process::start()
+{
+   if (! checkRunning() ) {
+      return false;
+   }
+
+
+   launch();
+   return true;
+}
 
 bool Process::start( Function* main, int pcount )
 {
@@ -85,6 +94,7 @@ bool Process::startItem( Item& main, int pcount, Item* params )
    return true;
 }
 
+
 const Item& Process::result() const
 {
    return m_context->topData();
@@ -96,15 +106,19 @@ Item& Process::result()
 }
 
 
-bool Process::wait( int64 timeout )
+InterruptibleEvent::wait_result_t Process::wait( int32 timeout )
 {
-   //TODO
-   return false;
+   return m_event.wait(timeout);
 }
 
 void Process::interrupt()
 {
-   //TODO
+   m_event.interrupt();
+}
+
+void Process::completed()
+{
+   m_event.set();
 }
 
 void Process::launch()

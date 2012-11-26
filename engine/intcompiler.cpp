@@ -407,10 +407,9 @@ void IntCompiler::setCompilationContext( Function * function, Module* mod, VMCon
 }
 
 
-IntCompiler::t_compile_status IntCompiler::compileNext( Stream* input, SynTree*& code, Mantra*& definition )
+IntCompiler::t_compile_status IntCompiler::compileNext( TextReader* input, SynTree*& code, Mantra*& definition )
 {
-   TextReader tr (input);
-   m_lexer->setReader(&tr);
+   m_lexer->setReader(input, false);
    t_compile_status status;
 
    // create a new syntree if it was emptied

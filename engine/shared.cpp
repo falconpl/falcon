@@ -15,14 +15,18 @@
 #define SRC "engine/shared.cpp"
 
 #include <falcon/shared.h>
+#include <falcon/vm.h>
+#include <falcon/vmcontext.h>
+#include <falcon/contextmanager.h>
+
 #include "shared_private.h"
 
 namespace Falcon
 {
 
 Shared::Shared( Class* handler, bool acquireable, int32 signals ):
-   m_cls( handler ),
-   m_acquireable( acquireable )
+   m_acquireable( acquireable ),
+   m_cls( handler )
 {
    _p = new Private( signals );
 }
@@ -45,36 +49,36 @@ int32 Shared::consumeSignal( int32 count )
 
 void Shared::signal( int32 count )
 {
-   Scheduler* notifyTo = 0;
+   ContextManager* notifyTo = 0;
 
    _p->m_mtx.lock();
    _p->m_signals += count;
    if( ! _p->m_waiters.empty() )
    {
-      notifyTo = _p->m_waiters.front()->vm()->scheduler();
+      notifyTo = &_p->m_waiters.front()->vm()->contextManager();
    }
    _p->m_mtx.unlock();
 
    if( notifyTo != 0 ) {
-      notifyTo->signalResource(this);
+      notifyTo->onSharedSignaled(this);
    }
 }
 
 
 void Shared::broadcast()
 {
-   Scheduler* notifyTo = 0;
+   ContextManager* notifyTo = 0;
    _p->m_mtx.lock();
    int32 count= (int32) _p->m_waiters.size();
    if( count > 0 )
    {
-      notifyTo = _p->m_waiters.front()->vm()->scheduler();
+      notifyTo = &_p->m_waiters.front()->vm()->contextManager();
       _p->m_signals += count;
    }
    _p->m_mtx.unlock();
 
    if( notifyTo != 0 ) {
-      notifyTo->broadcastResource(this);
+      notifyTo->onSharedSignaled(this);
    }
 }
 

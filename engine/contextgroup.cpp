@@ -24,6 +24,7 @@
 #include <falcon/mt.h>
 #include <falcon/itemarray.h>
 #include <falcon/fassert.h>
+#include <falcon/contextmanager.h>
 
 #include <deque>
 
@@ -94,10 +95,8 @@ void ContextGroup::setError( Error* error )
    Private::ContextList::iterator iter = _p->m_contexts.begin();
    while( _p->m_contexts.end() != iter ) {
       VMContext* ctx = *iter;
+      // ask the system to kill the contexts.
       ctx->setTerminateEvent();
-      // remove sleeping or ready contexts.
-      //TODO: probably not the best plae where to put this
-      ctx->vm()->contextManager().onContextTerminated(ctx);
       ++iter;
    }
 }
@@ -121,13 +120,18 @@ uint32 ContextGroup::runningContexts() const
 bool ContextGroup::onContextTerminated( VMContext* )
 {
    m_terminated++;
-   return m_terminated == (int32) _p->m_contexts.size();
+   bool done = m_terminated == (int32) _p->m_contexts.size();
+   if( done ) {
+      m_termEvent->broadcast();
+   }
+
+   return done;
 }
+
 
 void ContextGroup::addContext( VMContext* ctx )
 {
    _p->m_contexts.push_back( ctx );
-   pushReadyContext(ctx);
 }
 
 
@@ -136,7 +140,9 @@ void ContextGroup::readyAllContexts()
    Private::ContextList::const_iterator iter = _p->m_contexts.begin();
    while( iter != _p->m_contexts.end() ) {
       VMContext* ctx = *iter;
-      pushReadyContext(ctx);
+      if( onContextReady(ctx) ) {
+         ctx->vm()->contextManager().readyContexts().add( ctx );
+      }
       ++iter;
    }
 }
@@ -157,41 +163,45 @@ ItemArray* ContextGroup::results() const
 }
 
 
-void ContextGroup::pushReadyContext( VMContext* ctx )
-{
-   _p->m_mtxReadyCtx.lock();
-   if( _p->m_running < m_processors )
-   {
-      _p->m_running++;
-      _p->m_mtxReadyCtx.unlock();
-
-      //TODO
-      //m_owner->pushReadyContext( ctx );
-   }
-   else {
-      _p->m_readyCtx.push_back( ctx );
-      _p->m_mtxReadyCtx.unlock();
-   }
-}
-
-/** Called back when a context is swapped out from a processor. */
-void ContextGroup::onContextIdle( VMContext* ctx )
+VMContext* ContextGroup::onContextIdle()
 {
    _p->m_mtxReadyCtx.lock();
    --_p->m_running;
    if( ! _p->m_readyCtx.empty() && _p->m_running < m_processors )
    {
      ++_p->m_running;
-     ctx = _p->m_readyCtx.front();
+     VMContext* ctx = _p->m_readyCtx.front();
      _p->m_readyCtx.pop_front();
      _p->m_mtxReadyCtx.unlock();
 
-     //TODO
-     //m_owner->pushReadyContext( ctx );
+     // pass the existing reference to the managter
+     return ctx;
    }
    else {
      _p->m_mtxReadyCtx.unlock();
+     return 0;
    }
+}
+
+
+bool ContextGroup::onContextReady( VMContext* ctx )
+{
+   bool result;
+
+   _p->m_mtxReadyCtx.lock();
+   if( m_processors > 0  && m_processors <= _p->m_running )
+   {
+      result = false;
+      _p->m_readyCtx.push_front( ctx );
+   }
+   else {
+      ++_p->m_running;
+      result = true;
+   }
+   _p->m_mtxReadyCtx.unlock();
+
+   return result;
+
 }
 
 }

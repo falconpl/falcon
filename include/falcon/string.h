@@ -830,12 +830,12 @@ public:
    int compareIgnoreCase( const wchar_t *other ) const;
 
    /** Find one of the characters in the string. 
-   \param src A string containing all the charcters to be searched.
+   \param src A string containing all the characters to be searched.
     */
    length_t findFirstOf( const String& src, length_t pos = 0 ) const;
 
    /** Find one of the characters in the string from the back of the string. 
-    \param src A string containing all the charcters to be searched.
+    \param src A string containing all the characters to be searched.
     */
    length_t findLastOf( const String& src, length_t pos = npos ) const ;
    

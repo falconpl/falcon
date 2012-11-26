@@ -24,6 +24,9 @@ namespace Falcon {
 
 class VMachine;
 class VMContext;
+class Function;
+class Closure;
+class Item;
 
 /** Process Entity.
 
@@ -46,6 +49,7 @@ public:
    VMachine* vm() const { return m_vm; }
    VMContext* mainContext() const { return m_context; }
 
+   bool start();
    bool start( Function* main, int pcount = 0 );
    bool start( Closure* main, int pcount = 0);
    bool startItem( Item& main, int pcount, Item* params );
@@ -56,7 +60,7 @@ public:
    const Item& result() const;
    Item& result();
 
-   bool wait( int64 timeout=-1 );
+   InterruptibleEvent::wait_result_t wait( int32 timeout=-1 );
    void interrupt();
 
    /** This is called back by the main context when done.
@@ -74,7 +78,6 @@ public:
 
 private:
    Process( VMachine* owner );
-   Process( VMachine* owner, VMContext* mainContext );
    virtual ~Process();
 
    void launch();

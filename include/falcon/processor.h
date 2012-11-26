@@ -24,6 +24,8 @@ namespace Falcon {
 
 class VMachine;
 class VMContext;
+class Error;
+class Item;
 
 /**
  Class representing a Virtual machine processor.
@@ -39,7 +41,7 @@ public:
 
    virtual void* run();
    void execute(VMContext* ctx);
-   void manageEvents( VMContext* ctx, register int32 &events );
+   void manageEvents( VMContext* ctx, int32 &events );
 
    bool step();
 

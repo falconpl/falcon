@@ -13,7 +13,8 @@
    See LICENSE file for licensing details.
 */
 
-#define src "engine/contextmanager.cpp"
+#undef SRC
+#define SRC "engine/contextmanager.cpp"
 
 #include <falcon/contextmanager.h>
 #include <falcon/mt.h>
@@ -26,7 +27,7 @@
 #include <set>
 #include <vector>
 
-#include <syncqueue.h>
+#include <falcon/syncqueue.h>
 
 namespace Falcon {
 
@@ -38,8 +39,7 @@ public:
    typedef enum {
       e_resource_signaled,
       e_incoming_context,
-      e_context_terminated,
-      e_stop
+      e_context_terminated
    }
    t_type;
 
@@ -52,8 +52,7 @@ public:
    }
    m_data;
 
-   CMMsg():
-      m_type(e_stop) {}
+   CMMsg() {};
 
    CMMsg( VMContext* ctx ):
       m_type(e_incoming_context) { m_data.ctx = ctx; }
@@ -72,10 +71,6 @@ public:
    typedef std::set<VMContext*> ContextSet;
    typedef std::multimap<int64, VMContext*> ScheduleMap;
 
-   //==============================================
-   // Context ready to be scheduled.
-   typedef SyncQueue<VMContext*> ContextSyncQueue;
-   ContextSyncQueue m_readyContexts;
 
    //========================================
    // messages for the scheduler.
@@ -89,6 +84,7 @@ public:
    }
 
 };
+
 
 ContextManager::ContextManager()
 {
@@ -106,7 +102,7 @@ ContextManager::~ContextManager()
 
    MESSAGE( "ContextManager -- remove reference on runnable contexts" );
    VMContext* ctx = 0;
-   while ( _p->m_readyContexts.getST( ctx ) )
+   while ( m_readyContexts.getST( ctx ) )
    {
       ctx->decref();
    }
@@ -128,7 +124,8 @@ ContextManager::~ContextManager()
    CMMsg msg;
    while ( _p->m_messages.getST(msg) )
    {
-      switch( msg.t_type ) {
+      switch( msg.m_type )
+      {
       case CMMsg::e_incoming_context:
       case CMMsg::e_context_terminated:
          msg.m_data.ctx->decref();
@@ -139,6 +136,8 @@ ContextManager::~ContextManager()
          break;
       }
    }
+
+   delete _p;
 
    MESSAGE( "ContextManager destructor complete" );
 }
@@ -157,7 +156,7 @@ bool ContextManager::stop()
    m_mtxStopped.unlock();
 
    // send a killer message
-   _p->m_messages.add(CMMsg());
+   _p->m_messages.terminateWaiters();
 
    // Todo: we should also wait for all the processor to be terminated.
    void* result = 0;
@@ -216,22 +215,6 @@ int64 ContextManager::msToAbs( int32 to )
 }
 
 
-VMContext* ContextManager::getNextReadyContext( int* terminateHandler )
-{
-   VMContext* ctx = 0;
-   if( _p->m_readyContexts.get(ctx, terminateHandler ) ) {
-      return ctx;
-   }
-   return 0;
-}
-
-
-void ContextManager::terminateWaiterForReadyContext( int* terminateHandler )
-{
-   _p->m_readyContexts.terminateOne( terminateHandler );
-}
-
-
 //===========================================================
 // Manager
 //
@@ -239,65 +222,46 @@ void ContextManager::terminateWaiterForReadyContext( int* terminateHandler )
 void* ContextManager::run()
 {
    MESSAGE( "ContextManager::Manager::run -- start");
-   Private* p = _p;
 
    m_next_schedule = 0;
    m_now = Sys::_milliseconds();
 
-   bool cont = true;
-   while( cont )
+   int term = 0;
+   while( true )
    {
+      // How much should be wait?
+      int32 timeout = m_next_schedule - m_now;
+
       // see if we have some message to manage.
-      p->m_mtxManMsg.lock();
-      if( p->m_manmsg.empty() )
-      {
-         p->m_mtxManMsg.unlock();
+      CMMsg msg;
+      bool recvd = _p->m_messages.getTimed( msg, timeout, &term );
 
-         // NO? -- shall we wait?
-         int64 timeout = m_next_schedule - m_now;
-         if( timeout > 0 ) {
-            p->m_evtWorkForMan.wait(timeout);
-         }
-         else {
-            // wake up sleeping contexts
-            if( ! manageSleepingContexts() ) {
-               // if we have none, try to wait for a message -- forever.
-               p->m_evtWorkForMan.wait();
-            }
-         }
-         m_now = Sys::_milliseconds();
+      // are we done?
+      if( term ) {
+         break;
+      }
 
+      m_now = Sys::_milliseconds();
+      manageSleepingContexts();
+
+      if( !recvd ) {
          continue;
       }
 
       // we never get here if the message list is empty -- and if unlocked
-      Msg front( p->m_manmsg.front() );
-      p->m_manmsg.pop_front();
-      p->m_mtxManMsg.unlock();
 
-      switch( front.m_type ) {
-      case Msg::e_terminate_context:
-         onTerminateContext( front.m_data.ctx );
+      switch( msg.m_type )
+      {
+      case CMMsg::e_context_terminated:
+         manageTerminatedContext( msg.m_data.ctx );
          break;
 
-      case Msg::e_sleep_context:
-         onSleepContext( front.m_data.ctx, front.m_absTime );
+      case CMMsg::e_incoming_context:
+         manageDesceduledContext( msg.m_data.ctx );
          break;
 
-      case Msg::e_wait_context:
-         onWaitContext( front.m_data.ctx, front.m_absTime );
-         break;
-
-      case Msg::e_signal_resource:
-         onSignal( front.m_data.res );
-         break;
-
-      case Msg::e_aquirable_resource:
-         onAcquirable( front.m_data.res );
-         break;
-
-      case Msg::e_stop:
-         cont = false;
+      case CMMsg::e_resource_signaled:
+         manageSignal( msg.m_data.res );
          break;
       }
    }
@@ -307,12 +271,10 @@ void* ContextManager::run()
 }
 
 
-bool ContextManager::Manager::manageSleepingContexts()
+bool ContextManager::manageSleepingContexts()
 {
-   ContextManager::Private::ScheduleMap& mmap = m_owner->_p->m_schedMap;
-
-   // First, identify the contexts to be waken
-   std::deque<VMContext*> toWakeup;
+   ContextManager::Private::ScheduleMap& mmap = _p->m_schedMap;
+   bool done = false;
 
    // by default, we don't have a next schedule.
    m_next_schedule = 0;
@@ -321,8 +283,9 @@ bool ContextManager::Manager::manageSleepingContexts()
       ContextManager::Private::ScheduleMap::iterator front = mmap.begin();
       int64 sched = front->first;
       if( sched <= m_now ){
-         toWakeup.push_back(front->second);
-         mmap.erase(front)
+         m_readyContexts.add( front->second );
+         mmap.erase(front);
+         done = true;
       }
       else {
          // first element scheduled in future.
@@ -331,42 +294,24 @@ bool ContextManager::Manager::manageSleepingContexts()
       }
    }
 
-   // spare a bit of extra calculations if we have nothing to wake up.
-   if( ! toWakeup.empty() )
-   {
-      // now we have to really wake up the contexts in schedule.
-      std::deque<VMContext*>::iterator iWakeCtx = toWakeup.begin();
-
-      // -- we'll do in two steps; first retire the waits, then post them for execution.
-      while( iWakeCtx != toWakeup.end() )
-      {
-         VMContext* waken = *iWakeCtx;
-         waken->abortWaits();
-         // declare the waken context running or waiting to run.
-         waken->nextSchedule(-1);
-         ++iWakeCtx;
-      }
-
-      // time to post the contexts for immediate execution.
-      ContextManager::Private::ContextList& rctx = m_owner->_p->m_readyContexts;
-      iWakeCtx = toWakeup.begin();
-      m_owner->_p->m_mtxReadyContexts.lock();
-      while( iWakeCtx != toWakeup.end() ) {
-         VMContext* waken = *iWakeCtx;
-         rctx.push_back(waken);
-         ++iWakeCtx;
-      }
-
-      m_owner->_p->m_evtWorkForProcessors.set();
-      m_owner->_p->m_mtxReadyContexts.unlock();
-
-      // we did wake up some contexts
-      return true;
-   }
-
-   // no sleeping contexts in need of wake ups
-   return false;
+   return done;
 }
+
+void ContextManager::manageTerminatedContext( VMContext*  )
+{
+
+}
+
+void ContextManager::manageDesceduledContext( VMContext*  )
+{
+
+}
+
+void ContextManager::manageSignal( Shared*  )
+{
+
+}
+
 
 }
 

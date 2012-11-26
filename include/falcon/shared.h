@@ -17,10 +17,12 @@
 #define _FALCON_SHARED_H_
 
 #include <falcon/setup.h>
+#include <falcon/types.h>
 
 namespace Falcon {
 class VMContext;
 class Scheduler;
+class Class;
 
 /**
  An abstract shared resource as seen by the scheduler and the VM contexts.

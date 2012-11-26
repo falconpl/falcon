@@ -17,13 +17,14 @@
 #define _FALCON_SHARED_PRIVATE_H_
 
 #include <falcon/shared.h>
+#include <falcon/mt.h>
 #include <deque>
 
 namespace Falcon {
 
 class Shared::Private {
 public:
-   Private::Private( int32 signals = 0 ):
+   Private( int32 signals = 0 ):
       m_signals(signals)
    {}
 
@@ -36,5 +37,7 @@ public:
 };
 
 }
+
+#endif
 
 /* end of shared_private.h */

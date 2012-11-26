@@ -21,6 +21,13 @@
 #include <falcon/trace.h>
 #include <falcon/mt.h>
 #include <falcon/contextmanager.h>
+#include <falcon/error.h>
+#include <falcon/item.h>
+#include <falcon/vmcontext.h>
+#include <falcon/contextgroup.h>
+#include <falcon/locationinfo.h>
+#include <falcon/errors/genericerror.h>
+#include <falcon/vm.h>
 
 namespace Falcon {
 
@@ -50,7 +57,6 @@ void Processor::join()
    {
       void* dummy = 0;
       m_thread->join(dummy);
-      delete m_thread;
       m_thread = 0;
    }
 }
@@ -98,7 +104,6 @@ void* Processor::run()
 
    TRACE("Processor %p (id %d) starting", this, this->id() );
 
-   VMContext* ctx;
    int wasTerminated = 0;
    while( true )
    {
@@ -122,7 +127,7 @@ void* Processor::run()
 }
 
 
-void Processor::manageEvents( VMContext* ctx, register int32 &events )
+void Processor::manageEvents( VMContext* ctx, int32 &events )
 {
    if( (events & VMContext::evtSwap) )
    {
@@ -163,7 +168,7 @@ void Processor::manageEvents( VMContext* ctx, register int32 &events )
 
 void Processor::execute( VMContext* ctx )
 {
-   TRACE( "Scheduler::Processor::execute", (int) ctx->callDepth() );
+   TRACE( "Scheduler::Processor::execute with depth %d", (int) ctx->callDepth() );
    PARANOID( "Call stack empty", (ctx->callDepth() > 0) );
 
    while( true )
@@ -180,7 +185,7 @@ void Processor::execute( VMContext* ctx )
          ctx->raiseError( e );
       }
 
-      register int32 events;
+      int32 events;
       if( (events = ctx->events()) != 0 )
       {
          manageEvents( ctx, events );
@@ -213,7 +218,7 @@ bool Processor::step()
    }
 
    register VMContext* ctx = currentContext();
-   TRACE( "Scheduler::Processor::step", (int) ctx->callDepth() );
+   TRACE( "Scheduler::Processor::step with depth %d", (int) ctx->callDepth() );
    PARANOID( "Call stack empty", (ctx->callDepth() > 0) );
 
    // BEGIN STEP
@@ -228,7 +233,7 @@ bool Processor::step()
       ctx->raiseError( e );
    }
 
-   register int32 events;
+   int32 events;
    if( (events = ctx->events()) != 0 )
    {
       manageEvents( ctx, events );

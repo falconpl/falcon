@@ -68,7 +68,7 @@ public:
 
     The method might return a valid data even in case some errors were detected.
     */
-   t_compile_status compileNext( Stream* input, SynTree*& code, Mantra*& definition );
+   t_compile_status compileNext( TextReader* input, SynTree*& code, Mantra*& definition );
    
    /** Clear the currently compiled items.
 

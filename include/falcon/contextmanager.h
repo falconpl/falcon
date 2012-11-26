@@ -17,6 +17,9 @@
 #define _FALCON_CONTEXTMANAGER_H_
 
 #include <falcon/setup.h>
+#include <falcon/types.h>
+#include <falcon/mt.h>
+#include <falcon/syncqueue.h>
 
 namespace Falcon {
 class Shared;
@@ -73,25 +76,9 @@ public:
     * */
    static int64 msToAbs( int32 to );
 
-   /** Returns the next ready context, putting the caller in wait if there aren't more ready contexts.
-       \return a valid context or 0 if the VM is being terminated, or if the to is expired.
-       \param terminateHandler must be set to a 0 integer in input; will be 1 if
-          the caller is terminated.
 
-       When stop() is invoked, all the waiting processors are waken up and terminated.
-       The invoker can be terminated (or just waken up)
-       by asynchronously calling terminateWaiterForReadyContext.
-
-       The invoker can be
-    */
-   VMContext* getNextReadyContext( int* terminateHandler );
-
-   /** Terminates a single waiter, waking it up and setting the terminate handler to true.
-    The owner of the termination handler doesn't really need to be currently engaged
-    in wait. In that case, nothing is done (just, you have a spurious wake up of other
-    waiters that will be sent back to sleep).
-    */
-   void terminateWaiterForReadyContext( int* terminateHandler );
+   typedef SyncQueue<VMContext*> ContextSyncQueue;
+   ContextSyncQueue& readyContexts() { return m_readyContexts; }
 
 private:
 
@@ -103,9 +90,18 @@ private:
    bool m_bStopped;
 
    class Private;
-   Private* _p;
+   ContextManager::Private* _p;
 
    bool manageSleepingContexts();
+
+   void manageTerminatedContext( VMContext* ctx );
+   void manageDesceduledContext( VMContext* ctx );
+   void manageSignal( Shared* ctx );
+
+   //==============================================
+   // Context ready to be scheduled.
+   //
+   ContextSyncQueue m_readyContexts;
 };
 
 }

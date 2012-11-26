@@ -124,8 +124,16 @@ public:
     */
    void readyAllContexts();
 
-   /** Called back when a context is swapped out from a processor. */
-   void onContextIdle( VMContext* ctx );
+   /** Called back (by the context manager) when a context is swapped out from a processor.
+    \param ctx The context that has reached an idle state in the manager.
+    */
+   VMContext* onContextIdle();
+
+   /** Called back (by the manager) when the context is considered ready to run.
+    * \param ctx The contex whose schedule says it's ready to run.
+    * \return true if the context is allowed to actually run, false if it's put in the quiescent set.
+    */
+   bool onContextReady( VMContext* ctx );
 
    /** Returns the results of all the contexts in the group.
     */
@@ -139,16 +147,6 @@ public:
     use or destroy this instance of ContextGroup immediately.
     */
    Shared* terminated() const { return m_termEvent; }
-
-   /**
-    Puts a context in ready-to-run state.
-
-    If the group processor limit is not hit, the context is immediately sent
-    to the VM as a ready context; otherwise, the context is put in a
-    list and will be forwarded to the virtual machine when other
-    contexts from this group are idle.
-    */
-   void pushReadyContext( VMContext* ctx );
 
    /**
     Indicates that this thread group is to be terminated with error.

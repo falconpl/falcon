@@ -33,16 +33,24 @@ namespace Falcon {
  */
 class PStepCompile: public PStep
 {
+public:
    PStepCompile(int32 line=0, int32 chr = 0);
    PStepCompile( const PStepCompile& other );
    virtual ~PStepCompile();
    PStepCompile* clone() const;
 
    void describeTo( String& tgt, int depth=0 ) const;
-
    static void apply_( const PStep*, VMContext* ctx );
+
+   void setCompilerContext( Function* func, Module* mod, TextReader* tin, TextWriter* tout );
+
 private:
    IntCompiler* m_compiler;
+   Function* m_function;
+   Module* m_module;
+
+   TextReader* m_tin;
+   TextWriter* m_tout;
 };
 
 }

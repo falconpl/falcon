@@ -904,11 +904,11 @@ public:
    /** User flags.
     User flags are at disposal of the user to define some subtyping of class hierarcies.
 
-    The ClassTreeStep hierarcy uses it to mark some special classes that have some
+    The ClassTreeStep hierarchy uses it to mark some special classes that have some
     significance to the engine.
 
     Although there's no mechanism to guarantee that the numbers and flags assigned
-    are unique, if the user is reasonabily safe about the usage domain of a certain
+    are unique, if the user is reasonably safe about the usage domain of a certain
     class, it's safe to make assumption on the userFlags, which are never queried
     or altered by the engine.
 

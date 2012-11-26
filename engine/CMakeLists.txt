@@ -174,6 +174,8 @@ add_library(falcon_engine SHARED
   psteps/stmttry.cpp
   psteps/stmtwhile.cpp
   psteps/switchlike.cpp
+  
+  psteps/pstep_compile.cpp
 
   classes/classarray.cpp
   classes/classbool.cpp
@@ -236,7 +238,8 @@ add_library(falcon_engine SHARED
   closure.cpp
   collector.cpp
   collector_history.cpp
-  #contextgroup.cpp
+  contextgroup.cpp
+  contextmanager.cpp
   datareader.cpp
   datawriter.cpp
   derivedfrom.cpp
@@ -273,6 +276,8 @@ add_library(falcon_engine SHARED
   modspace.cpp
   module.cpp
   overridableclass.cpp
+  process.cpp
+  processor.cpp
   prototypeclass.cpp
   path.cpp
   pool.cpp
@@ -285,6 +290,7 @@ add_library(falcon_engine SHARED
   requirement.cpp
   rootsyntree.cpp
   rulesyntree.cpp
+  shared.cpp
   sourceref.cpp
   statement.cpp
   stderrors.cpp
