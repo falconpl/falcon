@@ -176,7 +176,7 @@ void FalconApp::launch( const String& script )
       }
       catch( Error* e )
       {
-         //TODO
+         vm.textErr()->write( e->describe() );
          e->decref();
       }
 

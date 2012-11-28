@@ -251,6 +251,8 @@ public:
     */
    void ungetChar( char_t chr );
 
+   Stream* underlying() const { return m_stream; }
+
 protected:
    char_t m_pushedChr;
    Transcoder* m_decoder;

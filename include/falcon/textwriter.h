@@ -172,6 +172,8 @@ public:
     */
    bool putChar( char_t chr );
 
+   Stream* underlying() const { return m_stream; }
+
 protected:
    Transcoder* m_encoder;
    bool m_bWasCR;

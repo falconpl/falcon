@@ -22,12 +22,14 @@
 #include <falcon/trace.h>
 #include <falcon/sys.h>
 #include <falcon/syncqueue.h>
+#include <falcon/contextgroup.h>
+#include <falcon/syncqueue.h>
+#include "shared_private.h"
 
 #include <map>
 #include <set>
 #include <vector>
 
-#include <falcon/syncqueue.h>
 
 namespace Falcon {
 
@@ -131,6 +133,10 @@ ContextManager::~ContextManager()
          msg.m_data.ctx->decref();
          break;
 
+      case CMMsg::e_resource_signaled:
+         msg.m_data.res->decref();
+         break;
+
       default:
          // nothing to do
          break;
@@ -191,12 +197,16 @@ void ContextManager::onContextDescheduled( VMContext* ctx )
 {
    TRACE1( "ContextManager::onContextDescheduled %d", ctx->id() );
    ctx->incref();
+   // perform automatic release of aqcuired resources
+   ctx->acquire(0);
    _p->m_messages.add( CMMsg(ctx) );
 }
 
 void ContextManager::onContextTerminated( VMContext* ctx )
 {
    TRACE1( "ContextManager::onContextTerminated %d", ctx->id() );
+   // perform automatic release of aqcuired resources
+   ctx->acquire(0);
    ctx->incref();
    _p->m_messages.add( CMMsg(ctx, true) );
 }
@@ -204,14 +214,14 @@ void ContextManager::onContextTerminated( VMContext* ctx )
 void ContextManager::onSharedSignaled( Shared* waitable )
 {
    TRACE1( "ContextManager::onSharedSignaled %p", waitable );
+   waitable->incref();
    _p->m_messages.add( CMMsg(waitable) );
 }
 
 
 int64 ContextManager::msToAbs( int32 to )
 {
-   // todo
-   return (int64) to;
+   return Sys::_milliseconds() + to;
 }
 
 
@@ -254,14 +264,17 @@ void* ContextManager::run()
       {
       case CMMsg::e_context_terminated:
          manageTerminatedContext( msg.m_data.ctx );
+         msg.m_data.ctx->decref();
          break;
 
       case CMMsg::e_incoming_context:
          manageDesceduledContext( msg.m_data.ctx );
+         msg.m_data.ctx->decref();
          break;
 
       case CMMsg::e_resource_signaled:
          manageSignal( msg.m_data.res );
+         msg.m_data.res->decref();
          break;
       }
    }
@@ -271,9 +284,32 @@ void* ContextManager::run()
 }
 
 
+void ContextManager::manageReadyContext( VMContext* ctx )
+{
+   TRACE( "manageReadyContext - Waking context %p(%d)", ctx, ctx->id() );
+
+   // remove the context from any shared resource in wait.
+   ctx->abortWaits();
+
+   // ask the context group if the context is quiescent
+   if( ctx->inGroup() != 0 )
+   {
+      bool proceed = ctx->inGroup()->onContextReady(ctx);
+      TRACE1( "manageReadyContext - Group says context %p(%d) is %s", ctx, ctx->id(),
+               (proceed ? "ready" : "quiescent") );
+      if( ! proceed ) {
+         return;
+      }
+   }
+
+   m_readyContexts.add( ctx );
+}
+
+
 bool ContextManager::manageSleepingContexts()
 {
    ContextManager::Private::ScheduleMap& mmap = _p->m_schedMap;
+   TRACE( "manageSleepingContexts - Checking %d contexts", (int) mmap.size() );
    bool done = false;
 
    // by default, we don't have a next schedule.
@@ -283,7 +319,7 @@ bool ContextManager::manageSleepingContexts()
       ContextManager::Private::ScheduleMap::iterator front = mmap.begin();
       int64 sched = front->first;
       if( sched <= m_now ){
-         m_readyContexts.add( front->second );
+         manageReadyContext( front->second );
          mmap.erase(front);
          done = true;
       }
@@ -294,22 +330,104 @@ bool ContextManager::manageSleepingContexts()
       }
    }
 
+   TRACE( "manageSleepingContexts - Completed with %s",
+            (done? "some wakeups" : "no wakeup"));
    return done;
 }
 
-void ContextManager::manageTerminatedContext( VMContext*  )
+void ContextManager::manageTerminatedContext( VMContext* ctx )
 {
-
+   TRACE( "manageTerminatedContext - Terminating context %p(%d)", ctx, ctx->id() );
+   if( ctx->nextSchedule() != 0 )
+   {
+      removeSleepingContext( ctx );
+   }
 }
 
-void ContextManager::manageDesceduledContext( VMContext*  )
-{
 
+void ContextManager::removeSleepingContext( VMContext* ctx )
+{
+   TRACE( "removeSleepingContext - Removing context %p(%d)", ctx, ctx->id() );
+
+   Private::ScheduleMap::iterator pos = _p->m_schedMap.find( ctx->nextSchedule() );
+   while( pos != _p->m_schedMap.end() && pos->first == ctx->nextSchedule() ) {
+      if (pos->second == ctx)  {
+         TRACE( "removeSleepingContext - Context %p(%d) found in wait", ctx, ctx->id() );
+         _p->m_schedMap.erase(pos);
+         ctx->decref();
+         break;
+      }
+      ++pos;
+   }
 }
 
-void ContextManager::manageSignal( Shared*  )
+void ContextManager::manageDesceduledContext( VMContext* ctx )
+{
+   TRACE( "manageDesceduledContext - Managing descheduled context %p(%d)", ctx, ctx->id() );
+
+   // a new context is de-scheduled.
+   // TODO: send it to GC if needed.
+
+   // Check if a shared resource was readied during the idle time.
+   Shared* sh = ctx->checkAcquiredWait();
+   if( sh != 0 ) {
+      TRACE( "manageDesceduledContext - Context %p(%d) ready because acquired success", ctx, ctx->id() );
+      manageReadyContext( ctx );
+   }
+   else if( ctx->nextSchedule() >= 0 && ctx->nextSchedule() <= m_now ) {
+      // immediately ready
+      TRACE( "manageDesceduledContext - Context %p(%d) expire time before now.", ctx, ctx->id() );
+      manageReadyContext( ctx );
+   }
+   else {
+      TRACE( "manageDesceduledContext - context %p(%d) put in wait", ctx, ctx->id() );
+      _p->m_schedMap.insert( std::make_pair(ctx->nextSchedule(), ctx) );
+   }
+   // in every case, we keep it.
+   ctx->incref();
+}
+
+
+void ContextManager::manageSignal( Shared* shared )
 {
 
+   std::deque<VMContext*> readyCtx;
+   TRACE("ContextManager::manageSignal -- managing signaled resource %p", shared);
+
+   shared->_p->m_mtx.lock();
+   int& signals = shared->_p->m_signals;
+   Shared::Private::ContextList::iterator iter = shared->_p->m_waiters.begin();
+   Shared::Private::ContextList::iterator end = shared->_p->m_waiters.end();
+
+   while( signals > 0 && iter != end ) {
+      VMContext* waiter = *iter;
+      readyCtx.push_back( waiter );
+      --signals;
+      ++iter;
+   }
+   shared->_p->m_mtx.unlock();
+
+   TRACE("ContextManager::manageSignal -- waking up %d contexts", (int) readyCtx.size() );
+   std::deque<VMContext*>::iterator ri = readyCtx.begin();
+   std::deque<VMContext*>::iterator re = readyCtx.end();
+   if( shared->hasAcquireSemantic() )
+   {
+      while( ri != re ) {
+         VMContext* ctx = *ri;
+         ctx->acquire( shared );
+         removeSleepingContext(ctx);
+         manageReadyContext( ctx );
+         ++ri;
+      }
+   }
+   else {
+      while( ri != re ) {
+         VMContext* ctx = *ri;
+         removeSleepingContext(ctx);
+         manageReadyContext( ctx );
+         ++ri;
+      }
+   }
 }
 
 

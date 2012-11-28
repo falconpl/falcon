@@ -20,6 +20,7 @@
 #include <falcon/string.h>
 #include <falcon/trace.h>
 #include <falcon/psteps/pstep_compile.h>
+#include <falcon/psteps/stmtreturn.h>
 
 using namespace Falcon;
 
@@ -44,7 +45,7 @@ void IntMode::run()
 
    // add module and function
    Module *mod = new Module("(interactive)");
-   Function* mainfunc = new SynFunc("__main__");
+   SynFunc* mainfunc = new SynFunc("__main__");
    mod->setMain(true);
    mod->setMainFunction( mainfunc );
    vm.modSpace()->add(mod, true, true);
@@ -72,7 +73,9 @@ void IntMode::run()
 
    // Start the process.
    PStepCompile psc;
+   vm.stdIn()->setNonblocking(true);
    psc.setCompilerContext(mainfunc, mod, vm.textIn(), vm.textOut() );
+   mainfunc->syntree().append( new StmtReturn );
    Process* process = vm.createProcess();
    process->mainContext()->call( mainfunc, 0 );
    process->mainContext()->pushCode(&psc);

@@ -17,6 +17,7 @@
 #include <falcon/psteps/pstep_compile.h>
 #include <falcon/textreader.h>
 #include <falcon/textwriter.h>
+#include <falcon/stream.h>
 
 namespace Falcon {
 
@@ -72,23 +73,47 @@ void PStepCompile::apply_( const PStep* ps, VMContext* ctx )
    IntCompiler* comp = psc->m_compiler;
    comp->setCompilationContext( psc->m_function, psc->m_module, ctx );
 
+   int status = ctx->currentCode().m_seqId;
    String tgt;
    String prompt = ">>> ";
+
+   // print result if needed.
+   if ( status > 1 || (status == 1 && ! ctx->regA().isNil()) ) {
+      Class* cls = 0;
+      void* inst = 0;
+      ctx->regA().forceClassInst(cls, inst);
+      String result;
+      cls->describe( inst, result, 3, 60 );
+      psc->m_tout->write( result + "\n" );
+   }
+
 
    while( true )
    {
       psc->m_tout->write( prompt );
       psc->m_tout->flush();
-
+      psc->m_tin->underlying()->readAvailable(-1);
 
       try {
          SynTree* st = 0;
          Mantra* decl = 0;
-         /*IntCompiler::t_compile_status status = */ comp->compileNext( psc->m_tin, st, decl );
+         IntCompiler::t_compile_status status = comp->compileNext( psc->m_tin, st, decl );
 
          if( st != 0 )
          {
             // todo: delete the steps
+
+            // declare how we shall print the result on return.
+            if( status == IntCompiler::e_expression ) {
+               ctx->currentCode().m_seqId = 2;
+            }
+            else if( status == IntCompiler::e_expr_call ) {
+               ctx->currentCode().m_seqId = 1;
+            }
+            else {
+               ctx->currentCode().m_seqId = 0;
+            }
+
             ctx->pushCode( st );
             break;
          }

@@ -97,6 +97,10 @@ VMContext::VMContext( Process* prc, ContextGroup* grp ):
 
 VMContext::~VMContext()
 {
+   // just in case we were killed while in wait.
+   abortWaits();
+   acquire(0);
+
    if( m_thrown != 0 ) m_thrown->decref();
 }
 
@@ -120,16 +124,12 @@ void VMContext::reset()
    m_dataStack.reset(0);
 
    abortWaits();
-   if( m_acquired != 0 ) {
-      m_acquired->signal();
-   }
+   acquire(0);
    m_waiting.init();
-   m_acquired = 0;
 
    // prepare a low-limit VM terminator request.
    pushReturn();
 }
-
 
 
 bool VMContext::location( LocationInfo& infos ) const
@@ -298,7 +298,9 @@ void VMContext::abortWaits()
    base = m_waiting.m_base;
    top = m_waiting.m_top;
    while( base != top ) {
-      (*base)->dropWaiting( this );
+      Shared* shared = *base;
+      shared->dropWaiting( this );
+      shared->decref();
       ++base;
    }
    m_waiting.m_top = m_waiting.m_base;
@@ -314,28 +316,97 @@ void VMContext::initWait()
 void VMContext::addWait( Shared* resource )
 {
    *m_waiting.addSlot() = resource;
+   resource->incref();
 }
+
+
+void VMContext::acquire(Shared* shared)
+{
+   if( m_acquired !=0 ) {
+      m_acquired->signal();
+      m_acquired->decref();
+   }
+
+   m_acquired = shared;
+   if( shared != 0 ) {
+      shared->incref();
+   }
+}
+
 
 Shared* VMContext::engageWait( int64 timeout )
 {
    Shared** base = m_waiting.m_base;
    Shared** top = m_waiting.m_top;
-   while( base != top ) {
-      if ((*base)->consumeSignal()) {
-         m_waiting.m_top = m_waiting.m_base;
-         TRACE( "VMContext::engageWait got signaled %p", *base);
-         return *base;
+
+   TRACE( "VMContext::engageWait waiting on %d shared resources in %dms.",
+          top-base, (int) timeout  );
+
+   while( base != top )
+   {
+      Shared* shared = *base;
+      if (shared->consumeSignal())
+      {
+         abortWaits();
+         TRACE( "VMContext::engageWait got signaled %p%s", *base,
+                     (shared->hasAcquireSemantic() ? " (with acquire semantic)" : "") );
+         if(shared->hasAcquireSemantic())
+         {
+            acquire(shared);
+         }
+         return shared;
       }
       ++base;
    }
-   MESSAGE( "VMContext::engageWait nothing signaled, will go wait");
 
    // nothing free right now, put us at sleep.
+   MESSAGE( "VMContext::engageWait nothing signaled, will go wait");
    setSwapEvent();
+
+   // tell the shared we're waiting for them.
+   base = m_waiting.m_base;
+   top = m_waiting.m_top;
+   while( base != top )
+   {
+      Shared* shared = *base;
+      shared->addWaiter( this );
+      ++base;
+   }
+
+   // when we want to abort wait?
    m_next_schedule = timeout > 0 ? Sys::_milliseconds() + timeout : timeout;
 
    return 0;
 }
+
+
+Shared* VMContext::checkAcquiredWait()
+{
+   Shared** base = m_waiting.m_base;
+   Shared** top = m_waiting.m_top;
+
+   TRACE( "VMContext::checkAcquiredWait checking %d shared resources.", top-base );
+
+   while( base != top )
+   {
+      Shared* shared = *base;
+      if (shared->consumeSignal())
+      {
+         abortWaits();
+         TRACE( "VMContext::engageWait got signaled %p%s", *base,
+                     (shared->hasAcquireSemantic() ? " (with acquire semantic)" : "") );
+         if(shared->hasAcquireSemantic())
+         {
+            acquire(shared);
+         }
+         return shared;
+      }
+      ++base;
+   }
+
+   return 0;
+}
+
 
 void VMContext::copyData( Item* target, size_t count, size_t start)
 {
@@ -465,6 +536,7 @@ bool VMContext::unrollToNext( const _checker& check )
    return false;
 }
 
+
 class CheckIfCodeIsNextBase
 {
 public:
@@ -481,6 +553,7 @@ public:
 
    bool isReturn() const { return false; }
 };
+
 
 class CheckIfCodeIsLoopBase
 {

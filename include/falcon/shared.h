@@ -18,10 +18,11 @@
 
 #include <falcon/setup.h>
 #include <falcon/types.h>
+#include <falcon/refcounter.h>
 
 namespace Falcon {
 class VMContext;
-class Scheduler;
+class ContextManager;
 class Class;
 
 /**
@@ -61,11 +62,11 @@ class FALCON_DYN_CLASS Shared
 {
 public:
    Shared( Class* cls=0, bool acquireable = false, int32 signals = 0 );
-   virtual ~Shared();
 
    /** Returns true if this resource supports acquire semantic.
     */
    bool hasAcquireSemantic() const { return m_acquireable; }
+   void addWaiter( VMContext* ctx );
    void dropWaiting( VMContext* ctx );
 
    /**
@@ -129,7 +130,11 @@ private:
    bool m_acquireable;
    Class* m_cls;
 
-   friend class Scheduler;
+   friend class ContextManager;
+
+   FALCON_REFERENCECOUNT_DECLARE_INCDEC(Shared);
+
+   virtual ~Shared();
 };
 
 }

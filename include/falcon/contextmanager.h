@@ -20,6 +20,7 @@
 #include <falcon/types.h>
 #include <falcon/mt.h>
 #include <falcon/syncqueue.h>
+#include <falcon/shared.h>
 
 namespace Falcon {
 class Shared;
@@ -96,7 +97,10 @@ private:
 
    void manageTerminatedContext( VMContext* ctx );
    void manageDesceduledContext( VMContext* ctx );
+   void manageReadyContext( VMContext* ctx );
    void manageSignal( Shared* ctx );
+
+   void removeSleepingContext( VMContext* ctx );
 
    //==============================================
    // Context ready to be scheduled.

@@ -1343,6 +1343,22 @@ public:
    void initWait();
    void addWait( Shared* resource );
    Shared* engageWait( int64 timeout );
+   Shared* checkAcquiredWait();
+
+   /** Called by the ContextManager to confirm the acquisition of a shared resource.
+    * \param shared the resource to acquire or 0
+    * This method is automatically called when the context is descheduled or terminated,
+    * or when a resource is acquired after a successful wait.
+    *
+    * The acquired resource is incref'd and any eventually previously acquired resource
+    * is signaled and decref'd
+    *
+    * Can be called with 0 to perform automatic signal of a previously acquired resource.
+    *
+    *
+    * \note this should usually be called just by the context manager.
+    */
+   void acquire(Shared* shared);
 
    /** Called back when this context is declared dead.
     */

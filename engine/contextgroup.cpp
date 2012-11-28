@@ -72,7 +72,7 @@ ContextGroup::ContextGroup( VMachine* owner, VMContext* parent, uint32 processor
 ContextGroup::~ContextGroup()
 {
    delete _p;
-   delete m_termEvent;
+   m_termEvent->decref();
 }
 
 

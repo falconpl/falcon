@@ -89,11 +89,21 @@ void Shared::dropWaiting( VMContext* ctx )
    while( iter != _p->m_waiters.end() ) {
       VMContext* wctx = *iter;
       if( ctx == wctx ) {
+         ctx->decref();
          _p->m_waiters.erase(iter);
          break;
       }
       ++iter;
    }
+   _p->m_mtx.unlock();
+}
+
+
+void Shared::addWaiter( VMContext* ctx )
+{
+   _p->m_mtx.lock();
+   ctx->incref();
+   _p->m_waiters.push_back(ctx);
    _p->m_mtx.unlock();
 }
 
