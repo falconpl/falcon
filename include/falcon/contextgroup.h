@@ -19,10 +19,15 @@
 
 #include <falcon/setup.h>
 #include <falcon/types.h>
+#include <falcon/refcounter.h>
 
 #include  <falcon/atomic.h>
 
 namespace Falcon {
+
+namespace Ext {
+   class ClassParallel;
+}
 
 class VMachine;
 class Shared;
@@ -65,7 +70,6 @@ public:
     from this group (0 means unlimited).
     */
    ContextGroup( VMachine* owner, VMContext* parent=0, uint32 processors=ANY_PROCESSOR );
-   virtual ~ContextGroup();
 
    /**
     Returns the virtual machine to which this group belongs to.
@@ -163,6 +167,8 @@ public:
 
    Error* error() const;
 
+   VMContext* getContext(uint32 count);
+   uint32 getContextCount();
 private:
    class Private;
    Private* _p;
@@ -171,7 +177,15 @@ private:
    VMContext* m_parent;
    Shared* m_termEvent;
    uint32 m_processors;
-   int32 m_terminated;
+   atomic_int m_terminated;
+
+   ContextGroup();
+   virtual ~ContextGroup();
+
+   void configure( VMachine* owner, VMContext* parent=0, uint32 processors=ANY_PROCESSOR );
+   friend class Ext::ClassParallel;
+
+   FALCON_REFERENCECOUNT_DECLARE_INCDEC( ContextGroup );
 };
 
 }

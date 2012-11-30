@@ -54,6 +54,15 @@ public:
    bool start( Closure* main, int pcount = 0);
    bool startItem( Item& main, int pcount, Item* params );
 
+   /**
+    * Starts a context that is ready to run.
+    *
+    * The context should have been already created and configured,
+    * eventually as a part of a context group, to call a function at
+    * top of its code/call stack.
+    */
+   void addReadyContext(VMContext* ctx);
+
    /** Returns the result of the evaluation.
     This is actually the topmost value in the stack of the main context.
     */
@@ -76,6 +85,8 @@ public:
 
    bool terminated() const { return atomicFetch(m_terminated); }
 
+   int32 getNextContextID();
+
 private:
    Process( VMachine* owner );
    virtual ~Process();
@@ -92,6 +103,8 @@ private:
 
    bool m_running;
    Mutex m_mtxRunning;
+
+   atomic_int m_ctxId;
 
    FALCON_REFERENCECOUNT_DECLARE_INCDEC(Process)
 };

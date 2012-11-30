@@ -34,6 +34,7 @@ class TranscoderMap;
 class PoolList;
 class Pool;
 class ClassReference;
+class ClassShared;
 
 class PredefMap;
 class MantraMap;
@@ -349,6 +350,17 @@ public:
     */
    ClassReference* referenceClass() const;
 
+   /** Returns the global instance of the ClassReference class.
+   \return the Engine instance of the ClassReference handler.
+
+    Method init() must have been called before.
+
+    @note This method will assert and terminate the program if compiled in debug mode
+    in case the engine has not been initialized. In release, it will just
+    return a null pointer.
+    */
+   ClassShared* sharedClass() const;
+
    /** Returns the collection of standard syntactic tree classes.
    \return the Engine instance of the SynClasses class collection.
 
@@ -525,6 +537,7 @@ protected:
 
    ClassRawMem* m_rawMemClass;
    ClassReference* m_referenceClass;
+   ClassShared* m_sharedClass;
    
    //===============================================
    // Standard error handlers

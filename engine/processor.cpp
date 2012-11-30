@@ -148,7 +148,7 @@ void Processor::manageEvents( VMContext* ctx, int32 &events )
    }
 
    if( (events & VMContext::evtComplete) ) {
-      TRACE( "Code completion before %s ", ctx->location().c_ize() );
+      TRACE( "Code completion of context %d", ctx->id() );
       ctx->terminated();
       m_owner->contextManager().onContextTerminated( ctx );
    }

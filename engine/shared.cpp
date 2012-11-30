@@ -26,13 +26,19 @@ namespace Falcon
 
 Shared::Shared( Class* handler, bool acquireable, int32 signals ):
    m_acquireable( acquireable ),
-   m_cls( handler )
+   m_cls( handler ),
+   m_mark(0)
 {
    _p = new Private( signals );
 }
 
 Shared::~Shared() {
    delete _p;
+}
+
+Shared* Shared::clone() const
+{
+   return new Shared( m_cls, m_acquireable, _p->m_signals );
 }
 
 int32 Shared::consumeSignal( int32 count )

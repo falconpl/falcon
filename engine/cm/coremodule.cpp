@@ -30,6 +30,7 @@
 #include <falcon/cm/textreader.h>
 #include <falcon/cm/datawriter.h>
 #include <falcon/cm/datareader.h>
+#include <falcon/cm/parallel.h>
 
 // the standard error classes
 #include <falcon/errorclasses.h>
@@ -54,6 +55,7 @@ CoreModule::CoreModule():
       << new Ext::ClassPath
       << new Ext::ClassRestorer
       << new Ext::ClassStorer
+      << new Ext::ClassParallel
       << classStream
       << new Ext::ClassTextStream( classStream )
       << new Ext::ClassTextWriter( classStream )

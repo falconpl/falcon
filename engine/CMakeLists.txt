@@ -76,6 +76,7 @@ add_library(falcon_engine SHARED
   cm/datawriter.cpp
   cm/iff.cpp
   cm/inspect.cpp
+  cm/parallel.cpp
   cm/path.cpp
   cm/print.cpp
   cm/restorer.cpp
@@ -195,6 +196,7 @@ add_library(falcon_engine SHARED
   classes/classreference.cpp
   classes/classrange.cpp
   classes/classrawmem.cpp
+  classes/classshared.cpp
   classes/classstring.cpp
   classes/classsymbol.cpp
   classes/classsynfunc.cpp

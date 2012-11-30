@@ -55,6 +55,16 @@ public:
    }
 };
 
+ContextGroup::ContextGroup():
+   m_owner( 0 ),
+   m_parent( 0 ),
+   m_processors( 0 ),
+   m_terminated(0)
+{
+   m_termEvent = new Shared;
+   _p = new Private;
+}
+
 
 ContextGroup::ContextGroup( VMachine* owner, VMContext* parent, uint32 processors ):
    m_owner(owner),
@@ -69,10 +79,31 @@ ContextGroup::ContextGroup( VMachine* owner, VMContext* parent, uint32 processor
    _p = new Private;
 }
 
+
+void ContextGroup::configure( VMachine* owner, VMContext* parent, uint32 processors )
+{
+   // if we have a parent, it must be in the same vm.
+   fassert( parent == 0 || parent->vm() == owner );
+   m_owner = owner;
+   m_parent = parent;
+   m_processors = processors;
+}
+
+
 ContextGroup::~ContextGroup()
 {
    delete _p;
    m_termEvent->decref();
+}
+
+VMContext* ContextGroup::getContext(uint32 count)
+{
+   return _p->m_contexts[count];
+}
+
+uint32 ContextGroup::getContextCount()
+{
+   return _p->m_contexts.size();
 }
 
 
@@ -116,13 +147,21 @@ uint32 ContextGroup::runningContexts() const
    return result;
 }
 
-
+#ifndef NDEBUG
+bool ContextGroup::onContextTerminated( VMContext* ctx )
+#else
 bool ContextGroup::onContextTerminated( VMContext* )
+#endif
 {
-   m_terminated++;
-   bool done = m_terminated == (int32) _p->m_contexts.size();
+   int terminated = atomicInc(m_terminated);
+   int32 size = (int32) _p->m_contexts.size();
+   TRACE( "ContextGroup::onContextTerminated on group %p terminated ctx %d, %d/%d",
+               this, ctx->id(), terminated, size);
+   bool done = terminated >= size;
+
    if( done ) {
-      m_termEvent->broadcast();
+      TRACE( "ContextGroup::onContextTerminated Group %p complete, signaling.", this );
+      m_termEvent->signal();
    }
 
    return done;

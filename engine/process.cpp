@@ -33,7 +33,8 @@ Process::Process( VMachine* owner ):
    m_vm(owner),
    m_context( new VMContext( this ) ),
    m_event( true, false ),
-   m_running(false)
+   m_running(false),
+   m_ctxId(0)
 {
    m_context = new VMContext(this, 0);
    m_id = m_vm->getNextProcessID();
@@ -132,6 +133,11 @@ void Process::launch()
 }
 
 
+void Process::addReadyContext( VMContext* ctx ) {
+   ctx->incref();
+   m_vm->readyContexts().add( ctx );
+}
+
 bool Process::checkRunning()
 {
    m_mtxRunning.lock();
@@ -145,6 +151,11 @@ bool Process::checkRunning()
    m_mtxRunning.unlock();
 
    return true;
+}
+
+int32 Process::getNextContextID()
+{
+   return atomicInc(m_ctxId);
 }
 
 

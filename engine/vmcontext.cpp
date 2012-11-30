@@ -92,6 +92,7 @@ VMContext::VMContext( Process* prc, ContextGroup* grp ):
    m_acquired = 0;
    atomicSet(m_events,0);
    pushReturn();
+   m_id = prc->getNextContextID();
 }
 
 
@@ -237,7 +238,7 @@ String VMContext::report()
 
 const PStep* VMContext::nextStep() const
 {
-   MESSAGE( "Next step" );
+   MESSAGE( "VMContext::nextStep" );
    if( codeEmpty() )
    {
       return 0;
@@ -296,21 +297,21 @@ void VMContext::abortWaits()
    Shared** base,** top;
 
    base = m_waiting.m_base;
-   top = m_waiting.m_top;
+   top = m_waiting.m_top+1;
    while( base != top ) {
       Shared* shared = *base;
       shared->dropWaiting( this );
       shared->decref();
       ++base;
    }
-   m_waiting.m_top = m_waiting.m_base;
+   m_waiting.m_top = m_waiting.m_base-1;
 }
 
 
 void VMContext::initWait()
 {
    m_next_schedule = -1;
-   m_waiting.m_top = m_waiting.m_base;
+   m_waiting.m_top = m_waiting.m_base-1;
 }
 
 void VMContext::addWait( Shared* resource )
@@ -337,7 +338,7 @@ void VMContext::acquire(Shared* shared)
 Shared* VMContext::engageWait( int64 timeout )
 {
    Shared** base = m_waiting.m_base;
-   Shared** top = m_waiting.m_top;
+   Shared** top = m_waiting.m_top+1;
 
    TRACE( "VMContext::engageWait waiting on %d shared resources in %dms.",
           top-base, (int) timeout  );
@@ -365,7 +366,7 @@ Shared* VMContext::engageWait( int64 timeout )
 
    // tell the shared we're waiting for them.
    base = m_waiting.m_base;
-   top = m_waiting.m_top;
+   top = m_waiting.m_top+1;
    while( base != top )
    {
       Shared* shared = *base;
@@ -383,7 +384,7 @@ Shared* VMContext::engageWait( int64 timeout )
 Shared* VMContext::checkAcquiredWait()
 {
    Shared** base = m_waiting.m_base;
-   Shared** top = m_waiting.m_top;
+   Shared** top = m_waiting.m_top+1;
 
    TRACE( "VMContext::checkAcquiredWait checking %d shared resources.", top-base );
 
@@ -1030,10 +1031,10 @@ void VMContext::callItem( const Item& item, int pcount, Item const* params )
    void* data;
    item.forceClassInst( cls, data );
 
-   addSpace( pcount+1 );
-   *(m_dataStack.m_top - ( pcount + 1 )) = item;
    if( pcount > 0 )
    {
+      addSpace( pcount+1 );
+      *(m_dataStack.m_top - ( pcount + 1 )) = item;
       memcpy( m_dataStack.m_top-pcount, params, pcount * sizeof(item) );
    }
 

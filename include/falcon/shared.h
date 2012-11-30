@@ -69,6 +69,8 @@ public:
    void addWaiter( VMContext* ctx );
    void dropWaiting( VMContext* ctx );
 
+   virtual Shared* clone() const;
+
    /**
     Consumes one or more signals atomically.
 
@@ -123,6 +125,9 @@ public:
     */
    Class* handler()  const { return m_cls; }
 
+   uint32 gcMark() const { return m_mark; }
+   void gcMark( uint32 n ) { m_mark = n; }
+
 private:
    class Private;
    Private* _p;
@@ -135,6 +140,8 @@ private:
    FALCON_REFERENCECOUNT_DECLARE_INCDEC(Shared);
 
    virtual ~Shared();
+
+   uint32 m_mark;
 };
 
 }

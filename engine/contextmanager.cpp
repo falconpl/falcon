@@ -92,7 +92,7 @@ ContextManager::ContextManager()
 {
    TRACE("ContextManager being created at %p", this );
 
-   m_bStopped = false;
+   m_bStopped = true;
    _p = new Private;
 }
 
@@ -186,6 +186,7 @@ bool ContextManager::start()
    m_bStopped = false;
    m_mtxStopped.unlock();
 
+   m_thread = new SysThread( this );
    m_thread->start();
 
    MESSAGE( "ContextManager start complete" );
@@ -335,6 +336,7 @@ bool ContextManager::manageSleepingContexts()
    return done;
 }
 
+
 void ContextManager::manageTerminatedContext( VMContext* ctx )
 {
    TRACE( "manageTerminatedContext - Terminating context %p(%d)", ctx, ctx->id() );
@@ -430,8 +432,6 @@ void ContextManager::manageSignal( Shared* shared )
    }
 }
 
-
 }
 
 /* end of contextmanager.cpp */
-
