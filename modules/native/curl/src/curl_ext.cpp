@@ -525,15 +525,18 @@ static void internal_setOpt( VMachine* vm, Mod::CurlHandle* h, CURLoption iOpt, 
 #if LIBCURL_VERSION_NUM >= 0x071901
    case CURLOPT_CERTINFO:
 #endif
-   case CURLOPT_SSL_VERIFYHOST:
    case CURLOPT_SSL_SESSIONID_CACHE:
       {
          long bVal = i_data->isTrue() ? 1 : 0;
          ret = curl_easy_setopt( curl, iOpt, bVal );
       }
       break;
-
-
+   case CURLOPT_SSL_VERIFYHOST:
+     {
+       long bVal = i_data->isTrue() ? 2 : 0;
+       ret = curl_easy_setopt( curl, iOpt, bVal );
+     }
+       break;
 #ifdef CURLOPT_PROTOCOLS
     case CURLOPT_PROTOCOLS:
     case CURLOPT_REDIR_PROTOCOLS:
