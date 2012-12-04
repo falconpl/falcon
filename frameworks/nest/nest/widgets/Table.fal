@@ -312,11 +312,12 @@ class PageCursor( id ) from widget.Widget( id + ".pc" )
 
 
    function renderContent()
+
       // fetch some (sanitized) value from parent
-      ipp = self.parent.itemsPerPage < 0 ? self.parent.data.len() : self.parent.itemsPerPage
-      ic = self.parent.itemCount < 0 ? self.parent.data.len() : self.parent.itemCount
-      items = self.parent.itemCount
-      firstItem = self.parent.firstItem
+      ipp = int(self.parent.itemsPerPage < 0 ? self.parent.data.len() : self.parent.itemsPerPage)
+      ic = int(self.parent.itemCount < 0 ? self.parent.data.len() : self.parent.itemCount)
+      items = int(self.parent.itemCount)
+      firstItem = int(self.parent.firstItem)
 
       // do we really need to be printed?
       if ic <= ipp: return ""
@@ -337,7 +338,7 @@ class PageCursor( id ) from widget.Widget( id + ".pc" )
                      self.parent.getJSSelf() +".goToPage(" + (cp-1) + ");\">" +
                      self.prevText + "</a></td>\n"
          end
-         
+
          // first pages
          fp = self.firstPages
          if fp >= cp: fp = cp - 1
@@ -346,7 +347,7 @@ class PageCursor( id ) from widget.Widget( id + ".pc" )
                      self.parent.getJSSelf() +".goToPage(" + i + ");\">" +
                      i + "</a></td>\n"
          end
-         
+
          // Minimum page
          minPage = cp - self.prevPages
          if minPage <= fp
@@ -360,7 +361,6 @@ class PageCursor( id ) from widget.Widget( id + ".pc" )
                      self.parent.getJSSelf() +".goToPage(" + i + ");\">" +
                      i + "</a></td>\n"
          end
-         
       end
 
       // the current page.
@@ -369,9 +369,10 @@ class PageCursor( id ) from widget.Widget( id + ".pc" )
       // last part of the page list
       if firstItem + ipp < items
          maxPage = cp + self.nextPages
-         totPages = int( items / ipp )
+         totPages = items / ipp
          if items % ipp != 0: totPages += 1
-         
+         totPages = int(totPages )
+
          maxCount = maxPage > totPages ? totPages : maxPage
          for i = cp + 1 to maxCount, 1
             str += "<td " + self.cellStyle + "><a href=\"javascript:" +
@@ -379,7 +380,6 @@ class PageCursor( id ) from widget.Widget( id + ".pc" )
                      i + "</a></td>\n"
          end
 
-         
          if maxCount != totPages
             // last pages
             lp = totPages - self.lastPages + 1
@@ -393,7 +393,7 @@ class PageCursor( id ) from widget.Widget( id + ".pc" )
                str += "<td " + self.cellStyle + "><a href=\"javascript:" +
                      self.parent.getJSSelf() +".goToPage(" + i + ");\">" +
                      i + "</a></td>\n"
-            end            
+            end
          end
 
          if cp + 1 < totPages
@@ -401,7 +401,7 @@ class PageCursor( id ) from widget.Widget( id + ".pc" )
                      self.parent.getJSSelf() +".goToPage(" + (cp+1) + ");\">" +
                      self.nextText + "</a></td>\n"
          end
-         
+
          if cp < totPages
             // always display last if not last page
             str += "<td " + self.cellStyle + "><a href=\"javascript:" +
@@ -515,7 +515,7 @@ class Table( id, itemsPerPage, itemCount, firstItem, orderColumn ) from widget.W
    checkboxData = [=>]
    
    init
-      self.initInfos = [self.itemsPerPage, self.itemCount, self.firstItem, self.orderColumn]
+      self.initInfos = [itemsPerPage, itemCount, firstItem, orderColumn]
 
       // initialize our javascript counterpart
       self.onCreate = @"
@@ -688,6 +688,7 @@ class Table( id, itemsPerPage, itemCount, firstItem, orderColumn ) from widget.W
       self.jsListeners[wid] = \
             "function( source, msg, value ) { if (msg == 'change') { this.setFilter( value, '"+
             filterPrefix + "');} }"
+      wid.onCreate = "this.oldValue=this.value"
    end
 
    /*# Fixes the first item and return a last item according to itemCount and ItemPerPage.
