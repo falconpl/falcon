@@ -213,7 +213,7 @@ VMContext* ContextGroup::onContextIdle()
      _p->m_readyCtx.pop_front();
      _p->m_mtxReadyCtx.unlock();
 
-     // pass the existing reference to the managter
+     // pass the existing reference to the manager
      return ctx;
    }
    else {

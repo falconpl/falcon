@@ -129,13 +129,13 @@ void Process::launch()
    // we're assigning the context to the processor/vm/manager system.
    ctx->incref();
    // processors are synchronized on the context queue.
-   m_vm->readyContexts().add( ctx );
+   m_vm->contextManager().readyContexts().add( ctx );
 }
 
 
 void Process::addReadyContext( VMContext* ctx ) {
    ctx->incref();
-   m_vm->readyContexts().add( ctx );
+   m_vm->contextManager().readyContexts().add( ctx );
 }
 
 bool Process::checkRunning()

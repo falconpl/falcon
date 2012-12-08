@@ -50,7 +50,7 @@ public:
       pthread_mutex_lock(&m_mtx);
       m_queue.push_back(data);
       pthread_mutex_unlock(&m_mtx);
-      pthread_cond_broadcast(&m_filled);
+      pthread_cond_signal(&m_filled);
    }
 
    bool get( __T& data, int *terminated ) {
@@ -111,10 +111,10 @@ public:
          rt = pthread_cond_timedwait( &m_filled, &m_mtx, &timeToWait );
          if( rt == ETIMEDOUT )
          {
-            //pthread_mutex_unlock( &m_mtx );
             if (m_terminateWaiters) {
                *terminated = 1;
             }
+            pthread_mutex_unlock(&m_mtx);
             return false;
          }
          fassert2( rt == 0, "Error waiting for the condition variable");
@@ -141,7 +141,7 @@ public:
 
    void terminateOne( int* termHandle ) {
       pthread_mutex_lock(&m_mtx);
-      termHandle = 1;
+      *termHandle = 1;
       pthread_mutex_unlock(&m_mtx);
       pthread_cond_broadcast(&m_filled);
 

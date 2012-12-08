@@ -78,8 +78,8 @@ public:
    static int64 msToAbs( int32 to );
 
 
-   typedef SyncQueue<VMContext*> ContextSyncQueue;
-   ContextSyncQueue& readyContexts() { return m_readyContexts; }
+   typedef SyncQueue<VMContext*> ReadyContextQueue;
+   ReadyContextQueue& readyContexts() { return m_readyContexts; }
 
 private:
 
@@ -105,7 +105,7 @@ private:
    //==============================================
    // Context ready to be scheduled.
    //
-   ContextSyncQueue m_readyContexts;
+   ReadyContextQueue m_readyContexts;
 };
 
 }

@@ -183,7 +183,7 @@ VMachine::~VMachine()
 void VMachine::joinProcessors()
 {
    // ask the processors to terminate
-   m_readyContexts.terminateWaiters();
+   contextManager().readyContexts().terminateWaiters();
 
    Private::ProcessorVector::iterator begin, end;
    begin = _p->m_processors.begin();

@@ -100,7 +100,7 @@ void* Processor::run()
 {
    m_me.set(this);
    m_currentContext = 0;
-   VMachine::ReadyContextQueue& rctx = m_owner->readyContexts();
+   ContextManager::ReadyContextQueue& rctx = m_owner->contextManager().readyContexts();
 
    TRACE("Processor %p (id %d) starting", this, this->id() );
 
@@ -129,20 +129,6 @@ void* Processor::run()
 
 void Processor::manageEvents( VMContext* ctx, int32 &events )
 {
-   if( (events & VMContext::evtSwap) )
-   {
-      if ( ctx->nextSchedule() >= 0 ) {
-         TRACE( "Processor::execute processor %p(%d) descheduled context %p(%d) for a while",
-                  this, this->id(), ctx, ctx->id() );
-         m_owner->contextManager().onContextDescheduled( ctx );
-      }
-      else {
-         TRACE( "Processor::execute processor %p(%d) descheduled forever context %p(%d)",
-                  this, this->id(), ctx, ctx->id() );
-         m_owner->contextManager().onContextDescheduled( ctx );
-      }
-   }
-
    if( (events & VMContext::evtBreak) ) {
       TRACE( "Hit breakpoint before %s ", ctx->location().c_ize() );
    }
@@ -163,6 +149,22 @@ void Processor::manageEvents( VMContext* ctx, int32 &events )
       Error* e = ctx->detachThrownError();
       onError(e);
    }
+
+   if( (events & VMContext::evtSwap) )
+   {
+      ctx->clearEvents();
+      if ( ctx->nextSchedule() >= 0 ) {
+         TRACE( "Processor::execute processor %p(%d) descheduled context %p(%d) for a while",
+                  this, this->id(), ctx, ctx->id() );
+         m_owner->contextManager().onContextDescheduled( ctx );
+      }
+      else {
+         TRACE( "Processor::execute processor %p(%d) descheduled forever context %p(%d)",
+                  this, this->id(), ctx, ctx->id() );
+         m_owner->contextManager().onContextDescheduled( ctx );
+      }
+   }
+
 }
 
 
@@ -208,7 +210,7 @@ bool Processor::step()
    if( m_currentContext == 0 )
    {
       TRACE("Processor %p (id %d) single stepping -- loading a new context.", this, this->id() );
-      m_owner->readyContexts().tryGet( m_currentContext, &wasTerminated );
+      m_owner->contextManager().readyContexts().tryGet( m_currentContext, &wasTerminated );
 
       if( m_currentContext == 0 )
       {

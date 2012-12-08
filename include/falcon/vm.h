@@ -272,10 +272,6 @@ public:
     */
    void updateProcessors();
 
-   typedef SyncQueue<VMContext*> ReadyContextQueue;
-   /** Returns the synchronized queue of contexts being ready to run. */
-   ReadyContextQueue& readyContexts() { return m_readyContexts; }
-
    /** Gets the context manager associated with this virtual machine.  */
    ContextManager& contextManager() { return m_ctxMan; }
 
@@ -306,7 +302,6 @@ protected:
 private:
    void joinProcessors();
 
-   ReadyContextQueue m_readyContexts;
    int32 m_processorCount;
    class Private;
    VMachine::Private* _p;

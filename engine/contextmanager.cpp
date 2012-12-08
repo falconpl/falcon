@@ -241,11 +241,25 @@ void* ContextManager::run()
    while( true )
    {
       // How much should be wait?
-      int32 timeout = m_next_schedule - m_now;
+      int64 timeout = m_next_schedule - m_now;
 
       // see if we have some message to manage.
       CMMsg msg;
-      bool recvd = _p->m_messages.getTimed( msg, timeout, &term );
+      bool recvd;
+      if( timeout > 0 ) {
+         TRACE1( "ContextManager::Manager::run -- waiting messages for %d msecs", (int) timeout );
+         recvd = _p->m_messages.getTimed( msg, timeout, &term );
+      }
+      else {
+         if( m_next_schedule == 0 ) {
+            MESSAGE1( "ContextManager::Manager::run -- schedule expired, checking for new messages" );
+            recvd = _p->m_messages.get( msg, &term );
+         }
+         else {
+            MESSAGE1( "ContextManager::Manager::run -- endlessly waiting for new messages" );
+            recvd = _p->m_messages.tryGet( msg, &term );
+         }
+      }
 
       // are we done?
       if( term ) {
@@ -253,9 +267,9 @@ void* ContextManager::run()
       }
 
       m_now = Sys::_milliseconds();
-      manageSleepingContexts();
 
       if( !recvd ) {
+         manageSleepingContexts();
          continue;
       }
 
@@ -278,6 +292,8 @@ void* ContextManager::run()
          msg.m_data.res->decref();
          break;
       }
+
+      manageSleepingContexts();
    }
 
    MESSAGE( "ContextManager::Manager::run -- end");
@@ -303,6 +319,7 @@ void ContextManager::manageReadyContext( VMContext* ctx )
       }
    }
 
+   TRACE1( "manageReadyContext - Adding ready context %p(%d)", ctx, ctx->id() );
    m_readyContexts.add( ctx );
 }
 
@@ -349,7 +366,7 @@ void ContextManager::manageTerminatedContext( VMContext* ctx )
 
 void ContextManager::removeSleepingContext( VMContext* ctx )
 {
-   TRACE( "removeSleepingContext - Removing context %p(%d)", ctx, ctx->id() );
+   TRACE( "removeSleepingContext - Removing context %p(%d) with sched %d", ctx, ctx->id(), (int) ctx->nextSchedule() );
 
    Private::ScheduleMap::iterator pos = _p->m_schedMap.find( ctx->nextSchedule() );
    while( pos != _p->m_schedMap.end() && pos->first == ctx->nextSchedule() ) {
@@ -382,7 +399,7 @@ void ContextManager::manageDesceduledContext( VMContext* ctx )
       manageReadyContext( ctx );
    }
    else {
-      TRACE( "manageDesceduledContext - context %p(%d) put in wait", ctx, ctx->id() );
+      TRACE( "manageDesceduledContext - context %p(%d) put in wait to sched %d", ctx, ctx->id(), (int)ctx->nextSchedule());
       _p->m_schedMap.insert( std::make_pair(ctx->nextSchedule(), ctx) );
    }
    // in every case, we keep it.

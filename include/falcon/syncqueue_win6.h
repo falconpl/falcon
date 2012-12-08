@@ -102,6 +102,7 @@ class SyncQueue {
             if( m_terminateWaiters ) {
                *terminated = 1;
             }
+            LeaveCriticalSection( &m_mtx );
             return false;
          }
          fassert2( rt != 0, "Error waiting for the condition variable");
@@ -128,7 +129,7 @@ class SyncQueue {
 
    void terminateOne( int* termHandle ) {
       EnterCriticalSection(&m_mtx);
-      termHandle = 1;
+      *termHandle = 1;
       EnterCriticalSection(&m_mtx);
       WakeAllConditionVariable(&m_filled);
    }
