@@ -57,7 +57,7 @@ void _dummy_ctrl_c_handler()
 {
     SetConsoleCtrlHandler(
       (PHANDLER_ROUTINE) CtrlHandler,
-      TRUE); 
+      TRUE);
 }
 
 
@@ -180,6 +180,7 @@ numeric _localSeconds()
 
 int64 _milliseconds()
 {
+   SYSTEMTIME st;
    GetSystemTime( &st );
    return SYSTEMTIME_TO_MILLISECONDS( st );
 }
@@ -381,7 +382,7 @@ void _enumerateEnvironment( EnvStringCallback cb, void* cbData )
          String key, value;
          key.adopt( envstr + pos, poseq-pos, 0 );
          value.adopt( envstr + poseq+1, posn-poseq-1, 0 );
-         
+
          key.bufferize();
          value.bufferize();
 
@@ -416,7 +417,7 @@ long _getPageSize()
 bool _getCWD( String& name )
 {
    DWORD size = GetCurrentDirectory( 0, NULL );
-   if( size == 0 ) 
+   if( size == 0 )
    {
       return false;
    }
@@ -441,7 +442,7 @@ bool _getCWD( String& name )
       return true;
    }
 
-   if( size == 0 ) 
+   if( size == 0 )
    {
       memFree( buffer );
       return false;
