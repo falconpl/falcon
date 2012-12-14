@@ -5,7 +5,7 @@
    WINDOWS system specific FILE service support
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
-   Begin: 
+   Begin:
 
    -------------------------------------------------------------------
    (C) Copyright 2011: the FALCON developers (see list in AUTHORS file)
@@ -26,12 +26,12 @@
 namespace Falcon {
 
 class WinFStreamData {
-public:      
+public:
    HANDLE hFile;
    bool bIsFile;
    bool bNonBlocking;
 
-   WinFStreamData( HANDLE hf, bool bf = true, bool nb ):
+   WinFStreamData( HANDLE hf, bool bf = true, bool nb = false ):
       hFile( hf ),
       bIsFile( bf ),
       bNonBlocking( nb )
