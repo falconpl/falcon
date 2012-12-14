@@ -20,7 +20,7 @@
 #include <falcon/setup.h>
 #include <falcon/types.h>
 
-#ifdef FALCON_SYSTEM_WIN
+#if defined(FALCON_SYSTEM_WIN) && !defined(__MINGW32__)
 #include <falcon/atomic_win.h>
 #else
 // TODO: atomic on other platforms
