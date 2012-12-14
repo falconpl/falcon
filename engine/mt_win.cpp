@@ -66,10 +66,10 @@ void ThreadSpecific::set( void *value )
 
 
 //==================================================================================
-// System threads. 
+// System threads.
 //
 
-SysThread::~SysThread() 
+SysThread::~SysThread()
 {
    CloseHandle( m_sysdata->hEvtDetach );
    DeleteCriticalSection( &m_sysdata->m_csT );
@@ -119,7 +119,7 @@ void* SysThread::RunAThread( void *data )
    {
       tdnext = tdnext->clearAndNext();
    }
-   
+
    return ret;
 }
 
@@ -129,7 +129,7 @@ bool SysThread::start( const ThreadParams &params )
    m_sysdata->hThread = (HANDLE) _beginthreadex( 0, params.stackSize(), &run_a_thread, this, 0, &m_sysdata->nThreadID );
    if ( m_sysdata->hThread == INVALID_HANDLE_VALUE )
       return false;
-   
+
    if ( params.detached() )
       detach();
 
@@ -161,13 +161,13 @@ void SysThread::detach()
       LeaveCriticalSection( &m_sysdata->m_csT );
    }
 }
-   
+
 bool SysThread::join( void* &result )
 {
    // ensure just one thread can join.
    EnterCriticalSection( &m_sysdata->m_csT );
    if ( m_sysdata->m_bJoining || m_sysdata->m_bDetached )
-   { 
+   {
       LeaveCriticalSection( &m_sysdata->m_csT );
       return false;
    }
@@ -175,10 +175,10 @@ bool SysThread::join( void* &result )
       m_sysdata->m_bJoining = true;
       LeaveCriticalSection( &m_sysdata->m_csT );
    }
-   
+
    HANDLE hs[] = { m_sysdata->hEvtDetach, m_sysdata->hThread };
    DWORD wres = WaitForMultipleObjects( 2, hs, FALSE, INFINITE );
-   
+
    if ( wres == WAIT_OBJECT_0 )
    {
       // The thread was detached -- if it's also done, we must destroy it.
@@ -189,7 +189,7 @@ bool SysThread::join( void* &result )
          delete this;
          return false;
       }
-      
+
       m_sysdata->m_bJoining = false;
       LeaveCriticalSection( &m_sysdata->m_csT );
       return false;  // can't join anymore.
@@ -201,7 +201,7 @@ bool SysThread::join( void* &result )
       delete this;
       return true;
    }
-   
+
    // wait failed.
    return false;
 }
@@ -211,17 +211,17 @@ uint64 SysThread::getID()
 {
    return (uint64) m_sysdata->nThreadID;
 }
-   
+
 uint64 SysThread::getCurrentID()
 {
    return (uint64) GetCurrentThreadId();
 }
-   
+
 bool SysThread::isCurrentThread()
 {
    return GetCurrentThreadId() == m_sysdata->nThreadID;
 }
-   
+
 bool SysThread::equal( const SysThread *th1 ) const
 {
    return m_sysdata->nThreadID == th1->m_sysdata->nThreadID;
@@ -245,7 +245,7 @@ void *SysThread::run()
       m_sysdata->m_bDone = true;
       LeaveCriticalSection( &m_sysdata->m_csT );
    }
-   
+
    return data;
 }
 
@@ -287,10 +287,10 @@ void InterruptibleEvent::set()
 }
 
 
-InterruptibleEvent::wait_result_t InterruptibleEvent::wait( int32 to = -1 )
+InterruptibleEvent::wait_result_t InterruptibleEvent::wait( int32 to )
 {
    struct int_evt* evt = (struct int_evt*) m_sysdata;
-   wait_result_t result;
+   //wait_result_t result;
 
    HANDLE hs[] = { evt->evtIntr, evt->evtMain };
    DWORD wres = WaitForMultipleObjects( 2, hs, FALSE, to < 0 ? INFINITE : to );
