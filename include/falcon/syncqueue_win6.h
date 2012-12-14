@@ -46,8 +46,8 @@ class SyncQueue {
    void add( __T data ) {
       EnterCriticalSection(&m_mtx);
       m_queue.push_back(data);
-      pthread_mutex_unlock(&m_mtx);
-      LeaveCriticalSection(&m_filled);
+      LeaveCriticalSection(&m_mtx);
+      WakeConditionVariable(&m_filled);
    }
 
    bool get( __T& data, int* terminated ) {
