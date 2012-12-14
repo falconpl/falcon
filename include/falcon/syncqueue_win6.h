@@ -19,6 +19,8 @@
 #include <windows.h>
 #include <falcon/fassert.h>
 
+#include <deque>
+
 namespace Falcon
 {
 
@@ -145,8 +147,8 @@ class SyncQueue {
 
 private:
    std::deque<__T> m_queue;
-   CRITICAL_SECTION cs;
-   CONDITION_VARIABLE cv;
+   CRITICAL_SECTION m_mtx;
+   CONDITION_VARIABLE m_filled;
 
    bool m_terminateWaiters;
 };
