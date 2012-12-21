@@ -1,6 +1,6 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: stream.h
+   FILE: classstream.h
 
    Falcon core module -- Interface to Stream.
    -------------------------------------------------------------------
@@ -13,8 +13,8 @@
    See LICENSE file for licensing details.
 */
 
-#ifndef FALCON_CORE_STREAM_H
-#define FALCON_CORE_STREAM_H
+#ifndef FALCON_CLASSSTREAM_H
+#define FALCON_CLASSSTREAM_H
 
 #include <falcon/pseudofunc.h>
 #include <falcon/fassert.h>
@@ -32,15 +32,11 @@ class Stream;
 class StreamBuffer;
 class Transcoder;
 
-namespace Ext {
-
 
 /** We keep th path, the auth data and the query. */
 class FALCON_DYN_CLASS StreamCarrier
 {
 public:
-   uint32 m_gcMark;
-   
    Stream* m_stream;
    StreamBuffer* m_sbuf;
    Stream* m_underlying;
@@ -49,7 +45,6 @@ public:
    virtual ~StreamCarrier();
    
    void setBuffering( uint32 size );
-   
    virtual void onFlushingOperation();
 };
 
@@ -110,8 +105,7 @@ private:
 };
 
 }
-}
 
-#endif	/* FALCON_CORE_TOSTRING_H */
+#endif
 
-/* end of stream.h */
+/* end of classstream.h */

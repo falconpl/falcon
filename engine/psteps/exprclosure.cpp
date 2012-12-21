@@ -64,7 +64,6 @@ void ExprClosure::describeTo( String& tgt, int ) const
    
 void ExprClosure::apply_( const PStep* ps, VMContext* ctx )
 {
-   static Collector* coll = Engine::instance()->collector();
    static Class* closureClass = Engine::instance()->closureClass();
    
    const ExprClosure* self = static_cast<const ExprClosure*>(ps);
@@ -80,7 +79,7 @@ void ExprClosure::apply_( const PStep* ps, VMContext* ctx )
       cls->close( ctx, &func->symbols() );
 
       // and return it.
-      ctx->pushData( FALCON_GC_STORE( coll , closureClass, cls ) );         
+      ctx->pushData( FALCON_GC_STORE( closureClass, cls ) );
    }
    else {
       ctx->pushData( self->m_function );

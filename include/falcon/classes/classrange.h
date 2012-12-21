@@ -42,7 +42,7 @@ public:
    virtual void* createInstance() const;
    
    virtual void store( VMContext* ctx, DataWriter* stream, void* instance ) const;
-   virtual void restore( VMContext* ctx, DataReader* stream, void*& empty ) const;
+   virtual void restore( VMContext* ctx, DataReader* stream ) const;
    
    virtual void describe( void* instance, String& target, int maxDepth = 3, int maxLength = 60 ) const;
 

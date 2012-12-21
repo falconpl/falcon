@@ -178,7 +178,7 @@ class Mantra;
 class FALCON_DYN_CLASS Storer
 {
 public:
-   Storer( VMContext* ctx );
+   Storer();
    virtual ~Storer();
    
    /** Stores an objet.
@@ -186,18 +186,17 @@ public:
     VM processing.
     
     */
-   virtual bool store( Class* handler, void* data );
+   virtual bool store( VMContext* ctx, Class* handler, void* data );
+
+   void setStream( Stream* dataStream, bool bOwnStream = false );
    
    /** Writes the stored objects on the stream.
-    @param wr The data stream on which the item should be stored.
+    @param dataStream The data stream on which the item should be stored (0 to keep an already set one).
+    \param bOwnStream true if the stream is to be destroyed at end.
     \return true if the operation was completed, false if a class requested
     VM processing. 
     */
-   virtual bool commit( Stream* dataStream );
-   
-   VMContext* context() const { return m_ctx; }
-   void context( VMContext* vmc ) { m_ctx = vmc; }
-   
+   virtual bool commit( VMContext* ctx, Stream* dataStream =0 , bool bOwnStream = false );
    void* topData() const { return m_topData; }
    Class* topHandler() const { return m_topHandler; }
    
@@ -263,22 +262,21 @@ public:
       Storer* m_owner; 
    };
 
+   DataWriter& writer() { return *m_writer; }
+
 private:      
    class Private;
    Private* _p;
-   
-   VMContext* m_ctx;
-   // internally used during serialization.
    DataWriter* m_writer;
    
    void* m_topData;
    Class* m_topHandler;
       
    // Using void* because we'll be using private data for that.
-   bool traverse( Class* handler, void* data, bool isTopLevel = false, void** objd = 0 );
+   bool traverse( VMContext* ctx, Class* handler, void* data, bool isTopLevel = false, void** objd = 0 );
    void writeClassTable( DataWriter* wr );
    void writeInstanceTable( DataWriter* wr );
-   bool writeObjectTable( DataWriter* wr );
+   bool writeObjectTable( VMContext* ctx, DataWriter* wr );
    void writeObjectDeps( uint32 pos, DataWriter* wr );
    bool writeObject( VMContext* ctx, uint32 pos, DataWriter* wr );
 
@@ -287,7 +285,6 @@ private:
 
    friend class WriteNext;
    WriteNext m_writeNext;
-   
 };
 
 }

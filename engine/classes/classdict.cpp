@@ -101,7 +101,7 @@ void ClassDict::store( VMContext*, DataWriter* stream, void* instance ) const
 }
 
 
-void ClassDict::restore( VMContext*, DataReader* stream, void*& empty ) const
+void ClassDict::restore( VMContext* ctx, DataReader* stream ) const
 {
    // first read the data (which may throw).
    uint32 flags, version;
@@ -112,7 +112,7 @@ void ClassDict::restore( VMContext*, DataReader* stream, void*& empty ) const
    ItemDict* dict = new ItemDict;
    dict->m_flags = flags;
    dict->m_version = flags;
-   empty = dict;
+   ctx->pushData( FALCON_GC_STORE( this, dict) );
 }
 
 
@@ -260,12 +260,11 @@ void ClassDict::op_setIndex( VMContext* ctx, void* self ) const
 
 void ClassDict::op_iter( VMContext* ctx, void* instance ) const
 {
-   static Collector* coll = Engine::instance()->collector();
    static Class* genc = Engine::instance()->genericClass();
    
    ItemDict* dict = static_cast<ItemDict*>(instance);
    ItemDict::Iterator* iter = new ItemDict::Iterator( dict );
-   ctx->pushData( FALCON_GC_STORE( coll, genc, iter ) );
+   ctx->pushData( FALCON_GC_STORE( genc, iter ) );
 }
 
 

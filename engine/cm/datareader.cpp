@@ -18,8 +18,9 @@
 #include <falcon/cm/datareader.h>
 
 #include <falcon/datareader.h>
+#include <falcon/stdsteps.h>
 #include <falcon/module.h>
-#include <falcon/cm/stream.h>
+#include <falcon/classes/classstream.h>
 
 #include <falcon/errors/accesserror.h>
 #include <falcon/errors/paramerror.h>
@@ -329,6 +330,7 @@ FALCON_DEFINE_METHOD_P1( ClassDataReader, readF64 )
 
 FALCON_DEFINE_METHOD_P1( ClassDataReader, readString )
 {
+   static Class* stringClass = Engine::instance()->stringClass();
    String* str = new String;
    DataReader* dw = static_cast<DataReader*>(ctx->self().asInst());
    try
@@ -341,15 +343,14 @@ FALCON_DEFINE_METHOD_P1( ClassDataReader, readString )
       throw;
    }
    
-   Item rv(str, true, __LINE__, SRC); // force to garbage the string NOW!     
-   ctx->returnFrame( rv );      
+   ctx->returnFrame( FALCON_GC_STORE( stringClass, str ) );
 }
 
 
 FALCON_DEFINE_METHOD_P1( ClassDataReader, readItem )
 {
-   Collector* coll = Engine::instance()->collector();
-      
+   static StdSteps* steps = Engine::instance()->stdSteps();
+
    Item* i_data = ctx->param(0);
    if( i_data == 0 || ! i_data->isClass() )
    {
@@ -364,24 +365,16 @@ FALCON_DEFINE_METHOD_P1( ClassDataReader, readItem )
    ctx->pushCode( &static_cast<ClassDataReader*>(m_methodOf)->m_readItemNext );
    
    long depth = ctx->codeDepth();
-   void* instance;
-   Item& dummy = ctx->addDataSlot();
    
-   if( cls->isFlatInstance() )
-   {
-      instance = &dummy;
-   }
-   cls->restore( ctx, dw, instance );      
-   if( !cls->isFlatInstance() )
-   {
-      *ctx->local(0) = FALCON_GC_STORE( coll, cls, instance );
-   }
+   // this will punch in later on...
+   ctx->pushCode( &steps->m_returnFrameWithTop );
+   cls->restore( ctx, dw );
    
+   // ... if the restore process isn't done.
    if( depth == ctx->codeDepth() )
    {
-      ctx->returnFrame( *ctx->local(0) );
+      ctx->returnFrame( ctx->topData() );
    }
-   // otherwise, better luck next time.
 }
 
 

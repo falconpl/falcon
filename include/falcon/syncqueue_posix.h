@@ -105,6 +105,10 @@ public:
       gettimeofday(&now,NULL);
       timeToWait.tv_sec = now.tv_sec + (to/1000);
       timeToWait.tv_nsec = (now.tv_usec + (to%1000) * 1000) * 1000;
+      if( timeToWait.tv_nsec >= 1000000000 ) {
+         timeToWait.tv_sec++;
+         timeToWait.tv_nsec -= 1000000000;
+      }
 
       pthread_mutex_lock(&m_mtx);
       while( m_queue.empty() && ! m_terminateWaiters && ! *terminated) {

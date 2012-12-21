@@ -31,6 +31,7 @@ namespace Falcon {
 class DataWriter;
 class DataReader;
 class GCToken;
+class Class;
 
 /** Core falcon string representation.
    This is a string as seen by the VM and its fellows (module loader, module and so on).
@@ -494,6 +495,8 @@ public:
    {
       m_class->destroy( this );
    }
+
+   static Class* handler();
 
    /** Copies the original string as-is.
       If the original string is of a static type, the buffer is just
@@ -1326,16 +1329,6 @@ public:
    */
    bool setCharSize( uint16 nsize );
 
-   /** Stores this string in the standard garbage collector.
-
-    After this call is issued, the string is delivered to the standard
-    garbage collector, and it cannot be destroyed anymore by the calling
-    program.
-
-    The returned token can be stored in an item to create a deep string.
-    */
-   GCToken* garbage();
-
    /** Returns true if the given character is a whitespace. */
    inline static bool isWhiteSpace( char_t chr )
    {
@@ -1345,6 +1338,8 @@ public:
    void gcMark( uint32 mark ) { m_lastMark = mark; }
    uint32 currentMark() const { return m_lastMark; }
    String* clone() const { return new String(*this); }
+
+   static Class* m_class_handler;
 };
 
 

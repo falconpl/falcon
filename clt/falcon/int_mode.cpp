@@ -27,9 +27,8 @@ using namespace Falcon;
 IntMode::IntMode( FalconApp* owner ):
    m_owner( owner )
 {
-   m_vm.modSpace()->add( Engine::instance()->getCore(), true, false ); 
+   m_vm.modSpace()->add( Engine::instance()->getCore() );
 }
-
 
 
 void IntMode::run()
@@ -48,10 +47,8 @@ void IntMode::run()
    SynFunc* mainfunc = new SynFunc("__main__");
    mod->setMain(true);
    mod->setMainFunction( mainfunc );
-   vm.modSpace()->add(mod, true, true);
+   vm.modSpace()->add(mod);
 
-   // link the space; we know the main module is currently empty.
-   vm.modSpace()->link();
 
    
    // prepare the loader to fulfill dynamic load requests.

@@ -23,36 +23,43 @@
 #include <falcon/enumerator.h>
 
 
-#if FALCON_TRACE_GC
 #ifndef SRC
 #define SRC __FILE__
 #endif
 
-   #define FALCON_GC_STORE( coll, cls, data ) ( coll->trace() ?\
-         coll->H_store( cls, (void*) data, SRC, __LINE__ ): \
-         coll->store( cls, (void*) data ))
-   #define FALCON_GC_STORELOCKED( coll, cls, data ) ( coll->trace() ?\
-         coll->H_storeLocked( cls, (void*) data, SRC, __LINE__ ): \
-         coll->storeLocked( cls, (void*) data ))
+#if FALCON_TRACE_GC
+   #define FALCON_GC_STORE( cls, data ) ( Engine::collector()->trace() ?\
+         Engine::GC_H_store( cls, (void*) data, SRC, __LINE__ ): \
+         Engine::GC_store( cls, (void*) data ))
+   #define FALCON_GC_STORELOCKED( cls, data ) ( Engine::collector()->trace() ?\
+         Engine::GC_H_storeLocked( cls, (void*) data, SRC, __LINE__ ): \
+         Engine::GC_storeLocked( cls, (void*) data ))
 
-   #define FALCON_GC_STORE_PARAMS( coll, cls, data, line, src ) ( coll->trace() ?\
-         coll->H_store( cls, (void*) data, src, line ): \
-         coll->store( cls, (void*) data ))
+   #define FALCON_GC_STORE_SRCLINE( cls, data, src, line ) ( Engine::collector()->trace() ?\
+         Engine::GC_H_store( cls, (void*) data, src, line ): \
+         Engine::GC_store( cls, (void*) data ))
+
+   #define FALCON_GC_STORELOCKED_SRCLINE( cls, data, src, line ) ( Engine::collector()->trace() ?\
+         Engine::GC_H_storeLocked( cls, (void*) data, src, line ): \
+         Engine::GC_storeLocked( cls, (void*) data ))
 
 #else  //FALCON_TRACE_GC
    /** This macro can be used to activate the history recording of GC entities.
     See the main body class.
     */
-   #define FALCON_GC_STORE( coll, cls, data ) (coll->store( cls, (void*) data ))
+   #define FALCON_GC_STORE( cls, data ) (Engine::GC_store( cls, (void*) data ))
 
-   #define FALCON_GC_STORE_PARAMS( coll, cls, data, line, src ) (coll->store( cls, (void*) data ))
+   #define FALCON_GC_STORE_SRCLINE( cls, data, src, line ) (Engine::GC_store( cls, (void*) data ))
 
    /** This macro can be used to activate the history recording of GC entities.
     See the main body class.
     */
-   #define FALCON_GC_STORELOCKED( coll, cls, data ) (coll->storeLocked( cls, (void*) data ))
+   #define FALCON_GC_STORELOCKED( cls, data ) (Engine::GC_storeLocked( cls, (void*) data ))
          
+   #define FALCON_GC_STORELOCKED_SRCLINE( cls, data, src, line ) (Engine::GC_storeLocked( cls, (void*) data ))
 #endif  //FALCON_TRACE_GC
+
+#define FALCON_GC_HANDLE( data ) (FALCON_GC_STORE((data)->handler(), data))
 
 namespace Falcon {
 

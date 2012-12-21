@@ -58,10 +58,10 @@ void* ClassSynTree::clone( void* instance ) const
 }
 
 
-void ClassSynTree::restore( VMContext* ctx, DataReader* stream, void*& empty ) const
+void ClassSynTree::restore( VMContext* ctx, DataReader* stream ) const
 {
-   empty = new SynTree;
-   m_parent->restore( ctx, stream, empty );
+   ctx->pushData( FALCON_GC_STORE( this, new SynTree ) );
+   m_parent->restore( ctx, stream );
 }
 
 

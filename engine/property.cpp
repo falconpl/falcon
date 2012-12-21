@@ -72,7 +72,7 @@ void PropertyString::get( void* instance, Item& target )
    if( cache->isNil() )
    {
       str = new String;
-      cache->setString(str);
+      *cache = FALCON_GC_HANDLE(str);
    }
    else
    {
@@ -235,7 +235,7 @@ void PropertyReflect::get( void* instance, Item& value )
             if( cache->isNil() )
             {
                str = new String;
-               cache->setString( str ); // will also garbage
+               *cache = FALCON_GC_HANDLE(str); // will also garbage
                cache->copied();  // so that we have copy on write downstream
             }
             else

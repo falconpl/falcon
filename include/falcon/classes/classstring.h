@@ -42,7 +42,7 @@ public:
    virtual void* createInstance() const;
    
    virtual void store( VMContext*, DataWriter* dw, void* data ) const;
-   virtual void restore( VMContext* , DataReader* dr, void*& data ) const;
+   virtual void restore( VMContext* , DataReader* dr ) const;
 
    virtual void describe( void* instance, String& target, int, int ) const;
 

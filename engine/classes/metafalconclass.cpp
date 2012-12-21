@@ -55,21 +55,14 @@ void MetaFalconClass::store( VMContext* ctx, DataWriter* wr, void* inst ) const
 }
 
 
-void MetaFalconClass::restore( VMContext*, DataReader* rd, void*& empty ) const
+void MetaFalconClass::restore( VMContext* ctx, DataReader* rd ) const
 {
    String name;
    rd->read( name );
    
    FalconClass* fcls = new FalconClass( name );
-   
-   try {
-      fcls->restoreSelf( rd );
-      empty = fcls;      
-   }
-   catch( ... ) {
-      delete fcls;
-      throw;
-   }      
+   ctx->pushData( FALCON_GC_STORE( this, fcls ) );
+   fcls->restoreSelf( rd );
 }
 
 
@@ -216,7 +209,7 @@ bool MetaFalconClass::op_init( VMContext* ctx, void* instance, int32 pcount ) co
    
 void* MetaFalconClass::createInstance() const
 {
-   return new FalconClass("anonymous");
+   return new FalconClass("#anonymous");
 }
 
 }

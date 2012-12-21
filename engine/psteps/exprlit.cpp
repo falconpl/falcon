@@ -91,7 +91,6 @@ ExprLit::~ExprLit()
  
 Symbol* ExprLit::makeSymbol( const String& name, int line ) 
 {
-   static Collector* coll = Engine::instance()->collector();
    static Class* cls = Engine::instance()->symbolClass();
    
    Private::DynSymMap::iterator item = _p->m_dynSyms.find(name);
@@ -100,7 +99,7 @@ Symbol* ExprLit::makeSymbol( const String& name, int line )
    }
    
    Symbol* sym = new Symbol( name, line );
-   GCLock* lock = FALCON_GC_STORELOCKED(coll, cls, sym);
+   GCLock* lock = FALCON_GC_STORELOCKED( cls, sym);
    _p->m_locks.push_back( lock );
    _p->m_dynSyms[name] = sym;
    return sym;

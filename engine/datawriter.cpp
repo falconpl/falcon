@@ -24,22 +24,19 @@
 namespace Falcon {
 
 DataWriter::DataWriter( Stream* stream, t_endianity endian, bool bOwn ):
-   Writer( stream, bOwn ),
-   m_gcMark( 0 )
+   Writer( stream, bOwn )
 {
    setEndianity( endian );
 }
 
 
-DataWriter::DataWriter( t_endianity endian ):
-   m_gcMark( 0 )
+DataWriter::DataWriter( t_endianity endian )
 {
    setEndianity( endian );
 }
 
 DataWriter::DataWriter( const DataWriter& other ):
-   Writer( m_stream ? m_stream->clone() : 0 , true ),
-   m_gcMark( 0 )
+   Writer( m_stream ? m_stream->clone() : 0 , true )
 {
    setEndianity( other.m_endianity );
 }

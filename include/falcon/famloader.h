@@ -17,6 +17,7 @@
 #define _FALCON_FAMLOADER_H_
 
 #include <falcon/setup.h>
+#include <falcon/restorer.h>
 
 namespace Falcon
 {
@@ -25,6 +26,7 @@ class Stream;
 class Module;
 class String;
 class ModSpace;
+class VMContext;
 
 /** Precompiled module deserializer.
  */
@@ -36,14 +38,32 @@ public:
    
    /** Loads a pre-compiled module from a data stream. 
     \param r The reader where the binary module is stored.
+    \param uri The URI where the module is being read from.
     \param local_name The name under which the module is internally known.
     */
-   Module* load( Stream* r, const String& uri, const String& local_name );
+   void load( VMContext* ctx, Stream* r, const String& uri, const String& local_name );
 
    /** Module space bound with this fam loader. */
    ModSpace* modSpace() const { return m_modSpace; }
 private:
    ModSpace* m_modSpace;
+
+   class PStepLoad: public PStep
+   {
+   public:
+      PStepLoad( FAMLoader* owner ): m_owner( owner ) {
+         apply = apply_;
+      }
+      virtual ~PStepLoad() {};
+      virtual void describeTo( String& str, int ) const { str = "PStepLoad"; }
+
+   private:
+      static void apply_( const PStep* self, VMContext* ctx );
+      FAMLoader* m_owner;
+   };
+   PStepLoad m_stepLoad;
+
+   friend class PStepLoad;
 };
 
 }

@@ -684,7 +684,6 @@ void ItemDict::Iterator::advance()
 {
    static Class* scls = Engine::instance()->stringClass();
    static Class* rcls = Engine::instance()->rangeClass();
-   static Collector* coll = Engine::instance()->collector();
    
    fassert( m_dict != 0 );
    fassert( m_dict->version() == m_version );
@@ -748,7 +747,7 @@ void ItemDict::Iterator::advance()
          {
             if( found ) return;
             found = true;
-            _pm->m_pair[0].setUser( FALCON_GC_STORE( coll, rcls, new Range(_pm->r_iter->first)) );
+            _pm->m_pair[0].setUser( FALCON_GC_STORE( rcls, new Range(_pm->r_iter->first)) );
             _pm->m_pair[1] = _pm->r_iter->second;
             ++_pm->r_iter;
          }

@@ -158,6 +158,8 @@ public:
          m_clsVector.push_back( cls );
       }
       
+      TRACE1("Adding object ID=%d(%p) with handler %s(%p) (CLSID=%d)",
+               objCount, obj, cls->name().c_ize(), cls, clsId );
       ObjectData* ndt = new ObjectData( obj, objCount, clsId );
       m_objVector.push_back( ndt );
       return ndt;
@@ -173,9 +175,8 @@ public:
 //
 //
 
-Storer::Storer( VMContext* ctx ):
+Storer::Storer():
    _p(0),
-   m_ctx(ctx),
    m_writer( new DataWriter(0) ),
    m_topData(0),
    m_topHandler(0),
@@ -196,7 +197,7 @@ Storer::~Storer()
 }
 
    
-bool Storer::store( Class* handler, void* data )
+bool Storer::store( VMContext* ctx, Class* handler, void* data )
 {
    if( _p == 0 )
    {
@@ -206,7 +207,7 @@ bool Storer::store( Class* handler, void* data )
    m_topData = data;
    m_topHandler = handler;
    // First, create the Private that we use to unroll cycles.
-   return traverse( handler, data, true );
+   return traverse( ctx, handler, data, true );
 }
 
    
@@ -221,17 +222,24 @@ bool Storer::isFlatMantra( const void* mantra )
    return _p->m_flatMantras.find( (Mantra*)mantra ) != _p->m_flatMantras.end();
 }
 
+void Storer::setStream( Stream* dataStream, bool bOwnStream )
+{
+   m_writer->changeStream( dataStream, bOwnStream, true );
+}
 
-bool Storer::commit( Stream* dataStream )
+bool Storer::commit( VMContext* ctx, Stream* dataStream, bool bOwnStream )
 {
    try
    {
-      m_writer->changeStream( dataStream, false, true );
+      if( dataStream != 0 )
+      {
+         m_writer->changeStream( dataStream, bOwnStream, true );
+      }
       writeClassTable( m_writer );
       writeInstanceTable( m_writer );
 
       // Serialize each item.
-      return writeObjectTable( m_writer );
+      return writeObjectTable( ctx, m_writer );
    }
    catch( ... )
    {
@@ -239,10 +247,12 @@ bool Storer::commit( Stream* dataStream )
       _p = 0;
       throw;
    }
+
+   return true;
 }
 
 
-bool Storer::traverse( Class* handler, void* data, bool isTopLevel, void** obj )
+bool Storer::traverse( VMContext* ctx, Class* handler, void* data, bool isTopLevel, void** obj )
 {
    TRACE( "Entering traverse on handler %s ", handler->name().c_ize() );
    
@@ -273,10 +283,10 @@ bool Storer::traverse( Class* handler, void* data, bool isTopLevel, void** obj )
    }
       
    // if the item is new, traverse its dependencies.
-   m_ctx->pushCode( &m_traverseNext );
-   int32 myDepth = m_ctx->codeDepth();
-   handler->flatten( m_ctx, objd->m_theArray, data );
-   if ( m_ctx->codeDepth() != myDepth )
+   ctx->pushCode( &m_traverseNext );
+   int32 myDepth = ctx->codeDepth();
+   handler->flatten( ctx, objd->m_theArray, data );
+   if ( ctx->codeDepth() != myDepth )
    {
       // going deep? -- suspend processing and save current work object
       _p->addTraversing( objd );
@@ -286,7 +296,7 @@ bool Storer::traverse( Class* handler, void* data, bool isTopLevel, void** obj )
    // nothing to traverse?
    if( objd->m_theArray.empty() )
    {
-      m_ctx->popCode();
+      ctx->popCode();
       return true;
    }
    
@@ -295,9 +305,9 @@ bool Storer::traverse( Class* handler, void* data, bool isTopLevel, void** obj )
    // we know we're having as many deps as indicated in by the entity
    objd->m_deps.reserve(objd->m_theArray.length());
    // perform the sub-traversal.
-   m_traverseNext.apply_( &m_traverseNext, m_ctx ); 
+   m_traverseNext.apply_( &m_traverseNext, ctx );
    // On completion, the PStep will pop itself, causing codeDepth < myDepth.
-   return m_ctx->codeDepth() < myDepth; 
+   return ctx->codeDepth() < myDepth;
 }
 
 
@@ -327,7 +337,7 @@ void Storer::TraverseNext::apply_( const PStep* ps, VMContext* ctx )
    
       ++i; // prepare for going deep
       Private::ObjectData* newDep;
-      bool bDidAll = self->m_owner->traverse( cls, udata, false, (void**) &newDep );
+      bool bDidAll = self->m_owner->traverse( ctx, cls, udata, false, (void**) &newDep );
       // Always save the traversed item -- which is alwas added right now...
       objd->m_deps.push_back( newDep->m_id );
      
@@ -390,14 +400,14 @@ void Storer::writeInstanceTable( DataWriter* wr )
 }
 
 
-bool Storer::writeObjectTable( DataWriter* wr )
+bool Storer::writeObjectTable( VMContext* ctx, DataWriter* wr )
 {
    // write the object boundary count
    uint32 size = (uint32) _p->m_objVector.size();
    wr->write( size );
 
-   m_ctx->pushCode( &m_writeNext );
-   m_writeNext.apply_( &m_writeNext, m_ctx );
+   ctx->pushCode( &m_writeNext );
+   m_writeNext.apply_( &m_writeNext, ctx );
    // have we completely run without the need to call the VM?
    return _p == 0;
 }

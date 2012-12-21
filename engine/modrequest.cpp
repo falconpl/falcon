@@ -15,6 +15,7 @@
 
 #include <falcon/modrequest.h>
 #include <falcon/importdef.h>
+#include <falcon/module.h>
 
 #include <falcon/datawriter.h>
 #include <falcon/datareader.h>
@@ -55,11 +56,31 @@ ModRequest::ModRequest( const ModRequest& other ):
    m_bIsURI( other.m_bIsURI ),
    m_module( other.m_module ),
    m_id(-1)
-{}
+{
+   if ( m_module != 0 ) {
+      m_module->incref();
+   }
+}
    
 ModRequest::~ModRequest()
 {
    delete m_idl;
+   if( m_module != 0 ) {
+      m_module->decref();
+   }
+}
+
+void ModRequest::module( Module* mod )
+{
+   if( m_module != 0  ) {
+      m_module->decref();
+   }
+
+   if( mod != 0 ) {
+      mod->incref();
+   }
+
+   m_module = mod;
 }
 
 void ModRequest::addImportDef( ImportDef* id )

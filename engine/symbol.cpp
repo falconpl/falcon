@@ -148,7 +148,8 @@ Variable* Symbol::getVariable_closed( Symbol* sym, VMContext* ctx )
 
 Variable* Symbol::getVariable_extern( Symbol*, VMContext* )
 {
-   return 0;
+   static Variable NilVariable;
+   return &NilVariable;
 }
 
 Variable* Symbol::getVariable_dyns( Symbol* sym, VMContext* ctx )

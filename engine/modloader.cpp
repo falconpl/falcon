@@ -16,6 +16,8 @@
 #undef SRC
 #define SRC "engine/modloader.cpp"
 
+#include <falcon/log.h>
+#include <falcon/trace.h>
 #include <falcon/modloader.h>
 #include <falcon/modspace.h>
 #include <falcon/modcompiler.h>
@@ -29,6 +31,8 @@
 #include <falcon/datareader.h>
 #include <falcon/stream.h>
 #include <falcon/storer.h>
+#include <falcon/vmcontext.h>
+#include <falcon/module.h>
 
 #include <falcon/trace.h>
 #include <falcon/fassert.h>
@@ -54,14 +58,16 @@ public:
 
 
 ModLoader::ModLoader( ModSpace* ms, ModCompiler* mc, FAMLoader* faml, DynLoader* dld ):
-   _p( new Private )
+   _p( new Private ),
+   m_stepSave(this)
 {
    init(".", ms, mc, faml, dld );
 }
 
 
-ModLoader::ModLoader( const String &path, ModSpace* ms, ModCompiler* mc, FAMLoader* faml, DynLoader* dld ):
-   _p( new Private )
+ModLoader::ModLoader( const String &path, ModSpace* ms,  ModCompiler* mc, FAMLoader* faml, DynLoader* dld ):
+   _p( new Private ),
+   m_stepSave(this)
 {
    init( path, ms, mc, faml, dld );
 }
@@ -82,6 +88,7 @@ void ModLoader::init ( const String &path, ModSpace* ms,  ModCompiler* mc, FAMLo
    if( faml == 0 ) faml = new FAMLoader(ms);
    if( dld == 0 ) dld = new DynLoader;
 
+   m_owner = ms;
    m_compiler = mc;
    m_famLoader = faml;
    m_dynLoader = dld;
@@ -96,7 +103,7 @@ void ModLoader::init ( const String &path, ModSpace* ms,  ModCompiler* mc, FAMLo
 }
 
 
-Module* ModLoader::loadName( const String& name, t_modtype type )
+bool ModLoader::loadName(VMContext* tgtctx, const String& name, t_modtype type )
 {
    String modName = name;
 
@@ -108,25 +115,25 @@ Module* ModLoader::loadName( const String& name, t_modtype type )
       pos1 = modName.find( '.', pos1+1 );
    }
 
-   Module* mod = loadFile( modName, type, true );
-   return mod;
+   return loadFile( tgtctx, modName, type, true );
 }
 
 
-Module* ModLoader::loadFile( const String& path, t_modtype type, bool bScan )
+bool ModLoader::loadFile( VMContext* tgtctx, const String& path, t_modtype type, bool bScan )
 {
    String uriPath = path;
    #ifdef FALCON_SYSTEM_WIN
    Path::winToUri(uriPath);
    #endif // FALCON_SYSTEM_WIN
    URI uri(uriPath);
-   return loadFile( uri, type, bScan );
+   return loadFile( tgtctx, uri, type, bScan );
 }
 
 
-Module* ModLoader::loadFile( const URI& uri, t_modtype type, bool bScan )
+bool ModLoader::loadFile( VMContext* tgtctx, const URI& uri, t_modtype type, bool bScan )
 {
    URI tgtUri;
+   TRACE( "ModLoader::loadFile: %s %d %d", uri.encode().c_ize(), type, bScan );
 
    // is the file absolute?
    Path path( URI::URLDecode( uri.path() ) );
@@ -135,8 +142,10 @@ Module* ModLoader::loadFile( const URI& uri, t_modtype type, bool bScan )
       t_modtype etype = checkFile_internal( uri, type, tgtUri );
       if( etype != e_mt_none )
       {
-         return load_internal( "", tgtUri, etype );
+         load_internal( tgtctx, "", tgtUri, etype );
+         return true;
       }
+      TRACE1( "ModLoader::loadFile: %s not found as direct path", uri.encode().c_ize() );
    }
    else
    {
@@ -159,7 +168,8 @@ Module* ModLoader::loadFile( const URI& uri, t_modtype type, bool bScan )
             t_modtype etype = checkFile_internal( location, type, tgtUri );
             if( etype != e_mt_none )
             {
-               return load_internal( *iter, tgtUri, etype );
+               load_internal( tgtctx, *iter, tgtUri, etype );
+               return true;
             }
          }
          else
@@ -168,10 +178,13 @@ Module* ModLoader::loadFile( const URI& uri, t_modtype type, bool bScan )
          }
          ++iter;
       }
+      TRACE1( "ModLoader::loadFile: %s not found in any path", uri.encode().c_ize() );
    }
 
-   // We didn't find anything to be loaded.
-   return 0;
+   TRACE( "ModLoader::loadFile: %s giving up", uri.encode().c_ize() );
+   // push a nil to mark failure
+   tgtctx->pushData(Item());
+   return false;
 }
 
 
@@ -381,9 +394,10 @@ ModLoader::t_modtype ModLoader::checkFile_internal(
 }
 
 
-Module* ModLoader::load_internal(
-      const String& prefixPath, const URI& uri, ModLoader::t_modtype type )
+void ModLoader::load_internal(
+      VMContext* ctx, const String& prefixPath, const URI& uri, ModLoader::t_modtype type )
 {
+   static Class* modClass = Engine::instance()->moduleClass();
    static VFSIface* vfs = &Engine::instance()->vfs();
 
    String modName;
@@ -421,6 +435,9 @@ Module* ModLoader::load_internal(
             throw m_compiler->makeError();
          }
 
+         // store the module in GC now
+         ctx->pushData( FALCON_GC_STORE( modClass, output ) );
+
          // what shoud we do with the newly compiled module?
          switch( savePC() )
          {
@@ -430,21 +447,22 @@ Module* ModLoader::load_internal(
 
             case e_save_try:
                try {
-                  saveModule_internal( output, uri, modName );
+                  saveModule_internal( ctx, output, uri, modName );
                }
                catch( IOError* err ) {
                   // decrement reference.
+                  Engine::instance()->log()->log( Log::fac_engine, Log::lvl_warn, err->describe() );
                   err->decref();
                }
                break;
 
             case e_save_mandatory:
-               saveModule_internal( output, uri, modName );
+               // save, but allow to throw an error.
+               saveModule_internal( ctx, output, uri, modName );
                break;
          }
-
-         return output;
       }
+      break;
 
       case e_mt_vmmod:
       {
@@ -455,20 +473,26 @@ Module* ModLoader::load_internal(
          }
 
          ins->shouldThrow(true);
-         return m_famLoader->load( ins, uri.encode(), modName );
+         // let the fam loader push the module
+         m_famLoader->load( ctx, ins, uri.encode(), modName );
+         return;
       }
 
       case e_mt_binmod:
+      {
          if ( modName.endsWith("_fm" ) )
          {
             modName = modName.subString(0,modName.length()-3);
          }
 
-         return m_dynLoader->load( uri.encode(), modName );
+         Module* output = m_dynLoader->load( uri.encode(), modName );
+         ctx->pushData( FALCON_GC_STORE(modClass, output) );
+      }
+      break;
 
       default:
          fassert2(false, "Should not be here...");
-         return 0;
+         break;
    }
 }
 
@@ -483,12 +507,13 @@ Error* ModLoader::makeError( int code, int line, const String &expl, int fsError
 }
 
 
-void ModLoader::saveModule_internal( Module* mod, const URI& srcUri, const String& )
+void ModLoader::saveModule_internal( VMContext* ctx, Module* mod, const URI& srcUri, const String& )
 {
    static VFSIface* vfs = &Engine::instance()->vfs();
-   static Class* clsModule = static_cast<Class*>(
-         Engine::instance()->getMantra("Module", Mantra::e_c_class ));
-   fassert( clsModule != 0 );
+
+   static Class* clsStream = Engine::instance()->streamClass();
+   static Class* clsStorer = Engine::instance()->storerClass();
+   static Class* clsModule = Engine::instance()->moduleClass();
 
    URI tgtUri = srcUri;
    Path path( tgtUri.path() );
@@ -497,23 +522,50 @@ void ModLoader::saveModule_internal( Module* mod, const URI& srcUri, const Strin
 
    // get the proper target URI provider
    Stream* output = vfs->createSimple( tgtUri );
+   output->shouldThrow(true);
+   output->write("FM\x4\x1",4);
 
-   try
+   ctx->pushData( FALCON_GC_STORE(clsStream, output) );
+   ctx->pushData( FALCON_GC_STORE(clsStorer, new Storer) );
+   ctx->pushData( Item(clsModule, mod) );
+   ctx->pushCode( &m_stepSave );
+
+}
+
+
+void ModLoader::PStepSave::apply_( const PStep*, VMContext* ctx )
+{
+   int32 &seqId = ctx->currentCode().m_seqId;
+
+   MESSAGE("ModLoader::PStepSave::apply_" );
+
+   Stream* output = static_cast<Stream*>(ctx->opcodeParam(2).asInst());
+   Storer* storer = static_cast<Storer*>(ctx->opcodeParam(1).asInst());
+   Module* mod = static_cast<Module*>(ctx->opcodeParam(0).asInst());
+
+   TRACE1("ModLoader::PStepSave::apply_ for %s (%d/2)", mod->name().c_ize(), seqId );
+
+   switch( seqId )
    {
-      output->shouldThrow(true);
-      output->write("FM\x4\x1",4);
-      Storer theStorer( m_famLoader->modSpace()->context() );
-      theStorer.store( clsModule, mod );
-      theStorer.commit(output);
-      output->close();
-   }
-   catch( ... )
-   {
-      delete output;
-      return;
+   case 0:
+      seqId++;
+      if( ! storer->store( ctx, ctx->opcodeParam(0).asClass(), mod ) )
+      {
+         return;
+      }
+      // fallthrough
+   case 1:
+      seqId++;
+      if( ! storer->commit( ctx, output, false) ) {
+         return;
+      }
+      //fallthrough
    }
 
-   delete output;
+   TRACE("ModLoader::PStepSave::apply_ complete %s", mod->name().c_ize() );
+
+   ctx->popData(3);
+   ctx->popCode();
 }
 
 }

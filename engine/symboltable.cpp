@@ -133,7 +133,6 @@ Symbol* SymbolTable::getClosed( int32 id ) const
    
 Symbol* SymbolTable::addLocal( const String& name, int32 line )
 {
-   Collector* coll = Engine::instance()->collector();
    Class* symClass = Engine::instance()->symbolClass();
    
    Private::SymbolMap::iterator iter = _p->m_symtab.find( name );
@@ -144,7 +143,7 @@ Symbol* SymbolTable::addLocal( const String& name, int32 line )
    
    Symbol* ls = new Symbol( name, 
       Symbol::e_st_local, _p->m_locals.size(), line );
-   FALCON_GC_STORE(coll, symClass, ls );
+   FALCON_GC_STORE( symClass, ls );
    _p->m_locals.push_back( ls );
    _p->m_symtab[name] = ls;
    
@@ -154,7 +153,6 @@ Symbol* SymbolTable::addLocal( const String& name, int32 line )
    
 Symbol* SymbolTable::addClosed( const String& name, int32 line )
 {
-   Collector* coll = Engine::instance()->collector();
    Class* symClass = Engine::instance()->symbolClass();
    
    Private::SymbolMap::iterator iter = _p->m_symtab.find( name );
@@ -166,7 +164,7 @@ Symbol* SymbolTable::addClosed( const String& name, int32 line )
    Symbol* ls = new Symbol( name, 
       Symbol::e_st_closed, _p->m_closed.size(), line );
    
-   FALCON_GC_STORE(coll, symClass, ls );
+   FALCON_GC_STORE( symClass, ls );
    _p->m_closed.push_back( ls );
    _p->m_symtab[name] = ls;
    

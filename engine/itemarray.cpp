@@ -21,6 +21,7 @@
 #include <falcon/itemarray.h>
 #include <falcon/item.h>
 #include <falcon/string.h>
+#include <falcon/engine.h>
 
 #include <string.h>
 
@@ -28,6 +29,8 @@
 
 namespace Falcon
 {
+
+Class* ItemArray::m_handler = 0;
 
 //========================================================
 // Inline utilities
@@ -105,6 +108,15 @@ ItemArray::ItemArray( const ItemArray& other ):
       m_size = 0;
       m_data = 0;
    }
+}
+
+
+Class* ItemArray::handler()
+{
+   if(m_handler == 0 ) {
+      m_handler = Engine::instance()->arrayClass();
+   }
+   return m_handler;
 }
 
 

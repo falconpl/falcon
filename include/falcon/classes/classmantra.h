@@ -38,7 +38,7 @@ public:
    virtual bool gcCheckInstance( void* self, uint32 mark ) const;
    
    virtual void store( VMContext* ctx, DataWriter* stream, void* instance ) const;
-   virtual void restore( VMContext* ctx, DataReader* stream, void*& empty ) const;
+   virtual void restore( VMContext* ctx, DataReader* stream) const;
    // mantras have no flattening.
    
    //=============================================================

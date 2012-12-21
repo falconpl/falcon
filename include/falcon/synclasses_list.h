@@ -9,7 +9,7 @@
       virtual ~Class##name() {};\
       virtual void* createInstance() const;\
       virtual bool op_init( VMContext* ctx, void* instance, int32 pcount ) const;\
-      virtual void restore( VMContext* ctx, DataReader*dr, void*& empty ) const; \
+      virtual void restore( VMContext* ctx, DataReader*dr ) const; \
       extra\
    }; \
    Class##name * variable;
@@ -177,7 +177,11 @@ FALCON_SYNCLASS_DECLARATOR(m_stmt_cut, Cut, stmt)
 FALCON_SYNCLASS_DECLARATOR(m_stmt_doubt, Doubt, stmt)
 FALCON_SYNCLASS_DECLARATOR(m_stmt_fastprint, FastPrint, stmt)
 FALCON_SYNCLASS_DECLARATOR(m_stmt_forin, ForIn, stmt)
-FALCON_SYNCLASS_DECLARATOR(m_stmt_forto, ForTo, stmt)
+
+FALCON_SYNCLASS_DECLARATOR_EX(m_stmt_forto, ForTo, stmt, \
+      virtual void flatten( VMContext* ctx, ItemArray& subItems, void* instance ) const;\
+      virtual void unflatten( VMContext* ctx, ItemArray& subItems, void* instance ) const; )
+
 FALCON_SYNCLASS_DECLARATOR(m_stmt_if, If, stmt)
 FALCON_SYNCLASS_DECLARATOR(m_stmt_raise, Raise, stmt)
 FALCON_SYNCLASS_DECLARATOR(m_stmt_return, Return, stmt)

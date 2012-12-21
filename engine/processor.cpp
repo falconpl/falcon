@@ -16,6 +16,7 @@
 #undef SRC
 #define SRC "engine/processor.cpp"
 
+#include <falcon/log.h>
 #include <falcon/processor.h>
 #include <falcon/paranoid.h>
 #include <falcon/trace.h>
@@ -75,7 +76,9 @@ void Processor::onError( Error* e )
    }
    else {
       // this is the top context. We're done.
-      throw e;
+      Engine::instance()->log()->log( Log::fac_engine, Log::lvl_critical, e->describe() );
+      //throw e;
+      e->decref();
    }
 }
 
@@ -148,6 +151,7 @@ void Processor::manageEvents( VMContext* ctx, int32 &events )
    if( (events & VMContext::evtRaise) ) {
       Error* e = ctx->detachThrownError();
       onError(e);
+      ctx->clearEvents();
    }
 
    if( (events & VMContext::evtSwap) )
@@ -184,6 +188,7 @@ void Processor::execute( VMContext* ctx )
       }
       catch( Error* e )
       {
+         Engine::instance()->log()->log(Log::fac_engine, Log::lvl_warn, e->describe() );
          ctx->raiseError( e );
       }
 

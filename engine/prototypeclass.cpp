@@ -128,7 +128,7 @@ void PrototypeClass::op_getProperty( VMContext* ctx, void* self, const String& p
    // check the special property _base
    if( prop == "_base" )
    {
-      ctx->topData().setArray(&fd->base());
+      ctx->topData() = Item(fd->base().handler(), &fd->base());
    }   
    else if( prop == "_prototype" )
    {

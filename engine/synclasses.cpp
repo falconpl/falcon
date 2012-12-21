@@ -191,13 +191,11 @@ void SynClasses::naryExprSet( VMContext* ctx, int pcount, TreeStep* step, int32 
 
 GCToken* SynClasses::collect( const Class* cls, TreeStep* earr, int line )
 {
-   FALCON_UNUSED_PARAM(line)
-   static Collector* coll = Engine::instance()->collector();
-   return FALCON_GC_STORE_PARAMS( coll, cls, earr, line, SRC );
+   return FALCON_GC_STORE_SRCLINE( cls, earr, SRC, line );
 }
 
 //===========================================================
-// The clases
+// The classes
 //
 
 #define FALCON_STANDARD_SYNCLASS_OP_CREATE( cls, exprcls, operation ) \
@@ -208,10 +206,10 @@ GCToken* SynClasses::collect( const Class* cls, TreeStep* earr, int line )
       SynClasses::operation ( ctx, pcount, expr ); \
       return false; \
    }\
-   void SynClasses::Class##cls ::restore( VMContext* ctx, DataReader*dr, void*& empty ) const \
+   void SynClasses::Class##cls ::restore( VMContext* ctx, DataReader*dr) const \
    {\
-      empty = new exprcls ; \
-      m_parent->restore( ctx, dr, empty ); \
+      ctx->pushData( Item( this, new exprcls) ); \
+      m_parent->restore( ctx, dr ); \
    }\
 
 
@@ -324,10 +322,10 @@ bool SynClasses::ClassGenClosure::op_init( VMContext* ctx, void* instance, int p
    expr->function( ctx->topData().asFunction() );
    return false;
 }
-void SynClasses::ClassGenClosure::restore( VMContext* ctx, DataReader*dr, void*& empty ) const
+void SynClasses::ClassGenClosure::restore( VMContext* ctx, DataReader*dr ) const
 {
-   empty = new ExprClosure;
-   m_parent->restore( ctx, dr, empty );
+   ctx->pushData( Item( this, new ExprClosure) );
+   m_parent->restore( ctx, dr );
 }
 void SynClasses::ClassGenClosure::flatten( VMContext*, ItemArray& subItems, void* instance ) const
 {
@@ -366,10 +364,10 @@ bool SynClasses::ClassGenDict::op_init( VMContext* ctx, void* instance, int pcou
    SynClasses:: varExprInsert( ctx, pcount, expr );
    return false;
 }
-void SynClasses::ClassGenDict::restore( VMContext* ctx, DataReader*dr, void*& empty ) const
+void SynClasses::ClassGenDict::restore( VMContext* ctx, DataReader*dr ) const
 {
-   empty = new ExprDict;
-   m_parent->restore( ctx, dr, empty );
+   ctx->pushData( Item( this, new ExprClosure) );
+   m_parent->restore( ctx, dr );
 }
 
 
@@ -399,20 +397,14 @@ void SynClasses::ClassDotAccess::store( VMContext* ctx, DataWriter*wr, void* ins
    m_parent->store( ctx, wr, dot );
 }
 
-void SynClasses::ClassDotAccess::restore( VMContext* ctx, DataReader*dr, void*& empty ) const
+void SynClasses::ClassDotAccess::restore( VMContext* ctx, DataReader*dr ) const
 {
    String prop;
    dr->read( prop );   
    ExprDot* dot = new ExprDot;
+   ctx->pushData( Item( this, dot ) );
    dot->property( prop );
-   try {
-      empty = dot;
-      m_parent->restore( ctx, dr, empty );
-   }
-   catch( ... ) {
-      delete dot;
-      throw;
-   }
+   m_parent->restore( ctx, dr );
 }
 
 
@@ -426,10 +418,10 @@ bool SynClasses::ClassMUnpack::op_init( VMContext* ctx, void* instance, int pcou
    // TODO -- parse a list of pairs symbol->expression
    return Class::op_init( ctx, instance, pcount );
 }
-void SynClasses::ClassMUnpack::restore( VMContext* ctx, DataReader*dr, void*& empty ) const
+void SynClasses::ClassMUnpack::restore( VMContext* ctx, DataReader*dr ) const
 {
-   empty = new ExprMultiUnpack;
-   m_parent->restore( ctx, dr, empty );
+   ctx->pushData( Item( this, new ExprMultiUnpack ) );
+   m_parent->restore( ctx, dr );
 }
 
 
@@ -442,10 +434,10 @@ bool SynClasses::ClassGenProto::op_init( VMContext* ctx, void* instance, int pco
    // TODO -- parse a list of pairs string->expression
    return Class::op_init( ctx, instance, pcount );
 }
-void SynClasses::ClassGenProto::restore( VMContext* ctx, DataReader*dr, void*& empty ) const
+void SynClasses::ClassGenProto::restore( VMContext* ctx, DataReader*dr ) const
 {
-   empty = new ExprProto;
-   m_parent->restore( ctx, dr, empty );
+   ctx->pushData( Item( this, new ExprProto ) );
+   m_parent->restore( ctx, dr );
 }
 
 
@@ -458,12 +450,11 @@ bool SynClasses::ClassPseudoCall::op_init( VMContext* ctx, void* instance, int p
    // TODO -- parse a single pseudofunction and a list of parameters.
    return Class::op_init( ctx, instance, pcount );
 }
-void SynClasses::ClassPseudoCall::restore( VMContext* ctx, DataReader*dr, void*& empty ) const
+void SynClasses::ClassPseudoCall::restore( VMContext* ctx, DataReader*dr ) const
 {
-   fassert( "Not yet implementd" );
-   empty = new ExprPseudoCall;   
-   m_parent->restore( ctx, dr, empty );
-
+   fassert( "Not yet implemented" );
+   ctx->pushData( Item( this, new ExprPseudoCall ) );
+   m_parent->restore( ctx, dr );
 }
 
 void* SynClasses::ClassUnpack::createInstance() const
@@ -475,10 +466,10 @@ bool SynClasses::ClassUnpack::op_init( VMContext* ctx, void* instance, int pcoun
    // TODO -- parse a list of pairs symbol, + 1 terminal expression
    return Class::op_init( ctx, instance, pcount );
 }
-void SynClasses::ClassUnpack::restore( VMContext* ctx, DataReader*dr, void*& empty ) const
+void SynClasses::ClassUnpack::restore( VMContext* ctx, DataReader*dr ) const
 {
-   empty = new ExprUnpack;
-   m_parent->restore( ctx, dr, empty );
+   ctx->pushData( Item( this, new ExprUnpack ) );
+   m_parent->restore( ctx, dr );
 }
 
 void* SynClasses::ClassGenRange::createInstance() const
@@ -535,10 +526,10 @@ bool SynClasses::ClassGenRange::op_init( VMContext* ctx, void* instance, int pco
 
    return false;
 }
-void SynClasses::ClassGenRange::restore( VMContext* ctx, DataReader*dr, void*& empty ) const
+void SynClasses::ClassGenRange::restore( VMContext* ctx, DataReader*dr ) const
 {
-   empty = new ExprRange;
-   m_parent->restore( ctx, dr, empty );
+   ctx->pushData( Item( this, new ExprRange ) );
+   m_parent->restore( ctx, dr );
 }
 
 
@@ -585,10 +576,10 @@ bool SynClasses::ClassGenRef::op_init( VMContext* ctx, void* instance, int pcoun
    
    return false;
 }
-void SynClasses::ClassGenRef::restore( VMContext* ctx, DataReader*dr, void*& empty ) const
+void SynClasses::ClassGenRef::restore( VMContext* ctx, DataReader*dr ) const
 {
-   empty = new ExprRef;
-   m_parent->restore( ctx, dr, empty );
+   ctx->pushData( Item( this, new ExprRef ) );
+   m_parent->restore( ctx, dr );
 }
 
 
@@ -632,7 +623,7 @@ void SynClasses::ClassGenSym::store( VMContext*, DataWriter* dw, void* instance 
    dw->write( es->chr() );
    dw->write( es->name() );
 }
-void SynClasses::ClassGenSym::restore( VMContext*, DataReader*dr, void*& empty ) const
+void SynClasses::ClassGenSym::restore( VMContext* ctx, DataReader*dr ) const
 {
    // TODO: this is just a test.
    int32 line, chr;
@@ -640,13 +631,11 @@ void SynClasses::ClassGenSym::restore( VMContext*, DataReader*dr, void*& empty )
    dr->read( line );
    dr->read( chr );
    dr->read( name );
-   
-   
-   ExprSymbol* es = new ExprSymbol;   
+
+   ExprSymbol* es = new ExprSymbol;
+   ctx->pushData( Item( this, es ) );
    es->decl( line, chr );
    es->name( name );
-   
-   empty = es;
 }
  
 void SynClasses::ClassGenSym::flatten( VMContext*, ItemArray& subItems, void* instance ) const
@@ -702,10 +691,10 @@ void SynClasses::ClassValue::unflatten( VMContext*, ItemArray& subItems, void* i
    ev->item( subItems[0] );
 }
 
-void SynClasses::ClassValue::restore( VMContext* ctx, DataReader*dr, void*& empty ) const
+void SynClasses::ClassValue::restore( VMContext* ctx, DataReader*dr ) const
 {
-   empty = new ExprValue;
-   m_parent->restore( ctx, dr, empty );
+   ctx->pushData(FALCON_GC_HANDLE( new ExprValue ));
+   m_parent->restore( ctx, dr );
 }
 
 //=================================================================
@@ -815,7 +804,7 @@ void SynClasses::ClassInherit::store( VMContext* ctx, DataWriter* wr, void* inst
    wr->write( inh->hadRequirement() );
    m_parent->store( ctx, wr, instance );
 }
-void SynClasses::ClassInherit::restore( VMContext* ctx, DataReader* rd, void*& empty ) const
+void SynClasses::ClassInherit::restore( VMContext* ctx, DataReader* rd ) const
 {
    String name;
    bool bHadReq;
@@ -824,8 +813,8 @@ void SynClasses::ClassInherit::restore( VMContext* ctx, DataReader* rd, void*& e
    
    ExprInherit* inh = new ExprInherit(name);
    inh->hadRequirement( bHadReq );
-   empty = inh;
-   m_parent->restore( ctx, rd, empty );
+   ctx->pushData( FALCON_GC_HANDLE(inh) );
+   m_parent->restore( ctx, rd );
 }
 
 
@@ -868,11 +857,11 @@ bool SynClasses::ClassParentship::op_init( VMContext* ctx, void* instance, int p
  
    return false;
 }
-void SynClasses::ClassParentship::restore( VMContext* ctx, DataReader* rd, void*& empty ) const
+void SynClasses::ClassParentship::restore( VMContext* ctx, DataReader* rd ) const
 {
    ExprParentship* pship = new ExprParentship;
-   empty = pship;
-   m_parent->restore( ctx, rd, empty );
+   ctx->pushData(FALCON_GC_HANDLE( pship ));
+   m_parent->restore( ctx, rd );
 }
 
 //=========================================
@@ -928,10 +917,11 @@ void SynClasses::ClassLit::store( VMContext* ctx, DataWriter* wr, void* instance
    
    m_parent->store( ctx, wr, instance );
 }
-void SynClasses::ClassLit::restore( VMContext* ctx, DataReader* rd, void*& empty ) const
+void SynClasses::ClassLit::restore( VMContext* ctx, DataReader* rd ) const
 {
    ExprLit* lit = new ExprLit();
-   empty = lit;
+   ctx->pushData(FALCON_GC_HANDLE( lit ));
+
    bool isEta;
    int32 pcount;
    rd->read( isEta );
@@ -945,7 +935,7 @@ void SynClasses::ClassLit::restore( VMContext* ctx, DataReader* rd, void*& empty
    }
    
    lit->setEta(isEta);
-   m_parent->restore( ctx, rd, empty);
+   m_parent->restore( ctx, rd );
 }
 void SynClasses::ClassLit::flatten( VMContext*, ItemArray& subItems, void* instance ) const
 {
@@ -985,6 +975,40 @@ FALCON_STANDARD_SYNCLASS_OP_CREATE( Switch, StmtSwitch, zeroaryExprSet ) //
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Try, StmtTry, zeroaryExprSet ) //
 FALCON_STANDARD_SYNCLASS_OP_CREATE( While, StmtWhile, zeroaryExprSet ) //
 
+//=================================================================
+// Statements
+//
+
+void SynClasses::ClassForTo::flatten( VMContext*, ItemArray& subItems, void* instance ) const
+{
+   static Class* clsSym = Engine::instance()->symbolClass();
+
+   StmtForTo* stmt = static_cast<StmtForTo*>(instance);
+   subItems.resize(8);
+   if ( stmt->target() != 0 ) { subItems[0] = Item( clsSym, stmt->target() ); }
+   if ( stmt->startExpr() != 0 ) { subItems[1] = Item( stmt->startExpr()->handler(), stmt->startExpr() ); }
+   if ( stmt->endExpr() != 0 ) { subItems[2] = Item( stmt->endExpr()->handler(), stmt->endExpr() ); }
+   if ( stmt->stepExpr() != 0 ) { subItems[3] = Item( stmt->stepExpr()->handler(), stmt->stepExpr() ); }
+   if ( stmt->body() != 0 ) { subItems[4] = Item( stmt->body()->handler(), stmt->body() ); }
+   if ( stmt->forFirst() != 0 ) { subItems[5] = Item( stmt->forFirst()->handler(), stmt->forFirst() ); }
+   if ( stmt->forLast() != 0 ) { subItems[6] = Item( stmt->forLast()->handler(), stmt->forLast() ); }
+   if ( stmt->forMiddle() != 0 ) { subItems[7] = Item( stmt->forMiddle()->handler(), stmt->forMiddle() ); }
+}
+void SynClasses::ClassForTo::unflatten( VMContext*, ItemArray& subItems, void* instance ) const
+{
+   StmtForTo* stmt = static_cast<StmtForTo*>(instance);
+   if( subItems.length() == 8 )
+   {
+      if( ! subItems[0].isNil() ) stmt->target( static_cast<Symbol*>(subItems[0].asInst()) );
+      if( ! subItems[1].isNil() ) stmt->startExpr( static_cast<Expression*>( subItems[1].asInst() ) );
+      if( ! subItems[2].isNil() ) stmt->endExpr( static_cast<Expression*>( subItems[2].asInst() ) );
+      if( ! subItems[3].isNil() ) stmt->stepExpr( static_cast<Expression*>( subItems[3].asInst() ) );
+      if( ! subItems[4].isNil() ) stmt->body( static_cast<SynTree*>(subItems[4].asInst()) );
+      if( ! subItems[5].isNil() ) stmt->forFirst( static_cast<SynTree*>(subItems[5].asInst()) );
+      if( ! subItems[6].isNil() ) stmt->forLast( static_cast<SynTree*>(subItems[6].asInst()) );
+      if( ! subItems[7].isNil() ) stmt->forMiddle( static_cast<SynTree*>(subItems[7].asInst()) );
+   }
+}
 
 //=================================================================
 // Trees

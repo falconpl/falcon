@@ -19,11 +19,10 @@
 
 #include <falcon/setup.h>
 #include <falcon/types.h>
+#include <falcon/stream.h>
 
 
 namespace Falcon {
-
-class Stream;
 
 /** Base abstract class for stream writers.
 
@@ -47,7 +46,7 @@ public:
 
     The stream control, and eventually ownership, is passed onto another writer.
     The state of the underlying stream, including its current buffer, is maintained
-    coherent and passsed onto the target.
+    coherent and passed onto the target.
 
     \note Using this writer after the this call has an undefined behavior.
     */
@@ -88,6 +87,22 @@ public:
     */
    virtual void changeStream( Stream* s, bool bOwn = false, bool bDiscard = false );
 
+   Stream* underlying() const { return m_stream; }
+
+   /** Checks if this entity is in GC. */
+   bool isInGC() const { return m_gcMark != 0; }
+
+   /** Mark this entity for GC. */
+   void gcMark( uint32 mark ) {
+      m_gcMark = mark;
+      if( m_stream != 0 ) {
+         m_stream->gcMark(mark);
+      }
+   }
+
+   /** Gets the GC entity. */
+   uint32 gcMark() const { return m_gcMark; }
+
 protected:
    /** Create for normal operations. */
    Writer( Stream* stream, bool bOwn = false );
@@ -103,6 +118,8 @@ protected:
    byte* m_buffer;
    length_t m_bufPos;
    length_t m_bufSize;
+
+   uint32 m_gcMark;
 
 protected:
    bool m_bOwnStream;

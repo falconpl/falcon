@@ -547,13 +547,15 @@ FALCON_DEFINE_METHOD_P1(ClassRegex, split)
    bool bgt = gettoken_i != 0 && gettoken_i->isTrue();
 
    ItemArray* ret = new ItemArray;
+   GCToken* rettok = FALCON_GC_HANDLE(ret);
    uint32 maxLen = src->length();
    uint32 from = 0;
    do
    {
-      ret->append( new String( *src, from, data->m_ovector[0] ) );
-      if( bgt )
-         ret->append( new String( *src, data->m_ovector[0], data->m_ovector[1] ) );
+      ret->append( FALCON_GC_HANDLE(new String( *src, from, data->m_ovector[0] )) );
+      if( bgt ) {
+         ret->append( FALCON_GC_HANDLE(new String( *src, data->m_ovector[0], data->m_ovector[1] )) );
+      }
 
       from = data->m_ovector[1];
       internal_regex_match( data, src, from );
@@ -561,10 +563,11 @@ FALCON_DEFINE_METHOD_P1(ClassRegex, split)
    }
    while( data->m_matches > 0 && count > 0 && from < maxLen );
 
-   if( from < maxLen )
-      ret->append( new String( *src, from ) );
+   if( from < maxLen ) {
+      ret->append( FALCON_GC_HANDLE(new String( *src, from )) );
+   }
 
-   ctx->returnFrame( ret );
+   ctx->returnFrame( rettok );
 }
 
 
@@ -604,6 +607,7 @@ static void internal_findAll( Falcon::VMContext *ctx, bool overlapped )
    }
 
    ItemArray *ca = new ItemArray;
+   GCToken* caret = FALCON_GC_HANDLE(ca);
    int frontOrBack = overlapped ? 0 : 1;
    uint32 maxLen = source->asString()->length();
 
@@ -631,7 +635,7 @@ static void internal_findAll( Falcon::VMContext *ctx, bool overlapped )
    }
 
    // always return an array, even if empty
-   ctx->returnFrame( ca );
+   ctx->returnFrame( caret );
 }
 
 /*#
@@ -724,7 +728,7 @@ FALCON_DEFINE_METHOD_P1(ClassRegex, replace)
 
    if ( data->m_matches == PCRE_ERROR_NOMATCH )
    {
-      ctx->returnFrame( source );
+      ctx->returnFrame( Item(source->handler(), source) );
       return;
    }
 
@@ -739,7 +743,7 @@ FALCON_DEFINE_METHOD_P1(ClassRegex, replace)
 
    String* ret = new String(*source);
    ret->change( data->m_ovector[0], data->m_ovector[1], *dest );
-   ctx->returnFrame( ret );
+   ctx->returnFrame( FALCON_GC_HANDLE(ret) );
 }
 
 
@@ -836,7 +840,7 @@ static void s_replaceall( VMContext* ctx, bool bExpand )
    }
 
    if ( clone != 0 )
-      ctx->returnFrame( clone );
+      ctx->returnFrame( FALCON_GC_HANDLE(clone) );
    else
       ctx->returnFrame( *source_i );
 }
@@ -1005,10 +1009,10 @@ FALCON_DEFINE_METHOD_P1(ClassRegex, grab)
             source->asString()->subString(
                data->m_ovector[ capt * 2 ], data->m_ovector[ capt * 2 + 1 ] )
                );
-      ca->append( grabbed );
+      ca->append( FALCON_GC_HANDLE(grabbed) );
    }
 
-   ctx->returnFrame( ca );
+   ctx->returnFrame( FALCON_GC_HANDLE(ca) );
 }
 
 /*#
@@ -1076,7 +1080,7 @@ FALCON_DEFINE_METHOD_P1(ClassRegex, compare)
 FALCON_DEFINE_METHOD_P1(ClassRegex, version)
 {
    const char *ver = pcre_version();
-   ctx->returnFrame( new String( ver, -1 ) );
+   ctx->returnFrame( FALCON_GC_HANDLE(new String( ver, -1 )) );
 }
 
 /*#

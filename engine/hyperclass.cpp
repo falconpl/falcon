@@ -216,8 +216,6 @@ void* HyperClass::clone( void* source ) const
 
 void* HyperClass::createInstance() const
 {
-   static Collector* coll = Engine::instance()->collector();
-   
    ItemArray* ia = new ItemArray( m_nParents );
    ia->resize(m_nParents);
    
@@ -227,7 +225,7 @@ void* HyperClass::createInstance() const
          static_cast<ExprInherit*>( m_parentship->get(i-1) )->handler();
       
       if( ! cls->isFlatInstance() ) {
-         (*ia)[i] = FALCON_GC_STORE( coll, cls, cls->createInstance() );
+         (*ia)[i] = FALCON_GC_STORE( cls, cls->createInstance() );
       }
       // else, the init step will fill the object.
    }

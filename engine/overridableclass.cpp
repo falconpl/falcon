@@ -343,7 +343,7 @@ bool OverridableClass::overrideGetProperty( VMContext* ctx, void* self, const St
       Item i_first( this, self );
       ctx->popData();
       // I prefer to go safe and push a new string here.
-      ctx->pushData( (new String(propName))->garbage() );
+      ctx->pushData( FALCON_GC_HANDLE(new String(propName)) );
 
       // use the instance we know, as first can be moved away.
       ctx->call( override, 1, i_first );
@@ -370,7 +370,7 @@ bool OverridableClass::overrideSetProperty( VMContext* ctx, void* self, const St
       // exchange the property name and the data,
       // as setProperty wants the propname first.
       Item i_data = ctx->topData();
-      ctx->topData() = (new String(propName))->garbage();
+      ctx->topData() = FALCON_GC_HANDLE(new String(propName));
       ctx->pushData( i_data );
 
       // Don't mangle the stack, we have to change it.
@@ -447,7 +447,7 @@ void OverridableClass::op_provides( VMContext* ctx, void* self, const String& pr
    if( override != 0  )
    {
       Item i_self( this, self );
-      ctx->topData() = (new String(propName))->garbage();
+      ctx->topData() = FALCON_GC_HANDLE(new String(propName));
       ctx->call( override, 1, i_self );
    }
    else
@@ -485,7 +485,7 @@ void OverridableClass::op_toString( VMContext* ctx, void* self ) const
    {
       String* str = new String("Instance of ");
       str->append( name() );
-      ctx->topData() = str;
+      ctx->topData() = FALCON_GC_HANDLE(str);
    }
 }
 

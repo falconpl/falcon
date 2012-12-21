@@ -41,7 +41,6 @@ using namespace Parsing;
 
 void apply_expr_amper( const Rule&, Parser& p )
 {
-   static Collector* coll = Engine::instance()->collector();
    static Class* cls = Engine::instance()->symbolClass();
    
    // << T_Amper << T_Name
@@ -58,7 +57,7 @@ void apply_expr_amper( const Rule&, Parser& p )
    
    // TODO: Use the engine to cache dynsymbols
    // TODO: Use garbage collector
-   FALCON_GC_STORE(coll, cls, nsym );
+   FALCON_GC_STORE( cls, nsym );
    ExprSymbol* esyn = new ExprSymbol( tref->line(), tref->chr() );
    esyn->safeGuard( nsym );
    

@@ -50,7 +50,7 @@ public:
    virtual void op_call( VMContext* ctx, int pcount, void* instance ) const;
    
    void store( VMContext*, DataWriter* stream, void* instance ) const;
-   void restore( VMContext*, DataReader* stream, void*& empty ) const;
+   void restore( VMContext*, DataReader* stream ) const;
    void flatten( VMContext*, ItemArray& subItems, void* instance ) const;
    void unflatten( VMContext*, ItemArray& subItems, void* instance ) const;
 

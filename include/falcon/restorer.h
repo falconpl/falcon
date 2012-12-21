@@ -27,6 +27,7 @@ class ModSpace;
 class VMContext;
 class Class;
 class ModLoader;
+class DataReader;
 
 /** Helper for cyclic joint structure deserialization.
  
@@ -36,35 +37,37 @@ class ModLoader;
 class FALCON_DYN_CLASS Restorer
 {
 public:
-   Restorer( VMContext* vmc );
+   Restorer();
    virtual ~Restorer();
    
-   /** Restores the data in the requried stream.
+   /** Restores the data in the required stream.
     \return true IF the restore was complete, false if the VMContext was altered.
     \throw IoError on error reading from the stream
     \thrown ParseError on semantic errors while reading from the stream.
     */
-   virtual bool restore( Stream* rd, ModSpace* msp );
+   virtual void restore( VMContext* vmc, Stream* rd, ModSpace* msp );
    
    virtual bool next( Class*& handler, void*& data, bool& first );
    virtual bool hasNext() const;
    virtual uint32 objCount() const;
    
-   void context( VMContext* vmc ) { m_ctx = vmc; }
-   VMContext* context() const { return m_ctx; }
-   
+   inline DataReader& reader() { return *m_reader; }
+
+protected:
+   Stream* m_stream;
+   ModSpace* m_modspace;
+
 private:
    class Private;
    Restorer::Private* _p;
-   
-   VMContext* m_ctx;
+   DataReader* m_reader;
    
    void readClassTable();
-   bool loadClasses( ModSpace* msp );
+   void loadClasses( VMContext* ctx, ModSpace* msp );
    void readInstanceTable();
    
-   bool readObjectTable();   
-   bool unflatten();
+   bool readObjectTable( VMContext* ctx );
+   bool unflatten( VMContext* ctx );
 
    
    class FALCON_DYN_CLASS ReadNext: public PStep
@@ -94,18 +97,18 @@ private:
    friend class UnflattenNext;
    UnflattenNext m_unflattenNext;
   
-   class FALCON_DYN_CLASS LinkNext: public PStep
+   class FALCON_DYN_CLASS PStepLoadNextClass: public PStep
    {
    public:
-      LinkNext(Restorer* owner): m_owner(owner) { apply = apply_; }
-      virtual ~LinkNext() {}
+      PStepLoadNextClass(Restorer* owner): m_owner(owner) { apply = apply_; }
+      virtual ~PStepLoadNextClass() {}
       static void apply_( const PStep* ps, VMContext* ctx );
    private:
       Restorer* m_owner; 
    };
 
-   friend class LinkNext;
-   LinkNext m_linkNext;
+   friend class PStepLoadNextClass;
+   PStepLoadNextClass m_stepLoadNextClass;
 };
 
 }

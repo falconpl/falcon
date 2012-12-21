@@ -49,7 +49,7 @@ public:
 
    /** Standard behavior is that to let through without interfering.
    */
-   virtual void restore( VMContext* ctx, DataReader* stream, void*& empty ) const;
+   virtual void restore( VMContext* ctx, DataReader* stream ) const;
    
    /** The normal behavior is that to flatten all via nth.
    */

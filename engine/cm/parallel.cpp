@@ -229,9 +229,11 @@ FALCON_DEFINE_METHOD_P( ClassParallel, launchWithResults )
 
 void ClassParallel::PStepGetResults::apply_( const PStep*, VMContext* ctx )
 {
+   static Class* classArray = Engine::instance()->arrayClass();
+
    CGCarrier* cgc = static_cast<CGCarrier*>(ctx->self().asInst());
    ItemArray* r = cgc->m_cg->results();
-   ctx->returnFrame( r );
+   ctx->returnFrame( FALCON_GC_STORE( classArray, r ) );
 }
 
 

@@ -24,7 +24,6 @@ namespace Falcon {
 
 void Variable::makeReference( Variable* original, Variable* copy )
 {
-   static Collector* coll = Engine::instance()->collector();
    static ClassRawMem* rawMem = Engine::instance()->rawMemClass();
    
    if( original->m_base != 0 ) {
@@ -48,13 +47,12 @@ void Variable::makeReference( Variable* original, Variable* copy )
       original->m_value = copy->m_value;
       
       // assign to the collector.
-      FALCON_GC_STORE(coll, rawMem, aligned_variable);
+      FALCON_GC_STORE( rawMem, aligned_variable);
    }
 }
 
 void Variable::makeFreeVariable( Variable& var )
 {
-   static Collector* coll = Engine::instance()->collector();
    static ClassRawMem* rawMem = Engine::instance()->rawMemClass();
    
    // craete  a place in memory that is sure to be properly aligned
@@ -66,7 +64,7 @@ void Variable::makeFreeVariable( Variable& var )
    aligned_variable->value.setNil();
 
    // assign to the collector.
-   FALCON_GC_STORE(coll, rawMem, aligned_variable);
+   FALCON_GC_STORE( rawMem, aligned_variable);
    
    var.m_base = &aligned_variable->count;
    var.m_value = &aligned_variable->value;

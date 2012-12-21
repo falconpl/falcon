@@ -47,6 +47,11 @@ public:
            Class *pClass;
         } ptr;
 
+        struct {
+           void* pOpaque;
+           const char* pOpaqueName;
+        } opaque;
+
      } data;
 
      union {
@@ -144,6 +149,17 @@ public:
       setString(str);
    }
 
+   Item( const char* name, void* opaque )
+   {
+      setOpaque(name, opaque);
+   }
+
+   void setOpaque( const char* name, void* opaque ) {
+      type( FLC_ITEM_OPAQUE );
+      content.data.opaque.pOpaqueName = name;
+      content.data.opaque.pOpaque = opaque;
+   }
+
    /** Creates a String item.
     \param str A wchar_t string that is taken as-is and converted to a Falcon String.
 
@@ -180,43 +196,23 @@ public:
       setString(str);
    }
 
-   /** Creates a String item, adopting an existing string.
-    \param str A pointer to a Falcon String that must be adopted.
-
-    The string is taken as-is and stored for garbage in the Falcon engine.
-    This constructor is useful when a String* has been created for another reason,
-    and then must be sent to the engine as a Falcon item. In this way, the
-    copy (and eventual deep-copy) of the already created string is avoided.
-    
-    */
-   Item( String* str, bool bGarbage = false, int line=0, const char* source=0 )
-   {
-      setString(str, bGarbage, line, source);
-   }
-
    /** Sets this item to a String item.
     \param str A C string that is taken as-is and converted to a Falcon String.
     \see Item( char* )
     */
-   void setString( const char* str );
+   Item& setString( const char* str );
 
    /** Sets this item to a String item.
     \param str A wchar_t string that is taken as-is and converted to a Falcon String.
     \see Item( wchar_t* )
     */
-   void setString( const wchar_t* str );
+   Item& setString( const wchar_t* str );
 
    /** Sets this item to a String item.
     \param str A Falcon string that will be copied.
     \see Item( const String& )
     */
-   void setString( const String& str );
-
-   /** Sets this item to a String item.
-    \param str A pointer to a Falcon String that must be adopted.
-    \see Item( String* )
-    */
-   void setString( String* str, bool bGarbage = false, int line=0, const char* source=0 );
+   Item& setString( const String& str );
 
    /** Creates a boolean item. */
    explicit inline Item( bool b ) {
@@ -224,10 +220,11 @@ public:
    }
 
    /** Sets this item as boolean */
-   inline void setBoolean( bool tof )
+   inline Item& setBoolean( bool tof )
    {
       type( FLC_ITEM_BOOL );
       content.data.val32 = tof? 1: 0;
+      return *this;
    }
 
    /** Creates an integer item */
@@ -242,9 +239,10 @@ public:
       setInteger( val );
    }
 
-   inline void setInteger( int64 val ) {
+   inline Item& setInteger( int64 val ) {
       type(FLC_ITEM_INT);
       content.data.val64 = val;
+      return *this;
    }
 
    /** Creates a numeric item */
@@ -253,9 +251,10 @@ public:
       setNumeric( val );
    }
 
-   inline void setNumeric( numeric val ) {
+   inline Item& setNumeric( numeric val ) {
       type( FLC_ITEM_NUM );
       content.data.number = val;
+      return *this;
    }
 
    inline Item( Function* f )
@@ -263,11 +262,12 @@ public:
       setFunction(f);
    }
 
-   inline void setFunction( Function* f )
+   inline Item& setFunction( Function* f )
    {
       type( FLC_CLASS_ID_FUNC );
       content.data.ptr.pInst = f;
       content.data.ptr.pClass = Item::m_funcClass;
+      return *this;
    }
 
    inline Item( const Class* cls, void* inst ) {
@@ -275,11 +275,12 @@ public:
    }
 
 
-   inline void setUser( const Class* cls, void* inst )
+   inline Item& setUser( const Class* cls, void* inst )
    {
        type( cls->typeID() );
        content.data.ptr.pInst = inst;
        content.data.ptr.pClass = (Class*) cls;
+       return *this;
    }
 
    inline Item( GCToken* token )
@@ -287,19 +288,21 @@ public:
       setUser( token );
    }
    
-   inline void setUser( GCToken* token )
+   inline Item& setUser( GCToken* token )
    {
        type( token->cls()->typeID() ); // normally
        content.data.ptr.pClass = token->cls();
        content.data.ptr.pInst = token->data();
+       return *this;
    }
 
 
-   inline void methodize( Function* mthFunc )
+   inline Item& methodize( Function* mthFunc )
    {
        content.mth.function = mthFunc;
        content.base.bits.oldType = content.base.bits.type;
        content.base.bits.type = FLC_ITEM_METHOD;
+       return *this;
    }
 
    inline void unmethodize()
@@ -314,34 +317,6 @@ public:
       tgt.content.data.ptr.pInst = content.data.ptr.pInst;
       tgt.content.data.ptr.pClass = content.data.ptr.pClass;
    }
-
-   /** Creates an integer item */
-   inline Item( ItemArray* array )
-   {
-      setArray( array );
-   }
-   
-   /** Turn this item in to an array (deep).
-    \param array The array handled to the vm.
-    
-    This method turns the item into an array with deep semantics (i.e.
-    controlled by the garbage collector.
-
-    For user-semantic (i.e. user-controlled) you must use directly the
-    setUser() method.
-    */
-   void setArray( ItemArray* array, bool bGarbage = false );
-
-   /** Turn this item in to a dictionary (deep).
-    \param dict The dictionary handled to the vm
-    
-    This method turns the item into an dictionary with deep semantics (i.e.
-    controlled by the garbage collector.
-
-    For user-semantic (i.e. user-controlled) you must use directly the
-    setUser() method.
-    */
-   //void setDict( ItemDictionary* dict );
 
    /** Defines this item as a out of band data.
       Out of band data allow out-of-order sequencing in functional programming.
@@ -491,6 +466,7 @@ public:
    bool isMethod() const { return type() == FLC_ITEM_METHOD; }
    bool isOrdinal() const { return type() == FLC_ITEM_INT || type() == FLC_ITEM_NUM; }
    bool isCallable() const;
+   bool isOpaque() const { return type() == FLC_ITEM_OPAQUE; }
    
    bool isUser() const { return type() >= FLC_ITEM_USER; }
    bool isClass() const { return type() == FLC_CLASS_ID_CLASS; }
@@ -655,6 +631,14 @@ public:
    Item* asReference() const
    {
       return content.mth.ref;
+   }
+
+   void* asOpaque() const {
+      return content.data.opaque.pOpaque;
+   }
+
+   const char* asOpaqueName() {
+      return content.data.opaque.pOpaqueName;
    }
 
    

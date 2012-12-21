@@ -230,7 +230,11 @@ public:
       m_ptrIntr = ptr;
    }
 
+   void gcMark( uint32 mark ) { m_mark = mark; }
+   uint32 gcMark() const { return m_mark; }
+
 protected:
+   uint32 m_mark;
    t_status m_status;
    size_t m_lastError;
    bool m_bShouldThrow;

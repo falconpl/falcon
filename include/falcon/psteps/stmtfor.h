@@ -208,6 +208,9 @@ public:
    StmtForTo( const StmtForTo& other );
    virtual ~StmtForTo();
 
+   Symbol* target() const { return m_target; }
+   void target( Symbol* t ) { m_target = t; }
+
    Expression* startExpr() const { return m_start; }
    void startExpr( Expression* s );
 
@@ -245,8 +248,6 @@ private:
       StmtForTo* m_owner;
    };
    PStepNext m_stepNext;
-
-
 };
 
 }

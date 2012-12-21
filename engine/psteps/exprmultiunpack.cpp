@@ -196,7 +196,7 @@ void ExprMultiUnpack::apply_( const PStep* ps, VMContext* ctx )
          (*retval)[i] = *topStack;
       }
       ctx->popData(pcount-1);
-      ctx->topData().setArray( retval );
+      ctx->topData().setUser( FALCON_GC_STORE( retval->handler(), retval ) );
    }
    
    ctx->popCode();

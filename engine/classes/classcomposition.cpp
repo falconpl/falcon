@@ -117,13 +117,13 @@ void ClassComposition::store( VMContext*, DataWriter* stream, void* instance ) c
    stream->write( ci->times() );
 }
 
-void ClassComposition::restore( VMContext*, DataReader* stream, void*& empty ) const
+void ClassComposition::restore( VMContext* ctx, DataReader* stream ) const
 {
    int64 times;
    stream->read( times );
    CompositionInstance* ci = new CompositionInstance;
    ci->times( times );
-   empty = ci;
+   ctx->pushData( FALCON_GC_STORE( this, ci) );
 }
 
 void ClassComposition::flatten( VMContext*, ItemArray& subItems, void* instance ) const

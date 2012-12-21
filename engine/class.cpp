@@ -123,7 +123,7 @@ void Class::store( VMContext*, DataWriter*, void* ) const
 }
 
 
-void Class::restore( VMContext*, DataReader*, void*& ) const
+void Class::restore( VMContext*, DataReader*) const
 {
    throw new UnserializableError(ErrorParam( e_unserializable, __LINE__, __FILE__ )
       .origin( ErrorParam::e_orig_vm )
@@ -399,7 +399,7 @@ void Class::op_toString( VMContext* ctx, void *self ) const
 {
    String *descr = new String();
    describe( self, *descr );
-   ctx->stackResult(1, descr->garbage());
+   ctx->stackResult(1, FALCON_GC_HANDLE(descr));
 }
 
 

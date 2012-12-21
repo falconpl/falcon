@@ -341,7 +341,6 @@ void apply_expr_lambda(const Rule&, Parser& p)
 
 static void internal_lambda_params(const Rule&, Parser& p, bool isEta )
 {
-   static Class* fcls = Engine::instance()->functionClass();
    // ListSymbol << T_Arrow
    SourceParser& sp = static_cast<SourceParser&>(p);
 
@@ -363,7 +362,7 @@ static void internal_lambda_params(const Rule&, Parser& p, bool isEta )
    }
 
    TokenInstance* ti = TokenInstance::alloc(tarr->line(),tarr->chr(), sp.Expr);
-   Expression* expr = ctx->onStaticData( fcls, func );   
+   Expression* expr = ctx->onStaticData( func->handler(), func );
    ti->setValue(expr,expr_deletor);
 
    // remove this stuff from the stack

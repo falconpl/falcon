@@ -39,66 +39,24 @@ void Item::init(Engine* engine)
    m_arrayClass = engine->arrayClass();
 }
 
-void Item::setString( const char* str )
+Item& Item::setString( const char* str )
 {
-   setUser( (new String(str))->garbage() );
+   setUser( FALCON_GC_HANDLE(new String(str)) );
+   return *this;
 }
 
-void Item::setString( const wchar_t* str )
+Item& Item::setString( const wchar_t* str )
 {
-   setUser( (new String(str))->garbage() );
+   setUser( FALCON_GC_HANDLE(new String(str)) );
+   return *this;
 }
 
-void Item::setString( const String& str )
+Item& Item::setString( const String& str )
 {
-   setUser( (new String(str))->garbage() );
+   setUser( FALCON_GC_HANDLE(new String(str)) );
+   return *this;
 }
 
-void Item::setString( String* str, bool bGarbage, int line, const char* src )
-{
-   (void) sizeof(line);
-   
-   static Class* strClass = Engine::instance()->stringClass();
-   static Collector* coll = Engine::instance()->collector();
-   
-   if( bGarbage )
-   {
-      if( src != 0 )
-      {
-         setUser(FALCON_GC_STORE_PARAMS(coll, strClass, str, line, src));
-      }
-      else
-      {
-         setUser(FALCON_GC_STORE(coll, strClass, str ));
-      }
-   }
-   else
-   {
-      setUser( strClass, str );
-   }
-}
-
-void Item::setArray( ItemArray* array, bool bGarbage )
-{
-   static Class* arrayClass = Engine::instance()->arrayClass();
-   static Collector* coll = Engine::instance()->collector();
-
-   if( bGarbage )
-   {
-      setUser( FALCON_GC_STORE(coll, arrayClass, array) );
-   }
-   else
-   {
-      setUser(arrayClass, array);
-   }
-}
-
-/*
-void Item::setDict( ItemDictionary* dict )
-{
-   setDeep( dict, Engine::instance()->dictClass() );
-}
-*/
 //===========================================================================
 // Generic item manipulators
 

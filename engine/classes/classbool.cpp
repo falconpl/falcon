@@ -140,11 +140,13 @@ void ClassBool::store( VMContext*, DataWriter* dw, void* data ) const
 }
 
 
-void ClassBool::restore( VMContext* , DataReader* dr, void*& data ) const
+void ClassBool::restore( VMContext* ctx, DataReader* dr ) const
 {
    bool value;
    dr->read( value );
-   static_cast<Item*>( data )->setBoolean(value);
+   Item temp;
+   temp.setBoolean(value);
+   ctx->pushData( temp );
 }
 
 
@@ -167,7 +169,7 @@ void ClassBool::op_toString( VMContext* ctx, void* ) const
    Item* iself;
    OpToken token( ctx, iself );
    String* s = new String( iself->asBoolean() ? "true" : "false" );
-   token.exit( s );
+   token.exit( FALCON_GC_STORE( s->handler(), s ) );
 }
 
 }

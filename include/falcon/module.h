@@ -26,6 +26,7 @@
 #include <falcon/mantra.h>
 #include <falcon/class.h>
 #include <falcon/function.h>
+#include <falcon/module.h>
 
 #define DEFALUT_FALCON_MODULE_INIT falcon_module_init
 #define DEFALUT_FALCON_MODULE_INIT_NAME "falcon_module_init"
@@ -110,8 +111,6 @@ public:
     \param isNative Native modules don't get automatically serialized.
     */
    Module( const String& name, const String& uri, bool isNative = true );
-
-   virtual ~Module();
 
    /** Logical name of the module. */
    const String& name() const { return m_name; }
@@ -388,18 +387,6 @@ public:
     */   
    void exportAll( bool e ) { m_bExportAll = e; }
    
-   /** Unloads a dynamically loaded module.
-    This method destroys the current module. In case the module has been
-    created through a dynamic shared object loader, the module is also unloaded.
-    
-    The system keeps a reference of loaded shared objects, so if the underlying
-    shared library has been used to generate more modules, the other modules
-    will still be able to work.
-    
-    */
-   virtual void unload();
-   
-
    /** Returns the module group associated with this module.    
     \return The module group in which this module is stored, or 0 if this
             is a static module living in the global module space.
@@ -461,12 +448,66 @@ public:
    
    bool isNative() const { return m_bNative; }
    
+   /**
+    * Sets the load mode of this module.
+    *
+    * Modules can be imported in a module space with the load or import directives.
+    *
+    * The load directive requests the engine to honor export requests from the module,
+    * so that all the loaded modules form a single body of application.
+    *
+    * Import directive makes the symbols defined in the module locally visible to the
+    * importer, on its explicit request. It is mainly meant to use a foreign module
+    * as a library of mantras to be used at will.
+    *
+    * This method indicates if the module is to be intended as loaded or imported in
+    * a module space.
+    *
+    * @note A module cannot be used in multiple module spaces. Once assigned, it
+    * must be exclusively used there, so the even if this setting depends on the
+    * way the module is included in the module space, it can be safely stored as a module
+    * characteristic.
+    */
+   void usingLoad( bool m ) { m_bLoad = m; }
+
+   /**
+    * Indicates current load/import setting for this module.
+    * @see void usingLoad(bool)
+    */
+   bool usingLoad() const { return m_bLoad; }
+
    Class* getClass( const String& name ) const { return 
       static_cast<Class*>( getMantra(name, Mantra::e_c_class) ); }
       
    Function* getFunction( const String& name ) const { return 
       static_cast<Function*>( getMantra(name, Mantra::e_c_function) ); }
-   
+
+   /** Count of import definitions (dependencies). */
+   uint32 depsCount() const;
+
+   /** Get the nth import definition (dependency).
+    * \param n Definition number in range 0 <= n < depsCount().
+    * \return ImportDef for that number.
+    */
+   ImportDef* getDep( uint32 n ) const;
+
+protected:
+   /** Invoked when refcount hits 0.
+    *  This will invoke the unload() method if not previously invoked.
+    */
+   virtual ~Module();
+
+   /** Unloads a dynamically loaded module.
+    This method destroys the current module. In case the module has been
+    created through a dynamic shared object loader, the module is also unloaded.
+
+    The system keeps a reference of loaded shared objects, so if the underlying
+    shared library has been used to generate more modules, the other modules
+    will still be able to work.
+
+    */
+   virtual void unload();
+
 private:
    class Private;
    Module::Private* _p;
@@ -482,6 +523,7 @@ private:
    int m_anonMantras;
    Function* m_mainFunc;
    bool m_bNative;
+   bool m_bLoad;
 
    friend class Private;   
    friend class DynLoader;
@@ -499,9 +541,10 @@ private:
    // used by various import and load requests.
    Error* addModuleRequirement( ImportDef* def, ModRequest*& req );
    bool removeModuleRequirement( ImportDef* def );
-   
-   
+
    class FuncRequirement;      
+
+   FALCON_REFERENCECOUNT_DECLARE_INCDEC( Module );
 };
 
 }

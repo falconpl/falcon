@@ -22,9 +22,6 @@
 #include <falcon/cm/print.h>
 #include <falcon/cm/uri.h>
 #include <falcon/cm/path.h>
-#include <falcon/cm/storer.h>
-#include <falcon/cm/restorer.h>
-#include <falcon/cm/stream.h>
 #include <falcon/cm/textstream.h>
 #include <falcon/cm/textwriter.h>
 #include <falcon/cm/textreader.h>
@@ -35,13 +32,15 @@
 // the standard error classes
 #include <falcon/errorclasses.h>
 
+#include <falcon/engine.h>
 
 namespace Falcon {
 
 CoreModule::CoreModule():
    Module("core")
 {
-   Ext::ClassStream* classStream = new Ext::ClassStream;
+   static ClassStream* classStream = static_cast<ClassStream*>(
+            Engine::instance()->streamClass());
    
    *this
       // Standard functions
@@ -53,10 +52,7 @@ CoreModule::CoreModule():
       // Standard classes
       << new Ext::ClassURI
       << new Ext::ClassPath
-      << new Ext::ClassRestorer
-      << new Ext::ClassStorer
       << new Ext::ClassParallel
-      << classStream
       << new Ext::ClassTextStream( classStream )
       << new Ext::ClassTextWriter( classStream )
       << new Ext::ClassTextReader( classStream )

@@ -20,6 +20,7 @@
 #include <falcon/string.h>
 #include <falcon/modmap.h>
 #include <falcon/symbolmap.h>
+#include <falcon/pstep.h>
 
 namespace Falcon {
 
@@ -30,6 +31,8 @@ class Symbol;
 class ModLoader;
 class ImportDef;
 class Mantra;
+class Process;
+class Function;
 
 /** Collection of (static) modules active in a virtual machine.
  
@@ -79,17 +82,16 @@ class FALCON_DYN_CLASS ModSpace
 public:
    
    /** Creates the module space, eventually linked to a parent module space.
+    \param owner The virtual machine owning this module space.
     \param parent A parent module space where to look for already loaded modules
     or exported symbols.
     */
-   ModSpace( ModSpace* parent = 0 );
+   ModSpace( VMachine* owner, ModSpace* parent = 0 );
    virtual ~ModSpace();
    
    /** Adds a new module to the module space. 
     \param module The module to be added.
-    \param bExport If true, honor the export requests of the module.
-    \return true if added, false otherwise.
-    
+
     If the same identical module is present (by address), the method returns
     false. As multiple modules having the same logical name should not exist in
     the same space, the incoming module will automatically receive a different
@@ -97,180 +99,70 @@ public:
     If this is not desirable, check the result of getModuleByName() method
     before trying to add the module.
     
+
+
     \note This is the first step of creating a module space. It's optional,
     and should be only used if the module is known not to have any
     dependency.
     */
-   bool add( Module* mod, bool bExport = false, bool bOnw = true );
+   void add( Module* mod );
    
-   /** Adds the given module and recursively tries to load the dependencies.
-    \param mod The Module that must be added to the space.
-    \param bExport whether the space should honor the export request of the
-            given module or not.
-    \throw IoError on error finding or loading the required modules.   
-    
-    This methods calls add() on the given module and then resolveDeps to
-    resolve all the dependencies of the added module.
-    
-    \note In case of error, the space should not be considered safe and
-    be destroyed as soon as possible.
-    
-    \note This is the second step of creating the module space. The method
-    repeatedly calls add() to store in the added modules in the module space.
-    
-    */
-   void resolve( Module* mod, bool bExport = false, bool bOwn = true );
+
+   void resolveDeps( VMContext* ctx, Module* mod );
    
-   
-   /** Resolves an import request.
-    
-    \param ml A mod loader that is used to load 
-    \param def The definition containing the module and the symbols to be resolved.
-    \param requester A module where the resolved symbols are stored. Can be null.
-    \throw IoError on error finding or loading the required modules.
-    \throw A link error with suberrors in case of errors during the linkage.
-    
-    This method checks or eventually performs all the linkages that are specified
-    by the given import definition. If a target module is given, its onImportResolved
-    is repeatedly called each time a symbol is resolved, and if the import directive
-    contains a namespace import requests (e.g. import * from...) then the onImportAll
-    is repeatedly called. In both cases, the name provided is the one that the
-    symbol should have in the requester module (accordingly with the import
-    definition).
-    
-    An empty requester can be used to pre-load the modules and check for correctness
-    of the import directive before actually applying it on a requester at a later
-    time.
-    */
-   void resolveImportDef( ImportDef* def, Module* requester = 0 );
-   
-   
-   /** Just resolves the dependencies of a module that was separately added.
-    \param mod The Module that must be added to the space.
-    \param bExport whether the space should honor the export request of the
-            given module or not.
-    \throw IoError on error finding or loading the required modules.   
-    
-    This method is usually called by resolve().
-    
-    */
-   void resolveDeps( Module* mod );
-   
-   /** Links newly added modules.
-    \return A link error containing all the problems in this link
-    step (as sub errors), or 0 if the link process was ok.
-    
-    This method resolves all the link export and import requests pending from
-    the previous add() and resolve steps.
-    
-    In case of error, an Error containing one or more sub-errors is returned.
-    In that case, the space should be considered invalid and destroyed when
-    possible.
-    
-    Calling link() without a prior add() or reslove() method call has no
-    effect.
-    
-    \note This is the third step of creating the module space.     
-    */
-   Error* link();   
-    
-    /** Readies the call to initialize the modules in the VM.
-     \param ctx A VMContext The context where the initialization shall take place.
-     \return True if there was some initialization function to be added to the
-     context, false if there isn't any initialization procedure scheduled.
-     
-     This method stores the calls to the __main__ functions and object initialization
-     methods that each module require to be performed in the given context, 
-     in proper load order (last module added will have its initialization
-     sequence called first). 
-     
-     A subsequent execution of the VM containing the given context will invoke
-     the intialization procedures in proper order.
-     
-     Calling this method clears the list of initialization procedures scheduled
-     for execution, so multiple calls to this method have no effect.
-     
-     \note This is the fourth step of creating the module space.     
-    */
-   bool readyContext( VMContext* ctx );
+   Process* loadModule( const String& name, bool isUri, bool isMain = false);
     
    //===================================================================
    // Service functions
    //===================================================================
    
-   Mantra* findDynamicMantra( 
+   void findDynamicMantra(
+      VMContext* ctx,
       const String& moduleUri, 
       const String& moduleName, 
-      const String& className, 
-      bool &addedMod );
+      const String& className );
    
-   
-   /** Returns a previously stored module by name.
-    \param name The logical name of the module to be searched.
-    \return 0 if not found, a valid module if found.
-    */
-   Module* getModuleByName( const String& name);
       
    void gcMark( uint32 mark );
    
    uint32 lastGCMark() const { return m_lastGCMark; }
-   
-   /** Returns all the generated error as a single composed error. 
-    \return a LinkError of type e_link_error containing all the suberrors, 
-    or 0 if there was no error to be returned.
-    
-    Once called, the previusly recorded errors are cleared.
-    */
-   Error* makeError() const;
     
       
    /** Get the space in which this group resides. */
    ModSpace* parent() const { return m_parent; }
    
-   /** Finds a module stored in this space by name.
-    \param name The name of the module.
-    \return A module if found, 0 otherwise.
-    
-    This method searches a module in this space, 
-    or in the parent space(s) if there are parents.    
-    */
-   inline Module* findByName( const String& name ) const { 
-         bool bDummy; 
-         return findByName(name, bDummy);
-   }
    
    /** Finds a module stored in this space by name.
     \param name The name of the module.
-    \param bExport will be set to true if the module is scheduled to export its variables.
     \return A module if found, 0 otherwise.
     
-    This method searches a module in this space, 
-    or in the parent space(s) if there are parents.    
+    This method searches a module in this space,  or in the parent space(s) if there are parents.
     */
-   Module* findByName( const String& name, bool& bExport ) const;
+   inline Module* findByName( const String& name ) const {
+      return findModule( name, false );
+   }
    
    
    /** Finds a module stored in this space by its URI.
     \param name The URI of the module.
     \return A module if found, 0 otherwise.
     
-    This method searches a module in this space, 
-    or in the parent space(s) if there are parents.    
+    This method searches a module in this space,  or in the parent space(s) if there are parents.
     */
    inline Module* findByURI( const String& uri ) const { 
-         bool bDummy; 
-         return findByURI(uri, bDummy);
+        return findModule( uri, true );
    }
    
-   /** Finds a module stored in this space by URI.
-    \param uri The URI of the module.
-    \param bExport will be set to true if the module is scheduled to export its variables.
+   /** Finds a module stored in this space by its name or URI.
+    \param name_uri The name or URI of the module.
+    \param isUri True if the name_uri parameter is a URI, false if it's a name.
     \return A module if found, 0 otherwise.
-    
-    This method searches a module in this space, 
-    or in the parent space(s) if there are parents.    
+
+    This method searches a module in this space,
+    or in the parent space(s) if there are parents.
     */
-   Module* findByURI( const String& uri, bool& bExport ) const;
+   Module* findModule( const String& name_uri, bool isUri ) const;
+
 
    /** Exports a single symbol on the module space. 
     */
@@ -311,45 +203,118 @@ public:
       return findExportedSymbol( symName, declarer );
    }
    
-   /** Links the unlinked imports newly found in a single module.
-    \param mod Module.
-    */
-   Error* linkModuleImports( Module* mod );
    
    /** Gets the module loader associated with this virtual machine. */
    ModLoader* modLoader() const { return m_loader; }
-   
-   /** Gets the active context bound with this module loader. */
-   VMContext* context() const { return m_ctx; }
-   
+
+   /** Virtual machine associated with this space. */
+   VMachine* vm() const { return m_vm; }
+
 private:      
    class Private;
    ModSpace::Private* _p;
    friend class Private;
-   
-   class ModuleData;
-   
-   VMContext* m_ctx;
+
+   VMachine* m_vm;
    ModSpace* m_parent;
    uint32 m_lastGCMark;
+   Function* m_loaderFunc;
    
    ModLoader* m_loader;
    
-   ModuleData* findModuleData( const String& name, bool isUri ) const;   
    void exportFromModule( Module* mod, Error*& link_errors );
    
-   void linkImports(Module* mod, Error*& link_errors);
-   void linkNSImports(Module* mod );
+   void importInModule(Module* mod, Error*& link_errors);
+   void importInNS(Module* mod );
    void addLinkError( Error*& top, Error* newError );
    
-   void linkSpecificDep( Module* asker, void* def, Error*& link_errors);
-   void linkGeneralDep( Module* asker, void* def, Error*& link_errors);
-   
-   Module* retreiveDynamicModule( 
-      const String& moduleUri, 
-      const String& moduleName,  
-      bool &addedMod );
+   void importSpecificDep( Module* asker, void* def, Error*& link_errors);
+   void importGeneralDep( Module* asker, void* def, Error*& link_errors);
+   void loadSubModule( const String& name, bool isUri, bool isMain, VMContext* tgtContext );
 
+
+   void retreiveDynamicModule(
+      VMContext* ctx,
+      const String& moduleUri, 
+      const String& moduleName);
+
+
+   class PStepLoader: public PStep
+   {
+   public:
+      PStepLoader( ModSpace* owner ): m_owner( owner ) {
+         apply = apply_;
+      }
+      virtual ~PStepLoader() {};
+      virtual void describeTo( String& str, int ) const { str = "PStepLoader"; }
+
+   private:
+      static void apply_( const PStep* self, VMContext* ctx );
+      ModSpace* m_owner;
+   };
+   PStepLoader m_stepLoader;
+
+
+   class PStepResolver: public PStep
+   {
+   public:
+      PStepResolver( ModSpace* owner ): m_owner( owner ) {
+         apply = apply_;
+      }
+      virtual ~PStepResolver() {};
+      virtual void describeTo( String& str, int ) const { str = "PStepResolver"; }
+
+   private:
+      static void apply_( const PStep* self, VMContext* ctx );
+      ModSpace* m_owner;
+   };
+   PStepResolver m_stepResolver;
+
+
+   class PStepDynModule: public PStep
+   {
+   public:
+      PStepDynModule( ModSpace* owner ): m_owner( owner ) {
+         apply = apply_;
+      }
+      virtual ~PStepDynModule() {};
+      virtual void describeTo( String& str, int ) const { str = "PStepDynModule"; }
+
+   private:
+      static void apply_( const PStep* self, VMContext* ctx );
+      ModSpace* m_owner;
+   };
+   PStepDynModule m_stepDynModule;
+
+   class PStepDynMantra: public PStep
+   {
+   public:
+   PStepDynMantra( ModSpace* owner ): m_owner( owner ) {
+         apply = apply_;
+      }
+      virtual ~PStepDynMantra() {};
+      virtual void describeTo( String& str, int ) const { str = "PStepDynMantra"; }
+
+   private:
+      static void apply_( const PStep* self, VMContext* ctx );
+      ModSpace* m_owner;
+   };
+   PStepDynMantra m_stepDynMantra;
+
+   class PStepExecMain: public PStep
+   {
+   public:
+      PStepExecMain( ModSpace* owner ): m_owner( owner ) {
+         apply = apply_;
+      }
+      virtual ~PStepExecMain() {};
+      virtual void describeTo( String& str, int ) const { str = "PStepExecMain"; }
+
+   private:
+      static void apply_( const PStep* self, VMContext* ctx );
+      ModSpace* m_owner;
+   };
+   PStepExecMain m_stepExecMain;
 };
 
 }

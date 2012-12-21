@@ -28,7 +28,7 @@ namespace Falcon
  data coming from outside the Falcon engine. However, not all the data requires
  to be that flexible. 
  
- This class handles a hierarcy of "generic" objects that share the same GenericItem
+ This class handles a hierarchy of "generic" objects that share the same GenericItem
  base class. When the item doesn't require particular specific management,
  but it just requires to be shared with the engine through common and simple rules,
  and it is possible to inherit the object from the GenericItem base class, then

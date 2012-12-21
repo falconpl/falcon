@@ -248,6 +248,8 @@ FALCON_DEFINE_METHOD_P1( ClassTextStream, read )
 
 FALCON_DEFINE_METHOD_P1( ClassTextStream, grab )
 {
+   static Class* clsString = Engine::instance()->stringClass();
+
    Item* i_count = ctx->param(0);
    if( i_count == 0 || !(i_count->isOrdinal()) )
    {
@@ -271,8 +273,7 @@ FALCON_DEFINE_METHOD_P1( ClassTextStream, grab )
    }
    
    // Return the string.
-   Item rv(str, true, __LINE__, SRC); // force to garbage the string NOW!
-   ctx->returnFrame( rv );
+   ctx->returnFrame( FALCON_GC_STORE( clsString, str ) );
 }
 
 
@@ -305,6 +306,8 @@ FALCON_DEFINE_METHOD_P1( ClassTextStream, readLine )
 
 FALCON_DEFINE_METHOD_P1( ClassTextStream, grabLine )
 {
+   static Class* clsString = Engine::instance()->stringClass();
+
    Item* i_count = ctx->param(0);
    if( i_count != 0 && !(i_count->isOrdinal()) )
    {
@@ -332,8 +335,7 @@ FALCON_DEFINE_METHOD_P1( ClassTextStream, grabLine )
    }
    
    // Return the string.
-   Item rv(str, true, __LINE__, SRC); // force to garbage the string NOW!
-   ctx->returnFrame( rv );
+   ctx->returnFrame( FALCON_GC_STORE( clsString, str ) );
 }
 
 

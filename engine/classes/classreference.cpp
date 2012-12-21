@@ -69,9 +69,10 @@ void* ClassReference::createInstance() const
 }
 
 void ClassReference::store( VMContext*, DataWriter*, void* ) const {}
-void ClassReference::restore( VMContext*, DataReader*, void*& empty ) const 
+void ClassReference::restore( VMContext* ctx, DataReader* ) const
 {
-   empty = new Variable; // but don't set the base; that will be restored later.
+   ctx->pushData( FALCON_GC_STORE( this, new Variable ) );
+   // but don't set the base; that will be restored later.
 }
 
 void ClassReference::flatten( VMContext*, ItemArray& subItems, void* instance ) const

@@ -91,7 +91,7 @@ VMachine::VMachine( Stream* stdIn, Stream* stdOut, Stream* stdErr )
    // create the first context
    TRACE( "Virtual machine created at %p", this );
    _p = new Private;
-   m_modspace = new ModSpace;
+   m_modspace = new ModSpace(this);
 
    if ( stdIn == 0 )
    {
@@ -331,10 +331,31 @@ void VMachine::quit()
 
 Process* VMachine::createProcess()
 {
-   Process* proc = new Process(this);
-   _p->m_procmap.insert( std::make_pair( proc->id(), proc ) );
-   proc->incref(); // for the target
+   Process* proc = new Process(this );
+   addProcess(proc, false);
    return proc;
+}
+
+
+void VMachine::addProcess( Process* proc, bool launch )
+{
+   fassert( proc->m_vm == this );
+
+   if( proc->m_vm == this )
+   {
+      if( ! proc->m_added ) {
+         _p->m_procmap.insert( std::make_pair( proc->id(), proc ) );
+         proc->incref(); // for the target
+         proc->m_added = true;
+      }
+
+      if( launch ) {
+         // we're assigning the context to the processor/vm/manager system.
+         proc->mainContext()->incref();
+         // processors are synchronized on the context queue.
+         contextManager().readyContexts().add( proc->mainContext() );
+      }
+   }
 }
 
 

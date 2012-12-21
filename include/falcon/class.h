@@ -308,32 +308,38 @@ public:
     there aren't enough information to store the live item on the stream.
     Subclasses must reimplement this method doing something sensible.
 
+    @note the store is allowed to push PSteps to complete the storage at a
+    later time. As the storage operation is complete, the context stack MUST be
+    in the same status as when the storage begins.
+
     @see class_serialize
     */
    virtual void store( VMContext* ctx, DataWriter* stream, void* instance ) const;
 
    /** Restores an instance previously stored on a stream.
-    \param ctx A virtual machine context where the deserialization occours.
+    \param ctx A virtual machine context where the deserialization occurs.
     \param stream The data writer where the instance is being stored.
     \param empty A pointer that will be filled with the new instance (but see below)
     \throw IoError on i/o error during serialization.
     \throw UnserializableError if the class doesn't provide a class-specific
     serialization.
 
+    On return restored item MUST be placed on top of the context data stack, or
+    an exception MUST be thrown. Alternatively, the restore method may push
+    a PStep on the code stack to complete the item restoring at a later stage. In any
+    case, as the restore operation is completed, a single restored item MUST be pushed
+    on top of the context data stack.
+
     By default, the base class raises a UnserializableError, indicating that
     there aren't enough information to store the live item on the stream.
     Subclasses must reimplement this method doing something sensible.
 
-    @note The \b empty pointer will receive the newly created and deserialized instance,
-    but flat classes (those for which isFlatInstance() returns true) expect this
-    pointer to be preallocated as an entity of class Item.
-
     \see class_serialize
    */
-   virtual void restore( VMContext* ctx, DataReader* stream, void*& empty ) const;
+   virtual void restore( VMContext* ctx, DataReader* stream ) const;
 
-   /** Called berfore storage to declare some other items that should be serialized.
-    \param ctx A virtual machine context where the deserialization occours.
+   /** Called before storage to declare some other items that should be serialized.
+    \param ctx A virtual machine context where the deserialization occurs.
     \param stream The data writer where the instance is being stored.
     \param instance The instance that must be serialized.
 
@@ -344,8 +350,10 @@ public:
     VM passing the subItem array to the called subroutine. The items that
     are stored in the array will be serialized afterwards.
 
-    The subItems array is garbage-locked by the Serializer instance that is
-    controlling the serialization process.
+    @note The subItems array garbage collection by the Storer instance that is
+    controlling the serialization process. This means that the class can
+    invoke other psteps and store the subItems array in a local variable or
+    on the context stack without explicitly accounting for garbage.
 
     The base class does nothing.
 
@@ -362,8 +370,10 @@ public:
     filled with the same items, already deserialized, as it was filled by
     flatten() before serialization occured.
 
-    The subItems array is garbage-locked by the Deserializer instance that is
-    controlling the serialization process.
+   @note The subItems array garbage collection by the Restorer instance that is
+    controlling the deserialization process. This means that the class can
+    invoke other psteps and store the subItems array in a local variable or
+    on the context stack without explicitly accounting for garbage.
 
     The base class does nothing.
 

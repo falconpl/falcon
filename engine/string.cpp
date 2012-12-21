@@ -30,6 +30,7 @@
 #include <falcon/engine.h>
 #include <falcon/strtod.h>
 #include <falcon/datareader.h>
+#include <falcon/engine.h>
 
 #include <string.h>
 #include <cstring>
@@ -39,6 +40,8 @@
 
 
 namespace Falcon {
+
+Class* String::m_class_handler = 0;
 
 namespace csh {
 
@@ -51,6 +54,7 @@ MemBuf16 handler_membuf16;
 Static32 handler_static32;
 Buffer32 handler_buffer32;
 MemBuf32 handler_membuf32;
+
 
 
 template<typename t1, typename t2>
@@ -2624,13 +2628,12 @@ length_t String::findLastOf( const String& src, length_t pos ) const
 }
 
 
-
-GCToken* String::garbage()
+Class* String::handler()
 {
-   static Class* stringClass = Engine::instance()->stringClass();
-   static Collector* collector = Engine::instance()->collector();
-
-   return FALCON_GC_STORE( collector, stringClass, this );
+   if (m_class_handler == 0) {
+      m_class_handler = Engine::instance()->stringClass();
+   }
+   return m_class_handler;
 }
 
 }

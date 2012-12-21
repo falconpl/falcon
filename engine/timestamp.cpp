@@ -959,6 +959,11 @@ TimeStamp* TimeStamp::deserialize( DataReader* dr )
    }
 }
 
+void TimeStamp::currentTime()
+{
+   setCurrent(true);
+}
+
 }
 
 /* end of TimeStampapi.cpp */

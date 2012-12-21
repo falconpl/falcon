@@ -87,31 +87,31 @@ void ClassSynFunc::store( VMContext*, DataWriter* stream, void* instance ) const
    synfunc->symbols().store( stream );
 }
 
-void ClassSynFunc::restore( VMContext*, DataReader* stream, void*& empty ) const
+void ClassSynFunc::restore(VMContext* ctx, DataReader* stream) const
 {
    bool bPred, bEta;
    int line;
    String name, signature;
+   int32 pcount;
    
    stream->read( name );
    stream->read( line );
    stream->read( bPred );
    stream->read( bEta );
    stream->read( signature );
-   
-   
+   stream->read(pcount);
+
    SynFunc* synfunc = new SynFunc( name, 0, line );
+   ctx->pushData( FALCON_GC_STORE(this, synfunc) );
+   
    synfunc->setPredicate( bPred );
    synfunc->setEta( bEta );
    synfunc->signature( signature );
-   
-   int32 pcount;
-   stream->read(pcount);
+
    synfunc->paramCount( pcount );
    synfunc->symbols().restore( stream );
-   
-   empty = synfunc;
 }
+
 
 void ClassSynFunc::flatten( VMContext*, ItemArray& subItems, void* instance ) const
 {
@@ -127,7 +127,6 @@ void ClassSynFunc::flatten( VMContext*, ItemArray& subItems, void* instance ) co
       Class* synClass = stmt->handler();
       subItems.append(Item( synClass, stmt ) );
    }
-   
 }
 
 

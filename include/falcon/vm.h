@@ -246,6 +246,15 @@ public:
    */
    Process* getProcessByID( int32 pid );
 
+   /**
+    * Adds a process created elsewhere to this VM.
+    * \param p the Process to be added.
+    * \param bLaunch if true, make immediately runnable.
+    *
+    * This is usually done automatically by Process::launch(), if needed.
+    */
+   void addProcess( Process* p, bool bLaunch );
+
    /** Changes the active processor count.
     \param count new processor count or 0 for default processor count.
 

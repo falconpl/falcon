@@ -26,6 +26,7 @@
 #include <falcon/string.h>
 #include <falcon/mt.h>
 #include <falcon/pool.h>
+#include <falcon/log.h>
 
 #include <falcon/errors/codeerror.h>
 
@@ -81,6 +82,9 @@
 #include <falcon/classes/metaclass.h>
 #include <falcon/classes/metafalconclass.h>
 #include <falcon/classes/metahyperclass.h>
+#include <falcon/classes/classstorer.h>
+#include <falcon/classes/classrestorer.h>
+#include <falcon/classes/classstream.h>
 
 #include <falcon/classes/classmodule.h>
 
@@ -159,6 +163,7 @@ Engine::Engine()
 
 
    m_mtx = new Mutex;
+   m_log = new Log;
    m_collector = new Collector;   
 
    //=====================================
@@ -284,6 +289,10 @@ Engine::Engine()
    //
       
    m_closureClass = new ClassClosure;
+   m_restorerClass = new ClassRestorer;
+   m_storerClass = new ClassStorer;
+   m_streamClass = new ClassStream;
+
    m_symbolClass = new ClassSymbol;
    
    ClassTreeStep* ctreeStep = new ClassTreeStep;
@@ -291,14 +300,20 @@ Engine::Engine()
    m_statementClass = new ClassStatement(ctreeStep);
    m_exprClass = new ClassExpression(ctreeStep);
    m_syntreeClass = new ClassSynTree(ctreeStep, static_cast<ClassSymbol*>(m_symbolClass));
-      
+
+   m_moduleClass = new ClassModule;
+
    addMantra(m_closureClass);
    addMantra(m_treeStepClass);
    addMantra(m_statementClass);
    addMantra(m_exprClass);
    addMantra(m_syntreeClass);
    addMantra(m_symbolClass); 
-   addMantra( new ClassModule );
+   addMantra(m_moduleClass);
+   addMantra(m_restorerClass);
+   addMantra(m_storerClass);
+   addMantra(m_streamClass);
+
    addMantra( new ClassComposition );
    
    ExprInherit::IRequirement::registerMantra();
@@ -311,11 +326,6 @@ Engine::Engine()
    // The Core Module
    //
    m_core  = new CoreModule;
-
-   // ====================================
-   // TODO: Prepare the TLS
-   //
-   m_currentContext = 0;
       
    MESSAGE( "Engine creation complete" );
 }
@@ -328,7 +338,7 @@ Engine::~Engine()
    m_collector->stop();
    
    /** Bye bye core... */
-   delete m_core;
+   m_core->decref();
 
    // ===============================
    // DO NOT Delete standard item classes -- they are mantras
@@ -395,13 +405,13 @@ Engine::~Engine()
       delete m_pools;
    }
 
+   delete m_log;
    MESSAGE( "Engine destroyed" );
 }
 
 void Engine::init()
 {
    MESSAGE( "Engine init()" );
-   fassert( m_instance == 0 );
    if( m_instance == 0 )
    {
       m_instance = new Engine;
@@ -577,15 +587,62 @@ Engine* Engine::instance()
    fassert( m_instance != 0 );
    return m_instance;
 }
-
  
-Collector* Engine::collector() const
+Collector* Engine::collector()
 {
    fassert( m_instance != 0 );
-   return m_instance->m_collector;
+   fassert( m_instance->m_collector != 0 );
+   static Collector* coll = m_instance->m_collector;
+   return coll;
 }
 
+GCToken* Engine::GC_store( const Class* cls, void* data )
+{
+   fassert( m_instance != 0 );
+   fassert( m_instance->m_collector != 0 );
+   return m_instance->m_collector->store( cls, data );
+}
 
+GCLock* Engine::GC_storeLocked( const Class* cls, void* data )
+{
+   fassert( m_instance != 0 );
+   fassert( m_instance->m_collector != 0 );
+   return m_instance->m_collector->storeLocked( cls, data );
+}
+
+GCToken* Engine::GC_H_store( const Class* cls, void* data, const String& file, int line )
+{
+   fassert( m_instance != 0 );
+   fassert( m_instance->m_collector != 0 );
+   return m_instance->m_collector->H_store( cls, data, file, line );
+}
+
+GCLock* Engine::GC_H_storeLocked( const Class* cls, void* data, const String& src, int line )
+{
+   fassert( m_instance != 0 );
+   fassert( m_instance->m_collector != 0 );
+   return m_instance->m_collector->H_storeLocked( cls, data, src, line );
+}
+
+GCLock* Engine::GC_lock( const Item& item )
+{
+   fassert( m_instance != 0 );
+   fassert( m_instance->m_collector != 0 );
+   return m_instance->m_collector->lock( item );
+}
+
+void Engine::GC_unlock( GCLock* lock )
+{
+   fassert( m_instance != 0 );
+   fassert( m_instance->m_collector != 0 );
+   m_instance->m_collector->unlock( lock );
+}
+
+Log* Engine::log() const
+{
+   fassert( m_instance != 0 );
+   return m_instance->m_log;
+}
    
 //=====================================================
 // Type handlers
@@ -708,6 +765,24 @@ Class* Engine::closureClass() const
 }
 
 
+Class* Engine::storerClass() const
+{
+   fassert( m_instance != 0 );
+   return m_instance->m_storerClass;
+}
+
+Class* Engine::restorerClass() const
+{
+   fassert( m_instance != 0 );
+   return m_instance->m_restorerClass;
+}
+
+Class* Engine::streamClass() const
+{
+   fassert( m_instance != 0 );
+   return m_instance->m_streamClass;
+}
+
 ClassRawMem* Engine::rawMemClass() const
 {
    fassert( m_instance != 0 );
@@ -726,25 +801,18 @@ ClassShared* Engine::sharedClass() const
    return m_instance->m_sharedClass;
 }
 
+Class* Engine::moduleClass() const
+{
+   fassert( m_instance != 0 );
+   return m_instance->m_moduleClass;
+}
+
 SynClasses* Engine::synclasses() const
 {
    fassert( m_instance != 0 );
    return m_instance->m_synClasses;
 }
 
-
-VMContext* Engine::currentContext() const 
-{
-   fassert( m_instance != 0 );
-   return m_instance->m_currentContext;
-}
-
-
-void Engine::setCurrentContext( VMContext* ctx ) 
-{
-   fassert( m_instance != 0 );
-   m_instance->m_currentContext = ctx;
-}
 
 Symbol* Engine::baseSymbol() const 
 {

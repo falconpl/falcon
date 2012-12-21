@@ -66,13 +66,13 @@ void ClassPath::store( VMContext*, DataWriter* stream, void* instance ) const
 }
 
 
-void ClassPath::restore( VMContext*, DataReader* stream, void*& empty ) const
+void ClassPath::restore( VMContext* ctx, DataReader* stream ) const
 {
    String pathName;
    stream->read( pathName );
    PathCarrier* pc = new PathCarrier(carriedProps());
+   ctx->pushData( FALCON_GC_STORE( this, pc ) );
    pc->m_path.parse( pathName );
-   empty = pc;
 }
 
 

@@ -84,14 +84,12 @@ void MetaClass::op_toString( VMContext* ctx , void* item ) const
    Class* fc = static_cast<Class*>(item);
    String* sret = new String( "Class " );
    sret->append(fc->name());
-   ctx->topData() = sret;
+   ctx->topData().setUser( FALCON_GC_STORE( sret->handler(), sret ) );
 }
 
 
 void MetaClass::op_call( VMContext* ctx, int32 pcount, void* self ) const
 {
-   static Collector* coll = Engine::instance()->collector();
-
    Class* fc = static_cast<Class*>(self);
    void* instance = fc->createInstance();
    if( instance == 0 )
@@ -112,8 +110,7 @@ void MetaClass::op_call( VMContext* ctx, int32 pcount, void* self ) const
    {
       // save the deep instance and handle it to the collector
       Item* params = ctx->opcodeParams( pcount + 1 );
-      params->setUser( fc, instance );
-      FALCON_GC_STORE( coll, fc, instance );
+      params->setUser( FALCON_GC_STORE( fc, instance ) );
       
       // finally, invoke init.
       if( fc->op_init( ctx, instance, pcount ) )

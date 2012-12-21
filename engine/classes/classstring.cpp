@@ -67,14 +67,14 @@ void ClassString::store( VMContext*, DataWriter* dw, void* data ) const
 }
 
 
-void ClassString::restore( VMContext* , DataReader* dr, void*& data ) const
+void ClassString::restore( VMContext* ctx, DataReader* dr ) const
 {
    String* str = new String;
 
    try
    {
       dr->read( *str );
-      data = str;
+      ctx->pushData( FALCON_GC_STORE( this, dr ) );
    }
    catch( ... )
    {
@@ -156,7 +156,7 @@ void ClassString::op_add( VMContext* ctx, void* self ) const
 
       copy->append( op2->describe() );
 
-      ctx->stackResult( 2, copy->garbage() );
+      ctx->stackResult( 2, FALCON_GC_HANDLE(copy) );
 
       return;
    }
@@ -168,7 +168,7 @@ void ClassString::op_add( VMContext* ctx, void* self ) const
 
       copy->append( *static_cast<String*>( inst ) );
 
-      ctx->stackResult( 2, copy->garbage() );
+      ctx->stackResult( 2, FALCON_GC_HANDLE(copy) );
 
       return;
    }
@@ -228,7 +228,7 @@ bool ClassString::op_init( VMContext* ctx, void* instance, int pcount ) const
          itm->forceClassInst( cls, data );
 
          // then ensure that the stack is as we need.
-         ctx->pushData( self );
+         ctx->pushData( FALCON_GC_HANDLE(self) );
          ctx->pushData( *itm );
          
          // and finally invoke stringify operation.
@@ -272,7 +272,7 @@ void ClassString::op_aadd( VMContext* ctx, void* self ) const
       {
          String* copy = new String( *str );
          copy->append( *op2->asString() );
-         ctx->stackResult( 2, copy->garbage() );
+         ctx->stackResult( 2, FALCON_GC_HANDLE(copy) );
       }
       else
       {
@@ -288,7 +288,7 @@ void ClassString::op_aadd( VMContext* ctx, void* self ) const
       {
          String* copy = new String( *str );
          copy->append( op2->describe() );
-         ctx->stackResult( 2, copy->garbage() );
+         ctx->stackResult( 2, FALCON_GC_HANDLE(copy) );
       }
       else
       {
@@ -335,7 +335,7 @@ void ClassString::NextOp::apply_( const PStep*, VMContext* ctx )
    {
       String* copy = new String( *self );
       copy->append( *deep );
-      ctx->stackResult( 2, copy->garbage() );
+      ctx->stackResult( 2, FALCON_GC_HANDLE(copy) );
    }
    else
    {
@@ -383,7 +383,7 @@ void ClassString::op_getIndex( VMContext* ctx, void* self ) const
       if( str.isText() ) {
          String *s = new String();
          s->append( str.getCharAt( v ) );
-         ctx->stackResult( 2, s->garbage() );
+         ctx->stackResult( 2, FALCON_GC_HANDLE(s) );
       }
       else {
          ctx->stackResult(2, Item((int64) str.getCharAt(v)) );
@@ -469,7 +469,7 @@ void ClassString::op_getIndex( VMContext* ctx, void* self ) const
          s->toMemBuf();
       }
 
-      ctx->stackResult( 2, s->garbage() );
+      ctx->stackResult( 2, FALCON_GC_HANDLE(s) );
    }
    else
    {

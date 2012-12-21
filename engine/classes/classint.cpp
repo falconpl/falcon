@@ -66,11 +66,11 @@ void ClassInt::store( VMContext*, DataWriter* dw, void* data ) const
 }
 
 
-void ClassInt::restore( VMContext* , DataReader* dr, void*& data ) const
+void ClassInt::restore( VMContext* ctx, DataReader* dr ) const
 {
    int64 value;
    dr->read( value );
-   static_cast<Item*>( data )->setInteger(value);
+   ctx->pushData( Item().setInteger(value) );
 }
 
 
@@ -130,7 +130,7 @@ void ClassInt::op_toString( VMContext* ctx, void* self ) const
    Item* iself = static_cast<Item*>(self);
    String* s = new String;
    s->N( iself->asInteger() );   
-   ctx->topData() = s->garbage(); // will garbage S
+   ctx->topData() = FALCON_GC_HANDLE(s); // will garbage S
 }
 
 

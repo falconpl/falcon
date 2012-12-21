@@ -27,8 +27,14 @@
 #include <falcon/errors/genericerror.h>
 #include <falcon/importdef.h>
 #include <falcon/pseudofunc.h>
+#include <falcon/process.h>
+#include <falcon/vm.h>
+#include <falcon/stdsteps.h>
+#include <falcon/synfunc.h>
+#include <falcon/psteps/stmtreturn.h>
 
 #include <falcon/errors/unserializableerror.h>
+#include <falcon/errors/ioerror.h>
 
 #include <map>
 #include <deque>
@@ -36,41 +42,11 @@
 #include "module_private.h"
 
 namespace Falcon {
-
-class ModSpace::ModuleData
-{
-public:
-   Module* m_mod;
-   bool m_bExport;
-   bool m_bExported;
-   bool m_bOwn;
-   
-   ModuleData( Module* mod, bool bExport, bool bOwn ):
-      m_mod( mod ),
-      m_bExport( bExport ),
-      m_bExported( false ),
-      m_bOwn( bOwn )
-   {      
-   }
-   
-   ~ModuleData()
-   {
-      if ( m_bOwn )
-      {
-         delete m_mod;
-      }
-   }
-};
    
 
 class ModSpace::Private
 {
 public:
-      
-   typedef std::deque<ModSpace::ModuleData*> ModList;
-   ModList m_invokeOrder;
-   ModList m_linkOrder;
-   
    class ExportSymEntry{
    public:
       Module* m_mod;
@@ -92,7 +68,7 @@ public:
    typedef std::map<String, ExportSymEntry> ExportSymMap;
    ExportSymMap m_symMap;
    
-   typedef std::map<String, ModSpace::ModuleData*> ModMap;
+   typedef std::map<String, Module*> ModMap;
    ModMap m_modmap;
    ModMap m_modmapByUri;  
    
@@ -105,7 +81,7 @@ public:
       ModMap::iterator iter = m_modmap.begin();
       while( iter != m_modmap.end() )
       {
-         delete iter->second;
+         iter->second->decref();
          ++iter;
       }
    }  
@@ -115,12 +91,21 @@ public:
 // Main class
 //
 
-ModSpace::ModSpace( ModSpace* parent ):
+ModSpace::ModSpace( VMachine* owner, ModSpace* parent ):
    _p( new Private ),   
    m_parent(parent),
-   m_lastGCMark(0)
+   m_lastGCMark(0),
+   m_stepLoader(this),
+   m_stepResolver(this),
+   m_stepDynModule(this),
+   m_stepDynMantra(this),
+   m_stepExecMain(this)
 {
+   m_vm = owner;
    m_loader = new ModLoader(this);
+   SynFunc* sf = new SynFunc("$loadModule");
+   sf->syntree().append( new StmtReturn );
+   m_loaderFunc = sf;
 }
 
 
@@ -128,25 +113,68 @@ ModSpace::~ModSpace()
 {
    delete _p;
    delete m_loader;
+   delete m_loaderFunc;
 }
 
 
-bool ModSpace::add( Module* mod, bool bExport, bool bOwn )
+Process* ModSpace::loadModule( const String& name, bool isUri,  bool isMain )
 {
-   TRACE( "ModSpace::add %s %s",
-      mod->name().c_ize(), bExport ? "with export" :  "" 
-      );
-   
+
+   Process* process = m_vm->createProcess();
+   VMContext* tgtContext = process->mainContext();
+   tgtContext->call( m_loaderFunc, 0 );
+   tgtContext->pushCode(&Engine::instance()->stdSteps()->m_returnFrameWithTop);
+
+   loadSubModule( name, isUri, isMain, tgtContext );
+
+   return process;
+}
+
+
+
+void ModSpace::loadSubModule( const String& name, bool isUri, bool isMain, VMContext* tgtContext )
+{
+   if( ! isMain ) {
+      // skip the main module set step
+      tgtContext->currentCode().m_seqId = 1;
+   }
+
+   bool loading;
+
+   if( isUri )
+   {
+      loading = m_loader->loadFile( tgtContext, name, ModLoader::e_mt_none, true );
+   }
+   else
+   {
+      loading = m_loader->loadName( tgtContext, name );
+   }
+
+   if( ! loading ) {
+      tgtContext->popCode();
+      tgtContext->popData();
+      throw new IOError( ErrorParam( e_mod_notfound, __LINE__, SRC )
+               .extra( name ) );
+   }
+}
+
+void ModSpace::add( Module* mod )
+{
+   TRACE( "ModSpace::add %s", mod->name().c_ize() );
+   mod->incref();
+
    Private::ModMap::iterator iter = _p->m_modmap.find( mod->name() );
    if( iter != _p->m_modmap.end() )
    {
       String name = mod->name();
       int count = 1;
-      while( iter != _p->m_modmap.end() && name == iter->second->m_mod->name() )
+      while( iter != _p->m_modmap.end() && name == iter->second->name() )
       {
-         if( mod == iter->second->m_mod )
+         if( mod == iter->second )
          {
-            return false;
+            // we already have this module.
+            mod->decref();
+            return;
          }
 
          name = mod->name() + "-";
@@ -157,205 +185,25 @@ bool ModSpace::add( Module* mod, bool bExport, bool bOwn )
       mod->name( name );
    }
    
-   ModuleData* theData = new ModuleData( mod, bExport, bOwn );
    // add the module to the known modules...
-   _p->m_modmap[mod->name()] = theData;
+   _p->m_modmap[mod->name()] = mod;
    // paths are unique by definition
-   _p->m_modmapByUri[mod->uri()] = theData;
+   // -- i.e. we don't care if we have multiple modules with the same path
+   _p->m_modmapByUri[mod->uri()] = mod;
    
-   // and to the list of modules to be served...
-   _p->m_linkOrder.push_back( theData );
-   _p->m_invokeOrder.push_back( theData );
    // tell the module we're in charge.
    mod->moduleSpace(this);
-   
-   return true;
 }
 
 
-void ModSpace::resolve( Module* mod, bool bExport, bool bOwn )
+void ModSpace::resolveDeps( VMContext* ctx, Module* mod )
 {
-    TRACE( "ModSpace::resolve %s %s",
-      mod->name().c_ize(), bExport ? "with export" :  "" 
-      );
-    
-   // save the module as requested.
-   add( mod, bExport, bOwn );
+   static StdSteps* steps = Engine::instance()->stdSteps();
+   static Class* modcls = Engine::instance()->moduleClass();
 
-   resolveDeps( mod );
-}
-
-
-void ModSpace::resolveImportDef( ImportDef* def, Module* requester ) 
-{
-   TRACE( "ModSpace::resolveImportDef for %s", def->sourceModule().c_ize() );
-   
-   Module* sourcemod = 0;
-   
-   // do we have a module to load?
-   if( def->sourceModule().size() != 0 )
-   {
-      ModuleData* sourcedt = findModuleData( def->sourceModule(), def->isUri() );
-      
-      if ( sourcedt == 0 )
-      {
-         sourcemod = def->isUri() ? m_loader->loadFile( def->sourceModule() ) : 
-                                  m_loader->loadName( def->sourceModule() );
-         
-         if( sourcemod == 0 )
-         {
-            TRACE1( "ModSpace::resolveImportDef failed to load request %s %s",
-                  def->sourceModule().c_ize(),
-                  def->isUri() ? "(as uri)" :  "(as name)" 
-                  );
-
-            Error* em = new LinkError( ErrorParam(e_mod_notfound, 0 )
-               .origin( ErrorParam::e_orig_linker )
-               .extra( def->sourceModule() ) );            
-            if( requester ) em->module( requester->uri() );
-            
-            throw em;
-         }
-         
-         // be sure the loaded module deps are resolved as well.
-         resolve( sourcemod, def->isLoad(), true );
-      }
-      else {
-         sourcemod = sourcedt->m_mod;
-      }
-      
-      if ( requester != 0 )
-      {
-         ModRequest* req = requester->_p->m_mrmap[def->sourceModule()];
-         if( req != 0 )
-         {
-            req->m_module = sourcemod;
-         }
-      }
-   }   
-}
-
-
-void ModSpace::resolveDeps( Module* mod)
-{   
-   TRACE( "ModSpace::resolveDeps %s", mod->name().c_ize() );
-    
-   // scan the dependencies.
-   Module::Private* prv = mod->_p;
-   Module::Private::ReqList &reqs = prv->m_mrlist;
-   
-   Module::Private::ReqList::iterator ri = reqs.begin();
-   while( ri != reqs.end() )
-   {
-      ModRequest* req = *ri;
-      
-      // is this a request to load or import a module?
-      if ( req->m_module == 0 )
-      {
-         // have we got the module here?
-         ModuleData* md = findModuleData( req->m_name, req->m_bIsURI );
-         
-         // No -- try to load.
-         if( md == 0 )
-         {
-            req->m_module = req->m_bIsURI ? 
-                                 m_loader->loadName( req->m_name ) : 
-                                 m_loader->loadFile( req->m_name );
-
-            if( req->m_module == 0 )
-            {
-               TRACE1( "ModSpace::resolveDeps failed to load request %s %s",
-                     req->m_name.c_ize(),
-                     req->m_bIsURI ? "(as uri)" : "(as name)" 
-                     );
-
-               Error* em = new LinkError( ErrorParam(e_mod_notfound, 0, mod->uri() )
-                  .origin( ErrorParam::e_orig_linker )
-                  .extra( req->m_name ) );            
-
-               throw em;
-            }
-
-            // be sure the loaded module deps are resolved as well.
-            resolve( req->m_module, req->m_isLoad, true );
-         }
-         else 
-         {
-            req->m_module = md->m_mod;
-            
-            // eventually promote to load.
-            if( req->m_isLoad && ! md->m_bExport )
-            {
-               md->m_bExport = true;
-               _p->m_linkOrder.push_back( md );
-            }
-         }
-      }     
-      
-      ++ri;
-   }
-}
-
-
-Error* ModSpace::link()
-{
-   MESSAGE( "ModSpace::link start" );
-   
-   Error* link_errors = 0;
-   
-   // first, publish all the exports.
-   Private::ModList& list = _p->m_linkOrder;
-   Private::ModList::iterator iter = list.begin();
-   while( iter != list.end() )
-   {
-      ModuleData* md = *iter;
-      Module* mod = md->m_mod;
-      
-      // shall we export something?
-      if( md->m_bExport && ! md->m_bExported )
-      {
-         md->m_bExported  = true;
-         exportFromModule( mod, link_errors );
-      }
-      
-      ++iter;
-   }
-
-   // then resolve the imports.
-   iter = list.begin();
-   while( iter != list.end() )
-   {
-      Module* mod = (*iter)->m_mod;
-      linkImports( mod, link_errors );
-      linkNSImports( mod );
-      ++iter;
-   }
-   
-   // then clear the list
-   list.clear();
-   
-   // in case of error, free the run order that was generated.
-   if ( link_errors != 0 )
-   {
-      _p->m_invokeOrder.clear();
-   }
-   // and return
-   return link_errors;
-}
-
-
-Error* ModSpace::linkModuleImports( Module* mod )
-{
-   TRACE( "ModSpace::linkModuleImports start on %s", mod->uri().c_ize() );
-   Error* link_errors = 0;
-   linkImports( mod, link_errors );
-   
-   if( link_errors == 0 )
-   {
-      linkNSImports( mod );
-   }
-   
-   return link_errors;
+   ctx->pushData( Item( modcls, mod ) );
+   ctx->pushCode( &steps->m_pop );
+   ctx->pushCode( &m_stepResolver );
 }
 
 
@@ -427,7 +275,7 @@ void ModSpace::gcMark( uint32  )
 }
 
 
-void ModSpace::linkImports(Module* mod, Error*& link_errors)
+void ModSpace::importInModule(Module* mod, Error*& link_errors)
 {
    TRACE1( "ModSpace::linkImports importing requests of %s", mod->name().c_ize());
    
@@ -444,11 +292,11 @@ void ModSpace::linkImports(Module* mod, Error*& link_errors)
          // now, we have some symbol to import here. Are they general or specific?
          if( dep->m_idef != 0 )
          {
-            linkSpecificDep( mod, dep, link_errors );
+            importSpecificDep( mod, dep, link_errors );
          }
          else
          {
-            linkGeneralDep( mod, dep, link_errors );
+            importGeneralDep( mod, dep, link_errors );
          }
       }
       ++dep_iter;
@@ -456,10 +304,12 @@ void ModSpace::linkImports(Module* mod, Error*& link_errors)
 }
 
 
-void ModSpace::linkSpecificDep( Module* asker, void* def, Error*& link_errors )
+void ModSpace::importSpecificDep( Module* asker, void* def, Error*& link_errors )
 {
    Module::Private::Dependency* dep = (Module::Private::Dependency*) def;
    
+   TRACE( "ModSpace::linkSpecificDep %s", dep->m_sourceName.c_ize() );
+
    Symbol* sym = 0;
    Module* sourcemod = 0;
       
@@ -508,7 +358,7 @@ void ModSpace::linkSpecificDep( Module* asker, void* def, Error*& link_errors )
 }
 
 
-void ModSpace::linkGeneralDep(Module* asker, void* def, Error*& link_errors)
+void ModSpace::importGeneralDep(Module* asker, void* def, Error*& link_errors)
 {   
    Module::Private::Dependency* dep = (Module::Private::Dependency*) def;
    
@@ -516,6 +366,8 @@ void ModSpace::linkGeneralDep(Module* asker, void* def, Error*& link_errors)
    Module* declarer = 0;
    const String& symName = dep->m_sourceName;
    Symbol* sym;
+
+   TRACE( "ModSpace::linkGeneralDep %s", symName.c_ize() );
 
    sym = findExportedOrGeneralSymbol( asker, symName, declarer );
    // not found? we have a link error.
@@ -539,7 +391,7 @@ void ModSpace::linkGeneralDep(Module* asker, void* def, Error*& link_errors)
 
 
 
-void ModSpace::linkNSImports(Module* mod )
+void ModSpace::importInNS(Module* mod )
 {
    TRACE1( "ModSpace::linkNSImports honoring namespace imports requests of %s", 
          mod->name().c_ize());
@@ -701,65 +553,11 @@ Symbol* ModSpace::findExportedSymbol( const String& symName, Module*& declarer )
 }
 
 
-bool ModSpace::readyContext( VMContext* ctx )
-{
-   bool someRun = false;
-   Private::ModList& mods = _p->m_invokeOrder;
-   
-   // insertion goes first to last because execution goes last to first.   
-   Private::ModList::const_iterator imods = mods.begin();
-   while( imods != mods.end() )
-   {
-      const Module* mod = (*imods)->m_mod;
-      // TODO -- invoke the init methods.
-      
-      if( ! mod->isMain() )
-      {
-         Function* main = mod->getFunction("__main__");
-         if( main != 0 )
-         {
-            ctx->call( main, 0 );
-            someRun = true;
-         }
-      }
-      
-      ++imods;
-   }
-   
-   return someRun;
-}
-
 //=============================================================
 //
 //
 
-Module* ModSpace::findByName( const String& name, bool& bExport ) const
-{
-   ModuleData* md = findModuleData( name, false );
-   if( md != 0 )
-   {
-      bExport = md->m_bExport;
-      return md->m_mod;
-   }
-   
-   return 0;
-}
-      
-   
-Module* ModSpace::findByURI( const String& uri, bool& bExport ) const
-{
-   ModuleData* md = findModuleData( uri, true );
-   if( md != 0 )
-   {
-      bExport = md->m_bExport;
-      return md->m_mod;
-   }
-   
-   return 0;
-}
-
-
-ModSpace::ModuleData* ModSpace::findModuleData( const String& name, bool isUri ) const
+Module* ModSpace::findModule( const String& name, bool isUri ) const
 {
    const Private::ModMap* mm = isUri ? &_p->m_modmapByUri : &_p->m_modmap;
    
@@ -768,7 +566,7 @@ ModSpace::ModuleData* ModSpace::findModuleData( const String& name, bool isUri )
    {
       if( m_parent != 0 )
       {
-         return m_parent->findModuleData( name, isUri );
+         return m_parent->findModule( name, isUri );
       }
       
       return 0;
@@ -788,11 +586,16 @@ void ModSpace::addLinkError( Error*& top, Error* newError )
 }  
 
 
-Module* ModSpace::retreiveDynamicModule( 
+void ModSpace::retreiveDynamicModule(
+      VMContext* ctx,
       const String& moduleUri, 
-      const String& moduleName,  
-      bool &addedMod )
+      const String& moduleName )
 {
+   static Class* clsMod = Engine::instance()->moduleClass();
+
+   TRACE( "ModSpace::retreiveDynamicModule %s, %s",
+            moduleUri.c_ize(), moduleName.c_ize() );
+
    Module* clsContainer = 0;
    // priority in search and load are inverted:
    // search by name -- by uri / load by uri -- by name.
@@ -802,60 +605,262 @@ Module* ModSpace::retreiveDynamicModule(
    if( moduleName != "" )
    {
       clsContainer = this->findByName( moduleName );
-      
-      // if not found, see if we can find by uri
-      if( clsContainer == 0 && moduleUri != "" )
-      {
-         // is the URI around?
-         clsContainer = this->findByURI( moduleUri );
-         if( clsContainer == 0 )
-         {
-            // then try to load the module.
-            clsContainer = m_loader->loadFile( moduleUri, ModLoader::e_mt_none, true );
-            // to be linked?
-            addedMod = clsContainer != 0;
-         }
-      }
-      
-      // Not loaded? -- try to load by name.
-      if( clsContainer == 0 )
-      {
-         // then try to load the module.
-         clsContainer = m_loader->loadName( moduleName );
-         // to be linked?
-         addedMod = clsContainer != 0;
-      }
    }
 
-   return clsContainer;
+   // if not found, see if we can find by uri
+   if( clsContainer == 0 && moduleUri != "" )
+   {
+      // is the URI around?
+      clsContainer = this->findByURI( moduleUri );
+   }
+
+   // still not found?
+   if( clsContainer == 0 )
+   {
+      // then try to load the module via URI
+      ctx->pushData( Item( moduleName.handler(), const_cast<String*>(&moduleName)) );
+      //... delayed check
+      ctx->pushCode( &m_stepDynModule );
+
+      m_loader->loadFile( ctx, moduleUri, ModLoader::e_mt_none, true );
+   }
+   else
+   {
+      TRACE( "ModSpace::retreiveDynamicModule found module %s: %s",
+                 clsContainer->name().c_ize(), clsContainer->uri().c_ize() );
+      ctx->pushData( Item( clsMod, clsContainer ) );
+   }
 }
 
 
-Mantra* ModSpace::findDynamicMantra( 
+void ModSpace::findDynamicMantra(
+      VMContext* ctx,
       const String& moduleUri, 
       const String& moduleName, 
-      const String& className, 
-      bool &addedMod )
+      const String& className )
 {
    static Engine* eng = Engine::instance();
-   
-   Module* clsContainer = retreiveDynamicModule( moduleUri, moduleName, addedMod );
-   Mantra* theClass;
 
-   // still no luck?
-   if( clsContainer == 0 )
+   TRACE( "ModSpace::findDynamicMantra %s, %s, %s",
+            moduleUri.c_ize(), moduleName.c_ize(), className.c_ize() );
+
+   if( moduleUri.size() == 0 && moduleName.size() == 0 )
    {
-      if( moduleName != "" )
+      Mantra* result = eng->getMantra(className);
+      if( result != 0 )
       {
+         MESSAGE( "Found required mantra in engine." );
+         ctx->pushData( Item( result->handler(), result ) );
+         return;
+      }
+      else {
+         // we can't find this stuff in modules -- as we don't have a module to search for.
+         ctx->pushData( Item() );
+         return;
+      }
+   }
+
+   // push the mantra resolver step.
+   ctx->pushData( Item( className.handler(), const_cast<String*>(&className)) );
+   ctx->pushCode( &m_stepDynMantra );
+
+   // and then start resolving the module
+   retreiveDynamicModule( ctx, moduleUri, moduleName );
+}
+
+//================================================================================
+// Psteps
+//================================================================================
+
+
+void ModSpace::PStepLoader::apply_( const PStep* self, VMContext* ctx )
+{
+   Error* error = 0;
+   const ModSpace::PStepLoader* pstep = static_cast<const ModSpace::PStepLoader* >(self);
+
+   int& seqId = ctx->currentCode().m_seqId;
+   // the module we're working on is at top data stack.
+   Module* mod = static_cast<Module*>(ctx->topData().asInst());
+   ModSpace* ms = pstep->m_owner;
+
+   switch( seqId )
+   {
+   // first step: set flag for execution of the main function.
+   case 0:
+      TRACE( "ModSpace::PStepLoader::apply_ step 0 on module %s", mod->name().c_ize() );
+      seqId++;
+      // non-main modules start at step 1
+      mod->setMain( true );
+      //fallthrough
+
+      // second step: add module to the module space.
+   case 1:
+      TRACE( "ModSpace::PStepLoader::apply_ step 1 on module %s", mod->name().c_ize() );
+      seqId++;
+      // store the module
+      ms->add( mod );
+
+      // perform exports, so imports can find them on need.
+      if( mod->usingLoad() ) {
+         ms->exportFromModule( mod, error );
+
+         if( error != 0 ) {
+            throw error;
+         }
+      }
+
+      //do we have some dependency?
+      if( mod->depsCount() > 0 )
+      {
+         // push the code that will solve it.
+         ctx->pushCode( &ms->m_stepResolver );
+         return;
+      }
+
+      // fall-through; third step, link
+   case 2:
+      TRACE( "ModSpace::PStepLoader::apply_ step 2 on module %s", mod->name().c_ize() );
+      seqId++;
+      // Now that deps are resolved, do imports.
+      ms->importInModule( mod, error );
+      if( error != 0 ) {
+         throw error;
+      }
+      ms->importInNS( mod );
+
+      //TODO push init.
+
+      // Push the main funciton only if this is not a main module.
+      if( mod->getMainFunction() != 0 && ! mod->isMain() ) {
+         ctx->call( mod->getMainFunction(), 0 );
+         return;
+      }
+   }
+
+   // Third step -- we can remove self and the module.
+   TRACE( "ModSpace::PStepLoader::apply_ step 2 on module %s", mod->name().c_ize() );
+   // leave the module in the stack if it's main.
+   if( ! mod->isMain() ) {
+      ctx->popData();
+   }
+
+   ctx->popCode();
+}
+
+
+void ModSpace::PStepResolver::apply_( const PStep* self, VMContext* ctx )
+{
+   const ModSpace::PStepResolver* pstep = static_cast<const ModSpace::PStepResolver* >(self);
+   int& seqId = ctx->currentCode().m_seqId;
+
+   // the module we're working on is at top data stack.
+   Module* mod = static_cast<Module*>(ctx->topData().asInst());
+   ModSpace* ms = pstep->m_owner;
+
+   uint32 depsCount = mod->depsCount();
+   TRACE( "ModSpace::PStepResolver::apply_  on module %s (%d/%d)",
+            mod->name().c_ize(), seqId, depsCount );
+
+   while( seqId < (int) depsCount )
+   {
+      // don't alter seqid now, we might check this dependency again.
+      ImportDef* idef = mod->getDep( seqId );
+
+      // do we have a module to import?
+      if( idef->sourceModule().size() != 0 && idef->modReq()->module() == 0 )
+      {
+         // already available?
+         Module* other = ms->findModule( idef->sourceModule(), idef->isUri() );
+         if( other == 0 ) {
+            // No? -- load it -- and always launch main
+            ms->loadSubModule( idef->sourceModule(), idef->isUri(), false, ctx );
+            // -- and wait for the process to have resolved it.
+            return;
+         }
+
+         idef->modReq()->module( other );
+      }
+
+      // get ready for next loop
+      ++seqId;
+   }
+
+   ctx->popCode();
+}
+
+
+void ModSpace::PStepDynModule::apply_( const PStep* self, VMContext* ctx )
+{
+   // --- STACK:
+   // top-1 : module name
+   // top   : module or nil
+   //
+   const ModSpace::PStepDynModule* pstep = static_cast<const ModSpace::PStepDynModule* >(self);
+   ModSpace* ms = pstep->m_owner;
+   const String& moduleName = *ctx->opcodeParam(1).asString();
+   int& seqId = ctx->currentCode().m_seqId;
+
+   TRACE( "ModSpace::PStepDynModule::apply_  %d/2", seqId );
+
+   // Not loaded?
+   if( ctx->topData().isNil() )
+   {
+      if( seqId == 0 )
+      {
+         // try with the name loading
+         seqId++;
+         ctx->popData();
+         TRACE( "ModSpace::PStepDynModule::apply_  module not found, trying to load by name %s",
+                  ctx->topData().asString()->c_ize() );
+         // then try to load the module.
+         ms->m_loader->loadName( ctx, moduleName );
+      }
+      else
+      {
+         TRACE( "ModSpace::PStepDynModule::apply_ module \"%s\" not found giving up",
+                  moduleName.c_ize() );
+         //we're done -- and we have no module.
+
          // we should have found a module -- and if the module has a URI,
          // then it has a name.
          throw new UnserializableError( ErrorParam(e_deser, __LINE__, SRC )
             .origin( ErrorParam::e_orig_runtime)
-            .extra( "Can't find module " + 
-                  moduleName + " for " + className ));
+            .extra( "Can't find module " +
+                  moduleName /*+ " for " + className*/ ));
       }
+   }
+   else
+   {
+      TRACE( "ModSpace::PStepDynModule::apply_  module \"%s\" found, resolving deps",
+               ctx->topData().asString()->c_ize() );
+      // we're done, but we have a module -- let's use the resolver code to proceed.
+      // remove the name string, saving the module down in the stack.
+      ctx->opcodeParam(1) = ctx->opcodeParam(0);
+      ctx->popData();
+      ctx->resetCode( &ms->m_stepExecMain );
+      // proceed as with a newly loaded module -- consider it main (seqId=0).
+      ctx->pushCode( &ms->m_stepLoader );
+   }
+}
 
-      Symbol* sym = this->findExportedSymbol( className );
+
+void ModSpace::PStepDynMantra::apply_( const PStep* self, VMContext* ctx )
+{
+   static Engine* eng = Engine::instance();
+   Mantra* theClass;
+
+   ModSpace* ms = static_cast<const ModSpace::PStepDynMantra*>(self)->m_owner;
+   // get the parameters
+   Module* clsContainer = ctx->topData().isNil() ? 0 : static_cast<Module*>( ctx->topData().asInst() );
+   const String& className = *ctx->opcodeParam(1).asString();
+
+   // remove the module
+   ctx->popData();
+
+   // still no luck?
+   if( clsContainer == 0 )
+   {
+      Symbol* sym = ms->findExportedSymbol( className );
       if( sym == 0 )
       {
          theClass = eng->getMantra( className );
@@ -866,7 +871,7 @@ Mantra* ModSpace::findDynamicMantra(
                .extra( "Unavailable mantra " + className ));
          }
       }
-      else 
+      else
       {
          if( sym->defaultValue().isClass() || sym->defaultValue().isFunction() )
          {
@@ -886,22 +891,29 @@ Mantra* ModSpace::findDynamicMantra(
       theClass = clsContainer->getMantra( className );
       if( theClass == 0 )
       {
-         String expl = "Unavailable mantra " + 
+         String expl = "Unavailable mantra " +
                   className + " in " + clsContainer->uri();
-         delete clsContainer; // the module is not going anywhere.
          throw new UnserializableError( ErrorParam(e_deser, __LINE__, SRC )
             .origin( ErrorParam::e_orig_runtime)
             .extra( expl ));
       }
-
-      // shall we link a new module?
-      if( addedMod )
-      {
-         this->resolve( clsContainer, false, true );
-      }
    }
-   
-   return theClass;
+
+   ctx->pushData( Item(theClass->handler(), theClass) );
+}
+
+
+void ModSpace::PStepExecMain::apply_( const PStep*, VMContext* ctx )
+{
+   // we're called just once
+   ctx->popCode();
+
+   Module* mod = static_cast<Module*>( ctx->topData().asInst() );
+   mod->setMain(false);
+
+   if( mod->getMainFunction() != 0 ) {
+      ctx->call( mod->getMainFunction(), 0 );
+   }
 }
 
 }

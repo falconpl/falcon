@@ -79,9 +79,6 @@ add_library(falcon_engine SHARED
   cm/parallel.cpp
   cm/path.cpp
   cm/print.cpp
-  cm/restorer.cpp
-  cm/storer.cpp
-  cm/stream.cpp
   cm/textreader.cpp
   cm/textstream.cpp
   cm/textwriter.cpp
@@ -196,7 +193,10 @@ add_library(falcon_engine SHARED
   classes/classreference.cpp
   classes/classrange.cpp
   classes/classrawmem.cpp
+  classes/classrestorer.cpp
   classes/classshared.cpp
+  classes/classstorer.cpp
+  classes/classstream.cpp
   classes/classstring.cpp
   classes/classsymbol.cpp
   classes/classsynfunc.cpp
@@ -269,11 +269,11 @@ add_library(falcon_engine SHARED
   item_util.cpp
   itemarray.cpp
   itemdict.cpp
+  log.cpp
   mantra.cpp
   method.cpp
   modcompiler.cpp
   modloader.cpp
-  modmap.cpp
   modrequest.cpp
   modspace.cpp
   module.cpp

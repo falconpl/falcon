@@ -69,7 +69,7 @@ void ClassRange::store( VMContext*, DataWriter* stream, void* instance ) const
 }
 
 
-void ClassRange::restore( VMContext*, DataReader* stream, void*& empty ) const
+void ClassRange::restore( VMContext* ctx, DataReader* stream ) const
 {
    int64 start, end, step;
    bool isOpen;
@@ -85,7 +85,7 @@ void ClassRange::restore( VMContext*, DataReader* stream, void*& empty ) const
    r->m_step = step;
    r->m_open = isOpen;
 
-   empty = r;
+   ctx->pushData( FALCON_GC_STORE( this, r) );
 }
 
 

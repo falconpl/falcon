@@ -19,12 +19,11 @@
 
 
 #include <falcon/classes/classuser.h>
+#include <falcon/classes/classstream.h>
 #include <falcon/property.h>
 #include <falcon/method.h>
 #include <falcon/types.h>
 #include <falcon/textwriter.h>
-
-#include <falcon/cm/stream.h>
 
 namespace Falcon {
 

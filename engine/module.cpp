@@ -233,16 +233,21 @@ Module::Module( const String& name, const String& uri, bool bNative ):
 Module::~Module()
 {
    TRACE("Deleting module %s", m_name.c_ize() );
-   
-   fassert2( m_unloader == 0, "A module cannot be destroyed with an active unloader!" );
-   if( m_unloader != 0 )
-   {      
-      throw std::runtime_error( "A module cannot be destroyed with an active unloader!" );
-   }
-
+   unload();
    // this is doing to do a bit of stuff; see ~Private()
    delete _p;
    TRACE("Module '%s' deletion complete", m_name.c_ize() );
+}
+
+
+uint32 Module::depsCount() const
+{
+   return _p->m_importDefs.size();
+}
+
+ImportDef* Module::getDep( uint32 n ) const
+{
+   return _p->m_importDefs[n];
 }
 
 
@@ -608,7 +613,6 @@ bool Module::removeModuleRequirement( ImportDef* def )
 Error* Module::addImport( ImportDef* def )
 {
    static Class* symClass = Engine::instance()->symbolClass();
-   static Collector* coll = Engine::instance()->collector();
    
    ModRequest* req;
    Error* error = addModuleRequirement( def, req );
@@ -630,7 +634,7 @@ Error* Module::addImport( ImportDef* def )
       if( name.getCharAt( name.length() -1 ) != '*' )
       {         
          Symbol* newsym = new Symbol( name, Symbol::e_st_extern, 0, def->sr().line());
-         FALCON_GC_STORE( coll, symClass, newsym );
+         FALCON_GC_STORE( symClass, newsym );
          _p->m_gSyms[name] = newsym;
          
          // and add a dependency.
@@ -878,12 +882,7 @@ void Module::unload()
    {
       DynUnloader* ul = m_unloader;
       m_unloader = 0;
-      delete this;
       ul->unload();
-   }
-   else
-   {
-      delete this;
    }
 }
 

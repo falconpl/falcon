@@ -713,7 +713,7 @@ void ClassMulti::op_toString( VMContext* ctx, void* self ) const
    {
       String* str = new String("Instance of ");
       str->append( name() );
-      ctx->topData() = str;
+      ctx->topData() = FALCON_GC_STORE( str->handler(), str );
    }
 }
 

@@ -170,7 +170,6 @@ bool ExprDict::simplify( Item& ) const
 void ExprDict::apply_( const PStep* ps, VMContext* ctx )
 {
    static Class* cd_class = Engine::instance()->dictClass();
-   static Collector* collector = Engine::instance()->collector();
 
    const ExprDict* ea = static_cast<const ExprDict*>(ps);
    
@@ -202,7 +201,7 @@ void ExprDict::apply_( const PStep* ps, VMContext* ctx )
    }
    fassert( items == end );
 
-   ctx->stackResult(size, FALCON_GC_STORE(collector, cd_class, nd) );
+   ctx->stackResult(size, FALCON_GC_STORE(cd_class, nd) );
    
    // we're done.
    ctx->popCode();

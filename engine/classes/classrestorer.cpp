@@ -1,6 +1,6 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: restorer.cpp
+   FILE: classrestorer.cpp
 
    Falcon core module -- Interface to Restorer class.
    -------------------------------------------------------------------
@@ -14,11 +14,11 @@
 */
 
 #undef SRC
-#define SRC "falcon/cm/restorer.cpp"
+#define SRC "falcon/classes/classrestorer.cpp"
 
-#include <falcon/cm/restorer.h>
+#include <falcon/classes/classrestorer.h>
 #include <falcon/restorer.h>
-
+#include <falcon/datareader.h>
 #include <falcon/vm.h>
 #include <falcon/vmcontext.h>
 #include <falcon/path.h>
@@ -30,46 +30,9 @@
 #include <falcon/module.h>
 #include <falcon/modspace.h>
 
-#include <falcon/cm/stream.h>
+#include <falcon/classes/classstream.h>
 
 namespace Falcon {
-namespace Ext {
-
-class RestorerCarrier: public UserCarrierT<Restorer> 
-{
-   
-public:
-   RestorerCarrier( Restorer* data ):
-      UserCarrierT<Restorer> (data),
-      m_streamc(0),
-      m_modSpace(0)
-   {}
-      
-   virtual ~RestorerCarrier()
-   {
-   }
-   
-   void setStream( StreamCarrier* stc )
-   {      
-      m_streamc = stc;
-   }
-   
-   virtual void gcMark( uint32 mark )
-   {
-      if ( m_gcMark != mark )
-      {
-         m_gcMark = mark;
-         m_streamc->m_gcMark = mark;
-         if( m_modSpace != 0 ) {
-            m_modSpace->gcMark( mark );
-         }
-      }
-   }
-   
-private:
-   StreamCarrier* m_streamc;
-   ModSpace* m_modSpace;
-};
 
 
 ClassRestorer::ClassRestorer():
@@ -82,18 +45,37 @@ ClassRestorer::ClassRestorer():
 ClassRestorer::~ClassRestorer()
 {}
 
-bool ClassRestorer::op_init( VMContext* ctx, void* instance, int32 ) const
+bool ClassRestorer::op_init( VMContext* , void*, int32 ) const
 {
-   RestorerCarrier* carrier = static_cast<RestorerCarrier*>(instance);
-   carrier->carried()->context( ctx );
    return false;
 }
 
 
 void* ClassRestorer::createInstance() const
 { 
-   return new RestorerCarrier(new Restorer(0) );
+   return new Restorer;
 }
+
+void ClassRestorer::dispose( void* instance ) const
+{
+   delete static_cast<Restorer*>(instance);
+}
+
+void* ClassRestorer::clone( void* instance ) const
+{
+   return new Restorer( *static_cast<Restorer*>(instance) );
+}
+
+void ClassRestorer::gcMarkInstance( void* instance, uint32 mark ) const
+{
+   static_cast<Restorer*>(instance)->reader().gcMark(mark);
+}
+
+bool ClassRestorer::gcCheckInstance( void* instance, uint32 mark ) const
+{
+   return static_cast<Restorer*>(instance)->reader().gcMark() >= mark ;
+}
+
 
 /*
 void ClassRestorer::op_iter( VMContext* ctx, void* instance ) const
@@ -113,9 +95,7 @@ void ClassRestorer::op_next( VMContext* ctx, void* instance ) const
 
 FALCON_DEFINE_PROPERTY_GET_P( ClassRestorer, hasNext )
 { 
-   RestorerCarrier* stc = static_cast<RestorerCarrier*>(instance);
-   Restorer* restorer = stc->carried();
-   
+   Restorer* restorer = static_cast<Restorer*>(instance);
    value.setBoolean( restorer->hasNext() );
 }
 
@@ -126,7 +106,7 @@ FALCON_DEFINE_PROPERTY_SET( ClassRestorer, hasNext )( void*, const Item& )
 
 FALCON_DEFINE_METHOD_P1( ClassRestorer, restore )
 {
-   static Class* clsStream = methodOf()->module()->getClass( "Stream" );
+   static Class* clsStream = Engine::instance()->streamClass();
    static PStep* retStep = &Engine::instance()->stdSteps()->m_returnFrame;
    
    fassert( clsStream != 0 );
@@ -145,28 +125,18 @@ FALCON_DEFINE_METHOD_P1( ClassRestorer, restore )
       throw paramError();
    }
    
-   RestorerCarrier* stc = static_cast<RestorerCarrier*>(ctx->self().asInst());
-   Restorer* restorer = stc->carried();
+   Restorer* restorer = static_cast<Restorer*>(ctx->self().asInst());
    StreamCarrier* streamc = static_cast<StreamCarrier*>(cls->getParentData(clsStream,data));
-   stc->setStream( streamc );
 
    // prepare not to return the frame now but later.
    ctx->pushCode( retStep );
-   bool complete =  restorer->restore(streamc->m_underlying, 
-                           ctx->vm()->modSpace() );
-   if( complete )
-   {
-      ctx->returnFrame();
-   }
+   restorer->restore(ctx, streamc->m_underlying, ctx->vm()->modSpace() );
 }
 
 
 FALCON_DEFINE_METHOD_P1( ClassRestorer, next )
 {  
-   static Collector* coll = Engine::instance()->collector();
-   
-   RestorerCarrier* stc = static_cast<RestorerCarrier*>(ctx->self().asInst());
-   Restorer* restorer = stc->carried();
+   Restorer* restorer = static_cast<Restorer*>(ctx->self().asInst());
    Class* cls;
    void* data;
    bool first;
@@ -179,7 +149,7 @@ FALCON_DEFINE_METHOD_P1( ClassRestorer, next )
       else {
          // send to the garbage the items that have been returned for the first time.
          if( first )
-            ctx->returnFrame( FALCON_GC_STORE(coll, cls, data) );
+            ctx->returnFrame( FALCON_GC_STORE(cls, data) );
          else
             ctx->returnFrame( Item(cls, data) );         
       }
@@ -194,6 +164,5 @@ FALCON_DEFINE_METHOD_P1( ClassRestorer, next )
 
    
 }
-}
 
-/* end of restorer.cpp */
+/* end of classrestorer.cpp */

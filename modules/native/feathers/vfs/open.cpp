@@ -18,7 +18,7 @@
 #include <falcon/vfsprovider.h>
 #include <falcon/engine.h>
 #include <falcon/cm/uri.h>
-#include <falcon/cm/stream.h>
+#include <falcon/classes/classstream.h>
 
 #include "vfs.h"
 #include "open.h"
@@ -38,7 +38,6 @@ Open::~Open() {}
 void Open::invoke( Falcon::VMContext* ctx, int )
 {
    static Engine* inst = Engine::instance();
-   static Collector* coll = Engine::instance()->collector();
    
    Item* i_uri = ctx->param(0);
    Item* i_mode = ctx->param(1);
@@ -100,7 +99,7 @@ void Open::invoke( Falcon::VMContext* ctx, int )
       scr->setBuffering(4096);
    }
       
-   ctx->returnFrame( FALCON_GC_STORE( coll, m_module->streamClass(), scr) );
+   ctx->returnFrame( FALCON_GC_STORE( m_module->streamClass(), scr) );
 }
 
 }

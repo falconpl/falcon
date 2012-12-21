@@ -25,6 +25,7 @@
 #include <falcon/function.h>
 #include <falcon/closure.h>
 #include <falcon/modspace.h>
+#include <falcon/synfunc.h>
 
 
 namespace Falcon {
@@ -34,23 +35,53 @@ Process::Process( VMachine* owner ):
    m_context( new VMContext( this ) ),
    m_event( true, false ),
    m_running(false),
-   m_ctxId(0)
+   m_ctxId(0),
+   m_added(false)
 {
-   m_context = new VMContext(this, 0);
+   // get an ID for this process.
    m_id = m_vm->getNextProcessID();
+   m_context = new VMContext(this, 0);
+   m_entry = 0;
 }
+
+Process::Process( VMachine* owner, bool bAdded ):
+   m_vm(owner),
+   m_context( new VMContext( this ) ),
+   m_event( true, false ),
+   m_running(false),
+   m_ctxId(0),
+   m_added(bAdded)
+{
+   // get an ID for this process.
+   m_id = m_vm->getNextProcessID();
+   m_context = new VMContext(this, 0);
+   m_entry = 0;
+}
+
 
 
 Process::~Process() {
    m_context->decref();
+   delete m_entry;
 }
+
+
+SynFunc* Process::readyEntry()
+{
+   m_context->reset();
+   delete m_entry;
+   m_entry = new SynFunc("#Entry");
+   m_context->call( m_entry, 0 );
+
+   return m_entry;
+}
+
 
 bool Process::start()
 {
    if (! checkRunning() ) {
       return false;
    }
-
 
    launch();
    return true;
@@ -62,6 +93,7 @@ bool Process::start( Function* main, int pcount )
       return false;
    }
 
+   //Put a VM termination request here.
    m_context->call(main, pcount);
    // launch is to be called after call,
    // as it may stack higher priority calls for base modules.
@@ -75,6 +107,7 @@ bool Process::start( Closure* main, int pcount )
       return false;
    }
 
+   //Put a VM termination request here.
    m_context->call(main, pcount);
    // launch is to be called after call,
    // as it may stack higher priority calls for base modules.
@@ -88,6 +121,7 @@ bool Process::startItem( Item& main, int pcount, Item* params )
       return false;
    }
 
+   // reset the context prior invoking the entry point
    m_context->callItem(main, pcount, params);
    // launch is to be called after call,
    // as it may stack higher priority calls for base modules.
@@ -124,12 +158,8 @@ void Process::completed()
 
 void Process::launch()
 {
-   VMContext* ctx = mainContext();
-   m_vm->modSpace()->readyContext( ctx );
-   // we're assigning the context to the processor/vm/manager system.
-   ctx->incref();
-   // processors are synchronized on the context queue.
-   m_vm->contextManager().readyContexts().add( ctx );
+   // The add will eventually launch the process.
+   m_vm->addProcess( this, true );
 }
 
 

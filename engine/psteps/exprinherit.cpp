@@ -242,22 +242,14 @@ public:
       s->m_target = static_cast<Class*>( subItems[1].asInst() );
    }
    
-   virtual void restore( VMContext*, DataReader* stream, void*& empty ) const
+   virtual void restore( VMContext* ctx, DataReader* stream ) const
    {
-      IRequirement* s = 0;
       String name;
       stream->read( name );
       
-      try {
-         s = new IRequirement( name );
-         s->restore(stream);
-         empty = s;
-      }
-      catch( ... )
-      {
-         delete s;
-         throw;
-      }
+      IRequirement* requirement = new IRequirement( name );
+      ctx->pushData( FALCON_GC_STORE( this, requirement ) );
+      requirement->restore(stream);
    }
    
    void describe( void* instance, String& target, int, int ) const

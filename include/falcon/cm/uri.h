@@ -63,7 +63,7 @@ public:
    virtual ~ClassURI();
     
    virtual void store( VMContext*, DataWriter* stream, void* instance ) const;
-   virtual void restore( VMContext*, DataReader* stream, void*& empty ) const;
+   virtual void restore( VMContext*, DataReader* stream ) const;
    
    //=============================================================
    //

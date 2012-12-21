@@ -157,25 +157,7 @@ void IntCompiler::Context::onLoad( const String& path, bool isFsPath )
    }
 
    // just adding it top the module won't be of any help.
-   ModLoader* ml = theSpace->modLoader();
-   Module* mod = isFsPath ? ml->loadFile( path ) : ml->loadName( path );
-
-   if( mod != 0 )
-   {
-      theSpace->resolve( mod, true, true ); // will throw on error.
-      Error* err = theSpace->link();
-      if( err != 0 )
-      {
-         sp.addError( err );
-         err->decref();
-      }
-
-      theSpace->readyContext( m_owner->m_vmctx );
-   }
-   else
-   {
-      sp.addError( e_mod_notfound, sp.currentSource(), sp.currentLine(), 0, 0, path );
-   }
+   theSpace->loadModule( path, isFsPath, m_owner->m_vmctx );
 }
 
 
@@ -193,61 +175,9 @@ bool IntCompiler::Context::onImportFrom( ImportDef* def )
    VMContext* cctx = m_owner->m_vmctx;
    Module* mod = m_owner->m_mod;
    ModSpace* ms = cctx->vm()->modSpace();
+   mod->addImport( def );
+   ms->resolveDeps( cctx, mod );
 
-   // first, update the module space by pre-loading the required module.
-   try
-   {
-      ms->resolveImportDef( def, 0 );
-   }
-   catch( Error* e )
-   {
-      // nope, we can't go on.
-      sp.addError(e);
-      return false;
-   }
-
-
-   // Now that we know that the module is ok, we can add the import entry to the module.
-   Error* linkErrors = mod->addImport( def );
-
-   // if the import was already handled, we should warn he user.
-   if( linkErrors != 0 )
-   {
-      sp.addError( linkErrors );
-      return false;
-   }
-
-   // the link will resolve newly undefined symbols.
-   linkErrors = ms->link();
-   if( linkErrors != 0)
-   {
-      mod->removeImport( def );
-      sp.addError(linkErrors);
-      return true;
-   }
-
-   // When called again, we get the module we just loaded in the ms.
-   try
-   {
-      //... and put it in place.
-      ms->resolveImportDef( def, mod );
-   }
-   catch( Error* e )
-   {
-      // ... we won't raise errors on second call to resolve, but just in case...
-      sp.addError(e);
-      return false;
-   }
-
-   /** Complete missing imports */
-   linkErrors = ms->linkModuleImports( mod );
-   if( linkErrors != 0)
-   {
-      sp.addError(linkErrors);
-      return false;
-   }
-
-   ms->readyContext( cctx );
    return true;
 }
 

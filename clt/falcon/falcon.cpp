@@ -29,10 +29,23 @@ using namespace Falcon;
 //
 FalconApp::FalconApp():
    m_exitValue(0)
-{}
+{
+   m_logger = new Logger;
+   m_vm = new VMachine;
+   m_process = m_vm->createProcess();
+}
+
+FalconApp::~FalconApp()
+{
+   m_logger->decref();
+   delete m_vm;
+}
 
 void FalconApp::guardAndGo( int argc, char* argv[] )
 {
+   Log* log = Engine::instance()->log();
+   log->addListener( m_logger );
+
    int scriptPos = 0;
    m_options.parse( argc, argv, scriptPos );
    if( m_options.m_justinfo )
@@ -64,6 +77,8 @@ void FalconApp::guardAndGo( int argc, char* argv[] )
       out.write( "Caught: " + e->describe() +"\n");
       e->decref();
    }
+
+   log->removeListener( m_logger );
 }
 
 
@@ -135,6 +150,7 @@ void FalconApp::launch( const String& script )
    }
 
    // What kind of module we are loading here?
+   /*
    ModLoader::t_modtype type = ModLoader::e_mt_none;
    if( m_options.run_only )
    {
@@ -145,8 +161,9 @@ void FalconApp::launch( const String& script )
       type = ModLoader::e_mt_source;
    }
 
+
    // TODO -- FIX ftds
-   Module* module = loader->loadFile( script, type );
+   loader->loadFile( script, type );
    if (module == NULL)
    {
 
@@ -163,25 +180,60 @@ void FalconApp::launch( const String& script )
    if( linkerr != 0 )
    {
       throw linkerr;
-
    }
 
+
    Function* fmain = module->getMainFunction();
+
+
+   m_process->mainContext()->call(fmain,0);
    if( fmain != 0 )
    {
-      Process* prc = vm.createProcess();
       try {
-         prc->start(fmain);
-         prc->wait();
+         m_process->start();
+         m_process->wait();
       }
       catch( Error* e )
       {
          vm.textErr()->write( e->describe() );
          e->decref();
       }
-
-      prc->decref();
    }
+   */
+
+   ms->add( Engine::instance()->getCore() );
+
+   Process* loadProc = m_vm->modSpace()->loadModule( script, true, true );
+
+   try {
+      loadProc->start();
+      loadProc->wait();
+
+      // get the main module
+      Module* mod = static_cast<Module*>(loadProc->result().asInst());
+      if( mod->getMainFunction() != 0 )
+      {
+         mod->incref();
+         m_process->mainContext()->call( mod->getMainFunction(), 0 );
+         m_process->start();
+         m_process->wait();
+      }
+   }
+   catch( Error* e )
+   {
+      vm.textErr()->write( e->describe() );
+      e->decref();
+   }
+}
+
+void FalconApp::Logger::onMessage( int fac, int lvl, const String& message )
+{
+   static TextWriter out(new StdErrStream);
+
+   String tgt;
+   Log::formatLog(fac, lvl, message, tgt );
+   out.writeLine( tgt );
+   out.flush();
 }
 
 

@@ -25,6 +25,7 @@ namespace Falcon
 
 class Item;
 class ClassArray;
+class Class;
 
 class FALCON_DYN_CLASS ItemArray
 {
@@ -213,12 +214,16 @@ public:
     */
    uint32 currentMark() const { return m_mark; }
    
+   static Class* handler();
+
 private:
    length_t m_alloc;
    length_t m_size;
    Item *m_data;
    length_t m_growth;
    uint32 m_mark;
+
+   static Class* m_handler;
 
    ItemArray( Item *buffer, length_t size, length_t alloc );
 

@@ -108,7 +108,6 @@ bool ExprArray::simplify( Item& ) const
 void ExprArray::apply_( const PStep* ps, VMContext* ctx )
 {
    static Class* ca_class = Engine::instance()->arrayClass();
-   static Collector* collector = Engine::instance()->collector();
    
    const ExprArray* ea = static_cast<const ExprArray*>(ps);
    ExprVector_Private::ExprVector& mye = ea->_p->m_exprs;
@@ -130,7 +129,7 @@ void ExprArray::apply_( const PStep* ps, VMContext* ctx )
 
    ctx->copyData( array->elements(), mye.size() );
    ctx->popData( mye.size() );
-   ctx->pushData( FALCON_GC_STORE( collector, ca_class, array ) );
+   ctx->pushData( FALCON_GC_STORE( ca_class, array ) );
    
    ctx->popCode();
 }

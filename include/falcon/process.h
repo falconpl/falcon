@@ -27,6 +27,7 @@ class VMContext;
 class Function;
 class Closure;
 class Item;
+class SynFunc;
 
 /** Process Entity.
 
@@ -38,10 +39,23 @@ class Item;
  The constructor is typically created by the virtual machine, which
  sets up a main context for the process and prepares it to run the
  desired code and/or symbol.
+
+ The process can be used to either invoke the execution of a function
+ (as i.e. the __main__ function of a module), or executable code stored
+ in an arbitrary item, or it can be used to execute PSteps stored
+ directly in the associated VM context.
+
+ In the latter case, keep in mind that the Process class itself doesn't
+ keep track of the PSteps; the calling program must ensure that the
+ PStep instances are alive for the whole duration of the process.
+
+ @note This can be easily ensured by subclassing the Process class
+ and storing the required PSteps as process-specific data.
  */
 class FALCON_DYN_CLASS Process
 {
 public:
+   Process( VMachine* owner );
 
    int32 id() const { return m_id; }
    void id( int32 i ) { m_id = i; }
@@ -49,9 +63,13 @@ public:
    VMachine* vm() const { return m_vm; }
    VMContext* mainContext() const { return m_context; }
 
+   /** Starts the process execution with the context configured as-is. */
    bool start();
+   /** Starts the process invoking the given function. */
    bool start( Function* main, int pcount = 0 );
+   /** Starts the process invoking the given closure. */
    bool start( Closure* main, int pcount = 0);
+   /** Starts the process invoking the given item. */
    bool startItem( Item& main, int pcount, Item* params );
 
    /**
@@ -87,8 +105,26 @@ public:
 
    int32 getNextContextID();
 
-private:
-   Process( VMachine* owner );
+   /**
+    * Prepare the process with an entry point.
+    * \return The entry point function.
+    *
+    * After calling this method, the process invoker can
+    * put instructions to be executed in the main context,
+    * and then invoke launch() as the code is complete.
+    *
+    * Alternatively, the caller of this method can synthesize
+    * a syntactic tree in the returned syntactic function pointer,
+    * but that will make this process to be usable just once.
+    *
+    * @note A void return PStep is automatically added at bottom of the
+    * code stack to ensure a clean termination of the entry point
+    * function.
+    */
+   SynFunc* readyEntry();
+
+protected:
+   Process( VMachine* owner, bool added );
    virtual ~Process();
 
    void launch();
@@ -99,12 +135,14 @@ private:
    VMachine* m_vm;
    VMContext *m_context;
    InterruptibleEvent m_event;
+   SynFunc* m_entry;
    atomic_int m_terminated;
 
    bool m_running;
    Mutex m_mtxRunning;
 
    atomic_int m_ctxId;
+   bool m_added;
 
    FALCON_REFERENCECOUNT_DECLARE_INCDEC(Process)
 };

@@ -57,13 +57,13 @@ void ClassClosure::store( VMContext*, DataWriter* wr, void* instance ) const
    wr->write( cls->m_closedLocals );
 }
 
-void ClassClosure::restore( VMContext*, DataReader* rd, void*& empty ) const
+void ClassClosure::restore( VMContext* ctx, DataReader* rd ) const
 {
    Closure* cls = new Closure();
    uint32 locals;
    rd->read( locals );
    cls->m_closedLocals = locals;
-   empty = cls;
+   ctx->pushData( FALCON_GC_STORE( this, cls) );
 }
 
 void ClassClosure::flatten( VMContext*, ItemArray& subItems, void* instance ) const

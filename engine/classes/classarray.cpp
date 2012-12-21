@@ -63,7 +63,7 @@ void ClassArray::store( VMContext*, DataWriter* stream, void* instance ) const
 }
 
 
-void ClassArray::restore( VMContext*, DataReader* stream, void*& empty ) const
+void ClassArray::restore( VMContext* ctx, DataReader* stream ) const
 {
    uint32 growth;
 
@@ -72,7 +72,7 @@ void ClassArray::restore( VMContext*, DataReader* stream, void*& empty ) const
    ItemArray* iarr = new ItemArray;
 
    iarr->m_growth = growth;
-   empty = iarr;
+   ctx->pushData( FALCON_GC_STORE(this, iarr) );
 }
 
 
@@ -243,9 +243,7 @@ void ClassArray::op_getIndex( VMContext* ctx, void* self ) const
             }
          }
 
-         static Collector* coll = Engine::instance()->collector();
-
-         ctx->stackResult( 2, FALCON_GC_STORE( coll, this, returnArray ) );
+         ctx->stackResult( 2, FALCON_GC_STORE( this, returnArray ) );
       }
       else
       {
@@ -401,7 +399,6 @@ void ClassArray::enumeratePV( void*, Class::PVEnumerator& ) const
 void ClassArray::op_add( VMContext* ctx, void* self ) const
 {
    static Class* arrayClass = Engine::instance()->arrayClass();
-   static Collector* coll = Engine::instance()->collector();
 
    ItemArray* array = static_cast<ItemArray*>( self );
    Item* op1, *op2;
@@ -430,7 +427,7 @@ void ClassArray::op_add( VMContext* ctx, void* self ) const
       result->merge( *other );
    }
 
-   ctx->stackResult( 2, Item( FALCON_GC_STORE( coll, arrayClass, result ) ) );
+   ctx->stackResult( 2, Item( FALCON_GC_STORE( arrayClass, result ) ) );
 }
 
 

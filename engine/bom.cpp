@@ -137,7 +137,7 @@ void describe(VMContext* ctx, const Class* cls, void* data)
    cls->describe( data, *target );
 
    Item& topData = ctx->topData();
-   topData.setUser( target->garbage() );
+   topData.setUser( FALCON_GC_HANDLE(target) );
 }
 
 

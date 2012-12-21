@@ -43,7 +43,7 @@ public:
    virtual void* createInstance() const;
    
    virtual void store( VMContext*, DataWriter* , void* ) const;
-   virtual void restore( VMContext* , DataReader* , void*& ) const;
+   virtual void restore( VMContext* , DataReader* ) const;
    virtual void describe( void* instance, String& target, int maxDepth = 3, int maxLength = 60 ) const;
 
    //=============================================================

@@ -52,14 +52,14 @@ void Describe::invoke( VMContext* ctx, int32 nParams )
       elem = ctx->params();
    }
 
-   ctx->returnFrame((new String(elem->describe()))->garbage());
+   ctx->returnFrame( FALCON_GC_HANDLE((new String(elem->describe()))) );
 }
 
 
 void Describe::Invoke::apply_( const PStep*, VMContext* ctx )
 {
    register Item& top = ctx->topData();
-   top = (new String(top.describe()))->garbage();
+   top = FALCON_GC_HANDLE( new String(top.describe()) );
    ctx->popCode();
 }
 

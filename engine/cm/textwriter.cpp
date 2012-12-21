@@ -41,7 +41,7 @@ void TextWriterCarrier::gcMark( uint32 mark )
    if( mark != m_gcMark )
    {
       m_gcMark = mark;
-      carried()->m_gcMark = mark;
+      carried()->m_stream->gcMark(mark);
    }
 }
 

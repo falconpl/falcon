@@ -14,7 +14,7 @@
 */
 
 #undef SRC
-#define SRC "falcon/cm/stream.cpp"
+#define SRC "falcon/classes/classstream.cpp"
 
 
 #include <falcon/vm.h>
@@ -24,7 +24,7 @@
 
 #include <falcon/cm/uri.h>
 
-#include <falcon/cm/stream.h>
+#include <falcon/classes/classstream.h>
 #include <falcon/errors/unsupportederror.h>
 #include <falcon/errors/ioerror.h>
 #include <falcon/stream.h>
@@ -37,10 +37,8 @@
 #include <string.h>
 
 namespace Falcon {
-namespace Ext {
  
 StreamCarrier::StreamCarrier( Stream* stream ):
-   m_gcMark(0),
    m_stream(stream),
    m_sbuf(0),
    m_underlying(stream)
@@ -137,13 +135,13 @@ void* ClassStream::clone( void* insatnce ) const
 void ClassStream::gcMarkInstance( void* instance, uint32 mark ) const
 {
    StreamCarrier* carrier = static_cast<StreamCarrier*>(instance);
-   carrier->m_gcMark = mark;
+   carrier->m_underlying->gcMark( mark );
 }
 
 bool ClassStream::gcCheckInstance( void* instance, uint32 mark ) const
 {
    StreamCarrier* carrier = static_cast<StreamCarrier*>(instance);
-   return carrier->m_gcMark < mark;
+   return carrier->m_underlying->gcMark() >= mark;
 }
    
 void* ClassStream::createInstance() const
@@ -432,7 +430,7 @@ FALCON_DEFINE_METHOD_P1( ClassStream, grab )
    }
 
    String* str = new String;
-   Item rv(str, true); // force to garbage the string NOW!
+   Item rv(FALCON_GC_HANDLE(str)); // force to garbage the string NOW!
    
    int64 icount = i_count->forceInteger();
    // shall we read?
@@ -447,6 +445,7 @@ FALCON_DEFINE_METHOD_P1( ClassStream, grab )
    // Return the string.
    ctx->returnFrame( rv );
 }
+
 
 FALCON_DEFINE_METHOD_P1( ClassStream, close )
 {
@@ -570,6 +569,5 @@ FALCON_DEFINE_METHOD_P1( ClassStream, wavail )
 }
 
 }
-}
 
-/* end of stream.cpp */
+/* end of classstream.cpp */

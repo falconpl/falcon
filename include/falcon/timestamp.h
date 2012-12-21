@@ -260,6 +260,9 @@ public:
    void changeTimezone( TimeZone tz );
 
    void copy( const TimeStamp &ts );
+   /**
+    * Equivalent to setCurrent() on local timezone.
+    */
    void currentTime();
    bool isValid() const;
    bool isLeapYear() const;

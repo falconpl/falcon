@@ -19,7 +19,7 @@
 
 #include <falcon/datawriter.h>
 #include <falcon/module.h>
-#include <falcon/cm/stream.h>
+#include <falcon/classes/classstream.h>
 
 #include <falcon/errors/accesserror.h>
 #include <falcon/errors/paramerror.h>

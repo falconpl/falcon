@@ -18,6 +18,7 @@
 
 // This includes the vast majority of things in Falcon.
 #include <falcon/engine.h>
+#include <falcon/log.h>
 
 #include <falcon/expression.h>
 #include <falcon/statement.h>

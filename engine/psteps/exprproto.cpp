@@ -156,7 +156,6 @@ bool ExprProto::simplify( Item& ) const
 
 void ExprProto::apply_( const PStep* ps, VMContext* ctx )
 {
-   static Collector* coll = Engine::instance()->collector();
    static Class* cls =  Engine::instance()->protoClass();
    
    const ExprProto* self = static_cast<const ExprProto*>(ps);
@@ -216,7 +215,7 @@ void ExprProto::apply_( const PStep* ps, VMContext* ctx )
   
    // we're done.
    ctx->popCode();
-   ctx->stackResult( size, FALCON_GC_STORE( coll, cls, value ) );
+   ctx->stackResult( size, FALCON_GC_STORE( cls, value ) );
 }
 
 }

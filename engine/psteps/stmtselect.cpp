@@ -485,19 +485,11 @@ public:
       s->m_owner = static_cast<StmtSelect*>(subItems[0].asInst());
    }
    
-   virtual void restore( VMContext*, DataReader* stream, void*& empty ) const
+   virtual void restore( VMContext* ctx, DataReader* stream ) const
    {
-      SelectRequirement* s = 0;
-      try {
-         s = new SelectRequirement(0,0,0,"",0);
-         s->restore(stream);
-         empty = s;
-      }
-      catch( ... )
-      {
-         delete s;
-         throw;
-      }
+      SelectRequirement* s = new SelectRequirement(0,0,0,"",0);
+      ctx->pushData( FALCON_GC_STORE( this, s ) );
+      s->restore(stream);
    }
    
    void describe( void* instance, String& target, int, int ) const

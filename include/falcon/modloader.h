@@ -20,6 +20,7 @@
 #include <falcon/setup.h>
 #include <falcon/string.h>
 #include <falcon/uri.h>
+#include <falcon/pstep.h>
 
 namespace Falcon
 {
@@ -30,6 +31,7 @@ class FAMLoader;
 class DynLoader;
 class Transcoder;
 class Error;
+class VMContext;
 
 /** Module loader and reference resolutor.
  
@@ -83,7 +85,8 @@ public:
    } t_modtype;
    
    /** Creates the ModLoader.
-    \param owner The module space ownwning this loader.
+    \param ctx The context where the loading occurs.
+    \param owner The module space owning this loader.
     \param mc An optional previously created and configured ModCompiler.
     \param faml An optional previously created and configured FamLoader.
     \param dld An optional previously created and configured DynLoader.
@@ -96,11 +99,12 @@ public:
     
     This constructor sets the path to the default ("." + system falcon load path)
     */
-   ModLoader( ModSpace* owner, ModCompiler* mc = 0, FAMLoader* faml=0, DynLoader* dld=0 );   
+   ModLoader( ModSpace* owner, ModCompiler* mc = 0, FAMLoader* faml=0, DynLoader* dld=0 );
    
    /** Creates a module loader with a given path.
     \param path The path where modules will be searched for.
-    \param owner The module space ownwning this loader.
+    \param ctx The context where the loading occurs.
+    \param owner The module space owning this loader.
     \param mc An optional previously created and configured ModCompiler.
     \param faml An optional previously created and configured FamLoader.
     \param dld An optional previously created and configured DynLoader.
@@ -143,7 +147,7 @@ public:
     the proper parent module names in case of self.xxx or .xxx module naming
     convnetion.
     */
-   Module* loadName( const String& name, t_modtype type=e_mt_none );
+   bool loadName( VMContext* tgtctx, const String& name, t_modtype type=e_mt_none );
    
    /** Loads a module through its physical path. 
     \param path The path of the module.
@@ -156,7 +160,7 @@ public:
     \throw Error* or appropriate error subclass in case of other errors.
      
     */
-   Module* loadFile( const String& path, t_modtype type=e_mt_none, bool bScan = true );
+   bool loadFile( VMContext* tgtctx, const String& path, t_modtype type=e_mt_none, bool bScan = true );
    
    /** Loads a module through its physical path. 
     \param uri The uri of the module.
@@ -168,7 +172,7 @@ public:
     
     This version uses an URI instead of a String.
     */
-   Module* loadFile( const URI& uri, t_modtype type=e_mt_none, bool bScan = false );
+   bool loadFile( VMContext* tgtctx, const URI& uri, t_modtype type=e_mt_none, bool bScan = false );
    //============================================================
    // Compilation process setting
    //
@@ -353,6 +357,7 @@ private:
    class Private;
    Private* _p;
    
+   ModSpace* m_owner;
    ModCompiler* m_compiler;
    FAMLoader* m_famLoader; 
    DynLoader* m_dynLoader;
@@ -369,13 +374,30 @@ private:
    
    String m_encName;
    Transcoder* m_tcoder;
-   
+
    void init ( const String &path, ModSpace* ms, ModCompiler* mc, FAMLoader* faml, DynLoader* dld );
    
    t_modtype checkFile_internal( const URI& uri, t_modtype type, URI& foundUri );
-   Module* load_internal( const String& prefixPath, const URI& uri, t_modtype type );
-   void saveModule_internal( Module* module, const URI& uri, const String& modName );
+   void load_internal( VMContext* tgtctx, const String& prefixPath, const URI& uri, t_modtype type );
+   void saveModule_internal( VMContext* tgtctx, Module* module, const URI& uri, const String& modName );
    Error* makeError( int code, int line, const String &expl="", int fsError=0 );
+
+   class PStepSave: public PStep
+   {
+   public:
+      PStepSave( ModLoader* owner ): m_owner( owner ) {
+         apply = apply_;
+      }
+      virtual ~PStepSave() {};
+      virtual void describeTo( String& str, int ) const { str = "PStepSave"; }
+
+   private:
+      static void apply_( const PStep* self, VMContext* ctx );
+      ModLoader* m_owner;
+   };
+   PStepSave m_stepSave;
+
+   friend class PStepSave;
 };
 
 }

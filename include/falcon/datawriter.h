@@ -176,21 +176,10 @@ public:
    
    bool write( const char* data ) { return write(String(data)); }
 
-   /** Checks if this entity is in GC. */
-   bool isInGC() const { return m_gcMark != 0; }
-   
-   /** Mark this entity for GC. */
-   void gcMark( uint32 mark ) { m_gcMark = mark; }
-   
-   /** Gets the GC entity. */
-   uint32 gcMark() const { return m_gcMark; }
-
 private:
 
    t_endianity m_endianity;
    bool m_bIsSameEndianity;
-   uint32 m_gcMark;
-   
 };
 
 }

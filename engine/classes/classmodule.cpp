@@ -53,8 +53,7 @@ ClassModule::~ClassModule()
 void ClassModule::dispose( void* self ) const
 {
    Module* mod = static_cast<Module*>(self);
-   mod->unload();
-   delete mod;
+   mod->decref();
 }
 
 
@@ -227,8 +226,9 @@ void ClassModule::store( VMContext*, DataWriter* stream, void* instance ) const
 }
 
 
-void ClassModule::restore( VMContext*, DataReader* stream, void*& empty ) const
+void ClassModule::restore( VMContext* ctx, DataReader* stream ) const
 {
+   static Class* mcls = Engine::instance()->moduleClass();
    MESSAGE( "Restoring module..." );
    
    bool bIsNative;
@@ -247,7 +247,7 @@ void ClassModule::restore( VMContext*, DataReader* stream, void*& empty ) const
       
       Module* mod = new Module( name, true );
       mod->uri( origUri );
-      empty = mod;
+      ctx->pushData( FALCON_GC_STORE( mcls, mod ) );
       return;
    }
    
@@ -263,7 +263,7 @@ void ClassModule::restore( VMContext*, DataReader* stream, void*& empty ) const
       throw;
    }
  
-   empty = mod;
+   ctx->pushData( FALCON_GC_STORE( mcls, mod ) );
 }
 
 
@@ -517,11 +517,14 @@ void ClassModule::flatten( VMContext* ctx, ItemArray& subItems, void* instance )
       Module::Private::MantraMap::iterator fi = mantras.begin();
       while( fi != mantras.end() ) 
       {
+         TRACE1("Flattening mantra %s", fi->first.c_ize() );
          Mantra* mantra = fi->second;
          // skip hyperclasses
          if( ! mantra->isCompatibleWith( Mantra::e_c_hyperclass ))
          {
-            subItems.append( Item(mantra->handler(), mantra) );
+            Class* cls = mantra->handler();
+            TRACE1("Mantra %s has handler %s(%p)", fi->first.c_ize(), cls->name().c_ize(), cls );
+            subItems.append( Item(cls, mantra) );
          }
          ++fi;
       }
@@ -575,8 +578,10 @@ void ClassModule::unflatten( VMContext*, ItemArray& subItems, void* instance ) c
       globs[sym->name()] = sym;
       
       Item& value = subItems[pos++];
-      // don't bother with nil values, as they could be associated with externs
-      sym->globalWithValue( value );
+      // don't bother with nil values, as they could be associated with
+      if( sym->type() != Symbol::e_st_extern ) {
+         sym->globalWithValue( value );
+      }
    }
    
    // unflatten exports and dependencies.

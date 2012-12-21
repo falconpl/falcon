@@ -56,6 +56,8 @@ public:
    ModRequest( const ModRequest& other );   
    ~ModRequest();
 
+   void module( Module* mod );
+
    inline Module* module() const { return m_module; }
    inline const String& name() const { return m_name; }   
    inline bool isLoad() const { return m_isLoad; }

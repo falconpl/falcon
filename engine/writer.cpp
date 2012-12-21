@@ -29,11 +29,13 @@ Writer::Writer():
    m_buffer(0),
    m_bufPos(0),
    m_bufSize(0),
+   m_gcMark(0),
    m_bOwnStream(false),
    m_stream(0)
 {}
 
 Writer::Writer( Stream* stream, bool bOwn ):
+   m_gcMark(0),
    m_bOwnStream(bOwn),
    m_stream(stream)
 {

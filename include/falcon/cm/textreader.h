@@ -23,7 +23,7 @@
 #include <falcon/types.h>
 #include <falcon/textreader.h>
 
-#include <falcon/cm/stream.h>
+#include <falcon/classes/classstream.h>
 
 namespace Falcon {
 

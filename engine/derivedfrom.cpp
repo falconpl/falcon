@@ -134,9 +134,9 @@ void DerivedFrom::store( VMContext* ctx, DataWriter* stream, void* instance ) co
    m_parent->store( ctx, stream, instance );
 }
 
-void DerivedFrom::restore( VMContext* ctx, DataReader* stream, void*& empty ) const
+void DerivedFrom::restore( VMContext* ctx, DataReader* stream ) const
 {
-   m_parent->restore( ctx, stream, empty );
+   m_parent->restore( ctx, stream );
 }
 
 void DerivedFrom::flatten( VMContext* ctx, ItemArray& subItems, void* instance ) const

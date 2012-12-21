@@ -35,6 +35,8 @@ class PoolList;
 class Pool;
 class ClassReference;
 class ClassShared;
+class ClassModule;
+class GCLock;
 
 class PredefMap;
 class MantraMap;
@@ -50,6 +52,8 @@ class Symbol;
 
 class SynClasses;
 class VMContext;
+
+class Log;
 
 /** Falcon application global data.
 
@@ -119,7 +123,14 @@ public:
 
    /** The global collector.
     */
-   Collector* collector() const;
+   static Collector* collector();
+
+   static GCToken* GC_store( const Class* cls, void* data );
+   static GCToken* GC_H_store( const Class* cls, void* data, const String& src, int line );
+   static GCLock* GC_storeLocked( const Class* cls, void* data );
+   static GCLock* GC_H_storeLocked( const Class* cls, void* data, const String& src, int line );
+   static GCLock* GC_lock( const Item& item );
+   static void GC_unlock( GCLock* lock );
 
    //==========================================================================
    // Type handlers
@@ -312,6 +323,39 @@ public:
     */
    Class* symbolClass() const;
 
+   /** Returns the global instance of the ClassStorer class.
+   \return the Engine instance of the ClassStorer handler.
+
+    Method init() must have been called before.
+
+    @note This method will assert and terminate the program if compiled in debug mode
+    in case the engine has not been initialized. In release, it will just
+    return a null pointer.
+    */
+   Class* storerClass() const;
+
+   /** Returns the global instance of the ClassRestorer class.
+   \return the Engine instance of the ClassRestorer handler.
+
+    Method init() must have been called before.
+
+    @note This method will assert and terminate the program if compiled in debug mode
+    in case the engine has not been initialized. In release, it will just
+    return a null pointer.
+    */
+   Class* restorerClass() const;
+
+   /** Returns the global instance of the ClassStream class.
+   \return the Engine instance of the ClassStream handler.
+
+    Method init() must have been called before.
+
+    @note This method will assert and terminate the program if compiled in debug mode
+    in case the engine has not been initialized. In release, it will just
+    return a null pointer.
+    */
+   Class* streamClass() const;
+
    /** Returns the global instance of the ClassClosure class.
    \return the Engine instance of the ClassClosure handler.
 
@@ -350,8 +394,8 @@ public:
     */
    ClassReference* referenceClass() const;
 
-   /** Returns the global instance of the ClassReference class.
-   \return the Engine instance of the ClassReference handler.
+   /** Returns the global instance of the SharedClass class.
+   \return the Engine instance of the SharedClass handler.
 
     Method init() must have been called before.
 
@@ -360,6 +404,17 @@ public:
     return a null pointer.
     */
    ClassShared* sharedClass() const;
+
+   /** Returns the global instance of the ModuleClass class.
+   \return the Engine instance of the ModuleClass handler.
+
+    Method init() must have been called before.
+
+    @note This method will assert and terminate the program if compiled in debug mode
+    in case the engine has not been initialized. In release, it will just
+    return a null pointer.
+    */
+   Class* moduleClass() const;
 
    /** Returns the collection of standard syntactic tree classes.
    \return the Engine instance of the SynClasses class collection.
@@ -473,15 +528,6 @@ public:
     @see addMantra
     */
    Mantra* getMantra( const String& name, Mantra::t_category cat = Mantra::e_c_none ) const;
-   
-   /** Returns the context currently active in the current tread.
-    \return the context active in the current thread or 0 if the VM is not
-    running any context.
-    
-    The context will be returned also if the VM active in the current thread
-    is paused.
-    */
-   VMContext* currentContext() const;
 
    /** Set the context run by this thread.
     \param ctx The context being run.
@@ -504,6 +550,8 @@ public:
     */
    Symbol* baseSymbol() const;
    
+   Log* log() const;
+
 protected:
    Engine();
    ~Engine();
@@ -511,6 +559,7 @@ protected:
    static Engine* m_instance;
    Mutex* m_mtx;
    Collector* m_collector;
+   Log* m_log;
    Class* m_classes[FLC_ITEM_COUNT];
 
    VFSIface m_vfs;
@@ -563,6 +612,10 @@ protected:
    Class* m_syntreeClass;
    Class* m_symbolClass;
    Class* m_closureClass;
+   Class* m_storerClass;
+   Class* m_restorerClass;
+   Class* m_streamClass;
+   ClassModule* m_moduleClass;
    
    SynClasses* m_synClasses;
    
@@ -588,9 +641,7 @@ protected:
    StdSteps* m_stdSteps;
    StdErrors* m_stdErrors;
    Symbol* m_baseSymbol;
-   
-   // TODO: In MT, set this as TLS data.
-   VMContext* m_currentContext;
+
 };
 
 }

@@ -111,7 +111,7 @@ void ClassSymbol::op_getProperty( VMContext* ctx, void* instance, const String& 
 
    if( prop == "name" )
    {
-      ctx->stackResult(1, sym->name().clone()->garbage() );
+      ctx->stackResult(1, FALCON_GC_HANDLE(sym->name().clone()) );
    }
    else if( prop == "value" )
    {
@@ -160,10 +160,8 @@ void ClassSymbol::store( VMContext*, DataWriter* stream, void* instance ) const
 }
 
 
-void ClassSymbol::restore( VMContext*, DataReader* stream, void*& empty ) const
+void ClassSymbol::restore( VMContext* ctx, DataReader* stream ) const
 {
-   static Collector* coll = Engine::instance()->collector();
-      
    String name;
    char type;
    int32 id, line;
@@ -176,12 +174,11 @@ void ClassSymbol::restore( VMContext*, DataReader* stream, void*& empty ) const
    stream->read( isConst );
    
    Symbol* sym = new Symbol( name, (Symbol::type_t) type, id, type );
-   FALCON_GC_STORE( coll, this, sym );
    
    if( isConst ) { 
       sym->setConstant(true); 
    }
-   empty = sym;
+   ctx->pushData( FALCON_GC_STORE( this, sym ) );
 }
 
 

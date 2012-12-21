@@ -60,13 +60,13 @@ void ClassURI::store( VMContext*, DataWriter* stream, void* instance ) const
 }
 
 
-void ClassURI::restore( VMContext*, DataReader* stream, void*& empty ) const
+void ClassURI::restore( VMContext* ctx, DataReader* stream ) const
 {
    String uriName;
    stream->read( uriName );
    URICarrier* uc = new URICarrier( carriedProps() );
+   ctx->pushData( FALCON_GC_STORE( this, uc ) );
    uc->m_uri.parse( uriName );
-   empty = uc;
 }
    
 void* ClassURI::createInstance() const
@@ -109,7 +109,7 @@ bool ClassURI::op_init( VMContext* ctx, void* instance, int pcount ) const
 void ClassURI::op_toString( VMContext* ctx, void* self ) const
 {
    URICarrier* uc = static_cast<URICarrier*>(self);
-   ctx->topData() = (new String(uc->m_uri.encode()))->garbage();
+   ctx->topData() = FALCON_GC_HANDLE(new String(uc->m_uri.encode()));
 }
 
 //=========================================================

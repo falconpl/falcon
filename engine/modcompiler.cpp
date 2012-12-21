@@ -264,7 +264,10 @@ ModCompiler::ModCompiler():
 ModCompiler::~ModCompiler()
 {
    delete m_ctx;
-   delete m_module; // should normally be zero.
+   if( m_module != 0 )
+   {
+      m_module->decref();
+   }
 }
 
 
@@ -274,7 +277,6 @@ Module* ModCompiler::compile( TextReader* tr, const String& uri, const String& n
 
    // create the main function that will be used by the compiler
    SynFunc* main = new SynFunc("__main__");
-   m_module->setMainFunction( main );
 
    // and prepare the parser to deal with the main state.
    m_ctx->openMain( &main->syntree() );
@@ -284,8 +286,15 @@ Module* ModCompiler::compile( TextReader* tr, const String& uri, const String& n
    if ( !m_sp.parse() )
    {
       // we failed.
-      delete m_module;
+      m_module->decref();
       return 0;
+   }
+
+   if( main->syntree().empty() ) {
+      m_module->setMainFunction( main );
+   }
+   else {
+      delete main;
    }
 
    // we're done.

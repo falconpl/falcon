@@ -43,7 +43,7 @@ void TextReaderCarrier::gcMark( uint32 mark )
    if( mark != m_gcMark )
    {
       m_gcMark = mark;
-      carried()->m_gcMark = mark;
+      carried()->m_stream->gcMark( mark );
    }
 }
 
@@ -212,6 +212,7 @@ FALCON_DEFINE_METHOD_P1( ClassTextReader, read )
 
 FALCON_DEFINE_METHOD_P1( ClassTextReader, grab )
 {
+   static Class* clsString = Engine::instance()->stringClass();
    Item* i_count = ctx->param(0);
    if( i_count == 0 || !(i_count->isOrdinal()) )
    {
@@ -237,8 +238,8 @@ FALCON_DEFINE_METHOD_P1( ClassTextReader, grab )
    }
    
    // Return the string.
-   Item rv(str, true, __LINE__, SRC); // force to garbage the string NOW!
-   ctx->returnFrame( rv );
+   // force to garbage the string NOW!
+   ctx->returnFrame( FALCON_GC_STORE( clsString, str ) );
 }
 
 
@@ -271,6 +272,7 @@ FALCON_DEFINE_METHOD_P1( ClassTextReader, readLine )
 
 FALCON_DEFINE_METHOD_P1( ClassTextReader, grabLine )
 {
+   static Class* clsString = Engine::instance()->stringClass();
    Item* i_count = ctx->param(0);
    if( i_count != 0 && !(i_count->isOrdinal()) )
    {
@@ -298,8 +300,7 @@ FALCON_DEFINE_METHOD_P1( ClassTextReader, grabLine )
    }
    
    // Return the string.
-   Item rv(str, true, __LINE__, SRC); // force to garbage the string NOW!
-   ctx->returnFrame( rv );
+   ctx->returnFrame( FALCON_GC_STORE( clsString, str ) );
 }
 
 
@@ -321,6 +322,7 @@ FALCON_DEFINE_METHOD_P1( ClassTextReader, readEof )
 
 FALCON_DEFINE_METHOD_P1( ClassTextReader, grabEof )
 {  
+   static Class* clsString = Engine::instance()->stringClass();
    String* str = new String;   
    TextReaderCarrier* sc = static_cast<TextReaderCarrier*>(ctx->self().asInst());
    try {
@@ -332,8 +334,7 @@ FALCON_DEFINE_METHOD_P1( ClassTextReader, grabEof )
       throw;
    }
    // Return the string.
-   Item rv(str, true, __LINE__, SRC); // force to garbage the string NOW!  
-   ctx->returnFrame( rv );
+   ctx->returnFrame( FALCON_GC_STORE( clsString, str ) );
 }
 
 
@@ -368,6 +369,8 @@ FALCON_DEFINE_METHOD_P1( ClassTextReader, readRecord )
 
 FALCON_DEFINE_METHOD_P1( ClassTextReader, grabRecord )
 {
+   static Class* clsString = Engine::instance()->stringClass();
+
    Item* i_sep = ctx->param(0);   
    Item* i_count = ctx->param(1);
    
@@ -396,8 +399,7 @@ FALCON_DEFINE_METHOD_P1( ClassTextReader, grabRecord )
       }
    }
    
-   Item rv(str, true, __LINE__, SRC); // force to garbage the string NOW!  
-   ctx->returnFrame( rv );
+   ctx->returnFrame( FALCON_GC_STORE( clsString, str ) );
 }
 
 
@@ -457,6 +459,8 @@ FALCON_DEFINE_METHOD_P1( ClassTextReader, readToken )
 
 FALCON_DEFINE_METHOD_P1( ClassTextReader, grabToken )
 {
+   static Class* clsString = Engine::instance()->stringClass();
+
    Item* i_seps = ctx->param(0);   
    Item* i_count = ctx->param(1);
    
@@ -478,9 +482,8 @@ FALCON_DEFINE_METHOD_P1( ClassTextReader, grabToken )
       delete str;
       throw;
    }
-   
-   Item rv(str, true, __LINE__, SRC); // force to garbage the string NOW!     
-   ctx->returnFrame( rv );      
+
+   ctx->returnFrame( FALCON_GC_STORE( clsString, str ) );
 }
 
 

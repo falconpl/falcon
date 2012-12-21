@@ -250,11 +250,10 @@ void ClassTreeStep::store( VMContext*, DataWriter* dw, void* instance ) const
    dw->write( ts->chr() );
 }
 
-void ClassTreeStep::restore( VMContext*, DataReader*dr, void*& empty ) const
+void ClassTreeStep::restore( VMContext* ctx, DataReader*dr ) const
 {
-   // We do require that empty is not zero.
-   fassert( empty != 0 );
-   TreeStep* ts = static_cast<TreeStep*>(empty);
+   fassert( ctx->topData().asClass()->isDerivedFrom( this ) ) ;
+   TreeStep* ts = static_cast<TreeStep*>( ctx->topData().asInst() );
    int32 line, chr;
    dr->read( line );
    dr->read( chr );

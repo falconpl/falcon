@@ -50,7 +50,7 @@ void MetaHyperClass::store( VMContext* , DataWriter* wr, void* instance ) const
    wr->write( hc->m_ownParentship );
 }
 
-void MetaHyperClass::restore( VMContext* , DataReader* dr, void*& empty ) const
+void MetaHyperClass::restore( VMContext* ctx, DataReader* dr ) const
 {
    String name;
    int nParents;
@@ -64,7 +64,7 @@ void MetaHyperClass::restore( VMContext* , DataReader* dr, void*& empty ) const
    hc->m_nParents = nParents;
    hc->m_ownParentship  = ownParentship;
    
-   empty = hc;
+   ctx->pushData( FALCON_GC_STORE( this, hc ) );
 }
 
 

@@ -101,7 +101,7 @@ void ClassMantra::store( VMContext*, DataWriter* stream, void* instance ) const
 }
 
 
-void ClassMantra::restore( VMContext* ctx, DataReader* stream, void*& empty ) const
+void ClassMantra::restore( VMContext* ctx, DataReader* stream ) const
 {
    MESSAGE1( " -- starting restore");
    
@@ -115,8 +115,6 @@ void ClassMantra::restore( VMContext* ctx, DataReader* stream, void*& empty ) co
    stream->read(bHasModule);      
    if( bHasModule ) 
    {
-      bool hasLink = false;
-
       String modName, modUri;
       stream->read( modName );
       stream->read( modUri );
@@ -124,28 +122,17 @@ void ClassMantra::restore( VMContext* ctx, DataReader* stream, void*& empty ) co
       TRACE2( " -- Restoring dynamic mantra %s from %s: %s", 
             name.c_ize(), modName.c_ize(), modUri.c_ize() );
 
+      //TODO: is the main VM module space the right place?
       ModSpace* ms = ctx->vm()->modSpace();
-      Mantra* mantra = ms->findDynamicMantra( modUri, modName, name, hasLink );
-      
-      // if 0, would have thrown
-      fassert( mantra != 0 );
-
-      // honor link request.
-      if( hasLink )
-      {
-         Error* err = ms->link();
-         if( err != 0 ) throw err;            
-         ms->readyContext( ctx );
-      }
-
-      empty = mantra;
+      // this might alter the context and go deep
+      ms->findDynamicMantra( ctx, modUri, modName, name );
    }
    else {
       Mantra* mantra = eng->getMantra( name );
       
       // if 0, would have thrown
       fassert( mantra != 0 );
-      empty = mantra;
+      ctx->pushData( FALCON_GC_STORE( this, mantra ) );
    }      
 }
 
@@ -165,7 +152,7 @@ void ClassMantra::op_toString( VMContext* ctx , void* item ) const
    Class* fc = static_cast<Class*>(item);
    String* sret = new String( "Mantra " );
    sret->append(fc->name());
-   ctx->topData() = sret;
+   ctx->topData() = FALCON_GC_STORE( sret->handler(), sret );
 }
 
 

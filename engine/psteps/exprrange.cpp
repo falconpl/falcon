@@ -136,7 +136,6 @@ bool ExprRange::simplify( Item& ) const
 
 void ExprRange::apply_( const PStep* ps, VMContext* ctx )
 {
-   static Collector* coll = Engine::instance()->collector();
    static Class* cls =  Engine::instance()->rangeClass();   
    
    const ExprRange* self = static_cast<const ExprRange*>(ps);
@@ -194,7 +193,7 @@ void ExprRange::apply_( const PStep* ps, VMContext* ctx )
   
    // we're done.
    ctx->popCode();
-   ctx->stackResult( 3, FALCON_GC_STORE( coll, cls, rng ) );
+   ctx->stackResult( 3, FALCON_GC_STORE( cls, rng ) );
 }
  
 }
