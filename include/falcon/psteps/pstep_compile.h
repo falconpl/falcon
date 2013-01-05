@@ -31,7 +31,7 @@ namespace Falcon {
  * The owner should destroy it when the computation is performed.
  *
  */
-class PStepCompile: public PStep
+class FALCON_DYN_CLASS PStepCompile: public PStep
 {
 public:
    PStepCompile(int32 line=0, int32 chr = 0);
