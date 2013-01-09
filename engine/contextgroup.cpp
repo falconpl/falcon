@@ -25,6 +25,7 @@
 #include <falcon/itemarray.h>
 #include <falcon/fassert.h>
 #include <falcon/contextmanager.h>
+#include <falcon/error.h>
 
 #include <deque>
 
@@ -49,7 +50,8 @@ public:
 
    ~Private()
    {
-      if( m_error != 0 ) {
+      if( m_error != 0 )
+      {
          m_error->decref();
       }
    }

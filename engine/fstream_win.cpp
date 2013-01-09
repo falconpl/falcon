@@ -159,6 +159,21 @@ size_t FStream::write( const void *buffer, size_t size )
    return (size_t) result;
 }
 
+bool FStream::setNonblocking( bool nb )
+{
+   if (nb)
+   {
+
+   }
+   return false;
+}
+
+bool FStream::isNonbloking() const
+{
+   WinFStreamData* data = (WinFStreamData*) m_fsData;
+   return data->bNonBlocking;
+}
+
 off_t FStream::seek( off_t pos, e_whence whence )
 {
    WinFStreamData* data = (WinFStreamData*) m_fsData;
@@ -374,6 +389,8 @@ size_t FStream::writeAvailable( int32 msec )
 
    return 0;
 }
+
+
 
 }
 

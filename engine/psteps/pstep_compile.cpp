@@ -18,6 +18,7 @@
 #include <falcon/textreader.h>
 #include <falcon/textwriter.h>
 #include <falcon/stream.h>
+#include <falcon/error.h>
 
 namespace Falcon {
 
