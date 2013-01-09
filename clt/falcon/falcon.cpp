@@ -162,7 +162,7 @@ void FalconApp::launch( const String& script )
       if( mod->getMainFunction() != 0 )
       {
          mod->incref();
-         m_process->mainContext()->call( mod->getMainFunction(), 0 );
+         m_process->mainContext()->callInternal( mod->getMainFunction(), 0 );
          m_process->start();
          m_process->wait();
       }

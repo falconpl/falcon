@@ -112,7 +112,7 @@ void PrototypeClass::op_call( VMContext* ctx, int32 paramCount, void* instance )
    Item* init = self->find("_init");
    if( init != 0 && init->isMethod() )
    {
-      ctx->call( init->asMethodFunction(), paramCount, *iNewSelf );
+      ctx->callInternal( init->asMethodFunction(), paramCount, *iNewSelf );
    }
    else
    {

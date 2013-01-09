@@ -128,7 +128,7 @@ void ExprPseudoCall::apply_( const PStep* v, VMContext* ctx )
       
       // we're out of business
       ctx->popCode();      
-      ctx->call( self->m_func, pcount );
+      ctx->callInternal( self->m_func, pcount );
    }
 }
 
@@ -171,7 +171,7 @@ void ExprPseudoCall::apply_eta_( const PStep* v, VMContext* ctx )
    {
       // we're out of business -- call the function
       ctx->popCode();      
-      ctx->call( self->m_func, pcount );
+      ctx->callInternal( self->m_func, pcount );
    }
 }
 

@@ -169,7 +169,7 @@ void ExprCall::apply_( const PStep* v, VMContext* ctx )
          {
             // this is just a shortcut for a very common case.
             Function* f = top.asFunction();
-            ctx->call( f, pcount );
+            ctx->callInternal( f, pcount );
          }
          break;
 
@@ -178,7 +178,7 @@ void ExprCall::apply_( const PStep* v, VMContext* ctx )
             Item old = top;
             Function* f = top.asMethodFunction();
             old.unmethodize();
-            ctx->call( f, pcount, old );
+            ctx->callInternal( f, pcount, old );
          }
          break;
 

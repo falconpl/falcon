@@ -121,7 +121,7 @@ bool ClassClosure::gcCheckInstance( void* instance, uint32 mark ) const
 void ClassClosure::op_call( VMContext* ctx, int32 paramCount, void* instance ) const
 {
    Closure* closure = static_cast<Closure*>(instance);
-   ctx->call( closure, paramCount );
+   ctx->callInternal( closure, paramCount );
 }
 
 }

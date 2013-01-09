@@ -866,8 +866,13 @@ public:
 
     @param function The function to be invoked.
     @param np Number of parameters that must be already in the stack.
+
+    \note This method is meant to be called internally by the VM;
+    you can use it if you know-what-you're-doing(TM); otherwise, use
+    callItem.
+
     */
-   void call( Function* f, int32 np );
+   void callInternal( Function* f, int32 np );
 
    /** Prepares the VM to execute a function (actually, a method).
 
@@ -893,13 +898,20 @@ public:
     @param np Number of parameters that must be already in the stack.
     @param self The item on which this method is invoked. Pure functions are
                 considered methods of "nil".
+    \note This method is meant to be called internally by the VM;
+    you can use it if you know-what-you're-doing(TM); otherwise, use
+    callItem.
     */
-   void call( Function* function, int np, const Item& self );
+   void callInternal( Function* function, int np, const Item& self );
 
    /** Invokes a function passing closure data.
     \see ClassClosure
+
+    \note This method is meant to be called internally by the VM;
+    you can use it if you know-what-you're-doing(TM); otherwise, use
+    callItem.
     */
-   void call( Closure* closure, int nparams );
+   void callInternal( Closure* closure, int nparams );
 
    /** Calls an item without parameters.
     \see callItem( const Item&, ... )

@@ -65,7 +65,7 @@ public:
       }      
       
       ctx->pushData("Hello from a function using printl!");
-      ctx->call( m_funcPrintl , 1 );
+      ctx->callInternal( m_funcPrintl , 1 );
    }
    
 private:
@@ -97,7 +97,7 @@ public:
       {
          ctx->pushData(
             "Hello from a function using printl -- with static linkage!!!");
-         ctx->call( m_funcPrintl , 1 );
+         ctx->callInternal( m_funcPrintl , 1 );
       }
    }
 };

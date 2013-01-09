@@ -409,7 +409,7 @@ bool HyperClass::op_init( VMContext* ctx, void* instance, int32 pcount ) const
    // if we have a constructor, call it.
    if( m_constructor )
    {
-      ctx->call( m_constructor, pcount, Item( this, &mData ) );
+      ctx->callInternal( m_constructor, pcount, Item( this, &mData ) );
       
       // we'll have to call also the master constructor. -- if so, repush the params.
       if( m_master->constructor() != 0 )

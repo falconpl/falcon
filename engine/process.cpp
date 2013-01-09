@@ -71,7 +71,7 @@ SynFunc* Process::readyEntry()
    m_context->reset();
    delete m_entry;
    m_entry = new SynFunc("#Entry");
-   m_context->call( m_entry, 0 );
+   m_context->callInternal( m_entry, 0 );
 
    return m_entry;
 }
@@ -94,7 +94,7 @@ bool Process::start( Function* main, int pcount )
    }
 
    //Put a VM termination request here.
-   m_context->call(main, pcount);
+   m_context->callInternal(main, pcount);
    // launch is to be called after call,
    // as it may stack higher priority calls for base modules.
    launch();
@@ -108,7 +108,7 @@ bool Process::start( Closure* main, int pcount )
    }
 
    //Put a VM termination request here.
-   m_context->call(main, pcount);
+   m_context->callInternal(main, pcount);
    // launch is to be called after call,
    // as it may stack higher priority calls for base modules.
    launch();

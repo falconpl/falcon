@@ -79,7 +79,7 @@ void StmtInit::apply_( const PStep* ps, VMContext* ctx )
    class FalconClass* fcs = static_cast<FalconClass*>( init->m_inheritance->parent());
    register CallFrame& cf = ctx->currentFrame();
    // if we're here, we didn't have any expression to evaluate.
-   ctx->call( fcs->constructor(), 0, cf.m_self );
+   ctx->callInternal( fcs->constructor(), 0, cf.m_self );
 }
 
 
@@ -101,7 +101,7 @@ void StmtInit::PostInit::apply_( const PStep* ps, VMContext* ctx )
    
    class FalconClass* fcs = static_cast<FalconClass*>( init->m_inheritance->parent());
    register CallFrame& cf = ctx->currentFrame();
-   ctx->call( fcs->constructor(),
+   ctx->callInternal( fcs->constructor(),
               init->m_inheritance->paramCount(), cf.m_self );
 }
   

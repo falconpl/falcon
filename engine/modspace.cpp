@@ -122,7 +122,7 @@ Process* ModSpace::loadModule( const String& name, bool isUri,  bool isMain )
 
    Process* process = m_vm->createProcess();
    VMContext* tgtContext = process->mainContext();
-   tgtContext->call( m_loaderFunc, 0 );
+   tgtContext->callInternal( m_loaderFunc, 0 );
    tgtContext->pushCode(&Engine::instance()->stdSteps()->m_returnFrameWithTop);
    loadSubModule( name, isUri, isMain, tgtContext );
 
@@ -661,7 +661,7 @@ void ModSpace::PStepLoader::apply_( const PStep* self, VMContext* ctx )
 
       // Push the main funciton only if this is not a main module.
       if( mod->getMainFunction() != 0 && ! mod->isMain() ) {
-         ctx->call( mod->getMainFunction(), 0 );
+         ctx->callInternal( mod->getMainFunction(), 0 );
          return;
       }
    }
@@ -842,7 +842,7 @@ void ModSpace::PStepExecMain::apply_( const PStep*, VMContext* ctx )
    mod->setMain(false);
 
    if( mod->getMainFunction() != 0 ) {
-      ctx->call( mod->getMainFunction(), 0 );
+      ctx->callInternal( mod->getMainFunction(), 0 );
    }
 }
 

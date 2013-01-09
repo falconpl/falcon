@@ -946,7 +946,7 @@ void VMContext::pushBreak()
 }
 
 
-void VMContext::call( Function* function, int nparams, const Item& self )
+void VMContext::callInternal( Function* function, int nparams, const Item& self )
 {
    TRACE( "Calling method %s.%s -- call frame code:%p, data:%p, call:%p",
          self.describe(3).c_ize(), function->locate().c_ize(),
@@ -959,7 +959,7 @@ void VMContext::call( Function* function, int nparams, const Item& self )
 }
 
 
-void VMContext::call( Function* function, int nparams )
+void VMContext::callInternal( Function* function, int nparams )
 {
    TRACE( "Calling function %s -- codebase:%d, dynsBase:%d, stackBase:%d",
          function->locate().c_ize(),
@@ -979,7 +979,7 @@ void VMContext::call( Function* function, int nparams )
 }
 
 
-void VMContext::call( Closure* closure, int32 nparams )
+void VMContext::callInternal( Closure* closure, int32 nparams )
 {
    // shall we create a full call frame?
    if( closure->closedHandler()->typeID() == FLC_CLASS_ID_FUNC ) 

@@ -82,7 +82,7 @@ void ClassFunction::describe( void* instance, String& target, int, int ) const
 
 void ClassFunction::op_call( VMContext* ctx, int32 paramCount, void* self ) const
 {
-   ctx->call( static_cast<Function*>(self), paramCount );
+   ctx->callInternal( static_cast<Function*>(self), paramCount );
 }
 
 }

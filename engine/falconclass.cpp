@@ -1074,7 +1074,7 @@ bool FalconClass::op_init( VMContext* ctx, void* instance, int32 pcount ) const
       ctx->pushCode( &st.m_pop );
       Item self( this, inst );
       ctx->insertData( pcount, &self, 1, 0 );
-      ctx->call( m_constructor, pcount, Item( this, inst ) );
+      ctx->callInternal( m_constructor, pcount, Item( this, inst ) );
       
       // now that we are in the constructor context, we can push the property initializer
       // if we're a base class, we don't need to do this, because property initializers

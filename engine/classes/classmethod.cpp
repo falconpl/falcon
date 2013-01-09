@@ -125,7 +125,7 @@ void ClassMethod::op_call( VMContext* ctx, int32 paramCount, void* self ) const
    Item copy = *static_cast<Item*>(self);
    Function* fmth = copy.asMethodFunction();
    copy.unmethodize();
-   ctx->call( fmth, paramCount, copy );
+   ctx->callInternal( fmth, paramCount, copy );
 }
 
 
