@@ -90,41 +90,12 @@ void ClassModule::store( VMContext*, DataWriter* stream, void* instance ) const
    }
    
    // otherwise, we don't have to save the URI, as it will be rewritten.
-   
-   int32 progID;
    // First, prepare to save the module ids.
    Module::Private* mp = mod->_p;
+   int32 progID;
    
-   // first, count the symbols
-   {
-      Module::Private::GlobalsMap& globs = mp->m_gSyms;
-      progID = (int32) globs.size();
-      TRACE1( "ClassModule::store -- storing %d symbols", progID );
-      stream->write( progID );
-      Module::Private::GlobalsMap::iterator globi = globs.begin();
-      progID = 0;
-      while( globi != globs.end() ) {
-         Symbol* sym = globi->second;
-         // reset the ID here
-         sym->localId( progID ); 
-
-         ++globi;
-         ++ progID;
-      }
-
-      // also the exported
-      Module::Private::GlobalsMap& exps = mp->m_gExports;
-      progID = (int32) exps.size();
-      TRACE1( "ClassModule::store -- storing %d export symbols", progID );
-      stream->write( progID );
-      Module::Private::GlobalsMap::iterator expi = exps.begin();
-      while( expi != exps.end() ) {
-         Symbol* sym = expi->second;
-         // just write the references
-         stream->write( (int32) sym->localId() );      
-         ++expi;
-      }
-   }
+   // first, save symbols
+   mod->globals().store(stream);
    
    // Now store the module requests
    {
@@ -202,9 +173,9 @@ void ClassModule::store( VMContext*, DataWriter* stream, void* instance ) const
          Module::Private::Dependency* dep = *depi;
          dep->m_id = progID++;
          stream->write( dep->m_sourceName );
-         if( dep->m_symbol != 0 )
+         if( dep->m_variable != 0 )
          {
-            stream->write( (int32) dep->m_symbol->localId() );
+            stream->write( (int32) dep->m_variable->id() );
          }
          else {
             stream->write( (int32)-1 );
@@ -276,32 +247,7 @@ void ClassModule::restoreModule( Module* mod, DataReader* stream ) const
    Module::Private* mp = mod->_p;
       
    // first, write the symbols.
-   stream->read(count);      
-   TRACE1( "ClassModule::restoreModule -- reading %d symbols", count );
-   mp->m_symCount = count;
-   progID = 0;
-   
-
-   // also the exported
-   stream->read( count );
-   TRACE1( "ClassModule::restoreModule -- reading %d exported symbols", count );
-   progID = 0;
-   while( progID < count ) {
-      int32 symPos;
-      // just write the references
-      stream->read( symPos );   
-      TRACE2( "Symbol %d is exported", symPos );
-      if( symPos >= (int32) mp->m_symCount )
-      {
-         throw new IOError( ErrorParam( e_deser, __LINE__, SRC )
-            .origin( ErrorParam::e_orig_loader )
-            .extra(String("Exported symbol ID out of range on exported symbol ").N(progID) )
-            );
-      }
-
-      mp->m_tempExport.push_back(symPos);
-      ++progID;
-   }
+   mod->globals().restore(stream);
    
    // Now restore the module requests
    Module::Private::ReqList& mrlist = mp->m_mrlist;
@@ -420,7 +366,7 @@ void ClassModule::restoreModule( Module* mod, DataReader* stream ) const
       stream->read( idSymbol );
       stream->read( idDef );
       
-      Symbol* sym = 0;
+
       ImportDef* idef = 0;
       
       if( idDef >= 0 )
@@ -445,11 +391,10 @@ void ClassModule::restoreModule( Module* mod, DataReader* stream ) const
                );
          }         
       }
-      sym = (Symbol*) idSymbol;
       
       Module::Private::Dependency* dep = new Module::Private::Dependency( sName );
       dep->m_idef = idef;
-      dep->m_symbol = sym;      
+      dep->m_variable = idSymbol >= 0 ? &mod->globals().getGlobal(idSymbol)->m_var : 0;
       deplist.push_back( dep );      
       
       ++progID;
@@ -460,8 +405,6 @@ void ClassModule::restoreModule( Module* mod, DataReader* stream ) const
 
 void ClassModule::flatten( VMContext* ctx, ItemArray& subItems, void* instance ) const
 {
-   static Class* clsSymbol = Engine::instance()->symbolClass();
-   
    Module* mod = static_cast<Module*>(instance);
    TRACE( "Flattening module %p %s (%s - %s)", 
       mod,  (mod->isNative()?"native" : "syntactic" ),
@@ -473,45 +416,21 @@ void ClassModule::flatten( VMContext* ctx, ItemArray& subItems, void* instance )
       return;
    }
       
-   // First, prepare to save the module ids.
+   // First, get enough lenght
    Module::Private* mp = mod->_p;
    
    subItems.reserve( 
-      mp->m_gSyms.size()*2 +
+      mod->globals().size() +
       mp->m_mantras.size()+
       mp->m_reqslist.size() +
       3
    );
    
-   // First, save the symbols and their values.   
-   {
-      Module::Private::GlobalsMap& globs = mp->m_gSyms;
-      Module::Private::GlobalsMap::iterator globi = globs.begin();
-      while( globi != globs.end() ) {
-         Symbol* sym = globi->second;
-         TRACE1( "Flattening symbol %s in module %s", sym->name().c_ize(), mod->name().c_ize() );
-         subItems.append(Item( clsSymbol, sym ) );
-         
-         const Item* value = sym->getValue( ctx );
-         if( value != 0 )
-         {
-            if( ! value->isUser() || !static_cast<Class*>(value->asInst())->isCompatibleWith(Mantra::e_c_hyperclass))
-            {
-               // skip hyperclasses
-               subItems.append( *value );
-            }
-            else { 
-               subItems.append( Item() );
-            }
-         }
-         else {
-            subItems.append( Item() );
-         }
-         
-         ++globi;
-      }
-   }
+   // save all the global variables
+   mod->globals().flatten(ctx, subItems);
+   TRACE( "ClassModule::flatten -- stored %d variables", (uint32) subItems.length() );
    
+   // save mantras
    {
       Module::Private::MantraMap& mantras = mp->m_mantras;
       Module::Private::MantraMap::iterator fi = mantras.begin();
@@ -548,10 +467,10 @@ void ClassModule::flatten( VMContext* ctx, ItemArray& subItems, void* instance )
 }
 
 
-void ClassModule::unflatten( VMContext*, ItemArray& subItems, void* instance ) const
+void ClassModule::unflatten( VMContext* ctx, ItemArray& subItems, void* instance ) const
 {
    Module* mod = static_cast<Module*>(instance);
-   TRACE( "Unflattening module %p %s (%s - %s)", 
+   TRACE( "ClassModule::unflatten -- module %p %s (%s - %s)",
       mod,  (mod->isNative()?"native" : "syntactic" ),
       mod->name().c_ize(), mod->uri().c_ize() );
    
@@ -564,60 +483,10 @@ void ClassModule::unflatten( VMContext*, ItemArray& subItems, void* instance ) c
    Module::Private* mp = mod->_p;
    uint32 pos = 0;
       
-   // First, restore the symbol values.
-   //exps[ exported->name() ] = (Symbol*) symPos;
-   std::vector<Symbol*> syms;
-   syms.reserve( mp->m_symCount );
-   Module::Private::GlobalsMap& globs = mp->m_gSyms;
-   while( pos < mp->m_symCount*2 ) 
-   {         
-      const Item& valueSym = subItems[pos++];
-      fassert( valueSym.isUser() );      
-      Symbol* sym = static_cast<Symbol*>(valueSym.asInst());
-      syms.push_back( sym );
-      globs[sym->name()] = sym;
-      
-      Item& value = subItems[pos++];
-      // don't bother with nil values, as they could be associated with
-      if( sym->type() != Symbol::e_st_extern ) {
-         sym->globalWithValue( value );
-      }
-   }
-   
-   // unflatten exports and dependencies.
-   {      
-      Module::Private::GlobalsMap& exps = mp->m_gExports;
-      std::vector<int32>& expids = mp->m_tempExport;
-      std::vector<int32>::iterator expi = expids.begin();
-      while( expi != expids.end() ) {
-         int32 pos = *expi;
-         fassert( (uint32)pos < syms.size() ); // already checked in restore
-         Symbol* sym = syms[pos];
-         exps[sym->name()] = sym;
-         
-         ++expi;
-      }
-      
-      Module::Private::DepList& deplist = mp->m_deplist;
-      Module::Private::DepList::iterator depi = deplist.begin();
-      while( depi != deplist.end() ) {
-         Module::Private::Dependency* dep = *depi;
-         int32 pos = (int32) dep->m_symbol;
-         if( pos >= 0 )
-         {
-            fassert( (uint32)pos < syms.size() ); // already checked in restore
-            Symbol* sym = syms[pos];
-            dep->m_symbol = sym;
-            mp->m_depsBySymbol[ sym->name() ] = dep;
-         }
-         else {
-            dep->m_symbol = 0;
-         }
-         
-         ++depi;
-      }
-   }
-   
+   // First, restore the global variables.
+   mod->globals().unflatten( ctx, subItems, 0, pos);
+   TRACE( "ClassModule::unflatten -- restored %d globals", pos );
+
    const Item* current = &subItems[pos];
    while( ! current->isNil() && pos < subItems.length()-2 )
    {
@@ -635,6 +504,7 @@ void ClassModule::unflatten( VMContext*, ItemArray& subItems, void* instance ) c
       current = &subItems[pos];
    }
    
+   TRACE( "ClassModule::unflatten -- restored mantras, at position %d", pos );
    
    Module::Private::RequirementList& reqs = mp->m_reqslist;
    current = &subItems[++pos];
@@ -647,6 +517,7 @@ void ClassModule::unflatten( VMContext*, ItemArray& subItems, void* instance ) c
       current = &subItems[pos];
    }
    
+   TRACE( "ClassModule::unflatten -- restored requirements, at position %d", pos );
 }
 
    

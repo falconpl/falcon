@@ -69,8 +69,6 @@ void apply_expr_call( const Rule&, Parser& p )
       if( pf != 0 )
       {
          callps = new ExprPseudoCall(pf);
-         ParserContext* ctx = static_cast<ParserContext*>(p.context());
-         ctx->undoVariable( esym->name() );
          delete esym;
       }
       else

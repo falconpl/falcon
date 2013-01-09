@@ -51,9 +51,6 @@ public:
    
    void store( VMContext*, DataWriter* stream, void* instance ) const;
    void restore( VMContext*, DataReader* stream ) const;
-   void flatten( VMContext*, ItemArray& subItems, void* instance ) const;
-   void unflatten( VMContext*, ItemArray& subItems, void* instance ) const;
-
 };
 
 }

@@ -317,7 +317,7 @@ void StmtForIn::expandItem( Item& itm, VMContext* ctx ) const
 {
    if( _p->m_params.size() == 1 )
    {
-      *_p->m_params[0]->lvalueValue( ctx ) = itm;
+      ctx->resolveSymbol(_p->m_params[0], true)->assign(itm);
    }
    else
    {
@@ -329,7 +329,7 @@ void StmtForIn::expandItem( Item& itm, VMContext* ctx ) const
          {
             for( length_t i = 0; i < ar->length(); ++i )
             {
-               *_p->m_params[i]->lvalueValue( ctx ) = (*ar)[i];               
+               ctx->resolveSymbol(_p->m_params[i], true)->assign((*ar)[i]);
             }
             return;
          }
@@ -668,7 +668,7 @@ void StmtForTo::apply_( const PStep* ps, VMContext* ctx )
    
    // Prepare the start value   
    Symbol* target = self->m_target;
-   *target->lvalueValue( ctx ) = start;
+   ctx->resolveSymbol(target, true)->assign(start);
    
    // eventually, push the first opode in top of all.
    if( self->m_forFirst != 0 )
@@ -688,7 +688,7 @@ void StmtForTo::PStepNext::apply_( const PStep* ps, VMContext* ctx )
    
    // the start, at minimum, will be done.
    Symbol* target = self->m_target;
-   *target->lvalueValue( ctx ) = start;   
+   ctx->resolveSymbol(target, true)->setInteger(start);
    
    // step cannot be 0 as it has been sanitized by our main step.
    if( (step > 0 && start >= end) || ( step < 0 && start <= end ) )

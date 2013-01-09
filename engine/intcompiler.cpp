@@ -75,31 +75,48 @@ void IntCompiler::Context::onInputOver()
 }
 
 
-void IntCompiler::Context::onNewFunc( Function* function, Symbol* gs )
+void IntCompiler::Context::onNewFunc( Function* function )
 {
    SourceParser& sp = m_owner->m_sp;
 
-   if( gs != 0 ) {
-      if( ! m_owner->m_mod->addMantraWithSymbol(function, gs, false) ) {
-         m_owner->m_sp.addError( e_already_def, sp.currentSource(), sp.currentLine()-1, 0, 0, function->name() );
-         delete function;
-         return;
-      }
+   bool result;
+   if( function->name() == "" ) {
+      result = true;
+      m_owner->m_mod->addAnonMantra(function);
+   }
+   else {
+      result = m_owner->m_mod->addMantra(function);
+   }
+
+   if( ! result ) {
+      m_owner->m_sp.addError( e_already_def, sp.currentSource(), sp.currentLine()-1, 0, 0,
+               function->name() );
+      delete function;
+      return;
    }
 
    m_owner->m_currentMantra = function;
 }
 
 
-void IntCompiler::Context::onNewClass( Class* cls, bool, Symbol* gs )
+void IntCompiler::Context::onNewClass( Class* cls, bool )
 {
    SourceParser& sp = m_owner->m_sp;
 
-   if( gs != 0 ) {
-      if( ! m_owner->m_mod->addMantraWithSymbol(cls, gs, false) ) {
-         m_owner->m_sp.addError( e_already_def, sp.currentSource(), sp.currentLine()-1, 0, 0, cls->name() );
-         return;
-      }
+   bool result;
+   if( cls->name() == "" ) {
+      result = true;
+      m_owner->m_mod->addAnonMantra(cls);
+   }
+   else {
+      result = m_owner->m_mod->addMantra(cls);
+   }
+
+   if( ! result ) {
+      m_owner->m_sp.addError( e_already_def, sp.currentSource(), sp.currentLine()-1, 0, 0,
+               cls->name() );
+      delete cls;
+      return;
    }
 
    FalconClass* fcls = static_cast<FalconClass*>(cls);
@@ -147,7 +164,7 @@ void IntCompiler::Context::onLoad( const String& path, bool isFsPath )
    }
 
    // get the module space
-   ModSpace* theSpace = m_owner->m_mod->moduleSpace();
+   ModSpace* theSpace = m_owner->m_mod->modSpace();
 
    // do we have a module?
    if( m_owner->m_mod->addLoad( path, isFsPath ) )
@@ -194,7 +211,7 @@ void IntCompiler::Context::onExport(const String& symName )
    Module* mod = m_owner->m_mod;
 
    // do we have a module?
-   Symbol* sym = 0;
+   Variable* sym = 0;
    bool already;
    sym = mod->addExport( symName, already );
 
@@ -206,7 +223,7 @@ void IntCompiler::Context::onExport(const String& symName )
       return;
    }
 
-   Error* e = mod->moduleSpace()->exportSymbol( mod, sym );
+   Error* e = mod->modSpace()->exportSymbol( mod, symName, *sym );
    if( e != 0 )
    {
       sp.addError( e );
@@ -239,56 +256,39 @@ void IntCompiler::Context::onGlobal( const String& )
 }
 
 
-Symbol* IntCompiler::Context::onUndefinedSymbol( const String& name )
+Variable* IntCompiler::Context::onGlobalDefined( const String& name, bool& bAlreadyDef )
 {
-   Module* mod = m_owner->m_mod;
-
-   // Is this a global symbol?
-   Symbol* gsym = mod->getGlobal( name );
-   if (gsym == 0)
+   Variable* var = m_owner->m_mod->getGlobal( name );
+   if( var == 0 )
    {
-      // no? -- create it as an implicit import -- but only if really needed,
-      // -- in the interactive mode, we just consider a missing reference to be an error.
-      // and try to link it right now.
-      Module* importer;
-      Symbol* exp = mod->moduleSpace()->findExportedOrGeneralSymbol( mod, name, importer );
-      if( exp == 0 )
-      {
-         return 0;
-      }
-      gsym = mod->addImplicitImport( name );
-
-      // no need to "define" it, it stays an extern.
-      Variable* var = exp->getVariable(0);
-      fassert( var != 0 );
-      gsym->resolved( var );
+      bAlreadyDef = false;
+      var = m_owner->m_mod->addGlobal( name, Item(), false );
+      var->declaredAt( m_owner->m_sp.currentLine() );
    }
-   return gsym;
+   else {
+      bAlreadyDef = true;
+   }
+
+   return var;
 }
 
 
-Symbol* IntCompiler::Context::onGlobalDefined( const String& name, bool &adef )
+Variable* IntCompiler::Context::onGlobalAccessed( const String& name )
 {
-   Module* mod = m_owner->m_mod;
-
-   Symbol* sym = mod->getGlobal(name);
-   if( sym == 0 )
+   Variable* var = m_owner->m_mod->getGlobal( name );
+   if( var == 0 )
    {
-      adef = false;
-      Symbol* s = mod->addVariable( name );
-      s->declaredAt( m_owner->m_sp.currentLine() );
-      return s;
+      Variable* var = m_owner->m_mod->addImplicitImport( name );
+      var->declaredAt( m_owner->m_sp.currentLine() );
    }
 
-   // The interactive compiler never adds an undefined symbol
-   adef = true;
-   return sym;
+   return var;
 }
 
 
-Expression* IntCompiler::Context::onStaticData( Class* cls, void* data )
+Item* IntCompiler::Context::getVariableValue( Variable* var )
 {
-   return new ExprValue( Item( cls, data ) );
+   return m_owner->m_mod->getGlobalValue( var->id() );
 }
 
 

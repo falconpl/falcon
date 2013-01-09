@@ -22,9 +22,9 @@
 #include <falcon/modrequest.h>
 
 #include <deque>
-#include <list>
 #include <map>
 #include <vector>
+#include <set>
 
 namespace Falcon {
 
@@ -105,7 +105,7 @@ public:
       /** Local unresolved symbol.
        Could be zero in case of a dependency created by a direct request.
        */
-      Symbol* m_symbol;
+      Variable* m_variable;
       
       /** The import definition related to this dependency.
        
@@ -115,11 +115,6 @@ public:
        Could be zero if the dependency is created by an implicit impor request.
        */
       ImportDef* m_idef;
-      
-      /** The symbol designated by this dependency once resolved. 
-       Will be zero until the symbol is not found in the source module.
-       */
-      Symbol* m_resSymbol;
            
       /** The name of the symbol as it appares in the source module.
        It is calculated from the import definition, once applied namespaces
@@ -148,36 +143,34 @@ public:
       int m_id;
 
       Dependency():
-         m_symbol( 0 ),
-         m_idef( 0 ),
-         m_resSymbol( 0 )
+         m_variable( 0 ),
+         m_idef( 0 )
       {}
       
       Dependency( const String& name ):
-         m_symbol( 0 ),
+         m_variable( 0 ),
          m_idef( 0 ),
-         m_resSymbol( 0 ),
          m_sourceName( name )
       {}
       
-      Dependency( Symbol* sym ):
-         m_symbol( sym ),
+      Dependency( const String& name, Variable* sym ):
+         m_variable( sym ),
          m_idef( 0 ),
-         m_resSymbol( 0 )
+         m_sourceName( name )
       {}
       
-      Dependency( Symbol* sym, ImportDef* def ):
-         m_symbol( sym ),
+      Dependency( const String& name, Variable* sym, ImportDef* def ):
+         m_variable( sym ),
          m_idef( def ),
-         m_resSymbol( 0 )
+         m_sourceName( name )
       {}
 
       ~Dependency() {}
       
       /** Called when the remote symbol is resolved. 
-       \param parentMod The module hosting this dependency
-       \param mod The module where the symbol is imported (not exported!)
-       \param sym the defined symbol (coming from the exporter module).
+       \param sourceMod The module hosting this dependency
+       \param hostMod The module where the symbol is imported, and this dependency is stored
+       \param sourceVar The
        \return 0 if ok, a pointer to a composite error (error in a list)
        in case of errors.
        
@@ -188,7 +181,7 @@ public:
        This calls all the waiting functions, and fills the m_errors queue
        with errors returned by that functions, if any.
        */      
-      Error* onResolved( Module* parentMod, Module* mod, Symbol* sym );
+      Error* onResolved( Module* sourceMod, Module* hostMod, Item* source );
    };
    
    typedef std::deque<Dependency*> DepList;
@@ -214,7 +207,7 @@ public:
     to be searched, it is to be found in the global exports of the ModSpace
     where this module resides.
     */
-   DepMap m_depsBySymbol;
+   DepMap m_depsByName;
    
    /** Class used to keep track of requests to import a whole namespace.
     Namespace imports are request to import multiple symbols in the owner module.
@@ -250,17 +243,6 @@ public:
    //============================================================
    // Visible entities
    //
-
-   typedef std::map<String, Symbol*> GlobalsMap;
-   /** Map of global symbols. 
-    All the global symbols defined in the module are listed here.
-    */
-   GlobalsMap m_gSyms;
-   
-   /** Map of global symbols that are exported. 
-    Symbols that must be exported are listed here.
-    */
-   GlobalsMap m_gExports;
 
    typedef std::map<String, Mantra*> MantraMap;
    MantraMap m_mantras;

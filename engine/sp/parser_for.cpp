@@ -75,7 +75,11 @@ static StmtForTo* internal_for_to( Parser& p, TokenInstance* tfor,
          const String& name, Expression* start, Expression* end, Expression* step )
 {
    ParserContext* ctx = static_cast<ParserContext*>(p.context());
-   Symbol* sym = ctx->addDefineSymbol( name );
+   Variable* var = ctx->defineSymbol( name );
+   if( start != 0 ) ctx->accessSymbols( start );
+   if( end != 0 ) ctx->accessSymbols( end );
+   if( step != 0 ) ctx->accessSymbols( step );
+
    /*
    int64 iStart = 0;
    int64 iEnd = 0;
@@ -122,7 +126,8 @@ static StmtForTo* internal_for_to( Parser& p, TokenInstance* tfor,
    if( step != 0 ) ft->stepExpr( step );
    */
    
-   StmtForTo* ft = new StmtForTo( sym, start, end, step, tfor->line(), tfor->chr() );
+   StmtForTo* ft = new StmtForTo( Engine::getSymbol(name, var->isGlobalOrExtern()),
+               start, end, step, tfor->line(), tfor->chr() );
    return ft;
 }
 
@@ -249,8 +254,9 @@ void apply_for_in( const Rule&, Parser& p )
    
    while( iter != list->end() )
    {
-      Symbol* var = ctx->addDefineSymbol( *iter );
-      forin->addParameter( var );
+      const String& name = *iter;
+      Variable* var = ctx->defineSymbol( name );
+      forin->addParameter( Engine::getSymbol(name, var->isGlobalOrExtern() ) );
       ++iter;
    }
          
@@ -279,8 +285,9 @@ void apply_for_in_short( const Rule&, Parser& p )
    
    while( iter != list->end() )
    {
-      Symbol* var = ctx->addDefineSymbol( *iter );
-      forin->addParameter( var );
+      const String& name = *iter;
+      Variable* var = ctx->defineSymbol( name );
+      forin->addParameter( Engine::getSymbol(name, var->isGlobalOrExtern() ) );
       ++iter;
    }
          

@@ -116,7 +116,7 @@ void ExprCall::apply_( const PStep* v, VMContext* ctx )
                
                case FLC_CLASS_ID_TREESTEP: 
                {
-                  SymbolTable* st = static_cast<TreeStep*>(vts)->symbolTable();
+                  VarMap* st = static_cast<TreeStep*>(vts)->varmap();
                   if( st != 0 ) {
                      bHaveEta = st->isEta();
                   }

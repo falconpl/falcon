@@ -71,7 +71,7 @@ void go()
    ExprCall* call_func = new ExprCall( new ExprValue(&string_add) );
    call_func->add( new ExprValue("A string") );
 
-   Symbol* printl = cm.getGlobal("printl");
+   Symbol* printl = cm.getGlobalValue("printl");
 
    // and the main
    SynFunc fmain( "__main__" );

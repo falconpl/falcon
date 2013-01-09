@@ -24,41 +24,21 @@
 #include <falcon/gclock.h>
 #include <falcon/closure.h>
 
-#include <vector>
-#include <map>
-#include <deque>
+#include <set>
 
-#include "falcon/syntree.h"
-#include "falcon/symboltable.h"
+#include <falcon/syntree.h>
 
 
 namespace Falcon {
 
-class ExprLit::Private
-{
-public:
-   typedef std::map<String,Symbol*> DynSymMap;
-   typedef std::deque<GCLock*> LockList;
-   
-   DynSymMap m_dynSyms;
-   LockList m_locks;
-   
-   ~Private() {
-      LockList::iterator iter = m_locks.begin();
-      while( iter != m_locks.end() ) {
-         (*iter)->dispose();
-         ++iter;
-      }
-   }
-};
 
 ExprLit::ExprLit( int line, int chr ):
    Expression( line, chr ),
    m_child(0)
 {
-   _p = new Private;
    FALCON_DECLARE_SYN_CLASS( expr_lit );
-   apply = apply_;   
+   apply = apply_;
+   m_trait = e_trait_composite;
 }
 
 
@@ -66,47 +46,29 @@ ExprLit::ExprLit( TreeStep* st, int line, int chr ):
    Expression( line, chr ),
    m_child(st)
 {
-   _p = new Private;
    FALCON_DECLARE_SYN_CLASS( expr_lit );
    apply = apply_;
    st->setParent(this);
+   m_trait = e_trait_composite;
 }
 
 ExprLit::ExprLit( const ExprLit& other ):
    Expression( other ),
    m_child(0)
 {
-   _p = new Private;
    apply = apply_;
    if( other.m_child != 0 ) {
       m_child = other.m_child->clone();
       m_child->setParent(this);
    }
+   m_trait = e_trait_composite;
 }
  
 ExprLit::~ExprLit()
 {
-   delete _p;
 }
- 
-Symbol* ExprLit::makeSymbol( const String& name, int line ) 
-{
-   static Class* cls = Engine::instance()->symbolClass();
-   
-   Private::DynSymMap::iterator item = _p->m_dynSyms.find(name);
-   if( item != _p->m_dynSyms.end() ) {
-      return item->second;
-   }
-   
-   Symbol* sym = new Symbol( name, line );
-   GCLock* lock = FALCON_GC_STORELOCKED( cls, sym);
-   _p->m_locks.push_back( lock );
-   _p->m_dynSyms[name] = sym;
-   return sym;
-}
- 
 
-    
+
 void ExprLit::describeTo( String& str, int depth ) const
 {
    if( m_child == 0) {
@@ -114,18 +76,19 @@ void ExprLit::describeTo( String& str, int depth ) const
       return;
    }
 
-   const char* etaOpen = m_paramTable.isEta() ? "[" : "(";
-   const char* etaClose = m_paramTable.isEta() ? "]" : ")";
+   const char* etaOpen = isEta() ? "[" : "(";
+   const char* etaClose = isEta() ? "]" : ")";
    str = "{";
    str += etaOpen; 
    
-   if( m_paramTable.localCount() > 0 ) {
-      for( int i = 0; i < m_paramTable.localCount(); ++i ) {
-         Symbol* param = m_paramTable.getLocal(i);
+   if( m_paramTable.paramCount() > 0 )
+   {
+      for( uint32 i = 0; i < m_paramTable.paramCount(); ++i ) {
+         const String& paramName = m_paramTable.getParamName(i);
          if( i > 0 ) {
             str += ", ";
          }
-         str += param->name();
+         str += paramName;
       }
    }
    str += etaClose;
@@ -134,6 +97,7 @@ void ExprLit::describeTo( String& str, int depth ) const
    str += m_child->describe(depth+1) + "\n";
    str += String( " " ).replicate( depth * depthIndent ) + "}";
 }
+
 
 void ExprLit::setChild( TreeStep* st )
 {
@@ -146,7 +110,7 @@ void ExprLit::setChild( TreeStep* st )
 
 void ExprLit::registerUnquote( ExprUnquote* expr )
 {
-   expr->regID( m_paramTable.localCount() + m_paramTable.closedCount() );
+   expr->regID( m_paramTable.paramCount() + m_paramTable.localCount() + m_paramTable.closedCount() );
    m_paramTable.addClosed( expr->symbolName() );
 }
 
@@ -194,8 +158,8 @@ void ExprLit::apply_( const PStep* ps, VMContext* ctx )
    ctx->popCode();
    register TreeStep* child = self->child();
    
-   if( self->m_paramTable.localCount() + self->m_paramTable.closedCount() ) {
-      child->setSymbolTable(const_cast<SymbolTable*>(&self->m_paramTable), false);
+   if( self->m_paramTable.paramCount() + self->m_paramTable.localCount() + self->m_paramTable.closedCount() ) {
+      child->setVarMap(const_cast<VarMap*>(&self->m_paramTable), false);
    }
    
    if( self->m_paramTable.closedCount() != 0 ) {

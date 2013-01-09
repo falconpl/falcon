@@ -180,8 +180,7 @@ public:
 
    virtual ~SelectRequirement() {}
 
-   virtual void onResolved( const Module* source, const Symbol* srcSym, 
-         Module* tgt, Symbol* extSym );
+   virtual void onResolved( const Module* sourceModule, const String& sourceName, Module* targetModule, const Item& value, const Variable* targetVar );
 
    virtual Class* cls() const;     
    

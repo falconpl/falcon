@@ -138,7 +138,7 @@ void ClassSynTree::op_call(VMContext* ctx, int pcount, void* instance) const
    static StdSteps* steps = Engine::instance()->stdSteps();
    
    SynTree* tree = static_cast<SynTree*>(instance);
-   SymbolTable* st = tree->symbolTable();
+   VarMap* st = tree->varmap();
    // Do we have a symbol table?
    if( st == 0 )
    {

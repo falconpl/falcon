@@ -222,7 +222,6 @@ void apply_array_entry_expr( const Rule&, Parser&p )
 
    TokenInstance* texpr = sp.getNextToken();
    Expression* expr = static_cast<Expression*>(texpr->detachValue());
-   ctx->checkSymbols();
 
    // are we waiting for an expression?
    if( decl->state == StmtTempArrayDecl::first_expr )

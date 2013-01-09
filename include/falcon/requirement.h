@@ -30,6 +30,8 @@ class ItemArray;
 class DataWriter;
 class DataReader;
 class Class;
+class Item;
+class Variable;
 
 /** Functionoid for delayed resolution of symbols.
  
@@ -111,25 +113,37 @@ public:
    virtual ~Requirement() {}
    
    /** Called back when the requirement is resolved.
-    \param source The module where the requirement is found -- might be 0 if 
+    \param sourceModule The module where the requirement is found -- might be 0 if
            generated internally.
-    \param srcSym The symbol answering the requirement.
-    \param tgt The module where the symbol was searched. Might be zero if not
-            invoked within a module.
-    \param extSym The symbol representing the external reference in the target
-            module.
+    \param sourceName The name of the variable answering the requirement.
+    \param targetModule The module that asked for the requirement to be resolved
+             (it's usually "this" module, or the module hosting the requirement owner).
+    \param value The concrete value that was found in the source module for the required name.
+    \param targetVar; a pointer to a variable i the targetModule where the value is stored.
+
     \throw A CodeError may be thrown by the implementation to indicate some kind of
           rule being broken (e.g. the requirement for inheritances must be classes).
 
     
-    The source module can be 0 if the symbol is internally generated.
-    
-    The target module and extSym can be 0 if the system resolves the dependency on its own.
+    The pointer parameters can be zero in the following cases:
+    - The source module can be 0 if the symbol is internally generated.
+    - The target module can be 0 if the system resolves the dependency on its own.
+    - The target variable might be 0 if the requirement is not to be stored in a local
+       target module variable.
     
     The source and target modules can be the same module if a requirement is resolved by
-    a later definition. In this case, extSym and srcSym will also point to the same symbol.
+    a forward definition.
+
+    The sourceName is given for reference, to help the code to understand what was resolved.
+    The name of the variable in which the resolved requirement is imported can be taken by
+    invoking
+    \code
+       targetModule->getVariableName( targetVar->id() ).
+    \endcode
+
+    \note targetVar being not zero implies also targetModule being not zero.
     */
-   virtual void onResolved( const Module* source, const Symbol* srcSym, Module* tgt, Symbol* extSym ) = 0;
+   virtual void onResolved( const Module* sourceModule, const String& sourceName, Module* targetModule, const Item& value, const Variable* targetVar ) = 0;
 
    /** Returns the symbol name that is associated with this requirement.
       \return A name.

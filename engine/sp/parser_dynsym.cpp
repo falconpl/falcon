@@ -41,8 +41,6 @@ using namespace Parsing;
 
 void apply_expr_amper( const Rule&, Parser& p )
 {
-   static Class* cls = Engine::instance()->symbolClass();
-   
    // << T_Amper << T_Name
    SourceParser& sp = static_cast<SourceParser&>(p);
 
@@ -53,13 +51,8 @@ void apply_expr_amper( const Rule&, Parser& p )
    // Create the symbol and the reference
    
    // this creates a dynsymbol.
-   Symbol* nsym = new Symbol(*tref->asString(), tref->line());
-   
-   // TODO: Use the engine to cache dynsymbols
-   // TODO: Use garbage collector
-   FALCON_GC_STORE( cls, nsym );
-   ExprSymbol* esyn = new ExprSymbol( tref->line(), tref->chr() );
-   esyn->safeGuard( nsym );
+   Symbol* nsym = Engine::getSymbol(*tref->asString(), false);
+   ExprSymbol* esyn = new ExprSymbol( nsym, tref->line(), tref->chr() );
    
    // update the result token
    TokenInstance* ti = TokenInstance::alloc( tref->line(), tref->chr(), sp.Expr );

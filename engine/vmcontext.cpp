@@ -85,7 +85,6 @@ VMContext::VMContext( Process* prc, ContextGroup* grp ):
    m_dynsStack.init();
    m_codeStack.init();
    m_callStack.init();
-   m_locsStack.init();
    m_dataStack.init(0, m_dataStack.INITIAL_STACK_ALLOC*1000);
 
    m_waiting.init();
@@ -121,7 +120,6 @@ void VMContext::reset()
    m_dynsStack.reset();
    m_codeStack.reset();
    m_callStack.reset();
-   m_locsStack.reset();
    m_dataStack.reset(0);
 
    abortWaits();
@@ -505,7 +503,6 @@ bool VMContext::unrollToNext( const _checker& check )
    register CodeFrame* curCode = m_codeStack.m_top;
    register Item* curData = m_dataStack.m_top;
    register DynsData* curDyns = m_dynsStack.m_top;
-   register Variable* curLocs = m_locsStack.m_top;
 
    while( m_callStack.m_base <= curFrame )
    {
@@ -520,7 +517,6 @@ bool VMContext::unrollToNext( const _checker& check )
             m_dataStack.m_top = curData;
             m_codeStack.m_top = curCode;
             m_dynsStack.m_top = curDyns;
-            m_locsStack.m_top = curLocs;
             return true;
          }
          --curCode;
@@ -734,7 +730,7 @@ void VMContext::raiseItem( const Item& item )
          Symbol* sym = m_catchBlock->target();
          if( sym != 0 )
          {
-            *sym->lvalueValue(this) = item;
+            *resolveSymbol(sym, true) = m_raised;
          }
          m_raised.setNil();
       }
@@ -788,7 +784,7 @@ void VMContext::raiseError( Error* ce )
          // assign the error to the required item.
          if( m_catchBlock->target() != 0 )
          {
-            *m_catchBlock->target()->lvalueValue(this) = Item( ce->handler(), ce );            
+            *resolveSymbol(m_catchBlock->target(), true ) = Item( ce->handler(), ce );
             ce->decref();
          }
       }
@@ -1042,7 +1038,7 @@ void VMContext::callItem( const Item& item, int pcount, Item const* params )
 }
 
 
-void VMContext::addLocalFrame( SymbolTable* st, int pcount )
+void VMContext::addLocalFrame( VarMap* st, int pcount )
 {
    static StdSteps* stdSteps = Engine::instance()->stdSteps();
    static Symbol* base = Engine::instance()->baseSymbol();
@@ -1056,9 +1052,9 @@ void VMContext::addLocalFrame( SymbolTable* st, int pcount )
    
    // point to the item that was pushed before the parameters
    Item* top = &topData() - pcount;
-   if( pcount < st->localCount() ) 
+   if( pcount < (int) st->paramCount() )
    {
-      addSpace(st->localCount() - pcount);
+      addSpace(st->paramCount() - pcount);
    }
 
    pushCode( &stdSteps->m_localFrame );
@@ -1069,28 +1065,27 @@ void VMContext::addLocalFrame( SymbolTable* st, int pcount )
    // add a base marker.
    DynsData* baseDyn = m_dynsStack.addSlot();
    baseDyn->m_sym = base;
-   baseDyn->m_var.value(top);
-   baseDyn->m_var.base(0);
+   baseDyn->m_value = m_dataStack.m_top;
    
    // now point to the first parameter.
    ++top;
-   for( int i = 0; i < st->localCount(); ++i ) 
+   for( uint32 i = 0; i < st->paramCount(); ++i )
    {
       DynsData* dd = m_dynsStack.addSlot();
-      dd->m_sym = st->getLocal(i);
-      dd->m_var.value(top);
-      dd->m_var.base(0);
+      dd->m_sym = Engine::getSymbol(st->getLoacalName(i), false);
+      dd->m_value = top;
       ++top;
    }
-   
-   for( int i = 0; i < st->closedCount(); ++i ) 
+   //TODO: prepare the closure frame.
+   /*
+  for( int i = 0; i < st->closedCount(); ++i )
    {
       DynsData* dd = m_dynsStack.addSlot();
-      dd->m_sym = st->getClosed(i);
-      dd->m_var.value(top);
-      dd->m_var.base(0);
+      dd->m_sym = Engine::getSymbol(st->getClosedName(i), false);
+      dd->m_value = top;
       ++top;
    }
+   */
 }
 
 
@@ -1099,7 +1094,7 @@ void VMContext::unrollLocalFrame( int dynsCount )
    // Descend into the dynsymbol stack until we find our base.
    register DynsData* base = m_dynsStack.offset( dynsCount );
    fassert( "$base" == base->m_sym->name() );
-   m_dataStack.m_top = base->m_var.value();
+   m_dataStack.m_top = base->m_value;
    m_dynsStack.m_top = base-1;
 }
 
@@ -1127,8 +1122,8 @@ void VMContext::exitLocalFrame()
             register DynsData* base = m_dynsStack.offset( top->m_seqId-1 );
             fassert( "$base" == base->m_sym->name() );
             TRACE( "Exiting with seq ID %d, data depth %d", top->m_seqId,
-                 (int)(base->m_var.value() - m_dataStack.m_base) );
-            m_dataStack.m_top = base->m_var.value();
+                 (int)(base->m_value - m_dataStack.m_base) );
+            m_dataStack.m_top = base->m_value;
             m_dynsStack.m_top = base-1;
          }
          
@@ -1182,9 +1177,6 @@ void VMContext::returnFrame( const Item& value )
    m_dynsStack.unroll( topCall->m_dynsBase );
    PARANOID( "Dynamic Symbols stack underflow at return", (m_dynsStack.m_top >= m_dynsStack.m_base-1) );
 
-   m_locsStack.unroll( topCall->m_locsBase );
-   PARANOID( "Local Symbols stack underflow at return", (m_locsStack.m_top >= m_locsStack.m_base-1) );
-
    // Forward the return value
    *m_dataStack.m_top = value;
 
@@ -1213,175 +1205,37 @@ void VMContext::forwardParams( int pcount )
 }
 
 
-Variable* VMContext::getLValueDynSymbolVariable( const Symbol* dyns )
+Item* VMContext::resolveSymbol( const Symbol* dyns, bool forAssign )
 {
    // search for the dynsymbol in the current context.
    const CallFrame* cf = &currentFrame();
    register DynsData* dd = m_dynsStack.m_top;
-   
-   // keep dd from previous loop
-   register DynsData* base = m_dynsStack.offset( cf->m_dynsBase );
-   // on stack empty, top = base -1;
-   while( dd >= base ) {
-      if ( dyns->name() == dd->m_sym->name() )
-      {
-         // Found!
-         return &dd->m_var;
+   register DynsData* dbase = m_dynsStack.m_base + cf->m_dynsBase;
+
+   // search resolved symbols.
+   while( dd >= dbase ) {
+      if ( dyns == dd->m_sym ) {
+         return dd->m_value;
       }
-      
-      // definitely not found?
-      if( dd->m_sym->name() == "$base" ) {
-         goto not_found;
-      }
-      --dd;      
+      --dd;
    }
    
-   // try with the locals
-   fassert( cf->m_function != 0 );
+   // No luck at all; try to resolve the variable.
+   Item* var = dyns->resolve( this, forAssign );
+   
+   if( var == 0 )
    {
-      Symbol* locsym = cf->m_function->symbols().findSymbol( dyns->name() );
-      if( locsym != 0 )
-      {
-         DynsData* newData = m_dynsStack.addSlot();
-         newData->m_sym = dyns;
-         // reference the target local variable into our slot.
-         Variable* lv = locsym->getVariable(this);
-         newData->m_var.set(lv->base(), lv->value());
-         return &newData->m_var;
-      }
+      // not found? -- it's an unbound symbol.
+      var = &addDataSlot();
    }
    
-not_found:
-   // not found, adding at top.
-   DynsData* newData = m_dynsStack.addSlot();
+   DynsData& newSlot = *m_dynsStack.addSlot();
+   newSlot.m_sym = dyns;
+   newSlot.m_value = var;
    
-   // save the data in the stack
-   newData->m_sym = dyns;
-   newData->m_var.base(0);
-   newData->m_var.value(&addDataSlot());
-   
-   return &newData->m_var;   
+   return var;
 }
 
-      
-Variable* VMContext::getDynSymbolVariable( const Symbol* dyns )
-{
-   // search for the dynsymbol in the current context.
-   const CallFrame* cf = &currentFrame();
-   register DynsData* dd = m_dynsStack.m_top;
-   
-   // no luck. Descend the frames.
-   while( cf >= m_callStack.m_base )
-   {
-      // keep dd from previous loop
-      register DynsData* base = m_dynsStack.offset( cf->m_dynsBase );
-      // on stack empty, top = base -1;
-      while( dd >= base ) {
-         if ( dyns->name() == dd->m_sym->name() )
-         {
-            // Found!
-            return &dd->m_var;
-         }
-         --dd;
-      }
-
-      // no luck, try with locals.
-      fassert( cf->m_function != 0 );
-      Symbol* locsym = cf->m_function->symbols().findSymbol( dyns->name() );
-      if( locsym != 0 )
-      {
-         DynsData* newData = m_dynsStack.addSlot();
-         newData->m_sym = dyns;
-         // We're in the same frame of the local variable.
-         Variable* lv = locsym->getVariable(this);
-         newData->m_var.set(lv->base(), lv->value());
-         return &newData->m_var;
-      }
-      
-      // no luck? Try with module globals.
-      Module* master = cf->m_function->module();
-      if( master != 0 )
-      {
-         Symbol* globsym = master->getGlobal( dyns->name() );
-         if( globsym != 0 )
-         {
-            DynsData* newData = m_dynsStack.addSlot();
-            newData->m_sym = dyns;
-            
-            // reference the target local variable into our slot.
-            newData->m_var.makeReference(globsym->getVariable(this));
-            return &newData->m_var;
-         }
-      }
-      --cf;
-   }   
-
-   // still no luck? -- what about exporeted symbols in VM?
-   // TODO: Correct interlocking.
-   ModSpace* ms = process()->vm()->modSpace();
-   if( ms != 0 )
-   {
-      Symbol* expsym = ms->findExportedSymbol( dyns->name() );
-      if( expsym != 0 )
-      {
-         DynsData* newData = m_dynsStack.addSlot();
-         newData->m_sym = dyns;
-         // reference the target local variable into our slot.
-         // we're not the context for the exported symbols
-         newData->m_var.makeReference(expsym->getVariable(0));
-         return &newData->m_var;
-      }
-   }
-
-   // No luck at all.
-   DynsData* newData = m_dynsStack.addSlot();
-   
-   // save the data in the stack
-   newData->m_sym = dyns;
-   newData->m_var.base(0);
-   newData->m_var.value(&addDataSlot());
-   
-   return &newData->m_var;
-}
-
-
-Variable* VMContext::findLocalVariable( const String& name ) const
-{
-   // navigate through the parent symbol tables till finding the desired symbols.
-   const CallFrame* cf = m_callStack.m_top;
-   DynsData* dynsd = m_dynsStack.m_top;
-   const CallFrame* base = m_callStack.m_base;
-   
-   while( cf >= base )
-   {      
-      fassert( cf->m_function != 0 )
-      Symbol* tgtsym = cf->m_function->symbols().findSymbol( name );
-
-      if( tgtsym != 0 )
-      {
-         return &m_locsStack.m_base[cf->m_locsBase + tgtsym->localId()];         
-      }
-      
-      // no private symbol? Try with dynsyms.
-      // Notice that we could do it once and for all once we fail the privates
-      // but it's more likely to find the dynsym near where we're searching it,
-      // and there's no extra cost in doing the search a bit at a time.
-      register const DynsData* locbase = m_dynsStack.m_base + cf->m_dynsBase;      
-      while( dynsd >= locbase )
-      {
-         if( dynsd->m_sym->name() == name ) {
-            return &dynsd->m_var;
-         }
-         --dynsd;
-      }
-      
-      // better luck with next time.
-      --cf;
-   }
-   
-   // not found
-   return 0;
-}
 
 void VMContext::terminated()
 {

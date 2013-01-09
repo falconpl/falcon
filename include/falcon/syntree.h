@@ -23,7 +23,7 @@ namespace Falcon
 {
 
 class Statement;
-class SymbolTable;
+class VarMap;
 class Symbol;
 class Expression;
 
@@ -104,7 +104,7 @@ public:
     This method returns (and eventually creates) a symbol table
     that can be used to store variable names local to this block.
     */
-   SymbolTable* locals( bool bmake = true );
+   VarMap* locals( bool bmake = true );
 
    /** Gets the head symbol for this syntree.
     \return A previously set head symbol or 0.
@@ -128,13 +128,13 @@ public:
     
     \note The ownership of the symbol stays on the caller.
     */
-   void target( Symbol* s ) { m_head = s; }
+   void target( Symbol* s );
       
 protected:   
    class Private;
    Private* _p;
    
-   SymbolTable* m_locals;
+   VarMap* m_locals;
    Symbol* m_head;
    Expression* m_selector;
 

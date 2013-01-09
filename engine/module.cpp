@@ -58,9 +58,9 @@ public:
 
    virtual ~FuncRequirement() {}
 
-   virtual void onResolved( const Module* source, const Symbol* srcSym, Module* tgt, Symbol* )
+   virtual void onResolved( const Module* sourceModule, const String& sourceName, Module* targetModule, const Item& value, const Variable* targetVar )
    {
-      Error* err = m_cbFunc( tgt, source, srcSym );
+      Error* err = m_cbFunc( sourceModule, sourceName, targetModule, value, targetVar );
       if( err != 0 ) throw err;
    }
    
@@ -72,26 +72,18 @@ private:
 };
    
    
-Error* Module::Private::Dependency::onResolved( Module* parentMod, Module* mod, Symbol* sym )
+Error* Module::Private::Dependency::onResolved( Module* sourceMod, Module* hostMod, Item* source )
 {
    Error* res = 0;
-   m_resSymbol = sym;
+
    bool firstError = true;
-   if( m_symbol != 0 && m_symbol->type() == Symbol::e_st_extern)
-   {
-      Variable* remoteVar = sym->getVariable(0);
-      fassert( remoteVar != 0 );
-      // congrats, we just became global.
-      m_symbol->resolved( remoteVar ); 
-   }
-   
    Private::Dependency::WaitingList::iterator iter = m_waitings.begin();
    while( m_waitings.end() != iter )
    {
       try 
       {
          Requirement* req = *iter;
-         req->onResolved( mod, sym, parentMod, m_symbol );
+         req->onResolved( sourceMod, m_sourceName, hostMod, *source, m_variable );
       }
       catch( Error * e )
       {
@@ -105,7 +97,7 @@ Error* Module::Private::Dependency::onResolved( Module* parentMod, Module* mod, 
             {
                firstError = false;
                Error* temp = res;
-               res = new LinkError( ErrorParam( e_link_error, 0, parentMod->uri())
+               res = new LinkError( ErrorParam( e_link_error, 0, hostMod->uri())
                   .extra( "Errors during symbol resolution")
                   );
                res->appendSubError(temp);
@@ -124,15 +116,6 @@ Error* Module::Private::Dependency::onResolved( Module* parentMod, Module* mod, 
       
 Module::Private::~Private()
 {
-   // We can destroy the globals, as we're always responsible for that...
-   GlobalsMap::iterator iter = m_gSyms.begin();
-   while( iter != m_gSyms.end() )
-   {
-      Symbol* sym = iter->second;
-      delete sym;
-      ++iter;
-   }
-
    // destroy reqs and deps
    DepList::iterator req_i = m_deplist.begin();
    while( req_i != m_deplist.end() )
@@ -163,12 +146,12 @@ Module::Private::~Private()
       ++nsi;
    }
    
-   MantraMap::iterator mantrai = m_mantras.begin();
-   while( mantrai != m_mantras.end() )
+   MantraMap::iterator mi = m_mantras.begin();
+   while( mi != m_mantras.end() )
    {
-      Mantra* m = mantrai->second;
-      delete m;
-      ++mantrai;
+      Mantra* mantra = mi->second;
+      delete mantra;
+      ++mi;
    }
 }
 
@@ -261,14 +244,81 @@ void Module::gcMark( uint32 mark )
          m_modSpace->gcMark( mark );
       }
       
-      //TODO: Mark other modules and data in symbols      
+      m_globals.gcMark(mark);
+
+      // mantras are not garbaged, they stay in this module and mark us back
+      // so we don't need to mark them.
    }
+}
+
+
+bool Module::promoteExtern( Variable* ext, const Item& value, int32 redeclaredAt )
+{
+   if( ! m_globals.promoteExtern(ext->id(), value, redeclaredAt) ) {
+      return false;
+   }
+
+   // see if this covers a forward declaration.
+   VarDataMap::VarData* vd = m_globals.getGlobal(ext->id());
+   fassert( vd != 0 ); // promotion to extern would have failed.
+   if( ! checkWaitingFwdDef( vd->m_name, vd->m_data ) ) {
+      return false;
+   }
+
+   return true;
+}
+
+
+bool Module::resolveExternValue( const String& name, Module* source, Item* value )
+{
+   VarDataMap::VarData* vd = m_globals.getGlobal(name);
+   if( vd == 0 ) {
+      return false;
+   }
+
+   if( ! m_globals.promoteExtern(vd->m_var.id(), *value, 0) ) {
+      return false;
+   }
+
+   // was a dependency waiting for this?
+   Private::DepMap::const_iterator diter = _p->m_depsByName.find( name );
+   if( diter != _p->m_depsByName.end() ) {
+      Error* err = diter->second->onResolved( source, this, value );
+      if( err != 0 ) throw err;
+   }
+
+   return true;
+}
+
+
+
+Variable* Module::importValue( const String& name, Module* source, Item* value )
+{
+   bool bAlready = false;
+   Variable* var = addImplicitImport(name, bAlready);
+   if( var->type() == Variable::e_nt_extern )
+   {
+      // ok, we have an extern variable.
+      // If it was already defined, there might be a dependency waiting for that.
+      if( bAlready )
+      {
+         // was a dependency waiting for this?
+         Private::DepMap::const_iterator diter = _p->m_depsByName.find( name );
+         if( diter != _p->m_depsByName.end() ) {
+            Error* err = diter->second->onResolved( source, this, value );
+            if( err != 0 ) throw err;
+         }
+      }
+
+      return var;
+   }
+
+   return 0;
 }
 
 
 void Module::addAnonMantra( Mantra* f )
 {
-   // finally add to the function vecotr so that we can account it.
    String name;
    do
    {
@@ -285,71 +335,44 @@ void Module::addAnonMantra( Mantra* f )
 }
 
 
-Symbol* Module::addMantra( Mantra* f, bool bExport )
+Variable* Module::addMantra( Mantra* f, bool bExport, int32 declaredAt )
 {
    //static Engine* eng = Engine::instance();
 
-   Private::GlobalsMap& syms = _p->m_gSyms;
-   if( syms.find(f->name()) != syms.end() )
+   VarDataMap::VarData* vd = m_globals.getGlobal( f->name() );
+   if( vd != 0 && vd->m_var.type() != Variable::e_nt_extern  )
    {
+      // already defined.
       return 0;
    }
    
-   // add to the function vecotr so that we can account it.
+   // add to the function vector so that we can account it.
    _p->m_mantras[f->name()] = f;
    f->module(this);
+   Item value( f->handler(), f );
 
-   // add the symbol to the symbol table.
-   Symbol* sym = new Symbol( f->name(), Symbol::e_st_global, 0, f->sr().line() );
-   //FALCON_GC_STORE( coll, symClass, sym );
-   sym->defaultValue(Item(f->handler(), f));
-   syms[f->name()] = sym;
-
-   // Eventually export it.
-   if( bExport )
+   // then add the required global.
+   if( vd == 0 )
    {
-      // by hypotesis, we can't have a double here, already checked on m_gSyms
-      _p->m_gExports[f->name()] = sym;
+      vd = m_globals.addGlobal( f->name(), value, bExport );
+      fassert( vd != 0 );
+   }
+   else {
+      if( ! promoteExtern( &vd->m_var, value, declaredAt ) ) {
+         return false;
+      }
    }
    
-   // see if this covers a forward declaration.
-   checkWaitingFwdDef( sym );
-
-   return sym;
+   vd->m_var.declaredAt( declaredAt );
+   return &vd->m_var;
 }
 
 
-bool Module::addMantraWithSymbol( Mantra* f, Symbol* gsym, bool bExport )
-{
-   if( _p->m_mantras.find( f->name() ) != _p->m_mantras.end() )
-   {
-      return false;
-   }
-
-   // finally add to the function vecotr so that we can account it.
-   _p->m_mantras[f->name()] = f;
-   f->module(this);
-   
-   if(gsym)
-   {
-      gsym->defaultValue(Item(f->handler(), f));
-   }
-   
-   if( bExport ) {
-      _p->m_gExports[ f->name() ] = gsym;
-   }
-   
-   // see if this covers a forward declaration.
-   checkWaitingFwdDef( gsym );
-   return true;
-}
-
-
-Symbol* Module::addFunction( const String &name, ext_func_t f, bool bExport )
+Variable* Module::addFunction( const String &name, ext_func_t f, bool bExport )
 {
    // check if the name is free.
-   Private::GlobalsMap& syms = _p->m_gSyms;
-   if( syms.find(name) != syms.end() )
+   VarDataMap::VarData* vd = m_globals.getGlobal( name );
+   if( vd == 0 )
    {
       return 0;
    }
@@ -360,16 +383,22 @@ Symbol* Module::addFunction( const String &name, ext_func_t f, bool bExport )
 }
 
 
-Symbol* Module::addVariable( const String& name, bool bExport )
-{
-   return addVariable( name, Item(), bExport );
-}
-
-
-Symbol* Module::addSingleton( Class*, bool )
+Variable* Module::addSingleton( Class*, bool )
 {
    // TODO
    return 0;
+}
+
+
+Variable* Module::addConstant( const String& name, const Item& value, bool bExport )
+{
+   VarDataMap::VarData* vd = m_globals.addGlobal( name, value, bExport );
+   if( vd == 0 ) {
+      return 0;
+   }
+
+   vd->m_var.setConst(true);
+   return &vd->m_var;
 }
 
 
@@ -389,63 +418,6 @@ Mantra* Module::getMantra( const String& name, Mantra::t_category cat ) const
 }
 
 
-
-Symbol* Module::addVariable( const String& name, const Item& value, bool bExport )
-{
-   Symbol* sym;
-   
-   // check if the name is free.
-   Private::GlobalsMap& syms = _p->m_gSyms;
-   Private::GlobalsMap::iterator pos = syms.find(name);
-   if( pos != syms.end() )
-   {
-      sym = 0;
-   }
-   else
-   {
-      // add the symbol to the symbol table.
-      sym = new Symbol( name, Symbol::e_st_global, 0, 0);
-      //FALCON_GC_STORE( coll, symClass, sym );
-      sym->defaultValue(value);
-      syms[name] = sym;
-      if( bExport )
-      {
-         _p->m_gExports[name] = sym;
-      }     
-   }
-
-   checkWaitingFwdDef( sym );
-   return sym;
-}
-
-
-Symbol* Module::getGlobal( const String& name ) const
-{
-   const Private::GlobalsMap& syms = _p->m_gSyms;
-   Private::GlobalsMap::const_iterator iter = syms.find(name);
-
-   if( iter == syms.end() )
-   {
-      return 0;
-   }
-
-   return iter->second;
-}
-
-
-void Module::enumerateGlobals( SymbolEnumerator& rator ) const
-{
-   const Private::GlobalsMap& syms = _p->m_gSyms;
-   Private::GlobalsMap::const_iterator iter = syms.begin();
-
-   while( iter != syms.end() )
-   {
-      Symbol* sym = iter->second;
-      if( ! rator( *sym, ++iter == syms.end()) )
-         break;
-   }
-}
-
 /** Enumerate all functions and classes in this module.
 */
 void Module::enumerateMantras( Module::MantraEnumerator& rator ) const
@@ -461,52 +433,6 @@ void Module::enumerateMantras( Module::MantraEnumerator& rator ) const
    }
 }
 
-
-void Module::enumerateExports( SymbolEnumerator& rator ) const
-{
-   if( m_bExportAll )
-   {
-      const Private::GlobalsMap& syms = _p->m_gSyms;   
-      Private::GlobalsMap::const_iterator iter = syms.begin();
-
-      while( iter != syms.end() )
-      {
-         Symbol* sym = iter->second;
-         // ignore "private" symbols
-         if( sym->name().startsWith("_") || sym->type() != Symbol::e_st_global )
-         {
-            ++iter;
-         }
-         else
-         {
-            if( ! rator( *sym, ++iter == syms.end()) )
-               break;
-         }
-      }
-   }
-   else
-   { 
-      const Private::GlobalsMap& syms = _p->m_gExports;
-      Private::GlobalsMap::const_iterator iter = syms.begin();
-
-      while( iter != syms.end() )
-      {
-         Symbol* sym = iter->second;
-         // ignore "private" symbols
-         if( sym->name().startsWith("_") || sym->type() != Symbol::e_st_global )
-         {
-            ++iter;
-         }
-         else
-         {
-            if( ! rator( *sym, ++iter == syms.end()) )
-               break;
-         }
-      }
-   }
-}
-
-
 Error* Module::addModuleRequirement( ImportDef* def, ModRequest*& req )
 {
    // first, check if there is a clash with already defined symbols.
@@ -520,7 +446,7 @@ Error* Module::addModuleRequirement( ImportDef* def, ModRequest*& req )
       if( name.getCharAt( name.length() -1 ) !=  '*' )
       {
          // it's a real symbol.
-         if ( _p->m_gSyms.find( name ) != _p->m_gSyms.end() )
+         if ( m_globals.getGlobal( name ) != 0 )
          {
             return new CodeError( ErrorParam( e_import_already, def->sr().line(), this->uri() ) 
                .origin( ErrorParam::e_orig_compiler )
@@ -612,8 +538,6 @@ bool Module::removeModuleRequirement( ImportDef* def )
 
 Error* Module::addImport( ImportDef* def )
 {
-   static Class* symClass = Engine::instance()->symbolClass();
-   
    ModRequest* req;
    Error* error = addModuleRequirement( def, req );
    if( error != 0 )
@@ -633,17 +557,7 @@ Error* Module::addImport( ImportDef* def )
       
       if( name.getCharAt( name.length() -1 ) != '*' )
       {         
-         Symbol* newsym = new Symbol( name, Symbol::e_st_extern, 0, def->sr().line());
-         FALCON_GC_STORE( symClass, newsym );
-         _p->m_gSyms[name] = newsym;
-         
-         // and add a dependency.
-         Private::Dependency* dep = new Private::Dependency( newsym, def );         
-         
-         dep->m_sourceName = def->sourceSymbol( i );
-         
-         _p->m_depsBySymbol[name] = dep;
-         _p->m_deplist.push_back( dep );
+          addImplicitImport( name );
       }
       else if( def->sourceModule().size() != 0 )
       {
@@ -683,24 +597,12 @@ void Module::removeImport( ImportDef* def )
    {
       String name;      
       def->targetSymbol( i, name );
-      
-      Private::GlobalsMap::iterator gep = _p->m_gExports.find(name);
-      if( gep != _p->m_gExports.end() )
+      m_globals.removeGlobal( name );
+
+      Private::DepMap::iterator dp = _p->m_depsByName.find( name );
+      if ( dp != _p->m_depsByName.end() )
       {
-         _p->m_gExports.erase( gep );
-      }
-      
-      Private::GlobalsMap::iterator gp = _p->m_gSyms.find(name);
-      if( gp != _p->m_gSyms.end() )
-      {
-         delete gp->second;
-         _p->m_gSyms.erase( gp );
-      }
-      
-      Private::DepMap::iterator dp = _p->m_depsBySymbol.find( name );
-      if ( dp != _p->m_depsBySymbol.end() )
-      {
-         _p->m_depsBySymbol.erase( dp );
+         _p->m_depsByName.erase( dp );
       }
    }
    
@@ -793,78 +695,59 @@ void Module::addImportRequest( t_func_import_req cbFunc, const String& symName,
 }
 
 
-Symbol* Module::addImplicitImport( const String& name, bool& isNew )
+Variable* Module::addImplicitImport( const String& name, bool& isNew )
 {
-   // We can't be called if the symbol is alredy declared elsewhere.
-   Private::GlobalsMap::iterator pos = _p->m_gSyms.find( name );
-   if( _p->m_gSyms.find( name ) != _p->m_gSyms.end() )
+   // We can't be called if the symbol is already declared elsewhere.
+   VarDataMap::VarData* vd = m_globals.getGlobal(name);
+   if( vd != 0 )
    {
       isNew = false;
-      return pos->second;
+      return &vd->m_var;
    }
 
    isNew = true;
-   // Record the fact that we have to save transform an unknown symbol...
-   Symbol* uks = new Symbol( name, Symbol::e_st_extern, 0, 0);
-   //FALCON_GC_STORE( coll, symClass, uks );
-   Private::Dependency* dep = new Private::Dependency(uks);
-   dep->m_sourceName = name;
+
+   // store a space for an external value in the global values vector.
+   vd = m_globals.addExtern( name, 0 );
+
+   Private::Dependency* dep = new Private::Dependency(name, &vd->m_var);
    _p->m_deplist.push_back(dep);
-   _p->m_depsBySymbol[name] = dep;
-   // ... and save the symbols.
-   _p->m_gSyms[name] = uks;
+   _p->m_depsByName[name] = dep;
 
-   return uks;
+   return &vd->m_var;
 }
 
 
-Symbol* Module::addExport( const String& name, bool& bAlready )
-{
-   Symbol* sym = 0;
-   // if we have export all or if this is already exported, return 0.
-   Private::GlobalsMap::const_iterator eiter; 
-   if( m_bExportAll || (( eiter = _p->m_gExports.find( name )) != _p->m_gExports.end()) )
-   {
-      sym = eiter->second;
-      bAlready = true;
-      return sym;
-   }   
-   
-   // We can't be called if the symbol is alredy declared elsewhere.
-   Private::GlobalsMap::iterator iter = _p->m_gSyms.find( name );
-   if( iter != _p->m_gSyms.end() )
-   {
-      sym = iter->second;
-      _p->m_gExports[name] = sym;  
-   }
-   
-   bAlready = false;   
-   return sym;
-}
-
-
-Symbol* Module::addRequirement( Requirement* cr )
+Variable* Module::addRequirement( Requirement* cr )
 {
    const String& symName = cr->name();
    
-   // we don't care if the symbol already exits; the mehtod would just return 0.
-   Symbol* imported = addImplicitImport( symName );
+   // we don't care if the symbol already exits; the method would just return 0.
+   Variable* imported = addImplicitImport( symName );
    
    // is the symbol defined?
-   if( imported->type() != Symbol::e_st_extern )
+   if( imported->type() != Variable::e_nt_extern )
    {
-      cr->onResolved( this, imported, this, imported );
-      delete cr;
-      return imported;
+      try {
+         Item* value = m_globals.getGlobalValue(imported->id());
+         fassert( value != 0 );
+         cr->onResolved( this, symName, this, *value, imported );
+         delete cr;
+         return imported;
+      }
+      catch (...) {
+         delete cr;
+         throw;
+      }
    }
     
    // at this point, the dependency must be created by implicit import.
-   Private::Dependency* dep = _p->m_depsBySymbol[symName];
+   Private::Dependency* dep = _p->m_depsByName[symName];
    if( dep == 0 )
    {
       // should not happen -- but if it happen, we can only search in global space
-      dep = new Private::Dependency( imported );
-      _p->m_depsBySymbol[imported->name()] = dep;
+      dep = new Private::Dependency( symName, imported );
+      _p->m_depsByName[symName] = dep;
       _p->m_deplist.push_back(dep);      
    }
    
@@ -889,69 +772,29 @@ void Module::unload()
 
 void Module::forwardNS( Module* mod, const String& remoteNS, const String& localNS )
 {
-   Private::GlobalsMap& globs = mod->_p->m_gSyms;
-   
-   // search the symbols in the remote namespace.
-   String nsPrefix = remoteNS + ".";
-   Private::GlobalsMap::iterator gi = globs.lower_bound(nsPrefix);
-   while( gi != globs.end() && gi->first.startsWith(nsPrefix) )
-   {
-      String localName = localNS + "." + gi->first.subString(nsPrefix.length());
-      if( _p->m_gSyms.find(localName) == _p->m_gSyms.end())
-      {
-         Symbol* gs = new Symbol(*gi->second);
-         //FALCON_GC_STORE( coll, symClass, gs );
-         _p->m_gSyms[localName] = gs;
-      }
-      ++gi;
-   }
+   m_globals.forwardNS( &mod->m_globals, remoteNS, localNS );
 }
 
 
-bool Module::addConstant( const String& name, const Item& value )
+bool Module::checkWaitingFwdDef( const String& name, Item* value )
 {
-   Symbol* gsym = addVariable( name, true );
-   if ( gsym == 0 ) 
-   { 
-      return false;
-   }
-   
-   gsym->defaultValue( value );
-   gsym->setConstant();
-   return true;
-}
-
-
-void Module::checkWaitingFwdDef( Symbol* sym )
-{   
-   // ignore non-globals
-   if ( sym->type() != Symbol::e_st_global )
-   {
-      return;
-   }
-   
-   Private::DepMap::iterator pos = _p->m_depsBySymbol.find( sym->name() );
-   if( pos != _p->m_depsBySymbol.end() )
+   Private::DepMap::iterator pos = _p->m_depsByName.find( name );
+   if( pos != _p->m_depsByName.end() )
    {
       // if the request covers an explicit import, this is an error.
       Module::Private::Dependency* dep = pos->second;
       if( dep->m_idef != 0 )
       {
-         throw new CodeError( 
-            ErrorParam(e_already_def, sym->declaredAt(), m_uri ) 
-            // TODO add source reference of the imported def
-            .extra( String("imported symbol"))
-            .origin(ErrorParam::e_orig_compiler)
-            );
+         return false;
       }
       else
       {
          // a genuine forward definition;
          // by setting the symbol as not extern anymore, we prevent an useless promotion
-         Error* err = dep->onResolved( this, this, sym );
+         Error* err = dep->onResolved( this, this, value );
 
          // remove the dependency (was just a forward marker)
-         _p->m_depsBySymbol.erase( pos );
+         _p->m_depsByName.erase( pos );
          Private::DepList::iterator dli =
             std::find( _p->m_deplist.begin(), _p->m_deplist.end(), dep );
          if( dli != _p->m_deplist.end() )
@@ -967,18 +810,13 @@ void Module::checkWaitingFwdDef( Symbol* sym )
          }            
       }
    }
+
+   return true;
 }
 
 
 Function* Module::getMainFunction()
 {
-   if ( m_mainFunc == 0 )
-   {
-      // see if someone was nice enough to add it elsewhere.      
-      m_mainFunc = new SynFunc("__main__");
-      m_mainFunc->module(this);
-   }
-   
    return m_mainFunc;
 }
 
@@ -1009,11 +847,10 @@ void Module::completeClass(FalconClass* fcls)
       _p->m_mantras["$" + fcls->name()] = fcls;
       
       // anonymous classes cannot have a name in the global symbol table, so...
-      Private::GlobalsMap::iterator pos = _p->m_gSyms.find( hcls->name() );
-      if( pos != _p->m_gSyms.end() )
+      Item* clsItem = m_globals.getGlobalValue( hcls->name() );
+      if( clsItem != 0 )
       {
-         Item& value = pos->second->defaultValue();
-         value.setUser( value.asClass(), hcls );
+         clsItem->setUser( hcls->handler(), hcls );
       }
    }
 }

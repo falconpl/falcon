@@ -18,11 +18,13 @@
 #include <falcon/vm.h>
 #include <falcon/codeframe.h>
 #include <falcon/statement.h>
-#include <falcon/symboltable.h>
 #include <falcon/expression.h>
+#include <falcon/syntree.h>
+#include <falcon/symbol.h>
 
 #include <falcon/engine.h>
 #include <falcon/synclasses.h>
+#include <falcon/varmap.h>
 
 #include "psteps/exprvector_private.h"
 
@@ -73,7 +75,7 @@ SynTree::SynTree( const SynTree& other ):
    _p = new Private(*other._p, this);
    if( other.m_locals != 0 )
    {
-      m_locals = new SymbolTable( *other.m_locals );
+      m_locals = new VarMap( *other.m_locals );
    }
    
    if( other.m_head != 0 ) {
@@ -95,7 +97,20 @@ SynTree::~SynTree()
    delete _p;
    delete m_locals;
    delete m_selector;
+   if( m_head != 0 ) {
+      m_head->decref();
+   }
    // we don't own the head symbol
+}
+
+
+void SynTree::target( Symbol* s )
+{
+   s->incref();
+   if( m_head != 0 ) {
+      m_head->decref();
+   }
+   m_head = s;
 }
 
 
@@ -130,11 +145,11 @@ void SynTree::oneLinerTo( String& tgt ) const
 }
 
 
-SymbolTable* SynTree::locals( bool bmake )
+VarMap* SynTree::locals( bool bmake )
 {
    if( m_locals == 0 && bmake )
    {
-      m_locals = new SymbolTable();
+      m_locals = new VarMap();
    }
    
    return m_locals;

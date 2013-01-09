@@ -33,7 +33,6 @@ class Transcoder;
 class TranscoderMap;
 class PoolList;
 class Pool;
-class ClassReference;
 class ClassShared;
 class ClassModule;
 class GCLock;
@@ -52,6 +51,7 @@ class Symbol;
 
 class SynClasses;
 class VMContext;
+class SymbolPool;
 
 class Log;
 
@@ -383,17 +383,6 @@ public:
     */   
    ClassRawMem* rawMemClass() const;
 
-   /** Returns the global instance of the ClassReference class.
-   \return the Engine instance of the ClassReference handler.
-
-    Method init() must have been called before.
-
-    @note This method will assert and terminate the program if compiled in debug mode
-    in case the engine has not been initialized. In release, it will just
-    return a null pointer.
-    */
-   ClassReference* referenceClass() const;
-
    /** Returns the global instance of the SharedClass class.
    \return the Engine instance of the SharedClass handler.
 
@@ -544,12 +533,20 @@ public:
 
    /** Returns a pointer to the base dynsymbol.
     
-    The base dynsymbol is a symbol that is inserted
+    The base symbol is a symbol that is inserted
     at the head of each evaluation frame to save the corresponding
     data stack frame.
     */
    Symbol* baseSymbol() const;
    
+   /** Returns a pointer to a local or global symbol.
+     Each call to this function increases the reference of the
+     retrieved symbol.
+    */
+   static Symbol* getSymbol( const String& name, bool global );
+   static void refSymbol(Symbol* sym);
+   static void releaseSymbol( Symbol* sym );
+
    Log* log() const;
 
 protected:
@@ -585,7 +582,6 @@ protected:
    Class* m_genericClass;
 
    ClassRawMem* m_rawMemClass;
-   ClassReference* m_referenceClass;
    ClassShared* m_sharedClass;
    
    //===============================================
@@ -628,6 +624,8 @@ protected:
    // Pools
    //
    PoolList* m_pools;
+   SymbolPool* m_symbols;
+
 
    //===============================================
    // The core module.

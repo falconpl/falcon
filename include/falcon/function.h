@@ -18,7 +18,7 @@
 
 #include <falcon/setup.h>
 #include <falcon/string.h>
-#include <falcon/symboltable.h>
+#include <falcon/varmap.h>
 #include <falcon/mantra.h>
 
 namespace Falcon
@@ -60,6 +60,7 @@ public:
    Function( const String& name, Module* owner = 0, int32 line = 0 );
    virtual ~Function();
    
+
    /** Parses the description of the function.
     \param dsec Descriptive list of parameters and signature.
     
@@ -112,16 +113,6 @@ public:
     */
    int32 declaredAt() const { return m_sr.line(); }
 
-
-   int32 paramCount() const { return m_paramCount; }
-
-   /** Sets the variable count.
-    * @param pc The number of parameters in this functions.
-    *
-    * the parameter count should be a number in 0..varCount().
-    */
-   void paramCount( int32 pc ) { m_paramCount = pc; }
-
    Error* paramError( int line = 0, const char* modName = 0 ) const;
 
    /** Executes the call.
@@ -159,23 +150,8 @@ public:
     */
    void setEta( bool mode ) { m_bEta = mode; }
 
-
-   /** Returns the symbol table of this function.
-    */
-   const SymbolTable& symbols() const { return m_symtab; }
-
-   /** Returns the symbol table of this function.
-    */
-   SymbolTable& symbols() { return m_symtab; }
-
-   /** Adds a parameter to this function.
-    \param param The parameter to be added.
-    \note call this before accessing symbols() in this function.
-    */
-   inline void addParam( const String& param )
-   {
-      m_symtab.addLocal( param );
-      m_paramCount = m_symtab.localCount();
+   inline void addParam( const String& name ) {
+      m_vars.addParam( name );
    }
 
    /** Candy grammar to declare parameters.
@@ -196,8 +172,7 @@ public:
     */
    inline Function& operator <<( const String& param )
    {
-      m_symtab.addLocal( param );
-      m_paramCount = m_symtab.localCount();
+      addParam( param );
       return *this;
    }
 
@@ -226,17 +201,24 @@ public:
       return *this;
    }
    
-   Class* handler() const;
+   /**
+    * Returns the appropriate engine class handler for this Function.
+    */
+   virtual Class* handler() const;
    
+   const VarMap& variables() const  { return m_vars; }
+   VarMap& variables() { return m_vars; }
+
+   inline uint32 paramCount() const { return m_vars.paramCount(); }
 protected:
-   SymbolTable m_symtab;
+   VarMap m_vars;
    String m_signature;
-   int32 m_paramCount;
    Class* m_methodOf;
    bool m_bEta;
    
    Function() {}
    friend class ClassFunction;
+
 };
 
 #define FALCON_DECLARE_FUNCTION(FN_NAME, SIGNATURE) \

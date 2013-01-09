@@ -210,8 +210,8 @@ static void internal_apply_catch( int toks, Parser& p, int line, int chr,
       // prepare the head symbol if needed
       if( tgt != 0 )
       {
-         Symbol* sym = ctx->addDefineSymbol( *tgt );
-         newBranch->target( sym );
+         Variable* var = ctx->defineSymbol( *tgt );
+         newBranch->target( Engine::getSymbol(*tgt, var->isGlobalOrExtern() ) );
       }
       
       if( errName != 0 )

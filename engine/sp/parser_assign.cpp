@@ -69,7 +69,8 @@ void apply_expr_assign( const Rule&, Parser& p )
    fassert( ! list->empty() );
    if( list->size() == 1 )
    {
-       ti->setValue(
+      ctx->accessSymbols(list->front());
+      ti->setValue(
          new ExprAssign( firstPart, list->front() ),
          expr_deletor );
    }
@@ -82,7 +83,9 @@ void apply_expr_assign( const Rule&, Parser& p )
       while( iter != list->end() )
       {
          // Todo -- make the array expression
-         array->add(*iter);
+         Expression* expr = *iter;
+         ctx->accessSymbols(expr);
+         array->add(expr);
          ++iter;
       }
 

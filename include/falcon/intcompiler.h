@@ -98,25 +98,24 @@ public:
 
 private:
 
-   /** Class used to notify the intcompiler about relevant facts in parsing. */
-   class Context: public ParserContext
-   {
+   /** Class used to notify the compiler about relevant facts in parsing. */
+   class Context: public ParserContext {
    public:
       Context( IntCompiler* owner );
       virtual ~Context();
-      
+
       virtual void onInputOver();
-      virtual void onNewFunc( Function* function, Symbol* gs=0 );
-      virtual void onNewClass( Class* cls, bool bIsObj, Symbol* gs=0 );
+      virtual void onNewFunc( Function* function );
+      virtual void onNewClass( Class* cls, bool bIsObj );
       virtual void onNewStatement( Statement* stmt );
       virtual void onLoad( const String& path, bool isFsPath );
       virtual bool onImportFrom( ImportDef* def );
       virtual void onExport(const String& symName);
       virtual void onDirective(const String& name, const String& value);
       virtual void onGlobal( const String& name );
-      virtual Symbol* onUndefinedSymbol( const String& name );
-      virtual Symbol* onGlobalDefined( const String& name, bool& bUnique );
-      virtual Expression* onStaticData( Class* cls, void* data );
+      virtual Variable* onGlobalDefined( const String& name, bool& bUnique );
+      virtual Variable* onGlobalAccessed( const String& name );
+      virtual Item* getVariableValue( Variable* var );
       virtual void onRequirement( Requirement* rec );
 
    private:

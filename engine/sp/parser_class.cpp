@@ -64,8 +64,8 @@ bool classdecl_errhand(const NonTerminal&, Parser& p)
    if( ! p.interactive() )
    {
       // put in a fake if statement (else, subsequent else/elif/end would also cause errors).
-      FalconClass* cls = new FalconClass( "anonymous" );
-      ctx->openClass( cls, false, 0 );
+      FalconClass* cls = new FalconClass( "" );
+      ctx->openClass( cls, false );
       p.pushState("ClassBody");
    }
    else
@@ -84,13 +84,11 @@ static void make_class( Parser& p, int tCount,
          TokenInstance* tParams,
          TokenInstance* tfrom )
 {
-   static Class* ccls = Engine::instance()->metaClass();
-   
    SourceParser& sp = static_cast<SourceParser&>(p);
    ParserContext* ctx = static_cast<ParserContext*>(p.context());
 
    FalconClass* cls = 0;
-   Symbol* symclass = 0;
+   Variable* symclass = 0;
    TokenInstance* ti = 0;
    
    // a symbol class?
@@ -109,25 +107,17 @@ static void make_class( Parser& p, int tCount,
       symclass = ctx->onGlobalDefined( *tname->asString(), alreadyDef );
       if( alreadyDef )
       {
-         if( symclass->type() != Symbol::e_st_extern )
+         // not free!
+         p.addError( e_already_def,  p.currentSource(), tname->line(), tname->chr(), 0,
+            String("at line ").N(symclass->declaredAt()) );
+         // however, go on with class creation
+         if ( sp.interactive() )
          {
-            // not free!
-            p.addError( e_already_def,  p.currentSource(), tname->line(), tname->chr(), 0,
-               String("at line ").N(symclass->declaredAt()) );
-            // however, go on with class creation
-            if ( sp.interactive() )
-            {
-               // unless intefactive...
-               p.simplify( tCount );
-               return;
-            }
-            cls = new FalconClass( "anonymous" );
+            // unless interactive...
+            p.simplify( tCount );
+            return;
          }
-         else {
-            cls = new FalconClass( *tname->asString() );
-            symclass->promoteToGlobal();
-         }
-         
+         cls = new FalconClass( "" );
       }
       else {
          // Ok, we took the symbol.
@@ -137,12 +127,12 @@ static void make_class( Parser& p, int tCount,
    else
    {
       // we don't have a symbol...
-      cls = new FalconClass( "anonymous" );
+      cls = new FalconClass( "" );
       symclass = 0;
       
       // ... but we have an expression value
       ti = TokenInstance::alloc( p.currentLine(), p.currentLexer()->character(), sp.Expr);
-      Expression* expr = ctx->onStaticData( ccls, cls );   
+      Expression* expr = new ExprValue( FALCON_GC_STORE( cls->handler(), cls ), p.currentLine(), p.currentLexer()->character() );
       ti->setValue( expr, expr_deletor );
    }
 
@@ -151,13 +141,12 @@ static void make_class( Parser& p, int tCount,
    {
       NameList* list = static_cast<NameList*>( tParams->asData() );
       Function* func = cls->makeConstructor();
-      SymbolTable& symtab = func->symbols();
+      VarMap& symtab = func->variables();
 
       for(NameList::const_iterator it=list->begin(),end=list->end();it!=end;++it)
       {
-         symtab.addLocal( *it );
+         symtab.addParam( *it );
       }
-      cls->makeConstructor()->paramCount( symtab.localCount() );
    }
 
    // some from clause to take care of?
@@ -170,16 +159,9 @@ static void make_class( Parser& p, int tCount,
       for( int i = 0; i < flist->arity(); ++i ) {
          ExprInherit* inh = static_cast<ExprInherit*>( flist->nth(i) );
          // ask the owner the required symbol.
-         Symbol* symBaseClass = ctx->findSymbol( inh->name() );
+         Variable* symBaseClass = ctx->onGlobalAccessed( inh->name() );
          // if it's 0, we need a requirement; and we shall also add an externa symbol.
-         if( symBaseClass == 0 ) {
-            Symbol* sym = ctx->onUndefinedSymbol( inh->name() ); 
-            sym->declaredAt( p.currentLine() );
-            Requirement* req = inh->makeRequirement( cls );
-            ctx->onRequirement( req );
-         }
-         // was already in but extern?
-         else if( symBaseClass->type() == Symbol::e_st_extern )
+         if( symBaseClass->type() == Variable::e_nt_extern )
          {
             // then just add the requirement
             Requirement* req = inh->makeRequirement( cls );
@@ -187,7 +169,9 @@ static void make_class( Parser& p, int tCount,
          }
          else {
             // if it's defined and not a class, we're in trouble
-            const Item* value = symBaseClass->getValue(0);
+            const Item* value = ctx->getVariableValue( symBaseClass );
+            fassert( value != 0 );
+
             if( value == 0 || ! value->isClass() )
             {
                p.addError( e_inv_inherit, p.currentSource(), ti->line(), ti->chr() );
@@ -208,10 +192,7 @@ static void make_class( Parser& p, int tCount,
       p.popState();
    }
    
-   ctx->openClass(cls, false, symclass);
-
-   // time to check the symbols.
-   ctx->checkSymbols();
+   ctx->openClass(cls, false );
 
    p.pushState( "ClassBody" );
 }
@@ -292,9 +273,6 @@ void apply_pdecl_expr( const Rule&, Parser& p )
    {
       cls->addProperty( *tname->asString(), expr );
    }
-
-   // time to add the things we have parsed.
-   ctx->checkSymbols();
 
    // remove this stuff from the stack
    p.simplify( 4 );

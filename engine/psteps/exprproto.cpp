@@ -55,6 +55,7 @@ ExprProto::ExprProto( int line, int chr ):
 {
    FALCON_DECLARE_SYN_CLASS( expr_genproto )
    apply=apply_;
+   m_trait = e_trait_composite;
 }
 
 ExprProto::ExprProto( const ExprProto& other ):
@@ -62,6 +63,7 @@ ExprProto::ExprProto( const ExprProto& other ):
    _p(new Private)
 {
    apply=apply_;
+   m_trait = e_trait_composite;
 }
 
 ExprProto::~ExprProto()

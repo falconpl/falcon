@@ -65,9 +65,9 @@ public:
     This constrcutor can be used to create a symbol placeholder in an expression,
     which can be then filled later on.
     */
-   ExprSymbol( const String& name, int line = 0, int chr = 0 );
+   ExprSymbol( const String& name, bool isGlobal = false, int line = 0, int chr = 0 );
    
-   /** Declare A fully constructer symbol access expression.
+   /** Declare A fully constructor symbol access expression.
     
     This constructor assigns the symbol directly, as if
       referenceFromContainer method was called.
@@ -87,11 +87,7 @@ public:
 
    // Return the symbol pointed by this expression.
    Symbol* symbol() const { return m_symbol; }
-   
-   /** Keeps safe a symbol.
-    This also creates a GCLock that will keep safe this symbol.
-    */
-   void safeGuard( Symbol* sym );
+   void symbol( Symbol* sym );
    
    /** Returns the symbol name associated with this expression.
     \return A symbol name.
@@ -105,9 +101,7 @@ public:
    void name( const String& newName );
 
 protected:
-   String m_name;
    Symbol* m_symbol;
-   GCLock* m_gcLock;
    
    static void apply_( const PStep* ps, VMContext* ctx );
    

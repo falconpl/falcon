@@ -19,7 +19,6 @@
 #include <falcon/setup.h>
 #include <falcon/string.h>
 #include <falcon/modmap.h>
-#include <falcon/symbolmap.h>
 #include <falcon/pstep.h>
 
 namespace Falcon {
@@ -33,6 +32,8 @@ class ImportDef;
 class Mantra;
 class Process;
 class Function;
+class Variable;
+class Item;
 
 /** Collection of (static) modules active in a virtual machine.
  
@@ -166,20 +167,20 @@ public:
 
    /** Exports a single symbol on the module space. 
     */
-   Error* exportSymbol( Module* mod, Symbol* sym );
+   Error* exportSymbol( Module* source, const String& name, const Variable& var );
 
-   /** Finds a symbol that has been generally exported via the load/export constructs.
+   /** Finds a value that has been generally exported via the load/export constructs.
     Finds a globally exported symbol.
     */
-   Symbol* findExportedSymbol( const String& symName, Module*& declarer );
+   Item* findExportedValue( const String& symName, Module*& declarer );
    
-   /** Finds a symbol that might be generally exported or imported by a module.
+   /** Finds a value that might be generally exported or imported by a module.
     \param asker The module that is asking for the given symbol.
     \param symName The name of the symbol that is being searched (as remotely known).
     \param decalrer a place where to store the module that declared the symbol, if found.
     \return A valid symbol or 0 if the symbol is not found.
     
-    This method finds a symbol that might be coming either from the global namespace
+    This method finds a value that might be coming either from the global namespace
     generated in this ModSpace via export/load directives, or a generally imported symbol
     from any of the modules that were declared as general providers via import/from by
     the module that is searching for that symbol.
@@ -187,20 +188,20 @@ public:
     The generic load/export search is extended to the parent ModSpaces, if 
     there is some parent.
     */
-   Symbol* findExportedOrGeneralSymbol( Module* asker, const String& symName, Module*& declarer );
+   Item* findExportedOrGeneralValue( Module* asker, const String& symName, Module*& declarer );
 
-   inline Symbol* findExportedOrGeneralSymbol( Module* asker, const String& symName )
+   inline Item* findExportedOrGeneralValue( Module* asker, const String& symName )
    {
       Module* declarer;
-      return findExportedOrGeneralSymbol( asker, symName, declarer ); 
+      return findExportedOrGeneralValue( asker, symName, declarer ); 
    }
    
    /** Finds a globally exported symbol.
     */
-   inline Symbol* findExportedSymbol( const String& symName )
+   inline Item* findExportedValue( const String& symName )
    {
       Module* declarer;
-      return findExportedSymbol( symName, declarer );
+      return findExportedValue( symName, declarer );
    }
    
    

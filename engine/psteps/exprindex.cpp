@@ -79,7 +79,8 @@ inline void generic_apply( const ExprIndex* self, VMContext* ctx )
          trait = current->trait();
          if( trait == Expression::e_trait_symbol )
          {
-            ctx->pushData(*static_cast<ExprSymbol*>( current )->symbol()->getValue(ctx));
+            Item* value = ctx->resolveSymbol(static_cast<ExprSymbol*>( current )->symbol(), false);
+            ctx->pushData( *value );
          }
          else {
             if( ctx->stepInYield( current, cf ) ) return;

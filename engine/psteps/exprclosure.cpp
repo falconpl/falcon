@@ -28,7 +28,8 @@ ExprClosure::ExprClosure():
    m_function(0)
 {
    FALCON_DECLARE_SYN_CLASS( expr_closure );
-   apply = apply_;   
+   apply = apply_;
+   m_trait = e_trait_composite;
 }
 
 
@@ -37,6 +38,7 @@ ExprClosure::ExprClosure( Function* closed ):
 {
    FALCON_DECLARE_SYN_CLASS( expr_closure );
    apply = apply_;   
+   m_trait = e_trait_composite;
    
    // TODO: GarbageLock the function
 }
@@ -46,6 +48,7 @@ ExprClosure::ExprClosure( const ExprClosure& other ):
    m_function( other.m_function )
 {
    apply = apply_;
+   m_trait = e_trait_composite;
    // TODO: GarbageLock the function
 }
 
@@ -72,11 +75,11 @@ void ExprClosure::apply_( const PStep* ps, VMContext* ctx )
    // Around just once
    ctx->popCode();
    
-   if( self->m_function->symbols().closedCount() > 0 ) {
+   if( self->m_function->variables().closedCount() > 0 ) {
       // Create the closure and close it.
       register Function* func = self->m_function;
       Closure* cls = new Closure( func->handler(), func );
-      cls->close( ctx, &func->symbols() );
+      cls->close( ctx, &func->variables() );
 
       // and return it.
       ctx->pushData( FALCON_GC_STORE( closureClass, cls ) );

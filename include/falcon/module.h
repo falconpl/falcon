@@ -27,6 +27,7 @@
 #include <falcon/class.h>
 #include <falcon/function.h>
 #include <falcon/module.h>
+#include <falcon/vardatamap.h>
 
 #define DEFALUT_FALCON_MODULE_INIT falcon_module_init
 #define DEFALUT_FALCON_MODULE_INIT_NAME "falcon_module_init"
@@ -122,18 +123,19 @@ public:
    /** Adds a global mantra, possibly exportable.
     \param f The function to be added
     \param bExport if true, the returned symbol will be exported.
-    \return A Symbol holding a pointer to the global variable where the
-            function is now stored, or 0 if the function name is already present.
-    */
-   Symbol* addMantra( Mantra* f, bool bExport = true );
-   
-   /** Storing it on an already defined symbol.
-    \param sym The global symbol that is already stored on this module.
-    \param f The function to be added
+    \return A variable containing the global ID or 0 if the variable
+             was already declared.
 
-    
+      Other than being added to the static values and to the global
+      variables table, the function will be added also to the module mantra table.
+
+      This means that after calling this method, the name of the mantra is also known as
+      a global, possibly exported variable.
     */
-   bool addMantraWithSymbol( Mantra* f, Symbol* sym, bool bExport = true );
+   Variable* addMantra( Mantra* f, bool bExport = true, int32 declaredAt = 0 );
+   
+
+   Variable* addConstant( const String& name, const Item& value, bool bExport = true );
 
    /** Adds an anonymous mantra.
     \param f The mantra to be added
@@ -141,7 +143,7 @@ public:
     The name of the mantra will be modified so that it is unique in case
     it is already present in the module.
     
-    The mantra will not be exported, and there won't be any synbol created
+    The mantra will not be exported, and there won't be any variable created
     for this mantra.
     */
    void addAnonMantra( Mantra* f );
@@ -150,57 +152,68 @@ public:
    /** Adds a global function, possibly exportable.
     \param f The function to be added
     \param bExport if true, the returned symbol will be exported.
-    \return A GlobalSymbol holding a pointer to the global variable where the
-            function is now stored, or 0 if the function name is already present.
+    \return A variable containing the global ID or 0 if the variable
+             was already declared.
 
+     This is a candy grammar for creating an ExtFunc entry and adding it
+     as a Mantra to the module.
+
+      Other than being added to the static values and to the global
+      variables table, the function will be added also to the module mantra table.
+
+      This means that after calling this method, the given name is also known as
+      a global, possibly exported variable.
     */
-   Symbol* addFunction( const String& name, ext_func_t f, bool bExport = true );
+   Variable* addFunction( const String& name, ext_func_t f, bool bExport = true );
 
 
    /** Creates a singleton object.
     \param fc The class to be added
     \param bExport if true, the returned symbol will be exported.
-    \return A GlobalSymbol holding a pointer to the global variable where the
-            function is now stored, or 0 if the function name is already present.
+    \return A variable containing the global ID or 0 if the variable
+             was already declared.
     */
-   Symbol* addSingleton( Class* fc, bool bExport = true );
+   Variable* addSingleton( Class* fc, bool bExport = true );
 
 
-   /** Adds a global variable, possibly exportable.
-    \param name The name of the symbol referencing the variable.
-    \param bExport if true, the returned symbol will be exported.
-    \return A GlobalSymbol holding a pointer to the global variable where the
-            value is now stored, or 0 if the function name is already present.
-
-    Creates a nil variable and references it to a global symbol.
+   /** Promotes a variable previously known as extern into a global.
+    * \param ext The variable to be promoted.
+    * \return true if the variable was an extern, false otherwise.
+    *
+    * This turns an extern variable into a global, eventually removing the
+    * extern dependencies bound with the variable name.
+    *
+    * \note; on exit, the \b ext variable is extern.
     */
-   Symbol* addVariable( const String& name, bool bExport = true );
+   bool promoteExtern( Variable* ext, const Item& value, int32 declaredAt );
 
-   /** Adds a global variable, possibly exportable.
-    \param name The name of the symbol referencing the variable.
-    \param bExport if true, the returned symbol will be exported.
-    \param value the value to be added.
-    \return A GlobalSymbol holding a pointer to the global variable where the
-            value is now stored, or 0 if the function name is already present.
 
-    Creates an already valorized variable in the module global vector.
-    \note The garbage collector may be running while performing this operation.
-    If the data to be added is a garbageable deep data, be sure to allocate
-    a garbage lock that can be released after the module has been linked in
-    the virtual machine.
+   /** Sets an extern value once the relative extern variable is resolved.
+    * \param name The name of the extern variable that is being resolved.
+    * \param value The resolved value
+    * \param source The source module where this value comes from (can be 0).
+    * \return true if the variable name is found (and extern), false otherwise.
+    *
+    * If a dependency is waiting for this variable to be resolved, it is satisfied.
+    * This might lead to throw an error if the satisfied depenency decides so.
+    * */
+   bool resolveExternValue( const String& name, Module* source, Item* value );
+
+   /** Tries to create a new variable taking an external value.
+    *
+    * \param name the name for the extern global variable.
+    * \param source A source module where this item is allocated (can be 0).
+    * \param value The value to be associated with the variable.
+    * \return A valid variable entry on success, 0 if the variable is already defined as global.
+    *
+    * If the variable is not defined, or defined as extern, the value is set.
+    * This might also lead to dependency resolve, which in turn might raise an
+    * error if the resolved dependency is willing to do so.
+    *
+    * If the value is already defined as a global variable, this method returns 0.
     */
-   Symbol* addVariable( const String& name, const Item& value, bool bExport = true );
+   Variable* importValue( const String& name, Module* source, Item* value );
 
-   /** Finds a global symbol by name.
-    \param name The symbol name to be searched.
-    \return A global symbol (either defined or undefined) or 0 if not found.
-    
-    If the given name is not present as a global symbol in the current module,
-    an imported UnknownSymbol will be added.
-
-    \note The returned symbol might be a GlobalSymbol or an UnknownSymbol.
-    */
-   Symbol* getGlobal( const String& name ) const;
 
    /** Finds a function.
     \param name The function name to be searched.
@@ -210,25 +223,14 @@ public:
     */
    Mantra* getMantra( const String& name, Mantra::t_category cat = Mantra::e_c_none ) const;
 
-   /** Enumerator receiving symbols in this module. */
-   typedef Enumerator<Symbol> SymbolEnumerator;
 
    /** Enumerator receiving mantras in this module. */
    typedef Enumerator<Mantra> MantraEnumerator;
 
-   /** Enumerate all the globals known by this module.
-      \note The enumerated symbol might be a GlobalSymbol or an UnknownSymbol.
-    */
-   void enumerateGlobals( SymbolEnumerator& rator ) const;
-
-   /** Enumerate all exported global values known by this module.
-          \note The enumerated symbol might be a GlobalSymbol or an UnknownSymbol.
-    */
-   void enumerateExports( SymbolEnumerator& rator ) const;
-
    /** Enumerate all functions and classes in this module.
     */
    void enumerateMantras( MantraEnumerator& rator ) const;
+
 
    /** Candy grammar to add exported functions. */
    Module& operator <<( Mantra* f )
@@ -291,22 +293,19 @@ public:
     
     */
    ImportDef* addLoad( const String& name, bool bIsUri );
-   
-   /** Returns an imported symbol */
-   Symbol* findImportedSymbol( const String& name ) const;
 
    /** Adds an implicitly imported symbol.
-    \param uks The unknown symbol that should be resolved during link time.
+    \param name The unknown symbol that should be resolved during link time.
     \param isNew True if the symbol is new.
-    \return A valid symbol (possibly created as "extern" on the spot).
+    \return A valid variable (possibly created as "extern" on the spot).
     
     Adds an implicit import. This is the same as import, but will always return
-    a valid symbol, which might be undefined if the symbol wasn't known before,
-    or it might be an existing global symbol.
+    a valid variable, which might be undefined if the symbol wasn't known before,
+    or it might be an existing global variable.
     */
-   Symbol* addImplicitImport( const String& name, bool& isNew );
+   Variable* addImplicitImport( const String& name, bool& isNew );
    
-   Symbol* addImplicitImport( const String& name )
+   Variable* addImplicitImport( const String& name )
    {
       bool bDummy;
       return addImplicitImport( name, bDummy );
@@ -318,7 +317,7 @@ public:
     \param sym The resolved symbol.
     */
    
-   typedef Error* (*t_func_import_req)( Module* requester, const Module* definer, const Symbol* sym );
+   typedef Error* (*t_func_import_req)( const Module* sourceModule, const String& sourceName, Module* targetModule, const Item& value, const Variable* targetVar );
    
    /** Adds an import request.
     \param cbFunc a t_func_import_req callback that will be notified when this
@@ -336,18 +335,7 @@ public:
    
    void addImportRequest( Requirement* req, 
                const String& sourceMod="", bool bModIsPath=false );
-   
-   /** Export a symbol.
-    \param name The name of the symbol to be exported.
-    \param bAlready will be set to true if the symbol was already defined.
-    \return The exported symbol or 0 if the symbol was not defined.
-    
-    If the symbol is still not defined, zero is returned.
-    
-    \note it is NOT legal to export undefined symbols -- to avoid mistyping.
-    */
-   Symbol* addExport( const String& name, bool &bAlready );   
-   
+
    
    /** Adds a request for a foreign entity that shall be resolved at link phase.
     
@@ -363,7 +351,7 @@ public:
     
     \see Requirement
     */
-   Symbol* addRequirement( Requirement* cr );
+   Variable* addRequirement( Requirement* cr );
 
    
    /** Perform completion checks on source classes.
@@ -395,9 +383,9 @@ public:
     and used for private load, or be assigned by the loading process
     by other modules or by the loading module space.
     */
-   ModSpace* moduleSpace() const { return m_modSpace; }
+   ModSpace* modSpace() const { return m_modSpace; }
    
-   void moduleSpace( ModSpace* md ) { m_modSpace = md; }
+   void modSpace( ModSpace* md ) { m_modSpace = md; }
    
    
    bool isMain() const { return m_bMain; }
@@ -417,31 +405,6 @@ public:
     Otherwise, a new load is needed (even if the module already exists somewhere.
     */
    Module* linkExistingModule( const String& name, bool bIsUri, t_loadMode imode );
-
-   /** Searches a symbol, complete with its namespace in the import structure.
-    \param name A symbol name, complete with its namespace prefix.
-    \return A symbol if found, 0 otherwise.
-    
-    This method searches a symbol in the import structure of a module.
-    
-    The Symbol is not searched in the
-    */
-   Symbol* searchInImports( const String& name, Module*& mod );
-     
-   
-   /** Adds a constant at global level in the module.
-    \param name The name of the constant.
-    \param value The value of the constant.
-    \reutrn true if the name is free, false if the constant cannot be created.
-    
-    This method adds a constant for export in the module by adding a 
-    global symbol and then assigning a default value to it.
-    
-    Assigmnet to the symbol is inhibited, but if the constant is complex (i.e.
-    a class instance), it could be possible that its contents are actually
-    changed.
-    */
-   bool addConstant( const String& name, const Item& value );
    
    Function* getMainFunction();
    void setMainFunction( Function* mf );
@@ -491,6 +454,60 @@ public:
     */
    ImportDef* getDep( uint32 n ) const;
 
+   VarDataMap& globals() { return m_globals; }
+   const VarDataMap& globals() const { return m_globals; }
+
+
+   Variable* addGlobal( const String& name, const Item& value, bool bExport = false )
+   {
+      VarDataMap::VarData* vd = m_globals.addGlobal(name, value, bExport);
+      if( vd == 0 ) return 0;
+      return &vd->m_var;
+   }
+
+   Variable* addExtern( const String& name, bool bExport = false )
+   {
+      VarDataMap::VarData* vd = m_globals.addExtern(name, bExport);
+      if( vd == 0 ) return 0;
+      return &vd->m_var;
+   }
+
+
+   Variable* addExport( const String& name, bool &bAlready )
+   {
+      VarDataMap::VarData* vd = m_globals.addExport(name, bAlready);
+      if( vd == 0 ) return 0;
+      return &vd->m_var;
+   }
+
+   inline Variable* addExport( const String& name ) {
+       bool dummy;
+       return addExport(name, dummy);
+   }
+
+
+   Item* getGlobalValue( const String& name ) const
+   {
+      return m_globals.getGlobalValue(name);
+   }
+
+   Item* getGlobalValue( uint32 id ) const
+   {
+      return m_globals.getGlobalValue(id);
+   }
+
+   Variable* getGlobal( const String& name ) const
+   {
+      VarDataMap::VarData* vd = m_globals.getGlobal(name);
+      if( vd == 0 ) return 0;
+      return &vd->m_var;
+   }
+
+   void exportNS( const String& sourceNS, Module* target, const String& targetNS )
+   {
+      m_globals.exportNS(this, sourceNS, target, targetNS );
+   }
+
 protected:
    /** Invoked when refcount hits 0.
     *  This will invoke the unload() method if not previously invoked.
@@ -512,6 +529,8 @@ private:
    class Private;
    Module::Private* _p;
    
+   VarDataMap m_globals;
+
    ModSpace* m_modSpace;
    String m_name;
    String m_uri;
@@ -536,7 +555,7 @@ private:
    void setDynUnloader( DynUnloader* ul ) { m_unloader = ul; } 
    
    // checks for forward declarations, eventually removing them.
-   void checkWaitingFwdDef( Symbol* sym );
+   bool checkWaitingFwdDef( const String& name, Item* value );
    
    // used by various import and load requests.
    Error* addModuleRequirement( ImportDef* def, ModRequest*& req );

@@ -69,16 +69,12 @@ void ClassClosure::restore( VMContext* ctx, DataReader* rd ) const
 void ClassClosure::flatten( VMContext*, ItemArray& subItems, void* instance ) const
 {
    Closure* closure = static_cast<Closure*>(instance);   
-   uint32 size = closure->m_closedDataSize;
    // save also the current values of the items
    // TODO: If we save the ItemReference, the flattening mechanism should be able
    // to preserve the references in unflatten.
-   subItems.resize( 1 + size );
+   subItems.resize( 2 );
    subItems[0] = Item( closure->m_handler, closure->m_closed );
-   for(uint32 i = 0; i < size; ++i )
-   {
-      subItems[i+1] = *closure->closedData()[i].value();
-   }
+   subItems[1] = Item( closure->closedData()->handler(), closure->closedData() );
 }
 
 
@@ -88,16 +84,8 @@ void ClassClosure::unflatten( VMContext*, ItemArray& subItems, void* instance ) 
    fassert( subItems.length() > 0 );
    
    subItems[0].forceClassInst( closure->m_handler, closure->m_closed );
-   if( subItems.length() > 1 ) {
-      closure->m_closedDataSize = subItems.length()-1;
-      closure->m_closedData = new Variable[closure->m_closedDataSize];
-      for(uint32 i = 1; i < subItems.length(); ++i )
-      {  
-         //TODO: Save as class Reference
-         Variable v;
-         v.value(&subItems[i]);
-         closure->m_closedData[i-1].makeReference(&v);
-      }      
+   if( subItems.length() == 2 ) {
+      closure->m_closedData = static_cast<ItemArray*>(subItems[1].asInst());
    }
 }
    

@@ -110,19 +110,17 @@ void* Processor::run()
    int wasTerminated = 0;
    while( true )
    {
-      TRACE("Processor %p (id %d) waiting for context", this, this->id() );
+      TRACE("Processor::run %p (id %d) waiting for context", this, this->id() );
       VMContext* ctx;
       rctx.get( ctx, &wasTerminated);
 
       if( wasTerminated != 0 ) {
-         TRACE("Processor %p (id %d) being terminated", this, this->id() );
+         TRACE("Processor::run %p (id %d) being terminated", this, this->id() );
          break;
       }
 
       m_currentContext = ctx;
       // proceed running with this context
-      TRACE("Processor %p (id %d) running context %p(%d)",
-               this, this->id(), ctx, ctx->id() );
       execute( ctx );
    }
 
@@ -158,12 +156,12 @@ void Processor::manageEvents( VMContext* ctx, int32 &events )
    {
       ctx->clearEvents();
       if ( ctx->nextSchedule() >= 0 ) {
-         TRACE( "Processor::execute processor %p(%d) descheduled context %p(%d) for a while",
+         TRACE( "Processor::manageEvents processor %p(%d) descheduled context %p(%d) for a while",
                   this, this->id(), ctx, ctx->id() );
          m_owner->contextManager().onContextDescheduled( ctx );
       }
       else {
-         TRACE( "Processor::execute processor %p(%d) descheduled forever context %p(%d)",
+         TRACE( "Processor::manageEvents processor %p(%d) descheduled forever context %p(%d)",
                   this, this->id(), ctx, ctx->id() );
          m_owner->contextManager().onContextDescheduled( ctx );
       }
@@ -174,7 +172,8 @@ void Processor::manageEvents( VMContext* ctx, int32 &events )
 
 void Processor::execute( VMContext* ctx )
 {
-   TRACE( "Scheduler::Processor::execute with depth %d", (int) ctx->callDepth() );
+   TRACE( "Processor::execute(%d) %d:%d with depth %d",
+            this->id(), ctx->process()->id(), ctx->id(), (int) ctx->callDepth() );
    PARANOID( "Call stack empty", (ctx->callDepth() > 0) );
 
    while( true )
@@ -207,25 +206,26 @@ void Processor::execute( VMContext* ctx )
    }
 }
 
+
 bool Processor::step()
 {
-   TRACE("Processor %p (id %d) single stepping", this, this->id() );
-
    int wasTerminated = 0;
    if( m_currentContext == 0 )
    {
-      TRACE("Processor %p (id %d) single stepping -- loading a new context.", this, this->id() );
+      TRACE("Processor::step %p (id %d) -- loading a new context.", this, this->id() );
       m_owner->contextManager().readyContexts().tryGet( m_currentContext, &wasTerminated );
 
       if( m_currentContext == 0 )
       {
-         TRACE("Processor %p (id %d) single stepping -- Can't load a new context", this, this->id() );
+         TRACE("Processor::step %p (id %d) -- Can't load a new context", this, this->id() );
          return false;
       }
    }
 
    register VMContext* ctx = currentContext();
-   TRACE( "Scheduler::Processor::step with depth %d", (int) ctx->callDepth() );
+   TRACE( "Processor::step %p (id %d) ctx %d:%d with depth %d",
+            this, this->id(), ctx->process()->id(), ctx->id(),
+            (int) ctx->callDepth() );
    PARANOID( "Call stack empty", (ctx->callDepth() > 0) );
 
    // BEGIN STEP
@@ -248,6 +248,7 @@ bool Processor::step()
 
    return true;
 }
+
 
 Processor* Processor::currentProcessor()
 {

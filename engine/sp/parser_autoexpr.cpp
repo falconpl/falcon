@@ -18,6 +18,7 @@
 
 #include <falcon/setup.h>
 #include <falcon/error.h>
+#include <falcon/symbol.h>
 
 #include <falcon/parser/rule.h>
 #include <falcon/parser/parser.h>
@@ -72,6 +73,7 @@ void apply_line_expr( const Rule&, Parser& p )
    {
       ParserContext* ctx = static_cast<ParserContext*>(p.context());      
       Expression* expr = static_cast<Expression*>(ti->detachValue());
+      ctx->accessSymbols( expr );
       
       Statement* parent = ctx->currentStmt();
       StmtAutoexpr* line = new StmtAutoexpr(expr, ti->line(), ti->chr());
@@ -153,8 +155,9 @@ void apply_stmt_assign_list( const Rule&, Parser& p )
             }
 
             // accept this item -- abandon it from the list
-            ctx->defineSymbols(expr);
-            unpack->addAssignand(static_cast<ExprSymbol*>(expr)->symbol());
+            Symbol* symbol = static_cast<ExprSymbol*>(expr)->symbol();
+            ctx->defineSymbol(symbol->name());
+            unpack->addAssignand(symbol);
             ++iterRight;
          }
           // don't clear the right side list, we got the symbols -- let the expr to die
@@ -189,9 +192,9 @@ void apply_stmt_assign_list( const Rule&, Parser& p )
          Expression* assignand = listRight->front();
          listRight->pop_front();
 
-         ctx->defineSymbols(expr);
-         unpack->addAssignment(
-            static_cast<ExprSymbol*>(expr)->symbol(), assignand );
+         Symbol* symbol = static_cast<ExprSymbol*>(expr)->symbol();
+         ctx->defineSymbol(symbol->name());
+         unpack->addAssignment(symbol, assignand );
          ++iterRight;
 
       }

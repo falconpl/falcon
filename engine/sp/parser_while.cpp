@@ -76,6 +76,7 @@ void apply_while_short( const Rule&, Parser& p )
 
    Expression* expr = static_cast<Expression*>(texpr->detachValue());
    ParserContext* st = static_cast<ParserContext*>(p.context());
+   st->accessSymbols( expr );
 
    SynTree* whsyn = new SynTree;
 
@@ -99,6 +100,7 @@ void apply_while( const Rule&, Parser& p )
    ParserContext* st = static_cast<ParserContext*>(p.context());
 
    SynTree* whsyn = new SynTree;
+   st->accessSymbols( expr );
    StmtWhile* stmt_while = new StmtWhile(expr, whsyn );
    stmt_while->decl( twhile->line(), twhile->chr() );
    st->openBlock( stmt_while, whsyn );

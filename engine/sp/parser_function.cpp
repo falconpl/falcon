@@ -73,7 +73,7 @@ static SynFunc* inner_apply_function( const Rule&, Parser& p, bool bHasExpr, boo
 {
    //<< (r_Expr_function << "Expr_function" << apply_function << T_function << T_Name << T_Openpar << ListSymbol << T_Closepar << T_EOL )
    ParserContext* ctx = static_cast<ParserContext*>(p.context());
-   SourceParser& sp = *static_cast<SourceParser*>(&p);
+   //SourceParser& sp = *static_cast<SourceParser*>(&p);
    
    p.getNextToken();//T_function
    if( isEta ) p.getNextToken();// '*'
@@ -97,34 +97,6 @@ static SynFunc* inner_apply_function( const Rule&, Parser& p, bool bHasExpr, boo
       return 0;
    }
 
-   // check if the symbol is free -- defining an unique symbol
-   bool alreadyDef;
-   Symbol* symfunc = 0; 
-   // a method?
-   if( ctx->currentClass() == 0 )
-   {
-      // if not, it's a global function
-      symfunc = ctx->onGlobalDefined( *tname->asString(), alreadyDef );
-      if( alreadyDef )
-      {
-         if( symfunc->type() != Symbol::e_st_extern )
-         {
-            // not free!
-            p.addError( e_already_def,  p.currentSource(), tname->line(), tname->chr(), 0,
-               String("at line ").N(symfunc->declaredAt()) );
-            if( sp.interactive() )
-            {
-               p.simplify(tcount);
-               return 0;
-            }
-         }
-         else {
-            symfunc->promoteToGlobal();
-         }
-         // otherwise, continue to compile the function.
-      }
-   }
-
    // Ok, we took the symbol.
    SynFunc* func = new SynFunc(*tname->asString(),0,tname->line());
    if( isEta ) func->setEta(true);
@@ -143,7 +115,7 @@ static SynFunc* inner_apply_function( const Rule&, Parser& p, bool bHasExpr, boo
    }
    else
    {
-      ctx->openFunc(func, symfunc);
+      ctx->openFunc(func);
       p.simplify(tcount);
       p.pushState( "Main" );
    }
@@ -177,7 +149,7 @@ void on_close_function( void* thing )
    }
    
    // was this a closure?
-   if( func->symbols().closedCount() > 0 ) {
+   if( func->variables().closedCount() > 0 ) {
       // change our token -- from function (value) to closure
       sp.getLastToken()->setValue( new ExprClosure(func), expr_deletor );
    }  
@@ -200,7 +172,7 @@ void on_close_lambda( void* thing )
    }
    
    // was this a closure?
-   if( func->symbols().closedCount() > 0 ) {
+   if( func->variables().closedCount() > 0 ) {
       // change our token -- from function (value) to closure
       sp.getLastToken()->setValue( new ExprClosure(func), expr_deletor );
    }  
@@ -254,7 +226,7 @@ static void internal_expr_func(const Rule&, Parser& p, bool isEta )
    TokenInstance* ti= TokenInstance::alloc(tf->line(),tf->chr(), sp.Expr);
 
    // give the context the occasion to say something about this item
-   Expression* expr= ctx->onStaticData( fcls, func );
+   Expression* expr= new ExprValue( FALCON_GC_STORE( fcls, func ), tf->line(),tf->chr() );
    ti->setValue(expr,expr_deletor);
 
    // remove this stuff from the stack
@@ -362,7 +334,7 @@ static void internal_lambda_params(const Rule&, Parser& p, bool isEta )
    }
 
    TokenInstance* ti = TokenInstance::alloc(tarr->line(),tarr->chr(), sp.Expr);
-   Expression* expr = ctx->onStaticData( func->handler(), func );
+   Expression* expr = new ExprValue( FALCON_GC_STORE( func->handler(), func ), tarr->line(),tarr->chr() );
    ti->setValue(expr,expr_deletor);
 
    // remove this stuff from the stack
@@ -405,7 +377,7 @@ void internal_lit_params(const Rule&, Parser& p, bool isEta )
    NameList* list=static_cast<NameList*>(tparams->asData());
    for(NameList::const_iterator it=list->begin(),end=list->end();it!=end;++it)
    {
-      lit->addParam(*it, tlit->line());
+      lit->addParam(*it);
    }
    
    // (,list,)

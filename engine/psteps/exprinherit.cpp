@@ -169,26 +169,21 @@ Requirement* ExprInherit::makeRequirement( Class* target )
 }
 
 
-void ExprInherit::IRequirement::onResolved( const Module* source, const Symbol* srcSym,  
-      Module* tgt, Symbol* )
+void ExprInherit::IRequirement::onResolved( const Module* sourceModule, const String& sourceName, Module* targetModule, const Item& value, const Variable* )
 {
-   const Variable* variable;
-   const Item* value;
-   
-   if( (variable = srcSym->getVariable( 0 )) == 0 
-       || ! (value = variable->value())->isClass() )
+   if( !value.isClass() )
    {
       // the symbol is not a class?   
       throw new CodeError( ErrorParam( e_inv_inherit ) 
-         .module( source == 0 ? "<internal>" : source->uri() )
-         .symbol( srcSym->name() )
+         .module( sourceModule == 0 ? "<internal>" : sourceModule->uri() )
+         .symbol( sourceName )
          .line( m_owner->sr().line())
          .chr( m_owner->sr().chr())
          .origin(ErrorParam::e_orig_linker));
    }
 
    // Ok, we have a valid class.
-   Class* newParent = static_cast<Class*>(value->asInst());
+   Class* newParent = static_cast<Class*>(value.asInst());
    m_owner->base( newParent );
    m_target->onInheritanceResolved( m_owner );
    
@@ -197,10 +192,10 @@ void ExprInherit::IRequirement::onResolved( const Module* source, const Symbol* 
    {
       // then, see if we can link it.
       FalconClass* falcls = static_cast<FalconClass*>(m_target);
-      if( falcls->missingParents() == 0 && tgt != 0 )
+      if( falcls->missingParents() == 0 && targetModule != 0 )
       {
          // ok, the parent that has been found now was the last one.
-         tgt->completeClass( falcls );
+         targetModule->completeClass( falcls );
       }
    }
 }

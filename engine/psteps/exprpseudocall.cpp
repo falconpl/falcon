@@ -78,8 +78,7 @@ void ExprPseudoCall::apply_( const PStep* v, VMContext* ctx )
    
    fassert( self->m_func != 0 );
    
-   int pcount = self->_p->m_exprs.size();
-      
+   uint32 pcount = self->_p->m_exprs.size();
    CodeFrame& cf = ctx->currentCode();
    bool psSemantic =  self->m_func->paramCount() == pcount;
    
@@ -141,7 +140,7 @@ void ExprPseudoCall::apply_eta_( const PStep* v, VMContext* ctx )
    TRACE2( "Apply ETA CALL %s", self->describe().c_ize() );  
    
    fassert( self->m_func != 0 );   
-   int pcount = self->_p->m_exprs.size();      
+   uint32 pcount = self->_p->m_exprs.size();
    bool psSemantic =  self->m_func->paramCount() == pcount;
    
    // prepare the call expression.

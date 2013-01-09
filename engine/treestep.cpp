@@ -19,6 +19,7 @@
 #include <falcon/psteps/exprvalue.h>
 #include <falcon/psteps/exprsym.h>
 #include <falcon/engine.h>
+#include <falcon/varmap.h>
 
 #include <falcon/statement.h>
 #include <falcon/syntree.h>
@@ -31,15 +32,15 @@ TreeStep::TreeStep( const TreeStep& other ):
    PStep( other ),
    m_handler( other.m_handler ),
    m_parent(0),
-   m_symtab(0),
+   m_varmap(0),
    m_cat( other.m_cat )
 {
-   if( other.m_symtab ) {
-      m_symtab = new SymbolTable(*other.m_symtab);
+   if( other.m_varmap ) {
+      m_varmap = new VarMap(*other.m_varmap);
       m_bOwnSymTab = true;
    }
    else {
-      m_symtab = 0;
+      m_varmap = 0;
       m_bOwnSymTab = false;      
    }
 }
@@ -47,7 +48,7 @@ TreeStep::TreeStep( const TreeStep& other ):
 TreeStep::~TreeStep()
 {
    if( m_bOwnSymTab ) {
-      delete m_symtab;
+      delete m_varmap;
    }
 }
 
@@ -201,12 +202,12 @@ SynTree* TreeStep::checkSyntree( const Item& item )
 }
     
 
-void TreeStep::setSymbolTable( SymbolTable* st, bool own )
+void TreeStep::setVarMap( VarMap* st, bool own )
 {
    if( m_bOwnSymTab ) {
-      delete m_symtab;
+      delete m_varmap;
    }
-   m_symtab = st;
+   m_varmap = st;
    m_bOwnSymTab = own;
 }
 

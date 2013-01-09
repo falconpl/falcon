@@ -100,7 +100,6 @@ void apply_proto_prop(const Rule&, Parser& p)
     TokenInstance* texpr = sp.getNextToken();
 
     Expression* expr = static_cast<Expression*>(texpr->detachValue());
-    ctx->checkSymbols();
     proto->m_forming->add( *tname->asString(), expr );
 
     p.simplify(4);

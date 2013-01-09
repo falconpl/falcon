@@ -135,21 +135,6 @@ public:
    //=========================================================
 
 
-   /** Return the nth variable in the local context.
-    * Consider that:
-    * - 0...N-1 are the parameters
-    * - N... are local variables.
-    */
-   const Variable* localVar( int id ) const
-   {
-      return m_locsStack.m_base + currentFrame().m_locsBase + id;
-   }
-
-   Variable* localVar( int id )
-   {
-      return m_locsStack.m_base + currentFrame().m_locsBase + id;
-   }
-
    /** Return the nth parameter in the local context.
    \param n The parameter number, starting from 0.
    \return A pointer to the nth parameter in the stack, or 0 if out of range.
@@ -263,16 +248,6 @@ public:
       }
    }
 
-   /** Adds the variable pointer reference needed for locals to work.
-    
-    This is called repeatedly by synfunctions to create pointers to
-    the stack space where the local symbols are allocated.
-    */
-   inline void addLocalVariable( Item* ptr ) {
-      register Variable* top = m_locsStack.addSlot();
-      top->value(ptr);
-      top->base(0);
-   }
    
    /** Add more variables on top of the stack -- without initializing them to nil.
     \param count Number of variables to be added.
@@ -606,7 +581,6 @@ public:
       // initialize also initBase, as stackBase may move
       topCall->m_initBase = topCall->m_stackBase = dataSize()-nparams;
       // TODO: enable rule application with dynsymbols?
-      topCall->m_locsBase = m_locsStack.depth();
       topCall->m_dynsBase = m_dynsStack.depth();
       topCall->m_paramCount = nparams;
       topCall->m_self = self;
@@ -625,7 +599,6 @@ public:
       topCall->m_codeBase = codeDepth();
       // initialize also initBase, as stackBase may move
       topCall->m_initBase = topCall->m_stackBase = dataSize()-nparams;
-      topCall->m_locsBase = m_locsStack.depth();
       // TODO: enable rule application with dynsymbols?
       topCall->m_dynsBase = m_dynsStack.depth();
 
@@ -648,7 +621,6 @@ public:
       topCall->m_initBase = topCall->m_stackBase = dataSize()-nparams;
       // TODO: enable rule application with dynsymbols?
       
-      topCall->m_locsBase = m_locsStack.depth();      
       topCall->m_dynsBase = m_dynsStack.depth();
       topCall->m_paramCount = nparams;
       topCall->m_self.setNil();
@@ -980,7 +952,7 @@ public:
     \param st The symbol table containing the Local Symbols to be added.
     \param pcount The count of the parameters that have been pushed for this frame.
     */
-   void addLocalFrame( SymbolTable* st, int pcount );
+   void addLocalFrame( VarMap* st, int pcount );
 
    /** Returns from the current frame.
     \param value The value considered as "exit value" of this frame.
@@ -1260,41 +1232,7 @@ public:
 
     \note Symbols marked as constant are returned by value; they aren't referenced.
     */
-   Variable* getDynSymbolVariable( const Symbol* dyns );
-   
-   
-   /** Gets the the value associated with a dynamic symbol -- ready for store.
-    \param name the name of the dynsymbol to be associated.
-    \return A pointer to the item associated with the symbol.
-
-    If the symbol exists in the local context, its associated value is returned.
-    if it doesn't exist, it is searched through the local context from the current
-    function to the topmost function.
-
-    If a local symbol corresponding to the given name is found, its value is
-    referenced and the reference item is associated with the name; the referenced
-    item (already de-referenced) is returned.
-
-    If a local symbol is not found, then the global symbol table of the module
-    of the topmost function is searched. If the symbol is found the same operation
-    as above is performed.
-    
-    Globals and extern sybmols are not searched, as they cannot be assigned
-    in the contexts where dynsymbols can be assigned.
-
-    If the search finally fails, a NIL item is created in the local dynsymbol    context and associated to the symbol, and that is returned.
-
-    */
-   Variable* getLValueDynSymbolVariable( const Symbol* dyns );
-   
-   /** Returns a variable responding to the given name.
-    \param name The name of the variable to be found.
-    \return A variable if a symbol with that name is defined or 0 if not.
-    
-    Returns a variable (local, parameter or dyn) visible in the stack with
-    the given name.    
-    */
-   Variable* findLocalVariable( const String& name ) const;
+   Item* resolveSymbol( const Symbol* dyns, bool forAssign );
    
    /** Copies pcount parameters from the frame parameters area to the top of the stack. */
    void forwardParams( int pcount );
@@ -1381,25 +1319,22 @@ protected:
    class DynsData {
    public:
       const Symbol* m_sym;
-      Variable m_var;
+      Item* m_value;
 
       DynsData():
-         m_sym(0)
+         m_sym(0),
+         m_value(0)
       {}
 
-      DynsData( const Symbol* sym ):
-         m_sym(sym)
-      {}
 
-      DynsData( const Symbol* sym, Variable* other ):
-         m_sym(sym)
-      {
-         m_var.makeReference(other);
-      }
+      DynsData( const Symbol* sym, Item* value ):
+         m_sym(sym),
+         m_value(value)
+      {}
 
       DynsData( const DynsData& other ):
          m_sym(other.m_sym),
-         m_var(other.m_var)
+         m_value(other.m_value)
       {
       }
 
@@ -1484,7 +1419,6 @@ protected:
    LinearStack<CallFrame> m_callStack;
    LinearStack<Item> m_dataStack;
    LinearStack<DynsData> m_dynsStack;
-   LinearStack<Variable> m_locsStack;
 
    // list of variables we're waiting on
    LinearStack<Shared*> m_waiting;

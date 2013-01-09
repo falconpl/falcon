@@ -157,7 +157,8 @@ void ExprUnpack::apply_( const PStep* ps, VMContext* ctx )
    size_t i;
    for( i = 0; i < pcount; ++i )
    {
-      *syms[i]->lvalueValue(ctx) = array[i];
+      //TODO: assign or copy?
+      ctx->resolveSymbol(syms[i], true)->assign(array[i]);
    }
 
    // leave the expander in the stack.

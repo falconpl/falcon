@@ -821,7 +821,6 @@ void SourceParser::addError( int code, const String& uri, int l, int c, int ctx,
    ParserContext* pc = static_cast<ParserContext*>(m_ctx);
    fassert( pc != 0 );
    Parser::addError( code, uri, l, c, ctx, extra );
-   pc->abandonSymbols();
 }
 
 void SourceParser::addError( Error* err )
@@ -829,7 +828,6 @@ void SourceParser::addError( Error* err )
    ParserContext* pc = static_cast<ParserContext*>(m_ctx);
    fassert( pc != 0 );
    Parser::addError( err->errorCode(), err->module(), err->line(), err->chr(), 0, err->extraDescription() );
-   pc->abandonSymbols();
 }
 
 
@@ -839,7 +837,6 @@ void SourceParser::addError( int code, const String& uri, int l, int c, int ctx 
    ParserContext* pc = static_cast<ParserContext*>(m_ctx);
    fassert( pc != 0 );
    Parser::addError( code, uri, l, c, ctx );
-   pc->abandonSymbols();
 }
 
 }

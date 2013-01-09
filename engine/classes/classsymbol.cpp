@@ -43,35 +43,51 @@ ClassSymbol::~ClassSymbol()
 
 void ClassSymbol::describe( void* instance, String& target, int, int ) const
 {
-   Symbol* sym = static_cast<Symbol*>(instance);   
-   target = sym->name();
+   if( instance != (void*) 1 ) {
+      Symbol* sym = static_cast<Symbol*>(instance);
+      target = "&";
+      target += sym->name();
+   }
+   else {
+      target = "&<noname>";
+   }
 }
 
 void ClassSymbol::dispose( void* instance ) const
 {   
-   Symbol* sym = static_cast<Symbol*>(instance);   
-   delete sym;
+   if( instance != (void*) 1 ) {
+      Symbol* sym = static_cast<Symbol*>(instance);
+      Engine::releaseSymbol(sym);
+   }
 }
 
 void* ClassSymbol::clone( void* instance ) const
 {
-   Symbol* sym = static_cast<Symbol*>(instance);   
-   return new Symbol(*sym);
+   if( instance != (void*) 1 ) {
+      Symbol* sym = static_cast<Symbol*>(instance);
+      Engine::refSymbol(sym);
+      return sym;
+   }
+   else {
+      return (void*)1;
+   }
+
 }
 
 void* ClassSymbol::createInstance() const
 {
-   return new Symbol;
+   return (Symbol*) 1;
 }
 
-bool ClassSymbol::op_init( VMContext* ctx, void* instance, int32 pcount ) const
+bool ClassSymbol::op_init( VMContext* ctx, void*, int32 pcount ) const
 {   
-   Symbol* sym = static_cast<Symbol*>(instance);   
-   
    Item* item = ctx->opcodeParams(pcount);
    if( pcount > 0 || item->isString() )
    {
-      sym->name( *item->asString() );      
+      String& name = *item->asString();
+      Symbol* sym = Engine::getSymbol(name, false);
+      ctx->self().setUser(this, sym );
+      FALCON_GC_STORE( this, sym );
    }
    else {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__, SRC )
@@ -115,7 +131,7 @@ void ClassSymbol::op_getProperty( VMContext* ctx, void* instance, const String& 
    }
    else if( prop == "value" )
    {
-      ctx->stackResult(1, *ctx->getDynSymbolVariable(sym)->value() );
+      ctx->stackResult(1, *ctx->resolveSymbol(sym, false) );
       ctx->topData().copied();
    }
    else {
@@ -134,7 +150,7 @@ void ClassSymbol::op_setProperty( VMContext* ctx, void* instance, const String& 
    }
    else if( prop == "value" )
    {
-      ctx->getDynSymbolVariable( sym )->value()->assign(ctx->opcodeParam(3));
+      ctx->resolveSymbol( sym, true )->assign(ctx->opcodeParam(3));
    }
    else {
       Class::op_setProperty(ctx, instance, prop);
@@ -145,7 +161,7 @@ void ClassSymbol::op_call( VMContext* ctx, int pcount, void* instance ) const
 {
    Symbol* sym = static_cast<Symbol*>( instance );
    ctx->popData(pcount);
-   ctx->topData() = *ctx->getDynSymbolVariable(sym)->value();
+   ctx->topData() = *ctx->resolveSymbol(sym, false);
 }
 
 
@@ -153,10 +169,7 @@ void ClassSymbol::store( VMContext*, DataWriter* stream, void* instance ) const
 {
    Symbol* symbol = static_cast<Symbol*>(instance);
    stream->write( symbol->name() );
-   stream->write( (char) symbol->type() );
-   stream->write( symbol->localId() );
-   stream->write( symbol->declaredAt() );
-   stream->write( symbol->isConstant() );
+   stream->write( (char) (symbol->isGlobal()?1:0) );
 }
 
 
@@ -164,51 +177,12 @@ void ClassSymbol::restore( VMContext* ctx, DataReader* stream ) const
 {
    String name;
    char type;
-   int32 id, line;
-   bool isConst;
    
    stream->read( name );
    stream->read( type );
-   stream->read( id );
-   stream->read( line );
-   stream->read( isConst );
    
-   Symbol* sym = new Symbol( name, (Symbol::type_t) type, id, type );
-   
-   if( isConst ) { 
-      sym->setConstant(true); 
-   }
+   Symbol* sym = Engine::getSymbol( name, type != 0 ? true : false );
    ctx->pushData( FALCON_GC_STORE( this, sym ) );
-}
-
-
-void ClassSymbol::flatten( VMContext*, ItemArray& subItems, void* instance ) const
-{
-   
-   Symbol* symbol = static_cast<Symbol*>(instance);
-   
-   if( symbol->type() == Symbol::e_st_extern ) 
-   {      
-      // it's an unresolved external symbol, and we don't have to save it.
-   }
-   else {
-      subItems.reserve(1);
-      subItems.append( symbol->defaultValue() );
-   }
-}
-
-
-void ClassSymbol::unflatten( VMContext*, ItemArray& subItems, void* instance ) const
-{
-   Symbol* symbol = static_cast<Symbol*>(instance);
-   fassert( subItems.length() == 1 || symbol->type() == Symbol::e_st_extern );
-   if( symbol->type() == Symbol::e_st_extern ) 
-   {
-      // the symbol was flattened when unresolved.
-   }
-   else {
-      symbol->defaultValue( subItems[0] );
-   }
 }
 
 }

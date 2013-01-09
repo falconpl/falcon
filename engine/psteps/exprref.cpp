@@ -97,7 +97,7 @@ bool ExprRef::selector( Expression* expr )
 
 void ExprRef::apply_( const PStep* ps, VMContext* ctx )
 {
-   static Class* ref = Engine::instance()->referenceClass();
+   //static Class* ref = Engine::instance()->referenceClass();
    const ExprRef* self = static_cast<const ExprRef*>(ps);
    
    fassert( self->m_symbol != 0 || self->m_expr != 0 );
@@ -107,22 +107,8 @@ void ExprRef::apply_( const PStep* ps, VMContext* ctx )
    {
       const_cast<ExprRef*>(self)->m_symbol = self->m_expr->symbol();
    }
-   
-   if( self->m_symbol->isConstant() )
-   {
-      throw new CodeError( ErrorParam(e_nonsym_ref, __LINE__, SRC )
-         .origin( ErrorParam::e_orig_vm )
-         .extra( self->m_symbol->name() ) );
-   }
-   
-   Variable* var = self->m_symbol->getVariable(ctx);
-   Variable* newVar = new Variable();
-   // dereference ?
-   if( var->value()->type() == ref->typeID() ) {
-      var = static_cast<Variable*>(var->value()->asInst());
-   }
-   newVar->makeReference( var );
-   ctx->pushData( Item( ref, newVar ) );
+
+   ctx->pushData( Item() );
 }
 
 

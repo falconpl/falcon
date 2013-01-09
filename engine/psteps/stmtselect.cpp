@@ -406,20 +406,19 @@ void StmtSelect::apply_( const PStep* ps, VMContext* ctx )
 // The requirer
 //
 
-void SelectRequirement::onResolved(
-         const Module* source, const Symbol* sym, Module* requirer, Symbol*  )
+void SelectRequirement::onResolved( const Module* sourceModule, const String& sourceName, Module* targetModule, const Item& value, const Variable* )
 {
    fassert( m_owner == 0 );
    
-   const Item* itm = sym->getValue(0);
+   const Item* itm = &value;
    if( itm == 0 || (!itm->isOrdinal()&& ! itm->isClass()) )
    {
       throw new LinkError( ErrorParam( m_owner->selector() == 0 ? e_catch_invtype : e_select_invtype )
          .line( m_line )
-         .module( requirer->uri() )
+         .module( targetModule->uri() )
          .origin( ErrorParam::e_orig_linker )
-         .symbol( sym->name() )
-         .extra( String("declared in ") + (source != 0 ? source->uri() : "<internal>" ) )
+         .symbol( sourceName )
+         .extra( String("declared in ") + (sourceModule != 0 ? sourceModule->uri() : "<internal>" ) )
          );
    }
 
@@ -431,10 +430,10 @@ void SelectRequirement::onResolved(
       {
          throw new LinkError( ErrorParam( m_owner->selector() == 0 ? e_catch_clash : e_switch_clash )
             .line( m_line )
-            .module( requirer->uri() )
+            .module( targetModule->uri() )
             .origin( ErrorParam::e_orig_linker )
-            .symbol( sym->name() )
-            .extra( String("declared in ") + (source != 0 ? source->uri() : "<internal>" ) )
+            .symbol( sourceName )
+            .extra( String("declared in ") + (sourceModule != 0 ? sourceModule->uri() : "<internal>" ) )
             );
       }      
    }
@@ -446,10 +445,10 @@ void SelectRequirement::onResolved(
       {
          throw new LinkError( ErrorParam( m_owner->selector() == 0 ? e_catch_clash : e_switch_clash )
             .line( m_line )
-            .module( requirer->uri() )
+            .module( targetModule->uri() )
             .origin( ErrorParam::e_orig_linker )
-            .symbol( sym->name() )
-            .extra( String("declared in ") + (source != 0 ? source->uri() : "<internal>" ) )
+            .symbol( sourceName )
+            .extra( String("declared in ") + (sourceModule != 0 ? sourceModule->uri() : "<internal>" ) )
             );
       }
    }

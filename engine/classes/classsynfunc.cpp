@@ -83,8 +83,7 @@ void ClassSynFunc::store( VMContext*, DataWriter* stream, void* instance ) const
    stream->write( synfunc->signature() );
    
    // now we got to save the function parameter table.
-   stream->write( synfunc->paramCount() );
-   synfunc->symbols().store( stream );
+   synfunc->variables().store( stream );
 }
 
 void ClassSynFunc::restore(VMContext* ctx, DataReader* stream) const
@@ -108,19 +107,13 @@ void ClassSynFunc::restore(VMContext* ctx, DataReader* stream) const
    synfunc->setEta( bEta );
    synfunc->signature( signature );
 
-   synfunc->paramCount( pcount );
-   synfunc->symbols().restore( stream );
+   synfunc->variables().restore( stream );
 }
 
 
 void ClassSynFunc::flatten( VMContext*, ItemArray& subItems, void* instance ) const
 {
    SynFunc* synfunc = static_cast<SynFunc*>(instance);
-   uint32 symtabSize = synfunc->symbols().localCount() + synfunc->symbols().closedCount();
-   subItems.reserve(synfunc->syntree().size() + symtabSize);
-   
-   // first flatten the unsuspecting symbol tree.
-   synfunc->symbols().flatten( subItems );
       
    for( uint32 i = 0; i < synfunc->syntree().size(); ++i ) {
       Statement* stmt = synfunc->syntree().at(i);
@@ -134,10 +127,8 @@ void ClassSynFunc::unflatten( VMContext*, ItemArray& subItems, void* instance ) 
 {    
    SynFunc* synfunc = static_cast<SynFunc*>(instance);
    // first restore the symbol table.
-   synfunc->symbols().unflatten( subItems );
-   uint32 symtabSize = synfunc->symbols().localCount() + synfunc->symbols().closedCount();
    
-   for( uint32 i = symtabSize; i < subItems.length(); ++i ) {
+   for( uint32 i = 0; i < subItems.length(); ++i ) {
       Class* cls = 0;
       void* data = 0;
       subItems[i].asClassInst(cls,data);

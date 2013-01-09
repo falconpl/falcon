@@ -78,7 +78,6 @@
 #include <falcon/classes/classmantra.h>
 #include <falcon/classes/classmethod.h>
 #include <falcon/classes/classshared.h>
-#include <falcon/classes/classreference.h>
 #include <falcon/classes/metaclass.h>
 #include <falcon/classes/metafalconclass.h>
 #include <falcon/classes/metahyperclass.h>
@@ -135,6 +134,68 @@ class PoolList: public std::deque<Pool* >
 {
 };
 
+
+class SymbolPool
+{
+public:
+   inline Symbol* get(const String& name, int poolId )
+   {
+      Symbol *s;
+      m_mtx[poolId].lock();
+      SymbolSet::iterator iter = m_symbols[poolId].find(&name);
+      if( iter == m_symbols[poolId].end() ) {
+         s = new Symbol( name, poolId == 1 );
+         m_symbols[poolId][&s->name()] = s;
+      }
+      else {
+         s = iter->second;
+         s->m_counter++;
+      }
+      m_mtx[poolId].unlock();
+
+      return s;
+   }
+
+   inline void release( Symbol* s, int poolId ) {
+     m_mtx[poolId].lock();
+     if( --s->m_counter == 0 ) {
+        m_symbols[poolId].erase(&s->name());
+        delete s;
+     }
+     m_mtx[poolId].unlock();
+   }
+
+   inline void ref( Symbol* s, int poolId ) {
+     m_mtx[poolId].lock();
+     s->m_counter++;
+     m_mtx[poolId].unlock();
+   }
+
+   ~ SymbolPool() {
+      for( int i = 0; i < 2; ++i ) {
+         SymbolSet::iterator iter = m_symbols[i].begin();
+         SymbolSet::iterator end = m_symbols[i].end();
+
+         while( iter != end ) {
+            delete iter->second;
+            ++iter;
+         }
+      }
+   }
+
+private:
+   class StringPtrCheck {
+   public:
+      inline bool operator ()( const String* s1, const String *s2 ) {
+         return *s1 < *s2;
+      }
+   };
+
+   typedef std::map<const String*, Symbol*, StringPtrCheck> SymbolSet;
+   SymbolSet m_symbols[2];
+   Mutex m_mtx[2];
+};
+
 //=======================================================
 // Engine static declarations
 //
@@ -176,7 +237,8 @@ Engine::Engine()
    //=====================================
    // Initialization of standard deep types.
    //
-   m_baseSymbol = new Symbol("$base");
+   m_symbols = new SymbolPool;
+   m_baseSymbol = m_symbols->get("$base",0);
    m_functionClass = new ClassFunction;
    m_stringClass = new ClassString;
    m_rangeClass = new ClassRange;
@@ -189,7 +251,6 @@ Engine::Engine()
    m_mantraClass = new ClassMantra;
    m_synFuncClass = new ClassSynFunc;
    m_genericClass = new ClassGeneric;
-   m_referenceClass = new ClassReference;
    m_sharedClass = new ClassShared;
    
    // Notice: rawMem is not reflected, is used only in extensions.
@@ -259,7 +320,6 @@ Engine::Engine()
    addMantra( m_synFuncClass );
    addMantra( m_genericClass );
    addMantra( m_rangeClass  );
-   addMantra( m_referenceClass );
    addMantra( m_sharedClass );
 
    addMantra( m_classes[FLC_ITEM_NIL] );
@@ -343,7 +403,7 @@ Engine::~Engine()
    // ===============================
    // DO NOT Delete standard item classes -- they are mantras
    //
-   delete m_baseSymbol;
+   delete m_symbols;
    
    // ===============================
    // delete registered transcoders
@@ -789,12 +849,6 @@ ClassRawMem* Engine::rawMemClass() const
    return m_instance->m_rawMemClass;
 }
 
-ClassReference* Engine::referenceClass() const
-{
-   fassert( m_instance != 0 );
-   return m_instance->m_referenceClass;
-}
-
 ClassShared* Engine::sharedClass() const
 {
    fassert( m_instance != 0 );
@@ -817,6 +871,26 @@ SynClasses* Engine::synclasses() const
 Symbol* Engine::baseSymbol() const 
 {
    return m_baseSymbol;
+}
+
+
+Symbol* Engine::getSymbol( const String& name, bool global )
+{
+   fassert( m_instance != 0 );
+   return m_instance->m_symbols->get(name, global ? 1 : 0);
+}
+
+
+void Engine::refSymbol( Symbol* sym )
+{
+   fassert( m_instance != 0 );
+   m_instance->m_symbols->ref(sym, sym->isGlobal() ? 1 : 0);
+}
+
+void Engine::releaseSymbol( Symbol* sym )
+{
+   fassert( m_instance != 0 );
+   m_instance->m_symbols->release(sym, sym->isGlobal() ? 1 : 0);
 }
 
 }

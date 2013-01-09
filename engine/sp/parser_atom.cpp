@@ -77,7 +77,9 @@ void apply_Atom_Name ( const Rule&, Parser& p )
    }
    else
    {
-      sym = ctx->addVariable(*ti->asString()); 
+      //TODO: check for globalized variables instead of using isGlobalContext
+      sym = new ExprSymbol( Engine::getSymbol(*ti->asString(), ctx->isGlobalContext()),
+               ti->line(), ti->chr() );
    }
 
    ti->token( sp.Atom );
@@ -91,14 +93,13 @@ void apply_Atom_String ( const Rule&, Parser& p )
 
    // << (r_Atom_String << "Atom_String" << apply_Atom_String << T_String )
    SourceParser& sp = static_cast<SourceParser&>(p);
-   ParserContext* ctx = static_cast<ParserContext*>(p.context());
+   //ParserContext* ctx = static_cast<ParserContext*>(p.context());
    TokenInstance* ti = p.getNextToken();
 
    // get the string and it's class, to generate a static UserValue
    String* s = ti->detachString();
-   // tell the context that we have a new string around.
-   Expression* res = ctx->onStaticData( sc, s );
-   res->decl( ti->line(), ti->chr() );
+   // The exprvalue is made so that it will gc lock the string.
+   Expression* res = new ExprValue( FALCON_GC_STORE(sc, s), ti->line(), ti->chr() );
    ti->token( sp.Atom );
    ti->setValue( res, expr_deletor );
 }

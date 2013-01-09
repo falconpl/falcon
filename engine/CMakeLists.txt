@@ -190,7 +190,6 @@ add_library(falcon_engine SHARED
   classes/classmodule.cpp
   classes/classmulti.cpp
   classes/classnumeric.cpp
-  classes/classreference.cpp
   classes/classrange.cpp
   classes/classrawmem.cpp
   classes/classrestorer.cpp
@@ -304,8 +303,6 @@ add_library(falcon_engine SHARED
   streambuffer.cpp
   sun_strtod.cpp
   symbol.cpp
-  symbolmap.cpp
-  symboltable.cpp
   synclasses.cpp
   synfunc.cpp
   syntree.cpp
@@ -318,7 +315,9 @@ add_library(falcon_engine SHARED
   treestep.cpp
   uri.cpp
   usercarrier.cpp
+  vardatamap.cpp
   variable.cpp
+  varmap.cpp
   vfsiface.cpp
   vfsprovider.cpp
   vm.cpp

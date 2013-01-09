@@ -177,7 +177,7 @@ void ExprMultiUnpack::apply_( const PStep* ps, VMContext* ctx )
    Item* topStack = &ctx->topData() - pcount+1;
    for( ; i < pcount; ++i, ++topStack )
    {
-      *syms[i]->lvalueValue( ctx ) = *topStack;
+      *ctx->resolveSymbol( syms[i], true ) = *topStack;
    }
    
    if ( self->isTop() )

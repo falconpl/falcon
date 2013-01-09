@@ -41,15 +41,14 @@ void apply_expr_ref( const Rule&, Parser& p )
 {
    // << T_Dollar << T_Name
    SourceParser& sp = static_cast<SourceParser&>(p);
-   ParserContext* ctx = static_cast<ParserContext*>(p.context());
+   //ParserContext* ctx = static_cast<ParserContext*>(p.context());
 
    // get the tokens
    p.getNextToken();
    TokenInstance* tref = p.getNextToken();
    
    // Create the symbol and the reference
-   ExprSymbol* refexpr = ctx->addVariable(*tref->asString());
-   Expression* reference = new ExprRef( refexpr );
+   Expression* reference = new ExprRef( );
    
    // update the result token
    TokenInstance* ti = TokenInstance::alloc( tref->line(), tref->chr(), sp.Expr );

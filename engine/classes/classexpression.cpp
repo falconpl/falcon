@@ -38,7 +38,7 @@ void ClassExpression::op_call( VMContext* ctx, int pcount, void* instance ) cons
 
    // Remove the top of the stack because our expression will do its own.
    Expression* self = static_cast<Expression*>(instance);
-   SymbolTable* st = self->symbolTable();
+   VarMap* st = self->varmap();
    // Do we have a symbol table?
    if( st == 0 )
    {

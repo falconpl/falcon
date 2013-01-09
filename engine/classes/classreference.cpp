@@ -57,9 +57,8 @@ void ClassReference::dispose( void* self ) const
 
 void* ClassReference::clone( void* source ) const
 {
-   Variable* ref = static_cast<Variable*>(source);
    // TODO: pool references
-   return new Variable(ref->base(), ref->value());
+   return 0
 }
 
 void* ClassReference::createInstance() const

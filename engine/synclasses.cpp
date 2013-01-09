@@ -606,7 +606,7 @@ bool SynClasses::ClassGenSym::op_init( VMContext* ctx, void* instance, int pcoun
       else if( params->asClassInst(cls, data) && cls->isDerivedFrom(symClass) )
       {
          Symbol* sym = static_cast<Symbol*>(symClass->getParentData( cls, data ));
-         expr->safeGuard( sym );
+         expr->symbol( sym );
          return false;
       }
    }
@@ -636,25 +636,6 @@ void SynClasses::ClassGenSym::restore( VMContext* ctx, DataReader*dr ) const
    ctx->pushData( Item( this, es ) );
    es->decl( line, chr );
    es->name( name );
-}
- 
-void SynClasses::ClassGenSym::flatten( VMContext*, ItemArray& subItems, void* instance ) const
-{
-    static Class* sc = Engine::instance()->symbolClass();
-    ExprSymbol* es = static_cast<ExprSymbol*>(instance);
-    
-    if( es->symbol() != 0 ) {
-       subItems.reserve(1);
-       subItems.append( Item(sc, es->symbol() ) );
-    }
-}
-void SynClasses::ClassGenSym::unflatten( VMContext*, ItemArray& subItems, void* instance ) const
-{
-   if( subItems.length() > 0 ) {
-      Symbol* sym = static_cast<Symbol*>( subItems[0].asInst() );
-      ExprSymbol* es = static_cast<ExprSymbol*>(instance);
-      es->safeGuard( sym );
-   }
 }
  
 //==========================================
@@ -898,7 +879,7 @@ bool SynClasses::ClassLit::op_init( VMContext* ctx, void* instance, int pcount )
             .extra( String("Parameter ").N(i).A(" is not an Inherit expression") ) );
    
       }
-      self->addParam(*param->asString(), 0);
+      self->addParam(*param->asString());
    }
    
    // we already managed.
@@ -911,7 +892,7 @@ void SynClasses::ClassLit::store( VMContext* ctx, DataWriter* wr, void* instance
    
    wr->write( (int32) lit->paramCount() );   
    for( int i = 0; i < lit->paramCount(); ++ i) {
-      const String& param = lit->param(i)->name();
+      const String& param = lit->param(i);
       wr->write( param );
    }
    
@@ -931,7 +912,7 @@ void SynClasses::ClassLit::restore( VMContext* ctx, DataReader* rd ) const
    String param;
    for( int i = 0; i < pcount; ++ i) {
       rd->read( param );
-      lit->addParam(param,0);
+      lit->addParam(param);
    }
    
    lit->setEta(isEta);

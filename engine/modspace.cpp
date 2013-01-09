@@ -50,18 +50,18 @@ public:
    class ExportSymEntry{
    public:
       Module* m_mod;
-      Symbol* m_sym;
+      Item* m_value;
       
-      ExportSymEntry(): m_mod(0), m_sym(0) {}
+      ExportSymEntry(): m_mod(0), m_value(0) {}
       
-      ExportSymEntry(Module* mod, Symbol* sym ):
+      ExportSymEntry(Module* mod, Item* item ):
          m_mod(mod),
-         m_sym(sym)
+         m_value(item)
       {}
       
       ExportSymEntry( const ExportSymEntry& other ):
          m_mod(other.m_mod),
-         m_sym(other.m_sym)
+         m_value(other.m_value)
       {}
    };
    
@@ -124,16 +124,15 @@ Process* ModSpace::loadModule( const String& name, bool isUri,  bool isMain )
    VMContext* tgtContext = process->mainContext();
    tgtContext->call( m_loaderFunc, 0 );
    tgtContext->pushCode(&Engine::instance()->stdSteps()->m_returnFrameWithTop);
-
    loadSubModule( name, isUri, isMain, tgtContext );
 
    return process;
 }
 
 
-
 void ModSpace::loadSubModule( const String& name, bool isUri, bool isMain, VMContext* tgtContext )
 {
+   tgtContext->pushCode( &m_stepLoader );
    if( ! isMain ) {
       // skip the main module set step
       tgtContext->currentCode().m_seqId = 1;
@@ -151,12 +150,12 @@ void ModSpace::loadSubModule( const String& name, bool isUri, bool isMain, VMCon
    }
 
    if( ! loading ) {
-      tgtContext->popCode();
-      tgtContext->popData();
+      tgtContext->returnFrame();
       throw new IOError( ErrorParam( e_mod_notfound, __LINE__, SRC )
                .extra( name ) );
    }
 }
+
 
 void ModSpace::add( Module* mod )
 {
@@ -192,7 +191,7 @@ void ModSpace::add( Module* mod )
    _p->m_modmapByUri[mod->uri()] = mod;
    
    // tell the module we're in charge.
-   mod->moduleSpace(this);
+   mod->modSpace(this);
 }
 
 
@@ -210,61 +209,46 @@ void ModSpace::resolveDeps( VMContext* ctx, Module* mod )
 void ModSpace::exportFromModule( Module* mod, Error*& link_errors )
 {
    TRACE1( "ModSpace::exportFromModule %s", mod->name().c_ize() );
-   Module::Private::GlobalsMap::const_iterator iter, iterEnd;
 
-
-   if( mod->exportAll() )
+   uint32 count = mod->globals().size();
+   for( uint32 i = 0; i < count; ++i )
    {
-      const Module::Private::GlobalsMap& syms = mod->_p->m_gSyms;         
-      iter = syms.begin();
-      iterEnd = syms.end();
-   }
-   else
-   {
-      const Module::Private::GlobalsMap& syms = mod->_p->m_gExports;
-      iter = syms.begin();
-      iterEnd = syms.end();
-   }
-
-   while( iter != iterEnd )
-   {
-      Symbol* sym = iter->second;
+      VarDataMap::VarData* vd = mod->globals().getGlobal(i);
       // ignore "private" symbols
-      if( ! (sym->name().startsWith("_") || sym->type() != Symbol::e_st_global) )
+      if( ! vd->m_name.startsWith("_") && (mod->exportAll() || vd->m_bExported))
       {
-         Error* e = exportSymbol( mod, sym );
+         Error* e = exportSymbol( mod, vd->m_name, vd->m_var );
          if( e != 0 )
          {
             addLinkError( link_errors, e );
          }
       }
-      ++iter;   
    }
 }
 
 
-Error* ModSpace::exportSymbol( Module* mod, Symbol* sym )
+Error* ModSpace::exportSymbol( Module* mod, const String& name, const Variable& var )
 {
-   Private::ExportSymMap::iterator iter = _p->m_symMap.find( sym->name() );
+   Private::ExportSymMap::iterator iter = _p->m_symMap.find( name );
    if( iter != _p->m_symMap.end() )
    {
       // name clash!
       return new LinkError( ErrorParam( e_already_def )
          .origin(ErrorParam::e_orig_linker)
          .module( mod->uri() )
-         .line( sym->declaredAt() )
-         .symbol(sym->name())
+         .line( var.declaredAt() )
+         .symbol(name )
          .extra( "in " + iter->second.m_mod->name() ));
    }
    
    // link the symbol
    TRACE1( "ModSpace::exportSymbol exporting %s.%s", 
-         mod->name().c_ize(), sym->name().c_ize() );
+         mod->name().c_ize(), name.c_ize() );
    
    // if the symbol is an extern symbol, then we have to get its
    // reference.
    
-   _p->m_symMap[ sym->name() ] = Private::ExportSymEntry(mod, sym);
+   _p->m_symMap[ name ] = Private::ExportSymEntry(mod, mod->getGlobalValue(var.id()));
    return 0;
 }
 
@@ -286,8 +270,8 @@ void ModSpace::importInModule(Module* mod, Error*& link_errors)
    while( dep_iter != deps.end() )
    {
       Module::Private::Dependency* dep = *dep_iter;
-      // ignore already resolved symbols (?)
-      if( dep->m_resSymbol == 0 )
+      // some dependency get sterilized.
+      if( dep->m_id >= 0  )
       {
          // now, we have some symbol to import here. Are they general or specific?
          if( dep->m_idef != 0 )
@@ -310,7 +294,7 @@ void ModSpace::importSpecificDep( Module* asker, void* def, Error*& link_errors 
    
    TRACE( "ModSpace::linkSpecificDep %s", dep->m_sourceName.c_ize() );
 
-   Symbol* sym = 0;
+   Item* value = 0;
    Module* sourcemod = 0;
       
    fassert( dep->m_idef != 0 );
@@ -321,14 +305,14 @@ void ModSpace::importSpecificDep( Module* asker, void* def, Error*& link_errors 
       sourcemod = dep->m_idef->modReq()->module();
 
       // in case we have the module, search the symbol there. 
-      sym = sourcemod->getGlobal( dep->m_sourceName );            
+      value = sourcemod->getGlobalValue( dep->m_sourceName );
    }
    else {
-      sym = findExportedSymbol( dep->m_sourceName, sourcemod );
+      value = findExportedValue( dep->m_sourceName, sourcemod );
    }
    
    // not found? we have a link error.
-   if( sym == 0 )
+   if( value == 0 )
    {
       Error* em = new LinkError( ErrorParam(e_undef_sym, 0, asker->uri() )
          .origin( ErrorParam::e_orig_linker )
@@ -340,38 +324,33 @@ void ModSpace::importSpecificDep( Module* asker, void* def, Error*& link_errors 
    }
    
    // Ok, we have the symbol. Now we must tell the requester we have found it
-   Error* em = dep->onResolved( asker, sourcemod, sym );
-   if( em != 0 )
+   try
+   {
+      asker->resolveExternValue( dep->m_sourceName, sourcemod, value );
+   }
+   catch( Error* em )
    {
       addLinkError( link_errors, em );
-      return;
+      em->decref();
    }
-   
-   // link the value -- if needed
-   if ( dep->m_symbol != 0 )
-   {
-      Variable* variable = sym->getVariable(0);
-      fassert( variable != 0 );
-      dep->m_symbol->resolved( variable );
-   }
-
 }
 
 
 void ModSpace::importGeneralDep(Module* asker, void* def, Error*& link_errors)
-{   
+{
    Module::Private::Dependency* dep = (Module::Private::Dependency*) def;
    
    // in case we have the module, search the symbol there.     
    Module* declarer = 0;
    const String& symName = dep->m_sourceName;
-   Symbol* sym;
+   Item* value;
 
    TRACE( "ModSpace::linkGeneralDep %s", symName.c_ize() );
 
-   sym = findExportedOrGeneralSymbol( asker, symName, declarer );
+   value = findExportedOrGeneralValue( asker, symName, declarer );
+
    // not found? we have a link error.
-   if( sym == 0 )
+   if( value == 0 )
    {
       Error* em = new LinkError( ErrorParam(e_undef_sym, 0, asker->uri() )
          .origin( ErrorParam::e_orig_linker )
@@ -382,10 +361,13 @@ void ModSpace::importGeneralDep(Module* asker, void* def, Error*& link_errors)
    }
 
    // Ok, we have the symbol. Now we must tell the requester we have found it
-   Error* em = dep->onResolved( asker, declarer, sym );
-   if( em != 0 )
+   try {
+      asker->resolveExternValue( symName, declarer, value );
+   }
+   catch( Error* em )
    {
       addLinkError( link_errors, em );
+      em->decref();
    }
 }
 
@@ -411,61 +393,8 @@ void ModSpace::importInNS(Module* mod )
          fassert( ns->m_def->modReq() != 0 );
          fassert( ns->m_def->modReq()->module() != 0 );
          Module* srcMod = ns->m_def->modReq()->module();
-                  
-         String srcName, tgName;
-         if( ns->m_from.size() != 0 )
-         {
-            srcName = ns->m_from + ".";
-         }
          
-         Module::Private::GlobalsMap& srcGlobals = srcMod->_p->m_gSyms;         
-         Module::Private::GlobalsMap::iterator glb = srcGlobals.lower_bound( srcName );
-         while( glb != srcGlobals.end() )
-         {
-            Symbol* sym = glb->second;
-            if( ! sym->name().startsWith( srcName ) )
-            {
-               // we're done
-               break;
-            }
-            
-            // find the target name.
-            tgName = ns->m_to.size() == 0 ? sym->name() : ns->m_to + "." + sym->name();
-            // import it.
-            Module::Private::GlobalsMap::iterator myglb = mod->_p->m_gSyms.find( tgName );
-            if( myglb == mod->_p->m_gSyms.end() )
-            {
-               // new symbol, make it external -- declared in main function of the module
-               Symbol* esym = new Symbol( tgName, Symbol::e_st_extern );
-               mod->_p->m_gSyms[tgName] = esym;
-               Variable* var = sym->getVariable(0);
-               fassert( var != 0 );
-               esym->resolved( var );
-            }
-            else
-            {
-               // just link it 
-               Symbol* esym = myglb->second;
-               Variable* var = sym->getVariable(0);
-               fassert( var != 0 );
-               esym->resolved( var );
-               
-               // eventually, make it resolved in dependencies, 
-               // -- so we don't search for it elsewhere.
-               Module::Private::DepMap::iterator di = mod->_p->m_depsBySymbol.find( tgName );
-               if( di != mod->_p->m_depsBySymbol.end() )
-               {
-                  Module::Private::Dependency* dep = di->second;
-                  if( dep->m_resSymbol == 0 )
-                  {
-                     dep->m_resSymbol = esym;
-                     dep->onResolved( mod, srcMod, esym );
-                  }
-               }
-            }
-            
-            ++glb;
-         }
+         srcMod->exportNS( ns->m_from, mod, ns->m_to );
       }
       
       ++nsi;
@@ -473,9 +402,9 @@ void ModSpace::importInNS(Module* mod )
 }
 
 
-Symbol* ModSpace::findExportedOrGeneralSymbol( Module* asker, const String& symName, Module*& declarer )
+Item* ModSpace::findExportedOrGeneralValue( Module* asker, const String& symName, Module*& declarer )
 {  
-   Symbol* sym = findExportedSymbol( symName, declarer );      
+   Item* sym = findExportedValue( symName, declarer );
    
    if( sym == 0 )
    {
@@ -498,7 +427,7 @@ Symbol* ModSpace::findExportedOrGeneralSymbol( Module* asker, const String& symN
          {
             if( dotpos == String::npos )
             {
-               sym = req->m_module->getGlobal( symName );
+               sym = req->m_module->getGlobalValue( symName );
                if( sym != 0 )
                {
                   declarer = req->m_module;
@@ -514,7 +443,7 @@ Symbol* ModSpace::findExportedOrGeneralSymbol( Module* asker, const String& symN
                      
                   if ( def->isNameSpace() && def->target() == nspace )
                   {
-                     sym = req->m_module->getGlobal( nsname );
+                     sym = req->m_module->getGlobalValue( nsname );
                      if( sym != 0 )
                      {
                         declarer = req->m_module;
@@ -533,7 +462,7 @@ Symbol* ModSpace::findExportedOrGeneralSymbol( Module* asker, const String& symN
 }
 
    
-Symbol* ModSpace::findExportedSymbol( const String& symName, Module*& declarer )
+Item* ModSpace::findExportedValue( const String& symName, Module*& declarer )
 {
    Private::ExportSymMap::iterator iter = _p->m_symMap.find( symName );
    
@@ -541,12 +470,12 @@ Symbol* ModSpace::findExportedSymbol( const String& symName, Module*& declarer )
    {
       Private::ExportSymEntry& entry = iter->second;
       declarer = entry.m_mod;
-      return entry.m_sym;
+      return entry.m_value;
    }
       
    if( m_parent != 0 )
    {
-      return m_parent->findExportedSymbol( symName, declarer );
+      return m_parent->findExportedValue( symName, declarer );
    }
    
    return 0;
@@ -860,7 +789,7 @@ void ModSpace::PStepDynMantra::apply_( const PStep* self, VMContext* ctx )
    // still no luck?
    if( clsContainer == 0 )
    {
-      Symbol* sym = ms->findExportedSymbol( className );
+      Item* sym = ms->findExportedValue( className );
       if( sym == 0 )
       {
          theClass = eng->getMantra( className );
@@ -873,9 +802,10 @@ void ModSpace::PStepDynMantra::apply_( const PStep* self, VMContext* ctx )
       }
       else
       {
-         if( sym->defaultValue().isClass() || sym->defaultValue().isFunction() )
+
+         if( sym->isClass() || sym->isFunction() )
          {
-            theClass = static_cast<Mantra*>(sym->defaultValue().asInst());
+            theClass = static_cast<Mantra*>(sym->asInst());
          }
          else
          {

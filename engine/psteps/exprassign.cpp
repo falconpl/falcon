@@ -28,6 +28,7 @@ ExprAssign::ExprAssign(int line, int chr) :
 {
    FALCON_DECLARE_SYN_CLASS( expr_assign )
    apply = apply_;
+   m_trait = e_trait_composite;
 }
 
 ExprAssign::ExprAssign( Expression* op1, Expression* op2, int line, int chr ):
@@ -35,6 +36,7 @@ ExprAssign::ExprAssign( Expression* op1, Expression* op2, int line, int chr ):
 {
    FALCON_DECLARE_SYN_CLASS( expr_assign )
    apply = apply_;
+   m_trait = e_trait_composite;
 }
 
 ExprAssign::ExprAssign( const ExprAssign& other ):
@@ -42,6 +44,7 @@ ExprAssign::ExprAssign( const ExprAssign& other ):
 {
    FALCON_DECLARE_SYN_CLASS( expr_assign )
    apply = apply_;
+   m_trait = e_trait_composite;
 }
 
 bool ExprAssign::simplify( Item& ) const

@@ -22,18 +22,17 @@
 #include <falcon/module.h>
 
 #include <falcon/engine.h>
-
 #include <falcon/errors/paramerror.h>
+
+#include <map>
 
 namespace Falcon
 {
 
 Function::EtaSetter Function::eta;
 
-
 Function::Function( const String& name, Module* module, int32 line ):
    Mantra( name, module, line ),
-   m_paramCount(0),
    m_methodOf( 0 ),
    m_bEta(false)
 {
@@ -110,6 +109,7 @@ Error* Function::paramError(int line, const char* place ) const
            .extra(m_signature) );
    
 }
+
 
 }
 

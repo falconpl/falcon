@@ -58,7 +58,7 @@ public:
       if( m_funcPrintl == 0 )
       {
          Falcon::Symbol* printlSym = 
-            ctx->vm()->modSpace()->findExportedSymbol( "printl" );
+            ctx->vm()->modSpace()->findExportedValue( "printl" );
          fassert( printlSym != 0 && printlSym->getValue(0)->isFunction() );
          
          m_funcPrintl = printlSym->getValue(0)->asFunction();

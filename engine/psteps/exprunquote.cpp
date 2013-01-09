@@ -58,13 +58,18 @@ ExprUnquote::ExprUnquote( const ExprUnquote& other ):
 void ExprUnquote::symbolName(const String& s) 
 {
    m_symbolName = s;
-   delete m_dynsym;
-   m_dynsym = new Symbol(s);
+   if( m_dynsym != 0 ) {
+      m_dynsym->decref();
+   }
+
+   m_dynsym = Engine::getSymbol( s, false);
 }
 
 ExprUnquote::~ExprUnquote()
 {
-   delete m_dynsym;
+   if( m_dynsym != 0 ) {
+      m_dynsym->decref();
+   }
 }
 
 
@@ -89,12 +94,12 @@ void ExprUnquote::apply_( const PStep* ps, VMContext* ctx )
    const ExprUnquote* self = static_cast<const ExprUnquote*>( ps );
    TRACE1( "Apply \"%s\"", self->describe().c_ize() );
    ctx->popCode();
-   Variable* var = ctx->getDynSymbolVariable( self->m_dynsym );
-   if( var == 0 ) {
+   Item* value = ctx->resolveSymbol( self->m_dynsym, false );
+   if( value == 0 ) {
       ctx->pushData( Item() );
    }
    else {
-      ctx->pushData( *var->value() );
+      ctx->pushData( *value );
    }
 }
 

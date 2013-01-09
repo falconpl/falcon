@@ -45,7 +45,8 @@ public:
       e_trait_symbol,
       e_trait_value,
       e_trait_assignable,
-      e_trait_inheritance
+      e_trait_inheritance,
+      e_trait_composite
    }
    t_trait;
    

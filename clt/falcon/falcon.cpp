@@ -149,61 +149,8 @@ void FalconApp::launch( const String& script )
       loader->savePC( ModLoader::e_save_no );
    }
 
-   // What kind of module we are loading here?
-   /*
-   ModLoader::t_modtype type = ModLoader::e_mt_none;
-   if( m_options.run_only )
-   {
-      type = ModLoader::e_mt_vmmod;
-   }
-   else if ( m_options.compile_only )
-   {
-      type = ModLoader::e_mt_source;
-   }
-
-
-   // TODO -- FIX ftds
-   loader->loadFile( script, type );
-   if (module == NULL)
-   {
-
-   }
-   module->setMain();
-
-   ms->add( Engine::instance()->getCore(), true, false );
-
-   // and start the resolution dance.
-   ms->resolve( module, true, true );
-
-   // throw on error.
-   Error* linkerr = ms->link();
-   if( linkerr != 0 )
-   {
-      throw linkerr;
-   }
-
-
-   Function* fmain = module->getMainFunction();
-
-
-   m_process->mainContext()->call(fmain,0);
-   if( fmain != 0 )
-   {
-      try {
-         m_process->start();
-         m_process->wait();
-      }
-      catch( Error* e )
-      {
-         vm.textErr()->write( e->describe() );
-         e->decref();
-      }
-   }
-   */
-
    ms->add( Engine::instance()->getCore() );
-
-   Process* loadProc = m_vm->modSpace()->loadModule( script, true, true );
+   Process* loadProc = ms->loadModule( script, true, true );
 
    try {
       loadProc->start();
@@ -211,6 +158,7 @@ void FalconApp::launch( const String& script )
 
       // get the main module
       Module* mod = static_cast<Module*>(loadProc->result().asInst());
+      loadProc->decref();
       if( mod->getMainFunction() != 0 )
       {
          mod->incref();

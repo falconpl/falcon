@@ -20,7 +20,6 @@
 #include <falcon/setup.h>
 #include <falcon/types.h>
 #include <falcon/variable.h>
-#include <falcon/symboltable.h>
 
 namespace Falcon {
 
@@ -28,6 +27,8 @@ class Function;
 class VMContext;
 class ClassClosure;
 class Class;
+class VarMap;
+class ItemArray;
 
 /** Closure abstraction.
  
@@ -66,7 +67,7 @@ public:
     \param ctx the context where the closed data is to be found.
     \param A symbol table containing the symbols to be closed.
     */
-   void close( VMContext* ctx, const SymbolTable* st );
+   void close( VMContext* ctx, const VarMap* st );
    
    /** Gets the function or closed code associated with this closure. */
    void* closed() const { return m_closed; }
@@ -74,8 +75,8 @@ public:
    Class* closedHandler() const { return m_handler; }
    
    /** Gets the data associated with this closure. */
-   const Variable* closedData() const { return m_closedData; }
-   Variable* closedData() { return m_closedData; }   
+   const ItemArray* closedData() const { return m_closedData; }
+   ItemArray* closedData() { return m_closedData; }
    Closure* clone() const { return new Closure(*this); }
 
    uint32 pushClosedData( VMContext* ctx );
@@ -85,7 +86,7 @@ private:
 
    void* m_closed;
    Class* m_handler;
-   Variable* m_closedData;
+   ItemArray* m_closedData;
    uint32 m_closedDataSize;
    uint32 m_closedLocals;
    uint32 m_mark;

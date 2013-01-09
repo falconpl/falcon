@@ -18,8 +18,6 @@
 
 #include <falcon/pstep.h>
 
-#include "symboltable.h"
-
 namespace Falcon {
 
 class Class;
@@ -27,6 +25,7 @@ class Expression;
 class Statement;
 class SynTree;
 class Item;
+class VarMap;
 
 /** PStep extension that can be insereted in an exposable syntactic tree.
  
@@ -336,20 +335,20 @@ public:
    /**
     Set the symbol table associated with this treestep.
     */
-   void setSymbolTable( SymbolTable* st, bool own = false );
+   void setVarMap( VarMap* st, bool own = false );
 
    /**
     Gets the symbol table associated with this treestep.
     
     \note Normally, the symbol table is 0.
     */
-   SymbolTable* symbolTable() const { return m_symtab; }
+   VarMap* varmap() const { return m_varmap; }
 
 protected:
    uint32 m_gcMark; 
    Class* m_handler;
    TreeStep* m_parent;
-   SymbolTable* m_symtab;
+   VarMap* m_varmap;
    t_category m_cat;
    bool m_bOwnSymTab;
    
@@ -357,7 +356,7 @@ protected:
       PStep(line, chr ),
       m_handler( cls ),
       m_parent(0),
-      m_symtab(0),
+      m_varmap(0),
       m_cat(t),
       m_bOwnSymTab(false)
    {}
@@ -367,7 +366,7 @@ protected:
       PStep(line, chr ),
       m_handler( 0 ),
       m_parent(0),
-      m_symtab(0),
+      m_varmap(0),
       m_cat(t),
       m_bOwnSymTab(false)
    {}

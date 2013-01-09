@@ -16,76 +16,38 @@
 #include <falcon/symbol.h>
 #include <falcon/stream.h>
 #include <falcon/vm.h>
-#include <falcon/symboltable.h>
 #include <falcon/callframe.h>
+#include <falcon/function.h>
+#include <falcon/module.h>
 #include <falcon/itemarray.h>
+#include <falcon/fassert.h>
+#include <falcon/modspace.h>
 
-#include "falcon/module.h"
-#include "falcon/closure.h"
+#include <falcon/module.h>
+#include <falcon/closure.h>
 
 namespace Falcon {
 
-Symbol::Symbol()
+Symbol::Symbol():
+         m_counter(1)
 {
    // leave all unconfigured.
 }
 
-Symbol::Symbol( const String& name, int line ):
+Symbol::Symbol( const String& name, bool isGlobal ):
    m_name(name),
-   m_declaredAt(line),         
-   m_type( Symbol::e_st_dynamic ),
-   m_bConstant(false)
+   m_isGlobal( isGlobal ),
+   m_counter(1)
 {
-   m_id = 0;
-   m_getVariable = Symbol::getVariable_dyns;
-   m_setVariable = Symbol::setVariable_dyns;
-}
-   
-Symbol::Symbol( const String& name, Symbol::type_t t, uint32 id, int line ):
-   m_name(name),
-   m_declaredAt(line),         
-   m_type( t ),
-   m_bConstant(false)  
-{
-   m_id = id;
-   
-   switch(t)
-   {
-      case e_st_local:
-         m_setVariable = m_getVariable = Symbol::getVariable_local;
-         break;
-         
-      case e_st_global:
-         m_setVariable = m_getVariable = Symbol::getVariable_global;
-         m_realValue.base(0);
-         m_realValue.value(&m_defValue);
-         break;
-         
-      case e_st_closed:
-         m_setVariable = m_getVariable = Symbol::getVariable_closed;
-         break;
-         
-      case e_st_extern:
-         m_setVariable = m_getVariable = Symbol::getVariable_extern;
-         break;
-         
-      case e_st_dynamic:
-         m_getVariable = Symbol::getVariable_dyns;
-         m_setVariable = Symbol::setVariable_dyns;
-         break;
-   }   
 }
    
 
+   
 Symbol::Symbol( const Symbol& other ):
    m_name(other.m_name),
-   m_declaredAt(other.m_declaredAt),         
-   m_getVariable(other.m_getVariable),
-   m_type( other.m_type ),
-   m_bConstant(other.m_bConstant)
+   m_isGlobal( other.m_isGlobal ),
+   m_counter(1)
 {
-   m_defValue = other.m_defValue;
-   m_realValue = other.m_realValue;
 }
 
 
@@ -93,73 +55,76 @@ Symbol::~Symbol()
 {
 }
 
-void Symbol::promoteToGlobal()
+
+void Symbol::incref()
 {
-   fassert2( m_type == e_st_extern, "Ought to be an extern symbol" );
-   m_type = e_st_global;
-   m_getVariable = &getVariable_global;
-   m_realValue.set(0, &m_defValue);
+   Engine::refSymbol( this );
 }
 
-
-void Symbol::resolved(Variable* other)
+void Symbol::decref()
 {
-   fassert2( m_type == e_st_extern, "Ought to be an extern symbol" );
-   m_type = e_st_global;
-   m_getVariable = &getVariable_global;
-   m_realValue.makeReference(other);
+   Engine::releaseSymbol( this );
 }
 
-void Symbol::globalWithValue( const Item& value )
+Item* Symbol::resolve( VMContext* ctx, bool forAssign ) const
 {
-   m_type = e_st_global;
-   m_getVariable = &getVariable_global;
-   m_defValue = value;
-   m_realValue.set(0, &m_defValue);   
-}
+   CallFrame* cf = &ctx->currentFrame();
+   Function* func = cf->m_function;
 
-void Symbol::gcMark( uint32 mark )
-{
-   if( m_name.currentMark() < mark )
+   if( ! m_isGlobal )
    {
-      m_name.gcMark( mark );
-      m_defValue.gcMark(mark);
-      if( m_realValue.base() != 0 ) {
-         *m_realValue.base() = mark;
+      Variable* var = func->variables().find( m_name );
+      if( var != 0 ) {
+         switch( var->type() ) {
+         case Variable::e_nt_closed:
+            return 0; //TODO
+
+         case Variable::e_nt_local:
+            return ctx->local(var->id());
+
+         case Variable::e_nt_param:
+            return ctx->param(var->id());
+
+         default:
+            fassert2( false, "Shouldn't have this in a function" );
+            break;
+         }
       }
-      m_realValue.value()->gcMark(mark);      
+      else if( forAssign ) {
+         ctx->pushData(Item());
+         return &ctx->topData();
+      }
+    }
+
+
+   // didn't find it locally, try globally
+   Module* mod = func->module();
+   if( mod != 0 ) {
+      // findGlobal will find also externally resolved variables.
+      Item* global = mod->getGlobalValue( m_name );
+      if( global != 0 ) {
+         return global;
+      }
+      else if( forAssign ) {
+         Variable* var = mod->addGlobal( m_name, Item(), false );
+         global = mod->getGlobalValue( var->id() );
+         return global;
+      }
    }
-}
 
-Variable* Symbol::getVariable_global( Symbol* sym, VMContext* )
-{
-   return &sym->m_realValue;
-}
+   // try as non-imported extern
+   if( ! forAssign && mod->modSpace() != ctx->vm()->modSpace() )
+   {
+      // if the module space is the same as the vm modspace,
+      // mod->findGlobal has already searched for it
+      Item* item = ctx->vm()->modSpace()->findExportedValue( m_name );
+      if( item != 0 ) {
+         return item;
+      }
+   }
 
-Variable* Symbol::getVariable_local( Symbol* sym, VMContext* ctx )
-{
-   return ctx->localVar(sym->m_id);
-}
-
-Variable* Symbol::getVariable_closed( Symbol* sym, VMContext* ctx )
-{
-   return ctx->currentFrame().m_closure->closedData() + sym->m_id;
-}
-
-Variable* Symbol::getVariable_extern( Symbol*, VMContext* )
-{
-   static Variable NilVariable;
-   return &NilVariable;
-}
-
-Variable* Symbol::getVariable_dyns( Symbol* sym, VMContext* ctx )
-{
-   return ctx->getDynSymbolVariable( sym );
-}
-
-Variable* Symbol::setVariable_dyns( Symbol* sym, VMContext* ctx )
-{
-   return ctx->getLValueDynSymbolVariable( sym );
+   // no luck
+   return 0;
 }
 
 }

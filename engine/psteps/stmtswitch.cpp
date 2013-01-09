@@ -510,7 +510,7 @@ void StmtSwitch::apply_( const PStep* ps, VMContext* ctx )
             Private::VarBlockLimit& lmt = lst[cf.m_seqId-2];
             cf.m_seqId++;
             Symbol* sym = lmt.first;
-            const Item* vcomp = sym->getValue(ctx);
+            const Item* vcomp = ctx->resolveSymbol( sym, false );
             // found?
             if( vcomp != 0 )
             {               

@@ -2,7 +2,7 @@
    FALCON - The Falcon Programming Language.
    FILE: callframe.cpp
 
-   Closure - function and externally referenced local variabels
+   Closure - function and externally referenced local variables
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: Sun, 01 Jan 2012 15:39:29 +0100
@@ -21,6 +21,8 @@
 #include <falcon/function.h>
 #include <falcon/vmcontext.h>
 #include <falcon/symbol.h>
+#include <falcon/varmap.h>
+#include <falcon/itemarray.h>
 
 #include <string.h>
 
@@ -52,7 +54,7 @@ Closure::Closure( const Closure& other )
       m_handler = other.m_handler;
       m_closed = m_handler->clone(other.m_closed);
       m_closedDataSize = other.m_closedDataSize;      
-      m_closedData = new Variable[m_closedDataSize];
+      m_closedData = new ItemArray();
       m_closedLocals = other.m_closedLocals;
       // the variables in a closure are SURELY references, so we can flat-copy them.
       memcpy( m_closedData, other.m_closedData, m_closedDataSize * sizeof(Variable));
@@ -68,7 +70,7 @@ Closure::Closure( const Closure& other )
 
 Closure::~Closure()
 {
-   delete[] m_closedData;
+
 }
 
 void Closure::gcMark( uint32 mark )
@@ -78,10 +80,7 @@ void Closure::gcMark( uint32 mark )
       m_mark = mark;
       m_handler->gcMark(mark);
       m_handler->gcMarkInstance(m_closed, mark);
-      for( uint32 i = 0; i < m_closedDataSize; ++i ) {         
-         m_closedData[i].gcMark( mark );
-         m_closedData[i].value()->gcMark(mark);
-      }
+      m_closedData->gcMark(mark);
    }
 }
 
@@ -89,14 +88,14 @@ uint32 Closure::pushClosedData( VMContext* ctx )
 {
    for( uint32 i = 0; i < m_closedDataSize; ++ i ) 
    {
-      ctx->pushData( *m_closedData[i].value() );
+      ctx->pushData( (*m_closedData)[i] );
    }
    
    return m_closedDataSize;
 }
 
 
-void Closure::close( VMContext* ctx, const SymbolTable* st )
+void Closure::close( VMContext* , const VarMap* st )
 {
    fassert( m_closed != 0 );
    TRACE( "Closure::close %p", m_closed );
@@ -104,17 +103,19 @@ void Closure::close( VMContext* ctx, const SymbolTable* st )
    delete[] m_closedData;
    uint32 size = st->closedCount();
    m_closedDataSize = size;
-   m_closedData = new Variable[size];
    m_closedLocals = st->localCount();
    
    for( uint32 i = 0; i < size; ++i )
    {
-      Symbol* closed = st->getClosed(i);
-      const String& closedName = closed->name();
+      const String& closedName = st->getClosedName(i);
       
-      TRACE1( "Closure::close -- closing symbol %s", closed->name().c_ize() );
+      TRACE1( "Closure::close -- closing symbol %s", closedName.c_ize() );
       
-      Variable* variable = ctx->findLocalVariable( closedName );
+      /*
+       * TODO
+       */
+      /*
+      Variable* variable = ctx-> ( closedName );
       if( variable != 0 ) {
          TRACE2( "Closure::close -- closed symbol %s => \"%s\"",
             closed->name().c_ize(), variable->value()->describe().c_ize() );
@@ -125,6 +126,7 @@ void Closure::close( VMContext* ctx, const SymbolTable* st )
          TRACE2( "Closure::close -- didn't find symbol to close %s", closed->name().c_ize() );
          Variable::makeFreeVariable(m_closedData[closed->localId()]);
       }
+      */
    }
 }
 

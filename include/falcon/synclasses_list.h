@@ -153,8 +153,7 @@ FALCON_SYNCLASS_DECLARATOR(m_expr_evalretexec, EvalRetExec, expr)
 
 FALCON_SYNCLASS_DECLARATOR_EX(m_expr_sym, GenSym, expr, \
       virtual void store( VMContext*, DataWriter* dw, void* instance ) const; \
-      virtual void flatten( VMContext* ctx, ItemArray& subItems, void* instance ) const;\
-      virtual void unflatten( VMContext* ctx, ItemArray& subItems, void* instance ) const; )
+      )
 
 FALCON_SYNCLASS_DECLARATOR_EX(m_expr_value, Value, expr, \
       virtual void flatten( VMContext* ctx, ItemArray& subItems, void* instance ) const;\

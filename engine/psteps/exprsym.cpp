@@ -32,7 +32,6 @@ namespace Falcon {
 ExprSymbol::ExprSymbol( int line, int chr ):
    Expression( line, chr ),
    m_symbol( 0 ),
-   m_gcLock( 0 ),
    m_pslv(this)
 {
    FALCON_DECLARE_SYN_CLASS( expr_sym )
@@ -45,24 +44,25 @@ ExprSymbol::ExprSymbol( int line, int chr ):
 ExprSymbol::ExprSymbol( Symbol* target, int line, int chr ):
    Expression( line, chr ),
    m_symbol( target ),
-   m_gcLock( 0 ),
    m_pslv(this)
 {
-   FALCON_DECLARE_SYN_CLASS( expr_sym )
+   FALCON_DECLARE_SYN_CLASS( expr_sym );
+   //Engine::refSymbol(sym);
+
    apply = apply_;
    m_pstep_lvalue = &m_pslv;
    m_trait = e_trait_symbol;
 }
 
 
-ExprSymbol::ExprSymbol( const String& name, int line, int chr ):
+ExprSymbol::ExprSymbol( const String& name, bool isGlobal, int line, int chr ):
    Expression( line, chr ),
-   m_name(name),
    m_symbol( 0 ),
-   m_gcLock( 0 ),
    m_pslv(this)
 {
-   FALCON_DECLARE_SYN_CLASS( expr_sym )
+   FALCON_DECLARE_SYN_CLASS( expr_sym );
+   m_symbol = Engine::getSymbol(name, isGlobal );
+
    apply = apply_;
    m_pstep_lvalue = &m_pslv;
    m_trait = e_trait_symbol;
@@ -71,82 +71,78 @@ ExprSymbol::ExprSymbol( const String& name, int line, int chr ):
 
 ExprSymbol::ExprSymbol( const ExprSymbol& other ):
    Expression( other ),
-   m_name( other.m_name ),
    m_pslv(this)
 {
    apply = apply_;
    m_pstep_lvalue = &m_pslv;
    m_pstep_lvalue->apply = other.m_pstep_lvalue->apply;
    m_trait = e_trait_symbol;
-   m_gcLock = 0;
    
    if( other.m_symbol == 0 ) {
       m_symbol = 0;
    }
-   else if( other.m_symbol->type() == Symbol::e_st_dynamic ) {
-      safeGuard( other.m_symbol );
-   }
    else {
-      // we're in the same tree where the symbol is recorded.
+      Engine::refSymbol(m_symbol);
       m_symbol = other.m_symbol;
    }
 }
 
+
 ExprSymbol::~ExprSymbol()
 {
-   static Collector* coll = Engine::instance()->collector();
-   
-   if( m_gcLock != 0 )
+   if( m_symbol != 0 )
    {
-      coll->unlock( m_gcLock );
+      Engine::releaseSymbol( m_symbol );
    }
 }
 
 const String& ExprSymbol::name() const
 {
+   static String empty;
+
    if ( m_symbol != 0 )
    {
       return m_symbol->name();
    }
-   return m_name;
+
+   return empty;
 }
+
+
+void ExprSymbol::symbol( Symbol* sym )
+{
+   if( m_symbol != 0 )
+   {
+      Engine::releaseSymbol( m_symbol );
+   }
+
+   Engine::refSymbol(sym);
+   m_symbol = sym;
+}
+
 
 void ExprSymbol::name( const String& n )
 {
-   m_name = n;
-}
-
-
-
-void ExprSymbol::safeGuard( Symbol* sym )
-{
-   static Collector* coll = Engine::instance()->collector();
-   static Class* symClass = Engine::instance()->symbolClass();
-   
-   m_symbol = sym;
-   if( m_gcLock != 0 )
+   if( m_symbol != 0 )
    {
-      coll->unlock( m_gcLock );
+      Engine::releaseSymbol( m_symbol );
    }
-   m_gcLock = coll->lock( Item( symClass, sym ) );
+
+   m_symbol = Engine::getSymbol(n, false);
 }
+
+
 
 void ExprSymbol::describeTo( String& val, int ) const
 {
    if( m_symbol == 0 )
    {
-      if ( m_name.size() == 0 )
-      {
-         val = "<Blank ExprSymbol>";
-         return;
-      }
-      val = m_name;
+      val = "<Blank ExprSymbol>";
    }
    else {   
       val = m_symbol->name();
    }
 }
-
 
 
 void ExprSymbol::PStepLValue::describeTo( String& s, int depth ) const
@@ -160,7 +156,7 @@ void ExprSymbol::apply_( const PStep* ps, VMContext* ctx )
    fassert( es->m_symbol != 0 );
    ctx->popCode();
    
-   ctx->pushData(*es->m_symbol->getValue(ctx));
+   ctx->pushData(*ctx->resolveSymbol(es->m_symbol, false));
 }
 
 
@@ -170,7 +166,7 @@ void ExprSymbol::PStepLValue::apply_( const PStep* ps, VMContext* ctx )
    fassert( es->m_owner->m_symbol != 0 );
    ctx->popCode();
       
-   *es->m_owner->m_symbol->lvalueValue(ctx) = ctx->topData();
+   ctx->resolveSymbol(es->m_owner->m_symbol, true)->assign( ctx->topData() );
 }
    
 }

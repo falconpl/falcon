@@ -18,7 +18,7 @@
 
 #include <falcon/setup.h>
 #include <falcon/expression.h>
-#include <falcon/symboltable.h>
+#include <falcon/varmap.h>
 #include <falcon/psteps/exprunquote.h>
 
 namespace Falcon {
@@ -57,17 +57,17 @@ public:
    /**
     Adds a parameter to this parametric  expression.
     */
-   void addParam( const String& name, int line ) { m_paramTable.addLocal(name,line); }
+   void addParam( const String& name ) { m_paramTable.addParam(name); }
    
    /**
     Retrns the count of parameters.
     */
-   int paramCount() const { return m_paramTable.localCount(); }
+   int paramCount() const { return m_paramTable.paramCount(); }
    
    /**
     Gets the nth parameter.
     */
-   Symbol* param( int n ) const { return m_paramTable.getLocal(n);}
+   const String& param( int n ) const { return m_paramTable.getParamName(n);}
    
    /**
     Declares an unquoted expression in the scope of this literal.
@@ -90,16 +90,9 @@ public:
    virtual TreeStep* nth( int32 n ) const;
    virtual bool setNth( int32 n, TreeStep* ts );
 
-   /** Used by the parser to create symbols.
-    */
-   Symbol* makeSymbol( const String& name, int line ); 
-
 private:
-   class Private;
-   ExprLit::Private* _p;
-   
    TreeStep* m_child;
-   SymbolTable m_paramTable;
+   VarMap m_paramTable;
    
    static void apply_( const PStep*, VMContext* ctx );
 };

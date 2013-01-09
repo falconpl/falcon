@@ -186,8 +186,9 @@ void apply_switch( const Rule&, Parser& p )
 
    ParserContext* st = static_cast<ParserContext*>(p.context());
 
-   StmtSwitch* stmt_switch = new StmtSwitch( 
-         static_cast<Expression*>(texpr->detachValue()), tswch->line(), tswch->chr() );
+   Expression* swexpr = static_cast<Expression*>(texpr->detachValue());
+   st->accessSymbols(swexpr);
+   StmtSwitch* stmt_switch = new StmtSwitch( swexpr, tswch->line(), tswch->chr() );
    
    // clear the stack
    p.simplify(3);
@@ -205,8 +206,9 @@ void apply_select( const Rule&, Parser& p )
 
    ParserContext* st = static_cast<ParserContext*>(p.context());
 
-   StmtSelect* stmt_sel = new StmtSelect( 
-         static_cast<Expression*>(texpr->detachValue()), tswch->line(), tswch->chr() );
+   Expression* swexpr = static_cast<Expression*>(texpr->detachValue());
+   st->accessSymbols(swexpr);
+   StmtSelect* stmt_sel = new StmtSelect( swexpr, tswch->line(), tswch->chr() );
 
    // clear the stack
    p.simplify(3);
@@ -250,7 +252,9 @@ static bool make_case_branch(  Parser& p, ParserContext* ctx, SynTree* st, bool 
             case CaseItem::e_false: noClash = swc->addBoolBlock( false, st ); break;
             case CaseItem::e_int: noClash = swc->addIntBlock( itm->m_iLow, st ); break;
             case CaseItem::e_string: noClash = swc->addStringBlock( *itm->m_sLow, st ); break;
-            case CaseItem::e_sym: noClash = swc->addSymbolBlock( itm->m_sym, st ); break;
+            case CaseItem::e_sym:
+               noClash = swc->addSymbolBlock( itm->m_sym, st );
+               break;
             case CaseItem::e_rngInt: noClash = swc->addRangeBlock( 
                                        itm->m_iLow, itm->m_iHigh, st ); break;
             case CaseItem::e_rngString: noClash = swc->addStringRangeBlock( 
@@ -278,7 +282,9 @@ static bool make_case_branch(  Parser& p, ParserContext* ctx, SynTree* st, bool 
          switch( itm->m_type ) {
             case CaseItem::e_int: noClash = swc->addSelectType( itm->m_iLow, st ); break;
             case CaseItem::e_string: noClash = swc->addSelectName( *itm->m_sLow, st ); break;
-            case CaseItem::e_sym: noClash = swc->addSelectName( itm->m_sym->name(), st ); break;
+            case CaseItem::e_sym:
+               noClash = swc->addSelectName( itm->m_sym->name(), st );
+               break;
             
             case CaseItem::e_nil: 
             case CaseItem::e_true:
@@ -286,6 +292,7 @@ static bool make_case_branch(  Parser& p, ParserContext* ctx, SynTree* st, bool 
             case CaseItem::e_rngInt:
             case CaseItem::e_rngString: 
                p.addError(e_select_decl, p.currentSource(), tlist->line(), tlist->chr() );
+               break;
          }
 
          if ( ! noClash ) {
@@ -478,22 +485,12 @@ void apply_CaseListToken_sym( const Rule&, Parser& p )
    TokenInstance* ti = p.getNextToken();
    SourceParser* sp = static_cast<SourceParser*>(&p);
    ParserContext* ctx = static_cast<ParserContext*>(p.context());
-   Symbol* sym = ctx->findSymbol( *ti->asString() );
-   // Undefined?
-   if( sym == 0 ) {
-      sym = ctx->onUndefinedSymbol( *ti->asString() ); 
-      if( sym == 0 ) {
-         // Signal the error but proceed as if it was a string.
-         p.addError( e_undef_sym, p.currentLexer()->uri(), ti->line(), ti->chr(), 0 , *ti->asString() );
-         ti->token( sp->CaseListToken );
-         ti->setValue( new CaseItem( ti->detachString() ), CaseItem::deletor );
-         return;
-      }
-   }
-   
+
+   String& name = *ti->asString();
+   Variable* var = ctx->accessSymbol(name);
    // SYM is not 0
    ti->token( sp->CaseListToken );
-   ti->setValue( new CaseItem( sym ), &CaseItem::deletor );  
+   ti->setValue( new CaseItem( Engine::getSymbol(name, var->isGlobalOrExtern()) ), &CaseItem::deletor );
 }
 
 

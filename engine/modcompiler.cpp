@@ -75,45 +75,52 @@ void ModCompiler::Context::onInputOver()
 }
 
 
-void ModCompiler::Context::onNewFunc( Function* function, Symbol* gs )
+void ModCompiler::Context::onNewFunc( Function* function )
 {
    Module* mod = m_owner->m_module;
 
-   try
+   if( function->name().size() == 0 )
    {
-      if( gs == 0 )
-      {
-         // anonymous function
-         mod->addAnonMantra( function );
-      }
-      else
-      {
-         mod->addMantraWithSymbol( function, gs );
-      }
+      // anonymous function
+      mod->addAnonMantra( function );
    }
-   catch( Error* e )
+   else
    {
-      m_owner->m_sp.addError( e );
-      e->decref();
+      ;
+      if( ! mod->addMantra( function, false, function->declaredAt() ) )
+      {
+         m_owner->m_sp.addError( new CodeError(
+            ErrorParam(e_already_def, function->declaredAt(), m_owner->m_module->uri() )
+            // TODO add source reference of the imported def
+            .origin(ErrorParam::e_orig_compiler)
+            ));
+      }
    }
 }
 
 
-void ModCompiler::Context::onNewClass( Class* cls, bool, Symbol* gs )
+void ModCompiler::Context::onNewClass( Class* cls, bool )
 {
    FalconClass* fcls = static_cast<FalconClass*>(cls);
    Module* mod = m_owner->m_module;
 
-   try {
-      // save the source class
-      mod->addMantraWithSymbol( fcls, gs, false );
-      // todo
-   }
-   catch( Error* e )
+   if( fcls->name().size() == 0 )
    {
-      m_owner->m_sp.addError( e );
-      e->decref();
+      // anonymous function
+      mod->addAnonMantra( fcls );
    }
+   else
+   {
+      if( ! mod->addMantra( fcls, false, fcls->declaredAt() ) )
+      {
+         m_owner->m_sp.addError( new CodeError(
+            ErrorParam(e_already_def, fcls->declaredAt(), m_owner->m_module->uri() )
+            // TODO add source reference of the imported def
+            .origin(ErrorParam::e_orig_compiler)
+            ));
+      }
+   }
+
 }
 
 
@@ -167,7 +174,7 @@ void ModCompiler::Context::onExport(const String& symName)
    }
    else {
       bool adef;
-      Symbol* sym = mod.addExport( symName, adef );
+      Variable* sym = mod.addExport( symName, adef );
       if( sym == 0 )
       {
          sp.addError( e_undef_sym, sp.currentSource(), sp.currentLine()-1, 0, 0, symName );
@@ -192,56 +199,40 @@ void ModCompiler::Context::onGlobal( const String& )
 }
 
 
-Symbol* ModCompiler::Context::onUndefinedSymbol( const String& name )
+Variable* ModCompiler::Context::onGlobalDefined( const String& name, bool& bAlreadyDef )
 {
-   Module* mod = m_owner->m_module;
-   // Is this a global symbol?
-   Symbol* gsym = mod->getGlobal( name );
-   if (gsym == 0)
-   {
-      // no? -- create it as an implicit import.
-      gsym = mod->addImplicitImport( name );
-   }
-   return gsym;
-}
-
-
-Symbol* ModCompiler::Context::onGlobalDefined( const String& name, bool& bAlreadyDef )
-{
-   Symbol* sym = m_owner->m_module->getGlobal(name);
-   if( sym == 0 )
+   Variable* var = m_owner->m_module->getGlobal( name );
+   if( var == 0 )
    {
       bAlreadyDef = false;
-      sym = m_owner->m_module->addVariable( name, false );
-      sym->declaredAt( m_owner->m_sp.currentLine() );
-      return sym;
+      var = m_owner->m_module->addGlobal( name, Item(), false );
+      var->declaredAt( m_owner->m_sp.currentLine() );
+   }
+   else {
+      bAlreadyDef = true;
    }
 
-   bAlreadyDef = true;
-   return sym;
+   return var;
 }
 
 
-bool ModCompiler::Context::onUnknownSymbol( const String& uks )
+Variable* ModCompiler::Context::onGlobalAccessed( const String& name )
 {
-   if( ! m_owner->m_module->addImplicitImport( uks ) )
+   Variable* var = m_owner->m_module->getGlobal( name );
+   if( var == 0 )
    {
-      return false;
+      Variable* var = m_owner->m_module->addImplicitImport( name );
+      var->declaredAt( m_owner->m_sp.currentLine() );
    }
 
-   return true;
+   return var;
 }
 
 
-
-Expression* ModCompiler::Context::onStaticData( Class* cls, void* data )
+Item* ModCompiler::Context::getVariableValue( Variable* var )
 {
-   //... which stays alive as long as all the expressions, residing in a function
-   // stay alive. The talk may be different for code snippets, but we're dealing
-   // with modules here. In short. we have no need for GC.
-   return new ExprValue( Item( cls, data ) );
+   return m_owner->m_module->getGlobalValue( var->id() );
 }
-
 
 void ModCompiler::Context::onRequirement( Requirement* rec )
 {
@@ -290,7 +281,7 @@ Module* ModCompiler::compile( TextReader* tr, const String& uri, const String& n
       return 0;
    }
 
-   if( main->syntree().empty() ) {
+   if(! main->syntree().empty() ) {
       m_module->setMainFunction( main );
    }
    else {
