@@ -31,6 +31,7 @@
 #include <falcon/expression.h>
 #include <falcon/ov_names.h>
 #include <falcon/trace.h>
+#include <falcon/stdsteps.h>
 
 #include <falcon/psteps/stmtreturn.h>
 #include <falcon/psteps/exprself.h>
@@ -1062,12 +1063,17 @@ void FalconClass::unflattenSelf( ItemArray& flatArray )
 //
 bool FalconClass::op_init( VMContext* ctx, void* instance, int32 pcount ) const
 {
+   static StdSteps& st = *Engine::instance()->stdSteps();
+
    // we just need to copy the defaults.
    FalconInstance* inst = static_cast<FalconInstance*>(instance);
    
    // we have to invoke the init method, if any
    if( m_constructor != 0 )
    {
+      ctx->pushCode( &st.m_pop );
+      Item self( this, inst );
+      ctx->insertData( pcount, &self, 1, 0 );
       ctx->call( m_constructor, pcount, Item( this, inst ) );
       
       // now that we are in the constructor context, we can push the property initializer
