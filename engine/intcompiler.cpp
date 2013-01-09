@@ -59,8 +59,7 @@ namespace Falcon {
 //
 
 IntCompiler::Context::Context(IntCompiler* owner):
-   ParserContext( &owner->m_sp ),
-   m_owner(owner)
+   ModCompiler::Context( owner )
 {
 }
 
@@ -69,119 +68,71 @@ IntCompiler::Context::~Context()
    // nothing to do
 }
 
-void IntCompiler::Context::onInputOver()
+
+void IntCompiler::Context::onCloseFunc( Function* function )
 {
-   //std::cout<< "CALLBACK: Input over"<<std::endl;
+   ModCompiler::Context::onCloseFunc( function );
+   static_cast<IntCompiler*>(m_owner)->m_currentMantra = function;
 }
 
 
-void IntCompiler::Context::onNewFunc( Function* function )
+void IntCompiler::Context::onCloseClass( Class* cls, bool isObj )
 {
-   SourceParser& sp = m_owner->m_sp;
+   ModCompiler::Context::onCloseClass(cls, isObj );
 
-   bool result;
-   if( function->name() == "" ) {
-      result = true;
-      m_owner->m_mod->addAnonMantra(function);
-   }
-   else {
-      result = m_owner->m_mod->addMantra(function);
-   }
-
-   if( ! result ) {
-      m_owner->m_sp.addError( e_already_def, sp.currentSource(), sp.currentLine()-1, 0, 0,
-               function->name() );
-      delete function;
-      return;
-   }
-
-   m_owner->m_currentMantra = function;
-}
-
-
-void IntCompiler::Context::onNewClass( Class* cls, bool )
-{
-   SourceParser& sp = m_owner->m_sp;
-
-   bool result;
-   if( cls->name() == "" ) {
-      result = true;
-      m_owner->m_mod->addAnonMantra(cls);
-   }
-   else {
-      result = m_owner->m_mod->addMantra(cls);
-   }
-
-   if( ! result ) {
-      m_owner->m_sp.addError( e_already_def, sp.currentSource(), sp.currentLine()-1, 0, 0,
-               cls->name() );
-      delete cls;
-      return;
-   }
-
+   Mantra* current;
    FalconClass* fcls = static_cast<FalconClass*>(cls);
+   current = fcls;
    if( fcls->missingParents() == 0 )
    {
       try
       {
+
          if( ! fcls->construct() )
          {
-            m_owner->m_currentMantra = fcls->hyperConstruct();
+            current = fcls->hyperConstruct();
          }
-         else
-         {
-            m_owner->m_currentMantra = fcls;
-         }
+         static_cast<IntCompiler*>(m_owner)->m_currentMantra = current;
       }
       catch( Error* e )
       {
-         m_owner->m_sp.addError( e );
+         m_owner->sp().addError( e );
          e->decref();
       }
    }
-   else
-   {
-      // we have already raised undefined symbol error.
-      // get rid of the class and of all its deps.
-      delete cls;
-   }
+
 }
 
-
-void IntCompiler::Context::onNewStatement( Statement* )
-{
-   // suspend parsing if we're at top level.
-}
 
 
 void IntCompiler::Context::onLoad( const String& path, bool isFsPath )
 {
-   SourceParser& sp = m_owner->m_sp;
-   if( ! m_owner->m_bAllowDirective )
+   SourceParser& sp = m_owner->sp();
+   if( ! static_cast<IntCompiler*>(m_owner)->m_bAllowDirective )
    {
       sp.addError( e_directive_not_allowed, sp.currentSource(), sp.currentLine()-1, 0, 0 );
       return;
    }
 
    // get the module space
-   ModSpace* theSpace = m_owner->m_mod->modSpace();
+   ModSpace* theSpace = m_owner->module()->modSpace();
 
    // do we have a module?
-   if( m_owner->m_mod->addLoad( path, isFsPath ) )
+   if( m_owner->module()->addLoad( path, isFsPath ) )
    {
       sp.addError( e_load_already, sp.currentSource(), sp.currentLine()-1, 0, 0, path );
       return;
    }
 
    // just adding it top the module won't be of any help.
-   theSpace->loadModule( path, isFsPath, m_owner->m_vmctx );
+   theSpace->loadModule( path, isFsPath, static_cast<IntCompiler*>(m_owner)->m_vmctx );
 }
 
 
 bool IntCompiler::Context::onImportFrom( ImportDef* def )
 {
-   SourceParser& sp = m_owner->m_sp;
-   if( ! m_owner->m_bAllowDirective )
+   SourceParser& sp = m_owner->sp();
+   if( ! static_cast<IntCompiler*>(m_owner)->m_bAllowDirective )
    {
       sp.addError( e_directive_not_allowed, sp.currentSource(), sp.currentLine()-1, 0, 0 );
       return false;
@@ -189,8 +140,8 @@ bool IntCompiler::Context::onImportFrom( ImportDef* def )
 
    // have we already a module group for the module?
    // get the module space
-   VMContext* cctx = m_owner->m_vmctx;
-   Module* mod = m_owner->m_mod;
+   VMContext* cctx = static_cast<IntCompiler*>(m_owner)->m_vmctx;
+   Module* mod = m_owner->module();
    ModSpace* ms = cctx->vm()->modSpace();
    mod->addImport( def );
    ms->resolveDeps( cctx, mod );
@@ -201,14 +152,14 @@ bool IntCompiler::Context::onImportFrom( ImportDef* def )
 
 void IntCompiler::Context::onExport(const String& symName )
 {
-   SourceParser& sp = m_owner->m_sp;
-   if( ! m_owner->m_bAllowDirective )
+   SourceParser& sp = m_owner->sp();
+   if( ! static_cast<IntCompiler*>(m_owner)->m_bAllowDirective )
    {
       sp.addError( e_directive_not_allowed, sp.currentSource(), sp.currentLine()-1, 0, 0 );
       return;
    }
 
-   Module* mod = m_owner->m_mod;
+   Module* mod = m_owner->module();
 
    // do we have a module?
    Variable* sym = 0;
@@ -218,7 +169,7 @@ void IntCompiler::Context::onExport(const String& symName )
    // already exported?
    if( already )
    {
-      sp.addError( e_export_already, m_owner->m_sp.currentSource(),
+      sp.addError( e_export_already, m_owner->sp().currentSource(),
            sym->declaredAt(), 0, 0 );
       return;
    }
@@ -235,8 +186,8 @@ void IntCompiler::Context::onExport(const String& symName )
 void IntCompiler::Context::onDirective(const String&, const String&)
 {
    // TODO
-   SourceParser& sp = m_owner->m_sp;
-   if( ! m_owner->m_bAllowDirective )
+   SourceParser& sp = m_owner->sp();
+   if( ! static_cast<IntCompiler*>(m_owner)->m_bAllowDirective )
    {
       sp.addError( e_directive_not_allowed, sp.currentSource(), sp.currentLine()-1, 0, 0 );
       return;
@@ -247,8 +198,8 @@ void IntCompiler::Context::onDirective(const String&, const String&)
 void IntCompiler::Context::onGlobal( const String& )
 {
    // TODO
-   SourceParser& sp = m_owner->m_sp;
-   if( ! m_owner->m_bAllowDirective )
+   SourceParser& sp = m_owner->sp();
+   if( ! static_cast<IntCompiler*>(m_owner)->m_bAllowDirective )
    {
       sp.addError( e_directive_not_allowed, sp.currentSource(), sp.currentLine()-1, 0, 0 );
       return;
@@ -256,47 +207,11 @@ void IntCompiler::Context::onGlobal( const String& )
 }
 
 
-Variable* IntCompiler::Context::onGlobalDefined( const String& name, bool& bAlreadyDef )
-{
-   Variable* var = m_owner->m_mod->getGlobal( name );
-   if( var == 0 )
-   {
-      bAlreadyDef = false;
-      var = m_owner->m_mod->addGlobal( name, Item(), false );
-      var->declaredAt( m_owner->m_sp.currentLine() );
-   }
-   else {
-      bAlreadyDef = true;
-   }
-
-   return var;
-}
-
-
-Variable* IntCompiler::Context::onGlobalAccessed( const String& name )
-{
-   Variable* var = m_owner->m_mod->getGlobal( name );
-   if( var == 0 )
-   {
-      Variable* var = m_owner->m_mod->addImplicitImport( name );
-      var->declaredAt( m_owner->m_sp.currentLine() );
-   }
-
-   return var;
-}
-
-
-Item* IntCompiler::Context::getVariableValue( Variable* var )
-{
-   return m_owner->m_mod->getGlobalValue( var->id() );
-}
-
-
 void IntCompiler::Context::onRequirement( Requirement* req )
 {
    // the incremental compiler cannot store requirements.
    delete req;
-   m_owner->m_sp.addError( e_undef_sym, m_owner->m_sp.currentSource(), 
+   m_owner->sp().addError( e_undef_sym, m_owner->sp().currentSource(),
                 req->sourceRef().line(), req->sourceRef().chr(), 0, req->name() );
 }
 
@@ -306,16 +221,14 @@ void IntCompiler::Context::onRequirement( Requirement* req )
 //
 
 IntCompiler::IntCompiler( bool allowDirective ):
+   ModCompiler( new IntCompiler::Context( this ) ),
    m_currentTree(0),
    m_bAllowDirective( allowDirective )
 {
    // Prepare the compiler and the context.
-   m_ctx = new Context( this );
    m_sp.setContext(m_ctx);
    m_sp.interactive(true);
    m_compf = 0;
-   m_mod = 0;
-   m_vmctx = 0;
 
    m_lexer = new SourceLexer( "(interactive)", &m_sp );
    m_sp.pushLexer( m_lexer );
@@ -329,10 +242,10 @@ IntCompiler::~IntCompiler()
 }
 
 
-void IntCompiler::setCompilationContext( Function * function, Module* mod, VMContext* vmctx )
+void IntCompiler::setCompilationContext( Function* function, Module* mod, VMContext* vmctx )
 {
    m_compf = function;
-   m_mod = mod;
+   m_module = mod;
    m_vmctx = vmctx;
 }
 

@@ -45,6 +45,7 @@ class FALCON_DYN_CLASS ModCompiler
 
 public:
    ModCompiler();
+
    virtual ~ModCompiler();
 
    /** Compile the module read from the given TextReader.
@@ -75,17 +76,25 @@ public:
       return m_sp.makeError();
    }
 
-private:
+   Module* module() const { return m_module; }
+   const SourceParser& sp() const { return m_sp; }
+   SourceParser& sp() { return m_sp; }
+
+protected:
 
    /** Class used to notify the compiler about relevant facts in parsing. */
-   class Context: public ParserContext {
+   class FALCON_DYN_CLASS Context: public ParserContext {
    public:
       Context( ModCompiler* owner );
       virtual ~Context();
 
       virtual void onInputOver();
-      virtual void onNewFunc( Function* function );
-      virtual void onNewClass( Class* cls, bool bIsObj );
+
+      virtual Variable* onOpenFunc( Function* function );
+      virtual void onCloseFunc( Function* function );
+      virtual Variable* onOpenClass( Class* cls, bool bIsObj );
+      virtual void onCloseClass( Class* cls, bool bIsObj );
+
       virtual void onNewStatement( Statement* stmt );
       virtual void onLoad( const String& path, bool isFsPath );
       virtual bool onImportFrom( ImportDef* def );
@@ -97,9 +106,11 @@ private:
       virtual Item* getVariableValue( Variable* var );
       virtual void onRequirement( Requirement* rec );
 
-   private:
+   protected:
       ModCompiler* m_owner;
    };
+
+   ModCompiler( ModCompiler::Context* ctx );
 
    SourceParser m_sp;
 
@@ -109,12 +120,6 @@ private:
    // better for the context to be a pointer, so we can control it's init order.
    Context* m_ctx;
    friend class Context;
-
-   // count of lambda functions
-   int m_nLambdaCount;
-
-   // count of anonymous classes
-   int m_nClsCount;   
 };
 
 }

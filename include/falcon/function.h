@@ -108,11 +108,6 @@ public:
     */
    const String& signature() const { return m_signature; }
 
-   /** Returns the source line where this function was declared.
-    To be used in conjunction with module() to pinpoint the location of a function.
-    */
-   int32 declaredAt() const { return m_sr.line(); }
-
    Error* paramError( int line = 0, const char* modName = 0 ) const;
 
    /** Executes the call.

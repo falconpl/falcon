@@ -322,27 +322,30 @@ void Module::addAnonMantra( Mantra* f )
    String name;
    do
    {
-      name = "anon#";
+      name = "_anon#";
       name.N(m_anonMantras++);
    } while( _p->m_mantras.find( name ) != _p->m_mantras.end() );
 
-   f->name(name);
+   f->name( name );
+   _p->m_mantras[f->name()] = f;
    f->module(this);
 
-   _p->m_mantras[name] = f;
-   
-   // by definition, an anonymous function cannot cover forward refs
 }
 
 
-Variable* Module::addMantra( Mantra* f, bool bExport, int32 declaredAt )
+Variable* Module::addMantra( Mantra* f, bool bExport)
 {
+   TRACE(" Module::addMantra -- (%s(%p), %s, %d)",
+            f->name().size() == 0 ? "(anon)" : f->name().c_ize(),
+            f, bExport? "export" : "private", f->declaredAt() );
+
    //static Engine* eng = Engine::instance();
 
    VarDataMap::VarData* vd = m_globals.getGlobal( f->name() );
    if( vd != 0 && vd->m_var.type() != Variable::e_nt_extern  )
    {
       // already defined.
+      TRACE1(" Module::addMantra -- %s(%p) already defined", f->name().c_ize(), f );
       return 0;
    }
    
@@ -354,16 +357,19 @@ Variable* Module::addMantra( Mantra* f, bool bExport, int32 declaredAt )
    // then add the required global.
    if( vd == 0 )
    {
+      TRACE1(" Module::addMantra -- %s(%p) adding as new global", f->name().c_ize(), f );
       vd = m_globals.addGlobal( f->name(), value, bExport );
       fassert( vd != 0 );
    }
    else {
-      if( ! promoteExtern( &vd->m_var, value, declaredAt ) ) {
+      TRACE1(" Module::addMantra -- %s(%p) promoting from extern.", f->name().c_ize(), f );
+      if( ! promoteExtern( &vd->m_var, value, f->declaredAt() ) ) {
+         TRACE1(" Module::addMantra -- %s(%p) promotion failed.", f->name().c_ize(), f );
          return false;
       }
    }
    
-   vd->m_var.declaredAt( declaredAt );
+   vd->m_var.declaredAt( f->declaredAt() );
    return &vd->m_var;
 }
 

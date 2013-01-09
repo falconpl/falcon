@@ -932,9 +932,6 @@ public:
    int32 userFlags() const { return m_userFlags; }
 
    void userFlags( int32 uf ) { m_userFlags = uf; }
-
-   int32 declaredAt() const { return m_sr.line(); }
-   void declaredAt( int32 line ) { m_sr.line(line); }
    
    Class* handler() const;
    

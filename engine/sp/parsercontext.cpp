@@ -332,10 +332,10 @@ void ParserContext::accessSymbols( Expression* expr )
       uint32 arity = expr->arity();
       for( uint32 i = 0; i < arity; ++ i ) {
          // expressions can only have expressions as nth()
-         Expression* expr = static_cast<Expression*>(expr->nth(i));
-         if( expr->trait() != Expression::e_trait_composite )
+         Expression* child = static_cast<Expression*>(expr->nth(i));
+         if( child->trait() != Expression::e_trait_composite )
          {
-            accessSymbols( expr );
+            accessSymbols( child );
          }
       }
    }
@@ -590,7 +590,7 @@ void ParserContext::closeContext()
       case CCFrame::t_object_type:
       case CCFrame::t_class_type:
          // TODO: allow nested classes.
-         onNewClass( bframe.m_elem.cls, bframe.m_type == CCFrame::t_object_type );
+         onCloseClass( bframe.m_elem.cls, bframe.m_type == CCFrame::t_object_type );
          break;
 
       case CCFrame::t_func_type:
@@ -605,7 +605,7 @@ void ParserContext::closeContext()
          }
          else
          {
-            onNewFunc( bframe.m_elem.func );
+            onCloseFunc( bframe.m_elem.func );
          }
          break;
 

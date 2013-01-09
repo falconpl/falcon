@@ -20,6 +20,7 @@
 #include <falcon/sp/sourceparser.h>
 #include <falcon/sp/parsercontext.h>
 #include <falcon/syntree.h>
+#include <falcon/modcompiler.h>
 
 namespace Falcon {
 
@@ -41,7 +42,7 @@ process of a virtual machine. A PStep constantly invokes the interactive
 compiler and eventually manages error that are raised from within.
 
  */
-class FALCON_DYN_CLASS IntCompiler
+class FALCON_DYN_CLASS IntCompiler: public ModCompiler
 {
 
 public:
@@ -94,39 +95,28 @@ public:
 
    void setCompilationContext( Function * function, Module* mod, VMContext* ctx );
    Function* getFunction() const { return m_compf; }
-   Module* getModule() const { return m_mod; }
 
-private:
+protected:
 
    /** Class used to notify the compiler about relevant facts in parsing. */
-   class Context: public ParserContext {
+   class Context: public ModCompiler::Context {
    public:
       Context( IntCompiler* owner );
       virtual ~Context();
 
-      virtual void onInputOver();
-      virtual void onNewFunc( Function* function );
-      virtual void onNewClass( Class* cls, bool bIsObj );
-      virtual void onNewStatement( Statement* stmt );
+      virtual void onCloseFunc( Function* function );
+      virtual void onCloseClass( Class* cls, bool bIsObj );
+
       virtual void onLoad( const String& path, bool isFsPath );
       virtual bool onImportFrom( ImportDef* def );
+
       virtual void onExport(const String& symName);
       virtual void onDirective(const String& name, const String& value);
       virtual void onGlobal( const String& name );
-      virtual Variable* onGlobalDefined( const String& name, bool& bUnique );
-      virtual Variable* onGlobalAccessed( const String& name );
-      virtual Item* getVariableValue( Variable* var );
-      virtual void onRequirement( Requirement* rec );
 
-   private:
-      IntCompiler* m_owner;
+      virtual void onRequirement( Requirement* rec );
    };
    
-   // adds a compiler error for later throwing.
-   void addError( Error* e );
-
-
-   SourceParser m_sp;
    SynTree* m_currentTree;
    Mantra* m_currentMantra;
 
@@ -134,11 +124,10 @@ private:
    bool m_bAllowDirective;
 
    Function* m_compf;
-   Module* m_mod;
+
    VMContext* m_vmctx;
 
    // better for the context to be a pointer, so we can control it's init order.
-   Context* m_ctx;
    Parsing::Lexer* m_lexer;
    friend class Context;
 };

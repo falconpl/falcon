@@ -88,8 +88,9 @@ public:
     with a entity having an empty name. The subclass is responsible to find
     an adequate name for the entity and set it, if necessary.
     */
-   virtual void onNewFunc( Function* function ) = 0;
+   virtual Variable* onOpenFunc( Function* function ) = 0;
 
+   virtual void onCloseFunc( Function* function ) = 0;
 
    /** Called back when creating a new class.
       \param cls The variable that is being created.
@@ -107,7 +108,9 @@ public:
     with a entity having an empty name. The subclass is responsible to find
     an adequate name for the entity and set it, if necessary.
     */
-   virtual void onNewClass( Class* cls, bool bIsObj ) = 0;
+   virtual Variable* onOpenClass( Class* cls, bool bIsObj ) = 0;
+
+   virtual void onCloseClass( Class* cls, bool bIsObj ) = 0;
 
    /** Called back when creating a new class.
       \param stmt The statement being created.

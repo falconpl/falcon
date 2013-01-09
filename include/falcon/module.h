@@ -132,7 +132,7 @@ public:
       This means that after calling this method, the name of the mantra is also known as
       a global, possibly exported variable.
     */
-   Variable* addMantra( Mantra* f, bool bExport = true, int32 declaredAt = 0 );
+   Variable* addMantra( Mantra* f, bool bExport = true );
    
 
    Variable* addConstant( const String& name, const Item& value, bool bExport = true );

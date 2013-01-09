@@ -103,25 +103,22 @@ static void make_class( Parser& p, int tCount,
       }
 
       // check if the symbol is free -- defining an unique symbol
-      bool alreadyDef;
-      symclass = ctx->onGlobalDefined( *tname->asString(), alreadyDef );
-      if( alreadyDef )
+      cls = new FalconClass( *tname->asString() );
+      symclass = ctx->onOpenClass( cls, false );
+      if( symclass == 0 )
       {
-         // not free!
-         p.addError( e_already_def,  p.currentSource(), tname->line(), tname->chr(), 0,
-            String("at line ").N(symclass->declaredAt()) );
-         // however, go on with class creation
-         if ( sp.interactive() )
-         {
-            // unless interactive...
-            p.simplify( tCount );
-            return;
-         }
-         cls = new FalconClass( "" );
-      }
-      else {
-         // Ok, we took the symbol.
-         cls = new FalconClass( *tname->asString() );
+          p.addError( e_already_def,  p.currentSource(), tname->line(), tname->chr(), 0,
+                    String("at line ").N(symclass->declaredAt()) );
+           // however, go on with class creation
+          if ( sp.interactive() )
+          {
+             // unless interactive...
+             delete cls;
+             p.simplify( tCount );
+             return;
+          }
+          // make this anonymous.
+          cls->name("");
       }
    }
    else

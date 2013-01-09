@@ -44,7 +44,7 @@ public:
 };
 
 VarMap::VarMap():
-     m_bEta(true)
+     m_bEta(false)
 {
    _p = new Private;
 }
@@ -132,7 +132,7 @@ Variable* VarMap::addExtern( const String& name )
 Variable* VarMap::find( const String& name ) const
 {
    Private::VariableMap::iterator pos = _p->m_variables.find( name );
-   if( pos != _p->m_variables.end() ) {
+   if( pos == _p->m_variables.end() ) {
       return 0;
    }
 

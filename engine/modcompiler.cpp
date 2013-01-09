@@ -75,53 +75,60 @@ void ModCompiler::Context::onInputOver()
 }
 
 
-void ModCompiler::Context::onNewFunc( Function* function )
+Variable* ModCompiler::Context::onOpenFunc( Function* function )
 {
    Module* mod = m_owner->m_module;
+   Variable* var = mod->addMantra( function, false );
 
-   if( function->name().size() == 0 )
+   if( ! var == 0  )
    {
-      // anonymous function
-      mod->addAnonMantra( function );
+      m_owner->m_sp.addError( new CodeError(
+         ErrorParam(e_already_def, function->declaredAt(), m_owner->m_module->uri() )
+         // TODO add source reference of the imported def
+         .symbol( function->name() )
+         .origin(ErrorParam::e_orig_compiler)
+         ));
    }
-   else
-   {
-      ;
-      if( ! mod->addMantra( function, false, function->declaredAt() ) )
-      {
-         m_owner->m_sp.addError( new CodeError(
-            ErrorParam(e_already_def, function->declaredAt(), m_owner->m_module->uri() )
-            // TODO add source reference of the imported def
-            .origin(ErrorParam::e_orig_compiler)
-            ));
-      }
+
+   return var;
+}
+
+
+void ModCompiler::Context::onCloseFunc( Function* f )
+{
+   if( f->name().size() == 0 ) {
+      Module* mod = m_owner->m_module;
+      mod->addAnonMantra( f );
    }
 }
 
 
-void ModCompiler::Context::onNewClass( Class* cls, bool )
+Variable* ModCompiler::Context::onOpenClass( Class* cls, bool )
 {
-   FalconClass* fcls = static_cast<FalconClass*>(cls);
    Module* mod = m_owner->m_module;
+   Variable* var = mod->addMantra( cls, false );
 
-   if( fcls->name().size() == 0 )
+   if( ! var )
    {
-      // anonymous function
-      mod->addAnonMantra( fcls );
-   }
-   else
-   {
-      if( ! mod->addMantra( fcls, false, fcls->declaredAt() ) )
-      {
-         m_owner->m_sp.addError( new CodeError(
-            ErrorParam(e_already_def, fcls->declaredAt(), m_owner->m_module->uri() )
-            // TODO add source reference of the imported def
-            .origin(ErrorParam::e_orig_compiler)
-            ));
-      }
+      m_owner->m_sp.addError( new CodeError(
+         ErrorParam(e_already_def, cls->declaredAt(), m_owner->m_module->uri() )
+         // TODO add source reference of the imported def
+         .origin(ErrorParam::e_orig_compiler)
+         ));
    }
 
+   return var;
 }
+
+
+void ModCompiler::Context::onCloseClass( Class* cls, bool )
+{
+   if( cls->name().size() == 0 ) {
+      Module* mod = m_owner->m_module;
+      mod->addAnonMantra( cls );
+   }
+}
+
 
 
 void ModCompiler::Context::onNewStatement( Statement* )
@@ -244,11 +251,16 @@ void ModCompiler::Context::onRequirement( Requirement* rec )
 //
 
 ModCompiler::ModCompiler():
-   m_module(0),
-   m_nLambdaCount(0),
-   m_nClsCount(0)
+   m_module(0)
 {
    m_ctx = new Context( this );
+   m_sp.setContext( m_ctx );
+}
+
+ModCompiler::ModCompiler( ModCompiler::Context* ctx ):
+   m_module(0)
+{
+   m_ctx = ctx;
    m_sp.setContext( m_ctx );
 }
 

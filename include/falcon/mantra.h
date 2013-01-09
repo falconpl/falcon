@@ -147,6 +147,13 @@ public:
    SourceRef& sr() { return m_sr; }
    const SourceRef& sr() const { return m_sr; }
    
+   /** Returns the source line where this function was declared.
+    To be used in conjunction with module() to pinpoint the location of a function.
+    */
+   int32 declaredAt() const { return m_sr.line(); }
+
+   void declaredAt( int32 line ) { m_sr.line(line); }
+
    /** Describe the location of the mantra.
     Format is basically:
     \code

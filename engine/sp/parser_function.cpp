@@ -115,9 +115,14 @@ static SynFunc* inner_apply_function( const Rule&, Parser& p, bool bHasExpr, boo
    }
    else
    {
-      ctx->openFunc(func);
       p.simplify(tcount);
-      p.pushState( "Main" );
+
+      // try to create the function
+      if( ctx->onOpenFunc( func ) != 0 || ! p.interactive() ) {
+         // non-interactive compiler must go on even on error.
+         ctx->openFunc(func);
+         p.pushState( "Main" );
+      }
    }
 
    return func;
@@ -214,7 +219,7 @@ static void internal_expr_func(const Rule&, Parser& p, bool isEta )
    TokenInstance* targs = p.getNextToken();
 
    // todo: generate an anonymous name
-   SynFunc* func = new SynFunc( "#anonymous", 0, tf->line() );
+   SynFunc* func = new SynFunc( "", 0, tf->line() );
    if( isEta ) func->setEta(true);
    NameList* list=static_cast<NameList*>(targs->asData());
 
@@ -231,6 +236,7 @@ static void internal_expr_func(const Rule&, Parser& p, bool isEta )
 
    // remove this stuff from the stack
    p.simplify(5,ti);
+
 
    // open a new main state for the function
    ctx->openFunc(func);
@@ -324,9 +330,9 @@ static void internal_lambda_params(const Rule&, Parser& p, bool isEta )
    TokenInstance* tarr = sp.getNextToken();
    
    // and add the function state.
-   SynFunc* func=new SynFunc("#anonymous", 0, tarr->line());
+   SynFunc* func = new SynFunc("", 0, tarr->line());
    if( isEta ) func->setEta(true);
-   NameList* list=static_cast<NameList*>(lsym->asData());
+   NameList* list = static_cast<NameList*>(lsym->asData());
 
    for(NameList::const_iterator it=list->begin(),end=list->end();it!=end;++it)
    {
@@ -342,7 +348,7 @@ static void internal_lambda_params(const Rule&, Parser& p, bool isEta )
    // remove the lambdastart state
    p.popState();
 
-   // open a new main state for the function
+   // non-interactive compiler must go on even on error.
    ctx->openFunc(func);
    p.pushState( "InlineFunc", on_close_lambda , &p );
 }
