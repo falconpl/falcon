@@ -192,6 +192,12 @@ void ModSpace::add( Module* mod )
    
    // tell the module we're in charge.
    mod->modSpace(this);
+
+   Error* le = 0;
+   exportFromModule(mod, le );
+   if( le != 0 ) {
+      throw le;
+   }
 }
 
 

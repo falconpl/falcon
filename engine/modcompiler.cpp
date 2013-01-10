@@ -228,7 +228,7 @@ Variable* ModCompiler::Context::onGlobalAccessed( const String& name )
    Variable* var = m_owner->m_module->getGlobal( name );
    if( var == 0 )
    {
-      Variable* var = m_owner->m_module->addImplicitImport( name );
+      var = m_owner->m_module->addImplicitImport( name );
       var->declaredAt( m_owner->m_sp.currentLine() );
    }
 
