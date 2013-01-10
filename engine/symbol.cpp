@@ -115,7 +115,7 @@ Item* Symbol::resolve( VMContext* ctx, bool forAssign ) const
    }
 
    // try as non-imported extern
-   if( ! forAssign && mod->modSpace() != ctx->vm()->modSpace() )
+   if( ! forAssign )
    {
       // if the module space is the same as the vm modspace,
       // mod->findGlobal has already searched for it

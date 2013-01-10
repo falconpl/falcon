@@ -46,6 +46,7 @@ void apply_expr_call( const Rule&, Parser& p )
 
    // r_Expr_call << "Expr_call" << apply_expr_call << Expr << T_Openpar << ListExpr << T_Closepar
    SourceParser& sp = static_cast<SourceParser&>(p);
+   ParserContext* ctx = static_cast<ParserContext*>(sp.context());
 
    TokenInstance* v1 = p.getNextToken();
    p.getNextToken();
@@ -58,6 +59,7 @@ void apply_expr_call( const Rule&, Parser& p )
 
    TokenInstance* ti = TokenInstance::alloc(v1->line(), v1->chr(), sp.Expr);
    Expression* callee = static_cast<Expression*>(v1->detachValue());
+   ctx->accessSymbols(callee);
    if( callee->trait() == Expression::e_trait_symbol )
    {
       // check if the symbol is a pseudofunction   
@@ -84,6 +86,7 @@ void apply_expr_call( const Rule&, Parser& p )
    List::iterator iter = list->begin();
    while( iter != list->end() )
    {
+      ctx->accessSymbols(*iter);
       if( call != 0 ) call->add( *iter );
       else callps->add( *iter );
       ++iter;
