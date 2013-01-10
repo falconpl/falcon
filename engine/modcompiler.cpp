@@ -80,7 +80,7 @@ Variable* ModCompiler::Context::onOpenFunc( Function* function )
    Module* mod = m_owner->m_module;
    Variable* var = mod->addMantra( function, false );
 
-   if( ! var == 0  )
+   if( var == 0  )
    {
       m_owner->m_sp.addError( new CodeError(
          ErrorParam(e_already_def, function->declaredAt(), m_owner->m_module->uri() )
@@ -108,7 +108,7 @@ Variable* ModCompiler::Context::onOpenClass( Class* cls, bool )
    Module* mod = m_owner->m_module;
    Variable* var = mod->addMantra( cls, false );
 
-   if( ! var )
+   if( var == 0 )
    {
       m_owner->m_sp.addError( new CodeError(
          ErrorParam(e_already_def, cls->declaredAt(), m_owner->m_module->uri() )
