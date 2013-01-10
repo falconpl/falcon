@@ -113,7 +113,7 @@ protected:
       virtual void onExport(const String& symName);
       virtual void onDirective(const String& name, const String& value);
       virtual void onGlobal( const String& name );
-
+      virtual Variable* onGlobalAccessed( const String& name );
       virtual void onRequirement( Requirement* rec );
    };
    

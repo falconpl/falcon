@@ -206,6 +206,31 @@ void IntCompiler::Context::onGlobal( const String& )
    }
 }
 
+Variable* IntCompiler::Context::onGlobalAccessed( const String& name )
+{
+   Variable* var = ModCompiler::Context::onGlobalAccessed(name);
+
+   // if the variable is extern, resolve it immediately
+   if( var->type() == Variable::e_nt_extern ) {
+      Module* mod = m_owner->module();
+      Module* declarer = 0;
+      Item* value = mod->modSpace()->findExportedOrGeneralValue(mod, name, declarer);
+      if( value != 0 ) {
+         mod->resolveExternValue(name, declarer, value);
+      }
+      else {
+         SourceParser& sp = m_owner->sp();
+         sp.addError(
+                  new CodeError(
+                           ErrorParam(e_undef_sym, sp.currentLine(), sp.currentSource() )
+                           .extra(name)
+                           .origin(ErrorParam::e_orig_compiler) ) );
+      }
+   }
+
+   return var;
+}
+
 
 void IntCompiler::Context::onRequirement( Requirement* req )
 {
@@ -265,6 +290,10 @@ IntCompiler::t_compile_status IntCompiler::compileNext( TextReader* input, SynTr
 
    // if there is a compilation error, throw it
    m_sp.step();
+
+   if( m_sp.hasErrors() ) {
+      throwCompileErrors();
+   }
 
    if( isComplete() )
    {
