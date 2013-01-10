@@ -119,7 +119,6 @@ static StmtForTo* internal_for_to( Parser& p, TokenInstance* tfor,
    }
    
    StmtForTo* ft = new StmtForTo( sym, iStart, iEnd, iStep, tfor->line(), tfor->chr() );
-   
       
    if( start != 0 ) ft->startExpr( start );
    if( end != 0 ) ft->endExpr( end );
@@ -130,6 +129,7 @@ static StmtForTo* internal_for_to( Parser& p, TokenInstance* tfor,
                start, end, step, tfor->line(), tfor->chr() );
    return ft;
 }
+
 
 void apply_for_to_step( const Rule&, Parser& p )
 {

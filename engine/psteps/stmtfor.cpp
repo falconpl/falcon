@@ -689,9 +689,10 @@ void StmtForTo::PStepNext::apply_( const PStep* ps, VMContext* ctx )
    // the start, at minimum, will be done.
    Symbol* target = self->m_target;
    ctx->resolveSymbol(target, true)->setInteger(start);
+   start += step;
    
    // step cannot be 0 as it has been sanitized by our main step.
-   if( (step > 0 && start >= end) || ( step < 0 && start <= end ) )
+   if( (step > 0 && start > end) || ( step < 0 && start < end ) )
    {
       // this will be the last loop.
       ctx->popCode();
@@ -714,7 +715,6 @@ void StmtForTo::PStepNext::apply_( const PStep* ps, VMContext* ctx )
       ctx->pushCode( self->m_body );
    }
    
-   start += step;
    ctx->opcodeParam(2).content.data.val64 = start;
 }
 
