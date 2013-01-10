@@ -303,6 +303,7 @@ void SynTree::setApply()
          
       default:
          apply = apply_;
+         break;
    }
 }
 
