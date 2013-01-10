@@ -67,10 +67,10 @@ void ExprClosure::describeTo( String& tgt, int ) const
    
 void ExprClosure::apply_( const PStep* ps, VMContext* ctx )
 {
-   static Class* closureClass = Engine::instance()->closureClass();
-   
    const ExprClosure* self = static_cast<const ExprClosure*>(ps);
    fassert( self->m_function != 0 );
+
+   TRACE( "ExprClosure::apply_ %s", self->m_function->name().c_ize() );
    
    // Around just once
    ctx->popCode();
@@ -78,11 +78,11 @@ void ExprClosure::apply_( const PStep* ps, VMContext* ctx )
    if( self->m_function->variables().closedCount() > 0 ) {
       // Create the closure and close it.
       register Function* func = self->m_function;
-      Closure* cls = new Closure( func->handler(), func );
-      cls->close( ctx, &func->variables() );
+      Closure* cls = new Closure( func );
+      cls->close( ctx );
 
       // and return it.
-      ctx->pushData( FALCON_GC_STORE( closureClass, cls ) );
+      ctx->pushData( FALCON_GC_HANDLE( cls ) );
    }
    else {
       ctx->pushData( self->m_function );

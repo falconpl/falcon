@@ -43,6 +43,7 @@ class Shared;
 class Scheduler;
 class ContextGroup;
 class Process;
+class VarMap;
 
 /**
  * Structure needed to store VM data.
@@ -576,7 +577,7 @@ public:
    {
       register CallFrame* topCall = m_callStack.addSlot();
       topCall->m_function = function;
-      topCall->m_closure = 0;
+      topCall->m_closingData = topCall->m_closure = 0;
       topCall->m_codeBase = codeDepth();
       // initialize also initBase, as stackBase may move
       topCall->m_initBase = topCall->m_stackBase = dataSize()-nparams;
@@ -595,7 +596,7 @@ public:
    {
       register CallFrame* topCall = m_callStack.addSlot();
       topCall->m_function = function;
-      topCall->m_closure = 0;
+      topCall->m_closingData = topCall->m_closure = 0;
       topCall->m_codeBase = codeDepth();
       // initialize also initBase, as stackBase may move
       topCall->m_initBase = topCall->m_stackBase = dataSize()-nparams;
@@ -613,14 +614,16 @@ public:
    /** Prepares a new non-methodic closure call frame. */
    inline CallFrame* makeCallFrame( Closure* cd, int nparams )
    {
+      fassert( cd->closed() );
       register CallFrame* topCall = m_callStack.addSlot();
-      topCall->m_function = static_cast<Function*>(cd->closed());
-      topCall->m_closure = cd;
+      topCall->m_function = cd->closed();
+      topCall->m_closure = cd->data();
+      topCall->m_closingData = 0;
       topCall->m_codeBase = codeDepth();
       // initialize also initBase, as stackBase may move
       topCall->m_initBase = topCall->m_stackBase = dataSize()-nparams;
       // TODO: enable rule application with dynsymbols?
-      
+
       topCall->m_dynsBase = m_dynsStack.depth();
       topCall->m_paramCount = nparams;
       topCall->m_self.setNil();
@@ -631,6 +634,9 @@ public:
    }
 
    bool isMethodic() const { return currentFrame().m_bMethodic; }
+
+   ClosedData* getTopClosedData() const;
+   Item* findLocal( const String& name ) const;
 
 //========================================================
 //

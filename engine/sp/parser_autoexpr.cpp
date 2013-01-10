@@ -131,12 +131,18 @@ void apply_stmt_assign_list( const Rule&, Parser& p )
          // a simple assignment
          check_type(p, listLeft->front(), v2->line(), v2->chr() );
          // create the expression even on failure.
-         ExprAssign* assign = new ExprAssign( listLeft->front(), listRight->front() );
+         Expression* first = listLeft->front();
+         Expression* second = listRight->front();
+         ctx->defineSymbols(first);
+         ctx->accessSymbols(second);
+
+         ExprAssign* assign = new ExprAssign( first, second );
          listLeft->clear();
          ti->setValue( assign, expr_deletor );
       }
       else
       {
+         ctx->accessSymbols(listRight->front());
          ExprUnpack* unpack = new ExprUnpack( listRight->front(), true );
          // save the unpack already. Even on error, it WAS a try to unpack.
          ti->setValue( unpack, expr_deletor );
@@ -190,6 +196,7 @@ void apply_stmt_assign_list( const Rule&, Parser& p )
 
          fassert( ! listRight->empty() );
          Expression* assignand = listRight->front();
+         ctx->accessSymbols(assignand);
          listRight->pop_front();
 
          Symbol* symbol = static_cast<ExprSymbol*>(expr)->symbol();

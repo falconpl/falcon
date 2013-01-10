@@ -982,39 +982,21 @@ void VMContext::callInternal( Function* function, int nparams )
 void VMContext::callInternal( Closure* closure, int32 nparams )
 {
    // shall we create a full call frame?
-   if( closure->closedHandler()->typeID() == FLC_CLASS_ID_FUNC ) 
-   {
-      Function* function = static_cast<Function*>(closure->closed());
-      TRACE( "Calling closure function %s -- codebase:%d, dynsBase:%d, stackBase:%d",
-         function->locate().c_ize(),
-         m_callStack.m_top->m_codeBase, 
-         m_callStack.m_top->m_dynsBase, 
-         m_callStack.m_top->m_stackBase );
+   Function* function = closure->closed();
+   TRACE( "Calling closure function %s -- codebase:%d, dynsBase:%d, stackBase:%d",
+      function->locate().c_ize(),
+      m_callStack.m_top->m_codeBase,
+      m_callStack.m_top->m_dynsBase,
+      m_callStack.m_top->m_stackBase );
 
-      makeCallFrame( closure, nparams );
-      TRACE3( "-- codebase:%d, dynsBase:%d, stackBase:%d",
-         m_callStack.m_top->m_codeBase, 
-         m_callStack.m_top->m_dynsBase, 
-         m_callStack.m_top->m_stackBase );
+   makeCallFrame( closure, nparams );
+   TRACE3( "-- codebase:%d, dynsBase:%d, stackBase:%d",
+      m_callStack.m_top->m_codeBase,
+      m_callStack.m_top->m_dynsBase,
+      m_callStack.m_top->m_stackBase );
 
-      // do the call
-      function->invoke( this, nparams );
-   }
-   else {
-      int32 locCount = (int32) closure->closedLocals();
-      if( nparams < locCount ) {
-         addLocals( locCount - nparams );
-      }
-      else if( nparams > locCount ) { 
-         popData(nparams-locCount);
-      }
-            
-      // add the closure data to the parameters.
-      int totParams = locCount + closure->pushClosedData( this );
-      // only functions support variable parameter call protocol;
-      // -- all the others are bound to have extra params as closed data.
-      closure->closedHandler()->op_call(this, totParams, closure->closed());
-   }
+   // do the call
+   function->invoke( this, nparams );
 }
 
 
@@ -1227,6 +1209,7 @@ Item* VMContext::resolveSymbol( const Symbol* dyns, bool forAssign )
    {
       // not found? -- it's an unbound symbol.
       var = &addDataSlot();
+      var->setNil();
    }
    
    DynsData& newSlot = *m_dynsStack.addSlot();
@@ -1234,6 +1217,52 @@ Item* VMContext::resolveSymbol( const Symbol* dyns, bool forAssign )
    newSlot.m_value = var;
    
    return var;
+}
+
+
+ClosedData* VMContext::getTopClosedData() const
+{
+   CallFrame *cf = m_callStack.m_top;
+   while( cf >= m_callStack.m_base ) {
+      if( cf->m_closingData != 0 ) {
+         return cf->m_closingData;
+      }
+      --cf;
+   }
+
+   return 0;
+}
+
+
+Item* VMContext::findLocal( const String& name ) const
+{
+   CallFrame *cf = m_callStack.m_top;
+   while( cf >= m_callStack.m_base ) {
+
+      Variable* var = cf->m_function->variables().find(name);
+      if( var != 0 ) {
+         switch( var->type() ) {
+         case Variable::e_nt_local:
+            return &m_dataStack.m_base[ var->id() + cf->m_stackBase + cf->m_paramCount ];
+
+         case Variable::e_nt_param:
+            return &m_dataStack.m_base[ var->id() + cf->m_stackBase ];
+
+         case Variable::e_nt_closed:
+            if( cf->m_closure != 0 ) {
+               return cf->m_closure->get(name);
+            }
+            break;
+
+         default:
+            break;
+         }
+      }
+
+      --cf;
+   }
+
+   return 0;
 }
 
 

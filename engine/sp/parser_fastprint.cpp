@@ -55,6 +55,8 @@ static void apply_fastprint_internal( const Rule&, Parser& p, bool hasNl )
    List::iterator iter = list->begin();
    while( iter != list->end() )
    {
+      Expression* expr = *iter;
+      ctx->accessSymbols( expr );
       sfp->add( *iter );
       ++iter;
    }

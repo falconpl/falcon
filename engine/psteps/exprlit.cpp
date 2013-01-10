@@ -149,8 +149,6 @@ bool ExprLit::setNth( int32 n, TreeStep* ts )
 
 void ExprLit::apply_( const PStep* ps, VMContext* ctx )
 {
-   static Class* clsClosure = Engine::instance()->closureClass();
-   
    const ExprLit* self = static_cast<const ExprLit*>( ps );
    TRACE1( "Apply \"%s\"", self->describe().c_ize() );   
    fassert( self->m_child != 0 );
@@ -162,14 +160,7 @@ void ExprLit::apply_( const PStep* ps, VMContext* ctx )
       child->setVarMap(const_cast<VarMap*>(&self->m_paramTable), false);
    }
    
-   if( self->m_paramTable.closedCount() != 0 ) {
-      Closure* closure = new Closure( child->handler(), child );
-      closure->close(ctx, &self->m_paramTable);
-      ctx->pushData(Item(clsClosure, closure));
-   }
-   else {
-      ctx->pushData( Item(child->handler(), child) );
-   }
+   ctx->pushData( Item(child->handler(), child) );
 }
 
 }

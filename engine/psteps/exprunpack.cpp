@@ -46,6 +46,7 @@ ExprUnpack::ExprUnpack( Expression* op1, bool isTop, int line, int chr ):
 {
    FALCON_DECLARE_SYN_CLASS( expr_unpack )
    apply = apply_;
+   m_trait = Expression::e_trait_composite;
 }
 
 ExprUnpack::ExprUnpack( int line, int chr ):
@@ -56,19 +57,21 @@ ExprUnpack::ExprUnpack( int line, int chr ):
 {
    FALCON_DECLARE_SYN_CLASS( expr_unpack )
    apply = apply_;
+   m_trait = Expression::e_trait_composite;
 }
 
 ExprUnpack::ExprUnpack( const ExprUnpack& other ):
    Expression(other)
 {
    _p = new Private;
-   
+   m_trait = Expression::e_trait_composite;
    m_expander = other.m_expander->clone();
 
    _p->m_params.reserve(other._p->m_params.size());
    std::vector<Symbol*>::const_iterator iter = other._p->m_params.begin();
    while( iter != other._p->m_params.end() )
    {
+      (*iter)->incref();
       _p->m_params.push_back( *iter );
       ++iter;
    }
@@ -77,6 +80,12 @@ ExprUnpack::ExprUnpack( const ExprUnpack& other ):
 ExprUnpack::~ExprUnpack()
 {
    delete m_expander;
+   std::vector<Symbol*>::const_iterator iter = _p->m_params.begin();
+   while( iter != _p->m_params.end() )
+   {
+      (*iter)->decref();
+      ++iter;
+   }
 }
 
 bool ExprUnpack::simplify( Item& ) const
@@ -90,7 +99,7 @@ void ExprUnpack::describeTo( String& ret, int depth ) const
    // and generate all the expressions, in inverse order.
    for( unsigned int i = 0; i < _p->m_params.size(); ++i )
    {
-      if ( params.size() )
+      if ( i > 0 )
       {
          params += ", ";
       }
@@ -114,6 +123,7 @@ Symbol* ExprUnpack::getAssignand( int i) const
 ExprUnpack& ExprUnpack::addAssignand(Symbol* e)
 {
    _p->m_params.push_back(e);
+   e->incref();
    return *this;
 }
 

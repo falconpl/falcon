@@ -90,8 +90,12 @@ public:
    ModSpace( VMachine* owner, ModSpace* parent = 0 );
    virtual ~ModSpace();
    
-   /** Adds a new module to the module space. 
+   /** Adds a new module (internal) to the module space.
     \param module The module to be added.
+
+    This method is mainly thought to add a module that has been
+    created by a third party application in a module space, for
+    it to be usable by new code incoming later on.
 
     If the same identical module is present (by address), the method returns
     false. As multiple modules having the same logical name should not exist in
@@ -100,14 +104,21 @@ public:
     If this is not desirable, check the result of getModuleByName() method
     before trying to add the module.
     
+    The module exported symbols are
+    imported in the module space. This might throw an "already defined" error.
+    In this case, the error is thrown after the module is already added to the
+    module space.
 
-
-    \note This is the first step of creating a module space. It's optional,
-    and should be only used if the module is known not to have any
-    dependency.
+    \note add() is actually store() + forced export.
     */
    void add( Module* mod );
    
+   /** Store a module without exporting its values.
+
+       If the module is stored for load the caller should then call
+       exportFromModule() autonomously.
+    */
+   void store( Module* mod );
 
    void resolveDeps( VMContext* ctx, Module* mod );
    

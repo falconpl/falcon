@@ -177,6 +177,7 @@ add_library(falcon_engine SHARED
 
   classes/classarray.cpp
   classes/classbool.cpp
+  classes/classcloseddata.cpp
   classes/classclosure.cpp
   classes/classcomposition.cpp
   classes/classdict.cpp
@@ -236,6 +237,7 @@ add_library(falcon_engine SHARED
   autowstring.cpp
   bom.cpp
   class.cpp
+  closeddata.cpp
   closure.cpp
   collector.cpp
   collector_history.cpp

@@ -18,115 +18,149 @@
 #include <falcon/trace.h>
 
 #include <falcon/closure.h>
-#include <falcon/function.h>
-#include <falcon/vmcontext.h>
-#include <falcon/symbol.h>
 #include <falcon/varmap.h>
+#include <falcon/item.h>
+#include <falcon/vmcontext.h>
+#include <falcon/callframe.h>
+#include <falcon/mt.h>
+#include <falcon/function.h>
 #include <falcon/itemarray.h>
+
+#include <map>
+#include <vector>
 
 #include <string.h>
 
 namespace Falcon {
 
-Closure::Closure( Class* handler, void *closed ):
-   m_closed(closed),
-   m_handler( handler ),
-   m_closedData(0),
-   m_closedDataSize(0),
-   m_closedLocals(0),
-   m_mark(0)
-{
-}
 
 Closure::Closure():
+   m_mark(0),
    m_closed(0),
-   m_handler(0),
-   m_closedData(0),
-   m_closedDataSize(0),
-   m_closedLocals(0),
-   m_mark(0)
+   m_data(0)
 {
 }
 
-Closure::Closure( const Closure& other )
+Closure::Closure( Function* f ):
+   m_mark(0),
+   m_closed(f),
+   m_data(0)
 {
-   if( other.m_handler != 0 && other.m_closed != 0 ) {
-      m_handler = other.m_handler;
-      m_closed = m_handler->clone(other.m_closed);
-      m_closedDataSize = other.m_closedDataSize;      
-      m_closedData = new ItemArray();
-      m_closedLocals = other.m_closedLocals;
-      // the variables in a closure are SURELY references, so we can flat-copy them.
-      memcpy( m_closedData, other.m_closedData, m_closedDataSize * sizeof(Variable));
-   }
-   else {
-      m_handler = 0;
-      m_closed = 0;
-      m_closedDataSize = 0;      
-      m_closedData = 0;
-      m_closedLocals = 0;
-   }
+}
+
+Closure::Closure( const Closure& other ):
+   m_mark(0),
+   m_closed( other.m_closed ),
+   m_data( other.m_data )
+{
 }
 
 Closure::~Closure()
 {
-
 }
 
 void Closure::gcMark( uint32 mark )
 {
-   if( m_mark < mark )
-   {
-      m_mark = mark;
-      m_handler->gcMark(mark);
-      m_handler->gcMarkInstance(m_closed, mark);
-      m_closedData->gcMark(mark);
+   if( m_mark >= mark ) {
+      return;
+   }
+   m_mark = mark;
+
+   if ( m_closed != 0 ) {
+      m_closed->gcMark(mark);
+   }
+   if( m_data != 0 ) {
+      m_data->gcMark(mark);
    }
 }
 
-uint32 Closure::pushClosedData( VMContext* ctx )
+
+void Closure::flatten( VMContext*, ItemArray& subItems ) const
 {
-   for( uint32 i = 0; i < m_closedDataSize; ++ i ) 
-   {
-      ctx->pushData( (*m_closedData)[i] );
+   if( m_closed != 0 ) {
+      subItems.append( m_closed );
    }
-   
-   return m_closedDataSize;
+   else {
+      subItems.append( Item() );
+   }
+
+   if( m_data != 0 ) {
+      subItems.append( Item( m_data->handler(), m_data ) );
+   }
+   else {
+      subItems.append( Item() );
+   }
 }
 
 
-void Closure::close( VMContext* , const VarMap* st )
+void Closure::unflatten( VMContext*, ItemArray& subItems, uint32 pos )
 {
-   fassert( m_closed != 0 );
-   TRACE( "Closure::close %p", m_closed );
+   if( pos +2 >= subItems.length() ) {
+      return;
+   }
 
-   delete[] m_closedData;
-   uint32 size = st->closedCount();
-   m_closedDataSize = size;
-   m_closedLocals = st->localCount();
-   
-   for( uint32 i = 0; i < size; ++i )
-   {
-      const String& closedName = st->getClosedName(i);
-      
-      TRACE1( "Closure::close -- closing symbol %s", closedName.c_ize() );
-      
-      /*
-       * TODO
-       */
-      /*
-      Variable* variable = ctx-> ( closedName );
-      if( variable != 0 ) {
-         TRACE2( "Closure::close -- closed symbol %s => \"%s\"",
-            closed->name().c_ize(), variable->value()->describe().c_ize() );
+   Item& closedItem = subItems[pos++];
+   Item& dataItem = subItems[pos++];
 
-         m_closedData[closed->localId()].makeReference(variable);
+   m_closed = closedItem.isNil() ? 0 : closedItem.asFunction();
+   m_data = dataItem.isNil() ? 0 : static_cast<ClosedData*>(dataItem.asInst());
+}
+
+Class* Closure::handler() const
+{
+   static Class* cls = Engine::instance()->closureClass();
+   return cls;
+}
+
+
+/** Analyzes the function and the context and closes the needed values.
+ \param ctx the context where the closed data is to be found.
+ \param A symbol table containing the symbols to be closed.
+ */
+void Closure::close( VMContext* ctx )
+{
+   const VarMap& vars = m_closed->variables();
+   TRACE( "Closure::close %s -- %d vars", m_closed->name().c_ize(), vars.closedCount() )
+
+   uint32 closedCount = vars.closedCount();
+   if( closedCount == 0 ) return;
+
+   CallFrame* current = &ctx->currentFrame();
+   ClosedData* cd = ctx->getTopClosedData();
+   if( cd != 0 ) {
+      if( cd == current->m_closingData ) {
+         m_data = current->m_closingData;
       }
       else {
-         TRACE2( "Closure::close -- didn't find symbol to close %s", closed->name().c_ize() );
-         Variable::makeFreeVariable(m_closedData[closed->localId()]);
+         if( m_data == 0 ) {
+            m_data = new ClosedData;
+            FALCON_GC_HANDLE( m_data );
+         }
+         m_data->copy( *cd );
       }
-      */
+   }
+   else {
+      if( m_data == 0 ) {
+         m_data = new ClosedData;
+         FALCON_GC_HANDLE( m_data );
+      }
+   }
+
+   current->m_closingData = m_data;
+
+   for( uint32 i = 0; i < closedCount; ++i )
+   {
+      const String& name = vars.getClosedName(i);
+      Item* data = ctx->findLocal( name );
+
+      if( data != 0 )
+      {
+         TRACE1( "Closure::close %s -- found %s", m_closed->name().c_ize(), name.c_ize() );
+         m_data->add(name, *data);
+      }
+      else {
+         TRACE1( "Closure::close %s -- NOT found %s", m_closed->name().c_ize(), name.c_ize() );
+      }
    }
 }
 

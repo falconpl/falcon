@@ -160,6 +160,20 @@ void ModSpace::loadSubModule( const String& name, bool isUri, bool isMain, VMCon
 void ModSpace::add( Module* mod )
 {
    TRACE( "ModSpace::add %s", mod->name().c_ize() );
+
+   store( mod );
+
+   Error* le = 0;
+   exportFromModule(mod, le );
+   if( le != 0 ) {
+      throw le;
+   }
+}
+
+
+void ModSpace::store( Module* mod )
+{
+   TRACE( "ModSpace::store %s", mod->name().c_ize() );
    mod->incref();
 
    Private::ModMap::iterator iter = _p->m_modmap.find( mod->name() );
@@ -192,12 +206,6 @@ void ModSpace::add( Module* mod )
    
    // tell the module we're in charge.
    mod->modSpace(this);
-
-   Error* le = 0;
-   exportFromModule(mod, le );
-   if( le != 0 ) {
-      throw le;
-   }
 }
 
 
@@ -633,7 +641,7 @@ void ModSpace::PStepLoader::apply_( const PStep* self, VMContext* ctx )
       TRACE( "ModSpace::PStepLoader::apply_ step 1 on module %s", mod->name().c_ize() );
       seqId++;
       // store the module
-      ms->add( mod );
+      ms->store( mod );
 
       // perform exports, so imports can find them on need.
       if( mod->usingLoad() ) {

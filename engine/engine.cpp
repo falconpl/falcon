@@ -65,6 +65,7 @@
 #include <falcon/classes/classsynfunc.h>
 #include <falcon/classes/classnil.h>
 #include <falcon/classes/classbool.h>
+#include <falcon/classes/classcloseddata.h>
 #include <falcon/classes/classclosure.h>
 #include <falcon/classes/classcomposition.h>
 #include <falcon/classes/classint.h>
@@ -222,7 +223,6 @@ Engine::Engine()
    }   
    m_instance = this; // modules need the engine.
 
-
    m_mtx = new Mutex;
    m_log = new Log;
    m_collector = new Collector;   
@@ -349,6 +349,7 @@ Engine::Engine()
    //
       
    m_closureClass = new ClassClosure;
+   m_closedDataClass = new ClassClosedData;
    m_restorerClass = new ClassRestorer;
    m_storerClass = new ClassStorer;
    m_streamClass = new ClassStream;
@@ -440,6 +441,7 @@ Engine::~Engine()
    //   
    delete m_predefs;   
    delete m_synClasses;
+   delete m_closedDataClass;
    
    //============================================
    // Delete singletons
@@ -822,6 +824,13 @@ Class* Engine::closureClass() const
 {
    fassert( m_instance != 0 );
    return m_instance->m_closureClass;
+}
+
+
+Class* Engine::closedDataClass() const
+{
+   fassert( m_instance != 0 );
+   return m_instance->m_closedDataClass;
 }
 
 

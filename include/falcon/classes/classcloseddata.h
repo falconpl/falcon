@@ -1,20 +1,20 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: classclosure.h
+   FILE: classclosedddata.h
 
-   Handler for closure entities.
+   Handler for data in closure entities.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
-   Begin: Sun, 01 Jan 2012 16:13:09 +0100
+   Begin: Thu, 10 Jan 2013 15:02:40 +0100
 
    -------------------------------------------------------------------
-   (C) Copyright 2011: the FALCON developers (see list in AUTHORS file)
+   (C) Copyright 2013: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
 */
 
-#ifndef _FALCON_CLASSCLOSURE_H_
-#define _FALCON_CLASSCLOSURE_H_
+#ifndef _FALCON_CLASSCLOSEDDATA_H_
+#define _FALCON_CLASSCLOSEDDATA_H_
 
 #include <falcon/setup.h>
 #include <falcon/class.h>
@@ -24,16 +24,16 @@
 namespace Falcon
 {
 
-/**  Class handling an array as an item in a falcon script.
- 
+/** Handler for data in closure entities.
+ *
+ *  Not visible at script level.
  */
-
-class FALCON_DYN_CLASS ClassClosure: public Class
+class FALCON_DYN_CLASS ClassClosedData: public Class
 {
 public:
 
-   ClassClosure();
-   virtual ~ClassClosure();
+   ClassClosedData();
+   virtual ~ClassClosedData();
    
    //=============================================================
 
@@ -48,14 +48,10 @@ public:
 
    virtual void gcMarkInstance( void* self, uint32 mark ) const;
    virtual bool gcCheckInstance( void* instance, uint32 mark ) const;
-   
-   //=============================================================
-
-   virtual void op_call( VMContext* ctx, int32 paramCount, void* instance ) const;
 };
 
 }
 
 #endif /* _FALCON_CLASSARRAY_H_ */
 
-/* end of classclosure.h */
+/* end of classclosedddata.h */

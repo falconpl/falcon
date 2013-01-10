@@ -68,6 +68,7 @@ void Symbol::decref()
 
 Item* Symbol::resolve( VMContext* ctx, bool forAssign ) const
 {
+   TRACE1( "Symbol::resolve -- resolving %s%s", m_name.c_ize(), m_isGlobal ? " (global)": "")
    CallFrame* cf = &ctx->currentFrame();
    Function* func = cf->m_function;
 
@@ -77,7 +78,8 @@ Item* Symbol::resolve( VMContext* ctx, bool forAssign ) const
       if( var != 0 ) {
          switch( var->type() ) {
          case Variable::e_nt_closed:
-            return 0; //TODO
+            if( cf->m_closure == 0 ) return 0;
+            return cf->m_closure->get(m_name);
 
          case Variable::e_nt_local:
             return ctx->local(var->id());

@@ -20,6 +20,8 @@
 #include <falcon/item.h>
 #include <falcon/collector.h>
 #include <falcon/module.h>
+#include <falcon/closure.h>
+#include <falcon/callframe.h>
 
 #include <falcon/engine.h>
 #include <falcon/errors/paramerror.h>
@@ -99,7 +101,6 @@ bool Function::parseDescription( const String& params )
 }
 
 
-
 Error* Function::paramError(int line, const char* place ) const
 {
    String placeName = place == 0 ? (m_module == 0 ? "" : m_module->name() ) : place;
@@ -109,7 +110,6 @@ Error* Function::paramError(int line, const char* place ) const
            .extra(m_signature) );
    
 }
-
 
 }
 

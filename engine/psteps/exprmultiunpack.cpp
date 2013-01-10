@@ -45,6 +45,7 @@ ExprMultiUnpack::ExprMultiUnpack( int line, int chr ):
 {
    FALCON_DECLARE_SYN_CLASS( expr_munpack )
    apply = apply_;
+   m_trait = Expression::e_trait_composite;
 }
 
 ExprMultiUnpack::ExprMultiUnpack( bool isTop, int line, int chr ):
@@ -54,6 +55,7 @@ ExprMultiUnpack::ExprMultiUnpack( bool isTop, int line, int chr ):
 {
    FALCON_DECLARE_SYN_CLASS( expr_munpack )
    apply = apply_;
+   m_trait = Expression::e_trait_composite;
 }
 
 
@@ -61,7 +63,8 @@ ExprMultiUnpack::ExprMultiUnpack( const ExprMultiUnpack& other ):
          Expression(other)
 {
    apply = apply_;
-    
+   m_trait = Expression::e_trait_composite;
+
    _p = new Private;
 
    _p->m_params.reserve(other._p->m_params.size());
@@ -84,6 +87,13 @@ ExprMultiUnpack::ExprMultiUnpack( const ExprMultiUnpack& other ):
 
 ExprMultiUnpack::~ExprMultiUnpack()
 {
+   std::vector<Symbol*>::const_iterator si = _p->m_params.begin();
+   while( si != _p->m_params.end() )
+   {
+      (*si)->decref();
+      ++si;
+   }
+
    std::vector<Expression*>::const_iterator iter = _p->m_assignee.begin();
    while( iter != _p->m_assignee.end() )
    {
@@ -145,6 +155,7 @@ ExprMultiUnpack& ExprMultiUnpack::addAssignment( Symbol* e, Expression* expr)
 {
    // save exprs and symbols in a parallel array
    _p->m_params.push_back(e);
+   e->incref();
    _p->m_assignee.push_back(expr);
 
    return *this;

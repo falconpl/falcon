@@ -22,7 +22,7 @@
 namespace Falcon {
 
 class Function;
-class Closure;
+class ClosedData;
 
 /** Call Frame for the Falcon virtual machine.
  *
@@ -41,7 +41,10 @@ public:
    Function* m_function;
    
    /** Data closed in closures. */
-   Closure* m_closure;
+   ClosedData* m_closure;
+
+   /** Data closed in closures. */
+   ClosedData* m_closingData;
 
    /** Number of parameters used for the effective call. */
    uint32 m_paramCount;
@@ -96,6 +99,7 @@ public:
    CallFrame( Function* f, uint32 pc, uint32 sb, uint32 cb, uint32 dynb, uint32 locb, const Item& self ):
       m_function(f),
       m_closure(0),
+      m_closingData(0),
       m_paramCount( pc ),
       m_stackBase( sb ),
       m_initBase( sb ),
@@ -110,6 +114,7 @@ public:
    CallFrame( Function* f, uint32 pc, uint32 sb, uint32 cb, uint32 dynb, uint32 locb ):
       m_function(f),
       m_closure(0),
+      m_closingData(0),
       m_paramCount( pc ),
       m_stackBase( sb ),
       m_initBase( sb ),

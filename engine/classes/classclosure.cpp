@@ -51,55 +51,42 @@ void* ClassClosure::createInstance() const
    return new Closure;
 }
 
-void ClassClosure::store( VMContext*, DataWriter* wr, void* instance ) const
-{
-   Closure* cls = static_cast<Closure*>(instance);
-   wr->write( cls->m_closedLocals );
-}
 
-void ClassClosure::restore( VMContext* ctx, DataReader* rd ) const
+void ClassClosure::flatten( VMContext* ctx, ItemArray& subItems, void* instance ) const
 {
-   Closure* cls = new Closure();
-   uint32 locals;
-   rd->read( locals );
-   cls->m_closedLocals = locals;
-   ctx->pushData( FALCON_GC_STORE( this, cls) );
-}
-
-void ClassClosure::flatten( VMContext*, ItemArray& subItems, void* instance ) const
-{
-   Closure* closure = static_cast<Closure*>(instance);   
-   // save also the current values of the items
-   // TODO: If we save the ItemReference, the flattening mechanism should be able
-   // to preserve the references in unflatten.
-   subItems.resize( 2 );
-   subItems[0] = Item( closure->m_handler, closure->m_closed );
-   subItems[1] = Item( closure->closedData()->handler(), closure->closedData() );
+   Closure* closure = static_cast<Closure*>(instance);
+   closure->flatten(ctx, subItems);
 }
 
 
-void ClassClosure::unflatten( VMContext*, ItemArray& subItems, void* instance ) const
+void ClassClosure::unflatten( VMContext* ctx, ItemArray& subItems, void* instance ) const
 {   
    Closure* closure = static_cast<Closure*>(instance);
-   fassert( subItems.length() > 0 );
-   
-   subItems[0].forceClassInst( closure->m_handler, closure->m_closed );
-   if( subItems.length() == 2 ) {
-      closure->m_closedData = static_cast<ItemArray*>(subItems[1].asInst());
-   }
+   closure->unflatten(ctx, subItems, 0);
 }
    
 void ClassClosure::describe( void* instance, String& target, int depth, int maxlen) const
 {
    Closure* closure = static_cast<Closure*>(instance);
-   if( closure->m_handler == 0 || closure->m_closed == 0 )
-   {
-      target = "<Blank Closure>";
+   target = "/* Closure ";
+   if( closure->data() != 0 ) {
+      target.N( closure->data()->size() );
+      target += " itm ";
    }
    else {
+      target += "empty";
+   }
+
+   Function* func = closure->closed();
+   if( func != 0 ) {
+      target += "for */ ";
       String temp;
-      closure->m_handler->describe(closure->m_closed, temp, depth+1, maxlen );
-      target = "/* Closure for */" + temp;
+      // don't descend in depth
+      func->handler()->describe( func, temp, depth, maxlen );
+      target += temp;
+   }
+   else {
+      target +=" */";
    }
 }
 

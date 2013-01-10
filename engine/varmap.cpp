@@ -94,7 +94,7 @@ Variable* VarMap::addClosed( const String& name )
    }
    uint32 id = _p->m_closedNames.size();
 
-   pos = _p->m_variables.insert( std::make_pair(name, Variable( Variable::e_nt_local, id )) ).first;
+   pos = _p->m_variables.insert( std::make_pair(name, Variable( Variable::e_nt_closed, id )) ).first;
    _p->m_closedNames.push_back(&pos->first);
 
    return &pos->second;
@@ -108,7 +108,7 @@ Variable* VarMap::addGlobal( const String& name )
    }
    uint32 id = _p->m_globalNames.size();
 
-   pos = _p->m_variables.insert( std::make_pair(name, Variable( Variable::e_nt_local, id )) ).first;
+   pos = _p->m_variables.insert( std::make_pair(name, Variable( Variable::e_nt_global, id )) ).first;
    _p->m_globalNames.push_back(&pos->first);
 
    return &pos->second;
@@ -122,7 +122,7 @@ Variable* VarMap::addExtern( const String& name )
    }
    uint32 id = _p->m_externNames.size();
 
-   pos = _p->m_variables.insert( std::make_pair(name, Variable( Variable::e_nt_local, id )) ).first;
+   pos = _p->m_variables.insert( std::make_pair(name, Variable( Variable::e_nt_extern, id )) ).first;
    _p->m_externNames.push_back(&pos->first);
 
    return &pos->second;

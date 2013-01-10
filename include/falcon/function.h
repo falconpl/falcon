@@ -30,6 +30,7 @@ class Error;
 class Class;
 class Item;
 class ClassFunction;
+class Closure;
 
 /**
  Falcon function.
@@ -205,6 +206,8 @@ public:
    VarMap& variables() { return m_vars; }
 
    inline uint32 paramCount() const { return m_vars.paramCount(); }
+   bool hasClosure() const { return m_vars.closedCount() != 0; }
+
 protected:
    VarMap m_vars;
    String m_signature;

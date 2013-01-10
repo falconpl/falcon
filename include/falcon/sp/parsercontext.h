@@ -383,7 +383,9 @@ public:
     to the topmost table before being returned.
 
     */
-   Variable* findSymbol( const String& name );
+   Variable* findLocalSymbol( const String& name );
+
+   bool isParentLocal( const String& name );
 
    /** Return true if the current statements are at syntactic top-level.
    \return true if the current statements are "main code" of the current syntax

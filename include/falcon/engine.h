@@ -367,6 +367,17 @@ public:
     */
    Class* closureClass() const;
    
+   /** Returns the global instance of the ClassClosedData class.
+   \return the Engine instance of the ClassClosedData handler.
+
+    Method init() must have been called before.
+
+    @note This method will assert and terminate the program if compiled in debug mode
+    in case the engine has not been initialized. In release, it will just
+    return a null pointer.
+    */
+   Class* closedDataClass() const;
+
    /** Returns the global instance of the ClassRawMem class.
    \return the Engine instance of the ClassRawMem handler.
 
@@ -608,6 +619,7 @@ protected:
    Class* m_syntreeClass;
    Class* m_symbolClass;
    Class* m_closureClass;
+   Class* m_closedDataClass;
    Class* m_storerClass;
    Class* m_restorerClass;
    Class* m_streamClass;

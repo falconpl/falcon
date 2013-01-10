@@ -281,12 +281,17 @@ Variable* ParserContext::accessSymbol( const String& variable )
    else
    {
       // search in the local contexts
-      nuks = findSymbol( variable );
+      nuks = findLocalSymbol( variable );
       // not found?
 
       if ( nuks == 0 ) {
-         // tell the subclass we're accessing this variable as global.
-         nuks = onGlobalAccessed( variable );
+         if( isParentLocal( variable ) ) {
+            nuks = m_varmap->addClosed(variable);
+         }
+         else {
+            // tell the subclass we're accessing this variable as global.
+            nuks = onGlobalAccessed( variable );
+         }
       }
    }
 
@@ -342,7 +347,7 @@ void ParserContext::accessSymbols( Expression* expr )
 }
 
 
-Variable* ParserContext::findSymbol( const String& name )
+Variable* ParserContext::findLocalSymbol( const String& name )
 {
    TRACE1("ParserContext::findSymbol \"%s\"", name.c_ize() );
    if( m_varmap == 0 )
@@ -358,36 +363,38 @@ Variable* ParserContext::findSymbol( const String& name )
       return var;
    }
 
+   return 0;
+}
+
+bool ParserContext::isParentLocal( const String& name )
+{
    Private::FrameVector::const_reverse_iterator iter = _p->m_frames.rbegin();
    while( iter != _p->m_frames.rend() )
    {
       const CCFrame& frame = *iter;
 
       // skip symbol table of classes, they can't be referenced by inner stuff.
-      if( frame.m_type != CCFrame::t_func_type || &frame.m_elem.func->variables() == m_varmap )
+      if( frame.m_type == CCFrame::t_class_type )
       {
          // we can't close symbols across class definitions.
          break;
       }
 
-      var = frame.m_elem.func->variables().find( name );
+      if( frame.m_type != CCFrame::t_func_type || &frame.m_elem.func->variables() == m_varmap ) {
+         ++iter;
+         continue;
+      }
+
+      Variable* var = frame.m_elem.func->variables().find( name );
       if( var !=  0 )
       {
-         if( var->type() == Variable::e_nt_local )
-         {
-            TRACE1("ParserContext::findSymbol \"%s\" found, need to be closed", name.c_ize() );
-            //TODO: Properly close symbols. -- this won't work
-            m_varmap->addClosed(name);
-            return 0;
-         }
-
-         TRACE1("ParserContext::findSymbol \"%s\" found of type %d", name.c_ize(), var->type() );
-         return var;
+         TRACE1("ParserContext::findSymbol \"%s\" found, need to be closed", name.c_ize() );
+         return true;
       }
       ++iter;
    }
 
-   return 0;
+   return false;
 }
 
 

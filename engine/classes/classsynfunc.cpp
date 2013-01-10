@@ -128,7 +128,7 @@ void ClassSynFunc::unflatten( VMContext*, ItemArray& subItems, void* instance ) 
    SynFunc* synfunc = static_cast<SynFunc*>(instance);
    // first restore the symbol table.
    
-   for( uint32 i = 0; i < subItems.length(); ++i ) {
+   for( uint32 i = 0; i+1 < subItems.length(); ++i ) {
       Class* cls = 0;
       void* data = 0;
       subItems[i].asClassInst(cls,data);
