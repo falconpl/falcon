@@ -27,10 +27,10 @@ try
    h = curl.Handle( URI.encode(Options.url) )
    // we want to receive the data as a stream.
    h.setInStream( is )
-   h.setOption( curl.CURLOPT.UPLOAD, true )
+   h.setOption( curl.OPT.UPLOAD, true )
 
-   if Options.user: h.setOption( curl.CURLOPT.USERNAME, Options.user )
-   if Options.password: h.setOption( curl.CURLOPT.PASSWORD, Options.password )
+   if Options.user: h.setOption( curl.OPT.USERNAME, Options.user )
+   if Options.password: h.setOption( curl.OPT.PASSWORD, Options.password )
 
    // if we want to rename the file after it is copied, use FTP quote
    if Options.newname
@@ -38,7 +38,7 @@ try
       quoted = [
          "RNFR " + uri.path,
          "RNTO " + Options.newname ]
-      h.setOption( curl.CURLOPT.POSTQUOTE, quoted )
+      h.setOption( curl.OPT.POSTQUOTE, quoted )
    end
          
 
