@@ -383,7 +383,7 @@ void ClassModule::restoreModule( Module* mod, DataReader* stream ) const
       
       if( idSymbol >= 0 )
       {
-         if( idSymbol >= (int32) mp->m_symCount )
+         if( idSymbol >= (int32) mod->globals().size() )
          {
             throw new IOError( ErrorParam( e_deser, __LINE__, SRC )
                .origin( ErrorParam::e_orig_loader )
@@ -394,9 +394,23 @@ void ClassModule::restoreModule( Module* mod, DataReader* stream ) const
       
       Module::Private::Dependency* dep = new Module::Private::Dependency( sName );
       dep->m_idef = idef;
-      dep->m_variable = idSymbol >= 0 ? &mod->globals().getGlobal(idSymbol)->m_var : 0;
+      dep->m_sourceName = sName;
+      VarDataMap::VarData* vd = 0;
+      if( idSymbol >= 0 ) {
+         vd = mod->globals().getGlobal(idSymbol);
+         dep->m_variable = &vd->m_var;
+      }
+      else {
+         dep->m_variable = 0;
+      }
+      dep->m_id = progID;
+
       deplist.push_back( dep );      
-      
+      mp->m_depsByName[sName] = dep;
+
+      TRACE2( "ClassModule::restoreModule -- restored dependency %d: %s (var:%s, idef:%d)",
+               progID, sName.c_ize(), (vd == 0? "<undef>": vd->m_name.c_ize()), idDef );
+
       ++progID;
    }
    
@@ -491,14 +505,17 @@ void ClassModule::unflatten( VMContext* ctx, ItemArray& subItems, void* instance
    while( ! current->isNil() && pos < subItems.length()-2 )
    {
       Mantra* mantra = static_cast<Mantra*>(current->asInst());  
+      TRACE1( "ClassModule::unflatten -- storing mantra %s ", mantra->name().c_ize() );
+
       if( mantra->name() == "__main__" )
       {
-         mod->setMainFunction( static_cast<Function*>(mantra) );
+         mod->m_mainFunc = static_cast<Function*>(mantra);
       }
-      else {
-         mp->m_mantras[mantra->name()] = mantra;
-      }
+
+      mp->m_mantras[mantra->name()] = mantra;
       mantra->module( mod );
+      // no need to store the mantra in globals:
+      // the globals already unflattened and mantras are in place.
       
       ++pos;
       current = &subItems[pos];
@@ -511,8 +528,14 @@ void ClassModule::unflatten( VMContext* ctx, ItemArray& subItems, void* instance
    while( ! current->isNil() && pos < subItems.length()-1 )
    {      
       Requirement* req = static_cast<Requirement*>(current->asInst());
+      TRACE1( "ClassModule::unflatten -- restored requirement for %s", req->name().c_ize() );
       reqs.push_back( req );
-      subItems.append( Item(req->cls(), req) );
+      // find the dependency to which this requirement belongs to
+      Module::Private::DepMap::iterator depi = mp->m_depsByName.find( req->name() );
+      if( depi != mp->m_depsByName.end() ) {
+         TRACE2( "ClassModule::unflatten -- found dependency for requirement %s", req->name().c_ize() );
+         depi->second->m_waitings.push_back( req );
+      }
       ++pos;
       current = &subItems[pos];
    }

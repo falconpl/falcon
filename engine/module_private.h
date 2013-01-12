@@ -129,7 +129,7 @@ public:
       /** We are responsible ofthe waiting list -- requirements are in the module. */
       typedef std::deque<Requirement*> WaitingList;
       
-      /* Delayed requests waiting for this synmbol to be resolved. 
+      /* Delayed requests waiting for this symbol to be resolved.
        
        This is a list of Requirement for things waiting for this dependency to be resolved.
        The requirements are generated 

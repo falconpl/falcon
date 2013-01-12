@@ -26,6 +26,7 @@ class Statement;
 class VarMap;
 class Symbol;
 class Expression;
+class ClassSynTree;
 
 /** Syntactic tree.
  *
@@ -139,6 +140,7 @@ protected:
    Expression* m_selector;
 
    void setApply();
+   friend class ClassSynTree;
 };
 
 }

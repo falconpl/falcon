@@ -63,7 +63,9 @@ void* ClassString::createInstance() const
 
 void ClassString::store( VMContext*, DataWriter* dw, void* data ) const
 {
-   dw->write( *( static_cast<String*>( data ) ) );
+   String& value = *static_cast<String*>( data );
+   TRACE2( "ClassString::store -- \"%s\"", value.c_ize() );
+   dw->write( value );
 }
 
 
@@ -74,7 +76,8 @@ void ClassString::restore( VMContext* ctx, DataReader* dr ) const
    try
    {
       dr->read( *str );
-      ctx->pushData( FALCON_GC_STORE( this, dr ) );
+      TRACE2( "ClassString::restore -- \"%s\"", str->c_ize() );
+      ctx->pushData( FALCON_GC_STORE( this, str ) );
    }
    catch( ... )
    {

@@ -64,6 +64,13 @@ void ClassSynTree::restore( VMContext* ctx, DataReader* stream ) const
    m_parent->restore( ctx, stream );
 }
 
+void ClassSynTree::unflatten( VMContext* ctx, ItemArray& subItems, void* instance ) const
+{
+   m_parent->unflatten( ctx, subItems, instance );
+   SynTree* tgt = static_cast<SynTree*>(instance);
+   tgt->setApply();
+}
+
 
 void ClassSynTree::enumerateProperties( void* instance, Class::PropertyEnumerator& cb ) const
 {

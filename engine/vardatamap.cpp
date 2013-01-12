@@ -337,7 +337,7 @@ bool VarDataMap::promoteExtern( uint32 id, const Item& value, int32 redeclaredAt
    vd->m_storage = value;
    vd->m_data = &vd->m_storage;
 
-   if( redeclaredAt >= 0 ) {
+   if( redeclaredAt > 0 ) {
       var->declaredAt(redeclaredAt);
    }
    return true;

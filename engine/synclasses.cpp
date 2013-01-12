@@ -622,20 +622,22 @@ void SynClasses::ClassGenSym::store( VMContext*, DataWriter* dw, void* instance 
    dw->write( es->line() );
    dw->write( es->chr() );
    dw->write( es->name() );
+   dw->write( es->symbol()->isGlobal() );
 }
 void SynClasses::ClassGenSym::restore( VMContext* ctx, DataReader*dr ) const
 {
-   // TODO: this is just a test.
    int32 line, chr;
    String name;
+   bool bIsGlobal;
    dr->read( line );
    dr->read( chr );
    dr->read( name );
+   dr->read( bIsGlobal );
 
    ExprSymbol* es = new ExprSymbol;
    ctx->pushData( Item( this, es ) );
    es->decl( line, chr );
-   es->name( name );
+   es->symbol( Engine::getSymbol( name, bIsGlobal) );
 }
  
 //==========================================
@@ -965,6 +967,7 @@ void SynClasses::ClassForTo::flatten( VMContext*, ItemArray& subItems, void* ins
    static Class* clsSym = Engine::instance()->symbolClass();
 
    StmtForTo* stmt = static_cast<StmtForTo*>(instance);
+   TRACE1( "SynClasses::ClassForTo::flatten %s", stmt->oneLiner().c_ize() );
    subItems.resize(8);
    if ( stmt->target() != 0 ) { subItems[0] = Item( clsSym, stmt->target() ); }
    if ( stmt->startExpr() != 0 ) { subItems[1] = Item( stmt->startExpr()->handler(), stmt->startExpr() ); }
@@ -980,6 +983,7 @@ void SynClasses::ClassForTo::unflatten( VMContext*, ItemArray& subItems, void* i
    StmtForTo* stmt = static_cast<StmtForTo*>(instance);
    if( subItems.length() == 8 )
    {
+      MESSAGE( "SynClasses::ClassForTo::unflatten -- correct subItems size.");
       if( ! subItems[0].isNil() ) stmt->target( static_cast<Symbol*>(subItems[0].asInst()) );
       if( ! subItems[1].isNil() ) stmt->startExpr( static_cast<Expression*>( subItems[1].asInst() ) );
       if( ! subItems[2].isNil() ) stmt->endExpr( static_cast<Expression*>( subItems[2].asInst() ) );
@@ -989,6 +993,7 @@ void SynClasses::ClassForTo::unflatten( VMContext*, ItemArray& subItems, void* i
       if( ! subItems[6].isNil() ) stmt->forLast( static_cast<SynTree*>(subItems[6].asInst()) );
       if( ! subItems[7].isNil() ) stmt->forMiddle( static_cast<SynTree*>(subItems[7].asInst()) );
    }
+   TRACE1( "SynClasses::ClassForTo::unflatten %s", stmt->oneLiner().c_ize() );
 }
 
 //=================================================================

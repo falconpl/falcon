@@ -245,6 +245,8 @@ void ClassTreeStep::op_setProperty( VMContext* ctx, void* instance, const String
 void ClassTreeStep::store( VMContext*, DataWriter* dw, void* instance ) const
 {
    TreeStep* ts = static_cast<TreeStep*>( instance );
+   TRACE2("ClassTreeStep::store %s", ts->describe(0).c_ize());
+
    // save the position
    dw->write( ts->line() );
    dw->write( ts->chr() );
@@ -254,6 +256,8 @@ void ClassTreeStep::restore( VMContext* ctx, DataReader*dr ) const
 {
    fassert( ctx->topData().asClass()->isDerivedFrom( this ) ) ;
    TreeStep* ts = static_cast<TreeStep*>( ctx->topData().asInst() );
+   TRACE2("ClassTreeStep::restore %s", ts->describe(0).c_ize());
+
    int32 line, chr;
    dr->read( line );
    dr->read( chr );
@@ -263,6 +267,8 @@ void ClassTreeStep::restore( VMContext* ctx, DataReader*dr ) const
 void ClassTreeStep::flatten( VMContext*, ItemArray& subItems, void* instance ) const
 {
    TreeStep* ts = static_cast<TreeStep*>( instance );
+   TRACE2("ClassTreeStep::flatten %s", ts->describe(0).c_ize());
+
    subItems.resize( ts->arity() + 1 );
    if( ts->selector() != 0 )
    {
@@ -288,6 +294,7 @@ void ClassTreeStep::flatten( VMContext*, ItemArray& subItems, void* instance ) c
 void ClassTreeStep::unflatten( VMContext*, ItemArray& subItems, void* instance ) const
 {
    TreeStep* ts = static_cast<TreeStep*>( instance );
+   TRACE2("ClassTreeStep::unflatten %s", ts->describe(0).c_ize());
 
    if( subItems[0].isUser() )
    {

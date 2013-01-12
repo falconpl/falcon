@@ -262,7 +262,11 @@ Variable* ParserContext::defineSymbol( const String& variable )
    else
    {
       // add it in the current symbol table.
-      nuks = m_varmap->addLocal( variable );
+      nuks = m_varmap->find( variable );
+      if( nuks == 0 ) {
+         nuks = m_varmap->addLocal( variable );
+         fassert( nuks != 0 );
+      }
    }
    
    return nuks;

@@ -69,16 +69,16 @@ void ExprAssign::describeTo( String& str, int depth ) const
 void ExprAssign::apply_( const PStep* ps, VMContext* ctx )
 {
    const ExprAssign* self = static_cast<const ExprAssign*>(ps);
-   TRACE2( "Apply \"%s\"", self->describe().c_ize() );
-   
+
+   // Generate the values
+   CodeFrame& cf = ctx->currentCode();
+   TRACE2( "Apply \"%s\" (%d/1)", self->describe().c_ize(), cf.m_seqId );
    
    // Resolve...
    fassert( self->m_first != 0 );
    fassert( self->m_first->lvalueStep() != 0 );
    fassert( self->m_second != 0 );
    
-   // Generate the values
-   CodeFrame& cf = ctx->currentCode();
    switch( cf.m_seqId )
    {
       case 0: 
@@ -88,16 +88,11 @@ void ExprAssign::apply_( const PStep* ps, VMContext* ctx )
          {
             return;
          }
-         // fallthrough
-      case 1:
-         cf.m_seqId = 2;
-         if( ctx->stepInYield( self->m_first->lvalueStep(), cf ) )
-         {
-            return;
-         }      
+         /* no break */
    }
    
-   ctx->popCode();
+   // we're clear -- apply assignment
+   ctx->resetCode(self->m_first->lvalueStep());
 }
 
 }

@@ -243,6 +243,8 @@ void ModSpace::exportFromModule( Module* mod, Error*& link_errors )
 
 Error* ModSpace::exportSymbol( Module* mod, const String& name, const Variable& var )
 {
+   TRACE1( "ModSpace::exportSymbol %s", name.c_ize());
+
    Private::ExportSymMap::iterator iter = _p->m_symMap.find( name );
    if( iter != _p->m_symMap.end() )
    {
@@ -275,7 +277,7 @@ void ModSpace::gcMark( uint32  )
 
 void ModSpace::importInModule(Module* mod, Error*& link_errors)
 {
-   TRACE1( "ModSpace::linkImports importing requests of %s", mod->name().c_ize());
+   TRACE1( "ModSpace::importInModule importing requests of %s", mod->name().c_ize());
    
    // scan the dependencies.
    Module::Private* prv = mod->_p;   
@@ -306,7 +308,7 @@ void ModSpace::importSpecificDep( Module* asker, void* def, Error*& link_errors 
 {
    Module::Private::Dependency* dep = (Module::Private::Dependency*) def;
    
-   TRACE( "ModSpace::linkSpecificDep %s", dep->m_sourceName.c_ize() );
+   TRACE( "ModSpace::importSpecificDep %s", dep->m_sourceName.c_ize() );
 
    Item* value = 0;
    Module* sourcemod = 0;
@@ -359,7 +361,7 @@ void ModSpace::importGeneralDep(Module* asker, void* def, Error*& link_errors)
    const String& symName = dep->m_sourceName;
    Item* value;
 
-   TRACE( "ModSpace::linkGeneralDep %s", symName.c_ize() );
+   TRACE( "ModSpace::importGeneralDep %s", symName.c_ize() );
 
    value = findExportedOrGeneralValue( asker, symName, declarer );
 
@@ -389,7 +391,7 @@ void ModSpace::importGeneralDep(Module* asker, void* def, Error*& link_errors)
 
 void ModSpace::importInNS(Module* mod )
 {
-   TRACE1( "ModSpace::linkNSImports honoring namespace imports requests of %s", 
+   TRACE1( "ModSpace::importInNS honoring namespace imports requests of %s",
          mod->name().c_ize());
       
    // scan the dependencies.

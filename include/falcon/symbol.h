@@ -75,13 +75,6 @@ public:
    void name( const String& n) { m_name = n; }
 
    bool isGlobal() const { return m_isGlobal; }
-
-   /** Retrieve the value associated with this symbol on this context.
-    \param ctx The context where the symbol value is to be determined.
-    \param forAssign
-    \throw An exception if the symbol is undefined.
-   */
-   Item* resolve( VMContext* ctx, bool forAssign = false ) const;
    
    Symbol* clone() const { return new Symbol(*this); }
    

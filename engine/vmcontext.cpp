@@ -1189,13 +1189,20 @@ void VMContext::forwardParams( int pcount )
 
 Item* VMContext::resolveSymbol( const Symbol* dyns, bool forAssign )
 {
+   static Symbol* baseSym = Engine::instance()->baseSymbol();
+
    // search for the dynsymbol in the current context.
    const CallFrame* cf = &currentFrame();
    register DynsData* dd = m_dynsStack.m_top;
    register DynsData* dbase = m_dynsStack.m_base + cf->m_dynsBase;
 
    // search resolved symbols.
-   while( dd >= dbase ) {
+   while( dd >= dbase  ) {
+      // arrived at a local base?
+      if ( baseSym == dd->m_sym ) {
+         break;
+      }
+      // found?
       if ( dyns == dd->m_sym ) {
          return dd->m_value;
       }
@@ -1203,20 +1210,83 @@ Item* VMContext::resolveSymbol( const Symbol* dyns, bool forAssign )
    }
    
    // No luck at all; try to resolve the variable.
-   Item* var = dyns->resolve( this, forAssign );
-   
+   Item* var = resolveVariable( dyns->name(), dyns->isGlobal(), forAssign );
+
+   DynsData& newSlot = *m_dynsStack.addSlot();
+
    if( var == 0 )
    {
       // not found? -- it's an unbound symbol.
-      var = &addDataSlot();
+      var = &newSlot.m_internal;
       var->setNil();
    }
    
-   DynsData& newSlot = *m_dynsStack.addSlot();
    newSlot.m_sym = dyns;
    newSlot.m_value = var;
    
    return var;
+}
+
+
+Item* VMContext::resolveVariable( const String& name, bool isGlobal, bool forAssign )
+{
+   TRACE1( "VMContext::resolveVariable -- resolving %s%s", name.c_ize(), isGlobal ? " (global)": "")
+   CallFrame& cf = currentFrame();
+   Function* func = cf.m_function;
+
+   if( ! isGlobal )
+   {
+      Variable* var = func->variables().find( name );
+      if( var != 0 ) {
+         switch( var->type() ) {
+         case Variable::e_nt_closed:
+            if( cf.m_closure == 0 ) return 0;
+            return cf.m_closure->get(name);
+
+         case Variable::e_nt_local:
+            return local(var->id());
+
+         case Variable::e_nt_param:
+            return param(var->id());
+
+         default:
+            fassert2( false, "Shouldn't have this in a function" );
+            break;
+         }
+      }
+      else if( forAssign ) {
+         return 0;
+      }
+    }
+
+   // didn't find it locally, try globally
+   Module* mod = func->module();
+   if( mod != 0 ) {
+      // findGlobal will find also externally resolved variables.
+      Item* global = mod->getGlobalValue( name );
+      if( global != 0 ) {
+         return global;
+      }
+      else if( forAssign ) {
+         Variable* var = mod->addGlobal( name, Item(), false );
+         global = mod->getGlobalValue( var->id() );
+         return global;
+      }
+   }
+
+   // try as non-imported extern
+   if( ! forAssign )
+   {
+      // if the module space is the same as the vm modspace,
+      // mod->findGlobal has already searched for it
+      Item* item = vm()->modSpace()->findExportedValue( name );
+      if( item != 0 ) {
+         return item;
+      }
+   }
+
+   // no luck
+   return 0;
 }
 
 

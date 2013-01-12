@@ -70,7 +70,9 @@ void ClassInt::restore( VMContext* ctx, DataReader* dr ) const
 {
    int64 value;
    dr->read( value );
-   ctx->pushData( Item().setInteger(value) );
+   Item v;
+   v.setInteger(value);
+   ctx->pushData( v );
 }
 
 

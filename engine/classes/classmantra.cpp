@@ -85,7 +85,7 @@ void ClassMantra::describe( void* instance, String& target, int, int ) const
 void ClassMantra::store( VMContext*, DataWriter* stream, void* instance ) const
 {
    Mantra* mantra = static_cast<Mantra*>(instance);
-   TRACE1( " -- starting store mantra %s", mantra->name().c_ize());
+   TRACE1( "ClassMantra::store -- starting store mantra %s", mantra->name().c_ize());
 
    stream->write( mantra->name() );
    // if store
@@ -103,13 +103,13 @@ void ClassMantra::store( VMContext*, DataWriter* stream, void* instance ) const
 
 void ClassMantra::restore( VMContext* ctx, DataReader* stream ) const
 {
-   MESSAGE1( " -- starting restore");
+   MESSAGE1( "ClassMantra::restore -- starting restore");
    
    static Engine* eng = Engine::instance()->instance();
    
    String name;
    stream->read(name);      
-   TRACE1( " -- Restoring mantra %s", name.c_ize() );
+   TRACE1( "ClassMantra::restore -- Restoring mantra %s", name.c_ize() );
    
    bool bHasModule;      
    stream->read(bHasModule);      
@@ -119,7 +119,7 @@ void ClassMantra::restore( VMContext* ctx, DataReader* stream ) const
       stream->read( modName );
       stream->read( modUri );
 
-      TRACE2( " -- Restoring dynamic mantra %s from %s: %s", 
+      TRACE2( "ClassMantra::restore -- Restoring dynamic mantra %s from %s: %s",
             name.c_ize(), modName.c_ize(), modUri.c_ize() );
 
       //TODO: is the main VM module space the right place?

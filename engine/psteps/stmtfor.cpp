@@ -584,7 +584,7 @@ void StmtForTo::oneLinerTo( String& tgt ) const
    tgt += "for " + m_target->name() + " = " ;
 
    tgt += m_start->describe();   
-   tgt + " to ";   
+   tgt += " to ";
    tgt += m_end->describe();
    if( m_step != 0 )
    {

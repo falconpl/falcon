@@ -1251,6 +1251,7 @@ public:
     \note Symbols marked as constant are returned by value; they aren't referenced.
     */
    Item* resolveSymbol( const Symbol* dyns, bool forAssign );
+   Item* resolveVariable( const String& name, bool isGlobal, bool forAssign );
    
    /** Copies pcount parameters from the frame parameters area to the top of the stack. */
    void forwardParams( int pcount );
@@ -1338,6 +1339,7 @@ protected:
    public:
       const Symbol* m_sym;
       Item* m_value;
+      Item m_internal;
 
       DynsData():
          m_sym(0),

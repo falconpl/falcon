@@ -75,6 +75,8 @@ void* ClassSynFunc::getParentData( Class* parent, void* data ) const
 void ClassSynFunc::store( VMContext*, DataWriter* stream, void* instance ) const
 {
    SynFunc* synfunc = static_cast<SynFunc*>(instance);
+
+   TRACE1("ClassSynFunc::store %s", synfunc->name().c_ize() );
    // saving the overall data.
    stream->write( synfunc->name() );
    stream->write( synfunc->declaredAt() );
@@ -91,14 +93,14 @@ void ClassSynFunc::restore(VMContext* ctx, DataReader* stream) const
    bool bPred, bEta;
    int line;
    String name, signature;
-   int32 pcount;
    
    stream->read( name );
+   TRACE1("ClassSynFunc::restore %s", name.c_ize() );
+
    stream->read( line );
    stream->read( bPred );
    stream->read( bEta );
    stream->read( signature );
-   stream->read(pcount);
 
    SynFunc* synfunc = new SynFunc( name, 0, line );
    ctx->pushData( FALCON_GC_STORE(this, synfunc) );
@@ -115,6 +117,7 @@ void ClassSynFunc::flatten( VMContext*, ItemArray& subItems, void* instance ) co
 {
    SynFunc* synfunc = static_cast<SynFunc*>(instance);
       
+   TRACE1("ClassSynFunc::flatten %s - %d syntree elements", synfunc->name().c_ize(), synfunc->syntree().size() );
    for( uint32 i = 0; i < synfunc->syntree().size(); ++i ) {
       Statement* stmt = synfunc->syntree().at(i);
       Class* synClass = stmt->handler();
@@ -127,8 +130,9 @@ void ClassSynFunc::unflatten( VMContext*, ItemArray& subItems, void* instance ) 
 {    
    SynFunc* synfunc = static_cast<SynFunc*>(instance);
    // first restore the symbol table.
-   
-   for( uint32 i = 0; i+1 < subItems.length(); ++i ) {
+   TRACE1("ClassSynFunc::unflatten %s - %d syntree elements", synfunc->name().c_ize(), subItems.length() );
+
+   for( uint32 i = 0; i < subItems.length(); ++i ) {
       Class* cls = 0;
       void* data = 0;
       subItems[i].asClassInst(cls,data);
