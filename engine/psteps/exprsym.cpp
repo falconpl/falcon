@@ -82,7 +82,7 @@ ExprSymbol::ExprSymbol( const ExprSymbol& other ):
       m_symbol = 0;
    }
    else {
-      Engine::refSymbol(m_symbol);
+      Engine::refSymbol(other.m_symbol);
       m_symbol = other.m_symbol;
    }
 }

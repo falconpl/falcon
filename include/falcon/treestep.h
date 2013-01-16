@@ -331,7 +331,7 @@ public:
          || (m_cat == e_cat_syntree && cat == e_cat_statement)
          || (m_cat == e_cat_expression && cat == e_cat_expression);
    }
-   
+
    /**
     Set the symbol table associated with this treestep.
     */
@@ -339,10 +339,12 @@ public:
 
    /**
     Gets the symbol table associated with this treestep.
-    
+
     \note Normally, the symbol table is 0.
     */
    VarMap* varmap() const { return m_varmap; }
+
+   virtual void resolveUnquote( VMContext* ctx );
 
 protected:
    uint32 m_gcMark; 

@@ -24,7 +24,7 @@
 namespace Falcon {
 
 /** Unquote expression.
- Unquote expressions (^~symbol) work tightly together with literal expression 
+ Unquote expressions (^~<expr>) work tightly together with literal expression
  causing local evaluation to be performed before quoting it.
  
  For instance:
@@ -47,7 +47,7 @@ namespace Falcon {
  \code
  function makeExpr()
    b = {()c + d}
-   return {() a+ ^~b }
+   return {() a+ ^~(b+1) }
  end
  \endcode
  
@@ -67,11 +67,11 @@ namespace Falcon {
  symbol tables of the enclosing function hierarcy will be considered.
  
  */
-class FALCON_DYN_CLASS ExprUnquote: public Expression
+class FALCON_DYN_CLASS ExprUnquote: public UnaryExpression
 {
 public:
    ExprUnquote( int line=0, int chr=0 );
-   ExprUnquote( const String& symbol, int line=0, int chr=0 );
+   ExprUnquote( Expression* child, int line=0, int chr=0 );
    ExprUnquote( const ExprUnquote& other );
    virtual ~ExprUnquote();
    
@@ -80,33 +80,11 @@ public:
    virtual bool simplify(Falcon::Item&) const;
    virtual bool isStatic() const { return false; }
    virtual ExprUnquote* clone() const { return new ExprUnquote(*this); }
-
-   /** Gets the name of the symbol associated with this unquote.
-    */
-   const String& symbolName() const { return m_symbolName; }
    
-   Symbol* symbol() const { return m_dynsym; }
-
-   /** Sets the name of the symbol associated with this unquote.
-    */
-   void symbolName( const String& s );
-   
-   /** 
-    Gets the Registration ID (pushed parameter in the evaluation).
-   */
-   int32 regID() const { return m_regID; }
-   
-   /** 
-    Changes the Registration ID (pushed parameter in the evaluation).
-   */
-   void regID( int32 i ) { m_regID = i; }
-   
+   virtual void resolveUnquote( VMContext* ctx );
 private:
    static void apply_( const PStep*, VMContext* ctx );
-   // registration ID (pushed parameter in the evaluation).
-   int32 m_regID;
-   String m_symbolName;
-   Symbol* m_dynsym;
+
 };
 
 }

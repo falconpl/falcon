@@ -765,41 +765,27 @@ void VMContext::raiseError( Error* ce )
       ce->decref();
       ce = m_thrown;
    }
-   else
-   {
-      if( m_thrown != 0 ) m_thrown->decref();
-      m_thrown = 0;
-   }
 
    // can we catch it?
+   unhandledError(ce);
    m_catchBlock = 0;
    CheckIfCodeIsCatchError check( ce->handler() );
+
    if( unrollToNext<CheckIfCodeIsCatchError>( check ) )
    {
       // the unroller has prepared the code for us
       if( m_catchBlock != 0 )
       {
+         m_finMode = e_fin_none;
          resetCode( m_catchBlock );
 
          // assign the error to the required item.
          if( m_catchBlock->target() != 0 )
          {
             *resolveSymbol(m_catchBlock->target(), true ) = Item( ce->handler(), ce );
-            ce->decref();
+            unhandledError(0); // the error is handled.
          }
       }
-      else
-      {
-         // otherwise, we have a finally around.
-         ce->incref();
-         m_thrown = ce;
-      }
-   }
-   else
-   {
-      // prevent script-bound re-catching.
-      m_thrown = ce;
-      atomicOr(m_events, evtRaise);
    }
 }
 
@@ -1025,18 +1011,11 @@ void VMContext::addLocalFrame( VarMap* st, int pcount )
    static StdSteps* stdSteps = Engine::instance()->stdSteps();
    static Symbol* base = Engine::instance()->baseSymbol();
    
-   TRACE("Add local frame PCOUNT: %d, Symbol table locals: %d, closed: %d",
-      pcount, st->localCount(), st->closedCount() );
+   TRACE("Add local frame PCOUNT: %d/%d, Symbol table locals: %d, closed: %d",
+      pcount, st->paramCount(), st->localCount(), st->closedCount() );
    if( st == 0 ) {
       pushCode( &stdSteps->m_localFrame );
       return;
-   }
-   
-   // point to the item that was pushed before the parameters
-   Item* top = &topData() - pcount;
-   if( pcount < (int) st->paramCount() )
-   {
-      addSpace(st->paramCount() - pcount);
    }
 
    pushCode( &stdSteps->m_localFrame );
@@ -1049,25 +1028,27 @@ void VMContext::addLocalFrame( VarMap* st, int pcount )
    baseDyn->m_sym = base;
    baseDyn->m_value = m_dataStack.m_top;
    
-   // now point to the first parameter.
-   ++top;
-   for( uint32 i = 0; i < st->paramCount(); ++i )
+   // Assign the parameters
+   Item* top = &topData() - pcount+1;
+   int32 p = 0;
+   while( p < pcount )
    {
       DynsData* dd = m_dynsStack.addSlot();
-      dd->m_sym = Engine::getSymbol(st->getLoacalName(i), false);
+      dd->m_sym = Engine::getSymbol(st->getParamName(p), false);
       dd->m_value = top;
       ++top;
+      ++p;
    }
-   //TODO: prepare the closure frame.
-   /*
-  for( int i = 0; i < st->closedCount(); ++i )
-   {
+
+   // blank unused parameters
+   pcount = st->paramCount();
+   while( p < pcount ) {
       DynsData* dd = m_dynsStack.addSlot();
-      dd->m_sym = Engine::getSymbol(st->getClosedName(i), false);
-      dd->m_value = top;
-      ++top;
+      dd->m_sym = Engine::getSymbol(st->getParamName(p), false);
+      dd->m_value = &dd->m_internal;
+      dd->m_internal.setNil();
+      ++p;
    }
-   */
 }
 
 

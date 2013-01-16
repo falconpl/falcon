@@ -51,7 +51,13 @@ ExprCall::ExprCall( const ExprCall& other ):
    ExprVector( other )
 {
    FALCON_DECLARE_SYN_CLASS( expr_call )
-   m_callExpr = other.m_callExpr;
+   if( other.m_callExpr != 0 ) {
+      m_callExpr = other.m_callExpr->clone();
+      m_callExpr->setParent(this);
+   }
+   else {
+      m_callExpr = 0;
+   }
    apply = apply_;
 }
 

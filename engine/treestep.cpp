@@ -35,13 +35,13 @@ TreeStep::TreeStep( const TreeStep& other ):
    m_varmap(0),
    m_cat( other.m_cat )
 {
-   if( other.m_varmap ) {
+   if( other.m_varmap != 0 ) {
       m_varmap = new VarMap(*other.m_varmap);
       m_bOwnSymTab = true;
    }
    else {
       m_varmap = 0;
-      m_bOwnSymTab = false;      
+      m_bOwnSymTab = false;
    }
 }
 
@@ -211,6 +211,14 @@ void TreeStep::setVarMap( VarMap* st, bool own )
    m_bOwnSymTab = own;
 }
 
+
+void TreeStep::resolveUnquote( VMContext* ctx )
+{
+   int32 rty = arity();
+   for (int i = 0; i < rty; ++i ) {
+      nth(i)->resolveUnquote(ctx);
+   }
+}
 
 }
 

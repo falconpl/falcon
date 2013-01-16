@@ -37,6 +37,7 @@ class FALCON_DYN_CLASS VarMap
 {
 public:
    VarMap();
+   VarMap( const VarMap& other );
    ~VarMap();
 
    /** Adds a parameter to this function.

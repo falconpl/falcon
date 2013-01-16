@@ -21,66 +21,48 @@
 #include <falcon/synclasses.h>
 #include <falcon/trace.h>
 #include <falcon/vmcontext.h>
-#include <falcon/symbol.h>
+#include <falcon/psteps/exprvalue.h>
 
 namespace Falcon {
 
 ExprUnquote::ExprUnquote( int line, int chr ):
-   Expression( line, chr ),
-   m_regID(-1),
-   m_dynsym(0)
-{
-   FALCON_DECLARE_SYN_CLASS( expr_unquote );
-   apply = apply_;   
-}
-
-
-ExprUnquote::ExprUnquote( const String& symbol, int line, int chr ):
-   Expression( line, chr ),
-   m_regID(-1),
-   m_dynsym(0)
+   UnaryExpression( line, chr )
 {
    FALCON_DECLARE_SYN_CLASS( expr_unquote );
    apply = apply_;
-   symbolName( symbol );
+   m_trait = e_trait_unquote;
+}
+
+
+ExprUnquote::ExprUnquote( Expression* child, int line, int chr ):
+   UnaryExpression( child, line, chr )
+{
+   FALCON_DECLARE_SYN_CLASS( expr_unquote );
+   apply = apply_;
+   m_trait = e_trait_unquote;
 }
 
 ExprUnquote::ExprUnquote( const ExprUnquote& other ):
-   Expression( other ),
-   // still unregistered!
-   m_regID(-1),
-   m_dynsym(0)  
+   UnaryExpression( other )
 {
    apply = apply_;
-   symbolName(other.m_symbolName);
+   m_trait = e_trait_unquote;
 }
 
-void ExprUnquote::symbolName(const String& s) 
-{
-   m_symbolName = s;
-   if( m_dynsym != 0 ) {
-      m_dynsym->decref();
-   }
-
-   m_dynsym = Engine::getSymbol( s, false);
-}
 
 ExprUnquote::~ExprUnquote()
 {
-   if( m_dynsym != 0 ) {
-      m_dynsym->decref();
-   }
 }
 
 
-void ExprUnquote::describeTo( String& str, int ) const
+void ExprUnquote::describeTo( String& str, int depth) const
 {
-   if( m_regID == -1 ) {
+   if( m_first == 0 ) {
       str = "<Blank ExprUnquote>";
       return;
    }
    
-   str += "^~" + m_symbolName;
+   str += m_first->describe(depth);
 }
 
 
@@ -89,19 +71,37 @@ bool ExprUnquote::simplify(Falcon::Item& ) const
    return false;
 }
 
+
+void ExprUnquote::resolveUnquote( VMContext* ctx )
+{
+   static Class* expr = Engine::instance()->expressionClass();
+
+   delete m_first;
+
+   Item& value = ctx->topData();
+   void* inst;
+   Class* cls;
+   if ( value.asClassInst( cls, inst ) && cls->isDerivedFrom(expr) ) {
+      m_first = static_cast<Expression*>( inst );
+      m_first->setParent(this);
+   }
+   else {
+      m_first = new ExprValue( value );
+   }
+   TRACE1( "ExprUnquote::resolveUnquote \"%s\"", m_first->describe(0).c_ize() );
+
+   ctx->popData();
+}
+
 void ExprUnquote::apply_( const PStep* ps, VMContext* ctx )
 {
    const ExprUnquote* self = static_cast<const ExprUnquote*>( ps );
-   TRACE1( "Apply \"%s\"", self->describe().c_ize() );
-   ctx->popCode();
-   Item* value = ctx->resolveSymbol( self->m_dynsym, false );
-   if( value == 0 ) {
-      ctx->pushData( Item() );
-   }
-   else {
-      ctx->pushData( *value );
-   }
+   fassert( self->m_first != 0 );
+   TRACE1( "ExprUnquote::apply_ \"%s\"", self->describe().c_ize() );
+   ctx->resetCode( self->m_first );
 }
+
+
 
 }
 

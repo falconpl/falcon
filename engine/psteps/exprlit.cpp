@@ -25,12 +25,26 @@
 #include <falcon/closure.h>
 
 #include <set>
-
 #include <falcon/syntree.h>
 
+#include <vector>
 
 namespace Falcon {
 
+class ExprLit::Private
+{
+public:
+   typedef std::vector<Expression*> ExprVector;
+
+   ExprVector m_exprs;
+
+   Private() {}
+   Private( const Private& other ):
+      m_exprs(other.m_exprs)
+   {}
+
+   ~Private() {}
+};
 
 ExprLit::ExprLit( int line, int chr ):
    Expression( line, chr ),
@@ -39,6 +53,7 @@ ExprLit::ExprLit( int line, int chr ):
    FALCON_DECLARE_SYN_CLASS( expr_lit );
    apply = apply_;
    m_trait = e_trait_composite;
+   _p = new Private;
 }
 
 
@@ -50,6 +65,7 @@ ExprLit::ExprLit( TreeStep* st, int line, int chr ):
    apply = apply_;
    st->setParent(this);
    m_trait = e_trait_composite;
+   _p = new Private;
 }
 
 ExprLit::ExprLit( const ExprLit& other ):
@@ -57,15 +73,97 @@ ExprLit::ExprLit( const ExprLit& other ):
    m_child(0)
 {
    apply = apply_;
+   m_trait = e_trait_composite;
+
+   _p = new Private();
+
+
    if( other.m_child != 0 ) {
       m_child = other.m_child->clone();
       m_child->setParent(this);
    }
-   m_trait = e_trait_composite;
+
+   if( other._p->m_exprs.size() ) {
+      searchUnquotes( m_child );
+   }
 }
  
 ExprLit::~ExprLit()
 {
+}
+
+
+void ExprLit::searchUnquotes( TreeStep* child )
+{
+   if( child->category() == TreeStep::e_cat_expression ) {
+      Expression* expr = static_cast<Expression*>(child);
+
+      if( expr->trait() == Expression::e_trait_unquote ) {
+         _p->m_exprs.push_back(expr);
+         return;
+      }
+      // don't saearch for unquotes in other sub-lits
+      else if( expr->handler() == handler() ) {
+         return;
+      }
+   }
+
+   for( int i = 0; i < child->arity(); ++i ) {
+      searchUnquotes(child);
+   }
+}
+
+void ExprLit::registerUnquote( Expression* unquoted )
+{
+   _p->m_exprs.push_back(unquoted);
+}
+
+uint32 ExprLit::unquotedCount()
+{
+   return _p->m_exprs.size();
+}
+
+
+Expression* ExprLit::unquoted( uint32 i )
+{
+   return _p->m_exprs[i];
+}
+
+Variable* ExprLit::addParam( const String& name )
+{
+   if( varmap() == 0 ) {
+      setVarMap( new VarMap, true ) ;
+   }
+
+   return varmap()->addParam(name);
+}
+
+Variable* ExprLit::addLocal( const String& name )
+{
+   if( varmap() == 0 ) {
+      setVarMap( new VarMap, true ) ;
+   }
+
+   return varmap()->addLocal(name);
+}
+
+
+int ExprLit::paramCount() const
+{
+   if( varmap() == 0 ) return 0;
+   return varmap()->paramCount();
+}
+
+
+const String& ExprLit::param( int n )
+{
+   static String none;
+
+   if( varmap() == 0 ){
+      return none;
+   }
+
+   return varmap()->getParamName(n);
 }
 
 
@@ -76,15 +174,17 @@ void ExprLit::describeTo( String& str, int depth ) const
       return;
    }
 
-   const char* etaOpen = isEta() ? "[" : "(";
-   const char* etaClose = isEta() ? "]" : ")";
+   bool isEta = varmap() != 0 && varmap()->isEta();
+
+   const char* etaOpen = isEta ? "[" : "(";
+   const char* etaClose = isEta ? "]" : ")";
    str = "{";
    str += etaOpen; 
    
-   if( m_paramTable.paramCount() > 0 )
+   if( varmap() != 0 && varmap()->paramCount() > 0 )
    {
-      for( uint32 i = 0; i < m_paramTable.paramCount(); ++i ) {
-         const String& paramName = m_paramTable.getParamName(i);
+      for( uint32 i = 0; i < varmap()->paramCount(); ++i ) {
+         const String& paramName = varmap()->getParamName(i);
          if( i > 0 ) {
             str += ", ";
          }
@@ -106,13 +206,6 @@ void ExprLit::setChild( TreeStep* st )
    st->setParent(this);
 }
 
-
-
-void ExprLit::registerUnquote( ExprUnquote* expr )
-{
-   expr->regID( m_paramTable.paramCount() + m_paramTable.localCount() + m_paramTable.closedCount() );
-   m_paramTable.addClosed( expr->symbolName() );
-}
 
 int32 ExprLit::arity() const {
    return 1;
@@ -152,15 +245,33 @@ void ExprLit::apply_( const PStep* ps, VMContext* ctx )
    const ExprLit* self = static_cast<const ExprLit*>( ps );
    TRACE1( "Apply \"%s\"", self->describe().c_ize() );   
    fassert( self->m_child != 0 );
+   Private::ExprVector& ev = self->_p->m_exprs;
+
+   CodeFrame& cf = ctx->currentCode();
+   // something to be unquoted?
+   while (cf.m_seqId < (int) ev.size() )
+   {
+      if ( ctx->stepInYield( ev[cf.m_seqId ++], cf ) )
+      {
+         return;
+      }
+   }
+
    // ExprLit always evaluate to its child
    ctx->popCode();
    register TreeStep* child = self->child();
    
-   if( self->m_paramTable.paramCount() + self->m_paramTable.localCount() + self->m_paramTable.closedCount() ) {
-      child->setVarMap(const_cast<VarMap*>(&self->m_paramTable), false);
+   if( self->varmap() != 0 ) {
+      child->setVarMap(new VarMap(*self->varmap()), true);
    }
    
-   ctx->pushData( Item(child->handler(), child) );
+   TreeStep* nchild = static_cast<TreeStep*>(child->handler()->clone(child));
+
+   if( ev.size() ) {
+      nchild->resolveUnquote( ctx );
+   }
+
+   ctx->pushData( FALCON_GC_HANDLE( nchild )  );
 }
 
 }

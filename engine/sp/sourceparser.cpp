@@ -485,7 +485,7 @@ SourceParser::SourceParser():
             << Expr << T_QMark << Expr << T_Colon << Expr );
    r_Expr_ternary_if.setGreedy(true);
    
-   Expr<< (r_Expr_expr_unquote << "Expr_unquote"  << apply_expr_unquote << T_UNQUOTE << T_Name );
+   Expr<< (r_Expr_expr_unquote << "Expr_unquote"  << apply_expr_unquote << T_UNQUOTE << Expr );
    
    
    Expr<< (r_Expr_Atom << "Expr_atom" << apply_expr_atom << Atom);

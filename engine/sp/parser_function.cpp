@@ -378,13 +378,13 @@ void internal_lit_params(const Rule&, Parser& p, bool isEta )
 
    // but actually we'll be using our lit
    ExprLit* lit = new ExprLit(ti->line(),ti->chr());
-   lit->setEta(isEta);
    
    NameList* list=static_cast<NameList*>(tparams->asData());
    for(NameList::const_iterator it=list->begin(),end=list->end();it!=end;++it)
    {
       lit->addParam(*it);
    }
+   if( lit->varmap() != 0 ) lit->varmap()->setEta( isEta );
    
    // (,list,)
    ti = TokenInstance::alloc( ti->line(), ti->chr(), sp.Expr);

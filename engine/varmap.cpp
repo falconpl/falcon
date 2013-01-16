@@ -41,6 +41,31 @@ public:
    NameList m_closedNames;
    NameList m_globalNames;
    NameList m_externNames;
+
+   void update( const Private& other ) {
+      updateSingle( m_paramNames, other.m_paramNames, other.m_variables );
+      updateSingle( m_localNames, other.m_localNames, other.m_variables );
+      updateSingle( m_closedNames, other.m_closedNames, other.m_variables );
+      updateSingle( m_globalNames, other.m_globalNames, other.m_variables );
+      updateSingle( m_externNames, other.m_externNames, other.m_variables );
+   }
+
+   void updateSingle( NameList& target, const NameList& source, const VariableMap& varmap )
+   {
+      NameList::const_iterator iter = source.begin();
+      NameList::const_iterator end = source.end();
+      while( iter != end )
+      {
+         const String& name = *(*iter);
+         VariableMap::const_iterator pos = varmap.find( name );
+         if( pos != varmap.end() ) {
+            VariableMap::iterator inserted = m_variables.insert( std::make_pair(name, pos->second) ).first;
+            target.push_back( &inserted->first );
+         }
+
+         ++iter;
+      }
+   }
 };
 
 VarMap::VarMap():
@@ -48,6 +73,14 @@ VarMap::VarMap():
 {
    _p = new Private;
 }
+
+VarMap::VarMap( const VarMap& other ):
+     m_bEta(other.m_bEta)
+{
+   _p = new Private;
+   _p->update( *other._p );
+}
+
 
 VarMap::~VarMap()
 {

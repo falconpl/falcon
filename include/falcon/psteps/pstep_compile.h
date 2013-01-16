@@ -19,6 +19,7 @@
 
 #include <falcon/pstep.h>
 #include <falcon/intcompiler.h>
+#include <falcon/psteps/stmttry.h>
 
 namespace Falcon {
 
@@ -31,7 +32,7 @@ namespace Falcon {
  * The owner should destroy it when the computation is performed.
  *
  */
-class FALCON_DYN_CLASS PStepCompile: public PStep
+class FALCON_DYN_CLASS PStepCompile: public StmtTry
 {
 public:
    PStepCompile(int32 line=0, int32 chr = 0);
@@ -44,6 +45,7 @@ public:
 
    void setCompilerContext( Function* func, Module* mod, TextReader* tin, TextWriter* tout );
 
+   void writeError( Error* e ) const;
 private:
    IntCompiler* m_compiler;
    Function* m_function;

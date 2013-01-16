@@ -22,25 +22,43 @@
 
 namespace Falcon {
 
+class CatchSyntree: public SynTree
+{
+public:
+   CatchSyntree( PStepCompile* ps )
+   {
+      apply = apply_;
+      m_compiler = ps;
+   }
+
+private:
+   static void apply_( const PStep* self, VMContext* ctx ){
+      const CatchSyntree* cst = static_cast<const CatchSyntree*>(self);
+      cst->m_compiler->writeError(ctx->thrownError());
+   }
+
+   PStepCompile* m_compiler;
+};
+
 PStepCompile::PStepCompile(int32 line, int32 chr):
-         PStep( line, chr ),
+         StmtTry( line, chr ),
          m_function( 0 ),
          m_module( 0 )
 {
    // This is not a syntactic pstep, we don't need to have a syntax for this.
    apply = apply_;
    m_compiler = new IntCompiler;
-   m_bIsCatch = true;
+   catchSelect().setDefault( new CatchSyntree(this) );
 }
 
 PStepCompile::PStepCompile( const PStepCompile& other ):
-         PStep( other ),
+         StmtTry( other ),
          m_function( 0 ),
          m_module( 0 )
 {
    apply = apply_;
    m_compiler = new IntCompiler;
-   m_bIsCatch = true;
+   catchSelect().setDefault( new CatchSyntree(this) );
 }
 
 PStepCompile::~PStepCompile()
@@ -127,37 +145,40 @@ void PStepCompile::apply_( const PStep* ps, VMContext* ctx )
       }
       catch( Error* e )
       {
-         // display the error and continue
-         if( e->errorCode() == e_compile )
-         {
-            // in case of a compilation, discard the encapsulator.
-            class MyEnumerator: public Error::ErrorEnumerator {
-            public:
-               MyEnumerator( TextWriter* wr ):
-                  m_wr(wr)
-               {}
-
-               virtual bool operator()( const Error& e, bool  ){
-                  m_wr->write(e.describe()+"\n");
-                  return true;
-               }
-            private:
-               TextWriter* m_wr;
-            } rator(psc->m_tout);
-
-            e->enumerateErrors( rator );
-         }
-         else {
-            psc->m_tout->write(e->describe()+"\n");
-         }
-
+         psc->writeError( e );
          e->decref();
       }
 
       // resets the prompt
       prompt = comp->isComplete() ? ">>> " : "... ";
    }
+}
 
+void PStepCompile::writeError( Error* e ) const
+{
+   // display the error and continue
+   if( e->errorCode() == e_compile )
+   {
+      // in case of a compilation, discard the encapsulator.
+      class MyEnumerator: public Error::ErrorEnumerator {
+      public:
+         MyEnumerator( TextWriter* wr ):
+            m_wr(wr)
+         {}
+
+         virtual bool operator()( const Error& e, bool  ){
+            m_wr->write(e.describe()+"\n");
+            return true;
+         }
+      private:
+         TextWriter* m_wr;
+      } rator(this->m_tout);
+
+      e->enumerateErrors( rator );
+   }
+   else {
+      this->m_tout->write(e->describe()+"\n");
+   }
 }
 
 }

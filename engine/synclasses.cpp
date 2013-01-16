@@ -889,35 +889,13 @@ bool SynClasses::ClassLit::op_init( VMContext* ctx, void* instance, int pcount )
 }
 void SynClasses::ClassLit::store( VMContext* ctx, DataWriter* wr, void* instance ) const
 {
-   ExprLit* lit = static_cast<ExprLit*>(instance);
-   wr->write( lit->isEta() );
-   
-   wr->write( (int32) lit->paramCount() );   
-   for( int i = 0; i < lit->paramCount(); ++ i) {
-      const String& param = lit->param(i);
-      wr->write( param );
-   }
-   
+   //ExprLit* lit = static_cast<ExprLit*>(instance);
    m_parent->store( ctx, wr, instance );
 }
 void SynClasses::ClassLit::restore( VMContext* ctx, DataReader* rd ) const
 {
    ExprLit* lit = new ExprLit();
    ctx->pushData(FALCON_GC_HANDLE( lit ));
-
-   bool isEta;
-   int32 pcount;
-   rd->read( isEta );
-   rd->read(pcount);
-   
-   // declare it outside so we recycle memory
-   String param;
-   for( int i = 0; i < pcount; ++ i) {
-      rd->read( param );
-      lit->addParam(param);
-   }
-   
-   lit->setEta(isEta);
    m_parent->restore( ctx, rd );
 }
 void SynClasses::ClassLit::flatten( VMContext*, ItemArray& subItems, void* instance ) const
@@ -926,12 +904,22 @@ void SynClasses::ClassLit::flatten( VMContext*, ItemArray& subItems, void* insta
    if( lit->child() != 0 ) {
       subItems.append( Item( lit->child()->handler(), lit->child()) );
    }
+
+   for( uint32 i = 0; i < lit->unquotedCount(); ++ i ) {
+      Expression* unquoted = lit->unquoted(i);
+      subItems.append( Item(unquoted->handler(), unquoted) );
+   }
 }
 void SynClasses::ClassLit::unflatten( VMContext*, ItemArray& subItems, void* instance ) const
 {
    ExprLit* lit = static_cast<ExprLit*>(instance);
-   if( subItems.length() == 1 ) {
+   if( subItems.length() >= 1 ) {
       lit->setChild( static_cast<TreeStep*>(subItems.at(0).asInst()) );
+   }
+
+   for( uint32 i = 1; i < subItems.length(); ++ i ) {
+      Item& item = subItems[i];
+      lit->registerUnquote( static_cast<Expression*>(item.asInst()) );
    }
 }
    

@@ -57,43 +57,39 @@ public:
    /**
     Adds a parameter to this parametric  expression.
     */
-   void addParam( const String& name ) { m_paramTable.addParam(name); }
+   Variable* addParam( const String& name );
+   Variable* addLocal( const String& name );
    
    /**
     Retrns the count of parameters.
     */
-   int paramCount() const { return m_paramTable.paramCount(); }
+   int paramCount() const;
    
    /**
     Gets the nth parameter.
     */
-   const String& param( int n ) const { return m_paramTable.getParamName(n);}
-   
-   /**
-    Declares an unquoted expression in the scope of this literal.
-    */
-   void registerUnquote( ExprUnquote* expr );
+   const String& param( int n );
    
    /** Return the child attached to this literal.    
     */
    TreeStep* child() const { return m_child; }
 
-   /**
-    Returns true if the expression is eta.    
-    Eta expressions pass untranslated parameters to the evaluation.
-    */
-   bool isEta() const { return m_paramTable.isEta(); }
-   
-   void setEta( bool e ) { m_paramTable.setEta(e); }
-
    virtual int32 arity() const;
    virtual TreeStep* nth( int32 n ) const;
    virtual bool setNth( int32 n, TreeStep* ts );
 
+   void registerUnquote( Expression* unquoted );
+   uint32 unquotedCount();
+   Expression* unquoted( uint32 i );
+
 private:
    TreeStep* m_child;
-   VarMap m_paramTable;
    
+   class Private;
+   ExprLit::Private* _p;
+
+   void searchUnquotes( TreeStep* child );
+
    static void apply_( const PStep*, VMContext* ctx );
 };
 

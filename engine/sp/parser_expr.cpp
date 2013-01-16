@@ -414,7 +414,8 @@ void apply_expr_unquote( const Rule&, Parser& p )
    TokenInstance* ti = p.getNextToken();
    TokenInstance* value = p.getNextToken();  // symbol 
    
-   ExprUnquote* un = new ExprUnquote(*value->asString(), value->line(), value->chr());
+   Expression* child = static_cast<Expression*>(value->detachValue());
+   ExprUnquote* un = new ExprUnquote( child , value->line(), value->chr());
    // Complexify the value
    value->token( sp.Expr );   // be sure to change it
    value->setValue( un, expr_deletor );
@@ -427,7 +428,7 @@ void apply_expr_unquote( const Rule&, Parser& p )
       p.addError(e_enc_fail, p.currentSource(), ti->line(), ti->chr(), 0);
    }
    else {
-      lit->registerUnquote(un);
+      lit->registerUnquote(child);
    }
 
 }

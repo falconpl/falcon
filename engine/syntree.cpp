@@ -63,7 +63,7 @@ SynTree::SynTree( int line, int chr ):
 
 
 SynTree::SynTree( const SynTree& other ):
-   TreeStep( TreeStep::e_cat_syntree ),
+   TreeStep( other ),
    _p( 0 ),
    m_locals(0),
    m_head(0),

@@ -280,7 +280,14 @@ Variable* ParserContext::accessSymbol( const String& variable )
    if( m_varmap == 0 )
    {
       // we're in the global context.
-      nuks = onGlobalAccessed( variable );
+      if( _p->m_litContexts.empty() )
+      {
+         nuks = onGlobalAccessed( variable );
+      }
+      else {
+         nuks = _p->m_litContexts.back()->addLocal(variable);
+         m_varmap = _p->m_litContexts.back()->varmap();
+      }
    }
    else
    {
@@ -288,8 +295,14 @@ Variable* ParserContext::accessSymbol( const String& variable )
       nuks = findLocalSymbol( variable );
       // not found?
 
-      if ( nuks == 0 ) {
-         if( isParentLocal( variable ) ) {
+      if ( nuks == 0 )
+      {
+         if( !_p->m_litContexts.empty() )
+         {
+            // actually, we discard this; it's totally unneeded bu
+            nuks = m_varmap->addLocal(variable);
+         }
+         else if( isParentLocal( variable ) ) {
             nuks = m_varmap->addClosed(variable);
          }
          else {
@@ -331,6 +344,10 @@ void ParserContext::accessSymbols( Expression* expr )
 {
    TRACE("ParserContext::accessSymbols on (: %s :)", expr->describe().c_ize() );
 
+   if( expr->trait() == Expression::e_trait_composite ) {
+      return;
+   }
+
    if( expr->trait() == Expression::e_trait_symbol )
    {
       ExprSymbol* exprsym = static_cast<ExprSymbol*>( expr );
@@ -342,7 +359,7 @@ void ParserContext::accessSymbols( Expression* expr )
       for( uint32 i = 0; i < arity; ++ i ) {
          // expressions can only have expressions as nth()
          Expression* child = static_cast<Expression*>(expr->nth(i));
-         if( child->trait() != Expression::e_trait_composite )
+         if( child->category() == TreeStep::e_cat_expression )
          {
             accessSymbols( child );
          }
@@ -353,7 +370,7 @@ void ParserContext::accessSymbols( Expression* expr )
 
 Variable* ParserContext::findLocalSymbol( const String& name )
 {
-   TRACE1("ParserContext::findSymbol \"%s\"", name.c_ize() );
+   TRACE1("ParserContext::findLocalSymbol \"%s\"", name.c_ize() );
    if( m_varmap == 0 )
    {
       return 0;
