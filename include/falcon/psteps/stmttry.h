@@ -83,33 +83,21 @@ private:
    StmtSelect* m_select;
    
    static void apply_( const PStep*, VMContext* ctx );
-   
+
    /** Execute the finally clause of this try.*/
-   class PStepFinally: public PStep 
+   class PStepFinally: public PStep
    {
    public:
-      PStepFinally( StmtTry* t ): m_owner(t) { apply = apply_; m_bIsFinally = true; }
+      PStepFinally( StmtTry* t ): m_owner(t) { apply = apply_;}
       virtual ~PStepFinally() {}
       virtual void describeTo( String& tgt, int =0 ) const { tgt = "Try finally"; }
-   
+
    private:
       StmtTry* m_owner;
       static void apply_( const PStep*, VMContext* ctx );
    }
    m_finallyStep;
 
-   /** Cleanup step, popping the try frame and eventually invoking the finally.*/
-   class PStepCleanup: public PStep 
-   {
-   public:
-      PStepCleanup() { apply = apply_; }
-      virtual ~PStepCleanup() {}
-      virtual void describeTo( String& tgt, int =0 ) const { tgt = "Try cleanup"; }
-   
-   private:
-      static void apply_( const PStep*, VMContext* ctx );
-   }
-   m_cleanStep;
 };
 
 }

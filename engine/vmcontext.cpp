@@ -84,8 +84,14 @@ VMContext::VMContext( Process* prc, ContextGroup* grp ):
    m_codeStack.init();
    m_callStack.init();
    m_dataStack.init(0, m_dataStack.INITIAL_STACK_ALLOC*1000);
-
+   m_finallyStack.init();
    m_waiting.init();
+
+   // create a finally base that will be never used (for performance)
+   FinallyData& dt = *m_finallyStack.addSlot();
+   dt.m_depth = 0;
+   dt.m_finstep = 0;
+
    m_acquired = 0;
    atomicSet(m_events,0);
    pushReturn();
@@ -122,7 +128,13 @@ void VMContext::reset()
 
    abortWaits();
    acquire(0);
+   m_finallyStack.init();
    m_waiting.init();
+
+   // create a finally base that will be never used (for performance)
+   FinallyData& dt = *m_finallyStack.addSlot();
+   dt.m_depth = 0;
+   dt.m_finstep = 0;
 
    // prepare a low-limit VM terminator request.
    pushReturn();
@@ -490,13 +502,13 @@ void VMContext::commitRule()
 
 
 template<class _checker>
-bool VMContext::unrollToNext( const _checker& check )
+VMContext::t_unrollResult VMContext::unrollToNext( const _checker& check )
 {
    // first, we must have at least a function around.
-   register CallFrame* curFrame =  m_callStack.m_top;
-   register CodeFrame* curCode = m_codeStack.m_top;
-   register Item* curData = m_dataStack.m_top;
-   register DynsData* curDyns = m_dynsStack.m_top;
+   CallFrame* curFrame =  m_callStack.m_top;
+   CodeFrame* curCode = m_codeStack.m_top;
+   Item* curData = m_dataStack.m_top;
+   DynsData* curDyns = m_dynsStack.m_top;
 
    while( m_callStack.m_base <= curFrame )
    {
@@ -507,24 +519,53 @@ bool VMContext::unrollToNext( const _checker& check )
       {
          if( check( *curCode->m_step, this ) )
          {
-            m_callStack.m_top = curFrame;
-            m_dataStack.m_top = curData;
             m_codeStack.m_top = curCode;
+            m_dataStack.m_top = curData;
             m_dynsStack.m_top = curDyns;
-            return true;
+            m_callStack.m_top = curFrame;
+
+            // did we cross one (or more) finally handlers
+            if ( static_cast<uint32>( curCode - m_codeStack.m_base ) < m_finallyStack.m_top->m_depth )
+            {
+               const TreeStep* finallyHandler = m_finallyStack.m_top->m_finstep;
+               m_finallyStack.pop();
+               check.handleFinally( this, finallyHandler );
+               return e_unroll_suspended;
+            }
+
+            return e_unroll_found;
          }
+
          --curCode;
       }
 
-      // were we searching a return?
-      if( check.isReturn() ) return true;
+      // are we allowed to find it just in one frame?
+      if( check.dontCrossFrame() )
+      {
+         return e_unroll_not_found;
+      }
+
+      // did we cross one (or more) finally handlers
+      if ( static_cast<uint32>( curCode - m_codeStack.m_base ) < m_finallyStack.m_top->m_depth )
+      {
+         m_codeStack.m_top = curCode;
+         m_dataStack.m_top = curData;
+         m_dynsStack.m_top = curDyns;
+         m_callStack.m_top = curFrame;
+
+         const TreeStep* finallyHandler = m_finallyStack.m_top->m_finstep;
+         m_finallyStack.pop();
+         check.handleFinally( this, finallyHandler );
+         return e_unroll_suspended;
+      }
 
       // unroll the call.
       curData = m_dataStack.m_base + curFrame->m_initBase;
+      curDyns = m_dynsStack.m_base + curFrame->m_dynsBase;
       curFrame--;
    }
 
-   return false;
+   return e_unroll_not_found;
 }
 
 
@@ -536,7 +577,14 @@ public:
       return ps.isNextBase();
    }
 
-   bool isReturn() const { return false; }
+   inline bool dontCrossFrame() const { return true; }
+
+   inline void handleFinally( VMContext* ctx, const TreeStep* handler ) const
+   {
+      static PStep* ps = &Engine::instance()->stdSteps()->m_unrollToNext;
+      ctx->pushCode( ps );
+      ctx->pushCode( handler );
+   }
 };
 
 
@@ -548,7 +596,14 @@ public:
       return ps.isLoopBase();
    }
 
-   bool isReturn() const { return false; }
+   inline bool dontCrossFrame() const { return true; }
+
+   inline void handleFinally( VMContext* ctx, const TreeStep* handler ) const
+   {
+      static PStep* ps = &Engine::instance()->stdSteps()->m_unrollToLoop;
+      ctx->pushCode( ps );
+      ctx->pushCode( handler );
+   }
 };
 
 
@@ -573,7 +628,16 @@ public:
       return false;
    }
 
-   bool isReturn() const { return false; }
+   inline bool dontCrossFrame() const { return false; }
+
+   inline void handleFinally( VMContext* ctx, const TreeStep* handler ) const
+   {
+      static PStep* ps = &Engine::instance()->stdSteps()->m_raiseTop;
+
+      ctx->pushData( m_item );
+      ctx->pushCode( ps );
+      ctx->pushCode( handler );
+   }
 
 private:
    const Item& m_item;
@@ -600,30 +664,27 @@ public:
       return false;
    }
 
-   bool isReturn() const { return false; }
+   inline bool dontCrossFrame() const { return false; }
+
+   inline void handleFinally( VMContext* ctx, const TreeStep* handler ) const
+   {
+      static PStep* ps = &Engine::instance()->stdSteps()->m_raiseTop;
+
+      ctx->pushData( Item(ctx->thrownError()->handler(), ctx->thrownError()) );
+      ctx->pushCode( ps );
+      ctx->pushCode( handler );
+
+   }
 
 private:
    Class* m_err;
 };
 
 
-class CheckIfCodeIsReturn
-{
-public:
-
-   inline bool operator()( const PStep& , VMContext*  ) const
-   {
-      return false;
-   }
-
-   bool isReturn() const { return true; }
-};
-
-
 void VMContext::unrollToNextBase()
 {
    CheckIfCodeIsNextBase checker;
-   if( ! unrollToNext( checker ) )
+   if( unrollToNext( checker ) == e_unroll_not_found )
    {
       raiseError( new CodeError( ErrorParam(e_continue_out, __LINE__, SRC )
          .origin(ErrorParam::e_orig_vm)) );
@@ -634,7 +695,7 @@ void VMContext::unrollToNextBase()
 void VMContext::unrollToLoopBase()
 {
    CheckIfCodeIsLoopBase checker;
-   if( ! unrollToNext( checker ) )
+   if( unrollToNext( checker ) == e_unroll_not_found )
    {
       raiseError( new CodeError( ErrorParam(e_break_out, __LINE__, SRC )
          .origin(ErrorParam::e_orig_vm)) );
@@ -650,8 +711,12 @@ void VMContext::raiseItem( const Item& item )
    // first, if this is a boxed error, unbox it and send it to raiseError.
    if( item.isUser() )
    {
-      if ( item.asClass()->isErrorClass() ) {
-         raiseError( static_cast<Error*>( item.asInst() ) );
+      Class* cls;
+      void* inst;
+      if ( item.asClassInst(cls,inst)
+               && cls->isErrorClass() )
+      {
+         raiseError( static_cast<Error*>( inst ) );
          return;
       }
    }
@@ -665,7 +730,9 @@ void VMContext::raiseItem( const Item& item )
 
    m_raised = item;
    m_catchBlock = 0;
-   if( unrollToNext<CheckIfCodeIsCatchItem>( check ) )
+
+   VMContext::t_unrollResult result = unrollToNext<CheckIfCodeIsCatchItem>( check );
+   if( result  == e_unroll_found )
    {
       // the unroller has prepared the code for us
       fassert( m_catchBlock != 0 );
@@ -679,7 +746,7 @@ void VMContext::raiseItem( const Item& item )
       //TODO: In case a finally punches in, manage it now.
 
    }
-   else
+   else if( result == e_unroll_not_found )
    {
       // reset the raised object, anyhow.
       m_raised.setNil();
@@ -689,18 +756,22 @@ void VMContext::raiseItem( const Item& item )
       ce->raised( item );
       raiseError( ce );
    }
+   else {
+      m_raised.setNil();
+   }
 }
 
 void VMContext::raiseError( Error* ce )
 {
    if( m_lastRaised != 0 ) m_lastRaised->decref();
    m_lastRaised = ce;
-
+   ce->incref();
    // can we catch it?
    m_catchBlock = 0;
    CheckIfCodeIsCatchError check( ce->handler() );
 
-   if( unrollToNext<CheckIfCodeIsCatchError>( check ) )
+   VMContext::t_unrollResult result = unrollToNext<CheckIfCodeIsCatchError>( check );
+   if( result == e_unroll_found )
    {
       resetCode( m_catchBlock );
 
@@ -710,9 +781,16 @@ void VMContext::raiseError( Error* ce )
          *resolveSymbol(m_catchBlock->target(), true ) = Item( ce->handler(), ce );
       }
    }
-   else {
+   else if( result == e_unroll_not_found )
+   {
       // we're out of business; ask to raise to our parent.
       atomicOr( m_events, evtRaise );
+   }
+   // otherwise, the throw is suspended
+   else {
+      atomicAnd( m_events, ~evtRaise );
+      ce->decref();
+      m_lastRaised = 0;
    }
 }
 
@@ -935,9 +1013,10 @@ void VMContext::unrollLocalFrame( int dynsCount )
 }
 
 
-void VMContext::exitLocalFrame()
+void VMContext::exitLocalFrame( bool exec )
 {
    static PStep* localFrame = &Engine::instance()->stdSteps()->m_localFrame;
+   static PStep* localFrameExec = &Engine::instance()->stdSteps()->m_localFrameExec;
    
    MESSAGE( "Exit local frame." );
    
@@ -948,21 +1027,29 @@ void VMContext::exitLocalFrame()
    {
       if( top->m_step == localFrame) 
       {
-         m_codeStack.m_top = top-1;
+         // we'll be here again...
+         if( static_cast<uint32>(top - m_codeStack.m_base) < m_finallyStack.m_top->m_depth )
+         {
+            const TreeStep* fd = m_finallyStack.m_top->m_finstep;
+            m_finallyStack.pop();
+            m_codeStack.m_top = top;
+            if( exec ) {
+               // chance into the exec frame, keep depth in m_seq
+               m_codeStack.m_top->m_step = localFrameExec;
+            }
+            pushCode(fd);
+            return;
+         }
 
+         m_codeStack.m_top = top-1;
          // if there are symbols to unroll, do it.
-         // don't call unrollLocalFrame to save this call.
          if( top->m_seqId > 0 )
          {
-            // the real frame is at seqId-1 as 0 is used as a marker.
-            register DynsData* base = m_dynsStack.offset( top->m_seqId-1 );
-            fassert( "$base" == base->m_sym->name() );
-            TRACE( "Exiting with seq ID %d, data depth %d", top->m_seqId,
-                 (int)(base->m_value - m_dataStack.m_base) );
-            m_dataStack.m_top = base->m_value;
-            m_dynsStack.m_top = base-1;
+            Item td = topData();
+            unrollLocalFrame( top->m_seqId-1 );
+            topData() = td;
          }
-         
+
          break;
       }
       --top;
@@ -986,13 +1073,23 @@ void VMContext::insertData(int32 pos, Item* data, int32 dataSize, int32 replSize
    memcpy( base, data, sizeof(Item)*dataSize );
 }
 
-
-void VMContext::returnFrame( const Item& value )
+template<class _returner>
+void VMContext::returnFrame_base( const Item& value )
 {
+   static PStep* ps_return = _returner::pstep();
+
    register CallFrame* topCall = m_callStack.m_top;
    TRACE1( "Return frame from function %s", topCall->m_function->name().c_ize() );
 
-   // TODO: check for pending finally
+   if( topCall->m_codeBase < m_finallyStack.m_top->m_depth )
+   {
+      const TreeStep* fd = m_finallyStack.m_top->m_finstep;
+      m_finallyStack.pop();
+      pushData(value);
+      pushCode(ps_return);
+      pushCode(fd);
+      return;
+   }
 
    // reset code and data
    m_codeStack.unroll( topCall->m_codeBase );
@@ -1020,8 +1117,84 @@ void VMContext::returnFrame( const Item& value )
 
    PARANOID( "Call stack underflow at return", (m_callStack.m_top >= m_callStack.m_base-1) );
    TRACE( "Return frame code:%p, data:%p, call:%p", m_codeStack.m_top, m_dataStack.m_top, m_callStack.m_top  );
+
+   _returner::post_return( this );
 }
 
+class ReturnerSimple
+{
+public:
+   inline static PStep* pstep() {
+      return &Engine::instance()->stdSteps()->m_returnFrameWithTop;
+   }
+
+   inline static void post_return( VMContext* ) {
+   }
+};
+
+class ReturnerND
+{
+public:
+   inline static PStep* pstep() {
+      return &Engine::instance()->stdSteps()->m_returnFrameWithTopDoubt;
+   }
+
+   inline static void post_return( VMContext* ctx ) {
+      ctx->SetNDContext();
+   }
+};
+
+class ReturnerEval
+{
+public:
+   inline static PStep* pstep() {
+      return &Engine::instance()->stdSteps()->m_returnFrameWithTopEval;
+   }
+
+   inline static void post_return( VMContext* ctx ) {
+     Class* cls = 0;
+      void* data = 0;
+      ctx->topData().forceClassInst(cls, data);
+      cls->op_call( ctx, 0, data );
+   }
+};
+
+class ReturnerNDEval
+{
+public:
+   inline static PStep* pstep() {
+      return &Engine::instance()->stdSteps()->m_returnFrameWithTopEval;
+   }
+
+   inline static void post_return( VMContext* ctx ) {
+      ctx->SetNDContext();
+      Class* cls = 0;
+      void* data = 0;
+      ctx->topData().forceClassInst(cls, data);
+      cls->op_call( ctx, 0, data );
+   }
+};
+
+
+void VMContext::returnFrame( const Item& value )
+{
+   returnFrame_base<ReturnerSimple>(value);
+}
+
+void VMContext::returnFrameND( const Item& value )
+{
+   returnFrame_base<ReturnerND>(value);
+}
+
+void VMContext::returnFrameEval( const Item& value )
+{
+   returnFrame_base<ReturnerEval>(value);
+}
+
+void VMContext::returnFrameNDEval( const Item& value )
+{
+   returnFrame_base<ReturnerEval>(value);
+}
 
 void VMContext::forwardParams( int pcount )
 {

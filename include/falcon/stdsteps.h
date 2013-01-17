@@ -291,13 +291,60 @@ public:
    class PStepLocalFrame: public PStep
    {
    public:
-      PStepLocalFrame() {apply = apply_; m_bIsFinally = true; }
+      PStepLocalFrame() {apply = apply_;}
       virtual ~PStepLocalFrame() {}
       static void apply_( const PStep*, VMContext* ctx );
       virtual void describeTo( String&, int =0 ) const;
    };
    PStepLocalFrame m_localFrame;
 
+   /** Unrolls a local evaluation frame and execute.
+    */
+   class PStepLocalFrameExec: public PStep
+   {
+   public:
+      PStepLocalFrameExec() {apply = apply_;}
+      virtual ~PStepLocalFrameExec() {}
+      static void apply_( const PStep*, VMContext* ctx );
+      virtual void describeTo( String&, int =0 ) const;
+   };
+   PStepLocalFrameExec m_localFrameExec;
+
+   /** Unrolls up to the next loop landing (break)
+    */
+   class PStepUnrollToLoop: public PStep
+   {
+   public:
+      PStepUnrollToLoop() {apply = apply_;}
+      virtual ~PStepUnrollToLoop() {}
+      static void apply_( const PStep*, VMContext* ctx );
+      virtual void describeTo( String&, int =0 ) const;
+   };
+   PStepUnrollToLoop m_unrollToLoop;
+
+   /** Unrolls up to the next loop begin (continue)
+    */
+   class PStepUnrollToNext: public PStep
+   {
+   public:
+      PStepUnrollToNext() {apply = apply_;}
+      virtual ~PStepUnrollToNext() {}
+      static void apply_( const PStep*, VMContext* ctx );
+      virtual void describeTo( String&, int =0 ) const;
+   };
+   PStepUnrollToNext m_unrollToNext;
+
+   /** Raises the top item in the data stack.
+    */
+   class PStepRaiseTop: public PStep
+   {
+   public:
+      PStepRaiseTop() {apply = apply_;}
+      virtual ~PStepRaiseTop() {}
+      static void apply_( const PStep*, VMContext* ctx );
+      virtual void describeTo( String&, int =0 ) const;
+   };
+   PStepRaiseTop m_raiseTop;
 };
 
 }

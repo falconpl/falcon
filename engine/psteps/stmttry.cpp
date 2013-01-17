@@ -203,22 +203,23 @@ void StmtTry::oneLinerTo( String& tgt ) const
 void StmtTry::apply_( const PStep* ps, VMContext* ctx )
 { 
    const StmtTry* self = static_cast<const StmtTry*>(ps);   
-   
-   // we won't be again in the same incarnation
-   ctx->popCode();
 
    // first time around?
    CodeFrame& cf = ctx->currentCode();
-   if( cf.m_seqId == 1 )
+   TRACE( "StmtTry::apply_ %d/2 %s ", cf.m_seqId, self->oneLiner().c_ize() );
+   if( cf.m_seqId )
    {
       // disabled --  we were catch placeholdrs.
+      ctx->popCode();
       return;
    }
+   // we won't be again in the same incarnation
+   ctx->popCode();
 
    // change into finally...
    if( self->m_fbody != 0 ) {
-      ctx->pushCode( self->m_fbody );
-      // TODO: register the finally code.
+      ctx->registerFinally(self->m_fbody);
+      ctx->pushCode( &self->m_finallyStep );
    }
 
    if( self->m_body != 0 )
@@ -232,23 +233,12 @@ void StmtTry::apply_( const PStep* ps, VMContext* ctx )
 }
 
 
-
 void StmtTry::PStepFinally::apply_( const PStep* ps, VMContext* ctx )
 {
    register const StmtTry* stry = static_cast<const StmtTry::PStepFinally*>(ps)->m_owner;
-   
-   // declare that we begin to work with finally
-   //ctx->enterFinally();
-   ctx->currentCode().m_step = &stry->m_cleanStep;
-   ctx->stepIn( stry->m_fbody );   
-}
-
-
-void StmtTry::PStepCleanup::apply_( const PStep*, VMContext* ctx )
-{
-   // declare that we're ready to be completed
-   ctx->popCode();
-   //ctx->finallyComplete();
+   // pop the topomost finally barrier
+   ctx->unregisterFinally();
+   ctx->resetCode( stry->m_fbody );
 }
 
 }

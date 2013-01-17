@@ -44,6 +44,7 @@ class Scheduler;
 class ContextGroup;
 class Process;
 class VarMap;
+class TreeStep;
 
 /**
  * Structure needed to store VM data.
@@ -978,6 +979,9 @@ public:
     */
    void returnFrame( const Item& value = Item() );
 
+   void returnFrameND( const Item& value = Item() );
+   void returnFrameEval( const Item& value = Item() );
+   void returnFrameNDEval( const Item& value = Item() );
 
    /** Unrolls the code and function frames down to the nearest "next" loop base.
     \throw CodeError if base not found.
@@ -1067,7 +1071,7 @@ public:
     the operation is silently aborted.
     
    */
-   void exitLocalFrame();
+   void exitLocalFrame( bool exec = false );
 
    //==========================================================
    // Event management
@@ -1272,6 +1276,17 @@ public:
    /** The virtual machine on which the process running this context is on. */
    VMachine* vm() const { return m_process->vm(); }
 
+   /** Adds a finally handler at current code position */
+   void registerFinally( TreeStep* finHandler ) {
+      FinallyData& dt = *m_finallyStack.addSlot();
+      dt.m_depth = codeDepth();
+      dt.m_finstep = finHandler;
+   }
+
+   void unregisterFinally() {
+      m_finallyStack.pop();
+   }
+
 protected:
 
    /** Class holding the dynamic symbol information on a stack. */
@@ -1299,6 +1314,21 @@ protected:
       }
 
       ~DynsData() {}
+   };
+
+   /** Class holding registered finally points */
+   class FinallyData {
+   public:
+      const TreeStep* m_finstep;
+      uint32 m_depth;
+
+      FinallyData()
+      {}
+
+      FinallyData( TreeStep* fs, uint32 d ):
+         m_finstep(fs),
+         m_depth(d)
+      {}
    };
 
    template<class datatype__>
@@ -1379,6 +1409,7 @@ protected:
    LinearStack<CallFrame> m_callStack;
    LinearStack<Item> m_dataStack;
    LinearStack<DynsData> m_dynsStack;
+   LinearStack<FinallyData> m_finallyStack;
 
    // list of variables we're waiting on
    LinearStack<Shared*> m_waiting;
@@ -1402,7 +1433,13 @@ protected:
    // temporary variable used during stack unrolls.
    const SynTree* m_catchBlock;
 
-   template <class __checker> bool unrollToNext( const __checker& check );
+   typedef enum {
+      e_unroll_not_found,
+      e_unroll_found,
+      e_unroll_suspended
+   } t_unrollResult;
+
+   template <class __checker> t_unrollResult unrollToNext( const __checker& check );
 
    uint32 m_id;
    int64 m_next_schedule;
@@ -1414,6 +1451,9 @@ protected:
    Process* m_process;
 
 private:
+   template<class _returner>
+   void returnFrame_base( const Item& value );
+
    virtual ~VMContext();
    FALCON_REFERENCECOUNT_DECLARE_INCDEC(VMContext)
 };

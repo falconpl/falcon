@@ -193,14 +193,12 @@ void StmtReturn::apply_expr_( const PStep* ps, VMContext* ctx )
    }
       
    // we can return now. No need for popping, we're popping a lot here.
-   ctx->returnFrame( ctx->topData() );
-   
    if( self->m_bHasEval )
    {
-      Class* cls = 0;
-      void * data = 0;
-      ctx->topData().forceClassInst( cls, data );
-      cls->op_call( ctx, 0, data );
+      ctx->returnFrameEval(ctx->topData());
+   }
+   else {
+      ctx->returnFrame( ctx->topData() );
    }
 }
 
@@ -208,8 +206,7 @@ void StmtReturn::apply_expr_( const PStep* ps, VMContext* ctx )
 void StmtReturn::apply_doubt_( const PStep*, VMContext* ctx )
 {
    MESSAGE1( "Apply 'return ?'");   
-   ctx->returnFrame();
-   ctx->SetNDContext();
+   ctx->returnFrameND();
 }
 
 
@@ -235,15 +232,12 @@ void StmtReturn::apply_expr_doubt_( const PStep* ps, VMContext* ctx )
       return;
    }
    
-   ctx->returnFrame( ctx->topData() );
-   ctx->SetNDContext();
-   
    if( self->m_bHasEval )
    {
-      Class* cls = 0;
-      void * data = 0;
-      ctx->topData().forceClassInst( cls, data );
-      cls->op_call( ctx, 0, data );
+      ctx->returnFrameNDEval( ctx->topData() );
+   }
+   else {
+      ctx->returnFrameND( ctx->topData() );
    }
 }
 

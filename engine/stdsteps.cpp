@@ -233,8 +233,7 @@ void StdSteps::PStepReturnFrameWithTop::describeTo( String& s, int ) const
 
 void StdSteps::PStepReturnFrameWithTopDoubt::apply_( const PStep*, VMContext* ctx )
 {
-   ctx->returnFrame( ctx->topData() );
-   ctx->SetNDContext();
+   ctx->returnFrameND( ctx->topData() );
 }
 
 void StdSteps::PStepReturnFrameWithTopDoubt::describeTo( String& s, int ) const
@@ -245,11 +244,7 @@ void StdSteps::PStepReturnFrameWithTopDoubt::describeTo( String& s, int ) const
 
 void StdSteps::PStepReturnFrameWithTopEval::apply_( const PStep*, VMContext* ctx )
 {
-   ctx->returnFrame( ctx->topData() );      
-   Class* cls = 0;
-   void* data = 0;
-   ctx->topData().forceClassInst(cls, data);
-   cls->op_call( ctx, 0, data );
+   ctx->returnFrameEval( ctx->topData() );
 }
 
 void StdSteps::PStepReturnFrameWithTopEval::describeTo( String& s, int ) const
@@ -259,20 +254,13 @@ void StdSteps::PStepReturnFrameWithTopEval::describeTo( String& s, int ) const
 
 void StdSteps::PStepReturnFrameWithTopDoubtEval::apply_( const PStep*, VMContext* ctx )
 {
-   ctx->returnFrame( ctx->topData() );
-   ctx->SetNDContext();
-   
-   Class* cls = 0;
-   void* data = 0;
-   ctx->topData().forceClassInst(cls, data);
-   cls->op_call( ctx, 0, data );
+   ctx->returnFrameNDEval( ctx->topData() );
 }
 
 void StdSteps::PStepReturnFrameWithTopDoubtEval::describeTo( String& s, int ) const
 {
    s = "PStepReturnFrameWithTopDoubtEval";
 }
-
 
 
 void StdSteps::PStepLocalFrame::apply_( const PStep*, VMContext* ctx )
@@ -285,13 +273,63 @@ void StdSteps::PStepLocalFrame::apply_( const PStep*, VMContext* ctx )
       ctx->unrollLocalFrame( base-1 );
       ctx->topData() = top;
    }
-   // we're a finally barrier.
-   //ctx->finallyComplete();
 }
-
 void StdSteps::PStepLocalFrame::describeTo( String& s, int ) const
 {
    s = "PStepLocalFrame";
+}
+
+
+void StdSteps::PStepLocalFrameExec::apply_( const PStep*, VMContext* ctx )
+{
+   register int base = ctx->currentCode().m_seqId;
+   ctx->popCode();
+   // 0 is marker for unused. The real base is seqId - 1.
+   if( base > 0 ) {
+      Item top = ctx->topData();
+      ctx->unrollLocalFrame( base-1 );
+      ctx->topData() = top;
+   }
+   ctx->callItem(ctx->topData());
+}
+void StdSteps::PStepLocalFrameExec::describeTo( String& s, int ) const
+{
+   s = "PStepLocalFrameExec";
+}
+
+void StdSteps::PStepUnrollToLoop::apply_( const PStep*, VMContext* ctx )
+{
+   ctx->popCode();
+   ctx->unrollToLoopBase();
+}
+
+void StdSteps::PStepUnrollToLoop::describeTo( String& s, int ) const
+{
+   s = "PStepUnrollToLoop";
+}
+
+
+void StdSteps::PStepUnrollToNext::apply_( const PStep*, VMContext* ctx )
+{
+   ctx->popCode();
+   ctx->unrollToNextBase();
+}
+
+void StdSteps::PStepUnrollToNext::describeTo( String& s, int ) const
+{
+   s = "PStepUnrollToNext";
+}
+
+
+void StdSteps::PStepRaiseTop::apply_( const PStep*, VMContext* ctx )
+{
+   ctx->popCode();
+   ctx->raiseItem( ctx->topData() );
+}
+
+void StdSteps::PStepRaiseTop::describeTo( String& s, int ) const
+{
+   s = "PStepRaiseTop";
 }
 
 }

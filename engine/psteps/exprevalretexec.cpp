@@ -42,17 +42,15 @@ void ExprEvalRetExec::apply_( const PStep* ps, VMContext* ctx )
       {
          return;
       }
+      /* no break */
       
-      // fallthrough
       case 1:
       {
          // we're done now.
-         ctx->popCode();     
-         Item item = ctx->topData();
-         ctx->exitLocalFrame();
-         ctx->topData() = item;
-         ctx->callItem(item);
+         // ctx->popCode(); will pop
+         ctx->exitLocalFrame( true );
       }
+      /* no break */
    }
 }
 
