@@ -25,6 +25,7 @@ namespace Falcon {
 class Symbol;
 class Expression;
 class SelectRequirement;
+class VMContext;
 
 /** Handler for the select statement.
 
@@ -148,6 +149,9 @@ public:
    /** Returns the count of unresolved forward symbols in block delcarations. */
    int32 unresolved() const { return m_unresolved; }
       
+   void flatten( VMContext* ctx, ItemArray& subItems ) const;
+   void unflatten( VMContext* ctx, ItemArray& subItems );
+
 private:
    class Private;
    Private* _p;

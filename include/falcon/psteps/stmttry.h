@@ -61,28 +61,28 @@ public:
     */   
    bool fbody(SynTree* b);
    
-   StmtSelect& catchSelect() { return m_select; } 
-   const StmtSelect& catchSelect() const { return m_select; }
+   StmtSelect& catchSelect() { return *m_select; }
+   const StmtSelect& catchSelect() const { return *m_select; }
+
+   /**
+    * Try has arity 3: body, catch clauses (a statement block) and finally body.
+    */
+   virtual int32 arity() const;
+   /**
+    * Try has arity 3: body, catch clauses (a statement block) and finally body.
+    */
+   virtual TreeStep* nth( int32 n ) const;
+   /**
+    * Try has arity 3; setting 1 (body) will fail.
+    */
+   virtual bool setNth( int32 n, TreeStep* ts );
 
 private:
    SynTree *m_body;
    SynTree *m_fbody;
-   StmtSelect m_select;
+   StmtSelect* m_select;
    
    static void apply_( const PStep*, VMContext* ctx );
-   
-   /** Placeholder for break after having pushed our body.*/
-   class PStepDone: public PStep 
-   {
-   public:
-      PStepDone() { apply = apply_; m_bIsCatch = true; }
-      virtual ~PStepDone() {}
-      virtual void describeTo( String& tgt, int =0 ) const { tgt = "Try done"; }
-   
-   private:
-      static void apply_( const PStep*, VMContext* ctx );
-   }
-   m_stepDone;   
    
    /** Execute the finally clause of this try.*/
    class PStepFinally: public PStep 

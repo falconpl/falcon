@@ -135,7 +135,6 @@ protected:
    class Private;
    Private* _p;
    
-   VarMap* m_locals;
    Symbol* m_head;
    Expression* m_selector;
 

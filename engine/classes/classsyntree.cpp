@@ -19,6 +19,9 @@
 #include <falcon/string.h>
 #include <falcon/syntree.h>
 #include <falcon/vmcontext.h>
+#include <falcon/datareader.h>
+#include <falcon/datawriter.h>
+#include <falcon/symbol.h>
 
 #include <falcon/classes/classsyntree.h>
 #include <falcon/classes/classtreestep.h>
@@ -58,11 +61,42 @@ void* ClassSynTree::clone( void* instance ) const
 }
 
 
+void ClassSynTree::store( VMContext* ctx, DataWriter* stream, void* instance ) const
+{
+   SynTree* st = static_cast<SynTree*>(instance);
+
+   if(st->target() != 0) {
+      stream->write( true );
+      stream->write( st->target()->isGlobal() );
+      stream->write( st->target()->name() ) ;
+   }
+   else {
+      stream->write( false );
+   }
+
+   m_parent->store( ctx, stream, instance );
+}
+
+
 void ClassSynTree::restore( VMContext* ctx, DataReader* stream ) const
 {
-   ctx->pushData( FALCON_GC_STORE( this, new SynTree ) );
+   bool hasSym;
+   bool isGlobal;
+   SynTree* st = new SynTree;
+
+   stream->read( hasSym );
+   if( hasSym ) {
+      stream->read( isGlobal );
+      String symname;
+      stream->read( symname );
+      Symbol* sym = Engine::getSymbol( symname, isGlobal );
+      st->target(sym);
+   }
+
+   ctx->pushData( FALCON_GC_STORE( this, st ) );
    m_parent->restore( ctx, stream );
 }
+
 
 void ClassSynTree::unflatten( VMContext* ctx, ItemArray& subItems, void* instance ) const
 {

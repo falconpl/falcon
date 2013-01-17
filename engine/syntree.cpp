@@ -49,7 +49,6 @@ public:
 SynTree::SynTree( int line, int chr ):
    TreeStep( TreeStep::e_cat_syntree, line, chr ),
    _p( new Private ),
-   m_locals(0),
    m_head(0),
    m_selector(0)
 {
@@ -65,7 +64,6 @@ SynTree::SynTree( int line, int chr ):
 SynTree::SynTree( const SynTree& other ):
    TreeStep( other ),
    _p( 0 ),
-   m_locals(0),
    m_head(0),
    m_selector(0)
 {   
@@ -73,10 +71,6 @@ SynTree::SynTree( const SynTree& other ):
    m_bIsComposed = true;  
    
    _p = new Private(*other._p, this);
-   if( other.m_locals != 0 )
-   {
-      m_locals = new VarMap( *other.m_locals );
-   }
    
    if( other.m_head != 0 ) {
       m_head = other.m_head;
@@ -95,7 +89,6 @@ SynTree::SynTree( const SynTree& other ):
 SynTree::~SynTree()
 {
    delete _p;
-   delete m_locals;
    delete m_selector;
    if( m_head != 0 ) {
       m_head->decref();
@@ -143,18 +136,6 @@ void SynTree::oneLinerTo( String& tgt ) const
    // todo: represent the first one?
    tgt = "...";
 }
-
-
-VarMap* SynTree::locals( bool bmake )
-{
-   if( m_locals == 0 && bmake )
-   {
-      m_locals = new VarMap();
-   }
-   
-   return m_locals;
-}
-
 
 void SynTree::apply_( const PStep* ps, VMContext* ctx )
 {

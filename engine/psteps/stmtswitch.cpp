@@ -201,8 +201,6 @@ void StmtSwitch::describeTo( String& tgt, int depth ) const
    
    String prefix = String(" ").replicate( depth * depthIndent );
    tgt = prefix + "switch " + m_expr->describe() +"\n";
-   
-   
 }
 
 

@@ -71,9 +71,7 @@ VMContext::LinearStack<datatype__>::~LinearStack()
 
 
 VMContext::VMContext( Process* prc, ContextGroup* grp ):
-   m_safeCode(0),
-   m_thrown(0),
-   m_finMode( e_fin_none ),
+   m_lastRaised(0),
    m_ruleEntryResult(false),
    m_catchBlock(0),
    m_id(0),
@@ -101,21 +99,21 @@ VMContext::~VMContext()
    abortWaits();
    acquire(0);
 
-   if( m_thrown != 0 ) m_thrown->decref();
+   if( m_lastRaised != 0 ) m_lastRaised->decref();
 }
 
 
 void VMContext::reset()
 {
-   if( m_thrown != 0 ) m_thrown->decref();
-   m_thrown = 0;
+   if( m_lastRaised != 0 ) m_lastRaised->decref();
+   m_lastRaised = 0;
+
    atomicSet(m_events, 0);
 
    // do not reset ingroup.
 
    m_catchBlock = 0;
    m_ruleEntryResult = false;
-   m_finMode = e_fin_none;
 
    m_dynsStack.reset();
    m_codeStack.reset();
@@ -284,11 +282,6 @@ const PStep* VMContext::nextStep() const
     return 0;
  }
 
-void VMContext::setSafeCode()
-{
-   m_safeCode = m_codeStack.m_top - m_codeStack.m_base;
-}
-
 
 void VMContext::abortWaits()
 {
@@ -338,8 +331,8 @@ Shared* VMContext::engageWait( int64 timeout )
    Shared** base = m_waiting.m_base;
    Shared** top = m_waiting.m_top+1;
 
-   TRACE( "VMContext::engageWait waiting on %d shared resources in %dms.",
-          top-base, (int) timeout  );
+   TRACE( "VMContext::engageWait waiting for %d(%p) on %d shared resources in %dms.",
+            id(), this,  top-base, (int) timeout  );
 
    while( base != top )
    {
@@ -347,7 +340,8 @@ Shared* VMContext::engageWait( int64 timeout )
       if (shared->consumeSignal())
       {
          abortWaits();
-         TRACE( "VMContext::engageWait got signaled %p%s", *base,
+         TRACE( "VMContext::engageWait for %d(%p) got signaled %p%s",
+                  id(), this, *base,
                      (shared->hasAcquireSemantic() ? " (with acquire semantic)" : "") );
          if(shared->hasAcquireSemantic())
          {
@@ -359,7 +353,7 @@ Shared* VMContext::engageWait( int64 timeout )
    }
 
    // nothing free right now, put us at sleep.
-   MESSAGE( "VMContext::engageWait nothing signaled, will go wait");
+   TRACE( "VMContext::engageWait for %d(%p) nothing signaled, will go wait", id(), this);
    setSwapEvent();
 
    // tell the shared we're waiting for them.
@@ -537,14 +531,8 @@ bool VMContext::unrollToNext( const _checker& check )
 class CheckIfCodeIsNextBase
 {
 public:
-   inline bool operator()( const PStep& ps, VMContext* ctx ) const
+   inline bool operator()( const PStep& ps, VMContext* ) const
    {
-      if( ps.isFinally() )
-      {
-         ctx->setFinallyContinuation( VMContext::e_fin_continue );
-         return true;
-      }
-
       return ps.isNextBase();
    }
 
@@ -555,13 +543,8 @@ public:
 class CheckIfCodeIsLoopBase
 {
 public:
-   inline bool operator()( const PStep& ps, VMContext* ctx ) const
+   inline bool operator()( const PStep& ps, VMContext* ) const
    {
-      if( ps.isFinally() )
-      {
-         ctx->setFinallyContinuation( VMContext::e_fin_break );
-         return true;
-      }
       return ps.isLoopBase();
    }
 
@@ -579,12 +562,6 @@ public:
 
    inline bool operator()( const PStep& ps, VMContext* ctx ) const
    {
-      if( ps.isFinally() )
-      {
-         ctx->setFinallyContinuation( VMContext::e_fin_raise );
-         return true;
-      }
-
       if( ps.isCatch() )
       {
          const StmtTry* stry = static_cast<const StmtTry*>( &ps );
@@ -611,12 +588,6 @@ public:
 
    inline bool operator()( const PStep& ps, VMContext* ctx ) const
    {
-      if( ps.isFinally() )
-      {
-         ctx->setFinallyContinuation( VMContext::e_fin_raise );
-         return true;
-      }
-
       if( ps.isCatch() )
       {
          const StmtTry* stry = static_cast<const StmtTry*>( &ps );
@@ -640,14 +611,8 @@ class CheckIfCodeIsReturn
 {
 public:
 
-   inline bool operator()( const PStep& ps, VMContext* ctx ) const
+   inline bool operator()( const PStep& , VMContext*  ) const
    {
-      if( ps.isFinally() )
-      {
-         ctx->setFinallyContinuation( VMContext::e_fin_return );
-         return true;
-      }
-
       return false;
    }
 
@@ -676,17 +641,6 @@ void VMContext::unrollToLoopBase()
    }
 }
 
-bool VMContext::unrollToSafeCode()
-{
-   if ( m_safeCode == 0 )
-   {
-      return false;
-   }
-
-   m_codeStack.m_top = m_codeStack.m_base + m_safeCode;
-   return true;
-}
-
 //===================================================================
 // Try frame management.
 //
@@ -702,49 +656,31 @@ void VMContext::raiseItem( const Item& item )
       }
    }
 
-   // are we in a finally? -- in that case, we must just queue our item.
-   if( m_finMode == e_fin_raise && m_thrown != 0 )
-   {
-      // in this case, the effect is that of continue raisal of an uncaught item.
-      CodeError* ce = new CodeError( ErrorParam( e_uncaught, __LINE__, SRC )
-         .origin(ErrorParam::e_orig_vm));
-      ce->raised( item );
-      raiseError( ce );
-      return;
-   }
-
    // ok, it's a real item. Just in case, remove the rising-error marker.
-   if( m_thrown != 0 ) m_thrown->decref();
-   m_thrown = 0;
+   if( m_lastRaised != 0 ) m_lastRaised->decref();
+   m_lastRaised = 0;
 
    // can we catch it?
    CheckIfCodeIsCatchItem check(item);
 
+   m_raised = item;
    m_catchBlock = 0;
    if( unrollToNext<CheckIfCodeIsCatchItem>( check ) )
    {
       // the unroller has prepared the code for us
-      if( m_catchBlock != 0 )
+      fassert( m_catchBlock != 0 );
+      resetCode( m_catchBlock );
+      Symbol* sym = m_catchBlock->target();
+      if( sym != 0 )
       {
-         resetCode( m_catchBlock );
-         Symbol* sym = m_catchBlock->target();
-         if( sym != 0 )
-         {
-            *resolveSymbol(sym, true) = m_raised;
-         }
-         m_raised.setNil();
+         *resolveSymbol(sym, true) = m_raised;
       }
-      else
-      {
-         // otherwise, it was a finally, and we should leave it alone.
-         // Save the item for later re-raisal.
-         m_raised = item;
-      }
+
+      //TODO: In case a finally punches in, manage it now.
+
    }
    else
    {
-      // no luck.
-
       // reset the raised object, anyhow.
       m_raised.setNil();
 
@@ -757,90 +693,27 @@ void VMContext::raiseItem( const Item& item )
 
 void VMContext::raiseError( Error* ce )
 {
-   // are we in a finally?
-   // -- in that case, we must queue our error and continue the previous raise
-   if( m_finMode == e_fin_raise && m_thrown != 0 )
-   {
-      m_thrown->appendSubError( ce );
-      ce->decref();
-      ce = m_thrown;
-   }
+   if( m_lastRaised != 0 ) m_lastRaised->decref();
+   m_lastRaised = ce;
 
    // can we catch it?
-   unhandledError(ce);
    m_catchBlock = 0;
    CheckIfCodeIsCatchError check( ce->handler() );
 
    if( unrollToNext<CheckIfCodeIsCatchError>( check ) )
    {
-      // the unroller has prepared the code for us
-      if( m_catchBlock != 0 )
-      {
-         m_finMode = e_fin_none;
-         resetCode( m_catchBlock );
+      resetCode( m_catchBlock );
 
-         // assign the error to the required item.
-         if( m_catchBlock->target() != 0 )
-         {
-            *resolveSymbol(m_catchBlock->target(), true ) = Item( ce->handler(), ce );
-            unhandledError(0); // the error is handled.
-         }
+      // assign the error to the required item.
+      if( m_catchBlock->target() != 0 )
+      {
+         *resolveSymbol(m_catchBlock->target(), true ) = Item( ce->handler(), ce );
       }
    }
-}
-
-
-void VMContext::unhandledError( Error* ce )
-{
-   if( m_thrown != 0 ) m_thrown->decref();
-   m_thrown = ce;
-
-   atomicOr(m_events, evtRaise);
-}
-
-
-void VMContext::finallyComplete()
-{
-   /** reduce the count of traversed finally codes. */
-   switch( m_finMode )
-   {
-      case e_fin_none: break;
-      case e_fin_raise:
-         if ( m_thrown != 0 )
-         {
-            // if we don't zero the thrown error, the system will be fooled and think
-            // that a new throw has appened.
-            Error* e = m_thrown;
-            m_thrown = 0;
-            raiseError( e );
-         }
-         else
-         {
-            raiseItem( m_raised );
-         }
-         break;
-
-      case e_fin_break:
-         unrollToLoopBase();
-         break;
-
-      case e_fin_continue:
-         unrollToNextBase();
-         break;
-
-      case e_fin_return:
-         {
-            Item copy = m_raised;
-            m_raised.setNil();
-            returnFrame( copy );
-         }
-         break;
-
-      case e_fin_terminate:
-         // currently not used.
-         break;
+   else {
+      // we're out of business; ask to raise to our parent.
+      atomicOr( m_events, evtRaise );
    }
-
 }
 
 
@@ -1119,14 +992,7 @@ void VMContext::returnFrame( const Item& value )
    register CallFrame* topCall = m_callStack.m_top;
    TRACE1( "Return frame from function %s", topCall->m_function->name().c_ize() );
 
-   if( topCall->m_finallyCount > 0 )
-   {
-      // we have some finally block in the middle that must be respected.
-      CheckIfCodeIsReturn check;
-      unrollToNext( check );
-      m_raised = value;
-      return;
-   }
+   // TODO: check for pending finally
 
    // reset code and data
    m_codeStack.unroll( topCall->m_codeBase );
@@ -1319,12 +1185,27 @@ Item* VMContext::findLocal( const String& name ) const
 
 void VMContext::terminated()
 {
-   if( m_inGroup != 0 ) {
-      m_inGroup->onContextTerminated(this);
+   int value;
+   value = atomicFetch( m_events );
+   if( (value & evtRaise) )
+   {
+      if( m_inGroup != 0 ) {
+         m_inGroup->setError(this->m_lastRaised);
+         m_inGroup->onContextTerminated(this);
+      }
+      else {
+         // we're the main context.
+         m_process->completedWithError(this->m_lastRaised);
+      }
    }
    else {
-      // we're the main context.
-      m_process->completed();
+      if( m_inGroup != 0 ) {
+         m_inGroup->onContextTerminated(this);
+      }
+      else {
+         // we're the main context.
+         m_process->completed();
+      }
    }
 }
 

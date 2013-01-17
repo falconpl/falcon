@@ -104,6 +104,7 @@ SynClasses::SynClasses( Class* classSynTree, Class* classStatement, Class* class
    m_stmt_if->userFlags(FALCON_SYNCLASS_ID_ELSEHOST);
    m_stmt_select->userFlags(FALCON_SYNCLASS_ID_CASEHOST );
    m_stmt_switch->userFlags(FALCON_SYNCLASS_ID_SWITCH );
+   m_stmt_try->userFlags(FALCON_SYNCLASS_ID_CATCHHOST);
    m_stmt_autoexpr->userFlags(FALCON_SYNCLASS_ID_AUTOEXPR);
    m_expr_call->userFlags(FALCON_SYNCLASS_ID_CALLFUNC);
    m_expr_pseudocall->userFlags(FALCON_SYNCLASS_ID_CALLFUNC);
@@ -949,6 +950,19 @@ FALCON_STANDARD_SYNCLASS_OP_CREATE( While, StmtWhile, zeroaryExprSet ) //
 //=================================================================
 // Statements
 //
+
+void SynClasses::ClassSelect::flatten( VMContext* ctx, ItemArray& subItems, void* instance ) const
+{
+   StmtSelect* stmt = static_cast<StmtSelect*>(instance);
+   TRACE1( "SynClasses::ClassSelect::flatten %s", stmt->oneLiner().c_ize() );
+   stmt->flatten(ctx, subItems);
+}
+void SynClasses::ClassSelect::unflatten( VMContext* ctx, ItemArray& subItems, void* instance ) const
+{
+   StmtSelect* stmt = static_cast<StmtSelect*>(instance);
+   stmt->unflatten( ctx, subItems );
+   TRACE1( "SynClasses::ClassForTo::unflatten %s", stmt->oneLiner().c_ize() );
+}
 
 void SynClasses::ClassForTo::flatten( VMContext*, ItemArray& subItems, void* instance ) const
 {

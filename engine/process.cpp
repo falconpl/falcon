@@ -26,6 +26,7 @@
 #include <falcon/closure.h>
 #include <falcon/modspace.h>
 #include <falcon/synfunc.h>
+#include <falcon/error.h>
 
 
 namespace Falcon {
@@ -36,6 +37,7 @@ Process::Process( VMachine* owner ):
    m_event( true, false ),
    m_running(false),
    m_ctxId(0),
+   m_error(0),
    m_added(false)
 {
    // get an ID for this process.
@@ -50,6 +52,7 @@ Process::Process( VMachine* owner, bool bAdded ):
    m_event( true, false ),
    m_running(false),
    m_ctxId(0),
+   m_error(0),
    m_added(bAdded)
 {
    // get an ID for this process.
@@ -62,6 +65,9 @@ Process::Process( VMachine* owner, bool bAdded ):
 
 Process::~Process() {
    m_context->decref();
+   if( m_error != 0 ) {
+      m_error->decref();
+   }
    delete m_entry;
 }
 
@@ -143,7 +149,15 @@ Item& Process::result()
 
 InterruptibleEvent::wait_result_t Process::wait( int32 timeout )
 {
-   return m_event.wait(timeout);
+   InterruptibleEvent::wait_result_t retval = m_event.wait(timeout);
+
+   if( m_error != 0 ) {
+      Error* e = m_error;
+      e->incref();
+      throw e;
+   }
+
+   return retval;
 }
 
 void Process::interrupt()
@@ -153,6 +167,17 @@ void Process::interrupt()
 
 void Process::completed()
 {
+   m_event.set();
+}
+
+void Process::completedWithError( Error* error )
+{
+   if( m_error !=0 ) {
+      m_error->decref();
+   }
+   m_error = error;
+   error->incref();
+
    m_event.set();
 }
 

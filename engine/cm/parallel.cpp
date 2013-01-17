@@ -26,6 +26,7 @@
 #include <falcon/path.h>
 #include <falcon/datawriter.h>
 #include <falcon/datareader.h>
+#include <falcon/itemarray.h>
 
 #include <falcon/errors/paramerror.h>
 #include <falcon/errors/codeerror.h>
@@ -199,8 +200,10 @@ FALCON_DEFINE_METHOD_P( ClassParallel, launch )
    // and now we wait...
    ctx->addWait( cgc->m_cg->terminated() );
    ctx->engageWait(-1);
+
    // push a return frame pstep for when we're awaken again.
-   ctx->pushReturn();
+   ClassParallel* cpl = static_cast<ClassParallel*>(methodOf());
+   ctx->pushCode( &cpl->m_afterWait );
 }
 
 
@@ -229,11 +232,15 @@ FALCON_DEFINE_METHOD_P( ClassParallel, launchWithResults )
 
 void ClassParallel::PStepGetResults::apply_( const PStep*, VMContext* ctx )
 {
-   static Class* classArray = Engine::instance()->arrayClass();
-
    CGCarrier* cgc = static_cast<CGCarrier*>(ctx->self().asInst());
-   ItemArray* r = cgc->m_cg->results();
-   ctx->returnFrame( FALCON_GC_STORE( classArray, r ) );
+   Error* err = cgc->m_cg->error();
+   if( err ) {
+      ctx->raiseError(err);
+   }
+   else  {
+      ItemArray* r = cgc->m_cg->results();
+      ctx->returnFrame( FALCON_GC_HANDLE( r ) );
+   }
 }
 
 
@@ -242,6 +249,23 @@ ClassParallel::PStepGetResults::PStepGetResults()
    apply = apply_;
 }
 
+
+void ClassParallel::PStepAfterWait::apply_( const PStep*, VMContext* ctx )
+{
+   CGCarrier* cgc = static_cast<CGCarrier*>(ctx->self().asInst());
+   Error* err = cgc->m_cg->error();
+   if( err ) {
+      ctx->raiseError(err);
+   }
+   else {
+      ctx->returnFrame();
+   }
+}
+
+ClassParallel::PStepAfterWait::PStepAfterWait()
+{
+   apply = apply_;
+}
 }
 }
 

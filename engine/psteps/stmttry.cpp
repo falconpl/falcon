@@ -34,7 +34,8 @@ StmtTry::StmtTry( int32 line, int32 chr):
 {
    FALCON_DECLARE_SYN_CLASS( stmt_try );
    
-   m_select.setParent(this);
+   m_select = new StmtSelect;
+   m_select->setParent(this);
    apply = apply_;
    m_bIsCatch = true;
 }
@@ -47,7 +48,7 @@ StmtTry::StmtTry( SynTree* body, int32 line, int32 chr ):
 {
    FALCON_DECLARE_SYN_CLASS( stmt_try );
 
-   m_select.setParent(this);
+   m_select = new StmtSelect;
    body->setParent( this );
    apply = apply_;
    m_bIsCatch = true;
@@ -61,7 +62,8 @@ StmtTry::StmtTry( SynTree* body, SynTree* fbody, int32 line, int32 chr ):
 {
    FALCON_DECLARE_SYN_CLASS( stmt_try );
 
-   m_select.setParent(this);
+   m_select = new StmtSelect;
+   m_select->setParent(this);
    body->setParent( this );
    fbody->setParent(this);
    apply = apply_;
@@ -72,11 +74,11 @@ StmtTry::StmtTry( const StmtTry& other ):
    Statement( other ),
    m_body( 0 ),
    m_fbody( 0 ),
-   m_select( other.m_select ),
+   m_select( new StmtSelect(*other.m_select) ),
    m_finallyStep( this )
 {
    apply = apply_;   
-   m_select.setParent(this);
+   m_select->setParent(this);
    
    if( other.m_body )
    {
@@ -97,6 +99,7 @@ StmtTry::~StmtTry()
 {
    delete m_body;
    delete m_fbody;
+   delete m_select;
 }
 
 
@@ -123,6 +126,60 @@ bool StmtTry::fbody( SynTree* body )
    return false;
 }
 
+int32 StmtTry::arity() const
+{
+   return 3;
+}
+
+
+TreeStep* StmtTry::nth( int32 n ) const
+{
+   switch( n ) {
+   case 0: return m_body;
+   case 1: return m_select;
+   case 2: return m_fbody;
+   }
+
+   return 0;
+}
+
+
+bool StmtTry::setNth( int32 n, TreeStep* ts )
+{
+   static Class* slc = Engine::instance()->synclasses()->m_stmt_select;
+
+   switch( n ) {
+   case 0:
+      if ( ts->category() == TreeStep::e_cat_syntree ) {
+         SynTree* st = static_cast<SynTree*>( ts );
+         return body(st);
+      }
+      break;
+
+   case 1:
+         if ( ts->handler() == slc ) {
+            StmtSelect* st = static_cast<StmtSelect*>( ts );
+            if( st->setParent(this) )
+            {
+               delete m_select;
+               m_select = st;
+               return true;
+            }
+         }
+         break;
+
+   case 2:
+      if ( ts->category() == TreeStep::e_cat_syntree ) {
+         SynTree* st = static_cast<SynTree*>( ts );
+         return fbody(st);
+      }
+      break;
+   }
+
+   return false;
+}
+
+
 void StmtTry::describeTo( String& tgt, int depth ) const
 {
    // TODO: describe catches, finally & check various options.
@@ -147,41 +204,33 @@ void StmtTry::apply_( const PStep* ps, VMContext* ctx )
 { 
    const StmtTry* self = static_cast<const StmtTry*>(ps);   
    
+   // we won't be again in the same incarnation
+   ctx->popCode();
+
+   // first time around?
+   CodeFrame& cf = ctx->currentCode();
+   if( cf.m_seqId == 1 )
+   {
+      // disabled --  we were catch placeholdrs.
+      return;
+   }
+
+   // change into finally...
+   if( self->m_fbody != 0 ) {
+      ctx->pushCode( self->m_fbody );
+      // TODO: register the finally code.
+   }
+
    if( self->m_body != 0 )
    {
-      // push the finally step?
-      if( self->m_fbody != 0 )
-      {
-         // put the finally processor in our place...
-         ctx->resetCode( &self->m_finallyStep );
-         // add a catch position placeholder
-         ctx->pushCode( &self->m_stepDone );
-         // ... and declare that we'll be doing some finally
-         ctx->traverseFinally();
-      }
-      else
-      {
-         // just add the catch placeholder.
-         ctx->resetCode( &self->m_stepDone );
-      }
-      
-      if( ctx->stepInYield( self->m_body ) )
-         return;
+      // Push ourselves back, as
+      ctx->pushCode( self );
+      ctx->currentCode().m_seqId = 1;
+
+      ctx->pushCode( self->m_body );
    }
-   else if( self->m_fbody )
-   {
-      // we're just doing the finally!
-      ctx->popCode();
-      ctx->stepIn( self->m_fbody );
-   }   
 }
 
-void StmtTry::PStepDone::apply_( const PStep*, VMContext* ctx )
-{ 
-   // we're just a placeholder for our catch clauses,
-   // if we're here, then we had no throws.
-   ctx->popCode(); 
-}
 
 
 void StmtTry::PStepFinally::apply_( const PStep* ps, VMContext* ctx )
@@ -189,7 +238,7 @@ void StmtTry::PStepFinally::apply_( const PStep* ps, VMContext* ctx )
    register const StmtTry* stry = static_cast<const StmtTry::PStepFinally*>(ps)->m_owner;
    
    // declare that we begin to work with finally
-   ctx->enterFinally();
+   //ctx->enterFinally();
    ctx->currentCode().m_step = &stry->m_cleanStep;
    ctx->stepIn( stry->m_fbody );   
 }
@@ -199,9 +248,8 @@ void StmtTry::PStepCleanup::apply_( const PStep*, VMContext* ctx )
 {
    // declare that we're ready to be completed
    ctx->popCode();
-   ctx->finallyComplete();
+   //ctx->finallyComplete();
 }
-
 
 }
 

@@ -586,7 +586,6 @@ public:
       topCall->m_paramCount = nparams;
       topCall->m_self = self;
       topCall->m_bMethodic = true;
-      topCall->m_finallyCount = 0;
 
       return topCall;
    }
@@ -606,7 +605,6 @@ public:
       topCall->m_paramCount = nparams;
       topCall->m_self.setNil();
       topCall->m_bMethodic = false;
-      topCall->m_finallyCount = 0;
 
       return topCall;
    }
@@ -628,7 +626,6 @@ public:
       topCall->m_paramCount = nparams;
       topCall->m_self.setNil();
       topCall->m_bMethodic = false;
-      topCall->m_finallyCount = 0;
 
       return topCall;
    }
@@ -992,15 +989,6 @@ public:
     */
    void unrollToLoopBase();
 
-   /** Unrolls the code and function frames down to the nearest "safe" code.
-    \return false if the safe code is not found.
-
-    If safe code is not found, the caller should consider discarding the context
-    or resetting it.
-
-    \see setSafeCode();
-    */
-   bool unrollToSafeCode();
 
    bool ruleEntryResult() const { return m_ruleEntryResult; }
    void ruleEntryResult( bool v ) { m_ruleEntryResult = v; }
@@ -1064,54 +1052,6 @@ public:
     */
    void raiseError( Error* exc );
 
-   /** Proceeds after a finally frame is complete.
-    Invoked by cleanup frames after a finally block has been invoked.
-
-    The context leaves a marker in the sequence ID of the cleanup step; if found,
-    the cleanup step invoke this method, which pops the current try-frame and
-    repeats the try-unroll procedure using the error that was saved in the frame.
-    */
-   void finallyComplete();
-
-   /** Increments the count of traversed finally blocks in this frame.
-
-    When a return is issued from inside a try block having a finally clause,
-    the return frame unroll procedure must first respect the finally block and
-    execute it. As unrolling the stack in search for the finally block is
-    more complex than simply executing a flat unroll, having the count of
-    active finally blocks helps to preform finally unrolls only when needed.
-
-    This method is called when the code generator places a finally block on
-    the code stack, and its effects are reversed by enterFinally(), which
-    is invoked at the beginning of the finally block.
-
-    */
-   void traverseFinally() { ++currentFrame().m_finallyCount; }
-
-   /** Declares the begin of the execution of a finally block.
-    \see traverseFinally
-    */
-   void enterFinally() { --currentFrame().m_finallyCount; }
-
-   /** Finally continuation mode type. */
-   typedef enum
-   {
-      /** Nothing to continue after finally */
-      e_fin_none,
-      /** Finally called during error raisal. */
-      e_fin_raise,
-      /** Finally called during a loop break. */
-      e_fin_break,
-      /** Finally called during a loop continue. */
-      e_fin_continue,
-      /** Finally called during a return stack unroll. */
-      e_fin_return,
-      /** Finally called during an explicit and soft termination request. */
-      e_fin_terminate
-   }
-   t_fin_mode;
-
-   void setFinallyContinuation( t_fin_mode fm ) { m_finMode = fm; }
 
    /** Sets the catch block for the current finally unroll. */
    void setCatchBlock( const SynTree* ps ) { m_catchBlock = ps; }
@@ -1174,8 +1114,8 @@ public:
    inline void setSwapEvent() { atomicOr(m_events, evtSwap);  }
 
 
-   Error* thrownError() const { return m_thrown; }
-   Error* detachThrownError() { Error* e = m_thrown; m_thrown =0; return e; }
+   Error* thrownError() const { return m_lastRaised; }
+   Error* detachThrownError() { Error* e = m_lastRaised; m_lastRaised =0; return e; }
 
 
    /** Check the boolean true-ness of the topmost data item, removing the top element.
@@ -1446,16 +1386,12 @@ protected:
    Shared* m_acquired;
 
    Item m_regA;
-   uint64 m_safeCode;
 
-   /** Error whose throwing was suspended by a finally handling. */
-   Error* m_thrown;
+   /** Error that was last raised in the context. */
+   Error* m_lastRaised;
 
    /** Item whose raisal was suspended by a finally handling. */
    Item m_raised;
-
-   // finally continuation mode.
-   t_fin_mode m_finMode;
 
    friend class VMachine;
    friend class SynFunc;
@@ -1467,12 +1403,6 @@ protected:
    const SynTree* m_catchBlock;
 
    template <class __checker> bool unrollToNext( const __checker& check );
-
-   /** Declares an unhandled error.
-    This method is invoked after an error is unhandled. The virtual machine
-    sees the error at run() loop and can handle it to the caller or throw it.
-    */
-   void unhandledError( Error* error );
 
    uint32 m_id;
    int64 m_next_schedule;

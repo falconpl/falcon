@@ -45,7 +45,7 @@ public:
 
    void setCompilerContext( Function* func, Module* mod, TextReader* tin, TextWriter* tout );
 
-   void writeError( Error* e ) const;
+   virtual void onError( Error* e ) const;
 private:
    IntCompiler* m_compiler;
    Function* m_function;

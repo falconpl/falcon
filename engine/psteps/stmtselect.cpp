@@ -31,6 +31,7 @@
 #include <falcon/engine.h>
 #include <falcon/synclasses.h>
 #include <falcon/itemarray.h>
+#include <falcon/vmcontext.h>
 
 #include <map>
 #include <deque>
@@ -401,6 +402,138 @@ void StmtSelect::apply_( const PStep* ps, VMContext* ctx )
       ctx->pushCode( res );
    }
 }
+
+
+
+void StmtSelect::flatten( VMContext*, ItemArray& subItems ) const
+{
+   static Class* mc = Engine::instance()->metaClass();
+
+   subItems.resize(6);
+   // First 4 are map sizes.
+   subItems[0].setInteger(_p->m_blocks.size());
+   subItems[1].setInteger(_p->m_classList.size());
+   subItems[2].setInteger(_p->m_intBlocks.size());
+   subItems[3].setInteger(_p->m_classBlocks.size());
+
+   // then, the selctor
+   if( selector() != 0 ) {
+      subItems[4] = Item(selector()->handler(), selector() );
+   }
+
+   // then, the selctor
+   if( getDefault() != 0 ) {
+      subItems[5] = Item(getDefault()->handler(), getDefault() );
+   }
+
+   // push everything to be serialized from 5 on.
+   Private::BlockSet::iterator bs_i = _p->m_blocks.begin();
+   Private::BlockSet::iterator bs_end = _p->m_blocks.end();
+   while( bs_i != bs_end ) {
+      SynTree* st = *bs_i;
+      subItems.append(Item(st->handler(), st));
+      ++bs_i;
+   }
+
+   Private::ClassList::iterator cl_i = _p->m_classList.begin();
+   Private::ClassList::iterator cl_end = _p->m_classList.end();
+   while( cl_i != cl_end ) {
+      Class* cls = *cl_i;
+      if( cls == 0 ) {
+         // unresolved class.
+         subItems.append(Item());
+      }
+      else {
+         subItems.append(Item(cls->handler(), cls));
+      }
+
+      ++cl_i;
+   }
+
+   Private::IntBlocks::iterator ib_i = _p->m_intBlocks.begin();
+   Private::IntBlocks::iterator ib_end = _p->m_intBlocks.end();
+   while( ib_i != ib_end )
+   {
+      int64 value = ib_i->first;
+      SynTree* second = ib_i->second;
+      subItems.append(Item(value));
+      subItems.append(Item(second->handler(), second));
+      ++ib_i;
+   }
+
+   Private::ClassBlocks::iterator cb_i = _p->m_classBlocks.begin();
+   Private::ClassBlocks::iterator cb_end = _p->m_classBlocks.end();
+   while( cb_i != cb_end )
+   {
+      Class* first = cb_i->first;
+      SynTree* second = cb_i->second;
+      subItems.append(Item(mc, first));
+      subItems.append(Item(second->handler(), second));
+      ++bs_i;
+   }
+
+}
+
+
+void StmtSelect::unflatten( VMContext*, ItemArray& subItems )
+{
+   if( subItems.length() < 6 ) {
+      return;
+   }
+
+   // First 4 are map sizes.
+   int64 blocksSize = subItems[0].asInteger();
+   int64 classListSize = subItems[1].asInteger();
+   int64 intBlocksSize = subItems[2].asInteger();
+   int64 classBlocksSize = subItems[3].asInteger();
+
+   // then, the selctor
+   if( ! subItems[4].isNil() ) {
+      selector( static_cast<Expression*>(subItems[4].asInst()) );
+   }
+
+   // and the default block
+   if( ! subItems[5].isNil() ) {
+      setDefault( static_cast<SynTree*>(subItems[5].asInst()) );
+   }
+
+   uint32 pos = 6;
+   while( blocksSize > 0 ) {
+      SynTree* st = static_cast<SynTree*>(subItems[pos].asInst());
+      _p->m_blocks.push_back(st);
+      ++pos;
+      --blocksSize;
+   }
+
+   m_unresolved = 0;
+   while( classListSize > 0 ) {
+      Class* cls = static_cast<Class*>(subItems[pos].asInst());
+      if( cls == 0 ) {
+         m_unresolved++;
+      }
+      _p->m_classList.push_back( cls );
+
+      ++pos;
+      --classListSize;
+   }
+
+   while( intBlocksSize > 0 ) {
+      int64 value = subItems[pos++].asInteger();
+      SynTree* st = static_cast<SynTree*>(subItems[pos++].asInst());
+
+      _p->m_intBlocks[value] = st;
+      --intBlocksSize;
+   }
+
+   while( classBlocksSize > 0 ) {
+      Class* cls = static_cast<Class*>(subItems[pos++].asInst());
+      SynTree* st = static_cast<SynTree*>(subItems[pos++].asInst());
+
+      _p->m_classBlocks[cls] = st;
+      --classBlocksSize;
+   }
+}
+
 
 //================================================================
 // The requirer

@@ -184,6 +184,16 @@ private:
 
    PStepGetResults m_getResult;
 
+   class FALCON_DYN_CLASS PStepAfterWait: public PStep
+   {
+   public:
+      PStepAfterWait();
+      virtual ~PStepAfterWait() {}
+      static void apply_( const PStep* ps, VMContext* ctx );
+   };
+
+   PStepAfterWait m_afterWait;
+
    FALCON_DECLARE_METHOD( wait, "..." );
    FALCON_DECLARE_METHOD( timedWait, "timeout:N,..." );
    FALCON_DECLARE_METHOD( launch, "..." );

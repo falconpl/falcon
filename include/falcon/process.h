@@ -28,6 +28,7 @@ class Function;
 class Closure;
 class Item;
 class SynFunc;
+class Error;
 
 /** Process Entity.
 
@@ -87,13 +88,39 @@ public:
    const Item& result() const;
    Item& result();
 
+   /**
+    * Wait for the process to be complete.
+    *
+    * This call blocks until the timeout is expired, or until the process
+    * is complete. If the process completes before the call is entered,
+    * the method returns immediately.
+    *
+    * If the process is terminated with error, the error is
+    * immediately thrown right after the wait is complete.
+    *
+    * After a successful wait, the process result can be obtained
+    * by invoking the result() method.
+    */
    InterruptibleEvent::wait_result_t wait( int32 timeout=-1 );
+
+   /**
+    * Interrupts a wait for the process completion.
+    *
+    * If a thread is currently held in wait for this process completion,
+    * the wait function returns immediately with an appropriate "wait canceled"
+    * return value.
+    */
    void interrupt();
 
    /** This is called back by the main context when done.
     This will make wait non-blocking, or wakeup waits with success.
    */
    void completed();
+
+   /** Declares that the process was terminated by an uncaught error.
+    This will make wait non-blocking, or wakeup waits with success.
+   */
+   void completedWithError( Error* error );
 
    /** Returns true if this process has been terminated.
 
@@ -123,6 +150,18 @@ public:
     */
    SynFunc* readyEntry();
 
+   /**
+    * Returns the process termination error.
+    * \return A valid error if the process was terminated with an error.
+    *
+    * In case the process is terminated with an error, this method will return
+    * a valid error pointer.
+    *
+    * If this method returns 0 after the wait for process completion is complete,
+    * then the process terminated correctly.
+    */
+   Error* error() const { return m_error; }
+
 protected:
    Process( VMachine* owner, bool added );
    virtual ~Process();
@@ -142,6 +181,7 @@ protected:
    Mutex m_mtxRunning;
 
    atomic_int m_ctxId;
+   Error* m_error;
    bool m_added;
 
    FALCON_REFERENCECOUNT_DECLARE_INCDEC(Process)

@@ -84,9 +84,6 @@ public:
    /** Image of "self" in this frame. */
    Item m_self;
 
-   /** Count of finally blocks traversed in this frame. */
-   uint16 m_finallyCount;
-   
    /** True if self has been passed. */
    bool m_bMethodic;
    
@@ -107,7 +104,6 @@ public:
       m_dynsBase( dynb ),
       m_codeBase( cb ),
       m_self(self),
-      m_finallyCount(0),
       m_bMethodic( true )
    {}
 
@@ -121,7 +117,6 @@ public:
       m_locsBase( locb ),
       m_dynsBase( dynb ),
       m_codeBase( cb ),
-      m_finallyCount(0),
       m_bMethodic( false )
    {}
 };

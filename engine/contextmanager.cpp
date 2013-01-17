@@ -251,13 +251,13 @@ void* ContextManager::run()
          recvd = _p->m_messages.getTimed( msg, timeout, &term );
       }
       else {
-         if( m_next_schedule == 0 ) {
+         if( m_next_schedule != 0 ) {
             MESSAGE1( "ContextManager::Manager::run -- schedule expired, checking for new messages" );
-            recvd = _p->m_messages.get( msg, &term );
+            recvd = _p->m_messages.tryGet( msg, &term );
          }
          else {
             MESSAGE1( "ContextManager::Manager::run -- endlessly waiting for new messages" );
-            recvd = _p->m_messages.tryGet( msg, &term );
+            recvd = _p->m_messages.get( msg, &term );
          }
       }
 
@@ -332,14 +332,25 @@ bool ContextManager::manageSleepingContexts()
 
    // by default, we don't have a next schedule.
    m_next_schedule = 0;
-   while( ! mmap.empty() )
+   ContextManager::Private::ScheduleMap::iterator front = mmap.begin();
+   ContextManager::Private::ScheduleMap::iterator end = mmap.end();
+
+   while( front != end )
    {
-      ContextManager::Private::ScheduleMap::iterator front = mmap.begin();
       int64 sched = front->first;
-      if( sched <= m_now ){
-         manageReadyContext( front->second );
-         mmap.erase(front);
-         done = true;
+      if( sched <= m_now ) {
+         if( sched >= 0 )
+         {
+            manageReadyContext( front->second );
+            ContextManager::Private::ScheduleMap::iterator old = front;
+            ++front;
+            mmap.erase(old);
+            done = true;
+         }
+         else {
+            // keep -1 until something in future is found.
+            ++front;
+         }
       }
       else {
          // first element scheduled in future.
@@ -348,8 +359,8 @@ bool ContextManager::manageSleepingContexts()
       }
    }
 
-   TRACE( "manageSleepingContexts - Completed with %s",
-            (done? "some wakeups" : "no wakeup"));
+   TRACE( "manageSleepingContexts - Completed with %s at %d",
+            (done? "some wakeups" : "no wakeup"), (int) m_next_schedule);
    return done;
 }
 

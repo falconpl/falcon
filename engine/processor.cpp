@@ -134,25 +134,22 @@ void Processor::manageEvents( VMContext* ctx, int32 &events )
       TRACE( "Hit breakpoint before %s ", ctx->location().c_ize() );
    }
 
-   if( (events & VMContext::evtComplete) ) {
+   if( (events & VMContext::evtRaise) ) {
+      TRACE( "Uncaught error raisal in context %d", ctx->id() );
+      ctx->terminated();
+      m_owner->contextManager().onContextTerminated( ctx );
+   }
+   else if( (events & VMContext::evtComplete) ) {
       TRACE( "Code completion of context %d", ctx->id() );
       ctx->terminated();
       m_owner->contextManager().onContextTerminated( ctx );
    }
-
-   if( (events & VMContext::evtTerminate) ) {
+   else if( (events & VMContext::evtTerminate) ) {
       TRACE( "Termination request before %s ", ctx->location().c_ize() );
       ctx->terminated();
       m_owner->contextManager().onContextTerminated( ctx );
    }
-
-   if( (events & VMContext::evtRaise) ) {
-      Error* e = ctx->detachThrownError();
-      onError(e);
-      ctx->clearEvents();
-   }
-
-   if( (events & VMContext::evtSwap) )
+   else if( (events & VMContext::evtSwap) )
    {
       ctx->clearEvents();
       if ( ctx->nextSchedule() >= 0 ) {
@@ -187,7 +184,7 @@ void Processor::execute( VMContext* ctx )
       }
       catch( Error* e )
       {
-         Engine::instance()->log()->log(Log::fac_engine, Log::lvl_warn, e->describe() );
+         //Engine::instance()->log()->log(Log::fac_engine, Log::lvl_warn, "Raising error: " + e->describe() );
          ctx->raiseError( e );
       }
 
@@ -197,10 +194,9 @@ void Processor::execute( VMContext* ctx )
          manageEvents( ctx, events );
          // did we reset the event?
          if ( events != 0 ) {
+            // out of business with this context.
             break;
          }
-
-         ctx->clearEvents();
       }
       // END STEP
    }

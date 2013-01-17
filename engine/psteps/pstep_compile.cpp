@@ -19,6 +19,7 @@
 #include <falcon/textwriter.h>
 #include <falcon/stream.h>
 #include <falcon/error.h>
+#include <falcon/trace.h>
 
 namespace Falcon {
 
@@ -33,8 +34,22 @@ public:
 
 private:
    static void apply_( const PStep* self, VMContext* ctx ){
+      MESSAGE( "CatchSyntree::apply_");
       const CatchSyntree* cst = static_cast<const CatchSyntree*>(self);
-      cst->m_compiler->writeError(ctx->thrownError());
+
+      // put our parent back in charge.
+      ctx->resetCode( cst->m_compiler );
+      cst->m_compiler->onError(ctx->thrownError());
+   }
+
+   virtual void describeTo( String& tgt, int depth = 0) const
+   {
+      tgt = String(" ").replicate( depth * depthIndent ) + "/*CatchSyntree*/";
+   }
+
+   virtual void oneLinerTo( String& tgt ) const
+   {
+      tgt = "/*CatchSyntree*/";
    }
 
    PStepCompile* m_compiler;
@@ -145,7 +160,8 @@ void PStepCompile::apply_( const PStep* ps, VMContext* ctx )
       }
       catch( Error* e )
       {
-         psc->writeError( e );
+         // this catches compilation error codes only.
+         psc->onError( e );
          e->decref();
       }
 
@@ -154,7 +170,7 @@ void PStepCompile::apply_( const PStep* ps, VMContext* ctx )
    }
 }
 
-void PStepCompile::writeError( Error* e ) const
+void PStepCompile::onError( Error* e ) const
 {
    // display the error and continue
    if( e->errorCode() == e_compile )

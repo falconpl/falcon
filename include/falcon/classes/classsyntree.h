@@ -40,6 +40,7 @@ public:
    virtual void dispose( void* instance ) const;
    virtual void* clone( void* instance ) const;
 
+   virtual void store( VMContext* ctx, DataWriter* stream, void* instance ) const;
    virtual void restore( VMContext* ctx, DataReader* stream ) const;
    virtual void unflatten( VMContext* ctx, ItemArray& subItems, void* instance ) const;
 
