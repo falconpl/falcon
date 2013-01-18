@@ -18,6 +18,7 @@
 #include <falcon/vfsprovider.h>
 #include <falcon/engine.h>
 #include <falcon/cm/uri.h>
+#include <falcon/stream.h>
 #include <falcon/classes/classstream.h>
 
 #include "vfs.h"
@@ -93,6 +94,7 @@ void Open::invoke( Falcon::VMContext* ctx, int )
       stream = inst->vfs().open( theUri, op );
    }
    
+   stream->shouldThrow(true);
    StreamCarrier* scr = new StreamCarrier(stream);
    if( i_mode == 0 || ((i_mode->forceInteger() & FALCON_VFS_MODE_FLAG_RAW) == 0) )
    {
