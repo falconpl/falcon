@@ -64,7 +64,7 @@ void Open::invoke( Falcon::VMContext* ctx, int )
    }
    else
    {
-      op.rdwr();
+      op.rdOnly();
    }
    
    if( i_shmode != 0 )
