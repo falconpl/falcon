@@ -20,6 +20,7 @@
 #include <falcon/engine.h>
 #include <falcon/cm/uri.h>
 #include <falcon/classes/classstream.h>
+#include <falcon/stream.h>
 
 #include "vfs.h"
 #include "create.h"
@@ -62,7 +63,7 @@ void Create::invoke( Falcon::VMContext* ctx, int )
    }
    else
    {
-      op.rdOnly();
+      op.wrOnly();
    }
    
    Stream* stream;
@@ -78,6 +79,7 @@ void Create::invoke( Falcon::VMContext* ctx, int )
       stream = inst->vfs().create( theUri, op );
    }
    
+   stream->shouldThrow(true);
    StreamCarrier* scr = new StreamCarrier(stream);
    if( i_mode == 0 || ((i_mode->forceInteger() & FALCON_VFS_MODE_FLAG_RAW) == 0) )
    {

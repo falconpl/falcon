@@ -339,11 +339,11 @@ bool StreamBuffer::flush()
       return true;
 
    int32 written = m_stream->write( m_buffer, m_bufLen );
-   uint32 count = (uint32)written;
+   uint32 count = 0;
    while( written > 0 && count < m_bufLen )
    {
+      count += (uint32) written;
       written = m_stream->write( m_buffer + count, m_bufLen - count );
-      count += written;
    }
 
    if( written < 0 )
