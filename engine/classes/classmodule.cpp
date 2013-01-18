@@ -276,6 +276,7 @@ void ClassModule::restoreModule( Module* mod, DataReader* stream ) const
 
       mrlist.push_back( req );
       mrmap[req->name()] = req;
+      ++progID;
    }
 
    // We can now proceed to the import defs.
@@ -307,6 +308,7 @@ void ClassModule::restoreModule( Module* mod, DataReader* stream ) const
          }
          
          idlist.push_back(def);
+         ++progID;
       }
       catch( ... ) {
          delete def;

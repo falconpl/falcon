@@ -118,14 +118,16 @@ void IntCompiler::Context::onLoad( const String& path, bool isFsPath )
    ModSpace* theSpace = m_owner->module()->modSpace();
 
    // do we have a module?
-   if( m_owner->module()->addLoad( path, isFsPath ) )
+   Error* err = m_owner->module()->addLoad( path, isFsPath );
+   if( err )
    {
-      sp.addError( e_load_already, sp.currentSource(), sp.currentLine()-1, 0, 0, path );
+      sp.addError( err );
       return;
    }
 
    // just adding it top the module won't be of any help.
-   theSpace->loadModule( path, isFsPath, static_cast<IntCompiler*>(m_owner)->m_vmctx );
+   VMContext* vmctx = static_cast<IntCompiler*>(m_owner)->m_vmctx;
+   theSpace->resolveDeps( vmctx, m_owner->module() );
 }
 
 
@@ -143,9 +145,13 @@ bool IntCompiler::Context::onImportFrom( ImportDef* def )
    VMContext* cctx = static_cast<IntCompiler*>(m_owner)->m_vmctx;
    Module* mod = m_owner->module();
    ModSpace* ms = cctx->vm()->modSpace();
-   mod->addImport( def );
-   ms->resolveDeps( cctx, mod );
-
+   Error* err = mod->addImport( def );
+   if( err != 0 ) {
+      sp.addError(err);
+   }
+   else {
+      ms->resolveDeps( cctx, mod );
+   }
    return true;
 }
 
@@ -211,7 +217,8 @@ Variable* IntCompiler::Context::onGlobalAccessed( const String& name )
    Variable* var = ModCompiler::Context::onGlobalAccessed(name);
 
    // if the variable is extern, resolve it immediately
-   if( var->type() == Variable::e_nt_extern ) {
+   if( var->type() == Variable::e_nt_extern && ! var->isResolved() )
+   {
       Module* mod = m_owner->module();
       Module* declarer = 0;
       Item* value = mod->modSpace()->findExportedOrGeneralValue(mod, name, declarer);

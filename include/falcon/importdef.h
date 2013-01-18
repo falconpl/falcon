@@ -175,6 +175,11 @@ public:
    /** Restore this definition from a stream */
    void restore( DataReader* rd);
    
+   void processed( bool mode ) { m_isProcessed = mode; }
+   bool processed() const { return m_isProcessed; }
+   void loaded( bool mode ) { m_isLoaded = mode; }
+   bool loaded() const { return m_isLoaded; }
+
 private:
    class SymbolList;
    SymbolList* m_sl;
@@ -183,6 +188,8 @@ private:
    bool m_bIsUri;
    bool m_bIsNS;
    bool m_bIsDirect;
+   bool m_isProcessed;
+   bool m_isLoaded;
    
    String m_source;
    String m_tgNameSpace;   

@@ -150,7 +150,7 @@ void FalconApp::launch( const String& script )
    }
 
    ms->add( Engine::instance()->getCore() );
-   Process* loadProc = ms->loadModule( script, true, true );
+   Process* loadProc = ms->loadModule( script, true, false, true );
 
    try {
       loadProc->start();
@@ -162,7 +162,7 @@ void FalconApp::launch( const String& script )
       if( mod->getMainFunction() != 0 )
       {
          mod->incref();
-         m_process->mainContext()->callInternal( mod->getMainFunction(), 0 );
+         m_process->mainContext()->call( mod->getMainFunction() );
          m_process->start();
          m_process->wait();
       }

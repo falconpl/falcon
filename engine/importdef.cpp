@@ -31,6 +31,8 @@ ImportDef::ImportDef():
    m_bIsUri( false ),
    m_bIsNS( false ),
    m_bIsDirect( false ),
+   m_isProcessed(false),
+   m_isLoaded(false),
    m_modreq(0),
    m_id(0)
 {}
@@ -43,6 +45,8 @@ ImportDef::ImportDef( const String& path, bool isFsPath, const String& symName,
    m_bIsUri( false ),
    m_bIsNS( false ),
    m_bIsDirect( false ),
+   m_isProcessed(false),
+   m_isLoaded(false),
    m_modreq(0),
    m_id(0)
 {

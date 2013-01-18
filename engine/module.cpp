@@ -127,7 +127,7 @@ Module::Private::~Private()
    ImportDefList::iterator id_i = m_importDefs.begin();
    while( id_i != m_importDefs.end() )
    {
-      delete *id_i;
+      //delete *id_i;
       ++id_i;
    }
       
@@ -271,6 +271,14 @@ bool Module::promoteExtern( Variable* ext, const Item& value, int32 redeclaredAt
 
 bool Module::resolveExternValue( const String& name, Module* source, Item* value )
 {
+   // was a dependency waiting for this?
+   Private::DepMap::const_iterator diter = _p->m_depsByName.find( name );
+   if( diter != _p->m_depsByName.end() ) {
+      Error* err = diter->second->onResolved( source, this, value );
+      if( err != 0 ) throw err;
+   }
+
+   // check if we have a variable associated with this.
    VarDataMap::VarData* vd = m_globals.getGlobal(name);
    if( vd == 0 ) {
       return false;
@@ -278,13 +286,6 @@ bool Module::resolveExternValue( const String& name, Module* source, Item* value
 
    if( ! m_globals.promoteExtern(vd->m_var.id(), *value, 0) ) {
       return false;
-   }
-
-   // was a dependency waiting for this?
-   Private::DepMap::const_iterator diter = _p->m_depsByName.find( name );
-   if( diter != _p->m_depsByName.end() ) {
-      Error* err = diter->second->onResolved( source, this, value );
-      if( err != 0 ) throw err;
    }
 
    return true;
@@ -564,6 +565,7 @@ Error* Module::addImport( ImportDef* def )
       if( name.getCharAt( name.length() -1 ) != '*' )
       {         
           addImplicitImport( name );
+          _p->m_depsByName[name]->m_idef = def;
       }
       else if( def->sourceModule().size() != 0 )
       {
@@ -657,39 +659,43 @@ void Module::removeImport( ImportDef* def )
 }
 
 
-ImportDef* Module::addLoad( const String& name, bool bIsUri )
+Error* Module::addLoad( const String& name, bool bIsUri )
 {
    ImportDef* id = new ImportDef;
    id->setLoad( name, bIsUri );
    
    ModRequest* req = 0;
-   if( ! addModuleRequirement( id, req ) )
+   Error* err = addModuleRequirement( id, req );
+   if (err != 0)
    {
       delete id;
-      return 0;
+      return err;
    }
    
    _p->m_importDefs.push_back( id );   
-   return id;
+   return 0;
 }
 
 void Module::addImportRequest( Requirement* req, 
                const String& sourceMod, bool bModIsPath )
 {
-   ImportDef* id = new ImportDef;
-   id->setDirect( req->name(), sourceMod, bModIsPath );
+   ImportDef* id = 0;
+
    if( sourceMod != "" )
    {
+      ImportDef* id = new ImportDef;
+      id->setDirect( req->name(), sourceMod, bModIsPath );
       ModRequest* mr;
       addModuleRequirement( id, mr );
+      _p->m_importDefs.push_back( id );
    }
-   _p->m_importDefs.push_back( id );   
    
    // add the dependency to the symbol.
    Private::Dependency* dep = new Private::Dependency( req->name() );
    dep->m_idef = id;
    dep->m_waitings.push_back( req );
    _p->m_deplist.push_back( dep );
+   _p->m_depsByName[req->name()] = dep;
 }
 
 

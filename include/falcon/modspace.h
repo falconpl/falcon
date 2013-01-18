@@ -121,9 +121,41 @@ public:
    void store( Module* mod );
 
    void resolveDeps( VMContext* ctx, Module* mod );
-   
-   Process* loadModule( const String& name, bool isUri, bool isMain = false);
+
+   /** Creates a process ready to load the module and all its dependencies.
+    * \param name The name of the module to be loaded.
+    * \param isUri true if the given name is actually a URI
+    * \param isMain true if the given module is considered the main module for the calling application.
+    *
+    * The returned process can be started immediately and then waited for completion.
+    * As the process is complete, the module and all its dependencies are loaded as required
+    * in this module space, or an error would be thrown.
+    *
+    * The following skeleton code can be used:
+    * \code
+         Process* prc = theSpace->loadModule( path, isFsPath, false );
+
+         try {
+            prc->start();
+            prc->wait(-1);
+         }
+         catch( Error* e ) {
+            // handle error e
+            e->decref();
+         }
+
+         prc->decref();
+    * \endcode
+    *
+    * If you're in need of loading a module from within a VM execution,
+    * you can still use this method if you want to do this asynchronously,
+    * but you can use loadModuleInContext() to use your own execution context
+    * instead of creating a new process.
+    */
+   Process* loadModule( const String& name, bool isUri, bool asLoad, bool isMain = false);
     
+   void loadModuleInContext( const String& name, bool isUri, bool asLoad, bool isMain, VMContext* tgtContext );
+
    //===================================================================
    // Service functions
    //===================================================================
@@ -242,7 +274,6 @@ private:
    
    void importSpecificDep( Module* asker, void* def, Error*& link_errors);
    void importGeneralDep( Module* asker, void* def, Error*& link_errors);
-   void loadSubModule( const String& name, bool isUri, bool isMain, VMContext* tgtContext );
 
 
    void retreiveDynamicModule(
@@ -327,6 +358,21 @@ private:
       ModSpace* m_owner;
    };
    PStepExecMain m_stepExecMain;
+
+   class PStepStartLoad: public PStep
+   {
+   public:
+      PStepStartLoad( ModSpace* owner ): m_owner( owner ) {
+         apply = apply_;
+      }
+      virtual ~PStepStartLoad() {};
+      virtual void describeTo( String& str, int ) const { str = "PStepStartLoad"; }
+
+   private:
+      static void apply_( const PStep* self, VMContext* ctx );
+      ModSpace* m_owner;
+   };
+   PStepStartLoad m_startLoadStep;
 };
 
 }

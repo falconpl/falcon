@@ -67,11 +67,11 @@ public:
    /** Starts the process execution with the context configured as-is. */
    bool start();
    /** Starts the process invoking the given function. */
-   bool start( Function* main, int pcount = 0 );
+   bool start( Function* main, int pcount = 0, Item const* params = 0 );
    /** Starts the process invoking the given closure. */
-   bool start( Closure* main, int pcount = 0);
+   bool start( Closure* main, int pcount = 0, Item const* params = 0 );
    /** Starts the process invoking the given item. */
-   bool startItem( Item& main, int pcount, Item* params );
+   bool startItem( Item& main, int pcount=0, Item const* params=0 );
 
    /**
     * Starts a context that is ready to run.

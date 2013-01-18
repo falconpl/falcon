@@ -77,7 +77,7 @@ SynFunc* Process::readyEntry()
    m_context->reset();
    delete m_entry;
    m_entry = new SynFunc("#Entry");
-   m_context->callInternal( m_entry, 0 );
+   m_context->call( m_entry );
 
    return m_entry;
 }
@@ -93,35 +93,35 @@ bool Process::start()
    return true;
 }
 
-bool Process::start( Function* main, int pcount )
+bool Process::start( Function* main, int32 pcount, Item const* params )
 {
    if (! checkRunning() ) {
       return false;
    }
 
    //Put a VM termination request here.
-   m_context->callInternal(main, pcount);
+   m_context->call(main, pcount, params);
    // launch is to be called after call,
    // as it may stack higher priority calls for base modules.
    launch();
    return true;
 }
 
-bool Process::start( Closure* main, int pcount )
+bool Process::start( Closure* main, int pcount, Item const* params )
 {
    if (! checkRunning() ) {
       return false;
    }
 
    //Put a VM termination request here.
-   m_context->callInternal(main, pcount);
+   m_context->call(main, pcount, params );
    // launch is to be called after call,
    // as it may stack higher priority calls for base modules.
    launch();
    return true;
 }
 
-bool Process::startItem( Item& main, int pcount, Item* params )
+bool Process::startItem( Item& main, int pcount, Item const* params )
 {
    if (! checkRunning() ) {
       return false;

@@ -110,6 +110,7 @@ void PStepCompile::apply_( const PStep* ps, VMContext* ctx )
    int status = ctx->currentCode().m_seqId;
    String tgt;
    String prompt = ">>> ";
+   long depht = ctx->codeDepth();
 
    // print result if needed.
    if ( status > 1 || (status == 1 && ! ctx->regA().isNil()) ) {
@@ -135,8 +136,6 @@ void PStepCompile::apply_( const PStep* ps, VMContext* ctx )
 
          if( st != 0 )
          {
-            // todo: delete the steps
-
             // declare how we shall print the result on return.
             if( status == IntCompiler::e_expression ) {
                ctx->currentCode().m_seqId = 2;
@@ -163,6 +162,11 @@ void PStepCompile::apply_( const PStep* ps, VMContext* ctx )
          // this catches compilation error codes only.
          psc->onError( e );
          e->decref();
+      }
+
+      // did we went deep?
+      if( depht != ctx->codeDepth() ) {
+         return;
       }
 
       // resets the prompt

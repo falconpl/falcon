@@ -65,14 +65,16 @@ public:
             m_id(undef),
             m_declaredAt( 0 ),
             m_type(e_nt_undefined),
-            m_isConst( false )
+            m_isConst( false ),
+            m_isResolved( false )
    { }
 
-   Variable( type_t type, uint32 id=undef, int32 declaredAt = 0, bool isConst=false ):
+   inline  Variable( type_t type, uint32 id=undef, int32 declaredAt = 0, bool isConst=false ):
       m_id(id),
       m_declaredAt( declaredAt ),
       m_type(type),
-      m_isConst( isConst )
+      m_isConst( isConst ),
+      m_isResolved( false )
    {
    }
 
@@ -80,7 +82,8 @@ public:
    Variable( const Variable& other ):
       m_id(other.m_id),
       m_type(other.m_type),
-      m_isConst(other.m_isConst)
+      m_isConst(other.m_isConst),
+      m_isResolved( false )
    {}
 
    ~Variable() {}
@@ -99,11 +102,15 @@ public:
 
    bool isGlobalOrExtern() const { return m_type == e_nt_extern || m_type == e_nt_global; }
 
+   bool isResolved() const { return m_isResolved; }
+   void isResolved( bool b) { m_isResolved = b; }
+
 protected:
    uint32 m_id;
    int32 m_declaredAt;
    type_t m_type;
    bool m_isConst;
+   bool m_isResolved;
 };
 
 }

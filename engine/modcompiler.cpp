@@ -141,19 +141,20 @@ void ModCompiler::Context::onLoad( const String& path, bool isFsPath )
 {
    SourceParser& sp = m_owner->m_sp;
 
-   if( m_owner->m_module->addLoad( path, isFsPath ) == 0 )
+   Error* err = m_owner->m_module->addLoad( path, isFsPath );
+   if( err )
    {
-      sp.addError( e_load_already, sp.currentSource(), sp.currentLine()-1, 0, 0, path );
+      sp.addError( err );
    }
 }
 
 
 bool ModCompiler::Context::onImportFrom( ImportDef* def )
 {
-   if ( ! m_owner->m_module->addImport( def ) )
-   {
+   Error* err = m_owner->m_module->addImport( def );
+   if( err ) {
       SourceParser& sp = m_owner->m_sp;
-      sp.addError( e_import_already_mod, sp.currentSource(), sp.currentLine()-1, 0, 0, def->sourceModule() );
+      sp.addError( err );
       return false;
    }
 

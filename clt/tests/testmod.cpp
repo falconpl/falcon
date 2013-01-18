@@ -64,8 +64,9 @@ public:
          m_funcPrintl = printlSym->getValue(0)->asFunction();
       }      
       
-      ctx->pushData("Hello from a function using printl!");
-      ctx->callInternal( m_funcPrintl , 1 );
+      Falcon::Item params[1];
+      params[0] = "Hello from a function using printl!";
+      ctx->call( m_funcPrintl , 1, params );
    }
    
 private:
@@ -95,9 +96,9 @@ public:
    {
       if( m_funcPrintl != 0 )
       {
-         ctx->pushData(
-            "Hello from a function using printl -- with static linkage!!!");
-         ctx->callInternal( m_funcPrintl , 1 );
+         Falcon::Item params[1];
+         params[0] = "Hello from a function using printl -- with static linkage!!!";
+         ctx->call( m_funcPrintl , 1, params );
       }
    }
 };

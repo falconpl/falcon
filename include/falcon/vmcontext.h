@@ -962,6 +962,55 @@ public:
    void callItem( const Item& item, int pcount, Item const* params );
 
    
+   /** Prepares the VM to execute a function.
+    @param function The function to be invoked.
+    @param np Number of parameters in the params array.
+    @param params Parameters to be pushed in the vm.
+
+    This method is meant to invoke a function from outside the normal
+    VM operation. The context prepares an execution context, properly
+    pushing the required elements in the data and call stack, and invokes
+    the given function immediately.
+
+    After this method returns, the given function might have exited invoking a
+    returnFrame() or still be engaged for further computation at
+    later steps.
+    */
+   void call( Function* f, int32 np = 0, Item const* params=0 );
+
+   /** Invokes a method of a given item.
+    @param function The function to be invoked.
+    @param self The item on which the method is invoked.
+    @param np Number of parameters in the params array.
+    @param params Parameters to be pushed in the vm.
+
+    This method is meant to invoke a method from outside the normal
+    VM operation. The context prepares an execution context, properly
+    pushing the required elements in the data and call stack, and invokes
+    the given function immediately.
+
+    After this method returns, the given function might have exited invoking a
+    returnFrame() or still be engaged for further computation at
+    later steps.
+    */
+   void call( Function* function, const Item& self, int32 np=0, Item const* params=0 );
+
+   /** Invokes a closure.
+    @param closure The closure to be invoked.
+    @param np Number of parameters in the params array.
+    @param params Parameters to be pushed in the vm.
+
+    This method is meant to invoke a closure from outside the normal
+    VM operation. The context prepares an execution context, properly
+    pushing the required elements in the data and call stack, and invokes
+    the given function immediately.
+
+    After this method returns, the given function might have exited invoking a
+    returnFrame() or still be engaged for further computation at
+    later steps.
+    */
+   void call( Closure* closure, int32 np=0, Item const* params=0 );
+
    /** Adds a local symbol table. 
     This creates an empty symbol entry in the symbol stack to store the
     current data depth.

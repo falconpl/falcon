@@ -292,7 +292,7 @@ public:
     (already added to the module) if not.
     
     */
-   ImportDef* addLoad( const String& name, bool bIsUri );
+   Error* addLoad( const String& name, bool bIsUri );
 
    /** Adds an implicitly imported symbol.
     \param name The unknown symbol that should be resolved during link time.

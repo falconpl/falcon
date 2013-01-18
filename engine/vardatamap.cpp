@@ -340,6 +340,8 @@ bool VarDataMap::promoteExtern( uint32 id, const Item& value, int32 redeclaredAt
    if( redeclaredAt > 0 ) {
       var->declaredAt(redeclaredAt);
    }
+   var->isResolved(true);
+
    return true;
 }
 

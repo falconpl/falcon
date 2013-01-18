@@ -74,7 +74,7 @@ void IntMode::run()
    psc.setCompilerContext(mainfunc, mod, vm.textIn(), vm.textOut() );
    mainfunc->syntree().append( new StmtReturn );
    Process* process = vm.createProcess();
-   process->mainContext()->callInternal( mainfunc, 0 );
+   process->mainContext()->call( mainfunc );
    process->mainContext()->pushCode(&psc);
 
    process->start();

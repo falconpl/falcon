@@ -295,7 +295,7 @@ inline bool FlexyClass::operand( int opCount, const String& name, VMContext* ctx
          Function* f = item->asFunction();
          Item &iself = ctx->opcodeParam(opCount-1);
          iself.methodize(f);
-         ctx->callInternal(f, opCount-1, iself );
+         ctx->callInternal(f, opCount, iself );
       }
       else
       {
@@ -304,7 +304,7 @@ inline bool FlexyClass::operand( int opCount, const String& name, VMContext* ctx
          void* data;
          item->forceClassInst( cls, data );
          ctx->opcodeParam(opCount-1) = *item;
-         cls->op_call( ctx, opCount - 1, data );
+         cls->op_call( ctx, opCount, data );
       }
       return true;
    }

@@ -51,6 +51,7 @@ public:
    public:
       Module* m_mod;
       Item* m_value;
+      Item m_internal;
       
       ExportSymEntry(): m_mod(0), m_value(0) {}
       
@@ -99,7 +100,8 @@ ModSpace::ModSpace( VMachine* owner, ModSpace* parent ):
    m_stepResolver(this),
    m_stepDynModule(this),
    m_stepDynMantra(this),
-   m_stepExecMain(this)
+   m_stepExecMain(this),
+   m_startLoadStep(this)
 {
    m_vm = owner;
    m_loader = new ModLoader(this);
@@ -117,26 +119,28 @@ ModSpace::~ModSpace()
 }
 
 
-Process* ModSpace::loadModule( const String& name, bool isUri,  bool isMain )
+Process* ModSpace::loadModule( const String& name, bool isUri,  bool asLoad, bool isMain )
 {
 
    Process* process = m_vm->createProcess();
    VMContext* tgtContext = process->mainContext();
-   tgtContext->callInternal( m_loaderFunc, 0 );
+   tgtContext->call( m_loaderFunc );
    tgtContext->pushCode(&Engine::instance()->stdSteps()->m_returnFrameWithTop);
-   loadSubModule( name, isUri, isMain, tgtContext );
 
+   tgtContext->pushData( FALCON_GC_HANDLE(new String(name)) );
+   tgtContext->pushCode( &m_startLoadStep );
+   int32 v = (isUri ? 1 : 0) | (asLoad ? 2 : 0) | (isMain ? 4 : 0);
+   tgtContext->currentCode().m_seqId = v;
+
+   // process loaded and ready to run.
    return process;
 }
 
 
-void ModSpace::loadSubModule( const String& name, bool isUri, bool isMain, VMContext* tgtContext )
+void ModSpace::loadModuleInContext( const String& name, bool isUri, bool isLoad, bool isMain, VMContext* tgtContext )
 {
    tgtContext->pushCode( &m_stepLoader );
-   if( ! isMain ) {
-      // skip the main module set step
-      tgtContext->currentCode().m_seqId = 1;
-   }
+   tgtContext->currentCode().m_seqId = (isLoad ? 1:0) | (isMain ? 2:0);
 
    bool loading;
 
@@ -150,9 +154,8 @@ void ModSpace::loadSubModule( const String& name, bool isUri, bool isMain, VMCon
    }
 
    if( ! loading ) {
-      tgtContext->returnFrame();
       throw new IOError( ErrorParam( e_mod_notfound, __LINE__, SRC )
-               .extra( name ) );
+               .extra( name + " in " + m_loader->getSearchPath() ));
    }
 }
 
@@ -332,8 +335,7 @@ void ModSpace::importSpecificDep( Module* asker, void* def, Error*& link_errors 
    {
       Error* em = new LinkError( ErrorParam(e_undef_sym, 0, asker->uri() )
          .origin( ErrorParam::e_orig_linker )
-         .symbol( dep->m_sourceName )
-         .extra( "in " + dep->m_sourceName ) );
+         .extra( dep->m_sourceName +" in " + dep->m_sourceName ) );
 
       addLinkError( link_errors, em );
       return;
@@ -370,7 +372,7 @@ void ModSpace::importGeneralDep(Module* asker, void* def, Error*& link_errors)
    {
       Error* em = new LinkError( ErrorParam(e_undef_sym, 0, asker->uri() )
          .origin( ErrorParam::e_orig_linker )
-         .symbol( symName ) );
+         .extra( symName ) );
 
       addLinkError( link_errors, em );
       return;
@@ -420,9 +422,9 @@ void ModSpace::importInNS(Module* mod )
 
 Item* ModSpace::findExportedOrGeneralValue( Module* asker, const String& symName, Module*& declarer )
 {  
-   Item* sym = findExportedValue( symName, declarer );
+   Item* item = findExportedValue( symName, declarer );
    
-   if( sym == 0 )
+   if( item == 0 )
    {
       Module::Private::ReqList::iterator geni = asker->_p->m_genericMods.begin();
       // see if we have a namespace.
@@ -443,8 +445,8 @@ Item* ModSpace::findExportedOrGeneralValue( Module* asker, const String& symName
          {
             if( dotpos == String::npos )
             {
-               sym = req->m_module->getGlobalValue( symName );
-               if( sym != 0 )
+               item = req->m_module->getGlobalValue( symName );
+               if( item != 0 )
                {
                   declarer = req->m_module;
                   break;
@@ -459,8 +461,8 @@ Item* ModSpace::findExportedOrGeneralValue( Module* asker, const String& symName
                      
                   if ( def->isNameSpace() && def->target() == nspace )
                   {
-                     sym = req->m_module->getGlobalValue( nsname );
-                     if( sym != 0 )
+                     item = req->m_module->getGlobalValue( nsname );
+                     if( item != 0 )
                      {
                         declarer = req->m_module;
                         break;
@@ -473,8 +475,18 @@ Item* ModSpace::findExportedOrGeneralValue( Module* asker, const String& symName
          ++geni;
       }
    }
-   
-   return sym;
+
+   if( item == 0 ) {
+      Mantra* m = Engine::instance()->getMantra(symName);
+      if( m != 0 ) {
+         //lock
+         Private::ExportSymMap::iterator entry = _p->m_symMap.insert(std::make_pair(symName, Private::ExportSymEntry() ) ).first;
+         item = entry->second.m_value = &entry->second.m_internal;
+         item->setUser(m->handler(), m);
+      }
+
+   }
+   return item;
 }
 
    
@@ -628,20 +640,16 @@ void ModSpace::PStepLoader::apply_( const PStep* self, VMContext* ctx )
    Module* mod = static_cast<Module*>(ctx->topData().asInst());
    ModSpace* ms = pstep->m_owner;
 
-   switch( seqId )
+   if( seqId < 10 )
    {
-   // first step: set flag for execution of the main function.
-   case 0:
       TRACE( "ModSpace::PStepLoader::apply_ step 0 on module %s", mod->name().c_ize() );
-      seqId++;
-      // non-main modules start at step 1
-      mod->setMain( true );
-      //fallthrough
 
-      // second step: add module to the module space.
-   case 1:
-      TRACE( "ModSpace::PStepLoader::apply_ step 1 on module %s", mod->name().c_ize() );
-      seqId++;
+      bool isLoad = (seqId & 1) != 0;
+      bool isMain = (seqId & 2) != 0;
+      mod->setMain( isMain );
+      mod->usingLoad( isLoad );
+
+      seqId = 10;
       // store the module
       ms->store( mod );
 
@@ -661,9 +669,10 @@ void ModSpace::PStepLoader::apply_( const PStep* self, VMContext* ctx )
          ctx->pushCode( &ms->m_stepResolver );
          return;
       }
+   }
 
-      // fall-through; third step, link
-   case 2:
+   if( seqId == 10 )
+   {
       TRACE( "ModSpace::PStepLoader::apply_ step 2 on module %s", mod->name().c_ize() );
       seqId++;
       // Now that deps are resolved, do imports.
@@ -677,7 +686,7 @@ void ModSpace::PStepLoader::apply_( const PStep* self, VMContext* ctx )
 
       // Push the main funciton only if this is not a main module.
       if( mod->getMainFunction() != 0 && ! mod->isMain() ) {
-         ctx->callInternal( mod->getMainFunction(), 0 );
+         ctx->call( mod->getMainFunction() );
          return;
       }
    }
@@ -712,18 +721,57 @@ void ModSpace::PStepResolver::apply_( const PStep* self, VMContext* ctx )
       ImportDef* idef = mod->getDep( seqId );
 
       // do we have a module to import?
-      if( idef->sourceModule().size() != 0 && idef->modReq()->module() == 0 )
+      if( ! idef->processed() )
       {
-         // already available?
-         Module* other = ms->findModule( idef->sourceModule(), idef->isUri() );
-         if( other == 0 ) {
-            // No? -- load it -- and always launch main
-            ms->loadSubModule( idef->sourceModule(), idef->isUri(), false, ctx );
-            // -- and wait for the process to have resolved it.
-            return;
-         }
+         if( idef->sourceModule().size() != 0 )
+         {
+            Module* other;
 
-         idef->modReq()->module( other );
+            if( idef->modReq()->module() == 0 )
+            {
+               // already available?
+               other = ms->findModule( idef->sourceModule(), idef->isUri() );
+               if( other == 0 )
+               {
+                  if( idef->loaded() ) {
+                     ++seqId;
+                     continue;
+                  }
+                  idef->loaded(true);
+
+                  // No? -- load it -- and always launch main
+                  ms->loadModuleInContext( idef->sourceModule(), idef->isUri(), idef->isLoad(), false, ctx );
+                  // -- and wait for the process to have resolved it.
+                  return;
+               }
+
+               idef->modReq()->module( other );
+            }
+            else {
+               other = idef->modReq()->module();
+            }
+
+            idef->processed(true);
+
+            if( idef->symbolCount() != 0 )
+            {
+               for( int i = 0; i < idef->symbolCount(); ++i )
+               {
+                  const String& symname = idef->sourceSymbol(i);
+                  Item* orig = other->getGlobalValue(symname);
+                  if( orig == 0 ) {
+                     Error* em = new LinkError( ErrorParam(e_undef_sym, 0, mod->uri() )
+                        .origin( ErrorParam::e_orig_linker )
+                        .extra( symname +" in " + other->name() ) );
+                     throw em;
+                  }
+
+                  String finalName = idef->targetSymbol(i);
+                  mod->resolveExternValue(finalName, other, orig);
+               }
+            }
+
+         }
       }
 
       // get ready for next loop
@@ -858,8 +906,26 @@ void ModSpace::PStepExecMain::apply_( const PStep*, VMContext* ctx )
    mod->setMain(false);
 
    if( mod->getMainFunction() != 0 ) {
-      ctx->callInternal( mod->getMainFunction(), 0 );
+      ctx->call( mod->getMainFunction());
    }
+}
+
+void ModSpace::PStepStartLoad::apply_( const PStep* ps, VMContext* ctx )
+{
+   const PStepStartLoad* sl = static_cast<const PStepStartLoad*>(ps);
+
+   String modName = *ctx->opcodeParam(0).asString();
+   int32 vals = ctx->currentCode().m_seqId;
+   bool isUri = (vals & 1)!=0;
+   bool asLoad = (vals & 2)!=0;
+   bool isMain = (vals & 4)!=0;
+
+   // we're called just once
+   ctx->popCode();
+   // I am not sure we actually need to pop. If not, we can use the modName by ref.
+   ctx->popData(1);
+
+   sl->m_owner->loadModuleInContext(modName, isUri, asLoad, isMain, ctx );
 }
 
 }

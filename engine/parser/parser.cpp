@@ -754,6 +754,9 @@ void Parser::parserLoop()
       TRACE1( "Parser::parserLoop -- stack now: %s ", dumpStack().c_ize() );
 
       onNewToken();
+      if ( m_bInteractive && (ti->token().name() == "EOL") ) {
+         m_bIsDone = true;
+      }
    }
 
    MESSAGE2( "Parser::parserLoop -- done on request" );

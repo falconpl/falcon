@@ -141,12 +141,13 @@ Parsing::TokenInstance* SourceLexer::nextToken()
                   // return only if not an operator at end of line.
                   if( ! m_hadOperator )
                   {
+                     m_hadImport = false;
                      return m_parser->T_EOL.makeInstance(l, c);
                   }
                   break;
                }
                
-               case ';': m_hadOperator = true; return m_parser->T_EOL.makeInstance(m_line, m_chr++);
+               case ';': m_hadOperator = true; m_hadImport = false; return m_parser->T_EOL.makeInstance(m_line, m_chr++);
                case ':': m_hadOperator = true; return parser->T_Colon.makeInstance(m_line, m_chr++);
                case ',': m_hadOperator = true; return parser->T_Comma.makeInstance(m_line, m_chr++);
                case '"':  m_stringML = false; m_stringStart = true; m_state = state_double_string; break;
@@ -160,6 +161,7 @@ Parsing::TokenInstance* SourceLexer::nextToken()
                case '}': m_chr++;
                   resetState();
                   m_nextToken = parser->T_end.makeInstance(m_line,m_chr);
+                  m_hadImport = false;
                   return parser->T_EOL.makeInstance(m_line,m_chr);
 
                case '/': previousState = m_state; m_state = state_enterComment; break;
@@ -772,6 +774,7 @@ Parsing::TokenInstance* SourceLexer::nextToken()
    if ( m_state == state_line )
    {
       m_state = state_none;
+      m_hadImport = false;
       // generate an extra EOL if we had an open line.
       return m_parser->T_EOL.makeInstance(m_line, m_chr);
    }
@@ -790,7 +793,6 @@ void SourceLexer::resetState()
 {
    m_state = state_line;
    m_hadOperator = false; // checkOperator will set it back as needed.
-   m_hadImport = false;
 }
 
 Parsing::TokenInstance* SourceLexer::checkWord()

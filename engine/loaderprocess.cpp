@@ -42,7 +42,7 @@ LoaderProcess::~LoaderProcess()
 void LoaderProcess::loadModule( const String& modUri, bool isUri, bool launchMain )
 {
    m_context->reset();
-   m_context->callInternal( m_loaderEntry, 0 );
+   m_context->call( m_loaderEntry );
    m_context->pushCode( &m_stepSetupMain );
 
    m_ms->loadModule( modUri, isUri, m_context, launchMain );

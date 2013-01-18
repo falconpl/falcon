@@ -942,18 +942,67 @@ void VMContext::callItem( const Item& item, int pcount, Item const* params )
    TRACE( "Calling item: %s -- call frame code:%p, data:%p, call:%p",
       item.describe(2).c_ize(), m_codeStack.m_top, m_dataStack.m_top, m_callStack.m_top  );
 
+   pushData( item );
    Class* cls;
    void* data;
    item.forceClassInst( cls, data );
 
    if( pcount > 0 )
    {
-      addSpace( pcount+1 );
-      *(m_dataStack.m_top - ( pcount + 1 )) = item;
+      addSpace( pcount);
       memcpy( m_dataStack.m_top-pcount, params, pcount * sizeof(item) );
    }
 
    cls->op_call( this, pcount, data );
+}
+
+void VMContext::call( Function* func, int pcount, Item const* params )
+{
+   TRACE( "VMContext::call function: %s -- call frame code:%p, data:%p, call:%p",
+     func->name().c_ize(), m_codeStack.m_top, m_dataStack.m_top, m_callStack.m_top  );
+
+   pushData( Item( func->handler(), func) );
+
+   if( pcount > 0 )
+   {
+      addSpace(pcount);
+      memcpy( m_dataStack.m_top-pcount, params, pcount * sizeof(Item) );
+   }
+   makeCallFrame(func, pcount);
+   func->invoke(this, pcount);
+}
+
+
+void VMContext::call( Function* func, const Item& self, int pcount, Item const* params )
+{
+   TRACE( "VMContext::call method: %s.%s -- call frame code:%p, data:%p, call:%p",
+     self.describe().c_ize(), func->name().c_ize(), m_codeStack.m_top, m_dataStack.m_top, m_callStack.m_top  );
+
+   pushData( Item( func->handler(), func) );
+
+   if( pcount > 0 )
+   {
+      addSpace(pcount);
+      memcpy( m_dataStack.m_top-pcount, params, pcount * sizeof(Item) );
+   }
+   makeCallFrame(func, pcount, self);
+   func->invoke(this, pcount);
+}
+
+void VMContext::call( Closure* cls, int pcount, Item const* params )
+{
+   TRACE( "VMContext::call closure: %s -- call frame code:%p, data:%p, call:%p",
+           cls->closed()->name().c_ize(), m_codeStack.m_top, m_dataStack.m_top, m_callStack.m_top  );
+
+   pushData( Item( cls->closed()->handler(), cls) );
+
+   if( pcount > 0 )
+   {
+      addSpace(pcount);
+      memcpy( m_dataStack.m_top-pcount, params, pcount * sizeof(Item) );
+   }
+   makeCallFrame(cls, pcount );
+   cls->closed()->invoke(this, pcount);
 }
 
 
