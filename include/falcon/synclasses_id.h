@@ -61,6 +61,11 @@
 */
 #define FALCON_SYNCLASS_ID_EPEX     10
 
+/** ID for the tree expression.
+*/
+#define FALCON_SYNCLASS_ID_TREE     11
+
+
 #endif	/* SYNCLASSES_ID_H */
 
 /* end of synclasses_id.h */

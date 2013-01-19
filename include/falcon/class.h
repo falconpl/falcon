@@ -150,6 +150,7 @@ public:
    const static int64 baseUserID = 100;
 
    int64 typeID() const { return m_typeID; }
+   void typeID(int64 t) { m_typeID = t; }
    const String& name() const { return m_name; }
    /** Renames the class
     \param name The new name of the class.

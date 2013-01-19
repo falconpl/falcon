@@ -47,8 +47,7 @@ public:
 };
 
 ExprLit::ExprLit( int line, int chr ):
-   Expression( line, chr ),
-   m_child(0)
+   UnaryExpression( line, chr )
 {
    FALCON_DECLARE_SYN_CLASS( expr_lit );
    apply = apply_;
@@ -57,9 +56,8 @@ ExprLit::ExprLit( int line, int chr ):
 }
 
 
-ExprLit::ExprLit( TreeStep* st, int line, int chr ):
-   Expression( line, chr ),
-   m_child(st)
+ExprLit::ExprLit( Expression* st, int line, int chr ):
+   UnaryExpression( st, line, chr )
 {
    FALCON_DECLARE_SYN_CLASS( expr_lit );
    apply = apply_;
@@ -69,27 +67,21 @@ ExprLit::ExprLit( TreeStep* st, int line, int chr ):
 }
 
 ExprLit::ExprLit( const ExprLit& other ):
-   Expression( other ),
-   m_child(0)
+   UnaryExpression( other )
 {
    apply = apply_;
    m_trait = e_trait_composite;
 
    _p = new Private();
 
-
-   if( other.m_child != 0 ) {
-      m_child = other.m_child->clone();
-      m_child->setParent(this);
-   }
-
    if( other._p->m_exprs.size() ) {
-      searchUnquotes( m_child );
+      searchUnquotes( m_first );
    }
 }
  
 ExprLit::~ExprLit()
 {
+   delete _p;
 }
 
 
@@ -129,143 +121,38 @@ Expression* ExprLit::unquoted( uint32 i )
    return _p->m_exprs[i];
 }
 
-Variable* ExprLit::addParam( const String& name )
-{
-   if( varmap() == 0 ) {
-      setVarMap( new VarMap, true ) ;
-   }
-
-   return varmap()->addParam(name);
-}
-
-Variable* ExprLit::addLocal( const String& name )
-{
-   if( varmap() == 0 ) {
-      setVarMap( new VarMap, true ) ;
-   }
-
-   return varmap()->addLocal(name);
-}
-
-
-int ExprLit::paramCount() const
-{
-   if( varmap() == 0 ) return 0;
-   return varmap()->paramCount();
-}
-
-
-const String& ExprLit::param( int n )
-{
-   static String none;
-
-   if( varmap() == 0 ){
-      return none;
-   }
-
-   return varmap()->getParamName(n);
-}
-
-
 void ExprLit::describeTo( String& str, int depth ) const
 {
-   if( m_child == 0) {
+   if( m_first == 0) {
       str = "<Blank ExprLit>";
       return;
    }
-
-   bool isEta = varmap() != 0 && varmap()->isEta();
-
-   const char* etaOpen = isEta ? "[" : "(";
-   const char* etaClose = isEta ? "]" : ")";
-   str = "{";
-   str += etaOpen; 
    
-   if( varmap() != 0 && varmap()->paramCount() > 0 )
-   {
-      for( uint32 i = 0; i < varmap()->paramCount(); ++i ) {
-         const String& paramName = varmap()->getParamName(i);
-         if( i > 0 ) {
-            str += ", ";
-         }
-         str += paramName;
-      }
-   }
-   str += etaClose;
-   
-   str += "\n";
-   str += m_child->describe(depth+1) + "\n";
-   str += String( " " ).replicate( depth * depthIndent ) + "}";
+   // we're transparent
+   m_first->describeTo(str, depth);
 }
-
-
-void ExprLit::setChild( TreeStep* st )
-{
-   delete m_child;
-   m_child = st;
-   st->setParent(this);
-}
-
-
-int32 ExprLit::arity() const {
-   return 1;
-}
-   
-
-TreeStep* ExprLit::nth( int32 n ) const
-{
-   if( n == 0 ) {
-      return m_child;
-   }
-   return 0;
-}
-   
-bool ExprLit::setNth( int32 n, TreeStep* ts ) 
-{
-   if( n == 0 ) 
-   {
-      delete m_child;
-      if( ts == 0 ) {
-         m_child = 0;
-         return true;
-      }
-      else if( ! ts->parent() ) {
-         ts->setParent(this);
-         m_child = ts;
-         return true;
-      }
-   }
-   
-   return false;
-}
-
 
 void ExprLit::apply_( const PStep* ps, VMContext* ctx )
 {
    const ExprLit* self = static_cast<const ExprLit*>( ps );
-   TRACE1( "Apply \"%s\"", self->describe().c_ize() );   
-   fassert( self->m_child != 0 );
+   fassert( self->first() != 0 );
    Private::ExprVector& ev = self->_p->m_exprs;
-
    CodeFrame& cf = ctx->currentCode();
+   int32& seqId = cf.m_seqId;
+   TRACE1( "ExprLit::apply_ %d/%d \"%s\"", seqId, ev.size(), self->describe().c_ize() );
+
    // something to be unquoted?
-   while (cf.m_seqId < (int) ev.size() )
+   while (seqId < (int) ev.size() )
    {
-      if ( ctx->stepInYield( ev[cf.m_seqId ++], cf ) )
+      if ( ctx->stepInYield( ev[seqId++], cf ) )
       {
          return;
       }
    }
 
-   // ExprLit always evaluate to its child
+   // ExprLit always evaluate to a copy of its child
    ctx->popCode();
-   register TreeStep* child = self->child();
-   
-   if( self->varmap() != 0 ) {
-      child->setVarMap(new VarMap(*self->varmap()), true);
-   }
-   
-   TreeStep* nchild = static_cast<TreeStep*>(child->handler()->clone(child));
+   Expression* nchild = self->first()->clone();
 
    if( ev.size() ) {
       nchild->resolveUnquote( ctx );

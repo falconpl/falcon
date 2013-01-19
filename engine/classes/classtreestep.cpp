@@ -251,13 +251,6 @@ void ClassTreeStep::store( VMContext*, DataWriter* dw, void* instance ) const
    // save the position
    dw->write( ts->line() );
    dw->write( ts->chr() );
-
-   bool vmap = ts->varmap() != 0;
-
-   dw->write( vmap );
-   if( vmap ) {
-      ts->varmap()->store( dw );
-   }
 }
 
 void ClassTreeStep::restore( VMContext* ctx, DataReader*dr ) const
@@ -270,15 +263,6 @@ void ClassTreeStep::restore( VMContext* ctx, DataReader*dr ) const
    dr->read( line );
    dr->read( chr );
    ts->decl( line, chr );
-
-
-   bool hasVmap;
-   dr->read( hasVmap );
-
-   if( hasVmap ) {
-      ts->setVarMap( new VarMap, true );
-      ts->varmap()->restore( dr );
-   }
 }
 
 void ClassTreeStep::flatten( VMContext*, ItemArray& subItems, void* instance ) const

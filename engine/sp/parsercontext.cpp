@@ -274,6 +274,7 @@ Variable* ParserContext::defineSymbol( const String& variable )
 
 Variable* ParserContext::accessSymbol( const String& variable )
 {
+   static Variable dummy(Variable::e_nt_local);
    TRACE("ParserContext::accessSymbol on (: %s :)", variable.c_ize() );
    Variable* nuks;
    
@@ -285,8 +286,12 @@ Variable* ParserContext::accessSymbol( const String& variable )
          nuks = onGlobalAccessed( variable );
       }
       else {
+         /*
          nuks = _p->m_litContexts.back()->addLocal(variable);
          m_varmap = _p->m_litContexts.back()->varmap();
+         */
+         nuks = &dummy; // for now...
+         // don't need to add any local.
       }
    }
    else
@@ -446,7 +451,7 @@ void ParserContext::addStatement( Statement* stmt )
 
 void ParserContext::openLitContext( ExprLit* el ) {
    _p->m_litContexts.push_back(el);
-   m_varmap = el->varmap();
+   //m_varmap = el->varmap();
 }
 
 ExprLit* ParserContext::closeLitContext() 
@@ -456,7 +461,7 @@ ExprLit* ParserContext::closeLitContext()
       ExprLit* current = _p->m_litContexts.back();
       _p->m_litContexts.pop_back();
       if( ! _p->m_litContexts.empty() ) {
-         m_varmap = _p->m_litContexts.back()->varmap();
+         //m_varmap = _p->m_litContexts.back()->varmap();
       }
       else if( !_p->m_frames.empty() ) {
          m_varmap = _p->m_frames.back().m_varmap;
@@ -486,6 +491,10 @@ bool ParserContext::isLitContext() const
    return ! _p->m_litContexts.empty();
 }
 
+bool ParserContext::isGlobalContext() const
+{
+   return m_varmap == 0 && _p->m_litContexts.empty();
+}
 
 void ParserContext::openBlock( Statement* parent, SynTree* branch, bool bAutoClose )
 {

@@ -18,6 +18,7 @@
 
 #include <falcon/psteps/exprinvoke.h>
 #include <falcon/psteps/exprep.h>
+#include <falcon/psteps/exprtree.h>
 #include <falcon/trace.h>
 #include <falcon/function.h>
 #include <falcon/synclasses_id.h>
@@ -37,8 +38,6 @@ bool ExprInvoke::simplify( Item& ) const
 
 void ExprInvoke::apply_( const PStep* ps, VMContext* ctx )
 {
-   static Class* tsc = Engine::instance()->treeStepClass();
-
    const ExprInvoke* self = static_cast<const ExprInvoke*>(ps);
    CodeFrame& cf = ctx->currentCode();
    int32& seqId = cf.m_seqId;
@@ -84,8 +83,9 @@ void ExprInvoke::apply_( const PStep* ps, VMContext* ctx )
                     && static_cast<Function*>(callee->asInst())->isEta() ){
                  eta = true;
               }
-              else if( callee->asClass()->isDerivedFrom( tsc )
-                       && static_cast<TreeStep*>(callee->asInst())->varmap()->isEta()  ) {
+              else if( callee->asClass()->typeID() == FLC_CLASS_ID_TREESTEP &&
+                       callee->asClass()->userFlags() == FALCON_SYNCLASS_ID_TREE &&
+                       static_cast<ExprTree*>(callee->asInst())->varmap()->isEta()  ) {
                  eta = true;
                  }
             }

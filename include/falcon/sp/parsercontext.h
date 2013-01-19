@@ -427,7 +427,7 @@ public:
     */
    bool isLitContext() const;
    
-   bool isGlobalContext() const { return m_varmap == 0; }
+   bool isGlobalContext() const;
 
 private:
    class CCFrame; // forward decl for Context Frames.

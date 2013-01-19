@@ -22,6 +22,7 @@
 
 #include <falcon/parser/rule.h>
 #include <falcon/parser/parser.h>
+#include <falcon/psteps/exprtree.h>
 
 #include <falcon/sp/sourceparser.h>
 #include <falcon/sp/parsercontext.h>
@@ -192,17 +193,18 @@ void on_close_lit( void* thing )
    StmtTempLit* lit = static_cast<StmtTempLit*>(ctx->currentStmt());
 
    ExprLit* elit = ctx->closeLitContext();
+   ExprTree* et = static_cast<ExprTree*>(elit->first());
    SynTree* st = lit->m_forming;
    int size = st->size();
    if ( size == 1 && st->at(0)->handler()->userFlags() == FALCON_SYNCLASS_ID_AUTOEXPR )
    {
       StmtAutoexpr* aexpr = static_cast<StmtAutoexpr*>( st->at(0) );
       Expression* evaluated = aexpr->detachExpr();
-      elit->setChild(evaluated);
+      et->setChild(evaluated);
    }
    else {
       lit->m_forming = 0;
-      elit->setChild(st);
+      et->setChild(st);
    }
 }
 
@@ -349,7 +351,7 @@ void apply_ep_body(const Rule&, Parser& p)
    // detach all the expressions.
    list->clear();
 
-   lit->setChild(ep);
+   lit->first(ep);
    // transform the topmost stack token.
    ti->setValue( lit, expr_deletor );
    ti->token(sp.Expr);
@@ -419,15 +421,20 @@ void internal_lit_params(const Rule&, Parser& p, bool isEta )
    tlit->m_forming = new SynTree(ti->line(), ti->chr());
 
    // but actually we'll be using our lit
-   ExprLit* lit = new ExprLit(ti->line(),ti->chr());
+   ExprTree* et = new ExprTree(ti->line(), ti->chr());
    
    NameList* list=static_cast<NameList*>(tparams->asData());
    for(NameList::const_iterator it=list->begin(),end=list->end();it!=end;++it)
    {
-      lit->addParam(*it);
+      et->addParam(*it);
    }
-   if( lit->varmap() != 0 ) lit->varmap()->setEta( isEta );
+
+   if( isEta ) {
+      if( et->varmap() == 0 ) et->setVarMap(new VarMap);
+      et->varmap()->setEta( true );
+   }
    
+   ExprLit* lit = new ExprLit(et, ti->line(),ti->chr());
    // (,list,)
    ti = TokenInstance::alloc( ti->line(), ti->chr(), sp.Expr);
    ti->setValue( lit, expr_deletor );

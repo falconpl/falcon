@@ -20,6 +20,8 @@
 #include <falcon/vmcontext.h>
 #include <falcon/engine.h>
 #include <falcon/treestep.h>
+#include <falcon/stdsteps.h>
+#include <falcon/derivedfrom.h>
 
 #include <falcon/synclasses_id.h>
 
@@ -60,6 +62,7 @@
 #include <falcon/psteps/exprfself.h>
 #include <falcon/psteps/exprstarindex.h>
 #include <falcon/psteps/exprsym.h>
+#include <falcon/psteps/exprtree.h>
 #include <falcon/psteps/exprunpack.h>
 #include <falcon/psteps/exprunquote.h>
 #include <falcon/psteps/exprvalue.h>
@@ -112,6 +115,9 @@ SynClasses::SynClasses( Class* classSynTree, Class* classStatement, Class* class
    m_stmt_autoexpr->userFlags(FALCON_SYNCLASS_ID_AUTOEXPR);
    m_expr_call->userFlags(FALCON_SYNCLASS_ID_CALLFUNC);
    m_expr_pseudocall->userFlags(FALCON_SYNCLASS_ID_CALLFUNC);
+
+   m_expr_tree->userFlags(FALCON_SYNCLASS_ID_TREE);
+
 }
 
 SynClasses::~SynClasses() {}
@@ -860,57 +866,24 @@ void SynClasses::ClassParentship::restore( VMContext* ctx, DataReader* rd ) cons
 
 void* SynClasses::ClassLit::createInstance() const
 {
-   return new ExprLit;
+   // lit cannot be invoked by constructor.
+   return 0;
 }
-bool SynClasses::ClassLit::op_init( VMContext* ctx, void* instance, int pcount ) const
+bool SynClasses::ClassLit::op_init( VMContext* , void* , int ) const
 {
-   // the first parameter must be a tree step.
-   Item* i_tree = ctx->opcodeParams(pcount);
-   if ( pcount == 0 || (i_tree->type() != FLC_CLASS_ID_TREESTEP) ) 
-   {
-      throw new ParamError( ErrorParam( e_inv_params, __LINE__, SRC )
-            .origin( ErrorParam::e_orig_runtime )
-            .extra( "TreeStep,[S]..." ) );
-   }
-   
-   // put in the treestep
-   ExprLit* self = static_cast<ExprLit*>(instance);   
-   TreeStep* ts = static_cast<TreeStep*>(i_tree->asInst());
-   self->setChild(ts);
-   
-   // And now the parameters.
-   for( int i = 1; i < pcount; ++ i) {
-      Item* param = i_tree+i;
-      if( ! param->isString() ) 
-      {
-         throw new ParamError( ErrorParam( e_param_type, __LINE__, SRC )
-            .origin( ErrorParam::e_orig_runtime)
-            .extra( String("Parameter ").N(i).A(" is not an Inherit expression") ) );
-   
-      }
-      self->addParam(*param->asString());
-   }
-   
-   // we already managed.
+   // Let the caller to remove the params
    return false;
-}
-void SynClasses::ClassLit::store( VMContext* ctx, DataWriter* wr, void* instance ) const
-{
-   //ExprLit* lit = static_cast<ExprLit*>(instance);
-   m_parent->store( ctx, wr, instance );
 }
 void SynClasses::ClassLit::restore( VMContext* ctx, DataReader* rd ) const
 {
-   ExprLit* lit = new ExprLit();
+   ExprLit* lit = new ExprLit;
    ctx->pushData(FALCON_GC_HANDLE( lit ));
    m_parent->restore( ctx, rd );
 }
 void SynClasses::ClassLit::flatten( VMContext*, ItemArray& subItems, void* instance ) const
 {
    ExprLit* lit = static_cast<ExprLit*>(instance);
-   if( lit->child() != 0 ) {
-      subItems.append( Item( lit->child()->handler(), lit->child()) );
-   }
+   subItems.append( Item( lit->first()->handler(), lit->first()) );
 
    for( uint32 i = 0; i < lit->unquotedCount(); ++ i ) {
       Expression* unquoted = lit->unquoted(i);
@@ -921,12 +894,122 @@ void SynClasses::ClassLit::unflatten( VMContext*, ItemArray& subItems, void* ins
 {
    ExprLit* lit = static_cast<ExprLit*>(instance);
    if( subItems.length() >= 1 ) {
-      lit->setChild( static_cast<TreeStep*>(subItems.at(0).asInst()) );
+      lit->first( static_cast<Expression*>(subItems.at(0).asInst()) );
    }
 
    for( uint32 i = 1; i < subItems.length(); ++ i ) {
       Item& item = subItems[i];
       lit->registerUnquote( static_cast<Expression*>(item.asInst()) );
+   }
+}
+//=========================================
+// Class Tree
+//
+void* SynClasses::ClassTree::createInstance() const
+{
+   return new ExprTree;
+}
+void SynClasses::ClassTree::op_call(VMContext* ctx, int pcount, void* instance) const
+{
+   static StdSteps* steps = Engine::instance()->stdSteps();
+   ExprTree* tree = static_cast<ExprTree*>(instance);
+   TreeStep* child = tree->child();
+
+   // TODO: really need to check for childhood?
+   if( child != 0 ) {
+      VarMap* st = tree->varmap();
+      // Do we have a symbol table?
+      if( st == 0 )
+      {
+         // Then we don't need parameters.
+         ctx->popData(pcount+1);
+         ctx->pushCode(&steps->m_localFrame);
+      }
+      else {
+         // otherwise we must push a local frame...
+         ctx->addLocalFrame( st, pcount );
+      }
+
+      // if the child is a syntree, we must prepare to push a nil value.
+      if( child->category() != TreeStep::e_cat_expression ) {
+         ctx->pushCode( &steps->m_pushNil );
+      }
+
+      ctx->pushCode( child );
+   }
+   else {
+      ctx->stackResult(pcount+1,Item());
+   }
+}
+bool SynClasses::ClassTree::op_init( VMContext* ctx, void* instance, int pcount ) const
+{
+   // the first parameter must be a tree step.
+   Item* i_tree = ctx->opcodeParams(pcount);
+   if ( pcount == 0 || (i_tree->type() != FLC_CLASS_ID_TREESTEP) )
+   {
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__, SRC )
+            .origin( ErrorParam::e_orig_runtime )
+            .extra( "TreeStep,[S]..." ) );
+   }
+
+   // put in the treestep
+   ExprTree* self = static_cast<ExprTree*>(instance);
+   TreeStep* ts = static_cast<TreeStep*>(i_tree->asInst());
+   self->setChild(ts);
+
+   // And now the parameters.
+   for( int i = 1; i < pcount; ++ i) {
+      Item* param = i_tree+i;
+      if( ! param->isString() )
+      {
+         throw new ParamError( ErrorParam( e_param_type, __LINE__, SRC )
+            .origin( ErrorParam::e_orig_runtime)
+            .extra( String("Parameter ").N(i).A(" is not an Inherit expression") ) );
+
+      }
+      self->addParam(*param->asString());
+   }
+
+   // we already managed.
+   return false;
+}
+void SynClasses::ClassTree::store( VMContext* ctx, DataWriter* wr, void* instance ) const
+{
+   ExprTree* tree = static_cast<ExprTree*>(instance);
+   bool vmap = tree->varmap() != 0;
+
+   m_parent->store( ctx, wr, tree );
+
+   wr->write( vmap );
+   if( vmap ) {
+      tree->varmap()->store( wr );
+   }
+}
+void SynClasses::ClassTree::restore( VMContext* ctx, DataReader* rd ) const
+{
+   ExprTree* tree = new ExprTree;
+   ctx->pushData(FALCON_GC_HANDLE( tree ));
+   m_parent->restore( ctx, rd );
+   bool hasVmap;
+   rd->read( hasVmap );
+
+   if( hasVmap ) {
+      tree->setVarMap( new VarMap );
+      tree->varmap()->restore( rd );
+   }
+}
+void SynClasses::ClassTree::flatten( VMContext*, ItemArray& subItems, void* instance ) const
+{
+   ExprTree* tree = static_cast<ExprTree*>(instance);
+   if( tree->child() != 0 ) {
+      subItems.append( Item( tree->child()->handler(), tree->child()) );
+   }
+}
+void SynClasses::ClassTree::unflatten( VMContext*, ItemArray& subItems, void* instance ) const
+{
+   ExprTree* tree = static_cast<ExprTree*>(instance);
+   if( subItems.length() >= 1 && !subItems[0].isNil() ) {
+      tree->setChild( static_cast<TreeStep*>(subItems.at(0).asInst()) );
    }
 }
    

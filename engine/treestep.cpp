@@ -32,24 +32,12 @@ TreeStep::TreeStep( const TreeStep& other ):
    PStep( other ),
    m_handler( other.m_handler ),
    m_parent(0),
-   m_varmap(0),
    m_cat( other.m_cat )
 {
-   if( other.m_varmap != 0 ) {
-      m_varmap = new VarMap(*other.m_varmap);
-      m_bOwnSymTab = true;
-   }
-   else {
-      m_varmap = 0;
-      m_bOwnSymTab = false;
-   }
 }
 
 TreeStep::~TreeStep()
 {
-   if( m_bOwnSymTab ) {
-      delete m_varmap;
-   }
 }
 
 void TreeStep::gcMark( uint32 mark )
@@ -200,17 +188,6 @@ SynTree* TreeStep::checkSyntree( const Item& item )
    }
    return 0;
 }
-    
-
-void TreeStep::setVarMap( VarMap* st, bool own )
-{
-   if( m_bOwnSymTab ) {
-      delete m_varmap;
-   }
-   m_varmap = st;
-   m_bOwnSymTab = own;
-}
-
 
 void TreeStep::resolveUnquote( VMContext* ctx )
 {

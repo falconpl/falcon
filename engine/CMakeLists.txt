@@ -154,6 +154,7 @@ add_library(falcon_engine SHARED
   psteps/exprself.cpp
   psteps/exprstarindex.cpp
   psteps/exprsym.cpp
+  psteps/exprtree.cpp
   psteps/exprunpack.cpp
   psteps/exprunquote.cpp
   psteps/exprvalue.cpp

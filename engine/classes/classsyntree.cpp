@@ -176,25 +176,9 @@ void ClassSynTree::op_setProperty( VMContext* ctx, void* instance, const String&
 
 void ClassSynTree::op_call(VMContext* ctx, int pcount, void* instance) const
 {
-   static StdSteps* steps = Engine::instance()->stdSteps();
-   
    SynTree* tree = static_cast<SynTree*>(instance);
-   VarMap* st = tree->varmap();
-   // Do we have a symbol table?
-   if( st == 0 )
-   {
-      // Then we don't need parameters.
-      ctx->popData(pcount+1);
-      //ctx->addLocalFrame(0,0);
-      ctx->pushCode(&steps->m_localFrame);
-   }
-   else {
-      // otherwise we must push a local frame...
-      ctx->addLocalFrame( st, pcount );
-   }
-   
-   ctx->pushCode( &steps->m_pushNil );
    ctx->pushCode( tree );
+   ctx->stackResult(pcount+1, Item());
 }
 
 }

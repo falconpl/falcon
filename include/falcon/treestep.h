@@ -332,35 +332,19 @@ public:
          || (m_cat == e_cat_expression && cat == e_cat_expression);
    }
 
-   /**
-    Set the symbol table associated with this treestep.
-    */
-   void setVarMap( VarMap* st, bool own = false );
-
-   /**
-    Gets the symbol table associated with this treestep.
-
-    \note Normally, the symbol table is 0.
-    */
-   VarMap* varmap() const { return m_varmap; }
-
    virtual void resolveUnquote( VMContext* ctx );
 
 protected:
    uint32 m_gcMark; 
    Class* m_handler;
    TreeStep* m_parent;
-   VarMap* m_varmap;
    t_category m_cat;
-   bool m_bOwnSymTab;
    
    TreeStep( Class* cls, t_category t, int line = 0, int chr = 0 ):
       PStep(line, chr ),
       m_handler( cls ),
       m_parent(0),
-      m_varmap(0),
-      m_cat(t),
-      m_bOwnSymTab(false)
+      m_cat(t)
    {}
    
    // Unclassesd step, or class provided later on
@@ -368,9 +352,7 @@ protected:
       PStep(line, chr ),
       m_handler( 0 ),
       m_parent(0),
-      m_varmap(0),
-      m_cat(t),
-      m_bOwnSymTab(false)
+      m_cat(t)
    {}
 
 };

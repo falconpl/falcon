@@ -19,8 +19,10 @@
 #include <falcon/vmcontext.h>
 
 #include <falcon/psteps/exprcall.h>
+#include <falcon/psteps/exprtree.h>
 
 #include <falcon/synclasses.h>
+#include <falcon/synclasses_id.h>
 #include <falcon/engine.h>
 
 #include <vector>
@@ -120,11 +122,13 @@ void ExprCall::apply_( const PStep* v, VMContext* ctx )
                }
                break;
                
-               case FLC_CLASS_ID_TREESTEP: 
+               case FLC_CLASS_ID_TREESTEP:
                {
-                  VarMap* st = static_cast<TreeStep*>(vts)->varmap();
-                  if( st != 0 ) {
-                     bHaveEta = st->isEta();
+                  if( cls->userFlags() == FALCON_SYNCLASS_ID_TREE) {
+                     VarMap* st = static_cast<ExprTree*>(vts)->varmap();
+                     if( st != 0 ) {
+                        bHaveEta = st->isEta();
+                     }
                   }
                }
             }
