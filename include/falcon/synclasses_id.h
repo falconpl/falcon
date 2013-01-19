@@ -53,6 +53,13 @@
 */
 #define FALCON_SYNCLASS_ID_SWITCH   8
 
+/** ID for the Invoke expression.
+*/
+#define FALCON_SYNCLASS_ID_INVOKE   9
+
+/** ID for the EPEX expression.
+*/
+#define FALCON_SYNCLASS_ID_EPEX     10
 
 #endif	/* SYNCLASSES_ID_H */
 

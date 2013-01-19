@@ -117,6 +117,8 @@ SourceParser::SourceParser():
    T_UnaryMinus("(neg)",23),
    T_Dollar("$",23),
    T_Amper("&",10),
+   T_NumberSign("#", 68),   /* between bit and & equality */
+
    T_Power("**", 25),
 
    T_Times("*",30),
@@ -479,6 +481,8 @@ SourceParser::SourceParser():
    Expr<< (r_Expr_auto_pow << "Expr_auto_pow"   << apply_expr_auto_pow   << Expr << T_AutoPow << Expr );
    Expr<< (r_Expr_auto_shl << "Expr_auto_shr"   << apply_expr_auto_shr  << Expr << T_AutoRShift << Expr );
    Expr<< (r_Expr_auto_shr << "Expr_auto_shl"   << apply_expr_auto_shl   << Expr << T_AutoLShift << Expr );   
+
+   Expr<< (r_Expr_invoke << "Expr_invoke"   << apply_expr_invoke   << Expr << T_NumberSign << Expr );
    Expr<< (r_Expr_expr_compose << "Expr_compose"  << apply_expr_compose << Expr << T_COMPOSE << Expr );
    Expr<< (r_Expr_expr_funcpower << "Expr_funcpower"  << apply_expr_funcpower << Expr << T_FUNCPOWER << Expr );
    

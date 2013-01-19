@@ -300,6 +300,8 @@ public:
     */
    void insertData( int32 pos, Item* data, int dataSize, int32 replSize=0 );
 
+   void removeData( uint32 pos, uint32 removeSize );
+
    /** Top data in the stack
     *
     */

@@ -137,6 +137,7 @@ add_library(falcon_engine SHARED
   psteps/exprincdec.cpp
   psteps/exprindex.cpp
   psteps/exprinherit.cpp
+  psteps/exprinvoke.cpp
   psteps/exprlit.cpp
   psteps/exprlogic.cpp
   psteps/exprmath.cpp

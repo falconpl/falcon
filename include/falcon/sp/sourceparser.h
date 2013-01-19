@@ -89,6 +89,7 @@ public:
    Parsing::Terminal T_UnaryMinus;
    Parsing::Terminal T_Dollar;
    Parsing::Terminal T_Amper;
+   Parsing::Terminal T_NumberSign;
    Parsing::Terminal T_Power;
    Parsing::Terminal T_Times;
    Parsing::Terminal T_Divide;
@@ -382,6 +383,7 @@ public:
    Parsing::Rule r_Expr_auto_pow;
    Parsing::Rule r_Expr_auto_shr;
    Parsing::Rule r_Expr_auto_shl;
+   Parsing::Rule r_Expr_invoke;
    Parsing::Rule r_Expr_expr_compose;
    Parsing::Rule r_Expr_expr_funcpower;
    

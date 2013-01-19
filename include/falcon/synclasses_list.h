@@ -58,6 +58,7 @@ FALCON_SYNCLASS_DECLARATOR(m_expr_assign, Assign, expr)
 FALCON_SYNCLASS_DECLARATOR(m_expr_bnot, BNot, expr)
 FALCON_SYNCLASS_DECLARATOR(m_expr_call, Call, expr)
 FALCON_SYNCLASS_DECLARATOR(m_expr_ep, EP, expr)
+FALCON_SYNCLASS_DECLARATOR(m_expr_invoke, Invoke, expr)
 FALCON_SYNCLASS_DECLARATOR_EX(m_expr_closure, GenClosure, expr, \
       virtual void flatten( VMContext* ctx, ItemArray& subItems, void* instance ) const;\
       virtual void unflatten( VMContext* ctx, ItemArray& subItems, void* instance ) const; )

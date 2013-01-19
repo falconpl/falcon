@@ -44,6 +44,7 @@
 #include <falcon/psteps/exprincdec.h>
 #include <falcon/psteps/exprindex.h>
 #include <falcon/psteps/exprinherit.h>
+#include <falcon/psteps/exprinvoke.h>
 #include <falcon/psteps/exprlit.h>
 #include <falcon/psteps/exprlogic.h>
 #include <falcon/psteps/exprmath.h>
@@ -99,6 +100,8 @@ SynClasses::SynClasses( Class* classSynTree, Class* classStatement, Class* class
 {
    #include <falcon/synclasses_list.h>
 
+   m_expr_ep->userFlags(FALCON_SYNCLASS_ID_EPEX);
+   m_expr_invoke->userFlags(FALCON_SYNCLASS_ID_INVOKE);
    m_stmt_forto->userFlags(FALCON_SYNCLASS_ID_FORCLASSES);
    m_stmt_forin->userFlags(FALCON_SYNCLASS_ID_FORCLASSES);
    m_stmt_rule->userFlags(FALCON_SYNCLASS_ID_RULE);
@@ -220,6 +223,7 @@ FALCON_STANDARD_SYNCLASS_OP_CREATE( Assign, ExprAssign, binaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( BNot, ExprBNOT, unaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Call, ExprCall, varExprInsert )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( EP, ExprEP, varExprInsert )
+FALCON_STANDARD_SYNCLASS_OP_CREATE( Invoke, ExprInvoke, binaryExprSet )
 // GenClosure --specificly managed
 
 FALCON_STANDARD_SYNCLASS_OP_CREATE( LT, ExprLT, binaryExprSet )

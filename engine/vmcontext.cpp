@@ -1106,6 +1106,18 @@ void VMContext::exitLocalFrame( bool exec )
 }
 
 
+void VMContext::removeData( uint32 pos, uint32 removeSize )
+{
+   Item* base = m_dataStack.m_top-pos;
+
+   memmove( base,
+            base + removeSize,
+            sizeof(Item) * (pos-removeSize+1) );
+
+   m_dataStack.m_top -= removeSize;
+}
+
+
 void VMContext::insertData(int32 pos, Item* data, int32 dataSize, int32 replSize )
 {
    addSpace( dataSize - replSize );

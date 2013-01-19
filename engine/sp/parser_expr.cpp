@@ -32,6 +32,7 @@
 #include <falcon/psteps/exprcompare.h>
 #include <falcon/psteps/exprmath.h>
 #include <falcon/psteps/exprin.h>
+#include <falcon/psteps/exprinvoke.h>
 #include <falcon/psteps/exprnotin.h>
 #include <falcon/psteps/exprdot.h>
 #include <falcon/psteps/expreeq.h>
@@ -256,6 +257,11 @@ void apply_expr_bor( const Rule& r, Parser& p )
 void apply_expr_bxor( const Rule& r, Parser& p )
 {
    apply_expr_binary(r, p, new ExprBXOR );
+}
+
+void apply_expr_invoke( const Rule& r, Parser& p )
+{
+   apply_expr_binary(r, p, new ExprInvoke );
 }
 
 void apply_expr_compose( const Rule& r, Parser& p )
