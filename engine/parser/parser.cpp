@@ -754,7 +754,10 @@ void Parser::parserLoop()
       TRACE1( "Parser::parserLoop -- stack now: %s ", dumpStack().c_ize() );
 
       onNewToken();
-      if ( m_bInteractive && (ti->token().name() == "EOL") ) {
+      if ( m_bInteractive
+               && (ti->chr() >= 0) // not a fake
+               && (ti->token().name() == "EOL") )
+      {
          m_bIsDone = true;
       }
    }

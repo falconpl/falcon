@@ -142,6 +142,9 @@ public:
    int line() const { return m_line; }
    int chr() const { return m_chr; }
    
+   void line(int v) { m_line = v; }
+   void chr( int v) { m_chr = v; }
+
    static TokenInstance* alloc( int line, int chr, const Token& tok );
    
 private:

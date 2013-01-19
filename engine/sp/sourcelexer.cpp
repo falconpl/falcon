@@ -158,11 +158,16 @@ Parsing::TokenInstance* SourceLexer::nextToken()
                case '[': m_chr++; m_hadOperator = true; return parser->T_OpenSquare.makeInstance(m_line,m_chr); break;
                case ']': m_chr++; resetState(); return parser->T_CloseSquare.makeInstance(m_line,m_chr); break;
                case '{': m_chr++; m_hadOperator = true; return parser->T_OpenGraph.makeInstance(m_line,m_chr); break;
-               case '}': m_chr++;
+               case '}':
+               {
+                  m_chr++;
                   resetState();
                   m_nextToken = parser->T_end.makeInstance(m_line,m_chr);
                   m_hadImport = false;
-                  return parser->T_EOL.makeInstance(m_line,m_chr);
+                  Parsing::TokenInstance* ti = parser->T_EOL.makeInstance(m_line,m_chr);
+                  ti->chr(-1); // it's fake
+                  return ti;
+               }
 
                case '/': previousState = m_state; m_state = state_enterComment; break;
 
