@@ -40,11 +40,11 @@ namespace Falcon {
  The former expression generates an ExprTree, the latter an ExprEP.
 
  */
-class ExprLit: public UnaryExpression
+class ExprLit: public Expression
 {
 public:
    ExprLit( int line=0, int chr=0 );
-   ExprLit( Expression* expr, int line=0, int chr=0 );
+   ExprLit( TreeStep* expr, int line=0, int chr=0 );
    ExprLit( const ExprLit& other );
    
    virtual ~ExprLit();   
@@ -60,9 +60,17 @@ public:
    uint32 unquotedCount();
    Expression* unquoted( uint32 i );
 
+   void setChild( TreeStep* st );
+   TreeStep* child() const { return m_child; }
+
+   virtual int32 arity() const;
+   virtual TreeStep* nth( int32 n ) const;
+   virtual bool setNth( int32 n, TreeStep* ts );
+
 private:
    class Private;
    ExprLit::Private* _p;
+   TreeStep* m_child;
 
    void searchUnquotes( TreeStep* child );
 

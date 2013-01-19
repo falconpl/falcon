@@ -883,7 +883,7 @@ void SynClasses::ClassLit::restore( VMContext* ctx, DataReader* rd ) const
 void SynClasses::ClassLit::flatten( VMContext*, ItemArray& subItems, void* instance ) const
 {
    ExprLit* lit = static_cast<ExprLit*>(instance);
-   subItems.append( Item( lit->first()->handler(), lit->first()) );
+   subItems.append( Item( lit->child()->handler(), lit->child()) );
 
    for( uint32 i = 0; i < lit->unquotedCount(); ++ i ) {
       Expression* unquoted = lit->unquoted(i);
@@ -894,7 +894,7 @@ void SynClasses::ClassLit::unflatten( VMContext*, ItemArray& subItems, void* ins
 {
    ExprLit* lit = static_cast<ExprLit*>(instance);
    if( subItems.length() >= 1 ) {
-      lit->first( static_cast<Expression*>(subItems.at(0).asInst()) );
+      lit->setChild( static_cast<Expression*>(subItems.at(0).asInst()) );
    }
 
    for( uint32 i = 1; i < subItems.length(); ++ i ) {

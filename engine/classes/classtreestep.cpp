@@ -39,6 +39,7 @@ ClassTreeStep::ClassTreeStep():
    m_lenMethod.methodOf(this);
    m_insertMethod.methodOf(this);
    m_removeMethod.methodOf(this);
+   m_appendMethod.methodOf(this);
 }
 
 ClassTreeStep::~ClassTreeStep()
@@ -113,8 +114,7 @@ void ClassTreeStep::enumerateProperties( void*, Class::PropertyEnumerator& cb ) 
    cb("insert", false);
    cb("parent", false );
    cb("remove", true);
-
-   //cb("append", true);
+   cb("append", true);
 }
 
 
@@ -146,7 +146,8 @@ bool ClassTreeStep::hasProperty( void*, const String& prop ) const
       || prop == "parent"
       || prop == "selector"
       || prop == "insert"
-      || prop == "remove";
+      || prop == "remove"
+      || prop == "append";
 }
 
 
@@ -164,6 +165,10 @@ void ClassTreeStep::op_getProperty( VMContext* ctx, void* instance, const String
    else if( prop == "remove")
    {
       ctx->topData().methodize( &m_removeMethod );
+   }
+   else if( prop == "append")
+   {
+      ctx->topData().methodize( &m_appendMethod );
    }
    else if( prop == "selector")
    {
@@ -397,13 +402,6 @@ void ClassTreeStep::op_setIndex(VMContext* ctx, void* instance ) const
 
          TreeStep* ts = static_cast<TreeStep*>(inst);
          // check TreeStep category.
-         if( ! self->canHost( ts ) )
-         {
-            throw new CodeError( ErrorParam(e_invalid_op, __LINE__, SRC)
-               .origin( ErrorParam::e_orig_vm)
-               .extra( "Incompatible type of Step to be inserted here" ) );
-         }
-
          if( ts->parent() != 0 )
          {
             throw new CodeError( ErrorParam(e_invalid_op, __LINE__, SRC)
@@ -542,13 +540,6 @@ void ClassTreeStep::InsertMethod::invoke( VMContext* ctx, int32 pcount )
 
    // check TreeStep category.
    TreeStep* self_step = static_cast<TreeStep*>(self.asInst());
-   if( ! self_step->canHost( ts ) )
-   {
-      throw new CodeError( ErrorParam(e_invalid_op, __LINE__, SRC)
-         .origin( ErrorParam::e_orig_vm)
-         .extra( "Incompatible type of Step to be inserted here" ) );
-   }
-
    if( ! self_step->insert( i_pos->forceInteger(), ts) ) {
       ctx->raiseError( new CodeError( ErrorParam(e_invalid_op, __LINE__, SRC)
       .origin( ErrorParam::e_orig_runtime)
@@ -561,14 +552,13 @@ void ClassTreeStep::InsertMethod::invoke( VMContext* ctx, int32 pcount )
 }
 
 //===============================================================
-// Insert method
+// Remove method
 //
 ClassTreeStep::RemoveMethod::RemoveMethod():
    Function("remove")
 {
    signature("N");
    addParam("pos");
-   addParam("syntree");
 }
 
 ClassTreeStep::RemoveMethod::~RemoveMethod()
@@ -595,6 +585,57 @@ void ClassTreeStep::RemoveMethod::invoke( VMContext* ctx, int32 pcount )
       .extra( "This Statement is not accepting remove" ) ) );
 
       return;
+   }
+
+   ctx->returnFrame( pcount );
+}
+
+//===============================================================
+// AppendMethod method
+//
+ClassTreeStep::AppendMethod::AppendMethod():
+   Function("append")
+{
+   signature("SynTree");
+   addParam("syntree");
+}
+
+ClassTreeStep::AppendMethod::~AppendMethod()
+{}
+
+
+void ClassTreeStep::AppendMethod::invoke( VMContext* ctx, int32 pcount )
+{
+   Item& self = ctx->self();
+   fassert( self.isUser() );
+
+   Item* i_treestep = ctx->param(0);
+   Class* cls;
+   void* inst;
+
+   ClassTreeStep* owner = static_cast<ClassTreeStep*>(methodOf());
+   if( !( i_treestep->asClassInst(cls, inst) && cls->isDerivedFrom(owner) )
+     )
+   {
+     ctx->raiseError(paramError(__LINE__, SRC ));
+     return;
+   }
+
+   TreeStep* ts = static_cast<TreeStep*>( inst );
+   if( ts->parent() !=  0 )
+   {
+     ctx->raiseError( new CodeError( ErrorParam(e_invalid_op, __LINE__, SRC)
+     .origin( ErrorParam::e_orig_runtime)
+     .extra( "Parented syntree cannot be inserted" ) ) );
+     return;
+   }
+
+   TreeStep* self_step = static_cast<TreeStep*>(self.asInst());
+   if( ! self_step->insert(ts->arity(), ts) ) {
+      ctx->raiseError( new CodeError( ErrorParam(e_invalid_op, __LINE__, SRC)
+           .origin( ErrorParam::e_orig_runtime)
+           .extra( "Element cannot be appended" ) ) );
+           return;
    }
 
    ctx->returnFrame( pcount );

@@ -25,6 +25,7 @@
 #include <falcon/engine.h>
 #include <falcon/synclasses.h>
 #include <falcon/varmap.h>
+#include <falcon/psteps/stmtautoexpr.h>
 
 #include "psteps/exprvector_private.h"
 
@@ -194,8 +195,16 @@ TreeStep* SynTree::nth( int pos ) const
 
 bool SynTree::setNth( int pos, TreeStep* step )
 {
-   if( step == 0 
-      || step->category() != TreeStep::e_cat_statement ) 
+   if( step == 0 || step->parent() != 0)
+   {
+      return false;
+   }
+
+   if( step->category() == TreeStep::e_cat_expression )
+   {
+      step = new StmtAutoexpr( static_cast<Expression*>(step), step->line(), step->chr() );
+   }
+   else if( step->category() != TreeStep::e_cat_statement )
    {
       return false;
    }
@@ -205,9 +214,16 @@ bool SynTree::setNth( int pos, TreeStep* step )
 
 bool SynTree::insert( int pos, TreeStep* step )
 {
-   if( step == 0 
-      || step->category() != TreeStep::e_cat_statement 
-      || ! step->setParent(this)) 
+   if( step == 0 || step->parent() != 0)
+   {
+      return false;
+   }
+
+   if( step->category() == TreeStep::e_cat_expression )
+   {
+      step = new StmtAutoexpr( static_cast<Expression*>(step), step->line(), step->chr() );
+   }
+   else if( step->category() != TreeStep::e_cat_statement )
    {
       return false;
    }

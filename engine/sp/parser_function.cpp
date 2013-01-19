@@ -193,18 +193,28 @@ void on_close_lit( void* thing )
    StmtTempLit* lit = static_cast<StmtTempLit*>(ctx->currentStmt());
 
    ExprLit* elit = ctx->closeLitContext();
-   ExprTree* et = static_cast<ExprTree*>(elit->first());
+   ExprTree* et = static_cast<ExprTree*>(elit->child());
    SynTree* st = lit->m_forming;
    int size = st->size();
    if ( size == 1 && st->at(0)->handler()->userFlags() == FALCON_SYNCLASS_ID_AUTOEXPR )
    {
       StmtAutoexpr* aexpr = static_cast<StmtAutoexpr*>( st->at(0) );
       Expression* evaluated = aexpr->detachExpr();
-      et->setChild(evaluated);
+      if( et == 0 ) {
+         elit->setChild(evaluated);
+      }
+      else {
+         et->setChild(evaluated);
+      }
    }
    else {
       lit->m_forming = 0;
-      et->setChild(st);
+      if( et == 0 ) {
+         elit->setChild(st);
+      }
+      else {
+         et->setChild(st);
+      }
    }
 }
 
@@ -351,7 +361,7 @@ void apply_ep_body(const Rule&, Parser& p)
    // detach all the expressions.
    list->clear();
 
-   lit->first(ep);
+   lit->setChild(ep);
    // transform the topmost stack token.
    ti->setValue( lit, expr_deletor );
    ti->token(sp.Expr);
@@ -421,20 +431,34 @@ void internal_lit_params(const Rule&, Parser& p, bool isEta )
    tlit->m_forming = new SynTree(ti->line(), ti->chr());
 
    // but actually we'll be using our lit
-   ExprTree* et = new ExprTree(ti->line(), ti->chr());
-   
    NameList* list=static_cast<NameList*>(tparams->asData());
-   for(NameList::const_iterator it=list->begin(),end=list->end();it!=end;++it)
+   ExprLit* lit;
+   if( ! list->empty() )
    {
-      et->addParam(*it);
-   }
+      ExprTree* et = new ExprTree(ti->line(), ti->chr());
 
-   if( isEta ) {
-      if( et->varmap() == 0 ) et->setVarMap(new VarMap);
-      et->varmap()->setEta( true );
+      for(NameList::const_iterator it=list->begin(),end=list->end();it!=end;++it)
+      {
+         et->addParam(*it);
+      }
+
+      if( isEta ) {
+         if( et->varmap() == 0 ) et->setVarMap(new VarMap);
+         et->varmap()->setEta( true );
+      }
+
+      lit = new ExprLit(et, ti->line(),ti->chr());
+   }
+   else {
+      // {[]  <expr> } is a totally literal expression, without an ExprTree
+      if( ! isEta ) {
+         lit = new ExprLit(new ExprTree(ti->line(), ti->chr()), ti->line(),ti->chr());
+      }
+      else {
+         lit = new ExprLit(ti->line(),ti->chr());
+      }
    }
    
-   ExprLit* lit = new ExprLit(et, ti->line(),ti->chr());
    // (,list,)
    ti = TokenInstance::alloc( ti->line(), ti->chr(), sp.Expr);
    ti->setValue( lit, expr_deletor );

@@ -97,9 +97,17 @@ private:
       void invoke( VMContext* ctx, int32 pCount = 0 );
    };
 
+   class AppendMethod: public Function {
+   public:
+      AppendMethod();
+      virtual ~AppendMethod();
+      void invoke( VMContext* ctx, int32 pCount = 0 );
+   };
+
    mutable LenMethod m_lenMethod;
    mutable InsertMethod m_insertMethod;
    mutable RemoveMethod m_removeMethod;
+   mutable AppendMethod m_appendMethod;
 };
 
 }
