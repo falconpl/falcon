@@ -141,6 +141,19 @@ public:
    {}
 };
 
+class TreeStepVector_Private: public TSVector_Private<TreeStep>
+{
+public:
+
+   TreeStepVector_Private() {}
+   ~TreeStepVector_Private() {}
+
+   TreeStepVector_Private( const TreeStepVector_Private& other, TreeStep* owner ):
+      TSVector_Private<TreeStep>( other, owner )
+   {}
+};
+
+
 
 }
 
