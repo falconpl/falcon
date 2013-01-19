@@ -21,6 +21,7 @@
 
 #include <falcon/statement.h>
 #include <falcon/expression.h>
+#include <falcon/psteps/exprvalue.h>
 
 #include <falcon/vmcontext.h>
 #include <falcon/itemarray.h>
@@ -403,9 +404,10 @@ void ClassTreeStep::op_setIndex(VMContext* ctx, void* instance ) const
          if( ! i_tree.asClassInst(cls, inst)
                || ! cls->isDerivedFrom( this ) )
          {
-            throw new AccessError( ErrorParam( e_inv_params, __LINE__, SRC )
-               .origin(ErrorParam::e_orig_vm)
-               .extra( "TreeStep" ) );
+            ExprValue* ev = new ExprValue( i_tree );
+            cls = ev->handler();
+            inst = ev;
+            FALCON_GC_HANDLE(ev);
          }
 
 
