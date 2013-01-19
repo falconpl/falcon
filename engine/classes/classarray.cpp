@@ -262,9 +262,7 @@ void ClassArray::op_setIndex( VMContext* ctx, void* self ) const
    // arritem[index] = value
    // arritem also = self
    Item* value, *arritem, *index;
-
    ctx->operands( value, arritem, index );
-
 
    ItemArray& array = *static_cast<ItemArray*>( self );
 
@@ -279,10 +277,9 @@ void ClassArray::op_setIndex( VMContext* ctx, void* self ) const
          throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra( "index out of range" ) );
       }
 
-      value->copied( true ); // the value is copied here.
-
-      array[v] = *value;
-      ctx->stackResult( 3, *value );  // push value back onto the stack
+      array[v].assign(*value);
+      ctx->popData(2); // our value is already the thirdmost element in the stack.
+      return;
    }
    else if ( ! index->isUser() ) // should get a user type
    {
@@ -372,7 +369,8 @@ void ClassArray::op_setIndex( VMContext* ctx, void* self ) const
       }
    }
 
-   ctx->stackResult( 3, *value );
+   // our value is already the third element in the stack.
+   ctx->popData( 2 );
 }
 
 
