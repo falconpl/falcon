@@ -30,6 +30,7 @@
 #include <falcon/psteps/exprassign.h>
 #include <falcon/psteps/exprbitwise.h>
 #include <falcon/psteps/exprcall.h>
+#include <falcon/psteps/exprep.h>
 #include <falcon/psteps/exprclosure.h>
 #include <falcon/psteps/exprcompare.h>
 #include <falcon/psteps/exprcompose.h>
@@ -218,6 +219,7 @@ FALCON_STANDARD_SYNCLASS_OP_CREATE( GenArray, ExprArray, varExprInsert )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Assign, ExprAssign, binaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( BNot, ExprBNOT, unaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Call, ExprCall, varExprInsert )
+FALCON_STANDARD_SYNCLASS_OP_CREATE( EP, ExprEP, varExprInsert )
 // GenClosure --specificly managed
 
 FALCON_STANDARD_SYNCLASS_OP_CREATE( LT, ExprLT, binaryExprSet )

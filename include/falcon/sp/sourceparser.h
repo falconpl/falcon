@@ -49,6 +49,7 @@ public:
    Parsing::Terminal T_Openpar;
    Parsing::Terminal T_Closepar;
    Parsing::Terminal T_OpenSquare;
+   Parsing::Terminal T_CapPar;
    Parsing::Terminal T_DotPar;
    Parsing::Terminal T_DotSquare;
    Parsing::Terminal T_CloseSquare;
@@ -398,6 +399,7 @@ public:
    Parsing::Rule r_Expr_function;
    Parsing::Rule r_Expr_functionEta;
    Parsing::Rule r_Expr_lambda;
+   Parsing::Rule r_Expr_ep;
    Parsing::Rule r_Expr_class;
    Parsing::Rule r_Expr_proto;
    Parsing::Rule r_Expr_lit;
@@ -514,6 +516,9 @@ public:
    Parsing::Rule r_lambda_params;
    Parsing::Rule r_lambda_params_eta;
 
+   Parsing::NonTerminal EPBody;
+   Parsing::Rule r_lit_epbody;
+
    Parsing::NonTerminal AnonClassParams;
    
    Parsing::NonTerminal S_ProtoProp;
@@ -551,6 +556,7 @@ public:
    Parsing::State s_InlineFunc;
    Parsing::State s_ClassBody;
    Parsing::State s_LambdaStart;
+   Parsing::State s_EPState;
    Parsing::State s_ClassStart;
    Parsing::State s_ProtoDecl;
    Parsing::State s_ArrayDecl;

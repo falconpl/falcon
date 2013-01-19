@@ -21,8 +21,6 @@
 namespace Falcon
 {
 
-class ExprVector_Private;
-
 /** Evaluation Parameters expression.
 
    The Evaluation Parameter Expression (EP-ex for short)
@@ -72,8 +70,18 @@ class FALCON_DYN_CLASS ExprEP: public ExprVector
 public:
    ExprEP( int line=0, int chr=0);
    ExprEP( const ExprEP& other );
-
    virtual ~ExprEP();
+
+   inline virtual ExprEP* clone() const { return new ExprEP( *this ); }
+   virtual bool simplify( Item& value ) const;
+   virtual void describeTo( String&, int depth=0 ) const;
+
+   inline virtual bool isStandAlone() const { return false; }
+
+   virtual bool isStatic() const { return false; }
+
+private:
+   static void apply_( const PStep*, VMContext* ctx );
 };
 
 }

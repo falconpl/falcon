@@ -330,10 +330,10 @@ void ParserContext::defineSymbols( Expression* expr )
       uint32 arity = expr->arity();
       for( uint32 i = 0; i < arity; ++ i ) {
          // expressions can only have expressions as nth()
-         Expression* expr = static_cast<Expression*>(expr->nth(i));
-         if( expr->trait() != Expression::e_trait_composite )
+         Expression* child = static_cast<Expression*>(expr->nth(i));
+         if( child->trait() != Expression::e_trait_composite )
          {
-            defineSymbols( expr );
+            defineSymbols( child );
          }
       }
    }

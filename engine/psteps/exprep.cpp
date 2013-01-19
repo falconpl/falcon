@@ -18,6 +18,8 @@
 
 #include <falcon/psteps/exprep.h>
 #include <falcon/synclasses.h>
+#include <falcon/engine.h>
+#include <falcon/vmcontext.h>
 
 namespace Falcon
 {
@@ -27,6 +29,7 @@ ExprEP::ExprEP( int line, int chr):
 {
    FALCON_DECLARE_SYN_CLASS( expr_ep );
    apply = apply_;
+   m_trait = e_trait_vectorial;
 }
 
 ExprEP::ExprEP( const ExprEP& other ):
@@ -34,13 +37,15 @@ ExprEP::ExprEP( const ExprEP& other ):
 {
    FALCON_DECLARE_SYN_CLASS( expr_ep );
    apply = apply_;
+   m_trait = e_trait_vectorial;
 }
+
 
 ExprEP::~ExprEP()
 {
 }
 
-bool ExprEP::simplify( Item& value ) const
+bool ExprEP::simplify( Item& ) const
 {
    return false;
 }
@@ -55,9 +60,9 @@ void ExprEP::describeTo( String& tgt, int depth ) const
 
    tgt = "^( ";
 
-   for( uint32 count = 0; count < arity(); ++count ) {
+   for( int32 count = 0; count < arity(); ++count ) {
       if ( count > 0 ) {
-         count += ", ";
+         tgt += ", ";
       }
       tgt+= nth( count )->describe(depth+1);
    }

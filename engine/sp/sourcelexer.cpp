@@ -740,7 +740,16 @@ Parsing::TokenInstance* SourceLexer::nextToken()
                      m_hadOperator = true;
                      return parser->T_DotPar.makeInstance(m_sline, m_schr );
                   }
-               }               
+               }
+               else if( m_text == "^" ) {
+                  if ( chr == '(' )
+                  {
+                     m_chr++;
+                     resetState();
+                     m_hadOperator = true;
+                     return parser->T_CapPar.makeInstance(m_sline, m_schr );
+                  }
+               }
 
                unget(chr);
                // reset the state, but don't ignore previous had-operator

@@ -74,6 +74,7 @@ SourceParser::SourceParser():
    T_Openpar("(",20),
    T_Closepar(")"),
    T_OpenSquare("[", 20),
+   T_CapPar("^("),
    T_DotPar(".("),
    T_DotSquare(".["),
    T_CloseSquare("]"),
@@ -493,6 +494,7 @@ SourceParser::SourceParser():
    Expr<< (r_Expr_functionEta << "Expr_funcEta" << apply_expr_funcEta << T_function << T_Times << T_Openpar << ListSymbol << T_Closepar << T_EOL);
    // Start of lambda expressions.
    Expr<< (r_Expr_lambda << "Expr_lambda" << apply_expr_lambda << T_OpenGraph );
+   Expr<< (r_Expr_ep << "Expr_ep" << apply_expr_ep << T_CapPar );
    Expr<< (r_Expr_class << "Expr_class" << apply_expr_class << T_class );
    Expr<< (r_Expr_proto << "Expr_proto" << apply_expr_proto << T_OpenProto );
 
@@ -613,6 +615,8 @@ SourceParser::SourceParser():
                         << ListSymbol << T_STARARROW );
    LambdaParams << ( r_lambda_params << "Params in lambda" << apply_lambda_params 
                         << ListSymbol << T_Arrow );
+
+   EPBody << ( r_lit_epbody << "EP" << apply_ep_body << ListExpr << T_Closepar );
 
    //==========================================================================
    // Anon Classes
@@ -755,6 +759,10 @@ SourceParser::SourceParser():
       << S_EmptyLine
       ;
    
+   s_EPState << "EPState"
+         << EPBody
+         ;
+
    s_ClassStart << "ClassStart"
       << AnonClassParams
       ;
@@ -776,6 +784,8 @@ SourceParser::SourceParser():
    addState( s_ProtoDecl );
    addState( s_ArrayDecl );
    addState( s_ClassStart );
+   addState( s_EPState );
+
 }
 
 void SourceParser::onPushState( bool isPushedState )

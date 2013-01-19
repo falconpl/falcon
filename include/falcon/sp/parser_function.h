@@ -37,6 +37,8 @@ void apply_return_eval(const Rule&, Parser& p);
 void apply_return_expr(const Rule&, Parser& p);
 void apply_return(const Rule&, Parser& p);
 void apply_expr_lambda(const Rule&, Parser& p);
+void apply_expr_ep(const Rule&, Parser& p);
+void apply_ep_body(const Rule&, Parser& p);
 
 void apply_lit_params(const Rule&, Parser& p);
 void apply_lit_params_eta(const Rule&, Parser& p);

@@ -39,6 +39,7 @@
 #include <falcon/psteps/exprlit.h>
 #include <falcon/psteps/stmtwhile.h>
 #include <falcon/classes/classsyntree.h>
+#include <falcon/psteps/exprep.h>
 
 namespace Falcon {
 
@@ -316,6 +317,47 @@ void apply_expr_lambda(const Rule&, Parser& p)
    p.pushState( "LambdaStart", false );
 }
 
+void apply_expr_ep(const Rule&, Parser& p)
+{
+   // T_CapPar
+   TokenInstance* ti = p.getNextToken();
+   ExprLit* lit = new ExprLit(ti->line(),ti->chr());
+
+   p.simplify(1);
+   static_cast<ParserContext*>(p.context())->openLitContext(lit);
+   p.pushState( "EPState", false );
+}
+
+
+void apply_ep_body(const Rule&, Parser& p)
+{
+   ParserContext* ctx = static_cast<ParserContext*>(p.context());
+   SourceParser& sp = *static_cast<SourceParser*>(&p);
+
+   // << ListExpr << T_Closepar
+   TokenInstance* ti = p.getNextToken();
+   ExprLit* lit = ctx->closeLitContext();
+
+   ExprEP* ep = new ExprEP( lit->sr().line(), lit->sr().chr()) ;
+
+   List* list = static_cast<List*>(ti->asData());
+   for(List::const_iterator it=list->begin(),end=list->end();it!=end;++it)
+   {
+      Expression* expr = *it;
+      ep->add( expr );
+   }
+   // detach all the expressions.
+   list->clear();
+
+   lit->setChild(ep);
+   // transform the topmost stack token.
+   ti->setValue( lit, expr_deletor );
+   ti->token(sp.Expr);
+   p.trim(1);
+
+   // remove the ep start.
+   p.popState();
+}
 
 static void internal_lambda_params(const Rule&, Parser& p, bool isEta )
 {
