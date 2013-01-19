@@ -31,7 +31,6 @@
 #include <falcon/psteps/exprvalue.h>
 
 #include "private_types.h"
-#include "falcon/psteps/exprsym.h"
 
 
 namespace Falcon {
@@ -41,6 +40,7 @@ using namespace Parsing;
 
 void apply_expr_amper( const Rule&, Parser& p )
 {
+   static Class* clssym = Engine::instance()->symbolClass();
    // << T_Amper << T_Name
    SourceParser& sp = static_cast<SourceParser&>(p);
 
@@ -52,7 +52,7 @@ void apply_expr_amper( const Rule&, Parser& p )
    
    // this creates a dynsymbol.
    Symbol* nsym = Engine::getSymbol(*tref->asString(), false);
-   ExprSymbol* esyn = new ExprSymbol( nsym, tref->line(), tref->chr() );
+   ExprValue* esyn = new ExprValue( Item( clssym, nsym ), tref->line(), tref->chr() );
    
    // update the result token
    TokenInstance* ti = TokenInstance::alloc( tref->line(), tref->chr(), sp.Expr );
