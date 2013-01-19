@@ -41,7 +41,7 @@ void ExprInvoke::apply_( const PStep* ps, VMContext* ctx )
 
    const ExprInvoke* self = static_cast<const ExprInvoke*>(ps);
    CodeFrame& cf = ctx->currentCode();
-   int32 seqId = cf.m_seqId;
+   int32& seqId = cf.m_seqId;
 
    TRACE2( "ExprInvoke::apply_ \"%s\" %d/3", self->describe().c_ize(), seqId );
 
