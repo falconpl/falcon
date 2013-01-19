@@ -149,8 +149,8 @@ Parsing::TokenInstance* SourceLexer::nextToken()
                
                case ';': {
                   m_hadOperator = true; m_hadImport = false;
-                  Parsing::TokenInstance* ti = m_parser->T_EOL.makeInstance(m_line, m_chr++);
-                  ti->chr(-1);  // fake
+                  m_chr++;
+                  Parsing::TokenInstance* ti = m_parser->T_EOL.makeInstance(m_line, -1);
                   return ti;
                }
                case ':': m_hadOperator = true; return parser->T_Colon.makeInstance(m_line, m_chr++);
@@ -169,8 +169,8 @@ Parsing::TokenInstance* SourceLexer::nextToken()
                   resetState();
                   m_nextToken = parser->T_end.makeInstance(m_line,m_chr);
                   m_hadImport = false;
-                  Parsing::TokenInstance* ti = parser->T_EOL.makeInstance(m_line,m_chr);
-                  ti->chr(-1); // it's fake
+                  // it's a fake.
+                  Parsing::TokenInstance* ti = parser->T_EOL.makeInstance(m_line,-1);
                   return ti;
                }
 
