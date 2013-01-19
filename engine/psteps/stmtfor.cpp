@@ -134,7 +134,6 @@ void StmtForBase::describeTo( String& tgt, int depth ) const
    }
    
    String prefix = String(" ").replicate( depth * depthIndent );   
-   String prefix1 = String(" ").replicate( (depth+1) * depthIndent );
    tgt = prefix + oneLiner();
    tgt += "\n";
    
@@ -142,28 +141,28 @@ void StmtForBase::describeTo( String& tgt, int depth ) const
    {
       String temp;
       m_body->describeTo( temp, depth + 1);
-      tgt += prefix1 + temp + "\n";
+      tgt += temp + "\n";
    }
    
    if( m_forFirst != 0 )
    {
       String temp;
       m_forFirst->describeTo( temp, depth + 1 );
-      tgt += prefix + "forfirst\n" + prefix1 +  temp + "\n" + prefix + "end\n";
+      tgt += prefix + "forfirst\n" + temp + "\n" + prefix + "end\n";
    }
    
    if( m_forMiddle != 0 )
    {
       String temp;
       m_forMiddle->describeTo( temp, depth + 1 );
-      tgt+= prefix + "formiddle\n" + prefix1 +  temp + "\n" + prefix + "end\n";
+      tgt+= prefix + "formiddle\n" +  temp + "\n" + prefix + "end\n";
    }
    
    if( m_forLast != 0 )
    {
       String temp;
       m_forLast->describeTo( temp, depth + 1 );
-      tgt += prefix + "forlast\n" + prefix1 +  temp + "\n" + prefix + "end\n";
+      tgt += prefix + "forlast\n" +  temp + "\n" + prefix + "end\n";
    }
    
    tgt += prefix + "end";

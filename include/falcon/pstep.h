@@ -43,7 +43,7 @@ class FALCON_DYN_CLASS PStep
 {
 public:
    /** Size of each depth scale in describe(). */
-   static const int depthIndent = 3;
+   static const int depthIndent = 2;
    
    inline PStep( int line=0, int chr=0 ):
       m_bIsLoopBase(false),

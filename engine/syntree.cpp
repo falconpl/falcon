@@ -122,11 +122,10 @@ bool SynTree::selector( Expression* expr )
 
 void SynTree::describeTo( String& tgt, int depth ) const
 {
-   String prefix = String( " " ).replicate( depth * depthIndent );
    for( size_t i = 0; i < _p->m_steps.m_exprs.size(); ++i )
    {
       if ( i > 0 ) tgt += "\n";
-      tgt += prefix + _p->m_steps.m_exprs[i]->describe( depth + 1 );
+      tgt += _p->m_steps.m_exprs[i]->describe( depth );
    }
 }
 
