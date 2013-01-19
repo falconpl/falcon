@@ -147,7 +147,12 @@ Parsing::TokenInstance* SourceLexer::nextToken()
                   break;
                }
                
-               case ';': m_hadOperator = true; m_hadImport = false; return m_parser->T_EOL.makeInstance(m_line, m_chr++);
+               case ';': {
+                  m_hadOperator = true; m_hadImport = false;
+                  Parsing::TokenInstance* ti = m_parser->T_EOL.makeInstance(m_line, m_chr++);
+                  ti->chr(-1);  // fake
+                  return ti;
+               }
                case ':': m_hadOperator = true; return parser->T_Colon.makeInstance(m_line, m_chr++);
                case ',': m_hadOperator = true; return parser->T_Comma.makeInstance(m_line, m_chr++);
                case '"':  m_stringML = false; m_stringStart = true; m_state = state_double_string; break;
