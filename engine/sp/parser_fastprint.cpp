@@ -49,7 +49,7 @@ static void apply_fastprint_internal( const Rule&, Parser& p, bool hasNl )
    List* list = static_cast<List*>(tlist->asData());
    
    // create our fast-print statement
-   StmtFastPrint* sfp = new StmtFastPrint(hasNl);
+   StmtFastPrint* sfp = new StmtFastPrint(hasNl, tlist->line(), tlist->chr());
    
    // move the expressions in the statement.
    List::iterator iter = list->begin();

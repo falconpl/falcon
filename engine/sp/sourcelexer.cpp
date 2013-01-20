@@ -27,6 +27,7 @@
 #include <falcon/parser/tokeninstance.h>
 
 #include <set>
+#include <deque>
 
 namespace Falcon {
 
@@ -34,6 +35,9 @@ class SourceLexer::Private
 {
 public:
    typedef std::set<String> StringSet;
+   typedef std::deque<Parsing::TokenInstance*> NextTokens;
+   NextTokens m_nextTokens;
+
    StringSet m_nsSet;
 };
 
@@ -47,15 +51,171 @@ SourceLexer::SourceLexer( const String& uri, Parsing::Parser* p, TextReader* rea
    m_hadImport(false),
    m_stringStart( false ),
    m_stringML( false ),
-   m_state( state_none ),
-   m_nextToken(0)
+   m_outscape(false),
+   m_bParsingFtd(false),
+   m_state( state_none )
 {
 }
 
 SourceLexer::~SourceLexer()
 {
-   if( m_nextToken != 0 ) m_nextToken->dispose();
+   Private::NextTokens::iterator ti = _p->m_nextTokens.begin();
+   Private::NextTokens::iterator tiend = _p->m_nextTokens.end();
+   while( ti != tiend ) {
+      Parsing::TokenInstance* t = *ti;
+      t->dispose();
+      ++ti;
+   }
+
    delete _p;
+}
+
+Parsing::TokenInstance* SourceLexer::readOutscape()
+{
+   SourceParser* parser = static_cast<SourceParser*>(m_parser);
+   enum {
+         e_normal,
+         e_esc1,
+         e_esc2,
+         e_escF,
+         e_escA,
+         e_escL
+   }
+   state;
+
+   // clear string
+   m_text.size( 0 );
+
+   // in outscape mode, everything up to an escape (or at EOF) is a "fast print" statement.
+   char_t chr;
+   state = e_normal;
+
+   // if we exited, then we completed a token.
+   m_sline = m_line;
+   m_schr = m_chr;
+
+   while( (chr = m_reader->getChar()) != (char_t)-1 )
+   {
+      if ( chr == '\n' )
+      {
+         m_line++;
+         m_chr = 1;
+      }
+      else
+      {
+         m_chr++;
+      }
+
+      switch( state )
+      {
+
+         case e_normal:
+            if ( chr == '<' )
+            {
+               state = e_esc1;
+            }
+            else {
+               m_text.append( chr );
+            }
+         break;
+
+         case e_esc1:
+            if ( chr == '?' )
+               state = e_esc2;
+            else {
+               m_text.append( '<' );
+               m_text.append( chr );
+               state  = e_normal;
+            }
+         break;
+
+         case e_esc2:
+            if ( chr == '=' || String::isWhiteSpace(chr) || chr == '\r' || chr == '\n' )
+            {
+               // we enter now in the eval mode
+               m_outscape = false;
+               // generate a >> "text" EOL >>  sequence
+               _p->m_nextTokens.push_back( m_parser->T_String.makeInstance( m_sline, m_schr, m_text ) );
+               m_text.size(0);
+               _p->m_nextTokens.push_back( m_parser->T_EOL.makeInstance(m_line, -1) ); // fake one
+
+               if( chr == '=') {
+                  // this will print the evaluation
+                  _p->m_nextTokens.push_back( parser->T_RShift.makeInstance(m_line, m_chr) );
+               }
+               // this will print the text prior the evaluation.
+               return parser->T_RShift.makeInstance(m_line, m_chr);
+            }
+            else if ( chr == 'f' )
+            {
+               state = e_escF;
+            }
+            else
+            {
+               state = e_normal;
+               m_text.append( '<' );
+               m_text.append( '?' );
+               m_text.append( chr );
+            }
+         break;
+
+         case e_escF:
+            if ( chr == 'a' )
+            {
+               state = e_escA;
+            }
+            else {
+               state = e_normal;
+               m_text.append( "<?f" );
+               m_text.append( chr );
+            }
+         break;
+
+         case e_escA:
+            if ( chr == 'l' )
+            {
+              state = e_escL;
+            }
+            else {
+               state = e_normal;
+               m_text.append( "<?fa" );
+               m_text.append( chr );
+            }
+         break;
+
+         case e_escL:
+            if ( String::isWhiteSpace(chr) || chr == '\r' || chr == '\n' )
+            {
+               // we enter now the normal mode; we start to consider a standard program.
+               m_outscape = false;
+               // Return now > and a string, that will be considered a > "..." statement.
+               _p->m_nextTokens.push_back( m_parser->T_String.makeInstance( m_sline, m_schr, m_text ) );
+               m_text.size(0);
+               _p->m_nextTokens.push_back( m_parser->T_EOL.makeInstance(m_line, -1) ); // fake one
+               return parser->T_Greater.makeInstance(m_sline, m_schr);
+            }
+            else {
+               state = e_normal;
+               m_text.append( "<?fal" );
+               m_text.append( chr );
+            }
+         break;
+      }
+   }
+
+   // If we're here, the stream is eof.
+   // return the last text.
+   if( m_text.size() != 0 )
+   {
+      _p->m_nextTokens.push_back( m_parser->T_String.makeInstance( m_sline, m_schr, m_text ) );
+      m_text.size(0);
+      _p->m_nextTokens.push_back( m_parser->T_EOL.makeInstance(m_line, -1) ); // fake one
+      return parser->T_Greater.makeInstance(m_sline, m_schr);
+   }
+
+   // else, generate a last EOL statement.
+   m_outscape = false;
+   return m_parser->T_EOL.makeInstance(m_line, -1);
 }
 
 Parsing::TokenInstance* SourceLexer::nextToken()
@@ -65,18 +225,24 @@ Parsing::TokenInstance* SourceLexer::nextToken()
       return 0;
    }
 
+   if ( !_p->m_nextTokens.empty() )
+   {
+      Parsing::TokenInstance* inst = _p->m_nextTokens.front();
+      _p->m_nextTokens.pop_front();
+      return inst;
+   }
+
+   if (m_outscape) {
+      return readOutscape();
+   }
+
    SourceParser* parser = static_cast<SourceParser*>(m_parser);
    String tempString;
    char_t chr;
    t_state previousState = state_none;
    int curMemChr = 0;
 
-   if ( m_nextToken != 0 )
-   {
-      Parsing::TokenInstance* inst = m_nextToken;
-      m_nextToken = 0;
-      return inst;
-   }
+
 
    while( (chr = m_reader->getChar()) != (char_t)-1 )
    {
@@ -118,6 +284,7 @@ Parsing::TokenInstance* SourceLexer::nextToken()
                default:
                   unget(chr);
                   resetState();
+                  break;
                   //m_hadOperator = true;
             }
             break;
@@ -167,7 +334,7 @@ Parsing::TokenInstance* SourceLexer::nextToken()
                {
                   m_chr++;
                   resetState();
-                  m_nextToken = parser->T_end.makeInstance(m_line,m_chr);
+                  _p->m_nextTokens.push_back( parser->T_end.makeInstance(m_line,m_chr) );
                   m_hadImport = false;
                   // it's a fake.
                   Parsing::TokenInstance* ti = parser->T_EOL.makeInstance(m_line,-1);
@@ -641,7 +808,7 @@ Parsing::TokenInstance* SourceLexer::nextToken()
                if ( ! m_text.parseDouble( retval ) )
                   addError( e_inv_num_format );
 
-               m_nextToken = parser->T_Dot.makeInstance(m_sline, m_schr);
+               _p->m_nextTokens.push_back( parser->T_Dot.makeInstance(m_sline, m_schr) );
                return m_parser->T_Float.makeInstance(m_sline, m_schr, retval);
             }
             else if ( chr != '_' )
@@ -773,6 +940,14 @@ Parsing::TokenInstance* SourceLexer::nextToken()
                }
                // else we had an error; try to go on.
             }
+            else if( m_bParsingFtd && m_text == "?" && chr == '>') {
+               m_chr++;
+               resetState();
+               m_outscape = true;
+               // generate a fake EOL to exit cleanly from parsing
+               return parser->T_EOL.makeInstance(m_sline, -1 );
+            }
+
             m_text.append( chr );
             break;
       }
@@ -1029,6 +1204,12 @@ Parsing::TokenInstance* SourceLexer::checkOperator()
          
          if( m_text == "^=" ) return parser->T_EVALRET.makeInstance(m_sline, m_schr);
          if( m_text == "^*" ) return parser->T_EVALRET_EXEC.makeInstance(m_sline, m_schr);
+
+         // outscaping?
+         if( m_bParsingFtd && m_text == "?>" ) {
+            m_outscape = true;
+            return parser->T_EOL.makeInstance(m_line, -1);
+         }
          break;
 
       case 3:
@@ -1056,6 +1237,17 @@ void SourceLexer::addNameSpace(const String& ns)
 bool SourceLexer::isNameSpace(const String& name)
 {
    return _p->m_nsSet.find( name ) != _p->m_nsSet.end();
+}
+
+void SourceLexer::setParsingFam( bool m )
+{
+   if( m ) {
+      m_outscape = true;
+      m_bParsingFtd = true;
+   }
+   else {
+      m_bParsingFtd = false;
+   }
 }
 
 }

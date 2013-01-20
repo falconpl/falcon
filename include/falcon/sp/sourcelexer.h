@@ -33,6 +33,9 @@ public:
    
    virtual Parsing::TokenInstance* nextToken();
 
+   bool isParsingFam() const { return m_bParsingFtd; }
+   void setParsingFam( bool m );
+
 private:
    class Private;
    Private* _p;
@@ -49,6 +52,10 @@ private:
 
    // true if we allow the string to be multiline.
    bool m_stringML;
+
+   // we're in outscape area.
+   bool m_outscape;
+   bool m_bParsingFtd;
 
    typedef enum
    {
@@ -93,7 +100,6 @@ private:
    t_state m_state;
 
    String m_text;
-   Parsing::TokenInstance* m_nextToken;
 
    inline bool isTokenLimit(char_t chr)
    {
@@ -134,6 +140,8 @@ private:
    Parsing::TokenInstance* checkOperator();
    Parsing::TokenInstance* checkWord();
    void resetState();
+
+   Parsing::TokenInstance* readOutscape();
 };
 
 }

@@ -275,7 +275,7 @@ ModCompiler::~ModCompiler()
 }
 
 
-Module* ModCompiler::compile( TextReader* tr, const String& uri, const String& name )
+Module* ModCompiler::compile( TextReader* tr, const String& uri, const String& name, bool asFtd )
 {
    m_module = new Module( name , uri, false ); // not a native module
 
@@ -286,7 +286,9 @@ Module* ModCompiler::compile( TextReader* tr, const String& uri, const String& n
    m_ctx->openMain( &main->syntree() );
 
    // start parsing.
-   m_sp.pushLexer( new SourceLexer( uri, &m_sp, tr ) );
+   SourceLexer* slex = new SourceLexer( uri, &m_sp, tr );
+   slex->setParsingFam(asFtd);
+   m_sp.pushLexer( slex );
    if ( !m_sp.parse() )
    {
       // we failed.

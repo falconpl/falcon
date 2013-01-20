@@ -52,8 +52,9 @@ public:
     \param input The TextReader where the input is stored.
     \param uri The physical location of the module
     \param name The logical name of the module.
+    \param asFtd true to parse an FTD.
     */
-   Module* compile( TextReader* input, const String& uri, const String& name );
+   Module* compile( TextReader* input, const String& uri, const String& name, bool asFtd=false );
 
    /** Enumerate received errors.
     In case parse returned false, calling this method will provide detailed

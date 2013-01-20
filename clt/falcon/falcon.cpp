@@ -127,9 +127,15 @@ void FalconApp::launch( const String& script )
    {
       loader->useSources( ModLoader::e_us_never );
    }
-   else if( m_options.force_recomp )
-   {
-      loader->useSources( ModLoader::e_us_always );
+   else {
+      if( m_options.force_recomp )
+      {
+         loader->useSources( ModLoader::e_us_always );
+      }
+
+      if( m_options.parse_ftd ) {
+         loader->checkFTD( ModLoader::e_ftd_force );
+      }
    }
 
    // -- Save modules?

@@ -221,7 +221,17 @@ GCToken* SynClasses::collect( const Class* cls, TreeStep* earr, int line )
    {\
       ctx->pushData( Item( this, new exprcls) ); \
       m_parent->restore( ctx, dr ); \
+   }
+
+#define FALCON_STANDARD_SYNCLASS_OP_CREATE_EX( cls, exprcls, operation ) \
+   void* SynClasses::Class## cls ::createInstance() const { return new exprcls; } \
+   bool SynClasses::Class## cls ::op_init( VMContext* ctx, void* instance, int pcount ) const\
+   {\
+      exprcls* expr = static_cast<exprcls*>(instance); \
+      SynClasses::operation ( ctx, pcount, expr ); \
+      return false; \
    }\
+
 
 
 FALCON_STANDARD_SYNCLASS_OP_CREATE( GenArray, ExprArray, varExprInsert )
@@ -1024,7 +1034,7 @@ FALCON_STANDARD_SYNCLASS_OP_CREATE( Breakpoint, Breakpoint, zeroaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Continue, StmtContinue, zeroaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Cut, StmtCut, zeroaryExprSet )  // do this
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Doubt, StmtDoubt, unaryExprSet )
-FALCON_STANDARD_SYNCLASS_OP_CREATE( FastPrint, StmtFastPrint, varExprInsert )
+FALCON_STANDARD_SYNCLASS_OP_CREATE_EX( FastPrint, StmtFastPrint, varExprInsert )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( ForIn, StmtForIn, zeroaryExprSet ) //
 FALCON_STANDARD_SYNCLASS_OP_CREATE( ForTo, StmtForTo, zeroaryExprSet ) //
 FALCON_STANDARD_SYNCLASS_OP_CREATE( If, StmtIf, zeroaryExprSet )   //
@@ -1039,6 +1049,21 @@ FALCON_STANDARD_SYNCLASS_OP_CREATE( While, StmtWhile, zeroaryExprSet ) //
 //=================================================================
 // Statements
 //
+void SynClasses::ClassFastPrint::store( VMContext* ctx, DataWriter*wr, void* instance ) const
+{
+   StmtFastPrint* fp = static_cast<StmtFastPrint*>( instance );
+   wr->write(fp->isAddNL());
+   m_parent->store( ctx, wr, fp );
+}
+
+void SynClasses::ClassFastPrint::restore( VMContext* ctx, DataReader*dr ) const
+{
+   bool bHasNL;
+   dr->read( bHasNL );
+   StmtFastPrint* fp = new StmtFastPrint(bHasNL);
+   ctx->pushData( Item( this, fp ) );
+   m_parent->restore( ctx, dr );
+}
 
 void SynClasses::ClassSelect::flatten( VMContext* ctx, ItemArray& subItems, void* instance ) const
 {

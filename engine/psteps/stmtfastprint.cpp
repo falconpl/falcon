@@ -46,7 +46,7 @@ public:
 StmtFastPrint::StmtFastPrint( int line, int chr ):
    Statement( line, chr ),
    _p( new Private ),   
-   m_bAddNL( true )
+   m_bAddNL( false )
 {
    FALCON_DECLARE_SYN_CLASS(stmt_fastprint)
    apply = apply_;
@@ -74,8 +74,6 @@ StmtFastPrint::~StmtFastPrint()
 {
    delete _p;
 }
-
-
 
 int StmtFastPrint::arity() const
 {

@@ -427,7 +427,7 @@ void ModLoader::load_internal(
          ins->shouldThrow(true);
          TextReader* input = new TextReader( ins, m_tcoder, true );
          // compiler gets the ownership of input.
-         Module* output = m_compiler->compile( input, uri.encode(), modName );
+         Module* output = m_compiler->compile( input, uri.encode(), modName, true );
 
          // for now, we just throw
          if( output == 0 )
