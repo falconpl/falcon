@@ -266,8 +266,8 @@ void ClassString::op_aadd( VMContext* ctx, void* self ) const
    Item* op1, *op2;
    ctx->operands( op1, op2 );
 
-   Class* cls;
-   void* inst;
+   Class* cls=0;
+   void* inst=0;
 
    if ( op2->isString() )
    {

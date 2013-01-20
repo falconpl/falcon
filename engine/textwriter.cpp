@@ -99,8 +99,10 @@ bool TextWriter::write( const String& str, length_t start, length_t count )
             return false;
          }
 
+         m_mtx.lock();
          ensure(m_encoder->encodingSize(2));
          m_bufPos += m_encoder->encode("\r\n", currentBuffer(), m_bufSize - m_bufPos );
+         m_mtx.unlock();
       }
       else
       {
@@ -117,7 +119,6 @@ bool TextWriter::write( const String& str, length_t start, length_t count )
       }
 
       pos1 = posNext+1; // we know we're in the string, or we would have been exited.
-
    }
 
    return true;
@@ -131,11 +132,13 @@ bool TextWriter::rawWrite( const String& str, length_t start, length_t count )
       count = str.length() - start;
    }
    
+   m_mtx.lock();
    length_t encSize = m_encoder->encodingSize(count);
    if( encSize < m_bufPos - m_bufSize )
    {
       m_bufPos += m_encoder->encode( str, currentBuffer(), m_bufSize - m_bufPos,
          '?', start, count );
+      m_mtx.unlock();
       return true;
    }
    else
@@ -150,9 +153,12 @@ bool TextWriter::rawWrite( const String& str, length_t start, length_t count )
       }
 
       encSize = m_encoder->encode( str, m_twBuffer, m_twBufSize, '?', start, count );
-      return Writer::writeRaw( m_twBuffer, encSize );
+      bool res = Writer::writeRaw( m_twBuffer, encSize );
+      m_mtx.unlock();
+      return res;
    }
 
+   m_mtx.unlock();
    return true;
 }
 
@@ -167,6 +173,7 @@ bool TextWriter::writeLine( const String& str, length_t start, length_t count )
 bool TextWriter::putChar( char_t chr )
 {
    byte buf[16];
+   m_mtx.lock();
    m_chrStr.size(0);
 
    if( chr == '\r')
@@ -190,12 +197,18 @@ bool TextWriter::putChar( char_t chr )
    }
 
    length_t rsize = m_encoder->encode( m_chrStr, buf, 16 );
-   if( ! Writer::writeRaw( buf, rsize ) ) return false;
+   if( ! Writer::writeRaw( buf, rsize ) ) {
+      m_mtx.unlock();
+      return false;
+   }
 
    if( m_bLineFlush && chr == '\n' )
    {
-      return flush();
+      bool res = flush();
+      m_mtx.unlock();
+      return res;
    }
+   m_mtx.unlock();
    return true;
 }
 

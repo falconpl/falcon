@@ -78,6 +78,7 @@ void Writer::delegate( Writer& target )
 
 void Writer::setBufferSize( length_t bs )
 {
+   m_mtx.lock();
    fassert( m_stream != 0 );
    fassert( bs > 0 );
 
@@ -91,11 +92,13 @@ void Writer::setBufferSize( length_t bs )
 
    delete[] m_buffer;
    m_buffer = nBuf;
+   m_mtx.unlock();
 }
 
 
 bool Writer::flush()
 {
+   m_mtx.lock();
    size_t nDone = 0;
    while ( nDone < m_bufPos)
    {
@@ -104,6 +107,7 @@ bool Writer::flush()
       if ( nSize == (size_t) -1 )
       {
          // if the stream wanted to throw, we wouldn't be here.
+         m_mtx.unlock();
          return false;
       }
 
@@ -111,19 +115,28 @@ bool Writer::flush()
    }
 
    m_bufPos = 0;
+   m_mtx.unlock();
    return true;
 }
 
 void Writer::ensure( size_t size )
 {
+   m_mtx.lock();
    if ( size + m_bufPos > m_bufSize )
    {
-      setBufferSize( size + m_bufPos );
+      length_t bp = m_bufPos;
+      m_mtx.unlock();
+
+      setBufferSize( size + bp );
+   }
+   else {
+      m_mtx.unlock();
    }
 }
 
 bool Writer::writeRaw( byte* data, size_t size )
 {
+   m_mtx.lock();
    if( size + m_bufPos <= m_bufSize )
    {
       memcpy( m_buffer + m_bufPos, data, size );
@@ -134,11 +147,14 @@ bool Writer::writeRaw( byte* data, size_t size )
       size_t nDone = m_bufSize - m_bufPos;
       memcpy( m_buffer + m_bufPos, data, nDone );
       m_bufPos += nDone; // flush uses current bufPos to save.
+
+      m_mtx.unlock();
       if( ! flush() )
       {
          return false;
       }
 
+      m_mtx.lock();
       // write a multiple of the buffer size
       size_t toWrite = ((size-nDone) / m_bufSize)*m_bufSize + nDone;
 
@@ -147,6 +163,7 @@ bool Writer::writeRaw( byte* data, size_t size )
          size_t nWritten = m_stream->write( data + nDone, toWrite - nDone );
          if( nWritten < (size_t)-1 )
          {
+            m_mtx.unlock();
             return false;
          }
          nDone += nWritten;
@@ -158,6 +175,7 @@ bool Writer::writeRaw( byte* data, size_t size )
       m_bufPos = size - nDone;
       memcpy( m_buffer, data + nDone, m_bufPos );
    }
+   m_mtx.unlock();
 
    return true;
 }
@@ -167,13 +185,16 @@ bool Writer::writeRaw( byte* data, size_t size )
  {
     if( bDiscard )
     {
+       m_mtx.lock();
        m_bufPos = 0;
+       m_mtx.unlock();
     }
     else
     {
        flush();
     }
 
+    m_mtx.lock();
     if ( m_bOwnStream )
     {
        delete s;
@@ -181,6 +202,7 @@ bool Writer::writeRaw( byte* data, size_t size )
 
     m_bOwnStream = bOwn;
     m_stream = s;
+    m_mtx.unlock();
  }
 
 }

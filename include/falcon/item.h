@@ -25,6 +25,8 @@
 #include <falcon/collector.h>
 #include <falcon/engine.h>
 
+#include <falcon/atomic.h>
+
 namespace Falcon {
 
 class Function;
@@ -73,6 +75,8 @@ public:
      } base;
   } content;
 
+  mutable atomic_int lockId;
+
 
 #ifdef _MSC_VER
 	#if _MSC_VER < 1299
@@ -113,6 +117,7 @@ public:
       
    inline Item()
    {
+      lockId = 0;
       type( FLC_ITEM_NIL );
    }
 
@@ -123,8 +128,11 @@ public:
 
    inline Item( const Item &other )
    {
+      lockId = 0;
+      other.lock();
       other.copied(true);
       copy( other );
+      other.unlock();
    }
 
    /** Creates a String item.
@@ -146,11 +154,13 @@ public:
     */
    Item( const char* str )
    {
+      lockId = 0;
       setString(str);
    }
 
    Item( const char* name, void* opaque )
    {
+      lockId = 0;
       setOpaque(name, opaque);
    }
 
@@ -179,6 +189,7 @@ public:
     */
    Item( const wchar_t* str )
    {
+      lockId = 0;
       setString(str);
    }
 
@@ -193,6 +204,7 @@ public:
     */
    Item( const String& str )
    {
+      lockId = 0;
       setString(str);
    }
 
@@ -216,12 +228,14 @@ public:
 
    /** Creates a boolean item. */
    explicit inline Item( bool b ) {
+      lockId = 0;
       setBoolean( b );
    }
 
    /** Sets this item as boolean */
    inline Item& setBoolean( bool tof )
    {
+      lockId = 0;
       type( FLC_ITEM_BOOL );
       content.data.val32 = tof? 1: 0;
       return *this;
@@ -230,12 +244,14 @@ public:
    /** Creates an integer item */
    inline Item( int32 val )
    {
+      lockId = 0;
       setInteger( (int64) val );
    }
 
    /** Creates an integer item */
    inline Item( int64 val )
    {
+      lockId = 0;
       setInteger( val );
    }
 
@@ -248,6 +264,7 @@ public:
    /** Creates a numeric item */
    inline Item( numeric val )
    {
+      lockId = 0;
       setNumeric( val );
    }
 
@@ -259,6 +276,7 @@ public:
 
    inline Item( Function* f )
    {
+      lockId = 0;
       setFunction(f);
    }
 
@@ -271,6 +289,7 @@ public:
    }
 
    inline Item( const Class* cls, void* inst ) {
+      lockId = 0;
        setUser( cls, inst );
    }
 
@@ -285,6 +304,7 @@ public:
 
    inline Item( GCToken* token )
    {
+      lockId = 0;
       setUser( token );
    }
    
@@ -423,8 +443,15 @@ public:
     */
    void assign( const Item& other )
    {
+      Item temp;
+      other.lock();
       other.copied(true);
-      copy(other);
+      temp.copy(other);
+      other.unlock();
+
+      lock();
+      copy(temp);
+      unlock();
    }
 
    bool asBoolean() const { return content.data.val32 != 0; }
@@ -534,7 +561,7 @@ public:
    /** Operator version of copy.
     \note This doesn't set the copy marker. Use assign() for that.
     */
-   Item &operator=( const Item &other ) { copy( other ); return *this; }
+   Item &operator=( const Item &other ) { other.lock(); copy( other ); other.unlock(); return *this; }
    bool operator==( const Item &other ) const { return compare(other) == 0; }
    bool operator!=( const Item &other ) const { return compare(other) != 0; }
    bool operator<(const Item &other) const { return compare( other ) < 0; }
@@ -672,6 +699,14 @@ public:
 
    int64 len() const;
    void swap( Item& other ) { Item temp = *this; *this = other; other = temp; }
+
+   void lock() const {
+      while(!atomicCAS(lockId, 0, 1)) {}
+   }
+
+   void unlock() const {
+      atomicSet(lockId, 0);
+   }
 };
 
 }

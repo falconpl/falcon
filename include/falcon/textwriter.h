@@ -22,6 +22,8 @@
 #include <falcon/string.h>
 #include <falcon/writer.h>
 
+#include <falcon/mt.h>
+
 namespace Falcon {
 
 class Stream;
@@ -184,6 +186,8 @@ protected:
 
    size_t m_twBufSize;
    byte* m_twBuffer;
+
+   Mutex m_mtx;
 
    bool rawWrite( const String& str, length_t start=0, length_t count=String::npos );
 };

@@ -20,6 +20,7 @@
 #include <falcon/setup.h>
 #include <falcon/types.h>
 #include <falcon/stream.h>
+#include <falcon/mt.h>
 
 
 namespace Falcon {
@@ -124,6 +125,9 @@ protected:
 protected:
    bool m_bOwnStream;
    Stream* m_stream;
+
+private:
+   Mutex m_mtx;
 };
 
 }

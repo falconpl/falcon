@@ -832,15 +832,19 @@ void SourceParser::reset()
 
 void SourceParser::addError( int code, const String& uri, int l, int c, int ctx, const String& extra )
 {
+#ifndef NDEBUG
    ParserContext* pc = static_cast<ParserContext*>(m_ctx);
    fassert( pc != 0 );
+#endif
    Parser::addError( code, uri, l, c, ctx, extra );
 }
 
 void SourceParser::addError( Error* err )
 {
+#ifndef NDEBUG
    ParserContext* pc = static_cast<ParserContext*>(m_ctx);
    fassert( pc != 0 );
+#endif
    Parser::addError( err->errorCode(), err->module(), err->line(), err->chr(), 0, err->extraDescription() );
 }
 
@@ -848,8 +852,10 @@ void SourceParser::addError( Error* err )
 
 void SourceParser::addError( int code, const String& uri, int l, int c, int ctx )
 {
+#ifndef NDEBUG
    ParserContext* pc = static_cast<ParserContext*>(m_ctx);
    fassert( pc != 0 );
+#endif
    Parser::addError( code, uri, l, c, ctx );
 }
 

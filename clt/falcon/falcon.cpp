@@ -193,7 +193,7 @@ void FalconApp::Logger::onMessage( int fac, int lvl, const String& message )
 
 int main( int argc, char* argv[] )
 {
-   TRACE_ON();
+   //TRACE_ON();
 
    FalconApp app;
    app.guardAndGo( argc, argv );

@@ -231,8 +231,8 @@ void* ClassRegex::createInstance() const
 */
 FALCON_DEFINE_METHOD_P1(ClassRegex, study)
 {
-   void *inst;
-   Class *cls;
+   Class *cls = 0;
+   void *inst = 0;
    ctx->self().asClassInst(cls, inst);
    RegexCarrier *data = ( RegexCarrier *) inst;
 
@@ -377,8 +377,8 @@ static void internal_regex_match( RegexCarrier *data, String *source, int from )
 */
 FALCON_DEFINE_METHOD_P1(ClassRegex, match)
 {
-   void *inst;
-   Class *cls;
+   Class *cls = 0;
+   void *inst = 0;
    ctx->self().asClassInst(cls, inst);
    RegexCarrier *data = ( RegexCarrier *) inst;
 
@@ -433,8 +433,8 @@ FALCON_DEFINE_METHOD_P1(ClassRegex, match)
 */
 FALCON_DEFINE_METHOD_P1(ClassRegex, find)
 {
-   void *inst;
-   Class *cls;
+   Class *cls = 0;
+   void *inst = 0;
    ctx->self().asClassInst(cls, inst);
    RegexCarrier *data = ( RegexCarrier *) inst;
 
@@ -502,8 +502,8 @@ FALCON_DEFINE_METHOD_P1(ClassRegex, find)
 */
 FALCON_DEFINE_METHOD_P1(ClassRegex, split)
 {
-   void *inst;
-   Class *cls;
+   Class *cls = 0;
+   void *inst = 0;
    ctx->self().asClassInst(cls, inst);
    RegexCarrier *data = ( RegexCarrier *) inst;
 
@@ -573,8 +573,8 @@ FALCON_DEFINE_METHOD_P1(ClassRegex, split)
 
 static void internal_findAll( Falcon::VMContext *ctx, bool overlapped )
 {
-   void *inst;
-   Class *cls;
+   Class *cls = 0;
+   void *inst = 0;
    ctx->self().asClassInst(cls, inst);
    RegexCarrier *data = ( RegexCarrier *) inst;
    Item *source = ctx->param(0);
@@ -697,8 +697,8 @@ FALCON_DEFINE_METHOD_P1(ClassRegex, findAllOverlapped)
 */
 FALCON_DEFINE_METHOD_P1(ClassRegex, replace)
 {
-   void *inst;
-   Class *cls;
+   Class *cls = 0;
+   void *inst = 0;
    ctx->self().asClassInst(cls, inst);
    RegexCarrier *data = (RegexCarrier*) inst;
    Item *source_i = ctx->param(0);
@@ -782,8 +782,8 @@ void s_expand( RegexCarrier *data, const String &orig, String &expanded )
 
 static void s_replaceall( VMContext* ctx, bool bExpand )
 {
-   void *inst;
-   Class *cls;
+   Class *cls = 0;
+   void *inst = 0;
    ctx->self().asClassInst(cls, inst);
    RegexCarrier *data = ( RegexCarrier *) inst;
 
@@ -903,8 +903,8 @@ FALCON_DEFINE_METHOD_P1(ClassRegex, subst)
 
 FALCON_DEFINE_METHOD_P1(ClassRegex, capturedCount)
 {
-   void *inst;
-   Class *cls;
+   Class *cls = 0;
+   void *inst = 0;
    ctx->self().asClassInst(cls, inst);
    RegexCarrier *data = ( RegexCarrier *) inst;
 
@@ -930,8 +930,8 @@ FALCON_DEFINE_METHOD_P1(ClassRegex, capturedCount)
 */
 FALCON_DEFINE_METHOD_P1(ClassRegex, captured)
 {
-   void *inst;
-   Class *cls;
+   Class *cls=0;
+   void *inst=0;
    ctx->self().asClassInst(cls, inst);
    RegexCarrier *data = ( RegexCarrier *) inst;
 
@@ -970,8 +970,8 @@ FALCON_DEFINE_METHOD_P1(ClassRegex, captured)
 */
 FALCON_DEFINE_METHOD_P1(ClassRegex, grab)
 {
-   void *inst;
-   Class *cls;
+   Class *cls = 0;
+   void *inst = 0;
    ctx->self().asClassInst(cls, inst);
    RegexCarrier *data = ( RegexCarrier *) inst;
    Item *source = ctx->param(0);
@@ -1027,8 +1027,8 @@ FALCON_DEFINE_METHOD_P1(ClassRegex, grab)
 */
 FALCON_DEFINE_METHOD_P1(ClassRegex, compare)
 {
-   void *inst;
-   Class *cls;
+   Class *cls = 0;
+   void *inst = 0;
    ctx->self().asClassInst(cls, inst);
    RegexCarrier *data = ( RegexCarrier *) inst;
    Item *source = ctx->param(0);
