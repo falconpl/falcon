@@ -242,7 +242,9 @@ public:
    Parsing::Rule r_Stmt_assign_list;
    
    Parsing::NonTerminal S_FastPrint;
+   Parsing::Rule r_fastprint_alone;
    Parsing::Rule r_fastprint;
+   Parsing::Rule r_fastprint_nl_alone;
    Parsing::Rule r_fastprint_nl;
    
    //================================================

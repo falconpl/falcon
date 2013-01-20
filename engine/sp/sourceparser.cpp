@@ -306,10 +306,11 @@ SourceParser::SourceParser():
       << (r_Stmt_assign_list << "STMT_assign_list" << apply_stmt_assign_list << NeListExpr_ungreed << T_EqSign << NeListExpr )
       ;
    
-   S_FastPrint << "FastPrint"
-      << ( r_fastprint << "fastprint rule" << apply_fastprint << T_RShift << ListExpr << T_EOL )
-      << ( r_fastprint_nl << "fastprint+nl" << apply_fastprint_nl << T_Greater << ListExpr << T_EOL )
-      ;
+   S_FastPrint << "FastPrint";
+   S_FastPrint << ( r_fastprint_alone << "fastprint alone rule" << apply_fastprint_alone << T_RShift << T_EOL );
+   S_FastPrint << ( r_fastprint << "fastprint rule" << apply_fastprint << T_RShift << ListExpr << T_EOL );
+   S_FastPrint << ( r_fastprint_nl_alone << "fastprint+nl alone" << apply_fastprint_nl_alone << T_Greater << T_EOL );
+   S_FastPrint << ( r_fastprint_nl << "fastprint+nl" << apply_fastprint_nl << T_Greater << ListExpr << T_EOL );
    
    S_Load << "load" << load_errhand;
    S_Load << (r_load_string << "load_string" << apply_load_string << T_load << T_String << T_EOL );

@@ -944,6 +944,7 @@ Parsing::TokenInstance* SourceLexer::nextToken()
                m_chr++;
                resetState();
                m_outscape = true;
+               m_text.size(0);
                // generate a fake EOL to exit cleanly from parsing
                return parser->T_EOL.makeInstance(m_sline, -1 );
             }
@@ -959,7 +960,8 @@ Parsing::TokenInstance* SourceLexer::nextToken()
       {
          TRACE2( "SourceLexer::nextToken - at line %d", m_line );
          m_line++;
-         m_chr = 0;
+         m_chr = 1;
+         return parser->T_EOL.makeInstance(m_sline, m_schr);
       }
       m_chr++;
    }

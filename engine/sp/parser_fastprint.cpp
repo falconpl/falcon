@@ -82,6 +82,33 @@ void apply_fastprint_nl( const Rule& r, Parser& p )
    apply_fastprint_internal(r, p, true);
 }
 
+void apply_fastprint_alone( const Rule&, Parser& p )
+{
+   // << T_RShift << T_EOL
+   ParserContext* ctx = static_cast<ParserContext*>(p.context());
+   TokenInstance* tlist = p.getNextToken();
+   StmtFastPrint* sfp = new StmtFastPrint(false, tlist->line(), tlist->chr());
+   // we can add the statement directly
+   ctx->addStatement( sfp );
+
+   // clear the stack
+   p.simplify(2);
+}
+
+
+void apply_fastprint_nl_alone( const Rule&, Parser& p )
+{
+   // << T_Greater << T_EOL
+   ParserContext* ctx = static_cast<ParserContext*>(p.context());
+   TokenInstance* tlist = p.getNextToken();
+   StmtFastPrint* sfp = new StmtFastPrint(true, tlist->line(), tlist->chr());
+   // we can add the statement directly
+   ctx->addStatement( sfp );
+
+   // clear the stack
+   p.simplify(2);
+}
+
 }
 
 /* end of parser_fastprint.cpp */
