@@ -43,40 +43,27 @@ ClassSymbol::~ClassSymbol()
 
 void ClassSymbol::describe( void* instance, String& target, int, int ) const
 {
-   if( instance != (void*) 1 ) {
-      Symbol* sym = static_cast<Symbol*>(instance);
-      target = "&";
-      target += sym->name();
-   }
-   else {
-      target = "&<noname>";
-   }
+   Symbol* sym = static_cast<Symbol*>(instance);
+   target = "&";
+   target += sym->name();
 }
 
 void ClassSymbol::dispose( void* instance ) const
 {   
-   if( instance != (void*) 1 ) {
-      Symbol* sym = static_cast<Symbol*>(instance);
-      Engine::releaseSymbol(sym);
-   }
+   Symbol* sym = static_cast<Symbol*>(instance);
+   Engine::releaseSymbol(sym);
 }
 
 void* ClassSymbol::clone( void* instance ) const
 {
-   if( instance != (void*) 1 ) {
-      Symbol* sym = static_cast<Symbol*>(instance);
-      Engine::refSymbol(sym);
-      return sym;
-   }
-   else {
-      return (void*)1;
-   }
-
+   Symbol* sym = static_cast<Symbol*>(instance);
+   Engine::refSymbol(sym);
+   return sym;
 }
 
 void* ClassSymbol::createInstance() const
 {
-   return (Symbol*) 1;
+   return FALCON_CLASS_CREATE_AT_INIT;
 }
 
 bool ClassSymbol::op_init( VMContext* ctx, void*, int32 pcount ) const
@@ -85,9 +72,12 @@ bool ClassSymbol::op_init( VMContext* ctx, void*, int32 pcount ) const
    if( pcount > 0 || item->isString() )
    {
       String& name = *item->asString();
-      Symbol* sym = Engine::getSymbol(name, false);
-      ctx->self().setUser(this, sym );
-      FALCON_GC_STORE( this, sym );
+      bool isFirst = false;
+      Symbol* sym = Engine::getSymbol(name, false, isFirst );
+      if( isFirst ) {
+         FALCON_GC_STORE( this, sym );
+      }
+      ctx->opcodeParam(pcount).setUser( this, sym );
    }
    else {
       throw new ParamError( ErrorParam( e_inv_params, __LINE__, SRC )

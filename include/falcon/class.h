@@ -37,6 +37,8 @@ class ExprInherit;
 class ItemArray;
 class Error;
 
+#define FALCON_CLASS_CREATE_AT_INIT ((void*)1)
+
 /** Representation of classes, that is item types.
 
  In falcon, each item has a type, which refers to a class.
@@ -270,7 +272,9 @@ public:
    virtual void* clone( void* instance ) const = 0;
    
   /** Creates a totally unconfigured instance of this class.
-    \return a new instance of an entity of this class.
+    \return a new instance of an entity of this class, 0 if instances
+    cannot be created by scripts or FALCON_CLASS_CREATE_AT_INIT if the instance
+    is created by the class during op_init invocation.
     
     This method creates an instance that is then to be initialized
     by other means (mainly, by a subsequent call to op_init).
@@ -293,6 +297,14 @@ public:
    handled and that the VM knows how to handled the (not fully configured)
    instance during the following period.
    
+   If the class cannot create the instance without the parameters that
+   are passed to op_init, it can return FALCON_CLASS_CREATE_AT_INIT. If it does so,
+   the class must:
+   - create the instance
+   - store it with stackResult or in the data stack item before the first parameter
+   - store it in the garbage collector, if needed.
+
+
     \note Flat instance classes \b must return 0.
     */
    virtual void* createInstance() const = 0; 

@@ -555,6 +555,7 @@ public:
      retrieved symbol.
     */
    static Symbol* getSymbol( const String& name, bool global );
+   static Symbol* getSymbol( const String& name, bool global, bool& isFirst );
    static void refSymbol(Symbol* sym);
    static void releaseSymbol( Symbol* sym );
 

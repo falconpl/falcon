@@ -92,7 +92,7 @@ void MetaClass::op_call( VMContext* ctx, int32 pcount, void* self ) const
 {
    Class* fc = static_cast<Class*>(self);
    void* instance = fc->createInstance();
-   if( instance == 0 )
+   if (instance == 0)
    {
       if( fc->isFlatInstance() )
       {
@@ -106,8 +106,15 @@ void MetaClass::op_call( VMContext* ctx, int32 pcount, void* self ) const
             .origin( ErrorParam::e_orig_vm ) );
       }
    }
-   else 
-   {
+   else if(instance == FALCON_CLASS_CREATE_AT_INIT) {
+      if( fc->op_init( ctx, instance, pcount ) )
+      {
+         // if init returned true, this means it went deep and will take care
+         // of the parameters.
+         return;
+      }
+   }
+   else {
       // save the deep instance and handle it to the collector
       Item* params = ctx->opcodeParams( pcount + 1 );
       params->setUser( FALCON_GC_STORE( fc, instance ) );

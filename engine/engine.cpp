@@ -139,7 +139,13 @@ class PoolList: public std::deque<Pool* >
 class SymbolPool
 {
 public:
-   inline Symbol* get(const String& name, int poolId )
+
+   inline Symbol* get(const String& name, int poolId ) {
+      bool isFirst = false;
+      return get( name, poolId, isFirst );
+   }
+
+   inline Symbol* get(const String& name, int poolId, bool& isFirst )
    {
       Symbol *s;
       m_mtx[poolId].lock();
@@ -147,10 +153,12 @@ public:
       if( iter == m_symbols[poolId].end() ) {
          s = new Symbol( name, poolId == 1 );
          m_symbols[poolId][&s->name()] = s;
+         isFirst = true;
       }
       else {
          s = iter->second;
          s->m_counter++;
+         isFirst = false;
       }
       m_mtx[poolId].unlock();
 
@@ -889,6 +897,11 @@ Symbol* Engine::getSymbol( const String& name, bool global )
    return m_instance->m_symbols->get(name, global ? 1 : 0);
 }
 
+Symbol* Engine::getSymbol( const String& name, bool global, bool& isFirst )
+{
+   fassert( m_instance != 0 );
+   return m_instance->m_symbols->get(name, global ? 1 : 0, isFirst);
+}
 
 void Engine::refSymbol( Symbol* sym )
 {
