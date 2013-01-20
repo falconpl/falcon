@@ -277,7 +277,7 @@ void ClassArray::op_setIndex( VMContext* ctx, void* self ) const
          throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra( "index out of range" ) );
       }
 
-      array[v].assign(*value);
+      array[v].assignFromLocal(*value);
       ctx->popData(2); // our value is already the thirdmost element in the stack.
       return;
    }

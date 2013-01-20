@@ -19,6 +19,8 @@
 #include <falcon/setup.h>
 #include <falcon/types.h>
 #include <falcon/item.h>
+#include <falcon/mt.h>
+
 
 namespace Falcon
 {
@@ -222,6 +224,8 @@ private:
    Item *m_data;
    length_t m_growth;
    uint32 m_mark;
+   mutable Mutex m_mtx;
+
 
    static Class* m_handler;
 

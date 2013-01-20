@@ -1106,7 +1106,7 @@ void FalconClass::op_getProperty( VMContext* ctx, void* self, const String& prop
       
       if( prop != 0 )
       {
-         Item& target = ctx->topData();
+         Item target;
          
          switch( prop->m_type )
          {
@@ -1118,28 +1118,31 @@ void FalconClass::op_getProperty( VMContext* ctx, void* self, const String& prop
                   fassert( prop->m_type == Property::t_prop );
                }
                
-               target = inst->data()[ prop->m_value.id ];
+               target.copyLocked(inst->data()[ prop->m_value.id ]);
                
                if( target.isFunction() ) {
                   Function* func = target.asFunction();
                   target.setUser( this, const_cast<FalconInstance*>(inst) );
                   target.methodize( func );
                }
-               return;
+               break;
 
             case FalconClass::Property::t_func:               
                target.setUser( this, const_cast<FalconInstance*>(inst) );
                target.methodize( prop->m_value.func );
-               return;
+               break;
 
             case FalconClass::Property::t_inh:
                target.setUser( prop->m_value.inh->base(), const_cast<FalconInstance*>(inst) );
-               return;
+               break;
 
             case FalconClass::Property::t_state:
                //TODO
-               return;
+               break;
          }
+
+         ctx->topData() = target;
+         return;
       }
 
       // Default to base class
@@ -1204,7 +1207,7 @@ void FalconClass::PStepInitExpr::apply_( const PStep* ps, VMContext* ctx )
       fassert( prop->m_type == FalconClass::Property::t_prop );
       fassert( prop->expression() != 0 );
       
-      inst->data()[prop->m_value.id] = ctx->topData();
+      inst->data()[prop->m_value.id].assignFromLocal( ctx->topData() );
       ctx->popData();
    }
 
@@ -1233,7 +1236,7 @@ void FalconClass::PStepInitExpr::apply_( const PStep* ps, VMContext* ctx )
          fassert( prop->expression() != 0 );
       }
       
-      inst->data()[prop->m_value.id] = ctx->topData();
+      inst->data()[prop->m_value.id].assignFromLocal( ctx->topData() );
       ctx->popData();
    }
 

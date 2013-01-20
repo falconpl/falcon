@@ -58,7 +58,7 @@ bool FalconInstance::getMember( const String& name, Item& target ) const
    switch( prop->m_type )
    {
       case FalconClass::Property::t_prop:
-         target = m_data[ prop->m_value.id ];
+         target.copyLocked(m_data[ prop->m_value.id ]);
          if( target.isFunction() ) {
             Function* func = target.asFunction();
             target.setUser( m_origin, const_cast<FalconInstance*>(this) );
@@ -96,7 +96,7 @@ void FalconInstance::setProperty( const String& name, const Item& value )
       throw new AccessTypeError( ErrorParam( e_prop_ro, __LINE__, __FILE__ ).extra( name ) );
    }
 
-   m_data[ prop->m_value.id ].assign( value );
+   m_data[ prop->m_value.id ].assignFromLocal( value );
 }
 
 void FalconInstance::serialize( DataWriter* ) const

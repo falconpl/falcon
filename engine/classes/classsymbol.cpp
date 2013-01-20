@@ -140,7 +140,7 @@ void ClassSymbol::op_setProperty( VMContext* ctx, void* instance, const String& 
    }
    else if( prop == "value" )
    {
-      ctx->resolveSymbol( sym, true )->assign(ctx->opcodeParam(3));
+      ctx->resolveSymbol( sym, true )->assignFromLocal(ctx->opcodeParam(3));
    }
    else {
       Class::op_setProperty(ctx, instance, prop);

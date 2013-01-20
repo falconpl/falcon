@@ -13,6 +13,9 @@
    See LICENSE file for licensing details.
 */
 
+#undef SRC
+#define SRC "engine/itemdict.cpp"
+
 #include <falcon/itemdict.h>
 #include <falcon/item.h>
 #include <falcon/range.h>
@@ -185,28 +188,28 @@ void ItemDict::insert( const Item& key, const Item& value )
    {      
       case FLC_ITEM_NIL:
          _p->m_bHasNil = true;
-         _p->m_itemNil.assign(value);
+         _p->m_itemNil.assignFromLocal(value);
          break;
          
       case FLC_ITEM_BOOL:
          if( key.asBoolean() )
          {
             _p->m_bHasTrue = true;
-            _p->m_itemTrue.assign(value);
+            _p->m_itemTrue.assignFromLocal(value);
          }
          else
          {
             _p->m_bHasFalse = true;
-            _p->m_itemFalse.assign(value);
+            _p->m_itemFalse.assignFromLocal(value);
          }
          break;
          
       case FLC_ITEM_INT:
-         _p->m_intMap[ key.asInteger() ].assign(value);
+         _p->m_intMap[ key.asInteger() ].assignFromLocal(value);
          break;
          
       case FLC_ITEM_NUM:
-         _p->m_intMap[ (int64) key.asNumeric() ].assign(value);
+         _p->m_intMap[ (int64) key.asNumeric() ].assignFromLocal(value);
          break;
                        
       default:
@@ -218,16 +221,16 @@ void ItemDict::insert( const Item& key, const Item& value )
          switch( cls->typeID() )
          {
             case FLC_CLASS_ID_STRING:
-               _p->m_stringMap[ *static_cast<String*>(data) ].assign(value);
+               _p->m_stringMap[ *static_cast<String*>(data) ].assignFromLocal(value);
                break;
                
             case FLC_CLASS_ID_RANGE:
-               _p->m_rangeMap[ *static_cast<Range*>(data) ].assign(value);
+               _p->m_rangeMap[ *static_cast<Range*>(data) ].assignFromLocal(value);
                break;
                
             default:
                _p->m_instMap[ 
-                  Private::class_data_pair( cls, data ) ].assign(value);
+                  Private::class_data_pair( cls, data ) ].assignFromLocal(value);
                break;
          }
       }
@@ -241,19 +244,25 @@ void ItemDict::remove( const Item& key )
    {      
       case FLC_ITEM_NIL:
          _p->m_bHasNil = false;
+         _p->m_itemNil.lock();
          _p->m_itemNil.setNil();
+         _p->m_itemNil.unlock();
          break;
          
       case FLC_ITEM_BOOL:
          if( key.asBoolean() )
          {
             _p->m_bHasTrue = false;
+            _p->m_itemTrue.lock();
             _p->m_itemTrue.setNil();
+            _p->m_itemTrue.unlock();
          }
          else
          {
             _p->m_bHasFalse = false;
+            _p->m_itemFalse.lock();
             _p->m_itemFalse.setNil();
+            _p->m_itemFalse.unlock();
          }
          break;
          
@@ -740,18 +749,23 @@ void ItemDict::Iterator::advance()
             ++_pm->i_iter;
          }
          m_state = e_st_range;
-         // fallthrough
+         /* no break */
          
       case e_st_range:
          while( p->m_rangeMap.end() != _pm->r_iter )
          {
             if( found ) return;
             found = true;
+            _pm->m_pair[0].lock();
             _pm->m_pair[0].setUser( FALCON_GC_STORE( rcls, new Range(_pm->r_iter->first)) );
+            _pm->m_pair[0].unlock();
+            _pm->m_pair[1].lock();
             _pm->m_pair[1] = _pm->r_iter->second;
+            _pm->m_pair[1].unlock();
             ++_pm->r_iter;
          }
          m_state = e_st_string;
+         /* no break */
          
       case e_st_string:
          while( p->m_stringMap.end() != _pm->s_iter )
@@ -759,12 +773,19 @@ void ItemDict::Iterator::advance()
             if( found ) return;
             found = true;
             m_tempString = _pm->s_iter->first;
+
+            _pm->m_pair[0].lock();
             _pm->m_pair[0].setUser( scls, &m_tempString );
             _pm->m_pair[0].copied();
+            _pm->m_pair[0].unlock();
+
+            _pm->m_pair[1].lock();
             _pm->m_pair[1] = _pm->s_iter->second;
+            _pm->m_pair[1].unlock();
             ++_pm->s_iter;
          }
          m_state = e_st_string;
+         /* no break */
          
       case e_st_other:
          while( p->m_instMap.end() != _pm->t_iter )
@@ -772,14 +793,20 @@ void ItemDict::Iterator::advance()
             if( found ) return;
             found = true;
             const ItemDict::Private::class_data_pair& pair = _pm->t_iter->first;
+            _pm->m_pair[0].lock();
             _pm->m_pair[0].setUser( pair.cls, pair.data );
+            _pm->m_pair[0].unlock();
+            _pm->m_pair[1].lock();
             _pm->m_pair[1] = _pm->t_iter->second;
+            _pm->m_pair[1].unlock();
             ++_pm->t_iter;
          }
          m_state = e_st_done;
+         /* no break */
          
       case e_st_done:
          m_complete = true;   
+         /* no break */
    }
    
    

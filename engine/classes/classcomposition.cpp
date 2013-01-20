@@ -307,11 +307,11 @@ void ClassComposition::op_setProperty( VMContext* ctx, void* instance, const Str
    ctx->popData();
    if( prop == "first" )
    {
-      ci->first().assign(ctx->topData());
+      ci->first().assignFromLocal(ctx->topData());
    }
    else if( prop == "second" && ci->times() < 0 ) 
    {
-      ci->second().assign(ctx->topData());
+      ci->second().assignFromLocal(ctx->topData());
    }
    else if( prop == "times" && ci->times() >= 0 )
    {

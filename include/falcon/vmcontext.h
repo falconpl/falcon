@@ -228,6 +228,12 @@ public:
       }
       */
    }
+   inline void pushDataLocked( const Item& data ) {
+      ++m_dataStack.m_top;
+      data.lock();
+      *m_dataStack.m_top = data;
+      data.unlock();
+   }
 
    /** Add more variables on top of the stack.
     \param count Number of variables to be added.

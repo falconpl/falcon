@@ -454,6 +454,35 @@ public:
       unlock();
    }
 
+   /**
+    * Assign without interlocking the other item.
+    * \param other The local item from which we do an unlocked copy.
+    *
+    * This method only locks this item; this is ok
+    * if the source is in the local context data stack.
+    */
+   void assignFromLocal( const Item& other )
+   {
+      other.copied(true);
+      lock();
+      copy(other);
+      unlock();
+   }
+
+   /**
+    * Perform a non-assignment local copy.
+    * \param other The local item from which we do an unlocked copy.
+    *
+    * This method only locks this item; this is ok
+    * if the source is in the local context data stack.
+    */
+   void copyLocked( const Item& other )
+   {
+      other.lock();
+      copy(other);
+      other.unlock();
+   }
+
    bool asBoolean() const { return content.data.val32 != 0; }
    int64 asInteger() const { return content.data.val64; }
    numeric asNumeric() const { return content.data.number; }
@@ -707,6 +736,7 @@ public:
    void unlock() const {
       atomicSet(lockId, 0);
    }
+
 };
 
 }

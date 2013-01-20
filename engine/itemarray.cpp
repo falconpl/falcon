@@ -70,7 +70,9 @@ public:
       Item* end = data + other.m_size;
       while( data < end )
       {
+         data->lock();
          data->copied(true);
+         data->unlock();
          ++data;
       }
    }
@@ -148,6 +150,7 @@ ItemArray::~ItemArray()
 void ItemArray::append( const Item &ndata )
 {
    // create enough space to hold the data
+   m_mtx.lock();
    if ( m_alloc <= m_size )
    {
       m_alloc = m_size + m_growth;
@@ -167,13 +170,15 @@ void ItemArray::append( const Item &ndata )
    }
 
    m_size++;
+   m_mtx.unlock();
 }
 
 
 void ItemArray::merge( const ItemArray &source )
 {
-   if ( source.m_size == 0 )
+   if ( source.m_size == 0 ) {
       return;
+   }
 
    // set all the items in the source as copied.
    Helper(this).setCopied( source );
