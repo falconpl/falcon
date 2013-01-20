@@ -943,9 +943,7 @@ void FalconClass::flattenSelf( ItemArray& flatArray, bool asConstructed ) const
    Private::MemberMap::iterator pos = members->begin();
    
    flatArray.reserve( members->size() + 5 );
-   
-   Item pdefs( _p->m_propDefaults );
-   flatArray.append( pdefs );
+   flatArray.append( Item(_p->m_propDefaults->handler(), _p->m_propDefaults) );
    
    if( m_constructor != 0 )
    {

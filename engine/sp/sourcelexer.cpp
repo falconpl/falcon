@@ -381,7 +381,9 @@ Parsing::TokenInstance* SourceLexer::nextToken()
                   m_schr = chr; // where '/' was opened.
                   // the state is operator (probably a division).
                   m_state = state_operator;
+                  break;
             }
+            /* no break */
 
          case state_eolComment:
             if ( chr == '\n' )
