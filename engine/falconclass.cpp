@@ -1207,7 +1207,7 @@ void FalconClass::PStepInitExpr::apply_( const PStep* ps, VMContext* ctx )
       fassert( prop->m_type == FalconClass::Property::t_prop );
       fassert( prop->expression() != 0 );
       
-      inst->data()[prop->m_value.id].assignFromLocal( ctx->topData() );
+      inst->data()[prop->m_value.id].assignFromLocal( ctx->topData());
       ctx->popData();
    }
 

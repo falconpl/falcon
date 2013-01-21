@@ -167,7 +167,6 @@ void ExprUnpack::apply_( const PStep* ps, VMContext* ctx )
    size_t i;
    for( i = 0; i < pcount; ++i )
    {
-      //TODO: assign or copy?
       ctx->resolveSymbol(syms[i], true)->assign(array[i]);
    }
 

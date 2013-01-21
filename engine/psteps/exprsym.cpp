@@ -177,7 +177,7 @@ void ExprSymbol::PStepLValue::apply_( const PStep* ps, VMContext* ctx )
                es->m_owner->m_symbol->name().c_ize(),
                item->describe(1,30).c_ize(), ctx->topData().describe(1,30).c_ize() );
 
-   item->assign( ctx->topData() );
+   item->assignFromLocal( ctx->topData() );
 }
    
 }

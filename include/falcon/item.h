@@ -441,7 +441,7 @@ public:
     This operation resolves into marking the source item as copied, and then
     applying the copy item.
     */
-   void assign( const Item& other )
+   void assign( const Item& other  )
    {
       Item temp;
       other.lock();
@@ -461,7 +461,7 @@ public:
     * This method only locks this item; this is ok
     * if the source is in the local context data stack.
     */
-   void assignFromLocal( const Item& other )
+   void assignFromLocal( const Item& other  )
    {
       other.copied(true);
       lock();
@@ -476,11 +476,11 @@ public:
     * This method only locks this item; this is ok
     * if the source is in the local context data stack.
     */
-   void copyLocked( const Item& other )
+   void copyLocked( const Item& other  )
    {
-      other.lock();
+      lock();
       copy(other);
-      other.unlock();
+      unlock();
    }
 
    bool asBoolean() const { return content.data.val32 != 0; }

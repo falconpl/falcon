@@ -667,7 +667,7 @@ void StmtForTo::apply_( const PStep* ps, VMContext* ctx )
    
    // Prepare the start value   
    Symbol* target = self->m_target;
-   ctx->resolveSymbol(target, true)->assign(start);
+   ctx->resolveSymbol(target, true)->copyLocked(Item(start));
    
    // eventually, push the first opode in top of all.
    if( self->m_forFirst != 0 )

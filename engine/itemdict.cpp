@@ -188,28 +188,28 @@ void ItemDict::insert( const Item& key, const Item& value )
    {      
       case FLC_ITEM_NIL:
          _p->m_bHasNil = true;
-         _p->m_itemNil.assignFromLocal(value);
+         _p->m_itemNil.assign(value);
          break;
          
       case FLC_ITEM_BOOL:
          if( key.asBoolean() )
          {
             _p->m_bHasTrue = true;
-            _p->m_itemTrue.assignFromLocal(value);
+            _p->m_itemTrue.assign(value);
          }
          else
          {
             _p->m_bHasFalse = true;
-            _p->m_itemFalse.assignFromLocal(value);
+            _p->m_itemFalse.assign(value);
          }
          break;
          
       case FLC_ITEM_INT:
-         _p->m_intMap[ key.asInteger() ].assignFromLocal(value);
+         _p->m_intMap[ key.asInteger() ].assign(value);
          break;
          
       case FLC_ITEM_NUM:
-         _p->m_intMap[ (int64) key.asNumeric() ].assignFromLocal(value);
+         _p->m_intMap[ (int64) key.asNumeric() ].assign(value);
          break;
                        
       default:
@@ -221,16 +221,16 @@ void ItemDict::insert( const Item& key, const Item& value )
          switch( cls->typeID() )
          {
             case FLC_CLASS_ID_STRING:
-               _p->m_stringMap[ *static_cast<String*>(data) ].assignFromLocal(value);
+               _p->m_stringMap[ *static_cast<String*>(data) ].assign(value);
                break;
                
             case FLC_CLASS_ID_RANGE:
-               _p->m_rangeMap[ *static_cast<Range*>(data) ].assignFromLocal(value);
+               _p->m_rangeMap[ *static_cast<Range*>(data) ].assign(value);
                break;
                
             default:
                _p->m_instMap[ 
-                  Private::class_data_pair( cls, data ) ].assignFromLocal(value);
+                  Private::class_data_pair( cls, data ) ].assign(value);
                break;
          }
       }
@@ -679,7 +679,7 @@ bool ItemDict::Iterator::next( Item& target )
    advance();
     
    // create a copied item, and ask to mark it for gc.
-   target.assign( Item(ac, &_pm->m_pair ) );
+   target.assignFromLocal( Item(ac, &_pm->m_pair ) );
    if( m_complete )
    {
       target.setLast();
