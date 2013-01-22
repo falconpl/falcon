@@ -28,7 +28,7 @@
 #include <falcon/cm/datawriter.h>
 #include <falcon/cm/datareader.h>
 #include <falcon/cm/parallel.h>
-#include <falcon/cm/sleep.h>
+#include <falcon/cm/stdfunctions.h>
 
 // the standard error classes
 #include <falcon/errorclasses.h>
@@ -49,7 +49,9 @@ CoreModule::CoreModule():
       << new Ext::FuncPrint
       << new Ext::Inspect
       << new Ext::Iff
-      << new Ext::Sleep
+      << new Ext::Function_epoch
+      << new Ext::Function_seconds
+      << new Ext::Function_sleep
       
       // Standard classes
       << new Ext::ClassURI

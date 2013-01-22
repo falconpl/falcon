@@ -33,14 +33,14 @@ namespace Sys {
 /** Gives current second count from Epoch.
    The number of seconds is generally returned in GMT, if this
    feature is available in the system.
-   \return a float nubmer, where decimals are up to milliseconds.
+   \return a float number, where decimals are up to milliseconds.
 */
 FALCON_DYN_SYM numeric _seconds();
 
 /** Gives current second count from Epoch in localtime.
    The number of seconds is generally returned in localtime, if this
    feature is available in the system.
-   \return a float nubmer, where decimals are up to milliseconds.
+   \return a float number, where decimals are up to milliseconds.
 */
 FALCON_DYN_SYM numeric _localSeconds();
 
