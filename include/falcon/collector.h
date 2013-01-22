@@ -67,7 +67,7 @@ class GCToken;
 class GCLock;
 class Item;
 class Class;
-class VMachine;
+class VMContext;
 class TextWriter;
 
 /** Falcon Garbage collector.
@@ -295,12 +295,12 @@ public:
       This sets the current generation of the VM so that it is unique
       among the currently living VMs.
    */
-   void registerVM( VMachine *vm );
+   void registerContext( VMContext *vm );
 
    /** Called before destruction of a VM.
       Takes also care to disengage the VM from idle VM list.
    */
-   void unregisterVM( VMachine *vm );
+   void unregisterContext( VMContext *vm );
 
 
    /** Returns the number of elements managed by this collector. */
@@ -318,18 +318,6 @@ public:
       The function synchronously wait for the thread to exit and sets it to 0.
    */
    void stop();
-   
-   /** Declares the given VM idle.
-
-      The VM may be sent to the the main memory pool garbage collector mark loop
-      if it is found outdated and in need of a new marking.
-
-      Set prio = true if the VM requests a priority GC. In that case, the VM
-      must present itself non-idle, and the idle-ship is taken implicitly by
-      the GC. The VM is notified with m_eGCPerformed being set after the complete
-      loop is performed.
-   */
-   void idleVM( VMachine *vm, bool bPrio = false );
 
    /** Sets the normal threshold level. */
    void thresholdNormal( size_t mem ) { m_thresholdNormal = mem; }
@@ -679,25 +667,7 @@ protected:
    //==================================================
    // Private functions
    //==================================================
-
-   bool markVM( VMachine *vm );
    void gcSweep();
-
-   /*
-   To reimplement this, we need to have anti-recursion checks on item, which are
-   currently being under consideration. However, I would prefer not to need to
-   have this functions back, as they were meant to be used when the memory
-   model wasn't complete.
-
-   In other words, I want items to be in garbage as soon as they are created,
-   and to exit when they are destroyed.
-
-   void removeFromGarbage( String *ptr );
-   void removeFromGarbage( Garbageable *ptr );
-
-   void storeForGarbageDeep( const Item &item );
-   void removeFromGarbageDeep( const Item &item );
-   */
 
    void clearRing( GCToken *ringRoot );
    void rollover();

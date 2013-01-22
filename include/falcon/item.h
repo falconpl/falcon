@@ -470,13 +470,29 @@ public:
    }
 
    /**
+    * Perform an assignment to a local copy.
+    * \param other The remote, non local item from which we do locked copy.
+    *
+    * This method only locks this item; this is ok
+    * if the source is in the local context data stack.
+    */
+   void assignToLocal( const Item& other )
+   {
+      other.lock();
+      other.copied(true);
+      copy(other);
+      other.unlock();
+   }
+
+
+   /**
     * Perform a non-assignment local copy.
     * \param other The local item from which we do an unlocked copy.
     *
     * This method only locks this item; this is ok
     * if the source is in the local context data stack.
     */
-   void copyLocked( const Item& other  )
+   void copyFromLocal( const Item& other )
    {
       lock();
       copy(other);

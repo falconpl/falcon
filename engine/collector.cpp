@@ -21,9 +21,11 @@
 #include <falcon/vmcontext.h>
 #include <falcon/gctoken.h>
 #include <falcon/gclock.h>
+#include <falcon/vmcontext.h>
 
 #include <string>
 #include <typeinfo>
+#include <set>
 
 #if FALCON_TRACE_GC
    #include <falcon/textwriter.h>
@@ -45,6 +47,10 @@ namespace Falcon {
 class Collector::Private
 {
 public:
+   Mutex m_mtx_contexts;
+   typedef std::set<VMContext*> ContextSet;
+   ContextSet m_contexts;
+
 #if FALCON_TRACE_GC
    typedef std::map<void*, Collector::DataStatus* > HistoryMap;
    HistoryMap m_hmap;
@@ -199,118 +205,30 @@ int Collector::rampMode() const
 }
 
 
-
-#if 0
-void Collector::registerVM( VMachine *vm )
+void Collector::registerContext( VMContext *ctx )
 {
-   // already registered
-   if( vm->m_nextVM != 0 || vm->m_prevVM )
-      return;
+   TRACE( "Collector::registerContext - %p(%d)", ctx, ctx->id() );
+   ctx->incref();
 
-   vm->m_idlePrev = vm->m_idleNext = 0;
-   vm->incref();
-
-   m_mtx_vms.lock();
-   vm->m_generation = ++m_generation; // rollover detection in run()
-   ++m_vmCount;
-
-   if ( m_vmRing == 0 )
-   {
-      m_vmRing = vm;
-      vm->m_nextVM = vm;
-      vm->m_prevVM = vm;
-
-      m_mingen = vm->m_generation;
-      vm->incref();
-      m_olderVM = vm;
-   }
-   else {
-      vm->m_prevVM = m_vmRing;
-      vm->m_nextVM = m_vmRing->m_nextVM;
-      m_vmRing->m_nextVM->m_prevVM = vm;
-      m_vmRing->m_nextVM = vm;
-
-      // also account for older VM.
-      if ( m_mingen == vm->m_generation )
-      {
-         vm->incref();
-         m_olderVM->decref();
-         m_olderVM = vm;
-      }
-   }
-
-   m_mtx_vms.unlock();
+   _p->m_mtx_contexts.lock();
+   _p->m_contexts.insert(ctx);
+   _p->m_mtx_contexts.unlock();
 }
 
 
-void Collector::unregisterVM( VMachine *vm )
+void Collector::unregisterContext( VMContext *ctx )
 {
-   m_mtx_vms.lock();
+   TRACE( "Collector::unregisterContext - %p(%d)", ctx, ctx->id() );
 
-   // disengage
-   vm->m_nextVM->m_prevVM = vm->m_prevVM;
-   vm->m_prevVM->m_nextVM = vm->m_nextVM;
+   _p->m_mtx_contexts.lock();
+   bool erased = _p->m_contexts.erase(ctx) != 0;
+   _p->m_mtx_contexts.unlock();
 
-   // was this the ring top?
-   if ( m_vmRing == vm )
-   {
-      m_vmRing = m_vmRing->m_nextVM;
-      // still the ring top? -- then the ring is empty
-      if( m_vmRing == vm )
-         m_vmRing = 0;
-   }
-
-   --m_vmCount;
-
-   // is this the oldest VM? -- then we got to elect a new one.
-   if( vm == m_olderVM )
-   {
-      electOlderVM();
-   }
-
-   m_mtx_vms.unlock();
-
-   // ok, the VM is not held here anymore.
-   vm->decref();
-}
-
-
-// WARNING -- this must be called with m_mtx_vms locked
-void Collector::electOlderVM()
-{
-   // Nay, we don't have any VM.
-   if ( m_vmRing == 0 )
-   {
-      if ( m_olderVM != 0 )
-      {
-         m_olderVM->decref();
-         m_olderVM = 0;
-      }
-   }
-   else
-   {
-      VMachine *vmc = m_vmRing;
-      m_mingen = vmc->m_generation;
-      VMachine* vmmin = vmc;
-      vmc = vmc->m_nextVM;
-
-      while( vmc != m_vmRing )
-      {
-         if ( vmc->m_generation < m_mingen )
-         {
-            m_mingen = vmc->m_generation;
-            vmmin = vmc;
-         }
-         vmc = vmc->m_nextVM;
-      }
-      vmmin->incref();
-      if( m_olderVM != 0 )
-         m_olderVM->decref();
-      m_olderVM = vmmin;
+   if( erased ) {
+      ctx->decref();
    }
 }
 
-#endif
 
 void Collector::clearRing( GCToken *ringRoot )
 {
@@ -433,63 +351,6 @@ GCLock* Collector::storeLocked( const Class* cls, void *data )
 }
 
 
-#if 0
-bool Collector::markVM( VMachine *vm )
-{
-   // mark all the messaging system.
-   vm->markSlots( generation() );
-
-   // mark the global symbols
-   // When generational gc will be on, this won't be always needed.
-   MapIterator iter = vm->liveModules().begin();
-   while( iter.hasCurrent() )
-   {
-      LiveModule *currentMod = *(LiveModule **) iter.currentValue();
-      // We must mark the current module.
-      currentMod->gcMark( generation() );
-
-      iter.next();
-   }
-
-   // mark all the items in the coroutines.
-   ListElement *ctx_iter = vm->getCtxList()->begin();
-   uint32 pos;
-   while( ctx_iter != 0 )
-   {
-      VMContext *ctx = (VMContext *) ctx_iter->data();
-
-      markItem( ctx->regA() );
-      markItem( ctx->regB() );
-      markItem( ctx->latch() );
-      markItem( ctx->latcher() );
-      markItem( ctx->self() );
-
-      markItem( vm->regBind() );
-      markItem( vm->regBindP() );
-
-      StackFrame* sf = ctx->currentFrame();
-      while( sf != 0 )
-      {
-         Item* stackItems = sf->stackItems();
-         uint32 sl = sf->stackSize();
-         markItem( sf->m_self );
-         markItem( sf->m_binding );
-
-         for( pos = 0; pos < sl; pos++ ) {
-            markItem( stackItems[ pos ] );
-         }
-         sf = sf->prev();
-      }
-
-      ctx_iter = ctx_iter->next();
-   }
-
-   return true;
-}
-
-#endif
-
-
 void Collector::gcSweep()
 {
 
@@ -533,42 +394,6 @@ void Collector::performGC()
 // MT functions
 //
 
-void Collector::idleVM( VMachine *, bool )
-{
-#if 0
-   // ok, we're givin the VM to the GC, so we reference it.
-   m_mtx_idlevm.lock();
-   if ( bPrio )
-   {
-      vm->m_bPirorityGC = true;
-   }
-
-   if ( vm->m_idleNext != 0 || vm->m_idlePrev != 0 || vm == m_vmIdle_head)
-   {
-      // already waiting
-      m_mtx_idlevm.unlock();
-      return;
-   }
-   vm->incref();
-
-   vm->m_idleNext = 0;
-   if ( m_vmIdle_head == 0 )
-   {
-      m_vmIdle_head = vm;
-      m_vmIdle_tail = vm;
-      vm->m_idlePrev = 0;
-   }
-   else {
-      m_vmIdle_tail->m_idleNext = vm;
-      vm->m_idlePrev = m_vmIdle_tail;
-      m_vmIdle_tail = vm;
-   }
-#endif
-
-   m_mtx_idlevm.unlock();
-   // wake up if we're waiting.
-   m_eRequest.set();
-}
 
 void Collector::start()
 {

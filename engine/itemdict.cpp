@@ -679,7 +679,7 @@ bool ItemDict::Iterator::next( Item& target )
    advance();
     
    // create a copied item, and ask to mark it for gc.
-   target.assignFromLocal( Item(ac, &_pm->m_pair ) );
+   target.copyFromLocal( Item(ac, &_pm->m_pair ) );
    if( m_complete )
    {
       target.setLast();

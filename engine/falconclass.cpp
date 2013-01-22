@@ -39,6 +39,8 @@
 #include <falcon/psteps/exprinherit.h>
 
 #include <falcon/errors/operanderror.h>
+#include <falcon/errors/accesserror.h>
+#include <falcon/errors/accesstypeerror.h>
 
 #include <map>
 #include <list>
@@ -1118,7 +1120,7 @@ void FalconClass::op_getProperty( VMContext* ctx, void* self, const String& prop
                   fassert( prop->m_type == Property::t_prop );
                }
                
-               target.copyLocked(inst->data()[ prop->m_value.id ]);
+               target.assignToLocal(inst->data()[ prop->m_value.id ]);
                
                if( target.isFunction() ) {
                   Function* func = target.asFunction();
@@ -1157,7 +1159,18 @@ void FalconClass::op_setProperty( VMContext* ctx, void* self, const String& prop
 
    if( ! overrideSetProperty( ctx, self, propName ) )
    {
-      inst->setProperty( propName, ctx->opcodeParam(1) );
+      const Property* prop = getProperty( propName );
+      if( prop == 0 )
+      {
+         throw new AccessError( ErrorParam( e_prop_acc, __LINE__, __FILE__ ).extra( propName ) );
+      }
+
+      if( prop->m_type != FalconClass::Property::t_prop )
+      {
+         throw new AccessTypeError( ErrorParam( e_prop_ro, __LINE__, __FILE__ ).extra( propName ) );
+      }
+
+      inst->m_data[ prop->m_value.id ].assignFromLocal( ctx->opcodeParam(1) );
       ctx->popData();
    }
 }

@@ -96,6 +96,8 @@ VMContext::VMContext( Process* prc, ContextGroup* grp ):
    atomicSet(m_events,0);
    pushReturn();
    m_id = prc->getNextContextID();
+
+   Engine::collector()->registerContext(this);
 }
 
 

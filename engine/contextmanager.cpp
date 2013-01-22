@@ -372,6 +372,8 @@ void ContextManager::manageTerminatedContext( VMContext* ctx )
    {
       removeSleepingContext( ctx );
    }
+   // we're off with this context.
+   Engine::collector()->unregisterContext(ctx);
 }
 
 
