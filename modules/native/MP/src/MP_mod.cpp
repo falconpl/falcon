@@ -84,7 +84,7 @@ namespace Mod {
     //size_t length = 
     //String *string = new String();
     //string->setCharSize(1);
-    //char *buff = (char *)memAlloc(length);
+    //char *buff = (char *)malloc(length);
     //string->adopt(buff, std::strlen(buff),length);
     //return string;
   }

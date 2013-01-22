@@ -782,7 +782,7 @@ void executeTests( ModuleLoader *modloader )
 
       if ( opt_checkmem )
       {
-         s_allocatedMem = gcMemAllocated();
+         s_allocatedMem = gcmallocated();
          s_outBlocks = memPool->allocatedItems();
       }
 
@@ -822,7 +822,7 @@ void executeTests( ModuleLoader *modloader )
          if ( opt_checkmem )
          {
             memPool->performGC();
-            long alloc = gcMemAllocated() - s_allocatedMem;
+            long alloc = gcmallocated() - s_allocatedMem;
             long blocks = memPool->allocatedItems() - s_outBlocks;
 
             String temp = " (leak: ";
@@ -995,7 +995,7 @@ int main( int argc, char *argv[] )
    modloader->compiler().reset();
 
    // reset memory tests
-   s_totalMem = gcMemAllocated();
+   s_totalMem = gcmallocated();
    s_totalOutBlocks = memPool->allocatedItems();
 
    executeTests( modloader );
@@ -1088,7 +1088,7 @@ int main( int argc, char *argv[] )
    {
       memPool->performGC();
       long blocks = memPool->allocatedItems() - s_totalOutBlocks;
-      long mem = gcMemAllocated() - s_totalMem;
+      long mem = gcmallocated() - s_totalMem;
 
       String temp = "Final memory balance: ";
       temp = "Final memory balance: ";

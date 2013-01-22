@@ -62,13 +62,13 @@ Geometry::Geometry( const Geometry& other )
 Geometry::~Geometry()
 {
     if ( m_obj )
-        memFree( m_obj );
+        free( m_obj );
 }
 
 
 void Geometry::alloc()
 {
-    m_obj = memAlloc( sizeof( GdkGeometry ) );
+    m_obj = malloc( sizeof( GdkGeometry ) );
     memset( m_obj, 0, sizeof( GdkGeometry ) );
 }
 

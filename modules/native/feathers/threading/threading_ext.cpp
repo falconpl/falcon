@@ -1365,12 +1365,12 @@ static void internal_SyncQueue_pop( VMachine *vm, bool front )
    Item retreived;
    if ( retreived.deserialize( &ss, vm ) != Item::sc_ok )
    {
-      memFree( data );
+      free( data );
       throw new ThreadError( ErrorParam( FALTH_ERR_DESERIAL, __LINE__ ).
          desc( FAL_STR( th_msg_errdes ) ) );
    }
 
-   memFree( data );
+   free( data );
    vm->retval( retreived );
 }
 

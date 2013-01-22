@@ -17,7 +17,7 @@
    Buffer wrapper for stream operations.
 */
 
-#include <falcon/memory.h>
+#include <malloc.h>
 #include <falcon/streambuffer.h>
 #include <falcon/fassert.h>
 
@@ -36,7 +36,7 @@ StreamBuffer::StreamBuffer( Stream *underlying, bool bOwn, uint32 bufSize ):
    m_stream( underlying ),
    m_streamOwner( bOwn )
 {
-   m_buffer = (byte *) memAlloc( m_bufSize );
+   m_buffer = (byte *) malloc( m_bufSize );
 }
 
 StreamBuffer::StreamBuffer( const StreamBuffer &other ):
@@ -54,7 +54,7 @@ StreamBuffer::StreamBuffer( const StreamBuffer &other ):
    else
       m_stream = other.m_stream;
 
-   m_buffer = (byte *) memAlloc( m_bufSize );
+   m_buffer = (byte *) malloc( m_bufSize );
 }
 
 
@@ -65,7 +65,7 @@ StreamBuffer::~StreamBuffer()
    if( m_streamOwner )
       delete m_stream;
 
-   memFree( m_buffer );
+   free( m_buffer );
 }
 
 
@@ -405,8 +405,8 @@ bool StreamBuffer::resizeBuffer( uint32 size )
       if ( ! flush() )
          return false;
 
-      memFree( m_buffer );
-      m_buffer = (byte*) memAlloc( size );
+      free( m_buffer );
+      m_buffer = (byte*) malloc( size );
       m_bufSize = size;  
    }
    

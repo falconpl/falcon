@@ -40,7 +40,7 @@ DBIOutBind::~DBIOutBind()
 {
    if( m_memory != 0 && m_memory != m_stdBuffer )
    {
-      memFree( m_memory );
+      free( m_memory );
       m_memory = 0;
    }
 
@@ -51,7 +51,7 @@ DBIOutBind::~DBIOutBind()
       long* l = (long*) block;
       l = l-2;
       void *nblock = (void*) l[0];
-      memFree( l );
+      free( l );
       block = nblock;
    }
 
@@ -62,7 +62,7 @@ DBIOutBind::~DBIOutBind()
 void* DBIOutBind::allocBlock( unsigned size )
 {
    fassert( sizeof(long) == sizeof(void*) );
-   long* lblock = (long*) memAlloc( size + (sizeof(long)*2));
+   long* lblock = (long*) malloc( size + (sizeof(long)*2));
    lblock[0] = 0;
    lblock[1] = (long) size;
 
@@ -97,7 +97,7 @@ void* DBIOutBind::consolidate()
 {
    if( m_memory != 0 && m_memory != m_stdBuffer )
    {
-      memFree( m_memory );
+      free( m_memory );
    }
 
    if( m_allocated == 0 )
@@ -106,7 +106,7 @@ void* DBIOutBind::consolidate()
       return 0;
    }
 
-   m_memory = memAlloc( m_allocated );
+   m_memory = malloc( m_allocated );
    char* memory = (char*) m_memory;
    m_allocated = 0;
 
@@ -118,7 +118,7 @@ void* DBIOutBind::consolidate()
       m_allocated += head[1];
       long* old = head;
       head = (long*)head[0];
-      memFree( old );
+      free( old );
    }
 
    return m_memory;
@@ -129,7 +129,7 @@ void* DBIOutBind::alloc( unsigned size )
 {
    if( m_memory == 0 || m_memory == m_stdBuffer )
    {
-      m_memory  = memAlloc( size );
+      m_memory  = malloc( size );
    }
    else
    {
@@ -151,7 +151,7 @@ void* DBIOutBind::reserve( unsigned size )
 
    if( m_memory == 0 || m_memory == m_stdBuffer )
    {
-      m_memory  = memAlloc( size );
+      m_memory  = malloc( size );
    }
    else
    {

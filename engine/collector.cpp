@@ -16,14 +16,13 @@
 #define SRC "/engine/collector.cpp"
 
 #include <falcon/trace.h>
-
-#include <falcon/memory.h>
 #include <falcon/collector.h>
 #include <falcon/vm.h>
 #include <falcon/vmcontext.h>
 #include <falcon/gctoken.h>
 #include <falcon/gclock.h>
 #include <falcon/vmcontext.h>
+#include <falcon/collectoralgorithm.h>
 
 #include <string>
 #include <typeinfo>
@@ -85,16 +84,14 @@ public:
 
 Collector::Collector():
    m_mingen( 0 ),
-   m_vmCount(0),
-   m_vmIdle_head( 0 ),
-   m_vmIdle_tail( 0 ),
-   m_generation( 0 ),
-   m_allocatedItems( 0 ),
-   m_allocatedMem( 0 ),
    m_th(0),
    m_bLive(false),
    m_bRequestSweep( false ),
    m_bTrace( false ),
+   m_currentMark(0),
+   m_oldestMark(0),
+   m_storedMem(0),
+   m_storedItems(0),
    _p( new Private )
 {
    // use a ring for garbage items.
@@ -124,15 +121,16 @@ Collector::Collector():
    m_thresholdActive = TEMP_MEM_THRESHOLD*3;
 
    // fill the ramp algorithms
-   m_ramp[RAMP_MODE_OFF] = new RampNone;
-   m_ramp[RAMP_MODE_STRICT_ID] = new RampStrict;
-   m_ramp[RAMP_MODE_LOOSE_ID] = new RampLoose;
-   m_ramp[RAMP_MODE_SMOOTH_SLOW_ID] = new RampSmooth( 2.6 );
-   m_ramp[RAMP_MODE_SMOOTH_FAST_ID] = new RampSmooth( 6.5 );
+   m_ramp  = new CollectorAlgorithm*[ FALCON_COLLECTOR_ALGORITHM_COUNT ];
+   m_ramp[FALCON_COLLECTOR_ALGORITHM_OFF] = new CollectorAlgorithmNone;
+   m_ramp[FALCON_COLLECTOR_ALGORITHM_FIXED] = new CollectorAlgorithmFixed(10000000,50000000,100000000);
+   m_ramp[FALCON_COLLECTOR_ALGORITHM_STRICT] = new CollectorAlgorithmStrict;
+   m_ramp[FALCON_COLLECTOR_ALGORITHM_SMOOTH] = new CollectorAlgorithmSmooth;
+   m_ramp[FALCON_COLLECTOR_ALGORITHM_LOOSE] = new CollectorAlgorithmLoose;
 
    // force initialization in rampMode by setting a different initial value;
-   m_curRampID = DEFAULT_RAMP_MODE+1;
-   rampMode( DEFAULT_RAMP_MODE );
+   m_curRampID = FALCON_COLLECTOR_ALGORITHM_DEFAULT;
+   m_curRampMode = m_ramp[m_curRampID];
 }
 
 
@@ -171,24 +169,24 @@ Collector::~Collector()
       litem = next;
    }
 
-   // VMs are not mine, and they should be already dead since long.
-   for( uint32 ri = 0; ri < RAMP_MODE_COUNT; ri++ )
+   for( uint32 ri = 0; ri < FALCON_COLLECTOR_ALGORITHM_COUNT; ri++ )
+   {
       delete m_ramp[ri];
-
+   }
    delete _p;
 }
 
 
 bool Collector::rampMode( int mode )
 {
-   if( mode >= 0 && mode < RAMP_MODE_COUNT )
+   if( mode >= 0 && mode < FALCON_COLLECTOR_ALGORITHM_COUNT )
    {
       m_mtx_ramp.lock();
       if ( m_curRampID != mode )
       {
          m_curRampID = mode;
          m_curRampMode = m_ramp[mode];
-         m_curRampMode->reset();
+         //TODO: reset
       }
       m_mtx_ramp.unlock();
       return true;
@@ -216,6 +214,8 @@ void Collector::registerContext( VMContext *ctx )
    _p->m_mtx_contexts.lock();
    _p->m_contexts.insert(ctx);
    _p->m_mtx_contexts.unlock();
+
+   ctx->gcMark( m_currentMark );
 }
 
 
@@ -236,7 +236,7 @@ void Collector::unregisterContext( VMContext *ctx )
 
 void Collector::clearRing( GCToken *ringRoot )
 {
-   //TRACE( "Entering sweep %ld, allocated %ld", (long)gcMemAllocated(), (long)m_allocatedItems );
+   //TRACE( "Entering sweep %ld, allocated %ld", (long)gcmallocated(), (long)m_allocatedItems );
    // delete the garbage ring.
    int32 killed = 0;
    GCToken *ring = ringRoot->m_next;
@@ -266,14 +266,14 @@ void Collector::clearRing( GCToken *ringRoot )
       }
    }
 
-   //TRACE( "Sweeping step 1 complete %ld", (long)gcMemAllocated() );
+   //TRACE( "Sweeping step 1 complete %ld", (long)gcmallocated() );
 
-   m_mtx_newitem.lock();
-   fassert( killed <= m_allocatedItems );
-   m_allocatedItems -= killed;
-   m_mtx_newitem.unlock();
+   m_mtx_accountmem.lock();
+   fassert( killed <= m_storedItems );
+   m_storedItems -= killed;
+   m_mtx_accountmem.unlock();
 
-   TRACE( "Sweeping done, allocated %ld (killed %ld)", (long)m_allocatedItems, (long)killed );
+   TRACE( "Sweeping done, allocated %ld (killed %ld)", (long)m_storedItems, (long)killed );
 }
 
 
@@ -322,9 +322,14 @@ GCToken* Collector::store( const Class* cls, void *data )
    // do we have spare elements we could take?
    GCToken* token = getToken( const_cast<Class*>(cls), data );
 
+   int64 memory = cls->occupiedMemory(data);
+   m_mtx_accountmem.lock();
+   m_storedItems++;
+   m_storedMem+= memory;
+   m_mtx_accountmem.unlock();
+
    // put the element in the new list.
    m_mtx_newitem.lock();
-   m_allocatedItems++;
    token->m_next =  m_newRoot ;
    token->m_prev =  m_newRoot->m_prev ;
    m_newRoot->m_prev->m_next =  token;
@@ -342,9 +347,14 @@ GCLock* Collector::storeLocked( const Class* cls, void *data )
    
    GCLock* l = this->lock( token );
 
+   int64 memory = cls->occupiedMemory(data);
+   m_mtx_accountmem.lock();
+   m_storedItems++;
+   m_storedMem+= memory;
+   m_mtx_accountmem.unlock();
+
    // put the element in the new list.
    m_mtx_newitem.lock();
-   m_allocatedItems++;
    token->m_next =  m_newRoot ;
    token->m_prev =  m_newRoot->m_prev ;
    m_newRoot->m_prev->m_next =  token;
@@ -358,30 +368,20 @@ GCLock* Collector::storeLocked( const Class* cls, void *data )
 void Collector::gcSweep()
 {
 
-   //TRACE( "Sweeping %ld (mingen: %d, gen: %d)", (long)gcMemAllocated(), m_mingen, m_generation );
+   //TRACE( "Sweeping %ld (mingen: %d, gen: %d)", (long)gcmallocated(), m_mingen, m_generation );
 
    m_mtx_ramp.lock();
    // ramp mode may change while we do the lock...
-   RampMode* rm = m_curRampMode;
-   rm->onScanInit();
+   //CollectorAlgorithm* rm = m_curRampMode;
+
    m_mtx_ramp.unlock();
 
    clearRing( m_garbageRoot );
 
    m_mtx_ramp.lock();
-   rm->onScanComplete();
-   m_thresholdActive = rm->activeLevel();
-   m_thresholdNormal = rm->normalLevel();
+   //TODO: Call the ramp
+
    m_mtx_ramp.unlock();
-}
-
-int32 Collector::allocatedItems() const
-{
-   m_mtx_newitem.lock();
-   int32 size = m_allocatedItems;
-   m_mtx_newitem.unlock();
-
-   return size;
 }
 
 void Collector::performGC()
@@ -443,7 +443,7 @@ void Collector::markNew()
 
    if ( bDone )
    {
-      uint32 mark = m_generation;
+      uint32 mark = m_currentMark;
       MESSAGE( "Found items to be marked" );
       
       // first mark
@@ -482,221 +482,20 @@ void Collector::stop()
 
 void* Collector::run()
 {
-   //uint32 oldGeneration = m_generation;
-   //uint32 oldMingen = m_mingen;
    bool bMoreWork;
 
    while( m_bLive )
    {
       bMoreWork = false; // in case of sweep request, loop without pause.
 
-#if 0
-      // first, detect the operating status.
-      size_t memory = gcMemAllocated();
+      // first, detect the operating status. -- we don't care about races here.
+      size_t memory = m_storedMem;
       int state = m_bRequestSweep || memory >= m_thresholdActive ? 2 :      // active mode
                   memory >= m_thresholdNormal ? 1 :      // normal mode
                   0;                                     // dormient mode
 
-      TRACE( "Working %ld (in mode %d)", (long)gcMemAllocated(), state );
-
-      
-
-      // if we're in active mode, send a block request to all the enabled vms.
-      if ( state == 2 )
-      {
-         m_mtx_vms.lock();
-         VMachine *vm = m_vmRing;
-         if ( vm != 0 )
-         {
-
-            if ( vm->isGcEnabled() )
-            {
-               TRACE( "Activating blocking request vm %p", vm );
-               vm->baton().block();
-            }
-            vm = vm->m_nextVM;
-            while( vm != m_vmRing )
-            {
-               if ( vm->isGcEnabled() )
-               {
-                  TRACE( "Activating blocking request vm %p", vm );
-                  vm->baton().block();
-               }
-               vm = vm->m_nextVM;
-            }
-         }
-         m_mtx_vms.unlock();
-      }
-
-      VMachine* vm = 0;
-      bool bPriority = false;
-
-      // In all 3 the modes, we must clear the idle queue, so let's do that.
-      m_mtx_idlevm.lock();
-      if( m_vmIdle_head != 0 )
-      {
-         // get the first VM to be processed.
-         vm = m_vmIdle_head;
-         m_vmIdle_head = m_vmIdle_head->m_idleNext;
-         if ( m_vmIdle_head == 0 )
-            m_vmIdle_tail = 0;
-         else
-            bMoreWork = true;
-         vm->m_idleNext = 0;
-         vm->m_idlePrev = 0;
-
-         // dormient or not, we must work this VM on priority scans.
-         bPriority = vm->m_bPirorityGC;
-         vm->m_bPirorityGC = false;
-
-         // if we're dormient, just empty the queue.
-         if ( state == 0 && ! bPriority )
-         {
-            // this to discard block requets.
-            vm->baton().unblock();
-            // we're done with this VM here
-            vm->decref();
-            m_mtx_idlevm.unlock();
-
-            TRACE( "Discarding idle vm %p", vm );
-            continue;
-         }
-
-         // mark the idle VM if we're not dormient.
-         // ok, we need to reclaim some memory.
-         // (try to acquire only if this is not a priority scan).
-         if ( ! bPriority && ! vm->baton().tryAcquire() )
-         {
-            m_mtx_idlevm.unlock();
-            // we're done with this VM here
-            vm->decref();
-            TRACE( "Was going to mark vm %p, but forfaited", vm );
-            // oh damn, we lost the occasion. The VM is back alive.
-            continue;
-         }
-
-         m_mtx_idlevm.unlock();
-
-         m_mtx_vms.lock();
-         // great; start mark loop -- first, set the new generation.
-         advanceGeneration( vm, oldGeneration );
-         m_mtx_vms.unlock();
-
-         TRACE( "Marking idle vm %p at %d", vm, m_generation );
-
-         // and then mark
-         markVM( vm );
-         // should notify now?
-         if ( bPriority )
-         {
-            if ( ! vm->m_bWaitForCollect )
-            {
-               bPriority = false; // disable the rest.
-               vm->m_eGCPerformed.set();
-               vm->decref();
-            }
-         }
-         else
-         {
-            // the VM is now free to go -- but it is not declared idle again.
-            vm->baton().releaseNotIdle();
-            // we're done with this VM here
-            vm->decref();
-         }
-      }
-      else
-      {
-         m_mtx_idlevm.unlock();
-      }
-
-      m_mtx_vms.lock();
-
-      // Mark of idle VM complete. See if it's useful to promote the last vm.
-      if ( state > 0 && ( m_generation - m_mingen > (unsigned) m_vmCount ) )
-      {
-         if ( m_olderVM != 0 )
-         {
-            if( m_olderVM->baton().tryAcquire() )
-            {
-               VMachine *vm = m_olderVM;
-               // great; start mark loop -- first, set the new generation.
-               advanceGeneration( vm, oldGeneration );
-               m_mtx_vms.unlock();
-
-               TRACE( "Marking oldest vm %p at %d", vm, m_generation );
-               // and then mark
-               markVM( vm );
-               // the VM is now free to go.
-               vm->baton().releaseNotIdle();
-            }
-            else
-            {
-               m_mtx_vms.unlock();
-            }
-         }
-         else
-         {
-            m_mtx_vms.unlock();
-         }
-      }
-      else
-         m_mtx_vms.unlock();
-
-      // if we have to sweep (we can claim something only if the lower VM has moved).
-      if ( oldMingen != m_mingen || bPriority || m_bRequestSweep )
-      {
-         bool signal = false;
-         m_mtxRequest.lock();
-         m_mtx_vms.lock();
-         if ( m_bRequestSweep )
-         {
-            if ( m_vmCount == 0  )
-            {
-               // be sure to clear the garbage
-               oldMingen = m_mingen;
-               m_mingen = SWEEP_GENERATION;
-               m_bRequestSweep = false;
-               signal = true;
-            }
-            else {
-               // HACK: we are not able to kill correctly VMS in multithreading in 0.9.1,
-               // so we just let the request go;
-               // we'll clean them during 0.9.1->0.9.2
-               //m_bRequestSweep = true;
-               //signal = true;
-               TRACE( "Priority with %d", m_vmCount );
-            }
-         }
-         m_mtx_vms.unlock();
-         m_mtxRequest.unlock();
-
-         // before sweeping, mark -- eventually -- the locked items.
-         markLocked();
-
-         // all is marked, we can sweep
-         gcSweep();
-
-         // should we notify about the sweep being complete?
-
-         if ( bPriority )
-         {
-            fassert( vm != 0 );
-            vm->m_eGCPerformed.set();
-            vm->decref();
-         }
-
-         if ( signal )
-         {
-            m_mingen = oldMingen;
-            m_eGCPerformed.set();
-         }
-
-         // no more use for this vm
-      }
-
-      oldGeneration = m_generation;  // spurious read is ok here (?)
-      oldMingen = m_mingen;
-#endif
+      TRACE( "Collector::run -- Working %ld on %ld items (in mode %d)",
+               (long)memory, (long) m_storedItems, state );
       
       // if we have nothing to do, we shall wait a bit.
       if( ! bMoreWork )
@@ -706,7 +505,7 @@ void* Collector::run()
       }
    }
 
-   //TRACE( "Stopping %ld", (long)gcMemAllocated() );
+   //TRACE( "Stopping %ld", (long)gcmallocated() );
    return 0;
 }
 
@@ -714,12 +513,13 @@ void* Collector::run()
 // to be called with m_mtx_vms locked
 void Collector::advanceGeneration( VMachine*, uint32 oldGeneration )
 {
-   uint32 curgen = ++m_generation;
+   uint32 curgen = ++m_currentMark;
 
    // detect here rollover.
    if ( curgen < oldGeneration || curgen >= MAX_GENERATION )
    {
-      curgen = m_generation = m_vmCount+1;
+      //TODO
+      curgen = m_currentMark;
       // perform rollover
       rollover();
 
@@ -811,7 +611,7 @@ void Collector::markLocked()
    }
 
    // mark the extracted items items
-   uint32 mark = m_generation;
+   uint32 mark = m_currentMark;
    GCLock *lock = firstLock;
    while( lock != 0 )
    {
@@ -1129,6 +929,40 @@ void Collector::clearTrace()
 }
 
 #endif
+
+
+void Collector::accountMemory( int64 memory )
+{
+   m_mtx_accountmem.lock();
+   m_storedMem += memory;
+   m_mtx_accountmem.unlock();
+}
+
+int64 Collector::storedMemory() const
+{
+   m_mtx_accountmem.lock();
+   int64 result = m_storedMem;
+   m_mtx_accountmem.unlock();
+
+   return result;
+}
+
+int64 Collector::storedItems() const
+{
+   m_mtx_accountmem.lock();
+   int64 result = m_storedItems;
+   m_mtx_accountmem.unlock();
+
+   return result;
+}
+
+void Collector::stored( int64& memory, int64& items ) const
+{
+   m_mtx_accountmem.lock();
+   memory = m_storedMem;
+   items = m_storedItems;
+   m_mtx_accountmem.unlock();
+}
 
 
 }

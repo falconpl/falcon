@@ -43,7 +43,7 @@ inline Item* allocate( length_t size )
 inline void release( Item* data )
 {
    if( data != 0 ) {
-      free( data );
+free( data );
    }
 }
 
@@ -256,7 +256,7 @@ bool ItemArray::insert( const Item &ndata, length_t pos )
 
       mem[ pos ] = ndata;
       m_size++;
-      free( m_data );
+free( m_data );
       m_data = mem;
    }
    else {

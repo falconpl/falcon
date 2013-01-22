@@ -1133,7 +1133,7 @@ FALCON_FUNC TextBuffer::get_iter_at_line_offset( VMARG )
         || !i_off || i_off->isNil() || !i_off->isInteger() )
         throw_inv_params( "I,I" );
 #endif
-    GtkTextIter* iter = (GtkTextIter*) memAlloc( sizeof( GtkTextIter ) );
+    GtkTextIter* iter = (GtkTextIter*) malloc( sizeof( GtkTextIter ) );
     MYSELF;
     GET_OBJ( self );
     gtk_text_buffer_get_iter_at_line_offset( (GtkTextBuffer*)_obj, iter,
@@ -1159,7 +1159,7 @@ FALCON_FUNC TextBuffer::get_iter_at_offset( VMARG )
     if ( !i_off || i_off->isNil() || !i_off->isInteger() )
         throw_inv_params( "I" );
 #endif
-    GtkTextIter* iter = (GtkTextIter*) memAlloc( sizeof( GtkTextIter ) );
+    GtkTextIter* iter = (GtkTextIter*) malloc( sizeof( GtkTextIter ) );
     MYSELF;
     GET_OBJ( self );
     gtk_text_buffer_get_iter_at_offset( (GtkTextBuffer*)_obj, iter, i_off->asInteger() );
@@ -1180,7 +1180,7 @@ FALCON_FUNC TextBuffer::get_iter_at_line( VMARG )
     if ( !i_num || i_num->isNil() || !i_num->isInteger() )
         throw_inv_params( "I" );
 #endif
-    GtkTextIter* iter = (GtkTextIter*) memAlloc( sizeof( GtkTextIter ) );
+    GtkTextIter* iter = (GtkTextIter*) malloc( sizeof( GtkTextIter ) );
     MYSELF;
     GET_OBJ( self );
     gtk_text_buffer_get_iter_at_line( (GtkTextBuffer*)_obj, iter, i_num->asInteger() );
@@ -1208,7 +1208,7 @@ FALCON_FUNC TextBuffer::get_iter_at_line_index( VMARG )
         || !i_off || i_off->isNil() || !i_off->isInteger() )
         throw_inv_params( "I,I" );
 #endif
-    GtkTextIter* iter = (GtkTextIter*) memAlloc( sizeof( GtkTextIter ) );
+    GtkTextIter* iter = (GtkTextIter*) malloc( sizeof( GtkTextIter ) );
     MYSELF;
     GET_OBJ( self );
     gtk_text_buffer_get_iter_at_line_index( (GtkTextBuffer*)_obj, iter,
@@ -1233,7 +1233,7 @@ FALCON_FUNC TextBuffer::get_iter_at_line_index( VMARG )
 FALCON_FUNC TextBuffer::get_start_iter( VMARG )
 {
     NO_ARGS
-    GtkTextIter* iter = (GtkTextIter*) memAlloc( sizeof( GtkTextIter ) );
+    GtkTextIter* iter = (GtkTextIter*) malloc( sizeof( GtkTextIter ) );
     MYSELF;
     GET_OBJ( self );
     gtk_text_buffer_get_start_iter( (GtkTextBuffer*)_obj, iter );
@@ -1254,7 +1254,7 @@ FALCON_FUNC TextBuffer::get_start_iter( VMARG )
 FALCON_FUNC TextBuffer::get_end_iter( VMARG )
 {
     NO_ARGS
-    GtkTextIter* iter = (GtkTextIter*) memAlloc( sizeof( GtkTextIter ) );
+    GtkTextIter* iter = (GtkTextIter*) malloc( sizeof( GtkTextIter ) );
     MYSELF;
     GET_OBJ( self );
     gtk_text_buffer_get_end_iter( (GtkTextBuffer*)_obj, iter );
@@ -1270,8 +1270,8 @@ FALCON_FUNC TextBuffer::get_end_iter( VMARG )
 FALCON_FUNC TextBuffer::get_bounds( VMARG )
 {
     NO_ARGS
-    GtkTextIter* start = (GtkTextIter*) memAlloc( sizeof( GtkTextIter ) );
-    GtkTextIter* end = (GtkTextIter*) memAlloc( sizeof( GtkTextIter ) );
+    GtkTextIter* start = (GtkTextIter*) malloc( sizeof( GtkTextIter ) );
+    GtkTextIter* end = (GtkTextIter*) malloc( sizeof( GtkTextIter ) );
     MYSELF;
     GET_OBJ( self );
     gtk_text_buffer_get_bounds( (GtkTextBuffer*)_obj, start, end );
@@ -1365,8 +1365,8 @@ FALCON_FUNC TextBuffer::delete_selection( VMARG )
 FALCON_FUNC TextBuffer::get_selection_bounds( VMARG )
 {
     NO_ARGS
-    GtkTextIter* start = (GtkTextIter*) memAlloc( sizeof( GtkTextIter ) );
-    GtkTextIter* end = (GtkTextIter*) memAlloc( sizeof( GtkTextIter ) );
+    GtkTextIter* start = (GtkTextIter*) malloc( sizeof( GtkTextIter ) );
+    GtkTextIter* end = (GtkTextIter*) malloc( sizeof( GtkTextIter ) );
     MYSELF;
     GET_OBJ( self );
     gboolean res = gtk_text_buffer_get_selection_bounds( (GtkTextBuffer*)_obj, start, end );
@@ -1381,8 +1381,8 @@ FALCON_FUNC TextBuffer::get_selection_bounds( VMARG )
     }
     else
     {
-        memFree( start );
-        memFree( end );
+        free( start );
+        free( end );
         arr->append( Item() );
         arr->append( Item() );
     }

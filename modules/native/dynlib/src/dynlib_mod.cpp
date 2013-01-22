@@ -989,8 +989,8 @@ ParamValueList::~ParamValueList()
 {
    if( m_compiledParams )
    {
-      memFree( m_compiledParams );
-      memFree( m_compiledSizes );
+      free( m_compiledParams );
+      free( m_compiledSizes );
    }
 
    ParamValue* p = m_head;
@@ -1027,15 +1027,15 @@ void ParamValueList::compile()
 {
    if( m_compiledParams )
    {
-      memFree( m_compiledParams );
-      memFree( m_compiledSizes );
+      free( m_compiledParams );
+      free( m_compiledSizes );
    }
 
-   m_compiledSizes = (int*) memAlloc( sizeof(int) * (m_size+1) );
+   m_compiledSizes = (int*) malloc( sizeof(int) * (m_size+1) );
 
    if ( m_head != 0 )
    {
-      m_compiledParams = (void**) memAlloc( sizeof(void*) * m_size );
+      m_compiledParams = (void**) malloc( sizeof(void*) * m_size );
 
       int count = 0;
       ParamValue* p = m_head;

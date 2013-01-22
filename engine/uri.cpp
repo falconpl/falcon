@@ -14,7 +14,6 @@
 */
 
 #include <falcon/uri.h>
-#include <falcon/memory.h>
 #include <falcon/engine.h>
 #include <falcon/autocstring.h>
 #include <falcon/path.h>
@@ -595,7 +594,7 @@ void URI::URLEncodePath( const String &source, String &target )
 bool URI::URLDecode( const String &source, String &target )
 {
    // the target buffer can be - at worst - long as the source.
-   char *tgbuf = (char *) memAlloc( source.length() + 1 );
+   char *tgbuf = (char *) malloc( source.length() + 1 );
    char *pos = tgbuf;
    bool bOk = true;
 
@@ -645,7 +644,7 @@ bool URI::URLDecode( const String &source, String &target )
       target.fromUTF8( tgbuf );
    }
 
-   memFree( tgbuf );
+   free( tgbuf );
    return bOk;
 }
 

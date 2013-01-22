@@ -65,13 +65,13 @@ MyDBIInBind::MyDBIInBind( MYSQL_STMT* stmt ):
 
 MyDBIInBind::~MyDBIInBind()
 {
-   memFree( m_mybind );
+   free( m_mybind );
 }
 
 
 void MyDBIInBind::onFirstBinding( int size )
 {
-   m_mybind = (MYSQL_BIND*) memAlloc( sizeof(MYSQL_BIND) * size );
+   m_mybind = (MYSQL_BIND*) malloc( sizeof(MYSQL_BIND) * size );
    memset( m_mybind, 0, sizeof(MYSQL_BIND) * size );
 }
 
@@ -217,7 +217,7 @@ DBIRecordsetMySQL_STMT::DBIRecordsetMySQL_STMT( DBIHandleMySQL *dbh, MYSQL_RES *
 void DBIRecordsetMySQL_STMT::init()
 {
    // bind the output values
-   m_pMyBind = (MYSQL_BIND*) memAlloc( sizeof( MYSQL_BIND ) * m_columnCount );
+   m_pMyBind = (MYSQL_BIND*) malloc( sizeof( MYSQL_BIND ) * m_columnCount );
    memset( m_pMyBind, 0, sizeof( MYSQL_BIND ) * m_columnCount );
    m_pOutBind = new MyDBIOutBind[ m_columnCount ];
 
@@ -278,7 +278,7 @@ DBIRecordsetMySQL_STMT::~DBIRecordsetMySQL_STMT()
 {
    close();
 
-   memFree( m_pMyBind );
+   free( m_pMyBind );
    delete m_pOutBind;
    delete[] m_pBlobId;
 }
@@ -427,7 +427,7 @@ bool DBIRecordsetMySQL_STMT::getColumnValue( int nCol, Item& value )
             value = new MemBuf_1(
                (byte*) outbind.getMemory(),
                dlen,
-               memFree );
+               free( );
          }
       }
       else
@@ -667,9 +667,9 @@ bool DBIRecordsetMySQL_RES::getColumnValue( int nCol, Item& value )
       if( m_fields[nCol].flags & BINARY_FLAG ) // sic -- from manual
       {
          unsigned long* lengths = mysql_fetch_lengths( m_res );
-         byte* mem = (byte*) memAlloc( lengths[nCol] );
+         byte* mem = (byte*) malloc( lengths[nCol] );
          memcpy( mem, data, lengths[nCol] );
-         value = new MemBuf_1( mem, lengths[nCol], memFree );
+         value = new MemBuf_1( mem, lengths[nCol], free( );
       }
       else
       {
@@ -799,9 +799,9 @@ bool DBIRecordsetMySQL_RES_STR::getColumnValue( int nCol, Item& value )
    else if( m_fields[nCol].charsetnr == 63 && IS_LONGDATA(m_fields[nCol].type ) ) // sic -- from manual
    {
       unsigned long* lengths = mysql_fetch_lengths( m_res );
-      byte* mem = (byte*) memAlloc( lengths[nCol] );
+      byte* mem = (byte*) malloc( lengths[nCol] );
       memcpy( mem, data, lengths[nCol] );
-      value = new MemBuf_1( mem, lengths[nCol], memFree );
+      value = new MemBuf_1( mem, lengths[nCol], free( );
    }
    else
    {

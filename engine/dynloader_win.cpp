@@ -37,7 +37,7 @@ Module* DynLoader::load_sys( const String& filePath )
    Path::uriToWin( dll_name );
 
    uint32 bufsize = dll_name.length() * sizeof( wchar_t ) + sizeof( wchar_t );
-   wchar_t *dll_name_wc = (wchar_t *) memAlloc( bufsize );
+   wchar_t *dll_name_wc = (wchar_t *) malloc( bufsize );
    dll_name.toWideString( dll_name_wc, bufsize );
 
    HMODULE module = LoadLibraryW( dll_name_wc );
@@ -54,7 +54,7 @@ Module* DynLoader::load_sys( const String& filePath )
       }
    }
 
-   memFree( dll_name_wc );
+   free( dll_name_wc );
 
    if ( module == NULL )
    {

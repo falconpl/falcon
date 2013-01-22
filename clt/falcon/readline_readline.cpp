@@ -34,7 +34,7 @@ bool IntMode::read_line( const String& prompt, String &line )
         line += buf;
         add_history(buf);
      }
-     free(buf);
+free(buf);
      return true;
    }
    else 

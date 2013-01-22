@@ -69,7 +69,7 @@ ODBCInBind::~ODBCInBind()
    // we don't own the handlers
    if ( m_pLenInd != 0 )
    {
-      memFree( m_pLenInd );
+      free( m_pLenInd );
    }
 
    /*if( m_pColInfo != 0 )
@@ -82,7 +82,7 @@ ODBCInBind::~ODBCInBind()
 
 void ODBCInBind::onFirstBinding( int size )
 {
-   m_pLenInd = (SQLLEN *) memAlloc( sizeof(SQLINTEGER) * size );
+   m_pLenInd = (SQLLEN *) malloc( sizeof(SQLINTEGER) * size );
    memset( m_pLenInd, 0, sizeof(SQLLEN ) * size );
    //m_pColInfo = new ODBCColInfo[ size ];
 }
@@ -415,7 +415,7 @@ bool DBIRecordsetODBC::getColumnValue( int nCol, Item& value )
          {
             // we must account for an extra '0' put in by ODBC
             uint32 alloc = ExpSize+sizeof(wchar_t);
-            wchar_t *cStr = (wchar_t*) memAlloc( alloc );  
+            wchar_t *cStr = (wchar_t*) malloc( alloc );  
             ret = SQLGetData( hStmt, nCol+1, SQL_C_WCHAR, cStr, alloc, &nSize);
 
             // save the data even in case we had an error, or we'll leak

@@ -145,7 +145,7 @@ FALCON_FUNC Region::polygon( VMARG )
     {
         Item pt;
         GdkPoint* tmp;
-        GdkPoint* points = (GdkPoint*) memAlloc( cnt * sizeof( GdkPoint ) );
+        GdkPoint* points = (GdkPoint*) malloc( cnt * sizeof( GdkPoint ) );
         assert( points );
         for ( uint32 i = 0; i < cnt; ++i )
         {
@@ -153,7 +153,7 @@ FALCON_FUNC Region::polygon( VMARG )
 #ifndef NO_PARAMETER_CHECK
             if ( !pt.isObject() || !IS_DERIVED( &pt, GdkPoint ) )
             {
-                memFree( points );
+                free( points );
                 throw_inv_params( spec );
             }
 #endif
@@ -161,7 +161,7 @@ FALCON_FUNC Region::polygon( VMARG )
             memcpy( &points[i], tmp, sizeof( GdkPoint ) );
         }
         ret = gdk_region_polygon( points, cnt, (GdkFillRule) i_rule->asInteger() );
-        memFree( points );
+        free( points );
     }
     assert( ret );
     vm->retval( new Gdk::Region( vm->findWKI( "GdkRegion" )->asClass(), ret,

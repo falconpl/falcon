@@ -19,7 +19,6 @@
 
 #include "regex_mod.h"
 #include <stdio.h>
-#include <falcon/memory.h>
 
 namespace Falcon {
 
@@ -46,7 +45,7 @@ void RegexCarrier::init( pcre *pattern)
 
 RegexCarrier::~RegexCarrier()
 {
-   free( m_ovector );
+free( m_ovector );
 
    pcre_free( m_pattern );
 

@@ -994,7 +994,7 @@ FALCON_FUNC SDLRect_init( ::Falcon::VMachine *vm )
       return;
    }
 
-   SDL_Rect* r = (SDL_Rect*) memAlloc( sizeof( SDL_Rect ) );
+   SDL_Rect* r = (SDL_Rect*) malloc( sizeof( SDL_Rect ) );
    vm->self().asObject()->setUserData(r);
    r->x = i_x == 0 ? 0 : i_x->forceInteger();
    r->y = i_y == 0 ? 0 : i_y->forceInteger();
@@ -1021,7 +1021,7 @@ FALCON_FUNC SDLColor_init( VMachine *vm )
       return;
    }
 
-   SDL_Color* c = (SDL_Color*) memAlloc( sizeof( SDL_Color ) );
+   SDL_Color* c = (SDL_Color*) malloc( sizeof( SDL_Color ) );
    vm->self().asObject()->setUserData( c );
    c->r = i_r->forceInteger();
    c->g = i_g->forceInteger();

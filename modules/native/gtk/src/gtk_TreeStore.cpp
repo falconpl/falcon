@@ -109,7 +109,7 @@ FALCON_FUNC TreeStore::init( VMARG )
         throw_inv_params( "Non-empty array" ); // todo: translate
     else
     {
-        GType* types = (GType*) memAlloc( sizeof( GType ) * ncol );
+        GType* types = (GType*) malloc( sizeof( GType ) * ncol );
         Item it;
         for ( int i = 0; i < ncol; ++i )
         {
@@ -117,14 +117,14 @@ FALCON_FUNC TreeStore::init( VMARG )
 #ifndef NO_PARAMETER_CHECK
             if ( !it.isInteger() )
             {
-                memFree( types );
+                free( types );
                 throw_inv_params( "GType" );
             }
 #endif
             types[i] = it.asInteger();
         }
         tree = gtk_tree_store_newv( ncol, types );
-        memFree( types );
+        free( types );
     }
     MYSELF;
     self->setObject( (GObject*) tree );
@@ -157,7 +157,7 @@ FALCON_FUNC TreeStore::set_column_types( VMARG )
         gtk_tree_store_set_column_types( (GtkTreeStore*)_obj, 0, NULL );
     else
     {
-        GType* types = (GType*) memAlloc( sizeof( GType ) * ncol );
+        GType* types = (GType*) malloc( sizeof( GType ) * ncol );
         Item it;
         for ( int i = 0; i < ncol; ++i )
         {
@@ -165,14 +165,14 @@ FALCON_FUNC TreeStore::set_column_types( VMARG )
 #ifndef NO_PARAMETER_CHECK
             if ( !it.isInteger() )
             {
-                memFree( types );
+                free( types );
                 throw_inv_params( "GType" );
             }
 #endif
             types[i] = it.asInteger();
         }
         gtk_tree_store_set_column_types( (GtkTreeStore*)_obj, ncol, types );
-        memFree( types );
+        free( types );
     }
 }
 
@@ -278,8 +278,8 @@ FALCON_FUNC TreeStore::set( VMARG )
     else
     {
         const int npairs = n / 2;
-        gint* indexes = (gint*) memAlloc( sizeof( gint ) * npairs );
-        GValue* values = (GValue*) memAlloc( sizeof( GValue ) * npairs );
+        gint* indexes = (gint*) malloc( sizeof( gint ) * npairs );
+        GValue* values = (GValue*) malloc( sizeof( GValue ) * npairs );
         Item it;
         for ( int i = 0; i < n; i += 2 )
         {
@@ -288,8 +288,8 @@ FALCON_FUNC TreeStore::set( VMARG )
 #ifndef NO_PARAMETER_CHECK
             if ( !it.isInteger() )
             {
-                memFree( indexes );
-                memFree( values );
+                free( indexes );
+                free( values );
                 throw_inv_params( "I" );
             }
 #endif
@@ -325,8 +325,8 @@ FALCON_FUNC TreeStore::set( VMARG )
 #ifndef NO_PARAMETER_CHECK
                 if ( !IS_DERIVED( &it, GObject ) )
                 {
-                    memFree( indexes );
-                    memFree( values );
+                    free( indexes );
+                    free( values );
                     throw_inv_params( "GObject" );
                 }
 #endif
@@ -336,15 +336,15 @@ FALCON_FUNC TreeStore::set( VMARG )
                 break;
             }
             default:
-                memFree( indexes );
-                memFree( values );
+                free( indexes );
+                free( values );
                 throw_inv_params( "Not implemented" );
             }
         }
         gtk_tree_store_set_valuesv( (GtkTreeStore*)_obj,
                                     iter, indexes, values, npairs );
-        memFree( indexes );
-        memFree( values );
+        free( indexes );
+        free( values );
     }
 }
 
@@ -538,8 +538,8 @@ FALCON_FUNC TreeStore::insert_with_values( VMARG )
     else
     {
         const int npairs = n / 2;
-        gint* indexes = (gint*) memAlloc( sizeof( gint ) * npairs );
-        GValue* values = (GValue*) memAlloc( sizeof( GValue ) * npairs );
+        gint* indexes = (gint*) malloc( sizeof( gint ) * npairs );
+        GValue* values = (GValue*) malloc( sizeof( GValue ) * npairs );
         Item it;
         for ( int i = 0; i < n; i += 2 )
         {
@@ -548,8 +548,8 @@ FALCON_FUNC TreeStore::insert_with_values( VMARG )
 #ifndef NO_PARAMETER_CHECK
             if ( !it.isInteger() )
             {
-                memFree( indexes );
-                memFree( values );
+                free( indexes );
+                free( values );
                 throw_inv_params( "I" );
             }
 #endif
@@ -585,8 +585,8 @@ FALCON_FUNC TreeStore::insert_with_values( VMARG )
 #ifndef NO_PARAMETER_CHECK
                 if ( !IS_DERIVED( &it, GObject ) )
                 {
-                    memFree( indexes );
-                    memFree( values );
+                    free( indexes );
+                    free( values );
                     throw_inv_params( "GObject" );
                 }
 #endif
@@ -596,15 +596,15 @@ FALCON_FUNC TreeStore::insert_with_values( VMARG )
                 break;
             }
             default:
-                memFree( indexes );
-                memFree( values );
+                free( indexes );
+                free( values );
                 throw_inv_params( "Not implemented" );
             }
         }
         gtk_tree_store_insert_with_valuesv( (GtkTreeStore*)_obj,
                         iter, par, i_pos->asInteger(), indexes, values, npairs );
-        memFree( indexes );
-        memFree( values );
+        free( indexes );
+        free( values );
     }
 }
 
@@ -785,7 +785,7 @@ FALCON_FUNC TreeStore::reorder( VMARG )
     if ( n == 0 )
         throw_inv_params( "Non-empty array" ); // todo: translate
 #endif
-    gint* order = (gint*) memAlloc( sizeof( gint ) * n );
+    gint* order = (gint*) malloc( sizeof( gint ) * n );
     Item it;
     for ( int i = 0; i < n; ++i )
     {
@@ -793,7 +793,7 @@ FALCON_FUNC TreeStore::reorder( VMARG )
 #ifndef NO_PARAMETER_CHECK
         if ( !it.isInteger() )
         {
-            memFree( order );
+            free( order );
             throw_inv_params( "I" );
         }
 #endif
@@ -802,7 +802,7 @@ FALCON_FUNC TreeStore::reorder( VMARG )
     MYSELF;
     GET_OBJ( self );
     gtk_tree_store_reorder( (GtkTreeStore*)_obj, par, order );
-    memFree( order );
+    free( order );
 }
 
 

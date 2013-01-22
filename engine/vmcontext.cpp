@@ -91,6 +91,7 @@ VMContext::VMContext( Process* prc, ContextGroup* grp ):
    FinallyData& dt = *m_finallyStack.addSlot();
    dt.m_depth = 0;
    dt.m_finstep = 0;
+   m_currentMark = 0;
 
    m_acquired = 0;
    atomicSet(m_events,0);
@@ -1450,6 +1451,57 @@ void VMContext::terminated()
       else {
          // we're the main context.
          m_process->completed();
+      }
+   }
+}
+
+
+void VMContext::gcMark( uint32 mark )
+{
+   if( m_currentMark < mark )
+   {
+      m_currentMark = mark;
+      // first, mark the items.
+      {
+         Item* base = m_dataStack.m_base;
+         while( base <= m_dataStack.m_top ) {
+            base->gcMark(mark);
+            ++base;
+         }
+      }
+
+      // then, the symbols.
+      {
+         DynsData* base = m_dynsStack.m_base;
+         while( base <= m_dynsStack.m_top ) {
+            if( base->m_value != 0 ) {
+               base->m_value->gcMark(mark);
+            }
+            ++base;
+         }
+      }
+
+      // items in call frames
+      {
+         CallFrame* base = m_callStack.m_base;
+         while( base <= m_callStack.m_top )
+         {
+            base->m_self.gcMark(mark);
+            base->m_function->gcMark(mark);
+
+            if( base->m_closingData != 0 ) {
+               base->m_closingData->gcMark(mark);
+            }
+            if( base->m_closure != 0 ) {
+               base->m_closure->gcMark(mark);
+            }
+            ++base;
+         }
+      }
+
+      // then, other various elements.
+      {
+         m_regA.gcMark(mark);
       }
    }
 }

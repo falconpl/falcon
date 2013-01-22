@@ -404,7 +404,7 @@ Engine::~Engine()
 {
    MESSAGE( "Engine destruction started" );
 
-   m_collector->stop();
+   m_collector->stop();  // will be deleted later
    
    /** Bye bye core... */
    m_core->decref();
@@ -485,9 +485,7 @@ void Engine::init()
    if( m_instance == 0 )
    {
       m_instance = new Engine;
-
-      // TODO
-      // m_instance->collector()->start();
+      m_instance->collector()->start();
    }
 }
 

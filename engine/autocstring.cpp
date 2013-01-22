@@ -20,6 +20,7 @@
 #include <falcon/autocstring.h>
 #include <falcon/item.h>
 #include <falcon/vm.h>
+#include <falcon/vm.h>
 
 namespace Falcon {
 
@@ -47,7 +48,7 @@ const char* AutoCString::bom_str()
 AutoCString::~AutoCString()
 {
    if ( m_pData != 0 && m_pData != m_buffer )
-      free( m_pData );
+free( m_pData );
 }
 
 
@@ -55,7 +56,7 @@ void AutoCString::set( const Falcon::String &str )
 {
    // remove m_pData
    if( m_pData != 0 && m_pData != m_buffer )
-      free( m_pData );
+free( m_pData );
 
    if ( (m_len = str.toCString( m_buffer+3, AutoCString_BUF_SPACE-3 ) ) != String::npos )
    {

@@ -306,7 +306,7 @@ FALCON_FUNC TreeRowReference::reordered( VMARG )
     GtkTreeIter* iter = GET_TREEITER( *i_iter );
     CoreArray* order = i_order->asArray();
     const int cnt = order->length();
-    gint* norder = (gint*) memAlloc( sizeof( gint ) * cnt );
+    gint* norder = (gint*) malloc( sizeof( gint ) * cnt );
     Item it;
     for ( int i = 0; i < cnt; ++i )
     {
@@ -314,14 +314,14 @@ FALCON_FUNC TreeRowReference::reordered( VMARG )
 #ifndef NO_PARAMETER_CHECK
         if ( !it.isInteger() )
         {
-            memFree( norder );
+            free( norder );
             throw_inv_params( "I" );
         }
 #endif
         norder[i] = it.asInteger();
     }
     gtk_tree_row_reference_reordered( proxy, path, iter, norder );
-    memFree( norder );
+    free( norder );
 }
 
 

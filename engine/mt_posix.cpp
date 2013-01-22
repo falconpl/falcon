@@ -18,9 +18,9 @@
 
 // this for gettimeofday on macosx
 #include <sys/time.h>
+#include <malloc.h>
 
 #include <falcon/mt.h>
-#include <falcon/memory.h>
 
 namespace Falcon
 {
@@ -96,6 +96,10 @@ bool Event::wait( int32 to )
 
       ts.tv_nsec = (tv.tv_usec + ((to%1000)*1000))*1000;
       ts.tv_sec = tv.tv_sec + (to/1000);
+      if( ts.tv_nsec > 1000000000 ) {
+         ts.tv_sec++;
+         ts.tv_nsec -= 1000000000;
+      }
       pthread_mutex_lock( &m_mtx );
 
       while( ! m_bIsSet ) {
@@ -122,13 +126,13 @@ bool Event::wait( int32 to )
 SysThread::~SysThread()
 {
    pthread_mutex_destroy( &m_sysdata->m_mtxT );
-   memFree( m_sysdata );
+   free( m_sysdata );
 }
 
 SysThread::SysThread( Runnable* r ):
    m_runnable( r )
 {
-   m_sysdata = ( struct SYSTH_DATA* ) memAlloc( sizeof( struct SYSTH_DATA ) );
+   m_sysdata = ( struct SYSTH_DATA* ) malloc( sizeof( struct SYSTH_DATA ) );
    m_sysdata->m_bDetached = false;
    m_sysdata->m_bDone = false;
    m_sysdata->m_lastError = 0;

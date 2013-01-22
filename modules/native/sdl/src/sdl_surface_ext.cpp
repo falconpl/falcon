@@ -848,7 +848,7 @@ FALCON_FUNC SDLScreen_UpdateRects( ::Falcon::VMachine *vm )
    // Spare memory allocating only when necessary
    SDL_Rect *rects = len <= 16 ?
          buffer :
-         (SDL_Rect *) memAlloc( sizeof( SDL_Rect ) * len );
+         (SDL_Rect *) malloc( sizeof( SDL_Rect ) * len );
 
    for( uint32 i = 0; i < len; i++ )
    {
@@ -856,8 +856,8 @@ FALCON_FUNC SDLScreen_UpdateRects( ::Falcon::VMachine *vm )
       Item &obj = aRect->at( i );
       if ( ! obj.isObject() || ! obj.asObject()->derivedFrom( "SDLRect" ) )
       {
-         if ( len > 16 ) // free only if we used memAlloc
-            memFree( rects );
+         if ( len > 16 ) // free only if we used malloc
+            free( rects );
          throw new ParamError( ErrorParam( e_param_type, __LINE__ ).
             extra( "A->SDLRect" ) ) ;
          return;
@@ -871,7 +871,7 @@ FALCON_FUNC SDLScreen_UpdateRects( ::Falcon::VMachine *vm )
 
    // free memory if we have allocated it.
    if( len > 16 )
-      memFree( rects );
+      free( rects );
 }
 
 /*#

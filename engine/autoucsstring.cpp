@@ -39,14 +39,14 @@ AutoUCSString::AutoUCSString( const String &str, uint16 defChar ):
 AutoUCSString::~AutoUCSString()
 {
    if ( m_pData != 0 && m_pData != m_buffer )
-      memFree( m_pData );
+      free( m_pData );
 }
 
 
 void AutoUCSString::set( const Falcon::String &str, uint16 defChar )
 {
    if ( m_pData != 0 && m_pData != m_buffer )
-        memFree( m_pData );
+        free( m_pData );
 
    m_len = str.length();
    if ( m_len + 1 <= AutoUCSString_BUF_SPACE )
@@ -56,7 +56,7 @@ void AutoUCSString::set( const Falcon::String &str, uint16 defChar )
    else
    {
       Falcon::uint32 size = (m_len + 1) * sizeof(uint16);
-      m_pData = (uint16 *) memAlloc( size );
+      m_pData = (uint16 *) malloc( size );
    }
 
    for( uint32 i = 0; i < m_len; ++i )

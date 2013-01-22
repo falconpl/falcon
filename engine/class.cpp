@@ -113,7 +113,10 @@ void* Class::getParentData( Class* parent, void* data ) const
    return 0;
 }
 
-
+int64 Class::occupiedMemory( void* ) const
+{
+   return 0;
+}
  
 void Class::store( VMContext*, DataWriter*, void* ) const
 {

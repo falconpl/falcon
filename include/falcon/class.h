@@ -255,6 +255,12 @@ public:
    //=========================================
    // Instance management
 
+   /** Return a possibly accurate esteem of the memory used by this instance.
+    *
+    * By default, this method returns 0
+    */
+   virtual int64 occupiedMemory( void* instance ) const;
+
    /** Disposes an instance.
     \param instance The instance to be disposed of.
     \note Actually, the disposal might be a dereference if necessary.

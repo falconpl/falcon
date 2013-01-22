@@ -37,6 +37,7 @@ public:
    ClassString();
    virtual ~ClassString();
 
+   virtual int64 occupiedMemory( void* instance ) const;
    virtual void dispose( void* self ) const;
    virtual void* clone( void* source ) const;
    virtual void* createInstance() const;

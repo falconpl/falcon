@@ -199,12 +199,12 @@ CoreObject* SDLRect_Factory( const CoreClass *cls, void *user_data, bool )
 
 SDLRectCarrier::~SDLRectCarrier()
 {
-   memFree( rect() );
+   free( rect() );
 }
 
 SDLRectCarrier* SDLRectCarrier::clone() const
 {
-   SDL_Rect* r = (SDL_Rect*) memAlloc( sizeof( SDL_Rect ) );
+   SDL_Rect* r = (SDL_Rect*) malloc( sizeof( SDL_Rect ) );
    *r = *rect();
    return new SDLRectCarrier( generator(), r );
 }
@@ -221,12 +221,12 @@ CoreObject* SDLColor_Factory( const CoreClass *cls, void *user_data, bool )
 
 SDLColorCarrier::~SDLColorCarrier()
 {
-   memFree( color() );
+   free( color() );
 }
 
 SDLColorCarrier* SDLColorCarrier::clone() const
 {
-   SDL_Color* c = (SDL_Color*) memAlloc( sizeof( SDL_Color ) );
+   SDL_Color* c = (SDL_Color*) malloc( sizeof( SDL_Color ) );
    *c = *color();
    return new SDLColorCarrier( generator(), c );
 }
@@ -268,7 +268,7 @@ CoreObject *MakeRectInst( VMachine *vm, const ::SDL_Rect &rect )
 {
    Item *cls = vm->findWKI( "SDLRect" );
    fassert( cls != 0 );
-   SDL_Rect* nrect = (SDL_Rect*) memAlloc( sizeof( SDL_Rect ) );
+   SDL_Rect* nrect = (SDL_Rect*) malloc( sizeof( SDL_Rect ) );
    memcpy( nrect, &rect, sizeof( SDL_Rect ) );
 
    CoreObject *obj = cls->asClass()->createInstance( nrect );

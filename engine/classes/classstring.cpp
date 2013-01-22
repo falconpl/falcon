@@ -44,6 +44,12 @@ ClassString::~ClassString()
 {
 }
 
+int64 ClassString::occupiedMemory( void* instance ) const
+{
+   String* s = static_cast<String*>( instance );
+   return sizeof(String) + s->allocated();
+}
+
 
 void ClassString::dispose( void* self ) const
 {

@@ -125,7 +125,7 @@ FALCON_DEFINE_FUNCTION_P1( compress )
       // Buffer too small? -- try to enlarge it.
       if ( err == Z_BUF_ERROR )
       {
-         free( compData );
+free( compData );
          compLen += dataLen/2;
          allocLen = compLen;
          compData = (Bytef *) malloc( compLen );
@@ -151,7 +151,7 @@ FALCON_DEFINE_FUNCTION_P1( compress )
       allocLen = compLen;
    }
 
-   //MemBuf *result = new MemBuf_1( compData, allocLen, memFree );
+   //MemBuf *result = new MemBuf_1( compData, allocLen, free( );
    //ctx->returnFrame( result );
 }
 
@@ -200,7 +200,7 @@ FALCON_DEFINE_FUNCTION_P1( compressText )
       // Buffer too small? -- try to enlarge it.
       if ( err == Z_BUF_ERROR )
       {
-         free( compData );
+free( compData );
          compLen += dataLen/2;
          allocLen = compLen;
          compData[0] = (Bytef) dataI->asString()->manipulator()->charSize();
@@ -231,7 +231,7 @@ FALCON_DEFINE_FUNCTION_P1( compressText )
       allocLen = compLen + 5;
    }
 
-   //MemBuf *result = new MemBuf_1( compData, allocLen, memFree );
+   //MemBuf *result = new MemBuf_1( compData, allocLen, free( );
    //ctx->returnFrame( result );
 }
 
@@ -292,7 +292,7 @@ FALCON_DEFINE_FUNCTION_P1( uncompress )
          // try with a larger buffer
          compLen += dataInSize < 512 ? 512 : dataInSize * 2;
          allocLen = compLen;
-         free( compData );
+free( compData );
          compData = (Bytef *) malloc( compLen );
       }
       else
@@ -312,7 +312,7 @@ FALCON_DEFINE_FUNCTION_P1( uncompress )
       allocLen = compLen;
    }
 
-   //MemBuf *result = new MemBuf_1( compData, allocLen, memFree );
+   //MemBuf *result = new MemBuf_1( compData, allocLen, free( );
    //ctx->returnFrame( result );
 }
 

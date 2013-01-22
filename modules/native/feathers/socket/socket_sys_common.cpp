@@ -51,7 +51,7 @@ Socket::~Socket()
    {
       // ungraceful close.
       terminate();
-      memFree( (void*)m_refcount );
+      free( (void*)m_refcount );
    }
 }
 

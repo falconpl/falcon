@@ -414,7 +414,7 @@ FALCON_FUNC TextView::get_iter_at_location( VMARG )
 #endif
     MYSELF;
     GET_OBJ( self );
-    GtkTextIter* iter = (GtkTextIter*) memAlloc( sizeof( GtkTextIter ) );
+    GtkTextIter* iter = (GtkTextIter*) malloc( sizeof( GtkTextIter ) );
     gtk_text_view_get_iter_at_location( (GtkTextView*)_obj, iter,
             i_x->asInteger(), i_y->asInteger() );
     vm->retval( new Gtk::TextIter( vm->findWKI( "GtkTextIter" )->asClass(), iter ) );
@@ -446,7 +446,7 @@ FALCON_FUNC TextView::get_iter_at_position( VMARG )
 #endif
     MYSELF;
     GET_OBJ( self );
-    GtkTextIter* iter = (GtkTextIter*) memAlloc( sizeof( GtkTextIter ) );
+    GtkTextIter* iter = (GtkTextIter*) malloc( sizeof( GtkTextIter ) );
     gint trailing;
 
     gtk_text_view_get_iter_at_position( (GtkTextView*)_obj,

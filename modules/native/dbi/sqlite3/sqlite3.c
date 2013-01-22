@@ -12972,7 +12972,7 @@ static void *sqlite3MemMalloc(int nByte){
   sqlite3_int64 *p;
   assert( nByte>0 );
   nByte = ROUND8(nByte);
-  p = malloc( nByte+8 );
+  p = memAlloc( nByte+8 );
   if( p ){
     p[0] = nByte;
     p++;
@@ -13336,7 +13336,7 @@ static void *sqlite3MemMalloc(int nByte){
   nReserve = ROUND8(nByte);
   totalSize = nReserve + sizeof(*pHdr) + sizeof(int) +
                mem.nBacktrace*sizeof(void*) + mem.nTitle;
-  p = malloc(totalSize);
+  p = memAlloc(totalSize);
   if( p ){
     z = p;
     pBt = (void**)&z[mem.nTitle];
@@ -28244,7 +28244,7 @@ static WCHAR *utf8ToUnicode(const char *zFilename){
   WCHAR *zWideFilename;
 
   nChar = MultiByteToWideChar(CP_UTF8, 0, zFilename, -1, NULL, 0);
-  zWideFilename = malloc( nChar*sizeof(zWideFilename[0]) );
+  zWideFilename = memAlloc( nChar*sizeof(zWideFilename[0]) );
   if( zWideFilename==0 ){
     return 0;
   }
@@ -28265,7 +28265,7 @@ static char *unicodeToUtf8(const WCHAR *zWideFilename){
   char *zFilename;
 
   nByte = WideCharToMultiByte(CP_UTF8, 0, zWideFilename, -1, 0, 0, 0, 0);
-  zFilename = malloc( nByte );
+  zFilename = memAlloc( nByte );
   if( zFilename==0 ){
     return 0;
   }
@@ -28291,7 +28291,7 @@ static WCHAR *mbcsToUnicode(const char *zFilename){
   int codepage = AreFileApisANSI() ? CP_ACP : CP_OEMCP;
 
   nByte = MultiByteToWideChar(codepage, 0, zFilename, -1, NULL,0)*sizeof(WCHAR);
-  zMbcsFilename = malloc( nByte*sizeof(zMbcsFilename[0]) );
+  zMbcsFilename = memAlloc( nByte*sizeof(zMbcsFilename[0]) );
   if( zMbcsFilename==0 ){
     return 0;
   }
@@ -28316,7 +28316,7 @@ static char *unicodeToMbcs(const WCHAR *zWideFilename){
   int codepage = AreFileApisANSI() ? CP_ACP : CP_OEMCP;
 
   nByte = WideCharToMultiByte(codepage, 0, zWideFilename, -1, 0, 0, 0, 0);
-  zFilename = malloc( nByte );
+  zFilename = memAlloc( nByte );
   if( zFilename==0 ){
     return 0;
   }
@@ -29657,7 +29657,7 @@ static int winFullPathname(
   if( isNT() ){
     WCHAR *zTemp;
     nByte = GetFullPathNameW((WCHAR*)zConverted, 0, 0, 0) + 3;
-    zTemp = malloc( nByte*sizeof(zTemp[0]) );
+    zTemp = memAlloc( nByte*sizeof(zTemp[0]) );
     if( zTemp==0 ){
       free(zConverted);
       return SQLITE_NOMEM;
@@ -29674,7 +29674,7 @@ static int winFullPathname(
   }else{
     char *zTemp;
     nByte = GetFullPathNameA((char*)zConverted, 0, 0, 0) + 3;
-    zTemp = malloc( nByte*sizeof(zTemp[0]) );
+    zTemp = memAlloc( nByte*sizeof(zTemp[0]) );
     if( zTemp==0 ){
       free(zConverted);
       return SQLITE_NOMEM;

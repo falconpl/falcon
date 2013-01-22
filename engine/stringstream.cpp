@@ -14,7 +14,6 @@
 */
 
 #include <falcon/stringstream.h>
-#include <falcon/memory.h>
 #include <falcon/mt.h>
 #include <cstring>
 #include <string.h>

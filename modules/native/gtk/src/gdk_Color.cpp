@@ -55,14 +55,14 @@ Color::Color( const Color& other )
 Color::~Color()
 {
     if ( m_obj )
-        memFree( m_obj );
+        free( m_obj );
 }
 
 
 void Color::alloc()
 {
     assert( m_obj == 0 );
-    m_obj = memAlloc( sizeof( GdkColor ) );
+    m_obj = malloc( sizeof( GdkColor ) );
 }
 
 

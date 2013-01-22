@@ -75,7 +75,7 @@ static voidpf win32_build_iowin(HANDLE hFile)
         WIN32FILE_IOWIN w32fiow;
         w32fiow.hf = hFile;
         w32fiow.error = 0;
-        ret = malloc(sizeof(WIN32FILE_IOWIN));
+        ret = memAlloc(sizeof(WIN32FILE_IOWIN));
 
         if (ret==NULL)
             CloseHandle(hFile);

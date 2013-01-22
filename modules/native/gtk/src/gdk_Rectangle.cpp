@@ -58,14 +58,14 @@ Rectangle::Rectangle( const Rectangle& other )
 Rectangle::~Rectangle()
 {
     if ( m_obj )
-        memFree( m_obj );
+        free( m_obj );
 }
 
 
 void Rectangle::alloc()
 {
     assert( m_obj == 0 );
-    m_obj = memAlloc( sizeof( GdkRectangle ) );
+    m_obj = malloc( sizeof( GdkRectangle ) );
 }
 
 

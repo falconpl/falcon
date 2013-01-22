@@ -132,7 +132,7 @@ int makedir (newdir)
   if (len <= 0)
     return 0;
 
-  buffer = (char*)malloc(len+1);
+  buffer = (char*)memAlloc(len+1);
         if (buffer==NULL)
         {
                 printf("Error allocating memory\n");
@@ -321,7 +321,7 @@ int do_extract_currentfile(uf,popt_extract_without_path,popt_overwrite,password)
     }
 
     size_buf = WRITEBUFFERSIZE;
-    buf = (void*)malloc(size_buf);
+    buf = (void*)memAlloc(size_buf);
     if (buf==NULL)
     {
         printf("Error allocating memory\n");

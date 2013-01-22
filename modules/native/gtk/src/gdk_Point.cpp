@@ -53,14 +53,14 @@ Point::Point( const Point& other )
 Point::~Point()
 {
     if ( m_obj )
-        memFree( m_obj );
+        free( m_obj );
 }
 
 
 void Point::alloc()
 {
     assert( m_obj == 0 );
-    m_obj = memAlloc( sizeof( GdkPoint ) );
+    m_obj = malloc( sizeof( GdkPoint ) );
 }
 
 void Point::setObject( const void* pt )

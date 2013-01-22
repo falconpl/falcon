@@ -73,13 +73,13 @@ SysThread::~SysThread()
 {
    CloseHandle( m_sysdata->hEvtDetach );
    DeleteCriticalSection( &m_sysdata->m_csT );
-   memFree( m_sysdata );
+   free( m_sysdata );
 }
 
 SysThread::SysThread( Runnable* r ):
    m_runnable( r )
 {
-   m_sysdata = ( struct SYSTH_DATA* ) memAlloc( sizeof( struct SYSTH_DATA ) );
+   m_sysdata = ( struct SYSTH_DATA* ) malloc( sizeof( struct SYSTH_DATA ) );
    // The event isactually a barrier.
    m_sysdata->hEvtDetach = CreateEvent( 0, TRUE, FALSE, 0 );
    m_sysdata->retval = 0;

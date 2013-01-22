@@ -214,7 +214,7 @@ bool spawn(String** argv, bool overlay, bool background, int *returnValue )
    WaitForSingleObject( proc.hProcess, INFINITE );
    DWORD iRet;
    GetExitCodeProcess( proc.hProcess, &iRet );
-   //memFree( completeCommand );
+   //free( completeCommand );
    if ( overlay )
       _exit(iRet);
    
@@ -319,7 +319,7 @@ bool spawn_read( String **argv, bool overlay, bool background, int *returnValue,
    DWORD iRet;
    // we have to change our streams with the ones of the process.
    GetExitCodeProcess( proc.hProcess, &iRet );
-   //memFree( completeCommand );
+   //free( completeCommand );
    if ( overlay )
    {
       _exit(iRet);

@@ -1345,6 +1345,9 @@ public:
       m_finallyStack.pop();
    }
 
+   void gcMark( uint32 mark );
+   uint32 currentMark() const { return m_currentMark; }
+
 protected:
 
    /** Class holding the dynamic symbol information on a stack. */
@@ -1500,6 +1503,7 @@ protected:
    template <class __checker> t_unrollResult unrollToNext( const __checker& check );
 
    uint32 m_id;
+   uint32 m_currentMark;
    int64 m_next_schedule;
 
    /** Set whenever an event was activated. */

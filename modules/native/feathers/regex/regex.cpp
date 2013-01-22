@@ -18,7 +18,6 @@
 */
 
 #include <falcon/module.h>
-#include <falcon/memory.h>
 #include "regex_ext.h"
 #include "version.h"
 

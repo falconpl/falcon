@@ -18,7 +18,6 @@
 
 #include <falcon/setup.h>
 #include <falcon/mt.h>
-#include <falcon/rampmode.h>
 #include <falcon/string.h>
 #include <falcon/enumerator.h>
 
@@ -69,6 +68,7 @@ class Item;
 class Class;
 class VMContext;
 class TextWriter;
+class CollectorAlgorithm;
 
 /** Falcon Garbage collector.
 
@@ -141,6 +141,20 @@ public:
       MAX_GENERATION = 0xFFFFFFFE,
       SWEEP_GENERATION = 0xFFFFFFFF
    };
+
+   /** What the GC should do */
+   typedef enum {
+      /** No action required */
+      e_status_green,
+      /** The GC is trying to collect memory on a by-opportunity basis */
+      e_status_yellow,
+      /** The GC is actively trying to collect memory without preempting contexts */
+      e_status_brown,
+      /** The GC is preempting contexts to obtain memory. */
+      e_status_red,
+      /** An external agent has required a forced, complete GC. */
+      e_status_required
+   } t_status;
 
    /** Base class for History Trace entries (ABC).
     Subclasses must reimplement the dump() method to have meaningful
@@ -302,13 +316,6 @@ public:
    */
    void unregisterContext( VMContext *vm );
 
-
-   /** Returns the number of elements managed by this collector. */
-   int32 allocatedItems() const;
-
-   /** Returns the current generation. */
-   uint32 generation() const { return m_generation; }
-
    virtual void* run();
 
    /** Starts the parallel garbage collector. */
@@ -403,6 +410,16 @@ public:
 
    /** Unlocks a locked item. */
    void unlock( GCLock* lock );
+
+   /**
+    * Accounts for new or released memory.
+    *
+    * Use a negative number to remove allocated memory.
+    */
+   void accountMemory( int64 memory );
+   int64 storedMemory() const;
+   int64 storedItems() const;
+   void stored( int64& memory, int64& items ) const;
 
 #if FALCON_TRACE_GC
    /** Debug version of store.
@@ -589,29 +606,9 @@ protected:
    int32 m_recycleTokensCount;
    Mutex m_mtx_recycle_tokens;
 
-
-   /** The machine with the oldest generation loop checked out. */
-   VMachine *m_olderVM;
-
-   /** Ring of VMs */
-   VMachine *m_vmRing;
-
-   int32 m_vmCount;
-
-   /** List of VM in idle state and waiting to be inspected */
-   VMachine *m_vmIdle_head;
-   VMachine *m_vmIdle_tail;
-
-   // for gc
-   uint32 m_generation;
-   int32 m_allocatedItems;
-   uint32 m_allocatedMem;
-
    SysThread *m_th;
    bool m_bLive;
-
    Event m_eRequest;
-   Mutex m_mtxa;
 
 
    /** Mutex for newly created items ring.
@@ -624,30 +621,11 @@ protected:
    */
    mutable Mutex m_mtx_newitem;
 
-   /** Mutex for the VM ring structure.
-      - VMachine::m_nextVM
-      - VMachine::m_prevVM
-      - m_vmRing
-      - electOlderVM()   -- call guard
-      - advanceGeneration()
-   */
-   Mutex m_mtx_vms;
-
-   /** Mutex for the idle VM list structure.
-      Guards the linked list of VMs being in idle state.
-
-      - VMachine::m_idleNext
-      - VMachine::m_idlePrev
-      - m_vmIdle_head
-      - m_vmIdle_tail
-   */
-   Mutex m_mtx_idlevm;
-
    /** Guard for ramp modes. */
    mutable Mutex m_mtx_ramp;
 
-   RampMode* m_ramp[RAMP_MODE_COUNT];
-   RampMode* m_curRampMode;
+   CollectorAlgorithm** m_ramp;
+   CollectorAlgorithm* m_curRampMode;
    int m_curRampID;
 
    Mutex m_mtxRequest;
@@ -692,6 +670,8 @@ protected:
    // True to activate runtime trace.
    bool m_bTrace;
    bool m_bTraceMarks;
+   uint32 m_currentMark;
+   uint32 m_oldestMark;
    
 private:
 
@@ -700,6 +680,10 @@ private:
    void onCreate( const Class* cls, void* data, const String& file, int line );
    void onMark( void* data );
    void onDestroy( void* data );
+
+   mutable Mutex m_mtx_accountmem;
+   int64 m_storedMem;
+   int64 m_storedItems;
 
    class Private;
    Private* _p;

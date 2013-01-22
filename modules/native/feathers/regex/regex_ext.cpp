@@ -20,7 +20,6 @@
 #include <falcon/vm.h>
 #include <falcon/string.h>
 #include <falcon/range.h>
-#include <falcon/memory.h>
 #include <falcon/fassert.h>
 #include <falcon/autocstring.h>
 #include <falcon/engine.h>

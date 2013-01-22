@@ -31,7 +31,6 @@
 
 #include <falcon/streambuffer.h>
 #include <falcon/transcoder.h>
-#include <falcon/memory.h>
 #include <falcon/errors/encodingerror.h>
 
 #include <string.h>

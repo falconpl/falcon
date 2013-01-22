@@ -273,7 +273,7 @@ void Byte::remove( String *str, length_t pos, length_t len ) const
    // for non-static strings...
    if ( str->allocated() != 0 )
    {
-      free( str->getRawStorage() );
+free( str->getRawStorage() );
    }
    str->setRawStorage( mem, newLen );
 
@@ -297,7 +297,7 @@ void Byte::bufferize( String *str ) const
 
       if( oldSize != 0 )
       {
-         free( str->getRawStorage() );
+free( str->getRawStorage() );
       }
 
       str->setRawStorage( mem, size );
@@ -317,7 +317,7 @@ void Byte::bufferize( String *str, const String *strOrig ) const
       
       if ( str->m_allocated != 0 )
       {
-         free( str->m_storage );
+free( str->m_storage );
       }
    }
    else 
@@ -439,7 +439,7 @@ void Static::setCharAt( String *str, length_t pos, char_t chr ) const
 
    uint32 oldSize = str->allocated();
    if( oldSize != 0 )
-      free( str->getRawStorage() );
+free( str->getRawStorage() );
    str->setRawStorage( buffer, size );
 }
 
@@ -474,7 +474,7 @@ void Static16::setCharAt( String *str, length_t pos, char_t chr ) const
    uint32 oldSize = str->allocated();
    str->setRawStorage( buffer, size );
    if( oldSize != 0 )
-      free( str->getRawStorage() );
+free( str->getRawStorage() );
 }
 
 void Static32::setCharAt( String *str, length_t pos, char_t chr ) const
@@ -491,7 +491,7 @@ void Static32::setCharAt( String *str, length_t pos, char_t chr ) const
    uint32 oldSize = str->allocated();
    str->setRawStorage( buffer, size );
    if( oldSize != 0 )
-      free( str->getRawStorage() );
+free( str->getRawStorage() );
 }
 
 void Buffer::setCharAt( String *str, length_t pos, char_t chr ) const
@@ -514,7 +514,7 @@ void Buffer::setCharAt( String *str, length_t pos, char_t chr ) const
       size *= 2;
       str->manipulator( &handler_buffer16 );
       if( str->allocated() > 0 )
-         free( buffer );
+free( buffer );
       str->setRawStorage( (byte *) buf16, size );
    }
    else
@@ -528,7 +528,7 @@ void Buffer::setCharAt( String *str, length_t pos, char_t chr ) const
       size *= 4;
       str->manipulator( &handler_buffer32 );
       if( str->allocated() > 0 )
-         free( buffer );
+free( buffer );
       str->setRawStorage( (byte *) buf32, size );
    }
 }
@@ -553,7 +553,7 @@ void Buffer16::setCharAt( String *str, length_t pos, char_t chr ) const
       size *= 2;
       str->manipulator( &handler_buffer32 );
       if( str->allocated() > 0 )
-         free( buf16 );
+free( buf16 );
       str->setRawStorage( (byte *) buf32, size );
    }
 
@@ -622,7 +622,7 @@ void Static::insert( String *str, uint32 pos, uint32 len, const String *source )
 
    if ( oldSize > 0 )
    {
-      free( str->getRawStorage() );
+free( str->getRawStorage() );
    }
    str->setRawStorage( mem );
 }
@@ -668,7 +668,7 @@ void Buffer::insert( String *str, length_t pos, length_t len, const String *sour
                       strLen - pos - len );
 
       if ( str->allocated() != 0 )
-         free( str->getRawStorage() );
+free( str->getRawStorage() );
 
       str->allocated( finalAlloc );
       str->setRawStorage( mem );
@@ -738,7 +738,7 @@ void Static32::remove( String *str, length_t pos, length_t len ) const
 void Static::destroy( String *str ) const
 {
    if ( str->allocated() > 0 ) {
-      free( str->getRawStorage() );
+free( str->getRawStorage() );
       str->allocated( 0 );
       str->size(0);
    }
@@ -770,7 +770,7 @@ void Buffer::shrink( String *str ) const
 void Buffer::destroy( String *str ) const
 {
    if ( str->allocated() > 0 ) {
-      free( str->getRawStorage() );
+free( str->getRawStorage() );
       str->allocated( 0 );
       str->size(0);
    }

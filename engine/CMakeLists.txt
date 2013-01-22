@@ -235,7 +235,6 @@ add_library(falcon_engine SHARED
   tc/transcoderc.cpp
   tc/transcoderutf8.cpp
 
-  memory.cpp
   application.cpp
   autocstring.cpp
   autowstring.cpp
@@ -243,8 +242,9 @@ add_library(falcon_engine SHARED
   class.cpp
   closeddata.cpp
   closure.cpp
-  collector.cpp
+  collector.cpp  
   collector_history.cpp
+  collectoralgorithm.cpp
   contextgroup.cpp
   contextmanager.cpp
   datareader.cpp
@@ -291,7 +291,6 @@ add_library(falcon_engine SHARED
   property.cpp
   pseudofunc.cpp
   pstep.cpp
-  rampmode.cpp
   reader.cpp
   restorer.cpp
   requirement.cpp

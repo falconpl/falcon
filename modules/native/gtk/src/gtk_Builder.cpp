@@ -70,7 +70,7 @@ static GType _falcon_get_type_from_name(GtkBuilder *builder, const gchar *name)
     uint32 funcNameSize = nameLength + reallocSize;
     uint32 realFuncNameSize = funcNameSize + sizeof( "_get_type" );
     // the output string
-    gchar* functionName = (gchar *) memAlloc( sizeof(gchar) * realFuncNameSize );
+    gchar* functionName = (gchar *) malloc( sizeof(gchar) * realFuncNameSize );
 
     // the index for function name
     uint32 pos = 0;
@@ -119,7 +119,7 @@ static GType _falcon_get_type_from_name(GtkBuilder *builder, const gchar *name)
     GModule* module = g_module_open( GTK2_GTK_LIBRARY, G_MODULE_BIND_LAZY );
     if( module == NULL )
     {
-        memFree( functionName );
+        free( functionName );
         return G_TYPE_INVALID;
     }
     
@@ -127,13 +127,13 @@ static GType _falcon_get_type_from_name(GtkBuilder *builder, const gchar *name)
     
     if( ! g_module_symbol( module, functionName, (gpointer *) &funcPtr ) )
     {
-        memFree( functionName );
+        free( functionName );
         g_module_close( module );
         return G_TYPE_INVALID;
     }
     
     g_module_close( module );
-    memFree( functionName );
+    free( functionName );
     
     return funcPtr();
 }

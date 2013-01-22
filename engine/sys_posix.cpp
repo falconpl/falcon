@@ -38,7 +38,6 @@ extern "C"
 
 #include <falcon/setup.h>
 #include <falcon/types.h>
-#include <falcon/memory.h>
 #include <falcon/sys.h>
 #include <falcon/string.h>
 //#include <falcon/transcoding.h>
@@ -163,15 +162,15 @@ bool _setEnv( const String &var, const String &value )
    // in unix system, we have at worst UTF-8 var names.
    uint32 varLen = var.length() * 4 + 2;
    uint32 valueLen = value.length() * 4 + 2;
-   char *varBuf = (char *) memAlloc( varLen );
-   char *valueBuf = (char *) memAlloc( valueLen );
+   char *varBuf = (char *) malloc( varLen );
+   char *valueBuf = (char *) malloc( valueLen );
 
    var.toCString( varBuf, varLen );
    value.toCString( valueBuf, valueLen );
 
    bool result = setenv( varBuf, valueBuf, 1 ) == 0;
-   memFree( varBuf );
-   memFree( valueBuf );
+   free( varBuf );
+   free( valueBuf );
    return result;
 }
 
@@ -179,7 +178,7 @@ bool _unsetEnv( const String &var )
 {
    // in unix system, we have at worst UTF-8 var names.
    uint32 varLen = var.length() * 4 + 2;
-   char *varBuf = (char *) memAlloc( varLen );
+   char *varBuf = (char *) malloc( varLen );
 
    var.toCString( varBuf, varLen );
 
@@ -189,7 +188,7 @@ bool _unsetEnv( const String &var )
    */
    bool result = true;
    unsetenv( varBuf );
-   memFree( varBuf );
+   free( varBuf );
    return result;
 }
 

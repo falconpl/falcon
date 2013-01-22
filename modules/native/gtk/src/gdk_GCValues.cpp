@@ -69,7 +69,7 @@ GCValues::~GCValues()
     if ( m_obj )
     {
         decref();
-        memFree( m_obj );
+        free( m_obj );
     }
 }
 
@@ -109,7 +109,7 @@ void GCValues::decref()
 void GCValues::setObject( const void* gcvalues )
 {
     assert( m_obj == 0 );
-    m_obj = memAlloc( sizeof( GdkGCValues ) );
+    m_obj = malloc( sizeof( GdkGCValues ) );
     memcpy( m_obj, gcvalues, sizeof( GdkGCValues ) );
     incref();
 }

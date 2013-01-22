@@ -107,7 +107,7 @@ void CurlHandle::cleanup()
 
    if (m_pPostBuffer != 0 )
    {
-      memFree( m_pPostBuffer );
+      free( m_pPostBuffer );
       m_pPostBuffer = 0;
    }
 }
@@ -398,9 +398,9 @@ struct curl_slist* CurlHandle::slistFromArray( CoreArray* ca )
 void CurlHandle::postData( const String& str )
 {
    if (m_pPostBuffer != 0 )
-      memFree( m_pPostBuffer );
+      free( m_pPostBuffer );
 
-   m_pPostBuffer = memAlloc( str.size() );
+   m_pPostBuffer = malloc( str.size() );
    memcpy(m_pPostBuffer, str.getRawStorage(), str.size() );
 
    curl_easy_setopt( handle(), CURLOPT_POSTFIELDS, m_pPostBuffer );

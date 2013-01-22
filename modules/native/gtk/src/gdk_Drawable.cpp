@@ -309,7 +309,7 @@ FALCON_FUNC Drawable::draw_points( VMARG )
         g_print( "Drawable::draw_points: Warning: empty array, bypassing.\n" );
         return;
     }
-    GdkPoint* pts = (GdkPoint*) memAlloc( sizeof( GdkPoint ) * len );
+    GdkPoint* pts = (GdkPoint*) malloc( sizeof( GdkPoint ) * len );
     Item it;
     for ( int i = 0; i < len; ++i )
     {
@@ -317,14 +317,14 @@ FALCON_FUNC Drawable::draw_points( VMARG )
 #ifndef NO_PARAMETER_CHECK
         if ( !it.isObject() || !IS_DERIVED( &it, GdkPoint ) )
         {
-            memFree( pts );
+            free( pts );
             throw_inv_params( "GdkPoint" );
         }
 #endif
         memcpy( &pts[i], GET_POINT( it ), sizeof( GdkPoint ) );
     }
     gdk_draw_points( GET_DRAWABLE( vm->self() ), GET_GC( *i_gc ), pts, len );
-    memFree( pts );
+    free( pts );
 }
 
 

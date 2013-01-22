@@ -53,9 +53,9 @@ differently, and global variables are not used (see pcre.in). */
 #include "pcre_internal.h"
 
 #ifndef VPCOMPAT
-PCRE_EXP_DATA_DEFN void *(*pcre_malloc)(size_t) = malloc;
+PCRE_EXP_DATA_DEFN void *(*pcre_malloc)(size_t) = memAlloc;
 PCRE_EXP_DATA_DEFN void  (*pcre_free)(void *) = free;
-PCRE_EXP_DATA_DEFN void *(*pcre_stack_malloc)(size_t) = malloc;
+PCRE_EXP_DATA_DEFN void *(*pcre_stack_malloc)(size_t) = memAlloc;
 PCRE_EXP_DATA_DEFN void  (*pcre_stack_free)(void *) = free;
 PCRE_EXP_DATA_DEFN int   (*pcre_callout)(pcre_callout_block *) = NULL;
 #endif

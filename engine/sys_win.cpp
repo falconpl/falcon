@@ -201,7 +201,7 @@ void _tempName( String &res )
          temp_dir = "C:\\TEMP";
 
    int tempLen = temp_dir.length() * sizeof( wchar_t ) + sizeof( wchar_t );
-   wchar_t *wct = (wchar_t *) memAlloc( tempLen );
+   wchar_t *wct = (wchar_t *) malloc( tempLen );
    temp_dir.toWideString( wct, tempLen );
 
    DWORD attribs = GetFileAttributesW( wct );
@@ -216,7 +216,7 @@ void _tempName( String &res )
    {
       temp_dir = ".";
    }
-   memFree( wct );
+   free( wct );
 
    res += temp_dir;
 	res += "\\";
@@ -283,23 +283,23 @@ bool _getEnv( const String &var, String &result )
 		if ( var.toWideString( convertBuf, 512 ) )
 		{
 
-			wchar_t *value = (wchar_t *) memAlloc( 512 * sizeof( wchar_t ) );
+			wchar_t *value = (wchar_t *) malloc( 512 * sizeof( wchar_t ) );
 			size_t retSize;
 			errno_t error = _wgetenv_s( &retSize, value, 512, convertBuf );
 			if ( error == ERANGE )
 			{
-				memFree( value );
-				value = (wchar_t *) memAlloc( retSize * sizeof( wchar_t ) );
+				free( value );
+				value = (wchar_t *) malloc( retSize * sizeof( wchar_t ) );
 				error = _wgetenv_s( &retSize, value, retSize, convertBuf );
 			}
 
 			if ( error != EINVAL && retSize != 0 )
 			{
 				result.bufferize( value );
-				memFree( value );
+				free( value );
 				return true;
 			}
-			memFree( value );
+			free( value );
 		}
 	#endif
 
@@ -311,24 +311,24 @@ bool _setEnv( const String &var, const String &value )
    #if _MSC_VER < 1400
 		String temp = var + "=" + value;
 		uint32 tempLen = temp.length() * 4 + 4;
-		char *tempBuf = (char*) memAlloc( tempLen );
+		char *tempBuf = (char*) malloc( tempLen );
 		temp.toCString( tempBuf, tempLen );
 		putenv( tempBuf );
-		memFree( tempBuf );
+		free( tempBuf );
 		return true;
 	#else
 		uint32 varLen = var.length() * sizeof(wchar_t) + sizeof(wchar_t);
 		uint32 valueLen = value.length() * sizeof(wchar_t) + sizeof(wchar_t);
-		wchar_t *varBuf = (wchar_t *) memAlloc( varLen );
-		wchar_t *valueBuf = (wchar_t *) memAlloc( valueLen );
+		wchar_t *varBuf = (wchar_t *) malloc( varLen );
+		wchar_t *valueBuf = (wchar_t *) malloc( valueLen );
 
 		var.toWideString( varBuf, varLen );
 		value.toWideString( valueBuf, valueLen );
 
 		bool result = _wputenv_s( varBuf, valueBuf ) == 0;
 
-		memFree( varBuf );
-		memFree( valueBuf );
+		free( varBuf );
+		free( valueBuf );
 	   return result;
 	#endif
 }
@@ -338,19 +338,19 @@ bool _unsetEnv( const String &var )
 	#if _MSC_VER < 1400
 		String temp = var + "=";
 		uint32 tempLen = temp.length() * 4 + 4;
-		char *tempBuf = (char*) memAlloc( tempLen );
+		char *tempBuf = (char*) malloc( tempLen );
 		temp.toCString( tempBuf, tempLen );
 		putenv( tempBuf );
-		memFree( tempBuf );
+		free( tempBuf );
 		return true;
 	#else
 		uint32 varLen = var.length() * sizeof(wchar_t) + sizeof(wchar_t);
-		wchar_t *varBuf = (wchar_t *) memAlloc( varLen );
+		wchar_t *varBuf = (wchar_t *) malloc( varLen );
 
 		var.toWideString( varBuf, varLen );
 
 		bool result = _wputenv_s( varBuf, L"" ) == 0;
-		memFree( varBuf );
+		free( varBuf );
 		return result;
 	#endif
 }
@@ -423,7 +423,7 @@ bool _getCWD( String& name )
    }
 
    DWORD bufSize = size * sizeof( wchar_t ) + sizeof( wchar_t );
-   wchar_t *buffer = (wchar_t *) memAlloc( bufSize );
+   wchar_t *buffer = (wchar_t *) malloc( bufSize );
    size = GetCurrentDirectoryW( bufSize, buffer );
 
    if( size == 0 && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED )
@@ -433,7 +433,7 @@ bool _getCWD( String& name )
 
       if( size == 0 )
       {
-         memFree( buffer );
+         free( buffer );
          return false;
       }
 
@@ -444,7 +444,7 @@ bool _getCWD( String& name )
 
    if( size == 0 )
    {
-      memFree( buffer );
+      free( buffer );
       return false;
    }
 

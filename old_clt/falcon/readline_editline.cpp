@@ -57,7 +57,7 @@ void IntMode::read_line(String &line, const char* prompt)
        line += String(buf);
        add_history(buf);
      }
-     free(buf);
+free(buf);
    }
    else // EOF (CTRL-D)
      m_owner->m_stdIn->status(Stream::t_eof);
