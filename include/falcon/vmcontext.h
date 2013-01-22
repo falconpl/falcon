@@ -1302,6 +1302,7 @@ public:
    void addWait( Shared* resource );
    Shared* engageWait( int64 timeout );
    Shared* checkAcquiredWait();
+   void sleep( int64 timeout );
 
    /** Called by the ContextManager to confirm the acquisition of a shared resource.
     * \param shared the resource to acquire or 0

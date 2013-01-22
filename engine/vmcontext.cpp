@@ -385,6 +385,13 @@ Shared* VMContext::engageWait( int64 timeout )
 }
 
 
+void VMContext::sleep( int64 timeout ) {
+   TRACE( "VMContext::sleep sleeping for %d milliseconds", timeout );
+   m_next_schedule = timeout > 0 ? Sys::_milliseconds() + timeout : 0;
+   setSwapEvent();
+}
+
+
 Shared* VMContext::checkAcquiredWait()
 {
    Shared** base = m_waiting.m_base;

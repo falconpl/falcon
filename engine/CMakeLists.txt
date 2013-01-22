@@ -79,6 +79,7 @@ add_library(falcon_engine SHARED
   cm/parallel.cpp
   cm/path.cpp
   cm/print.cpp
+  cm/sleep.cpp
   cm/textreader.cpp
   cm/textstream.cpp
   cm/textwriter.cpp
