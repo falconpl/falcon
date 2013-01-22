@@ -137,17 +137,14 @@ void Processor::manageEvents( VMContext* ctx, int32 &events )
    if( (events & VMContext::evtRaise) ) {
       TRACE( "Uncaught error raisal in context %d", ctx->id() );
       ctx->terminated();
-      m_owner->contextManager().onContextTerminated( ctx );
    }
    else if( (events & VMContext::evtComplete) ) {
       TRACE( "Code completion of context %d", ctx->id() );
       ctx->terminated();
-      m_owner->contextManager().onContextTerminated( ctx );
    }
    else if( (events & VMContext::evtTerminate) ) {
       TRACE( "Termination request before %s ", ctx->location().c_ize() );
       ctx->terminated();
-      m_owner->contextManager().onContextTerminated( ctx );
    }
    else if( (events & VMContext::evtSwap) )
    {

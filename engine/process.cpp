@@ -33,7 +33,7 @@ namespace Falcon {
 
 Process::Process( VMachine* owner ):
    m_vm(owner),
-   m_context( new VMContext( this ) ),
+   m_context( 0 ),
    m_event( true, false ),
    m_running(false),
    m_ctxId(0),

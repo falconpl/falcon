@@ -45,7 +45,7 @@ namespace Ext {
 
 FALCON_DEFINE_FUNCTION_P(sleep)
 {
-   TRACE1( "-- called with %d params", paramCount );
+   TRACE1( "-- called with %d params", pCount );
    
    // all the evaluation happens in the 
    if( pCount < 1 || ! ctx->param(0)->isOrdinal() ) {

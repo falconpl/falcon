@@ -205,7 +205,8 @@ void ContextManager::onContextDescheduled( VMContext* ctx )
 
 void ContextManager::onContextTerminated( VMContext* ctx )
 {
-   TRACE1( "ContextManager::onContextTerminated %d", ctx->id() );
+   TRACE1( "ContextManager::onContextTerminated %p(%d) in process %p(%d)",
+            ctx, ctx->id(), ctx->process(), ctx->process()->id() );
    // perform automatic release of aqcuired resources
    ctx->acquire(0);
    ctx->incref();

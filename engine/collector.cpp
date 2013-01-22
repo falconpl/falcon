@@ -12,6 +12,8 @@
 
    See LICENSE file for licensing details.
 */
+#undef SRC
+#define SRC "/engine/collector.cpp"
 
 #include <falcon/trace.h>
 
@@ -207,7 +209,8 @@ int Collector::rampMode() const
 
 void Collector::registerContext( VMContext *ctx )
 {
-   TRACE( "Collector::registerContext - %p(%d)", ctx, ctx->id() );
+   TRACE( "Collector::registerContext - %p(%d) in Process %p(%d)",
+            ctx, ctx->id(), ctx->process(), ctx->process()->id() );
    ctx->incref();
 
    _p->m_mtx_contexts.lock();
@@ -218,7 +221,8 @@ void Collector::registerContext( VMContext *ctx )
 
 void Collector::unregisterContext( VMContext *ctx )
 {
-   TRACE( "Collector::unregisterContext - %p(%d)", ctx, ctx->id() );
+   TRACE( "Collector::unregisterContext - %p(%d) in Process %p(%d)",
+            ctx, ctx->id(), ctx->process(), ctx->process()->id() );
 
    _p->m_mtx_contexts.lock();
    bool erased = _p->m_contexts.erase(ctx) != 0;
