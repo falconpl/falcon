@@ -65,8 +65,14 @@ void ClassURI::restore( VMContext* ctx, DataReader* stream ) const
    String uriName;
    stream->read( uriName );
    URICarrier* uc = new URICarrier( carriedProps() );
-   ctx->pushData( FALCON_GC_STORE( this, uc ) );
-   uc->m_uri.parse( uriName );
+   try {
+      uc->m_uri.parse( uriName );
+      ctx->pushData( Item( this, uc ) );
+   }
+   catch( ... ) {
+      delete uc;
+      throw;
+   }
 }
    
 void* ClassURI::createInstance() const

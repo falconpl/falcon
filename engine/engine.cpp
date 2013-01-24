@@ -404,8 +404,9 @@ Engine::~Engine()
 {
    MESSAGE( "Engine destruction started" );
 
-   m_collector->stop();  // will be deleted later
-   
+   // remove all unneeded memory
+   delete m_collector;
+
    /** Bye bye core... */
    m_core->decref();
 
@@ -458,7 +459,6 @@ Engine::~Engine()
    delete m_stdSteps;
    delete m_stdErrors;
 
-   delete m_collector;
    delete m_mtx;
    
    //============================================
@@ -678,6 +678,7 @@ GCLock* Engine::GC_storeLocked( const Class* cls, void* data )
    return m_instance->m_collector->storeLocked( cls, data );
 }
 
+#if FALCON_TRACE_GC
 GCToken* Engine::GC_H_store( const Class* cls, void* data, const String& file, int line )
 {
    fassert( m_instance != 0 );
@@ -691,6 +692,7 @@ GCLock* Engine::GC_H_storeLocked( const Class* cls, void* data, const String& sr
    fassert( m_instance->m_collector != 0 );
    return m_instance->m_collector->H_storeLocked( cls, data, src, line );
 }
+#endif
 
 GCLock* Engine::GC_lock( const Item& item )
 {

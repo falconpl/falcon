@@ -81,14 +81,14 @@ public:
 #ifdef _MSC_VER
 	#if _MSC_VER < 1299
 	#define flagLiteral 0x01
-	//#define flagIsGarbage 0x02
+	#define flagIsGarbage 0x02
 	#define flagIsOob 0x04
 	#define flagLast 0x08
 	#define flagContinue 0x10
 	#define flagBreak 0x20
 	#else
 	   static const byte flagLiteral = 0x01;
-	   //static const byte flagIsGarbage = 0x02;
+	   static const byte flagIsGarbage = 0x02;
 	   static const byte flagIsOob = 0x04;
 	   static const byte flagLast = 0x08;
 	   static const byte flagContinue = 0x10;
@@ -96,7 +96,7 @@ public:
 	#endif
 #else
    static const byte flagLiteral = 0x01;
-   //static const byte flagIsGarbage = 0x02;
+   static const byte flagIsGarbage = 0x02;
    static const byte flagIsOob = 0x04;
    static const byte flagLast = 0x08;
    static const byte flagContinue = 0x10;
@@ -299,6 +299,7 @@ public:
        type( cls->typeID() );
        content.data.ptr.pInst = inst;
        content.data.ptr.pClass = (Class*) cls;
+       content.base.bits.flags &= ~flagIsGarbage;
        return *this;
    }
 
@@ -313,6 +314,7 @@ public:
        type( token->cls()->typeID() ); // normally
        content.data.ptr.pClass = token->cls();
        content.data.ptr.pInst = token->data();
+       content.base.bits.flags |= flagIsGarbage;
        return *this;
    }
 
@@ -391,6 +393,22 @@ public:
       content.base.bits.copied = false;
       content.base.bits.flags = 0;
       content.base.bits.type = nt;
+   }
+
+   /**
+    * True if the instance in this item comes from the garbage collector.
+    *
+    * Meaningful only if the item is a user item (isUser() is true).
+    */
+   bool isGarbage() {
+      return (content.base.bits.flags & flagIsGarbage) != 0;
+   }
+
+   /**
+    * Use with caution.
+    */
+   bool setGarbage() {
+      return content.base.bits.flags |= flagIsGarbage;
    }
 
    /** Returns true if this item has the copy-marker.

@@ -272,9 +272,27 @@ Error* ModSpace::exportSymbol( Module* mod, const String& name, const Variable& 
 }
 
 
-void ModSpace::gcMark( uint32  )
+void ModSpace::gcMark( uint32 mark )
 {
-   //TODO
+   if( m_lastGCMark != mark )
+   {
+      m_lastGCMark = mark;
+      Private::ExportSymMap::iterator esi = _p->m_symMap.begin();
+      Private::ExportSymMap::iterator esi_end = _p->m_symMap.end();
+
+      while( esi != esi_end ) {
+         esi->second.m_value->gcMark(mark);
+         ++esi;
+      }
+
+      Private::ModMap::iterator mmi = _p->m_modmap.begin();
+      Private::ModMap::iterator mmi_end = _p->m_modmap.end();
+
+      while( mmi != mmi_end ) {
+         mmi->second->gcMark(mark);
+         ++mmi;
+      }
+   }
 }
 
 

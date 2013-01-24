@@ -83,7 +83,7 @@ void ClassString::restore( VMContext* ctx, DataReader* dr ) const
    {
       dr->read( *str );
       TRACE2( "ClassString::restore -- \"%s\"", str->c_ize() );
-      ctx->pushData( FALCON_GC_STORE( this, str ) );
+      ctx->pushData( Item( this, str ) );
    }
    catch( ... )
    {

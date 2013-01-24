@@ -131,6 +131,7 @@ public:
     */
    void gcMark( uint32 mark );
    
+   uint32 currentMark() const { return m_mark; }
 private:
    FalconInstance();
 

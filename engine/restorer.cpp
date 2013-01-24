@@ -49,25 +49,31 @@ public:
       /** returned to the parent for the first time -- garbage it!*/
       bool m_bFirstTime;
       
+      /** True if it should be garbaged.*/
+      bool m_bIsGarbage;
+
       /** Items to be given back while deserializing. */
       IDVector m_deps;
       
       ObjectData():
          m_data(0),
          m_clsId(0),
-         m_bFirstTime(true)
+         m_bFirstTime(true),
+         m_bIsGarbage(false)
       {}
       
       ObjectData( void* data,  size_t cls ):
          m_data(data),
          m_clsId(cls),
-         m_bFirstTime(true)
+         m_bFirstTime(true),
+         m_bIsGarbage(false)
       {}
       
       ObjectData( const ObjectData& other ):
          m_data( other.m_data ),
          m_clsId( other.m_clsId ),
-         m_bFirstTime(true)
+         m_bFirstTime(true),
+         m_bIsGarbage(false)
       // ignore m_deps
       {}
    };
@@ -305,6 +311,9 @@ void Restorer::ReadNext::apply_( const PStep* ps, VMContext* ctx )
       }
       else {
          objects[seq-1].m_data = ctx->topData().asInst();
+         if( objects[seq-1].m_bIsGarbage ) {
+            FALCON_GC_STORE( ctx->topData().asClass(), ctx->topData().asInst() );
+         }
       }
       ctx->popData();
    }
@@ -357,6 +366,7 @@ void Restorer::ReadNext::apply_( const PStep* ps, VMContext* ctx )
       
       // ok, the object is loaded. Now we got to deserialize the data.
       Class* cls = _p->m_clsVector[ objd.m_clsId ].m_cls;
+      m_reader->read( objd.m_bIsGarbage );
       cls->restore( ctx, m_reader );
       if( ctx->currentCode().m_step != self )
       {
@@ -374,6 +384,9 @@ void Restorer::ReadNext::apply_( const PStep* ps, VMContext* ctx )
          }
          else {
             objd.m_data = ctx->topData().asInst();
+            if( objd.m_bIsGarbage ) {
+               FALCON_GC_STORE( ctx->topData().asClass(), ctx->topData().asInst() );
+            }
          }
          ctx->popData();
       }
@@ -418,6 +431,10 @@ void Restorer::UnflattenNext::apply_( const PStep* ps, VMContext* ctx )
             else
             {
                _p->m_flattener[i].setUser( cls, tgtdata.m_data );
+               // bring the garbage flag correctly around.
+               if( tgtdata.m_bIsGarbage ) {
+                  _p->m_flattener[i].setGarbage();
+               }
             }
          }
          

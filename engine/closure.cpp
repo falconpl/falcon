@@ -61,7 +61,7 @@ Closure::~Closure()
 
 void Closure::gcMark( uint32 mark )
 {
-   if( m_mark >= mark ) {
+   if( m_mark == mark ) {
       return;
    }
    m_mark = mark;

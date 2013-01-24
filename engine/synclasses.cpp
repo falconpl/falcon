@@ -202,6 +202,7 @@ void SynClasses::naryExprSet( VMContext* ctx, int pcount, TreeStep* step, int32 
 
 GCToken* SynClasses::collect( const Class* cls, TreeStep* earr, int line )
 {
+   line = line;
    return FALCON_GC_STORE_SRCLINE( cls, earr, SRC, line );
 }
 
@@ -219,8 +220,15 @@ GCToken* SynClasses::collect( const Class* cls, TreeStep* earr, int line )
    }\
    void SynClasses::Class##cls ::restore( VMContext* ctx, DataReader*dr) const \
    {\
-      ctx->pushData( Item( this, new exprcls) ); \
-      m_parent->restore( ctx, dr ); \
+      exprcls* ec = new exprcls; \
+      try {\
+         ctx->pushData( Item( this, ec) ); \
+         m_parent->restore( ctx, dr ); \
+      }catch(...) {\
+         delete ec; \
+         ctx->popData(); \
+         throw; \
+      }\
    }
 
 #define FALCON_STANDARD_SYNCLASS_OP_CREATE_EX( cls, exprcls, operation ) \
@@ -347,8 +355,16 @@ bool SynClasses::ClassGenClosure::op_init( VMContext* ctx, void* instance, int p
 }
 void SynClasses::ClassGenClosure::restore( VMContext* ctx, DataReader*dr ) const
 {
-   ctx->pushData( Item( this, new ExprClosure) );
-   m_parent->restore( ctx, dr );
+   ExprClosure* expr = new ExprClosure;
+   try {
+      ctx->pushData( Item( this, new ExprClosure) );
+      m_parent->restore( ctx, dr );
+   }
+   catch(...) {
+      ctx->popData();
+      delete expr;
+      throw;
+   }
 }
 void SynClasses::ClassGenClosure::flatten( VMContext*, ItemArray& subItems, void* instance ) const
 {
@@ -389,8 +405,16 @@ bool SynClasses::ClassGenDict::op_init( VMContext* ctx, void* instance, int pcou
 }
 void SynClasses::ClassGenDict::restore( VMContext* ctx, DataReader*dr ) const
 {
-   ctx->pushData( Item( this, new ExprClosure) );
-   m_parent->restore( ctx, dr );
+   ExprDict* expr = new ExprDict;
+   try {
+      ctx->pushData( Item( this, expr ) );
+      m_parent->restore( ctx, dr );
+   }
+   catch(...) {
+      ctx->popData();
+      delete expr;
+      throw;
+   }
 }
 
 
@@ -425,9 +449,17 @@ void SynClasses::ClassDotAccess::restore( VMContext* ctx, DataReader*dr ) const
    String prop;
    dr->read( prop );   
    ExprDot* dot = new ExprDot;
-   ctx->pushData( Item( this, dot ) );
    dot->property( prop );
-   m_parent->restore( ctx, dr );
+
+   try {
+      ctx->pushData( Item( this, dot ) );
+      m_parent->restore( ctx, dr );
+   }
+   catch(...) {
+      ctx->popData();
+      delete dot;
+      throw;
+   }
 }
 
 
@@ -443,8 +475,16 @@ bool SynClasses::ClassMUnpack::op_init( VMContext* ctx, void* instance, int pcou
 }
 void SynClasses::ClassMUnpack::restore( VMContext* ctx, DataReader*dr ) const
 {
-   ctx->pushData( Item( this, new ExprMultiUnpack ) );
-   m_parent->restore( ctx, dr );
+   ExprMultiUnpack* expr = new ExprMultiUnpack;
+   try {
+      ctx->pushData( Item( this, expr ) );
+      m_parent->restore( ctx, dr );
+   }
+   catch(...) {
+      ctx->popData();
+      delete expr;
+      throw;
+   }
 }
 
 
@@ -459,8 +499,17 @@ bool SynClasses::ClassGenProto::op_init( VMContext* ctx, void* instance, int pco
 }
 void SynClasses::ClassGenProto::restore( VMContext* ctx, DataReader*dr ) const
 {
-   ctx->pushData( Item( this, new ExprProto ) );
-   m_parent->restore( ctx, dr );
+   ExprProto* expr = new ExprProto;
+
+   try {
+      ctx->pushData( Item( this, expr ) );
+      m_parent->restore( ctx, dr );
+   }
+   catch(...) {
+      ctx->popData();
+      delete expr;
+      throw;
+   }
 }
 
 
@@ -491,8 +540,16 @@ bool SynClasses::ClassUnpack::op_init( VMContext* ctx, void* instance, int pcoun
 }
 void SynClasses::ClassUnpack::restore( VMContext* ctx, DataReader*dr ) const
 {
-   ctx->pushData( Item( this, new ExprUnpack ) );
-   m_parent->restore( ctx, dr );
+   ExprUnpack* expr = new ExprUnpack;
+   try {
+      ctx->pushData( Item( this, expr ) );
+      m_parent->restore( ctx, dr );
+   }
+   catch(...) {
+      ctx->popData();
+      delete expr;
+      throw;
+   }
 }
 
 void* SynClasses::ClassGenRange::createInstance() const
@@ -551,8 +608,16 @@ bool SynClasses::ClassGenRange::op_init( VMContext* ctx, void* instance, int pco
 }
 void SynClasses::ClassGenRange::restore( VMContext* ctx, DataReader*dr ) const
 {
-   ctx->pushData( Item( this, new ExprRange ) );
-   m_parent->restore( ctx, dr );
+   ExprRange* expr = new ExprRange;
+   try {
+      ctx->pushData( Item( this, expr ) );
+      m_parent->restore( ctx, dr );
+   }
+   catch(...) {
+      ctx->popData();
+      delete expr;
+      throw;
+   }
 }
 
 
@@ -601,8 +666,17 @@ bool SynClasses::ClassGenRef::op_init( VMContext* ctx, void* instance, int pcoun
 }
 void SynClasses::ClassGenRef::restore( VMContext* ctx, DataReader*dr ) const
 {
-   ctx->pushData( Item( this, new ExprRef ) );
-   m_parent->restore( ctx, dr );
+   ExprRef* expr = new ExprRef;
+   try {
+      ctx->pushData( Item( this, expr ) );
+      m_parent->restore( ctx, dr );
+   }
+   catch(...) {
+      ctx->popData();
+      delete expr;
+      throw;
+   }
+
 }
 
 
@@ -699,8 +773,16 @@ void SynClasses::ClassValue::unflatten( VMContext*, ItemArray& subItems, void* i
 
 void SynClasses::ClassValue::restore( VMContext* ctx, DataReader*dr ) const
 {
-   ctx->pushData(FALCON_GC_HANDLE( new ExprValue ));
-   m_parent->restore( ctx, dr );
+   ExprValue* expr = new ExprValue;
+   try {
+      ctx->pushData( Item( this, expr ) );
+      m_parent->restore( ctx, dr );
+   }
+   catch(...) {
+      ctx->popData();
+      delete expr;
+      throw;
+   }
 }
 
 //=================================================================
@@ -810,17 +892,25 @@ void SynClasses::ClassInherit::store( VMContext* ctx, DataWriter* wr, void* inst
    wr->write( inh->hadRequirement() );
    m_parent->store( ctx, wr, instance );
 }
-void SynClasses::ClassInherit::restore( VMContext* ctx, DataReader* rd ) const
+void SynClasses::ClassInherit::restore( VMContext* ctx, DataReader* dr ) const
 {
    String name;
    bool bHadReq;
-   rd->read( name );
-   rd->read( bHadReq );
+   dr->read( name );
+   dr->read( bHadReq );
+
+   ExprInherit* expr = new ExprInherit(name);
+   expr->hadRequirement( bHadReq );
    
-   ExprInherit* inh = new ExprInherit(name);
-   inh->hadRequirement( bHadReq );
-   ctx->pushData( FALCON_GC_HANDLE(inh) );
-   m_parent->restore( ctx, rd );
+   try {
+      ctx->pushData( Item( this, expr ) );
+      m_parent->restore( ctx, dr );
+   }
+   catch(...) {
+      ctx->popData();
+      delete expr;
+      throw;
+   }
 }
 
 
@@ -863,11 +953,18 @@ bool SynClasses::ClassParentship::op_init( VMContext* ctx, void* instance, int p
  
    return false;
 }
-void SynClasses::ClassParentship::restore( VMContext* ctx, DataReader* rd ) const
+void SynClasses::ClassParentship::restore( VMContext* ctx, DataReader* dr ) const
 {
-   ExprParentship* pship = new ExprParentship;
-   ctx->pushData(FALCON_GC_HANDLE( pship ));
-   m_parent->restore( ctx, rd );
+   ExprParentship* expr = new ExprParentship;
+   try {
+      ctx->pushData( Item( this, expr ) );
+      m_parent->restore( ctx, dr );
+   }
+   catch(...) {
+      ctx->popData();
+      delete expr;
+      throw;
+   }
 }
 
 //=========================================
@@ -884,11 +981,18 @@ bool SynClasses::ClassLit::op_init( VMContext* , void* , int ) const
    // Let the caller to remove the params
    return false;
 }
-void SynClasses::ClassLit::restore( VMContext* ctx, DataReader* rd ) const
+void SynClasses::ClassLit::restore( VMContext* ctx, DataReader* dr ) const
 {
-   ExprLit* lit = new ExprLit;
-   ctx->pushData(FALCON_GC_HANDLE( lit ));
-   m_parent->restore( ctx, rd );
+   ExprLit* expr = new ExprLit;
+   try {
+      ctx->pushData( Item( this, expr ) );
+      m_parent->restore( ctx, dr );
+   }
+   catch(...) {
+      ctx->popData();
+      delete expr;
+      throw;
+   }
 }
 void SynClasses::ClassLit::flatten( VMContext*, ItemArray& subItems, void* instance ) const
 {
@@ -995,17 +1099,24 @@ void SynClasses::ClassTree::store( VMContext* ctx, DataWriter* wr, void* instanc
       tree->varmap()->store( wr );
    }
 }
-void SynClasses::ClassTree::restore( VMContext* ctx, DataReader* rd ) const
+void SynClasses::ClassTree::restore( VMContext* ctx, DataReader* dr ) const
 {
-   ExprTree* tree = new ExprTree;
-   ctx->pushData(FALCON_GC_HANDLE( tree ));
-   m_parent->restore( ctx, rd );
-   bool hasVmap;
-   rd->read( hasVmap );
+   ExprTree* expr = new ExprTree;
+   try {
+      ctx->pushData( Item( this, expr ) );
+      m_parent->restore( ctx, dr );
+      bool hasVmap;
+      dr->read( hasVmap );
 
-   if( hasVmap ) {
-      tree->setVarMap( new VarMap );
-      tree->varmap()->restore( rd );
+      if( hasVmap ) {
+         expr->setVarMap( new VarMap );
+         expr->varmap()->restore( dr );
+      }
+   }
+   catch(...) {
+      ctx->popData();
+      delete expr;
+      throw;
    }
 }
 void SynClasses::ClassTree::flatten( VMContext*, ItemArray& subItems, void* instance ) const
@@ -1060,9 +1171,17 @@ void SynClasses::ClassFastPrint::restore( VMContext* ctx, DataReader*dr ) const
 {
    bool bHasNL;
    dr->read( bHasNL );
-   StmtFastPrint* fp = new StmtFastPrint(bHasNL);
-   ctx->pushData( Item( this, fp ) );
-   m_parent->restore( ctx, dr );
+   StmtFastPrint* expr = new StmtFastPrint(bHasNL);
+
+   try {
+      ctx->pushData( Item( this, expr ) );
+      m_parent->restore( ctx, dr );
+   }
+   catch(...) {
+      ctx->popData();
+      delete expr;
+      throw;
+   }
 }
 
 void SynClasses::ClassSelect::flatten( VMContext* ctx, ItemArray& subItems, void* instance ) const

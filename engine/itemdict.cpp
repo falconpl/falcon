@@ -172,7 +172,7 @@ ItemDict::~ItemDict()
 
 void ItemDict::gcMark( uint32 mark )
 {
-   if( m_currentMark >= mark )
+   if( m_currentMark == mark )
    {
       return;
    }

@@ -96,7 +96,7 @@ bool Event::wait( int32 to )
 
       ts.tv_nsec = (tv.tv_usec + ((to%1000)*1000))*1000;
       ts.tv_sec = tv.tv_sec + (to/1000);
-      if( ts.tv_nsec > 1000000000 ) {
+      if( ts.tv_nsec >= 1000000000 ) {
          ts.tv_sec++;
          ts.tv_nsec -= 1000000000;
       }

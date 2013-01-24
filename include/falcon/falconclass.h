@@ -315,6 +315,8 @@ public:
    virtual void gcMark( uint32 mark );
 
    virtual void gcMarkInstance( void* self, uint32 mark ) const;
+   virtual bool gcCheckInstance( void* self, uint32 mark ) const;
+
 
    virtual void enumerateProperties( void* self, PropertyEnumerator& cb ) const;
    virtual void enumeratePV( void* self, PVEnumerator& cb ) const;

@@ -19,6 +19,7 @@
 #include <falcon/setup.h>
 #include <falcon/refcounter.h>
 #include <falcon/mt.h>
+#include <falcon/item.h>
 
 namespace Falcon {
 
@@ -29,6 +30,7 @@ class Closure;
 class Item;
 class SynFunc;
 class Error;
+class GCLock;
 
 /** Process Entity.
 
@@ -162,6 +164,8 @@ public:
     */
    Error* error() const { return m_error; }
 
+   void setResult( const Item& value );
+
 protected:
    Process( VMachine* owner, bool added );
    virtual ~Process();
@@ -183,6 +187,9 @@ protected:
    atomic_int m_ctxId;
    Error* m_error;
    bool m_added;
+
+   Item m_result;
+   GCLock* m_resultLock;
 
    FALCON_REFERENCECOUNT_DECLARE_INCDEC(Process)
 };

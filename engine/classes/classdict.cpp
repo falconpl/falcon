@@ -112,7 +112,7 @@ void ClassDict::restore( VMContext* ctx, DataReader* stream ) const
    ItemDict* dict = new ItemDict;
    dict->m_flags = flags;
    dict->m_version = flags;
-   ctx->pushData( FALCON_GC_STORE( this, dict) );
+   ctx->pushData( Item( this, dict) );
 }
 
 

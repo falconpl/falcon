@@ -31,14 +31,11 @@ FalconApp::FalconApp():
    m_exitValue(0)
 {
    m_logger = new Logger;
-   m_vm = new VMachine;
-   m_process = m_vm->createProcess();
 }
 
 FalconApp::~FalconApp()
 {
    m_logger->decref();
-   delete m_vm;
 }
 
 void FalconApp::guardAndGo( int argc, char* argv[] )
@@ -168,9 +165,10 @@ void FalconApp::launch( const String& script )
       if( mod->getMainFunction() != 0 )
       {
          mod->incref();
-         m_process->mainContext()->call( mod->getMainFunction() );
-         m_process->start();
-         m_process->wait();
+         Process* process = vm.createProcess();
+         process->mainContext()->call( mod->getMainFunction() );
+         process->start();
+         process->wait();
       }
    }
    catch( Error* e )

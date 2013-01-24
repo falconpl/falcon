@@ -59,6 +59,7 @@ public:
 
    virtual CGCarrier* clone() const { return new CGCarrier(*this); }
 
+   // no need for class specific marking, as contexts are known to the collector
 };
 
 

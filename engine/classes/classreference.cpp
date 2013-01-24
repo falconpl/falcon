@@ -70,7 +70,7 @@ void* ClassReference::createInstance() const
 void ClassReference::store( VMContext*, DataWriter*, void* ) const {}
 void ClassReference::restore( VMContext* ctx, DataReader* ) const
 {
-   ctx->pushData( FALCON_GC_STORE( this, new Variable ) );
+   ctx->pushData( Item( this, new Variable ) );
    // but don't set the base; that will be restored later.
 }
 

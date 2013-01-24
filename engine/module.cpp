@@ -145,7 +145,7 @@ Module::Private::~Private()
       delete ns;
       ++nsi;
    }
-   
+
    MantraMap::iterator mi = m_mantras.begin();
    while( mi != m_mantras.end() )
    {
@@ -238,6 +238,8 @@ void Module::gcMark( uint32 mark )
 {
    if( m_lastGCMark != mark )
    {
+      TRACE( "Module::gcMark -- marking %s", name().c_ize() );
+
       m_lastGCMark = mark;
       if ( m_modSpace != 0 )
       {
@@ -245,9 +247,16 @@ void Module::gcMark( uint32 mark )
       }
       
       m_globals.gcMark(mark);
+      /*
+      Private::MantraMap::iterator mi = _p->m_mantras.begin();
+      Private::MantraMap::iterator mi_end = _p->m_mantras.end();
 
-      // mantras are not garbaged, they stay in this module and mark us back
-      // so we don't need to mark them.
+      while( mi != mi_end ) {
+         Mantra* m = mi->second;
+         m->gcMark(mark);
+         ++mi;
+      }
+      */
    }
 }
 

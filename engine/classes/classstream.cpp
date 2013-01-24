@@ -134,13 +134,18 @@ void* ClassStream::clone( void* insatnce ) const
 void ClassStream::gcMarkInstance( void* instance, uint32 mark ) const
 {
    StreamCarrier* carrier = static_cast<StreamCarrier*>(instance);
-   carrier->m_underlying->gcMark( mark );
+   if( carrier != 0 && carrier->m_underlying != 0 ) {
+      carrier->m_underlying->gcMark( mark );
+   }
 }
 
 bool ClassStream::gcCheckInstance( void* instance, uint32 mark ) const
 {
    StreamCarrier* carrier = static_cast<StreamCarrier*>(instance);
-   return carrier->m_underlying->gcMark() >= mark;
+   if( carrier != 0 && carrier->m_underlying != 0 ) {
+      return carrier->m_underlying->gcMark() >= mark;
+   }
+   return true;
 }
    
 void* ClassStream::createInstance() const

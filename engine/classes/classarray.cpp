@@ -40,6 +40,12 @@ ClassArray::~ClassArray()
 {
 }
 
+int64 ClassArray::occupiedMemory( void* instance ) const
+{
+   ItemArray* f = static_cast<ItemArray*>( instance );
+   return sizeof(ItemArray) + (f->allocated() * sizeof(Item));
+}
+
 
 void ClassArray::dispose( void* self ) const
 {
@@ -72,7 +78,7 @@ void ClassArray::restore( VMContext* ctx, DataReader* stream ) const
    ItemArray* iarr = new ItemArray;
 
    iarr->m_growth = growth;
-   ctx->pushData( FALCON_GC_STORE(this, iarr) );
+   ctx->pushData( Item(this, iarr) );
 }
 
 

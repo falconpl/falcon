@@ -234,7 +234,7 @@ void ClassModule::restore( VMContext* ctx, DataReader* stream ) const
       throw;
    }
  
-   ctx->pushData( FALCON_GC_STORE( mcls, mod ) );
+   ctx->pushData( Item( mcls, mod ) );
 }
 
 
@@ -552,6 +552,15 @@ void ClassModule::describe( void* instance, String& target, int , int ) const
    target = "Module " + mod->name();
 }
 
+void ClassModule::gcMarkInstance( void* instance, uint32 mark ) const
+{
+   static_cast<Module*>(instance)->gcMark(mark);
+}
+
+bool ClassModule::gcCheckInstance( void* instance, uint32 mark ) const
+{
+   return static_cast<Module*>(instance)->lastGCMark() >= mark;
+}
 
 bool ClassModule::op_init( VMContext* ctx, void* instance, int32 pcount ) const
 {

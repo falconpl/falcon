@@ -76,6 +76,9 @@ VMContext::VMContext( Process* prc, ContextGroup* grp ):
    m_catchBlock(0),
    m_id(0),
    m_next_schedule(0),
+   m_inspectible(true),
+   m_bInspectMark(false),
+   m_bSleeping(false),
    m_inGroup(grp),
    m_process(prc)
 {
@@ -1429,6 +1432,7 @@ Item* VMContext::findLocal( const String& name ) const
 
 void VMContext::terminated()
 {
+   //... and from the manager
    vm()->contextManager().onContextTerminated(this);
 
    int value;
@@ -1450,60 +1454,105 @@ void VMContext::terminated()
       }
       else {
          // we're the main context.
+         m_process->setResult( topData() );
          m_process->completed();
       }
    }
+
+   // we're off from the collector...
+   Engine::collector()->unregisterContext(this);
 }
 
 
-void VMContext::gcMark( uint32 mark )
+void VMContext::gcStartMark( uint32 mark )
 {
-   if( m_currentMark < mark )
+   if( m_currentMark != mark )
    {
       m_currentMark = mark;
-      // first, mark the items.
-      {
-         Item* base = m_dataStack.m_base;
-         while( base <= m_dataStack.m_top ) {
-            base->gcMark(mark);
-            ++base;
-         }
-      }
+   }
+}
 
-      // then, the symbols.
-      {
-         DynsData* base = m_dynsStack.m_base;
-         while( base <= m_dynsStack.m_top ) {
-            if( base->m_value != 0 ) {
-               base->m_value->gcMark(mark);
-            }
-            ++base;
-         }
-      }
-
-      // items in call frames
-      {
-         CallFrame* base = m_callStack.m_base;
-         while( base <= m_callStack.m_top )
-         {
-            base->m_self.gcMark(mark);
-            base->m_function->gcMark(mark);
-
-            if( base->m_closingData != 0 ) {
-               base->m_closingData->gcMark(mark);
-            }
-            if( base->m_closure != 0 ) {
-               base->m_closure->gcMark(mark);
-            }
-            ++base;
-         }
-      }
-
-      // then, other various elements.
-      {
-         m_regA.gcMark(mark);
+void VMContext::gcPerformMark()
+{
+   uint32 mark = m_currentMark;
+   // first, mark the items.
+   {
+      Item* base = m_dataStack.m_base;
+      while( base <= m_dataStack.m_top ) {
+         base->gcMark(mark);
+         ++base;
       }
    }
+
+   // then, the symbols.
+   {
+      DynsData* base = m_dynsStack.m_base;
+      while( base <= m_dynsStack.m_top ) {
+         if( base->m_value != 0 ) {
+            base->m_value->gcMark(mark);
+         }
+         ++base;
+      }
+   }
+
+   // items in call frames
+   {
+      CallFrame* base = m_callStack.m_base;
+      while( base <= m_callStack.m_top )
+      {
+         base->m_self.gcMark(mark);
+         base->m_function->gcMark(mark);
+
+         if( base->m_closingData != 0 ) {
+            base->m_closingData->gcMark(mark);
+         }
+         if( base->m_closure != 0 ) {
+            base->m_closure->gcMark(mark);
+         }
+         ++base;
+      }
+   }
+
+   // then, other various elements.
+   {
+      vm()->modSpace()->gcMark(mark);
+      m_regA.gcMark(mark);
+   }
+}
+
+void VMContext::setInspectEvent()
+{
+   m_inspectible = true;  // not really necessary
+
+   m_mtx_sleep.lock();
+   m_bInspectMark = true;
+   if( m_bSleeping ) {
+      m_mtx_sleep.unlock();
+      vm()->contextManager().wakeUp(this);
+   }
+   else {
+      m_mtx_sleep.unlock();
+   }
+   atomicOr(m_events, evtSwap);
+}
+
+bool VMContext::goToSleep()
+{
+   m_mtx_sleep.lock();
+   if( m_bInspectMark ) {
+      m_mtx_sleep.unlock();
+      return false;
+   }
+   m_bSleeping = true;
+   m_mtx_sleep.unlock();
+   return true;
+}
+
+void VMContext::awake()
+{
+   m_mtx_sleep.lock();
+   m_bSleeping = false;
+   m_mtx_sleep.unlock();
 }
 
 }

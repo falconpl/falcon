@@ -61,8 +61,14 @@ void MetaFalconClass::restore( VMContext* ctx, DataReader* rd ) const
    rd->read( name );
    
    FalconClass* fcls = new FalconClass( name );
-   ctx->pushData( FALCON_GC_STORE( this, fcls ) );
-   fcls->restoreSelf( rd );
+   try {
+      fcls->restoreSelf( rd );
+      ctx->pushData( Item( this, fcls ) );
+   }
+   catch(...) {
+      delete fcls;
+      throw;
+   }
 }
 
 

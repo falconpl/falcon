@@ -34,19 +34,15 @@ class Collector;
 class GCToken
 {
 public:
-    void mark(uint32 n) { if( m_mark != n ) { m_mark = n; m_cls->gcMarkInstance( m_data, n ); } }
     void dispose() { m_cls->dispose( m_data ); }
 
     void *data() const { return m_data; }
     Class* cls() const { return m_cls; }
-    Collector* collector() const { return m_collector; }
     
 private:
-    GCToken( Collector* coll, Class* cls, void* data ):
+    GCToken( Class* cls, void* data ):
          m_cls( cls ),
-         m_data( data ),
-         m_mark(0),
-         m_collector( coll )
+         m_data( data )
     {}
 
     ~GCToken() {}
@@ -54,8 +50,6 @@ private:
 
     Class* m_cls;
     void* m_data;
-    uint32 m_mark;
-    Collector* m_collector;
 
     GCToken* m_next;
     GCToken* m_prev;

@@ -170,6 +170,8 @@ void Processor::execute( VMContext* ctx )
             this->id(), ctx->process()->id(), ctx->id(), (int) ctx->callDepth() );
    PARANOID( "Call stack empty", (ctx->callDepth() > 0) );
 
+   ctx->setInspectible(true);
+
    while( true )
    {
       // BEGIN STEP

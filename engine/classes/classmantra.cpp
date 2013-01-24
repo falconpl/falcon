@@ -132,7 +132,7 @@ void ClassMantra::restore( VMContext* ctx, DataReader* stream ) const
       
       // if 0, would have thrown
       fassert( mantra != 0 );
-      ctx->pushData( FALCON_GC_STORE( this, mantra ) );
+      ctx->pushData( Item( this, mantra ) );
    }      
 }
 

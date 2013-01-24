@@ -85,7 +85,7 @@ void Mantra::locateTo( String& target ) const
 
 void Mantra::gcMark( uint32 mark )
 {
-   if( mark > m_mark )
+   if( mark != m_mark )
    {
       m_mark = mark;
 

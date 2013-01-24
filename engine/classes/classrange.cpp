@@ -85,7 +85,7 @@ void ClassRange::restore( VMContext* ctx, DataReader* stream ) const
    r->m_step = step;
    r->m_open = isOpen;
 
-   ctx->pushData( FALCON_GC_STORE( this, r) );
+   ctx->pushData( Item( this, r) );
 }
 
 

@@ -27,6 +27,7 @@
 #include <falcon/modspace.h>
 #include <falcon/synfunc.h>
 #include <falcon/error.h>
+#include <falcon/gclock.h>
 
 
 namespace Falcon {
@@ -38,7 +39,8 @@ Process::Process( VMachine* owner ):
    m_running(false),
    m_ctxId(0),
    m_error(0),
-   m_added(false)
+   m_added(false),
+   m_resultLock(0)
 {
    // get an ID for this process.
    m_id = m_vm->getNextProcessID();
@@ -53,7 +55,8 @@ Process::Process( VMachine* owner, bool bAdded ):
    m_running(false),
    m_ctxId(0),
    m_error(0),
-   m_added(bAdded)
+   m_added(bAdded),
+   m_resultLock(0)
 {
    // get an ID for this process.
    m_id = m_vm->getNextProcessID();
@@ -67,6 +70,9 @@ Process::~Process() {
    m_context->decref();
    if( m_error != 0 ) {
       m_error->decref();
+   }
+   if( m_resultLock !=0 ) {
+      m_resultLock->dispose();
    }
    delete m_entry;
 }
@@ -138,12 +144,12 @@ bool Process::startItem( Item& main, int pcount, Item const* params )
 
 const Item& Process::result() const
 {
-   return m_context->topData();
+   return m_result;
 }
 
 Item& Process::result()
 {
-   return m_context->topData();
+   return m_result;
 }
 
 
@@ -213,6 +219,21 @@ int32 Process::getNextContextID()
    return atomicInc(m_ctxId);
 }
 
+void Process::setResult( const Item& value )
+{
+   if( m_resultLock != 0 ) {
+      m_resultLock->dispose();
+   }
+
+   if ( value.isUser() ) {
+      m_resultLock = Engine::collector()->lock(value);
+   }
+   else {
+      m_resultLock = 0;
+   }
+
+   m_result = value;
+}
 
 }
 

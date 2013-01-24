@@ -56,10 +56,14 @@ UserCarrier::~UserCarrier()
 
 void UserCarrier::gcMark( uint32 mark )   
 {
-   for ( size_t i = 0; i < m_dataSize; ++i )
+   if(m_gcMark != mark )
    {
-      Item& item = m_data[i];
-      item.gcMark(mark);
+      m_gcMark = mark;
+      for ( size_t i = 0; i < m_dataSize; ++i )
+      {
+         Item& item = m_data[i];
+         item.gcMark(mark);
+      }
    }
 }
   

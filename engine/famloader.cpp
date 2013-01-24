@@ -111,7 +111,7 @@ void FAMLoader::PStepLoad::apply_( const PStep* self, VMContext* ctx )
 
    TRACE("FAMLoader::PStepLoad::apply_ %s:%s restore complete", name.c_ize(), path.c_ize() );
 
-   ctx->stackResult(4, FALCON_GC_STORE(modClass, mod));
+   ctx->stackResult(4, Item(modClass, mod));
    ctx->popCode();
 }
 

@@ -13,6 +13,9 @@
    See LICENSE file for licensing details.
 */
 
+#undef SRC
+#define SRC "engine/storer.cpp"
+
 #include <falcon/storer.h>
 #include <falcon/class.h>
 #include <falcon/datawriter.h>
@@ -52,6 +55,7 @@ public:
       void* m_data;
       uint32 m_id;
       uint32 m_clsId;
+      bool m_bIsGarbaged;
       
       /** Items to be given back while deserializing. */
       IDVector m_deps;
@@ -65,16 +69,18 @@ public:
          m_clsId(0)
       {}
       
-      ObjectData( void* data, uint32 id,  uint32 cls ):
+      ObjectData( void* data, uint32 id,  uint32 cls, bool IsGarbaged ):
          m_data(data),
          m_id(id),
-         m_clsId(cls)
+         m_clsId(cls),
+         m_bIsGarbaged( IsGarbaged )
       {}
       
       ObjectData( const ObjectData& other ):
          m_data( other.m_data ),
          m_id( other.m_id ),
-         m_clsId( other.m_clsId )
+         m_clsId( other.m_clsId ),
+         m_bIsGarbaged( other.m_bIsGarbaged )
       // ignore m_deps
       {}
    };
@@ -114,7 +120,7 @@ public:
    }
    
    
-   ObjectData* addObject( Class* cls, void* obj, bool& bIsNew )
+   ObjectData* addObject( Class* cls, void* obj, bool& bIsNew, bool isGarbage = false )
    {
       // if the object is flat, it's never there.
       if( cls->isFlatInstance() )
@@ -158,9 +164,9 @@ public:
          m_clsVector.push_back( cls );
       }
       
-      TRACE1("Adding object ID=%d(%p) with handler %s(%p) (CLSID=%d)",
-               objCount, obj, cls->name().c_ize(), cls, clsId );
-      ObjectData* ndt = new ObjectData( obj, objCount, clsId );
+      TRACE1("Adding object ID=%d(%p) with handler %s(%p) (CLSID=%d)%s",
+               objCount, obj, cls->name().c_ize(), cls, clsId, (isGarbage ? " garbaged": "") );
+      ObjectData* ndt = new ObjectData( obj, objCount, clsId, isGarbage );
       m_objVector.push_back( ndt );
       return ndt;
    }
@@ -207,7 +213,7 @@ bool Storer::store( VMContext* ctx, Class* handler, void* data )
    m_topData = data;
    m_topHandler = handler;
    // First, create the Private that we use to unroll cycles.
-   return traverse( ctx, handler, data, true );
+   return traverse( ctx, handler, data, false, true );
 }
 
    
@@ -252,13 +258,13 @@ bool Storer::commit( VMContext* ctx, Stream* dataStream, bool bOwnStream )
 }
 
 
-bool Storer::traverse( VMContext* ctx, Class* handler, void* data, bool isTopLevel, void** obj )
+bool Storer::traverse( VMContext* ctx, Class* handler, void* data, bool isGarbage, bool isTopLevel, void** obj )
 {
    TRACE( "Entering traverse on handler %s ", handler->name().c_ize() );
    
    // first, save the item.
    bool bIsNew;
-   Storer::Private::ObjectData* objd = _p->addObject( handler, data, bIsNew );
+   Storer::Private::ObjectData* objd = _p->addObject( handler, data, bIsNew, isGarbage );
    if( obj != 0 )
    {
       *obj = objd;
@@ -322,7 +328,7 @@ void Storer::TraverseNext::apply_( const PStep* ps, VMContext* ctx )
    
    int &i = ctx->currentCode().m_seqId;
    
-   TRACE1( "Entering traverse next step %i", i );
+   TRACE1( "TraverseNext::apply_ -- step %i", i );
    
    // The dependencies are now stored in items array.
    int length = (int) items.length();
@@ -337,7 +343,8 @@ void Storer::TraverseNext::apply_( const PStep* ps, VMContext* ctx )
    
       ++i; // prepare for going deep
       Private::ObjectData* newDep;
-      bool bDidAll = self->m_owner->traverse( ctx, cls, udata, false, (void**) &newDep );
+      bool bDidAll = self->m_owner->traverse( ctx, cls, udata,
+               current.isUser() && current.isGarbage(), false, (void**) &newDep );
       // Always save the traversed item -- which is alwas added right now...
       objd->m_deps.push_back( newDep->m_id );
      
@@ -483,6 +490,7 @@ bool Storer::writeObject( VMContext* ctx, uint32 pos, DataWriter* wr )
    const PStep* ps = ctx->currentCode().m_step;
    
    // then serialize us.
+   wr->write( obd.m_bIsGarbaged );
    cls->store( ctx, wr, obd.m_data );
    // Return ture if we didn't go deep.
    return ctx->currentCode().m_step == ps;

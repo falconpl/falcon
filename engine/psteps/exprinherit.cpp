@@ -243,8 +243,14 @@ public:
       stream->read( name );
       
       IRequirement* requirement = new IRequirement( name );
-      ctx->pushData( FALCON_GC_STORE( this, requirement ) );
-      requirement->restore(stream);
+      try {
+         requirement->restore(stream);
+         ctx->pushData( Item( this, requirement ) );
+      }
+      catch( ... ) {
+         delete requirement;
+         throw;
+      }
    }
    
    void describe( void* instance, String& target, int, int ) const

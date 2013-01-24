@@ -103,13 +103,18 @@ void ClassSynFunc::restore(VMContext* ctx, DataReader* stream) const
    stream->read( signature );
 
    SynFunc* synfunc = new SynFunc( name, 0, line );
-   ctx->pushData( FALCON_GC_STORE(this, synfunc) );
-   
    synfunc->setPredicate( bPred );
    synfunc->setEta( bEta );
    synfunc->signature( signature );
 
-   synfunc->variables().restore( stream );
+   try {
+      synfunc->variables().restore( stream );
+      ctx->pushData( Item(this, synfunc) );
+   }
+   catch( ... ) {
+      delete synfunc;
+      throw;
+   }
 }
 
 
@@ -136,13 +141,13 @@ void ClassSynFunc::unflatten( VMContext*, ItemArray& subItems, void* instance ) 
       Class* cls = 0;
       void* data = 0;
       subItems[i].asClassInst(cls,data);
-      
+
 #ifndef NDEBUG
       static Class* stmtClass = Engine::instance()->statementClass();
       fassert2( cls != 0, "Serialized instances are not classes" );
-      fassert2( cls->isDerivedFrom( stmtClass ), "Serialized instances are not statements" );               
+      fassert2( cls->isDerivedFrom( stmtClass ), "Serialized instances are not statements" );
 #endif
-      
+
       synfunc->syntree().append( static_cast<Statement*>(data) );
    }
 }

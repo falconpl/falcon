@@ -287,7 +287,7 @@ void ClosedData::copy( const ClosedData& other )
 
 void ClosedData::gcMark( uint32 mark )
 {
-   if( m_mark >= mark ) {
+   if( m_mark == mark ) {
       return;
    }
    m_mark = mark;

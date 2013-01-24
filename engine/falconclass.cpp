@@ -499,9 +499,13 @@ const FalconClass::Property* FalconClass::getProperty( const String& name ) cons
 
 void FalconClass::gcMark( uint32 mark )
 {
-   if ( m_shouldMark )
+   if( m_mark != mark )
    {
-      _p->m_propDefaults->gcMark( mark );
+      Mantra::gcMark(mark);
+      if ( m_shouldMark )
+      {
+         _p->m_propDefaults->gcMark( mark );
+      }
    }
 }
 
@@ -737,6 +741,12 @@ void FalconClass::gcMarkInstance( void* self, uint32 mark ) const
 {
    FalconInstance* inst = static_cast<FalconInstance*>(self);
    inst->gcMark( mark );
+}
+
+bool FalconClass::gcCheckInstance( void* self, uint32 mark ) const
+{
+   FalconInstance* inst = static_cast<FalconInstance*>(self);
+   return inst->currentMark() >= mark;
 }
 
 

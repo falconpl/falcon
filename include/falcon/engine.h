@@ -126,9 +126,11 @@ public:
    static Collector* collector();
 
    static GCToken* GC_store( const Class* cls, void* data );
-   static GCToken* GC_H_store( const Class* cls, void* data, const String& src, int line );
    static GCLock* GC_storeLocked( const Class* cls, void* data );
+#ifdef FALCON_TRACE_GC
+   static GCToken* GC_H_store( const Class* cls, void* data, const String& src, int line );
    static GCLock* GC_H_storeLocked( const Class* cls, void* data, const String& src, int line );
+#endif
    static GCLock* GC_lock( const Item& item );
    static void GC_unlock( GCLock* lock );
 

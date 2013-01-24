@@ -620,8 +620,14 @@ public:
    virtual void restore( VMContext* ctx, DataReader* stream ) const
    {
       SelectRequirement* s = new SelectRequirement(0,0,0,"",0);
-      ctx->pushData( FALCON_GC_STORE( this, s ) );
-      s->restore(stream);
+      try {
+         s->restore(stream);
+         ctx->pushData( Item( this, s ) );
+      }
+      catch(...) {
+         delete s;
+         throw;
+      }
    }
    
    void describe( void* instance, String& target, int, int ) const

@@ -273,7 +273,7 @@ private:
    Class* m_topHandler;
       
    // Using void* because we'll be using private data for that.
-   bool traverse( VMContext* ctx, Class* handler, void* data, bool isTopLevel = false, void** objd = 0 );
+   bool traverse( VMContext* ctx, Class* handler, void* data, bool isGarbage, bool isTopLevel = false, void** objd = 0 );
    void writeClassTable( DataWriter* wr );
    void writeInstanceTable( DataWriter* wr );
    bool writeObjectTable( VMContext* ctx, DataWriter* wr );

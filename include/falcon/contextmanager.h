@@ -60,6 +60,11 @@ public:
     */
    void onSharedSignaled( Shared* waitable );
 
+   /**
+    * Used by the collector to wake up sleeping contexts.
+    */
+   void wakeUp(VMContext* ctx);
+
    /** Main loop of the context manager agent. */
    virtual void* run();
 
@@ -99,6 +104,7 @@ private:
    void manageDesceduledContext( VMContext* ctx );
    void manageReadyContext( VMContext* ctx );
    void manageSignal( Shared* ctx );
+   void manageAwakenContext( VMContext* ctx );
 
    void removeSleepingContext( VMContext* ctx );
 

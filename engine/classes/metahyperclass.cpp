@@ -64,7 +64,7 @@ void MetaHyperClass::restore( VMContext* ctx, DataReader* dr ) const
    hc->m_nParents = nParents;
    hc->m_ownParentship  = ownParentship;
    
-   ctx->pushData( FALCON_GC_STORE( this, hc ) );
+   ctx->pushData( Item( this, hc ) );
 }
 
 

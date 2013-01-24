@@ -41,7 +41,8 @@ public:
    typedef enum {
       e_resource_signaled,
       e_incoming_context,
-      e_context_terminated
+      e_context_terminated,
+      e_wakeup_context
    }
    t_type;
 
@@ -58,6 +59,9 @@ public:
 
    CMMsg( VMContext* ctx ):
       m_type(e_incoming_context) { m_data.ctx = ctx; }
+
+   CMMsg( VMContext* ctx, t_type t ):
+         m_type(t) { m_data.ctx = ctx; }
 
    CMMsg( VMContext* ctx, bool ):
       m_type(e_context_terminated) { m_data.ctx = ctx; }
@@ -220,6 +224,14 @@ void ContextManager::onSharedSignaled( Shared* waitable )
    _p->m_messages.add( CMMsg(waitable) );
 }
 
+void ContextManager::wakeUp( VMContext* ctx )
+{
+   TRACE1( "ContextManager::wakeUp %p(%d) in process %p(%d)",
+            ctx, ctx->id(), ctx->process(), ctx->process()->id() );
+
+   ctx->incref();
+   _p->m_messages.add( CMMsg(ctx, CMMsg::e_wakeup_context) );
+}
 
 int64 ContextManager::msToAbs( int32 to )
 {
@@ -258,6 +270,7 @@ void* ContextManager::run()
          }
          else {
             MESSAGE1( "ContextManager::Manager::run -- endlessly waiting for new messages" );
+            //recvd = _p->m_messages.getTimed( msg, 1000, &term );
             recvd = _p->m_messages.get( msg, &term );
          }
       }
@@ -292,6 +305,11 @@ void* ContextManager::run()
          manageSignal( msg.m_data.res );
          msg.m_data.res->decref();
          break;
+
+      case CMMsg::e_wakeup_context:
+         manageAwakenContext( msg.m_data.ctx );
+         msg.m_data.res->decref();
+         break;
       }
 
       manageSleepingContexts();
@@ -321,6 +339,7 @@ void ContextManager::manageReadyContext( VMContext* ctx )
    }
 
    TRACE1( "manageReadyContext - Adding ready context %p(%d)", ctx, ctx->id() );
+   ctx->nextSchedule(0); // ready to run.
    m_readyContexts.add( ctx );
 }
 
@@ -339,6 +358,8 @@ bool ContextManager::manageSleepingContexts()
    while( front != end )
    {
       int64 sched = front->first;
+      TRACE2( "manageSleepingContexts - schedule %d for %d(%p) in %d(%p)",
+               (int) sched, front->second->id(), front->second, front->second->process()->id(), front->second->process() );
       if( sched <= m_now ) {
          if( sched >= 0 )
          {
@@ -373,10 +394,25 @@ void ContextManager::manageTerminatedContext( VMContext* ctx )
    {
       removeSleepingContext( ctx );
    }
-   // we're off with this context.
-   Engine::collector()->unregisterContext(ctx);
 }
 
+void ContextManager::manageAwakenContext( VMContext* ctx )
+{
+   TRACE( "manageAwakenContext - Sending the context to the collector. %p(%d)", ctx, ctx->id() );
+   if( ctx->nextSchedule() != 0 )
+   {
+      removeSleepingContext( ctx );
+      if( ! Engine::collector()->offerContext(ctx) )
+      {
+         TRACE( "manageAwakenContext - Collector didn't accept %p(%d), putting back to sleep.", ctx, ctx->id() );
+         manageDesceduledContext(ctx);
+      }
+   }
+   else {
+      TRACE( "manageAwakenContext - Context %p(%d) was already readied for running.", ctx, ctx->id() );
+   }
+
+}
 
 void ContextManager::removeSleepingContext( VMContext* ctx )
 {
@@ -387,6 +423,7 @@ void ContextManager::removeSleepingContext( VMContext* ctx )
       if (pos->second == ctx)  {
          TRACE( "removeSleepingContext - Context %p(%d) found in wait", ctx, ctx->id() );
          _p->m_schedMap.erase(pos);
+         ctx->awake();
          ctx->decref();
          break;
       }
@@ -396,10 +433,17 @@ void ContextManager::removeSleepingContext( VMContext* ctx )
 
 void ContextManager::manageDesceduledContext( VMContext* ctx )
 {
-   TRACE( "manageDesceduledContext - Managing descheduled context %p(%d)", ctx, ctx->id() );
+   TRACE( "manageDesceduledContext - %d(%p) in %d(%p)",
+            ctx->id(), ctx, ctx->process()->id(), ctx->process() );
 
    // a new context is de-scheduled.
-   // TODO: send it to GC if needed.
+   if( ctx->isInspectible() ) {
+      if( Engine::collector()->offerContext(ctx) ) {
+         // the collector took it.
+         MESSAGE( "ContextManager::manageDesceduledContext - accepted by the collector"  );
+         return;
+      }
+   }
 
    // Check if a shared resource was readied during the idle time.
    Shared* sh = ctx->checkAcquiredWait();
@@ -414,7 +458,16 @@ void ContextManager::manageDesceduledContext( VMContext* ctx )
    }
    else {
       TRACE( "manageDesceduledContext - context %p(%d) put in wait to sched %d", ctx, ctx->id(), (int)ctx->nextSchedule());
-      _p->m_schedMap.insert( std::make_pair(ctx->nextSchedule(), ctx) );
+      if( ! ctx->goToSleep() ) {
+         TRACE( "manageDesceduledContext - context %p(%d) requested urgently by the collector %d", ctx, ctx->id(), (int)ctx->nextSchedule());
+         // ops, the context was urgently asked by the collector.
+         // a context that can't go to sleep MUST be accepted by the collector.
+         Engine::collector()->offerContext(ctx);
+         return;
+      }
+      else {
+         _p->m_schedMap.insert( std::make_pair(ctx->nextSchedule(), ctx) );
+      }
    }
    // in every case, we keep it.
    ctx->incref();

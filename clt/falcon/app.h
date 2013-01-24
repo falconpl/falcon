@@ -55,10 +55,6 @@ public:
    void launch( const String& script );
 
 private:
-   // we want a VM for this application.
-   VMachine* m_vm;
-   // and we'll have a single process to run.
-   Process* m_process;
 };
 
 } // namespace Falcon

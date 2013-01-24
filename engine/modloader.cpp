@@ -34,6 +34,8 @@
 #include <falcon/vmcontext.h>
 #include <falcon/module.h>
 
+#include <falcon/classes/classstream.h>
+
 #include <falcon/trace.h>
 #include <falcon/fassert.h>
 
@@ -525,7 +527,7 @@ void ModLoader::saveModule_internal( VMContext* ctx, Module* mod, const URI& src
    output->shouldThrow(true);
    output->write("FM\x4\x1",4);
 
-   ctx->pushData( FALCON_GC_STORE(clsStream, output) );
+   ctx->pushData( FALCON_GC_STORE(clsStream, new StreamCarrier(output) ) );
    ctx->pushData( FALCON_GC_STORE(clsStorer, new Storer) );
    ctx->pushData( Item(clsModule, mod) );
    ctx->pushCode( &m_stepSave );
@@ -539,7 +541,7 @@ void ModLoader::PStepSave::apply_( const PStep*, VMContext* ctx )
 
    MESSAGE("ModLoader::PStepSave::apply_" );
 
-   Stream* output = static_cast<Stream*>(ctx->opcodeParam(2).asInst());
+   Stream* output = static_cast<StreamCarrier*>(ctx->opcodeParam(2).asInst())->m_stream;
    Storer* storer = static_cast<Storer*>(ctx->opcodeParam(1).asInst());
    Module* mod = static_cast<Module*>(ctx->opcodeParam(0).asInst());
 

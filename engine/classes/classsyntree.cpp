@@ -93,10 +93,17 @@ void ClassSynTree::restore( VMContext* ctx, DataReader* stream ) const
       st->target(sym);
    }
 
-   ctx->pushData( FALCON_GC_STORE( this, st ) );
-   m_parent->restore( ctx, stream );
+   try {
+      ctx->pushData( Item( this, st ) );
+      // the parent wants us on top of stack.
+      m_parent->restore( ctx, stream );
+   }
+   catch( ... ) {
+      ctx->popData();
+      delete st;
+      throw;
+   }
 }
-
 
 void ClassSynTree::unflatten( VMContext* ctx, ItemArray& subItems, void* instance ) const
 {

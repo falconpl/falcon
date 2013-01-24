@@ -43,6 +43,8 @@ public:
 
    virtual void describe( void* instance, String& target, int maxDepth = 3, int maxLength = 60 ) const;
 
+   virtual void gcMarkInstance( void* instance, uint32 mark ) const;
+   virtual bool gcCheckInstance( void* instance, uint32 mark ) const;
    //=============================================================
 
    virtual bool op_init( VMContext* ctx, void* instance, int32 pcount ) const;

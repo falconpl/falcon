@@ -35,6 +35,7 @@ public:
    virtual ~CollectorAlgorithm() {};
 
    virtual Collector::t_status checkStatus() = 0;
+   virtual void onSweepBegin() {};
    virtual void onSweepComplete( int64 allocatedMemory, int64 allocatedItems ) = 0;
    virtual void describe( String& target) const = 0;
 

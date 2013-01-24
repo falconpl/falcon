@@ -172,7 +172,7 @@ void ClassSymbol::restore( VMContext* ctx, DataReader* stream ) const
    stream->read( type );
    
    Symbol* sym = Engine::getSymbol( name, type != 0 ? true : false );
-   ctx->pushData( FALCON_GC_STORE( this, sym ) );
+   ctx->pushData( Item( this, sym ) );
 }
 
 }

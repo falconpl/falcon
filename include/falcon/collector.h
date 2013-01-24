@@ -20,6 +20,7 @@
 #include <falcon/mt.h>
 #include <falcon/string.h>
 #include <falcon/enumerator.h>
+#include <falcon/atomic.h>
 
 
 #ifndef SRC
@@ -133,7 +134,7 @@ class CollectorAlgorithm;
  
 */
 
-class FALCON_DYN_CLASS Collector: public Runnable
+class FALCON_DYN_CLASS Collector
 {
 
 public:
@@ -316,7 +317,11 @@ public:
    */
    void unregisterContext( VMContext *vm );
 
-   virtual void* run();
+
+   /** Offers a context for inspection.
+      \return true if the context is accepted and going to be inspected, false otherwise.
+   */
+   bool offerContext( VMContext* vm );
 
    /** Starts the parallel garbage collector. */
    void start();
@@ -325,16 +330,6 @@ public:
       The function synchronously wait for the thread to exit and sets it to 0.
    */
    void stop();
-
-   /** Sets the normal threshold level. */
-   void thresholdNormal( size_t mem ) { m_thresholdNormal = mem; }
-
-   /** Sets the active threshold level. */
-   void thresholdActive( size_t mem ) { m_thresholdActive = mem; }
-
-   size_t thresholdNormal() const { return m_thresholdNormal; }
-
-   size_t thresholdActive() const { return m_thresholdActive; }
 
    /** Sets the algorithm used to dynamically configure the collection levels.
       Can be one of:
@@ -420,6 +415,7 @@ public:
    int64 storedMemory() const;
    int64 storedItems() const;
    void stored( int64& memory, int64& items ) const;
+
 
 #if FALCON_TRACE_GC
    /** Debug version of store.
@@ -586,40 +582,88 @@ public:
 #endif
 
 protected:
+   /** Monitor thread. */
+   class Monitor: public Runnable {
+   public:
+      Monitor( Collector* master ):
+         m_master(master)
+      {}
+      virtual ~Monitor(){}
 
-   size_t m_thresholdNormal;
-   size_t m_thresholdActive;
+      virtual void* run();
 
-   /** Minimal generation.
-      Items marked with generations lower than this are killed.
-   */
-   uint32 m_mingen;
+   private:
+      Collector* m_master;
+   };
 
-   /** Alive and possibly collectable items are stored in this ring. */
+   /** Marker thread. */
+   class Marker: public Runnable {
+   public:
+      Marker( Collector* master ):
+         m_master(master)
+      {}
+      virtual ~Marker(){}
+
+      virtual void* run();
+
+   private:
+      Collector* m_master;
+   };
+
+   /** Sweeper thread. */
+   class Sweeper: public Runnable {
+   public:
+      Sweeper( Collector* master ):
+         m_master(master)
+      {}
+      virtual ~Sweeper(){}
+
+      virtual void* run();
+
+   private:
+      void sweep( uint32 lastGen );
+      Collector* m_master;
+   };
+
+   friend class Monitor;
+   friend class Marker;
+   friend class Sweeper;
+
+   /** Alive and possibly collectible items are stored in this ring. */
    GCToken *m_garbageRoot;
+   /** Mutex for m_garbageRoot */
+   Mutex m_mtx_garbageRoot;
 
-   /** Newly created and unreclaimable items are stored in this ring. */
+   /** Newly created, non-collectible items are stored in this ring. */
    GCToken *m_newRoot;
+   /** Mutex for m_newRoot */
+   mutable Mutex m_mtx_newRoot;
+
 
    /** A place where to store tokens for recycle. */
    GCToken *m_recycleTokens;
    int32 m_recycleTokensCount;
    Mutex m_mtx_recycle_tokens;
 
-   SysThread *m_th;
-   bool m_bLive;
-   Event m_eRequest;
+   /** The monitor thread keeps track of what's going on in the system. */
+   SysThread *m_thMonitor;
+   Monitor m_monitor;
+   Event m_monitorWork;
 
+   /** The marker is in charge of marking incoming contexts */
+   SysThread *m_thMarker;
+   Marker m_marker;
+   Event m_markerWork;
 
-   /** Mutex for newly created items ring.
-      - GarbageableBase::nextGarbage()
-      - GarbageableBase::prevGarbage()
-      - m_generation
-      - m_newRoot
-      - rollover()
-      \note This mutex is acquired once while inside  m_mtx_vms.lock()
-   */
-   mutable Mutex m_mtx_newitem;
+   /** The sweeper thread is in charge of killing unused memory */
+   SysThread *m_thSweeper;
+   Sweeper m_sweeper;
+   Event m_sweeperWork;
+   /** Managed by m_mtxRequest */
+   bool m_sweepPerformed;
+
+   /** The threads are stopped by turning this to off. */
+   atomic_int m_aLive;
 
    /** Guard for ramp modes. */
    mutable Mutex m_mtx_ramp;
@@ -645,16 +689,13 @@ protected:
    //==================================================
    // Private functions
    //==================================================
-   void gcSweep();
+   void onSweepBegin();
+   void onSweepComplete( int64 freedMem, int64 freedItems );
 
    void clearRing( GCToken *ringRoot );
    void rollover();
-   void remark(uint32 mark);
-   void electOlderVM(); // to be called with m_mtx_vms locked
 
-   void promote( uint32 oldgen, uint32 curgen );
-   void advanceGeneration( VMachine* vm, uint32 oldGeneration );
-   void markLocked();
+   void markLocked( uint32 mark );
    void disposeLock( GCLock* lock );
    void disposeToken(GCToken* token);
 
@@ -665,12 +706,18 @@ protected:
    GCToken* getToken( Class* cls, void* data );
 
    // Marks the newly created items.
-   void markNew();
+   void markNew( uint32 mark );
 
    // True to activate runtime trace.
    bool m_bTrace;
    bool m_bTraceMarks;
+
+   // mark variables are associated with active contexts.
+   // so they are locked with _p->m_mtx_context
+
+   // mark currently used in mark loop, topmost mark
    uint32 m_currentMark;
+   // oldest mark known to be used
    uint32 m_oldestMark;
    
 private:
