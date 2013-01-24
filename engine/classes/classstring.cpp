@@ -47,7 +47,7 @@ ClassString::~ClassString()
 int64 ClassString::occupiedMemory( void* instance ) const
 {
    String* s = static_cast<String*>( instance );
-   return sizeof(String) + s->allocated();
+   return sizeof(String) + s->allocated() + 16 + (s->allocated()?16:0);
 }
 
 
@@ -303,6 +303,7 @@ void ClassString::op_aadd( VMContext* ctx, void* self ) const
       {
          op1->asString()->append( op2->describe() );
       }
+      return;
    }
 
 
