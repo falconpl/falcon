@@ -28,7 +28,7 @@ namespace Ext {
 
 TextWriterCarrier::TextWriterCarrier( StreamCarrier* stc ):
    UserCarrierT<StreamCarrier>(stc),
-   m_writer( stc->m_underlying )
+   m_writer( stc != 0 ? stc->m_underlying : 0 )
 {
 }
 
@@ -73,13 +73,12 @@ ClassTextWriter::~ClassTextWriter()
 
 void* ClassTextWriter::createInstance() const
 {
-   return new TextWriterCarrier( 0 );
+   return FALCON_CLASS_CREATE_AT_INIT;
 }
 
-bool ClassTextWriter::op_init( VMContext* ctx, void* instance, int pcount ) const
+bool ClassTextWriter::op_init( VMContext* ctx, void* , int pcount ) const
 {
    static Engine* eng = Engine::instance();
-   TextWriterCarrier* twc = static_cast<TextWriterCarrier*>(instance);
    
    // if we have 2 parameters, the second one is the encoding.
    String* encoding = 0;
@@ -130,11 +129,13 @@ bool ClassTextWriter::op_init( VMContext* ctx, void* instance, int pcount ) cons
       }
    }
    
+   TextWriterCarrier* twc = new TextWriterCarrier(stc);
    twc->carried( stc );
    if( tc != 0 )
    {
       twc->m_writer.setEncoding(tc);
    }
+   ctx->opcodeParam(pcount) = FALCON_GC_STORE(this, twc);
    
    return false;
 }

@@ -85,10 +85,10 @@ ClassTextReader::~ClassTextReader()
 
 void* ClassTextReader::createInstance() const
 {
-   return new TextReaderCarrier( 0 );
+   return FALCON_CLASS_CREATE_AT_INIT;
 }
 
-bool ClassTextReader::op_init( VMContext* ctx, void* instance, int pcount ) const
+bool ClassTextReader::op_init( VMContext* ctx, void* , int pcount ) const
 {
    static Engine* eng = Engine::instance();
    
@@ -141,11 +141,12 @@ bool ClassTextReader::op_init( VMContext* ctx, void* instance, int pcount ) cons
       }
    }
    
-   TextReaderCarrier* twc = static_cast<TextReaderCarrier*>( instance );
+   TextReaderCarrier* twc = new TextReaderCarrier(stc);
    if( tc != 0 )
    {
       twc->m_reader.setEncoding(tc);
    }
+   ctx->opcodeParam(pcount) = FALCON_GC_STORE(this, twc);
    
    return false;
 }
