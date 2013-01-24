@@ -43,7 +43,7 @@ ClassArray::~ClassArray()
 int64 ClassArray::occupiedMemory( void* instance ) const
 {
    ItemArray* f = static_cast<ItemArray*>( instance );
-   return sizeof(ItemArray) + (f->allocated() * sizeof(Item));
+   return sizeof(ItemArray) + (f->allocated() * sizeof(Item)) + 16 + (f->allocated()?16:0);
 }
 
 

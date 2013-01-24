@@ -30,8 +30,6 @@
 #include <set>
 #include <map>
 
-#include <stdio.h>
-
 #if FALCON_TRACE_GC
    #include <falcon/stdstreams.h>
    #include <falcon/textwriter.h>
@@ -134,7 +132,7 @@ Collector::Collector():
    // fill the ramp algorithms
    m_ramp  = new CollectorAlgorithm*[ FALCON_COLLECTOR_ALGORITHM_COUNT ];
    m_ramp[FALCON_COLLECTOR_ALGORITHM_OFF] = new CollectorAlgorithmNone;
-   m_ramp[FALCON_COLLECTOR_ALGORITHM_FIXED] = new CollectorAlgorithmFixed(1000000,5000000,10000000);
+   m_ramp[FALCON_COLLECTOR_ALGORITHM_FIXED] = new CollectorAlgorithmFixed(1000000,5000000,1000000);
    m_ramp[FALCON_COLLECTOR_ALGORITHM_STRICT] = new CollectorAlgorithmStrict;
    m_ramp[FALCON_COLLECTOR_ALGORITHM_SMOOTH] = new CollectorAlgorithmSmooth;
    m_ramp[FALCON_COLLECTOR_ALGORITHM_LOOSE] = new CollectorAlgorithmLoose;
@@ -451,10 +449,6 @@ bool Collector::offerContext( VMContext* ctx )
    TRACE( "Collector::offerContext -- being offeretd ctx %d(%p) in process %d(%p)",
             ctx->id(), ctx, ctx->process()->id(), ctx->process() );
 
-   /*
-   printf( "\nCollector::offerContext -- being offeretd ctx %d(%p) in process %d(%p)\n",
-               ctx->id(), ctx, ctx->process()->id(), ctx->process() );
-*/
    bool operate = false;
 
    if( ctx->markedForInspection() )
@@ -501,7 +495,6 @@ bool Collector::offerContext( VMContext* ctx )
    }
 
    if(operate) {
-      //printf("\nOffer accepted\n");
       ctx->incref();
       _p->m_mtx_markingList.lock();
       _p->m_markingList.push_back(ctx);
@@ -1047,7 +1040,7 @@ void* Collector::Monitor::run()
    Event& work = m_master->m_monitorWork;
 
    // start from green status.
-   //Collector::t_status prev_st = Collector::e_status_green;
+   Collector::t_status prev_st = Collector::e_status_green;
 
    while( atomicFetch(m_master->m_aLive) )
    {
@@ -1060,21 +1053,15 @@ void* Collector::Monitor::run()
 
       TRACE( "Collector::Monitor::run -- Working %ld on %ld items (in mode %d)",
                (long)m_master->storedMemory(), (long) m_master->storedItems(), st );
-      /*printf( "\nCollector::Monitor::run -- Working %ld on %ld items (in mode %d)\n",
-               (long)m_master->storedMemory(), (long) m_master->storedItems(), st );
-      */
-
       if( st == Collector::e_status_red || st == Collector::e_status_required )
       {
          bool perform = false;
-         //if( prev_st != st ) {
+         if( prev_st != st ) {
             TRACE1( "Collector::Monitor::run -- sending block requests for status change %d -> %d",
                            prev_st, st );
-            /*printf( "\nCollector::Monitor::run -- sending block requests for status change %d -> %d\n",
-                                       prev_st, st );
-                                       */
+
             perform = true;
-         /*}
+         }
          else {
             m_master->m_mtxRequest.lock();
             bool swept = m_master->m_sweepPerformed;
@@ -1084,7 +1071,7 @@ void* Collector::Monitor::run()
                MESSAGE( "Collector::Monitor::run -- sending block requests after (failed) sweep" );
                perform = true;
             }
-         }*/
+         }
 
          if( perform )
          {
@@ -1105,7 +1092,7 @@ void* Collector::Monitor::run()
          }
       }
 
-      //prev_st = st;
+      prev_st = st;
    }
 
    MESSAGE( "Collector::Monitor::run -- stopping" );
@@ -1170,9 +1157,6 @@ void* Collector::Marker::run()
 
          TRACE1( "Collector::Marker::run -- mark complete %d(%p) in process %d(%p)",
                                     toMark->id(), toMark, toMark->process()->id(), toMark->process() );
-         /*printf( "\nCollector::Marker::run -- mark complete %d(%p) in process %d(%p)\n",
-                                            toMark->id(), toMark, toMark->process()->id(), toMark->process() );
-         */
          // we don't need the inspected context anymore.
          toMark->decref();
 
@@ -1181,8 +1165,6 @@ void* Collector::Marker::run()
          {
             TRACE1( "Collector::Marker::run -- Abandoning oldest mark %d (now %d)",
                      oldMark, newOldest );
-            /*printf( "\nCollector::Marker::run -- Abandoning oldest mark %d (now %d)\n",
-                                oldMark, newOldest );*/
             // time to mark the gclocked items...
             m_master->markLocked( mark );
 
@@ -1250,7 +1232,6 @@ void* Collector::Sweeper::run()
 void Collector::Sweeper::sweep( uint32 lastGen )
 {
    TRACE( "Collector::Sweeper::sweep -- sweeping prior to %d", lastGen );
-   //printf( "\nCollector::Sweeper::sweep -- sweeping prior to %d\n", lastGen );
 
    // disengage the ring.
    m_master->m_mtx_garbageRoot.lock();
@@ -1338,9 +1319,6 @@ void Collector::Sweeper::sweep( uint32 lastGen )
       m_master->m_mtx_garbageRoot.unlock();
    }
 
-   /*printf( "\nCollector::Sweeper::sweep -- reclaimed %d items, %d bytes\n",
-               (int) freedCount, (int) freedMem );
-   */
    TRACE( "Collector::Sweeper::sweep -- reclaimed %d items, %d bytes",
             (int) freedCount, (int) freedMem );
 
