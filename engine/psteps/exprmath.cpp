@@ -531,10 +531,10 @@ FALCON_IMPLEMENT_MATH_EXPR_CLASS( ExprBXOR, "^^", expr_plus )
 #define FALCON_IMPLEMENT_MATH_AUTOEXPR_CLASS( name, symbol, handler ) \
    name::name( Expression* op1, Expression* op2, int line, int chr ): \
       ExprAuto( op1, op2, symbol, line, chr )\
-      { FALCON_DECLARE_SYN_CLASS( expr_iif ); apply = &generic_apply_<ops>; }\
+      { FALCON_DECLARE_SYN_CLASS( handler ); apply = &generic_apply_<ops>; }\
    name::name( int line, int chr ): \
       ExprAuto( symbol, line, chr )\
-      { FALCON_DECLARE_SYN_CLASS( expr_iif ); apply = &generic_apply_<ops>; }\
+      { FALCON_DECLARE_SYN_CLASS( handler ); apply = &generic_apply_<ops>; }\
    name::name( const name &other ): \
       ExprAuto( other ) \
       { apply = &generic_apply_<ops>; }
