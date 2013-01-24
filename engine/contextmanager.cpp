@@ -31,6 +31,8 @@
 #include <vector>
 
 
+#include <stdio.h>
+
 namespace Falcon {
 
 /**
@@ -62,9 +64,6 @@ public:
 
    CMMsg( VMContext* ctx, t_type t ):
          m_type(t) { m_data.ctx = ctx; }
-
-   CMMsg( VMContext* ctx, bool ):
-      m_type(e_context_terminated) { m_data.ctx = ctx; }
 
    CMMsg( Shared* res ):
       m_type(e_resource_signaled) { m_data.res = res; }
@@ -214,7 +213,7 @@ void ContextManager::onContextTerminated( VMContext* ctx )
    // perform automatic release of aqcuired resources
    ctx->acquire(0);
    ctx->incref();
-   _p->m_messages.add( CMMsg(ctx, true) );
+   _p->m_messages.add( CMMsg(ctx, CMMsg::e_context_terminated) );
 }
 
 void ContextManager::onSharedSignaled( Shared* waitable )
@@ -308,7 +307,7 @@ void* ContextManager::run()
 
       case CMMsg::e_wakeup_context:
          manageAwakenContext( msg.m_data.ctx );
-         msg.m_data.res->decref();
+         msg.m_data.ctx->decref();
          break;
       }
 
@@ -405,6 +404,7 @@ void ContextManager::manageAwakenContext( VMContext* ctx )
       if( ! Engine::collector()->offerContext(ctx) )
       {
          TRACE( "manageAwakenContext - Collector didn't accept %p(%d), putting back to sleep.", ctx, ctx->id() );
+         printf( "\nmanageAwakenContext - Collector didn't accept %p(%d), putting back to sleep.\n", ctx, ctx->id() );
          manageDesceduledContext(ctx);
       }
    }
