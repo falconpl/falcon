@@ -34,16 +34,15 @@ namespace Ext {
 
 
 /** Holder for the stream and its TextReader/TextWriter helpers. */
-class FALCON_DYN_CLASS TextStreamCarrier: public StreamCarrier
+class FALCON_DYN_CLASS TextStreamCarrier: public UserCarrierT<StreamCarrier>
 {
 public:
    // we won't be separating the text readers and writers.
-   TextReader m_reader;
-   TextWriter m_writer;
+   TextReader* m_reader;
+   TextWriter* m_writer;
    String m_encoding;
 
-   
-   TextStreamCarrier( Stream* stream );
+   TextStreamCarrier( StreamCarrier* sc );
    virtual ~TextStreamCarrier();   
    virtual void onFlushingOperation();   
    
@@ -88,6 +87,9 @@ private:
    FALCON_DECLARE_METHOD( getChar, "" );
    FALCON_DECLARE_METHOD( ungetChar, "char:S|N" );
    FALCON_DECLARE_METHOD( putChar, "char:S|N" );
+   FALCON_DECLARE_METHOD( sync, "" );
+   FALCON_DECLARE_METHOD( flush, "" );
+   FALCON_DECLARE_METHOD( close, "" );
    
 };
 

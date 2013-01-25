@@ -121,13 +121,15 @@ ClassStream::~ClassStream()
 
 void ClassStream::dispose( void* instance ) const
 {
-   delete static_cast<StreamCarrier*>(instance);
+   static_cast<StreamCarrier*>(instance)->decref();
 }
 
 void* ClassStream::clone( void* insatnce ) const
 {
    // TODO: Clone the underlying streams to have new file pointers
-   return insatnce;
+   StreamCarrier* sc = static_cast<StreamCarrier*>(insatnce);
+   sc->incref();
+   return sc;
 }
 
 

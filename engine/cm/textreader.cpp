@@ -30,12 +30,21 @@ namespace Ext {
 
 TextReaderCarrier::TextReaderCarrier( StreamCarrier* stc ):
    UserCarrierT<StreamCarrier>(stc),
-   m_reader( stc->m_underlying )
+   m_reader( new TextReader(stc->m_underlying, false) )
 {
+   stc->incref();
 }
 
 TextReaderCarrier::~TextReaderCarrier()
 {
+   delete m_reader;
+   carried()->decref();
+}
+
+StreamCarrier* TextReaderCarrier::cloneData() const
+{
+   carried()->incref();
+   return carried();
 }
    
 void TextReaderCarrier::gcMark( uint32 mark )
@@ -73,7 +82,8 @@ ClassTextReader::ClassTextReader( ClassStream* clsStream ):
    FALCON_INIT_METHOD( ungetChar ),   
    
    FALCON_INIT_METHOD( getStream ),      
-   FALCON_INIT_METHOD( sync )
+   FALCON_INIT_METHOD( sync ),
+   FALCON_INIT_METHOD( close )
 {
    
 }
@@ -144,7 +154,7 @@ bool ClassTextReader::op_init( VMContext* ctx, void* , int pcount ) const
    TextReaderCarrier* twc = new TextReaderCarrier(stc);
    if( tc != 0 )
    {
-      twc->m_reader.setEncoding(tc);
+      twc->m_reader->setEncoding(tc);
    }
    ctx->opcodeParam(pcount) = FALCON_GC_STORE(this, twc);
    
@@ -162,7 +172,7 @@ FALCON_DEFINE_PROPERTY_SET_P( ClassTextReader, encoding )
    TextReaderCarrier* sc = static_cast<TextReaderCarrier*>(instance);
    if( value.isNil() )
    {
-      sc->m_reader.setEncoding( eng->getTranscoder("C") );
+      sc->m_reader->setEncoding( eng->getTranscoder("C") );
    }
    else if( value.isString() )
    {
@@ -174,7 +184,7 @@ FALCON_DEFINE_PROPERTY_SET_P( ClassTextReader, encoding )
             .origin( ErrorParam::e_orig_runtime )
             .extra("Unknown encoding " + *value.asString()));
       }  
-      sc->m_reader.setEncoding(tc);
+      sc->m_reader->setEncoding(tc);
    }
    else
    {
@@ -186,7 +196,7 @@ FALCON_DEFINE_PROPERTY_SET_P( ClassTextReader, encoding )
 FALCON_DEFINE_PROPERTY_GET_P( ClassTextReader, encoding )
 {
    TextReaderCarrier* sc = static_cast<TextReaderCarrier*>(instance);     
-   value = sc->m_reader.transcoder()->name();
+   value = sc->m_reader->transcoder()->name();
 }
 
 //=================================================================
@@ -206,7 +216,7 @@ FALCON_DEFINE_METHOD_P1( ClassTextReader, read )
    }
            
    TextReaderCarrier* sc = static_cast<TextReaderCarrier*>(ctx->self().asInst());
-   bool value = sc->m_reader.read( *i_data->asString(), i_count->forceInteger() );   
+   bool value = sc->m_reader->read( *i_data->asString(), i_count->forceInteger() );
    ctx->returnFrame( value );   
 }
 
@@ -229,7 +239,7 @@ FALCON_DEFINE_METHOD_P1( ClassTextReader, grab )
    {      
       TextReaderCarrier* sc = static_cast<TextReaderCarrier*>(ctx->self().asInst());
       try {
-         sc->m_reader.read( *str, icount );
+         sc->m_reader->read( *str, icount );
       }
       catch( ... )
       {
@@ -262,7 +272,7 @@ FALCON_DEFINE_METHOD_P1( ClassTextReader, readLine )
    if( count > 0 )
    {
       TextReaderCarrier* sc = static_cast<TextReaderCarrier*>(ctx->self().asInst());
-      bool value = sc->m_reader.readLine( *i_data->asString(), count );   
+      bool value = sc->m_reader->readLine( *i_data->asString(), count );
       ctx->returnFrame( value );   
    }
    else {
@@ -291,7 +301,7 @@ FALCON_DEFINE_METHOD_P1( ClassTextReader, grabLine )
    {      
       TextReaderCarrier* sc = static_cast<TextReaderCarrier*>(ctx->self().asInst());
       try {
-         sc->m_reader.readLine( *str, count );
+         sc->m_reader->readLine( *str, count );
       }
       catch( ... )
       {
@@ -316,7 +326,7 @@ FALCON_DEFINE_METHOD_P1( ClassTextReader, readEof )
    }      
    
    TextReaderCarrier* sc = static_cast<TextReaderCarrier*>(ctx->self().asInst());
-   bool value = sc->m_reader.readEof( *i_data->asString() );   
+   bool value = sc->m_reader->readEof( *i_data->asString() );
    ctx->returnFrame( value );   
 }
 
@@ -327,7 +337,7 @@ FALCON_DEFINE_METHOD_P1( ClassTextReader, grabEof )
    String* str = new String;   
    TextReaderCarrier* sc = static_cast<TextReaderCarrier*>(ctx->self().asInst());
    try {
-      sc->m_reader.readEof( *str );
+      sc->m_reader->readEof( *str );
    }
    catch( ... )
    {
@@ -359,7 +369,7 @@ FALCON_DEFINE_METHOD_P1( ClassTextReader, readRecord )
    if( count > 0 )
    {
       TextReaderCarrier* sc = static_cast<TextReaderCarrier*>(ctx->self().asInst());
-      bool value = sc->m_reader.readRecord( *i_data->asString(), *i_sep->asString(), count );   
+      bool value = sc->m_reader->readRecord( *i_data->asString(), *i_sep->asString(), count );
       ctx->returnFrame( value );
    }
    else {
@@ -391,7 +401,7 @@ FALCON_DEFINE_METHOD_P1( ClassTextReader, grabRecord )
    {
       TextReaderCarrier* sc = static_cast<TextReaderCarrier*>(ctx->self().asInst());
       try {
-         sc->m_reader.readRecord( *str, *i_sep->asString(), count );
+         sc->m_reader->readRecord( *str, *i_sep->asString(), count );
       }
       catch( ... )
       {
@@ -430,7 +440,7 @@ static bool internal_readToken( VMContext* ctx, String& target, ItemArray* iarr,
       }
   
       TextReaderCarrier* sc = static_cast<TextReaderCarrier*>(ctx->self().asInst());
-      int value = sc->m_reader.readToken( target, tokens, stri, count );
+      int value = sc->m_reader->readToken( target, tokens, stri, count );
       return value > 0;
    }
    else {
@@ -501,7 +511,7 @@ FALCON_DEFINE_METHOD_P1( ClassTextReader, readChar )
    
    
    TextReaderCarrier* sc = static_cast<TextReaderCarrier*>(ctx->self().asInst());
-   char_t chr = sc->m_reader.getChar();
+   char_t chr = sc->m_reader->getChar();
    if( chr == (char_t)-1 )
    {
       ctx->returnFrame(false);
@@ -522,7 +532,7 @@ FALCON_DEFINE_METHOD_P1( ClassTextReader, readChar )
 FALCON_DEFINE_METHOD_P1( ClassTextReader, getChar )
 {   
    TextReaderCarrier* sc = static_cast<TextReaderCarrier*>(ctx->self().asInst());
-   char_t chr = sc->m_reader.getChar();
+   char_t chr = sc->m_reader->getChar();
    if( chr == (char_t)-1 )
    {
       ctx->returnFrame((int64)-1);
@@ -566,7 +576,7 @@ FALCON_DEFINE_METHOD_P1( ClassTextReader, ungetChar )
       chr = (char_t) i_data->forceInteger();
    }
    
-   sc->m_reader.ungetChar( chr );
+   sc->m_reader->ungetChar( chr );
    ctx->returnFrame();
 }
 
@@ -574,7 +584,14 @@ FALCON_DEFINE_METHOD_P1( ClassTextReader, ungetChar )
 FALCON_DEFINE_METHOD_P1( ClassTextReader, sync )
 {   
    TextReaderCarrier* sc = static_cast<TextReaderCarrier*>(ctx->self().asInst());
-   sc->m_reader.changeStream( sc->carried()->m_underlying, false, true );
+   sc->m_reader->changeStream( sc->carried()->m_underlying, false, true );
+   ctx->returnFrame();
+}
+
+FALCON_DEFINE_METHOD_P1( ClassTextReader, close )
+{
+   TextReaderCarrier* sc = static_cast<TextReaderCarrier*>(ctx->self().asInst());
+   sc->carried()->m_stream->close();
    ctx->returnFrame();
 }
 
@@ -586,6 +603,7 @@ FALCON_DEFINE_METHOD_P1( ClassTextReader, getStream )
    
    ctx->returnFrame( Item( ctw->m_clsStream, sc->carried() ) );
 }
+
 
 }
 }

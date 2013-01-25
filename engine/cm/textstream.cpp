@@ -27,22 +27,25 @@
 namespace Falcon {
 namespace Ext {
 
-TextStreamCarrier::TextStreamCarrier( Stream* stream ):
-   StreamCarrier( stream ),
-   m_reader(stream),
-   m_writer(stream),
-   m_encoding("C")
+TextStreamCarrier::TextStreamCarrier( StreamCarrier* stream ):
+   UserCarrierT<StreamCarrier>( stream ),
+   m_reader( new TextReader(stream->m_stream, false) ),
+   m_writer( new TextWriter(stream->m_stream, false) )
 {
+   stream->incref();
 }
 
 TextStreamCarrier::~TextStreamCarrier()
 {
+   delete m_reader;
+   delete m_writer;
+   carried()->decref();
 }
    
 void TextStreamCarrier::onFlushingOperation()
 {
-   m_writer.flush();
-   m_reader.changeStream( m_underlying, false, true );
+   m_writer->flush();
+   m_reader->changeStream( carried()->m_stream, false, true );
 }
 
 
@@ -56,8 +59,8 @@ bool TextStreamCarrier::setEncoding( const String& encName )
       return false;
    }
    
-   m_reader.setEncoding(tc);
-   m_writer.setEncoding(tc);
+   m_reader->setEncoding(tc);
+   m_writer->setEncoding(tc);
    return true;
 }
 
@@ -79,7 +82,10 @@ ClassTextStream::ClassTextStream( ClassStream* parent ):
    FALCON_INIT_METHOD( readChar ),
    FALCON_INIT_METHOD( getChar ),
    FALCON_INIT_METHOD( ungetChar ),
-   FALCON_INIT_METHOD( putChar ) 
+   FALCON_INIT_METHOD( putChar ),
+   FALCON_INIT_METHOD( sync ),
+   FALCON_INIT_METHOD( flush ),
+   FALCON_INIT_METHOD( close )
 {
    name("TextStream");
    addParent( parent );
@@ -92,12 +98,12 @@ ClassTextStream::~ClassTextStream()
 
 void* ClassTextStream::createInstance() const
 {
-   return new TextStreamCarrier(0);
+   return FALCON_CLASS_CREATE_AT_INIT;
 }
-bool ClassTextStream::op_init( VMContext* ctx, void* instance, int32 pcount ) const
+
+bool ClassTextStream::op_init( VMContext* ctx, void* , int32 pcount ) const
 {
    static Engine* eng = Engine::instance();
-   TextStreamCarrier* tsc = static_cast<TextStreamCarrier*>(instance);
    
    StreamCarrier* scarrier = 0;
    String* sEncoding = 0;
@@ -135,6 +141,7 @@ bool ClassTextStream::op_init( VMContext* ctx, void* instance, int32 pcount ) co
    }
    
    
+   TextStreamCarrier* tsc = new TextStreamCarrier( scarrier );
    if( sEncoding != 0 )
    {
       Transcoder* tcode = eng->getTranscoder(*sEncoding);
@@ -145,14 +152,9 @@ bool ClassTextStream::op_init( VMContext* ctx, void* instance, int32 pcount ) co
                .extra("Unknown encoding " + *sEncoding) );
       }
       
-      tsc->m_stream = scarrier->m_underlying->clone();
-      tsc->m_reader.setEncoding( tcode );
-      tsc->m_writer.setEncoding( tcode ); 
+      tsc->m_reader->setEncoding( tcode );
+      tsc->m_writer->setEncoding( tcode );
       tsc->m_encoding = *sEncoding;
-   }
-   else
-   {
-      tsc->m_stream = scarrier->m_underlying->clone();
    }   
    
    return false;
@@ -223,7 +225,7 @@ FALCON_DEFINE_METHOD_P1( ClassTextStream, write )
       static_cast<length_t>(i_start->forceInteger()) : 0;
    
    TextStreamCarrier* sc = static_cast<TextStreamCarrier*>(ctx->self().asInst());
-   bool value = sc->m_writer.write( *i_data->asString(), start, count );   
+   bool value = sc->m_writer->write( *i_data->asString(), start, count );
    ctx->returnFrame( value );   
 }
 
@@ -241,7 +243,7 @@ FALCON_DEFINE_METHOD_P1( ClassTextStream, read )
    }
            
    TextStreamCarrier* sc = static_cast<TextStreamCarrier*>(ctx->self().asInst());
-   bool value = sc->m_reader.read( *i_data->asString(), i_count->forceInteger() );   
+   bool value = sc->m_reader->read( *i_data->asString(), i_count->forceInteger() );
    ctx->returnFrame( value );   
 }
 
@@ -264,7 +266,7 @@ FALCON_DEFINE_METHOD_P1( ClassTextStream, grab )
    {      
       TextStreamCarrier* sc = static_cast<TextStreamCarrier*>(ctx->self().asInst());
       try {
-         sc->m_reader.read( *str, icount );
+         sc->m_reader->read( *str, icount );
       }
       catch( ... ) {
          delete str;
@@ -295,7 +297,7 @@ FALCON_DEFINE_METHOD_P1( ClassTextStream, readLine )
    if( count > 0 )
    {
       TextStreamCarrier* sc = static_cast<TextStreamCarrier*>(ctx->self().asInst());
-      bool value = sc->m_reader.readLine( *i_data->asString(), count );   
+      bool value = sc->m_reader->readLine( *i_data->asString(), count );
       ctx->returnFrame( value );   
    }
    else {
@@ -325,7 +327,7 @@ FALCON_DEFINE_METHOD_P1( ClassTextStream, grabLine )
    {      
       TextStreamCarrier* sc = static_cast<TextStreamCarrier*>(ctx->self().asInst());
       try {
-         sc->m_reader.readLine( *str, count );      
+         sc->m_reader->readLine( *str, count );
       }
       catch(...)
       {
@@ -352,7 +354,7 @@ FALCON_DEFINE_METHOD_P1( ClassTextStream, readChar )
    
    
    TextStreamCarrier* sc = static_cast<TextStreamCarrier*>(ctx->self().asInst());
-   char_t chr = sc->m_reader.getChar();
+   char_t chr = sc->m_reader->getChar();
    if( chr == (char_t)-1 )
    {
       ctx->returnFrame(false);
@@ -373,7 +375,7 @@ FALCON_DEFINE_METHOD_P1( ClassTextStream, readChar )
 FALCON_DEFINE_METHOD_P1( ClassTextStream, getChar )
 {   
    TextStreamCarrier* sc = static_cast<TextStreamCarrier*>(ctx->self().asInst());
-   char_t chr = sc->m_reader.getChar();
+   char_t chr = sc->m_reader->getChar();
    if( chr == (char_t)-1 )
    {
       ctx->returnFrame((int64)-1);
@@ -418,11 +420,11 @@ static void inner_putchar( Method* called, VMContext* ctx, bool isUnget )
    
    if( isUnget )
    {
-      sc->m_reader.ungetChar( chr );
+      sc->m_reader->ungetChar( chr );
    }
    else
    {
-      sc->m_writer.putChar( chr );
+      sc->m_writer->putChar( chr );
    }
    ctx->returnFrame();
 }
@@ -436,6 +438,28 @@ FALCON_DEFINE_METHOD_P1( ClassTextStream, ungetChar )
 FALCON_DEFINE_METHOD_P1( ClassTextStream, putChar )
 {
    inner_putchar( this, ctx, false );
+}
+
+FALCON_DEFINE_METHOD_P1( ClassTextStream, close )
+{
+   TextStreamCarrier* sc = static_cast<TextStreamCarrier*>(ctx->self().asInst());
+   sc->m_writer->flush();
+   sc->carried()->m_stream->close();
+   ctx->returnFrame();
+}
+
+FALCON_DEFINE_METHOD_P1( ClassTextStream, flush )
+{
+   TextStreamCarrier* sc = static_cast<TextStreamCarrier*>(ctx->self().asInst());
+   sc->m_writer->flush();
+   ctx->returnFrame();
+}
+
+FALCON_DEFINE_METHOD_P1( ClassTextStream, sync )
+{
+   TextStreamCarrier* sc = static_cast<TextStreamCarrier*>(ctx->self().asInst());
+   sc->m_reader->changeStream( sc->carried()->m_underlying, false, true );
+   ctx->returnFrame();
 }
 
 }

@@ -22,6 +22,7 @@
 #include <falcon/property.h>
 #include <falcon/method.h>
 #include <falcon/types.h>
+#include <falcon/refcounter.h>
 
 #include <falcon/usercarrier.h>
 #include <falcon/path.h>
@@ -42,10 +43,13 @@ public:
    Stream* m_underlying;
       
    StreamCarrier( Stream* stream );
-   virtual ~StreamCarrier();
    
    void setBuffering( uint32 size );
    virtual void onFlushingOperation();
+
+private:
+   FALCON_REFERENCECOUNT_DECLARE_INCDEC(StreamCarrier);
+   virtual ~StreamCarrier();
 };
 
 

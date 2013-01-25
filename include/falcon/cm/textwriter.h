@@ -37,10 +37,11 @@ class FALCON_DYN_CLASS TextWriterCarrier: public UserCarrierT<StreamCarrier>
 {
 public:
    // we won't be separating the text readers and writers.
-   TextWriter m_writer;
+   TextWriter* m_writer;
    
    TextWriterCarrier( StreamCarrier* stc );
-   virtual ~TextWriterCarrier();    
+   virtual ~TextWriterCarrier();
+   virtual StreamCarrier* cloneData() const;
    
    virtual void gcMark( uint32 mark );
 };
@@ -80,6 +81,8 @@ private:
    FALCON_DECLARE_METHOD( putChar, "char:S|N" );   
    FALCON_DECLARE_METHOD( getStream, "" );      
    FALCON_DECLARE_METHOD( flush, "" );
+   FALCON_DECLARE_METHOD( close, "" );
+
 };
 
 }

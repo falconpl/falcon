@@ -28,14 +28,23 @@ namespace Ext {
 
 TextWriterCarrier::TextWriterCarrier( StreamCarrier* stc ):
    UserCarrierT<StreamCarrier>(stc),
-   m_writer( stc != 0 ? stc->m_underlying : 0 )
+   m_writer( new TextWriter( stc->m_underlying, false ) )
 {
+   stc->incref();
 }
 
 TextWriterCarrier::~TextWriterCarrier()
 {
+   delete m_writer;
+   carried()->decref();
 }
    
+StreamCarrier* TextWriterCarrier::cloneData() const
+{
+   carried()->incref();
+   return carried();
+}
+
 void TextWriterCarrier::gcMark( uint32 mark )
 {
    if( mark != m_gcMark )
@@ -62,7 +71,9 @@ ClassTextWriter::ClassTextWriter( ClassStream* clsStream ):
    FALCON_INIT_METHOD( writeLine ),   
    FALCON_INIT_METHOD( putChar ),   
    FALCON_INIT_METHOD( getStream ),      
-   FALCON_INIT_METHOD( flush )
+   FALCON_INIT_METHOD( flush ),
+   FALCON_INIT_METHOD( close )
+
 {
    
 }
@@ -133,7 +144,7 @@ bool ClassTextWriter::op_init( VMContext* ctx, void* , int pcount ) const
    twc->carried( stc );
    if( tc != 0 )
    {
-      twc->m_writer.setEncoding(tc);
+      twc->m_writer->setEncoding(tc);
    }
    ctx->opcodeParam(pcount) = FALCON_GC_STORE(this, twc);
    
@@ -151,7 +162,7 @@ FALCON_DEFINE_PROPERTY_SET_P( ClassTextWriter, encoding )
    TextWriterCarrier* sc = static_cast<TextWriterCarrier*>(instance);
    if( value.isNil() )
    {
-      sc->m_writer.setEncoding( eng->getTranscoder("C") );
+      sc->m_writer->setEncoding( eng->getTranscoder("C") );
    }
    else if( value.isString() )
    {
@@ -163,7 +174,7 @@ FALCON_DEFINE_PROPERTY_SET_P( ClassTextWriter, encoding )
             .origin( ErrorParam::e_orig_runtime )
             .extra("Unknown encoding " + *value.asString()));
       }  
-      sc->m_writer.setEncoding(tc);
+      sc->m_writer->setEncoding(tc);
    }
    else
    {
@@ -175,34 +186,34 @@ FALCON_DEFINE_PROPERTY_SET_P( ClassTextWriter, encoding )
 FALCON_DEFINE_PROPERTY_GET_P( ClassTextWriter, encoding )
 {
    TextWriterCarrier* sc = static_cast<TextWriterCarrier*>(instance);     
-   value = sc->m_writer.transcoder()->name();
+   value = sc->m_writer->transcoder()->name();
 }
 
 
 FALCON_DEFINE_PROPERTY_SET_P( ClassTextWriter, crlf )
 {   
    TextWriterCarrier* sc = static_cast<TextWriterCarrier*>(instance);
-   sc->m_writer.setCRLF(value.isTrue());
+   sc->m_writer->setCRLF(value.isTrue());
 }
 
 
 FALCON_DEFINE_PROPERTY_GET_P( ClassTextWriter, crlf )
 {
    TextWriterCarrier* sc = static_cast<TextWriterCarrier*>(instance);     
-   value.setBoolean(sc->m_writer.isCRLF());
+   value.setBoolean(sc->m_writer->isCRLF());
 }
 
 FALCON_DEFINE_PROPERTY_SET_P( ClassTextWriter, lineflush )
 {   
    TextWriterCarrier* sc = static_cast<TextWriterCarrier*>(instance);
-   sc->m_writer.lineFlush(value.isTrue());
+   sc->m_writer->lineFlush(value.isTrue());
 }
 
 
 FALCON_DEFINE_PROPERTY_GET_P( ClassTextWriter, lineflush )
 {
    TextWriterCarrier* sc = static_cast<TextWriterCarrier*>(instance);     
-   value.setBoolean(sc->m_writer.lineFlush());
+   value.setBoolean(sc->m_writer->lineFlush());
 }
 
 
@@ -216,14 +227,14 @@ FALCON_DEFINE_PROPERTY_SET_P( ClassTextWriter, buffer )
             .origin( ErrorParam::e_orig_runtime )
             .extra("N"));
    }
-   sc->m_writer.setBufferSize( static_cast<length_t>(value.forceInteger()));
+   sc->m_writer->setBufferSize( static_cast<length_t>(value.forceInteger()));
 }
 
 
 FALCON_DEFINE_PROPERTY_GET_P( ClassTextWriter, buffer )
 {
    TextWriterCarrier* sc = static_cast<TextWriterCarrier*>(instance);     
-   value.setBoolean(sc->m_writer.bufferSize());
+   value.setBoolean(sc->m_writer->bufferSize());
 }
 
 //=================================================================
@@ -262,11 +273,11 @@ static void internal_write( Method* called, VMContext* ctx, bool asLine )
    bool value;
    if( asLine )
    {
-      value = sc->m_writer.writeLine( *i_data->asString(), start, count );   
+      value = sc->m_writer->writeLine( *i_data->asString(), start, count );
    }
    else
    {
-      value = sc->m_writer.write( *i_data->asString(), start, count );   
+      value = sc->m_writer->write( *i_data->asString(), start, count );
    }
    
    ctx->returnFrame( value );   
@@ -314,7 +325,7 @@ FALCON_DEFINE_METHOD_P1( ClassTextWriter, putChar )
       chr = (char_t) i_data->forceInteger();
    }
    
-   sc->m_writer.putChar( chr );
+   sc->m_writer->putChar( chr );
    ctx->returnFrame();
 }
 
@@ -322,7 +333,16 @@ FALCON_DEFINE_METHOD_P1( ClassTextWriter, putChar )
 FALCON_DEFINE_METHOD_P1( ClassTextWriter, flush )
 {   
    TextWriterCarrier* sc = static_cast<TextWriterCarrier*>(ctx->self().asInst());
-   sc->m_writer.flush();
+   sc->m_writer->flush();
+   ctx->returnFrame();
+}
+
+FALCON_DEFINE_METHOD_P1( ClassTextWriter, close )
+{
+   TextWriterCarrier* sc = static_cast<TextWriterCarrier*>(ctx->self().asInst());
+   sc->m_writer->flush();
+   sc->carried()->m_stream->close();
+   ctx->returnFrame();
 }
 
 FALCON_DEFINE_METHOD_P1( ClassTextWriter, getStream )

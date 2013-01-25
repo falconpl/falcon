@@ -82,24 +82,28 @@ class UserCarrierT: public UserCarrier
 public:
    UserCarrierT( T__* data ):
       UserCarrier(),
-      m_data( data )
+      m_carried( data )
    {}
 
    UserCarrierT( T__* data, uint32  itemcount ):
       UserCarrier(itemcount),
-      m_data( data )
+      m_carried( data )
    {}
 
-   //UserCarrierT( const UserCarrierT<T__>& other );
+   virtual ~UserCarrierT() {
+      // WARNING: the UserCarrier T doesn't include the data destructor,
+      // The destructor must be provided by the final implementation class.
+   }
 
-   T__* carried() const { return m_data; }
-   void carried( T__* data) { m_data = data; }
+   T__* carried() const { return m_carried; }
+   void carried( T__* data) { m_carried = data; }
 
 protected:
-   virtual void* cloneData() const { return 0; }
+   // override to clone.
+   virtual T__* cloneData() const { return 0; }
 
 private:
-   T__* m_data;
+   T__* m_carried;
 };
 
 }

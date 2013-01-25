@@ -134,7 +134,7 @@ bool TextWriter::rawWrite( const String& str, length_t start, length_t count )
    
    m_mtx.lock();
    length_t encSize = m_encoder->encodingSize(count);
-   if( encSize < m_bufPos - m_bufSize )
+   if( encSize < m_bufSize - m_bufPos )
    {
       m_bufPos += m_encoder->encode( str, currentBuffer(), m_bufSize - m_bufPos,
          '?', start, count );
