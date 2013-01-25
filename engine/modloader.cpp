@@ -555,13 +555,13 @@ void ModLoader::PStepSave::apply_( const PStep*, VMContext* ctx )
       {
          return;
       }
-      // fallthrough
+      /* no break */
    case 1:
       seqId++;
       if( ! storer->commit( ctx, output, false) ) {
          return;
       }
-      //fallthrough
+      /* no break */
    }
 
    TRACE("ModLoader::PStepSave::apply_ complete %s", mod->name().c_ize() );

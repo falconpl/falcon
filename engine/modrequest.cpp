@@ -20,6 +20,8 @@
 #include <falcon/datawriter.h>
 #include <falcon/datareader.h>
 
+#include "module_private.h"
+
 #include <deque>
 #include <algorithm>
 
@@ -118,7 +120,7 @@ void ModRequest::store( DataWriter* wr ) const
 }
 
 
-void ModRequest::restore( DataReader* rd )
+void ModRequest::restore( DataReader* rd)
 {
    rd->read( m_name );
    rd->read( m_isLoad );

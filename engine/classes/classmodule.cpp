@@ -99,6 +99,7 @@ void ClassModule::store( VMContext*, DataWriter* stream, void* instance ) const
    
    // Now store the module requests
    {
+      // first, number the module requests.
       Module::Private::ReqList& mrlist = mp->m_mrlist;
       progID = (int32) mrlist.size();
       TRACE1( "ClassModule::store -- storing %d mod requests", progID );
@@ -109,7 +110,7 @@ void ClassModule::store( VMContext*, DataWriter* stream, void* instance ) const
          ModRequest* req = *mri;
          req->store( stream );
          // save the progressive ID.
-         req->id( progID++ ); 
+         req->id( progID++ );
          ++mri;
       }
 
@@ -122,7 +123,7 @@ void ClassModule::store( VMContext*, DataWriter* stream, void* instance ) const
       progID = 0;
       while( idi != idlist.end() ) {
          ImportDef* def = *idi;
-         def->id( progID++ );   
+         def->id( progID++ );
          def->store( stream );
          if( def->modReq() != 0 )
          {
@@ -131,9 +132,25 @@ void ClassModule::store( VMContext*, DataWriter* stream, void* instance ) const
          else {
             stream->write( (int32) -1 );
          }
-         
+
          // save the progressive ID.
          ++idi;
+      }
+
+      // finally, we can write the modRequest->import deps.
+      mri = mrlist.begin();
+      while( mri != mrlist.end() )
+      {
+         ModRequest* req = *mri;
+         uint32 count = (int) req->importDefCount();
+         TRACE1( "ClassModule::store -- Request %d has %d imports", req->id(), count );
+         stream->write( count );
+         for( uint32 i = 0; i < count; ++i ) {
+            ImportDef* idl = req->importDefAt(i);
+            uint32 id = idl->id();
+            stream->write( id );
+         }
+         ++mri;
       }
    }
    
@@ -315,11 +332,43 @@ void ClassModule::restoreModule( Module* mod, DataReader* stream ) const
          throw;
       }
       
-      // save the progressive ID.
       ++progID;
    }
-
    
+   // finally, we can load the modRequest->import deps.
+   {
+      Module::Private::ReqList::iterator mri = mrlist.begin();
+      while( mri != mrlist.end() )
+      {
+         ModRequest* req = *mri;
+         uint32 count;
+         stream->read( count );
+         TRACE1( "ClassModule::restoreModule -- Request %d has %d imports", req->id(), count );
+         bool general = false;
+         for( uint32 i = 0; i < count; ++i ) {
+            uint32 id;
+            stream->read(id);
+            if ( id >= idlist.size() ) {
+               throw new IOError( ErrorParam( e_deser, __LINE__, SRC )
+                        .origin( ErrorParam::e_orig_loader )
+                        .extra(String("ImportDef ID out of range on ModReq ").N(req->id()) )
+                        );
+            }
+            ImportDef* idef = idlist[id];
+            req->addImportDef(idef);
+
+            // eventually, save the module as a generic provider.
+            if( idef->isGeneric() && ! general )
+            {
+               TRACE1( "ClassModule::restoreModule -- Module %s is declared generic", req->name().c_ize() );
+               general = true;
+               mp->m_genericMods.push_back( req );
+            }
+         }
+         ++mri;
+      }
+   }
+
    // namespace imports.
    Module::Private::NSImportList& nsilist = mp->m_nsimports;
    stream->read( count );

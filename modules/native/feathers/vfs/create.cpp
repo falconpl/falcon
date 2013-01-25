@@ -86,7 +86,7 @@ void Create::invoke( Falcon::VMContext* ctx, int )
       scr->setBuffering(4096);
    }
 
-   ctx->returnFrame( FALCON_GC_STORE( m_module->streamClass(), scr ) );
+   ctx->returnFrame( FALCON_GC_STORE( Engine::instance()->streamClass(), scr ) );
 }
 
 }

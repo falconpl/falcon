@@ -37,7 +37,9 @@ Class* ItemArray::m_handler = 0;
 //
 inline Item* allocate( length_t size )
 {
-   return (Item*) malloc(sizeof(Item) * size);
+   Item* data = (Item*) malloc(sizeof(Item) * size);
+   //memset( data, 0, sizeof(Item) * size);
+   return data;
 }
 
 inline void release( Item* data )
@@ -509,7 +511,8 @@ void ItemArray::reserve( length_t size )
    if ( size > m_alloc )
    {
       m_alloc = size;
-      Item* newData = Helper(this).reallocate( m_alloc );
+      Item* newData = Helper(this).reallocate( size );
+      memset( newData+ m_size, 0, esize( size - m_size ));
       m_data = newData;
    }
 }
