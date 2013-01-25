@@ -904,7 +904,7 @@ Parsing::TokenInstance* SourceLexer::nextToken()
 
          case state_operator:
             if( String::isWhiteSpace( chr ) ||
-               isParenthesis(chr) || chr == '\'' || chr == '"' 
+               isParenthesis(chr) || chr == '\'' || chr == '"' || chr == ';'
                || !isTokenLimit( chr ) )
             {
                // special case -- dot/square
