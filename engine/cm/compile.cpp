@@ -50,21 +50,23 @@ public:
 
    virtual void onInputOver() {}
 
-   virtual Variable* onOpenFunc( Function* f ) {
+   virtual Variable* onOpenFunc( Function* ) {
       static Variable var(Variable::e_nt_undefined, Variable::undef, 0, true);
-      f->name("anon");
       return &var;
    }
 
-   virtual void onCloseFunc( Function* ) {}
+   virtual void onCloseFunc( Function* f) {
+      if( f->name() == "") f->name("$anon");
+   }
 
-   virtual Variable* onOpenClass( Class* f, bool ) {
+   virtual Variable* onOpenClass( Class*, bool ) {
       static Variable var(Variable::e_nt_undefined, Variable::undef, 0, true);
-      f->name("anon");
       return &var;
    }
 
-   virtual void onCloseClass( Class* , bool ) {}
+   virtual void onCloseClass( Class* f, bool ) {
+      if( f->name() == "") f->name("$anon");
+   }
 
    virtual void onNewStatement( Statement* ) {}
 
