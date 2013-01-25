@@ -475,6 +475,7 @@ Parsing::TokenInstance* SourceLexer::nextToken()
                default:
                   m_text.append(chr);
                   m_state = state_double_string;
+                  break;
             }
             break;
 
@@ -482,6 +483,8 @@ Parsing::TokenInstance* SourceLexer::nextToken()
             switch( chr )
             {
                case '\\': m_text.append('\\'); m_state = state_double_string; break;
+               case '"': m_text.append('"'); m_state = state_double_string; break;
+               case '\'': m_text.append('\''); m_state = state_double_string; break;
                case 'n': m_text.append('\n'); m_state = state_double_string; break;
                case 'b': m_text.append('\b'); m_state = state_double_string; break;
                case 't': m_text.append('\t'); m_state = state_double_string; break;
@@ -492,6 +495,7 @@ Parsing::TokenInstance* SourceLexer::nextToken()
                default:
                   m_state = state_double_string;
                   addError(e_inv_esc_sequence);
+                  break;
             }
             break;
 
