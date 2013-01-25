@@ -166,7 +166,7 @@ static void make_class( Parser& p, int tCount,
          }
          else {
             // if it's defined and not a class, we're in trouble
-            const Item* value = ctx->getVariableValue( symBaseClass );
+            const Item* value = ctx->getVariableValue( inh->name(), symBaseClass );
             fassert( value != 0 );
 
             if( value == 0 || ! value->isClass() )

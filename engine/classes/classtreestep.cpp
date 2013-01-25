@@ -36,7 +36,6 @@ namespace Falcon {
 ClassTreeStep::ClassTreeStep():
    Class("TreeStep - abstract", FLC_CLASS_ID_TREESTEP)
 {
-   m_lenMethod.methodOf(this);
    m_insertMethod.methodOf(this);
    m_removeMethod.methodOf(this);
    m_appendMethod.methodOf(this);
@@ -142,7 +141,6 @@ bool ClassTreeStep::hasProperty( void*, const String& prop ) const
    return
          prop == "arity"
       || prop == "len"
-      || prop == "len_"
       || prop == "parent"
       || prop == "selector"
       || prop == "insert"
@@ -154,11 +152,7 @@ bool ClassTreeStep::hasProperty( void*, const String& prop ) const
 void ClassTreeStep::op_getProperty( VMContext* ctx, void* instance, const String& prop) const
 {
    TreeStep* stmt = static_cast<TreeStep*>(instance);
-   if( prop == "len" )
-   {
-      ctx->topData().methodize( &m_lenMethod );
-   }
-   else if( prop == "insert" )
+   if( prop == "insert" )
    {
       ctx->topData().methodize( &m_insertMethod );
    }
@@ -181,7 +175,7 @@ void ClassTreeStep::op_getProperty( VMContext* ctx, void* instance, const String
          ctx->topData().setNil();
       }
    }
-   else if( prop == "len_" || prop == "arity" )
+   else if( prop == "len" || prop == "arity" )
    {
       ctx->topData().setInteger( (int64) stmt->arity() );
    }
@@ -468,26 +462,6 @@ void ClassTreeStep::op_next( VMContext* ctx, void* instance ) const
 }
 
 
-//===============================================================
-// Len method
-//
-ClassTreeStep::LenMethod::LenMethod():
-   Function("len")
-{
-}
-
-ClassTreeStep::LenMethod::~LenMethod()
-{}
-
-
-void ClassTreeStep::LenMethod::invoke( VMContext* ctx, int32 )
-{
-   Item& self = ctx->self();
-   fassert( self.isUser() );
-
-   Statement* stmt = static_cast<Statement*>(self.asInst());
-   ctx->returnFrame( (int64) stmt->arity() );
-}
 
 //===============================================================
 // Insert method

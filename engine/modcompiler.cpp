@@ -238,7 +238,7 @@ Variable* ModCompiler::Context::onGlobalAccessed( const String& name )
 }
 
 
-Item* ModCompiler::Context::getVariableValue( Variable* var )
+Item* ModCompiler::Context::getVariableValue( const String&, Variable* var )
 {
    return m_owner->m_module->getGlobalValue( var->id() );
 }

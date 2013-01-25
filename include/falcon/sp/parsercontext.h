@@ -225,7 +225,7 @@ public:
        */
    virtual Variable* onGlobalAccessed( const String& name ) = 0;
    
-   virtual Item* getVariableValue( Variable* var ) = 0;
+   virtual Item* getVariableValue( const String& name, Variable* var ) = 0;
 
    /** Adds a requirement for a foreign class.
     RequiredClass is a particular import structure that statically specifies 

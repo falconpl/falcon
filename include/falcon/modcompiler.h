@@ -104,7 +104,7 @@ protected:
       virtual void onGlobal( const String& name );
       virtual Variable* onGlobalDefined( const String& name, bool& bUnique );
       virtual Variable* onGlobalAccessed( const String& name );
-      virtual Item* getVariableValue( Variable* var );
+      virtual Item* getVariableValue( const String& name, Variable* var );
       virtual void onRequirement( Requirement* rec );
 
    protected:

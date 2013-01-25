@@ -76,13 +76,6 @@ public:
 
 private:
    
-   class LenMethod: public Function {
-   public:
-      LenMethod();
-      virtual ~LenMethod();
-      void invoke( VMContext* ctx, int32 pCount = 0 );
-   };
-
    class InsertMethod: public Function {
    public:
       InsertMethod();
@@ -104,7 +97,6 @@ private:
       void invoke( VMContext* ctx, int32 pCount = 0 );
    };
 
-   mutable LenMethod m_lenMethod;
    mutable InsertMethod m_insertMethod;
    mutable RemoveMethod m_removeMethod;
    mutable AppendMethod m_appendMethod;

@@ -71,7 +71,8 @@ add_library(falcon_engine SHARED
   builtin/typeid.cpp
   builtin/len.cpp
   builtin/minmax.cpp
-
+ 
+  cm/compile.cpp
   cm/datareader.cpp
   cm/datawriter.cpp
   cm/iff.cpp

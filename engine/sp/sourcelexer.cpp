@@ -244,8 +244,14 @@ Parsing::TokenInstance* SourceLexer::nextToken()
 
 
 
-   while( (chr = m_reader->getChar()) != (char_t)-1 )
+   while( ! m_reader->eof() )
    {
+      chr = m_reader->getChar();
+      if( chr == (char_t)-1 ) {
+         // generate a last fake eol.
+         chr = '\n';
+      }
+
       // start the char-line count
       if( m_chr == 0 )
       {

@@ -17,6 +17,8 @@
 #define SRC "falcon/cm/coremodule.cpp"
 
 #include <falcon/cm/coremodule.h>
+
+#include <falcon/cm/compile.h>
 #include <falcon/cm/iff.h>
 #include <falcon/cm/inspect.h>
 #include <falcon/cm/print.h>
@@ -45,6 +47,7 @@ CoreModule::CoreModule():
    
    *this
       // Standard functions
+      << new Ext::Compile
       << new Ext::FuncPrintl
       << new Ext::FuncPrint
       << new Ext::Inspect
