@@ -104,6 +104,7 @@ void FalconApp::launch( const String& script )
    // Ok, we opened the file; prepare the space (and most important, the loader)
    ModSpace* ms = vm.modSpace();
    ModLoader* loader = ms->modLoader();
+   loader->sourceEncoding( m_options.io_encoding );
 
    // do we have a load path?
    loader->setSearchPath(".");

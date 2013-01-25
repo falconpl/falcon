@@ -105,6 +105,21 @@ void ModLoader::init ( const String &path, ModSpace* ms,  ModCompiler* mc, FAMLo
 }
 
 
+bool ModLoader::sourceEncoding( const String& encName )
+{
+   static Engine* engine = Engine::instance();
+
+   Transcoder* tc = engine->getTranscoder( encName );
+   if( tc == 0 ) {
+      return false;
+   }
+
+   m_encName = encName;
+   m_tcoder = tc;
+   return true;
+}
+
+
 bool ModLoader::loadName(VMContext* tgtctx, const String& name, t_modtype type )
 {
    String modName = name;
