@@ -30,7 +30,7 @@ class ClassSynFunc;
  Falcon function.
 
  This class represents the minimal execution unit in Falcon. It's a set of
- code (to be excuted), symbols (parameters, local variables and reference to
+ code (to be executed), symbols (parameters, local variables and reference to
  global variables in the module) and possibly closed values.
 
  Functions can be directly executed by the virtual machine.

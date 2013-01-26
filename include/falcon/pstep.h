@@ -77,7 +77,7 @@ public:
    inline String oneLiner() const {
       String temp; oneLinerTo(temp); return temp;
    }
-   
+
    /** Sparsely used function marknig steps with special significance.
       
     */

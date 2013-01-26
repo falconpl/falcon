@@ -25,6 +25,7 @@
 #include <falcon/datareader.h>
 #include <falcon/module.h>
 #include <falcon/pseudofunc.h>
+#include <falcon/collector.h>
 
 #include <falcon/errors/ioerror.h>
 
@@ -75,14 +76,20 @@ void* ClassFunction::getParentData( Class* parent, void* data ) const
 void ClassFunction::describe( void* instance, String& target, int, int ) const
 {
    Function* func = static_cast<Function*>(instance);
-   target = func->name() + "()";
+   target = func->name() + " /* Function " + func->locate() + " */";
 }
-
-
 
 void ClassFunction::op_call( VMContext* ctx, int32 paramCount, void* self ) const
 {
    ctx->callInternal( static_cast<Function*>(self), paramCount );
+}
+
+void ClassFunction::op_toString( VMContext* ctx, void* self ) const
+{
+   Function* func = static_cast<Function*>(self);
+   String* ret = new String(func->name());
+   ret->append("()");
+   ctx->pushData( FALCON_GC_HANDLE( ret ) );
 }
 
 }

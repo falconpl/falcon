@@ -38,6 +38,8 @@ public:
    virtual void enumerateParents( ClassEnumerator& cb ) const;
    virtual void* getParentData( Class* parent, void* data ) const;
    
+   void describe( void* instance, String& target, int depth, int ) const;
+
    virtual void store( VMContext* ctx, DataWriter* stream, void* instance ) const;
    virtual void restore( VMContext* ctx, DataReader* stream ) const;
    virtual void flatten( VMContext* ctx, ItemArray& subItems, void* instance ) const;

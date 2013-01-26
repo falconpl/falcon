@@ -23,6 +23,7 @@
 
 #include <falcon/synclasses.h>
 #include <falcon/engine.h>
+#include <falcon/class.h>
 
 #include <falcon/psteps/exprvalue.h>
 
@@ -132,9 +133,12 @@ bool ExprValue::isStatic() const
    return true;
 }
 
-void ExprValue::describeTo( String & str, int ) const
+void ExprValue::describeTo( String & str, int depth ) const
 {
-   m_item.describe(str);
+   Class* cls;
+   void* inst;
+   m_item.forceClassInst(cls, inst);
+   cls->describe(inst, str, depth );
 }
 
 }

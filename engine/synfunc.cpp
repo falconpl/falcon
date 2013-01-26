@@ -1,6 +1,6 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: synfunc.h
+   FILE: synfunc.cpp
 
    SynFunc objects -- expanding to new syntactic trees.
    -------------------------------------------------------------------
@@ -12,6 +12,9 @@
 
    See LICENSE file for licensing details.
 */
+
+#undef SRC
+#define SRC "engine/synfunc.cpp"
 
 #include <falcon/synfunc.h>
 #include <falcon/vmcontext.h>
