@@ -35,7 +35,8 @@ namespace Falcon {
 
 ExprTree::ExprTree( int line, int chr ):
    Expression( line, chr ),
-   m_child(0)
+   m_child(0),
+   m_varmap(0)
 {
    FALCON_DECLARE_SYN_CLASS( expr_tree );
    apply = apply_;
@@ -44,7 +45,8 @@ ExprTree::ExprTree( int line, int chr ):
 
 ExprTree::ExprTree( TreeStep* st, int line, int chr ):
    Expression( line, chr ),
-   m_child(st)
+   m_child(st),
+   m_varmap(0)
 {
    FALCON_DECLARE_SYN_CLASS( expr_tree );
    apply = apply_;
@@ -53,7 +55,8 @@ ExprTree::ExprTree( TreeStep* st, int line, int chr ):
 
 ExprTree::ExprTree( const ExprTree& other ):
    Expression( other ),
-   m_child(0)
+   m_child(0),
+   m_varmap(0)
 {
    apply = apply_;
    m_trait = e_trait_composite;
