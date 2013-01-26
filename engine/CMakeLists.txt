@@ -85,6 +85,7 @@ add_library(falcon_engine SHARED
   cm/textstream.cpp
   cm/textwriter.cpp
   cm/uri.cpp
+  cm/vmcontext.cpp
   cm/coremodule.cpp
 
   sp/parser_arraydecl.cpp
@@ -163,7 +164,6 @@ add_library(falcon_engine SHARED
 
   psteps/exprvector.cpp
 
-  psteps/stmtautoexpr.cpp
   psteps/stmtbreak.cpp
   psteps/stmtcontinue.cpp
   psteps/stmtfastprint.cpp

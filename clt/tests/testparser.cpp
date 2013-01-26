@@ -48,7 +48,7 @@ public:
    virtual void onInputOver();
    virtual void onNewFunc( Function* function, Symbol* gs = 0 );
    virtual void onNewClass( Class* cls, bool bIsObj, Symbol* gs = 0 );
-   virtual void onNewStatement( Statement* stmt );
+   virtual void onNewStatement( TreeStep* stmt );
    virtual void onLoad( const String& path, bool isFsPath );
    virtual bool onImportFrom( ImportDef* def );
    virtual void onExport(const String& symName);
@@ -106,7 +106,7 @@ void Context::onNewClass( Class* cls, bool bIsObj, Symbol* )
       << (bIsObj ? " (object)":"") << std::endl;
 }
 
-void Context::onNewStatement( Statement* stmt )
+void Context::onNewStatement( TreeStep* stmt )
 {
    std::cout<< "CALLBACK: New statement "<< stmt->oneLiner().c_ize() << std::endl;
 }

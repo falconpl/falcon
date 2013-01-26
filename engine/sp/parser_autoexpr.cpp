@@ -28,9 +28,8 @@
 #include <falcon/sp/parser_deletor.h>
 #include <falcon/sp/parser_autoexpr.h>
 
-#include <falcon/psteps/exprsym.h>
-#include <falcon/psteps/stmtautoexpr.h>
 #include <falcon/psteps/exprassign.h>
+#include <falcon/psteps/exprsym.h>
 #include <falcon/psteps/exprunpack.h>
 #include <falcon/psteps/exprmultiunpack.h>
 #include <falcon/synclasses_id.h>
@@ -74,19 +73,7 @@ void apply_line_expr( const Rule&, Parser& p )
       ParserContext* ctx = static_cast<ParserContext*>(p.context());      
       Expression* expr = static_cast<Expression*>(ti->detachValue());
       ctx->accessSymbols( expr );
-      
-      Statement* parent = ctx->currentStmt();
-      StmtAutoexpr* line = new StmtAutoexpr(expr, ti->line(), ti->chr());
-      if( parent != 0 && parent->handler()->userFlags() == FALCON_SYNCLASS_ID_RULE )
-      {
-         line->setInRule( true );
-      }
-      else if( p.interactive() )
-      {
-         line->setInteractive( true );
-      }
-      
-      ctx->addStatement( line );
+      ctx->addStatement( expr );
    }
 
    // clear the stack

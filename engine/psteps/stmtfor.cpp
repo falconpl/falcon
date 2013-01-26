@@ -47,6 +47,48 @@ StmtForBase::~StmtForBase()
    delete m_forLast;
 }
 
+void StmtForBase::minimize()
+{
+   m_body = minimize_basic( m_body );
+   m_forFirst = minimize_basic( m_forFirst );
+   m_forMiddle = minimize_basic( m_forMiddle );
+   m_forLast = minimize_basic( m_forLast );
+}
+
+void StmtForBase::body( TreeStep* st ) {
+   if( st->setParent(this) )
+   {
+      delete m_body;
+      m_body = st;
+   }
+}
+
+void StmtForBase::forFirst( TreeStep* st )
+{
+   if( st->setParent(this) )
+   {
+      delete m_forFirst;
+      m_forFirst = st;
+   }
+}
+
+void StmtForBase::forMiddle( TreeStep* st ) {
+   if( st->setParent(this) )
+   {
+      delete m_forMiddle;
+      m_forMiddle = st;
+   }
+}
+
+void StmtForBase::forLast( TreeStep* st ) {
+   if( st->setParent(this) )
+   {
+      delete m_forLast;
+      m_forLast = st;
+   }
+}
+
+
 int32 StmtForBase::arity() const
 {
    return 4;
@@ -69,7 +111,13 @@ bool StmtForBase::setNth( int32 n, TreeStep* ts )
    // accept even a 0
    if( ts != 0 )
    {
-      if( ts->parent() != 0 || ts->category() != TreeStep::e_cat_syntree ) return false;
+      if( ts->parent() != 0 || n < -4 || n > 3 ) return false;
+
+      if( ts->category() != TreeStep::e_cat_syntree ) {
+         SynTree* st = new SynTree(ts->sr().line(), ts->sr().chr());
+         st->append(ts);
+         ts = st;
+      }
    }
      
    switch( n )
@@ -80,8 +128,12 @@ bool StmtForBase::setNth( int32 n, TreeStep* ts )
       case 3: case -1: delete m_forLast; m_forLast = static_cast<SynTree*>(ts); break; 
       default: return false;
    }
-   if( ts != 0 ) ts->setParent( this );
    
+   if( ts != 0 )
+   {
+      ts->setParent( this );
+   }
+
    return true;
 }
 
@@ -89,7 +141,8 @@ bool StmtForBase::setNth( int32 n, TreeStep* ts )
 void StmtForBase::PStepCleanup::apply_( const PStep*, VMContext* ctx )
 {
    ctx->popCode();
-   ctx->popData(ctx->currentCode().m_seqId);
+   ctx->popData(ctx->currentCode().m_seqId-1);
+   ctx->topData().setNil();
 }
 
 
@@ -362,19 +415,20 @@ void StmtForIn::PStepBegin::apply_( const PStep* ps, VMContext* ctx )
    void* dt;
    if( ctx->topData().asClassInst( cls, dt )  )
    {       
-      // Prepare to get the iterator item...
+      // prepare the cleanup step removing 2 items + the item pushed by the last active syntree
       ctx->currentCode().m_step = &self->m_stepCleanup;
-      ctx->currentCode().m_seqId = 2;
+      ctx->currentCode().m_seqId = 3;
+      // Prepare to get the iterator item...
       ctx->pushCode( &self->m_stepFirst );      
       ctx->pushCode( &self->m_stepGetNext );
       
       // and create an iterator.
-      //ctx->addLocals(2);      
       cls->op_iter( ctx, dt );       
    }
    else if( ctx->topData().isNil() )
    {
-      // Nil is defined to cleanly exit the loop.
+      // Nil is defined to cleanly NOT TO ENTER the loop.
+      // keep the nil as for/in result
       ctx->popCode();
    }
    else
@@ -390,7 +444,7 @@ void StmtForIn::PStepBegin::apply_( const PStep* ps, VMContext* ctx )
 void StmtForIn::PStepGetNext::apply_( const PStep*, VMContext* ctx )
 {
     fassert( ctx->opcodeParam(1).isUser() );
-       
+
     // we're never needed anymore
     ctx->popCode();
     
@@ -405,12 +459,14 @@ void StmtForIn::PStepGetNext::apply_( const PStep*, VMContext* ctx )
 
 void StmtForIn::PStepFirst::apply_( const PStep* ps, VMContext* ctx )
 {
+   static PStep* pop = &Engine::instance()->stdSteps()->m_pop;
    const StmtForIn* self = static_cast<const StmtForIn::PStepFirst*>(ps)->m_owner;
 
    // we have here seq, iter, item
    Item& topData = ctx->topData();
    if( topData.isBreak() )
    {
+      // notice we clear 3 items in the clear step, so it's ok not to pop
       ctx->popCode();
       return;
    }
@@ -424,6 +480,7 @@ void StmtForIn::PStepFirst::apply_( const PStep* ps, VMContext* ctx )
       ctx->popCode(); // we won't be called again.
       if( self->m_forLast != 0 )
       {
+         ctx->pushCode( pop );
          ctx->pushCode( self->m_forLast );
       }
    }
@@ -434,33 +491,38 @@ void StmtForIn::PStepFirst::apply_( const PStep* ps, VMContext* ctx )
       
       if ( self->m_forMiddle != 0 )
       {
+         ctx->pushCode( pop );
          ctx->pushCode( self->m_forMiddle );
       }
    }
    
    if ( self->m_body != 0 )
    {
+      ctx->pushCode( pop );
       ctx->pushCode( self->m_body );
    }
 
    if ( self->m_forFirst != 0 )
    {
+      ctx->pushCode( pop );
       ctx->pushCode( self->m_forFirst );
    }
    
-   // in any case, the extra item can be removed.
+   // in any case, the extra item must be removed.
    ctx->popData();
 }
 
 
 void StmtForIn::PStepNext::apply_( const PStep* ps, VMContext* ctx )
 {
+   static PStep* pop = &Engine::instance()->stdSteps()->m_pop;
    const StmtForIn* self = static_cast<const StmtForIn::PStepNext*>(ps)->m_owner;
 
    // we have here seq, iter, item
    Item& topData = ctx->topData();
    if( topData.isBreak() )
    {
+      // notice we clear 3 items in the clear step, so it's ok not to pop
       ctx->popCode();
       return;
    }
@@ -475,6 +537,7 @@ void StmtForIn::PStepNext::apply_( const PStep* ps, VMContext* ctx )
        
       if( self->m_forLast != 0 )
       {
+         ctx->pushCode( pop );
          ctx->pushCode( self->m_forLast );
       }
    }
@@ -483,15 +546,17 @@ void StmtForIn::PStepNext::apply_( const PStep* ps, VMContext* ctx )
       ctx->pushCode( &self->m_stepGetNext );
       if ( self->m_forMiddle != 0 )
       {
+         ctx->pushCode( pop );
          ctx->pushCode( self->m_forMiddle );
       }
    }
       
    if ( self->m_body != 0 )
    {
+      ctx->pushCode( pop );
       ctx->pushCode( self->m_body );
    }
-   // in any case, the extra item can be removed.
+   // in any case, the extra item should be removed.
    ctx->popData();
 }
 
@@ -594,6 +659,7 @@ void StmtForTo::oneLinerTo( String& tgt ) const
 
 void StmtForTo::apply_( const PStep* ps, VMContext* ctx )
 {
+   static PStep* pop = &Engine::instance()->stdSteps()->m_pop;
    const StmtForTo* self = static_cast<const StmtForTo*>(ps);
    
    fassert( self->isValid() );
@@ -672,6 +738,7 @@ void StmtForTo::apply_( const PStep* ps, VMContext* ctx )
    // eventually, push the first opode in top of all.
    if( self->m_forFirst != 0 )
    {
+      ctx->pushCode( pop );
       ctx->pushCode( self->m_forFirst );
    }
 }
@@ -679,6 +746,7 @@ void StmtForTo::apply_( const PStep* ps, VMContext* ctx )
 
 void StmtForTo::PStepNext::apply_( const PStep* ps, VMContext* ctx )
 {
+   static PStep* pop = &Engine::instance()->stdSteps()->m_pop;
    const StmtForTo* self = static_cast<const StmtForTo::PStepNext*>(ps)->m_owner;
    
    register int64 start = ctx->opcodeParam(2).asInteger();
@@ -689,7 +757,7 @@ void StmtForTo::PStepNext::apply_( const PStep* ps, VMContext* ctx )
    Symbol* target = self->m_target;
    ctx->resolveSymbol(target, true)->setInteger(start);
    start += step;
-   
+
    // step cannot be 0 as it has been sanitized by our main step.
    if( (step > 0 && start > end) || ( step < 0 && start < end ) )
    {
@@ -698,6 +766,7 @@ void StmtForTo::PStepNext::apply_( const PStep* ps, VMContext* ctx )
       
       if( self->m_forLast != 0 )
       {
+         ctx->pushCode( pop );
          ctx->pushCode( self->m_forLast );
       }
    }
@@ -705,12 +774,14 @@ void StmtForTo::PStepNext::apply_( const PStep* ps, VMContext* ctx )
    {
       if( self->m_forMiddle != 0 )
       {
+         ctx->pushCode( pop );
          ctx->pushCode( self->m_forMiddle );
       }
    }
    
    if( self->m_body )
    {
+      ctx->pushCode( pop );
       ctx->pushCode( self->m_body );
    }
    

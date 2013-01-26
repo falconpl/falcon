@@ -175,7 +175,6 @@ FALCON_SYNCLASS_DECLARATOR_EX(m_expr_value, Value, expr, \
 //======================================================================
 // Statement classes
 //
-FALCON_SYNCLASS_DECLARATOR(m_stmt_autoexpr, AutoExpr, stmt)
 FALCON_SYNCLASS_DECLARATOR(m_stmt_break, Break, stmt)
 FALCON_SYNCLASS_DECLARATOR(m_stmt_breakpoint, Breakpoint, stmt)
 FALCON_SYNCLASS_DECLARATOR(m_stmt_continue, Continue, stmt)

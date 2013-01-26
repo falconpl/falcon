@@ -96,7 +96,7 @@ protected:
       virtual Variable* onOpenClass( Class* cls, bool bIsObj );
       virtual void onCloseClass( Class* cls, bool bIsObj );
 
-      virtual void onNewStatement( Statement* stmt );
+      virtual void onNewStatement( TreeStep* stmt );
       virtual void onLoad( const String& path, bool isFsPath );
       virtual bool onImportFrom( ImportDef* def );
       virtual void onExport(const String& symName);

@@ -30,7 +30,6 @@
 #include <falcon/sp/parser_function.h>
 
 #include <falcon/psteps/stmtreturn.h>
-#include <falcon/psteps/stmtautoexpr.h>
 #include <falcon/psteps/exprvalue.h>
 #include <falcon/synclasses_id.h>
 
@@ -170,10 +169,9 @@ void on_close_lambda( void* thing )
    SynFunc* func=ctx->currentFunc();
 
    int size = func->syntree().size();
-   if ( size == 1 && func->syntree().at(0)->handler()->userFlags() == FALCON_SYNCLASS_ID_AUTOEXPR )
+   if ( size == 1 && func->syntree().at(0)->category() == TreeStep::e_cat_expression )
    {
-      StmtAutoexpr* aexpr = static_cast<StmtAutoexpr*>( func->syntree().at(0) );
-      Expression* evaluated = aexpr->detachExpr();
+      Expression* evaluated = static_cast<Expression*>( func->syntree().detach(0) );
       StmtReturn* ret = new StmtReturn( evaluated );
       func->syntree().setNth(0, ret);
    }
@@ -196,10 +194,9 @@ void on_close_lit( void* thing )
    ExprTree* et = static_cast<ExprTree*>(elit->child());
    SynTree* st = lit->m_forming;
    int size = st->size();
-   if ( size == 1 && st->at(0)->handler()->userFlags() == FALCON_SYNCLASS_ID_AUTOEXPR )
+   if ( size == 1 && st->at(0)->category() == SynTree::e_cat_expression )
    {
-      StmtAutoexpr* aexpr = static_cast<StmtAutoexpr*>( st->at(0) );
-      Expression* evaluated = aexpr->detachExpr();
+      Expression* evaluated = static_cast<Expression*>( st->detach(0) );
       if( et == 0 ) {
          elit->setChild(evaluated);
       }

@@ -573,8 +573,10 @@ public:
    const CallFrame& currentFrame() const { return *m_callStack.m_top; }
    CallFrame& currentFrame() { return *m_callStack.m_top; }
 
-   const Item& regA() const { return m_regA; }
-   Item& regA() { return m_regA; }
+   /** Deprecated Kept for historic reasons */
+   const Item& regA() const { return topData(); }
+   /** Kept for historic reasons */
+   Item& regA() { return topData(); }
 
    inline long callDepth() const { return (long)m_callStack.depth(); }
 
@@ -1508,8 +1510,6 @@ protected:
    LinearStack<Shared*> m_waiting;
    // single variable acquired.
    Shared* m_acquired;
-
-   Item m_regA;
 
    /** Error that was last raised in the context. */
    Error* m_lastRaised;

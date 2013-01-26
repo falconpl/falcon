@@ -35,7 +35,7 @@ public:
    StmtWhile( Expression* expr, int32 line=0, int32 chr = 0 );
    
    /** Creates a while statement, adopting an existign statement set. */
-   StmtWhile( Expression* expr, SynTree* stmts, int32 line=0, int32 chr = 0 );
+   StmtWhile( Expression* expr, TreeStep* stmts, int32 line=0, int32 chr = 0 );
    
    StmtWhile( const StmtWhile& other );
    
@@ -46,9 +46,9 @@ public:
    virtual StmtWhile* clone() const { return new StmtWhile(*this); }
    static void apply_( const PStep*, VMContext* ctx );
 
-   SynTree* mainBlock() const { return m_stmts; }
-   void mainBlock(SynTree* st);
-   SynTree* detachMainBlock();
+   TreeStep* mainBlock() const { return m_child; }
+   void mainBlock(TreeStep* st);
+   TreeStep* detachMainBlock();
    
    virtual int32 arity() const;
    virtual TreeStep* nth( int32 n ) const;
@@ -57,8 +57,10 @@ public:
    virtual Expression* selector() const;   
    virtual bool selector( Expression* e ); 
 
+   /** We can remove a bit of stuff. */
+   virtual void minimize();
 private:   
-   SynTree* m_stmts;
+   TreeStep* m_child;
    Expression* m_expr;
 };
 

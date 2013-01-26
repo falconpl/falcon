@@ -1516,7 +1516,6 @@ void VMContext::gcPerformMark()
    // then, other various elements.
    {
       vm()->modSpace()->gcMark(mark);
-      m_regA.gcMark(mark);
    }
 }
 

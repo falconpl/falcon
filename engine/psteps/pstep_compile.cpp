@@ -110,18 +110,20 @@ void PStepCompile::apply_( const PStep* ps, VMContext* ctx )
    int status = ctx->currentCode().m_seqId;
    String tgt;
    String prompt = ">>> ";
-   long depht = ctx->codeDepth();
 
    // print result if needed.
-   if ( status > 1 || (status == 1 && ! ctx->regA().isNil()) ) {
+   if ( status == 2 || (status == 1 && ! ctx->topData().isNil()) ) {
       Class* cls = 0;
       void* inst = 0;
-      ctx->regA().forceClassInst(cls, inst);
+      ctx->topData().forceClassInst(cls, inst);
       String result;
       cls->describe( inst, result, 3, 60 );
       psc->m_tout->write( result + "\n" );
    }
 
+   if( status > 0 ) {
+      ctx->popData();
+   }
 
    while( true )
    {
@@ -144,7 +146,8 @@ void PStepCompile::apply_( const PStep* ps, VMContext* ctx )
                ctx->currentCode().m_seqId = 1;
             }
             else {
-               ctx->currentCode().m_seqId = 0;
+               // indicate we're already called.
+               ctx->currentCode().m_seqId = 3;
             }
 
             ctx->pushCode( st );
@@ -162,11 +165,6 @@ void PStepCompile::apply_( const PStep* ps, VMContext* ctx )
          // this catches compilation error codes only.
          psc->onError( e );
          e->decref();
-      }
-
-      // did we went deep?
-      if( depht != ctx->codeDepth() ) {
-         return;
       }
 
       // resets the prompt

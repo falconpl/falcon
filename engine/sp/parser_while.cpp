@@ -20,7 +20,6 @@
 #include <falcon/trace.h>
 #include <falcon/error.h>
 
-#include <falcon/psteps/stmtautoexpr.h>
 #include <falcon/psteps/stmtwhile.h>
 #include <falcon/psteps/stmtcontinue.h>
 #include <falcon/psteps/stmtbreak.h>

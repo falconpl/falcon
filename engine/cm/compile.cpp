@@ -68,7 +68,7 @@ public:
       if( f->name() == "") f->name("$anon");
    }
 
-   virtual void onNewStatement( Statement* ) {}
+   virtual void onNewStatement( TreeStep* ) {}
 
    virtual void onLoad( const String&, bool ) {
       m_sp.addError( e_directive_not_allowed, m_sp.currentSource(), m_sp.currentLine()-1, 0, 0 );

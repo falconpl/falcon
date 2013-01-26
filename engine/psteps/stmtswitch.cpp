@@ -466,7 +466,7 @@ void StmtSwitch::apply_( const PStep* ps, VMContext* ctx )
          {
             return;
          }
-         //fallthrough
+         /* no break */
         
       case 1:         
          {
@@ -481,7 +481,7 @@ void StmtSwitch::apply_( const PStep* ps, VMContext* ctx )
             }
          }
          cf.m_seqId = 2;
-         // falltrough
+         /* no break */
          
       default:
       {            
@@ -539,10 +539,14 @@ void StmtSwitch::apply_( const PStep* ps, VMContext* ctx )
    // nope, we didn't find it.
    // anyway, we're done...
    ctx->popCode();
-   ctx->popData();
    //... eventually push in the default block
    if( self->m_defaultBlock ) {
+      ctx->popData();
       ctx->stepIn(self->m_defaultBlock);
+   }
+   // else, leave the data in.
+   else {
+      ctx->topData().setNil();
    }
 }
 

@@ -13,6 +13,9 @@
    See LICENSE file for licensing details.
 */
 
+#undef SRC
+#define SRC "engine/syntree.cpp"
+
 #include <falcon/trace.h>
 #include <falcon/syntree.h>
 #include <falcon/vm.h>
@@ -25,7 +28,6 @@
 #include <falcon/engine.h>
 #include <falcon/synclasses.h>
 #include <falcon/varmap.h>
-#include <falcon/psteps/stmtautoexpr.h>
 
 #include "psteps/exprvector_private.h"
 
@@ -35,7 +37,7 @@ namespace Falcon
 class SynTree::Private
 {
 public:
-   typedef TSVector_Private<Statement> Steps;
+   typedef TSVector_Private<TreeStep> Steps;
    Steps m_steps;
 
    Private() {}
@@ -123,10 +125,22 @@ bool SynTree::selector( Expression* expr )
 
 void SynTree::describeTo( String& tgt, int depth ) const
 {
+   tgt = "";
+   if ( parent() == 0 || parent()->category() != TreeStep::e_cat_statement )
+   {
+      tgt += String(" ").replicate(depth*PStep::depthIndent) + "{[]\n";
+      depth = depth + 1;
+   }
+
    for( size_t i = 0; i < _p->m_steps.m_exprs.size(); ++i )
    {
       if ( i > 0 ) tgt += "\n";
       tgt += _p->m_steps.m_exprs[i]->describe( depth );
+   }
+
+   if ( parent() == 0 || parent()->category() != TreeStep::e_cat_statement )
+   {
+      tgt += "\n" + String(" ").replicate((depth-1)*PStep::depthIndent) + "}";
    }
 }
 
@@ -149,9 +163,25 @@ void SynTree::apply_( const PStep* ps, VMContext* ctx )
    
    TRACE1( "Syntree::apply -- %p with %d/%d", ps, seqId, len );
    
+   // execute the first step without popping.
+   if( seqId == 0 )
+   {
+      TreeStep* step = steps.m_exprs[ seqId++ ];
+      if( ctx->stepInYield(step, cf) )
+      {
+         TRACE2( "Syntree::apply -- going deep at step %d \"%s\"",
+                     ctx->currentCode().m_seqId-1,
+                     step->oneLiner().c_ize() );
+         return;
+      }
+   }
+
+   --len;
    while( seqId < (int) len )
    {
-      Statement* step = steps.m_exprs[ seqId++ ];
+      ctx->popData();
+
+      TreeStep* step = steps.m_exprs[ seqId++ ];
       if( ctx->stepInYield(step, cf) )
       {
          TRACE2( "Syntree::apply -- going deep at step %d \"%s\"", 
@@ -161,8 +191,10 @@ void SynTree::apply_( const PStep* ps, VMContext* ctx )
       }
    }
 
-   TRACE2( "Syntree::apply -- preparing \"%s\"", self->oneLiner().c_ize() );
-   ctx->popCode();
+   // leave the last expression value as is.
+   //ctx->popCode();
+   ctx->popData(); // we're certain to be here with 2 steps at least!!!
+   ctx->resetCode(steps.m_exprs[len]);
 }
 
 
@@ -170,6 +202,7 @@ void SynTree::apply_empty_( const PStep*, VMContext* ctx )
 {
    // we don't exist -- and should not have been generated, actually
    ctx->popCode();
+   ctx->pushData(Item());
 }
 
 
@@ -199,17 +232,8 @@ bool SynTree::setNth( int pos, TreeStep* step )
    {
       return false;
    }
-
-   if( step->category() == TreeStep::e_cat_expression )
-   {
-      step = new StmtAutoexpr( static_cast<Expression*>(step), step->line(), step->chr() );
-   }
-   else if( step->category() != TreeStep::e_cat_statement )
-   {
-      return false;
-   }
    
-   return _p->m_steps.nth( pos, static_cast<Statement*>(step), this );
+   return _p->m_steps.nth( pos, step, this );
 }
 
 bool SynTree::insert( int pos, TreeStep* step )
@@ -219,16 +243,7 @@ bool SynTree::insert( int pos, TreeStep* step )
       return false;
    }
 
-   if( step->category() == TreeStep::e_cat_expression )
-   {
-      step = new StmtAutoexpr( static_cast<Expression*>(step), step->line(), step->chr() );
-   }
-   else if( step->category() != TreeStep::e_cat_statement )
-   {
-      return false;
-   }
-   
-   if( ! _p->m_steps.insert( pos, static_cast<Statement*>(step), this ) ) return false;
+   if( ! _p->m_steps.insert( pos, step, this ) ) return false;
    if ( _p->m_steps.arity() <= 2 ){
       setApply();   
    }
@@ -246,7 +261,29 @@ bool SynTree::remove( int pos )
 }
 
 
-SynTree& SynTree::append( Statement* step )
+TreeStep* SynTree::detach( int pos )
+{
+   if( pos < 0 || pos >= (int) _p->m_steps.m_exprs.size() )
+   {
+      return 0;
+   }
+   TreeStep* ts = _p->m_steps.m_exprs[pos];
+   ts->setParent(0);
+   _p->m_steps.m_exprs.erase(_p->m_steps.m_exprs.begin() + pos);
+
+   if ( _p->m_steps.arity() <= 2 ){
+      setApply();
+   }
+   return ts;
+}
+
+void SynTree::clear()
+{
+   _p->m_steps.clear();
+   setApply();
+}
+
+SynTree& SynTree::append( TreeStep* step )
 {
    if( ! step->setParent(this) ) return *this;
    _p->m_steps.m_exprs.push_back( step );
@@ -268,19 +305,19 @@ bool SynTree::empty() const
 }
 
 
-Statement* SynTree::first() const
+TreeStep* SynTree::first() const
 {
    return _p->m_steps.m_exprs.front();
 }
 
 
-Statement* SynTree::last() const
+TreeStep* SynTree::last() const
 {
    return _p->m_steps.m_exprs.back();
 }
 
 
-Statement* SynTree::at( int pos ) const
+TreeStep* SynTree::at( int pos ) const
 { 
    return _p->m_steps.m_exprs[pos];
 }

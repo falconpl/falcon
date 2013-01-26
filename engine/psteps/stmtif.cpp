@@ -30,7 +30,7 @@
 namespace Falcon
 {
 
-class StmtIf::Private: public TSVector_Private<SynTree>
+class StmtIf::Private: public TSVector_Private<TreeStep>
 {
 public:
    
@@ -38,11 +38,11 @@ public:
    ~Private() {}
    
    Private( const Private& other, TreeStep* owner ):
-      TSVector_Private<SynTree>( other, owner )
+      TSVector_Private<TreeStep>( other, owner )
    {}
 };
 
-StmtIf::StmtIf( SynTree* ifTrue, SynTree* ifFalse, int32 line, int32 chr ):
+StmtIf::StmtIf( TreeStep* ifTrue, TreeStep* ifFalse, int32 line, int32 chr ):
    Statement( line, chr ),
    _p( new Private )
 {
@@ -58,7 +58,7 @@ StmtIf::StmtIf( SynTree* ifTrue, SynTree* ifFalse, int32 line, int32 chr ):
 }
 
 
-StmtIf::StmtIf( SynTree* ifTrue, int32 line, int32 chr ):
+StmtIf::StmtIf( TreeStep* ifTrue, int32 line, int32 chr ):
    Statement( line, chr ),
    _p( new Private )
 {
@@ -104,14 +104,12 @@ TreeStep* StmtIf::nth( int32 n ) const
 
 bool StmtIf::setNth( int32 n, TreeStep* ts )
 {
-    if ( ts == 0 || ts->category() != TreeStep::e_cat_syntree ) return false;
-    return _p->nth( n, static_cast<SynTree*>(ts), this );
+    return _p->nth( n, ts, this );
 }
 
 bool StmtIf::insert( int32 n, TreeStep* ts )
 {
-   if ( ts == 0 || ts->category() != TreeStep::e_cat_syntree ) return false;
-   return _p->insert( n, static_cast<SynTree*>(ts), this);
+   return _p->insert( n, ts, this);
 }
 
 bool StmtIf::remove( int32 n )
@@ -120,7 +118,17 @@ bool StmtIf::remove( int32 n )
 }
 
 
-StmtIf& StmtIf::addElif( SynTree* ifTrue  )
+void StmtIf::minimize()
+{
+   /*Private::ExprVector& elifs = _p->m_exprs;
+   uint32 len = elifs.size();
+   for( uint32 i = 0; i < len; ++i ) {
+      elifs[i] = minimize_basic(elifs[i]);
+   }
+   */
+}
+
+StmtIf& StmtIf::addElif( TreeStep* ifTrue  )
 {
    if( ifTrue->setParent(this) )
    {
@@ -150,7 +158,7 @@ void StmtIf::describeTo( String& tgt, int depth ) const
    }
    
    String prefix = String(" ").replicate( depth * depthIndent );   
-   String prefix1 = String(" ").replicate( (depth+1) * depthIndent );
+   //String prefix1 = String(" ").replicate( (depth+1) * depthIndent );
    
    if( _p->m_exprs.empty() || _p->m_exprs[0]->selector() == 0 )
    {
@@ -159,18 +167,18 @@ void StmtIf::describeTo( String& tgt, int depth ) const
    }
    
    tgt += prefix + "if "+ _p->m_exprs[0]->selector()->describe(depth+1) + "\n" +
-              prefix1 + _p->m_exprs[0]->selector()->describe(depth+1) +"\n";
+              _p->m_exprs[0]->describe(depth+1) +"\n";
 
    for ( size_t i = 1; i < _p->m_exprs.size(); ++i )
    {      
-      SynTree* tree = _p->m_exprs[i];
+      TreeStep* tree = _p->m_exprs[i];
       if( tree->selector() != 0 )
       {
          tgt += prefix + "elif " + tree->selector()->describe(depth+1) + "\n" +
-                     prefix1 + tree->describe(depth+1);
+                     tree->describe(depth+1) + "\n";
       }
       else if( i + 1 == _p->m_exprs.size() ) {
-         tgt += prefix + "else\n" + prefix1 + tree->describe(depth+1) +"\n";
+         tgt += prefix + "else\n" + tree->describe(depth+1) +"\n";
       }
       else {
          tgt += "elif...\n";
@@ -206,13 +214,14 @@ void StmtIf::apply_( const PStep* s1, VMContext* ctx )
    // -- this is ok also if we don't have a true route.
    while( sid < len )
    {
-      SynTree* elif = elifs[sid++];
+      TreeStep* elif = elifs[sid++];
       if( elif->selector() == 0 )
       {
-         if( sid + 1 == len )
+         if( sid == len )
          {
             MESSAGE1( "--Entering else" );
             ctx->resetAndApply(elif);
+            return;
          }
          else {
             MESSAGE1( "-- Ignoring elif without selector" );
@@ -237,6 +246,7 @@ void StmtIf::apply_( const PStep* s1, VMContext* ctx )
    
    // all elifs failed.
    MESSAGE1( "--All elif failed Failed" );
+   ctx->pushData(Item());
    ctx->popCode();
 }
 

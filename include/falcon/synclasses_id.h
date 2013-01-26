@@ -40,7 +40,7 @@
 /** ID for classes hosting Autoexpression.
    ID used as Class::userFlag() safe in the TreeStep::cls() domain. 
  */
-#define FALCON_SYNCLASS_ID_AUTOEXPR   5
+//#define FALCON_SYNCLASS_ID_AUTOEXPR   5
 
 /** ID for classes hosting Catch and Finally clauses.
    ID used as Class::userFlag() safe in the TreeStep::cls() domain. 

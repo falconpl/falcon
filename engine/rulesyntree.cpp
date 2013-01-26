@@ -101,7 +101,7 @@ void RuleSynTree::PStepNext::apply_(const PStep* ps, VMContext* ctx)
    }
       
    // just proceed with next step
-   Statement* step = self->m_owner->at( cf.m_seqId++ );
+   TreeStep* step = self->m_owner->at( cf.m_seqId++ );
    ctx->pushCode( step );
 }
 

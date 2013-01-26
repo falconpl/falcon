@@ -31,7 +31,6 @@
 #include <falcon/sp/parser_if.h>
 
 #include <falcon/psteps/stmtif.h>
-#include <falcon/psteps/stmtautoexpr.h>
 #include <falcon/psteps/exprvalue.h>
 
 #include "falcon/synclasses_id.h"

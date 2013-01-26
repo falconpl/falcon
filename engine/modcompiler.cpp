@@ -132,7 +132,7 @@ void ModCompiler::Context::onCloseClass( Class* cls, bool )
 
 
 
-void ModCompiler::Context::onNewStatement( Statement* )
+void ModCompiler::Context::onNewStatement( TreeStep* )
 {
    // actually nothing to do
 }

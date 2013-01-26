@@ -28,8 +28,8 @@ namespace Falcon
 class FALCON_DYN_CLASS StmtIf: public Statement
 {
 public:
-   StmtIf( SynTree* ifTrue, SynTree* ifFalse, int32 line=0, int32 chr = 0 );
-   StmtIf( SynTree* ifTrue, int32 line=0, int32 chr = 0 );
+   StmtIf( TreeStep* ifTrue, TreeStep* ifFalse, int32 line=0, int32 chr = 0 );
+   StmtIf( TreeStep* ifTrue, int32 line=0, int32 chr = 0 );
    StmtIf( int32 line=0, int32 chr = 0 );
    StmtIf( const StmtIf& other );
    virtual ~StmtIf();
@@ -43,7 +43,7 @@ public:
    /** Adds an else-if branch to the if statement.
     If the branch has no selector, it becomes the else branch.
     */
-   StmtIf& addElif( SynTree* ifTrue );
+   StmtIf& addElif( TreeStep* ifTrue );
 
    virtual int32 arity() const;
    virtual TreeStep* nth( int32 n ) const;   
@@ -51,6 +51,7 @@ public:
    virtual bool insert( int32 pos, TreeStep* element );   
    virtual bool remove( int32 pos );
    
+   virtual void minimize();
 private:
    class Private;
    Private* _p;

@@ -230,12 +230,13 @@ void StmtFastPrint::apply_( const PStep* ps, VMContext* ctx )
       {
          ctx->vm()->textOut()->write("\n");
       }
+      ctx->pushData(Item());
       ctx->popCode();
    }
    else
    {
       // produce the next one.
-      cframe.m_seqId = seqId + 1;
+      ctx->currentCode().m_seqId = seqId + 1;
       ctx->pushCode( pl[seqId] );
    }
 }

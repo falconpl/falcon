@@ -13,6 +13,8 @@
    See LICENSE file for licensing details.
 */
 
+#define SRC "engine/psteps/stmtwhile.cpp"
+
 #include <falcon/trace.h>
 #include <falcon/psteps/stmtwhile.h>
 #include <falcon/expression.h>
@@ -27,7 +29,7 @@ namespace Falcon
 
 StmtWhile::StmtWhile(int32 line, int32 chr ):
    Statement( line, chr ),
-   m_stmts( 0 ),
+   m_child( 0 ),
    m_expr( 0 )
 {
    FALCON_DECLARE_SYN_CLASS( stmt_while );
@@ -36,9 +38,9 @@ StmtWhile::StmtWhile(int32 line, int32 chr ):
    m_bIsLoopBase = true;
 }
 
-StmtWhile::StmtWhile( Expression* expr, SynTree* stmts, int32 line, int32 chr ):
+StmtWhile::StmtWhile( Expression* expr, TreeStep* stmts, int32 line, int32 chr ):
    Statement( line, chr ),
-   m_stmts( stmts ),
+   m_child( stmts ),
    m_expr( expr )
 {
    FALCON_DECLARE_SYN_CLASS( stmt_while );
@@ -53,13 +55,11 @@ StmtWhile::StmtWhile( Expression* expr, SynTree* stmts, int32 line, int32 chr ):
 
 StmtWhile::StmtWhile( Expression* expr, int32 line, int32 chr ):
    Statement( line, chr ),
-   m_stmts( 0 ),
+   m_child( 0 ),
    m_expr( expr )
 {
    FALCON_DECLARE_SYN_CLASS( stmt_while );
    
-   m_stmts = new SynTree;
-   m_stmts->setParent(this);
    expr->setParent(this);
    apply = apply_;
    m_bIsLoopBase = true;
@@ -69,16 +69,16 @@ StmtWhile::StmtWhile( Expression* expr, int32 line, int32 chr ):
 
 StmtWhile::StmtWhile( const StmtWhile& other ):
    Statement( other ),
-   m_stmts( 0 ),
+   m_child( 0 ),
    m_expr( 0 )
 {
    apply = apply_;
    m_bIsLoopBase = true;
    
-   if( other.m_stmts )
+   if( other.m_child )
    {
-      m_stmts = other.m_stmts->clone();
-      m_stmts->setParent(this);
+      m_child = other.m_child->clone();
+      m_child->setParent(this);
    }
    
    if( other.m_expr != 0 )
@@ -90,10 +90,15 @@ StmtWhile::StmtWhile( const StmtWhile& other ):
 
 StmtWhile::~StmtWhile()
 {
-   delete m_stmts;
+   delete m_child;
    delete m_expr;
 }
 
+
+void StmtWhile::minimize()
+{
+   m_child = minimize_basic(m_child);
+}
 
 Expression* StmtWhile::selector() const
 {
@@ -126,16 +131,19 @@ void StmtWhile::oneLinerTo( String& tgt ) const
 
 void StmtWhile::describeTo( String& tgt, int depth ) const
 {
-   if( m_expr == 0 || m_stmts == 0 )
+   if( m_expr == 0 )
    {
       tgt = "<Blank StmtWhile>";
       return;
    }
    
    String prefix = String(" ").replicate( depth * depthIndent );
-   tgt += prefix + "while " + m_expr->describe(depth+1) + "\n" +
-           m_stmts->describe(depth+1) + "\n" +
-         prefix + "end";
+   tgt += prefix + "while " + m_expr->describe(depth+1) + "\n";
+   if( m_child !=0 )
+   {
+      tgt += m_child->describe(depth+1) + "\n";
+   }
+   tgt += prefix + "end";
 }
 
 int StmtWhile::arity() const
@@ -145,35 +153,31 @@ int StmtWhile::arity() const
 
 TreeStep* StmtWhile::nth( int n ) const
 {
-   if( n == 0 || n == -1 ) return m_stmts;
+   if( n == 0 || n == -1 ) return m_child;
    return 0;
 }
 
 
 bool StmtWhile::setNth( int n, TreeStep* st )
 {
-   if( st == 0 || st->category() != TreeStep::e_cat_syntree || ! st->setParent(this) ) return false;
-   
-   if( n == 0 || n == -1 ) 
-   {
-      delete m_stmts;
-      m_stmts = static_cast<SynTree*>(st);
-   }
-   
-   return 0;
+   if( st == 0 || st->parent() != 0 || (n != 0 && n != -1) ) return false;
+
+   delete m_child;
+   m_child = st;
+   return true;
 }
 
-void StmtWhile::mainBlock(SynTree* st) {
-   delete m_stmts;
+void StmtWhile::mainBlock(TreeStep* st) {
+   delete m_child;
    st->setParent(this);
-   m_stmts = st;
+   m_child = st;
 }
 
-SynTree* StmtWhile::detachMainBlock()
+TreeStep* StmtWhile::detachMainBlock()
 {
-   m_stmts->setParent(0);
-   SynTree* ret = m_stmts;
-   m_stmts = 0;
+   m_child->setParent(0);
+   TreeStep* ret = m_child;
+   m_child = 0;
    return ret;
 }
 
@@ -183,37 +187,50 @@ void StmtWhile::apply_( const PStep* s1, VMContext* ctx )
    const StmtWhile* self = static_cast<const StmtWhile*>(s1);
    TRACE( "StmtWhile::apply_ entering %s", self->oneLiner().c_ize() );
    fassert( self->m_expr != 0 );
-   fassert( self->m_stmts != 0 );
    
    CodeFrame& cf = ctx->currentCode();
    
    // Perform the check
-   SynTree* tree = self->m_stmts;
-   if ( cf.m_seqId == 0 ) 
+   TreeStep* tree = self->m_child;
+   switch ( cf.m_seqId )
    {
+   case 2:
+      // already been around
+      ctx->popData(); // remove the data placed by the syntree
+      /* no break */
+
+   case 0:
+      // generate the expression.
       cf.m_seqId = 1;
       if( ctx->stepInYield( self->m_expr, cf ) )
       {
          // ignore soft exception, we're yielding back soon anyhow.
          return;
       }
+      break;
    }
-   // otherwise, we're here after performing a check.
-   cf.m_seqId = 0; // ... so we set it back to perform check.
    
+   cf.m_seqId = 2; // ... so we set it back to perform check.
+
    // break items are always nil, and so, false.
    if ( ctx->boolTopData() )
    {
       ctx->popData();
       TRACE1( "Apply 'while' at line %d -- redo", self->line() );
       // redo
-      ctx->stepIn( tree );
+      if( tree != 0 ) {
+         ctx->stepIn( tree );
+      }
+      else {
+         return;
+      }
       // no matter if stmts went deep, we're bound to be called again to recheck
    }
    else {      
       TRACE1( "Apply 'while' at line %d -- leave ", self->line() );
       //we're done
-      ctx->popData();
+      //keep the data
+      ctx->topData().setNil();
       ctx->popCode();
    }
 }

@@ -1051,8 +1051,10 @@ void* Collector::Monitor::run()
       Collector::t_status st = m_master->m_ramp[m_master->m_curRampID]->checkStatus();
       m_master->m_mtx_ramp.unlock();
 
+      /*
       TRACE( "Collector::Monitor::run -- Working %ld on %ld items (in mode %d)",
                (long)m_master->storedMemory(), (long) m_master->storedItems(), st );
+      */
       if( st == Collector::e_status_red || st == Collector::e_status_required )
       {
          bool perform = false;

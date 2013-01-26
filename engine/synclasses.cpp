@@ -69,7 +69,6 @@
 #include <falcon/psteps/exprevalret.h>
 #include <falcon/psteps/exprevalretexec.h>
 
-#include <falcon/psteps/stmtautoexpr.h>
 #include <falcon/psteps/stmtbreak.h>
 #include <falcon/psteps/stmtcontinue.h>
 #include <falcon/psteps/stmtfastprint.h>
@@ -112,7 +111,6 @@ SynClasses::SynClasses( Class* classSynTree, Class* classStatement, Class* class
    m_stmt_select->userFlags(FALCON_SYNCLASS_ID_CASEHOST );
    m_stmt_switch->userFlags(FALCON_SYNCLASS_ID_SWITCH );
    m_stmt_try->userFlags(FALCON_SYNCLASS_ID_CATCHHOST);
-   m_stmt_autoexpr->userFlags(FALCON_SYNCLASS_ID_AUTOEXPR);
    m_expr_call->userFlags(FALCON_SYNCLASS_ID_CALLFUNC);
    m_expr_pseudocall->userFlags(FALCON_SYNCLASS_ID_CALLFUNC);
 
@@ -1044,11 +1042,6 @@ void SynClasses::ClassTree::op_call(VMContext* ctx, int pcount, void* instance) 
          ctx->addLocalFrame( st, pcount );
       }
 
-      // if the child is a syntree, we must prepare to push a nil value.
-      if( child->category() != TreeStep::e_cat_expression ) {
-         ctx->pushCode( &steps->m_pushNil );
-      }
-
       ctx->pushCode( child );
    }
    else {
@@ -1138,7 +1131,6 @@ void SynClasses::ClassTree::unflatten( VMContext*, ItemArray& subItems, void* in
 // Statements
 //
 
-FALCON_STANDARD_SYNCLASS_OP_CREATE( AutoExpr, StmtAutoexpr, unaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Break, StmtBreak, zeroaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Breakpoint, Breakpoint, zeroaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Continue, StmtContinue, zeroaryExprSet )

@@ -31,6 +31,7 @@
 #include <falcon/cm/datareader.h>
 #include <falcon/cm/parallel.h>
 #include <falcon/cm/stdfunctions.h>
+#include <falcon/cm/vmcontext.h>
 
 // the standard error classes
 #include <falcon/errorclasses.h>
@@ -65,6 +66,7 @@ CoreModule::CoreModule():
       << new Ext::ClassTextReader( classStream )
       << new Ext::ClassDataWriter( classStream )
       << new Ext::ClassDataReader( classStream )
+      << new Ext::ClassVMContext
       ;
 }
 

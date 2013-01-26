@@ -40,11 +40,24 @@ public:
    
    virtual ~Statement();
 
+   /**
+    * Called when the statement is complete after a source compilation.
+    *
+    * Statements are usually created with some default data (i.e. a child
+    * syntree block) that can be removed. This method is meant to clean
+    * the defaults that a compiler may leave behind.
+    *
+    * By default does nothing.
+    */
+   virtual void minimize() {}
+
    /** Subclasses can set this to true to be discareded during parsing.*/
    inline bool discardable() const { return m_discardable; }
    
 protected:
    bool m_discardable;
+
+   TreeStep* minimize_basic( TreeStep* source );
 
    friend class SynTree;
    friend class RuleSynTree;

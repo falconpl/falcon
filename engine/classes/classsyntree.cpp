@@ -82,19 +82,20 @@ void ClassSynTree::restore( VMContext* ctx, DataReader* stream ) const
 {
    bool hasSym;
    bool isGlobal;
-   SynTree* st = new SynTree;
 
-   stream->read( hasSym );
-   if( hasSym ) {
-      stream->read( isGlobal );
-      String symname;
-      stream->read( symname );
-      Symbol* sym = Engine::getSymbol( symname, isGlobal );
-      st->target(sym);
-   }
+   SynTree* st = new SynTree;
+   ctx->pushData( Item( this, st ) );
 
    try {
-      ctx->pushData( Item( this, st ) );
+      stream->read( hasSym );
+      if( hasSym ) {
+         stream->read( isGlobal );
+         String symname;
+         stream->read( symname );
+         Symbol* sym = Engine::getSymbol( symname, isGlobal );
+         st->target(sym);
+      }
+
       // the parent wants us on top of stack.
       m_parent->restore( ctx, stream );
    }
@@ -183,9 +184,15 @@ void ClassSynTree::op_setProperty( VMContext* ctx, void* instance, const String&
 
 void ClassSynTree::op_call(VMContext* ctx, int pcount, void* instance) const
 {
+   static StdSteps* steps = Engine::instance()->stdSteps();
    SynTree* tree = static_cast<SynTree*>(instance);
+
+   // We don't need parameters.
+   ctx->popData(pcount+1);
+   // this is a local frame.
+   ctx->pushCode(&steps->m_localFrame);
+
    ctx->pushCode( tree );
-   ctx->stackResult(pcount+1, Item());
 }
 
 }

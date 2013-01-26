@@ -25,7 +25,6 @@
 #include <falcon/textreader.h>
 #include <falcon/textwriter.h>
 #include <falcon/statement.h>
-#include <falcon/psteps/stmtautoexpr.h>
 
 #include <falcon/parser/parser.h>
 #include <falcon/sp/sourcelexer.h>
@@ -306,11 +305,10 @@ IntCompiler::t_compile_status IntCompiler::compileNext( TextReader* input, SynTr
    {
       if( ! m_currentTree->empty() )
       {
-         if ( m_currentTree->at(0)->handler()->userFlags() == FALCON_SYNCLASS_ID_AUTOEXPR )
+         if ( m_currentTree->at(0)->category() == TreeStep::e_cat_expression )
          {
             // this requires evaluation; but is this a direct call?
-            StmtAutoexpr* stmt = static_cast<StmtAutoexpr*>(m_currentTree->at(0));
-            Expression* expr = stmt->selector();
+            Expression* expr = static_cast<Expression*>(m_currentTree->at(0));
             if( expr != 0 && expr->handler()->userFlags() == FALCON_SYNCLASS_ID_CALLFUNC )
             {
                status = e_expr_call;

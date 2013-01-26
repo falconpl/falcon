@@ -54,14 +54,14 @@ public:
    
    /** Direct interface. 
     Faster than nth()*/
-   Statement* at( int pos ) const;
+   TreeStep* at( int pos ) const;
    /** Direct interface. 
     Faster than arity()*/
    size_t size() const;
  
    bool empty() const;
-   Statement* first() const;
-   Statement* last() const;
+   TreeStep* first() const;
+   TreeStep* last() const;
    
    virtual void describeTo( String& tgt, int depth = 0) const;
    virtual void oneLinerTo( String& tgt ) const;
@@ -73,6 +73,8 @@ public:
    virtual bool setNth( int32 n, TreeStep* ts );
    virtual bool insert( int32 pos, TreeStep* element );
    virtual bool remove( int32 pos );
+   virtual TreeStep* detach( int32 pos );
+   virtual void clear();
    
    /** Returns the selector expression for this block.
 
@@ -92,7 +94,7 @@ public:
    /** Appends a statement.
     The method will silently fail if the step has already a parent.
     */
-   SynTree& append( Statement* step );
+   SynTree& append( TreeStep* step );
 
    static void apply_( const PStep* ps, VMContext* ctx );
    static void apply_single_( const PStep* ps, VMContext* ctx );
@@ -131,6 +133,7 @@ public:
     */
    void target( Symbol* s );
       
+
 protected:   
    class Private;
    Private* _p;

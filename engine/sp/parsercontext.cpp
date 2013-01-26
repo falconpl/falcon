@@ -424,7 +424,7 @@ bool ParserContext::isParentLocal( const String& name )
 }
 
 
-void ParserContext::addStatement( Statement* stmt )
+void ParserContext::addStatement( TreeStep* stmt )
 {
    TRACE("ParserContext::addStatement type '%s'",
          stmt->handler() == 0 ? "none": 
@@ -649,6 +649,7 @@ void ParserContext::closeContext()
       case CCFrame::t_stmt_type:
          if( ! bframe.m_elem.stmt->discardable() )
          {
+            bframe.m_elem.stmt->minimize();
             addStatement( bframe.m_elem.stmt ); // will also do onNewStatement
          }
          else

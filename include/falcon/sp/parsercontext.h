@@ -127,7 +127,7 @@ public:
     so parent statements gets notified throught this callback after their children
     statements.
     */
-   virtual void onNewStatement( Statement* stmt ) = 0;
+   virtual void onNewStatement( TreeStep* stmt ) = 0;
 
    /** Called back when parsing a "load" directive.
       \param path The load parameter
@@ -277,7 +277,7 @@ public:
     \param stmt The statement to be added.
     \see checkSymbols();
     */
-   void addStatement( Statement* stmt );
+   void addStatement( TreeStep* stmt );
 
    /** Opens a new block-statement context.
     \param Statement parent The parent that is opening this context.

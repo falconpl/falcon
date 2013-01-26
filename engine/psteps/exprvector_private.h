@@ -52,14 +52,19 @@ public:
    
    ~TSVector_Private()
    {
+      clear();
+   }
+
+   void clear()
+   {
       ExprVector_i iter = m_exprs.begin();
       while( iter != m_exprs.end() )
       {
          delete *iter;
          ++iter;
       }
+      m_exprs.clear();
    }
-   
    
    inline int arity() const
    {

@@ -46,17 +46,17 @@ class FALCON_DYN_CLASS StmtForBase: public Statement
 public:
    virtual void describeTo( String& tgt, int depth=0 ) const;
 
-   SynTree* body() const { return m_body; }
-   void body( SynTree* st ) { m_body = st; }
+   TreeStep* body() const { return m_body; }
+   void body( TreeStep* st );
 
-   SynTree* forFirst() const { return m_forFirst; }
-   void forFirst( SynTree* st ) { m_forFirst = st; }
+   TreeStep* forFirst() const { return m_forFirst; }
+   void forFirst( TreeStep* st );
 
-   SynTree* forMiddle() const { return m_forMiddle; }
-   void forMiddle( SynTree* st ) { m_forMiddle = st; }
+   TreeStep* forMiddle() const { return m_forMiddle; }
+   void forMiddle( TreeStep* st );
 
-   SynTree* forLast() const { return m_forLast; }
-   void forLast( SynTree* st ) { m_forLast = st; }
+   TreeStep* forLast() const { return m_forLast; }
+   void forLast( TreeStep* st );
 
    virtual int32 arity() const;
    virtual TreeStep* nth( int32 n ) const;
@@ -65,12 +65,14 @@ public:
    virtual bool isValid() const = 0;
    virtual bool isForHost() const { return true; }
 
+   void minimize();
+
 protected:
 
-   SynTree* m_body;
-   SynTree* m_forFirst;
-   SynTree* m_forMiddle;
-   SynTree* m_forLast;
+   TreeStep* m_body;
+   TreeStep* m_forFirst;
+   TreeStep* m_forMiddle;
+   TreeStep* m_forLast;
 
    StmtForBase( int32 line=0, int32 chr=0 ):
       Statement( line, chr ),

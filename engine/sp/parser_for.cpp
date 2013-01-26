@@ -150,9 +150,10 @@ void apply_for_to_step( const Rule&, Parser& p )
    Expression* expr_step = static_cast<Expression*>(texpr_step->detachValue());
 
    StmtForTo* ft = internal_for_to( p, tfor, *tsym->asString(), expr_start, expr_end, expr_step );
-   ft->body( new SynTree );
+   SynTree* body = new SynTree;
+   ft->body( body );
    
-   st->openBlock( ft, ft->body() );
+   st->openBlock( ft, body );
 
    // clear the stack
    p.simplify(9);
@@ -178,9 +179,10 @@ void apply_for_to_step_short( const Rule&, Parser& p )
    Expression* expr_step = static_cast<Expression*>(texpr_step->detachValue());
 
    StmtForTo* ft = internal_for_to( p, tfor, *tsym->asString(), expr_start, expr_end, expr_step );
-   ft->body( new SynTree );
+   SynTree* body = new SynTree;
+   ft->body( body );
    
-   st->openBlock( ft, ft->body(), true );
+   st->openBlock( ft, body, true );
 
    // clear the stack
    p.simplify(9);
@@ -202,9 +204,10 @@ void apply_for_to( const Rule&, Parser& p )
    Expression* expr_end = static_cast<Expression*>(texpr_end->detachValue());
 
    StmtForTo* ft = internal_for_to( p, tfor, *tsym->asString(), expr_start, expr_end, 0);
-   ft->body( new SynTree );
+   SynTree* body = new SynTree;
+   ft->body( body );
    
-   st->openBlock( ft, ft->body() );
+   st->openBlock( ft, body );
 
    // clear the stack
    p.simplify(7);
@@ -227,9 +230,10 @@ void apply_for_to_short( const Rule&, Parser& p )
    Expression* expr_end = static_cast<Expression*>(texpr_end->detachValue());
 
    StmtForTo* ft = internal_for_to( p, tfor, *tsym->asString(), expr_start, expr_end, 0);
-   ft->body( new SynTree );
+   SynTree* body = new SynTree;
+   ft->body( body );
    
-   st->openBlock( ft, ft->body(), true );
+   st->openBlock( ft, body, true );
 
    // clear the stack
    p.simplify(7);
@@ -260,8 +264,9 @@ void apply_for_in( const Rule&, Parser& p )
       ++iter;
    }
          
-   forin->body( new SynTree );   
-   ctx->openBlock( forin, forin->body() );
+   SynTree* body = new SynTree;
+   forin->body( body );
+   ctx->openBlock( forin, body );
    
    // clear the stack
    p.simplify(5);
@@ -291,8 +296,9 @@ void apply_for_in_short( const Rule&, Parser& p )
       ++iter;
    }
          
-   forin->body( new SynTree );   
-   ctx->openBlock( forin, forin->body(), true );
+   SynTree* body = new SynTree;
+   forin->body( body );
+   ctx->openBlock( forin, body, true );
    
    // clear the stack
    p.simplify(5);
@@ -321,8 +327,9 @@ static void apply_forfirst_internal( const Rule&, Parser& p, bool bShort )
    }
    
    // anyhow, add the block
-   base->forFirst( new SynTree );
-   ctx->openBlock( new StmtTempFor, base->forFirst(), bShort );
+   SynTree* body = new SynTree;
+   base->forFirst( body );
+   ctx->openBlock( new StmtTempFor, body, bShort );
    
    // clear the stack
    p.simplify(2);
@@ -362,8 +369,9 @@ static void apply_formiddle_internal( const Rule&, Parser& p, bool isShort )
    }
    
    // anyhow, add the block
-   base->forMiddle( new SynTree );
-   ctx->openBlock( new StmtTempFor, base->forMiddle(), isShort );
+   SynTree* body = new SynTree;
+   base->forMiddle( body );
+   ctx->openBlock( new StmtTempFor, body, isShort );
    
    // clear the stack
    p.simplify(2);
@@ -401,8 +409,9 @@ static void apply_forlast_internal( const Rule&, Parser& p, bool isShort )
    }
    
    // anyhow, add the block
-   base->forLast( new SynTree );
-   ctx->openBlock( new StmtTempFor, base->forLast(), isShort );
+   SynTree* body = new SynTree;
+   base->forLast( body );
+   ctx->openBlock( new StmtTempFor, body, isShort );
    
    // clear the stack
    p.simplify(2);
