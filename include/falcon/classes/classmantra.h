@@ -37,6 +37,10 @@ public:
    virtual void gcMarkInstance( void* self, uint32 mark ) const;
    virtual bool gcCheckInstance( void* self, uint32 mark ) const;
    
+   virtual void enumerateProperties( void* instance, Class::PropertyEnumerator& cb ) const;
+   virtual void enumeratePV( void* instance, Class::PVEnumerator& cb ) const;
+   virtual bool hasProperty( void* instance, const String& prop ) const;
+
    virtual void store( VMContext* ctx, DataWriter* stream, void* instance ) const;
    virtual void restore( VMContext* ctx, DataReader* stream) const;
    // mantras have no flattening.
@@ -45,6 +49,8 @@ public:
 
    virtual void op_isTrue( VMContext* ctx, void* self ) const;
    virtual void op_toString( VMContext* ctx, void* self ) const;
+
+   virtual void op_getProperty( VMContext* ctx, void* instance, const String& prop) const;
 
 protected:
    ClassMantra( const String& name, int64 type );

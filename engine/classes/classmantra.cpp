@@ -1,8 +1,8 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: metaclass.cpp
+   FILE: classmantra.cpp
 
-   Handler for class instances.
+   Base handler for function and classes.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: Sat, 18 Jun 2011 21:24:12 +0200
@@ -12,6 +12,8 @@
 
    See LICENSE file for licensing details.
 */
+
+#define SRC "engine/classes/mantra.cpp"
 
 #include <falcon/classes/classmantra.h>
 #include <falcon/error.h>
@@ -69,6 +71,38 @@ void* ClassMantra::clone( void* source ) const
 void* ClassMantra::createInstance() const
 {
    return 0;
+}
+
+
+void ClassMantra::enumerateProperties( void*, Class::PropertyEnumerator& cb ) const
+{
+   cb("name", false);
+   cb("location", true);
+   cb("module", true);
+}
+
+
+void ClassMantra::enumeratePV( void* instance, Class::PVEnumerator& cb ) const
+{
+   Mantra* mantra = static_cast<Mantra*>(instance);
+
+   Item i_name = mantra->name();
+   Item i_loc = mantra->locate();
+   Item i_cat = (int64) mantra->category();
+
+   cb("name", i_name );
+   cb("location", i_loc );
+   cb("category", i_cat );
+}
+
+
+bool ClassMantra::hasProperty( void*, const String& prop ) const
+{
+   return
+         prop == "name"
+         || prop == "category"
+         || prop == "location"
+         || prop == "module";
 }
 
 
@@ -153,6 +187,37 @@ void ClassMantra::op_toString( VMContext* ctx , void* item ) const
    String* sret = new String( "Mantra " );
    sret->append(fc->name());
    ctx->topData() = FALCON_GC_STORE( sret->handler(), sret );
+}
+
+void ClassMantra::op_getProperty( VMContext* ctx, void* instance, const String& prop) const
+{
+   Mantra* mantra = static_cast<Mantra*>(instance);
+
+   if( prop == "name" )
+   {
+      ctx->stackResult(1, FALCON_GC_HANDLE( new String(mantra->name())) );
+   }
+   else if( prop == "category" )
+   {
+      ctx->stackResult(1, (int64) mantra->category() );
+   }
+   else if( prop == "location" )
+   {
+      ctx->stackResult(1, FALCON_GC_HANDLE( new String(mantra->locate())) );
+   }
+   else if(  prop == "module" )
+   {
+      if( mantra->module() != 0 ) {
+         static Class* clsMod = Engine::instance()->moduleClass();
+         ctx->stackResult(1, Item(clsMod, mantra->module()) );
+      }
+      else {
+         ctx->stackResult(1, Item() );
+      }
+   }
+   else {
+      Class::op_getProperty(ctx, instance, prop );
+   }
 }
 
 
