@@ -173,7 +173,7 @@ void on_close_lambda( void* thing )
    {
       Expression* evaluated = static_cast<Expression*>( func->syntree().detach(0) );
       StmtReturn* ret = new StmtReturn( evaluated );
-      func->syntree().setNth(0, ret);
+      func->syntree().append(ret);
    }
    
    // was this a closure?

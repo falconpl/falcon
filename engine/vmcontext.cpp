@@ -79,6 +79,7 @@ VMContext::VMContext( Process* prc, ContextGroup* grp ):
    m_inspectible(true),
    m_bInspectMark(false),
    m_bSleeping(false),
+   m_events(0),
    m_inGroup(grp),
    m_process(prc)
 {
@@ -97,7 +98,6 @@ VMContext::VMContext( Process* prc, ContextGroup* grp ):
    m_currentMark = 0;
 
    m_acquired = 0;
-   atomicSet(m_events,0);
    pushReturn();
    m_id = prc->getNextContextID();
 
