@@ -650,6 +650,7 @@ void ModSpace::findDynamicMantra(
 
 void ModSpace::PStepLoader::apply_( const PStep* self, VMContext* ctx )
 {
+   static PStep* initStep = &Engine::instance()->stdSteps()->m_fillInstance;
    Error* error = 0;
    const ModSpace::PStepLoader* pstep = static_cast<const ModSpace::PStepLoader* >(self);
 
@@ -700,7 +701,25 @@ void ModSpace::PStepLoader::apply_( const PStep* self, VMContext* ctx )
       }
       ms->importInNS( mod );
 
-      //TODO push init.
+      int32 icount = mod->getInitCount();
+      if( icount != 0 )
+      {
+         // prepare all the required calls.
+
+         for( int32 i = 0; i < icount; ++i )
+         {
+            Class* cls = mod->getInitClass(i);
+            ctx->pushCode( initStep );
+            ctx->callItem( Item(cls->handler(), cls) );
+         }
+
+         return;
+      }
+   }
+
+   if(seqId == 11 )
+   {
+      seqId++;
 
       // Push the main funciton only if this is not a main module.
       if( mod->getMainFunction() != 0 && ! mod->isMain() ) {

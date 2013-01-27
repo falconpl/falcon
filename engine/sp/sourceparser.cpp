@@ -171,6 +171,7 @@ SourceParser::SourceParser():
    T_function("function"),
    T_return("return"),
    T_class("class"),
+   T_object("object"),
    T_init("init"),
 
    T_true( "true" ),
@@ -589,6 +590,11 @@ SourceParser::SourceParser():
    S_Class << (r_class_p << "Class w/params" << apply_class_p
              << T_class << T_Name << T_Openpar << ListSymbol << T_Closepar  << T_EOL );
 
+   S_Object << "Object" << classdecl_errhand;
+   S_Object << (r_object_from << "Object w/from" << apply_object_from
+               << T_object << T_Name << T_from << FromClause << T_EOL );
+   S_Object << (r_object << "Object decl" << apply_object << T_object << T_Name << T_EOL );
+
    FromClause << "Class from clause";
    FromClause << ( r_FromClause_next << "FromClause_next"
               << apply_FromClause_next << FromClause << T_Comma << FromEntry );
@@ -695,6 +701,7 @@ SourceParser::SourceParser():
       
       << S_Function
       << S_Class
+      << S_Object
       
       << S_FastPrint
       << S_If

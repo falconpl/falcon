@@ -104,10 +104,19 @@ void ModCompiler::Context::onCloseFunc( Function* f )
 }
 
 
-Variable* ModCompiler::Context::onOpenClass( Class* cls, bool )
+Variable* ModCompiler::Context::onOpenClass( Class* cls, bool isObject )
 {
    Module* mod = m_owner->m_module;
-   Variable* var = mod->addMantra( cls, false );
+   Variable* var;
+
+   if ( isObject )
+   {
+      // add a global as a placeholder for the object
+      var = mod->addInitClass(cls);
+   }
+   else {
+      var = mod->addMantra( cls, false );
+   }
 
    if( var == 0 )
    {
@@ -117,6 +126,7 @@ Variable* ModCompiler::Context::onOpenClass( Class* cls, bool )
          .origin(ErrorParam::e_orig_compiler)
          ));
    }
+
 
    return var;
 }

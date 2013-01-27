@@ -134,6 +134,23 @@ public:
     */
    Variable* addMantra( Mantra* f, bool bExport = true );
    
+   /** Adds a class and the required structures to make it initializable at startup.
+    *
+    * Creates also an object entity to be initialized at module startup.
+    *
+    */
+   Variable* addInitClass( Class* cls, bool bExport = true );
+
+   /**
+    * Returns the count of classes with an init-time instance to be filled.
+    */
+   int32 getInitCount() const ;
+
+   /**
+    * Returns the nth class with an init-time instance to be filled.
+    */
+   Class* getInitClass( int32 val ) const;
+
 
    Variable* addConstant( const String& name, const Item& value, bool bExport = true );
 

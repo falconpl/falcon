@@ -107,6 +107,7 @@ void PStepCompile::apply_( const PStep* ps, VMContext* ctx )
    IntCompiler* comp = psc->m_compiler;
    comp->setCompilationContext( psc->m_function, psc->m_module, ctx );
 
+   CodeFrame& curcode = ctx->currentCode();
    int status = ctx->currentCode().m_seqId;
    String tgt;
    String prompt = ">>> ";
@@ -165,6 +166,12 @@ void PStepCompile::apply_( const PStep* ps, VMContext* ctx )
          // this catches compilation error codes only.
          psc->onError( e );
          e->decref();
+      }
+
+      if( &ctx->currentCode() != &curcode )
+      {
+         // went deep? -- go away, we'll be back
+         break;
       }
 
       // resets the prompt

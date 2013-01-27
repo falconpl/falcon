@@ -82,7 +82,8 @@ using namespace Parsing;
 static void make_class( Parser& p, int tCount,
          TokenInstance* tname,
          TokenInstance* tParams,
-         TokenInstance* tfrom )
+         TokenInstance* tfrom,
+         bool isObject )
 {
    SourceParser& sp = static_cast<SourceParser&>(p);
    ParserContext* ctx = static_cast<ParserContext*>(p.context());
@@ -97,14 +98,20 @@ static void make_class( Parser& p, int tCount,
       // Are we already in a function?
       if( ctx->currentFunc() != 0 || ctx->currentClass() != 0 || ctx->currentStmt() != 0 )
       {
-         p.addError( e_toplevel_class,  p.currentSource(), tname->line(), tname->chr() );
+         p.addError( isObject ? e_toplevel_obj : e_toplevel_class,
+                     p.currentSource(), tname->line(), tname->chr() );
          p.simplify( tCount  );
          return;
       }
 
       // check if the symbol is free -- defining an unique symbol
-      cls = new FalconClass( *tname->asString() );
-      symclass = ctx->onOpenClass( cls, false );
+      String name = *tname->asString();
+      if( isObject ) {
+         name.prepend("%");
+      }
+      cls = new FalconClass( name
+               );
+      symclass = ctx->onOpenClass( cls, isObject );
       if( symclass == 0 )
       {
           p.addError( e_already_def,  p.currentSource(), tname->line(), tname->chr(), 0,
@@ -189,7 +196,7 @@ static void make_class( Parser& p, int tCount,
       p.popState();
    }
    
-   ctx->openClass(cls, false );
+   ctx->openClass(cls, isObject );
 
    p.pushState( "ClassBody" );
 }
@@ -201,7 +208,7 @@ void apply_class( const Rule&, Parser& p )
    p.getNextToken(); // T_class
    TokenInstance* tname=p.getNextToken();
 
-   make_class(p, 3, tname, 0, 0 );
+   make_class(p, 3, tname, 0, 0, false );
 }
 
 
@@ -213,7 +220,7 @@ void apply_class_p( const Rule&, Parser& p )
    p.getNextToken(); // T_Openpar
    TokenInstance* tparams = p.getNextToken(); // ListSymbol
 
-   make_class( p, 6, tname, tparams, 0 );
+   make_class( p, 6, tname, tparams, 0, false );
 }
 
 
@@ -225,7 +232,7 @@ void apply_class_from( const Rule&, Parser& p )
    (void) p.getNextToken();
    TokenInstance* tfrom=p.getNextToken(); // FromClause
 
-   make_class(p, 5, tname, 0, tfrom );
+   make_class(p, 5, tname, 0, tfrom, false );
 }
 
 
@@ -240,7 +247,29 @@ void apply_class_p_from( const Rule&, Parser& p )
    p.getNextToken();
    TokenInstance* tfrom=p.getNextToken(); // FromClause
 
-   make_class( p, 8, tname, tparams, tfrom );
+   make_class( p, 8, tname, tparams, tfrom, false );
+}
+
+
+void apply_object( const Rule&, Parser& p )
+{
+   // << T_class << T_Name << T_EOL
+   p.getNextToken(); // T_class
+   TokenInstance* tname=p.getNextToken();
+
+   make_class(p, 3, tname, 0, 0, true );
+}
+
+
+void apply_object_from( const Rule&, Parser& p )
+{
+   // << T_class << T_Name << T_from << FromClause << T_EOL
+   p.getNextToken(); // T_class
+   TokenInstance* tname=p.getNextToken(); // T_Name
+   (void) p.getNextToken();
+   TokenInstance* tfrom=p.getNextToken(); // FromClause
+
+   make_class(p, 5, tname, 0, tfrom, true );
 }
 
 
@@ -396,14 +425,13 @@ void apply_expr_class(const Rule&, Parser& p)
    p.pushState( "ClassStart", false );
 }
 
-
 void apply_anonclass_from( const Rule&, Parser& p )
 {
    //<< T_from << FromClause << T_EOL
    p.getNextToken(); // T_from
    TokenInstance* tfrom=p.getNextToken();
 
-   make_class(p, 3, 0, 0, tfrom );
+   make_class(p, 3, 0, 0, tfrom, false );
    
 }
 
@@ -411,7 +439,7 @@ void apply_anonclass_from( const Rule&, Parser& p )
 void apply_anonclass( const Rule&, Parser& p )
 {
    // << T_EOL
-   make_class(p, 1, 0, 0, 0 );
+   make_class(p, 1, 0, 0, 0, false );
 }
 
 
@@ -424,7 +452,7 @@ void apply_anonclass_p_from( const Rule&, Parser& p )
    p.getNextToken(); // T_from
    TokenInstance* tfrom = p.getNextToken();
 
-   make_class(p, 3, 0, tparams, tfrom );
+   make_class(p, 3, 0, tparams, tfrom, false );
 }
 
 
@@ -434,7 +462,7 @@ void apply_anonclass_p( const Rule&, Parser& p )
    p.getNextToken(); // T_Openpar
    TokenInstance* tparams = p.getNextToken();
    
-   make_class(p, 3, 0, tparams, 0 );
+   make_class(p, 3, 0, tparams, 0, false );
 
 }
 

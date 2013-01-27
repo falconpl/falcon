@@ -412,6 +412,30 @@ Variable* Module::addMantra( Mantra* f, bool bExport)
    return &vd->m_var;
 }
 
+Variable* Module::addInitClass( Class* cls, bool bExport )
+{
+   Variable* var = addMantra( cls, false );
+   if( var != 0 )
+   {
+      _p->m_initList.push_back(cls);
+      String name = cls->name().subString(1);
+      var = addGlobal(name, Item(), bExport );
+   }
+
+   return var;
+}
+
+
+int32 Module::getInitCount() const
+{
+   return (int32) _p->m_initList.size();
+}
+
+Class* Module::getInitClass( int32 val ) const
+{
+   return _p->m_initList[val];
+}
+
 
 Variable* Module::addFunction( const String &name, ext_func_t f, bool bExport )
 {

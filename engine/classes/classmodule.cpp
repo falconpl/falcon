@@ -525,9 +525,23 @@ void ClassModule::flatten( VMContext* ctx, ItemArray& subItems, void* instance )
          ++reqi;
       }
    }
-    // Push a nil as a separator
+
+   // Push a nil as a separator
    subItems.append( Item() );
    
+   // finally push the classes in need of init
+   {
+      Module::Private::InitList& initList = mp->m_initList;
+      Module::Private::InitList::iterator ii = initList.begin();
+      while( ii != initList.end() ) {
+         Class* cls = *ii;
+         subItems.append( Item(cls->handler(), cls) );
+         ++ii;
+      }
+   }
+   // Push a nil as a separator
+   subItems.append( Item() );
+
    // complete.
 }
 
@@ -591,7 +605,19 @@ void ClassModule::unflatten( VMContext* ctx, ItemArray& subItems, void* instance
       current = &subItems[pos];
    }
    
-   TRACE( "ClassModule::unflatten -- restored requirements, at position %d", pos );
+   // recover init classes
+   Module::Private::InitList& inits = mp->m_initList;
+   current = &subItems[++pos];
+   while( ! current->isNil() && pos < subItems.length()-1)
+   {
+      Class* cls = static_cast<Class*>(current->asInst());
+      TRACE1( "ClassModule::unflatten -- restored class in need of init %s", cls->name().c_ize() );
+      inits.push_back( cls );
+      ++pos;
+      current = &subItems[pos];
+   }
+
+   TRACE( "ClassModule::unflatten -- restored init classes, at position %d", pos );
 }
 
    

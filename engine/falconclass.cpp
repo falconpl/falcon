@@ -316,7 +316,7 @@ bool FalconClass::addMethod( Function* mth )
 
 bool FalconClass::addMethod( const String& name, Function* mth )
 {
-   TRACE1( "Addong method \"%s\" to class %s.", name.c_ize(), m_name.c_ize() );
+   TRACE1( "Adding method \"%s\" to class %s.", name.c_ize(), m_name.c_ize() );
    
    if( m_bConstructed )
    {

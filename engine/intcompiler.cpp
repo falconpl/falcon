@@ -36,6 +36,7 @@
 #include <falcon/hyperclass.h>
 #include <falcon/modloader.h>
 #include <falcon/requirement.h>
+#include <falcon/stdsteps.h>
 
 #include <falcon/errors/genericerror.h>
 #include <falcon/errors/syntaxerror.h>
@@ -77,6 +78,7 @@ void IntCompiler::Context::onCloseFunc( Function* function )
 
 void IntCompiler::Context::onCloseClass( Class* cls, bool isObj )
 {
+   static StdSteps* steps = Engine::instance()->stdSteps();
    ModCompiler::Context::onCloseClass(cls, isObj );
 
    Mantra* current;
@@ -86,12 +88,19 @@ void IntCompiler::Context::onCloseClass( Class* cls, bool isObj )
    {
       try
       {
-
          if( ! fcls->construct() )
          {
             current = fcls->hyperConstruct();
          }
          static_cast<IntCompiler*>(m_owner)->m_currentMantra = current;
+
+         // initialize the object now.
+         if ( isObj ) {
+            VMContext* vmctx = static_cast<IntCompiler*>(m_owner)->m_vmctx;
+            vmctx->pushCode( &steps->m_fillInstance );
+            vmctx->callItem( Item(current->handler(), current) );
+         }
+
       }
       catch( Error* e )
       {

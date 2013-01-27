@@ -118,8 +118,14 @@ static SynFunc* inner_apply_function( const Rule&, Parser& p, bool bHasExpr, boo
    {
       p.simplify(tcount);
 
+      // don't add the mantra if we're in a class.
+      if( ctx->currentClass() != 0 )
+      {
+         ctx->openFunc(func);
+         p.pushState( "Main" );
+      }
       // try to create the function
-      if( ctx->onOpenFunc( func ) != 0 || ! p.interactive() ) {
+      else if( ctx->onOpenFunc( func ) != 0 || ! p.interactive() ) {
          // non-interactive compiler must go on even on error.
          ctx->openFunc(func);
          p.pushState( "Main" );

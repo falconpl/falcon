@@ -254,6 +254,9 @@ public:
    uint32 m_symCount;
    std::vector<int32> m_tempExport;
    
+   typedef std::deque<Class*> InitList;
+   InitList m_initList;
+
    Private()
    {}
 

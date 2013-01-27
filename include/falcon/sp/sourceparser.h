@@ -133,6 +133,7 @@ public:
    Parsing::Terminal T_function;
    Parsing::Terminal T_return;
    Parsing::Terminal T_class;
+   Parsing::Terminal T_object;
    Parsing::Terminal T_init;
 
    Parsing::Terminal T_true;
@@ -433,6 +434,10 @@ public:
    Parsing::Rule r_class;
    Parsing::Rule r_class_p_from;
    Parsing::Rule r_class_p;
+
+   Parsing::NonTerminal S_Object;
+   Parsing::Rule r_object_from;
+   Parsing::Rule r_object;
 
    Parsing::Rule r_anonclass_from;
    Parsing::Rule r_anonclass;

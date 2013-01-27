@@ -1072,15 +1072,12 @@ Parsing::TokenInstance* SourceLexer::checkWord()
       break;
 
       case 6:
-         /*
-         if ( m_text == "object" )
-            return OBJECT;
-            */
          if ( m_text == "switch" ) return parser->T_switch.makeInstance(m_sline, m_schr);
          if ( m_text == "select" ) return parser->T_select.makeInstance(m_sline, m_schr);
          if ( m_text == "return" ) return parser->T_return.makeInstance(m_sline, m_schr);
          if ( m_text == "export" ) return parser->T_export.makeInstance(m_sline, m_schr);
          if ( m_text == "global" ) return parser->T_global.makeInstance(m_sline, m_schr);
+         if ( m_text == "object" ) return parser->T_object.makeInstance(m_sline, m_schr);
 
          if ( m_text == "import" ) 
          {

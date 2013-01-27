@@ -34,6 +34,10 @@ void apply_class_p( const Rule&, Parser& p );
 void apply_class_from( const Rule&, Parser& p );
 void apply_class_p_from( const Rule&, Parser& p );
 
+void apply_object( const Rule&, Parser& p );
+void apply_object_from( const Rule&, Parser& p );
+
+
 void apply_pdecl_expr( const Rule&, Parser& p );
 void apply_init_expr( const Rule&, Parser& p );
 

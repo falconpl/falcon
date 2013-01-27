@@ -110,13 +110,6 @@ void SynFunc::setConstructor()
 void SynFunc::invoke( VMContext* ctx, int32 nparams )
 {  
    // nothing to do?
-   if( syntree().empty() )
-   {
-      TRACE( "-- function %s is empty -- not calling it", locate().c_ize() );
-      ctx->returnFrame();
-      return;
-   }
-   
    register int paramCount = (int) this->paramCount();
    register int localCount = (int) this->variables().localCount();
    

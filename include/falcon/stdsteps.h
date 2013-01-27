@@ -345,6 +345,26 @@ public:
       virtual void describeTo( String&, int =0 ) const;
    };
    PStepRaiseTop m_raiseTop;
+
+   /** Pops the instance on top of the stack and fills an instance variable.
+    *
+    * The entity on top of the stack is considered to be an instance of a
+    * non-instanceable class, i.e. a class whose name is starting with "%".
+    *
+    * If such a instance is found, the global variable in the module where
+    * the class resides having a proper name is filled, otherwise a symbol
+    * not found (code) error is raised.
+    *
+    */
+   class PStepFillInstance: public PStep
+   {
+   public:
+      PStepFillInstance() {apply = apply_;}
+      virtual ~PStepFillInstance() {}
+      static void apply_( const PStep*, VMContext* ctx );
+      virtual void describeTo( String&, int =0 ) const;
+   };
+   PStepFillInstance m_fillInstance;
 };
 
 }

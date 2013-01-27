@@ -18,6 +18,7 @@
 
 #include <falcon/stdsteps.h>
 #include <falcon/vmcontext.h>
+#include <falcon/module.h>
 namespace Falcon
 {
 
@@ -331,6 +332,61 @@ void StdSteps::PStepRaiseTop::describeTo( String& s, int ) const
 {
    s = "PStepRaiseTop";
 }
+
+void StdSteps::PStepFillInstance::apply_( const PStep*, VMContext* ctx )
+{
+   ctx->popCode();
+   Item& inst = ctx->topData();
+   Class* cls = 0;
+   void* data = 0;
+
+   if( inst.asClassInst(cls, data) )
+   {
+      // is this a valid class instance?
+      if ( cls->name().size() > 0 && cls->name().getCharAt(0) == '%' )
+      {
+         Module* owner = cls->module();
+         if( owner )
+         {
+            String instName = cls->name().subString(1);
+            Item* gval = owner->getGlobalValue(instName);
+            if( gval != 0 )
+            {
+               // Success!
+               gval->assignFromLocal(inst);
+               ctx->popData();
+               return;
+            }
+
+            // failed to find the variable
+            throw ctx->runtimeError( e_no_cls_inst, instName + " inst of " + cls->name() );
+         }
+      }
+      else {
+            throw new CodeError(
+                     ErrorParam( e_no_cls_inst, __LINE__, SRC )
+                     .origin( ErrorParam::e_orig_vm )
+                     .symbol(cls->name())
+                     .extra("not instanceable")
+                     );
+      }
+   }
+   else {
+      throw new CodeError(
+               ErrorParam( e_no_cls_inst, __LINE__, SRC )
+                           .origin( ErrorParam::e_orig_vm )
+                           .extra("Not a class")
+                           );
+   }
+
+
+}
+
+void StdSteps::PStepFillInstance::describeTo( String& s, int ) const
+{
+   s = "PStepFillInstance";
+}
+
 
 }
 
