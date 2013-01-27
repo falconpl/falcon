@@ -158,12 +158,12 @@ void ClassSynFunc::unflatten( VMContext*, ItemArray& subItems, void* instance ) 
       subItems[i].asClassInst(cls,data);
 
 #ifndef NDEBUG
-      static Class* stmtClass = Engine::instance()->statementClass();
+      static Class* tsc = Engine::instance()->treeStepClass();
       fassert2( cls != 0, "Serialized instances are not classes" );
-      fassert2( cls->isDerivedFrom( stmtClass ), "Serialized instances are not statements" );
+      fassert2( cls->isDerivedFrom( tsc ), "Serialized instances are not treesteps" );
 #endif
 
-      synfunc->syntree().append( static_cast<Statement*>(data) );
+      synfunc->syntree().append( static_cast<TreeStep*>(data) );
    }
 }
 
