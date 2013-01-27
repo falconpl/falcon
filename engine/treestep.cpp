@@ -82,6 +82,11 @@ bool TreeStep::insert( int32, TreeStep* )
    return false;
 }
 
+bool TreeStep::append( TreeStep* )
+{
+   return false;
+}
+
 bool TreeStep::remove( int32 )
 {
    return false;

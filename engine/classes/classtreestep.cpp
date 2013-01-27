@@ -522,7 +522,7 @@ void ClassTreeStep::InsertMethod::invoke( VMContext* ctx, int32 pcount )
       return;
    }
 
-   ctx->returnFrame( pcount );
+   ctx->returnFrame();
 }
 
 //===============================================================
@@ -539,7 +539,7 @@ ClassTreeStep::RemoveMethod::~RemoveMethod()
 {}
 
 
-void ClassTreeStep::RemoveMethod::invoke( VMContext* ctx, int32 pcount )
+void ClassTreeStep::RemoveMethod::invoke( VMContext* ctx, int32 )
 {
    Item& self = ctx->self();
    fassert( self.isUser() );
@@ -561,7 +561,7 @@ void ClassTreeStep::RemoveMethod::invoke( VMContext* ctx, int32 pcount )
       return;
    }
 
-   ctx->returnFrame( pcount );
+   ctx->returnFrame();
 }
 
 //===============================================================
@@ -578,7 +578,7 @@ ClassTreeStep::AppendMethod::~AppendMethod()
 {}
 
 
-void ClassTreeStep::AppendMethod::invoke( VMContext* ctx, int32 pcount )
+void ClassTreeStep::AppendMethod::invoke( VMContext* ctx, int32 )
 {
    Item& self = ctx->self();
    fassert( self.isUser() );
@@ -605,14 +605,15 @@ void ClassTreeStep::AppendMethod::invoke( VMContext* ctx, int32 pcount )
    }
 
    TreeStep* self_step = static_cast<TreeStep*>(self.asInst());
-   if( ! self_step->insert(ts->arity(), ts) ) {
+   if( ! self_step->append(ts) )
+   {
       ctx->raiseError( new CodeError( ErrorParam(e_invalid_op, __LINE__, SRC)
            .origin( ErrorParam::e_orig_runtime)
            .extra( "Element cannot be appended" ) ) );
            return;
    }
 
-   ctx->returnFrame( pcount );
+   ctx->returnFrame();
 }
 
 }

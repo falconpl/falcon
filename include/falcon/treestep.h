@@ -277,6 +277,22 @@ public:
     */
    virtual bool insert( int32 pos, TreeStep* element );
    
+   /** Inserts a sub-element at the end of this eleent.
+       \param element An unparented expression.
+       \return true if \b element can be parented inserted, false otherwise.
+
+    If this expression allows varying arity, and the received \b element
+    can be set, the method returns true, otherwise it returns false.
+
+    The default behavior is that of returning false.
+
+    The position can be negative; in that case, it's calculated from end
+    (-1 being the last element).
+
+    If the position is out of range, the expression is inserted at end (appended).
+    */
+   virtual bool append( TreeStep* element );
+
    /** Removes a sub-element in this element.
     \param pos The position of the expression to be removed.
     \return true if \b expr can be parented removed, false otherwise.

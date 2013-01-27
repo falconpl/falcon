@@ -247,7 +247,10 @@ bool SynTree::insert( int pos, TreeStep* step )
       return false;
    }
 
-   if( ! _p->m_steps.insert( pos, step, this ) ) return false;
+   if( ! _p->m_steps.insert( pos, step, this ) )
+   {
+      return false;
+   }
    if ( _p->m_steps.arity() <= 2 ){
       setApply();   
    }
@@ -256,7 +259,10 @@ bool SynTree::insert( int pos, TreeStep* step )
 
 bool SynTree::remove( int pos )
 {
-   if( ! _p->m_steps.remove( pos ) ) return false;
+   if( ! _p->m_steps.remove( pos ) )
+   {
+      return false;
+   }
    
    if ( _p->m_steps.arity() <= 2 ){
       setApply();
@@ -287,14 +293,17 @@ void SynTree::clear()
    setApply();
 }
 
-SynTree& SynTree::append( TreeStep* step )
+bool SynTree::append( TreeStep* step )
 {
-   if( ! step->setParent(this) ) return *this;
+   if( step == 0 || ! step->setParent(this) )
+   {
+      return false;
+   }
    _p->m_steps.m_exprs.push_back( step );
    if ( _p->m_steps.arity() <= 2 ){
       setApply();   
    }
-   return *this;
+   return true;
 }
 
 size_t SynTree::size() const

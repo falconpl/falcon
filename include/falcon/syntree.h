@@ -94,7 +94,7 @@ public:
    /** Appends a statement.
     The method will silently fail if the step has already a parent.
     */
-   SynTree& append( TreeStep* step );
+   virtual bool append( TreeStep* step );
 
    static void apply_( const PStep* ps, VMContext* ctx );
    static void apply_single_( const PStep* ps, VMContext* ctx );

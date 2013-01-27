@@ -105,8 +105,7 @@ public:
          m_exprs.push_back(ts);
       }
       else {
-         delete m_exprs[n];
-         m_exprs[n] = ts;
+         m_exprs.insert( m_exprs.begin() + n, ts);
       }
 
       return true;
