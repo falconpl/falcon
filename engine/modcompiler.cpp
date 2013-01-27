@@ -202,9 +202,17 @@ void ModCompiler::Context::onDirective(const String&, const String& )
 }
 
 
-void ModCompiler::Context::onGlobal( const String& )
+void ModCompiler::Context::onGlobal( const String& name )
 {
-   // TODO
+   // global defines the global variable if not already there.
+   Variable* var = m_owner->m_module->getGlobal( name );
+
+   if( var == 0 )
+   {
+      var = m_owner->m_module->addGlobal( name, Item(), false );
+      var->declaredAt( m_owner->m_sp.currentLine() );
+   }
+
 }
 
 

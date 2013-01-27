@@ -1285,6 +1285,23 @@ public:
    Item* resolveSymbol( const Symbol* dyns, bool forAssign );
    Item* resolveVariable( const String& name, bool isGlobal, bool forAssign );
    
+   /** Force the symbol to be defined as required.
+    * \param sym The symbol to be defined.
+    * \param data The data associated with this symbol.
+    *
+    * This symbol gets defined in the current context/local frame as
+    * the given data pointer. The data must stay valid as long as the
+    * current frame is alive (so it should be in the local stack or in
+    * the global variable space of the module of the current frame function).
+    *
+    */
+   void defineSymbol( Symbol* sym, Item* data );
+
+   /** Force the symbol to be defined as nil.
+    * \param sym The symbol to be defined.
+    */
+   void defineSymbol( Symbol* sym );
+
    /** Copies pcount parameters from the frame parameters area to the top of the stack. */
    void forwardParams( int pcount );
    
@@ -1382,6 +1399,18 @@ public:
 
    bool markedForInspection() const { return m_bInspectMark; }
    void resetInspectEvent() { m_bInspectMark = false; }
+
+   /** Generates a runtime (code) error at current location in the code.
+    * \param id Error id that must be generated.
+    * \param extra An extra description for the error.
+    * \param line The error line, if different from the current code frame PStep line.
+    * \return A configured instance of CodeError.
+    *
+    * Uses the current call and code frame to pinpoint the location of the
+    * error; the line can be overridden.
+    */
+   Error* runtimeError( int id, const String& extra = "", int line = 0 );
+
 protected:
 
    /** Class holding the dynamic symbol information on a stack. */

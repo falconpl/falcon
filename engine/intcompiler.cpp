@@ -200,15 +200,16 @@ void IntCompiler::Context::onDirective(const String&, const String&)
 }
 
 
-void IntCompiler::Context::onGlobal( const String& )
+void IntCompiler::Context::onGlobal( const String& name )
 {
-   // TODO
    SourceParser& sp = m_owner->sp();
    if( ! static_cast<IntCompiler*>(m_owner)->m_bAllowDirective )
    {
       sp.addError( e_directive_not_allowed, sp.currentSource(), sp.currentLine()-1, 0, 0 );
       return;
    }
+
+   ModCompiler::Context::onGlobal( name );
 }
 
 Variable* IntCompiler::Context::onGlobalAccessed( const String& name )

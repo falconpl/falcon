@@ -1,246 +1,233 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: stmtreturn.cpp
+   FILE: stmtglobal.cpp
 
-   Statatement -- return
+   Statatement -- global
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
-   Begin: Sun, 16 Oct 2011 21:51:42 +0200
+   Begin: Sun, 27 Jan 2013 18:13:51 +0100
 
    -------------------------------------------------------------------
-   (C) Copyright 2011: the FALCON developers (see list in AUTHORS file)
+   (C) Copyright 2013: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
 */
+
+#undef SRC
+#define SRC "engine/psteps/stmtglobal.cpp"
+
+#include <falcon/psteps/stmtglobal.h>
 
 #include <falcon/trace.h>
 #include <falcon/expression.h>
 #include <falcon/vmcontext.h>
 #include <falcon/stdsteps.h>
+#include <falcon/datareader.h>
+#include <falcon/datawriter.h>
 
-#include <falcon/psteps/stmtreturn.h>
+#include <falcon/symbol.h>
+#include <falcon/function.h>
+#include <falcon/module.h>
+
+#include <falcon/errors/codeerror.h>
 
 #include <falcon/engine.h>
 #include <falcon/synclasses.h>
 
+#include <vector>
+
 namespace Falcon
 {
 
-StmtReturn::StmtReturn( int32 line, int32 chr ):
-   Statement( line, chr ),
-   m_expr( 0 ),
-   m_bHasDoubt( false ),
-   m_bHasEval( false )
+class StmtGlobal::Private
 {
-   FALCON_DECLARE_SYN_CLASS( stmt_return );   
+public:
+   typedef std::vector<Symbol*> SymbolVector;
+   SymbolVector m_symbols;
+
+   Private() {}
+   ~Private() {
+      SymbolVector::iterator viter = m_symbols.begin();
+      while( viter != m_symbols.end() ) {
+         (*viter)->decref();
+         ++viter;
+      }
+   }
+
+};
+
+StmtGlobal::StmtGlobal( int32 line, int32 chr ):
+         Statement(line, chr)
+{
+   FALCON_DECLARE_SYN_CLASS(stmt_global)
+   _p = new Private;
    apply = apply_;
 }
 
-StmtReturn::StmtReturn( Expression* expr, int32 line, int32 chr ):
-   Statement( line, chr ),
-   m_expr( expr ),
-   m_bHasDoubt( false ),
-   m_bHasEval(false)
+StmtGlobal::StmtGlobal( const StmtGlobal& other ):
+         Statement(other)
 {
-   FALCON_DECLARE_SYN_CLASS( stmt_return );   
+   FALCON_DECLARE_SYN_CLASS(stmt_global)
+
+   _p = new Private;
+   apply = apply_;
    
-   if ( expr )
+   Private::SymbolVector::iterator viter = other._p->m_symbols.begin();
+   Private::SymbolVector::iterator vend = other._p->m_symbols.end();
+   while( viter != vend )
    {
-      expr->setParent(this);
-      apply = apply_expr_;
-   }
-   else
-   {
-      apply = apply_;
-   }
-}
-
-
-StmtReturn::StmtReturn( const StmtReturn& other ):
-   Statement( other ),
-   m_expr( 0 ),
-   m_bHasDoubt( other.m_bHasDoubt ),
-   m_bHasEval( other.m_bHasEval )
-{
-   FALCON_DECLARE_SYN_CLASS( stmt_return );   
-   
-   apply = other.apply;
-   
-   if ( other.m_expr )
-   {
-      m_expr = other.m_expr->clone();
-      m_expr->setParent(this);
-   }
-   else
-   {
-      m_expr = 0;
+      (*viter)->incref();
+      _p->m_symbols.push_back(*viter);
+      ++viter;
    }
 }
 
-
-StmtReturn::~StmtReturn()
+StmtGlobal::~StmtGlobal()
 {
-   delete m_expr;
+   delete _p;
 }
 
-Expression* StmtReturn::selector() const
+void StmtGlobal::describeTo( String& tgt, int depth ) const
 {
-   return m_expr;
-}
-
-
-bool StmtReturn::selector( Expression* e )
-{
-   if( e!= 0  )
+   if( _p->m_symbols.empty() )
    {
-      if( e->setParent(this) )
-      {
-         delete m_expr;
-         m_expr = e;
-         apply = m_bHasDoubt ? apply_expr_doubt_ : apply_expr_;
-         return true;
+      tgt = "<blank StmtGlobal>";
+      return;
+   }
+
+   tgt = String(" ").replicate(depth*PStep::depthIndent) + "global ";
+
+   Private::SymbolVector::iterator viter = _p->m_symbols.begin();
+   Private::SymbolVector::iterator vend = _p->m_symbols.end();
+   bool bDone = false;
+   while( viter != vend )
+   {
+      Symbol* sym = *viter;
+      if( ! bDone ) {
+         bDone = true;
       }
+      else {
+         tgt +=", ";
+      }
+      tgt += sym->name();
+      ++viter;
+   }
+}
+
+bool StmtGlobal::addSymbol( const String& name )
+{
+   if( alreadyAdded(name) ) {
       return false;
    }
-      
-   delete m_expr;
-   m_expr = 0;
-   apply = m_bHasDoubt ? apply_doubt_ : apply_;
+
+   // resolve as local
+   Symbol* sym = Engine::getSymbol(name, false);
+   _p->m_symbols.push_back(sym);
    return true;
 }
 
-void StmtReturn::hasDoubt( bool b )
+bool StmtGlobal::addSymbol( Symbol* var )
 {
-   m_bHasDoubt = b; 
-   if( b )
-   {
-      apply = m_expr == 0 ? apply_expr_doubt_ : apply_doubt_;
+   if( alreadyAdded(var->name()) ) {
+      return false;
    }
-   else
-   {
-      apply = m_expr == 0 ? apply_expr_ : apply_;
-   }
+   
+   _p->m_symbols.push_back(var);
+   return true;
 }
- 
 
 
-void StmtReturn::hasEval( bool b )
+bool StmtGlobal::alreadyAdded( const String& name ) const
 {
-   m_bHasEval = b;   
-}
- 
+   Private::SymbolVector::iterator viter = _p->m_symbols.begin();
+   Private::SymbolVector::iterator vend = _p->m_symbols.end();
+   while( viter != vend )
+   {
+     Symbol* sym = *viter;
+     if( sym->name() == name ) {
+        return true;
+     }
 
-void StmtReturn::describeTo( String& tgt, int depth ) const
+     ++viter;
+   }
+
+   return false;
+}
+
+void StmtGlobal::store( DataWriter* stream ) const
 {
-   tgt = String(" ").replicate(depth * depthIndent ) + "return";
-   
-   if( m_bHasDoubt )
+   uint32 size = _p->m_symbols.size();
+   stream->write(size);
+
+   Private::SymbolVector::iterator viter = _p->m_symbols.begin();
+   Private::SymbolVector::iterator vend = _p->m_symbols.end();
+   while( viter != vend )
    {
-      tgt += " ?";
+     Symbol* sym = *viter;
+     stream->write( sym->name() );
+
+     ++viter;
    }
-   
-   if( m_expr != 0 )
-   {
-      tgt += " ";
-      tgt += m_expr->describe( depth + 1 );
-   }   
 }
 
-
-void StmtReturn::oneLinerTo( String& tgt ) const
+void StmtGlobal::restore( DataReader* stream )
 {
-   tgt = "return";
-   
-   if( m_bHasDoubt )
+   String name;
+
+   uint32 size;
+   stream->read(size);
+   for(uint32 i = 0; i < size; ++i )
    {
-      tgt += " ?";
+      // reuse the same memory for performance
+      name.size(0);
+      stream->read(name);
+      // resolve as local
+      Symbol* sym = Engine::getSymbol( name, false );
+      _p->m_symbols.push_back( sym );
    }
-   
-   if( m_expr != 0 )
-   {
-      tgt += " ";
-      tgt += m_expr->oneLiner();
-   }   
 }
+   
 
-
-void StmtReturn::apply_( const PStep*, VMContext* ctx )
+void StmtGlobal::apply_( const PStep* ps, VMContext* ctx )
 {
-   MESSAGE1( "Apply 'return'" );   
-   ctx->returnFrame();
-}
+   const StmtGlobal* self = static_cast<const StmtGlobal*>(ps);
+   TRACE( "StmtGlobal::apply -- %s", self->describe(0).c_ize() );
+   Private::SymbolVector& symbols = self->_p->m_symbols;
+   fassert( ! symbols.empty() );
 
-
-void StmtReturn::apply_expr_( const PStep* ps, VMContext* ctx )
-{
-   static StdSteps* steps = Engine::instance()->stdSteps();
+   // we're out of businss...
+   ctx->popCode();
    
-   MESSAGE1( "Apply 'return expr'" );
-   const StmtReturn* self = static_cast<const StmtReturn*>( ps );
-   
-   // change our step in a standard return with top data
-   if (self->m_bHasEval)
-      ctx->resetCode( &steps->m_returnFrameWithTopEval );
-   else
-      ctx->resetCode( &steps->m_returnFrameWithTop );
-   
-   CodeFrame& frame = ctx->currentCode();
-   ctx->stepIn( self->m_expr );
-   if( &frame != &ctx->currentCode() )
+   Private::SymbolVector::iterator viter = symbols.begin();
+   Private::SymbolVector::iterator vend = symbols.end();
+   while( viter != vend )
    {
-      // we went deep, let's the standard return frame to deal with the topic.
-      return;
+      Symbol* sym = *viter;
+      // Ignore the fact that the symbol is (probably) local and resolve it global.
+      Item* data = ctx->resolveVariable( sym->name(), true, false );
+
+      if( data == 0 )
+      {
+         Function* current = ctx->currentFrame().m_function;
+         String none;
+         const String* name = current->module() != 0 ?
+                     &current->module()->name() : &none;
+
+         // the symbol should be defined as global in the current module.
+         ctx->raiseError(
+                  new CodeError( ErrorParam(e_undef_sym, self->line(), *name )
+                           .symbol( current->name() )
+                           .extra( sym->name() ) ) );
+         return;
+      }
+
+      ctx->defineSymbol(sym, data);
+      ++viter;
    }
-      
-   // we can return now. No need for popping, we're popping a lot here.
-   if( self->m_bHasEval )
-   {
-      ctx->returnFrameEval(ctx->topData());
-   }
-   else {
-      ctx->returnFrame( ctx->topData() );
-   }
-}
 
 
-void StmtReturn::apply_doubt_( const PStep*, VMContext* ctx )
-{
-   MESSAGE1( "Apply 'return ?'");   
-   ctx->returnFrameND();
-}
-
-
-void StmtReturn::apply_expr_doubt_( const PStep* ps, VMContext* ctx )
-{
-   const StdSteps* steps = Engine::instance()->stdSteps();
-   
-   MESSAGE1( "Apply 'return expr'" );
-   
-   const StmtReturn* self = static_cast<const StmtReturn*>( ps );
-   
-   // change our step in a standard return with top data
-   if (self->m_bHasEval)
-      ctx->resetCode( &steps->m_returnFrameWithTopEval );
-   else
-      ctx->resetCode( &steps->m_returnFrameWithTop );
-   
-   CodeFrame& frame = ctx->currentCode();
-   ctx->stepIn( self->m_expr );
-   if( &frame != &ctx->currentCode() )
-   {
-      // we went deep, let's the standard return frame to deal with the topic.
-      return;
-   }
-   
-   if( self->m_bHasEval )
-   {
-      ctx->returnFrameNDEval( ctx->topData() );
-   }
-   else {
-      ctx->returnFrameND( ctx->topData() );
-   }
 }
 
 }
 
-/* end of stmtreturn.cpp */
+/* end of stmtglobal.cpp */

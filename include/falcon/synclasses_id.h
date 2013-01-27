@@ -65,6 +65,9 @@
 */
 #define FALCON_SYNCLASS_ID_TREE     11
 
+/** ID for the symbol class
+*/
+#define FALCON_SYNCLASS_ID_SYMBOL   12
 
 #endif	/* SYNCLASSES_ID_H */
 

@@ -26,6 +26,10 @@ class Engine;
 class VMContext;
 class GarbageToken;
 class TreeStep;
+class DataReader;
+class DataWriter;
+class VMContext;
+
 
 /** Class holding all the Class reflector for syntactic tree elements.
  

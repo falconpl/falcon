@@ -29,14 +29,17 @@
 #include <falcon/datareader.h>
 #include <falcon/datawriter.h>
 
-#include "falcon/itemarray.h"
+#include <falcon/itemarray.h>
+#include <falcon/synclasses_id.h>
 
 
 namespace Falcon {
 
 ClassSymbol::ClassSymbol():
    Class("Symbol")
-{}
+{
+   userFlags(FALCON_SYNCLASS_ID_SYMBOL);
+}
 
 ClassSymbol::~ClassSymbol()
 {}

@@ -18,6 +18,7 @@
 #include <falcon/string.h>
 #include <falcon/classes/classstatement.h>
 #include <falcon/classes/classtreestep.h>
+#include <falcon/statement.h>
 
 namespace Falcon {
 
@@ -26,7 +27,6 @@ ClassStatement::ClassStatement( ClassTreeStep* parent ):
 {}
    
 ClassStatement::~ClassStatement(){}
-
 
 }
 

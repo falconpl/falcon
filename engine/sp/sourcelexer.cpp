@@ -1073,10 +1073,6 @@ Parsing::TokenInstance* SourceLexer::checkWord()
 
       case 6:
          /*
-         if ( m_text == "global" )
-            return GLOBAL;
-         if ( m_text == "launch" )
-            return LAUNCH;
          if ( m_text == "object" )
             return OBJECT;
             */
@@ -1084,6 +1080,8 @@ Parsing::TokenInstance* SourceLexer::checkWord()
          if ( m_text == "select" ) return parser->T_select.makeInstance(m_sline, m_schr);
          if ( m_text == "return" ) return parser->T_return.makeInstance(m_sline, m_schr);
          if ( m_text == "export" ) return parser->T_export.makeInstance(m_sline, m_schr);
+         if ( m_text == "global" ) return parser->T_global.makeInstance(m_sline, m_schr);
+
          if ( m_text == "import" ) 
          {
             m_hadImport = true;

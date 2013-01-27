@@ -1277,6 +1277,7 @@ void VMContext::returnFrameNDEval( const Item& value )
    returnFrame_base<ReturnerEval>(value);
 }
 
+
 void VMContext::forwardParams( int pcount )
 {
    if( pcount > 0 )
@@ -1285,6 +1286,22 @@ void VMContext::forwardParams( int pcount )
       Item* base = params();
       memcpy( &topData()-pcount, base, pcount*sizeof(Item) );
    }
+}
+
+
+void VMContext::defineSymbol( Symbol* sym, Item* data )
+{
+   DynsData* newData = m_dynsStack.addSlot();
+   newData->m_sym = sym;
+   newData->m_value = data;
+}
+
+
+void VMContext::defineSymbol( Symbol* sym)
+{
+   DynsData* newData = m_dynsStack.addSlot();
+   newData->m_sym = sym;
+   newData->m_value = &newData->m_internal ;
 }
 
 
@@ -1511,6 +1528,22 @@ void VMContext::terminated()
    Engine::collector()->unregisterContext(this);
 }
 
+
+Error* VMContext::runtimeError( int id, const String& extra, int line )
+{
+   String noname;
+   Function* curFunc = currentFrame().m_function;
+   const String* modName = curFunc->module() == 0 ? &noname : &curFunc->module()->name();
+
+   if( line == 0 ) {
+      line = currentCode().m_step->sr().line();
+   }
+
+   return new CodeError( ErrorParam(id, line, *modName )
+            .origin(ErrorParam::e_orig_runtime)
+            .symbol( curFunc->name() )
+            .extra( extra ) );
+}
 
 void VMContext::gcStartMark( uint32 mark )
 {

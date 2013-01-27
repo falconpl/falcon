@@ -73,6 +73,7 @@
 #include <falcon/psteps/stmtcontinue.h>
 #include <falcon/psteps/stmtfastprint.h>
 #include <falcon/psteps/stmtfor.h>
+#include <falcon/psteps/stmtglobal.h>
 #include <falcon/psteps/stmtif.h>
 #include <falcon/psteps/stmtraise.h>
 #include <falcon/psteps/stmtreturn.h>
@@ -964,6 +965,83 @@ void SynClasses::ClassParentship::restore( VMContext* ctx, DataReader* dr ) cons
       throw;
    }
 }
+
+//=========================================
+// Class Global
+//
+
+void* SynClasses::ClassGlobal::createInstance() const
+{
+   return new StmtGlobal;
+}
+bool SynClasses::ClassGlobal::op_init( VMContext* ctx, void* instance, int pCount ) const
+{
+   if( pCount == 0 )
+   {
+      throw new ParamError( ErrorParam( e_inv_params, __LINE__, SRC )
+                        .extra("S|Symbol,..."));
+   }
+
+   StmtGlobal* stmt = static_cast<StmtGlobal *>(instance);
+   Item* params = ctx->opcodeParams(pCount);
+   for( int i = 0; i < pCount; ++i )
+   {
+      Item* current = params+i;
+      bool ok = true;
+      bool done = false;
+      if( current->isString() ) {
+         ok = stmt->addSymbol( *current->asString() );
+         done = true;
+      }
+      else if( current->isUser() )
+      {
+         Class* cls = 0;
+         void* data = 0;
+         current->asClassInst(cls, data);
+         if( cls->userFlags() == FALCON_SYNCLASS_ID_SYMBOL )
+         {
+            Symbol* sym = static_cast<Symbol*>(data);
+            // do not use the symbol directly.
+            ok = stmt->addSymbol( sym->name() );
+            done = true;
+         }
+      }
+
+      if( ! done ) {
+         throw new ParamError( ErrorParam( e_inv_params, __LINE__, SRC )
+                  .extra("S|Symbol,..."));
+      }
+
+      if( ! ok ) {
+         throw ctx->runtimeError( e_global_again );
+      }
+   }
+
+   return false;
+}
+void SynClasses::ClassGlobal::store( VMContext* ctx, DataWriter* wr, void* instance ) const
+{
+   StmtGlobal* g = static_cast<StmtGlobal*>(instance);
+   g->store(wr);
+   m_parent->store( ctx, wr, instance );
+}
+void SynClasses::ClassGlobal::restore( VMContext* ctx, DataReader* dr ) const
+{
+   StmtGlobal* stmt = new StmtGlobal;
+
+   try {
+      stmt->restore( dr );
+      ctx->pushData( Item( this, stmt ) );
+      m_parent->restore( ctx, dr );
+   }
+   catch(...) {
+      ctx->popData();
+      delete stmt;
+      throw;
+   }
+}
+
+
 
 //=========================================
 // Class LIT

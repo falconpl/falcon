@@ -143,6 +143,7 @@ public:
    Parsing::Terminal T_export;
    Parsing::Terminal T_import;
    Parsing::Terminal T_namespace;
+   Parsing::Terminal T_global;
 
    Parsing::Terminal T_forfirst;
    Parsing::Terminal T_formiddle;
@@ -263,6 +264,9 @@ public:
    Parsing::NonTerminal S_Export;
    Parsing::Rule r_export_rule;
    
+   Parsing::NonTerminal S_Global;
+   Parsing::Rule r_global_rule;
+
    Parsing::NonTerminal S_Try;
    Parsing::Rule r_try_rule;
 

@@ -33,7 +33,7 @@ class ClassStatement: public DerivedFrom // TreeStep
 {
 public:
    ClassStatement( ClassTreeStep* parent );
-   virtual ~ClassStatement();        
+   virtual ~ClassStatement();
 };
 
 }

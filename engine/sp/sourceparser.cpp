@@ -41,6 +41,7 @@
 #include <falcon/sp/parser_list.h>
 #include <falcon/sp/parser_load.h>
 #include <falcon/sp/parser_namespace.h>
+#include <falcon/sp/parser_global.h>
 #include <falcon/sp/parser_proto.h>
 #include <falcon/sp/parser_rule.h>
 #include <falcon/sp/parser_switch.h>
@@ -49,12 +50,12 @@
 #include <falcon/sp/parser_while.h>
 
 #include <falcon/parser/rule.h>
+#include <falcon/parser/lexer.h>
 #include <falcon/parser/parser.h>
 
 #include <falcon/error.h>
 
 #include "private_types.h"
-#include "falcon/parser/lexer.h"
 
 namespace Falcon {
 
@@ -180,6 +181,7 @@ SourceParser::SourceParser():
    T_export( "export" ),
    T_import( "import" ),
    T_namespace( "namespace" ),
+   T_global("global"),
    
    T_forfirst( "forfirst" ),
    T_formiddle( "formiddle" ),
@@ -323,6 +325,7 @@ SourceParser::SourceParser():
 
    S_Export << "export" << export_errhand;
    S_Export << ( r_export_rule << "export_rule" << apply_export_rule << T_export << ListSymbol << T_EOL );
+   S_Global << ( r_global_rule << "global_rule" << apply_global << T_global << ListSymbol << T_EOL );
    
    S_Try << "try" << try_errhand;
    S_Try << ( r_try_rule << "try_rule" << apply_try << T_try << T_EOL );
@@ -686,6 +689,7 @@ SourceParser::SourceParser():
       << S_EmptyLine
       << S_Load
       << S_Export
+      << S_Global
       << S_Import
       << S_Namespace
       
@@ -730,6 +734,7 @@ SourceParser::SourceParser():
 
    s_InlineFunc << "InlineFunc"
       << S_EmptyLine
+      << S_Global
       << S_FastPrint
       << S_If
       << S_Elif

@@ -45,10 +45,10 @@ ClassTreeStep::~ClassTreeStep()
 {}
 
 
-void ClassTreeStep::describe( void* instance, String& target, int, int ) const
+void ClassTreeStep::describe( void* instance, String& target, int depth, int ) const
 {
    TreeStep* ts = static_cast<TreeStep*>(instance);
-   ts->describeTo( target );
+   ts->describeTo( target, depth );
 }
 
 

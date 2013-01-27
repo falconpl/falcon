@@ -102,6 +102,7 @@ add_library(falcon_engine SHARED
   sp/parser_fastprint.cpp
   sp/parser_for.cpp
   sp/parser_function.cpp
+  sp/parser_global.cpp
   sp/parser_if.cpp
   sp/parser_import.cpp
   sp/parser_index.cpp
@@ -168,6 +169,7 @@ add_library(falcon_engine SHARED
   psteps/stmtcontinue.cpp
   psteps/stmtfastprint.cpp
   psteps/stmtfor.cpp
+  psteps/stmtglobal.cpp
   psteps/stmtif.cpp
   psteps/stmtraise.cpp
   psteps/stmtreturn.cpp
