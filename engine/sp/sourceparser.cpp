@@ -42,7 +42,6 @@
 #include <falcon/sp/parser_load.h>
 #include <falcon/sp/parser_namespace.h>
 #include <falcon/sp/parser_proto.h>
-#include <falcon/sp/parser_reference.h>
 #include <falcon/sp/parser_rule.h>
 #include <falcon/sp/parser_switch.h>
 #include <falcon/sp/parser_ternaryif.h>
@@ -447,7 +446,6 @@ SourceParser::SourceParser():
    Expr<< (r_Expr_array_decl << "Expr_array_decl" << apply_expr_array_decl << T_OpenSquare );
    Expr<< (r_Expr_array_decl2 << "Expr_array_decl2" << apply_expr_array_decl2 << T_DotSquare );
    
-   Expr<< (r_Expr_ref << "Expr_ref" << apply_expr_ref << T_Dollar << T_Name );
    Expr<< (r_Expr_amper << "Expr_dyns" << apply_expr_amper << T_Amper << T_Name );
    
    Expr<< (r_Expr_dot << "Expr_dot" << apply_expr_dot << Expr << T_Dot << T_Name);
