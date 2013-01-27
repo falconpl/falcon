@@ -1023,25 +1023,14 @@ void* SynClasses::ClassTree::createInstance() const
 }
 void SynClasses::ClassTree::op_call(VMContext* ctx, int pcount, void* instance) const
 {
-   static StdSteps* steps = Engine::instance()->stdSteps();
    ExprTree* tree = static_cast<ExprTree*>(instance);
    TreeStep* child = tree->child();
 
    // TODO: really need to check for childhood?
    if( child != 0 ) {
       VarMap* st = tree->varmap();
-      // Do we have a symbol table?
-      if( st == 0 )
-      {
-         // Then we don't need parameters.
-         ctx->popData(pcount+1);
-         ctx->pushCode(&steps->m_localFrame);
-      }
-      else {
-         // otherwise we must push a local frame...
-         ctx->addLocalFrame( st, pcount );
-      }
-
+      // We must always push a local frame, also with st == 0
+      ctx->addLocalFrame( st, pcount );
       ctx->pushCode( child );
    }
    else {

@@ -158,8 +158,10 @@ void ExprSymbol::apply_( const PStep* ps, VMContext* ctx )
    ctx->popCode();
    
    Item* item = ctx->resolveSymbol(es->m_symbol, false);
+   /*
    TRACE1( "ExprSymbol::apply_ %s -> %s",
             es->m_symbol->name().c_ize(), item->describe(1,30).c_ize() );
+   */
    ctx->pushData(*item);
 }
 
@@ -173,10 +175,11 @@ void ExprSymbol::PStepLValue::apply_( const PStep* ps, VMContext* ctx )
 
    Item* item = ctx->resolveSymbol(es->m_owner->m_symbol, true);
 
+   /*
    TRACE1( "ExprSymbol:PStepLValue::apply_ %s (now %s) = %s",
                es->m_owner->m_symbol->name().c_ize(),
                item->describe(1,30).c_ize(), ctx->topData().describe(1,30).c_ize() );
-
+   */
    item->assignFromLocal( ctx->topData() );
 }
    

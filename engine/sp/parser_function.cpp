@@ -194,7 +194,7 @@ void on_close_lit( void* thing )
    ExprTree* et = static_cast<ExprTree*>(elit->child());
    SynTree* st = lit->m_forming;
    int size = st->size();
-   if ( size == 1 && st->at(0)->category() == SynTree::e_cat_expression )
+   if ( size == 1 )
    {
       Expression* evaluated = static_cast<Expression*>( st->detach(0) );
       if( et == 0 ) {

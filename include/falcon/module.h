@@ -311,6 +311,12 @@ public:
       return addImplicitImport( name, bDummy );
    }
    
+   /** Removes an extern.
+    * Mainly used by the interactive compiler to undo an unnecessary implicit import.
+    *
+    */
+   bool removeExtern( const String& name );
+
    /** Callback that is called when a symbol import request is satisfied.
     \param requester The module from which the request was issued.
     \param definer The module where the symbol has been found.

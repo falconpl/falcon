@@ -28,6 +28,7 @@
 #include <falcon/engine.h>
 #include <falcon/synclasses.h>
 #include <falcon/varmap.h>
+#include <falcon/synclasses_id.h>
 
 #include "psteps/exprvector_private.h"
 
@@ -126,7 +127,10 @@ bool SynTree::selector( Expression* expr )
 void SynTree::describeTo( String& tgt, int depth ) const
 {
    tgt = "";
-   if ( parent() == 0 || parent()->category() != TreeStep::e_cat_statement )
+   bool addFrame = parent() == 0 ||
+            (parent()->category() != TreeStep::e_cat_statement
+             && !( parent()->handler()->userFlags() == FALCON_SYNCLASS_ID_TREE  ) );
+   if ( addFrame )
    {
       tgt += String(" ").replicate(depth*PStep::depthIndent) + "{[]\n";
       depth = depth + 1;
@@ -138,7 +142,7 @@ void SynTree::describeTo( String& tgt, int depth ) const
       tgt += _p->m_steps.m_exprs[i]->describe( depth );
    }
 
-   if ( parent() == 0 || parent()->category() != TreeStep::e_cat_statement )
+   if ( addFrame )
    {
       tgt += "\n" + String(" ").replicate((depth-1)*PStep::depthIndent) + "}";
    }

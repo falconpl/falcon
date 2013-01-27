@@ -1024,11 +1024,12 @@ void VMContext::addLocalFrame( VarMap* st, int pcount )
    static StdSteps* stdSteps = Engine::instance()->stdSteps();
    static Symbol* base = Engine::instance()->baseSymbol();
    
-   TRACE("Add local frame PCOUNT: %d/%d, Symbol table locals: %d, closed: %d",
-      pcount, st->paramCount(), st->localCount(), st->closedCount() );
-   if( st == 0 ) {
-      pushCode( &stdSteps->m_localFrame );
-      return;
+   if( st != 0 ) {
+      TRACE("Add local frame PCOUNT: %d/%d, Symbol table locals: %d, closed: %d",
+               pcount, st->paramCount(), st->localCount(), st->closedCount() );
+   }
+   else {
+      TRACE("Add local frame PCOUNT: %d (no table)", pcount );
    }
 
    pushCode( &stdSteps->m_localFrame );
@@ -1041,6 +1042,12 @@ void VMContext::addLocalFrame( VarMap* st, int pcount )
    baseDyn->m_sym = base;
    baseDyn->m_value = m_dataStack.m_top;
    
+   // if we don't have a map, there's nothing else we should do.
+   if( st == 0 ) {
+      popData( pcount + 1 );
+      return;
+   }
+
    // Assign the parameters
    Item* top = &topData() - pcount+1;
    int32 p = 0;
@@ -1288,35 +1295,76 @@ Item* VMContext::resolveSymbol( const Symbol* dyns, bool forAssign )
    // search for the dynsymbol in the current context.
    const CallFrame* cf = &currentFrame();
    register DynsData* dd = m_dynsStack.m_top;
-   register DynsData* dbase = m_dynsStack.m_base + cf->m_dynsBase;
 
    // search resolved symbols.
-   while( dd >= dbase  ) {
-      // arrived at a local base?
-      if ( baseSym == dd->m_sym ) {
-         break;
+   if( forAssign )
+   {
+      // when is forassign, we must stop at topmost symbol base.
+      register DynsData* dbase = m_dynsStack.m_base + cf->m_dynsBase;
+      while( dd >= dbase )
+      {
+         // found?
+         if ( dyns == dd->m_sym ) {
+            return dd->m_value;
+         }
+         // arrived at a local base?
+         if ( baseSym == dd->m_sym )
+         {
+            // in the end, we must create a new assignable slot.
+            // notice that evaluation parametersa are above the base symbol.
+            DynsData* newSlot = m_dynsStack.addSlot();
+            newSlot->m_sym = dyns;
+            newSlot->m_internal.setNil();
+            newSlot->m_value = &newSlot->m_internal;
+            return newSlot->m_value;
+         }
+
+         --dd;
       }
-      // found?
-      if ( dyns == dd->m_sym ) {
-         return dd->m_value;
+   }
+   else
+   {
+      // when not for assignment, we go down the whole current context.
+      register DynsData* dbase = m_dynsStack.m_base;
+      while( dd >= dbase ) {
+         // found?
+         if ( dyns == dd->m_sym ) {
+            return dd->m_value;
+         }
+
+         --dd;
       }
-      --dd;
+
+      // and if not found, we search in locals, parameters or globals.
    }
    
    // No luck at all; try to resolve the variable.
    Item* var = resolveVariable( dyns->name(), dyns->isGlobal(), forAssign );
 
-   DynsData& newSlot = *m_dynsStack.addSlot();
+   DynsData* newSlot;
 
    if( var == 0 )
    {
+      if( ! forAssign ) {
+         throw new CodeError( ErrorParam(e_undef_sym,
+                  currentCode().m_step->sr().line(),
+                  cf->m_function->module() ? cf->m_function->module()->name() : "" )
+                  .symbol( cf->m_function->name() )
+                  .extra(dyns->name())
+                  );
+      }
+
       // not found? -- it's an unbound symbol.
-      var = &newSlot.m_internal;
+      newSlot = m_dynsStack.addSlot();
+      var = &newSlot->m_internal;
       var->setNil();
    }
+   else {
+      newSlot = m_dynsStack.addSlot();
+   }
    
-   newSlot.m_sym = dyns;
-   newSlot.m_value = var;
+   newSlot->m_sym = dyns;
+   newSlot->m_value = var;
    
    return var;
 }

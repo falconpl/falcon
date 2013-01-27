@@ -224,8 +224,12 @@ Variable* IntCompiler::Context::onGlobalAccessed( const String& name )
       if( value != 0 ) {
          mod->resolveExternValue(name, declarer, value);
       }
-      else {
+      else
+      {
          SourceParser& sp = m_owner->sp();
+         // consider it a global, and remove it.
+         mod->removeExtern( name );
+
          sp.addError(
                   new CodeError(
                            ErrorParam(e_undef_sym, sp.currentLine(), sp.currentSource() )
@@ -236,6 +240,7 @@ Variable* IntCompiler::Context::onGlobalAccessed( const String& name )
 
    return var;
 }
+
 
 
 void IntCompiler::Context::onRequirement( Requirement* req )

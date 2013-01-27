@@ -278,6 +278,35 @@ bool Module::promoteExtern( Variable* ext, const Item& value, int32 redeclaredAt
 }
 
 
+bool Module::removeExtern( const String& name )
+{
+   m_globals.removeGlobal(name);
+
+   Private::DepMap::iterator idep = _p->m_depsByName.find( name );
+   if( idep != _p->m_depsByName.end() )
+   {
+      Private::Dependency* dep = idep->second;
+
+      // remove from the list.
+      // start from the bottom, as we usually kill the last item added
+      Private::DepList::iterator il = _p->m_deplist.begin();
+      while( il != _p->m_deplist.end() ) {
+         if( *il == dep ) {
+            _p->m_deplist.erase(il);
+            break;
+         }
+         ++il;
+      }
+
+      _p->m_depsByName.erase(idep);
+      delete dep;
+      return true;
+   }
+
+   return false;
+}
+
+
 bool Module::resolveExternValue( const String& name, Module* source, Item* value )
 {
    // was a dependency waiting for this?

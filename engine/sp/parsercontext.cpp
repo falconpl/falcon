@@ -253,6 +253,11 @@ Variable* ParserContext::defineSymbol( const String& variable )
    TRACE("ParserContext::defineSymbol on (: %s :)", variable.c_ize() );
    Variable* nuks;
    
+   // in literal context, we never define variables.
+   if( !_p->m_litContexts.empty() ) {
+      return 0;
+   }
+
    if( m_varmap == 0 )
    {
       // we're in the global context.
