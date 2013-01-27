@@ -41,7 +41,7 @@ ClassSynFunc::~ClassSynFunc()
 
 Class* ClassSynFunc::getParent( const String& name ) const
 {
-   Class* cls = Engine::instance()->functionClass();
+   static Class* cls = Engine::instance()->functionClass();
    
    if( name == cls->name() ) return cls;
    return 0;
@@ -49,22 +49,43 @@ Class* ClassSynFunc::getParent( const String& name ) const
 
 bool ClassSynFunc::isDerivedFrom( const Class* parent ) const
 {
-   Class* cls = Engine::instance()->functionClass();
+   static Class* cls = Engine::instance()->functionClass();
    
    return parent == cls || parent == this;
 }
 
 void ClassSynFunc::enumerateParents( ClassEnumerator& cb ) const
 {
-   Class* cls = Engine::instance()->functionClass();
+   static Class* cls = Engine::instance()->functionClass();
    
    cb( cls, true );
 }
 
+void ClassSynFunc::enumerateProperties( void* instance, Class::PropertyEnumerator& cb ) const
+{
+   static Class* cls = Engine::instance()->functionClass();
+   cb("code",false);
+   cls->enumerateProperties(instance, cb);
+}
+
+void ClassSynFunc::enumeratePV( void* instance, Class::PVEnumerator& cb ) const
+{
+   static Class* cls = Engine::instance()->functionClass();
+   cls->enumeratePV(instance, cb);
+}
+
+bool ClassSynFunc::hasProperty( void* instance, const String& prop ) const
+{
+   static Class* cls = Engine::instance()->functionClass();
+
+   return
+            prop == "code"
+            ||  cls->hasProperty(instance, prop);
+}
 
 void* ClassSynFunc::getParentData( Class* parent, void* data ) const
 {
-   Class* cls = Engine::instance()->functionClass();
+   static Class* cls = Engine::instance()->functionClass();
    
    if( parent == cls || parent == this ) return data;
    return 0;
@@ -164,6 +185,21 @@ void ClassSynFunc::unflatten( VMContext*, ItemArray& subItems, void* instance ) 
 #endif
 
       synfunc->syntree().append( static_cast<TreeStep*>(data) );
+   }
+}
+
+
+void ClassSynFunc::op_getProperty( VMContext* ctx, void* instance, const String& prop) const
+{
+   static Class* cls = Engine::instance()->functionClass();
+   SynFunc* func = static_cast<SynFunc*>(instance);
+
+   if( prop == "code" )
+   {
+      ctx->stackResult(1, Item(func->syntree().handler(), &func->syntree()) );
+   }
+   else {
+      cls->op_getProperty( ctx, instance, prop );
    }
 }
 

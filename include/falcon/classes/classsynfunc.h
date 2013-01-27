@@ -44,6 +44,12 @@ public:
    virtual void restore( VMContext* ctx, DataReader* stream ) const;
    virtual void flatten( VMContext* ctx, ItemArray& subItems, void* instance ) const;
    virtual void unflatten( VMContext* ctx, ItemArray& subItems, void* instance ) const;
+
+   virtual void enumerateProperties( void* instance, Class::PropertyEnumerator& cb ) const;
+   virtual void enumeratePV( void* instance, Class::PVEnumerator& cb ) const;
+   virtual bool hasProperty( void* instance, const String& prop ) const;
+
+   void op_getProperty( VMContext* ctx, void* instance, const String& prop) const;
 };
 
 }
