@@ -21,6 +21,7 @@
 #include <falcon/itemid.h>
 #include <falcon/vmcontext.h>
 #include <falcon/optoken.h>
+#include <falcon/itemdict.h>
 
 #include <falcon/datawriter.h>
 #include <falcon/datareader.h>
@@ -76,9 +77,11 @@ void* ClassMantra::createInstance() const
 
 void ClassMantra::enumerateProperties( void*, Class::PropertyEnumerator& cb ) const
 {
-   cb("name", false);
+   cb("attributes", true);
+   cb("category", false );
    cb("location", true);
-   cb("module", true);
+   cb("module", false);
+   cb("name", true );
 }
 
 
@@ -90,19 +93,21 @@ void ClassMantra::enumeratePV( void* instance, Class::PVEnumerator& cb ) const
    Item i_loc = mantra->locate();
    Item i_cat = (int64) mantra->category();
 
-   cb("name", i_name );
-   cb("location", i_loc );
    cb("category", i_cat );
+   cb("location", i_loc );
+   cb("name", i_name );
 }
 
 
 bool ClassMantra::hasProperty( void*, const String& prop ) const
 {
    return
-         prop == "name"
+         prop == "attributes"
          || prop == "category"
          || prop == "location"
-         || prop == "module";
+         || prop == "module"
+         || prop == "name"
+         ;
 }
 
 
@@ -122,6 +127,7 @@ void ClassMantra::store( VMContext*, DataWriter* stream, void* instance ) const
    TRACE1( "ClassMantra::store -- starting store mantra %s", mantra->name().c_ize());
 
    stream->write( mantra->name() );
+
    // if store
    if( mantra->module() != 0 )
    {
@@ -193,9 +199,15 @@ void ClassMantra::op_getProperty( VMContext* ctx, void* instance, const String& 
 {
    Mantra* mantra = static_cast<Mantra*>(instance);
 
-   if( prop == "name" )
+   if( prop == "attributes" )
    {
-      ctx->stackResult(1, FALCON_GC_HANDLE( new String(mantra->name())) );
+      ItemDict* dict = new ItemDict;
+      uint32 size = mantra->attributes().size();
+      for( uint32 i = 0; i < size; ++i ) {
+         Attribute* attr = mantra->attributes().get(i);
+         dict->insert( FALCON_GC_HANDLE( new String(attr->name())), attr->value() );
+      }
+      ctx->stackResult(1, FALCON_GC_HANDLE(dict) );
    }
    else if( prop == "category" )
    {
@@ -214,6 +226,10 @@ void ClassMantra::op_getProperty( VMContext* ctx, void* instance, const String& 
       else {
          ctx->stackResult(1, Item() );
       }
+   }
+   else if( prop == "name" )
+   {
+      ctx->stackResult(1, FALCON_GC_HANDLE( new String(mantra->name())) );
    }
    else {
       Class::op_getProperty(ctx, instance, prop );

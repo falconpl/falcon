@@ -33,7 +33,7 @@
 #include <falcon/psteps/stmtif.h>
 #include <falcon/psteps/exprvalue.h>
 
-#include "falcon/synclasses_id.h"
+#include <falcon/synclasses_id.h>
 
 namespace Falcon {
 

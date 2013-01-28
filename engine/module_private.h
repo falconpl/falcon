@@ -32,6 +32,7 @@ class Module::Private
 {
 public:
    typedef std::deque<ModRequest*> ReqList;
+   typedef std::set<Attribute*> AttribSet;
    
    /** List of requirements.
     

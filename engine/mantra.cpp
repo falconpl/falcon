@@ -134,6 +134,18 @@ bool Mantra::isCompatibleWith( Mantra::t_category cat ) const
    return false;
 }
 
+bool Mantra::addAttribute( const String& name, TreeStep* generator )
+{
+   Attribute* added = m_attributes.add(name);
+   if( added != 0 )
+   {
+      added->generator(generator);
+      return true;
+   }
+
+   return false;
+}
+
 }
 
 /* end of mantra.cpp */

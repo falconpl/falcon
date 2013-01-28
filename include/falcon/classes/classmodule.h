@@ -36,6 +36,10 @@ public:
    virtual void* clone( void* source ) const;
    virtual void* createInstance() const;
    
+   virtual void enumerateProperties( void*, Class::PropertyEnumerator& cb ) const;
+   virtual void enumeratePV( void* instance, Class::PVEnumerator& cb ) const;
+   virtual bool hasProperty( void*, const String& prop ) const;
+
    virtual void store( VMContext* ctx, DataWriter* stream, void* instance ) const;
    virtual void restore( VMContext* ctx, DataReader* stream ) const;
    virtual void flatten( VMContext* ctx, ItemArray& subItems, void* instance ) const;
@@ -48,6 +52,7 @@ public:
    //=============================================================
 
    virtual bool op_init( VMContext* ctx, void* instance, int32 pcount ) const;
+   virtual void op_getProperty( VMContext* ctx, void* instance, const String& prop) const;
    
 private:
    void restoreModule( Module* mod, DataReader* stream ) const;

@@ -23,6 +23,7 @@
 #include <falcon/sp/parsercontext.h>
 
 #include <falcon/sp/parser_arraydecl.h>
+#include <falcon/sp/parser_attribute.h>
 #include <falcon/sp/parser_assign.h>
 #include <falcon/sp/parser_atom.h>
 #include <falcon/sp/parser_autoexpr.h>
@@ -196,6 +197,9 @@ SourceParser::SourceParser():
    T_select("select")
    
 {
+   S_Attribute << "Attribute" << errhand_attribute;
+   S_Attribute << (r_attribute << "Attribute" << apply_attribute << T_Colon << T_Name <<  T_Arrow << Expr << T_EOL);
+
    S_Autoexpr << "Autoexpr"
       << (r_line_autoexpr << "Autoexpr" << apply_line_expr << Expr << T_EOL)
       << (r_assign_list << "Autoexpr_list" << apply_autoexpr_list << S_MultiAssign << T_EOL )
@@ -724,9 +728,11 @@ SourceParser::SourceParser():
       << S_End
       << S_Return
       << S_Autoexpr
+      << S_Attribute
       ;
 
    s_ClassBody << "ClassBody"
+      << S_Attribute
       << S_Function
       << S_PropDecl
       << S_InitDecl
@@ -736,6 +742,7 @@ SourceParser::SourceParser():
    
 
    s_InlineFunc << "InlineFunc"
+      << S_Attribute
       << S_EmptyLine
       << S_Global
       << S_FastPrint

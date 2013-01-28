@@ -165,6 +165,9 @@ public:
    Parsing::Rule r_statement_fastprint;
    Parsing::Rule r_statement_if;
 
+   Parsing::NonTerminal S_Attribute;
+   Parsing::Rule r_attribute;
+
    Parsing::NonTerminal S_Autoexpr;
    Parsing::Rule r_line_autoexpr;
    Parsing::Rule r_assign_list;

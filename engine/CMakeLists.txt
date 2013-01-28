@@ -89,6 +89,7 @@ add_library(falcon_engine SHARED
   cm/coremodule.cpp
 
   sp/parser_arraydecl.cpp
+  sp/parser_attribute.cpp
   sp/parser_assign.cpp
   sp/parser_atom.cpp
   sp/parser_autoexpr.cpp
@@ -239,6 +240,9 @@ add_library(falcon_engine SHARED
   tc/transcoderutf8.cpp
 
   application.cpp
+  attribute_helper.cpp
+  attribute.cpp
+  attributemap.cpp
   autocstring.cpp
   autowstring.cpp
   bom.cpp

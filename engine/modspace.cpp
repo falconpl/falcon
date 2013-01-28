@@ -32,6 +32,7 @@
 #include <falcon/stdsteps.h>
 #include <falcon/synfunc.h>
 #include <falcon/psteps/stmtreturn.h>
+#include <falcon/falconclass.h>
 
 #include <falcon/errors/unserializableerror.h>
 #include <falcon/errors/ioerror.h>
@@ -647,10 +648,27 @@ void ModSpace::findDynamicMantra(
 // Psteps
 //================================================================================
 
+static void pushAttribs( VMContext* ctx, const AttributeMap& map, bool& bDone )
+{
+   static PStep* attribStep = &Engine::instance()->stdSteps()->m_fillAttribute;
+
+   uint32 count = map.size();
+   for( uint32 i = 0; i < count; ++i )
+   {
+      Attribute* attrib = map.get( i );
+      if( attrib->generator() != 0 ) {
+         bDone = true;
+         ctx->pushData( Item(Attribute::CLASS_NAME, attrib ) );
+         ctx->pushCode( attribStep );
+         ctx->pushCode( attrib->generator() );
+      }
+   }
+}
 
 void ModSpace::PStepLoader::apply_( const PStep* self, VMContext* ctx )
 {
    static PStep* initStep = &Engine::instance()->stdSteps()->m_fillInstance;
+
    Error* error = 0;
    const ModSpace::PStepLoader* pstep = static_cast<const ModSpace::PStepLoader* >(self);
 
@@ -717,7 +735,37 @@ void ModSpace::PStepLoader::apply_( const PStep* self, VMContext* ctx )
       }
    }
 
+   // fill attributes
    if(seqId == 11 )
+   {
+      seqId++;
+      bool bDone = false;
+
+      // check module attributes
+      pushAttribs( ctx, mod->attributes(), bDone );
+
+
+      // check mantra attributes
+      Module::Private::MantraMap::iterator mi = mod->_p->m_mantras.begin();
+      Module::Private::MantraMap::iterator me = mod->_p->m_mantras.end();
+      while( mi != me ) {
+         Mantra* mantra = mi->second;
+         pushAttribs( ctx, mantra->attributes(), bDone );
+         if( mantra->isCompatibleWith( Mantra::e_c_falconclass ) )
+         {
+            FalconClass* cls = static_cast<FalconClass*>(mantra);
+            cls->registerAttributes( ctx );
+         }
+         ++mi;
+      }
+
+      // process all the expressions
+      if( bDone ) {
+         return;
+      }
+   }
+
+   if( seqId == 12 )
    {
       seqId++;
 

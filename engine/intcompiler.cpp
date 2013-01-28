@@ -52,6 +52,9 @@
 #include <falcon/synclasses_id.h>
 #include <falcon/process.h>
 
+#include <falcon/attribute_helper.h>
+
+
 namespace Falcon {
 
 //=======================================================================
@@ -111,6 +114,23 @@ void IntCompiler::Context::onCloseClass( Class* cls, bool isObj )
 
 }
 
+
+bool IntCompiler::Context::onAttribute(const String& name, TreeStep* generator, Mantra* target )
+{
+   SourceParser& sp = m_owner->sp();
+   if( target == 0 )
+   {
+      sp.addError( e_directive_not_allowed, sp.currentSource(), sp.currentLine()-1, 0, 0 );
+   }
+   else
+   {
+      VMContext* vmctx = static_cast<IntCompiler*>(m_owner)->m_vmctx;
+      return attribute_helper( vmctx, name, generator, target );
+
+   }
+
+   return true;
+}
 
 
 void IntCompiler::Context::onLoad( const String& path, bool isFsPath )

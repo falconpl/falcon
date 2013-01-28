@@ -131,6 +131,27 @@ Variable* ModCompiler::Context::onOpenClass( Class* cls, bool isObject )
    return var;
 }
 
+bool ModCompiler::Context::onAttribute(const String& name, TreeStep* generator, Mantra* target )
+{
+   Module* mod = m_owner->m_module;
+   Attribute* added = 0;
+
+   if ( target == 0 )
+   {
+      added = mod->attributes().add(name);
+   }
+   else {
+      added = target->attributes().add(name);
+   }
+
+   if( added != 0 ) {
+      added->generator(generator);
+      return true;
+   }
+
+   return false;
+}
+
 
 void ModCompiler::Context::onCloseClass( Class* cls, bool )
 {

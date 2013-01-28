@@ -17,12 +17,14 @@
 #include <falcon/setup.h>
 #include <falcon/string.h>
 #include <falcon/sourceref.h>
+#include <falcon/attributemap.h>
 
 namespace Falcon 
 {
 
 class Class;
 class Module;
+class TreeStep;
 
 /** Basic "utterance" of the Falcon engine.
  
@@ -184,12 +186,18 @@ public:
             false otherwise.
    */
    bool isCompatibleWith( t_category cat ) const;
-   
+
+   const AttributeMap& attributes() const { return m_attributes; }
+   AttributeMap& attributes() { return m_attributes; }
+
+   bool addAttribute( const String& name, TreeStep* generator );
+
 protected:
    t_category m_category;
    String m_name;
    Module* m_module;
    SourceRef m_sr;
+   AttributeMap m_attributes;
    
    uint32 m_mark; 
 };

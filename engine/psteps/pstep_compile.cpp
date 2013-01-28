@@ -110,7 +110,7 @@ void PStepCompile::apply_( const PStep* ps, VMContext* ctx )
    CodeFrame& curcode = ctx->currentCode();
    int status = ctx->currentCode().m_seqId;
    String tgt;
-   String prompt = ">>> ";
+   String prompt = comp->isComplete() ? ">>> " : "... ";
 
    // print result if needed.
    if ( status == 2 || (status == 1 && ! ctx->topData().isNil()) ) {

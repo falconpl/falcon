@@ -28,6 +28,7 @@
 #include <falcon/function.h>
 #include <falcon/module.h>
 #include <falcon/vardatamap.h>
+#include <falcon/attribute.h>
 
 #define DEFALUT_FALCON_MODULE_INIT falcon_module_init
 #define DEFALUT_FALCON_MODULE_INIT_NAME "falcon_module_init"
@@ -531,6 +532,9 @@ public:
       m_globals.exportNS(this, sourceNS, target, targetNS );
    }
 
+   const AttributeMap& attributes() const { return m_attributes; }
+   AttributeMap& attributes() { return m_attributes; }
+
 protected:
    /** Invoked when refcount hits 0.
     *  This will invoke the unload() method if not previously invoked.
@@ -566,6 +570,8 @@ private:
    Function* m_mainFunc;
    bool m_bNative;
    bool m_bLoad;
+
+   AttributeMap m_attributes;
 
    friend class Private;   
    friend class DynLoader;

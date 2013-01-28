@@ -32,6 +32,7 @@
 #include <falcon/ov_names.h>
 #include <falcon/trace.h>
 #include <falcon/stdsteps.h>
+#include <falcon/attribute.h>
 
 #include <falcon/psteps/stmtreturn.h>
 #include <falcon/psteps/exprself.h>
@@ -219,6 +220,40 @@ void* FalconClass::createInstance() const
    return inst;
 }
 
+bool FalconClass::registerAttributes( VMContext* ctx )
+{
+   static PStep* attribStep = &Engine::instance()->stdSteps()->m_fillAttribute;
+
+   Private::MemberMap::iterator iter = _p->m_members->begin();
+   Private::MemberMap::iterator end = _p->m_members->end();
+
+   bool bDone = false;
+
+   while( iter != end )
+   {
+      Property* p = iter->second;
+      if (p->m_type == Property::t_func )
+      {
+         Function* func = p->m_value.func;
+         uint32 count = func->attributes().size();
+
+         for( uint32 i = 0; i < count; ++i )
+         {
+            Attribute* attrib = func->attributes().get( i );
+            if( attrib->generator() != 0 ) {
+               bDone = true;
+               ctx->pushData( Item(Attribute::CLASS_NAME, attrib ) );
+               ctx->pushCode( attribStep );
+               ctx->pushCode( attrib->generator() );
+            }
+         }
+      }
+      ++iter;
+
+   }
+
+   return bDone;
+}
 
 bool FalconClass::addProperty( const String& name, const Item& initValue )
 {
@@ -909,6 +944,9 @@ void FalconClass::storeSelf( DataWriter* wr, bool asConstructed ) const
       }
    }
    
+   // save the attributes
+   attributes().store(wr);
+
 }
    
 
@@ -956,6 +994,9 @@ void FalconClass::restoreSelf( DataReader* rd )
          }
       }
    }
+
+   // restore the attributes
+   attributes().restore(rd);
 }
    
 
@@ -1014,6 +1055,8 @@ void FalconClass::flattenSelf( ItemArray& flatArray, bool asConstructed ) const
       
       ++pos;
    }
+
+   attributes().flatten(flatArray);
 }
 
 
@@ -1080,6 +1123,8 @@ void FalconClass::unflattenSelf( ItemArray& flatArray )
       ++pos;
       ++count;
    }
+
+   attributes().unflatten(flatArray, count);
 }
    
 //=========================================================

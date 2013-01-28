@@ -524,9 +524,19 @@ void ItemDict::describe( String& target, int depth, int maxlen ) const
       ++kiter;
    }
    
+   if( target.length() == 1 )
+   {
+      target += "=>";
+   }
+
    target += "]";
 }
 
+Class* ItemDict::handler()
+{
+   static Class* handler = Engine::instance()->dictClass();
+   return handler;
+}
 
 void ItemDict::enumerate( Enumerator& rator )
 {

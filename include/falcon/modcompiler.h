@@ -95,6 +95,7 @@ protected:
       virtual void onCloseFunc( Function* function );
       virtual Variable* onOpenClass( Class* cls, bool bIsObj );
       virtual void onCloseClass( Class* cls, bool bIsObj );
+      virtual bool onAttribute(const String& name, TreeStep* generator, Mantra* target );
 
       virtual void onNewStatement( TreeStep* stmt );
       virtual void onLoad( const String& path, bool isFsPath );

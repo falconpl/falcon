@@ -122,6 +122,9 @@ void ClassSynFunc::store( VMContext*, DataWriter* stream, void* instance ) const
    
    // now we got to save the function parameter table.
    synfunc->variables().store( stream );
+
+   // and the attributes table
+   synfunc->attributes().store(stream);
 }
 
 void ClassSynFunc::restore(VMContext* ctx, DataReader* stream) const
@@ -145,6 +148,10 @@ void ClassSynFunc::restore(VMContext* ctx, DataReader* stream) const
 
    try {
       synfunc->variables().restore( stream );
+
+      // and the attributes table
+      synfunc->attributes().restore(stream);
+
       ctx->pushData( Item(this, synfunc) );
    }
    catch( ... ) {
@@ -158,12 +165,20 @@ void ClassSynFunc::flatten( VMContext*, ItemArray& subItems, void* instance ) co
 {
    SynFunc* synfunc = static_cast<SynFunc*>(instance);
       
+   subItems.reserve(
+            synfunc->syntree().size()
+            + synfunc->attributes().size() * 2
+            + 1);
+
    TRACE1("ClassSynFunc::flatten %s - %d syntree elements", synfunc->name().c_ize(), synfunc->syntree().size() );
    for( uint32 i = 0; i < synfunc->syntree().size(); ++i ) {
       TreeStep* stmt = synfunc->syntree().at(i);
       Class* synClass = stmt->handler();
       subItems.append(Item( synClass, stmt ) );
    }
+
+   subItems.append(Item());
+   synfunc->attributes().flatten( subItems );
 }
 
 
@@ -173,10 +188,15 @@ void ClassSynFunc::unflatten( VMContext*, ItemArray& subItems, void* instance ) 
    // first restore the symbol table.
    TRACE1("ClassSynFunc::unflatten %s - %d syntree elements", synfunc->name().c_ize(), subItems.length() );
 
-   for( uint32 i = 0; i < subItems.length(); ++i ) {
+   uint32 i = 0;
+   for( ; i < subItems.length(); ++i ) {
       Class* cls = 0;
       void* data = 0;
-      subItems[i].asClassInst(cls,data);
+      if( ! subItems[i].asClassInst(cls,data) )
+      {
+         // we found the nil separator
+         break;
+      }
 
 #ifndef NDEBUG
       static Class* tsc = Engine::instance()->treeStepClass();
@@ -185,6 +205,13 @@ void ClassSynFunc::unflatten( VMContext*, ItemArray& subItems, void* instance ) 
 #endif
 
       synfunc->syntree().append( static_cast<TreeStep*>(data) );
+   }
+
+   // this if may be an overkill
+   ++i; // remove the extra nil
+   if( i < subItems.length() )
+   {
+      synfunc->attributes().unflatten(subItems, i);
    }
 }
 

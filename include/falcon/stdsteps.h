@@ -365,6 +365,18 @@ public:
       virtual void describeTo( String&, int =0 ) const;
    };
    PStepFillInstance m_fillInstance;
+
+   /** Pops the value on top of the stack and fills an attribute on top -1.
+    */
+   class PStepFillAttribute: public PStep
+   {
+   public:
+      PStepFillAttribute() {apply = apply_;}
+      virtual ~PStepFillAttribute() {}
+      static void apply_( const PStep*, VMContext* ctx );
+      virtual void describeTo( String&, int =0 ) const;
+   };
+   PStepFillAttribute m_fillAttribute;
 };
 
 }

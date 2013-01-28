@@ -72,9 +72,9 @@ public:
       Item* end = data + other.m_size;
       while( data < end )
       {
-         data->lock();
+         //data->lock();
          data->copied(true);
-         data->unlock();
+         //data->unlock();
          ++data;
       }
    }
@@ -471,7 +471,6 @@ void ItemArray::resize( length_t size )
       m_alloc = (size/m_growth + 1) *m_growth;
       Item* newData = allocate(m_alloc);
       memcpy( newData, m_data, esize( m_size ) );
-      memset( newData + m_size, 0, esize( m_alloc - m_size ) );
 
       release( m_data );
       m_data = newData;
@@ -512,7 +511,6 @@ void ItemArray::reserve( length_t size )
    {
       m_alloc = size;
       Item* newData = Helper(this).reallocate( size );
-      memset( newData+ m_size, 0, esize( size - m_size ));
       m_data = newData;
    }
 }

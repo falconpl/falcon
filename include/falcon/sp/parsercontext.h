@@ -190,6 +190,18 @@ public:
     */
    virtual void onDirective(const String& name, const String& value) = 0;
 
+   /** Invoked when an attribute is found.
+    *
+    * If the attribute declaration is happening in a matnra,
+    * the mantra parameter is non zero.
+    *
+    * The generator can never be zero.
+    *
+    * \return false if the attribute is duplicated. Add directly an error
+    * if there is any other problem with the attribute, and then return true.
+    */
+   virtual bool onAttribute(const String& name, TreeStep* generator, Mantra* mantra ) = 0;
+
    /** Called back when parsing a "global name" directive.
       \param name The symbol that is being imported in the local context.
     */

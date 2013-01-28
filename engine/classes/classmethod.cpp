@@ -18,6 +18,8 @@
 
 #include <falcon/classes/classmethod.h>
 #include <falcon/vmcontext.h>
+#include <falcon/function.h>
+
 
 #include <falcon/errors/paramerror.h>
 
@@ -74,27 +76,29 @@ void ClassMethod::describe( void* instance, String& target, int depth, int maxLe
 void ClassMethod::enumerateProperties( void*, PropertyEnumerator& cb ) const
 {
    cb( "origin", false );
-   cb( "attributes", false );
-   cb( "base", false );
    cb( "source", true );
 }
 
 
 void ClassMethod::enumeratePV( void* self, PVEnumerator& cb ) const
 {
+   Item& src = *(Item*) self;
    Item copy = *(Item*) self;
 
    copy.unmethodize();
+   Item func = src.asMethodFunction();
 
    cb( "origin", copy );
+   cb( "source", func );
 }
 
 
 bool ClassMethod::hasProperty( void*, const String& prop ) const
 {
-   if( prop == "origin" ) return true;
-
-   return false;
+   return
+            prop == "origin"
+        ||  prop == "source"
+    ;
 }
 
 //=============================================================
@@ -128,6 +132,33 @@ void ClassMethod::op_call( VMContext* ctx, int32 paramCount, void* self ) const
    ctx->callInternal( fmth, paramCount, copy );
 }
 
+
+void ClassMethod::op_getProperty( VMContext* ctx, void* instance, const String& prop) const
+{
+   Item* self = static_cast<Item*>(instance);
+
+   if( prop == "origin" )
+   {
+      Item copy = *self;
+      copy.unmethodize();
+      ctx->stackResult(1, copy );
+   }
+   else if( prop == "source" )
+   {
+      Function* f = self->asMethodFunction();
+      if( f->isCompatibleWith( Function::e_c_synfunction ) )
+      {
+         ctx->stackResult(1, f );
+      }
+      else {
+         // we cannot un-methodize C functions.
+         ctx->stackResult(1, Item() );
+      }
+   }
+   else {
+      Class::op_getProperty(ctx, instance, prop );
+   }
+}
 
 }
 

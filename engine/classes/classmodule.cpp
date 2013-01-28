@@ -28,6 +28,7 @@
 #include <falcon/modrequest.h>
 #include <falcon/importdef.h>
 #include <falcon/mantra.h>
+#include <falcon/itemdict.h>
 
 #include <falcon/datawriter.h>
 #include <falcon/datareader.h>
@@ -70,6 +71,36 @@ void* ClassModule::clone( void* source ) const
 void* ClassModule::createInstance() const
 {
    return new Module;
+}
+
+
+void ClassModule::enumerateProperties( void*, Class::PropertyEnumerator& cb ) const
+{
+   cb("attributes", true);
+   cb("name", true);
+   cb("uri", false );
+}
+
+
+void ClassModule::enumeratePV( void* instance, Class::PVEnumerator& cb ) const
+{
+   Module* mod = static_cast<Module*>(instance);
+
+   Item i_name = mod->name();
+   Item i_uri = mod->uri();
+
+   cb("name", i_name );
+   cb("uri", i_uri );
+}
+
+
+bool ClassModule::hasProperty( void*, const String& prop ) const
+{
+   return
+         prop == "attributes"
+         || prop == "name"
+         || prop == "uri"
+         ;
 }
 
    
@@ -209,6 +240,10 @@ void ClassModule::store( VMContext*, DataWriter* stream, void* instance ) const
          ++depi;
       }
    }
+   MESSAGE1( "Module store attributes." );
+
+   // restore the attributes
+   mod->attributes().store(stream);
    
    MESSAGE1( "Module store complete." );
 }
@@ -465,6 +500,11 @@ void ClassModule::restoreModule( Module* mod, DataReader* stream ) const
       ++progID;
    }
    
+   MESSAGE1( "Module restore -- attributes" );
+
+   // restore the attributes
+   mod->attributes().restore(stream);
+
    MESSAGE1( "Module restore complete." );
 }
 
@@ -488,7 +528,8 @@ void ClassModule::flatten( VMContext* ctx, ItemArray& subItems, void* instance )
       mod->globals().size() +
       mp->m_mantras.size()+
       mp->m_reqslist.size() +
-      3
+      mod->attributes().size() * 2 +
+      4
    );
    
    // save all the global variables
@@ -539,6 +580,12 @@ void ClassModule::flatten( VMContext* ctx, ItemArray& subItems, void* instance )
          ++ii;
       }
    }
+   // Push a nil as a separator
+   subItems.append( Item() );
+
+   // save the attributes.
+   mod->attributes().flatten(subItems);
+
    // Push a nil as a separator
    subItems.append( Item() );
 
@@ -618,6 +665,10 @@ void ClassModule::unflatten( VMContext* ctx, ItemArray& subItems, void* instance
    }
 
    TRACE( "ClassModule::unflatten -- restored init classes, at position %d", pos );
+
+   mod->attributes().unflatten( subItems, pos );
+
+   TRACE( "ClassModule::unflatten -- restored attributes, at position %d", pos );
 }
 
    
@@ -661,6 +712,34 @@ bool ClassModule::op_init( VMContext* ctx, void* instance, int32 pcount ) const
    }
    
    return false;
+}
+
+
+void ClassModule::op_getProperty( VMContext* ctx, void* instance, const String& prop) const
+{
+   Module* mod = static_cast<Module*>(instance);
+
+   if( prop == "attributes" )
+   {
+      ItemDict* dict = new ItemDict;
+      uint32 size = mod->attributes().size();
+      for( uint32 i = 0; i < size; ++i ) {
+         Attribute* attr = mod->attributes().get(i);
+         dict->insert( FALCON_GC_HANDLE( new String(attr->name())), attr->value() );
+      }
+      ctx->stackResult(1, FALCON_GC_HANDLE(dict) );
+   }
+   else if( prop == "name" )
+   {
+      ctx->stackResult(1, FALCON_GC_HANDLE( new String(mod->name())) );
+   }
+   else if( prop == "uri" )
+   {
+      ctx->stackResult(1, FALCON_GC_HANDLE( new String(mod->uri())) );
+   }
+   else {
+      Class::op_getProperty(ctx, instance, prop );
+   }
 }
 
 }

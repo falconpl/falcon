@@ -388,6 +388,25 @@ void StdSteps::PStepFillInstance::describeTo( String& s, int ) const
 }
 
 
+
+void StdSteps::PStepFillAttribute::apply_( const PStep*, VMContext* ctx )
+{
+   ctx->popCode();
+
+   Item& value = ctx->topData();
+   Item& iattrib = ctx->opcodeParam(1);
+   Attribute* op = static_cast<Attribute*>(iattrib.asOpaque());
+   op->value().copyFromLocal(value);
+
+   ctx->popData(2);
+}
+
+void StdSteps::PStepFillAttribute::describeTo( String& s, int ) const
+{
+   s = "PStepFillAttribute";
+}
+
+
 }
 
 /* end of stdsteps.cpp */

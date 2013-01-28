@@ -62,6 +62,8 @@ public:
    void enumerate( Enumerator& rator );   
    uint32 version() const { return m_version; }
    
+   static Class* handler();
+
    /** Iterator used by ClassDict to iterate with op_first/op_next. */
    class Iterator: public GenericItem
    {
@@ -113,7 +115,7 @@ private:
    uint32 m_flags;
    uint32 m_currentMark;
    uint32 m_version;
-   
+
    friend class Iterator;
    friend class ClassDict;
 };

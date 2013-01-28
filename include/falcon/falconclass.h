@@ -401,6 +401,11 @@ public:
    
    virtual Class* handler() const;
    
+   /** Used by the module link system to prepare attribute generation for methods.
+    *
+    */
+   bool registerAttributes( VMContext* ctx );
+
    //=========================================================
    // Storer helpers
    //

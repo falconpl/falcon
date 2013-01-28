@@ -32,6 +32,7 @@
 #include <falcon/sp/parsercontext.h>
 #include <falcon/syntree.h>
 #include <falcon/module.h>
+#include <falcon/attribute_helper.h>
 
 namespace Falcon {
 namespace Ext {
@@ -107,10 +108,26 @@ public:
       return value;
    }
 
+   virtual bool onAttribute(const String& name, TreeStep* generator, Mantra* target )
+   {
+      SourceParser& sp = m_sp;
+      if( target == 0 )
+      {
+         sp.addError( e_directive_not_allowed, sp.currentSource(), sp.currentLine()-1, 0, 0 );
+      }
+      else
+      {
+         return attribute_helper(m_ctx, name, generator, target );
+      }
+
+      return true;
+   }
+
    virtual void onRequirement( Requirement*  )
    {
       m_sp.addError( e_directive_not_allowed, m_sp.currentSource(), m_sp.currentLine()-1, 0, 0 );
    }
+
 
 private:
    VMContext* m_ctx;

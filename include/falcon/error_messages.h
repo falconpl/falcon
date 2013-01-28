@@ -240,6 +240,7 @@ FAL_ERRORDECL( e_syn_import_name_star, 266, "Imported symbols cannot contain a s
 FAL_ERRORDECL( e_mod_not_fam, 267, "Fam module has invalid FAM signature" );
 FAL_ERRORDECL( e_mod_unsupported_fam, 268, "Unsupported FAM version" );
 FAL_ERRORDECL( e_directive_not_allowed, 269, "Directive not allowed in dynamic compilation" );
+FAL_ERRORDECL( e_attrib_already, 270, "Attribute already declared" );
    
 FAL_ERRORDECL( e_unknown_encoding, 300, "Unknown encoding name" );
 FAL_ERRORDECL( e_enc_fail, 301, "Encoding failed or data not encodable" );

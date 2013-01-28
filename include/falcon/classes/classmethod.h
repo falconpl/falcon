@@ -25,8 +25,11 @@
 namespace Falcon
 {
 
-/**
- Class handling a method as an item in a falcon script.
+/*#
+    @class Method Class handling a method as an item in a falcon script.
+    @prop origin Object associated with this method.
+    @prop source function associated with this method.
+
  */
 
 class FALCON_DYN_CLASS ClassMethod: public Class
@@ -51,6 +54,8 @@ public:
    //=============================================================
    virtual bool op_init( VMContext* ctx, void*, int32 pcount ) const;
    virtual void op_call( VMContext* ctx, int32 paramCount, void* self ) const;
+
+   virtual void op_getProperty( VMContext* ctx, void* instance, const String& prop) const;
 };
 
 }
