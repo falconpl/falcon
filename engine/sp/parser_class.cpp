@@ -184,6 +184,7 @@ static void make_class( Parser& p, int tCount,
             }
             // cool, we can configure the inheritance.
             inh->base( static_cast<Class*>(value->asInst()) );
+            cls->onInheritanceResolved(inh);
          }
       }
    }

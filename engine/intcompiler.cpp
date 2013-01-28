@@ -261,6 +261,10 @@ void IntCompiler::Context::onRequirement( Requirement* req )
                 req->sourceRef().line(), req->sourceRef().chr(), 0, req->name() );
 }
 
+void IntCompiler::Context::onInputOver()
+{
+   // we usually do nothing here.
+}
 
 //=======================================================================
 // Main class

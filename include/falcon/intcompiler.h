@@ -115,6 +115,7 @@ protected:
       virtual void onGlobal( const String& name );
       virtual Variable* onGlobalAccessed( const String& name );
       virtual void onRequirement( Requirement* rec );
+      virtual void onInputOver();
    };
    
    SynTree* m_currentTree;
