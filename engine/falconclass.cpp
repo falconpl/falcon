@@ -128,6 +128,18 @@ FalconClass::Property::Property( const Property& other ):
    }
 }
 
+FalconClass::Property::Property( const Property& other, bool copyInitExpr ):
+   m_name( other.m_name ),
+   m_type( other.m_type ),
+   m_value( other.m_value ),
+   m_expr( 0 )
+{
+   if( copyInitExpr && other.m_expr != 0 )
+   {
+      m_expr = other.m_expr->clone();
+   }
+}
+
 FalconClass::Property::~Property()
 {
    delete m_expr;
@@ -244,7 +256,7 @@ bool FalconClass::addProperty( const String& name, const Item& initValue )
 
 bool FalconClass::addProperty( const String& name, Expression* initExpr )
 {
-   TRACE1( "Addong a property \"%s\" to class %s with expression.", name.c_ize(), m_name.c_ize() );
+   TRACE1( "Adding a property \"%s\" to class %s with expression.", name.c_ize(), m_name.c_ize() );
    
    if( m_bConstructed )
    {
@@ -605,13 +617,17 @@ SynFunc* FalconClass::makeConstructor()
 
 bool FalconClass::construct()
 {
+   TRACE( "FalconClass::construct -- constructing class \"%s\"", this->name().c_ize() );
+
    if( m_missingParents > 0 || ! m_bPureFalcon )
    {
+      TRACE1( "FalconClass::construct -- failed to construct \"%s\"", this->name().c_ize() );
       return false;
    }
    
    if( m_bConstructed )
    {
+      TRACE1( "FalconClass::construct -- already constructed \"%s\"", this->name().c_ize() );
       return true;
    }
    
@@ -643,16 +659,10 @@ bool FalconClass::construct()
                if( getProperty(fbpi->first) == 0 )
                {
                   // No? -- then add this
-                  Property* np = new Property(*bp);
-                  
-                  // reparent init expression, in case of need.
-                  if( np->expression() != 0 )
-                  {
-                     fassert( np->m_type == FalconClass::Property::t_prop);
-                     np->m_value.id = _p->m_members->size();
-                     np->expression()->setParent( &makeConstructor()->syntree() );
-                     m_hasInitExpr = true;
-                  }
+                  TRACE1( "FalconClass::construct -- copying \"%s.%s\" in \"%s\"",
+                           fbase->name().c_ize(), bp->m_name.c_ize(),
+                           this->name().c_ize() );
+                  Property* np = new Property(*bp, false);
                   (*_p->m_members)[np->m_name] = np;
                   
                   if( np->m_type == Property::t_prop )
@@ -1010,6 +1020,10 @@ void FalconClass::flattenSelf( ItemArray& flatArray, bool asConstructed ) const
 void FalconClass::unflattenSelf( ItemArray& flatArray )
 {
    Private::MemberMap* members = ! m_bConstructed ? &_p->m_origMembers : _p->m_members;
+   TRACE( "FalconClass::unflattenSelf -- %s (%d props) %s",
+            this->name().c_ize(), flatArray.length(),
+            (m_bConstructed ? "constructed" : "not-constructed"));
+
    Private::MemberMap::iterator pos = members->begin();
    
    fassert( flatArray.length() >= 2 );
@@ -1214,7 +1228,7 @@ void FalconClass::PStepInitExpr::apply_( const PStep* ps, VMContext* ctx )
    int size = (int) iprops.size();
    int& seqId = ccode.m_seqId;
 
-   TRACE1( "In %s class pre-init step %d/%d", step->m_owner->name().c_ize(), seqId, size );
+   TRACE1( "In class \"%s\" pre-init step %d/%d", step->m_owner->name().c_ize(), seqId, size );
    
    // Fix in case we're back from a prevuious run
    if( seqId > 0 )
@@ -1253,10 +1267,13 @@ void FalconClass::PStepInitExpr::apply_( const PStep* ps, VMContext* ctx )
       
       if( origin != step->m_owner ) 
       {
+         // ... but the original should have had an expression or we wouldn't be here.
+         fassert( prop->expression() != 0 );
+
+         // refetch the local property, as it might have a different ID.
          prop = origin->getProperty( prop->m_name );
          fassert( prop != 0 );
          fassert( prop->m_type == FalconClass::Property::t_prop );
-         fassert( prop->expression() != 0 );
       }
       
       inst->data()[prop->m_value.id].assignFromLocal( ctx->topData() );

@@ -107,6 +107,7 @@ public:
       Value m_value;
 
       Property( const Property& other );
+      Property( const Property& other, bool copyInitExpr );
       
       inline Property( const String& name, Type t ):
          m_name( name ),
