@@ -251,8 +251,7 @@ static void internal_expr_func(const Rule&, Parser& p, bool isEta )
    ti->setValue(expr,expr_deletor);
 
    // remove this stuff from the stack
-   p.simplify(5,ti);
-
+   p.simplify( isEta ? 6 : 5,ti);
 
    // open a new main state for the function
    ctx->openFunc(func);
@@ -263,11 +262,13 @@ static void internal_expr_func(const Rule&, Parser& p, bool isEta )
 
 void apply_expr_func(const Rule& r, Parser& p)
 {
+   //<< T_function << T_Openpar << ListSymbol << T_Closepar << T_EOL
    internal_expr_func( r, p, false );   
 }
 
 void apply_expr_funcEta(const Rule& r, Parser& p)
 {
+   //<< T_function << T_Times << T_Openpar << ListSymbol << T_Closepar << T_EOL
    internal_expr_func( r, p, true );   
 }
 

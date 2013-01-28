@@ -582,18 +582,10 @@ SourceParser::SourceParser():
    //==================================
    // Class
    S_Class << "Class" << classdecl_errhand;
-   S_Class << (r_class_from << "Class w/from" << apply_class_from 
-               << T_class << T_Name << T_from << FromClause << T_EOL );
-   S_Class << (r_class << "Class decl" << apply_class << T_class << T_Name << T_EOL );
-   S_Class << (r_class_p_from << "Class w/params & from" << apply_class_p_from
-             << T_class << T_Name << T_Openpar << ListSymbol << T_Closepar << T_from << FromClause << T_EOL );
-   S_Class << (r_class_p << "Class w/params" << apply_class_p
-             << T_class << T_Name << T_Openpar << ListSymbol << T_Closepar  << T_EOL );
+   S_Class << (r_class << "Class decl" << apply_class_statement << T_class << T_Name );
 
    S_Object << "Object" << classdecl_errhand;
-   S_Object << (r_object_from << "Object w/from" << apply_object_from
-               << T_object << T_Name << T_from << FromClause << T_EOL );
-   S_Object << (r_object << "Object decl" << apply_object << T_object << T_Name << T_EOL );
+   S_Object << (r_object << "Object decl" << apply_object_statement << T_object << T_Name );
 
    FromClause << "Class from clause";
    FromClause << ( r_FromClause_next << "FromClause_next"
@@ -631,17 +623,21 @@ SourceParser::SourceParser():
    EPBody << ( r_lit_epbody << "EP" << apply_ep_body << ListExpr << T_Closepar );
 
    //==========================================================================
-   // Anon Classes
+   // Class/Object heading
    //
-   AnonClassParams << "AnonClassParams" << classdecl_errhand;
-   AnonClassParams << (r_anonclass_from << "AClass w/from" << apply_anonclass_from 
+   ClassParams << "ClassParams" << classdecl_errhand;
+   ClassParams << (r_class_from << "Class w/from" << apply_class_from
                   << T_from << FromClause << T_EOL );
-   AnonClassParams << (r_anonclass << "AClass decl" << apply_anonclass << T_EOL );
-   AnonClassParams << (r_anonclass_p_from << "AClass w/params & from" << apply_anonclass_p_from
+   ClassParams << (r_class_pure << "Class decl" << apply_class << T_EOL );
+   ClassParams << (r_class_p_from << "AClass w/params & from" << apply_class_p_from
                   << T_Openpar << ListSymbol << T_Closepar << T_from << FromClause << T_EOL );
-   AnonClassParams << (r_anonclass_p << "AClass w/params" << apply_anonclass_p
+   ClassParams << (r_class_p << "Class w/params" << apply_class_p
              << T_Openpar << ListSymbol << T_Closepar  << T_EOL );
 
+   // Objects are like classes, but they don't use parameters.
+   ObjectParams << "ObjectParams" << classdecl_errhand;
+   ObjectParams << r_class_from;
+   ObjectParams << r_class_pure;
    
    //==========================================================================
    // prototype
@@ -734,7 +730,7 @@ SourceParser::SourceParser():
       << S_Function
       << S_PropDecl
       << S_InitDecl
-      << S_End
+      << S_SmallEnd
       << S_EmptyLine
       ;
    
@@ -779,7 +775,11 @@ SourceParser::SourceParser():
          ;
 
    s_ClassStart << "ClassStart"
-      << AnonClassParams
+      << ClassParams
+      ;
+
+   s_ObjectStart << "ObjectStart"
+      << ObjectParams
       ;
    
    s_ProtoDecl << "ProtoDecl"
@@ -799,6 +799,7 @@ SourceParser::SourceParser():
    addState( s_ProtoDecl );
    addState( s_ArrayDecl );
    addState( s_ClassStart );
+   addState( s_ObjectStart );
    addState( s_EPState );
 
 }

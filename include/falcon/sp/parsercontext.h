@@ -335,6 +335,11 @@ public:
     */
    void closeContext();
 
+   /** Pops the current context after an error.
+    closes a context without calling the onNew* methods.
+    */
+   void dropContext();
+
    /** Gets the current syntactic tree.
       \return the current syntactic tree where statements are added, or 0 for none.
     */

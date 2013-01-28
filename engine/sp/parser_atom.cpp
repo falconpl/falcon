@@ -78,7 +78,9 @@ void apply_Atom_Name ( const Rule&, Parser& p )
    else
    {
       //TODO: check for globalized variables instead of using isGlobalContext
-      sym = new ExprSymbol( Engine::getSymbol(*ti->asString(), ctx->isGlobalContext()),
+      bool isGlobal = ctx->isGlobalContext();
+      const String& name = *ti->asString();
+      sym = new ExprSymbol( Engine::getSymbol( name, isGlobal ),
                ti->line(), ti->chr() );
    }
 

@@ -54,7 +54,7 @@ bool classdecl_errhand(const NonTerminal&, Parser& p)
    // already detected?
    if( p.lastErrorLine() != ti->line() )
    {
-      p.addError( e_syn_import, p.currentSource(), ti->line(), ti->chr() );
+      p.addError( e_syn_class, p.currentSource(), ti->line(), ti->chr() );
    }
    
    // remove the whole line
@@ -71,7 +71,14 @@ bool classdecl_errhand(const NonTerminal&, Parser& p)
    else
    {
       MESSAGE2( "classdecl_errhand -- Ignoring CLASS in interactive mode." );
+      Class* cls = ctx->currentClass();
+      if( cls != 0 ) {
+         ctx->dropContext();
+         p.popState();
+         delete cls;
+      }
    }
+
       
    // we need to create a discardable anonymous class if we're a module.   
    return true;
@@ -80,46 +87,38 @@ bool classdecl_errhand(const NonTerminal&, Parser& p)
 using namespace Parsing;
 
 static void make_class( Parser& p, int tCount,
-         TokenInstance* tname,
          TokenInstance* tParams,
-         TokenInstance* tfrom,
-         bool isObject )
+         TokenInstance* tfrom )
 {
    SourceParser& sp = static_cast<SourceParser&>(p);
    ParserContext* ctx = static_cast<ParserContext*>(p.context());
 
-   FalconClass* cls = 0;
+   FalconClass* cls = ctx->currentClass();
+   fassert( cls != 0 );
+
    Variable* symclass = 0;
    TokenInstance* ti = 0;
    
-   // a symbol class?
-   if ( tname != 0 )
-   {
-      // Are we already in a function?
-      if( ctx->currentFunc() != 0 || ctx->currentClass() != 0 || ctx->currentStmt() != 0 )
-      {
-         p.addError( isObject ? e_toplevel_obj : e_toplevel_class,
-                     p.currentSource(), tname->line(), tname->chr() );
-         p.simplify( tCount  );
-         return;
-      }
+   bool isObject = false;
 
-      // check if the symbol is free -- defining an unique symbol
-      String name = *tname->asString();
-      if( isObject ) {
-         name.prepend("%");
-      }
-      cls = new FalconClass( name
-               );
+   // a symbol class?
+   if( cls->name().size() != 0 )
+   {
+      // we could also get the objectness of the class context in ctx...
+      isObject = cls->name().getCharAt(0) == '%';
+
+      // register as a global class...
       symclass = ctx->onOpenClass( cls, isObject );
       if( symclass == 0 )
       {
-          p.addError( e_already_def,  p.currentSource(), tname->line(), tname->chr(), 0,
-                    String("at line ").N(symclass->declaredAt()) );
+          p.addError( e_already_def,  p.currentSource(), cls->sr().line(), cls->sr().chr() );
            // however, go on with class creation
           if ( sp.interactive() )
           {
              // unless interactive...
+             ctx->dropContext();
+             p.popState();
+
              delete cls;
              p.simplify( tCount );
              return;
@@ -128,15 +127,11 @@ static void make_class( Parser& p, int tCount,
           cls->name("");
       }
    }
-   else
-   {
-      // we don't have a symbol...
-      cls = new FalconClass( "" );
-      symclass = 0;
-      
+   else {
       // ... but we have an expression value
       ti = TokenInstance::alloc( p.currentLine(), p.currentLexer()->character(), sp.Expr);
-      Expression* expr = new ExprValue( FALCON_GC_STORE( cls->handler(), cls ), p.currentLine(), p.currentLexer()->character() );
+      Expression* expr = new ExprValue( FALCON_GC_STORE( cls->handler(), cls ),
+               cls->sr().line(), cls->sr().chr() );
       ti->setValue( expr, expr_deletor );
    }
 
@@ -162,8 +157,8 @@ static void make_class( Parser& p, int tCount,
       // check symbols in the parentship list
       for( int i = 0; i < flist->arity(); ++i ) {
          ExprInherit* inh = static_cast<ExprInherit*>( flist->nth(i) );
-         // ask the owner the required symbol.
-         Variable* symBaseClass = ctx->onGlobalAccessed( inh->name() );
+         // ask the owner the required symbol -- we're fine with locals.
+         Variable* symBaseClass = ctx->accessSymbol( inh->name() );
          // if it's 0, we need a requirement; and we shall also add an externa symbol.
          if( symBaseClass->type() == Variable::e_nt_extern )
          {
@@ -180,6 +175,10 @@ static void make_class( Parser& p, int tCount,
             {
                p.addError( e_inv_inherit, p.currentSource(), ti->line(), ti->chr() );
                p.simplify(tCount);
+               ctx->dropContext();
+               // we already did onOpenClass so the class should be registered.
+               // anon classes are already stored on the GC
+               p.popState();
                return;
             }
             // cool, we can configure the inheritance.
@@ -191,87 +190,61 @@ static void make_class( Parser& p, int tCount,
 
    // remove this stuff from the stack
    p.simplify(tCount, ti);
-   // remove the ClassStart state?
-   if ( tname == 0 )
-   {
-      p.popState();
-   }
-   
-   ctx->openClass(cls, isObject );
+   // remove the ClassStart state
+   p.popState();
 
    p.pushState( "ClassBody" );
 }
 
-
-void apply_class( const Rule&, Parser& p )
+static void internal_apply_class_statement( Parser& p, bool isObject )
 {
-   // << T_class << T_Name << T_EOL
+   // << T_class/T_Object << T_Name
+   ParserContext* ctx = static_cast<ParserContext*>(p.context());
+
    p.getNextToken(); // T_class
    TokenInstance* tname=p.getNextToken();
 
-   make_class(p, 3, tname, 0, 0, false );
+   // Are we already in a function?
+   if( ctx->currentFunc() != 0 || ctx->currentClass() != 0 || ctx->currentStmt() != 0 )
+   {
+      p.addError( e_toplevel_class, p.currentSource(), tname->line(), tname->chr() );
+      p.consumeUpTo(p.T_EOL);
+      return;
+   }
+
+   // check if the symbol is free -- defining an unique symbol
+   String name;
+   if( isObject ) {
+      name = "%";
+   }
+   name += *tname->asString();
+
+   // Create the class.
+   FalconClass* cls = new FalconClass( name );
+   cls->sr().line(tname->line());
+   cls->sr().chr(tname->chr());
+
+   p.simplify(2);
+
+   if( isObject ) {
+      p.pushState( "ObjectStart", false );
+   }
+   else {
+      p.pushState( "ClassStart", false );
+   }
+   ctx->openClass(cls, isObject);
 }
 
-
-void apply_class_p( const Rule&, Parser& p )
+void apply_class_statement( const Rule&, Parser& p )
 {
-   // << T_class << T_Name << T_Openpar << ListSymbol << T_Closepar << T_EOL
-   p.getNextToken(); // T_class
-   TokenInstance* tname = p.getNextToken(); // T_Name
-   p.getNextToken(); // T_Openpar
-   TokenInstance* tparams = p.getNextToken(); // ListSymbol
-
-   make_class( p, 6, tname, tparams, 0, false );
+   internal_apply_class_statement( p, false );
 }
 
-
-void apply_class_from( const Rule&, Parser& p )
+void apply_object_statement( const Rule&, Parser& p )
 {
-   // << T_class << T_Name << T_from << FromClause << T_EOL
-   p.getNextToken(); // T_class
-   TokenInstance* tname=p.getNextToken(); // T_Name
-   (void) p.getNextToken();
-   TokenInstance* tfrom=p.getNextToken(); // FromClause
-
-   make_class(p, 5, tname, 0, tfrom, false );
+   internal_apply_class_statement( p, true );
 }
 
-
-void apply_class_p_from( const Rule&, Parser& p )
-{
-   // << T_class << T_Name << T_Openpar << ListSymbol << T_Closepar << T_from << FromClause << T_EOL
-   p.getNextToken(); // T_class
-   TokenInstance* tname = p.getNextToken(); // T_Name
-   p.getNextToken(); // T_Openpar
-   TokenInstance* tparams = p.getNextToken(); // ListSymbol
-   p.getNextToken(); // T_Closepar
-   p.getNextToken();
-   TokenInstance* tfrom=p.getNextToken(); // FromClause
-
-   make_class( p, 8, tname, tparams, tfrom, false );
-}
-
-
-void apply_object( const Rule&, Parser& p )
-{
-   // << T_class << T_Name << T_EOL
-   p.getNextToken(); // T_class
-   TokenInstance* tname=p.getNextToken();
-
-   make_class(p, 3, tname, 0, 0, true );
-}
-
-
-void apply_object_from( const Rule&, Parser& p )
-{
-   // << T_class << T_Name << T_from << FromClause << T_EOL
-   p.getNextToken(); // T_class
-   TokenInstance* tname=p.getNextToken(); // T_Name
-   (void) p.getNextToken();
-   TokenInstance* tfrom=p.getNextToken(); // FromClause
-
-   make_class(p, 5, tname, 0, tfrom, true );
-}
 
 
 void apply_pdecl_expr( const Rule&, Parser& p )
@@ -422,29 +395,40 @@ void apply_FromClause_entry( const Rule&, Parser& p )
 void apply_expr_class(const Rule&, Parser& p)
 {
    // T_class
+   ParserContext* ctx = static_cast<ParserContext*>(p.context());
+
+   TokenInstance* tcls=p.getNextToken();
+
+   // let the class be anonymous
+   FalconClass* cls = new FalconClass( "" );
+   cls->sr().line(tcls->line());
+   cls->sr().chr(tcls->chr());
+
    p.simplify(1);
-   p.pushState( "ClassStart", false );
+   p.pushState("ClassStart", false);
+
+   ctx->openClass(cls, false);
 }
 
-void apply_anonclass_from( const Rule&, Parser& p )
+void apply_class_from( const Rule&, Parser& p )
 {
    //<< T_from << FromClause << T_EOL
    p.getNextToken(); // T_from
    TokenInstance* tfrom=p.getNextToken();
 
-   make_class(p, 3, 0, 0, tfrom, false );
+   make_class(p, 3, 0, tfrom );
    
 }
 
 
-void apply_anonclass( const Rule&, Parser& p )
+void apply_class( const Rule&, Parser& p )
 {
    // << T_EOL
-   make_class(p, 1, 0, 0, 0, false );
+   make_class(p, 1, 0, 0 );
 }
 
 
-void apply_anonclass_p_from( const Rule&, Parser& p )
+void apply_class_p_from( const Rule&, Parser& p )
 {
    // << T_Openpar << ListSymbol << T_Closepar << T_from << FromClause << T_EOL
    p.getNextToken(); // T_Openpar
@@ -453,17 +437,17 @@ void apply_anonclass_p_from( const Rule&, Parser& p )
    p.getNextToken(); // T_from
    TokenInstance* tfrom = p.getNextToken();
 
-   make_class(p, 3, 0, tparams, tfrom, false );
+   make_class(p, 6, tparams, tfrom );
 }
 
 
-void apply_anonclass_p( const Rule&, Parser& p )
+void apply_class_p( const Rule&, Parser& p )
 {
    // << T_Openpar << ListSymbol << T_Closepar  << T_EOL
    p.getNextToken(); // T_Openpar
    TokenInstance* tparams = p.getNextToken();
    
-   make_class(p, 3, 0, tparams, 0, false );
+   make_class(p, 4, tparams, 0 );
 
 }
 

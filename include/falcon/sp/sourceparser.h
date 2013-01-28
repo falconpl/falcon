@@ -430,19 +430,15 @@ public:
    Parsing::Rule r_return;
 
    Parsing::NonTerminal S_Class;
-   Parsing::Rule r_class_from;
    Parsing::Rule r_class;
-   Parsing::Rule r_class_p_from;
-   Parsing::Rule r_class_p;
 
    Parsing::NonTerminal S_Object;
-   Parsing::Rule r_object_from;
    Parsing::Rule r_object;
 
-   Parsing::Rule r_anonclass_from;
-   Parsing::Rule r_anonclass;
-   Parsing::Rule r_anonclass_p_from;
-   Parsing::Rule r_anonclass_p;
+   Parsing::Rule r_class_from;
+   Parsing::Rule r_class_pure;
+   Parsing::Rule r_class_p_from;
+   Parsing::Rule r_class_p;
    
    Parsing::NonTerminal S_InitDecl;
    Parsing::Rule r_init;
@@ -532,7 +528,8 @@ public:
    Parsing::NonTerminal EPBody;
    Parsing::Rule r_lit_epbody;
 
-   Parsing::NonTerminal AnonClassParams;
+   Parsing::NonTerminal ClassParams;
+   Parsing::NonTerminal ObjectParams;
    
    Parsing::NonTerminal S_ProtoProp;
    Parsing::Rule r_proto_prop;
@@ -571,6 +568,7 @@ public:
    Parsing::State s_LambdaStart;
    Parsing::State s_EPState;
    Parsing::State s_ClassStart;
+   Parsing::State s_ObjectStart;
    Parsing::State s_ProtoDecl;
    Parsing::State s_ArrayDecl;
 };

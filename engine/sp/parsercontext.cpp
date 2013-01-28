@@ -498,7 +498,7 @@ bool ParserContext::isLitContext() const
 
 bool ParserContext::isGlobalContext() const
 {
-   return m_varmap == 0 && _p->m_litContexts.empty();
+   return m_varmap == 0 && _p->m_litContexts.empty() && currentClass() == 0 && currentFunc() == 0;
 }
 
 void ParserContext::openBlock( Statement* parent, SynTree* branch, bool bAutoClose )
@@ -665,6 +665,29 @@ void ParserContext::closeContext()
    }
 }
 
+
+
+void ParserContext::dropContext()
+{
+   TRACE("ParserContext::dropContext -- closing context on depth %d", (int)_p->m_frames.size() );
+   fassert( !_p->m_frames.empty() );
+
+   // copy by value
+   CCFrame bframe = _p->m_frames.back();
+
+   // as we're removing the frame.
+   _p->m_frames.pop_back();
+
+   // we can never close the main context
+   fassert( ! _p->m_frames.empty() );
+   if( bframe.m_bStatePushed )
+   {
+      m_parser->popState();
+   }
+
+   // restore our previous status
+   restoreStatus(_p->m_frames.back());
+}
 
 bool ParserContext::isTopLevel() const
 {

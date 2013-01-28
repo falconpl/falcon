@@ -55,6 +55,7 @@ template<class datatype__>
 void VMContext::LinearStack<datatype__>::init( int base, uint32 allocSize )
 {
    m_base = (datatype__*) malloc( allocSize * sizeof(datatype__) );
+   memset(m_base, 0, allocSize * sizeof(datatype__));
    m_top = m_base + base;
    m_max = m_base + allocSize;
    m_allocSize = allocSize;

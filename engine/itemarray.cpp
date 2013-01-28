@@ -38,7 +38,7 @@ Class* ItemArray::m_handler = 0;
 inline Item* allocate( length_t size )
 {
    Item* data = (Item*) malloc(sizeof(Item) * size);
-   //memset( data, 0, sizeof(Item) * size);
+   memset( data, 0, sizeof(Item) * size);
    return data;
 }
 
