@@ -136,6 +136,12 @@ Stream *VFSFile::create( const URI& uri, const CParams &p )
 {
    int omode = paramsToMode( p );
 
+   if( omode == 0 )
+   {
+      // we must at least set WR mode.
+      omode = O_WRONLY;
+   }
+
    if ( p.isNoOvr() )
       omode |= O_EXCL;
 
