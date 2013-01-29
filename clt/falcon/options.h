@@ -52,6 +52,9 @@ public:
    StringMap defines;
    StringList preloaded;
    
+   String test_dir;
+   String log_file;
+
    bool compile_only;
    bool run_only;
    bool tree_out;
@@ -71,7 +74,8 @@ public:
    bool ignore_syspath;
 
    bool errOnStdout;
-
+   bool testMode;
+   int log_level;
 
    FalconOptions();
 

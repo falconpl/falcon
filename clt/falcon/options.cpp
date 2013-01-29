@@ -31,6 +31,7 @@ FalconOptions::FalconOptions():
    io_encoding( "" ),
    source_encoding( "" ),
    module_language( "" ),
+   log_file("%"),
 
    compile_only( false ),
    run_only( false ),
@@ -48,6 +49,8 @@ FalconOptions::FalconOptions():
    interactive( false ),
    ignore_syspath( false ),
    errOnStdout(false),
+   testMode(false),
+   log_level(-1),
    m_modal( false ),
    m_justinfo( false )
    
@@ -69,40 +72,43 @@ void FalconOptions::usage( bool deep )
    {
       cout
       << "Modal options:" << endl
-      << "   -c          compile the given source(s) in a .fam module" << endl
-      << "   -i          interactive mode" << endl
-      << "   -t          generate a syntactic tree (for logic debug)" << endl
-      << "   -x          execute a binary '.fam' module" << endl
-      << "   -y          write string translation table for the module" << endl
-      << "   --cgi       execute in GGI mode" << endl
+      << "  -c           compile the given source(s) in a .fam module" << endl
+      << "  -i           interactive mode" << endl
+      << "  -t           generate a syntactic tree (for logic debug)" << endl
+      << "  -x           execute a binary '.fam' module" << endl
+      << "  -y           write string translation table for the module" << endl
+      << "  --cgi        execute in GGI mode" << endl
+      << "  --test <dir> Execute tests in the given directory" << endl
       << endl
       << "Compilation options (c_opts):" << endl
-      << "   -d          Set directive (as <directive>=<value>)" << endl
-      << "   -D          Set constant (as <constant>=<value>)" << endl
-      << "   -E <enc>    Source files are in <enc> encoding (overrides -e)" << endl
-      << "   -f          force recompilation of modules even when .fam are found" << endl
-      << "   -T          consider given [module] as .ftd (template document)" << endl
+      << "  -d           Set directive (as <directive>=<value>)" << endl
+      << "  -D           Set constant (as <constant>=<value>)" << endl
+      << "  -E <enc>     Source files are in <enc> encoding (overrides -e)" << endl
+      << "  -f           force recompilation of modules even when .fam are found" << endl
+      << "  -T           consider given [module] as .ftd (template document)" << endl
       << endl
       << "Run options (r_opts):" << endl
-      << "   -C          check for memory allocation correctness" << endl
-      << "   -e <enc>    set given encoding as default for VM I/O" << endl
+      << "  -C           check for memory allocation correctness" << endl
+      << "  -e <enc>     set given encoding as default for VM I/O" << endl
 #ifndef NDEBUG
-      << "   -F <file>   Output TRACE debug statements to <file>" << endl
+      << "  -F <file>    Output TRACE debug statements to <file> (local platform file format)" << endl
 #endif
-      << "   -l <lang>   Set preferential language of loaded modules" << endl
-      << "   -L <path>   Add path for 'load' directive (start with ';' remove std paths)" << endl
-      << "   -M          do NOT save the compiled modules in '.fam' files" << endl
-      << "   -p <module> preload (pump in) given module" << endl
-      << "   -P          ignore system PATH (and FALCON_LOAD_PATH envvar)" << endl
-      << "   -I          Ignore sources" << endl
+      << "  -l <lang>    Set preferential language of loaded modules" << endl
+      << "  -L <path>    Add path for 'load' and 'import' directives" << endl
+      << "  -M           do NOT save the compiled modules in '.fam' files" << endl
+      << "  -p <module>  preload (pump in) given module" << endl
+      << "  -P           ignore system PATH (and FALCON_LOAD_PATH envvar)" << endl
+      << "  -I           Ignore sources" << endl
+      << "  --ll <lvl>   Set system log level 0: critical, 7: debug, -1: off"  << endl
+      << "  --log <file> Send System log to file (-:stdout, %:stderr)"  << endl
       << endl
       << "General options:" << endl
-      << "   -h/-?       display usage" << endl
-      << "   -H          this help" << endl
-      << "   -o <fn>     output to <fn> instead of [module.xxx]" << endl
-      << "   -s          Send error description to stdOut instead of stdErr" << endl
-      << "   -v          print copyright notice and version and exit" << endl
-      << "   -w          add an extra console wait after program exit" << endl
+      << "  -h/-?        display usage" << endl
+      << "  -H           this help" << endl
+      << "  -o <fn>      output to <fn> instead of [module.xxx]" << endl
+      << "  -s           Send error description to stdOut instead of stdErr" << endl
+      << "  -v           print copyright notice and version and exit" << endl
+      << "  -w           add an extra console wait after program exit" << endl
       << "" << endl
       << "Paths must be in falcon file name format: directory separators must be slashes [/] and" << endl
       << "multiple entries must be entered separed by a semicolon (';')" << endl
@@ -238,13 +244,29 @@ void FalconOptions::parse( int argc, char **argv, int &script_pos )
                   preloaded.push_back( "cgi" );
                   break;
                }
-
-            // else just fallthrough
+               else if( String( op+2 ) == "test" )
+               {
+                  testMode = true;
+                  test_dir = String( argv[++i] );
+                  break;
+               }
+               else if( String( op+2 ) == "ll" )
+               {
+                  log_level = atoi( argv[++i] );
+                  break;
+               }
+               else if( String( op+2 ) == "log" )
+               {
+                  log_file = String( argv[++i] );
+                  break;
+               }
+               /* no break */
 
             default:
                cerr << "falcon: unrecognized option '" << op << "'."<< endl << endl;
                usage(false);
                m_justinfo = true;
+               break;
          }
       }
       else

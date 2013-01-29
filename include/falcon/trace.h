@@ -56,7 +56,9 @@ inline void trace_dummyfunc( const char*, const void* )
 #endif
 
 #define TRACE_ON()  _falcon_trace_fp = fopen( "falcon.trace", "w" ); _falcon_trace_level = 3;
+#define TRACE_ON_FILE( _fname )  _falcon_trace_fp = fopen( _fname, "w" ); _falcon_trace_level = 3;
 #define TRACE_ON_LEVEL( _LVL )  _falcon_trace_fp = fopen( "falcon.trace", "w" ); _falcon_trace_level = _LVL;
+#define TRACE_ON_FILE_LEVEL( _fname, _LVL )  _falcon_trace_fp = fopen( _fname, "w" ); _falcon_trace_level = _LVL;
 #define TRACE_OFF  fclose(_falcon_trace_fp);  _falcon_trace_fp = 0;
 #define TRACE_SET_LEVEL( _LVL ) _falcon_trace_level = _LVL;
 #define TRACE_GET_LEVEL() (_falcon_trace_level)

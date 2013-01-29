@@ -33,7 +33,7 @@ class FalconApp: public Falcon::Application
 public:
    int m_exitValue;
    FalconOptions m_options;
-   
+
    /**
     * The logger for the Falcon application.
     *
@@ -41,8 +41,15 @@ public:
     */
    class Logger: public Log::Listener
    {
+   public:
+      Logger();
+      virtual ~Logger();
+      TextWriter* m_logfile;
+
    protected:
+
       virtual void onMessage( int fac, int lvl, const String& message );
+
    };
 
    Logger* m_logger;

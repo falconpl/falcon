@@ -40,15 +40,45 @@ FalconApp::~FalconApp()
 
 void FalconApp::guardAndGo( int argc, char* argv[] )
 {
-   Log* log = Engine::instance()->log();
-   log->addListener( m_logger );
-
    int scriptPos = 0;
    m_options.parse( argc, argv, scriptPos );
    if( m_options.m_justinfo )
    {
       return;
    }
+
+   if( m_options.log_level >= 0 )
+   {
+      if( m_options.log_file == "-" ){
+         m_logger->m_logfile = new TextWriter(new StdOutStream(), true);
+      }
+      else if( m_options.log_file == "%" ) {
+         m_logger->m_logfile = new TextWriter(new StdErrStream(), true);
+      }
+      else {
+         try {
+            Stream* out = Engine::instance()->vfs().create(
+                     m_options.log_file,
+                     VFSIface::CParams().append().wrOnly()
+                     );
+            m_logger->m_logfile = new TextWriter( out, true );
+         }
+         catch( Error* err )
+         {
+            Engine::die(String("Cannot create requried log file: ") + err->describe() );
+         }
+      }
+
+      Engine::instance()->log()->addListener( m_logger );
+   }
+
+   // prepare the trace file
+#ifndef NDEBUG
+   if( m_options.trace_file != "" )
+   {
+      TRACE_ON_FILE( m_options.trace_file.c_ize() );
+   }
+#endif
 
    TextWriter out(new StdOutStream);
    try
@@ -75,7 +105,7 @@ void FalconApp::guardAndGo( int argc, char* argv[] )
       e->decref();
    }
 
-   log->removeListener( m_logger );
+   Engine::instance()->log()->removeListener( m_logger );
 }
 
 
@@ -179,21 +209,31 @@ void FalconApp::launch( const String& script )
    }
 }
 
+//===============================================================
+// Logger
+//
+
+FalconApp::Logger::Logger():
+         m_logfile(0)
+{
+}
+
+FalconApp::Logger::~Logger()
+{
+   delete m_logfile;
+}
+
 void FalconApp::Logger::onMessage( int fac, int lvl, const String& message )
 {
-   static TextWriter out(new StdErrStream);
-
    String tgt;
    Log::formatLog(fac, lvl, message, tgt );
-   out.writeLine( tgt );
-   out.flush();
+   m_logfile->writeLine( tgt );
+   m_logfile->flush();
 }
 
 
 int main( int argc, char* argv[] )
 {
-   TRACE_ON();
-
    FalconApp app;
    app.guardAndGo( argc, argv );
 
