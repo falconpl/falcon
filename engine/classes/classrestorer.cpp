@@ -147,11 +147,8 @@ FALCON_DEFINE_METHOD_P1( ClassRestorer, next )
          ctx->returnFrame( *static_cast<Item*>(data) );
       }
       else {
-         // send to the garbage the items that have been returned for the first time.
-         if( first )
-            ctx->returnFrame( FALCON_GC_STORE(cls, data) );
-         else
-            ctx->returnFrame( Item(cls, data) );         
+         // Never send to the garbage, the restorer knows how to do that.
+         ctx->returnFrame( Item(cls, data) );
       }
    }
    else

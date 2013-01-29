@@ -65,7 +65,12 @@ bool ClassMantra::gcCheckInstance( void* self, uint32 mark ) const
 
 void ClassMantra::dispose( void* self ) const
 {
-   delete static_cast<Mantra*>(self);
+   TRACE( "ClassMantra::dispose %p", self);
+
+   Mantra* mantra = static_cast<Mantra*>(self);
+   TRACE1( "ClassMantra::dispose -- detail: %s", mantra->locate().c_ize() );
+
+   delete mantra;
 }
 
 

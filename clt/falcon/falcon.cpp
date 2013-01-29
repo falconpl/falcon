@@ -47,6 +47,8 @@ void FalconApp::guardAndGo( int argc, char* argv[] )
       return;
    }
 
+   Log* log = Engine::instance()->log();
+
    if( m_options.log_level >= 0 )
    {
       if( m_options.log_file == "-" ){
@@ -69,7 +71,7 @@ void FalconApp::guardAndGo( int argc, char* argv[] )
          }
       }
 
-      Engine::instance()->log()->addListener( m_logger );
+      log->addListener( m_logger );
    }
 
    // prepare the trace file
@@ -85,6 +87,7 @@ void FalconApp::guardAndGo( int argc, char* argv[] )
    {
       if( m_options.interactive )
       {
+         log->log(Log::fac_app, Log::lvl_info, String("Going interactive") );
          interactive();
       }
       else
@@ -96,16 +99,18 @@ void FalconApp::guardAndGo( int argc, char* argv[] )
          }
 
          String script = argv[scriptPos-1];
+         log->log(Log::fac_app, Log::lvl_info, String("Starting execution of: ") + script );
          launch( script );
       }
    }
    catch( Error* e )
    {
-      out.write( "Caught: " + e->describe() +"\n");
+      log->log( Log::fac_app, Log::lvl_critical, String("Terminating with error: ") + e->describe() );
+      out.write( "falcon: Terminating with error\n" + e->describe() +"\n");
       e->decref();
    }
 
-   Engine::instance()->log()->removeListener( m_logger );
+   log->removeListener( m_logger );
 }
 
 
@@ -118,18 +123,11 @@ void FalconApp::interactive()
 
 void FalconApp::launch( const String& script )
 {
+   Log* log = Engine::instance()->log();
+
    // Create the virtual machine -- that is used also for textual output.
    VMachine vm;
    vm.setStdEncoding( m_options.io_encoding );
-
-   // can we access the required module?
-   Stream* fs = Engine::instance()->vfs().openRO( script );
-   if( fs == 0 )
-   {
-      vm.textOut()->write( "Can't open " + script + "\n" );
-      return;
-   }
-   fs->close();
 
    // Ok, we opened the file; prepare the space (and most important, the loader)
    ModSpace* ms = vm.modSpace();
@@ -141,6 +139,7 @@ void FalconApp::launch( const String& script )
    if( m_options.load_path.size() > 0 )
    {
       // Is the load path totally substituting?
+      log->log(Log::fac_app, Log::lvl_detail, String("Setting load path to: ") + m_options.load_path );
       loader->addSearchPath(m_options.load_path);
    }
 
@@ -148,6 +147,11 @@ void FalconApp::launch( const String& script )
    {
       loader->addFalconPath();
    }
+   else {
+      log->log(Log::fac_app, Log::lvl_detail, String("Ignoring system paths") );
+   }
+
+   log->log(Log::fac_app, Log::lvl_info, String("System load path is: ") + loader->getSearchPath() );
 
    // Now configure other options of the lodaer.
    // -- How to treat sources?
@@ -186,26 +190,38 @@ void FalconApp::launch( const String& script )
    ms->add( Engine::instance()->getCore() );
    Process* loadProc = ms->loadModule( script, true, false, true );
 
-   try {
-      loadProc->start();
-      loadProc->wait();
+   log->log(Log::fac_app, Log::lvl_info, String("Starting loader process on: ") + script );
+   loadProc->start();
+   loadProc->wait();
+   log->log(Log::fac_app, Log::lvl_info, String("Main script load complete") );
 
-      // get the main module
-      Module* mod = static_cast<Module*>(loadProc->result().asInst());
-      loadProc->decref();
+   // get the main module
+   Module* mod = static_cast<Module*>(loadProc->result().asInst());
+   loadProc->decref();
+
+   try {
       if( mod->getMainFunction() != 0 )
       {
-         mod->incref();
+         log->log(Log::fac_app, Log::lvl_info, String("Launching main script function") );
          Process* process = vm.createProcess();
          process->mainContext()->call( mod->getMainFunction() );
          process->start();
          process->wait();
+
+         m_exitValue = (int) process->result().forceInteger();
+
+         log->log(Log::fac_app, Log::lvl_info, String("Script complete, exit value: ").N(m_exitValue) );
+         //log->log(Log::fac_app, Log::lvl_detail, String("Exit value as item: ") + process->result().describe(3,128) );
       }
+      else {
+         log->log(Log::fac_app, Log::lvl_info, String("Main module hasn't a main function, terminating") );
+      }
+      mod->decref();
    }
-   catch( Error* e )
+   catch( ... )
    {
-      vm.textErr()->write( e->describe() );
-      e->decref();
+      mod->decref();
+      throw;
    }
 }
 

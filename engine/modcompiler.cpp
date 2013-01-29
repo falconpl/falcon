@@ -98,8 +98,12 @@ Variable* ModCompiler::Context::onOpenFunc( Function* function )
 void ModCompiler::Context::onCloseFunc( Function* f )
 {
    if( f->name().size() == 0 ) {
+      /*
       Module* mod = m_owner->m_module;
       mod->addAnonMantra( f );
+      */
+      f->name("_anonymous");
+      f->module( m_owner->m_module );
    }
 }
 
@@ -156,8 +160,12 @@ bool ModCompiler::Context::onAttribute(const String& name, TreeStep* generator, 
 void ModCompiler::Context::onCloseClass( Class* cls, bool )
 {
    if( cls->name().size() == 0 ) {
+      /*
       Module* mod = m_owner->m_module;
       mod->addAnonMantra( cls );
+      */
+      cls->name("_anonymous");
+      cls->module( m_owner->m_module );
    }
 }
 

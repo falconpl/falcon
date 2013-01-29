@@ -182,6 +182,9 @@ public:
    /** Open a file. */
    virtual Stream* open( const URI &uri, const OParams &p )=0;
 
+   /** Just an inline for creating file with default parameters.
+      Default parameters are "write only, truncate, full sharing".
+   */
    inline Stream* createSimple( const URI &uri ) {
       CParams params;
       params.wrOnly();

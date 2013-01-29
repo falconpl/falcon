@@ -779,7 +779,13 @@ void ModSpace::PStepLoader::apply_( const PStep* self, VMContext* ctx )
    // Third step -- we can remove self and the module.
    TRACE( "ModSpace::PStepLoader::apply_ step 2 on module %s", mod->name().c_ize() );
    // leave the module in the stack if it's main.
-   if( ! mod->isMain() ) {
+   if( mod->isMain() )
+   {
+      // we need to return an extra reference to the process caller.
+      mod->incref();
+   }
+   else
+   {
       ctx->popData();
    }
 

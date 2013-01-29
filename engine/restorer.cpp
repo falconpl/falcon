@@ -383,9 +383,15 @@ void Restorer::ReadNext::apply_( const PStep* ps, VMContext* ctx )
             objd.m_data = &_p->m_flatItems.back();
          }
          else {
-            objd.m_data = ctx->topData().asInst();
-            if( objd.m_bIsGarbage ) {
-               FALCON_GC_STORE( ctx->topData().asClass(), ctx->topData().asInst() );
+            Class* cls;
+            void* inst;
+            ctx->topData().asClassInst(cls, inst);
+            objd.m_data = inst;
+            if( objd.m_bIsGarbage )
+            {
+               TRACE2( "Restorer::ReadNext::apply_ -- Reassigning to garbage %s",
+                        ctx->topData().describe(2,60).c_ize() );
+               FALCON_GC_STORE( cls, inst );
             }
          }
          ctx->popData();

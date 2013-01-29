@@ -343,6 +343,8 @@ void Collector::disposeToken(GCToken* token)
 
 GCToken* Collector::store( const Class* cls, void *data )
 {
+   TRACE2( "Collector::store instance of %s: %p", cls->name().c_ize(), data);
+
    // do we have spare elements we could take?
    GCToken* token = getToken( const_cast<Class*>(cls), data );
 

@@ -453,6 +453,7 @@ void ModLoader::load_internal(
          }
 
          // store the module in GC now
+         output->incref();
          ctx->pushData( FALCON_GC_STORE( modClass, output ) );
 
          // what shoud we do with the newly compiled module?

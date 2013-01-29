@@ -169,7 +169,8 @@ Module::Module():
    m_bMain( false ),
    m_anonMantras(0),
    m_mainFunc(0),
-   m_bNative( false )
+   m_bNative( false ),
+   m_refcounter_Module(1)
 {
    TRACE("Creating internal module '%s'", m_name.c_ize() );
    m_uri = "";
@@ -186,7 +187,8 @@ Module::Module( const String& name, bool bNative ):
    m_bMain( false ),
    m_anonMantras(0),
    m_mainFunc(0),
-   m_bNative( bNative )
+   m_bNative( bNative ),
+   m_refcounter_Module(1)
 {
    TRACE("Creating internal module '%s'", name.c_ize() );
    m_uri = "";
@@ -204,7 +206,8 @@ Module::Module( const String& name, const String& uri, bool bNative ):
    m_bMain( false ),
    m_anonMantras(0),
    m_mainFunc(0),
-   m_bNative( bNative )
+   m_bNative( bNative ),
+   m_refcounter_Module(1)
 {
    TRACE("Creating module '%s' from %s",
       name.c_ize(), uri.c_ize() );
