@@ -245,7 +245,8 @@ bool Reader::ensure( length_t size )
 bool Reader::eof()
 {
    fassert( m_stream != 0 );
-   return m_stream->eof();
+
+   return m_bufPos >= m_bufLength && m_stream->eof();
 }
 
 }
