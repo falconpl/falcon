@@ -1,0 +1,10 @@
+/*
+@name Basic smoke test -- checking output
+
+@output   
+Hello world
+@endoutput
+
+*/
+
+> "Hello world"

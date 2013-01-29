@@ -1,0 +1,7 @@
+/*
+@name Basic smoke test -- checking result
+
+@result Done
+*/
+
+return "Done"
