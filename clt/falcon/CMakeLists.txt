@@ -59,6 +59,7 @@ add_executable( falcon
    falcon.cpp
    int_mode.cpp
    options.cpp
+   testmode.cpp
    ${readline_SRC}
    ${SYSTEM_RC}
 )

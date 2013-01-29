@@ -23,11 +23,12 @@
 #include <falcon/falcon.h>
 
 #include "options.h"
-#include "int_mode.h"
 
 namespace Falcon {
 
-class FalconApp: public Falcon::Application
+   class Log;
+
+class FalconApp: public Application
 {
 
 public:
@@ -59,7 +60,10 @@ public:
    
    void guardAndGo( int argc, char* argv[] );
    void interactive();
+   void testMode();
    void launch( const String& script );
+
+   void configureVM( VMachine& vm, Log* log = 0 );
 
 private:
 };

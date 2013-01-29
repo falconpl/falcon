@@ -771,6 +771,10 @@ void ModSpace::PStepLoader::apply_( const PStep* self, VMContext* ctx )
 
       // Push the main funciton only if this is not a main module.
       if( mod->getMainFunction() != 0 && ! mod->isMain() ) {
+         // we're pretty done
+         ctx->popData();
+         ctx->popCode();
+
          ctx->call( mod->getMainFunction() );
          return;
       }

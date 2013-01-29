@@ -19,6 +19,7 @@
 #include <falcon/trace.h>
 
 #include "int_mode.h"
+#include "testmode.h"
 
 #include <memory>
 
@@ -90,6 +91,11 @@ void FalconApp::guardAndGo( int argc, char* argv[] )
          log->log(Log::fac_app, Log::lvl_info, String("Going interactive") );
          interactive();
       }
+      else if( m_options.testMode )
+      {
+         log->log(Log::fac_app, Log::lvl_info, String("Going testmode") );
+         testMode();
+      }
       else
       {
          if ( scriptPos <= 0 )
@@ -121,12 +127,61 @@ void FalconApp::interactive()
 }
 
 
+void FalconApp::testMode()
+{
+   TestMode tm(this);
+   tm.perform();
+}
+
 void FalconApp::launch( const String& script )
 {
    Log* log = Engine::instance()->log();
 
    // Create the virtual machine -- that is used also for textual output.
    VMachine vm;
+   configureVM( vm );
+
+   ModSpace* ms = vm.modSpace();
+   Process* loadProc = ms->loadModule( script, true, false, true );
+
+   log->log(Log::fac_app, Log::lvl_info, String("Starting loader process on: ") + script );
+   loadProc->start();
+   loadProc->wait();
+   log->log(Log::fac_app, Log::lvl_info, String("Main script load complete") );
+
+   // get the main module
+   Module* mod = static_cast<Module*>(loadProc->result().asInst());
+   loadProc->decref();
+
+   try {
+      if( mod->getMainFunction() != 0 )
+      {
+         log->log(Log::fac_app, Log::lvl_info, String("Launching main script function") );
+         Process* process = vm.createProcess();
+         process->mainContext()->call( mod->getMainFunction() );
+         process->start();
+         process->wait();
+
+         m_exitValue = (int) process->result().forceInteger();
+
+         log->log(Log::fac_app, Log::lvl_info, String("Script complete, exit value: ").N(m_exitValue) );
+         log->log(Log::fac_app, Log::lvl_detail, String("Exit value as item: ") + process->result().describe(3,128) );
+      }
+      else {
+         log->log(Log::fac_app, Log::lvl_info, String("Main module hasn't a main function, terminating") );
+      }
+      mod->decref();
+   }
+   catch( ... )
+   {
+      mod->decref();
+      throw;
+   }
+}
+
+
+void FalconApp::configureVM( VMachine& vm, Log* log )
+{
    vm.setStdEncoding( m_options.io_encoding );
 
    // Ok, we opened the file; prepare the space (and most important, the loader)
@@ -139,7 +194,7 @@ void FalconApp::launch( const String& script )
    if( m_options.load_path.size() > 0 )
    {
       // Is the load path totally substituting?
-      log->log(Log::fac_app, Log::lvl_detail, String("Setting load path to: ") + m_options.load_path );
+      if ( log ) log->log(Log::fac_app, Log::lvl_detail, String("Setting load path to: ") + m_options.load_path );
       loader->addSearchPath(m_options.load_path);
    }
 
@@ -148,10 +203,10 @@ void FalconApp::launch( const String& script )
       loader->addFalconPath();
    }
    else {
-      log->log(Log::fac_app, Log::lvl_detail, String("Ignoring system paths") );
+      if ( log ) log->log(Log::fac_app, Log::lvl_detail, String("Ignoring system paths") );
    }
 
-   log->log(Log::fac_app, Log::lvl_info, String("System load path is: ") + loader->getSearchPath() );
+   if ( log ) log->log(Log::fac_app, Log::lvl_info, String("System load path is: ") + loader->getSearchPath() );
 
    // Now configure other options of the lodaer.
    // -- How to treat sources?
@@ -188,41 +243,7 @@ void FalconApp::launch( const String& script )
    }
 
    ms->add( Engine::instance()->getCore() );
-   Process* loadProc = ms->loadModule( script, true, false, true );
 
-   log->log(Log::fac_app, Log::lvl_info, String("Starting loader process on: ") + script );
-   loadProc->start();
-   loadProc->wait();
-   log->log(Log::fac_app, Log::lvl_info, String("Main script load complete") );
-
-   // get the main module
-   Module* mod = static_cast<Module*>(loadProc->result().asInst());
-   loadProc->decref();
-
-   try {
-      if( mod->getMainFunction() != 0 )
-      {
-         log->log(Log::fac_app, Log::lvl_info, String("Launching main script function") );
-         Process* process = vm.createProcess();
-         process->mainContext()->call( mod->getMainFunction() );
-         process->start();
-         process->wait();
-
-         m_exitValue = (int) process->result().forceInteger();
-
-         log->log(Log::fac_app, Log::lvl_info, String("Script complete, exit value: ").N(m_exitValue) );
-         //log->log(Log::fac_app, Log::lvl_detail, String("Exit value as item: ") + process->result().describe(3,128) );
-      }
-      else {
-         log->log(Log::fac_app, Log::lvl_info, String("Main module hasn't a main function, terminating") );
-      }
-      mod->decref();
-   }
-   catch( ... )
-   {
-      mod->decref();
-      throw;
-   }
 }
 
 //===============================================================

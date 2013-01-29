@@ -20,27 +20,54 @@
 
 namespace Falcon {
 
+class FalconApp;
+class String;
+class Log;
+
 class TestMode
 {
 public:
    TestMode( FalconApp* app );
    ~TestMode();
 
+   class ScriptData {
+   public:
+      ScriptData( const String& id );
+      ~ScriptData();
+
+      String m_id;
+      String m_path;
+
+      String m_name;
+      String m_category;
+
+      String m_exp_output;
+      String m_exp_result;
+
+      bool m_bSuccess;
+      String m_reason;
+   };
+
    void setup();
    void perform();
-   void test( const String& name );
+   ScriptData* parse(const String& scriptName );
+   void testAll();
+   void test( ScriptData* sd );
+   void reportTest( ScriptData* sd );
+
    void report();
+
+   Log* log;
 
 private:
    FalconApp* m_app;
 
-   typedef std::map<String, String> ScriptMap;
+   typedef std::map<String, ScriptData*> ScriptMap;
    typedef std::map<String, ScriptMap> CategoryMap;
 
    ScriptMap m_scripts;
    uint32 m_passed;
 };
-
 
 }
 
