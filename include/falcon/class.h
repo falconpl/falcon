@@ -952,8 +952,27 @@ public:
 
    void userFlags( int32 uf ) { m_userFlags = uf; }
    
+   /** Handler class for this class. */
    Class* handler() const;
    
+   /** Returns the destruction order of this class.
+    *
+    * Higher classes priorities are destroyed later when the collector performs a clear loop.
+    * Classes handling normal items have priority 0 (the default).
+    *
+    * Subclasses handling other classes or instance which holds complex entities should set this
+    * value according to the following scheme:
+    * - 0: Generic instances with no priority issues (it's the default).
+    * - 1: Mantras (generic functions)
+    * - 2: Classes (In particular, Falcon classes)
+    * - 3: Modules
+    * - 4: Super modules (meta-modules, module spaces etc.)
+    *
+    * To configure the priority, set the m_clearPriority value in the child handler
+    * class.
+    */
+   int clearPriority() const { return m_clearPriority; }
+
 protected:
    bool m_bIsfalconClass;
    bool m_bIsErrorClass;
@@ -963,6 +982,8 @@ protected:
    int32 m_userFlags;
 
    int64 m_typeID;
+
+   int32 m_clearPriority;
 };
 
 }

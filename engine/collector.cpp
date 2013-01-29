@@ -269,25 +269,60 @@ void Collector::clearRing( GCToken *ringRoot )
 
    int64 count = 0;
    int64 mem = 0;
+   int32 prio = 0;
+
+   GCToken* prioBegin = 0;
+   GCToken* prioNow = 0;
 
    // live modules must be killed after all their data. For this reason, we must put them aside.
-   while( ring != 0 )
+   while(true)
    {
-#if FALCON_TRACE_GC
-      if( m_bTrace )
-      {
-         onDestroy( ring->m_data );
-      }
-#endif
+      TRACE( "Collector::clearRing -- priority %d", prio );
 
-      Class* cls = ring->m_cls;
-      void* data = ring->m_data;
-      mem += cls->occupiedMemory(data);
-      cls->dispose(data);
-      ++count;
-      GCToken* prev = ring;
-      ring = ring->m_next;
-      disposeToken(prev);
+      while( ring != 0 )
+      {
+   #if FALCON_TRACE_GC
+         if( m_bTrace )
+         {
+            onDestroy( ring->m_data );
+         }
+   #endif
+
+         Class* cls = ring->m_cls;
+
+         if( cls->clearPriority() <= prio )
+         {
+            void* data = ring->m_data;
+            mem += cls->occupiedMemory(data);
+            cls->dispose(data);
+            ++count;
+            GCToken* prev = ring;
+            ring = ring->m_next;
+            disposeToken(prev);
+         }
+         else {
+            // skip it now, and keep it for later.
+            if( prioBegin == 0 ) {
+               prioBegin = ring;
+               prioNow = ring;
+            }
+            else {
+               prioNow->m_next = ring;
+               prioNow = ring;
+            }
+            ring = ring->m_next;
+            prioNow->m_next = 0;
+         }
+      }
+
+      if( prioNow == 0 ) {
+         break;
+      }
+
+      ring= prioBegin;
+      prioBegin = prioNow = 0;
+      prio++;
+      TRACE( "Collector::clearRing -- found more things to collect at higher prio %d", prio );
    }
 
    m_mtx_accountmem.lock();
@@ -1262,55 +1297,78 @@ void Collector::Sweeper::sweep( uint32 lastGen )
 
    int64 freedMem = 0;
    int64 freedCount = 0;
+   int32 priority = 0;
+   int32 maxPriority = 0;
 
-   while( ring != 0 )
+   while( priority <= maxPriority )
    {
-      Class* cls = ring->cls();
-      void* data = ring->data();
-
-      if ( ! cls->gcCheckInstance(data, lastGen ) )
+      while( ring != 0 )
       {
+         Class* cls = ring->cls();
+         void* data = ring->data();
 
-#ifndef NDEBUG
-         String temp;
-         cls->describe(data, temp);
-         TRACE2( "Collector::Sweeper::sweep -- killing %s (%p) of class %s",
-                  temp.c_ize(), data, cls->name().c_ize() );
-#endif
+         if ( ! cls->gcCheckInstance(data, lastGen ) )
+         {
+            if( cls->clearPriority() > priority )
+            {
+               // skip this, we need to check this later.
+               if( cls->clearPriority() > maxPriority ) {
+                  maxPriority = cls->clearPriority();
+               }
+            }
+            else
+            {
+               // time to collect it now.
+      #ifndef NDEBUG
+               String temp;
+               cls->describe(data, temp);
+               TRACE2( "Collector::Sweeper::sweep -- killing %s (%p) of class %s",
+                        temp.c_ize(), data, cls->name().c_ize() );
+      #endif
 
-         #if FALCON_TRACE_GC
-         if( m_master->m_bTrace ) {
-            m_master->onDestroy( data );
+               #if FALCON_TRACE_GC
+               if( m_master->m_bTrace ) {
+                  m_master->onDestroy( data );
+               }
+               #endif
+
+               freedMem += ring->m_cls->occupiedMemory( data );
+               freedCount++;
+               cls->dispose( data );
+
+               // unlink the ring
+               GCToken* current = ring;
+               ring = ring->m_next;
+
+               if( current == begin ) {
+                  begin = begin->m_next;
+                  // no need to reset begin->m_prev
+               }
+               else {
+                  current->m_prev->m_next = current->m_next;
+               }
+
+               if( current == end ) {
+                  end = end->m_prev;
+                  // need to reset end->m_next in case of another priority loop.
+                  end->m_next = 0;
+               }
+               else {
+                  current->m_next->m_prev = current->m_prev;
+               }
+
+               m_master->disposeToken(current);
+            }
          }
-         #endif
-
-         freedMem += ring->m_cls->occupiedMemory( data );
-         freedCount++;
-         cls->dispose( data );
-
-         // unlink the ring
-         GCToken* current = ring;
-         ring = ring->m_next;
-
-         if( current == begin ) {
-            begin = begin->m_next;
-         }
+         // else, it's not time for collection.
          else {
-            current->m_prev->m_next = current->m_next;
+            ring = ring->m_next;
          }
-
-         if( current == end ) {
-            end = end->m_prev;
-         }
-         else {
-            current->m_next->m_prev = current->m_prev;
-         }
-
-         m_master->disposeToken(current);
       }
-      else {
-         ring = ring->m_next;
-      }
+
+      // reset the ring.
+      ring = begin;
+      ++priority;
    }
 
    // put the ring back in place.

@@ -36,7 +36,8 @@ Class::Class( const String& name ):
    m_bIsErrorClass( false ),
    m_bIsFlatInstance(false),
    m_userFlags(0),
-   m_typeID( FLC_ITEM_USER )
+   m_typeID( FLC_ITEM_USER ),
+   m_clearPriority( 0 )
 {
    m_category = e_c_class;
 }
@@ -47,7 +48,8 @@ Class::Class( const String& name, int64 tid ):
    m_bIsErrorClass( false ),
    m_bIsFlatInstance(false),
    m_userFlags(0),
-   m_typeID( tid )
+   m_typeID( tid ),
+   m_clearPriority( 0 )
 {
    m_category = e_c_class;
 }
@@ -58,7 +60,8 @@ Class::Class( const String& name, Module* module, int line, int chr ):
    m_bIsErrorClass( false ),
    m_bIsFlatInstance(false),
    m_userFlags(0),
-   m_typeID( FLC_ITEM_USER )
+   m_typeID( FLC_ITEM_USER ),
+   m_clearPriority( 0 )
 {
    m_category = e_c_class;
 }
@@ -69,7 +72,8 @@ Class::Class( const String& name, int64 tid, Module* module, int line, int chr )
    m_bIsErrorClass( false ),
    m_bIsFlatInstance(false),
    m_userFlags(0),
-   m_typeID( tid )
+   m_typeID( tid ),
+   m_clearPriority( 0 )
 {
    m_category = e_c_class;
 }

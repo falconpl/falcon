@@ -47,6 +47,7 @@ ClassModule::ClassModule():
 {
    m_getAttributeMethod.methodOf(this);
    m_setAttributeMethod.methodOf(this);
+   m_clearPriority = 3;
 }
 
 ClassModule::~ClassModule()

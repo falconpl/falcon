@@ -39,6 +39,7 @@ ClassMantra::ClassMantra():
 {
    m_getAttributeMethod.methodOf(this);
    m_setAttributeMethod.methodOf(this);
+   m_clearPriority = 1;
 }
 
 ClassMantra::ClassMantra( const String& name, int64 type ):
@@ -46,6 +47,7 @@ ClassMantra::ClassMantra( const String& name, int64 type ):
 {
    m_getAttributeMethod.methodOf(this);
    m_setAttributeMethod.methodOf(this);
+   m_clearPriority = 1;
 }
 
 

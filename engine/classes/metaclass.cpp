@@ -29,6 +29,7 @@ namespace Falcon {
 MetaClass::MetaClass():
    ClassMantra("$MetaClass", FLC_CLASS_ID_CLASS )
 {
+   m_clearPriority = 2;
 }
 
 
