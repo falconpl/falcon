@@ -246,6 +246,8 @@ void Module::gcMark( uint32 mark )
          m_modSpace->gcMark( mark );
       }
       
+      m_attributes.gcMark(mark);
+
       m_globals.gcMark(mark);
       /*
       Private::MantraMap::iterator mi = _p->m_mantras.begin();

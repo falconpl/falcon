@@ -89,6 +89,7 @@ void Mantra::gcMark( uint32 mark )
    {
       m_mark = mark;
 
+      attributes().gcMark( mark );
       if( m_module != 0 ) {
          m_module->gcMark( mark );
       }

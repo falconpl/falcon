@@ -44,6 +44,7 @@ public:
 
    uint32 size() const;
    Attribute* get( uint32 id ) const;
+   bool remove( const String& name );
 
    void store( DataWriter* stream ) const;
    void restore( DataReader* stream );
@@ -51,6 +52,7 @@ public:
    void flatten( ItemArray& subItems ) const;
    void unflatten( const ItemArray& subItems, uint32& start );
 
+   void gcMark( uint32 mark );
 private:
    class Private;
    Private* _p;

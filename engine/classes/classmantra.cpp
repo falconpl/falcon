@@ -30,17 +30,22 @@
 
 #include <falcon/modspace.h>
 #include <falcon/pseudofunc.h>
+#include <falcon/errors/accesserror.h>
 
 namespace Falcon {
 
 ClassMantra::ClassMantra():
    Class( "Mantra", FLC_ITEM_USER )
 {
+   m_getAttributeMethod.methodOf(this);
+   m_setAttributeMethod.methodOf(this);
 }
 
 ClassMantra::ClassMantra( const String& name, int64 type ):
    Class( name, type )
 {
+   m_getAttributeMethod.methodOf(this);
+   m_setAttributeMethod.methodOf(this);
 }
 
 
@@ -105,8 +110,10 @@ bool ClassMantra::hasProperty( void*, const String& prop ) const
          prop == "attributes"
          || prop == "category"
          || prop == "location"
+         || prop == "getAttribute"
          || prop == "module"
          || prop == "name"
+         || prop == "setAttribute"
          ;
 }
 
@@ -217,6 +224,10 @@ void ClassMantra::op_getProperty( VMContext* ctx, void* instance, const String& 
    {
       ctx->stackResult(1, FALCON_GC_HANDLE( new String(mantra->locate())) );
    }
+   else if( prop == "getAttribute" )
+   {
+      ctx->topData().methodize( &m_getAttributeMethod );
+   }
    else if(  prop == "module" )
    {
       if( mantra->module() != 0 ) {
@@ -231,11 +242,102 @@ void ClassMantra::op_getProperty( VMContext* ctx, void* instance, const String& 
    {
       ctx->stackResult(1, FALCON_GC_HANDLE( new String(mantra->name())) );
    }
+   else if( prop == "setAttribute" )
+   {
+      ctx->topData().methodize( &m_setAttributeMethod );
+   }
    else {
       Class::op_getProperty(ctx, instance, prop );
    }
 }
 
+
+
+//===============================================================
+// getAttribute method
+//
+ClassMantra::GetAttributeMethod::GetAttributeMethod():
+   Function("getAttribute")
+{
+   signature("S");
+   addParam("name");
+}
+
+ClassMantra::GetAttributeMethod::~GetAttributeMethod()
+{}
+
+
+void ClassMantra::GetAttributeMethod::invoke( VMContext* ctx, int32 )
+{
+   Item& self = ctx->self();
+   fassert( self.isUser() );
+
+   Item* i_name = ctx->param(0);
+   if( ! i_name->isString() )
+   {
+      ctx->raiseError(paramError());
+      return;
+   }
+
+   const String& attName = *i_name->asString();
+   Mantra* mantra = static_cast<Mantra*>(self.asInst());
+   Attribute* attr = mantra->attributes().find(attName);
+   if( attr == 0 )
+   {
+      ctx->raiseError( new AccessError( ErrorParam(e_dict_acc, __LINE__, SRC )
+            .symbol("Mantra.getAttribute")
+            .module("[core]")
+            .extra(attName) ) );
+      return;
+   }
+
+   ctx->returnFrame(attr->value());
+}
+
+ClassMantra::SetAttributeMethod::SetAttributeMethod():
+   Function("setAttribute")
+{
+   signature("S,[X]");
+   addParam("name");
+   addParam("value");
+}
+
+ClassMantra::SetAttributeMethod::~SetAttributeMethod()
+{}
+
+
+void ClassMantra::SetAttributeMethod::invoke( VMContext* ctx, int32 )
+{
+   Item& self = ctx->self();
+   fassert( self.isUser() );
+
+   Item* i_name = ctx->param(0);
+   Item* i_value = ctx->param(1);
+   if( ! i_name->isString() )
+   {
+      ctx->raiseError(paramError());
+      return;
+   }
+
+   const String& attName = *i_name->asString();
+   Mantra* mantra = static_cast<Mantra*>(self.asInst());
+
+   if( i_value == 0 )
+   {
+      mantra->attributes().remove(attName);
+   }
+   else {
+      Attribute* attr = mantra->attributes().find(attName);
+      if( attr == 0 )
+      {
+         attr = mantra->attributes().add(attName);
+      }
+
+      attr->value().assign( *i_value );
+   }
+
+   ctx->returnFrame();
+}
 
 }
 

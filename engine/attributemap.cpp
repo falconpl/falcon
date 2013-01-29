@@ -102,6 +102,30 @@ Attribute* AttributeMap::add( const String& name )
    return attrib;
 }
 
+bool AttributeMap::remove( const String& name )
+{
+   Private::AttribMap::iterator iter = _p->m_map.find(&name);
+   if( iter == _p->m_map.end() ) {
+      return false;
+   }
+
+   Attribute* attrib = iter->second;
+   uint32 id = attrib->id();
+   _p->m_map.erase(iter);
+
+   // re-id all the attributes.
+   _p->m_list.erase(_p->m_list.begin() + id );
+   for( uint32 i = id; i < _p->m_list.size(); ++ i )
+   {
+      _p->m_list[i]->id(i);
+   }
+
+   // kill the attribute
+   delete attrib;
+
+   return true;
+}
+
 
 Attribute* AttributeMap::find( const String& name ) const
 {
@@ -128,6 +152,16 @@ Attribute* AttributeMap::get( uint32 id ) const
    return _p->m_list[id];
 }
 
+
+void AttributeMap::gcMark(uint32 mark)
+{
+   Private::AttribList::iterator iter = _p->m_list.begin();
+   while( iter != _p->m_list.end() ) {
+      Attribute* a = *iter;
+      a->gcMark(mark);
+      ++iter;
+   }
+}
 
 void AttributeMap::store( DataWriter* stream ) const
 {

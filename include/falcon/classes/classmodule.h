@@ -18,11 +18,19 @@
 
 #include <falcon/setup.h>
 #include <falcon/class.h>
+#include <falcon/function.h>
 
 namespace Falcon
 {
 
-/** Class handling a whole module.
+/*#
+ * @class Module
+ * @brief Reflection of Falcon module.
+ *
+ * @prop name The logical name of the module.
+ * @prop uri A string containing the full URI where this module
+ *       is located. Can be empty if the module wasn't created
+ *       from a serialized resource.
  */
 
 class FALCON_DYN_CLASS ClassModule: public Class
@@ -56,6 +64,42 @@ public:
    
 private:
    void restoreModule( Module* mod, DataReader* stream ) const;
+
+   /*#
+    * @method getAttribute Module
+    * @brief Gets the desired attribute, if it exists.
+    * @param name The name of the required attribute
+    * @return value of the require attribute
+    * @raise Access error if the attribute is not found
+    *
+    */
+   class GetAttributeMethod: public Function {
+   public:
+      GetAttributeMethod();
+      virtual ~GetAttributeMethod();
+      void invoke( VMContext* ctx, int32 pCount = 0 );
+   };
+
+   /*#
+    * @method setAttribute Mantra
+    * @brief Sets or deletes the desired attribute if it exists
+    * @param name The name of the required attribute
+    * @optparam value The new value for the required attribute
+    *
+    * If @b value is not given, then the attribute is removed, if it exists.
+    *
+    * If @b value is given, the value is changed or created as required.
+    * In this case, if the attribute doesn't exists, it is created.
+    */
+   class SetAttributeMethod: public Function {
+   public:
+      SetAttributeMethod();
+      virtual ~SetAttributeMethod();
+      void invoke( VMContext* ctx, int32 pCount = 0 );
+   };
+
+   mutable GetAttributeMethod m_getAttributeMethod;
+   mutable SetAttributeMethod m_setAttributeMethod;
 };
 
 }
