@@ -193,6 +193,9 @@ void Log::log( int fac, int lvl, const String& message )
    }
    else {
       msg = _p->m_stringPool.back();
+      // optimal way to copy a string on a preallocated buffer.
+      msg->size(0);
+      msg->append(message);
       _p->m_stringPool.pop_back();
    }
    _p->m_mtx.unlock();
