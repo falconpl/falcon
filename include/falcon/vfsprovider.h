@@ -159,6 +159,15 @@ public:
       */
       CParams& noStream() { m_cflags |= e_cflag_nostream; return *this; }
       bool isNoStream() const { return (m_cflags & e_cflag_nostream) == e_cflag_nostream; }
+
+      CParams& rdOnly() { OParams::rdOnly(); return *this; }
+      CParams& wrOnly() { OParams::wrOnly(); return *this; }
+      CParams& rdwr() { OParams::rdwr(); return *this; }
+      CParams& append() { OParams::append(); return *this; }
+      CParams& truncate() { OParams::truncate(); return *this; }
+      CParams& shNoRead() { OParams::shNoRead(); return *this; }
+      CParams& shNoWrite() { OParams::shNoWrite(); return *this; }
+      CParams& shNone() { OParams::shNone(); return *this; }
    };
 
    inline const String& protocol() const { return m_servedProto; }
