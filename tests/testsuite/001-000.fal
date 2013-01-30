@@ -1,0 +1,13 @@
+/*
+@name Variable assignment
+
+@result Ok
+*/
+
+var = 1
+
+if var
+   return "Ok"
+end
+
+return "Fail"

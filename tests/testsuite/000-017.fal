@@ -1,0 +1,11 @@
+/*
+@name Smoke test -- Greater or equal to nega
+
+@result Ok
+*/
+
+if 0 >= 1
+   return "False"
+end
+
+return "Ok"

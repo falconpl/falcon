@@ -1,0 +1,12 @@
+/*
+@name Smoke test -- Equality negative test, vital for other tests
+
+@result Ok
+*/
+
+if 0 == 1
+   return "Fail"
+end
+
+return "Ok"
+

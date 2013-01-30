@@ -1,0 +1,11 @@
+/*
+@name Smoke test -- And expr nega 1
+
+@result Ok
+*/
+
+if 0 and 1
+   return "False"
+end
+
+return "Ok"

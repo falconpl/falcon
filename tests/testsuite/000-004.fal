@@ -1,0 +1,12 @@
+/*
+@name Smoke test -- Equality expression test, vital for other tests
+
+@result Ok
+*/
+
+if 0 == 0
+   return "Ok"
+end
+
+return "Fail"
+

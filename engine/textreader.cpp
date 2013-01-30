@@ -333,23 +333,18 @@ int TextReader::readTokenInternal( String& target, struct token* tokens, int32 t
         // use target if possible.
          if( target.size() == 0 )
          {
-            decoded = m_decoder->decode(m_buffer + m_bufPos, pos-m_bufPos,
-                                              target, maxCount - target.length(), true );
+            decoded = m_decoder->decode(m_buffer + m_bufPos, m_bufLength-m_bufPos,
+                                              target, maxCount, true );
          }
          else
          {
             // else accumulate the string.
-            decoded = m_decoder->decode(m_buffer + m_bufPos, pos-m_bufPos,
+            decoded = m_decoder->decode(m_buffer + m_bufPos, m_bufLength-m_bufPos,
                                               temp, maxCount - target.length(), true );
             target += temp;
          }
          
          m_bufPos += decoded;
-         // nothing more to add?
-         if( decoded == 0 ) {
-            // the file is over and we didn't find the token.
-            break;
-         }
       }
    }
 

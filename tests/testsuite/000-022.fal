@@ -1,0 +1,11 @@
+/*
+@name Smoke test -- Or expr posi 2
+
+@result Ok
+*/
+
+if 1 or 0
+   return "Ok"
+end
+
+return "False"

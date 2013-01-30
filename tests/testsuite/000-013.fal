@@ -1,0 +1,12 @@
+/*
+@name Smoke test -- Less or equal exp posi 2
+
+@result Ok
+*/
+
+if 0 <= 0
+   return "Ok"
+end
+
+return "False"
+

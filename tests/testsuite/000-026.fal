@@ -1,0 +1,7 @@
+/*
+@name Smoke test -- Ternary Fast IF, posi
+
+@result Ok
+*/
+
+return 1 ? "Ok" : "Fail"

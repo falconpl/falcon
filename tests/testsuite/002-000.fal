@@ -1,0 +1,27 @@
+/*
+@name Statement if -- simple
+
+@output   
+First Branch
+Else Branch
+Done
+@endoutput
+*/
+
+// First branch
+a = 1
+if a == 1 
+   > "First Branch"
+else
+   > "Else Branch"
+end
+
+// Else branch
+a = 2
+if a == 1 
+   > "First Branch"
+else
+   > "Else Branch"
+end
+
+> "Done"
