@@ -347,12 +347,14 @@ public:
 
 
    /** Run a complete garbage collection.
+    * \param wait True to wait for completion, false to return immediately.
+    * \return true if the wait is complete.
     *
     * This method orders the GC to perform a complete garbage collection loop as soon as
-    * possible, and then waits for the completion of that loop.
+    * possible, and then eventually waits for the completion of that loop.
     *
     */
-   void performGC();
+   void performGC( bool wait = true );
 
    /** Stores an entity in the garbage collector.
 
@@ -605,6 +607,7 @@ protected:
       virtual ~Marker(){}
 
       virtual void* run();
+      void onMarked( VMContext* ctx );
 
    private:
       Collector* m_master;

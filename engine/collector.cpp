@@ -47,16 +47,92 @@
 
 namespace Falcon {
 
+/*
+ * Tokens posted by entities that explicitly request for full GC markings.
+ *
+ * Full GC Marks are done by saving all the VMContests that need to be marked,
+ * and an event that is set when all the contexts are processed.
+ *
+ * \note: when a context is de-registered, all the pending mark tokens must be
+ * scanned to remove the context from them.
+ */
+class MarkToken
+{
+public:
+   typedef std::set<VMContext*> ContextSet;
+   ContextSet m_set;
+
+   Event* m_toBeSignaled;
+
+   MarkToken( Event* evt ):
+      m_toBeSignaled(evt)
+   {}
+
+   ~MarkToken()
+   {
+      ContextSet::iterator iter = m_set.begin();
+      while( iter != m_set.end() )
+      {
+         VMContext* ctx = *iter;
+         ctx->decref();
+         ++iter;
+      }
+
+      signal();
+   }
+
+
+   void signal()
+   {
+      if (m_toBeSignaled != 0 )
+      {
+         m_toBeSignaled->set();
+         m_toBeSignaled = 0;
+      }
+   }
+
+
+   void onContextProcessed( VMContext* ctx )
+   {
+      ContextSet::iterator iter = m_set.find(ctx);
+
+      if ( iter != m_set.end() )
+      {
+         m_set.erase(iter);
+         ctx->decref();
+      }
+
+      if ( m_set.empty() )
+      {
+         signal();
+      }
+   }
+};
+
+
 class Collector::Private
 {
 public:
+   // This mutex is used for all the context modify operations,
+   // - m_contexts
+   // - m_markTokens
+   // - Context related counters and variables in the main Collector class.
+   //
    Mutex m_mtx_contexts;
+
    typedef std::map<uint32, VMContext*> ContextMap;
    ContextMap m_contexts;
 
    Mutex m_mtx_markingList;
    typedef std::deque<VMContext*> MarkingList;
    MarkingList m_markingList;
+
+   // This list is modified inside the parent m_mtxRequest
+   typedef std::deque<Event*> EventList;
+   EventList m_sweepTokens;
+
+   typedef std::deque<MarkToken*> MarkTokenList;
+   MarkTokenList m_markTokens;
 
 #if FALCON_TRACE_GC
    typedef std::map<void*, Collector::DataStatus* > HistoryMap;
@@ -67,7 +143,25 @@ public:
    ~Private()
    {
       clearTrace();
+
+      EventList::iterator eli = m_sweepTokens.begin();
+      while( eli != m_sweepTokens.end() )
+      {
+         (*eli)->set();
+         ++eli;
+      }
+      m_sweepTokens.clear();
+
+      MarkTokenList::iterator mti = m_markTokens.begin();
+      while( mti != m_markTokens.end() )
+      {
+         MarkToken* mt = *mti;
+         delete mt;
+         ++mti;
+      }
+      m_markTokens.clear();
    }
+
 
    void clearTrace()
    {
@@ -98,7 +192,6 @@ Collector::Collector():
    m_sweepPerformed(false),
 
    m_aLive(1),
-   m_bRequestSweep( false ),
    m_bTrace( false ),
    m_currentMark(0),
    m_oldestMark(0),
@@ -245,6 +338,19 @@ void Collector::unregisterContext( VMContext *ctx )
 
    _p->m_mtx_contexts.lock();
    bool erased = _p->m_contexts.erase(ctx->currentMark()) != 0;
+
+   // also, be sure that we're not waiting for this context to be marked.
+   Private::MarkTokenList::iterator mti = _p->m_markTokens.begin();
+   Private::MarkTokenList::iterator mtend = _p->m_markTokens.end();
+   // notice that token lists are very rarely used.
+   while( mti != mtend )
+   {
+      MarkToken* token = *mti;
+      // we don't need to unlock even if ctx gets decreffed,
+      // as we hold a reference and we know the context won't be destroyed
+      token->onContextProcessed(ctx);
+      ++mti;
+   }
    _p->m_mtx_contexts.unlock();
 
    if( erased ) {
@@ -426,14 +532,64 @@ GCLock* Collector::storeLocked( const Class* cls, void *data )
 }
 
 
-void Collector::performGC()
+void Collector::performGC( bool wait )
 {
-   m_mtxRequest.lock();
-   m_bRequestSweep = true;
-   m_sweeperWork.set();
-   m_mtxRequest.unlock();
+   Event markEvt;
+   Event evt;
+   MarkToken markToken(&markEvt);
 
-   m_eGCPerformed.wait();
+   // push a request for all the contexts to be marked.
+   int32 count = 0;
+   _p->m_mtx_contexts.lock();
+   Private::ContextMap::iterator cti = _p->m_contexts.begin();
+   Private::ContextMap::iterator ctend = _p->m_contexts.end();
+   while( cti != ctend )
+   {
+      VMContext* ctx = cti->second;
+
+      // ask the context to be inspected asap.
+      ctx->setInspectEvent();
+      // ^^ this might send the context to the monitor, and
+      // that requires locking a mutex, check that is NEVER
+      // locked against m_mtx_contexts.
+
+      // if we don't wait, we won't post the markToken
+      if( wait )
+      {
+         ctx->incref();
+         markToken.m_set.insert(ctx);
+      }
+      ++cti;
+      count++;
+
+      // signal the marker.
+      _p->m_markTokens.push_back(&markToken);
+   }
+   _p->m_mtx_contexts.unlock();
+
+   if( wait )
+   {
+      // now we have to wait for the marking to be complete (?)
+      if( count != 0 )
+      {
+         markEvt.wait(-1);
+      }
+
+      // Ask the sweeper to notify us when it's done.
+      // The sweeper MIGHT have already done our sweep,
+      // but it will notify us never the less even if it doesn't sweep again.
+      m_mtxRequest.lock();
+      _p->m_sweepTokens.push_back(&evt);
+      m_mtxRequest.unlock();
+
+      // ask the sweeper to work a bit,
+      // so it will notify us even if it's done and currently idle.
+      m_sweeperWork.set();
+      evt.wait( -1 );
+   }
+
+   // we don't need to ask the sweeper to work if we don't wait,
+   // the marker will do if necessary and when necessary.
 }
 
 //===================================================================================
@@ -929,6 +1085,7 @@ void Collector::onMark( void* data )
    }
 }
 
+
 void Collector::onDestroy( void* data )
 {
    m_mtx_history.lock();
@@ -1114,7 +1271,7 @@ void* Collector::Monitor::run()
 
          if( perform )
          {
-            // send all the block requests.
+            // send all the blocking inspect requests to all the contexts.
             mtxContexts.lock();
             Collector::Private::ContextMap::iterator iter = contexts.begin();
             Collector::Private::ContextMap::iterator end = contexts.end();
@@ -1186,13 +1343,14 @@ void* Collector::Marker::run()
 
          // continue marking
          toMark->gcPerformMark();
+         // declare the mark is marked
+         onMarked( toMark );
 
          // send the context back to the manager.
          toMark->clearEvents();  //TODO --- really?
          toMark->setInspectible(false);
          toMark->resetInspectEvent();
          toMark->vm()->contextManager().onContextDescheduled(toMark);
-
 
          TRACE1( "Collector::Marker::run -- mark complete %d(%p) in process %d(%p)",
                                     toMark->id(), toMark, toMark->process()->id(), toMark->process() );
@@ -1236,6 +1394,24 @@ void* Collector::Marker::run()
 }
 
 
+void Collector::Marker::onMarked( VMContext* ctx )
+{
+   m_master->_p->m_mtx_contexts.lock();
+   // also, be sure that we're not waiting for this context to be marked.
+   Private::MarkTokenList::iterator mti = m_master->_p->m_markTokens.begin();
+   Private::MarkTokenList::iterator mtend = m_master->_p->m_markTokens.end();
+   // notice that token lists are very rarely used.
+   while( mti != mtend )
+   {
+      MarkToken* token = *mti;
+      // we don't need to unlock even if ctx gets decreffed,
+      // as we hold a reference and we know the context won't be destroyed
+      token->onContextProcessed(ctx);
+      ++mti;
+   }
+   m_master->_p->m_mtx_contexts.unlock();
+}
+
 //==========================================================================================
 // Marker
 //
@@ -1246,6 +1422,9 @@ void* Collector::Sweeper::run()
 
    uint32 lastSweepMark = 0;
    Mutex& mtxContexts = m_master->_p->m_mtx_contexts;
+   Collector::Private::EventList& sweepTokens = m_master->_p->m_sweepTokens;
+
+   std::deque<Event*> toBeSignaled;
 
    while( atomicFetch(m_master->m_aLive) )
    {
@@ -1255,18 +1434,40 @@ void* Collector::Sweeper::run()
       mtxContexts.lock();
       if( m_master->m_oldestMark != lastSweepMark ) {
          lastSweepMark = m_master->m_oldestMark;
-         bPerform = true;
+         if( lastSweepMark > 1 )
+         {
+            bPerform = true;
+         }
+
+         // we want to signal even if we don't perform.
+         if( ! sweepTokens.empty() )
+         {
+            toBeSignaled = sweepTokens;
+            sweepTokens.clear();
+         }
       }
       mtxContexts.unlock();
 
-      if( bPerform && lastSweepMark > 1 ) {
+      // should we perform sweep?
+      if( bPerform )
+      {
          sweep( lastSweepMark );
       }
+
+      // signal the waiters that we're done.
+      std::deque<Event*>::iterator signal_iter = toBeSignaled.begin();
+      while( signal_iter != toBeSignaled.end() ) {
+         Event* evt = *signal_iter;
+         evt->set();
+         ++signal_iter;
+      }
+      toBeSignaled.clear();
    }
 
    MESSAGE( "Collector::Sweeper::run -- stopping" );
    return 0;
 }
+
 
 void Collector::Sweeper::sweep( uint32 lastGen )
 {
@@ -1387,9 +1588,6 @@ void Collector::Sweeper::sweep( uint32 lastGen )
    m_master->onSweepComplete( freedMem, freedCount );
 }
 
-
 }
 
 /* end of collector.cpp */
-
-

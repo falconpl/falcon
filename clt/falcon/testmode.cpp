@@ -141,6 +141,12 @@ void TestMode::testAll()
    {
       ScriptData* sd = iter->second;
       test( sd );
+
+      // perform a full GC
+      log->log( Log::fac_app, Log::lvl_detail, String( "Starting full GC." ) );
+      Engine::instance()->collector()->performGC(true);
+      log->log( Log::fac_app, Log::lvl_info, String( "Full GC complete." ) );
+
       reportTest(sd);
       ++iter;
    }
