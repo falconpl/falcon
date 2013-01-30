@@ -345,6 +345,11 @@ int TextReader::readTokenInternal( String& target, struct token* tokens, int32 t
          }
          
          m_bufPos += decoded;
+         // nothing more to add?
+         if( decoded == 0 ) {
+            // the file is over and we didn't find the token.
+            break;
+         }
       }
    }
 
