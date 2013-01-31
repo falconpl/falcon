@@ -94,7 +94,8 @@ private:
       state_operator,
       state_membuf,
       state_membuf2,
-      state_membuf3
+      state_membuf3,
+      state_sym_dot
    } t_state;
 
    t_state m_state;

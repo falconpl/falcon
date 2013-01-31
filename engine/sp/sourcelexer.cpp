@@ -894,9 +894,14 @@ Parsing::TokenInstance* SourceLexer::nextToken()
                   m_text.size(0);
                   break;
                }
-               
-               // namespace check
-               else if( chr != '.' || ! isNameSpace( m_text ) )
+               // namespace check (NAMESPACE. or x..)
+               else if ( chr == '.' )
+               {
+                  m_state = state_sym_dot;
+                  break;
+               }
+               // A normal symbol
+               else
                {
                   unget(chr);
                   resetState();
@@ -904,6 +909,25 @@ Parsing::TokenInstance* SourceLexer::nextToken()
                }
             }
             m_text.append( chr );
+            break;
+
+         case state_sym_dot:
+            if( chr != '.' )
+            {
+               unget(chr);
+               // if the current word is not a namespace...
+               if( ! isNameSpace( m_text ) )
+               {
+                  // send the word and add a '.' as next token
+                  _p->m_nextTokens.push_back( parser->T_Dot.makeInstance(m_sline, m_schr-1) );
+
+                  resetState();
+                  return checkWord();
+               }
+            }
+            // go back to "name" acceptance, and add "." in place of ".."
+            m_state = state_name;
+            m_text.append( '.' );
             break;
 
          case state_operator:

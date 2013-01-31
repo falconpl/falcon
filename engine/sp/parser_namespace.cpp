@@ -62,7 +62,6 @@ void apply_namespace( const Rule&, Parser& p )
    
    static_cast<SourceLexer*>(p.currentLexer())->addNameSpace( *ns );
    
-   // TODO: Add the namespace.
    p.simplify(3);
 }
 
