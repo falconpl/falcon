@@ -47,6 +47,7 @@ template<class datatype__>
 void VMContext::LinearStack<datatype__>::init( int base )
 {
    m_base = (datatype__*) malloc( INITIAL_STACK_ALLOC * sizeof(datatype__) );
+   memset(m_base, 0, INITIAL_STACK_ALLOC * sizeof(datatype__));
    m_top = m_base + base;
    m_max = m_base + INITIAL_STACK_ALLOC;
 }
@@ -88,7 +89,7 @@ VMContext::VMContext( Process* prc, ContextGroup* grp ):
    m_dynsStack.init();
    m_codeStack.init();
    m_callStack.init();
-   m_dataStack.init(0, m_dataStack.INITIAL_STACK_ALLOC*1000);
+   m_dataStack.init(0, m_dataStack.INITIAL_STACK_ALLOC);
    m_finallyStack.init();
    m_waiting.init();
 
@@ -1308,56 +1309,87 @@ void VMContext::defineSymbol( Symbol* sym)
 
 Item* VMContext::resolveSymbol( const Symbol* dyns, bool forAssign )
 {
+   TRACE1( "VMContext::resolveSymbol -- resolving %s symbol \"%s\"%s",
+            (dyns->isGlobal() ? "global": "local"),
+            dyns->name().c_ize(),
+            (forAssign ? " (for assign)": " (for access)") );
+
    static Symbol* baseSym = Engine::instance()->baseSymbol();
 
    // search for the dynsymbol in the current context.
    const CallFrame* cf = &currentFrame();
    register DynsData* dd = m_dynsStack.m_top;
 
-   // search resolved symbols.
-   if( forAssign )
+   // search resolved symbols in current frame.
+   // when is forassign, we must stop at topmost symbol base.
+   register DynsData* dbase = m_dynsStack.m_base + cf->m_dynsBase;
+   while( dd >= dbase )
    {
-      // when is forassign, we must stop at topmost symbol base.
-      register DynsData* dbase = m_dynsStack.m_base + cf->m_dynsBase;
-      while( dd >= dbase )
+      // found?
+      if ( dyns == dd->m_sym ) {
+         TRACE2( "VMContext::resolveSymbol -- \"%s\" already resolved as %p", dyns->name().c_ize(), dd->m_value );
+         return dd->m_value;
+      }
+      // arrived at a local base?
+      if ( baseSym == dd->m_sym )
       {
-         // found?
-         if ( dyns == dd->m_sym ) {
-            return dd->m_value;
-         }
-         // arrived at a local base?
-         if ( baseSym == dd->m_sym )
-         {
-            // in the end, we must create a new assignable slot.
-            // notice that evaluation parametersa are above the base symbol.
-            DynsData* newSlot = m_dynsStack.addSlot();
-            newSlot->m_sym = dyns;
-            newSlot->m_internal.setNil();
-            newSlot->m_value = &newSlot->m_internal;
-            return newSlot->m_value;
-         }
-
-         --dd;
+         // in the end, we must create a new assignable slot.
+         // notice that evaluation parameters are above the base symbol.
+         DynsData* newSlot = m_dynsStack.addSlot();
+         newSlot->m_sym = dyns;
+         newSlot->m_internal.setNil();
+         newSlot->m_value = &newSlot->m_internal;
+         TRACE2( "VMContext::resolveSymbol -- \"%s\" went down to a local base, creating new.", dyns->name().c_ize() );
+         return newSlot->m_value;
       }
+
+      --dd;
    }
-   else
+
+   // if we're here, we didn't find it -- it might be an unresolved local variable...
+   const String& name = dyns->name();
+   Variable* lvar = cf->m_function->variables().find(name);
+   if( lvar != 0 )
    {
-      // when not for assignment, we go down the whole current context.
-      register DynsData* dbase = m_dynsStack.m_base;
-      while( dd >= dbase ) {
-         // found?
-         if ( dyns == dd->m_sym ) {
-            return dd->m_value;
+      Item* resolved = 0;
+      switch( lvar->type() ) {
+      case Variable::e_nt_closed:
+         if( cf->m_closure != 0 )
+         {
+            resolved = cf->m_closure->get(name);
          }
+         break;
 
-         --dd;
+      case Variable::e_nt_local:
+         if( forAssign )
+         {
+            resolved = local(lvar->id());
+         }
+         break;
+
+      case Variable::e_nt_param:
+         resolved = param(lvar->id());
+         break;
+
+      default:
+         fassert2( false, "Shouldn't have this in a function" );
+         break;
       }
 
-      // and if not found, we search in locals, parameters or globals.
+      if( resolved != 0 )
+      {
+         DynsData* newSlot = m_dynsStack.addSlot();
+         newSlot->m_sym = dyns;
+         newSlot->m_internal.setNil();
+         newSlot->m_value = resolved;
+         TRACE2( "VMContext::resolveSymbol -- \"%s\" Found in locals as %p (%s)",
+                  dyns->name().c_ize(), resolved, resolved->describe().c_ize() );
+         return resolved;
+      }
    }
-   
-   // No luck at all; try to resolve the variable.
-   Item* var = resolveVariable( dyns->name(), dyns->isGlobal(), forAssign );
+
+   // No luck at all; try to resolve the variable in the global arena
+   Item* var = resolveVariable( dyns->name(), true, forAssign );
 
    DynsData* newSlot;
 
@@ -1376,6 +1408,8 @@ Item* VMContext::resolveSymbol( const Symbol* dyns, bool forAssign )
       newSlot = m_dynsStack.addSlot();
       var = &newSlot->m_internal;
       var->setNil();
+      TRACE2( "VMContext::resolveSymbol -- \"%s\" Not found, creating new.",
+               dyns->name().c_ize() );
    }
    else {
       newSlot = m_dynsStack.addSlot();
@@ -1383,7 +1417,10 @@ Item* VMContext::resolveSymbol( const Symbol* dyns, bool forAssign )
    
    newSlot->m_sym = dyns;
    newSlot->m_value = var;
-   
+
+   TRACE2( "VMContext::resolveSymbol -- \"%s\" Resolved as new/global/extern %p (%s)",
+            dyns->name().c_ize(), var, var->describe().c_ize() );
+
    return var;
 }
 
@@ -1635,6 +1672,28 @@ void VMContext::awake()
    m_bSleeping = false;
    m_mtx_sleep.unlock();
 }
+
+
+void VMContext::onStackRebased( Item* oldBase )
+{
+   TRACE( "VMContext::onStackRebased %p -> %p", oldBase, m_dataStack.m_base );
+
+   // rebase the dynsym satack.
+   Item* newBase = m_dataStack.m_base;
+   Item* oldTop = oldBase + (m_dataStack.m_top - newBase);
+
+   DynsData* dt = m_dynsStack.m_base;
+   DynsData* endDt = m_dynsStack.m_top;
+
+   while( dt <= endDt )
+   {
+      if( dt->m_value >= oldBase && dt->m_value <= oldTop ) {
+         dt->m_value = newBase + (dt->m_value - oldBase);
+      }
+      ++dt;
+   }
+}
+
 
 }
 

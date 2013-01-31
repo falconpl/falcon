@@ -30,6 +30,8 @@
 #include <falcon/refcounter.h>
 #include <falcon/process.h>
 
+#include <string.h>
+
 namespace Falcon {
 
 class VMachine;
@@ -216,24 +218,34 @@ public:
     */
    inline void pushData( const Item& data ) {
       ++m_dataStack.m_top;
-      *m_dataStack.m_top = data;
-      /*
       if( m_dataStack.m_top >= m_dataStack.m_max )
       {
-         Item temp = data;
+         Item temp;
+         temp.copy(data);
+         Item* base = m_dataStack.m_base;
          m_dataStack.more();
          *m_dataStack.m_top = temp;
+         onStackRebased( base );
       }
       else {
-         *m_dataStack.m_top = data;
+         m_dataStack.m_top->copy(data);
       }
-      */
    }
    inline void pushDataLocked( const Item& data ) {
       ++m_dataStack.m_top;
-      data.lock();
-      *m_dataStack.m_top = data;
-      data.unlock();
+      if( m_dataStack.m_top >= m_dataStack.m_max )
+      {
+         // = locks
+         Item temp = data;
+         Item* base = m_dataStack.m_base;
+         m_dataStack.more();
+         *m_dataStack.m_top = temp;
+         onStackRebased( base );
+      }
+      else {
+         // = locks
+         *m_dataStack.m_top = data;
+      }
    }
 
    /** Add more variables on top of the stack.
@@ -241,36 +253,28 @@ public:
     The resulting values will be nilled.
     */
    inline void addLocals( size_t count ) {
-      Item* base = m_dataStack.m_top+1;
+      Item* base = m_dataStack.m_top;
       m_dataStack.m_top += count;
-      /*
       if( m_dataStack.m_top >= m_dataStack.m_max )
       {
+         Item* old = m_dataStack.m_base;
          m_dataStack.more();
+         onStackRebased( old );
+
          base = m_dataStack.m_top - count;
       }
-       */
-      while( base <= m_dataStack.m_top )
-      {
-         base->setNil();
-         ++base;
-      }
+
+      memset( base+1, 0, count * sizeof(Item) );
    }
 
    
    /** Add more variables on top of the stack -- without initializing them to nil.
     \param count Number of variables to be added.
 
-    This is like addLocals, but doesn't nil the newly created variables.
+    Now an alias to addLocals
     */
    inline void addSpace( size_t count ) {
-      m_dataStack.m_top += count;
-      /*
-      if( m_dataStack.m_top >= m_dataStack.m_max )
-      {
-         m_dataStack.more();
-      }
-      */
+      addLocals( count );
    }
 
    /** Insert some data at some point in the stack.
@@ -1459,7 +1463,7 @@ protected:
    class LinearStack
    {
    public:
-      static const int INITIAL_STACK_ALLOC = 512;
+      static const int INITIAL_STACK_ALLOC = 256;
       static const int INCREMENT_STACK_ALLOC = 256;
       uint32 m_allocSize;
       
@@ -1501,9 +1505,16 @@ protected:
          long newSize = (long)(m_max - m_base + INCREMENT_STACK_ALLOC);
          TRACE("Reallocating %p: %d -> %ld", m_base, (int)(m_max - m_base), newSize );
 
-         m_base = (datatype__*) realloc( m_base, newSize * sizeof(datatype__) );
+         datatype__* mem = (datatype__*) realloc( m_base, newSize * sizeof(datatype__) );
+         if( mem == 0 )
+         {
+            throw "No more mem";
+         }
+         m_base = mem;
          m_top = m_base + distance;
          m_max = m_base + newSize;
+         // More is done after moving top, but before using it.
+         memset( m_top, 0, (m_max - m_top) * sizeof(datatype__) );
       }
 
 
@@ -1583,6 +1594,8 @@ private:
 
    virtual ~VMContext();
    FALCON_REFERENCECOUNT_DECLARE_INCDEC(VMContext)
+
+   void onStackRebased( Item* oldBase );
 };
 
 }
