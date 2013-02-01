@@ -802,7 +802,19 @@ void Collector::rollover()
    m_currentMark = baseMark-1;  // ok even if 0, currentMark is pre-advanced
    _p->m_mtx_contexts.unlock();
 
-   TRACE("Collector::rollover -- marked %d contexts", baseMark-1);
+   TRACE("Collector::rollover -- marked %d contexts -- notifying sweeper", baseMark-1);
+
+   // prior letting the marker to proceed, we must be sure that the sweeper
+   // aknowledges the change.
+   Event evt;
+   m_mtxRequest.lock();
+   _p->m_sweepTokens.push_back(&evt);
+   m_mtxRequest.unlock();
+
+   m_sweeperWork.set();
+   evt.wait( -1 );
+
+   MESSAGE("Collector::rollover -- sweeper notified");
 }
 
 
