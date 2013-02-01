@@ -42,7 +42,6 @@ private:
    void handleStaticInterpolated( const String &str, VMContext *ctx ) const;
    void handleDynamicInterpolated( const String &str, VMContext *ctx ) const;
 
-
    class FALCON_DYN_CLASS PStepIPolData: public PStep
    {
    public:

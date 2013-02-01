@@ -28,6 +28,7 @@ class TreeStep;
 class Item;
 class VMContext;
 class Symbol;
+class Format;
 
 /** Data for string interpolation.
 
@@ -82,11 +83,12 @@ public:
 
       t_type m_type;
       String m_def;
-      String m_format;
+      Format* m_format;
+
       TreeStep *m_compiled;
       Symbol* m_symbol;
 
-      Slice( t_type t, const String& def, const String& format = "", TreeStep* comp = 0 );
+      Slice( t_type t, const String& def, Format* format = 0, TreeStep* comp = 0 );
       Slice( const Slice& other );
       ~Slice();
    };

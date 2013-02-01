@@ -191,6 +191,7 @@ add_library(falcon_engine SHARED
   classes/classcomposition.cpp
   classes/classdict.cpp
   classes/classerror.cpp
+  classes/classformat.cpp
   classes/classfunction.cpp
   classes/classint.cpp
   classes/classgeneric.cpp

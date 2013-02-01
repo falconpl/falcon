@@ -24,6 +24,7 @@ namespace Falcon {
 
 class ClassUser;
 class Item;
+class Error;
 
 class FALCON_DYN_CLASS Property
 {
@@ -40,6 +41,8 @@ public:
    bool isCarried() const { return m_bCarried; }
 
    void checkType( bool ok, const String& required );
+
+   Error* readOnlyError() const;
 private:
    String m_name;
    ClassUser* m_owner;

@@ -25,6 +25,7 @@
 #include <falcon/dyncompiler.h>
 #include <falcon/syntree.h>
 #include <falcon/symbol.h>
+#include <falcon/format.h>
 
 #include <vector>
 
@@ -41,7 +42,6 @@ public:
    // true if the compiled slices are ours.
    bool m_ownCompiled;
 
-
    class PStepFormatter: public PStep
    {
    public:
@@ -49,9 +49,16 @@ public:
       virtual ~PStepFormatter() {}
       static void apply_( const PStep*, VMContext* ctx )
       {
-         // for now, do nothing
-         ctx->topData().copy(FALCON_GC_HANDLE(new String("Now nothing")));
+         Item ivalue(ctx->opcodeParam(0));
+         Item& iformat = ctx->opcodeParam(1);
+
+         fassert( iformat.asClass() == Engine::instance()->formatClass() );
+
+         Format* fmt = static_cast<Format*>(iformat.asInst());
+         ctx->popData(2);
          ctx->popCode();
+
+         fmt->opFormat(ctx, ivalue );
       }
       virtual void describeTo( String& desc , int ) const
       {
@@ -388,7 +395,8 @@ StrIPolData::t_parse_result StrIPolData::parse( const String& source, int& failP
                fail = true;
             }
             else {
-               list.back()->m_format = format;
+               list.back()->m_format = new Format;
+               list.back()->m_format->parse(format);
                state = e_basic;
                parCount = 0;
             }
@@ -520,23 +528,23 @@ void StrIPolData::describe( String& target ) const
 
          case Slice::e_t_symbol:
             target += '$';
-            if( sl->m_format.size() == 0 )
+            if( sl->m_format == 0 )
             {
                target += "(" + sl->m_def + ")";
             }
             else {
-               target += "(" + sl->m_def + ":" + sl->m_format + ")";
+               target += "(" + sl->m_def + ":" + sl->m_format->originalFormat() + ")";
             }
             break;
 
          case Slice::e_t_expr:
             target += '$';
-            if( sl->m_format.size() == 0 )
+            if( sl->m_format == 0 )
             {
                target += "{" +  sl->m_def + "}";
             }
             else {
-               target += "({" + sl->m_def + "}:" + sl->m_format + ")";
+               target += "({" + sl->m_def + "}:" + sl->m_format->originalFormat() + ")";
             }
             break;
          }
@@ -664,12 +672,12 @@ bool StrIPolData::prepareStep( VMContext* ctx , uint32 id )
       Item* value = ctx->resolveSymbol(slice->m_symbol, false);
       fassert( value != 0 );
 
-      if( slice->m_format.size() != 0 )
+      if( slice->m_format != 0 )
       {
          ctx->pushCode(&_p->m_pStepFormatter);
          // the format string is in us, and we're alive as we're below in the data stack,
          // there's no need to garbage the string.
-         ctx->pushData( Item(slice->m_format.handler(), &slice->m_format) );
+         ctx->pushData( Item(slice->m_format->handler(), slice->m_format) );
          ctx->pushData(*value);
       }
       else
@@ -687,12 +695,12 @@ bool StrIPolData::prepareStep( VMContext* ctx , uint32 id )
    }
    else {
       // it's an expression.
-      if( slice->m_format.size() != 0 )
+      if( slice->m_format != 0 )
       {
          ctx->pushCode(&_p->m_pStepFormatter);
          // the format string is in us, and we're alive as we're below in the data stack,
          // there's no need to garbage the string.
-         ctx->pushData( Item(slice->m_format.handler(), &slice->m_format) );
+         ctx->pushData( Item(slice->m_format->handler(), slice->m_format) );
       }
       else {
          ctx->pushCode(&_p->m_pStepStringifier);
@@ -735,19 +743,20 @@ bool StrIPolData::prepareStep( VMContext* ctx , uint32 id )
 
 //==============================================================================
 //
-StrIPolData::Slice::Slice( t_type t, const String& def, const String& format, TreeStep* comp ):
+StrIPolData::Slice::Slice( t_type t, const String& def, Format* format, TreeStep* comp ):
    m_type(t),
    m_def(def),
    m_format(format),
    m_compiled(comp),
    m_symbol(0)
 {
+
 }
 
 StrIPolData::Slice::Slice( const Slice& other ):
    m_type(other.m_type),
    m_def(other.m_def),
-   m_format(other.m_format),
+   m_format(0),
    m_compiled(0),
    m_symbol(0)
 {
@@ -755,11 +764,17 @@ StrIPolData::Slice::Slice( const Slice& other ):
    {
       m_compiled = other.m_compiled->clone();
    }
+
+   if( other.m_format != 0 )
+   {
+      m_format = other.m_format->clone();
+   }
 }
 
 StrIPolData::Slice::~Slice()
 {
    delete m_compiled;
+   delete m_format;
    if( m_symbol != 0 )
    {
       m_symbol->decref();

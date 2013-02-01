@@ -22,6 +22,7 @@
 #include <falcon/classes/classuser.h>
 
 #include <falcon/errors/paramerror.h>
+#include <falcon/errors/accesserror.h>
 
 namespace Falcon {
 
@@ -50,6 +51,12 @@ void Property::checkType( bool ok, const String& required )
    }
 }
 
+Error* Property::readOnlyError() const
+{
+   Error* error = new AccessError( ErrorParam(e_prop_ro) );
+   error->extraDescription(name());
+   return error;
+}
 //===================================================================
 // PropertyCarried
 //

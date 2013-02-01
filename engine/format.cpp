@@ -53,7 +53,13 @@ void Format::reset()
    m_negFormat = e_minusFront;
    m_numFormat = e_decimal;
    m_nilFormat = e_nilNil;
-   m_posOfObjectFmt = String::npos;
+}
+
+
+Class* Format::handler()
+{
+   static Class* cls = Engine::instance()->formatClass();
+   return cls;
 }
 
 
@@ -201,13 +207,6 @@ bool Format::parse( const String &fmt )
 
                case 'n':
                   state = e_sNilMode;
-               break;
-
-               case '|':
-                  m_posOfObjectFmt = pos;
-                  m_convType = e_tStr;
-                  // complete parsing
-                  pos = len;
                break;
 
                case '+':
@@ -694,25 +693,7 @@ Format::t_format_result Format::format( const Item &source, String &target )
          break;
 
          default:
-            /*
-            // try to format the object
-            if( cls->op_get)
-            if( vm != 0 )
-            {
-               if( m_posOfObjectFmt != String::npos )
-               {
-                  vm->itemToString( sBuffer, &source, m_originalFormat.subString( m_posOfObjectFmt + 1 ) );
-               }
-               else {
-                  vm->itemToString( sBuffer, &source );
-               }
-            }
-            else {
-               return processMismatch( vm, source, target );
-            }
-            */
-
-            applyPad( sBuffer );
+            return e_fr_deep;
          }
       }
       break;
@@ -720,7 +701,12 @@ Format::t_format_result Format::format( const Item &source, String &target )
    }
 
    // out of bounds?
-   if ( m_size > 0 && m_fixedSize && sBuffer.length() > m_size ) {
+   if ( m_size > 0 && m_fixedSize && sBuffer.length() > m_size )
+   {
+      String temp;
+      temp.append(m_paddingChr);
+      target.append( temp.replicate(m_fixedSize) );
+
       return e_fr_toolong;
    }
 
@@ -806,20 +792,7 @@ Format::t_format_result Format::tryConvertAndFormat( const Item &source, String 
 
    // try a basic string conversion
    String temp;
-   /*
-   if( vm != 0 )
-   {
-      if( m_posOfObjectFmt != String::npos )
-      {
-         vm->itemToString( temp, &source, originalFormat().subString( m_posOfObjectFmt + 1 ) );
-      }
-      else
-         vm->itemToString( temp, &source );
-   }
-   else {
-   */
-      source.describe( temp );
-   //}
+   source.describe( temp );
 
    // If conversion was numeric, try to to reformat the thing into a number
    if( m_convType == e_tNum )
@@ -1095,6 +1068,46 @@ Format *Format::clone() const
    return new Format( this->originalFormat() );
 }
 
+
+bool Format::opFormat( VMContext* ctx, const Item& source )
+{
+   String* resString = new String;
+   t_format_result result = format( source, *resString );
+
+   if( result == e_fr_deep )
+   {
+      ctx->pushData(source);
+      Class* cls = 0;
+      void* data = 0;
+      source.asClassInst(cls, data);
+
+      ctx->pushCode( &m_stepPostRender );
+      cls->op_toString( ctx, data );
+
+      return true;
+   }
+   else {
+      ctx->pushData( FALCON_GC_HANDLE(resString) );
+   }
+
+   // we didn't go deep.
+   return false;
+}
+
+
+void Format::PStepPostRender::apply_( const PStep* ps, VMContext* ctx )
+{
+   const PStepPostRender* self = static_cast<const PStepPostRender*>(ps);
+   const Item& istr = ctx->topData();
+   fassert( istr.isString() );
+
+   if( istr.isString() )
+   {
+      self->m_owner->applyPad(*istr.asString());
+   }
+   ctx->popCode();
+
+}
 }
 
 /* end of format.cpp */

@@ -1415,6 +1415,11 @@ public:
     */
    Error* runtimeError( int id, const String& extra = "", int line = 0 );
 
+   /**
+    * Adds information about the currently executed context.
+    */
+   void contestualize(Error* error);
+
 protected:
 
    /** Class holding the dynamic symbol information on a stack. */

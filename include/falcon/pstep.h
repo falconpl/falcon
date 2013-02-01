@@ -191,6 +191,37 @@ private:
 
 }
 
+
+#define FALCON_DECLARE_INTERNAL_PSTEP( name ) \
+      class PStep ## name : public PStep\
+      {\
+      public:\
+         PStep ## name(){apply = apply_;}\
+         virtual ~PStep ## name() {}\
+         static void apply_( const PStep*, VMContext* ctx );\
+         virtual void describeTo( String& desc , int ) const\
+         {\
+            desc = #name;\
+         }\
+      };\
+      PStep ## name m_step ## name ;
+
+#define FALCON_DECLARE_INTERNAL_PSTEP_OWNED( name, ownerclass ) \
+      class PStep ## name : public PStep\
+      {\
+      public:\
+         PStep ## name( ownerclass* owner): m_owner(owner) {apply = apply_;}\
+         virtual ~ PStep ## name() {}\
+         static void apply_( const PStep*, VMContext* ctx );\
+         virtual void describeTo( String& desc , int ) const\
+         {\
+            desc = #ownerclass "::" #name;\
+         }\
+         private:\
+         ownerclass* m_owner;\
+      };\
+      PStep ## name m_step ## name ;
+
 #endif
 
 /* end of pstep.h */

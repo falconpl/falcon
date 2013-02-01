@@ -407,6 +407,17 @@ public:
     */
    ClassShared* sharedClass() const;
 
+   /** Returns the global instance of the FormatClass class.
+   \return the Engine instance of the FormatClass handler.
+
+    Method init() must have been called before.
+
+    @note This method will assert and terminate the program if compiled in debug mode
+    in case the engine has not been initialized. In release, it will just
+    return a null pointer.
+    */
+   Class* formatClass() const;
+
    /** Returns the global instance of the ModuleClass class.
    \return the Engine instance of the ModuleClass handler.
 
@@ -594,6 +605,7 @@ protected:
    Class* m_mantraClass;
    Class* m_synFuncClass;
    Class* m_genericClass;
+   Class* m_formatClass;
 
    ClassRawMem* m_rawMemClass;
    ClassShared* m_sharedClass;

@@ -1577,10 +1577,24 @@ Error* VMContext::runtimeError( int id, const String& extra, int line )
       line = currentCode().m_step->sr().line();
    }
 
-   return new CodeError( ErrorParam(id, line, *modName )
+   CodeError* error = new CodeError( ErrorParam(id, line, *modName )
             .origin(ErrorParam::e_orig_runtime)
             .symbol( curFunc->name() )
             .extra( extra ) );
+
+   return error;
+}
+
+void VMContext::contestualize( Error* error )
+{
+   String noname;
+   Function* curFunc = currentFrame().m_function;
+   const String* modName = curFunc->module() == 0 ? &noname : &curFunc->module()->name();
+   int line = currentCode().m_step->sr().line();
+
+   error->line(line);
+   error->module(*modName);
+   error->symbol( curFunc->name() );
 }
 
 void VMContext::gcStartMark( uint32 mark )

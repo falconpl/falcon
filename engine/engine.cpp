@@ -77,6 +77,7 @@
 #include <falcon/classes/classarray.h>
 #include <falcon/classes/classdict.h>
 #include <falcon/classes/classgeneric.h>
+#include <falcon/classes/classformat.h>
 #include <falcon/classes/classnumeric.h>
 #include <falcon/classes/classmantra.h>
 #include <falcon/classes/classmethod.h>
@@ -261,6 +262,7 @@ Engine::Engine()
    m_mantraClass = new ClassMantra;
    m_synFuncClass = new ClassSynFunc;
    m_genericClass = new ClassGeneric;
+   m_formatClass = new ClassFormat;
    m_sharedClass = new ClassShared;
    
    // Notice: rawMem is not reflected, is used only in extensions.
@@ -331,6 +333,7 @@ Engine::Engine()
    addMantra( m_mantraClass ); 
    addMantra( m_synFuncClass );
    addMantra( m_genericClass );
+   addMantra( m_formatClass );
    addMantra( m_rangeClass  );
    addMantra( m_sharedClass );
 
@@ -874,6 +877,12 @@ ClassShared* Engine::sharedClass() const
 {
    fassert( m_instance != 0 );
    return m_instance->m_sharedClass;
+}
+
+Class* Engine::formatClass() const
+{
+   fassert( m_instance != 0 );
+   return m_instance->m_formatClass;
 }
 
 Class* Engine::moduleClass() const
