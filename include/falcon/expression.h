@@ -272,17 +272,21 @@ protected:
 //
 
 #define FALCON_UNARY_EXPRESSION_CLASS_DECLARATOR( class_name, handler ) \
+         FALCON_UNARY_EXPRESSION_CLASS_DECLARATOR_EX( class_name, handler, )
+
+#define FALCON_UNARY_EXPRESSION_CLASS_DECLARATOR_EX( class_name, handler, extend_constructor ) \
    inline class_name( Expression* op1, int line=0, int chr=0 ): \
-            UnaryExpression( op1, line, chr ) { FALCON_DECLARE_SYN_CLASS( handler ); apply = apply_;} \
+            UnaryExpression( op1, line, chr ) { FALCON_DECLARE_SYN_CLASS( handler ); apply = apply_; extend_constructor} \
    inline class_name(int line=0, int chr=0): \
-            UnaryExpression(line,chr) { FALCON_DECLARE_SYN_CLASS( handler );  apply = apply_; }\
+            UnaryExpression(line,chr) { FALCON_DECLARE_SYN_CLASS( handler );  apply = apply_; extend_constructor }\
    inline class_name( const class_name& other ):\
-            UnaryExpression( other ) {FALCON_DECLARE_SYN_CLASS( handler ); apply = apply_;} \
+            UnaryExpression( other ) {FALCON_DECLARE_SYN_CLASS( handler ); apply = apply_; extend_constructor} \
    inline ~class_name() {}\
    inline virtual class_name* clone() const { return new class_name( *this ); } \
    virtual bool simplify( Item& value ) const; \
    static void apply_( const PStep*, VMContext* ctx ); \
    virtual void describeTo( String&, int depth = 0 ) const;
+
 
 #define FALCON_BINARY_EXPRESSION_CLASS_DECLARATOR( class_name, handler ) \
    FALCON_BINARY_EXPRESSION_CLASS_DECLARATOR_EX( class_name, handler, )

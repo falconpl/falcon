@@ -22,16 +22,16 @@
 namespace Falcon
 {
 
-/** Class handling GenericItem subclasses.
+/** Class handling GenericData subclasses.
  
  The Class-Data pair can easily handle heterogeneous objects and arbitrary
  data coming from outside the Falcon engine. However, not all the data requires
  to be that flexible. 
  
- This class handles a hierarchy of "generic" objects that share the same GenericItem
+ This class handles a hierarchy of "generic" objects that share the same GenericData
  base class. When the item doesn't require particular specific management,
  but it just requires to be shared with the engine through common and simple rules,
- and it is possible to inherit the object from the GenericItem base class, then
+ and it is possible to inherit the object from the GenericData base class, then
  using this handler class can be a correct solution.
  
  \note Do not use this class if you need to access object properties, or to

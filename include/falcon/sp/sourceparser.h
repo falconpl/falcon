@@ -90,6 +90,7 @@ public:
    Parsing::Terminal T_Dollar;
    Parsing::Terminal T_Amper;
    Parsing::Terminal T_NumberSign;
+   Parsing::Terminal T_At;
    Parsing::Terminal T_Power;
    Parsing::Terminal T_Times;
    Parsing::Terminal T_Divide;
@@ -381,6 +382,7 @@ public:
    Parsing::Rule r_Expr_deoob;
    Parsing::Rule r_Expr_xoob;
    Parsing::Rule r_Expr_isoob;
+   Parsing::Rule r_Expr_str_ipol;
 
    Parsing::Rule r_Expr_expr_evalret;
    Parsing::Rule r_Expr_expr_evalret_exec;

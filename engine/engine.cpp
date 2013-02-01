@@ -37,6 +37,8 @@
 //--- standard transcoder headers ---
 
 #include <falcon/tc/transcoderc.h>
+#include <falcon/tc/transcoderf16.h>
+#include <falcon/tc/transcoderf32.h>
 #include <falcon/tc/transcoderutf8.h>
 
 //--- core function headers ---
@@ -286,6 +288,8 @@ Engine::Engine()
 
    m_tcoders = new TranscoderMap;
    addTranscoder( new TranscoderC );
+   addTranscoder( new TranscoderF16 );
+   addTranscoder( new TranscoderF32 );
    addTranscoder( new TranscoderUTF8 );
 
    //============================================

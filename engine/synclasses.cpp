@@ -61,6 +61,7 @@
 #include <falcon/psteps/exprself.h>
 #include <falcon/psteps/exprfself.h>
 #include <falcon/psteps/exprstarindex.h>
+#include <falcon/psteps/exprstripol.h>
 #include <falcon/psteps/exprsym.h>
 #include <falcon/psteps/exprtree.h>
 #include <falcon/psteps/exprunpack.h>
@@ -247,6 +248,7 @@ FALCON_STANDARD_SYNCLASS_OP_CREATE( BNot, ExprBNOT, unaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Call, ExprCall, varExprInsert )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( EP, ExprEP, varExprInsert )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Invoke, ExprInvoke, binaryExprSet )
+FALCON_STANDARD_SYNCLASS_OP_CREATE( StrIPol, ExprStrIPol, unaryExprSet )
 // GenClosure --specificly managed
 
 FALCON_STANDARD_SYNCLASS_OP_CREATE( LT, ExprLT, binaryExprSet )

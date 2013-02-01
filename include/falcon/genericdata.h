@@ -2,7 +2,7 @@
    FALCON - The Falcon Programming Language.
    FILE: genericdata.h
 
-   eneric item with standardized behavior.
+   Generic item with standardized behavior.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: Fri, 12 Aug 2011 21:06:49 +0200
@@ -55,6 +55,6 @@ private:
 
 }
 
-#endif	/* _FALCON_GENERICITEM_H_ */
+#endif	/* _FALCON_GENERICDATA_H_ */
 
 /* end of genericdata.h */

@@ -156,6 +156,7 @@ add_library(falcon_engine SHARED
   psteps/exprproto.cpp
   psteps/exprpseudocall.cpp
   psteps/exprref.cpp
+  psteps/exprstripol.cpp  
   psteps/exprself.cpp
   psteps/exprstarindex.cpp
   psteps/exprsym.cpp
@@ -237,6 +238,8 @@ add_library(falcon_engine SHARED
   errors/unsupportederror.cpp
 
   tc/transcoderc.cpp
+  tc/transcoderf16.cpp
+  tc/transcoderf32.cpp
   tc/transcoderutf8.cpp
 
   application.cpp
@@ -258,21 +261,23 @@ add_library(falcon_engine SHARED
   datawriter.cpp
   derivedfrom.cpp
   directory.cpp
+  dyncompiler.cpp
   dynloader.cpp
   engine.cpp
   error.cpp
   extfunc.cpp
   expression.cpp
-  famloader.cpp
-  filestat.cpp
-  flexyclass.cpp
-  flexydict.cpp
-  function.cpp
   fassert.cpp
   falconclass.cpp
   falconinstance.cpp
   falconstate.cpp
+  famloader.cpp
   fatal.cpp
+  filestat.cpp
+  flexyclass.cpp
+  flexydict.cpp
+  format.cpp
+  function.cpp
   fstream.cpp
   hyperclass.cpp
   importdef.cpp
@@ -309,10 +314,11 @@ add_library(falcon_engine SHARED
   stderrors.cpp
   stdsteps.cpp
   storer.cpp
-  string.cpp
-  stringstream.cpp
   stream.cpp
   streambuffer.cpp
+  string.cpp
+  stringstream.cpp
+  stripoldata.cpp
   sun_strtod.cpp
   symbol.cpp
   synclasses.cpp

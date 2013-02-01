@@ -119,6 +119,8 @@ SourceParser::SourceParser():
    T_Dollar("$",23),
    T_Amper("&",10),
    T_NumberSign("#", 68),   /* between bit and & equality */
+   T_At("@", 10),           /* Must have a very high priority,
+                               as @"abc".x should be interpreted as (@"abc").x */
 
    T_Power("**", 25),
 
@@ -421,6 +423,7 @@ SourceParser::SourceParser():
    Expr<< (r_Expr_deoob  << "Expr_deoob" << apply_expr_deoob << T_DEOOB << Expr );
    Expr<< (r_Expr_xoob  << "Expr_xoob" << apply_expr_xoob << T_XOOB << Expr );
    Expr<< (r_Expr_isoob  << "Expr_isoob" << apply_expr_isoob << T_ISOOB << Expr );
+   Expr<< (r_Expr_str_ipol  << "Expr_str_ipol" << apply_expr_str_ipol << T_At << Expr );
 
    Expr<< (r_Expr_expr_evalret << "Expr_evarlet"  << apply_expr_evalret << T_EVALRET << Expr );
    Expr<< (r_Expr_expr_evalret_exec << "Expr_evarlet_exec"  << apply_expr_evalret_exec << T_EVALRET_EXEC << Expr );

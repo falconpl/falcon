@@ -44,6 +44,7 @@
 #include <falcon/psteps/exprunquote.h>
 #include <falcon/psteps/exprevalret.h>
 #include <falcon/psteps/exprevalretexec.h>
+#include <falcon/psteps/exprstripol.h>
 
 #include <falcon/psteps/exprcompose.h>
 #include <falcon/psteps/exprfuncpower.h>
@@ -413,6 +414,10 @@ void apply_expr_isoob( const Rule& r, Parser& p )
    apply_expr_unary( r, p, new ExprIsOob );
 }
 
+void apply_expr_str_ipol(const Rule& r, Parser& p )
+{
+   apply_expr_unary( r, p, new ExprStrIPol );
+}
 
 void apply_expr_unquote( const Rule&, Parser& p )
 {
