@@ -22,7 +22,6 @@
 #include <falcon/path.h>
 #include <falcon/module.h>
 #include <falcon/errors/ioerror.h>
-#include <falcon/memory.h>
 
 #include <windows.h>
 

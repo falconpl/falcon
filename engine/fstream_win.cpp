@@ -13,7 +13,6 @@
    See LICENSE file for licensing details.
 */
 
-#include <falcon/memory.h>
 #include <falcon/sys.h>
 #include <falcon/path.h>
 #include <falcon/fstream.h>
