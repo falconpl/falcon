@@ -14,7 +14,6 @@
 */
 
 #include <falcon/mt.h>
-#include <falcon/memory.h>
 #include <process.h>
 
 namespace Falcon

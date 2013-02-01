@@ -29,7 +29,6 @@
 #include <falcon/types.h>
 #include <falcon/sys.h>
 #include <falcon/string.h>
-#include <falcon/memory.h>
 #include <falcon/path.h>
 #include <errno.h>
 #include <time.h>
