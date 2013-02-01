@@ -18,7 +18,7 @@
 #include <falcon/setup.h>
 #include <falcon/string.h>
 #include <falcon/overridableclass.h>
-#include <falcon/genericitem.h>
+#include <falcon/genericdata.h>
 
 
 namespace Falcon
@@ -65,7 +65,7 @@ public:
    static Class* handler();
 
    /** Iterator used by ClassDict to iterate with op_first/op_next. */
-   class Iterator: public GenericItem
+   class Iterator: public GenericData
    {
    public:
       Iterator( ItemDict* item );      

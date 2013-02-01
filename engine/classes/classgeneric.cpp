@@ -17,7 +17,8 @@
 #define SRC "engine/classes/classgeneric.cpp"
 
 #include <falcon/classes/classgeneric.h>
-#include <falcon/genericitem.h>
+#include <falcon/genericdata.h>
+#include <falcon/engine.h>
 
 namespace Falcon
 {
@@ -33,12 +34,12 @@ ClassGeneric::~ClassGeneric()
 
 void ClassGeneric::dispose( void* self ) const
 {
-   delete static_cast<GenericItem*>(self);
+   delete static_cast<GenericData*>(self);
 }
 
 void* ClassGeneric::clone( void* self ) const
 {
-   return static_cast<GenericItem*>(self)->clone();
+   return static_cast<GenericData*>(self)->clone();
 }
 
 void* ClassGeneric::createInstance() const
@@ -49,7 +50,7 @@ void* ClassGeneric::createInstance() const
 
 void ClassGeneric::describe( void* self, String& target, int, int maxlen ) const
 {
-   static_cast<GenericItem*>(self)->describe(target);
+   static_cast<GenericData*>(self)->describe(target);
    if( maxlen > 0 && target.length() > (unsigned) maxlen )
    {
       target.size( maxlen * target.manipulator()->charSize() );
@@ -59,20 +60,22 @@ void ClassGeneric::describe( void* self, String& target, int, int maxlen ) const
 
 void ClassGeneric::gcMarkInstance( void* self, uint32 mark ) const
 {
-   GenericItem* gi = static_cast<GenericItem*>(self);
+   GenericData* gi = static_cast<GenericData*>(self);
    gi->gcMark( mark );
 }
 
 
 bool ClassGeneric::gcCheckInstance( void* self, uint32 mark ) const
 {
-   GenericItem* gi = static_cast<GenericItem*>(self);
+   GenericData* gi = static_cast<GenericData*>(self);
    return gi->gcCheck( mark );
 }
 
 
-GenericItem::~GenericItem()
+Class* GenericData::handler()
 {
+   static Class* gen = Engine::instance()->genericClass();
+   return gen;
 }
 
 }

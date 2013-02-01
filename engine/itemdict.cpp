@@ -602,7 +602,7 @@ public:
 
 
 ItemDict::Iterator::Iterator( ItemDict* item ):
-   GenericItem( "ItemDict::Iterator" ),
+   GenericData( "ItemDict::Iterator" ),
    _pm( new Private ),
    m_dict( item ),
    m_version( item->version() ),
