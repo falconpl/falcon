@@ -1,10 +1,10 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: atomic_gcc.h
+   FILE: atomic_win.h
 
-   Multithreaded extensions -- atomic operations for GCC compiler.
+   Multithreaded extensions -- atomic operations for Windows.
    -------------------------------------------------------------------
-   Author: Giancarlo Niccolai
+   Author: Giancarlo Niccolai, Paul Davey
    Begin: Thu, 09 Aug 2012 00:01:22 +0200
 
    -------------------------------------------------------------------
@@ -13,8 +13,8 @@
    See LICENSE file for licensing details.
 */
 
-#ifndef FALCON_ATOMIC_GCC_H
-#define FALCON_ATOMIC_GCC_H
+#ifndef FALCON_ATOMIC_WIN_H
+#define FALCON_ATOMIC_WIN_H
 
 #include <falcon/setup.h>
 #include <falcon/types.h>
@@ -46,7 +46,7 @@ inline int32 atomicAdd( atomic_int& atomic, atomic_int value )
 
 /** Perform a threadsafe fetch */
 inline int32 atomicFetch( const atomic_int& atomic ) {
-   return InterlockedCompareExchange( &atomic, 0, 0 );
+   return InterlockedCompareExchange( (volatile LONG*)&atomic, 0, 0 );
 }
 
 /** Perform a threadsafe set.*/
@@ -85,4 +85,4 @@ inline atomic_int atomicOr( atomic_int& target, atomic_int value )
 
 #endif
 
-/* end of atomic_gcc.h */
+/* end of atomic_win.h */
