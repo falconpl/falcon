@@ -82,6 +82,7 @@ void apply_if_short( const Rule&, Parser& p )
       ParserContext* ctx = static_cast<ParserContext*>(p.context());
 
       SynTree* ifTrue = new SynTree;
+      ctx->accessSymbols(expr);
       ifTrue->selector(expr);
       StmtIf* stmt_if = new StmtIf(ifTrue, tif->line(), tif->chr());
       ctx->openBlock( stmt_if, ifTrue, true );
@@ -104,6 +105,7 @@ void apply_if( const Rule&, Parser& p )
    // don't open the if context if  we have an error in interactive mode.
    if( !p.interactive() || p.lastErrorLine() < tif->line() )
    {
+      ParserContext* ctx = static_cast<ParserContext*>(p.context());
       TokenInstance* texpr = p.getNextToken();
       p.getNextToken();
 
@@ -111,6 +113,7 @@ void apply_if( const Rule&, Parser& p )
       ParserContext* st = static_cast<ParserContext*>(p.context());
 
       SynTree* ifTrue = new SynTree;
+      ctx->accessSymbols(expr);
       ifTrue->selector( expr );
       StmtIf* stmt_if = new StmtIf(ifTrue, tif->line(), tif->chr());
       st->openBlock( stmt_if, ifTrue );
