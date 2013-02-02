@@ -270,12 +270,6 @@ void apply_expr_compose( const Rule& r, Parser& p )
    apply_expr_binary(r, p, new ExprCompose );
 }
 
-void apply_expr_funcpower( const Rule& r, Parser& p )
-{
-   apply_expr_binary(r, p, new ExprFuncPower );
-}
-
-
 //==================================================================
 // Auto expressions
 //

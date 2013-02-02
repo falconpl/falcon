@@ -1251,7 +1251,6 @@ Parsing::TokenInstance* SourceLexer::checkOperator()
          if( m_text == "===" ) return parser->T_EEQ.makeInstance(m_sline, m_schr);
          if( m_text == ">>=" ) return parser->T_AutoRShift.makeInstance(m_sline, m_schr);
          if( m_text == "<<=" ) return parser->T_AutoLShift.makeInstance(m_sline, m_schr);
-         if( m_text == "^.." ) return parser->T_FUNCPOWER.makeInstance(m_sline, m_schr);
          if( m_text == "*=>" ) return parser->T_STARARROW.makeInstance(m_sline, m_schr);
          break;
    }

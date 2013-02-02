@@ -106,7 +106,6 @@ SourceParser::SourceParser():
    T_ISOOB("^?", 24),
    T_UNQUOTE("^~", 10 ),
    T_COMPOSE("^.", 60),
-   T_FUNCPOWER("^..", 60),
    T_EVALRET( "^=", 150),
    T_EVALRET_EXEC( "^*", 150),
    T_STARARROW( "*=>", 170),
@@ -494,7 +493,6 @@ SourceParser::SourceParser():
 
    Expr<< (r_Expr_invoke << "Expr_invoke"   << apply_expr_invoke   << Expr << T_NumberSign << Expr );
    Expr<< (r_Expr_expr_compose << "Expr_compose"  << apply_expr_compose << Expr << T_COMPOSE << Expr );
-   Expr<< (r_Expr_expr_funcpower << "Expr_funcpower"  << apply_expr_funcpower << Expr << T_FUNCPOWER << Expr );
    
    Expr<< (r_Expr_ternary_if << "Expr_ternary_if"   << apply_expr_ternary_if  
             << Expr << T_QMark << Expr << T_Colon << Expr );

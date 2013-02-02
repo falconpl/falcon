@@ -78,7 +78,6 @@ public:
    Parsing::Terminal T_ISOOB;
    Parsing::Terminal T_UNQUOTE;
    Parsing::Terminal T_COMPOSE;
-   Parsing::Terminal T_FUNCPOWER;
    Parsing::Terminal T_EVALRET;
    Parsing::Terminal T_EVALRET_EXEC;
    Parsing::Terminal T_STARARROW;
