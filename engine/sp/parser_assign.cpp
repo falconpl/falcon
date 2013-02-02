@@ -49,18 +49,6 @@ void apply_expr_assign( const Rule&, Parser& p )
    TokenInstance* v2 = p.getNextToken();
 
    Expression* firstPart = static_cast<Expression*>(v1->detachValue());
-
-   // assignable expressions are only expressions having a lvalue pstep:
-   // -- symbols
-   // -- accessors
-   if( firstPart->lvalueStep() == 0  )
-   {
-      p.addError( e_assign_sym, p.currentSource(), v1->line(), v1->chr(), 0 );
-   }
-   else
-   {
-      ctx->defineSymbols(firstPart);
-   }
    
    TokenInstance* ti = TokenInstance::alloc(v1->line(), v1->chr(), sp.Expr);
 
@@ -95,6 +83,18 @@ void apply_expr_assign( const Rule&, Parser& p )
    }
    // clear, so we keep the expr even if destroyed
    list->clear();
+
+   // assignable expressions are only expressions having a lvalue pstep:
+   // -- symbols
+   // -- accessors
+   if( firstPart->lvalueStep() == 0  )
+   {
+      p.addError( e_assign_sym, p.currentSource(), v1->line(), v1->chr(), 0 );
+   }
+   else
+   {
+      ctx->defineSymbols(firstPart);
+   }
 
    p.simplify(3,ti);
 }
