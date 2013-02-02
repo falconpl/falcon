@@ -463,7 +463,7 @@ void OverridableClass::op_call( VMContext* ctx, int32 paramCount, void* self ) c
 
    if( override != 0 )
    {
-      ctx->popData();
+      //ctx->popData();
       ctx->callInternal( override, paramCount, Item( this, self ) );
    }
    else
