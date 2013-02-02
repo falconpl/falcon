@@ -100,8 +100,12 @@ public:
    
    void name( const String& newName );
 
+   bool isPure() const {return m_pure;}
+   void setPure( bool m ) { m_pure = m; }
+
 protected:
    Symbol* m_symbol;
+   bool m_pure;
    
    static void apply_( const PStep* ps, VMContext* ctx );
    

@@ -361,8 +361,11 @@ void ParserContext::accessSymbols( Expression* expr )
    if( expr->trait() == Expression::e_trait_symbol )
    {
       ExprSymbol* exprsym = static_cast<ExprSymbol*>( expr );
-      Symbol* sym = exprsym->symbol();
-      accessSymbol( sym->name() );
+      if( !exprsym->isPure() )
+      {
+         Symbol* sym = exprsym->symbol();
+         accessSymbol( sym->name() );
+      }
    }
    else {
       uint32 arity = expr->arity();

@@ -32,6 +32,7 @@ namespace Falcon {
 ExprSymbol::ExprSymbol( int line, int chr ):
    Expression( line, chr ),
    m_symbol( 0 ),
+   m_pure(false),
    m_pslv(this)
 {
    FALCON_DECLARE_SYN_CLASS( expr_sym )
@@ -44,6 +45,7 @@ ExprSymbol::ExprSymbol( int line, int chr ):
 ExprSymbol::ExprSymbol( Symbol* target, int line, int chr ):
    Expression( line, chr ),
    m_symbol( target ),
+   m_pure(false),
    m_pslv(this)
 {
    FALCON_DECLARE_SYN_CLASS( expr_sym );
@@ -58,6 +60,7 @@ ExprSymbol::ExprSymbol( Symbol* target, int line, int chr ):
 ExprSymbol::ExprSymbol( const String& name, bool isGlobal, int line, int chr ):
    Expression( line, chr ),
    m_symbol( 0 ),
+   m_pure(false),
    m_pslv(this)
 {
    FALCON_DECLARE_SYN_CLASS( expr_sym );
@@ -71,6 +74,7 @@ ExprSymbol::ExprSymbol( const String& name, bool isGlobal, int line, int chr ):
 
 ExprSymbol::ExprSymbol( const ExprSymbol& other ):
    Expression( other ),
+   m_pure(other.isPure()),
    m_pslv(this)
 {
    apply = apply_;

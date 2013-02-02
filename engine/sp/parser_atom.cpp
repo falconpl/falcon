@@ -80,12 +80,33 @@ void apply_Atom_Name ( const Rule&, Parser& p )
       //TODO: check for globalized variables instead of using isGlobalContext
       bool isGlobal = ctx->isGlobalContext();
       const String& name = *ti->asString();
-      sym = new ExprSymbol( Engine::getSymbol( name, isGlobal ),
-               ti->line(), ti->chr() );
+      Symbol* s = Engine::getSymbol( name, isGlobal );
+      sym = new ExprSymbol( s, ti->line(), ti->chr() );
+      // exprsymbol doesn't incref s.
    }
 
    ti->token( sp.Atom );
    ti->setValue( sym, expr_deletor );
+}
+
+
+
+void apply_Atom_Pure_Name ( const Rule&, Parser& p )
+{
+   // << "Atom_Pure_Name" << apply_Atom_Pure_Name << T_Tilde << T_Name )
+   SourceParser& sp = static_cast<SourceParser&>(p);
+   TokenInstance* tilde = p.getNextToken(); // T_Tilde;
+   TokenInstance* ti = p.getNextToken();
+
+   const String& name = *ti->asString();
+   Symbol* sym = Engine::getSymbol( name, false );
+   ExprSymbol* esym = new ExprSymbol( sym, ti->line(), ti->chr() );
+   esym->setPure(true);
+   // exprsymbol doesn't incref s.
+
+   p.trim(1); // remove T_Name...
+   tilde->token( sp.Atom );     // change T_Tilde...
+   tilde->setValue( esym, expr_deletor );
 }
 
 

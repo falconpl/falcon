@@ -1471,6 +1471,20 @@ Item* VMContext::resolveVariable( const String& name, bool isGlobal, bool forAss
       }
    }
 
+   // if the function is an eta...
+   if( func->isEta() && callDepth() > 0 )
+   {
+      // we must inspect also the global context of the caller.
+      Function* caller = callerFrame(1).m_function;
+      if ( caller->module() != 0 )
+      {
+         Item* global = caller->module()->getGlobalValue( name );
+         if( global != 0 ) {
+            return global;
+         }
+      }
+   }
+
    // try as non-imported extern
    if( ! forAssign )
    {

@@ -1184,6 +1184,7 @@ Parsing::TokenInstance* SourceLexer::checkOperator()
          if( m_text == "#" ) return parser->T_NumberSign.makeInstance(m_sline, m_schr);
          if( m_text == "@" ) return parser->T_At.makeInstance(m_sline, m_schr);
          if( m_text == "?" ) return parser->T_QMark.makeInstance(m_sline, m_schr);
+         if( m_text == "~" ) return parser->T_Tilde.makeInstance(m_sline, m_schr);
          // the cut operator is a statement.
          if( m_text == "!" )
          {

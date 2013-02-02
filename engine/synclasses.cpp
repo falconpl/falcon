@@ -57,7 +57,6 @@
 #include <falcon/psteps/exprproto.h>
 #include <falcon/psteps/exprpseudocall.h>
 #include <falcon/psteps/exprrange.h>
-#include <falcon/psteps/exprref.h>
 #include <falcon/psteps/exprself.h>
 #include <falcon/psteps/exprfself.h>
 #include <falcon/psteps/exprstarindex.h>
@@ -319,7 +318,6 @@ FALCON_STANDARD_SYNCLASS_OP_CREATE( XorOob, ExprXorOob, unaryExprSet )
 // GenProto -- separated
 // Pseudocall -- separated
 // GenRange -- seperated
-// GenRef -- separated
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Self, ExprSelf, zeroaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( FSelf, ExprFSelf, zeroaryExprSet )
 
@@ -622,65 +620,6 @@ void SynClasses::ClassGenRange::restore( VMContext* ctx, DataReader*dr ) const
 }
 
 
-
-void* SynClasses::ClassGenRef::createInstance() const
-{
-   return new ExprRef;
-}
-bool SynClasses::ClassGenRef::op_init( VMContext* ctx, void* instance, int pcount ) const
-{
-   static Class* symClass = Engine::instance()->symbolClass();
-   static Class* exprClass = Engine::instance()->expressionClass();
-   
-   ExprRef* expr = static_cast<ExprRef*>(instance);
-   
-   Item* params = ctx->opcodeParams(pcount);
-   Class* cls=0;
-   void* data=0;
-   if( pcount < 1 || params->asClassInst(cls, data) )
-   {
-      throw new ParamError( ErrorParam( e_inv_params, __LINE__, SRC )
-            .origin( ErrorParam::e_orig_runtime)
-            .extra( String("Symbol|GenSym") ) );
-   }
-   
-   if( cls->isDerivedFrom( symClass ) )
-   {
-      //TODO:TreeStepInherit
-      Symbol* sym = static_cast<Symbol*>( data );
-      expr->symbol(sym);
-   }
-   else if( cls->isDerivedFrom( exprClass ) &&
-      static_cast<Expression*>(data)->trait() == Expression::e_trait_symbol )
-   {
-      //TODO:TreeStepInherit
-      ExprSymbol* sym = static_cast<ExprSymbol*>( data );
-      expr->selector( sym );
-   }
-   else {            
-      throw new ParamError( ErrorParam( e_inv_params, __LINE__, SRC )
-            .origin( ErrorParam::e_orig_runtime)
-            .extra( String("Symbol|Sym") ) );
-   }
-   
-   return false;
-}
-void SynClasses::ClassGenRef::restore( VMContext* ctx, DataReader*dr ) const
-{
-   ExprRef* expr = new ExprRef;
-   try {
-      ctx->pushData( Item( this, expr ) );
-      m_parent->restore( ctx, dr );
-   }
-   catch(...) {
-      ctx->popData();
-      delete expr;
-      throw;
-   }
-
-}
-
-
 void* SynClasses::ClassGenSym::createInstance() const
 {
    return new ExprSymbol;
@@ -721,21 +660,28 @@ void SynClasses::ClassGenSym::store( VMContext*, DataWriter* dw, void* instance 
    dw->write( es->chr() );
    dw->write( es->name() );
    dw->write( es->symbol()->isGlobal() );
+   dw->write( es->isPure() );
+
 }
 void SynClasses::ClassGenSym::restore( VMContext* ctx, DataReader*dr ) const
 {
    int32 line, chr;
    String name;
    bool bIsGlobal;
+   bool bIsPure;
    dr->read( line );
    dr->read( chr );
    dr->read( name );
    dr->read( bIsGlobal );
+   dr->read( bIsPure );
 
    ExprSymbol* es = new ExprSymbol;
    ctx->pushData( Item( this, es ) );
    es->decl( line, chr );
-   es->symbol( Engine::getSymbol( name, bIsGlobal) );
+   es->setPure( bIsPure );
+   Symbol* sym = Engine::getSymbol( name, bIsGlobal);
+   es->symbol( sym );
+   sym->decref();
 }
  
 //==========================================

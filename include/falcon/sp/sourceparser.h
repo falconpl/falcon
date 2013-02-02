@@ -84,6 +84,7 @@ public:
    
    Parsing::Terminal T_Comma;
    Parsing::Terminal T_QMark;
+   Parsing::Terminal T_Tilde;
    Parsing::Terminal T_Bang;
    Parsing::Terminal T_UnaryMinus;
    Parsing::Terminal T_Dollar;
@@ -467,6 +468,7 @@ public:
    Parsing::Rule r_Atom_Int;
    Parsing::Rule r_Atom_Float;
    Parsing::Rule r_Atom_Name;
+   Parsing::Rule r_Atom_Pure_Name;
    Parsing::Rule r_Atom_String;
    Parsing::Rule r_Atom_False;
    Parsing::Rule r_Atom_True;

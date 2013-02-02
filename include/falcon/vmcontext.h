@@ -583,6 +583,8 @@ public:
    Item& regA() { return topData(); }
 
    inline long callDepth() const { return (long)m_callStack.depth(); }
+   inline CallFrame& callerFrame( uint32 n ) const { return *(m_callStack.m_top - n); }
+
 
    inline CallFrame* addCallFrame()  {
       return m_callStack.addSlot();

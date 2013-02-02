@@ -112,6 +112,7 @@ SourceParser::SourceParser():
 
    T_Comma( "," , 180 ),
    T_QMark( "?" , 175, true ),
+   T_Tilde( "~" , 5 ),
    T_Bang("!"),
 
    T_UnaryMinus("(neg)",23),
@@ -531,6 +532,7 @@ SourceParser::SourceParser():
       << (r_Atom_Int << "Atom_Int" << apply_Atom_Int << T_Int )
       << (r_Atom_Float << "Atom_Float" << apply_Atom_Float << T_Float )
       << (r_Atom_Name << "Atom_Name" << apply_Atom_Name << T_Name )
+      << (r_Atom_Pure_Name << "Atom_Pure_Name" << apply_Atom_Pure_Name << T_Tilde << T_Name )
       << (r_Atom_String << "Atom_String" << apply_Atom_String << T_String )
       << (r_Atom_False<< "Atom_False" << apply_Atom_False << T_false )
       << (r_Atom_True<< "Atom_True" << apply_Atom_True << T_true )
