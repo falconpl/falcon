@@ -153,7 +153,10 @@ void apply_elif( const Rule&, Parser& p )
          StmtIf* stmt_if = static_cast<StmtIf*>(current);
          // can we really change branch now?
          SynTree* ifElse = st->changeBranch();
-         if ( ifElse != 0 ) {
+         if ( ifElse != 0 )
+         {
+            ParserContext* ctx = static_cast<ParserContext*>(p.context());
+            ctx->accessSymbols(expr);
             ifElse->selector(expr);
             ifElse->decl( tif->line(), tif->chr() );
             stmt_if->addElif( ifElse );
