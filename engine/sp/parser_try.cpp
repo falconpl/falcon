@@ -211,7 +211,8 @@ static void internal_apply_catch( int toks, Parser& p, int line, int chr,
       if( tgt != 0 )
       {
          Variable* var = ctx->defineSymbol( *tgt );
-         newBranch->target( Engine::getSymbol(*tgt, var->isGlobalOrExtern() ) );
+         bool isGlobal = var == 0 ? false : var->isGlobalOrExtern();
+         newBranch->target( Engine::getSymbol(*tgt, isGlobal ) );
       }
       
       if( errName != 0 )

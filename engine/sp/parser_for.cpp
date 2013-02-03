@@ -125,7 +125,8 @@ static StmtForTo* internal_for_to( Parser& p, TokenInstance* tfor,
    if( step != 0 ) ft->stepExpr( step );
    */
    
-   StmtForTo* ft = new StmtForTo( Engine::getSymbol(name, var->isGlobalOrExtern()),
+   bool isGlobal = var == 0 ? false : var->isGlobalOrExtern();
+   StmtForTo* ft = new StmtForTo( Engine::getSymbol(name, isGlobal),
                start, end, step, tfor->line(), tfor->chr() );
    return ft;
 }
@@ -260,7 +261,8 @@ void apply_for_in( const Rule&, Parser& p )
    {
       const String& name = *iter;
       Variable* var = ctx->defineSymbol( name );
-      forin->addParameter( Engine::getSymbol(name, var->isGlobalOrExtern() ) );
+      bool isGlobal = var == 0 ? false : var->isGlobalOrExtern();
+      forin->addParameter( Engine::getSymbol(name, isGlobal ) );
       ++iter;
    }
          
@@ -292,7 +294,8 @@ void apply_for_in_short( const Rule&, Parser& p )
    {
       const String& name = *iter;
       Variable* var = ctx->defineSymbol( name );
-      forin->addParameter( Engine::getSymbol(name, var->isGlobalOrExtern() ) );
+      bool isGlobal = var == 0 ? false : var->isGlobalOrExtern();
+      forin->addParameter( Engine::getSymbol(name, isGlobal ) );
       ++iter;
    }
          
