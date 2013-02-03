@@ -404,8 +404,8 @@ FALCON_DEFINE_PROPERTY_GET(ClassRE, groupNames)( void* instance, Item& value )
 {
    re2::RE2* re = static_cast<re2::RE2*>( instance );
    const std::map<std::string, int>& names = re->NamedCapturingGroups();
-   const std::map<std::string, int>::const_iterator iter = names.begin();
-   const std::map<std::string, int>::const_iterator end = names.end();
+   std::map<std::string, int>::const_iterator iter = names.begin();
+   std::map<std::string, int>::const_iterator end = names.end();
 
    ItemDict* dict = new ItemDict;
 
@@ -415,6 +415,7 @@ FALCON_DEFINE_PROPERTY_GET(ClassRE, groupNames)( void* instance, Item& value )
       name->fromUTF8( iter->first.c_str() );
       int64 pos = iter->second;
       dict->insert( FALCON_GC_HANDLE(name), pos );
+      ++iter;
    }
 
    value = FALCON_GC_HANDLE(dict);
