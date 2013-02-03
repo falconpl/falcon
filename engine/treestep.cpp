@@ -197,6 +197,12 @@ SynTree* TreeStep::checkSyntree( const Item& item )
 void TreeStep::resolveUnquote( VMContext* ctx )
 {
    int32 rty = arity();
+   Expression* sel = selector();
+   if( sel != 0 )
+   {
+      sel->resolveUnquote(ctx);
+   }
+
    for (int i = 0; i < rty; ++i ) {
       nth(i)->resolveUnquote(ctx);
    }

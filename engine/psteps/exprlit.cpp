@@ -188,7 +188,8 @@ void ExprLit::apply_( const PStep* ps, VMContext* ctx )
    TRACE1( "ExprLit::apply_ %d/%d \"%s\"", seqId, ev.size(), self->describe().c_ize() );
 
    // something to be unquoted?
-   while (seqId < (int) ev.size() )
+   uint32 evsize = ev.size();
+   while (seqId < (int) evsize )
    {
       if ( ctx->stepInYield( ev[seqId++], cf ) )
       {
@@ -200,7 +201,7 @@ void ExprLit::apply_( const PStep* ps, VMContext* ctx )
    ctx->popCode();
    TreeStep* nchild = self->child()->clone();
 
-   if( ev.size() ) {
+   if( evsize ) {
       nchild->resolveUnquote( ctx );
    }
 

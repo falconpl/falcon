@@ -44,6 +44,8 @@ public:
    virtual bool isStatic() const { return false; }
 
    bool isTop() const { return m_bIsTop; }
+
+   void resolveUnquote( VMContext* ctx );
 protected:
    bool m_bIsTop;
 

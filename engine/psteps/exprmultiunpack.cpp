@@ -161,6 +161,13 @@ ExprMultiUnpack& ExprMultiUnpack::addAssignment( Symbol* e, Expression* expr)
    return *this;
 }
 
+void ExprMultiUnpack::resolveUnquote( VMContext* ctx )
+{
+   for ( uint32 i = 0; i < _p->m_assignee.size(); ++i ) {
+      _p->m_assignee[i]->resolveUnquote(ctx);
+   }
+}
+
 
 void ExprMultiUnpack::apply_( const PStep* ps, VMContext* ctx )
 {
@@ -212,6 +219,8 @@ void ExprMultiUnpack::apply_( const PStep* ps, VMContext* ctx )
    
    ctx->popCode();
 }
+
+
 
 }
 
