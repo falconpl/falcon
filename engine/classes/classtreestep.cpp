@@ -149,6 +149,14 @@ bool ClassTreeStep::hasProperty( void*, const String& prop ) const
 }
 
 
+void ClassTreeStep::op_call( VMContext* ctx, int32 paramCount, void* instance ) const
+{
+   TreeStep* ts = static_cast<TreeStep*>(instance);
+   ctx->pushCode(ts);
+   ctx->popData(paramCount+1);
+}
+
+
 void ClassTreeStep::op_getProperty( VMContext* ctx, void* instance, const String& prop) const
 {
    TreeStep* stmt = static_cast<TreeStep*>(instance);

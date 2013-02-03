@@ -63,6 +63,7 @@ public:
    virtual void enumeratePV( void* instance, PVEnumerator& cb ) const;
    virtual bool hasProperty( void* instance, const String& prop ) const;
    
+   virtual void op_call( VMContext* ctx, int32 paramCount, void* instance ) const;
    virtual void op_getProperty( VMContext* ctx, void* instance, const String& prop) const;
    virtual void op_setProperty( VMContext* ctx, void* instance, const String& prop ) const;   
    virtual void op_getIndex(VMContext* vm, void* instance ) const;
