@@ -27,7 +27,7 @@ class FALCON_DYN_CLASS ExprUnpack: public Expression
 {
 public:
    ExprUnpack( int line = 0, int chr = 0 );
-   ExprUnpack( Expression* op1, bool bIsTop, int line = 0, int chr = 0 );
+   ExprUnpack( Expression* op1, int line = 0, int chr = 0 );
    ExprUnpack( const ExprUnpack& other );
    virtual ~ExprUnpack();
 
@@ -42,11 +42,16 @@ public:
    inline virtual bool isStandAlone() const { return false; }
 
    virtual bool isStatic() const { return false; }
-   bool isTop() const { return m_bIsTop; }
+
+   virtual Expression* selector() const
+   {
+      return m_expander;
+   }
+
+   bool selector( Expression* sel );
 
 protected:
    Expression* m_expander;
-   bool m_bIsTop;
    
 private:
    class Private;

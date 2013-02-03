@@ -38,10 +38,9 @@ public:
 //=========================================================
 // Unpack
 
-ExprUnpack::ExprUnpack( Expression* op1, bool isTop, int line, int chr ):
+ExprUnpack::ExprUnpack( Expression* op1, int line, int chr ):
    Expression(line, chr),
    m_expander(op1),
-   m_bIsTop( isTop ),
    _p( new Private )
 {
    FALCON_DECLARE_SYN_CLASS( expr_unpack )
@@ -52,7 +51,6 @@ ExprUnpack::ExprUnpack( Expression* op1, bool isTop, int line, int chr ):
 ExprUnpack::ExprUnpack( int line, int chr ):
    Expression(line, chr),
    m_expander(0),
-   m_bIsTop( false ),
    _p( new Private )
 {
    FALCON_DECLARE_SYN_CLASS( expr_unpack )
@@ -88,6 +86,19 @@ ExprUnpack::~ExprUnpack()
    }
 }
 
+
+bool ExprUnpack::selector( Expression* sel )
+{
+   if( sel->setParent(this) ) {
+      delete m_expander;
+      m_expander = sel;
+      return true;
+   }
+
+   return false;
+}
+
+
 bool ExprUnpack::simplify( Item& ) const
 {
    return false;
@@ -95,6 +106,12 @@ bool ExprUnpack::simplify( Item& ) const
 
 void ExprUnpack::describeTo( String& ret, int depth ) const
 {
+   if( m_expander == 0 )
+   {
+      ret = "<Blanc ExprUnpack>";
+      return;
+   }
+
    String params;
    // and generate all the expressions, in inverse order.
    for( unsigned int i = 0; i < _p->m_params.size(); ++i )

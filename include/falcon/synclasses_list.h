@@ -138,7 +138,10 @@ FALCON_SYNCLASS_DECLARATOR(m_expr_compose, Compose, expr )
 FALCON_SYNCLASS_DECLARATOR(m_expr_funcpower, FuncPower, expr )
 
 // 
-FALCON_SYNCLASS_DECLARATOR(m_expr_munpack, MUnpack, expr)
+FALCON_SYNCLASS_DECLARATOR_EX(m_expr_munpack, MUnpack, expr, \
+         virtual void store( VMContext*, DataWriter* dw, void* instance ) const; \
+         )
+
 FALCON_SYNCLASS_DECLARATOR(m_expr_neg, Neg, expr)
 // OOB
 FALCON_SYNCLASS_DECLARATOR(m_expr_oob, Oob, expr)
@@ -152,7 +155,11 @@ FALCON_SYNCLASS_DECLARATOR(m_expr_genrange, GenRange, expr)
 FALCON_SYNCLASS_DECLARATOR(m_expr_self, Self, expr)
 FALCON_SYNCLASS_DECLARATOR(m_expr_fself, FSelf, expr)
 FALCON_SYNCLASS_DECLARATOR(m_expr_starindex, StarIndexAccess, expr)
-FALCON_SYNCLASS_DECLARATOR(m_expr_unpack, Unpack, expr)
+FALCON_SYNCLASS_DECLARATOR_EX(m_expr_unpack, Unpack, expr, \
+      virtual void store( VMContext*, DataWriter* dw, void* instance ) const; \
+      )
+
+
 FALCON_SYNCLASS_DECLARATOR(m_expr_unquote, Unquote, expr)
 FALCON_SYNCLASS_DECLARATOR(m_expr_evalret, EvalRet, expr)
 FALCON_SYNCLASS_DECLARATOR(m_expr_evalretexec, EvalRetExec, expr)

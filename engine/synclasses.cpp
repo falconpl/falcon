@@ -472,9 +472,18 @@ bool SynClasses::ClassMUnpack::op_init( VMContext* ctx, void* instance, int pcou
    // TODO -- parse a list of pairs symbol->expression
    return Class::op_init( ctx, instance, pcount );
 }
+void SynClasses::ClassMUnpack::store(Falcon::VMContext*, Falcon::DataWriter* stream, void* inst ) const
+{
+   ExprMultiUnpack* expr = static_cast<ExprMultiUnpack*>(inst);
+   stream->write(expr->isTop());
+
+}
 void SynClasses::ClassMUnpack::restore( VMContext* ctx, DataReader*dr ) const
 {
-   ExprMultiUnpack* expr = new ExprMultiUnpack;
+   bool isTop;
+   dr->read(isTop);
+
+   ExprMultiUnpack* expr = new ExprMultiUnpack(isTop);
    try {
       ctx->pushData( Item( this, expr ) );
       m_parent->restore( ctx, dr );
@@ -537,10 +546,39 @@ bool SynClasses::ClassUnpack::op_init( VMContext* ctx, void* instance, int pcoun
    // TODO -- parse a list of pairs symbol, + 1 terminal expression
    return Class::op_init( ctx, instance, pcount );
 }
+void SynClasses::ClassUnpack::store(Falcon::VMContext* ctx, Falcon::DataWriter* stream, void* instance) const
+{
+   ExprUnpack* expr = static_cast<ExprUnpack*>( instance );
+   uint32 count = expr->targetCount();
+   stream->write( count );
+   for( uint32 i = 0; i < count; ++i )
+   {
+      Symbol* sym = expr->getAssignand(i);
+      stream->write( sym->isGlobal() );
+      stream->write( sym->name() );
+   }
+
+   m_parent->store( ctx, stream, instance );
+}
+
 void SynClasses::ClassUnpack::restore( VMContext* ctx, DataReader*dr ) const
 {
    ExprUnpack* expr = new ExprUnpack;
    try {
+      uint32 count;
+      dr->read( count );
+
+      for( uint32 i = 0; i < count; ++i )
+      {
+         bool isGlobal;
+         String name;
+         dr->read(isGlobal);
+         dr->read(name);
+
+         Symbol* sym = Engine::getSymbol( name, isGlobal );
+         expr->addAssignand(sym);
+      }
+
       ctx->pushData( Item( this, expr ) );
       m_parent->restore( ctx, dr );
    }

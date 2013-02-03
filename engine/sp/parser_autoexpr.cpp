@@ -130,7 +130,7 @@ void apply_stmt_assign_list( const Rule&, Parser& p )
       else
       {
          ctx->accessSymbols(listRight->front());
-         ExprUnpack* unpack = new ExprUnpack( listRight->front(), true );
+         ExprUnpack* unpack = new ExprUnpack( listRight->front(), v2->line(), v2->chr() );
          // save the unpack already. Even on error, it WAS a try to unpack.
          ti->setValue( unpack, expr_deletor );
 
