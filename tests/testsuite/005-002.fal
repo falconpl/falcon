@@ -1,0 +1,22 @@
+/*
+@name Regex - Creation flags
+
+@output
+With ignore: R'abc'
+With match longest: r'abc'l
+With ignore \n: r'abc'n
+With one line: r'abc'o
+With all: R'abc'oln
+@endoutput
+*/
+
+x = RE('abc', "i")
+> "With ignore: ", x
+x = RE('abc', "l")
+> "With match longest: ", x
+x = RE('abc', "n")
+> "With ignore \\n: ", x
+x = RE('abc', "o")
+> "With one line: ", x
+x = RE('abc', "ilno")
+> "With all: ", x
