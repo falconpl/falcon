@@ -192,7 +192,9 @@ FALCON_SYNCLASS_DECLARATOR_EX(m_stmt_fastprint, FastPrint, stmt, \
          virtual void store( VMContext*, DataWriter* dw, void* instance ) const; \
        )
 
-FALCON_SYNCLASS_DECLARATOR(m_stmt_forin, ForIn, stmt)
+FALCON_SYNCLASS_DECLARATOR_EX(m_stmt_forin, ForIn, stmt, \
+         virtual void store( VMContext*, DataWriter* dw, void* instance ) const; \
+       )
 
 FALCON_SYNCLASS_DECLARATOR_EX(m_stmt_forto, ForTo, stmt, \
       virtual void flatten( VMContext* ctx, ItemArray& subItems, void* instance ) const;\

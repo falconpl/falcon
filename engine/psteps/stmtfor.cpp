@@ -140,8 +140,11 @@ bool StmtForBase::setNth( int32 n, TreeStep* ts )
    
 void StmtForBase::PStepCleanup::apply_( const PStep*, VMContext* ctx )
 {
+   TRACE( "StmtForBase::PStepCleanup::apply_ %d (-1)",  ctx->currentCode().m_seqId );
+   int32 size = ctx->currentCode().m_seqId-1;
+
    ctx->popCode();
-   ctx->popData(ctx->currentCode().m_seqId-1);
+   ctx->popData(size);
    ctx->topData().setNil();
 }
 
@@ -659,9 +662,12 @@ void StmtForTo::oneLinerTo( String& tgt ) const
 
 void StmtForTo::apply_( const PStep* ps, VMContext* ctx )
 {
+
    static PStep* pop = &Engine::instance()->stdSteps()->m_pop;
    const StmtForTo* self = static_cast<const StmtForTo*>(ps);
    
+   TRACE( "StmtForTo::PStepNext::apply_ %d/3",  ctx->currentCode().m_seqId );
+
    fassert( self->isValid() );
 
    // we must at least have a start and an end
@@ -709,7 +715,8 @@ void StmtForTo::apply_( const PStep* ps, VMContext* ctx )
    if( (end > start && step < 0) || (start > end && step > 0 ) )
    {
       ctx->popCode();
-      ctx->popData(3);
+      ctx->popData(2);
+      ctx->topData().setNil();
       return;
    }
    
@@ -746,6 +753,8 @@ void StmtForTo::apply_( const PStep* ps, VMContext* ctx )
 
 void StmtForTo::PStepNext::apply_( const PStep* ps, VMContext* ctx )
 {
+   MESSAGE( "StmtForTo::PStepNext::apply_" );
+
    static PStep* pop = &Engine::instance()->stdSteps()->m_pop;
    const StmtForTo* self = static_cast<const StmtForTo::PStepNext*>(ps)->m_owner;
    

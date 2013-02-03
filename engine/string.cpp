@@ -2145,6 +2145,74 @@ bool String::fromUTF8( const char *utf8, length_t len )
    return true;
 }
 
+length_t String::UTF8Size( const char *utf8, length_t len )
+{
+   // start scanning
+   length_t size = 0;
+   while ( len != 0 && *utf8 != 0 )
+   {
+      char_t chr = 0;
+
+      byte in = (byte) *utf8;
+
+      // 4 bytes? -- pattern 1111 0xxx
+      int count;
+      if ( (in & 0xF8) == 0xF0 )
+      {
+         chr = (in & 0x7 ) << 18;
+         count = 18;
+      }
+      // pattern 1110 xxxx
+      else if ( (in & 0xF0) == 0xE0 )
+      {
+         chr = (in & 0xF) << 12;
+         count = 12;
+      }
+      // pattern 110x xxxx
+      else if ( (in & 0xE0) == 0xC0 )
+      {
+         chr = (in & 0x1F) << 6;
+         count = 6;
+      }
+      else if( in < 0x80 )
+      {
+         chr = (char_t) in;
+         count = 0;
+      }
+      // invalid pattern
+      else {
+         return npos;
+      }
+
+      // read the other characters with pattern 0x10xx xxxx
+      while( count > 0 )
+      {
+         count -= 6;
+
+         utf8++;
+         byte in = (byte) *utf8;
+
+         if ( in == 0 ) {
+            // short utf8 sequence
+            return false;
+         }
+         else if( (in & 0xC0) != 0x80 )
+         {
+            // unrecognized pattern, protocol error
+            return false;
+         }
+         chr |= (in & 0x3f) << count;
+      }
+
+      size++;
+
+      utf8++;
+      --len;
+   }
+
+   return size;
+}
+
 bool String::startsWith( const String &str, bool icase ) const
 {
    length_t len = str.length();

@@ -1,0 +1,21 @@
+/*
+@name Regex - "capture/1" method
+
+@output
+Testing RE.capture
+R'a(.)c'.find('abc'): ["b"]
+R'a(.)c'.find('aaa'): Nil
+R'a(.)c'.find('bbb'): Nil
+R'a(.)c'.find('xxaccxx'): ["c"]
+R'a(.)c'.find('AAA'): Nil
+R'a(.)c'.find('ABC'): ["B"]
+R'a(.)c'.find('xxABCxx'): ["B"]
+@endoutput
+*/
+
+> "Testing RE.capture"
+regex = r'a(.)c'i
+
+for expr in .[ "abc" "aaa" "bbb" "xxaccxx" "AAA" "ABC" "xxABCxx" ]
+   > regex,".find('",expr,"'): ", regex.capture(expr).describe()
+end

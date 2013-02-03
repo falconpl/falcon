@@ -1,13 +1,21 @@
 /*
-@name Regex - Operator "match" method
+@name Regex - "match" method
 
 @output
 Testing RE.match
 R'a(.)c'.match('abc'): true
+R'a(.)c'.match('aaa'): false
+R'a(.)c'.match('bbb'): false
+R'a(.)c'.match('xxaccxx'): true
+R'a(.)c'.match('AAA'): false
+R'a(.)c'.match('ABC'): true
+R'a(.)c'.match('xxABCxx'): true
 @endoutput
 */
 
 > "Testing RE.match"
 regex = r'a(.)c'i
 
-> regex,".match('abc'): ", regex.match('abc')
+for expr in .[ "abc" "aaa" "bbb" "xxaccxx" "AAA" "ABC" "xxABCxx" ]
+   > regex,".match('",expr,"'): ", regex.match(expr)
+end

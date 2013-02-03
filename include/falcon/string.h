@@ -1265,6 +1265,13 @@ public:
 
    bool fromUTF8( const char *utf8 );
 
+   /** Determines the length in characters of the given UTF string.
+    * \param utf8 A utf8 character sequence.
+    * \param len Size of the sequence, or String::npos to proceed up to a zero character.
+    * \return a length, or String::npos if the input is not a valid utf8 sequence.
+    */
+   static length_t UTF8Size( const char *utf8, length_t len = String::npos );
+
    /** Access to a single character.
       Please, notice that Falcon strings are polymorphic in assignment,
       so they cannot support the following syntax:

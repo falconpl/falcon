@@ -1,0 +1,21 @@
+/*
+@name Regex - "consume" method with grab all
+
+@output
+Testing RE.consume with grab all
+R'a(.)c'.consume('abcabc', true): ["abc", "b"]: "abc"
+R'a(.)c'.consume('aaaabc', true): ["abc", "b"]: ""
+R'a(.)c'.consume('bbb', true): false: "bbb"
+R'a(.)c'.consume('xxaccxaacx', true): ["acc", "c"]: "xaacx"
+R'a(.)c'.consume('AAA', true): false: "AAA"
+R'a(.)c'.consume('ABC', true): ["ABC", "B"]: ""
+R'a(.)c'.consume('xxABCxxABC', true): ["ABC", "B"]: "xxABC"
+@endoutput
+*/
+
+> "Testing RE.consume with grab all"
+regex = r'a(.)c'i
+
+for expr in .[ "abcabc" "aaaabc" "bbb" "xxaccxaacx" "AAA" "ABC" "xxABCxxABC" ]
+   > regex,".consume('",expr,"', true): ", regex.consume(expr, true).describe(), ": ", expr.describe()
+end

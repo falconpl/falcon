@@ -1,0 +1,21 @@
+/*
+@name Regex - "consumeMatch" method
+
+@output
+Testing RE.consumeMatch
+R'a(.)c'.consumeMatch('abcabc'): "abc": "abc"
+R'a(.)c'.consumeMatch('aaaabc'): "abc": ""
+R'a(.)c'.consumeMatch('bbb'): Nil: "bbb"
+R'a(.)c'.consumeMatch('xxaccxaacx'): "acc": "xaacx"
+R'a(.)c'.consumeMatch('AAA'): Nil: "AAA"
+R'a(.)c'.consumeMatch('ABC'): "ABC": ""
+R'a(.)c'.consumeMatch('xxABCxxABC'): "ABC": "xxABC"
+@endoutput
+*/
+
+> "Testing RE.consumeMatch"
+regex = r'a(.)c'i
+
+for expr in .[ "abcabc" "aaaabc" "bbb" "xxaccxaacx" "AAA" "ABC" "xxABCxxABC" ]
+   > regex,".consumeMatch('",expr,"'): ", regex.consumeMatch(expr).describe(), ": ", expr.describe()
+end

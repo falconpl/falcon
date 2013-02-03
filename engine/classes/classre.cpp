@@ -53,9 +53,11 @@ ClassRE::ClassRE():
    FALCON_INIT_METHOD(capture),
 
    FALCON_INIT_METHOD(replace),
-   FALCON_INIT_METHOD(replaceAll),
+   FALCON_INIT_METHOD(replaceFirst),
+   FALCON_INIT_METHOD(substitute),
    FALCON_INIT_METHOD(change),
-   FALCON_INIT_METHOD(changeAll),
+   FALCON_INIT_METHOD(changeFirst),
+   FALCON_INIT_METHOD(chop),
 
    FALCON_INIT_METHOD(consume),
    FALCON_INIT_METHOD(consumeMatch)
@@ -290,6 +292,22 @@ void ClassRE::op_div( VMContext* ctx, void* instance ) const
    internal_match( ctx, instance, true );
 }
 
+ItemArray* internal_make_grab_array( re2::StringPiece* captured, int cc, bool grabAll )
+{
+   ItemArray* capt = new ItemArray;
+   capt->reserve( cc );
+
+   // skip the global match
+   for( int i = grabAll ? 0 : 1; i < cc; ++i )
+   {
+      String* scapt = new String;
+      scapt->fromUTF8( captured[i].data(), captured[i].size() );
+      capt->append( FALCON_GC_HANDLE( scapt ) );
+   }
+   return capt;
+
+}
+
 static ItemArray* internal_grab( String* target, void * instance, bool grabAll )
 {
    re2::RE2* re = static_cast<re2::RE2*>( instance );
@@ -310,17 +328,7 @@ static ItemArray* internal_grab( String* target, void * instance, bool grabAll )
 
    if( match )
    {
-      ItemArray* capt = new ItemArray;
-      capt->reserve( cc );
-
-      // skip the global match
-      for( int i = grabAll ? 0 : 1; i < cc; ++i )
-      {
-         std::string result = captured[i].ToString();
-         String* scapt = new String( result.c_str(), result.size() );
-         capt->append( FALCON_GC_HANDLE( scapt ) );
-      }
-      return capt;
+      return internal_make_grab_array( captured, cc, grabAll );
    }
 
    return 0;
@@ -376,8 +384,8 @@ void ClassRE::op_pow( VMContext* ctx, void* instance ) const
    Item ret;
    if( match )
    {
-      std::string result = piece.ToString();
-      String *captured = new String( result.c_str(), result.size() );
+      String *captured = new String;
+      captured->fromUTF8( piece.data(), piece.size() );
       ret = FALCON_GC_HANDLE( captured );
    }
 
@@ -481,7 +489,7 @@ FALCON_DEFINE_METHOD_P1( ClassRE, find )
    if( match )
    {
       String* ret = new String;
-      ret->fromUTF8(captured.ToString().c_str());
+      ret->fromUTF8(captured.data(), captured.size() );
       ctx->returnFrame(FALCON_GC_HANDLE(ret));
    }
    else {
@@ -531,22 +539,32 @@ static bool internal_change( VMContext* ctx, int mode )
    bool result;
    switch( mode )
    {
-   case 0: // replace
+   case 0: // substitute
       ret = new String;
       result = re2::RE2::Extract(*target, *re, *replacer, *ret );
       break;
 
-   case 1: // replace All
+   case 1: // replace
       ret = new String(*target);
       result = re2::RE2::GlobalReplace(*ret, *re, *replacer );
       break;
 
-   case 2: // change
-      result = re2::RE2::Replace(*target, *re, *replacer );
+   case 2: // replace first
+      ret = new String(*target);
+      result = re2::RE2::Replace(*ret, *re, *replacer );
       break;
 
-   case 3: // replace All
+   case 3: // chop
+      result = re2::RE2::Extract(*target, *re, *replacer, *target );
+      //re2::RE2::Replace(*target, *re, *replacer );
+      break;
+
+   case 4: // change
       result = re2::RE2::GlobalReplace(*target, *re, *replacer );
+      break;
+
+   case 5: // changeFirst
+      result = re2::RE2::Replace(*target, *re, *replacer );
       break;
    }
 
@@ -563,13 +581,19 @@ static bool internal_change( VMContext* ctx, int mode )
    else
    {
       delete ret;
-      ctx->returnFrame();
+      if( mode >= 3 )
+      {
+         ctx->returnFrame(Item().setBoolean(false));
+      }
+      else {
+         ctx->returnFrame();
+      }
    }
 
    return true;
 }
 
-FALCON_DEFINE_METHOD_P1( ClassRE, replace )
+FALCON_DEFINE_METHOD_P1( ClassRE, substitute )
 {
    if( ! internal_change( ctx, 0 ) )
    {
@@ -577,7 +601,7 @@ FALCON_DEFINE_METHOD_P1( ClassRE, replace )
    }
 }
 
-FALCON_DEFINE_METHOD_P1( ClassRE, replaceAll )
+FALCON_DEFINE_METHOD_P1( ClassRE, replace )
 {
    if( ! internal_change( ctx, 1 ) )
    {
@@ -585,22 +609,37 @@ FALCON_DEFINE_METHOD_P1( ClassRE, replaceAll )
    }
 }
 
+FALCON_DEFINE_METHOD_P1( ClassRE, replaceFirst )
+{
+   if( ! internal_change( ctx, 2 ) )
+   {
+      throw paramError();
+   }
+}
+
+FALCON_DEFINE_METHOD_P1( ClassRE, chop )
+{
+   if( !  internal_change( ctx, 3 ) )
+   {
+      throw paramError();
+   }
+}
+
 FALCON_DEFINE_METHOD_P1( ClassRE, change )
 {
-   if( !  internal_change( ctx, 2 ) )
+   if( ! internal_change( ctx, 4 ) )
    {
       throw paramError();
    }
 }
 
-FALCON_DEFINE_METHOD_P1( ClassRE, changeAll )
+FALCON_DEFINE_METHOD_P1( ClassRE, changeFirst )
 {
-   if( ! internal_change( ctx, 3 ) )
+   if( ! internal_change( ctx, 4 ) )
    {
       throw paramError();
    }
 }
-
 
 FALCON_DEFINE_METHOD_P1( ClassRE, consume )
 {
@@ -625,7 +664,7 @@ FALCON_DEFINE_METHOD_P1( ClassRE, consume )
       cc = MAX_CAPTURE_COUNT;
    }
 
-   String* cfr = ctx->topData().asString();
+   String* cfr = i_target->asString();
    re2::StringPiece text(*cfr);
 
    bool match = re->Match(text,
@@ -638,20 +677,15 @@ FALCON_DEFINE_METHOD_P1( ClassRE, consume )
    if( match )
    {
       int consumed = captured[0].end() - text.begin();
-      text.remove_prefix(consumed);
-      target->fromUTF8(text.ToString().c_str());
 
       if( cc  > 1 || getAll )
       {
-         ItemArray* res = new ItemArray;
-         res->reserve(cc);
+         ItemArray* res = internal_make_grab_array( captured, cc, getAll );
 
-         for( int i = getAll ? 0 : 1; i < cc; ++i )
-         {
-            std::string result = captured[i].ToString();
-            String* scapt = new String( result.c_str(), result.size() );
-            res->append( FALCON_GC_HANDLE( scapt ) );
-         }
+         // change the string after, as text and captured are based on that
+         length_t removed = String::UTF8Size( text.data(), consumed );
+         target->remove(0, removed);
+
          ctx->returnFrame(FALCON_GC_HANDLE(res));
       }
       else {
@@ -660,7 +694,7 @@ FALCON_DEFINE_METHOD_P1( ClassRE, consume )
    }
    else
    {
-      ctx->returnFrame();
+      ctx->returnFrame(Item().setBoolean(false));
    }
 }
 
@@ -676,32 +710,26 @@ FALCON_DEFINE_METHOD_P1( ClassRE, consumeMatch )
    re2::RE2* re = static_cast<re2::RE2*>(ctx->self().asInst());
    String* target = i_target->asString();
 
-   re2::StringPiece captured[36];
-   int cc = re->NumberOfCapturingGroups() + 1;
-   // paranoid...
-   if( cc > 36 )
-   {
-      cc = 36;
-   }
+   re2::StringPiece captured;
 
-   String* cfr = ctx->topData().asString();
+   String* cfr = i_target->asString();
    re2::StringPiece text(*cfr);
 
-   bool match = re->Match(text,
-              0,
-              text.size(),
+   bool match = re->Match(text, 0, text.size(),
               re2::RE2::UNANCHORED,
-              captured,
-              cc);
+              &captured, 1);
 
    if( match )
    {
-      int consumed = captured[0].end() - text.begin();
-      text.remove_prefix(consumed);
-      target->fromUTF8(text.ToString().c_str());
+      int consumed = captured.end() - text.begin();
 
       String* res = new String;
-      res->fromUTF8(captured[0].ToString().c_str());
+      res->fromUTF8(captured.data(), captured.length());
+
+      // change the string after, as text and captured are based on that
+      length_t removed = String::UTF8Size( text.data(), consumed );
+      target->remove(0, removed);
+
       ctx->returnFrame(FALCON_GC_HANDLE(res));
    }
    else

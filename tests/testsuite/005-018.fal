@@ -1,0 +1,21 @@
+/*
+@name Regex - "consume" method
+
+@output
+Testing RE.consume
+R'a(.)c'.consume('abcabc'): ["b"]: "abc"
+R'a(.)c'.consume('aaaabc'): ["b"]: ""
+R'a(.)c'.consume('bbb'): false: "bbb"
+R'a(.)c'.consume('xxaccxaacx'): ["c"]: "xaacx"
+R'a(.)c'.consume('AAA'): false: "AAA"
+R'a(.)c'.consume('ABC'): ["B"]: ""
+R'a(.)c'.consume('xxABCxxABC'): ["B"]: "xxABC"
+@endoutput
+*/
+
+> "Testing RE.consume"
+regex = r'a(.)c'i
+
+for expr in .[ "abcabc" "aaaabc" "bbb" "xxaccxaacx" "AAA" "ABC" "xxABCxxABC" ]
+   > regex,".consume('",expr,"'): ", regex.consume(expr).describe(), ": ", expr.describe()
+end

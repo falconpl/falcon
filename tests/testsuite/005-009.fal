@@ -1,0 +1,21 @@
+/*
+@name Regex - "find" method
+
+@output
+Testing RE.find
+R'a(.)c'.find('abc'): abc
+R'a(.)c'.find('aaa'): Nil
+R'a(.)c'.find('bbb'): Nil
+R'a(.)c'.find('xxaccxx'): acc
+R'a(.)c'.find('AAA'): Nil
+R'a(.)c'.find('ABC'): ABC
+R'a(.)c'.find('xxABCxx'): ABC
+@endoutput
+*/
+
+> "Testing RE.find"
+regex = r'a(.)c'i
+
+for expr in .[ "abc" "aaa" "bbb" "xxaccxx" "AAA" "ABC" "xxABCxx" ]
+   > regex,".find('",expr,"'): ", regex.find(expr)
+end

@@ -1,0 +1,21 @@
+/*
+@name Regex - "capture/2" method
+
+@output
+Testing RE.capture with full grab
+R'a(.)c'.find('abc'): ["abc", "b"]
+R'a(.)c'.find('aaa'): Nil
+R'a(.)c'.find('bbb'): Nil
+R'a(.)c'.find('xxaccxx'): ["acc", "c"]
+R'a(.)c'.find('AAA'): Nil
+R'a(.)c'.find('ABC'): ["ABC", "B"]
+R'a(.)c'.find('xxABCxx'): ["ABC", "B"]
+@endoutput
+*/
+
+> "Testing RE.capture with full grab"
+regex = r'a(.)c'i
+
+for expr in .[ "abc" "aaa" "bbb" "xxaccxx" "AAA" "ABC" "xxABCxx" ]
+   > regex,".find('",expr,"'): ", regex.capture(expr, true).describe()
+end

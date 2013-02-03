@@ -1218,7 +1218,7 @@ FALCON_STANDARD_SYNCLASS_OP_CREATE( Continue, StmtContinue, zeroaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Cut, StmtCut, zeroaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Doubt, StmtDoubt, unaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE_EX( FastPrint, StmtFastPrint, varExprInsert )
-FALCON_STANDARD_SYNCLASS_OP_CREATE( ForIn, StmtForIn, zeroaryExprSet ) //
+FALCON_STANDARD_SYNCLASS_OP_CREATE_EX( ForIn, StmtForIn, zeroaryExprSet ) //
 FALCON_STANDARD_SYNCLASS_OP_CREATE( ForTo, StmtForTo, zeroaryExprSet ) //
 FALCON_STANDARD_SYNCLASS_OP_CREATE( If, StmtIf, zeroaryExprSet )   //
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Raise, StmtRaise, unaryExprSet )
@@ -1278,6 +1278,49 @@ void SynClasses::ClassReturn::restore( VMContext* ctx, DataReader*dr ) const
 
    try {
       ctx->pushData( Item( this, expr ) );
+      m_parent->restore( ctx, dr );
+   }
+   catch(...) {
+      ctx->popData();
+      delete expr;
+      throw;
+   }
+}
+
+
+void SynClasses::ClassForIn::store( VMContext* ctx, DataWriter*wr, void* instance ) const
+{
+   StmtForIn* forin = static_cast<StmtForIn*>( instance );
+   uint32 count = forin->paramCount();
+   wr->write(count);
+   for( uint32 i = 0; i < count; ++i )
+   {
+      Symbol* tgt = forin->param(i);
+      wr->write( tgt->name() );
+      wr->write( tgt->isGlobal() );
+   }
+   m_parent->store( ctx, wr, forin );
+}
+void SynClasses::ClassForIn::restore( VMContext* ctx, DataReader*dr ) const
+{
+   uint32 count;
+   dr->read( count );
+   StmtForIn* expr = new StmtForIn;
+
+   try {
+      ctx->pushData( Item( this, expr ) );
+      for( uint32 i = 0; i < count; ++i )
+      {
+         String name;
+         bool isGlobal = false;
+
+         dr->read( name );
+         dr->read( isGlobal );
+
+         Symbol* sym = Engine::getSymbol(name, isGlobal);
+         expr->addParameter(sym);
+      }
+
       m_parent->restore( ctx, dr );
    }
    catch(...) {

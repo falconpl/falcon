@@ -1,0 +1,21 @@
+/*
+@name Regex - "changeFirst" method
+
+@output
+Testing RE.changeFirst
+R'a(.)c'.changeFirst('abcabc', '-\0-'): true: -abc--abc-
+R'a(.)c'.changeFirst('aaaabc', '-\0-'): true: aaa-abc-
+R'a(.)c'.changeFirst('bbb', '-\0-'): false: bbb
+R'a(.)c'.changeFirst('xxaccxaacx', '-\0-'): true: xx-acc-x-aac-x
+R'a(.)c'.changeFirst('AAA', '-\0-'): false: AAA
+R'a(.)c'.changeFirst('ABC', '-\0-'): true: -ABC-
+R'a(.)c'.changeFirst('xxABCxxABC', '-\0-'): true: xx-ABC-xx-ABC-
+@endoutput
+*/
+
+> "Testing RE.changeFirst"
+regex = r'a(.)c'i
+
+for expr in .[ "abcabc" "aaaabc" "bbb" "xxaccxaacx" "AAA" "ABC" "xxABCxxABC" ]
+   > regex,".changeFirst('",expr,"', '-\\0-'): ", regex.changeFirst(expr, '-\0-'), ": ", expr
+end

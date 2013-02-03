@@ -1,0 +1,21 @@
+/*
+@name Regex - "chop" method
+
+@output
+Testing RE.chop
+R'a(.)c'.chop('abcabc', '-\1-'): true: -b-
+R'a(.)c'.chop('aaaabc', '-\1-'): true: -b-
+R'a(.)c'.chop('bbb', '-\1-'): false: bbb
+R'a(.)c'.chop('xxaccxaacx', '-\1-'): true: -c-
+R'a(.)c'.chop('AAA', '-\1-'): false: AAA
+R'a(.)c'.chop('ABC', '-\1-'): true: -B-
+R'a(.)c'.chop('xxABCxxABC', '-\1-'): true: -B-
+@endoutput
+*/
+
+> "Testing RE.chop"
+regex = r'a(.)c'i
+
+for expr in .[ "abcabc" "aaaabc" "bbb" "xxaccxaacx" "AAA" "ABC" "xxABCxxABC" ]
+   > regex,".chop('",expr,"', '-\\1-'): ", regex.chop(expr, '-\1-'), ": ", expr
+end

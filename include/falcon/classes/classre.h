@@ -124,40 +124,117 @@ private:
     @method replace RE
     @param target The string where the replacement is done.
     @param replacer The replaced string.
-    @return On success, the changed string, nil on match failed.
+    @return On success, a new copy of the string with the required
+       substitution performed; on failure, returns nil.
+
+    This method finds all the occurrences of the regular expression
+    in @b target, and replaces them with the @b replacer.
+
+    The replace may contain backslash expressions in form of
+    '\\n' where @b n is a number indicating the nth capture (parenthesis)
+    expression in the regular expression. \\0 represents the whole match,
+    \\1 the first captured expression, \\2 the second and so on,
+    up to @a RE.captures.
    */
 
    FALCON_DECLARE_METHOD( replace, "S,S" );
 
    /*#
-    @method replace RE
+    @method replaceFirst RE
     @param target The string where the replacement is done.
     @param replacer The replaced string.
-    @return On success, the changed string, nil on match failed.
+    @return On success, a new copy of the string with the required
+       substitution performed; on failure, returns nil.
+
+    This method finds just the first occurrence of the regular expression
+    in @b target, and replaces it with the @b replacer.
+
+    The replace may contain backslash expressions in form of
+    '\\n' where @b n is a number indicating the nth capture (parenthesis)
+    expression in the regular expression. \\0 represents the whole match,
+    \\1 the first captured expression, \\2 the second and so on,
+    up to @a RE.captures.
    */
 
-   FALCON_DECLARE_METHOD( replaceAll, "S,S" );
+   FALCON_DECLARE_METHOD( replaceFirst, "S,S" );
 
    /*#
-    @method replaceAll RE
+    @method substitute RE
+    @param target The string where the replacement is done.
+    @param replacer The replaced string.
+    @return On success, a new copy of the string with the required
+       substitution performed; on failure, returns nil.
+
+    This method finds a first occurrence of this regular expression
+    in the @target string, and if found, returns a copy of the \b replacer.
+
+    The replacer may contain backslash expressions in form of
+    '\\n' where @b n is a number indicating the nth capture (parenthesis)
+    expression in the regular expression. \\0 represents the whole match,
+    \\1 the first captured expression, \\2 the second and so on,
+    up to @a RE.captures.
+   */
+
+   FALCON_DECLARE_METHOD( substitute, "S,S" );
+
+   /*#
+    @method change RE
     @param target The string where the replacement is done.
     @param replacer The replaced string.
     @return On success, true, on error, false.
 
-      On success the @b target string is changed on place.
+    This method finds all the occurrences of the regular expression
+    in @b target, and replaces them with the @b replacer.
+
+    In case of success, The @b target string is modified in place.
+
+    The replace may contain backslash expressions in form of
+    '\\n' where @b n is a number indicating the nth capture (parenthesis)
+    expression in the regular expression. \\0 represents the whole match,
+    \\1 the first captured expression, \\2 the second and so on,
+    up to @a RE.captures.
    */
    FALCON_DECLARE_METHOD( change, "S,S" );
 
    /*#
-    @method replace RE
+    @method changeFirst RE
     @param target The string where the replacement is done.
     @param replacer The replaced string.
     @return On success, true, on error, false.
 
-      On success the @b target string is changed on place.
+    This method finds just the first occurrence of the regular expression
+    in @b target, and replaces it with the @b replacer.
+
+    In case of success, The @b target string is modified in place.
+
+    The replace may contain backslash expressions in form of
+    '\\n' where @b n is a number indicating the nth capture (parenthesis)
+    expression in the regular expression. \\0 represents the whole match,
+    \\1 the first captured expression, \\2 the second and so on,
+    up to @a RE.captures.
+   */
+   FALCON_DECLARE_METHOD( changeFirst, "S,S" );
+
+   /*#
+    @method subInPlace RE
+    @param target The string where the replacement is done.
+    @param replacer The replaced string.
+    @return On success, true, on error, false.
+
+          This method finds a first occurrence of this regular expression
+    in the @target string, and if found, it chops down the @b target string
+    as indicated in the @b replacer.
+
+    @note On success, the @b target string is changed in place.
+
+    The replacer may contain backslash expressions in form of
+    '\\n' where @b n is a number indicating the nth capture (parenthesis)
+    expression in the regular expression. \\0 represents the whole match,
+    \\1 the first captured expression, \\2 the second and so on,
+    up to @a RE.captures.
    */
 
-   FALCON_DECLARE_METHOD( changeAll, "S,S" );
+   FALCON_DECLARE_METHOD( chop, "S,S" );
 
    /*#
     @method consume RE
