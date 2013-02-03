@@ -340,13 +340,16 @@ void ClassComposition::op_call( VMContext* ctx, int32 paramCount, void* instance
    }
    else if( ci->times() < 0 )
    {
-      ctx->insertData(paramCount+1, &ci->first(), 1, 0 );
-      ctx->pushCode( &m_applyFirst );
-      ctx->currentCode().m_seqId = 1;
+      *ctx->opcodeParams(paramCount+1) = ci->second();
       Class* cls;
       void* data;
-      *ctx->opcodeParams(paramCount-1) = ci->second();
       ci->second().forceClassInst( cls, data );
+
+      ctx->insertData(paramCount+1, &ci->first(), 1, 0 );
+
+      ctx->pushCode( &m_applyFirst );
+      ctx->currentCode().m_seqId = 1;
+
       cls->op_call( ctx, paramCount, data );
    }
    else {

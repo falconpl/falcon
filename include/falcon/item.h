@@ -624,7 +624,7 @@ public:
    /** Operator version of copy.
     \note This doesn't set the copy marker. Use assign() for that.
     */
-   Item &operator=( const Item &other ) { other.lock(); copy( other ); other.unlock(); return *this; }
+   Item &operator=( const Item &other ) { copy( other ); return *this; }
    bool operator==( const Item &other ) const { return compare(other) == 0; }
    bool operator!=( const Item &other ) const { return compare(other) != 0; }
    bool operator<(const Item &other) const { return compare( other ) < 0; }
