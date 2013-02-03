@@ -1368,7 +1368,8 @@ Item* VMContext::resolveSymbol( const Symbol* dyns, bool forAssign )
          break;
 
       case Variable::e_nt_param:
-         resolved = param(lvar->id());
+         // get the parameter even if not given (will be nil)
+         resolved = &m_dataStack.m_base[ lvar->id() + currentFrame().m_stackBase ];
          break;
 
       default:
