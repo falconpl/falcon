@@ -1,0 +1,16 @@
+/*
+@name Statement for/in -- simple
+
+@output   
+First Branch
+Else Branch
+Done
+@endoutput
+*/
+
+> "Testing basic for/in"
+for elem in ["first", "first", "third"]
+   > "Looping: ", elem
+end
+
+> "Done"

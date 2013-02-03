@@ -1,0 +1,43 @@
+/*
+@name Statement for/to -- simple same
+
+@output   
+DataDepth = 4
+Testing basic for i = 5 to 5
+Looping: 5
+DataDepth = 4
+
+Testing basic for i = 5 to 5, -1
+Looping: 5
+DataDepth = 4
+
+Testing basic for i = 5 to 5, -2
+Looping: 5
+DataDepth = 4
+Done
+Done
+
+*/
+
+x = VMContext()
+> "DataDepth = ", x.dataDepth
+> "Testing basic for i = 5 to 5"
+for i = 5 to 5
+   > "Looping: ", i
+end
+> "DataDepth = ", x.dataDepth
+>
+> "Testing basic for i = 5 to 5, -1"
+for i = 5 to 5,-1
+   > "Looping: ", i
+end
+> "DataDepth = ", x.dataDepth
+
+>
+> "Testing basic for i = 5 to 5, -2"
+for i = 5 to 5,1
+   > "Looping: ", i
+end
+> "DataDepth = ", x.dataDepth
+
+> "Done"
