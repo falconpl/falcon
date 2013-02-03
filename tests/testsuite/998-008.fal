@@ -1,0 +1,14 @@
+/*
+998 series -- book samples
+
+@name Wiki sample - ETA codeblock
+
+@output
+30
+200
+@endoutput
+*/
+
+pcode = {[p0] a = 10; b = 20; > p0()}
+pcode( ~a + ~b )   
+pcode( ~a * ~b )   

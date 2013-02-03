@@ -1,0 +1,12 @@
+/*
+@name String interpolation -- smoke
+
+@output   
+Hello world
+Hello world
+@endoutput
+*/
+
+string = "Hello world"
+> @ "$string"
+> @ "$(string)"

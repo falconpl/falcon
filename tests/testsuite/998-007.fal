@@ -1,0 +1,21 @@
+/*
+998 series -- book samples
+
+@name Wiki sample - Code evaluation with unsecape
+
+@output
+0
+1
+2
+3
+@endoutput
+*/
+
+function maker()
+   value = 2
+   return {[] while a < ^~( value * 2 ); > a++; end }
+end
+
+code = maker()
+a = 0
+code()   // loops up to 10.

@@ -1,0 +1,19 @@
+/*
+998 series -- book samples
+
+@name Wiki sample - Function compostition
+
+@output
+( 2 + 1 ) * 2 = 6
+( (10/2) + 1 ) * 2 = 12
+@endoutput
+*/
+
+f = {v=> v*2}
+g = {v=> v+1}
+> "( 2 + 1 ) * 2 = ", (f ^. g)(2)  //  6
+
+h = {a,b => a / b}
+compo = f ^. g ^. h
+> "( (10/2) + 1 ) * 2 = ", compo(10,2)  // 12
+

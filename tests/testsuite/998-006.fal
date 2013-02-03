@@ -1,0 +1,17 @@
+/*
+998 series -- book samples
+
+@name Wiki sample - Code evaluation
+
+@output
+0
+1
+2
+3
+@endoutput
+*/
+
+
+code = {[] while a < 4; > a++; end }
+a = 0
+code() 

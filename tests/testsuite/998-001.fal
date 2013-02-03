@@ -1,0 +1,13 @@
+/*
+998 series -- book samples
+
+@name Wiki sample - Globals in etas
+
+@output
+A is non-zero
+@endoutput
+
+*/
+
+a = 0
+iff( a > 0, printl("A is non-zero"), printl("A is zero" ) )

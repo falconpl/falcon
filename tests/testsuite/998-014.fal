@@ -1,0 +1,22 @@
+/*
+998 series -- book samples
+
+@name Wiki sample - Function power
+
+@output
+2 times: 4
+3 times: 8
+4 times: 16
+5 times: 32
+6 times: 64
+7 times: 128
+@endoutput
+*/
+
+f = {(a) a*2 }
+> "2 times: ", f(2) 
+> "3 times: ", (f ^. 2)(2)
+> "4 times: ", (f ^. 3)(2)
+> "5 times: ", (f ^. 4)(2)
+> "6 times: ", (f ^. 5)(2)
+> "7 times: ", (f ^. 6)(2)

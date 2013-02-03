@@ -1,0 +1,19 @@
+/*
+998 series -- book samples
+
+@name Wiki sample - Exit from codeblock operator
+
+@output
+Sum of first 10 numbers: 55
+@endoutput
+*/
+
+code = {() 
+   sum = 0
+   for a = 1 to 10
+   sum += a
+   end
+   ^= sum
+}
+
+> "Sum of first 10 numbers: ", code()
