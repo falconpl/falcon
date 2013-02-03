@@ -472,11 +472,11 @@ bool SynClasses::ClassMUnpack::op_init( VMContext* ctx, void* instance, int pcou
    // TODO -- parse a list of pairs symbol->expression
    return Class::op_init( ctx, instance, pcount );
 }
-void SynClasses::ClassMUnpack::store(Falcon::VMContext*, Falcon::DataWriter* stream, void* inst ) const
+void SynClasses::ClassMUnpack::store(Falcon::VMContext* ctx, Falcon::DataWriter* stream, void* inst ) const
 {
    ExprMultiUnpack* expr = static_cast<ExprMultiUnpack*>(inst);
    stream->write(expr->isTop());
-
+   m_parent->store( ctx, stream, inst );
 }
 void SynClasses::ClassMUnpack::restore( VMContext* ctx, DataReader*dr ) const
 {
@@ -492,6 +492,35 @@ void SynClasses::ClassMUnpack::restore( VMContext* ctx, DataReader*dr ) const
       ctx->popData();
       delete expr;
       throw;
+   }
+}
+void SynClasses::ClassMUnpack::flatten( VMContext*, ItemArray& subItems, void* instance ) const
+{
+   static Class* symClass = Engine::instance()->symbolClass();
+   ExprMultiUnpack* expr = static_cast<ExprMultiUnpack*>( instance );
+
+   uint32 count = expr->targetCount();
+   subItems.resize(count*2);
+   for( uint32 i = 0; i < count; ++i )
+   {
+      Symbol* assignand = expr->getAssignand(i);
+      Expression* assignee = expr->getAssignee(i);
+      subItems[i*2].setUser(symClass, assignand );
+      subItems[i*2+1].setUser(assignee->handler(), assignee);
+   }
+}
+
+void SynClasses::ClassMUnpack::unflatten( VMContext*, ItemArray& subItems, void* instance ) const
+{
+   ExprMultiUnpack* expr = static_cast<ExprMultiUnpack*>( instance );
+   fassert(subItems.length() % 2 == 0);
+
+   uint32 count = 0;
+   while( count < subItems.length() )
+   {
+      Symbol* sym = static_cast<Symbol*>(subItems[count++].asInst());
+      Expression* assign = static_cast<Expression*>(subItems[count++].asInst());
+      expr->addAssignment( sym, assign );
    }
 }
 
@@ -560,7 +589,6 @@ void SynClasses::ClassUnpack::store(Falcon::VMContext* ctx, Falcon::DataWriter* 
 
    m_parent->store( ctx, stream, instance );
 }
-
 void SynClasses::ClassUnpack::restore( VMContext* ctx, DataReader*dr ) const
 {
    ExprUnpack* expr = new ExprUnpack;
