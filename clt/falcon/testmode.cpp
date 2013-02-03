@@ -92,6 +92,15 @@ void TestMode::perform()
             continue;
          }
 
+         if( m_app->m_options.test_category != "" )
+         {
+            if( ! name.startsWith(m_app->m_options.test_category) )
+            {
+               log->log( Log::fac_app, Log::lvl_debug, String( "Skipping because not in selected category " ) + name );
+               continue;
+            }
+         }
+
          // ok, file in correct format.
          try {
             ScriptData* sd = parse( name );
@@ -171,7 +180,7 @@ TestMode::ScriptData* TestMode::parse(const String& scriptName )
       while( ! tr.eof() )
       {
          tr.readLine(line,256);
-         String tline = line; tline.trim();
+         String tline = line;
 
          if( gettingOut )
          {
@@ -191,6 +200,8 @@ TestMode::ScriptData* TestMode::parse(const String& scriptName )
          }
          else
          {
+            tline.trim();
+
             if( tline.startsWith("@name ") )
             {
                sd->m_name = tline.subString(5);

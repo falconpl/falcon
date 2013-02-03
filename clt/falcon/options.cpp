@@ -87,6 +87,9 @@ void FalconOptions::usage( bool deep )
       << "  -f           force recompilation of modules even when .fam are found" << endl
       << "  -T           consider given [module] as .ftd (template document)" << endl
       << endl
+      << "Test mode options (test_opts):" << endl
+      << "  --cat <cat>   Test this category (code prefix) only" << endl
+      << endl
       << "Run options (r_opts):" << endl
       << "  -C           check for memory allocation correctness" << endl
       << "  -e <enc>     set given encoding as default for VM I/O" << endl
@@ -248,6 +251,11 @@ void FalconOptions::parse( int argc, char **argv, int &script_pos )
                {
                   testMode = true;
                   test_dir = String( argv[++i] );
+                  break;
+               }
+               else if (String( op+2 ) == "cat" )
+               {
+                  test_category = String( argv[++i] );
                   break;
                }
                else if( String( op+2 ) == "ll" )
