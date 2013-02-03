@@ -158,6 +158,9 @@ public:
    Parsing::Terminal T_default;
    Parsing::Terminal T_select;
    
+   Parsing::Terminal T_RString;
+   Parsing::Terminal T_IString;
+
    //================================================
    // Statements
    //
@@ -470,6 +473,8 @@ public:
    Parsing::Rule r_Atom_Name;
    Parsing::Rule r_Atom_Pure_Name;
    Parsing::Rule r_Atom_String;
+   Parsing::Rule r_Atom_RString;
+   Parsing::Rule r_Atom_IString;
    Parsing::Rule r_Atom_False;
    Parsing::Rule r_Atom_True;
    Parsing::Rule r_Atom_self;

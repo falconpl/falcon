@@ -201,7 +201,6 @@ FAL_ERRORDECL( e_formiddle_outside, 193, "Block 'formiddle' declared outside 'fo
 FAL_ERRORDECL( e_syn_doubt, 194, "Rule doubt '?' not under rule" );
 FAL_ERRORDECL( e_catch_invtype, 195, "Invalid type in catch clause" );
 FAL_ERRORDECL( e_select_invtype, 196, "Invalid type in select clause" );
-FAL_ERRORDECL( e_membuf_def, 197, "Invalid character in membuf definition" );
 
 
 FAL_ERRORDECL( e_io_error, 200, "Generic I/O Error" );
@@ -245,6 +244,9 @@ FAL_ERRORDECL( e_attrib_already, 270, "Attribute already declared" );
 FAL_ERRORDECL( e_unknown_encoding, 300, "Unknown encoding name" );
 FAL_ERRORDECL( e_enc_fail, 301, "Encoding failed or data not encodable" );
 FAL_ERRORDECL( e_dec_fail, 302, "Decode failed or input data not in required format" );
+FAL_ERRORDECL( e_membuf_def, 303, "Invalid character in membuf definition" );
+FAL_ERRORDECL( e_regex_def, 304, "Error in regular expression definition" );
+
 
 FAL_ERRORDECL( e_state, 400, "Unknown state in state-oriented operation" );
 FAL_ERRORDECL( e_underflow, 401, "Generic underflow in code flow" );

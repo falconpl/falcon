@@ -44,7 +44,7 @@
 #define FLC_CLASS_ID_CLASS    14
 #define FLC_CLASS_ID_PROTO    15
 #define FLC_CLASS_ID_TREESTEP 16
-
+#define FLC_CLASS_ID_RE       17
 
 #define FLC_ITEM_INVALID      99
 

@@ -53,7 +53,9 @@ SourceLexer::SourceLexer( const String& uri, Parsing::Parser* p, TextReader* rea
    m_stringML( false ),
    m_outscape(false),
    m_bParsingFtd(false),
-   m_state( state_none )
+   m_state( state_none ),
+   m_string_type( e_st_normal ),
+   m_bRegexIgnoreCase(true)
 {
 }
 
@@ -135,7 +137,7 @@ Parsing::TokenInstance* SourceLexer::readOutscape()
                // we enter now in the eval mode
                m_outscape = false;
                // generate a >> "text" EOL >>  sequence
-               _p->m_nextTokens.push_back( m_parser->T_String.makeInstance( m_sline, m_schr, m_text ) );
+               _p->m_nextTokens.push_back( makeString() );
                m_text.size(0);
                _p->m_nextTokens.push_back( m_parser->T_EOL.makeInstance(m_line, -1) ); // fake one
 
@@ -189,7 +191,7 @@ Parsing::TokenInstance* SourceLexer::readOutscape()
                // we enter now the normal mode; we start to consider a standard program.
                m_outscape = false;
                // Return now > and a string, that will be considered a > "..." statement.
-               _p->m_nextTokens.push_back( m_parser->T_String.makeInstance( m_sline, m_schr, m_text ) );
+               _p->m_nextTokens.push_back( makeString() );
                m_text.size(0);
                _p->m_nextTokens.push_back( m_parser->T_EOL.makeInstance(m_line, -1) ); // fake one
                return parser->T_Greater.makeInstance(m_sline, m_schr);
@@ -207,7 +209,7 @@ Parsing::TokenInstance* SourceLexer::readOutscape()
    // return the last text.
    if( m_text.size() != 0 )
    {
-      _p->m_nextTokens.push_back( m_parser->T_String.makeInstance( m_sline, m_schr, m_text ) );
+      _p->m_nextTokens.push_back( makeString() );
       m_text.size(0);
       _p->m_nextTokens.push_back( m_parser->T_EOL.makeInstance(m_line, -1) ); // fake one
       return parser->T_Greater.makeInstance(m_sline, m_schr);
@@ -216,6 +218,55 @@ Parsing::TokenInstance* SourceLexer::readOutscape()
    // else, generate a last EOL statement.
    m_outscape = false;
    return m_parser->T_EOL.makeInstance(m_line, -1);
+}
+
+Parsing::TokenInstance* SourceLexer::makeString()
+{
+   SourceParser* sp = static_cast<SourceParser*>(m_parser);
+
+   switch( m_string_type )
+   {
+   case e_st_normal: return sp->T_String.makeInstance( m_sline, m_schr, m_text );
+   case e_st_intl: return sp->T_IString.makeInstance( m_sline, m_schr, m_text );
+   case e_st_regex:
+   {
+      // read the regex options
+
+      String opts;
+      char_t chr = m_reader->getChar();
+      while( (chr == 'i' || chr == 'o' || chr == 'l' || chr == 'n') && opts.length() <= 4 )
+      {
+         opts.append(chr);
+         if( chr == 'i' ) {
+            // it's useless to add it twice.
+            m_bRegexIgnoreCase = false;
+         }
+         chr = m_reader->getChar();
+         m_chr++;
+      }
+
+      if( chr != (char_t)-1 )
+      {
+         m_reader->ungetChar(chr);
+      }
+
+      if( m_bRegexIgnoreCase )
+      {
+         opts.append('i');
+      }
+
+      if( opts.length() != 0 )
+      {
+         m_text.append(0);
+         m_text.append(opts);
+      }
+
+      return sp->T_RString.makeInstance( m_sline, m_schr, m_text );
+   }
+
+   }
+
+   return 0;
 }
 
 Parsing::TokenInstance* SourceLexer::nextToken()
@@ -328,8 +379,8 @@ Parsing::TokenInstance* SourceLexer::nextToken()
                }
                case ':': m_hadOperator = true; return parser->T_Colon.makeInstance(m_line, m_chr++);
                case ',': m_hadOperator = true; return parser->T_Comma.makeInstance(m_line, m_chr++);
-               case '"':  m_stringML = false; m_stringStart = true; m_state = state_double_string; break;
-               case '\'': m_stringML = false; m_stringStart = true; m_state = state_single_string; break;
+               case '"':  m_string_type = e_st_normal; m_stringML = false; m_stringStart = true; m_state = state_double_string; break;
+               case '\'': m_string_type = e_st_normal; m_stringML = false; m_stringStart = true; m_state = state_single_string; break;
                case '0': m_state = state_zero_prefix; break;
                case '(': m_chr++; m_hadOperator = true; return parser->T_Openpar.makeInstance(m_line,m_chr); break;
                case ')': m_chr++; resetState(); return parser->T_Closepar.makeInstance(m_line,m_chr); break;
@@ -433,7 +484,7 @@ Parsing::TokenInstance* SourceLexer::nextToken()
 
          case state_double_string:
             switch( chr ) {
-               case '"': m_chr++; resetState(); return m_parser->T_String.makeInstance( m_sline, m_schr, m_text );
+               case '"': m_chr++; resetState(); return makeString();
                case '\\': m_state = state_double_string_esc; break;
 
                case '\n':
@@ -470,7 +521,7 @@ Parsing::TokenInstance* SourceLexer::nextToken()
                case '"':
                   m_chr++;
                   resetState();
-                  return m_parser->T_String.makeInstance( m_sline, m_schr, m_text );
+                  return makeString();
 
                default:
                   m_text.append(chr);
@@ -575,7 +626,7 @@ Parsing::TokenInstance* SourceLexer::nextToken()
                   {
                      m_reader->ungetChar(chr1);
                      resetState();
-                     return m_parser->T_String.makeInstance( m_sline, m_schr, m_text );
+                     return makeString();
                   }
                }
                // on read failure, will break at next loop
@@ -892,6 +943,23 @@ Parsing::TokenInstance* SourceLexer::nextToken()
                   m_chr++;
                   m_state = state_membuf;
                   m_text.size(0);
+                  break;
+               }
+               else if( (m_text == "i" || m_text == "r" || m_text == "R" ) && (chr == '"' || chr == '\'') )
+               {
+                  if( m_text == "i" ) {
+                     m_string_type = e_st_intl;
+                  }
+                  else {
+                     m_string_type = e_st_regex;
+                     m_bRegexIgnoreCase = m_text == "R";
+                  }
+
+                  m_stringML = false;
+                  m_stringStart = true;
+                  m_state = chr == '"' ? state_double_string : state_single_string;
+                  m_text.size(0);
+                  m_chr++;
                   break;
                }
                // namespace check (NAMESPACE. or x..)

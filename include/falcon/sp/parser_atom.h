@@ -33,6 +33,8 @@ void apply_Atom_Float ( const Rule&, Parser& p );
 void apply_Atom_Name ( const Rule&, Parser& p );
 void apply_Atom_Pure_Name ( const Rule&, Parser& p );
 void apply_Atom_String ( const Rule&, Parser& p );
+void apply_Atom_RString ( const Rule&, Parser& p );
+void apply_Atom_IString ( const Rule&, Parser& p );
 void apply_Atom_False ( const Rule&, Parser& p );
 void apply_Atom_True ( const Rule&, Parser& p );
 void apply_Atom_Continue ( const Rule&, Parser& p );

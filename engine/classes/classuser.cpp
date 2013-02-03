@@ -31,7 +31,15 @@ class ClassUser::Private
 
 public:
    
-   typedef std::map<String, Property*> PropMap;
+   class StringPtrCfr {
+   public:
+      bool operator()(const String* s1, const String* s2 )
+      {
+         return *s1 < *s2;
+      }
+   };
+
+   typedef std::map<const String*, Property*, StringPtrCfr> PropMap;
    PropMap m_props;
    
    typedef std::vector<Class*> ParentList;
@@ -65,7 +73,7 @@ ClassUser::~ClassUser()
    
 void ClassUser::add( Property* prop )
 {
-   _p->m_props[ prop->name() ] = prop;
+   _p->m_props.insert( std::make_pair( &prop->name(), prop ) );
    if( prop->isCarried() )
    {
       static_cast<PropertyCarried*>(prop)->m_carrierPos = m_carriedProps;
@@ -210,7 +218,7 @@ void ClassUser::enumeratePV( void* instance, PVEnumerator& cb ) const
 
 bool ClassUser::hasProperty( void*, const String& prop ) const
 {
-   return _p->m_props.find( prop ) != _p->m_props.end();
+   return _p->m_props.find( &prop ) != _p->m_props.end();
 }
 
 
@@ -268,7 +276,7 @@ void ClassUser::describe( void* instance, String& target, int depth, int maxlen 
 
 void ClassUser::op_getProperty( VMContext* ctx, void* instance, const String& prop ) const
 {
-   Private::PropMap::const_iterator iter = _p->m_props.find( prop );
+   Private::PropMap::const_iterator iter = _p->m_props.find( &prop );
    if ( iter != _p->m_props.end() )
    {
       iter->second->get( instance, ctx->topData() );
@@ -294,7 +302,7 @@ void ClassUser::op_getProperty( VMContext* ctx, void* instance, const String& pr
 
 void ClassUser::op_setProperty( VMContext* ctx, void* instance, const String& prop ) const
 {
-   Private::PropMap::const_iterator iter = _p->m_props.find( prop );
+   Private::PropMap::const_iterator iter = _p->m_props.find( &prop );
    if ( iter != _p->m_props.end() )
    {
       iter->second->set( instance, ctx->opcodeParam(1) );

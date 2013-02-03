@@ -7,7 +7,7 @@
 add_definitions(-DFALCON_ENGINE_EXPORTS)
 
 # We need config.h
-include_directories( ${CMAKE_CURRENT_BINARY_DIR}/../include )
+include_directories( ${CMAKE_CURRENT_BINARY_DIR}/../include re2/)
 
 message(STATUS "Compiling Falcon core on ${CMAKE_SYSTEM_NAME}" )
 
@@ -49,6 +49,69 @@ elseif(WIN32)
 endif()
 
 #################
+
+   
+set( re2_HDRS
+   re2/util/arena.h
+   re2/util/atomicops.h
+   re2/util/benchmark.h
+   re2/util/flags.h
+   re2/util/logging.h
+   re2/util/mutex.h
+   re2/util/pcre.h
+   re2/util/random.h
+   re2/util/sparse_array.h
+   re2/util/sparse_set.h
+   re2/util/test.h
+   re2/util/utf.h
+   re2/util/util.h
+   re2/util/valgrind.h
+   re2/re2/filtered_re2.h
+   re2/re2/prefilter.h
+   re2/re2/prefilter_tree.h
+   re2/re2/prog.h
+   re2/re2/re2.h
+   re2/re2/regexp.h
+   re2/re2/set.h
+   re2/re2/stringpiece.h
+   re2/re2/unicode_casefold.h
+   re2/re2/unicode_groups.h
+   re2/re2/variadic_function.h
+   re2/re2/walker-inl.h
+   )
+
+set( re2_SRCS
+      ${re2_HDRS}
+   re2/util/arena.cc
+   re2/util/hash.cc
+   re2/util/rune.cc
+   re2/util/stringpiece.cc
+   re2/util/stringprintf.cc
+   re2/util/strutil.cc
+   re2/util/valgrind.cc
+   re2/re2/bitstate.cc
+   re2/re2/compile.cc
+   re2/re2/dfa.cc
+   re2/re2/filtered_re2.cc
+   re2/re2/mimics_pcre.cc
+   re2/re2/nfa.cc
+   re2/re2/onepass.cc
+   re2/re2/parse.cc
+   re2/re2/perl_groups.cc
+   re2/re2/prefilter.cc
+   re2/re2/prefilter_tree.cc
+   re2/re2/prog.cc
+   re2/re2/re2.cc
+   re2/re2/regexp.cc
+   re2/re2/set.cc
+   re2/re2/simplify.cc
+   re2/re2/tostring.cc
+   re2/re2/unicode_casefold.cc
+   re2/re2/unicode_groups.cc
+   )
+
+#TODO re2 switch   
+   
 add_library(falcon_engine SHARED
   ${SYS_SPECIFIC}
 
@@ -200,6 +263,7 @@ add_library(falcon_engine SHARED
   classes/classnumeric.cpp
   classes/classrange.cpp
   classes/classrawmem.cpp
+  classes/classre.cpp
   classes/classrestorer.cpp
   classes/classshared.cpp
   classes/classstorer.cpp
@@ -340,6 +404,8 @@ add_library(falcon_engine SHARED
   vmcontext.cpp
   vmtimer.cpp
   writer.cpp
+  
+  ${re2_SRCS}
 )
 
 set_target_properties(falcon_engine PROPERTIES

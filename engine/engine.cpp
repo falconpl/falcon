@@ -88,6 +88,7 @@
 #include <falcon/classes/classstorer.h>
 #include <falcon/classes/classrestorer.h>
 #include <falcon/classes/classstream.h>
+#include <falcon/classes/classre.h>
 
 #include <falcon/classes/classmodule.h>
 
@@ -363,6 +364,7 @@ Engine::Engine()
    // Syntax Reflection
    //
       
+   m_reClass = new ClassRE;
    m_closureClass = new ClassClosure;
    m_closedDataClass = new ClassClosedData;
    m_restorerClass = new ClassRestorer;
@@ -388,6 +390,7 @@ Engine::Engine()
    addMantra(m_moduleClass);
    addMantra(m_restorerClass);
    addMantra(m_storerClass);
+   addMantra(m_reClass);
    addMantra(m_streamClass);
 
    addMantra( new ClassComposition );
@@ -854,6 +857,14 @@ Class* Engine::storerClass() const
    fassert( m_instance != 0 );
    return m_instance->m_storerClass;
 }
+
+
+Class* Engine::reClass() const
+{
+   fassert( m_instance != 0 );
+   return m_instance->m_reClass;
+}
+
 
 Class* Engine::restorerClass() const
 {

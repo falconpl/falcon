@@ -698,7 +698,10 @@ public:
       \param bufsize the size of the target buffer in bytes.
       \return npos if the buffer is not long enough, else returns the used size.
    */
-   length_t toUTF8String( char *target, length_t bufsize ) const;
+   length_t toUTF8String( char *target, length_t bufsize ) const
+   {
+      return toCString( target, bufsize );
+   }
 
    /**
      Alias to toUTF8String.

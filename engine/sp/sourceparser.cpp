@@ -196,7 +196,10 @@ SourceParser::SourceParser():
    T_switch("switch"),
    T_case("case"),
    T_default("default"),
-   T_select("select")
+   T_select("select"),
+
+   T_RString("R-String"),
+   T_IString("I-String")
    
 {
    S_Attribute << "Attribute" << errhand_attribute;
@@ -534,6 +537,8 @@ SourceParser::SourceParser():
       << (r_Atom_Name << "Atom_Name" << apply_Atom_Name << T_Name )
       << (r_Atom_Pure_Name << "Atom_Pure_Name" << apply_Atom_Pure_Name << T_Tilde << T_Name )
       << (r_Atom_String << "Atom_String" << apply_Atom_String << T_String )
+      << (r_Atom_RString << "Atom_RString" << apply_Atom_RString << T_RString )
+      << (r_Atom_IString << "Atom_IString" << apply_Atom_IString << T_IString )
       << (r_Atom_False<< "Atom_False" << apply_Atom_False << T_false )
       << (r_Atom_True<< "Atom_True" << apply_Atom_True << T_true )
       << (r_Atom_self<< "Atom_Self" << apply_Atom_Self << T_self )

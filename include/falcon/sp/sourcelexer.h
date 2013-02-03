@@ -100,6 +100,16 @@ private:
 
    t_state m_state;
 
+   typedef enum
+   {
+      e_st_normal,
+      e_st_intl,
+      e_st_regex
+   }
+   t_string_type;
+   t_string_type m_string_type;
+   bool m_bRegexIgnoreCase;
+
    String m_text;
 
    inline bool isTokenLimit(char_t chr)
@@ -143,6 +153,7 @@ private:
    void resetState();
 
    Parsing::TokenInstance* readOutscape();
+   Parsing::TokenInstance* makeString();
 };
 
 }

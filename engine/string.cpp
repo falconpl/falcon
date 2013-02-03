@@ -770,7 +770,7 @@ void Buffer::shrink( String *str ) const
 void Buffer::destroy( String *str ) const
 {
    if ( str->allocated() > 0 ) {
-free( str->getRawStorage() );
+      free( str->getRawStorage() );
       str->allocated( 0 );
       str->size(0);
    }
