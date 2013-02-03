@@ -4,7 +4,7 @@
 @name Wiki sample - Globals in etas
 
 @output
-A is non-zero
+A is zero
 @endoutput
 
 */
