@@ -82,7 +82,7 @@ void ExprUnquote::resolveUnquote( VMContext* ctx )
    void* inst;
    Class* cls;
    if ( value.asClassInst( cls, inst ) && cls->isDerivedFrom(expr) ) {
-      m_first = static_cast<Expression*>( inst );
+      m_first = static_cast<Expression*>( inst )->clone();
       m_first->setParent(this);
    }
    else {
