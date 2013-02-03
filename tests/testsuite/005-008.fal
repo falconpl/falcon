@@ -1,0 +1,13 @@
+/*
+@name Regex - Operator "match" method
+
+@output
+Testing RE.match
+R'a(.)c'.match('abc'): true
+@endoutput
+*/
+
+> "Testing RE.match"
+regex = r'a(.)c'i
+
+> regex,".match('abc'): ", regex.match('abc')
