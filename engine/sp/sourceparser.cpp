@@ -132,8 +132,8 @@ SourceParser::SourceParser():
 
    T_Plus("+",50),
    T_Minus("-",50),
-   T_PlusPlus("++",210),
-   T_MinusMinus("--",210),
+   T_PlusPlus("++",21, true),
+   T_MinusMinus("--",21, true),
 
    T_DblEq("==", 70),
    T_NotEq("!=", 70),

@@ -1222,7 +1222,7 @@ FALCON_STANDARD_SYNCLASS_OP_CREATE( ForIn, StmtForIn, zeroaryExprSet ) //
 FALCON_STANDARD_SYNCLASS_OP_CREATE( ForTo, StmtForTo, zeroaryExprSet ) //
 FALCON_STANDARD_SYNCLASS_OP_CREATE( If, StmtIf, zeroaryExprSet )   //
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Raise, StmtRaise, unaryExprSet )
-FALCON_STANDARD_SYNCLASS_OP_CREATE( Return, StmtReturn, zeroaryExprSet ) //
+FALCON_STANDARD_SYNCLASS_OP_CREATE_EX( Return, StmtReturn, unaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Rule, StmtRule, zeroaryExprSet ) //
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Select, StmtSelect, zeroaryExprSet ) //
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Switch, StmtSwitch, zeroaryExprSet ) //
@@ -1244,6 +1244,37 @@ void SynClasses::ClassFastPrint::restore( VMContext* ctx, DataReader*dr ) const
    bool bHasNL;
    dr->read( bHasNL );
    StmtFastPrint* expr = new StmtFastPrint(bHasNL);
+
+   try {
+      ctx->pushData( Item( this, expr ) );
+      m_parent->restore( ctx, dr );
+   }
+   catch(...) {
+      ctx->popData();
+      delete expr;
+      throw;
+   }
+}
+
+void SynClasses::ClassReturn::store( VMContext* ctx, DataWriter*wr, void* instance ) const
+{
+   StmtReturn* ret = static_cast<StmtReturn*>( instance );
+   wr->write(ret->hasDoubt());
+   wr->write(ret->hasEval());
+   m_parent->store( ctx, wr, ret );
+}
+
+void SynClasses::ClassReturn::restore( VMContext* ctx, DataReader*dr ) const
+{
+   bool bHasDoubt;
+   bool bHasEval;
+
+   dr->read( bHasDoubt );
+   dr->read( bHasEval );
+
+   StmtReturn* expr = new StmtReturn;
+   expr->hasDoubt(bHasDoubt);
+   expr->hasEval(bHasEval);
 
    try {
       ctx->pushData( Item( this, expr ) );

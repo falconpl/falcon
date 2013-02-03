@@ -204,7 +204,10 @@ FALCON_SYNCLASS_DECLARATOR_EX(m_stmt_global, Global, stmt, \
          virtual void store( VMContext*, DataWriter* dw, void* instance ) const; \
        )
 
-FALCON_SYNCLASS_DECLARATOR(m_stmt_return, Return, stmt)
+FALCON_SYNCLASS_DECLARATOR_EX(m_stmt_return, Return, stmt,
+         virtual void store( VMContext*, DataWriter* dw, void* instance ) const; \
+         )
+
 FALCON_SYNCLASS_DECLARATOR(m_stmt_rule, Rule, stmt)
 FALCON_SYNCLASS_DECLARATOR_EX(m_stmt_select, Select, stmt, \
          virtual void flatten( VMContext* ctx, ItemArray& subItems, void* instance ) const;\
