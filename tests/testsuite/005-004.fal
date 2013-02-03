@@ -8,7 +8,7 @@ Testing r/ operator
 'a.*c' matches aaaaccccc: true
 'a(.?)c' matches bbbc: false
 'a(.?)c' matches aabc: true
-'a(.?)c' matches ac: false
+'a(.?)c' matches ac: true
 'a(.?)c' matches AAC: false
 'a(.?)c'i matches AAC: true
 @endoutput

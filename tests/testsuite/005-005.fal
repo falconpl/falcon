@@ -5,7 +5,7 @@
 Testing r* operator
 'a.c' matches abc: true
 'a.c' matches ac: false
-'a.*c' matches aaaaccccc: false
+'a.*c' matches aaaaccccc: true
 'a(.?)c' matches bbbc: false
 'a(.?)c' matches aabc: false
 'a(.?)c' matches ac: false
