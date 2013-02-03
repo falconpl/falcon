@@ -330,7 +330,7 @@ bool FalconClass::addProperty( const String& name, Expression* initExpr )
 
 bool FalconClass::addProperty( const String& name )
 {
-   TRACE1( "Addong a property \"%s\" to class %s.", name.c_ize(), m_name.c_ize() );
+   TRACE1( "Adding a property \"%s\" to class %s.", name.c_ize(), m_name.c_ize() );
    
    if( m_bConstructed )
    {
@@ -1109,6 +1109,7 @@ void FalconClass::unflattenSelf( ItemArray& flatArray )
             
          case Property::t_func:
             prop->m_value.func = static_cast<Function*>(flatArray[count].asInst());
+            overrideAddMethod( prop->m_name, prop->m_value.func );
             break;
             
          case Property::t_inh:
