@@ -1,0 +1,19 @@
+/*
+@name Smoke test -- Multiline string 2
+
+@output
+Multilne string test 2:
+   Hello 
+   world!
+
+---------------------
+@endoutput
+
+*/
+
+> "Multilne string test 2:"
+> '
+   Hello 
+   world!
+'
+> "---------------------"

@@ -47,12 +47,15 @@ SourceLexer::SourceLexer( const String& uri, Parsing::Parser* p, TextReader* rea
    _p( new Private ),
    m_sline( 0 ),
    m_schr( 0 ),
+   m_parCount(0),
+   m_squareCount(0),
    m_hadOperator( false ),
    m_hadImport(false),
    m_stringStart( false ),
    m_stringML( false ),
    m_outscape(false),
    m_bParsingFtd(false),
+   m_eatEOL(false),
    m_state( state_none ),
    m_string_type( e_st_normal ),
    m_bRegexIgnoreCase(true)
@@ -416,6 +419,7 @@ Parsing::TokenInstance* SourceLexer::nextToken()
                      m_text.append( chr );
                      m_state = state_operator;
                   }
+                  break;
             }
             break;
 
@@ -504,10 +508,12 @@ Parsing::TokenInstance* SourceLexer::nextToken()
                         m_stringML = true; // to avoid multiple error reports.
                      }
                   }
-                  m_state = state_double_string_nl; break;
+                  m_state = state_double_string_nl;
+                  break;
 
                default:
                   m_text.append(chr);
+                  break;
             }
             m_stringStart = false;
             break;
@@ -639,6 +645,7 @@ Parsing::TokenInstance* SourceLexer::nextToken()
                   if ( m_stringStart )
                   {
                      m_stringML = true;
+                     m_eatEOL = true;
                   }
                   else if( m_stringML )
                   {
@@ -1062,11 +1069,18 @@ Parsing::TokenInstance* SourceLexer::nextToken()
       // Do this now so we can advance only after having read a char.
       if( chr == '\n' )
       {
-         TRACE2( "SourceLexer::nextToken - at line %d", m_line );
+         TRACE2( "SourceLexer::nextToken - \\n at line %d -- %s", m_line, ( eatingEOL() ? "Eating away" : "returning") );
          m_line++;
-         m_chr = 1;
-         return parser->T_EOL.makeInstance(m_sline, m_schr);
+         // are we in a state that requires to go on?
+         if( ! eatingEOL() )
+         {
+            m_chr = 1;
+            return parser->T_EOL.makeInstance(m_sline, m_schr);
+         }
+         // else go on
+         m_chr =0;
       }
+
       m_chr++;
    }
 
@@ -1088,9 +1102,15 @@ Parsing::TokenInstance* SourceLexer::nextToken()
 }
 
 
+bool SourceLexer::eatingEOL()
+{
+   return m_parCount > 0 || m_squareCount > 0 || m_stringML;
+}
+
 void SourceLexer::resetState()
 {
    m_state = state_line;
+   m_eatEOL = false;
    m_hadOperator = false; // checkOperator will set it back as needed.
 }
 
