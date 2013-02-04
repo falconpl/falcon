@@ -420,7 +420,7 @@ void StmtForIn::PStepBegin::apply_( const PStep* ps, VMContext* ctx )
    {       
       // prepare the cleanup step removing 2 items + the item pushed by the last active syntree
       ctx->currentCode().m_step = &self->m_stepCleanup;
-      ctx->currentCode().m_seqId = 3;
+      ctx->currentCode().m_seqId = 2;
       // Prepare to get the iterator item...
       ctx->pushCode( &self->m_stepFirst );      
       ctx->pushCode( &self->m_stepGetNext );

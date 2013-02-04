@@ -2,14 +2,12 @@
 @name Statement for/to -- simple donward
 
 @output   
-DataDepth = 4
 Testing basic for i = 5 to 1
 Looping: 5
 Looping: 4
 Looping: 3
 Looping: 2
 Looping: 1
-DataDepth = 4
 
 Testing basic for i = 5 to 1, -1
 Looping: 5
@@ -17,46 +15,63 @@ Looping: 4
 Looping: 3
 Looping: 2
 Looping: 1
-DataDepth = 4
 
 Testing basic for i = 5 to 1, -2
 Looping: 5
 Looping: 3
 Looping: 1
-DataDepth = 4
 
 Testing basic for i = 5 to 1, 1
-DataDepth = 4
 Done
+@endoutput
 
 */
 
 x = VMContext()
-> "DataDepth = ", x.dataDepth
+dd = x.dataDepth
 > "Testing basic for i = 5 to 1"
 for i = 5 to 1
    > "Looping: ", i
 end
-> "DataDepth = ", x.dataDepth
+
+dd1 = x.dataDepth
+if dd != dd1
+   raise "Corrupted stack at loop 1"
+end
+
 >
 > "Testing basic for i = 5 to 1, -1"
 for i = 5 to 1,-1
    > "Looping: ", i
 end
-> "DataDepth = ", x.dataDepth
+
+dd1 = x.dataDepth
+if dd != dd1
+   raise "Corrupted stack at loop 1"
+end
 
 >
 > "Testing basic for i = 5 to 1, -2"
 for i = 5 to 1,-2
    > "Looping: ", i
 end
-> "DataDepth = ", x.dataDepth
+
+dd1 = x.dataDepth
+if dd != dd1
+   raise "Corrupted stack at loop 1"
+end
+
 
 >
 > "Testing basic for i = 5 to 1, 1"
 for i = 5 to 1, 1
    > "Looping: ", i
 end
-> "DataDepth = ", x.dataDepth
+
+dd1 = x.dataDepth
+if dd != dd1
+   raise "Corrupted stack at loop 1"
+end
+
 
 > "Done"
