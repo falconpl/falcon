@@ -1,0 +1,48 @@
+/*
+@name Regex - "range" method
+
+@output
+Testing RE.range
+R'a(.)c'.range('abcabc'): [0:3]
+R'a(.)c'.range('aaaabc'): [3:6]
+R'a(.)c'.range('bbb'): Nil
+R'a(.)c'.range('xxaccxaacx'): [2:5]
+R'a(.)c'.range('AAA'): Nil
+R'a(.)c'.range('ABC'): [0:3]
+R'a(.)c'.range('xxABCxxABC'): [2:5]
+Starting at 3
+R'a(.)c'.range('abcabc',3): [3:6]
+R'a(.)c'.range('aaaabc',3): [3:6]
+R'a(.)c'.range('bbb',3): Nil
+R'a(.)c'.range('xxaccxaacx',3): [6:9]
+R'a(.)c'.range('AAA',3): Nil
+R'a(.)c'.range('ABC',3): Nil
+R'a(.)c'.range('xxABCxxABC',3): [7:10]
+Ending at 9
+R'a(.)c'.range('abcabc',3,9): [3:6]
+R'a(.)c'.range('aaaabc',3,9): [3:6]
+R'a(.)c'.range('bbb',3,9): Nil
+R'a(.)c'.range('xxaccxaacx',3,9): [6:9]
+R'a(.)c'.range('AAA',3,9): Nil
+R'a(.)c'.range('ABC',3,9): Nil
+R'a(.)c'.range('xxABCxxABC',3,9): Nil
+@endoutput
+*/
+
+> "Testing RE.range"
+regex = r'a(.)c'i
+tests = .[ "abcabc" "aaaabc" "bbb" "xxaccxaacx" "AAA" "ABC" "xxABCxxABC" ]
+
+for expr in tests
+   > regex,".range('",expr,"'): ", regex.range(expr)
+end
+
+> "Starting at 3"
+for expr in tests
+   > regex,".range('",expr,"',3): ", regex.range(expr,3)
+end
+
+> "Ending at 9"
+for expr in tests
+   > regex,".range('",expr,"',3,9): ", regex.range(expr,3,9)
+end

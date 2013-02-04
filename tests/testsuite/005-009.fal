@@ -1,21 +1,21 @@
 /*
-@name Regex - "find" method
+@name Regex - "grab" method
 
 @output
-Testing RE.find
-R'a(.)c'.find('abc'): abc
-R'a(.)c'.find('aaa'): Nil
-R'a(.)c'.find('bbb'): Nil
-R'a(.)c'.find('xxaccxx'): acc
-R'a(.)c'.find('AAA'): Nil
-R'a(.)c'.find('ABC'): ABC
-R'a(.)c'.find('xxABCxx'): ABC
+Testing RE.grab
+R'a(.)c'.grab('abc'): abc
+R'a(.)c'.grab('aaa'): Nil
+R'a(.)c'.grab('bbb'): Nil
+R'a(.)c'.grab('xxaccxx'): acc
+R'a(.)c'.grab('AAA'): Nil
+R'a(.)c'.grab('ABC'): ABC
+R'a(.)c'.grab('xxABCxx'): ABC
 @endoutput
 */
 
-> "Testing RE.find"
+> "Testing RE.grab"
 regex = r'a(.)c'i
 
 for expr in .[ "abc" "aaa" "bbb" "xxaccxx" "AAA" "ABC" "xxABCxx" ]
-   > regex,".find('",expr,"'): ", regex.find(expr)
+   > regex,".grab('",expr,"'): ", regex.grab(expr)
 end

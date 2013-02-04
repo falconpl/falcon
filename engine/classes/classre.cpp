@@ -23,6 +23,7 @@
 #include <falcon/itemarray.h>
 #include <falcon/vmcontext.h>
 #include <falcon/optoken.h>
+#include <falcon/range.h>
 #include <falcon/errors/accesserror.h>
 #include <falcon/errors/paramerror.h>
 #include <falcon/errors/operanderror.h>
@@ -49,7 +50,11 @@ ClassRE::ClassRE():
    FALCON_INIT_PROPERTY( groupNames ),
 
    FALCON_INIT_METHOD(match),
+   FALCON_INIT_METHOD(grab),
    FALCON_INIT_METHOD(find),
+   FALCON_INIT_METHOD(findAll),
+   FALCON_INIT_METHOD(range),
+   FALCON_INIT_METHOD(rangeAll),
    FALCON_INIT_METHOD(capture),
 
    FALCON_INIT_METHOD(replace),
@@ -468,7 +473,7 @@ FALCON_DEFINE_METHOD_P1( ClassRE, match )
 }
 
 
-FALCON_DEFINE_METHOD_P1( ClassRE, find )
+FALCON_DEFINE_METHOD_P1( ClassRE, grab )
 {
    Item* i_target = ctx->param(0);
 
@@ -495,6 +500,225 @@ FALCON_DEFINE_METHOD_P1( ClassRE, find )
    else {
       ctx->returnFrame();
    }
+}
+
+bool internal_check_params( VMContext* ctx, String* &target, int64& start, int64& end )
+{
+
+   Item* i_target = ctx->param(0);
+   Item* i_start = ctx->param(1);
+   Item* i_end = ctx->param(2);
+
+   if( i_target == 0|| ! i_target->isString() )
+   {
+      return false;
+   }
+
+   target = i_target->asString();
+   start = 0;
+   int64 tlen = target->length();
+   end = tlen;
+
+   if( i_start != 0 )
+   {
+      if( i_start->isOrdinal() )
+      {
+         start = i_start->forceInteger();
+         /* Do not sanitize, as substring will do for us
+         if ( start < 0 )
+         {
+            start = tlen + end;
+         }
+         if ( start > (int64) tlen )
+         {
+            start = tlen;
+         }
+         */
+      }
+      else if ( ! i_start->isNil() )
+      {
+         return false;
+      }
+   }
+
+   if( i_end != 0 )
+   {
+      if( i_end->isOrdinal() )
+      {
+         end = i_end->forceInteger();
+         /* Do not sanitize, as substring will do for us
+         if ( end < 0 )
+         {
+            end = tlen + end;
+         }
+         if ( end > (int64) tlen )
+         {
+            end = tlen;
+         }
+         */
+
+      }
+      else if ( ! i_end->isNil() )
+      {
+         return false;
+      }
+   }
+
+   return true;
+}
+
+
+static bool internal_find( VMContext* ctx, Item& result, bool (*on_found)(Item& target, int count, int pos, int size) )
+{
+   String* target;
+   int64 start, end;
+   if( ! internal_check_params( ctx, target, start, end ) )
+   {
+      return false;
+   }
+
+   String temp;
+   if( start != 0 || end != target->length() )
+   {
+      // TODO: Use a UTF8 Converter instead.
+      // In that case, remember to sanitize the values.
+      temp = target->subString(start, end);
+      target = &temp;
+   }
+
+   re2::RE2* re = static_cast<re2::RE2*>(ctx->self().asInst());
+   re2::StringPiece text(*target);
+
+   re2::StringPiece captured;
+   bool match = re->Match(text, 0, text.size(),
+              re2::RE2::UNANCHORED,
+              &captured, 1);
+
+   int count = 0;
+   while( match )
+   {
+      uint32 pos_utf8 = captured.begin() - text.begin();
+      uint32 size_utf8 = captured.end() - captured.begin();
+
+      int64 pos = String::UTF8Size( text.data(), pos_utf8 );
+      int64 size = String::UTF8Size( captured.data(), size_utf8 );
+
+      if( ! on_found( result, count++, start + pos, size ) )
+      {
+         break;
+      }
+
+      int next = static_cast<int>( pos + size + 1 );
+      if( next >= text.size() )
+      {
+         break;
+      }
+
+      match = re->Match(text, next, text.size(),
+                    re2::RE2::UNANCHORED,
+                    &captured, 1);
+   }
+
+   return true;
+}
+
+
+bool on_found_find(Item& target, int , int pos, int )
+{
+   target = (int64) pos;
+   return false;
+}
+
+
+bool on_found_findAll(Item& target, int count, int pos, int )
+{
+   if( count == 0 )
+   {
+      target = FALCON_GC_HANDLE(new ItemArray);
+   }
+
+   ItemArray* array = static_cast<ItemArray*>(target.asInst());
+   array->append( pos );
+
+   return true;
+}
+
+bool on_found_range(Item& target, int, int pos, int size)
+{
+   static class Class* crng = Engine::instance()->rangeClass();
+   Range* rng = static_cast<Range*>( crng->createInstance() );
+
+   rng->start( pos );
+   rng->end( pos + size );
+
+   target = FALCON_GC_STORE( crng, rng );
+   return false;
+}
+
+
+bool on_found_rangeAll(Item& target, int count, int pos, int size)
+{
+   static class Class* crng = Engine::instance()->rangeClass();
+
+   if( count == 0 )
+   {
+      target = FALCON_GC_HANDLE(new ItemArray);
+   }
+   ItemArray* array = static_cast<ItemArray*>(target.asInst());
+
+   Range* rng = static_cast<Range*>( crng->createInstance() );
+   rng->start( pos );
+   rng->end( pos + size );
+   array->append( FALCON_GC_STORE( crng, rng ) );
+
+   return true;
+}
+
+
+FALCON_DEFINE_METHOD_P1( ClassRE, find )
+{
+   Item result = -1;
+
+   if( ! internal_find(ctx, result, &on_found_find) ) {
+      throw paramError();
+   }
+
+   ctx->returnFrame(result);
+}
+
+
+FALCON_DEFINE_METHOD_P1( ClassRE, findAll )
+{
+   Item result;
+
+   if( ! internal_find(ctx, result, &on_found_findAll) ) {
+      throw paramError();
+   }
+
+   ctx->returnFrame(result);
+}
+
+
+FALCON_DEFINE_METHOD_P1( ClassRE, range )
+{
+   Item result;
+
+   if( ! internal_find(ctx, result, &on_found_range) ) {
+      throw paramError();
+   }
+
+   ctx->returnFrame(result);
+}
+
+FALCON_DEFINE_METHOD_P1( ClassRE, rangeAll )
+{
+   Item result;
+
+   if( ! internal_find(ctx, result, &on_found_rangeAll) ) {
+      throw paramError();
+   }
+
+   ctx->returnFrame(result);
 }
 
 

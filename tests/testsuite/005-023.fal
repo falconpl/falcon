@@ -1,0 +1,48 @@
+/*
+@name Regex - "findAll" method
+
+@output
+Testing RE.findAll
+R'a(.)c'.findAll('abcabc'): [0]
+R'a(.)c'.findAll('aaaabc'): [3]
+R'a(.)c'.findAll('bbb'): Nil
+R'a(.)c'.findAll('xxaccxaacx'): [2, 6]
+R'a(.)c'.findAll('AAA'): Nil
+R'a(.)c'.findAll('ABC'): [0]
+R'a(.)c'.findAll('xxABCxxABC'): [2, 7]
+Starting at 3
+R'a(.)c'.findAll('abcabc',3): [3]
+R'a(.)c'.findAll('aaaabc',3): [3]
+R'a(.)c'.findAll('bbb',3): Nil
+R'a(.)c'.findAll('xxaccxaacx',3): [6]
+R'a(.)c'.findAll('AAA',3): Nil
+R'a(.)c'.findAll('ABC',3): Nil
+R'a(.)c'.findAll('xxABCxxABC',3): [7]
+Ending at 9
+R'a(.)c'.findAll('abcabc',3,9): [3]
+R'a(.)c'.findAll('aaaabc',3,9): [3]
+R'a(.)c'.findAll('bbb',3,9): Nil
+R'a(.)c'.findAll('xxaccxaacx',3,9): [6]
+R'a(.)c'.findAll('AAA',3,9): Nil
+R'a(.)c'.findAll('ABC',3,9): Nil
+R'a(.)c'.findAll('xxABCxxABC',3,9): Nil
+@endoutput
+*/
+
+> "Testing RE.findAll"
+regex = r'a(.)c'i
+tests = .[ "abcabc" "aaaabc" "bbb" "xxaccxaacx" "AAA" "ABC" "xxABCxxABC" ]
+
+for expr in tests
+   > regex,".findAll('",expr,"'): ", regex.findAll(expr).describe()
+end
+
+> "Starting at 3"
+for expr in tests
+   > regex,".findAll('",expr,"',3): ", regex.findAll(expr,3).describe()
+end
+
+> "Ending at 9"
+for expr in tests
+   > regex,".findAll('",expr,"',3,9): ", regex.findAll(expr,3,9).describe()
+end

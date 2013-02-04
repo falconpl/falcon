@@ -101,27 +101,96 @@ private:
     @return True if the string matches somewhere with the
     regular expression.
    */
-   FALCON_DECLARE_METHOD( match, "S" );
+   FALCON_DECLARE_METHOD( match, "target:S" );
 
    /*#
-    @method find RE
+    @method grab RE
     @param target The string to be matched.
     @return If the string matches, returns the matched content,
        otherwise returns nil
    */
-   FALCON_DECLARE_METHOD( find, "S" );
+   FALCON_DECLARE_METHOD( grab, "target:S" );
+
+
+   /*#
+    @method find RE
+    @brief Returns the the first position where the pattern is matching.
+    @param target The string to be matched.
+    @optparam begin_ Where to begin the search in the target string.
+    @optparam end_ Where to end the target string.
+    @return If the regex is found in the @b target, returns the
+       position where the pattern is matched, otherwise returns -1.
+
+    If begin and end are set, the search is performed in the open
+    range [begin_, end_[. If end is not set, it goes up to the end of
+    the string.
+   */
+   FALCON_DECLARE_METHOD( find, "target:S,begin_:[N],end_[N]" );
+
+   /*#
+    @method findAll RE
+    @param target The string to be matched.
+    @brief Returns the all the initial positions where the pattern is matching.
+    @optparam begin_ Where to begin the search in the target string.
+    @optparam end_ Where to end the target string.
+    @return If the regex is found in the @b target, returns the
+       an array containing all the initial positions of the matches,
+       otherwise returns nil
+
+    If begin and end are set, the search is performed in the open
+    range [begin, end[. If end is not set, it goes up to the end of
+    the string.
+   */
+   FALCON_DECLARE_METHOD( findAll, "target:S,begin_:[N],end_[N]" );
+
+
+   /*#
+    @method range RE
+    @brief Returns the first range where the pattern is matching.
+    @param target The string to be matched.
+    @optparam begin_ Where to begin the search in the target string.
+    @optparam end_ Where to end the target string.
+    @return If the regex is found in the @b target, returns a range
+       with the being-end position of the matched partern, otherwise
+       returns nil
+
+    If begin and end are set, the search is performed in the open
+    range [begin, end[. If end is not set, it goes up to the end of
+    the string.
+   */
+   FALCON_DECLARE_METHOD( range, "target:S,begin_:[N],end_[N]" );
+
+   /*#
+    @method rangeAll RE
+    @brief Returns all the ranges where the pattern is matching.
+    @param target The string to be matched.
+    @optparam begin_ Where to begin the search in the target string.
+    @optparam end_ Where to end the target string.
+    @return If the regex is found in the @b target, returns the
+       an array containing a set of ranges with all the found
+       matches.
+
+    If begin and end are set, the search is performed in the open
+    range [begin, end[. If end is not set, it goes up to the end of
+    the string.
+
+    @note The found ranges cannot be overlapping.
+   */
+   FALCON_DECLARE_METHOD( rangeAll, "target:S,begin_:[N],end_[N]" );
 
    /*#
     @method capture RE
+    @brief Returns the captured expressions.
     @param target The string to be matched.
     @optparam getAll If true, the first returned element is the whole match,
        otherwise, only parenthezized expressions are returned.
     @return If the string matches, returns an array with the captured expressions,
    */
-   FALCON_DECLARE_METHOD( capture, "S" );
+   FALCON_DECLARE_METHOD( capture, "target:S,getAll:[B]" );
 
    /*#
     @method replace RE
+    @brief Substitutes all the occurrences of the pattern.
     @param target The string where the replacement is done.
     @param replacer The replaced string.
     @return On success, a new copy of the string with the required
@@ -137,10 +206,11 @@ private:
     up to @a RE.captures.
    */
 
-   FALCON_DECLARE_METHOD( replace, "S,S" );
+   FALCON_DECLARE_METHOD( replace, "target:S,replacer:S" );
 
    /*#
     @method replaceFirst RE
+    @brief Changes the first occurrence of the pattern.
     @param target The string where the replacement is done.
     @param replacer The replaced string.
     @return On success, a new copy of the string with the required
@@ -156,10 +226,11 @@ private:
     up to @a RE.captures.
    */
 
-   FALCON_DECLARE_METHOD( replaceFirst, "S,S" );
+   FALCON_DECLARE_METHOD( replaceFirst, "target:S,replacer:S" );
 
    /*#
     @method substitute RE
+    @brief Returns a transformation of the found pattern.
     @param target The string where the replacement is done.
     @param replacer The replaced string.
     @return On success, a new copy of the string with the required
@@ -175,10 +246,11 @@ private:
     up to @a RE.captures.
    */
 
-   FALCON_DECLARE_METHOD( substitute, "S,S" );
+   FALCON_DECLARE_METHOD( substitute, "target:S,replacer:S" );
 
    /*#
     @method change RE
+    @brief changes all the occurrences of the pattern in place.
     @param target The string where the replacement is done.
     @param replacer The replaced string.
     @return On success, true, on error, false.
@@ -194,10 +266,11 @@ private:
     \\1 the first captured expression, \\2 the second and so on,
     up to @a RE.captures.
    */
-   FALCON_DECLARE_METHOD( change, "S,S" );
+   FALCON_DECLARE_METHOD( change, "target:S,replacer:S" );
 
    /*#
     @method changeFirst RE
+    @brief Changes the first occurence of the pattern in place.
     @param target The string where the replacement is done.
     @param replacer The replaced string.
     @return On success, true, on error, false.
@@ -213,10 +286,11 @@ private:
     \\1 the first captured expression, \\2 the second and so on,
     up to @a RE.captures.
    */
-   FALCON_DECLARE_METHOD( changeFirst, "S,S" );
+   FALCON_DECLARE_METHOD( changeFirst, "target:S,replacer:S" );
 
    /*#
-    @method subInPlace RE
+    @method chop RE
+    @brief extract the matched pattern in place.
     @param target The string where the replacement is done.
     @param replacer The replaced string.
     @return On success, true, on error, false.
@@ -234,19 +308,28 @@ private:
     up to @a RE.captures.
    */
 
-   FALCON_DECLARE_METHOD( chop, "S,S" );
+   FALCON_DECLARE_METHOD( chop, "target:S,replacer:S" );
 
    /*#
     @method consume RE
+    @brief Cut the string up to where the pattern is matched and
+        return the captured expressions.
     @param target The string that is to be consumed.
+    @optparam getAll if true, return also the full matched pattern,
+       otherwise just return the captured expressions.
+    @return on success, an array with the matched captured patterns, or
+    true if there aren't pattern to be captured. On failure, returns false.
    */
-   FALCON_DECLARE_METHOD( consume, "S,[B]" );
+   FALCON_DECLARE_METHOD( consume, "target:S,getAll:[B]" );
 
    /*#
     @method consume RE
+    @brief Cut the string up to where the pattern is matched,
+       and return the matched pattern.
     @param target The string that is to be consumed.
+    @return on success, the matched pattern. On failure, nil.
    */
-   FALCON_DECLARE_METHOD( consumeMatch, "S" );
+   FALCON_DECLARE_METHOD( consumeMatch, "target:S" );
 
    /*
    FALCON_DECLARE_PROPERTY( back );
