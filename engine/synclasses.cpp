@@ -39,7 +39,6 @@
 #include <falcon/psteps/exprdict.h>
 #include <falcon/psteps/exprdot.h>
 #include <falcon/psteps/expreeq.h>
-#include <falcon/psteps/exprfuncpower.h>
 #include <falcon/psteps/exprin.h>
 #include <falcon/psteps/exprnotin.h>
 #include <falcon/psteps/expriif.h>
@@ -101,6 +100,7 @@ SynClasses::SynClasses( Class* classSynTree, Class* classStatement, Class* class
    m_cls_expr( classExpr ),
    m_dummy_end(0)
 {
+
    #include <falcon/synclasses_list.h>
 
    m_expr_ep->userFlags(FALCON_SYNCLASS_ID_EPEX);
@@ -304,7 +304,6 @@ FALCON_STANDARD_SYNCLASS_OP_CREATE( AutoRShift, ExprAutoRShift, binaryExprSet )
 
 // Functional
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Compose, ExprCompose, binaryExprSet )
-FALCON_STANDARD_SYNCLASS_OP_CREATE( FuncPower, ExprFuncPower, binaryExprSet )
 
 // MUnpack -- separated
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Neg, ExprNeg, unaryExprSet )

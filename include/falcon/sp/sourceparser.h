@@ -161,6 +161,7 @@ public:
    Parsing::Terminal T_RString;
    Parsing::Terminal T_IString;
 
+   Parsing::Terminal T_provides;
    //================================================
    // Statements
    //
@@ -392,6 +393,7 @@ public:
 
    Parsing::Rule r_Expr_expr_evalret;
    Parsing::Rule r_Expr_expr_evalret_exec;
+   Parsing::Rule r_Expr_provides;
    
    Parsing::Rule r_Expr_auto_add;
    Parsing::Rule r_Expr_auto_sub;

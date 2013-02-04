@@ -29,6 +29,7 @@ namespace Falcon {
 class Error;
 class Class;
 class Error_p;
+class VMContext;
 
 // Declare the error IDS
 #define FLC_DECLARE_ERROR_TABLE
@@ -109,6 +110,16 @@ public:
       m_origin( e_orig_mod ),
       m_catchable( true )
       {}
+
+   /**
+    * Fill an error with the current context.
+    *
+    * This extracts function, module, line and execution status
+    * from the context, and uses them to configure the error parameters.
+    *
+    * \note For convenience, the definition of this constructor is in vmcontext.cpp
+    */
+   ErrorParam( int code, VMContext* ctx );
 
    ErrorParam &code( int code ) { m_errorCode = code; return *this; }
    ErrorParam &desc( const String &d ) { m_description = d; return *this; }

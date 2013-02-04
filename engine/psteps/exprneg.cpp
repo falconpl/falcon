@@ -47,12 +47,13 @@ void ExprNeg::apply_( const PStep* ps, VMContext* ctx )
    switch( cf.m_seqId )
    {
       case 0:
-      cf.m_seqId = 1;
-      if( ctx->stepInYield( self->m_first, cf ) )
-      {
-         return;
-      }
-      // fallthrough
+         cf.m_seqId = 1;
+         if( ctx->stepInYield( self->m_first, cf ) )
+         {
+            return;
+         }
+
+      /* no break */
       case 1:
       {
          cf.m_seqId = 2;
@@ -83,6 +84,7 @@ void ExprNeg::apply_( const PStep* ps, VMContext* ctx )
             }            
          }
       }
+      break;
    }
    
    ctx->popCode();     

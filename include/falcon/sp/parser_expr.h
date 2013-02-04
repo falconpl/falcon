@@ -95,6 +95,7 @@ void apply_expr_auto_shl( const Rule&, Parser& p );
 
 void apply_expr_pars( const Rule&, Parser& p );
 void apply_expr_dot( const Rule&, Parser& p );
+void apply_expr_provides( const Rule&, Parser& p );
 
 }
 

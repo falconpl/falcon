@@ -198,7 +198,6 @@ add_library(falcon_engine SHARED
   psteps/exprevalret.cpp
   psteps/exprevalretexec.cpp
   psteps/exprfself.cpp
-  psteps/exprfuncpower.cpp
   psteps/expriif.cpp
   psteps/exprin.cpp
   psteps/exprincdec.cpp
@@ -213,6 +212,7 @@ add_library(falcon_engine SHARED
   psteps/exprnotin.cpp
   psteps/exproob.cpp
   psteps/exprparentship.cpp
+  psteps/exprprovides.cpp
   psteps/exprrange.cpp
   psteps/exprproto.cpp
   psteps/exprpseudocall.cpp
@@ -255,12 +255,12 @@ add_library(falcon_engine SHARED
   classes/classfunction.cpp
   classes/classint.cpp
   classes/classgeneric.cpp
-  classes/classnil.cpp
   classes/classmantra.cpp
   classes/classmethod.cpp
   classes/classmodule.cpp
   classes/classmulti.cpp
   classes/classnumeric.cpp
+  classes/classnil.cpp
   classes/classrange.cpp
   classes/classrawmem.cpp
   classes/classre.cpp

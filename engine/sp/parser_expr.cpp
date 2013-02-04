@@ -45,9 +45,9 @@
 #include <falcon/psteps/exprevalret.h>
 #include <falcon/psteps/exprevalretexec.h>
 #include <falcon/psteps/exprstripol.h>
+#include <falcon/psteps/exprprovides.h>
 
 #include <falcon/psteps/exprcompose.h>
-#include <falcon/psteps/exprfuncpower.h>
 
 #include "falcon/parser/lexer.h"
 
@@ -156,7 +156,7 @@ void apply_expr_preinc(const Rule&, Parser& p )
    TokenInstance* value = p.getNextToken();
 
    TokenInstance* ti2 = TokenInstance::alloc( plpl->line(), plpl->chr(), sp.Expr );
-   ti2->setValue( new ExprPreInc(static_cast<Expression*>(value->detachValue())), expr_deletor );
+   ti2->setValue( new ExprPreInc(static_cast<Expression*>(value->detachValue()), plpl->line(), plpl->chr()), expr_deletor );
 
    p.simplify(2,ti2);
 }
@@ -169,7 +169,7 @@ void apply_expr_preinc(const Rule&, Parser& p )
    /*TokenInstance* plpl  =*/ p.getNextToken();
 
    TokenInstance* ti2 = TokenInstance::alloc( value->line(), value->chr(), sp.Expr );
-   ti2->setValue( new ExprPostInc(static_cast<Expression*>(value->detachValue())), expr_deletor );
+   ti2->setValue( new ExprPostInc(static_cast<Expression*>(value->detachValue()), value->line(), value->chr()), expr_deletor );
 
    p.simplify(2,ti2);
 }
@@ -182,7 +182,7 @@ void apply_expr_preinc(const Rule&, Parser& p )
    TokenInstance* value = p.getNextToken();
 
    TokenInstance* ti2 = TokenInstance::alloc( plpl->line(), plpl->chr(), sp.Expr );
-   ti2->setValue( new ExprPreDec(static_cast<Expression*>(value->detachValue())), expr_deletor );
+   ti2->setValue( new ExprPreDec(static_cast<Expression*>(value->detachValue()), plpl->line(), plpl->chr()), expr_deletor );
 
    p.simplify(2,ti2);
 }
@@ -195,7 +195,7 @@ void apply_expr_preinc(const Rule&, Parser& p )
    /*TokenInstance* plpl  =*/ p.getNextToken();
 
    TokenInstance* ti2 = TokenInstance::alloc( value->line(), value->chr(), sp.Expr );
-   ti2->setValue( new ExprPostDec(static_cast<Expression*>(value->detachValue())), expr_deletor );
+   ti2->setValue( new ExprPostDec(static_cast<Expression*>(value->detachValue()), value->line(), value->chr()), expr_deletor );
 
    p.simplify(2,ti2);
 }
@@ -279,7 +279,7 @@ void apply_expr_auto( const Rule&, Parser& p, BinaryExpression* aexpr )
    SourceParser& sp = static_cast<SourceParser&>(p);
    
    TokenInstance* tfirst = p.getNextToken();
-   (void) p.getNextToken();
+   TokenInstance* oper = p.getNextToken();
    TokenInstance* tsecond = p.getNextToken();
    
    Expression* firstPart = static_cast<Expression*>(tfirst->detachValue());
@@ -292,6 +292,7 @@ void apply_expr_auto( const Rule&, Parser& p, BinaryExpression* aexpr )
    }
    
    Expression* secondPart = static_cast<Expression*>(tsecond->detachValue());
+   aexpr->decl( oper->line(), oper->chr() );
    aexpr->first( firstPart );
    aexpr->second( secondPart );
    TokenInstance* ti = TokenInstance::alloc(tfirst->line(), tfirst->chr(), sp.Expr);
@@ -358,12 +359,12 @@ static void apply_expr_unary( const Rule&, Parser& p, UnaryExpression* un )
 {
    SourceParser& sp = static_cast<SourceParser&>(p);
    
-   (void) p.getNextToken();
+   TokenInstance* oper = p.getNextToken();
    TokenInstance* value = p.getNextToken();  // expr   
    
    // get the expression coming from the value and unarize it.
    Expression* other = static_cast<Expression*>(value->detachValue());
-   un->decl(value->line(), value->chr());
+   un->decl(oper->line(), oper->chr());
    un->first( other );
    
    // Complexify the value
@@ -495,6 +496,27 @@ void apply_expr_dot( const Rule&, Parser& p )
       ), expr_deletor );
 
    p.simplify(3,ti);
+}
+
+
+void apply_expr_provides( const Rule& , Parser& p )
+{
+   // << Expr << T_Provides << T_Name
+   SourceParser& sp = static_cast<SourceParser&>(p);
+   TokenInstance* texpr = p.getNextToken();   // expr
+   TokenInstance* toper = p.getNextToken();
+   TokenInstance* tprop = p.getNextToken();  // name
+
+   // get the expression coming from the value and unarize it.
+   Expression* expr = static_cast<Expression*>(texpr->detachValue());
+   const String& prop = *tprop->asString();
+   ExprProvides* provides = new ExprProvides( expr, prop, toper->line(), toper->chr() );
+
+
+   // Complexify the value
+   texpr->token( sp.Expr );   // be sure to change it
+   texpr->setValue( provides, expr_deletor );
+   p.trim(2); // remove the 2 tokens in front
 }
 
 }

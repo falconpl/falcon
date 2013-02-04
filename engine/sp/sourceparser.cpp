@@ -199,7 +199,8 @@ SourceParser::SourceParser():
    T_select("select"),
 
    T_RString("R-String"),
-   T_IString("I-String")
+   T_IString("I-String"),
+   T_provides("provides")
    
 {
    S_Attribute << "Attribute" << errhand_attribute;
@@ -434,7 +435,10 @@ SourceParser::SourceParser():
    Expr<< (r_Expr_expr_evalret << "Expr_evarlet"  << apply_expr_evalret << T_EVALRET << Expr );
    Expr<< (r_Expr_expr_evalret_exec << "Expr_evarlet_exec"  << apply_expr_evalret_exec << T_EVALRET_EXEC << Expr );
 
+   Expr<< (r_Expr_provides << "Expr_provides" << apply_expr_provides << Expr << T_provides << T_Name);
+
    Expr << (r_Expr_assign << "Expr_assign" << apply_expr_assign << Expr << T_EqSign << NeListExpr );
+
 
    Expr<< (r_Expr_equal << "Expr_equal" << apply_expr_equal << Expr << T_DblEq << Expr);
    Expr<< (r_Expr_diff << "Expr_diff" << apply_expr_diff << Expr << T_NotEq << Expr);

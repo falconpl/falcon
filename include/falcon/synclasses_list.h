@@ -1,4 +1,5 @@
 
+
 #ifdef FALCON_SYNCLASS_DECLARATOR_DECLARE
 #undef FALCON_SYNCLASS_DECLARATOR_EX
 #undef FALCON_SYNCLASS_DECLARATOR
@@ -77,10 +78,19 @@ FALCON_SYNCLASS_DECLARATOR(m_expr_gendict, GenDict, expr)
 FALCON_SYNCLASS_DECLARATOR_EX(m_expr_dot, DotAccess, expr, \
       virtual void store( VMContext*, DataWriter* dw, void* instance ) const; \
       )
+
+FALCON_SYNCLASS_DECLARATOR(m_expr_iif, IIF, expr)
 FALCON_SYNCLASS_DECLARATOR(m_expr_eeq, EEQ, expr)
 FALCON_SYNCLASS_DECLARATOR(m_expr_in, In, expr)
 FALCON_SYNCLASS_DECLARATOR(m_expr_notin, Notin, expr)
-FALCON_SYNCLASS_DECLARATOR(m_expr_iif, IIF, expr)
+
+FALCON_SYNCLASS_DECLARATOR_EX(m_expr_provides, Provides, expr, \
+         virtual void store( VMContext*, DataWriter* dw, void* instance ) const; \
+         virtual void op_getProperty( VMContext* ctx, void* instance, const String& prop) const;\
+         virtual void op_setProperty( VMContext* ctx, void* instance, const String& prop ) const;\
+         virtual bool hasProperty( void*, const String& ) const; \
+         )
+
 
 FALCON_SYNCLASS_DECLARATOR_EX(m_expr_lit, Lit, expr, \
          virtual void flatten( VMContext* ctx, ItemArray& subItems, void* instance ) const;\
@@ -135,7 +145,6 @@ FALCON_SYNCLASS_DECLARATOR(m_expr_arshift, AutoRShift, expr)
 
 // Functional
 FALCON_SYNCLASS_DECLARATOR(m_expr_compose, Compose, expr )
-FALCON_SYNCLASS_DECLARATOR(m_expr_funcpower, FuncPower, expr )
 
 // 
 FALCON_SYNCLASS_DECLARATOR_EX(m_expr_munpack, MUnpack, expr, \

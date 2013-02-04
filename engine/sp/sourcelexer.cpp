@@ -1191,10 +1191,7 @@ Parsing::TokenInstance* SourceLexer::checkWord()
 
 
       case 8:
-         /*
-         if ( m_text == "provides" )
-            return PROVIDES;
-           */
+         if ( m_text == "provides" ) return parser->T_provides.makeInstance(m_sline, m_schr);
          if ( m_text == "forfirst" ) return parser->T_forfirst.makeInstance(m_sline, m_schr);
          
          if ( m_text == "function" )

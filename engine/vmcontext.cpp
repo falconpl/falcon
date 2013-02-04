@@ -1639,6 +1639,7 @@ Error* VMContext::runtimeError( int id, const String& extra, int line )
    String noname;
    Function* curFunc = currentFrame().m_function;
    const String* modName = curFunc->module() == 0 ? &noname : &curFunc->module()->name();
+   const String* modPath = curFunc->module() == 0 ? &noname : &curFunc->module()->uri();
 
    if( line == 0 ) {
       line = currentCode().m_step->sr().line();
@@ -1646,6 +1647,7 @@ Error* VMContext::runtimeError( int id, const String& extra, int line )
 
    CodeError* error = new CodeError( ErrorParam(id, line, *modName )
             .origin(ErrorParam::e_orig_runtime)
+            .path(*modPath)
             .symbol( curFunc->name() )
             .extra( extra ) );
 
@@ -1657,11 +1659,13 @@ void VMContext::contestualize( Error* error )
    String noname;
    Function* curFunc = currentFrame().m_function;
    const String* modName = curFunc->module() == 0 ? &noname : &curFunc->module()->name();
+   const String* modPath = curFunc->module() == 0 ? &noname : &curFunc->module()->uri();
    int line = currentCode().m_step->sr().line();
 
    error->line(line);
    error->module(*modName);
-   error->symbol( curFunc->name() );
+   error->path(*modPath);
+   error->symbol( curFunc->fullName() );
 }
 
 void VMContext::addTrace( Error *error )
@@ -1810,6 +1814,27 @@ void VMContext::onStackRebased( Item* oldBase )
    }
 }
 
+//===============================================================
+// Fill an error with the current context.
+//
+ErrorParam::ErrorParam( int code, VMContext* ctx ):
+         m_errorCode(code)
+{
+   String noname;
+   Function* curFunc = ctx->currentFrame().m_function;
+   const String* modName = curFunc->module() == 0 ? &noname : &curFunc->module()->name();
+   const String* modPath = curFunc->module() == 0 ? &noname : &curFunc->module()->uri();
+
+   m_line = ctx->currentCode().m_step->sr().line();
+   m_module = *modName;
+   m_path = *modPath;
+   m_symbol = curFunc->fullName();
+   m_origin = e_orig_script;
+
+   m_sysError = 0;
+   m_catchable = true;
+   m_chr = 0;
+}
 
 }
 

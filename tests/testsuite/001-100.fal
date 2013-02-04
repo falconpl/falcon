@@ -1,0 +1,21 @@
+/*
+@name Expression test - provides
+
+@output
+@endoutput
+
+*/
+
+class test
+   hello = 0
+   function sayHello()
+   end
+end
+
+inst = test()
+
+> "Simple provides test"
+> "inst provides hello? ", (inst provides hello ? "Yes" : "No")
+> "inst provides world? ", (inst provides world ? "Yes" : "No")
+> "inst provides sayHello? ", (inst provides sayHello ? "Yes" : "No")
+> "Done"
