@@ -170,7 +170,7 @@ void ClassSynFunc::flatten( VMContext*, ItemArray& subItems, void* instance ) co
             + synfunc->attributes().size() * 2
             + 1);
 
-   TRACE1("ClassSynFunc::flatten %s - %ld syntree elements", synfunc->name().c_ize(), synfunc->syntree().size() );
+   TRACE1("ClassSynFunc::flatten %s - %ld syntree elements", synfunc->name().c_ize(), (long)synfunc->syntree().size() );
    for( uint32 i = 0; i < synfunc->syntree().size(); ++i ) {
       TreeStep* stmt = synfunc->syntree().at(i);
       Class* synClass = stmt->handler();

@@ -389,7 +389,7 @@ Shared* VMContext::engageWait( int64 timeout )
    Shared** top = m_waiting.m_top+1;
 
    TRACE( "VMContext::engageWait waiting for %d(%p) on %ld shared resources in %dms.",
-            id(), this,  top-base, (int) timeout  );
+            id(), this,  (long) (top-base), (int) timeout  );
 
    while( base != top )
    {
@@ -442,7 +442,7 @@ Shared* VMContext::checkAcquiredWait()
    Shared** base = m_waiting.m_base;
    Shared** top = m_waiting.m_top+1;
 
-   TRACE( "VMContext::checkAcquiredWait checking %ld shared resources.", top-base );
+   TRACE( "VMContext::checkAcquiredWait checking %ld shared resources.", (long) (top-base) );
 
    while( base != top )
    {
