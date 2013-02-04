@@ -52,7 +52,7 @@ public:
    virtual bool simplify( Item& value ) const;
    virtual void describeTo( String&, int depth=0 ) const;   
 
-   inline virtual bool isStandAlone() const { return false; }
+   inline virtual bool isStandAlone() const { return true; }
 
    virtual bool isStatic() const { return false; }
 

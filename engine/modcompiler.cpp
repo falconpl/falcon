@@ -132,7 +132,6 @@ Variable* ModCompiler::Context::onOpenClass( Class* cls, bool isObject )
          ));
    }
 
-
    return var;
 }
 
@@ -172,9 +171,17 @@ void ModCompiler::Context::onCloseClass( Class* cls, bool )
 
 
 
-void ModCompiler::Context::onNewStatement( TreeStep* )
+void ModCompiler::Context::onNewStatement( TreeStep* ts )
 {
-   // actually nothing to do
+   if( ts->category() == TreeStep::e_cat_expression )
+   {
+      Expression* expr = static_cast<Expression*>(ts);
+      if( ! expr->isStandAlone() )
+      {
+         SourceParser& sp = m_owner->m_sp;
+         sp.addError( e_noeffect, sp.currentSource(), ts->line(), ts->chr(), 0 );
+      }
+   }
 }
 
 

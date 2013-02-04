@@ -104,6 +104,7 @@ protected:
       Context( IntCompiler* owner );
       virtual ~Context();
 
+      virtual void onNewStatement( TreeStep* ts );
       virtual void onCloseFunc( Function* function );
       virtual void onCloseClass( Class* cls, bool bIsObj );
 

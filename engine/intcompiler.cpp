@@ -72,6 +72,12 @@ IntCompiler::Context::~Context()
 }
 
 
+void IntCompiler::Context::onNewStatement( TreeStep* )
+{
+   // override the base class and do nothing
+}
+
+
 void IntCompiler::Context::onCloseFunc( Function* function )
 {
    ModCompiler::Context::onCloseFunc( function );
