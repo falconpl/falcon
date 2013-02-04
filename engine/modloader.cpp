@@ -302,7 +302,11 @@ void ModLoader::pathToName( const String &path, const String &modFile, String &m
       modName = modFile;
    }
 
-   // chop away ./ or /
+   // chop away ../ ./ or /
+   if( modName.find( "../" ) == 0 )
+   {
+      modName = modName.subString(3);
+   }
    if( modName.find( "./" ) == 0 )
    {
       modName = modName.subString(2);

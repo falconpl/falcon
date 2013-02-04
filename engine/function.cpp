@@ -46,6 +46,19 @@ Function::~Function()
 }
 
 
+String Function::fullName() const
+{
+   if ( m_methodOf == 0 )
+   {
+      return name();
+   }
+   else
+   {
+      return m_methodOf->name() + "." + name();
+   }
+}
+
+
 Class* Function::handler() const
 {
    static Class* cls = Engine::instance()->functionClass();   

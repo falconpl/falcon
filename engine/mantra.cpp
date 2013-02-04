@@ -52,6 +52,12 @@ Class* Mantra::handler() const
    return cls;
 }
 
+String Mantra::fullName() const
+{
+   return name();
+}
+
+
 void Mantra::locateTo( String& target ) const
 {
    if ( m_module == 0 )
@@ -79,7 +85,7 @@ void Mantra::locateTo( String& target ) const
       target += ":";
    }
 
-   target += m_name;
+   target += fullName();
 }
 
 

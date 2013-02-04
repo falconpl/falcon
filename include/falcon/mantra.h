@@ -120,6 +120,8 @@ public:
    Mantra( const String& name, int32 line=0, int32 chr=0 );
    Mantra( const String& name, Module* module, int32 line=0, int32 chr=0 );
    
+   virtual String fullName() const;
+
    virtual ~Mantra() {}
    
    t_category category() const { return m_category; }

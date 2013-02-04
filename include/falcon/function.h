@@ -98,6 +98,7 @@ public:
    void methodOf( Class* cls ) { m_methodOf = cls; }
    Class* methodOf() const { return m_methodOf; }
 
+   virtual String fullName() const;
 
    /** Sets the signature of the function.
     \param sign A string with the expected parameters of the function.

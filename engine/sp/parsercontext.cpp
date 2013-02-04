@@ -648,10 +648,8 @@ void ParserContext::closeContext()
                m_cclass->addMethod( bframe.m_elem.func );
             }
          }
-         else
-         {
-            onCloseFunc( bframe.m_elem.func );
-         }
+
+         onCloseFunc( bframe.m_elem.func );
          break;
 
       case CCFrame::t_stmt_type:

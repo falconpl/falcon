@@ -103,8 +103,9 @@ void ModCompiler::Context::onCloseFunc( Function* f )
       mod->addAnonMantra( f );
       */
       f->name("_anonymous");
-      f->module( m_owner->m_module );
    }
+   // set the module even if we don't add them to the module as mantras.
+   f->module( m_owner->m_module );
 }
 
 

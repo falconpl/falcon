@@ -1685,11 +1685,11 @@ void VMContext::addTrace( Error *error )
       int line = caller != 0 ? caller->line() : func->declaredAt();
       if( mod != 0 )
       {
-         error->addTrace( TraceStep(mod->name(), mod->uri(), func->name(), line ) );
+         error->addTrace( TraceStep(mod->name(), mod->uri(), func->fullName(), line ) );
       }
       else
       {
-         error->addTrace( TraceStep("<internal>", func->name(), line ) );
+         error->addTrace( TraceStep("<internal>", func->fullName(), line ) );
       }
 
       caller = cf.m_caller;

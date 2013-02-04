@@ -1110,6 +1110,7 @@ void FalconClass::unflattenSelf( ItemArray& flatArray )
          case Property::t_func:
             prop->m_value.func = static_cast<Function*>(flatArray[count].asInst());
             overrideAddMethod( prop->m_name, prop->m_value.func );
+            prop->m_value.func->methodOf(this);
             break;
             
          case Property::t_inh:
