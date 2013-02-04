@@ -23,6 +23,7 @@ namespace Falcon {
 
 class Function;
 class ClosedData;
+class PStep;
 
 /** Call Frame for the Falcon virtual machine.
  *
@@ -45,6 +46,9 @@ public:
 
    /** Data closed in closures. */
    ClosedData* m_closingData;
+
+   /** The step calling this function. */
+   const PStep* m_caller;
 
    /** Number of parameters used for the effective call. */
    uint32 m_paramCount;

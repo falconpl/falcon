@@ -168,7 +168,7 @@ void ExprCall::apply_( const PStep* v, VMContext* ctx )
    
    // we're out of business
    ctx->popCode();
-
+   ctx->caller(self);
   
    // now, top points to our function value.
    register Item& top = *(&ctx->topData()-pcount);

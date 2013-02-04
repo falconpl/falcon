@@ -108,6 +108,16 @@ public:
     */
    const PStep* nextStep() const;
 
+   /** Returns the step that is going to be executed next in the given frame, or null if none.
+    \param frame the nth calling frame, 0 being the current frame.
+    \return The next step that will be executed.
+
+    Calling nextStep(1) will return the step that will be executed when the
+    current frame returns (unless it returns a dynamic computation for immediate
+    execution).
+    */
+   const PStep* nextStep( int frame ) const;
+
    /** Resets the context to the initial state.
 
     This clears the context and sets it as if it was just created.
@@ -585,7 +595,6 @@ public:
    inline long callDepth() const { return (long)m_callStack.depth(); }
    inline CallFrame& callerFrame( uint32 n ) const { return *(m_callStack.m_top - n); }
 
-
    inline CallFrame* addCallFrame()  {
       return m_callStack.addSlot();
    }
@@ -597,6 +606,7 @@ public:
       topCall->m_function = function;
       topCall->m_closingData = topCall->m_closure = 0;
       topCall->m_codeBase = codeDepth();
+      topCall->m_caller = m_caller;
       // initialize also initBase, as stackBase may move
       topCall->m_initBase = topCall->m_stackBase = dataSize()-nparams;
       // TODO: enable rule application with dynsymbols?
@@ -615,6 +625,7 @@ public:
       topCall->m_function = function;
       topCall->m_closingData = topCall->m_closure = 0;
       topCall->m_codeBase = codeDepth();
+      topCall->m_caller = m_caller;
       // initialize also initBase, as stackBase may move
       topCall->m_initBase = topCall->m_stackBase = dataSize()-nparams;
       // TODO: enable rule application with dynsymbols?
@@ -636,6 +647,7 @@ public:
       topCall->m_closure = cd->data();
       topCall->m_closingData = 0;
       topCall->m_codeBase = codeDepth();
+      topCall->m_caller = m_caller;
       // initialize also initBase, as stackBase may move
       topCall->m_initBase = topCall->m_stackBase = dataSize()-nparams;
       // TODO: enable rule application with dynsymbols?
@@ -941,8 +953,9 @@ public:
 
    /** Calls an arbitrary item with arbitrary parameters.
     \param item The item to be called.
-    \throw Non-callable Error if this item doesn't provide a valid Class::op_call
-    callback.
+    \param count Number of parameters passed
+    \param params Parameter passed.
+
 
     This method prepares the invocation of an item as if it was called by
     the script. The method can receive variable parameters of type Item&,
@@ -965,6 +978,11 @@ public:
     be ensured until callItem() method returns. The contents of the items must
     either be static and exist for the whole duration of the program or be
     delivered to the Garbage Collector for separate accounting.
+
+    \note The item array in the \b callable parameter must be stored
+    otuside the scope of the Falcon VM, as the items are copied without
+    locking nor marking as-is into the context stack.
+
 
     Example usage:
     \code
@@ -1422,6 +1440,13 @@ public:
     */
    void contestualize(Error* error);
 
+   /**
+    * Adds information about the currently executed context.
+    */
+   void addTrace(Error* error);
+
+   void caller( const PStep* ps ) { m_caller = ps; }
+
 protected:
 
    /** Class holding the dynamic symbol information on a stack. */
@@ -1595,14 +1620,19 @@ protected:
    ContextGroup* m_inGroup;
    Process* m_process;
 
+   // caller temporarily ready to fire
+   const PStep* m_caller;
+
 private:
-   template<class _returner>
-   void returnFrame_base( const Item& value );
 
    virtual ~VMContext();
    FALCON_REFERENCECOUNT_DECLARE_INCDEC(VMContext)
 
    void onStackRebased( Item* oldBase );
+   void pushBaseElements();
+
+   template<class _returner>
+   void returnFrame_base( const Item& value );
 };
 
 }

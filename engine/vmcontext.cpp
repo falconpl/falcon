@@ -83,9 +83,9 @@ VMContext::VMContext( Process* prc, ContextGroup* grp ):
    m_bSleeping(false),
    m_events(0),
    m_inGroup(grp),
-   m_process(prc)
+   m_process(prc),
+   m_caller(0)
 {
-   // prepare a low-limit VM terminator request.
    m_dynsStack.init();
    m_codeStack.init();
    m_callStack.init();
@@ -93,16 +93,12 @@ VMContext::VMContext( Process* prc, ContextGroup* grp ):
    m_finallyStack.init();
    m_waiting.init();
 
-   // create a finally base that will be never used (for performance)
-   FinallyData& dt = *m_finallyStack.addSlot();
-   dt.m_depth = 0;
-   dt.m_finstep = 0;
-   m_currentMark = 0;
-
-   m_acquired = 0;
-   pushReturn();
    m_id = prc->getNextContextID();
+   m_acquired = 0;
 
+   pushBaseElements();
+
+   // ready to go
    Engine::collector()->registerContext(this);
 }
 
@@ -121,10 +117,14 @@ void VMContext::reset()
 {
    if( m_lastRaised != 0 ) m_lastRaised->decref();
    m_lastRaised = 0;
+   m_caller = 0;
 
    atomicSet(m_events, 0);
 
    // do not reset ingroup.
+
+   abortWaits();
+   acquire(0);
 
    m_catchBlock = 0;
    m_ruleEntryResult = false;
@@ -133,19 +133,27 @@ void VMContext::reset()
    m_codeStack.reset();
    m_callStack.reset();
    m_dataStack.reset(0);
+   m_finallyStack.reset();
+   m_waiting.reset();
 
-   abortWaits();
-   acquire(0);
-   m_finallyStack.init();
-   m_waiting.init();
+   pushBaseElements();
+}
+
+
+void VMContext::pushBaseElements()
+{
+   static const PStep* endContext = &Engine::instance()->stdSteps()->m_endOfContext;
 
    // create a finally base that will be never used (for performance)
    FinallyData& dt = *m_finallyStack.addSlot();
    dt.m_depth = 0;
    dt.m_finstep = 0;
+   m_currentMark = 0;
 
-   // prepare a low-limit VM terminator request.
-   pushReturn();
+   // create a code that will be never used (for performance)
+   // also, ensures that the VM is quitted if it hits this
+   CodeFrame* cf = m_codeStack.addSlot();
+   cf->m_step = endContext;
 }
 
 
@@ -269,6 +277,35 @@ const PStep* VMContext::nextStep() const
    {
       const SynTree* st = static_cast<const SynTree*>(ps);
       return st->at(cframe.m_seqId);
+   }
+   return ps;
+}
+
+const PStep* VMContext::nextStep( int frame ) const
+{
+   MESSAGE( "VMContext::nextStep" );
+   if( codeEmpty() )
+   {
+      return 0;
+   }
+   PARANOID( "Call stack empty", (this->callDepth() > 0) );
+
+   const CodeFrame* cframe;
+
+   if( frame == 0 )
+   {
+      cframe = m_codeStack.m_top;
+   }
+   else {
+      CallFrame& callf = callerFrame(frame-1);
+      cframe = m_codeStack.m_base + callf.m_codeBase;
+   }
+
+   const PStep* ps = cframe->m_step;
+   if( ps->isComposed() )
+   {
+      const SynTree* st = static_cast<const SynTree*>(ps);
+      return st->at(cframe->m_seqId);
    }
    return ps;
 }
@@ -781,6 +818,7 @@ void VMContext::raiseError( Error* ce )
    if( m_lastRaised != 0 ) m_lastRaised->decref();
    m_lastRaised = ce;
    ce->incref();
+
    // can we catch it?
    m_catchBlock = 0;
    CheckIfCodeIsCatchError check( ce->handler() );
@@ -800,6 +838,11 @@ void VMContext::raiseError( Error* ce )
    {
       // we're out of business; ask to raise to our parent.
       atomicOr( m_events, evtRaise );
+      // add a trace if not present
+      if( ! ce->hasTraceback() )
+      {
+         addTrace(ce);
+      }
    }
    // otherwise, the throw is suspended
    else {
@@ -968,6 +1011,7 @@ void VMContext::callItem( const Item& item, int pcount, Item const* params )
       memcpy( m_dataStack.m_top-pcount, params, pcount * sizeof(item) );
    }
 
+   m_caller = currentCode().m_step;
    cls->op_call( this, pcount, data );
 }
 
@@ -983,6 +1027,7 @@ void VMContext::call( Function* func, int pcount, Item const* params )
       addSpace(pcount);
       memcpy( m_dataStack.m_top-pcount, params, pcount * sizeof(Item) );
    }
+   m_caller = currentCode().m_step;
    makeCallFrame(func, pcount);
    func->invoke(this, pcount);
 }
@@ -1000,6 +1045,7 @@ void VMContext::call( Function* func, const Item& self, int pcount, Item const* 
       addSpace(pcount);
       memcpy( m_dataStack.m_top-pcount, params, pcount * sizeof(Item) );
    }
+   m_caller = currentCode().m_step;
    makeCallFrame(func, pcount, self);
    func->invoke(this, pcount);
 }
@@ -1016,6 +1062,7 @@ void VMContext::call( Closure* cls, int pcount, Item const* params )
       addSpace(pcount);
       memcpy( m_dataStack.m_top-pcount, params, pcount * sizeof(Item) );
    }
+   m_caller = currentCode().m_step;
    makeCallFrame(cls, pcount );
    cls->closed()->invoke(this, pcount);
 }
@@ -1190,13 +1237,7 @@ void VMContext::returnFrame_base( const Item& value )
    *m_dataStack.m_top = value;
 
    // Finalize return -- pop call frame
-   // TODO: This is useful only in the interactive mode. Maybe we can use a
-   // specific returnFrame for the interactive mode to achieve this.
-   if( m_callStack.m_top-- ==  m_callStack.m_base )
-   {
-      setCompleteEvent();
-      MESSAGE( "Returned from last frame -- declaring complete." );
-   }
+   m_callStack.m_top--;
 
    PARANOID( "Call stack underflow at return", (m_callStack.m_top >= m_callStack.m_base-1) );
    TRACE( "Return frame code:%p, data:%p, call:%p", m_codeStack.m_top, m_dataStack.m_top, m_callStack.m_top  );
@@ -1612,6 +1653,39 @@ void VMContext::contestualize( Error* error )
    error->symbol( curFunc->name() );
 }
 
+void VMContext::addTrace( Error *error )
+{
+   VMContext* ctx = this;
+
+   long depth = ctx->callDepth();
+   const PStep* caller = currentCode().m_step;
+
+   for( long i = 0; i < depth; ++i )
+   {
+      CallFrame& cf = ctx->callerFrame(i);
+      Function* func = cf.m_function;
+      Module* mod = func->module();
+
+      if( caller == 0 )
+      {
+         caller = ctx->nextStep(i);
+      }
+
+      int line = caller != 0 ? caller->line() : func->declaredAt();
+      if( mod != 0 )
+      {
+         error->addTrace( TraceStep(mod->name(), mod->uri(), func->name(), line ) );
+      }
+      else
+      {
+         error->addTrace( TraceStep("<internal>", func->name(), line ) );
+      }
+
+      caller = cf.m_caller;
+   }
+}
+
+
 void VMContext::gcStartMark( uint32 mark )
 {
    if( m_currentMark != mark )
@@ -1657,6 +1731,8 @@ void VMContext::gcPerformMark()
          if( base->m_closure != 0 ) {
             base->m_closure->gcMark(mark);
          }
+         // TODO: Mark the pstep if it's a treestep.
+         // actually, it might be a bit paranoid.
          ++base;
       }
    }

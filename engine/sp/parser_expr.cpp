@@ -84,7 +84,7 @@ static void apply_expr_binary( const Rule&, Parser& p, BinaryExpression* bexpr )
    p.getNextToken();
    TokenInstance* v2 = p.getNextToken();
 
-   // Todo: set lvalues and define symbols in the module
+   bexpr->decl(v1->line(), v1->chr());
    TokenInstance* ti = TokenInstance::alloc(v1->line(), v1->chr(), sp.Expr);
    bexpr->first(static_cast<Expression*>(v1->detachValue()));
    bexpr->second(static_cast<Expression*>(v2->detachValue()));

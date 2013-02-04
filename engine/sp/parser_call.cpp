@@ -70,16 +70,16 @@ void apply_expr_call( const Rule&, Parser& p )
       // if it is, we don't need the callee expression anymore.
       if( pf != 0 )
       {
-         callps = new ExprPseudoCall(pf);
+         callps = new ExprPseudoCall(pf, v1->line(), v1->chr());
          delete esym;
       }
       else
       {
-         call = new ExprCall( callee );
+         call = new ExprCall( callee, v1->line(), v1->chr() );
       }
    }
    else {
-      call = new ExprCall( callee );
+      call = new ExprCall( callee, v1->line(), v1->chr() );
    }
 
    List* list = static_cast<List*>(v2->detachValue());

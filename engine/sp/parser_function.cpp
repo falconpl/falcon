@@ -111,7 +111,7 @@ static SynFunc* inner_apply_function( const Rule&, Parser& p, bool bHasExpr, boo
    if ( bHasExpr )
    {
       Expression* sa = static_cast<Expression*>(tstatement->detachValue());
-      func->syntree().append(new StmtReturn(sa));
+      func->syntree().append(new StmtReturn(sa, tstatement->line(), tstatement->chr()));
       p.simplify(tcount);
    }
    else
@@ -178,7 +178,7 @@ void on_close_lambda( void* thing )
    if ( size == 1 && func->syntree().at(0)->category() == TreeStep::e_cat_expression )
    {
       Expression* evaluated = static_cast<Expression*>( func->syntree().detach(0) );
-      StmtReturn* ret = new StmtReturn( evaluated );
+      StmtReturn* ret = new StmtReturn( evaluated, evaluated->line(), evaluated->chr() );
       func->syntree().append(ret);
    }
    
@@ -319,8 +319,9 @@ void apply_return_expr(const Rule&, Parser& p)
 
 void apply_return(const Rule&, Parser& p)
 {
+   TokenInstance* texpr = p.getNextToken();
    ParserContext* ctx = static_cast<ParserContext*>(p.context());
-   ctx->addStatement(new StmtReturn );
+   ctx->addStatement(new StmtReturn(texpr->line(), texpr->chr()) );
 
    p.simplify(2);
 }

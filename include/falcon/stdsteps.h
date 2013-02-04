@@ -377,6 +377,24 @@ public:
       virtual void describeTo( String&, int =0 ) const;
    };
    PStepFillAttribute m_fillAttribute;
+
+   /** End of context.
+    * This is a special step pushed at the base of each contexts.
+    *
+    * When hit, this means the context is terminated, and the end of context
+    * flag is set.
+    *
+    * This step never removes itself.
+    */
+   class PStepEndOfContext: public PStep
+   {
+   public:
+      PStepEndOfContext() {apply = apply_;}
+      virtual ~PStepEndOfContext() {}
+      static void apply_( const PStep*, VMContext* ctx );
+      virtual void describeTo( String&, int =0 ) const;
+   };
+   PStepEndOfContext m_endOfContext;
 };
 
 }

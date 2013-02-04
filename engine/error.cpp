@@ -13,6 +13,9 @@
    See LICENSE file for licensing details.
 */
 
+#undef SRC
+#define SRC "engine/error.cpp"
+
 #include <falcon/setup.h>
 #include <falcon/error.h>
 #include <falcon/item.h>
@@ -167,7 +170,7 @@ String &Error::heading( String &target ) const
    case ErrorParam::e_orig_runtime: target += "RT"; break;
    case ErrorParam::e_orig_mod: target += "MD"; break;
    case ErrorParam::e_orig_script: target += "SC"; break;
-   default: target += "??";
+   default: target += "??"; break;
    }
 
    uint32 ecode = (uint32) m_errorCode;

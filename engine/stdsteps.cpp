@@ -407,6 +407,19 @@ void StdSteps::PStepFillAttribute::describeTo( String& s, int ) const
 }
 
 
+void StdSteps::PStepEndOfContext::apply_( const PStep*, VMContext* ctx )
+{
+   TRACE("PStepEndOfContext -- end of context reached: %d(%p) in process %d(%p)",
+            ctx->id(), ctx, ctx->process()->id(), ctx->process());
+
+   ctx->setCompleteEvent();
+}
+
+void StdSteps::PStepEndOfContext::describeTo( String& s, int ) const
+{
+   s = "-- End Of Context --";
+}
+
 }
 
 /* end of stdsteps.cpp */
