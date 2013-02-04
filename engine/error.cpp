@@ -87,6 +87,7 @@ void Error::set( const ErrorParam& params )
    m_extra = params.m_extra ;
    m_symbol = params.m_symbol ;
    m_module = params.m_module ;
+   m_path = params.m_path;
    m_line= params.m_line ;
    m_chr= params.m_chr ;
    m_sysError= params.m_sysError ;
@@ -300,6 +301,11 @@ const String& Error::className() const
 bool Error::hasTraceback() const
 {
    return ! _p->m_steps.empty();
+}
+
+bool Error::hasSubErrors() const
+{
+   return ! _p->m_subErrors.empty();
 }
 
 

@@ -255,6 +255,8 @@ void TestMode::test( ScriptData* sd )
          {
             sd->m_bSuccess = false;
             sd->m_reason = "Expected output not matching";
+            log->log( Log::fac_app, Log::lvl_info, String("Test ") +sd->m_id
+                                    +" failing because expected output is not matching" );
          }
 
          delete result;
@@ -271,13 +273,23 @@ void TestMode::test( ScriptData* sd )
                {
                   sd->m_bSuccess = false;
                   sd->m_reason = "Expected final result not matching";
+                  log->log( Log::fac_app, Log::lvl_info, String("Test ") +sd->m_id
+                           +" failing because " + sd->m_exp_result+ "!=" + *result.asString() );
                }
             }
             else {
                sd->m_bSuccess = false;
                sd->m_reason = "Returned final result is not a string";
+               log->log( Log::fac_app, Log::lvl_info, String("Test ") +sd->m_id
+                        +" failing because final result is not a string" );
             }
          }
+      }
+
+      if( sd->m_bSuccess )
+      {
+         log->log( Log::fac_app, Log::lvl_info, String("Test ") +sd->m_id
+                                 +" success ");
       }
    }
    catch( Error* err )
@@ -291,6 +303,8 @@ void TestMode::test( ScriptData* sd )
       else {
          sd->m_reason = "Terminated with error: ";
          sd->m_reason += err->describe();
+         log->log( Log::fac_app, Log::lvl_warn, String("Test ") +sd->m_id
+                                 +" terminated with error: "+ sd->m_reason );
       }
       err->decref();
    }

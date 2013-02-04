@@ -82,7 +82,7 @@ public:
    */
    ErrorParam( int code, uint32 line = 0, const char* file = 0 ):
       m_errorCode( code ),
-      m_module( file == 0 ? "" : file, String::npos ),    // force buffering
+      m_module( file == 0 ? "" : file ),    // force buffering
       m_line( line ),
       m_chr( 0 ),
       m_sysError( 0 ),
@@ -92,7 +92,7 @@ public:
 
    ErrorParam( int code, uint32 line, const String& file ):
       m_errorCode( code ),
-      m_module( file ),    // force buffering
+      m_module( file ),
       m_line( line ),
       m_chr( 0 ),
       m_sysError( 0 ),
@@ -102,7 +102,7 @@ public:
    
    ErrorParam():
       m_errorCode( 0 ),
-      m_module( "" ),    // force buffering
+      m_module( "" ),
       m_line( 0 ),
       m_chr( 0 ),
       m_sysError( 0 ),
@@ -115,6 +115,7 @@ public:
    ErrorParam &extra( const String &e ) { m_extra.bufferize(e); return *this; }
    ErrorParam &symbol( const String &sym ) { m_symbol = sym; return *this; }
    ErrorParam &module( const String &mod ) { m_module = mod; return *this; }
+   ErrorParam &path( const String &p ) { m_path = p; return *this; }
    ErrorParam &line( uint32 line ) { m_line = line; return *this; }
    ErrorParam &chr( uint32 chr ) { m_chr = chr; return *this; }
    ErrorParam &sysError( uint32 e ) { m_sysError = e; return *this; }
@@ -129,6 +130,7 @@ private:
    String m_extra;
    String m_symbol;
    String m_module;
+   String m_path;
 
    uint32 m_line;
    uint32 m_chr;
@@ -199,6 +201,7 @@ public:
    void errorDescription( const String &errorDesc ) { m_description = errorDesc; }
    void extraDescription( const String &extra ) { m_extra = extra; }
    void module( const String &moduleName ) { m_module = moduleName; }
+   void path( const String &path ) { m_path = path; }
    void symbol( const String &symbolName )  { m_symbol = symbolName; }
    void line( uint32 line ) { m_line = line; }
    void chr( uint32 chr ) { m_chr = chr; }
@@ -211,6 +214,7 @@ public:
    const String &errorDescription() const { return m_description; }
    const String &extraDescription() const { return m_extra; }
    const String &module() const { return m_module; }
+   const String &path() const { return m_path; }
    const String &symbol() const { return m_symbol; }
    uint32 line() const { return m_line; }
    uint32 chr() const { return m_chr; }
@@ -298,6 +302,8 @@ public:
    /** Return true if this error has been filled with a traceback.*/
    bool hasTraceback() const;
 
+   bool hasSubErrors() const;
+
    /** Increment the reference count of this object */
    void incref() const;
 
@@ -326,6 +332,7 @@ protected:
    String m_extra;
    String m_symbol;
    String m_module;
+   String m_path;
    String m_className;
    Class* m_handler;
 
