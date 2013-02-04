@@ -347,10 +347,13 @@ SourceParser::SourceParser():
    CatchSpec << "CatchSpec"
          << ( r_catch_all << "catch_all" << apply_catch_all << T_EOL )
          << ( r_catch_in_var<< "catch_in_var" << apply_catch_in_var << T_in << T_Name << T_EOL )
+         << ( r_catch_as_var<< "catch_as_var" << apply_catch_as_var << T_as << T_Name << T_EOL )
          << ( r_catch_number << "catch_number" << apply_catch_number <<  T_Int << T_EOL )
          << ( r_catch_number_in_var << "catch_number_in_var" << apply_catch_number_in_var << T_Int << T_in << T_Name << T_EOL )
+         << ( r_catch_number_as_var << "catch_number_as_var" << apply_catch_number_as_var << T_Int << T_as << T_Name << T_EOL )
          << ( r_catch_thing << "catch_thing" << apply_catch_thing <<  T_Name << T_EOL )
          << ( r_catch_thing_in_var << "catch_thing_in_var" << apply_catch_thing_in_var << T_Name << T_in << T_Name << T_EOL )
+         << ( r_catch_thing_as_var << "catch_thing_as_var" << apply_catch_thing_as_var << T_Name << T_as << T_Name << T_EOL )
             ;
    
    S_Raise << "raise" << raise_errhand;

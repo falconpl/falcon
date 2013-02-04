@@ -37,7 +37,7 @@ StmtTry::StmtTry( int32 line, int32 chr):
    m_select = new StmtSelect;
    m_select->setParent(this);
    apply = apply_;
-   m_bIsCatch = true;
+   setTry();
 }
 
 StmtTry::StmtTry( SynTree* body, int32 line, int32 chr ):
@@ -51,7 +51,7 @@ StmtTry::StmtTry( SynTree* body, int32 line, int32 chr ):
    m_select = new StmtSelect;
    body->setParent( this );
    apply = apply_;
-   m_bIsCatch = true;
+   setTry();
 }
 
 StmtTry::StmtTry( SynTree* body, SynTree* fbody, int32 line, int32 chr ):
@@ -67,7 +67,7 @@ StmtTry::StmtTry( SynTree* body, SynTree* fbody, int32 line, int32 chr ):
    body->setParent( this );
    fbody->setParent(this);
    apply = apply_;
-   m_bIsCatch = true;
+   setTry();
 }
 
 StmtTry::StmtTry( const StmtTry& other ):
@@ -77,6 +77,7 @@ StmtTry::StmtTry( const StmtTry& other ):
    m_select( new StmtSelect(*other.m_select) ),
    m_finallyStep( this )
 {
+   setTry();
    apply = apply_;   
    m_select->setParent(this);
    
@@ -84,7 +85,7 @@ StmtTry::StmtTry( const StmtTry& other ):
    {
       m_body = other.m_body->clone();
       m_body->setParent( this );
-      m_bIsCatch = true;
+      setTry();
    }
    
    if( other.m_fbody )

@@ -669,7 +669,7 @@ public:
 
    inline bool operator()( const PStep& ps, VMContext* ctx ) const
    {
-      if( ps.isCatch() )
+      if( ps.isTry() )
       {
          const StmtTry* stry = static_cast<const StmtTry*>( &ps );
          SynTree* st = stry->catchSelect().findBlockForItem( m_item );
@@ -698,19 +698,32 @@ private:
 class CheckIfCodeIsCatchError
 {
 public:
-   CheckIfCodeIsCatchError( Class* err ):
-      m_err(err)
+   CheckIfCodeIsCatchError( Error* err ):
+      m_error(err),
+      m_errClass(err->handler())
    {}
 
    inline bool operator()( const PStep& ps, VMContext* ctx ) const
    {
-      if( ps.isCatch() )
+      if( ps.isTry()  )
       {
          const StmtTry* stry = static_cast<const StmtTry*>( &ps );
-         SynTree* st = stry->catchSelect().findBlockForClass( m_err );
-         if ( st == 0 ) st = stry->catchSelect().getDefault();
-         ctx->setCatchBlock( st );
-         return st != 0;
+         SynTree* st = stry->catchSelect().findBlockForClass( m_errClass );
+         // has the try a default?
+         if ( st == 0 ) {
+            st = stry->catchSelect().getDefault();
+         }
+
+         if( st != 0 )
+         {
+            // found, shall we add a traceback to the error?
+            if( st->isTracedCatch() && ! m_error->hasTraceback() )
+            {
+               ctx->addTrace(m_error);
+            }
+            ctx->setCatchBlock( st );
+            return true;
+         }
       }
 
       return false;
@@ -729,7 +742,8 @@ public:
    }
 
 private:
-   Class* m_err;
+   Error* m_error;
+   Class* m_errClass;
 };
 
 
@@ -794,9 +808,6 @@ void VMContext::raiseItem( const Item& item )
       {
          *resolveSymbol(sym, true) = m_raised;
       }
-
-      //TODO: In case a finally punches in, manage it now.
-
    }
    else if( result == e_unroll_not_found )
    {
@@ -821,7 +832,7 @@ void VMContext::raiseError( Error* ce )
 
    // can we catch it?
    m_catchBlock = 0;
-   CheckIfCodeIsCatchError check( ce->handler() );
+   CheckIfCodeIsCatchError check( ce );
 
    VMContext::t_unrollResult result = unrollToNext<CheckIfCodeIsCatchError>( check );
    if( result == e_unroll_found )

@@ -257,7 +257,15 @@ void ClassTreeStep::store( VMContext*, DataWriter* dw, void* instance ) const
 
    // save the position
    dw->write( ts->line() );
-   dw->write( ts->chr() );
+   int32 chr = ts->chr();
+   if( ts->isTracedCatch() )
+   {
+      chr = - chr;
+      if( chr == 0 ) {
+         chr = -1;
+      }
+   }
+   dw->write( chr );
 }
 
 void ClassTreeStep::restore( VMContext* ctx, DataReader*dr ) const
@@ -269,6 +277,11 @@ void ClassTreeStep::restore( VMContext* ctx, DataReader*dr ) const
    int32 line, chr;
    dr->read( line );
    dr->read( chr );
+   if( chr < 0 )
+   {
+      chr = -chr;
+      ts->setTracedCatch();
+   }
    ts->decl( line, chr );
 }
 

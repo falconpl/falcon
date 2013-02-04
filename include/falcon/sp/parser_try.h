@@ -41,10 +41,13 @@ void apply_raise( const Rule&, Parser& p );
 
 void apply_catch_all( const Rule&, Parser& p );
 void apply_catch_in_var( const Rule&, Parser& p );
+void apply_catch_as_var( const Rule&, Parser& p );
 void apply_catch_number( const Rule&, Parser& p );
 void apply_catch_number_in_var( const Rule&, Parser& p );
+void apply_catch_number_as_var( const Rule&, Parser& p );
 void apply_catch_thing( const Rule&, Parser& p );
 void apply_catch_thing_in_var( const Rule&, Parser& p );
+void apply_catch_thing_as_var( const Rule&, Parser& p );
 
 }
 

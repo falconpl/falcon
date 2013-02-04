@@ -49,7 +49,7 @@ public:
       m_bIsLoopBase(false),
       m_bIsNextBase(false),
       m_bIsComposed(false),
-      m_bIsCatch(false),
+      m_catchMode(false),
       m_sr(line, chr)
    {}
    
@@ -78,11 +78,11 @@ public:
       String temp; oneLinerTo(temp); return temp;
    }
 
-   /** Sparsely used function marknig steps with special significance.
-      
+   /** Sparsely used function marking steps with special significance.
+
     */
    inline virtual uint32 flags() const { return 0; }
-   
+
    /** Apply function. 
     \param self The PStep that was applied here.
     \param ctx The virtual machine context where this apply function was run
@@ -174,15 +174,18 @@ public:
    inline bool isComposed() const { return m_bIsComposed; }
    inline bool isNextBase() const { return m_bIsNextBase; }
    inline bool isLoopBase() const { return m_bIsLoopBase; }
-   inline bool isCatch() const { return m_bIsCatch; }
+   inline bool isTry() const { return m_catchMode == 1; }
+   inline bool isTracedCatch() const { return m_catchMode == 2; }
 
    inline void setNextBase() { m_bIsNextBase = true; }
-   
+   inline void setTry() { m_catchMode = 1; }
+   inline void setTracedCatch() { m_catchMode = 2; }
+
 protected:
    bool m_bIsLoopBase;
    bool m_bIsNextBase;
    bool m_bIsComposed;
-   bool m_bIsCatch;
+   byte m_catchMode;
 
 private:   
    

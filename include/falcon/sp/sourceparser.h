@@ -286,10 +286,13 @@ public:
    Parsing::NonTerminal CatchSpec;
    Parsing::Rule r_catch_all;
    Parsing::Rule r_catch_in_var;
+   Parsing::Rule r_catch_as_var;
    Parsing::Rule r_catch_number;
    Parsing::Rule r_catch_number_in_var;
+   Parsing::Rule r_catch_number_as_var;
    Parsing::Rule r_catch_thing;
    Parsing::Rule r_catch_thing_in_var;
+   Parsing::Rule r_catch_thing_as_var;
 
    Parsing::NonTerminal S_Raise;
    Parsing::Rule r_raise;

@@ -51,7 +51,6 @@ public:
    SynTree( const SynTree& other );
    virtual ~SynTree();
 
-   
    /** Direct interface. 
     Faster than nth()*/
    TreeStep* at( int pos ) const;

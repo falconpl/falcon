@@ -194,7 +194,7 @@ void apply_raise( const Rule&, Parser& p )
 //   
 
 static void internal_apply_catch( int toks, Parser& p, int line, int chr,
-      int64 tid, String* errName, String* tgt )
+      int64 tid, String* errName, String* tgt, bool genTrace = false )
 {   
    ParserContext* ctx = static_cast<ParserContext*>(p.context());
    Statement* stmt = ctx->currentStmt();
@@ -206,6 +206,10 @@ static void internal_apply_catch( int toks, Parser& p, int line, int chr,
    {      
       StmtTry* stmttry = static_cast<StmtTry*>(stmt);      
       SynTree* newBranch = ctx->changeBranch();
+      if(genTrace)
+      {
+         newBranch->setTracedCatch();
+      }
       
       // prepare the head symbol if needed
       if( tgt != 0 )
@@ -295,6 +299,14 @@ void apply_catch_in_var( const Rule&, Parser& p )
    internal_apply_catch( 3, p, ti->line(), ti->chr(), -1, 0, ti->asString() );
 }
 
+void apply_catch_as_var( const Rule&, Parser& p )
+{
+   // << T_as << T_Name << T_EOL
+   p.getNextToken();
+   TokenInstance* ti = p.getNextToken();
+   internal_apply_catch( 3, p, ti->line(), ti->chr(), -1, 0, ti->asString(), true );
+}
+
 
 void apply_catch_number( const Rule&, Parser& p )
 {
@@ -313,6 +325,15 @@ void apply_catch_number_in_var( const Rule&, Parser& p )
    internal_apply_catch( 4, p, tint->line(), tint->chr(), tint->asInteger(), 0, tname->asString() );
 }
 
+void apply_catch_number_as_var( const Rule&, Parser& p )
+{
+   // << T_Int << T_as << T_Name << T_EOL
+   TokenInstance* tint = p.getNextToken();
+   p.getNextToken();
+   TokenInstance* tname = p.getNextToken();
+   internal_apply_catch( 4, p, tint->line(), tint->chr(), tint->asInteger(), 0, tname->asString(), true );
+}
+
 
 void apply_catch_thing( const Rule&, Parser& p )
 {
@@ -329,6 +350,15 @@ void apply_catch_thing_in_var( const Rule&, Parser& p )
    p.getNextToken();
    TokenInstance* tgt = p.getNextToken();   
    internal_apply_catch( 4, p, tname->line(), tname->chr(), -1, tname->asString(), tgt->asString() );
+}
+
+void apply_catch_thing_as_var( const Rule&, Parser& p )
+{
+   // << T_Name << T_in << T_Name << T_EOL
+   TokenInstance* tname = p.getNextToken();
+   p.getNextToken();
+   TokenInstance* tgt = p.getNextToken();
+   internal_apply_catch( 4, p, tname->line(), tname->chr(), -1, tname->asString(), tgt->asString(), true );
 }
 
 }
