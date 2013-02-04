@@ -167,7 +167,6 @@ void SynClasses::ClassProvides::op_getProperty( VMContext* ctx, void* instance, 
    ExprProvides* prov = static_cast<ExprProvides *>(instance);
    if( prop == "property" )
    {
-      ctx->popData();
       ctx->topData() = FALCON_GC_HANDLE(new String(prov->property()));
       return;
    }
@@ -180,7 +179,7 @@ void SynClasses::ClassProvides::op_setProperty( VMContext* ctx, void* instance, 
    ExprProvides* prov = static_cast<ExprProvides *>(instance);
    if( prop == "property" )
    {
-      Item& value = ctx->topData();
+      Item& value = ctx->opcodeParam(1);
       if( ! value.isString() )
       {
          throw new OperandError( ErrorParam(e_invalid_op, __LINE__, SRC )
@@ -188,8 +187,7 @@ void SynClasses::ClassProvides::op_setProperty( VMContext* ctx, void* instance, 
       }
 
       prov->property(*value.asString());
-      ctx->opcodeParam(2) = value;
-      ctx->popData(2);
+      ctx->popData();
       return;
    }
 
