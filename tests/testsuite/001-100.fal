@@ -2,6 +2,11 @@
 @name Expression test - provides
 
 @output
+Simple provides test
+inst provides hello? Yes
+inst provides world? No
+inst provides sayHello? Yes
+Done
 @endoutput
 
 */
