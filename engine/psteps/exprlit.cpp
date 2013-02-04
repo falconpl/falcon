@@ -185,7 +185,7 @@ void ExprLit::apply_( const PStep* ps, VMContext* ctx )
    Private::ExprVector& ev = self->_p->m_exprs;
    CodeFrame& cf = ctx->currentCode();
    int32& seqId = cf.m_seqId;
-   TRACE1( "ExprLit::apply_ %d/%d \"%s\"", seqId, ev.size(), self->describe().c_ize() );
+   TRACE1( "ExprLit::apply_ %d/%ld \"%s\"", seqId, ev.size(), self->describe().c_ize() );
 
    // something to be unquoted?
    uint32 evsize = ev.size();
