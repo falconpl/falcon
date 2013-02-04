@@ -2,7 +2,7 @@
 @name Expression test - provides dynamic
 
 @output
-Simple provides test
+Simple provides test with dynamic clases
 inst provides hello? Yes
 inst provides world? No
 inst provides sayHello? Yes
