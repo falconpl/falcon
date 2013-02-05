@@ -108,6 +108,12 @@ void ExprRange::describeTo( String& target, int depth ) const
 
 void ExprRange::start( Expression* expr )
 {
+   if( expr != 0 ) {
+      if ( ! expr->setParent(this) )
+      {
+         return;
+      }
+   }
    delete m_estart;
    m_estart = expr;
 }
@@ -115,6 +121,12 @@ void ExprRange::start( Expression* expr )
 
 void ExprRange::end( Expression* expr )
 {
+   if( expr != 0 ) {
+      if ( ! expr->setParent(this) )
+      {
+         return;
+      }
+   }
    delete m_eend;
    m_eend = expr;
 }
@@ -122,6 +134,12 @@ void ExprRange::end( Expression* expr )
 
 void ExprRange::step( Expression* expr )
 {
+   if( expr != 0 ) {
+      if ( ! expr->setParent(this) )
+      {
+         return;
+      }
+   }
    delete m_estep;
    m_estep = expr;
 }
@@ -133,6 +151,42 @@ bool ExprRange::simplify( Item& ) const
    return false;
 }
 
+
+int32 ExprRange::arity() const
+{
+   return 3;
+}
+
+TreeStep* ExprRange::nth( int32 n ) const
+{
+   switch(n)
+   {
+   case 0: return start();
+   case 1: case -2: return end();
+   case 2: case -1: return step();
+   }
+
+   return 0;
+}
+
+bool ExprRange::setNth( int32 n, TreeStep* ts )
+{
+   if( ts != 0 && (ts->category() != TreeStep::e_cat_expression || ! ts->setParent(this) ) )
+   {
+      return false;
+   }
+
+   Expression* expr = static_cast<Expression*>(ts);
+
+   switch(n)
+   {
+   case 0: delete m_estart; m_estart = expr; break;
+   case 1: case -2: delete m_eend; m_eend = expr; break;
+   case 2: case -1: delete m_estep; m_estep = expr; break;
+   }
+
+   return true;
+}
 
 void ExprRange::apply_( const PStep* ps, VMContext* ctx )
 {
