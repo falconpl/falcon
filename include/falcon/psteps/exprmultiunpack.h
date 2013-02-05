@@ -34,13 +34,13 @@ public:
    inline virtual ExprMultiUnpack* clone() const { return new ExprMultiUnpack( *this ); }
    virtual bool simplify( Item& value ) const;
    virtual void describeTo( String&, int depth = 0 ) const;
+   inline virtual bool isStandAlone() const { return true; }
 
    int targetCount() const;
    Symbol* getAssignand( int n ) const;
    Expression* getAssignee( int n ) const;
    ExprMultiUnpack& addAssignment( Symbol* tgt, Expression* src );
 
-   inline virtual bool isStandAlone() const { return false; }
    virtual bool isStatic() const { return false; }
 
    bool isTop() const { return m_bIsTop; }

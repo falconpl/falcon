@@ -34,12 +34,11 @@ public:
    inline virtual ExprUnpack* clone() const { return new ExprUnpack( *this ); }
    virtual bool simplify( Item& value ) const;
    virtual void describeTo( String&, int depth = 0 ) const;
+   inline virtual bool isStandAlone() const { return true; }
 
    int targetCount() const;
    Symbol* getAssignand( int n ) const;
    ExprUnpack& addAssignand( Symbol* );
-
-   inline virtual bool isStandAlone() const { return false; }
 
    virtual bool isStatic() const { return false; }
 
