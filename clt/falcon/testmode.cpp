@@ -174,7 +174,7 @@ TestMode::ScriptData* TestMode::parse(const String& scriptName )
 
       Stream* input = Engine::instance()->vfs().openRO( fname );
       input->shouldThrow(true);
-      TextReader tr(input);
+      TextReader tr(input, true);
       String line;
 
       while( ! tr.eof() )

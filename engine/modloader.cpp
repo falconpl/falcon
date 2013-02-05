@@ -446,9 +446,9 @@ void ModLoader::load_internal(
             throw makeError( e_nofile, __LINE__, uri.encode() );
          }
          ins->shouldThrow(true);
-         TextReader* input = new TextReader( ins, m_tcoder, true );
+         TextReader input( ins, m_tcoder, true );
          // compiler gets the ownership of input.
-         Module* output = m_compiler->compile( input, uri.encode(), modName, type == e_mt_ftd );
+         Module* output = m_compiler->compile( &input, uri.encode(), modName, type == e_mt_ftd );
 
          // for now, we just throw
          if( output == 0 )
@@ -584,6 +584,8 @@ void ModLoader::PStepSave::apply_( const PStep*, VMContext* ctx )
    }
 
    TRACE("ModLoader::PStepSave::apply_ complete %s", mod->name().c_ize() );
+
+   output->close();
 
    ctx->popData(3);
    ctx->popCode();
