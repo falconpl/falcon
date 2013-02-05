@@ -1,0 +1,30 @@
+/*
+@name Smoke tests - Dictionary multiline 3
+
+@output
+Dictionary multiline 3
+1
+2
+3
+4
+Len:4
+Done
+@endoutput
+*/
+
+> "Dictionary multiline 3"
+dict = .[
+"a" => 1    /* with some */
+"b" => 2
+      // comments
+   "3" => 3,   // comments
+   
+   4   =>    4
+]
+> dict["a"]
+> dict["b"]
+> dict["3"]
+> dict[4]
+> "Len:", dict.len
+> "Done"
+

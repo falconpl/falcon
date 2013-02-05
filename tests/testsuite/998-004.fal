@@ -10,7 +10,6 @@
 @endoutput
 */
 
-
 function makeMultiplier( param )
    return { myparam => myparam * param }
 end

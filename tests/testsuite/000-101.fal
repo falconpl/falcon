@@ -1,0 +1,23 @@
+/*
+@name Smoke tests - Multiline grammar 1
+
+@output
+Basic multiline grammar text:
+
+---
+
+---
+Hello World
+@endoutput
+*/
+
+> "Basic multiline grammar text:"
+printl()
+> "---"
+printl(
+)
+> "---"
+printl(
+   "Hello",
+   " ",
+   "World" ) 

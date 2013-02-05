@@ -1,0 +1,16 @@
+/*
+@name Smoke tests - Indirect call grammar test
+
+@output
+Indirect call grammar test
+Hello world
+Hello world again!
+@endoutput
+*/
+
+> "Indirect call grammar test"
+printl # ^("Hello world")
+printl#^("Hello", " ", "world", " again!")
+
+
+

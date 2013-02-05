@@ -1,0 +1,16 @@
+/*
+@name Smoke test -- Multiline parenthesis
+
+@output
+Multiline expression 2
+2+2=4
+---------------------
+@endoutput
+
+*/
+
+> "Multiline expression 2"
+// Using automatic continue on next line:
+> "2+2=", 2 +  
+2
+> "---------------------"

@@ -1,0 +1,26 @@
+/*
+@name Smoke test -- Basic types -- arrays
+
+@output
+Elements in the array:
+1
+b
+3
+c
+Lenght: 4
+Class: Array
+---- Done ----
+@endoutput
+*/
+
+array = [1, "b", 3, "c"]
+> "Elements in the array:"
+> array[0]
+> array[1]
+> array[2]
+> array[3]
+> "Lenght: ", array.len
+> "Class: ", array.className
+> "---- Done ----"
+
+

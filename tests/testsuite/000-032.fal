@@ -1,0 +1,17 @@
+/*
+@name Smoke test -- Multiline parenthesis
+
+@output
+Multiline expression 3
+3+3=6
+---------------------
+@endoutput
+
+*/
+
+> "Multiline expression 3"
+// Using a mix:
+> "3+3=", 3 \
++  
+3
+> "---------------------"

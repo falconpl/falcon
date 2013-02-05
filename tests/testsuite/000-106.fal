@@ -1,0 +1,30 @@
+/*
+@name Smoke tests - Array multiline 4
+
+@output
+Array multiline 4
+1
+2
+3
+4
+Len:4
+Done
+@endoutput
+*/
+
+> "Array multiline 4"
+array = .[
+1
+
+2,       // with
+   3     // some
+         /* comment */
+   4
+]
+> array[0]
+> array[1]
+> array[2]
+> array[3]
+> "Len:", array.len
+> "Done"
+
