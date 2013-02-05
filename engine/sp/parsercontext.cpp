@@ -341,7 +341,7 @@ void ParserContext::defineSymbols( Expression* expr )
       for( uint32 i = 0; i < arity; ++ i ) {
          // expressions can only have expressions as nth()
          Expression* child = static_cast<Expression*>(expr->nth(i));
-         if( child->trait() != Expression::e_trait_composite )
+         if( child != 0 && child->trait() != Expression::e_trait_composite )
          {
             defineSymbols( child );
          }
@@ -372,7 +372,7 @@ void ParserContext::accessSymbols( Expression* expr )
       for( uint32 i = 0; i < arity; ++ i ) {
          // expressions can only have expressions as nth()
          Expression* child = static_cast<Expression*>(expr->nth(i));
-         if( child->category() == TreeStep::e_cat_expression )
+         if( child != 0 && child->category() == TreeStep::e_cat_expression )
          {
             accessSymbols( child );
          }

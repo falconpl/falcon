@@ -79,28 +79,34 @@ void ModCompiler::Context::onInputOver()
 Variable* ModCompiler::Context::onOpenFunc( Function* function )
 {
    Module* mod = m_owner->m_module;
-   Variable* var = mod->addMantra( function, false );
-
-   if( var == 0  )
-   {
-      m_owner->m_sp.addError( new CodeError(
-         ErrorParam(e_already_def, function->declaredAt(), m_owner->m_module->uri() )
-         // TODO add source reference of the imported def
-         .symbol( function->name() )
-         .origin(ErrorParam::e_orig_compiler)
-         ));
+   if( function->name().size() == 0 ) {
+      mod->addAnonMantra( function );
+      return 0;
    }
+   else
+   {
+      Variable* var = mod->addMantra( function, false );
 
-   return var;
+      if( var == 0  )
+      {
+         // save it somewhere anyhow
+         mod->addAnonMantra( function );
+
+         m_owner->m_sp.addError( new CodeError(
+            ErrorParam(e_already_def, function->declaredAt(), m_owner->m_module->uri() )
+            // TODO add source reference of the imported def
+            .symbol( function->name() )
+            .origin(ErrorParam::e_orig_compiler)
+            ));
+      }
+      return var;
+   }
 }
 
 
-void ModCompiler::Context::onCloseFunc( Function* f )
+void ModCompiler::Context::onCloseFunc( Function* )
 {
-   if( f->name().size() == 0 ) {
-      Module* mod = m_owner->m_module;
-      mod->addAnonMantra( f );
-   }
+
 }
 
 
@@ -115,11 +121,21 @@ Variable* ModCompiler::Context::onOpenClass( Class* cls, bool isObject )
       var = mod->addInitClass(cls);
    }
    else {
-      var = mod->addMantra( cls, false );
+      if( cls->name().size() == 0 ) {
+         Module* mod = m_owner->m_module;
+         mod->addAnonMantra( cls );
+         return 0;
+      }
+      else {
+         var = mod->addMantra( cls, false );
+      }
    }
 
    if( var == 0 )
    {
+      // save it anyhow
+      mod->addAnonMantra( cls );
+
       m_owner->m_sp.addError( new CodeError(
          ErrorParam(e_already_def, cls->declaredAt(), m_owner->m_module->uri() )
          // TODO add source reference of the imported def
@@ -152,12 +168,8 @@ bool ModCompiler::Context::onAttribute(const String& name, TreeStep* generator, 
 }
 
 
-void ModCompiler::Context::onCloseClass( Class* cls, bool )
+void ModCompiler::Context::onCloseClass( Class*, bool )
 {
-   if( cls->name().size() == 0 ) {
-      Module* mod = m_owner->m_module;
-      mod->addAnonMantra( cls );
-   }
 }
 
 
@@ -171,7 +183,8 @@ void ModCompiler::Context::onNewStatement( TreeStep* ts )
       {
          // are we in a lambda?
          ParserContext* pc =  static_cast<ParserContext*>(m_owner->m_sp.context());
-         if(pc->currentFunc() != 0 && pc->currentFunc()->name().size() == 0 )
+         if((pc->currentFunc() != 0 && pc->currentFunc()->name().size() == 0)
+             || pc->isLitContext() )
          {
             // it's ok
          }
