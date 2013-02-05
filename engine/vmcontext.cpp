@@ -824,11 +824,15 @@ void VMContext::raiseItem( const Item& item )
    }
 }
 
-void VMContext::raiseError( Error* ce )
+Error* VMContext::raiseError( Error* ce )
 {
    if( m_lastRaised != 0 ) m_lastRaised->decref();
    m_lastRaised = ce;
    ce->incref();
+   if( ce->mantra().empty() )
+   {
+      contextualize(ce);
+   }
 
    // can we catch it?
    m_catchBlock = 0;
@@ -861,6 +865,8 @@ void VMContext::raiseError( Error* ce )
       ce->decref();
       m_lastRaised = 0;
    }
+
+   return ce;
 }
 
 
@@ -1654,18 +1660,35 @@ Error* VMContext::runtimeError( int id, const String& extra, int line )
    return error;
 }
 
-void VMContext::contestualize( Error* error )
+void VMContext::contextualize( Error* error, bool force )
 {
    String noname;
    Function* curFunc = currentFrame().m_function;
-   const String* modName = curFunc->module() == 0 ? &noname : &curFunc->module()->name();
-   const String* modPath = curFunc->module() == 0 ? &noname : &curFunc->module()->uri();
-   int line = currentCode().m_step->sr().line();
 
-   error->line(line);
-   error->module(*modName);
-   error->path(*modPath);
-   error->symbol( curFunc->fullName() );
+   if( error->line() == 0 || force )
+   {
+      error->line(currentCode().m_step->sr().line());
+   }
+
+   if( error->mantra().empty() || force)
+   {
+      error->mantra( curFunc->fullName() );
+   }
+
+   Module* mod = curFunc->module();
+   if( mod != 0 || force )
+   {
+      if( error->module().empty() )
+      {
+         error->module(mod->name());
+      }
+
+      if( error->path().empty() )
+      {
+         error->path(mod->uri());
+      }
+   }
+
 }
 
 void VMContext::addTrace( Error *error )
@@ -1817,19 +1840,27 @@ void VMContext::onStackRebased( Item* oldBase )
 //===============================================================
 // Fill an error with the current context.
 //
-ErrorParam::ErrorParam( int code, VMContext* ctx ):
-         m_errorCode(code)
+ErrorParam::ErrorParam( int code, VMContext* ctx, const char* file, int signLine )
 {
    String noname;
    Function* curFunc = ctx->currentFrame().m_function;
    const String* modName = curFunc->module() == 0 ? &noname : &curFunc->module()->name();
    const String* modPath = curFunc->module() == 0 ? &noname : &curFunc->module()->uri();
 
+   m_errorCode = code;
    m_line = ctx->currentCode().m_step->sr().line();
    m_module = *modName;
    m_path = *modPath;
    m_symbol = curFunc->fullName();
    m_origin = e_orig_script;
+
+   if( file != 0 )
+   {
+      m_signature = file;
+      if( signLine != 0 ) {
+         m_signature.A(":").N(signLine);
+      }
+   }
 
    m_sysError = 0;
    m_catchable = true;

@@ -30,6 +30,21 @@ class Stream;
 
 /*# The base class of all the error class hierarchy.
  
+   @prop code
+   @prop description
+   @prop extra
+
+   @prop mantra
+   @prop module
+   @prop path
+   @prop signature
+   @prop line
+   @prop chr
+
+   @prop heading
+   @prop trace
+   @prop errors
+   @prop raised
  */
 class FALCON_DYN_SYM ClassError: public ClassUser
 {
@@ -85,9 +100,10 @@ private:
    FALCON_DECLARE_PROPERTY( description );
    FALCON_DECLARE_PROPERTY( extra );
 
-   FALCON_DECLARE_PROPERTY( symbol );
+   FALCON_DECLARE_PROPERTY( mantra );
    FALCON_DECLARE_PROPERTY( module );
    FALCON_DECLARE_PROPERTY( path );
+   FALCON_DECLARE_PROPERTY( signature );
    FALCON_DECLARE_PROPERTY( line );
    FALCON_DECLARE_PROPERTY( chr );
 
@@ -96,6 +112,11 @@ private:
    FALCON_DECLARE_PROPERTY( errors );
    FALCON_DECLARE_PROPERTY( raised );
 
+   /**
+    @method take Error
+    Takes the current trace and context and stores it in the error.
+    */
+   FALCON_DECLARE_METHOD( take, "" );
 };
 
 }

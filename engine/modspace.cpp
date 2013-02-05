@@ -45,6 +45,12 @@
 namespace Falcon {
    
 
+Class* ModSpace::handler()
+{
+   static Class* ms = Engine::instance()->modSpaceClass();
+   return ms;
+}
+
 class ModSpace::Private
 {
 public:
@@ -109,11 +115,21 @@ ModSpace::ModSpace( VMachine* owner, ModSpace* parent ):
    SynFunc* sf = new SynFunc("$loadModule");
    sf->syntree().append( new StmtReturn );
    m_loaderFunc = sf;
+
+   if( parent != 0 )
+   {
+      parent->incref();
+   }
 }
 
 
 ModSpace::~ModSpace()
 {
+   if( m_parent != 0 )
+   {
+      m_parent->decref();
+   }
+
    delete _p;
    delete m_loader;
    delete m_loaderFunc;

@@ -21,6 +21,8 @@
 #include <falcon/modmap.h>
 #include <falcon/pstep.h>
 
+#include <falcon/refcounter.h>
+
 namespace Falcon {
 
 class VMContext;
@@ -88,7 +90,6 @@ public:
     or exported symbols.
     */
    ModSpace( VMachine* owner, ModSpace* parent = 0 );
-   virtual ~ModSpace();
    
    /** Adds a new module (internal) to the module space.
     \param module The module to be added.
@@ -169,7 +170,7 @@ public:
       
    void gcMark( uint32 mark );
    
-   uint32 lastGCMark() const { return m_lastGCMark; }
+   uint32 currentMark() const { return m_lastGCMark; }
     
       
    /** Get the space in which this group resides. */
@@ -254,6 +255,11 @@ public:
    /** Virtual machine associated with this space. */
    VMachine* vm() const { return m_vm; }
 
+   /**
+    * Returns the engine-wide visible instance of ClassModSpace;
+    */
+   static Class* handler();
+
 private:      
    class Private;
    ModSpace::Private* _p;
@@ -266,6 +272,7 @@ private:
    
    ModLoader* m_loader;
    
+   virtual ~ModSpace();
    void exportFromModule( Module* mod, Error*& link_errors );
    
    void importInModule(Module* mod, Error*& link_errors);
@@ -373,6 +380,8 @@ private:
       ModSpace* m_owner;
    };
    PStepStartLoad m_startLoadStep;
+
+   FALCON_REFERENCECOUNT_DECLARE_INCDEC(ModSpace);
 };
 
 }

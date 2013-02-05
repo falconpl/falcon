@@ -139,6 +139,7 @@ add_library(falcon_engine SHARED
   cm/datareader.cpp
   cm/datawriter.cpp
   cm/iff.cpp
+  cm/include.cpp
   cm/inspect.cpp
   cm/parallel.cpp
   cm/path.cpp
@@ -258,6 +259,7 @@ add_library(falcon_engine SHARED
   classes/classmantra.cpp
   classes/classmethod.cpp
   classes/classmodule.cpp
+  classes/classmodspace.cpp
   classes/classmulti.cpp
   classes/classnumeric.cpp
   classes/classnil.cpp

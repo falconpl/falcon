@@ -927,9 +927,6 @@ public:
    // Utilities
    //
 
-   /** Generates a read only property access error. */
-   Error* ropError( const String& prop, int line = 0, const char* src = 0 ) const;
-
    /** User flags.
     User flags are at disposal of the user to define some subtyping of class hierarcies.
 

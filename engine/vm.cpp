@@ -172,7 +172,7 @@ VMachine::~VMachine()
       delete m_stdCoder;
    }
    
-   delete m_modspace;
+   m_modspace->decref();
 
    delete _p;
    

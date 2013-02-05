@@ -56,20 +56,10 @@ public:
 
 Error::Error( Class* handler, const ErrorParam &params ):
    m_refCount( 1 ),
-   m_errorCode( params.m_errorCode ),
-   m_description( params.m_description ),
-   m_extra( params.m_extra ),
-   m_symbol( params.m_symbol ),
-   m_module( params.m_module ),
-   m_handler( handler ),
-   m_line( params.m_line ),
-   m_chr( params.m_chr ),
-   m_sysError( params.m_sysError ),
-   m_origin( params.m_origin ),
-   m_catchable( params.m_catchable ),
-   m_bHasRaised( false )
+   m_handler( handler )
 {
    _p = new Error_p;
+   set(params);
 }
 
 
@@ -85,9 +75,10 @@ void Error::set( const ErrorParam& params )
    m_errorCode = params.m_errorCode ;
    m_description = params.m_description ;
    m_extra = params.m_extra ;
-   m_symbol = params.m_symbol ;
+   m_mantra = params.m_symbol ;
    m_module = params.m_module ;
    m_path = params.m_path;
+   m_signature = params.m_signature;
    m_line= params.m_line ;
    m_chr= params.m_chr ;
    m_sysError= params.m_sysError ;
@@ -123,6 +114,11 @@ void Error::decref()
 void Error::describeTo( String &target ) const
 {
    heading( target );
+
+   if (! m_signature.empty() )
+   {
+      target += "\n   Signed by: " + m_signature;
+   }
 
    if ( ! _p->m_steps.empty() )
    {
@@ -199,8 +195,8 @@ String &Error::heading( String &target ) const
    if ( m_module.size() != 0 )
    {
       target += m_module;
-      if ( m_symbol.size() != 0 )
-         target += "." + m_symbol;
+      if ( m_mantra.size() != 0 )
+         target += "." + m_mantra;
       target += ":";
    }
 

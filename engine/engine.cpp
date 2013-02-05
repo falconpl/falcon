@@ -91,6 +91,7 @@
 #include <falcon/classes/classre.h>
 
 #include <falcon/classes/classmodule.h>
+#include <falcon/classes/classmodspace.h>
 
 #include <falcon/classes/classtreestep.h>
 #include <falcon/classes/classstatement.h>
@@ -379,6 +380,7 @@ Engine::Engine()
    m_exprClass = new ClassExpression(ctreeStep);
    m_syntreeClass = new ClassSynTree(ctreeStep, static_cast<ClassSymbol*>(m_symbolClass));
 
+   m_modSpaceClass = new ClassModSpace;
    m_moduleClass = new ClassModule;
 
    addMantra(m_closureClass);
@@ -387,6 +389,7 @@ Engine::Engine()
    addMantra(m_exprClass);
    addMantra(m_syntreeClass);
    addMantra(m_symbolClass); 
+   addMantra(m_modSpaceClass);
    addMantra(m_moduleClass);
    addMantra(m_restorerClass);
    addMantra(m_storerClass);
@@ -900,6 +903,12 @@ Class* Engine::moduleClass() const
 {
    fassert( m_instance != 0 );
    return m_instance->m_moduleClass;
+}
+
+Class* Engine::modSpaceClass() const
+{
+   fassert( m_instance != 0 );
+   return m_instance->m_modSpaceClass;
 }
 
 SynClasses* Engine::synclasses() const

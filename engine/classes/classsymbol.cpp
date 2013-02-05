@@ -24,6 +24,7 @@
 #include <falcon/error.h>
 #include <falcon/symbol.h>
 #include <falcon/errors/paramerror.h>
+#include <falcon/errors/accesserror.h>
 #include <falcon/collector.h>
 
 #include <falcon/datareader.h>
@@ -139,7 +140,7 @@ void ClassSymbol::op_setProperty( VMContext* ctx, void* instance, const String& 
 
    if( prop == "name" )
    {
-      throw ropError( prop, __LINE__, SRC );
+      FALCON_RESIGN_ROPROP_ERROR(prop, ctx);
    }
    else if( prop == "value" )
    {

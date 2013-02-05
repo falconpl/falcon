@@ -20,6 +20,7 @@
 
 #include <falcon/cm/compile.h>
 #include <falcon/cm/iff.h>
+#include <falcon/cm/include.h>
 #include <falcon/cm/inspect.h>
 #include <falcon/cm/print.h>
 #include <falcon/cm/uri.h>
@@ -54,6 +55,7 @@ CoreModule::CoreModule():
       << new Ext::Inspect
       << new Ext::Iff
       << new Ext::Function_epoch
+      << new Ext::Function_include
       << new Ext::Function_seconds
       << new Ext::Function_sleep
       

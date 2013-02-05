@@ -83,23 +83,38 @@ public:
    */
    ErrorParam( int code, uint32 line = 0, const char* file = 0 ):
       m_errorCode( code ),
-      m_module( file == 0 ? "" : file ),    // force buffering
-      m_line( line ),
+      m_module(),
+      m_line( 0 ),
       m_chr( 0 ),
       m_sysError( 0 ),
       m_origin( e_orig_mod ),
       m_catchable( true )
-      {}
+      {
+         if( file != 0 ) {
+            m_signature = file;
+            if( line != 0 ) {
+               m_signature.A(":").N(line);
+            }
+            m_signature.bufferize();
+         }
+      }
 
-   ErrorParam( int code, uint32 line, const String& file ):
+   ErrorParam( int code, uint32 line, const String& signature ):
       m_errorCode( code ),
-      m_module( file ),
-      m_line( line ),
+      m_line( 0 ),
       m_chr( 0 ),
       m_sysError( 0 ),
       m_origin( e_orig_mod ),
       m_catchable( true )
-      {}
+      {
+         m_signature = signature;
+         if( line > 0 )
+            m_signature.A(":").N(line);
+         else
+         {
+            m_signature.bufferize();
+         }
+      }
    
    ErrorParam():
       m_errorCode( 0 ),
@@ -119,7 +134,7 @@ public:
     *
     * \note For convenience, the definition of this constructor is in vmcontext.cpp
     */
-   ErrorParam( int code, VMContext* ctx );
+   ErrorParam( int code, VMContext* ctx, const char* file=0, int signLine = 0 );
 
    ErrorParam &code( int code ) { m_errorCode = code; return *this; }
    ErrorParam &desc( const String &d ) { m_description = d; return *this; }
@@ -132,6 +147,7 @@ public:
    ErrorParam &sysError( uint32 e ) { m_sysError = e; return *this; }
    ErrorParam &origin( t_origin orig ) { m_origin = orig; return *this; }
    ErrorParam &hard() { m_catchable = false; return *this; }
+   ErrorParam &sign( const String& str ) { m_signature = str; return *this; }
 
 private:
    friend class Error;
@@ -142,6 +158,7 @@ private:
    String m_symbol;
    String m_module;
    String m_path;
+   String m_signature;
 
    uint32 m_line;
    uint32 m_chr;
@@ -213,12 +230,13 @@ public:
    void extraDescription( const String &extra ) { m_extra = extra; }
    void module( const String &moduleName ) { m_module = moduleName; }
    void path( const String &path ) { m_path = path; }
-   void symbol( const String &symbolName )  { m_symbol = symbolName; }
+   void mantra( const String &symbolName )  { m_mantra = symbolName; }
    void line( uint32 line ) { m_line = line; }
    void chr( uint32 chr ) { m_chr = chr; }
    void origin( ErrorParam::t_origin o ) { m_origin = o; }
    void catchable( bool c ) { m_catchable = c; }
    void raised( const Item &itm ) { m_raised = itm; m_bHasRaised = true; }
+   void sign( const String& s ) { m_signature = s; }
 
    int errorCode() const { return m_errorCode; }
    uint32 systemError() const { return m_sysError; }
@@ -226,13 +244,14 @@ public:
    const String &extraDescription() const { return m_extra; }
    const String &module() const { return m_module; }
    const String &path() const { return m_path; }
-   const String &symbol() const { return m_symbol; }
+   const String &mantra() const { return m_mantra; }
    uint32 line() const { return m_line; }
    uint32 chr() const { return m_chr; }
    ErrorParam::t_origin origin() const { return m_origin; }
    bool catchable() const { return m_catchable; }
    const Item &raised() const { return m_raised; }
    bool hasRaised() const { return m_bHasRaised; }
+   const String& signature() const { return m_signature; }
 
    inline String describe() const {
       String s; describeTo(s); return s;
@@ -341,15 +360,17 @@ protected:
    int m_errorCode;
    String m_description;
    String m_extra;
-   String m_symbol;
+   String m_mantra;
    String m_module;
    String m_path;
    String m_className;
+   String m_signature;
    Class* m_handler;
 
    uint32 m_line;
    uint32 m_chr;
    uint32 m_sysError;
+
 
    ErrorParam::t_origin m_origin;
    bool m_catchable;
@@ -367,6 +388,82 @@ private:
 };
 
 }
+
+/**
+ * Creates a signed error.
+ *
+ * This macro creates an instance of a class already configured with
+ * the current context and signed at given position.
+ *
+ * The macro uses the __LINE__ standard C99 macro to determine the
+ * current file line, and the SRC macro which is Falcon specific
+ * and gets defined as __FILE__ by falcon/setup.h, unless
+ * it's specifically set in the source file before its inclusion
+ *
+ * @note Remember to add the ';' after the macro.
+ */
+#define FALCON_SIGN_ERROR( Error_Class__, error_code__ ) \
+   (new Error_Class__(ErrorParam(error_code__, __LINE__, SRC  ) ))
+
+/**
+ * More compact error macro.
+ *
+ * This is like FALCON_SIGN_ERROR, but adds a call to the VMContext::raiseError
+ * method and dereferences the returned error immediately.
+ */
+#define FALCON_RESIGN_ERROR( Error_Class__, error_code__, VMContext__ ) \
+         (VMContext__->raiseError(new Error_Class__(ErrorParam(error_code__, __LINE__, SRC ) ))->decref())
+
+/**
+ * Creates a signed error with extra information.
+ *
+ * This macro creates an instance of a class already configured with
+ * the current context and signed at given position.
+ *
+ * The extra parameter is directly expanded after the ErrorParam()
+ * call, so it must be a sequence of self-returning methods.
+ * For instance, to create a signed error and specify the system
+ * error and the extra description, use
+ *
+ * @code
+ * throw FALCON_SIGN_XERROR( IOError, e_io_code, vmcontext,
+ *       .extra("Can't open this file")
+ *       .sysError(15)
+ *       );
+ * @endcode
+ *
+ * The macro uses the __LINE__ standard C99 macro to determine the
+ * current file line, and the SRC macro which is Falcon specific
+ * and gets defined as __FILE__ by falcon/setup.h, unless
+ * it's specifically set in the source file before its inclusion.
+ *
+ *@note Remember to add the ';' after the macro.
+ */
+#define FALCON_SIGN_XERROR( Error_Class__, error_code__, Extra__ ) \
+         (new Error_Class__(ErrorParam(error_code__, __LINE__, SRC ) Extra__ ))
+
+
+/**
+ * More compact error macro.
+ *
+ * This is like FALCON_SIGN_XERROR, but adds a call to the VMContext::raiseError
+ * method and dereferences the returned error immediately
+ */
+#define FALCON_RESIGN_XERROR( Error_Class__, error_code__, VMContext__, Extra__ ) \
+         (VMContext__->raiseError(new Error_Class__(ErrorParam(error_code__, __LINE__, SRC ) Extra__ ))->decref())
+
+/**
+ * Prepare a read-only-property error on the given property
+ */
+
+#define FALCON_SIGN_ROPROP_ERROR( prop ) \
+      (new AccessError(ErrorParam(e_prop_ro, __LINE__, SRC  ).extra(prop) ))
+
+/**
+ * Prepare a read-only-property error on the given property
+ */
+#define FALCON_RESIGN_ROPROP_ERROR( prop, VMContext__ ) \
+         (VMContext__->raiseError(new AccessError(ErrorParam(e_prop_ro, __LINE__, SRC  ).extra(prop) ))->decref())
 
 #endif	/* FALCON_ERROR_H */
 

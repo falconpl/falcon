@@ -54,16 +54,19 @@ ClassError::ClassError( const String& name ):
    FALCON_INIT_PROPERTY( description ),
    FALCON_INIT_PROPERTY( extra ),
 
-   FALCON_INIT_PROPERTY( symbol ),
+   FALCON_INIT_PROPERTY( mantra ),
    FALCON_INIT_PROPERTY( module ),
    FALCON_INIT_PROPERTY( path ),
+   FALCON_INIT_PROPERTY( signature ),
    FALCON_INIT_PROPERTY( line ),
    FALCON_INIT_PROPERTY( chr ),
 
    FALCON_INIT_PROPERTY( heading ),
    FALCON_INIT_PROPERTY( trace ),
    FALCON_INIT_PROPERTY( errors ),
-   FALCON_INIT_PROPERTY( raised )
+   FALCON_INIT_PROPERTY( raised ),
+   FALCON_INIT_METHOD( take )
+
 {
    m_bIsErrorClass = true;
 }
@@ -319,23 +322,23 @@ FALCON_DEFINE_PROPERTY_SET(ClassError, extra)( void* instance, const Item& value
    }
 }
 
-FALCON_DEFINE_PROPERTY_GET(ClassError, symbol)( void* instance, Item& value )
+FALCON_DEFINE_PROPERTY_GET(ClassError, mantra)( void* instance, Item& value )
 {
    Error* error = static_cast<Error*>( instance );
-   String* str = new String( error->symbol() );
+   String* str = new String( error->mantra() );
    str->bufferize();
    value = FALCON_GC_HANDLE( str );
 }
 
-FALCON_DEFINE_PROPERTY_SET(ClassError, symbol)( void* instance, const Item& value )
+FALCON_DEFINE_PROPERTY_SET(ClassError, mantra)( void* instance, const Item& value )
 {
    Error* error = static_cast<Error*>( instance );
    if( value.isString() )
    {
-      error->symbol( *value.asString() );
+      error->mantra( *value.asString() );
    }
    else {
-      error->symbol( value.describe() );
+      error->mantra( value.describe() );
    }
 }
 
@@ -376,6 +379,26 @@ FALCON_DEFINE_PROPERTY_SET(ClassError, path)( void* instance, const Item& value 
    }
    else {
       error->path( value.describe() );
+   }
+}
+
+FALCON_DEFINE_PROPERTY_GET(ClassError, signature)( void* instance, Item& value )
+{
+   Error* error = static_cast<Error*>( instance );
+   String* str = new String( error->signature() );
+   str->bufferize();
+   value = FALCON_GC_HANDLE( str );
+}
+
+FALCON_DEFINE_PROPERTY_SET(ClassError, signature)( void* instance, const Item& value )
+{
+   Error* error = static_cast<Error*>( instance );
+   if( value.isString() )
+   {
+      error->sign( *value.asString() );
+   }
+   else {
+      error->sign( value.describe() );
    }
 }
 
@@ -487,6 +510,13 @@ FALCON_DEFINE_PROPERTY_SET(ClassError, raised)( void* , const Item&  )
    throw readOnlyError();
 }
 
+
+FALCON_DEFINE_METHOD_P1( ClassError, take )
+{
+   Error* error = static_cast<Error*>( ctx->self().asInst() );
+   ctx->contextualize(error, true);
+   ctx->addTrace(error);
+}
 
 }
 

@@ -241,7 +241,7 @@ void ClassTreeStep::op_setProperty( VMContext* ctx, void* instance, const String
    }
    else if( hasProperty( instance, prop) )
    {
-      throw ropError( prop, __LINE__, SRC );
+      FALCON_RESIGN_ROPROP_ERROR( prop, ctx );
    }
    else
    {

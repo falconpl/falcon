@@ -1102,14 +1102,16 @@ public:
 
    /** Tries to manage an error through try handlers.
     \param exc The Falcon::Error instance that was thrown.
+    \return The same entity that is passed as parameter, so that
+       it's possible to use it on the fly.
 
     This method is invoked by the virtual machine when it catches an Error*
-    thrown by some part of the code. This exceptins are usually meant to be
+    thrown by some part of the code. This exceptions are usually meant to be
     handled by a script, if possible, or forwarded to the system if the
     script can't manage it.
 
     If an handler is found, the stacks are unrolled and the execution of
-    the error handler is preapred in the stack.
+    the error handler is prepared in the stack.
 
     If a finally block is found before an error handler can be found, the
     error is stored in that try-frame and the cleanup procedure is invoked
@@ -1117,8 +1119,8 @@ public:
     pstep frame so that, after cleanup, the process can proceed.
 
     If a new error is thrown during a finalization, two things may happen: either
-    it is handled by an handler inside the finalize process or it is unhandled.
-    If it is handled, then the error raisal process continues. If it is unhandled,
+    it is handled by an handler inside the finalize process or it is not handled.
+    If it is handled, then the error raising process continues. If it is not handled,
     the new error gets propagated as a sub-error of the old one. Example:
 
     @code
@@ -1135,10 +1137,24 @@ public:
     If a non-error item is raised from finally, it becomes an sub-error of the
     main one as a "uncaught raised item" exception. If the non-error item was
     raised before an error or an item throw by finally, the non-error item is
-    lost and the raisal process continues with the item raised by the finally
+    lost and the raising process continues with the item raised by the finally
     code.
+
+    @note The method returns the same error it receives; in this way, it is
+    possible to create the error directly via new statement as the
+    parameter and have it back. Notice that the error gets a reference increment
+    when it's sent to raiseError(), so it is necessary to dereference it
+    when the caller doesn't need it anymore.
+
+    The extension code can call directly raiseError() whenever it's going
+    to return the control to the calling Falcon::Processor as soon as possible.
+    When raiseError() returns, this context may have significantly changed,
+    but if calling code is able to yield the control back to the Falcon system,
+    this might save a useless C++ throw. However, when the code detects an error
+    deep down in C++, it should simply throw it and let the Falcon::Processor
+    main loop to catch it.
     */
-   void raiseError( Error* exc );
+   Error* raiseError( Error* exc );
 
 
    /** Sets the catch block for the current finally unroll. */
@@ -1437,8 +1453,11 @@ public:
 
    /**
     * Adds information about the currently executed context.
+    * \param error The error to be contextualized
+    * \param force if true, will cause the context fields in the error to be overwritten
+    *    even if they have already a value.
     */
-   void contestualize(Error* error);
+   void contextualize(Error* error, bool force = false);
 
    /**
     * Adds information about the currently executed context.

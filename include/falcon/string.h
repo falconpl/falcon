@@ -648,6 +648,11 @@ public:
    */
    void size( length_t s ) { m_size = s; }
 
+   /** Efficient check for string emptyness.
+    * \return true if the string is empty.
+    */
+   bool empty() const { return m_size == 0; }
+
    /** Return the raw storage for this string.
       The raw storage is where the strings byte are stored. For more naive string (i.e. chunked), it
       may return the pointer to a structure helding more informations about the string data.

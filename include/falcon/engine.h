@@ -429,8 +429,8 @@ public:
     */
    Class* formatClass() const;
 
-   /** Returns the global instance of the ModuleClass class.
-   \return the Engine instance of the ModuleClass handler.
+   /** Returns the global instance of the ClassModule class.
+   \return the Engine instance of the ClassModule handler.
 
     Method init() must have been called before.
 
@@ -439,6 +439,18 @@ public:
     return a null pointer.
     */
    Class* moduleClass() const;
+
+   /** Returns the global instance of the ClassModSpace class.
+   \return the Engine instance of the ClassModSpace handler.
+
+    Method init() must have been called before.
+
+    @note This method will assert and terminate the program if compiled in debug mode
+    in case the engine has not been initialized. In release, it will just
+    return a null pointer.
+    */
+   Class* modSpaceClass() const;
+
 
    /** Returns the collection of standard syntactic tree classes.
    \return the Engine instance of the SynClasses class collection.
@@ -651,6 +663,7 @@ protected:
    Class* m_restorerClass;
    Class* m_streamClass;
    ClassModule* m_moduleClass;
+   Class* m_modSpaceClass;
    
    SynClasses* m_synClasses;
    

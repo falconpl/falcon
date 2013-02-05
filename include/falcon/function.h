@@ -220,7 +220,7 @@ protected:
 
 };
 
-#define FALCON_DECLARE_FUNCTION(FN_NAME, SIGNATURE) \
+#define FALCON_DECLARE_FUNCTION_EX(FN_NAME, SIGNATURE, extra ) \
    class Function_ ## FN_NAME: public ::Falcon::Function \
    { \
    public: \
@@ -229,7 +229,12 @@ protected:
       { parseDescription( SIGNATURE ); } \
       virtual ~Function_ ## FN_NAME() {} \
       virtual void invoke( ::Falcon::VMContext* ctx, ::Falcon::int32 pCount = 0 ); \
+      extra\
    };
+
+
+#define FALCON_DECLARE_FUNCTION(FN_NAME, SIGNATURE) \
+         FALCON_DECLARE_FUNCTION_EX(FN_NAME, SIGNATURE, )
 
 #define FALCON_DEFINE_FUNCTION(FN_NAME) void Function_ ## FN_NAME::invoke
 #define FALCON_DEFINE_FUNCTION_P(FN_NAME) \

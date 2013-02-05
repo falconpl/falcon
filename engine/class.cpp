@@ -26,7 +26,7 @@
 #include <falcon/errors/operanderror.h>
 #include <falcon/errors/unserializableerror.h>
 #include <falcon/errors/accesserror.h>
-
+#include <falcon/errors/accesstypeerror.h>
 
 namespace Falcon {
 
@@ -222,148 +222,171 @@ void Class::onInheritanceResolved( ExprInherit* )
 // VM Operator override.
 //
 
-bool Class::op_init( VMContext* , void*, int32 ) const
+bool Class::op_init( VMContext*, void*, int32 ) const
 {
-   throw new OperandError( ErrorParam( e_invop, __LINE__, SRC ).extra("init") );
+   throw FALCON_SIGN_XERROR( OperandError, e_invop, .extra("init") );
 }
 
 
-void Class::op_neg( VMContext* , void* ) const
+void Class::op_neg( VMContext* ctx, void* ) const
 {
-   throw new OperandError( ErrorParam( e_invop, __LINE__, SRC ).extra("neg") );
+   FALCON_RESIGN_XERROR( OperandError, e_invop, ctx,
+            .extra("neg") );
 }
 
-void Class::op_add( VMContext* , void* ) const
+void Class::op_add( VMContext* ctx, void* ) const
 {
-   throw new OperandError( ErrorParam( e_invop, __LINE__, SRC ).extra("add") );
+   FALCON_RESIGN_XERROR( OperandError, e_invop, ctx,
+            .extra("add") );
 }
 
-void Class::op_sub( VMContext* , void* ) const
+void Class::op_sub( VMContext* ctx, void* ) const
 {
-   throw new OperandError( ErrorParam( e_invop, __LINE__, SRC ).extra("sub") );
-}
-
-
-void Class::op_mul( VMContext* , void* ) const
-{
-   throw new OperandError( ErrorParam( e_invop, __LINE__, SRC ).extra("mul") );
+   FALCON_RESIGN_XERROR( OperandError, e_invop, ctx,
+            .extra("sub") );
 }
 
 
-void Class::op_div( VMContext* , void* ) const
+void Class::op_mul( VMContext* ctx, void* ) const
 {
-   throw new OperandError( ErrorParam( e_invop, __LINE__, SRC ).extra("div") );
+   FALCON_RESIGN_XERROR( OperandError, e_invop, ctx,
+            .extra("mul") );
 }
 
 
-void Class::op_mod( VMContext* , void* ) const
+void Class::op_div( VMContext* ctx, void* ) const
 {
-   throw new OperandError( ErrorParam( e_invop, __LINE__, SRC ).extra("mod") );
+   FALCON_RESIGN_XERROR( OperandError, e_invop, ctx,
+            .extra("div") );
 }
 
 
-void Class::op_pow( VMContext* , void* ) const
+void Class::op_mod( VMContext* ctx, void* ) const
 {
-   throw new OperandError( ErrorParam( e_invop, __LINE__, SRC ).extra("pow") );
-}
-
-void Class::op_shr( VMContext* , void* ) const
-{
-   throw new OperandError( ErrorParam( e_invop, __LINE__, SRC ).extra(">>") );
-}
-
-void Class::op_shl( VMContext* , void* ) const
-{
-   throw new OperandError( ErrorParam( e_invop, __LINE__, SRC ).extra("<<") );
+   FALCON_RESIGN_XERROR( OperandError, e_invop, ctx,
+            .extra("mod") );
 }
 
 
-void Class::op_aadd( VMContext* , void* ) const
+void Class::op_pow( VMContext* ctx, void* ) const
 {
-   throw new OperandError( ErrorParam( e_invop, __LINE__, SRC ).extra("aadd") );
+   FALCON_RESIGN_XERROR( OperandError, e_invop, ctx,
+            .extra("pow") );
+}
+
+void Class::op_shr( VMContext* ctx, void* ) const
+{
+   FALCON_RESIGN_XERROR( OperandError, e_invop, ctx,
+            .extra("shift right (>>)") );
+}
+
+void Class::op_shl( VMContext* ctx, void* ) const
+{
+   FALCON_RESIGN_XERROR( OperandError, e_invop, ctx,
+            .extra("shift left (<<)") );
 }
 
 
-void Class::op_asub( VMContext* , void* ) const
+void Class::op_aadd( VMContext* ctx, void* ) const
 {
-   throw new OperandError( ErrorParam( e_invop, __LINE__, SRC ).extra("asub") );
+   FALCON_RESIGN_XERROR( OperandError, e_invop, ctx,
+               .extra("Auto add (+=)") );
 }
 
 
-void Class::op_amul( VMContext* , void* ) const
+void Class::op_asub( VMContext* ctx, void* ) const
 {
-   throw new OperandError( ErrorParam( e_invop, __LINE__, SRC ).extra("amul") );
+   FALCON_RESIGN_XERROR( OperandError, e_invop, ctx,
+               .extra("Auto sub (-=)") );
 }
 
 
-void Class::op_adiv( VMContext* , void* ) const
+void Class::op_amul( VMContext* ctx, void* ) const
 {
-   throw new OperandError( ErrorParam( e_invop, __LINE__, SRC ).extra("/=") );
+   FALCON_RESIGN_XERROR( OperandError, e_invop, ctx,
+               .extra("Auto amul (-=)") );;
 }
 
 
-void Class::op_amod( VMContext* , void* ) const
+void Class::op_adiv( VMContext* ctx, void* ) const
 {
-   throw new OperandError( ErrorParam( e_invop, __LINE__, SRC ).extra("%=") );
+   FALCON_RESIGN_XERROR( OperandError, e_invop, ctx,
+               .extra("Auto div (/=)") );
 }
 
 
-void Class::op_apow( VMContext* , void* ) const
+void Class::op_amod( VMContext* ctx, void* ) const
 {
-   throw new OperandError( ErrorParam( e_invop, __LINE__, SRC ).extra("**=") );
-}
-
-void Class::op_ashr( VMContext* , void* ) const
-{
-   throw new OperandError( ErrorParam( e_invop, __LINE__, SRC ).extra(">>=") );
-}
-
-void Class::op_ashl( VMContext* , void* ) const
-{
-   throw new OperandError( ErrorParam( e_invop, __LINE__, SRC ).extra("<<=") );
+   FALCON_RESIGN_XERROR( OperandError, e_invop, ctx,
+               .extra("Auto mod (%=)") );
 }
 
 
-void Class::op_inc( VMContext* , void* ) const
+void Class::op_apow( VMContext* ctx, void* ) const
 {
-   throw new OperandError( ErrorParam(e_invop, __LINE__, SRC ).extra("++x") );
+   FALCON_RESIGN_XERROR( OperandError, e_invop, ctx,
+               .extra("Auto pow (**=)") );
+}
+
+void Class::op_ashr( VMContext* ctx, void* ) const
+{
+   FALCON_RESIGN_XERROR( OperandError, e_invop, ctx,
+               .extra("Auto shr (>>=)") );
+}
+
+void Class::op_ashl( VMContext* ctx, void*  ) const
+{
+   FALCON_RESIGN_XERROR( OperandError, e_invop, ctx,
+               .extra("Auto shl (<<=)") );
 }
 
 
-void Class::op_dec( VMContext* , void* ) const
+void Class::op_inc( VMContext* ctx, void* ) const
 {
-   throw new OperandError( ErrorParam( e_invop, __LINE__, SRC ).extra("--x") );
+   FALCON_RESIGN_XERROR( OperandError, e_invop, ctx,
+               .extra("Pre-inc (++x)") );
 }
 
 
-void Class::op_incpost( VMContext* , void*) const
+void Class::op_dec( VMContext* ctx, void* ) const
 {
-   throw new OperandError( ErrorParam( e_invop, __LINE__, SRC ).extra("x++") );
+   FALCON_RESIGN_XERROR( OperandError, e_invop, ctx,
+               .extra("Pre-dec (--x)") );
 }
 
 
-void Class::op_decpost( VMContext* , void* ) const
+void Class::op_incpost( VMContext* ctx, void*) const
 {
-   throw new OperandError( ErrorParam( e_invop, __LINE__, SRC ).extra("x--") );
+   FALCON_RESIGN_XERROR( OperandError, e_invop, ctx,
+               .extra("Post-inc (x++)") );
 }
 
 
-void Class::op_call( VMContext* ctx, int32 count, void* ) const
+void Class::op_decpost( VMContext* ctx, void* ) const
+{
+   FALCON_RESIGN_XERROR( OperandError, e_invop, ctx,
+               .extra("Post-dec (x--)") );
+}
+
+
+void Class::op_call( VMContext* ctx, int32 count , void* ) const
 {
    ctx->popData(count);
 }
 
 
-void Class::op_getIndex(VMContext* , void* ) const
+void Class::op_getIndex(VMContext* ctx, void* ) const
 {
-   throw new OperandError( ErrorParam( e_invop, __LINE__, SRC ).extra("[]") );
+   FALCON_RESIGN_XERROR( OperandError, e_invop, ctx,
+               .extra("Get index []") );
 }
 
 
-void Class::op_setIndex(VMContext* , void* ) const
+void Class::op_setIndex(VMContext* ctx, void* ) const
 {
    // TODO: IS it worth to add more infos about self in the error?
-   throw new OperandError( ErrorParam( e_invop, __LINE__, SRC ).extra("[]=") );
+   FALCON_RESIGN_XERROR( OperandError, e_invop, ctx,
+                .extra("Set index []=") );
 }
 
 
@@ -379,15 +402,16 @@ void Class::op_getProperty( VMContext* ctx, void* data, const String& property )
    }
    else
    {
-      throw new OperandError( ErrorParam(e_prop_acc, __LINE__, SRC  ).extra(property) );
+      FALCON_RESIGN_XERROR( AccessTypeError, e_prop_acc, ctx,
+                   .extra(property) );
    }
 }
 
 
-void Class::op_setProperty( VMContext* , void*, const String& prop ) const
+void Class::op_setProperty( VMContext* ctx, void*, const String& prop ) const
 {
-   // TODO: IS it worth to add more infos about self in the error?
-   throw new OperandError( ErrorParam( e_prop_acc, __LINE__, SRC ).extra(prop) );
+   FALCON_RESIGN_XERROR( AccessError, e_prop_acc, ctx,
+                .extra(prop) );
 }
 
 
@@ -397,9 +421,10 @@ void Class::op_isTrue( VMContext* ctx, void* ) const
 }
 
 
-void Class::op_in( VMContext* , void*) const
+void Class::op_in( VMContext* ctx, void*) const
 {
-   throw new OperandError( ErrorParam( e_invop, __LINE__, SRC ).extra("in") );
+   FALCON_RESIGN_XERROR( OperandError, e_invop, ctx,
+                .extra("in") );
 }
 
 void Class::op_toString( VMContext* ctx, void *self ) const
@@ -420,17 +445,6 @@ void Class::op_iter( VMContext* ctx, void* ) const
 void Class::op_next( VMContext* ctx, void* ) const
 {
    ctx->topData().setBreak();
-}
-
-
-
-Error* Class::ropError( const String& prop, int line, const char* src ) const
-{
-   if( src == 0 ) src = SRC;
-   if( line == 0 ) line = __LINE__;
-   return new AccessError( ErrorParam( e_prop_ro, line, src )
-         .origin(ErrorParam::e_orig_vm)
-         .extra(prop));
 }
 
 }

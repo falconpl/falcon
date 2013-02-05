@@ -225,6 +225,15 @@ private:
       };\
       PStep ## name m_step ## name ;
 
+#define FALCON_DEFINE_INTERNAL_PSTEP( Class__, Name__ )\
+         void Class__::PStep ## Name__ ::apply_
+
+#define FALCON_DEFINE_INTERNAL_PSTEP_P1( Class__, Name__ )\
+         void Class__::PStep ## Name__ ::apply_( const PStep* , VMContext* ctx )
+
+#define FALCON_DEFINE_INTERNAL_PSTEP_P2( Class__, Name__ )\
+         void Class__::PStep ## Name__ ::apply_( const PStep* pstep, VMContext* ctx )
+
 #endif
 
 /* end of pstep.h */
