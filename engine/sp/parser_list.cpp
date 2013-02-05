@@ -43,7 +43,18 @@ bool ListExpr_errhand(const NonTerminal&, Parser& p)
    TokenInstance* t0 = p.getNextToken();
    TokenInstance* t1 = p.getLastToken();
 
-   p.addError( e_syn_arraydecl, p.currentSource(), t1->line(), t1->chr(), t0->line() );
+   p.addError( e_syn_list_decl, p.currentSource(), t1->line(), t1->chr(), t0->line() );
+   p.trimFromCurrentToken();
+   return true;
+}
+
+bool PrintExpr_errhand(const NonTerminal&, Parser& p)
+{
+   TRACE2( "PrintExpr_errhand -- removing %d tokens", p.tokenCount() );
+   TokenInstance* t0 = p.getNextToken();
+   TokenInstance* t1 = p.getLastToken();
+
+   p.addError( e_syn_self_print, p.currentSource(), t1->line(), t1->chr(), t0->line() );
    p.trimFromCurrentToken();
    return true;
 }
@@ -58,13 +69,18 @@ void apply_ListExpr_next( const Rule&, Parser& p )
    TokenInstance* texpr = p.getNextToken();
 
    Expression* expr = static_cast<Expression*>(texpr->detachValue());
-   List* list = static_cast<List*>(tlist->detachValue());
+
+   List* list = static_cast<List*>(tlist->asData());
    list->push_back(expr);
+   tlist->token(sp.ListExpr);
+   p.trimFromBase(1,2);
+}
 
-   TokenInstance* ti_list = TokenInstance::alloc(tlist->line(), tlist->chr(), sp.ListExpr );
-   ti_list->setValue( list, list_deletor );
-   p.simplify(3,ti_list);
-
+void apply_ListExpr_next2( const Rule&, Parser& p )
+{
+   // << ListExpr << T_EOL
+   // remove the trailing eol
+   p.trim(1);
 }
 
 void apply_ListExpr_first( const Rule&, Parser& p )
@@ -74,56 +90,15 @@ void apply_ListExpr_first( const Rule&, Parser& p )
    //TODO: Get current lexer char/line
    TokenInstance* texpr = p.getNextToken();
 
-   Expression* expr = static_cast<Expression*>(texpr->detachValue());;
-
-   List* list = new List;
-   list->push_back(expr);
-
-   TokenInstance* ti_list = TokenInstance::alloc(texpr->line(), texpr->chr(), sp.ListExpr );
-   ti_list->setValue( list, list_deletor );
-
-   // Change the expression in a list
-   p.simplify( 1, ti_list );
-}
-
-void apply_NeListExpr_next( const Rule&, Parser& p )
-{
-   // << (r_ListExpr_next << "ListExpr_next" << apply_ListExpr_next << ListExpr << T_Comma << Expr )
-   SourceParser& sp = static_cast<SourceParser&>(p);
-
-   TokenInstance* tlist = p.getNextToken();
-   p.getNextToken();
-   TokenInstance* texpr = p.getNextToken();
-
    Expression* expr = static_cast<Expression*>(texpr->detachValue());
-   List* list = static_cast<List*>(tlist->detachValue());
-   list->push_back(expr);
-
-   TokenInstance* ti_list = TokenInstance::alloc(tlist->line(), tlist->chr(), sp.NeListExpr );
-   ti_list->setValue( list, list_deletor );
-   p.simplify(3,ti_list);
-
-}
-
-void apply_NeListExpr_first( const Rule&, Parser& p )
-{
-   // << (r_ListExpr_next << "ListExpr_next" << apply_ListExpr_next << Expr )
-   SourceParser& sp = static_cast<SourceParser&>(p);
-   //TODO: Get current lexer char/line
-   TokenInstance* texpr = p.getNextToken();
-
-   Expression* expr = static_cast<Expression*>(texpr->detachValue());;
 
    List* list = new List;
    list->push_back(expr);
 
-   TokenInstance* ti_list = TokenInstance::alloc(texpr->line(), texpr->chr(), sp.NeListExpr );
-   ti_list->setValue( list, list_deletor );
-
    // Change the expression in a list
-   p.simplify( 1, ti_list );
+   texpr->token(sp.ListExpr);
+   texpr->setValue( list, list_deletor );
 }
-
 
 void apply_ListExpr_empty( const Rule&, Parser& p )
 {
@@ -139,6 +114,39 @@ void apply_ListExpr_empty( const Rule&, Parser& p )
    p.simplify( 0, ti_list );
 }
 
+void apply_NeListExpr_next( const Rule&, Parser& p )
+{
+   // << (r_ListExpr_next << "ListExpr_next" << apply_ListExpr_next << ListExpr << T_Comma << Expr )
+   SourceParser& sp = static_cast<SourceParser&>(p);
+
+   TokenInstance* tlist = p.getNextToken();
+   p.getNextToken();
+   TokenInstance* texpr = p.getNextToken();
+
+   Expression* expr = static_cast<Expression*>(texpr->detachValue());
+   List* list = static_cast<List*>(tlist->asData());
+   list->push_back(expr);
+   tlist->token( sp.NeListExpr );
+   p.trimFromBase(1,2);
+}
+
+void apply_NeListExpr_first( const Rule&, Parser& p )
+{
+   // << (r_ListExpr_next << "ListExpr_next" << apply_ListExpr_next << Expr )
+   SourceParser& sp = static_cast<SourceParser&>(p);
+   //TODO: Get current lexer char/line
+   TokenInstance* texpr = p.getNextToken();
+
+   Expression* expr = static_cast<Expression*>(texpr->detachValue());;
+
+   List* list = new List;
+   list->push_back(expr);
+
+   // Change the expression in a list
+   texpr->token( sp.NeListExpr );
+   texpr->setValue( list, list_deletor );
+}
+
 
 void apply_NeListExpr_ungreed_next( const Rule&, Parser& p )
 {
@@ -150,13 +158,11 @@ void apply_NeListExpr_ungreed_next( const Rule&, Parser& p )
    TokenInstance* texpr = p.getNextToken();
 
    Expression* expr = static_cast<Expression*>(texpr->detachValue());
-   List* list = static_cast<List*>(tlist->detachValue());
+   List* list = static_cast<List*>(tlist->asData());
    list->push_back(expr);
-
-   TokenInstance* ti_list = TokenInstance::alloc(tlist->line(), tlist->chr(), sp.NeListExpr_ungreed );
-   ti_list->setValue( list, list_deletor );
-   p.simplify(3,ti_list);
-
+   // we must create a new token as the expression is ungreedy and we have more things in the stack.
+   tlist->token( sp.NeListExpr_ungreed);
+   p.trimFromBase(1,2);
 }
 
 
@@ -172,11 +178,9 @@ void apply_NeListExpr_ungreed_first( const Rule&, Parser& p )
    List* list = new List;
    list->push_back(expr);
 
-   TokenInstance* ti_list = TokenInstance::alloc(texpr->line(), texpr->chr(), sp.NeListExpr_ungreed );
-   ti_list->setValue( list, list_deletor );
-
    // Change the expression in a list
-   p.simplify( 1, ti_list );
+   texpr->token( sp.NeListExpr_ungreed );
+   texpr->setValue( list, list_deletor );
 }
 
 
@@ -186,13 +190,11 @@ void apply_ListSymbol_first(const Rule&,Parser& p)
    SourceParser& sp = static_cast<SourceParser&>(p);
    TokenInstance* tname = p.getNextToken();
 
-   TokenInstance* ti_list = TokenInstance::alloc(tname->line(), tname->chr(), sp.ListSymbol);
-
+   // change the symbol in list
    NameList* list = new NameList;
    list->push_back(*tname->asString());
-   ti_list->setValue( list, name_list_deletor );
-
-   p.simplify( 1, ti_list );
+   tname->token(sp.ListSymbol);
+   tname->setValue( list, name_list_deletor );
 }
 
 
@@ -204,13 +206,18 @@ void apply_ListSymbol_next(const Rule&,Parser& p)
    p.getNextToken();
    TokenInstance* tname = p.getNextToken();
 
-   NameList* list=static_cast<NameList*>(tlist->detachValue());
+   NameList* list=static_cast<NameList*>(tlist->asData());
    list->push_back(*tname->asString());
 
-   TokenInstance* ti_list = TokenInstance::alloc(tlist->line(), tlist->chr(), sp.ListSymbol );
-   ti_list->setValue( list, name_list_deletor );
+   tlist->token(sp.ListSymbol);
+   p.trimFromBase(1,2);
+}
 
-   p.simplify( 3, ti_list );
+void apply_ListSymbol_next2(const Rule&,Parser& p)
+{
+   // << ListSymbol << T_EOL
+   // Just remove the eol
+   p.trim(1);
 }
 
 
@@ -236,13 +243,10 @@ void apply_NeListSymbol_first(const Rule&, Parser& p)
    SourceParser& sp = static_cast<SourceParser&>(p);
    TokenInstance* tname = p.getNextToken();
 
-   TokenInstance* ti_list = TokenInstance::alloc(tname->line(), tname->chr(), sp.NeListSymbol);
-
    NameList* list = new NameList;
    list->push_back(*tname->asString());
-   ti_list->setValue( list, name_list_deletor );
-
-   p.simplify( 1, ti_list );
+   tname->token( sp.NeListSymbol);
+   tname->setValue( list, name_list_deletor );
 }
 
 
@@ -254,13 +258,11 @@ void apply_NeListSymbol_next(const Rule&, Parser& p)
    p.getNextToken();
    TokenInstance* tname = p.getNextToken();
 
-   NameList* list=static_cast<NameList*>(tlist->detachValue());
+   NameList* list=static_cast<NameList*>(tlist->asData());
    list->push_back(*tname->asString());
+   tlist->token(sp.NeListSymbol);
 
-   TokenInstance* ti_list = TokenInstance::alloc(tlist->line(), tlist->chr(), sp.NeListSymbol );
-   ti_list->setValue( list, name_list_deletor );
-
-   p.simplify( 3, ti_list );
+   p.trimFromBase(1,2);
 }
 
 }
