@@ -47,6 +47,10 @@ public:
    
    virtual void describeTo( String& target, int depth=0 ) const;
       
+   virtual int32 arity() const;
+   virtual TreeStep* nth( int32 n ) const;
+   virtual bool setNth( int32 n, TreeStep* ts );
+
 private:
    Expression* m_estart;
    Expression* m_eend;
