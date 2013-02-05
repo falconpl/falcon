@@ -134,8 +134,6 @@ void Function_include::invoke( VMContext* ctx , int32 /* paramCount */)
 
 void Function_include::PStepModLoaded::apply_(const PStep* pstep, VMContext* ctx )
 {
-   static const PStep* popStep = & Engine::instance()->stdSteps()->m_pop;
-
    // We're in a PStep of our function...
    const Function_include::PStepModLoaded* self = static_cast<const Function_include::PStepModLoaded*>(pstep);
    // ... to get our function back, we need the the pstep.
@@ -143,10 +141,10 @@ void Function_include::PStepModLoaded::apply_(const PStep* pstep, VMContext* ctx
 
    // Ok, we have this local structure:
    // local(0) --> childMS
-   // local(1) --> the loaded module
+   // local(1) --> the loaded module, put there by childMS->loadModuleInContext
    // Parameters are still where we left them.
    Item* i_syms = ctx->param(3);
-   Item* i_module = &ctx->topData(); // we know local(1) is the topmost
+   Item* i_module = ctx->local(1);
 
    // check that the data type of the item is REALLY what we want.
    // (at least as a debug assert)
@@ -178,9 +176,6 @@ void Function_include::PStepModLoaded::apply_(const PStep* pstep, VMContext* ctx
          if( theMain != 0 )
          {
             // great, let's call it;
-            //but first, push a code to remove the return value.
-            ctx->pushCode( popStep );
-
             ctx->call(theMain);
             // we're ready to be called back, with seqId == 1, when done.
             return;
