@@ -405,9 +405,32 @@ void Parser::trimFromCurrentToken()
    }
 }
 
+void Parser::trimFromBase(unsigned int base, unsigned int count)
+{
+   if ( base+count > _p->m_tokenStack->size() )
+   {
+      if( base >= _p->m_tokenStack->size() )
+      {
+         return;
+      }
+
+      count = _p->m_tokenStack->size()-base;
+   }
+
+   int nDepth = _p->m_pframes->empty() ? 0 : _p->m_pframes->back().m_nStackDepth;
+
+   size_t end = nDepth + count + base;
+   for( size_t pos = nDepth+base; pos < end; ++pos )
+   {
+      (*_p->m_tokenStack)[pos]->dispose();
+   }
+
+   _p->m_tokenStack->erase( _p->m_tokenStack->begin() + nDepth+base, _p->m_tokenStack->begin() + end );
+}
+
 void Parser::trim( unsigned int count )
 {
-   if ( count >  _p->m_tokenStack->size() )
+   if ( count > _p->m_tokenStack->size() )
    {
       count = _p->m_tokenStack->size();
    }

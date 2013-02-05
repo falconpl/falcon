@@ -70,7 +70,7 @@ void IntMode::run()
 
    // Start the process.
    PStepCompile psc;
-   vm.stdIn()->setNonblocking(true);
+
    psc.setCompilerContext(mainfunc, mod, vm.textIn(), vm.textOut() );
    mainfunc->syntree().append( new StmtReturn );
    Process* process = vm.createProcess();

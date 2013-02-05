@@ -37,11 +37,14 @@ public:
    virtual ~FAMLoader();
    
    /** Loads a pre-compiled module from a data stream. 
-    \param r The reader where the binary module is stored.
+    \param input The reader where the binary module is stored.
     \param uri The URI where the module is being read from.
     \param local_name The name under which the module is internally known.
+
+    \note The stream \b input is sent to the garbage collector. The ownership passes
+    to the Falcon virtual machine.
     */
-   void load( VMContext* ctx, Stream* r, const String& uri, const String& local_name );
+   void load( VMContext* ctx, Stream* input, const String& uri, const String& local_name );
 
    /** Module space bound with this fam loader. */
    ModSpace* modSpace() const { return m_modSpace; }

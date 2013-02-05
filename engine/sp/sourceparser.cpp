@@ -317,13 +317,14 @@ SourceParser::SourceParser():
    S_MultiAssign << "MultiAssign"
       << (r_Stmt_assign_list << "STMT_assign_list" << apply_stmt_assign_list << NeListExpr_ungreed << T_EqSign << NeListExpr )
       ;
-   
+
    S_FastPrint << "FastPrint";
+   S_FastPrint << PrintExpr_errhand;
    S_FastPrint << ( r_fastprint_alone << "fastprint alone rule" << apply_fastprint_alone << T_RShift << T_EOL );
    S_FastPrint << ( r_fastprint << "fastprint rule" << apply_fastprint << T_RShift << ListExpr << T_EOL );
    S_FastPrint << ( r_fastprint_nl_alone << "fastprint+nl alone" << apply_fastprint_nl_alone << T_Greater << T_EOL );
    S_FastPrint << ( r_fastprint_nl << "fastprint+nl" << apply_fastprint_nl << T_Greater << ListExpr << T_EOL );
-   
+
    S_Load << "load" << load_errhand;
    S_Load << (r_load_string << "load_string" << apply_load_string << T_load << T_String << T_EOL );
    S_Load << (r_load_mod_spec << "load_mod_spec" << apply_load_mod_spec << T_load << ModSpec << T_EOL );
@@ -557,6 +558,10 @@ SourceParser::SourceParser():
 
    ListExpr << "ListExpr";
    ListExpr << ListExpr_errhand;
+
+   ListExpr<< (r_ListExpr_eol << "ListExpr_eol" << apply_dummy << T_EOL );
+   ListExpr<< (r_ListExpr_nextd << "ListExpr_nextd" << apply_ListExpr_next2 << ListExpr << T_EOL );
+
    ListExpr<< (r_ListExpr_next << "ListExpr_next" << apply_ListExpr_next << ListExpr << T_Comma << Expr );
    ListExpr<< (r_ListExpr_first << "ListExpr_first" << apply_ListExpr_first << Expr );
    ListExpr<< (r_ListExpr_empty << "ListExpr_empty" << apply_ListExpr_empty );
@@ -590,6 +595,9 @@ SourceParser::SourceParser():
    r_NeListExpr_ungreed_next.setGreedy(false);
 
    ListSymbol << "ListSymbol";
+   ListSymbol<< (r_ListSymbol_eol << "ListSymbol_eol" << apply_dummy << T_EOL );
+   ListSymbol<< (r_ListSymbol_nextd << "ListSymbol_nextd" << apply_ListSymbol_next2 << ListSymbol << T_EOL );
+
    ListSymbol<< (r_ListSymbol_next << "ListSymbol_next" << apply_ListSymbol_next << ListSymbol << T_Comma << T_Name );
    ListSymbol<< (r_ListSymbol_first << "ListSymbol_first" << apply_ListSymbol_first << T_Name );
    ListSymbol<< (r_ListSymbol_empty << "ListSymbol_empty" << apply_ListSymbol_empty );

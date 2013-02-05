@@ -27,6 +27,7 @@ class FALCON_DYN_CLASS ExprEvalRetExec: public UnaryExpression
 {
 public:
    FALCON_UNARY_EXPRESSION_CLASS_DECLARATOR( ExprEvalRetExec, expr_evalretexec );
+   virtual bool isStandAlone() const { return true; }
 };
 
 }

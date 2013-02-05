@@ -183,6 +183,7 @@ FAL_ERRORDECL( e_determ_decl, 175, "Determinism status already specified" );
 FAL_ERRORDECL( e_dict_key, 176, "The given item cannot be used as a key for a dictionary" );
 FAL_ERRORDECL( e_dict_acc, 177, "Key not found in dictionary" );
 FAL_ERRORDECL( e_unquote_out, 178, "Unquote out of literal context" );
+FAL_ERRORDECL( e_syn_list_decl, 179, "Syntax error in expression list" );
 
 FAL_ERRORDECL( e_catch_clash, 180, "Duplicate type identifier in catch selector" );
 FAL_ERRORDECL( e_catch_adef, 181, "Default catch block already defined" );

@@ -29,8 +29,10 @@ class Parser;
 using namespace Parsing;
 
 bool ListExpr_errhand(const NonTerminal&, Parser& p);
+bool PrintExpr_errhand(const NonTerminal&, Parser& p);
 
 void apply_ListExpr_next( const Rule&, Parser& p );
+void apply_ListExpr_next2( const Rule&, Parser& p );
 void apply_ListExpr_first( const Rule&, Parser& p );
 void apply_ListExpr_empty( const Rule&, Parser& p );
 
@@ -64,6 +66,7 @@ void apply_SeqExprOrPairs_empty( const Rule&, Parser& p );
 
 void apply_ListSymbol_first(const Rule&,Parser& p);
 void apply_ListSymbol_next(const Rule&,Parser& p);
+void apply_ListSymbol_next2(const Rule&,Parser& p);
 void apply_ListSymbol_empty(const Rule&,Parser& p);
 
 void apply_NeListSymbol_first(const Rule&, Parser& p);

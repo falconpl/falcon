@@ -257,6 +257,11 @@ public:
    Parsing::Rule r_fastprint_nl_alone;
    Parsing::Rule r_fastprint_nl;
    
+   Parsing::NonTerminal PrintExpr;
+   Parsing::Rule r_PrintExpr_next;
+   Parsing::Rule r_PrintExpr_first;
+   Parsing::Rule r_PrintExpr_empty;
+
    //================================================
    // Load, import and export
    //
@@ -493,7 +498,9 @@ public:
    //
    Parsing::NonTerminal ListExpr;
    Parsing::Rule r_ListExpr_next;
+   Parsing::Rule r_ListExpr_nextd;
    Parsing::Rule r_ListExpr_first;
+   Parsing::Rule r_ListExpr_eol;
    Parsing::Rule r_ListExpr_empty;
    
    Parsing::NonTerminal CaseListRange;
@@ -527,6 +534,8 @@ public:
    //
 
    Parsing::NonTerminal ListSymbol;
+   Parsing::Rule r_ListSymbol_eol;
+   Parsing::Rule r_ListSymbol_nextd;
    Parsing::Rule r_ListSymbol_next;
    Parsing::Rule r_ListSymbol_first;
    Parsing::Rule r_ListSymbol_empty;

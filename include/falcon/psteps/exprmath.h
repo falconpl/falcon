@@ -88,6 +88,7 @@ class FALCON_DYN_CLASS ExprAuto: public ExprMath
 public:   
    inline virtual ~ExprAuto() {}
    virtual bool simplify( Item& ) const { return false; }
+   virtual bool isStandAlone() const { return true; }
    
 protected:
    ExprAuto( Expression* op1, Expression* op2, const String& name, int line = 0, int chr = 0 );

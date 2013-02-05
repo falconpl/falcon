@@ -338,6 +338,11 @@ public:
     */
    void trimFromCurrentToken();
 
+   /** Keeps the first base tokens, and discard the next count tokens.
+
+    */
+   void trimFromBase(unsigned int base, unsigned int count);
+
    /** Trims the topmost (last) n parsed stack elements away.
     \param count Count of element to remove from the top (latest) parsed stack elements.
     */

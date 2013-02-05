@@ -58,7 +58,6 @@ private:
    // we're in outscape area.
    bool m_outscape;
    bool m_bParsingFtd;
-   bool m_eatEOL;
 
    typedef enum
    {
