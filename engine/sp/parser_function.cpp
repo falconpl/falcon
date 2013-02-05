@@ -247,7 +247,7 @@ static void internal_expr_func(const Rule&, Parser& p, bool isEta )
    TokenInstance* ti= TokenInstance::alloc(tf->line(),tf->chr(), sp.Expr);
 
    // give the context the occasion to say something about this item
-   Expression* expr= new ExprValue( FALCON_GC_STORE( fcls, func ), tf->line(),tf->chr() );
+   Expression* expr= new ExprValue( Item( fcls, func ), tf->line(),tf->chr() );
    ti->setValue(expr,expr_deletor);
 
    // remove this stuff from the stack
@@ -399,7 +399,7 @@ static void internal_lambda_params(const Rule&, Parser& p, bool isEta )
    }
 
    TokenInstance* ti = TokenInstance::alloc(tarr->line(),tarr->chr(), sp.Expr);
-   Expression* expr = new ExprValue( FALCON_GC_STORE( func->handler(), func ), tarr->line(),tarr->chr() );
+   Expression* expr = new ExprValue( func, tarr->line(),tarr->chr() );
    ti->setValue(expr,expr_deletor);
 
    // remove this stuff from the stack

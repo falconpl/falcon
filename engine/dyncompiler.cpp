@@ -46,8 +46,9 @@ public:
 
    virtual void onInputOver() {}
 
-   virtual Variable* onOpenFunc( Function* ) {
+   virtual Variable* onOpenFunc( Function* func ) {
       static Variable var(Variable::e_nt_undefined, Variable::undef, 0, true);
+      FALCON_GC_HANDLE( func );
       return &var;
    }
 
@@ -55,8 +56,10 @@ public:
       if( f->name() == "") f->name("$anon");
    }
 
-   virtual Variable* onOpenClass( Class*, bool isObj ) {
+   virtual Variable* onOpenClass( Class* cls, bool isObj ) {
       static Variable var(Variable::e_nt_undefined, Variable::undef, 0, true);
+      FALCON_GC_HANDLE( cls );
+
       if( isObj ) {
          m_sp.addError( e_toplevel_obj, m_sp.currentSource(), m_sp.currentLine()-1, 0, 0 );
       }

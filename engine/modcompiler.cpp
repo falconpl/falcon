@@ -98,14 +98,9 @@ Variable* ModCompiler::Context::onOpenFunc( Function* function )
 void ModCompiler::Context::onCloseFunc( Function* f )
 {
    if( f->name().size() == 0 ) {
-      /*
       Module* mod = m_owner->m_module;
       mod->addAnonMantra( f );
-      */
-      f->name("_anonymous");
    }
-   // set the module even if we don't add them to the module as mantras.
-   f->module( m_owner->m_module );
 }
 
 
@@ -160,12 +155,8 @@ bool ModCompiler::Context::onAttribute(const String& name, TreeStep* generator, 
 void ModCompiler::Context::onCloseClass( Class* cls, bool )
 {
    if( cls->name().size() == 0 ) {
-      /*
       Module* mod = m_owner->m_module;
       mod->addAnonMantra( cls );
-      */
-      cls->name("_anonymous");
-      cls->module( m_owner->m_module );
    }
 }
 
@@ -178,8 +169,16 @@ void ModCompiler::Context::onNewStatement( TreeStep* ts )
       Expression* expr = static_cast<Expression*>(ts);
       if( ! expr->isStandAlone() )
       {
-         SourceParser& sp = m_owner->m_sp;
-         sp.addError( e_noeffect, sp.currentSource(), ts->line(), ts->chr(), 0 );
+         // are we in a lambda?
+         ParserContext* pc =  static_cast<ParserContext*>(m_owner->m_sp.context());
+         if(pc->currentFunc() != 0 && pc->currentFunc()->name().size() == 0 )
+         {
+            // it's ok
+         }
+         else {
+            SourceParser& sp = m_owner->m_sp;
+            sp.addError( e_noeffect, sp.currentSource(), ts->line(), ts->chr(), 0 );
+         }
       }
    }
 }
