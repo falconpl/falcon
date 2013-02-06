@@ -487,7 +487,7 @@ class RE2 {
   // fail because of a bad rewrite string.
   bool CheckRewriteString(const StringPiece& rewrite, string* error) const;
 
-  void gcMark( uint mark ) { m_falconGCMark = mark; }
+  void gcMark( Falcon::uint32 mark ) { m_falconGCMark = mark; }
   Falcon::uint32 currentMark() const { return m_falconGCMark; }
 
   // Constructor options
