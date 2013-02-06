@@ -157,6 +157,7 @@ public:
    Parsing::Terminal T_case;
    Parsing::Terminal T_default;
    Parsing::Terminal T_select;
+   Parsing::Terminal T_loop;
    
    Parsing::Terminal T_RString;
    Parsing::Terminal T_IString;
@@ -331,6 +332,10 @@ public:
    Parsing::Rule r_NameSpaceSpec_next;
    Parsing::Rule r_NameSpaceSpec_first;
    
+   Parsing::NonTerminal S_Loop;
+   Parsing::Rule r_loop_short;
+   Parsing::Rule r_loop;
+
    Parsing::NonTerminal S_Namespace;
    Parsing::Rule r_NameSpace;
    

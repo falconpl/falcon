@@ -210,6 +210,7 @@ FALCON_SYNCLASS_DECLARATOR_EX(m_stmt_forto, ForTo, stmt, \
       virtual void unflatten( VMContext* ctx, ItemArray& subItems, void* instance ) const; )
 
 FALCON_SYNCLASS_DECLARATOR(m_stmt_if, If, stmt)
+FALCON_SYNCLASS_DECLARATOR(m_stmt_loop, Loop, stmt)
 FALCON_SYNCLASS_DECLARATOR(m_stmt_raise, Raise, stmt)
 FALCON_SYNCLASS_DECLARATOR_EX(m_stmt_global, Global, stmt, \
          virtual void store( VMContext*, DataWriter* dw, void* instance ) const; \

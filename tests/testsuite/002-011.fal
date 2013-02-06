@@ -1,0 +1,36 @@
+/*
+@name Statement while -- Loop with break
+
+@output   
+Test loop with end expression
+Looping: 0
+Looping: 1
+Looping: 2
+Looping: 3
+Looping: 4
+Done
+@endoutput
+
+*/
+
+x = VMContext()
+dd = x.dataDepth
+cd = x.codeDepth
+
+> "Test loop with end expression"
+a = 0
+loop
+   > "Looping: ", a++
+end a >= 5
+
+dd1 = x.dataDepth
+if dd1 != dd
+   raise "Data stack corruption at the end of loop " + dd1 + " was " + dd
+end
+
+cd1 = x.codeDepth
+if cd != cd1
+   raise "Code stack corruption at the end of loop "  + cd1 + " was " + cd
+end
+
+> "Done"

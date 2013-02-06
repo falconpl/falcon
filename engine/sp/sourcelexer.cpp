@@ -1188,10 +1188,9 @@ Parsing::TokenInstance* SourceLexer::checkWord()
          if ( m_text == "from" ) return parser->T_from.makeInstance(m_sline, m_schr);
          if ( m_text == "load" ) return parser->T_load.makeInstance(m_sline, m_schr);
          if ( m_text == "case" ) return parser->T_case.makeInstance(m_sline, m_schr);
+         if ( m_text == "loop" ) return parser->T_loop.makeInstance(m_sline, m_schr);
          
          /*
-         if ( m_text == "loop" )
-            return LOOP;
          if ( m_text == "enum" )
             return ENUM;
           */

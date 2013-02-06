@@ -74,6 +74,7 @@
 #include <falcon/psteps/stmtfor.h>
 #include <falcon/psteps/stmtglobal.h>
 #include <falcon/psteps/stmtif.h>
+#include <falcon/psteps/stmtloop.h>
 #include <falcon/psteps/stmtraise.h>
 #include <falcon/psteps/stmtreturn.h>
 #include <falcon/psteps/stmtrule.h>
@@ -1220,6 +1221,7 @@ FALCON_STANDARD_SYNCLASS_OP_CREATE_EX( FastPrint, StmtFastPrint, varExprInsert )
 FALCON_STANDARD_SYNCLASS_OP_CREATE_EX( ForIn, StmtForIn, zeroaryExprSet ) //
 FALCON_STANDARD_SYNCLASS_OP_CREATE( ForTo, StmtForTo, zeroaryExprSet ) //
 FALCON_STANDARD_SYNCLASS_OP_CREATE( If, StmtIf, zeroaryExprSet )   //
+FALCON_STANDARD_SYNCLASS_OP_CREATE( Loop, StmtLoop, zeroaryExprSet ) //
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Raise, StmtRaise, unaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE_EX( Return, StmtReturn, unaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Rule, StmtRule, zeroaryExprSet ) //

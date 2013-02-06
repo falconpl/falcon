@@ -49,6 +49,7 @@
 #include <falcon/sp/parser_ternaryif.h>
 #include <falcon/sp/parser_try.h>
 #include <falcon/sp/parser_while.h>
+#include <falcon/sp/parser_loop.h>
 
 #include <falcon/parser/rule.h>
 #include <falcon/parser/lexer.h>
@@ -197,6 +198,7 @@ SourceParser::SourceParser():
    T_case("case"),
    T_default("default"),
    T_select("select"),
+   T_loop("loop"),
 
    T_RString("R-String"),
    T_IString("I-String"),
@@ -228,6 +230,10 @@ SourceParser::SourceParser():
       << (r_while << "while" << apply_while << T_while << Expr << T_EOL )
       ;
    
+   S_Loop << "LOOP" << loop_errhand;
+   S_Loop << ( r_loop_short << "loop short" << apply_loop_short << T_loop << T_Colon );
+   S_Loop << ( r_loop << "loop" << apply_loop << T_loop << T_EOL );
+
    S_For << "FOR" << for_errhand;
    S_For << (r_for_to_step << "FOR/to/step" << apply_for_to_step
             << T_for << T_Name << T_EqSign << Expr << T_to << Expr << T_Comma << Expr << T_EOL )
@@ -731,6 +737,7 @@ SourceParser::SourceParser():
       << S_Elif
       << S_Else
       << S_While
+      << S_Loop
       << S_Continue
       << S_Break
       << S_For
@@ -773,6 +780,7 @@ SourceParser::SourceParser():
       << S_Elif
       << S_Else
       << S_While
+      << S_Loop
       << S_Continue
       << S_Break
       << S_For

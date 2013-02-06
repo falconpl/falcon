@@ -14,7 +14,7 @@
 */
 
 #undef SRC
-#define SRC "engine/sp/parsercontext.cpp"
+#define SRC "engine/sp/parser_while.cpp"
 
 #include <falcon/setup.h>
 #include <falcon/trace.h>
@@ -66,7 +66,7 @@ bool while_errhand(const NonTerminal&, Parser& p)
    return true;
 }
 
-void apply_while_short( const Rule&, Parser& p )
+static void apply_while_internal( Parser& p, bool autoClose )
 {
    // << (r_while_short << "while_short" << apply_while_short << T_while << Expr << T_Colon
 
@@ -79,33 +79,22 @@ void apply_while_short( const Rule&, Parser& p )
 
    SynTree* whsyn = new SynTree;
 
-   StmtWhile* stmt_wh = new StmtWhile(expr, whsyn);
+   StmtWhile* stmt_wh = new StmtWhile(expr, whsyn, twhile->line(), twhile->chr());
    stmt_wh->decl( twhile->line(), twhile->chr() );
-   st->openBlock( stmt_wh, whsyn, true );
+   st->openBlock( stmt_wh, whsyn, autoClose );
    
    // clear the stack
    p.simplify(3);
 }
 
+void apply_while_short( const Rule&, Parser& p )
+{
+   apply_while_internal(p, true);
+}
 
 void apply_while( const Rule&, Parser& p )
 {
-   // << (r_while << "while" << apply_while << T_while << Expr << T_EOL )
-   TokenInstance* twhile = p.getNextToken();
-   TokenInstance* texpr = p.getNextToken();
-   p.getNextToken();
-
-   Expression* expr = static_cast<Expression*>(texpr->detachValue());
-   ParserContext* st = static_cast<ParserContext*>(p.context());
-
-   SynTree* whsyn = new SynTree;
-   st->accessSymbols( expr );
-   StmtWhile* stmt_while = new StmtWhile(expr, whsyn );
-   stmt_while->decl( twhile->line(), twhile->chr() );
-   st->openBlock( stmt_while, whsyn );
-
-   // clear the stack
-   p.simplify(3);
+   apply_while_internal(p, false);
 }
 
 void apply_continue( const Rule&, Parser& p )

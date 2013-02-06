@@ -59,7 +59,8 @@ public:
 
    /** We can remove a bit of stuff. */
    virtual void minimize();
-private:   
+
+protected:
    TreeStep* m_child;
    Expression* m_expr;
 };

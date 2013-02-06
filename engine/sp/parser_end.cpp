@@ -87,16 +87,28 @@ void apply_end_rich( const Rule&, Parser& p )
    ParserContext* st = static_cast<ParserContext*>(p.context());
 
    // TODO: Actually, it's used for the Loop statement.
-   if(!st->currentStmt() && !st->currentFunc() && !st->currentClass())
+   if( !st->currentStmt() )
    {
+      delete expr;
       p.addError( e_syn_end, p.currentSource(), tend->line(), tend->chr() );
    }
    else
    {
-      delete expr; // todo; actually put in loop
+      Statement* statement = st->currentStmt();
+      if( ! statement->selector( expr ) )
+      {
+         delete expr;
+         p.addError( e_syn_end, p.currentSource(), tend->line(), tend->chr() );
+      }
       st->closeContext();
    }
 
+   SourceParser* sp = static_cast<SourceParser*>( &p);
+   if( ! sp->interactive() && ( st->currentStmt() || st->currentFunc() || st->currentClass() ))
+   {
+      // close the current context even in case of error.
+      st->closeContext();
+   }
    // clear the stack
    p.simplify(3);
 }

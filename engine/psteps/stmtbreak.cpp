@@ -50,10 +50,10 @@ void StmtBreak::oneLinerTo( String& tgt ) const
 
 void StmtBreak::apply_( const PStep*, VMContext* ctx )
 {
-   ctx->unrollToLoopBase(); // which will pop us as well.
-   Item b;
-   b.setBreak();
-   ctx->pushData( b );
+   // this will throw if not found
+   ctx->unrollToLoopBase();
+   ctx->popCode(); // remove our loop base.
+   ctx->pushData(Item()); // generate a value for the whole operation.
 }
 
 }

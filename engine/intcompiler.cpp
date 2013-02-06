@@ -313,7 +313,6 @@ IntCompiler::IntCompiler( bool allowDirective ):
 
 IntCompiler::~IntCompiler()
 {
-   delete m_ctx;
    delete m_currentTree;
 }
 

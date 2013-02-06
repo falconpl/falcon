@@ -52,6 +52,7 @@ void StmtContinue::oneLinerTo( String& tgt ) const
 void StmtContinue::apply_( const PStep*, VMContext* ctx )
 {
    ctx->unrollToNextBase(); // that will pop me as well.
+   ctx->pushData(Item()); // push a data as statement result
 }
 
 }

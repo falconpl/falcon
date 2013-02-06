@@ -36,6 +36,7 @@ StmtWhile::StmtWhile(int32 line, int32 chr ):
    
    apply = apply_;
    m_bIsLoopBase = true;
+   m_bIsNextBase = true;
 }
 
 StmtWhile::StmtWhile( Expression* expr, TreeStep* stmts, int32 line, int32 chr ):
@@ -50,6 +51,7 @@ StmtWhile::StmtWhile( Expression* expr, TreeStep* stmts, int32 line, int32 chr )
    
    apply = apply_;
    m_bIsLoopBase = true;
+   m_bIsNextBase = true;
 }
 
 
@@ -63,6 +65,7 @@ StmtWhile::StmtWhile( Expression* expr, int32 line, int32 chr ):
    expr->setParent(this);
    apply = apply_;
    m_bIsLoopBase = true;
+   m_bIsNextBase = true;
 }
 
 
@@ -74,6 +77,7 @@ StmtWhile::StmtWhile( const StmtWhile& other ):
 {
    apply = apply_;
    m_bIsLoopBase = true;
+   m_bIsNextBase = true;
    
    if( other.m_child )
    {
@@ -160,10 +164,11 @@ TreeStep* StmtWhile::nth( int n ) const
 
 bool StmtWhile::setNth( int n, TreeStep* st )
 {
-   if( st == 0 || st->parent() != 0 || (n != 0 && n != -1) ) return false;
+   if( st == 0 || (n != 0 && n != -1) || ! st->setParent(this)  ) return false;
 
    delete m_child;
    m_child = st;
+
    return true;
 }
 
