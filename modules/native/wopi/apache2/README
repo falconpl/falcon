@@ -103,5 +103,11 @@ This may not fit your needs but it is a simple starting point.
  |                                                                       |
  +-----------------------------------------------------------------------+
 
+ 
+LICENSE
+=======
 
+The Falcon Programming Language WOPI module for the Apache web server is
+released under Apache 2.0 License. The text of the license is included
+in this distrubtion.
 
