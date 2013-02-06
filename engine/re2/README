@@ -1,3 +1,23 @@
+This is a modification of the RE2 library modified to work as
+an embedded component of the Falcon Programming Language.
+
+Files that are not necessary for a dry build and functions that
+are not necessary for the integration in the language mechanics
+have been removed.
+
+Other modifications have been performed to make the library
+understand the native Falcon::String data type.
+
+The original RE2 library is distributed under a BSD-style license.
+
+Original boiler plates, LICENSE and copyright related files are
+preserved.
+
+Here follows the contents of the original README file:
+
+=========================================================================
+
+
 This is the source code repository for RE2, a regular expression library.
 
 For documentation about how to install and use RE2,
