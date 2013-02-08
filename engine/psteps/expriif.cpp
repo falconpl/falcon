@@ -96,6 +96,12 @@ void ExprIIF::apply_( const PStep* ps, VMContext* ctx )
 
 void ExprIIF::describeTo( String& str, int depth ) const
 {
+   if( m_first == 0 || m_second == 0 || m_third == 0 )
+   {
+      str = "<Blank ExprIIF>";
+      return;
+   }
+
    str = "( " + m_first->describe(depth+1) + " ? " 
             + m_second->describe(depth+1) + " : " 
             + m_third->describe(depth+1) + " )";

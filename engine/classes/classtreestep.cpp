@@ -272,7 +272,7 @@ void ClassTreeStep::restore( VMContext* ctx, DataReader*dr ) const
 {
    fassert( ctx->topData().asClass()->isDerivedFrom( this ) ) ;
    TreeStep* ts = static_cast<TreeStep*>( ctx->topData().asInst() );
-   TRACE2("ClassTreeStep::restore %s", ts->describe(0).c_ize());
+   TRACE2("ClassTreeStep::restore instance of %s", ts->handler()->name().c_ize() );
 
    int32 line, chr;
    dr->read( line );

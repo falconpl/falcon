@@ -42,7 +42,6 @@ public:
    }
 
 private:
-   mutable int m_falseSeqId;
 
    class FALCON_DYN_CLASS Gate: public PStep {
    public:
