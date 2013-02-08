@@ -76,7 +76,7 @@ void TestMode::perform()
       while(dir->read(name))
       {
          // Check format "NNN-NNN.fal"
-         if( name.size() == 11 && name.subString(7,11) == ".fal")
+         if( name.length() == 11 && name.subString(7,11) == ".fal")
          {
             for( int i = 0; i < 7; ++i )
             {
