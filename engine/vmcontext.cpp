@@ -736,6 +736,7 @@ VMContext::t_unrollResult VMContext::unrollToNext( const _checker& check )
       // did we cross one (or more) finally handlers in the current call frame?
       if ( static_cast<uint32>( curCode - m_codeStack.m_base ) < m_finallyStack.m_top->m_depth )
       {
+         check.onCrossFinally(this);
          // set the call frame.
          m_callStack.m_top = curFrame;
 
@@ -780,6 +781,9 @@ public:
 
    inline bool dontCrossFrame() const { return true; }
 
+   inline void onCrossFinally( VMContext* ) const {}
+
+
    inline void handleFinally( VMContext* ctx, const TreeStep* handler ) const
    {
       static PStep* ps = &Engine::instance()->stdSteps()->m_unrollToNext;
@@ -798,6 +802,8 @@ public:
    }
 
    inline bool dontCrossFrame() const { return true; }
+
+   inline void onCrossFinally( VMContext* ) const {}
 
    inline void handleFinally( VMContext* ctx, const TreeStep* handler ) const
    {
@@ -828,6 +834,9 @@ public:
 
       return false;
    }
+
+
+   inline void onCrossFinally( VMContext* ) const {}
 
    inline bool dontCrossFrame() const { return false; }
 
@@ -876,6 +885,14 @@ public:
       }
 
       return false;
+   }
+
+   inline void onCrossFinally( VMContext* ctx ) const
+   {
+      if( ! m_error->hasTraceback() )
+      {
+         ctx->addTrace( m_error );
+      }
    }
 
    inline bool dontCrossFrame() const { return false; }
