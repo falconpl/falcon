@@ -30,6 +30,8 @@
 #include <falcon/errors/genericerror.h>
 #include <falcon/vm.h>
 
+#include <falcon/trace.h>
+
 namespace Falcon {
 
 // we can't have an init fiasco as m_me is used only after starting some processor thread.
@@ -38,6 +40,7 @@ ThreadSpecific Processor::m_me;
 Processor::Processor( int32 id, VMachine* owner ):
       m_id(id),
       m_owner( owner ),
+      m_thread(0),
       m_onTimeSliceExpired( this )
 {
 }
@@ -45,9 +48,14 @@ Processor::Processor( int32 id, VMachine* owner ):
 
 void Processor::start()
 {
-   if( m_thread == 0 ) {
+   if( m_thread == 0 )
+   {
+      TRACE( "Processor::start -- Starting processor thread %d(%p)", id(), this);
       m_thread = new SysThread(this);
       m_thread->start();
+   }
+   else {
+      TRACE( "Processor::start -- Invoking start processor thread %d(%p); but already started.", id(), this);
    }
 }
 
@@ -56,9 +64,13 @@ void Processor::join()
 {
    if( m_thread != 0 )
    {
+      TRACE( "Processor::join -- Joining processor thread %d(%p)", id(), this);
       void* dummy = 0;
       m_thread->join(dummy);
       m_thread = 0;
+   }
+   else {
+      TRACE( "Processor::join -- Joining processor thread %d(%p); but not running", id(), this);
    }
 }
 
@@ -69,6 +81,8 @@ Processor::~Processor()
 
 void Processor::onError( Error* e )
 {
+   TRACE( "Processor::onError -- %s", e->describe().c_ize() );
+
    if( m_currentContext->inGroup() != 0 )
    {
       m_currentContext->inGroup()->setError( e );
@@ -105,7 +119,7 @@ void* Processor::run()
    m_currentContext = 0;
    ContextManager::ReadyContextQueue& rctx = m_owner->contextManager().readyContexts();
 
-   TRACE("Processor %p (id %d) starting", this, this->id() );
+   TRACE("Processor::run --  %d(%p) starting", this->id(), this );
 
    int wasTerminated = 0;
    while( true )
@@ -135,7 +149,7 @@ void Processor::manageEvents( VMContext* ctx, int32 &events )
    }
 
    if( (events & VMContext::evtRaise) ) {
-      TRACE( "Uncaught error raisal in context %d", ctx->id() );
+      TRACE( "Uncaught error raise in context %d", ctx->id() );
       ctx->terminated();
    }
    else if( (events & VMContext::evtComplete) ) {
