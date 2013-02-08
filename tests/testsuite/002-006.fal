@@ -1,5 +1,6 @@
 /*
-@name Statement while -- basic loop
+@name Basic While loop
+@category Loops
 
 @output   
 Test basic while

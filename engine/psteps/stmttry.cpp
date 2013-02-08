@@ -219,14 +219,15 @@ void StmtTry::apply_( const PStep* ps, VMContext* ctx )
 
    // change into finally...
    if( self->m_fbody != 0 ) {
+      ctx->pushCodeWithUnrollPoint( &self->m_finallyStep );
+      // save the finally point
       ctx->registerFinally(self->m_fbody);
-      ctx->pushCode( &self->m_finallyStep );
    }
 
    if( self->m_body != 0 )
    {
       // Push ourselves back, as
-      ctx->pushCode( self );
+      ctx->pushCodeWithUnrollPoint( self );
       ctx->currentCode().m_seqId = 1;
 
       ctx->pushCode( self->m_body );
@@ -239,7 +240,7 @@ void StmtTry::PStepFinally::apply_( const PStep* ps, VMContext* ctx )
    register const StmtTry* stry = static_cast<const StmtTry::PStepFinally*>(ps)->m_owner;
    // pop the topomost finally barrier
    ctx->unregisterFinally();
-   ctx->resetCode( stry->m_fbody );
+   ctx->stepIn( stry->m_fbody );
 }
 
 }

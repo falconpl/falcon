@@ -1,5 +1,6 @@
 /*
-@name Statement while -- Loop with break
+@name Loop with break
+@category Loops
 
 @output   
 Test loop with break

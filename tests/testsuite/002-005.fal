@@ -1,5 +1,6 @@
 /*
-@name Statement for/to -- simple same
+@name Simple for/to loops on same level
+@category Loops
 
 @output   
 Testing basic for i = 5 to 5

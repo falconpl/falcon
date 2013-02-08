@@ -501,6 +501,22 @@ public:
       cf->m_seqId = 0;
    }
 
+   inline void pushCodeWithUnrollPoint( const PStep* step ) {
+      register CodeFrame* cf = m_codeStack.addSlot();
+      cf->m_step = step;
+      cf->m_seqId = 0;
+      cf->m_dataDepth = m_dataStack.depth();
+      cf->m_dynsDepth = m_dynsStack.depth();
+   }
+
+   /** Save the unroll points on this code frame.
+    *
+    */
+   inline void saveUnrollPoint( CodeFrame& cf ) {
+      cf.m_dataDepth = m_dataStack.depth();
+      cf.m_dynsDepth = m_dynsStack.depth();
+   }
+
    /** Push some code to be run in the execution stack, but only if not already at top.
     \param step The step to be pushed.
 

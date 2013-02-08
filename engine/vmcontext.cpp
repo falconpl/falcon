@@ -694,8 +694,6 @@ VMContext::t_unrollResult VMContext::unrollToNext( const _checker& check )
    // first, we must have at least a function around.
    CallFrame* curFrame =  m_callStack.m_top;
    CodeFrame* curCode = m_codeStack.m_top;
-   Item* curData = m_dataStack.m_top;
-   DynsData* curDyns = m_dynsStack.m_top;
 
    while( m_callStack.m_base <= curFrame )
    {
@@ -706,9 +704,12 @@ VMContext::t_unrollResult VMContext::unrollToNext( const _checker& check )
       {
          if( check( *curCode->m_step, this ) )
          {
+            fassert2(curCode->m_dataDepth != 0xFFFFFFFF, "Data unroll uninitialized" );
+            fassert2(curCode->m_dataDepth != 0, "Data unroll uninitialized 2" );
+            fassert2(curCode->m_dynsDepth != 0xFFFFFFFF, "Dynsstack unroll uninitialized" );
             m_codeStack.m_top = curCode;
-            m_dataStack.m_top = curData;
-            m_dynsStack.m_top = curDyns;
+            m_dataStack.unroll(curCode->m_dataDepth);
+            m_dynsStack.unroll(curCode->m_dynsDepth);
             m_callStack.m_top = curFrame;
 
             // did we cross one (or more) finally handlers
@@ -732,23 +733,36 @@ VMContext::t_unrollResult VMContext::unrollToNext( const _checker& check )
          return e_unroll_not_found;
       }
 
-      // did we cross one (or more) finally handlers
+      // did we cross one (or more) finally handlers in the current call frame?
       if ( static_cast<uint32>( curCode - m_codeStack.m_base ) < m_finallyStack.m_top->m_depth )
       {
-         m_codeStack.m_top = curCode;
-         m_dataStack.m_top = curData;
-         m_dynsStack.m_top = curDyns;
+         // set the call frame.
          m_callStack.m_top = curFrame;
 
+         // set the code stack accordingly to the finally step
          const TreeStep* finallyHandler = m_finallyStack.m_top->m_finstep;
+         m_codeStack.unroll( m_finallyStack.m_top->m_depth );
+         CodeFrame* curCode = m_codeStack.m_top;
+
+         fassert2(curCode->m_dataDepth != 0xFFFFFFFF, "Data unroll uninitialized" );
+         fassert2(curCode->m_dataDepth != 0, "Data unroll uninitialized 2" );
+         fassert2(curCode->m_dynsDepth != 0xFFFFFFFF, "Dynsstack unroll uninitialized" );
+
+         // unroll data and dyns frame accordingly
+         m_dataStack.unroll( curCode->m_dataDepth );
+         m_dynsStack.unroll( curCode->m_dynsDepth );
+
+         // remove the finally point...
          m_finallyStack.pop();
+         //... and remove the finally code frame.
+         m_codeStack.pop();
+
+         // this will push the finally handler AND
+         // the action to be done when the handler completes.
          check.handleFinally( this, finallyHandler );
          return e_unroll_suspended;
       }
 
-      // unroll the call --  bases are in length (pos+1)
-      curData = m_dataStack.m_base + curFrame->m_dataBase-1;
-      curDyns = m_dynsStack.m_base + curFrame->m_dynsBase-1;
       curFrame--;
    }
 

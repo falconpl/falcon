@@ -1,6 +1,6 @@
 /*
-@name Statement while -- Loop with break
-
+@name Loop statement with end expression
+@category Loops
 @output   
 Test loop with end expression
 Looping: 0

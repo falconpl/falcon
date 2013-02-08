@@ -42,19 +42,31 @@ public:
    const PStep* m_step;
 
    /** Sequence ID (internal step in the sequence)  */
-   int m_seqId;
+   int32 m_seqId;
+
+   /** Used only by rollbackable codes. */
+   uint32 m_dataDepth;
+   /** Used only by rollbackable codes. */
+   uint32 m_dynsDepth;
 
    inline CodeFrame( const PStep* ps ):
          m_step(ps),
          m_seqId(0)
+// initialize at debug time
+#ifndef NDEBUG
+   , m_dataDepth(0xFFFFFFFF)
+   , m_dynsDepth(0xFFFFFFFF)
+#endif
    {}
 
    inline CodeFrame( const CodeFrame& other ):
       m_step(other.m_step),
       m_seqId(other.m_seqId)
+#ifndef NDEBUG
+   , m_dataDepth(0xFFFFFFFF)
+   , m_dynsDepth(0xFFFFFFFF)
+#endif
    {}
-
-
 };
 
 }

@@ -1,5 +1,6 @@
 /*
-@name Statement for/to -- simple donward
+@name Simple For/to loops donward
+@category Loops
 
 @output   
 Testing basic for i = 5 to 1

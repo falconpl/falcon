@@ -132,6 +132,8 @@ void StmtLoop::apply_pure_( const PStep* s1, VMContext* ctx )
       CodeFrame& cf = ctx->currentCode();
       if( cf.m_seqId == 0 )
       {
+         // save the unroll points
+         ctx->saveUnrollPoint(cf);
          cf.m_seqId = 1;
       }
       else {
@@ -161,8 +163,12 @@ void StmtLoop::apply_withexpr_( const PStep* s1, VMContext* ctx )
    switch ( cf.m_seqId )
    {
    case 0:
-      // step in the tree
       cf.m_seqId = 1;
+
+      // save the unroll points
+      ctx->saveUnrollPoint(cf);
+
+      // step in the tree
       if( tree != 0 ) {
          if( ctx->stepInYield( tree, cf ) )
          {

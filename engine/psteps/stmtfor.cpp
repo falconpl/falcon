@@ -423,7 +423,8 @@ void StmtForIn::PStepBegin::apply_( const PStep* ps, VMContext* ctx )
       ctx->currentCode().m_seqId = 2;
       // Prepare to get the iterator item...
       ctx->pushCode( &self->m_stepFirst );      
-      ctx->pushCode( &self->m_stepGetNext );
+      // push the next and save the also unroll points
+      ctx->pushCodeWithUnrollPoint( &self->m_stepGetNext );
       
       // and create an iterator.
       cls->op_iter( ctx, dt );       
@@ -489,8 +490,11 @@ void StmtForIn::PStepFirst::apply_( const PStep* ps, VMContext* ctx )
    }
    else
    {
+      // turn this step in a loop (break) step landing.
       ctx->currentCode().m_step = &self->m_stepNext;
-      ctx->pushCode( &self->m_stepGetNext );
+      ctx->saveUnrollPoint(ctx->currentCode());
+      // and save the get next with next landing
+      ctx->pushCodeWithUnrollPoint( &self->m_stepGetNext );
       
       if ( self->m_forMiddle != 0 )
       {
@@ -545,8 +549,9 @@ void StmtForIn::PStepNext::apply_( const PStep* ps, VMContext* ctx )
       }
    }
    else
-   {      
-      ctx->pushCode( &self->m_stepGetNext );
+   {
+      // save the next step with landing
+      ctx->pushCodeWithUnrollPoint( &self->m_stepGetNext );
       if ( self->m_forMiddle != 0 )
       {
          ctx->pushCode( pop );
@@ -559,6 +564,7 @@ void StmtForIn::PStepNext::apply_( const PStep* ps, VMContext* ctx )
       ctx->pushCode( pop );
       ctx->pushCode( self->m_body );
    }
+
    // in any case, the extra item should be removed.
    ctx->popData();
 }
@@ -577,7 +583,10 @@ StmtForTo::StmtForTo( Symbol* tgt, Expression* start, Expression* end, Expressio
    m_stepNext(this)
 {
    FALCON_DECLARE_SYN_CLASS(stmt_forto)   
-   apply = apply_;     
+   apply = apply_;
+
+   // act as a loop-base in case for/to expression wants to break.
+   m_bIsLoopBase = true;
 }
 
 
@@ -591,6 +600,9 @@ StmtForTo::StmtForTo( const StmtForTo& other ):
 {
    apply = apply_;
    
+   // act as a loop-base in case for/to expression wants to break.
+   m_bIsLoopBase = true;
+
    if( other.m_start != 0 ) {
       m_start = other.m_start->clone();
       m_start->setParent(this);
@@ -679,20 +691,25 @@ void StmtForTo::apply_( const PStep* ps, VMContext* ctx )
    switch( cf.m_seqId )
    {
       case 0: 
-         // check the start.
          cf.m_seqId = 1;
+         // save the points.
+         ctx->saveUnrollPoint(cf);
+
+         // check the start.
          if( ctx->stepInYield( self->m_start, cf ) )
          {
             return;
          }
-         // fallthrough
+         /* no break */
+
       case 1:
          cf.m_seqId = 2;
          if( ctx->stepInYield( self->m_end, cf ) )
          {
             return;
          }
-         // fallthrough
+         /* no break */
+
       case 2:
          cf.m_seqId = 3;
          if( self->m_step != 0 )
@@ -705,6 +722,7 @@ void StmtForTo::apply_( const PStep* ps, VMContext* ctx )
          else {
             ctx->pushData( (int64) 0 );
          }
+         break;
    }
    
    int64 step = ctx->topData().asInteger();
@@ -733,10 +751,12 @@ void StmtForTo::apply_( const PStep* ps, VMContext* ctx )
       }      
    }
    
-   // however, we won't be called anymore.
+   // however, we won't be called anymore (cleanup is also the loop base)
    cf.m_step = &self->m_stepCleanup;
+   // -- we already saved the unroll points in this step at seqId = 1
+
    cf.m_seqId = 3; // 3 items to remove at cleanup
-   ctx->pushCode( &self->m_stepNext );
+   ctx->pushCodeWithUnrollPoint( &self->m_stepNext );
    
    // Prepare the start value   
    Symbol* target = self->m_target;

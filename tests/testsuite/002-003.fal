@@ -1,5 +1,6 @@
 /*
-@name Statement for/to -- simple upward
+@name Simple For/to loops upward
+@category Loops
 
 @output   
 Testing basic for i = 1 to 5

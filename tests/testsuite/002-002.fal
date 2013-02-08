@@ -1,5 +1,6 @@
 /*
-@name Statement for/in -- simple
+@name Simple For/in loop
+@category Loops
 
 @output   
 Testing basic for/in

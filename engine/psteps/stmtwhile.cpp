@@ -199,28 +199,39 @@ void StmtWhile::apply_( const PStep* s1, VMContext* ctx )
    TreeStep* tree = self->m_child;
    switch ( cf.m_seqId )
    {
-   case 2:
-      // already been around
-      ctx->popData(); // remove the data placed by the syntree
-      /* no break */
-
    case 0:
-      // generate the expression.
-      cf.m_seqId = 1;
+      // preprare the stack
+      ctx->saveUnrollPoint( cf );
+
+      // generate the first expression
+      cf.m_seqId = 2;
       if( ctx->stepInYield( self->m_expr, cf ) )
       {
-         // ignore soft exception, we're yielding back soon anyhow.
-         return;
+          // ignore soft exception, we're yielding back soon anyhow.
+          return;
+      }
+      break;
+
+   case 1:
+      // already been around
+      ctx->popData(); // remove the data placed by the syntree
+
+      cf.m_seqId = 2;
+      if( ctx->stepInYield( self->m_expr, cf ) )
+      {
+          // ignore soft exception, we're yielding back soon anyhow.
+          return;
       }
       break;
    }
    
-   cf.m_seqId = 2; // ... so we set it back to perform check.
 
    // break items are always nil, and so, false.
    if ( ctx->boolTopData() )
    {
       ctx->popData();
+      // mark for regeneration of the expression
+      cf.m_seqId = 1;
       TRACE1( "Apply 'while' at line %d -- redo", self->line() );
       // redo
       if( tree != 0 ) {
