@@ -30,6 +30,8 @@
 #include <falcon/psteps/exprvalue.h>
 #include <falcon/psteps/exprinit.h>
 
+#include <falcon/error.h>
+
 #include <falcon/symbol.h>
 #include "../re2/re2/re2.h"
 
