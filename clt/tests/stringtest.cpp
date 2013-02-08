@@ -21,7 +21,7 @@
 #include <falcon/cm/coremodule.h>
 
 #include <falcon/psteps/stmtautoexpr.h>
-#include <falcon/psteps/stmtrule.h>
+#include <falcon/psteps/exprrrule.h>
 #include <falcon/psteps/stmtwhile.h>
 #include <falcon/psteps/stmtreturn.h>
 #include <falcon/psteps/exprvalue.h>

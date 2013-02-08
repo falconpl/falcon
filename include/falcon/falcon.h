@@ -22,7 +22,7 @@
 
 #include <falcon/expression.h>
 #include <falcon/statement.h>
-#include <falcon/psteps/stmtrule.h>
+#include <falcon/psteps/exprrule.h>
 
 #include <falcon/stdstreams.h>
 #include <falcon/streambuffer.h>

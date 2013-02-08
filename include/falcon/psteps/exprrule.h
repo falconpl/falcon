@@ -1,8 +1,8 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: stmtrule.h
+   FILE: exprrule.h
 
-   Syntactic tree item definitions -- statements.
+   Syntactic tree item definitions -- Rule expression.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: Sun, 02 Jan 2011 20:37:39 +0100
@@ -13,8 +13,8 @@
    See LICENSE file for licensing details.
 */
 
-#ifndef FALCON_STMTRULE_H
-#define FALCON_STMTRULE_H
+#ifndef FALCON_EXPRRULE_H
+#define FALCON_EXPRRULE_H
 
 #include <falcon/statement.h>
 #include <falcon/rulesyntree.h>
@@ -27,25 +27,36 @@ namespace Falcon
 
    The rule statement processes one or more sub-trees in a rule context.
 */
-class FALCON_DYN_CLASS StmtRule: public Statement
+class FALCON_DYN_CLASS ExprRule: public Expression
 {
 public:
-   StmtRule( int32 line=0, int32 chr=0 );
-   StmtRule( const StmtRule& other );   
-   virtual ~StmtRule();
+   ExprRule( int32 line=0, int32 chr=0 );
+   ExprRule( const ExprRule& other );   
+   virtual ~ExprRule();
    
-   StmtRule& addStatement( Statement* stmt );
-   StmtRule& addAlternative();
+   ExprRule& addStatement( TreeStep* stmt );
+   ExprRule& addAlternative();
 
    virtual void describeTo( String& tgt, int depth=0 ) const;
    virtual void oneLinerTo( String& tgt ) const;
-   virtual StmtRule* clone() const { return new StmtRule(*this); }
+   virtual ExprRule* clone() const { return new ExprRule(*this); }
    
+   virtual bool isStatic() const {return false;}
+   virtual bool simplify(Falcon::Item&) const {return false; }
+   virtual bool isStandAlone() const {return true; }
+
    static void apply_( const PStep*, VMContext* ctx );
 
    SynTree& currentTree();
    const SynTree& currentTree() const;
-   
+
+   virtual int32 arity() const;
+   virtual TreeStep* nth( int32 n ) const;
+   virtual bool setNth( int32 n, TreeStep* ts );
+   virtual bool insert( int32 pos, TreeStep* element );
+   virtual bool append( TreeStep* element );
+   virtual bool remove( int32 pos );
+
 protected:
    class Private;
    Private* _p;
@@ -94,6 +105,9 @@ public:
    virtual void oneLinerTo( String& tgt ) const;
    virtual StmtDoubt* clone() const { return new StmtDoubt(*this); }
    
+   virtual Expression* selector() const;
+   virtual bool selector( Expression* e );
+
 private:
    Expression* m_expr;
    static void apply_( const PStep*, VMContext* ctx );
@@ -103,4 +117,4 @@ private:
 
 #endif
 
-/* end of stmtrule.h */
+/* end of exprrule.h */

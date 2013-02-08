@@ -204,6 +204,7 @@ add_library(falcon_engine SHARED
   psteps/exprin.cpp
   psteps/exprincdec.cpp
   psteps/exprindex.cpp
+  psteps/exprinit.cpp
   psteps/exprinherit.cpp
   psteps/exprinvoke.cpp
   psteps/exprlit.cpp
@@ -216,6 +217,7 @@ add_library(falcon_engine SHARED
   psteps/exprparentship.cpp
   psteps/exprprovides.cpp
   psteps/exprrange.cpp
+  psteps/exprrule.cpp
   psteps/exprproto.cpp
   psteps/exprpseudocall.cpp
   psteps/exprstripol.cpp  
@@ -238,7 +240,6 @@ add_library(falcon_engine SHARED
   psteps/stmtloop.cpp
   psteps/stmtraise.cpp
   psteps/stmtreturn.cpp
-  psteps/stmtrule.cpp
   psteps/stmtselect.cpp
   psteps/stmtswitch.cpp
   psteps/stmttry.cpp

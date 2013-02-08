@@ -155,7 +155,7 @@ void apply_finally( const Rule&, Parser& p )
    TokenInstance* ti = p.getNextToken();
    
    ParserContext* ctx = static_cast<ParserContext*>(p.context());
-   Statement* stmt = ctx->currentStmt();
+   TreeStep* stmt = ctx->currentStmt();
    if( stmt == 0 || stmt->handler()->userFlags() != FALCON_SYNCLASS_ID_CATCHHOST )
    {
       p.addError( e_finally_outside, p.currentSource(), ti->line(), ti->chr() );
@@ -197,7 +197,7 @@ static void internal_apply_catch( int toks, Parser& p, int line, int chr,
       int64 tid, String* errName, String* tgt, bool genTrace = false )
 {   
    ParserContext* ctx = static_cast<ParserContext*>(p.context());
-   Statement* stmt = ctx->currentStmt();
+   TreeStep* stmt = ctx->currentStmt();
    if( stmt == 0 || stmt->handler()->userFlags() != FALCON_SYNCLASS_ID_CATCHHOST )
    {
       p.addError( e_catch_outside, p.currentSource(), line, 0 );
@@ -214,9 +214,8 @@ static void internal_apply_catch( int toks, Parser& p, int line, int chr,
       // prepare the head symbol if needed
       if( tgt != 0 )
       {
-         Variable* var = ctx->defineSymbol( *tgt );
-         bool isGlobal = var == 0 ? false : var->isGlobalOrExtern();
-         newBranch->target( Engine::getSymbol(*tgt, isGlobal ) );
+         ctx->defineSymbol( *tgt );
+         newBranch->target( Engine::getSymbol(*tgt ) );
       }
       
       if( errName != 0 )
@@ -267,7 +266,7 @@ void apply_catch_all( const Rule&, Parser& p )
    TokenInstance* ti = p.getNextToken();
    
    ParserContext* ctx = static_cast<ParserContext*>(p.context());
-   Statement* stmt = ctx->currentStmt();
+   TreeStep* stmt = ctx->currentStmt();
    if( stmt == 0 || stmt->handler()->userFlags() != FALCON_SYNCLASS_ID_CATCHHOST )
    {
       p.addError( e_catch_outside, p.currentSource(), ti->line(), ti->chr() );

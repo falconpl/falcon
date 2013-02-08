@@ -5,10 +5,10 @@
    Syntactic tree item definitions -- Init values for generators
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
-   Begin: Thu, 05 Jul 2012 02:03:34 +0200
+   Begin: Thu, 07 Feb 2013 18:11:20 +0100
 
    -------------------------------------------------------------------
-   (C) Copyright 2012: the FALCON developers (see list in AUTHORS file)
+   (C) Copyright 2013: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
 */
@@ -31,11 +31,22 @@ public:
 
    virtual bool isStatic() const;
    virtual ExprInit* clone() const { return new ExprInit(*this); }
-   virtual bool simplify( Item& result ) const { return false; }
+   virtual bool simplify( Item& ) const { return false; }
    virtual void describeTo( String & str, int depth = 0 ) const;
 
 private:
    static void apply_( const PStep* s1, VMContext* ctx );
+
+   class FALCON_DYN_CLASS PStepLValue: public PStep
+   {
+   public:
+      PStepLValue(){ apply = apply_; }
+      virtual ~PStepLValue(){}
+      virtual void describeTo( String&, int depth=0 ) const;
+      static void apply_( const PStep* ps, VMContext* ctx );
+   };
+
+   PStepLValue m_pslv;
 };
 
 }

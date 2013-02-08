@@ -29,6 +29,7 @@ class Parser;
 using namespace Parsing;
 
 void apply_rule( const Rule&, Parser& p );
+void apply_rule_branch( const Rule&, Parser& p );
 void apply_cut_expr( const Rule&, Parser& p );
 void apply_cut( const Rule&, Parser& p );
 void apply_doubt( const Rule&, Parser& p );

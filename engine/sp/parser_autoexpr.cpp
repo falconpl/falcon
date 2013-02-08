@@ -125,14 +125,14 @@ void apply_stmt_assign_list( const Rule&, Parser& p )
 
          ExprAssign* assign = new ExprAssign( first, second );
          listLeft->clear();
-         ti->setValue( assign, expr_deletor );
+         ti->setValue( assign, treestep_deletor );
       }
       else
       {
          ctx->accessSymbols(listRight->front());
          ExprUnpack* unpack = new ExprUnpack( listRight->front(), v2->line(), v2->chr() );
          // save the unpack already. Even on error, it WAS a try to unpack.
-         ti->setValue( unpack, expr_deletor );
+         ti->setValue( unpack, treestep_deletor );
 
          // we abandoned the data in the list
          listRight->clear();
@@ -160,7 +160,7 @@ void apply_stmt_assign_list( const Rule&, Parser& p )
    {
       // save the unpack already. Even on error, it WAS a try to unpack.
       ExprMultiUnpack* unpack = new ExprMultiUnpack( true );
-      ti->setValue( unpack, expr_deletor );
+      ti->setValue( unpack, treestep_deletor );
 
       // multiple assignment
       if( listLeft->size() != listRight->size() )

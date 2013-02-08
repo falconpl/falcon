@@ -373,7 +373,7 @@ void apply_array_entry_close( const Rule&, Parser& p )
    // close the list
    Expression* made = make_array_expr( pl );
    made->decl( openPar->line(), openPar->chr() );
-   openPar->setValue( made, expr_deletor );
+   openPar->setValue( made, treestep_deletor );
    openPar->token( sp.Expr );
 }
 
@@ -401,7 +401,7 @@ static void makeRange( Parser& p, int count, Expression* expr1, Expression* expr
    TokenInstance* openPar = p.getLastToken();
    // close the list
    made->decl( openPar->line(), openPar->chr() );
-   openPar->setValue( made, expr_deletor );
+   openPar->setValue( made, treestep_deletor );
    openPar->token( sp.Expr );
 }
 

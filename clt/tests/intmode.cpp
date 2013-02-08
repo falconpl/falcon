@@ -39,7 +39,7 @@
 
 #include <falcon/errors/genericerror.h>
 
-#include <falcon/psteps/stmtrule.h>
+#include <falcon/psteps/exprrule.h>
 #include <falcon/psteps/exprvalue.h>
 #include <falcon/psteps/exprsym.h>
 

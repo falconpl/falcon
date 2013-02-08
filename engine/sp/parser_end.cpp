@@ -94,7 +94,7 @@ void apply_end_rich( const Rule&, Parser& p )
    }
    else
    {
-      Statement* statement = st->currentStmt();
+      TreeStep* statement = st->currentStmt();
       if( ! statement->selector( expr ) )
       {
          delete expr;

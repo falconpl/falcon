@@ -65,7 +65,7 @@ public:
    Symbol();
 
    /** Creates a dynamic symbol. */
-   Symbol( const String& name, bool isGlobal );
+   Symbol( const String& name );
    
    /** Copies the other symbol */
    Symbol( const Symbol& other );
@@ -73,8 +73,6 @@ public:
 
    const String& name() const { return m_name; }
    void name( const String& n) { m_name = n; }
-
-   bool isGlobal() const { return m_isGlobal; }
    
    Symbol* clone() const { return new Symbol(*this); }
    
@@ -89,7 +87,6 @@ public:
 protected:
    // Notice: we're using the string GC mark to keep ours.
    String m_name;
-   bool m_isGlobal;
    
    friend class ExprSymbol;
    friend class SymbolPool;

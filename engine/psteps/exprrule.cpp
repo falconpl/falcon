@@ -1,6 +1,6 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: stmtrule.cpp
+   FILE: exprrule.cpp
 
    Syntactic tree item definitions -- statements.
    -------------------------------------------------------------------
@@ -19,8 +19,9 @@
 #include <falcon/rulesyntree.h>
 #include <falcon/vm.h>
 #include <falcon/trace.h>
+#include <falcon/synclasses_id.h>
 
-#include <falcon/psteps/stmtrule.h>
+#include <falcon/psteps/exprrule.h>
 
 #include <vector>
 
@@ -32,7 +33,7 @@
 namespace Falcon
 {
 
-class StmtRule::Private: public TSVector_Private<RuleSynTree> 
+class ExprRule::Private: public TSVector_Private<RuleSynTree> 
 {
 public:
    Private() {}
@@ -43,8 +44,8 @@ public:
    {}
 };
 
-StmtRule::StmtRule( int32 line, int32 chr ):
-   Statement( line, chr )
+ExprRule::ExprRule( int32 line, int32 chr ):
+   Expression( line, chr )
 {
    FALCON_DECLARE_SYN_CLASS( stmt_rule );
    
@@ -52,21 +53,21 @@ StmtRule::StmtRule( int32 line, int32 chr ):
    _p = new Private;   
 }
 
-StmtRule::StmtRule( const StmtRule& other ):
-   Statement( other )
+ExprRule::ExprRule( const ExprRule& other ):
+         Expression( other )
 {  
-   apply = apply_;   
+   apply = apply_;
    _p = new Private( *other._p, this );   
 }
 
 
-StmtRule::~StmtRule()
+ExprRule::~ExprRule()
 {
    delete _p;
 }
 
 
-StmtRule& StmtRule::addStatement( Statement* stmt )
+ExprRule& ExprRule::addStatement( TreeStep* stmt )
 {
    if( _p->arity() == 0 )
    {
@@ -81,7 +82,7 @@ StmtRule& StmtRule::addStatement( Statement* stmt )
 }
 
 
-SynTree& StmtRule::currentTree()
+SynTree& ExprRule::currentTree()
 {
    if( _p->arity() == 0 )
    {
@@ -94,12 +95,98 @@ SynTree& StmtRule::currentTree()
    return *_p->m_exprs.back();
 }
 
-const SynTree& StmtRule::currentTree() const
+
+int32 ExprRule::arity() const
+{
+   return _p->m_exprs.size();
+}
+
+TreeStep* ExprRule::nth( int32 n ) const
+{
+   if (n < 0) n = _p->m_exprs.size() + n;
+   if( n >= (int32) _p->m_exprs.size() )
+   {
+      return 0;
+   }
+
+   return _p->m_exprs[n];
+}
+
+
+bool ExprRule::setNth( int32 n, TreeStep* ts )
+{
+   if (n < 0) n = _p->m_exprs.size() + n;
+   if( n > (int32) _p->m_exprs.size() )
+   {
+      return false;
+   }
+   if( n == (int32) _p->m_exprs.size() ) {
+      return append(ts);
+   }
+
+   if( ts->handler()->userFlags() == FALCON_SYNCLASS_ID_RULE_SYNTREE && ts->setParent(this))
+   {
+      RuleSynTree* st = static_cast<RuleSynTree*>(ts);
+      delete _p->m_exprs[n];
+      _p->m_exprs[n] = st;
+      return true;
+   }
+
+   return false;
+}
+
+bool ExprRule::insert( int32 n, TreeStep* ts )
+{
+   if (n < 0) n = _p->m_exprs.size() + n;
+   if( n > (int32) _p->m_exprs.size() )
+   {
+      return false;
+   }
+   if( n == (int32) _p->m_exprs.size() ) {
+      return append(ts);
+   }
+
+   if( ts->handler()->userFlags() == FALCON_SYNCLASS_ID_RULE_SYNTREE && ts->setParent(this))
+   {
+      RuleSynTree* st = static_cast<RuleSynTree*>(ts);
+      _p->m_exprs.insert( _p->m_exprs.begin() +n, st );
+      return true;
+   }
+
+   return false;
+}
+
+bool ExprRule::append( TreeStep* ts )
+{
+   if( ts->handler()->userFlags() == FALCON_SYNCLASS_ID_RULE_SYNTREE && ts->setParent(this))
+   {
+      RuleSynTree* st = static_cast<RuleSynTree*>(ts);
+      _p->m_exprs.push_back( st );
+      return true;
+   }
+
+   return false;
+}
+
+bool ExprRule::remove( int32 n )
+{
+   if (n < 0) n = _p->m_exprs.size() + n;
+   if( n > (int32) _p->m_exprs.size() )
+   {
+      return false;
+   }
+
+   delete _p->m_exprs[n];
+   _p->m_exprs.erase( _p->m_exprs.begin() + n );
+   return true;
+}
+
+const SynTree& ExprRule::currentTree() const
 {
    return *_p->m_exprs.back();
 }
 
-StmtRule& StmtRule::addAlternative()
+ExprRule& ExprRule::addAlternative()
 {
    RuleSynTree* st = new RuleSynTree();
    st->setParent(this);
@@ -108,7 +195,7 @@ StmtRule& StmtRule::addAlternative()
 }
 
 
-void StmtRule::describeTo( String& tgt, int depth ) const
+void ExprRule::describeTo( String& tgt, int depth ) const
 {
    if( _p->arity() == 0 )
    {
@@ -135,7 +222,7 @@ void StmtRule::describeTo( String& tgt, int depth ) const
 }
 
 
-void StmtRule::oneLinerTo( String& tgt ) const
+void ExprRule::oneLinerTo( String& tgt ) const
 {
    if( _p->arity() == 0 )
    {
@@ -147,46 +234,52 @@ void StmtRule::oneLinerTo( String& tgt ) const
 }
 
 
-void StmtRule::apply_( const PStep*s1 , VMContext* ctx )
+void ExprRule::apply_( const PStep*s1 , VMContext* ctx )
 {
-   const StmtRule* self = static_cast<const StmtRule*>(s1);
+   const ExprRule* self = static_cast<const ExprRule*>(s1);
    CodeFrame& cf = ctx->currentCode();
+   TRACE( "StmtRule::apply_ at line %d step %d/%d", self->line(), cf.m_seqId , self->_p->arity() );
 
-   fassert( self->_p->arity() > 0 );
-   
-   // Always process the first alternative
-   if ( cf.m_seqId > 0 && ctx->ruleEntryResult() )
+   if( self->_p->arity() == 0 )
    {
-      TRACE1( "Apply 'rule' at line %d -- success ", self->line() );      
-      //we're done
+      // we're an immediate success
+      ctx->pushData( Item().setBoolean(true) );
       ctx->popCode();
+      return;
    }
-   else
+   
+   // initialize the rule
+   if( cf.m_seqId == 0 )
    {
-      // on first alternative -- or if previous alternative failed...
+      ctx->startRuleFrame();
+      cf.m_seqId = 1;
+      RuleSynTree* st = self->_p->nth(0);
+      ctx->pushCode( st );
+   }
+   else if (ctx->topData().isTrue() )
+   {
+      // success
+      // But actually, this should never be called, because our branch has committed.
+      TRACE( "StmtRule::apply_ at line %d -- Branch was successful (should not be here)", self->line() );
+      ctx->popCode();
+      // leave the result in -- but booleanize it.
+      ctx->topData().setBoolean(true);
+   }
+   else {
+      // try another branch?
       if( cf.m_seqId >= (int) self->_p->arity() )
       {
-         // we failed, and we have no more alternatives.
-         TRACE1( "Apply 'rule' at line %d -- rule failed", self->line() );
-
-         // we're done
-         ctx->popCode();         
+         // we're done.
+         TRACE( "StmtRule::apply_ at line %d -- failed.", self->line() );
+         ctx->unrollRule(); // this pops us as well.
+         ctx->addDataSlot().setBoolean(false);
       }
-      else
-      {
-         // we have some more alternative to try
-         TRACE1( "Apply 'rule' at line %d -- applying next branch %d",
-               self->line(), cf.m_seqId );
+      else {
+         TRACE1( "StmtRule::apply_ at line %d -- trying next branch.", self->line() );
 
-         // clear ND status
-         ctx->checkNDContext();
-
-         // create the initial rule alternative context
-         ctx->startRuleFrame();
-
-         // push the next alternative and pricess it
-         RuleSynTree* rst = self->_p->m_exprs[cf.m_seqId++];
-         ctx->pushCode( rst );
+         RuleSynTree* next = self->_p->nth(cf.m_seqId);
+         cf.m_seqId++;
+         ctx->pushCode( next );
       }
    }
 }
@@ -296,7 +389,8 @@ bool StmtCut::selector( Expression* expr )
    
 void StmtCut::apply_( const PStep*, VMContext* ctx )
 {
-   ctx->unrollRuleBranches(); // which also pops us
+   ctx->dropRuleNDFrames();
+   ctx->popCode();
 }
 
 void StmtCut::apply_cut_expr_( const PStep* ps, VMContext* ctx )
@@ -314,19 +408,10 @@ void StmtCut::apply_cut_expr_( const PStep* ps, VMContext* ctx )
       }
    }
    // second time around? -- we have our expression solved in top data.
-   
-   // clear the non-deterministic bit in the context, if set.
-   ctx->checkNDContext();
+
    ctx->popCode(); // use us just once.
+   ctx->setDeterm(true);
    
-   // we're inside a rule, or we wouldn't be called.
-   register Item* td = &ctx->topData();
-   
-   // set to false only if the last op result was a boolean false.
-   ctx->ruleEntryResult( !(td->isBoolean() && td->asBoolean() == false) );
-   
-   // remove the data created by the expression
-   ctx->popData();
 }
 
 
@@ -392,6 +477,24 @@ void StmtDoubt::oneLinerTo( String& tgt ) const
    tgt += m_expr->oneLiner();
 }
 
+Expression* StmtDoubt::selector()  const
+{
+   return m_expr;
+}
+
+
+bool StmtDoubt::selector( Expression* expr )
+{
+   if( expr != 0  && expr->setParent(this) )
+   {
+      delete m_expr;
+      m_expr = expr;
+      return true;
+   }
+
+   return false;
+}
+
 void StmtDoubt::apply_( const PStep* ps, VMContext* ctx )
 {  
    const StmtDoubt* self = static_cast<const StmtDoubt*>(ps);
@@ -409,21 +512,11 @@ void StmtDoubt::apply_( const PStep* ps, VMContext* ctx )
       }
    }
    
-   // Declare this context as non-deterministic
-   ctx->SetNDContext();
-   ctx->popCode(); // use us just once.
-   
-   // we're inside a rule, or we wouldn't be called.
-   register Item* td = &ctx->topData();
-   
-   // set to false only if the last op result was a boolean false.
-   ctx->ruleEntryResult( !(td->isBoolean() && td->asBoolean() == false) );
-   
-   // remove the data created by the expression
-   ctx->popData();
+   ctx->popCode();
+   ctx->setDeterm(false);
 }
 
 
 }
 
-/* end of stmtrule.cpp */
+/* end of exprrule.cpp */

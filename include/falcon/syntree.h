@@ -96,9 +96,6 @@ public:
    virtual bool append( TreeStep* step );
 
    static void apply_( const PStep* ps, VMContext* ctx );
-   static void apply_single_( const PStep* ps, VMContext* ctx );
-   static void apply_empty_( const PStep* ps, VMContext* ctx );
-
 
    /** Returns the symbol table for this block.
     \param bmake if true, generate a table if not already created.
@@ -140,7 +137,6 @@ protected:
    Symbol* m_head;
    Expression* m_selector;
 
-   void setApply();
    friend class ClassSynTree;
 };
 

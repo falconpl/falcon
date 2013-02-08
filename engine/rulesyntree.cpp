@@ -13,6 +13,9 @@
    See LICENSE file for licensing details.
 */
 
+#undef SRC
+#define SRC "engine/rulesyntree.cpp"
+
 #include <falcon/rulesyntree.h>
 #include <falcon/vm.h>
 #include <falcon/codeframe.h>
@@ -24,42 +27,47 @@
 namespace Falcon
 {
 
-RuleSynTree::RuleSynTree():
+RuleSynTree::RuleSynTree( int line, int chr ):
+   SynTree(line, chr),
    m_stepNext(this)
 {
    FALCON_DECLARE_SYN_CLASS( st_rulest );
-   apply = apply_;
+   apply = rapply_;
 }
 
 RuleSynTree::RuleSynTree( const RuleSynTree& other ):
    SynTree( other ),
    m_stepNext(this)
 {
-   apply = apply_;
+   FALCON_DECLARE_SYN_CLASS( st_rulest );
+   apply = rapply_;
 }
 
 RuleSynTree::~RuleSynTree()
 {
 }
 
-void RuleSynTree::apply_( const PStep* ps, VMContext* ctx )
+void RuleSynTree::rapply_( const PStep* ps, VMContext* ctx )
 {
    const RuleSynTree* self = static_cast<const RuleSynTree*>(ps);
+   CodeFrame& cf = ctx->currentCode();
+   TRACE( "RuleSynTree::apply_ at line %d step %d/%d", self->line(), cf.m_seqId , self->size() );
 
    // prepare the first step
    if( self->size() == 0 )
    {
-      ctx->ruleEntryResult( true );
-      return;
+      // We did it
+      ctx->pushData(Item().setBoolean(true));
+      ctx->popCode();
    }
    else
    {
       // we can start the dance.
-      register CodeFrame& cf = ctx->currentCode();
       cf.m_step = &self->m_stepNext;
       cf.m_seqId = 1;
       ctx->pushCode( self->at( 0 ) );
-      ctx->ruleEntryResult( true );
+      ctx->setDeterm(true);  // be sure to reset determinism
+      ctx->clearInit();
    }   
 }
 
@@ -69,40 +77,57 @@ void RuleSynTree::PStepNext::apply_(const PStep* ps, VMContext* ctx)
    const RuleSynTree::PStepNext* self = static_cast<const RuleSynTree::PStepNext*>(ps);
    // get the current step.
    CodeFrame& cf = ctx->currentCode();
+   TRACE( "RuleSynTree::PStepNext::apply_ at line %d step %d", self->line(), cf.m_seqId );
    
    // Have the rule failed?
-   if( ! ctx->ruleEntryResult() )
+   register Item& top = ctx->topData();
+   if( top.type() == FLC_ITEM_BOOL && ! top.isTrue() )
    {
-      // have a we a traceback point?
-      register uint32 tbpoint = ctx->unrollRuleFrame();
-      if( tbpoint == 0xFFFFFFFF )
+      TRACE1( "RuleSynTree::PStepNext::apply_ at line %d -- failure detected", self->line());
+      // Maybe we're dead?
+      uint32 frameID = ctx->unrollRuleNDFrame();
+      if( frameID == 0xFFFFFFFF )
       {
-         // nope. No traceback allowed -- go away with failure   
+         // yes, we are.
+         ctx->pushData(Item().setBoolean(false));
          ctx->popCode();
          return;
       }
+      else
+      {
+         // we still have hope
+         ctx->restoreInit();
 
-      // we have a traceback.
-      cf.m_seqId = tbpoint;
-      ctx->ruleEntryResult( true ); // reset the result.
+         cf.m_seqId = frameID+1;
+         TreeStep* step = self->m_owner->at( frameID );
+         ctx->pushCode( step );
+      }
    }
    else if (cf.m_seqId >= (int) self->m_owner->size() )
    {
-      // We have processed the rule up to the end -- SUCCESS
-      ctx->popCode();
-      // Commit the rule hypotesis
-      ctx->commitRule();      
-      return;
+      TRACE1( "RuleSynTree::PStepNext::apply_ at line %d -- success", self->line());
+      // Commit the rule hypothesis
+      ctx->commitRule();  // will pop us and our grandma StmtRule as well.
+      ctx->pushData(Item().setBoolean(true));
    }
-   else if( ctx->checkNDContext() )
+   else
    {
-      // we have a non-determ context at step - 1
-      ctx->addRuleNDFrame( cf.m_seqId - 1 );
+      // remove the return value
+      ctx->popData();
+
+      // is current return non-deterministic?
+      if( ! ctx->isDeterm() )
+      {
+         ctx->setDeterm(true); // be sure to reset it.
+         ctx->saveInit();
+         ctx->startRuleNDFrame(cf.m_seqId-1); // previous step was -1
+      }
+      ctx->clearInit();
+
+      // just proceed with next step
+      TreeStep* step = self->m_owner->at( cf.m_seqId++ );
+      ctx->pushCode( step );
    }
-      
-   // just proceed with next step
-   TreeStep* step = self->m_owner->at( cf.m_seqId++ );
-   ctx->pushCode( step );
 }
 
 }

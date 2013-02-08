@@ -1191,7 +1191,7 @@ void FalconClass::op_getProperty( VMContext* ctx, void* self, const String& prop
                   fassert( prop->m_type == Property::t_prop );
                }
                
-               target.assignToLocal(inst->data()[ prop->m_value.id ]);
+               target.assignFromRemote(inst->data()[ prop->m_value.id ]);
                
                if( target.isFunction() ) {
                   Function* func = target.asFunction();

@@ -59,11 +59,9 @@ public:
    SynTree& syntree() { return m_syntree; }
 
    virtual void invoke( VMContext* ctx, int32 pCount = 0 );
-   
-   void setPredicate( bool bmode );
-   bool isPredicate() const { return m_bIsPredicate; }
-   
+
    void setConstructor();
+   bool isConstructor() const { return m_bIsConstructor; }
    
    Class* handler() const;
    
@@ -73,9 +71,12 @@ protected:
    
    RootSynTree m_syntree;
    PStep* m_retStep;
-   bool m_bIsPredicate;
+   bool m_bIsConstructor;
    
    friend class ClassSynFunc;
+
+private:
+   SynFunc( const SynFunc& );
 };
 
 }

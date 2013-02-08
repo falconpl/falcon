@@ -22,8 +22,7 @@
 #include <falcon/trace.h>
 #include <falcon/application.h>
 
-#include <falcon/psteps/stmtautoexpr.h>
-#include <falcon/psteps/stmtrule.h>
+#include <falcon/psteps/exprrule.h>
 #include <falcon/psteps/exprvalue.h>
 #include <falcon/psteps/exprsym.h>
 #include <falcon/psteps/exprcompare.h>
@@ -135,7 +134,7 @@ void go()
                   new ExprPlus( new ExprSymbol(var_a), new ExprValue(1) ) ) );
    
    // and the rule
-   StmtRule* rule = new StmtRule;
+   ExprRule* rule = new ExprRule;
    (*rule)
          .addStatement( new StmtAutoexpr(
                new ExprAssign( new ExprSymbol(var_a), new ExprValue(0) ) ) )

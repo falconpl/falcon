@@ -37,10 +37,9 @@ void apply_Atom_RString ( const Rule&, Parser& p );
 void apply_Atom_IString ( const Rule&, Parser& p );
 void apply_Atom_False ( const Rule&, Parser& p );
 void apply_Atom_True ( const Rule&, Parser& p );
-void apply_Atom_Continue ( const Rule&, Parser& p );
-void apply_Atom_Break ( const Rule&, Parser& p );
 void apply_Atom_Self ( const Rule&, Parser& p );
 void apply_Atom_FSelf ( const Rule&, Parser& p );
+void apply_Atom_Init ( const Rule&, Parser& p );
 void apply_Atom_Nil ( const Rule&, Parser& p );
 
 void apply_expr_atom( const Rule&, Parser& p );

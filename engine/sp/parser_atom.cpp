@@ -28,6 +28,7 @@
 #include <falcon/psteps/exprfself.h>
 #include <falcon/psteps/exprsym.h>
 #include <falcon/psteps/exprvalue.h>
+#include <falcon/psteps/exprinit.h>
 
 #include <falcon/symbol.h>
 #include "../re2/re2/re2.h"
@@ -45,7 +46,7 @@ void apply_Atom_Int ( const Rule&, Parser& p )
    TokenInstance* ti = p.getNextToken();
 
    ti->token( sp.Atom );
-   ti->setValue( new ExprValue((int64) ti->asInteger(), ti->line(), ti->chr()), expr_deletor );
+   ti->setValue( new ExprValue((int64) ti->asInteger(), ti->line(), ti->chr()), treestep_deletor );
 }
 
 
@@ -56,7 +57,7 @@ void apply_Atom_Float ( const Rule&, Parser& p )
 
    TokenInstance* ti = p.getNextToken();
    ti->token( sp.Atom );
-   ti->setValue( new ExprValue(ti->asNumeric(), ti->line(), ti->chr()), expr_deletor );
+   ti->setValue( new ExprValue(ti->asNumeric(), ti->line(), ti->chr()), treestep_deletor );
 }
 
 
@@ -66,7 +67,6 @@ void apply_Atom_Name ( const Rule&, Parser& p )
    
    // << (r_Atom_Name << "Atom_Name" << apply_Atom_Name << T_Name )
    SourceParser& sp = static_cast<SourceParser&>(p);
-   ParserContext* ctx = static_cast<ParserContext*>(p.context());
 
    TokenInstance* ti = p.getNextToken();
    const Item* builtin = inst->getBuiltin( *ti->asString() );
@@ -79,15 +79,14 @@ void apply_Atom_Name ( const Rule&, Parser& p )
    else
    {
       //TODO: check for globalized variables instead of using isGlobalContext
-      bool isGlobal = ctx->isGlobalContext();
       const String& name = *ti->asString();
-      Symbol* s = Engine::getSymbol( name, isGlobal );
+      Symbol* s = Engine::getSymbol( name );
       sym = new ExprSymbol( s, ti->line(), ti->chr() );
       // exprsymbol doesn't incref s.
    }
 
    ti->token( sp.Atom );
-   ti->setValue( sym, expr_deletor );
+   ti->setValue( sym, treestep_deletor );
 }
 
 
@@ -100,14 +99,14 @@ void apply_Atom_Pure_Name ( const Rule&, Parser& p )
    TokenInstance* ti = p.getNextToken();
 
    const String& name = *ti->asString();
-   Symbol* sym = Engine::getSymbol( name, false );
+   Symbol* sym = Engine::getSymbol( name );
    ExprSymbol* esym = new ExprSymbol( sym, ti->line(), ti->chr() );
    esym->setPure(true);
    // exprsymbol doesn't incref s.
 
    p.trim(1); // remove T_Name...
    tilde->token( sp.Atom );     // change T_Tilde...
-   tilde->setValue( esym, expr_deletor );
+   tilde->setValue( esym, treestep_deletor );
 }
 
 
@@ -125,7 +124,7 @@ void apply_Atom_String ( const Rule&, Parser& p )
    // The exprvalue is made so that it will gc lock the string.
    Expression* res = new ExprValue( FALCON_GC_STORE(sc, s), ti->line(), ti->chr() );
    ti->token( sp.Atom );
-   ti->setValue( res, expr_deletor );
+   ti->setValue( res, treestep_deletor );
 }
 
 
@@ -211,7 +210,7 @@ void apply_Atom_RString ( const Rule&, Parser& p )
    }
 
    ti->token( sp.Atom );
-   ti->setValue( res, expr_deletor );
+   ti->setValue( res, treestep_deletor );
 }
 
 void apply_Atom_IString ( const Rule& r, Parser& p )
@@ -227,7 +226,7 @@ void apply_Atom_False ( const Rule&, Parser& p )
 
    TokenInstance* ti = p.getNextToken();
    ti->token( sp.Atom );
-   ti->setValue( new ExprValue(Item(false), ti->line(), ti->chr() ), expr_deletor );
+   ti->setValue( new ExprValue(Item(false), ti->line(), ti->chr() ), treestep_deletor );
 }
 
 
@@ -240,7 +239,7 @@ void apply_Atom_True ( const Rule&, Parser& p )
    ti->token( sp.Atom );
    Item val;
    val.setBoolean(true);
-   ti->setValue( new ExprValue(val, ti->line(), ti->chr()), expr_deletor );
+   ti->setValue( new ExprValue(val, ti->line(), ti->chr()), treestep_deletor );
 }
 
 void apply_Atom_Self ( const Rule&, Parser& p )
@@ -250,7 +249,7 @@ void apply_Atom_Self ( const Rule&, Parser& p )
 
    TokenInstance* ti = p.getNextToken();
    ti->token(sp.Atom);
-   ti->setValue( new ExprSelf, expr_deletor );
+   ti->setValue( new ExprSelf, treestep_deletor );
 }
 
 void apply_Atom_FSelf ( const Rule&, Parser& p )
@@ -260,29 +259,17 @@ void apply_Atom_FSelf ( const Rule&, Parser& p )
 
    TokenInstance* ti = p.getNextToken();
    ti->token(sp.Atom);
-   ti->setValue( new ExprFSelf, expr_deletor );
+   ti->setValue( new ExprFSelf, treestep_deletor );
 }
 
-void apply_Atom_Continue( const Rule&, Parser& p )
+void apply_Atom_Init ( const Rule&, Parser& p )
 {
-   SourceParser& sp = static_cast<SourceParser&>(p);   
-   TokenInstance* ti = p.getNextToken();
-   
-   Item cont;
-   cont.setContinue();
-   ti->token( sp.Atom );
-   ti->setValue( new ExprValue(cont, ti->line(), ti->chr()), expr_deletor );
-}
+   // << (r_Atom_Nil << "Atom_Self" << apply_Atom_Delf << T_init )
+   SourceParser& sp = static_cast<SourceParser&>(p);
 
-void apply_Atom_Break ( const Rule&, Parser& p )
-{
-   SourceParser& sp = static_cast<SourceParser&>(p);   
    TokenInstance* ti = p.getNextToken();
-   
-   Item b;
-   b.setBreak();
-   ti->token( sp.Atom );
-   ti->setValue( new ExprValue(b, ti->line(), ti->chr()), expr_deletor );
+   ti->token(sp.Atom);
+   ti->setValue( new ExprInit, treestep_deletor );
 }
 
 void apply_Atom_Nil ( const Rule&, Parser& p )
@@ -292,7 +279,7 @@ void apply_Atom_Nil ( const Rule&, Parser& p )
 
    TokenInstance* ti = p.getNextToken();
    ti->token( sp.Atom );
-   ti->setValue( new ExprValue(Item(), ti->line(), ti->chr()), expr_deletor );
+   ti->setValue( new ExprValue(Item(), ti->line(), ti->chr()), treestep_deletor );
 }
 
 void apply_expr_atom( const Rule&, Parser& p )
@@ -303,7 +290,7 @@ void apply_expr_atom( const Rule&, Parser& p )
    Expression* expr = (Expression*) ti->detachValue();
    
    ti->token( sp.Expr );
-   ti->setValue( expr, expr_deletor );
+   ti->setValue( expr, treestep_deletor );
 }
 
 }

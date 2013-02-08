@@ -156,7 +156,7 @@ public:
       m_mtx[poolId].lock();
       SymbolSet::iterator iter = m_symbols[poolId].find(&name);
       if( iter == m_symbols[poolId].end() ) {
-         s = new Symbol( name, poolId == 1 );
+         s = new Symbol( name );
          m_symbols[poolId][&s->name()] = s;
          isFirst = true;
       }
@@ -252,6 +252,7 @@ Engine::Engine()
    //
    m_symbols = new SymbolPool;
    m_baseSymbol = m_symbols->get("$base",0);
+   m_ruleBaseSymbol = m_symbols->get("$rulebase",0);
    m_functionClass = new ClassFunction;
    m_stringClass = new ClassString;
    m_rangeClass = new ClassRange;
@@ -923,29 +924,33 @@ Symbol* Engine::baseSymbol() const
    return m_baseSymbol;
 }
 
-
-Symbol* Engine::getSymbol( const String& name, bool global )
+Symbol* Engine::ruleBaseSymbol() const
 {
-   fassert( m_instance != 0 );
-   return m_instance->m_symbols->get(name, global ? 1 : 0);
+   return m_ruleBaseSymbol;
 }
 
-Symbol* Engine::getSymbol( const String& name, bool global, bool& isFirst )
+Symbol* Engine::getSymbol( const String& name )
 {
    fassert( m_instance != 0 );
-   return m_instance->m_symbols->get(name, global ? 1 : 0, isFirst);
+   return m_instance->m_symbols->get(name, 0);
+}
+
+Symbol* Engine::getSymbol( const String& name, bool& isFirst )
+{
+   fassert( m_instance != 0 );
+   return m_instance->m_symbols->get(name, 0, isFirst);
 }
 
 void Engine::refSymbol( Symbol* sym )
 {
    fassert( m_instance != 0 );
-   m_instance->m_symbols->ref(sym, sym->isGlobal() ? 1 : 0);
+   m_instance->m_symbols->ref(sym, 0);
 }
 
 void Engine::releaseSymbol( Symbol* sym )
 {
    fassert( m_instance != 0 );
-   m_instance->m_symbols->release(sym, sym->isGlobal() ? 1 : 0);
+   m_instance->m_symbols->release(sym, 0);
 }
 
 }

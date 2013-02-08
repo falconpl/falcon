@@ -1,0 +1,24 @@
+/*
+@name Rule -- explicit doubt
+
+@output
+Rule explicit doubt test
+1
+2
+3
+4
+Done!
+@endoutput
+
+*/
+
+> "Rule explicit doubt test"
+
+a = 0
+rule
+   ? a += 1
+   > a
+   a == 4
+end
+
+> "Done!"

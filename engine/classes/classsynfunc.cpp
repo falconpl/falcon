@@ -116,7 +116,7 @@ void ClassSynFunc::store( VMContext*, DataWriter* stream, void* instance ) const
    // saving the overall data.
    stream->write( synfunc->name() );
    stream->write( synfunc->declaredAt() );
-   stream->write( synfunc->isPredicate() );
+   stream->write( synfunc->isConstructor() );
    stream->write( synfunc->isEta() );
    stream->write( synfunc->signature() );
    
@@ -129,7 +129,7 @@ void ClassSynFunc::store( VMContext*, DataWriter* stream, void* instance ) const
 
 void ClassSynFunc::restore(VMContext* ctx, DataReader* stream) const
 {
-   bool bPred, bEta;
+   bool bConstructor, bEta;
    int line;
    String name, signature;
    
@@ -137,14 +137,17 @@ void ClassSynFunc::restore(VMContext* ctx, DataReader* stream) const
    TRACE1("ClassSynFunc::restore %s", name.c_ize() );
 
    stream->read( line );
-   stream->read( bPred );
+   stream->read( bConstructor );
    stream->read( bEta );
    stream->read( signature );
 
    SynFunc* synfunc = new SynFunc( name, 0, line );
-   synfunc->setPredicate( bPred );
    synfunc->setEta( bEta );
    synfunc->signature( signature );
+   if( bConstructor )
+   {
+      synfunc->setConstructor();
+   }
 
    try {
       synfunc->variables().restore( stream );

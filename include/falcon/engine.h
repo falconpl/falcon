@@ -586,12 +586,20 @@ public:
     */
    Symbol* baseSymbol() const;
    
+   /** Returns a pointer to the rule base dynsymbol.
+
+    The base symbol is a symbol that is inserted
+    at the head of each rule frame to save the corresponding
+    data stack frame.
+    */
+   Symbol* ruleBaseSymbol() const;
+
    /** Returns a pointer to a local or global symbol.
      Each call to this function increases the reference of the
      retrieved symbol.
     */
-   static Symbol* getSymbol( const String& name, bool global );
-   static Symbol* getSymbol( const String& name, bool global, bool& isFirst );
+   static Symbol* getSymbol( const String& name );
+   static Symbol* getSymbol( const String& name, bool& isFirst );
    static void refSymbol(Symbol* sym);
    static void releaseSymbol( Symbol* sym );
 
@@ -691,7 +699,7 @@ protected:
    StdSteps* m_stdSteps;
    StdErrors* m_stdErrors;
    Symbol* m_baseSymbol;
-
+   Symbol* m_ruleBaseSymbol;
 };
 
 }

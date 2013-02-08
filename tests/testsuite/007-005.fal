@@ -1,0 +1,43 @@
+/*
+@name Rule -- Determinization
+
+@output
+Rule determinization
+A: 0; B: 0
+A: 1; B: 0
+A: 2; B: 0
+A: 3; B: 0
+Done!!
+@endoutput
+
+*/
+
+> "Rule determinization"
+
+
+a = 0
+b = 0
+inc = function ( v )
+   var = init
+   if not var
+      var = 0
+   end
+   
+   if var < 3
+      init = var + 1
+      return? var
+   else
+      return var
+   end
+end
+
+
+rule
+   a = inc()
+   ! b = inc()
+   > @"A: $a; B: $b" 
+   false
+   or
+   > "Done!!"
+end
+

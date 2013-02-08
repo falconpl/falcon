@@ -77,7 +77,7 @@ bool ClassSymbol::op_init( VMContext* ctx, void*, int32 pcount ) const
    {
       String& name = *item->asString();
       bool isFirst = false;
-      Symbol* sym = Engine::getSymbol(name, false, isFirst );
+      Symbol* sym = Engine::getSymbol(name, isFirst );
       if( isFirst ) {
          FALCON_GC_STORE( this, sym );
       }
@@ -163,19 +163,16 @@ void ClassSymbol::store( VMContext*, DataWriter* stream, void* instance ) const
 {
    Symbol* symbol = static_cast<Symbol*>(instance);
    stream->write( symbol->name() );
-   stream->write( (char) (symbol->isGlobal()?1:0) );
 }
 
 
 void ClassSymbol::restore( VMContext* ctx, DataReader* stream ) const
 {
    String name;
-   char type;
    
    stream->read( name );
-   stream->read( type );
    
-   Symbol* sym = Engine::getSymbol( name, type != 0 ? true : false );
+   Symbol* sym = Engine::getSymbol( name );
    ctx->pushData( Item( this, sym ) );
 }
 

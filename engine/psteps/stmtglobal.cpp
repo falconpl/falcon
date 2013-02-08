@@ -121,7 +121,7 @@ bool StmtGlobal::addSymbol( const String& name )
    }
 
    // resolve as local
-   Symbol* sym = Engine::getSymbol(name, false);
+   Symbol* sym = Engine::getSymbol(name);
    _p->m_symbols.push_back(sym);
    return true;
 }
@@ -182,7 +182,7 @@ void StmtGlobal::restore( DataReader* stream )
       name.size(0);
       stream->read(name);
       // resolve as local
-      Symbol* sym = Engine::getSymbol( name, false );
+      Symbol* sym = Engine::getSymbol( name );
       _p->m_symbols.push_back( sym );
    }
 }

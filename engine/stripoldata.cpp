@@ -667,7 +667,7 @@ bool StrIPolData::prepareStep( VMContext* ctx , uint32 id )
    {
       if( slice->m_symbol == 0 )
       {
-         slice->m_symbol = Engine::getSymbol(slice->m_def, false);
+         slice->m_symbol = Engine::getSymbol(slice->m_def);
       }
       Item* value = ctx->resolveSymbol(slice->m_symbol, false);
       fassert( value != 0 );

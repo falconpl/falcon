@@ -65,7 +65,7 @@ public:
     This constrcutor can be used to create a symbol placeholder in an expression,
     which can be then filled later on.
     */
-   ExprSymbol( const String& name, bool isGlobal = false, int line = 0, int chr = 0 );
+   ExprSymbol( const String& name,  int line = 0, int chr = 0 );
    
    /** Declare A fully constructor symbol access expression.
     
@@ -115,6 +115,7 @@ protected:
       ExprSymbol* m_owner;
       
       PStepLValue( ExprSymbol* owner ): m_owner(owner) { apply = apply_; }
+      virtual ~PStepLValue(){}
       virtual void describeTo( String&, int depth=0 ) const;
       static void apply_( const PStep* ps, VMContext* ctx );
    };   

@@ -96,11 +96,11 @@ void apply_expr_call( const Rule&, Parser& p )
 
    if( call != 0 )
    {
-      ti->setValue( call, expr_deletor );
+      ti->setValue( call, treestep_deletor );
    }
    else
    {
-      ti->setValue( callps, expr_deletor );
+      ti->setValue( callps, treestep_deletor );
    }
    
    p.simplify(4,ti);

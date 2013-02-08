@@ -1,0 +1,71 @@
+/*
+@name Rule -- value rollback test
+
+@output
+Rule value rollback and accept test
+Changed 1
+Changed 2
+Changed 3
+Try to be original: Original
+Changed 1
+Branched
+Still try to be original: Original
+Changed 1
+Changed 2
+Changed 3
+Accepted changed
+Try to change: Change
+Done!
+@endoutput
+
+*/
+
+> "Rule value rollback and accept test"
+
+function tryAgain(n)
+   if n < 3
+      return? n+1
+   else
+      return false
+   end
+end
+
+a = "Original"
+t = 0
+rule
+   t = tryAgain(t)
+   a = "Changed " + t
+   > a
+   false
+end
+
+> "Try to be original: ", a
+
+t = 0
+rule
+   t = tryAgain(t)
+   a = "Changed " + t
+   > a
+   !
+   false
+   or
+   > "Branched"
+end
+
+> "Still try to be original: ", a
+
+t = 0
+rule
+   t = tryAgain(t)
+   a = "Changed " + t
+   > a
+   false
+   or
+   a = "Change"
+   > "Accepted changed"
+end
+
+> "Try to change: ", a
+
+
+> "Done!"

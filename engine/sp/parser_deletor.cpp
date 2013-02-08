@@ -32,12 +32,11 @@ void list_deletor(void* data)
    delete expr;
 }
 
-void expr_deletor(void* data)
+void treestep_deletor(void* data)
 {
-   Expression* expr = static_cast<Expression*>(data);
+   TreeStep* expr = static_cast<TreeStep*>(data);
    delete expr;
 }
-
 
 
 void pair_list_deletor(void* data)

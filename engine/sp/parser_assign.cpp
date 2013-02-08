@@ -60,7 +60,7 @@ void apply_expr_assign( const Rule&, Parser& p )
       ctx->accessSymbols(list->front());
       ti->setValue(
          new ExprAssign( firstPart, list->front() ),
-         expr_deletor );
+         treestep_deletor );
    }
    else
    {
@@ -79,7 +79,7 @@ void apply_expr_assign( const Rule&, Parser& p )
 
       ti->setValue(
          new ExprAssign( firstPart, array ),
-         expr_deletor );
+         treestep_deletor );
    }
    // clear, so we keep the expr even if destroyed
    list->clear();
@@ -120,7 +120,7 @@ static void apply_expr_list( const Rule&, Parser& p )
       ++iter;
    }
    TokenInstance* ti = TokenInstance::alloc(v1->line(), v1->chr(), sp.Expr);
-   ti->setValue( array, expr_deletor );
+   ti->setValue( array, treestep_deletor );
 
    // free the expressions in the list
    list->clear();

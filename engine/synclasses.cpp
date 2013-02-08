@@ -58,6 +58,7 @@
 #include <falcon/psteps/exprrange.h>
 #include <falcon/psteps/exprself.h>
 #include <falcon/psteps/exprfself.h>
+#include <falcon/psteps/exprinit.h>
 #include <falcon/psteps/exprstarindex.h>
 #include <falcon/psteps/exprstripol.h>
 #include <falcon/psteps/exprsym.h>
@@ -77,7 +78,7 @@
 #include <falcon/psteps/stmtloop.h>
 #include <falcon/psteps/stmtraise.h>
 #include <falcon/psteps/stmtreturn.h>
-#include <falcon/psteps/stmtrule.h>
+#include <falcon/psteps/exprrule.h>
 #include <falcon/psteps/stmtselect.h>
 #include <falcon/psteps/stmtswitch.h>
 #include <falcon/psteps/stmttry.h>
@@ -101,6 +102,7 @@ SynClasses::SynClasses( Class* classSynTree, Class* classStatement, Class* class
    m_cls_expr( classExpr ),
    m_dummy_end(0)
 {
+   m_cls_treestep = Engine::instance()->treeStepClass();
 
    #include <falcon/synclasses_list.h>
 
@@ -117,6 +119,7 @@ SynClasses::SynClasses( Class* classSynTree, Class* classStatement, Class* class
    m_expr_pseudocall->userFlags(FALCON_SYNCLASS_ID_CALLFUNC);
 
    m_expr_tree->userFlags(FALCON_SYNCLASS_ID_TREE);
+   m_st_rulest->userFlags(FALCON_SYNCLASS_ID_RULE_SYNTREE);
 
 }
 
@@ -320,6 +323,7 @@ FALCON_STANDARD_SYNCLASS_OP_CREATE( XorOob, ExprXorOob, unaryExprSet )
 // GenRange -- seperated
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Self, ExprSelf, zeroaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE( FSelf, ExprFSelf, zeroaryExprSet )
+FALCON_STANDARD_SYNCLASS_OP_CREATE( Init, ExprInit, zeroaryExprSet )
 
 FALCON_STANDARD_SYNCLASS_OP_CREATE( StarIndexAccess, ExprStarIndex, binaryExprSet )
 
@@ -583,7 +587,6 @@ void SynClasses::ClassUnpack::store(Falcon::VMContext* ctx, Falcon::DataWriter* 
    for( uint32 i = 0; i < count; ++i )
    {
       Symbol* sym = expr->getAssignand(i);
-      stream->write( sym->isGlobal() );
       stream->write( sym->name() );
    }
 
@@ -598,12 +601,10 @@ void SynClasses::ClassUnpack::restore( VMContext* ctx, DataReader*dr ) const
 
       for( uint32 i = 0; i < count; ++i )
       {
-         bool isGlobal;
          String name;
-         dr->read(isGlobal);
          dr->read(name);
 
-         Symbol* sym = Engine::getSymbol( name, isGlobal );
+         Symbol* sym = Engine::getSymbol( name );
          expr->addAssignand(sym);
       }
 
@@ -725,7 +726,6 @@ void SynClasses::ClassGenSym::store( VMContext*, DataWriter* dw, void* instance 
    dw->write( es->line() );
    dw->write( es->chr() );
    dw->write( es->name() );
-   dw->write( es->symbol()->isGlobal() );
    dw->write( es->isPure() );
 
 }
@@ -733,19 +733,17 @@ void SynClasses::ClassGenSym::restore( VMContext* ctx, DataReader*dr ) const
 {
    int32 line, chr;
    String name;
-   bool bIsGlobal;
    bool bIsPure;
    dr->read( line );
    dr->read( chr );
    dr->read( name );
-   dr->read( bIsGlobal );
    dr->read( bIsPure );
 
    ExprSymbol* es = new ExprSymbol;
    ctx->pushData( Item( this, es ) );
    es->decl( line, chr );
    es->setPure( bIsPure );
-   Symbol* sym = Engine::getSymbol( name, bIsGlobal);
+   Symbol* sym = Engine::getSymbol( name );
    es->symbol( sym );
    sym->decref();
 }
@@ -1224,7 +1222,7 @@ FALCON_STANDARD_SYNCLASS_OP_CREATE( If, StmtIf, zeroaryExprSet )   //
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Loop, StmtLoop, zeroaryExprSet ) //
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Raise, StmtRaise, unaryExprSet )
 FALCON_STANDARD_SYNCLASS_OP_CREATE_EX( Return, StmtReturn, unaryExprSet )
-FALCON_STANDARD_SYNCLASS_OP_CREATE( Rule, StmtRule, zeroaryExprSet ) //
+FALCON_STANDARD_SYNCLASS_OP_CREATE( Rule, ExprRule, zeroaryExprSet ) //
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Select, StmtSelect, zeroaryExprSet ) //
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Switch, StmtSwitch, zeroaryExprSet ) //
 FALCON_STANDARD_SYNCLASS_OP_CREATE( Try, StmtTry, zeroaryExprSet ) //
@@ -1298,7 +1296,6 @@ void SynClasses::ClassForIn::store( VMContext* ctx, DataWriter*wr, void* instanc
    {
       Symbol* tgt = forin->param(i);
       wr->write( tgt->name() );
-      wr->write( tgt->isGlobal() );
    }
    m_parent->store( ctx, wr, forin );
 }
@@ -1313,12 +1310,10 @@ void SynClasses::ClassForIn::restore( VMContext* ctx, DataReader*dr ) const
       for( uint32 i = 0; i < count; ++i )
       {
          String name;
-         bool isGlobal = false;
 
          dr->read( name );
-         dr->read( isGlobal );
 
-         Symbol* sym = Engine::getSymbol(name, isGlobal);
+         Symbol* sym = Engine::getSymbol(name);
          expr->addParameter(sym);
       }
 

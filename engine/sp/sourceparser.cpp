@@ -286,10 +286,6 @@ SourceParser::SourceParser():
              << (r_default_short << "r_default_short" << apply_default_short << T_default << T_Colon )
       ;
 
-   S_Rule << "RULE"
-      << (r_rule << "rule" << apply_rule << T_rule << T_EOL )
-      ;
-
    S_Cut << "CUT"
       << (r_cut_expr << "cut-expr" << apply_cut_expr << T_Bang << Expr << T_EOL )
       << (r_cut << "cut" << apply_cut << T_Bang << T_EOL )
@@ -527,6 +523,10 @@ SourceParser::SourceParser():
    Expr<< (r_Expr_ep << "Expr_ep" << apply_expr_ep << T_CapPar );
    Expr<< (r_Expr_class << "Expr_class" << apply_expr_class << T_class );
    Expr<< (r_Expr_proto << "Expr_proto" << apply_expr_proto << T_OpenProto );
+   Expr<< (r_rule << "Rule_rule" << apply_rule << T_rule << T_EOL );
+
+
+   S_RuleOr << (r_rule_or << "Rule_rule_or" << apply_rule_branch << T_or << T_EOL );
 
    S_Function << "Function"
       /* This requires a bit of work << (r_function_short << "Function short" << apply_function_short
@@ -557,8 +557,7 @@ SourceParser::SourceParser():
       << (r_Atom_True<< "Atom_True" << apply_Atom_True << T_true )
       << (r_Atom_self<< "Atom_Self" << apply_Atom_Self << T_self )
       << (r_Atom_fself<< "Atom_FSelf" << apply_Atom_FSelf << T_fself )
-      << (r_Atom_continue<< "Atom_continue" << apply_Atom_Continue << T_continue )
-      << (r_Atom_break<< "Atom_break" << apply_Atom_Break << T_break )
+      << (r_Atom_init<< "Atom_Init" << apply_Atom_Init << T_init )
       << (r_Atom_Nil<< "Atom_Nil" << apply_Atom_Nil << T_nil )
       ;
 
@@ -752,9 +751,9 @@ SourceParser::SourceParser():
       << S_Catch
       << S_Finally   
       << S_Raise
-      << S_Rule
       << S_Cut
       << S_Doubt
+      << S_RuleOr
       << S_End
       << S_Return
       << S_Autoexpr
@@ -795,9 +794,9 @@ SourceParser::SourceParser():
       << S_Catch
       << S_Finally
       << S_Raise
-      << S_Rule
       << S_Cut
       << S_Doubt
+      << S_RuleOr
       << S_SmallEnd
       << S_Return
       << S_Autoexpr

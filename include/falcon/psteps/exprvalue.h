@@ -58,6 +58,7 @@ public:
    virtual ExprValue* clone() const;
    virtual bool isStatic() const;
    virtual void describeTo( String&, int depth=0 ) const;
+   virtual bool isStandAlone() const;
 
 private:
    Item m_item;

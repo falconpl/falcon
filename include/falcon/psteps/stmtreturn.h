@@ -54,10 +54,6 @@ private:
    bool m_bHasEval;
    
    static void apply_( const PStep*, VMContext* ctx );
-   static void apply_expr_( const PStep*, VMContext* ctx );
-   static void apply_doubt_( const PStep*, VMContext* ctx );
-   static void apply_expr_doubt_( const PStep*, VMContext* ctx );
-
 };
 
 }

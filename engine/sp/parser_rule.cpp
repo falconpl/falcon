@@ -28,7 +28,7 @@
 #include <falcon/sp/parser_deletor.h>
 #include <falcon/sp/parser_rule.h>
 
-#include <falcon/psteps/stmtrule.h>
+#include <falcon/psteps/exprrule.h>
 
 #include "private_types.h"
 #include "falcon/synclasses_id.h"
@@ -38,22 +38,48 @@ namespace Falcon {
 
 using namespace Parsing;
 
+
 void apply_rule( const Rule&, Parser& p )
 {
    // << (r_rule << "rule" << apply_rule << T_rule << T_EOL )
    TokenInstance* trule = p.getNextToken();
-   p.getNextToken();
+   SourceParser* sp = static_cast<SourceParser*>(&p);
 
    ParserContext* st = static_cast<ParserContext*>(p.context());
+   ExprRule* stmt_rule = new ExprRule( trule->line(), trule->chr() );
 
-   StmtRule* stmt_rule = new StmtRule( trule->line(), trule->chr() );
-   st->openBlock( stmt_rule, &stmt_rule->currentTree() );
+   // clear the stack
+   p.trimFromBase(1,1);
+
+   // our rule is now an expression
+   trule->token( sp->Expr );
+   trule->setValue( stmt_rule, treestep_deletor );
+
+   // enter the rule.
+   st->openBlock( stmt_rule, &stmt_rule->currentTree(), false, false );
+   p.pushState( "InlineFunc" );
+}
+
+void apply_rule_branch( const Rule&, Parser& p )
+{
+   // << apply_rule_branch << T_or << T_EOL )
+   TokenInstance* trule = p.getNextToken();
+
+   ParserContext* st = static_cast<ParserContext*>(p.context());
+   ExprRule* stmt_rule = static_cast<ExprRule*>(st->currentStmt());
+   if( stmt_rule == 0 || stmt_rule->handler()->userFlags() != FALCON_SYNCLASS_ID_RULE )
+   {
+      p.addError( e_syn_or, p.currentSource(), trule->line(), trule->chr() );
+   }
+   else {
+      stmt_rule->addAlternative();
+      SynTree* tree = &stmt_rule->currentTree();
+      st->changeBranch( tree );
+   }
 
    // clear the stack
    p.simplify(2);
 }
-
-
 
 static void apply_cut_internal( const Rule&, Parser& p, bool hasExpr )
 {

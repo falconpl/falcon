@@ -297,7 +297,7 @@ public:
     \param bAutoClose Close automatically the context at first statement.
     \see checkSymbols();
     */
-   void openBlock( Statement* parent, SynTree* branch, bool bAutoClose = false );
+   void openBlock( TreeStep* parent, SynTree* branch, bool bAutoClose = false, bool bAutoAdd = true );
 
    /** Changes the branch of a block statement context without closing it.
     \return A new SynTree if it's possible to open a branch now, 0 otherwise.
@@ -315,6 +315,7 @@ public:
     \see checkSymbols();
     */
    SynTree* changeBranch();
+   void changeBranch( SynTree* );
 
    /** Opens a new Function statement context.
     \param func The function being created.
@@ -363,7 +364,7 @@ public:
       Zero is returned also for topmost-level statements inside functions.
       The returned value is non-zero only if a block statement has been opened.
     */
-   Statement* currentStmt() const { return m_cstatement; }
+   TreeStep* currentStmt() const { return m_cstatement; }
 
    /** Gets the current function.
       \return The current function or 0 if the parser is parsing in the main code.
@@ -455,7 +456,7 @@ private:
    SynTree* m_st;
 
    // Current function, precached for performance.
-   Statement* m_cstatement;
+   TreeStep* m_cstatement;
 
    // Current function, precached for performance.
    SynFunc * m_cfunc;

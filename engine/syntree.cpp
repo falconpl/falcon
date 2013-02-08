@@ -61,7 +61,7 @@ SynTree::SynTree( int line, int chr ):
    
    /** Mark this as a composed class */
    m_bIsComposed = true;
-   apply = apply_empty_;
+   apply = apply_;
 }
 
 
@@ -85,8 +85,7 @@ SynTree::SynTree( const SynTree& other ):
       m_selector = other.m_selector->clone();
       m_selector->setParent(this);
    }
-   
-   setApply();
+   apply = apply_;
 }
 
 
@@ -168,23 +167,20 @@ void SynTree::apply_( const PStep* ps, VMContext* ctx )
    TRACE1( "Syntree::apply -- %p with %d/%d", ps, seqId, len );
    
    // execute the first step without popping.
-   if( seqId == 0 )
+   if( seqId > 0 )
    {
-      TreeStep* step = steps.m_exprs[ seqId++ ];
-      if( ctx->stepInYield(step, cf) )
-      {
-         TRACE2( "Syntree::apply -- going deep at step %d \"%s\"",
-                     ctx->currentCode().m_seqId-1,
-                     step->oneLiner().c_ize() );
-         return;
-      }
+      ctx->popData();
+   }
+   else if( len == 0 )
+   {
+      ctx->pushData(Item());
+      ctx->popCode();
+      return;
    }
 
    --len;
-   while( seqId < (int) len )
+   while( seqId < (int32)len )
    {
-      ctx->popData();
-
       TreeStep* step = steps.m_exprs[ seqId++ ];
       if( ctx->stepInYield(step, cf) )
       {
@@ -193,29 +189,12 @@ void SynTree::apply_( const PStep* ps, VMContext* ctx )
                      step->oneLiner().c_ize() );
          return;
       }
+
+      ctx->popData();
    }
 
-   // leave the last expression value as is.
-   //ctx->popCode();
-   ctx->popData(); // we're certain to be here with 2 steps at least!!!
-   ctx->resetCode(steps.m_exprs[len]);
-}
-
-
-void SynTree::apply_empty_( const PStep*, VMContext* ctx )
-{
-   // we don't exist -- and should not have been generated, actually
-   ctx->popCode();
-   ctx->pushData(Item());
-}
-
-
-void SynTree::apply_single_( const PStep* ps, VMContext* ctx )
-{
-   const SynTree* self = static_cast<const SynTree*>(ps);
-   register const PStep* singps = self->_p->m_steps.m_exprs[0];
-   ctx->resetCode( singps );
-   singps->apply(singps, ctx);
+   // step in the last and let it go.
+   ctx->resetCode(steps.m_exprs[seqId]);
 }
 
 
@@ -251,9 +230,6 @@ bool SynTree::insert( int pos, TreeStep* step )
    {
       return false;
    }
-   if ( _p->m_steps.arity() <= 2 ){
-      setApply();   
-   }
    return true;
 }
 
@@ -263,10 +239,7 @@ bool SynTree::remove( int pos )
    {
       return false;
    }
-   
-   if ( _p->m_steps.arity() <= 2 ){
-      setApply();
-   }
+
    return true;
 }
 
@@ -281,16 +254,13 @@ TreeStep* SynTree::detach( int pos )
    ts->setParent(0);
    _p->m_steps.m_exprs.erase(_p->m_steps.m_exprs.begin() + pos);
 
-   if ( _p->m_steps.arity() <= 2 ){
-      setApply();
-   }
+
    return ts;
 }
 
 void SynTree::clear()
 {
    _p->m_steps.clear();
-   setApply();
 }
 
 bool SynTree::append( TreeStep* step )
@@ -300,9 +270,7 @@ bool SynTree::append( TreeStep* step )
       return false;
    }
    _p->m_steps.m_exprs.push_back( step );
-   if ( _p->m_steps.arity() <= 2 ){
-      setApply();   
-   }
+
    return true;
 }
 
@@ -335,23 +303,6 @@ TreeStep* SynTree::at( int pos ) const
    return _p->m_steps.m_exprs[pos];
 }
 
-void SynTree::setApply()
-{ 
-   switch( _p->m_steps.m_exprs.size() )
-   {
-      case 0:
-         apply = apply_empty_;
-         break;
-         
-      case 1:
-         apply = apply_single_;
-         break;
-         
-      default:
-         apply = apply_;
-         break;
-   }
-}
 
 }
 

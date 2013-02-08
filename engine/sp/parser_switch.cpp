@@ -161,7 +161,7 @@ static void on_switch_closed(void* parser_void)
 {
    Parser* p = static_cast<Parser*>(parser_void);
    ParserContext* ctx = static_cast<ParserContext*>(p->context());
-   Statement* stmt = ctx->currentStmt();
+   TreeStep* stmt = ctx->currentStmt();
    fassert( stmt != 0 );
    fassert( (stmt->handler()->userFlags() == FALCON_SYNCLASS_ID_CASEHOST)
             || (stmt->handler()->userFlags() == FALCON_SYNCLASS_ID_SWITCH) );
@@ -227,7 +227,7 @@ static bool make_case_branch(  Parser& p, ParserContext* ctx, SynTree* st, bool 
    TokenInstance* tlist = p.getNextToken();      
    
    // get a new syntree for what comes next.
-   Statement* stmt = ctx->currentStmt();
+   TreeStep* stmt = ctx->currentStmt();
    if( stmt == 0 ) {
        p.addError(e_case_outside, p.currentSource(), tlist->line(), tlist->chr() );
        return false;
@@ -320,7 +320,7 @@ static bool make_default_branch( Parser& p, ParserContext* ctx, SynTree* st, boo
    TokenInstance* ti = p.getNextToken();
       
    // Gets the parent statement.
-   Statement* stmt = ctx->currentStmt();
+   TreeStep* stmt = ctx->currentStmt();
    if( stmt == 0 ) {
        p.addError(e_case_outside, p.currentSource(), ti->line(), ti->chr() );
        return false;
@@ -487,10 +487,10 @@ void apply_CaseListToken_sym( const Rule&, Parser& p )
    ParserContext* ctx = static_cast<ParserContext*>(p.context());
 
    String& name = *ti->asString();
-   Variable* var = ctx->accessSymbol(name);
+   ctx->accessSymbol(name);
    // SYM is not 0
    ti->token( sp->CaseListToken );
-   ti->setValue( new CaseItem( Engine::getSymbol(name, var->isGlobalOrExtern()) ), &CaseItem::deletor );
+   ti->setValue( new CaseItem( Engine::getSymbol(name) ), &CaseItem::deletor );
 }
 
 

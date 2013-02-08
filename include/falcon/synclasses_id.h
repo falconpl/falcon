@@ -69,6 +69,10 @@
 */
 #define FALCON_SYNCLASS_ID_SYMBOL   12
 
+/** ID for the rule syntrees class
+*/
+#define FALCON_SYNCLASS_ID_RULE_SYNTREE   13
+
 #endif	/* SYNCLASSES_ID_H */
 
 /* end of synclasses_id.h */

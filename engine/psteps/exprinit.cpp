@@ -1,19 +1,20 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: ExprFSelf.cpp
+   FILE: exprinit.cpp
 
-   Syntactic tree item definitions -- Self accessor expression.
+   Syntactic tree item definitions -- Init values for generators
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
-   Begin: Sun, 16 Oct 2011 21:30:11 +0200
+   Begin: Thu, 07 Feb 2013 18:11:20 +0100
 
    -------------------------------------------------------------------
-   (C) Copyright 2011: the FALCON developers (see list in AUTHORS file)
+   (C) Copyright 2013: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
 */
 
-#include <falcon/psteps/exprfself.h>
+
+#include <falcon/psteps/exprinit.h>
 #include <falcon/trace.h>
 #include <falcon/vmcontext.h>
 #include <falcon/pstep.h>
@@ -25,56 +26,53 @@
 
 namespace Falcon {
 
-ExprFSelf::ExprFSelf( int line, int chr ):
+ExprInit::ExprInit( int line, int chr ):
    Expression( line, chr )
 {
-   FALCON_DECLARE_SYN_CLASS( expr_fself )
+   FALCON_DECLARE_SYN_CLASS( expr_init )
+   m_pstep_lvalue = &m_pslv;
    apply = apply_;
 }
 
-ExprFSelf::ExprFSelf( const ExprFSelf &other ):
+ExprInit::ExprInit( const ExprInit &other ):
    Expression(other)
 {
+   m_pstep_lvalue = &m_pslv;
    apply = apply_;
 }
 
-ExprFSelf::~ExprFSelf() {}
+ExprInit::~ExprInit() {}
 
 
-bool ExprFSelf::isStatic() const
+bool ExprInit::isStatic() const
 {
    return false;
 }
 
-ExprFSelf* ExprFSelf::clone() const
+void ExprInit::describeTo( String & str, int ) const
 {
-   return new ExprFSelf( *this );
+   str = "init";
 }
 
-bool ExprFSelf::simplify( Item& ) const
-{
-   return false;
-}
-
-void ExprFSelf::describeTo( String & str, int ) const
-{
-   str = "fself";
-}
-
-void ExprFSelf::apply_( const PStep*, VMContext* ctx )
+void ExprInit::apply_( const PStep*, VMContext* ctx )
 {
    ctx->popCode();
-   if( ctx->callDepth()>=1 ) 
-   {
-      register Function* func = ctx->currentFrame().m_function;
-      ctx->pushData( Item( func->handler(), func ) );
-   }
-   else 
-   {
-      ctx->pushData(Item());
-   }
+   ctx->pushData( ctx->readInit() );
+}
+
+void ExprInit::PStepLValue::describeTo( String& str, int ) const
+{
+   str = "init";
+}
+
+
+void ExprInit::PStepLValue::apply_( const PStep*, VMContext* ctx )
+{
+   ctx->popCode();
+   ctx->topData().copied(true);
+   ctx->writeInit(ctx->topData());
 }
 
 }
 
-/* end of ExprFSelf.cpp */
+/* end of exprinit.h */

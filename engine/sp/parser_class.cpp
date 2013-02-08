@@ -132,7 +132,7 @@ static void make_class( Parser& p, int tCount,
       ti = TokenInstance::alloc( p.currentLine(), p.currentLexer()->character(), sp.Expr);
       Expression* expr = new ExprValue( FALCON_GC_STORE( cls->handler(), cls ),
                cls->sr().line(), cls->sr().chr() );
-      ti->setValue( expr, expr_deletor );
+      ti->setValue( expr, treestep_deletor );
    }
 
    // Some parameters to take care of?
@@ -324,7 +324,7 @@ void apply_FromClause_next( const Rule&, Parser& p  )
    inhList->add( static_cast<ExprInherit*>(tInh->detachValue()) );
 
    TokenInstance* tiNew = TokenInstance::alloc(tInhList->line(), tInhList->chr(), sp.FromClause );
-   tiNew->setValue( inhList, &expr_deletor );
+   tiNew->setValue( inhList, &treestep_deletor );
    p.simplify(3, tiNew );
 }
 
@@ -339,7 +339,7 @@ void apply_FromClause_first( const Rule&, Parser& p )
    TokenInstance* tlist = TokenInstance::alloc(tInh->line(), tInh->chr(), sp.FromClause );
    ExprParentship* ep = new ExprParentship( tInh->line(), tInh->chr() );   
    ep->add( static_cast<ExprInherit*>(tInh->detachValue()) );
-   tlist->setValue( ep, &expr_deletor );
+   tlist->setValue( ep, &treestep_deletor );
 
    p.simplify(1, tlist);
 }
@@ -368,7 +368,7 @@ void apply_FromClause_entry_with_expr( const Rule&, Parser& p )
    
 
    TokenInstance* tInh = TokenInstance::alloc(tname->line(), tname->chr(), sp.FromEntry );
-   tInh->setValue( ei, &expr_deletor );
+   tInh->setValue( ei, &treestep_deletor );
 
    p.simplify( 4, tInh );
 }
@@ -383,7 +383,7 @@ void apply_FromClause_entry( const Rule&, Parser& p )
 
    TokenInstance* tInh = TokenInstance::alloc(tname->line(), tname->chr(), sp.FromEntry );
    ExprInherit* ei = new ExprInherit( *tname->asString(), tname->line(), tname->chr());
-   tInh->setValue( ei, expr_deletor );
+   tInh->setValue( ei, treestep_deletor );
    p.simplify( 1, tInh );
 }
 

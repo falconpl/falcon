@@ -229,8 +229,9 @@ public:
    Parsing::Rule r_default;
    Parsing::Rule r_default_short;
    
-   Parsing::NonTerminal S_Rule;
+   Parsing::NonTerminal S_RuleOr;
    Parsing::Rule r_rule;
+   Parsing::Rule r_rule_or;
 
    Parsing::NonTerminal S_Cut;
    Parsing::Rule r_cut_expr;
@@ -494,6 +495,7 @@ public:
    Parsing::Rule r_Atom_True;
    Parsing::Rule r_Atom_self;
    Parsing::Rule r_Atom_fself;
+   Parsing::Rule r_Atom_init;
    Parsing::Rule r_Atom_continue;
    Parsing::Rule r_Atom_break;
    Parsing::Rule r_Atom_Nil;

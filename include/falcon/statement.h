@@ -36,7 +36,10 @@ public:
    Statement( int32 line=0, int32 chr=0 ):
       TreeStep( TreeStep::e_cat_statement, line, chr ),
       m_discardable(false)
-   {}
+   {
+      // all the statements are composed, as they parse their expressions separately
+      m_bIsComposed = true;
+   }
    
    virtual ~Statement();
 

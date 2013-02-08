@@ -152,6 +152,9 @@ void on_close_function( void* thing )
    SourceParser& sp = *static_cast<SourceParser*>(thing);
    ParserContext* ctx = static_cast<ParserContext*>(sp.context());
    SynFunc* func = ctx->currentFunc();
+
+   /*
+   ATM I don't want this
    if ( func->syntree().size() == 1 )
    {
       if( func->syntree().at(0)->handler()->userFlags() == FALCON_SYNCLASS_ID_RULE )
@@ -159,11 +162,12 @@ void on_close_function( void* thing )
          func->setPredicate( true );
       }
    }
+   */
    
    // was this a closure?
    if( func->variables().closedCount() > 0 ) {
       // change our token -- from function (value) to closure
-      sp.getLastToken()->setValue( new ExprClosure(func), expr_deletor );
+      sp.getLastToken()->setValue( new ExprClosure(func), treestep_deletor );
    }  
 }
 
@@ -185,7 +189,7 @@ void on_close_lambda( void* thing )
    // was this a closure?
    if( func->variables().closedCount() > 0 ) {
       // change our token -- from function (value) to closure
-      sp.getLastToken()->setValue( new ExprClosure(func), expr_deletor );
+      sp.getLastToken()->setValue( new ExprClosure(func), treestep_deletor );
    }  
 }
 
@@ -246,7 +250,7 @@ static void internal_expr_func(const Rule&, Parser& p, bool isEta )
 
    // give the context the occasion to say something about this item
    Expression* expr= new ExprValue( Item( func->handler(), func ), tf->line(),tf->chr() );
-   ti->setValue(expr,expr_deletor);
+   ti->setValue(expr,treestep_deletor);
 
    // remove this stuff from the stack
    p.simplify( isEta ? 6 : 5,ti);
@@ -366,7 +370,7 @@ void apply_ep_body(const Rule&, Parser& p)
 
    lit->setChild(ep);
    // transform the topmost stack token.
-   ti->setValue( lit, expr_deletor );
+   ti->setValue( lit, treestep_deletor );
    ti->token(sp.Expr);
    p.trim(1);
 
@@ -398,7 +402,7 @@ static void internal_lambda_params(const Rule&, Parser& p, bool isEta )
 
    TokenInstance* ti = TokenInstance::alloc(tarr->line(),tarr->chr(), sp.Expr);
    Expression* expr = new ExprValue( Item(func->handler(), func), tarr->line(),tarr->chr() );
-   ti->setValue(expr,expr_deletor);
+   ti->setValue(expr,treestep_deletor);
 
    // remove this stuff from the stack
    p.simplify(2,ti);
@@ -464,7 +468,7 @@ void internal_lit_params(const Rule&, Parser& p, bool isEta )
    
    // (,list,)
    ti = TokenInstance::alloc( ti->line(), ti->chr(), sp.Expr);
-   ti->setValue( lit, expr_deletor );
+   ti->setValue( lit, treestep_deletor );
    p.simplify(3,ti);
    // Use the left "(" as our expression.
    

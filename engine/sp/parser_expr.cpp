@@ -88,7 +88,7 @@ static void apply_expr_binary( const Rule&, Parser& p, BinaryExpression* bexpr )
    TokenInstance* ti = TokenInstance::alloc(v1->line(), v1->chr(), sp.Expr);
    bexpr->first(static_cast<Expression*>(v1->detachValue()));
    bexpr->second(static_cast<Expression*>(v2->detachValue()));
-   ti->setValue( bexpr, expr_deletor );
+   ti->setValue( bexpr, treestep_deletor );
 
    p.simplify(3,ti);
 }
@@ -156,7 +156,7 @@ void apply_expr_preinc(const Rule&, Parser& p )
    TokenInstance* value = p.getNextToken();
 
    TokenInstance* ti2 = TokenInstance::alloc( plpl->line(), plpl->chr(), sp.Expr );
-   ti2->setValue( new ExprPreInc(static_cast<Expression*>(value->detachValue()), plpl->line(), plpl->chr()), expr_deletor );
+   ti2->setValue( new ExprPreInc(static_cast<Expression*>(value->detachValue()), plpl->line(), plpl->chr()), treestep_deletor );
 
    p.simplify(2,ti2);
 }
@@ -169,7 +169,7 @@ void apply_expr_preinc(const Rule&, Parser& p )
    /*TokenInstance* plpl  =*/ p.getNextToken();
 
    TokenInstance* ti2 = TokenInstance::alloc( value->line(), value->chr(), sp.Expr );
-   ti2->setValue( new ExprPostInc(static_cast<Expression*>(value->detachValue()), value->line(), value->chr()), expr_deletor );
+   ti2->setValue( new ExprPostInc(static_cast<Expression*>(value->detachValue()), value->line(), value->chr()), treestep_deletor );
 
    p.simplify(2,ti2);
 }
@@ -182,7 +182,7 @@ void apply_expr_preinc(const Rule&, Parser& p )
    TokenInstance* value = p.getNextToken();
 
    TokenInstance* ti2 = TokenInstance::alloc( plpl->line(), plpl->chr(), sp.Expr );
-   ti2->setValue( new ExprPreDec(static_cast<Expression*>(value->detachValue()), plpl->line(), plpl->chr()), expr_deletor );
+   ti2->setValue( new ExprPreDec(static_cast<Expression*>(value->detachValue()), plpl->line(), plpl->chr()), treestep_deletor );
 
    p.simplify(2,ti2);
 }
@@ -195,7 +195,7 @@ void apply_expr_preinc(const Rule&, Parser& p )
    /*TokenInstance* plpl  =*/ p.getNextToken();
 
    TokenInstance* ti2 = TokenInstance::alloc( value->line(), value->chr(), sp.Expr );
-   ti2->setValue( new ExprPostDec(static_cast<Expression*>(value->detachValue()), value->line(), value->chr()), expr_deletor );
+   ti2->setValue( new ExprPostDec(static_cast<Expression*>(value->detachValue()), value->line(), value->chr()), treestep_deletor );
 
    p.simplify(2,ti2);
 }
@@ -296,7 +296,7 @@ void apply_expr_auto( const Rule&, Parser& p, BinaryExpression* aexpr )
    aexpr->first( firstPart );
    aexpr->second( secondPart );
    TokenInstance* ti = TokenInstance::alloc(tfirst->line(), tfirst->chr(), sp.Expr);
-   ti->setValue( aexpr, expr_deletor );
+   ti->setValue( aexpr, treestep_deletor );
    p.simplify( 3, ti );
 }
 
@@ -369,7 +369,7 @@ static void apply_expr_unary( const Rule&, Parser& p, UnaryExpression* un )
    
    // Complexify the value
    value->token( sp.Expr );   // be sure to change it
-   value->setValue( un, expr_deletor );
+   value->setValue( un, treestep_deletor );
    p.simplify(1); // remove 1 token and keep the value.
 }
 
@@ -424,7 +424,7 @@ void apply_expr_unquote( const Rule&, Parser& p )
    ExprUnquote* un = new ExprUnquote( child , value->line(), value->chr());
    // Complexify the value
    value->token( sp.Expr );   // be sure to change it
-   value->setValue( un, expr_deletor );
+   value->setValue( un, treestep_deletor );
    p.simplify(1); // remove 1 token and keep the value.
 
    // now, was it ok?
@@ -476,7 +476,7 @@ void apply_expr_pars( const Rule&, Parser& p )
    p.getNextToken();
 
    TokenInstance* ti2 = TokenInstance::alloc(ti->line(), ti->chr(), sp.Expr);
-   ti2->setValue( ti->detachValue(), expr_deletor );
+   ti2->setValue( ti->detachValue(), treestep_deletor );
    p.simplify(3,ti2);
 }
 
@@ -493,7 +493,7 @@ void apply_expr_dot( const Rule&, Parser& p )
    ti->setValue( new ExprDot(
          *v2->asString(),
          static_cast<Expression*>(v1->detachValue())
-      ), expr_deletor );
+      ), treestep_deletor );
 
    p.simplify(3,ti);
 }
@@ -515,7 +515,7 @@ void apply_expr_provides( const Rule& , Parser& p )
 
    // Complexify the value
    texpr->token( sp.Expr );   // be sure to change it
-   texpr->setValue( provides, expr_deletor );
+   texpr->setValue( provides, treestep_deletor );
    p.trim(2); // remove the 2 tokens in front
 }
 

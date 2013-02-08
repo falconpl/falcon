@@ -142,7 +142,7 @@ void apply_elif( const Rule&, Parser& p )
       Expression* expr = static_cast<Expression*>(texpr->detachValue());
       ParserContext* st = static_cast<ParserContext*>(p.context());
 
-      Statement* current = st->currentStmt();
+      TreeStep* current = st->currentStmt();
       if( current == 0 || current->handler()->userFlags() != FALCON_SYNCLASS_ID_ELSEHOST )
       {
          p.addError( e_syn_elif, p.currentSource(), tif->line(), tif->chr() );
@@ -185,7 +185,7 @@ void apply_else( const Rule&, Parser& p )
 
       ParserContext* st = static_cast<ParserContext*>(p.context());
 
-      Statement* current = st->currentStmt();
+      TreeStep* current = st->currentStmt();
       if( current == 0 || current->handler()->userFlags() != FALCON_SYNCLASS_ID_ELSEHOST )
       {
          p.addError( e_syn_else, p.currentSource(), telse->line(), telse->chr() );

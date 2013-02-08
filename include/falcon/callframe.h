@@ -54,13 +54,7 @@ public:
    uint32 m_paramCount;
 
    /** Stack base for this frame; item at this point is parameter 0 */
-   uint32 m_stackBase;
-
-   /** Stack base for this frame when the function is invoked.
-    Rules can temporarily change the stack base. This stackbase is granted
-    to be the initial stack base of the function.
-    */
-   uint32 m_initBase;
+   uint32 m_dataBase;
 
    /** Local symbols stack base.
     \TODO This might be a temporary solution. Needs to be tested for performance
@@ -90,9 +84,7 @@ public:
 
    /** True if self has been passed. */
    bool m_bMethodic;
-   
-   
-   
+
    // Actually never used, just used at compile time by vector.
    CallFrame()
    {}
@@ -102,8 +94,7 @@ public:
       m_closure(0),
       m_closingData(0),
       m_paramCount( pc ),
-      m_stackBase( sb ),
-      m_initBase( sb ),
+      m_dataBase( sb ),
       m_locsBase( locb ),
       m_dynsBase( dynb ),
       m_codeBase( cb ),
@@ -116,8 +107,7 @@ public:
       m_closure(0),
       m_closingData(0),
       m_paramCount( pc ),
-      m_stackBase( sb ),
-      m_initBase( sb ),
+      m_dataBase( sb ),
       m_locsBase( locb ),
       m_dynsBase( dynb ),
       m_codeBase( cb ),

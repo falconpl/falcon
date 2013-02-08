@@ -75,7 +75,7 @@ static StmtForTo* internal_for_to( Parser& p, TokenInstance* tfor,
          const String& name, Expression* start, Expression* end, Expression* step )
 {
    ParserContext* ctx = static_cast<ParserContext*>(p.context());
-   Variable* var = ctx->defineSymbol( name );
+   ctx->defineSymbol( name );
    if( start != 0 ) ctx->accessSymbols( start );
    if( end != 0 ) ctx->accessSymbols( end );
    if( step != 0 ) ctx->accessSymbols( step );
@@ -125,8 +125,7 @@ static StmtForTo* internal_for_to( Parser& p, TokenInstance* tfor,
    if( step != 0 ) ft->stepExpr( step );
    */
    
-   bool isGlobal = var == 0 ? false : var->isGlobalOrExtern();
-   StmtForTo* ft = new StmtForTo( Engine::getSymbol(name, isGlobal),
+   StmtForTo* ft = new StmtForTo( Engine::getSymbol(name),
                start, end, step, tfor->line(), tfor->chr() );
    return ft;
 }
@@ -260,9 +259,8 @@ void apply_for_in( const Rule&, Parser& p )
    while( iter != list->end() )
    {
       const String& name = *iter;
-      Variable* var = ctx->defineSymbol( name );
-      bool isGlobal = var == 0 ? false : var->isGlobalOrExtern();
-      forin->addParameter( Engine::getSymbol(name, isGlobal ) );
+      ctx->defineSymbol( name );
+      forin->addParameter( Engine::getSymbol(name  ) );
       ++iter;
    }
          
@@ -293,9 +291,8 @@ void apply_for_in_short( const Rule&, Parser& p )
    while( iter != list->end() )
    {
       const String& name = *iter;
-      Variable* var = ctx->defineSymbol( name );
-      bool isGlobal = var == 0 ? false : var->isGlobalOrExtern();
-      forin->addParameter( Engine::getSymbol(name, isGlobal ) );
+      ctx->defineSymbol( name );
+      forin->addParameter( Engine::getSymbol(name) );
       ++iter;
    }
          
@@ -313,7 +310,7 @@ static void apply_forfirst_internal( const Rule&, Parser& p, bool bShort )
    // << T_forfirst << T_EOL )
    ParserContext* ctx = static_cast<ParserContext*>(p.context());
    
-   Statement* stmt = ctx->currentStmt();
+   TreeStep* stmt = ctx->currentStmt();
    
    // TODO: Use a typing system?
    if( stmt == 0 || stmt->handler()->userFlags() != FALCON_SYNCLASS_ID_FORCLASSES )
@@ -356,7 +353,7 @@ static void apply_formiddle_internal( const Rule&, Parser& p, bool isShort )
    // << T_formiddle << T_EOL )
    ParserContext* ctx = static_cast<ParserContext*>(p.context());
    
-   Statement* stmt = ctx->currentStmt();
+   TreeStep* stmt = ctx->currentStmt();
    
    if( stmt == 0 || stmt->handler()->userFlags() != FALCON_SYNCLASS_ID_FORCLASSES )
    {
@@ -396,7 +393,7 @@ static void apply_forlast_internal( const Rule&, Parser& p, bool isShort )
 {
    // << T_forlast << T_EOL )
    ParserContext* ctx = static_cast<ParserContext*>(p.context());   
-   Statement* stmt = ctx->currentStmt();
+   TreeStep* stmt = ctx->currentStmt();
    
    if( stmt == 0 || stmt->handler()->userFlags() != FALCON_SYNCLASS_ID_FORCLASSES )
    {

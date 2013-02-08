@@ -22,7 +22,7 @@
 namespace Falcon {
 
 void list_deletor(void* data);
-void expr_deletor(void* data);
+void treestep_deletor(void* data);
 void pair_list_deletor(void* data);
 void name_list_deletor(void* data);
 

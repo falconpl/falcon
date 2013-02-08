@@ -34,9 +34,8 @@ Symbol::Symbol():
    // leave all unconfigured.
 }
 
-Symbol::Symbol( const String& name, bool isGlobal ):
+Symbol::Symbol( const String& name ):
    m_name(name),
-   m_isGlobal( isGlobal ),
    m_counter(1)
 {
 }
@@ -45,7 +44,6 @@ Symbol::Symbol( const String& name, bool isGlobal ):
    
 Symbol::Symbol( const Symbol& other ):
    m_name(other.m_name),
-   m_isGlobal( other.m_isGlobal ),
    m_counter(1)
 {
 }

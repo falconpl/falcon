@@ -75,7 +75,7 @@ void apply_expr_proto(const Rule&, Parser& p)
 
    TokenInstance* ti = TokenInstance::alloc( 0,0, sp.Expr );
    ExprProto* eproto = new ExprProto;
-   ti->setValue( eproto, expr_deletor );
+   ti->setValue( eproto, treestep_deletor );
    p.simplify( 1, ti );
 
    StmtTempProto* proto = new StmtTempProto;

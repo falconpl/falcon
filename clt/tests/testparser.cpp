@@ -29,7 +29,7 @@
 #include <falcon/sp/sourcelexer.h>
 #include <falcon/sp/parsercontext.h>
 
-#include <falcon/psteps/stmtrule.h>
+#include <falcon/psteps/exprrule.h>
 #include <falcon/psteps/exprvalue.h>
 #include <falcon/psteps/exprsym.h>
 

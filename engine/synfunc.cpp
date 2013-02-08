@@ -21,8 +21,7 @@
 #include <falcon/item.h>
 #include <falcon/trace.h>
 #include <falcon/pstep.h>
-
-#include <falcon/psteps/stmtreturn.h>
+#include <falcon/stdsteps.h>
 
 namespace Falcon
 {
@@ -30,12 +29,13 @@ namespace Falcon
 
 SynFunc::SynFunc( const String& name, Module* owner, int32 line ):
    Function( name, owner, line ),
-   m_syntree( this ),
-   m_bIsPredicate( false )
+   m_syntree( this )
 {
-   // by default, use a statement return as fallback cleanup. 
-   setPredicate( false );
+   static PStep* retStep = &Engine::instance()->stdSteps()->m_returnFrame;
+
    m_category = e_c_synfunction;
+   m_bIsConstructor = false;
+   m_retStep = retStep;
 }
 
 
@@ -49,41 +49,6 @@ Class* SynFunc::handler() const
    static Class* cls = Engine::instance()->synFuncClass();   
    return cls;
 }
-
-
-void SynFunc::setPredicate(bool bmode)
-{
-   static StmtReturn s_stdReturn;
-   
-   class PStepReturnRule: public PStep
-   {
-   public:
-      PStepReturnRule() { apply = apply_; }
-      virtual ~PStepReturnRule() {}
-      void describeTo( String& v, int ) const { v = "Automatic return rule value"; }
-      
-   private:
-      static void apply_( const PStep*, VMContext* ctx ) {
-         Item b;
-         b.setBoolean( ctx->ruleEntryResult() );
-         ctx->returnFrame( b );
-      }
-   };
-   
-   static PStepReturnRule s_ruleReturn;
-   
-   m_bIsPredicate = bmode;
-   if( bmode )
-   {
-      m_retStep = &s_ruleReturn;
-   }
-   else
-   {
-      // reset the default return value
-      m_retStep = &s_stdReturn;
-   }
-}
-
 
 void SynFunc::setConstructor()
 {
@@ -101,8 +66,8 @@ void SynFunc::setConstructor()
    };
    
    static PStepReturnCtor s_ctorReturn;
-      
-    
+
+   m_bIsConstructor = true;
    // reset the default return value
    m_retStep = &s_ctorReturn;
 }

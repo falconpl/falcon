@@ -67,7 +67,6 @@ void ClassSynTree::store( VMContext* ctx, DataWriter* stream, void* instance ) c
 
    if(st->target() != 0) {
       stream->write( true );
-      stream->write( st->target()->isGlobal() );
       stream->write( st->target()->name() ) ;
    }
    else {
@@ -81,7 +80,6 @@ void ClassSynTree::store( VMContext* ctx, DataWriter* stream, void* instance ) c
 void ClassSynTree::restore( VMContext* ctx, DataReader* stream ) const
 {
    bool hasSym;
-   bool isGlobal;
 
    SynTree* st = new SynTree;
    ctx->pushData( Item( this, st ) );
@@ -89,10 +87,9 @@ void ClassSynTree::restore( VMContext* ctx, DataReader* stream ) const
    try {
       stream->read( hasSym );
       if( hasSym ) {
-         stream->read( isGlobal );
          String symname;
          stream->read( symname );
-         Symbol* sym = Engine::getSymbol( symname, isGlobal );
+         Symbol* sym = Engine::getSymbol( symname );
          st->target(sym);
       }
 
@@ -109,8 +106,6 @@ void ClassSynTree::restore( VMContext* ctx, DataReader* stream ) const
 void ClassSynTree::unflatten( VMContext* ctx, ItemArray& subItems, void* instance ) const
 {
    m_parent->unflatten( ctx, subItems, instance );
-   SynTree* tgt = static_cast<SynTree*>(instance);
-   tgt->setApply();
 }
 
 

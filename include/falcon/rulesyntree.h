@@ -31,13 +31,13 @@ class FALCON_DYN_CLASS RuleSynTree: public SynTree
 {
 
 public:
-   RuleSynTree();
+   RuleSynTree( int line = 0, int chr = 0 );
    RuleSynTree( const RuleSynTree& other );
    virtual ~RuleSynTree();
 
    RuleSynTree* clone() const { return new RuleSynTree( *this ); }
 private:
-   static void apply_( const PStep* ps, VMContext* ctx );
+   static void rapply_( const PStep* ps, VMContext* ctx );
 
    class PStepNext: public PStep {
    public:

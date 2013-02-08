@@ -74,13 +74,13 @@ VMContext::LinearStack<datatype__>::~LinearStack()
 
 VMContext::VMContext( Process* prc, ContextGroup* grp ):
    m_lastRaised(0),
-   m_ruleEntryResult(false),
    m_catchBlock(0),
    m_id(0),
    m_next_schedule(0),
    m_inspectible(true),
    m_bInspectMark(false),
    m_bSleeping(false),
+   m_bDeterm(true),
    m_events(0),
    m_inGroup(grp),
    m_process(prc),
@@ -127,7 +127,10 @@ void VMContext::reset()
    acquire(0);
 
    m_catchBlock = 0;
-   m_ruleEntryResult = false;
+   m_inspectible = true;
+   m_bInspectMark = false;
+   m_bSleeping = false;
+   m_bDeterm = true;
 
    m_dynsStack.reset();
    m_codeStack.reset();
@@ -485,70 +488,202 @@ void VMContext::copyData( Item* target, size_t count, size_t start)
 
 void VMContext::startRuleFrame()
 {
-   CallFrame& cf = currentFrame();
-   int32 stackBase = cf.m_stackBase;
-   long localCount = (long)((m_dataStack.m_top+1) - m_dataStack.m_base) - stackBase;
-   while ( m_dataStack.m_top + localCount + 1 > m_dataStack.m_max )
-   {
-      m_dataStack.more();
-   }
+   TRACE1( "VMContext::startRuleFrame -- dataDepth: %ld; dynsDepth: %ld; codeDepth: %ld",
+            dataSize(), m_dynsStack.depth(), m_codeStack.depth());
 
-   Item& ruleFrame = addDataSlot();
-   ruleFrame.type( FLC_ITEM_FRAMING );
-   ruleFrame.content.data.val64 = stackBase;
-   ruleFrame.content.data.val64 <<= 32;
-   ruleFrame.content.data.val64 |= 0xFFFFFFFF;
-   ruleFrame.content.mth.ruleTop = stackBase;
+   static Symbol* base = Engine::instance()->baseSymbol();
+   DynsData* slot = m_dynsStack.addSlot();
 
-   // copy the local variables.
-   memcpy( m_dataStack.m_top + 1, m_dataStack.m_base + stackBase, localCount * sizeof(Item) );
+   register Item& frame = slot->m_internal;
+   slot->m_sym = base;
+   slot->m_value = &slot->m_internal; // overkill
+   frame.type(FLC_ITEM_FRAMING);
+   int64 dataDepth = m_dataStack.depth();
+   dataDepth <<= 32;
+   // StmtRule or the rule master is ALREADY in the code stack,
+   // so we have to record the previous depth m_codeStack.depth()-1
+   uint32 codeDepth = m_codeStack.depth()-1;
+   frame.content.data.val64 = dataDepth | codeDepth;
+   frame.flags(1);
 
-   // move forward the stack base.
-   cf.m_stackBase = dataSize();
-   m_dataStack.m_top += localCount; // point to the last local
 }
 
 
-void VMContext::addRuleNDFrame( uint32 tbPoint )
+void VMContext::startRuleNDFrame( uint32 tbPoint )
 {
-   CallFrame& cf = currentFrame();
-   int32 stackBase = cf.m_stackBase;
-   int32 oldRuleTop = m_dataStack.m_base[stackBase-1].content.mth.ruleTop;
+   TRACE1( "VMContext::startRuleNDFrame -- dataDepth: %ld; dynsDepth: %ld; codeDepth: %ld",
+            dataSize(), m_dynsStack.depth(), m_codeStack.depth());
 
-   long localCount = (long)((m_dataStack.m_top+1) - m_dataStack.m_base) - stackBase;
-   while ( m_dataStack.m_top + localCount + 1 > m_dataStack.m_max )
+   static Symbol* base = Engine::instance()->baseSymbol();
+   DynsData* slot = m_dynsStack.addSlot();
+
+   register Item& frame = slot->m_internal;
+   slot->m_sym = base;
+   slot->m_value = &slot->m_internal; // overkill
+   frame.type(FLC_ITEM_FRAMING);
+   int64 dataDepth = m_dataStack.depth();
+   dataDepth <<= 32;
+   frame.content.data.val64 = dataDepth | tbPoint;
+   frame.flags(0);
+}
+
+uint32 VMContext::unrollRuleNDFrame()
+{
+   TRACE2( "VMContext::unrollRuleNDFrame -- dataDepth: %ld; dynsDepth: %ld; codeDepth: %ld",
+            dataSize(), m_dynsStack.depth(), m_codeStack.depth());
+
+   static Symbol* base = Engine::instance()->baseSymbol();
+
+   DynsData* dbase = m_dynsStack.m_base + currentFrame().m_dynsBase;
+   DynsData* top = m_dynsStack.m_top;
+   while( top >= dbase )
    {
-      m_dataStack.more();
+      if( top->m_sym == base )
+      {
+         register Item& frame = top->m_internal;
+         int64 depth = frame.content.data.val64;
+         m_dataStack.unroll( 0xFFFFFFFF & (depth >> 32));
+
+         // return 0xFFFFFFFF or the real depth depending on the flags.
+         uint32 ret;
+         if( top->m_internal.flags() == 0 )
+         {
+            // try again
+            ret = (depth & 0xFFFFFFFF);
+            m_dynsStack.m_top = top-1;
+         }
+         else {
+            // nowhere else to go.
+            ret = 0xFFFFFFFF;
+            m_dynsStack.m_top = top;
+         }
+
+         TRACE1( "VMContext::unrollRuleNDFrame -- after unroll dataDepth: %ld; dynsDepth: %ld; codeDepth: %ld",
+                     dataSize(), m_dynsStack.depth(), m_codeStack.depth());
+         return ret;
+      }
+
+      top--;
    }
 
-   Item& ruleFrame = addDataSlot();
-   ruleFrame.type( FLC_ITEM_FRAMING );
-   ruleFrame.content.data.val64 = stackBase;
-   ruleFrame.content.data.val64 <<= 32;
-   ruleFrame.content.data.val64 |= tbPoint;
-   ruleFrame.content.mth.ruleTop = oldRuleTop;
+   return 0xFFFFFFFF;
+}
 
-   // copy the local variables.
-   memcpy( m_dataStack.m_top + 1, m_dataStack.m_base + stackBase, localCount * sizeof(Item) );
 
-   // move forward the stack base.
-   cf.m_stackBase = dataSize();
-   m_dataStack.m_top += localCount;
+void VMContext::dropRuleNDFrames()
+{
+   TRACE2( "VMContext::dropRuleNDFrames -- dataDepth: %ld; dynsDepth: %ld; codeDepth: %ld",
+            dataSize(), m_dynsStack.depth(), m_codeStack.depth());
+
+   static Symbol* base = Engine::instance()->baseSymbol();
+   static Symbol* baseIgnore = Engine::instance()->ruleBaseSymbol();
+
+   DynsData* dbase = m_dynsStack.m_base + currentFrame().m_dynsBase;
+   DynsData* top = m_dynsStack.m_top;
+   while( top >= dbase )
+   {
+      if( top->m_sym == base )
+      {
+         register Item& frame = top->m_internal;
+
+         if( frame.flags() == 1 )
+         {
+            break;
+         }
+         else {
+            top->m_sym = baseIgnore;
+         }
+      }
+
+      top--;
+   }
+}
+
+
+void VMContext::unrollRule()
+{
+   TRACE1( "VMContext::unrollRule -- dataDepth: %ld; dynsDepth: %ld; codeDepth: %ld",
+                  dataSize(), m_dynsStack.depth(), m_codeStack.depth());
+
+   static Symbol* base = Engine::instance()->baseSymbol();
+
+   DynsData* dbase = m_dynsStack.m_base + currentFrame().m_dynsBase;
+   DynsData* top = m_dynsStack.m_top;
+   while( top >= dbase )
+   {
+      if( top->m_sym == base )
+      {
+         register Item& frame = top->m_internal;
+         // we're interested in the ruleframe only
+         if( top->m_internal.flags() == 1 )
+         {
+            int64 depth = frame.content.data.val64;
+            m_dataStack.unroll( 0xFFFFFFFF & (depth >> 32));
+            m_dynsStack.m_top = top - 1;
+            // in this case, we're iterested in removing the rule frame too.
+            m_codeStack.unroll( depth & 0xFFFFFFFF );
+
+            TRACE1( "VMContext::unrollRule -- after unroll dataDepth: %ld; dynsDepth: %ld; codeDepth: %ld",
+                        dataSize(), m_dynsStack.depth(), m_codeStack.depth());
+            return;
+         }
+      }
+
+      top--;
+   }
+
+   fassert2( false, "Base rule frame not found" );
 }
 
 
 void VMContext::commitRule()
 {
-   CallFrame& cf = currentFrame();
-   long localCount = localVarCount();
-   int32 baseRuleTop = params()[-1].content.mth.ruleTop;
+   TRACE1( "VMContext::commitRule -- dataDepth: %ld; dynsDepth: %ld; codeDepth: %ld",
+               dataSize(), m_dynsStack.depth(), m_codeStack.depth());
 
-   // copy the local variables.
-   memcpy( m_dataStack.m_base + baseRuleTop, m_dataStack.m_base + cf.m_stackBase, localCount * sizeof(Item) );
+   static Symbol* base = Engine::instance()->baseSymbol();
 
-   // move forward the stack base.
-   cf.m_stackBase = baseRuleTop;
-   m_dataStack.m_top = m_dataStack.m_base + baseRuleTop + localCount - 1;
+   DynsData* dbase = m_dynsStack.m_base + currentFrame().m_dynsBase;
+   DynsData* top = m_dynsStack.m_top;
+   while( top >= dbase )
+   {
+      if( top->m_sym == base )
+      {
+         register Item& frame = top->m_internal;
+         if( top->m_internal.flags() == 1 )
+         {
+            int64 depth = frame.content.data.val64;
+            m_dataStack.unroll( 0xFFFFFFFF & (depth >> 32));
+            m_codeStack.unroll( depth & 0xFFFFFFFF );
+            m_dynsStack.m_top = top - 1;
+            TRACE1( "VMContext::commitRule -- after unroll dataDepth: %ld; dynsDepth: %ld; codeDepth: %ld",
+                        dataSize(), m_dynsStack.depth(), m_codeStack.depth());
+            return;
+         }
+      }
+      else
+      {
+         // apply the variable down, copying its values to previous frames.
+         register const Symbol* sym = top->m_sym;
+         DynsData* top1 = top-1;
+         while( top1 >= dbase )
+         {
+            if( top1->m_sym == sym )
+            {
+               *top1->m_value = *top->m_value;
+               // if the're are other copies of the symbol downstairs,
+               // we'll catch them later.
+               break;
+            }
+
+            --top1;
+         }
+      }
+
+      top--;
+   }
+
+   fassert2( false, "Base rule frame not found" );
 }
 
 
@@ -611,9 +746,9 @@ VMContext::t_unrollResult VMContext::unrollToNext( const _checker& check )
          return e_unroll_suspended;
       }
 
-      // unroll the call.
-      curData = m_dataStack.m_base + curFrame->m_initBase;
-      curDyns = m_dynsStack.m_base + curFrame->m_dynsBase;
+      // unroll the call --  bases are in length (pos+1)
+      curData = m_dataStack.m_base + curFrame->m_dataBase-1;
+      curDyns = m_dynsStack.m_base + curFrame->m_dynsBase-1;
       curFrame--;
    }
 
@@ -977,14 +1112,14 @@ void VMContext::callInternal( Function* function, int nparams )
          function->locate().c_ize(),
          m_callStack.m_top->m_codeBase, 
          m_callStack.m_top->m_dynsBase, 
-         m_callStack.m_top->m_stackBase );
+         m_callStack.m_top->m_dataBase );
 
 
    makeCallFrame( function, nparams );
    TRACE3( "-- codebase:%d, dynsBase:%d, stackBase:%d",
          m_callStack.m_top->m_codeBase, 
          m_callStack.m_top->m_dynsBase, 
-         m_callStack.m_top->m_stackBase );
+         m_callStack.m_top->m_dataBase );
 
    // do the call
    function->invoke( this, nparams );
@@ -999,13 +1134,13 @@ void VMContext::callInternal( Closure* closure, int32 nparams )
       function->locate().c_ize(),
       m_callStack.m_top->m_codeBase,
       m_callStack.m_top->m_dynsBase,
-      m_callStack.m_top->m_stackBase );
+      m_callStack.m_top->m_dataBase );
 
    makeCallFrame( closure, nparams );
    TRACE3( "-- codebase:%d, dynsBase:%d, stackBase:%d",
       m_callStack.m_top->m_codeBase,
       m_callStack.m_top->m_dynsBase,
-      m_callStack.m_top->m_stackBase );
+      m_callStack.m_top->m_dataBase );
 
    // do the call
    function->invoke( this, nparams );
@@ -1120,7 +1255,7 @@ void VMContext::addLocalFrame( VarMap* st, int pcount )
    while( p < pcount )
    {
       DynsData* dd = m_dynsStack.addSlot();
-      dd->m_sym = Engine::getSymbol(st->getParamName(p), false);
+      dd->m_sym = Engine::getSymbol(st->getParamName(p));
       dd->m_value = top;
       ++top;
       ++p;
@@ -1130,7 +1265,7 @@ void VMContext::addLocalFrame( VarMap* st, int pcount )
    pcount = st->paramCount();
    while( p < pcount ) {
       DynsData* dd = m_dynsStack.addSlot();
-      dd->m_sym = Engine::getSymbol(st->getParamName(p), false);
+      dd->m_sym = Engine::getSymbol(st->getParamName(p));
       dd->m_value = &dd->m_internal;
       dd->m_internal.setNil();
       ++p;
@@ -1243,7 +1378,7 @@ void VMContext::returnFrame_base( const Item& value )
    PARANOID( "Code stack underflow at return", (m_codeStack.m_top >= m_codeStack.m_base-1) );
    // Use initBase as stackBase may have been moved -- but keep 1 parameter ...
 
-   m_dataStack.unroll( topCall->m_initBase );
+   m_dataStack.unroll( topCall->m_dataBase );
    // notice: data stack can never be empty, an empty data stack is an error.
    PARANOID( "Data stack underflow at return", (m_dataStack.m_top >= m_dataStack.m_base) );
 
@@ -1281,7 +1416,7 @@ public:
    }
 
    inline static void post_return( VMContext* ctx ) {
-      ctx->SetNDContext();
+      ctx->setDeterm(false);
    }
 };
 
@@ -1308,7 +1443,7 @@ public:
    }
 
    inline static void post_return( VMContext* ctx ) {
-      ctx->SetNDContext();
+      ctx->setDeterm(false);
       Class* cls = 0;
       void* data = 0;
       ctx->topData().forceClassInst(cls, data);
@@ -1367,12 +1502,13 @@ void VMContext::defineSymbol( Symbol* sym)
 
 Item* VMContext::resolveSymbol( const Symbol* dyns, bool forAssign )
 {
-   TRACE1( "VMContext::resolveSymbol -- resolving %s symbol \"%s\"%s",
-            (dyns->isGlobal() ? "global": "local"),
+   TRACE1( "VMContext::resolveSymbol -- resolving symbol \"%s\"%s",
             dyns->name().c_ize(),
             (forAssign ? " (for assign)": " (for access)") );
 
    static Symbol* baseSym = Engine::instance()->baseSymbol();
+
+   bool isRule = false;
 
    // search for the dynsymbol in the current context.
    const CallFrame* cf = &currentFrame();
@@ -1391,14 +1527,22 @@ Item* VMContext::resolveSymbol( const Symbol* dyns, bool forAssign )
       // arrived at a local base?
       if ( baseSym == dd->m_sym )
       {
-         // in the end, we must create a new assignable slot.
-         // notice that evaluation parameters are above the base symbol.
-         DynsData* newSlot = m_dynsStack.addSlot();
-         newSlot->m_sym = dyns;
-         newSlot->m_internal.setNil();
-         newSlot->m_value = &newSlot->m_internal;
-         TRACE2( "VMContext::resolveSymbol -- \"%s\" went down to a local base, creating new.", dyns->name().c_ize() );
-         return newSlot->m_value;
+         if( forAssign )
+         {
+            // in the end, we must create a new assignable slot.
+            // notice that evaluation parameters are above the base symbol.
+            DynsData* newSlot = m_dynsStack.addSlot();
+            newSlot->m_sym = dyns;
+            newSlot->m_internal.setNil();
+            newSlot->m_value = &newSlot->m_internal;
+            TRACE2( "VMContext::resolveSymbol -- \"%s\" went down to a local base, creating new.", dyns->name().c_ize() );
+            return newSlot->m_value;
+         }
+
+         // this might be a rule base. If it is, we have things to copy below.
+         if( ! isRule && dd->m_internal.type() == FLC_ITEM_FRAMING) {
+            isRule = true;
+         }
       }
 
       --dd;
@@ -1427,7 +1571,7 @@ Item* VMContext::resolveSymbol( const Symbol* dyns, bool forAssign )
 
       case Variable::e_nt_param:
          // get the parameter even if not given (will be nil)
-         resolved = &m_dataStack.m_base[ lvar->id() + currentFrame().m_stackBase ];
+         resolved = &m_dataStack.m_base[ lvar->id() + currentFrame().m_dataBase ];
          break;
 
       default:
@@ -1439,8 +1583,15 @@ Item* VMContext::resolveSymbol( const Symbol* dyns, bool forAssign )
       {
          DynsData* newSlot = m_dynsStack.addSlot();
          newSlot->m_sym = dyns;
-         newSlot->m_internal.setNil();
-         newSlot->m_value = resolved;
+         if( isRule )
+         {
+            newSlot->m_internal = *resolved;
+            newSlot->m_value = &newSlot->m_internal;
+         }
+         else {
+            newSlot->m_internal.setNil();
+            newSlot->m_value = resolved;
+         }
          TRACE2( "VMContext::resolveSymbol -- \"%s\" Found in locals as %p (%s)",
                   dyns->name().c_ize(), resolved, resolved->describe().c_ize() );
          return resolved;
@@ -1475,10 +1626,19 @@ Item* VMContext::resolveSymbol( const Symbol* dyns, bool forAssign )
    }
    
    newSlot->m_sym = dyns;
-   newSlot->m_value = var;
+   if( isRule )
+   {
+      newSlot->m_internal = *var;
+      newSlot->m_value = &newSlot->m_internal;
+   }
+   else
+   {
+      newSlot->m_value = var;
+   }
 
-   TRACE2( "VMContext::resolveSymbol -- \"%s\" Resolved as new/global/extern %p (%s)",
-            dyns->name().c_ize(), var, var->describe().c_ize() );
+   TRACE2( "VMContext::resolveSymbol -- \"%s\" Resolved as new/global/extern %p (%s)%s",
+            dyns->name().c_ize(), var, var->describe().c_ize(),
+            (isRule? " as rule" : "") );
 
    return var;
 }
@@ -1583,10 +1743,10 @@ Item* VMContext::findLocal( const String& name ) const
       if( var != 0 ) {
          switch( var->type() ) {
          case Variable::e_nt_local:
-            return &m_dataStack.m_base[ var->id() + cf->m_stackBase + cf->m_paramCount ];
+            return &m_dataStack.m_base[ var->id() + cf->m_dataBase + cf->m_paramCount ];
 
          case Variable::e_nt_param:
-            return &m_dataStack.m_base[ var->id() + cf->m_stackBase ];
+            return &m_dataStack.m_base[ var->id() + cf->m_dataBase ];
 
          case Variable::e_nt_closed:
             if( cf->m_closure != 0 ) {
@@ -1777,6 +1937,8 @@ void VMContext::gcPerformMark()
 
    // then, other various elements.
    {
+      m_initWrite.gcMark(mark);
+      m_initRead.gcMark(mark);
       vm()->modSpace()->gcMark(mark);
    }
 }

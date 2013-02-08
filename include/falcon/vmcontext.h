@@ -155,9 +155,9 @@ public:
    \return A pointer to the nth parameter in the stack, or 0 if out of range.
     */
    inline const Item* param( uint32 n ) const {
-      fassert(m_dataStack.m_base+(n + currentFrame().m_stackBase) < m_dataStack.m_max );
+      fassert(m_dataStack.m_base+(n + currentFrame().m_dataBase) < m_dataStack.m_max );
       if( currentFrame().m_paramCount <= n ) return 0;
-      return &m_dataStack.m_base[ n + currentFrame().m_stackBase ];
+      return &m_dataStack.m_base[ n + currentFrame().m_dataBase ];
    }
 
    /** Return the nth parameter in the local context (non-const).
@@ -165,9 +165,9 @@ public:
    \return A pointer to the nth parameter in the stack, or 0 if out of range.
     */
    inline Item* param( uint32 n )  {
-      fassert(m_dataStack.m_base+(n + currentFrame().m_stackBase) < m_dataStack.m_max );
+      fassert(m_dataStack.m_base+(n + currentFrame().m_dataBase) < m_dataStack.m_max );
       if( currentFrame().m_paramCount <= n ) return 0;
-      return &m_dataStack.m_base[ n + currentFrame().m_stackBase ];
+      return &m_dataStack.m_base[ n + currentFrame().m_dataBase ];
    }
    
    /** Now alias to param.
@@ -183,7 +183,7 @@ public:
     This usually points to the first parameter of the currently executed function.
     */
    inline Item* params() {
-      return &m_dataStack.m_base[ currentFrame().m_stackBase ];
+      return &m_dataStack.m_base[ currentFrame().m_dataBase ];
    }
 
    inline int paramCount() {
@@ -212,13 +212,13 @@ public:
     *TODO use the local stack.
     */
    inline const Item* local( int n ) const {
-      fassert(m_dataStack.m_base+(n + currentFrame().m_stackBase + currentFrame().m_paramCount) < m_dataStack.m_max );
-      return &m_dataStack.m_base[ n + currentFrame().m_stackBase + currentFrame().m_paramCount ];
+      fassert(m_dataStack.m_base+(n + currentFrame().m_dataBase + currentFrame().m_paramCount) < m_dataStack.m_max );
+      return &m_dataStack.m_base[ n + currentFrame().m_dataBase + currentFrame().m_paramCount ];
    }
 
    inline Item* local( int n ) {
-	  fassert(m_dataStack.m_base+(n + currentFrame().m_stackBase + currentFrame().m_paramCount) < m_dataStack.m_max );
-      return &m_dataStack.m_base[ n + currentFrame().m_stackBase + currentFrame().m_paramCount ];
+	  fassert(m_dataStack.m_base+(n + currentFrame().m_dataBase + currentFrame().m_paramCount) < m_dataStack.m_max );
+      return &m_dataStack.m_base[ n + currentFrame().m_dataBase + currentFrame().m_paramCount ];
    }
 
    /** Push data on top of the stack.
@@ -355,7 +355,7 @@ public:
    }
 
    inline long localVarCount() const {
-      return (long)m_dataStack.depth() - currentFrame().m_stackBase;
+      return (long)m_dataStack.depth() - currentFrame().m_dataBase;
    }
 
    /** Copy multiple values in a target. */
@@ -380,119 +380,67 @@ public:
    /** Begins a new rule frame.
 
     This is called when a new rule is encountered to begin the rule framing.
+    \note Call this \b after pushing the StmtRule in the code stack.
+       UnrollRule and CommitRule will unroll also the PStep that was the current
+       one as this method is called.
     */
    void startRuleFrame();
 
    /** Adds a new local rule frame with a non-deterministic traceback point.
-    \param tbPoint a traceback point or 0xFFFFFFFF if there isn't any
-            traceback point (topmost rule frame in a rule).
-
-    This creates a copy of the parameters and local variables of the
-    current call context, and shifts the stackbase forward.
     */
-   void addRuleNDFrame( uint32 tbPoint );
+   void startRuleNDFrame( uint32 tbpoint );
 
    /** Retract the current rule status and resets the rule frame to its previous state.
     */
-   inline uint32 unrollRuleFrame()
-   {
-      CallFrame& callf = currentFrame();
+   uint32 unrollRuleNDFrame();
 
-      // assert if we're not in a rule frame.
-      fassert( callf.m_stackBase > callf.m_initBase );
-
-      // our frame informations are at param -1
-      int64 vals = params()[-1].asInteger();
-
-      // roll back to previous state stack state.
-      m_dataStack.m_top = m_dataStack.m_base + callf.m_stackBase - 2;
-      callf.m_stackBase = (int32) (vals >> 32);
-
-      // return the traceback part
-      return (uint32)(vals & 0xFFFFFFFF);
-   }
-
-   /** Retract all the ND branches and get back
-    */
-   inline void unrollRuleBranches()
-   {
-      CallFrame& callf = currentFrame();
-
-      // assert if we're not in a rule frame.
-      fassert( callf.m_stackBase > callf.m_initBase );
-
-      // our frame informations are at param -1
-      int64 vals = params()[-1].asInteger();
-      while( (vals & 0xFFFFFFFF) != 0xFFFFFF )
-      {
-         m_dataStack.m_top = m_dataStack.m_base + callf.m_stackBase - 2;
-
-         // roll back to previous state stack state.
-         callf.m_stackBase = (int32) (vals >> 32);
-
-         vals = params()[-1].asInteger();
-         // assert if we're not in a rule frame anymore!
-         fassert( callf.m_stackBase > callf.m_initBase );
-      }
-   }
+   void dropRuleNDFrames();
 
    /** Retract a whole rule, thus closing it.
     */
-   inline void unrollRule()
-   {
-      CallFrame& cf = currentFrame();
-      // assert if we're not in a rule frame.
-      fassert( cf.m_stackBase > cf.m_initBase );
-
-      long localCount = localVarCount();
-      int32 baseRuleTop = params()[-1].content.mth.ruleTop;
-      // move forward the stack base.
-      cf.m_stackBase = baseRuleTop;
-      m_dataStack.m_top = m_dataStack.m_base + baseRuleTop + localCount - 1;
-
-   }
+   void unrollRule();
 
    /** Commits a whole rule, thus closing it.
     */
    void commitRule();
 
-   /** Specicfy that the current context is ND.
-    When inside a rule, activating this bit will cause the upper rule to
-    consider the current operation as non-deterministic, and will cause a new
-    non-deterministic frame to be generated as the statement invoking this
-    method returns.
-
-    The method has no effect when not called from a non-rule context
+   /** Set a deterministic point
     */
-   void SetNDContext()
+   void setDeterm( bool mode )
    {
-      register CallFrame& cf = currentFrame();
-      // are we in a rule frame?
-      if( cf.m_initBase < cf.m_stackBase )
-      {
-         register Item& itm = m_dataStack.m_base[cf.m_stackBase-1];
-         itm.setOob(true);
-      }
+      m_bDeterm = mode;
    }
 
-   /** Checks (and clear) non-deterministic contexts.
-
-    A rule will check if a statement has performed some non-deterministic operation
-    calling this method, that will also clear the determinism status so no further
-    operation needs to be called by the checking rule.
-
-    */
-   bool checkNDContext()
+   bool isDeterm()
    {
-      register CallFrame& cf = currentFrame();
-      if( cf.m_initBase < cf.m_stackBase )
-      {
-         register Item& itm = m_dataStack.m_base[cf.m_stackBase-1];
-         register bool mode = itm.isOob();
-         itm.resetOob();
-         return mode;
-      }
-      return false;
+      return m_bDeterm;
+   }
+
+   const Item& readInit() const
+   {
+      return m_initRead;
+   }
+
+   void writeInit( const Item& init )
+   {
+      m_initWrite.assignFromRemote( init );
+   }
+
+   void commitInit() {
+      m_initRead = m_initWrite;
+   }
+
+   void clearInit() {
+      m_initRead.setNil();
+   }
+
+   void saveInit() {
+      pushData(m_initWrite);
+   }
+
+   void restoreInit() {
+      m_initRead = topData();
+      popData();
    }
 
    //=========================================================
@@ -608,7 +556,7 @@ public:
       topCall->m_codeBase = codeDepth();
       topCall->m_caller = m_caller;
       // initialize also initBase, as stackBase may move
-      topCall->m_initBase = topCall->m_stackBase = dataSize()-nparams;
+      topCall->m_dataBase = dataSize()-nparams;
       // TODO: enable rule application with dynsymbols?
       topCall->m_dynsBase = m_dynsStack.depth();
       topCall->m_paramCount = nparams;
@@ -627,7 +575,7 @@ public:
       topCall->m_codeBase = codeDepth();
       topCall->m_caller = m_caller;
       // initialize also initBase, as stackBase may move
-      topCall->m_initBase = topCall->m_stackBase = dataSize()-nparams;
+      topCall->m_dataBase = dataSize()-nparams;
       // TODO: enable rule application with dynsymbols?
       topCall->m_dynsBase = m_dynsStack.depth();
 
@@ -649,7 +597,7 @@ public:
       topCall->m_codeBase = codeDepth();
       topCall->m_caller = m_caller;
       // initialize also initBase, as stackBase may move
-      topCall->m_initBase = topCall->m_stackBase = dataSize()-nparams;
+      topCall->m_dataBase = dataSize()-nparams;
       // TODO: enable rule application with dynsymbols?
 
       topCall->m_dynsBase = m_dynsStack.depth();
@@ -1076,10 +1024,6 @@ public:
     \throw CodeError if base not found.
     */
    void unrollToLoopBase();
-
-
-   bool ruleEntryResult() const { return m_ruleEntryResult; }
-   void ruleEntryResult( bool v ) { m_ruleEntryResult = v; }
 
    //=============================================================
    // Try/catch
@@ -1608,11 +1552,12 @@ protected:
    /** Item whose raisal was suspended by a finally handling. */
    Item m_raised;
 
+   Item m_initRead;
+   Item m_initWrite;
+
    friend class VMachine;
    friend class SynFunc;
    friend class Scheduler;
-
-   bool m_ruleEntryResult;
 
    // temporary variable used during stack unrolls.
    const SynTree* m_catchBlock;
@@ -1631,6 +1576,7 @@ protected:
    bool m_inspectible;
    bool m_bInspectMark;
    bool m_bSleeping;
+   bool m_bDeterm;
    Mutex m_mtx_sleep;
 
    /** Set whenever an event was activated. */

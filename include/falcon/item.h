@@ -474,32 +474,32 @@ public:
 
    /**
     * Assign without interlocking the other item.
-    * \param other The local item from which we do an unlocked copy.
+    * \param local The local item from which we do an unlocked copy.
     *
     * This method only locks this item; this is ok
     * if the source is in the local context data stack.
     */
-   void assignFromLocal( const Item& other  )
+   void assignFromLocal( const Item& local  )
    {
-      other.copied(true);
+      local.copied(true);
       lock();
-      copy(other);
+      copy(local);
       unlock();
    }
 
    /**
-    * Perform an assignment to a local copy.
-    * \param other The remote, non local item from which we do locked copy.
+    * Perform an assignment from a remote locked item to a local copy.
+    * \param remote The remote, non local item from which we do locked copy.
     *
     * This method only locks this item; this is ok
     * if the source is in the local context data stack.
     */
-   void assignToLocal( const Item& other )
+   void assignFromRemote( const Item& remote )
    {
-      other.lock();
-      other.copied(true);
-      copy(other);
-      other.unlock();
+      remote.lock();
+      remote.copied(true);
+      copy(remote);
+      remote.unlock();
    }
 
 

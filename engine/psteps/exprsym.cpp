@@ -57,14 +57,14 @@ ExprSymbol::ExprSymbol( Symbol* target, int line, int chr ):
 }
 
 
-ExprSymbol::ExprSymbol( const String& name, bool isGlobal, int line, int chr ):
+ExprSymbol::ExprSymbol( const String& name, int line, int chr ):
    Expression( line, chr ),
    m_symbol( 0 ),
    m_pure(false),
    m_pslv(this)
 {
    FALCON_DECLARE_SYN_CLASS( expr_sym );
-   m_symbol = Engine::getSymbol(name, isGlobal );
+   m_symbol = Engine::getSymbol(name );
 
    apply = apply_;
    m_pstep_lvalue = &m_pslv;
@@ -132,7 +132,7 @@ void ExprSymbol::name( const String& n )
       Engine::releaseSymbol( m_symbol );
    }
 
-   m_symbol = Engine::getSymbol(n, false);
+   m_symbol = Engine::getSymbol(n);
 }
 
 

@@ -25,6 +25,8 @@
 #include <falcon/engine.h>
 #include <falcon/class.h>
 
+#include <falcon/synclasses_id.h>
+
 #include <falcon/psteps/exprvalue.h>
 
 namespace Falcon {
@@ -139,6 +141,15 @@ void ExprValue::describeTo( String & str, int depth ) const
    void* inst;
    m_item.forceClassInst(cls, inst);
    cls->describe(inst, str, depth );
+}
+
+bool ExprValue::isStandAlone() const
+{
+   if ( m_parent == 0 ) {
+      return false;
+   }
+
+   return m_item.isBoolean() && m_parent->handler()->userFlags() == FALCON_SYNCLASS_ID_RULE;
 }
 
 }

@@ -49,7 +49,7 @@ class ParserContext::CCFrame
    typedef union tag_elem {
       FalconClass* cls;
       SynFunc* func;
-      Statement* stmt;
+      TreeStep* stmt;
       SynTree* synTree;
       void* raw;
    } t_elem;
@@ -67,7 +67,7 @@ class ParserContext::CCFrame
    CCFrame();
    CCFrame( FalconClass* cls, bool bIsObject );
    CCFrame( SynFunc* func );
-   CCFrame( Statement* stmt, bool bAutoClose = false );
+   CCFrame( TreeStep* stmt, bool bAutoClose = false, bool bAutoAdd = true );
    CCFrame( SynTree* st );
 
    void setup();
@@ -87,13 +87,16 @@ public:
    /** True when the context should be closed immediately at first addStatement */
    bool m_bAutoClose;
 
+   /** Automatically add the statement when closed */
+   bool m_bAutoAdd;
+
    //===================================================
 
    // Pre-cached syntree for performance.
    SynTree* m_st;
 
    // Current function, precached for performance.
-   Statement* m_cstatement;
+   TreeStep* m_cstatement;
 
    // Current function, precached for performance.
    SynFunc * m_cfunc;
@@ -108,7 +111,8 @@ public:
 ParserContext::CCFrame::CCFrame():
    m_type( t_none_type ),
    m_bStatePushed( false ),
-   m_bAutoClose(false)
+   m_bAutoClose(false),
+   m_bAutoAdd( true )
 {
    setup();
 }
@@ -116,7 +120,8 @@ ParserContext::CCFrame::CCFrame():
 ParserContext::CCFrame::CCFrame( FalconClass* cls, bool bIsObject ):
    m_type( bIsObject ? t_object_type : t_class_type ),
    m_bStatePushed( false ),
-   m_bAutoClose( false )
+   m_bAutoClose( false ),
+   m_bAutoAdd( true )
 {
    m_elem.cls = cls;
    setup();
@@ -125,17 +130,19 @@ ParserContext::CCFrame::CCFrame( FalconClass* cls, bool bIsObject ):
 ParserContext::CCFrame::CCFrame( SynFunc* func ):
    m_type( t_func_type ),
    m_bStatePushed( false ),
-   m_bAutoClose( false )
+   m_bAutoClose( false ),
+   m_bAutoAdd( true )
 {
    m_elem.func = func;
    setup();
 }
 
 
-ParserContext::CCFrame::CCFrame( Statement* stmt, bool bAutoClose ):
+ParserContext::CCFrame::CCFrame( TreeStep* stmt, bool bAutoClose, bool bAutoAdd ):
    m_type( t_stmt_type ),
    m_bStatePushed( false ),
-   m_bAutoClose( bAutoClose )
+   m_bAutoClose( bAutoClose ),
+   m_bAutoAdd( bAutoAdd )
 {
    m_elem.stmt = stmt;
    setup();
@@ -144,7 +151,8 @@ ParserContext::CCFrame::CCFrame( Statement* stmt, bool bAutoClose ):
 ParserContext::CCFrame::CCFrame( SynTree* oldST ):
    m_type( t_temp_type ),
    m_bStatePushed( false ),
-   m_bAutoClose( true )
+   m_bAutoClose( true ),
+   m_bAutoAdd( true )
 {
    m_elem.synTree = oldST;
    setup();
@@ -504,7 +512,7 @@ bool ParserContext::isGlobalContext() const
    return m_varmap == 0 && _p->m_litContexts.empty() && currentClass() == 0 && currentFunc() == 0;
 }
 
-void ParserContext::openBlock( Statement* parent, SynTree* branch, bool bAutoClose )
+void ParserContext::openBlock( TreeStep* parent, SynTree* branch, bool bAutoClose, bool bAutoAdd )
 {
    TRACE("ParserContext::openBlock type '%s'",
          parent->handler() == 0 ? "none": 
@@ -517,7 +525,7 @@ void ParserContext::openBlock( Statement* parent, SynTree* branch, bool bAutoClo
    // if the pareser is not interactive, append the statement even after undefined errors.
    if( ! m_parser->hasErrors() || ! m_parser->interactive() )
    {
-      _p->m_frames.push_back( CCFrame(parent, bAutoClose) );
+      _p->m_frames.push_back( CCFrame(parent, bAutoClose, bAutoAdd ) );
       m_cstatement = parent;
       m_st = branch;
    }
@@ -555,6 +563,13 @@ SynTree* ParserContext::changeBranch()
       // when interactive, we don't want to have useless statements.
       return 0;
    }
+}
+
+
+void ParserContext::changeBranch( SynTree* st)
+{
+   MESSAGE( "ParserContext::changeBranch 2" );
+   m_st = st;
 }
 
 
@@ -653,15 +668,32 @@ void ParserContext::closeContext()
          break;
 
       case CCFrame::t_stmt_type:
-         if( ! bframe.m_elem.stmt->discardable() )
+      {
+         TreeStep* step = bframe.m_elem.stmt;
+         if( step->category() == TreeStep::e_cat_statement )
          {
-            bframe.m_elem.stmt->minimize();
-            addStatement( bframe.m_elem.stmt ); // will also do onNewStatement
+            Statement* stmt = static_cast<Statement*>(step);
+
+            if( ! stmt->discardable() )
+            {
+               stmt->minimize();
+               if ( bframe.m_bAutoAdd )
+               {
+                  addStatement( stmt ); // will also do onNewStatement
+               }
+            }
+            else
+            {
+               delete bframe.m_elem.stmt;
+            }
          }
-         else
-         {
-            delete bframe.m_elem.stmt;
+         else {
+            if ( bframe.m_bAutoAdd )
+            {
+               addStatement( step ); // will also do onNewStatement
+            }
          }
+      }
          break;
    }
 }

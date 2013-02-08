@@ -19,6 +19,7 @@
 #include <falcon/falconclass.h>
 #include <falcon/requirement.h>
 #include <falcon/vmcontext.h>
+#include <falcon/synclasses_id.h>
 
 #include <falcon/sp/sourcelexer.h>
 #include <falcon/parser/parser.h>
@@ -184,7 +185,8 @@ void ModCompiler::Context::onNewStatement( TreeStep* ts )
          // are we in a lambda?
          ParserContext* pc =  static_cast<ParserContext*>(m_owner->m_sp.context());
          if((pc->currentFunc() != 0 && pc->currentFunc()->name().size() == 0)
-             || pc->isLitContext() )
+             || pc->isLitContext()
+             || (pc->currentStmt() != 0 && pc->currentStmt()->handler()->userFlags() == FALCON_SYNCLASS_ID_RULE ) )
          {
             // it's ok
          }

@@ -51,12 +51,12 @@ void apply_expr_amper( const Rule&, Parser& p )
    // Create the symbol and the reference
    
    // this creates a dynsymbol.
-   Symbol* nsym = Engine::getSymbol(*tref->asString(), false);
+   Symbol* nsym = Engine::getSymbol(*tref->asString() );
    ExprValue* esyn = new ExprValue( Item( clssym, nsym ), tref->line(), tref->chr() );
    
    // update the result token
    TokenInstance* ti = TokenInstance::alloc( tref->line(), tref->chr(), sp.Expr );
-   ti->setValue( esyn, expr_deletor );   
+   ti->setValue( esyn, treestep_deletor );   
    p.simplify(2, ti); 
 }
 

@@ -50,7 +50,7 @@ void apply_expr_index( const Rule&, Parser& p )
          static_cast<Expression*>( v2->detachValue() ),
          v1->line(),
          v1->chr() ),
-      expr_deletor );
+      treestep_deletor );
 
    p.simplify( 4, ti );
 }
@@ -74,7 +74,7 @@ void apply_expr_star_index( const Rule&, Parser& p )
          static_cast<Expression*>( v2->detachValue() ),
          v1->line(),
          v1->chr() ),
-      expr_deletor );
+      treestep_deletor );
 
    p.simplify( 5, ti );
 }
@@ -107,7 +107,7 @@ void apply_expr_range_index3( const Rule&, Parser& p )
          rng,
          v1->line(),
          v1->chr() ),
-      expr_deletor );
+      treestep_deletor );
 
    p.simplify( 8, ti );
 }
@@ -137,7 +137,7 @@ void apply_expr_range_index3open( const Rule&, Parser& p )
          rng,
          v1->line(),
          v1->chr() ),
-      expr_deletor );
+      treestep_deletor );
 
    p.simplify( 7, ti );   
 }
@@ -167,7 +167,7 @@ void apply_expr_range_index2( const Rule&, Parser& p )
          rng,
          v1->line(),
          v1->chr() ),
-      expr_deletor );
+      treestep_deletor );
 
    p.simplify( 6, ti );
 }
@@ -195,7 +195,7 @@ void apply_expr_range_index1( const Rule&, Parser& p )
          static_cast<Expression*>( v1->detachValue() ),
             rng,
             v1->line(), v1->chr() ),
-      expr_deletor );
+      treestep_deletor );
 
    p.simplify(5,ti);
 }
@@ -222,7 +222,7 @@ void apply_expr_range_index0( const Rule&, Parser& p )
          rng,
          v1->line(),
          v1->chr() ),
-      expr_deletor );
+      treestep_deletor );
 
    p.simplify( 4, ti );
 }

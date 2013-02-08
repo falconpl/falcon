@@ -13,6 +13,9 @@
    See LICENSE file for licensing details.
 */
 
+#undef SRC
+#define SRC "engine/psteps/stmtreturn.cpp"
+
 #include <falcon/trace.h>
 #include <falcon/expression.h>
 #include <falcon/vmcontext.h>
@@ -43,16 +46,7 @@ StmtReturn::StmtReturn( Expression* expr, int32 line, int32 chr ):
    m_bHasEval(false)
 {
    FALCON_DECLARE_SYN_CLASS( stmt_return );   
-   
-   if ( expr )
-   {
-      expr->setParent(this);
-      apply = apply_expr_;
-   }
-   else
-   {
-      apply = apply_;
-   }
+   apply = apply_;
 }
 
 
@@ -62,9 +56,8 @@ StmtReturn::StmtReturn( const StmtReturn& other ):
    m_bHasDoubt( other.m_bHasDoubt ),
    m_bHasEval( other.m_bHasEval )
 {
-   FALCON_DECLARE_SYN_CLASS( stmt_return );   
-   
-   apply = other.apply;
+   FALCON_DECLARE_SYN_CLASS( stmt_return );
+   apply = apply_;
    
    if ( other.m_expr )
    {
@@ -97,7 +90,6 @@ bool StmtReturn::selector( Expression* e )
       {
          delete m_expr;
          m_expr = e;
-         apply = m_bHasDoubt ? apply_expr_doubt_ : apply_expr_;
          return true;
       }
       return false;
@@ -105,21 +97,12 @@ bool StmtReturn::selector( Expression* e )
       
    delete m_expr;
    m_expr = 0;
-   apply = m_bHasDoubt ? apply_doubt_ : apply_;
    return true;
 }
 
 void StmtReturn::hasDoubt( bool b )
 {
    m_bHasDoubt = b; 
-   if( b )
-   {
-      apply = m_expr == 0 ? apply_expr_doubt_ : apply_doubt_;
-   }
-   else
-   {
-      apply = m_expr == 0 ? apply_expr_ : apply_;
-   }
 }
  
 
@@ -134,9 +117,14 @@ void StmtReturn::describeTo( String& tgt, int depth ) const
 {
    tgt = String(" ").replicate(depth * depthIndent ) + "return";
    
+   if( m_bHasEval )
+   {
+      tgt += "*";
+   }
+
    if( m_bHasDoubt )
    {
-      tgt += " ?";
+      tgt += "?";
    }
    
    if( m_expr != 0 )
@@ -151,9 +139,14 @@ void StmtReturn::oneLinerTo( String& tgt ) const
 {
    tgt = "return";
    
+   if( m_bHasEval )
+   {
+      tgt += "*";
+   }
+
    if( m_bHasDoubt )
    {
-      tgt += " ?";
+      tgt += "?";
    }
    
    if( m_expr != 0 )
@@ -164,82 +157,56 @@ void StmtReturn::oneLinerTo( String& tgt ) const
 }
 
 
-void StmtReturn::apply_( const PStep*, VMContext* ctx )
+void StmtReturn::apply_( const PStep* ps, VMContext* ctx )
 {
-   MESSAGE1( "Apply 'return'" );   
-   ctx->returnFrame();
-}
-
-
-void StmtReturn::apply_expr_( const PStep* ps, VMContext* ctx )
-{
-   static StdSteps* steps = Engine::instance()->stdSteps();
-   
-   MESSAGE1( "Apply 'return expr'" );
    const StmtReturn* self = static_cast<const StmtReturn*>( ps );
-   
-   // change our step in a standard return with top data
-   if (self->m_bHasEval)
-      ctx->resetCode( &steps->m_returnFrameWithTopEval );
-   else
-      ctx->resetCode( &steps->m_returnFrameWithTop );
-   
-   CodeFrame& frame = ctx->currentCode();
-   ctx->stepIn( self->m_expr );
-   if( &frame != &ctx->currentCode() )
+   TRACE( "StmtReturn::apply_ %s", self->oneLiner().c_ize() );
+
+   CodeFrame& cf = ctx->currentCode();
+   int& seqId = cf.m_seqId;
+
+   switch( seqId )
    {
-      // we went deep, let's the standard return frame to deal with the topic.
-      return;
+   case 0:
+      if( self->m_expr != 0 )
+      {
+         seqId = 1;
+         if( ctx->stepInYield( self->m_expr, cf) )
+         {
+            return;
+         }
+         Item temp = ctx->topData();
+         ctx->returnFrame(temp);
+      }
+      else {
+         ctx->returnFrame();
+      }
+      break;
+
+   case 1:
+      {
+         Item temp = ctx->topData();
+         ctx->returnFrame(temp);
+      }
+      break;
+
    }
-      
-   // we can return now. No need for popping, we're popping a lot here.
+
+   // after a returnFrame, we are popped for good.
+   if( self->m_bHasDoubt )
+   {
+      ctx->setDeterm(false);
+   }
+
    if( self->m_bHasEval )
    {
-      ctx->returnFrameEval(ctx->topData());
-   }
-   else {
-      ctx->returnFrame( ctx->topData() );
-   }
-}
-
-
-void StmtReturn::apply_doubt_( const PStep*, VMContext* ctx )
-{
-   MESSAGE1( "Apply 'return ?'");   
-   ctx->returnFrameND();
-}
-
-
-void StmtReturn::apply_expr_doubt_( const PStep* ps, VMContext* ctx )
-{
-   const StdSteps* steps = Engine::instance()->stdSteps();
-   
-   MESSAGE1( "Apply 'return expr'" );
-   
-   const StmtReturn* self = static_cast<const StmtReturn*>( ps );
-   
-   // change our step in a standard return with top data
-   if (self->m_bHasEval)
-      ctx->resetCode( &steps->m_returnFrameWithTopEval );
-   else
-      ctx->resetCode( &steps->m_returnFrameWithTop );
-   
-   CodeFrame& frame = ctx->currentCode();
-   ctx->stepIn( self->m_expr );
-   if( &frame != &ctx->currentCode() )
-   {
-      // we went deep, let's the standard return frame to deal with the topic.
-      return;
-   }
-   
-   if( self->m_bHasEval )
-   {
-      ctx->returnFrameNDEval( ctx->topData() );
-   }
-   else {
-      ctx->returnFrameND( ctx->topData() );
+      Class* cls = 0;
+      void* data = 0;
+      ctx->topData().forceClassInst(cls, data);
+      cls->op_call( ctx, 0, data );
    }
 }
+
 
 }
 

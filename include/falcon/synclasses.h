@@ -81,6 +81,7 @@ public:
    Class* m_cls_st;
    Class* m_cls_stmt;
    Class* m_cls_expr;
+   Class* m_cls_treestep;
    
    #define FALCON_SYNCLASS_DECLARATOR_DECLARE
    #include <falcon/synclasses_list.h>      
