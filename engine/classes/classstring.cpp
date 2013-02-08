@@ -206,7 +206,7 @@ void ClassString::op_add( VMContext* ctx, void* self ) const
 bool ClassString::op_init( VMContext* ctx, void* instance, int pcount ) const
 {
    String* self = static_cast<String*>(instance);
-   
+
    // no param?
    if ( pcount > 0 )
    {
@@ -225,7 +225,7 @@ bool ClassString::op_init( VMContext* ctx, void* instance, int pcount ) const
             // just to be sure.
             itm = &ctx->topData();
          }
-         
+
          // apply the op_toString on the item.
          ctx->pushCode( &m_initNext );
          ctx->currentCode().m_seqId = pcount;
@@ -237,30 +237,30 @@ bool ClassString::op_init( VMContext* ctx, void* instance, int pcount ) const
          itm->forceClassInst( cls, data );
 
          // then ensure that the stack is as we need.
-         ctx->pushData( FALCON_GC_HANDLE(self) );
+         ctx->pushData( *self );
          ctx->pushData( *itm );
-         
+
          // and finally invoke stringify operation.
-         cls->op_toString( ctx, data );         
+         cls->op_toString( ctx, data );
          if( depth == ctx->codeDepth() )
          {
             // we can get the string here.
             fassert( ctx->topData().isString() );
             fassert( ctx->opcodeParam(1).isString() );
-            
+
             String* result = ctx->topData().asString();
             ctx->opcodeParam(1).asString()->copy( *result );
-            
+
             // and clean the stack
             ctx->popData(2 + pcount);
             ctx->popCode();
          }
-         
+
          // we took care of the stack.
          return true;
       }
    }
-   
+
    return false;
 }
 
@@ -352,7 +352,7 @@ void ClassString::NextOp::apply_( const PStep*, VMContext* ctx )
       ctx->popData();
       self->append( *deep );
    }
-   
+
    ctx->popCode();
 }
 
@@ -490,7 +490,7 @@ void ClassString::op_getIndex( VMContext* ctx, void* self ) const
 
 void ClassString::op_setIndex( VMContext* ctx, void* self ) const
 {
-   Item* value, *arritem, *index; 
+   Item* value, *arritem, *index;
 
    ctx->operands( value, arritem, index );
 
@@ -599,7 +599,7 @@ void ClassString::op_toString( VMContext* ctx, void* data ) const
    // this op is generally called for temporary items,
    // ... so, even if we shouldn't be marked,
    // ... we won't be marked long if we're temporary.
-   ctx->topData().setUser( this, data ); 
+   ctx->topData().setUser( this, data );
 }
 
 

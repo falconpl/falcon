@@ -110,7 +110,7 @@ numeric SYSTEMTIME_TO_SECONDS( const SYSTEMTIME &st )
 
 int64 SYSTEMTIME_TO_MILLISECONDS( const SYSTEMTIME &st )
 {
-   int secsAt[12];
+   int64 secsAt[12];
    secsAt[0 ] = 0;
    secsAt[1 ] = 31 * SECS_IN_DAY;
    secsAt[2 ] = secsAt[1 ] + 28 * SECS_IN_DAY;
@@ -128,30 +128,29 @@ int64 SYSTEMTIME_TO_MILLISECONDS( const SYSTEMTIME &st )
    secsAt[11] = secsAt[10] + 31 * SECS_IN_DAY;
 
    if( st.wYear < 1970 ) {
-      int leapSeconds = (1969 - st.wYear)/4 * SECS_IN_DAY;
+      int64 leapSeconds = (1969 - (int64)st.wYear)/4 * SECS_IN_DAY;
       return
-         (1969 - st.wYear) * SECS_IN_YEAR *1000+
+         (1969 - (int64)st.wYear) * SECS_IN_YEAR *1000+
          secsAt[st.wMonth-1] *1000+
-         st.wDay * SECS_IN_DAY*1000 +
-         st.wHour * SECS_IN_HOUR*1000 +
-         st.wMinute * 60*1000 +
-         st.wSecond *1000+
+         (int64)st.wDay * SECS_IN_DAY*1000 +
+         (int64)st.wHour * SECS_IN_HOUR*1000 +
+         (int64)st.wMinute * 60*1000 +
+         (int64)st.wSecond *1000+
          leapSeconds *1000 +
-         st.wMilliseconds;
+         (int64)st.wMilliseconds;
    }
    else {
       // good also if wYear is 1970: /4 will neutralize it.
-      int leapSeconds = ((st.wYear-1)-1970)/4 * SECS_IN_DAY;
-
+      int64 leapSeconds = (((int64)st.wYear-1)-1970)/4 * SECS_IN_DAY;
       return
-         (st.wYear-1970 ) * SECS_IN_YEAR *1000+
+         ((int64)st.wYear-1970 ) * SECS_IN_YEAR *1000+
          secsAt[st.wMonth-1] *1000+
-         st.wDay * SECS_IN_DAY *1000+
-         st.wHour * SECS_IN_HOUR *1000+
-         st.wMinute * 60*1000 +
-         st.wSecond *1000+
+         (int64)st.wDay * SECS_IN_DAY *1000+
+         (int64)st.wHour * SECS_IN_HOUR *1000+
+         (int64)st.wMinute * 60*1000 +
+         (int64)st.wSecond *1000+
          leapSeconds *1000+
-         st.wMilliseconds;
+         (int64)st.wMilliseconds;
    }
 }
 

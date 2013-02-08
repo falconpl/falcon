@@ -19,6 +19,10 @@
 #include <falcon/stdsteps.h>
 #include <falcon/vmcontext.h>
 #include <falcon/module.h>
+
+#include <falcon/error.h>
+#include <falcon/errors/codeerror.h>
+
 namespace Falcon
 {
 
