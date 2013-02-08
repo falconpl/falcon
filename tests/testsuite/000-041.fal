@@ -1,5 +1,6 @@
 /*
-@name Smoke test -- Basic types -- dictionaries
+@name dictionaries
+@category Types
 
 @output
 Elements in the dict:

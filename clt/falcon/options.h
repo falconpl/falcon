@@ -76,6 +76,8 @@ public:
    bool errOnStdout;
    bool testMode;
    String test_category;
+   String test_prefix;
+   bool list_tests;
    int log_level;
 
    FalconOptions();

@@ -1,5 +1,6 @@
 /*
-@name Functions -- Deep recursion test
+@name Deep recursion test
+@category Functions
 
 This test goes deep (1024 calls) to test for call stack 
 expansion (it starts at 256 or 512 elements, which translate

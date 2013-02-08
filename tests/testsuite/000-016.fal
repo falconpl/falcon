@@ -1,5 +1,6 @@
 /*
-@name Smoke test -- Greater or equal to exp posi 2
+@name Greater or equal to exp posi 2
+@category Smoke
 
 @result Ok
 */

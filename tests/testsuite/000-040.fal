@@ -1,5 +1,6 @@
 /*
-@name Smoke test -- Basic types -- arrays
+@name Arrays
+@category Types
 
 @output
 Elements in the array:

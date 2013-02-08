@@ -1,5 +1,6 @@
 /*
-@name Smoke test -- If statement, vital for other tests
+@name If statement, vital for other tests
+@category Smoke
 
 @result Done
 */

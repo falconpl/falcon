@@ -63,6 +63,14 @@ void TextWriter::setEncoding( Transcoder* decoder )
    m_encoder = decoder;
 }
 
+void TextWriter::setSysCRLF()
+{
+#ifdef FALCON_SYSTEM_UNIX
+   m_bCRLF = false;
+#else
+   m_bCRLF = true;
+#endif
+}
 
 bool TextWriter::write( const String& str, length_t start, length_t count )
 {

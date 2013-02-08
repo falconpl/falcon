@@ -1,5 +1,6 @@
 /*
-@name Smoke test -- Multiline parenthesis
+@name Multiline parenthesis
+@category Smoke
 
 @output
 Multiline expression 4

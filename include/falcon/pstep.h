@@ -181,6 +181,16 @@ public:
    inline void setTry() { m_catchMode = 1; }
    inline void setTracedCatch() { m_catchMode = 2; }
 
+   /**
+    * Returns the unroll marker associated with this step.
+    *
+    * If the step is an unroll base (try, next/loop base, local frame base
+    * and so on), it leaves a marker on the dyns stack; the dyns
+    * entry has then a pointer to the data stack that allows to unroll the
+    * data stack.
+    */
+   //virtual Symbol* unrollMarker() const;
+
 protected:
    bool m_bIsLoopBase;
    bool m_bIsNextBase;

@@ -1,5 +1,6 @@
 /*
-@name Smoke test -- Equality negative test, vital for other tests
+@name Equality negative test, vital for other tests
+@category Smoke
 
 @result Ok
 */

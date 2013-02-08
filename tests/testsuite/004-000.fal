@@ -1,5 +1,6 @@
 /*
-@name Functions -- smoke test
+@name Function smoke test
+@category Functions
 
 @output   
 Hello world

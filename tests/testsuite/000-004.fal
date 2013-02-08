@@ -1,5 +1,6 @@
 /*
-@name Smoke test -- Equality expression test, vital for other tests
+@name Equality expression test, vital for other tests
+@category Smoke
 
 @result Ok
 */

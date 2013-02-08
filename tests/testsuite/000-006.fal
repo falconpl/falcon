@@ -1,5 +1,6 @@
 /*
-@name Smoke test -- Difference negative test, vital for other tests
+@name Difference negative test, vital for other tests
+@category Smoke
 
 @result Ok
 */

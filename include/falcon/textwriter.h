@@ -176,6 +176,14 @@ public:
 
    Stream* underlying() const { return m_stream; }
 
+   /**
+    * Sets the host system CRLF preference.
+    *
+    * This sets the correct CRLF sequence for line operations
+    * on the current O/S platform.
+    */
+   void setSysCRLF();
+
 protected:
    Transcoder* m_encoder;
    bool m_bWasCR;

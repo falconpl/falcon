@@ -1,5 +1,6 @@
 /*
-@name Smoke test -- Basic types -- Ranges
+@name Ranges
+@category Types
 
 @output
 Elements in the range:

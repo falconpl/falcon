@@ -1,5 +1,6 @@
 /*
-@name Smoke test -- Not expr nega
+@name Not expr nega
+@category Smoke
 
 @result Ok
 */

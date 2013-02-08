@@ -52,6 +52,7 @@ public:
    void perform();
    ScriptData* parse(const String& scriptName );
    void testAll();
+   void listAll();
    void test( ScriptData* sd );
    void reportTest( ScriptData* sd );
 
@@ -66,6 +67,7 @@ private:
    typedef std::map<String, ScriptMap> CategoryMap;
 
    ScriptMap m_scripts;
+   CategoryMap m_categories;
    uint32 m_passed;
 };
 

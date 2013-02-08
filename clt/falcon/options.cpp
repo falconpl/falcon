@@ -50,6 +50,7 @@ FalconOptions::FalconOptions():
    ignore_syspath( false ),
    errOnStdout(false),
    testMode(false),
+   list_tests(false),
    log_level(-1),
    m_modal( false ),
    m_justinfo( false )
@@ -64,6 +65,7 @@ void FalconOptions::usage( bool deep )
       << "       falcon (-c|-S|-t) [c_opts] [-o<output>] module" << endl
       << "       falcon -y [-o<output>] module" << endl
       << "       falcon -x [c_options] module" << endl
+      << "       falcon --test <directory> [test_opts]" << endl
       << "       falcon [c_opts] [r_opts] module [script options]" << endl
       << "       falcon -i [-p module] ... [-p module]" << endl
       << endl;
@@ -88,7 +90,9 @@ void FalconOptions::usage( bool deep )
       << "  -T           consider given [module] as .ftd (template document)" << endl
       << endl
       << "Test mode options (test_opts):" << endl
-      << "  --cat <cat>   Test this category (code prefix) only" << endl
+      << "  --cat <cat>   Test this category only" << endl
+      << "  --tlist       Just list the test descriptions" << endl
+      << "  --tpref <prf> Just run the tests with the given prefix" << endl
       << endl
       << "Run options (r_opts):" << endl
       << "  -C           check for memory allocation correctness" << endl
@@ -256,6 +260,16 @@ void FalconOptions::parse( int argc, char **argv, int &script_pos )
                else if (String( op+2 ) == "cat" )
                {
                   test_category = String( argv[++i] );
+                  break;
+               }
+               else if (String( op+2 ) == "tpref" )
+               {
+                  test_prefix = String( argv[++i] );
+                  break;
+               }
+               else if (String( op+2 ) == "tlist" )
+               {
+                  list_tests = true;
                   break;
                }
                else if( String( op+2 ) == "ll" )

@@ -25,6 +25,16 @@
 
 using namespace Falcon;
 
+static void stripReturns( String* result )
+{
+   uint32 pos = result->find('\r');
+   while( pos != String::npos )
+   {
+      result->remove(pos,1);
+      pos = result->find('\r', pos);
+   }
+}
+
 TestMode::ScriptData::ScriptData( const String& id ):
          m_id(id)
 {
@@ -92,9 +102,9 @@ void TestMode::perform()
             continue;
          }
 
-         if( m_app->m_options.test_category != "" )
+         if( m_app->m_options.test_prefix != "" )
          {
-            if( ! name.startsWith(m_app->m_options.test_category) )
+            if( ! name.startsWith(m_app->m_options.test_prefix) )
             {
                log->log( Log::fac_app, Log::lvl_debug, String( "Skipping because not in selected category " ) + name );
                continue;
@@ -104,7 +114,14 @@ void TestMode::perform()
          // ok, file in correct format.
          try {
             ScriptData* sd = parse( name );
-            m_scripts[name] = sd;
+            if( m_app->m_options.test_category == ""
+                ||  m_app->m_options.test_category == sd->m_category )
+            {
+               m_scripts[name] = sd;
+               ScriptMap& map = m_categories[sd->m_category];
+               map[name] = sd;
+            }
+
             log->log( Log::fac_app, Log::lvl_detail, String( "Adding script " ) + name );
          }
          catch (Error* error)
@@ -122,8 +139,14 @@ void TestMode::perform()
          log->log( Log::fac_app, Log::lvl_warn, String( "No script in format NNN-NNN.fal found in target directory.") );
       }
 
-      testAll();
-      report();
+      if( m_app->m_options.list_tests )
+      {
+         listAll();
+      }
+      else {
+         testAll();
+         report();
+      }
    }
    catch(Error* e)
    {
@@ -161,6 +184,33 @@ void TestMode::testAll()
    }
 }
 
+
+
+void TestMode::listAll()
+{
+   ScriptMap::iterator iter = m_scripts.begin();
+   ScriptMap::iterator end = m_scripts.end();
+
+   TextWriter output(new StdOutStream(true), true);
+   output.setSysCRLF();
+   if( iter == end )
+   {
+      output.writeLine( "The filter has determined an empty list" );
+      return;
+   }
+
+   while( iter != end )
+   {
+      ScriptData* sd = iter->second;
+      String category = sd->m_category == "" ? "uncategorized" : sd->m_category;
+
+      output.writeLine( sd->m_id + " (" + category+ "): " + sd->m_name );
+
+      ++iter;
+   }
+
+   output.flush();
+}
 
 TestMode::ScriptData* TestMode::parse(const String& scriptName )
 {
@@ -207,6 +257,11 @@ TestMode::ScriptData* TestMode::parse(const String& scriptName )
                sd->m_name = tline.subString(5);
                sd->m_name.trim();
             }
+            else if( tline.startsWith("@category ") )
+            {
+               sd->m_category = tline.subString(10);
+               sd->m_category.trim();
+            }
             else if( tline == ("@output") )
             {
                sd->m_exp_output = "";
@@ -251,6 +306,10 @@ void TestMode::test( ScriptData* sd )
       if( sd->m_exp_output.size() != 0 )
       {
          String* result = ss->closeToString();
+
+         // neutralize xplatform \r\n things.
+         stripReturns( result );
+
          if ( sd->m_exp_output != *result && (sd->m_exp_output+"\n") != *result )
          {
             sd->m_bSuccess = false;
@@ -315,6 +374,7 @@ void TestMode::test( ScriptData* sd )
 void TestMode::reportTest( ScriptData* sd )
 {
    TextWriter output(new StdOutStream(true), true);
+   output.setSysCRLF();
 
    output.write( sd->m_id + ": ");
    if( sd->m_bSuccess )

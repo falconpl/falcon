@@ -1,5 +1,6 @@
 /*
-@name Smoke test -- Ternary Fast IF, nega
+@name Ternary Fast IF, nega
+@category Smoke
 
 @result Ok
 */

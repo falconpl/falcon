@@ -3,7 +3,8 @@
 Note: the file doesn't end with a single empty line ON PURPOSE
 **************************************************************
 
-@name Basic smoke test -- checking output
+@name Checking output
+@category Smoke
 
 @output   
 Hello world
