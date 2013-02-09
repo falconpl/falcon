@@ -165,7 +165,7 @@ static void on_switch_closed(void* parser_void)
    fassert( stmt != 0 );
    fassert( (stmt->handler()->userFlags() == FALCON_SYNCLASS_ID_CASEHOST)
             || (stmt->handler()->userFlags() == FALCON_SYNCLASS_ID_SWITCH) );
-   SwitchlikeStatement* swc = static_cast<StmtSwitch*>( stmt );
+   SwitchlikeStatement* swc = static_cast<SwitchlikeStatement*>( stmt );
    
    if( swc->dummyTree() != 0 ) {
       SynTree* dummytree = swc->dummyTree();
