@@ -281,11 +281,49 @@ static bool make_case_branch(  Parser& p, ParserContext* ctx, SynTree* st, bool 
 
          switch( itm->m_type ) {
             case CaseItem::e_int: noClash = swc->addSelectType( itm->m_iLow, st ); break;
-            case CaseItem::e_string: noClash = swc->addSelectName( *itm->m_sLow, st ); break;
             case CaseItem::e_sym:
-               noClash = swc->addSelectName( itm->m_sym->name(), st );
+               // Search the symbol
+               {
+                  Variable* symBaseClass = ctx->accessSymbol( itm->m_sym->name() );
+                  // if it's 0, we need a requirement; and we shall also add an external symbol.
+                  if( symBaseClass == 0 || symBaseClass->type() == Variable::e_nt_extern )
+                  {
+                     // then just add the requirement
+                     if( p.interactive() )
+                     {
+                        p.addError( e_undef_sym, p.currentSource(), tlist->line(), tlist->chr(), 0, itm->m_sym->name() );
+                        return false;
+                     }
+
+                     Requirement* req = swc->addSelectName( itm->m_sym->name(), st );
+                     if( req == 0 )
+                     {
+                        noClash = false;
+                     }
+                     else {
+                        ctx->onRequirement( req );
+                     }
+                  }
+                  else
+                  {
+                     // if it's defined and not a class, we're in trouble
+                     const Item* value = ctx->getVariableValue( itm->m_sym->name(), symBaseClass );
+                     fassert( value != 0 );
+
+                     if( value == 0 || ! value->isClass() )
+                     {
+                        p.addError( e_select_invtype, p.currentSource(), tlist->line(), tlist->chr() );
+                        return false;
+                     }
+                     else {
+                        // cool, we can add the resolved symbol
+                        noClash = swc->addSelectClass( static_cast<Class*>(value->asInst()), st );
+                     }
+                  }
+               }
                break;
             
+            case CaseItem::e_string:
             case CaseItem::e_nil: 
             case CaseItem::e_true:
             case CaseItem::e_false:
