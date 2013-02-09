@@ -77,11 +77,17 @@ int64 _milliseconds()
 #if POSIX_TIMERS > 0
    struct timespec time;
    clock_gettime( CLOCK_REALTIME, &time );
-   return time.tv_sec * 1000 + time.tv_nsec / 1000000;
+   int64 msecs = time.tv_sec;
+   msecs *= 1000;
+   msecs += time.tv_nsec / 1000000;
+   return msecs;
 #else
    struct timeval time;
    gettimeofday( &time, 0 );
-   return time.tv_sec * 1000 + time.tv_usec / 1000;
+   int64 msecs = time.tv_sec;
+   msecs *= 1000;
+   msecs += time.tv_usec / 1000;
+   return msecs;
 #endif
 }
 
