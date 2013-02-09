@@ -400,7 +400,10 @@ void apply_case( const Rule&, Parser& p )
    // the current statement is a switch.
    ParserContext* ctx = static_cast<ParserContext*>(p.context());
    SynTree* st = ctx->changeBranch();    
-   make_case_branch( p, ctx, st, false );   
+   if( st != 0 )
+   {
+      make_case_branch( p, ctx, st, false );
+   }
       
    // clear the stack
    p.simplify(3);
