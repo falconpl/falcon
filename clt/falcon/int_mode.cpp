@@ -75,7 +75,7 @@ void IntMode::run()
    mainfunc->syntree().append( new StmtReturn );
    Process* process = vm.createProcess();
    process->mainContext()->call( mainfunc );
-   process->mainContext()->pushCode(&psc);
+   process->mainContext()->pushCodeWithUnrollPoint(&psc);
 
    process->start();
    process->wait();

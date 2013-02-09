@@ -344,7 +344,7 @@ void apply_array_entry_close( const Rule&, Parser& p )
    // if waiting for an arrow or a second, we have an error.
    if( decl->state == StmtTempArrayDecl::second_expr
       || decl->state == StmtTempArrayDecl::arrow
-      || ( decl->state == StmtTempArrayDecl::first_expr && decl->bHasSep )
+      || ( decl->state == StmtTempArrayDecl::first_expr && decl->bHasSep && decl->arity() != 0 )
       )
    {
       TokenInstance* ti = p.getNextToken();
