@@ -1289,8 +1289,8 @@ void* Collector::Monitor::run()
             Collector::Private::ContextMap::iterator end = contexts.end();
             while( iter != end ) {
                //TODO!!!
-               //VMContext* ctx = iter->second;
-               //ctx->setInspectEvent();
+               VMContext* ctx = iter->second;
+               ctx->setInspectEvent();
                ++iter;
             }
             mtxContexts.unlock();
