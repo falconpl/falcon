@@ -410,8 +410,7 @@ void StmtCut::apply_cut_expr_( const PStep* ps, VMContext* ctx )
    // second time around? -- we have our expression solved in top data.
 
    ctx->popCode(); // use us just once.
-   ctx->setDeterm(true);
-   
+   ctx->topData().clearDoubt();
 }
 
 
@@ -513,7 +512,7 @@ void StmtDoubt::apply_( const PStep* ps, VMContext* ctx )
    }
    
    ctx->popCode();
-   ctx->setDeterm(false);
+   ctx->topData().setDoubt();
 }
 
 

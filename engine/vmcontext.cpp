@@ -80,7 +80,6 @@ VMContext::VMContext( Process* prc, ContextGroup* grp ):
    m_inspectible(true),
    m_bInspectMark(false),
    m_bSleeping(false),
-   m_bDeterm(true),
    m_events(0),
    m_inGroup(grp),
    m_process(prc),
@@ -130,7 +129,6 @@ void VMContext::reset()
    m_inspectible = true;
    m_bInspectMark = false;
    m_bSleeping = false;
-   m_bDeterm = true;
 
    m_dynsStack.reset();
    m_codeStack.reset();
@@ -705,7 +703,6 @@ VMContext::t_unrollResult VMContext::unrollToNext( const _checker& check )
          if( check( *curCode->m_step, this ) )
          {
             fassert2(curCode->m_dataDepth != 0xFFFFFFFF, "Data unroll uninitialized" );
-            fassert2(curCode->m_dataDepth != 0, "Data unroll uninitialized 2" );
             fassert2(curCode->m_dynsDepth != 0xFFFFFFFF, "Dynsstack unroll uninitialized" );
             m_codeStack.m_top = curCode;
             m_dataStack.unroll(curCode->m_dataDepth);
@@ -746,7 +743,6 @@ VMContext::t_unrollResult VMContext::unrollToNext( const _checker& check )
          CodeFrame* curCode = m_codeStack.m_top;
 
          fassert2(curCode->m_dataDepth != 0xFFFFFFFF, "Data unroll uninitialized" );
-         fassert2(curCode->m_dataDepth != 0, "Data unroll uninitialized 2" );
          fassert2(curCode->m_dynsDepth != 0xFFFFFFFF, "Dynsstack unroll uninitialized" );
 
          // unroll data and dyns frame accordingly
@@ -1447,7 +1443,7 @@ public:
    }
 
    inline static void post_return( VMContext* ctx ) {
-      ctx->setDeterm(false);
+      ctx->topData().setDoubt();
    }
 };
 
@@ -1474,7 +1470,7 @@ public:
    }
 
    inline static void post_return( VMContext* ctx ) {
-      ctx->setDeterm(false);
+      ctx->topData().setDoubt();
       Class* cls = 0;
       void* data = 0;
       ctx->topData().forceClassInst(cls, data);
@@ -1488,7 +1484,7 @@ void VMContext::returnFrame( const Item& value )
    returnFrame_base<ReturnerSimple>(value);
 }
 
-void VMContext::returnFrameND( const Item& value )
+void VMContext::returnFrameDoubt( const Item& value )
 {
    returnFrame_base<ReturnerND>(value);
 }
@@ -1498,9 +1494,9 @@ void VMContext::returnFrameEval( const Item& value )
    returnFrame_base<ReturnerEval>(value);
 }
 
-void VMContext::returnFrameNDEval( const Item& value )
+void VMContext::returnFrameDoubtEval( const Item& value )
 {
-   returnFrame_base<ReturnerEval>(value);
+   returnFrame_base<ReturnerNDEval>(value);
 }
 
 

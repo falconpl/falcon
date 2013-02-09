@@ -141,6 +141,7 @@ add_library(falcon_engine SHARED
   cm/iff.cpp
   cm/include.cpp
   cm/inspect.cpp
+  cm/iterator.cpp
   cm/parallel.cpp
   cm/path.cpp
   cm/print.cpp

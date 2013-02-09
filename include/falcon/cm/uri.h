@@ -64,7 +64,7 @@ public:
     
    virtual void store( VMContext*, DataWriter* stream, void* instance ) const;
    virtual void restore( VMContext*, DataReader* stream ) const;
-   
+
    //=============================================================
    //
    virtual void* createInstance() const;   

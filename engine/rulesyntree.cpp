@@ -66,7 +66,6 @@ void RuleSynTree::rapply_( const PStep* ps, VMContext* ctx )
       cf.m_step = &self->m_stepNext;
       cf.m_seqId = 1;
       ctx->pushCode( self->at( 0 ) );
-      ctx->setDeterm(true);  // be sure to reset determinism
       ctx->clearInit();
    }   
 }
@@ -113,12 +112,12 @@ void RuleSynTree::PStepNext::apply_(const PStep* ps, VMContext* ctx)
    else
    {
       // remove the return value
+      bool bDoubt = ctx->topData().isDoubt();
       ctx->popData();
 
       // is current return non-deterministic?
-      if( ! ctx->isDeterm() )
+      if( bDoubt )
       {
-         ctx->setDeterm(true); // be sure to reset it.
          ctx->saveInit();
          ctx->startRuleNDFrame(cf.m_seqId-1); // previous step was -1
       }

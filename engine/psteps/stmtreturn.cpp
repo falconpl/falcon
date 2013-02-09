@@ -195,7 +195,11 @@ void StmtReturn::apply_( const PStep* ps, VMContext* ctx )
    // after a returnFrame, we are popped for good.
    if( self->m_bHasDoubt )
    {
-      ctx->setDeterm(false);
+      ctx->topData().setDoubt();
+   }
+   else {
+      //TODO: Necessary?
+      ctx->topData().clearDoubt();
    }
 
    if( self->m_bHasEval )

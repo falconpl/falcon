@@ -254,10 +254,14 @@ public:
 #define FALCON_DEFINE_PROPERTY_SET(CLASS_NAME, PROP_NAME) void CLASS_NAME :: Property_ ## PROP_NAME::set
 #define FALCON_DEFINE_PROPERTY_SET_P(CLASS_NAME, PROP_NAME) \
       void CLASS_NAME :: Property_ ## PROP_NAME::set( void* instance, const ::Falcon::Item& value )
+#define FALCON_DEFINE_PROPERTY_SET_P0(CLASS_NAME, PROP_NAME) \
+      void CLASS_NAME :: Property_ ## PROP_NAME::set( void* , const ::Falcon::Item&  )
 
 #define FALCON_DEFINE_PROPERTY_GET(CLASS_NAME, PROP_NAME) void CLASS_NAME :: Property_ ## PROP_NAME::get
 #define FALCON_DEFINE_PROPERTY_GET_P(CLASS_NAME, PROP_NAME) \
       void CLASS_NAME :: Property_ ## PROP_NAME::get( void* instance, ::Falcon::Item& value )
+#define FALCON_DEFINE_PROPERTY_GET_P0(CLASS_NAME, PROP_NAME) \
+      void CLASS_NAME :: Property_ ## PROP_NAME::get( void*, ::Falcon::Item& )
 
 #define FALCON_DEFINE_PROPERTY_GETS(CLASS_NAME, PROP_NAME) \
       const String& CLASS_NAME :: Property_ ## PROP_NAME::getString

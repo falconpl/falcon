@@ -238,7 +238,7 @@ void StdSteps::PStepReturnFrameWithTop::describeTo( String& s, int ) const
 
 void StdSteps::PStepReturnFrameWithTopDoubt::apply_( const PStep*, VMContext* ctx )
 {
-   ctx->returnFrameND( ctx->topData() );
+   ctx->returnFrameDoubt( ctx->topData() );
 }
 
 void StdSteps::PStepReturnFrameWithTopDoubt::describeTo( String& s, int ) const
@@ -259,7 +259,7 @@ void StdSteps::PStepReturnFrameWithTopEval::describeTo( String& s, int ) const
 
 void StdSteps::PStepReturnFrameWithTopDoubtEval::apply_( const PStep*, VMContext* ctx )
 {
-   ctx->returnFrameNDEval( ctx->topData() );
+   ctx->returnFrameDoubtEval( ctx->topData() );
 }
 
 void StdSteps::PStepReturnFrameWithTopDoubtEval::describeTo( String& s, int ) const

@@ -342,9 +342,9 @@ void ClassRange::op_next( VMContext* ctx, void* self ) const
 
   if ( !range->isOpen() )
   {
-       if ( dir ? next >= range->end() : next < range->end() )
+       if ( ! (dir ? next >= range->end() : next < range->end()) )
        {
-          ctx->topData().setLast();
+          ctx->topData().setDoubt();
        }
   }
 }

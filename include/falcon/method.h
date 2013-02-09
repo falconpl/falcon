@@ -58,7 +58,8 @@ private:
       { parseDescription( SIGNATURE ); } \
       virtual ~Method_ ## MTH_NAME() {} \
       virtual void invoke( ::Falcon::VMContext* ctx, ::Falcon::int32 pCount = 0 ); \
-   } m_Method_ ## MTH_NAME;
+   } m_Method_ ## MTH_NAME; \
+   friend class Method_ ## MTH_NAME;
 
 #define FALCON_INIT_METHOD(MTH_NAME) m_Method_ ## MTH_NAME(this)
 #define FALCON_DEFINE_METHOD(CLASS_NAME, MTH_NAME) void CLASS_NAME :: Method_ ## MTH_NAME::invoke

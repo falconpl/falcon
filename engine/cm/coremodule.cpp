@@ -31,6 +31,7 @@
 #include <falcon/cm/datawriter.h>
 #include <falcon/cm/datareader.h>
 #include <falcon/cm/parallel.h>
+#include <falcon/cm/iterator.h>
 #include <falcon/cm/stdfunctions.h>
 #include <falcon/cm/vmcontext.h>
 
@@ -58,11 +59,13 @@ CoreModule::CoreModule():
       << new Ext::Function_include
       << new Ext::Function_seconds
       << new Ext::Function_sleep
+      << new Ext::Function_advance
       
       // Standard classes
       << new Ext::ClassURI
       << new Ext::ClassPath
       << new Ext::ClassParallel
+      << new Ext::ClassIterator
       << new Ext::ClassTextStream( classStream )
       << new Ext::ClassTextWriter( classStream )
       << new Ext::ClassTextReader( classStream )

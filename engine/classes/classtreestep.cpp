@@ -474,9 +474,9 @@ void ClassTreeStep::op_next( VMContext* ctx, void* instance ) const
       else {
          Item value(st->handler(), st);
          ctx->pushData( value );
-         if( pos >= stmt->arity() )
+         if( pos < stmt->arity() )
          {
-            ctx->topData().setLast();
+            ctx->topData().setDoubt();
          }
       }
    }

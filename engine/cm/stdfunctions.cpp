@@ -24,6 +24,8 @@
 #include <falcon/vmcontext.h>
 #include <falcon/sys.h>
 
+#include <falcon/cm/iterator.h>
+
 #include <falcon/error.h>
 
 namespace Falcon {
@@ -88,6 +90,47 @@ FALCON_DEFINE_FUNCTION_P1(seconds)
    numeric ep = Sys::_milliseconds()/1000.0;
    ctx->returnFrame(ep);
 }
+
+/*#
+   @function advance
+   @ingroup general_purpose
+   @param collection the collection being traversed.
+   @brief Advnaces an automatic iterator in the current rule context.
+   @return An item from the collection.
+
+*/
+
+FALCON_DEFINE_FUNCTION_P(advance)
+{
+   TRACE1( "-- called with %d params", pCount );
+   if( pCount < 1 ) {
+      throw paramError();
+   }
+
+   IteratorCarrier* ic;
+   Class* iterClass;
+
+   if( ctx->readInit().isNil() )
+   {
+      iterClass = module()->getClass("Iterator");
+      fassert( iterClass != 0 );
+      ic = new IteratorCarrier( *ctx->param(0) );
+
+      ctx->writeInit(FALCON_GC_STORE(iterClass, ic));
+   }
+   else {
+      const Item& initItem = ctx->readInit();
+      void* data;
+      initItem.asClassInst( iterClass, data );
+      fassert( iterClass == module()->getClass("Iterator") );
+      ic = static_cast<IteratorCarrier*>(data);
+   }
+
+   // change into the class method, and use its return frames.
+   ctx->param(0)->setBoolean(false);
+   static_cast<ClassIterator*>(iterClass)->invokeDirectNextMethod(ctx, ic, pCount);
+}
+
 
 }
 }

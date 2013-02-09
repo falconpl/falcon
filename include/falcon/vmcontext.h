@@ -404,17 +404,6 @@ public:
     */
    void commitRule();
 
-   /** Set a deterministic point
-    */
-   void setDeterm( bool mode )
-   {
-      m_bDeterm = mode;
-   }
-
-   bool isDeterm()
-   {
-      return m_bDeterm;
-   }
 
    const Item& readInit() const
    {
@@ -499,6 +488,10 @@ public:
       register CodeFrame* cf = m_codeStack.addSlot();
       cf->m_step = step;
       cf->m_seqId = 0;
+#ifndef NDEBUG
+      cf->m_dataDepth = 0xFFFFFFFF;
+      cf->m_dynsDepth = 0xFFFFFFFF;
+#endif
    }
 
    inline void pushCodeWithUnrollPoint( const PStep* step ) {
@@ -1027,9 +1020,9 @@ public:
     */
    void returnFrame( const Item& value = Item() );
 
-   void returnFrameND( const Item& value = Item() );
+   void returnFrameDoubt( const Item& value = Item() );
    void returnFrameEval( const Item& value = Item() );
-   void returnFrameNDEval( const Item& value = Item() );
+   void returnFrameDoubtEval( const Item& value = Item() );
 
    /** Unrolls the code and function frames down to the nearest "next" loop base.
     \throw CodeError if base not found.
@@ -1592,7 +1585,6 @@ protected:
    bool m_inspectible;
    bool m_bInspectMark;
    bool m_bSleeping;
-   bool m_bDeterm;
    Mutex m_mtx_sleep;
 
    /** Set whenever an event was activated. */

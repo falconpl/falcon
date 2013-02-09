@@ -478,9 +478,8 @@ void StmtForIn::PStepFirst::apply_( const PStep* ps, VMContext* ctx )
    // prepare the loop variabiles.
    self->expandItem( ctx->topData(), ctx );
    
-   if( topData.isLast() )
+   if( ! topData.isDoubt() )
    {
-      topData.flagsOff( Item::flagLast );
       ctx->popCode(); // we won't be called again.
       if( self->m_forLast != 0 )
       {
@@ -490,6 +489,7 @@ void StmtForIn::PStepFirst::apply_( const PStep* ps, VMContext* ctx )
    }
    else
    {
+      topData.clearDoubt();
       // turn this step in a loop (break) step landing.
       ctx->currentCode().m_step = &self->m_stepNext;
       ctx->saveUnrollPoint(ctx->currentCode());
@@ -537,9 +537,8 @@ void StmtForIn::PStepNext::apply_( const PStep* ps, VMContext* ctx )
    // prepare the loop variabiles.
    self->expandItem( ctx->topData(), ctx );
 
-   if( topData.isLast() )
+   if( ! topData.isDoubt() )
    {
-      topData.flagsOff( Item::flagLast );
       ctx->popCode(); // we won't be called again.
        
       if( self->m_forLast != 0 )
@@ -550,6 +549,7 @@ void StmtForIn::PStepNext::apply_( const PStep* ps, VMContext* ctx )
    }
    else
    {
+      topData.clearDoubt();
       // save the next step with landing
       ctx->pushCodeWithUnrollPoint( &self->m_stepGetNext );
       if ( self->m_forMiddle != 0 )

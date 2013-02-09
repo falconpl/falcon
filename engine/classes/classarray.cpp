@@ -539,9 +539,9 @@ void ClassArray::op_next( VMContext* ctx, void* instance ) const
       iter.setInteger( pos );
       ctx->pushData( value );
 
-      if( pos >= arr->length() )
+      if( pos != arr->length() )
       {
-         ctx->topData().setLast();
+         ctx->topData().setDoubt();
       }
    }
 }

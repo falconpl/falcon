@@ -1,20 +1,20 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: uri.h
+   FILE: iterator.h
 
-   Falcon core module -- Interface to URI.
+   Falcon core module -- Iterator
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
-   Begin: Sat, 11 Jun 2011 20:20:06 +0200
+   Begin: Fri, 08 Feb 2013 21:20:00 +0100
 
    -------------------------------------------------------------------
-   (C) Copyright 2011: the FALCON developers (see list in AUTHORS file)
+   (C) Copyright 2013: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
 */
 
-#ifndef FALCON_CORE_URI_H
-#define FALCON_CORE_URI_H
+#ifndef FALCON_CORE_ITERATOR_H
+#define FALCON_CORE_ITERATOR_H
 
 #include <falcon/pseudofunc.h>
 #include <falcon/fassert.h>
@@ -29,245 +29,93 @@
 namespace Falcon {
 namespace Ext {
 
-/** We keep a C++ uri + the path, the auth data and the query*/
-class FALCON_DYN_CLASS URICarrier: public UserCarrier
-{
-public:
-   URI m_uri;
-   Path m_path;
-   URI::Authority m_auth;
-   URI::Query m_query;
-   
-   URICarrier( uint32 nprops ):
-      UserCarrier(nprops)
-   {}
-   
-   URICarrier( const URICarrier& other ):
-      UserCarrier( other.dataSize() ),
-      m_uri( other.m_uri )
-   {}
-   
-   virtual ~URICarrier()
-   {      
-   }
-   
-   virtual URICarrier* clone() const { return new URICarrier(*this); }
-};
 
-
-class FALCON_DYN_CLASS ClassURI: public ClassUser
+class FALCON_DYN_CLASS ClassIterator: public ClassUser
 {
 public:
    
-   ClassURI();
-   virtual ~ClassURI();
-    
+   ClassIterator();
+   virtual ~ClassIterator();
+
+   void invokeDirectNextMethod( VMContext* ctx, void* instance, int32 pcount );
+
+   virtual void describe( void* instance, String& target, int depth = 3, int maxlen = 60 ) const;
+   virtual void dispose( void* instance ) const;
+   virtual void* clone( void* insatnce ) const;
+   virtual void gcMarkInstance( void* instance, uint32 mark ) const;
+   virtual bool gcCheckInstance( void* instance, uint32 mark ) const;
+
    virtual void store( VMContext*, DataWriter* stream, void* instance ) const;
    virtual void restore( VMContext*, DataReader* stream ) const;
    
+   virtual void flatten( VMContext* ctx, ItemArray& subItems, void* instance ) const;
+   virtual void unflatten( VMContext* ctx, ItemArray& subItems, void* instance ) const;
+
+
    //=============================================================
    //
    virtual void* createInstance() const;   
    virtual bool op_init( VMContext* ctx, void* instance, int pcount ) const;
-   virtual void op_toString( VMContext* ctx, void* self ) const;
    
+
+   void op_iter( VMContext* ctx, void* instance ) const;
+   void op_next( VMContext* ctx, void* instance ) const;
+
+
 private:
-   //====================================================
-   // Methods
-   //
-   class FALCON_DYN_CLASS MethodSetq: public Method
-   {
-   public:
-      MethodSetq( ClassUser* owner ):
-         Method( owner, "setq" )
-      {
-         signature("X,X");
-         addParam("key");
-         addParam("value");
-      }         
-      virtual ~MethodSetq() {}
-      
-      virtual void invoke( VMContext* ctx, int32 pCount = 0 );
-   }
-   m_mthSetq;
-   
-      
-   class FALCON_DYN_CLASS MethodGetq: public Method
-   {
-   public:
-      MethodGetq( ClassUser* owner ):
-         Method( owner, "getq" )
-      {
-         signature("X,[X]");
-         addParam("key");
-         addParam("default");
-      }         
-      virtual ~MethodGetq() {}
-      
-      virtual void invoke( VMContext* ctx, int32 pCount = 0 );
-   }
-   m_mthGetq;
-   
-   //====================================================
-   // Properties.
-   //
-   
-   class FALCON_DYN_CLASS PropertyEncoded: public PropertyString
-   {
-   public:
-      PropertyEncoded( ClassUser* owner ):
-         PropertyString( owner, "encoded" )
-      {}      
-      virtual ~PropertyEncoded() {}
-      
-      virtual void set( void* instance, const Item& value );      
-      virtual const String& getString( void* instance );
-   }
-   m_encoded;
-   
-   class FALCON_DYN_CLASS PropertyScheme: public PropertyString
-   {
-   public:
-      PropertyScheme( ClassUser* owner ):
-         PropertyString( owner, "scheme" )
-      {}
-      
-      virtual ~PropertyScheme() {}
-      
-      virtual void set( void* instance, const Item& value )
-      {
-         checkType( value.isString(), "S" );
-         static_cast<URICarrier*>(instance)->m_uri.scheme();
-      }
-      
-      virtual const String& getString( void* instance )
-      {
-         return static_cast<URICarrier*>(instance)->m_uri.scheme();
-      }
-   }
-   m_scheme;
-   
-   class FALCON_DYN_CLASS PropertyAuth: public PropertyString
-   {
-   public:
-      PropertyAuth( ClassUser* owner ):
-         PropertyString( owner, "auth" )
-      {}
-      
-      virtual ~PropertyAuth() {}
-      
-      virtual void set( void* instance, const Item& value );      
-      virtual const String& getString( void* instance );
-   }
-   m_auth;
-   
-   class FALCON_DYN_CLASS PropertyPath: public PropertyString
-   {
-   public:
-      PropertyPath( ClassUser* owner ):
-         PropertyString( owner, "path" )
-      {}
-      
-      virtual ~PropertyPath() {}
-      
-      virtual void set( void* instance, const Item& value );     
-      virtual const String& getString( void* instance );
-   }
-   m_path;
-   
-   class FALCON_DYN_CLASS PropertyQuery: public PropertyString
-   {
-   public:
-      PropertyQuery( ClassUser* owner ):
-         PropertyString( owner, "query" )
-      {}
-      
-      virtual ~PropertyQuery() {}
-      
-      virtual void set( void* instance, const Item& value );
-      virtual const String& getString( void* instance );
-   }
-   m_query;
-   
-   class FALCON_DYN_CLASS PropertyFragment: public PropertyString
-   {
-   public:
-      PropertyFragment( ClassUser* owner ):
-         PropertyString( owner, "fragment" )
-      {}
-      
-      virtual ~PropertyFragment() {}
-      
-      virtual void set( void* instance, const Item& value )
-      {
-         checkType( value.isString(), "S" );
-         static_cast<URICarrier*>(instance)->m_uri.fragment();
-      }
-      
-      virtual const String& getString( void* instance )
-      {
-         return static_cast<URICarrier*>(instance)->m_uri.fragment();
-      }
-   }
-   m_fragment;
-   
-   class FALCON_DYN_CLASS PropertyHost: public PropertyString
-   {
-   public:
-      PropertyHost( ClassUser* owner ):
-         PropertyString( owner, "host" )
-      {}      
-      virtual ~PropertyHost() {}
-      
-      virtual void set( void* instance, const Item& value );      
-      virtual const String& getString( void* instance );
-   }
-   m_propHost;
-   
-   class PropertyPort: public PropertyString
-   {
-   public:
-      PropertyPort( ClassUser* owner ):
-         PropertyString( owner, "port" )
-      {}      
-      virtual ~PropertyPort() {}
-      
-      virtual void set( void* instance, const Item& value );      
-      virtual const String& getString( void* instance );
-   }
-   m_propPort;
-   
-   class FALCON_DYN_CLASS PropertyUser: public PropertyString
-   {
-   public:
-      PropertyUser( ClassUser* owner ):
-         PropertyString( owner, "user" )
-      {}      
-      virtual ~PropertyUser() {}
-      
-      virtual void set( void* instance, const Item& value );      
-      virtual const String& getString( void* instance );
-   }
-   m_propUser;
-   
-   class FALCON_DYN_CLASS PropertyPwd: public PropertyString
-   {
-   public:
-      PropertyPwd( ClassUser* owner ):
-         PropertyString( owner, "pwd" )
-      {}      
-      virtual ~PropertyPwd() {}
-      
-      virtual void set( void* instance, const Item& value );      
-      virtual const String& getString( void* instance );
-   }
-   m_propPwd;
-   
+   FALCON_DECLARE_INTERNAL_PSTEP( IterNext );
+   FALCON_DECLARE_INTERNAL_PSTEP( NextNext );
+   FALCON_DECLARE_INTERNAL_PSTEP( MethodNext_IterNext );
+   FALCON_DECLARE_INTERNAL_PSTEP( MethodNext_NextNext );
+
+   FALCON_DECLARE_METHOD( next, "retOnFinish:[X]" )
+   FALCON_DECLARE_METHOD( rewind, "" )
+   FALCON_DECLARE_PROPERTY( source )
 };
 
+
+class FALCON_DYN_CLASS IteratorCarrier
+{
+public:
+   IteratorCarrier( const Item& src ):
+      m_source(src),
+      m_ready(false),
+      m_mark(0)
+   {}
+
+   IteratorCarrier():
+      m_ready(false),
+      m_mark(0)
+   {}
+
+   IteratorCarrier( const IteratorCarrier& other ):
+      m_source( other.m_source ),
+      m_srciter( other.m_srciter ),
+      m_ready(other.m_ready),
+      m_mark(0)
+   {}
+
+   virtual ~IteratorCarrier()
+   {
+   }
+
+   virtual IteratorCarrier* clone() const { return new IteratorCarrier(*this); }
+
+   const Item& source() const { return m_source; }
+
+private:
+   Item m_source;
+   Item m_srciter;
+   bool m_ready;
+   uint32 m_mark;
+
+   friend class ClassIterator;
+};
+
+
 }
 }
 
-#endif	/* FALCON_CORE_TOSTRING_H */
+#endif
 
-/* end of uri.h */
+/* end of iterator.h */

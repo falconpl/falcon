@@ -690,9 +690,9 @@ bool ItemDict::Iterator::next( Item& target )
     
    // create a copied item, and ask to mark it for gc.
    target.copyFromLocal( Item(ac, &_pm->m_pair ) );
-   if( m_complete )
+   if( ! m_complete )
    {
-      target.setLast();
+      target.setDoubt();
    }
    
    return true;
