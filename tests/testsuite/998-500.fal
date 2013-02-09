@@ -1,0 +1,67 @@
+/*
+998 series -- book samples
+
+@name Book sample - Rules
+
+@output
+Result? true
+Counter now is: 1
+Counter now is: 2
+Counter now is: 3
+Counter now is: 4
+Counter is accepted: 4
+Counter now is: 1
+Counter now is: 2
+Counter now is: 3
+Counter is still zero: 0
+@endoutput
+*/ 
+// A rule is a sequence of expressions that might fail
+ 
+var1 = "Hello"
+var2 = "World"
+result = rule
+   var1 == "Hello"
+   var2 == "Something else"
+   or
+   var2 == "World"
+end
+ 
+> "Result? ", result   // will be true
+ 
+// But Falcon searches for other solutions 
+// when a rule partially fails:
+counter = 0
+rule
+   ? counter++   // ? = try this again...
+   > "Counter now is: ", counter
+   counter >= 4 // ... this this succeeds
+end
+ 
+// If the rule succeeds, 
+// all the variables set inside are accepted.
+> "Counter is accepted: ", counter  // 4
+ 
+ 
+// The solution could come from elsewhere...
+function tryAgain(n)
+   if n < 3
+      // return with doubt...
+      return? n+1
+   end
+   return false
+end
+ 
+counter = 0
+rule
+   counter = tryAgain(counter)   
+   // we returned ? so it's a doubtful solution
+   > "Counter now is: ", counter
+   counter >= 10 // ... and this will fail
+end
+ 
+// as we failed, the value is not accepted.
+> "Counter is still zero: ", counter     // yep, == 0.
+ 
+// more to come...
+ 

@@ -207,15 +207,29 @@ void StmtTry::apply_( const PStep* ps, VMContext* ctx )
 
    // first time around?
    CodeFrame& cf = ctx->currentCode();
-   TRACE( "StmtTry::apply_ %d/2 %s ", cf.m_seqId, self->oneLiner().c_ize() );
-   if( cf.m_seqId )
+   TRACE( "StmtTry::apply_ %d/1 %s ", cf.m_seqId, self->oneLiner().c_ize() );
+   if( cf.m_seqId == 0 )
    {
-      // disabled --  we were catch placeholdrs.
-      ctx->popCode();
-      return;
+      // preliminary checks.
+      if( self->m_body == 0 )
+      {
+         if( self->m_fbody == 0 )
+         {
+            MESSAGE( "StmtTry::apply_ Removed because fully empty");
+            ctx->popCode();
+            return;
+         }
+         else {
+            MESSAGE( "StmtTry::apply_ substituting with finally");
+            ctx->resetCode( self->m_fbody );
+            return;
+         }
+      }
+
+      // we'll be back; save the status.
+      cf.m_seqId = 1;
+      ctx->saveUnrollPoint(cf);
    }
-   // we won't be again in the same incarnation
-   ctx->popCode();
 
    // change into finally...
    if( self->m_fbody != 0 ) {
@@ -224,14 +238,8 @@ void StmtTry::apply_( const PStep* ps, VMContext* ctx )
       ctx->registerFinally(self->m_fbody);
    }
 
-   if( self->m_body != 0 )
-   {
-      // Push ourselves back, as
-      ctx->pushCodeWithUnrollPoint( self );
-      ctx->currentCode().m_seqId = 1;
-
-      ctx->pushCode( self->m_body );
-   }
+   // and into body
+   ctx->pushCode( self->m_body );
 }
 
 

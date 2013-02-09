@@ -1,0 +1,22 @@
+/*
+@name Regex "change" method
+@category Regex
+
+@output
+Testing RE.change
+R'a(.)c'.change('abcabc', '-\0-'): true: -abc--abc-
+R'a(.)c'.change('aaaabc', '-\0-'): true: aaa-abc-
+R'a(.)c'.change('bbb', '-\0-'): false: bbb
+R'a(.)c'.change('xxaccxaacx', '-\0-'): true: xx-acc-x-aac-x
+R'a(.)c'.change('AAA', '-\0-'): false: AAA
+R'a(.)c'.change('ABC', '-\0-'): true: -ABC-
+R'a(.)c'.change('xxABCxxABC', '-\0-'): true: xx-ABC-xx-ABC-
+@endoutput
+*/
+
+> "Testing RE.change"
+regex = r'a(.)c'i
+
+for expr in .[ "abcabc" "aaaabc" "bbb" "xxaccxaacx" "AAA" "ABC" "xxABCxxABC" ]
+   > regex,".change('",expr,"', '-\\0-'): ", regex.change(expr, '-\0-'), ": ", expr
+end

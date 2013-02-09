@@ -1,12 +1,20 @@
 /*
-@name String interpolation -- smoke
+@name Regex - smoke test
 
-@output   
-Hello world
-Hello world
+@output
+Direct: r'abc'
+Direct insensitive: R'abc'
+Indirect: r'abc'
+Indirect insensitive: R'abc'
 @endoutput
 */
 
-string = "Hello world"
-> @ "$string"
-> @ "$(string)"
+x = r'abc'
+> "Direct: ", x
+x = R'abc'
+> "Direct insensitive: ", x
+
+x = RE("abc")
+> "Indirect: ", x
+x = RE("abc", "i")
+> "Indirect insensitive: ", x

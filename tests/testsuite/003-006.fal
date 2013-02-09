@@ -1,0 +1,31 @@
+/*
+@name Operator "**" (grab match)
+@category Regex
+
+@output
+Testing r** operator
+'a.c' matches abc: abc
+'a.c' matches ac: Nil
+'a.*c' matches aaaaccccc: aaaaccccc
+'a.*?c' matches aaaaccccc: aaaac
+'a.*?c' matches long aaaaccccc: aaaaccccc
+'a(.?)c' matches bbbc: Nil
+'a(.?)c' matches aabc: abc
+'a(.?)c' matches ac: Nil
+'a(.?)c' matches AAC: Nil
+'a(.?)c'i matches AAC: AAC
+@endoutput
+*/
+
+> "Testing r** operator"
+> "'a.c' matches abc: ", r'a.c' ** 'abc'
+> "'a.c' matches ac: ", r'a.c' ** 'ac'
+> "'a.*c' matches aaaaccccc: ", r'a.*c' ** 'aaaaccccc'
+> "'a.*?c' matches aaaaccccc: ", r'a.*?c' ** 'aaaaccccc'
+> "'a.*?c' matches long aaaaccccc: ", r'a.*?c'l ** 'aaaaccccc'
+> "'a(.?)c' matches bbbc: ", r'a.c' ** 'bbbc'
+> "'a(.?)c' matches aabc: ", r'a.c' ** 'aabc'
+> "'a(.?)c' matches ac: ", r'a.c' ** 'ac'
+
+> "'a(.?)c' matches AAC: ", r'a.c' ** 'AAC'
+> "'a(.?)c'i matches AAC: ", r'a.c'i ** 'AAC'

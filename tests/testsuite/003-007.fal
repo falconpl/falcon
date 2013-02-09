@@ -1,0 +1,33 @@
+/*
+@name Operator "%" (grab capture)
+@category Regex
+
+@output
+Testing r% operator
+'a.c' % abc: []
+'a.c' % ac: []
+'a(.?)c' % bbbc: Nil
+'a(.*?)?c' % aabc: ["ab"]
+'(.b.)(.b.)(...)?' % abcabcab: ["abc", "abc", ""]
+'(.b.)(.b.)(...)?' % abcabcabc: ["abc", "abc", "abc"]
+'a(.?)c' % AAC: Nil
+'A(B)?C' % AAC: [""]
+'A(B?)C' % AAC: [""]
+'a(.?)c'i % AAC: ["A"]
+'a(.)?c'i % AAC: ["A"]
+@endoutput
+*/
+
+> "Testing r% operator"
+> "'a.c' % abc: ", (r'a.c' % 'abc').describe()
+> "'a.c' % ac: ", (r'a.c' % 'abc').describe()
+> "'a(.?)c' % bbbc: ", (r'a(.?)c' % 'bbbc').describe()
+> "'a(.*?)?c' % aabc: ", (r'a(.*?)?c' % 'aabc').describe()
+> "'(.b.)(.b.)(...)?' % abcabcab: ", (r'(.b.)(.b.)(...)?' % 'abcabcab').describe()
+> "'(.b.)(.b.)(...)?' % abcabcabc: ", (r'(.b.)(.b.)(...)?' % 'abcabcabc').describe()
+
+> "'a(.?)c' % AAC: ", (r'a(.?)c' % 'AAC').describe()
+> "'A(B)?C' % AAC: ", (r'A(B)?C' % 'AAC').describe()
+> "'A(B?)C' % AAC: ", (r'A(B?)C' % 'AAC').describe()
+> "'a(.?)c'i % AAC: ", (r'a(.?)c'i % 'AAC').describe()
+> "'a(.)?c'i % AAC: ", (r'a(.)?c'i % 'AAC').describe()

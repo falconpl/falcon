@@ -1,0 +1,32 @@
+/*
+@name Basic rule test
+@category Rules
+
+@output   
+Basic rule test
+Ok
+First rule result: true
+Second rule result: false
+Done!
+@endoutput
+
+*/
+
+> "Basic rule test"
+
+
+a = 0
+value1 = rule
+   a == 0
+   printl("Ok")
+end
+
+value2 = rule
+   a != 0
+   printl("Fail")
+end
+
+> "First rule result: ", value1
+> "Second rule result: ", value2
+
+> "Done!"

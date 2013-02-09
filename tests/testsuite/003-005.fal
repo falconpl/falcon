@@ -1,0 +1,27 @@
+/*
+@name Operator "*" (match)
+@category Regex
+
+@output
+Testing r* operator
+'a.c' matches abc: true
+'a.c' matches ac: false
+'a.*c' matches aaaaccccc: true
+'a(.?)c' matches bbbc: false
+'a(.?)c' matches aabc: false
+'a(.?)c' matches ac: false
+'a(.?)c' matches AAC: false
+'a(.?)c'i matches AAC: true
+@endoutput
+*/
+
+> "Testing r* operator"
+> "'a.c' matches abc: ", r'a.c' * 'abc'
+> "'a.c' matches ac: ", r'a.c' * 'ac'
+> "'a.*c' matches aaaaccccc: ", r'a.*c' * 'aaaaccccc'
+> "'a(.?)c' matches bbbc: ", r'a.c' * 'bbbc'
+> "'a(.?)c' matches aabc: ", r'a.c' * 'aabc'
+> "'a(.?)c' matches ac: ", r'a.c' * 'ac'
+
+> "'a(.?)c' matches AAC: ", r'a.c' * 'AAC'
+> "'a(.?)c'i matches AAC: ", r'a.c'i * 'AAC'

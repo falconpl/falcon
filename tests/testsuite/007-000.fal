@@ -1,31 +1,20 @@
 /*
-@name Rule -- basic
+@name Function smoke test
+@category Functions
 
 @output   
-Basic rule test
-Ok
-First rule result: true
-Second rule result: false
-Done!
+Hello world
+No param
 @endoutput
-
 */
 
-> "Basic rule test"
-
-
-a = 0
-value1 = rule
-   a == 0
-   printl("Ok")
+function hello( param )
+   if param
+      > "Hello ", param
+   else
+      > "No param"
+   end
 end
 
-value2 = rule
-   a != 0
-   printl("Fail")
-end
-
-> "First rule result: ", value1
-> "Second rule result: ", value2
-
-> "Done!"
+hello( "world" )
+hello()

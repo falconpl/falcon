@@ -1,0 +1,35 @@
+/*
+@name Finally in continu8e
+@category Complex tests
+
+@output   
+@endoutput
+*/
+
+
+array = [1,2,3,"a",nil, 5,6,7]
+sum = 0
+count = 0
+for elem in array
+   > elem
+   try
+      // break here
+      if not elem
+         continue
+      end
+      
+      sum += elem
+      
+   catch in e
+      > "Error caught for ", elem
+   finally
+      ++count
+   end
+   
+end
+
+> "Results:"
+> "Count: ", count
+> "Sum: ", sum
+
+   
