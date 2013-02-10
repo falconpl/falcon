@@ -188,6 +188,9 @@ public:
 
    virtual Class* cls() const;     
    
+   virtual void store( DataWriter* stream ) const;
+   virtual void restore( DataReader* stream );
+
    static void registerMantra();
 private:
    StmtSelect* m_owner;

@@ -33,11 +33,14 @@
 #include <falcon/itemarray.h>
 #include <falcon/vmcontext.h>
 
+#include <falcon/datareader.h>
+#include <falcon/datawriter.h>
+
 #include <map>
 #include <deque>
 #include <vector>
 
-#include "falcon/psteps/switchlike.h"
+#include <falcon/psteps/switchlike.h>
 
 namespace Falcon {
 
@@ -538,11 +541,24 @@ void StmtSelect::unflatten( VMContext*, ItemArray& subItems )
 //================================================================
 // The requirer
 //
+void SelectRequirement::store( DataWriter* stream ) const
+{
+   stream->write(m_id);
+   stream->write(m_clsId);
+   stream->write(m_line);
+   Requirement::store(stream);
+}
+
+void SelectRequirement::restore( DataReader* stream )
+{
+   stream->read(m_id);
+   stream->read(m_clsId);
+   stream->read(m_line);
+   Requirement::restore(stream);
+}
 
 void SelectRequirement::onResolved( const Module* sourceModule, const String& sourceName, Module* targetModule, const Item& value, const Variable* )
 {
-   fassert( m_owner == 0 );
-   
    const Item* itm = &value;
    if( itm == 0 || (!itm->isOrdinal()&& ! itm->isClass()) )
    {

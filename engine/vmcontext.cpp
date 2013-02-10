@@ -823,7 +823,18 @@ public:
       if( ps.isTry() )
       {
          const StmtTry* stry = static_cast<const StmtTry*>( &ps );
+         if( stry->catchSelect().arity() == 0 && stry->catchSelect().getDefault() == 0 )
+         {
+            // catch all, but do nothing.
+            ctx->setCatchBlock( 0 );
+            return true;
+         }
+
          SynTree* st = stry->catchSelect().findBlockForItem( m_item );
+         if( st == 0 )
+         {
+            st = stry->catchSelect().getDefault();
+         }
          ctx->setCatchBlock( st );
          return st != 0;
       }
@@ -862,7 +873,16 @@ public:
       if( ps.isTry()  )
       {
          const StmtTry* stry = static_cast<const StmtTry*>( &ps );
+
+         if( stry->catchSelect().arity() == 0 && stry->catchSelect().getDefault() == 0 )
+         {
+            // catch all, but do nothing.
+            ctx->setCatchBlock( 0 );
+            return true;
+         }
+
          SynTree* st = stry->catchSelect().findBlockForClass( m_errClass );
+
          // has the try a default?
          if ( st == 0 ) {
             st = stry->catchSelect().getDefault();
@@ -963,13 +983,22 @@ void VMContext::raiseItem( const Item& item )
    if( result  == e_unroll_found )
    {
       // the unroller has prepared the code for us
-      fassert( m_catchBlock != 0 );
-      resetCode( m_catchBlock );
-      Symbol* sym = m_catchBlock->target();
-      if( sym != 0 )
+      if( m_catchBlock != 0 )
       {
-         *resolveSymbol(sym, true) = m_raised;
+         // change the try with the catch
+         resetCode( m_catchBlock );
+         Symbol* sym = m_catchBlock->target();
+         if( sym != 0 )
+         {
+            *resolveSymbol(sym, true) = m_raised;
+         }
       }
+      else {
+         // we just discarded the item.
+         popCode(); // remove the item
+         m_raised.setNil();
+      }
+
    }
    else if( result == e_unroll_not_found )
    {
@@ -1003,12 +1032,21 @@ Error* VMContext::raiseError( Error* ce )
    VMContext::t_unrollResult result = unrollToNext<CheckIfCodeIsCatchError>( check );
    if( result == e_unroll_found )
    {
-      resetCode( m_catchBlock );
-
-      // assign the error to the required item.
-      if( m_catchBlock->target() != 0 )
+      if( m_catchBlock != 0 )
       {
-         *resolveSymbol(m_catchBlock->target(), true ) = Item( ce->handler(), ce );
+         resetCode( m_catchBlock );
+
+         // assign the error to the required item.
+         if( m_catchBlock->target() != 0 )
+         {
+            *resolveSymbol(m_catchBlock->target(), true ) = Item( ce->handler(), ce );
+         }
+      }
+      else {
+         // discad the error and exit from the try
+         m_lastRaised = 0;
+         ce->decref();
+         popCode();
       }
    }
    else if( result == e_unroll_not_found )

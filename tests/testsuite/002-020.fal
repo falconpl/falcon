@@ -1,6 +1,7 @@
 /*
-@name Error tracing
+@name Basic try/catch test
 @category Try
+
 This test creates a bit of traceback. It can be 
 checked by hand to see if the traceback is correct
 in terms of desired output and source lines.
@@ -8,56 +9,35 @@ in terms of desired output and source lines.
 The automated test checks if the traceback has
 been properly generated only when requestsed.
 
-@result Ok
+@output
+Basic try/catch test
+Testing empty try
+Testing try with just body
+All ok here
+Testing try with just body and an error
+All ok here
+Done
+@endoutput
 */
 
-class test
-   function third()
-      // generate an error
-      a = nil + 1
-   end
-end
+> "Basic try/catch test"
 
-function first( count )
-   if count < 3
-      first( count + 1)
-   end
-
-   second( 0 )
-end
-
-function second( count )
-   if count < 2
-      second( count + 1 )
-   end
-   t = test()
-   t.third( count + 1 )
-end
-
-
+> "Testing empty try"
 try
-   first(0)
-catch in e
-   > "Untraced error:"
-   > e
-   trace0 = e.trace
 end
 
->
-
+// basic try with success
+> "Testing try with just body"
 try
-   first(0)
-catch as e
-   > "Traced error:"
-   > e
-   trace1 = e.trace
+   > "All ok here"
 end
 
-if trace0 == nil and trace1.len >= 9 and trace1.len <= 10
-   >
-   > "Success"
-   return "Ok"
+> "Testing try with just body and an error"
+v = 0
+try
+   > "All ok here"
+   > v + "a"         // discard this error
+   > "Should not see this"
 end
 
-> "... Fail incoming"
-return "Fail"
+> "Done"

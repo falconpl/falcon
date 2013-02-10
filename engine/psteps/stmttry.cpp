@@ -229,17 +229,21 @@ void StmtTry::apply_( const PStep* ps, VMContext* ctx )
       // we'll be back; save the status.
       cf.m_seqId = 1;
       ctx->saveUnrollPoint(cf);
-   }
 
-   // change into finally...
-   if( self->m_fbody != 0 ) {
-      ctx->pushCodeWithUnrollPoint( &self->m_finallyStep );
-      // save the finally point
-      ctx->registerFinally(self->m_fbody);
-   }
+      // change into finally...
+      if( self->m_fbody != 0 ) {
+         ctx->pushCodeWithUnrollPoint( &self->m_finallyStep );
+         // save the finally point
+         ctx->registerFinally(self->m_fbody);
+      }
 
-   // and into body
-   ctx->pushCode( self->m_body );
+      // and into body
+      ctx->pushCode( self->m_body );
+   }
+   else {
+      // we're off
+      ctx->popCode();
+   }
 }
 
 

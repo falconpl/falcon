@@ -1,0 +1,94 @@
+/*
+@name Try/catch getting explicit items
+@category Try
+
+Here we never throw, just check the grammar
+@output
+
+@endoutput
+*/
+
+// basic try with success
+> "Testing try with just body"
+try
+   > "First test"
+catch Integer in item
+   > "Integer catch: ", item
+catch String in item
+   > "String catch: ", item
+catch Range in item
+   > "Range catch: ", item
+catch in item
+   > "Other catch: ", item
+end
+
+
+> "Testing try with integer raise"
+try
+   > "Second test"
+   if true
+      raise 1
+   end
+   > "Should not be here"
+catch Integer in item
+   > "Integer catch: ", item
+catch String in item
+   > "String catch: ", item
+catch Range in item
+   > "Range catch: ", item
+catch in item
+   > "Other catch: ", item
+end
+
+> "Testing try with String raise"
+try
+   > "Second test"
+   if true
+      raise "Raised"
+   end
+   > "Should not be here"
+catch Integer in item
+   > "Integer catch: ", item
+catch String in item
+   > "String catch: ", item
+catch Range in item
+   > "Range catch: ", item
+catch in item
+   > "Other catch: ", item
+end
+
+> "Testing try with range raise"
+try
+   > "Third test"
+   if true
+      raise [0:1:2]
+   end
+   > "Should not be here"
+catch Integer in item
+   > "Integer catch: ", item
+catch String in item
+   > "String catch: ", item
+catch Range in item
+   > "Range catch: ", item
+catch in item
+   > "Other catch: ", item
+end
+
+> "Testing try with other(bool) raise"
+try
+   > "Fourth test"
+   if true
+      raise false
+   end
+   > "Should not be here"
+catch Integer in item
+   > "Integer catch: ", item
+catch String in item
+   > "String catch: ", item
+catch Range in item
+   > "Range catch: ", item
+catch in item
+   > "Other catch: ", item
+end
+
+> "Done"
