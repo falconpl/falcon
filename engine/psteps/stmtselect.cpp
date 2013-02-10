@@ -376,6 +376,38 @@ bool StmtSelect::setSelectType( int id, int typeId )
    return true;
 }
 
+int32 StmtSelect::blockCount() const
+{
+   return (int) _p->m_blocks.size();
+}
+
+int32 StmtSelect::arity() const
+{
+   return (int) _p->m_blocks.size();
+}
+
+TreeStep* StmtSelect::nth( int32 n ) const
+{
+   if( n < 0 ) n = _p->m_blocks.size() + n;
+   if( n >= (int) _p->m_blocks.size() ) return 0;
+   return _p->m_blocks[n];
+}
+
+bool StmtSelect::setNth( int32 n, TreeStep* ts )
+{
+   if( n < 0 ) n = _p->m_blocks.size() + n;
+   if( n >= (int) _p->m_blocks.size()
+            || ts->category() != TreeStep::e_cat_syntree
+            || ! ts->setParent(this) )
+   {
+      return false;
+   }
+
+   delete _p->m_blocks[n];
+   _p->m_blocks[n] = static_cast<SynTree*>(ts);
+   return true;
+}
+
 
 void StmtSelect::apply_( const PStep* ps, VMContext* ctx )
 {

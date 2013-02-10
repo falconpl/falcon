@@ -62,6 +62,8 @@ public:
    const static int32 evtBreak = 0x4;
    const static int32 evtSwap = 0x8;
    const static int32 evtRaise = 0x10;
+   // Request all the stepInYield to return the control to the processor
+   const static int32 evtEmerge = 0x20;
 
 
    VMContext( Process* prc, ContextGroup* grp=0 );
@@ -509,6 +511,12 @@ public:
       cf.m_dataDepth = m_dataStack.depth();
       cf.m_dynsDepth = m_dynsStack.depth();
    }
+
+   inline void restoreUnrollPoint() {
+      m_dataStack.unroll(currentCode().m_dataDepth);
+      m_dynsStack.unroll(currentCode().m_dynsDepth);
+   }
+
 
    /** Push some code to be run in the execution stack, but only if not already at top.
     \param step The step to be pushed.

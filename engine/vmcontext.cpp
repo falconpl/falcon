@@ -852,12 +852,12 @@ public:
       static PStep* ps = &Engine::instance()->stdSteps()->m_raiseTop;
 
       ctx->pushData( m_item );
-      ctx->pushCode( ps );
+      ctx->pushCodeWithUnrollPoint( ps );
       ctx->pushCode( handler );
    }
 
 private:
-   const Item& m_item;
+   Item m_item;
 };
 
 class CheckIfCodeIsCatchError
@@ -918,7 +918,7 @@ public:
       static PStep* ps = &Engine::instance()->stdSteps()->m_raiseTop;
 
       ctx->pushData( Item(ctx->thrownError()->handler(), ctx->thrownError()) );
-      ctx->pushCode( ps );
+      ctx->pushCodeWithUnrollPoint( ps );
       ctx->pushCode( handler );
 
    }
@@ -992,6 +992,8 @@ void VMContext::raiseItem( const Item& item )
          {
             *resolveSymbol(sym, true) = m_raised;
          }
+         // be sure to reset all the step-in-yield hierarchy
+         atomicOr( m_events, evtEmerge );
       }
       else {
          // we just discarded the item.
@@ -1011,6 +1013,8 @@ void VMContext::raiseItem( const Item& item )
       raiseError( ce );
    }
    else {
+      // be sure to reset all the step-in-yield hierarchy
+      atomicOr( m_events, evtEmerge );
       m_raised.setNil();
    }
 }
@@ -1041,6 +1045,8 @@ Error* VMContext::raiseError( Error* ce )
          {
             *resolveSymbol(m_catchBlock->target(), true ) = Item( ce->handler(), ce );
          }
+         // be sure to reset all the step-in-yield hierarchy
+         atomicOr( m_events, evtEmerge );
       }
       else {
          // discad the error and exit from the try
@@ -1062,6 +1068,8 @@ Error* VMContext::raiseError( Error* ce )
    // otherwise, the throw is suspended
    else {
       atomicAnd( m_events, ~evtRaise );
+      // be sure to reset all the step-in-yield hierarchy
+      atomicOr( m_events, evtEmerge );
       ce->decref();
       m_lastRaised = 0;
    }

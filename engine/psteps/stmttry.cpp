@@ -222,22 +222,32 @@ void StmtTry::apply_( const PStep* ps, VMContext* ctx )
          else {
             MESSAGE( "StmtTry::apply_ substituting with finally");
             ctx->resetCode( self->m_fbody );
+            self->m_fbody->apply( self->m_fbody, ctx );
             return;
          }
       }
 
-      // we'll be back; save the status.
-      cf.m_seqId = 1;
-      ctx->saveUnrollPoint(cf);
+      // If we have a finally...
+      if( self->m_fbody != 0 )
+      {
+         // change this step into a finally gate
+         ctx->resetCode( &self->m_finallyStep );
+         ctx->saveUnrollPoint(cf);
 
-      // change into finally...
-      if( self->m_fbody != 0 ) {
-         ctx->pushCodeWithUnrollPoint( &self->m_finallyStep );
          // save the finally point
          ctx->registerFinally(self->m_fbody);
+
+         // now repush us as a catch point
+         ctx->pushCodeWithUnrollPoint(self);
+         ctx->currentCode().m_seqId = 1;
+      }
+      else {
+         // keep us, but change into a catch point
+         cf.m_seqId = 1;
+         ctx->saveUnrollPoint(cf);
       }
 
-      // and into body
+      // Push in the body
       ctx->pushCode( self->m_body );
    }
    else {
@@ -252,7 +262,8 @@ void StmtTry::PStepFinally::apply_( const PStep* ps, VMContext* ctx )
    register const StmtTry* stry = static_cast<const StmtTry::PStepFinally*>(ps)->m_owner;
    // pop the topomost finally barrier
    ctx->unregisterFinally();
-   ctx->stepIn( stry->m_fbody );
+   ctx->resetCode( stry->m_fbody );
+   stry->m_fbody->apply(stry->m_fbody, ctx);
 }
 
 }

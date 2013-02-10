@@ -35,6 +35,9 @@
 #include <falcon/psteps/exprvalue.h>
 
 #include <falcon/synclasses_id.h>
+#include <falcon/symbol.h>
+
+#include "private_caselist.h"
 
 namespace Falcon {
 
@@ -193,8 +196,9 @@ void apply_raise( const Rule&, Parser& p )
 // Catch clauses 
 //   
 
+
 static void internal_apply_catch( int toks, Parser& p, int line, int chr,
-      int64 tid, String* errName, String* tgt, bool genTrace = false )
+      int64 tid, const String* errName, String* tgt, bool genTrace = false, bool bNew = true )
 {   
    ParserContext* ctx = static_cast<ParserContext*>(p.context());
    TreeStep* stmt = ctx->currentStmt();
@@ -205,7 +209,10 @@ static void internal_apply_catch( int toks, Parser& p, int line, int chr,
    else
    {      
       StmtTry* stmttry = static_cast<StmtTry*>(stmt);      
-      SynTree* newBranch = ctx->changeBranch();
+      SynTree* newBranch = bNew ?
+               ctx->changeBranch()
+               : ctx->currentTree();
+
       newBranch->decl(line,chr);
       if(genTrace)
       {
@@ -254,12 +261,54 @@ static void internal_apply_catch( int toks, Parser& p, int line, int chr,
       }
    }
    
+   if( toks != 0 )
+   {
+      // simplify but leave the last EOL as success marker
+      SourceParser& sp = *static_cast<SourceParser*>(&p);
+      p.getLastToken()->token(sp.CatchSpec);
+      p.simplify(toks-1);
+   }
+}
+
+static void internal_apply_catch_case( int toks, Parser& p, int line, int chr,
+      CaseList* cli, String* tgt, bool genTrace = false )
+{
+   CaseList::iterator iter = cli->begin();
+
+   while( iter != cli->end() )
+   {
+      CaseItem* itm = *iter;
+
+      switch( itm->m_type ) {
+         case CaseItem::e_int:
+            internal_apply_catch( 0, p, line, chr, itm->m_iLow, 0, tgt, genTrace, iter == cli->begin() );
+            break;
+
+         case CaseItem::e_sym:
+            internal_apply_catch( 0, p, line, chr, -1, &itm->m_sym->name(), tgt, genTrace, iter == cli->begin()  );
+            break;
+
+         case CaseItem::e_string:
+            internal_apply_catch( 0, p, line, chr, -1, itm->m_sLow, tgt, genTrace, iter == cli->begin() );
+            break;
+
+         case CaseItem::e_nil:
+         case CaseItem::e_true:
+         case CaseItem::e_false:
+         case CaseItem::e_rngInt:
+         case CaseItem::e_rngString:
+            p.addError(e_syn_catch, p.currentSource(), line, chr );
+            break;
+      }
+
+      ++iter;
+   }
+
    // simplify but leave the last EOL as success marker
    SourceParser& sp = *static_cast<SourceParser*>(&p);
    p.getLastToken()->token(sp.CatchSpec);
    p.simplify(toks-1);
 }
-
 
 void apply_catch_all( const Rule&, Parser& p )
 {
@@ -308,57 +357,31 @@ void apply_catch_as_var( const Rule&, Parser& p )
 }
 
 
-void apply_catch_number( const Rule&, Parser& p )
-{
-   // <<  T_Int << T_EOL
-   TokenInstance* ti = p.getNextToken();
-   internal_apply_catch( 2, p, ti->line(), ti->chr(), ti->asInteger(), 0, 0 );
-}
-
-
-void apply_catch_number_in_var( const Rule&, Parser& p )
-{
-   // << T_Int << T_in << T_Name << T_EOL   
-   TokenInstance* tint = p.getNextToken();
-   p.getNextToken();
-   TokenInstance* tname = p.getNextToken();   
-   internal_apply_catch( 4, p, tint->line(), tint->chr(), tint->asInteger(), 0, tname->asString() );
-}
-
-void apply_catch_number_as_var( const Rule&, Parser& p )
-{
-   // << T_Int << T_as << T_Name << T_EOL
-   TokenInstance* tint = p.getNextToken();
-   p.getNextToken();
-   TokenInstance* tname = p.getNextToken();
-   internal_apply_catch( 4, p, tint->line(), tint->chr(), tint->asInteger(), 0, tname->asString(), true );
-}
-
 
 void apply_catch_thing( const Rule&, Parser& p )
 {
-   //<<  T_Name << T_EOL
+   //<<  CaseList << T_EOL
    TokenInstance* tname = p.getNextToken();   
-   internal_apply_catch( 2, p, tname->line(), tname->chr(), -1, tname->asString(), 0 );
+   internal_apply_catch_case( 2, p, tname->line(), tname->chr(), static_cast<CaseList*>(tname->asData()), 0);
 }
 
 
 void apply_catch_thing_in_var( const Rule&, Parser& p )
 {
-   // << T_Name << T_in << T_Name << T_EOL
+   // << CaseList << T_in << T_Name << T_EOL
    TokenInstance* tname = p.getNextToken();
    p.getNextToken();
    TokenInstance* tgt = p.getNextToken();   
-   internal_apply_catch( 4, p, tname->line(), tname->chr(), -1, tname->asString(), tgt->asString() );
+   internal_apply_catch_case( 4, p, tname->line(), tname->chr(), static_cast<CaseList*>(tname->asData()), tgt->asString() );
 }
 
 void apply_catch_thing_as_var( const Rule&, Parser& p )
 {
-   // << T_Name << T_in << T_Name << T_EOL
+   // << CaseList << T_as << T_Name << T_EOL
    TokenInstance* tname = p.getNextToken();
    p.getNextToken();
    TokenInstance* tgt = p.getNextToken();
-   internal_apply_catch( 4, p, tname->line(), tname->chr(), -1, tname->asString(), tgt->asString(), true );
+   internal_apply_catch_case( 4, p, tname->line(), tname->chr(), static_cast<CaseList*>(tname->asData()), tgt->asString() );
 }
 
 }

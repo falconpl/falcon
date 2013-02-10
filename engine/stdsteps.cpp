@@ -328,6 +328,7 @@ void StdSteps::PStepUnrollToNext::describeTo( String& s, int ) const
 
 void StdSteps::PStepRaiseTop::apply_( const PStep*, VMContext* ctx )
 {
+   ctx->restoreUnrollPoint();
    ctx->popCode();
    ctx->raiseItem( ctx->topData() );
 }

@@ -2,7 +2,6 @@
 @name Try/catch getting explicit items
 @category Try
 
-Here we never throw, just check the grammar
 @output
 Testing try with just body
 First test
@@ -13,13 +12,13 @@ Testing try with integer raise
 Second test again
 Integer catch (as number): 1
 Testing try with String raise
-Second test
+Third test
 String catch: Raised
 Testing try with range raise
-Third test
+Fourth test
 Range catch: [0:1:2]
 Testing try with other(bool) raise
-Fourth test
+Fifth test
 Other catch: false
 Done
 @endoutput
@@ -76,7 +75,7 @@ end
 
 > "Testing try with String raise"
 try
-   > "Second test"
+   > "Third test"
    if true
       raise "Raised"
    end
@@ -93,7 +92,7 @@ end
 
 > "Testing try with range raise"
 try
-   > "Third test"
+   > "Fourth test"
    if true
       raise [0:1:2]
    end
@@ -110,7 +109,7 @@ end
 
 > "Testing try with other(bool) raise"
 try
-   > "Fourth test"
+   > "Fifth test"
    if true
       raise false
    end

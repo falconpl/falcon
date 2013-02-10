@@ -148,6 +148,11 @@ void Processor::manageEvents( VMContext* ctx, int32 &events )
       TRACE( "Hit breakpoint before %s ", ctx->location().c_ize() );
    }
 
+   if( (events & VMContext::evtEmerge) ) {
+      TRACE( "Hit breakpoint before %s ", ctx->location().c_ize() );
+      events &= ~VMContext::evtEmerge;
+   }
+
    if( (events & VMContext::evtRaise) ) {
       TRACE( "Uncaught error raise in context %d", ctx->id() );
       ctx->terminated();

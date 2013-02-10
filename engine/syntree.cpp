@@ -190,7 +190,14 @@ void SynTree::apply_( const PStep* ps, VMContext* ctx )
          return;
       }
 
+
       ctx->popData();
+
+      /*
+      TreeStep* step = steps.m_exprs[ seqId++ ];
+      ctx->pushCode(step);
+      return;
+      */
    }
 
    // step in the last and let it go.

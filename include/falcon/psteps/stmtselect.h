@@ -152,6 +152,14 @@ public:
    void flatten( VMContext* ctx, ItemArray& subItems ) const;
    void unflatten( VMContext* ctx, ItemArray& subItems );
 
+   /**
+    * Number of blocks in this select, default block excluded (== arity)
+    */
+   int32 blockCount() const;
+   virtual int32 arity() const;
+   virtual TreeStep* nth( int32 n ) const;
+   virtual bool setNth( int32 n, TreeStep* ts );
+
 private:
    class Private;
    Private* _p;
