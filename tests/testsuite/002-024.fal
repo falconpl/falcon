@@ -1,0 +1,42 @@
+/*
+@name Try/catch without in/as
+@category Try
+
+This test is like 002-022, but we use multiple selection
+blocks.
+
+@output
+Testing try with just body
+First test
+Testing try with integer raise
+Second test
+Multiple catch: 1
+Testing try with integer raise on numeric
+Second test again
+Multiple catch (as number): 1
+Testing try with String raise
+Third test
+Multiple catch (as number): Raised
+Testing try with range raise
+Fourth test
+Range catch: [0:1:2]
+Testing try with other(bool) raise
+Fifth test
+Other catch: false
+Done
+@endoutput
+*/
+
+// basic try with success
+> "Testing try with just body"
+try
+   > "First test"
+catch Integer, String
+   > "Multiple catch"
+catch Range
+   > "Range catch"
+catch 
+   > "Other catch"
+end
+
+> "Done"

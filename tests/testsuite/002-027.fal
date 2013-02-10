@@ -1,0 +1,102 @@
+/*
+@name Uncaught item in try-catch
+@category Try
+
+@output
+Nesting try -- caught inside
+Inside try 1
+Inner try 1
+Caught inside: Risen string
+After catching
+Nesting try -- caught outside
+Inside try 2
+Inner try 2
+Caught integer outside: 123
+Nesting try -- caught outside (generic)
+Inside try 3
+Inner try 3
+Generic catch outside
+Nesting try -- caught ALL inside
+Inside try 4
+Inner try 4
+Done
+@endoutput
+*/
+
+// basic try with success
+
+> "Nesting try -- caught inside"
+try
+   > "Inside try 1"
+   
+   try
+      > "Inner try 1"
+      raise "Risen string"
+      > "Should not reach here (inner)"
+   catch String in s
+      > "Caught inside: ", s
+   end
+   
+   > "After catching"
+   
+catch Integer in val
+   > "Caught integer outside: ", val
+catch 
+   > "Generic catch outside"
+end
+
+> "Nesting try -- caught outside"
+try
+   > "Inside try 2"
+   
+   try
+      > "Inner try 2"
+      raise 123
+       > "Should not reach here (inner)"
+   catch String in s
+      > "Caught inside: ", s
+   end
+   
+   > "Should not reach here"
+catch Number in val
+   > "Caught integer outside: ", val
+catch 
+   > "Generic catch outside"
+end
+
+> "Nesting try -- caught outside (generic)"
+try
+   > "Inside try 3"
+   
+   try
+      > "Inner try 3"
+      raise [1:2:3]
+       > "Should not reach here (inner)"
+   catch String in s
+      > "Caught inside: ", s
+   end
+   
+    > "Should not reach here"
+catch Number in val
+   > "Caught integer outside: ", val
+catch 
+   > "Generic catch outside"
+end
+
+> "Nesting try -- caught ALL inside"
+try
+   > "Inside try 4"
+   
+   try
+      > "Inner try 4"
+      raise [1:2:3]
+       > "Should not reach here (inner)"
+   end
+   // testing without extra instructions
+catch Number in val
+   > "Caught integer outside: ", val
+catch 
+   > "Generic catch outside"
+end
+
+> "Done"

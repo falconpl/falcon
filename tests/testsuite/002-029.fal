@@ -1,0 +1,131 @@
+/*
+@name Nested finally with error class
+@category Try
+
+@output
+Nesting try -- caught inside
+Inside try 1
+Inner try 1
+Caught inside: Risen string
+Inner Finally 1 executed: 1
+After catching
+Outer finally 1 executed: 2
+Nesting try -- caught outside
+Inside try 2
+Inner try 2
+Inner Finally 2 executed: 3
+Caught integer outside: 123
+Outer Finally 2 executed: 4
+Nesting try -- caught outside (generic)
+Inside try 3
+Inner try 3
+Inner Finally 3 executed: 5
+Generic catch outside
+Outer Finally 3 executed: 6
+Nesting try -- caught ALL inside
+Inside try 4
+Inner try 4
+Inner Finally 4 executed: 7
+Outer Finally 4 executed: 8
+Verify count: 8
+Done
+@endoutput
+*/
+
+// basic try with success
+
+verify = 0
+
+dict = [=>]
+
+> "Nesting try -- caught inside"
+try
+   > "Inside try 1"
+   
+   try
+      > "Inner try 1"
+      > dict["3"] // generates access error
+      > "Should not reach here (inner)"
+   catch AccessError in s
+      > "Caught inside: ", s.code
+   finally
+      > "Inner Finally 1 executed: ", ++verify
+   end
+   
+   > "After catching"
+   
+catch OperandError in val
+   > "Caught integer outside: ", val.code
+catch 
+   > "Generic catch outside"
+finally
+   > "Outer finally 1 executed: ", ++verify   
+end
+
+> "Nesting try -- caught outside"
+try
+   > "Inside try 2"
+   
+   try
+      > "Inner try 2"
+      a = 0 + "n"
+      > "Should not reach here (inner)"
+   catch  AccessError in s
+      > "Caught inside: ", s.code
+   finally
+      > "Inner Finally 2 executed: ", ++verify
+   end
+   
+   > "Should not reach here"
+catch OperandError in val
+   > "Caught Error outside: ", val.code
+catch in val
+   > "Generic catch outside: ", val
+finally
+   > "Outer Finally 2 executed: ", ++verify
+end
+
+> "Nesting try -- caught outside (generic)"
+try
+   > "Inside try 3"
+   
+   try
+      > "Inner try 3"
+      a = 0 + "n"
+      > "Should not reach here (inner)"
+   catch  AccessError in s
+      > "Caught inside: ", s.code
+   finally
+      > "Inner Finally 3 executed: ", ++verify      
+   end
+   
+    > "Should not reach here"
+catch 
+   > "Generic catch outside"
+finally
+   > "Outer Finally 3 executed: ", ++verify
+end
+
+> "Nesting try -- caught ALL inside"
+try
+   > "Inside try 4"
+   
+   try
+      > "Inner try 4"
+      a = 0 + "n"
+      > "Should not reach here (inner)"
+   finally
+      > "Inner Finally 4 executed: ", ++verify
+   end
+   // testing without extra instructions
+catch OperandError in val
+   > "Caught Error outside: ", val.code
+catch 
+   > "Generic catch outside"
+finally
+   > "Outer Finally 4 executed: ", ++verify
+end
+
+> "Verify count: ", verify
+
+> "Done"
