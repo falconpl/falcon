@@ -418,6 +418,20 @@ public:
     */
    ClassShared* sharedClass() const;
 
+   /** Returns the global instance of the ClassNumber class.
+   \return the Engine instance of the ClassNumber handler.
+
+    Method init() must have been called before.
+
+    ClassNumber is the abstract base class for all kind of numbers,
+    it's mainly to be used in select and other type checks.
+
+    @note This method will assert and terminate the program if compiled in debug mode
+    in case the engine has not been initialized. In release, it will just
+    return a null pointer.
+    */
+   Class* numberClass() const;
+
    /** Returns the global instance of the FormatClass class.
    \return the Engine instance of the FormatClass handler.
 
@@ -637,6 +651,7 @@ protected:
    Class* m_synFuncClass;
    Class* m_genericClass;
    Class* m_formatClass;
+   Class* m_numberClass;
 
    ClassRawMem* m_rawMemClass;
    ClassShared* m_sharedClass;

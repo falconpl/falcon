@@ -71,6 +71,7 @@
 #include <falcon/classes/classclosure.h>
 #include <falcon/classes/classcomposition.h>
 #include <falcon/classes/classint.h>
+#include <falcon/classes/classnumber.h>
 #include <falcon/classes/classnumeric.h>
 #include <falcon/classes/classstring.h>
 #include <falcon/classes/classrange.h>
@@ -267,6 +268,7 @@ Engine::Engine()
    m_genericClass = new ClassGeneric;
    m_formatClass = new ClassFormat;
    m_sharedClass = new ClassShared;
+   m_numberClass = new ClassNumber;
    
    // Notice: rawMem is not reflected, is used only in extensions.
    m_rawMemClass = new ClassRawMem();
@@ -339,6 +341,7 @@ Engine::Engine()
    addMantra( m_formatClass );
    addMantra( m_rangeClass  );
    addMantra( m_sharedClass );
+   addMantra( m_numberClass );
 
    addMantra( m_classes[FLC_ITEM_NIL] );
    addMantra( m_classes[FLC_ITEM_BOOL] );
@@ -892,6 +895,12 @@ ClassShared* Engine::sharedClass() const
 {
    fassert( m_instance != 0 );
    return m_instance->m_sharedClass;
+}
+
+Class* Engine::numberClass() const
+{
+   fassert( m_instance != 0 );
+   return m_instance->m_numberClass;
 }
 
 Class* Engine::formatClass() const

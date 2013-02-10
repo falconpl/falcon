@@ -297,7 +297,7 @@ SynTree* StmtSelect::findBlockForClass( Class* cls ) const
       // base can be 0 if the class was resolved as actually being an integer.
       if( base != 0 && cls->isDerivedFrom( base ) )
       {
-         Private::ClassBlocks::iterator pos = _p->m_classBlocks.find( cls );
+         Private::ClassBlocks::iterator pos = _p->m_classBlocks.find( base );
          fassert( pos != _p->m_classBlocks.end() );
          return pos->second;
       }

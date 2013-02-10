@@ -81,6 +81,43 @@ void ClassInt::describe( void* instance, String& target, int, int ) const
    target.N(((Item*) instance)->asInteger() );
 }
 
+
+Class* ClassInt::getParent( const String& name ) const
+{
+   static Class* number = Engine::instance()->numberClass();
+
+   if( name == number->name() )
+   {
+      return number;
+   }
+   return 0;
+}
+
+bool ClassInt::isDerivedFrom( const Class* cls ) const
+{
+   static Class* number = Engine::instance()->numberClass();
+   return cls == number;
+}
+
+void ClassInt::enumerateParents( ClassEnumerator& cb ) const
+{
+   static Class* number = Engine::instance()->numberClass();
+   cb(number,true);
+}
+
+void* ClassInt::getParentData( Class* parent, void* data ) const
+{
+   static Class* number = Engine::instance()->numberClass();
+
+   if( parent == number )
+   {
+      Item* itm = static_cast<Item*>(data);
+      itm->setInteger(itm->asNumeric());
+      return data;
+   }
+   return 0;
+}
+
 //=======================================================================
 //
 
@@ -521,42 +558,37 @@ void ClassInt::op_ashl( VMContext* ctx, void* self ) const
 
 
 // -------- Helper functions to increment and decrement ClassInt -----
-
-inline void increment( VMContext *ctx, void *self )
-{
-   Item *iself = (Item*)self;
-   ctx->stackResult( 1, iself->asInteger() + 1 );
-}
-
-inline void decrement( VMContext *ctx, void *self )
-{
-   Item *iself = (Item*)self;
-   ctx->stackResult( 1, iself->asInteger() - 1 );
-}
-
 // ---------------------------------------------------------------------
 
 void ClassInt::op_inc( VMContext* ctx, void* self ) const
 {
-   increment( ctx, self );
+   Item *iself = (Item*)self;
+   iself->setInteger(iself->asInteger()+1);
+   ctx->stackResult( 1, iself->asInteger() );
 }
 
 
 void ClassInt::op_dec( VMContext* ctx, void* self ) const
 {
-   decrement( ctx, self );
+   Item *iself = (Item*)self;
+   iself->setInteger(iself->asInteger() - 1);
+   ctx->stackResult( 1, iself->asInteger() );
 }
 
 
 void ClassInt::op_incpost( VMContext* ctx, void* self ) const
 {
-   increment( ctx, self );
+   Item *iself = (Item*)self;
+   ctx->stackResult( 1, iself->asInteger() );
+   iself->setInteger(iself->asInteger() + 1);
 }
 
 
 void ClassInt::op_decpost( VMContext* ctx, void* self ) const
 {
-   decrement( ctx, self );
+   Item *iself = (Item*)self;
+   ctx->stackResult( 1, iself->asInteger() );
+   iself->setInteger(iself->asInteger() - 1);
 }
 
 }

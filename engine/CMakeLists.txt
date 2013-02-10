@@ -265,6 +265,7 @@ add_library(falcon_engine SHARED
   classes/classmodule.cpp
   classes/classmodspace.cpp
   classes/classmulti.cpp
+  classes/classnumber.cpp
   classes/classnumeric.cpp
   classes/classnil.cpp
   classes/classrange.cpp

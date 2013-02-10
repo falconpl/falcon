@@ -42,6 +42,11 @@ public:
 
    virtual void describe( void* instance, String& target, int depth = 3, int maxlen = 60 ) const;
 
+   virtual Class* getParent( const String& name ) const;
+   virtual bool isDerivedFrom( const Class* cls ) const;
+   virtual void enumerateParents( ClassEnumerator& cb ) const;
+   virtual void* getParentData( Class* parent, void* data ) const;
+
    //=============================================================
    virtual bool op_init( VMContext* ctx, void* instance, int32 pcount ) const;
    virtual void op_isTrue( VMContext* ctx, void* self ) const;

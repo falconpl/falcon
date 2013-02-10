@@ -4,7 +4,24 @@
 
 Here we never throw, just check the grammar
 @output
-
+Testing try with just body
+First test
+Testing try with integer raise
+Second test
+Integer catch: 1
+Testing try with integer raise
+Second test again
+Integer catch (as number): 1
+Testing try with String raise
+Second test
+String catch: Raised
+Testing try with range raise
+Third test
+Range catch: [0:1:2]
+Testing try with other(bool) raise
+Fourth test
+Other catch: false
+Done
 @endoutput
 */
 
@@ -32,6 +49,23 @@ try
    > "Should not be here"
 catch Integer in item
    > "Integer catch: ", item
+catch String in item
+   > "String catch: ", item
+catch Range in item
+   > "Range catch: ", item
+catch in item
+   > "Other catch: ", item
+end
+
+> "Testing try with integer raise"
+try
+   > "Second test again"
+   if true
+      raise 1
+   end
+   > "Should not be here"
+catch Number in item
+   > "Integer catch (as number): ", item
 catch String in item
    > "String catch: ", item
 catch Range in item

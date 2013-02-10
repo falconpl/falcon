@@ -14,7 +14,7 @@
  */
 
 #undef SRC
-#define SRC "engine/classes/classsnumeric.cpp"
+#define SRC "engine/classes/classnumeric.cpp"
 
 
 #include <falcon/classes/classnumeric.h>
@@ -61,7 +61,7 @@ bool ClassNumeric::op_init( VMContext* ctx, void* instance, int pcount ) const
          numeric value;
          if( ! param->asString()->parseDouble( value ) )
          {
-            throw new ParamError( ErrorParam( e_param_range, __LINE__, __FILE__ ).extra( "Not an integer" ) );
+            throw new ParamError( ErrorParam( e_param_range, __LINE__, __FILE__ ).extra( "Not a number" ) );
          }
          else
          {
@@ -114,6 +114,40 @@ void ClassNumeric::restore( VMContext* ctx, DataReader* dr ) const
 void ClassNumeric::describe( void* instance, String& target, int, int  ) const 
 {
    target.N(((Item*) instance)->asNumeric() );   
+}
+
+Class* ClassNumeric::getParent( const String& name ) const
+{
+   static Class* number = Engine::instance()->numberClass();
+
+   if( name == number->name() )
+   {
+      return number;
+   }
+   return 0;
+}
+
+bool ClassNumeric::isDerivedFrom( const Class* cls ) const
+{
+   static Class* number = Engine::instance()->numberClass();
+   return cls == number;
+}
+
+void ClassNumeric::enumerateParents( ClassEnumerator& cb ) const
+{
+   static Class* number = Engine::instance()->numberClass();
+   cb(number,true);
+}
+
+void* ClassNumeric::getParentData( Class* parent, void* data ) const
+{
+   static Class* number = Engine::instance()->numberClass();
+
+   if( parent == number )
+   {
+      return data;
+   }
+   return 0;
 }
 
 // ================================================================
@@ -514,43 +548,37 @@ void ClassNumeric::op_ashl( VMContext* ctx, void* self ) const
  }
 
 
-// -------- Helper functions to increment and decrement ClassNumeric -----
-
-inline void increment( VMContext *ctx, void *self )
-{
-   Item *iself = (Item*)self;
-   ctx->stackResult( 1, iself->asInteger() + 1.0 );
-}
-
-inline void decrement( VMContext *ctx, void *self )
-{
-   Item *iself = (Item*)self;
-   ctx->stackResult( 1, iself->asInteger() - 1.0 );
-}
-
 // ---------------------------------------------------------------------
 
 void ClassNumeric::op_inc( VMContext* ctx, void* self ) const
 {
-   increment( ctx, self );
+   Item *iself = (Item*)self;
+   iself->setNumeric(iself->asNumeric() + 1.0);
+   ctx->stackResult( 1, iself->asNumeric() );
 }
 
 
 void ClassNumeric::op_dec( VMContext* ctx, void* self ) const
 {
-   decrement( ctx, self );
+   Item *iself = (Item*)self;
+   iself->setNumeric(iself->asNumeric() - 1.0);
+   ctx->stackResult( 1, iself->asNumeric() );
 }
 
 
 void ClassNumeric::op_incpost( VMContext* ctx, void* self ) const
 {
-   increment( ctx, self );
+   Item *iself = (Item*)self;
+   ctx->stackResult( 1, iself->asNumeric() );
+   iself->setNumeric(iself->asNumeric() + 1.0);
 }
 
 
 void ClassNumeric::op_decpost( VMContext* ctx, void* self ) const
 {
-   decrement( ctx, self );
+   Item *iself = (Item*)self;
+   ctx->stackResult( 1, iself->asNumeric() );
+   iself->setNumeric(iself->asNumeric() - 1.0);
 }
 
 }
