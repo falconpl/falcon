@@ -101,7 +101,7 @@ public:
 
    ErrorParam( int code, uint32 line, const String& signature ):
       m_errorCode( code ),
-      m_line( 0 ),
+      m_line( line ),
       m_chr( 0 ),
       m_sysError( 0 ),
       m_origin( e_orig_mod ),
@@ -363,7 +363,6 @@ protected:
    String m_mantra;
    String m_module;
    String m_path;
-   String m_className;
    String m_signature;
    Class* m_handler;
 

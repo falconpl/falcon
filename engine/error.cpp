@@ -157,7 +157,7 @@ void Error::describeTo( String &target ) const
 
 String &Error::heading( String &target ) const
 {
-   target += m_className;
+   target += handler()->name();
    target += " ";
 
    switch( m_origin )
