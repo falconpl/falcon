@@ -1456,6 +1456,8 @@ void VMContext::returnFrame_base( const Item& value )
       m_finallyStack.pop();
       pushData(value);
       pushCode(ps_return);
+      // clean 1 for the data created by the finally controller.
+      currentCode().m_seqId = 1;
       pushCode(fd);
       return;
    }

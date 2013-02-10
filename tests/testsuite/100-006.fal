@@ -1,0 +1,84 @@
+/*
+@name Function with return, try catch and finally
+@category Complex tests
+
+@output
+Test for positive check
+Traversal of Finally child_func: 1
+Traversal of Finally in base_func: 2
+Returned value: Return value
+Traversal count: 2
+-----------------------------
+Test for inner catch
+Integer caught in child_func: 123
+Traversal of Finally child_func: 3
+Traversal of Finally in base_func: 4
+Returned value: In catch of child_func
+Traversal count: 4
+-----------------------------
+Test for outer catch
+Traversal of Finally child_func: 5
+String caught in base_func: string
+Traversal of Finally in base_func: 6
+Returned value: Nil
+Traversal count: 6
+-----------------------------
+@endoutput
+*/
+
+
+function base_func( p0, pc )
+   try 
+      value = child_func(p0,pc) 
+      return value
+   catch String in base
+      > "String caught in ",fself.name, ": ", base
+   finally
+      > "Traversal of Finally in ",fself.name, ": ", ++pc.count
+   end
+end
+   
+   
+function child_func( p0, pc )
+   try 
+      if p0 == 1
+         raise 123
+      elif p0 == 2
+         raise "string"
+      end
+      
+      return pc.value
+      
+   catch Integer in base
+      > "Integer caught in ", fself.name, ": ", base
+      return "In catch of " + fself.name
+   finally
+      > "Traversal of Finally ",fself.name, ": ", ++pc.count
+   end
+   
+   return "Outside finally of " + fself.name
+end
+
+class Counter(value)
+   count = 0
+   value = value
+end
+
+> "Test for positive check"
+pc = Counter("Return value")
+value0 = base_func(0, pc)
+> "Returned value: ", value0
+> "Traversal count: ", pc.count
+> "-----------------------------"
+
+> "Test for inner catch"
+value0 = base_func(1, pc)
+> "Returned value: ", value0
+> "Traversal count: ", pc.count
+> "-----------------------------"
+
+> "Test for outer catch"
+value0 = base_func(2, pc)
+> "Returned value: ", value0
+> "Traversal count: ", pc.count
+> "-----------------------------"

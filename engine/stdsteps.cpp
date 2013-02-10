@@ -228,7 +228,9 @@ void StdSteps::PStepReturnFrame::describeTo( String& s, int ) const
 
 void StdSteps::PStepReturnFrameWithTop::apply_( const PStep*, VMContext* ctx )
 {
-   ctx->returnFrame( ctx->topData() );
+   ctx->popData(ctx->currentCode().m_seqId);
+   Item top = ctx->topData();  //copy it in the C stack
+   ctx->returnFrame( top );
 }
 
 void StdSteps::PStepReturnFrameWithTop::describeTo( String& s, int ) const
@@ -238,7 +240,9 @@ void StdSteps::PStepReturnFrameWithTop::describeTo( String& s, int ) const
 
 void StdSteps::PStepReturnFrameWithTopDoubt::apply_( const PStep*, VMContext* ctx )
 {
-   ctx->returnFrameDoubt( ctx->topData() );
+   ctx->popData(ctx->currentCode().m_seqId);
+   Item top = ctx->topData();  //copy it in the C stack
+   ctx->returnFrameDoubt( top );
 }
 
 void StdSteps::PStepReturnFrameWithTopDoubt::describeTo( String& s, int ) const
@@ -249,7 +253,9 @@ void StdSteps::PStepReturnFrameWithTopDoubt::describeTo( String& s, int ) const
 
 void StdSteps::PStepReturnFrameWithTopEval::apply_( const PStep*, VMContext* ctx )
 {
-   ctx->returnFrameEval( ctx->topData() );
+   ctx->popData(ctx->currentCode().m_seqId);
+   Item top = ctx->topData();  //copy it in the C stack
+   ctx->returnFrameEval( top );
 }
 
 void StdSteps::PStepReturnFrameWithTopEval::describeTo( String& s, int ) const
@@ -259,7 +265,9 @@ void StdSteps::PStepReturnFrameWithTopEval::describeTo( String& s, int ) const
 
 void StdSteps::PStepReturnFrameWithTopDoubtEval::apply_( const PStep*, VMContext* ctx )
 {
-   ctx->returnFrameDoubtEval( ctx->topData() );
+   ctx->popData(ctx->currentCode().m_seqId);
+   Item top = ctx->topData();  //copy it in the C stack
+   ctx->returnFrameDoubtEval( top );
 }
 
 void StdSteps::PStepReturnFrameWithTopDoubtEval::describeTo( String& s, int ) const
