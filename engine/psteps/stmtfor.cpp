@@ -679,8 +679,6 @@ void StmtForTo::oneLinerTo( String& tgt ) const
 
 void StmtForTo::apply_( const PStep* ps, VMContext* ctx )
 {
-
-   static PStep* pop = &Engine::instance()->stdSteps()->m_pop;
    const StmtForTo* self = static_cast<const StmtForTo*>(ps);
    
    TRACE( "StmtForTo::PStepNext::apply_ %d/3",  ctx->currentCode().m_seqId );
@@ -769,7 +767,6 @@ void StmtForTo::apply_( const PStep* ps, VMContext* ctx )
    // eventually, push the first opode in top of all.
    if( self->m_forFirst != 0 )
    {
-      ctx->pushCode( pop );
       ctx->pushCode( self->m_forFirst );
    }
 }
@@ -778,10 +775,11 @@ void StmtForTo::apply_( const PStep* ps, VMContext* ctx )
 void StmtForTo::PStepNext::apply_( const PStep* ps, VMContext* ctx )
 {
    MESSAGE( "StmtForTo::PStepNext::apply_" );
-
-   static PStep* pop = &Engine::instance()->stdSteps()->m_pop;
    const StmtForTo* self = static_cast<const StmtForTo::PStepNext*>(ps)->m_owner;
    
+   // reset the unroll point for next.
+   ctx->restoreUnrollPoint();
+
    register int64 start = ctx->opcodeParam(2).asInteger();
    int64 end = ctx->opcodeParam(1).asInteger();
    int64 step = ctx->topData().asInteger();
@@ -799,7 +797,6 @@ void StmtForTo::PStepNext::apply_( const PStep* ps, VMContext* ctx )
       
       if( self->m_forLast != 0 )
       {
-         ctx->pushCode( pop );
          ctx->pushCode( self->m_forLast );
       }
    }
@@ -807,14 +804,12 @@ void StmtForTo::PStepNext::apply_( const PStep* ps, VMContext* ctx )
    {
       if( self->m_forMiddle != 0 )
       {
-         ctx->pushCode( pop );
          ctx->pushCode( self->m_forMiddle );
       }
    }
    
    if( self->m_body )
    {
-      ctx->pushCode( pop );
       ctx->pushCode( self->m_body );
    }
    
