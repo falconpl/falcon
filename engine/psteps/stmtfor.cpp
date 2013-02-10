@@ -447,15 +447,13 @@ void StmtForIn::PStepBegin::apply_( const PStep* ps, VMContext* ctx )
 
 void StmtForIn::PStepGetNext::apply_( const PStep*, VMContext* ctx )
 {
-    fassert( ctx->opcodeParam(1).isUser() );
-
     // we're never needed anymore
     ctx->popCode();
     
     Class* cls = 0;
     void* dt = 0;
     // here we have seq, iter, <space>...
-    ctx->opcodeParam(1).asClassInst( cls, dt );
+    ctx->opcodeParam(1).forceClassInst( cls, dt );
     // ... pass them to next.
     cls->op_next( ctx, dt );
 }
