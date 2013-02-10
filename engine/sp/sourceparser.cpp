@@ -348,17 +348,13 @@ SourceParser::SourceParser():
    S_Finally << "finally" << finally_errhand;
    S_Finally << ( r_finally << "r_finally" << apply_finally << T_finally << T_EOL ); 
    
-   CatchSpec << "CatchSpec"
-         << ( r_catch_all << "catch_all" << apply_catch_all << T_EOL )
-         << ( r_catch_in_var<< "catch_in_var" << apply_catch_in_var << T_in << T_Name << T_EOL )
-         << ( r_catch_as_var<< "catch_as_var" << apply_catch_as_var << T_as << T_Name << T_EOL )
-         << ( r_catch_number << "catch_number" << apply_catch_number <<  T_Int << T_EOL )
-         << ( r_catch_number_in_var << "catch_number_in_var" << apply_catch_number_in_var << T_Int << T_in << T_Name << T_EOL )
-         << ( r_catch_number_as_var << "catch_number_as_var" << apply_catch_number_as_var << T_Int << T_as << T_Name << T_EOL )
-         << ( r_catch_thing << "catch_thing" << apply_catch_thing <<  T_Name << T_EOL )
-         << ( r_catch_thing_in_var << "catch_thing_in_var" << apply_catch_thing_in_var << T_Name << T_in << T_Name << T_EOL )
-         << ( r_catch_thing_as_var << "catch_thing_as_var" << apply_catch_thing_as_var << T_Name << T_as << T_Name << T_EOL )
-            ;
+   CatchSpec << "CatchSpec";
+   CatchSpec << ( r_catch_all << "catch_all" << apply_catch_all << T_EOL );
+   CatchSpec << ( r_catch_in_var<< "catch_in_var" << apply_catch_in_var << T_in << T_Name << T_EOL );
+   CatchSpec << ( r_catch_as_var<< "catch_as_var" << apply_catch_as_var << T_as << T_Name << T_EOL );
+   CatchSpec << ( r_catch_thing << "catch_thing" << apply_catch_thing <<  CaseList << T_EOL );
+   CatchSpec << ( r_catch_thing_in_var << "catch_thing_in_var" << apply_catch_thing_in_var << CaseList << T_in << T_Name << T_EOL );
+   CatchSpec << ( r_catch_thing_as_var << "catch_thing_as_var" << apply_catch_thing_as_var << CaseList << T_as << T_Name << T_EOL );
    
    S_Raise << "raise" << raise_errhand;
    S_Raise << ( r_raise << "r_raise" << apply_raise << T_raise << Expr << T_EOL );
@@ -592,6 +588,10 @@ SourceParser::SourceParser():
    CaseList << "CaseList";
    CaseList<< (r_CaseList_next << "CaseList_next" << apply_CaseList_next << CaseList << T_Comma << CaseListToken );
    CaseList<< (r_CaseList_first << "CaseList_first" << apply_CaseList_first << CaseListToken );
+   // remove right associativity to be able to use "in" in catches.
+   // (in is an operator and has a priority, but it is used as a keyword token in catches)
+   CaseList.setRightAssoc(true);
+   r_CaseList_next.setGreedy(false);
    
 
    NeListExpr_ungreed << "NeListExpr_ungreed" << expr_errhand;
