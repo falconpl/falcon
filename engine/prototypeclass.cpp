@@ -177,7 +177,7 @@ void PrototypeClass::op_getProperty( VMContext* ctx, void* self, const String& p
                Item& result = ctx->topData();
                if( result.isMethod() && result.asClass() == this )
                {
-                  result.content.data.ptr.pInst = self;
+                  //result.content.data.ptr.pInst = self;
                }
                return;
             }

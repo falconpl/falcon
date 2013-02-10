@@ -316,7 +316,7 @@ GenericError* Parser::makeError() const
       return 0;
    }
 
-   GenericError* cerr = new GenericError(ErrorParam(e_syntax, __LINE__, __SRC__ ));
+   GenericError* cerr = new GenericError(ErrorParam(e_syntax, __LINE__, SRC ));
    Private::ErrorList::iterator iter = _p->m_lErrors.begin();
    while( iter != _p->m_lErrors.end() )
    {
