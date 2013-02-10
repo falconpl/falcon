@@ -123,7 +123,6 @@ void generic_apply_( const PStep* ps, VMContext* ctx )
          // refetch, we may have gone deep
          fassert( ctx->topData().isInteger() );
          int64 cmp = ctx->topData().asInteger();
-         ctx->popData();
          ctx->topData().setBoolean( _cpr::cmpCheck( cmp ) );
       }
       else {
