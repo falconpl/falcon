@@ -1,0 +1,52 @@
+/*
+@name Single inheritance
+@category Classes
+
+@output
+Single inheritance
+Init from base
+Init from child
+From Child!
+self.propChild = 1111
+From base!
+self.propBase = 0000
+Done
+@endoutput
+*/
+
+class Base
+   propBase = nil
+   
+   init
+      > "Init from base"
+   end
+   
+   function fromBase()
+      > "From base!"
+      > "self.propBase = ", self.propBase
+   end
+end
+
+class Child from Base
+   propChild = nil
+   
+   init
+      > "Init from child"
+   end
+   
+   function fromChild()
+      > "From Child!"
+      > "self.propChild = ", self.propChild
+      self.fromBase()
+   end
+end
+
+> "Single inheritance"
+x = Child()
+x.propBase = "0000"
+x.propChild = "1111"
+
+x.fromChild()
+> "Done"
+
+

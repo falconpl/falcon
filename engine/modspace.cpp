@@ -368,9 +368,11 @@ void ModSpace::importSpecificDep( Module* asker, void* def, Error*& link_errors 
    // not found? we have a link error.
    if( value == 0 )
    {
-      Error* em = new LinkError( ErrorParam(e_undef_sym, 0, asker->uri() )
+      Error* em = new LinkError( ErrorParam(e_undef_sym, __LINE__, SRC )
          .origin( ErrorParam::e_orig_linker )
-         .extra( dep->m_sourceName +" in " + dep->m_sourceName ) );
+         .module(asker->uri())
+         .line( dep->m_idef->sr().line() )
+         .extra( dep->m_sourceName ) );
 
       addLinkError( link_errors, em );
       return;
@@ -405,8 +407,10 @@ void ModSpace::importGeneralDep(Module* asker, void* def, Error*& link_errors)
    // not found? we have a link error.
    if( value == 0 )
    {
-      Error* em = new LinkError( ErrorParam(e_undef_sym, 0, asker->uri() )
+      Error* em = new LinkError( ErrorParam(e_undef_sym, __LINE__, SRC )
          .origin( ErrorParam::e_orig_linker )
+         .module(asker->uri())
+         .line( dep->m_defLine )
          .extra( symName ) );
 
       addLinkError( link_errors, em );
@@ -871,9 +875,12 @@ void ModSpace::PStepResolver::apply_( const PStep* self, VMContext* ctx )
                   const String& symname = idef->sourceSymbol(i);
                   Item* orig = other->getGlobalValue(symname);
                   if( orig == 0 ) {
-                     Error* em = new LinkError( ErrorParam(e_undef_sym, 0, mod->uri() )
+                     Error* em = new LinkError( ErrorParam(e_undef_sym, __LINE__, SRC )
                         .origin( ErrorParam::e_orig_linker )
-                        .extra( symname +" in " + other->name() ) );
+                        .module(mod->uri())
+                        .line( idef->sr().line() )
+                        .extra( symname ) );
+
                      throw em;
                   }
 

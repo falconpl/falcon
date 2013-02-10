@@ -230,7 +230,7 @@ public:
     *
     * If the value is already defined as a global variable, this method returns 0.
     */
-   Variable* importValue( const String& name, Module* source, Item* value );
+   Variable* importValue( const String& name, Module* source, Item* value, int line = 0 );
 
 
    /** Finds a function.
@@ -321,12 +321,12 @@ public:
     a valid variable, which might be undefined if the symbol wasn't known before,
     or it might be an existing global variable.
     */
-   Variable* addImplicitImport( const String& name, bool& isNew );
+   Variable* addImplicitImport( const String& name, int line, bool& isNew );
    
-   Variable* addImplicitImport( const String& name )
+   Variable* addImplicitImport( const String& name, int line )
    {
       bool bDummy;
-      return addImplicitImport( name, bDummy );
+      return addImplicitImport( name, line, bDummy );
    }
    
    /** Removes an extern.

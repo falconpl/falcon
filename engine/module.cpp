@@ -336,10 +336,10 @@ bool Module::resolveExternValue( const String& name, Module* source, Item* value
 
 
 
-Variable* Module::importValue( const String& name, Module* source, Item* value )
+Variable* Module::importValue( const String& name, Module* source, Item* value, int line )
 {
    bool bAlready = false;
-   Variable* var = addImplicitImport(name, bAlready);
+   Variable* var = addImplicitImport(name, line, bAlready );
    if( var->type() == Variable::e_nt_extern )
    {
       // ok, we have an extern variable.
@@ -631,7 +631,7 @@ Error* Module::addImport( ImportDef* def )
 
       if( name.getCharAt( name.length() -1 ) != '*' )
       {
-          addImplicitImport( name );
+          addImplicitImport( name, def->sr().line() );
           _p->m_depsByName[name]->m_idef = def;
       }
       else if( def->sourceModule().size() != 0 )
@@ -760,6 +760,7 @@ void Module::addImportRequest( Requirement* req,
    // add the dependency to the symbol.
    Private::Dependency* dep = new Private::Dependency( req->name() );
    dep->m_idef = id;
+   dep->m_defLine = id->sr().line();
    dep->m_waitings.push_back( req );
    _p->m_deplist.push_back( dep );
    _p->m_depsByName[req->name()] = dep;
@@ -774,7 +775,7 @@ void Module::addImportRequest( t_func_import_req cbFunc, const String& symName,
 }
 
 
-Variable* Module::addImplicitImport( const String& name, bool& isNew )
+Variable* Module::addImplicitImport( const String& name, int line , bool& isNew)
 {
    // We can't be called if the symbol is already declared elsewhere.
    VarDataMap::VarData* vd = m_globals.getGlobal(name);
@@ -790,9 +791,10 @@ Variable* Module::addImplicitImport( const String& name, bool& isNew )
    vd = m_globals.addExtern( name, 0 );
 
    Private::Dependency* dep = new Private::Dependency(name, &vd->m_var);
+
    _p->m_deplist.push_back(dep);
    _p->m_depsByName[name] = dep;
-
+   dep->m_defLine = line;
    return &vd->m_var;
 }
 
@@ -802,7 +804,7 @@ Variable* Module::addRequirement( Requirement* cr )
    const String& symName = cr->name();
 
    // we don't care if the symbol already exits; the method would just return 0.
-   Variable* imported = addImplicitImport( symName );
+   Variable* imported = addImplicitImport( symName, cr->sourceRef().line() );
 
    // is the symbol defined?
    if( imported->type() != Variable::e_nt_extern )

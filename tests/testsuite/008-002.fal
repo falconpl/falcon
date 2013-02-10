@@ -1,0 +1,35 @@
+/*
+@name Smoke test for init
+@category Classes
+
+@output
+Smoke test for init
+Welcome in init!
+Self.prop0 = First
+Self.prop1 = Second
+Self.prop2 = Third
+@endoutput
+*/
+
+class Test(p0, p1, p2)
+   prop0 = nil
+   prop1 = p1
+   prop2 = nil
+   
+   init
+      self.prop0 = p0
+      self.prop2 = p2
+      > "Welcome in init!"
+   end
+   
+   function tell()
+      > "Self.prop0 = ", self.prop0
+      > "Self.prop1 = ", self.prop1
+      > "Self.prop2 = ", self.prop2
+   end
+   
+end
+
+> "Smoke test for init"
+x = Test( "First","Second", "Third" )
+x.tell()

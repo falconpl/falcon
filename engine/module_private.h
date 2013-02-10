@@ -143,27 +143,33 @@ public:
        */
       int m_id;
 
+      int m_defLine;
+
       Dependency():
          m_variable( 0 ),
-         m_idef( 0 )
+         m_idef( 0 ),
+         m_defLine( 0 )
       {}
       
       Dependency( const String& name ):
          m_variable( 0 ),
          m_idef( 0 ),
-         m_sourceName( name )
+         m_sourceName( name ),
+         m_defLine( 0 )
       {}
       
       Dependency( const String& name, Variable* sym ):
          m_variable( sym ),
          m_idef( 0 ),
-         m_sourceName( name )
+         m_sourceName( name ),
+         m_defLine( 0 )
       {}
       
       Dependency( const String& name, Variable* sym, ImportDef* def ):
          m_variable( sym ),
          m_idef( def ),
-         m_sourceName( name )
+         m_sourceName( name ),
+         m_defLine( 0 )
       {}
 
       ~Dependency() {}

@@ -1,0 +1,24 @@
+/*
+@name Smoke test for classes
+@category Classes
+
+@output
+Smoke class test
+x.prop = 0
+x.prop = 1
+x.prop = Hello world
+@endoutput
+*/
+
+class Test
+   prop = 0
+end
+
+> "Smoke class test"
+x = Test()
+> "x.prop = ", x.prop
+x.prop = 1
+> "x.prop = ", x.prop
+x.prop = "Hello world"
+> "x.prop = ", x.prop
+
