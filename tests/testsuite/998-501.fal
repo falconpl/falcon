@@ -1,7 +1,8 @@
 /*
 998 series -- book samples
 
-@name Book sample - Rules with init and cut
+@name Rules with init and cut
+@category Book
 
 @output
 A: 0; B: 0
