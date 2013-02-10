@@ -132,7 +132,7 @@ StmtSelect::StmtSelect( const StmtSelect& other ):
    m_unresolved( other.m_unresolved )
 {
    // we can't duplicate unresolved symbols.
-   fassert( m_unresolved == 0 );
+   fassert( m_unresolved <= 0 );
    
    if ( other.m_expr != 0 )
    {

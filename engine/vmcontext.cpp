@@ -1387,6 +1387,8 @@ void VMContext::exitLocalFrame( bool exec )
          // we'll be here again...
          if( static_cast<uint32>(top - m_codeStack.m_base) < m_finallyStack.m_top->m_depth )
          {
+            static PStep* pop = &Engine::instance()->stdSteps()->m_pop;
+
             const TreeStep* fd = m_finallyStack.m_top->m_finstep;
             m_finallyStack.pop();
             m_codeStack.m_top = top;
@@ -1394,6 +1396,7 @@ void VMContext::exitLocalFrame( bool exec )
                // chance into the exec frame, keep depth in m_seq
                m_codeStack.m_top->m_step = localFrameExec;
             }
+            pushCode( pop );
             pushCode(fd);
             return;
          }
