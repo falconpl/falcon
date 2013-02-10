@@ -290,16 +290,17 @@ void ClassTreeStep::flatten( VMContext*, ItemArray& subItems, void* instance ) c
    TreeStep* ts = static_cast<TreeStep*>( instance );
    TRACE2("ClassTreeStep::flatten %s", ts->describe(0).c_ize());
 
-   subItems.resize( ts->arity() + 1 );
+   int arity = ts->arity();
+   subItems.resize( arity + 1 );
    if( ts->selector() != 0 )
    {
       subItems.at(0).setUser( ts->selector()->handler(), ts->selector() );
    }
    // else, let it be nil.
 
-   if( ts->arity() > 0 )
+   if( arity > 0 )
    {
-      for( int i = 0; i < ts->arity(); ++i )
+      for( int i = 0; i < arity; ++i )
       {
          TreeStep* element = ts->nth(i);
          if( element != 0 )

@@ -43,9 +43,9 @@ public:
    virtual void dispose( void* self ) const;
    virtual void* clone( void* source ) const;
    virtual void* createInstance() const;
-   
-   virtual void serialize( DataWriter* stream, void* self ) const;
-   virtual void* deserialize( DataReader* stream ) const;
+
+   virtual void flatten( VMContext* ctx, ItemArray& subItems, void* instance ) const;
+   virtual void unflatten( VMContext* ctx, ItemArray& subItems, void* instance ) const;
 
    //=========================================================
    // Class management

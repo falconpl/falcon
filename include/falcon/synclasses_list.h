@@ -160,7 +160,10 @@ FALCON_SYNCLASS_DECLARATOR(m_expr_isoob, IsOob, expr)
 FALCON_SYNCLASS_DECLARATOR(m_expr_xoroob, XorOob, expr)
 // 
 FALCON_SYNCLASS_DECLARATOR(m_expr_pseudocall, PseudoCall, expr)
-FALCON_SYNCLASS_DECLARATOR(m_expr_genproto, GenProto, expr)
+FALCON_SYNCLASS_DECLARATOR_EX(m_expr_genproto, GenProto, expr, \
+         virtual void flatten( VMContext* ctx, ItemArray& subItems, void* instance ) const;\
+         virtual void unflatten( VMContext* ctx, ItemArray& subItems, void* instance ) const; )
+
 FALCON_SYNCLASS_DECLARATOR(m_expr_genrange, GenRange, expr)
 FALCON_SYNCLASS_DECLARATOR(m_expr_self, Self, expr)
 FALCON_SYNCLASS_DECLARATOR(m_expr_fself, FSelf, expr)

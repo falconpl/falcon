@@ -64,6 +64,30 @@ public:
    virtual void op_call( VMContext* ctx, int32 paramCount, void* instance ) const;
    virtual void op_getProperty( VMContext* ctx, void* self, const String& prop) const;
    virtual void op_setProperty( VMContext* ctx, void* self, const String& prop ) const;
+
+private:
+
+   class PStepCallBaseInit: public PStep
+   {
+   public:
+      PStepCallBaseInit() { apply = apply_; }
+      virtual ~PStepCallBaseInit() {}
+      void describeTo( String& text ) const { text = "PStepCallBaseInit"; }
+      static void apply_( const PStep* ps, VMContext* ctx );
+   };
+
+   PStepCallBaseInit m_stepCallBaseInit;
+
+   class PStepGetPropertyNext: public PStep
+   {
+   public:
+      PStepGetPropertyNext() { apply = apply_; }
+      virtual ~PStepGetPropertyNext() {}
+      void describeTo( String& text ) const { text = "PStepGetPropertyNext"; }
+      static void apply_( const PStep* ps, VMContext* ctx );
+   };
+
+   PStepGetPropertyNext m_stepGetPropertyNext;
 };
 
 }

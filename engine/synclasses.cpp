@@ -552,8 +552,38 @@ void SynClasses::ClassGenProto::restore( VMContext* ctx, DataReader*dr ) const
       throw;
    }
 }
+void SynClasses::ClassGenProto::flatten( VMContext*, ItemArray& subItems, void* instance ) const
+{
+   ExprProto* ep = static_cast<ExprProto*>(instance);
+   uint32 size = ep->size();
 
+   subItems.reserve(size*2);
+   for(uint32 i = 0; i < size; ++i )
+   {
+      const String& name = ep->nameAt(i);
+      Expression* expr = ep->exprAt(i);
 
+      subItems.append(Item(name.handler(), const_cast<String*>(&name)));
+      subItems.append(Item(expr->handler(), expr));
+   }
+}
+void SynClasses::ClassGenProto::unflatten( VMContext*, ItemArray& subItems, void* instance ) const
+{
+   fassert( subItems.length() % 2 == 0 );
+
+   ExprProto* ep = static_cast<ExprProto*>(instance);
+
+   for(uint32 i = 0; i < subItems.length(); i += 2 )
+   {
+      const Item& first = subItems[i];
+      const Item& second = subItems[i+1];
+
+      fassert( first.isString() );
+      fassert( second.asClass()->isDerivedFrom(Engine::instance()->treeStepClass()));
+
+      ep->add(*first.asString(), static_cast<Expression*>(second.asInst()));
+   }
+}
 void* SynClasses::ClassPseudoCall::createInstance() const
 {       
    return new ExprPseudoCall;

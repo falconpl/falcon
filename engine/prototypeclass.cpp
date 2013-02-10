@@ -32,7 +32,6 @@ namespace Falcon
 
 PrototypeClass::PrototypeClass():
    FlexyClass( "Prototype" )
-  
 {
 }
 
@@ -105,19 +104,79 @@ void PrototypeClass::op_call( VMContext* ctx, int32 paramCount, void* instance )
    
    FlexyDict* child = new FlexyDict;
    child->base().resize(1);
-   child->base()[0].setUser(this, self);  
+   child->base()[0].setUser(this, self);
 
    Item* iNewSelf = ctx->opcodeParams(paramCount + 1);
-   iNewSelf->setUser(this, child);
+   iNewSelf->setUser(FALCON_GC_STORE(this, child) );
    Item* init = self->find("_init");
+
    if( init != 0 && init->isMethod() )
    {
       ctx->callInternal( init->asMethodFunction(), paramCount, *iNewSelf );
    }
    else
    {
-      ctx->popData( paramCount );
-   }             
+      ItemArray& base = self->base();
+      length_t len = base.length();
+
+      for( length_t i = 0; i < len; ++i )
+      {
+         Class* cls;
+         void* data;
+         base[ i ].forceClassInst( cls, data );
+         if( cls->hasProperty( data, "_init" ) )
+         {
+            ctx->pushData(base[i]);
+            ctx->pushCode( &m_stepCallBaseInit );
+            ctx->currentCode().m_seqId = paramCount;
+
+            long depth = ctx->codeDepth();
+            cls->op_getProperty( ctx, data, "_init" );
+            if( ctx->wentDeepSized(depth) )
+            {
+               return;
+            }
+
+            ctx->popCode();
+            Item& result =  ctx->topData();
+            if( result.isMethod() )
+            {
+               Function* func = result.asMethodFunction();
+               ctx->popData();
+               ctx->callInternal( func, paramCount, *ctx->opcodeParams(paramCount+1) );
+               return;
+            }
+            // try again
+            ctx->popData();
+         }
+      }
+
+      // we didn't find it
+      ctx->popData(paramCount);
+      // return the new self object that we have already created on top of the stack.
+   }
+}
+
+
+void PrototypeClass::PStepCallBaseInit::apply_( const PStep*, VMContext* ctx )
+{
+   CodeFrame& cf = ctx->currentCode();
+   int pCount = cf.m_seqId;
+   ctx->popCode();
+
+
+   Item& result =  ctx->topData();
+   if( result.isMethod() )
+   {
+      Function* func = result.asMethodFunction();
+      ctx->popData();
+      ctx->callInternal( func, pCount, ctx->opcodeParam(pCount+1) );
+   }
+   else
+   {
+      // leave the self object prepared by the main
+      ctx->popData(pCount);
+   }
 }
 
 
@@ -164,6 +223,7 @@ void PrototypeClass::op_getProperty( VMContext* ctx, void* self, const String& p
       }
       else
       {
+
          // nope -- search across bases.
          const ItemArray& base = fd->base();
          for( length_t i = 0; i < base.length(); ++i )
@@ -173,12 +233,26 @@ void PrototypeClass::op_getProperty( VMContext* ctx, void* self, const String& p
             base[i].forceClassInst( cls, data );
             if( cls->hasProperty( data, prop ) )
             {
+               long depth = ctx->codeDepth();
+               ctx->pushCode( &m_stepGetPropertyNext );
+
+               ctx->pushData( base[i] ); // getProperty wants it and eats it away
                cls->op_getProperty( ctx, data, prop );
-               Item& result = ctx->topData();
+               if( ctx->wentDeepSized(depth) )
+               {
+                  return;
+               }
+
+               Item result = ctx->topData();
                if( result.isMethod() && result.asClass() == this )
                {
-                  //result.content.data.ptr.pInst = self;
+                  result.content.data.ptr.pInst = self;
                }
+
+               ctx->popData();
+               // and we eat ourselves in the stack with our property
+               ctx->topData() = result;
+               ctx->popCode();
                return;
             }
          }
@@ -187,6 +261,23 @@ void PrototypeClass::op_getProperty( VMContext* ctx, void* self, const String& p
       // fall back to the starndard system
       Class::op_getProperty( ctx, self, prop );
    }
+}
+
+
+void PrototypeClass::PStepGetPropertyNext::apply_( const PStep*, VMContext* ctx )
+{
+   static Class* protoClass = Engine::instance()->protoClass();
+
+   Item result = ctx->topData(); // copy!
+   if( result.isMethod() && result.asClass() == protoClass )
+   {
+      fassert( ctx->opcodeParam(1).asClass() == protoClass );
+      result.content.data.ptr.pInst = ctx->opcodeParam(1).asInst();
+   }
+
+   ctx->popData();
+   ctx->topData() = result;
+   ctx->popCode();
 }
 
 
@@ -207,8 +298,7 @@ void PrototypeClass::op_setProperty( VMContext* ctx, void* self, const String& p
       else
       {
          fd->base().resize(1);
-         value.copied();
-         fd->base()[0] = value;
+         fd->base()[0].assign(value);
       }
       return;
    }

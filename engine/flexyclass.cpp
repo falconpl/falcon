@@ -22,6 +22,7 @@
 #include <falcon/vmcontext.h>
 #include <falcon/engine.h>
 #include <falcon/ov_names.h>
+#include <falcon/itemarray.h>
 
 #include <falcon/errors/accesserror.h>
 #include <falcon/errors/operanderror.h>
@@ -50,6 +51,7 @@ FlexyClass::~FlexyClass()
 }
 
 
+
 void FlexyClass::dispose( void* self ) const
 {
    delete static_cast<FlexyDict*>(self);
@@ -66,16 +68,42 @@ void* FlexyClass::createInstance() const
    return new FlexyDict;
 }
 
-void FlexyClass::serialize( DataWriter*, void*  ) const
+
+void FlexyClass::flatten( VMContext* , ItemArray& subItems, void* instance ) const
 {
-   // TODO
+   FlexyDict* dict = static_cast<FlexyDict*>(instance);
+
+   class Enum: public PVEnumerator
+   {
+   public:
+      Enum( ItemArray& si ): m_subItems(si) {}
+      virtual ~Enum() {}
+
+      virtual void operator()( const String& property, Item& value )
+      {
+         m_subItems.append( Item(property.handler()) );
+         m_subItems.append( Item(value) );
+      }
+
+   private:
+      ItemArray& m_subItems;
+   };
+
+   Enum rator(subItems);
+   dict->enumeratePV(rator);
 }
 
-
-void* FlexyClass::deserialize( DataReader* ) const
+void FlexyClass::unflatten( VMContext*, ItemArray& subItems, void* instance ) const
 {
-   // TODO
-   return 0;
+   fassert( subItems.length() % 2 == 0 )
+
+   FlexyDict* dict = static_cast<FlexyDict*>(instance);
+
+   for(length_t i = 0; i < subItems.length(); i+=2 )
+   {
+      fassert( subItems[i].isString() );
+      dict->insert( *subItems[i].asString(), subItems[i+1] );
+   }
 }
 
 
@@ -171,6 +199,7 @@ bool FlexyClass::op_init( VMContext* ctx, void* instance, int32 pcount ) const
                m_fself( owner, self)
             {
             }
+            virtual ~Enum() {}
 
             virtual void operator()( const Item& key, Item& value )
             {
@@ -214,6 +243,7 @@ bool FlexyClass::op_init( VMContext* ctx, void* instance, int32 pcount ) const
                m_fself( owner, self)
             {               
             }
+            virtual ~Enum() {}
 
             virtual void operator()( const String& data, Item& value )
             {              
