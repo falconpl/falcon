@@ -119,11 +119,21 @@ void generic_apply_( const PStep* ps, VMContext* ctx )
    default:
       if( op1.type() >= FLC_ITEM_USER )
       {
+         ctx->resetCode( &self->m_stepPostComparer );
+         long depth = ctx->codeDepth();
+
          op1.asClass()->op_compare( ctx, op1.asInst() );
+
+         if( depth != ctx->codeDepth() )
+         {
+            return;
+         }
+
          // refetch, we may have gone deep
          fassert( ctx->topData().isInteger() );
          int64 cmp = ctx->topData().asInteger();
          ctx->topData().setBoolean( _cpr::cmpCheck( cmp ) );
+         // the popCode at the end of the function will take care of stepPostCompare
       }
       else {
          op1.setBoolean( _cpr::cmpCheck( op1.compare(op2) ) );
@@ -152,26 +162,36 @@ void generic_apply_<ExprEQ::comparer>( const PStep* ps, VMContext* ctx );
 template
 void generic_apply_<ExprNE::comparer>( const PStep* ps, VMContext* ctx );
 
+
 //==========================================================
 
 ExprCompare::ExprCompare( const String& name, int line, int chr ):
    BinaryExpression( line, chr ),
+   m_stepPostComparer(this),
    m_name(name)
 {}
 
 ExprCompare::ExprCompare( Expression* op1, Expression* op2, const String& name, int line, int chr ):
    BinaryExpression( op1, op2, line, chr ),
+   m_stepPostComparer(this),
    m_name(name)
 {}
 
 ExprCompare::ExprCompare( const ExprCompare& other ):
    BinaryExpression( other ),
+   m_stepPostComparer(this),
    m_name( other.m_name )
 {}
 
 ExprCompare::~ExprCompare()
 {}
 
+void ExprCompare::PStepPostCompare::apply_( const PStep* ps, VMContext* ctx )
+{
+   const ExprCompare::PStepPostCompare* self = static_cast<const ExprCompare::PStepPostCompare*>(ps);
+   ctx->topData().setBoolean(self->m_owner->checkCompare( ctx->topData().asInteger() ) );
+   ctx->popCode();
+}
 
 
 void ExprCompare::describeTo( String& ret, int depth ) const
