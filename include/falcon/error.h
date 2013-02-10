@@ -84,7 +84,7 @@ public:
    ErrorParam( int code, uint32 line = 0, const char* file = 0 ):
       m_errorCode( code ),
       m_module(),
-      m_line( 0 ),
+      m_line( line ),
       m_chr( 0 ),
       m_sysError( 0 ),
       m_origin( e_orig_mod ),

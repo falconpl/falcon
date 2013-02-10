@@ -72,12 +72,12 @@ bool try_errhand(const NonTerminal&, Parser& p)
 bool catch_errhand(const NonTerminal&, Parser& p)
 {
    TokenInstance* ti = p.getNextToken();
-   TokenInstance* ti2 = p.getLastToken();
+   //TokenInstance* ti2 = p.getLastToken();
 
    if( p.lastErrorLine() < ti->line() )
    {
       // generate another error only if we didn't notice it already.
-      p.addError( e_syn_catch, p.currentSource(), ti2->line(), ti2->chr() );
+      p.addError( e_syn_catch, p.currentSource(), ti->line(), ti->chr() );
    }
    else {
       // we can ignore failing catches.
@@ -206,6 +206,7 @@ static void internal_apply_catch( int toks, Parser& p, int line, int chr,
    {      
       StmtTry* stmttry = static_cast<StmtTry*>(stmt);      
       SynTree* newBranch = ctx->changeBranch();
+      newBranch->decl(line,chr);
       if(genTrace)
       {
          newBranch->setTracedCatch();

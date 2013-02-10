@@ -56,7 +56,8 @@ public:
 
 Error::Error( Class* handler, const ErrorParam &params ):
    m_refCount( 1 ),
-   m_handler( handler )
+   m_handler( handler ),
+   m_bHasRaised(false)
 {
    _p = new Error_p;
    set(params);
@@ -65,7 +66,8 @@ Error::Error( Class* handler, const ErrorParam &params ):
 
 Error::Error( Class* handler ):
    m_refCount( 1 ),
-   m_handler( handler )
+   m_handler( handler ),
+   m_bHasRaised(false)
 {
    _p = new Error_p;
 }
