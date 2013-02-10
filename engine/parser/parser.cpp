@@ -333,6 +333,7 @@ GenericError* Parser::makeError() const
 
       SyntaxError* err = new SyntaxError( ErrorParam( def.nCode, def.nLine )
             .module(def.sUri)
+            //.chr(def.nChar)
             .extra(sExtra));
       cerr->appendSubError(err);
       ++iter;
@@ -1057,6 +1058,7 @@ bool Parser::applyPaths()
          int tokenPrio = next.prio();
          if( tokenPrio == 0 || tokenPrio > frame.m_nPriority
             || ( tokenPrio == frame.m_nPriority && ! frame.m_bIsRightAssoc )
+            || ( ! currentRule->isGreedy() )
             )
          {
             // we can simplify.
