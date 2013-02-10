@@ -2,7 +2,27 @@
 @name Finally in continue
 @category Complex tests
 
-@output   
+@output
+Summing current element 1
+Finally count: 1
+Summing current element 2
+Finally count: 2
+Summing current element 3
+Finally count: 3
+Summing current element a
+Error caught for a
+Finally count: 4
+Found Nil, continuing
+Finally count: 5
+Summing current element 5
+Finally count: 6
+Summing current element 6
+Finally count: 7
+Summing current element 7
+Finally count: 8
+Results:
+Count: 8
+Sum: 24
 @endoutput
 */
 
@@ -10,22 +30,32 @@
 array = [1,2,3,"a",nil, 5,6,7]
 sum = 0
 count = 0
+
+x = VMContext()
+dd = x.dataDepth
+
 for elem in array
-   > elem
    try
       // break here
       if not elem
+         > "Found Nil, continuing"
          continue
       end
-      
+      > "Summing current element ", elem
       sum += elem
       
    catch in e
       > "Error caught for ", elem
    finally
-      ++count
+      > "Finally count: ", ++count
    end
    
+end
+
+dd1 = x.dataDepth
+
+if dd1 != dd
+   raise "Data depth corruption " + dd1 + "/" + dd
 end
 
 > "Results:"

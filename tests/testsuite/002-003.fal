@@ -36,7 +36,7 @@ end
 
 dd1 = x.dataDepth
 if dd != dd1
-   raise "Corrupted stack at loop 1"
+   raise "Corrupted stack at loop 1: " + dd1 + "/" + dd 
 end
 
 >

@@ -160,9 +160,20 @@ private:
 
    class PStepFirst: public PStep {
    public:
-      PStepFirst( StmtForIn* owner ): m_owner(owner) { m_bIsLoopBase = true; apply = apply_; }
+      PStepFirst( StmtForIn* owner ): m_owner(owner) { apply = apply_; }
       virtual ~PStepFirst() {};
       virtual void describeTo( String& str, int = 0 ) const { str = "PStepFirst of " + m_owner->oneLiner(); }
+
+   private:
+      static void apply_( const PStep* self, VMContext* ctx );
+      StmtForIn* m_owner;
+   };
+
+   class PStepGetFirst: public PStep {
+   public:
+      PStepGetFirst( StmtForIn* owner ): m_owner(owner) { apply = apply_; }
+      virtual ~PStepGetFirst() {};
+      virtual void describeTo( String& str, int = 0 ) const { str = "PStepGetFirst of " + m_owner->oneLiner(); }
 
    private:
       static void apply_( const PStep* self, VMContext* ctx );
@@ -196,8 +207,11 @@ private:
 
    PStepBegin m_stepBegin;
    PStepFirst m_stepFirst;
+   PStepGetFirst m_stepGetFirst;
    PStepNext m_stepNext;
    PStepGetNext m_stepGetNext;
+
+   friend class PStepGetFirst;
 };
 
 /** For/to statement.

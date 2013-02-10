@@ -141,11 +141,10 @@ bool StmtForBase::setNth( int32 n, TreeStep* ts )
 void StmtForBase::PStepCleanup::apply_( const PStep*, VMContext* ctx )
 {
    TRACE( "StmtForBase::PStepCleanup::apply_ %d (-1)",  ctx->currentCode().m_seqId );
-   int32 size = ctx->currentCode().m_seqId-1;
-
+   ctx->restoreUnrollPoint();
    ctx->popCode();
-   ctx->popData(size);
-   ctx->topData().setNil();
+   // Add the value for the loop
+   ctx->pushData(Item());
 }
 
 
@@ -250,6 +249,7 @@ StmtForIn::StmtForIn( int32 line, int32 chr):
    m_expr(0),
    m_stepBegin( this ),
    m_stepFirst( this ),
+   m_stepGetFirst( this ),
    m_stepNext( this ),
    m_stepGetNext( this )
 {
@@ -266,6 +266,7 @@ StmtForIn::StmtForIn( Expression* gen, int32 line, int32 chr):
    m_expr(gen),
    m_stepBegin( this ),
    m_stepFirst( this ),
+   m_stepGetFirst( this ),
    m_stepNext( this ),
    m_stepGetNext( this )
 {
@@ -283,6 +284,7 @@ StmtForIn::StmtForIn( const StmtForIn& other ):
    m_expr(0),
    m_stepBegin( this ),
    m_stepFirst( this ),
+   m_stepGetFirst( this ),
    m_stepNext( this ),
    m_stepGetNext( this )
 {
@@ -405,7 +407,11 @@ void StmtForIn::apply_( const PStep* ps, VMContext* ctx )
    
    fassert( self->isValid() );
    
-   ctx->resetCode( &self->m_stepBegin );
+   // prepare the unroll point for the whole loop
+   ctx->currentCode().m_step = &self->m_stepCleanup;
+   ctx->saveUnrollPoint( ctx->currentCode() );
+
+   ctx->pushCode( &self->m_stepBegin );
    ctx->stepIn( self->m_expr );
 }
 
@@ -418,16 +424,11 @@ void StmtForIn::PStepBegin::apply_( const PStep* ps, VMContext* ctx )
    void* dt;
    if( ctx->topData().asClassInst( cls, dt )  )
    {       
-      // prepare the cleanup step removing 2 items + the item pushed by the last active syntree
-      ctx->currentCode().m_step = &self->m_stepCleanup;
-      ctx->currentCode().m_seqId = 2;
-      // Prepare to get the iterator item...
-      ctx->pushCode( &self->m_stepFirst );      
-      // push the next and save the also unroll points
-      ctx->pushCodeWithUnrollPoint( &self->m_stepGetNext );
+      // Prepare to get the first op_next after op_iter
+      ctx->pushCode( &self->m_stepGetFirst );
       
       // and create an iterator.
-      cls->op_iter( ctx, dt );       
+      cls->op_iter( ctx, dt );
    }
    else if( ctx->topData().isNil() )
    {
@@ -444,90 +445,100 @@ void StmtForIn::PStepBegin::apply_( const PStep* ps, VMContext* ctx )
    }    
 }
 
+void StmtForIn::PStepGetFirst::apply_( const PStep* ps, VMContext* ctx )
+{
+   const StmtForIn::PStepGetFirst* step = static_cast<const StmtForIn::PStepGetFirst*>(ps);
+    fassert( ctx->opcodeParam(1).isUser() );
+
+   // we're never needed anymore
+   ctx->resetCode(&step->m_owner->m_stepFirst);
+
+   Class* cls = 0;
+   void* dt = 0;
+   // here we have seq, iter, <space>...
+   ctx->opcodeParam(1).asClassInst( cls, dt );
+   // ... pass them to next.
+   cls->op_next( ctx, dt );
+}
+
 
 void StmtForIn::PStepGetNext::apply_( const PStep*, VMContext* ctx )
 {
-    // we're never needed anymore
-    ctx->popCode();
-    
-    Class* cls = 0;
-    void* dt = 0;
-    // here we have seq, iter, <space>...
-    ctx->opcodeParam(1).forceClassInst( cls, dt );
-    // ... pass them to next.
-    cls->op_next( ctx, dt );
+   ctx->restoreUnrollPoint();
+
+   fassert( ctx->opcodeParam(1).isUser() );
+
+   // we're never needed anymore
+   ctx->popCode();
+
+   Class* cls = 0;
+   void* dt = 0;
+   // here we have seq, iter, <space>...
+   ctx->opcodeParam(1).asClassInst( cls, dt );
+   // ... pass them to next.
+   cls->op_next( ctx, dt );
 }
 
 
 void StmtForIn::PStepFirst::apply_( const PStep* ps, VMContext* ctx )
 {
-   static PStep* pop = &Engine::instance()->stdSteps()->m_pop;
    const StmtForIn* self = static_cast<const StmtForIn::PStepFirst*>(ps)->m_owner;
 
    // we have here seq, iter, item
    Item& topData = ctx->topData();
    if( topData.isBreak() )
    {
-      // notice we clear 3 items in the clear step, so it's ok not to pop
+      // the loop is over
       ctx->popCode();
       return;
    }
 
    // prepare the loop variabiles.
-   self->expandItem( ctx->topData(), ctx );
+   self->expandItem( topData, ctx );
    
    if( ! topData.isDoubt() )
    {
+      ctx->popData();
       ctx->popCode(); // we won't be called again.
       if( self->m_forLast != 0 )
       {
-         ctx->pushCode( pop );
          ctx->pushCode( self->m_forLast );
       }
    }
    else
    {
-      topData.clearDoubt();
-      // turn this step in a loop (break) step landing.
+      ctx->popData();
+      // turn this step in the next step
       ctx->currentCode().m_step = &self->m_stepNext;
-      ctx->saveUnrollPoint(ctx->currentCode());
       // and save the get next with next landing
       ctx->pushCodeWithUnrollPoint( &self->m_stepGetNext );
       
       if ( self->m_forMiddle != 0 )
       {
-         ctx->pushCode( pop );
          ctx->pushCode( self->m_forMiddle );
       }
    }
    
    if ( self->m_body != 0 )
    {
-      ctx->pushCode( pop );
       ctx->pushCode( self->m_body );
    }
 
    if ( self->m_forFirst != 0 )
    {
-      ctx->pushCode( pop );
       ctx->pushCode( self->m_forFirst );
    }
-   
-   // in any case, the extra item must be removed.
-   ctx->popData();
 }
 
 
 void StmtForIn::PStepNext::apply_( const PStep* ps, VMContext* ctx )
 {
-   static PStep* pop = &Engine::instance()->stdSteps()->m_pop;
    const StmtForIn* self = static_cast<const StmtForIn::PStepNext*>(ps)->m_owner;
 
    // we have here seq, iter, item
    Item& topData = ctx->topData();
    if( topData.isBreak() )
    {
-      // notice we clear 3 items in the clear step, so it's ok not to pop
       ctx->popCode();
       return;
    }
@@ -537,34 +548,30 @@ void StmtForIn::PStepNext::apply_( const PStep* ps, VMContext* ctx )
 
    if( ! topData.isDoubt() )
    {
+      ctx->popData();
       ctx->popCode(); // we won't be called again.
        
       if( self->m_forLast != 0 )
       {
-         ctx->pushCode( pop );
          ctx->pushCode( self->m_forLast );
       }
    }
    else
    {
-      topData.clearDoubt();
+      ctx->popData();
       // save the next step with landing
       ctx->pushCodeWithUnrollPoint( &self->m_stepGetNext );
       if ( self->m_forMiddle != 0 )
       {
-         ctx->pushCode( pop );
          ctx->pushCode( self->m_forMiddle );
       }
    }
       
    if ( self->m_body != 0 )
    {
-      ctx->pushCode( pop );
       ctx->pushCode( self->m_body );
    }
 
-   // in any case, the extra item should be removed.
-   ctx->popData();
 }
 
 
@@ -751,9 +758,8 @@ void StmtForTo::apply_( const PStep* ps, VMContext* ctx )
    
    // however, we won't be called anymore (cleanup is also the loop base)
    cf.m_step = &self->m_stepCleanup;
-   // -- we already saved the unroll points in this step at seqId = 1
+   // I have already saved the unroll points at seqID 0
 
-   cf.m_seqId = 3; // 3 items to remove at cleanup
    ctx->pushCodeWithUnrollPoint( &self->m_stepNext );
    
    // Prepare the start value   
