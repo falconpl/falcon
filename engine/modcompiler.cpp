@@ -273,7 +273,6 @@ void ModCompiler::Context::onGlobal( const String& name )
       var = m_owner->m_module->addGlobal( name, Item(), false );
       var->declaredAt( m_owner->m_sp.currentLine() );
    }
-
 }
 
 

@@ -81,10 +81,10 @@ public:
       \param file the file where the error is raised.
       \param line optional line where error occurs.
    */
-   ErrorParam( int code, uint32 line = 0, const char* file = 0 ):
+   ErrorParam( int code, uint32 signLine = 0, const char* file = 0 ):
       m_errorCode( code ),
       m_module(),
-      m_line( line ),
+      m_line( 0 ),
       m_chr( 0 ),
       m_sysError( 0 ),
       m_origin( e_orig_mod ),
@@ -92,24 +92,24 @@ public:
       {
          if( file != 0 ) {
             m_signature = file;
-            if( line != 0 ) {
-               m_signature.A(":").N(line);
+            if( signLine != 0 ) {
+               m_signature.A(":").N(signLine);
             }
             m_signature.bufferize();
          }
       }
 
-   ErrorParam( int code, uint32 line, const String& signature ):
+   ErrorParam( int code, uint32 signLine, const String& signature ):
       m_errorCode( code ),
-      m_line( line ),
+      m_line( 0 ),
       m_chr( 0 ),
       m_sysError( 0 ),
       m_origin( e_orig_mod ),
       m_catchable( true )
       {
          m_signature = signature;
-         if( line > 0 )
-            m_signature.A(":").N(line);
+         if( signLine > 0 )
+            m_signature.A(":").N(signLine);
          else
          {
             m_signature.bufferize();

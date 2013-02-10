@@ -316,7 +316,7 @@ GenericError* Parser::makeError() const
       return 0;
    }
 
-   GenericError* cerr = new GenericError(ErrorParam(e_syntax));
+   GenericError* cerr = new GenericError(ErrorParam(e_syntax, __LINE__, __SRC__ ));
    Private::ErrorList::iterator iter = _p->m_lErrors.begin();
    while( iter != _p->m_lErrors.end() )
    {
@@ -331,8 +331,9 @@ GenericError* Parser::makeError() const
          sExtra.N(def.nOpenContext);
       }
 
-      SyntaxError* err = new SyntaxError( ErrorParam( def.nCode, def.nLine )
+      SyntaxError* err = new SyntaxError( ErrorParam( def.nCode )
             .module(def.sUri)
+            .line(def.nLine)
             //.chr(def.nChar)
             .extra(sExtra));
       cerr->appendSubError(err);
