@@ -8,24 +8,24 @@ First test
 Finally code executed
 Testing try with integer raise
 Second test
-Finally code executed
 Multiple catch: 1
+Finally code executed
 Testing try with integer raise on numeric
 Second test again
-Finally code executed
 Multiple catch (as number): 1
+Finally code executed
 Testing try with String raise
 Third test
-Finally code executed
 Multiple catch (as number): Raised
+Finally code executed
 Testing try with range raise
 Fourth test
-Finally code executed
 Range catch: [0:1:2]
+Finally code executed
 Testing try with other(bool) raise
 Fifth test
-Finally code executed
 Other catch: false
+Finally code executed
 Verify count: 7
 Done
 @endoutput

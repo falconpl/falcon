@@ -6,7 +6,7 @@
 Nesting try -- caught inside
 Inside try 1
 Inner try 1
-Caught inside: Risen string
+Caught inside: 22
 Inner Finally 1 executed: 1
 After catching
 Outer finally 1 executed: 2
@@ -14,7 +14,7 @@ Nesting try -- caught outside
 Inside try 2
 Inner try 2
 Inner Finally 2 executed: 3
-Caught integer outside: 123
+Caught Error outside: 7
 Outer Finally 2 executed: 4
 Nesting try -- caught outside (generic)
 Inside try 3
