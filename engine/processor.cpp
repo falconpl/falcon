@@ -149,7 +149,7 @@ void Processor::manageEvents( VMContext* ctx, int32 &events )
    }
 
    if( (events & VMContext::evtEmerge) ) {
-      TRACE( "Hit breakpoint before %s ", ctx->location().c_ize() );
+      MESSAGE( "Hit emerge event" );
       events &= ~VMContext::evtEmerge;
    }
 

@@ -710,7 +710,8 @@ VMContext::t_unrollResult VMContext::unrollToNext( const _checker& check )
             m_callStack.m_top = curFrame;
 
             // did we cross one (or more) finally handlers
-            if ( static_cast<uint32>( curCode - m_codeStack.m_base ) < m_finallyStack.m_top->m_depth )
+            uint32 depth = static_cast<uint32>( curCode - m_codeStack.m_base );
+            if ( depth < m_finallyStack.m_top->m_depth )
             {
                const TreeStep* finallyHandler = m_finallyStack.m_top->m_finstep;
                m_finallyStack.pop();
@@ -718,6 +719,10 @@ VMContext::t_unrollResult VMContext::unrollToNext( const _checker& check )
                return e_unroll_suspended;
             }
 
+            // perform required cleanups after unroll (if any)
+            check.onBaseFound( this );
+
+            // report success
             return e_unroll_found;
          }
 
@@ -751,8 +756,6 @@ VMContext::t_unrollResult VMContext::unrollToNext( const _checker& check )
 
          // remove the finally point...
          m_finallyStack.pop();
-         //... and remove the finally code frame.
-         m_codeStack.pop();
 
          // this will push the finally handler AND
          // the action to be done when the handler completes.
@@ -779,6 +782,7 @@ public:
 
    inline void onCrossFinally( VMContext* ) const {}
 
+   inline void onBaseFound( VMContext* ) const {}
 
    inline void handleFinally( VMContext* ctx, const TreeStep* handler ) const
    {
@@ -798,6 +802,12 @@ public:
    }
 
    inline bool dontCrossFrame() const { return true; }
+
+   inline void onBaseFound( VMContext* ctx ) const {
+      // pop the base loop entity and set success
+      ctx->popCode();
+      ctx->pushData(Item());
+   }
 
    inline void onCrossFinally( VMContext* ) const {}
 
@@ -846,6 +856,8 @@ public:
    inline void onCrossFinally( VMContext* ) const {}
 
    inline bool dontCrossFrame() const { return false; }
+
+   inline void onBaseFound( VMContext* ) const {}
 
    inline void handleFinally( VMContext* ctx, const TreeStep* handler ) const
    {
@@ -912,6 +924,8 @@ public:
    }
 
    inline bool dontCrossFrame() const { return false; }
+
+   inline void onBaseFound( VMContext* ) const {}
 
    inline void handleFinally( VMContext* ctx, const TreeStep* handler ) const
    {

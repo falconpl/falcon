@@ -182,7 +182,7 @@ private:
 
    class PStepNext: public PStep {
    public:
-      PStepNext( StmtForIn* owner ): m_owner(owner) { m_bIsLoopBase = true; apply = apply_; }
+      PStepNext( StmtForIn* owner ): m_owner(owner) { apply = apply_; }
       virtual ~PStepNext() {};
       virtual void describeTo( String& str, int=0 ) const { str = "PStepNext of " + m_owner->oneLiner(); }
 

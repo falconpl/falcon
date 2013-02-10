@@ -304,7 +304,7 @@ void StdSteps::PStepLocalFrameExec::describeTo( String& s, int ) const
 
 void StdSteps::PStepUnrollToLoop::apply_( const PStep*, VMContext* ctx )
 {
-   ctx->popCode();
+   // This will pop this step as well.
    ctx->unrollToLoopBase();
 }
 
@@ -316,7 +316,7 @@ void StdSteps::PStepUnrollToLoop::describeTo( String& s, int ) const
 
 void StdSteps::PStepUnrollToNext::apply_( const PStep*, VMContext* ctx )
 {
-   ctx->popCode();
+   // This will pop this step as well.
    ctx->unrollToNextBase();
 }
 

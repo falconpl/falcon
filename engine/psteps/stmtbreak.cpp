@@ -52,8 +52,6 @@ void StmtBreak::apply_( const PStep*, VMContext* ctx )
 {
    // this will throw if not found
    ctx->unrollToLoopBase();
-   ctx->popCode(); // remove our loop base.
-   ctx->pushData(Item()); // generate a value for the whole operation.
 }
 
 }

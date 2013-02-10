@@ -425,7 +425,7 @@ void StmtForIn::PStepBegin::apply_( const PStep* ps, VMContext* ctx )
    if( ctx->topData().asClassInst( cls, dt )  )
    {       
       // Prepare to get the first op_next after op_iter
-      ctx->pushCode( &self->m_stepGetFirst );
+      ctx->resetCode( &self->m_stepGetFirst );
       
       // and create an iterator.
       cls->op_iter( ctx, dt );
@@ -468,7 +468,7 @@ void StmtForIn::PStepGetNext::apply_( const PStep*, VMContext* ctx )
 
    fassert( ctx->opcodeParam(1).isUser() );
 
-   // we're never needed anymore
+   // we're never needed anymore -- stepNext is behind us
    ctx->popCode();
 
    Class* cls = 0;

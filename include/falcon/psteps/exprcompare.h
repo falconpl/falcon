@@ -33,9 +33,25 @@ public:
 
    const String& name() const { return m_name; }
 
+   virtual bool checkCompare( int64 compresult ) const = 0;
+
+   class PStepPostCompare: public PStep
+   {
+   public:
+      PStepPostCompare(ExprCompare* owner): m_owner(owner) { apply = apply_; }
+      virtual ~PStepPostCompare() {}
+      virtual void describeTo( String& str, int = 0 ) const { str = "PStepPostCompare"; }
+
+   private:
+      static void apply_( const PStep* self, VMContext* ctx );
+      ExprCompare* m_owner;
+   };
+
+   PStepPostCompare m_stepPostComparer;
+
 protected:
    String m_name;
-   
+
    ExprCompare( const String& name, int line = 0, int chr = 0 );
    ExprCompare( Expression* op1, Expression* op2, const String& name, int line = 0, int chr = 0 );
    ExprCompare( const ExprCompare& other );
@@ -54,12 +70,15 @@ public:
    inline virtual ExprLT* clone() const { return new ExprLT( *this ); }   
    virtual bool simplify( Item& value ) const;
 
+   virtual bool checkCompare( int64 value ) const { return value < 0; }
+
    class comparer
    {
    public:
       static bool pass( int64 a, int64 b ) { return a < b; }
       static bool passn( numeric a, numeric b ) { return a < b; }
       static bool cmpCheck( int64 value ) { return value < 0; }
+
    };
 
 };
@@ -77,6 +96,7 @@ public:
    inline virtual ExprLE* clone() const { return new ExprLE( *this ); }
 
    virtual bool simplify( Item& value ) const;
+   virtual bool checkCompare( int64 value ) const { return value <= 0; }
 
    class comparer
    {
@@ -100,6 +120,8 @@ public:
    inline virtual ExprGT* clone() const { return new ExprGT( *this ); }
 
    virtual bool simplify( Item& value ) const;
+
+   virtual bool checkCompare( int64 value ) const { return value > 0; }
 
    class comparer
    {
@@ -125,6 +147,8 @@ public:
 
    virtual bool simplify( Item& value ) const;
 
+   virtual bool checkCompare( int64 value ) const { return value >= 0; }
+
    class comparer
    {
    public:
@@ -149,6 +173,8 @@ public:
 
    virtual bool simplify( Item& value ) const;
 
+   virtual bool checkCompare( int64 value ) const { return value == 0; }
+
    class comparer
    {
    public:
@@ -172,6 +198,9 @@ public:
    inline virtual ExprNE* clone() const { return new ExprNE( *this ); }
 
    virtual bool simplify( Item& value ) const;
+
+   virtual bool checkCompare( int64 value ) const { return value != 0; }
+
 
    class comparer
    {
