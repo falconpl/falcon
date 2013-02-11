@@ -1,0 +1,45 @@
+/*
+@name Base prototypes
+@category Prototypes
+
+@output
+Hello
+World
+Item base: Prototype
+Item base (according to us): BaseProto
+Rehail
+Again...
+Done
+@endoutput
+*/
+
+
+BaseProto = p{
+   prop0 = "___empty___"
+   hail = {=> printl( self.prop0 ) }
+   
+   name = "BaseProto"
+   _init = { param =>
+      self.prop0 = param
+      return self
+      }
+      
+   _isBase = true
+}
+
+item1 = BaseProto( "Hello" )
+item2 = BaseProto( "World" )
+
+item1.hail()
+item2.hail()
+
+> "Item base: ", item1._base[0].className
+> "Item base (according to us): ", item1._base[0].name
+
+// now item1 is a proto!
+> "Rehail"
+item1._isBase = true
+item2 = item1("Again...")
+item2.hail()
+
+> "Done"

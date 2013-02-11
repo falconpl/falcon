@@ -1,0 +1,32 @@
+/*
+@name Prototypes with classes as bases
+@category Prototypes
+
+@output
+Prototypes with classes as bases
+Hello
+Base
+After changing base: Changed
+Done
+@endoutput
+*/
+
+class Base1
+   pbase = "Base"
+end
+
+class Base2
+   pbase = "Changed"
+end
+
+proto = p{
+   prop = "Hello"
+   _base = [Base1()]
+}
+
+> "Prototypes with classes as bases"
+> proto.prop
+> proto.pbase
+proto._base = [Base2()]
+> "After changing base: ", proto.pbase
+> "Done"
