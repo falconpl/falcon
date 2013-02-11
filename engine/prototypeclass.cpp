@@ -212,7 +212,20 @@ void PrototypeClass::op_getProperty( VMContext* ctx, void* self, const String& p
       Item* item = fd->find( prop );
       if( item != 0 )
       {
-         ctx->stackResult(1, *item);
+         Item& result = *item;
+         if( result.isMethod() && result.asClass() == this )
+         {
+            result.content.data.ptr.pInst = self;
+            ctx->topData() = result;
+         }
+         else if( result.isFunction() ) {
+            ctx->topData().setUser(this, self);
+            ctx->topData().methodize(result.asFunction());
+         }
+         else {
+            ctx->topData() = result;
+         }
+
          return;
       }
       else
@@ -237,14 +250,21 @@ void PrototypeClass::op_getProperty( VMContext* ctx, void* self, const String& p
                }
 
                Item result = ctx->topData();
+               ctx->popData();
                if( result.isMethod() && result.asClass() == this )
                {
                   result.content.data.ptr.pInst = self;
+                  ctx->topData() = result;
+               }
+               else if( result.isFunction() ) {
+                  ctx->topData().setUser(this, self);
+                  ctx->topData().methodize(result.asFunction());
+               }
+               else {
+                  ctx->topData() = result;
                }
 
-               ctx->popData();
                // and we eat ourselves in the stack with our property
-               ctx->topData() = result;
                ctx->popCode();
                return;
             }
@@ -261,15 +281,21 @@ void PrototypeClass::PStepGetPropertyNext::apply_( const PStep*, VMContext* ctx 
 {
    static Class* protoClass = Engine::instance()->protoClass();
 
-   Item result = ctx->topData(); // copy!
+   Item result = ctx->topData();
+   ctx->popData();
    if( result.isMethod() && result.asClass() == protoClass )
    {
-      fassert( ctx->opcodeParam(1).asClass() == protoClass );
-      result.content.data.ptr.pInst = ctx->opcodeParam(1).asInst();
+      result.content.data.ptr.pInst = ctx->topData().asInst();
+      ctx->topData() = result;
+   }
+   else if( result.isFunction() ) {
+      ctx->topData().setUser(protoClass, ctx->topData().asInst());
+      ctx->topData().methodize(result.asFunction());
+   }
+   else {
+      ctx->topData() = result;
    }
 
-   ctx->popData();
-   ctx->topData() = result;
    ctx->popCode();
 }
 

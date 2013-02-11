@@ -3,6 +3,7 @@
 @category Prototypes
 
 @output
+Prototype toString method override
 I am Init!!
 Testing toString: What a wonderful world!
 Done

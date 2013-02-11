@@ -3,7 +3,7 @@
 @category Prototypes
 
 @output
-Prototype toString method override
+Prototype Iter and Next operators
 I am Init!!
 Testing iterator
 Begin: 0,1,2,3,4.
@@ -11,7 +11,7 @@ Done
 @endoutput
 */
 
-> "Prototype toString method override"
+> "Prototype Iter and Next operators"
 
 Proto = p{
    number = nil

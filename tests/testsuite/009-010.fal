@@ -3,6 +3,7 @@
 @category Prototypes
 
 @output
+Prototype index access override for bases.
 I am Init!!
 Value: 10
 getting index[2]
