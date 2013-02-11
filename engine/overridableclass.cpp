@@ -62,8 +62,9 @@ inline void OverridableClass::override_unary( VMContext* ctx, void* self, int op
    }
    else
    {
-      throw new OperandError( ErrorParam(__LINE__, e_invop ).extra(opName) );
-   }
+      throw new OperandError( ErrorParam(e_invop, __LINE__, SRC )
+               .extra(opName)
+               .origin( ErrorParam::e_orig_vm) );   }
 }
 
 
@@ -320,11 +321,17 @@ void OverridableClass::op_setIndex( VMContext* ctx, void* ) const
 
    if( override != 0 )
    {
-      Item* first = ctx->opcodeParams(3);
+      Item* params = ctx->opcodeParams(3);
+      Item value = params[0];
+      Item iself = params[1];
+      Item nth = params[2];
+      params[0] = iself;
+      params[1] = nth;
+      params[2] = value;
 
       // Two parameters (second and third) will be popped,
       //  and first will be turned in the result.
-      ctx->callInternal( override, 2, *first );
+      ctx->callInternal( override, 2, iself );
    }
    else
    {

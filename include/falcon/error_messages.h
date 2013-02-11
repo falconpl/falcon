@@ -290,6 +290,7 @@ FAL_ERRORDECL( e_param_strexp_code, 905, "Parse error in expanded string" );
 FAL_ERRORDECL( e_param_fmt_code, 906, "Parse error in format specifier" );
 FAL_ERRORDECL( e_inv_prop_value, 907, "Invalid value assigned to a property" );
 FAL_ERRORDECL( e_param_arity, 908, "Unexpected number of parameters in evaluation" );
+FAL_ERRORDECL( e_meta_not_proto, 909, "_meta is not a prototype" );
 
 FAL_ERRORDECL( e_paranoid, 999, "Paranoid check failed" );
 

@@ -120,7 +120,7 @@ void generic_apply_( const PStep* ps, VMContext* ctx )
       {
          return;
       }
-      // fallthrough
+      /* no break */
    
       // Phase 1 -- operate
    case 1:
@@ -140,13 +140,11 @@ void generic_apply_( const PStep* ps, VMContext* ctx )
                void* data;
                if( op->asClassInst( cls, data ) )
                {
+                  // it's all in the hands of our class.
+                  ctx->popCode();
+                  _cpr::postAssign( ctx );
                   _cpr::operate( ctx, cls, data );
-                  // went deep?
-                  if( &cf != &ctx->currentCode() )
-                  {
-                     // s_nextApply will be called
-                     return;
-                  }
+                  return;
                }
                else {
                   throw
@@ -155,8 +153,7 @@ void generic_apply_( const PStep* ps, VMContext* ctx )
             }
          }
       }
-      
-      // fallthrough
+      /* no break */
    
       // Phase 2 -- assigning the topmost value back.
    case 2:
@@ -170,6 +167,7 @@ void generic_apply_( const PStep* ps, VMContext* ctx )
             return;
          }
       }
+      /* no break */
       
    }
    

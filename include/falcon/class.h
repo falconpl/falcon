@@ -846,6 +846,9 @@ public:
     */
    virtual void op_in( VMContext* ctx, void* instance ) const;
 
+   virtual void op_provides( VMContext* ctx, void* instance, const String& propName ) const;
+
+
    /** Call the instance.
     \param ctx A virutal machine where the call is performed.
     \param instance An instance of this class

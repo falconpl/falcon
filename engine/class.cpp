@@ -427,6 +427,12 @@ void Class::op_in( VMContext* ctx, void*) const
                 .extra("in") );
 }
 
+void Class::op_provides( VMContext* ctx, void* instance, const String& propName ) const
+{
+   ctx->topData().setBoolean( hasProperty(instance, propName ) );
+}
+
+
 void Class::op_toString( VMContext* ctx, void *self ) const
 {
    String *descr = new String();

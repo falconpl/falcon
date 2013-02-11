@@ -25,6 +25,8 @@
 namespace Falcon
 {
 
+class FlexyDict;
+
 /** Class holding polymorphic classes.
  A prototype is a set of 1 or more base classes, and just like an HyperClass it
  generates instances that actually hold the instances of the base classes.
@@ -62,21 +64,43 @@ public:
 
    virtual bool op_init( VMContext* ctx, void* instance, int32 pcount ) const;
    virtual void op_call( VMContext* ctx, int32 paramCount, void* instance ) const;
+
+   virtual void op_neg( VMContext* ctx, void* self ) const;
+   virtual void op_add( VMContext* ctx, void* self ) const;
+   virtual void op_sub( VMContext* ctx, void* self ) const;
+   virtual void op_mul( VMContext* ctx, void* self ) const;
+   virtual void op_div( VMContext* ctx, void* self ) const;
+   virtual void op_mod( VMContext* ctx, void* self ) const;
+   virtual void op_pow( VMContext* ctx, void* self ) const;
+   virtual void op_shr( VMContext* ctx, void* self ) const;
+   virtual void op_shl( VMContext* ctx, void* self ) const;
+   virtual void op_aadd( VMContext* ctx, void* self) const;
+   virtual void op_asub( VMContext* ctx, void* self ) const;
+   virtual void op_amul( VMContext* ctx, void* self ) const;
+   virtual void op_adiv( VMContext* ctx, void* self ) const;
+   virtual void op_amod( VMContext* ctx, void* self ) const;
+   virtual void op_apow( VMContext* ctx, void* self ) const;
+   virtual void op_ashr( VMContext* ctx, void* self ) const;
+   virtual void op_ashl( VMContext* ctx, void* self ) const;
+   virtual void op_inc( VMContext* ctx, void* self ) const;
+   virtual void op_dec( VMContext* ctx, void* self) const;
+   virtual void op_incpost( VMContext* ctx, void* self ) const;
+   virtual void op_decpost( VMContext* ctx, void* self ) const;
+   virtual void op_getIndex( VMContext* ctx, void* self ) const;
+   virtual void op_setIndex( VMContext* ctx, void* self ) const;
    virtual void op_getProperty( VMContext* ctx, void* self, const String& prop) const;
    virtual void op_setProperty( VMContext* ctx, void* self, const String& prop ) const;
 
+
+   virtual void op_compare( VMContext* ctx, void* self ) const;
+   virtual void op_isTrue( VMContext* ctx, void* self ) const;
+   virtual void op_in( VMContext* ctx, void* self ) const;
+   virtual void op_provides( VMContext* ctx, void* self, const String& property ) const;
+   virtual void op_toString( VMContext* ctx, void* self ) const;
+   virtual void op_iter( VMContext* ctx, void* self ) const;
+   virtual void op_next( VMContext* ctx, void* self ) const;
+
 private:
-
-   class PStepCallBaseInit: public PStep
-   {
-   public:
-      PStepCallBaseInit() { apply = apply_; }
-      virtual ~PStepCallBaseInit() {}
-      void describeTo( String& text ) const { text = "PStepCallBaseInit"; }
-      static void apply_( const PStep* ps, VMContext* ctx );
-   };
-
-   PStepCallBaseInit m_stepCallBaseInit;
 
    class PStepGetPropertyNext: public PStep
    {
@@ -88,6 +112,10 @@ private:
    };
 
    PStepGetPropertyNext m_stepGetPropertyNext;
+
+   inline bool callOverride( VMContext* ctx, FlexyDict* self, const String& opName, int count ) const;
+   inline void override_unary( VMContext* ctx, void* instance, const String& opName ) const;
+   inline void override_binary(  VMContext* ctx, void* instance, const String& opName ) const;
 };
 
 }

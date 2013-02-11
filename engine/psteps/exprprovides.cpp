@@ -90,14 +90,13 @@ void ExprProvides::apply_( const PStep*ps , VMContext* ctx )
       }
       break;
    }
+   ctx->popCode();
 
    Class* cls;
    void* inst;
    ctx->topData().forceClassInst(cls, inst);
-   bool hasIt = cls->hasProperty(inst, self->property());
-   ctx->topData().setBoolean(hasIt);
 
-   ctx->popCode();     
+   cls->op_provides(ctx, inst, self->property() );
 }
 
 //======================================================================

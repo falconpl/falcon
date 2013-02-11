@@ -24,6 +24,7 @@
 #include <falcon/engine.h>
 
 #include <falcon/psteps/exprproto.h>
+#include <falcon/ov_names.h>
 
 #include <vector>
 
@@ -178,21 +179,13 @@ void ExprProto::apply_( const PStep* ps, VMContext* ctx )
    
    // we're done with the exrpessions
    FlexyDict *value = new FlexyDict;
-   value->setBaseType(true);
+   Item retval = FALCON_GC_STORE( cls, value );
 
    Item* result = ctx->opcodeParams(size);
    Private::DefVector::iterator viter = dv.begin();
    while( viter != dv.end() )
    {
-      // pre-methodize ?
-      if( result->isFunction() )
-      {
-         Function* f = result->asFunction();
-         result->setUser( cls, value );
-         result->methodize( f );
-      }
-
-      if( viter->first == "_base" )
+      if( viter->first == FALCON_PROTOTYPE_PROPERTY_OVERRIDE_BASE )
       {
          if( result->isArray() )
          {
@@ -206,18 +199,34 @@ void ExprProto::apply_( const PStep* ps, VMContext* ctx )
             value->base()[0] = *result;
          }
       }
+      else if ( viter->first == FALCON_PROTOTYPE_PROPERTY_OVERRIDE_META )
+      {
+         if (! result->isUser() || result->asClass()->typeID() != FLC_CLASS_ID_PROTO )
+         {
+            throw FALCON_SIGN_ERROR( CodeError, e_meta_not_proto );
+         }
+
+         FlexyDict* meta = static_cast<FlexyDict*>(result->asInst());
+         value->meta( meta );
+      }
+      else if ( viter->first == FALCON_PROTOTYPE_PROPERTY_OVERRIDE_ISBASE )
+      {
+         value->setBaseType(result->isTrue());
+         value->insert(viter->first, *result );
+      }
       else
       {
          value->insert(viter->first, *result );
       }
       
+
       ++result;
       ++viter;
    }
   
    // we're done.
    ctx->popCode();
-   ctx->stackResult( size, FALCON_GC_STORE( cls, value ) );
+   ctx->stackResult( size, retval );
 }
 
 }

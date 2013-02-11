@@ -39,8 +39,8 @@ FlexyClass::FlexyClass():
 {
 }
 
-FlexyClass::FlexyClass( const String& name ):
-   Class( name )
+FlexyClass::FlexyClass( const String& name, int id ):
+   Class( name, id )
 {
 }
 
@@ -73,6 +73,19 @@ void FlexyClass::flatten( VMContext* , ItemArray& subItems, void* instance ) con
 {
    FlexyDict* dict = static_cast<FlexyDict*>(instance);
 
+   subItems.reserve( dict->size() + 1 );
+   if(dict->meta())
+   {
+      Item meta(this, dict->meta() );
+      // force garbage at deserialization
+      meta.content.base.bits.flags |= Item::flagIsGarbage;
+
+      subItems.append(meta);
+   }
+   else {
+      subItems.append(Item());
+   }
+
    class Enum: public PVEnumerator
    {
    public:
@@ -93,13 +106,21 @@ void FlexyClass::flatten( VMContext* , ItemArray& subItems, void* instance ) con
    dict->enumeratePV(rator);
 }
 
+
 void FlexyClass::unflatten( VMContext*, ItemArray& subItems, void* instance ) const
 {
-   fassert( subItems.length() % 2 == 0 )
+   fassert( subItems.length() % 2 == 1 )
 
    FlexyDict* dict = static_cast<FlexyDict*>(instance);
-
-   for(length_t i = 0; i < subItems.length(); i+=2 )
+   Item& i_meta = subItems[0];
+   if( i_meta.isUser() )
+   {
+      fassert(i_meta.asClass() == this );
+      FlexyDict* meta = static_cast<FlexyDict*>(i_meta.asInst());
+      // we know it's garbaged.
+      dict->meta( meta, false );
+   }
+   for(length_t i = 1; i < subItems.length(); i+=2 )
    {
       fassert( subItems[i].isString() );
       dict->insert( *subItems[i].asString(), subItems[i+1] );
@@ -207,17 +228,7 @@ bool FlexyClass::op_init( VMContext* ctx, void* instance, int32 pcount ) const
                {
                   if( key.asString()->find( ' ' ) == String::npos )
                   {
-                     if( value.isFunction() )
-                     {
-                        Function* func = value.asFunction();
-                        Item temp = m_fself;
-                        temp.methodize( func );
-                        m_self->insert( *key.asString(), temp );
-                     }
-                     else
-                     {
-                        m_self->insert( *key.asString(), value );
-                     }
+                     m_self->insert( *key.asString(), value );
                   }
                }
             }
@@ -246,18 +257,8 @@ bool FlexyClass::op_init( VMContext* ctx, void* instance, int32 pcount ) const
             virtual ~Enum() {}
 
             virtual void operator()( const String& data, Item& value )
-            {              
-               if( value.isFunction() )
-               {
-                  Function* func = value.asFunction();
-                  Item temp = m_fself;
-                  temp.methodize( func );
-                  m_self->insert( data, temp );
-               }
-               else
-               {
-                  m_self->insert( data, value );
-               }
+            {
+               m_self->insert( data, value );
             }
             
          private:
@@ -283,7 +284,15 @@ void FlexyClass::op_getProperty( VMContext* ctx, void* self, const String& prop)
 
    if( result != 0 )
    {
-      ctx->topData() = *result; // should be already copied by insert
+      if( result->isFunction() )
+      {
+        Function* func = result->asFunction();
+        ctx->topData().setUser(this, self);
+        ctx->topData().methodize( func );
+      }
+      else {
+         ctx->topData() = *result; // should be already copied by insert
+      }
    }
    else
    {
@@ -299,13 +308,6 @@ void FlexyClass::op_setProperty( VMContext* ctx, void* self, const String& prop 
 
    ctx->popData();
    Item& value = ctx->topData();
-   if ( value.isFunction() )
-   {
-      Function* func = value.asFunction();
-      value.setUser( this, &dict );
-      value.methodize( func );
-   }
-   
    dict.insert( prop, value );
 }
 
@@ -324,7 +326,6 @@ inline bool FlexyClass::operand( int opCount, const String& name, VMContext* ctx
       {
          Function* f = item->asFunction();
          Item &iself = ctx->opcodeParam(opCount-1);
-         iself.methodize(f);
          ctx->callInternal(f, opCount, iself );
       }
       else

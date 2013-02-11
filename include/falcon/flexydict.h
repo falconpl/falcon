@@ -58,7 +58,7 @@ public:
     Warning: this doesn't search the properties in the bases.
     Searching properties in the bases is delegated to the VM if necessary.
     */
-   Item* find( const String& value );
+   Item* find( const String& value ) const;
 
    void insert( const String& key, Item& value );
    inline uint32 currentMark() const { return m_currentMark; }
@@ -69,12 +69,32 @@ public:
    void setBaseType( bool bIsBaseType ) { m_flags = bIsBaseType ? 1:0; }
    bool isBaseType() const { return (m_flags & 1) == 1; }
    
+   FlexyDict* meta() const { return m_meta; }
+
+   /**
+    * Sets the meta dictionary.
+    * \param d the meta dictionary.
+    * \param own True to have the dictionary destroyed when this entity is destroyed
+    * \return true if possible, false if the meta setting causes a loop.
+    *
+    * Normally, meta dictionaries come from the virtual machine, as such they are
+    * garbage collected and don't require ownership.
+    */
+   bool meta( FlexyDict* d, bool own = false);
+
+   bool ownMeta() const { return m_bOwnMeta; }
+
+   uint32 size() const;
+
 private:
    class Private;
    Private* _p;
 
    uint32 m_currentMark;
    uint32 m_flags;
+
+   FlexyDict* m_meta;
+   bool m_bOwnMeta;
 
    ItemArray m_base;
 };

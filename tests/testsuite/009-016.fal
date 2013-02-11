@@ -1,0 +1,54 @@
+/*
+@name Prototype Iter and Next operators
+@category Prototypes
+
+@output
+Prototype toString method override
+I am Init!!
+Testing iterator
+Begin: 0,1,2,3,4.
+Done
+@endoutput
+*/
+
+> "Prototype toString method override"
+
+Proto = p{
+   number = nil
+   
+   _isBase = true   
+   _init = { value => 
+         > "I am Init!!"
+         self.number = value
+         return self
+      } 
+         
+   _meta = p{
+      __iter = {=>
+         return [0]
+      }
+      
+      __next = { iter =>
+         if iter[0] + 1 < self.number
+            return? iter[0]++
+         elif iter[0] +1 == self.number
+            return iter[0]++
+         else
+            return nil
+         end
+         }
+   }  
+}
+
+p = Proto( 5 )
+> "Testing iterator"
+
+for i in p
+   forfirst: >> "Begin: "
+   >> i 
+   formiddle: >> ","
+   forlast: >"."
+end 
+
+> "Done"
+

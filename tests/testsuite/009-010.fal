@@ -1,0 +1,52 @@
+/*
+@name Prototype index access override
+@category Prototypes
+
+@output
+I am Init!!
+Value: 10
+getting index[2]
+20
+getting index[3]
+30
+Setting index[2] = 5
+5
+Setting index[3] = 10
+10
+Done
+@endoutput
+*/
+
+> "Prototype index access override for bases."
+Proto = p{
+   number = nil
+   
+   _isBase = true   
+   _init = {a,b,c=> 
+         > "I am Init!!"
+         self.number = a * b + c 
+         return self
+      } 
+         
+   _meta = p{
+      __getIndex = { n =>
+         > @"getting index[$n]"
+         return self.number * n
+      }
+      
+      __setIndex = { pos, value =>
+         > @"Setting index[$pos] = $value"
+         self.number = value*pos
+         return value
+      }
+   }  
+}
+
+p = Proto( 2, 3, 4 )
+> "Value: ", p.number
+> p[2]
+> p[3]
+> (p[2] = 5)
+> (p[3] = 10)
+
+> "Done"

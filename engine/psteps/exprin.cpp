@@ -57,22 +57,18 @@ void ExprIn::apply_( const PStep* ps, VMContext* ctx )
       // fallthrough
    }
    
-   register Item* item = &ctx->topData();
+   // we won't be back anymore
+   ctx->popCode();
+
+   // invert the operands: "x in y" is leaded by y
+   ctx->opcodeParam(0).swap(ctx->opcodeParam(1));
+   register Item* item = &ctx->opcodeParam(1);
    
    Class* cls;
    void* data;
    item->forceClassInst( cls, data );
    
    cls->op_in( ctx, data );
-   // went deep?
-   if( &cf != &ctx->currentCode() )
-   {
-      // s_nextApply will be called
-      return;
-   }
-   
-   ctx->popCode();     
-   
 }
 
 

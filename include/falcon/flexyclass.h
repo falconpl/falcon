@@ -103,7 +103,7 @@ public:
    virtual void op_setProperty( VMContext* ctx, void* self, const String& prop ) const;
 
 protected:
-   FlexyClass( const String& name );
+   FlexyClass( const String& name, int id = 0 );
 
 private:
    inline bool operand( int opCount, const String& name, VMContext* ctx, void* self, bool bRaise = true ) const;

@@ -414,10 +414,15 @@ void generic_apply_( const PStep* ps, VMContext* ctx )
 
          default:
          {
+            // classes don't auto-assign, they use auto operators
+            ctx->popCode();
+
             Class* cls = 0;
             void* inst = 0;
             op1->forceClassInst( cls, inst );
             _cpr::operate( ctx, cls, inst );
+            // we're done here.
+            return;
          }
       }
       

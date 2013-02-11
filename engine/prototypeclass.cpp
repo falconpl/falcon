@@ -21,17 +21,20 @@
 #include <falcon/vmcontext.h>
 
 #include <falcon/errors/accesserror.h>
+#include <falcon/errors/operanderror.h>
+#include <falcon/errors/paramerror.h>
 
 #include <map>
 #include <vector>
 #include <cstring>
 
+#include <falcon/ov_names.h>
+
 namespace Falcon
 {
 
-
 PrototypeClass::PrototypeClass():
-   FlexyClass( "Prototype" )
+   FlexyClass( "Prototype", FLC_CLASS_ID_PROTO )
 {
 }
 
@@ -98,7 +101,24 @@ void PrototypeClass::op_call( VMContext* ctx, int32 paramCount, void* instance )
    
    if( ! self->isBaseType() )
    {
-      FlexyClass::op_call( ctx, paramCount, instance );
+
+      FlexyDict* self = static_cast<FlexyDict*>(instance);
+      Item* override = 0;
+
+      if( self->meta() )
+      {
+         override = self->meta()->find(OVERRIDE_OP_CALL);
+      }
+
+      if( override != 0 && override->isFunction() )
+      {
+         ctx->callInternal( override->asFunction(), paramCount, Item( this, self ) );
+      }
+      else
+      {
+         FlexyClass::op_call( ctx, paramCount, instance );
+      }
+
       return;
    }
    
@@ -108,75 +128,30 @@ void PrototypeClass::op_call( VMContext* ctx, int32 paramCount, void* instance )
 
    Item* iNewSelf = ctx->opcodeParams(paramCount + 1);
    iNewSelf->setUser(FALCON_GC_STORE(this, child) );
-   Item* init = self->find("_init");
-
-   if( init != 0 && init->isMethod() )
+   // do automatic meta-init transfer.
+   if( self->meta() != 0 )
    {
-      ctx->callInternal( init->asMethodFunction(), paramCount, *iNewSelf );
+      child->meta( self->meta() );
    }
-   else
+
+   Item* init = self->find(FALCON_PROTOTYPE_PROPERTY_OVERRIDE_INIT);
+
+   if( init != 0 )
    {
-      ItemArray& base = self->base();
-      length_t len = base.length();
-
-      for( length_t i = 0; i < len; ++i )
+      if( init->isMethod() )
       {
-         Class* cls;
-         void* data;
-         base[ i ].forceClassInst( cls, data );
-         if( cls->hasProperty( data, "_init" ) )
-         {
-            ctx->pushData(base[i]);
-            ctx->pushCode( &m_stepCallBaseInit );
-            ctx->currentCode().m_seqId = paramCount;
-
-            long depth = ctx->codeDepth();
-            cls->op_getProperty( ctx, data, "_init" );
-            if( ctx->wentDeepSized(depth) )
-            {
-               return;
-            }
-
-            ctx->popCode();
-            Item& result =  ctx->topData();
-            if( result.isMethod() )
-            {
-               Function* func = result.asMethodFunction();
-               ctx->popData();
-               ctx->callInternal( func, paramCount, *ctx->opcodeParams(paramCount+1) );
-               return;
-            }
-            // try again
-            ctx->popData();
-         }
+         ctx->callInternal( init->asMethodFunction(), paramCount, *init );
+      }
+      else if( init->isFunction() )
+      {
+         ctx->callInternal( init->asFunction(), paramCount, *iNewSelf );
       }
 
-      // we didn't find it
-      ctx->popData(paramCount);
-      // return the new self object that we have already created on top of the stack.
+      return;
    }
-}
 
-
-void PrototypeClass::PStepCallBaseInit::apply_( const PStep*, VMContext* ctx )
-{
-   CodeFrame& cf = ctx->currentCode();
-   int pCount = cf.m_seqId;
-   ctx->popCode();
-
-
-   Item& result =  ctx->topData();
-   if( result.isMethod() )
-   {
-      Function* func = result.asMethodFunction();
-      ctx->popData();
-      ctx->callInternal( func, pCount, ctx->opcodeParam(pCount+1) );
-   }
-   else
-   {
-      // leave the self object prepared by the main
-      ctx->popData(pCount);
-   }
+   ctx->popData(paramCount);
+   // return the new self object that we have already created on top of the stack.
 }
 
 
@@ -185,11 +160,11 @@ void PrototypeClass::op_getProperty( VMContext* ctx, void* self, const String& p
    FlexyDict* fd = static_cast<FlexyDict*>(self);
 
    // check the special property _base
-   if( prop == "_base" )
+   if( prop == FALCON_PROTOTYPE_PROPERTY_OVERRIDE_BASE )
    {
       ctx->topData() = Item(fd->base().handler(), &fd->base());
    }   
-   else if( prop == "_prototype" )
+   else if( prop == FALCON_PROTOTYPE_PROPERTY_OVERRIDE_PROTOTYPE )
    {
       if( fd->base().length() > 0 )
       {
@@ -199,22 +174,41 @@ void PrototypeClass::op_getProperty( VMContext* ctx, void* self, const String& p
          ctx->topData().setNil();
       }
    }
-   else if( prop == "_isBase" )
+   else if( prop == FALCON_PROTOTYPE_PROPERTY_OVERRIDE_ISBASE )
    {
       ctx->topData().setBoolean( fd->isBaseType() );
    }
-   else if( prop == "_init" )
+   else if( prop == FALCON_PROTOTYPE_PROPERTY_OVERRIDE_META )
    {
-      Item* init = fd->find("_init");
-      if( init == 0 || ! init->isMethod() ) {
-         ctx->topData().setNil();
+      if( fd->meta() ) {
+         ctx->topData().setUser(this, fd->meta() );
       }
       else {
-         ctx->topData() = *init;
+         ctx->topData().setNil();
       }
    }
    else 
    {
+      if(fd->meta() != 0 && prop.getCharAt(0) != '_' )
+      {
+         Item* meta = fd->meta()->find( OVERRIDE_OP_GETPROP );
+         if( meta != 0 )
+         {
+            if( meta->isFunction() )
+            {
+               ctx->pushData(FALCON_GC_HANDLE(new String(prop)));
+               ctx->callInternal(meta->asFunction(), 1, Item(this, fd) );
+               return;
+            }
+            else if( meta->isMethod() )
+            {
+               ctx->pushData(FALCON_GC_HANDLE(new String(prop)));
+               ctx->callInternal(meta->asMethodFunction(), 1, *meta );
+               return;
+            }
+         }
+      }
+
       Item* item = fd->find( prop );
       if( item != 0 )
       {
@@ -223,7 +217,6 @@ void PrototypeClass::op_getProperty( VMContext* ctx, void* self, const String& p
       }
       else
       {
-
          // nope -- search across bases.
          const ItemArray& base = fd->base();
          for( length_t i = 0; i < base.length(); ++i )
@@ -286,7 +279,7 @@ void PrototypeClass::op_setProperty( VMContext* ctx, void* self, const String& p
    FlexyDict* fd = static_cast<FlexyDict*>(self);
 
    // check the special property _base
-   if( prop == "_base" )
+   if( prop == FALCON_PROTOTYPE_PROPERTY_OVERRIDE_BASE )
    {
       ctx->popData();
       Item& value = ctx->topData();
@@ -300,9 +293,8 @@ void PrototypeClass::op_setProperty( VMContext* ctx, void* self, const String& p
          fd->base().resize(1);
          fd->base()[0].assign(value);
       }
-      return;
    }
-   else if( prop == "_prototype" )
+   else if( prop == FALCON_PROTOTYPE_PROPERTY_OVERRIDE_PROTOTYPE )
    {
       ctx->popData();
       Item& value = ctx->topData();
@@ -314,17 +306,56 @@ void PrototypeClass::op_setProperty( VMContext* ctx, void* self, const String& p
       
       value.copied();
       fd->base()[0] = value;
-      return;
    }
-   else if( prop == "_isBase" )
+   else if( prop == FALCON_PROTOTYPE_PROPERTY_OVERRIDE_ISBASE )
    {
       ctx->popData();
       Item& value = ctx->topData();      
       fd->setBaseType( value.isTrue() );
-      return;
    }
+   else if ( prop == FALCON_PROTOTYPE_PROPERTY_OVERRIDE_META )
+   {
+      ctx->popData();
+      Item& value = ctx->topData();
 
-   FlexyClass::op_setProperty( ctx, self, prop );
+      // the m_meta is just a proxy.
+      if( value.asClass() != this )
+      {
+         throw FALCON_SIGN_XERROR( ParamError, e_param_type, .extra("Prototype") );
+      }
+
+      // save it in the dictionary so that we don't have to gc or flatten it separately
+      FlexyDict* m = static_cast<FlexyDict*>(value.asInst());
+      fd->meta( m );
+   }
+   else
+   {
+      if(fd->meta() != 0 && prop.getCharAt(0) != '_' )
+      {
+         Item* meta = fd->meta()->find( OVERRIDE_OP_SETPROP );
+         if( meta != 0 )
+         {
+            if( meta->isFunction() )
+            {
+               Item temp = ctx->opcodeParam(1);
+               ctx->topData() = FALCON_GC_HANDLE(new String(prop));
+               ctx->pushData(temp);
+               ctx->callInternal(meta->asFunction(), 2, Item(this, fd) );
+               return;
+            }
+            else if( meta->isMethod() )
+            {
+               Item temp = ctx->opcodeParam(1);
+               ctx->topData() = FALCON_GC_HANDLE(new String(prop));
+               ctx->pushData(temp);
+               ctx->callInternal(meta->asMethodFunction(), 2, *meta );
+               return;
+            }
+         }
+      }
+
+      FlexyClass::op_setProperty( ctx, self, prop );
+   }
 }
 
 
@@ -377,6 +408,355 @@ void PrototypeClass::describe( void* instance, String& target, int depth, int ma
       target += "{...}";
    }  
 }
+
+
+inline bool PrototypeClass::callOverride( VMContext* ctx, FlexyDict* self, const String& opName, int count ) const
+{
+   if( self->meta() != 0 )
+   {
+      Item* override = self->meta()->find(opName);
+
+      if( override != 0 )
+      {
+         if ( override->isFunction() )
+         {
+            // 1 parameter == second; which will be popped away,
+            // while first == self will be substituted with the return value.
+            ctx->callInternal( override->asFunction(), count, Item( this, self ) );
+            return true;
+         }
+         else if ( override->isMethod() )
+         {
+            ctx->callInternal( override->asMethodFunction(), count, *override );
+            return true;
+         }
+
+         // doing other call controls has no meaning.
+      }
+   }
+
+   return false;
+}
+
+
+inline void PrototypeClass::override_unary( VMContext* ctx, void* instance, const String& opName ) const
+{
+   FlexyDict* self = static_cast<FlexyDict*>(instance);
+   if( callOverride( ctx, self, opName, 0 ) )
+   {
+      return;
+   }
+
+   throw new OperandError( ErrorParam(e_invop, __LINE__, SRC )
+            .extra(opName)
+            .origin( ErrorParam::e_orig_vm) );
+}
+
+
+inline void PrototypeClass::override_binary(  VMContext* ctx, void* instance, const String& opName ) const
+{
+   FlexyDict* self = static_cast<FlexyDict*>(instance);
+   if( callOverride( ctx, self, opName, 1 ) )
+   {
+      return;
+   }
+
+   throw new OperandError( ErrorParam(e_invop, __LINE__, SRC )
+            .extra(opName)
+            .origin( ErrorParam::e_orig_vm) );
+}
+
+
+void PrototypeClass::op_neg( VMContext* ctx, void* self ) const
+{
+   override_unary( ctx, self, OVERRIDE_OP_NEG );
+}
+
+
+void PrototypeClass::op_add( VMContext* ctx, void* self ) const
+{
+   override_binary( ctx, self, OVERRIDE_OP_ADD );
+}
+
+
+void PrototypeClass::op_sub( VMContext* ctx, void* self ) const
+{
+   override_binary( ctx, self, OVERRIDE_OP_SUB );
+}
+
+
+void PrototypeClass::op_mul( VMContext* ctx, void* self ) const
+{
+   override_binary( ctx, self, OVERRIDE_OP_MUL );
+}
+
+
+void PrototypeClass::op_div( VMContext* ctx, void* self ) const
+{
+   override_binary( ctx, self, OVERRIDE_OP_DIV );
+}
+
+void PrototypeClass::op_mod( VMContext* ctx, void* self ) const
+{
+   override_binary( ctx, self, OVERRIDE_OP_MOD );
+}
+
+
+void PrototypeClass::op_pow( VMContext* ctx, void* self ) const
+{
+   override_binary( ctx, self, OVERRIDE_OP_POW );
+}
+
+void PrototypeClass::op_shr( VMContext* ctx, void* self ) const
+{
+   override_binary( ctx, self, OVERRIDE_OP_SHR );
+}
+
+void PrototypeClass::op_shl( VMContext* ctx, void* self ) const
+{
+   override_binary( ctx, self, OVERRIDE_OP_SHL );
+}
+
+
+void PrototypeClass::op_aadd( VMContext* ctx, void* self) const
+{
+   override_binary( ctx, self, OVERRIDE_OP_AADD );
+}
+
+
+void PrototypeClass::op_asub( VMContext* ctx, void* self ) const
+{
+   override_binary( ctx, self, OVERRIDE_OP_ASUB );
+}
+
+
+void PrototypeClass::op_amul( VMContext* ctx, void* self ) const
+{
+   override_binary( ctx, self, OVERRIDE_OP_AMUL );
+}
+
+
+void PrototypeClass::op_adiv( VMContext* ctx, void* self ) const
+{
+   override_binary( ctx, self, OVERRIDE_OP_ADIV );
+}
+
+
+void PrototypeClass::op_amod( VMContext* ctx, void* self ) const
+{
+   override_binary( ctx, self, OVERRIDE_OP_AMOD );
+}
+
+
+void PrototypeClass::op_apow( VMContext* ctx, void* self ) const
+{
+   override_binary( ctx, self, OVERRIDE_OP_APOW );
+}
+
+void PrototypeClass::op_ashr( VMContext* ctx, void* self ) const
+{
+   override_binary( ctx, self, OVERRIDE_OP_ASHR );
+}
+
+void PrototypeClass::op_ashl( VMContext* ctx, void* self ) const
+{
+   override_binary( ctx, self, OVERRIDE_OP_ASHL );
+}
+
+void PrototypeClass::op_inc( VMContext* ctx, void* self ) const
+{
+   override_unary( ctx, self, OVERRIDE_OP_INC );
+}
+
+
+void PrototypeClass::op_dec( VMContext* ctx, void* self) const
+{
+   override_unary( ctx, self, OVERRIDE_OP_DEC );
+}
+
+
+void PrototypeClass::op_incpost( VMContext* ctx, void* self ) const
+{
+   override_unary( ctx, self, OVERRIDE_OP_INCPOST );
+}
+
+
+void PrototypeClass::op_decpost( VMContext* ctx, void* self ) const
+{
+   override_unary( ctx, self, OVERRIDE_OP_DECPOST );
+}
+
+
+void PrototypeClass::op_getIndex( VMContext* ctx, void* self ) const
+{
+   override_binary( ctx, self, OVERRIDE_OP_GETINDEX );
+}
+
+
+void PrototypeClass::op_setIndex( VMContext* ctx, void* instance ) const
+{
+   FlexyDict* self = static_cast<FlexyDict*>(instance);
+
+   if( self->meta() != 0 )
+   {
+      Item* override = self->meta()->find(OVERRIDE_OP_SETINDEX);
+      if( override != 0  && override->isFunction() )
+      {
+         Item* params = ctx->opcodeParams(3);
+         Item value = params[0];
+         Item iself = params[1];
+         Item nth = params[2];
+         params[0] = iself;
+         params[1] = nth;
+         params[2] = value;
+
+         // Two parameters (second and third) will be popped,
+         //  and first will be turned in the result.
+         ctx->callInternal( override->asFunction(), 2, Item(this, self) );
+      }
+
+      return;
+   }
+
+   throw new OperandError( ErrorParam(__LINE__, e_invop )
+            .extra(OVERRIDE_OP_SETINDEX)
+            .origin( ErrorParam::e_orig_vm) );
+}
+
+
+void PrototypeClass::op_compare( VMContext* ctx, void* instance ) const
+{
+   FlexyDict* self = static_cast<FlexyDict*>(instance);
+   Item* override = 0;
+   if( self->meta() != 0 )
+   {
+      override = self->meta()->find(OVERRIDE_OP_COMPARE);
+   }
+
+   if( override && override->isFunction() )
+   {
+      // call will remove the extra parameter...
+      Item iSelf( this, self );
+      // remove "self" from the stack..
+      ctx->popData();
+      ctx->callInternal( override->asFunction(), 1, iSelf );
+   }
+   else
+   {
+      // we don't need the self object.
+      ctx->popData();
+      const Item& crand = ctx->topData();
+      if( crand.type() == typeID() )
+      {
+         // we're all object. Order by ptr.
+         ctx->topData() = (int64)
+            (self > crand.asInst() ? 1 : (self < crand.asInst() ? -1 : 0));
+      }
+      else
+      {
+         // order by type
+         ctx->topData() = (int64)( typeID() - crand.type() );
+      }
+   }
+}
+
+
+void PrototypeClass::op_isTrue( VMContext* ctx, void* instance ) const
+{
+   FlexyDict* self = static_cast<FlexyDict*>(instance);
+   Item* override = 0;
+
+   if( self->meta() != 0 )
+   {
+      override = self->meta()->find(OVERRIDE_OP_INCPOST);
+   }
+
+   if( override != 0 && override->isFunction() )
+   {
+      // use the instance we know, as first can be moved away.
+      ctx->callInternal( override->asFunction(), 0, ctx->topData() );
+   }
+   else
+   {
+      // instances are always true.
+      ctx->topData().setBoolean(true);
+   }
+}
+
+
+void PrototypeClass::op_in( VMContext* ctx, void* self ) const
+{
+   override_binary( ctx, self, OVERRIDE_OP_IN );
+}
+
+
+void PrototypeClass::op_provides( VMContext* ctx, void* instance, const String& propName ) const
+{
+   FlexyDict* self = static_cast<FlexyDict*>(instance);
+   Item* override = 0;
+
+   if( self->meta() != 0 )
+   {
+      override = self->meta()->find(OVERRIDE_OP_PROVIDES);
+   }
+
+   if( override != 0 && override->isFunction() )
+   {
+      Item i_self( this, self );
+      ctx->pushData( FALCON_GC_HANDLE(new String(propName)) );
+      ctx->callInternal( override->asFunction(), 1, i_self );
+   }
+   else if( override != 0 && override->isMethod() )
+   {
+      ctx->pushData( FALCON_GC_HANDLE(new String(propName)) );
+      ctx->callInternal( override->asMethodFunction(), 1, *override);
+   }
+   else
+   {
+      ctx->topData().setBoolean( hasProperty( self, propName ) );
+   }
+}
+
+
+void PrototypeClass::op_toString( VMContext* ctx, void* instance ) const
+{
+   FlexyDict* self = static_cast<FlexyDict*>(instance);
+   Item* override = 0;
+
+   if( self->meta() != 0 )
+   {
+      override = self->meta()->find(OVERRIDE_OP_TOSTRING);
+   }
+
+   if( override != 0 && override->isFunction() )
+   {
+      ctx->callInternal( override->asFunction(), 0, Item( this, self ) );
+   }
+   else
+   {
+      String* str = new String("Instance of ");
+      str->append( name() );
+      ctx->topData() = FALCON_GC_HANDLE(str);
+   }
+}
+
+void PrototypeClass::op_iter( VMContext* ctx, void* self ) const
+{
+   ctx->addSpace(1);
+   ctx->opcodeParam(0) = ctx->opcodeParam(1);
+
+   override_unary( ctx, self, OVERRIDE_OP_ITER );
+}
+
+void PrototypeClass::op_next( VMContext* ctx, void* self ) const
+{
+   ctx->addSpace(2);
+   ctx->opcodeParam(0) = ctx->opcodeParam(2);
+   ctx->opcodeParam(1) = ctx->opcodeParam(3);
+
+   override_binary( ctx, self, OVERRIDE_OP_NEXT );
+}
+
 
 }
 

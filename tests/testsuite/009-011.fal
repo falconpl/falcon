@@ -1,0 +1,58 @@
+/*
+@name Prototype index access override
+@category Prototypes
+
+@output
+Prototype getProperty override for bases.
+I am Init!!
+Value: Getting number=10
+10
+Getting neutron=10
+10
+Setting boson = 15
+15
+Getting proton=15
+15
+Setting electron = 10
+10
+Unmasked: 10
+Done
+@endoutput
+*/
+
+> "Prototype getProperty override for bases."
+Proto = p{
+   _number = nil
+   
+   
+   _isBase = true   
+   _init = {a,b,c=> 
+         > "I am Init!!"
+         self._number = a * b + c 
+         return self
+      } 
+         
+   _meta = p{
+      __getProperty = { prop =>
+         > "Getting ", prop, "=", self._number
+         x = self._number
+         return x
+      }
+      
+      __setProperty = { prop, value =>
+         > @"Setting $prop = $value"
+         self._number = value
+         return value
+      }
+   }  
+}
+
+p = Proto( 2, 3, 4 )
+> "Value: ", p.number
+> p.neutron
+> p.boson = 15
+> p.proton
+> p.electron = 10
+> "Unmasked: ", p._number
+
+> "Done"

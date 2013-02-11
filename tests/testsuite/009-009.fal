@@ -1,0 +1,38 @@
+/*
+@name Prototype _init override
+@category Prototypes
+
+@output
+Prototype _call override for bases.
+I am Init!!
+Value: 10
+Done
+@endoutput
+*/
+
+> "Prototype _call override for bases."
+Proto = p{
+   number = nil
+   
+   _isBase = true   
+   _init = {a,b,c=> 
+         > "I am Init!!"
+         self.number = a * b +c 
+         return self
+      } 
+         
+   _meta = p{
+      // we mask __call via _init
+      __call = {a,b,c=> 
+         > "I am called!"
+         > "A: ", a
+         > "B: ", b
+         > "C: ", c         
+      }     
+   }
+}
+
+p = Proto( 2, 3, 4 )
+> "Value: ", p.number
+
+> "Done"

@@ -31,21 +31,40 @@ public:
 FlexyDict::FlexyDict():
    _p( new Private ),
    m_currentMark(0),
-   m_flags(0)
-{}
+   m_flags(0),
+   m_meta(0),
+   m_bOwnMeta(false)
+{
+}
 
 FlexyDict::FlexyDict( const FlexyDict& other ):
    _p( new Private ),
    m_currentMark(other.m_currentMark),
    m_flags(other.m_flags),
+   m_meta(0),
+   m_bOwnMeta(false),
    m_base(other.m_base)
 {
    _p->m_im = other._p->m_im;
+   if (other.m_bOwnMeta && other.m_meta != 0 )
+   {
+      m_bOwnMeta = true;
+      m_meta = new FlexyDict( *other.m_meta );
+   }
+   else  {
+      m_bOwnMeta = false;
+      m_meta = other.m_meta;
+   }
 }
 
 FlexyDict::~FlexyDict()
 {
    delete _p;
+
+   if( m_bOwnMeta )
+   {
+      delete m_meta;
+   }
 }
 
 
@@ -62,6 +81,11 @@ void FlexyDict::gcMark( uint32 mark )
       const Item& value = pos->second;
       value.gcMark( mark );
       ++pos;
+   }
+
+   if( m_meta != 0 )
+   {
+      m_meta->gcMark(mark);
    }
 
    m_base.gcMark( mark );
@@ -105,6 +129,7 @@ void FlexyDict::enumerateProps( Class::PropertyEnumerator& e ) const
             m_temp(temp),
             m_e(e)
          {}
+         virtual ~Rator(){}
 
          virtual bool operator()( const String& property, bool )
          {
@@ -170,6 +195,7 @@ void FlexyDict::enumeratePV( Class::PVEnumerator& e )
             m_temp(temp),
             m_e(e)
          {}
+         virtual ~Rator(){}
 
          virtual void operator()( const String& property, Item& value )
          {
@@ -227,23 +253,16 @@ void FlexyDict::describe( String& target, int depth, int maxlen ) const
 
       ++pos;
    }
-   
-   /*
-   for ( length_t i = 0; i < m_base.length(); ++ i )
-   {
-      target += "; ";
-      Class* cls;
-      void * data;
-      m_base[i].forceClassInst( cls, data );
-      String temp;
-      cls->describe( data, temp, depth-1, maxlen );
-      target += temp;
-   }
-   */
 }
 
 
-Item* FlexyDict::find( const String& value )
+uint32 FlexyDict::size() const
+{
+   return _p->m_im.size();
+}
+
+
+Item* FlexyDict::find( const String& value ) const
 {
    Private::ItemMap::iterator pos = _p->m_im.find( value );
    if( pos != _p->m_im.end() )
@@ -258,6 +277,29 @@ Item* FlexyDict::find( const String& value )
 void FlexyDict::insert( const String& key, Item& value )
 {
    _p->m_im[key].assign(value);
+}
+
+
+bool FlexyDict::meta( FlexyDict* fd, bool own )
+{
+   FlexyDict* metaChild = fd;
+   while( metaChild != 0 )
+   {
+      if ( metaChild == this )
+      {
+         return false;
+      }
+      metaChild = metaChild->meta();
+   }
+
+   if (m_bOwnMeta )
+   {
+      delete m_meta;
+   }
+   m_meta = fd;
+   m_bOwnMeta = own;
+
+   return true;
 }
 
 }

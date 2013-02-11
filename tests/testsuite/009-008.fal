@@ -1,0 +1,31 @@
+/*
+@name Prototype __call override
+@category Prototypes
+
+@output
+Prototype simple property override test
+I am called!
+A: One
+B: Two
+C: Three
+Done
+@endoutput
+*/
+
+> "Prototype simple property override test"
+Proto = p{
+   number = 3
+   //_isBase = true
+   _meta = p{
+      __call = {a,b,c=> 
+         > "I am called!"
+         > "A: ", a
+         > "B: ", b
+         > "C: ", c         
+         }     
+   }
+}
+
+Proto( "One", "Two", "Three" )
+
+> "Done"

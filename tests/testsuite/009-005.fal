@@ -1,0 +1,41 @@
+/*
+@name Prototype meta table smoke test
+@category Prototypes
+
+This test just checks for the protoype meta table to be
+correctly set via the 3 standard means: 
+ - creating a protype with the grammar construct, 
+ - setting the table from a prototype, 
+ - setting a single prototype property.
+
+@output
+Override declaration
+5
+Override reset table
+8
+Override reset property
+11
+@endoutput
+*/
+
+> "Override declaration"
+x = p{
+   number = 3
+   _meta = p{
+      __add = {b=> self.number + b}
+   }
+}
+
+> x + 2
+
+> "Override reset table"
+x._meta = p{
+      __add = {b=> self.number*2 + b}
+   }
+   
+> x + 2
+
+> "Override reset property"
+x._meta.__add = {b=> self.number*3 + b}
+
+> x + 2

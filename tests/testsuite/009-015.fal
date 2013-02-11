@@ -1,0 +1,34 @@
+/*
+@name Prototype toString method override
+@category Prototypes
+
+@output
+I am Init!!
+Testing toString: What a wonderful world!
+Done
+@endoutput
+*/
+
+> "Prototype toString method override"
+
+Proto = p{
+   number = nil
+   
+   _isBase = true   
+   _init = { value => 
+         > "I am Init!!"
+         self.number = value
+         return self
+      } 
+         
+   _meta = p{
+      toString = {=>
+         return "What a wonderful world!"
+      }
+      
+   }  
+}
+
+p = Proto( 0 )
+> "Testing toString: " + p
+> "Done"
