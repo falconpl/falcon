@@ -515,6 +515,15 @@ Parsing::TokenInstance* SourceLexer::nextToken()
                case '"': m_chr++; resetState(); return makeString();
                case '\\': m_state = state_double_string_esc; break;
 
+               case '\r':
+                  // eat \n
+                  if( (chr = m_reader->getChar()) != '\n')
+                  {
+                     m_reader->ungetChar(chr);
+                     continue;
+                  }
+                  /* no break */
+
                case '\n':
                   if( m_stringStart )
                   {
@@ -659,10 +668,21 @@ Parsing::TokenInstance* SourceLexer::nextToken()
                      return makeString();
                   }
                }
-               // on read failure, will break at next loop
+               else {
+                  // on read failure, it's '<EOF>: will break at next loop
+                  resetState();
+                  return makeString();
+               }
             }
             else
             {
+               // eat \r
+               if( chr == '\r' && (chr = m_reader->getChar()) != '\n')
+               {
+                  m_reader->ungetChar(chr);
+                  continue;
+               }
+
                if ( chr == '\n' )
                {
                   // at string start? -- allow it, but don't record it.
@@ -717,6 +737,7 @@ Parsing::TokenInstance* SourceLexer::nextToken()
                      }
                      addError(e_inv_num_format);
                   }
+                  break;
             }
             break;
 
