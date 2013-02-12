@@ -100,11 +100,10 @@ void apply_end_rich( const Rule&, Parser& p )
          delete expr;
          p.addError( e_syn_end, p.currentSource(), tend->line(), tend->chr() );
       }
-      st->closeContext();
    }
 
-   SourceParser* sp = static_cast<SourceParser*>( &p);
-   if( ! sp->interactive() && ( st->currentStmt() || st->currentFunc() || st->currentClass() ))
+   //SourceParser* sp = static_cast<SourceParser*>( &p);
+   if( !p.interactive() && (st->currentStmt() || st->currentFunc() || st->currentClass()) )
    {
       // close the current context even in case of error.
       st->closeContext();
