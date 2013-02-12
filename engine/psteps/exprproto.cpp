@@ -26,6 +26,9 @@
 #include <falcon/psteps/exprproto.h>
 #include <falcon/ov_names.h>
 
+#include <falcon/error.h>
+#include <falcon/errors/codeerror.h>
+
 #include <vector>
 
 namespace Falcon
@@ -160,10 +163,10 @@ bool ExprProto::simplify( Item& ) const
 void ExprProto::apply_( const PStep* ps, VMContext* ctx )
 {
    static Class* cls =  Engine::instance()->protoClass();
-   
+
    const ExprProto* self = static_cast<const ExprProto*>(ps);
    CodeFrame& cs = ctx->currentCode();
-   
+
    // apply all the expressions.
    int& seqId = cs.m_seqId;
    Private::DefVector& dv = self->_p->m_defs;
@@ -176,7 +179,7 @@ void ExprProto::apply_( const PStep* ps, VMContext* ctx )
          return;
       }
    }
-   
+
    // we're done with the exrpessions
    FlexyDict *value = new FlexyDict;
    Item retval = FALCON_GC_STORE( cls, value );
@@ -218,12 +221,12 @@ void ExprProto::apply_( const PStep* ps, VMContext* ctx )
       {
          value->insert(viter->first, *result );
       }
-      
+
 
       ++result;
       ++viter;
    }
-  
+
    // we're done.
    ctx->popCode();
    ctx->stackResult( size, retval );
