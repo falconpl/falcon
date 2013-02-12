@@ -403,6 +403,16 @@ int64 _getpid() {
    return (int64) GetCurrentProcessId();
 }
 
+
+int _getCores()
+{
+   SYSTEM_INFO sysinfo;
+   GetSystemInfo( &sysinfo );
+
+   return (int) sysinfo.dwNumberOfProcessors;
+}
+
+
 long _getPageSize()
 {
    SYSTEM_INFO si;

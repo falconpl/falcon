@@ -63,7 +63,7 @@ public:
    void testMode();
    void launch( const String& script );
 
-   void configureVM( VMachine& vm, Log* log = 0 );
+   void configureVM( VMachine& vm, Process* prc, Log* log = 0 );
 
 private:
 };

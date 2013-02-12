@@ -99,7 +99,7 @@ public:
 // Main class
 //
 
-ModSpace::ModSpace( VMachine* owner, ModSpace* parent ):
+ModSpace::ModSpace( Process* owner, ModSpace* parent ):
    _p( new Private ),   
    m_parent(parent),
    m_lastGCMark(0),
@@ -110,7 +110,7 @@ ModSpace::ModSpace( VMachine* owner, ModSpace* parent ):
    m_stepExecMain(this),
    m_startLoadStep(this)
 {
-   m_vm = owner;
+   m_process = owner;
    m_loader = new ModLoader(this);
    SynFunc* sf = new SynFunc("$loadModule");
    sf->syntree().append( new StmtReturn );
@@ -138,8 +138,17 @@ ModSpace::~ModSpace()
 
 Process* ModSpace::loadModule( const String& name, bool isUri,  bool asLoad, bool isMain )
 {
+   Process* process = m_process->vm()->createProcess();
+   loadModuleInProcess( process, name, isUri, asLoad, isMain );
+   return process;
+}
 
-   Process* process = m_vm->createProcess();
+void ModSpace::loadModuleInProcess( Process* process, const String& name, bool isUri,  bool asLoad, bool isMain )
+{
+   if( process != m_process) {
+      process->adoptModSpace(this);
+   }
+
    VMContext* tgtContext = process->mainContext();
    tgtContext->call( m_loaderFunc );
    tgtContext->pushCode(&Engine::instance()->stdSteps()->m_returnFrameWithTop);
@@ -148,11 +157,12 @@ Process* ModSpace::loadModule( const String& name, bool isUri,  bool asLoad, boo
    tgtContext->pushCode( &m_startLoadStep );
    int32 v = (isUri ? 1 : 0) | (asLoad ? 2 : 0) | (isMain ? 4 : 0);
    tgtContext->currentCode().m_seqId = v;
-
-   // process loaded and ready to run.
-   return process;
 }
 
+void ModSpace::loadModuleInProcess( const String& name, bool isUri, bool asLoad, bool isMain )
+{
+   loadModuleInProcess( m_process, name, isUri, asLoad, isMain );
+}
 
 void ModSpace::loadModuleInContext( const String& name, bool isUri, bool isLoad, bool isMain, VMContext* tgtContext )
 {

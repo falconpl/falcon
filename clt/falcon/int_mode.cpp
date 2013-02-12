@@ -27,7 +27,6 @@ using namespace Falcon;
 IntMode::IntMode( FalconApp* owner ):
    m_owner( owner )
 {
-   m_vm.modSpace()->add( Engine::instance()->getCore() );
 }
 
 
@@ -39,22 +38,24 @@ void IntMode::run()
 #endif
 
    VMachine& vm = m_vm;
-   
    vm.textOut()->write( "Welcome to Falcon.\n" );
+   
+   Process* process = vm.createProcess();
+   process->modSpace()->add(Engine::instance()->getCore());
 
    // add module and function
    Module *mod = new Module("(interactive)");
    SynFunc* mainfunc = new SynFunc("__main__");
    mod->setMain(true);
    mod->setMainFunction( mainfunc );
-   vm.modSpace()->add(mod);
+   process->modSpace()->add(mod);
 
 
    
    // prepare the loader to fulfill dynamic load requests.
 
    // do we have a load path?
-   ModLoader* loader = vm.modSpace()->modLoader();
+   ModLoader* loader = process->modSpace()->modLoader();
    loader->setSearchPath(".");
    if( m_owner->m_options.load_path.size() > 0 )
    {
@@ -67,13 +68,12 @@ void IntMode::run()
       loader->addFalconPath();
    }
 
-
    // Start the process.
    PStepCompile psc;
 
    psc.setCompilerContext(mainfunc, mod, vm.textIn(), vm.textOut() );
    mainfunc->syntree().append( new StmtReturn );
-   Process* process = vm.createProcess();
+
    process->mainContext()->call( mainfunc );
    process->mainContext()->pushCodeWithUnrollPoint(&psc);
 

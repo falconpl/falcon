@@ -28,11 +28,12 @@
 #include <falcon/synfunc.h>
 #include <falcon/error.h>
 #include <falcon/gclock.h>
+#include <falcon/modspace.h>
 
 
 namespace Falcon {
 
-Process::Process( VMachine* owner ):
+Process::Process( VMachine* owner, ModSpace* ms ):
    m_vm(owner),
    m_context( 0 ),
    m_event( true, false ),
@@ -46,6 +47,15 @@ Process::Process( VMachine* owner ):
    m_id = m_vm->getNextProcessID();
    m_context = new VMContext(this, 0);
    m_entry = 0;
+   if( ms == 0 )
+   {
+      m_modspace = new ModSpace(this);
+   }
+   else
+   {
+      m_modspace = ms;
+      ms->incref();
+   }
 }
 
 Process::Process( VMachine* owner, bool bAdded ):
@@ -62,6 +72,8 @@ Process::Process( VMachine* owner, bool bAdded ):
    m_id = m_vm->getNextProcessID();
    m_context = new VMContext(this, 0);
    m_entry = 0;
+
+   m_modspace = new ModSpace(this);
 }
 
 
@@ -77,6 +89,18 @@ Process::~Process() {
    delete m_entry;
 }
 
+
+void Process::adoptModSpace( ModSpace* hostSpace )
+{
+   hostSpace->incref();
+   ModSpace* old = m_modspace;
+   m_modspace = hostSpace;
+
+   if (old != 0 )
+   {
+      old->decref();
+   }
+}
 
 SynFunc* Process::readyEntry()
 {

@@ -80,6 +80,8 @@ public:
    bool list_tests;
    int log_level;
 
+   int num_processors;
+
    FalconOptions();
 
    void parse( int argc, char **argv, int &script_pos );

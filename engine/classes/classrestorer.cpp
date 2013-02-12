@@ -130,7 +130,7 @@ FALCON_DEFINE_METHOD_P1( ClassRestorer, restore )
 
    // prepare not to return the frame now but later.
    ctx->pushCode( retStep );
-   restorer->restore(ctx, streamc->m_underlying, ctx->vm()->modSpace() );
+   restorer->restore(ctx, streamc->m_underlying, ctx->process()->modSpace() );
 }
 
 

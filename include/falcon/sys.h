@@ -98,6 +98,8 @@ FALCON_DYN_SYM void _enumerateEnvironment( EnvStringCallback cb, void* cbData );
 /** Returns process ID of the current process. */
 FALCON_DYN_SYM int64 _getpid();
 
+/** Returns the number of CPU cores on the host machine. */
+FALCON_DYN_SYM int _getCores();
 
 FALCON_DYN_SYM void _dummy_ctrl_c_handler();
 

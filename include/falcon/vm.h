@@ -208,18 +208,6 @@ public:
     */
    inline TextWriter* textErr() const { return m_textOut; }
 
-   //=========================================================
-   // Module management
-   //=========================================================
-
-   /** Gets the module space associated with this virtual machine. */
-   ModSpace* modSpace() const { return m_modspace; }
-
-
-   //=========================================================
-   // Context management
-   //=========================================================
-
    /** Cleanly terminates the virtual machine.
     *
     The scheduler and all the processors are sent a request
@@ -305,7 +293,6 @@ protected:
    Transcoder* m_stdCoder;
    bool m_bOwnCoder;
    
-   ModSpace* m_modspace;
    ContextManager m_ctxMan;
 
 private:

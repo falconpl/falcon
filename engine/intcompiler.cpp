@@ -179,7 +179,7 @@ bool IntCompiler::Context::onImportFrom( ImportDef* def )
    // get the module space
    VMContext* cctx = static_cast<IntCompiler*>(m_owner)->m_vmctx;
    Module* mod = m_owner->module();
-   ModSpace* ms = cctx->vm()->modSpace();
+   ModSpace* ms = cctx->process()->modSpace();
    Error* err = mod->addImport( def );
    if( err != 0 ) {
       sp.addError(err);

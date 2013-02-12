@@ -139,9 +139,11 @@ void FalconApp::launch( const String& script )
 
    // Create the virtual machine -- that is used also for textual output.
    VMachine vm;
-   configureVM( vm );
+   Process* process = vm.createProcess();
 
-   ModSpace* ms = vm.modSpace();
+   configureVM( vm, process );
+
+   ModSpace* ms = process->modSpace();
    Process* loadProc = ms->loadModule( script, true, false, true );
 
    log->log(Log::fac_app, Log::lvl_info, String("Starting loader process on: ") + script );
@@ -157,7 +159,7 @@ void FalconApp::launch( const String& script )
       if( mod->getMainFunction() != 0 )
       {
          log->log(Log::fac_app, Log::lvl_info, String("Launching main script function") );
-         Process* process = vm.createProcess();
+
          process->mainContext()->call( mod->getMainFunction() );
          process->start();
          process->wait();
@@ -180,12 +182,13 @@ void FalconApp::launch( const String& script )
 }
 
 
-void FalconApp::configureVM( VMachine& vm, Log* log )
+void FalconApp::configureVM( VMachine& vm, Process* prc, Log* log )
 {
+   vm.setProcessorCount( m_options.num_processors );
    vm.setStdEncoding( m_options.io_encoding );
 
    // Ok, we opened the file; prepare the space (and most important, the loader)
-   ModSpace* ms = vm.modSpace();
+   ModSpace* ms = prc->modSpace();
    ModLoader* loader = ms->modLoader();
    loader->sourceEncoding( m_options.io_encoding );
 

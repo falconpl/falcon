@@ -99,9 +99,6 @@ void Processor::onError( Error* e )
 
 void Processor::onRaise( const Item& item )
 {
-   // for now, just wrap and raise.
-
-   //TODO: extract the error if the item is an instance of error.
    LocationInfo lci;
    m_currentContext->location(lci);
    Error* e = new GenericError( ErrorParam(e_uncaught, lci.m_line)
@@ -202,7 +199,6 @@ void Processor::execute( VMContext* ctx )
       }
       catch( Error* e )
       {
-         //Engine::instance()->log()->log(Log::fac_engine, Log::lvl_warn, "Raising error: " + e->describe() );
          ctx->raiseError( e );
       }
 

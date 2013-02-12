@@ -81,7 +81,7 @@ void Function_include::invoke( VMContext* ctx , int32 /* paramCount */)
    String& file = *i_file->asString();
 
    // Get the vm module loader and space.
-   ModSpace* masterMS = ctx->vm()->modSpace();
+   ModSpace* masterMS = ctx->process()->modSpace();
    ModLoader* masterLoader = masterMS->modLoader();
 
    // check if the given encoding is plausible.
@@ -110,7 +110,7 @@ void Function_include::invoke( VMContext* ctx , int32 /* paramCount */)
             i_path->asString();
 
 
-   ModSpace* childMS = new ModSpace(ctx->vm(), masterMS );
+   ModSpace* childMS = new ModSpace(ctx->process(), masterMS );
    // configure the child module loader
    ModLoader* childLoader = childMS->modLoader();
    childLoader->sourceEncoding( *encoding );

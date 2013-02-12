@@ -52,9 +52,10 @@ FalconOptions::FalconOptions():
    testMode(false),
    list_tests(false),
    log_level(-1),
+   num_processors(0),
+
    m_modal( false ),
    m_justinfo( false )
-   
 {}
 
 
@@ -108,6 +109,7 @@ void FalconOptions::usage( bool deep )
       << "  -I           Ignore sources" << endl
       << "  --ll <lvl>   Set system log level 0: critical, 7: debug, -1: off"  << endl
       << "  --log <file> Send System log to file (-:stdout, %:stderr)"  << endl
+      << "  --prc <num>  Set number of VM processors (0 = match CPU count)" << endl
       << endl
       << "General options:" << endl
       << "  -h/-?        display usage" << endl
@@ -280,6 +282,11 @@ void FalconOptions::parse( int argc, char **argv, int &script_pos )
                else if( String( op+2 ) == "log" )
                {
                   log_file = String( argv[++i] );
+                  break;
+               }
+               else if( String( op+2 ) == "prc" )
+               {
+                  num_processors = atoi( argv[++i] );
                   break;
                }
                /* no break */

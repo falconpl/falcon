@@ -31,6 +31,7 @@ class Item;
 class SynFunc;
 class Error;
 class GCLock;
+class ModSpace;
 
 /** Process Entity.
 
@@ -58,7 +59,9 @@ class GCLock;
 class FALCON_DYN_CLASS Process
 {
 public:
-   Process( VMachine* owner );
+   Process( VMachine* owner, ModSpace* hostSpace = 0);
+
+   void adoptModSpace( ModSpace* hostSpace );
 
    int32 id() const { return m_id; }
    void id( int32 i ) { m_id = i; }
@@ -166,6 +169,10 @@ public:
 
    void setResult( const Item& value );
 
+   /** Gets the module space associated with this process. */
+   ModSpace* modSpace() const { return m_modspace; }
+
+
 protected:
    Process( VMachine* owner, bool added );
    virtual ~Process();
@@ -190,6 +197,8 @@ protected:
 
    Item m_result;
    GCLock* m_resultLock;
+
+   ModSpace* m_modspace;
 
    FALCON_REFERENCECOUNT_DECLARE_INCDEC(Process)
 };

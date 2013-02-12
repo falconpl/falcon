@@ -1805,7 +1805,7 @@ Item* VMContext::resolveVariable( const String& name, bool isGlobal, bool forAss
    {
       // if the module space is the same as the vm modspace,
       // mod->findGlobal has already searched for it
-      Item* item = vm()->modSpace()->findExportedValue( name );
+      Item* item = process()->modSpace()->findExportedValue( name );
       if( item != 0 ) {
          return item;
       }
@@ -2035,7 +2035,8 @@ void VMContext::gcPerformMark()
    {
       m_initWrite.gcMark(mark);
       m_initRead.gcMark(mark);
-      vm()->modSpace()->gcMark(mark);
+      //TODO: let the collector do this property
+      process()->modSpace()->gcMark(mark);
    }
 }
 

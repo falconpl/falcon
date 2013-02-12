@@ -177,7 +177,7 @@ void ClassMantra::restore( VMContext* ctx, DataReader* stream ) const
             name.c_ize(), modName.c_ize(), modUri.c_ize() );
 
       //TODO: is the main VM module space the right place?
-      ModSpace* ms = ctx->vm()->modSpace();
+      ModSpace* ms = ctx->process()->modSpace();
       // this might alter the context and go deep
       ms->findDynamicMantra( ctx, modUri, modName, name );
    }

@@ -266,6 +266,11 @@ long _getPageSize()
 }
 
 
+int _getCores()
+{
+   return sysconf( _SC_NPROCESSORS_ONLN );
+}
+
 bool _getCWD( String& name )
 {
    char buf[PATH_MAX+1];

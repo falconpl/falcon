@@ -294,8 +294,11 @@ void TestMode::test( ScriptData* sd )
    StringStream* ss = new StringStream;
    vm.stdOut( ss );
 
-   m_app->configureVM(vm);
-   Process* loadProc = vm.modSpace()->loadModule( sd->m_path, true, true, false );
+   Process* loadProc = vm.createProcess();
+   m_app->configureVM( vm, loadProc );
+
+   ModSpace* ms = loadProc->modSpace();
+   ms->loadModuleInProcess( sd->m_path,  true, true, false );
 
    try {
       loadProc->start();

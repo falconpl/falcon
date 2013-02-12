@@ -13,6 +13,7 @@
    See LICENSE file for licensing details.
 */
 
+#include <falcon/sys.h>
 #include <falcon/vm.h>
 #include <falcon/symbol.h>
 #include <falcon/syntree.h>
@@ -91,7 +92,6 @@ VMachine::VMachine( Stream* stdIn, Stream* stdOut, Stream* stdErr )
    // create the first context
    TRACE( "Virtual machine created at %p", this );
    _p = new Private;
-   m_modspace = new ModSpace(this);
 
    if ( stdIn == 0 )
    {
@@ -142,10 +142,6 @@ VMachine::VMachine( Stream* stdIn, Stream* stdOut, Stream* stdErr )
 
    // start the context manager
    m_ctxMan.start();
-
-   // start the processors
-   setProcessorCount(0);
-   // TODO: start timer and context manager.
 }
 
 
@@ -171,8 +167,6 @@ VMachine::~VMachine()
    {
       delete m_stdCoder;
    }
-   
-   m_modspace->decref();
 
    delete _p;
    
@@ -268,6 +262,18 @@ void VMachine::addProcess( Process* proc, bool launch )
 {
    fassert( proc->m_vm == this );
 
+   // we don't have processors yet?
+   _p->m_mtxProcessors.lock();
+   if( _p->m_processors.size() == 0 )
+   {
+      _p->m_mtxProcessors.unlock();
+      setProcessorCount(0);
+   }
+   else {
+      _p->m_mtxProcessors.unlock();
+   }
+
+
    if( proc->m_vm == this )
    {
       if( ! proc->m_added ) {
@@ -303,7 +309,11 @@ void VMachine::setProcessorCount( int32 count )
 {
    //TODO: get the CPU count.
    if( count == 0 ) {
-      count = DEFAULT_CPU_COUNT;
+      count = Sys::_getCores();
+
+      if( count == 0 ) {
+         count = DEFAULT_CPU_COUNT;
+      }
    }
    m_processorCount = count;
 

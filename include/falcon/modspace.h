@@ -89,7 +89,7 @@ public:
     \param parent A parent module space where to look for already loaded modules
     or exported symbols.
     */
-   ModSpace( VMachine* owner, ModSpace* parent = 0 );
+   ModSpace( Process* owner, ModSpace* parent = 0 );
    
    /** Adds a new module (internal) to the module space.
     \param module The module to be added.
@@ -154,7 +154,10 @@ public:
     * instead of creating a new process.
     */
    Process* loadModule( const String& name, bool isUri, bool asLoad, bool isMain = false);
-    
+
+   void loadModuleInProcess( const String& name, bool isUri, bool asLoad, bool isMain = false);
+   void loadModuleInProcess( Process* prc, const String& name, bool isUri, bool asLoad, bool isMain = false);
+
    void loadModuleInContext( const String& name, bool isUri, bool asLoad, bool isMain, VMContext* tgtContext );
 
    //===================================================================
@@ -253,7 +256,7 @@ public:
    ModLoader* modLoader() const { return m_loader; }
 
    /** Virtual machine associated with this space. */
-   VMachine* vm() const { return m_vm; }
+   Process* process() const { return m_process; }
 
    /**
     * Returns the engine-wide visible instance of ClassModSpace;
@@ -265,7 +268,7 @@ private:
    ModSpace::Private* _p;
    friend class Private;
 
-   VMachine* m_vm;
+   Process* m_process;
    ModSpace* m_parent;
    uint32 m_lastGCMark;
    Function* m_loaderFunc;
