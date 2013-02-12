@@ -91,7 +91,7 @@ bool TextWriter::write( const String& str, length_t start, length_t count )
 
    while(true)
    {
-      length_t posNext = str.find( "\n", pos1 );
+      length_t posNext = str.findFirstOf( "\r\n", pos1 );
       // ok also when not found.
       if( posNext >= end )
       {
