@@ -1,0 +1,14 @@
+/*
+@name Sum of strings
+@category Expressions
+
+@output
+aA
+bb
+CC
+@endoutput
+*/
+
+> "a" + "A"
+> "bb"+""
+> "" +"CC"

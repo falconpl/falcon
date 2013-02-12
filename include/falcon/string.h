@@ -25,6 +25,7 @@
 #include <stdlib.h>
 
 #define FALCON_STRING_ALLOCATION_BLOCK 32
+#define FALCON_DEFAULT_NUMERIC_STRING_FORMAT "%.14g"
 
 namespace Falcon {
 
@@ -1045,7 +1046,7 @@ public:
     */
     void writeNumber( double number )
     {
-      writeNumber( number, "%E" );
+      writeNumber( number, FALCON_DEFAULT_NUMERIC_STRING_FORMAT );
     }
 
     /** Converts a number to a string and appends it to this string.

@@ -164,7 +164,7 @@ void Item::describe( String &target, int maxDepth, int maxLength ) const
 
       case FLC_ITEM_NUM:
       {
-         target.writeNumber( this->asNumeric(), "%.16g" );
+         target.writeNumber( this->asNumeric(), FALCON_DEFAULT_NUMERIC_STRING_FORMAT );
       }
       break;
 
