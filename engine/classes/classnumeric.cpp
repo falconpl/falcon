@@ -105,7 +105,7 @@ void ClassNumeric::store( VMContext*, DataWriter* dw, void* data ) const
 
 void ClassNumeric::restore( VMContext* ctx, DataReader* dr ) const
 {
-   int64 value;
+   numeric value;
    dr->read( value );
    ctx->pushData( Item().setNumeric(value) );
 }
