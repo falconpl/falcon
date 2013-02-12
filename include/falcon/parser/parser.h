@@ -30,11 +30,11 @@
 namespace Falcon {
 
 class GenericError;
+class Error;
 
 namespace Parsing {
 
 class Lexer;
-
 
 /** Generic Falcon Parser class.
 
@@ -135,13 +135,16 @@ public:
       /** Uri of the source stream. */
       String sUri;
 
+      Error* objError;
+
       ErrorDef( int code, const String& uri, int l, int c, int ctx, const String& extra ):
          nLine(l),
          nChar(c),
          nCode(code),
          nOpenContext(ctx),
          sExtra( extra ),
-         sUri( uri )
+         sUri( uri ),
+         objError( 0 )
       {}
 
       ErrorDef( int code, const String& uri, int l, int c, int ctx=0  ):
@@ -149,8 +152,14 @@ public:
          nChar(c),
          nCode(code),
          nOpenContext( ctx ),
-         sUri( uri )
+         sUri( uri ),
+         objError( 0 )
       {}
+
+      ErrorDef( Error* error )
+      {
+         objError = error;
+      }
 
    };
 
@@ -260,6 +269,14 @@ public:
       Once called, this method marks the current parsing as faulty, and parse() will return false.
     */
    virtual void addError( int code, const String& uri, int l, int c, int ctx, const String& extra );
+
+   /** Adds a preconfigured error to the parser.
+      \param error The pre-configured error.
+
+      Warning: this methdo does NOT incref the received error. Do not  decref
+      on the other side.
+    */
+   virtual void addError( Error* error );
 
    /** Adds an error for the parser.
 

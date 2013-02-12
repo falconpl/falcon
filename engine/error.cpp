@@ -113,11 +113,11 @@ void Error::decref()
    }
 }
 
-void Error::describeTo( String &target ) const
+void Error::describeTo( String &target, bool addSignature ) const
 {
    heading( target );
 
-   if (! m_signature.empty() )
+   if ( addSignature && ! m_signature.empty() )
    {
       target += "\n   Signed by: " + m_signature;
    }
@@ -142,7 +142,7 @@ void Error::describeTo( String &target ) const
       std::deque<Error*>::const_iterator iter = _p->m_subErrors.begin();
       while( iter != _p->m_subErrors.end() )
       {
-         target += (*iter)->describe() +"\n";
+         target += (*iter)->describe(addSignature) +"\n";
          
          ++iter;
       }

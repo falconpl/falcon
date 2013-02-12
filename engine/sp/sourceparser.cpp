@@ -894,7 +894,7 @@ void SourceParser::addError( Error* err )
    ParserContext* pc = static_cast<ParserContext*>(m_ctx);
    fassert( pc != 0 );
 #endif
-   Parser::addError( err->errorCode(), err->module(), err->line(), err->chr(), 0, err->extraDescription() );
+   Parser::addError( err );
 }
 
 

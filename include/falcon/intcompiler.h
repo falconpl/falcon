@@ -87,9 +87,6 @@ public:
    bool areDirectivesAllowed() const { return m_bAllowDirective; }
    void setDirectivesAllowed(bool mode ) { m_bAllowDirective = mode; }
 
-   /** helper to generate Interactive Compiler errors. */
-   void throwCompileErrors() const;
-
    /** True if the last compileNext() generated some errors. */
    bool hasErrors() const;
 

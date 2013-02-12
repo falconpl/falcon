@@ -42,6 +42,7 @@
 #include <falcon/errors/syntaxerror.h>
 #include <falcon/errors/codeerror.h>
 #include <falcon/errors/ioerror.h>
+#include <falcon/errors/linkerror.h>
 
 #include <falcon/vm.h>
 
@@ -267,9 +268,11 @@ Variable* IntCompiler::Context::onGlobalAccessed( const String& name )
          mod->removeExtern( name );
 
          sp.addError(
-                  new CodeError(
-                           ErrorParam(e_undef_sym, sp.currentLine(), sp.currentSource() )
+                  new LinkError(
+                           ErrorParam(e_undef_sym, __LINE__, SRC )
                            .extra(name)
+                           .module(sp.currentSource())
+                           .line( sp.currentLine() )
                            .origin(ErrorParam::e_orig_compiler) ) );
       }
    }
@@ -283,8 +286,13 @@ void IntCompiler::Context::onRequirement( Requirement* req )
 {
    // the incremental compiler cannot store requirements.
    delete req;
-   m_owner->sp().addError( e_undef_sym, m_owner->sp().currentSource(),
-                req->sourceRef().line(), req->sourceRef().chr(), 0, req->name() );
+
+   SourceParser& sp = m_owner->sp();
+   sp.addError(
+      new LinkError(
+            ErrorParam(e_undef_sym, sp.currentLine(), sp.currentSource() )
+            .extra(req->name())
+            .origin(ErrorParam::e_orig_compiler) ) );
 }
 
 void IntCompiler::Context::onInputOver()
@@ -342,7 +350,7 @@ IntCompiler::t_compile_status IntCompiler::compileNext( TextReader* input, SynTr
    m_sp.step();
 
    if( m_sp.hasErrors() ) {
-      throwCompileErrors();
+      throw m_sp.makeError();
    }
 
    if( isComplete() )
@@ -385,50 +393,6 @@ IntCompiler::t_compile_status IntCompiler::compileNext( TextReader* input, SynTr
    return status;
 }
 
-
-void IntCompiler::throwCompileErrors() const
-{
-   class MyEnumerator: public Parsing::Parser::ErrorEnumerator
-   {
-   public:
-      MyEnumerator() {
-         myError = new CodeError( e_compile );
-      }
-
-      virtual bool operator()( const Parsing::Parser::ErrorDef& def, bool bLast ){
-
-         String sExtra = def.sExtra;
-         if( def.nOpenContext != 0 && def.nLine != def.nOpenContext )
-         {
-            if( sExtra.size() != 0 )
-               sExtra += " -- ";
-            sExtra += "from line ";
-            sExtra.N(def.nOpenContext);
-         }
-
-         SyntaxError* err = new SyntaxError( ErrorParam( def.nCode, def.nLine )
-               .origin( ErrorParam::e_orig_compiler )
-               .chr( def.nChar )
-               .module(def.sUri)
-               .extra(sExtra));
-
-         myError->appendSubError(err);
-
-         if( bLast )
-         {
-            throw myError;
-         }
-
-         return true;
-      }
-
-   private:
-      Error* myError;
-
-   } rator;
-
-   m_sp.enumerateErrors( rator );
-}
 
 void IntCompiler::resetTree()
 {

@@ -192,7 +192,7 @@ void PStepCompile::onError( Error* e ) const
          {}
 
          virtual bool operator()( const Error& e, bool  ){
-            m_wr->write(e.describe()+"\n");
+            m_wr->write(e.describe(false)+"\n");
             return true;
          }
       private:

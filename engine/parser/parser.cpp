@@ -316,27 +316,33 @@ GenericError* Parser::makeError() const
       return 0;
    }
 
-   GenericError* cerr = new GenericError(ErrorParam(e_syntax, __LINE__, SRC ));
+   GenericError* cerr = new GenericError(ErrorParam(e_compile, __LINE__, SRC ));
    Private::ErrorList::iterator iter = _p->m_lErrors.begin();
    while( iter != _p->m_lErrors.end() )
    {
       ErrorDef& def = *iter;
-
-      String sExtra = def.sExtra;
-      if( def.nOpenContext != 0 && def.nOpenContext != def.nLine )
+      if( def.objError != 0 )
       {
-         if( sExtra.size() != 0 )
-            sExtra += " -- ";
-         sExtra += "from line ";
-         sExtra.N(def.nOpenContext);
+         cerr->appendSubError(def.objError);
+      }
+      else {
+         String sExtra = def.sExtra;
+         if( def.nOpenContext != 0 && def.nOpenContext != def.nLine )
+         {
+            if( sExtra.size() != 0 )
+               sExtra += " -- ";
+            sExtra += "from line ";
+            sExtra.N(def.nOpenContext);
+         }
+
+         SyntaxError* err = new SyntaxError( ErrorParam( def.nCode )
+               .module(def.sUri)
+               .line(def.nLine)
+               //.chr(def.nChar)
+               .extra(sExtra));
+         cerr->appendSubError(err);
       }
 
-      SyntaxError* err = new SyntaxError( ErrorParam( def.nCode )
-            .module(def.sUri)
-            .line(def.nLine)
-            //.chr(def.nChar)
-            .extra(sExtra));
-      cerr->appendSubError(err);
       ++iter;
    }
 
@@ -518,6 +524,12 @@ void Parser::addError( int code, const String& uri, int l, int c, int ctx  )
    _p->m_lErrors.push_back(ErrorDef(code, uri, l, c, ctx));
 }
 
+
+void Parser::addError( Error* error )
+{
+   TRACE( "Parser::addError -- with current stack: %s ", dumpStack().c_ize() );
+   _p->m_lErrors.push_back(ErrorDef(error));
+}
 
 void Parser::simplify( int32 tcount, TokenInstance* newtoken )
 {

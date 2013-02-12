@@ -86,7 +86,8 @@ void apply_expr_call( const Rule&, Parser& p )
    List::iterator iter = list->begin();
    while( iter != list->end() )
    {
-      ctx->accessSymbols(*iter);
+      // symbols will be accessed in the call expression.
+      //ctx->accessSymbols(*iter);
       if( call != 0 ) call->add( *iter );
       else callps->add( *iter );
       ++iter;

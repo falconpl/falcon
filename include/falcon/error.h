@@ -253,12 +253,12 @@ public:
    bool hasRaised() const { return m_bHasRaised; }
    const String& signature() const { return m_signature; }
 
-   inline String describe() const {
-      String s; describeTo(s); return s;
+   inline String describe( bool addSignature = true ) const {
+      String s; describeTo(s, addSignature); return s;
    }
    /** Renders the error to a string.
     */
-   virtual void describeTo( String &target ) const;
+   virtual void describeTo( String &target, bool addSignature = true ) const;
 
    /** Writes only the heading of the error to the target string.
       The error heading is everything of the error without the traceback.
