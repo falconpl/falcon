@@ -108,7 +108,7 @@ FALCON_DEFINE_FUNCTION_P(advance)
    }
 
    IteratorCarrier* ic;
-   Class* iterClass;
+   Class* iterClass=0;
 
    if( ctx->readInit().isNil() )
    {
@@ -120,7 +120,7 @@ FALCON_DEFINE_FUNCTION_P(advance)
    }
    else {
       const Item& initItem = ctx->readInit();
-      void* data;
+      void* data = 0;
       initItem.asClassInst( iterClass, data );
       fassert( iterClass == module()->getClass("Iterator") );
       ic = static_cast<IteratorCarrier*>(data);

@@ -760,7 +760,7 @@ static bool internal_change( VMContext* ctx, int mode )
    String* replacer = i_replacer->asString();
 
    String* ret = 0;
-   bool result;
+   bool result = false;
    switch( mode )
    {
    case 0: // substitute

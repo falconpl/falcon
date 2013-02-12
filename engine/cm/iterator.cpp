@@ -166,8 +166,8 @@ void ClassIterator::op_iter( VMContext* ctx, void* instance ) const
 
    CodeFrame& cc = ctx->currentCode();
 
-   Class* cls;
-   void* data;
+   Class* cls=0;
+   void* data=0;
    ic->m_source.asClassInst(cls, data);
    ctx->pushData( ic->m_source );
    cls->op_iter( ctx, data );
@@ -207,8 +207,8 @@ void ClassIterator::op_next( VMContext* ctx, void* instance ) const
 
    CodeFrame& cc = ctx->currentCode();
 
-   Class* cls;
-   void* data;
+   Class* cls=0;
+   void* data=0;
    ic->m_source.asClassInst(cls, data);
    ctx->popData(); // remove the iterator, we have it.
    ctx->pushData( ic->m_source );
@@ -274,8 +274,8 @@ FALCON_DEFINE_METHOD_P1( ClassIterator, next )
    IteratorCarrier* ic = static_cast<IteratorCarrier*>( ctx->self().asInst() );
    TRACE1( "ClassIterator::next %s", ctx->self().describe(2,50).c_ize() );
 
-   Class* cls;
-   void* inst;
+   Class* cls=0;
+   void* inst=0;
    ic->m_source.asClassInst( cls, inst );
 
    ClassIterator* cli = static_cast<ClassIterator*>(methodOf());
@@ -317,8 +317,8 @@ void ClassIterator::PStepMethodNext_IterNext::apply_( const PStep* , VMContext* 
    ic->m_ready = true;
    ic->m_srciter = ctx->opcodeParam(0);
 
-   Class* cls;
-   void* inst;
+   Class* cls=0;
+   void* inst=0;
    ic->m_source.asClassInst( cls, inst );
 
    long depth = ctx->codeDepth();
