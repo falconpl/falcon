@@ -315,6 +315,7 @@ Parsing::TokenInstance* SourceLexer::nextToken()
          if ( chr == '#' )
          {
             m_state = state_shebang1;
+            continue;
          }
       }
 
