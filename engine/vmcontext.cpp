@@ -1697,11 +1697,15 @@ Item* VMContext::resolveSymbol( const Symbol* dyns, bool forAssign )
 
    if( var == 0 )
    {
-      if( ! forAssign ) {
-         throw new CodeError( ErrorParam(e_undef_sym,
-                  currentCode().m_step->sr().line(),
-                  cf->m_function->module() ? cf->m_function->module()->name() : "" )
-                  .symbol( cf->m_function->name() )
+      if( ! forAssign )
+      {
+         Function* func = cf->m_function;
+         fassert( func != 0 );
+         Module* mod = func->module();
+         throw new CodeError( ErrorParam(e_undef_sym, __LINE__, SRC )
+                  .line(currentCode().m_step->sr().line())
+                  .module( mod != 0 ? mod->name() : "" )
+                  .symbol( func->name() )
                   .extra(dyns->name())
                   );
       }

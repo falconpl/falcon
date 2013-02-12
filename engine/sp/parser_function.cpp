@@ -255,6 +255,8 @@ static void internal_expr_func(const Rule&, Parser& p, bool isEta )
    // remove this stuff from the stack
    p.simplify( isEta ? 6 : 5,ti);
 
+   // tell the owner we have a new function around.
+   ctx->onOpenFunc(func);
    // open a new main state for the function
    ctx->openFunc(func);
    // will check on close if the function is a predicate.
@@ -409,6 +411,8 @@ static void internal_lambda_params(const Rule&, Parser& p, bool isEta )
    // remove the lambdastart state
    p.popState();
 
+   // tell our owner
+   ctx->onOpenFunc(func);
    // non-interactive compiler must go on even on error.
    ctx->openFunc(func);
    p.pushState( "InlineFunc", on_close_lambda , &p );
