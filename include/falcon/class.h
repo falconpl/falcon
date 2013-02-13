@@ -244,13 +244,14 @@ public:
 
     If \b parent is this same class, then \b data is returned. Otherwise, if
     it's identified as a component of this class, an usable data is returned,
-    while if \b subcparentls is unknown, 0 is returned.
+    while if \b parent is unknown, 0 is returned.
 
     In some contexts, parents might use the same data as their child; it's
     the case of incremental classes as FalconClass. In that case, \b data may be
     returned even if \b parent is a proper parent of this class.
     */
    virtual void* getParentData( Class* parent, void* data ) const;
+
 
    //=========================================
    // Instance management

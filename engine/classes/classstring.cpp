@@ -35,7 +35,8 @@ namespace Falcon {
 ClassString::ClassString():
    ClassUser( "String", FLC_CLASS_ID_STRING ),
    FALCON_INIT_PROPERTY( isText ),
-   FALCON_INIT_PROPERTY( len )
+   FALCON_INIT_PROPERTY( len ),
+   m_nextOp(this)
 {
 }
 
@@ -46,6 +47,7 @@ ClassString::~ClassString()
 
 int64 ClassString::occupiedMemory( void* instance ) const
 {
+   /* NO LOCK */
    String* s = static_cast<String*>( instance );
    return sizeof(String) + s->allocated() + 16 + (s->allocated()?16:0);
 }
@@ -53,13 +55,20 @@ int64 ClassString::occupiedMemory( void* instance ) const
 
 void ClassString::dispose( void* self ) const
 {
+   /* NO LOCK */
    delete static_cast<String*>( self );
 }
 
 
 void* ClassString::clone( void* source ) const
 {
-   return new String( *( static_cast<String*>( source ) ) );
+   String* temp;
+   {
+      InstanceLock::Locker( &m_lock, source );
+      temp = new String( *( static_cast<String*>( source ) ) );
+   }
+
+   return temp;
 }
 
 void* ClassString::createInstance() const
@@ -69,8 +78,17 @@ void* ClassString::createInstance() const
 
 void ClassString::store( VMContext*, DataWriter* dw, void* data ) const
 {
+#ifdef FALCON_MT_UNSAFE
    String& value = *static_cast<String*>( data );
+   TRACE2( "ClassString::store -- (unsafe) \"%s\"", value.c_ize() );
+#else
+   InstanceLock::Token* tk = m_lock.lock(data);
+   String value(*static_cast<String*>( data ));
+   m_lock.unlock(tk);
+
    TRACE2( "ClassString::store -- \"%s\"", value.c_ize() );
+#endif
+
    dw->write( value );
 }
 
@@ -95,7 +113,15 @@ void ClassString::restore( VMContext* ctx, DataReader* dr ) const
 
 void ClassString::describe( void* instance, String& target, int, int maxlen ) const
 {
+#ifdef FALCON_MT_UNSAFE
    String* self = static_cast<String*>( instance );
+#else
+   InstanceLock::Token* tk = m_lock.lock(instance);
+   String copy( *static_cast<String*>( instance ) );
+   m_lock.unlock(tk);
+
+   String* self = &copy;
+#endif
 
    target.size( 0 );
 
@@ -135,12 +161,14 @@ void ClassString::describe( void* instance, String& target, int, int maxlen ) co
 
 void ClassString::gcMarkInstance( void* instance, uint32 mark ) const
 {
+   /* NO LOCK */
    static_cast<String*>( instance )->gcMark( mark );
 }
 
 
 bool ClassString::gcCheckInstance( void* instance, uint32 mark ) const
 {
+   /* NO LOCK */
    return static_cast<String*>( instance )->currentMark() >= mark;
 }
 
@@ -161,7 +189,9 @@ void ClassString::op_add( VMContext* ctx, void* self ) const
 
    if ( ! op2->asClassInst( cls, inst ) )
    {
+      InstanceLock::Token* tk = m_lock.lock(str);
       String* copy = new String( *str );
+      m_lock.unlock(tk);
 
       copy->append( op2->describe() );
 
@@ -173,9 +203,13 @@ void ClassString::op_add( VMContext* ctx, void* self ) const
    if ( cls->typeID() == typeID() )
    {
       // it's a string!
-      String *copy = new String( *str );
+      InstanceLock::Token* tk = m_lock.lock(str);
+      String* copy = new String( *str );
+      m_lock.unlock(tk);
 
+      tk = m_lock.lock(inst);
       copy->append( *static_cast<String*>( inst ) );
+      m_lock.unlock(tk);
 
       ctx->stackResult( 2, FALCON_GC_HANDLE(copy) );
 
@@ -195,7 +229,9 @@ void ClassString::op_add( VMContext* ctx, void* self ) const
       // op2 has been transformed
       String* deep = (String*)op2->asInst();
 
+      InstanceLock::Token* tk = m_lock.lock(str);
       deep->prepend( *str );
+      m_lock.unlock(tk);
    }
 }
 
@@ -279,13 +315,31 @@ void ClassString::op_aadd( VMContext* ctx, void* self ) const
    {
       if ( op1->copied() )
       {
-         String* copy = new String( *str );
+         String* copy = new String;
+         InstanceLock::Token* tk = m_lock.lock(str);
+         copy->append( *str );
+         m_lock.unlock(tk);
+
+         tk = m_lock.lock(op2->asString());
          copy->append( *op2->asString() );
+         m_lock.unlock(tk);
          ctx->stackResult( 2, FALCON_GC_HANDLE(copy) );
       }
       else
       {
+#ifdef FALCON_MT_UNSAFE
          op1->asString()->append( *op2->asString() );
+#else
+         InstanceLock::Token* tk = m_lock.lock(op2->asString());
+         String copy( *op2->asString() );
+         m_lock.unlock(tk);
+
+         tk = m_lock.lock(op1->asString());
+         op1->asString()->append(copy);
+         m_lock.unlock(tk);
+#endif
+
+         ctx->popData();
       }
 
       return;
@@ -295,13 +349,19 @@ void ClassString::op_aadd( VMContext* ctx, void* self ) const
       // a flat entity
       if ( op1->copied() )
       {
-         String* copy = new String( *str );
+         String* copy = new String;
+         InstanceLock::Token* tk = m_lock.lock(str);
+         copy->append( *str );
+         m_lock.unlock(tk);
+
          copy->append( op2->describe() );
          ctx->stackResult( 2, FALCON_GC_HANDLE(copy) );
       }
       else
       {
+         InstanceLock::Token* tk = m_lock.lock(op1->asString());
          op1->asString()->append( op2->describe() );
+         m_lock.unlock(tk);
       }
       return;
    }
@@ -317,22 +377,27 @@ void ClassString::op_aadd( VMContext* ctx, void* self ) const
    {
       ctx->popCode();
 
-      // op2 has been transformed
+      // op2 has been transformed (and is ours)
       String* deep = (String*) op2->asInst();
 
+      InstanceLock::Token* tk = m_lock.lock(str);
       deep->prepend( *str );
+      m_lock.unlock(tk);
    }
 }
 
 
-ClassString::NextOp::NextOp()
+ClassString::NextOp::NextOp( ClassString* owner ):
+         m_owner(owner)
 {
    apply = apply_;
 }
 
 
-void ClassString::NextOp::apply_( const PStep*, VMContext* ctx )
+void ClassString::NextOp::apply_( const PStep* ps, VMContext* ctx )
 {
+   const ClassString::NextOp* step = static_cast<const ClassString::NextOp*>(ps);
+
    // The result of a deep call is in A
    Item* op1, *op2;
 
@@ -343,14 +408,19 @@ void ClassString::NextOp::apply_( const PStep*, VMContext* ctx )
 
    if( op1->copied() )
    {
-      String* copy = new String( *self );
+      String* copy = new String;
+      InstanceLock::Token* tk = step->m_owner->m_lock.lock(self);
+      copy->append( *self );
+      step->m_owner->m_lock.unlock(tk);
       copy->append( *deep );
       ctx->stackResult( 2, FALCON_GC_HANDLE(copy) );
    }
    else
    {
       ctx->popData();
+      InstanceLock::Token* tk = step->m_owner->m_lock.lock(self);
       self->append( *deep );
+      step->m_owner->m_lock.unlock(tk);
    }
 
    ctx->popCode();
@@ -382,21 +452,28 @@ void ClassString::op_getIndex( VMContext* ctx, void* self ) const
    if ( index->isOrdinal() )
    {
       int64 v = index->forceInteger();
+      uint32 chr = 0;
 
-      if ( v < 0 ) v = str.length() + v;
-
-      if ( v >= str.length() )
       {
-         throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra( "index out of range" ) );
+         InstanceLock::Locker( &m_lock, &str );
+
+         if ( v < 0 ) v = str.length() + v;
+
+         if ( v >= str.length() )
+         {
+            throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra( "index out of range" ) );
+         }
+
+         chr = str.getCharAt( v );
       }
 
       if( str.isText() ) {
          String *s = new String();
-         s->append( str.getCharAt( v ) );
+         s->append( chr );
          ctx->stackResult( 2, FALCON_GC_HANDLE(s) );
       }
       else {
-         ctx->stackResult(2, Item((int64) str.getCharAt(v)) );
+         ctx->stackResult(2, Item((int64) chr) );
       }
    }
    else if ( index->isUser() ) // index is a range
@@ -425,58 +502,62 @@ void ClassString::op_getIndex( VMContext* ctx, void* self ) const
       int64 step = ( rng.step() == 0 ) ? 1 : rng.step(); // assume 1 if no step given
       int64 start = rng.start();
       int64 end = rng.end();
-      int64 strLen = str.length();
-
-      // do some validation checks before proceeding
-      if ( start >= strLen || start < ( strLen * -1 )  || end > strLen || end < ( strLen * -1 ) )
-      {
-         throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra( "index out of range" ) );
-      }
 
       bool reverse = false;
-
       String *s = new String();
 
-      if ( rng.isOpen() )
       {
-         // If negative number count from the end of the array
-         if ( start < 0 ) start = strLen + start;
+         InstanceLock::Locker( &m_lock, &str );
+         int64 strLen = str.length();
 
-         end = strLen;
-      }
-      else // non-open range
-      {
-         if ( start < 0 ) start = strLen + start;
-
-         if ( end < 0 ) end = strLen + end;
-
-         if ( start > end )
+         // do some validation checks before proceeding
+         if ( start >= strLen || start < ( strLen * -1 )  || end > strLen || end < ( strLen * -1 ) )
          {
-            reverse = true;
-            if ( rng.step() == 0 ) step = -1;
+            delete s;
+            throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra( "index out of range" ) );
          }
-      }
 
-      if ( reverse )
-      {
-         while ( start >= end )
+         if ( rng.isOpen() )
          {
-            s->append( str.getCharAt( start ) );
-            start += step;
-         }
-      }
-      else
-      {
-         while ( start < end )
-         {
-            s->append( str.getCharAt( start ) );
-            start += step;
-         }
-      }
+            // If negative number count from the end of the array
+            if ( start < 0 ) start = strLen + start;
 
-      if( ! str.isText() )
-      {
-         s->toMemBuf();
+            end = strLen;
+         }
+         else // non-open range
+         {
+            if ( start < 0 ) start = strLen + start;
+
+            if ( end < 0 ) end = strLen + end;
+
+            if ( start > end )
+            {
+               reverse = true;
+               if ( rng.step() == 0 ) step = -1;
+            }
+         }
+
+         if ( reverse )
+         {
+            while ( start >= end )
+            {
+               s->append( str.getCharAt( start ) );
+               start += step;
+            }
+         }
+         else
+         {
+            while ( start < end )
+            {
+               s->append( str.getCharAt( start ) );
+               start += step;
+            }
+         }
+
+         if( ! str.isText() )
+         {
+            s->toMemBuf();
+         }
       }
 
       ctx->stackResult( 2, FALCON_GC_HANDLE(s) );
@@ -504,52 +585,60 @@ void ClassString::op_setIndex( VMContext* ctx, void* self ) const
    if ( index->isOrdinal() )
    {
       // simple index assignment: a[x] = value
-
-      int64 v = index->forceInteger();
-
-      if ( v < 0 ) v = str.length() + v;
-
-      if ( v >= str.length() )
       {
-         throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra("index out of range") );
+         InstanceLock::Locker( &m_lock, &str );
+
+         int64 v = index->forceInteger();
+
+         if ( v < 0 ) v = str.length() + v;
+
+         if ( v >= str.length() )
+         {
+            throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra("index out of range") );
+         }
+
+         if( value->isOrdinal() ) {
+            str.setCharAt(v, value->forceInteger() );
+         }
+         else {
+            str.setCharAt( v, value->asString()->getCharAt( 0 ) );
+         }
       }
 
-      if( value->isOrdinal() ) {
-         str.setCharAt(v, value->forceInteger() );
-      }
-      else {
-         str.setCharAt( v, value->asString()->getCharAt( 0 ) );
-      }
       ctx->stackResult( 3, *value );
    }
    else if ( index->isRange() )
    {
       Range& rng = *static_cast<Range*>( index->asInst() );
 
-      int64 strLen = str.length();
-      int64 start = rng.start();
-      int64 end = ( rng.isOpen() ) ? strLen : rng.end();
-
-      // handle negative indexes
-      if ( start < 0 ) start = strLen + start;
-      if ( end < 0 ) end = strLen + end;
-
-      // do some validation checks before proceeding
-      if ( start >= strLen  || end > strLen )
       {
-         throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra("index out of range") );
-      }
+         InstanceLock::Locker( &m_lock, &str );
 
-      if ( value->isString() )  // should be a string
-      {
-         String& strVal = *value->asString();
-         str.change( (Falcon::length_t)start, (Falcon::length_t)end, strVal );
-      }
-      else
-      {
-         String temp;
-         temp.append(value->forceInteger());
-         str.change((Falcon::length_t)start, (Falcon::length_t)end, temp );
+         int64 strLen = str.length();
+         int64 start = rng.start();
+         int64 end = ( rng.isOpen() ) ? strLen : rng.end();
+
+         // handle negative indexes
+         if ( start < 0 ) start = strLen + start;
+         if ( end < 0 ) end = strLen + end;
+
+         // do some validation checks before proceeding
+         if ( start >= strLen  || end > strLen )
+         {
+            throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra("index out of range") );
+         }
+
+         if ( value->isString() )  // should be a string
+         {
+            String& strVal = *value->asString();
+            str.change( (Falcon::length_t)start, (Falcon::length_t)end, strVal );
+         }
+         else
+         {
+            String temp;
+            temp.append(value->forceInteger());
+            str.change((Falcon::length_t)start, (Falcon::length_t)end, temp );
+         }
       }
 
       ctx->stackResult( 3, *value );
@@ -605,6 +694,7 @@ void ClassString::op_toString( VMContext* ctx, void* data ) const
 
 void ClassString::op_isTrue( VMContext* ctx, void* str ) const
 {
+   /* No lock -- we can accept sub-program level uncertainty */
    ctx->topData().setBoolean( static_cast<String*>( str )->size() != 0 );
 }
 

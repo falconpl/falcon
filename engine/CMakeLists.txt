@@ -350,6 +350,7 @@ add_library(falcon_engine SHARED
   fstream.cpp
   hyperclass.cpp
   importdef.cpp
+  instancelock.cpp
   intcompiler.cpp
   item.cpp
   item_util.cpp

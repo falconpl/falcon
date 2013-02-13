@@ -21,6 +21,7 @@
 #include <falcon/property.h>
 #include <falcon/method.h>
 #include <falcon/string.h>
+#include <falcon/instancelock.h>
 
 #include <falcon/pstep.h>
 namespace Falcon
@@ -64,6 +65,7 @@ public:
    virtual void op_isTrue( VMContext* ctx, void* self ) const;
 
 private:
+   InstanceLock m_lock;
 
    //====================================================
    // Properties.
@@ -103,8 +105,10 @@ private:
    class FALCON_DYN_CLASS NextOp: public PStep
    {
    public:
-      NextOp();
+      NextOp( ClassString* owner );
       static void apply_( const PStep*, VMContext* vm );
+   private:
+      ClassString* m_owner;
    } m_nextOp;
    
    class FALCON_DYN_CLASS InitNext: public PStep

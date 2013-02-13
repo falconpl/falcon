@@ -145,9 +145,7 @@ Process* ModSpace::loadModule( const String& name, bool isUri,  bool asLoad, boo
 
 void ModSpace::loadModuleInProcess( Process* process, const String& name, bool isUri,  bool asLoad, bool isMain )
 {
-   if( process != m_process) {
-      process->adoptModSpace(this);
-   }
+   process->adoptModSpace(this);
 
    VMContext* tgtContext = process->mainContext();
    tgtContext->call( m_loaderFunc );
