@@ -378,6 +378,7 @@ add_library(falcon_engine SHARED
   requirement.cpp
   rootsyntree.cpp
   rulesyntree.cpp
+  scheduler.cpp
   shared.cpp
   sourceref.cpp
   statement.cpp
@@ -410,7 +411,6 @@ add_library(falcon_engine SHARED
   vfsprovider.cpp
   vm.cpp
   vmcontext.cpp
-  vmtimer.cpp
   writer.cpp
   
   ${re2_SRCS}

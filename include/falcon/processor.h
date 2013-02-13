@@ -18,7 +18,7 @@
 
 #include <falcon/setup.h>
 #include <falcon/mt.h>
-#include <falcon/vmtimer.h>
+#include <falcon/scheduler.h>
 
 namespace Falcon {
 
@@ -67,8 +67,6 @@ public:
     */
    VMContext* currentContext() const { return m_currentContext;  }
 
-   void onTimeSliceExpired();
-
 private:
    int32 m_id;
    VMachine* m_owner;
@@ -78,14 +76,9 @@ private:
 
    static ThreadSpecific m_me;
 
-   class OnTimeSliceExpired: public VMTimer::Callback {
-   public:
-      OnTimeSliceExpired( Processor* owner );
-      virtual bool operator() ();
-   private:
-      Processor* m_owner;
-   }
-   m_onTimeSliceExpired;
+   Scheduler::Activity* m_activity;
+
+   static void onTimesliceExpired( void* data, Scheduler::Activity* activity );
 
 };
 

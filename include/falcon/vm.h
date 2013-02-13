@@ -24,6 +24,7 @@
 #include <falcon/string.h>
 #include <falcon/syncqueue.h>
 #include <falcon/contextmanager.h>
+#include <falcon/scheduler.h>
 
 #define FALCON_VM_DFAULT_CHECK_LOOPS 5000
 
@@ -39,7 +40,6 @@ class Module;
 class Symbol;
 class ModSpace;
 class ModLoader;
-class Scheduler;
 class Function;
 
 /** The Falcon virtual machine.
@@ -271,6 +271,10 @@ public:
 
    /** Gets the context manager associated with this virtual machine.  */
    ContextManager& contextManager() { return m_ctxMan; }
+   const ContextManager& contextManager() const { return m_ctxMan; }
+
+   const Scheduler& scheduler() const { return m_scheduler; }
+   Scheduler& scheduler() { return m_scheduler; }
 
    //=========================================================
    // Utilities
@@ -295,6 +299,7 @@ protected:
    
    ContextManager m_ctxMan;
 
+   Scheduler m_scheduler;
 private:
    void joinProcessors();
 

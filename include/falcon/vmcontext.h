@@ -62,9 +62,11 @@ public:
    const static int32 evtBreak = 0x4;
    const static int32 evtSwap = 0x8;
    const static int32 evtRaise = 0x10;
-   // Request all the stepInYield to return the control to the processor
+   /** Request all the stepInYield to return the control to the processor **/
    const static int32 evtEmerge = 0x20;
 
+   /** Declare the timeslice expired for this context **/
+   const static int32 evtTimeslice = 0x40;
 
    VMContext( Process* prc, ContextGroup* grp=0 );
 
@@ -1183,6 +1185,13 @@ public:
     The swap event is also set.
    */
    void setInspectEvent();
+
+   /** Declare the timeslice for this context expired.
+    *
+    * This won't lead to an automatic removal of this context from the processor;
+    * the context will be changed only if there is another context immediately ready to run.
+    */
+   void setTimesliceEvent() { atomicOr(m_events, evtTimeslice);  }
 
    /**
     * Used by the context manager to communicate that the context is quiescent.

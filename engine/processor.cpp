@@ -28,9 +28,13 @@
 #include <falcon/contextgroup.h>
 #include <falcon/locationinfo.h>
 #include <falcon/errors/genericerror.h>
+#include <falcon/scheduler.h>
+
 #include <falcon/vm.h>
 
 #include <falcon/trace.h>
+
+#define FALCON_PROCESS_TIMESLICE 100
 
 namespace Falcon {
 
@@ -41,7 +45,7 @@ Processor::Processor( int32 id, VMachine* owner ):
       m_id(id),
       m_owner( owner ),
       m_thread(0),
-      m_onTimeSliceExpired( this )
+      m_activity(0)
 {
 }
 
@@ -130,9 +134,18 @@ void* Processor::run()
          break;
       }
 
-      m_currentContext = ctx;
+      // for the scheduler
+      ctx->incref();
+      m_activity = m_owner->scheduler().addActivity( FALCON_PROCESS_TIMESLICE, onTimesliceExpired, ctx, true );
+
       // proceed running with this context
+      m_currentContext = ctx;
       execute( ctx );
+
+      if( m_owner->scheduler().cancelActivity(m_activity) ) {
+         ctx->decref();
+      }
+      // if false, the contex has been decreffed by onTimesliceExpired
    }
 
    return 0;
@@ -176,6 +189,36 @@ void Processor::manageEvents( VMContext* ctx, int32 &events )
          m_owner->contextManager().onContextDescheduled( ctx );
       }
    }
+   else if( (events & VMContext::evtTimeslice) )
+   {
+      ctx->clearEvents();
+      events &= ~VMContext::evtTimeslice;
+      TRACE( "Processor::manageEvents processor %p(%d) received a timeslice event context %p(%d)",
+               this, this->id(), ctx, ctx->id() );
+
+      // have we other contexts?
+      VMContext* newCtx = 0;
+      int32 term = 0;
+      if( m_owner->contextManager().readyContexts().tryGet( newCtx, &term ) )
+      {
+         // yep, we're changed.
+         m_currentContext = newCtx;
+         // we don't hold any extra ref...
+         m_owner->contextManager().onContextDescheduled( ctx );
+
+      }
+
+      // need to do reschedule even if not changed.
+      if( m_owner->scheduler().cancelActivity( m_activity) )
+      {
+         // ... except the one for the activity
+         ctx->decref();
+      }
+
+      m_currentContext->incref();
+      m_activity = m_owner->scheduler().addActivity( FALCON_PROCESS_TIMESLICE, onTimesliceExpired, m_currentContext, true );
+
+   }
 
 }
 
@@ -211,6 +254,8 @@ void Processor::execute( VMContext* ctx )
             // out of business with this context.
             break;
          }
+         // refetch the context, that may be changed.
+         ctx = m_currentContext;
       }
       // END STEP
    }
@@ -265,21 +310,16 @@ Processor* Processor::currentProcessor()
    return (Processor*) m_me.get();
 }
 
-void Processor::onTimeSliceExpired()
+
+void Processor::onTimesliceExpired( void* dt, Scheduler::Activity* )
 {
-   m_currentContext->setSwapEvent();
+   VMContext* ctx = static_cast<VMContext*>(dt);
+   ctx->setTimesliceEvent();
+   // we have an extra reference to take care of.
+   ctx->decref();
+   // we cannot complete the activity, let the main thread try to cancel it.
 }
 
-
-Processor::OnTimeSliceExpired::OnTimeSliceExpired( Processor* owner ):
-         m_owner( owner )
-{}
-
-bool Processor::OnTimeSliceExpired::operator()()
-{
-   m_owner->onTimeSliceExpired();
-   return false;
-}
 
 }
 /* end of processor.cpp */

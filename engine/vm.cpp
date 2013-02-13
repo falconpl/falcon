@@ -152,8 +152,12 @@ VMachine::~VMachine()
    // join all the processors
    joinProcessors();
 
+   // stop the scheduler.
+   m_scheduler.stop();
+
    // stop the context manager
    m_ctxMan.stop();
+
 
    delete m_textIn;
    delete m_textOut;
@@ -262,18 +266,6 @@ void VMachine::addProcess( Process* proc, bool launch )
 {
    fassert( proc->m_vm == this );
 
-   // we don't have processors yet?
-   _p->m_mtxProcessors.lock();
-   if( _p->m_processors.size() == 0 )
-   {
-      _p->m_mtxProcessors.unlock();
-      setProcessorCount(0);
-   }
-   else {
-      _p->m_mtxProcessors.unlock();
-   }
-
-
    if( proc->m_vm == this )
    {
       if( ! proc->m_added ) {
@@ -282,7 +274,19 @@ void VMachine::addProcess( Process* proc, bool launch )
          proc->m_added = true;
       }
 
-      if( launch ) {
+      if( launch )
+      {
+         // we don't have processors yet?
+         _p->m_mtxProcessors.lock();
+         if( _p->m_processors.size() == 0 )
+         {
+            _p->m_mtxProcessors.unlock();
+            setProcessorCount(0);
+         }
+         else {
+            _p->m_mtxProcessors.unlock();
+         }
+
          // we're assigning the context to the processor/vm/manager system.
          proc->mainContext()->incref();
          // processors are synchronized on the context queue.
