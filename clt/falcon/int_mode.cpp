@@ -49,8 +49,6 @@ void IntMode::run()
    mod->setMain(true);
    mod->setMainFunction( mainfunc );
    process->modSpace()->add(mod);
-
-
    
    // prepare the loader to fulfill dynamic load requests.
 

@@ -195,7 +195,7 @@ void ClassString::op_add( VMContext* ctx, void* self ) const
 
       copy->append( op2->describe() );
 
-      ctx->stackResult( 2, FALCON_GC_HANDLE(copy) );
+      ctx->stackResult( 2, FALCON_GC_HANDLE_IN(ctx,copy) );
 
       return;
    }
@@ -211,7 +211,7 @@ void ClassString::op_add( VMContext* ctx, void* self ) const
       copy->append( *static_cast<String*>( inst ) );
       m_lock.unlock(tk);
 
-      ctx->stackResult( 2, FALCON_GC_HANDLE(copy) );
+      ctx->stackResult( 2, FALCON_GC_HANDLE_IN(ctx, copy) );
 
       return;
    }
@@ -323,7 +323,7 @@ void ClassString::op_aadd( VMContext* ctx, void* self ) const
          tk = m_lock.lock(op2->asString());
          copy->append( *op2->asString() );
          m_lock.unlock(tk);
-         ctx->stackResult( 2, FALCON_GC_HANDLE(copy) );
+         ctx->stackResult( 2, FALCON_GC_HANDLE_IN(ctx, copy) );
       }
       else
       {
@@ -355,7 +355,7 @@ void ClassString::op_aadd( VMContext* ctx, void* self ) const
          m_lock.unlock(tk);
 
          copy->append( op2->describe() );
-         ctx->stackResult( 2, FALCON_GC_HANDLE(copy) );
+         ctx->stackResult( 2, FALCON_GC_HANDLE_IN(ctx,copy) );
       }
       else
       {
@@ -413,7 +413,7 @@ void ClassString::NextOp::apply_( const PStep* ps, VMContext* ctx )
       copy->append( *self );
       step->m_owner->m_lock.unlock(tk);
       copy->append( *deep );
-      ctx->stackResult( 2, FALCON_GC_HANDLE(copy) );
+      ctx->stackResult( 2, FALCON_GC_HANDLE_IN(ctx,copy) );
    }
    else
    {
@@ -470,7 +470,7 @@ void ClassString::op_getIndex( VMContext* ctx, void* self ) const
       if( str.isText() ) {
          String *s = new String();
          s->append( chr );
-         ctx->stackResult( 2, FALCON_GC_HANDLE(s) );
+         ctx->stackResult( 2, FALCON_GC_HANDLE_IN(ctx,s) );
       }
       else {
          ctx->stackResult(2, Item((int64) chr) );
@@ -560,7 +560,7 @@ void ClassString::op_getIndex( VMContext* ctx, void* self ) const
          }
       }
 
-      ctx->stackResult( 2, FALCON_GC_HANDLE(s) );
+      ctx->stackResult( 2, FALCON_GC_HANDLE_IN(ctx,s) );
    }
    else
    {

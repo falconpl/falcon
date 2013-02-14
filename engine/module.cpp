@@ -431,6 +431,17 @@ Variable* Module::addInitClass( Class* cls, bool bExport )
 }
 
 
+Variable* Module::addObject( Class* cls, bool bExport )
+{
+   if( cls->name().getCharAt(0) != '%')
+   {
+      cls->name( "%" + cls->name() );
+   }
+   return addInitClass(cls, bExport);
+}
+
+
+
 int32 Module::getInitCount() const
 {
    return (int32) _p->m_initList.size();

@@ -196,6 +196,24 @@ void ModSpace::add( Module* mod )
    if( le != 0 ) {
       throw le;
    }
+
+   int32 icount = mod->getInitCount();
+   if( icount != 0 )
+   {
+      // prepare all the required calls.
+      for( int32 i = 0; i < icount; ++i )
+      {
+         Class* cls = mod->getInitClass(i);
+         String instName = cls->name().subString(1);
+         Item* gval = mod->getGlobalValue(instName);
+         if( gval != 0 )
+         {
+            // Success!
+            gval->assignFromLocal( Item( cls, cls->createInstance() ) );
+            return;
+         }
+      }
+   }
 }
 
 

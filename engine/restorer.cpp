@@ -383,8 +383,8 @@ void Restorer::ReadNext::apply_( const PStep* ps, VMContext* ctx )
             objd.m_data = &_p->m_flatItems.back();
          }
          else {
-            Class* cls;
-            void* inst;
+            Class* cls = 0;
+            void* inst = 0;
             ctx->topData().asClassInst(cls, inst);
             objd.m_data = inst;
             if( objd.m_bIsGarbage )

@@ -23,15 +23,16 @@
 #include <falcon/atomic.h>
 
 
-#ifndef SRC
-#define SRC __FILE__
-#endif
-
 #if FALCON_TRACE_GC
    #define FALCON_GC_STORE( cls, data ) ( Engine::collector()->trace() ?\
          Engine::GC_H_store( cls, (void*) data, SRC, __LINE__ ): \
          Engine::GC_store( cls, (void*) data ))
-   #define FALCON_GC_STORELOCKED( cls, data ) ( Engine::collector()->trace() ?\
+
+   #define FALCON_GC_STORE_IN( ctx, cls, data ) ( Engine::collector()->trace() ?\
+                  (Engine::instance()->collector()->H_store_in( ctx, cls,data, SRC, __LINE__ )): \
+                  (Engine::instance()->collector()->store_in( ctx, cls,data)))
+
+#define FALCON_GC_STORELOCKED( cls, data ) ( Engine::collector()->trace() ?\
          Engine::GC_H_storeLocked( cls, (void*) data, SRC, __LINE__ ): \
          Engine::GC_storeLocked( cls, (void*) data ))
 
@@ -48,6 +49,7 @@
     See the main body class.
     */
    #define FALCON_GC_STORE( cls, data ) (Engine::GC_store( cls, (void*) data ))
+   #define FALCON_GC_STORE_IN( ctx, cls, data ) (ctx->addNewToken(Engine::instance()->collector()->store( cls,data)) )
 
    #define FALCON_GC_STORE_SRCLINE( cls, data, src, line ) (Engine::GC_store( cls, (void*) data ))
 
@@ -60,6 +62,7 @@
 #endif  //FALCON_TRACE_GC
 
 #define FALCON_GC_HANDLE( data ) (FALCON_GC_STORE((data)->handler(), data))
+#define FALCON_GC_HANDLE_IN( ctx, data ) (FALCON_GC_STORE_IN( ctx, (data)->handler(), data))
 
 namespace Falcon {
 
@@ -377,6 +380,7 @@ public:
      @return the token associated with this storage.
     */
    GCToken* store( const Class* cls, void* data );
+   GCToken* store_in( VMContext* ctx, const Class* cls, void* data );
 
    /** Stores an entity in the garbage collector and immediately locks it.
 
@@ -419,6 +423,23 @@ public:
    void stored( int64& memory, int64& items ) const;
 
 
+   /**
+    * Disable automatic garbage collection.
+    * \param value true to disable automatic garbage collection.
+    *
+    * Setting the value to true prevent automatic item marking, causing garbage
+    * memory not to be collected from that moment on.
+    *
+    * Explicit collection (e.g. performGC()) can still be performed.
+    */
+   void enable( bool value );
+
+   /** Check if automatic collection is enabled.
+    * \return true if the collection is enabled.
+    */
+   bool isEnabled() const;
+
+
 #if FALCON_TRACE_GC
    /** Debug version of store.
 
@@ -435,6 +456,7 @@ public:
 
     */
    GCToken* H_store( const Class* cls, void* data, const String& file, int line );
+   GCToken* H_store_in( VMContext* ctx, const Class* cls, void* data, const String& file, int line );
 
   /** DebugVersion of storeLocked().
 
@@ -581,6 +603,7 @@ public:
 
     */
    void clearTrace();
+
 #endif
 
 protected:
@@ -734,6 +757,8 @@ private:
    mutable Mutex m_mtx_accountmem;
    int64 m_storedMem;
    int64 m_storedItems;
+
+   bool m_bEnabled;
 
    class Private;
    Private* _p;

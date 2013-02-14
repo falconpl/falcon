@@ -138,9 +138,22 @@ public:
    /** Adds a class and the required structures to make it initializable at startup.
     *
     * Creates also an object entity to be initialized at module startup.
+    * The name of the class MUST start with "%", that marks an initializable
+    * class.
+    *
+    * \note this is for internal usage. Use addObject instead.
     *
     */
    Variable* addInitClass( Class* cls, bool bExport = true );
+
+   /** Creates a singleton object that is initialized at startup
+    *
+    * The class is to be exclusively used as a base for this object.
+    * If it doesn't start with a "%" character, it is automatically
+    * added.
+    *
+    */
+   Variable* addObject( Class* cls, bool bExport = true );
 
    /**
     * Returns the count of classes with an init-time instance to be filled.

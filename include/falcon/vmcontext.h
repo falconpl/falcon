@@ -47,6 +47,7 @@ class ContextGroup;
 class Process;
 class VarMap;
 class TreeStep;
+class GCToken;
 
 /**
  * Structure needed to store VM data.
@@ -1436,6 +1437,9 @@ public:
 
    void caller( const PStep* ps ) { m_caller = ps; }
 
+   GCToken* addNewToken( GCToken* token );
+   void getNewTokens( GCToken* &first, GCToken* &last );
+
 protected:
 
    /** Class holding the dynamic symbol information on a stack. */
@@ -1614,6 +1618,7 @@ protected:
    const PStep* m_caller;
 
 private:
+   GCToken* m_newTokens;
 
    virtual ~VMContext();
    FALCON_REFERENCECOUNT_DECLARE_INCDEC(VMContext)

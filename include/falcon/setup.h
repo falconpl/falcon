@@ -29,6 +29,10 @@ different systems.
 #ifndef FLC_SETUP_H
 #define FLC_SETUP_H
 
+#ifndef SRC
+#define SRC __FILE__
+#endif
+
 #include <falcon/config.h>
 
 //=================================

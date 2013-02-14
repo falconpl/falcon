@@ -199,6 +199,9 @@ Collector::Collector():
    m_storedItems(0),
    _p( new Private )
 {
+   // start as enabled
+   m_bEnabled = true;
+
    // use a ring for garbage items.
    m_garbageRoot = new GCToken(0,0);
    m_garbageRoot->m_next = m_garbageRoot;
@@ -225,7 +228,7 @@ Collector::Collector():
    // fill the ramp algorithms
    m_ramp  = new CollectorAlgorithm*[ FALCON_COLLECTOR_ALGORITHM_COUNT ];
    m_ramp[FALCON_COLLECTOR_ALGORITHM_OFF] = new CollectorAlgorithmNone;
-   m_ramp[FALCON_COLLECTOR_ALGORITHM_FIXED] = new CollectorAlgorithmFixed(1000000,5000000,1000000);
+   m_ramp[FALCON_COLLECTOR_ALGORITHM_FIXED] = new CollectorAlgorithmFixed(10000,50000,100000);
    m_ramp[FALCON_COLLECTOR_ALGORITHM_STRICT] = new CollectorAlgorithmStrict;
    m_ramp[FALCON_COLLECTOR_ALGORITHM_SMOOTH] = new CollectorAlgorithmSmooth;
    m_ramp[FALCON_COLLECTOR_ALGORITHM_LOOSE] = new CollectorAlgorithmLoose;
@@ -282,6 +285,16 @@ Collector::~Collector()
    delete _p;
 }
 
+
+void Collector::enable( bool )
+{
+
+}
+
+bool Collector::isEnabled() const
+{
+   return true;
+}
 
 bool Collector::rampMode( int mode )
 {
@@ -506,6 +519,30 @@ GCToken* Collector::store( const Class* cls, void *data )
    return token;
 }
 
+GCToken* Collector::store_in( VMContext* ctx, const Class* cls, void *data )
+{
+   TRACE2( "Collector::store_in %d(%p) process %d(%p) instance of %s: %p",
+            ctx->id(), ctx, ctx->process()->id(), ctx->process(),
+            cls->name().c_ize(), data);
+
+   if( ctx->process()->mainContext() == ctx )
+   {
+      // do we have spare elements we could take?
+      GCToken* token = getToken( const_cast<Class*>(cls), data );
+
+      int64 memory = cls->occupiedMemory(data);
+      m_mtx_accountmem.lock();
+      m_storedItems++;
+      m_storedMem+= memory;
+      m_mtx_accountmem.unlock();
+
+      ctx->addNewToken(token);
+      return token;
+   }
+
+   return store( cls, data );
+}
+
 
 GCLock* Collector::storeLocked( const Class* cls, void *data )
 {
@@ -649,43 +686,49 @@ bool Collector::offerContext( VMContext* ctx )
       // when marked for inspection, we HAVE to accept it.
       operate = true;
    }
-   else {
+   else
+   {
+      // if not enable, never mark an incoming context.
       m_mtx_ramp.lock();
-      CollectorAlgorithm* algo = m_ramp[m_curRampID];
+      CollectorAlgorithm* algo = m_bEnabled ? m_ramp[m_curRampID] : 0;
       m_mtx_ramp.unlock();
 
-      t_status st = algo->checkStatus();
+      if( algo != 0 )
+      {
+         t_status st = algo->checkStatus();
 
-      switch( st ) {
-      case e_status_green:
-         MESSAGE1( "Collector::offerContext -- refusing because in green state." );
-         break;
+         switch( st ) {
+         case e_status_green:
+            MESSAGE1( "Collector::offerContext -- refusing because in green state." );
+            break;
 
-      case e_status_yellow:
-         _p->m_mtx_contexts.lock();
-         operate = m_oldestMark == ctx->currentMark();
-         _p->m_mtx_contexts.unlock();
+         case e_status_yellow:
+            _p->m_mtx_contexts.lock();
+            operate = m_oldestMark == ctx->currentMark();
+            _p->m_mtx_contexts.unlock();
 
-         TRACE1( "Collector::offerContext -- %s in yellow status.",
-                  (operate?"accepting":"refusing"));
-         break;
+            TRACE1( "Collector::offerContext -- %s in yellow status.",
+                     (operate?"accepting":"refusing"));
+            break;
 
-      case e_status_brown:
-      case e_status_red:
-         _p->m_mtx_contexts.lock();
-         operate = (m_oldestMark == ctx->currentMark()) || ctx->markedForInspection();
-         _p->m_mtx_contexts.unlock();
+         case e_status_brown:
+         case e_status_red:
+            _p->m_mtx_contexts.lock();
+            operate = (m_oldestMark == ctx->currentMark()) || ctx->markedForInspection();
+            _p->m_mtx_contexts.unlock();
 
-         TRACE1( "Collector::offerContext -- %s in %s status.",
-                  (operate?"accepting":"refusing"), (st == e_status_red? "red":"brown" ));
-         break;
+            TRACE1( "Collector::offerContext -- %s in %s status.",
+                     (operate?"accepting":"refusing"), (st == e_status_red? "red":"brown" ));
+            break;
 
-      case e_status_required:
-         operate = true;
-         MESSAGE1("Collector::offerContext -- accepting because in required state.");
-         break;
+         case e_status_required:
+            operate = true;
+            MESSAGE1("Collector::offerContext -- accepting because in required state.");
+            break;
+         }
       }
    }
+
 
    if(operate) {
       ctx->incref();
@@ -982,6 +1025,19 @@ GCToken* Collector::H_store( const Class* cls, void *data, const String& fname, 
    return token;
 }
 
+
+GCToken* Collector::H_store_in( VMContext* ctx, const Class* cls, void *data, const String& fname, int line )
+{
+   GCToken* token = store_in( ctx, cls, data );
+   if ( m_bTrace )
+   {
+      onCreate( cls, data, fname, line );
+   }
+
+   return token;
+}
+
+
 GCLock* Collector::H_storeLocked( const Class* cls, void *data, const String& file, int line )
 {
    GCLock* lock = storeLocked( cls, data );
@@ -1254,6 +1310,12 @@ void* Collector::Monitor::run()
       work.wait(GC_IDLE_TIME);
 
       m_master->m_mtx_ramp.lock();
+      if( ! m_master->m_bEnabled )
+      {
+         m_master->m_mtx_ramp.unlock();
+         continue;
+      }
+
       Collector::t_status st = m_master->m_ramp[m_master->m_curRampID]->checkStatus();
       m_master->m_mtx_ramp.unlock();
 
@@ -1356,6 +1418,7 @@ void* Collector::Marker::run()
 
          // continue marking
          toMark->gcPerformMark();
+
          // declare the mark is marked
          onMarked( toMark );
 
@@ -1409,6 +1472,20 @@ void* Collector::Marker::run()
 
 void Collector::Marker::onMarked( VMContext* ctx )
 {
+   // save the context new data
+
+   GCToken* first, * last;
+   ctx->getNewTokens(first, last);
+   if( first != 0 )
+   {
+      m_master->m_mtx_garbageRoot.lock();
+      first->m_prev = m_master->m_garbageRoot;
+      last->m_next = m_master->m_garbageRoot->m_next;
+      m_master->m_garbageRoot->m_next->m_prev = last;
+      m_master->m_garbageRoot->m_next = first;
+      m_master->m_mtx_garbageRoot.unlock();
+   }
+
    m_master->_p->m_mtx_contexts.lock();
    // also, be sure that we're not waiting for this context to be marked.
    Private::MarkTokenList::iterator mti = m_master->_p->m_markTokens.begin();

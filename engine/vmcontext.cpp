@@ -28,6 +28,7 @@
 #include <falcon/shared.h>
 #include <falcon/sys.h>
 #include <falcon/contextgroup.h>
+#include <falcon/gctoken.h>
 
 #include <falcon/module.h>       // For getDynSymbolValue
 #include <falcon/modspace.h>
@@ -85,6 +86,10 @@ VMContext::VMContext( Process* prc, ContextGroup* grp ):
    m_process(prc),
    m_caller(0)
 {
+   m_newTokens = new GCToken(0,0);
+   m_newTokens->m_next = m_newTokens;
+   m_newTokens->m_prev = m_newTokens;
+
    m_dynsStack.init();
    m_codeStack.init();
    m_callStack.init();
@@ -107,6 +112,15 @@ VMContext::~VMContext()
    // just in case we were killed while in wait.
    abortWaits();
    acquire(0);
+
+   m_newTokens->m_prev->m_next = 0;
+   GCToken* token = m_newTokens;
+   while (token != 0 )
+   {
+      GCToken* old = token;
+      token = token->m_next;
+      delete old;
+   }
 
    if( m_lastRaised != 0 ) m_lastRaised->decref();
 }
@@ -2094,6 +2108,38 @@ void VMContext::onStackRebased( Item* oldBase )
       }
       ++dt;
    }
+}
+
+GCToken* VMContext::addNewToken( GCToken* token )
+{
+   token->m_next = m_newTokens->m_next;
+   token->m_prev = m_newTokens;
+
+   m_newTokens->m_next->m_prev = token;
+   m_newTokens->m_next = token;
+
+   return token;
+}
+
+
+void VMContext::getNewTokens( GCToken* &first, GCToken* &last )
+{
+   if( m_newTokens->m_next == m_newTokens )
+   {
+      first = 0;
+      last = 0;
+      return;
+   }
+
+   first = m_newTokens->m_next;
+   last = m_newTokens->m_prev;
+
+   m_newTokens->m_next = m_newTokens;
+   m_newTokens->m_prev = m_newTokens;
+
+   // Not necessary
+   first->m_prev = 0;
+   last->m_next = 0;
 }
 
 //===============================================================

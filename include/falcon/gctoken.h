@@ -21,6 +21,7 @@ namespace Falcon
 {
 
 class Collector;
+class VMContexte;
 
 /** Data carrier for the garbage collector.
  *
@@ -55,6 +56,7 @@ private:
     GCToken* m_prev;
 
     friend class Collector;
+    friend class VMContext;
 };
 
 }
