@@ -11,8 +11,6 @@ due to timings.
 */
 
 > "Garbage Collector full perform"
-
-return "Ok"
  
 memory = GC.memory
 items = GC.items

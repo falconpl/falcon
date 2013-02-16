@@ -700,6 +700,7 @@ void Collector::performGC( bool wait )
    Event markEvt;
    Event evt;
    MarkToken* markToken = new MarkToken( (wait ? &markEvt:0), true);
+   uint32 mark = 0;
 
    // push a request for all the contexts to be marked.
    int32 count = 0;
@@ -730,7 +731,26 @@ void Collector::performGC( bool wait )
    {
       _p->m_markTokens.push_back(markToken);
    }
+   else {
+      // without contexts around, we're the one that must suggest the sweeper to go on
+      mark = ++m_oldestMark;
+   }
    _p->m_mtx_contexts.unlock();
+
+   // if we don't have any context around, we still have to mark locks and new items
+   if( mark != 0 )
+   {
+      markLocked( mark );
+
+      //... and the new items ...
+      markNew( mark );
+
+      // lastly, check if we need to rollover the mark counter.
+      if( mark > MAX_GENERATION )
+      {
+         rollover();
+      }
+   }
 
    if( wait )
    {
@@ -752,9 +772,14 @@ void Collector::performGC( bool wait )
       m_sweeperWork.set();
       evt.wait( -1 );
    }
+   else if ( count == 0 )
+   {
+      // we don't need to ask the sweeper to work if we don't wait,
+      // the marker will do if necessary and when necessary,
+      // unless we have no contexts
 
-   // we don't need to ask the sweeper to work if we don't wait,
-   // the marker will do if necessary and when necessary.
+      m_sweeperWork.set();
+   }
 }
 
 
@@ -1727,9 +1752,9 @@ void Collector::Sweeper::sweep( uint32 lastGen )
       #ifndef NDEBUG
                String temp;
                try {
-                  cls->describe(data, temp);
+                  Item temp(cls, data);
                   TRACE2( "Collector::Sweeper::sweep -- killing %s (%p) of class %s",
-                        temp.c_ize(), data, cls->name().c_ize() );
+                        temp.describe(0,60).c_ize(), data, cls->name().c_ize() );
                }
                catch( Error* e )
                {
