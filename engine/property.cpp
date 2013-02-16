@@ -23,14 +23,16 @@
 
 #include <falcon/errors/paramerror.h>
 #include <falcon/errors/accesserror.h>
+#include <falcon/gclock.h>
 
 namespace Falcon {
 
 
-Property::Property( ClassUser* uc, const String &name, bool bCarried ):
+Property::Property( ClassUser* uc, const String &name, bool bCarried, bool bHidden ):
    m_name(name),
    m_owner(uc),
-   m_bCarried(bCarried)
+   m_bCarried(bCarried),
+   m_bHidden(bHidden)
 {
    uc->add(this);
 }
@@ -57,6 +59,38 @@ Error* Property::readOnlyError() const
    error->extraDescription(name());
    return error;
 }
+
+
+//===================================================================
+// PropertyConstant
+//
+
+PropertyConstant::PropertyConstant( const Item& value, ClassUser* uc, const String &name ):
+         Property(uc, name, false, true ),
+         m_lock(0)
+{
+   static Collector* coll = Engine::instance()->collector();
+   m_value = value;
+   if( value.isUser() )
+   {
+      m_lock = coll->lock(m_value);
+   }
+
+}
+
+PropertyConstant::~PropertyConstant()
+{
+   if( m_lock != 0 )
+   {
+      m_lock->dispose();
+   }
+}
+
+void PropertyConstant::set( void*, const Item& )
+{
+   throw readOnlyError();
+}
+
 //===================================================================
 // PropertyCarried
 //

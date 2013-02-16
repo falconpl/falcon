@@ -24,6 +24,9 @@
 #include <falcon/vmcontext.h>
 #include <falcon/collectoralgorithm.h>
 #include <falcon/shared.h>
+#include <falcon/sys.h>
+
+#include <falcon/log.h>
 
 #include <deque>
 #include <string>
@@ -266,6 +269,8 @@ public:
 Collector::Collector():
    m_thMarker(0),
    m_marker(this),
+   m_thTimer(0),
+   m_timer(this),
    m_thSweeper(0),
    m_sweeper(this),
 
@@ -276,6 +281,8 @@ Collector::Collector():
    m_storedMem(0),
    m_storedItems(0),
    m_status(e_status_green),
+   m_markLoops(0),
+   m_sweepLoops(0),
    _p( new Private )
 {
    // start as enabled
@@ -305,19 +312,15 @@ Collector::Collector():
    m_recycleLockCount = 0;
 
    // fill the ramp algorithms
-   m_ramp  = new CollectorAlgorithm*[ FALCON_COLLECTOR_ALGORITHM_COUNT ];
-   m_ramp[FALCON_COLLECTOR_ALGORITHM_MANUAL] = new CollectorAlgorithmManual;
-   m_ramp[FALCON_COLLECTOR_ALGORITHM_FIXED] = new CollectorAlgorithmFixed(1000000);
-   m_ramp[FALCON_COLLECTOR_ALGORITHM_STRICT] = new CollectorAlgorithmStrict;
-   m_ramp[FALCON_COLLECTOR_ALGORITHM_SMOOTH] = new CollectorAlgorithmSmooth;
-   m_ramp[FALCON_COLLECTOR_ALGORITHM_LOOSE] = new CollectorAlgorithmLoose;
+   m_algo  = new CollectorAlgorithm*[ FALCON_COLLECTOR_ALGORITHM_COUNT ];
+   m_algo[FALCON_COLLECTOR_ALGORITHM_MANUAL] = new CollectorAlgorithmManual;
+   m_algo[FALCON_COLLECTOR_ALGORITHM_FIXED] = new CollectorAlgorithmFixed(1000000);
+   m_algo[FALCON_COLLECTOR_ALGORITHM_STRICT] = new CollectorAlgorithmStrict;
+   m_algo[FALCON_COLLECTOR_ALGORITHM_SMOOTH] = new CollectorAlgorithmSmooth;
+   m_algo[FALCON_COLLECTOR_ALGORITHM_LOOSE] = new CollectorAlgorithmLoose;
 
-   // force initialization in rampMode by setting a different initial value;
-   /*
-   m_curRampID = FALCON_COLLECTOR_ALGORITHM_DEFAULT;
-   m_curRampMode = m_ramp[m_curRampID];
-   */
-   setAlgorithm( FALCON_COLLECTOR_ALGORITHM_FIXED );
+   m_curAlgoID = -1;
+   setAlgorithm( FALCON_COLLECTOR_ALGORITHM_DEFAULT );
 }
 
 Collector::~Collector()
@@ -357,7 +360,7 @@ Collector::~Collector()
 
    for( uint32 ri = 0; ri < FALCON_COLLECTOR_ALGORITHM_COUNT; ri++ )
    {
-      delete m_ramp[ri];
+      delete m_algo[ri];
    }
    delete _p;
 }
@@ -380,11 +383,11 @@ bool Collector::setAlgorithm( int mode )
       CollectorAlgorithm* algo = 0;
 
       m_mtx_algo.lock();
-      if ( m_curRampID != mode )
+      if ( m_curAlgoID != mode )
       {
-         m_curRampID = mode;
-         m_curRampMode = m_ramp[mode];
-         algo = m_curRampMode;
+         m_curAlgoID = mode;
+         m_curAlgoMode = m_algo[mode];
+         algo = m_curAlgoMode;
 
          // reset thresholds
          m_memoryThreshold = (uint64)-1;
@@ -408,20 +411,59 @@ bool Collector::setAlgorithm( int mode )
 int Collector::currentAlgorithm() const
 {
    m_mtx_algo.lock();
-   int mode = m_curRampID;
+   int mode = m_curAlgoID;
    m_mtx_algo.unlock();
    return mode;
 }
 
-void Collector::memoryThreshold( uint64 th )
+CollectorAlgorithm* Collector::currentAlgorithmObject() const
 {
+   m_mtx_algo.lock();
+   CollectorAlgorithm* mode = m_curAlgoMode;
+   m_mtx_algo.unlock();
+   return mode;
+}
+
+void Collector::memoryThreshold( uint64 th, bool doNow )
+{
+
+   bool perform;
+   m_mtx_accountmem.lock();
+   int64 sm = m_storedMem;
+   if(  th <= (uint64) m_storedMem )
+   {
+      th = -1;
+      perform = true;
+   }
+   m_mtx_accountmem.unlock();
+
+   if( doNow && perform )
+   {
+      currentAlgorithmObject()->onMemoryThreshold(this, sm );
+   }
+
    m_mtx_algo.lock();
    m_memoryThreshold = th;
    m_mtx_algo.unlock();
 }
 
-void Collector::itemThreshold( uint64 th )
+void Collector::itemThreshold( uint64 th, bool doNow )
 {
+   bool perform;
+   m_mtx_accountmem.lock();
+   int64 sm = m_storedItems;
+   if(  th <= (uint64) m_storedItems )
+   {
+      th = -1;
+      perform = true;
+   }
+   m_mtx_accountmem.unlock();
+
+   if( doNow && perform )
+   {
+      currentAlgorithmObject()->onItemThreshold(this, sm );
+   }
+
    m_mtx_algo.lock();
    m_itemThreshold = th;
    m_mtx_algo.unlock();
@@ -638,7 +680,7 @@ GCToken* Collector::store_in( VMContext* ctx, const Class* cls, void *data )
    {
       m_mtx_algo.lock();
       m_itemThreshold = (uint64) -1;
-      CollectorAlgorithm* algo = m_curRampMode;
+      CollectorAlgorithm* algo = m_curAlgoMode;
       m_mtx_algo.unlock();
       algo->onItemThreshold(this, stoi);
    }
@@ -647,7 +689,7 @@ GCToken* Collector::store_in( VMContext* ctx, const Class* cls, void *data )
    {
       m_mtx_algo.lock();
       m_memoryThreshold = (uint64) -1;
-      CollectorAlgorithm* algo = m_curRampMode;
+      CollectorAlgorithm* algo = m_curAlgoMode;
       m_mtx_algo.unlock();
       algo->onMemoryThreshold(this, stom);
    }
@@ -679,9 +721,28 @@ GCLock* Collector::storeLocked( const Class* cls, void *data )
 
    int64 memory = cls->occupiedMemory(data);
    m_mtx_accountmem.lock();
-   m_storedItems++;
-   m_storedMem+= memory;
+   uint64 stoi = m_storedItems++;
+   uint64 stom = m_storedMem+= memory;
    m_mtx_accountmem.unlock();
+
+   // we do without lock, not urgent
+   if( stoi >= m_itemThreshold )
+   {
+      m_mtx_algo.lock();
+      m_itemThreshold = (uint64) -1;
+      CollectorAlgorithm* algo = m_curAlgoMode;
+      m_mtx_algo.unlock();
+      algo->onItemThreshold(this, stoi);
+   }
+
+   if( stom >= m_memoryThreshold )
+   {
+      m_mtx_algo.lock();
+      m_memoryThreshold = (uint64) -1;
+      CollectorAlgorithm* algo = m_curAlgoMode;
+      m_mtx_algo.unlock();
+      algo->onMemoryThreshold(this, stom);
+   }
 
    // put the element in the new list.
    m_mtx_newRoot.lock();
@@ -862,6 +923,8 @@ void Collector::start()
       atomicSet(m_aLive, 1);
       m_thMarker = new SysThread( &m_marker );
       m_thMarker->start( ThreadParams().stackSize( GC_THREAD_STACK_SIZE ) );
+      m_thTimer = new SysThread( &m_timer );
+      m_thTimer->start( ThreadParams().stackSize( GC_THREAD_STACK_SIZE ) );
       m_thSweeper = new SysThread( &m_sweeper );
       m_thSweeper->start( ThreadParams().stackSize( GC_THREAD_STACK_SIZE ) );
    }
@@ -877,16 +940,30 @@ void Collector::stop()
       // wake up our threads
       m_markerWork.set();
       m_sweeperWork.set();
+      m_timerWork.set();
 
       // join them
-      void *dummy;
+      void *dummy = 0;
       m_thMarker->join( dummy );
       m_thSweeper->join( dummy );
+      m_thTimer->join( dummy );
 
       // and clear them
       m_thMarker = 0;
       m_thSweeper = 0;
+      m_thTimer = 0;
    }
+}
+
+
+void Collector::algoTimeout( uint32 to )
+{
+   int64 now = to == 0 ? -1 : Sys::_milliseconds();
+
+   m_mtx_timer.lock();
+   m_algoRandezVous = to + now;
+   m_mtx_timer.unlock();
+   m_timerWork.set();
 }
 
 
@@ -906,7 +983,7 @@ bool Collector::offerContext( VMContext* ctx )
    {
       // if not enable, never mark an incoming context.
       m_mtx_algo.lock();
-      CollectorAlgorithm* algo = m_bEnabled ? m_ramp[m_curRampID] : 0;
+      CollectorAlgorithm* algo = m_bEnabled ? m_algo[m_curAlgoID] : 0;
       m_mtx_algo.unlock();
 
       if( algo != 0 )
@@ -1439,8 +1516,17 @@ void Collector::clearTrace()
 void Collector::accountMemory( int64 memory )
 {
    m_mtx_accountmem.lock();
-   m_storedMem += memory;
+   int64 stom = m_storedMem += memory;
    m_mtx_accountmem.unlock();
+
+   if( ((uint64)stom) >= m_memoryThreshold )
+   {
+      m_mtx_algo.lock();
+      m_memoryThreshold = (uint64) -1;
+      CollectorAlgorithm* algo = m_curAlgoMode;
+      m_mtx_algo.unlock();
+      algo->onMemoryThreshold(this, stom);
+   }
 }
 
 int64 Collector::storedMemory() const
@@ -1461,6 +1547,33 @@ int64 Collector::storedItems() const
    return result;
 }
 
+int64 Collector::sweepLoops( bool clear ) const
+{
+   m_mtx_accountmem.lock();
+   int64 result = m_sweepLoops;
+   if( clear )
+   {
+      m_sweepLoops = 0;
+   }
+   m_mtx_accountmem.unlock();
+
+   return result;
+}
+
+int64 Collector::markLoops( bool clear ) const
+{
+   m_mtx_accountmem.lock();
+   int64 result = m_markLoops;
+   if( clear )
+   {
+      m_markLoops = 0;
+   }
+   m_mtx_accountmem.unlock();
+
+   return result;
+}
+
+
 void Collector::stored( int64& memory, int64& items ) const
 {
    m_mtx_accountmem.lock();
@@ -1472,7 +1585,7 @@ void Collector::stored( int64& memory, int64& items ) const
 void Collector::onSweepBegin()
 {
   m_mtx_algo.lock();
-  CollectorAlgorithm* algo = m_ramp[m_curRampID];
+  CollectorAlgorithm* algo = m_algo[m_curAlgoID];
   m_mtx_algo.unlock();
 
   algo->onSweepBegin(this);
@@ -1483,10 +1596,11 @@ void Collector::onSweepComplete( int64 freedMem, int64 freedItems )
    m_mtx_accountmem.lock();
    m_storedMem -= freedMem;
    m_storedItems -= freedItems;
+   m_sweepLoops ++;
    m_mtx_accountmem.unlock();
 
    m_mtx_algo.lock();
-   CollectorAlgorithm* algo = m_ramp[m_curRampID];
+   CollectorAlgorithm* algo = m_algo[m_curAlgoID];
    m_mtx_algo.unlock();
 
    algo->onSweepComplete( this, freedMem, freedItems );
@@ -1540,6 +1654,12 @@ void* Collector::Marker::run()
 
          // continue marking
          toMark->gcPerformMark();
+
+         // account
+         m_master->m_mtx_accountmem.lock();
+         m_master->m_markLoops++;
+         m_master->m_mtx_accountmem.unlock();
+
 
          // did we change the old mark?
          if( newOldest != 0 )
@@ -1632,7 +1752,7 @@ void Collector::Marker::onMarked( VMContext* ctx )
 }
 
 //==========================================================================================
-// Marker
+// Sweeper
 //
 
 void* Collector::Sweeper::run()
@@ -1827,6 +1947,43 @@ void Collector::Sweeper::sweep( uint32 lastGen )
 
    m_master->onSweepComplete( freedMem, freedCount );
 }
+
+
+//==========================================================================================
+// Timer
+//
+
+void* Collector::Timer::run()
+{
+   MESSAGE( "Collector::Timer::run -- starting" );
+
+   Mutex& mtxTimer = m_master->m_mtx_timer;
+   Event& work = m_master->m_timerWork;
+   int64& randezVous = m_master->m_algoRandezVous;
+
+   while ( atomicFetch(m_master->m_aLive) )
+   {
+      MESSAGE( "Collector::Sweeper::run -- waiting new activity" );
+      int64 nextRandezVous;
+      mtxTimer.lock();
+      nextRandezVous = randezVous;
+      mtxTimer.unlock();
+
+      int64 now = Sys::_milliseconds();
+      if( nextRandezVous > 0 && now > nextRandezVous )
+      {
+         m_master->currentAlgorithmObject()->onTimeout( m_master );
+         nextRandezVous = -1;
+      }
+
+      int64 waitTime = nextRandezVous > 0 ? nextRandezVous - now : -1;
+
+      work.wait((int32)waitTime);
+   }
+
+   return 0;
+}
+
 
 }
 

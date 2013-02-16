@@ -25,11 +25,12 @@ namespace Falcon {
 class ClassUser;
 class Item;
 class Error;
+class GCLock;
 
 class FALCON_DYN_CLASS Property
 {
 public:   
-   Property( ClassUser* uc, const String &name, bool bCarried = false );
+   Property( ClassUser* uc, const String &name, bool bCarried = false, bool bHidden = false );
    virtual ~Property();
    
    const String& name() const { return m_name; }
@@ -39,6 +40,7 @@ public:
    virtual void get( void* instance, Item& target ) = 0;
   
    bool isCarried() const { return m_bCarried; }
+   bool isHidden() const { return m_bHidden; }
 
    void checkType( bool ok, const String& required );
 
@@ -47,10 +49,25 @@ private:
    String m_name;
    ClassUser* m_owner;
    bool m_bCarried;
+   bool m_bHidden;
+};
+
+class FALCON_DYN_CLASS PropertyConstant: public Property
+{
+
+public:
+   PropertyConstant( const Item& value, ClassUser* uc, const String &name );
+   virtual ~PropertyConstant();
+   virtual void set( void* instance, const Item& value );
+   virtual void get( void*, Item& target ) { target.assignFromLocal(m_value); }
+
+private:
+   Item m_value;
+   GCLock* m_lock;
 };
 
 
-class PropertyCarried: public Property
+class FALCON_DYN_CLASS PropertyCarried: public Property
 {
    
 public:
@@ -69,7 +86,7 @@ private:
 };
 
 
-class PropertyString: public PropertyCarried
+class FALCON_DYN_CLASS PropertyString: public PropertyCarried
 {
 public:
    PropertyString( ClassUser* uc, const String &name ):
@@ -82,7 +99,7 @@ public:
    virtual const String& getString( void* instance ) = 0;
 };
 
-class PropertyData: public PropertyCarried
+class FALCON_DYN_CLASS PropertyData: public PropertyCarried
 {
 public:
    PropertyData( ClassUser* uc, const String &name ):
@@ -99,7 +116,7 @@ public:
    virtual void fetch( void* data ) = 0;
 };
 
-class PropertyReflect: public PropertyCarried
+class FALCON_DYN_CLASS PropertyReflect: public PropertyCarried
 {
 public:
    typedef enum {
@@ -164,7 +181,7 @@ private:
 };
 
 
-class PropertyReflectRO: public PropertyReflect
+class FALCON_DYN_CLASS PropertyReflectRO: public PropertyReflect
 {
 public:
    
@@ -174,7 +191,7 @@ public:
 };
 
 
-class PropertyReflectWO: public PropertyReflect
+class FALCON_DYN_CLASS PropertyReflectWO: public PropertyReflect
 {
 public:
    
@@ -185,7 +202,7 @@ public:
 
 
 #define FALCON_DECLARE_PROPERTY(PROP_NAME) \
-   class Property_ ## PROP_NAME: public ::Falcon::Property \
+   class FALCON_DYN_CLASS Property_ ## PROP_NAME: public ::Falcon::Property \
    { \
    public: \
       Property_ ## PROP_NAME( ::Falcon::ClassUser* u ): \
@@ -196,9 +213,19 @@ public:
       virtual void get( void* instance, ::Falcon::Item& value ); \
    } m_Property_ ## PROP_NAME;
 
+#define FALCON_DECLARE_PROPERTY_CONSTANT(PROP_NAME, value__ ) \
+   class FALCON_DYN_CLASS Property_ ## PROP_NAME: public ::Falcon::PropertyConstant \
+   { \
+   public: \
+   Property_ ## PROP_NAME( ::Falcon::ClassUser* u ): \
+         PropertyConstant( (value__), u, #PROP_NAME ) \
+      {} \
+      virtual ~Property_ ## PROP_NAME() {} \
+   } m_Property_ ## PROP_NAME;
+
 
 #define FALCON_DECLARE_CPROPERTY(PROP_NAME) \
-   class Property_ ## PROP_NAME: public ::Falcon::PropertyCarried \
+   class FALCON_DYN_CLASS Property_ ## PROP_NAME: public ::Falcon::PropertyCarried \
    { \
    public: \
       Property_ ## PROP_NAME( ::Falcon::ClassUser* u ): \
@@ -224,7 +251,7 @@ public:
 
 
 #define FALCON_DECLARE_STRPROPERTY(PROP_NAME) \
-   class Property_ ## PROP_NAME: public ::Falcon::PropertyString \
+   class FALCON_DYN_CLASS Property_ ## PROP_NAME: public ::Falcon::PropertyString \
    { \
    public: \
       Property_ ## PROP_NAME( ::Falcon::ClassUser* u ): \
@@ -237,7 +264,7 @@ public:
 
 
 #define FALCON_DECLARE_DATAPROPERTY(PROP_NAME) \
-   class Property_ ## PROP_NAME: public ::Falcon::PropertyData \
+   class FALCON_DYN_CLASS Property_ ## PROP_NAME: public ::Falcon::PropertyData \
    { \
    public: \
       Property_ ## PROP_NAME( ::Falcon::ClassUser* u ): \

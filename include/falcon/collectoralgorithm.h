@@ -61,9 +61,14 @@ public:
    virtual void onSweepBegin( Collector* coll ) = 0;
    virtual void onSweepComplete( Collector* coll, int64 freedMemry, int64 freedItems ) = 0;
 
-   virtual void onTimer(Collector* coll) = 0;
-
    virtual void describe(String& target) const = 0;
+
+   virtual void onTimeout( Collector* ) = 0;
+
+   virtual void limit( int64 l ) = 0;
+   virtual int64 limit() const = 0;
+   virtual void base( int64 l ) = 0;
+   virtual int64 base() const = 0;
 
    String describe() const {
       String temp; describe( temp ); return temp;
@@ -86,9 +91,14 @@ public:
    virtual void onSweepBegin( Collector* ) {}
    virtual void onSweepComplete( Collector*, int64, int64 ) {}
 
-   virtual void onTimer(Collector*) {}
-
    virtual void describe(String& target) const { target = "Manual";}
+
+   virtual void onTimeout( Collector* ) {}
+
+   void limit( int64 ) {}
+   int64 limit() const { return 0; }
+   void base( int64 ) {}
+   int64 base() const { return 0; }
 
    String describe() const {
       String temp; describe( temp ); return temp;
@@ -113,8 +123,7 @@ public:
 
    virtual void onSweepBegin( Collector* ) {}
    virtual void onSweepComplete( Collector* coll, int64 freedMemory, int64 freedItems );
-
-   virtual void onTimer(Collector*) {}
+   virtual void onTimeout( Collector* );
 
    virtual void describe(String& target) const;
 
@@ -122,51 +131,53 @@ public:
 
    int64 getLimit() const { return m_limit; }
 
+   void limit( int64 );
+   int64 limit() const;
+   void base( int64 );
+   int64 base() const;
+
 protected:
    int64 m_limit;
 };
 
 /** Base class for all ramping algorithms. */
-class FALCON_DYN_CLASS CollectorAlgorithmRamp: public CollectorAlgorithmFixed
+class FALCON_DYN_CLASS CollectorAlgorithmRamp: public CollectorAlgorithm
 {
 public:
-   CollectorAlgorithmRamp();
+   CollectorAlgorithmRamp( int64 limit, numeric sweepFact, numeric yellowFact, numeric redFact );
    virtual ~CollectorAlgorithmRamp();
 
-   virtual void onApply(Collector* ) {}
-   virtual void onRemove(Collector* ) {}
+   virtual void onApply(Collector* );
+   virtual void onRemove(Collector* );
 
-   virtual Collector::t_status checkStatus();
+   virtual void onMemoryThreshold( Collector* coll, int64 threshold );
+   virtual void onItemThreshold( Collector* , int64  ) {}
+
    virtual void onSweepBegin( Collector* ) {}
    virtual void onSweepComplete( Collector* coll, int64 freedMemory, int64 freedItems );
+   virtual void onTimeout( Collector* );
 
-   virtual void onTimer(Collector*) {}
+
+   void limit( int64 );
+   int64 limit() const;
+   void base( int64 );
+   int64 base() const;
 
    virtual void describe( String& target) const;
 
 protected:
-   Collector::t_status m_currentStatus;
-   int64 m_sweptMemory;
+   int64 m_sweepThreshold;
+   int64 m_base;
+   int64 m_limit;
 
-   numeric m_yellowBaseRatio;
-   numeric m_brownBaseRatio;
-   numeric m_redBaseRatio;
+   int64 m_yellowLimit;
+   int64 m_redLimit;
+   numeric m_yellowFactor;
+   numeric m_redFactor;
+   numeric m_sweepFactor;
 
-   numeric m_yellowMaxRatio;
-   numeric m_brownMaxRatio;
-   numeric m_redMaxRatio;
-
-   numeric m_growthRatio;
-   numeric m_successRatio;
-
-   int32 m_sweepThreshold;
-   int32 m_sweptTimes;
-
-   int64 m_thresholdYellow;
-   int64 m_thresholdBrown;
-   int64 m_thresholdRed;
-
-   Mutex m_mtx;
+   uint32 m_lastTimeout;
+   mutable Mutex m_mtx;
 };
 
 /** Enforces a strict inspection policy.

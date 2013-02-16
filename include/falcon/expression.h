@@ -81,6 +81,9 @@ public:
     */
    virtual bool simplify( Item& result ) const = 0;   
       
+   /** True if an automatic definition of this expression can define symbols. */
+   virtual bool fullDefining() { return false; }
+
    virtual Expression* clone() const = 0;
 
 protected:

@@ -336,20 +336,28 @@ public:
    */
    bool setAlgorithm( int mode );
    int currentAlgorithm() const;
+   CollectorAlgorithm* currentAlgorithmObject() const;
 
    /** Set item threshold for algorithm callback.
+    * \param th The threshold level
+    * \param doNow If true, and if the current level is already above the threshold,
+    *    invoke the callback now.
     *
     * When the number of allocated item exceeds the given value,
     * the onItemThreshold callback method of the active algorithm is invoked.
     *
     */
-   void itemThreshold( uint64 th );
+   void itemThreshold( uint64 th, bool doNow = false );
 
    /** Set memory threshold for algorithm callback.
+    * \param th The threshold level
+    * \param doNow If true, and if the current level is already above the threshold,
+    *    invoke the callback now.
+    *
     * When the number of bytes exceeds the given value,
     * the onMemoryThreshold callback method of the active algorithm is invoked.
     */
-   void memoryThreshold( uint64 th );
+   void memoryThreshold( uint64 th, bool doNow = false );
 
    /** Run a complete garbage collection.
     * \param wait True to wait for completion, false to return immediately.
@@ -437,6 +445,8 @@ public:
    int64 storedItems() const;
    void stored( int64& memory, int64& items ) const;
 
+   int64 sweepLoops( bool clear ) const;
+   int64 markLoops( bool clear ) const;
 
    /**
     * Disable automatic garbage collection.
@@ -484,6 +494,14 @@ public:
     * all the available memory.
     */
    void suggestGC( bool all = false );
+
+   /** Callback the onTimeout method of the active algorithm after given time.
+    * \param 0 to be called back after the given timeout, or 0 to disable.
+    *
+    * Calling this method multiple times cancels previous timeout callback.
+    *
+    */
+   void algoTimeout( uint32 to );
 
 #if FALCON_TRACE_GC
    /** Debug version of store.
@@ -670,6 +688,23 @@ protected:
       Collector* m_master;
    };
 
+   /** Timer thread.
+    * \note The timer thread could be eliminated if we created a collector per VM;
+    * we could then use the VM scheduler for the purpose of being called back at intervals.
+    * */
+   class Timer: public Runnable {
+      public:
+         Timer( Collector* master ):
+            m_master(master)
+         {}
+         virtual ~Timer(){}
+
+         virtual void* run();
+
+      private:
+         Collector* m_master;
+      };
+
    /** Sweeper thread. */
    class Sweeper: public Runnable {
    public:
@@ -709,6 +744,13 @@ protected:
    Marker m_marker;
    Event m_markerWork;
 
+   /** Timer thread, used for periodic memory checks by algorithms. */
+   SysThread *m_thTimer;
+   Timer m_timer;
+   Event m_timerWork;
+   Mutex m_mtx_timer;
+   int64 m_algoRandezVous;
+
    /** The sweeper thread is in charge of killing unused memory */
    SysThread *m_thSweeper;
    Sweeper m_sweeper;
@@ -722,9 +764,9 @@ protected:
    /** Guard for ramp modes. */
    mutable Mutex m_mtx_algo;
 
-   CollectorAlgorithm** m_ramp;
-   CollectorAlgorithm* m_curRampMode;
-   int m_curRampID;
+   CollectorAlgorithm** m_algo;
+   CollectorAlgorithm* m_curAlgoMode;
+   int m_curAlgoID;
 
    Mutex m_mtxRequest;
    Event m_eGCPerformed;
@@ -792,6 +834,8 @@ private:
    uint64 m_memoryThreshold;
    uint64 m_itemThreshold;
 
+   mutable uint64 m_markLoops;
+   mutable uint64 m_sweepLoops;
 
    class Private;
    Private* _p;

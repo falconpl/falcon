@@ -84,6 +84,7 @@ public:
    /** Symbols cannot be simplified. */
    inline virtual bool simplify( Item& ) const { return false; }
    inline virtual bool isStatic() const { return false; }
+   virtual bool fullDefining() { return true; }
 
    // Return the symbol pointed by this expression.
    Symbol* symbol() const { return m_symbol; }

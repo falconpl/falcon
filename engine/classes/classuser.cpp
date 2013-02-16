@@ -246,26 +246,30 @@ void ClassUser::describe( void* instance, String& target, int depth, int maxlen 
       while( iter != _p->m_props.end() )
       {
          Property* prop = iter->second;
-         Item value;
-         prop->get( instance, value );
-         
-         if( ! (value.isFunction() || value.isMethod()) )
+         if( ! prop->isHidden() )
          {
-            if( bFirst )
+            Item value;
+            prop->get( instance, value );
+
+            if( ! (value.isFunction() || value.isMethod()) )
             {
-               bFirst = false;
+               if( bFirst )
+               {
+                  bFirst = false;
+               }
+               else
+               {
+                  target += ','; target += ' ';
+               }
+
+               value.describe( temp, depth-1, maxlen );
+               target.append( prop->name() );
+               target.append('=');
+               target.append(temp);
+               temp.size(0);
             }
-            else
-            {
-               target += ','; target += ' ';
-            }
+         }
          
-            value.describe( temp, depth-1, maxlen );
-            target.append( prop->name() );
-            target.append('=');
-            target.append(temp);
-            temp.size(0);
-         }         
          ++iter;
       }
             

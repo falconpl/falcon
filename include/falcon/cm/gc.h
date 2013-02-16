@@ -20,6 +20,7 @@
 #include <falcon/property.h>
 #include <falcon/method.h>
 #include <falcon/classes/classuser.h>
+#include <falcon/collectoralgorithm.h>
 
 namespace Falcon {
 namespace Ext {
@@ -31,7 +32,9 @@ namespace Ext {
  @prop memory Memory currently controlled and supposed alive by the collector
  @prop items Number of items currently controlled and supposed alive by the collector
  @prop enabled True if the collector works, false to disable the collector.
- @prop current GC status: 0=green, 1=yellow, 2=red
+ @prop status current GC status: 0=green, 1=yellow, 2=red
+ @prop marks Contexts marked since last time @a GC.reset() was invoked
+ @prop sweeps Count of sweep loops since last time @a GC.reset() was invoked
  */
 class ClassGC: public ClassUser
 {
@@ -60,6 +63,36 @@ private:
    FALCON_DECLARE_PROPERTY( items )
    FALCON_DECLARE_PROPERTY( enabled )
    FALCON_DECLARE_PROPERTY( status )
+   /*#
+     @property algorithm GC
+     @brief Show or select which automatic collection algorithm is used.
+
+     The algorithm
+    */
+   FALCON_DECLARE_PROPERTY( algorithm )
+   /*#
+     @property limit GC
+     @brief Current limit for "green zone" in automatic algorithms.
+
+    */
+   FALCON_DECLARE_PROPERTY( limit )
+
+   /*#
+     @property baseLimit GC
+     @brief Minimum value for the limit property.
+
+    */
+   FALCON_DECLARE_PROPERTY( baseLimit )
+
+   FALCON_DECLARE_PROPERTY( sweeps )
+   FALCON_DECLARE_PROPERTY( marks )
+
+   FALCON_DECLARE_PROPERTY_CONSTANT( MANUAL, FALCON_COLLECTOR_ALGORITHM_MANUAL )
+   FALCON_DECLARE_PROPERTY_CONSTANT( FIXED, FALCON_COLLECTOR_ALGORITHM_FIXED )
+   FALCON_DECLARE_PROPERTY_CONSTANT( STRICT, FALCON_COLLECTOR_ALGORITHM_STRICT )
+   FALCON_DECLARE_PROPERTY_CONSTANT( SMOOTH, FALCON_COLLECTOR_ALGORITHM_SMOOTH )
+   FALCON_DECLARE_PROPERTY_CONSTANT( LOOSE, FALCON_COLLECTOR_ALGORITHM_LOOSE )
+   FALCON_DECLARE_PROPERTY_CONSTANT( DEFAULT, FALCON_COLLECTOR_ALGORITHM_LOOSE )
 
    /*#
     @method perform GC
@@ -94,6 +127,15 @@ private:
     the available memory as soon as possible.
     */
    FALCON_DECLARE_METHOD( suggest, "all:[B]" );
+
+   /*#
+    @method reset GC
+    @brief Clears count of sweep and mark loops.
+
+    After this call, the @a GC.marks and @a GC.sweeps counters
+    will be reset to 0.
+    */
+   FALCON_DECLARE_METHOD( reset, "all:[B]" );
 };
 
 }

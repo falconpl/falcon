@@ -22,6 +22,11 @@
 
 #include <falcon/log.h>
 
+#define TIMEOUT_TICK          200
+#define RED_RETRY_TIMEOUT     500
+#define YELLOW_RETRY_TIMEOUT  1000
+#define GREEN_RETRY_TIMEOUT   2000
+
 namespace Falcon {
 
 //=======================================================================
@@ -41,16 +46,54 @@ void CollectorAlgorithmFixed::onApply(Collector* coll)
 
 void CollectorAlgorithmFixed::onMemoryThreshold( Collector* coll, int64 memory )
 {
-   coll->status( Collector::e_status_yellow );
    if( memory >= m_limit * 2 )
    {
+      coll->status( Collector::e_status_red );
       coll->suggestGC(true);
-      coll->memoryThreshold(memory*2);
+      coll->memoryThreshold(memory + m_limit*2 );
+      coll->algoTimeout(RED_RETRY_TIMEOUT);
+   }
+   else if( memory >= m_limit ) {
+      coll->status( Collector::e_status_yellow );
+      coll->suggestGC(false);
+      coll->memoryThreshold(memory+m_limit);
+      coll->algoTimeout(YELLOW_RETRY_TIMEOUT);
    }
    else {
-      coll->suggestGC(false);
+      coll->status( Collector::e_status_green );
+      coll->memoryThreshold(m_limit);
+      coll->algoTimeout(0);
    }
 }
+
+
+void CollectorAlgorithmFixed::onTimeout( Collector* coll )
+{
+   onMemoryThreshold(coll, coll->storedMemory() );
+   // let sweep to reschedule us if necessary
+   // we might be called by the sweep loop; see if we should
+}
+
+
+void CollectorAlgorithmFixed::limit( int64 l )
+{
+   m_limit = l;
+}
+
+int64 CollectorAlgorithmFixed::limit() const
+{
+   return m_limit;
+}
+
+void CollectorAlgorithmFixed::base( int64  )
+{
+}
+
+int64 CollectorAlgorithmFixed::base() const
+{
+   return 0;
+}
+
 
 void CollectorAlgorithmFixed::onSweepComplete( Collector* coll, int64 freedMem, int64 freedItems )
 {
@@ -60,14 +103,18 @@ void CollectorAlgorithmFixed::onSweepComplete( Collector* coll, int64 freedMem, 
    if ( mem < m_limit )
    {
       coll->status( Collector::e_status_green );
-      coll->memoryThreshold(m_limit);
+      coll->memoryThreshold(m_limit );
+      // cancel pending timeouts.
+      coll->algoTimeout(0);
    }
    else if ( freedItems > 0 )
    {
-      coll->memoryThreshold(m_limit*2);
+      coll->status(Collector::e_status_yellow);
+      coll->algoTimeout(YELLOW_RETRY_TIMEOUT);
    }
    else {
-      coll->memoryThreshold(mem*2);
+      coll->status(Collector::e_status_red);
+      coll->algoTimeout(RED_RETRY_TIMEOUT);
    }
 
    log->log(Log::fac_engine, Log::lvl_detail, String("Swept ").N(freedMem) );
@@ -85,85 +132,198 @@ void CollectorAlgorithmFixed::describe(String& target) const
 // Ramp algorithm.
 //
 
-CollectorAlgorithmRamp::CollectorAlgorithmRamp():
-   CollectorAlgorithmFixed(0)
+CollectorAlgorithmRamp::CollectorAlgorithmRamp( int64 limit, numeric sweepFact, numeric yellowFact, numeric redFact ):
+      m_sweepThreshold( limit * sweepFact ),
+      m_yellowLimit( limit * yellowFact  ),
+      m_redLimit( limit * redFact ),
+      m_yellowFactor( yellowFact ),
+      m_redFactor( redFact ),
+      m_sweepFactor( sweepFact )
 {
-   m_sweptMemory = 0;
-   m_sweptTimes = 0;
+   m_limit = limit;
+   m_base = limit * (1-sweepFact);
 }
+
 
 CollectorAlgorithmRamp::~CollectorAlgorithmRamp()
 {}
 
-Collector::t_status CollectorAlgorithmRamp::checkStatus()
+void CollectorAlgorithmRamp::onApply( Collector* coll )
 {
-   m_mtx.lock();
-   Collector::t_status result = m_currentStatus;
-   m_mtx.unlock();
-
-   return result;
+   coll->memoryThreshold( m_yellowLimit );
 }
 
-void CollectorAlgorithmRamp::onSweepComplete( Collector*, int64 allocatedMemory, int64 )
+void CollectorAlgorithmRamp::onRemove( Collector* coll )
 {
-   m_mtx.lock();
-   if( allocatedMemory <= m_thresholdYellow ) {
-      m_currentStatus = Collector::e_status_green;
+   // be sure to leave the timeout clean for who comes.
+   coll->algoTimeout( 0 );
+}
+
+
+void CollectorAlgorithmRamp::onMemoryThreshold( Collector* coll, int64 threshold )
+{
+   if( threshold >= m_redLimit *m_redFactor ) {
+      coll->status( Collector::e_status_red );
+      coll->suggestGC(true);
    }
-   else if( allocatedMemory <= m_thresholdBrown ) {
-      m_currentStatus = Collector::e_status_yellow;
+   if( threshold >= m_redLimit ) {
+      coll->status( Collector::e_status_red );
+      coll->memoryThreshold( m_redLimit* m_redFactor );
+      coll->suggestGC(false);
+   }
+   else if( threshold >= m_yellowLimit ) {
+      coll->status( Collector::e_status_yellow );
+      coll->memoryThreshold( m_redLimit );
    }
    else {
-      m_currentStatus = Collector::e_status_red;
+      coll->memoryThreshold(m_yellowLimit);
    }
+}
 
-   if( m_sweptMemory == 0 || m_sweptMemory >= allocatedMemory * (1+m_successRatio) )
+
+void CollectorAlgorithmRamp::onSweepComplete( Collector* coll, int64 freedMemory, int64 )
+{
+   Collector::t_status status = coll->status();
+
+   int64 memory = coll->storedMemory();
+   // -- put current limit as next threshold
+   m_mtx.lock();
+   int64 oldLimit = m_limit;
+   m_limit = memory > m_base ? memory : m_base;
+   int64 yl = (m_yellowLimit = m_limit * m_yellowFactor);
+   int64 rl = (m_redLimit = m_limit * m_redFactor);
+   int64 oldThreshold = m_sweepThreshold;
+   m_sweepThreshold = m_limit * m_sweepFactor;
+   m_mtx.unlock();
+
+   // success in freeing memory?
+   if( freedMemory >= oldThreshold || memory < oldLimit )
    {
-      // a successful event.
-      m_thresholdYellow = allocatedMemory * m_yellowBaseRatio;
-      m_thresholdBrown = allocatedMemory * m_brownBaseRatio;
-      m_thresholdRed = allocatedMemory * m_redBaseRatio;
+      // -- go down a state.
+      if ( status == Collector::e_status_red )
+      {
+         coll->status(Collector::e_status_yellow);
+         yl = rl;
+      }
+      else if ( status == Collector::e_status_yellow ) {
+         coll->status(Collector::e_status_green);
+         // keep current to
+      }
+      m_lastTimeout = TIMEOUT_TICK * (10*m_redFactor);
    }
    else {
-      if( m_thresholdYellow *(1+m_growthRatio) <= m_sweptMemory * m_yellowMaxRatio )
-      {
-         m_thresholdYellow *= (1+m_growthRatio);
-      }
-
-      if( m_thresholdBrown *(1+m_growthRatio) < m_sweptMemory * m_brownMaxRatio )
-      {
-         m_thresholdBrown *= (1+m_growthRatio);
-      }
-
-      if( m_thresholdRed *(1+m_growthRatio) < m_sweptMemory * m_redMaxRatio )
-      {
-         m_thresholdRed *= (1+m_growthRatio);
-      }
+      m_lastTimeout = TIMEOUT_TICK*(5*m_redFactor);
    }
 
-   if( m_sweepThreshold > 0 && m_sweptTimes++ >= m_sweepThreshold ) {
-      m_sweptMemory = 0;
+   coll->algoTimeout(m_lastTimeout);
+   coll->memoryThreshold( yl, true );
+}
+
+
+void CollectorAlgorithmRamp::onTimeout( Collector* coll )
+{
+   static Log* log = Engine::instance()->log();
+   Collector::t_status status = coll->status();
+
+   log->log(Log::fac_engine, Log::lvl_detail,
+               String("Timeout for collector strategy ").N(status) );
+
+   // if we're still in yellow status or above, try to suggest some collection.
+   if ( status == Collector::e_status_red &&  (m_redLimit*2 < coll->storedMemory()) )
+   {
+      coll->suggestGC(true);
+      if( m_lastTimeout > TIMEOUT_TICK*2 )
+      {
+         // shrink the timeout
+         m_lastTimeout /= m_redFactor;
+      }
+   }
+   else if ( status == Collector::e_status_red )
+   {
+      coll->suggestGC(false);
+      // keep current timeout
+   }
+   else if ( status == Collector::e_status_yellow ) {
+      if( m_lastTimeout < TIMEOUT_TICK*25 )
+      {
+         // grow the timeout
+         m_lastTimeout *= m_yellowFactor;
+      }
+
+      coll->suggestGC(false);
    }
    else {
-      m_sweptMemory = allocatedMemory;
+      if( m_lastTimeout < TIMEOUT_TICK*50 )
+      {
+         // grow the timeout more
+         m_lastTimeout *= m_redFactor;
+      }
+
+      // suggest some gc.
+      coll->status( Collector::e_status_yellow );
+      coll->suggestGC(false);
    }
 
+   coll->algoTimeout( m_lastTimeout );
+}
+
+
+void CollectorAlgorithmRamp::describe( String& target ) const
+{
+   // we don't care to lock here.
+   target
+      .A("ylmt:").N(m_yellowLimit)
+      .A(", rlmt:").N(m_redLimit)
+      .A(", yfac:").N(m_yellowFactor)
+      .A(", rfac:").N(m_redFactor)
+      .A(", swt:").N(m_sweepThreshold);
+}
+
+
+void CollectorAlgorithmRamp::limit( int64 l )
+{
+   m_mtx.lock();
+   m_limit = l;
+   if( m_limit < m_base )
+   {
+      m_limit = m_base;
+   }
+   m_yellowLimit = m_limit * m_yellowFactor;
+   m_redLimit = m_limit * m_redFactor;
    m_mtx.unlock();
 }
 
-void CollectorAlgorithmRamp::describe( String& target) const
+int64 CollectorAlgorithmRamp::limit() const
 {
-   switch( m_currentStatus ) {
-   case Collector::e_status_green: target.A("green "); break;
-   case Collector::e_status_yellow: target.A("yellow "); break;
-   case Collector::e_status_red: target.A("red "); break;
-   default: target.A("forced "); break;
-   }
+   m_mtx.lock();
+   int64 l = m_limit;
+   m_mtx.unlock();
 
-   target.N(m_thresholdYellow).A(", ").N(m_thresholdBrown).A(", ").N(m_thresholdRed)
-            .A( "[Sw: " ).N(m_sweptMemory).A(" sr:").N(m_successRatio).A("]{")
-            .N(m_sweptTimes).A("/").N(m_sweepThreshold).A("}");
+   return l;
 }
+
+void CollectorAlgorithmRamp::base( int64 l )
+{
+   m_mtx.lock();
+   m_base = l;
+   if( m_limit < m_base )
+   {
+      m_limit = m_base;
+      m_yellowLimit = m_limit * m_yellowFactor;
+      m_redLimit = m_limit * m_redFactor;
+   }
+   m_mtx.unlock();
+}
+
+int64 CollectorAlgorithmRamp::base() const
+{
+   m_mtx.lock();
+   int64 l = m_base;
+   m_mtx.unlock();
+
+   return l;
+}
+
 
 //=======================================================================
 // Strict algorithm.
@@ -171,22 +331,8 @@ void CollectorAlgorithmRamp::describe( String& target) const
 
 
 CollectorAlgorithmStrict::CollectorAlgorithmStrict():
-         CollectorAlgorithmRamp()
+         CollectorAlgorithmRamp( 100000, 0.5, 1.25, 1.5 )
 {
-   m_currentStatus = Collector::e_status_red;
-
-   m_yellowBaseRatio = 0.5;
-   m_brownBaseRatio = 0.75;
-   m_redBaseRatio = 1.0001;
-
-   m_yellowMaxRatio = 0.98;
-   m_brownMaxRatio = 1.25;
-   m_redMaxRatio = 1.50;
-
-   m_growthRatio = 0.05;
-   m_successRatio = 0.05;
-
-   m_sweepThreshold = 10;
 }
 
 CollectorAlgorithmStrict::~CollectorAlgorithmStrict()
@@ -205,22 +351,8 @@ void CollectorAlgorithmStrict::describe( String& target ) const
 //
 
 CollectorAlgorithmSmooth::CollectorAlgorithmSmooth():
-         CollectorAlgorithmRamp()
+         CollectorAlgorithmRamp( 1000000, 0.25, 1.5, 2 )
 {
-   m_currentStatus = Collector::e_status_red;
-
-   m_yellowBaseRatio = 0.75;
-   m_brownBaseRatio = 1.0001;
-   m_redBaseRatio = 1.50;
-
-   m_yellowMaxRatio = 1.001;
-   m_brownMaxRatio = 1.50;
-   m_redMaxRatio = 2.0;
-
-   m_growthRatio = 0.15;
-   m_successRatio = 0.15;
-
-   m_sweepThreshold = 50;
 }
 
 CollectorAlgorithmSmooth::~CollectorAlgorithmSmooth()
@@ -239,22 +371,8 @@ void CollectorAlgorithmSmooth::describe( String& target ) const
 //
 
 CollectorAlgorithmLoose::CollectorAlgorithmLoose():
-         CollectorAlgorithmRamp()
+         CollectorAlgorithmRamp( 10000000, 0.1, 2, 3 )
 {
-   m_currentStatus = Collector::e_status_yellow;
-
-   m_yellowBaseRatio = 0.75;
-   m_brownBaseRatio = 1.0001;
-   m_redBaseRatio = 1.50;
-
-   m_yellowMaxRatio = 1.001;
-   m_brownMaxRatio = 1.50;
-   m_redMaxRatio = 2.0;
-
-   m_growthRatio = 0.25;
-   m_successRatio = 0.25;
-
-   m_sweepThreshold = 0;
 }
 
 CollectorAlgorithmLoose::~CollectorAlgorithmLoose()

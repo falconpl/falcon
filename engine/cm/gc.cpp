@@ -38,8 +38,22 @@ ClassGC::ClassGC():
    FALCON_INIT_PROPERTY( enabled ),
    FALCON_INIT_PROPERTY( status ),
 
+   FALCON_INIT_PROPERTY( algorithm ),
+   FALCON_INIT_PROPERTY( limit ),
+   FALCON_INIT_PROPERTY( baseLimit ),
+   FALCON_INIT_PROPERTY( sweeps ),
+   FALCON_INIT_PROPERTY( marks ),
+
+   FALCON_INIT_PROPERTY( MANUAL ),
+   FALCON_INIT_PROPERTY( FIXED ),
+   FALCON_INIT_PROPERTY( STRICT ),
+   FALCON_INIT_PROPERTY( SMOOTH ),
+   FALCON_INIT_PROPERTY( LOOSE ),
+   FALCON_INIT_PROPERTY( DEFAULT ),
+
    FALCON_INIT_METHOD( perform ),
-   FALCON_INIT_METHOD( suggest )
+   FALCON_INIT_METHOD( suggest ),
+   FALCON_INIT_METHOD( reset )
 {
    // we don't need an object
    m_bIsFlatInstance = true;
@@ -138,6 +152,75 @@ FALCON_DEFINE_PROPERTY_GET( ClassGC, status )(void*, Item& value)
 }
 
 
+FALCON_DEFINE_PROPERTY_SET( ClassGC, algorithm )(void*, const Item& value)
+{
+   static Collector* coll = Engine::instance()->collector();
+   int32 algo;
+   checkType( value.isOrdinal()
+            && (algo = static_cast<int32>(value.forceInteger()))
+            && algo >= 0 && algo < FALCON_COLLECTOR_ALGORITHM_COUNT,
+       String("0<=N<").N(FALCON_COLLECTOR_ALGORITHM_COUNT));
+
+   coll->setAlgorithm(algo);
+}
+
+FALCON_DEFINE_PROPERTY_GET( ClassGC, algorithm )(void*, Item& value)
+{
+   static Collector* coll = Engine::instance()->collector();
+   value = static_cast<int64>(coll->currentAlgorithm());
+}
+
+FALCON_DEFINE_PROPERTY_SET( ClassGC, limit )(void*, const Item& value )
+{
+   static Collector* coll = Engine::instance()->collector();
+   checkType( value.isOrdinal(), "N" );
+   coll->currentAlgorithmObject()->limit( value.asInteger() );
+}
+
+FALCON_DEFINE_PROPERTY_GET( ClassGC, limit )(void*, Item& value)
+{
+   static Collector* coll = Engine::instance()->collector();
+   value = coll->currentAlgorithmObject()->limit();
+}
+
+FALCON_DEFINE_PROPERTY_SET( ClassGC, baseLimit )(void*, const Item& value )
+{
+   static Collector* coll = Engine::instance()->collector();
+   checkType( value.isOrdinal(), "N" );
+   coll->currentAlgorithmObject()->base( value.forceInteger() );
+}
+
+FALCON_DEFINE_PROPERTY_GET( ClassGC, baseLimit )(void*, Item& value)
+{
+   static Collector* coll = Engine::instance()->collector();
+   value = coll->currentAlgorithmObject()->base();
+}
+
+
+
+FALCON_DEFINE_PROPERTY_SET( ClassGC, marks )(void*, const Item& )
+{
+   throw readOnlyError();
+}
+
+FALCON_DEFINE_PROPERTY_GET( ClassGC, marks )(void*, Item& value)
+{
+   static Collector* coll = Engine::instance()->collector();
+   value = coll->markLoops(false);
+}
+
+FALCON_DEFINE_PROPERTY_SET( ClassGC, sweeps )(void*, const Item& )
+{
+   throw readOnlyError();
+}
+
+FALCON_DEFINE_PROPERTY_GET( ClassGC, sweeps )(void*, Item& value)
+{
+   static Collector* coll = Engine::instance()->collector();
+   value = coll->sweepLoops(false);
+}
+
+
 FALCON_DEFINE_METHOD_P1( ClassGC, perform )
 {
    static Collector* coll = Engine::instance()->collector();
@@ -184,6 +267,17 @@ FALCON_DEFINE_METHOD_P1( ClassGC, suggest )
    TRACE( "ClassGC::Method_suggest %s", (all? "Full" : "partial") );
 
    coll->suggestGC(all);
+   ctx->returnFrame();
+}
+
+
+FALCON_DEFINE_METHOD_P1( ClassGC, reset )
+{
+   static Collector* coll = Engine::instance()->collector();
+   MESSAGE( "ClassGC::Method_reset");
+
+   coll->sweepLoops(true);
+   coll->markLoops(true);
    ctx->returnFrame();
 }
 
