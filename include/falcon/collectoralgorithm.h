@@ -144,7 +144,7 @@ protected:
 class FALCON_DYN_CLASS CollectorAlgorithmRamp: public CollectorAlgorithm
 {
 public:
-   CollectorAlgorithmRamp( int64 limit, numeric sweepFact, numeric yellowFact, numeric redFact );
+   CollectorAlgorithmRamp( int64 limit, numeric yellowFact, numeric redFact );
    virtual ~CollectorAlgorithmRamp();
 
    virtual void onApply(Collector* );
@@ -166,7 +166,6 @@ public:
    virtual void describe( String& target) const;
 
 protected:
-   int64 m_sweepThreshold;
    int64 m_base;
    int64 m_limit;
 
@@ -174,7 +173,6 @@ protected:
    int64 m_redLimit;
    numeric m_yellowFactor;
    numeric m_redFactor;
-   numeric m_sweepFactor;
 
    uint32 m_lastTimeout;
    mutable Mutex m_mtx;

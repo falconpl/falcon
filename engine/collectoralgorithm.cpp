@@ -23,9 +23,11 @@
 #include <falcon/log.h>
 
 #define TIMEOUT_TICK          200
-#define RED_RETRY_TIMEOUT     500
-#define YELLOW_RETRY_TIMEOUT  1000
-#define GREEN_RETRY_TIMEOUT   2000
+#define RED_RETRY_TIMEOUT     250
+#define YELLOW_RETRY_TIMEOUT  500
+#define GREEN_RETRY_TIMEOUT   1000
+
+#define MAX_TIMEOUT           10000
 
 namespace Falcon {
 
@@ -132,16 +134,14 @@ void CollectorAlgorithmFixed::describe(String& target) const
 // Ramp algorithm.
 //
 
-CollectorAlgorithmRamp::CollectorAlgorithmRamp( int64 limit, numeric sweepFact, numeric yellowFact, numeric redFact ):
-      m_sweepThreshold( limit * sweepFact ),
+CollectorAlgorithmRamp::CollectorAlgorithmRamp( int64 limit, numeric yellowFact, numeric redFact ):
       m_yellowLimit( limit * yellowFact  ),
       m_redLimit( limit * redFact ),
       m_yellowFactor( yellowFact ),
-      m_redFactor( redFact ),
-      m_sweepFactor( sweepFact )
+      m_redFactor( redFact )
 {
    m_limit = limit;
-   m_base = limit * (1-sweepFact);
+   m_base = limit;
 }
 
 
@@ -150,7 +150,7 @@ CollectorAlgorithmRamp::~CollectorAlgorithmRamp()
 
 void CollectorAlgorithmRamp::onApply( Collector* coll )
 {
-   coll->memoryThreshold( m_yellowLimit );
+   coll->memoryThreshold( m_yellowLimit, true );
 }
 
 void CollectorAlgorithmRamp::onRemove( Collector* coll )
@@ -162,108 +162,130 @@ void CollectorAlgorithmRamp::onRemove( Collector* coll )
 
 void CollectorAlgorithmRamp::onMemoryThreshold( Collector* coll, int64 threshold )
 {
-   if( threshold >= m_redLimit *m_redFactor ) {
-      coll->status( Collector::e_status_red );
-      coll->suggestGC(true);
-   }
    if( threshold >= m_redLimit ) {
       coll->status( Collector::e_status_red );
-      coll->memoryThreshold( m_redLimit* m_redFactor );
-      coll->suggestGC(false);
+      coll->suggestGC(true);
+      coll->memoryThreshold( m_redLimit*m_redFactor );
+      m_lastTimeout = ( RED_RETRY_TIMEOUT * m_yellowFactor );
    }
    else if( threshold >= m_yellowLimit ) {
       coll->status( Collector::e_status_yellow );
+      coll->suggestGC(false);
       coll->memoryThreshold( m_redLimit );
+      m_lastTimeout = ( YELLOW_RETRY_TIMEOUT * m_yellowFactor );
    }
-   else {
+   else
+   {
       coll->memoryThreshold(m_yellowLimit);
+      m_lastTimeout = ( GREEN_RETRY_TIMEOUT * m_yellowFactor );
    }
+
+   coll->algoTimeout( m_lastTimeout );
 }
 
 
-void CollectorAlgorithmRamp::onSweepComplete( Collector* coll, int64 freedMemory, int64 )
+void CollectorAlgorithmRamp::onSweepComplete( Collector* coll, int64 freed, int64 )
 {
-   Collector::t_status status = coll->status();
-
    int64 memory = coll->storedMemory();
    // -- put current limit as next threshold
    m_mtx.lock();
-   int64 oldLimit = m_limit;
-   m_limit = memory > m_base ? memory : m_base;
+   bool done = memory <= m_base;
+   m_limit = done ? m_base : memory;
    int64 yl = (m_yellowLimit = m_limit * m_yellowFactor);
-   int64 rl = (m_redLimit = m_limit * m_redFactor);
-   int64 oldThreshold = m_sweepThreshold;
-   m_sweepThreshold = m_limit * m_sweepFactor;
+   m_redLimit = m_limit * m_redFactor;
    m_mtx.unlock();
 
-   // success in freeing memory?
-   if( freedMemory >= oldThreshold || memory < oldLimit )
+   // success in freeing?
+   if( done )
    {
-      // -- go down a state.
-      if ( status == Collector::e_status_red )
-      {
-         coll->status(Collector::e_status_yellow);
-         yl = rl;
-      }
-      else if ( status == Collector::e_status_yellow ) {
-         coll->status(Collector::e_status_green);
-         // keep current to
-      }
-      m_lastTimeout = TIMEOUT_TICK * (10*m_redFactor);
+      // cancel pending timeout and set status
+      coll->algoTimeout(0);
+      coll->status(Collector::e_status_green);
    }
-   else {
-      m_lastTimeout = TIMEOUT_TICK*(5*m_redFactor);
+   else if( freed >= m_limit * (1-m_redFactor) )
+   {
+      // Rest the counter, we have hope in the future
+      m_lastTimeout = TIMEOUT_TICK;
+      coll->algoTimeout(m_lastTimeout);
    }
-
-   coll->algoTimeout(m_lastTimeout);
-   coll->memoryThreshold( yl, true );
+   // also add a threshold; whichever comes first wins...
+   coll->memoryThreshold( yl );
 }
 
 
 void CollectorAlgorithmRamp::onTimeout( Collector* coll )
 {
-   static Log* log = Engine::instance()->log();
-   Collector::t_status status = coll->status();
+   int64 memory = coll->storedMemory();
+   Collector::t_status status;
+   bool suggestGC = false;
+   bool suggestMode = false;
+   int64 yl = 0;
 
-   log->log(Log::fac_engine, Log::lvl_detail,
-               String("Timeout for collector strategy ").N(status) );
-
-   // if we're still in yellow status or above, try to suggest some collection.
-   if ( status == Collector::e_status_red &&  (m_redLimit*2 < coll->storedMemory()) )
+   m_mtx.lock();
+   if( memory >= m_redLimit )
    {
-      coll->suggestGC(true);
-      if( m_lastTimeout > TIMEOUT_TICK*2 )
-      {
-         // shrink the timeout
-         m_lastTimeout /= m_redFactor;
-      }
+     status = Collector::e_status_red;
+     suggestGC = true;
+     suggestMode = true;
+     m_lastTimeout += RED_RETRY_TIMEOUT * m_redFactor;
    }
-   else if ( status == Collector::e_status_red )
+   else if( memory >= m_yellowLimit ) {
+     status = Collector::e_status_yellow;
+     suggestGC = true;
+     suggestMode = false;
+     m_lastTimeout += YELLOW_RETRY_TIMEOUT * m_redFactor;
+   }
+   else if( memory >= m_base )
    {
-      coll->suggestGC(false);
-      // keep current timeout
-   }
-   else if ( status == Collector::e_status_yellow ) {
-      if( m_lastTimeout < TIMEOUT_TICK*25 )
+      // gets the limits a bit down and see what happens.
+      m_limit /= m_yellowFactor;
+      if( m_limit < m_base )
       {
-         // grow the timeout
-         m_lastTimeout *= m_yellowFactor;
+         m_limit = m_base;
       }
+      yl = (m_yellowLimit = m_limit * m_yellowFactor);
+      m_redLimit = m_limit * m_redFactor;
 
-      coll->suggestGC(false);
+      if( memory >= m_redLimit )
+      {
+         status = Collector::e_status_red;
+         m_lastTimeout += YELLOW_RETRY_TIMEOUT * m_redFactor;
+      }
+      else if( memory >= m_yellowLimit )
+      {
+         status = Collector::e_status_red;
+         m_lastTimeout += YELLOW_RETRY_TIMEOUT * m_redFactor;
+      }
+      else {
+         status = Collector::e_status_green;
+         m_lastTimeout += GREEN_RETRY_TIMEOUT * m_redFactor;
+      }
+      // however, wait next time before suggesting collection
+
    }
    else {
-      if( m_lastTimeout < TIMEOUT_TICK*50 )
-      {
-         // grow the timeout more
-         m_lastTimeout *= m_redFactor;
-      }
-
-      // suggest some gc.
-      coll->status( Collector::e_status_yellow );
-      coll->suggestGC(false);
+     coll->memoryThreshold(m_yellowLimit);
+     status = Collector::e_status_green;
+     // timer off.
+     m_lastTimeout = 0;
    }
 
+   if( m_lastTimeout > MAX_TIMEOUT )
+   {
+      m_lastTimeout = MAX_TIMEOUT;
+   }
+   m_mtx.unlock();
+
+   if( yl > 0 ) {
+      coll->memoryThreshold( yl );
+   }
+
+   if( suggestGC )
+   {
+      coll->suggestGC( suggestMode );
+   }
+
+   coll->status( status );
    coll->algoTimeout( m_lastTimeout );
 }
 
@@ -276,7 +298,7 @@ void CollectorAlgorithmRamp::describe( String& target ) const
       .A(", rlmt:").N(m_redLimit)
       .A(", yfac:").N(m_yellowFactor)
       .A(", rfac:").N(m_redFactor)
-      .A(", swt:").N(m_sweepThreshold);
+      ;
 }
 
 
@@ -331,7 +353,7 @@ int64 CollectorAlgorithmRamp::base() const
 
 
 CollectorAlgorithmStrict::CollectorAlgorithmStrict():
-         CollectorAlgorithmRamp( 100000, 0.5, 1.25, 1.5 )
+         CollectorAlgorithmRamp( 100000, 1.25, 1.5 )
 {
 }
 
@@ -351,7 +373,7 @@ void CollectorAlgorithmStrict::describe( String& target ) const
 //
 
 CollectorAlgorithmSmooth::CollectorAlgorithmSmooth():
-         CollectorAlgorithmRamp( 1000000, 0.25, 1.5, 2 )
+         CollectorAlgorithmRamp( 1000000, 1.5, 2 )
 {
 }
 
@@ -371,7 +393,7 @@ void CollectorAlgorithmSmooth::describe( String& target ) const
 //
 
 CollectorAlgorithmLoose::CollectorAlgorithmLoose():
-         CollectorAlgorithmRamp( 10000000, 0.1, 2, 3 )
+         CollectorAlgorithmRamp( 10000000, 1.8, 2.5 )
 {
 }
 

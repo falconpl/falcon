@@ -55,10 +55,10 @@ function fullTest( algoId, limit )
    vector = []
    doLoop( "Memory generator loop", 100000, 
          // use a closure to close our variable
-         {l => vector += "abcd" + l} )
+         {l => vector += "abcdefghilmno" + l} )
          
    doLoop( "Memory Leak loop", 100000, 
-         {(l) x = "abcd" + l } )
+         {(l) x = "abcdefghilmno" + l } )
       
    doLoop( "Memory release loop", 100000, 
          {l => vector[l] = nil} )   
