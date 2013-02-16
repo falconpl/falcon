@@ -184,7 +184,7 @@ void ModCompiler::Context::onNewStatement( TreeStep* ts )
       {
          // are we in a lambda?
          ParserContext* pc =  static_cast<ParserContext*>(m_owner->m_sp.context());
-         if((pc->currentFunc() != 0 && pc->currentFunc()->name().size() == 0)
+         if((pc->currentFunc() != 0 && (pc->currentFunc()->name().size() == 0|| pc->currentFunc()->name().startsWith("_anon#") ))
              || pc->isLitContext()
              || (pc->currentStmt() != 0 && pc->currentStmt()->handler()->userFlags() == FALCON_SYNCLASS_ID_RULE ) )
          {

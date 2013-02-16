@@ -127,7 +127,7 @@ void ExprStrIPol::handleDynamicInterpolated( const String &str, VMContext *ctx )
       return;
    }
    else {
-      ctx->topData().setUser(FALCON_GC_HANDLE(sipol));
+      ctx->topData().setUser(FALCON_GC_HANDLE_IN( ctx, sipol));
       ctx->resetAndApply(&m_pstepIPolData);
    }
 }
@@ -219,7 +219,7 @@ void ExprStrIPol::PStepIPolData::apply_( const PStep*, VMContext* ctx )
 
    String* res = sipol->mount(ctx->opcodeParams(depth));
    ctx->popData(depth+1);// we and our parent.
-   ctx->pushData(FALCON_GC_HANDLE(res));
+   ctx->pushData(FALCON_GC_HANDLE_IN(ctx, res));
 }
 
 }

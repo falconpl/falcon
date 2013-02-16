@@ -20,90 +20,64 @@
 #include <falcon/collector.h>
 #include <falcon/engine.h>
 
+#include <falcon/log.h>
+
 namespace Falcon {
 
 //=======================================================================
 // Fixed algorithm.
 //
 
-CollectorAlgorithmFixed::CollectorAlgorithmFixed( int64 yellow, int64 brown, int64 red ):
+CollectorAlgorithmFixed::CollectorAlgorithmFixed( int64 limit ):
          CollectorAlgorithm(),
-         m_thresholdYellow(yellow),
-         m_thresholdBrown(brown),
-         m_thresholdRed(red)
+         m_limit(limit)
 {}
 
-
-Collector::t_status CollectorAlgorithmFixed::checkStatus()
+void CollectorAlgorithmFixed::onApply(Collector* coll)
 {
-   int64 level = Engine::collector()->storedMemory();
+   coll->memoryThreshold(m_limit);
+}
 
-   Collector::t_status result;
-   m_mtx.lock();
-   if( level <= m_thresholdYellow ) {
-      result = Collector::e_status_green;
-   }
-   else if( level <= m_thresholdBrown ) {
-      result = Collector::e_status_yellow;
-   }
-   else if( level <= m_thresholdRed ) {
-      result = Collector::e_status_brown;
+
+void CollectorAlgorithmFixed::onMemoryThreshold( Collector* coll, int64 memory )
+{
+   coll->status( Collector::e_status_yellow );
+   if( memory >= m_limit * 2 )
+   {
+      coll->suggestGC(true);
+      coll->memoryThreshold(memory*2);
    }
    else {
-      result = Collector::e_status_red;
+      coll->suggestGC(false);
    }
-   m_mtx.unlock();
-
-   return result;
 }
 
-
-void CollectorAlgorithmFixed::onSweepComplete( int64, int64 )
+void CollectorAlgorithmFixed::onSweepComplete( Collector* coll, int64 freedMem, int64 freedItems )
 {
+   static Log* log = Engine::instance()->log();
+
+   int64 mem = coll->storedMemory();
+   if ( mem < m_limit )
+   {
+      coll->status( Collector::e_status_green );
+      coll->memoryThreshold(m_limit);
+   }
+   else if ( freedItems > 0 )
+   {
+      coll->memoryThreshold(m_limit*2);
+   }
+   else {
+      coll->memoryThreshold(mem*2);
+   }
+
+   log->log(Log::fac_engine, Log::lvl_detail, String("Swept ").N(freedMem) );
 }
+
 
 void CollectorAlgorithmFixed::describe(String& target) const
 {
    target = "CollectorAlgorithmFixed(";
-   target.N(m_thresholdYellow).A(", ").N(m_thresholdBrown).A(", ").N(m_thresholdRed);
-}
-
-void CollectorAlgorithmFixed::setLevels( int64 yellow, int64 brown, int64 red )
-{
-   m_mtx.lock();
-   m_thresholdYellow = yellow;
-   m_thresholdBrown = brown;
-   m_thresholdRed = red;
-   m_mtx.unlock();
-}
-void CollectorAlgorithmFixed::setYellow( int64 value )
-{
-   m_mtx.lock();
-   m_thresholdYellow = value;
-   m_mtx.unlock();
-}
-
-void CollectorAlgorithmFixed::setBrown( int64 value )
-{
-   m_mtx.lock();
-   m_thresholdBrown = value;
-   m_mtx.unlock();
-}
-
-void CollectorAlgorithmFixed::setRed( int64 value )
-{
-   m_mtx.lock();
-   m_thresholdRed = value;
-   m_mtx.unlock();
-}
-
-void CollectorAlgorithmFixed::getLevels( int64& yellow, int64& brown, int64& red ) const
-{
-   m_mtx.lock();
-   yellow = m_thresholdYellow;
-   brown = m_thresholdBrown;
-   red = m_thresholdRed;
-   m_mtx.unlock();
+   target.N(m_limit).A(")");
 }
 
 
@@ -112,7 +86,7 @@ void CollectorAlgorithmFixed::getLevels( int64& yellow, int64& brown, int64& red
 //
 
 CollectorAlgorithmRamp::CollectorAlgorithmRamp():
-   CollectorAlgorithmFixed(0,0,0)
+   CollectorAlgorithmFixed(0)
 {
    m_sweptMemory = 0;
    m_sweptTimes = 0;
@@ -130,7 +104,7 @@ Collector::t_status CollectorAlgorithmRamp::checkStatus()
    return result;
 }
 
-void CollectorAlgorithmRamp::onSweepComplete( int64 allocatedMemory, int64 )
+void CollectorAlgorithmRamp::onSweepComplete( Collector*, int64 allocatedMemory, int64 )
 {
    m_mtx.lock();
    if( allocatedMemory <= m_thresholdYellow ) {
@@ -138,9 +112,6 @@ void CollectorAlgorithmRamp::onSweepComplete( int64 allocatedMemory, int64 )
    }
    else if( allocatedMemory <= m_thresholdBrown ) {
       m_currentStatus = Collector::e_status_yellow;
-   }
-   else if( allocatedMemory <= m_thresholdRed ) {
-      m_currentStatus = Collector::e_status_brown;
    }
    else {
       m_currentStatus = Collector::e_status_red;
@@ -185,7 +156,6 @@ void CollectorAlgorithmRamp::describe( String& target) const
    switch( m_currentStatus ) {
    case Collector::e_status_green: target.A("green "); break;
    case Collector::e_status_yellow: target.A("yellow "); break;
-   case Collector::e_status_brown: target.A("brown "); break;
    case Collector::e_status_red: target.A("red "); break;
    default: target.A("forced "); break;
    }
@@ -237,7 +207,7 @@ void CollectorAlgorithmStrict::describe( String& target ) const
 CollectorAlgorithmSmooth::CollectorAlgorithmSmooth():
          CollectorAlgorithmRamp()
 {
-   m_currentStatus = Collector::e_status_brown;
+   m_currentStatus = Collector::e_status_red;
 
    m_yellowBaseRatio = 0.75;
    m_brownBaseRatio = 1.0001;

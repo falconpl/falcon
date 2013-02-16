@@ -106,7 +106,7 @@ private:
    void manageSignal( Shared* ctx );
    void manageAwakenContext( VMContext* ctx );
 
-   void removeSleepingContext( VMContext* ctx );
+   bool removeSleepingContext( VMContext* ctx );
 
    //==============================================
    // Context ready to be scheduled.

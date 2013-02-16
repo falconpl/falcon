@@ -549,9 +549,16 @@ void FalconClass::gcMark( uint32 mark )
    if( m_mark != mark )
    {
       Mantra::gcMark(mark);
-      if ( m_shouldMark )
+      _p->m_propDefaults->gcMark( mark );
+
+      if( m_parentship != 0 )
       {
-         _p->m_propDefaults->gcMark( mark );
+         m_parentship->gcMark(mark);
+      }
+
+      if( m_constructor != 0 )
+      {
+         m_constructor->gcMark(mark);
       }
    }
 }

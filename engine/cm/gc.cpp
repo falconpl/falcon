@@ -35,7 +35,11 @@ ClassGC::ClassGC():
    ClassUser("%GC"),
    FALCON_INIT_PROPERTY( memory ),
    FALCON_INIT_PROPERTY( items ),
-   FALCON_INIT_PROPERTY( enabled )
+   FALCON_INIT_PROPERTY( enabled ),
+   FALCON_INIT_PROPERTY( status ),
+
+   FALCON_INIT_METHOD( perform ),
+   FALCON_INIT_METHOD( suggest )
 {
    // we don't need an object
    m_bIsFlatInstance = true;
@@ -114,6 +118,73 @@ FALCON_DEFINE_PROPERTY_GET( ClassGC, enabled )(void*, Item& value)
 {
    static Collector* coll = Engine::instance()->collector();
    value = coll->isEnabled();
+}
+
+FALCON_DEFINE_PROPERTY_SET( ClassGC, status )(void*, const Item& value)
+{
+   static Collector* coll = Engine::instance()->collector();
+   int64 v = value.forceInteger();
+   if( v < 0 || v > static_cast<int64>(Collector::e_status_red) )
+   {
+      throw FALCON_SIGN_ERROR( ParamError, e_param_range );
+   }
+   coll->status( static_cast<Collector::t_status>(v) );
+}
+
+FALCON_DEFINE_PROPERTY_GET( ClassGC, status )(void*, Item& value)
+{
+   static Collector* coll = Engine::instance()->collector();
+   value = static_cast<int64>(coll->status());
+}
+
+
+FALCON_DEFINE_METHOD_P1( ClassGC, perform )
+{
+   static Collector* coll = Engine::instance()->collector();
+
+   Item* i_full = ctx->param(0);
+   Item* i_wait = ctx->param(1);
+
+   bool full = i_full != 0 ? i_full->isTrue() : false;
+   bool wait = i_wait != 0 ? i_wait->isTrue() : false;
+
+   TRACE( "ClassGC::Method_perform %s, %s", (full? "Full" : "partial"), (wait?"wait": "no wait") );
+
+   if( full )
+   {
+      if( wait != 0 )
+      {
+         Shared* sh = new Shared;
+         coll->performGCOnShared( sh );
+         ctx->addWait(sh);
+         ctx->engageWait(-1);
+      }
+      else
+      {
+         coll->performGC(false);
+      }
+   }
+   else
+   {
+      ctx->setInspectEvent();
+   }
+
+   ctx->returnFrame();
+}
+
+
+FALCON_DEFINE_METHOD_P1( ClassGC, suggest )
+{
+   static Collector* coll = Engine::instance()->collector();
+
+   Item* i_all = ctx->param(0);
+
+   bool all = i_all != 0 ? i_all->isTrue() : false;
+
+   TRACE( "ClassGC::Method_suggest %s", (all? "Full" : "partial") );
+
+   coll->suggestGC(all);
+   ctx->returnFrame();
 }
 
 }

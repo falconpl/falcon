@@ -24,9 +24,27 @@
 
 namespace Falcon {
 
-/** Ramp-up GC parameters base class.
-   The subclasses of this virtual class contain a configurable algorithm used by the
-   Memory Pool to update its status after a successful garbage collection.
+/** Base class for collection algorithms.
+ *
+ * An instance of this class can be set in the GC to be
+ * notified about relevant events happening in the garbage
+ * collector.
+ *
+ * The subclasses should set the GC status, invoke Collector::suggestGC
+ * or Collector::performGC on their perception of the status
+ * of the memory.
+ *
+ * The algorithm could install a timer callback that is periodically
+ * called in the GC, or a memory / item
+ * threshold callback that will be invoked by the GC when the limits
+ * are broken.
+ *
+ * The class has also hooks called before and after sweep loops, so that
+ * it is possible to determine the efficacy of a just started loop.
+ *
+ * \note callbacks are called from different threads. If necessary,
+ * use locking or atomic access to your variables.
+ *
 */
 class FALCON_DYN_CLASS CollectorAlgorithm
 {
@@ -34,10 +52,18 @@ public:
    CollectorAlgorithm() {}
    virtual ~CollectorAlgorithm() {};
 
-   virtual Collector::t_status checkStatus() = 0;
-   virtual void onSweepBegin() {};
-   virtual void onSweepComplete( int64 allocatedMemory, int64 allocatedItems ) = 0;
-   virtual void describe( String& target) const = 0;
+   virtual void onApply(Collector* coll) = 0;
+   virtual void onRemove(Collector* coll) = 0;
+
+   virtual void onMemoryThreshold( Collector* coll, int64 threshold ) = 0;
+   virtual void onItemThreshold( Collector* coll, int64 threshold ) = 0;
+
+   virtual void onSweepBegin( Collector* coll ) = 0;
+   virtual void onSweepComplete( Collector* coll, int64 freedMemry, int64 freedItems ) = 0;
+
+   virtual void onTimer(Collector* coll) = 0;
+
+   virtual void describe(String& target) const = 0;
 
    String describe() const {
       String temp; describe( temp ); return temp;
@@ -45,49 +71,59 @@ public:
 };
 
 
-/** This collector algorithm disables automatic GC.
-   The GC never punches in.
-*/
-class FALCON_DYN_CLASS CollectorAlgorithmNone: public CollectorAlgorithm
+class FALCON_DYN_CLASS CollectorAlgorithmManual: public CollectorAlgorithm
 {
 public:
-   CollectorAlgorithmNone():
-      CollectorAlgorithm()
-   {}
-   virtual ~CollectorAlgorithmNone() {};
-   virtual Collector::t_status checkStatus() { return Collector::e_status_green; }
-   virtual void onSweepComplete( int64, int64 ) {}
+   CollectorAlgorithmManual() {}
+   virtual ~CollectorAlgorithmManual() {}
 
-   virtual void describe( String& target) const { target = "CollectorAlgorithmNone"; }
+   virtual void onApply(Collector* ) {}
+   virtual void onRemove(Collector* ) {}
+
+   virtual void onMemoryThreshold( Collector* , int64 ) {}
+   virtual void onItemThreshold( Collector* , int64 ) {}
+
+   virtual void onSweepBegin( Collector* ) {}
+   virtual void onSweepComplete( Collector*, int64, int64 ) {}
+
+   virtual void onTimer(Collector*) {}
+
+   virtual void describe(String& target) const { target = "Manual";}
+
+   String describe() const {
+      String temp; describe( temp ); return temp;
+   }
 };
 
 
-/** This algorithm sets a three fixed levels at which GC is started.
+/**
 
 */
 class FALCON_DYN_CLASS CollectorAlgorithmFixed: public CollectorAlgorithm
 {
 public:
-   CollectorAlgorithmFixed( int64 thresholdYellow, int64 thresholdBrown, int64 thresholdRed );
-   virtual ~CollectorAlgorithmFixed() {};
+   CollectorAlgorithmFixed( int64 limit );
+   virtual ~CollectorAlgorithmFixed() {}
 
-   virtual Collector::t_status checkStatus();
-   virtual void onSweepComplete( int64 allocatedMemory, int64 allocatedItems );
+   virtual void onApply(Collector* coll);
+   virtual void onRemove(Collector* ) {}
+
+   virtual void onMemoryThreshold( Collector* coll, int64 threshold );
+   virtual void onItemThreshold( Collector* , int64  ) {}
+
+   virtual void onSweepBegin( Collector* ) {}
+   virtual void onSweepComplete( Collector* coll, int64 freedMemory, int64 freedItems );
+
+   virtual void onTimer(Collector*) {}
+
    virtual void describe(String& target) const;
 
-   void setLevels( int64 yellow, int64 brown, int64 red );
-   void setYellow( int64 value );
-   void setBrown( int64 value );
-   void setRed( int64 value );
+   void setLimit( int64 limit ) { m_limit = limit; }
 
-   void getLevels( int64& yellow, int64& brown, int64& red ) const;
+   int64 getLimit() const { return m_limit; }
 
 protected:
-   int64 m_thresholdYellow;
-   int64 m_thresholdBrown;
-   int64 m_thresholdRed;
-
-   mutable Mutex m_mtx;
+   int64 m_limit;
 };
 
 /** Base class for all ramping algorithms. */
@@ -97,8 +133,15 @@ public:
    CollectorAlgorithmRamp();
    virtual ~CollectorAlgorithmRamp();
 
+   virtual void onApply(Collector* ) {}
+   virtual void onRemove(Collector* ) {}
+
    virtual Collector::t_status checkStatus();
-   virtual void onSweepComplete( int64 allocatedMemory, int64 allocatedItems );
+   virtual void onSweepBegin( Collector* ) {}
+   virtual void onSweepComplete( Collector* coll, int64 freedMemory, int64 freedItems );
+
+   virtual void onTimer(Collector*) {}
+
    virtual void describe( String& target) const;
 
 protected:
@@ -118,6 +161,12 @@ protected:
 
    int32 m_sweepThreshold;
    int32 m_sweptTimes;
+
+   int64 m_thresholdYellow;
+   int64 m_thresholdBrown;
+   int64 m_thresholdRed;
+
+   Mutex m_mtx;
 };
 
 /** Enforces a strict inspection policy.
@@ -194,7 +243,7 @@ public:
 
 
 
-#define FALCON_COLLECTOR_ALGORITHM_OFF       0
+#define FALCON_COLLECTOR_ALGORITHM_MANUAL    0
 #define FALCON_COLLECTOR_ALGORITHM_FIXED     1
 #define FALCON_COLLECTOR_ALGORITHM_STRICT    2
 #define FALCON_COLLECTOR_ALGORITHM_SMOOTH    3

@@ -428,6 +428,11 @@ Shared* VMContext::engageWait( int64 timeout )
    TRACE( "VMContext::engageWait for %d(%p) nothing signaled, will go wait", id(), this);
    setSwapEvent();
 
+   m_mtx_sleep.lock();
+   // marker...
+   m_next_schedule = -2;
+   m_mtx_sleep.unlock();
+
    // tell the shared we're waiting for them.
    base = m_waiting.m_base;
    top = m_waiting.m_top+1;
@@ -439,7 +444,16 @@ Shared* VMContext::engageWait( int64 timeout )
    }
 
    // when we want to abort wait?
-   m_next_schedule = timeout > 0 ? Sys::_milliseconds() + timeout : timeout;
+   int64 randesVousAt = timeout > 0 ? Sys::_milliseconds() + timeout : timeout;
+
+   m_mtx_sleep.lock();
+   // if the marker changed, then we ALREADY received some wakeup
+   // it's too late to undo the waiting, but we must NOT overwrite the timeout.
+   if( m_next_schedule == -2 )
+   {
+      m_next_schedule = randesVousAt;
+   }
+   m_mtx_sleep.unlock();
 
    return 0;
 }

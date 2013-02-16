@@ -73,6 +73,7 @@ class Class;
 class VMContext;
 class TextWriter;
 class CollectorAlgorithm;
+class Shared;
 
 /** Falcon Garbage collector.
 
@@ -152,13 +153,10 @@ public:
       e_status_green,
       /** The GC is trying to collect memory on a by-opportunity basis */
       e_status_yellow,
-      /** The GC is actively trying to collect memory without preempting contexts */
-      e_status_brown,
       /** The GC is preempting contexts to obtain memory. */
-      e_status_red,
-      /** An external agent has required a forced, complete GC. */
-      e_status_required
+      e_status_red
    } t_status;
+
 
    /** Base class for History Trace entries (ABC).
     Subclasses must reimplement the dump() method to have meaningful
@@ -334,30 +332,47 @@ public:
    */
    void stop();
 
-   /** Sets the algorithm used to dynamically configure the collection levels.
-      Can be one of:
-      - RAMP_MODE_STRICT_ID
-      - RAMP_MODE_LOOSE_ID
-      - RAMP_MODE_SMOOTH_SLOW_ID
-      - RAMP_MODE_SMOOTH_FAST_ID
-
-      Or RAMP_MODE_OFF to disable dynamic auto-adjust of collection levels.
-      \param mode the mode to be set.
-      \return true if the mode can be set, false if it is an invalid value.
+   /**
    */
-   bool rampMode( int mode );
-   int rampMode() const;
+   bool setAlgorithm( int mode );
+   int currentAlgorithm() const;
 
+   /** Set item threshold for algorithm callback.
+    *
+    * When the number of allocated item exceeds the given value,
+    * the onItemThreshold callback method of the active algorithm is invoked.
+    *
+    */
+   void itemThreshold( uint64 th );
+
+   /** Set memory threshold for algorithm callback.
+    * When the number of bytes exceeds the given value,
+    * the onMemoryThreshold callback method of the active algorithm is invoked.
+    */
+   void memoryThreshold( uint64 th );
 
    /** Run a complete garbage collection.
     * \param wait True to wait for completion, false to return immediately.
-    * \return true if the wait is complete.
     *
     * This method orders the GC to perform a complete garbage collection loop as soon as
     * possible, and then eventually waits for the completion of that loop.
     *
     */
    void performGC( bool wait = true );
+
+   /** Run a complete garbage collection, and notify the given shared resource when done.
+    * \param shared the shared resource to be signaled.
+    *
+    * This method orders the GC to perform a complete garbage collection loop as soon as
+    * possible. When the reclaim loop is complete, the given shared resource is signaled.
+    *
+    */
+   void performGCOnShared( Shared *shared );
+
+   /**
+    * Used internally
+    */
+   void signalSharedOnSweep(  Shared *shared );
 
    /** Stores an entity in the garbage collector.
 
@@ -439,6 +454,36 @@ public:
     */
    bool isEnabled() const;
 
+   /** Returns current GC status.
+    *
+    */
+   t_status status() const { return m_status; }
+
+   /**
+    * Changes the current GC status
+    * \param s the new status.
+    */
+   void status( t_status s ) { m_status = s; }
+
+   /** Ask the contexts to present themselves ASAP for inspection.
+    * \param all if true send the request to all the active contexts.
+    *
+    * This method sends a request to the oldest context, or eventually
+    * to all the contexts, to relinquish execution as soon as possible and
+    * present themselves for inspection.
+    *
+    * For any context to be actually inspected, it's necessary that the
+    * garbage collector is enabled and at least in yellow state.
+    *
+    * When the oldest context (the one that was marked since more time)
+    * presents itself for inspection, a sweep (collection) cycle is
+    * started as well.
+    *
+    * Contrarily to performGC, mark/sweep is not forced and it is not
+    * granted that the action, even in yellow or red state, collects
+    * all the available memory.
+    */
+   void suggestGC( bool all = false );
 
 #if FALCON_TRACE_GC
    /** Debug version of store.
@@ -604,23 +649,12 @@ public:
     */
    void clearTrace();
 
+
+
+
 #endif
 
 protected:
-   /** Monitor thread. */
-   class Monitor: public Runnable {
-   public:
-      Monitor( Collector* master ):
-         m_master(master)
-      {}
-      virtual ~Monitor(){}
-
-      virtual void* run();
-
-   private:
-      Collector* m_master;
-   };
-
    /** Marker thread. */
    class Marker: public Runnable {
    public:
@@ -651,7 +685,6 @@ protected:
       Collector* m_master;
    };
 
-   friend class Monitor;
    friend class Marker;
    friend class Sweeper;
 
@@ -671,11 +704,6 @@ protected:
    int32 m_recycleTokensCount;
    Mutex m_mtx_recycle_tokens;
 
-   /** The monitor thread keeps track of what's going on in the system. */
-   SysThread *m_thMonitor;
-   Monitor m_monitor;
-   Event m_monitorWork;
-
    /** The marker is in charge of marking incoming contexts */
    SysThread *m_thMarker;
    Marker m_marker;
@@ -692,7 +720,7 @@ protected:
    atomic_int m_aLive;
 
    /** Guard for ramp modes. */
-   mutable Mutex m_mtx_ramp;
+   mutable Mutex m_mtx_algo;
 
    CollectorAlgorithm** m_ramp;
    CollectorAlgorithm* m_curRampMode;
@@ -745,7 +773,7 @@ protected:
    uint32 m_currentMark;
    // oldest mark known to be used
    uint32 m_oldestMark;
-   
+
 private:
 
    mutable Mutex m_mtx_history;
@@ -759,6 +787,11 @@ private:
    int64 m_storedItems;
 
    bool m_bEnabled;
+   t_status m_status;
+
+   uint64 m_memoryThreshold;
+   uint64 m_itemThreshold;
+
 
    class Private;
    Private* _p;

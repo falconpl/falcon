@@ -414,7 +414,7 @@ void ContextManager::manageAwakenContext( VMContext* ctx )
 
 }
 
-void ContextManager::removeSleepingContext( VMContext* ctx )
+bool ContextManager::removeSleepingContext( VMContext* ctx )
 {
    TRACE( "removeSleepingContext - Removing context %p(%d) with sched %d", ctx, ctx->id(), (int) ctx->nextSchedule() );
 
@@ -425,10 +425,12 @@ void ContextManager::removeSleepingContext( VMContext* ctx )
          _p->m_schedMap.erase(pos);
          ctx->awake();
          ctx->decref();
-         break;
+         return true;
       }
       ++pos;
    }
+
+   return false;
 }
 
 void ContextManager::manageDesceduledContext( VMContext* ctx )
@@ -498,19 +500,30 @@ void ContextManager::manageSignal( Shared* shared )
    std::deque<VMContext*>::iterator re = readyCtx.end();
    if( shared->hasAcquireSemantic() )
    {
-      while( ri != re ) {
+      while( ri != re )
+      {
          VMContext* ctx = *ri;
          ctx->acquire( shared );
-         removeSleepingContext(ctx);
-         manageReadyContext( ctx );
+         if( removeSleepingContext(ctx) ) {
+            manageReadyContext( ctx );
+         }
+         else {
+            ctx->nextSchedule(0); // prevents accepting it if incoming
+         }
+         // else, the contex is alive or will be.
          ++ri;
       }
    }
    else {
-      while( ri != re ) {
+      while( ri != re )
+      {
          VMContext* ctx = *ri;
-         removeSleepingContext(ctx);
-         manageReadyContext( ctx );
+         if( removeSleepingContext(ctx) ) {
+            manageReadyContext( ctx );
+         }
+         else {
+            ctx->nextSchedule(0); // prevents accepting it if incoming
+         }
          ++ri;
       }
    }

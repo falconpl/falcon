@@ -1,0 +1,49 @@
+/*
+@name Garbage Collector full perform
+@category GC
+
+Note: use ">" only, without string interpolation or "+"
+operator, as those operators create garbage that might
+or might not get accounted in the subsequent operations
+due to timings.
+
+@result Ok
+*/
+
+> "Garbage Collector full perform"
+
+return "Ok"
+ 
+memory = GC.memory
+items = GC.items
+> "GC initial memory:", memory, " items:", items
+> "Performing initial cleanup"
+GC.perform(true,true)
+GC.perform(true,true)
+
+memory = GC.memory
+items = GC.items
+> "GC memory: ", memory, " items: ", items
+
+> "Creating a bit of garbage..."
+str = "Garbage:"
+for a = 0 to 1000
+   str = str + a
+end
+
+memory1 = GC.memory
+items1 = GC.items
+> "GC memory: ", memory1, " items: ", items1
+
+> "Performing a full collection"
+str = nil
+GC.perform(true,true)
+
+memory2 = GC.memory
+items2 = GC.items
+> "GC memory: ", memory2, " items: ", items2
+
+result = (memory2 == memory and items2 == items) ? "Ok" : "Fail"
+> "Done: ", result
+
+return result

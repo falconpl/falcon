@@ -23,6 +23,7 @@
 #include <falcon/gclock.h>
 #include <falcon/vmcontext.h>
 #include <falcon/collectoralgorithm.h>
+#include <falcon/shared.h>
 
 #include <deque>
 #include <string>
@@ -63,10 +64,28 @@ public:
    ContextSet m_set;
 
    Event* m_toBeSignaled;
+   Shared* m_sharedToBeSignaled;
+   bool m_bTransient;
 
-   MarkToken( Event* evt ):
-      m_toBeSignaled(evt)
+   MarkToken( bool bTransient = false ):
+      m_toBeSignaled(0),
+      m_sharedToBeSignaled(0),
+      m_bTransient(bTransient)
    {}
+
+   MarkToken( Event* evt, bool bTransient = false ):
+      m_toBeSignaled(evt),
+      m_sharedToBeSignaled(0),
+      m_bTransient(bTransient)
+   {}
+
+   MarkToken( Shared* shared, bool bTransient = false ):
+      m_toBeSignaled(0),
+      m_sharedToBeSignaled(shared),
+      m_bTransient(bTransient)
+   {
+      shared->incref();
+   }
 
    ~MarkToken()
    {
@@ -89,10 +108,17 @@ public:
          m_toBeSignaled->set();
          m_toBeSignaled = 0;
       }
+      else if ( m_sharedToBeSignaled != 0 )
+      {
+         static Collector* coll = Engine::instance()->collector();
+         coll->signalSharedOnSweep( m_sharedToBeSignaled );
+         m_sharedToBeSignaled->decref();
+         m_sharedToBeSignaled = 0;
+      }
    }
 
 
-   void onContextProcessed( VMContext* ctx )
+   bool onContextProcessed( VMContext* ctx )
    {
       ContextSet::iterator iter = m_set.find(ctx);
 
@@ -105,8 +131,63 @@ public:
       if ( m_set.empty() )
       {
          signal();
+
+         if( m_bTransient )
+         {
+            delete this;
+         }
+         return true;
+      }
+
+      return false;  // more
+   }
+
+private:
+   MarkToken(const MarkToken& ) {}
+};
+
+
+class SweepToken
+{
+public:
+
+   Event* m_toBeSignaled;
+   Shared* m_sharedToBeSignaled;
+
+   SweepToken( Event* evt ):
+      m_toBeSignaled(evt),
+      m_sharedToBeSignaled(0)
+   {}
+
+   SweepToken( Shared* shared ):
+      m_toBeSignaled(0),
+      m_sharedToBeSignaled(shared)
+   {
+      m_sharedToBeSignaled->incref();
+   }
+
+   ~SweepToken()
+   {
+      signal();
+   }
+
+   void signal()
+   {
+      if (m_toBeSignaled != 0 )
+      {
+         m_toBeSignaled->set();
+         m_toBeSignaled = 0;
+      }
+      else if ( m_sharedToBeSignaled != 0 )
+      {
+         m_sharedToBeSignaled->signal(1);
+         m_sharedToBeSignaled->decref();
+         m_sharedToBeSignaled = 0;
       }
    }
+
+private:
+   SweepToken(const SweepToken&) {}
 };
 
 
@@ -128,8 +209,8 @@ public:
    MarkingList m_markingList;
 
    // This list is modified inside the parent m_mtxRequest
-   typedef std::deque<Event*> EventList;
-   EventList m_sweepTokens;
+   typedef std::deque<SweepToken*> SweepTokenList;
+   SweepTokenList m_sweepTokens;
 
    typedef std::deque<MarkToken*> MarkTokenList;
    MarkTokenList m_markTokens;
@@ -144,10 +225,10 @@ public:
    {
       clearTrace();
 
-      EventList::iterator eli = m_sweepTokens.begin();
+      SweepTokenList::iterator eli = m_sweepTokens.begin();
       while( eli != m_sweepTokens.end() )
       {
-         (*eli)->set();
+         delete *eli;
          ++eli;
       }
       m_sweepTokens.clear();
@@ -183,13 +264,10 @@ public:
 //
 
 Collector::Collector():
-   m_thMonitor(0),
-   m_monitor(this),
    m_thMarker(0),
    m_marker(this),
    m_thSweeper(0),
    m_sweeper(this),
-   m_sweepPerformed(false),
 
    m_aLive(1),
    m_bTrace( false ),
@@ -197,6 +275,7 @@ Collector::Collector():
    m_oldestMark(0),
    m_storedMem(0),
    m_storedItems(0),
+   m_status(e_status_green),
    _p( new Private )
 {
    // start as enabled
@@ -227,8 +306,8 @@ Collector::Collector():
 
    // fill the ramp algorithms
    m_ramp  = new CollectorAlgorithm*[ FALCON_COLLECTOR_ALGORITHM_COUNT ];
-   m_ramp[FALCON_COLLECTOR_ALGORITHM_OFF] = new CollectorAlgorithmNone;
-   m_ramp[FALCON_COLLECTOR_ALGORITHM_FIXED] = new CollectorAlgorithmFixed(10000,50000,100000);
+   m_ramp[FALCON_COLLECTOR_ALGORITHM_MANUAL] = new CollectorAlgorithmManual;
+   m_ramp[FALCON_COLLECTOR_ALGORITHM_FIXED] = new CollectorAlgorithmFixed(1000000);
    m_ramp[FALCON_COLLECTOR_ALGORITHM_STRICT] = new CollectorAlgorithmStrict;
    m_ramp[FALCON_COLLECTOR_ALGORITHM_SMOOTH] = new CollectorAlgorithmSmooth;
    m_ramp[FALCON_COLLECTOR_ALGORITHM_LOOSE] = new CollectorAlgorithmLoose;
@@ -238,10 +317,8 @@ Collector::Collector():
    m_curRampID = FALCON_COLLECTOR_ALGORITHM_DEFAULT;
    m_curRampMode = m_ramp[m_curRampID];
    */
-   m_curRampID = FALCON_COLLECTOR_ALGORITHM_FIXED;
-   m_curRampMode = m_ramp[m_curRampID];
+   setAlgorithm( FALCON_COLLECTOR_ALGORITHM_FIXED );
 }
-
 
 Collector::~Collector()
 {
@@ -296,18 +373,30 @@ bool Collector::isEnabled() const
    return true;
 }
 
-bool Collector::rampMode( int mode )
+bool Collector::setAlgorithm( int mode )
 {
    if( mode >= 0 && mode < FALCON_COLLECTOR_ALGORITHM_COUNT )
    {
-      m_mtx_ramp.lock();
+      CollectorAlgorithm* algo = 0;
+
+      m_mtx_algo.lock();
       if ( m_curRampID != mode )
       {
          m_curRampID = mode;
          m_curRampMode = m_ramp[mode];
-         //TODO: reset
+         algo = m_curRampMode;
+
+         // reset thresholds
+         m_memoryThreshold = (uint64)-1;
+         m_itemThreshold = (uint64)-1;
       }
-      m_mtx_ramp.unlock();
+      m_mtx_algo.unlock();
+
+      if( algo != 0 )
+      {
+         algo->onApply(this);
+      }
+
       return true;
    }
 
@@ -315,12 +404,27 @@ bool Collector::rampMode( int mode )
 }
 
 
-int Collector::rampMode() const
+
+int Collector::currentAlgorithm() const
 {
-   m_mtx_ramp.lock();
+   m_mtx_algo.lock();
    int mode = m_curRampID;
-   m_mtx_ramp.unlock();
+   m_mtx_algo.unlock();
    return mode;
+}
+
+void Collector::memoryThreshold( uint64 th )
+{
+   m_mtx_algo.lock();
+   m_memoryThreshold = th;
+   m_mtx_algo.unlock();
+}
+
+void Collector::itemThreshold( uint64 th )
+{
+   m_mtx_algo.lock();
+   m_itemThreshold = th;
+   m_mtx_algo.unlock();
 }
 
 
@@ -354,15 +458,19 @@ void Collector::unregisterContext( VMContext *ctx )
 
    // also, be sure that we're not waiting for this context to be marked.
    Private::MarkTokenList::iterator mti = _p->m_markTokens.begin();
-   Private::MarkTokenList::iterator mtend = _p->m_markTokens.end();
    // notice that token lists are very rarely used.
-   while( mti != mtend )
+   while( mti != _p->m_markTokens.end() )
    {
       MarkToken* token = *mti;
       // we don't need to unlock even if ctx gets decreffed,
       // as we hold a reference and we know the context won't be destroyed
-      token->onContextProcessed(ctx);
-      ++mti;
+      if( token->onContextProcessed(ctx) )
+      {
+         mti = _p->m_markTokens.erase(mti);
+      }
+      else {
+         ++mti;
+      }
    }
    _p->m_mtx_contexts.unlock();
 
@@ -499,48 +607,66 @@ GCToken* Collector::store( const Class* cls, void *data )
 {
    TRACE2( "Collector::store instance of %s: %p", cls->name().c_ize(), data);
 
-   // do we have spare elements we could take?
-   GCToken* token = getToken( const_cast<Class*>(cls), data );
-
-   int64 memory = cls->occupiedMemory(data);
-   m_mtx_accountmem.lock();
-   m_storedItems++;
-   m_storedMem+= memory;
-   m_mtx_accountmem.unlock();
-
-   // put the element in the new list.
-   m_mtx_newRoot.lock();
-   token->m_next =  m_newRoot ;
-   token->m_prev =  m_newRoot->m_prev ;
-   m_newRoot->m_prev->m_next =  token;
-   m_newRoot->m_prev =  token;
-   m_mtx_newRoot.unlock();
-
-   return token;
+   return store_in(0, cls, data );
 }
 
 GCToken* Collector::store_in( VMContext* ctx, const Class* cls, void *data )
 {
-   TRACE2( "Collector::store_in %d(%p) process %d(%p) instance of %s: %p",
+#ifndef NDEBUG
+   if( ctx != 0 ) {
+      TRACE2( "Collector::store_in %d(%p) process %d(%p) instance of %s: %p",
             ctx->id(), ctx, ctx->process()->id(), ctx->process(),
             cls->name().c_ize(), data);
+   }
+   else {
+      TRACE2( "Collector::store_in generic instance of %s: %p",
+            cls->name().c_ize(), data);
+   }
+#endif
+   // do we have spare elements we could take?
+   GCToken* token = getToken( const_cast<Class*>(cls), data );
 
-   if( ctx->process()->mainContext() == ctx )
+
+   int64 memory = cls->occupiedMemory(data);
+   m_mtx_accountmem.lock();
+   uint64 stoi = (uint64) (++m_storedItems);
+   uint64 stom = (uint64) (m_storedMem+= memory);
+   m_mtx_accountmem.unlock();
+
+   // we do without lock, not urgent
+   if( stoi >= m_itemThreshold )
    {
-      // do we have spare elements we could take?
-      GCToken* token = getToken( const_cast<Class*>(cls), data );
-
-      int64 memory = cls->occupiedMemory(data);
-      m_mtx_accountmem.lock();
-      m_storedItems++;
-      m_storedMem+= memory;
-      m_mtx_accountmem.unlock();
-
-      ctx->addNewToken(token);
-      return token;
+      m_mtx_algo.lock();
+      m_itemThreshold = (uint64) -1;
+      CollectorAlgorithm* algo = m_curRampMode;
+      m_mtx_algo.unlock();
+      algo->onItemThreshold(this, stoi);
    }
 
-   return store( cls, data );
+   if( stom >= m_memoryThreshold )
+   {
+      m_mtx_algo.lock();
+      m_memoryThreshold = (uint64) -1;
+      CollectorAlgorithm* algo = m_curRampMode;
+      m_mtx_algo.unlock();
+      algo->onMemoryThreshold(this, stom);
+   }
+
+   // put the element in the new list.
+   if( ctx == 0 || ctx->process()->mainContext() != ctx )
+   {
+      m_mtx_newRoot.lock();
+      token->m_next =  m_newRoot ;
+      token->m_prev =  m_newRoot->m_prev ;
+      m_newRoot->m_prev->m_next =  token;
+      m_newRoot->m_prev =  token;
+      m_mtx_newRoot.unlock();
+   }
+   else {
+      ctx->addNewToken(token);
+   }
+
+   return token;
 }
 
 
@@ -573,7 +699,7 @@ void Collector::performGC( bool wait )
 {
    Event markEvt;
    Event evt;
-   MarkToken markToken(&markEvt);
+   MarkToken* markToken = new MarkToken( (wait ? &markEvt:0), true);
 
    // push a request for all the contexts to be marked.
    int32 count = 0;
@@ -594,13 +720,15 @@ void Collector::performGC( bool wait )
       if( wait )
       {
          ctx->incref();
-         markToken.m_set.insert(ctx);
+         markToken->m_set.insert(ctx);
       }
       ++cti;
       count++;
-
-      // signal the marker.
-      _p->m_markTokens.push_back(&markToken);
+   }
+   // signal the marker.
+   if( count != 0 )
+   {
+      _p->m_markTokens.push_back(markToken);
    }
    _p->m_mtx_contexts.unlock();
 
@@ -616,7 +744,7 @@ void Collector::performGC( bool wait )
       // The sweeper MIGHT have already done our sweep,
       // but it will notify us never the less even if it doesn't sweep again.
       m_mtxRequest.lock();
-      _p->m_sweepTokens.push_back(&evt);
+      _p->m_sweepTokens.push_back(new SweepToken(&evt) );
       m_mtxRequest.unlock();
 
       // ask the sweeper to work a bit,
@@ -629,6 +757,74 @@ void Collector::performGC( bool wait )
    // the marker will do if necessary and when necessary.
 }
 
+
+void Collector::performGCOnShared( Shared* shared )
+{
+   TRACE( "Collector::performGCOnShared -- %p", shared );
+
+   // create a transient (destructible) token
+   MarkToken* markToken = new MarkToken( shared, true );
+
+   // push a request for all the contexts to be marked.
+   int32 count = 0;
+   _p->m_mtx_contexts.lock();
+   Private::ContextMap::iterator cti = _p->m_contexts.begin();
+   Private::ContextMap::iterator ctend = _p->m_contexts.end();
+   while( cti != ctend )
+   {
+      VMContext* ctx = cti->second;
+
+      // ask the context to be inspected asap.
+      ctx->setInspectEvent();
+      ctx->incref();
+      markToken->m_set.insert(ctx);
+
+      ++cti;
+      count++;
+
+   }
+   // signal the marker.
+   _p->m_markTokens.push_back( markToken );
+   _p->m_mtx_contexts.unlock();
+}
+
+
+void Collector::signalSharedOnSweep( Shared *shared )
+{
+   TRACE( "Collector::signalSharedOnSweep -- %p", shared );
+
+   m_mtxRequest.lock();
+   _p->m_sweepTokens.push_back( new SweepToken(shared) );
+   m_mtxRequest.unlock();
+
+   m_sweeperWork.set();
+}
+
+
+void Collector::suggestGC( bool all )
+{
+   // push a request for all the contexts to be marked.
+   _p->m_mtx_contexts.lock();
+   Private::ContextMap::iterator cti = _p->m_contexts.begin();
+   if( ! all )
+   {
+      cti->second->setSwapEvent();
+      _p->m_mtx_contexts.unlock();
+      return;
+   }
+
+   Private::ContextMap::iterator ctend = _p->m_contexts.end();
+   while( cti != ctend )
+   {
+      VMContext* ctx = cti->second;
+
+      // ask the context for a gentle swap.
+      ctx->setSwapEvent();
+      ++cti;
+   }
+   _p->m_mtx_contexts.unlock();
+}
+
 //===================================================================================
 // MT functions
 //
@@ -636,11 +832,9 @@ void Collector::performGC( bool wait )
 
 void Collector::start()
 {
-   if ( m_thMonitor == 0 )
+   if ( m_thMarker == 0 )
    {
       atomicSet(m_aLive, 1);
-      m_thMonitor = new SysThread( &m_monitor );
-      m_thMonitor->start( ThreadParams().stackSize( GC_THREAD_STACK_SIZE ) );
       m_thMarker = new SysThread( &m_marker );
       m_thMarker->start( ThreadParams().stackSize( GC_THREAD_STACK_SIZE ) );
       m_thSweeper = new SysThread( &m_sweeper );
@@ -651,23 +845,20 @@ void Collector::start()
 
 void Collector::stop()
 {
-   if ( m_thMonitor != 0 )
+   if ( m_thMarker != 0 )
    {
       atomicSet(m_aLive,0);
 
       // wake up our threads
-      m_monitorWork.set();
       m_markerWork.set();
       m_sweeperWork.set();
 
       // join them
       void *dummy;
-      m_thMonitor->join( dummy );
       m_thMarker->join( dummy );
       m_thSweeper->join( dummy );
 
       // and clear them
-      m_thMonitor = 0;
       m_thMarker = 0;
       m_thSweeper = 0;
    }
@@ -676,7 +867,7 @@ void Collector::stop()
 
 bool Collector::offerContext( VMContext* ctx )
 {
-   TRACE( "Collector::offerContext -- being offeretd ctx %d(%p) in process %d(%p)",
+   TRACE( "Collector::offerContext -- being offered ctx %d(%p) in process %d(%p)",
             ctx->id(), ctx, ctx->process()->id(), ctx->process() );
 
    bool operate = false;
@@ -689,13 +880,13 @@ bool Collector::offerContext( VMContext* ctx )
    else
    {
       // if not enable, never mark an incoming context.
-      m_mtx_ramp.lock();
+      m_mtx_algo.lock();
       CollectorAlgorithm* algo = m_bEnabled ? m_ramp[m_curRampID] : 0;
-      m_mtx_ramp.unlock();
+      m_mtx_algo.unlock();
 
       if( algo != 0 )
       {
-         t_status st = algo->checkStatus();
+         t_status st = m_status;
 
          switch( st ) {
          case e_status_green:
@@ -711,21 +902,15 @@ bool Collector::offerContext( VMContext* ctx )
                      (operate?"accepting":"refusing"));
             break;
 
-         case e_status_brown:
          case e_status_red:
-            _p->m_mtx_contexts.lock();
-            operate = (m_oldestMark == ctx->currentMark()) || ctx->markedForInspection();
-            _p->m_mtx_contexts.unlock();
-
-            TRACE1( "Collector::offerContext -- %s in %s status.",
-                     (operate?"accepting":"refusing"), (st == e_status_red? "red":"brown" ));
-            break;
-
-         case e_status_required:
             operate = true;
-            MESSAGE1("Collector::offerContext -- accepting because in required state.");
+            MESSAGE1( "Collector::offerContext -- accepting because in red status." );
             break;
          }
+      }
+      else
+      {
+         MESSAGE1( "Collector::offerContext -- Refused because disabled." );
       }
    }
 
@@ -851,7 +1036,7 @@ void Collector::rollover()
    // aknowledges the change.
    Event evt;
    m_mtxRequest.lock();
-   _p->m_sweepTokens.push_back(&evt);
+   _p->m_sweepTokens.push_back(new SweepToken(&evt));
    m_mtxRequest.unlock();
 
    m_sweeperWork.set();
@@ -1261,11 +1446,11 @@ void Collector::stored( int64& memory, int64& items ) const
 
 void Collector::onSweepBegin()
 {
-  m_mtx_ramp.lock();
+  m_mtx_algo.lock();
   CollectorAlgorithm* algo = m_ramp[m_curRampID];
-  m_mtx_ramp.unlock();
+  m_mtx_algo.unlock();
 
-  algo->onSweepBegin();
+  algo->onSweepBegin(this);
 }
 
 void Collector::onSweepComplete( int64 freedMem, int64 freedItems )
@@ -1273,101 +1458,13 @@ void Collector::onSweepComplete( int64 freedMem, int64 freedItems )
    m_mtx_accountmem.lock();
    m_storedMem -= freedMem;
    m_storedItems -= freedItems;
-   int64 mem = m_storedMem;
-   int64 items = m_storedItems;
    m_mtx_accountmem.unlock();
 
-   m_mtxRequest.lock();
-   m_sweepPerformed = true;
-   m_mtxRequest.unlock();
-
-   m_mtx_ramp.lock();
+   m_mtx_algo.lock();
    CollectorAlgorithm* algo = m_ramp[m_curRampID];
-   m_mtx_ramp.unlock();
+   m_mtx_algo.unlock();
 
-   algo->onSweepComplete( mem, items );
-}
-
-
-//==========================================================================================
-// Monitor
-//
-
-void* Collector::Monitor::run()
-{
-   MESSAGE( "Collector::Monitor::run -- starting" );
-
-   Collector::Private::ContextMap& contexts = m_master->_p->m_contexts;
-   Mutex& mtxContexts = m_master->_p->m_mtx_contexts;
-   Event& work = m_master->m_monitorWork;
-
-   // start from green status.
-   Collector::t_status prev_st = Collector::e_status_green;
-
-   while( atomicFetch(m_master->m_aLive) )
-   {
-
-      work.wait(GC_IDLE_TIME);
-
-      m_master->m_mtx_ramp.lock();
-      if( ! m_master->m_bEnabled )
-      {
-         m_master->m_mtx_ramp.unlock();
-         continue;
-      }
-
-      Collector::t_status st = m_master->m_ramp[m_master->m_curRampID]->checkStatus();
-      m_master->m_mtx_ramp.unlock();
-
-      /*
-      TRACE( "Collector::Monitor::run -- Working %ld on %ld items (in mode %d)",
-               (long)m_master->storedMemory(), (long) m_master->storedItems(), st );
-      */
-      if( st == Collector::e_status_red || st == Collector::e_status_required )
-      {
-         bool perform = false;
-         if( prev_st != st ) {
-            TRACE1( "Collector::Monitor::run -- sending block requests for status change %d -> %d",
-                           prev_st, st );
-
-            perform = true;
-         }
-         else {
-            m_master->m_mtxRequest.lock();
-            bool swept = m_master->m_sweepPerformed;
-            m_master->m_mtxRequest.unlock();
-
-            if( swept ) {
-               MESSAGE( "Collector::Monitor::run -- sending block requests after (failed) sweep" );
-               perform = true;
-            }
-         }
-
-         if( perform )
-         {
-            // send all the blocking inspect requests to all the contexts.
-            mtxContexts.lock();
-            Collector::Private::ContextMap::iterator iter = contexts.begin();
-            Collector::Private::ContextMap::iterator end = contexts.end();
-            while( iter != end ) {
-               //TODO!!!
-               VMContext* ctx = iter->second;
-               ctx->setInspectEvent();
-               ++iter;
-            }
-            mtxContexts.unlock();
-
-            m_master->m_mtxRequest.lock();
-            m_master->m_sweepPerformed = false;
-            m_master->m_mtxRequest.unlock();
-         }
-      }
-
-      prev_st = st;
-   }
-
-   MESSAGE( "Collector::Monitor::run -- stopping" );
-   return 0;
+   algo->onSweepComplete( this, freedMem, freedItems );
 }
 
 
@@ -1419,20 +1516,6 @@ void* Collector::Marker::run()
          // continue marking
          toMark->gcPerformMark();
 
-         // declare the mark is marked
-         onMarked( toMark );
-
-         // send the context back to the manager.
-         toMark->clearEvents();  //TODO --- really?
-         toMark->setInspectible(false);
-         toMark->resetInspectEvent();
-         toMark->vm()->contextManager().onContextDescheduled(toMark);
-
-         TRACE1( "Collector::Marker::run -- mark complete %d(%p) in process %d(%p)",
-                                    toMark->id(), toMark, toMark->process()->id(), toMark->process() );
-         // we don't need the inspected context anymore.
-         toMark->decref();
-
          // did we change the old mark?
          if( newOldest != 0 )
          {
@@ -1453,6 +1536,20 @@ void* Collector::Marker::run()
             // signal the sweeper to have a look.
             m_master->m_sweeperWork.set();
          }
+
+         // declare the mark is marked
+         onMarked( toMark );
+
+         // send the context back to the manager.
+         toMark->clearEvents();  //TODO --- really?
+         toMark->setInspectible(false);
+         toMark->resetInspectEvent();
+         toMark->vm()->contextManager().onContextDescheduled(toMark);
+
+         TRACE1( "Collector::Marker::run -- mark complete %d(%p) in process %d(%p)",
+                                    toMark->id(), toMark, toMark->process()->id(), toMark->process() );
+         // we don't need the inspected context anymore.
+         toMark->decref();
 
          // lastly, check if we need to rollover the mark counter.
          if( mark > MAX_GENERATION )
@@ -1487,17 +1584,24 @@ void Collector::Marker::onMarked( VMContext* ctx )
    }
 
    m_master->_p->m_mtx_contexts.lock();
+
+   TRACE1( "Collector::Marker::onMarked -- signaling %d waiters", (int)  m_master->_p->m_markTokens.size() );
+
    // also, be sure that we're not waiting for this context to be marked.
    Private::MarkTokenList::iterator mti = m_master->_p->m_markTokens.begin();
-   Private::MarkTokenList::iterator mtend = m_master->_p->m_markTokens.end();
    // notice that token lists are very rarely used.
-   while( mti != mtend )
+   while( mti !=  m_master->_p->m_markTokens.end() )
    {
       MarkToken* token = *mti;
       // we don't need to unlock even if ctx gets decreffed,
       // as we hold a reference and we know the context won't be destroyed
-      token->onContextProcessed(ctx);
-      ++mti;
+      if( token->onContextProcessed(ctx) )
+      {
+         mti = m_master->_p->m_markTokens.erase(mti);
+      }
+      else {
+         ++mti;
+      }
    }
    m_master->_p->m_mtx_contexts.unlock();
 }
@@ -1512,31 +1616,38 @@ void* Collector::Sweeper::run()
 
    uint32 lastSweepMark = 0;
    Mutex& mtxContexts = m_master->_p->m_mtx_contexts;
-   Collector::Private::EventList& sweepTokens = m_master->_p->m_sweepTokens;
+   Mutex& mtxRequest = m_master->m_mtxRequest;
+   Collector::Private::SweepTokenList& sweepTokens = m_master->_p->m_sweepTokens;
 
-   std::deque<Event*> toBeSignaled;
+   std::deque<SweepToken*> toBeSignaled;
 
    while( atomicFetch(m_master->m_aLive) )
    {
+      MESSAGE( "Collector::Sweeper::run -- waiting new activity" );
       m_master->m_sweeperWork.wait(-1);
       bool bPerform = false;
 
+      MESSAGE( "Collector::Sweeper::run -- new activity received, checking out" );
       mtxContexts.lock();
-      if( m_master->m_oldestMark != lastSweepMark ) {
-         lastSweepMark = m_master->m_oldestMark;
-         if( lastSweepMark > 1 )
+      if( m_master->m_oldestMark != lastSweepMark )
+      {
+         if( lastSweepMark < m_master->m_oldestMark )
          {
+            lastSweepMark = m_master->m_oldestMark;
             bPerform = true;
-         }
-
-         // we want to signal even if we don't perform.
-         if( ! sweepTokens.empty() )
-         {
-            toBeSignaled = sweepTokens;
-            sweepTokens.clear();
          }
       }
       mtxContexts.unlock();
+
+      // we want to signal even if we don't perform.
+      mtxRequest.lock();
+      if( ! sweepTokens.empty() )
+      {
+         bPerform = true;
+         toBeSignaled = sweepTokens;
+         sweepTokens.clear();
+      }
+      mtxRequest.unlock();
 
       // should we perform sweep?
       if( bPerform )
@@ -1545,10 +1656,12 @@ void* Collector::Sweeper::run()
       }
 
       // signal the waiters that we're done.
-      std::deque<Event*>::iterator signal_iter = toBeSignaled.begin();
+      TRACE1( "Collector::Sweeper::run -- signaling %d waiters", (int) toBeSignaled.size() );
+      std::deque<SweepToken*>::iterator signal_iter = toBeSignaled.begin();
       while( signal_iter != toBeSignaled.end() ) {
-         Event* evt = *signal_iter;
-         evt->set();
+         SweepToken* evt = *signal_iter;
+         evt->signal();
+         delete evt;
          ++signal_iter;
       }
       toBeSignaled.clear();
@@ -1606,15 +1719,24 @@ void Collector::Sweeper::sweep( uint32 lastGen )
                if( cls->clearPriority() > maxPriority ) {
                   maxPriority = cls->clearPriority();
                }
+               ring = ring->m_next;
             }
             else
             {
                // time to collect it now.
       #ifndef NDEBUG
                String temp;
-               cls->describe(data, temp);
-               TRACE2( "Collector::Sweeper::sweep -- killing %s (%p) of class %s",
+               try {
+                  cls->describe(data, temp);
+                  TRACE2( "Collector::Sweeper::sweep -- killing %s (%p) of class %s",
                         temp.c_ize(), data, cls->name().c_ize() );
+               }
+               catch( Error* e )
+               {
+                  TRACE2( "Collector::Sweeper::sweep -- while describing instance %p of class %s: %s",
+                        data, cls->name().c_ize(), e->describe(true).c_ize() );
+                  e->decref();
+               }
       #endif
 
                #if FALCON_TRACE_GC
@@ -1639,10 +1761,13 @@ void Collector::Sweeper::sweep( uint32 lastGen )
                   current->m_prev->m_next = current->m_next;
                }
 
-               if( current == end ) {
+              if( current == end ) {
                   end = end->m_prev;
                   // need to reset end->m_next in case of another priority loop.
-                  end->m_next = 0;
+                  if( end != 0 )
+                  {
+                     end->m_next = 0;
+                  }
                }
                else {
                   current->m_next->m_prev = current->m_prev;

@@ -406,20 +406,20 @@ void ClassTreeStep::op_setIndex(VMContext* ctx, void* instance ) const
       }
       else {
          Class* cls; void* inst;
+         ExprValue* ev = 0;
          if( ! i_tree.asClassInst(cls, inst)
                || ! cls->isDerivedFrom( this ) )
          {
-            ExprValue* ev = new ExprValue( i_tree );
+            ev = new ExprValue( i_tree );
             cls = ev->handler();
             inst = ev;
-            FALCON_GC_HANDLE(ev);
          }
-
 
          TreeStep* ts = static_cast<TreeStep*>(inst);
          // check TreeStep category.
          if( ts->parent() != 0 )
          {
+            // cannot be our ev...
             throw new CodeError( ErrorParam(e_invalid_op, __LINE__, SRC)
                .origin( ErrorParam::e_orig_vm)
                .extra( "Parented entity cannot be inserted" ) );
@@ -427,6 +427,7 @@ void ClassTreeStep::op_setIndex(VMContext* ctx, void* instance ) const
 
          if( ! self->setNth( num, ts ) )
          {
+            delete ev; // this can be our ev
             throw new CodeError( ErrorParam(e_invalid_op, __LINE__, SRC)
                .origin( ErrorParam::e_orig_vm)
                .extra( "Entity is not accepting that kind of element" ) );

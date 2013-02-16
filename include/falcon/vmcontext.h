@@ -1347,7 +1347,11 @@ public:
 
     \param to Next absolute time when the context wants to run.
     */
-   void nextSchedule( int64 to ) { m_next_schedule = to; }
+   void nextSchedule( int64 to ) {
+      m_mtx_sleep.lock();
+      m_next_schedule = to;
+      m_mtx_sleep.unlock();
+   }
 
    /**
     Returns the next time when a context will be set to runnable.
@@ -1355,7 +1359,13 @@ public:
     \return Next schedule time
     \see nextSchedule(int64)
     */
-   int64 nextSchedule() const { return m_next_schedule; }
+   int64 nextSchedule() const {
+      m_mtx_sleep.lock();
+      int64 sched = m_next_schedule;
+      m_mtx_sleep.unlock();
+
+      return sched;
+   }
 
    void initWait();
    void addWait( Shared* resource );
@@ -1606,7 +1616,7 @@ protected:
    bool m_inspectible;
    bool m_bInspectMark;
    bool m_bSleeping;
-   Mutex m_mtx_sleep;
+   mutable Mutex m_mtx_sleep;
 
    /** Set whenever an event was activated. */
    atomic_int m_events;

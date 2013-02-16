@@ -27,6 +27,11 @@ namespace Ext {
 /*#
  @object GC
  @brief Controls the garbage collector.
+
+ @prop memory Memory currently controlled and supposed alive by the collector
+ @prop items Number of items currently controlled and supposed alive by the collector
+ @prop enabled True if the collector works, false to disable the collector.
+ @prop current GC status: 0=green, 1=yellow, 2=red
  */
 class ClassGC: public ClassUser
 {
@@ -54,16 +59,41 @@ private:
    FALCON_DECLARE_PROPERTY( memory )
    FALCON_DECLARE_PROPERTY( items )
    FALCON_DECLARE_PROPERTY( enabled )
+   FALCON_DECLARE_PROPERTY( status )
 
    /*#
-    @method caller VMContext
-    @brief Returns the item (function or method) that is calling the current function.
-    @optparam depth If specified, return the nth parameter up to @a VMContext.codeDepth
+    @method perform GC
+    @brief Suggests or forces a full garbage collecting.
+    @optparam force True to ask for a total garbage collection.
+    @optparam wait True to wait until the collection is complete.
 
-    If @b depth is not specified, it defaults to 1. Using 0 returns the same entity as
-    obtained by the @b fself keyword.
+    If @b force is false, then the current context only is scheduled for
+    inspection as soon as possible. This can cause a delay in the
+    execution of subsequent instructions. However, the calling context
+    might not see the memory immediately freed, as reclaim happens
+    at a later stage.
+
+    If @b force is true, then all the existing contexts are marked
+    for inspection, and inspected as soon as possible. If @b wait
+    is also true, then the calling context stays blocked until all
+    the currently existing contexts are checked, and all the garbage
+    memory is actually reclaimed.
+
+    @note If @b force is false, @b wait is ignored. To see memory
+    effectively reclaimed in a single agent application after this
+    call, set both parameters to true nevertheless.
     */
-   //FALCON_DECLARE_METHOD( caller, "depth:[N]" );
+   FALCON_DECLARE_METHOD( perform, "force:[B], wait:[B]" );
+
+   /*#
+    @method suggest GC
+    @brief Invites the GC to inspect the oldest or all the contexts
+    @optparam all True to ask for inspection on all the contexts.
+
+    The method returns immediately; the GC will try to collect
+    the available memory as soon as possible.
+    */
+   FALCON_DECLARE_METHOD( suggest, "all:[B]" );
 };
 
 }
