@@ -351,7 +351,13 @@ void ParserContext::defineSymbols( Expression* expr )
          Expression* child = static_cast<Expression*>(expr->nth(i));
          if( child != 0 && child->trait() != Expression::e_trait_composite )
          {
-            defineSymbols( child );
+            if( expr->fullDefining() )
+            {
+               defineSymbols( child );
+            }
+            else {
+               accessSymbols( child );
+            }
          }
       }
    }
