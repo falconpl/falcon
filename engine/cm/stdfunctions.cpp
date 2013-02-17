@@ -19,6 +19,7 @@
 #include <falcon/trace.h>
 #include <falcon/falcon.h>
 
+#include <falcon/autocstring.h>
 #include <falcon/cm/stdfunctions.h>
 #include <falcon/vm.h>
 #include <falcon/vmcontext.h>
@@ -27,6 +28,8 @@
 #include <falcon/cm/iterator.h>
 
 #include <falcon/error.h>
+#include <falcon/errors/paramerror.h>
+#include <falcon/errors/matherror.h>
 
 namespace Falcon {
 namespace Ext {
@@ -131,6 +134,98 @@ FALCON_DEFINE_FUNCTION_P(advance)
    static_cast<ClassIterator*>(iterClass)->invokeDirectNextMethod(ctx, ic, pCount);
 }
 
+/*#
+   @function int
+   @brief Converts the given parameter to integer.
+   @param item The item to be converted
+   @return An integer value.
+   @raise ParseError in case the given string cannot be converted to an integer.
+   @raise MathError if a given floating point value is too large to be converted to an integer.
+
+   Integer values are just copied. Floating point values are converted to long integer;
+   in case they are too big to be represented a RangeError is raised.
+   Strings are converted from base 10. If the string cannot be converted,
+   or if the value is anything else, a MathError instance is raised.
+*/
+
+FALCON_DEFINE_FUNCTION_P(int)
+{
+   TRACE1( "int -- called with %d params", pCount );
+   if( pCount < 1 ) {
+      throw paramError( __LINE__, SRC );
+   }
+
+   Item* i_param = ctx->param(0);
+   if( i_param->isInteger() ) {
+      ctx->returnFrame(*i_param);
+   }
+   else if( i_param->isNumeric() )
+   {
+      numeric nval = i_param->asNumeric();
+      if ( nval > 9.223372036854775808e18 || nval < -9.223372036854775808e18 )
+      {
+         throw new MathError( ErrorParam( e_domain, __LINE__ ).origin( ErrorParam::e_orig_runtime ) );
+      }
+
+      ctx->returnFrame( (int64) nval );
+   }
+   else if( i_param->isString() )
+   {
+      String* str = i_param->asString();
+      int64 num = 0;
+      double nval = 0;
+      if( str->parseInt( num, 0 ) )
+      {
+         ctx->returnFrame(num);
+      }
+      else if (str->parseDouble(nval, 0))
+      {
+         if ( nval > 9.223372036854775808e18 || nval < -9.223372036854775808e18 )
+         {
+            throw new MathError( ErrorParam( e_domain, __LINE__ ).origin( ErrorParam::e_orig_runtime ) );
+         }
+         ctx->returnFrame( (int64) nval );
+      }
+      else {
+         throw FALCON_SIGN_XERROR(ParamError, e_param_type, .extra("Not a number"));
+      }
+   }
+   else {
+      throw paramError( __LINE__, SRC );
+   }
+}
+
+FALCON_DEFINE_FUNCTION_P(numeric)
+{
+   TRACE1( "numeric -- called with %d params", pCount );
+   if( pCount < 1 ) {
+      throw paramError( __LINE__, SRC );
+   }
+
+   Item* i_param = ctx->param(0);
+   if( i_param->isInteger() ) {
+      ctx->returnFrame((numeric) i_param->asInteger() );
+   }
+   else if( i_param->isNumeric() )
+   {
+      ctx->returnFrame(i_param->asNumeric());
+   }
+   else if( i_param->isString() )
+   {
+      String* str = i_param->asString();
+      double dbl = 0.0;
+      if( str->parseDouble(dbl,0) )
+      {
+         ctx->returnFrame(dbl);
+      }
+      else {
+         throw FALCON_SIGN_XERROR(ParamError, e_param_type, .extra("Not a number"));
+      }
+   }
+   else {
+      throw paramError( __LINE__, SRC );
+   }
+}
 
 }
 }
