@@ -24,41 +24,41 @@
 
 
 #if FALCON_TRACE_GC
-   #define FALCON_GC_STORE( cls, data ) ( Engine::collector()->trace() ?\
-         Engine::GC_H_store( cls, (void*) data, SRC, __LINE__ ): \
-         Engine::GC_store( cls, (void*) data ))
+   #define FALCON_GC_STORE( cls, data ) ( ::Falcon::Engine::collector()->trace() ?\
+         ::Falcon::Engine::GC_H_store( cls, (void*) data, SRC, __LINE__ ): \
+         ::Falcon::Engine::GC_store( cls, (void*) data ))
 
-   #define FALCON_GC_STORE_IN( ctx, cls, data ) ( Engine::collector()->trace() ?\
-                  (Engine::instance()->collector()->H_store_in( ctx, cls,data, SRC, __LINE__ )): \
-                  (Engine::instance()->collector()->store_in( ctx, cls,data)))
+   #define FALCON_GC_STORE_IN( ctx, cls, data ) ( ::Falcon::Engine::collector()->trace() ?\
+                  (::Falcon::Engine::instance()->collector()->H_store_in( ctx, cls,data, SRC, __LINE__ )): \
+                  (::Falcon::Engine::instance()->collector()->store_in( ctx, cls,data)))
 
-#define FALCON_GC_STORELOCKED( cls, data ) ( Engine::collector()->trace() ?\
-         Engine::GC_H_storeLocked( cls, (void*) data, SRC, __LINE__ ): \
-         Engine::GC_storeLocked( cls, (void*) data ))
+   #define FALCON_GC_STORELOCKED( cls, data ) ( ::Falcon::Engine::collector()->trace() ?\
+         ::Falcon::Engine::GC_H_storeLocked( cls, (void*) data, SRC, __LINE__ ): \
+         ::Falcon::Engine::GC_storeLocked( cls, (void*) data ))
 
-   #define FALCON_GC_STORE_SRCLINE( cls, data, src, line ) ( Engine::collector()->trace() ?\
-         Engine::GC_H_store( cls, (void*) data, src, line ): \
-         Engine::GC_store( cls, (void*) data ))
+   #define FALCON_GC_STORE_SRCLINE( cls, data, src, line ) ( ::Falcon::Engine::collector()->trace() ?\
+         ::Falcon::Engine::GC_H_store( cls, (void*) data, src, line ): \
+         ::Falcon::Engine::GC_store( cls, (void*) data ))
 
-   #define FALCON_GC_STORELOCKED_SRCLINE( cls, data, src, line ) ( Engine::collector()->trace() ?\
-         Engine::GC_H_storeLocked( cls, (void*) data, src, line ): \
-         Engine::GC_storeLocked( cls, (void*) data ))
+   #define FALCON_GC_STORELOCKED_SRCLINE( cls, data, src, line ) ( ::Falcon::Engine::collector()->trace() ?\
+         ::Falcon::Engine::GC_H_storeLocked( cls, (void*) data, src, line ): \
+         ::Falcon::Engine::GC_storeLocked( cls, (void*) data ))
 
 #else  //FALCON_TRACE_GC
    /** This macro can be used to activate the history recording of GC entities.
     See the main body class.
     */
-   #define FALCON_GC_STORE( cls, data ) (Engine::GC_store( cls, (void*) data ))
-   #define FALCON_GC_STORE_IN( ctx, cls, data ) (Engine::instance()->collector()->store_in(ctx, cls, data) )
+   #define FALCON_GC_STORE( cls, data ) (::Falcon::Engine::GC_store( cls, (void*) data ))
+   #define FALCON_GC_STORE_IN( ctx, cls, data ) (::Falcon::Engine::instance()->collector()->store_in(ctx, cls, data) )
 
-   #define FALCON_GC_STORE_SRCLINE( cls, data, src, line ) (Engine::GC_store( cls, (void*) data ))
+   #define FALCON_GC_STORE_SRCLINE( cls, data, src, line ) (::Falcon::Engine::GC_store( cls, (void*) data ))
 
    /** This macro can be used to activate the history recording of GC entities.
     See the main body class.
     */
-   #define FALCON_GC_STORELOCKED( cls, data ) (Engine::GC_storeLocked( cls, (void*) data ))
-         
-   #define FALCON_GC_STORELOCKED_SRCLINE( cls, data, src, line ) (Engine::GC_storeLocked( cls, (void*) data ))
+   #define FALCON_GC_STORELOCKED( cls, data ) (::Falcon::Engine::GC_storeLocked( cls, (void*) data ))
+
+   #define FALCON_GC_STORELOCKED_SRCLINE( cls, data, src, line ) (::Falcon::Engine::GC_storeLocked( cls, (void*) data ))
 #endif  //FALCON_TRACE_GC
 
 #define FALCON_GC_HANDLE( data ) (FALCON_GC_STORE((data)->handler(), data))
@@ -135,7 +135,7 @@ class Shared;
  growth in memory usage in large programs. Either be sure to periodically
  call clearTrace() or consider using traceMark() method to disable the tracing
  of GC mark calls.
- 
+
 */
 
 class FALCON_DYN_CLASS Collector
@@ -161,13 +161,13 @@ public:
    /** Base class for History Trace entries (ABC).
     Subclasses must reimplement the dump() method to have meaningful
     descriptions of events.
-    
+
     */
    class HistoryEntry
    {
    public:
       /** Type of events.
-       
+
        Subclasses must pick one of this types describing what kind
        of event they represent.
        */
@@ -220,7 +220,7 @@ public:
        */
       HECreate( const String& file, int line, const String& className );
       virtual ~HECreate();
-      
+
       virtual String dump() const;
    };
 
@@ -272,7 +272,7 @@ public:
        \param e The new History Entry.
        */
       void addEntry( HistoryEntry* e );
-      
+
       /** A String representation of this item and of all the associated history.
        \return a String representation of this entry.
        */
@@ -288,9 +288,9 @@ public:
        Use proper casting, if the virtual methods provided by the HistoryEntry
        hyerarcy is not enough.
        */
-      
+
       void enumerateEntries( EntryEnumerator& r ) const;
-      
+
    private:
       class Private;
       Private* _p;
@@ -387,17 +387,17 @@ public:
     \note Use the macro FALCON_GC_STORE to transparently allow selecting
     this method or the H_store method depending on compilation options.
     Calling directly this method is to be considerated a deprecated practice.
-    
+
      The entity gets stored in the new items, and will become reclaimable
      since the first scan loop that comes next.
-    
+
      The data must be delivered to the garbage collection system with the
      class that describes it. The collector will call Class::gcmark to
      indicate that the item holding this object is alive. When the item
      is found dead, the collector will call Class::dispose to inform
      the class that the item is not needed by Falcon anymore.
 
-    
+
      @param cls The class that manages the data.
      @param data An arbitrary data to be passed to the garbage collector.
      @return the token associated with this storage.
@@ -410,17 +410,17 @@ public:
     \note Use the macro FALCON_GC_STORELOCKED to transparently allow selecting
     this method or the H_storeLocked method depending on compilation options.
     Calling directly this method is to be considerated a deprecated practice.
-    
+
      This method stores an entity for garbage collecting, but adds an initial
      lock so that the collector cannot reclaim it, nor any other data depending
      from the stored entity.
-    
+
      This is useful when the object is known to be needed by an external entity
      that may be destroyed separately from Falcon activity. A locked entity
      gets marked via Class::gcmark even if not referenced in any virtual machine,
      and gets disposed only if found unreferenced after the garbage lock is
      removed.
-    
+
       @param cls The class that manages the data.
       @param data An arbitrary data to be passed to the garbage collector.
       @return A GCLock entity to control when the item becomes disposeable.
@@ -613,7 +613,7 @@ public:
     */
    void traceMark( bool t );
 
-   
+
    /** Dumps all the history information on a selected device.
     \param target The TextWriter where to write the informaton.
 
@@ -658,7 +658,7 @@ public:
 
    /** Clears all the trace events recorded up to date.
     This destroys all the entries recored by the history tracing systems.
-    
+
     New events on previously existing pointers will be ignored.
 
     \note this method is available only when FALCON_TRACE_GC macro is defined
@@ -819,7 +819,7 @@ protected:
 private:
 
    mutable Mutex m_mtx_history;
-   
+
    void onCreate( const Class* cls, void* data, const String& file, int line );
    void onMark( void* data );
    void onDestroy( void* data );
