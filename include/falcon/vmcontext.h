@@ -174,7 +174,7 @@ public:
       if( currentFrame().m_paramCount <= n ) return 0;
       return &m_dataStack.m_base[ n + currentFrame().m_dataBase ];
    }
-   
+
    /** Now alias to param.
     */
    inline Item* paramRef( uint32 n )  {
@@ -282,7 +282,7 @@ public:
       memset( base+1, 0, count * sizeof(Item) );
    }
 
-   
+
    /** Add more variables on top of the stack -- without initializing them to nil.
     \param count Number of variables to be added.
 
@@ -964,7 +964,7 @@ public:
     */
    void callItem( const Item& item, int pcount, Item const* params );
 
-   
+
    /** Prepares the VM to execute a function.
     @param function The function to be invoked.
     @param np Number of parameters in the params array.
@@ -1014,7 +1014,7 @@ public:
     */
    void call( Closure* closure, int32 np=0, Item const* params=0 );
 
-   /** Adds a local symbol table. 
+   /** Adds a local symbol table.
     This creates an empty symbol entry in the symbol stack to store the
     current data depth.
     \param st The symbol table containing the Local Symbols to be added.
@@ -1127,16 +1127,16 @@ public:
    /** Sets the catch block for the current finally unroll. */
    void setCatchBlock( const SynTree* ps ) { m_catchBlock = ps; }
 
-   /** Unroll dynsymbols pushed for local evaluations. 
+   /** Unroll dynsymbols pushed for local evaluations.
     \param symBase Number of symbols LEFT in the stack after unroll.
     */
    void unrollLocalFrame( int symBase );
-   
+
    /** Finds the upstream local evaluation frame and pops it.
-    
+
     If a local frame is not found up to the next code function frame,
     the operation is silently aborted.
-    
+
    */
    void exitLocalFrame( bool exec = false );
 
@@ -1250,7 +1250,7 @@ public:
          return topData().asInteger() != 0;
 
       case FLC_ITEM_NUM:
-         return topData().asNumeric() != 0.0;      
+         return topData().asNumeric() != 0.0;
 
       case FLC_ITEM_METHOD:
          return true;
@@ -1270,7 +1270,7 @@ public:
    //===============================================================
    // Dynamic Symbols
    //
-   
+
    /** Gets the the value associated with a dynamic symbol.
     \param name the name of the dynsymbol to be associated.
     \return A pointer to the item associated with the symbol.
@@ -1298,7 +1298,7 @@ public:
     */
    Item* resolveSymbol( const Symbol* dyns, bool forAssign );
    Item* resolveVariable( const String& name, bool isGlobal, bool forAssign );
-   
+
    /** Force the symbol to be defined as required.
     * \param sym The symbol to be defined.
     * \param data The data associated with this symbol.
@@ -1318,10 +1318,10 @@ public:
 
    /** Copies pcount parameters from the frame parameters area to the top of the stack. */
    void forwardParams( int pcount );
-   
+
    /** Gets the storer that is currently performing a serialization. */
    Storer* getTopStorer() const;
-   
+
    /** Aborts waits and acquisitions being performed by this contexts.
     This method notifies all the shared resources that this context was
     waiting for, or trying to acquire, that we're not waiting anymore for them.
@@ -1588,7 +1588,7 @@ protected:
       static const int INITIAL_STACK_ALLOC = 256;
       static const int INCREMENT_STACK_ALLOC = 256;
       uint32 m_allocSize;
-      
+
       datatype__* m_base;
       datatype__* m_top;
       datatype__* m_max;
@@ -1601,7 +1601,7 @@ protected:
 
       inline void reset( int base = -1)
       {
-         m_top = m_base-base;
+         m_top = m_base+base;
       }
 
       inline long height() const {
