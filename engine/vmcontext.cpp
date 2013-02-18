@@ -356,7 +356,7 @@ const PStep* VMContext::nextStep( int frame ) const
           break;
        }
     }
-    
+
     return 0;
  }
 
@@ -367,7 +367,7 @@ void VMContext::abortWaits()
 
    base = m_waiting.m_base;
    top = m_waiting.m_top+1;
-   while( base != top ) {
+   while( base < top ) {
       Shared* shared = *base;
       shared->dropWaiting( this );
       shared->decref();
@@ -1279,15 +1279,15 @@ void VMContext::callInternal( Function* function, int nparams )
 {
    TRACE( "Calling function %s -- codebase:%d, dynsBase:%d, stackBase:%d",
          function->locate().c_ize(),
-         m_callStack.m_top->m_codeBase, 
-         m_callStack.m_top->m_dynsBase, 
+         m_callStack.m_top->m_codeBase,
+         m_callStack.m_top->m_dynsBase,
          m_callStack.m_top->m_dataBase );
 
 
    makeCallFrame( function, nparams );
    TRACE3( "-- codebase:%d, dynsBase:%d, stackBase:%d",
-         m_callStack.m_top->m_codeBase, 
-         m_callStack.m_top->m_dynsBase, 
+         m_callStack.m_top->m_codeBase,
+         m_callStack.m_top->m_dynsBase,
          m_callStack.m_top->m_dataBase );
 
    // do the call
@@ -1329,7 +1329,7 @@ void VMContext::callItem( const Item& item, int pcount, Item const* params )
    if( pcount > 0 )
    {
       addSpace( pcount);
-      memcpy( m_dataStack.m_top-pcount, params, pcount * sizeof(item) );
+      memcpy( m_dataStack.m_top-pcount+1, params, pcount * sizeof(item) );
    }
 
    m_caller = currentCode().m_step;
@@ -1346,7 +1346,7 @@ void VMContext::call( Function* func, int pcount, Item const* params )
    if( pcount > 0 )
    {
       addSpace(pcount);
-      memcpy( m_dataStack.m_top-pcount, params, pcount * sizeof(Item) );
+      memcpy( m_dataStack.m_top-pcount+1, params, pcount * sizeof(Item) );
    }
    m_caller = currentCode().m_step;
    makeCallFrame(func, pcount);
@@ -1364,7 +1364,7 @@ void VMContext::call( Function* func, const Item& self, int pcount, Item const* 
    if( pcount > 0 )
    {
       addSpace(pcount);
-      memcpy( m_dataStack.m_top-pcount, params, pcount * sizeof(Item) );
+      memcpy( m_dataStack.m_top-pcount+1, params, pcount * sizeof(Item) );
    }
    m_caller = currentCode().m_step;
    makeCallFrame(func, pcount, self);
@@ -1381,7 +1381,7 @@ void VMContext::call( Closure* cls, int pcount, Item const* params )
    if( pcount > 0 )
    {
       addSpace(pcount);
-      memcpy( m_dataStack.m_top-pcount, params, pcount * sizeof(Item) );
+      memcpy( m_dataStack.m_top-pcount+1, params, pcount * sizeof(Item) );
    }
    m_caller = currentCode().m_step;
    makeCallFrame(cls, pcount );
@@ -1393,7 +1393,7 @@ void VMContext::addLocalFrame( VarMap* st, int pcount )
 {
    static StdSteps* stdSteps = Engine::instance()->stdSteps();
    static Symbol* base = Engine::instance()->baseSymbol();
-   
+
    if( st != 0 ) {
       TRACE("Add local frame PCOUNT: %d/%d, Symbol table locals: %d, closed: %d",
                pcount, st->paramCount(), st->localCount(), st->closedCount() );
@@ -1411,7 +1411,7 @@ void VMContext::addLocalFrame( VarMap* st, int pcount )
    DynsData* baseDyn = m_dynsStack.addSlot();
    baseDyn->m_sym = base;
    baseDyn->m_value = m_dataStack.m_top;
-   
+
    // if we don't have a map, there's nothing else we should do.
    if( st == 0 ) {
       popData( pcount + 1 );
@@ -1456,15 +1456,15 @@ void VMContext::exitLocalFrame( bool exec )
 {
    static PStep* localFrame = &Engine::instance()->stdSteps()->m_localFrame;
    static PStep* localFrameExec = &Engine::instance()->stdSteps()->m_localFrameExec;
-   
+
    MESSAGE( "Exit local frame." );
-   
+
    // Descend into the code stack until we find our local stack marker.
    register CodeFrame* base = m_codeStack.offset(currentFrame().m_codeBase);
    register CodeFrame* top = m_codeStack.m_top;
-   while( top > base ) 
+   while( top > base )
    {
-      if( top->m_step == localFrame) 
+      if( top->m_step == localFrame)
       {
          // we'll be here again...
          if( static_cast<uint32>(top - m_codeStack.m_base) < m_finallyStack.m_top->m_depth )
@@ -1495,7 +1495,7 @@ void VMContext::exitLocalFrame( bool exec )
          break;
       }
       --top;
-   }   
+   }
 }
 
 
@@ -1802,7 +1802,7 @@ Item* VMContext::resolveSymbol( const Symbol* dyns, bool forAssign )
    else {
       newSlot = m_dynsStack.addSlot();
    }
-   
+
    newSlot->m_sym = dyns;
    if( isRule )
    {
