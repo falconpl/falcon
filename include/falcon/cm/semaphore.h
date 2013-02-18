@@ -21,7 +21,7 @@
 #include <falcon/function.h>
 #include <falcon/string.h>
 #include <falcon/shared.h>
-#include <falcon/classes/classuser.h>
+#include <falcon/classes/classshared.h>
 
 #include <falcon/method.h>
 
@@ -36,7 +36,7 @@ public:
 };
 
 
-class FALCON_DYN_CLASS ClassSemaphore: public ClassUser
+class FALCON_DYN_CLASS ClassSemaphore: public ClassShared
 {
 public:
    ClassSemaphore();
@@ -45,12 +45,6 @@ public:
    //=============================================================
    //
    virtual void* createInstance() const;
-   virtual void dispose( void* instance ) const;
-   virtual void* clone( void* instance ) const;
-
-   virtual void gcMarkInstance( void* instance, uint32 mark ) const;
-   virtual bool gcCheckInstance( void* instance, uint32 mark ) const;
-
    virtual bool op_init( VMContext* ctx, void*, int pcount ) const;
 
 private:

@@ -38,7 +38,7 @@ SharedSemaphore::~SharedSemaphore()
 //
 
 ClassSemaphore::ClassSemaphore():
-      ClassUser("Semaphore"),
+      ClassShared("Semaphore"),
       FALCON_INIT_METHOD(post),
       FALCON_INIT_METHOD(wait)
 {
@@ -52,31 +52,6 @@ ClassSemaphore::~ClassSemaphore()
 void* ClassSemaphore::createInstance() const
 {
    return FALCON_CLASS_CREATE_AT_INIT;
-}
-
-void ClassSemaphore::dispose( void* instance ) const
-{
-   SharedSemaphore* sm = static_cast<SharedSemaphore*>(instance);
-   sm->decref();
-}
-
-void* ClassSemaphore::clone( void* instance ) const
-{
-   SharedSemaphore* sm = static_cast<SharedSemaphore*>(instance);
-   sm->incref();
-   return sm;
-}
-
-void ClassSemaphore::gcMarkInstance( void* instance, uint32 mark ) const
-{
-   SharedSemaphore* sm = static_cast<SharedSemaphore*>(instance);
-   sm->gcMark(mark);
-}
-
-bool ClassSemaphore::gcCheckInstance( void* instance, uint32 mark ) const
-{
-   SharedSemaphore* sm = static_cast<SharedSemaphore*>(instance);
-   return sm->gcMark() >= mark;
 }
 
 
@@ -129,16 +104,8 @@ FALCON_DEFINE_METHOD_P( ClassSemaphore, post )
    }
 
    SharedSemaphore* sm = static_cast<SharedSemaphore*>(ctx->self().asInst());
-   // is this the acquired  resource?
-   if( sm == ctx->acquired() )
-   {
-      // then, just deacquire.
-      ctx->releaseAcquired();
-   }
-   else {
-      sm->signal( count );
-   }
-
+   // The semaphore can't be the acquired resource, as it's not acquireable.
+   sm->signal( count );
    ctx->returnFrame();
 }
 
@@ -146,6 +113,7 @@ FALCON_DEFINE_METHOD_P( ClassSemaphore, post )
 FALCON_DEFINE_METHOD_P( ClassSemaphore, wait )
 {
    static const PStep& stepWaitSuccess = Engine::instance()->stdSteps()->m_waitSuccess;
+   static const PStep& stepInvoke = Engine::instance()->stdSteps()->m_reinvoke;
 
    //===============================================
    //
@@ -162,10 +130,10 @@ FALCON_DEFINE_METHOD_P( ClassSemaphore, wait )
    }
 
    // first of all check that we're clear to go with pending events.
-   ctx->releaseAcquired();
-   if( ctx->events() != 0 )
+   if( ctx->releaseAcquired() )
    {
       // i'll be called again, but next time events should be 0.
+      ctx->pushCode(&stepInvoke);
       return;
    }
 

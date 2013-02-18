@@ -135,6 +135,8 @@ add_library(falcon_engine SHARED
   builtin/len.cpp
   builtin/minmax.cpp
  
+ 
+  cm/barrier.cpp
   cm/compile.cpp
   cm/datareader.cpp
   cm/datawriter.cpp

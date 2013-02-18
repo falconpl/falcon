@@ -413,16 +413,21 @@ void VMContext::acquire(Shared* shared)
 }
 
 
-void VMContext::releaseAcquired()
+bool VMContext::releaseAcquired()
 {
    if( m_acquired != 0 )
    {
       m_acquired->signal();
       m_acquired->decref();
+      if( m_suspendedEvents != 0 )
+      {
+         atomicOr( m_events, m_suspendedEvents );
+         m_suspendedEvents = 0;
+         return true;
+      }
    }
 
-   atomicOr( m_events, m_suspendedEvents );
-   m_suspendedEvents = 0;
+   return false;
 }
 
 
@@ -467,7 +472,7 @@ Shared* VMContext::engageWait( int64 timeout )
    while( base != top )
    {
       Shared* shared = *base;
-      if (shared->consumeSignal())
+      if (shared->consumeSignal() > 0)
       {
          clearWaits();
          TRACE( "VMContext::engageWait for %d(%p) got signaled %p%s",
@@ -495,36 +500,39 @@ Shared* VMContext::engageWait( int64 timeout )
    // just in case someone forgot...
    clearSignaledResource();
 
-   m_mtx_sleep.lock();
-   // marker...
-   m_next_schedule = -2;
-   m_mtx_sleep.unlock();
-
-   // tell the shared we're waiting for them.
-   base = m_waiting.m_base;
-   top = m_waiting.m_top+1;
-   while( base != top )
-   {
-      Shared* shared = *base;
-      shared->addWaiter( this );
-      ++base;
-   }
-
    // when we want to abort wait?
    int64 randesVousAt = timeout > 0 ? Sys::_milliseconds() + timeout : timeout;
-
-   m_mtx_sleep.lock();
-   // if the marker changed, then we ALREADY received some wakeup
-   // it's too late to undo the waiting, but we must NOT overwrite the timeout.
-   if( m_next_schedule == -2 )
-   {
-      m_next_schedule = randesVousAt;
-   }
-   m_mtx_sleep.unlock();
+   m_next_schedule = randesVousAt;
 
    return 0;
 }
 
+
+Shared* VMContext::declareWaits()
+{
+   // tell the shared we're waiting for them.
+   Shared** base = m_waiting.m_base;
+   Shared** current = m_waiting.m_base;
+   Shared** top = m_waiting.m_top;
+   while( current <= top )
+   {
+        Shared* shared = *current;
+        if( shared->addWaiter( this ) )
+        {
+           // oh, we made it at last.
+           while( --current >= base )
+           {
+              shared->dropWaiting(this);
+           }
+
+           clearWaits();
+           return shared;
+        }
+        ++current;
+   }
+
+   return 0;
+}
 
 void VMContext::sleep( int64 timeout )
 {
@@ -534,34 +542,6 @@ void VMContext::sleep( int64 timeout )
    // release acquired resources.
    releaseAcquired();
    setSwapEvent();
-}
-
-
-Shared* VMContext::checkAcquiredWait()
-{
-   Shared** base = m_waiting.m_base;
-   Shared** top = m_waiting.m_top+1;
-
-   TRACE( "VMContext::checkAcquiredWait checking %ld shared resources.", (long) (top-base) );
-
-   while( base != top )
-   {
-      Shared* shared = *base;
-      if (shared->consumeSignal())
-      {
-         abortWaits();
-         TRACE( "VMContext::engageWait got signaled %p%s", *base,
-                     (shared->hasAcquireSemantic() ? " (with acquire semantic)" : "") );
-         if(shared->hasAcquireSemantic())
-         {
-            acquire(shared);
-         }
-         return shared;
-      }
-      ++base;
-   }
-
-   return 0;
 }
 
 

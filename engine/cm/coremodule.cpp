@@ -18,6 +18,7 @@
 
 #include <falcon/cm/coremodule.h>
 
+#include <falcon/cm/barrier.h>
 #include <falcon/cm/compile.h>
 #include <falcon/cm/iff.h>
 #include <falcon/cm/include.h>
@@ -67,6 +68,7 @@ CoreModule::CoreModule():
       << new Ext::Function_numeric
       
       // Standard classes
+      << new Ext::ClassBarrier
       << new Ext::ClassURI
       << new Ext::ClassPath
       << new Ext::ClassParallel

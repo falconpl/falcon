@@ -1373,9 +1373,13 @@ public:
    void initWait();
    void addWait( Shared* resource );
    Shared* engageWait( int64 timeout );
-   Shared* checkAcquiredWait();
+   Shared* declareWaits();
 
-   void releaseAcquired();
+   /** Releases the acquired resource.
+    * \return true if the release causes event preemption.
+    *
+    */
+   bool releaseAcquired();
 
    /** Set by the context manager when a resource is signaled during idle time.
     *

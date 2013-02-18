@@ -476,6 +476,20 @@ void StdSteps::PStepWaitSuccess::apply_(const PStep*, VMContext* ctx)
    }
 }
 
+
+void StdSteps::PStepReinvoke::describeTo( String& target, int ) const
+{
+   target = "PStepReinvoke";
+}
+
+void StdSteps::PStepReinvoke::apply_(const PStep*, VMContext* ctx)
+{
+   ctx->popCode(); // in case, we'll be pushed again.
+
+   CallFrame& current = ctx->currentFrame();
+   current.m_function->invoke(ctx, current.m_paramCount);
+}
+
 }
 
 /* end of stdsteps.cpp */

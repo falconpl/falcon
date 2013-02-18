@@ -53,6 +53,17 @@ int32 Shared::consumeSignal( int32 count )
    return count;
 }
 
+
+bool Shared::lockedConsumeSignal()
+{
+   if( _p->m_signals > 0 )
+   {
+      _p->m_signals--;
+      return true;
+   }
+   return false;
+}
+
 void Shared::signal( int32 count )
 {
    ContextManager* notifyTo = 0;
@@ -70,6 +81,14 @@ void Shared::signal( int32 count )
    }
 }
 
+int32 Shared::signalCount() const
+{
+   _p->m_mtx.lock();
+   int32 count = _p->m_signals;
+   _p->m_mtx.unlock();
+
+   return count;
+}
 
 void Shared::broadcast()
 {
@@ -105,12 +124,26 @@ void Shared::dropWaiting( VMContext* ctx )
 }
 
 
-void Shared::addWaiter( VMContext* ctx )
+bool Shared::addWaiter( VMContext* ctx )
 {
    _p->m_mtx.lock();
-   ctx->incref();
+   if ( lockedConsumeSignal() )
+   {
+      _p->m_mtx.unlock();
+
+      if( m_acquireable )
+      {
+         ctx->acquire(this);
+      }
+      ctx->signaledResource(this);
+
+      return true;
+   }
+
    _p->m_waiters.push_back(ctx);
+   ctx->incref();
    _p->m_mtx.unlock();
+   return false;
 }
 
 }

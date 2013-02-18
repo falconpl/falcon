@@ -444,10 +444,9 @@ void ContextManager::manageDesceduledContext( VMContext* ctx )
    }
 
    // Check if a shared resource was readied during the idle time.
-   Shared* sh = ctx->checkAcquiredWait();
+   Shared* sh = ctx->declareWaits();
    if( sh != 0 ) {
       TRACE( "manageDesceduledContext - Context %p(%d) ready because acquired success", ctx, ctx->id() );
-      ctx->signaledResource(sh);
       manageReadyContext( ctx );
    }
    else if( ctx->nextSchedule() >= 0 && ctx->nextSchedule() <= m_now ) {
@@ -480,15 +479,13 @@ void ContextManager::manageSignal( Shared* shared )
    TRACE("ContextManager::manageSignal -- managing signaled resource %p", shared);
 
    shared->_p->m_mtx.lock();
-   int& signals = shared->_p->m_signals;
-   Shared::Private::ContextList::iterator iter = shared->_p->m_waiters.begin();
-   Shared::Private::ContextList::iterator end = shared->_p->m_waiters.end();
+   Shared::Private::ContextList& clist = shared->_p->m_waiters;
 
-   while( signals > 0 && iter != end ) {
-      VMContext* waiter = *iter;
+   while( ! clist.empty() && shared->lockedConsumeSignal() ) {
+      VMContext* waiter = clist.front();
       readyCtx.push_back( waiter );
-      --signals;
-      ++iter;
+      waiter->decref();
+      clist.pop_front();
    }
    shared->_p->m_mtx.unlock();
 

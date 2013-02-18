@@ -17,12 +17,12 @@
 #define _FALCON_CLASSSHARED_H_
 
 #include <falcon/setup.h>
-#include <falcon/class.h>
+#include <falcon/classes/classuser.h>
 
 namespace Falcon
 {
 
-class FALCON_DYN_CLASS ClassShared: public Class
+class FALCON_DYN_CLASS ClassShared: public ClassUser
 {
 public:
    ClassShared();
@@ -37,6 +37,7 @@ public:
    virtual bool gcCheckInstance( void* self, uint32 mark ) const;
 
 protected:
+   ClassShared( const String& name );
    ClassShared( const String& name, int64 type );
 };
 

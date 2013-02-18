@@ -431,6 +431,25 @@ public:
    PStepWaitSuccess m_waitSuccess;
 
 
+   /** Reinvoke.
+    *
+    * Call the invoke method of the function in the current call frame.
+    *
+    * This is done when it is necessary to temporarily abandon the current function,
+    * but the frame must be kept for a later execution, without pushing intermediate
+    * steps.
+    */
+   class PStepReinvoke: public PStep
+   {
+   public:
+      PStepReinvoke() { apply = apply_; }
+      virtual ~PStepReinvoke() {}
+      virtual void describeTo( String& target, int ) const;
+      static void apply_(const PStep*, VMContext* ctx);
+   };
+   PStepReinvoke m_reinvoke;
+
+
 };
 
 }

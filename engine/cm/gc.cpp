@@ -155,7 +155,7 @@ FALCON_DEFINE_PROPERTY_GET( ClassGC, status )(void*, Item& value)
 FALCON_DEFINE_PROPERTY_SET( ClassGC, algorithm )(void*, const Item& value)
 {
    static Collector* coll = Engine::instance()->collector();
-   int32 algo;
+   int32 algo = 0;
    checkType( value.isOrdinal()
             && (algo = static_cast<int32>(value.forceInteger()))
             && algo >= 0 && algo < FALCON_COLLECTOR_ALGORITHM_COUNT,

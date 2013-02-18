@@ -122,11 +122,12 @@ static void internal_wait( VMContext* ctx, int pCount, int start, Method* caller
 {
    static Class* clsShared = Engine::instance()->sharedClass();
    static PStep* step = &Engine::instance()->stdSteps()->m_waitComplete;
+   static PStep* stepInvoke = &Engine::instance()->stdSteps()->m_reinvoke;
 
    // return if we have pending signals -- we'll be called back.
-   ctx->releaseAcquired();
-   if( ctx->events() != 0 )
+   if( ctx->releaseAcquired())
    {
+      ctx->pushCode(stepInvoke);
       return;
    }
 
@@ -171,7 +172,24 @@ FALCON_DEFINE_METHOD_P( ClassParallel, wait )
       throw paramError();
    }
 
-   internal_wait( ctx, pCount, 0, this, -1 );
+   class PStepNext: public PStep
+   {
+   public:
+      PStepNext(Method* caller): m_caller(caller) { apply = apply_; }
+      virtual ~PStepNext() {}
+      virtual void describeTo( String& tgt, int ) const { tgt = "PStepNext"; }
+      static void apply_( const PStep* ps, VMContext* ctx )
+      {
+         const PStepNext* psn = static_cast<const PStepNext*>(ps);
+         internal_wait( ctx, ctx->paramCount(), 0, psn->m_caller, -1 );
+      }
+   private:
+      Method* m_caller;
+   }
+   next(this);
+
+   internal_wait( ctx, ctx->paramCount(), 0, this, -1 );
+   //ctx->stepIn(&next);
 }
 
 FALCON_DEFINE_METHOD_P( ClassParallel, tryWait )
@@ -181,7 +199,23 @@ FALCON_DEFINE_METHOD_P( ClassParallel, tryWait )
       throw paramError();
    }
 
-   internal_wait( ctx, pCount, 0, this, 0 );
+   class PStepNext: public PStep
+   {
+   public:
+      PStepNext(Method* caller): m_caller(caller) { apply = apply_; }
+      virtual ~PStepNext() {}
+      virtual void describeTo( String& tgt, int ) const { tgt = "PStepNext"; }
+      static void apply_( const PStep* ps, VMContext* ctx )
+      {
+         const PStepNext* psn = static_cast<const PStepNext*>(ps);
+         internal_wait( ctx, ctx->paramCount(), 0, psn->m_caller, 0 );
+      }
+   private:
+      Method* m_caller;
+   }
+   next(this);
+
+   ctx->stepIn(&next);
 }
 
 
@@ -199,7 +233,25 @@ FALCON_DEFINE_METHOD_P( ClassParallel, timedWait )
    }
 
    numeric to = timeout->forceNumeric();
-   internal_wait( ctx, pCount, 1, this, to );
+
+   class PStepNext: public PStep
+   {
+   public:
+      PStepNext(Method* caller, numeric to): m_caller(caller), m_to(to) { apply = apply_; }
+      virtual ~PStepNext() {}
+      virtual void describeTo( String& tgt, int ) const { tgt = "PStepNext"; }
+      static void apply_( const PStep* ps, VMContext* ctx )
+      {
+         const PStepNext* psn = static_cast<const PStepNext*>(ps);
+         internal_wait( ctx, ctx->paramCount(), 1, psn->m_caller, psn->m_to );
+      }
+   private:
+      Method* m_caller;
+      numeric m_to;
+   }
+   next(this, to);
+
+   ctx->stepIn(&next);
 }
 
 

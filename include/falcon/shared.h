@@ -66,7 +66,6 @@ public:
    /** Returns true if this resource supports acquire semantic.
     */
    bool hasAcquireSemantic() const { return m_acquireable; }
-   void addWaiter( VMContext* ctx );
    void dropWaiting( VMContext* ctx );
 
    virtual Shared* clone() const;
@@ -128,8 +127,17 @@ public:
    uint32 gcMark() const { return m_mark; }
    void gcMark( uint32 n ) { m_mark = n; }
 
+
 protected:
    virtual ~Shared();
+
+   /** Returns the count of the signals in this moment.
+    *
+    * Used by subclasses that don't implement a semaphore semantic.
+    */
+   int32 signalCount() const;
+
+   virtual bool lockedConsumeSignal();
 
 private:
    class Private;
@@ -139,6 +147,9 @@ private:
    const Class* m_cls;
 
    friend class ContextManager;
+   friend class VMContext;
+
+   bool addWaiter( VMContext* ctx );
 
    FALCON_REFERENCECOUNT_DECLARE_INCDEC(Shared);
 

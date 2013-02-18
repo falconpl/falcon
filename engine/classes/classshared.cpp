@@ -19,14 +19,19 @@
 namespace Falcon
 {
 
+ClassShared::ClassShared( const String& name ):
+         ClassUser(name)
+{
+}
+
 ClassShared::ClassShared( const String& name, int64 type ):
-         Class(name, type)
+         ClassUser(name, type)
 {
 }
 
 
 ClassShared::ClassShared():
-         Class("Shared")
+         ClassUser("Shared")
 {
 }
 
@@ -57,7 +62,7 @@ void* ClassShared::createInstance() const
 
 void ClassShared::describe( void* instance, String& target, int, int ) const
 {
-   target.A("<Shared* ").N((int64) instance).A(">");
+   target.A("<").A(name()).A("* ").N((int64) instance).A(">");
 }
 
 void ClassShared::gcMarkInstance( void* self, uint32 mark ) const
