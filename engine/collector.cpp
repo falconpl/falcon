@@ -28,6 +28,8 @@
 
 #include <falcon/log.h>
 
+#include <stdio.h>
+
 #include <deque>
 #include <string>
 #include <typeinfo>
@@ -668,7 +670,6 @@ GCToken* Collector::store_in( VMContext* ctx, const Class* cls, void *data )
    // do we have spare elements we could take?
    GCToken* token = getToken( const_cast<Class*>(cls), data );
 
-
    int64 memory = cls->occupiedMemory(data);
    m_mtx_accountmem.lock();
    uint64 stoi = (uint64) (++m_storedItems);
@@ -698,10 +699,10 @@ GCToken* Collector::store_in( VMContext* ctx, const Class* cls, void *data )
    if( ctx == 0 || ctx->process()->mainContext() != ctx )
    {
       m_mtx_newRoot.lock();
-      token->m_next =  m_newRoot ;
-      token->m_prev =  m_newRoot->m_prev ;
-      m_newRoot->m_prev->m_next =  token;
-      m_newRoot->m_prev =  token;
+      token->m_next =  m_newRoot->m_next;
+      token->m_prev =  m_newRoot;
+      m_newRoot->m_next->m_prev =  token;
+      m_newRoot->m_next =  token;
       m_mtx_newRoot.unlock();
    }
    else {
@@ -716,7 +717,6 @@ GCLock* Collector::storeLocked( const Class* cls, void *data )
 {
    // do we have spare elements we could take?
    GCToken* token = getToken( const_cast<Class*>(cls), data );
-   
    GCLock* l = this->lock( token );
 
    int64 memory = cls->occupiedMemory(data);
@@ -1895,18 +1895,15 @@ void Collector::Sweeper::sweep( uint32 lastGen )
                cls->dispose( data );
 
                // unlink the ring
-               GCToken* current = ring;
-               ring = ring->m_next;
-
-               if( current == begin ) {
+               if( ring == begin ) {
                   begin = begin->m_next;
                   // no need to reset begin->m_prev
                }
                else {
-                  current->m_prev->m_next = current->m_next;
+                  ring->m_prev->m_next = ring->m_next;
                }
 
-              if( current == end ) {
+              if( ring == end ) {
                   end = end->m_prev;
                   // need to reset end->m_next in case of another priority loop.
                   if( end != 0 )
@@ -1915,8 +1912,11 @@ void Collector::Sweeper::sweep( uint32 lastGen )
                   }
                }
                else {
-                  current->m_next->m_prev = current->m_prev;
+                  ring->m_next->m_prev = ring->m_prev;
                }
+
+              GCToken* current = ring;
+              ring = ring->m_next;
 
                m_master->disposeToken(current);
             }
@@ -1935,9 +1935,10 @@ void Collector::Sweeper::sweep( uint32 lastGen )
    // put the ring back in place.
    if( begin != 0 ) {
       m_master->m_mtx_garbageRoot.lock();
+      GCToken* next = m_master->m_garbageRoot->m_next;
       begin->m_prev = m_master->m_garbageRoot;
-      end->m_next = m_master->m_garbageRoot->m_next;
-      m_master->m_garbageRoot->m_next->m_prev = end;
+      end->m_next = next;
+      next->m_prev = end;
       m_master->m_garbageRoot->m_next = begin;
       m_master->m_mtx_garbageRoot.unlock();
    }

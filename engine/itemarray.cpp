@@ -24,8 +24,9 @@
 #include <falcon/engine.h>
 
 #include <string.h>
+#include <stdio.h>
 
-#define flc_ARRAY_GROWTH 32
+#define flc_ARRAY_GROWTH 64
 
 namespace Falcon
 {
@@ -61,6 +62,7 @@ public:
 
    inline Item* reallocate( length_t size )
    {
+      //printf( "REalloc: %d -> %d\n", m_master->m_size, size);
       Item* newData = allocate( size );
       memcpy( newData, m_master->m_data, ItemArray::esize( m_master->m_size ) );
       return newData;

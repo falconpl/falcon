@@ -30,10 +30,32 @@
 #include <falcon/stdsteps.h>
 
 #include <falcon/errors/paramerror.h>
-#include <falcon/errors/codeerror.h>
+#include <falcon/errors/accesserror.h>
+
+#include <falcon/processor.h>
+
+#include <map>
 
 namespace Falcon {
 namespace Ext {
+
+
+class WaiterData
+{
+public:
+   typedef std::map<Shared*, Item> CallbackMap;
+
+   ItemArray m_waited;
+   CallbackMap m_callbacks;
+
+   length_t m_pos;
+   volatile VMContext* m_owner;
+
+   WaiterData():
+      m_pos(0),
+      m_owner(0)
+   {}
+};
 
 
 ClassWaiter::ClassWaiter():
@@ -54,7 +76,7 @@ ClassWaiter::~ClassWaiter()
 
 void* ClassWaiter::createInstance() const
 {
-   return new ItemArray;
+   return new WaiterData();
 }
 
 
@@ -62,10 +84,11 @@ bool ClassWaiter::op_init( VMContext* ctx, void* instance, int pcount ) const
 {
    static Class* shared = Engine::instance()->sharedClass();
 
-   ItemArray* items = static_cast<ItemArray*>(instance);
+   WaiterData* wd = static_cast<WaiterData*>(instance);
+   ItemArray* items = &wd->m_waited;
+
    Item* params = ctx->opcodeParams(pcount);
 
-   items->append((int64)1);
    for( int32 i = 0; i < pcount; ++ i ) {
       Item* param = params + i;
       if( ! param->isUser() || ! param->asClass()->isDerivedFrom(shared) )
@@ -75,16 +98,24 @@ bool ClassWaiter::op_init( VMContext* ctx, void* instance, int pcount ) const
                         .extra("Shared...") );
       }
 
+      // no need to lock ATM, we're the only users.
       items->append(*param);
    }
+   wd->m_owner = ctx;
 
    return false;
 }
 
 void ClassWaiter::op_in( VMContext* ctx, void* instance ) const
 {
-   ItemArray* self = static_cast<ItemArray*>(instance);
-   ctx->opcodeParam(1).setBoolean(self->find(ctx->topData()) >= 0 );
+   WaiterData* self = static_cast<WaiterData*>(instance);
+   if( ctx != self->m_owner )
+   {
+      throw FALCON_SIGN_ERROR(AccessError, e_ctx_ownership);
+   }
+
+   // no need to lock, we're using just the top array.
+   ctx->opcodeParam(1).setBoolean(self->m_waited.find(ctx->topData()) >= 0 );
    ctx->popCode();
 }
 
@@ -96,51 +127,107 @@ void ClassWaiter::dispose( void* instance ) const
 
 void* ClassWaiter::clone( void* instance ) const
 {
-   ItemArray* self = static_cast<ItemArray*>(instance);
-   return self->clone();
+   WaiterData* self = static_cast<WaiterData*>(instance);
+
+   Processor* proc = Processor::currentProcessor();
+   if( proc == 0 || proc->currentContext() != self->m_owner )
+   {
+      throw FALCON_SIGN_ERROR(AccessError, e_ctx_ownership);
+   }
+
+   WaiterData* nData = new WaiterData;
+   nData->m_waited.merge( self->m_waited );
+   WaiterData::CallbackMap::iterator iter = nData->m_callbacks.begin();
+   WaiterData::CallbackMap::iterator end = nData->m_callbacks.end();
+
+   while( iter != end )
+   {
+      Shared* sh = iter->first;
+      int32 pos = self->m_waited.find(Item(sh->handler(), sh));
+      if( pos >= 0 )
+      {
+         Shared* newShared = static_cast<Shared*>(nData->m_waited.at(pos).asInst());
+         nData->m_callbacks[newShared] = iter->second;
+      }
+      ++iter;
+   }
+   return nData;
 }
 
 void ClassWaiter::gcMarkInstance( void* instance, uint32 mark ) const
 {
-   ItemArray* self = static_cast<ItemArray*>(instance);
-   self->gcMark(mark);
+   WaiterData* self = static_cast<WaiterData*>(instance);
+
+   if( self->m_waited.currentMark() != mark )
+   {
+      self->m_waited.gcMark(mark);
+      WaiterData::CallbackMap::iterator iter = self->m_callbacks.begin();
+      WaiterData::CallbackMap::iterator end = self->m_callbacks.end();
+
+      while( iter != end )
+      {
+         iter->second.gcMark(mark);
+         ++iter;
+      }
+   }
 }
 
 bool ClassWaiter::gcCheckInstance( void* instance, uint32 mark ) const
 {
-   ItemArray* self = static_cast<ItemArray*>(instance);
-   return self->currentMark() >= mark ;
+   WaiterData* self = static_cast<WaiterData*>(instance);
+   return self->m_waited.currentMark() >= mark;
 }
 
 void ClassWaiter::describe( void* instance, String& target, int, int ) const
 {
-   ItemArray* self = static_cast<ItemArray*>(instance);
+   WaiterData* self = static_cast<WaiterData*>(instance);
+
+   Processor* proc = Processor::currentProcessor();
+   if( proc == 0 || proc->currentContext() != self->m_owner )
+   {
+      throw FALCON_SIGN_ERROR(AccessError, e_ctx_ownership);
+   }
+
    target = "Waiter(on ";
-   target.N(self->length()-1).A(" shared)");
+   target.N(self->m_waited.length()).A(" shared)");
 }
 
 
-void ClassWaiter::store( VMContext*, DataWriter*, void* ) const
+void ClassWaiter::store( VMContext* ctx, DataWriter*, void* instance ) const
 {
-   // nothing to do
+   WaiterData* self = static_cast<WaiterData*>(instance);
+
+   if( ctx != self->m_owner )
+   {
+      throw FALCON_SIGN_ERROR(AccessError, e_ctx_ownership);
+   }
 }
 
 void ClassWaiter::restore( VMContext* ctx, DataReader*) const
 {
-   ItemArray* ir = new ItemArray;
+   WaiterData* ir = new WaiterData;
+   ir->m_owner = ctx;
    ctx->pushData( Item(this,ir) );
 }
 
-void ClassWaiter::flatten( VMContext*, ItemArray& arr, void* inst ) const
+void ClassWaiter::flatten( VMContext* ctx,  ItemArray& arr, void* instance ) const
 {
-   ItemArray* self = static_cast<ItemArray*>(inst);
-   arr.merge(*self);
+   WaiterData* self = static_cast<WaiterData*>(instance);
+
+   if( ctx != self->m_owner )
+   {
+      throw FALCON_SIGN_ERROR(AccessError, e_ctx_ownership);
+   }
+
+   arr.append( Item(self->m_waited.handler(), &self->m_waited));
 }
 
 void ClassWaiter::unflatten( VMContext*, ItemArray& arr, void* inst ) const
 {
-   ItemArray* self = static_cast<ItemArray*>(inst);
-   self->merge( arr );
+   WaiterData* self = static_cast<WaiterData*>(inst);
+   fassert( arr[0].asClass() == self->m_waited.handler() );
+
+   self->m_waited.merge( *static_cast<ItemArray*>(arr[0].asInst()) );
 }
 
 
@@ -149,7 +236,7 @@ void ClassWaiter::unflatten( VMContext*, ItemArray& arr, void* inst ) const
 
 FALCON_DEFINE_PROPERTY_GET_P( ClassWaiter, len )
 {
-   value =(int64) static_cast<ItemArray*>(instance)->length();
+   value =(int64) static_cast<WaiterData*>(instance)->m_waited.length();
 }
 
 
@@ -162,11 +249,16 @@ FALCON_DEFINE_PROPERTY_SET_P0( ClassWaiter, len )
 //========================================================================
 
 
-static void internal_wait( VMContext* ctx, numeric to )
+void ClassWaiter::internal_wait( VMContext* ctx, numeric to )
 {
    static Class* clsShared = Engine::instance()->sharedClass();
-   static PStep* step = &Engine::instance()->stdSteps()->m_waitComplete;
    static PStep* stepInvoke = &Engine::instance()->stdSteps()->m_reinvoke;
+
+   WaiterData* self = static_cast<WaiterData*>(ctx->self().asInst());
+   if( ctx != self->m_owner )
+   {
+      throw FALCON_SIGN_ERROR(AccessError, e_ctx_ownership);
+   }
 
    // return if we have pending signals -- we'll be called back.
    if( ctx->releaseAcquired())
@@ -175,13 +267,15 @@ static void internal_wait( VMContext* ctx, numeric to )
       return;
    }
 
-   ItemArray* array = static_cast<ItemArray*>(ctx->self().asInst());
-
+   ItemArray* array = &self->m_waited;
 
    ctx->initWait();
-   uint32 start = (uint32) array->at(0).asInteger();
+   uint32 start = self->m_pos;
    uint32 len = array->length();
-   array->at(0).setInteger(start+1 >= len? 1: start+1);
+   self->m_pos++;
+   if( self->m_pos >= len ) {
+      self->m_pos = 0;
+   }
 
    // roll the loop
    for( uint32 i = start; i < len; ++i )
@@ -195,7 +289,7 @@ static void internal_wait( VMContext* ctx, numeric to )
       ctx->addWait(sh);
    }
 
-   for( uint32 i = 1; i < start; ++i )
+   for( uint32 i = 0; i < start; ++i )
    {
       Item& param = array->at(i);
       Class* cls = 0;
@@ -206,13 +300,10 @@ static void internal_wait( VMContext* ctx, numeric to )
       ctx->addWait(sh);
    }
 
-
-
    Shared* sh = ctx->engageWait(to);
    if( sh != 0 )
    {
-      // return the resource.
-      ctx->returnFrame(Item(sh->handler(), sh));
+      returnOrInvoke( ctx, sh );
    }
    else if( to  == 0 )
    {
@@ -221,9 +312,69 @@ static void internal_wait( VMContext* ctx, numeric to )
    }
    else {
       // try later.
-      ctx->pushCode( step );
+      ctx->pushCode( &m_stepAfterWait );
    }
 }
+
+
+void ClassWaiter::returnOrInvoke( VMContext* ctx, Shared* sh )
+{
+   WaiterData* self = static_cast<WaiterData*>(ctx->self().asInst());
+
+   // return the resource?
+   WaiterData::CallbackMap::iterator cbmp = self->m_callbacks.find( sh );
+   if( cbmp == self->m_callbacks.end() )
+   {
+      ctx->returnFrame(Item(sh->handler(), sh));
+   }
+   else {
+      // prepare a step to analyze the function result.
+      ctx->pushCode( &m_stepAfterCall );
+
+      // invoke the function.
+      ctx->pushData( cbmp->second );
+      ctx->pushData( Item(sh->handler(),sh) );
+      Class* cls = 0;
+      void* inst = 0;
+      cbmp->second.asClassInst(cls, inst);
+      cls->op_call(ctx,1,inst);
+   }
+}
+
+void ClassWaiter::PStepAfterCall::apply_(const PStep*, VMContext* ctx )
+{
+   static PStep* reinvoke = &Engine::instance()->stdSteps()->m_reinvoke;
+
+   Item& result = ctx->topData();
+   // get the return value from the invoked function.
+   if( result.isOob())
+   {
+      // the function is asking us to return.
+      result.setOob(false);
+      ctx->returnFrame(result);
+   }
+   else {
+      // we just need to re-loop
+      ctx->pushCode(reinvoke);
+   }
+}
+
+void ClassWaiter::PStepAfterWait::apply_(const PStep*, VMContext* ctx )
+{
+   // did we have a success?
+   Shared* shared = ctx->getSignaledResouce();
+   if( shared != 0 )
+   {
+      ClassWaiter* waiter = static_cast<ClassWaiter*>(ctx->self().asClass());
+      shared->decref(); // extra ref not needed if we're in garbage system
+      waiter->returnOrInvoke( ctx, shared );
+   }
+   else {
+      // we timed out
+      ctx->returnFrame();
+   }
+}
+
 
 
 FALCON_DEFINE_METHOD_P1( ClassWaiter, wait )
@@ -239,28 +390,45 @@ FALCON_DEFINE_METHOD_P1( ClassWaiter, wait )
       timeout = i_timeout->forceInteger();
    }
 
-   internal_wait( ctx, timeout );
+   static_cast<ClassWaiter*>(methodOf())->internal_wait( ctx, timeout );
 }
 
 FALCON_DEFINE_METHOD_P1( ClassWaiter, tryWait )
 {
-   internal_wait( ctx, 0 );
+   static_cast<ClassWaiter*>(methodOf())->internal_wait( ctx, 0 );
 }
 
 FALCON_DEFINE_METHOD_P1( ClassWaiter, add )
 {
    static Class* clsShared = Engine::instance()->sharedClass();
 
+   WaiterData* self = static_cast<WaiterData*>(ctx->self().asInst());
+   if( ctx != self->m_owner )
+   {
+      throw FALCON_SIGN_ERROR(AccessError, e_ctx_ownership);
+   }
+
    Item* i_added = ctx->param(0);
-   if( i_added == 0 || ! i_added->isUser() || ! i_added->asClass()->isDerivedFrom(clsShared) )
+   Item* i_callback = ctx->param(1);
+
+   Class* cls = 0;
+   void* inst = 0;
+
+   if( i_added == 0
+            || ! i_added->asClassInst(cls, inst)
+            || ! cls->isDerivedFrom(clsShared)
+     )
    {
       throw paramError(__LINE__, SRC);
    }
 
-   ItemArray* items = static_cast<ItemArray*>(ctx->self().asInst());
-   items->append(*i_added);
-
-   ctx->returnFrame();
+   self->m_waited.append(*i_added);
+   if( i_callback != 0 )
+   {
+      Shared* sh = static_cast<Shared*>(cls->getParentData(clsShared, inst));
+      self->m_callbacks[sh] = *i_callback;
+   }
+   ctx->returnFrame(ctx->self());
 }
 
 
@@ -268,17 +436,29 @@ FALCON_DEFINE_METHOD_P1( ClassWaiter, remove )
 {
    static Class* clsShared = Engine::instance()->sharedClass();
 
+   WaiterData* self = static_cast<WaiterData*>(ctx->self().asInst());
+   if( ctx != self->m_owner )
+   {
+      throw FALCON_SIGN_ERROR(AccessError, e_ctx_ownership);
+   }
+
    Item* i_added = ctx->param(0);
-   if( i_added == 0 || ! i_added->isUser() || ! i_added->asClass()->isDerivedFrom(clsShared) )
+   Class* cls = 0;
+   void* inst = 0;
+   if( i_added == 0
+            || ! i_added->asClassInst(cls, inst)
+            || ! cls->isDerivedFrom(clsShared)
+            )
    {
       throw paramError(__LINE__, SRC);
    }
 
-   ItemArray* items = static_cast<ItemArray*>(ctx->self().asInst());
-   length_t pos = items->find(*i_added);
-   if( pos < items->length())
+   int32 pos = self->m_waited.find(*i_added);
+   if( pos < 0)
    {
-      items->remove(pos);
+      self->m_waited.remove(pos);
+      Shared* sh = static_cast<Shared*>(cls->getParentData(clsShared, inst));
+      self->m_callbacks.erase(sh);
    }
 
    ctx->returnFrame();

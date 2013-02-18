@@ -130,6 +130,7 @@ void ContextGroup::setError( Error* error )
       VMContext* ctx = *iter;
       // ask the system to kill the contexts.
       ctx->setTerminateEvent();
+      ctx->vm()->contextManager().onGroupTerminated( ctx );
       ++iter;
    }
 }

@@ -44,6 +44,7 @@ public:
       e_resource_signaled,
       e_incoming_context,
       e_context_terminated,
+      e_group_terminated,
       e_wakeup_context
    }
    t_type;
@@ -212,6 +213,14 @@ void ContextManager::onContextTerminated( VMContext* ctx )
    _p->m_messages.add( CMMsg(ctx, CMMsg::e_context_terminated) );
 }
 
+void ContextManager::onGroupTerminated( VMContext* ctx )
+{
+   TRACE1( "ContextManager::onGroupTerminated %p(%d) in process %p(%d)",
+            ctx, ctx->id(), ctx->process(), ctx->process()->id() );
+   ctx->incref();
+   _p->m_messages.add( CMMsg(ctx, CMMsg::e_group_terminated) );
+}
+
 void ContextManager::onSharedSignaled( Shared* waitable )
 {
    TRACE1( "ContextManager::onSharedSignaled %p", waitable );
@@ -288,6 +297,11 @@ void* ContextManager::run()
       {
       case CMMsg::e_context_terminated:
          manageTerminatedContext( msg.m_data.ctx );
+         msg.m_data.ctx->decref();
+         break;
+
+      case CMMsg::e_group_terminated:
+         manageContextKilledInGroup( msg.m_data.ctx );
          msg.m_data.ctx->decref();
          break;
 
@@ -388,6 +402,16 @@ void ContextManager::manageTerminatedContext( VMContext* ctx )
    if( ctx->nextSchedule() != 0 )
    {
       removeSleepingContext( ctx );
+   }
+}
+
+void ContextManager::manageContextKilledInGroup( VMContext* ctx )
+{
+   TRACE( "manageContextKilledInGroup - Terminating context %p(%d)", ctx, ctx->id() );
+   if( removeSleepingContext( ctx ) )
+   {
+      // this context is gone now
+      ctx->inGroup()->onContextTerminated(ctx);
    }
 }
 

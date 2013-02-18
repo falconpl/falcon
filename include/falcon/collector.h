@@ -49,7 +49,7 @@
     See the main body class.
     */
    #define FALCON_GC_STORE( cls, data ) (Engine::GC_store( cls, (void*) data ))
-   #define FALCON_GC_STORE_IN( ctx, cls, data ) (ctx->addNewToken(Engine::instance()->collector()->store( cls,data)) )
+   #define FALCON_GC_STORE_IN( ctx, cls, data ) (Engine::instance()->collector()->store_in(ctx, cls, data) )
 
    #define FALCON_GC_STORE_SRCLINE( cls, data, src, line ) (Engine::GC_store( cls, (void*) data ))
 

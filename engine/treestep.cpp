@@ -203,7 +203,7 @@ void TreeStep::resolveUnquote( VMContext* ctx )
       sel->resolveUnquote(ctx);
    }
 
-   for (int i = 0; i < rty; ++i ) {
+   for (int i = rty-1; i >=0; --i ) {
       nth(i)->resolveUnquote(ctx);
    }
 }

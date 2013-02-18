@@ -17,6 +17,7 @@
 
 #include <falcon/class.h>
 
+#include <stdio.h>
 namespace Falcon
 {
 

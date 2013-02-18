@@ -56,6 +56,19 @@ public:
    void onContextTerminated( VMContext* ctx );
 
    /**
+    Invoked by a group when it is being terminated because of errors.
+
+    This just inform the manager that the context is scheduled for future termination.
+    Normally, the context will arrive to the manager at a later time, with a
+    deschedule message and terminate event.
+
+    However, if the context is currently sleeping (possibly forever), it must be
+    removed by the context manager. This message asks the context manager to
+    remove the context on its initiative, if it is still sleeping.
+    */
+   void onGroupTerminated( VMContext* ctx );
+
+   /**
    Called back when a shared resource with contexts in wait is signaled.
     */
    void onSharedSignaled( Shared* waitable );
@@ -100,6 +113,7 @@ private:
 
    bool manageSleepingContexts();
 
+   void manageContextKilledInGroup( VMContext* ctx );
    void manageTerminatedContext( VMContext* ctx );
    void manageDesceduledContext( VMContext* ctx );
    void manageReadyContext( VMContext* ctx );

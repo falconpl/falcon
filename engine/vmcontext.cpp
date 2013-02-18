@@ -1724,52 +1724,56 @@ Item* VMContext::resolveSymbol( const Symbol* dyns, bool forAssign )
 
    // if we're here, we didn't find it -- it might be an unresolved local variable...
    const String& name = dyns->name();
-   Variable* lvar = cf->m_function->variables().find(name);
-   if( lvar != 0 )
+   //while( cf >= m_callStack.m_base )
    {
-      Item* resolved = 0;
-      switch( lvar->type() ) {
-      case Variable::e_nt_closed:
-         if( cf->m_closure != 0 )
-         {
-            resolved = cf->m_closure->get(name);
-         }
-         break;
-
-      case Variable::e_nt_local:
-         if( forAssign )
-         {
-            resolved = local(lvar->id());
-         }
-         break;
-
-      case Variable::e_nt_param:
-         // get the parameter even if not given (will be nil)
-         resolved = &m_dataStack.m_base[ lvar->id() + currentFrame().m_dataBase ];
-         break;
-
-      default:
-         fassert2( false, "Shouldn't have this in a function" );
-         break;
-      }
-
-      if( resolved != 0 )
+      Variable* lvar = cf->m_function->variables().find(name);
+      if( lvar != 0 )
       {
-         DynsData* newSlot = m_dynsStack.addSlot();
-         newSlot->m_sym = dyns;
-         if( isRule )
+         Item* resolved = 0;
+         switch( lvar->type() ) {
+         case Variable::e_nt_closed:
+            if( cf->m_closure != 0 )
+            {
+               resolved = cf->m_closure->get(name);
+            }
+            break;
+
+         case Variable::e_nt_local:
+            if( forAssign )
+            {
+               resolved = &m_dataStack.m_base[ lvar->id() + cf->m_dataBase +cf->m_paramCount ];
+            }
+            break;
+
+         case Variable::e_nt_param:
+            // get the parameter even if not given (will be nil)
+            resolved = &m_dataStack.m_base[ lvar->id() + cf->m_dataBase ];
+            break;
+
+         default:
+            fassert2( false, "Shouldn't have this in a function" );
+            break;
+         }
+
+         if( resolved != 0 )
          {
-            newSlot->m_internal = *resolved;
-            newSlot->m_value = &newSlot->m_internal;
+            DynsData* newSlot = m_dynsStack.addSlot();
+            newSlot->m_sym = dyns;
+            if( isRule )
+            {
+               newSlot->m_internal = *resolved;
+               newSlot->m_value = &newSlot->m_internal;
+            }
+            else {
+               newSlot->m_internal.setNil();
+               newSlot->m_value = resolved;
+            }
+            TRACE2( "VMContext::resolveSymbol -- \"%s\" Found in locals as %p (%s)",
+                     dyns->name().c_ize(), resolved, resolved->describe().c_ize() );
+            return resolved;
          }
-         else {
-            newSlot->m_internal.setNil();
-            newSlot->m_value = resolved;
-         }
-         TRACE2( "VMContext::resolveSymbol -- \"%s\" Found in locals as %p (%s)",
-                  dyns->name().c_ize(), resolved, resolved->describe().c_ize() );
-         return resolved;
       }
+      //cf--;
    }
 
    // No luck at all; try to resolve the variable in the global arena
@@ -1950,11 +1954,13 @@ void VMContext::terminated()
    // If terminated after a raise, this is a no-op.
    releaseAcquired();
 
-   //... and from the manager
-   vm()->contextManager().onContextTerminated(this);
-
+   // get the events now
    int value;
    value = atomicFetch( m_events );
+
+   // And then ask the context manager to work on us.
+   vm()->contextManager().onContextTerminated(this);
+
    if( (value & evtRaise) )
    {
       if( m_inGroup != 0 ) {
@@ -2189,7 +2195,6 @@ GCToken* VMContext::addNewToken( GCToken* token )
 
    m_newTokens->m_next->m_prev = token;
    m_newTokens->m_next = token;
-
    return token;
 }
 

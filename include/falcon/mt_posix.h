@@ -78,7 +78,7 @@ inline void cv_broadcast( pthread_cond_t& cv )
 */
 class Mutex
 {
-   pthread_mutex_t m_mtx;
+   pthread_spinlock_t m_mtx;
 
 public:
    /** Creates the mutex.
@@ -87,9 +87,9 @@ public:
    inline Mutex()
    {
       #ifdef NDEBUG
-      pthread_mutex_init( &m_mtx, 0 );
+      pthread_spin_init( &m_mtx, 300 );
       #else
-      int result = pthread_mutex_init( &m_mtx, 0 );
+      int result = pthread_spin_init( &m_mtx, 300 );
       fassert( result == 0 );
       #endif
    }
@@ -101,9 +101,9 @@ public:
    */
    inline ~Mutex() {
       #ifdef NDEBUG
-      pthread_mutex_destroy( &m_mtx );
+      pthread_spin_destroy( &m_mtx );
       #else
-      int result = pthread_mutex_destroy( &m_mtx );
+      int result = pthread_spin_destroy( &m_mtx );
       fassert( result == 0 );
       #endif
    }
@@ -116,9 +116,9 @@ public:
    inline void lock()
    {
       #ifdef NDEBUG
-      pthread_mutex_lock( &m_mtx );
+      pthread_spin_lock( &m_mtx );
       #else
-      int result = pthread_mutex_lock( &m_mtx );
+      int result = pthread_spin_lock( &m_mtx );
       fassert( result != EINVAL );
       fassert( result != EDEADLK );
       #endif
@@ -132,9 +132,9 @@ public:
    inline void unlock()
    {
       #ifdef NDEBUG
-      pthread_mutex_unlock( &m_mtx );
+      pthread_spin_unlock( &m_mtx );
       #else
-      int result = pthread_mutex_unlock( &m_mtx );
+      int result = pthread_spin_unlock( &m_mtx );
       fassert( result == 0 );
       #endif
    }
@@ -146,7 +146,7 @@ public:
    */
    inline bool trylock()
    {
-      int result = pthread_mutex_trylock( &m_mtx );
+      int result = pthread_spin_trylock( &m_mtx );
       if ( result == EBUSY )
          return false;
 
