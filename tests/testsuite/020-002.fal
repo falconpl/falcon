@@ -3,8 +3,7 @@
 @category Core-module
 
 @output
-Core module test -- function int
-Core module test -- function int
+Core module test -- function numeric
 1 true
 123 true
 123.2123 true
@@ -14,7 +13,7 @@ Done
 @endoutput
 */
 
-> "Core module test -- function int"
+> "Core module test -- function numeric"
 
 x = numeric(1)
 > x, " ", x === 1.0
