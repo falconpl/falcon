@@ -37,6 +37,7 @@
 #include <falcon/cm/semaphore.h>
 #include <falcon/cm/stdfunctions.h>
 #include <falcon/cm/vmcontext.h>
+#include <falcon/cm/waiter.h>
 
 // the standard error classes
 #include <falcon/errorclasses.h>
@@ -73,6 +74,7 @@ CoreModule::CoreModule():
       << new Ext::ClassPath
       << new Ext::ClassParallel
       << new Ext::ClassIterator
+      << new Ext::ClassWaiter
       << new Ext::ClassTextStream( classStream )
       << new Ext::ClassTextWriter( classStream )
       << new Ext::ClassTextReader( classStream )

@@ -172,24 +172,7 @@ FALCON_DEFINE_METHOD_P( ClassParallel, wait )
       throw paramError();
    }
 
-   class PStepNext: public PStep
-   {
-   public:
-      PStepNext(Method* caller): m_caller(caller) { apply = apply_; }
-      virtual ~PStepNext() {}
-      virtual void describeTo( String& tgt, int ) const { tgt = "PStepNext"; }
-      static void apply_( const PStep* ps, VMContext* ctx )
-      {
-         const PStepNext* psn = static_cast<const PStepNext*>(ps);
-         internal_wait( ctx, ctx->paramCount(), 0, psn->m_caller, -1 );
-      }
-   private:
-      Method* m_caller;
-   }
-   next(this);
-
    internal_wait( ctx, ctx->paramCount(), 0, this, -1 );
-   //ctx->stepIn(&next);
 }
 
 FALCON_DEFINE_METHOD_P( ClassParallel, tryWait )
@@ -199,23 +182,7 @@ FALCON_DEFINE_METHOD_P( ClassParallel, tryWait )
       throw paramError();
    }
 
-   class PStepNext: public PStep
-   {
-   public:
-      PStepNext(Method* caller): m_caller(caller) { apply = apply_; }
-      virtual ~PStepNext() {}
-      virtual void describeTo( String& tgt, int ) const { tgt = "PStepNext"; }
-      static void apply_( const PStep* ps, VMContext* ctx )
-      {
-         const PStepNext* psn = static_cast<const PStepNext*>(ps);
-         internal_wait( ctx, ctx->paramCount(), 0, psn->m_caller, 0 );
-      }
-   private:
-      Method* m_caller;
-   }
-   next(this);
-
-   ctx->stepIn(&next);
+   internal_wait( ctx, ctx->paramCount(), 0, this, 0);
 }
 
 
@@ -234,24 +201,7 @@ FALCON_DEFINE_METHOD_P( ClassParallel, timedWait )
 
    numeric to = timeout->forceNumeric();
 
-   class PStepNext: public PStep
-   {
-   public:
-      PStepNext(Method* caller, numeric to): m_caller(caller), m_to(to) { apply = apply_; }
-      virtual ~PStepNext() {}
-      virtual void describeTo( String& tgt, int ) const { tgt = "PStepNext"; }
-      static void apply_( const PStep* ps, VMContext* ctx )
-      {
-         const PStepNext* psn = static_cast<const PStepNext*>(ps);
-         internal_wait( ctx, ctx->paramCount(), 1, psn->m_caller, psn->m_to );
-      }
-   private:
-      Method* m_caller;
-      numeric m_to;
-   }
-   next(this, to);
-
-   ctx->stepIn(&next);
+   internal_wait( ctx, ctx->paramCount(), 1, this, to );
 }
 
 

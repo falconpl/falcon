@@ -155,6 +155,7 @@ add_library(falcon_engine SHARED
   cm/textwriter.cpp
   cm/uri.cpp
   cm/vmcontext.cpp
+  cm/waiter.cpp
   cm/coremodule.cpp
 
   sp/parser_arraydecl.cpp
