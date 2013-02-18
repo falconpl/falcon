@@ -27,6 +27,7 @@
 #include <falcon/datawriter.h>
 #include <falcon/datareader.h>
 #include <falcon/itemarray.h>
+#include <falcon/stdsteps.h>
 
 #include <falcon/errors/paramerror.h>
 #include <falcon/errors/codeerror.h>
@@ -67,6 +68,7 @@ ClassParallel::ClassParallel():
    ClassUser("Parallel"),
 
    FALCON_INIT_METHOD( wait ),
+   FALCON_INIT_METHOD( tryWait ),
    FALCON_INIT_METHOD( timedWait ),
    FALCON_INIT_METHOD( launch ),
    FALCON_INIT_METHOD( launchWithResults )
@@ -118,8 +120,17 @@ bool ClassParallel::op_init( VMContext* ctx, void* instance, int pcount ) const
 
 static void internal_wait( VMContext* ctx, int pCount, int start, Method* caller, numeric to )
 {
-   Class* clsShared = Engine::instance()->sharedClass();
+   static Class* clsShared = Engine::instance()->sharedClass();
+   static PStep* step = &Engine::instance()->stdSteps()->m_waitComplete;
 
+   // return if we have pending signals -- we'll be called back.
+   ctx->releaseAcquired();
+   if( ctx->events() != 0 )
+   {
+      return;
+   }
+
+   ctx->initWait();
    for( int i = start; i < pCount; ++i )
    {
       Item* param = ctx->param(i);
@@ -135,8 +146,23 @@ static void internal_wait( VMContext* ctx, int pCount, int start, Method* caller
       ctx->addWait(sh);
    }
 
-   ctx->engageWait(to);
+   Shared* sh = ctx->engageWait(to);
+   if( sh != 0 )
+   {
+      // return the resource.
+      ctx->returnFrame(Item(sh->handler(), sh));
+   }
+   else if( to  == 0 )
+   {
+      // return nil immediately
+      ctx->returnFrame();
+   }
+   else {
+      // try later.
+      ctx->pushCode( step );
+   }
 }
+
 
 FALCON_DEFINE_METHOD_P( ClassParallel, wait )
 {
@@ -147,6 +173,17 @@ FALCON_DEFINE_METHOD_P( ClassParallel, wait )
 
    internal_wait( ctx, pCount, 0, this, -1 );
 }
+
+FALCON_DEFINE_METHOD_P( ClassParallel, tryWait )
+{
+   if( pCount == 0 )
+   {
+      throw paramError();
+   }
+
+   internal_wait( ctx, pCount, 0, this, 0 );
+}
+
 
 
 FALCON_DEFINE_METHOD_P( ClassParallel, timedWait )
@@ -267,6 +304,7 @@ ClassParallel::PStepAfterWait::PStepAfterWait()
 {
    apply = apply_;
 }
+
 }
 }
 

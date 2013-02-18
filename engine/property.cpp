@@ -29,12 +29,16 @@ namespace Falcon {
 
 
 Property::Property( ClassUser* uc, const String &name, bool bCarried, bool bHidden ):
-   m_name(name),
    m_owner(uc),
+   m_name(name),
    m_bCarried(bCarried),
    m_bHidden(bHidden)
 {
-   uc->add(this);
+   if( uc != 0 )
+   {
+      uc->add(this);
+      // otherwise, the subclass wants to override this.
+   }
 }
 
 
@@ -66,9 +70,13 @@ Error* Property::readOnlyError() const
 //
 
 PropertyConstant::PropertyConstant( const Item& value, ClassUser* uc, const String &name ):
-         Property(uc, name, false, true ),
+         Property(0, name, false, true ),
          m_lock(0)
 {
+   m_owner = uc;
+   uc->add(this);
+   uc->addStatic(this);
+
    static Collector* coll = Engine::instance()->collector();
    m_value = value;
    if( value.isUser() )
@@ -89,6 +97,22 @@ PropertyConstant::~PropertyConstant()
 void PropertyConstant::set( void*, const Item& )
 {
    throw readOnlyError();
+}
+
+//===================================================================
+// PropertyStatic
+//
+
+PropertyStatic::PropertyStatic( ClassUser* uc, const String &name ):
+         Property(0, name, false, true )
+{
+   // make us reachable, yet invisible, for the instances too.
+   uc->add(this);
+   uc->addStatic(this);
+}
+
+PropertyStatic::~PropertyStatic()
+{
 }
 
 //===================================================================

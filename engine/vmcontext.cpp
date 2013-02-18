@@ -37,7 +37,6 @@
 #include <falcon/errors/codeerror.h>
 #include <falcon/psteps/stmttry.h>      // for catch.
 
-
 #include <stdlib.h>
 #include <string.h>
 
@@ -82,6 +81,7 @@ VMContext::VMContext( Process* prc, ContextGroup* grp ):
    m_bInspectMark(false),
    m_bSleeping(false),
    m_events(0),
+   m_suspendedEvents(0),
    m_inGroup(grp),
    m_process(prc),
    m_caller(0)
@@ -99,6 +99,8 @@ VMContext::VMContext( Process* prc, ContextGroup* grp ):
 
    m_id = prc->getNextContextID();
    m_acquired = 0;
+   m_signaledResource = 0;
+
 
    pushBaseElements();
 
@@ -111,7 +113,8 @@ VMContext::~VMContext()
 {
    // just in case we were killed while in wait.
    abortWaits();
-   acquire(0);
+   releaseAcquired();
+   clearSignaledResource();
 
    m_newTokens->m_prev->m_next = 0;
    GCToken* token = m_newTokens;
@@ -137,7 +140,8 @@ void VMContext::reset()
    // do not reset ingroup.
 
    abortWaits();
-   acquire(0);
+   releaseAcquired();
+   clearSignaledResource();
 
    m_catchBlock = 0;
    m_inspectible = true;
@@ -152,6 +156,8 @@ void VMContext::reset()
    m_waiting.reset();
 
    pushBaseElements();
+   clearEvents();
+
 }
 
 
@@ -370,6 +376,19 @@ void VMContext::abortWaits()
    m_waiting.m_top = m_waiting.m_base-1;
 }
 
+void VMContext::clearWaits()
+{
+   Shared** base,** top;
+
+   base = m_waiting.m_base;
+   top = m_waiting.m_top+1;
+   while( base != top ) {
+      Shared* shared = *base;
+      shared->decref();
+      ++base;
+   }
+   m_waiting.m_top = m_waiting.m_base-1;
+}
 
 void VMContext::initWait()
 {
@@ -386,14 +405,53 @@ void VMContext::addWait( Shared* resource )
 
 void VMContext::acquire(Shared* shared)
 {
-   if( m_acquired !=0 ) {
+   fassert( m_acquired == 0 );
+   fassert( shared != 0 );
+
+   m_acquired = shared;
+   shared->incref();
+}
+
+
+void VMContext::releaseAcquired()
+{
+   if( m_acquired != 0 )
+   {
       m_acquired->signal();
       m_acquired->decref();
    }
 
-   m_acquired = shared;
-   if( shared != 0 ) {
-      shared->incref();
+   atomicOr( m_events, m_suspendedEvents );
+   m_suspendedEvents = 0;
+}
+
+
+void VMContext::signaledResource( Shared* shared )
+{
+   if( m_signaledResource != 0 )
+   {
+      m_signaledResource->decref();
+   }
+
+   shared->incref();
+   m_signaledResource = shared;
+}
+
+
+Shared* VMContext::getSignaledResouce()
+{
+   Shared* signaled = m_signaledResource;
+   m_signaledResource = 0;
+   return signaled;
+}
+
+
+void VMContext::clearSignaledResource()
+{
+   if( m_signaledResource != 0 )
+   {
+      m_signaledResource->decref();
+      m_signaledResource = 0;
    }
 }
 
@@ -411,7 +469,7 @@ Shared* VMContext::engageWait( int64 timeout )
       Shared* shared = *base;
       if (shared->consumeSignal())
       {
-         abortWaits();
+         clearWaits();
          TRACE( "VMContext::engageWait for %d(%p) got signaled %p%s",
                   id(), this, *base,
                      (shared->hasAcquireSemantic() ? " (with acquire semantic)" : "") );
@@ -424,9 +482,18 @@ Shared* VMContext::engageWait( int64 timeout )
       ++base;
    }
 
+   // was this just a try?
+   if( timeout == 0 )
+   {
+      clearWaits();
+      return 0;
+   }
+
    // nothing free right now, put us at sleep.
    TRACE( "VMContext::engageWait for %d(%p) nothing signaled, will go wait", id(), this);
    setSwapEvent();
+   // just in case someone forgot...
+   clearSignaledResource();
 
    m_mtx_sleep.lock();
    // marker...
@@ -459,9 +526,13 @@ Shared* VMContext::engageWait( int64 timeout )
 }
 
 
-void VMContext::sleep( int64 timeout ) {
+void VMContext::sleep( int64 timeout )
+{
    TRACE( "VMContext::sleep sleeping for %d milliseconds", (int) timeout );
    m_next_schedule = timeout > 0 ? Sys::_milliseconds() + timeout : 0;
+
+   // release acquired resources.
+   releaseAcquired();
    setSwapEvent();
 }
 
@@ -1063,6 +1134,9 @@ void VMContext::raiseItem( const Item& item )
 
 Error* VMContext::raiseError( Error* ce )
 {
+   // be sure to release the critical section no matter wat
+   releaseAcquired();
+
    if( m_lastRaised != 0 ) m_lastRaised->decref();
    m_lastRaised = ce;
    ce->incref();
@@ -1892,6 +1966,10 @@ Item* VMContext::findLocal( const String& name ) const
 
 void VMContext::terminated()
 {
+   // be sure to release any acquired resource.
+   // If terminated after a raise, this is a no-op.
+   releaseAcquired();
+
    //... and from the manager
    vm()->contextManager().onContextTerminated(this);
 

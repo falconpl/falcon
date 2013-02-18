@@ -133,6 +133,20 @@ void MetaClass::op_call( VMContext* ctx, int32 pcount, void* self ) const
    ctx->popData( pcount );
 }
 
+
+void MetaClass::op_getProperty( VMContext* ctx, void* instance, const String& prop) const
+{
+   Class* fc = static_cast<Class*>(instance);
+   fc->op_getClassProperty(ctx, prop);
+}
+
+
+void MetaClass::op_setProperty( VMContext* ctx, void* instance, const String& prop ) const
+{
+   Class* fc = static_cast<Class*>(instance);
+   fc->op_setClassProperty(ctx, prop);
+}
+
 }
 
 /* end of metaclass.cpp */

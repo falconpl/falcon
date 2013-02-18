@@ -33,6 +33,7 @@
 #include <falcon/cm/datareader.h>
 #include <falcon/cm/parallel.h>
 #include <falcon/cm/iterator.h>
+#include <falcon/cm/semaphore.h>
 #include <falcon/cm/stdfunctions.h>
 #include <falcon/cm/vmcontext.h>
 
@@ -56,6 +57,7 @@ CoreModule::CoreModule():
       << new Ext::FuncPrint
       << new Ext::Inspect
       << new Ext::Iff
+      << new Ext::Function_rest
       << new Ext::Function_epoch
       << new Ext::Function_include
       << new Ext::Function_seconds
@@ -74,6 +76,7 @@ CoreModule::CoreModule():
       << new Ext::ClassTextReader( classStream )
       << new Ext::ClassDataWriter( classStream )
       << new Ext::ClassDataReader( classStream )
+      << new Ext::ClassSemaphore
       << new Ext::ClassVMContext
       ;
 

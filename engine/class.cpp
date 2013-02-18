@@ -415,6 +415,32 @@ void Class::op_setProperty( VMContext* ctx, void*, const String& prop ) const
 }
 
 
+void Class::op_getClassProperty( VMContext* ctx, const String& prop) const
+{
+   static BOM* bom = Engine::instance()->getBom();
+
+   // try to find a valid BOM propery.
+   BOM::handler handler = bom->get( prop );
+   if ( handler != 0  )
+   {
+      // all bom methods do not modify their object
+      // we can safely use a const cast
+      handler( ctx, this, const_cast<Class*>(this) );
+   }
+   else
+   {
+      FALCON_RESIGN_XERROR( AccessTypeError, e_prop_acc, ctx,
+                   .extra(prop) );
+   }
+}
+
+
+void Class::op_setClassProperty( VMContext* ctx, const String& prop ) const
+{
+   FALCON_RESIGN_XERROR( AccessError, e_prop_acc, ctx,
+                .extra(prop) );
+}
+
 void Class::op_isTrue( VMContext* ctx, void* ) const
 {
    ctx->topData().setBoolean(true);

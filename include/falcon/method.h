@@ -29,7 +29,7 @@ class Item;
 class FALCON_DYN_CLASS Method: public Function
 {
 public:
-   Method( ClassUser* cls, const String& name, Module* mod = 0 );
+   Method( ClassUser* cls, const String& name, Module* mod = 0, bool isStatic = false );
    virtual ~Method() {}
 
 private:
@@ -46,6 +46,7 @@ private:
    };
 
    MethodProp m_prop;
+   bool m_bIsStatic;
 };
 
 
@@ -55,6 +56,18 @@ private:
    public: \
       Method_ ## MTH_NAME( ::Falcon::ClassUser* u ): \
          Method( u, #MTH_NAME ) \
+      { parseDescription( SIGNATURE ); } \
+      virtual ~Method_ ## MTH_NAME() {} \
+      virtual void invoke( ::Falcon::VMContext* ctx, ::Falcon::int32 pCount = 0 ); \
+   } m_Method_ ## MTH_NAME; \
+   friend class Method_ ## MTH_NAME;
+
+#define FALCON_DECLARE_STATIC_METHOD(MTH_NAME, SIGNATURE) \
+   class Method_ ## MTH_NAME: public ::Falcon::Method \
+   { \
+   public: \
+      Method_ ## MTH_NAME( ::Falcon::ClassUser* u ): \
+         Method( u, #MTH_NAME, 0, true ) \
       { parseDescription( SIGNATURE ); } \
       virtual ~Method_ ## MTH_NAME() {} \
       virtual void invoke( ::Falcon::VMContext* ctx, ::Falcon::int32 pCount = 0 ); \

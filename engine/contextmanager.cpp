@@ -201,8 +201,6 @@ void ContextManager::onContextDescheduled( VMContext* ctx )
 {
    TRACE1( "ContextManager::onContextDescheduled %d", ctx->id() );
    ctx->incref();
-   // perform automatic release of aqcuired resources
-   ctx->acquire(0);
    _p->m_messages.add( CMMsg(ctx) );
 }
 
@@ -210,8 +208,6 @@ void ContextManager::onContextTerminated( VMContext* ctx )
 {
    TRACE1( "ContextManager::onContextTerminated %p(%d) in process %p(%d)",
             ctx, ctx->id(), ctx->process(), ctx->process()->id() );
-   // perform automatic release of aqcuired resources
-   ctx->acquire(0);
    ctx->incref();
    _p->m_messages.add( CMMsg(ctx, CMMsg::e_context_terminated) );
 }
@@ -451,6 +447,7 @@ void ContextManager::manageDesceduledContext( VMContext* ctx )
    Shared* sh = ctx->checkAcquiredWait();
    if( sh != 0 ) {
       TRACE( "manageDesceduledContext - Context %p(%d) ready because acquired success", ctx, ctx->id() );
+      ctx->signaledResource(sh);
       manageReadyContext( ctx );
    }
    else if( ctx->nextSchedule() >= 0 && ctx->nextSchedule() <= m_now ) {
@@ -503,6 +500,7 @@ void ContextManager::manageSignal( Shared* shared )
       while( ri != re )
       {
          VMContext* ctx = *ri;
+         ctx->signaledResource( shared );
          ctx->acquire( shared );
          if( removeSleepingContext(ctx) ) {
             manageReadyContext( ctx );
@@ -518,6 +516,7 @@ void ContextManager::manageSignal( Shared* shared )
       while( ri != re )
       {
          VMContext* ctx = *ri;
+         ctx->signaledResource( shared );
          if( removeSleepingContext(ctx) ) {
             manageReadyContext( ctx );
          }

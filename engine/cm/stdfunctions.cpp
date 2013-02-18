@@ -37,15 +37,17 @@ namespace Ext {
 /*#
    @function sleep
    @brief Put the current coroutine at sleep for some time.
-   @param time Time, in seconds and fractions, that the coroutine wishes to sleep.
-   @return an item posted by the embedding application.
+   @param time Time, in seconds and fractions, that the caller wishes to sleep.
 
    This function declares that the current coroutines is not willing to proceed at
-   least for the given time. The VM will swap out the coroutine until the time has
+   least for the given time. The VM will swap out the caller until the time has
    elapsed, and will make it eligible to run again after the given time lapse.
 
    The parameter may be a floating point number if a pause shorter than a second is
    required.
+
+   @note As this call is performed, any critical section is abandoned, and aquired
+   shared resources are signaled.
 */
 
 FALCON_DEFINE_FUNCTION_P(sleep)
@@ -61,6 +63,36 @@ FALCON_DEFINE_FUNCTION_P(sleep)
    ctx->sleep( (int64)(to * 1000) );
    ctx->returnFrame();
 } 
+
+/*#
+   @function rest
+   @brief Put the current coroutine at sleep for some time.
+   @param time Time, in milliseconds, that the caller wishes to sleep.
+
+   This function declares that the current context is not willing to proceed at
+   least for the given time. The VM will swap out the caller until the time has
+   elapsed, and will make it eligible to run again after the given time lapse.
+
+   @note this is equivalent to @a sleep but the sleep @b time is expressed in
+   milliseconds.
+
+   @note As this call is performed, any critical section is abandoned, and aquired
+   shared resources are signaled.
+*/
+
+FALCON_DEFINE_FUNCTION_P(rest)
+{
+   TRACE1( "-- called with %d params", pCount );
+
+   // all the evaluation happens in the
+   if( pCount < 1 || ! ctx->param(0)->isOrdinal() ) {
+      throw paramError();
+   }
+
+   int64 to = ctx->param(0)->forceInteger();
+   ctx->sleep( to );
+   ctx->returnFrame();
+}
 
 /*#
    @function epoch

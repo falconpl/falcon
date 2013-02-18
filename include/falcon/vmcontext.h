@@ -1117,6 +1117,9 @@ public:
     this might save a useless C++ throw. However, when the code detects an error
     deep down in C++, it should simply throw it and let the Falcon::Processor
     main loop to catch it.
+
+    \note Invoking this method causes exiting from any critical section, that is
+    releasing (and signaling) any acquired resource.
     */
    Error* raiseError( Error* exc );
 
@@ -1371,6 +1374,50 @@ public:
    void addWait( Shared* resource );
    Shared* engageWait( int64 timeout );
    Shared* checkAcquiredWait();
+
+   void releaseAcquired();
+
+   /** Set by the context manager when a resource is signaled during idle time.
+    *
+    * The step invoked after a shared resource wait can check if the resource
+    * has been acquired via getSignaledResource().
+    *
+    * \note, this invokes shared->incref(). Do not use 0 as parameter.
+    */
+   void signaledResource( Shared* shared );
+
+   /** Gets and clear the resource signaled during idle time.
+    *
+    * After having temporarily abandoned the processor due to a failed
+    * engageWait(), the pstep that receives the control after wake up
+    * can invoke this method to get the signaled resource.
+    *
+    * If this method returns 0, then the wait timeout expired without
+    * the context being signaled.
+    *
+    * Notice that calling this method clears the signaled resource, so
+    * successive calls will return 0.
+    *
+    * \note The resource returned by this method might also be set by
+    * the manager as the acquired resource, if the resource has acquire
+    * semantic.
+    *
+    * \note the shared resource, if returned, has an extra incref that
+    * must be disposed.
+    */
+   Shared* getSignaledResouce();
+
+   /** Ensures the signaled resource is zero, eventually disposing of it.
+    *
+    * \see signaledResource.
+    */
+   void clearSignaledResource();
+
+   /** Ask explicit descheduling for the given time lapse.
+    *
+    * This automatically frees acquired resources and resets
+    * the delayed events.
+    */
    void sleep( int64 timeout );
 
    /** Called by the ContextManager to confirm the acquisition of a shared resource.
@@ -1383,10 +1430,31 @@ public:
     *
     * Can be called with 0 to perform automatic signal of a previously acquired resource.
     *
-    *
     * \note this should usually be called just by the context manager.
     */
    void acquire(Shared* shared);
+
+   /** Returns the acquired resource.
+    *
+    * While there is a non-zero acquired resource, the context
+    * is in a critical section and cannot be implicitly swapped.
+    *
+    * Any explicit swap operation, as well as explicit signaling of
+    * the acquired resource, causes the acquired resource to be released,
+    * and the context to exit the critical section.
+    *
+    * Notice that a direct Shared::signal operation doesn't automatically
+    * removes it from the contexts that have acquired it. It's necessary
+    * that the script-level operations signaling the resource check for
+    * it to be the context acquired resource, and eventually release it
+    * via acquire(0).
+    *
+    * \note VMContext::acquire(0) will automatically signal the acquired
+    * resource, so if using this to free the acquired resource from a script-level
+    * signal operation, the caller should not re-signal the shared resource.
+    *
+    */
+   Shared* acquired() const { return m_acquired; }
 
    /** Called back when this context is declared dead.
     */
@@ -1449,6 +1517,21 @@ public:
 
    GCToken* addNewToken( GCToken* token );
    void getNewTokens( GCToken* &first, GCToken* &last );
+
+   /** Stack events during critical sections for later honoring.
+    *
+    * When a processor is asked to swap or timeslice out a context,
+    * this request cannot be fulfilled if the context has an active
+    * acquired resource (it is said to be in a critical section).
+    *
+    * As soon as the acquired resource is released, the delayed event must be
+    * set and honored.
+    */
+   void delayEvents( uint32 evt )
+   {
+      m_suspendedEvents |= evt;
+   }
+
 
 protected:
 
@@ -1585,6 +1668,7 @@ protected:
    LinearStack<Shared*> m_waiting;
    // single variable acquired.
    Shared* m_acquired;
+   Shared* m_signaledResource;
 
    /** Error that was last raised in the context. */
    Error* m_lastRaised;
@@ -1620,12 +1704,20 @@ protected:
 
    /** Set whenever an event was activated. */
    atomic_int m_events;
+   int32 m_suspendedEvents;
 
    ContextGroup* m_inGroup;
    Process* m_process;
 
    // caller temporarily ready to fire
    const PStep* m_caller;
+
+   /** Clear the waits, but doesn't send the shared resources a request to remove this context.
+    *
+    * This is used by engageWait on early success, prior telling the resources they're being
+    * watched.
+    */
+   void clearWaits();
 
 private:
    GCToken* m_newTokens;

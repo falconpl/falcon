@@ -90,6 +90,16 @@ public:
     */
    void add( Property* prop );
    
+   /** Adds a static property.
+    \param prop The propety (or method) to be added.
+
+    Notice that this method is usually invoked directly by the property at creation.
+    The added property is not destroyed by this class because it is considered
+    owned by the subclass declaring them. They should be destroyed when the
+    subclass is disposed.
+    */
+   void addStatic( Property* prop );
+
    /** Adds a parent class.
     This method allow to declare Class (most commonly another UserClass) as
     parent of this class.
@@ -234,6 +244,8 @@ public:
    
    virtual void op_getProperty( VMContext* ctx, void* instance, const String& prop) const;
    virtual void op_setProperty( VMContext* ctx, void* instance, const String& prop ) const;
+   virtual void op_getClassProperty( VMContext* ctx, const String& prop) const;
+   virtual void op_setClassProperty( VMContext* ctx, const String& prop ) const;
 
    
 private:

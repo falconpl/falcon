@@ -178,45 +178,59 @@ void Processor::manageEvents( VMContext* ctx, int32 &events )
    else if( (events & VMContext::evtSwap) )
    {
       ctx->clearEvents();
-      if ( ctx->nextSchedule() >= 0 ) {
-         TRACE( "Processor::manageEvents processor %p(%d) descheduled context %p(%d) for a while",
-                  this, this->id(), ctx, ctx->id() );
-         m_owner->contextManager().onContextDescheduled( ctx );
+      if( ctx->acquired() != 0 )
+      {
+         ctx->delayEvents( VMContext::evtSwap );
       }
       else {
-         TRACE( "Processor::manageEvents processor %p(%d) descheduled forever context %p(%d)",
-                  this, this->id(), ctx, ctx->id() );
-         m_owner->contextManager().onContextDescheduled( ctx );
+         if ( ctx->nextSchedule() >= 0 ) {
+            TRACE( "Processor::manageEvents processor %p(%d) descheduled context %p(%d) for a while",
+                     this, this->id(), ctx, ctx->id() );
+            m_owner->contextManager().onContextDescheduled( ctx );
+         }
+         else {
+            TRACE( "Processor::manageEvents processor %p(%d) descheduled forever context %p(%d)",
+                     this, this->id(), ctx, ctx->id() );
+            m_owner->contextManager().onContextDescheduled( ctx );
+         }
       }
    }
    else if( (events & VMContext::evtTimeslice) )
    {
       ctx->clearEvents();
       events &= ~VMContext::evtTimeslice;
-      TRACE( "Processor::manageEvents processor %p(%d) received a timeslice event context %p(%d)",
-               this, this->id(), ctx, ctx->id() );
 
-      // have we other contexts?
-      VMContext* newCtx = 0;
-      int32 term = 0;
-      if( m_owner->contextManager().readyContexts().tryGet( newCtx, &term ) )
+      if( ctx->acquired() != 0 )
       {
-         // yep, we're changed.
-         m_currentContext = newCtx;
-         // we don't hold any extra ref...
-         m_owner->contextManager().onContextDescheduled( ctx );
-
+         ctx->delayEvents( VMContext::evtTimeslice );
       }
-
-      // need to do reschedule even if not changed.
-      if( m_owner->scheduler().cancelActivity( m_activity) )
+      else
       {
-         // ... except the one for the activity
-         ctx->decref();
-      }
+         TRACE( "Processor::manageEvents processor %p(%d) received a timeslice event context %p(%d)",
+                  this, this->id(), ctx, ctx->id() );
 
-      m_currentContext->incref();
-      m_activity = m_owner->scheduler().addActivity( FALCON_PROCESS_TIMESLICE, onTimesliceExpired, m_currentContext, true );
+         // have we other contexts?
+         VMContext* newCtx = 0;
+         int32 term = 0;
+         if( m_owner->contextManager().readyContexts().tryGet( newCtx, &term ) )
+         {
+            // yep, we're changed.
+            m_currentContext = newCtx;
+            // we don't hold any extra ref...
+            m_owner->contextManager().onContextDescheduled( ctx );
+
+         }
+
+         // need to do reschedule even if not changed.
+         if( m_owner->scheduler().cancelActivity( m_activity) )
+         {
+            // ... except the one for the activity
+            ctx->decref();
+         }
+
+         m_currentContext->incref();
+         m_activity = m_owner->scheduler().addActivity( FALCON_PROCESS_TIMESLICE, onTimesliceExpired, m_currentContext, true );
+      }
 
    }
 

@@ -1,0 +1,54 @@
+
+semWrite = Semaphore()
+semRead = Semaphore()
+
+function consumer( deepItem )
+   > "Entering the consumer"
+
+   old = -1
+   loop
+      semRead.wait()
+      item = deepItem[0]
+      
+      if item == nil
+         break
+      end
+      
+      if item != old + 1
+         raise "Number out of sequence: " + item
+      end
+      old = item
+      if item % 100 == 0
+         >> item, "                  \r"
+      end
+      semWrite.post()
+   end
+
+   >
+   > "Exiting consumer"
+end
+
+
+function producer( deepItem )
+   > "Entering the producer"
+
+   i = 0
+   while i < 100000
+      deepItem[0] = i
+      semRead.post()
+      semWrite.wait()
+      i++
+   end 
+   
+   deepItem[0] = nil
+   semRead.post()
+   > "Exiting the producer"
+end
+
+> "Starting"
+
+deep = [0]
+p = Parallel( {=> consumer(deep); > "Done 1" }, {=> producer(deep); > "Done 2"} )
+p.launch()
+
+> "Done"

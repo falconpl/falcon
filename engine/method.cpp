@@ -25,20 +25,24 @@
 
 namespace Falcon {
 
-Method::Method( ClassUser* owner, const String& name, Module* mod ):
+Method::Method( ClassUser* owner, const String& name, Module* mod, bool isStatic ):
    Function( name, mod ),
-   m_prop( this, owner, name )
+   m_prop( this, (isStatic ? 0 :owner), name ),
+   m_bIsStatic( isStatic )
 {
    methodOf( owner );
+   if( isStatic )
+   {
+      owner->addStatic(&m_prop);
+      owner->add(&m_prop);
+   }
 }
-
-
 
 Method::MethodProp::MethodProp( Method* mth, ClassUser* owner, const String& name ):
    Property( owner, name ),
    m_mth( mth )
-   
-{}
+{
+}
       
 void Method::MethodProp::set( void*, const Item& )
 {
@@ -49,8 +53,19 @@ void Method::MethodProp::set( void*, const Item& )
 
 void Method::MethodProp::get( void* instance, Item& target )
 {
-   target.setUser( owner(), instance );
-   target.methodize( m_mth );
+   static Class* meta = Engine::instance()->metaClass();
+
+   // static method?
+   if( owner() == 0 )
+   {
+      // the method can access the class via methodOf().
+      target.setUser(meta, m_mth->methodOf());
+      target.methodize(m_mth);
+   }
+   else {
+      target.setUser( owner(), instance );
+      target.methodize( m_mth );
+   }
 }   
 
 }

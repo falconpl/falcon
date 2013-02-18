@@ -24,7 +24,7 @@
 namespace Falcon
 {
 
-Shared::Shared( Class* handler, bool acquireable, int32 signals ):
+Shared::Shared( const Class* handler, bool acquireable, int32 signals ):
    m_acquireable( acquireable ),
    m_cls( handler ),
    m_mark(0)

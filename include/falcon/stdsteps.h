@@ -395,6 +395,42 @@ public:
       virtual void describeTo( String&, int =0 ) const;
    };
    PStepEndOfContext m_endOfContext;
+
+   /** Wait complete.
+    * To be pushed inside a function that starts a wait on a resource,
+    * but it is not sure it can complete it.
+    *
+    * Will invoke VMContext::returnFrame, eventually returning the
+    * resource returned by VMContext::getSignaledResource().
+    */
+   class PStepWaitComplete: public PStep
+   {
+   public:
+      PStepWaitComplete() { apply = apply_; }
+      virtual ~PStepWaitComplete() { }
+      virtual void describeTo( String& target, int ) const;
+      static void apply_(const PStep*, VMContext* ctx);
+   };
+   PStepWaitComplete m_waitComplete;
+
+   /** Wait success.
+    * To be pushed inside a function that starts a wait on a resource,
+    * but it is not sure it can complete it.
+    *
+    * Will invoke VMContext::returnFrame, returning true if
+    * VMContext::getSignaledResource() returns a resource, false otherwise.
+    */
+   class PStepWaitSuccess: public PStep
+   {
+   public:
+      PStepWaitSuccess() { apply = apply_; }
+      virtual ~PStepWaitSuccess() {}
+      virtual void describeTo( String& target, int ) const;
+      static void apply_(const PStep*, VMContext* ctx);
+   };
+   PStepWaitSuccess m_waitSuccess;
+
+
 };
 
 }

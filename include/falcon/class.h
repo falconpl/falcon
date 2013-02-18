@@ -787,7 +787,7 @@ public:
    /** Called back when the VM wants to get the value of a property of an item
      \param vm the virtual machine that will receive the result.
      \param instance the instance (or 0 on flat items)
-    \param prop The oroperty to be accessed.
+    \param prop The property to be accessed.
 
     \note The operand is unary -- requires OpToken with 1 parameter.
    */
@@ -796,10 +796,27 @@ public:
    /** Called back when the VM wants to set a value of a property in an item.
      \param vm the virtual machine that will receive the result.
      \param instance the instance (or 0 on flat items)
+    \param prop The property to be accessed.
 
     \note The operand is binary -- requires OpToken with 2 parameters.
    */
    virtual void op_setProperty( VMContext* ctx, void* instance, const String& prop ) const;
+
+   /** Called back when the VM wants to get the value of a property of this class (static property).
+     \param vm the virtual machine that will receive the result.
+    \param prop The property to be accessed.
+
+    \note The operand is unary -- requires OpToken with 1 parameter.
+   */
+   virtual void op_getClassProperty( VMContext* ctx, const String& prop) const;
+
+   /** Called back when the VM wants to set a value of a property in an item.
+     \param vm the virtual machine that will receive the result.
+    \param prop The property to be accessed.
+
+    \note The operand is binary -- requires OpToken with 2 parameters.
+   */
+   virtual void op_setClassProperty( VMContext* ctx, const String& prop ) const;
 
    /** Called back when the VM wants to compare an item to this instance.
      \param vm the virtual machine that will receive the result.

@@ -41,6 +41,7 @@ public:
 
    typedef std::map<const String*, Property*, StringPtrCfr> PropMap;
    PropMap m_props;
+   PropMap m_staticProps;
    
    typedef std::vector<Class*> ParentList;
    ParentList m_parents;
@@ -79,8 +80,19 @@ void ClassUser::add( Property* prop )
       static_cast<PropertyCarried*>(prop)->m_carrierPos = m_carriedProps;
       m_carriedProps++;
    }
+}
+
+void ClassUser::addStatic( Property* prop )
+{
+   _p->m_staticProps.insert( std::make_pair( &prop->name(), prop ) );
+   if( prop->isCarried() )
+   {
+      static_cast<PropertyCarried*>(prop)->m_carrierPos = m_carriedProps;
+      m_carriedProps++;
+   }
       
 }
+
 
 void ClassUser::addParent( Class* parent )
 {
@@ -315,6 +327,36 @@ void ClassUser::op_setProperty( VMContext* ctx, void* instance, const String& pr
    else
    {
       Class::op_setProperty( ctx, instance, prop );
+   }
+}
+
+
+void ClassUser::op_getClassProperty( VMContext* ctx, const String& prop ) const
+{
+   Private::PropMap::const_iterator iter = _p->m_staticProps.find( &prop );
+   if ( iter != _p->m_staticProps.end() )
+   {
+      iter->second->get( const_cast<ClassUser*>(this), ctx->topData() );
+   }
+   else
+   {
+      // fallback to class get property
+      Class::op_getProperty( ctx, const_cast<ClassUser*>(this), prop );
+   }
+}
+
+
+void ClassUser::op_setClassProperty( VMContext* ctx, const String& prop ) const
+{
+   Private::PropMap::const_iterator iter = _p->m_staticProps.find( &prop );
+   if ( iter != _p->m_staticProps.end() )
+   {
+      iter->second->set( const_cast<ClassUser*>(this), ctx->opcodeParam(1) );
+      ctx->popData();
+   }
+   else
+   {
+      Class::op_setProperty( ctx, const_cast<ClassUser*>(this), prop );
    }
 }
 

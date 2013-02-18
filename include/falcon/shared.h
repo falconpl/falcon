@@ -61,7 +61,7 @@ class Class;
 class FALCON_DYN_CLASS Shared
 {
 public:
-   Shared( Class* cls=0, bool acquireable = false, int32 signals = 0 );
+   Shared( const Class* cls=0, bool acquireable = false, int32 signals = 0 );
 
    /** Returns true if this resource supports acquire semantic.
     */
@@ -123,23 +123,24 @@ public:
     \return The handler class for this shared object, or 0 if the object cannot
     be handled by the engine.
     */
-   Class* handler()  const { return m_cls; }
+   const Class* handler()  const { return m_cls; }
 
    uint32 gcMark() const { return m_mark; }
    void gcMark( uint32 n ) { m_mark = n; }
+
+protected:
+   virtual ~Shared();
 
 private:
    class Private;
    Private* _p;
 
    bool m_acquireable;
-   Class* m_cls;
+   const Class* m_cls;
 
    friend class ContextManager;
 
    FALCON_REFERENCECOUNT_DECLARE_INCDEC(Shared);
-
-   virtual ~Shared();
 
    uint32 m_mark;
 };

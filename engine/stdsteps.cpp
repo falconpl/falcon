@@ -23,6 +23,8 @@
 #include <falcon/error.h>
 #include <falcon/errors/codeerror.h>
 
+#include <falcon/shared.h>
+
 namespace Falcon
 {
 
@@ -431,6 +433,47 @@ void StdSteps::PStepEndOfContext::apply_( const PStep*, VMContext* ctx )
 void StdSteps::PStepEndOfContext::describeTo( String& s, int ) const
 {
    s = "-- End Of Context --";
+}
+
+//====================================================================
+//
+
+void StdSteps::PStepWaitComplete::describeTo( String& target, int ) const
+{
+   target = "PStepWaitComplete";
+}
+
+void StdSteps::PStepWaitComplete::apply_(const PStep*, VMContext* ctx)
+{
+   Shared* shared = ctx->getSignaledResouce();
+   if( shared != 0 )
+   {
+      shared->decref(); // extra ref not needed if we're in garbage system
+      ctx->returnFrame(Item(shared->handler(), shared));
+   }
+   else {
+      // we timed out
+      ctx->returnFrame();
+   }
+}
+
+void StdSteps::PStepWaitSuccess::describeTo( String& target, int ) const
+{
+   target = "PStepWaitSuccess";
+}
+
+void StdSteps::PStepWaitSuccess::apply_(const PStep*, VMContext* ctx)
+{
+   Shared* shared = ctx->getSignaledResouce();
+   if( shared != 0 )
+   {
+      shared->decref(); // extra ref not needed if we're in garbage system
+      ctx->returnFrame(Item().setBoolean(true));
+   }
+   else {
+      // we timed out
+      ctx->returnFrame(Item().setBoolean(false));
+   }
 }
 
 }

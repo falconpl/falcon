@@ -45,6 +45,8 @@ public:
    //=============================================================
    virtual void op_toString( VMContext* ctx, void* self ) const;
    virtual void op_call( VMContext* ctx, int32 pcount, void* self ) const;
+   virtual void op_getProperty( VMContext* ctx, void* instance, const String& prop) const;
+   virtual void op_setProperty( VMContext* ctx, void* instance, const String& prop ) const;
 };
 
 }

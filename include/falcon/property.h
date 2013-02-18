@@ -45,9 +45,12 @@ public:
    void checkType( bool ok, const String& required );
 
    Error* readOnlyError() const;
+
+protected:
+   ClassUser* m_owner;
+
 private:
    String m_name;
-   ClassUser* m_owner;
    bool m_bCarried;
    bool m_bHidden;
 };
@@ -58,12 +61,22 @@ class FALCON_DYN_CLASS PropertyConstant: public Property
 public:
    PropertyConstant( const Item& value, ClassUser* uc, const String &name );
    virtual ~PropertyConstant();
+
    virtual void set( void* instance, const Item& value );
    virtual void get( void*, Item& target ) { target.assignFromLocal(m_value); }
 
 private:
    Item m_value;
    GCLock* m_lock;
+};
+
+
+class FALCON_DYN_CLASS PropertyStatic: public Property
+{
+
+public:
+   PropertyStatic( ClassUser* uc, const String &name );
+   virtual ~PropertyStatic();
 };
 
 
