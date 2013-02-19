@@ -2,7 +2,7 @@
    FALCON - The Falcon Programming Language.
    FILE: mutex.cpp
 
-   Falcon core module -- Reentrant mutex
+   Falcon core module -- Classic reentrant mutex
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: Sun, 17 Feb 2013 22:34:32 +0100
@@ -193,6 +193,7 @@ FALCON_DEFINE_METHOD_P1( ClassMutex, unlock )
          // last lock? -- we're off
          ctx->releaseAcquired();
       }
+      ctx->returnFrame();
    }
    else
    {

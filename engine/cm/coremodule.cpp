@@ -20,6 +20,7 @@
 
 #include <falcon/cm/barrier.h>
 #include <falcon/cm/compile.h>
+#include <falcon/cm/event.h>
 #include <falcon/cm/iff.h>
 #include <falcon/cm/include.h>
 #include <falcon/cm/inspect.h>
@@ -72,6 +73,7 @@ CoreModule::CoreModule():
       
       // Standard classes
       << new Ext::ClassBarrier
+      << new Ext::ClassEvent
       << new Ext::ClassURI
       << new Ext::ClassPath
       << new Ext::ClassParallel
