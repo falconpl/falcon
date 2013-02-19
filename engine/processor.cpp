@@ -134,6 +134,9 @@ void* Processor::run()
          break;
       }
 
+      // declare the context now active.
+      ctx->setStatus(VMContext::statusActive);
+
       // for the scheduler
       ctx->incref();
       m_activity = m_owner->scheduler().addActivity( FALCON_PROCESS_TIMESLICE, onTimesliceExpired, ctx, true );
@@ -154,6 +157,8 @@ void* Processor::run()
 
 void Processor::manageEvents( VMContext* ctx, int32 &events )
 {
+   ctx->setStatus(VMContext::statusZombie);
+
    if( (events & VMContext::evtBreak) ) {
       TRACE( "Hit breakpoint before %s ", ctx->location().c_ize() );
    }
@@ -181,6 +186,7 @@ void Processor::manageEvents( VMContext* ctx, int32 &events )
       if( ctx->acquired() != 0 )
       {
          ctx->delayEvents( VMContext::evtSwap );
+         events &= ~VMContext::evtSwap;
       }
       else {
          if ( ctx->nextSchedule() >= 0 ) {
@@ -270,6 +276,7 @@ void Processor::execute( VMContext* ctx )
          }
          // refetch the context, that may be changed.
          ctx = m_currentContext;
+         ctx->setStatus(VMContext::statusActive);
       }
       // END STEP
    }

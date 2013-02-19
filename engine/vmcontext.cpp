@@ -73,6 +73,7 @@ VMContext::LinearStack<datatype__>::~LinearStack()
 
 
 VMContext::VMContext( Process* prc, ContextGroup* grp ):
+   m_status(statusBorn),
    m_lastRaised(0),
    m_catchBlock(0),
    m_id(0),
@@ -136,6 +137,7 @@ void VMContext::reset()
    m_caller = 0;
 
    atomicSet(m_events, 0);
+   setStatus(statusBorn);
 
    // do not reset ingroup.
 
@@ -517,6 +519,11 @@ Shared* VMContext::engageWait( int64 timeout )
    return 0;
 }
 
+
+int32 VMContext::waitingSharedCount() const
+{
+   return (int32) ((m_waiting.m_top+1) - m_waiting.m_base);
+}
 
 Shared* VMContext::declareWaits()
 {
@@ -1966,6 +1973,9 @@ Item* VMContext::findLocal( const String& name ) const
 
 void VMContext::terminated()
 {
+   // declare the context dead
+   setStatus(statusTerminated);
+
    // be sure to release any acquired resource.
    // If terminated after a raise, this is a no-op.
    releaseAcquired();
@@ -2233,6 +2243,17 @@ void VMContext::getNewTokens( GCToken* &first, GCToken* &last )
    // Not necessary
    first->m_prev = 0;
    last->m_next = 0;
+}
+
+
+int VMContext::getStatus()
+{
+   return atomicFetch(m_status);
+}
+
+void VMContext::setStatus( int status )
+{
+   atomicSet(m_status, status);
 }
 
 //===============================================================

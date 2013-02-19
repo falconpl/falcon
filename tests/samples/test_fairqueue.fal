@@ -1,16 +1,18 @@
 
-queue = SyncQueue()
+queue = SyncQueue( true )
 done = Barrier()
 semWrite = Semaphore(1)
 
 function consumer( id, control )
-   > "Entering the consumer ", id
+   semWrite.wait(50)
+   > "Entering the consumer ", VMContext().id
+   semWrite.post()
 
    spurious = [0,0]
    onSignaled = {queue =>
-      item = queue.pop("Spurious wakeup")      
+      item = queue.pop()      
       control[id] = "Received " + item.describe()
-      if item == "Spurious wakeup"
+      if item == nil
          spurious[0]++
       else
          spurious[1]++
@@ -20,10 +22,11 @@ function consumer( id, control )
    
    wl = Waiter( done )
    wl.add( queue, onSignaled )
-   wl.wait()
+   res = wl.wait(1000)
    
-   semWrite.wait()
-   > "Exiting consumer ", id, " with ", spurious[0],"/",spurious[1], " spurious wakeups."
+   semWrite.wait(50)
+   > "Out res: ", res.describe() 
+   > "Exiting consumer ", VMContext().id, " with ", spurious[0],"/",spurious[1], " spurious wakeups."
    semWrite.post()
 end
 
@@ -35,17 +38,19 @@ function controller( control )
    queue.push("Hello world!")
    count = 0
    now  = seconds()
-   while seconds() - now < 20.0
+   while seconds() - now < 5.0
       //if count % 100 == 0
          >> @"$({seconds()-now}.2) ${control[0]}, ${control[1]}, ${control[2]}                    \r"
       //end
-      //rest(10)
+      //rest(100)
       ++count
       queue.push("Hello again! " + count, 1, seconds(), count )
    end 
    
    >
-   > "Exiting the controller"
+   > "Exiting the controller ", VMContext().id
+   > GC.contexts.describe()
+   
    done.open()
 end
 

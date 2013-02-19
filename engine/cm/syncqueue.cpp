@@ -23,6 +23,8 @@
 #include <falcon/stdsteps.h>
 #include <falcon/vm.h>
 
+#include <falcon/errors/accesserror.h>
+
 #include <deque>
 
 namespace Falcon {
@@ -49,7 +51,18 @@ SharedSyncQueue::SharedSyncQueue( ContextManager* mgr, const Class* owner ):
    Shared( mgr, owner, false, 0 )
 {
    _p = new Private;
+   m_fair = false;
+   m_held = false;
 }
+
+SharedSyncQueue::SharedSyncQueue( ContextManager* mgr, const Class* owner, bool fair ):
+   Shared( mgr, owner, fair, 0 )
+{
+   _p = new Private;
+   m_fair = fair;
+   m_held = false;
+}
+
 
 SharedSyncQueue::~SharedSyncQueue()
 {
@@ -74,7 +87,7 @@ int32 SharedSyncQueue::lockedConsumeSignal( int32 )
 void SharedSyncQueue::push( const Item& itm )
 {
    lockSignals();
-   if( _p->m_values.empty() )
+   if( _p->m_values.empty() && ! m_held )
    {
       Shared::lockedSignal(1);
    }
@@ -82,6 +95,7 @@ void SharedSyncQueue::push( const Item& itm )
    _p->m_version++;
    unlockSignals();
 }
+
 
 bool SharedSyncQueue::pop( Item& target )
 {
@@ -93,7 +107,7 @@ bool SharedSyncQueue::pop( Item& target )
       _p->m_values.pop_front();
       _p->m_version++;
       result = true;
-      if( _p->m_values.empty() )
+      if( _p->m_values.empty() && ! m_held )
       {
          Shared::lockedConsumeSignal(1);
       }
@@ -160,6 +174,56 @@ uint32 SharedSyncQueue::currentMark() const
 
 //=============================================================
 //
+//
+
+FairSyncQueue::FairSyncQueue( ContextManager* mgr, const Class* owner ):
+         SharedSyncQueue(mgr, owner, true)
+{
+}
+
+FairSyncQueue::~FairSyncQueue()
+{
+}
+
+
+int32 FairSyncQueue::consumeSignal( int32 count )
+{
+   lockSignals();
+   if( !m_held && Shared::lockedConsumeSignal(count) > 0 )
+   {
+      m_held = true;
+      unlockSignals();
+      return 1;
+   }
+
+   unlockSignals();
+   return 0;
+}
+
+
+void FairSyncQueue::signal( int32 )
+{
+   lockSignals();
+   m_held = false;
+   if( !_p->m_values.empty() )
+   {
+      Shared::lockedSignal(1);
+   }
+   unlockSignals();
+}
+
+int32 FairSyncQueue::lockedConsumeSignal( int32 count )
+{
+   if( !m_held && Shared::lockedConsumeSignal(count) > 0 )
+   {
+      m_held = true;
+      return 1;
+   }
+   return 0;
+}
+
+//=============================================================
+//
 
 ClassSyncQueue::ClassSyncQueue():
       ClassShared("SyncQueue"),
@@ -184,10 +248,17 @@ void* ClassSyncQueue::createInstance() const
 
 bool ClassSyncQueue::op_init( VMContext* ctx, void*, int pCount ) const
 {
-   Shared* shared = new SharedSyncQueue(&ctx->vm()->contextManager(), this);
-   ctx->stackResult(pCount+1, FALCON_GC_HANDLE(shared));
+   Shared* shared;
+   if( pCount == 0 || ! ctx->opcodeParams(pCount)->isTrue() )
+   {
+      shared = new SharedSyncQueue(&ctx->vm()->contextManager(), this);
+   }
+   else {
+      shared = new FairSyncQueue(&ctx->vm()->contextManager(), this);
+   }
 
-   return false;
+   ctx->stackResult(pCount+1, FALCON_GC_HANDLE(shared));
+   return true;
 }
 
 
@@ -226,16 +297,31 @@ FALCON_DEFINE_METHOD_P1( ClassSyncQueue, pop )
 {
    SharedSyncQueue* queue = static_cast<SharedSyncQueue*>(ctx->self().asInst());
 
-   // check and get params.
-   Item* i_dflt = ctx->param(0);
    Item dflt;
-   if( i_dflt != 0 )
+
+   if( queue->isFair() )
    {
-      dflt = *i_dflt;
-      dflt.copied(true);
+      if( ctx->acquired() != queue )
+      {
+         throw FALCON_SIGN_XERROR( AccessError, e_acc_forbidden, .extra("Cannot access pop() if not owner") );
+      }
+      else {
+         queue->pop( dflt );
+         ctx->releaseAcquired();
+      }
+   }
+   else {
+      // check and get params.
+      Item* i_dflt = ctx->param(0);
+      if( i_dflt != 0 )
+      {
+         dflt = *i_dflt;
+         dflt.copied(true);
+      }
+
+      queue->pop( dflt );
    }
 
-   queue->pop( dflt );
    ctx->returnFrame(dflt);
 }
 

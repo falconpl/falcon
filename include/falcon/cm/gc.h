@@ -58,6 +58,7 @@ private:
    //====================================================
    // Properties.
    //
+   FALCON_DECLARE_PROPERTY( contexts )
    
    FALCON_DECLARE_PROPERTY( memory )
    FALCON_DECLARE_PROPERTY( items )

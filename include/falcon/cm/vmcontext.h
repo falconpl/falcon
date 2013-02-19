@@ -77,6 +77,7 @@ private:
    FALCON_DECLARE_PROPERTY( dataDepth )
    FALCON_DECLARE_PROPERTY( codeDepth )
    FALCON_DECLARE_PROPERTY( selfItem )
+   FALCON_DECLARE_PROPERTY( status )
 
    /*#
     @method caller VMContext

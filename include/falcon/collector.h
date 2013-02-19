@@ -318,6 +318,13 @@ public:
    */
    void unregisterContext( VMContext *vm );
 
+   class ContextEnumerator {
+   public:
+      virtual ~ContextEnumerator(){}
+      virtual void operator()(VMContext* ctx) = 0;
+   };
+   void enumerateContexts( ContextEnumerator& ectx );
+
 
    /** Offers a context for inspection.
       \return true if the context is accepted and going to be inspected, false otherwise.

@@ -47,20 +47,80 @@ public:
    bool empty() const;
 
    virtual int32 consumeSignal( int32 count = 1 );
+
+   bool isFair() const { return m_fair; }
 protected:
    virtual int32 lockedConsumeSignal( int32 );
+   SharedSyncQueue( ContextManager* mgr, const Class* owner, bool fair );
 
-private:
    class Private;
    Private* _p;
+
+   bool m_fair;
+   bool m_held;
+};
+
+
+
+class FALCON_DYN_CLASS FairSyncQueue: public SharedSyncQueue
+{
+public:
+   FairSyncQueue( ContextManager* mgr, const Class* owner );
+   virtual ~FairSyncQueue();
+
+   virtual void signal( int32 count = 1 );
+   virtual int32 consumeSignal( int32 count = 1 );
+
+protected:
+   virtual int32 lockedConsumeSignal( int32 );
 };
 
 /*#
   @class SyncQueue
   @brief Multiple producers/consumers queue
+  @param fairness If true, the queue operates in fair mode.
   @ingroup parallel
 
-   A synchronized FIFO queue.
+   A synchronized FIFO queue, suitable for multiple producer/
+   multiple consumer patterns.
+
+   When in unfair mode, it is possible to try popping an
+   item from the queue even if empty. Pushes will cause all
+   the waiters to be notified, and they will have a chance to
+   try to get items from the queue.
+
+   For instance, if agent A pushes a single item on the
+   queue, and agents B and C are waiting in that moment they
+   get notified and might wake up at the same time. If this happens,
+   only one of them will be able to get the pushed object; the other
+   will get a spurious read (that can be identified by passing a
+   token object to the @a SyncQueue.pop method). Also, it is possible
+   that an agent D which wasn't waiting on the queue is able to
+   casually pop the item posted by A, leaving both B and C wihtout a
+   valid item to be read.
+
+   In fair mode, the queue has acquire semantic. The succesful waiter
+   will receive the queue in a critical section; a single pop will signal
+   the queue again, and other waiting agents will be notified and given
+   the queue to pop exactly one item. In fair mode, it is granted that:
+   - At every wakeup it is possible to pop exactly one object; and
+   - Agents that didn't successfully wait for the queue cannot pop from it; and
+   - The queue is acquired in a critical section;
+   - The critical section is exited explicitly and atomically by invoking the
+      @a SyncQueue.pop method.
+
+   Although this structure allows to implement any pattern of single/multiple
+   consumer/producer, the unfair mode is more suitable for single consumer
+   patterns; at wakeup, there will be one or more items that can be popped
+   in a tight loop, while the queue is not empty; in this mode, it is not
+   necessary to wait again on the queue to acquire it and then be able to
+   perform a single pop.
+
+   The fair mode is more suited for multiple consumer patterns, especially
+   if more resources are polled through the same waiter.
+
+   @note Any agent can push items in the queue, regardless of fairness or
+   acquisition.
  */
 class FALCON_DYN_CLASS ClassSyncQueue: public ClassShared
 {
@@ -83,7 +143,6 @@ private:
      that there aren't other producers able to push data in the queue
      in this moment.
 
-     This is true if the queue is acquired.
     */
    FALCON_DECLARE_PROPERTY( empty );
 
@@ -101,10 +160,19 @@ private:
    /*#
      @method pop SyncQueue
      @brief Removes an item from the queue atomically, or waits for an item to be available.
-     @optoaram onEmpty Returned if the queue is empty.
+     @optparam onEmpty Returned if the queue is empty.
+     @raise AccessError if the queue is in fair mode and the pop method is invoked without
+           having acquired the resource with a successfull wait.
 
-     @note this is a wait-point. Invoking this method forces the releasing of the queue.
-     use @a SyncQueue.tryPop after a succesful wait to pop items.
+      In non fair mode, even if the queue is signaled and the wait operation is successful,
+      there is no guarantee that the queue is still non-empty when this agent
+      tires to pop the queue. The pop method is granted to return an item from
+      the queue if and only if a wait operation was successful and there aren't other
+      agents trying to pop from this resource.
+
+      In fair mode, this method can be invoked only after having acquired the queue
+      through a successful wait operation. It is then granted that the method will return
+      an item, and the @b onEmpty parameter, if given, will be ignored.
     */
    FALCON_DECLARE_METHOD( pop, "onEmpty:[X]" );
 
@@ -117,10 +185,8 @@ private:
      If @b timeout is less than zero, the wait is endless; if @b timeout is zero,
      the wait exits immediately.
 
-     When the wait is successful, the queue is acquired exclusively, and the acquirer can pop
-     as many items as desired through the @a Syncqueue.tryPop method.
-
-     Use @a Syncqueue.release to explicitly release a queue acquired via this @b wait method.
+     If the queue is in fair mode, a successful wait makes the invoker to
+     enter a critical section; the pop method will then release the queue.
     */
    FALCON_DECLARE_METHOD( wait, "timeout:[N]" );
 };

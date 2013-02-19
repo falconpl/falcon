@@ -40,6 +40,7 @@ ClassVMContext::ClassVMContext():
    FALCON_INIT_PROPERTY( dataDepth ),
    FALCON_INIT_PROPERTY( codeDepth ),
    FALCON_INIT_PROPERTY( selfItem ),
+   FALCON_INIT_PROPERTY( status ),
    FALCON_INIT_METHOD( caller )
 {
 }
@@ -115,6 +116,18 @@ FALCON_DEFINE_PROPERTY_GET_P( ClassVMContext, id )
    VMContext* ctx = static_cast<VMContext*>(instance);
    value.setInteger(ctx->id());
 }
+
+FALCON_DEFINE_PROPERTY_SET( ClassVMContext, status )(void*, const Item& )
+{
+   throw new ParamError( ErrorParam( e_prop_ro, __LINE__, SRC ).extra("status") );
+}
+
+FALCON_DEFINE_PROPERTY_GET_P( ClassVMContext, status )
+{
+   VMContext* ctx = static_cast<VMContext*>(instance);
+   value.setInteger(ctx->getStatus());
+}
+
 
 FALCON_DEFINE_PROPERTY_SET( ClassVMContext, processId )(void*, const Item& )
 {

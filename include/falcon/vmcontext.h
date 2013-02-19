@@ -69,6 +69,17 @@ public:
    /** Declare the timeslice expired for this context **/
    const static int32 evtTimeslice = 0x40;
 
+   const static int32 statusBorn = 0x00;
+   const static int32 statusReady = 0x01;
+   const static int32 statusActive = 0x02;
+   const static int32 statusDescheduled = 0x03;
+   const static int32 statusInspected = 0x04;
+   const static int32 statusSleeping = 0x05;
+   const static int32 statusWaiting= 0x06;
+   const static int32 statusZombie = 0x07;
+   const static int32 statusQuiescent = 0x08;
+   const static int32 statusTerminated = 0x10;
+
    VMContext( Process* prc, ContextGroup* grp=0 );
 
    /**
@@ -1375,6 +1386,8 @@ public:
    Shared* engageWait( int64 timeout );
    Shared* declareWaits();
 
+   int32 waitingSharedCount() const;
+
    /** Releases the acquired resource.
     * \return true if the release causes event preemption.
     *
@@ -1536,6 +1549,19 @@ public:
       m_suspendedEvents |= evt;
    }
 
+   /**
+    * Context status, for debugging purposes.
+    *
+    * What the context is currently doing in the system.
+    */
+   int getStatus();
+
+   /**
+    * Context status, for debugging purposes.
+    *
+    * What the context is currently doing in the system.
+    */
+   void setStatus( int status );
 
 protected:
 
@@ -1661,6 +1687,8 @@ protected:
          return  m_top;
       }
    };
+
+   atomic_int m_status;
 
    LinearStack<CodeFrame> m_codeStack;
    LinearStack<CallFrame> m_callStack;

@@ -183,6 +183,7 @@ void ContextGroup::readyAllContexts()
    while( iter != _p->m_contexts.end() ) {
       VMContext* ctx = *iter;
       if( onContextReady(ctx) ) {
+         ctx->setStatus(VMContext::statusReady);
          ctx->vm()->contextManager().readyContexts().add( ctx );
       }
       ++iter;

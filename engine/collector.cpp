@@ -492,6 +492,19 @@ void Collector::registerContext( VMContext *ctx )
 }
 
 
+void Collector::enumerateContexts( Collector::ContextEnumerator& ectx )
+{
+   _p->m_mtx_contexts.lock();
+   Private::ContextMap::const_iterator pos = _p->m_contexts.begin();
+   Private::ContextMap::const_iterator end = _p->m_contexts.end();
+   while( pos != end )
+   {
+      ectx( pos->second );
+      ++pos;
+   }
+   _p->m_mtx_contexts.unlock();
+}
+
 void Collector::unregisterContext( VMContext *ctx )
 {
    TRACE( "Collector::unregisterContext - %p(%d) in Process %p(%d)",
@@ -973,6 +986,9 @@ bool Collector::offerContext( VMContext* ctx )
             ctx->id(), ctx, ctx->process()->id(), ctx->process() );
 
    bool operate = false;
+   int32 prevStatus = ctx->getStatus();
+   // do this early, so we account for it during lockings and pauses.
+   ctx->setStatus(VMContext::statusInspected);
 
    if( ctx->markedForInspection() )
    {
@@ -1017,12 +1033,16 @@ bool Collector::offerContext( VMContext* ctx )
    }
 
 
-   if(operate) {
+   if(operate)
+   {
       ctx->incref();
       _p->m_mtx_markingList.lock();
       _p->m_markingList.push_back(ctx);
       _p->m_mtx_markingList.unlock();
       m_markerWork.set();
+   }
+   else {
+      ctx->setStatus(prevStatus);
    }
 
    return operate;

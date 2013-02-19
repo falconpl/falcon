@@ -26,6 +26,8 @@
 
 #include <falcon/datawriter.h>
 #include <falcon/datareader.h>
+#include <falcon/itemarray.h>
+#include <falcon/module.h>
 
 namespace Falcon {
 namespace Ext {
@@ -33,6 +35,7 @@ namespace Ext {
 
 ClassGC::ClassGC():
    ClassUser("%GC"),
+   FALCON_INIT_PROPERTY( contexts ),
    FALCON_INIT_PROPERTY( memory ),
    FALCON_INIT_PROPERTY( items ),
    FALCON_INIT_PROPERTY( enabled ),
@@ -99,6 +102,41 @@ bool ClassGC::op_init( VMContext* , void*, int  ) const
 //====================================================
 // Properties.
 //
+
+FALCON_DEFINE_PROPERTY_SET_P0( ClassGC, contexts )
+{
+   throw new CodeError( ErrorParam( e_prop_ro, __LINE__, SRC ).extra("contexts") );
+}
+
+FALCON_DEFINE_PROPERTY_GET( ClassGC, contexts )(void*, Item& value)
+{
+   static Class* cls = owner()->module()->getClass("VMContext");
+   static Collector* coll = Engine::instance()->collector();
+
+   ItemArray* res = new ItemArray;
+
+   class Rator: public Collector::ContextEnumerator
+   {
+   public:
+      Rator( ItemArray* array ):
+         m_array(array)
+      {}
+
+      virtual ~Rator(){}
+
+      virtual void operator()(VMContext* ctx)
+      {
+         m_array->append( Item( cls, ctx ) );
+      }
+
+   private:
+      ItemArray* m_array;
+   }
+   rator(res);
+
+   coll->enumerateContexts(rator);
+   value = FALCON_GC_HANDLE(res);
+}
    
 FALCON_DEFINE_PROPERTY_SET_P0( ClassGC, memory )
 {

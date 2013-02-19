@@ -202,6 +202,7 @@ void ContextManager::onContextDescheduled( VMContext* ctx )
 {
    TRACE1( "ContextManager::onContextDescheduled %d", ctx->id() );
    ctx->incref();
+   ctx->setStatus(VMContext::statusDescheduled);
    _p->m_messages.add( CMMsg(ctx) );
 }
 
@@ -334,6 +335,7 @@ void ContextManager::manageReadyContext( VMContext* ctx )
    TRACE( "manageReadyContext - Waking context %p(%d)", ctx, ctx->id() );
 
    // remove the context from any shared resource in wait.
+   ctx->setStatus(VMContext::statusReady);
    ctx->abortWaits();
 
    // ask the context group if the context is quiescent
@@ -343,6 +345,7 @@ void ContextManager::manageReadyContext( VMContext* ctx )
       TRACE1( "manageReadyContext - Group says context %p(%d) is %s", ctx, ctx->id(),
                (proceed ? "ready" : "quiescent") );
       if( ! proceed ) {
+         ctx->setStatus(VMContext::statusQuiescent);
          return;
       }
    }
@@ -424,7 +427,6 @@ void ContextManager::manageAwakenContext( VMContext* ctx )
       if( ! Engine::collector()->offerContext(ctx) )
       {
          TRACE( "manageAwakenContext - Collector didn't accept %p(%d), putting back to sleep.", ctx, ctx->id() );
-         printf( "\nmanageAwakenContext - Collector didn't accept %p(%d), putting back to sleep.\n", ctx, ctx->id() );
          manageDesceduledContext(ctx);
       }
    }
@@ -488,7 +490,18 @@ void ContextManager::manageDesceduledContext( VMContext* ctx )
          return;
       }
       else {
+         if( ctx->waitingSharedCount() ) {
+            ctx->setStatus( VMContext::statusWaiting  );
+         }
+         else {
+            ctx->setStatus( VMContext::statusSleeping );
+         }
          _p->m_schedMap.insert( std::make_pair(ctx->nextSchedule(), ctx) );
+
+         /*if( ctx->nextSchedule() < 0 )
+         {
+            printf( "\n\nInserted context %d with %d waits with timeout %lld\n\n\n", ctx->id(), ctx->waitingSharedCount(), ctx->nextSchedule() );
+         }*/
       }
    }
    // in every case, we keep it.
