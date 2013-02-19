@@ -170,8 +170,8 @@ public:
    \return A pointer to the nth parameter in the stack, or 0 if out of range.
     */
    inline Item* param( uint32 n )  {
-      fassert(m_dataStack.m_base+(n + currentFrame().m_dataBase) < m_dataStack.m_max );
       if( currentFrame().m_paramCount <= n ) return 0;
+      fassert(m_dataStack.m_base+(n + currentFrame().m_dataBase) < m_dataStack.m_max );
       return &m_dataStack.m_base[ n + currentFrame().m_dataBase ];
    }
 

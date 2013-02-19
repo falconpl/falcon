@@ -354,8 +354,9 @@ void ClassWaiter::PStepAfterCall::apply_(const PStep*, VMContext* ctx )
       ctx->returnFrame(result);
    }
    else {
+      ctx->popData();
       // we just need to re-loop
-      ctx->pushCode(reinvoke);
+      ctx->resetCode(reinvoke);
    }
 }
 
@@ -365,6 +366,7 @@ void ClassWaiter::PStepAfterWait::apply_(const PStep*, VMContext* ctx )
    Shared* shared = ctx->getSignaledResouce();
    if( shared != 0 )
    {
+      ctx->popCode();
       ClassWaiter* waiter = static_cast<ClassWaiter*>(ctx->self().asClass());
       shared->decref(); // extra ref not needed if we're in garbage system
       waiter->returnOrInvoke( ctx, shared );

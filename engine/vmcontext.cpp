@@ -419,6 +419,7 @@ bool VMContext::releaseAcquired()
    {
       m_acquired->signal();
       m_acquired->decref();
+      m_acquired = 0;
       if( m_suspendedEvents != 0 )
       {
          atomicOr( m_events, m_suspendedEvents );

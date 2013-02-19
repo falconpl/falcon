@@ -150,6 +150,7 @@ add_library(falcon_engine SHARED
   cm/print.cpp
   cm/semaphore.cpp
   cm/stdfunctions.cpp
+  cm/syncqueue.cpp
   cm/textreader.cpp
   cm/textstream.cpp
   cm/textwriter.cpp
