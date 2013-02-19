@@ -21,14 +21,15 @@
 #include <falcon/errors/paramerror.h>
 #include <falcon/vmcontext.h>
 #include <falcon/stdsteps.h>
+#include <falcon/vm.h>
 
 #include <stdio.h>
 
 namespace Falcon {
 namespace Ext {
 
-SharedBarrier::SharedBarrier( const Class* owner, bool isOpen ):
-   Shared(owner, false, isOpen ? 1 : 0 )
+SharedBarrier::SharedBarrier( ContextManager* mgr, const Class* owner, bool isOpen ):
+   Shared( mgr, owner, false, isOpen ? 1 : 0 )
 {
    m_status = isOpen ? 1 : 0;
 }
@@ -42,9 +43,9 @@ int32 SharedBarrier::consumeSignal( int32 )
    return atomicFetch(m_status);
 }
 
-bool SharedBarrier::lockedConsumeSignal()
+int32 SharedBarrier::lockedConsumeSignal(int32)
 {
-   return atomicFetch(m_status) > 0;
+   return atomicFetch(m_status);
 }
 
 void SharedBarrier::open()
@@ -97,7 +98,7 @@ bool ClassBarrier::op_init( VMContext* ctx, void*, int pcount ) const
       isOpen = ctx->param(0)->isTrue();
    }
 
-   SharedBarrier* sb = new SharedBarrier(this, isOpen);
+   SharedBarrier* sb = new SharedBarrier(&ctx->vm()->contextManager(), this, isOpen);
    ctx->stackResult(pcount+1, FALCON_GC_STORE(this, sb));
    return false;
 }

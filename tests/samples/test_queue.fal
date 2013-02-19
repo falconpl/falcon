@@ -5,17 +5,23 @@ done = Barrier()
 function consumer( id, control )
    > "Entering the consumer ", id
 
+   spurious = [0,0]
    onSignaled = {queue =>
-      control[id] = "Received " + queue.tryPop().describe()
-      queue.release()
+      item = queue.pop("Spurious wakeup")      
+      control[id] = "Received " + item.describe()
+      if item == "Spurious wakeup"
+         spurious[0]++
+      else
+         spurious[1]++
+      end
+      //> VMContext().describe()
    }
    
    wl = Waiter( done )
    wl.add( queue, onSignaled )
-   > wl
    wl.wait()
    
-   > "Exiting consumer ", id
+   > "Exiting consumer ", id, " with ", spurious[0],"/",spurious[1], " spurious wakeups."
 end
 
 
@@ -27,10 +33,12 @@ function controller( control )
    count = 0
    now  = seconds()
    while seconds() - now < 5.0
-      >> @"$({seconds()-now}.2) ${control[0]}, ${control[1]}, ${control[2]}              \r"
-      rest(10)
+      //if count % 100 == 0
+         >> @"$({seconds()-now}.2) ${control[0]}, ${control[1]}, ${control[2]}                    \r"
+      //end
+      //rest(10)
       ++count
-      queue.push("Hello again!", 1, seconds(), count )
+      queue.push("Hello again! " + count, 1, seconds(), count )
    end 
    
    done.open()

@@ -392,7 +392,7 @@ void VMContext::clearWaits()
 
 void VMContext::initWait()
 {
-   m_next_schedule = -1;
+   m_next_schedule = 0;
    m_waiting.m_top = m_waiting.m_base-1;
 }
 
@@ -467,8 +467,17 @@ Shared* VMContext::engageWait( int64 timeout )
    Shared** base = m_waiting.m_base;
    Shared** top = m_waiting.m_top+1;
 
+   // we have sereral no-op exit points, better to clear the schedule.
+   m_next_schedule = 0;
+
    TRACE( "VMContext::engageWait waiting for %d(%p) on %ld shared resources in %dms.",
             id(), this,  (long) (top-base), (int) timeout  );
+
+   if(base == top)
+   {
+      // not waiting on nothing.
+      return 0;
+   }
 
    while( base != top )
    {
@@ -515,6 +524,12 @@ Shared* VMContext::declareWaits()
    Shared** base = m_waiting.m_base;
    Shared** current = m_waiting.m_base;
    Shared** top = m_waiting.m_top;
+   if( current > top && m_next_schedule < 0 )
+   {
+      m_next_schedule = 0;
+      return 0;
+   }
+
    while( current <= top )
    {
         Shared* shared = *current;

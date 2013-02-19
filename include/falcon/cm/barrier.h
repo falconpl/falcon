@@ -33,7 +33,7 @@ namespace Ext {
 class FALCON_DYN_CLASS SharedBarrier: public Shared
 {
 public:
-   SharedBarrier( const Class* owner, bool isOpen = false );
+   SharedBarrier( ContextManager* mgr, const Class* owner, bool isOpen = false );
    virtual ~SharedBarrier();
 
    virtual int32 consumeSignal( int32 count = 1 );
@@ -41,7 +41,7 @@ public:
    void close();
 
 protected:
-   virtual bool lockedConsumeSignal();
+   virtual int32 lockedConsumeSignal(int32 count );
 
 private:
    atomic_int m_status;

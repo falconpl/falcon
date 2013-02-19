@@ -61,7 +61,7 @@ class Class;
 class FALCON_DYN_CLASS Shared
 {
 public:
-   Shared( const Class* cls=0, bool acquireable = false, int32 signals = 0 );
+   Shared( ContextManager* mgr, const Class* cls=0, bool acquireable = false, int32 signals = 0 );
 
    /** Returns true if this resource supports acquire semantic.
     */
@@ -84,6 +84,16 @@ public:
    /** Post one or more signals signal to this resource.
 
    \param count Number of signals posted to this resource.
+
+   The first signal \b only sends a request to the context manager to
+   publish the information.
+
+   This is consistent if the manager
+   can atomically decrease the signals as the waiters are
+   dequeued. Not all the shared resources can grant this
+   semantic; in that case, the signal method must be
+   reimplemented to notify the manager also in other
+   occasions.
     */
    virtual void signal( int count = 1 );
 
@@ -137,9 +147,13 @@ protected:
     */
    int32 signalCount() const;
 
-   virtual bool lockedConsumeSignal();
+   virtual int32 lockedConsumeSignal( int32 count = 1 );
+   virtual void lockedSignal( int32 count = 1 );
 
+   void lockSignals() const;
+   void unlockSignals() const;
 private:
+   ContextManager* m_notifyTo;
    class Private;
    Private* _p;
 

@@ -63,7 +63,6 @@ ContextGroup::ContextGroup():
    m_processors( 0 ),
    m_terminated(0)
 {
-   m_termEvent = new Shared;
    _p = new Private;
 }
 
@@ -77,7 +76,7 @@ ContextGroup::ContextGroup( VMachine* owner, VMContext* parent, uint32 processor
    // if we have a parent, it must be in the same vm.
    fassert( parent == 0 || parent->vm() == owner );
 
-   m_termEvent = new Shared;
+   m_termEvent = new Shared( &owner->contextManager() );
    _p = new Private;
 }
 
@@ -89,6 +88,7 @@ void ContextGroup::configure( VMachine* owner, VMContext* parent, uint32 process
    m_owner = owner;
    m_parent = parent;
    m_processors = processors;
+   m_termEvent = new Shared( &owner->contextManager() );
 }
 
 

@@ -22,11 +22,13 @@
 #include <falcon/vmcontext.h>
 #include <falcon/stdsteps.h>
 
+#include <falcon/vm.h>
+
 namespace Falcon {
 namespace Ext {
 
-SharedSemaphore::SharedSemaphore( const Class* owner, int32 initCount ):
-   Shared(owner, false, initCount )
+SharedSemaphore::SharedSemaphore( ContextManager* mgr, const Class* owner, int32 initCount ):
+   Shared( mgr, owner, false, initCount )
 {
 }
 
@@ -76,7 +78,7 @@ bool ClassSemaphore::op_init( VMContext* ctx, void*, int pcount ) const
       }
    }
 
-   SharedSemaphore* sm = new SharedSemaphore(this, count);
+   SharedSemaphore* sm = new SharedSemaphore( &ctx->vm()->contextManager(), this, count);
    ctx->stackResult(pcount+1, FALCON_GC_STORE(this, sm));
    return false;
 }

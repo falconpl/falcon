@@ -31,7 +31,7 @@ namespace Ext {
 class FALCON_DYN_CLASS SharedSemaphore: public Shared
 {
 public:
-   SharedSemaphore( const Class* owner, int32 initCount );
+   SharedSemaphore( ContextManager* mgr, const Class* owner, int32 initCount );
    virtual ~SharedSemaphore();
 };
 

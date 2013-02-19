@@ -237,7 +237,7 @@ FALCON_DEFINE_METHOD_P1( ClassGC, perform )
    {
       if( wait != 0 )
       {
-         Shared* sh = new Shared;
+         Shared* sh = new Shared(&ctx->vm()->contextManager());
          coll->performGCOnShared( sh );
          ctx->addWait(sh);
          ctx->engageWait(-1);

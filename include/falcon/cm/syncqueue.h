@@ -35,7 +35,7 @@ namespace Ext {
 class FALCON_DYN_CLASS SharedSyncQueue: public Shared
 {
 public:
-   SharedSyncQueue( const Class* owner );
+   SharedSyncQueue( ContextManager* mgr, const Class* owner );
    virtual ~SharedSyncQueue();
 
    void push( const Item& itm );
@@ -44,13 +44,11 @@ public:
    void gcMark( uint32 mark );
    uint32 currentMark() const;
 
-   void release();
    bool empty() const;
 
-   virtual void signal( int32 count = 1);
    virtual int32 consumeSignal( int32 count = 1 );
 protected:
-   virtual bool lockedConsumeSignal();
+   virtual int32 lockedConsumeSignal( int32 );
 
 private:
    class Private;
@@ -103,24 +101,12 @@ private:
    /*#
      @method pop SyncQueue
      @brief Removes an item from the queue atomically, or waits for an item to be available.
-     @optparam timeout Time out for the item to be popped.
      @optoaram onEmpty Returned if the queue is empty.
 
      @note this is a wait-point. Invoking this method forces the releasing of the queue.
      use @a SyncQueue.tryPop after a succesful wait to pop items.
     */
-   FALCON_DECLARE_METHOD( pop, "timeout:[N], onEmpty:[X]" );
-
-
-   /*#
-     @method tryPop SyncQueue
-     @brief Tries to remove an item from the queue atomically if possible.
-     @optoaram onEmpty Returned if the queue is empty.
-
-     Invoking this method doesn't relase an acquired queue.
-    */
-   FALCON_DECLARE_METHOD( tryPop, "onEmpty:[X]" );
-
+   FALCON_DECLARE_METHOD( pop, "onEmpty:[X]" );
 
    /*#
      @method wait SyncQueue
@@ -137,18 +123,6 @@ private:
      Use @a Syncqueue.release to explicitly release a queue acquired via this @b wait method.
     */
    FALCON_DECLARE_METHOD( wait, "timeout:[N]" );
-
-
-   /*#
-     @method release SyncQueue
-     @brief Release a queue acquired through a wait operation.
-     @raise AccessError if the queue is not currently acquired.
-    */
-   FALCON_DECLARE_METHOD( release, "" );
-
-
-   FALCON_DECLARE_INTERNAL_PSTEP(AfterPop);
-
 };
 
 }

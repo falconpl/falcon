@@ -21,6 +21,7 @@
 #include <falcon/errors/paramerror.h>
 #include <falcon/vmcontext.h>
 #include <falcon/stdsteps.h>
+#include <falcon/vm.h>
 
 #include <deque>
 
@@ -33,22 +34,19 @@ public:
 
    typedef std::deque<Item> ValueList;
    ValueList m_values;
-   Mutex m_mtx_content;
    // to invalidate iterators during the gc loop.
    uint32 m_version;
-   bool m_bHeld;
    uint32 m_gcMark;
 
    Private():
-      m_version(0),
-      m_bHeld(false)
+      m_version(0)
    {}
 
    ~Private() {}
 };
 
-SharedSyncQueue::SharedSyncQueue( const Class* owner ):
-   Shared(owner, true, 0 )
+SharedSyncQueue::SharedSyncQueue( ContextManager* mgr, const Class* owner ):
+   Shared( mgr, owner, false, 0 )
 {
    _p = new Private;
 }
@@ -59,86 +57,48 @@ SharedSyncQueue::~SharedSyncQueue()
 }
 
 
-void SharedSyncQueue::signal( int32 )
-{
-   release();
-}
-
 int32 SharedSyncQueue::consumeSignal( int32 )
 {
-   _p->m_mtx_content.lock();
-   if( ! _p->m_bHeld && ! _p->m_values.empty() )
-   {
-      _p->m_bHeld = true;
-      _p->m_mtx_content.unlock();
+   lockSignals();
+   int32 result = _p->m_values.empty() ?  0 : 1;
+   unlockSignals();
 
-      Shared::consumeSignal(1);
-      return 1;
-   }
-
-   _p->m_mtx_content.unlock();
-   return 0;
+   return result;
 }
 
-bool SharedSyncQueue::lockedConsumeSignal()
+int32 SharedSyncQueue::lockedConsumeSignal( int32 )
 {
-   _p->m_mtx_content.lock();
-   if( ! _p->m_bHeld && ! _p->m_values.empty() )
-   {
-      _p->m_bHeld = true;
-      _p->m_mtx_content.unlock();
-
-      Shared::lockedConsumeSignal();
-      return true;
-   }
-
-   _p->m_mtx_content.unlock();
-   return false;
+   return _p->m_values.empty() ?  0 : 1;
 }
 
 void SharedSyncQueue::push( const Item& itm )
 {
-   bool doSignal = false;
-
-   _p->m_mtx_content.lock();
+   lockSignals();
+   if( _p->m_values.empty() )
+   {
+      Shared::lockedSignal(1);
+   }
    _p->m_values.push_back(itm);
    _p->m_version++;
-   if( ! _p->m_bHeld )
-   {
-      doSignal = true;
-   }
-   _p->m_mtx_content.unlock();
-
-   if( doSignal )
-   {
-      Shared::signal(1);
-   }
+   unlockSignals();
 }
 
 bool SharedSyncQueue::pop( Item& target )
 {
    bool result = false;
-
-   _p->m_mtx_content.lock();
-   if( ! _p->m_bHeld && ! _p->m_values.empty() )
+   lockSignals();
+   if( ! _p->m_values.empty() )
    {
       target = _p->m_values.front();
       _p->m_values.pop_front();
       _p->m_version++;
       result = true;
-
       if( _p->m_values.empty() )
       {
-         _p->m_mtx_content.unlock();
-         Shared::consumeSignal(1);
-      }
-      else {
-         _p->m_mtx_content.unlock();
+         Shared::lockedConsumeSignal(1);
       }
    }
-   else {
-      _p->m_mtx_content.unlock();
-   }
+   unlockSignals();
 
    return result;
 }
@@ -146,32 +106,11 @@ bool SharedSyncQueue::pop( Item& target )
 
 bool SharedSyncQueue::empty() const
 {
-   _p->m_mtx_content.lock();
+   lockSignals();
    bool isEmpty = _p->m_values.empty();
-   _p->m_mtx_content.unlock();
+   unlockSignals();
 
    return isEmpty;
-}
-
-void SharedSyncQueue::release()
-{
-   _p->m_mtx_content.lock();
-   if( _p->m_bHeld )
-   {
-      _p->m_bHeld = false;
-      if( ! _p->m_values.empty() )
-      {
-         _p->m_mtx_content.unlock();
-         Shared::signal(1);
-      }
-      else {
-         // nothing to signal.
-         _p->m_mtx_content.unlock();
-      }
-   }
-   else {
-      _p->m_mtx_content.unlock();
-   }
 }
 
 
@@ -182,7 +121,8 @@ void SharedSyncQueue::gcMark( uint32 mark )
       return;
    }
 
-   _p->m_mtx_content.lock();
+   lockSignals();
+   _p->m_gcMark = mark;
    Private::ValueList::iterator iter;
    Private::ValueList::iterator end;
    do
@@ -194,20 +134,21 @@ void SharedSyncQueue::gcMark( uint32 mark )
       {
          Item current = *iter;
          uint32 version = _p->m_version;
-         _p->m_mtx_content.unlock();
+         unlockSignals();
 
          current.gcMark(mark);
 
-         _p->m_mtx_content.lock();
+         lockSignals();
          if ( version != _p->m_version )
          {
             // try again.
             break;
          }
+         ++iter;
       }
 
    } while( iter != end );
-   _p->m_mtx_content.unlock();
+   unlockSignals();
 }
 
 
@@ -226,9 +167,7 @@ ClassSyncQueue::ClassSyncQueue():
 
       FALCON_INIT_METHOD(push),
       FALCON_INIT_METHOD(pop),
-      FALCON_INIT_METHOD(tryPop),
-      FALCON_INIT_METHOD(wait),
-      FALCON_INIT_METHOD(release)
+      FALCON_INIT_METHOD(wait)
 {
    static Class* shared = Engine::instance()->sharedClass();
    addParent(shared);
@@ -239,13 +178,16 @@ ClassSyncQueue::~ClassSyncQueue()
 
 void* ClassSyncQueue::createInstance() const
 {
-   return new SharedSyncQueue(this);
+   return FALCON_CLASS_CREATE_AT_INIT;
 }
 
 
-bool ClassSyncQueue::op_init( VMContext*, void*, int ) const
+bool ClassSyncQueue::op_init( VMContext* ctx, void*, int pCount ) const
 {
-   return true;
+   Shared* shared = new SharedSyncQueue(&ctx->vm()->contextManager(), this);
+   ctx->stackResult(pCount+1, FALCON_GC_HANDLE(shared));
+
+   return false;
 }
 
 
@@ -285,59 +227,6 @@ FALCON_DEFINE_METHOD_P1( ClassSyncQueue, pop )
    SharedSyncQueue* queue = static_cast<SharedSyncQueue*>(ctx->self().asInst());
 
    // check and get params.
-   Item* i_timeout = ctx->param(0);
-   Item* i_dflt = ctx->param(1);
-   if( i_timeout != 0 && !(i_timeout->isNil() || i_timeout->isOrdinal()) )
-   {
-      throw paramError(__LINE__, SRC);
-   }
-
-
-   int64 timeout = i_timeout == 0 || i_timeout->isNil() ? -1 : i_timeout->forceInteger();
-   Item dflt;
-   if( i_dflt != 0 )
-   {
-      dflt = *i_dflt;
-      dflt.copied(true);
-   }
-
-   Item target;
-   bool result = queue->pop( target );
-
-   // success or not, we abandoned the resource nevertheless.
-   if( ctx->acquired() == queue )
-   {
-      queue->release();
-   }
-   ctx->releaseAcquired();
-
-   if( result )
-   {
-      ctx->returnFrame(target);
-      return;
-   }
-
-   // we failed..
-   if( timeout == 0 )
-   {
-      ctx->returnFrame(dflt);
-      return;
-   }
-
-   // prepare for wait -- we need a landing pstep.
-   ctx->pushCode( &static_cast<ClassSyncQueue*>(methodOf())->m_stepAfterPop );
-
-   ctx->initWait();
-   ctx->addWait( queue );
-   ctx->engageWait( timeout );
-}
-
-
-FALCON_DEFINE_METHOD_P1( ClassSyncQueue, tryPop )
-{
-   SharedSyncQueue* queue = static_cast<SharedSyncQueue*>(ctx->self().asInst());
-
-   // check and get params.
    Item* i_dflt = ctx->param(0);
    Item dflt;
    if( i_dflt != 0 )
@@ -348,35 +237,6 @@ FALCON_DEFINE_METHOD_P1( ClassSyncQueue, tryPop )
 
    queue->pop( dflt );
    ctx->returnFrame(dflt);
-}
-
-
-void ClassSyncQueue::PStepAfterPop::apply_(const PStep*, VMContext* ctx )
-{
-   SharedSyncQueue* shared = static_cast<SharedSyncQueue*>( ctx->getSignaledResouce() );
-   Item value;
-
-   if( shared == 0 || ! shared->pop(value) )
-   {
-      // we must return the default item.
-      Item* i_dflt = ctx->param(1);
-      if( i_dflt != 0 )
-      {
-         ctx->returnFrame(*i_dflt);
-      }
-      else {
-         ctx->returnFrame();
-      }
-   }
-   else {
-      ctx->returnFrame(value);
-   }
-
-   if( shared != 0 )
-   {
-      ctx->releaseAcquired();
-      shared->release();
-   }
 }
 
 FALCON_DEFINE_METHOD_P( ClassSyncQueue, wait )
@@ -417,19 +277,6 @@ FALCON_DEFINE_METHOD_P( ClassSyncQueue, wait )
       // we got to wait.
       ctx->pushCode( &stepWaitSuccess );
    }
-}
-
-FALCON_DEFINE_METHOD_P1( ClassSyncQueue, release )
-{
-   SharedSyncQueue* queue = static_cast<SharedSyncQueue*>(ctx->self().asInst());
-
-   if( ctx->acquired() == queue )
-   {
-      ctx->releaseAcquired();
-      queue->release();
-   }
-
-   ctx->returnFrame();
 }
 
 }

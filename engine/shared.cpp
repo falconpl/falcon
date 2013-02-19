@@ -24,7 +24,8 @@
 namespace Falcon
 {
 
-Shared::Shared( const Class* handler, bool acquireable, int32 signals ):
+Shared::Shared( ContextManager* mgr, const Class* handler, bool acquireable, int32 signals ):
+   m_notifyTo(mgr),
    m_acquireable( acquireable ),
    m_cls( handler ),
    m_mark(0)
@@ -38,7 +39,7 @@ Shared::~Shared() {
 
 Shared* Shared::clone() const
 {
-   return new Shared( m_cls, m_acquireable, _p->m_signals );
+   return new Shared( m_notifyTo, m_cls, m_acquireable, _p->m_signals );
 }
 
 int32 Shared::consumeSignal( int32 count )
@@ -54,31 +55,54 @@ int32 Shared::consumeSignal( int32 count )
 }
 
 
-bool Shared::lockedConsumeSignal()
+int Shared::lockedConsumeSignal( int count )
 {
-   if( _p->m_signals > 0 )
-   {
-      _p->m_signals--;
-      return true;
+   if( count > _p->m_signals ) {
+      count = _p->m_signals;
    }
-   return false;
+   _p->m_signals -= count;
+
+   return count;
 }
 
 void Shared::signal( int32 count )
 {
-   ContextManager* notifyTo = 0;
+   if( count <= 0 )
+   {
+      return;
+   }
 
    _p->m_mtx.lock();
+   bool doSignal = (_p->m_signals == 0 );
+   _p->m_signals += count;
+   _p->m_mtx.unlock();
+
+   if( doSignal )
+   {
+      m_notifyTo->onSharedSignaled(this);
+   }
+}
+
+void Shared::lockedSignal( int32 count )
+{
+   ContextManager* notifyTo = 0;
+
    _p->m_signals += count;
    if( ! _p->m_waiters.empty() )
    {
       notifyTo = &_p->m_waiters.front()->vm()->contextManager();
-   }
-   _p->m_mtx.unlock();
-
-   if( notifyTo != 0 ) {
       notifyTo->onSharedSignaled(this);
    }
+}
+
+void Shared::lockSignals() const
+{
+   _p->m_mtx.lock();
+}
+
+void Shared::unlockSignals() const
+{
+   _p->m_mtx.unlock();
 }
 
 int32 Shared::signalCount() const
