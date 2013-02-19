@@ -66,7 +66,7 @@ bool ClassSemaphore::op_init( VMContext* ctx, void*, int pcount ) const
       count = 0;
    }
    else {
-      Item* i_count = ctx->param(0);
+      Item* i_count = ctx->opcodeParams(pcount);
       if( ! i_count->isOrdinal() )
       {
          throw FALCON_SIGN_XERROR( ParamError, e_inv_params, .extra("N") );
@@ -80,7 +80,7 @@ bool ClassSemaphore::op_init( VMContext* ctx, void*, int pcount ) const
 
    SharedSemaphore* sm = new SharedSemaphore( &ctx->vm()->contextManager(), this, count);
    ctx->stackResult(pcount+1, FALCON_GC_STORE(this, sm));
-   return false;
+   return true;
 }
 
 

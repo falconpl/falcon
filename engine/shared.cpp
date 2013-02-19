@@ -85,13 +85,11 @@ void Shared::signal( int32 count )
 
 void Shared::lockedSignal( int32 count )
 {
-   ContextManager* notifyTo = 0;
-
+   bool doSignal = (_p->m_signals == 0 );
    _p->m_signals += count;
-   if( ! _p->m_waiters.empty() )
+   if( doSignal )
    {
-      notifyTo = &_p->m_waiters.front()->vm()->contextManager();
-      notifyTo->onSharedSignaled(this);
+      m_notifyTo->onSharedSignaled(this);
    }
 }
 
