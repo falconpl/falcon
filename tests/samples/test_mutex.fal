@@ -1,0 +1,67 @@
+
+// Typical sync control via mutex-semaphore pair.
+
+class Entity
+   mtx = Mutex()
+   prop0 = 0
+   prop1 = 1
+   prop2 = 2
+   count = 0
+   done = 0
+   
+   function mth0(p0, p1)
+      self.mtx.lock()
+      self.prop0 = p0 + p1
+      self.prop1 = "Made by " + p1
+      self.mtx.unlock()
+   end
+
+   function mth1(p0)
+      self.mtx.lock()
+      self.count++
+      self.prop2 = "Set by " + p0
+      self.mth0("Done by ", p0)
+      self.mtx.unlock()
+   end
+   
+   function complete()
+      self.mtx.lock()
+      self.done++    
+      self.mtx.unlock()
+   end
+end
+
+instance = Entity()
+
+function mangle( entity, id, count )
+   for i = 1 to count 
+      entity.mth1(id)
+   end
+   entity.complete()
+end
+
+function control( inst, count )
+   
+   loop
+      inst.mtx.lock()
+      if inst.done == count
+         break
+      end
+      >> inst.count, ": ", inst.prop0, " ", inst.prop1, " ", inst.prop2, " ", inst.done,
+            "                          \r"
+      rest(80)
+   end
+   > inst.count, ": ", inst.prop0, " ", inst.prop1, " ", inst.prop2, " ", inst.done,
+         "                          "
+end
+
+f1 = {=> mangle(instance, 1, 10000) }
+f2 = {=> mangle(instance, 2, 10000) }
+f3 = {=> mangle(instance, 3, 10000) }
+f4 = {=> mangle(instance, 4, 10000) }
+ctr = {=> control(instance, 4) }
+
+para = Parallel( f1,f2,f3,f4, ctr )
+para.launch()
+>
+> "Complete"

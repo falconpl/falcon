@@ -153,8 +153,7 @@ FALCON_DEFINE_METHOD_P( ClassBarrier, wait )
    }
 
    // first of all check that we're clear to go with pending events.
-   ctx->releaseAcquired();
-   if( ctx->events() != 0 )
+   if( ctx->releaseAcquired() )
    {
       // i'll be called again, but next time events should be 0.
       static const PStep& stepInvoke = Engine::instance()->stdSteps()->m_reinvoke;
