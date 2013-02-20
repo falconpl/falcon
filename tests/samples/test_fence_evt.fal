@@ -1,5 +1,5 @@
 // 
-// Fences, mutexes and events tests
+// Fences, mutexes and semaphopre tests
 //
 
 
@@ -21,7 +21,7 @@ class Entity(count)
       // fill a place where to store cooperative data.
       for i = 0 to count-1
          self.props += 0
-         self.sem += Semaphore(0)
+         self.sem += Event()
       end
    end
    
@@ -66,7 +66,7 @@ class Entity(count)
       self.loops++
       // let all our agents to go.
       for sem in self.sem
-         sem.post()
+         sem.set()
       end
    end
    
@@ -88,9 +88,9 @@ class Entity(count)
          
          // wait for all the agents to be done.
          self.fence.wait()
-         // show results and check if all is ok.
          if self.loops % 100 != 0: continue
          
+         // show results and check if all is ok.
          props = self.props
          for prop in props
             forfirst

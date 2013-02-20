@@ -63,9 +63,11 @@ int32 SharedEvent::lockedConsumeSignal(int32)
 
 void SharedEvent::set()
 {
+   lockSignals();
    if( atomicCAS(m_status, 0, 1) ) {
-      signal(1);
+      lockedSignal(1);
    }
+   unlockSignals();
 }
 
 
