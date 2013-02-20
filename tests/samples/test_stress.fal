@@ -1,0 +1,121 @@
+class test
+   string = ""
+   errcount = 0
+   loops = [0,0,0]
+   done = 0
+end
+ 
+startTime = seconds()
+timeLimit = 10.0
+ 
+function changeInsert(t, id)
+   > "Entering changeInsert" 
+   range = [0:0]
+   
+   loop
+ 
+      if t.string.len < 2
+         t.string = t.string + "ABCD"
+      elif t.string.len > 40
+         continue
+      end
+      
+      try
+         point = t.loops[id] % t.string.len
+      catch
+         point = 0
+      end
+         
+      range[0] = point
+      range[1] = point
+      try
+         //t.string[range] = "" + i % 10
+         t.string[range] = "A"
+         t.loops[id] ++
+      catch AccessError
+         t.errcount++
+      end            
+   end t.done
+   
+end
+ 
+ 
+function changeRemove(t, id)
+   > "Entering changeRemove"
+   range = [0:0]
+ 
+   loop
+      
+      if t.string.len < 4
+         continue
+      end
+      
+      try
+         point = t.loops[id] % t.string.len
+      catch
+         point = 0
+      end
+      
+      range[0] = point
+      range[1] = point+1
+      try
+         t.string[range] = ""
+         t.loops[id] ++
+      catch AccessError
+         t.errcount++
+      end
+   end t.done
+   
+end
+   
+function changeAlter(t, id)
+   > "Entering changeAlter"
+   str = t.string
+   
+   loop      
+      try
+         point = t.loops[id] % t.string.len
+      catch
+         point = 0
+      end
+      
+      try
+         t.string[point] = "B" //+ (9-(i%10))
+         t.loops[id] ++
+      catch AccessError
+         t.errcount++
+      end
+   end t.done
+   
+end
+ 
+function checker( t )
+   
+   > "Entering checker"
+   > t.describe()
+   loop
+      >> @"$({seconds() - startTime}.3) Err: ${t.errcount} - ${t.string}                         \r"      
+      sleep(0.1)
+      if seconds() - startTime > timeLimit
+         t.done = 1
+         break
+      end
+   end
+end
+ 
+t = test()
+> t.describe()
+f0 = {=>changeInsert(t,0)}
+f1 = {=>changeRemove(t,1)}
+f2 = {=>changeAlter(t,2)}
+f3 = {=>checker(t)}
+ 
+comp = Parallel( f0, f1, f2, f3 )
+//comp = Parallel( f0, f3 )
+ 
+ 
+comp.launch()
+>
+> @"Performed loops -- Insert: ${t.loops[0]}, Remove: ${t.loops[1]}, Alter: ${t.loops[2]}"
+> @"Complete in $({seconds()-startTime}.3)s."
+
