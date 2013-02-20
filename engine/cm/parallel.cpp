@@ -70,6 +70,8 @@ ClassParallel::ClassParallel():
    FALCON_INIT_METHOD( wait ),
    FALCON_INIT_METHOD( tryWait ),
    FALCON_INIT_METHOD( timedWait ),
+
+   FALCON_INIT_METHOD( add ),
    FALCON_INIT_METHOD( launch ),
    FALCON_INIT_METHOD( launchWithResults )
 {
@@ -88,13 +90,6 @@ void* ClassParallel::createInstance() const
 
 bool ClassParallel::op_init( VMContext* ctx, void* instance, int pcount ) const
 {
-   if ( pcount == 0 )
-   {
-      throw new ParamError( ErrorParam(e_inv_params, __LINE__, SRC )
-               .origin( ErrorParam::e_orig_runtime )
-               .extra("C,...") );
-   }
-
    CGCarrier* ctg = static_cast<CGCarrier*>(instance);
    Item* params = ctx->opcodeParams(pcount);
 
@@ -227,8 +222,39 @@ static void internal_launch( VMContext* ctx, int pCount )
       //TODO: should we add the whole group?
       prc->addReadyContext( nctx );
    }
-
 }
+
+
+FALCON_DEFINE_METHOD_P( ClassParallel, add )
+{
+   if ( pCount == 0 )
+   {
+      throw new ParamError( ErrorParam(e_inv_params, __LINE__, SRC )
+               .origin( ErrorParam::e_orig_runtime )
+               .extra("C,...") );
+   }
+
+   CGCarrier* ctg = static_cast<CGCarrier*>(ctx->self().asInst());
+
+   for( int32 i = 0; i < pCount; ++ i ) {
+      Item* param = ctx->param(i);
+      if( ! param->isCallable() ) {
+         throw new ParamError( ErrorParam(e_inv_params, __LINE__, SRC )
+                        .origin( ErrorParam::e_orig_runtime)
+                        .extra("C,...") );
+      }
+
+      VMContext* nctx = new VMContext(ctx->process(), ctg->m_cg );
+      ctg->m_cg->addContext(nctx);
+
+      // copy the callable item in the context,
+      // as it will be actually called at launch.
+      nctx->pushData(*param);
+   }
+
+   ctx->returnFrame(ctx->self());
+}
+
 
 FALCON_DEFINE_METHOD_P( ClassParallel, launch )
 {

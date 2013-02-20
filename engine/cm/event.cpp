@@ -75,6 +75,7 @@ void SharedEvent::set()
 ClassEvent::ClassEvent():
       ClassShared("Event"),
       FALCON_INIT_METHOD(set),
+      FALCON_INIT_METHOD(tryWait),
       FALCON_INIT_METHOD(wait)
 {
    static Class* shared = Engine::instance()->sharedClass();
@@ -104,7 +105,7 @@ bool ClassEvent::op_init( VMContext* ctx, void*, int pcount ) const
 
    SharedEvent* sb = new SharedEvent(&ctx->vm()->contextManager(), this, isSet);
    ctx->stackResult(pcount+1, FALCON_GC_STORE(this, sb));
-   return false;
+   return true;
 }
 
 
@@ -116,47 +117,14 @@ FALCON_DEFINE_METHOD_P1( ClassEvent, set )
 }
 
 
+FALCON_DEFINE_METHOD_P( ClassEvent, tryWait )
+{
+   ClassShared::genericClassTryWait(methodOf(), ctx, pCount);
+}
 
 FALCON_DEFINE_METHOD_P( ClassEvent, wait )
 {
-   static const PStep& stepWaitSuccess = Engine::instance()->stdSteps()->m_waitSuccess;
-
-   //===============================================
-   //
-   int64 timeout = -1;
-   if( pCount >= 1 )
-   {
-      Item* i_timeout = ctx->param(0);
-      if (!i_timeout->isOrdinal())
-      {
-         throw paramError(__LINE__, SRC);
-      }
-
-      timeout = i_timeout->forceInteger();
-   }
-
-   // first of all check that we're clear to go with pending events.
-   if( ctx->releaseAcquired() )
-   {
-      // i'll be called again, but next time events should be 0.
-      static const PStep& stepInvoke = Engine::instance()->stdSteps()->m_reinvoke;
-      ctx->pushCode( &stepInvoke );
-      return;
-   }
-
-   Shared* shared = static_cast<Shared*>(ctx->self().asInst());
-   ctx->initWait();
-   ctx->addWait(shared);
-   shared = ctx->engageWait( timeout );
-
-   if( shared != 0 )
-   {
-      ctx->returnFrame( Item().setBoolean(true) );
-   }
-   else {
-      // we got to wait.
-      ctx->pushCode( &stepWaitSuccess );
-   }
+   ClassShared::genericClassWait(methodOf(), ctx, pCount);
 }
 
 }

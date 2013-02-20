@@ -28,7 +28,8 @@ Shared::Shared( ContextManager* mgr, const Class* handler, bool acquireable, int
    m_notifyTo(mgr),
    m_acquireable( acquireable ),
    m_cls( handler ),
-   m_mark(0)
+   m_mark(0),
+   m_refcounter_Shared(1)
 {
    _p = new Private( signals );
 }

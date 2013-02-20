@@ -39,6 +39,9 @@ public:
 protected:
    ClassShared( const String& name );
    ClassShared( const String& name, int64 type );
+
+   static void genericClassWait( const Class* childClass, VMContext* ctx, int32 pCount );
+   static void genericClassTryWait( const Class* childClass, VMContext* ctx, int32 pCount );
 };
 
 }

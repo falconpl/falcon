@@ -141,6 +141,7 @@ add_library(falcon_engine SHARED
   cm/datareader.cpp
   cm/datawriter.cpp
   cm/event.cpp
+  cm/fence.cpp
   cm/gc.cpp
   cm/iff.cpp
   cm/include.cpp

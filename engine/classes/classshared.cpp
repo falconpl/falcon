@@ -13,8 +13,16 @@
    See LICENSE file for licensing details.
 */
 
+#undef SRC
+#define SRC "engine/classshared.cpp"
+
 #include <falcon/classes/classshared.h>
 #include <falcon/shared.h>
+#include <falcon/errors/paramerror.h>
+
+#include <falcon/vmcontext.h>
+#include <falcon/engine.h>
+#include <falcon/stdsteps.h>
 
 namespace Falcon
 {
@@ -77,6 +85,77 @@ bool ClassShared::gcCheckInstance( void* self, uint32 mark ) const
    return sh->gcMark() >= mark;
 }
 
+
+void ClassShared::genericClassTryWait( const Class* , VMContext* ctx, int32 )
+{
+   // first of all check that we're clear to go with pending events.
+   if( ctx->releaseAcquired() )
+   {
+      // i'll be called again, but next time events should be 0.
+      static const PStep& stepInvoke = Engine::instance()->stdSteps()->m_reinvoke;
+      ctx->pushCode( &stepInvoke );
+      return;
+   }
+
+   Shared* shared = static_cast<Shared*>(ctx->self().asInst());
+   bool result = shared->consumeSignal(1) > 0;
+   ctx->returnFrame( Item().setBoolean(result) );
+}
+
+
+void ClassShared::genericClassWait( const Class* childClass, VMContext* ctx, int32 pCount )
+{
+   static const PStep& stepWaitSuccess = Engine::instance()->stdSteps()->m_waitSuccess;
+
+   //===============================================
+   //
+   int64 timeout = -1;
+   if( pCount >= 1 )
+   {
+      Item* i_timeout = ctx->param(0);
+      if (!i_timeout->isOrdinal())
+      {
+         throw FALCON_SIGN_XERROR(ParamError, e_inv_params, .extra("[N]") );
+      }
+
+      timeout = i_timeout->forceInteger();
+   }
+
+   if( timeout == 0 )
+   {
+      // use a simpler approach
+      genericClassTryWait(childClass, ctx, pCount );
+   }
+
+   // first of all check that we're clear to go with pending events.
+   if( ctx->releaseAcquired() )
+   {
+      // i'll be called again, but next time events should be 0.
+      static const PStep& stepInvoke = Engine::instance()->stdSteps()->m_reinvoke;
+      ctx->pushCode( &stepInvoke );
+      return;
+   }
+
+   Shared* shared = static_cast<Shared*>(ctx->self().asInst());
+   ctx->initWait();
+   ctx->addWait(shared);
+   shared = ctx->engageWait( timeout );
+
+   if( shared != 0 )
+   {
+      ctx->returnFrame( Item().setBoolean(true) );
+   }
+   else {
+      // we got to wait.
+      if( timeout == 0 )
+      {
+         ctx->returnFrame(Item().setBoolean(false));
+      }
+      else {
+         ctx->pushCode( &stepWaitSuccess );
+      }
+   }
+}
 
 }
 

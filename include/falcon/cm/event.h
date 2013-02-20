@@ -52,13 +52,17 @@ private:
   @brief Waitable event.
   @ingroup parallel
 
-  Events are a syncronization device that can be used by a worker
+  Events are a synchronization device that can be used by a worker
   to be notified about a status change on a shared resource. They are suitable
   to indicate changes in single worker multiple producer patterns.
 
   The Event doesn't support acquisition semantic, and can't be used
   to protect a resource from contemporary accesses; it is a mean to
   signal that something new has happened and requires attention.
+
+  @note The @a Barrier synchronization primitive provides the same
+  functionality as a Microsoft Windows SDK  Event with manual reset.
+
  */
 class FALCON_DYN_CLASS ClassEvent: public ClassShared
 {
@@ -83,9 +87,23 @@ private:
 
 
    /*#
+     @method tryWait Event
+     @brief Check if the event is signaled.
+     @return true if the event is signaled, false otherwise.
+
+     The check eventually resets the event if it's currently signaled.
+    */
+   FALCON_DECLARE_METHOD( tryWait, "" );
+
+   /*#
      @method wait Event
      @brief Waits until the event is set.
+     @optparam timeout A number of milliseconds to wait for the event to be posted.
+     @return True if the wait was succesful, false if the timeout expired without
+        the event being signaled.
 
+     If @b timeout is less than zero, the wait method waits forever. If it's
+     zero, it's equivalent to @a Event.tryWait.
     */
    FALCON_DECLARE_METHOD( wait, "timeout:[N]" );
 

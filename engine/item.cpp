@@ -62,7 +62,10 @@ Item& Item::setString( const String& str )
 
 bool Item::isCallable() const
 {
-   return isFunction() || (isArray() && asArray()->at(0).isCallable());
+   return isFunction()
+            || (isArray() && asArray()->at(0).isCallable())
+             || isMethod()
+             || (isUser() && asClass()->typeID() == FLC_CLASS_ID_CLOSURE);
 }
 
 bool Item::isTrue() const

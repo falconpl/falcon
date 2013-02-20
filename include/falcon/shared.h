@@ -165,9 +165,9 @@ private:
 
    bool addWaiter( VMContext* ctx );
 
-   FALCON_REFERENCECOUNT_DECLARE_INCDEC(Shared);
-
    uint32 m_mark;
+
+   FALCON_REFERENCECOUNT_DECLARE_INCDEC(Shared);
 };
 
 }

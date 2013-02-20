@@ -25,6 +25,7 @@
 #include <falcon/parser/parser.h>
 
 #include <falcon/psteps/exprvalue.h>
+#include <falcon/psteps/exprlit.h>
 #include <falcon/importdef.h>
 #include <falcon/errors/codeerror.h>
 
@@ -48,6 +49,39 @@ ModCompiler::Context::~Context()
 
 void ModCompiler::Context::onInputOver()
 {
+   SourceParser& sp = m_owner->m_sp;
+   ParserContext* pctx = static_cast<ParserContext*>(sp.context());
+   if( ! pctx->isTopLevel() )
+   {
+      String error;
+      int line;
+      if( pctx->currentFunc() != 0 )
+      {
+         error = "Function not closed ";
+         line = pctx->currentFunc()->declaredAt();
+      }
+      else if( pctx->currentLitContext() != 0 )
+      {
+         error = "LiteralContext not closed";
+         line = pctx->currentLitContext()->sr().line();
+      }
+      else if( pctx->currentStmt() != 0 )
+      {
+         error = "Context not closed";
+         line = pctx->currentStmt()->sr().line();
+      }
+      else if( pctx->currentClass() != 0 )
+      {
+         error = "Class not closed";
+         line = pctx->currentClass()->declaredAt();
+      }
+      else {
+         line = sp.currentLexer()->line();
+      }
+
+      sp.addError(e_runaway_eof, sp.currentSource(), sp.currentLexer()->line(), 0, line, error );
+   }
+
    Module* mod = m_owner->m_module;
 
    class Rator: public Module::MantraEnumerator

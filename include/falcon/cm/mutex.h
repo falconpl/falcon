@@ -27,6 +27,8 @@
 #include <falcon/method.h>
 #include <falcon/atomic.h>
 
+#include <falcon/pstep.h>
+
 namespace Falcon {
 namespace Ext {
 
@@ -75,6 +77,18 @@ private:
    FALCON_DECLARE_METHOD( lock, "" );
 
    /*#
+     @method locked Performs locked computation.
+     @brief Waits indefinitely until the mutex is acquired, and then executes the given code.
+     @param code A code to be run inside the lock.
+     @return the result of the evaluated code.
+
+     The locked is automatically released as the code is terminated
+     @note wait operations performed inside the code are bound to unlock the mutex.
+    */
+   FALCON_DECLARE_METHOD( locked, "code:C" );
+
+
+   /*#
      @method tryLock Mutex
      @brief Tries to lock the mutex.
      @return true if the try was succesfull.
@@ -89,6 +103,7 @@ private:
     */
    FALCON_DECLARE_METHOD( unlock, "" );
 
+   FALCON_DECLARE_INTERNAL_PSTEP( UnlockAndReturn );
 };
 
 }

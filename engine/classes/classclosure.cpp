@@ -19,6 +19,7 @@
 #include <falcon/closure.h>
 #include <falcon/function.h>
 #include <falcon/itemarray.h>
+#include <falcon/itemid.h>
 #include <falcon/vmcontext.h>
 
 #include <falcon/datawriter.h>
@@ -28,7 +29,7 @@
 namespace Falcon {
 
 ClassClosure::ClassClosure():
-   Class("Closure")
+   Class("Closure", FLC_CLASS_ID_CLOSURE)
 {}
 
 

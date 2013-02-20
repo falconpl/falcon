@@ -197,6 +197,7 @@ private:
    FALCON_DECLARE_STATIC_METHOD( wait, "..." );
    FALCON_DECLARE_STATIC_METHOD( tryWait, "..." );
    FALCON_DECLARE_STATIC_METHOD( timedWait, "timeout:N,..." );
+   FALCON_DECLARE_METHOD( add, "C..." );
    FALCON_DECLARE_METHOD( launch, "..." );
    FALCON_DECLARE_METHOD( launchWithResults, "..." );
 };

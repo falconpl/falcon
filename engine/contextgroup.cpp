@@ -61,7 +61,8 @@ ContextGroup::ContextGroup():
    m_owner( 0 ),
    m_parent( 0 ),
    m_processors( 0 ),
-   m_terminated(0)
+   m_terminated(0),
+   m_refcounter_ContextGroup(1)
 {
    _p = new Private;
 }
@@ -71,7 +72,8 @@ ContextGroup::ContextGroup( VMachine* owner, VMContext* parent, uint32 processor
    m_owner(owner),
    m_parent( parent ),
    m_processors( processors ),
-   m_terminated(0)
+   m_terminated(0),
+   m_refcounter_ContextGroup(1)
 {
    // if we have a parent, it must be in the same vm.
    fassert( parent == 0 || parent->vm() == owner );
@@ -95,7 +97,10 @@ void ContextGroup::configure( VMachine* owner, VMContext* parent, uint32 process
 ContextGroup::~ContextGroup()
 {
    delete _p;
-   m_termEvent->decref();
+   if( m_termEvent != 0 )
+   {
+      m_termEvent->decref();
+   }
 }
 
 VMContext* ContextGroup::getContext(uint32 count)

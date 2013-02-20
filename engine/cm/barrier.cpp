@@ -136,44 +136,7 @@ FALCON_DEFINE_METHOD_P1( ClassBarrier, close )
 
 FALCON_DEFINE_METHOD_P( ClassBarrier, wait )
 {
-   static const PStep& stepWaitSuccess = Engine::instance()->stdSteps()->m_waitSuccess;
-
-   //===============================================
-   //
-   int64 timeout = -1;
-   if( pCount >= 1 )
-   {
-      Item* i_timeout = ctx->param(0);
-      if (!i_timeout->isOrdinal())
-      {
-         throw paramError(__LINE__, SRC);
-      }
-
-      timeout = i_timeout->forceInteger();
-   }
-
-   // first of all check that we're clear to go with pending events.
-   if( ctx->releaseAcquired() )
-   {
-      // i'll be called again, but next time events should be 0.
-      static const PStep& stepInvoke = Engine::instance()->stdSteps()->m_reinvoke;
-      ctx->pushCode( &stepInvoke );
-      return;
-   }
-
-   Shared* shared = static_cast<Shared*>(ctx->self().asInst());
-   ctx->initWait();
-   ctx->addWait(shared);
-   shared = ctx->engageWait( timeout );
-
-   if( shared != 0 )
-   {
-      ctx->returnFrame( Item().setBoolean(true) );
-   }
-   else {
-      // we got to wait.
-      ctx->pushCode( &stepWaitSuccess );
-   }
+   ClassShared::genericClassWait(methodOf(), ctx, pCount);
 }
 
 }

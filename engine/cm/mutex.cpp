@@ -82,6 +82,7 @@ int32 SharedMutex::lockedConsumeSignal(int32)
 ClassMutex::ClassMutex():
       ClassShared("Mutex"),
       FALCON_INIT_METHOD(lock),
+      FALCON_INIT_METHOD(locked),
       FALCON_INIT_METHOD(tryLock),
       FALCON_INIT_METHOD(unlock)
 {
@@ -148,6 +149,59 @@ FALCON_DEFINE_METHOD_P1( ClassMutex, lock )
       }
    }
 }
+
+
+FALCON_DEFINE_METHOD_P1( ClassMutex, locked )
+{
+   static const PStep& stepInvoke = Engine::instance()->stdSteps()->m_reinvoke;
+
+   Item* i_param = ctx->param(0);
+   if( i_param == 0 )
+   {
+      throw paramError(__LINE__, SRC );
+   }
+
+   SharedMutex* mtx = static_cast<SharedMutex*>(ctx->self().asInst());
+
+   if( ctx->acquired() == mtx )
+   {
+      // adds a reentrant lock.
+      mtx->addLock();
+   }
+   else
+   {
+      // first of all check that we're clear to go with pending events.
+      ctx->releaseAcquired();
+      if( ctx->events() != 0 )
+      {
+         // i'll be called again, but next time events should be 0.
+         ctx->pushCode( &stepInvoke );
+         return;
+      }
+
+      // prepare the locked call.
+      ctx->pushCode( &static_cast<ClassMutex*>(methodOf())->m_stepUnlockAndReturn );
+
+      Class* cls =0;
+      void* inst=0;
+      i_param->forceClassInst( cls, inst );
+      ctx->pushData( *i_param );
+      cls->op_call(ctx,0, inst);
+
+      // When we're back, either now or later, we'll have the item locked.
+      ctx->initWait();
+      ctx->addWait(mtx);
+      ctx->engageWait( -1 );
+   }
+}
+
+
+void ClassMutex::PStepUnlockAndReturn::apply_( const PStep*, VMContext* ctx )
+{
+   ctx->releaseAcquired();
+   ctx->returnFrame(ctx->topData());
+}
+
 
 
 FALCON_DEFINE_METHOD_P1( ClassMutex, tryLock )

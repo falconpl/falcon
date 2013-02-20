@@ -661,7 +661,7 @@ void ParserContext::closeContext()
 
       case CCFrame::t_func_type:
          // is this a method?
-         if ( m_cclass != 0 )
+         if ( m_cclass != 0 && currentFunc() == 0 )
          {
             // unless it's the constructor -- in which case it's already added
             if ( bframe.m_elem.func->methodOf() != m_cclass )
