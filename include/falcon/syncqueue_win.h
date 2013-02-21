@@ -107,7 +107,7 @@ public:
       EnterCriticalSection(&m_mtx);
       while( m_queue.empty() && ! m_terminateWaiters && ! *terminated) {
          LeaveCriticalSection(&m_mtx);
-         rt = WaitForSingleObject( m_filled, to*1000 );
+         rt = WaitForSingleObject( m_filled, to );
          EnterCriticalSection(&m_mtx);
          if( rt == WAIT_TIMEOUT )
          {
