@@ -271,6 +271,7 @@ add_library(falcon_engine SHARED
   classes/classgeneric.cpp
   classes/classmantra.cpp
   classes/classmethod.cpp
+  classes/classmessagequeue.cpp
   classes/classmodule.cpp
   classes/classmodspace.cpp
   classes/classmulti.cpp
@@ -368,6 +369,7 @@ add_library(falcon_engine SHARED
   log.cpp
   mantra.cpp
   method.cpp
+  messagequeue.cpp
   modcompiler.cpp
   modloader.cpp
   modrequest.cpp

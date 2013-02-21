@@ -90,6 +90,8 @@ public:
     */
    virtual Variable* onOpenFunc( Function* function ) = 0;
 
+   virtual void onOpenMethod( Class* cls, Function* function ) = 0;
+
    virtual void onCloseFunc( Function* function ) = 0;
 
    /** Called back when creating a new class.

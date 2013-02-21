@@ -158,7 +158,7 @@ public:
     This method should be overridden by subclasses if some of the parents cannot
     handle the same data type used by this class.
     */
-   virtual void* getParentData( Class* parent, void* data ) const;
+   virtual void* getParentData( const Class* parent, void* data ) const;
    
    /** Overridden to return true if the required class is added through addParent. 
     \param cls A parent class.

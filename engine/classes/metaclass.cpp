@@ -67,7 +67,7 @@ void MetaClass::enumerateParents( ClassEnumerator& cb ) const
    cb( cls, true );
 }
 
-void* MetaClass::getParentData( Class* parent, void* data ) const
+void* MetaClass::getParentData( const Class* parent, void* data ) const
 {
    Class* cls = Engine::instance()->mantraClass();
    

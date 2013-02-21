@@ -45,7 +45,7 @@ public:
    virtual Class* getParent( const String& name ) const;
    virtual bool isDerivedFrom( const Class* cls ) const;
    virtual void enumerateParents( ClassEnumerator& cb ) const;
-   virtual void* getParentData( Class* parent, void* data ) const;
+   virtual void* getParentData( const Class* parent, void* data ) const;
 
    //=============================================================
    virtual bool op_init( VMContext* ctx, void* instance, int32 pcount ) const;

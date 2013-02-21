@@ -70,7 +70,7 @@ SharedSyncQueue::~SharedSyncQueue()
 }
 
 
-int32 SharedSyncQueue::consumeSignal( int32 )
+int32 SharedSyncQueue::consumeSignal( VMContext*, int32 )
 {
    lockSignals();
    int32 result = _p->m_values.empty() ?  0 : 1;
@@ -79,7 +79,7 @@ int32 SharedSyncQueue::consumeSignal( int32 )
    return result;
 }
 
-int32 SharedSyncQueue::lockedConsumeSignal( int32 )
+int32 SharedSyncQueue::lockedConsumeSignal( VMContext*, int32 )
 {
    return _p->m_values.empty() ?  0 : 1;
 }
@@ -109,7 +109,7 @@ bool SharedSyncQueue::pop( Item& target )
       result = true;
       if( _p->m_values.empty() && ! m_held )
       {
-         Shared::lockedConsumeSignal(1);
+         Shared::lockedConsumeSignal(0, 1);
       }
    }
    unlockSignals();
@@ -186,10 +186,10 @@ FairSyncQueue::~FairSyncQueue()
 }
 
 
-int32 FairSyncQueue::consumeSignal( int32 count )
+int32 FairSyncQueue::consumeSignal( VMContext* ctx, int32 count )
 {
    lockSignals();
-   if( !m_held && Shared::lockedConsumeSignal(count) > 0 )
+   if( !m_held && Shared::lockedConsumeSignal(ctx, count) > 0 )
    {
       m_held = true;
       unlockSignals();
@@ -212,9 +212,9 @@ void FairSyncQueue::signal( int32 )
    unlockSignals();
 }
 
-int32 FairSyncQueue::lockedConsumeSignal( int32 count )
+int32 FairSyncQueue::lockedConsumeSignal( VMContext* ctx, int32 count )
 {
-   if( !m_held && Shared::lockedConsumeSignal(count) > 0 )
+   if( !m_held && Shared::lockedConsumeSignal(ctx, count) > 0 )
    {
       m_held = true;
       return 1;

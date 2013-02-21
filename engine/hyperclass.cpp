@@ -253,7 +253,7 @@ bool HyperClass::isDerivedFrom( const Class* cls ) const
 }
 
 
-void* HyperClass::getParentData( Class* parent, void* data ) const
+void* HyperClass::getParentData( const Class* parent, void* data ) const
 {
    // are we the searched parent?
    if( parent == this || parent == m_master )

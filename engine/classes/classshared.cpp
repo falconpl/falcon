@@ -28,18 +28,24 @@ namespace Falcon
 {
 
 ClassShared::ClassShared( const String& name ):
-         ClassUser(name)
+         ClassUser(name),
+         FALCON_INIT_METHOD(tryWait),
+         FALCON_INIT_METHOD(wait)
 {
 }
 
 ClassShared::ClassShared( const String& name, int64 type ):
-         ClassUser(name, type)
+         ClassUser(name, type),
+         FALCON_INIT_METHOD(tryWait),
+         FALCON_INIT_METHOD(wait)
 {
 }
 
 
 ClassShared::ClassShared():
-         ClassUser("Shared")
+         ClassUser("Shared"),
+         FALCON_INIT_METHOD(tryWait),
+         FALCON_INIT_METHOD(wait)
 {
 }
 
@@ -82,7 +88,7 @@ void ClassShared::gcMarkInstance( void* self, uint32 mark ) const
 bool ClassShared::gcCheckInstance( void* self, uint32 mark ) const
 {
    Shared* sh = static_cast<Shared*>(self);
-   return sh->gcMark() >= mark;
+   return sh->currentMark() >= mark;
 }
 
 
@@ -98,7 +104,7 @@ void ClassShared::genericClassTryWait( const Class* , VMContext* ctx, int32 )
    }
 
    Shared* shared = static_cast<Shared*>(ctx->self().asInst());
-   bool result = shared->consumeSignal(1) > 0;
+   bool result = shared->consumeSignal(ctx, 1) > 0;
    ctx->returnFrame( Item().setBoolean(result) );
 }
 
@@ -156,6 +162,17 @@ void ClassShared::genericClassWait( const Class* childClass, VMContext* ctx, int
       }
    }
 }
+
+FALCON_DEFINE_METHOD_P( ClassShared, tryWait )
+{
+   ClassShared::genericClassWait(methodOf(), ctx, pCount);
+}
+
+FALCON_DEFINE_METHOD_P( ClassShared, wait )
+{
+   ClassShared::genericClassWait(methodOf(), ctx, pCount);
+}
+
 
 }
 

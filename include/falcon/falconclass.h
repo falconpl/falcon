@@ -291,7 +291,7 @@ public:
    void enumeratePropertiesOnly( PropertyEnumerator& cb ) const;
 
    virtual bool isDerivedFrom( const Class* cls ) const;
-   virtual void* getParentData( Class* parent, void* data ) const;
+   virtual void* getParentData( const Class* parent, void* data ) const;
 
    //====================================================================
    // Overrides from Class

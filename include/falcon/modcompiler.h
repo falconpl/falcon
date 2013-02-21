@@ -92,6 +92,7 @@ protected:
       virtual void onInputOver();
 
       virtual Variable* onOpenFunc( Function* function );
+      virtual void onOpenMethod( Class* cls, Function* function );
       virtual void onCloseFunc( Function* function );
       virtual Variable* onOpenClass( Class* cls, bool bIsObj );
       virtual void onCloseClass( Class* cls, bool bIsObj );

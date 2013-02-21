@@ -102,6 +102,7 @@ VMContext::VMContext( Process* prc, ContextGroup* grp ):
    m_acquired = 0;
    m_signaledResource = 0;
 
+   m_firstWeakRef = 0;
 
    pushBaseElements();
 
@@ -160,6 +161,51 @@ void VMContext::reset()
    pushBaseElements();
    clearEvents();
 
+}
+
+
+void VMContext::registerOnTerminate( VMContext::WeakRef* subscriber )
+{
+   m_mtxWeakRef.lock();
+   subscriber->m_next = m_firstWeakRef;
+   subscriber->m_prev = 0;
+
+   // adding before first.
+   if( m_firstWeakRef == 0)
+   {
+      m_firstWeakRef = subscriber;
+   }
+   else {
+      m_firstWeakRef->m_prev = subscriber;
+      m_firstWeakRef = subscriber;
+   }
+   m_mtxWeakRef.unlock();
+}
+
+
+void VMContext::unregisterOnTerminate( VMContext::WeakRef* subscriber )
+{
+   m_mtxWeakRef.lock();
+   if( subscriber == m_firstWeakRef )
+   {
+      m_firstWeakRef = m_firstWeakRef->m_next;
+      if( m_firstWeakRef != 0 )
+      {
+         m_firstWeakRef->m_prev = 0;
+      }
+   }
+   else {
+      if( subscriber->m_prev != 0 )
+      {
+         subscriber->m_prev->m_next = subscriber->m_next;
+      }
+
+      if(subscriber->m_next != 0 )
+      {
+         subscriber->m_next->m_prev = subscriber->m_prev;
+      }
+   }
+   m_mtxWeakRef.unlock();
 }
 
 
@@ -484,7 +530,7 @@ Shared* VMContext::engageWait( int64 timeout )
    while( base != top )
    {
       Shared* shared = *base;
-      if (shared->consumeSignal() > 0)
+      if (shared->consumeSignal(this,1) > 0)
       {
          clearWaits();
          TRACE( "VMContext::engageWait for %d(%p) got signaled %p%s",
@@ -1979,6 +2025,20 @@ void VMContext::terminated()
    // be sure to release any acquired resource.
    // If terminated after a raise, this is a no-op.
    releaseAcquired();
+
+   // invoke the on termination callbacks.
+   // no need to lock, we're supposed to alter this list from the same thread
+   m_mtxWeakRef.lock();
+   WeakRef* refs = m_firstWeakRef;
+   // clear the list, because we might be reset and reused.
+   m_firstWeakRef = 0;
+   while( refs != 0 )
+   {
+      refs->terminated( this );
+      refs = refs->m_next;
+   }
+   m_mtxWeakRef.unlock();
+
 
    // get the events now
    int value;

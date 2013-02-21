@@ -80,6 +80,53 @@ public:
    const static int32 statusQuiescent = 0x08;
    const static int32 statusTerminated = 0x10;
 
+
+   /** Class of callbacks invoked at context termination.
+    *
+    * This class is used to register entities that should receive
+    * a notification about when the context is terminated.
+    *
+    * The concrete instance is held by the subscriber that
+    * registered it with registerWeakRef().
+    *
+    * If the subscriber goes out of scope and is destroyed
+    * before the context is terminated, it must invoke
+    * unregisterWeakRef() or the callback process will
+    * crash.
+    *
+    * \note The callback is invoked inside the weak ref list
+    * lock. If doing anything lengty there, or holding a mutex,
+    * be sure KNOW WHAT YOU'RE DOING. Especially, don't invoke
+    * registerWeakRef() or unregisterWeakRef() while  holding
+    * any mutex you want to hold also during onTerminate()
+    * callback.
+    *
+    */
+   class FALCON_DYN_CLASS WeakRef
+   {
+   public:
+      WeakRef():
+         m_bTerminated(false)
+      {}
+
+      virtual ~WeakRef() {}
+
+      bool hasTerminated() const { return m_bTerminated; }
+      void terminated( VMContext* ctx ) { m_bTerminated = true; onTerminate( ctx ); }
+
+      /**
+       * Callback to be overridden, called when the context terminates.
+       */
+      virtual void onTerminate(VMContext* ctx) = 0;
+
+   private:
+      bool m_bTerminated;
+      WeakRef* m_next;
+      WeakRef* m_prev;
+
+      friend class VMContext;
+   };
+
    VMContext( Process* prc, ContextGroup* grp=0 );
 
    /**
@@ -140,26 +187,17 @@ public:
     */
    void reset();
 
-   /** Sets the topmost code as "safe".
-    In interactive mode, when what's done up to date is correct,
-    an error must not cause the invalidation of the whole code structure.
-
-    For instance,
-    @code
-    x = 1
-    if x
-      x = 2
-      an error  // raises a grammar error
-    end
-    > x        // expected to be 2
-
-    After each "stop point", usually a self contained statement, the
-    interactive compiler calls this method to mark a point where everything
-    was considered ok. In case of subsequent error, the code stack (and
-    eventually other stacks across function borders) is rolled back to this
-    point.
+   /** Register a callback that is invoked at termination.
+    * \see VMContextWeakRef
+    * \note The registerer must exist at least up to the moment it receives the termination event.
     */
-   void setSafeCode();
+   void registerOnTerminate( WeakRef* subscriber );
+
+   /** Unregister a previously registered callback at termination.
+    * \see VMContextWeakRef
+    * \note The registerer must exist at least up to the moment it receives the termination event.
+    */
+   void unregisterOnTerminate( WeakRef* subscriber );
 
    //=========================================================
    // Varaibles - stack management
@@ -1743,6 +1781,9 @@ protected:
 
    // caller temporarily ready to fire
    const PStep* m_caller;
+
+   Mutex m_mtxWeakRef;
+   WeakRef* m_firstWeakRef;
 
    /** Clear the waits, but doesn't send the shared resources a request to remove this context.
     *

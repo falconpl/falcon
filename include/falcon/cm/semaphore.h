@@ -71,7 +71,7 @@ private:
      @method wait Semaphore
      @brief Wait for the semaphore to be  to be open.
      @optparam timeout Milliseconds to wait for the barrier to be open.
-     @return true if the barrier is open during the wait, false if the given timeout expires.
+     @return true if the semaphore is signaled during the wait, false if the given timeout expires.
 
      If @b timeout is less than zero, the wait is endless; if @b timeout is zero,
      the wait exits immediately.

@@ -105,7 +105,7 @@ void ClassInt::enumerateParents( ClassEnumerator& cb ) const
    cb(number,true);
 }
 
-void* ClassInt::getParentData( Class* parent, void* data ) const
+void* ClassInt::getParentData( const Class* parent, void* data ) const
 {
    static Class* number = Engine::instance()->numberClass();
 

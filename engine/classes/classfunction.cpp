@@ -66,7 +66,7 @@ void ClassFunction::enumerateParents( ClassEnumerator& cb ) const
    cb( cls, true );
 }
 
-void* ClassFunction::getParentData( Class* parent, void* data ) const
+void* ClassFunction::getParentData( const Class* parent, void* data ) const
 {
    static Class* cls = Engine::instance()->mantraClass();
    

@@ -139,7 +139,7 @@ void ClassNumeric::enumerateParents( ClassEnumerator& cb ) const
    cb(number,true);
 }
 
-void* ClassNumeric::getParentData( Class* parent, void* data ) const
+void* ClassNumeric::getParentData( const Class* parent, void* data ) const
 {
    static Class* number = Engine::instance()->numberClass();
 

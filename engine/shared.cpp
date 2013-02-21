@@ -43,7 +43,7 @@ Shared* Shared::clone() const
    return new Shared( m_notifyTo, m_cls, m_acquireable, _p->m_signals );
 }
 
-int32 Shared::consumeSignal( int32 count )
+int32 Shared::consumeSignal( VMContext*, int32 count )
 {
    _p->m_mtx.lock();
    if( count > _p->m_signals ) {
@@ -56,7 +56,7 @@ int32 Shared::consumeSignal( int32 count )
 }
 
 
-int Shared::lockedConsumeSignal( int count )
+int Shared::lockedConsumeSignal( VMContext*, int count )
 {
    if( count > _p->m_signals ) {
       count = _p->m_signals;
@@ -104,6 +104,13 @@ void Shared::unlockSignals() const
    _p->m_mtx.unlock();
 }
 
+
+void Shared::onWaiterWaiting(VMContext*)
+{
+   // nothing to do
+}
+
+
 int32 Shared::signalCount() const
 {
    _p->m_mtx.lock();
@@ -150,7 +157,7 @@ void Shared::dropWaiting( VMContext* ctx )
 bool Shared::addWaiter( VMContext* ctx )
 {
    _p->m_mtx.lock();
-   if ( lockedConsumeSignal() )
+   if ( lockedConsumeSignal(ctx, 1) )
    {
       _p->m_mtx.unlock();
 
@@ -168,6 +175,12 @@ bool Shared::addWaiter( VMContext* ctx )
    _p->m_mtx.unlock();
    return false;
 }
+
+
+void Shared::onWakeupComplete()
+{
+}
+
 
 }
 

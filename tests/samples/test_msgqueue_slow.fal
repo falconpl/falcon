@@ -1,0 +1,147 @@
+// 
+// Fences, mutexes and events tests
+//
+
+class Message(count)
+   readCount = 0
+   previous = nil
+   msgid = count
+end
+
+// Create a shared entity
+class Entity(count)
+   done = Barrier()
+   count = count
+   loops = 0
+   
+   // A generic mutex to do pretty output
+   outputMutex = Mutex()
+   
+   
+   // theese are our agents.
+   function worker( id )
+   
+    // doing interlocked computation here:
+    self.outputMutex.locked( 
+      {() > "Worker -- entering ", ^~id, "."} )      
+      
+      // each agent does some work...
+      // (this can be also a method, but we're going for a closure).
+      entity = self
+      work = function(signaled)
+         a = id
+         while not signaled.empty
+            msg = signaled.get()
+            
+            entity.outputMutex.locked( 
+               {[] 
+                  msgcount = ^~(msg).readCount++
+                  > "Worker ", ^~id, " -- received message ", ^~(msg.msgid), " with count ", msgcount
+                   > "       -- previous worker left \"", ^~(msg).previous, "\""
+                  ^~(msg).previous = "Worker " + ^~id + " read count " + msgcount
+               } )
+            
+         end
+         
+         // simulate some work so we stay behind messages
+         sleep(0.4*(id+1))
+      end
+      
+      queue = MessageQueue("general")
+      // the work is automatically marshalled by a waiter
+      waiter = Waiter()
+      // when the semaphore is signaled, we can work...
+      waiter.add( queue, work )
+      //... and we're done when the barrier is signaled.
+      waiter.add( self.done )
+
+      // this will keep us locked until a non-marshalled entity 
+      // is signaled. In our case, the "done" barrier.
+      // At that point, it returns the signaled entity (but we
+      // don't need it).
+      waiter.wait()
+            
+      self.outputMutex.locked( 
+         {() > "Worker ", ^~id, "-- terminating." }
+         )      
+   end
+   
+      
+   function control( time )
+      // using a traditional lock approach here.
+      self.outputMutex.lock()
+      > "Entering control for ", time, " seconds."
+      self.outputMutex.unlock()
+      
+      startedAt = seconds()
+      
+      // wait for the agents to have subscribed
+      queue = MessageQueue("general")
+      self.outputMutex.locked( {()
+            > "Control -- Waiting for subscribers."} )
+      queue.subscribersFence( self.count ).wait()
+      // then we can start sending them some message
+      self.outputMutex.locked( {()
+            > "Control -- Subscribers have subscribed -- proceed."} )
+            
+      count = 0
+      while seconds() - startedAt < time
+         sleep(0.5)
+         self.outputMutex.locked( {()
+            > "Control -- sending a new message."} )
+         
+         msg = Message(count++)
+         queue.send( msg )
+      end
+      
+      
+      >
+      > "Control agent terminated. Signaling the other agents."
+      
+      // open the barrier to terminate the others.
+      self.done.open()      
+   end
+
+
+   // This creates a parallel computation for our test to run.
+   function getReady( time )
+      comp = Parallel()
+      
+      // add all our methods using closures
+      this = self
+      for i = 0 to self.count-1
+         comp.add([{n=> this.worker(n) }, i])
+      end
+      
+      // add also the control method
+      comp.add( {=> this.control(time) } )
+      
+      return comp
+   end
+   
+end
+
+
+//===============================================================
+// The main program.
+//===============================================================
+
+> "Computation test"
+
+// creating five agents.
+instance = Entity(5)
+
+// for 20 seconds
+computation = instance.getReady(20)
+
+try
+   computation.launch()
+   >
+   > "Test complete."
+   
+catch in error
+   >
+   > "Caught a generic error:"
+   > error
+end
+   

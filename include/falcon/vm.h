@@ -41,6 +41,7 @@ class Symbol;
 class ModSpace;
 class ModLoader;
 class Function;
+class MessageQueue;
 
 /** The Falcon virtual machine.
 */
@@ -268,6 +269,17 @@ public:
    /** Starts and stops processors accordingly to current processor settings.
     */
    void updateProcessors();
+
+   /** Gets a VM level message queue.
+    \param Name the name of the message queue.
+
+    If a message queue with the given name doesn't exist,
+    it is created on the spot.
+
+    Created message queues are never deleted (until the VM itself
+    is deleted).
+    */
+   MessageQueue* getMessageQueue( const String& name );
 
    /** Gets the context manager associated with this virtual machine.  */
    ContextManager& contextManager() { return m_ctxMan; }

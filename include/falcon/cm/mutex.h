@@ -38,13 +38,13 @@ public:
    SharedMutex( ContextManager* mgr, const Class* owner );
    virtual ~SharedMutex();
 
-   virtual int32 consumeSignal( int32 count = 1 );
+   virtual int32 consumeSignal( VMContext*, int32 count = 1 );
 
    void addLock();
    int32 removeLock();
 
 protected:
-   virtual int32 lockedConsumeSignal(int32 count );
+   virtual int32 lockedConsumeSignal( VMContext*, int32 count );
 
 private:
    atomic_int m_count;

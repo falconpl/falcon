@@ -83,6 +83,7 @@
 #include <falcon/classes/classmantra.h>
 #include <falcon/classes/classmethod.h>
 #include <falcon/classes/classshared.h>
+#include <falcon/classes/classmessagequeue.h>
 #include <falcon/classes/metaclass.h>
 #include <falcon/classes/metafalconclass.h>
 #include <falcon/classes/metahyperclass.h>
@@ -269,6 +270,7 @@ Engine::Engine()
    m_formatClass = new ClassFormat;
    m_sharedClass = new ClassShared;
    m_numberClass = new ClassNumber;
+   m_messageQueueClass = new ClassMessageQueue;
    
    // Notice: rawMem is not reflected, is used only in extensions.
    m_rawMemClass = new ClassRawMem();
@@ -342,6 +344,7 @@ Engine::Engine()
    addMantra( m_rangeClass  );
    addMantra( m_sharedClass );
    addMantra( m_numberClass );
+   addMantra( m_messageQueueClass );
 
    addMantra( m_classes[FLC_ITEM_NIL] );
    addMantra( m_classes[FLC_ITEM_BOOL] );
@@ -901,6 +904,12 @@ Class* Engine::numberClass() const
 {
    fassert( m_instance != 0 );
    return m_instance->m_numberClass;
+}
+
+Class* Engine::messageQueueClass() const
+{
+   fassert( m_instance != 0 );
+   return m_instance->m_messageQueueClass;
 }
 
 Class* Engine::formatClass() const

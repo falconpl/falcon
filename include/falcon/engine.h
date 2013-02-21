@@ -418,6 +418,17 @@ public:
     */
    ClassShared* sharedClass() const;
 
+   /** Returns the global instance of the ClassMessageQueue class.
+   \return the Engine instance of the ClassMessageQueue handler.
+
+    Method init() must have been called before.
+
+    @note This method will assert and terminate the program if compiled in debug mode
+    in case the engine has not been initialized. In release, it will just
+    return a null pointer.
+    */
+   Class* messageQueueClass() const;
+
    /** Returns the global instance of the ClassNumber class.
    \return the Engine instance of the ClassNumber handler.
 
@@ -687,6 +698,7 @@ protected:
    Class* m_streamClass;
    ClassModule* m_moduleClass;
    Class* m_modSpaceClass;
+   Class* m_messageQueueClass;
    
    SynClasses* m_synClasses;
    
@@ -700,7 +712,6 @@ protected:
    //
    PoolList* m_pools;
    SymbolPool* m_symbols;
-
 
    //===============================================
    // The core module.

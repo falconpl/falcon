@@ -111,7 +111,7 @@ void Class::enumerateParents( Class::ClassEnumerator&  ) const
    // normally does nothing
 }
 
-void* Class::getParentData( Class* parent, void* data ) const
+void* Class::getParentData( const Class* parent, void* data ) const
 {
    if( parent == this ) return data;
    return 0;

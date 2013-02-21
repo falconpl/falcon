@@ -38,12 +38,12 @@ SharedBarrier::~SharedBarrier()
 {}
 
 
-int32 SharedBarrier::consumeSignal( int32 )
+int32 SharedBarrier::consumeSignal( VMContext*, int32 )
 {
    return atomicFetch(m_status);
 }
 
-int32 SharedBarrier::lockedConsumeSignal(int32)
+int32 SharedBarrier::lockedConsumeSignal( VMContext*, int32)
 {
    return atomicFetch(m_status);
 }
@@ -58,7 +58,7 @@ void SharedBarrier::open()
 void SharedBarrier::close()
 {
    if( atomicCAS(m_status, 1, 0) ) {
-      Shared::consumeSignal(1);
+      Shared::consumeSignal(0, 1);
    }
 }
 
@@ -108,7 +108,7 @@ bool ClassBarrier::op_init( VMContext* ctx, void*, int pcount ) const
 FALCON_DEFINE_PROPERTY_GET_P( ClassBarrier, isOpen )
 {
    SharedBarrier* sc = static_cast<SharedBarrier*>(instance);
-   value.setBoolean( sc->consumeSignal() > 0 );
+   value.setBoolean( sc->consumeSignal(0) > 0 );
 }
 
 

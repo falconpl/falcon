@@ -52,9 +52,9 @@ int32 SharedMutex::removeLock()
 
 
 
-int32 SharedMutex::consumeSignal( int32 )
+int32 SharedMutex::consumeSignal( VMContext* ctx, int32 )
 {
-   if( Shared::consumeSignal(1) )
+   if( Shared::consumeSignal(ctx, 1) )
    {
       atomicSet(m_count,1);
       return 1;
@@ -63,9 +63,9 @@ int32 SharedMutex::consumeSignal( int32 )
    return 0;
 }
 
-int32 SharedMutex::lockedConsumeSignal(int32)
+int32 SharedMutex::lockedConsumeSignal(VMContext* ctx, int32)
 {
-   if( Shared::lockedConsumeSignal(1) )
+   if( Shared::lockedConsumeSignal(ctx, 1) )
    {
       atomicSet(m_count,1);
       return 1;

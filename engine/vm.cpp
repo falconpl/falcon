@@ -13,6 +13,9 @@
    See LICENSE file for licensing details.
 */
 
+#undef SRC
+#define SRC "engine/vm.cpp"
+
 #include <falcon/sys.h>
 #include <falcon/vm.h>
 #include <falcon/symbol.h>
@@ -35,6 +38,7 @@
 #include <falcon/modloader.h>
 #include <falcon/process.h>
 #include <falcon/processor.h>
+#include <falcon/messagequeue.h>
 
 #include <falcon/errors/codeerror.h>
 #include <falcon/errors/genericerror.h>
@@ -54,10 +58,15 @@ namespace Falcon
 {
 
 
+
 class VMachine::Private
 {
 public:
    typedef std::map<int32, Process*> ProcessMap;
+   typedef std::map<String, MessageQueue*> MessageQueueMap;
+
+   Mutex m_mtxMsgQueues;
+   MessageQueueMap m_msgQueues;
 
    ProcessMap m_procmap;
    Mutex m_mtxProc;
@@ -80,8 +89,14 @@ public:
       m_terminate( true )
    {}
 
-   virtual ~Private()
+   ~Private()
    {
+      MessageQueueMap::iterator mqi = m_msgQueues.begin();
+      while( mqi != m_msgQueues.end() )
+      {
+         mqi->second->decref();
+         ++mqi;
+      }
    }
 
 };
@@ -362,6 +377,26 @@ int32 VMachine::getNextContextID()
 int32 VMachine::getNextGroupID()
 {
    return atomicInc(_p->m_group_id);
+}
+
+
+MessageQueue* VMachine::getMessageQueue( const String& name )
+{
+   MessageQueue* msgq;
+
+   _p->m_mtxMsgQueues.lock();
+   Private::MessageQueueMap::iterator pos = _p->m_msgQueues.find( name );
+   if( pos == _p->m_msgQueues.end() )
+   {
+      msgq = new MessageQueue( &contextManager(), name );
+      _p->m_msgQueues[name] = msgq;
+   }
+   else {
+      msgq = pos->second;
+   }
+   _p->m_mtxMsgQueues.unlock();
+
+   return msgq;
 }
 
 

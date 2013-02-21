@@ -46,11 +46,11 @@ public:
 
    bool empty() const;
 
-   virtual int32 consumeSignal( int32 count = 1 );
+   virtual int32 consumeSignal( VMContext*, int32 count = 1 );
 
    bool isFair() const { return m_fair; }
 protected:
-   virtual int32 lockedConsumeSignal( int32 );
+   virtual int32 lockedConsumeSignal( VMContext*, int32 );
    SharedSyncQueue( ContextManager* mgr, const Class* owner, bool fair );
 
    class Private;
@@ -69,10 +69,10 @@ public:
    virtual ~FairSyncQueue();
 
    virtual void signal( int32 count = 1 );
-   virtual int32 consumeSignal( int32 count = 1 );
+   virtual int32 consumeSignal( VMContext*, int32 count = 1 );
 
 protected:
-   virtual int32 lockedConsumeSignal( int32 );
+   virtual int32 lockedConsumeSignal( VMContext*, int32 );
 };
 
 /*#

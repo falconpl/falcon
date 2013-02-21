@@ -19,6 +19,8 @@
 #include <falcon/setup.h>
 #include <falcon/classes/classuser.h>
 
+#include <falcon/method.h>
+
 namespace Falcon
 {
 
@@ -42,6 +44,9 @@ protected:
 
    static void genericClassWait( const Class* childClass, VMContext* ctx, int32 pCount );
    static void genericClassTryWait( const Class* childClass, VMContext* ctx, int32 pCount );
+
+   FALCON_DECLARE_METHOD( tryWait, "" );
+   FALCON_DECLARE_METHOD( wait, "timeout:[N]" );
 };
 
 }

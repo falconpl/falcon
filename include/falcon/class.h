@@ -250,7 +250,7 @@ public:
     the case of incremental classes as FalconClass. In that case, \b data may be
     returned even if \b parent is a proper parent of this class.
     */
-   virtual void* getParentData( Class* parent, void* data ) const;
+   virtual void* getParentData( const Class* parent, void* data ) const;
 
 
    //=========================================

@@ -116,7 +116,7 @@ Class* ClassUser::getParent( const String& name ) const
  }
    
 
-void* ClassUser::getParentData( Class* parent, void* data ) const
+void* ClassUser::getParentData( const Class* parent, void* data ) const
 {
    if( parent == this ) 
    {

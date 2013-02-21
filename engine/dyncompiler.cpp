@@ -27,6 +27,7 @@
 #include <falcon/module.h>
 #include <falcon/attribute_helper.h>
 #include <falcon/stringstream.h>
+#include <falcon/falconclass.h>
 
 
 #include <falcon/errors/genericerror.h>
@@ -65,6 +66,14 @@ public:
       }
       return &var;
    }
+
+   virtual void onOpenMethod( Class* cls, Function* func) {
+      static Variable var(Variable::e_nt_undefined, Variable::undef, 0, true);
+      if( static_cast<FalconClass*>(cls)->getProperty(func->name())) {
+         m_sp.addError( e_prop_adef, m_sp.currentSource(), m_sp.currentLine()-1, 0, 0 );
+      }
+   }
+
 
    virtual void onCloseClass( Class* f, bool ) {
       if( f->name() == "") f->name("$anon");

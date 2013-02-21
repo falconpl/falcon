@@ -80,7 +80,7 @@ public:
     \return The number of signals really consumed.
 
     */
-   virtual int32 consumeSignal( int32 count = 1 );
+   virtual int32 consumeSignal( VMContext* target, int32 count = 1 );
    /** Post one or more signals signal to this resource.
 
    \param count Number of signals posted to this resource.
@@ -134,9 +134,14 @@ public:
     */
    const Class* handler()  const { return m_cls; }
 
-   uint32 gcMark() const { return m_mark; }
-   void gcMark( uint32 n ) { m_mark = n; }
 
+   virtual uint32 currentMark() const { return m_mark; }
+   virtual void gcMark( uint32 n ) { m_mark = n; }
+
+   /**
+    * Called back when added to a waiter that will wait instead of this shared.
+    */
+   virtual void onWaiterWaiting(VMContext* ctx);
 
 protected:
    virtual ~Shared();
@@ -147,11 +152,23 @@ protected:
     */
    int32 signalCount() const;
 
-   virtual int32 lockedConsumeSignal( int32 count = 1 );
+   virtual int32 lockedConsumeSignal( VMContext* target, int32 count = 1 );
    virtual void lockedSignal( int32 count = 1 );
 
    void lockSignals() const;
    void unlockSignals() const;
+
+
+   /**
+    * Called back by the context manager after a signaled shared resource is processed.
+    *
+    * This is called back during the signal-lock loop, so the "locked" version of
+    * methods should be used.
+    */
+   virtual void onWakeupComplete();
+
+   ContextManager* notifyTo() const { return m_notifyTo; }
+
 private:
    ContextManager* m_notifyTo;
    class Private;

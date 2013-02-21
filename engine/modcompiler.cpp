@@ -139,6 +139,23 @@ Variable* ModCompiler::Context::onOpenFunc( Function* function )
 }
 
 
+void ModCompiler::Context::onOpenMethod( Class* cls, Function* function )
+{
+   Module* mod = m_owner->m_module;
+
+   if( static_cast<FalconClass*>(cls)->getProperty(function->name()) != 0 )
+   {
+      m_owner->m_sp.addError( new CodeError(
+             ErrorParam(e_prop_adef, function->declaredAt(), m_owner->m_module->uri() )
+             // TODO add source reference of the imported def
+             .symbol( function->name() )
+             .origin(ErrorParam::e_orig_compiler)
+             ));
+   }
+   function->module(mod);
+}
+
+
 void ModCompiler::Context::onCloseFunc( Function* )
 {
 
@@ -149,6 +166,7 @@ Variable* ModCompiler::Context::onOpenClass( Class* cls, bool isObject )
 {
    Module* mod = m_owner->m_module;
    Variable* var;
+   cls->module(mod);
 
    if ( isObject )
    {

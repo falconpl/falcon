@@ -497,11 +497,6 @@ void ContextManager::manageDesceduledContext( VMContext* ctx )
             ctx->setStatus( VMContext::statusSleeping );
          }
          _p->m_schedMap.insert( std::make_pair(ctx->nextSchedule(), ctx) );
-
-         /*if( ctx->nextSchedule() < 0 )
-         {
-            printf( "\n\nInserted context %d with %d waits with timeout %lld\n\n\n", ctx->id(), ctx->waitingSharedCount(), ctx->nextSchedule() );
-         }*/
       }
    }
    // in every case, we keep it.
@@ -518,12 +513,14 @@ void ContextManager::manageSignal( Shared* shared )
    shared->_p->m_mtx.lock();
    Shared::Private::ContextList& clist = shared->_p->m_waiters;
 
-   while( ! clist.empty() && shared->lockedConsumeSignal() ) {
+   while( ! clist.empty() && shared->lockedConsumeSignal( clist.front() ) ) {
       VMContext* waiter = clist.front();
       readyCtx.push_back( waiter );
       waiter->decref();
       clist.pop_front();
    }
+
+   shared->onWakeupComplete();
    shared->_p->m_mtx.unlock();
 
    TRACE("ContextManager::manageSignal -- waking up %d contexts", (int) readyCtx.size() );

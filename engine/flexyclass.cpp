@@ -128,7 +128,7 @@ void FlexyClass::unflatten( VMContext*, ItemArray& subItems, void* instance ) co
 }
 
 
-void* FlexyClass::getParentData( Class* parent, void* data ) const
+void* FlexyClass::getParentData( const Class* parent, void* data ) const
 {
    // if we're the searched class...
    if( parent == this ) return data;

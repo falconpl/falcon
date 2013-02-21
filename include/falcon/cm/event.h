@@ -36,12 +36,12 @@ public:
    SharedEvent( ContextManager* mgr, const Class* owner, bool isSet );
    virtual ~SharedEvent();
 
-   virtual int32 consumeSignal( int32 count = 1 );
+   virtual int32 consumeSignal( VMContext*, int32 count = 1 );
 
    void set();
 
 protected:
-   virtual int32 lockedConsumeSignal(int32 count );
+   virtual int32 lockedConsumeSignal(VMContext*, int32 count );
 
 private:
    atomic_int m_status;

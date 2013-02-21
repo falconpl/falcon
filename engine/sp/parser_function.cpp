@@ -121,6 +121,7 @@ static SynFunc* inner_apply_function( const Rule&, Parser& p, bool bHasExpr, boo
       // don't add the mantra if we're in a class.
       if( ctx->currentClass() != 0 )
       {
+         ctx->onOpenMethod( (Class*)ctx->currentClass(), func );
          ctx->openFunc(func);
          p.pushState( "Main" );
       }

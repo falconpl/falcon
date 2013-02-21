@@ -83,7 +83,7 @@ bool ClassSynFunc::hasProperty( void* instance, const String& prop ) const
             ||  cls->hasProperty(instance, prop);
 }
 
-void* ClassSynFunc::getParentData( Class* parent, void* data ) const
+void* ClassSynFunc::getParentData( const Class* parent, void* data ) const
 {
    static Class* cls = Engine::instance()->functionClass();
    

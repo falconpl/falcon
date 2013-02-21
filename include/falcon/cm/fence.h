@@ -37,7 +37,7 @@ public:
    virtual ~SharedFence();
 
    virtual void signal( int32 count = 1 );
-   virtual int32 consumeSignal( int32 count = 1 );
+   virtual int32 consumeSignal( VMContext*, int32 count = 1 );
 
    int32 level() const { return atomicFetch(m_level); }
    int32 count() const { return atomicFetch(m_fenceCount); }
@@ -46,7 +46,7 @@ public:
    void count( int32 count ) { atomicSet(m_fenceCount, count); }
 
 protected:
-   virtual int32 lockedConsumeSignal(int32 count );
+   virtual int32 lockedConsumeSignal( VMContext*, int32 count );
 
 private:
    atomic_int m_level;

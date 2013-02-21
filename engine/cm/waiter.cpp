@@ -425,11 +425,14 @@ FALCON_DEFINE_METHOD_P1( ClassWaiter, add )
    }
 
    self->m_waited.append(*i_added);
+   Shared* sh = static_cast<Shared*>(cls->getParentData(clsShared, inst));
+   sh->onWaiterWaiting(ctx);
+
    if( i_callback != 0 )
    {
-      Shared* sh = static_cast<Shared*>(cls->getParentData(clsShared, inst));
       self->m_callbacks[sh] = *i_callback;
    }
+
    ctx->returnFrame(ctx->self());
 }
 

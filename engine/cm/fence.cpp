@@ -58,9 +58,9 @@ void SharedFence::signal( int32 count )
 }
 
 
-int32 SharedFence::consumeSignal( int32 )
+int32 SharedFence::consumeSignal( VMContext* ctx, int32 )
 {
-   int32 result = Shared::consumeSignal(1);
+   int32 result = Shared::consumeSignal(ctx, 1);
    if( result > 0 ) {
       // yay, we can proceed!
       if( result )
@@ -76,9 +76,9 @@ int32 SharedFence::consumeSignal( int32 )
    return result;
 }
 
-int32 SharedFence::lockedConsumeSignal(int32)
+int32 SharedFence::lockedConsumeSignal( VMContext* ctx, int32)
 {
-   int32 result = Shared::lockedConsumeSignal(1);
+   int32 result = Shared::lockedConsumeSignal(ctx, 1);
    if( result > 0 ) {
       // yay, we can proceed!
       if( result )

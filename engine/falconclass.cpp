@@ -382,6 +382,7 @@ bool FalconClass::addMethod( const String& name, Function* mth )
 
    // insert a new property with the required ID
    mth->methodOf( this );
+   mth->module(this->module());
    members[name] = new Property( mth );
    overrideAddMethod( mth->name(), mth );
    return true;
@@ -632,7 +633,7 @@ bool FalconClass::isDerivedFrom( const Class* cls ) const
 }
 
 
-void* FalconClass::getParentData( Class* parent, void* data ) const
+void* FalconClass::getParentData( const Class* parent, void* data ) const
 {
    // The data for all the hierarcy is the same.
    if( this->isDerivedFrom( parent ) )
@@ -1118,6 +1119,7 @@ void FalconClass::unflattenSelf( ItemArray& flatArray )
             prop->m_value.func = static_cast<Function*>(flatArray[count].asInst());
             overrideAddMethod( prop->m_name, prop->m_value.func );
             prop->m_value.func->methodOf(this);
+            prop->m_value.func->module(this->module());
             break;
             
          case Property::t_inh:
