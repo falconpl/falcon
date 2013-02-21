@@ -295,14 +295,13 @@ Parsing::TokenInstance* SourceLexer::nextToken()
    t_state previousState = state_none;
    int curMemChr = 0;
 
-
-
    while( ! m_reader->eof() )
    {
       chr = m_reader->getChar();
       if( chr == (char_t)-1 ) {
          // generate a last fake eol.
          chr = '\n';
+         m_line--; // back one line because we'll be accounted.
          m_hadOperator = false;
          m_stringML = false;
       }
@@ -363,13 +362,13 @@ Parsing::TokenInstance* SourceLexer::nextToken()
                {
                   int32 l = m_line;
                   int32 c = m_chr;
-                  m_line++;
-                  m_chr = 1;
                   // After a real new-line, enter in none-state
                   m_state = state_none;
                   // return only if not an operator at end of line.
                   if( ! eatingEOL() )
                   {
+                     m_line++;
+                     m_chr = 1;
                      m_hadImport = false;
                      return m_parser->T_EOL.makeInstance(l, c);
                   }
@@ -817,9 +816,6 @@ Parsing::TokenInstance* SourceLexer::nextToken()
                return ti;
             }
             else if(chr == '\n' ) {
-               // ignore \n, but add newline.
-               m_line++;
-               m_chr = 0;
                break;
             }
             else if( chr == '_' || chr == ' ' || chr =='\r' || chr =='\t' ) {
@@ -853,7 +849,6 @@ Parsing::TokenInstance* SourceLexer::nextToken()
             else if(chr == '\n' ) {
                m_parser->addError(e_membuf_def, m_parser->currentSource(), m_line, m_chr, 0);
                m_state = state_membuf3;
-               m_line++;
                m_chr = 0;
             }
             else {
@@ -869,7 +864,6 @@ Parsing::TokenInstance* SourceLexer::nextToken()
          // consume up to }
          case state_membuf3:
             if(chr == '\n' ) {
-               m_line++;
                m_chr = 0;
             }
             else if( chr == '}' ) {

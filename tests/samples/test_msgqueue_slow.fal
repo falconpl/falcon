@@ -94,7 +94,6 @@ class Entity(count)
          queue.send( msg )
       end
       
-      
       >
       > "Control agent terminated. Signaling the other agents."
       
@@ -144,4 +143,3 @@ catch in error
    > "Caught a generic error:"
    > error
 end
-   
