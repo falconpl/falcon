@@ -1,19 +1,37 @@
-// 
-// Fences, mutexes and events tests
-//
+/*
+ MessageQueue Test
+ 
+ Message queues are FIFO queues of arbitrary objects that
+ will be read by all the agents (parallel contexts) that 
+ subscribed for later receival, or that are actively waiting
+ for new messages to be processed.
+ 
+ Named message queues are globally visible in a virtual machine,
+ so different VM processes can pass data through a queue by
+ just knowing its name.
+ 
+ This test screates a set of agents that will receive some obect
+ at different times; some agents will sleep enough that they will
+ receive two messages at once.
+*/
 
+// regoalte this for different outcomes
+simultaneity = 0.4
+generator_interval = 0.5
+
+// The message that we're sending around
+// Can be any arbitrary Falcon data.
 class Message(count)
    readCount = 0
    previous = nil
    msgid = count
 end
 
-// Create a shared entity
+// our test encapsulation
 class Entity(count)
    done = Barrier()
    count = count
-   loops = 0
-   
+   loops = 0   
    // A generic mutex to do pretty output
    outputMutex = Mutex()
    
@@ -21,37 +39,35 @@ class Entity(count)
    // theese are our agents.
    function worker( id )
    
-    // doing interlocked computation here:
     self.outputMutex.locked( 
       {() > "Worker -- entering ", ^~id, "."} )      
       
-      // each agent does some work...
-      // (this can be also a method, but we're going for a closure).
       entity = self
-      work = function(signaled)
-         a = id
+      work = function(id, signaled)
          while not signaled.empty
             msg = signaled.get()
             
+            // the pretty output and mutex allow us to put some agent-specific data
+            // on the shared object for the latecomers to see it.
             entity.outputMutex.locked( 
                {[] 
                   msgcount = ^~(msg).readCount++
                   > "Worker ", ^~id, " -- received message ", ^~(msg.msgid), " with count ", msgcount
                    > "       -- previous worker left \"", ^~(msg).previous, "\""
                   ^~(msg).previous = "Worker " + ^~id + " read count " + msgcount
-               } )
-            
+               } )            
          end
          
          // simulate some work so we stay behind messages
-         sleep(0.4*(id+1))
+         sleep(simultaneity*(id+1))
       end
       
+      // get the named queue "general" from the VM
       queue = MessageQueue("general")
       // the work is automatically marshalled by a waiter
       waiter = Waiter()
       // when the semaphore is signaled, we can work...
-      waiter.add( queue, work )
+      waiter.add( queue, [work,id] )
       //... and we're done when the barrier is signaled.
       waiter.add( self.done )
 
@@ -69,16 +85,17 @@ class Entity(count)
       
    function control( time )
       // using a traditional lock approach here.
-      self.outputMutex.lock()
-      > "Entering control for ", time, " seconds."
-      self.outputMutex.unlock()
+      self.outputMutex.locked(
+         {[] > "Entering control for ", ^~time, " seconds."})
       
       startedAt = seconds()
       
-      // wait for the agents to have subscribed
+      // again, get the "general" VM queue
       queue = MessageQueue("general")
       self.outputMutex.locked( {()
             > "Control -- Waiting for subscribers."} )
+      // this method generates a fence that will tell us
+      // when the receivers are ready
       queue.subscribersFence( self.count ).wait()
       // then we can start sending them some message
       self.outputMutex.locked( {()
@@ -86,11 +103,12 @@ class Entity(count)
             
       count = 0
       while seconds() - startedAt < time
-         sleep(0.5)
+         sleep(generator_interval)
          self.outputMutex.locked( {()
             > "Control -- sending a new message."} )
-         
+         // mark the mesages with a different sequential
          msg = Message(count++)
+         // just send it
          queue.send( msg )
       end
       
