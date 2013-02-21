@@ -51,6 +51,8 @@ class MessageQueue::Token
 {
 public:
    Item m_item;
+   String m_evtName;
+
    Token* m_next;
    uint32 m_readCount;
 
@@ -272,6 +274,12 @@ bool MessageQueue::unsubscribe(VMContext* ctx)
 
 void MessageQueue::send( const Item& message )
 {
+   sendEvent("", message);
+}
+
+
+void MessageQueue::sendEvent( const String& eventName, const Item& message )
+{
    // as we don't support late subscribers,
    // nor is a problem to accept an extra message without subscribers,
    // we can safely do this check outside the lock.
@@ -295,6 +303,9 @@ void MessageQueue::send( const Item& message )
    token->m_sequence = m_lastToken->m_sequence + 1;
    // we're pretty sure that the message comes from the stack.
    token->m_item = message;
+
+   token->m_evtName.size(0);
+   token->m_evtName.append(eventName);
    m_lastToken = token;
    m_mtx.unlock();
 
@@ -304,6 +315,13 @@ void MessageQueue::send( const Item& message )
 
 
 bool MessageQueue::get( VMContext* ctx, Item& msg )
+{
+   String temp;
+   return getEvent( ctx, temp, msg );
+}
+
+
+bool MessageQueue::getEvent( VMContext* ctx, String& eventName, Item& msg )
 {
    Shared::consumeSignal(ctx, 1);
 
@@ -327,6 +345,7 @@ bool MessageQueue::get( VMContext* ctx, Item& msg )
    // store the message.
    Token* next = token->m_next;
    msg = next->m_item;
+   eventName = next->m_evtName;
 
    // update the pointer for this context
    pos->second = next;

@@ -69,10 +69,44 @@ private:
      @method send MessageQueue
      @brief Sends a new message to all the subscribers
      @optparam message An arbitrary item that will be received by all the subscribers.
-
-      The parameter @b count must be greater or equal to 1.
     */
    FALCON_DECLARE_METHOD( send, "message:X,..." );
+
+   /*#
+     @method sendEvent MessageQueue
+     @brief Sends a marshaled event to the listeners.
+     @param name An arbitrary name for the event.
+     @optparam message An arbitrary item that will be received by all the subscribers.
+
+    */
+   FALCON_DECLARE_METHOD( sendEvent, "event:S,message:X,..." );
+
+   /*#
+     @method marshal MessageQueue
+     @brief Creates a marshal function that can be used in Waiters.
+     @param name An arbitrary name for the event.
+     @optparam message An arbitrary item that will be received by all the subscribers.
+
+      This method returns a marshal function. The function expects to receive this
+      queue as a parameter, and gets the incoming message.
+      It then invokes a method on the @b handler object named after the event sent
+      by @a MessageQueue.sendEvent, named accordingly to the following rules:
+      - If the event is not named (or has been sent via @a MessageQueue.send), then
+         a method named "on_"  is searched and invoked.
+      - If the event is named, a method called similarly to "on_EventName" is searched.
+      - If that method is not found, a method "on__discard" (two underlines) is searched
+         and eventually invoked.
+      - If that method is not found, a method "on__default" (two underlines) is searched
+         and invoked; This method receives the name of the generated event as the first
+         parameter.
+
+     If the message was sent via @a MessageQueue.sendEvent, then the method receives the
+     parameters as they were originally written in the sendEvent call.
+
+     The "on_" method always receive a single parameter.
+    */
+   FALCON_DECLARE_METHOD( marshal, "handler:X" );
+
 
    /*#
      @method get MessageQueue

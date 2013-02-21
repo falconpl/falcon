@@ -22,6 +22,8 @@
 #include <falcon/vmcontext.h>
 #include <falcon/stdsteps.h>
 #include <falcon/processor.h>
+#include <falcon/eventmarshal.h>
+#include <falcon/itemarray.h>
 
 #include <falcon/errors/paramerror.h>
 #include <falcon/errors/accesserror.h>
@@ -40,6 +42,8 @@ ClassMessageQueue::ClassMessageQueue():
       FALCON_INIT_PROPERTY(empty),
 
       FALCON_INIT_METHOD(send),
+      FALCON_INIT_METHOD(sendEvent),
+      FALCON_INIT_METHOD(marshal),
       FALCON_INIT_METHOD(get),
       FALCON_INIT_METHOD(peek),
       FALCON_INIT_METHOD(subscribersFence),
@@ -124,10 +128,60 @@ FALCON_DEFINE_METHOD_P( ClassMessageQueue, send )
    MessageQueue* self = static_cast<MessageQueue*>(ctx->self().asClass()->getParentData(this->methodOf(), ctx->self().asInst()) );
    for( int32 i = 0;  i < pCount; ++i )
    {
-      self->send( *ctx->param(0) );
+      self->send( *ctx->param(i) );
    }
 
    ctx->returnFrame();
+}
+
+
+FALCON_DEFINE_METHOD_P( ClassMessageQueue, sendEvent )
+{
+   if( pCount < 2 )
+   {
+      throw paramError(__LINE__, SRC );
+   }
+
+   Item* i_name = ctx->param(0);
+   if( ! i_name->isString() )
+   {
+      throw paramError(__LINE__, SRC );
+   }
+
+   // copy
+   String eventName = *i_name->asString();
+   MessageQueue* self = static_cast<MessageQueue*>(ctx->self().asClass()->getParentData(this->methodOf(), ctx->self().asInst()) );
+   Item toSend;
+   if( pCount == 2 )
+   {
+      toSend = *ctx->param(1);
+   }
+   else
+   {
+      ItemArray* array = new ItemArray;
+      for( int32 i = 1; i < pCount; ++i )
+      {
+         array->append( *ctx->param(i) );
+      }
+      // mark the string so that the other side knows
+      eventName.prepend(' ');
+      toSend = FALCON_GC_HANDLE(array);
+   }
+
+   self->sendEvent(eventName, toSend);
+   ctx->returnFrame();
+}
+
+
+FALCON_DEFINE_METHOD_P( ClassMessageQueue, marshal )
+{
+   if( pCount < 1 )
+   {
+      throw paramError(__LINE__, SRC );
+   }
+
+   EventMarshal* evm = new EventMarshal(*ctx->param(0));
+   ctx->returnFrame( FALCON_GC_HANDLE(evm) );
 }
 
 

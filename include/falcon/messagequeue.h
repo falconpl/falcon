@@ -41,12 +41,15 @@ public:
    const String& name() const { return m_name; }
 
    void send( const Item& message );
+   void sendEvent( const String& eventName, const Item& message );
 
    bool subscribe(VMContext* ctx);
    bool unsubscribe(VMContext* ctx);
 
    bool get( VMContext* ctx, Item& msg );
    bool peek( VMContext* ctx, Item& msg );
+
+   bool getEvent( VMContext* ctx, String& event, Item& msg );
 
    virtual int32 consumeSignal( VMContext* target, int32 count = 1 );
 

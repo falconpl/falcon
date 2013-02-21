@@ -344,6 +344,7 @@ add_library(falcon_engine SHARED
   dynloader.cpp
   engine.cpp
   error.cpp
+  eventmarshal.cpp
   extfunc.cpp
   expression.cpp
   fassert.cpp
