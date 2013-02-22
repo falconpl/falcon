@@ -149,7 +149,7 @@ end
 instance = Entity(5)
 
 // for 10 seconds
-computation = instance.getReady(10)
+computation = instance.getReady(5)
 
 try
    computation.launch()

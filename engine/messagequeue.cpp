@@ -148,15 +148,20 @@ void MessageQueue::gcMark( uint32 n )
 
 int32 MessageQueue::subscribers() const
 {
-   return atomicFetch(m_subscriberCount);
+   m_mtx.lock();
+   int32 subs = (int32) _p->m_contexts.size();
+   m_mtx.unlock();
+
+   return subs;
 }
+
 
 Shared* MessageQueue::subscriberWaiter( int count )
 {
    MQFence* mqf = new MQFence( notifyTo(), Engine::instance()->sharedClass(), count );
 
    m_mtx.lock();
-   int signals = atomicFetch(m_subscriberCount);
+   int32 signals = (int32) _p->m_contexts.size();
    if( signals < count )
    {
       mqf->m_next = m_firstFence;
@@ -169,6 +174,7 @@ Shared* MessageQueue::subscriberWaiter( int count )
    FALCON_GC_HANDLE(mqf);
    return mqf;
 }
+
 
 int32 MessageQueue::consumeSignal( VMContext* ctx, int32 )
 {
@@ -240,7 +246,6 @@ bool MessageQueue::subscribe(VMContext* ctx)
    }
 
    // Add
-   atomicAdd(m_subscriberCount, 1);
    m_mtx.unlock();
 
    ctx->registerOnTerminate(&this->m_ctxWeakRef);
@@ -263,46 +268,46 @@ bool MessageQueue::unsubscribe(VMContext* ctx)
    _p->m_contexts.erase(pos);
 
    // Add
-   atomicAdd(m_subscriberCount, -1);
    m_mtx.unlock();
 
+   // DO NOT DECREF THE UNREAD MESSAGES
+   // -- the next time a newer message is add and read, all the messages
+   // -- that the subscriber didn't read will be disposed of.
+   // -- However, this might be a memory hungry and bloatsome solution;
+   // -- in case the queue grows out of control, it might be necessary
+   // -- to decref the messages that the subscriber didn't read yet
+   // -- when it was removed.
    ctx->unregisterOnTerminate(&this->m_ctxWeakRef);
    ctx->decref();
    return true;
 }
 
 
-void MessageQueue::send( const Item& message )
+bool MessageQueue::send( const Item& message )
 {
-   sendEvent("", message);
+   return sendEvent("", message);
 }
 
 
-void MessageQueue::sendEvent( const String& eventName, const Item& message )
+bool MessageQueue::sendEvent( const String& eventName, const Item& message )
 {
-   // as we don't support late subscribers,
-   // nor is a problem to accept an extra message without subscribers,
-   // we can safely do this check outside the lock.
-   if( atomicFetch(m_subscriberCount) == 0 )
-   {
-      return;
-   }
-   Token* token = allocToken();
-
    m_mtx.lock();
-   m_version++;
    // we don't support late subscription. Incoming messages are lost.
    if( _p->m_contexts.empty() )
    {
       m_mtx.unlock();
-      recycleToken(token);
-      return;
+      return false;
    }
+
+   Token* token = allocToken();
+   m_version++;
 
    m_lastToken->m_next = token;
    token->m_sequence = m_lastToken->m_sequence + 1;
    // we're pretty sure that the message comes from the stack.
    token->m_item = message;
+   // Set the reader count to the number of current subscribers
+   token->m_readCount = _p->m_contexts.size();
 
    token->m_evtName.size(0);
    token->m_evtName.append(eventName);
@@ -311,6 +316,8 @@ void MessageQueue::sendEvent( const String& eventName, const Item& message )
 
    // just wake up existing subcribers, if any.
    Shared::signal(1);
+
+   return true;
 }
 
 
@@ -353,10 +360,10 @@ bool MessageQueue::getEvent( VMContext* ctx, String& eventName, Item& msg )
    // update the token read count.
    // Actually, the token was was read previously,
    // but it's ok if we keep the convention of marking the previous element.
-   next->m_readCount++;
+   next->m_readCount--;
 
    // is the token abandoned by all subscribers?
-   if( token != m_firstToken && next->m_readCount >= _p->m_contexts.size() )
+   if( token != m_firstToken && next->m_readCount == 0 )
    {
       // recycle all the previous tokens -- the head is our dummy, so we go next
       recycleTokens(m_firstToken->m_next, token);

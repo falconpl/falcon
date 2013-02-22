@@ -40,8 +40,8 @@ public:
 
    const String& name() const { return m_name; }
 
-   void send( const Item& message );
-   void sendEvent( const String& eventName, const Item& message );
+   bool send( const Item& message );
+   bool sendEvent( const String& eventName, const Item& message );
 
    bool subscribe(VMContext* ctx);
    bool unsubscribe(VMContext* ctx);
@@ -89,16 +89,15 @@ private:
    Private *_p;
 
    String m_name;
-   atomic_int m_subscriberCount;
    uint32 m_version;
 
    // Messages are stored in a simple linked list as tokens.
    class Token;
-   Mutex m_mtx;
+   mutable Mutex m_mtx;
    Token* m_firstToken;
    Token* m_lastToken;
 
-   Mutex m_mtxRecycle;
+   mutable Mutex m_mtxRecycle;
    Token* m_recycleBin;
    int32 m_recycleCount;
    Token* allocToken();
