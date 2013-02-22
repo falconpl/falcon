@@ -111,7 +111,7 @@ void ExprLit::searchUnquotes( TreeStep* child )
    }
 
    for( int i = 0; i < child->arity(); ++i ) {
-      searchUnquotes(child);
+      searchUnquotes(child->nth(i));
    }
 }
 
