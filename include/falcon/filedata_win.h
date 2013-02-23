@@ -28,7 +28,7 @@ public:
    bool bIsFile;
    bool bNonBlocking;
 
-   FileData( HANDLE hf, bool bf = true, bool nb = false ):
+   FileData( HANDLE hf = NULL, bool bf = true, bool nb = false ):
       hFile( hf ),
       bIsFile( bf ),
       bNonBlocking( nb )

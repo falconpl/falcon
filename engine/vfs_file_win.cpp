@@ -19,7 +19,6 @@
 #include <falcon/autocstring.h>
 #include <falcon/autowstring.h>
 #include <falcon/fstream.h>
-#include <falcon/fstream_win.h>
 #include <falcon/errors/ioerror.h>
 #include <falcon/filestat.h>
 #include <falcon/directory.h>
@@ -190,7 +189,7 @@ Stream *VFSFile::open( const URI& uri, const OParams &p )
          .sysError( GetLastError() ) );
    }
 
-   return new FStream( new SysFStreamData(handle) );
+   return new FStream( new Sys::FileData(handle) );
 }
 
 
@@ -246,7 +245,7 @@ Stream *VFSFile::create( const URI& uri, const CParams &p )
       return 0;
    }
 
-   return new FStream( new SysFStreamData(handle) );
+   return new FStream( new Sys::FileData(handle) );
 }
 
 

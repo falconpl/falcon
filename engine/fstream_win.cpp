@@ -29,7 +29,7 @@
 namespace Falcon {
 
 
-FStream::FStream( void* data ):
+FStream::FStream( Sys::FileData* data ):
    m_fsData(data)
 {
    m_status = t_open;
