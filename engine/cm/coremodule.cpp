@@ -68,6 +68,7 @@ CoreModule::CoreModule():
       << new Ext::Function_include
       << new Ext::Function_seconds
       << new Ext::Function_sleep
+      << new Ext::Function_quit
       << new Ext::Function_advance
       << new Ext::Function_int
       << new Ext::Function_numeric

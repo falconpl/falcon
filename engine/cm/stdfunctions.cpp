@@ -127,6 +127,29 @@ FALCON_DEFINE_FUNCTION_P1(seconds)
 }
 
 /*#
+   @function quit
+   @ingroup general_purpose
+   @brief Terminates the current process.
+   @optparam value The process termination value.
+
+   This function terminates the current process as soon
+   as possible.
+*/
+
+FALCON_DEFINE_FUNCTION_P(quit)
+{
+   TRACE( "-- called with %d params", pCount );
+
+   if(pCount > 0)
+   {
+      ctx->process()->setResult( * ctx->param(0) );
+   }
+
+   ctx->process()->terminate();
+   ctx->returnFrame();
+}
+
+/*#
    @function advance
    @ingroup general_purpose
    @param collection the collection being traversed.
