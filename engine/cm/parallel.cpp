@@ -220,7 +220,7 @@ static void internal_launch( VMContext* ctx, int pCount )
 
       nctx->callItem( toBeCalled, pCount, 0 );
       //TODO: should we add the whole group?
-      prc->addReadyContext( nctx );
+      prc->startContext( nctx );
    }
 }
 

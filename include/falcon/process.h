@@ -20,6 +20,7 @@
 #include <falcon/refcounter.h>
 #include <falcon/mt.h>
 #include <falcon/item.h>
+#include <falcon/atomic.h>
 
 namespace Falcon {
 
@@ -85,7 +86,12 @@ public:
     * eventually as a part of a context group, to call a function at
     * top of its code/call stack.
     */
-   void addReadyContext(VMContext* ctx);
+   void startContext(VMContext* ctx);
+
+   /** Called back by the context when going to be terminated.
+    *
+    */
+   void onContextTerminated( VMContext* ctx );
 
    /** Returns the result of the evaluation.
     This is actually the topmost value in the stack of the main context.
@@ -127,14 +133,6 @@ public:
    */
    void completedWithError( Error* error );
 
-   /** Returns true if this process has been terminated.
-
-      This is used by the virtual machine to interrupt
-      any operation on any context belonging to this process.
-    */
-
-   bool terminated() const { return atomicFetch(m_terminated); }
-
    int32 getNextContextID();
 
    /**
@@ -172,6 +170,22 @@ public:
    /** Gets the module space associated with this process. */
    ModSpace* modSpace() const { return m_modspace; }
 
+   /** Terminates the process by asking termination of all the contexts.
+    *
+    * This will cause the process to exit as soon as possible. External
+    * entities waiting on the process termination will not be waken up
+    * until the process really exits the virtual machine, unless
+    * interrupt() is also called.
+    */
+   void terminate();
+
+   /** Returns true if this process has been terminated.
+
+      This is used by the virtual machine to interrupt
+      any operation on any context belonging to this process.
+    */
+
+   bool isTerminated() const { return atomicFetch(m_terminated); }
 
 protected:
    Process( VMachine* owner, bool added );
@@ -189,7 +203,8 @@ protected:
    atomic_int m_terminated;
 
    bool m_running;
-   Mutex m_mtxRunning;
+   mutable Mutex m_mtxRunning;
+   mutable Mutex m_mtxContexts;
 
    atomic_int m_ctxId;
    Error* m_error;
@@ -201,6 +216,9 @@ protected:
    ModSpace* m_modspace;
 
    FALCON_REFERENCECOUNT_DECLARE_INCDEC(Process)
+
+   class Private;
+   Private* _p;
 };
 
 }

@@ -27,6 +27,8 @@
 #include <falcon/mt.h>
 #include <falcon/errors/genericerror.h>
 
+#include <falcon/sys.h>
+
 #include "app.h"
 #include "testmode.h"
 
@@ -322,6 +324,8 @@ void TestMode::test( ScriptData* sd )
    try
    {
       String* result = 0;
+      // suppose true
+      sd->m_bSuccess = true;
 
       if( sd->m_length != 0 )
       {
@@ -341,9 +345,7 @@ void TestMode::test( ScriptData* sd )
          }
       }
 
-      sd->m_bSuccess = true;
-
-      if( sd->m_exp_output.size() != 0 )
+      if( sd->m_bSuccess && sd->m_exp_output.size() != 0 )
       {
          // neutralize xplatform \r\n things.
          stripReturns( result );
@@ -359,7 +361,7 @@ void TestMode::test( ScriptData* sd )
          delete result;
       }
 
-      if( sd->m_bSuccess == true )
+      if( sd->m_bSuccess )
       {
          if( sd->m_exp_result.size() != 0 )
          {
@@ -434,12 +436,42 @@ String* TestMode::longTest( ScriptData* sd, Process* loadProc )
 
    loadProc->start();
 
+   int oldCpcount = 0;
+   int64 timeout = sd->m_interval > 0 ? (Sys::_milliseconds() + sd->m_interval ) : -1;
+
    while( true )
    {
-      progress( output, sd, m_reader.checkpointCount() );
+      int cpcount = m_reader.checkpointCount();
+
+      progress( output, sd, cpcount );
+      // was there real progress?
+      if( cpcount != oldCpcount)
+      {
+         oldCpcount = cpcount;
+         if( timeout > 0 )
+         {
+            // reset the timeout
+            timeout = Sys::_milliseconds() + sd->m_interval;
+         }
+      }
 
       try
       {
+         // too slow?
+         if( timeout > 0 && Sys::_milliseconds() > timeout )
+         {
+            loadProc->terminate();
+            loadProc->wait();
+            sd->m_bSuccess = false;
+            sd->m_reason = String("Timeout of ").N(sd->m_interval).A("ms elapsed at step ")
+                     .N( cpcount ).A(" - ").N((cpcount*100.0)/sd->m_length, "%02.2f").A("%");
+
+            log->log( Log::fac_app, Log::lvl_info, String("Test ") +sd->m_id
+                                             +" failure: " + sd->m_reason );
+            break;
+         }
+
+         // normal wait loop
          if( loadProc->wait(50) )
          {
             break;
@@ -447,7 +479,7 @@ String* TestMode::longTest( ScriptData* sd, Process* loadProc )
       }
       catch( ... )
       {
-         controlPipe.close();
+         writeStream->close();
          void* dummy = 0;
          thread->join( dummy );
          delete static_cast<String*>(dummy);

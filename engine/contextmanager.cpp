@@ -421,10 +421,17 @@ void ContextManager::manageContextKilledInGroup( VMContext* ctx )
 void ContextManager::manageAwakenContext( VMContext* ctx )
 {
    TRACE( "manageAwakenContext - Sending the context to the collector. %p(%d)", ctx, ctx->id() );
-   if( ctx->nextSchedule() != 0 )
+   // if the schedule is 0, the context is NOT sleeping,
+   // but if it's non-zero, it might somewhere being in bring of getting asleep.
+   if( ctx->nextSchedule() != 0 && removeSleepingContext( ctx ) )
    {
-      removeSleepingContext( ctx );
-      if( ! Engine::collector()->offerContext(ctx) )
+      if( ctx->isTerminated() )
+      {
+         TRACE( "manageAwakenContext - Context %p(%d) terminated.", ctx, ctx->id() );
+         ctx->onTerminated();
+         ctx->decref();
+      }
+      else if( ! Engine::collector()->offerContext(ctx) )
       {
          TRACE( "manageAwakenContext - Collector didn't accept %p(%d), putting back to sleep.", ctx, ctx->id() );
          manageDesceduledContext(ctx);
@@ -459,6 +466,15 @@ void ContextManager::manageDesceduledContext( VMContext* ctx )
 {
    TRACE( "manageDesceduledContext - %d(%p) in %d(%p)",
             ctx->id(), ctx, ctx->process()->id(), ctx->process() );
+
+   if( ctx->isTerminated() )
+   {
+      TRACE( "manageDesceduledContext - Context was terminated prior reaching here %d(%p) in %d(%p)",
+               ctx->id(), ctx, ctx->process()->id(), ctx->process() );
+
+      // we don't keep it.
+      return;
+   }
 
    // a new context is de-scheduled.
    if( ctx->isInspectible() ) {

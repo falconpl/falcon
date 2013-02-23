@@ -90,7 +90,7 @@ void Processor::onError( Error* e )
    if( m_currentContext->inGroup() != 0 )
    {
       m_currentContext->inGroup()->setError( e );
-      m_currentContext->terminated();
+      m_currentContext->onTerminated();
    }
    else {
       // this is the top context. We're done.
@@ -170,15 +170,15 @@ void Processor::manageEvents( VMContext* ctx, int32 &events )
 
    if( (events & VMContext::evtRaise) ) {
       TRACE( "Uncaught error raise in context %d", ctx->id() );
-      ctx->terminated();
+      ctx->onTerminated();
    }
    else if( (events & VMContext::evtComplete) ) {
       TRACE( "Code completion of context %d", ctx->id() );
-      ctx->terminated();
+      ctx->onTerminated();
    }
    else if( (events & VMContext::evtTerminate) ) {
       TRACE( "Termination request before %s ", ctx->location().c_ize() );
-      ctx->terminated();
+      ctx->onTerminated();
    }
    else if( (events & VMContext::evtSwap) )
    {

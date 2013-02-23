@@ -1214,6 +1214,8 @@ public:
     */
    inline void setTerminateEvent() { atomicOr(m_events, evtTerminate); }
 
+   inline bool isTerminated() const { return (atomicFetch( m_events ) & evtTerminate) != 0; }
+
 
    /** Sets the complete event
    */
@@ -1516,9 +1518,20 @@ public:
     */
    Shared* acquired() const { return m_acquired; }
 
+   /** Ask the context to terminate as soon as possible.
+    *
+    * If the context is currently waiting or sleeping, it is waken up immediately.
+    *
+    * It is possible that a context being terminated received a wakeup signal,
+    * or was managing a critical resource. While the resource is feed, the status
+    * of the system could be instable; a terminate request like this should be issued
+    * only when the host process is going to be discarded.
+    */
+   virtual void terminate();
+
    /** Called back when this context is declared dead.
     */
-   virtual void terminated();
+   virtual void onTerminated();
 
    void inGroup( ContextGroup* grp ) { m_inGroup = grp; }
 

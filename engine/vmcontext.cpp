@@ -2017,7 +2017,25 @@ Item* VMContext::findLocal( const String& name ) const
 }
 
 
-void VMContext::terminated()
+void VMContext::terminate()
+{
+   setTerminateEvent();
+
+   m_mtx_sleep.lock();
+   if( m_bSleeping )
+   {
+      m_mtx_sleep.unlock();
+      // in the meanwhile we might get waken up,
+      // but this message is a no-op in that case.
+      vm()->contextManager().wakeUp(this);
+   }
+   else {
+      m_mtx_sleep.unlock();
+   }
+}
+
+
+void VMContext::onTerminated()
 {
    // declare the context dead
    setStatus(statusTerminated);
@@ -2025,6 +2043,8 @@ void VMContext::terminated()
    // be sure to release any acquired resource.
    // If terminated after a raise, this is a no-op.
    releaseAcquired();
+
+   m_process->onContextTerminated( this );
 
    // invoke the on termination callbacks.
    // no need to lock, we're supposed to alter this list from the same thread

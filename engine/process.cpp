@@ -30,8 +30,18 @@
 #include <falcon/gclock.h>
 #include <falcon/modspace.h>
 
+#include <set>
 
 namespace Falcon {
+
+class Process::Private
+{
+public:
+   typedef std::set<VMContext*> ContextSet;
+   ContextSet m_liveContexts;
+};
+
+
 
 Process::Process( VMachine* owner, ModSpace* ms ):
    m_vm(owner),
@@ -43,6 +53,8 @@ Process::Process( VMachine* owner, ModSpace* ms ):
    m_added(false),
    m_resultLock(0)
 {
+   _p = new Private;
+
    // get an ID for this process.
    m_id = m_vm->getNextProcessID();
    m_context = new VMContext(this, 0);
@@ -58,6 +70,7 @@ Process::Process( VMachine* owner, ModSpace* ms ):
    }
 }
 
+
 Process::Process( VMachine* owner, bool bAdded ):
    m_vm(owner),
    m_context( new VMContext( this ) ),
@@ -68,6 +81,8 @@ Process::Process( VMachine* owner, bool bAdded ):
    m_added(bAdded),
    m_resultLock(0)
 {
+   _p = new Private;
+
    // get an ID for this process.
    m_id = m_vm->getNextProcessID();
    m_context = new VMContext(this, 0);
@@ -87,6 +102,25 @@ Process::~Process() {
       m_resultLock->dispose();
    }
    delete m_entry;
+
+   delete _p;
+}
+
+
+void Process::terminate()
+{
+   if( atomicCAS(m_terminated, 0, 1 ) )
+   {
+      m_mtxContexts.lock();
+      Private::ContextSet::iterator iter = _p->m_liveContexts.begin();
+      while( iter != _p->m_liveContexts.end() )
+      {
+         VMContext* ctx = *iter;
+         ctx->terminate();
+         ++iter;
+      }
+      m_mtxContexts.unlock();
+   }
 }
 
 
@@ -218,9 +252,30 @@ void Process::launch()
 }
 
 
-void Process::addReadyContext( VMContext* ctx ) {
+void Process::startContext( VMContext* ctx ) {
+   ctx->incref();
+   m_mtxContexts.lock();
+   _p->m_liveContexts.insert( ctx );
+   m_mtxContexts.unlock();
+
+   // also, send the context to the manager for immediate execution.
    ctx->incref();
    m_vm->contextManager().readyContexts().add( ctx );
+}
+
+void Process::onContextTerminated( VMContext* ctx )
+{
+   m_mtxContexts.lock();
+   Private::ContextSet::iterator iter = _p->m_liveContexts.find( ctx );
+   if( iter != _p->m_liveContexts.end() )
+   {
+      _p->m_liveContexts.erase(iter);
+      m_mtxContexts.unlock();
+      ctx->decref();
+   }
+   else {
+      m_mtxContexts.unlock();
+   }
 }
 
 bool Process::checkRunning()

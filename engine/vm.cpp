@@ -302,10 +302,7 @@ void VMachine::addProcess( Process* proc, bool launch )
             _p->m_mtxProcessors.unlock();
          }
 
-         // we're assigning the context to the processor/vm/manager system.
-         proc->mainContext()->incref();
-         // processors are synchronized on the context queue.
-         contextManager().readyContexts().add( proc->mainContext() );
+         proc->startContext( proc->mainContext() );
       }
    }
 }
