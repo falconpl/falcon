@@ -190,7 +190,7 @@ Stream *VFSFile::open( const URI& uri, const OParams &p )
          .sysError( GetLastError() ) );
    }
 
-   return new FStream( new WinFStreamData(handle) );
+   return new FStream( new SysFStreamData(handle) );
 }
 
 
@@ -246,7 +246,7 @@ Stream *VFSFile::create( const URI& uri, const CParams &p )
       return 0;
    }
 
-   return new FStream( new WinFStreamData(handle) );
+   return new FStream( new SysFStreamData(handle) );
 }
 
 

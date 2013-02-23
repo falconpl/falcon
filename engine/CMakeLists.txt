@@ -16,6 +16,7 @@ if(UNIX OR APPLE)
     fstream_posix.cpp
     interrupt_posix.cpp
     mt_posix.cpp
+    pipe_posix.cpp
     stdstreams_posix.cpp
     sys_posix.cpp
     timestamp_posix.cpp
@@ -41,6 +42,7 @@ elseif(WIN32)
     fstream_win.cpp
     interrupt_win.cpp
     mt_win.cpp
+    pipe_win.cpp
     stdstreams_win.cpp
     sys_win.cpp
     timestamp_win.cpp
@@ -381,6 +383,7 @@ add_library(falcon_engine SHARED
   processor.cpp
   prototypeclass.cpp
   path.cpp
+  pipe.cpp
   pool.cpp
   property.cpp
   pseudofunc.cpp

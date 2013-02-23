@@ -165,7 +165,7 @@ void ClassShared::genericClassWait( const Class* childClass, VMContext* ctx, int
 
 FALCON_DEFINE_METHOD_P( ClassShared, tryWait )
 {
-   ClassShared::genericClassWait(methodOf(), ctx, pCount);
+   ClassShared::genericClassTryWait(methodOf(), ctx, pCount);
 }
 
 FALCON_DEFINE_METHOD_P( ClassShared, wait )

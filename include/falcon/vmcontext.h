@@ -129,6 +129,11 @@ public:
 
    VMContext( Process* prc, ContextGroup* grp=0 );
 
+   /** Tells if the context is currently in some active state.
+    *
+    */
+   bool isActive() const { return m_status != statusBorn && m_status != statusTerminated; }
+
    /**
     Returns the unique ID of this context.
 

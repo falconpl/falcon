@@ -18,6 +18,7 @@
 #define _FALCON_FSTREAM_H_
 
 #include <falcon/stream.h>
+#include <falcon/filedata.h>
 
 namespace Falcon {
 
@@ -40,7 +41,7 @@ namespace Falcon {
 class FALCON_DYN_CLASS FStream: public Stream
 {
 public:
-   FStream( void *fsdata );
+   FStream( Sys::FileData* data );
    FStream( const FStream &other );
    virtual ~FStream();
 
@@ -62,14 +63,14 @@ public:
    virtual FStream* clone() const;
 
 protected:
-   void *m_fsData;
+   Sys::FileData *m_fsData;
 };
 
 /** File stream with output functions filtered out. */
 class FALCON_DYN_CLASS InputOnlyFStream: public FStream
 {
 public:
-   InputOnlyFStream( void *fsdata ):
+   InputOnlyFStream( Sys::FileData *fsdata ):
       FStream( fsdata )
    {}
 
@@ -92,7 +93,7 @@ public:
 class FALCON_DYN_CLASS OutputOnlyFStream: public FStream
 {
 public:
-   OutputOnlyFStream( void *fsdata ):
+   OutputOnlyFStream( Sys::FileData *fsdata ):
       FStream( fsdata )
    {}
 
@@ -113,7 +114,7 @@ public:
 class FALCON_DYN_CLASS ReadOnlyFStream: public InputOnlyFStream
 {
 public:
-   ReadOnlyFStream( void *fsdata ):
+   ReadOnlyFStream( Sys::FileData *fsdata ):
       InputOnlyFStream( fsdata )
    {}
 
@@ -135,7 +136,7 @@ class FALCON_DYN_CLASS WriteOnlyFStream: public OutputOnlyFStream
 {
 public:
 
-   WriteOnlyFStream( void *fsdata ):
+   WriteOnlyFStream( Sys::FileData *fsdata ):
       OutputOnlyFStream( fsdata )
    {}
 

@@ -785,20 +785,23 @@ void Collector::performGC( bool wait )
    {
       VMContext* ctx = cti->second;
 
-      // ask the context to be inspected asap.
-      ctx->setInspectEvent();
-      // ^^ this might send the context to the monitor, and
-      // that requires locking a mutex, check that is NEVER
-      // locked against m_mtx_contexts.
-
-      // if we don't wait, we won't post the markToken
-      if( wait )
+      if(ctx->isActive())
       {
-         ctx->incref();
-         markToken->m_set.insert(ctx);
+         // ask the context to be inspected asap.
+         ctx->setInspectEvent();
+         // ^^ this might send the context to the monitor, and
+         // that requires locking a mutex, check that is NEVER
+         // locked against m_mtx_contexts.
+
+         // if we don't wait, we won't post the markToken
+         if( wait )
+         {
+            ctx->incref();
+            markToken->m_set.insert(ctx);
+         }
+         count++;
       }
       ++cti;
-      count++;
    }
    // signal the marker.
    if( count != 0 )
@@ -807,6 +810,7 @@ void Collector::performGC( bool wait )
    }
    else {
       // without contexts around, we're the one that must suggest the sweeper to go on
+      delete markToken;
       mark = ++m_oldestMark;
    }
    _p->m_mtx_contexts.unlock();

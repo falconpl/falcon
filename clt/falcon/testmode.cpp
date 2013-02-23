@@ -12,13 +12,20 @@
 
    See LICENSE file for licensing details.
 */
-
+#undef SRC
+#define SRC "testmode.cpp"
 
 #include <falcon/falcon.h>
 #include <falcon/modloader.h>
 #include <falcon/trace.h>
 #include <falcon/log.h>
 #include <falcon/stringstream.h>
+
+#include <falcon/pipe.h>
+#include <falcon/textwriter.h>
+#include <falcon/textreader.h>
+#include <falcon/mt.h>
+#include <falcon/errors/genericerror.h>
 
 #include "app.h"
 #include "testmode.h"
@@ -36,7 +43,9 @@ static void stripReturns( String* result )
 }
 
 TestMode::ScriptData::ScriptData( const String& id ):
-         m_id(id)
+         m_id(id),
+         m_length(0),
+         m_interval(0)
 {
 }
 
@@ -262,6 +271,18 @@ TestMode::ScriptData* TestMode::parse(const String& scriptName )
                sd->m_category = tline.subString(10);
                sd->m_category.trim();
             }
+            else if( tline.startsWith("@long ") )
+            {
+               sd->m_length = atoi( tline.subString(6).c_ize() );
+            }
+            else if( tline.startsWith("@interval ") )
+            {
+               sd->m_interval = atoi( tline.subString(10).c_ize() );
+            }
+            else if( tline.startsWith("@checkpoint ") )
+            {
+               sd->m_checkpoint = tline.subString(12);
+            }
             else if( tline == ("@output") )
             {
                sd->m_exp_output = "";
@@ -290,9 +311,6 @@ void TestMode::test( ScriptData* sd )
    log->log( Log::fac_app, Log::lvl_info, String( "Now testing " ) + sd->m_id );
 
    VMachine vm;
-   // capture VM output
-   StringStream* ss = new StringStream;
-   vm.stdOut( ss );
 
    Process* loadProc = vm.createProcess();
    m_app->configureVM( vm, loadProc );
@@ -300,16 +318,33 @@ void TestMode::test( ScriptData* sd )
    ModSpace* ms = loadProc->modSpace();
    ms->loadModuleInProcess( sd->m_path,  true, true, false );
 
-   try {
-      loadProc->start();
-      loadProc->wait();
+
+   try
+   {
+      String* result = 0;
+
+      if( sd->m_length != 0 )
+      {
+         result = longTest( sd, loadProc );
+      }
+      else
+      {
+         // capture VM output
+         StringStream* ss = new StringStream;
+         vm.stdOut( ss );
+
+         loadProc->start();
+         loadProc->wait();
+         if( ! sd->m_exp_output.empty() )
+         {
+            result = ss->closeToString();
+         }
+      }
 
       sd->m_bSuccess = true;
 
       if( sd->m_exp_output.size() != 0 )
       {
-         String* result = ss->closeToString();
-
          // neutralize xplatform \r\n things.
          stripReturns( result );
 
@@ -374,6 +409,97 @@ void TestMode::test( ScriptData* sd )
    loadProc->decref();
 }
 
+
+
+String* TestMode::longTest( ScriptData* sd, Process* loadProc )
+{
+#define TestMode_READER_THREAD_STACK_SIZE 20384
+
+   TextWriter output(new StdOutStream(true), true);
+   log->log( Log::fac_app, Log::lvl_info, String( "Entering long test for " ) + sd->m_id );
+
+   // redirect the VM output to a pipe we can control.
+   Sys::Pipe controlPipe;
+   Stream* writeStream = controlPipe.getWriteStream();
+   loadProc->vm()->stdOut( writeStream );
+
+   SysThread* thread = new SysThread( &m_reader );
+   m_reader.setStream( controlPipe.getReadStream() );
+   m_reader.setCheckpoint( sd->m_checkpoint );
+   if ( ! thread->start(ThreadParams().stackSize(TestMode_READER_THREAD_STACK_SIZE)) )
+   {
+      throw new GenericError(ErrorParam( e_io_error,  __LINE__, SRC )
+               .extra( "Starting thread"));
+   }
+
+   loadProc->start();
+
+   while( true )
+   {
+      progress( output, sd, m_reader.checkpointCount() );
+
+      try
+      {
+         if( loadProc->wait(50) )
+         {
+            break;
+         }
+      }
+      catch( ... )
+      {
+         controlPipe.close();
+         void* dummy = 0;
+         thread->join( dummy );
+         delete static_cast<String*>(dummy);
+         output.write(String(" ").replicate(70).A("\r"));
+         output.flush();
+         throw;
+      }
+   }
+
+   // a last progress before flashing the close
+   progress( output, sd, m_reader.checkpointCount() );
+   // get the output from the reader.
+   writeStream->close();
+   void* scriptOutput = 0;
+   thread->join( scriptOutput );
+
+   // clear the line
+   output.write(String(" ").replicate(78).A("\r"));
+   output.flush();
+
+   return static_cast<String*>(scriptOutput);
+}
+
+
+void TestMode::progress( TextWriter& output, ScriptData* sd, int count )
+{
+   #define TEST_PROGRESS_BAR_LENGTH 50
+
+   static int flapPos = 0;
+   const char* flaps ="\\|/-";
+
+   output.write(sd->m_id);
+   output.write(": [");
+   output.write(String().A(flaps[flapPos++]));
+   if( flapPos == 4 ) flapPos = 0;
+   output.write("] ");
+
+   double pct = (count * 100.0) / sd->m_length;
+   int filled = (int) (TEST_PROGRESS_BAR_LENGTH * (pct/100.0));
+   if( filled > 0  )
+   {
+      if( filled > TEST_PROGRESS_BAR_LENGTH ) filled = TEST_PROGRESS_BAR_LENGTH;
+      output.write(String("=").replicate(filled));
+   }
+
+   output.write(String(" ").replicate(TEST_PROGRESS_BAR_LENGTH - filled));
+   output.write(" ");
+   output.write(String().N(pct, "%02.2f").A("%\r"));
+   output.flush();
+}
+
+
 void TestMode::reportTest( ScriptData* sd )
 {
    TextWriter output(new StdOutStream(true), true);
@@ -389,6 +515,47 @@ void TestMode::reportTest( ScriptData* sd )
       output.writeLine( "Fail (" + sd->m_reason + ")" );
    }
    output.flush();
+}
+
+
+TestMode::Reader::Reader():
+      m_cks(0),
+      m_readStream(0)
+{}
+
+void* TestMode::Reader::run()
+{
+   fassert( m_readStream !=0 );
+   TextReader reader( m_readStream );
+   m_cks = 0;
+
+   String* output = new String;
+
+   String line;
+   while(reader.readLine(line, 4096) )
+   {
+      if( m_checkPoint.empty() || line == m_checkPoint )
+      {
+         m_mtx.lock();
+         m_cks++;
+         m_mtx.unlock();
+      }
+
+      output->append(line);
+      output->append('\n');
+   }
+
+   return output;
+}
+
+
+int TestMode::Reader::checkpointCount()
+{
+   m_mtx.lock();
+   int ret = m_cks;
+   m_mtx.unlock();
+
+   return ret;
 }
 
 /* end of testmode.cpp */

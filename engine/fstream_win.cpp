@@ -19,7 +19,6 @@
 #include <falcon/errors/ioerror.h>
 #include <falcon/errors/interruptederror.h>
 
-#include <falcon/fstream_win.h>
 #include <windows.h>
 #include <wincon.h>
 
@@ -41,7 +40,7 @@ FStream::FStream( const FStream &other ):
 {
    m_fsData = 0;
 
-   WinFStreamData* data = (WinFStreamData*) m_fsData;
+   Sys::FileData* data = (Sys::FileData*) m_fsData;
    HANDLE hTarget;
    HANDLE hOrig = data->hFile;
    HANDLE curProc = GetCurrentProcess();
@@ -61,21 +60,21 @@ FStream::FStream( const FStream &other ):
          .sysError( ::GetLastError() ) );
    }
 
-   m_fsData = new WinFStreamData( hTarget, data->bIsFile, data->bNonBlocking );
+   m_fsData = new Sys::FileData( hTarget, data->bIsFile, data->bNonBlocking );
 }
 
 
 FStream::~FStream()
 {
    close();
-   WinFStreamData* data = (WinFStreamData*) m_fsData;
+   Sys::FileData* data = (Sys::FileData*) m_fsData;
    delete data;
 }
 
 
 bool FStream::close()
 {
-   WinFStreamData* data = (WinFStreamData*) m_fsData;
+   Sys::FileData* data = (Sys::FileData*) m_fsData;
    HANDLE hFile = data->hFile;
 
    if ( m_status & Stream::t_open )
@@ -102,7 +101,7 @@ bool FStream::close()
 
 size_t FStream::read( void *buffer, size_t size )
 {
-   WinFStreamData* data = (WinFStreamData*) m_fsData;
+   Sys::FileData* data = (Sys::FileData*) m_fsData;
    HANDLE hFile = data->hFile;
    if( data->bNonBlocking && ! readAvailable(0) ) {
       return 0;
@@ -132,7 +131,7 @@ size_t FStream::read( void *buffer, size_t size )
 
 size_t FStream::write( const void *buffer, size_t size )
 {
-   WinFStreamData* data = (WinFStreamData*) m_fsData;
+   Sys::FileData* data = (Sys::FileData*) m_fsData;
    HANDLE hFile = data->hFile;
 
    if( data->bNonBlocking && ! writeAvailable(0) ) {
@@ -169,13 +168,13 @@ bool FStream::setNonblocking( bool nb )
 
 bool FStream::isNonbloking() const
 {
-   WinFStreamData* data = (WinFStreamData*) m_fsData;
+   Sys::FileData* data = (Sys::FileData*) m_fsData;
    return data->bNonBlocking;
 }
 
 off_t FStream::seek( off_t pos, e_whence whence )
 {
-   WinFStreamData* data = (WinFStreamData*) m_fsData;
+   Sys::FileData* data = (Sys::FileData*) m_fsData;
    HANDLE hFile = data->hFile;
 
    DWORD from;
@@ -217,7 +216,7 @@ off_t FStream::seek( off_t pos, e_whence whence )
 
 off_t FStream::tell()
 {
-   WinFStreamData* data = (WinFStreamData*) m_fsData;
+   Sys::FileData* data = (Sys::FileData*) m_fsData;
    HANDLE hFile = data->hFile;
 
    LONG posHI = 0;
@@ -242,7 +241,7 @@ off_t FStream::tell()
 
 bool FStream::truncate( off_t pos )
 {
-   WinFStreamData* data = (WinFStreamData*) m_fsData;
+   Sys::FileData* data = (Sys::FileData*) m_fsData;
    HANDLE hFile = data->hFile;
    LONG savePosHI = 0;
    LONG savePosLow = 0;
@@ -303,7 +302,7 @@ on_error:
 
 size_t FStream::readAvailable( int32 msec )
 {
-   WinFStreamData* data = (WinFStreamData*) m_fsData;
+   Sys::FileData* data = (Sys::FileData*) m_fsData;
    if( data->bIsFile )
    {
       // files are always available on windows
@@ -347,7 +346,7 @@ size_t FStream::readAvailable( int32 msec )
 
 size_t FStream::writeAvailable( int32 msec )
 {
-   WinFStreamData* data = (WinFStreamData*) m_fsData;
+   Sys::FileData* data = (Sys::FileData*) m_fsData;
    if( data->bIsFile )
    {
       // files are always available on windows

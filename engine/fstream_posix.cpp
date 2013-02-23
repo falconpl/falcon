@@ -22,7 +22,6 @@
 #include <sys/poll.h>
 
 #include <falcon/fstream.h>
-#include <falcon/fstream_posix.h>
 #include <falcon/interrupt.h>
 #include <falcon/errors/ioerror.h>
 #include <falcon/errors/interruptederror.h>
@@ -34,7 +33,7 @@
 
 namespace Falcon {
 
-FStream::FStream( void* data ):
+FStream::FStream( Sys::FileData* data ):
    m_fsData(data)
 {
    m_status = t_open;
@@ -43,28 +42,28 @@ FStream::FStream( void* data ):
 FStream::FStream( const FStream &other ):
    Stream( other )
 {
-   PosixFStreamData* data = static_cast<PosixFStreamData*>(other.m_fsData);
-   int fd = static_cast<PosixFStreamData*>(other.m_fsData)->fdFile;
+   Sys::FileData* data = static_cast<Sys::FileData*>(other.m_fsData);
+   int fd = static_cast<Sys::FileData*>(other.m_fsData)->fdFile;
    int fd2 = ::dup( fd );
    if ( fd2 < 0 )
    {
       throw new IOError (ErrorParam(e_io_dup, __LINE__, __FILE__ ).sysError(errno) );
    }
 
-   m_fsData = new PosixFStreamData(fd2, data->m_nonBloking);
+   m_fsData = new Sys::FileData(fd2, data->m_nonBloking);
 }
 
 
 FStream::~FStream()
 {
    close();
-   delete static_cast<PosixFStreamData*>(m_fsData);
+   delete static_cast<Sys::FileData*>(m_fsData);
 }
 
 
 bool FStream::close()
 {
-   int fd = static_cast<PosixFStreamData*>(m_fsData)->fdFile;
+   int fd = static_cast<Sys::FileData*>(m_fsData)->fdFile;
 
    if ( m_status & Stream::t_open ) {
       if( ::close( fd ) < 0 ) {
@@ -88,20 +87,20 @@ bool FStream::close()
 
 bool FStream::setNonblocking( bool mode )
 {
-   static_cast<PosixFStreamData*>(m_fsData)->m_nonBloking = mode;
+   static_cast<Sys::FileData*>(m_fsData)->m_nonBloking = mode;
    return true;
 }
 
 
 bool FStream::isNonbloking() const
 {
-   return static_cast<PosixFStreamData*>(m_fsData)->m_nonBloking;
+   return static_cast<Sys::FileData*>(m_fsData)->m_nonBloking;
 }
 
 
 size_t FStream::read( void *buffer, size_t size )
 {
-   PosixFStreamData* data = static_cast<PosixFStreamData*>(m_fsData);
+   Sys::FileData* data = static_cast<Sys::FileData*>(m_fsData);
    if( data->m_nonBloking && ! readAvailable(0) ) {
       return 0;
    }
@@ -130,7 +129,7 @@ size_t FStream::read( void *buffer, size_t size )
 
 size_t FStream::write( const void *buffer, size_t size )
 {
-   PosixFStreamData* data = static_cast<PosixFStreamData*>(m_fsData);
+   Sys::FileData* data = static_cast<Sys::FileData*>(m_fsData);
    if( data->m_nonBloking && ! writeAvailable(0) ) {
       return 0;
    }
@@ -156,7 +155,7 @@ size_t FStream::write( const void *buffer, size_t size )
 
 off_t FStream::seek( off_t pos, e_whence whence )
 {
-   int fd = static_cast<PosixFStreamData*>(m_fsData)->fdFile;
+   int fd = static_cast<Sys::FileData*>(m_fsData)->fdFile;
 
    int from;
    switch( whence ) {
@@ -189,7 +188,7 @@ off_t FStream::seek( off_t pos, e_whence whence )
 
 off_t FStream::tell()
 {
-   int fd = static_cast<PosixFStreamData*>(m_fsData)->fdFile;
+   int fd = static_cast<Sys::FileData*>(m_fsData)->fdFile;
 
    off_t pos = (off_t) ::lseek( fd, 0, SEEK_CUR );
 
@@ -212,7 +211,7 @@ off_t FStream::tell()
 
 bool FStream::truncate( off_t pos )
 {
-   int fd = static_cast<PosixFStreamData*>(m_fsData)->fdFile;
+   int fd = static_cast<Sys::FileData*>(m_fsData)->fdFile;
 
    if ( pos < 0 ) {
       pos = tell();
@@ -262,7 +261,7 @@ size_t FStream::readAvailable( int32 msec )
    return 0;
    */
 
-   int fd = static_cast<PosixFStreamData*>(m_fsData)->fdFile;
+   int fd = static_cast<Sys::FileData*>(m_fsData)->fdFile;
    struct timeval tv, *tvp;
    fd_set set;
    int last;
@@ -327,7 +326,7 @@ size_t FStream::readAvailable( int32 msec )
 
 size_t FStream::writeAvailable( int32 msec )
 {
-   int fd = static_cast<PosixFStreamData*>(m_fsData)->fdFile;
+   int fd = static_cast<Sys::FileData*>(m_fsData)->fdFile;
 
    struct pollfd poller[2];
    int fds;

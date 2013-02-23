@@ -17,6 +17,7 @@
 #define FALCON_APP_TESTMODE_H
 
 #include <map>
+#include <falcon/mt.h>
 
 namespace Falcon {
 
@@ -46,6 +47,11 @@ public:
 
       bool m_bSuccess;
       String m_reason;
+
+      // long text extension
+      int32 m_length;
+      int32 m_interval;
+      String m_checkpoint;
    };
 
    void setup();
@@ -54,11 +60,16 @@ public:
    void testAll();
    void listAll();
    void test( ScriptData* sd );
+   // returns the full output of the script.
+   String* longTest( ScriptData* sd, Process* loadProc );
+   void progress( TextWriter& out, ScriptData* sd, int count );
+
    void reportTest( ScriptData* sd );
 
    void report();
 
    Log* log;
+
 
 private:
    FalconApp* m_app;
@@ -69,6 +80,23 @@ private:
    ScriptMap m_scripts;
    CategoryMap m_categories;
    uint32 m_passed;
+
+   class Reader: public Runnable {
+   public:
+      Reader();
+      virtual ~Reader() {}
+      virtual void* run();
+      int checkpointCount();
+      void setStream( Stream* s ) { m_readStream = s; }
+      void setCheckpoint( const String& cp ) { m_checkPoint = cp; }
+
+   private:
+      int m_cks;
+      mutable Mutex m_mtx;
+      Stream* m_readStream;
+      String m_checkPoint;
+   }
+   m_reader;
 };
 
 }

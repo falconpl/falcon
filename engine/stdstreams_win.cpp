@@ -15,14 +15,14 @@
 
 
 #include <falcon/stdstreams.h>
-#include <falcon/fstream_win.h>
+#include <falcon/filedata.h>
 #include <falcon/errors/ioerror.h>
 
 #include <windows.h>
 
 namespace Falcon {
 
-inline WinFStreamData* make_handle( HANDLE orig_handle, bool bDup )
+inline Sys::FileData* make_handle( HANDLE orig_handle, bool bDup )
 {
    HANDLE hTarget;
    
@@ -48,7 +48,7 @@ inline WinFStreamData* make_handle( HANDLE orig_handle, bool bDup )
       hTarget = orig_handle;
    }
 
-   return new WinFStreamData( hTarget, false );
+   return new Sys::FileData( hTarget, false );
 }
 
 
