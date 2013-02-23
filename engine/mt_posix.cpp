@@ -341,6 +341,11 @@ InterruptibleEvent::wait_result_t InterruptibleEvent::wait( int32 to )
 
       ts.tv_nsec = (tv.tv_usec + ((to%1000)*1000))*1000;
       ts.tv_sec = tv.tv_sec + (to/1000);
+      if( ts.tv_nsec > 1000000000 )
+      {
+         ts.tv_nsec -= 1000000000;
+         ts.tv_sec += 1;
+      }
       pthread_mutex_lock( &evt->mtx );
 
       while( !(evt->isInterrupted|| evt->isSet) ) {
