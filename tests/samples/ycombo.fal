@@ -1,0 +1,10 @@
+
+Y = { f => {x=> {n => f(x(x))(n)}} ({x=> {n => f(x(x))(n)}}) }
+facStep = { f => {x => x < 1 ? 1 : x*f(x-1) }}
+fibStep = { f => {x => x == 0 ? 0 : (x == 1 ? 1 : f(x-1) + f(x-2))}}
+
+coolFac = Y(facStep)
+coolFib = Y(fibStep)
+
+> "Factorial 10: ", coolFac(10)
+> "Fibonacci 10: ", coolFib(10)
