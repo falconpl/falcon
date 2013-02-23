@@ -1,8 +1,8 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: pipe.h
+   FILE: pipe_posix.cpp
 
-   System independent abstraction for linked inter-process sockets.
+   Posix specific Pipe functions.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
    Begin: Fri, 22 Feb 2013 20:01:34 +0100
