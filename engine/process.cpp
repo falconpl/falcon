@@ -47,6 +47,7 @@ Process::Process( VMachine* owner, ModSpace* ms ):
    m_vm(owner),
    m_context( 0 ),
    m_event( true, false ),
+   m_terminated(0),
    m_running(false),
    m_ctxId(0),
    m_error(0),
@@ -75,6 +76,7 @@ Process::Process( VMachine* owner, bool bAdded ):
    m_vm(owner),
    m_context( new VMContext( this ) ),
    m_event( true, false ),
+   m_terminated(0),
    m_running(false),
    m_ctxId(0),
    m_error(0),
@@ -300,6 +302,12 @@ int32 Process::getNextContextID()
 
 void Process::setResult( const Item& value )
 {
+   // ignore if already terminated.
+   if( atomicFetch(m_terminated) != 0 )
+   {
+      return;
+   }
+
    if( m_resultLock != 0 ) {
       m_resultLock->dispose();
    }
