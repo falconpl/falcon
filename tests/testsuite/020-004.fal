@@ -1,0 +1,28 @@
+/*
+@name Function quit multiagent
+@category Core-module
+
+@result From quit
+*/
+
+> "Core module test -- quit function (multiagent)"
+
+mtx = Mutex()
+function agent( id )
+   mtx.locked( {()> "Entering agent ", ^~id} )
+   quit( "From quit" )
+   mtx.locked( {()> "Exiting agent ", ^~id} )
+end
+
+> "Launching agents"
+f0 = {=> agent(0)}
+f1 = {=> agent(1)}
+f2 = {=> agent(2)}
+f3 = {=> agent(3)}
+
+p = Parallel( f0, f1, f2, f3 )
+p.launch()
+
+> "Test failed..."
+return "Failure"
+

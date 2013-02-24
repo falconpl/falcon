@@ -273,7 +273,8 @@ void FalconApp::Logger::onMessage( int fac, int lvl, const String& message )
 
 
 int main( int argc, char* argv[] )
-{   FalconApp app;
+{
+   FalconApp app;
    app.guardAndGo( argc, argv );
 
    return app.m_exitValue;

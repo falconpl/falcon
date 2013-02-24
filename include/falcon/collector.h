@@ -318,6 +318,8 @@ public:
    */
    void unregisterContext( VMContext *vm );
 
+   void onContextMarked( VMContext* vm );
+
    class ContextEnumerator {
    public:
       virtual ~ContextEnumerator(){}

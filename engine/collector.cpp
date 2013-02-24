@@ -505,18 +505,32 @@ void Collector::enumerateContexts( Collector::ContextEnumerator& ectx )
    _p->m_mtx_contexts.unlock();
 }
 
+
 void Collector::unregisterContext( VMContext *ctx )
 {
    TRACE( "Collector::unregisterContext - %p(%d) in Process %p(%d)",
             ctx, ctx->id(), ctx->process(), ctx->process()->id() );
 
+   // also, be sure that we're not waiting for this context to be marked.
+   onContextMarked( ctx );
+
    _p->m_mtx_contexts.lock();
    bool erased = _p->m_contexts.erase(ctx->currentMark()) != 0;
+   _p->m_mtx_contexts.unlock();
 
-   // also, be sure that we're not waiting for this context to be marked.
+   if( erased ) {
+      ctx->decref();
+   }
+}
+
+
+void Collector::onContextMarked( VMContext *ctx )
+{
+   _p->m_mtx_contexts.lock();
+   // be sure that we're not waiting for this context to be marked.
    Private::MarkTokenList::iterator mti = _p->m_markTokens.begin();
    // notice that token lists are very rarely used.
-   while( mti != _p->m_markTokens.end() )
+   while( mti !=  _p->m_markTokens.end() )
    {
       MarkToken* token = *mti;
       // we don't need to unlock even if ctx gets decreffed,
@@ -530,10 +544,6 @@ void Collector::unregisterContext( VMContext *ctx )
       }
    }
    _p->m_mtx_contexts.unlock();
-
-   if( erased ) {
-      ctx->decref();
-   }
 }
 
 
@@ -785,7 +795,7 @@ void Collector::performGC( bool wait )
    {
       VMContext* ctx = cti->second;
 
-      if(ctx->isActive())
+      if(ctx->isActive() && ! ctx->isTerminated())
       {
          // ask the context to be inspected asap.
          ctx->setInspectEvent();
@@ -878,9 +888,12 @@ void Collector::performGCOnShared( Shared* shared )
       VMContext* ctx = cti->second;
 
       // ask the context to be inspected asap.
-      ctx->setInspectEvent();
-      ctx->incref();
-      markToken->m_set.insert(ctx);
+      if(ctx->isActive() && ! ctx->isTerminated())
+      {
+         ctx->setInspectEvent();
+         ctx->incref();
+         markToken->m_set.insert(ctx);
+      }
 
       ++cti;
       count++;
@@ -1752,27 +1765,8 @@ void Collector::Marker::onMarked( VMContext* ctx )
       m_master->m_mtx_garbageRoot.unlock();
    }
 
-   m_master->_p->m_mtx_contexts.lock();
-
    TRACE1( "Collector::Marker::onMarked -- signaling %d waiters", (int)  m_master->_p->m_markTokens.size() );
-
-   // also, be sure that we're not waiting for this context to be marked.
-   Private::MarkTokenList::iterator mti = m_master->_p->m_markTokens.begin();
-   // notice that token lists are very rarely used.
-   while( mti !=  m_master->_p->m_markTokens.end() )
-   {
-      MarkToken* token = *mti;
-      // we don't need to unlock even if ctx gets decreffed,
-      // as we hold a reference and we know the context won't be destroyed
-      if( token->onContextProcessed(ctx) )
-      {
-         mti = m_master->_p->m_markTokens.erase(mti);
-      }
-      else {
-         ++mti;
-      }
-   }
-   m_master->_p->m_mtx_contexts.unlock();
+   m_master->onContextMarked( ctx );
 }
 
 //==========================================================================================

@@ -2091,6 +2091,7 @@ void VMContext::onTerminated()
 
    // we're off from the collector...
    Engine::collector()->unregisterContext(this);
+
 }
 
 

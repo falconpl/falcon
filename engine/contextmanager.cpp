@@ -472,6 +472,10 @@ void ContextManager::manageDesceduledContext( VMContext* ctx )
       TRACE( "manageDesceduledContext - Context was terminated prior reaching here %d(%p) in %d(%p)",
                ctx->id(), ctx, ctx->process()->id(), ctx->process() );
 
+      if( ctx->isActive() )
+      {
+         ctx->onTerminated();
+      }
       // we don't keep it.
       return;
    }
