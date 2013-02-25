@@ -1,0 +1,22 @@
+/*
+@name Import syms from
+@category modules
+
+To check that the functions are correctly imported, 
+this test prints their className.
+
+@output
+Import syms from/in directive
+open() class name: Function
+create() class name: Function
+Done
+@endoutput
+
+*/
+
+import open, create from vfs
+
+> "Import syms from/in directive"
+> "open() class name: ", open.className
+> "create() class name: ", create.className
+> "Done"

@@ -1,0 +1,22 @@
+/*
+@name Import from without namespace
+@category modules
+
+To check that the functions are correctly imported, 
+this test prints their className.
+
+@output
+Import from directive
+open() class name: Function
+create() class name: Function
+Done
+@endoutput
+
+*/
+
+import from vfs
+
+> "Import from directive"
+> "open() class name: ", open.className
+> "create() class name: ", create.className
+> "Done"

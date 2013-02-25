@@ -1,0 +1,23 @@
+/*
+@name Import from/as re-aliasing
+@category modules
+
+To check that the functions are correctly imported, 
+this test prints their className.
+
+@output
+Import from/as directive with double alias
+open() class name: Function
+open() (again) class name: Function
+Done
+@endoutput
+
+*/
+
+import open from vfs as myopen
+import open from vfs as myopen2
+
+> "Import from/as directive with double alias"
+> "open() class name: ", myopen.className
+> "open() (again) class name: ", myopen2.className
+> "Done"

@@ -1,0 +1,24 @@
+/*
+@name Import from/as re-aliasing
+@category modules
+
+To check that the functions are correctly imported, 
+this test prints their className.
+
+@output
+Import from/as directive
+open() class name: Function
+create() class name: Function
+Done
+Import from/as directive with double alias
+open() class name: Function
+Done
+@endoutput
+
+*/
+
+import test.create from "./014-005" in retest
+
+> "Import from/as directive with double alias"
+> "open() class name: ", retest.create.className
+> "Done"

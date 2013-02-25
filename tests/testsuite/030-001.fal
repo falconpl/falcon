@@ -1,0 +1,45 @@
+/*
+@name Function log
+@category Feathers-math
+
+@output
+Feathers-math -- Function log
+log(1)=0
+log(exp(1))=1
+log(exp(2))=2
+@'$({log(1024)}.3)'=6.931
+@'$({log(2048)}.3)'=7.625
+@'$({log(10**3)}.3)'=6.908
+@'$({log(10**4)}.3)'=9.210
+@'$({log(10**5)}.3)'=11.513
+Done
+@endoutput
+*/
+
+import log, exp from math
+
+> "Feathers-math -- Function log"
+tests = .[
+   "log(1)"
+   "log(exp(1))"
+   "log(exp(2))"
+   "@'$({log(1024)}.3)'"
+   "@'$({log(2048)}.3)'"
+   "@'$({log(10**3)}.3)'"
+   "@'$({log(10**4)}.3)'"
+   "@'$({log(10**5)}.3)'"
+]
+
+try
+   for expr in tests
+      e = compile(expr)
+      r1 = e()
+      > expr, "=", r1
+   end
+catch in error
+   > "Test failed on error: ", error
+   return
+end
+
+
+> "Done"

@@ -1,0 +1,26 @@
+/*
+@name Import from/as
+@category modules
+
+To check that the functions are correctly imported, 
+this test prints their className.
+
+@output
+Import from/as directive
+open() class name: Function
+create() class name: Function
+Done
+@endoutput
+
+*/
+
+import open from vfs as myopen
+namespace test
+import create from vfs as test.create
+
+> "Import from/as directive"
+> "open() class name: ", myopen.className
+> "create() class name: ", test.create.className
+> "Done"
+
+return "Pippo"
