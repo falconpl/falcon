@@ -200,11 +200,11 @@ void Class::op_compare( VMContext* ctx, void* self ) const
          return;
       }
 
-      if( typeID() > 0 )
-      {
-         ctx->stackResult(2, (int64)  typeID() - op2->asClass()->typeID() );
-         return;
-      }
+      byte* bself = static_cast<byte*>(self);
+      byte* bop2 = static_cast<byte*>(op2->asInst());
+
+      ctx->stackResult(2, (int64)  (bself - bop2) );
+      return;
    }
 
    // we have no information about what an item might be here, but we can
