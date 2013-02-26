@@ -96,10 +96,10 @@ protected:
    will get a spurious read (that can be identified by passing a
    token object to the @a SyncQueue.pop method). Also, it is possible
    that an agent D which wasn't waiting on the queue is able to
-   casually pop the item posted by A, leaving both B and C wihtout a
+   casually pop the item posted by A, leaving both B and C without a
    valid item to be read.
 
-   In fair mode, the queue has acquire semantic. The succesful waiter
+   In fair mode, the queue has acquire semantic. The successful waiter
    will receive the queue in a critical section; a single pop will signal
    the queue again, and other waiting agents will be notified and given
    the queue to pop exactly one item. In fair mode, it is granted that:

@@ -1,0 +1,81 @@
+/*
+@name Unfair queue with delay
+@category Parallel
+
+@long 100
+@checkpoint STEP
+
+@result OK
+*/
+
+load rnd
+
+randomSeed(123122)
+size = 10000
+size100 = size/100
+
+agents = 5
+data = []
+sems = []
+queue = SyncQueue() // unfair
+for i = 1 to agents
+   data += -1
+   sems += Semaphore()
+end
+
+barrier = Barrier()
+count = 0
+
+function process( id )
+   waiter = Waiter( barrier )   
+   waiter.add( sems[id], {=>
+      if random(0,0,0,1)
+         rest( random(1,10) )
+      end
+      queue.push( count )
+   })
+      
+   waiter.wait()
+end
+
+
+function control()
+   for i = 1 to size
+      // ask the agents to post 
+      for j = 0 to agents-1
+         sems[j].post()
+      end
+      
+      if i % size100 == 0: > "STEP"      
+      received = 0
+      // receive all the produced data
+      while received < agents
+         queue.wait()
+         // would not be necessary, but we want to test this.
+         while not queue.empty
+            value = queue.pop()
+            if value != count
+               return "Coherence check failed at " + count
+            end
+            
+            received++
+         end         
+      end
+      
+      ++count      
+   end   
+   // declare we're done.
+   barrier.open()
+end
+
+
+> "Unfair queue w/ delay"
+pfunc = [Parallel, control]
+for i = 0 to agents-1
+   pfunc += [[process, i]]
+end
+
+p = pfunc()
+p.launch()
+
+return "OK"
