@@ -98,7 +98,7 @@ public:
    }
    
    /** Returns true if this is a generic (without symbols) import. */
-   bool isGeneric() const {return m_sl == 0; }
+   bool isGeneric() const {return m_symList == 0; }
    
    /** Set this as a direct import request. 
     \param symName the name of the symbol to be searched on the source module.
@@ -182,7 +182,7 @@ public:
 
 private:
    class SymbolList;
-   SymbolList* m_sl;
+   SymbolList* m_symList;
    
    bool m_bIsLoad;
    bool m_bIsUri;

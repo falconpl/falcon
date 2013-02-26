@@ -386,7 +386,7 @@ SourceParser::SourceParser():
       << ImportSpec << T_from << T_String << T_EOL );
    
    ImportClause << ( r_import_from_modspec_as << "import_from_modspec_as" << apply_import_from_modspec_as
-      << ImportSpec << T_from << ModSpec << T_as << T_Name << T_EOL );   
+      << ImportSpec << T_from << ModSpec << T_as << T_Name << T_EOL );
    ImportClause << ( r_import_from_modspec_in << "import_from_modspec_in" << apply_import_from_modspec_in
       << ImportSpec << T_from << ModSpec << T_in << NameSpaceSpec << T_EOL );
    ImportClause << ( r_import_from_modspec << "import_from_modspec" << apply_import_from_modspec
@@ -866,6 +866,7 @@ bool SourceParser::parse()
    if( result ) {
       ParserContext* pc = static_cast<ParserContext*>(m_ctx);
       pc->onInputOver();
+      result = ! hasErrors();
    }
    return result;
 }

@@ -31,90 +31,61 @@
 */
 
 #include <falcon/module.h>
-#include "math_ext.h"
+#include "rnd_ext.h"
 
 #include "version.h"
 
 /*#
-   @module feathers.math_extra Uncommon math functions
-   @brief Uncommon math functions
+   @module feathers.rnd
+   @brief Simple pseudo-random number generator functions.
+
+   This module exposes a set of simple function-oriented
+   pseudo-random generator function that use the Mersenne-Twister
+   interlocked pseudo-random generator available in the Falcon
+   Virtual Machine.
+
+   This means that the status of the number generator is shared
+   across all the processes and contexts that participate in a
+   virtual machine.
+
+   In case the application needs a fixed seed to generate a
+   repeatable random sequence, this set of function can be considered
+   consistent in full stand-alone applications only.
+
+   The VM pseudo-random number generator is also used by third party
+   modules to give the application a simple mean to configure the
+   number generator.
    
-   The @b math_extra module provides some mathematical functions that are not
-   commonly used in scripting languages.
+   @note The @b rand module provides a more general support to
+   pseudo-random number generation.
 */
 
 //Define the math_extra module class
-class MathExtraModule: public Falcon::Module
+class RndModule: public Falcon::Module
 {
 public:
    // initialize the module
-   MathExtraModule():
-      Module("math")
+   RndModule():
+      Module("rnd")
    {
-
-      //language( "en_US" );
-      //engineVersion( FALCON_VERSION_NUM );
-      //version( VERSION_MAJOR, VERSION_MINOR, VERSION_REVISION );
-
-      //============================================================
-      // Api Declartion
-      //
-      
-      // Hyperbolic
-      addMantra( new Falcon::Ext::FALCON_FUNCTION_NAME(cosh) );
-      addMantra( new Falcon::Ext::FALCON_FUNCTION_NAME(sinh) );
-      addMantra( new Falcon::Ext::FALCON_FUNCTION_NAME(tanh) );
-      
-      // Inverse Hyperbolic
-      addMantra( new Falcon::Ext::FALCON_FUNCTION_NAME(acosh) );
-      addMantra( new Falcon::Ext::FALCON_FUNCTION_NAME(asinh) );
-      addMantra( new Falcon::Ext::FALCON_FUNCTION_NAME(atanh) );
-
-      // Reciprocal trigonometric function
-      addMantra( new Falcon::Ext::FALCON_FUNCTION_NAME(sec) );
-      addMantra( new Falcon::Ext::FALCON_FUNCTION_NAME(cosec) );
-      addMantra( new Falcon::Ext::FALCON_FUNCTION_NAME(cotan) );
-
-      // Other
-      addMantra( new Falcon::Ext::FALCON_FUNCTION_NAME(lambda) );
-
       // Standard
       *this
-         << new Falcon::Ext::FALCON_FUNCTION_NAME(log)
-         << new Falcon::Ext::FALCON_FUNCTION_NAME(log10)
-         << new Falcon::Ext::FALCON_FUNCTION_NAME(log2)
-         << new Falcon::Ext::FALCON_FUNCTION_NAME(logN)
-         << new Falcon::Ext::FALCON_FUNCTION_NAME(exp)
-         << new Falcon::Ext::FALCON_FUNCTION_NAME(sqrt)
-         << new Falcon::Ext::FALCON_FUNCTION_NAME(mod)
-         << new Falcon::Ext::FALCON_FUNCTION_NAME(pow)
-         << new Falcon::Ext::FALCON_FUNCTION_NAME(sin)
-         << new Falcon::Ext::FALCON_FUNCTION_NAME(cos)
-         << new Falcon::Ext::FALCON_FUNCTION_NAME(tan)
-         << new Falcon::Ext::FALCON_FUNCTION_NAME(asin)
-         << new Falcon::Ext::FALCON_FUNCTION_NAME(acos)
-         << new Falcon::Ext::FALCON_FUNCTION_NAME(atan)
-         << new Falcon::Ext::FALCON_FUNCTION_NAME(atan2)
-         << new Falcon::Ext::FALCON_FUNCTION_NAME(rad2deg)
-         << new Falcon::Ext::FALCON_FUNCTION_NAME(deg2rad)
-         << new Falcon::Ext::FALCON_FUNCTION_NAME(fract)
-         << new Falcon::Ext::FALCON_FUNCTION_NAME(fint)
-         << new Falcon::Ext::FALCON_FUNCTION_NAME(round)
-         << new Falcon::Ext::FALCON_FUNCTION_NAME(floor)
-         << new Falcon::Ext::FALCON_FUNCTION_NAME(ceil)
-         << new Falcon::Ext::FALCON_FUNCTION_NAME(abs)
-         << new Falcon::Ext::FALCON_FUNCTION_NAME(factorial)
-         << new Falcon::Ext::FALCON_FUNCTION_NAME(permutations)
-         << new Falcon::Ext::FALCON_FUNCTION_NAME(combinations)
+         << new Falcon::Ext::FALCON_FUNCTION_NAME(random)
+         << new Falcon::Ext::FALCON_FUNCTION_NAME(randomChoice)
+         << new Falcon::Ext::FALCON_FUNCTION_NAME(randomPick)
+         << new Falcon::Ext::FALCON_FUNCTION_NAME(randomWalk)
+         << new Falcon::Ext::FALCON_FUNCTION_NAME(randomGrab)
+         << new Falcon::Ext::FALCON_FUNCTION_NAME(randomDice)
+         << new Falcon::Ext::FALCON_FUNCTION_NAME(randomSeed)
                ;
 
    }
-   virtual ~MathExtraModule() {}
+   virtual ~RndModule() {}
 };
 
 FALCON_MODULE_DECL
 {
-   Falcon::Module* mod = new MathExtraModule;
+   Falcon::Module* mod = new RndModule;
    return mod;
 }
 

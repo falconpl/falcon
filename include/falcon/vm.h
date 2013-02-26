@@ -26,6 +26,8 @@
 #include <falcon/contextmanager.h>
 #include <falcon/scheduler.h>
 
+#include <falcon/mersennetwister.h>
+
 #define FALCON_VM_DFAULT_CHECK_LOOPS 5000
 
 namespace Falcon {
@@ -288,6 +290,7 @@ public:
    const Scheduler& scheduler() const { return m_scheduler; }
    Scheduler& scheduler() { return m_scheduler; }
 
+
    //=========================================================
    // Utilities
    //=========================================================
@@ -295,6 +298,8 @@ public:
    int32 getNextProcessID();
    int32 getNextContextID();
    int32 getNextGroupID();
+
+   MTRand_interlocked& mtrand() const { return m_rand; }
 
 protected:
 
@@ -312,6 +317,9 @@ protected:
    ContextManager m_ctxMan;
 
    Scheduler m_scheduler;
+
+   mutable MTRand_interlocked m_rand;
+
 private:
    void joinProcessors();
 

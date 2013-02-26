@@ -12,8 +12,13 @@
 011 Homoiconic classes
 012 Codeblocks
 013 Garbage collecting (fast)
+014 Load and import
 
 020 Core module
+
+030 Feather module - math
+031 Feather module - rnd
+
 
 100 Advanced tests
 

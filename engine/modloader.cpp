@@ -120,43 +120,75 @@ bool ModLoader::sourceEncoding( const String& encName )
 }
 
 
-bool ModLoader::loadName(VMContext* tgtctx, const String& name, t_modtype type )
+bool ModLoader::loadName(VMContext* tgtctx, const String& name, t_modtype type, Module* loader )
 {
    String modName = name;
+
+   if( modName.startsWith("self.") )
+   {
+      if (loader != 0 )
+      {
+         modName = loader->name() + modName.subString(4);
+      }
+      else {
+         modName = modName.subString(4);
+      }
+   }
 
    // change "." into "/"
    length_t pos1 = modName.find( '.' );
    while( pos1 != String::npos )
    {
       modName.setCharAt( pos1, '/' );
+      // .something.name becomes ./something/name
+      if(pos1 == 0 )
+      {
+         modName.prepend('.');
+      }
       pos1 = modName.find( '.', pos1+1 );
    }
 
-   return loadFile( tgtctx, modName, type, true );
+   return loadFile( tgtctx, modName, type, true, loader );
 }
 
 
-bool ModLoader::loadFile( VMContext* tgtctx, const String& path, t_modtype type, bool bScan )
+bool ModLoader::loadFile( VMContext* tgtctx, const String& path, t_modtype type, bool bScan, Module* loader )
 {
    String uriPath = path;
    #ifdef FALCON_SYSTEM_WIN
    Path::winToUri(uriPath);
    #endif // FALCON_SYSTEM_WIN
    URI uri(uriPath);
-   return loadFile( tgtctx, uri, type, bScan );
+   return loadFile( tgtctx, uri, type, bScan, loader );
 }
 
 
-bool ModLoader::loadFile( VMContext* tgtctx, const URI& uri, t_modtype type, bool bScan )
+bool ModLoader::loadFile( VMContext* tgtctx, const URI& uri, t_modtype type, bool bScan, Module* loader )
 {
+   URI srcUri;
    URI tgtUri;
    TRACE( "ModLoader::loadFile: %s %d %d", uri.encode().c_ize(), type, bScan );
 
+   srcUri = uri;
+   // check if the host path is relative to the loader path
+   if( srcUri.path().startsWith("./") && loader != 0 && loader->uri() != "" )
+   {
+      URI loaderURI( loader->uri() );
+      // merge only if same scheme, or if we have empty scheme.
+      if( loaderURI.scheme() == srcUri.scheme() || srcUri.scheme().empty() )
+      {
+         Path loaderPath( loaderURI.path() );
+
+         srcUri.path( loaderPath.fulloc() + srcUri.path().subString(1) );
+         srcUri.scheme( loaderURI.scheme() ); // in case we have none.
+      }
+   }
+
    // is the file absolute?
-   Path path( URI::URLDecode( uri.path() ) );
+   Path path( URI::URLDecode( srcUri.path() ) );
    if( path.isAbsolute() || ! bScan )
    {
-      t_modtype etype = checkFile_internal( uri, type, tgtUri );
+      t_modtype etype = checkFile_internal( srcUri, type, tgtUri );
       if( etype != e_mt_none )
       {
          load_internal( tgtctx, "", tgtUri, etype );
@@ -166,6 +198,12 @@ bool ModLoader::loadFile( VMContext* tgtctx, const URI& uri, t_modtype type, boo
    }
    else
    {
+      // time to chop away ./ to add the paths.
+      while( srcUri.path().startsWith("./") )
+      {
+         srcUri.path( srcUri.path().subString(2) );
+      }
+
       // Search the file in the path elements.
       Private::PathList& plist = _p->m_plist;
       Private::PathList::iterator iter = plist.begin();
@@ -175,7 +213,7 @@ bool ModLoader::loadFile( VMContext* tgtctx, const URI& uri, t_modtype type, boo
          #ifdef FALCON_SYSTEM_WIN
          Path::winToUri(prefix);
          #endif // FALCON_SYSTEM_WIN
-         URI location( prefix + "/" + uri.path() );
+         URI location( prefix + "/" + srcUri.path() );
 
 
          if( location.isValid() )
@@ -295,7 +333,7 @@ void ModLoader::pathToName( const String &path, const String &modFile, String &m
    // Chop away the topmost part of the path.
    if( modFile.find( path ) == 0 )
    {
-      modName = modFile.subString( path.length()+1 );
+      modName = modFile.subString( path.length() );
    }
    else
    {
@@ -303,17 +341,26 @@ void ModLoader::pathToName( const String &path, const String &modFile, String &m
    }
 
    // chop away ../ ./ or /
-   if( modName.find( "../" ) == 0 )
+   bool found = true;
+   while( found )
    {
-      modName = modName.subString(3);
-   }
-   if( modName.find( "./" ) == 0 )
-   {
-      modName = modName.subString(2);
-   }
-   else if( modName.find( '/' ) == 0 )
-   {
-      modName = modName.subString(1);
+      found = false;
+
+      if( modName.find( "../" ) == 0 )
+      {
+         found = true;
+         modName = modName.subString(3);
+      }
+      if( modName.find( "./" ) == 0 )
+      {
+         found = true;
+         modName = modName.subString(2);
+      }
+      else if( modName.find( '/' ) == 0 )
+      {
+         found = true;
+         modName = modName.subString(1);
+      }
    }
 
    // chop away terminal extension.
@@ -505,6 +552,7 @@ void ModLoader::load_internal(
          {
             modName = modName.subString(0,modName.length()-3);
          }
+         TRACE( "ModLoader::load_internal -- loading dynmodule %s => %s ", uri.encode().c_ize(), modName.c_ize() );
 
          Module* output = m_dynLoader->load( uri.encode(), modName );
          ctx->pushData( FALCON_GC_STORE(modClass, output) );

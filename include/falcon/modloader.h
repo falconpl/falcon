@@ -140,6 +140,7 @@ public:
     \param path The path of the module.
     \param type Detect the type of the resource to be loaded or provide a
     specific type.
+    \param loader The module that originated the request, if any. Used to relativize file names.
     \return 0 If the module could not be found
     \throw Error* or appropriate error subclass in case of other errors.
     
@@ -147,7 +148,7 @@ public:
     the proper parent module names in case of self.xxx or .xxx module naming
     convnetion.
     */
-   bool loadName( VMContext* tgtctx, const String& name, t_modtype type=e_mt_none );
+   bool loadName( VMContext* tgtctx, const String& name, t_modtype type=e_mt_none, Module* loader = 0 );
    
    /** Loads a module through its physical path. 
     \param path The path of the module.
@@ -156,23 +157,25 @@ public:
     \param bScan if true and the path is relative, the module will be searched
     in the search path; else, it will be searched only relatively to the
     current directory.
+    \param loader The module that originated the request, if any. Used to relativize file names.
     \return 0 If the module could not be found
     \throw Error* or appropriate error subclass in case of other errors.
      
     */
-   bool loadFile( VMContext* tgtctx, const String& path, t_modtype type=e_mt_none, bool bScan = true );
+   bool loadFile( VMContext* tgtctx, const String& path, t_modtype type=e_mt_none, bool bScan = true, Module* loader = 0 );
    
    /** Loads a module through its physical path. 
     \param uri The uri of the module.
     \param type Detect the type of the resource to be loaded or provide a
     specific type.
     \param bScan if true and the path is relative, the module will be searched
+    \param loader The module that originated the request, if any. Used to relativize file names.
     \return 0 If the module could not be found
     \throw Error* or appropriate error subclass in case of other errors.
     
     This version uses an URI instead of a String.
     */
-   bool loadFile( VMContext* tgtctx, const URI& uri, t_modtype type=e_mt_none, bool bScan = false );
+   bool loadFile( VMContext* tgtctx, const URI& uri, t_modtype type=e_mt_none, bool bScan = false, Module* loader = 0 );
    //============================================================
    // Compilation process setting
    //

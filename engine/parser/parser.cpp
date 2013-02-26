@@ -34,7 +34,8 @@ namespace Parsing {
 Parser::Private::Private():
    m_nextTokenPos(0),
    m_tokenStack(0),
-   m_stateFrameID(0)
+   m_stateFrameID(0),
+   m_lastLine(0)
 
 {
 }
@@ -120,7 +121,8 @@ Parser::Parser():
    m_ctx(0),
    m_bIsDone(false),
    m_bInteractive(false),
-   m_consumeToken(0)
+   m_consumeToken(0),
+   m_lastLine(0)
 {
    _p = new Private;
 }
@@ -506,6 +508,8 @@ void Parser::popLexer()
       throw new CodeError( ErrorParam( e_underflow, __LINE__, __FILE__ ).extra("Parser::popLexer") );
    }
 
+   m_lastSource = _p->m_lLexers.back()->uri();
+   m_lastLine = _p->m_lLexers.back()->line();
    delete _p->m_lLexers.back();
    _p->m_lLexers.pop_back();
 }

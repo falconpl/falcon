@@ -5,7 +5,7 @@
 ####################################################################
 
 # Creates the proper module file name from the project name.
-falcon_define_module( CURRENT_MODULE math_extra )
+falcon_define_module( CURRENT_MODULE math )
 
 # Inclusion settings
 include_directories(
@@ -14,16 +14,14 @@ include_directories(
 
 # Sources files the module is built from.
 set(SRC_FILES 
-  math_extra.cpp
-  math_extra_mod.cpp
-  math_extra_ext.cpp
+  math.cpp
+  math_ext.cpp
 )
 
 # These are actually not needed by cmake to build. But if omitted they won't be
 # listed in the virtual file tree of Visual Studio.
 set(HDR_FILES
-  math_extra_ext.h
-  math_extra_mod.h
+  math_ext.h
 )
 
 # Builds and links from the source files

@@ -948,6 +948,8 @@ void Collector::suggestGC( bool all )
 
 void Collector::start()
 {
+   MESSAGE( "Collector::start" );
+
    if ( m_thMarker == 0 )
    {
       atomicSet(m_aLive, 1);
@@ -963,6 +965,8 @@ void Collector::start()
 
 void Collector::stop()
 {
+   MESSAGE( "Collector::stop" );
+
    if ( m_thMarker != 0 )
    {
       atomicSet(m_aLive,0);

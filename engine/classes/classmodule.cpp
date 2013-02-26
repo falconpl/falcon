@@ -179,13 +179,14 @@ void ClassModule::store( VMContext*, DataWriter* stream, void* instance ) const
       while( mri != mrlist.end() )
       {
          ModRequest* req = *mri;
-         uint32 count = (int) req->importDefCount();
+         uint32 count = (uint32) req->importDefCount();
          TRACE1( "ClassModule::store -- Request %d has %d imports", req->id(), count );
          stream->write( count );
          for( uint32 i = 0; i < count; ++i ) {
             ImportDef* idl = req->importDefAt(i);
             uint32 id = idl->id();
             stream->write( id );
+            TRACE2( "ClassModule::store -- Request %d -> import %d", req->id(), id );
          }
          ++mri;
       }
@@ -227,6 +228,7 @@ void ClassModule::store( VMContext*, DataWriter* stream, void* instance ) const
          Module::Private::Dependency* dep = *depi;
          dep->m_id = progID++;
          stream->write( dep->m_sourceName );
+         stream->write( dep->m_targetName );
          if( dep->m_variable != 0 )
          {
             stream->write( (int32) dep->m_variable->id() );
@@ -366,7 +368,6 @@ void ClassModule::restoreModule( Module* mod, DataReader* stream ) const
          }
          
          idlist.push_back(def);
-         ++progID;
       }
       catch( ... ) {
          delete def;
@@ -451,9 +452,10 @@ void ClassModule::restoreModule( Module* mod, DataReader* stream ) const
    progID = 0;
    while( progID < count ) 
    {
-      String sName;
+      String sSourceName, sName;
       int32 idSymbol, idDef;
       
+      stream->read( sSourceName );
       stream->read( sName );
       stream->read( idSymbol );
       stream->read( idDef );
@@ -486,7 +488,8 @@ void ClassModule::restoreModule( Module* mod, DataReader* stream ) const
       
       Module::Private::Dependency* dep = new Module::Private::Dependency( sName );
       dep->m_idef = idef;
-      dep->m_sourceName = sName;
+      dep->m_sourceName = sSourceName;
+      dep->m_targetName = sName;
       VarDataMap::VarData* vd = 0;
       if( idSymbol >= 0 ) {
          vd = mod->globals().getGlobal(idSymbol);

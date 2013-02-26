@@ -117,7 +117,7 @@ public:
        */
       ImportDef* m_idef;
            
-      /** The name of the symbol as it appares in the source module.
+      /** The name of the symbol as it appears in the source module.
        It is calculated from the import definition, once applied namespaces
        and/or name aliasing defined there, or set to the same name
        of the implicitly imported symbol in case of implicit import.
@@ -127,7 +127,11 @@ public:
        */
       String m_sourceName;
 
-      /** We are responsible ofthe waiting list -- requirements are in the module. */
+      /** The name of the symbol as it is referenced in the target (local) module.
+       */
+      String m_targetName;
+
+      /** We are responsible of the waiting list -- requirements are in the module. */
       typedef std::deque<Requirement*> WaitingList;
       
       /* Delayed requests waiting for this symbol to be resolved.
@@ -155,20 +159,23 @@ public:
          m_variable( 0 ),
          m_idef( 0 ),
          m_sourceName( name ),
+         m_targetName( name ),
          m_defLine( 0 )
       {}
       
-      Dependency( const String& name, Variable* sym ):
+      Dependency( const String& srcName, Variable* sym, const String& tgName ):
          m_variable( sym ),
          m_idef( 0 ),
-         m_sourceName( name ),
+         m_sourceName( srcName ),
+         m_targetName( tgName ),
          m_defLine( 0 )
       {}
       
-      Dependency( const String& name, Variable* sym, ImportDef* def ):
+      Dependency( const String& srcName, Variable* sym, const String& tgName, ImportDef* def ):
          m_variable( sym ),
          m_idef( def ),
-         m_sourceName( name ),
+         m_sourceName( srcName ),
+         m_targetName( tgName ),
          m_defLine( 0 )
       {}
 

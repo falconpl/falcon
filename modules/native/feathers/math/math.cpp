@@ -31,16 +31,22 @@
 */
 
 #include <falcon/module.h>
-#include "math_extra_ext.h"
+#include "math_ext.h"
 
 #include "version.h"
 
 /*#
-   @module feathers.math_extra Uncommon math functions
-   @brief Uncommon math functions
+   @module feathers.math
+   @brief Mathematical functions
+
+   The @b math module provides standard mathematical function that
+   operate on IEEE 64 bit double-precision floating point numbers.
    
-   The @b math_extra module provides some mathematical functions that are not
-   commonly used in scripting languages.
+   Functions available in this module cover:
+   - Trigonometry;
+   - Logarithms and exponentials;
+   - Floating point manipulation;
+   - Combinatory calculus.
 */
 
 //Define the math_extra module class
@@ -49,13 +55,8 @@ class MathExtraModule: public Falcon::Module
 public:
    // initialize the module
    MathExtraModule():
-      Module("math_extra")
+      Module("math")
    {
-
-      //language( "en_US" );
-      //engineVersion( FALCON_VERSION_NUM );
-      //version( VERSION_MAJOR, VERSION_MINOR, VERSION_REVISION );
-
       //============================================================
       // Api Declartion
       //
@@ -77,6 +78,36 @@ public:
 
       // Other
       addMantra( new Falcon::Ext::FALCON_FUNCTION_NAME(lambda) );
+
+      // Standard
+      *this
+         << new Falcon::Ext::FALCON_FUNCTION_NAME(log)
+         << new Falcon::Ext::FALCON_FUNCTION_NAME(log10)
+         << new Falcon::Ext::FALCON_FUNCTION_NAME(log2)
+         << new Falcon::Ext::FALCON_FUNCTION_NAME(logN)
+         << new Falcon::Ext::FALCON_FUNCTION_NAME(exp)
+         << new Falcon::Ext::FALCON_FUNCTION_NAME(sqrt)
+         << new Falcon::Ext::FALCON_FUNCTION_NAME(mod)
+         << new Falcon::Ext::FALCON_FUNCTION_NAME(pow)
+         << new Falcon::Ext::FALCON_FUNCTION_NAME(sin)
+         << new Falcon::Ext::FALCON_FUNCTION_NAME(cos)
+         << new Falcon::Ext::FALCON_FUNCTION_NAME(tan)
+         << new Falcon::Ext::FALCON_FUNCTION_NAME(asin)
+         << new Falcon::Ext::FALCON_FUNCTION_NAME(acos)
+         << new Falcon::Ext::FALCON_FUNCTION_NAME(atan)
+         << new Falcon::Ext::FALCON_FUNCTION_NAME(atan2)
+         << new Falcon::Ext::FALCON_FUNCTION_NAME(rad2deg)
+         << new Falcon::Ext::FALCON_FUNCTION_NAME(deg2rad)
+         << new Falcon::Ext::FALCON_FUNCTION_NAME(fract)
+         << new Falcon::Ext::FALCON_FUNCTION_NAME(fint)
+         << new Falcon::Ext::FALCON_FUNCTION_NAME(round)
+         << new Falcon::Ext::FALCON_FUNCTION_NAME(floor)
+         << new Falcon::Ext::FALCON_FUNCTION_NAME(ceil)
+         << new Falcon::Ext::FALCON_FUNCTION_NAME(abs)
+         << new Falcon::Ext::FALCON_FUNCTION_NAME(factorial)
+         << new Falcon::Ext::FALCON_FUNCTION_NAME(permutations)
+         << new Falcon::Ext::FALCON_FUNCTION_NAME(combinations)
+               ;
 
    }
    virtual ~MathExtraModule() {}

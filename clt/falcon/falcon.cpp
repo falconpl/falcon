@@ -144,6 +144,26 @@ void FalconApp::launch( const String& script )
    configureVM( vm, process );
 
    ModSpace* ms = process->modSpace();
+   // add the script path to the load path
+   try
+   {
+      URI scriptUri( script );
+      Path path(scriptUri.path());
+      if( path.fulloc() != "" )
+      {
+         scriptUri.path( path.fulloc() );
+         scriptUri.fragment("");
+         scriptUri.query("");
+         ms->modLoader()->addSearchPath(scriptUri.encode());
+      }
+   }
+   catch(Error *e)
+   {
+      log->log( Log::fac_app, Log::lvl_error, String( "Invalid script path: ") + e->describe(true) );
+      // try anyhow to proceed.
+      e->decref();
+   }
+
    Process* loadProc = ms->loadModule( script, true, false, true );
 
    log->log(Log::fac_app, Log::lvl_info, String("Starting loader process on: ") + script );

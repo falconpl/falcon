@@ -1,11 +1,11 @@
 ####################################################################
 # The Falcon Programming Language
 #
-# CMake configuration file for math_extra
+# CMake configuration file for rnd (Simple random)
 ####################################################################
 
 # Creates the proper module file name from the project name.
-falcon_define_module( CURRENT_MODULE math )
+falcon_define_module( CURRENT_MODULE rnd )
 
 # Inclusion settings
 include_directories(
@@ -14,16 +14,14 @@ include_directories(
 
 # Sources files the module is built from.
 set(SRC_FILES 
-  math.cpp
-  math_mod.cpp
-  math_ext.cpp
+  rnd.cpp
+  rnd_ext.cpp
 )
 
 # These are actually not needed by cmake to build. But if omitted they won't be
 # listed in the virtual file tree of Visual Studio.
 set(HDR_FILES
-  math_ext.h
-  math_mod.h
+  rnd_ext.h
 )
 
 # Builds and links from the source files

@@ -51,10 +51,14 @@ void ModCompiler::Context::onInputOver()
 {
    SourceParser& sp = m_owner->m_sp;
    ParserContext* pctx = static_cast<ParserContext*>(sp.context());
-   if( ! pctx->isTopLevel() )
+   if( pctx->currentFunc() != 0
+            || pctx->currentLitContext() != 0
+            || pctx->currentStmt() != 0
+            || pctx->currentClass() != 0
+            )
    {
       String error;
-      int line;
+      int line = 0;
       if( pctx->currentFunc() != 0 )
       {
          error = "Function not closed ";
@@ -75,11 +79,13 @@ void ModCompiler::Context::onInputOver()
          error = "Class not closed";
          line = pctx->currentClass()->declaredAt();
       }
-      else {
-         line = sp.currentLexer()->line();
+      else
+      {
+         error = "Element not closed";
+         line = sp.lastLine();
       }
 
-      sp.addError(e_runaway_eof, sp.currentSource(), sp.currentLexer()->line(), 0, line, error );
+      sp.addError(e_runaway_eof, sp.lastSource(), sp.lastLine(), 0, line, error );
    }
 
    Module* mod = m_owner->m_module;

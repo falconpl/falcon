@@ -369,6 +369,9 @@ Parsing::TokenInstance* SourceLexer::nextToken()
                   {
                      m_line++;
                      m_chr = 1;
+                     if ( m_hadImport ) {
+                        _p->m_nextTokens.push_back( m_parser->T_EOL.makeInstance(l,c) );
+                     }
                      m_hadImport = false;
                      return m_parser->T_EOL.makeInstance(l, c);
                   }

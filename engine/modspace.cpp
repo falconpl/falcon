@@ -143,39 +143,48 @@ Process* ModSpace::loadModule( const String& name, bool isUri,  bool asLoad, boo
    return process;
 }
 
-void ModSpace::loadModuleInProcess( Process* process, const String& name, bool isUri,  bool asLoad, bool isMain )
+void ModSpace::loadModuleInProcess( Process* process, const String& name, bool isUri,  bool asLoad, bool isMain, Module* loader )
 {
+   static Class* clsModule = Engine::instance()->moduleClass();
+
    process->adoptModSpace(this);
 
    VMContext* tgtContext = process->mainContext();
    tgtContext->call( m_loaderFunc );
    tgtContext->pushCode(&Engine::instance()->stdSteps()->m_returnFrameWithTop);
 
+   if( loader != 0 )
+   {
+      tgtContext->pushData(Item(clsModule, loader));
+   }
+   else {
+      tgtContext->pushData( Item() );
+   }
    tgtContext->pushData( FALCON_GC_HANDLE(new String(name)) );
    tgtContext->pushCode( &m_startLoadStep );
    int32 v = (isUri ? 1 : 0) | (asLoad ? 2 : 0) | (isMain ? 4 : 0);
    tgtContext->currentCode().m_seqId = v;
 }
 
-void ModSpace::loadModuleInProcess( const String& name, bool isUri, bool asLoad, bool isMain )
+void ModSpace::loadModuleInProcess( const String& name, bool isUri, bool asLoad, bool isMain, Module* loader )
 {
-   loadModuleInProcess( m_process, name, isUri, asLoad, isMain );
+   loadModuleInProcess( m_process, name, isUri, asLoad, isMain, loader );
 }
 
-void ModSpace::loadModuleInContext( const String& name, bool isUri, bool isLoad, bool isMain, VMContext* tgtContext )
+void ModSpace::loadModuleInContext( const String& name, bool isUri, bool isLoad, bool isMain, VMContext* tgtContext, Module* loader, bool getResult )
 {
    tgtContext->pushCode( &m_stepLoader );
-   tgtContext->currentCode().m_seqId = (isLoad ? 1:0) | (isMain ? 2:0);
+   tgtContext->currentCode().m_seqId = (isLoad ? 1:0) | (isMain ? 2:0) |  (getResult? 4 : 0);
 
    bool loading;
 
    if( isUri )
    {
-      loading = m_loader->loadFile( tgtContext, name, ModLoader::e_mt_none, true );
+      loading = m_loader->loadFile( tgtContext, name, ModLoader::e_mt_none, true, loader );
    }
    else
    {
-      loading = m_loader->loadName( tgtContext, name );
+      loading = m_loader->loadName( tgtContext, name, ModLoader::e_mt_none, loader );
    }
 
    if( ! loading ) {
@@ -261,6 +270,7 @@ void ModSpace::resolveDeps( VMContext* ctx, Module* mod )
    static Class* modcls = Engine::instance()->moduleClass();
 
    ctx->pushData( Item( modcls, mod ) );
+   ctx->pushData( Item() );
    ctx->pushCode( &steps->m_pop );
    ctx->pushCode( &m_stepResolver );
 }
@@ -723,16 +733,18 @@ void ModSpace::PStepLoader::apply_( const PStep* self, VMContext* ctx )
    Module* mod = static_cast<Module*>(ctx->topData().asInst());
    ModSpace* ms = pstep->m_owner;
 
-   if( seqId < 10 )
+   bool isCalled = (seqId & 4) != 0;
+
+   if( seqId < 0x10 )
    {
-      TRACE( "ModSpace::PStepLoader::apply_ step 0 on module %s", mod->name().c_ize() );
+      TRACE( "ModSpace::PStepLoader::apply_ step 0 - %d on module %s", seqId, mod->name().c_ize() );
 
       bool isLoad = (seqId & 1) != 0;
       bool isMain = (seqId & 2) != 0;
       mod->setMain( isMain );
       mod->usingLoad( isLoad );
 
-      seqId = 10;
+      seqId |= 0x10;
       // store the module
       ms->store( mod );
 
@@ -749,15 +761,16 @@ void ModSpace::PStepLoader::apply_( const PStep* self, VMContext* ctx )
       if( mod->depsCount() > 0 )
       {
          // push the code that will solve it.
+         ctx->pushData( Item() );
          ctx->pushCode( &ms->m_stepResolver );
          return;
       }
    }
 
-   if( seqId == 10 )
+   if( (seqId &0xF0) == 0x10 )
    {
-      TRACE( "ModSpace::PStepLoader::apply_ step 2 on module %s", mod->name().c_ize() );
-      seqId++;
+      TRACE( "ModSpace::PStepLoader::apply_ step 10 on module %s", mod->name().c_ize() );
+      seqId = (seqId&0xf) | 0x20;
       // Now that deps are resolved, do imports.
       ms->importInModule( mod, error );
       if( error != 0 ) {
@@ -782,9 +795,10 @@ void ModSpace::PStepLoader::apply_( const PStep* self, VMContext* ctx )
    }
 
    // fill attributes
-   if(seqId == 11 )
+   if( (seqId &0xF0) == 0x20 )
    {
-      seqId++;
+      TRACE( "ModSpace::PStepLoader::apply_ step 11 on module %s", mod->name().c_ize() );
+      seqId = (seqId&0xf) | 0x30;
       bool bDone = false;
 
       // check module attributes
@@ -811,23 +825,34 @@ void ModSpace::PStepLoader::apply_( const PStep* self, VMContext* ctx )
       }
    }
 
-   if( seqId == 12 )
+   if( (seqId &0xF0) == 0x30 )
    {
-      seqId++;
+      TRACE( "ModSpace::PStepLoader::apply_ step 12 on module %s", mod->name().c_ize() );
+      seqId = (seqId&0xf) | 0x40;
 
       // Push the main funciton only if this is not a main module.
-      if( mod->getMainFunction() != 0 && ! mod->isMain() ) {
+      if( mod->getMainFunction() != 0 && ! mod->isMain() )
+      {
+         static PStep* pop = &Engine::instance()->stdSteps()->m_pop;
          // we're pretty done
-         ctx->popData();
-         ctx->popCode();
-
+         // if directly called...
+         if( isCalled )
+         {
+            // we don't want the module...
+            ctx->popData();
+            ctx->popCode();
+         }
+         else {
+            // and if indirect, we don't want the main function result.
+            ctx->resetCode(pop);
+         }
          ctx->call( mod->getMainFunction() );
          return;
       }
    }
 
    // Third step -- we can remove self and the module.
-   TRACE( "ModSpace::PStepLoader::apply_ step 2 on module %s", mod->name().c_ize() );
+   TRACE( "ModSpace::PStepLoader::apply_ step 13 (end) on module %s", mod->name().c_ize() );
    // leave the module in the stack if it's main.
    if( mod->isMain() )
    {
@@ -836,7 +861,7 @@ void ModSpace::PStepLoader::apply_( const PStep* self, VMContext* ctx )
    }
    else
    {
-      ctx->popData();
+      //ctx->popData();
    }
 
    ctx->popCode();
@@ -848,8 +873,13 @@ void ModSpace::PStepResolver::apply_( const PStep* self, VMContext* ctx )
    const ModSpace::PStepResolver* pstep = static_cast<const ModSpace::PStepResolver* >(self);
    int& seqId = ctx->currentCode().m_seqId;
 
+   // Here's the module that was previouously resolved (if any):
+   Module* resolved = ctx->topData().isNil() ? 0 : static_cast<Module*>(ctx->topData().asInst());
+   ctx->popData();
+
    // the module we're working on is at top data stack.
    Module* mod = static_cast<Module*>(ctx->topData().asInst());
+
    ModSpace* ms = pstep->m_owner;
 
    uint32 depsCount = mod->depsCount();
@@ -860,6 +890,13 @@ void ModSpace::PStepResolver::apply_( const PStep* self, VMContext* ctx )
    {
       // don't alter seqid now, we might check this dependency again.
       ImportDef* idef = mod->getDep( seqId );
+      if( resolved != 0 )
+      {
+         TRACE( "ModSpace::PStepResolver::apply_  on saving resolved module %s on request %d/%s of module %s",
+                  resolved->name().c_ize(), seqId, idef->modReq()->name().c_ize(), mod->name().c_ize() );
+         idef->modReq()->module( resolved );
+         resolved = 0;
+      }
 
       // do we have a module to import?
       if( ! idef->processed() )
@@ -875,13 +912,16 @@ void ModSpace::PStepResolver::apply_( const PStep* self, VMContext* ctx )
                if( other == 0 )
                {
                   if( idef->loaded() ) {
+                     // we should not be here
+                     fassert2( false, "loaded but not resolved. ");
                      ++seqId;
                      continue;
                   }
                   idef->loaded(true);
 
                   // No? -- load it -- and always launch main
-                  ms->loadModuleInContext( idef->sourceModule(), idef->isUri(), idef->isLoad(), false, ctx );
+                  // -- keep current sequence ID
+                  ms->loadModuleInContext( idef->sourceModule(), idef->isUri(), idef->isLoad(), false, ctx, mod, false );
                   // -- and wait for the process to have resolved it.
                   return;
                }
@@ -976,6 +1016,9 @@ void ModSpace::PStepDynModule::apply_( const PStep* self, VMContext* ctx )
       ctx->popData();
       ctx->resetCode( &ms->m_stepExecMain );
       // proceed as with a newly loaded module -- consider it main (seqId=0).
+
+      static PStep* pop = &Engine::instance()->stdSteps()->m_pop;
+      ctx->pushCode(pop);
       ctx->pushCode( &ms->m_stepLoader );
    }
 }
@@ -1043,13 +1086,18 @@ void ModSpace::PStepDynMantra::apply_( const PStep* self, VMContext* ctx )
 
 void ModSpace::PStepExecMain::apply_( const PStep*, VMContext* ctx )
 {
+   static PStep* pop = &Engine::instance()->stdSteps()->m_pop;
+
+   Module* mod = static_cast<Module*>( ctx->topData().asInst() );
+   TRACE( "ModSpace::PStepExecMain::apply_  module \"%s\" found, resolving deps",
+                  ctx->topData().asString()->c_ize() );
+
+   mod->setMain(false);
    // we're called just once
    ctx->popCode();
 
-   Module* mod = static_cast<Module*>( ctx->topData().asInst() );
-   mod->setMain(false);
-
    if( mod->getMainFunction() != 0 ) {
+      ctx->pushCode( pop );
       ctx->call( mod->getMainFunction());
    }
 }
@@ -1058,6 +1106,7 @@ void ModSpace::PStepStartLoad::apply_( const PStep* ps, VMContext* ctx )
 {
    const PStepStartLoad* sl = static_cast<const PStepStartLoad*>(ps);
 
+   Module* invoker = ctx->opcodeParam(1).isNil() ? 0 : static_cast<Module*>(ctx->opcodeParam(1).asInst());
    String modName = *ctx->opcodeParam(0).asString();
    int32 vals = ctx->currentCode().m_seqId;
    bool isUri = (vals & 1)!=0;
@@ -1067,9 +1116,9 @@ void ModSpace::PStepStartLoad::apply_( const PStep* ps, VMContext* ctx )
    // we're called just once
    ctx->popCode();
    // I am not sure we actually need to pop. If not, we can use the modName by ref.
-   ctx->popData(1);
+   ctx->popData(2);
 
-   sl->m_owner->loadModuleInContext(modName, isUri, asLoad, isMain, ctx );
+   sl->m_owner->loadModuleInContext(modName, isUri, asLoad, isMain, ctx, invoker, true );
 }
 
 }

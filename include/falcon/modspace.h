@@ -155,10 +155,10 @@ public:
     */
    Process* loadModule( const String& name, bool isUri, bool asLoad, bool isMain = false);
 
-   void loadModuleInProcess( const String& name, bool isUri, bool asLoad, bool isMain = false);
-   void loadModuleInProcess( Process* prc, const String& name, bool isUri, bool asLoad, bool isMain = false);
+   void loadModuleInProcess( const String& name, bool isUri, bool asLoad, bool isMain = false, Module* loader = 0);
+   void loadModuleInProcess( Process* prc, const String& name, bool isUri, bool asLoad, bool isMain = false, Module* loader = 0);
 
-   void loadModuleInContext( const String& name, bool isUri, bool asLoad, bool isMain, VMContext* tgtContext );
+   void loadModuleInContext( const String& name, bool isUri, bool asLoad, bool isMain, VMContext* tgtContext, Module* caller, bool getResult );
 
    //===================================================================
    // Service functions

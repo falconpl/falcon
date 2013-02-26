@@ -517,6 +517,16 @@ public:
 
    void consumeUpTo( const Token& token ) { m_consumeToken = &token; }
    
+   /**
+    * Returns the last line parsed by the previous lexer.
+    *
+    * After a lexer terminates (and is removed), the last line
+    * is recorded.
+    */
+   int lastLine() const {return m_lastLine;}
+
+   const String& lastSource() const { return m_lastSource; }
+
 protected:
    void* m_ctx;
    bool m_bIsDone;
@@ -541,6 +551,8 @@ private:
    Parser::Private* _p;
 
    const Token* m_consumeToken;
+   int m_lastLine;
+   String m_lastSource;
 };
 
 }

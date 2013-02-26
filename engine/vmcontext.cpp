@@ -1927,7 +1927,15 @@ Item* VMContext::resolveVariable( const String& name, bool isGlobal, bool forAss
     }
 
    // didn't find it locally, try globally
-   Module* mod = func->module();
+   Module* mod = 0;
+   CallFrame* curFrame = m_callStack.m_top;
+   do
+   {
+      mod = curFrame->m_function->module();
+      curFrame--;
+   }
+   while ( curFrame > m_callStack.m_base && mod == 0  );
+
    if( mod != 0 ) {
       // findGlobal will find also externally resolved variables.
       Item* global = mod->getGlobalValue( name );
@@ -1960,7 +1968,9 @@ Item* VMContext::resolveVariable( const String& name, bool isGlobal, bool forAss
    {
       // if the module space is the same as the vm modspace,
       // mod->findGlobal has already searched for it
-      Item* item = process()->modSpace()->findExportedValue( name );
+      Item* item = mod != 0 ?
+         process()->modSpace()->findExportedOrGeneralValue( mod, name )
+         :  process()->modSpace()->findExportedValue( name ) ;
       if( item != 0 ) {
          return item;
       }

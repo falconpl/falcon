@@ -1,5 +1,5 @@
 /* FALCON - The Falcon Programming Language.
- * FILE: math_extra_ext.h
+ * FILE: math_ext.h
  * 
  * Extra math functions
  * Interface extension functions
@@ -44,27 +44,55 @@
 
 namespace Falcon { 
     namespace Ext {
-        // Hyperbolic
-        FALCON_DECLARE_FUNCTION(cosh,"arg:N")
-        FALCON_DECLARE_FUNCTION(sinh,"arg:N")
-        FALCON_DECLARE_FUNCTION(tanh,"arg:N")
+         // Hyperbolic
+         FALCON_DECLARE_FUNCTION(cosh,"arg:N")
+         FALCON_DECLARE_FUNCTION(sinh,"arg:N")
+         FALCON_DECLARE_FUNCTION(tanh,"arg:N")
 
-        // Inverse Hyperbolic
-        FALCON_DECLARE_FUNCTION(acosh,"arg:N")
-        FALCON_DECLARE_FUNCTION(asinh,"arg:N")
-        FALCON_DECLARE_FUNCTION(atanh,"arg:N")
+         // Inverse Hyperbolic
+         FALCON_DECLARE_FUNCTION(acosh,"arg:N")
+         FALCON_DECLARE_FUNCTION(asinh,"arg:N")
+         FALCON_DECLARE_FUNCTION(atanh,"arg:N")
 
-        // Other
-        FALCON_DECLARE_FUNCTION(lambda,"num1:N,num2:N")
+         // Other
+         FALCON_DECLARE_FUNCTION(lambda,"num1:N,num2:N")
 
-        // Reciprocal trigonometric function
-        FALCON_DECLARE_FUNCTION(sec,"arg:N")
-        FALCON_DECLARE_FUNCTION(cosec,"arg:N")
-        FALCON_DECLARE_FUNCTION(cotan,"arg:N")
+         // Reciprocal trigonometric function
+         FALCON_DECLARE_FUNCTION(sec,"arg:N")
+         FALCON_DECLARE_FUNCTION(cosec,"arg:N")
+         FALCON_DECLARE_FUNCTION(cotan,"arg:N")
+
+         // plain standard math
+         FALCON_DECLARE_FUNCTION(log,"arg:N")
+         FALCON_DECLARE_FUNCTION(log10,"arg:N")
+         FALCON_DECLARE_FUNCTION(log2,"arg:N")
+         FALCON_DECLARE_FUNCTION(logN,"arg:N, base:N")
+         FALCON_DECLARE_FUNCTION(exp,"arg:N")
+         FALCON_DECLARE_FUNCTION(sqrt,"arg:N")
+         FALCON_DECLARE_FUNCTION(mod,"arg:N")
+         FALCON_DECLARE_FUNCTION(pow,"arg:N")
+         FALCON_DECLARE_FUNCTION(sin,"arg:N")
+         FALCON_DECLARE_FUNCTION(cos,"arg:N")
+         FALCON_DECLARE_FUNCTION(tan,"arg:N")
+         FALCON_DECLARE_FUNCTION(asin,"arg:N")
+         FALCON_DECLARE_FUNCTION(acos,"arg:N")
+         FALCON_DECLARE_FUNCTION(atan,"arg:N")
+         FALCON_DECLARE_FUNCTION(atan2,"arg:N")
+         FALCON_DECLARE_FUNCTION(rad2deg,"arg:N")
+         FALCON_DECLARE_FUNCTION(deg2rad,"arg:N")
+         FALCON_DECLARE_FUNCTION(fract,"arg:N")
+         FALCON_DECLARE_FUNCTION(fint,"arg:N")
+         FALCON_DECLARE_FUNCTION(round,"arg:N")
+         FALCON_DECLARE_FUNCTION(floor,"arg:N")
+         FALCON_DECLARE_FUNCTION(ceil,"arg:N")
+         FALCON_DECLARE_FUNCTION(abs,"arg:N")
+         FALCON_DECLARE_FUNCTION(factorial,"arg:N")
+         FALCON_DECLARE_FUNCTION(permutations, "n:N,p:N" )
+         FALCON_DECLARE_FUNCTION(combinations, "n:N,p:N" )
     }
 } // namespace Falcon::Ext
 
 #endif
 
-/* end of math_ext_ext.h */
+/* end of math_ext.h */
 

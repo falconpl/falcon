@@ -643,7 +643,10 @@ Error* Module::addImport( ImportDef* def )
       if( name.getCharAt( name.length() -1 ) != '*' )
       {
           addImplicitImport( name, def->sr().line() );
-          _p->m_depsByName[name]->m_idef = def;
+          // get the just added dependency
+          Private::Dependency* dep = _p->m_depsByName[name];
+          dep->m_idef = def;
+          dep->m_sourceName = def->sourceSymbol(i);
       }
       else if( def->sourceModule().size() != 0 )
       {
@@ -771,7 +774,7 @@ void Module::addImportRequest( Requirement* req,
    // add the dependency to the symbol.
    Private::Dependency* dep = new Private::Dependency( req->name() );
    dep->m_idef = id;
-   dep->m_defLine = id->sr().line();
+   dep->m_defLine = req->sourceRef().line();
    dep->m_waitings.push_back( req );
    _p->m_deplist.push_back( dep );
    _p->m_depsByName[req->name()] = dep;
@@ -801,7 +804,7 @@ Variable* Module::addImplicitImport( const String& name, int line , bool& isNew)
    // store a space for an external value in the global values vector.
    vd = m_globals.addExtern( name, 0 );
 
-   Private::Dependency* dep = new Private::Dependency(name, &vd->m_var);
+   Private::Dependency* dep = new Private::Dependency(name, &vd->m_var,name );
 
    _p->m_deplist.push_back(dep);
    _p->m_depsByName[name] = dep;
@@ -838,7 +841,7 @@ Variable* Module::addRequirement( Requirement* cr )
    if( dep == 0 )
    {
       // should not happen -- but if it happen, we can only search in global space
-      dep = new Private::Dependency( symName, imported );
+      dep = new Private::Dependency( symName, imported, symName );
       _p->m_depsByName[symName] = dep;
       _p->m_deplist.push_back(dep);
    }

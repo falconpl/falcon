@@ -106,6 +106,7 @@ class Parser::Private
    typedef std::list<StateFrame*> StateStack;
    StateStack m_lStates;
    int m_stateFrameID;
+   int m_lastLine;
 
 
    Private();
