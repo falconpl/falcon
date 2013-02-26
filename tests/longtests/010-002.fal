@@ -20,16 +20,15 @@ data.reserve(size)
 mtx = Mutex()
 
 function process()
-   //i = 0
-   //while i < size10
-   for i = 1 to size10
-    /*  mtx.lock()
+   for i = 0 to size10
+      
+      mtx.lock()
       data += data[-1] + 1
       if i % size1000 == 0
          > "STEP"
       end
-      mtx.unlock() */
-   //++i
+      mtx.unlock()
+   
    end
 end
 
@@ -42,12 +41,10 @@ p = functions()
 p.launch()
 
 > "Check loop"
-
 for i = 1 to data.len - 1
    if data[i] != data[i-1] + 1
       return "Check failed"
    end
    if i % size10 == 0: > "STEP"
 end
-
 return "OK"
