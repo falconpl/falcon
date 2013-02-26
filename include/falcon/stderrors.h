@@ -109,7 +109,11 @@ public:
    /** Returns the global instance of the UnserializableError handler Class.
     */
    Class* unserializable() const { return m_unserializable; }
-   
+
+   /** Returns the global instance of the TypeError handler Class.
+    */
+   Class* type() const { return m_type; }
+
    /** Adds all the error classes to the engine builtins. 
     
     Usually called by the engine at startup.
@@ -132,6 +136,7 @@ private:
    Class* m_math;
    Class* m_link;
    Class* m_unserializable;
+   Class* m_type;
 };
 
 }

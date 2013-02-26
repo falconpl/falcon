@@ -42,6 +42,7 @@ StdErrors::StdErrors()
    m_math = new ClassMathError;
    m_link = new ClassLinkError;
    m_unserializable = new ClassUnserializableError;
+   m_type = new ClassTypeError;
 }
 
 
@@ -67,6 +68,7 @@ void StdErrors::addBuiltins() const
    eng->addMantra(m_param);
    eng->addMantra(m_link);
    eng->addMantra(m_unserializable);
+   eng->addMantra(m_type);
 }
    
 }

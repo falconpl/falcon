@@ -1,0 +1,79 @@
+/*
+@name For/to loop with symbols
+@category Loops
+
+@output   
+Testing basic for i = 1 to 5
+Looping: 1
+Looping: 2
+Looping: 3
+Looping: 4
+Looping: 5
+
+Testing basic for i = 1 to 5, 1
+Looping: 1
+Looping: 2
+Looping: 3
+Looping: 4
+Looping: 5
+
+Testing basic for i = 1 to 5, 2
+Looping: 1
+Looping: 3
+Looping: 5
+
+Testing basic for i = 1 to 5, -1
+Done
+@endoutput
+*/
+
+x = VMContext()
+dd = x.dataDepth
+> "Testing basic for i = 1 to 5"
+start= 1
+stop = 50/10
+step = 1
+
+for i = start to stop
+   > "Looping: ", i
+end
+
+dd1 = x.dataDepth
+if dd != dd1
+   raise "Corrupted stack at loop 1: " + dd1 + "/" + dd 
+end
+
+>
+> "Testing basic for i = 1 to 5, 1"
+for i = start to stop,step
+   > "Looping: ", i
+end
+
+dd1 = x.dataDepth
+if dd != dd1
+   raise "Corrupted stack at loop 2"
+end
+
+>
+> "Testing basic for i = 1 to 5, 2"
+for i = start to stop, step+1
+   > "Looping: ", i
+end
+
+dd1 = x.dataDepth
+if dd != dd1
+   raise "Corrupted stack at loop 3"
+end
+
+>
+> "Testing basic for i = 1 to 5, -1"
+for i = start to stop, -step
+   > "Looping: ", i
+end
+
+dd1 = x.dataDepth
+if dd != dd1
+   raise "Corrupted stack at loop 4"
+end
+
+> "Done"

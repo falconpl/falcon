@@ -402,7 +402,7 @@ void Class::op_getProperty( VMContext* ctx, void* data, const String& property )
    }
    else
    {
-      FALCON_RESIGN_XERROR( AccessTypeError, e_prop_acc, ctx,
+      FALCON_RESIGN_XERROR( AccessError, e_prop_acc, ctx,
                    .extra(property) );
    }
 }

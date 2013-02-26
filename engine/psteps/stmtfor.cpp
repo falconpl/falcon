@@ -26,12 +26,12 @@
 
 #include <falcon/errors/accesserror.h>
 #include <falcon/errors/codeerror.h>
+#include <falcon/errors/typeerror.h>
 
 #include <falcon/psteps/stmtfor.h>
 
 #include <falcon/engine.h>
 #include <falcon/synclasses.h>
-
 
 #include <vector>
 
@@ -728,9 +728,21 @@ void StmtForTo::apply_( const PStep* ps, VMContext* ctx )
          break;
    }
    
+   if( ! ctx->opcodeParam(0).isOrdinal()
+            || ! ctx->opcodeParam(1).isOrdinal()
+            || ! ctx->opcodeParam(2).isOrdinal() )
+   {
+      throw new TypeError( ErrorParam( e_for_not_numeric, __LINE__, SRC ) );
+   }
+
+   if( ! ctx->topData().isInteger() ) ctx->topData().setInteger(ctx->topData().forceInteger());
+   if( ! ctx->opcodeParam(1).isInteger() ) ctx->opcodeParam(1).setInteger(ctx->opcodeParam(1).forceInteger());
+   if( ! ctx->opcodeParam(2).isInteger() ) ctx->opcodeParam(2).setInteger(ctx->opcodeParam(1).forceInteger());
+
    int64 step = ctx->topData().asInteger();
    int64 end = ctx->opcodeParam(1).asInteger();
    int64 start = ctx->opcodeParam(2).asInteger();
+
    
    // in some cases, we don't even start the loop
    if( (end > start && step < 0) || (start > end && step > 0 ) )

@@ -2,35 +2,34 @@
 @name Mutex check
 @category Parallel
 
-Adds 100k elements to an interlocked array, with random waits
+Adds 1Mk elements to an interlocked array 
+as fast as possible.
 
-@long 1001
+@long 1010
 @checkpoint STEP
 @result OK
 */
 
 load rnd
 
-randomSeed(1024)
-
+size = 1_000_000
+size10 = size/10
+size1000 = size/1000
 data = [1]
-data.reserve(100000)
+data.reserve(size)
 mtx = Mutex()
 
 function process()
-   for i = 0 to 10000
-      if random(1,2) == 1 
-         r = random(1,10)
-         rest(r)
-      end
-      
-      mtx.lock()
+   //i = 0
+   //while i < size10
+   for i = 1 to size10
+    /*  mtx.lock()
       data += data[-1] + 1
-      if data.len % 100 == 0
+      if i % size1000 == 0
          > "STEP"
       end
-      mtx.unlock()
-   
+      mtx.unlock() */
+   //++i
    end
 end
 
@@ -43,12 +42,12 @@ p = functions()
 p.launch()
 
 > "Check loop"
+
 for i = 1 to data.len - 1
    if data[i] != data[i-1] + 1
       return "Check failed"
    end
+   if i % size10 == 0: > "STEP"
 end
-
-> "STEP"
 
 return "OK"

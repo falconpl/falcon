@@ -315,6 +315,7 @@ add_library(falcon_engine SHARED
   errors/operanderror.cpp
   errors/paramerror.cpp
   errors/syntaxerror.cpp
+  errors/typeerror.cpp
   errors/unserializableerror.cpp
   errors/unsupportederror.cpp
 

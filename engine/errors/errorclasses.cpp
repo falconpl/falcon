@@ -35,6 +35,7 @@
 #include <falcon/errors/paramerror.h>
 #include <falcon/errors/matherror.h>
 #include <falcon/errors/unserializableerror.h>
+#include <falcon/errors/typeerror.h>
 #include <falcon/errorclasses.h>
 
 // Initialization

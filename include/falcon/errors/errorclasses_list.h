@@ -93,6 +93,10 @@ FALCON_DECLARE_ERROR_CLASS( MathError )
 /** Class handler for MathError exceptions. 
  */
 FALCON_DECLARE_ERROR_CLASS( UnserializableError )
+
+/** Class handler for MathError exceptions.
+ */
+FALCON_DECLARE_ERROR_CLASS( TypeError )
    
 /* end of errorclasses_list.h */
    

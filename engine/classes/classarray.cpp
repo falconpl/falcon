@@ -31,7 +31,9 @@
 namespace Falcon {
 
 ClassArray::ClassArray():
-   Class("Array", FLC_CLASS_ID_ARRAY )
+   ClassUser("Array", FLC_CLASS_ID_ARRAY ),
+   FALCON_INIT_METHOD(alloc),
+   FALCON_INIT_METHOD(reserve)
 {
 }
 
@@ -150,11 +152,6 @@ bool ClassArray::op_init( VMContext* ctx, void* instance, int pcount ) const
    return false;
 }
 
-
-void ClassArray::op_getProperty( VMContext* ctx, void* self, const String& property ) const
-{
-   Class::op_getProperty( ctx, self, property );
-}
 
 
 void ClassArray::op_getIndex( VMContext* ctx, void* self ) const
@@ -547,97 +544,52 @@ void ClassArray::op_next( VMContext* ctx, void* instance ) const
 }
 
 
-
-#if 0
-void ClassArray::op_toString( VMContext* ctx, void* self ) const
-   // If we're long 0, surrender.
-   ItemArray* array = static_cast<ItemArray*>( self );
-
-   if( array->length() == 0 )
-   {
-      ctx->stackResult( 1, "[]" );
-      return;
-   }
-   VMContext* ctx = ctx->currentContext();
-
-   // initialize the deep loop
-   ctx->addDataSlot() = 0;  // local 0 -- counter
-   ctx->addDataSlot().setString("[ ");  // local 1 -- currently elaborated string.
-
-   // add an item for op_toString
-   ctx->pushData( Item() );
-
-   m_toStringNextOp.apply( &m_toStringNextOp, vm );
-}
-
-
-ClassArray::ToStringNextOp::ToStringNextOp()
+FALCON_DEFINE_METHOD_P1(ClassArray, alloc )
 {
-   apply = apply_;
-}
+   Item* i_size = ctx->param(0);
 
-
-void ClassArray::ToStringNextOp::apply_( const PStep* step, VMachine* vm )
-{
-   VMContext* ctx = ctx->currentContext();
-
-   // array in self
-   ItemArray* array = static_cast<ItemArray*>( ctx->self().asInst() );
-
-   // loop counter in 0
-   length_t i = (length_t) ctx->local( 0 )->asInteger();
-
-   // string in 1
-   String* myStr = ctx->local( 1 )->asString();
-   fassert( myStr != 0 )
-
-   // have we been called from deep?
-   if( i > 0 )
+   if( i_size != 0 && ! i_size->isOrdinal() )
    {
-      // in this case, get the top data -- now converted by the deep call.
-      fassert( ctx->topData().asString() )
-      myStr->append(*ctx->topData().asString());
+      throw paramError(__LINE__, SRC );
    }
 
-   // continue with the stringification loop
-   for( ; i < array->length(); ++i )
+   if( i_size == 0 )
    {
-      if( i > 0 )
+      ItemArray* array = new ItemArray;
+      ctx->returnFrame(FALCON_GC_HANDLE(array));
+   }
+   else {
+      if( i_size->forceInteger() < 0 )
       {
-         myStr->append( ", " );
-      }
-
-      Class* cls;
-      void* inst;
-      Item& item = array->at( i );
-
-      // if it's a simple item, add it's base representation
-      if( ! item.asClassInst( cls, inst ) )
-      {
-         myStr->append( item.describe() );
+         throw paramError(__LINE__, SRC );
       }
       else
       {
-         // Not simple; we may be deep -- so prepare
-         ctx->local( 0 )->setInteger( i+1 );
-         ctx->topData() = item;
-
-         ctx->ifDeep( step );
-         cls->op_toString( vm, inst );
-         if( ctx->wentDeep() ) return;
-
-         // pfew, not deep! just go on as usual
-         fassert( ctx->topData().isString() );
-         myStr->append( *ctx->topData().asString() );
+         ItemArray* array = new ItemArray;
+         array->reserve(i_size->forceInteger());
+         ctx->returnFrame(FALCON_GC_HANDLE(array));
       }
    }
-
-   // we're done, put our string in A.
-   myStr->append(" ]");
-   ctx->popData();
-   ctx->topData() = myStr->garbage();
 }
-#endif
+
+
+FALCON_DEFINE_METHOD_P1(ClassArray, reserve )
+{
+   Item* i_size = ctx->param(0);
+   if( i_size == 0 || ! i_size->isOrdinal() || i_size->forceInteger() < 0 )
+   {
+      throw paramError(__LINE__, SRC );
+   }
+
+   Class* cls = 0;
+   void* data = 0;
+   ctx->self().asClassInst(cls, data);
+
+   ItemArray* array = static_cast<ItemArray*>( cls->getParentData(methodOf(), data) );
+
+   array->reserve(i_size->forceInteger());
+   ctx->returnFrame(Item(array->handler(), array));
+}
 
 }
 

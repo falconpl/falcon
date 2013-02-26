@@ -20,6 +20,8 @@
 #include <falcon/class.h>
 
 #include <falcon/pstep.h>
+#include <falcon/classes/classuser.h>
+#include <falcon/method.h>
 
 namespace Falcon
 {
@@ -30,7 +32,7 @@ class ItemArray;
  Class handling an array as an item in a falcon script.
  */
 
-class FALCON_DYN_CLASS ClassArray: public Class
+class FALCON_DYN_CLASS ClassArray: public ClassUser
 {
 public:
 
@@ -64,22 +66,17 @@ public:
    virtual void op_toString( VMContext* ctx, void* self ) const;
    virtual void op_call( VMContext* ctx, int32 paramCount, void* instance ) const;
 
-   virtual void op_getProperty( VMContext* ctx, void* self, const String& prop) const;
    virtual void op_getIndex( VMContext* ctx, void* self ) const;
    virtual void op_setIndex( VMContext* ctx, void* self ) const;
 
    virtual void op_iter( VMContext* ctx, void* instance ) const;
    virtual void op_next( VMContext* ctx, void* instance ) const;
 
+
 private:
-#if 0
-   class FALCON_DYN_CLASS ToStringNextOp: public PStep {
-   public:
-      ToStringNextOp();
-      static void apply_( const PStep*, VMachine* vm );
-   } m_toStringNextOp;
-#endif
    
+   FALCON_DECLARE_STATIC_METHOD(alloc,"size:[N>1]");
+   FALCON_DECLARE_METHOD(reserve,"size:N>1");
 };
 
 }
