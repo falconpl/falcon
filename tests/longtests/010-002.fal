@@ -1,5 +1,5 @@
 /*
-@name Mutex check
+@name Mutex check without delay
 @category Parallel
 
 Adds 1Mk elements to an interlocked array 

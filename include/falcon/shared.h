@@ -154,6 +154,7 @@ protected:
 
    virtual int32 lockedConsumeSignal( VMContext* target, int32 count = 1 );
    virtual void lockedSignal( int32 count = 1 );
+   virtual int32 lockedSignalCount() const;
 
    void lockSignals() const;
    void unlockSignals() const;

@@ -120,6 +120,12 @@ int32 Shared::signalCount() const
    return count;
 }
 
+int32 Shared::lockedSignalCount() const
+{
+   return _p->m_signals;
+}
+
+
 void Shared::broadcast()
 {
    ContextManager* notifyTo = 0;

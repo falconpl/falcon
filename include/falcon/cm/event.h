@@ -44,7 +44,7 @@ protected:
    virtual int32 lockedConsumeSignal(VMContext*, int32 count );
 
 private:
-   atomic_int m_status;
+   int m_status;
 };
 
 /*#

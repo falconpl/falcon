@@ -40,31 +40,18 @@ SharedEvent::~SharedEvent()
 
 int32 SharedEvent::consumeSignal( VMContext* ctx, int32 )
 {
-   lockSignals();
-   if( atomicCAS(m_status, 1, 0) )
-   {
-      Shared::lockedConsumeSignal(ctx, 1);
-      unlockSignals();
-      return 1;
-   }
-   unlockSignals();
-   return 0;
+   return Shared::consumeSignal(ctx);
 }
 
 int32 SharedEvent::lockedConsumeSignal( VMContext* ctx, int32)
 {
-   if( atomicCAS(m_status, 1, 0) )
-   {
-      Shared::lockedConsumeSignal(ctx, 1);
-      return 1;
-   }
-   return 0;
+   return Shared::lockedConsumeSignal(ctx, 1);
 }
 
 void SharedEvent::set()
 {
    lockSignals();
-   if( atomicCAS(m_status, 0, 1) ) {
+   if( ! lockedSignalCount() ) {
       lockedSignal(1);
    }
    unlockSignals();
