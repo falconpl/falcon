@@ -1,5 +1,5 @@
 /*
-@name Event w/o delay
+@name Semaphore with delay
 @category Parallel
 
 @long 110
@@ -11,33 +11,35 @@
 load rnd
 
 randomSeed(123123)
-size = 100_000
+size = 10000
 size10 = size/10
 size100 = size/100
 data = []
 data.reserve(size)
 pos = 1
 
-evtGo = Event()
-evtDone = Event()
+evtGo = Semaphore()
+evtDone = Semaphore()
 barrier = Barrier()
 
 function process()
-   w = Waiter( evtGo, barrier )
    loop
-      res = w.wait()
+      res = Parallel.wait( evtGo, barrier )
       if res == barrier: break
             
       pos++
       data += pos
-      evtDone.set()
+      evtDone.post()
    end
 end
 
 
 function control()
    for i = 1 to size
-      evtGo.set()
+      evtGo.post()
+      if random(0,0,1)
+         rest( random(1,10) )
+      end
       if i % size100 == 0: > "STEP"      
       evtDone.wait()
    end   
@@ -45,7 +47,7 @@ function control()
 end
 
 
-> "Event w/o delay"
+> "Semaphore with delay"
 p = Parallel( process, process, control )
 p.launch()
 
