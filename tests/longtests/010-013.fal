@@ -1,0 +1,75 @@
+/*
+@name Fair queue with delay
+@category Parallel
+
+@long 100
+@checkpoint STEP
+
+@result OK
+*/
+
+load rnd
+
+randomSeed(123121)
+size = 10000
+size100 = size/100
+
+agents = 5
+data = []
+queue = SyncQueue(true) // fair
+for i = 1 to agents
+   data += -1
+end
+
+fence_read = Fence(agents)
+bar_wait_for_news = Barrier()
+barrier = Barrier()
+count = 0
+
+function process( id )
+   waiter = Waiter( barrier )   
+   waiter.add( queue, {=>
+      v = queue.pop()
+      if v != count
+         raise "Agent " + id + " found count out of sequence at " + count
+      end
+      
+      fence_read.signal()
+   })
+      
+   waiter.wait()
+end
+
+
+function control()
+   for i = 1 to size      
+      if random(0,0,1)
+         rest( random(1,10) )
+      end
+      // ask the agents to post 
+      func = [queue.push]
+      for j = 0 to agents-1
+         func += count
+      end
+      func()
+            
+      if i % size100 == 0: > "STEP"      
+      
+      fence_read.wait()
+      ++count      
+   end   
+   // declare we're done.
+   barrier.open()
+end
+
+
+> "Fair queue w/ delay"
+pfunc = [Parallel, control]
+for i = 0 to agents-1
+   pfunc += [[process, i]]
+end
+
+p = pfunc()
+p.launch()
+
+return "OK"
