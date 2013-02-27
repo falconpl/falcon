@@ -88,7 +88,7 @@ private:
       virtual void* run();
       int checkpointCount();
       void setStream( Stream* s ) { m_readStream = s; }
-      void setCheckpoint( const String& cp ) { m_checkPoint = cp; }
+      void setCheckpoint( const String& cp ) { m_checkPoint = cp; m_cks = 0; }
 
    private:
       int m_cks;

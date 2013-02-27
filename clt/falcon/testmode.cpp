@@ -483,7 +483,7 @@ String* TestMode::longTest( ScriptData* sd, Process* loadProc )
          void* dummy = 0;
          thread->join( dummy );
          delete static_cast<String*>(dummy);
-         output.write(String(" ").replicate(70).A("\r"));
+         output.write(String(" ").replicate(78).A("\r"));
          output.flush();
          throw;
       }
@@ -527,7 +527,7 @@ void TestMode::progress( TextWriter& output, ScriptData* sd, int count )
 
    output.write(String(" ").replicate(TEST_PROGRESS_BAR_LENGTH - filled));
    output.write(" ");
-   output.write(String().N(pct, "%02.2f").A("%\r"));
+   output.write(String().N(pct, "%02.2f").A("%   \r"));
    output.flush();
 }
 
