@@ -59,14 +59,14 @@ void apply_expr_assign( const Rule&, Parser& p )
    {
       ctx->accessSymbols(list->front());
       ti->setValue(
-         new ExprAssign( firstPart, list->front() ),
+         new ExprAssign( firstPart, list->front(), v1->line(), v1->chr() ),
          treestep_deletor );
    }
    else
    {
       // a list assignment.
 
-      ExprArray* array = new ExprArray;
+      ExprArray* array = new ExprArray(v1->line(), v1->chr() );
       List::iterator iter = list->begin();
       while( iter != list->end() )
       {
@@ -78,7 +78,7 @@ void apply_expr_assign( const Rule&, Parser& p )
       }
 
       ti->setValue(
-         new ExprAssign( firstPart, array ),
+         new ExprAssign( firstPart, array, v1->line(), v1->chr() ),
          treestep_deletor );
    }
    // clear, so we keep the expr even if destroyed
