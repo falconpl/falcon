@@ -49,30 +49,56 @@ void SharedFence::signal( int32 count )
    }
 
    lockSignals();
-   uint32 oldLevel = atomicFetch(m_level);
-   if( atomicAdd(m_level, -count) <= 0 && oldLevel > 0)
+   uint32 oldLevel = m_level;
+   m_level -= count;
+   if( m_level <= 0 && oldLevel > 0)
    {
       Shared::lockedSignal(1);
    }
    unlockSignals();
 }
 
+int32 SharedFence::level() const
+{
+   lockSignals();
+   int32 l = m_level;
+   unlockSignals();
+   return l;
+}
+
+int32 SharedFence::count() const
+{
+   lockSignals();
+   int32 l = m_fenceCount;
+   unlockSignals();
+   return l;
+}
+
+void SharedFence::count( int32 count )
+{
+   lockSignals();
+   m_fenceCount = count;
+   unlockSignals();
+}
 
 int32 SharedFence::consumeSignal( VMContext* ctx, int32 )
 {
-   int32 result = Shared::consumeSignal(ctx, 1);
-   if( result > 0 ) {
+   lockSignals();
+   int32 result = Shared::lockedConsumeSignal(ctx, 1);
+   if( result > 0 )
+   {
       // yay, we can proceed!
       if( result )
       {
          if( m_bEventSemantic ) {
-            atomicSet(m_level, atomicFetch(m_fenceCount));
+            m_level = m_fenceCount;
          }
          else {
-            atomicAdd(m_level, atomicFetch(m_fenceCount));
+            m_level += m_fenceCount;
          }
       }
    }
+   unlockSignals();
    return result;
 }
 
@@ -84,10 +110,10 @@ int32 SharedFence::lockedConsumeSignal( VMContext* ctx, int32)
       if( result )
       {
          if( m_bEventSemantic ) {
-            atomicSet(m_level, atomicFetch(m_fenceCount));
+            m_level = m_fenceCount;
          }
          else {
-            atomicAdd(m_level, atomicFetch(m_fenceCount));
+            m_level += m_fenceCount;
          }
       }
    }

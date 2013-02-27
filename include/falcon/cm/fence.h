@@ -39,18 +39,18 @@ public:
    virtual void signal( int32 count = 1 );
    virtual int32 consumeSignal( VMContext*, int32 count = 1 );
 
-   int32 level() const { return atomicFetch(m_level); }
-   int32 count() const { return atomicFetch(m_fenceCount); }
+   int32 level() const;
+   int32 count() const;
    bool isEvent() const { return m_bEventSemantic; }
 
-   void count( int32 count ) { atomicSet(m_fenceCount, count); }
+   void count( int32 count );
 
 protected:
    virtual int32 lockedConsumeSignal( VMContext*, int32 count );
 
 private:
-   atomic_int m_level;
-   atomic_int m_fenceCount;
+   int32 m_level;
+   int32 m_fenceCount;
    bool m_bEventSemantic;
 };
 

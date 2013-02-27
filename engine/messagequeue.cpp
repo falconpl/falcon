@@ -74,9 +74,10 @@ MessageQueue::MessageQueue( ContextManager* mgr, const String& name ):
    // create a dummy token
    m_lastToken = m_firstToken = new Token;
 
+   m_firstFence = 0;
    m_firstToken->m_sequence = 0;
    m_firstToken->m_readCount = 0;
-   m_lastToken->m_next = 0;
+   m_firstToken->m_next = 0;
 }
 
 
@@ -225,7 +226,7 @@ bool MessageQueue::subscribe(VMContext* ctx)
    {
       // ready to disengage -- check it before signaling,
       // or the waiter may get the signals.
-      if ( mqf->level() + 1 >= mqf->count() )
+      if ( mqf->level() <= 1 )
       {
          // remove the current fence
          if( prev != 0 )

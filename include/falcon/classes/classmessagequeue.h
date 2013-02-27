@@ -171,6 +171,25 @@ private:
      at the moment the wait is entered.
     */
    FALCON_DECLARE_METHOD( wait, "timeout:[N]" );
+
+   /*#
+     @method subscribe MessageQueue
+     @brief Explicitly subscribe the currently running context to the message queue.
+
+     This is implicitly done when a first wait() is issued on the queue, but
+     the invoker might want to subscriber at a earlier moment and then receive
+     the messages that were sent in the meanwhile at a later time.
+    */
+   FALCON_DECLARE_METHOD( subscribe, "" );
+
+   /*#
+     @method unsubscribe MessageQueue
+     @brief Unsubscribe the currently running context from the message queue.
+
+     From this moment on, the context will not receive the messages sent to the queue
+     anymore, until resubscribed or waiting again on the queue.
+    */
+   FALCON_DECLARE_METHOD( unsubscribe, "" );
 };
 
 }

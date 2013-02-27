@@ -19,22 +19,26 @@ agents = 5
 data = []
 data.reserve(size)
 queue = MessageQueue() // fair
-for i = 1 to agents
-   data += -1
-end
 
 mtx = Mutex()
-barrier = Barrier()
-
 function process( id )
-   waiter = Waiter( barrier )   
-   waiter.add( queue, {=>
-      v = queue.pop()
-      > "Got: ",v 
-      mtx.lock()
-      data[v] += id
-   })
-      
+   
+   sem = Semaphore()
+   waiter = Waiter( sem )   
+   waiter.add( queue, 
+      {=>
+         v = queue.get()
+                  
+         mtx.lock()
+         data[v] += id
+         // not needed, we're going to wait.
+         //mtx.unlock()
+         
+         if v+1 == size
+            sem.post()
+         end
+      })
+         
    waiter.wait()
 end
 
@@ -42,7 +46,7 @@ end
 function control()
    queue.subscribersFence(agents).wait()
 
-   for i = 1 to size      
+   for i = 0 to size -1
       if random(0,0,1)
          rest( random(1,10) )
       end
@@ -55,8 +59,6 @@ function control()
             
       if i % size100 == 0: > "STEP"      
    end   
-   // declare we're done.
-   barrier.open()
 end
 
 
@@ -77,10 +79,10 @@ for i = 1 to agents
 end
 
 
-for i = 0 to data.len
+for i = 0 to data.len-1
    if data[i] != count
-      > "Check failed at step " + i
-      return failed
+      > "Check failed at step " + i + ": "+ data[i]
+      return "Failed"
    end
    if i % size10 == 0: > "STEP"
 end

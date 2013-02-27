@@ -48,7 +48,9 @@ ClassMessageQueue::ClassMessageQueue():
       FALCON_INIT_METHOD(peek),
       FALCON_INIT_METHOD(subscribersFence),
       FALCON_INIT_METHOD(tryWait),
-      FALCON_INIT_METHOD(wait)
+      FALCON_INIT_METHOD(wait),
+      FALCON_INIT_METHOD(subscribe),
+      FALCON_INIT_METHOD(unsubscribe)
 {
    static Class* shared = Engine::instance()->sharedClass();
    addParent(shared);
@@ -72,7 +74,7 @@ bool ClassMessageQueue::op_init( VMContext* ctx, void*, int pCount ) const
       Item* i_name = ctx->opcodeParams(pCount);
       if( ! i_name->isString() )
       {
-         throw FALCON_SIGN_XERROR( ParamError, e_inv_params, .extra("S") );
+         throw FALCON_SIGN_XERROR( ParamError, e_inv_params, .extra("[S]") );
       }
 
       name = *i_name->asString();
@@ -250,6 +252,24 @@ FALCON_DEFINE_METHOD_P( ClassMessageQueue, wait )
    self->subscribe(ctx);
 
    ClassShared::genericClassWait(methodOf(), ctx, pCount);
+}
+
+FALCON_DEFINE_METHOD_P1( ClassMessageQueue, subscribe )
+{
+   MessageQueue* self = static_cast<MessageQueue*>(ctx->self().asClass()->getParentData(this->methodOf(), ctx->self().asInst()) );
+
+   // subscribe (no-op if already subscribed)
+   self->subscribe(ctx);
+   ctx->returnFrame();
+}
+
+FALCON_DEFINE_METHOD_P1( ClassMessageQueue, unsubscribe )
+{
+   MessageQueue* self = static_cast<MessageQueue*>(ctx->self().asClass()->getParentData(this->methodOf(), ctx->self().asInst()) );
+
+   // unsubscribe (no-op if not subscribed)
+   self->unsubscribe(ctx);
+   ctx->returnFrame();
 }
 
 }
