@@ -268,17 +268,7 @@ size_t FStream::readAvailable( int32 msec )
 
    FD_ZERO( &set );
    FD_SET( fd, &set );
-   if( m_ptrIntr.assigned() )
-   {
-      int* pipe_fds = (int*) m_ptrIntr->sysData();
-      last = pipe_fds[0];
-
-      FD_SET( last, &set );
-      if( last < fd )
-         last = fd;
-   }
-   else
-      last = fd;
+   last = fd;
 
    if ( msec >= 0 ) {
       tvp = &tv;
@@ -292,18 +282,6 @@ size_t FStream::readAvailable( int32 msec )
    {
       case 1:
       case 2:
-         if ( m_ptrIntr.assigned() && FD_ISSET( ((int*) m_ptrIntr->sysData())[0], &set ) )
-         {
-            m_status = m_status | t_interrupted;
-            m_ptrIntr->reset();
-            if( m_bShouldThrow )
-            {
-               throw new InterruptedError( ErrorParam( e_interrupted, __LINE__, __FILE__ ) );
-            }
-
-            return -1;
-         }
-
          return FD_ISSET( fd, &set ) ? 1 : 0;
 
       case -1:
@@ -333,17 +311,7 @@ size_t FStream::writeAvailable( int32 msec )
 
    poller[0].fd = fd;
    poller[0].events = POLLOUT;
-
-   if ( m_ptrIntr.assigned() )
-   {
-      int* poll_fds = (int*) m_ptrIntr->sysData();
-
-      fds = 2;
-      poller[1].fd = poll_fds[0];
-      poller[1].events = POLLIN;
-   }
-   else
-      fds = 1;
+   fds = 1;
 
 
    int res;
@@ -352,18 +320,6 @@ size_t FStream::writeAvailable( int32 msec )
    if ( res == 0 )
    {
       m_lastError = 0;
-      if( m_ptrIntr.assigned()  && (poller[1].revents & POLLIN) != 0 )
-      {
-         m_ptrIntr->reset();
-         m_status = m_status | t_interrupted;
-         if( m_bShouldThrow )
-         {
-            throw new InterruptedError( ErrorParam( e_interrupted, __LINE__, __FILE__ ) );
-         }
-
-         return -1;
-      }
-
       if( (poller[0].revents & ( POLLOUT | POLLHUP ) ) != 0 )
          return 1;
    }

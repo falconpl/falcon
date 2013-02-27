@@ -111,9 +111,9 @@ bool ClassDataReader::op_init( VMContext* ctx, void* instance, int pcount ) cons
       {
          DataReader* wr = static_cast<DataReader*>( instance );
          wr->changeStream(
-               static_cast<StreamCarrier*>(data)->m_underlying, false, false );
+               static_cast<StreamCarrier*>(data)->m_underlying, false );
          // this data is going to be added to gc very soon.
-         return wr;
+         return false;
       }      
    }
    

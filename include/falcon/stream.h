@@ -25,9 +25,7 @@
 
 #include <falcon/setup.h>
 #include <falcon/types.h>
-
-#include <falcon/refpointer.h>
-#include <falcon/interrupt.h>
+#include <falcon/refcounter.h>
 
 namespace Falcon {
 
@@ -61,9 +59,7 @@ public:
       /** Last required operation is unsupported on this stream. */
       t_unsupported = 0x8,
       /** The stream has been invalidated. */
-      t_invalid = 0x10,
-      /** Last I/O operation has been interrupted. */
-      t_interrupted = 0x20
+      t_invalid = 0x10
    } t_status ;
 
    /** Enumeration representing the current status of the stream. */
@@ -73,11 +69,12 @@ public:
       ew_end
    } e_whence;
 
+   typedef LocalRef<Stream> L;
+
    /** Copy constructor.
     The base class copies the status and the value of the last error.
    */
    Stream( const Stream &other );
-   virtual ~Stream();
 
    /** Returns the current stream status.
     The status may be one of the t_status enumeration,
@@ -117,10 +114,6 @@ public:
     In this case, the system error ID can be retreived through lastError().
    */
    inline bool error() const;
-
-   /** Returns true if this stream has been interrupted during a blocking operation. */
-   inline bool interrupted() const;
-
 
    /** Reads from target stream.
 
@@ -225,11 +218,6 @@ public:
    /** Utility to throw an unsupported error when an operation is unsupported. */
    void throwUnsupported();
 
-   inline void setInterrupter( const ref_ptr<Interrupt> &ptr )
-   {
-      m_ptrIntr = ptr;
-   }
-
    void gcMark( uint32 mark ) { m_mark = mark; }
    uint32 gcMark() const { return m_mark; }
 
@@ -239,12 +227,14 @@ protected:
    size_t m_lastError;
    bool m_bShouldThrow;
 
-   ref_ptr<Interrupt> m_ptrIntr;
-
    /** Initializes the base stream class. */
    Stream();
+   virtual ~Stream();
 
    friend class Transcoder;
+
+private:
+   FALCON_REFERENCECOUNT_DECLARE_INCDEC(Stream);
 };
 
 
@@ -307,8 +297,6 @@ inline bool Stream::invalid() const
    { return (status() & t_invalid ) != 0; }
 inline bool Stream::error() const
    { return ( status() & t_error ) != 0; }
-inline bool Stream::interrupted() const
-   { return ( status() & t_interrupted ) != 0; }
 
 } //end of Falcon namespace
 

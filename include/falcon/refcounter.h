@@ -52,7 +52,7 @@ namespace Falcon {
 */
 
 template<class __T>
-class FALCON_DYN_CLASS RefCounter
+class RefCounter
 {
 public:
    /** Creates the reference counter.
@@ -74,6 +74,40 @@ public:
 private:
    mutable atomic_int m_count;
 };
+
+/**
+ * Class localizing in a local stack a reference counted entity.
+ *
+ * A problem with classes being reference counted internally is that
+ * they do not give direct access to their destructor, raising the need
+ * to use heap instances.
+ *
+ * This class takes a reference counted entity (without adding a reference
+ * count at it), and decrements its reference at destruction; it can then be
+ * used to automatically drop a reference, and eventually destroy, an entitity
+ * that was meant to be created in a local function stack, but that needs to
+ * be referenced.
+ *
+ */
+template<class __T>
+class LocalRef
+{
+public:
+
+   LocalRef( __T* t ):
+      m_data( t )
+   {}
+
+   ~LocalRef() { m_data->decref(); }
+   __T* operator->(){ return m_data; }
+   __T& operator*() { return *m_data;}
+   operator __T* () { return m_data;}
+
+private:
+   __T* m_data;
+};
+
+
 
 #define FALCON_REFERENCECOUNT_DECLARE_INCDEC(clsname) \
    private:\

@@ -493,7 +493,7 @@ void ModLoader::load_internal(
             throw makeError( e_nofile, __LINE__, uri.encode() );
          }
          ins->shouldThrow(true);
-         TextReader input( ins, m_tcoder, true );
+         TextReader input( ins, m_tcoder );
          // compiler gets the ownership of input.
          Module* output = m_compiler->compile( &input, uri.encode(), modName, type == e_mt_ftd );
 
@@ -625,7 +625,7 @@ void ModLoader::PStepSave::apply_( const PStep*, VMContext* ctx )
       /* no break */
    case 1:
       seqId++;
-      if( ! storer->commit( ctx, output, false) ) {
+      if( ! storer->commit( ctx, output ) ) {
          return;
       }
       /* no break */

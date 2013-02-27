@@ -58,7 +58,7 @@ public:
     DataWriter have an according endianity default setting.
    */
 
-   DataWriter( Stream* stream, t_endianity endian = e_LE, bool bOwn = false );
+   DataWriter( Stream* stream, t_endianity endian = e_LE );
 
    /** Constructor for immediate delegation.
 

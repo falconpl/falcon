@@ -26,16 +26,16 @@
 
 namespace Falcon {
 
-StreamBuffer::StreamBuffer( Stream *underlying, bool bOwn, uint32 bufSize ):
+StreamBuffer::StreamBuffer( Stream *underlying, uint32 bufSize ):
    m_bufSize( bufSize ),
    m_changed( false ),
    m_bufPos(0),
    m_bufLen(0),
    m_filePos(0),
    m_bReseek( false ),
-   m_stream( underlying ),
-   m_streamOwner( bOwn )
+   m_stream( underlying )
 {
+   m_stream->incref();
    m_buffer = (byte *) malloc( m_bufSize );
 }
 
@@ -46,14 +46,10 @@ StreamBuffer::StreamBuffer( const StreamBuffer &other ):
    m_bufPos( other.m_bufPos ),
    m_bufLen( other.m_bufLen ),
    m_filePos( other.m_filePos ),
-   m_bReseek( other.m_bReseek ),
-   m_streamOwner( other.m_streamOwner )
+   m_bReseek( other.m_bReseek )
 {
-   if( m_streamOwner )
-      m_stream = dyncast<Stream*>(other.m_stream->clone());
-   else
-      m_stream = other.m_stream;
-
+   m_stream = other.m_stream;
+   m_stream->incref();
    m_buffer = (byte *) malloc( m_bufSize );
 }
 
@@ -61,10 +57,7 @@ StreamBuffer::StreamBuffer( const StreamBuffer &other ):
 StreamBuffer::~StreamBuffer()
 {
    flush();
-
-   if( m_streamOwner )
-      delete m_stream;
-
+   m_stream->decref();
    free( m_buffer );
 }
 

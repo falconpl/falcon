@@ -30,18 +30,38 @@ Writer::Writer():
    m_bufPos(0),
    m_bufSize(0),
    m_gcMark(0),
-   m_bOwnStream(false),
    m_stream(0)
 {}
 
-Writer::Writer( Stream* stream, bool bOwn ):
+Writer::Writer( Stream* stream ):
    m_gcMark(0),
-   m_bOwnStream(bOwn),
    m_stream(stream)
 {
+   if( stream != 0 )
+   {
+      stream->incref();
+   }
+
    m_bufSize = Sys::_getPageSize();
    m_bufPos = 0;
    m_buffer = new byte[m_bufSize];
+}
+
+
+Writer::Writer( const Writer& other ):
+   m_gcMark(0)
+{
+   if( other.m_stream != 0 )
+   {
+      other.m_stream->incref();
+   }
+
+   m_stream = other.m_stream;
+   m_bufSize = other.m_bufSize;
+   m_bufPos = other.m_bufPos;
+   m_buffer = new byte[m_bufSize];
+
+   memcpy( m_buffer, other.m_buffer, other.m_bufSize );
 }
 
 
@@ -49,31 +69,32 @@ Writer::~Writer()
 {
    flush();
    delete[] m_buffer;
-   if ( m_bOwnStream )
+   if ( m_stream != 0 )
    {
-      delete m_stream;
+      m_stream->decref();
    }
 }
 
 void Writer::delegate( Writer& target )
 {
-   if( target.m_bOwnStream )
+   if( target.m_stream )
    {
-      delete target.m_stream;
+      target.m_stream->decref();
    }
 
    delete[] target.m_buffer;
 
    target.m_stream = this->m_stream;
-   target.m_bOwnStream = this->m_bOwnStream;
 
    target.m_buffer = this->m_buffer;
    target.m_bufPos = this->m_bufPos;
    target.m_bufSize = this->m_bufSize;
 
+   this->m_bufPos = 0;
+   this->m_bufSize = 0;
    this->m_buffer = 0;
    this->m_stream = 0;
-   this->m_bOwnStream = false;
+
 }
 
 void Writer::setBufferSize( length_t bs )
@@ -181,28 +202,38 @@ bool Writer::writeRaw( byte* data, size_t size )
 }
 
 
- void Writer::changeStream( Stream* s, bool bOwn, bool bDiscard )
+ void Writer::changeStream( Stream* s, bool bDiscard )
  {
     if( bDiscard )
-    {
-       m_mtx.lock();
-       m_bufPos = 0;
-       m_mtx.unlock();
-    }
-    else
+
+    if( ! bDiscard )
     {
        flush();
     }
 
-    m_mtx.lock();
-    if ( m_bOwnStream )
+    if( s != m_stream )
     {
-       delete s;
+       if( s != 0 )
+       {
+          s->incref();
+       }
+
+       m_mtx.lock();
+       if ( m_stream != 0 )
+       {
+          m_stream->decref();
+       }
+
+       if( bDiscard )
+       {
+          m_bufPos = 0;
+       }
+
+       m_stream = s;
+       m_mtx.unlock();
     }
 
-    m_bOwnStream = bOwn;
-    m_stream = s;
-    m_mtx.unlock();
+
  }
 
 }

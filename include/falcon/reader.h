@@ -121,7 +121,7 @@ public:
 
     If it was owned, the previous stream is destroyed.
     */
-   virtual void changeStream( Stream* s, bool bOwn = false, bool bDiscard = false );
+   virtual void changeStream( Stream* s, bool bDiscard = false );
       
    /** Returns true if the underlying stream is exhausted. */
    bool eof();
@@ -131,8 +131,9 @@ public:
    
 protected:
    /** Create for normal operations. */
-   Reader( Stream* stream, bool bOwn = false );
+   Reader( Stream* stream );
 
+   Reader( const Reader& other );
    /** Create for immediate delegation */
    Reader();
    
@@ -194,7 +195,6 @@ protected:
    length_t m_readSize;
 
 protected:
-   bool m_bOwnStream;
    Stream* m_stream;
 };
 

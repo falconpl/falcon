@@ -86,7 +86,7 @@ public:
 
     If it was owned, the previous stream is destroyed.
     */
-   virtual void changeStream( Stream* s, bool bOwn = false, bool bDiscard = false );
+   virtual void changeStream( Stream* s, bool bDiscard = false );
 
    Stream* underlying() const { return m_stream; }
 
@@ -106,7 +106,10 @@ public:
 
 protected:
    /** Create for normal operations. */
-   Writer( Stream* stream, bool bOwn = false );
+   Writer( Stream* stream );
+
+   /** Gets the other stream and increfs it. */
+   Writer( const Writer& other );
 
    /** Create for immediate delegation. */
    Writer();
@@ -123,7 +126,6 @@ protected:
    uint32 m_gcMark;
 
 protected:
-   bool m_bOwnStream;
    Stream* m_stream;
 
 private:

@@ -311,34 +311,16 @@ size_t FStream::readAvailable( int32 msec )
 
    HANDLE hFile = data->hFile;
    HANDLE waiting[2];
-   //DWORD nWaitingCount = 1;
+   DWORD nWaitingCount = 1;
    DWORD waitTime = msec < 0 ? INFINITE : msec;
 
    waiting[0] = hFile;
-   if( m_ptrIntr.assigned() )
-   {
-      //nWaitingCount = 2;
-      waiting[1] = (HANDLE) m_ptrIntr->sysData();
-   }
 
-   DWORD res = WaitForMultipleObjects( 2, waiting, FALSE, waitTime );
+   DWORD res = WaitForMultipleObjects( nWaitingCount, waiting, FALSE, waitTime );
 
    if ( res == WAIT_OBJECT_0 )
    {
       return 1;
-   }
-
-   // Interrupted?
-   if ( res == WAIT_OBJECT_0 + 1 )
-   {
-      m_ptrIntr->reset();
-
-      if( m_bShouldThrow )
-      {
-         throw new InterruptedError( ErrorParam( e_interrupted, __LINE__, __FILE__ ) );
-      }
-
-      return -1;
    }
 
    return 0;
@@ -355,34 +337,16 @@ size_t FStream::writeAvailable( int32 msec )
 
    HANDLE hFile = data->hFile;
    HANDLE waiting[2];
-   //DWORD nWaitingCount = 1;
+   DWORD nWaitingCount = 1;
    DWORD waitTime = msec < 0 ? INFINITE : msec;
 
    waiting[0] = hFile;
-   if( m_ptrIntr.assigned() )
-   {
-      //nWaitingCount = 2;
-      waiting[1] = (HANDLE) m_ptrIntr->sysData();
-   }
 
    DWORD res = WaitForMultipleObjects( 2, waiting, FALSE, waitTime );
 
    if ( res == WAIT_OBJECT_0 )
    {
       return 1;
-   }
-
-   // Interrupted?
-   if ( res == WAIT_OBJECT_0 + 1 )
-   {
-      m_ptrIntr->reset();
-
-      if( m_bShouldThrow )
-      {
-         throw new InterruptedError( ErrorParam( e_interrupted, __LINE__, __FILE__ ) );
-      }
-
-      return -1;
    }
 
    return 0;

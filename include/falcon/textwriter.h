@@ -49,14 +49,14 @@ public:
     \param stream The stream to be accessed.
     \param bOwn If true, the stream is closed and destroyed at reader destruction.
     */
-   TextWriter( Stream* stream, bool bOwn = false );
+   TextWriter( Stream* stream );
 
    /** Creates the text encoder using determined transcoder.
     \param stream The stream to be accessed.
     \param decoder A text encoder obtained through Engine::getTranscoder.
     \param bOwn If true, the stream is closed and destroyed at reader destruction.
    */
-   TextWriter( Stream* stream, Transcoder* decoder, bool bOwn = false );
+   TextWriter( Stream* stream, Transcoder* decoder );
 
    virtual ~TextWriter();
 

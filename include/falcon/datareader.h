@@ -52,7 +52,7 @@ public:
     DataWriter have an according endianity default setting.
    */
 
-   DataReader( Stream* stream, t_endianity endian = e_LE, bool bOwn = false );
+   DataReader( Stream* stream, t_endianity endian = e_LE );
 
    /** Constructor for immediate delegation.
 

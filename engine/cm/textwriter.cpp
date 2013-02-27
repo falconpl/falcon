@@ -28,7 +28,7 @@ namespace Ext {
 
 TextWriterCarrier::TextWriterCarrier( StreamCarrier* stc ):
    UserCarrierT<StreamCarrier>(stc),
-   m_writer( new TextWriter( stc->m_underlying, false ) )
+   m_writer( new TextWriter( stc->m_underlying ) )
 {
    stc->incref();
 }

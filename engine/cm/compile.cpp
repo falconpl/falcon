@@ -66,14 +66,14 @@ void Compile::invoke( VMContext* ctx , int32 params )
 
       if( pitem->isString() ) {
          sinput = new StringStream( *pitem->asString() );
-         reader = new TextReader(sinput, true);
+         reader = new TextReader(sinput );
          ownReader = true;
       }
       else if( pitem->asClassInst(cls, data) )
       {
          if( cls->isDerivedFrom(streamClass) ) {
             StreamCarrier* sc = static_cast<StreamCarrier*>( data );
-            reader = new TextReader( sc->m_underlying, false );
+            reader = new TextReader( sc->m_underlying );
             ownReader = true;
          }
          else if( cls->isDerivedFrom( readerClass ) ) {

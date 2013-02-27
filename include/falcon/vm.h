@@ -67,6 +67,9 @@ public:
     foreground process, the creator of this virtual machine should pass standard
     stream instances not duplicating the standard streams, so that the script
     can close the VM streams and that behavior is reflected to the process streams.
+
+    \note The streams given to the virtual machine are NOT increffed. If you want to keep them
+    beyond VM Destruction, they must receive an extra reference before calling this constructor.
     */
    VMachine( Stream* stdIn = 0, Stream* stdOut=0, Stream* stdErr = 0 );
    virtual ~VMachine();

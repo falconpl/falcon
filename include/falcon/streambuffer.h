@@ -45,7 +45,6 @@ private:
    bool m_bReseek;
 
    Stream *m_stream;
-   bool m_streamOwner;
 
    bool refill();
 
@@ -53,7 +52,7 @@ protected:
    virtual int64 seek( int64 pos, e_whence whence );
    
 public:
-   StreamBuffer( Stream *underlying, bool bOwn = true, uint32 bufSize = default_buffer_size );
+   StreamBuffer( Stream *underlying, uint32 bufSize = default_buffer_size );
    StreamBuffer( const StreamBuffer &other );
    virtual ~StreamBuffer();
    
@@ -83,9 +82,6 @@ public:
    virtual size_t lastError() const { return m_stream->lastError(); }
    virtual t_status status() const { return m_stream->status(); }
    virtual void status(t_status s) { return m_stream->status(s); }
-   
-   /** Disengages this transcoder from the underlying stream. */
-   void detach() { m_stream = 0; m_streamOwner = false; }
    
    bool resizeBuffer( uint32 size );
    uint32 bufferSize() const { return m_bufSize; }

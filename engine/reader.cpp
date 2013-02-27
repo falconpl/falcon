@@ -31,12 +31,10 @@ Reader::Reader():
    m_bufLength(0),
    m_bufSize(0),
    m_readSize(0),
-   m_bOwnStream(false),
    m_stream(0)
 {}
 
-Reader::Reader( Stream* stream, bool bOwn ):
-   m_bOwnStream(bOwn),
+Reader::Reader( Stream* stream ):
    m_stream(stream)
 {
    m_readSize = Sys::_getPageSize();
@@ -46,29 +44,52 @@ Reader::Reader( Stream* stream, bool bOwn ):
 
    m_bufSize = m_readSize*2;
    m_buffer = new byte[m_bufSize];
+
+   if( m_stream != 0 )
+   {
+      m_stream->incref();
+   }
+}
+
+Reader::Reader( const Reader& other )
+{
+   if (other.m_stream != 0 )
+   {
+      other.m_stream->incref();
+   }
+   m_stream = other.m_stream;
+
+   m_readSize = other.m_readSize;
+
+   m_bufLength = other.m_bufLength;
+   m_bufPos = other.m_bufPos;
+
+   m_bufSize = other.m_bufSize;
+   m_buffer = new byte[m_bufSize];
+   memcpy( m_buffer, other.m_buffer, m_bufLength );
 }
 
 
 Reader::~Reader()
 {
    delete[] m_buffer;
-   if ( m_bOwnStream )
+   if( m_stream != 0 )
    {
-      delete m_stream;
+      m_stream->decref();
    }
 }
 
 void Reader::delegate( Reader& target )
 {
-   if( target.m_bOwnStream )
+
+   if( target.m_stream != 0 )
    {
-      delete target.m_stream;
+      target.m_stream->decref();
    }
    
    delete[] target.m_buffer;
 
    target.m_stream = this->m_stream;
-   target.m_bOwnStream = this->m_bOwnStream;
 
    target.m_buffer = this->m_buffer;
    target.m_bufPos = this->m_bufPos;
@@ -76,9 +97,16 @@ void Reader::delegate( Reader& target )
    target.m_bufSize = this->m_bufSize;
    target.m_readSize = this->m_readSize;
 
-   this->m_buffer = 0;
+   m_buffer = 0;
+   m_bufLength = 0;
+   m_bufPos = 0;
+   m_bufSize = 0;
    this->m_stream = 0;
-   this->m_bOwnStream = false;
+
+   if( this->m_stream != 0 )
+   {
+      this->m_stream->incref();
+   }
 }
 
 void Reader::setBufferSize( length_t bs )
@@ -102,15 +130,24 @@ void Reader::setBufferSize( length_t bs )
    m_buffer = nBuf;
 }
 
-void Reader::changeStream( Stream* s, bool bOwn, bool bDiscard )
+void Reader::changeStream( Stream* s, bool bDiscard )
 {
-   if( m_bOwnStream )
+   // at times, changeStream is used just to discard the buffer.
+   if( s != m_stream )
    {
-      delete m_stream;
+      if( s != 0 )
+      {
+         s->incref();
+      }
+
+      if( m_stream != 0 )
+      {
+         m_stream->decref();
+      }
+
+      m_stream = s;
    }
    
-   m_stream = s;
-   m_bOwnStream = bOwn;
 
    if ( bDiscard )
    {

@@ -188,7 +188,7 @@ public:
     */
    virtual bool store( VMContext* ctx, Class* handler, void* data );
 
-   void setStream( Stream* dataStream, bool bOwnStream = false );
+   void setStream( Stream* dataStream );
    
    /** Writes the stored objects on the stream.
     @param dataStream The data stream on which the item should be stored (0 to keep an already set one).
@@ -196,7 +196,7 @@ public:
     \return true if the operation was completed, false if a class requested
     VM processing. 
     */
-   virtual bool commit( VMContext* ctx, Stream* dataStream =0 , bool bOwnStream = false );
+   virtual bool commit( VMContext* ctx, Stream* dataStream =0 );
    void* topData() const { return m_topData; }
    Class* topHandler() const { return m_topHandler; }
    

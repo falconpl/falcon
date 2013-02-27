@@ -29,8 +29,8 @@ namespace Ext {
 
 TextStreamCarrier::TextStreamCarrier( StreamCarrier* stream ):
    UserCarrierT<StreamCarrier>( stream ),
-   m_reader( new TextReader(stream->m_stream, false) ),
-   m_writer( new TextWriter(stream->m_stream, false) )
+   m_reader( new TextReader(stream->m_stream ) ),
+   m_writer( new TextWriter(stream->m_stream ) )
 {
    stream->incref();
 }
@@ -45,7 +45,7 @@ TextStreamCarrier::~TextStreamCarrier()
 void TextStreamCarrier::onFlushingOperation()
 {
    m_writer->flush();
-   m_reader->changeStream( carried()->m_stream, false, true );
+   m_reader->changeStream( carried()->m_stream, true );
 }
 
 
@@ -458,7 +458,7 @@ FALCON_DEFINE_METHOD_P1( ClassTextStream, flush )
 FALCON_DEFINE_METHOD_P1( ClassTextStream, sync )
 {
    TextStreamCarrier* sc = static_cast<TextStreamCarrier*>(ctx->self().asInst());
-   sc->m_reader->changeStream( sc->carried()->m_underlying, false, true );
+   sc->m_reader->changeStream( sc->carried()->m_underlying, true );
    ctx->returnFrame();
 }
 

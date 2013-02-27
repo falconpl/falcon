@@ -202,7 +202,7 @@ void TestMode::listAll()
    ScriptMap::iterator iter = m_scripts.begin();
    ScriptMap::iterator end = m_scripts.end();
 
-   TextWriter output(new StdOutStream(true), true);
+   TextWriter output(new StdOutStream(true));
    output.setSysCRLF();
    if( iter == end )
    {
@@ -235,7 +235,7 @@ TestMode::ScriptData* TestMode::parse(const String& scriptName )
 
       Stream* input = Engine::instance()->vfs().openRO( fname );
       input->shouldThrow(true);
-      TextReader tr(input, true);
+      TextReader tr(input);
       String line;
 
       while( ! tr.eof() )
@@ -417,7 +417,8 @@ String* TestMode::longTest( ScriptData* sd, Process* loadProc )
 {
 #define TestMode_READER_THREAD_STACK_SIZE 20384
 
-   TextWriter output(new StdOutStream(true), true);
+   Stream::L stream(new StdOutStream(true));
+   TextWriter output( stream );
    log->log( Log::fac_app, Log::lvl_info, String( "Entering long test for " ) + sd->m_id );
 
    // redirect the VM output to a pipe we can control.
@@ -534,7 +535,8 @@ void TestMode::progress( TextWriter& output, ScriptData* sd, int count )
 
 void TestMode::reportTest( ScriptData* sd )
 {
-   TextWriter output(new StdOutStream(true), true);
+   Stream::L stream(new StdOutStream(true));
+   TextWriter output(stream);
    output.setSysCRLF();
 
    output.write( sd->m_id + ": ");

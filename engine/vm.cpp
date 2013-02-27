@@ -178,9 +178,9 @@ VMachine::~VMachine()
    delete m_textOut;
    delete m_textErr;
 
-   delete m_stdIn;
-   delete m_stdOut;
-   delete m_stdErr;
+   m_stdIn->decref();
+   m_stdOut->decref();
+   m_stdErr->decref();
 
    if( m_bOwnCoder )
    {
@@ -213,7 +213,8 @@ void VMachine::joinProcessors()
 
 void VMachine::stdIn( Stream* s )
 {
-   delete m_stdIn;
+   if( s != 0 ) s->incref();
+   if( m_stdIn != 0 ) m_stdIn->decref();
    m_stdIn = s;
    m_textIn->changeStream( s );
 }
@@ -221,7 +222,8 @@ void VMachine::stdIn( Stream* s )
 
 void VMachine::stdOut( Stream* s )
 {
-   delete m_stdOut;
+   if( s != 0 ) s->incref();
+   if( m_stdOut != 0 ) m_stdOut->decref();
    m_stdOut = s;
    m_textOut->changeStream( s );
 }
@@ -229,7 +231,8 @@ void VMachine::stdOut( Stream* s )
 
 void VMachine::stdErr( Stream* s )
 {
-   delete m_stdErr;
+   if( s != 0 ) s->incref();
+   if( m_stdErr != 0 ) m_stdErr->decref();
    m_stdErr = s;
    m_textErr->changeStream( s );
 }

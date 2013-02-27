@@ -26,8 +26,8 @@
 
 namespace Falcon {
 
-TextWriter::TextWriter( Stream* stream, bool bOwn ):
-   Writer( stream, bOwn ),
+TextWriter::TextWriter( Stream* stream ):
+   Writer( stream ),
    m_bWasCR(false),
    m_bCRLF(false),
    m_bLineFlush(false),
@@ -39,8 +39,8 @@ TextWriter::TextWriter( Stream* stream, bool bOwn ):
 }
 
 
-TextWriter::TextWriter( Stream* stream, Transcoder* decoder, bool bOwn ):
-   Writer( stream, bOwn ),
+TextWriter::TextWriter( Stream* stream, Transcoder* decoder ):
+   Writer( stream ),
    m_encoder( decoder ),
    m_bWasCR(false),
    m_bCRLF(false),

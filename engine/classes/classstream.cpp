@@ -47,7 +47,7 @@ StreamCarrier::StreamCarrier( Stream* stream ):
 StreamCarrier::~StreamCarrier()
 {   
    delete m_sbuf;
-   delete m_underlying;
+   m_underlying->decref();
 }
 
 
@@ -56,7 +56,7 @@ void StreamCarrier::setBuffering( uint32 size )
    // shall we initialize a buffer?
    if( m_sbuf == 0 && size != 0 )
    {
-      m_sbuf = new StreamBuffer( m_underlying, false, size );
+      m_sbuf = new StreamBuffer( m_underlying, size );
       m_stream = m_sbuf;
    }
    else {
@@ -93,7 +93,6 @@ ClassStream::ClassStream():
    FALCON_INIT_PROPERTY( position ),
    FALCON_INIT_PROPERTY( status ),
    FALCON_INIT_PROPERTY( eof ),
-   FALCON_INIT_PROPERTY( interrupted ),
    FALCON_INIT_PROPERTY( bad ),
    FALCON_INIT_PROPERTY( good ),
    FALCON_INIT_PROPERTY( isopen ),
@@ -222,15 +221,6 @@ FALCON_DEFINE_PROPERTY_GET_P( ClassStream, eof )
    value.setBoolean(static_cast<StreamCarrier*>(instance)->m_stream->eof());
 }
 
-FALCON_DEFINE_PROPERTY_SET( ClassStream, interrupted )( void*, const Item& )
-{
-   throw new ParamError( ErrorParam(e_prop_ro, __LINE__, SRC ).extra(name()));
-}
-
-FALCON_DEFINE_PROPERTY_GET_P( ClassStream, interrupted )
-{
-   value.setBoolean(static_cast<StreamCarrier*>(instance)->m_stream->interrupted());
-}
 
 FALCON_DEFINE_PROPERTY_SET( ClassStream, bad )( void*, const Item& )
 {

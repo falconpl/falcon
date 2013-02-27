@@ -106,7 +106,7 @@ bool ClassDataWriter::op_init( VMContext* ctx, void* instance, int pcount ) cons
          DataWriter* wr = static_cast<DataWriter*>(instance);            
          wr->changeStream( 
                   static_cast<StreamCarrier*>(data)->m_underlying, 
-                  false, false );
+                  false );
          return false;
       }      
    }

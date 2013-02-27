@@ -228,18 +228,18 @@ bool Storer::isFlatMantra( const void* mantra )
    return _p->m_flatMantras.find( (Mantra*)mantra ) != _p->m_flatMantras.end();
 }
 
-void Storer::setStream( Stream* dataStream, bool bOwnStream )
+void Storer::setStream( Stream* dataStream )
 {
-   m_writer->changeStream( dataStream, bOwnStream, true );
+   m_writer->changeStream( dataStream, true );
 }
 
-bool Storer::commit( VMContext* ctx, Stream* dataStream, bool bOwnStream )
+bool Storer::commit( VMContext* ctx, Stream* dataStream )
 {
    try
    {
       if( dataStream != 0 )
       {
-         m_writer->changeStream( dataStream, bOwnStream, true );
+         m_writer->changeStream( dataStream, true );
       }
       writeClassTable( m_writer );
       writeInstanceTable( m_writer );

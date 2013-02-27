@@ -30,7 +30,7 @@ namespace Ext {
 
 TextReaderCarrier::TextReaderCarrier( StreamCarrier* stc ):
    UserCarrierT<StreamCarrier>(stc),
-   m_reader( new TextReader(stc->m_underlying, false) )
+   m_reader( new TextReader(stc->m_underlying ) )
 {
    stc->incref();
 }
@@ -584,7 +584,7 @@ FALCON_DEFINE_METHOD_P1( ClassTextReader, ungetChar )
 FALCON_DEFINE_METHOD_P1( ClassTextReader, sync )
 {   
    TextReaderCarrier* sc = static_cast<TextReaderCarrier*>(ctx->self().asInst());
-   sc->m_reader->changeStream( sc->carried()->m_underlying, false, true );
+   sc->m_reader->changeStream( sc->carried()->m_underlying, true );
    ctx->returnFrame();
 }
 

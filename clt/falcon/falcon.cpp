@@ -52,19 +52,25 @@ void FalconApp::guardAndGo( int argc, char* argv[] )
 
    if( m_options.log_level >= 0 )
    {
+      Stream* out;
       if( m_options.log_file == "-" ){
-         m_logger->m_logfile = new TextWriter(new StdOutStream(), true);
+         out = new StdOutStream();
+         m_logger->m_logfile = new TextWriter( out );
+         out->decref();
       }
       else if( m_options.log_file == "%" ) {
-         m_logger->m_logfile = new TextWriter(new StdErrStream(), true);
+         out = new StdErrStream();
+         m_logger->m_logfile = new TextWriter( out );
+         out->decref();
       }
       else {
          try {
-            Stream* out = Engine::instance()->vfs().create(
+            out = Engine::instance()->vfs().create(
                      m_options.log_file,
                      VFSIface::CParams().append().wrOnly()
                      );
-            m_logger->m_logfile = new TextWriter( out, true );
+            m_logger->m_logfile = new TextWriter( out  );
+            out->decref();
          }
          catch( Error* err )
          {

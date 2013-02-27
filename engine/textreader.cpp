@@ -27,8 +27,8 @@
 
 namespace Falcon {
 
-TextReader::TextReader( Stream* stream, bool bOwn ):
-   Reader( stream, bOwn ),
+TextReader::TextReader( Stream* stream ):
+   Reader( stream ),
    m_pushedChr((char_t)-1),
    m_cTokens( 0 ),
    m_cTSize( 0 )
@@ -38,8 +38,8 @@ TextReader::TextReader( Stream* stream, bool bOwn ):
 }
 
 
-TextReader::TextReader( Stream* stream, Transcoder* decoder, bool bOwn ):
-   Reader( stream, bOwn ),
+TextReader::TextReader( Stream* stream, Transcoder* decoder ):
+   Reader( stream ),
    m_pushedChr(-1),
    m_decoder( decoder ),
    m_cTokens( 0 ),

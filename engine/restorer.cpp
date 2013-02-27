@@ -145,7 +145,7 @@ void Restorer::restore( VMContext* ctx, Stream* rd, ModSpace* space )
    
    try
    {
-      m_reader->changeStream( rd, false, true );
+      m_reader->changeStream( rd, true );
 
       readClassTable();
    }

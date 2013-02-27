@@ -161,11 +161,11 @@ SynTree* DynCompiler::compile( Stream* stream, Transcoder* tc, SynTree* target )
 {
    if( tc == 0 )
    {
-      TextReader tr(stream, tc, false);
+      TextReader tr(stream, tc );
       return compile(&tr, target );
    }
    else {
-      TextReader tr(stream, false);
+      TextReader tr(stream );
       return compile(&tr, target );
    }
 }
