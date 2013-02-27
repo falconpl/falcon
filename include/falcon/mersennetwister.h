@@ -17,7 +17,7 @@
 
 // Copyright (C) 1997 - 2002, Makoto Matsumoto and Takuji Nishimura,
 // Copyright (C) 2000 - 2003, Richard J. Wagner
-// All rights reserved.                          
+// All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions
@@ -30,8 +30,8 @@
 //      notice, this list of conditions and the following disclaimer in the
 //      documentation and/or other materials provided with the distribution.
 //
-//   3. The names of its contributors may not be used to endorse or promote 
-//      products derived from this software without specific prior written 
+//   3. The names of its contributors may not be used to endorse or promote
+//      products derived from this software without specific prior written
 //      permission.
 //
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
@@ -67,7 +67,7 @@
 
 #include <falcon/mt.h>
 
-class FALCON_DYN_CLASS MTRand {
+class MTRand {
 // Data
 public:
     typedef Falcon::uint32 uint32;
@@ -78,7 +78,7 @@ public:
 
 protected:
 	static const int M = 397;  // period parameter
-	
+
 	uint32 state[N];   // internal state
 	uint32 *pNext;     // next value to get from state
 	int left;          // number of values left before reload needed
@@ -93,13 +93,13 @@ public:
 	MTRand();                         // auto-initialize with /dev/urandom or time() and clock()
    MTRand(const MTRand&);            // prevent copy constructor
    MTRand& operator=(const MTRand&); // no-op operator=
-	
+
    virtual ~MTRand();
 
 	// Do NOT use for CRYPTOGRAPHY without securely hashing several returned
 	// values together, otherwise the generator state can be learned after
 	// reading 624 consecutive values.
-	
+
 	// Access to 32-bit random numbers
 	double rand();                          // real number in [0,1]
 	double rand( double n );         // real number in [0,n]
@@ -114,18 +114,18 @@ public:
     // uint64 randomness especially for Falcon
     uint64 randInt64();
     uint64 randInt64( uint64 n );      // integer in [0,n] for n < 2^64
-	
+
 	// Access to 53-bit random numbers (capacity of IEEE double precision)
 	double rand53();  // real number in [0,1)
-	
+
 	// Access to nonuniform random number distributions
 	double randNorm( double mean = 0.0, double variance = 0.0 );
-	
+
 	// Re-seeding functions with same behavior as initializers
 	void seed( const uint32 oneSeed );
 	void seed( uint32 *const bigSeed, const uint32 seedLength = N );
 	void seed();
-	
+
 	// Saving and loading generator state
 	void save( uint32* saveArray ) const;  // to array of size SAVE
 	void load( uint32 *const loadArray );  // from such array
@@ -147,7 +147,7 @@ protected:
 };
 
 
-class FALCON_DYN_CLASS MTRand_interlocked: public MTRand
+class MTRand_interlocked: public MTRand
 {
 
 //Methods
