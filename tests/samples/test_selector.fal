@@ -1,27 +1,54 @@
 
+// We create a string stream...
 ss = StringStream()
+
+// Pipe mode tells the string stream to keep 
+// write and read pointer separated, so we can
+// read after a write.
 ss.pipeMode = true
+
+// This is our waitable obect.
 sel = Selector()
+// add the stream for read
 sel.addRead( ss )
+// A control object
 barrier = Barrier()
 
+// The passive agent
 function process()
-   w = Waiter(barrier)
-   w.add( sel, {sel =>
-      >> "Getting text... "
-      stream = sel.get()
-      > stream.grab(1024)
-   })
+   
+   // The waiter accepts the barrier...
+   w = Waiter()
+   w.add(barrier)
+   
+   // and the selector...
+   w.add( sel, 
+      // when the selector is signaled, we can...
+      {sel =>
+         >> "Getting text... "
+         // get the ready stream
+         stream = sel.getRead()
+         // and read from it
+         > stream.grab(1024)
+      })
+      
+   // start the waiting.
+   // we'll be out as the first non-marshalled entity is signaled.
+   // (that's our barrier)
    w.wait()
 end
 
+
+// this is our producer
 function producer()
 
-   for i = 1 to 2
+   // sends all the data.
+   for i = 1 to 10
       sleep(1)
       > "Sending text..."
       ss.write( "New text " + i )
    end
+   // open the barrier.
    sleep(0.2)
    barrier.open()
 
@@ -31,6 +58,6 @@ end
 para = Parallel( process, producer )
 para.launch()
 
-> "Total:", ss.closeToString().describe()
-
+> "Total: ", ss.closeToString()
 > "Done"
+    
