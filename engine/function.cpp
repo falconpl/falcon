@@ -22,6 +22,7 @@
 #include <falcon/module.h>
 #include <falcon/closure.h>
 #include <falcon/callframe.h>
+#include <falcon/stdhandlers.h>
 
 #include <falcon/engine.h>
 #include <falcon/errors/paramerror.h>
@@ -61,7 +62,7 @@ String Function::fullName() const
 
 Class* Function::handler() const
 {
-   static Class* cls = Engine::instance()->functionClass();   
+   static Class* cls = Engine::handlers()->functionClass();   
    return cls;
 }
 

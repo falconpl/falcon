@@ -22,6 +22,7 @@
 
 #include <falcon/synclasses.h>
 #include <falcon/engine.h>
+#include <falcon/stdhandlers.h>
 
 #include <falcon/psteps/exprproto.h>
 #include <falcon/ov_names.h>
@@ -162,7 +163,7 @@ bool ExprProto::simplify( Item& ) const
 
 void ExprProto::apply_( const PStep* ps, VMContext* ctx )
 {
-   static Class* cls =  Engine::instance()->protoClass();
+   static Class* cls =  Engine::handlers()->protoClass();
 
    const ExprProto* self = static_cast<const ExprProto*>(ps);
    CodeFrame& cs = ctx->currentCode();

@@ -26,11 +26,11 @@
 #include <falcon/setup.h>
 #include <falcon/types.h>
 #include <falcon/refcounter.h>
+#include <falcon/item.h>
+#include <falcon/streamtraits.h>
 
 namespace Falcon {
 
-
-class MultiplexGenerator;
 class Module;
 class Selector;
 class Class;
@@ -195,29 +195,12 @@ public:
    /** Seks from a given position in a file. */
    virtual off_t seek( off_t pos, e_whence w ) = 0;
    
-   /** Gets the selector generator for this kind of streams.
+   /** Gets the stream traits for this kind of streams.
     *
-    * Each subclass of Stream must provide a MultiplexGenerator
-    * class instance, which exposes a streamSelector() method.
-    *
-    * That streamSelector takes all the streams of the same type
-    * that are stored in a Selector, and multiplexes them,
-    * eventually queuing ready streams into the master Selector.
-    *
-    * So,
-    * 1) Selector asks the stream to give its MultiplexGenerator.
-    * 2) The MultiplexGenerator is asked to produce a new Multiplexer
-    * 3) The new Multiplexer receives that stream, and other Streams
-    * having the same MultiplexGenerator, to multiplex their status.
-    *
-    * \note It's important that all the instances of a certain Stream
-    * sub-class share the same MultiplexGenerator instance. However,
-    * more subclasses can provide the same instance of MultiplexGenerator,
-    * provided the generated Multiplex can handle instances of different
-    * Stream subclasses.
+    * Each subclass of Stream should provide traits that
+    * help the engine handle all the similar subclasses.
     */
-   virtual MultiplexGenerator* getMultiplexGenerator() = 0;
-
+   virtual StreamTraits* traits() const = 0;
 
    /** Commits pending read/write operations on those streams supporting delayed rw. 
     \return true of the operation is completed, false on error (if not raising exceptions).
@@ -247,7 +230,15 @@ public:
    /** Utility to throw an unsupported error when an operation is unsupported. */
    void throwUnsupported();
 
-   void gcMark( uint32 mark ) { m_mark = mark; }
+   void gcMark( uint32 mark )
+   {
+      if( m_mark != mark )
+      {
+         m_mark = mark;
+         m_userItem.gcMark(mark);
+      }
+   }
+
    uint32 gcMark() const { return m_mark; }
 
    /** VM Level Handler for this class.
@@ -269,11 +260,28 @@ public:
     */
    virtual Stream* underlying() const;
 
+
+   /** Returns the user item associated with this stream.
+    *
+    * This is a useful way to attach an arbitrary item to a stream
+    * that can then be selected.
+    */
+   const Item& userItem() const { return m_userItem; }
+
+   /** Returns the user item associated with this stream.
+    *
+    * This is a useful way to attach an arbitrary item to a stream
+    * that can then be selected.
+    */
+   Item& userItem() { return m_userItem; }
+
 protected:
    uint32 m_mark;
    t_status m_status;
    size_t m_lastError;
    bool m_bShouldThrow;
+
+   Item m_userItem;
 
    /** Initializes the base stream class. */
    Stream();

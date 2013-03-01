@@ -1,6 +1,6 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: stringstream.h
+   FILE: classstringstream.h
 
    Falcon core module -- String stream interface
    -------------------------------------------------------------------
@@ -26,13 +26,12 @@
 #include <falcon/method.h>
 
 namespace Falcon {
-namespace Ext {
 
-   /*#
-    @class StringStream
-    @brief Memory based virtual stream.
+/*#
+ @class StringStream
+ @brief Memory based virtual stream.
 
-    */
+ */
 class FALCON_DYN_CLASS ClassStringStream: public ClassStream
 {
 public:
@@ -79,8 +78,7 @@ public:
 };
 
 }
-}
 
 #endif	
 
-/* end of stringstream.h */
+/* end of classstringstream.h */

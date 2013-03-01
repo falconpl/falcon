@@ -164,6 +164,7 @@ off_t FStream::seek( off_t pos, e_whence whence )
       case ew_end: from = SEEK_END; break;
       default:
          from = SEEK_SET;
+         break;
    }
 
    pos = (off_t) ::lseek( fd, pos, from );

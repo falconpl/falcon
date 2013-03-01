@@ -28,6 +28,7 @@
 #include <falcon/datareader.h>
 #include <falcon/itemarray.h>
 #include <falcon/stdsteps.h>
+#include <falcon/stdhandlers.h>
 
 #include <falcon/errors/paramerror.h>
 #include <falcon/errors/codeerror.h>
@@ -115,7 +116,7 @@ bool ClassParallel::op_init( VMContext* ctx, void* instance, int pcount ) const
 
 static void internal_wait( VMContext* ctx, int pCount, int start, Method* caller, numeric to )
 {
-   static Class* clsShared = Engine::instance()->sharedClass();
+   static Class* clsShared = Engine::handlers()->sharedClass();
    static PStep* step = &Engine::instance()->stdSteps()->m_waitComplete;
    static PStep* stepInvoke = &Engine::instance()->stdSteps()->m_reinvoke;
 

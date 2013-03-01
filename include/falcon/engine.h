@@ -26,34 +26,36 @@
 
 namespace Falcon
 {
-class Class;
-class Collector;
 class Mutex;
 class Transcoder;
-class TranscoderMap;
-class PoolList;
-class Pool;
-class ClassShared;
-class ClassModule;
-class GCLock;
 
+class TranscoderMap;
 class PredefMap;
 class MantraMap;
 
-class Module;
+class Class;
 class BOM;
-class ClassRawMem;
 class StdSteps;
+class StdHandlers;
 class StdErrors;
-class ModSpace;
-class Item;
-class Symbol;
-
 class SynClasses;
-class VMContext;
+
+class Collector;
+class PoolList;
+class Pool;
+class GCLock;
+class Symbol;
 class SymbolPool;
 
-class MultiplexGenerator;
+class Module;
+class ModSpace;
+class Item;
+
+class VMContext;
+
+class StdStreamTypes;
+class StdHandlers;
+class StdErrors;
 
 class Log;
 
@@ -136,347 +138,27 @@ public:
    static GCLock* GC_lock( const Item& item );
    static void GC_unlock( GCLock* lock );
 
-   //==========================================================================
-   // Type handlers
-   //
 
-   /** Returns the global instance of the Function class.
-   \return the Engine instance of the Function Class (handler).
-
-    Method init() must have been called before.
-
-    @note This method will assert and terminate the program if compiled in debug mode
-    in case the engine has not been initialized. In release, it will just
-    return a null pointer.
+   /**
+    * The global handler class collection.
     */
-   Class* functionClass() const;
+   StdHandlers* stdHandlers() const { return m_stdHandlers; }
 
-   /** Returns the global instance of the String class.
-   \return the Engine instance of the String Class (handler).
-
-    Method init() must have been called before.
-
-    @note This method will assert and terminate the program if compiled in debug mode
-    in case the engine has not been initialized. In release, it will just
-    return a null pointer.
+   /**
+    * The global handler class collection.
     */
-   Class* stringClass() const;
-   
-   /** Returns the global instance of the String class.
-   \return the Engine instance of the String Class (handler).
+   static StdHandlers* handlers();
 
-    Method init() must have been called before.
-
-    @note This method will assert and terminate the program if compiled in debug mode
-    in case the engine has not been initialized. In release, it will just
-    return a null pointer.
+   /**
+    * The global handler class collection.
     */
-   Class* rangeClass() const;
+   StdStreamTypes* stdStreamTypes() const { return m_stdStreamTypes; }
 
-   /** Returns the global instance of the Array class.
-   \return the Engine instance of the Array Class (handler).
-
-    Method init() must have been called before.
-
-    @note This method will assert and terminate the program if compiled in debug mode
-    in case the engine has not been initialized. In release, it will just
-    return a null pointer.
+   /**
+    * The global handler class collection.
     */
-   Class* arrayClass() const;
+   static StdHandlers* streamTraits();
 
-   /** Returns the global instance of the Dictionary class.
-   \return the Engine instance of the Dictionary Class (handler).
-
-    Method init() must have been called before.
-
-    @note This method will assert and terminate the program if compiled in debug mode
-    in case the engine has not been initialized. In release, it will just
-    return a null pointer.
-    */
-   Class* dictClass() const;
-
-   /** Returns the global instance of the Prototype class.
-   \return the Engine instance of the Prototype Class (handler).
-
-    Method init() must have been called before.
-
-    @note This method will assert and terminate the program if compiled in debug mode
-    in case the engine has not been initialized. In release, it will just
-    return a null pointer.
-    */
-   Class* protoClass() const;
-
-   /** Returns the global instance of the MetaClass class.
-   \return the Engine instance of the MetaClass handler.
-
-    Method init() must have been called before.
-
-    @note This method will assert and terminate the program if compiled in debug mode
-    in case the engine has not been initialized. In release, it will just
-    return a null pointer.
-    */
-   Class* metaClass() const;
-   
-    /** Returns the global instance of the MetaFalconClass class.
-   \return the Engine instance of the MetaFalconClass handler.
-
-    Method init() must have been called before.
-
-    @note This method will assert and terminate the program if compiled in debug mode
-    in case the engine has not been initialized. In release, it will just
-    return a null pointer.
-    */
-   Class* metaFalconClass() const;
-    
-   /** Returns the global instance of the MetaHyperClass class.
-   \return the Engine instance of the MetaHyperClass handler.
-
-    Method init() must have been called before.
-
-    @note This method will assert and terminate the program if compiled in debug mode
-    in case the engine has not been initialized. In release, it will just
-    return a null pointer.
-    */
-   Class* metaHyperClass() const;
-   
-   /** Returns the global instance of the MetaClass class.
-   \return the Engine instance of the MetaClass handler.
-
-    Method init() must have been called before.
-
-    @note This method will assert and terminate the program if compiled in debug mode
-    in case the engine has not been initialized. In release, it will just
-    return a null pointer.
-    */
-   Class* mantraClass() const;
-   
-      /** Returns the global instance of the MetaClass class.
-   \return the Engine instance of the MetaClass handler.
-
-    Method init() must have been called before.
-
-    @note This method will assert and terminate the program if compiled in debug mode
-    in case the engine has not been initialized. In release, it will just
-    return a null pointer.
-    */
-   Class* synFuncClass() const;
-   
-   /** Returns the global instance of the GenericClass class.
-   \return the Engine instance of the GenericClass handler.
-
-    Method init() must have been called before.
-
-    @note This method will assert and terminate the program if compiled in debug mode
-    in case the engine has not been initialized. In release, it will just
-    return a null pointer.
-    */
-   Class* genericClass() const;
-   
-   /** Returns the global instance of the ClassTreeStep class.
-   \return the Engine instance of the ClassTreeStep handler.
-
-    Method init() must have been called before.
-
-    @note This method will assert and terminate the program if compiled in debug mode
-    in case the engine has not been initialized. In release, it will just
-    return a null pointer.
-    */
-   Class* treeStepClass() const;
-   
-   /** Returns the global instance of the statement class.
-   \return the Engine instance of the ClassStatement handler.
-
-    Method init() must have been called before.
-
-    @note This method will assert and terminate the program if compiled in debug mode
-    in case the engine has not been initialized. In release, it will just
-    return a null pointer.
-    */
-   Class* statementClass() const;
-   
-   /** Returns the global instance of the ClassExpression class.
-   \return the Engine instance of the ClassExpression handler.
-
-    Method init() must have been called before.
-
-    @note This method will assert and terminate the program if compiled in debug mode
-    in case the engine has not been initialized. In release, it will just
-    return a null pointer.
-    */
-   Class* expressionClass() const;
-   
-   /** Returns the global instance of the ClassSynTree class.
-   \return the Engine instance of the ClassSynTree handler.
-
-    Method init() must have been called before.
-
-    @note This method will assert and terminate the program if compiled in debug mode
-    in case the engine has not been initialized. In release, it will just
-    return a null pointer.
-    */
-   Class* syntreeClass() const;
-   
-   /** Returns the global instance of the ClassSymbol class.
-   \return the Engine instance of the ClassSymbol handler.
-
-    Method init() must have been called before.
-
-    @note This method will assert and terminate the program if compiled in debug mode
-    in case the engine has not been initialized. In release, it will just
-    return a null pointer.
-    */
-   Class* symbolClass() const;
-
-   /** Returns the global instance of the ClassStorer class.
-   \return the Engine instance of the ClassStorer handler.
-
-    Method init() must have been called before.
-
-    @note This method will assert and terminate the program if compiled in debug mode
-    in case the engine has not been initialized. In release, it will just
-    return a null pointer.
-    */
-   Class* storerClass() const;
-
-   /** Returns the global instance of the ClassRE class.
-   \return the Engine instance of the ClassRE handler.
-
-    Method init() must have been called before.
-
-    @note This method will assert and terminate the program if compiled in debug mode
-    in case the engine has not been initialized. In release, it will just
-    return a null pointer.
-    */
-   Class* reClass() const;
-
-   /** Returns the global instance of the ClassRestorer class.
-   \return the Engine instance of the ClassRestorer handler.
-
-    Method init() must have been called before.
-
-    @note This method will assert and terminate the program if compiled in debug mode
-    in case the engine has not been initialized. In release, it will just
-    return a null pointer.
-    */
-   Class* restorerClass() const;
-
-   /** Returns the global instance of the ClassStream class.
-   \return the Engine instance of the ClassStream handler.
-
-    Method init() must have been called before.
-
-    @note This method will assert and terminate the program if compiled in debug mode
-    in case the engine has not been initialized. In release, it will just
-    return a null pointer.
-    */
-   Class* streamClass() const;
-
-   /** Returns the global instance of the ClassClosure class.
-   \return the Engine instance of the ClassClosure handler.
-
-    Method init() must have been called before.
-
-    @note This method will assert and terminate the program if compiled in debug mode
-    in case the engine has not been initialized. In release, it will just
-    return a null pointer.
-    */
-   Class* closureClass() const;
-   
-   /** Returns the global instance of the ClassClosedData class.
-   \return the Engine instance of the ClassClosedData handler.
-
-    Method init() must have been called before.
-
-    @note This method will assert and terminate the program if compiled in debug mode
-    in case the engine has not been initialized. In release, it will just
-    return a null pointer.
-    */
-   Class* closedDataClass() const;
-
-   /** Returns the global instance of the ClassRawMem class.
-   \return the Engine instance of the ClassRawMem handler.
-
-    Method init() must have been called before.
-
-    Notice that the ClassRawMem is not reflected in the language:
-    is just used internally by the engine as it at disposal of embedders
-    and third party module writers to write extensions that require to pass
-    some raw data to the Falcon garbage collector.
-    
-    @note This method will assert and terminate the program if compiled in debug mode
-    in case the engine has not been initialized. In release, it will just
-    return a null pointer.
-    */   
-   ClassRawMem* rawMemClass() const;
-
-   /** Returns the global instance of the SharedClass class.
-   \return the Engine instance of the SharedClass handler.
-
-    Method init() must have been called before.
-
-    @note This method will assert and terminate the program if compiled in debug mode
-    in case the engine has not been initialized. In release, it will just
-    return a null pointer.
-    */
-   ClassShared* sharedClass() const;
-
-   /** Returns the global instance of the ClassMessageQueue class.
-   \return the Engine instance of the ClassMessageQueue handler.
-
-    Method init() must have been called before.
-
-    @note This method will assert and terminate the program if compiled in debug mode
-    in case the engine has not been initialized. In release, it will just
-    return a null pointer.
-    */
-   Class* messageQueueClass() const;
-
-   /** Returns the global instance of the ClassNumber class.
-   \return the Engine instance of the ClassNumber handler.
-
-    Method init() must have been called before.
-
-    ClassNumber is the abstract base class for all kind of numbers,
-    it's mainly to be used in select and other type checks.
-
-    @note This method will assert and terminate the program if compiled in debug mode
-    in case the engine has not been initialized. In release, it will just
-    return a null pointer.
-    */
-   Class* numberClass() const;
-
-   /** Returns the global instance of the FormatClass class.
-   \return the Engine instance of the FormatClass handler.
-
-    Method init() must have been called before.
-
-    @note This method will assert and terminate the program if compiled in debug mode
-    in case the engine has not been initialized. In release, it will just
-    return a null pointer.
-    */
-   Class* formatClass() const;
-
-   /** Returns the global instance of the ClassModule class.
-   \return the Engine instance of the ClassModule handler.
-
-    Method init() must have been called before.
-
-    @note This method will assert and terminate the program if compiled in debug mode
-    in case the engine has not been initialized. In release, it will just
-    return a null pointer.
-    */
-   Class* moduleClass() const;
-
-   /** Returns the global instance of the ClassModSpace class.
-   \return the Engine instance of the ClassModSpace handler.
-
-    Method init() must have been called before.
-
-    @note This method will assert and terminate the program if compiled in debug mode
-    in case the engine has not been initialized. In release, it will just
-    return a null pointer.
-    */
-   Class* modSpaceClass() const;
 
 
    /** Returns the collection of standard syntactic tree classes.
@@ -632,12 +314,6 @@ public:
 
    Log* log() const;
 
-   /** Return the general instance of the string multiplex generator */
-   MultiplexGenerator* getStringStreamMultiplexGenerator() const;
-
-   /** Return the general instance of the file multiplex generator */
-   MultiplexGenerator* getFileStreamMultiplexGenerator() const;
-
 protected:
    Engine();
    ~Engine();
@@ -653,27 +329,6 @@ protected:
    // Global settings
    //
    bool m_bWindowsNamesConversion;
-
-   //===============================================
-   // Global type handlers
-   //
-   Class* m_functionClass;
-   Class* m_stringClass;
-   Class* m_rangeClass;
-   Class* m_arrayClass;
-   Class* m_dictClass;
-   Class* m_protoClass;
-   Class* m_metaClass;
-   Class* m_metaFalconClass;
-   Class* m_metaHyperClass;
-   Class* m_mantraClass;
-   Class* m_synFuncClass;
-   Class* m_genericClass;
-   Class* m_formatClass;
-   Class* m_numberClass;
-
-   ClassRawMem* m_rawMemClass;
-   ClassShared* m_sharedClass;
    
    //===============================================
    // Standard error handlers
@@ -690,23 +345,6 @@ protected:
    Class* m_syntaxErrorClass;
    Class* m_paramErrorClass;
 
-   //===============================================
-   // Basic code reflection entities
-   //
-   Class* m_treeStepClass;
-   Class* m_statementClass;
-   Class* m_exprClass;
-   Class* m_syntreeClass;
-   Class* m_symbolClass;
-   Class* m_closureClass;
-   Class* m_closedDataClass;
-   Class* m_storerClass;
-   Class* m_reClass;
-   Class* m_restorerClass;
-   Class* m_streamClass;
-   ClassModule* m_moduleClass;
-   Class* m_modSpaceClass;
-   Class* m_messageQueueClass;
    
    SynClasses* m_synClasses;
    
@@ -722,11 +360,6 @@ protected:
    SymbolPool* m_symbols;
 
    //===============================================
-   // Files, streams and I/O support
-   MultiplexGenerator* m_stringStreamMultiplexGenerator;
-   MultiplexGenerator* m_fileStreamMultiplexGenerator;
-
-   //===============================================
    // The core module.
    //
    Module* m_core;
@@ -737,6 +370,9 @@ protected:
    
    StdSteps* m_stdSteps;
    StdErrors* m_stdErrors;
+   StdHandlers* m_stdHandlers;
+   StdStreamTypes* m_stdStreamTypes;
+
    Symbol* m_baseSymbol;
    Symbol* m_ruleBaseSymbol;
 };

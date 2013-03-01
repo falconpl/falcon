@@ -33,6 +33,8 @@
 #include <falcon/synfunc.h>
 #include <falcon/psteps/stmtreturn.h>
 #include <falcon/falconclass.h>
+#include <falcon/stdhandlers.h>
+#include <falcon/classes/classmodule.h>
 
 #include <falcon/errors/unserializableerror.h>
 #include <falcon/errors/ioerror.h>
@@ -47,7 +49,7 @@ namespace Falcon {
 
 Class* ModSpace::handler()
 {
-   static Class* ms = Engine::instance()->modSpaceClass();
+   static Class* ms = Engine::handlers()->modSpaceClass();
    return ms;
 }
 
@@ -145,7 +147,7 @@ Process* ModSpace::loadModule( const String& name, bool isUri,  bool asLoad, boo
 
 void ModSpace::loadModuleInProcess( Process* process, const String& name, bool isUri,  bool asLoad, bool isMain, Module* loader )
 {
-   static Class* clsModule = Engine::instance()->moduleClass();
+   static Class* clsModule = Engine::handlers()->moduleClass();
 
    process->adoptModSpace(this);
 
@@ -267,7 +269,7 @@ void ModSpace::store( Module* mod )
 void ModSpace::resolveDeps( VMContext* ctx, Module* mod )
 {
    static StdSteps* steps = Engine::instance()->stdSteps();
-   static Class* modcls = Engine::instance()->moduleClass();
+   static Class* modcls = Engine::handlers()->moduleClass();
 
    ctx->pushData( Item( modcls, mod ) );
    ctx->pushData( Item() );
@@ -623,7 +625,7 @@ void ModSpace::retreiveDynamicModule(
       const String& moduleUri, 
       const String& moduleName )
 {
-   static Class* clsMod = Engine::instance()->moduleClass();
+   static Class* clsMod = Engine::handlers()->moduleClass();
 
    TRACE( "ModSpace::retreiveDynamicModule %s, %s",
             moduleUri.c_ize(), moduleName.c_ize() );

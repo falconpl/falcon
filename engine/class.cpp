@@ -27,6 +27,7 @@
 #include <falcon/errors/unserializableerror.h>
 #include <falcon/errors/accesserror.h>
 #include <falcon/errors/accesstypeerror.h>
+#include <falcon/stdhandlers.h>
 
 namespace Falcon {
 
@@ -89,7 +90,7 @@ Class::~Class()
 
 Class* Class::handler() const
 {
-   static Class* meta = Engine::instance()->metaClass();
+   static Class* meta = Engine::handlers()->metaClass();
    return meta;
 }
 

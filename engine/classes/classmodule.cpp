@@ -29,6 +29,7 @@
 #include <falcon/importdef.h>
 #include <falcon/mantra.h>
 #include <falcon/itemdict.h>
+#include <falcon/stdhandlers.h>
 
 #include <falcon/datawriter.h>
 #include <falcon/datareader.h>
@@ -259,7 +260,7 @@ void ClassModule::store( VMContext*, DataWriter* stream, void* instance ) const
 
 void ClassModule::restore( VMContext* ctx, DataReader* stream ) const
 {
-   static Class* mcls = Engine::instance()->moduleClass();
+   static Class* mcls = Engine::handlers()->moduleClass();
    MESSAGE( "Restoring module..." );
    
    bool bIsNative;

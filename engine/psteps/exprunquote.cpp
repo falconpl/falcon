@@ -20,6 +20,7 @@
 #include <falcon/engine.h>
 #include <falcon/synclasses.h>
 #include <falcon/trace.h>
+#include <falcon/stdhandlers.h>
 #include <falcon/vmcontext.h>
 #include <falcon/psteps/exprvalue.h>
 
@@ -74,7 +75,7 @@ bool ExprUnquote::simplify(Falcon::Item& ) const
 
 void ExprUnquote::resolveUnquote( VMContext* ctx )
 {
-   static Class* expr = Engine::instance()->expressionClass();
+   static Class* expr = Engine::handlers()->expressionClass();
 
    delete m_first;
 

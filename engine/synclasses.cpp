@@ -102,7 +102,7 @@ SynClasses::SynClasses( Class* classSynTree, Class* classStatement, Class* class
    m_cls_expr( classExpr ),
    m_dummy_end(0)
 {
-   m_cls_treestep = Engine::instance()->treeStepClass();
+   m_cls_treestep = Engine::handlers()->treeStepClass();
 
    #include <falcon/synclasses_list.h>
 
@@ -500,7 +500,7 @@ void SynClasses::ClassMUnpack::restore( VMContext* ctx, DataReader*dr ) const
 }
 void SynClasses::ClassMUnpack::flatten( VMContext*, ItemArray& subItems, void* instance ) const
 {
-   static Class* symClass = Engine::instance()->symbolClass();
+   static Class* symClass = Engine::handlers()->symbolClass();
    ExprMultiUnpack* expr = static_cast<ExprMultiUnpack*>( instance );
 
    uint32 count = expr->targetCount();
@@ -579,7 +579,7 @@ void SynClasses::ClassGenProto::unflatten( VMContext*, ItemArray& subItems, void
       const Item& second = subItems[i+1];
 
       fassert( first.isString() );
-      fassert( second.asClass()->isDerivedFrom(Engine::instance()->treeStepClass()));
+      fassert( second.asClass()->isDerivedFrom(Engine::handlers()->treeStepClass()));
 
       ep->add(*first.asString(), static_cast<Expression*>(second.asInst()));
    }
@@ -723,7 +723,7 @@ void* SynClasses::ClassGenSym::createInstance() const
 }
 bool SynClasses::ClassGenSym::op_init( VMContext* ctx, void* instance, int pcount ) const
 {
-   static Class* symClass = Engine::instance()->symbolClass();
+   static Class* symClass = Engine::handlers()->symbolClass();
    
    ExprSymbol* expr = static_cast<ExprSymbol*>( instance );
    Item* params = ctx->opcodeParams(pcount);
@@ -835,7 +835,7 @@ void* SynClasses::ClassInherit::createInstance() const
 }
 bool SynClasses::ClassInherit::op_init( VMContext* ctx, void* instance, int pcount ) const
 {
-   static Class* clsExpr = Engine::instance()->expressionClass();
+   static Class* clsExpr = Engine::handlers()->expressionClass();
       
    if( pcount < 1 )
    {
@@ -1371,7 +1371,7 @@ void SynClasses::ClassSelect::unflatten( VMContext* ctx, ItemArray& subItems, vo
 
 void SynClasses::ClassForTo::flatten( VMContext*, ItemArray& subItems, void* instance ) const
 {
-   static Class* clsSym = Engine::instance()->symbolClass();
+   static Class* clsSym = Engine::handlers()->symbolClass();
 
    StmtForTo* stmt = static_cast<StmtForTo*>(instance);
    TRACE1( "SynClasses::ClassForTo::flatten %s", stmt->oneLiner().c_ize() );

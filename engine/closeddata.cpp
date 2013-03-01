@@ -23,6 +23,7 @@
 #include <falcon/closeddata.h>
 #include <falcon/engine.h>
 #include <falcon/refcounter.h>
+#include <falcon/stdhandlers.h>
 
 #include <map>
 #include <vector>
@@ -403,7 +404,7 @@ void ClosedData::unflatten( VMContext*, ItemArray& subItems, uint32 pos )
 
 Class* ClosedData::handler() const
 {
-   static Class* cls = Engine::instance()->closedDataClass();
+   static Class* cls = Engine::handlers()->closedDataClass();
 
    return cls;
 }

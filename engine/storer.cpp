@@ -473,7 +473,7 @@ void Storer::writeObjectDeps( uint32 pos, DataWriter* wr )
 
 bool Storer::writeObject( VMContext* ctx, uint32 pos, DataWriter* wr )
 {   
-   static Class* clsMantra = Engine::instance()->mantraClass();
+   static Class* clsMantra = Engine::handlers()->mantraClass();
    
    // first, get the class that must serialize us.
    const Private::ObjectData& obd = *_p->m_objVector[pos];

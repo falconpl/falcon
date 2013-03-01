@@ -24,6 +24,7 @@
 #include <falcon/datawriter.h>
 #include <falcon/datareader.h>
 #include <falcon/itemarray.h>
+#include <falcon/stdhandlers.h>
 
 #include <falcon/errors/accesserror.h>
 #include <falcon/errors/unserializableerror.h>
@@ -260,7 +261,7 @@ void ClassDict::op_setIndex( VMContext* ctx, void* self ) const
 
 void ClassDict::op_iter( VMContext* ctx, void* instance ) const
 {
-   static Class* genc = Engine::instance()->genericClass();
+   static Class* genc = Engine::handlers()->genericClass();
    
    ItemDict* dict = static_cast<ItemDict*>(instance);
    ItemDict::Iterator* iter = new ItemDict::Iterator( dict );
@@ -272,7 +273,7 @@ void ClassDict::op_next( VMContext* ctx, void*  ) const
 {
    Item& user = ctx->opcodeParam( 0 );
    fassert( user.isUser() );
-   fassert( user.asClass() == Engine::instance()->genericClass() );
+   fassert( user.asClass() == Engine::handlers()->genericClass() );
    
    ItemDict::Iterator* iter = static_cast<ItemDict::Iterator*>(user.asInst());
    ctx->addSpace(1);

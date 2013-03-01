@@ -22,6 +22,7 @@
 #include <falcon/trace.h>
 #include <falcon/pstep.h>
 #include <falcon/stdsteps.h>
+#include <falcon/stdhandlers.h>
 
 #include <falcon/messagequeue.h>
 #include <falcon/itemarray.h>
@@ -59,7 +60,7 @@ EventMarshal::~EventMarshal()
 
 void EventMarshal::invoke( VMContext* ctx, int32 )
 {  
-   static Class* queueCls = Engine::instance()->messageQueueClass();
+   static Class* queueCls = Engine::handlers()->messageQueueClass();
 
    Item* i_queue = ctx->param(0);
    Class* paramCls = 0;

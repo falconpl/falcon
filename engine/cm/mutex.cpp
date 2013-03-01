@@ -23,6 +23,7 @@
 #include <falcon/stdsteps.h>
 #include <falcon/vm.h>
 #include <falcon/errors/accesserror.h>
+#include <falcon/stdhandlers.h>
 
 #include <stdio.h>
 
@@ -86,7 +87,7 @@ ClassMutex::ClassMutex():
       FALCON_INIT_METHOD(tryLock),
       FALCON_INIT_METHOD(unlock)
 {
-   static Class* shared = Engine::instance()->sharedClass();
+   static Class* shared = Engine::handlers()->sharedClass();
    addParent(shared);
 }
 

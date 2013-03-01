@@ -55,7 +55,7 @@ bool Stream::flush()
 
 Class* Stream::handler()
 {
-   static Class* sc = Engine::instance()->streamClass();
+   static Class* sc = Engine::handlers()->streamClass();
    return sc;
 }
 

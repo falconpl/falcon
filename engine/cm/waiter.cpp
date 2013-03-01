@@ -18,6 +18,7 @@
 
 #include <falcon/classes/classshared.h>
 #include <falcon/cm/waiter.h>
+#include <falcon/stdhandlers.h>
 
 #include <falcon/vm.h>
 #include <falcon/vmcontext.h>
@@ -82,7 +83,7 @@ void* ClassWaiter::createInstance() const
 
 bool ClassWaiter::op_init( VMContext* ctx, void* instance, int pcount ) const
 {
-   static Class* shared = Engine::instance()->sharedClass();
+   static Class* shared = Engine::handlers()->sharedClass();
 
    WaiterData* wd = static_cast<WaiterData*>(instance);
    ItemArray* items = &wd->m_waited;
@@ -251,7 +252,7 @@ FALCON_DEFINE_PROPERTY_SET_P0( ClassWaiter, len )
 
 void ClassWaiter::internal_wait( VMContext* ctx, numeric to )
 {
-   static Class* clsShared = Engine::instance()->sharedClass();
+   static Class* clsShared = Engine::handlers()->sharedClass();
    static PStep* stepInvoke = &Engine::instance()->stdSteps()->m_reinvoke;
 
    WaiterData* self = static_cast<WaiterData*>(ctx->self().asInst());
@@ -402,7 +403,7 @@ FALCON_DEFINE_METHOD_P1( ClassWaiter, tryWait )
 
 FALCON_DEFINE_METHOD_P1( ClassWaiter, add )
 {
-   static Class* clsShared = Engine::instance()->sharedClass();
+   static Class* clsShared = Engine::handlers()->sharedClass();
 
    WaiterData* self = static_cast<WaiterData*>(ctx->self().asInst());
    if( ctx != self->m_owner )
@@ -439,7 +440,7 @@ FALCON_DEFINE_METHOD_P1( ClassWaiter, add )
 
 FALCON_DEFINE_METHOD_P1( ClassWaiter, remove )
 {
-   static Class* clsShared = Engine::instance()->sharedClass();
+   static Class* clsShared = Engine::handlers()->sharedClass();
 
    WaiterData* self = static_cast<WaiterData*>(ctx->self().asInst());
    if( ctx != self->m_owner )

@@ -14,6 +14,7 @@
 */
 
 #include <falcon/fstream.h>
+#include <falcon/stdstreamtraits.h>
 
 namespace Falcon{
 
@@ -27,6 +28,92 @@ FStream *FStream::clone() const
 {
    FStream *ge = new FStream( *this );
    return ge;
+}
+
+
+
+StreamTraits* FStream::traits() const
+{
+   static StreamTraits* gen = Engine::streamTraits()->diskFileTraits();
+   return gen;
+}
+
+
+
+FStream::Traits::~Traits()
+{}
+
+Multiplex* FStream::Traits::multiplex( Selector* master )
+{
+   return new FStream::MPX(master);
+}
+
+
+//====================================================================================
+//
+//====================================================================================
+
+StringStream::MPX::MPX( MultiplexGenerator* generator, Selector* master ):
+         Multiplex( generator, master )
+{
+}
+
+StringStream::MPX::~MPX()
+{
+}
+
+
+void StringStream::MPX::addStream( Stream* stream, int mode )
+{
+   StringStream* ss = static_cast<StringStream*>(stream);
+
+   if( (mode & Selector::mode_write) != 0)
+   {
+      // always writeable
+      onReadyWrite(stream);
+   }
+
+   if( (mode & Selector::mode_read) != 0)
+   {
+      ss->m_b->m_mtx.lock();
+      uint32 bsize =  ss->m_b->m_str->size();
+      if ( bsize > ss->m_posRead )
+      {
+         ss->m_b->m_mtx.unlock();
+         onReadyRead( stream );
+         stream->decref();
+         return;
+      }
+
+      bool bNew = ss->m_b->m_waiters.insert( this ).second;
+      ss->m_b->m_mtx.unlock();
+
+      if( bNew )
+      {
+         incref();
+      }
+   }
+}
+
+
+void StringStream::MPX::removeStream( Stream* stream )
+{
+   StringStream* ss = static_cast<StringStream*>(stream);
+
+   ss->m_b->m_mtx.unlock();
+   bool bRemoved = ss->m_b->m_waiters.erase(this) > 0;
+   ss->m_b->m_mtx.unlock();
+
+   if( bRemoved )
+   {
+      decref();
+   }
+}
+
+void StringStream::MPX::onStringStreamReady( StringStream* ss )
+{
+   onReadyRead( ss );
+   decref();
 }
 
 //============================================================

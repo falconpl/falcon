@@ -40,6 +40,8 @@
 #include <falcon/psteps/stmtwhile.h>
 #include <falcon/classes/classsyntree.h>
 #include <falcon/psteps/exprep.h>
+#include <falcon/stdhandlers.h>
+
 
 namespace Falcon {
 
@@ -53,7 +55,7 @@ public:
    StmtTempLit():
       Statement( 0,0 )
    {
-      static Class* cls = Engine::instance()->syntreeClass();
+      static Class* cls = Engine::handlers()->syntreeClass();
       // don't record us, we're temp.
       m_forming = 0; // you can never know.
       m_discardable = true;

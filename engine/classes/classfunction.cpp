@@ -26,6 +26,7 @@
 #include <falcon/module.h>
 #include <falcon/pseudofunc.h>
 #include <falcon/collector.h>
+#include <falcon/stdhandlers.h>
 
 #include <falcon/itemarray.h>
 
@@ -46,7 +47,7 @@ ClassFunction::~ClassFunction()
 
 Class* ClassFunction::getParent( const String& name ) const
 {
-   static Class* cls = Engine::instance()->mantraClass();
+   static Class* cls = Engine::handlers()->mantraClass();
    
    if( name == cls->name() ) return cls;
    return 0;
@@ -54,21 +55,21 @@ Class* ClassFunction::getParent( const String& name ) const
 
 bool ClassFunction::isDerivedFrom( const Class* parent ) const
 {
-   static Class* cls = Engine::instance()->mantraClass();
+   static Class* cls = Engine::handlers()->mantraClass();
    
    return parent == cls || parent == this;
 }
 
 void ClassFunction::enumerateParents( ClassEnumerator& cb ) const
 {
-   static Class* cls = Engine::instance()->mantraClass();
+   static Class* cls = Engine::handlers()->mantraClass();
    
    cb( cls, true );
 }
 
 void* ClassFunction::getParentData( const Class* parent, void* data ) const
 {
-   static Class* cls = Engine::instance()->mantraClass();
+   static Class* cls = Engine::handlers()->mantraClass();
    
    if( parent == cls || parent == this ) return data;
    return 0;
@@ -77,7 +78,7 @@ void* ClassFunction::getParentData( const Class* parent, void* data ) const
 
 void ClassFunction::enumerateProperties( void* instance, Class::PropertyEnumerator& cb ) const
 {
-   static Class* cls = Engine::instance()->mantraClass();
+   static Class* cls = Engine::handlers()->mantraClass();
 
    cb("params", false);
    cls->enumerateProperties(instance, cb);
@@ -86,14 +87,14 @@ void ClassFunction::enumerateProperties( void* instance, Class::PropertyEnumerat
 
 void ClassFunction::enumeratePV( void* instance, Class::PVEnumerator& cb ) const
 {
-   static Class* cls = Engine::instance()->mantraClass();
+   static Class* cls = Engine::handlers()->mantraClass();
    cls->enumeratePV(instance, cb);
 }
 
 
 bool ClassFunction::hasProperty( void* instance, const String& prop ) const
 {
-   static Class* cls = Engine::instance()->mantraClass();
+   static Class* cls = Engine::handlers()->mantraClass();
 
    return
          prop == "params"
@@ -110,7 +111,7 @@ void ClassFunction::describe( void* instance, String& target, int, int ) const
 
 void ClassFunction::op_getProperty( VMContext* ctx, void* instance, const String& prop) const
 {
-   static Class* cls = Engine::instance()->mantraClass();
+   static Class* cls = Engine::handlers()->mantraClass();
    Function* func = static_cast<Function*>(instance);
 
    if( prop == "params" )

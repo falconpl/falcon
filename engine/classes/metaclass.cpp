@@ -22,7 +22,7 @@
 #include <falcon/falconclass.h>
 #include <falcon/falconinstance.h>
 #include <falcon/errors/codeerror.h>
-
+#include <falcon/stdhandlers.h>
 
 namespace Falcon {
 
@@ -47,7 +47,7 @@ void MetaClass::describe( void* instance, String& target, int, int ) const
 
 Class* MetaClass::getParent( const String& name ) const
 {
-   Class* cls = Engine::instance()->mantraClass();
+   Class* cls = Engine::handlers()->mantraClass();
    
    if( name == cls->name() ) return cls;
    return 0;
@@ -55,21 +55,21 @@ Class* MetaClass::getParent( const String& name ) const
 
 bool MetaClass::isDerivedFrom( const Class* parent ) const
 {
-   Class* cls = Engine::instance()->mantraClass();
+   Class* cls = Engine::handlers()->mantraClass();
    
    return parent == cls || parent == this;
 }
 
 void MetaClass::enumerateParents( ClassEnumerator& cb ) const
 {
-   Class* cls = Engine::instance()->mantraClass();
+   Class* cls = Engine::handlers()->mantraClass();
    
    cb( cls, true );
 }
 
 void* MetaClass::getParentData( const Class* parent, void* data ) const
 {
-   Class* cls = Engine::instance()->mantraClass();
+   Class* cls = Engine::handlers()->mantraClass();
    
    if( parent == cls || parent == this ) return data;
    return 0;

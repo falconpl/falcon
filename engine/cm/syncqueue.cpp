@@ -22,6 +22,7 @@
 #include <falcon/vmcontext.h>
 #include <falcon/stdsteps.h>
 #include <falcon/vm.h>
+#include <falcon/stdhandlers.h>
 
 #include <falcon/errors/accesserror.h>
 
@@ -233,7 +234,7 @@ ClassSyncQueue::ClassSyncQueue():
       FALCON_INIT_METHOD(pop),
       FALCON_INIT_METHOD(wait)
 {
-   static Class* shared = Engine::instance()->sharedClass();
+   static Class* shared = Engine::handlers()->sharedClass();
    addParent(shared);
 }
 

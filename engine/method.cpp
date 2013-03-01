@@ -18,6 +18,7 @@
 
 #include <falcon/method.h>
 #include <falcon/item.h>
+#include <falcon/stdhandlers.h>
 
 #include <falcon/classes/classuser.h>
 
@@ -53,7 +54,7 @@ void Method::MethodProp::set( void*, const Item& )
 
 void Method::MethodProp::get( void* instance, Item& target )
 {
-   static Class* meta = Engine::instance()->metaClass();
+   static Class* meta = Engine::handlers()->metaClass();
 
    // static method?
    if( owner() == 0 )

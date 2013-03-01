@@ -118,7 +118,7 @@ public:
     
     Usually called by the engine at startup.
     */
-   void addBuiltins() const;
+   void subscribe( Engine* eng ) const;
    
 private:
    Class* m_error;

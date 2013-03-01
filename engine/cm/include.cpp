@@ -31,6 +31,11 @@
 #include <falcon/itemdict.h>
 #include <falcon/modloader.h>
 #include <falcon/stdsteps.h>
+#include <falcon/stdhandlers.h>
+#include <falcon/stdhandlers.h>
+#include <falcon/classes/classmodule.h>
+
+
 
 namespace Falcon {
 namespace Ext {
@@ -149,7 +154,7 @@ void Function_include::PStepModLoaded::apply_(const PStep* pstep, VMContext* ctx
 
    // check that the data type of the item is REALLY what we want.
    // (at least as a debug assert)
-   fassert( i_module->asClass() == Engine::instance()->moduleClass() );
+   fassert( i_module->asClass() == Engine::handlers()->moduleClass() );
    Module* module = static_cast<Module*>(i_module->asInst());
 
    // Now we must decide if we have to run the module or just take

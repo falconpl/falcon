@@ -27,8 +27,15 @@
 #include <falcon/mt.h>
 #include <falcon/pool.h>
 #include <falcon/log.h>
+#include <falcon/stdhandlers.h>
 
 #include <falcon/errors/codeerror.h>
+
+#include <falcon/classes/classnil.h>
+#include <falcon/classes/classbool.h>
+#include <falcon/classes/classint.h>
+#include <falcon/classes/classnumeric.h>
+#include <falcon/classes/classmethod.h>
 
 
 //--- Virtual file systems ---
@@ -61,46 +68,6 @@
 //--- object headers ---
 #include <falcon/pseudofunc.h>
 #include <falcon/collector.h>
-
-//--- type headers ---
-#include <falcon/classes/classfunction.h>
-#include <falcon/classes/classsynfunc.h>
-#include <falcon/classes/classnil.h>
-#include <falcon/classes/classbool.h>
-#include <falcon/classes/classcloseddata.h>
-#include <falcon/classes/classclosure.h>
-#include <falcon/classes/classcomposition.h>
-#include <falcon/classes/classint.h>
-#include <falcon/classes/classnumber.h>
-#include <falcon/classes/classnumeric.h>
-#include <falcon/classes/classstring.h>
-#include <falcon/classes/classrange.h>
-#include <falcon/classes/classarray.h>
-#include <falcon/classes/classdict.h>
-#include <falcon/classes/classgeneric.h>
-#include <falcon/classes/classformat.h>
-#include <falcon/classes/classnumeric.h>
-#include <falcon/classes/classmantra.h>
-#include <falcon/classes/classmethod.h>
-#include <falcon/classes/classshared.h>
-#include <falcon/classes/classmessagequeue.h>
-#include <falcon/classes/metaclass.h>
-#include <falcon/classes/metafalconclass.h>
-#include <falcon/classes/metahyperclass.h>
-#include <falcon/classes/classstorer.h>
-#include <falcon/classes/classrestorer.h>
-#include <falcon/classes/classstream.h>
-#include <falcon/classes/classre.h>
-
-#include <falcon/classes/classmodule.h>
-#include <falcon/classes/classmodspace.h>
-
-#include <falcon/classes/classtreestep.h>
-#include <falcon/classes/classstatement.h>
-#include <falcon/classes/classexpression.h>
-#include <falcon/classes/classsyntree.h>
-#include <falcon/classes/classsymbol.h>
-#include <falcon/classes/classrawmem.h>
 #include <falcon/synclasses.h>
 
 #include <falcon/psteps/exprinherit.h>
@@ -123,7 +90,6 @@
 
 namespace Falcon
 {
-
 
 //=======================================================
 // Private classes known by the engine -- Utils
@@ -243,7 +209,11 @@ Engine::Engine()
 
    m_mtx = new Mutex;
    m_log = new Log;
-   m_collector = new Collector;   
+
+   m_collector = new Collector;
+
+   m_mantras = new MantraMap;
+   m_stdHandlers = new StdHandlers();
 
    //=====================================
    // Standard file systems.
@@ -258,26 +228,7 @@ Engine::Engine()
    m_symbols = new SymbolPool;
    m_baseSymbol = m_symbols->get("$base",0);
    m_ruleBaseSymbol = m_symbols->get("$rulebase",0);
-   m_functionClass = new ClassFunction;
-   m_stringClass = new ClassString;
-   m_rangeClass = new ClassRange;
-   m_arrayClass = new ClassArray;
-   m_dictClass = new ClassDict;
-   m_protoClass = new PrototypeClass;
-   m_metaClass = new MetaClass;
-   m_metaFalconClass = new MetaFalconClass;
-   m_metaHyperClass = new MetaHyperClass;
-   m_mantraClass = new ClassMantra;
-   m_synFuncClass = new ClassSynFunc;
-   m_genericClass = new ClassGeneric;
-   m_formatClass = new ClassFormat;
-   m_sharedClass = new ClassShared;
-   m_numberClass = new ClassNumber;
-   m_messageQueueClass = new ClassMessageQueue;
-   
-   // Notice: rawMem is not reflected, is used only in extensions.
-   m_rawMemClass = new ClassRawMem();
-   
+
    // Initialization of the class vector.
    m_classes[FLC_ITEM_NIL] = new ClassNil;
    m_classes[FLC_ITEM_BOOL] = new ClassBool;
@@ -314,8 +265,9 @@ Engine::Engine()
    //=====================================
    // Adding standard pseudo functions.
    //
+   m_stdHandlers->subscribe( this );
+   m_stdErrors->subscribe(this);
 
-   m_mantras = new MantraMap;
    addMantra(new Ext::Compare);
    addMantra(new Ext::DerivedFrom);
    addMantra(new Ext::Len);
@@ -331,23 +283,6 @@ Engine::Engine()
    //============================================
    // Creating singletons
    //
-      
-   addMantra( m_functionClass );
-   addMantra( m_stringClass );
-   addMantra( m_arrayClass );
-   addMantra( m_dictClass );
-   addMantra( m_protoClass );
-   addMantra( m_metaClass );
-   addMantra( m_metaFalconClass );
-   addMantra( m_metaHyperClass );
-   addMantra( m_mantraClass ); 
-   addMantra( m_synFuncClass );
-   addMantra( m_genericClass );
-   addMantra( m_formatClass );
-   addMantra( m_rangeClass  );
-   addMantra( m_sharedClass );
-   addMantra( m_numberClass );
-   addMantra( m_messageQueueClass );
 
    addMantra( m_classes[FLC_ITEM_NIL] );
    addMantra( m_classes[FLC_ITEM_BOOL] );
@@ -369,58 +304,21 @@ Engine::Engine()
    addBuiltin( "RangeType", (int64) FLC_CLASS_ID_RANGE );
    addBuiltin( "ClassType", (int64) FLC_CLASS_ID_CLASS );
    addBuiltin( "ProtoType", (int64) FLC_CLASS_ID_PROTO );
-      
-   m_stdErrors->addBuiltins();
+
    //=====================================
    // Syntax Reflection
    //
-      
-   m_reClass = new ClassRE;
-   m_closureClass = new ClassClosure;
-   m_closedDataClass = new ClassClosedData;
-   m_restorerClass = new ClassRestorer;
-   m_storerClass = new ClassStorer;
-   m_streamClass = new ClassStream;
-
-   m_symbolClass = new ClassSymbol;
    
-   ClassTreeStep* ctreeStep = new ClassTreeStep;
-   m_treeStepClass = ctreeStep;
-   m_statementClass = new ClassStatement(ctreeStep);
-   m_exprClass = new ClassExpression(ctreeStep);
-   m_syntreeClass = new ClassSynTree(ctreeStep, static_cast<ClassSymbol*>(m_symbolClass));
-
-   m_modSpaceClass = new ClassModSpace;
-   m_moduleClass = new ClassModule;
-
-   addMantra(m_closureClass);
-   addMantra(m_treeStepClass);
-   addMantra(m_statementClass);
-   addMantra(m_exprClass);
-   addMantra(m_syntreeClass);
-   addMantra(m_symbolClass); 
-   addMantra(m_modSpaceClass);
-   addMantra(m_moduleClass);
-   addMantra(m_restorerClass);
-   addMantra(m_storerClass);
-   addMantra(m_reClass);
-   addMantra(m_streamClass);
-
-   addMantra( new ClassComposition );
+   ExprInherit::IRequirement::registerMantra( this );
+   SelectRequirement::registerMantra( this );
    
-   ExprInherit::IRequirement::registerMantra();
-   SelectRequirement::registerMantra();
-   
-   m_synClasses = new SynClasses(m_syntreeClass, m_statementClass, m_exprClass );
+   m_synClasses = new SynClasses(m_stdHandlers->syntreeClass(), m_stdHandlers->statementClass(), m_stdHandlers->expressionClass() );
    m_synClasses->subscribe( this );
    
    //=====================================
    // File/stream i/o
    //
-
-   m_stringStreamMultiplexGenerator = new StringStream::MPGen;
-   m_fileStreamMultiplexGenerator = 0;
-   //m_fileStreamMultiplexGenerator = new FStream::MPGen;
+   m_mpgen = new StdStreamTraits;
 
    //=====================================
    // The Core Module
@@ -481,7 +379,7 @@ Engine::~Engine()
    //   
    delete m_predefs;   
    delete m_synClasses;
-   delete m_closedDataClass;
+   delete m_stdHandlers;
    
    //============================================
    // Delete singletons
@@ -745,18 +643,6 @@ Log* Engine::log() const
    return m_instance->m_log;
 }
 
-MultiplexGenerator* Engine::getStringStreamMultiplexGenerator() const
-{
-   fassert( m_instance != 0 );
-   return m_instance->m_stringStreamMultiplexGenerator;
-}
-
-MultiplexGenerator* Engine::getFileStreamMultiplexGenerator() const
-{
-   fassert( m_instance != 0 );
-   return m_instance->m_fileStreamMultiplexGenerator;
-}
-
 //=====================================================
 // Type handlers
 //
@@ -767,191 +653,13 @@ Class* Engine::getTypeClass( int type )
    return m_classes[type];
 }
 
-Class* Engine::functionClass() const
+
+StdHandlers* Engine::handlers()
 {
    fassert( m_instance != 0 );
-   return m_instance->m_functionClass;
+   return m_instance->m_stdHandlers;
 }
 
-
-Class* Engine::stringClass() const
-{
-   fassert( m_instance != 0 );
-   return m_instance->m_stringClass;
-}
-
-Class* Engine::rangeClass() const
-{
-   fassert( m_instance != 0 );
-   return m_instance->m_rangeClass;
-}
-
-
-Class* Engine::arrayClass() const
-{
-   fassert( m_instance != 0 );
-   return m_instance->m_arrayClass;
-}
-
-Class* Engine::dictClass() const
-{
-   fassert( m_instance != 0 );
-   return m_instance->m_dictClass;
-}
-
-Class* Engine::protoClass() const
-{
-   fassert( m_instance != 0 );
-   return m_instance->m_protoClass;
-}
-
-Class* Engine::metaClass() const
-{
-   fassert( m_instance != 0 );
-   return m_instance->m_metaClass;
-}
-
-Class* Engine::metaFalconClass() const
-{
-   fassert( m_instance != 0 );
-   return m_instance->m_metaFalconClass;
-}
-
-Class* Engine::metaHyperClass() const
-{
-   fassert( m_instance != 0 );
-   return m_instance->m_metaHyperClass;
-}
-
-Class* Engine::mantraClass() const
-{
-   fassert( m_instance != 0 );
-   return m_instance->m_mantraClass;
-}
-
-Class* Engine::synFuncClass() const
-{
-   fassert( m_instance != 0 );
-   return m_instance->m_synFuncClass;
-}
-
-Class* Engine::genericClass() const
-{
-   fassert( m_instance != 0 );
-   return m_instance->m_genericClass;
-}
-
-Class* Engine::treeStepClass() const
-{
-   fassert( m_instance != 0 );
-   return m_instance->m_treeStepClass;
-}
-
-Class* Engine::statementClass() const
-{
-   fassert( m_instance != 0 );
-   return m_instance->m_statementClass;
-}
-
-Class* Engine::expressionClass() const
-{
-   fassert( m_instance != 0 );
-   return m_instance->m_exprClass;
-}
-
-Class* Engine::syntreeClass() const
-{
-   fassert( m_instance != 0 );
-   return m_instance->m_syntreeClass;
-}
-
-Class* Engine::symbolClass() const
-{
-   fassert( m_instance != 0 );
-   return m_instance->m_symbolClass;
-}
-
-Class* Engine::closureClass() const
-{
-   fassert( m_instance != 0 );
-   return m_instance->m_closureClass;
-}
-
-
-Class* Engine::closedDataClass() const
-{
-   fassert( m_instance != 0 );
-   return m_instance->m_closedDataClass;
-}
-
-
-Class* Engine::storerClass() const
-{
-   fassert( m_instance != 0 );
-   return m_instance->m_storerClass;
-}
-
-
-Class* Engine::reClass() const
-{
-   fassert( m_instance != 0 );
-   return m_instance->m_reClass;
-}
-
-
-Class* Engine::restorerClass() const
-{
-   fassert( m_instance != 0 );
-   return m_instance->m_restorerClass;
-}
-
-Class* Engine::streamClass() const
-{
-   fassert( m_instance != 0 );
-   return m_instance->m_streamClass;
-}
-
-ClassRawMem* Engine::rawMemClass() const
-{
-   fassert( m_instance != 0 );
-   return m_instance->m_rawMemClass;
-}
-
-ClassShared* Engine::sharedClass() const
-{
-   fassert( m_instance != 0 );
-   return m_instance->m_sharedClass;
-}
-
-Class* Engine::numberClass() const
-{
-   fassert( m_instance != 0 );
-   return m_instance->m_numberClass;
-}
-
-Class* Engine::messageQueueClass() const
-{
-   fassert( m_instance != 0 );
-   return m_instance->m_messageQueueClass;
-}
-
-Class* Engine::formatClass() const
-{
-   fassert( m_instance != 0 );
-   return m_instance->m_formatClass;
-}
-
-Class* Engine::moduleClass() const
-{
-   fassert( m_instance != 0 );
-   return m_instance->m_moduleClass;
-}
-
-Class* Engine::modSpaceClass() const
-{
-   fassert( m_instance != 0 );
-   return m_instance->m_modSpaceClass;
-}
 
 SynClasses* Engine::synclasses() const
 {

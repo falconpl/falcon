@@ -25,6 +25,7 @@
 #include <falcon/mt.h>
 #include <falcon/function.h>
 #include <falcon/itemarray.h>
+#include <falcon/stdhandlers.h>
 
 #include <map>
 #include <vector>
@@ -108,7 +109,7 @@ void Closure::unflatten( VMContext*, ItemArray& subItems, uint32 pos )
 
 Class* Closure::handler() const
 {
-   static Class* cls = Engine::instance()->closureClass();
+   static Class* cls = Engine::handlers()->closureClass();
    return cls;
 }
 

@@ -29,6 +29,7 @@
 #include <falcon/psteps/exprsym.h>
 #include <falcon/psteps/exprvalue.h>
 #include <falcon/psteps/exprinit.h>
+#include <falcon/stdhandlers.h>
 
 #include <falcon/error.h>
 
@@ -114,7 +115,7 @@ void apply_Atom_Pure_Name ( const Rule&, Parser& p )
 
 void apply_Atom_String ( const Rule&, Parser& p )
 {
-   static Class* sc = Engine::instance()->stringClass();
+   static Class* sc = Engine::handlers()->stringClass();
 
    // << (r_Atom_String << "Atom_String" << apply_Atom_String << T_String )
    SourceParser& sp = static_cast<SourceParser&>(p);
@@ -132,7 +133,7 @@ void apply_Atom_String ( const Rule&, Parser& p )
 
 void apply_Atom_RString ( const Rule&, Parser& p )
 {
-   static Class* sc = Engine::instance()->reClass();
+   static Class* sc = Engine::handlers()->reClass();
 
    // << (r_Atom_String << "Atom_String" << apply_Atom_String << T_String )
    SourceParser& sp = static_cast<SourceParser&>(p);

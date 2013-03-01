@@ -24,6 +24,7 @@
 #include <falcon/timestamp.h>
 #include <falcon/range.h>
 #include <falcon/errors/paramerror.h>
+#include <falcon/stdhandlers.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -58,7 +59,7 @@ void Format::reset()
 
 Class* Format::handler()
 {
-   static Class* cls = Engine::instance()->formatClass();
+   static Class* cls = Engine::handlers()->formatClass();
    return cls;
 }
 

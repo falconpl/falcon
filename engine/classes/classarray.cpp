@@ -23,6 +23,7 @@
 #include <falcon/itemarray.h>
 #include <falcon/datareader.h>
 #include <falcon/datawriter.h>
+#include <falcon/stdhandlers.h>
 
 #include <falcon/errors/accesserror.h>
 #include <falcon/errors/codeerror.h>
@@ -399,7 +400,7 @@ void ClassArray::enumeratePV( void*, Class::PVEnumerator& ) const
 
 void ClassArray::op_add( VMContext* ctx, void* self ) const
 {
-   static Class* arrayClass = Engine::instance()->arrayClass();
+   static Class* arrayClass = Engine::handlers()->arrayClass();
 
    ItemArray* array = static_cast<ItemArray*>( self );
    Item* op1, *op2;

@@ -23,6 +23,7 @@
 #include <falcon/errors/accesserror.h>
 #include <falcon/errors/operanderror.h>
 #include <falcon/errors/paramerror.h>
+#include <falcon/stdhandlers.h>
 
 #include <map>
 #include <vector>
@@ -279,7 +280,7 @@ void PrototypeClass::op_getProperty( VMContext* ctx, void* self, const String& p
 
 void PrototypeClass::PStepGetPropertyNext::apply_( const PStep*, VMContext* ctx )
 {
-   static Class* protoClass = Engine::instance()->protoClass();
+   static Class* protoClass = Engine::handlers()->protoClass();
 
    Item result = ctx->topData();
    ctx->popData();

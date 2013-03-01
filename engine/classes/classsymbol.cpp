@@ -17,6 +17,7 @@
 
 #include <falcon/setup.h>
 #include <falcon/classes/classsymbol.h>
+#include <falcon/stdhandlers.h>
 
 #include <falcon/symbol.h>
 #include <falcon/engine.h>
@@ -100,7 +101,7 @@ void ClassSymbol::enumerateProperties( void*, PropertyEnumerator& cb ) const
 
 void ClassSymbol::enumeratePV( void* instance, PVEnumerator& cb ) const
 {
-   static Class* strClass = Engine::instance()->stringClass();
+   static Class* strClass = Engine::handlers()->stringClass();
 
    Symbol* sym = static_cast<Symbol*>( instance );
    Item temp( strClass, sym );

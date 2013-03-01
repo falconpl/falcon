@@ -27,6 +27,7 @@
 #include <falcon/errors/accesserror.h>
 #include <falcon/errors/paramerror.h>
 #include <falcon/errors/operanderror.h>
+#include <falcon/stdhandlers.h>
 
 #include <falcon/datareader.h>
 #include <falcon/datawriter.h>
@@ -119,7 +120,7 @@ void ClassRE::store( VMContext*, DataWriter* stream, void* instance ) const
 
 void ClassRE::restore( VMContext* ctx, DataReader* dr ) const
 {
-   static Class* classRe = Engine::instance()->reClass();
+   static Class* classRe = Engine::handlers()->reClass();
 
    String pattern;
    bool cs;
@@ -645,7 +646,7 @@ bool on_found_findAll(Item& target, int count, int pos, int )
 
 bool on_found_range(Item& target, int, int pos, int size)
 {
-   static class Class* crng = Engine::instance()->rangeClass();
+   static class Class* crng = Engine::handlers()->rangeClass();
    Range* rng = static_cast<Range*>( crng->createInstance() );
 
    rng->start( pos );
@@ -658,7 +659,7 @@ bool on_found_range(Item& target, int, int pos, int size)
 
 bool on_found_rangeAll(Item& target, int count, int pos, int size)
 {
-   static class Class* crng = Engine::instance()->rangeClass();
+   static class Class* crng = Engine::handlers()->rangeClass();
 
    if( count == 0 )
    {

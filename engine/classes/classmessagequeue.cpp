@@ -24,6 +24,7 @@
 #include <falcon/processor.h>
 #include <falcon/eventmarshal.h>
 #include <falcon/itemarray.h>
+#include <falcon/stdhandlers.h>
 
 #include <falcon/errors/paramerror.h>
 #include <falcon/errors/accesserror.h>
@@ -52,7 +53,7 @@ ClassMessageQueue::ClassMessageQueue():
       FALCON_INIT_METHOD(subscribe),
       FALCON_INIT_METHOD(unsubscribe)
 {
-   static Class* shared = Engine::instance()->sharedClass();
+   static Class* shared = Engine::handlers()->sharedClass();
    addParent(shared);
 }
 

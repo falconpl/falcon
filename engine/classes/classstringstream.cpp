@@ -1,6 +1,6 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: stringstream.cpp
+   FILE: classstringstream.cpp
 
    Falcon core module -- String stream interface
    -------------------------------------------------------------------
@@ -14,19 +14,19 @@
 */
 
 #undef SRC
-#define SRC "engine/cm/stringstream.cpp"
+#define SRC "engine/classes/stringstream.cpp"
 
 #include <falcon/classes/classstream.h>
-#include <falcon/cm/stringstream.h>
+#include <falcon/classes/classstringstream.h>
 #include <falcon/errors/paramerror.h>
 #include <falcon/vmcontext.h>
 #include <falcon/stdsteps.h>
 #include <falcon/stringstream.h>
+#include <falcon/stdhandlers.h>
 
 #include <falcon/vm.h>
 
 namespace Falcon {
-namespace Ext {
 
 //=============================================================
 //
@@ -38,7 +38,7 @@ ClassStringStream::ClassStringStream():
 
       FALCON_INIT_METHOD(closeToString)
 {
-   static Class* ssc = Engine::instance()->streamClass();
+   static Class* ssc = Engine::handlers()->streamClass();
    addParent(ssc);
 }
 
@@ -113,6 +113,5 @@ FALCON_DEFINE_METHOD_P1(ClassStringStream, closeToString )
 }
 
 }
-}
 
-/* end of stringstream.cpp */
+/* end of classstringstream.cpp */

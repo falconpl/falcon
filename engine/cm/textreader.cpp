@@ -19,6 +19,7 @@
 #include <falcon/cm/textreader.h>
 #include <falcon/transcoder.h>
 #include <falcon/vmcontext.h>
+#include <falcon/stdhandlers.h>
 
 #include <falcon/cm/textstream.h>
 
@@ -194,7 +195,7 @@ FALCON_DEFINE_METHOD_P1( ClassTextReader, read )
 
 FALCON_DEFINE_METHOD_P1( ClassTextReader, grab )
 {
-   static Class* clsString = Engine::instance()->stringClass();
+   static Class* clsString = Engine::handlers()->stringClass();
    Item* i_count = ctx->param(0);
    if( i_count == 0 || !(i_count->isOrdinal()) )
    {
@@ -254,7 +255,7 @@ FALCON_DEFINE_METHOD_P1( ClassTextReader, readLine )
 
 FALCON_DEFINE_METHOD_P1( ClassTextReader, grabLine )
 {
-   static Class* clsString = Engine::instance()->stringClass();
+   static Class* clsString = Engine::handlers()->stringClass();
    Item* i_count = ctx->param(0);
    if( i_count != 0 && !(i_count->isOrdinal()) )
    {
@@ -304,7 +305,7 @@ FALCON_DEFINE_METHOD_P1( ClassTextReader, readEof )
 
 FALCON_DEFINE_METHOD_P1( ClassTextReader, grabEof )
 {  
-   static Class* clsString = Engine::instance()->stringClass();
+   static Class* clsString = Engine::handlers()->stringClass();
    String* str = new String;   
    TextReader* sc = static_cast<TextReader*>(ctx->self().asInst());
    try {
@@ -351,7 +352,7 @@ FALCON_DEFINE_METHOD_P1( ClassTextReader, readRecord )
 
 FALCON_DEFINE_METHOD_P1( ClassTextReader, grabRecord )
 {
-   static Class* clsString = Engine::instance()->stringClass();
+   static Class* clsString = Engine::handlers()->stringClass();
 
    Item* i_sep = ctx->param(0);   
    Item* i_count = ctx->param(1);
@@ -441,7 +442,7 @@ FALCON_DEFINE_METHOD_P1( ClassTextReader, readToken )
 
 FALCON_DEFINE_METHOD_P1( ClassTextReader, grabToken )
 {
-   static Class* clsString = Engine::instance()->stringClass();
+   static Class* clsString = Engine::handlers()->stringClass();
 
    Item* i_seps = ctx->param(0);   
    Item* i_count = ctx->param(1);

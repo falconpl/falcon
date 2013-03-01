@@ -33,6 +33,7 @@
 #include <falcon/trace.h>
 #include <falcon/stdsteps.h>
 #include <falcon/attribute.h>
+#include <falcon/stdhandlers.h>
 
 #include <falcon/psteps/stmtreturn.h>
 #include <falcon/psteps/exprself.h>
@@ -911,7 +912,7 @@ void FalconClass::pushInitExprStep( VMContext* ctx )
 
 Class* FalconClass::handler() const
 {
-   static Class* cls = Engine::instance()->metaFalconClass();
+   static Class* cls = Engine::handlers()->metaFalconClass();
    return cls;
 }
 

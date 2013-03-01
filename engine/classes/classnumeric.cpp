@@ -27,6 +27,7 @@
 
 #include <falcon/errors/paramerror.h>
 #include <falcon/errors/operanderror.h>
+#include <falcon/stdhandlers.h>
 
 #include <math.h>
 
@@ -118,7 +119,7 @@ void ClassNumeric::describe( void* instance, String& target, int, int  ) const
 
 Class* ClassNumeric::getParent( const String& name ) const
 {
-   static Class* number = Engine::instance()->numberClass();
+   static Class* number = Engine::handlers()->numberClass();
 
    if( name == number->name() )
    {
@@ -129,19 +130,19 @@ Class* ClassNumeric::getParent( const String& name ) const
 
 bool ClassNumeric::isDerivedFrom( const Class* cls ) const
 {
-   static Class* number = Engine::instance()->numberClass();
+   static Class* number = Engine::handlers()->numberClass();
    return cls == number;
 }
 
 void ClassNumeric::enumerateParents( ClassEnumerator& cb ) const
 {
-   static Class* number = Engine::instance()->numberClass();
+   static Class* number = Engine::handlers()->numberClass();
    cb(number,true);
 }
 
 void* ClassNumeric::getParentData( const Class* parent, void* data ) const
 {
-   static Class* number = Engine::instance()->numberClass();
+   static Class* number = Engine::handlers()->numberClass();
 
    if( parent == number )
    {

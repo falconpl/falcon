@@ -27,6 +27,8 @@
 #include <falcon/trace.h>
 #include <falcon/classes/classstream.h>
 #include <falcon/streambuffer.h>
+#include <falcon/stdhandlers.h>
+#include <falcon/classes/classmodule.h>
 
 #include <falcon/vmcontext.h>
 
@@ -43,7 +45,7 @@ FAMLoader::~FAMLoader()
    
 void FAMLoader::load( VMContext* ctx, Stream* ins , const String& path, const String& name )
 {
-   static Class* restClass = Engine::instance()->restorerClass();
+   static Class* restClass = Engine::handlers()->restorerClass();
 
    char buffer[4];
    ins->read( buffer, sizeof(buffer) );
@@ -76,7 +78,7 @@ void FAMLoader::load( VMContext* ctx, Stream* ins , const String& path, const St
 
 void FAMLoader::PStepLoad::apply_( const PStep* self, VMContext* ctx )
 {
-   static Class* modClass = Engine::instance()->moduleClass();
+   static Class* modClass = Engine::handlers()->moduleClass();
    const FAMLoader::PStepLoad* pstep = static_cast<const FAMLoader::PStepLoad*>( self );
    int32 &seqId = ctx->currentCode().m_seqId;
 

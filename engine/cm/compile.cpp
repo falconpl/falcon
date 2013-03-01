@@ -28,6 +28,8 @@
 #include <falcon/syntree.h>
 #include <falcon/error.h>
 #include <falcon/errors/genericerror.h>
+#include <falcon/stdhandlers.h>
+
 
 #include <falcon/dyncompiler.h>
 
@@ -47,7 +49,7 @@ Compile::~Compile()
 
 void Compile::invoke( VMContext* ctx , int32 params )
 {
-   static Class* streamClass = Engine::instance()->streamClass();
+   static Class* streamClass = Engine::handlers()->streamClass();
    static Class* readerClass = m_module->getClass("TextReader");
    static Class* tsClass = m_module->getClass("TextStream");
 

@@ -105,8 +105,8 @@ bool TreeStep::selector( Expression* )
 
 Expression* TreeStep::checkExpr( const Item& item, bool& bCreate )
 {
-   static Class* clsTreeStep = Engine::instance()->treeStepClass();
-   static Class* clsSymbol = Engine::instance()->symbolClass();
+   static Class* clsTreeStep = Engine::handlers()->treeStepClass();
+   static Class* clsSymbol = Engine::handlers()->symbolClass();
 
    Class* cls;
    void* data;
@@ -149,7 +149,7 @@ Expression* TreeStep::checkExpr( const Item& item, bool& bCreate )
 
 Statement* TreeStep::checkStatement( const Item& item )
 {
-   static Class* clsTreeStep = Engine::instance()->treeStepClass();
+   static Class* clsTreeStep = Engine::handlers()->treeStepClass();
 
    Class* cls;
    void* data;
@@ -173,7 +173,7 @@ Statement* TreeStep::checkStatement( const Item& item )
 
 SynTree* TreeStep::checkSyntree( const Item& item )
 {
-   static Class* clsTreeStep = Engine::instance()->treeStepClass();
+   static Class* clsTreeStep = Engine::handlers()->treeStepClass();
 
    Class* cls;
    void* data;

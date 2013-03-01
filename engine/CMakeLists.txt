@@ -156,7 +156,6 @@ add_library(falcon_engine SHARED
   cm/semaphore.cpp
   cm/stdfunctions.cpp
   cm/selector.cpp
-  cm/stringstream.cpp
   cm/syncqueue.cpp
   cm/textreader.cpp
   cm/textstream.cpp
@@ -290,6 +289,7 @@ add_library(falcon_engine SHARED
   classes/classstorer.cpp
   classes/classstream.cpp
   classes/classstring.cpp
+  classes/classstringstream.cpp  
   classes/classsymbol.cpp
   classes/classsynfunc.cpp
   classes/classtreestep.cpp
@@ -403,7 +403,9 @@ add_library(falcon_engine SHARED
   sourceref.cpp
   statement.cpp
   stderrors.cpp
+  stdhandlers.cpp
   stdsteps.cpp
+  stdstreamtraits.cpp
   storer.cpp
   stream.cpp
   streambuffer.cpp

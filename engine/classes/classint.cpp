@@ -23,6 +23,7 @@
 #include <falcon/vmcontext.h>
 #include <falcon/datareader.h>
 #include <falcon/datawriter.h>
+#include <falcon/stdhandlers.h>
 
 #include <falcon/errors/paramerror.h>
 #include <falcon/errors/operanderror.h>
@@ -84,7 +85,7 @@ void ClassInt::describe( void* instance, String& target, int, int ) const
 
 Class* ClassInt::getParent( const String& name ) const
 {
-   static Class* number = Engine::instance()->numberClass();
+   static Class* number = Engine::handlers()->numberClass();
 
    if( name == number->name() )
    {
@@ -95,19 +96,19 @@ Class* ClassInt::getParent( const String& name ) const
 
 bool ClassInt::isDerivedFrom( const Class* cls ) const
 {
-   static Class* number = Engine::instance()->numberClass();
+   static Class* number = Engine::handlers()->numberClass();
    return cls == number;
 }
 
 void ClassInt::enumerateParents( ClassEnumerator& cb ) const
 {
-   static Class* number = Engine::instance()->numberClass();
+   static Class* number = Engine::handlers()->numberClass();
    cb(number,true);
 }
 
 void* ClassInt::getParentData( const Class* parent, void* data ) const
 {
-   static Class* number = Engine::instance()->numberClass();
+   static Class* number = Engine::handlers()->numberClass();
 
    if( parent == number )
    {

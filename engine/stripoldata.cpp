@@ -52,7 +52,7 @@ public:
          Item ivalue(ctx->opcodeParam(0));
          Item& iformat = ctx->opcodeParam(1);
 
-         fassert( iformat.asClass() == Engine::instance()->formatClass() );
+         fassert( iformat.asClass() == Engine::handlers()->formatClass() );
 
          Format* fmt = static_cast<Format*>(iformat.asInst());
          ctx->popData(2);

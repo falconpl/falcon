@@ -22,6 +22,7 @@
 #include <falcon/syntree.h>
 #include <falcon/symbol.h>
 #include <falcon/module.h>
+#include <falcon/stdhandlers.h>
 
 #include <falcon/errors/linkerror.h>
 
@@ -442,7 +443,7 @@ void StmtSelect::apply_( const PStep* ps, VMContext* ctx )
 
 void StmtSelect::flatten( VMContext*, ItemArray& subItems ) const
 {
-   static Class* mc = Engine::instance()->metaClass();
+   static Class* mc = Engine::handlers()->metaClass();
 
    subItems.resize(6);
    // First 4 are map sizes.
@@ -702,12 +703,12 @@ Class* SelectRequirement::cls() const
 Class* SelectRequirement::m_mantraClass = 0;
 
 
-void SelectRequirement::registerMantra()
+void SelectRequirement::registerMantra( Engine* target )
 {
    
    if( m_mantraClass == 0 ) {
       m_mantraClass = new ClassSelectRequirement;
-      Engine::instance()->addMantra(m_mantraClass);
+      target->addMantra(m_mantraClass);
    }
 }
 

@@ -199,7 +199,7 @@ public:
    virtual void store( DataWriter* stream ) const;
    virtual void restore( DataReader* stream );
 
-   static void registerMantra();
+   static void registerMantra( Engine* target );
 private:
    StmtSelect* m_owner;
    int32 m_id;

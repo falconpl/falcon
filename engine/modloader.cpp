@@ -33,6 +33,8 @@
 #include <falcon/storer.h>
 #include <falcon/vmcontext.h>
 #include <falcon/module.h>
+#include <falcon/stdhandlers.h>
+#include <falcon/classes/classmodule.h>
 
 #include <falcon/classes/classstream.h>
 
@@ -465,7 +467,7 @@ ModLoader::t_modtype ModLoader::checkFile_internal(
 void ModLoader::load_internal(
       VMContext* ctx, const String& prefixPath, const URI& uri, ModLoader::t_modtype type )
 {
-   static Class* modClass = Engine::instance()->moduleClass();
+   static Class* modClass = Engine::handlers()->moduleClass();
    static VFSIface* vfs = &Engine::instance()->vfs();
 
    String modName;
@@ -579,8 +581,8 @@ Error* ModLoader::makeError( int code, int line, const String &expl, int fsError
 void ModLoader::saveModule_internal( VMContext* ctx, Module* mod, const URI& srcUri, const String& )
 {
    static VFSIface* vfs = &Engine::instance()->vfs();
-   static Class* clsStorer = Engine::instance()->storerClass();
-   static Class* clsModule = Engine::instance()->moduleClass();
+   static Class* clsStorer = Engine::handlers()->storerClass();
+   static Class* clsModule = Engine::handlers()->moduleClass();
 
    URI tgtUri = srcUri;
    Path path( tgtUri.path() );

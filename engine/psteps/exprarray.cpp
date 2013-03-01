@@ -20,6 +20,7 @@
 #include <falcon/engine.h>
 
 #include <falcon/psteps/exprarray.h>
+#include <falcon/stdhandlers.h>
 
 #include <falcon/synclasses.h>
 #include <falcon/engine.h>
@@ -107,7 +108,7 @@ bool ExprArray::simplify( Item& ) const
 
 void ExprArray::apply_( const PStep* ps, VMContext* ctx )
 {
-   static Class* ca_class = Engine::instance()->arrayClass();
+   static Class* ca_class = Engine::handlers()->arrayClass();
    
    const ExprArray* ea = static_cast<const ExprArray*>(ps);
    ExprVector_Private::ExprVector& mye = ea->_p->m_exprs;

@@ -50,10 +50,8 @@ StdErrors::~StdErrors()
 {  
 }
 
-void StdErrors::addBuiltins() const
+void StdErrors::subscribe( Engine* eng ) const
 {
-   static Engine* eng = Engine::instance();
-   
    eng->addMantra(m_error);
    eng->addMantra(m_code);
    eng->addMantra(m_generic);

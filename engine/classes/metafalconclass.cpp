@@ -24,6 +24,7 @@
 #include <falcon/storer.h>
 #include <falcon/errors/paramerror.h>
 #include <falcon/itemdict.h>
+#include <falcon/stdhandlers.h>
 
 namespace Falcon
 {
@@ -39,7 +40,7 @@ MetaFalconClass::~MetaFalconClass()
 
 Class* MetaFalconClass::handler() const
 {
-   static Class* cls = Engine::instance()->metaFalconClass();   
+   static Class* cls = Engine::handlers()->metaFalconClass();   
    return cls;
 }
 

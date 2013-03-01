@@ -72,6 +72,7 @@ private:
    FALCON_DECLARE_PROPERTY( good )
    FALCON_DECLARE_PROPERTY( isopen )
    FALCON_DECLARE_PROPERTY( buffer )
+   FALCON_DECLARE_PROPERTY( userItem )
    
    FALCON_DECLARE_METHOD( write, "data:S|M, count:[N], start:[N]" );
    FALCON_DECLARE_METHOD( read, "data:S|M, count:[N], start:[N]" );

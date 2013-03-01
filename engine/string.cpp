@@ -2699,7 +2699,7 @@ length_t String::findLastOf( const String& src, length_t pos ) const
 Class* String::handler()
 {
    if (m_class_handler == 0) {
-      m_class_handler = Engine::instance()->stringClass();
+      m_class_handler = Engine::handlers()->stringClass();
    }
    return m_class_handler;
 }

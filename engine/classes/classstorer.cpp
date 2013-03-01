@@ -19,6 +19,7 @@
 #include <falcon/classes/classstorer.h>
 #include <falcon/storer.h>
 #include <falcon/datawriter.h>
+#include <falcon/stdhandlers.h>
 
 #include <falcon/vm.h>
 #include <falcon/vmcontext.h>
@@ -106,7 +107,7 @@ FALCON_DEFINE_METHOD_P1( ClassStorer, store )
 
 FALCON_DEFINE_METHOD_P1( ClassStorer, addFlatMantra )
 {
-   static Class* clsMantra = Engine::instance()->mantraClass();
+   static Class* clsMantra = Engine::handlers()->mantraClass();
    
    Item* i_item = ctx->param(0);
    if( i_item == 0 )
@@ -130,7 +131,7 @@ FALCON_DEFINE_METHOD_P1( ClassStorer, addFlatMantra )
 FALCON_DEFINE_METHOD_P1( ClassStorer, commit )
 {  
    static StdSteps* stdSteps = Engine::instance()->stdSteps();
-   static Class* clsStream = Engine::instance()->streamClass();
+   static Class* clsStream = Engine::handlers()->streamClass();
    
    Item* i_item = ctx->param(0);
    if( i_item == 0 )

@@ -19,6 +19,7 @@
 
 #include <falcon/stream.h>
 #include <falcon/filedata.h>
+#include <falcon/streamtraits.h>
 
 namespace Falcon {
 
@@ -62,10 +63,26 @@ public:
 
    virtual FStream* clone() const;
 
-   MultiplexGenerator* getMultiplexGenerator() { return 0; }
+   virtual StreamTraits* traits() const;
 
 protected:
    Sys::FileData *m_fsData;
+
+private:
+
+   class FALCON_DYN_CLASS Traits: public StreamTraits
+   {
+   public:
+     Traits(): StreamTraits("FStream") {}
+     virtual ~Traits();
+     virtual Multiplex* multiplex( Selector* master ) const;
+   };
+
+   friend class StdStreamTraits;
+
+   class MPX;
+   friend class MPX;
+   friend class Traits;
 };
 
 /** File stream with output functions filtered out. */

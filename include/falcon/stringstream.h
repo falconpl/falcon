@@ -26,6 +26,8 @@
 
 namespace Falcon {
 
+class StdStreamTraits;
+
 class FALCON_DYN_CLASS StringStream: public Stream
 {
 public:
@@ -49,6 +51,8 @@ public:
    uint32 length() const;
    uint32 allocated() const;
    byte *data() const;
+
+   virtual Class* handler();
 
    /** Transfers a string stream buffer into this one.
       The original buffer is emptied, and this buffer aqcuires the
@@ -130,16 +134,7 @@ public:
     */
    bool isPipeMode() const ;
   
-   MultiplexGenerator* getMultiplexGenerator();
-
-   class MPGen: public MultiplexGenerator
-   {
-   public:
-      MPGen() {}
-      virtual ~ MPGen();
-      virtual Multiplex* generate( Selector* master );
-   };
-
+   virtual StreamTraits* traits() const;
 
 protected:
    int64 m_posRead;
@@ -158,23 +153,19 @@ private:
    class Buffer;
    Buffer* m_b;
 
-
-   class MPX: public Multiplex
+   class FALCON_DYN_CLASS Traits: public StreamTraits
    {
    public:
-      MPX( MultiplexGenerator* generator, Selector* master );
-      virtual ~MPX();
-
-      virtual void addStream( Stream* stream, int mode );
-      virtual void removeStream( Stream* stream );
-
-      void onStringStreamReady( StringStream*ss );
-   private:
-
-      FALCON_REFERENCECOUNT_DECLARE_INCDEC(MPX);
+      Traits(): StreamTraits("StringStream") {}
+      virtual ~Traits();
+      virtual Multiplex* multiplex( Selector* master ) const;
    };
 
+   friend class StdStreamTraits;
+
+   class MPX;
    friend class MPX;
+   friend class Traits;
 };
 
 }

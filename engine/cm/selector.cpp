@@ -24,7 +24,7 @@
 #include <falcon/vm.h>
 
 #include <falcon/vmcontext.h>
-#include <falcon/engine.h>
+#include <falcon/stdhandlers.h>
 #include <falcon/stdsteps.h>
 
 namespace Falcon {
@@ -46,7 +46,7 @@ ClassSelector::ClassSelector():
          FALCON_INIT_METHOD(tryWait),
          FALCON_INIT_METHOD(wait)
 {
-   static Class* shared = Engine::instance()->sharedClass();
+   static Class* shared = Engine::handlers()->sharedClass();
    addParent( shared );
 }
 
@@ -76,7 +76,7 @@ bool ClassSelector::op_init( VMContext* ctx, void*, int pcount ) const
 
 static void internal_selector_add( VMContext* ctx, int32, bool bAdd )
 {
-   static Class* streamClass = Engine::instance()->streamClass();
+   static Class* streamClass = Engine::handlers()->streamClass();
    Item* i_stream = ctx->param(0);
    Item* i_mode = ctx->param(1);
 
@@ -131,7 +131,7 @@ FALCON_DEFINE_METHOD_P( ClassSelector, update )
 
 static void internal_add_mode( VMContext* ctx, int32, int32 mode )
 {
-   static Class* streamClass = Engine::instance()->streamClass();
+   static Class* streamClass = Engine::handlers()->streamClass();
    Item* i_stream = ctx->param(0);
 
    Class* cls = 0;

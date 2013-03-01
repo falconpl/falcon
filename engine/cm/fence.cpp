@@ -24,6 +24,8 @@
 
 #include <falcon/errors/accesserror.h>
 #include <falcon/errors/paramerror.h>
+#include <falcon/stdhandlers.h>
+
 
 namespace Falcon {
 namespace Ext {
@@ -132,7 +134,7 @@ ClassFence::ClassFence():
       FALCON_INIT_METHOD(tryWait),
       FALCON_INIT_METHOD(wait)
 {
-   static Class* shared = Engine::instance()->sharedClass();
+   static Class* shared = Engine::handlers()->sharedClass();
    addParent(shared);
 }
 

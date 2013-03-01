@@ -22,11 +22,14 @@
 #include <falcon/vmcontext.h>
 #include <falcon/optoken.h>
 #include <falcon/itemdict.h>
+#include <falcon/stdhandlers.h>
 
 #include <falcon/datawriter.h>
 #include <falcon/datareader.h>
 #include <falcon/itemarray.h>
 #include <falcon/module.h>
+#include <falcon/stdhandlers.h>
+#include <falcon/classes/classmodule.h>
 
 #include <falcon/modspace.h>
 #include <falcon/pseudofunc.h>
@@ -238,7 +241,7 @@ void ClassMantra::op_getProperty( VMContext* ctx, void* instance, const String& 
    else if(  prop == "module" )
    {
       if( mantra->module() != 0 ) {
-         static Class* clsMod = Engine::instance()->moduleClass();
+         static Class* clsMod = Engine::handlers()->moduleClass();
          ctx->stackResult(1, Item(clsMod, mantra->module()) );
       }
       else {

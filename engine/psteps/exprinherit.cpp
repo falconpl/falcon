@@ -23,6 +23,8 @@
 #include <falcon/errors/codeerror.h>
 #include <falcon/itemarray.h>
 #include <falcon/classes/classrequirement.h>
+#include <falcon/stdhandlers.h>
+
 
 #include <falcon/symbol.h>
 #include <falcon/module.h>
@@ -220,7 +222,7 @@ public:
    
    virtual void flatten( VMContext*, ItemArray& subItems, void* instance ) const
    {
-      static Class* metaClass = Engine::instance()->metaClass();
+      static Class* metaClass = Engine::handlers()->metaClass();
       IRequirement* s = static_cast<IRequirement*>(instance);
       
       subItems.resize(2);
@@ -275,11 +277,11 @@ Class* ExprInherit::IRequirement::cls() const
 
 Class* ExprInherit::IRequirement::m_mantraClass = 0;
 
-void ExprInherit::IRequirement::registerMantra()
+void ExprInherit::IRequirement::registerMantra( Engine* target )
 {
    if( m_mantraClass == 0 ) {
       m_mantraClass = new ClassIRequirement;
-      Engine::instance()->addMantra(m_mantraClass);
+      target->addMantra(m_mantraClass);
    }
 }
 

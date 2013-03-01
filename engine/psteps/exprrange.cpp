@@ -20,8 +20,10 @@
 #include <falcon/vmcontext.h>
 #include <falcon/stdsteps.h>
 
-#include <falcon/synclasses.h>
 #include <falcon/engine.h>
+#include <falcon/synclasses.h>
+#include <falcon/stdhandlers.h>
+
 
 #include <falcon/psteps/exprrange.h>
 
@@ -190,7 +192,7 @@ bool ExprRange::setNth( int32 n, TreeStep* ts )
 
 void ExprRange::apply_( const PStep* ps, VMContext* ctx )
 {
-   static Class* cls =  Engine::instance()->rangeClass();   
+   static Class* cls =  Engine::handlers()->rangeClass();   
    
    const ExprRange* self = static_cast<const ExprRange*>(ps);
    CodeFrame& cs = ctx->currentCode();

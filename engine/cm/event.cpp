@@ -21,6 +21,7 @@
 #include <falcon/errors/paramerror.h>
 #include <falcon/vmcontext.h>
 #include <falcon/stdsteps.h>
+#include <falcon/stdhandlers.h>
 #include <falcon/vm.h>
 
 #include <stdio.h>
@@ -67,7 +68,7 @@ ClassEvent::ClassEvent():
       FALCON_INIT_METHOD(tryWait),
       FALCON_INIT_METHOD(wait)
 {
-   static Class* shared = Engine::instance()->sharedClass();
+   static Class* shared = Engine::handlers()->sharedClass();
    addParent(shared);
 }
 

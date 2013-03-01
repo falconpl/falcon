@@ -29,7 +29,9 @@ void Multiplex::gcMark( uint32 mark )
    if( m_mark != mark )
    {
       m_mark = mark;
-      m_generator->gcMark(mark);
+      if( m_module != 0 ) {
+         m_module->gcMark(mark);
+      }
    }
 }
 
@@ -49,16 +51,6 @@ void Multiplex::onReadyErr( Stream* stream )
    m_selector->pushReadyErr( stream );
 }
 
-
-
-void MultiplexGenerator::gcMark( uint32 mark )
-{
-   if( m_module != 0 && m_mark != mark )
-   {
-      m_mark = mark;
-      m_module->gcMark(mark);
-   }
-}
 
 }
 

@@ -25,6 +25,7 @@
 
 #include <falcon/synclasses.h>
 #include <falcon/engine.h>
+#include <falcon/stdhandlers.h>
 
 #include <vector>
 
@@ -169,7 +170,7 @@ bool ExprDict::simplify( Item& ) const
 
 void ExprDict::apply_( const PStep* ps, VMContext* ctx )
 {
-   static Class* cd_class = Engine::instance()->dictClass();
+   static Class* cd_class = Engine::handlers()->dictClass();
 
    const ExprDict* ea = static_cast<const ExprDict*>(ps);
    

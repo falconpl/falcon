@@ -26,6 +26,7 @@
 #include <falcon/errors/codeerror.h>
 #include <falcon/stdsteps.h>
 #include <falcon/usercarrier.h>
+#include <falcon/stdhandlers.h>
 
 #include <falcon/module.h>
 #include <falcon/modspace.h>
@@ -106,7 +107,7 @@ FALCON_DEFINE_PROPERTY_SET( ClassRestorer, hasNext )( void*, const Item& )
 
 FALCON_DEFINE_METHOD_P1( ClassRestorer, restore )
 {
-   static Class* clsStream = Engine::instance()->streamClass();
+   static Class* clsStream = Engine::handlers()->streamClass();
    static PStep* retStep = &Engine::instance()->stdSteps()->m_returnFrame;
    
    fassert( clsStream != 0 );

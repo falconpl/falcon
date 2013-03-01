@@ -20,6 +20,7 @@
 #include <falcon/itemid.h>
 #include <falcon/fassert.h>
 #include <falcon/synfunc.h>
+#include <falcon/stdhandlers.h>
 
 #include <falcon/engine.h>
 #include <falcon/datareader.h>
@@ -41,7 +42,7 @@ ClassSynFunc::~ClassSynFunc()
 
 Class* ClassSynFunc::getParent( const String& name ) const
 {
-   static Class* cls = Engine::instance()->functionClass();
+   static Class* cls = Engine::handlers()->functionClass();
    
    if( name == cls->name() ) return cls;
    return 0;
@@ -49,34 +50,34 @@ Class* ClassSynFunc::getParent( const String& name ) const
 
 bool ClassSynFunc::isDerivedFrom( const Class* parent ) const
 {
-   static Class* cls = Engine::instance()->functionClass();
+   static Class* cls = Engine::handlers()->functionClass();
    
    return parent == cls || parent == this;
 }
 
 void ClassSynFunc::enumerateParents( ClassEnumerator& cb ) const
 {
-   static Class* cls = Engine::instance()->functionClass();
+   static Class* cls = Engine::handlers()->functionClass();
    
    cb( cls, true );
 }
 
 void ClassSynFunc::enumerateProperties( void* instance, Class::PropertyEnumerator& cb ) const
 {
-   static Class* cls = Engine::instance()->functionClass();
+   static Class* cls = Engine::handlers()->functionClass();
    cb("code",false);
    cls->enumerateProperties(instance, cb);
 }
 
 void ClassSynFunc::enumeratePV( void* instance, Class::PVEnumerator& cb ) const
 {
-   static Class* cls = Engine::instance()->functionClass();
+   static Class* cls = Engine::handlers()->functionClass();
    cls->enumeratePV(instance, cb);
 }
 
 bool ClassSynFunc::hasProperty( void* instance, const String& prop ) const
 {
-   static Class* cls = Engine::instance()->functionClass();
+   static Class* cls = Engine::handlers()->functionClass();
 
    return
             prop == "code"
@@ -85,7 +86,7 @@ bool ClassSynFunc::hasProperty( void* instance, const String& prop ) const
 
 void* ClassSynFunc::getParentData( const Class* parent, void* data ) const
 {
-   static Class* cls = Engine::instance()->functionClass();
+   static Class* cls = Engine::handlers()->functionClass();
    
    if( parent == cls || parent == this ) return data;
    return 0;
@@ -202,7 +203,7 @@ void ClassSynFunc::unflatten( VMContext*, ItemArray& subItems, void* instance ) 
       }
 
 #ifndef NDEBUG
-      static Class* tsc = Engine::instance()->treeStepClass();
+      static Class* tsc = Engine::handlers()->treeStepClass();
       fassert2( cls != 0, "Serialized instances are not classes" );
       fassert2( cls->isDerivedFrom( tsc ), "Serialized instances are not treesteps" );
 #endif
@@ -221,7 +222,7 @@ void ClassSynFunc::unflatten( VMContext*, ItemArray& subItems, void* instance ) 
 
 void ClassSynFunc::op_getProperty( VMContext* ctx, void* instance, const String& prop) const
 {
-   static Class* cls = Engine::instance()->functionClass();
+   static Class* cls = Engine::handlers()->functionClass();
    SynFunc* func = static_cast<SynFunc*>(instance);
 
    if( prop == "code" )

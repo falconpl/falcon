@@ -24,6 +24,7 @@
 #include <falcon/autocstring.h>
 #include <falcon/engine.h>
 #include <falcon/itemarray.h>
+#include <falcon/stdhandlers.h>
 
 #include <falcon/errors/paramerror.h>
 
@@ -460,7 +461,7 @@ FALCON_DEFINE_METHOD_P1(ClassRegex, find)
    {
       // we know by hypotesis that oVector is at least 1 entry.
       Item rng;
-      rng.setUser( (Engine::instance())->rangeClass(), new Range( data->m_ovector[0], data->m_ovector[1] ) );
+      rng.setUser( (Engine::handlers())->rangeClass(), new Range( data->m_ovector[0], data->m_ovector[1] ) );
       ctx->returnFrame( rng );
    }
    else if ( data->m_matches == PCRE_ERROR_NOMATCH ){
@@ -615,7 +616,7 @@ static void internal_findAll( Falcon::VMContext *ctx, bool overlapped )
       if( data->m_matches > 0 )
       {
          Item rng;
-         rng.setUser( (Engine::instance())->rangeClass(), new Range( data->m_ovector[0], data->m_ovector[1] ) );
+         rng.setUser( (Engine::handlers())->rangeClass(), new Range( data->m_ovector[0], data->m_ovector[1] ) );
          ca->append( rng );
          // restart from the end of the patter
          from = data->m_ovector[frontOrBack];
@@ -953,7 +954,7 @@ FALCON_DEFINE_METHOD_P1(ClassRegex, captured)
    }
 
    Item rng;
-   rng.setUser( (Engine::instance())->rangeClass(), new Range( data->m_ovector[ count * 2 ] , data->m_ovector[ count * 2 + 1 ] ) );
+   rng.setUser( (Engine::handlers())->rangeClass(), new Range( data->m_ovector[ count * 2 ] , data->m_ovector[ count * 2 + 1 ] ) );
    ctx->returnFrame( rng );
 }
 

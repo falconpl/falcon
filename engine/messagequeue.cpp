@@ -18,6 +18,7 @@
 #include <falcon/vmcontext.h>
 #include <falcon/item.h>
 #include <falcon/cm/fence.h>
+#include <falcon/stdhandlers.h>
 
 #include <map>
 
@@ -61,7 +62,7 @@ public:
 };
 
 MessageQueue::MessageQueue( ContextManager* mgr, const String& name ):
-   Shared( mgr, Engine::instance()->messageQueueClass() ),
+   Shared( mgr, Engine::handlers()->messageQueueClass() ),
    m_ctxWeakRef( this ),
    m_name(name),
    m_version(0),
@@ -159,7 +160,7 @@ int32 MessageQueue::subscribers() const
 
 Shared* MessageQueue::subscriberWaiter( int count )
 {
-   MQFence* mqf = new MQFence( notifyTo(), Engine::instance()->sharedClass(), count );
+   MQFence* mqf = new MQFence( notifyTo(), Engine::handlers()->sharedClass(), count );
 
    m_mtx.lock();
    int32 signals = (int32) _p->m_contexts.size();

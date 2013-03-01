@@ -21,7 +21,7 @@
 #include <falcon/itemarray.h>
 #include <falcon/item.h>
 #include <falcon/string.h>
-#include <falcon/engine.h>
+#include <falcon/stdhandlers.h>
 
 #include <string.h>
 #include <stdio.h>
@@ -120,7 +120,7 @@ ItemArray::ItemArray( const ItemArray& other ):
 Class* ItemArray::handler()
 {
    if(m_handler == 0 ) {
-      m_handler = Engine::instance()->arrayClass();
+      m_handler = Engine::handlers()->arrayClass();
    }
    return m_handler;
 }

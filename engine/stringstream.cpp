@@ -31,6 +31,27 @@
 
 namespace Falcon {
 
+
+class StringStream::MPX: public Multiplex
+{
+public:
+   MPX( Selector* master ):
+      Multiplex(master)
+   {}
+
+   virtual ~MPX();
+
+   virtual void addStream( Stream* stream, int mode );
+   virtual void removeStream( Stream* stream );
+
+   void onStringStreamReady( StringStream*ss );
+private:
+
+   FALCON_REFERENCECOUNT_DECLARE_INCDEC(MPX);
+};
+
+
+
 class StringStream::Buffer {
 public:
    String* m_str;
@@ -171,6 +192,12 @@ uint32 StringStream::allocated() const
 byte *StringStream::data() const
 { 
    return m_b->m_str->getRawStorage();
+}
+
+
+Class* StringStream::handler()
+{
+   return Engine::handlers()->stringStreamClass();
 }
 
 
@@ -442,20 +469,20 @@ StringStream *StringStream::clone() const
 }
 
 
-MultiplexGenerator* StringStream::getMultiplexGenerator()
+StreamTraits* StringStream::traits() const
 {
-   static MultiplexGenerator* gen = Engine::instance()->getStringStreamMultiplexGenerator();
+   static StreamTraits* gen = Engine::streamTraits()->stringStreamClass();
    return gen;
 }
 
 
 
-StringStream::MPGen::~MPGen()
+StringStream::Traits::~Traits()
 {}
 
-Multiplex* StringStream::MPGen::generate( Selector* master )
+Multiplex* StringStream::Traits::multiplex( Selector* master )
 {
-   return new MPX(this, master);
+   return new StringStream::MPX(master);
 }
 
 

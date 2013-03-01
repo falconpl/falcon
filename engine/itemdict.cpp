@@ -22,6 +22,7 @@
 #include <falcon/class.h>
 #include <falcon/itemid.h>
 #include <falcon/itemarray.h>
+#include <falcon/stdhandlers.h>
 
 #include <falcon/errors/accesstypeerror.h>
 
@@ -534,14 +535,14 @@ void ItemDict::describe( String& target, int depth, int maxlen ) const
 
 Class* ItemDict::handler()
 {
-   static Class* handler = Engine::instance()->dictClass();
+   static Class* handler = Engine::handlers()->dictClass();
    return handler;
 }
 
 void ItemDict::enumerate( Enumerator& rator )
 {
-   static Class* cstr = Engine::instance()->stringClass();
-   static Class* cr = Engine::instance()->rangeClass();
+   static Class* cstr = Engine::handlers()->stringClass();
+   static Class* cr = Engine::handlers()->rangeClass();
    
    if( _p->m_bHasNil ) rator( Item(), _p->m_itemNil );
    if( _p->m_bHasTrue ) rator( Item( true ), _p->m_itemTrue );
@@ -671,7 +672,7 @@ void ItemDict::Iterator::describe( String& target ) const
 
 bool ItemDict::Iterator::next( Item& target )
 {
-   static Class* ac = Engine::instance()->arrayClass();
+   static Class* ac = Engine::handlers()->arrayClass();
    
    if( m_dict == 0 ) return false;
    if( m_version != m_dict->version() )
@@ -701,8 +702,8 @@ bool ItemDict::Iterator::next( Item& target )
 
 void ItemDict::Iterator::advance()
 {
-   static Class* scls = Engine::instance()->stringClass();
-   static Class* rcls = Engine::instance()->rangeClass();
+   static Class* scls = Engine::handlers()->stringClass();
+   static Class* rcls = Engine::handlers()->rangeClass();
    
    fassert( m_dict != 0 );
    fassert( m_dict->version() == m_version );

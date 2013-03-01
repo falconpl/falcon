@@ -49,6 +49,7 @@ ClassStream::ClassStream():
    FALCON_INIT_PROPERTY( good ),
    FALCON_INIT_PROPERTY( isopen ),
    FALCON_INIT_PROPERTY( buffer ),
+   FALCON_INIT_PROPERTY( userItem ),
 
    FALCON_INIT_METHOD( write ),
    FALCON_INIT_METHOD( read ),
@@ -78,6 +79,7 @@ ClassStream::ClassStream( const String& subclassName ):
    FALCON_INIT_PROPERTY( good ),
    FALCON_INIT_PROPERTY( isopen ),
    FALCON_INIT_PROPERTY( buffer ),
+   FALCON_INIT_PROPERTY( userItem ),
 
    FALCON_INIT_METHOD( write ),
    FALCON_INIT_METHOD( read ),
@@ -254,6 +256,19 @@ FALCON_DEFINE_PROPERTY_GET_P( ClassStream, buffer )
    uint32 bufSize = sc->underlying() == 0 ? 0 : static_cast<StreamBuffer*>(sc)->bufferSize();
    value = (int64) bufSize;
 }
+
+FALCON_DEFINE_PROPERTY_SET_P( ClassStream, userItem )
+{
+   Stream* sc = static_cast<Stream*>(instance);
+   sc->userItem() = value;
+}
+
+FALCON_DEFINE_PROPERTY_GET_P( ClassStream, userItem )
+{
+   Stream* sc = static_cast<Stream*>(instance);
+   value = sc->userItem();
+}
+
 
 //======================================================
 // Methods

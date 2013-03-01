@@ -19,6 +19,7 @@
 #include <falcon/classes/classgeneric.h>
 #include <falcon/genericdata.h>
 #include <falcon/engine.h>
+#include <falcon/stdhandlers.h>
 
 namespace Falcon
 {
@@ -74,7 +75,7 @@ bool ClassGeneric::gcCheckInstance( void* self, uint32 mark ) const
 
 Class* GenericData::handler()
 {
-   static Class* gen = Engine::instance()->genericClass();
+   static Class* gen = Engine::handlers()->genericClass();
    return gen;
 }
 

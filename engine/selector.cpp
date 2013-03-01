@@ -33,7 +33,7 @@ public:
    typedef std::map<Stream*, Selector::Data> StreamMap;
    typedef std::deque<Selector::Data*> DataList;
    typedef std::deque<Stream*> StreamList;
-   typedef std::map<MultiplexGenerator*, Multiplex*> MultiplexMap;
+   typedef std::map<StreamTraits*, Multiplex*> MultiplexMap;
 
    Mutex m_mtx;
    StreamMap m_streams;
@@ -408,13 +408,13 @@ void Selector::dequePending()
       _p->m_mtx.unlock();
 
       // we can safely release the lock while searching or a multiplex.
-      MultiplexGenerator* gen = toBeSent->getMultiplexGenerator();
+      StreamTraits* gen = toBeSent->traits();
       Multiplex* plex;
       _p->m_mtxMultiplex.lock();
       Private::MultiplexMap::iterator pos = _p->m_multiplex.find( gen );
       if( pos == _p->m_multiplex.end() )
       {
-         plex = gen->generate(this);
+         plex = gen->multiplex(this);
          _p->m_multiplex[gen] = plex;
          _p->m_mpxVersion++;
       }

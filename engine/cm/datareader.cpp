@@ -25,6 +25,7 @@
 #include <falcon/errors/accesserror.h>
 #include <falcon/errors/paramerror.h>
 #include <falcon/vmcontext.h>
+#include <falcon/stdhandlers.h>
 
 namespace Falcon {
 namespace Ext {
@@ -330,7 +331,7 @@ FALCON_DEFINE_METHOD_P1( ClassDataReader, readF64 )
 
 FALCON_DEFINE_METHOD_P1( ClassDataReader, readString )
 {
-   static Class* stringClass = Engine::instance()->stringClass();
+   static Class* stringClass = Engine::handlers()->stringClass();
    String* str = new String;
    DataReader* dw = static_cast<DataReader*>(ctx->self().asInst());
    try

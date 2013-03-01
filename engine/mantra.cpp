@@ -16,7 +16,7 @@
 
 #include <falcon/mantra.h>
 #include <falcon/module.h>
-#include <falcon/engine.h>
+#include <falcon/stdhandlers.h>
 
 namespace Falcon
 {
@@ -47,7 +47,7 @@ Mantra::Mantra( const String& name, Module* module, int32 line, int32 chr ):
 
 Class* Mantra::handler() const
 {
-   static Class* cls = Engine::instance()->mantraClass();
+   static Class* cls = Engine::handlers()->mantraClass();
 
    return cls;
 }

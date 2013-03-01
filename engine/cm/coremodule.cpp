@@ -39,11 +39,11 @@
 #include <falcon/cm/parallel.h>
 #include <falcon/cm/selector.h>
 #include <falcon/cm/semaphore.h>
-#include <falcon/cm/stringstream.h>
 #include <falcon/cm/stdfunctions.h>
 #include <falcon/cm/syncqueue.h>
 #include <falcon/cm/vmcontext.h>
 #include <falcon/cm/waiter.h>
+#include <falcon/stdhandlers.h>
 
 // the standard error classes
 #include <falcon/errorclasses.h>
@@ -56,7 +56,7 @@ CoreModule::CoreModule():
    Module("core")
 {
    static ClassStream* classStream = static_cast<ClassStream*>(
-            Engine::instance()->streamClass());
+            Engine::handlers()->streamClass());
    
    *this
       // Standard functions
@@ -91,7 +91,6 @@ CoreModule::CoreModule():
       << new Ext::ClassDataReader( classStream )
       << new Ext::ClassSelector
       << new Ext::ClassSemaphore
-      << new Ext::ClassStringStream
       << new Ext::ClassSyncQueue
       << new Ext::ClassVMContext
       << new Ext::ClassWaiter

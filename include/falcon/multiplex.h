@@ -23,7 +23,6 @@ namespace Falcon
 {
 
 class Stream;
-class MultiplexGenerator;
 class Selector;
 
 /**
@@ -76,9 +75,13 @@ public:
    Selector* selector() const { return m_selector; }
 
 protected:
-   Multiplex( MultiplexGenerator* generator, Selector* master ):
+   /** Creates the multiplex on a selector.
+    * The module is used for back-reference and keep alive marks.
+    */
+   Multiplex( Selector* master,  Module* mod = 0 ):
       m_generator(generator),
       m_selector(master),
+      m_module(mod),
       m_mark(0)
    {}
 
@@ -116,54 +119,6 @@ protected:
 
    MultiplexGenerator* m_generator;
    Selector* m_selector;
-   uint32 m_mark;
-};
-
-/**
- * Stream multiplexer generator.
- *
- * A class that can multiplex create instances of multiplexer
- * handling instances of a certain Stream subclass or subclass tree.
- *
- * \see getMultiplexGenerator();
- *
- * \note The class is not exposed to the scripts,
- * but it accepts a module so that its marking can keep alive modules in
- * DLLs presenting new kind of streams.
- */
-class MultiplexGenerator
-{
-public:
-   MultiplexGenerator():
-      m_module(0),
-      m_mark(0)
-   {}
-
-   /**
-    * Creates a multiplex generator attached to a module.
-    *
-    * This will cause the generator to keep the module alive
-    * as long as it is referenced by some Selector alive in
-    * the virtual machine.
-    */
-   MultiplexGenerator(Module* owner):
-      m_module(owner),
-      m_mark(0)
-   {}
-
-   virtual ~MultiplexGenerator() {}
-   /**
-    * Creates the concrete instance of multiplex handling this stream subclass.
-    * \return new multiplex instance.
-    * \param master The owner of this new multiplex.
-    *
-    */
-   virtual Multiplex* generate( Selector* master )=0;
-
-   virtual void gcMark( uint32 mark );
-   uint32 currentMark() const { return m_mark; }
-
-private:
    Module* m_module;
    uint32 m_mark;
 };

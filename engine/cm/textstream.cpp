@@ -19,6 +19,7 @@
 #include <falcon/stream.h>
 #include <falcon/vmcontext.h>
 #include <falcon/errors/paramerror.h>
+#include <falcon/stdhandlers.h>
 
 #include <falcon/cm/textstream.h>
 #include <math.h>
@@ -247,7 +248,7 @@ FALCON_DEFINE_METHOD_P1( ClassTextStream, read )
 
 FALCON_DEFINE_METHOD_P1( ClassTextStream, grab )
 {
-   static Class* clsString = Engine::instance()->stringClass();
+   static Class* clsString = Engine::handlers()->stringClass();
 
    Item* i_count = ctx->param(0);
    if( i_count == 0 || !(i_count->isOrdinal()) )
@@ -305,7 +306,7 @@ FALCON_DEFINE_METHOD_P1( ClassTextStream, readLine )
 
 FALCON_DEFINE_METHOD_P1( ClassTextStream, grabLine )
 {
-   static Class* clsString = Engine::instance()->stringClass();
+   static Class* clsString = Engine::handlers()->stringClass();
 
    Item* i_count = ctx->param(0);
    if( i_count != 0 && !(i_count->isOrdinal()) )

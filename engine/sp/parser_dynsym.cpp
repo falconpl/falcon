@@ -26,6 +26,8 @@
 #include <falcon/sp/parsercontext.h>
 #include <falcon/sp/parser_deletor.h>
 #include <falcon/sp/parser_dynsym.h>
+#include <falcon/stdhandlers.h>
+
 
 #include <falcon/engine.h>
 #include <falcon/psteps/exprvalue.h>
@@ -40,7 +42,7 @@ using namespace Parsing;
 
 void apply_expr_amper( const Rule&, Parser& p )
 {
-   static Class* clssym = Engine::instance()->symbolClass();
+   static Class* clssym = Engine::handlers()->symbolClass();
    // << T_Amper << T_Name
    SourceParser& sp = static_cast<SourceParser&>(p);
 

@@ -18,7 +18,7 @@
 
 #include <falcon/item.h>
 #include <falcon/itemid.h>
-#include <falcon/engine.h>
+#include <falcon/stdhandlers.h>
 
 #include "falcon/itemarray.h"
 
@@ -33,10 +33,10 @@ Class* Item::m_arrayClass;
 
 void Item::init(Engine* engine)
 {
-   m_funcClass = engine->functionClass();
-   m_stringClass = engine->stringClass();
-   m_dictClass = engine->dictClass();
-   m_arrayClass = engine->arrayClass();
+   m_funcClass = engine->handlers()->functionClass();
+   m_stringClass = engine->handlers()->stringClass();
+   m_dictClass = engine->handlers()->dictClass();
+   m_arrayClass = engine->handlers()->arrayClass();
 }
 
 Item& Item::setString( const char* str )
@@ -182,7 +182,7 @@ void Item::describe( String &target, int maxDepth, int maxLength ) const
          target += temp + ".";
          temp = "";
 
-         Engine::instance()->functionClass()->describe( asMethodFunction(), temp, maxDepth-1, maxLength );
+         Engine::handlers()->functionClass()->describe( asMethodFunction(), temp, maxDepth-1, maxLength );
          target += temp;
          target += ")";
       }

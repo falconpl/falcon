@@ -26,7 +26,7 @@
 #include <falcon/psteps/exprparentship.h>
 #include <falcon/datareader.h>
 #include <falcon/datawriter.h>
-
+#include <falcon/stdhandlers.h>
 
 namespace Falcon
 {
@@ -119,7 +119,7 @@ void MetaHyperClass::unflatten( VMContext*, ItemArray& subItems, void* instance 
 
 Class* MetaHyperClass::handler() const
 {
-   Class* cls = Engine::instance()->metaHyperClass();
+   Class* cls = Engine::handlers()->metaHyperClass();
    return cls;
 }
 
