@@ -19,6 +19,10 @@
 
 #include <falcon/string.h>
 #include <falcon/stream.h>
+#include <falcon/multiplex.h>
+#include <falcon/mt.h>
+#include <falcon/syncqueue.h>
+
 
 namespace Falcon {
 
@@ -106,9 +110,42 @@ public:
    byte  *closeToBuffer();
   
    virtual StringStream *clone() const;
+
+   /** Changes the pipe mode of this string stream.
+    *
+    * In pipe mode, the string stream read and write pointers are different.
+    *
+    * If the mode is set to false, they move together, and the write pointer
+    * is reset to the position of the read pointer.
+    *
+    * In pipe mode, seek() moves both the read and the write pointer,
+    * and current position is relative to write pointer,
+    * but tell() returns the read pointer.
+    */
+   void setPipeMode( bool mode );
+
+   /** Changes the pipe mode of this string stream.
+    *
+    * In pipe mode, the string stream read and write pointers are different.
+    */
+   bool isPipeMode() const ;
   
+   MultiplexGenerator* getMultiplexGenerator();
+
+   class MPGen: public MultiplexGenerator
+   {
+   public:
+      MPGen() {}
+      virtual ~ MPGen();
+      virtual Multiplex* generate( Selector* master );
+   };
+
+
 protected:
-   int64 m_pos;
+   int64 m_posRead;
+   int64 m_posWrite;
+   bool m_bPipeMode;
+
    virtual int64 seek( int64 pos, e_whence whence );
 
    void setBuffer( const String &source );
@@ -120,6 +157,24 @@ protected:
 private:
    class Buffer;
    Buffer* m_b;
+
+
+   class MPX: public Multiplex
+   {
+   public:
+      MPX( MultiplexGenerator* generator, Selector* master );
+      virtual ~MPX();
+
+      virtual void addStream( Stream* stream, int mode );
+      virtual void removeStream( Stream* stream );
+
+      void onStringStreamReady( StringStream*ss );
+   private:
+
+      FALCON_REFERENCECOUNT_DECLARE_INCDEC(MPX);
+   };
+
+   friend class MPX;
 };
 
 }

@@ -37,7 +37,9 @@
 #include <falcon/cm/iterator.h>
 #include <falcon/cm/mutex.h>
 #include <falcon/cm/parallel.h>
+#include <falcon/cm/selector.h>
 #include <falcon/cm/semaphore.h>
+#include <falcon/cm/stringstream.h>
 #include <falcon/cm/stdfunctions.h>
 #include <falcon/cm/syncqueue.h>
 #include <falcon/cm/vmcontext.h>
@@ -87,7 +89,9 @@ CoreModule::CoreModule():
       << new Ext::ClassTextReader( classStream )
       << new Ext::ClassDataWriter( classStream )
       << new Ext::ClassDataReader( classStream )
+      << new Ext::ClassSelector
       << new Ext::ClassSemaphore
+      << new Ext::ClassStringStream
       << new Ext::ClassSyncQueue
       << new Ext::ClassVMContext
       << new Ext::ClassWaiter

@@ -579,8 +579,6 @@ Error* ModLoader::makeError( int code, int line, const String &expl, int fsError
 void ModLoader::saveModule_internal( VMContext* ctx, Module* mod, const URI& srcUri, const String& )
 {
    static VFSIface* vfs = &Engine::instance()->vfs();
-
-   static Class* clsStream = Engine::instance()->streamClass();
    static Class* clsStorer = Engine::instance()->storerClass();
    static Class* clsModule = Engine::instance()->moduleClass();
 
@@ -594,7 +592,7 @@ void ModLoader::saveModule_internal( VMContext* ctx, Module* mod, const URI& src
    output->shouldThrow(true);
    output->write("FM\x4\x1",4);
 
-   ctx->pushData( FALCON_GC_STORE(clsStream, new StreamCarrier(output) ) );
+   ctx->pushData( FALCON_GC_HANDLE(output) );
    ctx->pushData( FALCON_GC_STORE(clsStorer, new Storer) );
    ctx->pushData( Item(clsModule, mod) );
    ctx->pushCode( &m_stepSave );
@@ -608,7 +606,7 @@ void ModLoader::PStepSave::apply_( const PStep*, VMContext* ctx )
 
    MESSAGE("ModLoader::PStepSave::apply_" );
 
-   Stream* output = static_cast<StreamCarrier*>(ctx->opcodeParam(2).asInst())->m_stream;
+   Stream* output = static_cast<Stream*>(ctx->opcodeParam(2).asInst());
    Storer* storer = static_cast<Storer*>(ctx->opcodeParam(1).asInst());
    Module* mod = static_cast<Module*>(ctx->opcodeParam(0).asInst());
 

@@ -33,26 +33,6 @@ class Stream;
 class StreamBuffer;
 class Transcoder;
 
-
-/** We keep th path, the auth data and the query. */
-class FALCON_DYN_CLASS StreamCarrier
-{
-public:
-   Stream* m_stream;
-   StreamBuffer* m_sbuf;
-   Stream* m_underlying;
-      
-   StreamCarrier( Stream* stream );
-   
-   void setBuffering( uint32 size );
-   virtual void onFlushingOperation();
-
-private:
-   FALCON_REFERENCECOUNT_DECLARE_INCDEC(StreamCarrier);
-   virtual ~StreamCarrier();
-};
-
-
 /*# @class Stream
    
  */
@@ -61,6 +41,7 @@ class ClassStream: public ClassUser
 public:
    
    ClassStream();
+   ClassStream(const String& subclassName );
    virtual ~ClassStream();
 
    //=============================================================

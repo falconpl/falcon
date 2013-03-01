@@ -32,21 +32,6 @@ class ClassStream;
 
 namespace Ext {
 
-/** Holder for the stream. */
-class FALCON_DYN_CLASS TextWriterCarrier: public UserCarrierT<StreamCarrier>
-{
-public:
-   // we won't be separating the text readers and writers.
-   TextWriter* m_writer;
-   
-   TextWriterCarrier( StreamCarrier* stc );
-   virtual ~TextWriterCarrier();
-   virtual StreamCarrier* cloneData() const;
-   
-   virtual void gcMark( uint32 mark );
-};
-
-
 /*# @class TextStream
    @param stream A stream on which to operate.
  

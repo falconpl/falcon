@@ -62,6 +62,8 @@ public:
 
    virtual FStream* clone() const;
 
+   MultiplexGenerator* getMultiplexGenerator() { return 0; }
+
 protected:
    Sys::FileData *m_fsData;
 };

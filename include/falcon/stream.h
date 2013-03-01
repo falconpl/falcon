@@ -30,6 +30,11 @@
 namespace Falcon {
 
 
+class MultiplexGenerator;
+class Module;
+class Selector;
+class Class;
+
 /** Base class for file and filelike services.
 
    This class is used by all the I/O in Falcon libraries and modules.
@@ -190,6 +195,30 @@ public:
    /** Seks from a given position in a file. */
    virtual off_t seek( off_t pos, e_whence w ) = 0;
    
+   /** Gets the selector generator for this kind of streams.
+    *
+    * Each subclass of Stream must provide a MultiplexGenerator
+    * class instance, which exposes a streamSelector() method.
+    *
+    * That streamSelector takes all the streams of the same type
+    * that are stored in a Selector, and multiplexes them,
+    * eventually queuing ready streams into the master Selector.
+    *
+    * So,
+    * 1) Selector asks the stream to give its MultiplexGenerator.
+    * 2) The MultiplexGenerator is asked to produce a new Multiplexer
+    * 3) The new Multiplexer receives that stream, and other Streams
+    * having the same MultiplexGenerator, to multiplex their status.
+    *
+    * \note It's important that all the instances of a certain Stream
+    * sub-class share the same MultiplexGenerator instance. However,
+    * more subclasses can provide the same instance of MultiplexGenerator,
+    * provided the generated Multiplex can handle instances of different
+    * Stream subclasses.
+    */
+   virtual MultiplexGenerator* getMultiplexGenerator() = 0;
+
+
    /** Commits pending read/write operations on those streams supporting delayed rw. 
     \return true of the operation is completed, false on error (if not raising exceptions).
     \throw IoError on i/o error while writing if throwing exception is enabled.
@@ -220,6 +249,25 @@ public:
 
    void gcMark( uint32 mark ) { m_mark = mark; }
    uint32 gcMark() const { return m_mark; }
+
+   /** VM Level Handler for this class.
+    * \return the VM/Collector level handler for this stream.
+    *
+    * Normally, it's the ClassStream instance taken from the engine,
+    * but subclasses might have a different idea about the script level
+    * handler.
+    *
+    */
+   virtual Class* handler();
+
+   /**
+    * Underlying real stream for virtual streams.
+    *
+    * (for instance, StringBuffer has underlying).
+    *
+    * Normally it's 0.
+    */
+   virtual Stream* underlying() const;
 
 protected:
    uint32 m_mark;

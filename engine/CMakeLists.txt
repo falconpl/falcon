@@ -155,6 +155,8 @@ add_library(falcon_engine SHARED
   cm/print.cpp
   cm/semaphore.cpp
   cm/stdfunctions.cpp
+  cm/selector.cpp
+  cm/stringstream.cpp
   cm/syncqueue.cpp
   cm/textreader.cpp
   cm/textstream.cpp
@@ -379,6 +381,7 @@ add_library(falcon_engine SHARED
   modrequest.cpp
   modspace.cpp
   module.cpp
+  multiplex.cpp
   overridableclass.cpp
   process.cpp
   processor.cpp
@@ -395,6 +398,7 @@ add_library(falcon_engine SHARED
   rootsyntree.cpp
   rulesyntree.cpp
   scheduler.cpp
+  selector.cpp
   shared.cpp
   sourceref.cpp
   statement.cpp

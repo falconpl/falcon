@@ -53,6 +53,8 @@ class SynClasses;
 class VMContext;
 class SymbolPool;
 
+class MultiplexGenerator;
+
 class Log;
 
 /** Falcon application global data.
@@ -630,6 +632,12 @@ public:
 
    Log* log() const;
 
+   /** Return the general instance of the string multiplex generator */
+   MultiplexGenerator* getStringStreamMultiplexGenerator() const;
+
+   /** Return the general instance of the file multiplex generator */
+   MultiplexGenerator* getFileStreamMultiplexGenerator() const;
+
 protected:
    Engine();
    ~Engine();
@@ -712,6 +720,11 @@ protected:
    //
    PoolList* m_pools;
    SymbolPool* m_symbols;
+
+   //===============================================
+   // Files, streams and I/O support
+   MultiplexGenerator* m_stringStreamMultiplexGenerator;
+   MultiplexGenerator* m_fileStreamMultiplexGenerator;
 
    //===============================================
    // The core module.

@@ -27,25 +27,22 @@
 namespace Falcon {
 namespace Ext {
 
-TextStreamCarrier::TextStreamCarrier( StreamCarrier* stream ):
-   UserCarrierT<StreamCarrier>( stream ),
-   m_reader( new TextReader(stream->m_stream ) ),
-   m_writer( new TextWriter(stream->m_stream ) )
+TextStreamCarrier::TextStreamCarrier( Stream* stream ):
+   m_reader( new TextReader(stream ) ),
+   m_writer( new TextWriter(stream ) )
 {
-   stream->incref();
 }
 
 TextStreamCarrier::~TextStreamCarrier()
 {
    delete m_reader;
    delete m_writer;
-   carried()->decref();
 }
    
 void TextStreamCarrier::onFlushingOperation()
 {
    m_writer->flush();
-   m_reader->changeStream( carried()->m_stream, true );
+   m_reader->changeStream( m_reader->underlying(), true );
 }
 
 
@@ -105,7 +102,7 @@ bool ClassTextStream::op_init( VMContext* ctx, void* , int32 pcount ) const
 {
    static Engine* eng = Engine::instance();
    
-   StreamCarrier* scarrier = 0;
+   Stream* scarrier = 0;
    String* sEncoding = 0;
    
    if ( pcount > 0 )
@@ -115,7 +112,7 @@ bool ClassTextStream::op_init( VMContext* ctx, void* , int32 pcount ) const
       void* data;
       if( streamInst.asClassInst( cls, data ) && cls->isDerivedFrom( m_stream ) )
       {
-         scarrier = static_cast<StreamCarrier*>(data);
+         scarrier = static_cast<Stream*>(data);
       }
       
       if ( pcount > 1 )
@@ -444,7 +441,7 @@ FALCON_DEFINE_METHOD_P1( ClassTextStream, close )
 {
    TextStreamCarrier* sc = static_cast<TextStreamCarrier*>(ctx->self().asInst());
    sc->m_writer->flush();
-   sc->carried()->m_stream->close();
+   sc->m_reader->underlying()->close();
    ctx->returnFrame();
 }
 
@@ -458,7 +455,7 @@ FALCON_DEFINE_METHOD_P1( ClassTextStream, flush )
 FALCON_DEFINE_METHOD_P1( ClassTextStream, sync )
 {
    TextStreamCarrier* sc = static_cast<TextStreamCarrier*>(ctx->self().asInst());
-   sc->m_reader->changeStream( sc->carried()->m_underlying, true );
+   sc->m_reader->changeStream( sc->m_reader->underlying(), true );
    ctx->returnFrame();
 }
 

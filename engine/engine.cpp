@@ -114,6 +114,9 @@
 
 #include <falcon/item.h>         // for builtin
 
+#include <falcon/stringstream.h> // multiplex generator
+#include <falcon/fstream.h> // multiplex generator
+
 #include <falcon/paranoid.h>
 #include <map>
 #include <deque>
@@ -411,6 +414,14 @@ Engine::Engine()
    m_synClasses = new SynClasses(m_syntreeClass, m_statementClass, m_exprClass );
    m_synClasses->subscribe( this );
    
+   //=====================================
+   // File/stream i/o
+   //
+
+   m_stringStreamMultiplexGenerator = new StringStream::MPGen;
+   m_fileStreamMultiplexGenerator = 0;
+   //m_fileStreamMultiplexGenerator = new FStream::MPGen;
+
    //=====================================
    // The Core Module
    //
@@ -733,7 +744,19 @@ Log* Engine::log() const
    fassert( m_instance != 0 );
    return m_instance->m_log;
 }
-   
+
+MultiplexGenerator* Engine::getStringStreamMultiplexGenerator() const
+{
+   fassert( m_instance != 0 );
+   return m_instance->m_stringStreamMultiplexGenerator;
+}
+
+MultiplexGenerator* Engine::getFileStreamMultiplexGenerator() const
+{
+   fassert( m_instance != 0 );
+   return m_instance->m_fileStreamMultiplexGenerator;
+}
+
 //=====================================================
 // Type handlers
 //

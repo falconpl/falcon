@@ -43,7 +43,6 @@ FAMLoader::~FAMLoader()
    
 void FAMLoader::load( VMContext* ctx, Stream* ins , const String& path, const String& name )
 {
-   static Class* streamClass = Engine::instance()->streamClass();
    static Class* restClass = Engine::instance()->restorerClass();
 
    char buffer[4];
@@ -63,12 +62,11 @@ void FAMLoader::load( VMContext* ctx, Stream* ins , const String& path, const St
    }
 
    Restorer* restorer = new Restorer;
-   StreamCarrier* sc = new StreamCarrier(ins);
    // bufferize the fam loading
-   sc->m_stream = new StreamBuffer( ins, false );
+   StreamBuffer* sc = new StreamBuffer( ins, false );
 
    ctx->pushData( FALCON_GC_STORE(restClass, restorer) );
-   ctx->pushData( FALCON_GC_STORE(streamClass, sc ) );
+   ctx->pushData( FALCON_GC_HANDLE( sc ) );
    ctx->pushData( FALCON_GC_HANDLE(new String(path)) );
    ctx->pushData( FALCON_GC_HANDLE(new String(name)));
 
@@ -85,7 +83,7 @@ void FAMLoader::PStepLoad::apply_( const PStep* self, VMContext* ctx )
    TRACE("FAMLoader::PStepLoad::apply_ %d", seqId );
 
    Restorer* restorer = static_cast<Restorer*>(ctx->opcodeParam(3).asInst());
-   Stream* ins = static_cast<StreamCarrier*>(ctx->opcodeParam(2).asInst())->m_stream;
+   Stream* ins = static_cast<Stream*>(ctx->opcodeParam(2).asInst());
 
    switch( seqId )
    {
@@ -111,8 +109,6 @@ void FAMLoader::PStepLoad::apply_( const PStep* self, VMContext* ctx )
               .extra(path) );
    }
 
-   ins->close();
-   ins = static_cast<StreamCarrier*>(ctx->opcodeParam(2).asInst())->m_underlying;
    ins->close();
 
    Module* mod = static_cast<Module*>( data );

@@ -1,0 +1,36 @@
+
+ss = StringStream()
+ss.pipeMode = true
+sel = Selector()
+sel.addRead( ss )
+barrier = Barrier()
+
+function process()
+   w = Waiter(barrier)
+   w.add( sel, {sel =>
+      >> "Getting text... "
+      stream = sel.get()
+      > stream.grab(1024)
+   })
+   w.wait()
+end
+
+function producer()
+
+   for i = 1 to 2
+      sleep(1)
+      > "Sending text..."
+      ss.write( "New text " + i )
+   end
+   sleep(0.2)
+   barrier.open()
+
+end
+
+
+para = Parallel( process, producer )
+para.launch()
+
+> "Total:", ss.closeToString().describe()
+
+> "Done"

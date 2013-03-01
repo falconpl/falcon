@@ -25,10 +25,10 @@ namespace Falcon
 {
 
 Shared::Shared( ContextManager* mgr, const Class* handler, bool acquireable, int32 signals ):
+   m_mark(0),
    m_notifyTo(mgr),
    m_acquireable( acquireable ),
    m_cls( handler ),
-   m_mark(0),
    m_refcounter_Shared(1)
 {
    _p = new Private( signals );

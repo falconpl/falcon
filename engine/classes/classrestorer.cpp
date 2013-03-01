@@ -126,11 +126,11 @@ FALCON_DEFINE_METHOD_P1( ClassRestorer, restore )
    }
    
    Restorer* restorer = static_cast<Restorer*>(ctx->self().asInst());
-   StreamCarrier* streamc = static_cast<StreamCarrier*>(cls->getParentData(clsStream,data));
+   Stream* streamc = static_cast<Stream*>(cls->getParentData(clsStream,data));
 
    // prepare not to return the frame now but later.
    ctx->pushCode( retStep );
-   restorer->restore(ctx, streamc->m_underlying, ctx->process()->modSpace() );
+   restorer->restore(ctx, streamc, ctx->process()->modSpace() );
 }
 
 

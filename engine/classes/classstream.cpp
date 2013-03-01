@@ -37,54 +37,6 @@
 
 namespace Falcon {
  
-StreamCarrier::StreamCarrier( Stream* stream ):
-   m_stream(stream),
-   m_sbuf(0),
-   m_underlying(stream)
-{}
-
-
-StreamCarrier::~StreamCarrier()
-{   
-   delete m_sbuf;
-   m_underlying->decref();
-}
-
-
-void StreamCarrier::setBuffering( uint32 size )
-{
-   // shall we initialize a buffer?
-   if( m_sbuf == 0 && size != 0 )
-   {
-      m_sbuf = new StreamBuffer( m_underlying, size );
-      m_stream = m_sbuf;
-   }
-   else {
-      // with size 0 remove buffering.
-      if( size == 0 )
-      {
-         if( m_sbuf != 0 )
-         {
-            m_stream = m_underlying;
-            delete m_sbuf;
-            m_sbuf = 0;
-         }
-         // otherwise, we have nothing to do, size = 0 but it's already so.
-      }
-      else {
-         m_sbuf->resizeBuffer( size );
-      }
-   }
-}
-
-void StreamCarrier::onFlushingOperation()
-{
-   // normally, do nothing.
-}
-
-//==================================================
-//
-
 ClassStream::ClassStream():
    ClassUser("Stream"),
    
@@ -114,19 +66,48 @@ ClassStream::ClassStream():
 {
 }
 
+ClassStream::ClassStream( const String& subclassName ):
+   ClassUser(subclassName),
+
+   FALCON_INIT_PROPERTY( error ),
+   FALCON_INIT_PROPERTY( moved ),
+   FALCON_INIT_PROPERTY( position ),
+   FALCON_INIT_PROPERTY( status ),
+   FALCON_INIT_PROPERTY( eof ),
+   FALCON_INIT_PROPERTY( bad ),
+   FALCON_INIT_PROPERTY( good ),
+   FALCON_INIT_PROPERTY( isopen ),
+   FALCON_INIT_PROPERTY( buffer ),
+
+   FALCON_INIT_METHOD( write ),
+   FALCON_INIT_METHOD( read ),
+   FALCON_INIT_METHOD( grab ),
+   FALCON_INIT_METHOD( close ),
+   FALCON_INIT_METHOD( seekBeg ),
+   FALCON_INIT_METHOD( seekCur ),
+   FALCON_INIT_METHOD( seekEnd ),
+   FALCON_INIT_METHOD( seek ),
+   FALCON_INIT_METHOD( tell ),
+   FALCON_INIT_METHOD( flush ),
+   FALCON_INIT_METHOD( trunc ),
+   FALCON_INIT_METHOD( ravail ),
+   FALCON_INIT_METHOD( wavail )
+{
+}
+
 ClassStream::~ClassStream()
 {}
 
 
 void ClassStream::dispose( void* instance ) const
 {
-   static_cast<StreamCarrier*>(instance)->decref();
+   static_cast<Stream*>(instance)->decref();
 }
 
 void* ClassStream::clone( void* insatnce ) const
 {
    // TODO: Clone the underlying streams to have new file pointers
-   StreamCarrier* sc = static_cast<StreamCarrier*>(insatnce);
+   Stream* sc = static_cast<Stream*>(insatnce);
    sc->incref();
    return sc;
 }
@@ -134,19 +115,14 @@ void* ClassStream::clone( void* insatnce ) const
 
 void ClassStream::gcMarkInstance( void* instance, uint32 mark ) const
 {
-   StreamCarrier* carrier = static_cast<StreamCarrier*>(instance);
-   if( carrier != 0 && carrier->m_underlying != 0 ) {
-      carrier->m_underlying->gcMark( mark );
-   }
+   Stream* carrier = static_cast<Stream*>(instance);
+   carrier->gcMark(mark);
 }
 
 bool ClassStream::gcCheckInstance( void* instance, uint32 mark ) const
 {
-   StreamCarrier* carrier = static_cast<StreamCarrier*>(instance);
-   if( carrier != 0 && carrier->m_underlying != 0 ) {
-      return carrier->m_underlying->gcMark() >= mark;
-   }
-   return true;
+   Stream* carrier = static_cast<Stream*>(instance);
+   return carrier->gcMark() >= mark;
 }
    
 void* ClassStream::createInstance() const
@@ -166,7 +142,7 @@ FALCON_DEFINE_PROPERTY_SET( ClassStream, error )( void*, const Item& )
 
 FALCON_DEFINE_PROPERTY_GET_P( ClassStream, error )
 {
-   value.setBoolean(static_cast<StreamCarrier*>(instance)->m_stream->error());
+   value.setBoolean(static_cast<Stream*>(instance)->error());
 }
 
 
@@ -184,8 +160,8 @@ FALCON_DEFINE_PROPERTY_GET( ClassStream, moved )( void*, Item& value)
 FALCON_DEFINE_PROPERTY_SET_P( ClassStream, position )
 {
    checkType( value.isOrdinal(), "N" );
-   int64 pos = static_cast<StreamCarrier*>(instance)
-               ->m_stream->seekBegin( value.forceInteger() );
+   int64 pos = static_cast<Stream*>(instance)
+               ->seekBegin( value.forceInteger() );
    
    if( ! pos < 0 )
    {
@@ -196,7 +172,7 @@ FALCON_DEFINE_PROPERTY_SET_P( ClassStream, position )
 
 FALCON_DEFINE_PROPERTY_GET_P( ClassStream, position )
 {
-   value = static_cast<StreamCarrier*>(instance)->m_stream->tell();
+   value = static_cast<Stream*>(instance)->tell();
 }
   
   
@@ -207,7 +183,7 @@ FALCON_DEFINE_PROPERTY_SET( ClassStream, status )( void*, const Item& )
 
 FALCON_DEFINE_PROPERTY_GET_P( ClassStream, status )
 {
-   value = (int64) static_cast<StreamCarrier*>(instance)->m_stream->status();
+   value = (int64) static_cast<Stream*>(instance)->status();
 }
    
 
@@ -218,7 +194,7 @@ FALCON_DEFINE_PROPERTY_SET( ClassStream, eof )( void*, const Item& )
 
 FALCON_DEFINE_PROPERTY_GET_P( ClassStream, eof )
 {
-   value.setBoolean(static_cast<StreamCarrier*>(instance)->m_stream->eof());
+   value.setBoolean(static_cast<Stream*>(instance)->eof());
 }
 
 
@@ -229,7 +205,7 @@ FALCON_DEFINE_PROPERTY_SET( ClassStream, bad )( void*, const Item& )
 
 FALCON_DEFINE_PROPERTY_GET_P( ClassStream, bad )
 {
-   value.setBoolean(static_cast<StreamCarrier*>(instance)->m_stream->bad());
+   value.setBoolean(static_cast<Stream*>(instance)->bad());
 }
 
 FALCON_DEFINE_PROPERTY_SET( ClassStream, good )( void*, const Item& )
@@ -239,7 +215,7 @@ FALCON_DEFINE_PROPERTY_SET( ClassStream, good )( void*, const Item& )
 
 FALCON_DEFINE_PROPERTY_GET_P( ClassStream, good )
 {
-   value.setBoolean(static_cast<StreamCarrier*>(instance)->m_stream->good());
+   value.setBoolean(static_cast<Stream*>(instance)->good());
 }
 
 
@@ -250,7 +226,7 @@ FALCON_DEFINE_PROPERTY_SET( ClassStream, isopen )( void*, const Item& )
 
 FALCON_DEFINE_PROPERTY_GET_P( ClassStream, isopen )
 {
-   value.setBoolean(static_cast<StreamCarrier*>(instance)->m_stream->open());
+   value.setBoolean(static_cast<Stream*>(instance)->open());
 }
 
 
@@ -261,15 +237,21 @@ FALCON_DEFINE_PROPERTY_SET_P( ClassStream, buffer )
       throw new ParamError( ErrorParam(e_inv_prop_value, __LINE__, SRC ).extra("N"));
    }
    
-   StreamCarrier* sc = static_cast<StreamCarrier*>(instance);
+   Stream* sc = static_cast<Stream*>(instance);
    uint32 v = value.asInteger() < 0 ? 0 : value.asInteger();
-   sc->setBuffering( v );
+   if( sc->underlying() == 0 )
+   {
+      sc = new StreamBuffer(sc, v);
+   }
+   else {
+      static_cast<StreamBuffer*>(sc)->resizeBuffer(v);
+   }
 }
 
 FALCON_DEFINE_PROPERTY_GET_P( ClassStream, buffer )
 {
-   StreamCarrier* sc = static_cast<StreamCarrier*>(instance);
-   uint32 bufSize = sc->m_sbuf == 0 ? 0 : sc->m_sbuf->bufferSize();   
+   Stream* sc = static_cast<Stream*>(instance);
+   uint32 bufSize = sc->underlying() == 0 ? 0 : static_cast<StreamBuffer*>(sc)->bufferSize();
    value = (int64) bufSize;
 }
 
@@ -279,7 +261,7 @@ FALCON_DEFINE_PROPERTY_GET_P( ClassStream, buffer )
 
 FALCON_DEFINE_METHOD_P1( ClassStream, write )
 {
-   StreamCarrier* sc = static_cast<StreamCarrier*>(ctx->self().asInst());
+   Stream* sc = static_cast<Stream*>(ctx->self().asInst());
    
    Item* i_data = ctx->param(0);
    if( i_data == 0 || !(i_data->isString()||i_data->isMemBuf()) )
@@ -352,7 +334,7 @@ FALCON_DEFINE_METHOD_P1( ClassStream, write )
       return;
    }
    
-   int64 retval = (int64) sc->m_stream->write(dataSource+start, count);   
+   int64 retval = (int64) sc->write(dataSource+start, count);
    ctx->returnFrame( retval );
 }
 
@@ -411,8 +393,8 @@ FALCON_DEFINE_METHOD_P1( ClassStream, read )
    }
    
    byte* dataSource = i_data->asString()->getRawStorage();
-   StreamCarrier* sc = static_cast<StreamCarrier*>(ctx->self().asInst());
-   int64 retval = (int64) sc->m_stream->read(dataSource+start, count);   
+   Stream* sc = static_cast<Stream*>(ctx->self().asInst());
+   int64 retval = (int64) sc->read(dataSource+start, count);
    ctx->returnFrame( retval );   
 }
 
@@ -433,8 +415,8 @@ FALCON_DEFINE_METHOD_P1( ClassStream, grab )
    if( icount > 0 )
    {
       str->reserve( icount );
-      StreamCarrier* sc = static_cast<StreamCarrier*>(ctx->self().asInst());
-      int64 retval = (int64) sc->m_stream->read( str->getRawStorage(), icount );
+      Stream* sc = static_cast<Stream*>(ctx->self().asInst());
+      int64 retval = (int64) sc->read( str->getRawStorage(), icount );
       str->size( retval );
    }
    
@@ -445,8 +427,8 @@ FALCON_DEFINE_METHOD_P1( ClassStream, grab )
 
 FALCON_DEFINE_METHOD_P1( ClassStream, close )
 {
-   StreamCarrier* sc = static_cast<StreamCarrier*>(ctx->self().asInst());
-   sc->m_stream->close();
+   Stream* sc = static_cast<Stream*>(ctx->self().asInst());
+   sc->close();
    ctx->returnFrame();
 }
 
@@ -458,10 +440,8 @@ FALCON_DEFINE_METHOD_P1( ClassStream, seekBeg )
    {
       throw paramError();
    }
-   StreamCarrier* sc = static_cast<StreamCarrier*>(ctx->self().asInst());
-
-   sc->onFlushingOperation();
-   ctx->returnFrame( sc->m_stream->seekBegin( i_loc->forceInteger() ) );
+   Stream* sc = static_cast<Stream*>(ctx->self().asInst());
+   ctx->returnFrame( sc->seekBegin( i_loc->forceInteger() ) );
 }
 
 
@@ -472,10 +452,8 @@ FALCON_DEFINE_METHOD_P1( ClassStream, seekCur )
    {
       throw paramError();
    }
-   StreamCarrier* sc = static_cast<StreamCarrier*>(ctx->self().asInst());
-   
-   sc->onFlushingOperation();
-   ctx->returnFrame( sc->m_stream->seekCurrent( i_loc->forceInteger() ) );
+   Stream* sc = static_cast<Stream*>(ctx->self().asInst());
+   ctx->returnFrame( sc->seekCurrent( i_loc->forceInteger() ) );
 }
 
 
@@ -486,10 +464,8 @@ FALCON_DEFINE_METHOD_P1( ClassStream, seekEnd )
    {
       throw paramError();
    }
-   StreamCarrier* sc = static_cast<StreamCarrier*>(ctx->self().asInst());
-   
-   sc->onFlushingOperation();
-   ctx->returnFrame( sc->m_stream->seekEnd( i_loc->forceInteger() ) );
+   Stream* sc = static_cast<Stream*>(ctx->self().asInst());
+   ctx->returnFrame( sc->seekEnd( i_loc->forceInteger() ) );
 }
 
 FALCON_DEFINE_METHOD_P1( ClassStream, seek )
@@ -503,26 +479,24 @@ FALCON_DEFINE_METHOD_P1( ClassStream, seek )
       throw paramError();
    }
    
-   StreamCarrier* sc = static_cast<StreamCarrier*>(ctx->self().asInst());
+   Stream* sc = static_cast<Stream*>(ctx->self().asInst());
    
-   sc->onFlushingOperation();
-   ctx->returnFrame( sc->m_stream->seek( i_loc->forceInteger(), 
+   ctx->returnFrame( sc->seek( i_loc->forceInteger(),
          (Stream::e_whence) i_whence->forceInteger() ) );
 }
 
 
 FALCON_DEFINE_METHOD_P1( ClassStream, tell )
 {   
-   StreamCarrier* sc = static_cast<StreamCarrier*>(ctx->self().asInst());   
-   ctx->returnFrame( sc->m_stream->tell() );
+   Stream* sc = static_cast<Stream*>(ctx->self().asInst());
+   ctx->returnFrame( sc->tell() );
 }
 
 
 FALCON_DEFINE_METHOD_P1( ClassStream, flush )
 {   
-   StreamCarrier* sc = static_cast<StreamCarrier*>(ctx->self().asInst());   
-   sc->onFlushingOperation();
-   ctx->returnFrame( sc->m_stream->flush() );
+   Stream* sc = static_cast<Stream*>(ctx->self().asInst());
+   ctx->returnFrame( sc->flush() );
 }
 
 FALCON_DEFINE_METHOD_P1( ClassStream, trunc )
@@ -532,10 +506,9 @@ FALCON_DEFINE_METHOD_P1( ClassStream, trunc )
    {
       throw paramError();
    }
-   StreamCarrier* sc = static_cast<StreamCarrier*>(ctx->self().asInst());
-   sc->onFlushingOperation();
+   Stream* sc = static_cast<Stream*>(ctx->self().asInst());
    int64 loc = i_loc != 0 ? i_loc->forceInteger() : -1 ;
-   ctx->returnFrame( sc->m_stream->truncate( loc ) );
+   ctx->returnFrame( sc->truncate( loc ) );
 }
 
 
@@ -546,9 +519,9 @@ FALCON_DEFINE_METHOD_P1( ClassStream, ravail )
    {
       throw paramError();
    }
-   StreamCarrier* sc = static_cast<StreamCarrier*>(ctx->self().asInst());
+   Stream* sc = static_cast<Stream*>(ctx->self().asInst());
    int64 loc = i_loc != 0 ? i_loc->forceInteger() : -1 ;
-   ctx->returnFrame( (int64) sc->m_stream->readAvailable( loc ) );
+   ctx->returnFrame( (int64) sc->readAvailable( loc ) );
 }
 
 
@@ -559,9 +532,9 @@ FALCON_DEFINE_METHOD_P1( ClassStream, wavail )
    {
       throw paramError();
    }
-   StreamCarrier* sc = static_cast<StreamCarrier*>(ctx->self().asInst());
+   Stream* sc = static_cast<Stream*>(ctx->self().asInst());
    int64 loc = i_loc != 0 ? i_loc->forceInteger() : -1 ;
-   ctx->returnFrame( (int64) sc->m_stream->writeAvailable( loc ) );
+   ctx->returnFrame( (int64) sc->writeAvailable( loc ) );
 }
 
 }

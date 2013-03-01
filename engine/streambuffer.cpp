@@ -406,6 +406,12 @@ bool StreamBuffer::resizeBuffer( uint32 size )
    return true;
 }
 
+
+MultiplexGenerator* StreamBuffer::getMultiplexGenerator()
+{
+   return m_stream->getMultiplexGenerator();
+}
+
 }
 
 

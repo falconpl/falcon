@@ -72,13 +72,13 @@ void Compile::invoke( VMContext* ctx , int32 params )
       else if( pitem->asClassInst(cls, data) )
       {
          if( cls->isDerivedFrom(streamClass) ) {
-            StreamCarrier* sc = static_cast<StreamCarrier*>( data );
-            reader = new TextReader( sc->m_underlying );
+            Stream* sc = static_cast<Stream*>( cls->getParentData(streamClass, data) );
+            reader = new TextReader( sc );
             ownReader = true;
          }
          else if( cls->isDerivedFrom( readerClass ) ) {
-            TextReaderCarrier* trc = static_cast<TextReaderCarrier*>( data );
-            reader = trc->m_reader;
+            TextReader* tr = static_cast<TextReader*>( data );
+            reader = tr;
             ownReader = false;
          }
          else if( cls->isDerivedFrom( tsClass ) ) {

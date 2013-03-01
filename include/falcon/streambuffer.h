@@ -65,7 +65,7 @@ public:
    /** Returns the underlying stream used by this transcoder.
    \return the underlying stream.
    */
-   Stream *underlying() const { return m_stream; }
+   virtual Stream *underlying() const { return m_stream; }
 
    virtual bool close();
    virtual int64 tell();
@@ -85,6 +85,8 @@ public:
    
    bool resizeBuffer( uint32 size );
    uint32 bufferSize() const { return m_bufSize; }
+
+   MultiplexGenerator* getMultiplexGenerator();
 };
 
 }

@@ -52,6 +52,20 @@ bool Stream::flush()
    return true;
 }
 
+
+Class* Stream::handler()
+{
+   static Class* sc = Engine::instance()->streamClass();
+   return sc;
+}
+
+
+Stream* Stream::underlying() const
+{
+   return 0;
+}
+
+
 }
 
 /* end of stream.cpp */

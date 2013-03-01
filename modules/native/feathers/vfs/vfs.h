@@ -18,8 +18,6 @@
 
 #include <falcon/module.h>
 
-#define FALCON_VFS_MODE_FLAG_RAW 0x100
-
 namespace Falcon {
 
 class VFSModule: public Module

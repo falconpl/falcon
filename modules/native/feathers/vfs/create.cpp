@@ -80,13 +80,7 @@ void Create::invoke( Falcon::VMContext* ctx, int )
    }
    
    stream->shouldThrow(true);
-   StreamCarrier* scr = new StreamCarrier(stream);
-   if( i_mode == 0 || ((i_mode->forceInteger() & FALCON_VFS_MODE_FLAG_RAW) == 0) )
-   {
-      scr->setBuffering(4096);
-   }
-
-   ctx->returnFrame( FALCON_GC_STORE( Engine::instance()->streamClass(), scr ) );
+   ctx->returnFrame( FALCON_GC_HANDLE( stream ) );
 }
 
 }

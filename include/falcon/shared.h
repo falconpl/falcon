@@ -61,7 +61,7 @@ class Class;
 class FALCON_DYN_CLASS Shared
 {
 public:
-   Shared( ContextManager* mgr, const Class* cls=0, bool acquireable = false, int32 signals = 0 );
+   Shared( ContextManager* mgr, const Class* handler=0, bool acquireable = false, int32 signals = 0 );
 
    /** Returns true if this resource supports acquire semantic.
     */
@@ -144,6 +144,9 @@ public:
    virtual void onWaiterWaiting(VMContext* ctx);
 
 protected:
+
+   uint32 m_mark;
+
    virtual ~Shared();
 
    /** Returns the count of the signals in this moment.
@@ -183,7 +186,6 @@ private:
 
    bool addWaiter( VMContext* ctx );
 
-   uint32 m_mark;
 
    FALCON_REFERENCECOUNT_DECLARE_INCDEC(Shared);
 };

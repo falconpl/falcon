@@ -147,13 +147,13 @@ FALCON_DEFINE_METHOD_P1( ClassStorer, commit )
    }
    
    Storer* storer = static_cast<Storer*>(ctx->self().asInst());
-   StreamCarrier* streamc = static_cast<StreamCarrier*>(data);
+   Stream* streamc = static_cast<Stream*>(data);
 
    // prepare an explicit call of the return frame
    ctx->pushCode( &stdSteps->m_returnFrame );
    
    // skip internal buffering, even if provided, by taking the underlying
-   if( storer->commit( ctx, streamc->m_underlying ) )
+   if( storer->commit( ctx, streamc ) )
    {
       // we must return only if the store was completed in this loop
       ctx->returnFrame();
