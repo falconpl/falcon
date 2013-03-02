@@ -67,7 +67,7 @@ protected:
 
 private:
 
-   class CtxWeakRef: public VMContext::WeakRef
+   class FALCON_DYN_CLASS CtxWeakRef: public VMContext::WeakRef
    {
    public:
       CtxWeakRef( MessageQueue* owner );

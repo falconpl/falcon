@@ -85,7 +85,7 @@ private:
    static void apply_( const PStep*, VMContext* ctx );
 
    /** Execute the finally clause of this try.*/
-   class PStepFinally: public PStep
+   class FALCON_DYN_CLASS PStepFinally: public PStep
    {
    public:
       PStepFinally( StmtTry* t ): m_owner(t) { apply = apply_;}

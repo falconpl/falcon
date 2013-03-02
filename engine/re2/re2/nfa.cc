@@ -133,9 +133,9 @@ NFA::NFA(Prog* prog) {
   endmatch_ = false;
   btext_ = NULL;
   etext_ = NULL;
-  q0_.resize(prog_->size());
-  q1_.resize(prog_->size());
-  nastack_ = 2*prog_->size();
+  q0_.resize((int)prog_->size());
+  q1_.resize((int)prog_->size());
+  nastack_ = (int)(2*prog_->size());
   astack_ = new AddState[nastack_];
   match_ = NULL;
   matched_ = false;
@@ -627,7 +627,7 @@ int NFA::ComputeFirstByte() {
   int b = -1;  // first byte, not yet computed
 
   typedef SparseSet Workq;
-  Workq q(prog_->size());
+  Workq q((int)prog_->size());
   q.insert(start_);
   for (Workq::iterator it = q.begin(); it != q.end(); ++it) {
     int id = *it;

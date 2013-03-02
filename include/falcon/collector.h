@@ -683,7 +683,7 @@ public:
 
 protected:
    /** Marker thread. */
-   class Marker: public Runnable {
+   class FALCON_DYN_CLASS Marker: public Runnable {
    public:
       Marker( Collector* master ):
          m_master(master)
@@ -701,7 +701,7 @@ protected:
     * \note The timer thread could be eliminated if we created a collector per VM;
     * we could then use the VM scheduler for the purpose of being called back at intervals.
     * */
-   class Timer: public Runnable {
+   class FALCON_DYN_CLASS Timer: public Runnable {
       public:
          Timer( Collector* master ):
             m_master(master)
@@ -715,7 +715,7 @@ protected:
       };
 
    /** Sweeper thread. */
-   class Sweeper: public Runnable {
+   class FALCON_DYN_CLASS Sweeper: public Runnable {
    public:
       Sweeper( Collector* master ):
          m_master(master)

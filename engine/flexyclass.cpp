@@ -94,7 +94,7 @@ void FlexyClass::flatten( VMContext* , ItemArray& subItems, void* instance ) con
 
       virtual void operator()( const String& property, Item& value )
       {
-         m_subItems.append( Item(property.handler()) );
+         m_subItems.append( Item(property.handler(), const_cast<String*>(&property) ) );
          m_subItems.append( Item(value) );
       }
 

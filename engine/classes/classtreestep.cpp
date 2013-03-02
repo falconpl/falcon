@@ -362,7 +362,7 @@ void ClassTreeStep::op_getIndex(VMContext* ctx, void* instance ) const
             .origin(ErrorParam::e_orig_vm));
       }
 
-      TreeStep* st = stmt->nth( num );
+      TreeStep* st = stmt->nth( (int32) num );
       if( st == 0 )
       {
          // nil might be valid for optional blocks
@@ -397,7 +397,7 @@ void ClassTreeStep::op_setIndex(VMContext* ctx, void* instance ) const
       Item& i_tree = ctx->opcodeParam(2);
       if( i_tree.isNil() )
       {
-         if( ! self->setNth( num, 0 ) )
+         if( ! self->setNth( (int32) num, 0 ) )
          {
             throw new CodeError( ErrorParam(e_invalid_op, __LINE__, SRC)
                .origin( ErrorParam::e_orig_vm)
@@ -425,7 +425,7 @@ void ClassTreeStep::op_setIndex(VMContext* ctx, void* instance ) const
                .extra( "Parented entity cannot be inserted" ) );
          }
 
-         if( ! self->setNth( num, ts ) )
+         if( ! self->setNth( (int32) num, ts ) )
          {
             delete ev; // this can be our ev
             throw new CodeError( ErrorParam(e_invalid_op, __LINE__, SRC)
@@ -537,7 +537,7 @@ void ClassTreeStep::InsertMethod::invoke( VMContext* ctx, int32 pcount )
 
    // check TreeStep category.
    TreeStep* self_step = static_cast<TreeStep*>(self.asInst());
-   if( ! self_step->insert( i_pos->forceInteger(), ts) ) {
+   if( ! self_step->insert( (int32) i_pos->forceInteger(), ts) ) {
       ctx->raiseError( new CodeError( ErrorParam(e_invalid_op, __LINE__, SRC)
       .origin( ErrorParam::e_orig_runtime)
       .extra( "This Statement is not accepting insert" ) ) );
@@ -576,7 +576,7 @@ void ClassTreeStep::RemoveMethod::invoke( VMContext* ctx, int32 )
    }
 
    TreeStep* self_step = static_cast<TreeStep*>(self.asInst());
-   if( ! self_step->remove( i_pos->forceInteger() ) ) {
+   if( ! self_step->remove( (int32) i_pos->forceInteger() ) ) {
       ctx->raiseError( new CodeError( ErrorParam(e_invalid_op, __LINE__, SRC)
       .origin( ErrorParam::e_orig_runtime)
       .extra( "This Statement is not accepting remove" ) ) );

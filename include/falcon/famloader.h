@@ -51,7 +51,7 @@ public:
 private:
    ModSpace* m_modSpace;
 
-   class PStepLoad: public PStep
+   class FALCON_DYN_CLASS PStepLoad: public PStep
    {
    public:
       PStepLoad( FAMLoader* owner ): m_owner( owner ) {

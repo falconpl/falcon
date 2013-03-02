@@ -395,7 +395,7 @@ bool Prog::IsOnePass() {
   // Flood the graph starting at the start state, and check
   // that in each reachable state, each possible byte leads
   // to a unique next state.
-  int size = this->size();
+  int size = (int) this->size();
   InstCond *stack = new InstCond[size];
 
   int* nodebyid = new int[size];  // indexed by ip

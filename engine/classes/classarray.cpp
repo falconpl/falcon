@@ -174,7 +174,7 @@ void ClassArray::op_getIndex( VMContext* ctx, void* self ) const
          throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra( "out of range" ) );
       }
 
-      ctx->stackResult( 2, array[v] );
+      ctx->stackResult( 2, array[(length_t)v] );
    }
    else if ( index->isUser() ) // index is a range
    {
@@ -228,13 +228,13 @@ void ClassArray::op_getIndex( VMContext* ctx, void* self ) const
             }
          }
 
-         ItemArray *returnArray = new ItemArray( abs( ( start - end ) + 1 ) );
+         ItemArray *returnArray = new ItemArray( abs( (int)(( start - end ) + 1) ) );
 
          if ( reverse )
          {
             while ( start >= end )
             {
-               returnArray->append( array[start] );
+               returnArray->append( array[(length_t)start] );
                start += step;
             }
          }
@@ -242,7 +242,7 @@ void ClassArray::op_getIndex( VMContext* ctx, void* self ) const
          {
             while ( start < end )
             {
-               returnArray->append( array[start] );
+               returnArray->append( array[(length_t)start] );
                start += step;
             }
          }
@@ -281,7 +281,7 @@ void ClassArray::op_setIndex( VMContext* ctx, void* self ) const
          throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra( "index out of range" ) );
       }
 
-      array[v].assignFromLocal(*value);
+      array[(length_t)v].assignFromLocal(*value);
       ctx->popData(2); // our value is already the thirdmost element in the stack.
       return;
    }
@@ -332,28 +332,28 @@ void ClassArray::op_setIndex( VMContext* ctx, void* self ) const
 
          if ( rangeLen < rhsLen )
          {
-            array.change( rhsArray, start, rangeLen );
+            array.change( rhsArray, (length_t)start, (length_t)rangeLen );
          }
          else if ( rangeLen > rhsLen )
          {
-            array.change( rhsArray, start, rhsLen );
+            array.change( rhsArray, (length_t)start, (length_t)rhsLen );
 
-            array.remove( ( start + rhsLen ), ( rangeLen - rhsLen ) );
+            array.remove( (length_t)( start + rhsLen ), (length_t)( rangeLen - rhsLen ) );
          }
          else // rangeLen == rhsLen
          {
-            array.copyOnto( start, rhsArray, 0, rhsLen );
+            array.copyOnto( (length_t)start, rhsArray, 0, (length_t)rhsLen );
          }
       }
       else
       {
          value->copied( true );    // the value is copied here.
 
-         array[ ( start == end ) ? start + 1 : start ] = *value;
+         array[ (length_t)(( start == end ) ? start + 1 : start) ] = *value;
 
          if ( rangeLen > 1 )
          {
-            array.remove( ( start + 1 ), ( rangeLen - 1 ) );
+            array.remove( (length_t)( start + 1 ), (length_t)( rangeLen - 1 ) );
          }
       }
    }
@@ -363,9 +363,9 @@ void ClassArray::op_setIndex( VMContext* ctx, void* self ) const
 
       if ( rangeLen > 1 )
       {
-         array[ ( start == end ) ? start + 1 : start ] = *value;
+         array[ (length_t)(( start == end ) ? start + 1 : start) ] = *value;
 
-         array.remove( ( start + 1 ), ( rangeLen - 1 ) );
+         array.remove( (length_t)( start + 1 ), (length_t)( rangeLen - 1 ) );
       }
       else  // arritem[1:1]
       {
@@ -567,7 +567,7 @@ FALCON_DEFINE_METHOD_P1(ClassArray, alloc )
       else
       {
          ItemArray* array = new ItemArray;
-         array->reserve(i_size->forceInteger());
+         array->reserve((length_t)i_size->forceInteger());
          ctx->returnFrame(FALCON_GC_HANDLE(array));
       }
    }
@@ -588,7 +588,7 @@ FALCON_DEFINE_METHOD_P1(ClassArray, reserve )
 
    ItemArray* array = static_cast<ItemArray*>( cls->getParentData(methodOf(), data) );
 
-   array->reserve(i_size->forceInteger());
+   array->reserve((length_t)i_size->forceInteger());
    ctx->returnFrame(Item(array->handler(), array));
 }
 

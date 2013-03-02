@@ -135,8 +135,8 @@ void CollectorAlgorithmFixed::describe(String& target) const
 //
 
 CollectorAlgorithmRamp::CollectorAlgorithmRamp( int64 limit, numeric yellowFact, numeric redFact ):
-      m_yellowLimit( limit * yellowFact  ),
-      m_redLimit( limit * redFact ),
+      m_yellowLimit( (int64)(limit * yellowFact)  ),
+      m_redLimit( (int64)(limit * redFact) ),
       m_yellowFactor( yellowFact ),
       m_redFactor( redFact )
 {
@@ -165,19 +165,19 @@ void CollectorAlgorithmRamp::onMemoryThreshold( Collector* coll, int64 threshold
    if( threshold >= m_redLimit ) {
       coll->status( Collector::e_status_red );
       coll->suggestGC(true);
-      coll->memoryThreshold( m_redLimit*m_redFactor );
-      m_lastTimeout = ( RED_RETRY_TIMEOUT * m_yellowFactor );
+      coll->memoryThreshold( (int64)(m_redLimit*m_redFactor) );
+      m_lastTimeout = ( (uint32)(RED_RETRY_TIMEOUT * m_yellowFactor) );
    }
    else if( threshold >= m_yellowLimit ) {
       coll->status( Collector::e_status_yellow );
       coll->suggestGC(false);
       coll->memoryThreshold( m_redLimit );
-      m_lastTimeout = ( YELLOW_RETRY_TIMEOUT * m_yellowFactor );
+      m_lastTimeout = ( (uint32)(YELLOW_RETRY_TIMEOUT * m_yellowFactor) );
    }
    else
    {
       coll->memoryThreshold(m_yellowLimit);
-      m_lastTimeout = ( GREEN_RETRY_TIMEOUT * m_yellowFactor );
+      m_lastTimeout = ( (uint32)(GREEN_RETRY_TIMEOUT * m_yellowFactor) );
    }
 
    coll->algoTimeout( m_lastTimeout );
@@ -191,8 +191,8 @@ void CollectorAlgorithmRamp::onSweepComplete( Collector* coll, int64 freed, int6
    m_mtx.lock();
    bool done = memory <= m_base;
    m_limit = done ? m_base : memory;
-   int64 yl = (m_yellowLimit = m_limit * m_yellowFactor);
-   m_redLimit = m_limit * m_redFactor;
+   int64 yl = m_yellowLimit = (int64)(m_limit * m_yellowFactor);
+   m_redLimit = (int64)(m_limit * m_redFactor);
    m_mtx.unlock();
 
    // success in freeing?
@@ -227,38 +227,38 @@ void CollectorAlgorithmRamp::onTimeout( Collector* coll )
      status = Collector::e_status_red;
      suggestGC = true;
      suggestMode = true;
-     m_lastTimeout += RED_RETRY_TIMEOUT * m_redFactor;
+     m_lastTimeout += (uint32)(RED_RETRY_TIMEOUT * m_redFactor);
    }
    else if( memory >= m_yellowLimit ) {
      status = Collector::e_status_yellow;
      suggestGC = true;
      suggestMode = false;
-     m_lastTimeout += YELLOW_RETRY_TIMEOUT * m_redFactor;
+     m_lastTimeout += (uint32)(YELLOW_RETRY_TIMEOUT * m_redFactor);
    }
    else if( memory >= m_base )
    {
       // gets the limits a bit down and see what happens.
-      m_limit /= m_yellowFactor;
+      m_limit =(int64)( m_limit/ m_yellowFactor);
       if( m_limit < m_base )
       {
          m_limit = m_base;
       }
-      yl = (m_yellowLimit = m_limit * m_yellowFactor);
-      m_redLimit = m_limit * m_redFactor;
+      yl = m_yellowLimit = (int64)(m_limit * m_yellowFactor);
+      m_redLimit = (int64)(m_limit * m_redFactor);
 
       if( memory >= m_redLimit )
       {
          status = Collector::e_status_red;
-         m_lastTimeout += YELLOW_RETRY_TIMEOUT * m_redFactor;
+         m_lastTimeout += (uint32)(YELLOW_RETRY_TIMEOUT * m_redFactor);
       }
       else if( memory >= m_yellowLimit )
       {
          status = Collector::e_status_red;
-         m_lastTimeout += YELLOW_RETRY_TIMEOUT * m_redFactor;
+         m_lastTimeout += (uint32)(YELLOW_RETRY_TIMEOUT * m_redFactor);
       }
       else {
          status = Collector::e_status_green;
-         m_lastTimeout += GREEN_RETRY_TIMEOUT * m_redFactor;
+         m_lastTimeout += (uint32)(GREEN_RETRY_TIMEOUT * m_redFactor);
       }
       // however, wait next time before suggesting collection
 
@@ -310,8 +310,8 @@ void CollectorAlgorithmRamp::limit( int64 l )
    {
       m_limit = m_base;
    }
-   m_yellowLimit = m_limit * m_yellowFactor;
-   m_redLimit = m_limit * m_redFactor;
+   m_yellowLimit = (int64)(m_limit * m_yellowFactor);
+   m_redLimit = (int64)(m_limit * m_redFactor);
    m_mtx.unlock();
 }
 
@@ -331,8 +331,8 @@ void CollectorAlgorithmRamp::base( int64 l )
    if( m_limit < m_base )
    {
       m_limit = m_base;
-      m_yellowLimit = m_limit * m_yellowFactor;
-      m_redLimit = m_limit * m_redFactor;
+      m_yellowLimit = (int64)(m_limit * m_yellowFactor);
+      m_redLimit = (int64)(m_limit * m_redFactor);
    }
    m_mtx.unlock();
 }

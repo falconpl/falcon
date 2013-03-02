@@ -36,7 +36,7 @@ class Transcoder;
 /*# @class Stream
    
  */
-class ClassStream: public ClassUser
+class FALCON_DYN_CLASS ClassStream: public ClassUser
 {
 public:
    

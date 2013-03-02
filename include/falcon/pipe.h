@@ -55,15 +55,15 @@ public:
    ~Pipe();
 
    /** Returns the side of the pipe that can be written. */
-   const FileData& writeSide() const { return m_writeSide; }
+   const FileData& writeSide() const { return *m_writeSide; }
 
    /** Returns the side of the pipe that can be read. */
-   const FileData& readSide() const { return m_readSide; }
+   const FileData& readSide() const { return *m_readSide; }
 
    /** Returns the side of the pipe that can be written. */
-   FileData& writeSide() { return m_writeSide; }
+   FileData& writeSide() { return *m_writeSide; }
    /** Returns the side of the pipe that can be read. */
-   FileData& readSide() { return m_readSide; }
+   FileData& readSide() { return *m_readSide; }
 
    void closeRead();
    void closeWrite();
@@ -88,7 +88,7 @@ public:
 
    /** Traits for streams that can be interpreted as directional, piped FileData.
     */
-   class Traits: public StreamTraits
+   class FALCON_DYN_CLASS Traits: public StreamTraits
    {
    public:
       /**
@@ -110,8 +110,8 @@ public:
    };
 
 private:
-   FileData m_readSide;
-   FileData m_writeSide;
+   FileData* m_readSide;
+   FileData* m_writeSide;
 };
 
 }

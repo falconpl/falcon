@@ -501,7 +501,7 @@ int Compiler::RuneByteSuffix(uint8 lo, uint8 hi, bool foldcase, int next) {
     return UncachedRuneByteSuffix(lo, hi, foldcase, next);
   }
 
-  uint64 key = ((uint64)next << 17) | (lo<<9) | (hi<<1) | foldcase;
+  uint64 key = ((uint64)next << 17) | (lo<<9) | (hi<<1) | (foldcase? 1 : 0);
   map<uint64, int>::iterator it = rune_cache_.find(key);
   if (it != rune_cache_.end())
     return it->second;
@@ -751,16 +751,16 @@ Frag Compiler::PostVisit(Regexp* re, Frag, Frag, Frag* child_frags,
     }
 
     case kRegexpStar:
-      return Star(child_frags[0], re->parse_flags()&Regexp::NonGreedy);
+      return Star(child_frags[0], (re->parse_flags()&Regexp::NonGreedy) > 0);
 
     case kRegexpPlus:
-      return Plus(child_frags[0], re->parse_flags()&Regexp::NonGreedy);
+      return Plus(child_frags[0], (re->parse_flags()&Regexp::NonGreedy) > 0);
 
     case kRegexpQuest:
-      return Quest(child_frags[0], re->parse_flags()&Regexp::NonGreedy);
+      return Quest(child_frags[0], (re->parse_flags()&Regexp::NonGreedy) > 0);
 
     case kRegexpLiteral:
-      return Literal(re->rune(), re->parse_flags()&Regexp::FoldCase);
+      return Literal(re->rune(), (re->parse_flags()&Regexp::FoldCase) > 0);
 
     case kRegexpLiteralString: {
       // Concatenation of literals.
@@ -768,7 +768,7 @@ Frag Compiler::PostVisit(Regexp* re, Frag, Frag, Frag* child_frags,
         return Nop();
       Frag f;
       for (int i = 0; i < re->nrunes(); i++) {
-        Frag f1 = Literal(re->runes()[i], re->parse_flags()&Regexp::FoldCase);
+        Frag f1 = Literal(re->runes()[i], (re->parse_flags()&Regexp::FoldCase) > 0);
         if (i == 0)
           f = f1;
         else
@@ -976,7 +976,7 @@ void Compiler::Setup(Regexp::ParseFlags flags, int64 max_mem,
     if (m > Prog::Inst::kMaxInst)
       m = Prog::Inst::kMaxInst;
 
-    max_inst_ = m;
+    max_inst_ = (int) m;
   }
 
   anchor_ = anchor;

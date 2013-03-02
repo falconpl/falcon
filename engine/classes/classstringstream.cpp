@@ -72,7 +72,7 @@ bool ClassStringStream::op_init( VMContext* ctx, void*, int pcount ) const
       }
    }
 
-   StringStream* ss = new StringStream( count );
+   StringStream* ss = new StringStream( (int32) count );
    ctx->stackResult(pcount+1, FALCON_GC_STORE(this, ss));
    return true;
 }

@@ -40,7 +40,7 @@ class StreamTraits;
  *
  * \see getMultiplexGenerator();
  */
-class Multiplex
+class FALCON_DYN_CLASS Multiplex
 {
 public:
    virtual ~Multiplex(){}

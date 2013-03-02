@@ -117,7 +117,7 @@ public:
    static numeric operaten( numeric a, numeric b ) { return a / b; }
    static bool zeroCheck( const Item& n ) { return n.isOrdinal() && n.forceInteger() == 0; }
    static void swapper( Item&, Item& op1) { 
-      if( op1.isInteger() ) {op1.setNumeric( op1.asInteger());} 
+      if( op1.isInteger() ) {op1.setNumeric( (numeric) op1.asInteger());} 
    }   
    static void assign( PStep*, VMContext* ) {}
 };
@@ -127,7 +127,7 @@ class ExprMod::ops
 public:
    static int64 operate( int64 a, int64 b ) { return a % b; }
    static void operate( VMContext* ctx, Class* cls, void* inst ) { cls->op_mod(ctx, inst); }
-   static numeric operaten( numeric a, numeric b ) { return ((int64)a) % ((int64)b); }
+   static numeric operaten( numeric a, numeric b ) { return (numeric)(((int64)a) % ((int64)b)); }
    static bool zeroCheck( const Item& n ) { return n.isOrdinal() && n.forceInteger() == 0; }
    static void swapper( Item&, Item& ) {}   
    static void assign( PStep*, VMContext* ) {}
@@ -136,12 +136,12 @@ public:
 class ExprPow::ops
 {
 public:
-   static int64 operate( int64 a, int64 b ) { return (int64)pow(a,(numeric)b); }
+   static int64 operate( int64 a, int64 b ) { return (int64)pow((numeric)a,(numeric)b); }
    static void operate( VMContext* ctx, Class* cls, void* inst ) { cls->op_pow(ctx, inst); }
    static numeric operaten( numeric a, numeric b ) { return pow(a,b); }
    static bool zeroCheck( const Item& ) { return false; }
    static void swapper( Item&, Item& op1) { 
-      if( op1.isInteger() ) {op1.setNumeric( op1.asInteger());} 
+      if( op1.isInteger() ) {op1.setNumeric( (numeric) op1.asInteger());} 
    }   
    static void assign( PStep*, VMContext* ) {}
 };
@@ -152,7 +152,7 @@ class ExprRShift::ops
 public:
    static int64 operate( int64 a, int64 b ) { return ((uint64)a) >> ((uint64)b); }
    static void operate( VMContext* ctx, Class* cls, void* inst ) { cls->op_shr(ctx, inst); }
-   static numeric operaten( numeric a, numeric b ) { return ((uint64)a) >> ((uint64)b); }
+   static numeric operaten( numeric a, numeric b ) { return (numeric)(((uint64)a) >> ((uint64)b)); }
    static bool zeroCheck( const Item& ) { return false; }
    static void swapper( Item&, Item&) {}
    static void assign( PStep*, VMContext* ) {}
@@ -161,9 +161,9 @@ public:
 class ExprLShift::ops
 {
 public:
-   static int64 operate( int64 a, int64 b ) { return (int64) ((uint64)a) << ((uint64)b); }
+   static int64 operate( int64 a, int64 b ) { return (int64) (((uint64)a) << ((uint64)b)); }
    static void operate( VMContext* ctx, Class* cls, void* inst ) { cls->op_shl(ctx, inst); }
-   static numeric operaten( numeric a, numeric b ) { return ((uint64)a) << ((uint64)b); }
+   static numeric operaten( numeric a, numeric b ) { return (numeric)(((uint64)a) << ((uint64)b)); }
    static bool zeroCheck( const Item& ) { return false; }
    static void swapper( Item&, Item& ) {} 
    static void assign( PStep*, VMContext* ) {}
@@ -179,7 +179,7 @@ public:
          .extra("^&")
          .origin( ErrorParam::e_orig_vm )); 
    }
-   static numeric operaten( numeric a, numeric b ) { return ((uint64)a) & ((uint64)b); }
+   static numeric operaten( numeric a, numeric b ) { return (numeric)(((uint64)a) & ((uint64)b)); }
    static bool zeroCheck( const Item& ) { return false; }
    static void swapper( Item&, Item& ) {} 
    static void assign( PStep*, VMContext* ) {}
@@ -194,7 +194,7 @@ public:
          .extra("^|")
          .origin( ErrorParam::e_orig_vm )); 
    }
-   static numeric operaten( numeric a, numeric b ) { return ((uint64)a) | ((uint64)b); }
+   static numeric operaten( numeric a, numeric b ) { return (numeric)(((uint64)a) | ((uint64)b)); }
    static bool zeroCheck( const Item& ) { return false; }
    static void swapper( Item&, Item& ) {} 
    static void assign( PStep*, VMContext* ) {}
@@ -209,7 +209,7 @@ public:
          .extra("^^")
          .origin( ErrorParam::e_orig_vm )); 
    }
-   static numeric operaten( numeric a, numeric b ) { return ((uint64)a) ^ ((uint64)b); }
+   static numeric operaten( numeric a, numeric b ) { return (numeric)(((uint64)a) ^ ((uint64)b)); }
    static bool zeroCheck( const Item& ) { return false; }
    static void swapper( Item&, Item& ) {} 
    static void assign( PStep*, VMContext* ) {}
@@ -261,7 +261,7 @@ public:
    static numeric operaten( numeric a, numeric b ) { return a / b; }
    static bool zeroCheck( const Item& n ) { return n.isOrdinal() && n.forceInteger() == 0; }
    static void swapper( Item&, Item& op2 ) {
-      if( op2.isInteger() ) {op2.setNumeric( op2.asInteger());} 
+      if( op2.isInteger() ) {op2.setNumeric( (numeric)op2.asInteger());} 
    }   
    static void assign( PStep* lvalue, VMContext* ctx ) {if( lvalue != 0 ) { ctx->stepIn( lvalue ); } }
 };
@@ -271,7 +271,7 @@ class ExprAutoMod::ops
 public:
    static int64 operate( int64 a, int64 b ) { return a % b; }   
    static void operate( VMContext* ctx, Class* cls, void* inst ) { cls->op_amod(ctx, inst); }
-   static numeric operaten( numeric a, numeric b ) { return ((int64)a) % ((int64)b); }
+   static numeric operaten( numeric a, numeric b ) { return (numeric)(((int64)a) % ((int64)b)); }
    static bool zeroCheck( const Item& n ) { return n.isOrdinal() && n.forceInteger() == 0; }
    static void swapper( Item&, Item& ) { }
    static void assign( PStep* lvalue, VMContext* ctx ) {if( lvalue != 0 ) { ctx->stepIn( lvalue ); } }
@@ -280,12 +280,12 @@ public:
 class ExprAutoPow::ops
 {
 public:
-   static int64 operate( int64 a, int64 b ) { return (int64)pow(a,(numeric)b); }
+   static int64 operate( int64 a, int64 b ) { return (int64)pow((numeric)a,(numeric)b); }
    static void operate( VMContext* ctx, Class* cls, void* inst ) { cls->op_apow(ctx, inst); }
    static numeric operaten( numeric a, numeric b ) { return pow(a,b); }
    static bool zeroCheck( const Item& ) { return false; }
    static void swapper( Item&, Item& op2 ) {
-      if( op2.isInteger() ) {op2.setNumeric( op2.asInteger());}
+      if( op2.isInteger() ) {op2.setNumeric( (numeric)op2.asInteger());}
    }
    static void assign( PStep* lvalue, VMContext* ctx ) {if( lvalue != 0 ) { ctx->stepIn( lvalue ); } }
 };
@@ -295,7 +295,7 @@ class ExprAutoRShift::ops
 public:
    static int64 operate( int64 a, int64 b ) { return ((uint64)a) >> ((uint64)b); }
    static void operate( VMContext* ctx, Class* cls, void* inst ) { cls->op_ashr(ctx, inst); }
-   static numeric operaten( numeric a, numeric b ) { return ((uint64)a) >> ((uint64)b); }
+   static numeric operaten( numeric a, numeric b ) { return (numeric)(((uint64)a) >> ((uint64)b)); }
    static bool zeroCheck( const Item& ) { return false; }
    static void swapper( Item& , Item&  ) {}
    static void assign( PStep* lvalue, VMContext* ctx ) {if( lvalue != 0 ) { ctx->stepIn( lvalue ); } }
@@ -306,7 +306,7 @@ class ExprAutoLShift::ops
 public:
    static int64 operate( int64 a, int64 b ) { return ((uint64)a) << ((uint64)b); }
    static void operate( VMContext* ctx, Class* cls, void* inst ) { cls->op_ashl(ctx, inst); }
-   static numeric operaten( numeric a, numeric b ) { return ((uint64)a) << ((uint64)b); }
+   static numeric operaten( numeric a, numeric b ) { return (numeric)(((uint64)a) << ((uint64)b)); }
    static bool zeroCheck( const Item& ) { return false; }
    static void swapper( Item&, Item& ) { }
    static void assign( PStep* lvalue, VMContext* ctx ) {if( lvalue != 0 ) { ctx->stepIn( lvalue ); } }
@@ -400,11 +400,11 @@ void generic_apply_( const PStep* ps, VMContext* ctx )
             break;
 
          case FLC_ITEM_INT << 8 | FLC_ITEM_NUM:
-            op1->setNumeric( _cpr::operaten(op1->asInteger(), op2->asNumeric()) );
+            op1->setNumeric( _cpr::operaten((numeric)op1->asInteger(), op2->asNumeric()) );
             ctx->popData();
             break;
          case FLC_ITEM_NUM << 8 | FLC_ITEM_INT:
-            op1->content.data.number = _cpr::operaten(op1->asNumeric(), op2->asInteger());
+            op1->content.data.number = _cpr::operaten(op1->asNumeric(), (numeric)op2->asInteger());
             ctx->popData();
             break;
          case FLC_ITEM_NUM << 8 | FLC_ITEM_NUM:

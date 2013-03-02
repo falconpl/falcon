@@ -71,7 +71,7 @@ bool Regexp::ComputeSimple() {
       return !cc_->empty() && !cc_->full();
     case kRegexpCapture:
       subs = sub();
-      return subs[0]->simple_;
+      return subs[0]->simple_ != 0;
     case kRegexpStar:
     case kRegexpPlus:
     case kRegexpQuest:

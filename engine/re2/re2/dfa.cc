@@ -94,7 +94,7 @@ class DFA {
   // States, linked by the next_ pointers.  If in state s and reading
   // byte c, the next state should be s->next_[c].
   struct State {
-    inline bool IsMatch() const { return flag_ & kFlagMatch; }
+    inline bool IsMatch() const { return (flag_ & kFlagMatch)!=0; }
     void SaveMatch(vector<int>* v);
 
     int* inst_;         // Instruction pointers in the state.
@@ -141,12 +141,15 @@ class DFA {
       if (sizeof(size_t) == sizeof(uint32))
         return Hash32StringWithSeed(s, len, a->flag_);
       else
-        return Hash64StringWithSeed(s, len, a->flag_);
+        return (size_t)Hash64StringWithSeed(s, len, a->flag_);
     }
   };
 
+#ifdef _MSC_VER
+  typedef unordered_set<State*, StateEqual> StateSet;
+#else
   typedef unordered_set<State*, StateHash, StateEqual> StateSet;
-
+#endif
 
  private:
   // Special "firstbyte" values for a state.  (Values >= 0 denote actual bytes.)
@@ -418,10 +421,10 @@ DFA::DFA(Prog* prog, Prog::MatchKind kind, int64 max_mem)
   int nmark = 0;
   start_unanchored_ = 0;
   if (kind_ == Prog::kLongestMatch) {
-    nmark = prog->size();
+    nmark = (int) prog->size();
     start_unanchored_ = prog->start_unanchored();
   }
-  nastack_ = 2 * prog->size() + nmark;
+  nastack_ = (int)(2 * prog->size() + nmark);
 
   // Account for space needed for DFA, q0, q1, astack.
   mem_budget_ -= sizeof(DFA);
@@ -441,8 +444,8 @@ DFA::DFA(Prog* prog, Prog::MatchKind kind, int64 max_mem)
   // At minimum, the search requires room for two states in order
   // to limp along, restarting frequently.  We'll get better performance
   // if there is room for a larger number of states, say 20.
-  int one_state = sizeof(State) + (prog_->size()+nmark)*sizeof(int) +
-                  (prog_->bytemap_range()+1)*sizeof(State*);
+  int one_state = (int)(sizeof(State) + (prog_->size()+nmark)*sizeof(int) +
+                  (prog_->bytemap_range()+1)*sizeof(State*));
   if (state_budget_ < 20*one_state) {
     LOG(INFO) << StringPrintf("DFA out of memory: prog size %lld mem %lld",
                               prog_->size(), max_mem);
@@ -450,8 +453,8 @@ DFA::DFA(Prog* prog, Prog::MatchKind kind, int64 max_mem)
     return;
   }
 
-  q0_ = new Workq(prog->size(), nmark);
-  q1_ = new Workq(prog->size(), nmark);
+  q0_ = new Workq((int)prog->size(), nmark);
+  q1_ = new Workq((int) prog->size(), nmark);
   astack_ = new int[nastack_];
 }
 
@@ -991,7 +994,7 @@ DFA::State* DFA::RunStateOnByte(State* state, int c) {
   // The state flag kFlagLastWord says whether the last
   // byte processed was a word character.  Use that info to
   // insert empty-width (non-)word boundaries.
-  bool islastword = state->flag_ & kFlagLastWord;
+  bool islastword = (state->flag_ & kFlagLastWord)!=0;
   bool isword = (c != kByteEndText && Prog::IsWordChar(c));
   if (isword == islastword)
     beforeflag |= kEmptyNonWordBoundary;

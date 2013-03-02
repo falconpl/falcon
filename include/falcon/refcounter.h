@@ -52,7 +52,7 @@ namespace Falcon {
 */
 
 template<class __T>
-class RefCounter
+class FALCON_DYN_CLASS RefCounter
 {
 public:
    /** Creates the reference counter.

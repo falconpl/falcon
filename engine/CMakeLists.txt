@@ -15,7 +15,6 @@ if(UNIX OR APPLE)
   set(SYS_SPECIFIC
     fstream_posix.cpp
     filedatampx_posix.cpp
-    interrupt_posix.cpp
     mt_posix.cpp
     pipe_posix.cpp
     stdstreams_posix.cpp
@@ -41,7 +40,7 @@ elseif(WIN32)
   set(SYS_SPECIFIC
     dynloader_win.cpp
     fstream_win.cpp
-    interrupt_win.cpp
+    filedatampx_win.cpp
     mt_win.cpp
     pipe_win.cpp
     stdstreams_win.cpp

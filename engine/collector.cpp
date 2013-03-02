@@ -429,7 +429,7 @@ CollectorAlgorithm* Collector::currentAlgorithmObject() const
 void Collector::memoryThreshold( uint64 th, bool doNow )
 {
 
-   bool perform;
+   bool perform = false;
    m_mtx_accountmem.lock();
    int64 sm = m_storedMem;
    if(  th <= (uint64) m_storedMem )

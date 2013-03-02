@@ -185,7 +185,7 @@ public:
       any operation on any context belonging to this process.
     */
 
-   bool isTerminated() const { return atomicFetch(m_terminated); }
+   bool isTerminated() const { return atomicFetch(m_terminated) > 0; }
 
 protected:
    Process( VMachine* owner, bool added );

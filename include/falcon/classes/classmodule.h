@@ -73,7 +73,7 @@ private:
     * @raise Access error if the attribute is not found
     *
     */
-   class GetAttributeMethod: public Function {
+   class FALCON_DYN_CLASS GetAttributeMethod: public Function {
    public:
       GetAttributeMethod();
       virtual ~GetAttributeMethod();
@@ -91,7 +91,7 @@ private:
     * If @b value is given, the value is changed or created as required.
     * In this case, if the attribute doesn't exists, it is created.
     */
-   class SetAttributeMethod: public Function {
+   class FALCON_DYN_CLASS SetAttributeMethod: public Function {
    public:
       SetAttributeMethod();
       virtual ~SetAttributeMethod();

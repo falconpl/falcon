@@ -31,29 +31,31 @@ namespace Falcon
 
  */
 template<class __T>
-class SyncQueue
+class FALCON_DYN_CLASS SyncQueue
 {
 public:
    SyncQueue() {
       m_terminateWaiters = false;
       m_filled = CreateEvent(NULL, TRUE, FALSE, NULL);
       InitializeCriticalSectionAndSpinCount(&m_mtx,500);
+      m_queue = new std::deque<__T>;
    }
    ~SyncQueue() {
       CloseHandle(m_filled);
       DeleteCriticalSection(&m_mtx);
+      delete m_queue;
    }
 
    void add( __T data ) {
       EnterCriticalSection(&m_mtx);
-      m_queue.push_back(data);
+      m_queue->push_back(data);
       SetEvent(m_filled);
       LeaveCriticalSection(&m_mtx);
    }
 
    bool get( __T& data, int *terminated ) {
       EnterCriticalSection(&m_mtx);
-      while( m_queue.empty() && ! m_terminateWaiters && ! *terminated) {
+      while( m_queue->empty() && ! m_terminateWaiters && ! *terminated) {
          LeaveCriticalSection(&m_mtx);
          WaitForSingleObject( m_filled, INFINITE );
          EnterCriticalSection(&m_mtx);
@@ -63,9 +65,9 @@ public:
          LeaveCriticalSection(&m_mtx);
          return false;
       }
-      data = m_queue.front();
-      m_queue.pop_front();
-      if (m_queue.empty())
+      data = m_queue->front();
+      m_queue->pop_front();
+      if (m_queue->empty())
       {
          ResetEvent(m_filled);
       }
@@ -89,9 +91,9 @@ public:
          LeaveCriticalSection(&m_mtx);
          return false;
       }
-      if( ! m_queue.empty()  ) {
-         data = m_queue.front();
-         m_queue.pop_front();
+      if( ! m_queue->empty()  ) {
+         data = m_queue->front();
+         m_queue->pop_front();
          LeaveCriticalSection(&m_mtx);
          return true;
       }
@@ -105,7 +107,7 @@ public:
       int rt;
 
       EnterCriticalSection(&m_mtx);
-      while( m_queue.empty() && ! m_terminateWaiters && ! *terminated) {
+      while( m_queue->empty() && ! m_terminateWaiters && ! *terminated) {
          LeaveCriticalSection(&m_mtx);
          rt = WaitForSingleObject( m_filled, to );
          EnterCriticalSection(&m_mtx);
@@ -125,9 +127,9 @@ public:
          LeaveCriticalSection(&m_mtx);
          return false;
       }
-      data = m_queue.front();
-      m_queue.pop_front();
-      if (m_queue.empty())
+      data = m_queue->front();
+      m_queue->pop_front();
+      if (m_queue->empty())
       {
          ResetEvent(m_filled);
       }
@@ -151,16 +153,16 @@ public:
    }
 
    bool getST( __T& data ) {
-      if ( m_queue.empty() ) {
+      if ( m_queue->empty() ) {
          return false;
       }
-      data = m_queue.front();
-      m_queue.pop_front();
+      data = m_queue->front();
+      m_queue->pop_front();
       return true;
    }
 
 private:
-   std::deque<__T> m_queue;
+   std::deque<__T>* m_queue;
    CRITICAL_SECTION m_mtx;
    HANDLE m_filled;
 

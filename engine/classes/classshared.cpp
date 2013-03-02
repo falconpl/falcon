@@ -35,7 +35,7 @@ ClassShared::ClassShared( const String& name ):
 }
 
 ClassShared::ClassShared( const String& name, int64 type ):
-         ClassUser(name, type),
+         ClassUser(name, (int32) type),
          FALCON_INIT_METHOD(tryWait),
          FALCON_INIT_METHOD(wait)
 {

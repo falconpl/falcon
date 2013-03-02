@@ -39,7 +39,7 @@ public:
 private:
    static void rapply_( const PStep* ps, VMContext* ctx );
 
-   class PStepNext: public PStep {
+   class FALCON_DYN_CLASS PStepNext: public PStep {
    public:
       PStepNext( RuleSynTree* owner ): m_owner(owner) { apply = apply_; }
       virtual ~PStepNext() {};

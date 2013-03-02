@@ -385,7 +385,7 @@ private:
    void saveModule_internal( VMContext* tgtctx, Module* module, const URI& uri, const String& modName );
    Error* makeError( int code, int line, const String &expl="", int fsError=0 );
 
-   class PStepSave: public PStep
+   class FALCON_DYN_CLASS PStepSave: public PStep
    {
    public:
       PStepSave( ModLoader* owner ): m_owner( owner ) {

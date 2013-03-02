@@ -60,7 +60,7 @@ FStream::FStream( const FStream &other ):
          .sysError( ::GetLastError() ) );
    }
 
-   m_fsData = new Sys::FileData( hTarget, data->bIsFile, data->bNonBlocking );
+   m_fsData = new Sys::FileData( hTarget, data->bIsDiskFile );
 }
 
 
@@ -103,9 +103,6 @@ size_t FStream::read( void *buffer, size_t size )
 {
    Sys::FileData* data = (Sys::FileData*) m_fsData;
    HANDLE hFile = data->hFile;
-   if( data->bNonBlocking && ! readAvailable(0) ) {
-      return 0;
-   }
 
    DWORD result;
    if ( ! ::ReadFile( hFile, buffer, size, &result, NULL ) )
@@ -134,10 +131,6 @@ size_t FStream::write( const void *buffer, size_t size )
    Sys::FileData* data = (Sys::FileData*) m_fsData;
    HANDLE hFile = data->hFile;
 
-   if( data->bNonBlocking && ! writeAvailable(0) ) {
-      return 0;
-   }
-
    DWORD result;
    if ( ! ::WriteFile( hFile, buffer, size, &result, NULL ) )
    {
@@ -157,20 +150,6 @@ size_t FStream::write( const void *buffer, size_t size )
    return (size_t) result;
 }
 
-bool FStream::setNonblocking( bool nb )
-{
-   if (nb)
-   {
-
-   }
-   return false;
-}
-
-bool FStream::isNonbloking() const
-{
-   Sys::FileData* data = (Sys::FileData*) m_fsData;
-   return data->bNonBlocking;
-}
 
 off_t FStream::seek( off_t pos, e_whence whence )
 {
@@ -299,60 +278,6 @@ on_error:
    }
    return false;
 }
-
-size_t FStream::readAvailable( int32 msec )
-{
-   Sys::FileData* data = (Sys::FileData*) m_fsData;
-   if( data->bIsFile )
-   {
-      // files are always available on windows
-      return 1;
-   }
-
-   HANDLE hFile = data->hFile;
-   HANDLE waiting[2];
-   DWORD nWaitingCount = 1;
-   DWORD waitTime = msec < 0 ? INFINITE : msec;
-
-   waiting[0] = hFile;
-
-   DWORD res = WaitForMultipleObjects( nWaitingCount, waiting, FALSE, waitTime );
-
-   if ( res == WAIT_OBJECT_0 )
-   {
-      return 1;
-   }
-
-   return 0;
-}
-
-size_t FStream::writeAvailable( int32 msec )
-{
-   Sys::FileData* data = (Sys::FileData*) m_fsData;
-   if( data->bIsFile )
-   {
-      // files are always available on windows
-      return 1;
-   }
-
-   HANDLE hFile = data->hFile;
-   HANDLE waiting[2];
-   DWORD nWaitingCount = 1;
-   DWORD waitTime = msec < 0 ? INFINITE : msec;
-
-   waiting[0] = hFile;
-
-   DWORD res = WaitForMultipleObjects( 2, waiting, FALSE, waitTime );
-
-   if ( res == WAIT_OBJECT_0 )
-   {
-      return 1;
-   }
-
-   return 0;
-}
-
-
 
 }
 

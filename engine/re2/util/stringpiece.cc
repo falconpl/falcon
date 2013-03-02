@@ -121,7 +121,7 @@ void StringPiece::set( const Falcon::String& src )
       delete[] buffer_; // initally 0
       bufSize = bufSize * 2 + 4;
       buffer_ = new char[bufSize];
-      result = src.toUTF8String( buffer_, bufSize );
+      result = src.toUTF8String( buffer_, bufSize ) > 0;
    }
 
 }

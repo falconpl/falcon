@@ -583,7 +583,7 @@ static bool internal_find( VMContext* ctx, Item& result, bool (*on_found)(Item& 
    {
       // TODO: Use a UTF8 Converter instead.
       // In that case, remember to sanitize the values.
-      temp = target->subString(start, end);
+      temp = target->subString((int32)start, (int32)end);
       target = &temp;
    }
 
@@ -604,7 +604,7 @@ static bool internal_find( VMContext* ctx, Item& result, bool (*on_found)(Item& 
       int64 pos = String::UTF8Size( text.data(), pos_utf8 );
       int64 size = String::UTF8Size( captured.data(), size_utf8 );
 
-      if( ! on_found( result, count++, start + pos, size ) )
+      if( ! on_found( result, count++, (int) (start + pos), (int) size ) )
       {
          break;
       }
@@ -771,7 +771,7 @@ static bool internal_change( VMContext* ctx, int mode )
 
    case 1: // replace
       ret = new String(*target);
-      result = re2::RE2::GlobalReplace(*ret, *re, *replacer );
+      result = re2::RE2::GlobalReplace(*ret, *re, *replacer ) > 0;
       break;
 
    case 2: // replace first
@@ -785,7 +785,7 @@ static bool internal_change( VMContext* ctx, int mode )
       break;
 
    case 4: // change
-      result = re2::RE2::GlobalReplace(*target, *re, *replacer );
+      result = re2::RE2::GlobalReplace(*target, *re, *replacer ) > 0;
       break;
 
    case 5: // changeFirst

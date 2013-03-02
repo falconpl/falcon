@@ -144,15 +144,6 @@ public:
     */
    virtual size_t write( const void *buffer, size_t size )=0;
 
-   /** Sets the nonblocking semantics for this stream.
-    * \return true if nonblocking semantics are supported on this stream, false otherwise.
-    */
-   virtual bool setNonblocking( bool mode ) = 0;
-
-   /** Return true if this stream has nonblocking semantics.
-    */
-   virtual bool isNonbloking() const = 0;
-
    /** Close target stream. */
    virtual bool close() = 0;
    

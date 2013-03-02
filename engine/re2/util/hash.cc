@@ -152,10 +152,10 @@ const uint32 *k,                   /* the key, an array of uint32_t values */
 size_t          length,               /* the length of the key, in uint32_ts */
 uint32        initval)         /* the previous hash, or an arbitrary value */
 {
-  uint32_t a,b,c;
+  uint32 a,b,c;
 
   /* Set up the internal state */
-  a = b = c = 0xdeadbeef + (((uint32_t)length)<<2) + initval;
+  a = b = c = 0xdeadbeef + (((uint32)length)<<2) + initval;
 
   /*------------------------------------------------- handle most of the key */
   while (length > 3)
@@ -197,10 +197,10 @@ size_t          length,               /* the length of the key, in uint32_ts */
 uint32       *pc,                      /* IN: seed OUT: primary hash value */
 uint32       *pb)               /* IN: more seed OUT: secondary hash value */
 {
-  uint32_t a,b,c;
+  uint32 a,b,c;
 
   /* Set up the internal state */
-  a = b = c = 0xdeadbeef + ((uint32_t)(length<<2)) + *pc;
+  a = b = c = 0xdeadbeef + ((uint32)(length<<2)) + *pc;
   c += *pb;
 
   /*------------------------------------------------- handle most of the key */

@@ -46,7 +46,7 @@ public:
    
 public:
    
-   class PStepChoice: public PStep
+   class FALCON_DYN_CLASS PStepChoice: public PStep
    {
    public:
       PStepChoice() { apply = apply_; }

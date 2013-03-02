@@ -102,7 +102,7 @@ public:
 
 private:
 
-   class PStepGetPropertyNext: public PStep
+   class FALCON_DYN_CLASS PStepGetPropertyNext: public PStep
    {
    public:
       PStepGetPropertyNext() { apply = apply_; }

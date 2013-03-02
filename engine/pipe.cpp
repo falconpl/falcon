@@ -28,6 +28,8 @@ namespace Sys {
 Pipe::~Pipe()
 {
    close();
+   delete m_readSide;
+   delete m_writeSide;
 }
 
 void Pipe::close()
@@ -39,24 +41,32 @@ void Pipe::close()
 
 ReadOnlyFStream* Pipe::getReadStream()
 {
-   FileData* fd = new FileData();
-   m_readSide.passOn( *fd );
-   return new ReadOnlyFStream( fd );
+   if( m_readSide != 0 )
+   {
+      FileData* fd = m_readSide;
+      m_readSide = 0;
+      return new ReadOnlyFStream( fd );
+   }
+   return 0;
 }
 
 
 WriteOnlyFStream* Pipe::getWriteStream()
 {
-   FileData* fd = new FileData();
-   m_writeSide.passOn( *fd );
-   return new WriteOnlyFStream( fd );
+   if( m_writeSide != 0 )
+   {
+      FileData* fd = m_writeSide;
+      m_writeSide = 0;
+      return new WriteOnlyFStream( fd );
+   }
+   return 0;
 }
 
 //======================================================
 // Pipe Traits
 //======================================================
 
-class Pipe::Traits::ReadMPX: public FileDataMPX
+class Pipe::Traits::ReadMPX: public Sys::FileDataMPX
 {
 public:
    ReadMPX( const StreamTraits* generator, Selector* master ):
@@ -74,7 +84,7 @@ public:
    }
 };
 
-class Pipe::Traits::WriteMPX: public FileDataMPX
+class Pipe::Traits::WriteMPX: public Sys::FileDataMPX
 {
 public:
    WriteMPX( const StreamTraits* generator, Selector* master ):

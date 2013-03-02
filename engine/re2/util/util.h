@@ -5,15 +5,18 @@
 #ifndef RE2_UTIL_UTIL_H__
 #define RE2_UTIL_UTIL_H__
 
+#include <falcon/setup.h>
+#include <falcon/types.h>
+
 // C
 #include <stdio.h>
 #include <string.h>
+#ifndef _MSC_VER
 #include <stdint.h>
+#endif
 #include <stddef.h>         // For size_t
 #include <assert.h>
 #include <stdarg.h>
-#include <sys/time.h>
-#include <time.h>
 
 // C++
 #include <vector>
@@ -46,22 +49,27 @@ using std::make_pair;
 using std::tr1::unordered_set;
 
 #else
-
+#ifdef _MSC_VER
+#include <set>
+using std::set;
+#define unordered_set set
+#else
 #include <hash_set>
 using std::hash_set;
 #define unordered_set hash_set
 #endif
+#endif
 
 namespace re2 {
 
-typedef int8_t int8;
-typedef uint8_t uint8;
-typedef int16_t int16;
-typedef uint16_t uint16;
-typedef int32_t int32;
-typedef uint32_t uint32;
-typedef int64_t int64;
-typedef uint64_t uint64;
+typedef char int8;
+typedef unsigned char uint8;
+typedef short int int16;
+typedef unsigned short int uint16;
+typedef int int32;
+typedef unsigned int uint32;
+typedef Falcon::int64 int64;
+typedef Falcon::int64 uint64;
 
 typedef unsigned long ulong;
 typedef unsigned int uint;

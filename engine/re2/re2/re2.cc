@@ -11,7 +11,6 @@
 
 #include <stdio.h>
 #include <string>
-#include <pthread.h>
 #include <errno.h>
 #include "util/util.h"
 #include "util/flags.h"
@@ -20,6 +19,13 @@
 
 #include <falcon/fassert.h>
 #include <falcon/autocstring.h>
+
+#ifdef _MSC_VER
+#define strtoll _strtoi64
+#define strtoull _strtoui64
+#include <sstream>
+#endif
+
 
 DEFINE_bool(trace_re2, false, "trace RE2 execution");
 
@@ -34,7 +40,7 @@ const VariadicFunction2<bool, const StringPiece&, const RE2&, RE2::Arg, RE2::Par
 const VariadicFunction2<bool, StringPiece*, const RE2&, RE2::Arg, RE2::ConsumeN> RE2::Consume;
 const VariadicFunction2<bool, StringPiece*, const RE2&, RE2::Arg, RE2::FindAndConsumeN> RE2::FindAndConsume;
 
-const int RE2::Options::kDefaultMaxMem;  // initialized in re2.h
+//const int RE2::Options::kDefaultMaxMem;  // initialized in re2.h
 
 // Commonly-used option sets; arguments to constructor are:
 //   utf8 input
@@ -243,7 +249,7 @@ RE2::~RE2() {
 int RE2::ProgramSize() const {
   if (prog_ == NULL)
     return -1;
-  return prog_->size();
+  return (int) prog_->size();
 }
 
 // Returns named_groups_, computing it if needed.
@@ -630,7 +636,7 @@ bool RE2::Match(const StringPiece& text,
   const int MaxBitStateProg = 500;   // prog_->size() <= Max.
   const int MaxBitStateVector = 256*1024;  // bit vector size <= Max (bits)
   bool can_bit_state = prog_->size() <= MaxBitStateProg;
-  int bit_state_text_max = MaxBitStateVector / prog_->size();
+  int bit_state_text_max = (int)( MaxBitStateVector / prog_->size() );
 
   bool dfa_failed = false;
   switch (re_anchor) {
@@ -1088,7 +1094,7 @@ bool RE2::Arg::parse_short_radix(const char* str,
   if (!parse_long_radix(str, n, &r, radix)) return false; // Could not parse
   if ((short)r != r) return false;       // Out of range
   if (dest == NULL) return true;
-  *(reinterpret_cast<short*>(dest)) = r;
+  *(reinterpret_cast<short*>(dest)) = (short) r;
   return true;
 }
 
@@ -1100,7 +1106,7 @@ bool RE2::Arg::parse_ushort_radix(const char* str,
   if (!parse_ulong_radix(str, n, &r, radix)) return false; // Could not parse
   if ((ushort)r != r) return false;                      // Out of range
   if (dest == NULL) return true;
-  *(reinterpret_cast<unsigned short*>(dest)) = r;
+  *(reinterpret_cast<unsigned short*>(dest)) = (unsigned short) r;
   return true;
 }
 
@@ -1178,7 +1184,12 @@ static bool parse_double_float(const char* str, int n, bool isfloat, void *dest)
   char* end;
   double r;
   if (isfloat) {
+#ifdef _MSC_VER
+     std::stringstream ss(buf);
+     ss >> r;
+#else
     r = strtof(buf, &end);
+#endif
   } else {
     r = strtod(buf, &end);
   }
@@ -1186,7 +1197,7 @@ static bool parse_double_float(const char* str, int n, bool isfloat, void *dest)
   if (errno) return false;
   if (dest == NULL) return true;
   if (isfloat) {
-    *(reinterpret_cast<float*>(dest)) = r;
+    *(reinterpret_cast<float*>(dest)) = (float)r;
   } else {
     *(reinterpret_cast<double*>(dest)) = r;
   }

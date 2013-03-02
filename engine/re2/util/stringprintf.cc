@@ -4,6 +4,10 @@
 
 #include "util/util.h"
 
+#ifdef _MSC_VER
+#define va_copy( a,b ) a = b
+#endif
+
 namespace re2 { 
 
 static void StringAppendV(string* dst, const char* format, va_list ap) {

@@ -19,7 +19,7 @@
 
 namespace Falcon {
 
-class SwitchlikeStatement: public Statement
+class FALCON_DYN_CLASS SwitchlikeStatement: public Statement
 {
 public:
    SwitchlikeStatement( int32 line = 0, int32 chr = 0 );

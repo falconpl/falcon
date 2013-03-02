@@ -51,7 +51,7 @@ private:
 
 
 #define FALCON_DECLARE_METHOD(MTH_NAME, SIGNATURE) \
-   class Method_ ## MTH_NAME: public ::Falcon::Method \
+   class FALCON_DYN_CLASS Method_ ## MTH_NAME: public ::Falcon::Method \
    { \
    public: \
       Method_ ## MTH_NAME( ::Falcon::ClassUser* u ): \
@@ -63,7 +63,7 @@ private:
    friend class Method_ ## MTH_NAME;
 
 #define FALCON_DECLARE_STATIC_METHOD(MTH_NAME, SIGNATURE) \
-   class Method_ ## MTH_NAME: public ::Falcon::Method \
+   class FALCON_DYN_CLASS Method_ ## MTH_NAME: public ::Falcon::Method \
    { \
    public: \
       Method_ ## MTH_NAME( ::Falcon::ClassUser* u ): \

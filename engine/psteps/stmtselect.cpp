@@ -608,7 +608,7 @@ void SelectRequirement::onResolved( const Module* sourceModule, const String& so
    if( itm->isOrdinal() )
    {
       int64 tid = itm->forceInteger();
-      if( ! m_owner->setSelectType( m_id, tid ) )
+      if( ! m_owner->setSelectType( m_id, (int32) tid ) )
       {
          throw new LinkError( ErrorParam( m_owner->selector() == 0 ? e_catch_clash : e_switch_clash )
             .line( m_line )

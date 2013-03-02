@@ -464,7 +464,7 @@ void ClassString::op_getIndex( VMContext* ctx, void* self ) const
             throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra( "index out of range" ) );
          }
 
-         chr = str.getCharAt( v );
+         chr = str.getCharAt( (length_t) v );
       }
 
       if( str.isText() ) {
@@ -492,7 +492,7 @@ void ClassString::op_getIndex( VMContext* ctx, void* self ) const
       }
 
       // Confirm we have a range
-      if ( ! cls->typeID() == FLC_CLASS_ID_RANGE )
+      if ( cls->typeID() != FLC_CLASS_ID_RANGE )
       {
          throw new AccessError( ErrorParam( e_arracc, __LINE__ ).extra( "unknown index" ) );
       }
@@ -541,7 +541,7 @@ void ClassString::op_getIndex( VMContext* ctx, void* self ) const
          {
             while ( start >= end )
             {
-               s->append( str.getCharAt( start ) );
+               s->append( str.getCharAt( (length_t) start ) );
                start += step;
             }
          }
@@ -549,7 +549,7 @@ void ClassString::op_getIndex( VMContext* ctx, void* self ) const
          {
             while ( start < end )
             {
-               s->append( str.getCharAt( start ) );
+               s->append( str.getCharAt( (length_t) start ) );
                start += step;
             }
          }
@@ -598,10 +598,10 @@ void ClassString::op_setIndex( VMContext* ctx, void* self ) const
          }
 
          if( value->isOrdinal() ) {
-            str.setCharAt(v, value->forceInteger() );
+            str.setCharAt( (length_t) v, (char_t) value->forceInteger() );
          }
          else {
-            str.setCharAt( v, value->asString()->getCharAt( 0 ) );
+            str.setCharAt( (length_t) v, (char_t) value->asString()->getCharAt( 0 ) );
          }
       }
 
@@ -636,7 +636,7 @@ void ClassString::op_setIndex( VMContext* ctx, void* self ) const
          else
          {
             String temp;
-            temp.append(value->forceInteger());
+            temp.append((char_t)value->forceInteger());
             str.change((Falcon::length_t)start, (Falcon::length_t)end, temp );
          }
       }

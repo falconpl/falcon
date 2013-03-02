@@ -182,7 +182,7 @@ public:
 /**
    An event on which the wait can be interrupted asynchronously.
 */
-class InterruptibleEvent
+class FALCON_DYN_CLASS InterruptibleEvent
 {
 public:
    /** Creates the interruptible event.

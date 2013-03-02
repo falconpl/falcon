@@ -86,7 +86,7 @@ protected:
 
    virtual ~StmtForBase();
 
-   class PStepCleanup: public PStep
+   class FALCON_DYN_CLASS PStepCleanup: public PStep
    {
    public:
       PStepCleanup() {
@@ -147,7 +147,7 @@ private:
    // apply is the same as PCODE, but it also checks ND requests.
    static void apply_( const PStep* self, VMContext* ctx );
 
-   class PStepBegin: public PStep {
+   class FALCON_DYN_CLASS PStepBegin: public PStep {
    public:
       PStepBegin( StmtForIn* owner ): m_owner(owner) { m_bIsLoopBase = true; apply = apply_; }
       virtual ~PStepBegin() {};
@@ -158,7 +158,7 @@ private:
       StmtForIn* m_owner;
    };
 
-   class PStepFirst: public PStep {
+   class FALCON_DYN_CLASS PStepFirst: public PStep {
    public:
       PStepFirst( StmtForIn* owner ): m_owner(owner) { apply = apply_; }
       virtual ~PStepFirst() {};
@@ -169,7 +169,7 @@ private:
       StmtForIn* m_owner;
    };
 
-   class PStepGetFirst: public PStep {
+   class FALCON_DYN_CLASS PStepGetFirst: public PStep {
    public:
       PStepGetFirst( StmtForIn* owner ): m_owner(owner) { apply = apply_; }
       virtual ~PStepGetFirst() {};
@@ -180,7 +180,7 @@ private:
       StmtForIn* m_owner;
    };
 
-   class PStepNext: public PStep {
+   class FALCON_DYN_CLASS PStepNext: public PStep {
    public:
       PStepNext( StmtForIn* owner ): m_owner(owner) { apply = apply_; }
       virtual ~PStepNext() {};
@@ -191,7 +191,7 @@ private:
       StmtForIn* m_owner;
    };
 
-   class PStepGetNext: public PStep {
+   class FALCON_DYN_CLASS PStepGetNext: public PStep {
    public:
       PStepGetNext( StmtForIn* owner ): m_owner(owner) { m_bIsNextBase = true; apply = apply_; }
       virtual ~PStepGetNext() {};
@@ -250,7 +250,7 @@ private:
    Expression* m_end;
    Expression* m_step;
 
-   class PStepNext: public PStep {
+   class FALCON_DYN_CLASS PStepNext: public PStep {
    public:
       PStepNext( StmtForTo* owner ): m_owner(owner) {
          m_bIsNextBase = true;

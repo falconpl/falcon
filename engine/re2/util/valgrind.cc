@@ -8,10 +8,14 @@
 namespace re2 {
 
 static bool checkValgrind() {
+#ifdef _MSC_VER
+return false;
+#else
 #ifdef RUNNING_ON_VALGRIND
 	return RUNNING_ON_VALGRIND;
 #else
 	return false;
+#endif
 #endif
 }
 

@@ -244,7 +244,7 @@ size_t StringStream::read( void *buffer, size_t size )
       return 0;
    }
 
-   int sret = size + m_posRead < bsize ? size : bsize - m_posRead;
+   int sret = (int)(size + m_posRead < bsize ? size : bsize - m_posRead);
    memcpy( buffer, m_b->m_str->getRawStorage() + m_posRead, sret );
    m_posRead += sret;
 
@@ -269,7 +269,7 @@ size_t StringStream::write( const void *buffer, size_t size )
    }
    
    // be sure there is enough space to write
-   m_b->m_str->reserve(m_posWrite+size);
+   m_b->m_str->reserve((length_t) m_posWrite+size);
 
    // effectively write
    memcpy( m_b->m_str->getRawStorage() + m_posWrite, buffer, size );
@@ -278,7 +278,7 @@ size_t StringStream::write( const void *buffer, size_t size )
    // are we writing at end? -- enlarge the string.
    if( m_posWrite > m_b->m_str->size() )
    {
-      m_b->m_str->size( m_posWrite );
+      m_b->m_str->size( (length_t) m_posWrite );
    }
 
    if(! m_bPipeMode )
@@ -349,7 +349,7 @@ int64 StringStream::tell()
       return -1;
    }
    
-   int32 pos = m_posRead;
+   int64 pos = m_posRead;
    m_b->m_mtx.unlock();
    return pos;
 }

@@ -1664,7 +1664,7 @@ protected:
    };
 
    template<class datatype__>
-   class LinearStack
+   class FALCON_DYN_CLASS LinearStack
    {
    public:
       static const int INITIAL_STACK_ALLOC = 256;

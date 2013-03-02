@@ -213,7 +213,7 @@ FALCON_DEFINE_METHOD_P1( ClassMessageQueue, subscribersFence )
       throw paramError( __LINE__, SRC );
    }
    else {
-      count = i_count->forceInteger();
+      count = (int32) i_count->forceInteger();
       if( count <= 0 )
       {
          throw paramError( __LINE__, SRC );

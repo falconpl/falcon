@@ -292,7 +292,7 @@ private:
       const String& moduleName);
 
 
-   class PStepLoader: public PStep
+   class FALCON_DYN_CLASS PStepLoader: public PStep
    {
    public:
       PStepLoader( ModSpace* owner ): m_owner( owner ) {
@@ -308,7 +308,7 @@ private:
    PStepLoader m_stepLoader;
 
 
-   class PStepResolver: public PStep
+   class FALCON_DYN_CLASS PStepResolver: public PStep
    {
    public:
       PStepResolver( ModSpace* owner ): m_owner( owner ) {
@@ -324,7 +324,7 @@ private:
    PStepResolver m_stepResolver;
 
 
-   class PStepDynModule: public PStep
+   class FALCON_DYN_CLASS PStepDynModule: public PStep
    {
    public:
       PStepDynModule( ModSpace* owner ): m_owner( owner ) {
@@ -339,7 +339,7 @@ private:
    };
    PStepDynModule m_stepDynModule;
 
-   class PStepDynMantra: public PStep
+   class FALCON_DYN_CLASS PStepDynMantra: public PStep
    {
    public:
    PStepDynMantra( ModSpace* owner ): m_owner( owner ) {
@@ -354,7 +354,7 @@ private:
    };
    PStepDynMantra m_stepDynMantra;
 
-   class PStepExecMain: public PStep
+   class FALCON_DYN_CLASS PStepExecMain: public PStep
    {
    public:
       PStepExecMain( ModSpace* owner ): m_owner( owner ) {
@@ -369,7 +369,7 @@ private:
    };
    PStepExecMain m_stepExecMain;
 
-   class PStepStartLoad: public PStep
+   class FALCON_DYN_CLASS PStepStartLoad: public PStep
    {
    public:
       PStepStartLoad( ModSpace* owner ): m_owner( owner ) {

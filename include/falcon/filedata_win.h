@@ -20,25 +20,27 @@
 #include <falcon/setup.h>
 #include <windows.h>
 
-namespace Falcon {
+namespace Falcon 
+{
+class Stream;
+
 namespace Sys {
+
 class FileData {
 public:
    HANDLE hFile;
-   bool bIsFile;
-   bool bNonBlocking;
+   bool bIsDiskFile;
 
-   FileData( HANDLE hf = NULL, bool bf = true, bool nb = false ):
+   FileData( HANDLE hf = NULL, bool bf = true ):
       hFile( hf ),
-      bIsFile( bf ),
-      bNonBlocking( nb )
-   {}
+      bIsDiskFile( bf )
+   {      
+   }
 
    void passOn( FileData& destination )
    {
       destination.hFile = hFile;
-      destination.bIsFile = bIsFile;
-      destination.bNonBlocking = bNonBlocking;
+      destination.bIsDiskFile = bIsDiskFile;
       hFile = NULL;
    }
 
@@ -46,6 +48,32 @@ private:
    // disable implicit copy
    FileData( FileData& )
    {}
+};
+
+class FileDataEx: public FileData 
+{
+public:
+   bool bBusy;
+
+   typedef struct
+   {
+      OVERLAPPED overlapped;
+      FileDataEx* self;
+      Stream* owner;
+      void* extra;
+   }
+   OVERLAPPED_EX;
+
+   OVERLAPPED_EX ovl;
+
+
+   FileDataEx( HANDLE hf = NULL, bool bf = false ):
+      FileData(hf, bf ),
+      bBusy( false )
+   {
+      memset( &ovl, 0, sizeof(ovl) );
+      ovl.self = this;
+   }
 };
 
 }

@@ -35,7 +35,7 @@ public:
 
    virtual bool checkCompare( int64 compresult ) const = 0;
 
-   class PStepPostCompare: public PStep
+   class FALCON_DYN_CLASS PStepPostCompare: public PStep
    {
    public:
       PStepPostCompare(ExprCompare* owner): m_owner(owner) { apply = apply_; }
@@ -72,7 +72,7 @@ public:
 
    virtual bool checkCompare( int64 value ) const { return value < 0; }
 
-   class comparer
+   class FALCON_DYN_CLASS comparer
    {
    public:
       static bool pass( int64 a, int64 b ) { return a < b; }
@@ -98,7 +98,7 @@ public:
    virtual bool simplify( Item& value ) const;
    virtual bool checkCompare( int64 value ) const { return value <= 0; }
 
-   class comparer
+   class FALCON_DYN_CLASS comparer
    {
    public:
       static bool pass( int64 a, int64 b ) { return a <= b; }
@@ -123,7 +123,7 @@ public:
 
    virtual bool checkCompare( int64 value ) const { return value > 0; }
 
-   class comparer
+   class FALCON_DYN_CLASS comparer
    {
    public:
       static bool pass( int64 a, int64 b ) { return a > b; }
@@ -149,7 +149,7 @@ public:
 
    virtual bool checkCompare( int64 value ) const { return value >= 0; }
 
-   class comparer
+   class FALCON_DYN_CLASS comparer
    {
    public:
       static bool pass( int64 a, int64 b ) { return a >= b; }
@@ -175,7 +175,7 @@ public:
 
    virtual bool checkCompare( int64 value ) const { return value == 0; }
 
-   class comparer
+   class FALCON_DYN_CLASS comparer
    {
    public:
       static bool pass( int64 a, int64 b ) { return a == b; }
@@ -202,7 +202,7 @@ public:
    virtual bool checkCompare( int64 value ) const { return value != 0; }
 
 
-   class comparer
+   class FALCON_DYN_CLASS comparer
    {
    public:
       static bool pass( int64 a, int64 b ) { return a != b; }

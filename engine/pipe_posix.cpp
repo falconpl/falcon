@@ -36,20 +36,23 @@ Pipe::Pipe()
                .sysError(errno));
    }
 
-   m_readSide.fdFile = fds[0];
-   m_writeSide.fdFile = fds[1];
+   m_readSide = new FileData;
+   m_writeSide = new FileData;
 
-   m_readSide.m_nonBloking = false;
-   m_writeSide.m_nonBloking = false;
+   m_readSide->fdFile = fds[0];
+   m_writeSide->fdFile = fds[1];
+
+   m_readSide->m_nonBloking = false;
+   m_writeSide->m_nonBloking = false;
 }
 
 
 void Pipe::closeRead()
 {
-   if( m_readSide.fdFile != -1 )
+   if( m_readSide->fdFile != -1 )
    {
-      int result = ::close( m_readSide.fdFile );
-      m_readSide.fdFile = -1;
+      int result = ::close( m_readSide->fdFile );
+      m_readSide->fdFile = -1;
 
       if( result != 0 )
       {
@@ -62,10 +65,10 @@ void Pipe::closeRead()
 
 void Pipe::closeWrite()
 {
-   if( m_writeSide.fdFile != -1 )
+   if( m_writeSide->fdFile != -1 )
    {
-      int result = ::close( m_writeSide.fdFile );
-      m_writeSide.fdFile = -1;
+      int result = ::close( m_writeSide->fdFile );
+      m_writeSide->fdFile = -1;
 
       if( result != 0 )
       {

@@ -36,20 +36,17 @@ Pipe::Pipe()
                .sysError(GetLastError()));
    }
 
-   m_readSide.hFile = read;
-   m_writeSide.hFile = write;
-
-   m_readSide.bNonBlocking = false;
-   m_writeSide.bNonBlocking = false;
+   m_readSide = new FileDataEx(read);
+   m_writeSide = new FileDataEx(write);
 }
 
 
 void Pipe::closeRead()
 {
-   if( m_readSide.hFile != NULL )
+   if( m_readSide->hFile != INVALID_HANDLE_VALUE )
    {
-      BOOL result = ::CloseHandle( m_readSide.hFile );
-      m_readSide.hFile = NULL;
+      BOOL result = ::CloseHandle( m_readSide->hFile );
+      m_readSide->hFile = INVALID_HANDLE_VALUE;
 
       if( result == 0 )
       {
@@ -62,10 +59,10 @@ void Pipe::closeRead()
 
 void Pipe::closeWrite()
 {
-   if( m_writeSide.hFile != NULL )
+   if( m_writeSide->hFile != INVALID_HANDLE_VALUE )
    {
-      BOOL result = ::CloseHandle( m_writeSide.hFile );
-      m_writeSide.hFile = NULL;
+      BOOL result = ::CloseHandle( m_writeSide->hFile );
+      m_writeSide->hFile = INVALID_HANDLE_VALUE;
 
       if( result == 0 )
       {

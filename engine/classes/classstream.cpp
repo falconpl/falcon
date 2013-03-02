@@ -161,7 +161,7 @@ FALCON_DEFINE_PROPERTY_SET_P( ClassStream, position )
    int64 pos = static_cast<Stream*>(instance)
                ->seekBegin( value.forceInteger() );
    
-   if( ! pos < 0 )
+   if( pos < 0 )
    {
       throw new IOError( ErrorParam( e_io_seek, __LINE__, SRC ) );
    }
@@ -236,7 +236,7 @@ FALCON_DEFINE_PROPERTY_SET_P( ClassStream, buffer )
    }
    
    Stream* sc = static_cast<Stream*>(instance);
-   uint32 v = value.asInteger() < 0 ? 0 : value.asInteger();
+   uint32 v = (uint32) (value.asInteger() < 0 ? 0 : value.asInteger());
    if( sc->underlying() == 0 )
    {
       sc = new StreamBuffer(sc, v);
@@ -425,10 +425,10 @@ FALCON_DEFINE_METHOD_P1( ClassStream, grab )
    // shall we read?
    if( icount > 0 )
    {
-      str->reserve( icount );
+      str->reserve( (uint32) icount );
       Stream* sc = static_cast<Stream*>(ctx->self().asInst());
-      int64 retval = (int64) sc->read( str->getRawStorage(), icount );
-      str->size( retval );
+      int64 retval = (int64) sc->read( str->getRawStorage(), (size_t) icount );
+      str->size( (length_t) retval );
    }
    
    // Return the string.

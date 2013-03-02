@@ -21,7 +21,7 @@
 namespace Falcon {
 
 
-class Poolable
+class FALCON_DYN_CLASS Poolable
 {
 public:
    inline void dispose() { m_pool->release( this ); }

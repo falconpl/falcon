@@ -224,7 +224,7 @@ private:
    }
    m_propHost;
    
-   class PropertyPort: public PropertyString
+   class FALCON_DYN_CLASS PropertyPort: public PropertyString
    {
    public:
       PropertyPort( ClassUser* owner ):

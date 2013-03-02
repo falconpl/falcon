@@ -439,7 +439,7 @@ private:
    bool m_bConstructed;
 
    // This is used to initialize the init expressions.
-   class PStepInitExpr: public PStep
+   class FALCON_DYN_CLASS PStepInitExpr: public PStep
    {
    public:
       PStepInitExpr( FalconClass* o );

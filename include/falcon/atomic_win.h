@@ -20,6 +20,9 @@
 #include <falcon/types.h>
 
 #include <windows.h>
+#ifdef _MSC_VER
+#include <intrin.h>
+#endif
 
 namespace Falcon {
 /**  An alias to the atomic integer type.
@@ -41,7 +44,11 @@ inline int32 atomicDec( atomic_int& atomic )
 /** Performs an atomic thread safe addition. */
 inline int32 atomicAdd( atomic_int& atomic, atomic_int value )
 {
+#ifdef _M_IX86
+   return InterlockedExchangeAdd( &atomic, value );
+#else
    return InterlockedAdd( &atomic, value );
+#endif
 }
 
 /** Perform a threadsafe fetch */
@@ -62,22 +69,34 @@ inline atomic_int atomicExchange( atomic_int& atomic, atomic_int value )
 
 inline bool atomicCAS( atomic_int& target, atomic_int compareTo, atomic_int newVal )
 {
-   return InterlockedCompareExchange( &target, newVal, compareTo );
+   return InterlockedCompareExchange( &target, newVal, compareTo ) == newVal;
 }
 
 inline atomic_int atomicXor( atomic_int& target, atomic_int value )
 {
+#ifdef _M_IX86
+   return _InterlockedXor(&target, value);
+#else
    return InterlockedXor(&target, value);
+#endif
 }
 
 inline atomic_int atomicAnd( atomic_int& target, atomic_int value )
 {
+#ifdef _M_IX86
+   return _InterlockedAnd( &target, value );
+#else
    return InterlockedAnd(&target, value);
+#endif
 }
 
 inline atomic_int atomicOr( atomic_int& target, atomic_int value )
 {
+#ifdef _M_IX86
+   return _InterlockedOr(&target, value);
+#else
    return InterlockedOr(&target, value);
+#endif
 }
 
 

@@ -160,7 +160,7 @@ bool ClassError::invokeParams( VMContext* ctx, int pcount, ErrorParam& params, b
    int nErrId = 0;
    if( IerrId.isOrdinal() )
    {
-      nErrId = IerrId.forceInteger();
+      nErrId = (int) IerrId.forceInteger();
    }
    else if( ! IerrId.isNil() )
    {
@@ -254,7 +254,7 @@ FALCON_DEFINE_PROPERTY_GET(ClassError, code)( void* instance, Item& value )
 FALCON_DEFINE_PROPERTY_SET(ClassError, code)( void* instance, const Item& value )
 {
    Error* error = static_cast<Error*>( instance );
-   error->errorCode( value.forceInteger() );
+   error->errorCode( (int) value.forceInteger() );
 }
 
 FALCON_DEFINE_PROPERTY_GET(ClassError, line)( void* instance, Item& value )
@@ -266,19 +266,19 @@ FALCON_DEFINE_PROPERTY_GET(ClassError, line)( void* instance, Item& value )
 FALCON_DEFINE_PROPERTY_SET(ClassError, line)( void* instance, const Item& value )
 {
    Error* error = static_cast<Error*>( instance );
-   error->line( value.forceInteger() );
+   error->line( (uint32) value.forceInteger() );
 }
 
 FALCON_DEFINE_PROPERTY_GET(ClassError, chr)( void* instance, Item& value )
 {
    Error* error = static_cast<Error*>( instance );
-   value.setInteger( error->chr() );
+   value.setInteger( (uint32) error->chr() );
 }
 
 FALCON_DEFINE_PROPERTY_SET(ClassError, chr)( void* instance, const Item& value )
 {
    Error* error = static_cast<Error*>( instance );
-   error->chr( value.forceInteger() );
+   error->chr( (uint32) value.forceInteger() );
 }
 
 

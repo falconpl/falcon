@@ -187,7 +187,12 @@
 // will leave 64 in a, b, c, and d.
 
 
+#ifndef _MSC_VER
 #include <stdint.h>
+#else
+typedef __int64 int64_t;
+#endif
+
 #include <map>
 #include <string>
 #include "re2/stringpiece.h"
@@ -541,7 +546,7 @@ class RE2 {
     // If this happens too often, RE2 falls back on the NFA implementation.
 
     // For now, make the default budget something close to Code Search.
-    static const int kDefaultMaxMem = 8<<20;
+    #define kDefaultMaxMem  (8<<20)
 
     enum Encoding {
       EncodingUTF8 = 1,
@@ -585,7 +590,7 @@ class RE2 {
     bool log_errors() const { return log_errors_; }
     void set_log_errors(bool b) { log_errors_ = b; }
 
-    int max_mem() const { return max_mem_; }
+    int max_mem() const { return (int) max_mem_; }
     void set_max_mem(int m) { max_mem_ = m; }
 
     bool literal() const { return literal_; }

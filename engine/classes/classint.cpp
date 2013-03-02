@@ -113,7 +113,7 @@ void* ClassInt::getParentData( const Class* parent, void* data ) const
    if( parent == number )
    {
       Item* itm = static_cast<Item*>(data);
-      itm->setInteger(itm->asNumeric());
+      itm->setInteger((int64) itm->asNumeric());
       return data;
    }
    return 0;

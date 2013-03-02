@@ -311,7 +311,7 @@ bool BitState::Search(const StringPiece& text, const StringPiece& context,
     submatch_[i] = NULL;
 
   // Allocate scratch space.
-  nvisited_ = (prog_->size() * (text.size()+1) + VisitedBits-1) / VisitedBits;
+  nvisited_ = (int)((prog_->size() * (text.size()+1) + VisitedBits-1) / VisitedBits);
   visited_ = new uint32[nvisited_];
   memset(visited_, 0, nvisited_*sizeof visited_[0]);
   // VLOG(0) << "nvisited_ = " << nvisited_;

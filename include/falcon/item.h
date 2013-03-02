@@ -296,7 +296,7 @@ public:
 
    inline Item& setUser( const Class* cls, void* inst )
    {
-       type( cls->typeID() );
+       type( (byte) cls->typeID() );
        content.data.ptr.pInst = inst;
        content.data.ptr.pClass = (Class*) cls;
        content.base.bits.flags &= ~flagIsGarbage;
@@ -311,7 +311,7 @@ public:
    
    inline Item& setUser( GCToken* token )
    {
-       type( token->cls()->typeID() ); // normally
+       type( (byte) token->cls()->typeID() ); // normally
        content.data.ptr.pClass = token->cls();
        content.data.ptr.pInst = token->data();
        content.base.bits.flags |= flagIsGarbage;
@@ -407,8 +407,8 @@ public:
    /**
     * Use with caution.
     */
-   bool setGarbage() {
-      return content.base.bits.flags |= flagIsGarbage;
+   void setGarbage() {
+      content.base.bits.flags |= flagIsGarbage;
    }
 
    /** Returns true if this item has the copy-marker.
