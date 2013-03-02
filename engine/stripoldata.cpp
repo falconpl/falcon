@@ -26,6 +26,7 @@
 #include <falcon/syntree.h>
 #include <falcon/symbol.h>
 #include <falcon/format.h>
+#include <falcon/stdhandlers.h>
 
 #include <vector>
 

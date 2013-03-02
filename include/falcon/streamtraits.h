@@ -51,6 +51,7 @@ public:
    virtual ~StreamTraits() {}
 
    const String& name() const { return m_name; }
+   Module* module() const { return m_module; }
 
    /**
     * Creates a concrete instance of a multiplex handling streams of this type.

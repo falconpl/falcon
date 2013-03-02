@@ -130,7 +130,7 @@ void PStepCompile::apply_( const PStep* ps, VMContext* ctx )
    {
       psc->m_tout->write( prompt );
       psc->m_tout->flush();
-      psc->m_tin->underlying()->readAvailable(-1);
+      //psc->m_tin->underlying()->readAvailable(-1);
 
       try {
          SynTree* st = 0;

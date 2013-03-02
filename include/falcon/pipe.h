@@ -20,7 +20,7 @@
 #include <falcon/setup.h>
 #include <falcon/types.h>
 #include <falcon/filedata.h>
-
+#include <falcon/streamtraits.h>
 
 namespace Falcon {
 
@@ -85,6 +85,29 @@ public:
     * this Pipe won't close the write side.
     */
    WriteOnlyFStream* getWriteStream();
+
+   /** Traits for streams that can be interpreted as directional, piped FileData.
+    */
+   class Traits: public StreamTraits
+   {
+   public:
+      /**
+       * Creates a trait instance.
+       * \pram readDirection if true, this pipe traits are created for read direction.
+       */
+      Traits( bool readDirection );
+      virtual ~Traits();
+
+      virtual Multiplex* multiplex( Selector* master ) const;
+
+      bool isRead() const { return m_bReadDirection; }
+
+   private:
+      class ReadMPX;
+      class WriteMPX;
+
+      bool m_bReadDirection;
+   };
 
 private:
    FileData m_readSide;

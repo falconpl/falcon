@@ -20,6 +20,7 @@
 #include <malloc.h>
 #include <falcon/streambuffer.h>
 #include <falcon/fassert.h>
+#include <falcon/stdhandlers.h>
 
 #include <string.h>
 #include <cstring>
@@ -293,22 +294,6 @@ bool StreamBuffer::truncate( int64 pos )
    }
 }
 
-size_t StreamBuffer::readAvailable( int32 msecs_timeout )
-{
-   if ( m_bufPos < m_bufLen )
-      return m_bufLen - m_bufPos;
-
-   return m_stream->readAvailable( msecs_timeout );
-}
-
-size_t StreamBuffer::writeAvailable( int32 msecs_timeout )
-{
-   if ( m_bufPos < m_bufSize )
-      return m_bufSize - m_bufPos;
-
-   return m_stream->writeAvailable( msecs_timeout );
-}
-
 int64 StreamBuffer::seek( int64 pos, e_whence whence )
 {
    // TODO: optimize and avoid re-buffering if we're still in the buffer.
@@ -407,9 +392,9 @@ bool StreamBuffer::resizeBuffer( uint32 size )
 }
 
 
-MultiplexGenerator* StreamBuffer::getMultiplexGenerator()
+StreamTraits* StreamBuffer::traits() const
 {
-   return m_stream->getMultiplexGenerator();
+   return m_stream->traits();
 }
 
 }

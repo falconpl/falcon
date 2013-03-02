@@ -101,10 +101,6 @@ bool FStream::isNonbloking() const
 size_t FStream::read( void *buffer, size_t size )
 {
    Sys::FileData* data = static_cast<Sys::FileData*>(m_fsData);
-   if( data->m_nonBloking && ! readAvailable(0) ) {
-      return 0;
-   }
-
    int fd = data->fdFile;
    int result = ::read( fd, buffer, size );
    if ( result < 0 ) {
@@ -130,10 +126,6 @@ size_t FStream::read( void *buffer, size_t size )
 size_t FStream::write( const void *buffer, size_t size )
 {
    Sys::FileData* data = static_cast<Sys::FileData*>(m_fsData);
-   if( data->m_nonBloking && ! writeAvailable(0) ) {
-      return 0;
-   }
-
    int fd = data->fdFile;
 
    int result = ::write( fd, buffer, size );
@@ -237,6 +229,7 @@ bool FStream::truncate( off_t pos )
    return true;
 }
 
+#if 0
 size_t FStream::readAvailable( int32 msec )
 {
    /* Temporarily turned off because of a darwin flaw
@@ -337,6 +330,7 @@ size_t FStream::writeAvailable( int32 msec )
    return 0;
 }
 
+#endif
 
 }
 

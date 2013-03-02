@@ -61,9 +61,7 @@ ClassStream::ClassStream():
    FALCON_INIT_METHOD( seek ),
    FALCON_INIT_METHOD( tell ),
    FALCON_INIT_METHOD( flush ),   
-   FALCON_INIT_METHOD( trunc ),
-   FALCON_INIT_METHOD( ravail ),
-   FALCON_INIT_METHOD( wavail )
+   FALCON_INIT_METHOD( trunc )
 {
 }
 
@@ -91,9 +89,7 @@ ClassStream::ClassStream( const String& subclassName ):
    FALCON_INIT_METHOD( seek ),
    FALCON_INIT_METHOD( tell ),
    FALCON_INIT_METHOD( flush ),
-   FALCON_INIT_METHOD( trunc ),
-   FALCON_INIT_METHOD( ravail ),
-   FALCON_INIT_METHOD( wavail )
+   FALCON_INIT_METHOD( trunc )
 {
 }
 
@@ -524,32 +520,6 @@ FALCON_DEFINE_METHOD_P1( ClassStream, trunc )
    Stream* sc = static_cast<Stream*>(ctx->self().asInst());
    int64 loc = i_loc != 0 ? i_loc->forceInteger() : -1 ;
    ctx->returnFrame( sc->truncate( loc ) );
-}
-
-
-FALCON_DEFINE_METHOD_P1( ClassStream, ravail )
-{   
-   Item* i_loc = ctx->param(0);
-   if( i_loc != 0 && !(i_loc->isOrdinal()) )
-   {
-      throw paramError();
-   }
-   Stream* sc = static_cast<Stream*>(ctx->self().asInst());
-   int64 loc = i_loc != 0 ? i_loc->forceInteger() : -1 ;
-   ctx->returnFrame( (int64) sc->readAvailable( loc ) );
-}
-
-
-FALCON_DEFINE_METHOD_P1( ClassStream, wavail )
-{   
-   Item* i_loc = ctx->param(0);
-   if( i_loc != 0 && !(i_loc->isOrdinal()) )
-   {
-      throw paramError();
-   }
-   Stream* sc = static_cast<Stream*>(ctx->self().asInst());
-   int64 loc = i_loc != 0 ? i_loc->forceInteger() : -1 ;
-   ctx->returnFrame( (int64) sc->writeAvailable( loc ) );
 }
 
 }

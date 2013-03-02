@@ -17,6 +17,9 @@
 #define SRC "engine/stdstreamtraits.cpp"
 
 #include <falcon/stdstreamtraits.h>
+#include <falcon/stringstream.h>
+#include <falcon/diskfiletraits.h>
+#include <falcon/pipe.h>
 
 namespace Falcon
 {
@@ -24,9 +27,9 @@ namespace Falcon
 StdStreamTraits::StdStreamTraits()
 {
    m_stringStreamTraits = new StringStream::Traits;
-   m_diskFileTraits = 0;
-   m_readPipeTraits = 0;
-   m_writePipeTraits = 0;
+   m_diskFileTraits = new DiskFileTraits;
+   m_readPipeTraits = new Sys::Pipe::Traits(true);
+   m_writePipeTraits = new Sys::Pipe::Traits(false);
 }
 
 StdStreamTraits::~StdStreamTraits()
@@ -39,6 +42,4 @@ StdStreamTraits::~StdStreamTraits()
 
 }
 
-#endif
-
-/* end of stdstreamtraits.g */
+/* end of stdstreamtraits.cpp */

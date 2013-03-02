@@ -53,7 +53,7 @@ class Item;
 
 class VMContext;
 
-class StdStreamTypes;
+class StdStreamTraits;
 class StdHandlers;
 class StdErrors;
 
@@ -152,12 +152,12 @@ public:
    /**
     * The global handler class collection.
     */
-   StdStreamTypes* stdStreamTypes() const { return m_stdStreamTypes; }
+   StdStreamTraits* stdStreamTraits() const { return m_stdStreamTraits; }
 
    /**
     * The global handler class collection.
     */
-   static StdHandlers* streamTraits();
+   static StdStreamTraits* streamTraits();
 
 
 
@@ -371,7 +371,7 @@ protected:
    StdSteps* m_stdSteps;
    StdErrors* m_stdErrors;
    StdHandlers* m_stdHandlers;
-   StdStreamTypes* m_stdStreamTypes;
+   StdStreamTraits* m_stdStreamTraits;
 
    Symbol* m_baseSymbol;
    Symbol* m_ruleBaseSymbol;

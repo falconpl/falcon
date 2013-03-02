@@ -23,6 +23,7 @@
 #include <falcon/module.h>
 #include <falcon/gclock.h>
 #include <falcon/vmcontext.h>
+#include <falcon/stdhandlers.h>
 
 #include <map>
 #include <vector>

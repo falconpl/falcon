@@ -130,9 +130,6 @@ public:
     available, the call blocks if the stream has blocking semantics, and it
     returns zero if it's nonblocking. In this latter case, check the eof() status
     to determine if the stream is completely read.
-
-    Use readAvailable() and nonblocking semantics to determine if the next
-    read on this stream might block.
     
       \param buffer the buffer where read data will be stored.
       \param size the amount of bytes to read.
@@ -164,24 +161,6 @@ public:
 
    /** Truncates the stream at a given position, or at current position if pos < 0 */
    virtual bool truncate( off_t pos=-1 ) = 0;
-
-   /** Determines if the stream can be read, possibly with a given timeout.
-
-    \param msecs_timeout Wait for available data for no more than the required milliseconds.
-    \param intr An interrupter that might be remotely excited to stop the wait.
-    \return 0 if no data is available, -1 on error, a positive value (possibly an hint of how
-    much data can be read) on success.
-   */
-   virtual size_t readAvailable( int32 msecs_timeout=0 ) = 0;
-
-   /** Determines if the stream can be written, possibly with a given timeout.
-
-    \param msecs_timeout Wait for available data for no more than the required milliseconds.
-    \param intr An interrupter that might be remotely excited to stop the wait.
-    \return 0 if no data can be written, -1 on error, a positive value (possibly an hint of how
-    much data can be written) on success.
-    */
-   virtual size_t writeAvailable( int32 msecs_timeout=0 ) = 0;
 
    /** Seks from the beginning of a file. */
    inline off_t seekBegin( off_t pos ) { return seek( pos, ew_begin ); }

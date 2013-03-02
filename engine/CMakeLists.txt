@@ -14,6 +14,7 @@ message(STATUS "Compiling Falcon core on ${CMAKE_SYSTEM_NAME}" )
 if(UNIX OR APPLE)
   set(SYS_SPECIFIC
     fstream_posix.cpp
+    filedatampx_posix.cpp
     interrupt_posix.cpp
     mt_posix.cpp
     pipe_posix.cpp
@@ -345,6 +346,7 @@ add_library(falcon_engine SHARED
   datawriter.cpp
   derivedfrom.cpp
   directory.cpp
+  diskfiletraits.cpp
   dyncompiler.cpp
   dynloader.cpp
   engine.cpp
@@ -358,6 +360,7 @@ add_library(falcon_engine SHARED
   falconstate.cpp
   famloader.cpp
   fatal.cpp
+  filedatampx.cpp
   filestat.cpp
   flexyclass.cpp
   flexydict.cpp

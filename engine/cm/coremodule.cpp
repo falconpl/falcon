@@ -74,6 +74,7 @@ CoreModule::CoreModule():
       << new Ext::Function_advance
       << new Ext::Function_int
       << new Ext::Function_numeric
+      << new Ext::Function_stdIn
       
       // Standard classes
       << new Ext::ClassBarrier

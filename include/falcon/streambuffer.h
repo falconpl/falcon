@@ -70,8 +70,6 @@ public:
    virtual bool close();
    virtual int64 tell();
    virtual bool truncate( int64 pos=-1 );
-   size_t readAvailable( int32 msecs_timeout = 0 );
-   size_t writeAvailable( int32 msecs_timeout = 0 );
    virtual bool flush();
    
    virtual bool get( uint32 &chr );
@@ -86,7 +84,7 @@ public:
    bool resizeBuffer( uint32 size );
    uint32 bufferSize() const { return m_bufSize; }
 
-   MultiplexGenerator* getMultiplexGenerator();
+   StreamTraits* traits() const;
 };
 
 }

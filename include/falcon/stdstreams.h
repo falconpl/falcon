@@ -36,7 +36,7 @@ class FALCON_DYN_CLASS StdInStream: public ReadOnlyFStream
 public:
    StdInStream( bool bDup = true );
    virtual ~StdInStream() {}
-
+   StreamTraits* traits() const;
 };
 
 /** Standard Output Stream proxy.
@@ -59,7 +59,7 @@ public:
     */
    StdOutStream( bool bDup = true);
    virtual ~StdOutStream() {}
-
+   StreamTraits* traits() const;
 };
 
 /** Standard Error Stream proxy.
@@ -82,7 +82,7 @@ public:
     */
    StdErrStream( bool bDup = true );
    virtual ~StdErrStream() {}
-
+   StreamTraits* traits() const;
 };
 
 }

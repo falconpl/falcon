@@ -53,6 +53,7 @@ public:
     */
    bool remove( Stream* stream );
 
+   virtual void signal( int count = 1 );
    virtual int32 consumeSignal( VMContext* target, int32 count = 1 );
    virtual void gcMark( uint32 n );
 
@@ -82,7 +83,7 @@ protected:
       {}
    };
 
-   virtual int32 lockedConsumeSignal( VMContext* target, int32 count = 1 );
+   virtual int lockedConsumeSignal( VMContext* target, int count = 1 );
 
 private:
    void dequePending();

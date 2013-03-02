@@ -22,6 +22,7 @@
 #include <falcon/treestep.h>
 #include <falcon/stdsteps.h>
 #include <falcon/derivedfrom.h>
+#include <falcon/stdhandlers.h>
 
 #include <falcon/synclasses_id.h>
 

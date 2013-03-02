@@ -24,6 +24,7 @@ namespace Falcon
 
 class Stream;
 class Selector;
+class StreamTraits;
 
 /**
  * Stream multiplexer.
@@ -70,7 +71,7 @@ public:
     */
    virtual void removeStream( Stream* stream ) = 0 ;
 
-   MultiplexGenerator* generator() const { return m_generator; }
+   const StreamTraits* generator() const { return m_generator; }
 
    Selector* selector() const { return m_selector; }
 
@@ -78,7 +79,7 @@ protected:
    /** Creates the multiplex on a selector.
     * The module is used for back-reference and keep alive marks.
     */
-   Multiplex( Selector* master,  Module* mod = 0 ):
+   Multiplex( const StreamTraits* generator, Selector* master,  Module* mod = 0 ):
       m_generator(generator),
       m_selector(master),
       m_module(mod),
@@ -117,7 +118,7 @@ protected:
     */
    void onReadyErr( Stream* stream );
 
-   MultiplexGenerator* m_generator;
+   const StreamTraits* m_generator;
    Selector* m_selector;
    Module* m_module;
    uint32 m_mark;

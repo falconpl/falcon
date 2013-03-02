@@ -39,8 +39,6 @@ public:
    virtual bool close();
    virtual size_t read( void *buffer, size_t size );
    virtual size_t write( const void *buffer, size_t size );
-   virtual size_t readAvailable( int32 msecs_timeout=0 );
-   virtual size_t writeAvailable( int32 msecs_timeout=0 );
 
    virtual bool setNonblocking( bool ) { return true; }
    virtual bool isNonbloking() const { return true; }

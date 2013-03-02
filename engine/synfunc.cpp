@@ -22,6 +22,7 @@
 #include <falcon/trace.h>
 #include <falcon/pstep.h>
 #include <falcon/stdsteps.h>
+#include <falcon/stdhandlers.h>
 
 namespace Falcon
 {

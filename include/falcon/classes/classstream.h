@@ -85,8 +85,6 @@ private:
    FALCON_DECLARE_METHOD( tell, "" );
    FALCON_DECLARE_METHOD( flush, "" );
    FALCON_DECLARE_METHOD( trunc, "position:[N]" );
-   FALCON_DECLARE_METHOD( ravail, "msecs:[N]" );
-   FALCON_DECLARE_METHOD( wavail, "msecs:[N]" );
 };
 
 }

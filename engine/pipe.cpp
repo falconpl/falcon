@@ -19,6 +19,8 @@
 #include <falcon/pipe.h>
 #include <falcon/errors/ioerror.h>
 #include <falcon/fstream.h>
+#include <falcon/filedatampx.h>
+#include <falcon/selector.h>
 
 namespace Falcon {
 namespace Sys {
@@ -48,6 +50,67 @@ WriteOnlyFStream* Pipe::getWriteStream()
    FileData* fd = new FileData();
    m_writeSide.passOn( *fd );
    return new WriteOnlyFStream( fd );
+}
+
+//======================================================
+// Pipe Traits
+//======================================================
+
+class Pipe::Traits::ReadMPX: public FileDataMPX
+{
+public:
+   ReadMPX( const StreamTraits* generator, Selector* master ):
+      FileDataMPX( generator, master )
+   {}
+
+   virtual ~ReadMPX() {}
+
+   virtual void addStream( Stream* stream, int mode )
+   {
+      if( (mode & Selector::mode_read) != 0 )
+      {
+         FileDataMPX::addStream(stream, Selector::mode_read);
+      }
+   }
+};
+
+class Pipe::Traits::WriteMPX: public FileDataMPX
+{
+public:
+   WriteMPX( const StreamTraits* generator, Selector* master ):
+      FileDataMPX( generator, master )
+   {}
+
+   virtual ~WriteMPX() {}
+
+   // This is system specific
+   virtual void addStream( Stream* stream, int mode )
+   {
+      if( (mode & Selector::mode_write) != 0 )
+      {
+         FileDataMPX::addStream(stream, Selector::mode_write);
+      }
+   }
+};
+
+
+Pipe::Traits::Traits( bool readDirection ):
+      StreamTraits("Pipe::Traits", 0),
+      m_bReadDirection(readDirection)
+{}
+
+Pipe::Traits::~Traits()
+{}
+
+Multiplex* Pipe::Traits::multiplex( Selector* master ) const
+{
+   if( m_bReadDirection )
+   {
+      return new ReadMPX( this, master );
+   }
+   else {
+      return new WriteMPX(this, master );
+   }
 }
 
 }

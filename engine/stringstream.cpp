@@ -18,7 +18,8 @@
 
 #include <falcon/stringstream.h>
 #include <falcon/selector.h>
-#include <falcon/engine.h>
+#include <falcon/stdhandlers.h>
+#include <falcon/stdstreamtraits.h>
 
 #include <cstring>
 #include <string.h>
@@ -35,10 +36,7 @@ namespace Falcon {
 class StringStream::MPX: public Multiplex
 {
 public:
-   MPX( Selector* master ):
-      Multiplex(master)
-   {}
-
+   MPX( const StreamTraits* generator, Selector* master );
    virtual ~MPX();
 
    virtual void addStream( Stream* stream, int mode );
@@ -374,17 +372,6 @@ bool StringStream::truncate( int64 pos )
    return true;
 }
 
-size_t StringStream::readAvailable( int32 )
-{
-   //TODO: Wait if empty till new data arrives ?.
-   return 1;
-}
-
-size_t StringStream::writeAvailable( int32 )
-{
-   return 1;
-}
-
 void StringStream::getString( String &target ) const
 {
    m_b->m_mtx.lock();
@@ -430,6 +417,7 @@ void StringStream::setPipeMode( bool mode )
    m_b->m_mtx.unlock();
 }
 
+
 bool StringStream::isPipeMode() const
 {
    m_b->m_mtx.lock();
@@ -438,7 +426,6 @@ bool StringStream::isPipeMode() const
 
    return mode;
 }
-
 
 
 byte * StringStream::closeToBuffer()
@@ -462,6 +449,7 @@ byte * StringStream::closeToBuffer()
    return retbuf;
 }
 
+
 StringStream *StringStream::clone() const
 {
    StringStream *sstr = new StringStream( *this );
@@ -471,7 +459,7 @@ StringStream *StringStream::clone() const
 
 StreamTraits* StringStream::traits() const
 {
-   static StreamTraits* gen = Engine::streamTraits()->stringStreamClass();
+   static StreamTraits* gen = Engine::streamTraits()->stringStreamTraits();
    return gen;
 }
 
@@ -480,9 +468,9 @@ StreamTraits* StringStream::traits() const
 StringStream::Traits::~Traits()
 {}
 
-Multiplex* StringStream::Traits::multiplex( Selector* master )
+Multiplex* StringStream::Traits::multiplex( Selector* master ) const
 {
-   return new StringStream::MPX(master);
+   return new MPX(this, master);
 }
 
 
@@ -490,7 +478,7 @@ Multiplex* StringStream::Traits::multiplex( Selector* master )
 //
 //====================================================================================
 
-StringStream::MPX::MPX( MultiplexGenerator* generator, Selector* master ):
+StringStream::MPX::MPX( const StreamTraits* generator, Selector* master ):
          Multiplex( generator, master )
 {
 }

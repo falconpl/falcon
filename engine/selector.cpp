@@ -184,6 +184,17 @@ Selector::~Selector()
 }
 
 
+void Selector::signal( int )
+{
+   Shared::lockSignals();
+   if( Shared::lockedSignalCount() == 0 )
+   {
+      Shared::lockedSignal(1);
+   }
+   Shared::unlockSignals();
+}
+
+
 int32 Selector::consumeSignal( VMContext*, int32 )
 {
    // as consume signal is usually invoked upon waits, it's a good time to send the
@@ -197,7 +208,7 @@ int32 Selector::consumeSignal( VMContext*, int32 )
 }
 
 
-int32 Selector::lockedConsumeSignal( VMContext*, int32 )
+int Selector::lockedConsumeSignal( VMContext*, int )
 {
    _p->m_mtx.lock();
    int32 value = _p->m_readyCount;
@@ -313,27 +324,30 @@ Stream* Selector::getNextReadyErr()
 
 void Selector::pushReadyRead( Stream* stream )
 {
+   // only for the first...
    if( _p->pushReady( stream, _p->m_readyRead ) )
    {
-      signal();
+      Shared::signal();
    }
 }
 
 
 void Selector::pushReadyWrite( Stream* stream )
 {
+   // only for the first...
    if( _p->pushReady( stream, _p->m_readyWrite ) )
    {
-      signal();
+      Shared::signal();
    }
 }
 
 
 void Selector::pushReadyErr( Stream* stream )
 {
+   // only for the first...
    if( _p->pushReady( stream, _p->m_readyErr ) )
    {
-      signal();
+      Shared::signal();
    }
 }
 
@@ -436,7 +450,7 @@ void Selector::removeFromMultiplex( Stream* stream )
 {
    Multiplex* mpx = 0;
 
-   MultiplexGenerator* gen = stream->getMultiplexGenerator();
+   StreamTraits* gen = stream->traits();
    _p->m_mtxMultiplex.lock();
    Private::MultiplexMap::iterator mpi = _p->m_multiplex.find( gen );
    if( mpi != _p->m_multiplex.end() )

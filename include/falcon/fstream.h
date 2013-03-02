@@ -56,33 +56,19 @@ public:
    virtual off_t tell();
    virtual bool truncate(off_t pos = - 1);
 
-   virtual size_t readAvailable( int32 msecs_timeout=0 );
-   virtual size_t writeAvailable( int32 msecs_timeout=0 );
-
    virtual bool close();
 
    virtual FStream* clone() const;
 
    virtual StreamTraits* traits() const;
 
+   /** Returns the underlying system specific file data.
+    *\return the underlying system specific file data.
+    */
+   Sys::FileData* fileData() const { return m_fsData; }
+
 protected:
    Sys::FileData *m_fsData;
-
-private:
-
-   class FALCON_DYN_CLASS Traits: public StreamTraits
-   {
-   public:
-     Traits(): StreamTraits("FStream") {}
-     virtual ~Traits();
-     virtual Multiplex* multiplex( Selector* master ) const;
-   };
-
-   friend class StdStreamTraits;
-
-   class MPX;
-   friend class MPX;
-   friend class Traits;
 };
 
 /** File stream with output functions filtered out. */
@@ -100,7 +86,6 @@ public:
 
    virtual ~InputOnlyFStream() {}
 
-   virtual size_t writeAvailable( int32 msecs_timeout=0 );
    virtual size_t write( const void *buffer, size_t size );
    virtual bool truncate(int64 pos = - 1);
 
@@ -121,8 +106,6 @@ public:
    {}
 
    virtual ~OutputOnlyFStream() {}
-
-   virtual size_t readAvailable( int32 msecs_timeout=0 );
    virtual size_t read( void *buffer, size_t size );
 
    virtual OutputOnlyFStream* clone() const;

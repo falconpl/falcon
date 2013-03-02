@@ -81,8 +81,7 @@
 
 #include <falcon/item.h>         // for builtin
 
-#include <falcon/stringstream.h> // multiplex generator
-#include <falcon/fstream.h> // multiplex generator
+#include <falcon/stdstreamtraits.h>
 
 #include <falcon/paranoid.h>
 #include <map>
@@ -318,7 +317,7 @@ Engine::Engine()
    //=====================================
    // File/stream i/o
    //
-   m_mpgen = new StdStreamTraits;
+   m_stdStreamTraits = new StdStreamTraits;
 
    //=====================================
    // The Core Module
@@ -660,6 +659,11 @@ StdHandlers* Engine::handlers()
    return m_instance->m_stdHandlers;
 }
 
+StdStreamTraits* Engine::streamTraits()
+{
+   fassert( m_instance != 0 );
+   return m_instance->m_stdStreamTraits;
+}
 
 SynClasses* Engine::synclasses() const
 {

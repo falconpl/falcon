@@ -20,6 +20,7 @@
 #include <falcon/stdstreams.h>
 #include <unistd.h>
 #include <falcon/errors/ioerror.h>
+#include <falcon/stdstreamtraits.h>
 
 namespace Falcon {
 
@@ -49,13 +50,28 @@ StdInStream::StdInStream( bool bDup ):
    ReadOnlyFStream( new Sys::FileData(make_fd(STDIN_FILENO, bDup )) )
 {}
 
+StreamTraits* StdInStream::traits() const
+{
+   return Engine::streamTraits()->readPipeTraits();
+}
+
 StdOutStream::StdOutStream( bool bDup ):
    WriteOnlyFStream( new Sys::FileData(make_fd(STDOUT_FILENO, bDup )) )
 {}
 
+StreamTraits* StdOutStream::traits() const
+{
+   return Engine::streamTraits()->writePipeTraits();
+}
+
 StdErrStream::StdErrStream( bool bDup ):
    WriteOnlyFStream( new Sys::FileData(make_fd(STDERR_FILENO, bDup )) )
 {}
+
+StreamTraits* StdErrStream::traits() const
+{
+   return Engine::streamTraits()->writePipeTraits();
+}
 
 }
 

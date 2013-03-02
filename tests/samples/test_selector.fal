@@ -11,6 +11,7 @@ ss.pipeMode = true
 sel = Selector()
 // add the stream for read
 sel.addRead( ss )
+sel.addRead( stdIn() )
 // A control object
 barrier = Barrier()
 
@@ -28,10 +29,11 @@ function process()
          >> "Getting text... "
          // get the ready stream
          stream = sel.getRead()
+         >> "...got..."
          // and read from it
          > stream.grab(1024)
       })
-      
+
    // start the waiting.
    // we'll be out as the first non-marshalled entity is signaled.
    // (that's our barrier)
@@ -53,7 +55,6 @@ function producer()
    barrier.open()
 
 end
-
 
 para = Parallel( process, producer )
 para.launch()

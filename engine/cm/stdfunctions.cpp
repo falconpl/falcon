@@ -282,6 +282,38 @@ FALCON_DEFINE_FUNCTION_P(numeric)
    }
 }
 
+/*#
+   @function stdIn
+   @brief Creates an object mapped to the standard input of the Virtual Machine.
+   @optparam stream A stream to replace the standard input with.
+   @return A new valid @a Stream instance on success.
+
+   The returned read-only stream is mapped to the standard input of the virtual
+   machine hosting the script. Read operations will return the characters from the
+   input stream as they are available. The readAvailable() method of the returned
+   stream will indicate if read operations may block. Calling the read() method
+   will block until some character can be read, or will fill the given buffer up
+   the amount of currently available characters.
+
+   The returned stream is a clone of the stream used by the Virtual Machine as
+   standard input stream. This means that every transcoding applied by the VM is
+   also available to the script, and that, when running in embedding applications,
+   the stream will be handled by the embedder.
+
+   As a clone of this stream is held in the VM, closing it will have actually no
+   effect, except that of invalidating the instance returned by this function.
+
+   Read operations will fail raising an I/O error.
+*/
+FALCON_DEFINE_FUNCTION_P(stdIn)
+{
+   TRACE1( "stdIn -- called with %d params", pCount );
+
+   Stream* retStream = ctx->vm()->stdIn();
+   retStream->incref();
+   ctx->returnFrame(FALCON_GC_HANDLE(retStream));
+}
+
 }
 }
 
