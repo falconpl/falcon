@@ -26,10 +26,9 @@ function process()
    w.add( sel, 
       // when the selector is signaled, we can...
       {sel =>
-         >> "Getting text... "
+         >> "Getting text: "
          // get the ready stream
-         stream = sel.getRead()
-         >> "...got..."
+         stream = sel.getRead()         
          // and read from it
          > stream.grab(1024)
       })
