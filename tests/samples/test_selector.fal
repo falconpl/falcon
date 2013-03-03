@@ -37,6 +37,8 @@ function process()
    // we'll be out as the first non-marshalled entity is signaled.
    // (that's our barrier)
    w.wait()
+   
+   > "Consumer out"
 end
 
 
@@ -44,15 +46,15 @@ end
 function producer()
 
    // sends all the data.
-   for i = 1 to 10
+   for i = 1 to 2
       sleep(1)
       > "Sending text..."
       ss.write( "New text " + i )
    end
    // open the barrier.
-   sleep(0.2)
+   sleep(1)
    barrier.open()
-
+   > "Producer out"
 end
 
 para = Parallel( process, producer )
@@ -60,4 +62,3 @@ para.launch()
 
 > "Total: ", ss.closeToString()
 > "Done"
-    

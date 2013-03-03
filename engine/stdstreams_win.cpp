@@ -19,6 +19,7 @@
 #include <falcon/errors/ioerror.h>
 
 #include <windows.h>
+#include <io.h>
 
 namespace Falcon {
 
@@ -48,13 +49,15 @@ inline Sys::FileData* make_handle( HANDLE orig_handle, bool bDup )
       hTarget = orig_handle;
    }
 
-   return new Sys::FileData( hTarget, false );
+   return new Sys::FileDataEx( hTarget, false, GetFileType(hTarget) == FILE_TYPE_CHAR );
 }
 
 
 StdInStream::StdInStream( bool bDup ):
 ReadOnlyFStream(make_handle(GetStdHandle(STD_INPUT_HANDLE), bDup ))
-{}
+{  
+   
+}
 
 StdOutStream::StdOutStream( bool bDup ):
    WriteOnlyFStream(make_handle(GetStdHandle(STD_OUTPUT_HANDLE), bDup ))

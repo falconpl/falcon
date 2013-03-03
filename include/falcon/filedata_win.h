@@ -44,6 +44,8 @@ public:
       hFile = NULL;
    }
 
+   virtual ~FileData() {}
+
 private:
    // disable implicit copy
    FileData( FileData& )
@@ -53,6 +55,7 @@ private:
 class FileDataEx: public FileData 
 {
 public:
+   bool bConsole;
    bool bBusy;
 
    typedef struct
@@ -66,13 +69,28 @@ public:
 
    OVERLAPPED_EX ovl;
 
+   HANDLE hEmulWrite;
+   HANDLE hRealConsole;
 
-   FileDataEx( HANDLE hf = NULL, bool bf = false ):
-      FileData(hf, bf ),
+   FileDataEx( HANDLE hf = NULL, bool bf = false, bool cons = false ):
+      FileData(hf, bf),
+      bConsole(cons),
       bBusy( false )
    {
       memset( &ovl, 0, sizeof(ovl) );
       ovl.self = this;
+      hEmulWrite = INVALID_HANDLE_VALUE;
+      hRealConsole = INVALID_HANDLE_VALUE;
+   }
+
+   virtual ~FileDataEx()
+   {
+      if(hEmulWrite != INVALID_HANDLE_VALUE) {
+         CloseHandle(hEmulWrite);
+      }
+      if(hRealConsole != INVALID_HANDLE_VALUE) {
+         CloseHandle(hRealConsole);
+      }
    }
 };
 
