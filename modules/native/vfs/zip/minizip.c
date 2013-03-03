@@ -291,7 +291,7 @@ int main(argc,argv)
     }
 
     size_buf = WRITEBUFFERSIZE;
-    buf = (void*)malloc(size_buf);
+    buf = (void*)memAlloc(size_buf);
     if (buf==NULL)
     {
         printf("Error allocating memory\n");

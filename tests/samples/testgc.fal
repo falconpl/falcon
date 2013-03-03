@@ -1,0 +1,71 @@
+
+> "Multiple GC strategy tests"
+> "==============================================================="
+> "Strategy 'fixed'; try to collect aggressively above the limit"
+>
+fullTest( GC.FIXED, 1000000 )
+GC.perform( true, true )  // clear memory
+> "==============================================================="
+> "Strategy 'strict'; try to collect when possible, with strict limit growth rates"
+>
+fullTest( GC.STRICT, 1000000 )
+GC.perform( true, true )  // clear memory
+> "==============================================================="
+> "Strategy 'smooth'; try to collect when possible, with mediuym limit growth rates"
+>
+fullTest( GC.SMOOTH, 1000000 )
+GC.perform( true, true )  // clear memory
+> "==============================================================="
+> "Strategy 'loose'; try to collect when possible, with relaxed limit growth rates"
+>
+fullTest( GC.LOOSE, 1000000 )
+GC.perform( true, true )  // clear memory
+
+> "==============================================================="
+> "Test complete"
+>
+
+//===========================================================
+
+function doLoop( name, count, loopCode )
+   > name
+   for a = 0 to count
+      loopCode(a)
+      if a % 10 == 0: displayGC( a )
+   end
+   >
+end
+
+function displayGC( count )
+   >> count, ": ", GC.memory, "b in ", GC.items, " - ", GC.limit, " status=", GC.status,
+         "                              \r"
+end
+
+//===========================================================
+
+function fullTest( algoId, limit )
+   GC.algorithm = algoId
+   GC.limit = limit
+   GC.baseLimit = limit/2
+   GC.reset()
+
+   > GC.describe()
+
+   // a place where to store a bit of unreleaseable memory
+   vector = []
+   doLoop( "Memory generator loop", 100000, 
+         // use a closure to close our variable
+         {l => vector += "abcdefghilmno" + l} )
+         
+   doLoop( "Memory Leak loop", 100000, 
+         {(l) x = "abcdefghilmno" + l } )
+      
+   doLoop( "Memory release loop", 100000, 
+         {l => vector[l] = nil} )   
+    doLoop( "Idle loop to give the GC more time", 100000, 
+         {l => vector[l] = nil} ) 
+   
+   // here we see the count of mark and sweeps.
+   > "Mark loops: ", GC.marks, " - Sweeps: ", GC.sweeps,
+      @" Unclaimed: $({GC.memory/1024}:.0)kb in ", GC.items, " items."
+end

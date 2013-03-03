@@ -18,9 +18,7 @@
 */
 
 #include <falcon/module.h>
-#include <falcon/memory.h>
 #include "regex_ext.h"
-#include "regex_st.h"
 #include "version.h"
 
 #include <stdio.h>
@@ -123,66 +121,74 @@ A minimal example would look like the following:
    @beginmodule feathers.regex
 */
 
+class RegexModule: public Falcon::Module
+{
+public:
+   // setup DLL engine common data
+   RegexModule():
+      Module("regex")
+   {
+
+
+      //language( "en_US" );
+      //engineVersion( FALCON_VERSION_NUM );
+      //version( VERSION_MAJOR, VERSION_MINOR, VERSION_REVISION );
+
+      
+
+      //====================================
+      // Message setting
+      //#include "regex_st.h"
+
+      //============================================================
+      // Regex class
+      //
+      /*Falcon::Symbol *regex_c = self->addClass( "Regex", Falcon::Ext::Regex_init );
+      self->addClassMethod( regex_c, "study", &Falcon::Ext::Regex_study );
+      self->addClassMethod( regex_c, "match", &Falcon::Ext::Regex_match ).asSymbol()->
+         addParam("string");
+      self->addClassMethod( regex_c, "grab", &Falcon::Ext::Regex_grab ).asSymbol()->
+         addParam("string");
+      self->addClassMethod( regex_c, "split", &Falcon::Ext::Regex_split ).asSymbol()->
+         addParam("string")->addParam("count")->addParam("gettoken");
+      self->addClassMethod( regex_c, "find", &Falcon::Ext::Regex_find ).asSymbol()->
+         addParam("string")->addParam("start");
+      self->addClassMethod( regex_c, "findAll", &Falcon::Ext::Regex_findAll ).asSymbol()->
+         addParam("string")->addParam("start")->addParam("maxcount");
+      self->addClassMethod( regex_c, "findAllOverlapped", &Falcon::Ext::Regex_findAllOverlapped ).asSymbol()->
+         addParam("string")->addParam("start")->addParam("maxcount");
+      self->addClassMethod( regex_c, "replace", &Falcon::Ext::Regex_replace ).asSymbol()->
+         addParam("string")->addParam("replacer");
+      self->addClassMethod( regex_c, "replaceAll", &Falcon::Ext::Regex_replaceAll ).asSymbol()->
+         addParam("string")->addParam("replacer");
+      self->addClassMethod( regex_c, "subst", &Falcon::Ext::Regex_subst ).asSymbol()->
+         addParam("string")->addParam("replacer");
+      self->addClassMethod( regex_c, "capturedCount", &Falcon::Ext::Regex_capturedCount );
+      self->addClassMethod( regex_c, "captured", &Falcon::Ext::Regex_captured ).asSymbol()->
+         addParam("count");
+      self->addClassMethod( regex_c, "compare", &Falcon::Ext::Regex_compare ).asSymbol()->
+         addParam("string");
+      self->addClassMethod( regex_c, "version", &Falcon::Ext::Regex_version );*/
+      addMantra(new Falcon::Ext::ClassRegex);
+
+
+      //==================================================
+      // Error class
+
+      addMantra(Falcon::Ext::ClassRegexError::singleton());
+   }
+   virtual ~RegexModule() {};
+};
+
 FALCON_MODULE_DECL
 {
-   #define FALCON_DECLARE_MODULE self
-
-   Falcon::Module *self = new Falcon::Module();
-   self->name( "regex" );
-   self->language( "en_US" );
-   self->engineVersion( FALCON_VERSION_NUM );
-   self->version( VERSION_MAJOR, VERSION_MINOR, VERSION_REVISION );
-
    // Initialzie pcre -- todo, import data from app.
-   pcre_malloc = Falcon::memAlloc;
-   pcre_free = Falcon::memFree;
-   pcre_stack_malloc = Falcon::memAlloc;
-   pcre_stack_free = Falcon::memFree;
-
-   //====================================
-   // Message setting
-   #include "regex_st.h"
-
-   //============================================================
-   // Regex class
-   //
-   Falcon::Symbol *regex_c = self->addClass( "Regex", Falcon::Ext::Regex_init );
-   self->addClassMethod( regex_c, "study", &Falcon::Ext::Regex_study );
-   self->addClassMethod( regex_c, "match", &Falcon::Ext::Regex_match ).asSymbol()->
-      addParam("string");
-   self->addClassMethod( regex_c, "grab", &Falcon::Ext::Regex_grab ).asSymbol()->
-      addParam("string");
-   self->addClassMethod( regex_c, "split", &Falcon::Ext::Regex_split ).asSymbol()->
-      addParam("string")->addParam("count")->addParam("gettoken");
-   self->addClassMethod( regex_c, "find", &Falcon::Ext::Regex_find ).asSymbol()->
-      addParam("string")->addParam("start");
-   self->addClassMethod( regex_c, "findAll", &Falcon::Ext::Regex_findAll ).asSymbol()->
-      addParam("string")->addParam("start")->addParam("maxcount");
-   self->addClassMethod( regex_c, "findAllOverlapped", &Falcon::Ext::Regex_findAllOverlapped ).asSymbol()->
-      addParam("string")->addParam("start")->addParam("maxcount");
-   self->addClassMethod( regex_c, "replace", &Falcon::Ext::Regex_replace ).asSymbol()->
-      addParam("string")->addParam("replacer");
-   self->addClassMethod( regex_c, "replaceAll", &Falcon::Ext::Regex_replaceAll ).asSymbol()->
-      addParam("string")->addParam("replacer");
-   self->addClassMethod( regex_c, "subst", &Falcon::Ext::Regex_subst ).asSymbol()->
-      addParam("string")->addParam("replacer");
-   self->addClassMethod( regex_c, "capturedCount", &Falcon::Ext::Regex_capturedCount );
-   self->addClassMethod( regex_c, "captured", &Falcon::Ext::Regex_captured ).asSymbol()->
-      addParam("count");
-   self->addClassMethod( regex_c, "compare", &Falcon::Ext::Regex_compare ).asSymbol()->
-      addParam("string");
-   self->addClassMethod( regex_c, "version", &Falcon::Ext::Regex_version );
-
-   //==================================================
-   // Error class
-
-   Falcon::Symbol *error_class = self->addExternalRef( "Error" ); // it's external
-   Falcon::Symbol *reerr_cls = self->addClass( "RegexError", &Falcon::Ext::RegexError_init );
-   reerr_cls->setWKS(true);
-   reerr_cls->getClassDef()->addInheritance(  new Falcon::InheritDef( error_class ) );
-
-
-   return self;
+   pcre_malloc = malloc;
+   pcre_free = free;
+   pcre_stack_malloc = malloc;
+   pcre_stack_free = free;
+   Falcon::Module* mod = new RegexModule;
+   return mod;
 }
 
 /* end of regex.cpp */

@@ -1,0 +1,10 @@
+<html>
+<head>
+   <title>Nest test site - Ajax</title>
+   <? Nest.headings() ?>
+</head>
+<script src="res/json2.js"></script>
+<body>
+<? Nest.content() ?>
+</body>
+</html>

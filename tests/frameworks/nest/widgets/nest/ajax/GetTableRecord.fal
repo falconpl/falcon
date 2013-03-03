@@ -1,0 +1,9 @@
+function GetTableRecord( req )
+   id = int(req["id"])
+   data = Wopi.getAppData("table-app")
+   number = arrayScan( data, { v => v["id"] == id} )
+   if number >= 0
+      return data[number]
+   end
+   return ["unknown" => id]
+end

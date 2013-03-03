@@ -1,0 +1,33 @@
+/*
+@name Expression test - provides properties
+
+@output
+Simple provides test with dynamic property value
+Changing the property: hello
+inst provides hello? Yes
+Changing the property: world
+inst provides world? No
+Changing the property: sayHello
+inst provides sayHello? Yes
+Done
+@endoutput
+
+*/
+
+class test
+   hello = 0
+   function sayHello()
+   end
+end
+
+inst = test()
+
+x = Provides( &inst, "a")
+
+> "Simple provides test with dynamic property value"
+for prop in ["hello", "world", "sayHello"]
+   > "Changing the property: ", (x.property = prop)
+   > "inst provides ", x.property, "? ", (x() ? "Yes" : "No")
+end
+
+> "Done"

@@ -1,129 +1,259 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: flc_modloader.cpp
+   FILE: modloader.cpp
 
-   Module loader
+   Module loader and reference resolutor.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
-   Begin: 2004-08-20
+   Begin: Mon, 01 Aug 2011 11:45:31 +0200
 
    -------------------------------------------------------------------
-   (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
+   (C) Copyright 2011: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
 */
 
-#include <falcon/setup.h>
+#undef SRC
+#define SRC "engine/modloader.cpp"
+
+#include <falcon/log.h>
+#include <falcon/trace.h>
 #include <falcon/modloader.h>
-#include <falcon/error.h>
-#include <falcon/fstream.h>
-#include <falcon/module.h>
-#include <falcon/dll.h>
-#include <falcon/fstream.h>
+#include <falcon/modspace.h>
+#include <falcon/modcompiler.h>
+#include <falcon/famloader.h>
+#include <falcon/dynloader.h>
 #include <falcon/sys.h>
-#include <falcon/pcodes.h>
-#include <falcon/timestamp.h>
-#include <falcon/transcoding.h>
-#include <falcon/stringstream.h>
-#include <falcon/gencode.h>
-#include <falcon/uri.h>
-#include <falcon/vfsprovider.h>
-#include <falcon/streambuffer.h>
-#include <falcon/stdstreams.h>
+#include <falcon/engine.h>
+#include <falcon/transcoder.h>
+#include <falcon/vfsiface.h>
+#include <falcon/textreader.h>
+#include <falcon/datareader.h>
+#include <falcon/stream.h>
+#include <falcon/storer.h>
+#include <falcon/vmcontext.h>
+#include <falcon/module.h>
+#include <falcon/stdhandlers.h>
+#include <falcon/classes/classmodule.h>
 
-#include <falcon/globals.h>
-#include <falcon/modulecache.h>
+#include <falcon/classes/classstream.h>
 
-#include <memory>
+#include <falcon/trace.h>
+#include <falcon/fassert.h>
 
+#include <falcon/errors/ioerror.h>
+#include <falcon/errors/genericerror.h>
 
-
-#define BINMODULE_EXT "_fm"
+#include <deque>
 
 namespace Falcon
 {
 
-ModuleLoader::ModuleLoader():
-   m_alwaysRecomp( false ),
-   m_compMemory( true ),
-   m_saveModule( true ),
-   m_saveMandatory( false ),
-   m_detectTemplate( true ),
-   m_forceTemplate( false ),
-   m_delayRaise( false ),
-   m_ignoreSources( false ),
-   m_saveRemote( false ),
-   m_compileErrors(0)
+class ModLoader::Private
 {
-   m_path.deletor( string_deletor );
-   setSearchPath( "." );
+public:
+   Private() {}
+   ~Private() {}
+
+   typedef std::deque<String> PathList;
+   PathList m_plist;
+
+};
+
+
+ModLoader::ModLoader( ModSpace* ms, ModCompiler* mc, FAMLoader* faml, DynLoader* dld ):
+   _p( new Private ),
+   m_stepSave(this)
+{
+   init(".", ms, mc, faml, dld );
 }
 
 
-ModuleLoader::ModuleLoader( const String &path ):
-   m_alwaysRecomp( false ),
-   m_compMemory( true ),
-   m_saveModule( true ),
-   m_saveMandatory( false ),
-   m_detectTemplate( true ),
-   m_forceTemplate( false ),
-   m_delayRaise( false ),
-   m_ignoreSources( false ),
-   m_saveRemote( false ),
-   m_compileErrors(0)
+ModLoader::ModLoader( const String &path, ModSpace* ms,  ModCompiler* mc, FAMLoader* faml, DynLoader* dld ):
+   _p( new Private ),
+   m_stepSave(this)
 {
-   m_path.deletor( string_deletor );
-   setSearchPath( path );
-}
-
-ModuleLoader::ModuleLoader( const ModuleLoader &other ):
-   m_alwaysRecomp( other.m_alwaysRecomp ),
-   m_compMemory( other.m_compMemory ),
-   m_saveModule( other.m_saveModule ),
-   m_saveMandatory( other.m_saveMandatory ),
-   m_detectTemplate( other.m_detectTemplate ),
-   m_forceTemplate( other.m_forceTemplate ),
-   m_delayRaise( other.m_delayRaise ),
-   m_ignoreSources( other.m_ignoreSources ),
-   m_saveRemote( other.m_saveRemote ),
-   m_compileErrors( other.m_compileErrors )
-{
-   setSearchPath( other.getSearchPath() );
+   init( path, ms, mc, faml, dld );
 }
 
 
-ModuleLoader::~ModuleLoader()
+ModLoader::~ModLoader()
 {
+   delete _p;
 }
 
 
-ModuleLoader *ModuleLoader::clone() const
+void ModLoader::init ( const String &path, ModSpace* ms,  ModCompiler* mc, FAMLoader* faml, DynLoader* dld )
 {
-   return new ModuleLoader( *this );
+   static Engine* engine = Engine::instance();
+
+   setSearchPath(path);
+   if( mc == 0 ) mc = new ModCompiler;
+   if( faml == 0 ) faml = new FAMLoader(ms);
+   if( dld == 0 ) dld = new DynLoader;
+
+   m_owner = ms;
+   m_compiler = mc;
+   m_famLoader = faml;
+   m_dynLoader = dld;
+   m_useSources = e_us_newer;
+
+   m_famExt = "fam";
+   m_ftdExt = "ftd";
+
+   m_encName = "C";
+   m_tcoder = engine->getTranscoder( m_encName );
+   fassert( m_tcoder != 0 );
 }
 
 
-void ModuleLoader::getModuleName( const String &path, String &modName )
+bool ModLoader::sourceEncoding( const String& encName )
 {
-   // .../modname.xxx
-   // we need at least a char.
-   if ( path.length() == 0 )
-   {
-      modName = "";
-      return;
+   static Engine* engine = Engine::instance();
+
+   Transcoder* tc = engine->getTranscoder( encName );
+   if( tc == 0 ) {
+      return false;
    }
 
-   int32 dotpos = path.rfind( "." );
-   int32 slashpos = path.rfind( "/" );
-   if ( dotpos == -1  || dotpos < slashpos )
-      dotpos = path.length();
-   // legal also if slashpos < 0
-
-   modName = path.subString( slashpos + 1, dotpos );
+   m_encName = encName;
+   m_tcoder = tc;
+   return true;
 }
 
 
-void ModuleLoader::addFalconPath()
+bool ModLoader::loadName(VMContext* tgtctx, const String& name, t_modtype type, Module* loader )
+{
+   String modName = name;
+
+   if( modName.startsWith("self.") )
+   {
+      if (loader != 0 )
+      {
+         modName = loader->name() + modName.subString(4);
+      }
+      else {
+         modName = modName.subString(4);
+      }
+   }
+
+   // change "." into "/"
+   length_t pos1 = modName.find( '.' );
+   while( pos1 != String::npos )
+   {
+      modName.setCharAt( pos1, '/' );
+      // .something.name becomes ./something/name
+      if(pos1 == 0 )
+      {
+         modName.prepend('.');
+      }
+      pos1 = modName.find( '.', pos1+1 );
+   }
+
+   return loadFile( tgtctx, modName, type, true, loader );
+}
+
+
+bool ModLoader::loadFile( VMContext* tgtctx, const String& path, t_modtype type, bool bScan, Module* loader )
+{
+   String uriPath = path;
+   #ifdef FALCON_SYSTEM_WIN
+   Path::winToUri(uriPath);
+   #endif // FALCON_SYSTEM_WIN
+   URI uri(uriPath);
+   return loadFile( tgtctx, uri, type, bScan, loader );
+}
+
+
+bool ModLoader::loadFile( VMContext* tgtctx, const URI& uri, t_modtype type, bool bScan, Module* loader )
+{
+   URI srcUri;
+   URI tgtUri;
+   TRACE( "ModLoader::loadFile: %s %d %d", uri.encode().c_ize(), type, bScan );
+
+   srcUri = uri;
+   // check if the host path is relative to the loader path
+   if( srcUri.path().startsWith("./") && loader != 0 && loader->uri() != "" )
+   {
+      URI loaderURI( loader->uri() );
+      // merge only if same scheme, or if we have empty scheme.
+      if( loaderURI.scheme() == srcUri.scheme() || srcUri.scheme().empty() )
+      {
+         Path loaderPath( loaderURI.path() );
+
+         srcUri.path( loaderPath.fulloc() + srcUri.path().subString(1) );
+         srcUri.scheme( loaderURI.scheme() ); // in case we have none.
+      }
+   }
+
+   // is the file absolute?
+   Path path( URI::URLDecode( srcUri.path() ) );
+   if( path.isAbsolute() || ! bScan )
+   {
+      t_modtype etype = checkFile_internal( srcUri, type, tgtUri );
+      if( etype != e_mt_none )
+      {
+         load_internal( tgtctx, "", tgtUri, etype );
+         return true;
+      }
+      TRACE1( "ModLoader::loadFile: %s not found as direct path", uri.encode().c_ize() );
+   }
+   else
+   {
+      // time to chop away ./ to add the paths.
+      while( srcUri.path().startsWith("./") )
+      {
+         srcUri.path( srcUri.path().subString(2) );
+      }
+
+      // Search the file in the path elements.
+      Private::PathList& plist = _p->m_plist;
+      Private::PathList::iterator iter = plist.begin();
+      while( iter != plist.end() )
+      {
+         String prefix = *iter;
+         #ifdef FALCON_SYSTEM_WIN
+         Path::winToUri(prefix);
+         #endif // FALCON_SYSTEM_WIN
+         URI location( prefix + "/" + srcUri.path() );
+
+
+         if( location.isValid() )
+         {
+            TRACE( "Scanning for module %s with type %d ", location.encode().c_ize(), type );
+
+            t_modtype etype = checkFile_internal( location, type, tgtUri );
+            if( etype != e_mt_none )
+            {
+               load_internal( tgtctx, *iter, tgtUri, etype );
+               return true;
+            }
+         }
+         else
+         {
+            TRACE( "URI not valid: %s", location.encode().c_ize() );
+         }
+         ++iter;
+      }
+      TRACE1( "ModLoader::loadFile: %s not found in any path", uri.encode().c_ize() );
+   }
+
+   TRACE( "ModLoader::loadFile: %s giving up", uri.encode().c_ize() );
+   // push a nil to mark failure
+   tgtctx->pushData(Item());
+   return false;
+}
+
+
+void ModLoader::setSearchPath( const String &path )
+{
+   Private::PathList& plist = _p->m_plist;
+
+   plist.clear();
+   addSearchPath( path );
+}
+
+void ModLoader::addFalconPath()
 {
    String envpath;
    bool hasEnvPath = Sys::_getEnv( "FALCON_LOAD_PATH", envpath );
@@ -137,854 +267,378 @@ void ModuleLoader::addFalconPath()
    }
 }
 
-void ModuleLoader::setSearchPath( const String &path )
+void ModLoader::addSearchPath( const String &path )
 {
-   m_path.clear();
-   addSearchPath( path );
-}
+   Private::PathList& plist = _p->m_plist;
 
-void ModuleLoader::addSearchPath( const String &path )
-{
-   // subdivide the path by ';'
-   int32 pos = 0, pos1 = 0;
+   // clear the path
+   m_path = "";
 
-   // nothing to add ?
-   if ( path == "" )
-      return;;
-
-   while( true )
-   {
-      String *tmp;
-
-      pos1 = path.find( ";", pos );
-      if ( pos1 ==  -1 )
-      {
-         tmp = new String( path, pos );
-         tmp->bufferize();
-         m_path.pushBack( tmp );
-         break;
-      }
-
-      if ( pos1 == -1 ) {
-         tmp = new String( path, pos );
-         tmp->bufferize();
-         m_path.pushBack( tmp );
-         break;
-      }
-
-      if ( pos1 > pos ) {
-         tmp = new String( path, pos, pos1 );
-         tmp->bufferize();
-         m_path.pushBack( tmp );
-      }
-      pos = pos1+1;
-   }
-}
-
-void ModuleLoader::getSearchPath( String &tgt ) const
-{
-   tgt.size(0);
-
-   ListElement *path_elem = m_path.begin();
-   while ( path_elem != 0 )
-   {
-      String *pathp = (String *) path_elem->data();
-      tgt += *pathp;
-      path_elem = path_elem->next();
-      if ( path_elem != 0 )
-         tgt += ";";
-   }
-}
-
-
-Stream *ModuleLoader::openResource( const String &path, t_filetype type )
-{
-   // Get the uri
-   URI furi( path );
-
-   if ( !furi.isValid() )
-   {
-      raiseError( e_malformed_uri, path ); // upstream will fill the module
-   }
-
-   // find the appropriage provider.
-   VFSProvider* vfs = Engine::getVFS( furi.scheme() );
-   if ( vfs == 0 )
-   {
-      raiseError( e_unknown_vfs, path );  // upstream will fill the module
-   }
-
-   Stream *in = vfs->open( furi, VFSProvider::OParams().rdOnly() );
-
-   if ( in == 0 )
-   {
-      throw vfs->getLastError();
-   }
-
-   if ( type == t_source || type == t_ftd )
-   {
-      if ( m_srcEncoding != "" )
-      {
-         // set input encoding
-         Stream *inputStream = TranscoderFactory( m_srcEncoding, in, true );
-         if( inputStream != 0 )
-            return AddSystemEOL( inputStream );
-
-         delete in;
-         raiseError( e_unknown_encoding, m_srcEncoding ); // upstream will fill the module
-      }
-      else
-         return AddSystemEOL( in );
-   }
-
-   return in;
-}
-
-
-ModuleLoader::t_filetype ModuleLoader::fileType( const String &fext )
-{
-   String ext = fext;
-   ext.lower();
-
-   if ( ext == "fal" )
-   {
-      return t_source;
-   }
-   else if ( ext == "ftd" )
-   {
-      return t_ftd;
-   }
-   else if ( ext == DllLoader::dllExt() )
-   {
-      return t_binmod;
-   }
-   else if ( ext == "fam" )
-   {
-      return t_vmmod;
-   }
-
-   return t_none;
-}
-
-
-Module *ModuleLoader::loadName( const String &module_name, const String &parent_name )
-{
-   String file_path;
-   String nmodName;
-
-   // prevent doing a crashy thing.
-   if ( module_name.length() == 0 )
-      throw new CodeError( ErrorParam( e_modname_inv ).extra( module_name ).origin( e_orig_loader ).
-            module( "(loader)" ) );
-
-   nmodName = Module::absoluteName( module_name, parent_name );
-
-   String path_name;
-   String expName = nmodName;
-
-   // expand "." names into "/"
-   uint32 pos = expName.find( "." );
+   length_t pos0 = 0;
+   length_t pos = path.find( ';' );
    while( pos != String::npos )
    {
-      expName.setCharAt( pos, '/' );
-      pos = expName.find( ".", pos + 1 );
+      plist.push_back(path.subString( pos0, pos ) );
+      pos0 = pos+1;
+      pos = path.find( ';', pos0 );
    }
 
-
-   Module *mod = loadFile( expName, t_none, true );
-   mod->name( nmodName );
-
-   return mod;
+   // Push the last one
+   if ( pos0 < path.length() )
+   {
+      plist.push_back(path.subString( pos0 ) );
+   }
 }
 
 
-bool ModuleLoader::scanForFile( URI &origUri, VFSProvider* vfs, t_filetype &type, FileStat &fs )
+void ModLoader::addDirectoryFront( const String &directory )
 {
-   // loop over the possible extensions and pick the newest.
-   const char *exts[] = { "ftd", "fal", "fam", DllLoader::dllExt(), 0 };
-   const t_filetype ftypes[] = { t_ftd, t_source, t_vmmod, t_binmod, t_none };
-
-   TimeStamp tsNewest;
-   const char **ext = exts;
-   const t_filetype *ptf = ftypes;
-
-   // skip source exensions if so required.
-   if ( ignoreSources() )
-   {
-      ext++; ext++;
-      ptf++; ptf++;
-   }
-
-   while( *ext != 0 )
-   {
-      origUri.pathElement().setExtension( *ext );
-
-      // did we find it?
-      if ( *ptf == t_binmod )
-      {
-         // for binary module, add the extra module identifier.
-         URI copy(origUri);
-         copy.pathElement().setFile( copy.pathElement().getFile() + BINMODULE_EXT );
-         if( vfs->readStats( copy, fs ) )
-         {
-            origUri.pathElement().setFile( copy.pathElement().getFile() );
-            type = t_binmod;
-            return true;
-         }
-      }
-      else if ( vfs->readStats( origUri, fs ) )
-      {
-         type = *ptf;
-         return true;
-      }
-
-      // get next extension and file type
-      ext++;
-      ptf++;
-   }
-
-   return false;
+   m_path = "";
+   Private::PathList& plist = _p->m_plist;
+   plist.push_front( directory );
 }
 
-Module *ModuleLoader::loadFile( const URI& uri, t_filetype type, bool scan )
+
+void ModLoader::addDirectoryBack( const String &directory )
 {
-   URI origUri = uri;
-   String file_path;
-   t_filetype tf = t_none;
+   m_path = "";
+   Private::PathList& plist = _p->m_plist;
+   plist.push_back( directory );
+}
 
-   VFSProvider *vfs = Engine::getVFS( origUri.scheme() );
-   if ( vfs == 0 )
+
+const String& ModLoader::getSearchPath() const
+{
+   if( m_path == "" )
    {
-      throw new CodeError( ErrorParam( e_unknown_vfs )
-         .extra( uri.scheme() )
-            .origin( e_orig_loader )
-            );
-   }
-
-   // Check wether we have absolute files or files to be searched.
-
-   FileStat foundStats;
-   bool bFound = false;
-
-   // If we don't have have an absolute path,
-   if ( ! origUri.pathElement().isAbsolute() )
-   {
-      // ... and if scan is false, we must add our relative path to absolutize it.
-      if ( ! scan )
+      const Private::PathList& plist = _p->m_plist;
+      Private::PathList::const_iterator iter = plist.begin();
+      while( iter != plist.end() )
       {
-         String curdir;
-         int32 error;
-         if ( ! Sys::fal_getcwd( curdir, error ) )
+         if( m_path.size() != 0 )
          {
-            throw new IoError( ErrorParam( e_io_error )
-               .extra( Engine::getMessage( msg_io_curdir ) )
-               .origin( e_orig_loader )
-               .sysError( error )
-               );
+            m_path += ";";
          }
 
-         origUri.pathElement().setFullLocation( curdir + "/" + origUri.pathElement().getFullLocation() );
+         m_path += *iter;
+         ++iter;
       }
+   }
+
+   return m_path;
+}
+
+
+
+void ModLoader::pathToName( const String &path, const String &modFile, String &modName )
+{
+   // Chop away the topmost part of the path.
+   if( modFile.find( path ) == 0 )
+   {
+      modName = modFile.subString( path.length() );
    }
    else
    {
-      // absolute path force scan to be off, just to be sure.
-      scan = false;
+      modName = modFile;
    }
 
-   // we are interested in knowing if a default extension was given,
-   // in that case we won't go searching for that.
-   bool bHadExtension = origUri.pathElement().getExtension() != "";
-
-   // if we don't have to scan in the path...
-   if ( ! scan )
+   // chop away ../ ./ or /
+   bool found = true;
+   while( found )
    {
-      // ... if type is t_none, we may anyhow scan for a proper extension.
-      if( (type == t_none || type == t_defaultSource) && ! bHadExtension )
+      found = false;
+
+      if( modName.find( "../" ) == 0 )
       {
-         URI saveUri = origUri;
-         bFound = scanForFile( origUri, vfs, tf, foundStats );
-         if ( ! bFound && type == t_defaultSource )
-         {
-            origUri = saveUri;
-
-            // scanforfile may
-            bFound = vfs->readStats( origUri, foundStats );
-            if ( bFound )
-               tf = t_source;
-         }
+         found = true;
+         modName = modName.subString(3);
       }
-      else {
-         // just check if the file exists.
-         tf = type == t_none ? fileType(origUri.pathElement().getExtension()) : type;
-         bFound = vfs->readStats( origUri, foundStats );
-      }
-   }
-   // shall we scan for a file?
-   else
-   {
-      // ready to scan the list of directories;
-      ListElement *path_elem = m_path.begin();
-      String oldPath = origUri.pathElement().getLocation();
-      while ( (! bFound) && path_elem != 0 )
+      if( modName.find( "./" ) == 0 )
       {
-         String *pathp = (String *) path_elem->data();
-         origUri.pathElement().setFullLocation( *pathp );
-         origUri.pathElement().extendLocation( oldPath  );
-
-         // If we originally had an extension, we must not add it.
-         if ( bHadExtension )
-         {
-            // if the thing exists...
-            if( ( bFound = vfs->readStats( origUri, foundStats ) ) )
-            {
-               // ... set the file type, either on our default or on the found extension.
-               tf = (type == t_none || type == t_defaultSource ) ?
-                     fileType( origUri.pathElement().getExtension() ) : type;
-            }
-         }
-         else
-         {
-            // we must can the possible extensions in this directory
-            bFound = scanForFile( origUri, vfs, tf, foundStats );
-         }
-
-         path_elem = path_elem->next();
+         found = true;
+         modName = modName.subString(2);
+      }
+      else if( modName.find( '/' ) == 0 )
+      {
+         found = true;
+         modName = modName.subString(1);
       }
    }
 
-
-   Module *mod = 0;
-   // did we found a file?
-   if( bFound )
+   // chop away terminal extension.
+   length_t pos1 = modName.rfind( '.' );
+   length_t pos2 = modName.rfind( '/' );
+   if ( pos1 != String::npos &&
+         (pos2 == String::npos || pos2 < pos1 ) )
    {
-      // Ok, TF should be the file type.
-      switch( tf )
+      modName = modName.subString(0, pos1);
+   }
+
+   // change "/" into .
+   pos1 = modName.find( '/' );
+   while( pos1 != String::npos )
+   {
+      modName.setCharAt( pos1, '.' );
+      pos1 = modName.find( '/', pos1+1 );
+   }
+}
+
+
+ModLoader::t_modtype ModLoader::checkFile_internal(
+      const URI& uri, ModLoader::t_modtype type, URI& foundUri )
+{
+   static VFSIface* vfs = &Engine::instance()->vfs();
+
+   // if we have a type, just check if the beast exists.
+   if( type != ModLoader::e_mt_none )
+   {
+      if( vfs->fileType( uri, true ) == FileStat::_normal )
       {
-      case t_source: case t_ftd: case t_defaultSource:
-         {
-            FileStat fs;
-            // should we load a .fam instead?
-            URI famUri = origUri;
-            famUri.pathElement().setExtension( "fam" );
-            if ( ! alwaysRecomp()
-                 && ( ignoreSources()
-                      || (vfs->readStats( famUri, fs ) && *fs.m_mtime >= *foundStats.m_mtime) )
-               )
-            {
-               try {
-                  mod = loadModule( famUri.get() );
-               }
-               catch( Error *e )
-               {
-                  // well, our try wasn't cool. try with the source.
-                  e->decref();
-                  mod = loadSource( origUri.get() );
-               }
-            }
-            else
-            {
-               mod = loadSource( origUri.get() );
-            }
-         }
+         foundUri = uri;
+         return type;
+      }
+
+      return e_mt_none;
+   }
+
+   // else, try to find the required file, in priority order.
+   FileStat stats[4];
+   URI uris[4];
+   t_modtype types[] = { e_mt_source, e_mt_vmmod, e_mt_binmod, e_mt_ftd };
+   Path path( URI::URLDecode(uri.path()) );
+
+   uris[0] = uri; path.ext( "fal" ); uris[0].path( path.encode() );
+   uris[1] = uri; path.ext( m_famExt ); uris[1].path( path.encode() );
+   uris[3] = uri; path.ext( m_ftdExt ); uris[3].path( path.encode() );
+   // here we modify the filename, it must be done for last.
+   uris[2] = uri; path.fileext( path.file() + "_fm." + DynLoader::sysExtension() );
+                    uris[2].path( path.encode() );
+
+   // the files we should look at depends on our working mode.
+   switch( m_useSources )
+   {
+      case e_us_newer:
+         vfs->readStats( uris[0], stats[0], true );
+         vfs->readStats( uris[1], stats[1], true );
+         vfs->readStats( uris[2], stats[2], true );
+         vfs->readStats( uris[3], stats[3], true );
          break;
 
-      case t_vmmod: mod = loadModule( origUri.get() ); break;
-      case t_binmod: mod = loadBinaryModule( URI::URLDecode( origUri.get() ) ); break;
+      case e_us_always:
+         vfs->readStats( uris[0], stats[0], true );
+         vfs->readStats( uris[3], stats[3], true );
+         break;
+
+      case e_us_never:
+         vfs->readStats( uris[1], stats[1], true );
+         vfs->readStats( uris[2], stats[2], true );
+         break;
+   }
+
+   // who is the winner?
+   int bestUri = -1;
+   TimeStamp best;
+   for( int i = 0; i < 4; ++i )
+   {
+      FileStat& st = stats[i];
+      // was this stat found?
+      if( st.type() != FileStat::_notFound )
+      {
+         // if yes, check if we should use it.
+         if( bestUri == -1 || stats[bestUri].mtime().compare(st.mtime()) < 0 )
+         {
+            bestUri = i;
+         }
+      }
+   }
+
+   // Not found? -- ignore.
+   if( bestUri == -1 )
+   {
+      return e_mt_none;
+   }
+
+   // Found? -- get the found uri and return the type.
+   foundUri = uris[bestUri];
+   return types[ bestUri ];
+}
+
+
+void ModLoader::load_internal(
+      VMContext* ctx, const String& prefixPath, const URI& uri, ModLoader::t_modtype type )
+{
+   static Class* modClass = Engine::handlers()->moduleClass();
+   static VFSIface* vfs = &Engine::instance()->vfs();
+
+   String modName;
+   // The module name depends on the prefix path.
+   // if the scheme is not in the prefix, then we should just use the path.
+   if( prefixPath.find( uri.scheme() ) == 0 )
+   {
+      pathToName( prefixPath, uri.encode(), modName );
+   }
+   else
+   {
+      pathToName( prefixPath, uri.path(), modName );
+   }
+
+   // Use the right device depending on the file type.
+   switch( type )
+   {
+      case e_mt_source:
+      case e_mt_ftd:
+      {
+         // TODO: Treat FTD
+         Stream* ins = vfs->openRO( uri );
+         if( ins == 0 )
+         {
+            throw makeError( e_nofile, __LINE__, uri.encode() );
+         }
+         ins->shouldThrow(true);
+         TextReader input( ins, m_tcoder );
+         // compiler gets the ownership of input.
+         Module* output = m_compiler->compile( &input, uri.encode(), modName, type == e_mt_ftd );
+
+         // for now, we just throw
+         if( output == 0 )
+         {
+            throw m_compiler->makeError();
+         }
+
+         // store the module in GC now
+         ctx->pushData( FALCON_GC_STORE( modClass, output ) );
+
+         // what shoud we do with the newly compiled module?
+         switch( savePC() )
+         {
+            case e_save_no:
+               // nothing to do.
+               break;
+
+            case e_save_try:
+               try {
+                  saveModule_internal( ctx, output, uri, modName );
+               }
+               catch( IOError* err ) {
+                  // decrement reference.
+                  Engine::instance()->log()->log( Log::fac_engine, Log::lvl_warn, err->describe() );
+                  err->decref();
+               }
+               break;
+
+            case e_save_mandatory:
+               // save, but allow to throw an error.
+               saveModule_internal( ctx, output, uri, modName );
+               break;
+         }
+      }
+      break;
+
+      case e_mt_vmmod:
+      {
+         Stream* ins = vfs->openRO( uri );
+         if( ins == 0 )
+         {
+            throw makeError( e_nofile, __LINE__, uri.encode() );
+         }
+
+         ins->shouldThrow(true);
+         // let the fam loader push the module
+         m_famLoader->load( ctx, ins, uri.encode(), modName );
+         return;
+      }
+
+      case e_mt_binmod:
+      {
+         if ( modName.endsWith("_fm" ) )
+         {
+            modName = modName.subString(0,modName.length()-3);
+         }
+         TRACE( "ModLoader::load_internal -- loading dynmodule %s => %s ", uri.encode().c_ize(), modName.c_ize() );
+
+         Module* output = m_dynLoader->load( uri.encode(), modName );
+         ctx->pushData( FALCON_GC_STORE(modClass, output) );
+      }
+      break;
 
       default:
-         // we have not been able to find it
-         // -- report the actual file that caused the problem.
-         raiseError( e_unrec_file_type, origUri.get() );
-      }
-   }
-   else
-   {
-   	String expl = URI::URLDecode(uri.get());
-   	if( scan )
-   		expl += String(" in path ") + getSearchPath();
-      raiseError( e_nofile, expl );
-   }
-
-   // in case of errors, we already raised
-   String modName;
-   getModuleName( origUri.get(), modName );
-   mod->name( modName );
-   mod->path( origUri.get() );
-
-   // try to load the language table.
-   if ( m_language != "" && mod->language() != m_language )
-   {
-      // the function may fail, but it won't raise.
-      loadLanguageTable( mod, m_language );
-   }
-
-   // in case of errors, we already raised
-   return mod;
-}
-
-
-Module *ModuleLoader::loadFile( const String &module_path, t_filetype type, bool scan )
-{
-   // Preliminary filtering -- get the URI and the filesystem.
-   URI origUri;
-   origUri.parse( module_path, true, false );
-  
-   if ( ! origUri.isValid() )
-   {
-      throw new CodeError( ErrorParam( e_malformed_uri )
-            .extra( module_path )
-            .origin( e_orig_loader )
-            );
-   }
-   
-   return loadFile( origUri, type, scan );
-}
-
-
-
-bool ModuleLoader::loadLanguageTable( Module *module, const String &language )
-{
-   String langFileName;
-
-   // try to find the .ftr file
-   uint32 posDot = module->path().rfind( "." );
-   uint32 posSlash = module->path().rfind( "/" );
-   if ( posDot == String::npos || ( posSlash != String::npos && posDot < posSlash ) )
-   {
-      langFileName = module->path() + ".ftr";
-   }
-   else {
-      langFileName = module->path().subString(0, posDot );
-      langFileName += ".ftr";
-   }
-
-   if( applyLangTable( module, langFileName ) )
-   {
-      module->language( language );
-      return true;
-   }
-
-   return false;
-}
-
-inline int32 xendianity( bool sameEndianity, int32 val )
-{
-   return sameEndianity ? val :
-      (val >> 24) |
-      ((val & 0xFF0000) >> 8) |
-      ((val & 0xFF00 ) << 8) |
-      (val << 24);
-}
-
-//TODO: add some diags.
-bool ModuleLoader::applyLangTable( Module *mod, const String &file_path )
-{
-   URI fsuri( file_path );
-   fassert( fsuri.isValid() );
-   VFSProvider* vfs = Engine::getVFS( fsuri.scheme() );
-   fassert( vfs != 0 );
-
-   // try to open the required file table.
-   Stream *fsin_p = vfs->open( fsuri, VFSProvider::OParams().rdOnly() );
-   if( fsin_p == 0 )
-      return false;
-      
-   std::auto_ptr<Stream> fsin( fsin_p );
-
-   // check if this is a regular tab file.
-   char buf[16];
-   buf[5] = 0;
-   if ( fsin->read( buf, 5 ) != 5 || String( "TLTAB" ) != buf )
-   {
-      return false;
-   }
-
-   uint16 endianity;
-   if( fsin->read( &endianity, 2 ) != 2 )
-   {
-      return false;
-   }
-
-   bool sameEndianity = endianity == 0xFBFC;
-
-   // read the language table index.
-   int32 sizeField;
-   if( fsin->read( &sizeField, 4 ) != 4 )
-      return false;
-
-   int32 tableSize = xendianity( sameEndianity, sizeField );
-   int32 tablePos = -1;
-   for( int32 i = 0; i < tableSize; i++ )
-   {
-      // read language code and position in file
-      if( fsin->read( buf, 5 ) != 5 ||
-          fsin->read( &sizeField, 4 ) != 4 )
-         return false;
-
-      // is this our language code?
-      if( m_language == buf )
-      {
-         tablePos = xendianity( sameEndianity, sizeField );
+         fassert2(false, "Should not be here...");
          break;
-      }
    }
-
-   // entry not found?
-   if( tablePos < 0 )
-      return false;
-
-   uint32 headerSise = 5 + 2 + 4 + (tableSize * 9);
-   uint32 filePos = headerSise + tablePos;
-   fsin->seekBegin( filePos );
-
-   // read the number of strings to be decoded.
-   if( fsin->read( &sizeField, 4 ) != 4 )
-      return false;
-
-   int32 stringCount = xendianity( sameEndianity, sizeField );
-
-   // read table and alter module.
-   int32 allocated = 256;
-   char *memBuf = (char *) memAlloc( allocated );
-
-   // the most intelligent thing is that to modify the strings as they are in memory.
-   // In this way, we don't have to alter already allocated string structures, and
-   // we don't have to scan the map for the correct string entry.
-
-   while ( stringCount > 0 )
-   {
-      // read ID
-      if( fsin->read( &sizeField, 4 ) != 4 )
-         break;
-      int32 stringID = xendianity( sameEndianity, sizeField );
-      if ( stringID < 0 || stringID >= mod->stringTable().size() )
-         break;
-
-      // read the string size
-      if( fsin->read( &sizeField, 4 ) != 4 )
-         break;
-      int32 stringSize = xendianity( sameEndianity, sizeField );
-      if ( stringSize < 0 )
-         break;
-      if ( stringSize == 0 )
-         continue;
-
-      // if the string size exeeds the allocated amount, fix it.
-      if( stringSize >= allocated )
-      {
-         memFree( memBuf );
-         allocated = stringSize + 1;
-         memBuf = (char *) memAlloc( allocated );
-      }
-
-      // read the string
-      if( fsin->read( memBuf, stringSize ) != stringSize )
-         break;
-
-      // zero the end so we have an utf8 string
-      memBuf[ stringSize ] = 0;
-
-      // finally, place it in the right place
-      if ( ! mod->stringTable().getNonConst( stringID )->fromUTF8( memBuf ) )
-         break;
-
-      stringCount --;
-   }
-
-   memFree( memBuf );
-   return stringCount == 0;
-}
-
-Module *ModuleLoader::loadModule( const String &path )
-{
-   ModuleCache* mc = Engine::getModuleCache();
-   if( mc != 0 )
-   {
-      Module* mod = mc->find( path );
-      if( mod != 0 )
-         return mod;
-   }
-
-   // May throw on error.
-   Module *mod = 0;
-
-   {
-      // loadModule may throw, so we need an autoptr not to leak in case of errors.
-      std::auto_ptr<Stream> in( openResource( path, t_vmmod ));
-      mod = loadModule( in.get() );
-
-      if( mc != 0 ) mod = mc->add( path, mod );
-   }
-   fassert( mod != 0 );
-
-   String modName;
-   getModuleName( path, modName );
-   mod->name( modName );
-   mod->path( path );
-
-   if ( m_language != "" && mod->language() != m_language )
-   {
-      // This should not throw.
-      loadLanguageTable( mod, m_language );
-   }
-
-   return mod;
 }
 
 
-Module *ModuleLoader::loadBinaryModule( const String &path )
+Error* ModLoader::makeError( int code, int line, const String &expl, int fsError )
 {
-   ModuleCache* mc = Engine::getModuleCache();
-   if( mc != 0 )
-   {
-      Module* mod = mc->find( path );
-      if( mod != 0 )
-         return mod;
-   }
-
-   DllLoader dll;
-
-   if ( ! dll.open( path ) )
-   {
-      String error;
-      dll.getErrorDescription( error );
-      error.prepend( path + ": " );
-      raiseError( e_binload, error );
-      return 0;
-   }
-
-   DllFunc dlfunc = dll.getSymbol( "falcon_module_init" );
-   ext_mod_init func = (ext_mod_init) dlfunc.data();
-
-   if ( func == 0 )
-   {
-      raiseError( e_binstartup, path );
-      return 0;
-   }
-
-   Module *mod = func();
-
-   if ( mod == 0 )
-   {
-      raiseError( e_bininit, path);
-      return 0;
-   }
-
-   // Now I can pass the DLL instance to the module.
-   mod->dllLoader().assign( dll );
-
-   // and give the module its names.
-   String modName;
-   getModuleName( path, modName );
-   mod->name( modName );
-   mod->path( path );
-
-   if ( mc ) mod = mc->add( path, mod );
-
-   // as dll instance has been emptied, the DLL won't be closed till the
-   // module lifetime comes to an end.
-   return mod;
-}
-
-
-Module *ModuleLoader::loadModule( Stream *in )
-{
-   // try to open the file
-   char c1, c2;
-
-   in->read( &c1, 1 );
-   in->read( &c2, 1 );
-
-   if(c1 =='F' && c2 =='M')
-   {
-      Module *ret = loadModule_select_ver( in );
-      return ret;
-   }
-
-   return 0;
-}
-
-
-Module *ModuleLoader::loadModule_select_ver( Stream *in )
-{
-   char c1, c2;
-
-   in->read( &c1, 1 );
-   in->read( &c2, 1 );
-
-   // C1 and c2 now contain the version.
-   // for now we can load only format PCODE
-
-   if( c1 == FALCON_PCODE_VERSION && c2 == FALCON_PCODE_MINOR ) {
-      return  loadModule_ver_1_0( in );
-   }
-
-   raiseError( e_modver, "" );
-   return 0;
-}
-
-Module *ModuleLoader::loadModule_ver_1_0( Stream *in )
-{
-   Module *mod = new Module();
-   if ( ! mod->load( in, true ) )
-   {
-      raiseError( e_modformat, "" );
-   }
-   return mod;
-}
-
-
-void  ModuleLoader::raiseError( int code, const String &expl, int fsError )
-{
-   throw new IoError( ErrorParam( code )
+   return new IOError( ErrorParam( code, line, SRC )
             .extra( expl )
-            .origin( e_orig_loader )
+            .origin( ErrorParam::e_orig_loader )
             .sysError( fsError )
          );
 }
 
-Module *ModuleLoader::loadSource( const String &file )
+
+void ModLoader::saveModule_internal( VMContext* ctx, Module* mod, const URI& srcUri, const String& )
 {
-   ModuleCache* mc = Engine::getModuleCache();
-   if( mc != 0 )
-   {
-      Module* mod = mc->find( file );
-      if( mod != 0 )
-         return mod;
-   }
+   static VFSIface* vfs = &Engine::instance()->vfs();
+   static Class* clsStorer = Engine::handlers()->storerClass();
+   static Class* clsModule = Engine::handlers()->moduleClass();
 
-   // we need it later
-   int32 dotpos = file.rfind( "." );
+   URI tgtUri = srcUri;
+   Path path( tgtUri.path() );
+   path.ext("fam");
+   tgtUri.path( path.encode() );
 
-   // Ok, if we're here we have to load the source.
-   // should we force loading through Falcon Template Document parsing?
-   bool bOldForceFtd = m_forceTemplate;
-   if ( m_detectTemplate && ! m_forceTemplate )
-   {
-      if ( file.subString( dotpos ) == ".ftd" )
-         m_forceTemplate = true;
-   }
+   // get the proper target URI provider
+   Stream* output = vfs->createSimple( tgtUri );
+   output->shouldThrow(true);
+   output->write("FM\x4\x1",4);
 
-   // use the base load source routine
-   // ask for detection, but default to falcon source
-   // will throw on error
-   std::auto_ptr<Stream> in( openResource( file, t_source ) );
+   ctx->pushData( FALCON_GC_HANDLE(output) );
+   ctx->pushData( FALCON_GC_STORE(clsStorer, new Storer) );
+   ctx->pushData( Item(clsModule, mod) );
+   ctx->pushCode( &m_stepSave );
 
-   String modName;
-   getModuleName( file, modName );
-
-   Module *mod = 0;
-   try {
-      mod = loadSource( in.get(), file, modName );
-      m_forceTemplate = bOldForceFtd;
-      in->close();
-
-      if( mc != 0 )
-      {
-         mod = mc->add( file, mod );
-      }
-   }
-   catch (Error *)
-   {
-      // reset old forcing method
-      m_forceTemplate = bOldForceFtd;
-      throw;
-   }
-
-   return mod;
 }
 
 
-Module *ModuleLoader::loadSource( Stream *fin, const String &path, const String &name )
+void ModLoader::PStepSave::apply_( const PStep*, VMContext* ctx )
 {
-   Module *module;
-   m_compileErrors = 0;
+   int32 &seqId = ctx->currentCode().m_seqId;
 
-   // the temporary binary file for the pre-generated module
-   Stream *temp_binary;
+   MESSAGE("ModLoader::PStepSave::apply_" );
 
-   module = new Module();
-   module->name( name );
-   module->path( path );
+   Stream* output = static_cast<Stream*>(ctx->opcodeParam(2).asInst());
+   Storer* storer = static_cast<Storer*>(ctx->opcodeParam(1).asInst());
+   Module* mod = static_cast<Module*>(ctx->opcodeParam(0).asInst());
 
-   m_compiler.reset();
-   m_compiler.searchPath( getSearchPath() );
+   TRACE1("ModLoader::PStepSave::apply_ for %s (%d/2)", mod->name().c_ize(), seqId );
 
-   if ( m_forceTemplate )
-      m_compiler.parsingFtd( true );
-
-   // the compiler can never throw
-   if( ! m_compiler.compile( module, fin ) )
+   switch( seqId )
    {
-      module->decref();
-      throw m_compiler.detachErrors();
-   }
-
-   // we have compiled it. Now we need a file or a memory stream for
-   // saving data.
-   if ( m_compMemory )
-   {
-      temp_binary = new StringStream;
-   }
-   else {
-      String tempFileName;
-      Sys::_tempName( tempFileName );
-      FileStream *tb= new FileStream;
-      tb->create( tempFileName + "_1", Falcon::FileStream::e_aReadOnly | Falcon::FileStream::e_aUserWrite );
-      if ( ! tb->good() )
+   case 0:
+      seqId++;
+      if( ! storer->store( ctx, ctx->opcodeParam(0).asClass(), mod ) )
       {
-         int fserr = (int)tb->lastError();
-         delete tb;
-         module->decref();
-         raiseError( e_file_output, tempFileName, fserr );
+         return;
       }
-      temp_binary = new StreamBuffer( tb );
+      /* no break */
+   case 1:
+      seqId++;
+      if( ! storer->commit( ctx, output ) ) {
+         return;
+      }
+      /* no break */
    }
 
-   GenCode codeOut( module );
-   codeOut.generate( m_compiler.sourceTree() );
+   TRACE("ModLoader::PStepSave::apply_ complete %s", mod->name().c_ize() );
 
-   // import the binary stream in the module;
-   delete temp_binary;
+   output->close();
 
-   module->name( name );
-   module->path( path );
-
-   // if the base load source worked, save the result (if configured to do so).
-   if ( m_saveModule )
-   {
-      URI tguri( path );
-      fassert( tguri.isValid() );
-      VFSProvider* vfs = Engine::getVFS( tguri.scheme() );
-      fassert( vfs != 0 );
-
-      // don't save on remote systems if saveRemote is false
-      if ( vfs->protocol() == "file" || m_saveRemote )
-      {
-         tguri.pathElement().setExtension( "fam" );
-         // Standard creations params are ok.
-         Stream *temp_binary = vfs->create( tguri, VFSProvider::CParams() );
-         if ( temp_binary == 0 || ! module->save( temp_binary ) )
-         {
-            if ( m_saveMandatory )
-            {
-               int fserr = (int) temp_binary->lastError();
-               delete temp_binary;
-               module->decref();
-               raiseError( e_file_output, tguri.get(), fserr );
-            }
-         }
-
-         delete temp_binary;
-      }
-   }
-
-   return module;
+   ctx->popData(3);
+   ctx->popCode();
 }
-
-
 
 }
 
-/* end of flc_modloader.cpp */
+/* end of modloader.cpp */

@@ -1,0 +1,13 @@
+/*
+@name Difference positive test, vital for other tests
+@category Smoke
+
+@result Ok
+*/
+
+if 0 != 1
+   return "Ok"
+end
+
+return "False"
+

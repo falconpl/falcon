@@ -1,0 +1,27 @@
+000 Smoke tests and very basic tests
+001 Variables and expressions
+002 Statements
+003 Basic object model
+004 Advanced grammar constructs (r"", i"", @"" etc.)
+005 Data types
+006 Builtin
+007 Functions
+008 Classes
+009 Advanced OOP constructs (Prototypes, flexy, Hyperclasses)
+010 Basic object model
+011 Homoiconic classes
+012 Codeblocks
+013 Garbage collecting (fast)
+014 Load and import
+
+020 Core module
+
+030 Feather module - math
+031 Feather module - rnd
+
+
+100 Advanced tests
+
+997 Snippet samples
+998 Wiki samples
+999 Book samples

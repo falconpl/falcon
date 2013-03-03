@@ -1,14 +1,14 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: file_base.h
+   FILE: stream.h
 
-   Short description
+   Base class for I/O operations.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
-   Begin: mar nov 2 2004
+   Begin: Sat, 12 Mar 2011 13:00:57 +0100
 
    -------------------------------------------------------------------
-   (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
+   (C) Copyright 2011: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
 */
@@ -20,19 +20,20 @@
    VM, compiler, assembler, generators and modules.
 */
 
-#ifndef flc_stream_H
-#define flc_stream_H
+#ifndef _FALCON_STREAM_H_
+#define _FALCON_STREAM_H_
 
 #include <falcon/setup.h>
 #include <falcon/types.h>
-#include <falcon/falcondata.h>
-#include <falcon/string.h>
-#include <falcon/vm_sys.h>
-
-#define FALCON_READAHEAD_BUFFER_BLOCK  32
+#include <falcon/refcounter.h>
+#include <falcon/item.h>
+#include <falcon/streamtraits.h>
 
 namespace Falcon {
 
+class Module;
+class Selector;
+class Class;
 
 /** Base class for file and filelike services.
 
@@ -46,284 +47,220 @@ namespace Falcon {
    This is a purely abstract class that serves as a base class for
    system-specific or system independent implementations.
 */
-
-class FALCON_DYN_CLASS Stream: public FalconData
+class FALCON_DYN_CLASS Stream
 {
-protected:
-   uint32 *m_rhBuffer;
-   uint32 m_rhBufferSize;
-   uint32 m_rhBufferPos;
-
-   /** Push a character in the read ahead buffer.
-      If the buffer is not still constructed, it is
-      constructed here.
-      \param chr the char to be pushed.
-   */
-   void pushBuffer( uint32 chr );
-
-   /** Pops next character from the buffer.
-      If the buffer is not still constructed, or if its empty,
-      the functionr returns false.
-      \param chr the character that will be retreived.
-      \return false if buffer empty.
-   */
-   bool popBuffer( uint32 &chr );
-
-   /** Returns true if the buffer is empty. */
-   bool bufferEmpty() const { return m_rhBufferPos == 0; }
-
-   /** Protected constructor.
-      Transcoder constructor of this class and of all subclassess
-      is guaranteed not to use the stream in any way
-      but to store it in a protected member; so it is actually possible to
-      switch streams after creation, or to pass 0 as stream initially.
-      Just, be sure YOU KNOW WHAT YOU ARE DOING, as switching streams on
-      stateful encoders may be a bad idea, as it may be a bad idea to
-      create a transcoder passing a 0 stream to it.
-
-      Also, there's nowhere any control about the stream not being
-      null before calling parsing functions, so be carefull.
-   */
-
 public:
-   typedef enum {
-      t_undefined = 0,
-      t_file = 1,
-      t_stream = 2,
-      t_membuf = 3,
-      t_network = 4,
-      t_proxy = 5
-   } t_streamType;
 
+   /** Enumeration representing the current status of the stream. */
    typedef enum {
+      /** Stream is unopened and unready. */
       t_none = 0,
+      /** The stream has been opened. */
       t_open = 0x1,
+      /** A read operation hit the end of file. */
       t_eof = 0x2,
+      /** An I/O error condition has been met during a read, write, flush, open or close operation. */
       t_error = 0x4,
+      /** Last required operation is unsupported on this stream. */
       t_unsupported = 0x8,
-      t_invalid = 0x10,
-      t_interrupted = 0x20
-
+      /** The stream has been invalidated. */
+      t_invalid = 0x10
    } t_status ;
 
-
-protected:
-   t_streamType m_streamType;
-   t_status m_status;
-   int32 m_lastMoved;
-
-   /** Initializes the base file class. */
-   Stream( t_streamType streamType ):
-      m_rhBuffer( 0 ),
-      m_rhBufferSize( 0 ),
-      m_rhBufferPos( 0 ),
-      m_streamType( streamType ),
-      m_status( t_none ),
-      m_lastMoved( 0 )
-   {}
-
-   typedef enum {
+   /** Enumeration representing the current status of the stream. */
+      typedef enum {
       ew_begin,
       ew_cur,
       ew_end
    } e_whence;
 
-   friend class Transcoder;
+   typedef LocalRef<Stream> L;
 
-public:
-
+   /** Copy constructor.
+    The base class copies the status and the value of the last error.
+   */
    Stream( const Stream &other );
 
-   t_streamType type() const { return m_streamType; }
+   /** Returns the current stream status.
+    The status may be one of the t_status enumeration,
+    or a bit combination.
+
+    The following functions should be used to determine the current
+    stream status.
+   */
    virtual t_status status() const { return m_status; }
+
+   /** Changes the status of the stream.
+
+    It's suggested to use just reset() to alter the status of the stream.
+    */
    virtual void status( t_status s ) { m_status = s; }
 
-   uint32 lastMoved() const { return m_lastMoved; }
+   /** Resets the stream status after an error, or after eof has been hit. */
+   virtual inline void reset();
+   /** Returns true if the stream is open and not in error state or eof. */
+   inline bool good() const;
+   /** Returns true if the stream is in error state or at eof (ignoring open state). */
+   inline bool bad() const;
+   /** Returns true if the stream refers to an open resource. */
+   inline bool open() const;
+   /** Returns true if the caller tried to read past of end-of-file. */
+   inline bool eof() const;
+   /** Returns true if the caller tried to perform an unsupported operation.
+    For example, a write  on a read-only stream.
+    Please, notice that unsupported operations always throw a Falcon::IOError.
+   */
+   inline bool unsupported() const;
 
-   void reset();
-   bool good() const;
-   bool bad() const;
-   bool open() const;
-   bool eof() const;
-   bool unsupported() const;
-   bool invalid() const;
-   bool error() const;
-   bool interrupted() const;
+   /** Returns true if this stream has a permanent error and is considered invalid. */
+   inline bool invalid() const;
 
-   virtual ~Stream();
-
-   virtual void gcMark( uint32 mark ) {}
-   virtual bool isStreamBuffer() const { return false; }
-   virtual bool isTranscoder() const { return false; }
+   /** Returns true if this stream has met an I/O Error.
+    In this case, the system error ID can be retreived through lastError().
+   */
+   inline bool error() const;
 
    /** Reads from target stream.
 
+    At end of streams, returns 0 and sets the eof() status. If trying to read
+    when the eof() status is set, it might throw an error.
+
+    The returned read size may be smaller than the required size if there aren't
+    enough bytes available on the stream. If there isn't any data currently
+    available, the call blocks if the stream has blocking semantics, and it
+    returns zero if it's nonblocking. In this latter case, check the eof() status
+    to determine if the stream is completely read.
+    
       \param buffer the buffer where read data will be stored.
-      \param size the amount of bytes to read
+      \param size the amount of bytes to read.
+      \return Count of read data; 0 on stream end or read not available, (size_t) -1 on error.
    */
-   virtual int32 read( void *buffer, int32 size );
+   virtual size_t read( void *buffer, size_t size )=0;
 
    /** Write to the target stream.
-   */
-   virtual int32 write( const void *buffer, int32 size );
 
-   /** Close target stream.
-   */
-   virtual bool close();
-   virtual int64 tell();
-   virtual bool truncate( int64 pos=-1 );
-   virtual bool errorDescription( ::Falcon::String &description ) const;
+     \param buffer the buffer where the output data is stored.
+     \param size the maximum amount of bytes to write.
+    */
+   virtual size_t write( const void *buffer, size_t size )=0;
 
-   /** Determines if the stream can be read, possibly with a given timeout.
-      If sysData is not zero, it will be used to honor concurrent interrupt requests.
-   */
-   virtual int32 readAvailable( int32 msecs_timeout, const Sys::SystemData *sysData = 0 );
-
-   /** Determines if the stream can be written, possibly with a given timeout.
-      If sysData is not zero, it will be used to honor concurrent interrupt requests.
-   */
-   virtual int32 writeAvailable( int32 msecs_timeout, const Sys::SystemData *sysData = 0 );
-
-   int64 seekBegin( int64 pos ) {
-      return seek( pos, ew_begin );
-   }
-
-   int64 seekCurrent( int64 pos ) {
-      return seek( pos, ew_cur );
-   }
-
-   int64 seekEnd( int64 pos ) {
-      return seek( pos, ew_end );
-   }
+   /** Close target stream. */
+   virtual bool close() = 0;
    
-   virtual int64 seek( int64 pos, e_whence w );
+   /** Returns the current position in a file. */
+   virtual int64 tell() = 0;
 
-   virtual int64 lastError() const;
+   /** Truncates the stream at a given position, or at current position if pos < 0 */
+   virtual bool truncate( off_t pos=-1 ) = 0;
 
-   /** Gets next character from the stream.
-      Subclasses must manage both stateful transcoding and
-      properly popping readahead characters from the buffer.
-      \return true if the character is available, false on stream end or error.
-   */
-   virtual bool get( uint32 &chr ) = 0;
+   /** Seks from the beginning of a file. */
+   inline off_t seekBegin( off_t pos ) { return seek( pos, ew_begin ); }
 
-   /** Gets a whole string from the stream.
-      This is implemented by iteratively calling get( uint32 ).
-      The caller should provide a string with enough space already reserved,
-      if possible, to make operations more efficient.
+   /** Seks from the curent position of a file. */
+   inline off_t seekCurrent( off_t pos ) { return seek( pos, ew_cur ); }
 
-      The target string may be shorter than required if the stream ends before all the
-      characters are read, or in case of error.
+   /** Seks from the end of a file. */
+   inline off_t seekEnd( off_t pos ) { return seek( pos, ew_end ); }
 
-      \return true if some characters are available, false on stream end or error.
-   */
-   virtual bool readString( String &target, uint32 size );
+   /** Seks from a given position in a file. */
+   virtual off_t seek( off_t pos, e_whence w ) = 0;
+   
+   /** Gets the stream traits for this kind of streams.
+    *
+    * Each subclass of Stream should provide traits that
+    * help the engine handle all the similar subclasses.
+    */
+   virtual StreamTraits* traits() const = 0;
 
-   /** Writes a character on the stream.
-      \param chr the character to write.
-      \return true success, false on stream error.
-   */
-   virtual bool put( uint32 chr );
-
-   /** Writes a string on the stream.
-      Encoding range is in [begin, end), that is, the last character encoded is end - 1.
-      \param source the string that must be encoded
-      \param begin first character from which to encode
-      \param end one past last character to encode (can be safely greater than string lenght() )
-      \return true success, false on stream error.
-   */
-   virtual bool writeString( const String &source, uint32 begin=0, uint32 end = csh::npos );
-
-   /** Write a character in the readahead buffer.
-      Next get() operation will return characters pushed in the buffer in
-      reverse order. So, if the next character on the stream is 100 and the
-      caller class unget(1) and unget(2), three consecutive get will
-      return in turn 2, 1 and 100.
-
-      Unget is interleaved with readAhead(), so that the sequence
-      \code
-         Stream *s = ...
-         Transcoder x( s );
-         x.unget( 10 );
-         x.readAhead( chr ); // chr <- 20
-         x.unget( 30 );
-
-         String res;
-         x.get( res, 3 );
-      \endcode
-
-      Will fill res with 30, 20 and 10.
-      \see readAhead
-      \param chr the character to be pushed.
-   */
-   void unget( uint32 chr ) { pushBuffer( chr ); }
-
-   /** Ungets a whole string.
-      The string is pushed on the read back buffer so that the
-      next target.length() get() operations return the content
-      of the string.
-
-      \note use wisely.
-   */
-   void unget( const String &target );
-
-   /** Read a character but don't remove from get().
-      This function is equivalent to:
-      \code
-         Stream *s = ...
-         Transcoder xss );
-         uint32 chr;
-         x.get( chr );
-         x.unget( chr );
-      \endcode
-      \param chr the read character
-      \return false on stream end or error.
-   */
-
-   bool readAhead( uint32 &chr );
-
-   /** Read a string but don't remove from get().
-      Every character in the returned string will still be read by other
-      get() operations; this allows to "peek" forward a bit in the
-      target stream to i.e. take lexer decisions that won 't affect
-      a parser.
-
-      The target string may be shorter than required if the stream ends before all the
-      characters are read, or in case of error.
-
-      \param target the read string
-      \param size the amount of character to be read.
-      \return false on stream end or error.
-   */
-   bool readAhead( String &target, uint32 size );
-
-   /** Discards ungetted and read ahead characters.
-      If the lexer finds that it would be useless to retreive again the
-      read ahead characters, it can use this function to discard the content
-      of the buffer instead of re-reading and ignoring them.
-
-      However, this can be done only if the final application has a state
-      memory of what is happening, as there may be some ungetted or
-      read ahaead strings that the code portion calling this function
-      may not be aware of.
-
-      In that case, the caller should know the amount of character it
-      has read ahead and pass as parameter for this function.
-
-      \param count number of character to discard from read ahead buffer (0 for all).
-   */
-   void discardReadAhead( uint32 count = 0 );
-
-   /** Flushes stream buffers.
-      Hook for buffered streams.
-   */
+   /** Commits pending read/write operations on those streams supporting delayed rw. 
+    \return true of the operation is completed, false on error (if not raising exceptions).
+    \throw IoError on i/o error while writing if throwing exception is enabled.
+    
+    On other streams, it has no effect.
+    */
    virtual bool flush();
 
+   /** Returns the system error ID from the last I/O operation. */
+   virtual size_t lastError() const { return m_lastError; }
+
    /** Clones the stream.
-      This version returns 0 and sets error to unsupported;
-      subclasses must properly clone the stream.
+    The clone semantic is the same as the unix dup() operation; it should create
+    a new stream referring to the same underlying resource.
+    
+    If the stream cannot be cloned, an unsupported error should be thrown.
    */
-   virtual Stream *clone() const;
+   virtual Stream *clone() const = 0;
+
+   /** Return true if this stream is required to throw an IOError. */
+   inline bool shouldThrow() const { return m_bShouldThrow; }
+
+   /** Changes the status of throw-on-error operations. */
+   inline void shouldThrow( bool bMode ) { m_bShouldThrow = bMode; }
+
+   /** Utility to throw an unsupported error when an operation is unsupported. */
+   void throwUnsupported();
+
+   void gcMark( uint32 mark )
+   {
+      if( m_mark != mark )
+      {
+         m_mark = mark;
+         m_userItem.gcMark(mark);
+      }
+   }
+
+   uint32 gcMark() const { return m_mark; }
+
+   /** VM Level Handler for this class.
+    * \return the VM/Collector level handler for this stream.
+    *
+    * Normally, it's the ClassStream instance taken from the engine,
+    * but subclasses might have a different idea about the script level
+    * handler.
+    *
+    */
+   virtual Class* handler();
+
+   /**
+    * Underlying real stream for virtual streams.
+    *
+    * (for instance, StringBuffer has underlying).
+    *
+    * Normally it's 0.
+    */
+   virtual Stream* underlying() const;
+
+
+   /** Returns the user item associated with this stream.
+    *
+    * This is a useful way to attach an arbitrary item to a stream
+    * that can then be selected.
+    */
+   const Item& userItem() const { return m_userItem; }
+
+   /** Returns the user item associated with this stream.
+    *
+    * This is a useful way to attach an arbitrary item to a stream
+    * that can then be selected.
+    */
+   Item& userItem() { return m_userItem; }
+
+protected:
+   uint32 m_mark;
+   t_status m_status;
+   size_t m_lastError;
+   bool m_bShouldThrow;
+
+   Item m_userItem;
+
+   /** Initializes the base stream class. */
+   Stream();
+   virtual ~Stream();
+
+   friend class Transcoder;
+
+private:
+   FALCON_REFERENCECOUNT_DECLARE_INCDEC(Stream);
 };
 
 
@@ -368,13 +305,13 @@ inline void Stream::reset()
 {
    status( status() &
          static_cast<t_status>(~static_cast<unsigned int>(t_error|t_unsupported|t_invalid)) );
-   m_lastMoved = 0;
+   m_lastError = 0;
 }
 
 inline bool Stream::good() const
-      { return (status() &( t_error | t_unsupported | t_invalid )) == 0; }
+      { return (status() &( t_error | t_unsupported | t_invalid | t_eof | t_open )) == t_open; }
 inline bool Stream::bad() const
-      { return (status() &( t_error | t_unsupported | t_invalid )) != 0; }
+      { return (status() &( t_error | t_unsupported | t_invalid | t_eof )) != 0; }
 
 inline bool Stream::open() const
    { return (status() & t_open ) != 0; }
@@ -386,11 +323,9 @@ inline bool Stream::invalid() const
    { return (status() & t_invalid ) != 0; }
 inline bool Stream::error() const
    { return ( status() & t_error ) != 0; }
-inline bool Stream::interrupted() const
-   { return ( status() & t_interrupted ) != 0; }
 
 } //end of Falcon namespace
 
 #endif
 
-/* end of file_base.h */
+/* end of stream.h */

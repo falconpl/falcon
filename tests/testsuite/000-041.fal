@@ -1,0 +1,29 @@
+/*
+@name dictionaries
+@category Types
+
+@output
+Elements in the dict:
+1
+2
+c
+d
+e
+Lenght: 5
+Class: Dictionary
+---- Done ----
+@endoutput
+*/
+
+dict = ["a"=>1, "b"=>2, "3"=>"c", "4"=>"d",5=>"e"]
+> "Elements in the dict:"
+> dict["a"]
+> dict["b"]
+> dict["3"]
+> dict["4"]
+> dict[5]
+> "Lenght: ", dict.len
+> "Class: ", dict.className
+> "---- Done ----"
+
+

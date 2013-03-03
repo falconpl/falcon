@@ -1,0 +1,59 @@
+/*
+@name Prototype compare override
+@category Prototypes
+
+@output
+Prototype compare override for bases.
+I am Init!!
+Value: 10
+Value == 9 : false
+Value != 9 : true
+Value == 10: true
+Value != 10: false
+Value > 10 : false
+Value < 10 : false
+Value >= 10: true
+Value <= 10: true
+Value >= 9 : true
+Value <= 9 : false
+Value >= 11: false
+Value <= 11: true
+Done
+@endoutput
+*/
+
+> "Prototype compare override for bases."
+
+Proto = p{
+   number = nil
+   
+   _isBase = true   
+   _init = { value => 
+         > "I am Init!!"
+         self.number = value
+         return self
+      } 
+         
+   _meta = p{
+      compare = { other =>
+         return self.number - other
+      }
+   }  
+}
+
+p = Proto( 10 )
+> "Value: ", p.number
+> "Value == 9 : ", p.number == 9
+> "Value != 9 : ", p.number != 9
+> "Value == 10: ", p.number == 10
+> "Value != 10: ", p.number != 10
+> "Value > 10 : ", p.number > 10
+> "Value < 10 : ", p.number < 10
+> "Value >= 10: ", p.number >= 10
+> "Value <= 10: ", p.number <= 10
+> "Value >= 9 : ", p.number >= 9
+> "Value <= 9 : ", p.number <= 9
+> "Value >= 11: ", p.number >= 11
+> "Value <= 11: ", p.number <= 11
+
+> "Done"

@@ -1,0 +1,24 @@
+/*
+998 series -- book samples
+
+@name Wiki sample - Execute in caller
+
+@output
+10+20=30
+10*20=200
+@endoutput
+*/
+
+
+function makeMeSum()
+   return* {[] a+b}
+end
+
+function makeMeMultiply()
+   return* {[] a*b}
+end
+
+a = 10
+b = 20
+> "10+20=", makeMeSum()       // 30
+> "10*20=", makeMeMultiply()  // 200

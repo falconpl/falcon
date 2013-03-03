@@ -1,0 +1,50 @@
+/*
+@name Long test system smoke test (2)
+@category smoke
+
+This is the test for the long - test system. 
+
+This test checks for the test to work using 
+output lines instead of explicit checkpoints.
+
+@long 27
+
+@output
+Long test system smoke test
+This is step 1
+This is step 2
+This is step 3
+This is step 4
+This is step 5
+This is step 6
+This is step 7
+This is step 8
+This is step 9
+This is step 10
+This is step 11
+This is step 12
+This is step 13
+This is step 14
+This is step 15
+This is step 16
+This is step 17
+This is step 18
+This is step 19
+This is step 20
+This is step 21
+This is step 22
+This is step 23
+This is step 24
+This is step 25
+Test complete.
+@endoutput
+
+*/
+
+> "Long test system smoke test"
+for i = 1 to 25
+   > "This is step ", i
+   sleep(0.07)
+end
+
+> "Test complete."

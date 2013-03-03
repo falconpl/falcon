@@ -43,7 +43,7 @@ Mutex* m_mtx_listener;
 MixChunkCarrier::MixChunkCarrier( Mix_Chunk* c ):
    m_chunk( c )
 {
-   m_counter = (int32 *) memAlloc( sizeof( int32 ) );
+   m_counter = (int32 *) malloc( sizeof( int32 ) );
 }
 
 MixChunkCarrier::MixChunkCarrier( const MixChunkCarrier &other )
@@ -58,7 +58,7 @@ MixChunkCarrier::~MixChunkCarrier()
    (*m_counter)--;
    if( *m_counter <= 0 )
    {
-      memFree( m_counter );
+      free( m_counter );
       Mix_FreeChunk( m_chunk );
    }
 }
@@ -78,7 +78,7 @@ FalconData* MixChunkCarrier::clone() const
 MixMusicCarrier::MixMusicCarrier( Mix_Music* c ):
    m_music( c )
 {
-   m_counter = (int32 *) memAlloc( sizeof( int32 ) );
+   m_counter = (int32 *) malloc( sizeof( int32 ) );
 }
 
 MixMusicCarrier::MixMusicCarrier( const MixMusicCarrier &other )
@@ -93,7 +93,7 @@ MixMusicCarrier::~MixMusicCarrier()
    (*m_counter)--;
    if( *m_counter <= 0 )
    {
-      memFree( m_counter );
+      free( m_counter );
       Mix_FreeMusic( m_music );
    }
 }

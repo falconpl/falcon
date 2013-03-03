@@ -1,0 +1,249 @@
+/*
+    FALCON - POP3 client module
+
+    FILE: pop.fal
+
+    Interface for POP3 remote services
+    -------------------------------------------------------------------
+    Author: Stanislas Marquis
+    Begin: Wed, 30 Nov 2011 17:28:20 +0100
+
+    See http://tools.ietf.org/html/rfc3501
+    -------------------------------------------------------------------
+    (C) Copyright 2011: the FALCON developers (see list in AUTHORS file)
+
+    See LICENSE file for licensing details.
+ */
+
+import from socket
+export
+
+class POPError( code, desc, extra ) from Error( code, desc, extra )
+end
+
+/*#
+   @brief POP class
+   @param server Server address.
+   @optparam port Port number (default 110, or 995 is useSSl is true).
+   @optparam timeout Socket timeout in milliseconds (default 1000).
+   @optparam useSsl Use SSL encrypted socket (default false).
+   @optparam sslVersion SSL version to use (default SSLv3).
+ */
+class POP( server, port, timeout, useSsl, sslVersion )
+   /*# Server address. */
+   server = server
+   /*# Port number. */
+   port = port ? toString( port ) : useSsl ? "995" : "110"
+   /*# Timeout (in milliseconds) waiting for server contact. */
+   timeout = timeout ? timeout : 1000
+   /*# Wether to use ssl. Change it before connection. */
+   useSsl = useSsl ? useSsl : false
+   /*# Ssl version to use, default TLSv1. */
+   sslVersion = sslVersion ? sslVersion : socket.SSLv3
+   /*# Function used to show communication between client and server. */
+   trace = {=>}
+
+   _sock = nil
+   _buf = ""
+
+   /*#
+      @brief Connect to POP3 server.
+      @raise POPError Unable to connect.
+    */
+   function connect()
+      sock = socket.TCPSocket()
+      sock.setTimeout( self.timeout )
+      sock.connect( self.server, self.port )
+      if not sock.isConnected()
+         raise POPError( 10001, "Can't connect to required server",
+                         self.server.toString() + ":" + self.port )
+      end
+      sock.setTimeout( 0 )
+      self._sock = sock
+      // encryption
+      if self.useSsl
+         self._sock.sslConfig( false, self.sslVersion )
+         self._sock.sslConnect()
+      end
+      // get greeting
+      self._expectOK( "Greeting" )
+   end
+
+   /*#
+      @brief Issue a QUIT command.
+    */
+   function quit()
+      self._simpleCmd( "QUIT" )
+   end
+
+   /*#
+      @brief Authentication.
+      @param user String identifying a mailbox.
+      @param pswd Password.
+    */
+   function authenticate( user, pswd )
+      self._simpleCmd( "USER " + user )
+      self._simpleCmd( "PASS " + pswd )
+   end
+
+   /*#
+      @brief Issue a STAT command.
+      @return An array of integers ( total messages, total size ).
+    */
+   function stat()
+      rep = self._simpleCmd( "STAT" )
+      return [].comp( rep.split( " " )[1:], { x => int(x) } )
+   end
+
+   /*#
+      @brief Issue a LIST command.
+      @optparam msg A message number (may not be marked as deleted).
+      @return A dict ( message number => message size ).
+    */
+   function list( msg )
+      res = [=>]
+      if msg == nil
+         rep = self._simpleCmd( "LIST" )
+         tot_msg = int( rep.split( " " )[1] )
+         i = 0
+         while i < tot_msg
+            rep = self._recvLine().trim()
+            msg_id, msg_sz = rep.split( " " )
+            res[ int(msg_id) ] = int( msg_sz )
+            i += 1
+         end
+         self._recvLine() // ignore last line (dot)
+      else
+         rep = self._simpleCmd( "LIST " + msg )
+         msg_id, msg_sz = rep.split( " " )[1:]
+         res[ int(msg_id) ] = int( msg_sz )
+      end
+      return res
+   end
+
+   /*#
+      @brief Retrieve a message.
+      @param msg The message number.
+      @optparam sz The message size. ???
+      @return The message.
+    */
+   function retr( msg, sz )
+      self._simpleCmd( "RETR " + msg )
+      if sz == nil
+         return self._recvFinalDot()
+      else
+         /*rep = self._recvAll( sz )
+         if not rep.endsWith( "\r\n.\r\n" )
+            rep += self._recvFinalDot().trim()
+         end
+         return rep*/
+      end
+   end
+
+   /*#
+      @brief Mark a message as deleted.
+      @param msg The message number.
+    */
+   function dele( msg )
+      self._simpleCmd( "DELE " + msg )
+   end
+
+   /*#
+      @brief Issue a NOOP command.
+    */
+   function noop()
+      self._simpleCmd( "NOOP" )
+   end
+
+   /*#
+      @brief Reset deletion mark.
+    */
+   function rset()
+      self._simpleCmd( "RSET" )
+   end
+
+   function _send( cmd )
+      self.trace( "--> " + cmd )
+      if self._sock.writeAvailable( self.timeout/1000.0 )
+         self._sock.send( cmd + "\r\n" )
+      else
+         raise POPError( 10001, "Socket write timeout ("
+                         + self.timeout.toString() + ")" )
+      end
+   end
+
+   // read the next line sent by server
+   // return the complete line with trailing \r\n
+   function _recvLine()
+      buf = strBuffer( 1024 )
+      rep = self._buf + strBuffer( 1024 )
+
+      while ( (pos = rep.find( "\r\n" )) < 0 )
+         //if not self._sock.readAvailable( self.timeout/1000.0 )
+         //   raise socket.NetError( 10021, "Timeout in reading next line from reply." )
+         //end
+         self._sock.recv( buf )
+         rep += buf
+      end
+
+      self._buf = rep[pos+2:]
+      rep = rep[0:pos+2]  // include \r\n in reply
+      self.trace( "<-- " + rep.trim() )
+      return rep
+   end
+
+   function _recvAll( totalsz )
+      // check old buffer
+      if self._buf.len() >= totalsz
+         if self._buf.len() == totalsz
+            reply = self._buf
+            self._buf = ""
+         else
+            reply = self._buf[:totalsz]
+            self._buf = self._buf[totalsz:]
+         end
+         self.trace( "<-- " + reply.trim() )
+         return reply
+      end
+
+      reply = self._buf
+      self._buf = ""
+      cnt = totalsz - reply.len()
+      buf = strBuffer( cnt )
+      self._sock.recv( buf, cnt )
+      reply += buf
+      self.trace( "<-- " + reply.trim() )
+      return reply
+   end
+
+   // get response until termination byte is found
+   // return everything but final line
+   function _recvFinalDot()
+      rep = ""
+      while not rep.endsWith( "\r\n.\r\n" )
+         rep += self._recvLine()
+      end
+      return rep[:-3]
+   end
+
+   // expect a one-liner beginning with OK
+   // return the line
+   function _expectOK( cmd )
+      rep = self._recvLine()
+      if not rep.startsWith( "+OK" )
+         raise POPError( 10001, @"$(cmd) failed.", rep.trim() )
+      end
+      return rep.trim()
+   end
+
+   // issue a command expecting a one-liner beginning with +OK
+   // return the line
+   function _simpleCmd( cmd )
+      self._send( cmd )
+      return self._expectOK( cmd )
+   end
+
+end // class POP
+
+/* vim: set ai et sw=3 ts=3 sts=3: */
+

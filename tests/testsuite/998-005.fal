@@ -1,0 +1,40 @@
+/*
+998 series -- book samples
+
+@name Wiki sample - Closure advanced
+
+@output
+0
+1
+2
+0
+1
+2
+0
+1
+2
+@endoutput
+*/
+
+
+function makeCounters()
+   count = 0
+   reset = {=> if count; count = 0; end }
+   reset2 = {=> count = count; count = 0 }   
+   inc = {=> count++}
+   return [inc, reset, reset2]
+end
+
+
+inc, reset, reset2 = makeCounters()
+> inc()  // 0
+> inc()  // 1
+> inc()  // 2
+reset()
+> inc()  // 0
+> inc()  // 1
+> inc()  // 2
+reset2()
+> inc()  // 0
+> inc()  // 1
+> inc()  // 2

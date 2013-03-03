@@ -1,0 +1,34 @@
+/*
+@name Rule disjunciton basic test
+@category Rules
+
+@output
+Rule disjunciton basic test
+Ok
+Ok
+Done!
+@endoutput
+
+*/
+
+> "Rule disjunciton basic test"
+
+a = 0
+rule
+   a !=  0
+   printl("Fail")
+   or
+   printl("Ok")   
+end
+
+
+a = 0
+rule
+   a ==  0
+   printl("Ok")
+   or
+   printl("Fail")   
+end
+
+> "Done!"
+

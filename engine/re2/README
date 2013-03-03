@@ -1,0 +1,39 @@
+This is a modification of the RE2 library modified to work as
+an embedded component of the Falcon Programming Language.
+
+Files that are not necessary for a dry build and functions that
+are not necessary for the integration in the language mechanics
+have been removed.
+
+Other modifications have been performed to make the library
+understand the native Falcon::String data type.
+
+The original RE2 library is distributed under a BSD-style license.
+
+Original boiler plates, LICENSE and copyright related files are
+preserved.
+
+Here follows the contents of the original README file:
+
+=========================================================================
+
+
+This is the source code repository for RE2, a regular expression library.
+
+For documentation about how to install and use RE2,
+visit http://code.google.com/p/re2/.
+
+The short version is:
+
+make
+make test
+make install
+make testinstall
+
+Unless otherwise noted, the RE2 source files are distributed
+under the BSD-style license found in the LICENSE file.
+
+RE2's native language is C++.
+An Inferno wrapper is at http://code.google.com/p/inferno-re2/.
+A Python wrapper is at http://github.com/facebook/pyre2/.
+A Ruby wrapper is at http://github.com/axic/rre2/.

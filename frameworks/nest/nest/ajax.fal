@@ -1,0 +1,42 @@
+/*
+   FALCON - The Falcon Programming Language
+
+   Nest - Falcon web applcation engine
+
+   FILE: ajax.fal
+
+   Ajax utilities.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Sat, 14 Aug 2010 19:41:05 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+/*#
+   @brief Creates a javascript request for the Nest module in the page.
+   @param id The ID of the Nest ajax request.
+   @param params The parameters to send to request.
+   @param onSuccess Javascript to run on success.
+   @optparam extra elements to be put in the button field (class, id, etc)
+      in a dictionary.
+
+   @note double quotes in onClick are escaped.
+*/
+
+function request( id, params, onSuccess )
+   extratxt = ""
+   for k,v in params
+      extratxt += @"$k:\"$v\""
+      formiddle: extratxt += ","
+   end
+
+   Nest.requireJS( "base" )
+   
+   >> @"Nest.ajax('$id',{$(extratxt)},$(onSuccess) );"
+end
+
+

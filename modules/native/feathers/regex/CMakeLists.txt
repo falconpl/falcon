@@ -11,9 +11,9 @@ else( WIN32 OR APPLE )
 endif( WIN32 OR APPLE)
 option(FALCON_WITH_INTERNAL_PCRE "Use internal pcre library" ${_pcre_default})
 
-if(WIN32)
+if(WIN32 AND NOT MINGW)
    set( SYS_RC regex.rc)
-endif(WIN32)
+endif(WIN32 AND NOT MINGW)
 
 if(FALCON_WITH_INTERNAL_PCRE)
    #include local headers BEFORE
@@ -56,13 +56,12 @@ else()
    find_package(PCRE REQUIRED)   
    # Force ignoring OUR pcre
    include_directories(${PCRE_INCLUDE_DIR}) 
-endif(FALCON_WITH_INTERNAL_PCRE)
+endif()
 
 add_library(regex_fm MODULE
   regex.cpp
   regex_ext.cpp
   regex_mod.cpp
-  regex_st.cpp
   ${PCRE_SOURCE}
   ${SYS_RC}
 )

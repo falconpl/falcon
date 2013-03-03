@@ -1,0 +1,145 @@
+/*
+@name Try/catch with finally
+@category Try
+
+@output
+Testing try with just body
+First test
+Finally code executed
+Testing try with integer raise
+Second test
+Multiple catch: 1
+Finally code executed
+Testing try with integer raise on numeric
+Second test again
+Multiple catch (as number): 1
+Finally code executed
+Testing try with String raise
+Third test
+Multiple catch (as number): Raised
+Finally code executed
+Testing try with range raise
+Fourth test
+Range catch: [0:1:2]
+Finally code executed
+Testing try with other(bool) raise
+Fifth test
+Other catch: false
+Finally code executed
+Verify count: 7
+Done
+@endoutput
+*/
+
+// basic try with success
+
+> "Testing try with just body"
+try
+   > "First test"
+   verify = 1
+catch Integer, String in item
+   > "Multiple catch: ", item
+catch Range in item
+   > "Range catch: ", item
+catch in item
+   > "Other catch: ", item
+finally
+   > "Finally code executed"
+   verify ++
+end
+
+
+> "Testing try with integer raise"
+try
+   > "Second test"
+   if true
+      raise 1
+   end
+   > "Should not be here"
+catch Integer, String in item
+   > "Multiple catch: ", item
+catch Range in item
+   > "Range catch: ", item
+catch in item
+   > "Other catch: ", item
+finally
+   > "Finally code executed"
+   verify ++
+end
+
+
+> "Testing try with integer raise on numeric"
+try
+   > "Second test again"
+   if true
+      raise 1
+   end
+   > "Should not be here"
+catch Number, String in item
+   > "Multiple catch (as number): ", item
+catch Range in item
+   > "Range catch: ", item
+catch in item
+   > "Other catch: ", item
+finally
+   > "Finally code executed"
+   verify ++   
+end
+
+> "Testing try with String raise"
+try
+   > "Third test"
+   if true
+      raise "Raised"
+   end
+   > "Should not be here"
+catch Number, String in item
+   > "Multiple catch (as number): ", item
+catch Range in item
+   > "Range catch: ", item
+catch in item
+   > "Other catch: ", item
+finally
+   > "Finally code executed"
+   verify ++   
+end
+
+> "Testing try with range raise"
+try
+   > "Fourth test"
+   if true
+      raise [0:1:2]
+   end
+   > "Should not be here"
+catch Number, String in item
+   > "Multiple catch (as number): ", item
+catch Range in item
+   > "Range catch: ", item
+catch in item
+   > "Other catch: ", item
+finally
+   > "Finally code executed"
+   verify ++   
+end
+
+> "Testing try with other(bool) raise"
+try
+   > "Fifth test"
+   if true
+      raise false
+   end
+   > "Should not be here"
+catch Number, String in item
+   > "Multiple catch (as number): ", item
+catch Range in item
+   > "Range catch: ", item
+catch in item
+   > "Other catch: ", item
+finally
+   > "Finally code executed"
+   verify ++
+end
+
+> "Verify count: ", verify
+
+> "Done"

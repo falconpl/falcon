@@ -1,0 +1,41 @@
+/*
+@name Properties
+@category Regex
+
+@output
+Checking: r'abc'
+captures: 0
+groupNames: [=>]
+caseSensitive: true
+ ---
+Checking: R'abc'
+captures: 0
+groupNames: [=>]
+caseSensitive: false
+ ---
+Checking: r'ab(c)..(d)'
+captures: 2
+groupNames: [=>]
+caseSensitive: true
+ ---
+Checking: r'ab(?P<first>c)..(?P<second>d)'
+captures: 2
+groupNames: ["first" => 1, "second" => 2]
+caseSensitive: true
+ ---
+@endoutput
+*/
+
+function check( regex )
+   > "Checking: ", regex
+   > "captures: ", regex.captures
+   > "groupNames: ", regex.groupNames.describe()
+   > "caseSensitive: ", regex.caseSensitive
+   > " ---"
+end
+
+check( r'abc' )
+check( r'abc'i )
+check( r'ab(c)..(d)' )
+check( r'ab(?P<first>c)..(?P<second>d)' )
+

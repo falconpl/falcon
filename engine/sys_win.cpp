@@ -29,7 +29,7 @@
 #include <falcon/types.h>
 #include <falcon/sys.h>
 #include <falcon/string.h>
-#include <falcon/memory.h>
+#include <falcon/path.h>
 #include <errno.h>
 #include <time.h>
 
@@ -56,7 +56,7 @@ void _dummy_ctrl_c_handler()
 {
     SetConsoleCtrlHandler(
       (PHANDLER_ROUTINE) CtrlHandler,
-      TRUE); 
+      TRUE);
 }
 
 
@@ -108,6 +108,53 @@ numeric SYSTEMTIME_TO_SECONDS( const SYSTEMTIME &st )
 }
 
 
+int64 SYSTEMTIME_TO_MILLISECONDS( const SYSTEMTIME &st )
+{
+   int64 secsAt[12];
+   secsAt[0 ] = 0;
+   secsAt[1 ] = 31 * SECS_IN_DAY;
+   secsAt[2 ] = secsAt[1 ] + 28 * SECS_IN_DAY;
+   if( st.wYear % 4 == 0 )
+      secsAt[2 ] += SECS_IN_DAY;
+
+   secsAt[3 ] = secsAt[2 ] + 31 * SECS_IN_DAY;
+   secsAt[4 ] = secsAt[3 ] + 30 * SECS_IN_DAY;
+   secsAt[5 ] = secsAt[4 ] + 31 * SECS_IN_DAY;
+   secsAt[6 ] = secsAt[5 ] + 30 * SECS_IN_DAY;
+   secsAt[7 ] = secsAt[6 ] + 31 * SECS_IN_DAY;
+   secsAt[8 ] = secsAt[7 ] + 31 * SECS_IN_DAY;
+   secsAt[9 ] = secsAt[8 ] + 30 * SECS_IN_DAY;
+   secsAt[10] = secsAt[9 ] + 31 * SECS_IN_DAY;
+   secsAt[11] = secsAt[10] + 31 * SECS_IN_DAY;
+
+   if( st.wYear < 1970 ) {
+      int64 leapSeconds = (1969 - (int64)st.wYear)/4 * SECS_IN_DAY;
+      return
+         (1969 - (int64)st.wYear) * SECS_IN_YEAR *1000+
+         secsAt[st.wMonth-1] *1000+
+         (int64)st.wDay * SECS_IN_DAY*1000 +
+         (int64)st.wHour * SECS_IN_HOUR*1000 +
+         (int64)st.wMinute * 60*1000 +
+         (int64)st.wSecond *1000+
+         leapSeconds *1000 +
+         (int64)st.wMilliseconds;
+   }
+   else {
+      // good also if wYear is 1970: /4 will neutralize it.
+      int64 leapSeconds = (((int64)st.wYear-1)-1970)/4 * SECS_IN_DAY;
+      return
+         ((int64)st.wYear-1970 ) * SECS_IN_YEAR *1000+
+         secsAt[st.wMonth-1] *1000+
+         (int64)st.wDay * SECS_IN_DAY *1000+
+         (int64)st.wHour * SECS_IN_HOUR *1000+
+         (int64)st.wMinute * 60*1000 +
+         (int64)st.wSecond *1000+
+         leapSeconds *1000+
+         (int64)st.wMilliseconds;
+   }
+}
+
+
 void _sleep( numeric time )
 {
    Sleep( long( time * 1000 ) );
@@ -129,9 +176,11 @@ numeric _localSeconds()
    return SYSTEMTIME_TO_SECONDS( st );
 }
 
-uint32 _milliseconds()
+int64 _milliseconds()
 {
-   return (uint32) GetTickCount();
+   SYSTEMTIME st;
+   GetSystemTime( &st );
+   return SYSTEMTIME_TO_MILLISECONDS( st );
 }
 
 int64 _epoch()
@@ -150,7 +199,7 @@ void _tempName( String &res )
          temp_dir = "C:\\TEMP";
 
    int tempLen = temp_dir.length() * sizeof( wchar_t ) + sizeof( wchar_t );
-   wchar_t *wct = (wchar_t *) memAlloc( tempLen );
+   wchar_t *wct = (wchar_t *) malloc( tempLen );
    temp_dir.toWideString( wct, tempLen );
 
    DWORD attribs = GetFileAttributesW( wct );
@@ -165,7 +214,7 @@ void _tempName( String &res )
    {
       temp_dir = ".";
    }
-   memFree( wct );
+   free( wct );
 
    res += temp_dir;
 	res += "\\";
@@ -232,23 +281,23 @@ bool _getEnv( const String &var, String &result )
 		if ( var.toWideString( convertBuf, 512 ) )
 		{
 
-			wchar_t *value = (wchar_t *) memAlloc( 512 * sizeof( wchar_t ) );
+			wchar_t *value = (wchar_t *) malloc( 512 * sizeof( wchar_t ) );
 			size_t retSize;
 			errno_t error = _wgetenv_s( &retSize, value, 512, convertBuf );
 			if ( error == ERANGE )
 			{
-				memFree( value );
-				value = (wchar_t *) memAlloc( retSize * sizeof( wchar_t ) );
+				free( value );
+				value = (wchar_t *) malloc( retSize * sizeof( wchar_t ) );
 				error = _wgetenv_s( &retSize, value, retSize, convertBuf );
 			}
 
 			if ( error != EINVAL && retSize != 0 )
 			{
 				result.bufferize( value );
-				memFree( value );
+				free( value );
 				return true;
 			}
-			memFree( value );
+			free( value );
 		}
 	#endif
 
@@ -260,24 +309,24 @@ bool _setEnv( const String &var, const String &value )
    #if _MSC_VER < 1400
 		String temp = var + "=" + value;
 		uint32 tempLen = temp.length() * 4 + 4;
-		char *tempBuf = (char*) memAlloc( tempLen );
+		char *tempBuf = (char*) malloc( tempLen );
 		temp.toCString( tempBuf, tempLen );
 		putenv( tempBuf );
-		memFree( tempBuf );
+		free( tempBuf );
 		return true;
 	#else
 		uint32 varLen = var.length() * sizeof(wchar_t) + sizeof(wchar_t);
 		uint32 valueLen = value.length() * sizeof(wchar_t) + sizeof(wchar_t);
-		wchar_t *varBuf = (wchar_t *) memAlloc( varLen );
-		wchar_t *valueBuf = (wchar_t *) memAlloc( valueLen );
+		wchar_t *varBuf = (wchar_t *) malloc( varLen );
+		wchar_t *valueBuf = (wchar_t *) malloc( valueLen );
 
 		var.toWideString( varBuf, varLen );
 		value.toWideString( valueBuf, valueLen );
 
 		bool result = _wputenv_s( varBuf, valueBuf ) == 0;
 
-		memFree( varBuf );
-		memFree( valueBuf );
+		free( varBuf );
+		free( valueBuf );
 	   return result;
 	#endif
 }
@@ -287,19 +336,19 @@ bool _unsetEnv( const String &var )
 	#if _MSC_VER < 1400
 		String temp = var + "=";
 		uint32 tempLen = temp.length() * 4 + 4;
-		char *tempBuf = (char*) memAlloc( tempLen );
+		char *tempBuf = (char*) malloc( tempLen );
 		temp.toCString( tempBuf, tempLen );
 		putenv( tempBuf );
-		memFree( tempBuf );
+		free( tempBuf );
 		return true;
 	#else
 		uint32 varLen = var.length() * sizeof(wchar_t) + sizeof(wchar_t);
-		wchar_t *varBuf = (wchar_t *) memAlloc( varLen );
+		wchar_t *varBuf = (wchar_t *) malloc( varLen );
 
 		var.toWideString( varBuf, varLen );
 
 		bool result = _wputenv_s( varBuf, L"" ) == 0;
-		memFree( varBuf );
+		free( varBuf );
 		return result;
 	#endif
 }
@@ -331,7 +380,7 @@ void _enumerateEnvironment( EnvStringCallback cb, void* cbData )
          String key, value;
          key.adopt( envstr + pos, poseq-pos, 0 );
          value.adopt( envstr + poseq+1, posn-poseq-1, 0 );
-         
+
          key.bufferize();
          value.bufferize();
 
@@ -354,9 +403,63 @@ int64 _getpid() {
    return (int64) GetCurrentProcessId();
 }
 
+
+int _getCores()
+{
+   SYSTEM_INFO sysinfo;
+   GetSystemInfo( &sysinfo );
+
+   return (int) sysinfo.dwNumberOfProcessors;
+}
+
+
 long _getPageSize()
 {
-   return WIN_PAGE_SIZE;
+   SYSTEM_INFO si;
+   GetSystemInfo( &si );
+
+   return (long) si.dwPageSize;
+}
+
+
+bool _getCWD( String& name )
+{
+   DWORD size = GetCurrentDirectory( 0, NULL );
+   if( size == 0 )
+   {
+      return false;
+   }
+
+   DWORD bufSize = size * sizeof( wchar_t ) + sizeof( wchar_t );
+   wchar_t *buffer = (wchar_t *) malloc( bufSize );
+   size = GetCurrentDirectoryW( bufSize, buffer );
+
+   if( size == 0 && GetLastError() == ERROR_CALL_NOT_IMPLEMENTED )
+   {
+      char *buffer_c = (char *) buffer;
+      size = GetCurrentDirectory( bufSize, buffer_c );
+
+      if( size == 0 )
+      {
+         free( buffer );
+         return false;
+      }
+
+      name.adopt( buffer_c, size, bufSize );
+      Path::winToUri( name );
+      return true;
+   }
+
+   if( size == 0 )
+   {
+      free( buffer );
+      return false;
+   }
+
+   name.adopt( buffer, size, bufSize );
+   Path::winToUri( name );
+
+   return true;
 }
 
 }

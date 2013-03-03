@@ -1,0 +1,11 @@
+/*
+@name Smoke tests - Calling library functions
+
+@output
+Hello World
+@endoutput
+*/
+
+print("Hello")
+print(" ")
+printl("World")

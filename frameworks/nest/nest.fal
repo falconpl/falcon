@@ -16,7 +16,7 @@
    See LICENSE file for licensing details.
 */
 
-const _version = "1.0"
+const _version = "1.1"
 directive lang = "en_US"
 
 import NestError from self.error as NestError
@@ -28,6 +28,7 @@ import Hook from self.hook in hook_module
 import from self.utils
 
 import from compiler
+import from json
 
 
 const _phase_startup = 0
@@ -36,10 +37,12 @@ const _phase_exec = 2
 const _phase_render = 3
 
 const pages_dir = "pages"
+const widget_dir = "widgets"
+const ajax_dir = "ajax"
 const srv_dir = "srv"
 const dm_dir = "dm"
 const hooks_dir = "hooks"
-//const res_dir = "res"
+const res_dir = "res"
 
 /*# Basic Nest router class.
 
@@ -56,6 +59,7 @@ class BasicRouter
 
    //# Returns a string that may be used to reach the given page
    function routingURI( baseUri, pid )
+      if not pid: pid = "home"
       return baseUri + "?pid=" + URI.encode( pid )
    end
 end
@@ -247,6 +251,9 @@ object Nest
 
    /*# For now, use the max authlevel by default. */
    auth_level = AuthLevel.ADMIN
+
+   /*# Script that should be executed at the end of the page. */
+   closingScript = ""
 
    /*# Function called back after routing and before routed page execution.
 
@@ -446,15 +453,22 @@ object Nest
       self.logi( "Routing started" )
       self._phase = _phase_startup
       // 1. Determine PID
-      if not pid: pid = self.router.route( self )
+      if not pid
+         aid = Request.getField( "a", nil )
+         wid = Request.getField( "w", nil )
+         if not aid and not wid
+            pid = self.router.route( self )
+         end
+      end
 
-      if pid == nil
+      if pid == nil and aid == nil and wid == nil
          // Todo: get the proper error.
          self.logw( "No route found" )
          self._manageError( NestError( NestError.no_route ), "" )
          if self.debug: self._displayDebug()
          return
       end
+      self.pid = pid
 
       // 2. Load variables
       self._loadSession()
@@ -464,7 +478,6 @@ object Nest
       if self.log_level >= 3: self.logd( "Input vars: " + self.inputVars.describe() )
 
       // 3. Enter config phase
-      self.pid = pid
       try
          self._startup()
       catch Error in e
@@ -475,10 +488,35 @@ object Nest
 
       // 4. Read the page -- and load services
       self._phase = _phase_config
-      self.selector( pid )
+      if pid
+         self.selector( pid )
+      elif aid
+         self.selector_ajax( aid )
+      else
+         self.selector_ajax_widget( wid )
+      end
    end
 
-   /*# Page selector.
+   /*# AJAX function selector.
+      @param aid The ID of the AJAX function or widget.
+      @optparam method A method for an AJAX widget.
+
+   */
+   function selector_ajax( aid )
+      ajax_file = utils.findFileInDirs(
+            [self.site_nest_dir + "/" +  ajax_dir, self.nest_dir + "/" +  ajax_dir ],
+            aid,
+            ["fal", "fam"]
+         )
+
+      if( ajax_file )
+         self._selector_ajax( aid, ajax_file )
+      else
+         raise NestError( NestError.page_notfound, "", aid )
+      end
+   end
+
+   /*# Page function or method selector.
 
       Call this function to get the main ID of the page to be displayed.
 
@@ -586,6 +624,7 @@ object Nest
    function service( name, inst, vars )
       nestDir = self.nest_dir
       siteNestDir = self.site_nest_dir
+
       srv = self._instanceModule( "Service", name, inst, self.services,
                // using a function instead of an array prevents array generation if not necessary
                {=> [ nestDir + "/" + srv_dir,
@@ -615,6 +654,86 @@ object Nest
       return srv
    end
 
+   /*# Invoke a widget class
+      @param name The logical name of the widget class to be invoked.
+      @return A @a Widget class.
+
+      Notice that widgets are local to the page where they are instantiated,
+      so they don't offer a cross-page, applicaiton-wide support like that of
+      Service and DataManager classes. This facility just helps to dynamically
+      load the widget from one of the widget location where Nest is supposed
+      to search it.
+
+      Theoretically, the widget may be located anywhere it can be reached
+      via import/load and then just intantiated; but this might make hard to
+      impossible to create project-specific widget overrides or may require to
+      dirty the code-out-of-site model of Nest. So, this method is just a facility
+      to load the desired class as a Nest aware plug-in.
+
+      The widget file must contain a class named exactly as the file (extension
+      excluded), which is the class that will be returned by this method.
+   */
+   function widget( name )
+      w_file = utils.findFileInDirs(
+            [self.site_nest_dir + "/" +  widget_dir, self.nest_dir + "/" + widget_dir ],
+            name,
+            ["fal", "fam"]
+         )
+
+      if( w_file )
+         // by default, launchAtLink is true.
+         page = self._comp.loadFile( w_file )
+         widget = page.get(name)
+         if typeId( widget ) != ClassType
+            raise NestError( NestError.no_mod_class, "", name )
+         end
+
+         return widget
+      else
+         raise NestError( NestError.page_notfound, "", name )
+      end
+
+   end
+
+
+   function selector_ajax_widget( wid )
+      widgetClass = self.widget( wid )
+
+      try
+         // init the widget.
+         params =  Request.getField( "params", nil )
+         if params: params = json.JSONdecode( params )
+         if params and "init" in params
+            initfunc = [widgetClass] + params["init"]
+            widget = initfunc()
+         else
+            widget = widgetClass()
+         end
+
+         // Execute the method.
+         if not widget provides AJAX
+            ctx = [ "error"=>"-4",
+                  "errorDesc"=>"Widget is not exposing the AJAX entry point: " + wid]
+         else
+            ctx = widget.AJAX( params )
+            if typeId( ctx ) != DictionaryType and typeId( ctx ) != ArrayType
+               ctx = [  "error"=>"-2",
+                        "errorDesc"=>"AJAX function \"" + wid + ".AJAX\" didn't return a dicitonary"
+                        ]
+            end
+         end
+      catch in e
+         ctx = [ "error"=>"-3",
+                  "errorDesc"=>"Uncaught error: " + e.toString() ]
+      end
+
+      // Ok send the output
+      >> json.JSONencode(ctx)
+
+      if self.debug
+         self._displayDebug()
+      end
+   end
 
 
    /*# Produces nest automatic headings. */
@@ -658,7 +777,7 @@ object Nest
    /*# Create a link to this or another page.
       @optparam pid The pageID of the desired page; leave nil to use the current pid.
       @optparam vars A dictionary of variables to be passed to the given page.
-      
+
    */
    function pageLink( pid, vars )
       return self.linkVars( self.router.routingURI( self.getURI(), pid ? pid : self.pid ), vars )
@@ -666,24 +785,49 @@ object Nest
 
    /*# Create a link to this page */
    function linkVars( link, vars )
-      v = link
+      base = v = nil        // Base: the address, v: existing params
+      d = [ => ]
 
-      if vars
-         pos = v.find("?")
-         if pos == -1
-            v += "?"
-         else
-            if pos + 1 < v.len(): v += "&"
+      l = link.split("?")
+      base = l[0]
+
+      if l.len() > 1: v = l[1].trim()
+
+      if v
+
+         parms = strSplit( v, "&")
+
+         for param in parms
+            name, value = param.split( "=" )
+            d[name] = value
          end
 
-         for key, value in vars
-            v += URI.encode(key)
-            if value != nil: v += "=" + (^? value ? value:URI.encode(value.toString()))
-            formiddle: v += "&"
+      end
+
+      if vars
+         for key, value in vars: \
+            d[ URI.encode(key) ]  = ^? value ? value:URI.encode(value.toString())
+      end
+
+      v = ""
+
+      for key, value in d
+
+         if not value: continue
+
+         v += key + "=" + value
+
+         forfirst
+            v = "?" + v
+         end
+
+         formiddle
+            v += "&"
          end
       end
 
-      return v
+      return base + v
+
    end
 
    function actionLink( pid, cmd, cmdField )
@@ -807,7 +951,7 @@ object Nest
             end
          end
 
-         self.logd( "Hook " + name + " reutrned  " + ret.describe() )
+         self.logd( "Hook " + name + " returned  " + ret.describe() )
          return ^- ret
       else
          self.logw( "Can't find hook " + name )
@@ -1233,6 +1377,9 @@ object Nest
          // render the slices requiring rendering.
          self._renderSlices()
 
+         // render the closeScripts
+         self._renderClosingScript()
+
          // finalize services
          self._finalizeServices()
 
@@ -1293,6 +1440,17 @@ object Nest
       end
    end
 
+   function _renderClosingScript()
+      if self.closingScript
+         self.logi( "Rendering closing script -- generating" )
+         self._contentSlices += "<script language=\"javascript\">\n(function(){\n" +
+                  self.closingScript +
+                  "\n}());\n</script>"
+      else
+         self.logi( "Rendering closing script -- skipping" )
+      end
+   end
+
    function _packSlices()
       self.logi( "Packing data slices" )
 
@@ -1320,6 +1478,40 @@ object Nest
       end
       f.close()
    end
+
+
+   function _selector_ajax( aid, file )
+      try
+         // by default, launchAtLink is true.
+         page = self._comp.loadFile( file )
+         ajax = page.get(aid)
+         if not ajax.isCallable()
+            ctx = [  "error"=>"-1",
+                     "errorDesc"=>"Module \"" + file + "\" is not defining '"+aid+"' as function." ]
+         else
+            // parameters are in Request.getField
+            params = Request.getField( "params", nil )
+            if params: params = json.JSONdecode( params )
+            ctx = ajax( params )
+            if typeId( ctx ) != DictionaryType
+               ctx = [  "error"=>"-2",
+                        "errorDesc"=>"AJAX function \"" + file + "\" didn't return a dicitonary" ]
+            end
+         end
+
+      catch in e
+         ctx = [ "error"=>"-3",
+                  "errorDesc"=>"Uncaught error: " + e.toString() ]
+      end
+
+      // Ok send the output
+      >> json.JSONencode(ctx)
+
+      if self.debug
+         self._displayDebug()
+      end
+   end
+
 
    function _onSessionVarChanged( sv, value )
       self.logd( @"Session var changed: $(sv)=$value" )
@@ -1375,7 +1567,7 @@ object Nest
          > "<hr/>"
       end
    end
-   
+
 end
 
 // Re-export relevant Nest elements

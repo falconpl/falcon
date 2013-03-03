@@ -1,0 +1,38 @@
+/*
+@name Basic recursion test
+@category Functions
+
+@output   
+Basic recursion test
+Recursing: 1
+Recursing: 2
+Recursing: 3
+Recursing: 4
+Reached end of recursion
+At 4 retval is: Top
+At 3 retval is: Top-4
+At 2 retval is: Top-4-3
+At 1 retval is: Top-4-3-2
+At end recurse is Top-4-3-2-1
+Done
+@endoutput
+*/
+
+> "Basic recursion test"
+
+function recurse( param )
+   if param < 5
+      > "Recursing: ", param
+      retval = recurse( param + 1 )
+      > "At ", param, " retval is: ", retval
+      return retval + "-" + param
+   end
+   
+   > "Reached end of recursion"
+   return "Top"
+end
+
+val = recurse(1)
+> "At end recurse is ", val
+
+> "Done"

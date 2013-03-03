@@ -1,0 +1,62 @@
+/*
+@name Complete IF branching test
+@category Branches
+
+@output   
+First branch
+Second branch
+Third branch
+Else Branch
+Done
+@endoutput
+*/
+
+// First branch
+a = 1
+if a == 1 
+   > "First branch"
+elif a == 2
+   > "Second branch"
+elif a == 3
+   > "Third branch"
+else
+   > "Else Branch"
+end
+
+// Second branch
+a = 2
+if a == 1 
+   > "First branch"
+elif a == 2
+   > "Second branch"
+elif a == 3
+   > "Third branch"
+else
+   > "Else Branch"
+end
+
+// Third branch
+a = 3
+if a == 1 
+   > "First branch"
+elif a == 2
+   > "Second branch"
+elif a == 3
+   > "Third branch"
+else
+   > "Else Branch"
+end
+
+// Else branch
+a = 4
+if a == 1 
+   > "First branch"
+elif a == 2
+   > "Second branch"
+elif a == 3
+   > "Third branch"
+else
+   > "Else Branch"
+end
+
+> "Done"

@@ -1,0 +1,26 @@
+/*
+998 series -- book samples
+
+@name Wiki sample - Advanced exit from codeblock
+
+@output
+Sum of first 10 numbers: 55
+First even number in sum: 6
+@endoutput
+*/
+
+
+code = {(nth, evens)
+  sum = 0
+  a = 1
+  while a <= nth
+     sum += a++
+     if evens and sum % 2 == 0
+        ^= sum
+     end
+  end
+  ^= sum
+}
+
+> "Sum of first 10 numbers: ", code( 10, false )
+> "First even number in sum: ", code( 10, true)

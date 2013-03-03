@@ -1,0 +1,42 @@
+/*
+@name Prototype child meta table smoke test
+@category Prototypes
+
+This test is like 009-005, but we create a child
+prototype and check for the meta table to be
+inherited.
+
+@output
+Override declaration
+5
+Override reset table
+8
+Override reset property
+11
+@endoutput
+*/
+
+> "Override declaration"
+Proto = p{
+   number = 3
+   _isBase = true
+   _meta = p{
+      __add = {b=> self.number + b}
+   }
+}
+
+x = Proto()
+
+> x + 2
+
+> "Override reset table"
+x._meta = p{
+      __add = {b=> self.number*2 + b}
+   }
+   
+> x + 2
+
+> "Override reset property"
+x._meta.__add = {b=> self.number*3 + b}
+
+> x + 2

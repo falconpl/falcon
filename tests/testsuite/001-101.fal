@@ -1,0 +1,29 @@
+/*
+@name provides dynamic
+@category Expressions
+
+@output
+Simple provides test with dynamic clases
+inst provides hello? Yes
+inst provides world? No
+inst provides sayHello? Yes
+Done
+@endoutput
+
+*/
+
+class test
+   hello = 0
+   function sayHello()
+   end
+end
+
+inst = test()
+
+> "Simple provides test with dynamic clases"
+for prop in ["hello", "world", "sayHello"]
+   x = Provides( &inst, prop)
+   > "inst provides ", prop, "? ", (x() ? "Yes" : "No")
+end
+
+> "Done"

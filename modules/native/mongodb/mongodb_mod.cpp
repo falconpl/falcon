@@ -32,7 +32,7 @@ ConnRef::decref()
         if ( mConn )
         {
             mongo_destroy( mConn );
-            free( mConn );
+free( mConn );
         }
         delete this;
     }
@@ -124,7 +124,7 @@ Connection::connect()
         if ( ret == 0 ) // success
             mConn = new ConnRef( conn );
         else
-            free( conn );
+free( conn );
     }
 
     return (int) ret;
@@ -1232,24 +1232,24 @@ BSONIter::makeItem( const bson_type tp,
         switch ( bson_iterator_bin_type( iter ) )
         {
         case 4:
-            data = (byte*) memAlloc( sz * 4 );
+            data = (byte*) malloc( sz * 4 );
             memcpy( data, ptr, sz * 4 );
-            mb = new MemBuf_4( data, sz, memFree );
+            mb = new MemBuf_4( data, sz, free( );
             break;
         case 3:
-            data = (byte*) memAlloc( sz * 3 );
+            data = (byte*) malloc( sz * 3 );
             memcpy( data, ptr, sz * 3 );
-            mb = new MemBuf_3( data, sz, memFree );
+            mb = new MemBuf_3( data, sz, free( );
             break;
         case 2:
-            data = (byte*) memAlloc( sz * 2 );
+            data = (byte*) malloc( sz * 2 );
             memcpy( data, ptr, sz * 2 );
-            mb = new MemBuf_2( data, sz, memFree );
+            mb = new MemBuf_2( data, sz, free( );
             break;
         case 1:
-            data = (byte*) memAlloc( sz * 1 );
+            data = (byte*) malloc( sz * 1 );
             memcpy( data, ptr, sz * 1 );
-            mb = new MemBuf_1( data, sz, memFree );
+            mb = new MemBuf_1( data, sz, free( );
             break;
         default:
             break;

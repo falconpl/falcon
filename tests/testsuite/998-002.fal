@@ -1,0 +1,20 @@
+/*
+998 series -- book samples
+
+@name Wiki sample - User defined ETA
+
+@output
+Result is: 30
+Result is: 200
+@endoutput
+
+*/
+
+function* myEta( expression )  
+  a = 10
+  b = 20
+  > "Result is: ", expression()
+end
+
+myEta( ~a + ~b )
+myEta( ~a * ~b )

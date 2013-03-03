@@ -1159,7 +1159,8 @@ FALCON_FUNC Entry::get_layout_offsets( VMARG )
 
 /*#
     @method layout_index_to_text_index GtkEntry
-    @brief Converts from a position in the entry contents (returned by gtk_entry_get_text()) to a position in the entry's PangoLayout (returned by gtk_entry_get_layout(), with text retrieved via pango_layout_get_text()).
+    @brief Converts from a position in the entry contents (returned by gtk_entry_get_text()) to a position in the entry's PangoLayout 
+			(returned by gtk_entry_get_layout(), with text retrieved via pango_layout_get_text()).
     @param layout_index byte index into the entry layout text
     @return byte index into the entry contents
  */

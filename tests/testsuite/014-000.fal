@@ -1,0 +1,25 @@
+/*
+@name Load smoke test
+@category modules
+
+This test tries to load the VFS module and seek the open
+and create functions.
+
+To check that they are correctly imported, it prints their
+className.
+
+@output
+Smoke test for module loading
+open() class name: Function
+create() class name: Function
+Done
+@endoutput
+
+*/
+
+load vfs
+
+> "Smoke test for module loading"
+> "open() class name: ", open.className
+> "create() class name: ", create.className
+> "Done"

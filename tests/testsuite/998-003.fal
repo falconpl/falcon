@@ -1,0 +1,30 @@
+/*
+998 series -- book samples
+
+@name Wiki sample - Functors
+
+@output
+Previous value: none
+Current value: One
+Previous value: One
+Current value: Two
+Previous value: Two
+Current value: Three
+@endoutput
+
+*/
+
+class functor
+  old = "none"
+
+  function __call( v )
+    > "Previous value: ", self.old
+    > "Current value: ", v
+    self.old = v
+  end
+end
+
+fi = functor()
+fi( "One" )
+fi( "Two" )
+fi( "Three" )

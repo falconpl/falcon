@@ -1,0 +1,12 @@
+/*
+@name Not expr nega
+@category Smoke
+
+@result Ok
+*/
+
+if not 1
+   return "Fail"
+end
+
+return "Ok"

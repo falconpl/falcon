@@ -1,0 +1,50 @@
+
+semWrite = Semaphore()
+done = Barrier()
+
+function consumer( id, deepItem, control )
+   > "Entering the consumer ", id
+
+   onSignaled = {sem =>
+      control[id] = deepItem[0]++
+      sem.post()
+   }
+   
+   wl = Waiter( done )
+   wl.add( semWrite, onSignaled )
+   > wl
+   wl.wait()
+   
+   > "Exiting consumer ", id
+end
+
+
+function controller( deepItem, control )
+   > "Entering the controller"
+   
+   // start all
+   semWrite.post()
+   now  = seconds()
+   while seconds() - now < 5.0
+      >> @"$({seconds()-now}.2) ${control[0]}, ${control[1]}, ${control[2]}              \r"
+      rest(100)
+   end 
+   
+   done.open()
+   >
+   > "Exiting the controller"
+end
+
+> "Starting"
+
+deep = [0]
+ctrl = [0, 0, 0]
+f0 = {=> consumer(0, deep, ctrl) }
+f1 = {=> consumer(1, deep, ctrl) }
+f2 = {=> consumer(2, deep, ctrl) }
+f3 = {=> controller( deep, ctrl) }
+
+p = Parallel( f0, f1, f2, f3 )
+p.launch()
+
+> "Done"

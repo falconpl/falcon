@@ -1,0 +1,13 @@
+/*
+@name Function definition
+@category Expressions
+
+@result Ok
+*/
+
+function test( value )
+   return value
+end
+
+> "Function definition test"
+return test( "Ok" )

@@ -1,0 +1,59 @@
+/*
+   FALCON - The Falcon Programming Language
+
+   Nest - Falcon web applcation engine
+
+   FILE: PairCheck.fal
+
+   AJAX widgeting subsystem -- A field checking that two fields match.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Mon, 26 Sep 2011 11:55:58 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2011: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+import from nest.widgets.widget in widget
+
+class PairCheck( id, first_widget, second_widget ) from widget.Widget( id )
+   tag = "span"
+   content = ""
+   first_widget = first_widget
+   second_widget = second_widget
+
+   text_match = "Matches"
+   text_no_match = "Is not matching!"
+   
+   jsMethods = [
+      "checkFirst" => 'function( value ){ this.valueOfFirst = value; this.checkPair();}',
+      "checkSecond" => 'function( value ){ this.valueOfSecond = value; this.checkPair();}'
+   ]
+
+   jsListeners = [
+      first_widget => "function( wid, msg, value ) { this.checkFirst(value); }",
+      second_widget => "function(  wid, msg, value ) { this.checkSecond(value); }"
+   ]
+
+   function onRender()
+      // we render the method here to be able to change the text after init.
+      self.jsMethods["checkPair"] = @'
+         function(){
+            var match = "";
+            if( this.valueOfFirst == this.valueOfSecond ) {
+               this.innerHTML="$(self.text_match)";
+               match = "ok";
+            }
+            else {
+               this.innerHTML="$(self.text_no_match)";
+               match = "";
+            }
+         }'
+   end
+
+   function renderContent()
+      return self.content
+   end
+end

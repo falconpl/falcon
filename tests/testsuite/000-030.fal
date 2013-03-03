@@ -1,0 +1,17 @@
+/*
+@name Multiline parenthesis
+@category Smoke
+
+@output
+Multiline expression 1
+1+1=2
+---------------------
+@endoutput
+
+*/
+
+> "Multiline expression 1"
+// Using explicit contine on next line
+> "1+1=", 1 \
++ 1  
+> "---------------------"

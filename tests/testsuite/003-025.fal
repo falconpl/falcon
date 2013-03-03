@@ -1,0 +1,13 @@
+/*
+@name String interpolation smoke test
+@category Str-ipol
+
+@output   
+Hello world
+Hello world
+@endoutput
+*/
+
+string = "Hello world"
+> @ "$string"
+> @ "$(string)"

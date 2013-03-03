@@ -1,0 +1,83 @@
+
+// Typical sync control via mutex-semaphore pair.
+
+class Entity
+   mtx = Mutex()
+   prop0 = 0
+   prop1 = 1
+   prop2 = 2
+   count = 0
+   done = 0
+   evt = Event()
+   
+   function mth0(p0, p1)
+      self.mtx.lock()
+      self.prop0 = p0 + p1
+      self.prop1 = "Made by " + p1
+      self.mtx.unlock()
+   end
+
+   function mth1(p0)
+      self.mtx.lock()
+      self.count++
+      self.prop2 = "Set by " + p0
+      self.mth0("Done by ", p0)
+      self.mtx.unlock()
+      self.evt.set()
+   end
+   
+   function complete()
+      self.mtx.lock()
+      self.done++    
+      self.mtx.unlock()
+      self.evt.set()
+   end
+end
+
+instance = Entity()
+
+function mangle( entity, id, count )
+   for i = 1 to count 
+      entity.mth1(id)
+   end
+   entity.complete()
+end
+
+function control( inst, count )
+   
+   loop
+      inst.mtx.lock()
+      if inst.done == count
+         break
+      end
+      >> inst.count, ": ", inst.prop0, " ", inst.prop1, " ", inst.prop2, " ", inst.done,
+          "                          \r"
+      inst.evt.wait()
+   end
+   > inst.count, ": ", inst.prop0, " ", inst.prop1, " ", inst.prop2, " ", inst.done,
+         "                          "
+end
+
+function control2()
+   > "Control"
+   contexts = GC.contexts
+   loop
+      for ctx in contexts
+      >> ctx.id, ":", ctx.status
+      formiddle: >> ", "
+      forlast: >> "            \r"
+      end
+   end
+   
+end
+
+f1 = {=> mangle(instance, 1, 10000) }
+f2 = {=> mangle(instance, 2, 10000) }
+f3 = {=> mangle(instance, 3, 10000) }
+f4 = {=> mangle(instance, 4, 10000) }
+ctr = {=> control(instance, 4) }
+
+para = Parallel( f1,f2,f3,f4, ctr )
+para.launch()
+>
+> "Complete"

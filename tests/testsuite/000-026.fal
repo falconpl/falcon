@@ -1,0 +1,8 @@
+/*
+@name Ternary Fast IF, posi
+@category Smoke
+
+@result Ok
+*/
+
+return 1 ? "Ok" : "Fail"

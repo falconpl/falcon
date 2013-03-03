@@ -22,6 +22,9 @@
 #include <falcon/item.h>
 #include <falcon/string.h>
 #include <falcon/timestamp.h>
+#include <falcon/range.h>
+#include <falcon/errors/paramerror.h>
+#include <falcon/stdhandlers.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -30,6 +33,11 @@
 #include <math.h>
 
 namespace Falcon {
+
+Format::~Format()
+{
+
+}
 
 void Format::reset()
 {
@@ -46,7 +54,13 @@ void Format::reset()
    m_negFormat = e_minusFront;
    m_numFormat = e_decimal;
    m_nilFormat = e_nilNil;
-   m_posOfObjectFmt = String::npos;
+}
+
+
+Class* Format::handler()
+{
+   static Class* cls = Engine::handlers()->formatClass();
+   return cls;
 }
 
 
@@ -194,13 +208,6 @@ bool Format::parse( const String &fmt )
 
                case 'n':
                   state = e_sNilMode;
-               break;
-
-               case '|':
-                  m_posOfObjectFmt = pos;
-                  m_convType = e_tStr;
-                  // complete parsing
-                  pos = len;
                break;
 
                case '+':
@@ -391,6 +398,7 @@ bool Format::parse( const String &fmt )
                case '^': m_negFormat = e_plusMinusEnd; break;
                default:
                   pos--;
+                  break;
             }
             state = e_sInitial;
          break;
@@ -403,6 +411,7 @@ bool Format::parse( const String &fmt )
                case '^': m_negFormat = e_minusEnd; break;
                default:
                   pos--;
+                  break;
             }
             state = e_sInitial;
          break;
@@ -448,7 +457,7 @@ bool Format::parse( const String &fmt )
 }
 
 
-bool Format::format( VMachine *vm, const Item &source, String &target )
+Format::t_format_result Format::format( const Item &source, String &target )
 {
    String sBuffer;
 
@@ -465,17 +474,11 @@ bool Format::format( VMachine *vm, const Item &source, String &target )
             case e_nilNone: sBuffer = "None"; break;
             case e_nilNULL: sBuffer = "NULL"; break;
             case e_nilNull: sBuffer = "Null"; break;
-            case e_nilPad: sBuffer.append( m_paddingChr );
+            case e_nilPad: sBuffer.append( m_paddingChr ); break;
          }
          applyPad( sBuffer );
 
       break;
-
-      case FLC_ITEM_UNB:
-         sBuffer = "_";
-         applyPad( sBuffer );
-         break;
-
 
       //==================================================
       // Parse an integer
@@ -487,7 +490,7 @@ bool Format::format( VMachine *vm, const Item &source, String &target )
          // number formats are compatible with string formats
          if ( m_convType != e_tNum && m_convType != e_tStr )
          {
-            return processMismatch( vm, source, target );
+            return processMismatch( source, target );
          }
 
          formatInt( num, sBuffer, true );
@@ -516,7 +519,7 @@ bool Format::format( VMachine *vm, const Item &source, String &target )
          // number formats are compatible with string formats
          if ( m_convType != e_tNum && m_convType != e_tStr )
          {
-            return processMismatch( vm, source, target );
+            return processMismatch( source, target );
          }
 
          if( m_numFormat == e_scientific )
@@ -630,91 +633,86 @@ bool Format::format( VMachine *vm, const Item &source, String &target )
       }
       break;
 
-      case FLC_ITEM_RANGE:
-      {
-         // number formats are compatible with string formats
-         if ( m_convType != e_tNum && m_convType != e_tStr )
-         {
-            return processMismatch( vm, source, target );
-         }
-
-         int64 begin = source.asRangeStart();
-         String sBuf1, sBuf2, sBuf3;
-
-         formatInt( begin, sBuf1, true );
-
-         //apply negative format now.
-         applyNeg( sBuf1, (int64) begin );
-         if ( ! source.asRangeIsOpen() )
-         {
-            int64 end = source.asRangeEnd();
-            formatInt( end, sBuf2, true );
-            applyNeg( sBuf2, (int64) end );
-            
-            int64 step = source.asRangeStep();
-            if ( (begin <= end && step != 1) ||
-                 (begin > end && step != -1 ) )
-            {
-               formatInt( step, sBuf3, true );
-               applyNeg( sBuf3, (int64) step );
-               sBuffer = "[" + sBuf1 + ":" + sBuf2 + ":" + sBuf3 + "]";
-            }
-            else
-               sBuffer = "[" + sBuf1 + ":" + sBuf2 + "]";
-         }
-         else
-            sBuffer = "[" + sBuf1 + ":" + sBuf2 + "]";
-
-         applyPad( sBuffer );
-      }
-      break;
-
-      case FLC_ITEM_STRING:
-      {
-         // number formats are compatible with string formats
-         if ( m_convType != e_tStr )
-         {
-            return processMismatch( vm, source, target );
-         }
-
-         sBuffer = *source.asString();
-         applyPad( sBuffer );
-      }
-      break;
-
-
-      case FLC_ITEM_OBJECT:
-      {
-         // try to format the object
-         if( vm != 0 )
-         {
-            if( m_posOfObjectFmt != String::npos )
-            {
-               vm->itemToString( sBuffer, &source, m_originalFormat.subString( m_posOfObjectFmt + 1 ) );
-            }
-            else {
-               vm->itemToString( sBuffer, &source );
-            }
-         }
-         else {
-            return processMismatch( vm, source, target );
-         }
-
-         applyPad( sBuffer );
-      }
-      break;
-
       default:
-         return processMismatch( vm, source, target );
+      {
+         Class* cls = 0;
+         void* data = 0;
+         source.forceClassInst(cls, data);
+         switch( cls->typeID() )
+         {
+         case FLC_CLASS_ID_RANGE:
+         {
+           // number formats are compatible with string formats
+           if ( m_convType != e_tNum && m_convType != e_tStr )
+           {
+              return processMismatch( source, target );
+           }
+           Range* range = static_cast<Range*>(data);
+
+           int64 begin = range->start();
+           String sBuf1, sBuf2, sBuf3;
+
+           formatInt( begin, sBuf1, true );
+
+           //apply negative format now.
+           applyNeg( sBuf1, (int64) begin );
+           if ( ! range->isOpen() )
+           {
+              int64 end = range->end();
+              formatInt( end, sBuf2, true );
+              applyNeg( sBuf2, (int64) end );
+
+              int64 step = range->step();
+              if ( (begin <= end && step != 1) ||
+                   (begin > end && step != -1 ) )
+              {
+                 formatInt( step, sBuf3, true );
+                 applyNeg( sBuf3, (int64) step );
+                 sBuffer = "[" + sBuf1 + ":" + sBuf2 + ":" + sBuf3 + "]";
+              }
+              else
+                 sBuffer = "[" + sBuf1 + ":" + sBuf2 + "]";
+           }
+           else
+              sBuffer = "[" + sBuf1 + ":" + sBuf2 + "]";
+
+           applyPad( sBuffer );
+         }
+         break;
+
+         case FLC_CLASS_ID_STRING:
+         {
+            // number formats are compatible with string formats
+            if ( m_convType != e_tStr )
+            {
+               return processMismatch( source, target );
+            }
+
+            sBuffer = *source.asString();
+            applyPad( sBuffer );
+         }
+         break;
+
+         default:
+            return e_fr_deep;
+         }
+      }
+      break;
+
    }
 
    // out of bounds?
-   if ( m_size > 0 && m_fixedSize && sBuffer.length() > m_size ) {
-      return false;
+   if ( m_size > 0 && m_fixedSize && sBuffer.length() > m_size )
+   {
+      String temp;
+      temp.append(m_paddingChr);
+      target.append( temp.replicate(m_fixedSize) );
+
+      return e_fr_toolong;
    }
 
    target += sBuffer;
-   return true;
+   return e_fr_ok;
 }
 
 
@@ -732,93 +730,82 @@ void Format::formatScientific( numeric num, String &sBuffer )
       bNeg = false;
    }
    sprintf( buffer, "%35e", num );
+   if( bNeg )
+   {
+      sBuffer += "-";
+   }
    sBuffer += buffer;
 }
 
 
-bool Format::processMismatch( VMachine *vm, const Item &source, String &target )
+Format::t_format_result Format::processMismatch( const Item &source, String &target )
 {
    Item dummy;
 
    switch( m_misAct )
    {
       case e_actNoAction:
-         return false;
+         return e_fr_mismatch;
 
       case e_actConvertNil:
-         if( tryConvertAndFormat( vm, source, target ) )
-            return true;
+         if( tryConvertAndFormat( source, target ) == e_fr_ok)
+            return e_fr_ok;
+         /* no break */
 
-         // else fallthrouhg
       case e_actNil:
          dummy.setNil();
-         return format( vm, dummy, target );
+         return format( dummy, target );
       break;
 
       case e_actConvertZero:
-         if( tryConvertAndFormat( vm, source, target ) )
-            return true;
+         if( tryConvertAndFormat( source, target )  == e_fr_ok)
+            return e_fr_ok;
 
-         // else fallthrouhg
+         /* no break */
       case e_actZero:
       {
          dummy = (int64) 0;
 
          // also, force conversion
          m_misAct = e_actConvertZero;
-         bool ret = format( vm, source, target );
+         t_format_result ret = format( source, target );
          m_misAct = e_actZero;
          return ret;
       }
 
       case e_actConvertRaise:
-         if( tryConvertAndFormat( vm, source, target ) )
-            return true;
+         if( tryConvertAndFormat( source, target ) == e_fr_ok)
+            return e_fr_ok;
 
-         // else fallthrouhg
+         /* no break */
       case e_actRaise:
-         if( vm != 0 )
-         {
-            throw new TypeError( ErrorParam( e_fmt_convert, __LINE__ )
-               .origin( e_orig_runtime ) );
-         }
-         return false;
+         throw new ParamError( ErrorParam( e_fmt_convert, __LINE__ )
+               .origin( ErrorParam::e_orig_runtime ) );
+         break;
    }
 
-   // should not happen
-   return false;
+   return e_fr_mismatch;
 }
 
-bool Format::tryConvertAndFormat( VMachine *vm, const Item &source, String &target )
+Format::t_format_result Format::tryConvertAndFormat( const Item &source, String &target )
 {
    // first convert to string, then try to convert to number
 
    // try a basic string conversion
    String temp;
-   if( vm != 0 )
-   {
-      if( m_posOfObjectFmt != String::npos )
-      {
-         vm->itemToString( temp, &source, originalFormat().subString( m_posOfObjectFmt + 1 ) );
-      }
-      else
-         vm->itemToString( temp, &source );
-   }
-   else {
-      source.toString( temp );
-   }
+   source.describe( temp );
 
    // If conversion was numeric, try to to reformat the thing into a number
    if( m_convType == e_tNum )
    {
       numeric num;
       if( ! temp.parseDouble( num ) )
-         return false;
+         return e_fr_mismatch;
 
-      return format( vm, num, target );
+      return format( num, target );
    }
 
-   return format( vm, &temp, target );
+   return format( Item(temp.handler(), &temp), target );
 }
 
 
@@ -863,7 +850,7 @@ void Format::formatInt( int64 number, String &target, bool bUseGroup )
 
       case e_octalZero:
          target.append( '0' );
-         // fallthrough
+         /* no break */
       case e_octal:
          base = 8;
       break;
@@ -871,7 +858,7 @@ void Format::formatInt( int64 number, String &target, bool bUseGroup )
       case e_cHexLower:
          target.append( '0' );
          target.append( 'x' );
-         // fallthrough
+         /* no break */
       case e_hexLower:
          base = 16;
          baseHexChr = 'a';
@@ -880,7 +867,7 @@ void Format::formatInt( int64 number, String &target, bool bUseGroup )
       case e_cHexUpper:
          target.append( '0' );
          target.append( 'x' );
-         // fallthrough
+         /* no break */
       case e_hexUpper:
          base = 16;
          baseHexChr = 'A';
@@ -1077,67 +1064,51 @@ void Format::applyPad( String &target, uint32 extraSize )
    }
 }
 
-/*
-
-void Format::getProperty( const String &propName, Item &prop )
-{
-   if( propName == "size" )
-   {
-      prop = (int64) m_size;
-   }
-   else if( propName == "decimals" ) {
-      prop = (int64) m_decimals;
-   }
-   else if( propName == "paddingChr" ) {
-      prop = (int64) m_paddingChr;
-   }
-   else if( propName == "groupingChr" ) {
-      prop = (int64) m_thousandSep;
-   }
-   else if( propName == "decimalChr" ) {
-      prop = (int64) m_decimalSep;
-   }
-   else if( propName == "grouiping" ) {
-      prop = (int64) m_grouping;
-   }
-   else if( propName == "fixedSize" ) {
-      prop = (int64) (m_fixedSize ? 1:0);
-   }
-   else if( propName == "rightAlign" ) {
-      prop = (int64) (m_rightAlign ? 1:0);
-   }
-   else if( propName == "originalFormat" ) {
-      prop = &m_originalFormat;
-   }
-   else if( propName == "convType" ) {
-      prop = (int64) m_convType;
-   }
-   else if( propName == "misAct" ) {
-      prop = (int64) m_misAct;
-   }
-   else if( propName == "nilFormat" ) {
-      prop = (int64) m_nilFormat;
-   }
-   else if( propName == "negFormat" ) {
-      prop = (int64) m_negFormat;
-   }
-   else if( propName == "numFormat" ) {
-      prop = (int64) m_numFormat;
-   }
-
-}
-
-void Format::setProperty( const String &propName, Item &prop )
-{
-   // read only
-}
-*/
-
 Format *Format::clone() const
 {
    return new Format( this->originalFormat() );
 }
 
+
+bool Format::opFormat( VMContext* ctx, const Item& source )
+{
+   String* resString = new String;
+   t_format_result result = format( source, *resString );
+
+   if( result == e_fr_deep )
+   {
+      ctx->pushData(source);
+      Class* cls = 0;
+      void* data = 0;
+      source.asClassInst(cls, data);
+
+      ctx->pushCode( &m_stepPostRender );
+      cls->op_toString( ctx, data );
+
+      return true;
+   }
+   else {
+      ctx->pushData( FALCON_GC_HANDLE(resString) );
+   }
+
+   // we didn't go deep.
+   return false;
+}
+
+
+void Format::PStepPostRender::apply_( const PStep* ps, VMContext* ctx )
+{
+   const PStepPostRender* self = static_cast<const PStepPostRender*>(ps);
+   const Item& istr = ctx->topData();
+   fassert( istr.isString() );
+
+   if( istr.isString() )
+   {
+      self->m_owner->applyPad(*istr.asString());
+   }
+   ctx->popCode();
+
+}
 }
 
 /* end of format.cpp */

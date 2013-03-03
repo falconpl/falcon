@@ -13,357 +13,84 @@
    See LICENSE file for licensing details.
 */
 
-/** \file
-   Item API implementation
-   This File contains the non-inlined access to items.
-*/
+#undef SRC
+#define SRC "engine/item.cpp"
 
 #include <falcon/item.h>
-#include <falcon/memory.h>
-#include <falcon/mempool.h>
-#include <falcon/common.h>
-#include <falcon/symbol.h>
-#include <falcon/coreobject.h>
-#include <falcon/corefunc.h>
-#include <falcon/carray.h>
-#include <falcon/garbagepointer.h>
-#include <falcon/coredict.h>
-#include <falcon/cclass.h>
-#include <falcon/membuf.h>
-#include <falcon/vmmaps.h>
-#include <falcon/error.h>
-#include <cstdlib>
-#include <cstring>
+#include <falcon/itemid.h>
+#include <falcon/stdhandlers.h>
+
+#include "falcon/itemarray.h"
 
 
 namespace Falcon
 {
 
-inline void assignToVm( Garbageable *gcdata )
+Class* Item::m_funcClass;
+Class* Item::m_stringClass;
+Class* Item::m_dictClass;
+Class* Item::m_arrayClass;
+
+void Item::init(Engine* engine)
 {
-   gcdata->gcMark( memPool->generation() );
+   m_funcClass = engine->handlers()->functionClass();
+   m_stringClass = engine->handlers()->stringClass();
+   m_dictClass = engine->handlers()->dictClass();
+   m_arrayClass = engine->handlers()->arrayClass();
 }
 
-//=================================================================
-// Garbage markers
-Item::Item( byte t, Garbageable *dt )
+Item& Item::setString( const char* str )
 {
-   type( t );
-   content( dt );
-   assignToVm( dt );
+   setUser( FALCON_GC_HANDLE(new String(str)) );
+   return *this;
 }
 
-void Item::setRange( CoreRange *r )
+Item& Item::setString( const wchar_t* str )
 {
-   type( FLC_ITEM_RANGE );
-   all.ctx.data.content = r;
-   assignToVm( r );
+   setUser( FALCON_GC_HANDLE(new String(str)) );
+   return *this;
 }
 
-
-void Item::setString( String *str )
+Item& Item::setString( const String& str )
 {
-   type( FLC_ITEM_STRING );
-
-   all.ctx.data.ptr.voidp = str;
-   all.ctx.data.ptr.extra = 0;
-   if ( str->isCore() )
-      assignToVm( &static_cast<CoreString*>(str)->garbage() );
+   setUser( FALCON_GC_HANDLE(new String(str)) );
+   return *this;
 }
-/*
-
-void Item::setString( String *str, LiveModule *lm )
-{
-   type( FLC_ITEM_STRING );
-   // must not be a non-garbage string
-   fassert( ! str->isCore() );
-   all.ctx.data.ptr.voidp = str;
-   all.ctx.data.ptr.extra = lm;
-}
-*/
-
-void Item::setArray( CoreArray *array )
-{
-   type( FLC_ITEM_ARRAY );
-   all.ctx.data.ptr.voidp = array;
-   assignToVm( array );
-}
-
-void Item::setObject( CoreObject *obj )
-{
-   type( FLC_ITEM_OBJECT );
-   all.ctx.data.ptr.voidp = obj;
-   assignToVm( obj );
-}
-
-
-void Item::setDict( CoreDict *dict )
-{
-   type( FLC_ITEM_DICT );
-   all.ctx.data.ptr.voidp = dict;
-   assignToVm( dict );
-}
-
-
-void Item::setMemBuf( MemBuf *b )
-{
-   type( FLC_ITEM_MEMBUF );
-   all.ctx.data.ptr.voidp = b;
-   assignToVm( b );
-}
-
-void Item::setReference( GarbageItem *ref )
-{
-   type( FLC_ITEM_REFERENCE );
-   all.ctx.data.ptr.voidp = ref;
-   assignToVm( ref );
-}
-
-void Item::setFunction( CoreFunc* cf )
-{
-   type( FLC_ITEM_FUNC );
-   all.ctx.data.ptr.extra = cf;
-   assignToVm( cf );
-}
-
-void Item::setLBind( String *lbind, GarbageItem *val )
-{
-   type( FLC_ITEM_LBIND );
-   all.ctx.data.ptr.voidp = lbind;
-   all.ctx.data.ptr.extra = val;
-
-   if ( lbind->isCore() )
-      assignToVm( &static_cast<CoreString*>(lbind)->garbage() );
-
-   if ( val != 0 )
-       assignToVm( val );
-}
-
-void Item::setMethod( const Item &data, CallPoint *func )
-{
-   *this = data;
-   all.ctx.base.bits.oldType = all.ctx.base.bits.type;
-   all.ctx.method = func;
-   type( FLC_ITEM_METHOD );
-   assignToVm( func );
-}
-
-void Item::setClassMethod( CoreObject *obj, CoreClass *cls )
-{
-   type( FLC_ITEM_CLSMETHOD );
-   all.ctx.data.ptr.voidp = obj;
-   all.ctx.data.ptr.extra = cls;
-   assignToVm( obj );
-   assignToVm( cls );
-}
-
-void Item::setClass( CoreClass *cls )
-{
-   type( FLC_ITEM_CLASS );
-   // warning: class in extra to be homologue to methodClass()
-   all.ctx.data.ptr.extra = cls;
-   assignToVm( cls );
-}
-
-void Item::setGCPointer( FalconData *ptr )
-{
-   type( FLC_ITEM_GCPTR );
-   all.ctx.data.content = new GarbagePointer( ptr );
-   assignToVm( all.ctx.data.content );
-   // Done in assingToVM
-   //ptr->gcMark( memPool->generation() );
-}
-
-void Item::setGCPointer( GarbagePointer *shell )
-{
-   type( FLC_ITEM_GCPTR );
-   all.ctx.data.content = shell;
-   assignToVm( shell );
-   // Done in assingToVM
-   //shell->ptr()->gcMark( memPool->generation() );
-}
-
-FalconData *Item::asGCPointer() const
-{
-   return static_cast<GarbagePointer*>(all.ctx.data.content)->ptr();
-}
-
-GarbagePointer *Item::asGCPointerShell() const
-{
-   return static_cast<GarbagePointer*>(all.ctx.data.content);
-}
-
-
-//====================================================
-// Safe items.
-//
-
-SafeItem::SafeItem( byte t, Garbageable *dt )
-{
-   type( t );
-   content( dt );
-}
-
-void SafeItem::setRange( CoreRange *r )
-{
-   type( FLC_ITEM_RANGE );
-   all.ctx.data.content = r;
-}
-
-
-void SafeItem::setString( String *str )
-{
-   type( FLC_ITEM_STRING );
-
-   all.ctx.data.ptr.voidp = str;
-   all.ctx.data.ptr.extra = 0;
-}
-
-void SafeItem::setArray( CoreArray *array )
-{
-   type( FLC_ITEM_ARRAY );
-   all.ctx.data.ptr.voidp = array;
-}
-
-void SafeItem::setObject( CoreObject *obj )
-{
-   type( FLC_ITEM_OBJECT );
-   all.ctx.data.ptr.voidp = obj;
-}
-
-
-void SafeItem::setDict( CoreDict *dict )
-{
-   type( FLC_ITEM_DICT );
-   all.ctx.data.ptr.voidp = dict;
-}
-
-
-void SafeItem::setMemBuf( MemBuf *b )
-{
-   type( FLC_ITEM_MEMBUF );
-   all.ctx.data.ptr.voidp = b;
-}
-
-void SafeItem::setReference( GarbageItem *ref )
-{
-   type( FLC_ITEM_REFERENCE );
-   all.ctx.data.ptr.voidp = ref;
-}
-
-void SafeItem::setFunction( CoreFunc* cf )
-{
-   type( FLC_ITEM_FUNC );
-   all.ctx.data.ptr.extra = cf;
-}
-
-void SafeItem::setLBind( String *lbind, GarbageItem *val )
-{
-   type( FLC_ITEM_LBIND );
-   all.ctx.data.ptr.voidp = lbind;
-   all.ctx.data.ptr.extra = val;
-
-   if ( val != 0 )
-       assignToVm( val );
-}
-
-void SafeItem::setMethod( const Item &data, CallPoint *func )
-{
-   copy( data );
-   all.ctx.base.bits.oldType = all.ctx.base.bits.type;
-   all.ctx.method = func;
-   type( FLC_ITEM_METHOD );
-   assignToVm( func );
-}
-
-void SafeItem::setClassMethod( CoreObject *obj, CoreClass *cls )
-{
-   type( FLC_ITEM_CLSMETHOD );
-   all.ctx.data.ptr.voidp = obj;
-   all.ctx.data.ptr.extra = cls;
-}
-
-void SafeItem::setClass( CoreClass *cls )
-{
-   type( FLC_ITEM_CLASS );
-   // warning: class in extra to be omologue to methodClass()
-   all.ctx.data.ptr.extra = cls;
-}
-
-void SafeItem::setGCPointer( FalconData *ptr )
-{
-   type( FLC_ITEM_GCPTR );
-   all.ctx.data.content = new GarbagePointer( ptr );
-}
-
-void SafeItem::setGCPointer( GarbagePointer *shell )
-{
-   type( FLC_ITEM_GCPTR );
-   all.ctx.data.content = shell;
-}
-
 
 //===========================================================================
 // Generic item manipulators
 
+bool Item::isCallable() const
+{
+   return isFunction()
+            || (isArray() && asArray()->at(0).isCallable())
+             || isMethod()
+             || (isUser() && asClass()->typeID() == FLC_CLASS_ID_CLOSURE);
+}
+
 bool Item::isTrue() const
 {
-   switch( dereference()->type() )
+   switch( type() )
    {
-      case FLC_ITEM_BOOL:
-         return asBoolean() != 0;
+   case FLC_ITEM_NIL:
+      return false;
 
-      case FLC_ITEM_INT:
-         return asInteger() != 0;
+   case FLC_ITEM_BOOL:
+      return asBoolean() != 0;
 
-      case FLC_ITEM_NUM:
-         return asNumeric() != 0.0;
+   case FLC_ITEM_INT:
+      return asInteger() != 0;
 
-      case FLC_ITEM_RANGE:
-         return asRangeStart() != asRangeEnd() || asRangeIsOpen();
+   case FLC_ITEM_NUM:
+      return asNumeric() != 0.0;
 
-      case FLC_ITEM_STRING:
-         return asString()->size() != 0;
-
-      case FLC_ITEM_ARRAY:
-         return asArray()->length() != 0;
-
-      case FLC_ITEM_DICT:
-         return asDict()->length() != 0;
-
-      case FLC_ITEM_FUNC:
-      case FLC_ITEM_OBJECT:
-      case FLC_ITEM_CLASS:
-      case FLC_ITEM_METHOD:
-      case FLC_ITEM_MEMBUF:
-      case FLC_ITEM_LBIND:
-         // methods are always filled, so they are always true.
-         return true;
+   default:
+      return false;
    }
 
    return false;
 }
 
-/*
-static int64 s_atoi( const String *cs )
-{
-   if ( cs->size() == 0 )
-      return 0;
-   const char *p =  (const char *)cs->getRawStorage() + ( cs->size() -1 );
-   uint64 val = 0;
-   uint64 base = 1;
-   while( p > (const char *)cs->getRawStorage() ) {
-      if ( *p < '0' || *p > '9' ) {
-         return 0;
-      }
-      val += (*p-'0') * base;
-      p--;
-      base *= 10;
-   }
-   if ( *p == '-' ) return -(int64)val;
-   return (int64)(val*base);
-}
-*/
 
 int64 Item::forceInteger() const
 {
@@ -373,17 +100,6 @@ int64 Item::forceInteger() const
 
       case FLC_ITEM_NUM:
          return (int64) asNumeric();
-
-      case FLC_ITEM_RANGE:
-         return (int64)asRangeStart();
-
-      case FLC_ITEM_STRING:
-      {
-         int64 tgt;
-         if ( asString()->parseInt( tgt ) )
-            return tgt;
-         return 0;
-      }
    }
    return 0;
 }
@@ -399,7 +115,7 @@ int64 Item::forceIntegerEx() const
          return (int64) asNumeric();
 
    }
-   throw new TypeError( ErrorParam( e_param_type, __LINE__ ) );
+   //throw new TypeError( ErrorParam( e_param_type, __LINE__ ) );
 
    // to make some dumb compiler happy
    return 0;
@@ -414,50 +130,30 @@ numeric Item::forceNumeric() const
 
       case FLC_ITEM_NUM:
          return asNumeric();
-
-      case FLC_ITEM_RANGE:
-         return (numeric) asRangeStart();
-
-      case FLC_ITEM_STRING:
-      {
-         double tgt;
-         if ( asString()->parseDouble( tgt ) )
-            return tgt;
-         return 0.0;
-      }
    }
    return 0.0;
 }
 
 
-bool Item::isOfClass( const String &className ) const
-{
-   switch( type() )
-   {
-      case FLC_ITEM_OBJECT:
-         // objects may be classless or derived from exactly one class.
-         return asObjectSafe()->derivedFrom( className );
-
-      case FLC_ITEM_CLASS:
-         return className == asClass()->symbol()->name() || asClass()->derivedFrom( className );
-   }
-
-   return false;
-}
-
-
-void Item::toString( String &target ) const
+void Item::describe( String &target, int maxDepth, int maxLength ) const
 {
    target.size(0);
 
    switch( this->type() )
    {
       case FLC_ITEM_NIL:
-         target = "Nil";
-      break;
-
-      case FLC_ITEM_UNB:
-         target = "_";
+         if ( isContinue() )
+         {
+            target = "continue";
+         }
+         else if ( isBreak() )
+         {
+            target = "break";
+         }
+         else
+         {
+            target = "Nil";
+         }
       break;
 
       case FLC_ITEM_BOOL:
@@ -469,322 +165,91 @@ void Item::toString( String &target ) const
          target.writeNumber( this->asInteger() );
       break;
 
-      case FLC_ITEM_RANGE:
-         target = "[";
-         target.writeNumber( (int64) this->asRangeStart() );
-         target += ":";
-         if ( ! this->asRangeIsOpen() )
-         {
-            target.writeNumber( (int64) this->asRangeEnd() );
-            if ( this->asRangeStep() != 0 )
-            {
-               target += ":";
-               target.writeNumber( (int64) this->asRangeStep() );
-            }
-         }
-         target += "]";
-      break;
-
       case FLC_ITEM_NUM:
       {
-         target.writeNumber( this->asNumeric(), "%.16g" );
+         target.writeNumber( this->asNumeric(), FALCON_DEFAULT_NUMERIC_STRING_FORMAT );
       }
       break;
 
-      case FLC_ITEM_MEMBUF:
-         target = "MemBuf( ";
-         target.writeNumber( (int64) this->asMemBuf()->length() );
-         target += ", ";
-            target.writeNumber( (int64) this->asMemBuf()->wordSize() );
-         target += " )";
-      break;
+      case FLC_ITEM_METHOD:
+      {         
+         String temp;
+         target = "(Method ";
 
-      case FLC_ITEM_STRING:
-         target = *asString();
-      break;
+         Item old = *this;
+         old.unmethodize();
+         old.describe( temp, 0, maxLength );
+         target += temp + ".";
+         temp = "";
 
-      case FLC_ITEM_LBIND:
-         if ( isFutureBind() )
+         Engine::handlers()->functionClass()->describe( asMethodFunction(), temp, maxDepth-1, maxLength );
+         target += temp;
+         target += ")";
+      }
+      break;
+      
+      default:
+      {
+         Class* cls = 0;
+         void* inst = 0;
+         asClassInst( cls, inst );
+         cls->describe( inst, target, maxDepth, maxLength );
+      }
+   }
+}
+
+
+bool Item::clone( Item& target ) const
+{
+   void* data;
+
+   if( type() >= FLC_ITEM_USER )
+   {
+     data = asClass()->clone( asInst() );
+     if ( data == 0 )
+        return false;
+     
+     target.setUser( asClass(), data );
+   }
+   else {
+     target.copy( target );
+   }
+
+   return true;
+}
+
+int Item::compare( const Item& other ) const
+{
+   register const Item* i1 = this;
+   register const Item* i2 = &other;
+   
+   int typeDiff = i1->type() - i2->type();
+   if( typeDiff == 0 )
+   {
+      switch( i1->type() ) {
+      case FLC_ITEM_NIL: return 0;
+      case FLC_ITEM_INT: return (int) (i1->asInteger() - i2->asInteger());
+      case FLC_ITEM_NUM: return (int) (i1->asNumeric() - i2->asNumeric());
+      case FLC_ITEM_BOOL:
+         if( i1->isTrue() )
          {
-            String temp;
-            asFutureBind().toString(temp);
-            target = *asLBind() + "|" + temp;
+            if ( i2->isTrue() ) return 0;
+            return 1;
          }
          else
-            target = "&" + *asLBind();
-      break;
-
-      case FLC_ITEM_REFERENCE:
-         dereference()->toString( target );
-      break;
-
-      case FLC_ITEM_OBJECT:
-         target = "Object from " + asObjectSafe()->generator()->symbol()->name();
-      break;
-
-      case FLC_ITEM_ARRAY:
-         target = "Array";
-      break;
-
-      case FLC_ITEM_DICT:
-         target = "Dictionary";
-      break;
-
-      case FLC_ITEM_FUNC:
-         target = "Function " + this->asFunction()->symbol()->name();
-      break;
-
-      case FLC_ITEM_CLASS:
-         target = "Class " + this->asClass()->symbol()->name();
-      break;
-
-      case FLC_ITEM_METHOD:
          {
-            Item orig;
-            this->getMethodItem( orig );
-            String temp;
-            orig.dereference()->toString( temp );
-            target = "Method (" + temp + ")." + this->asMethodFunc()->name();
+            if( i2->isTrue() ) return -1;
+            return 0;
          }
-      break;
-
-      case FLC_ITEM_CLSMETHOD:
-         target = "ClsMethod " + this->asMethodClass()->symbol()->name();
-      break;
 
       default:
-         target = "<?>";
-   }
-}
-
-void Item::typeName( String &target ) const
-{
-   target.size(0);
-
-   switch( this->type() )
-   {
-      case FLC_ITEM_NIL:
-         target = "Nil";
-      break;
-
-      case FLC_ITEM_UNB:
-         target = "Unbound";
-      break;
-
-      case FLC_ITEM_BOOL:
-         target = "Bool";
-      break;
-
-
-      case FLC_ITEM_INT:
-         target = "Int";
-      break;
-
-      case FLC_ITEM_RANGE:
-         target = "Range";
-      break;
-
-      case FLC_ITEM_NUM:
-         target = "Numeric";
-      break;
-
-      case FLC_ITEM_MEMBUF:
-         target = "MemBuf";
-      break;
-
-      case FLC_ITEM_STRING:
-         target = "String";
-      break;
-
-      case FLC_ITEM_LBIND:
-         target = "LBind";
-      break;
-
-      case FLC_ITEM_REFERENCE:
-         target = "Reference";
-      break;
-
-      case FLC_ITEM_OBJECT:
-         target = asObjectSafe()->generator()->symbol()->name();
-      break;
-
-      case FLC_ITEM_ARRAY:
-         target = "Array";
-      break;
-
-      case FLC_ITEM_DICT:
-         target = "Dictionary";
-      break;
-
-      case FLC_ITEM_FUNC:
-         target = "Function";
-      break;
-
-      case FLC_ITEM_CLASS:
-         target = this->asClass()->symbol()->name();
-      break;
-
-      case FLC_ITEM_METHOD:
-         target = "Method";
-      break;
-
-      case FLC_ITEM_CLSMETHOD:
-         target = "ClsMethod";
-      break;
-
-      default:
-         target = "<?>";
-   }
-}
-
-bool Item::methodize( const Item &self )
-{
-   Item *data = dereference();
-
-   switch( data->type() )
-   {
-      case FLC_ITEM_FUNC:
-      {
-         data->setMethod( self, data->asFunction() );
-      }
-      return true;
-
-      case FLC_ITEM_ARRAY:
-      {
-         CoreArray& arr = *asArray();
-         // even if arr[0] is not an array, the check is harmless, as we check by ptr value.
-         if ( arr.canBeMethod() && arr.length() > 0 && arr[0].asArray() != &arr && arr[0].isCallable() )
-         {
-            data->setMethod( self, &arr );
-            return true;
-         }
-      }
-      return false;
-   }
-
-   return false;
-}
-
-bool Item::isCallable() const
-{
-   if ( isClass() || isFunction() || isMethod() )
-      return true;
-
-   if( isObject() )
-   {
-      return asObjectSafe()->hasProperty( OVERRIDE_OP_CALL );
-   }
-
-   //a bit more complex: a callable array...
-   if( type() == FLC_ITEM_ARRAY )
-   {
-      CoreArray& arr = *asArray();
-      if ( arr.length() > 0 )
-      {
-         // avoid infinite recursion.
-         // even if arr[0] is not an array, the check is harmless, as we check by ptr value.
-         return arr[0].asArray() != &arr && arr[0].isCallable();
+         return (int64) (i1 - i2);
       }
    }
 
-   // in all the other cases, the item is not callable
-   return false;
+   return typeDiff;
 }
 
-bool Item::canBeMethod() const
-{
-   if ( isFunction() || isMethod() )
-      return true;
-
-   //a bit more complex: a callable array...
-   if( type() == FLC_ITEM_ARRAY )
-   {
-      CoreArray& arr = *asArray();
-      if ( ! arr.canBeMethod() )
-         return false;
-
-      if ( arr.length() > 0 )
-      {
-         // avoid infinite recursion.
-         // even if arr[0] is not an array, the check is harmless, as we check by ptr value.
-         return arr[0].asArray() != &arr && arr[0].isCallable();
-      }
-   }
-
-   // in all the other cases, the item is not callable
-   return false;
-}
-
-const Item &Item::asFutureBind() const {
-   return ((GarbageItem*)all.ctx.data.ptr.extra)->origin();
-}
-
-Item &Item::asFutureBind() {
-   return ((GarbageItem*)all.ctx.data.ptr.extra)->origin();
-}
-
-CoreObject *Item::asObject() const {
-   if ( ! isObject() )
-      throw new CodeError( ErrorParam( e_static_call, __LINE__ ) );
-
-   return (CoreObject *) all.ctx.data.ptr.voidp;
-}
-
-
-
-bool Item::exactlyEqual( const Item& other ) const
-{
-   if ( type() != other.type() )
-   {
-      return false;
-   }
-
-   switch( type() )
-   {
-      case FLC_ITEM_NIL: case FLC_ITEM_UNB:
-         return true;
-      
-      case FLC_ITEM_INT:
-         return asInteger() == other.asInteger();
-      
-      case FLC_ITEM_NUM:
-         return asNumeric() == other.asNumeric();
-         
-      case FLC_ITEM_RANGE:
-         if( asRangeIsOpen() != other.asRangeIsOpen() )
-            return false;
-         if ( asRangeStart() != other.asRangeStart() )
-            return false;
-         if ( asRangeStep() != other.asRangeStep() )
-            return false;
-         if ( ! asRangeIsOpen() &&
-            (asRangeEnd() != other.asRangeEnd() ) )
-            return false;
-         return true;
-      
-      case FLC_ITEM_STRING:
-         return *asString() == *other.asString();
-      
-      case FLC_ITEM_METHOD:
-         if ( asMethodFunc() == other.asMethodFunc() )
-         {
-            return asMethodItem().exactlyEqual(other.asMethodItem() );
-         } 
-         return false;
-      
-      case FLC_ITEM_CLSMETHOD:
-         if ( asObjectSafe()  != other.asObjectSafe() )
-            return false;
-         // fallthrough
-         
-      case FLC_ITEM_FUNC:
-      case FLC_ITEM_CLASS:
-         return asClass() == other.asClass();
-   }
-   
-   // the default is to check for the voidp element in data
-   return asObjectSafe() == other.asObjectSafe(); 
-}
 
 }
 

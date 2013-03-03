@@ -1,0 +1,13 @@
+/*
+@name Function quit (basic)
+@category Core-module
+
+@result From quit
+*/
+
+> "Core module test -- quit function (basic)"
+
+quit( "From quit" )
+
+> "Test failed..."
+return "Failure"

@@ -1,0 +1,37 @@
+/*
+@name Try/catch with default cath
+@category Try
+
+Here we never throw, just checks the grammar
+@output
+Testing try with just body
+All ok here
+All ok here
+All ok here
+Done
+@endoutput
+*/
+
+
+// basic try with success
+> "Testing try with just body"
+try
+   > "All ok here"
+catch 
+   > "First catch"
+end
+
+
+try
+   > "All ok here"
+catch in a 
+   > "Second catch"
+end
+
+try
+   > "All ok here"
+catch as a 
+   > "Third catch"
+end
+
+> "Done"

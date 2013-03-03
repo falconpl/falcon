@@ -1,0 +1,164 @@
+// 
+// Fences, mutexes and events tests
+//
+
+
+
+// Create a shared entity
+class Entity(count)
+   // The Fence will indicate when workers are done.
+   fence = Fence(count)
+   sem = []
+   done = Barrier()
+   props = []
+   count = count
+   loops = 0
+   
+   // A generic mutex to do pretty output
+   outputMutex = Mutex()
+   
+   init
+      // fill a place where to store cooperative data.
+      for i = 0 to count-1
+         self.props += 0
+         self.sem += Semaphore(0)
+      end
+   end
+   
+   // theese are our agents.
+   function worker( id )
+   
+    // doing interlocked computation here:
+    self.outputMutex.locked( 
+      {() > "Entering worker ", ^~id, "."} )      
+      
+      // each agent does some work...
+      // (this can be also a method, but we're going for a closure).
+      entity = self
+      work = function(signaled)
+         // which is just incrementing our own property
+         entity.props[id]++
+         //... and signaling that we're done.
+         entity.fence.signal()
+      end
+      
+      // the work is automatically marshalled by a waiter
+      waiter = Waiter()
+      // when the semaphore is signaled, we can work...
+      waiter.add( self.sem[id], work )
+      //... and we're done when the barrier is signaled.
+      waiter.add( self.done )
+
+      // this will keep us locked until a non-marshalled entity 
+      // is signaled. In our case, the "done" barrier.
+      // At that point, it returns the signaled entity (but we
+      // don't need it).
+      waiter.wait()
+            
+      self.outputMutex.locked( 
+         {() > "Agent ", ^~id, " terminating." }
+         )      
+   end
+   
+   // advance work to the next step.
+   function moreWork()
+      // one more loop
+      self.loops++
+      // let all our agents to go.
+      for sem in self.sem
+         sem.post()
+      end
+   end
+   
+      
+   // The control function reports what's going on.
+   // We expect each worker to increment the count of its property
+   // by one, and then report completion by signling the fence.
+
+   function control( time )
+      // using a traditional lock approach here.
+      self.outputMutex.lock()
+      > "Entering control for ", time, " seconds."
+      self.outputMutex.unlock()
+      
+      startedAt = seconds()
+      while seconds() - startedAt < time
+         // ask the entity to proceed.
+         self.moreWork()
+         
+         // wait for all the agents to be done.
+         self.fence.wait()
+         // show results and check if all is ok.
+         if self.loops % 100 != 0: continue
+         
+         props = self.props
+         for prop in props
+            forfirst
+               >> @"Time: $({seconds()-startedAt}.2) -- Ctrl: ${self.loops} || "
+            end
+            
+            >> prop
+            
+            formiddle: >> ", "
+            forlast 
+               >> "                  \r"
+               if prop != self.loops
+                  >
+                  // will exit the context group
+                  raise "Count out of sequence."
+               end
+            end            
+         end
+         //rest(500)
+      end
+      
+      >
+      > "Control agent terminated. Signaling the other agents."
+      
+      // open the barrier to terminate the others.
+      self.done.open()      
+   end
+
+
+   // This creates a parallel computation for our test to run.
+   function getReady( time )
+      comp = Parallel()
+      
+      // add all our methods using closures
+      this = self
+      for i = 0 to self.count-1
+         comp.add([{n=> this.worker(n) }, i])
+      end
+      
+      // add also the control method
+      comp.add( {=> this.control(time) } )
+      
+      return comp
+   end
+   
+end
+
+
+//===============================================================
+// The main program.
+//===============================================================
+
+> "Computation test"
+
+// creating five agents.
+instance = Entity(10)
+
+// for 10 seconds
+computation = instance.getReady( 60 )
+
+try
+   computation.launch()
+   >
+   > "Test complete."
+   
+catch in error
+   >
+   > "Caught a generic error:"
+   > error
+end
+   

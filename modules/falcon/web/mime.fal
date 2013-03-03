@@ -14,7 +14,7 @@
     See LICENSE file for licensing details.
 */
 
-const _bstring = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!#$%&()*+,-./"
+const _bstring = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 const _default_boundary_length = 32
 const _header_line_size = 4096
 const _block_buffer = 16384
@@ -29,6 +29,64 @@ enum Multipart
    digest = "digest"
    //# Parallel multipart
    parallel = "parallel"
+end
+
+
+/*# Creates a MIME data part.
+   @param data A string or memory buffer with the data to be attached.
+   @optparam type Content/type of the data (defaults to "application/octet-stream")
+   @optparam fname The file name of the part element.
+   @optparam partName Logical name of the part in the Mime document,
+   @return The new part created by this method.
+
+   This method creates a part that is immediately ready to be attached
+   as a data part in a multipart mime.
+
+   The part created by this method can be configured afterwards. By default, it
+   creates the following default headers:
+   @code
+   Content-Disposition: attachment
+   Content-Transfer-Encoding: base64
+   @endcode
+*/
+function makeDataPart( data, type, fname, partName )
+   if not type: type = "application/octet-stream"
+
+   if fname
+      if not partName: partName = fname
+      part = Part( [
+         "Content-Type" => [ "" => type, "name" => partName ],
+         "Content-Disposition" => ["" => "attachment", "filename" => fname],
+         "Content-Transfer-Encoding" => "base64"] )
+   else
+      part = Part( [
+         "Content-Type" => type,
+         "Content-Disposition" => "attachment",
+         "Content-Transfer-Encoding" => "base64"] )
+   end
+
+
+   // encoding the content
+   if data.typeId() == MemBufType
+      data = Base64.encode( data )
+   else
+      data = Base64.encode( strToMemBuf(data) )
+   end
+
+   // Breaking the part into lines
+   length = data.len()
+   dbuffer = StringStream( length + (length/76)*2+2)
+   for i in [76:length:76]
+      dbuffer.writeText( data, i-76, i )
+      dbuffer.write("\r\n")
+   end
+   if length % 76
+      dbuffer.writeText( data, int(length/76)*76 )
+      dbuffer.write( "\r\n" )
+   end
+   part.body = dbuffer.closeToString()
+
+   return part
 end
 
 /*# Part of a MIME document.
@@ -96,6 +154,18 @@ class Part( headers, body )
       self._boundary = boundary
       self.headers["Content-Type"] = [""=> @"multipart/$partMode", "boundary" => boundary]
       return self
+   end
+
+   /*# Declare this part as a full MIME 1.0 message.
+      This method sets up this part to be a full top-level message in compliancy
+      with RFC2045 (MIME). Mandatory top-level headers are set.
+
+      After this call, this part should not be added as subpart to another
+      parent; however, no check is currently performed.
+   */
+
+   function setTop()
+      self.headers["MIME-Version"] = "1.0"
    end
 
    /*# Sets this part to be a Message part
@@ -172,7 +242,7 @@ class Part( headers, body )
 
    /*# Attach a data content to the mail part.
       @param data A string or memory buffer with the data to be attached.
-      @param type Content/type of the data
+      @param type Content/type of the data (defaults to "application/octet-stream")
       @param fname The file name of the part element.
       @optparam partName Logical name of the part in the Mime document,
       @return The new part created by this method.
@@ -185,29 +255,11 @@ class Part( headers, body )
       to the part to be added.
 
       The part created by this method can be configured afterwards.
+      @see makeDataPart
    */
 
    function attachData( data, type, fname, partName )
-      if not partName: partName = fname
-
-      part = Part( [
-         "Content-Type" => [ "" => type, "name" => partName ],
-         "Content-Disposition" => ["" => "attachment", "filename" => fname],
-         "Content-Transfer-Encoding" => "base64"] )
-
-      // encoding the content
-      data = Base64.encode( strToMemBuf(data) )
-
-      // Breaking the part into lines
-      length = data.len()
-      dbuffer = strBuffer(length / 76 + 3 ) * 76
-      i = 0
-      for i in [76:length:76]
-         dbuffer += data[i-76:i] + "\r\n"
-      end
-      if length % 76: dbuffer += data[int(length/76)*76:] + "\r\n"
-      part.body = dbuffer
-
+      part = makeDataPart( data, type, fname, partName )
       self.attachPart( part )
       return part
    end
@@ -262,13 +314,18 @@ class Part( headers, body )
             end
 
             firstPart.body = self.body
+            self._parts = [firstPart]
          end
 
          self.setMultipart( Multipart.mixed )
          self.body = "This is a MIME Multipart document."
-         self._parts = [firstPart]
       end
-      self._parts += part
+
+      if self._parts
+         self._parts += part
+      else
+         self._parts = [part]
+      end
       return self
    end
 
@@ -280,15 +337,15 @@ class Part( headers, body )
 
       if not count: count = _default_boundary_length
 
-      str = " " * count
-      for n in [0:count]
+      str = "=_" + (" " * count)
+      for n in [2:count+2]
          str[n] = randomPick( _bound_array )
       end
       return str
    end
 
    /*# Transforms this MIME in a string.
-	   @return This MIME element rendered as a String.
+      @return This MIME element rendered as a String.
    */
    function toString()
       s = StringStream()
@@ -296,8 +353,8 @@ class Part( headers, body )
       return s.closeToString()
    end
 
-   /*# Writes this mime-part on the given stream. 
-	  @param stream The stream where to write the part.
+   /*# Writes this mime-part on the given stream.
+     @param stream The stream where to write the part.
    */
    function write( stream )
       self._writeHeaders( stream )
@@ -343,7 +400,7 @@ class Part( headers, body )
             // as the main header is "", we can always be sure that it will be the first
             for key, val in value
                if key: stream.write( key + "=" )
-               if '"' in val or ';' in val
+               if '"' in val or ';' in val or " " in val
                   val = '"' + val.replace( '"', '\"' ) + '"'
                end
                stream.write( val )
@@ -356,22 +413,22 @@ class Part( headers, body )
    end
 
    /*# Sets the text for this MIME part.
-	   @param text The text to be encoded.
+      @param text The text to be encoded.
        @optparam ctype Content type of the part; if not given, defaults to "text/plain"
        @optparam cset Type of encoding of the rendered text. If not given, defaults to "utf-8"
-	   
-	   Converts the text string into an string of the given encoding, and
-	   prepares the headers of the part so that the transport is notified
-	   about the fact that this part is meant to be an encoded text.
-	   
-	   The @b cset parameter, if specificed, must be a character encoding know by Falcon.
+
+      Converts the text string into an string of the given encoding, and
+      prepares the headers of the part so that the transport is notified
+      about the fact that this part is meant to be an encoded text.
+
+      The @b cset parameter, if specificed, must be a character encoding know by Falcon.
    */
-	   
+
    function setText( text, ctype, cset )
       if not ctype: ctype = "text/plain"
       if not cset: cset = "utf-8"
       ttext = transcodeTo( text, cset )
-      self.body = self.quote( ttext )
+      self.body = quote( ttext )
       self.headers[ "Content-Type" ] = [""=>ctype, "charset" => cset]
       self.headers[ "Content-Transfer-Encoding" ] = "quoted-printable"
    end
@@ -383,38 +440,6 @@ class Part( headers, body )
       self.body = transcodeTo( text, cset )
       self.headers[ "Content-Type" ] = [""=>ctype, "charset" => cset]
       self.headers[ "Content-Transfer-Encoding" ] = "8-bit"
-   end
-
-   function quote( text )
-      fmt = Format("rp02X")
-      size = text.len()
-      ttgt = strBuffer( size*1.5 )
-      p = 0
-      line = ""
-      line_len = 0
-      while p < size
-         c = text[*p]
-         if c >= 32 and c <= 127 and c != 61
-            line += "\x0"/c
-            if ++line_len == 75
-               ttgt += line + "=\r\n"
-               line = ""
-               line_len = 0
-            end
-         else
-            if line_len + 3 >= 76
-               ttgt += line +"=\r\n"
-               line = "="+fmt.format(c)
-               line_len = 0
-            else
-               line += "="+fmt.format(c)
-               line_len += 3
-            end
-         end
-         ++p
-      end
-      ttgt += line
-      return ttgt
    end
 
 end
@@ -475,17 +500,30 @@ function _parseHeaders( stream, part )
          end
       end
 
-      key,value = _parseHeaderLine( hdr )
-      hdr = ""
-
-      // should we consider some content type ?
-      if key.lower() == "content-type"
-         bound = _checkMultipart( value, part )
-      end
-
-      part.headers[key] = value
+      bd = _parseSingleHeader( hdr, part )
+      if bd: bound = bd
    end
 
+   // parse the last line
+   if buf
+      bd = _parseSingleHeader( buf, part )
+      if bd: bound = bd
+   end
+
+   return bound
+end
+
+
+function _parseSingleHeader( hdr, part )
+   key,value = _parseHeaderLine( hdr )
+   hdr = ""
+
+   // should we consider some content type ?
+   if key.lower() == "content-type"
+      bound = _checkMultipart( value, part )
+   end
+
+   part.headers[key] = value
    return bound
 end
 
@@ -606,7 +644,7 @@ function _parseHeaderParam( param, xvalues )
       // we know value[-1] is a quote or the upstream would have raised.
       value = value[1:-1].replace( '\"', '"' )
    end
-   
+
    if key == "" and xvalues.get("") != nil
       xvalues[key] += value
    else
@@ -713,5 +751,97 @@ function _parseBoundBody( stream, part, bound )
    end
 end
 
-/* vi: set ai et sts=3 sw=3: */
 
+/** Quotes a text in MIME quoted-printable format.
+@param text The text to be quoted.
+@return The quoted text
+
+@note The input should be 8-bit. Transcoded to utf-8 if unsure.
+*/
+
+function quote( text )
+   fmt = Format("rp02X")
+   size = text.len()
+   ttgt = strBuffer( size*1.5 )
+   p = 0
+   line = ""
+   line_len = 0
+   while p < size
+      c = text[*p]
+      if c >= 32 and c <= 127 and c != 61 and \
+                (line_len < 72 or c != 32 )
+         line += "\x0"/c
+         if ++line_len == 75
+            ttgt += line + "=\r\n"
+            line = ""
+            line_len = 0
+         end
+      else
+         if line_len + 3 >= 76
+            ttgt += line +"=\r\n"
+            line = "="+fmt.format(c)
+            line_len = 0
+         else
+            line += "="+fmt.format(c)
+            line_len += 3
+         end
+      end
+      ++p
+   end
+   ttgt += line
+   return ttgt
+end
+
+/** Unquotes a text in MIME quoted-printable format.
+@param text The text to be unquoted.
+@return The clear text
+*/
+
+function unquote( text )
+   size = text.len()
+   ttgt = strBuffer( size )
+   p0 = 0
+   p1 = text.find( "=" )
+
+   while p0 < size and p1 != -1
+      try
+         ttgt += text[p0:p1]
+         chr0 = text[* ++p1]
+         chr1 = text[* ++p1]
+      catch AccessError
+         raise ParseError( 10011, "Malformed quoted-printable text", "= at end of text" )
+      end
+      
+      p0 = p1+1
+      p1 = text.find( "=", p0 )
+
+      // Is this an =\r\n sequence (inserted EOL)
+      if chr0 == 0xD and chr1 == 0xA
+         continue
+      end
+
+      // is this an hex escape?
+      num = 0
+      if chr0 >= 0x30 and chr0 <= 0x39
+         num = (chr0-0x30) << 4
+      elif chr0 >= 0x41 and chr0 <= 0x45
+         num = (chr0-0x41+10) << 4
+      else
+         raise ParseError( 10011, "Malformed quoted-printable text", "Invaid =XX sequence" )
+      end
+
+      if chr1 >= 0x30 and chr1 <= 0x39
+         num |= chr1-0x30
+      elif chr1 >= 0x41 and chr1 <= 0x45
+         num |= chr1-0x41 + 10
+      else
+         raise ParseError( 10011, "Malformed quoted-printable text", "Invaid =XX sequence" )
+      end
+
+      ttgt += "\x0"/num
+   end
+   
+   return ttgt+text[p0:]
+end
+
+/* vi: set ai et sts=3 sw=3: */

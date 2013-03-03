@@ -1,0 +1,20 @@
+/*
+998 series -- book samples
+
+@name Wiki sample - Closure basic
+
+@output
+4
+6
+8
+@endoutput
+*/
+
+function makeMultiplier( param )
+   return { myparam => myparam * param }
+end
+
+x = makeMultiplier( 2 )
+> x(2)  // 4
+> x(3)  // 6
+> x(4)  // 8

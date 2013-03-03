@@ -1,17 +1,8 @@
 ##################################################
 # Falcon Programming Language
-#
-# CLT - Command Line Tools meta cmake file
+#  -- Command line tools build
 ##################################################
 
-ADD_SUBDIRECTORY(faltest)
-ADD_SUBDIRECTORY(faldisass)
-ADD_SUBDIRECTORY(falrun)
-ADD_SUBDIRECTORY(falcon)
-ADD_SUBDIRECTORY(falpack)
-
-configure_file(
-  executable_wrapper.cmake.in
-  ${CMAKE_BINARY_DIR}/${FALCON_BIN_DIR}/executable_wrapper.cmake
-  @ONLY
-)
+cmake_minimum_required(VERSION 2.6.2)
+add_subdirectory(falcon)
+#add_subdirectory(tests)

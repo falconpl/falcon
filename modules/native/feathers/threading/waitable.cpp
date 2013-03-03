@@ -451,7 +451,7 @@ SyncQueue::~SyncQueue()
    ListElement *e = m_items.begin();
    while( e != 0 )
    {
-      memFree( const_cast< void *>(e->data()) );
+      free( const_cast< void *>(e->data()) );
       e = e->next();
    }
    m_mtx.unlock();

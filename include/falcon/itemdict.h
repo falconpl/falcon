@@ -1,75 +1,127 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: coredict.h
+   FILE: itemdict.h
 
-   Core dictionary -- base abstract class for dictionary interfaces.
+   Class storing lexicographic ordered item dictionaries.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
-   Begin: Sun, 02 Aug 2009 21:18:28 +0200
+   Begin: Mon, 18 Jul 2011 02:22:35 +0200
 
    -------------------------------------------------------------------
-   (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
+   (C) Copyright 2011: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
 */
+#ifndef _FALCON_ITEMDICT_H
+#define	_FALCON_ITEMDICT_H
 
-/** \file
-   Core dictionary -- base abstract class for dictionary interfaces.
-*/
+#include <falcon/setup.h>
+#include <falcon/string.h>
+#include <falcon/overridableclass.h>
+#include <falcon/genericdata.h>
 
-#ifndef FALCON_ITEM_DICT_H
-#define FALCON_ITEM_DICT_H
 
-#include <falcon/types.h>
-#include <falcon/sequence.h>
+namespace Falcon
+{
 
-namespace Falcon {
+class ClassDict;
 
-class Item;
+/** Class storing lexicographic ordered item dictionaries.
 
-/** Base class for item dictionaries.
- * This is the base class for item dictionaries. Dictionaries
- * must support the sequence interface. They cannot be immediately
- * stored into falcon Items; a CoreDict wrapper is necessary.
  */
-class FALCON_DYN_CLASS ItemDict: public Sequence
+class FALCON_DYN_CLASS ItemDict
 {
 public:
-   /** Override sequence to inform all that we're a dictionary. */
-   virtual bool isDictionary() const { return true; }
 
-   virtual uint32 length() const = 0;
-   virtual Item *find( const Item &key ) const = 0;
-   virtual bool findIterator( const Item &key, Iterator &iter ) = 0;
+   ItemDict();
+   ItemDict( const ItemDict& other );
+   ~ItemDict();
 
-   virtual bool remove( const Item &key ) = 0;
-   virtual void put( const Item &key, const Item &value ) = 0;
-   virtual void smartInsert( const Iterator &iter, const Item &key, const Item &value ) = 0;
+   ItemDict* clone() const { return new ItemDict(*this); }
 
-   virtual void merge( const ItemDict &dict ) = 0;
-   virtual void clear() = 0;
 
-   virtual int compare( const ItemDict& other ) const { return compare( other, 0); }
+   void gcMark( uint32 mark );
+   uint32 currentMark() const { return m_currentMark; }
+
+   uint32 flags() const { return m_flags; }
+   void flags( uint32 v ) { m_flags = v; }
+
+   void insert( const Item& key, const Item& value );
+   void remove( const Item& key );
+   Item* find( const Item& key );
+
+   length_t size() const;
+
+   void describe( String& target, int depth = 3, int maxlen = 60 ) const;
+
+   class Enumerator {
+   public:
+      virtual void operator()( const Item& key, Item& value )=0;
+   };
    
-private:
+   void enumerate( Enumerator& rator );   
+   uint32 version() const { return m_version; }
+   
+   static Class* handler();
 
-   /** Classed used internally to track loops in traversals. */
-   class Parentship
+   /** Iterator used by ClassDict to iterate with op_first/op_next. */
+   class Iterator: public GenericData
    {
    public:
-      const ItemDict* m_dict;
-      Parentship* m_parent;
+      Iterator( ItemDict* item );      
+      virtual ~Iterator();
       
-      Parentship( const ItemDict* d, Parentship* parent=0 ):
-         m_dict(d),
-         m_parent( parent )
-      {}
-   };
+      virtual bool gcCheck( uint32 value );
+      virtual void gcMark( uint32 value );
+      virtual Iterator* clone() const;
+      virtual void describe( String& target ) const;
 
-   int compare( const ItemDict& other, Parentship* p ) const;
-   int checkValue( const Item& first, const Item& second, Parentship& current ) const;
+      /** Prepare the next pair on the target item. */
+      bool next( Item& target );
+            
+   private:
+      class Private;
+      Private* _pm;
+      
+      ItemDict* m_dict;
+      uint32 m_version;      
+      uint32 m_currentMark;
+      bool m_complete;
+      String m_tempString;
+      
+      /** Internal iterator advancement. */
+      void advance();
+      
+      typedef enum
+      {
+         e_st_none,
+         e_st_nil,
+         e_st_true,
+         e_st_false,
+         e_st_int,
+         e_st_range,
+         e_st_string,
+         e_st_other,
+         e_st_done
+      } state;
+      
+      state m_state;
+   };
+   
+private:
+   class Private;
+   Private* _p;
+   
+   uint32 m_flags;
+   uint32 m_currentMark;
+   uint32 m_version;
+
+   friend class Iterator;
+   friend class ClassDict;
 };
 
 }
 
-#endif /* FALCON_ITEM_DICT_H */
+#endif /* _FALCON_ITEMDICT_H_ */
+
+/* end of itemdict.h */

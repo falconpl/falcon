@@ -14,7 +14,6 @@
 */
 
 #include <falcon/mt.h>
-#include <falcon/memory.h>
 #include <process.h>
 
 namespace Falcon
@@ -66,20 +65,20 @@ void ThreadSpecific::set( void *value )
 
 
 //==================================================================================
-// System threads. 
+// System threads.
 //
 
-SysThread::~SysThread() 
+SysThread::~SysThread()
 {
    CloseHandle( m_sysdata->hEvtDetach );
    DeleteCriticalSection( &m_sysdata->m_csT );
-   memFree( m_sysdata );
+   free( m_sysdata );
 }
 
 SysThread::SysThread( Runnable* r ):
    m_runnable( r )
 {
-   m_sysdata = ( struct SYSTH_DATA* ) memAlloc( sizeof( struct SYSTH_DATA ) );
+   m_sysdata = ( struct SYSTH_DATA* ) malloc( sizeof( struct SYSTH_DATA ) );
    // The event isactually a barrier.
    m_sysdata->hEvtDetach = CreateEvent( 0, TRUE, FALSE, 0 );
    m_sysdata->retval = 0;
@@ -119,7 +118,7 @@ void* SysThread::RunAThread( void *data )
    {
       tdnext = tdnext->clearAndNext();
    }
-   
+
    return ret;
 }
 
@@ -129,7 +128,7 @@ bool SysThread::start( const ThreadParams &params )
    m_sysdata->hThread = (HANDLE) _beginthreadex( 0, params.stackSize(), &run_a_thread, this, 0, &m_sysdata->nThreadID );
    if ( m_sysdata->hThread == INVALID_HANDLE_VALUE )
       return false;
-   
+
    if ( params.detached() )
       detach();
 
@@ -161,13 +160,13 @@ void SysThread::detach()
       LeaveCriticalSection( &m_sysdata->m_csT );
    }
 }
-   
+
 bool SysThread::join( void* &result )
 {
    // ensure just one thread can join.
    EnterCriticalSection( &m_sysdata->m_csT );
    if ( m_sysdata->m_bJoining || m_sysdata->m_bDetached )
-   { 
+   {
       LeaveCriticalSection( &m_sysdata->m_csT );
       return false;
    }
@@ -175,10 +174,10 @@ bool SysThread::join( void* &result )
       m_sysdata->m_bJoining = true;
       LeaveCriticalSection( &m_sysdata->m_csT );
    }
-   
+
    HANDLE hs[] = { m_sysdata->hEvtDetach, m_sysdata->hThread };
    DWORD wres = WaitForMultipleObjects( 2, hs, FALSE, INFINITE );
-   
+
    if ( wres == WAIT_OBJECT_0 )
    {
       // The thread was detached -- if it's also done, we must destroy it.
@@ -189,7 +188,7 @@ bool SysThread::join( void* &result )
          delete this;
          return false;
       }
-      
+
       m_sysdata->m_bJoining = false;
       LeaveCriticalSection( &m_sysdata->m_csT );
       return false;  // can't join anymore.
@@ -201,7 +200,7 @@ bool SysThread::join( void* &result )
       delete this;
       return true;
    }
-   
+
    // wait failed.
    return false;
 }
@@ -211,17 +210,17 @@ uint64 SysThread::getID()
 {
    return (uint64) m_sysdata->nThreadID;
 }
-   
+
 uint64 SysThread::getCurrentID()
 {
    return (uint64) GetCurrentThreadId();
 }
-   
+
 bool SysThread::isCurrentThread()
 {
    return GetCurrentThreadId() == m_sysdata->nThreadID;
 }
-   
+
 bool SysThread::equal( const SysThread *th1 ) const
 {
    return m_sysdata->nThreadID == th1->m_sysdata->nThreadID;
@@ -245,8 +244,79 @@ void *SysThread::run()
       m_sysdata->m_bDone = true;
       LeaveCriticalSection( &m_sysdata->m_csT );
    }
-   
+
    return data;
+}
+
+
+
+//==========================================================
+// Interruptible event
+//==========================================================
+
+struct int_evt
+{
+   HANDLE evtMain;
+   HANDLE evtIntr;
+};
+
+
+InterruptibleEvent::InterruptibleEvent( bool bManualReset, bool initState )
+{
+   struct int_evt* evt = new struct int_evt;
+   m_sysdata = evt;
+   evt->evtMain = CreateEvent( NULL, bManualReset ? TRUE :FALSE, initState ? TRUE : FALSE, NULL );
+   evt->evtIntr = CreateEvent( NULL, TRUE, FALSE, NULL );
+}
+
+
+InterruptibleEvent::~InterruptibleEvent()
+{
+   struct int_evt* evt = (struct int_evt*) m_sysdata;
+   CloseHandle( evt->evtMain );
+   CloseHandle( evt->evtIntr );
+   delete evt;
+}
+
+
+void InterruptibleEvent::set()
+{
+   struct int_evt* evt = (struct int_evt*) m_sysdata;
+   SetEvent( evt->evtMain );
+}
+
+
+InterruptibleEvent::wait_result_t InterruptibleEvent::wait( int32 to )
+{
+   struct int_evt* evt = (struct int_evt*) m_sysdata;
+   //wait_result_t result;
+
+   HANDLE hs[] = { evt->evtIntr, evt->evtMain };
+   DWORD wres = WaitForMultipleObjects( 2, hs, FALSE, to < 0 ? INFINITE : to );
+
+   if( wres == WAIT_OBJECT_0 )
+   {
+      return wait_interrupted;
+   }
+   else if( wres == WAIT_TIMEOUT )
+   {
+      return wait_timedout;
+   }
+
+   return wait_success;
+}
+
+
+void InterruptibleEvent::interrupt()
+{
+   struct int_evt* evt = (struct int_evt*) m_sysdata;
+   SetEvent( evt->evtIntr );
+}
+
+void InterruptibleEvent::reset()
+{
+   struct int_evt* evt = (struct int_evt*) m_sysdata;
+   ResetEvent( evt->evtMain );
 }
 
 }

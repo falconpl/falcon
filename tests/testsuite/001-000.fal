@@ -1,0 +1,14 @@
+/*
+@name Variable assignment
+@category Expressions
+
+@result Ok
+*/
+
+var = 1
+
+if var
+   return "Ok"
+end
+
+return "Fail"

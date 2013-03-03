@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.85 2009/09/07 21:24:33 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.92 2010/09/16 20:08:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -29,10 +29,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <config.h>
-
+#include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.85 2009/09/07 21:24:33 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.92 2010/09/16 20:08:51 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -56,7 +55,7 @@ __RCSID("$NetBSD: readline.c,v 1.85 2009/09/07 21:24:33 christos Exp $");
 #include "filecomplete.h"
 
 #if !defined(SIZE_T_MAX)
-# define SIZE_T_MAX (size_t)(-1) 
+# define SIZE_T_MAX (size_t)(-1)
 #endif
 
 void rl_prep_terminal(int);
@@ -195,7 +194,7 @@ _move_history(int op)
 		return (HIST_ENTRY *) NULL;
 
 	rl_he.line = ev.str;
-	rl_he.data = (histdata_t) &(ev.num);
+	rl_he.data = NULL;
 
 	return (&rl_he);
 }
@@ -215,6 +214,17 @@ _getc_function(EditLine *el, char *c)
 		return 0;
 	*c = i;
 	return 1;
+}
+
+static void
+_resize_fun(EditLine *el, void *a)
+{
+	const LineInfo *li;
+	char **ap = a;
+
+	li = el_line(el);
+	/* a cheesy way to get rid of const cast. */
+	*ap = memchr(li->buffer, *li->buffer, 1);
 }
 
 static const char _dothistory[] = "/.history";
@@ -269,7 +279,6 @@ int
 rl_initialize(void)
 {
 	HistEvent ev;
-	const LineInfo *li;
 	int editmode = 1;
 	struct termios t;
 
@@ -302,6 +311,9 @@ rl_initialize(void)
 	history_length = 0;
 	max_input_history = INT_MAX;
 	el_set(e, EL_HIST, history, h);
+
+	/* Setup resize function */
+	el_set(e, EL_RESIZE, _resize_fun, &rl_line_buffer);
 
 	/* setup getc function if valid */
 	if (rl_getc_function)
@@ -348,9 +360,7 @@ rl_initialize(void)
 	 * Unfortunately, some applications really do use rl_point
 	 * and rl_line_buffer directly.
 	 */
-	li = el_line(e);
-	/* a cheesy way to get rid of const cast. */
-	rl_line_buffer = memchr(li->buffer, *li->buffer, 1);
+	_resize_fun(e, &rl_line_buffer);
 	_rl_update_pos();
 
 	if (rl_startup_hook)
@@ -506,7 +516,7 @@ get_history_event(const char *cmd, int *cindex, int qchar)
 		if (history(h, &ev, H_FIRST) != 0)
 			return(NULL);
 		*cindex = cmd[idx]? (idx + 1):idx;
-		return(ev.str);
+		return ev.str;
 	}
 	sign = 0;
 	if (cmd[idx] == '-') {
@@ -1295,7 +1305,8 @@ read_history(const char *filename)
 		rl_initialize();
 	if (filename == NULL && (filename = _default_history_file()) == NULL)
 		return errno;
-	return (history(h, &ev, H_LOAD, filename) == -1 ? (errno ? errno : EINVAL) : 0);
+	return (history(h, &ev, H_LOAD, filename) == -1 ?
+	    (errno ? errno : EINVAL) : 0);
 }
 
 
@@ -1311,7 +1322,8 @@ write_history(const char *filename)
 		rl_initialize();
 	if (filename == NULL && (filename = _default_history_file()) == NULL)
 		return errno;
-	return (history(h, &ev, H_SAVE, filename) == -1 ? (errno ? errno : EINVAL) : 0);
+	return (history(h, &ev, H_SAVE, filename) == -1 ?
+	    (errno ? errno : EINVAL) : 0);
 }
 
 
@@ -1453,7 +1465,7 @@ clear_history(void)
 {
 	HistEvent ev;
 
-	history(h, &ev, H_CLEAR);
+	(void)history(h, &ev, H_CLEAR);
 	history_length = 0;
 }
 
@@ -1471,7 +1483,7 @@ where_history(void)
 		return (0);
 	curr_num = ev.num;
 
-	history(h, &ev, H_FIRST);
+	(void)history(h, &ev, H_FIRST);
 	off = 1;
 	while (ev.num != curr_num && history(h, &ev, H_NEXT) == 0)
 		off++;
@@ -1505,10 +1517,10 @@ history_total_bytes(void)
 		return (-1);
 	curr_num = ev.num;
 
-	history(h, &ev, H_FIRST);
+	(void)history(h, &ev, H_FIRST);
 	size = 0;
 	do
-		size += strlen(ev.str);
+		size += strlen(ev.str) * sizeof(*ev.str);
 	while (history(h, &ev, H_NEXT) == 0);
 
 	/* get to the same position as before */
@@ -1530,7 +1542,7 @@ history_set_pos(int pos)
 	if (pos >= history_length || pos < 0)
 		return (-1);
 
-	history(h, &ev, H_CURR);
+	(void)history(h, &ev, H_CURR);
 	curr_num = ev.num;
 
 	/*
@@ -1538,7 +1550,7 @@ history_set_pos(int pos)
 	 * (void **)-1
 	 */
 	if (history(h, &ev, H_DELDATA, pos, (void **)-1)) {
-		history(h, &ev, H_SET, curr_num);
+		(void)history(h, &ev, H_SET, curr_num);
 		return(-1);
 	}
 	return (0);
@@ -1587,7 +1599,7 @@ history_search(const char *str, int direction)
 		if (history(h, &ev, direction < 0 ? H_NEXT:H_PREV) != 0)
 			break;
 	}
-	history(h, &ev, H_SET, curr_num);
+	(void)history(h, &ev, H_SET, curr_num);
 	return (-1);
 }
 
@@ -1600,7 +1612,8 @@ history_search_prefix(const char *str, int direction)
 {
 	HistEvent ev;
 
-	return (history(h, &ev, direction < 0? H_PREV_STR:H_NEXT_STR, str));
+	return (history(h, &ev, direction < 0 ?
+	    H_PREV_STR : H_NEXT_STR, str));
 }
 
 
@@ -1626,7 +1639,6 @@ history_search_pos(const char *str,
 	if (history_set_pos(off) != 0 || history(h, &ev, H_CURR) != 0)
 		return (-1);
 
-
 	for (;;) {
 		if (strstr(ev.str, str))
 			return (off);
@@ -1635,7 +1647,8 @@ history_search_pos(const char *str,
 	}
 
 	/* set "current" pointer back to previous state */
-	history(h, &ev, (pos < 0) ? H_NEXT_EVENT : H_PREV_EVENT, curr_num);
+	(void)history(h, &ev,
+	    pos < 0 ? H_NEXT_EVENT : H_PREV_EVENT, curr_num);
 
 	return (-1);
 }
@@ -1731,6 +1744,10 @@ _rl_completion_append_character_function(const char *dummy
 int
 rl_complete(int ignore __attribute__((__unused__)), int invoking_key)
 {
+#ifdef WIDECHAR
+	static ct_buffer_t wbreak_conv, sprefix_conv;
+#endif
+
 	if (h == NULL || e == NULL)
 		rl_initialize();
 
@@ -1746,11 +1763,14 @@ rl_complete(int ignore __attribute__((__unused__)), int invoking_key)
 	return fn_complete(e,
 	    (CPFunction *)rl_completion_entry_function,
 	    rl_attempted_completion_function,
-	    rl_basic_word_break_characters, rl_special_prefixes,
+	    ct_decode_string(rl_basic_word_break_characters, &wbreak_conv),
+	    ct_decode_string(rl_special_prefixes, &sprefix_conv),
 	    _rl_completion_append_character_function,
 	    (size_t)rl_completion_query_items,
 	    &rl_completion_type, &rl_attempted_completion_over,
 	    &rl_point, &rl_end);
+
+
 }
 
 
@@ -2214,4 +2234,10 @@ rl_bind_key_in_map(int key, rl_command_func_t *fun, Keymap k)
 void
 rl_cleanup_after_signal(void)
 {
+}
+
+int
+rl_on_new_line(void)
+{
+	return 0;
 }

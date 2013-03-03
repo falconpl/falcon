@@ -1,0 +1,82 @@
+/*
+@name Single inheritance with overrides
+@category Classes
+
+@output
+Single inheritance with overrides
+Init from base:
+self.propBase = assigned from child
+self.propOver = 4000
+Init from mine:
+self.propMine = 1000
+self.propOver = 2000
+From Child!
+self.propMine = 1000
+From base!
+self.propBase = assigned from child
+self.propOver = 2000
+Over From Child!
+self.propMine = 1000
+self.propOver = 2000
+Over From base!
+self.propBase = assigned from child
+self.propOver = 2000
+Done
+@endoutput
+*/
+
+class Base( base, over )
+   propBase = base
+   propOver = over
+   
+   init
+      > "Init from base:"
+      > @"self.propBase = ${self.propBase}" 
+      > @"self.propOver = ${self.propOver}" 
+   end
+   
+   function fromBase()
+      > "From base!"
+      > @"self.propBase = ${self.propBase}" 
+      > @"self.propOver = ${self.propOver}" 
+   end
+   
+   function over()
+      > "Over From base!"
+      > @"self.propBase = ${self.propBase}" 
+      > @"self.propOver = ${self.propOver}" 
+   end
+   
+end
+
+class Child( mine, over ) from Base("assigned from child", over*2)
+   propOver = over
+   propMine = mine
+   
+   init
+      > "Init from mine:"
+      > @"self.propMine = ${self.propMine}" 
+      > @"self.propOver = ${self.propOver}" 
+   end
+   
+   function fromChild()
+      > "From Child!"
+      > "self.propMine = ", self.propMine
+      self.fromBase()
+   end
+   
+   function over()
+      > "Over From Child!"
+      > @"self.propMine = ${self.propMine}" 
+      > @"self.propOver = ${self.propOver}" 
+      self.Base.over()
+   end
+end
+
+> "Single inheritance with overrides"
+x = Child(1000, 2000)
+x.fromChild()
+x.over()
+> "Done"
+
+

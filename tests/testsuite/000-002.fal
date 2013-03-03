@@ -1,0 +1,13 @@
+/*
+@name If statement, vital for other tests
+@category Smoke
+
+@result Done
+*/
+
+if 1
+   return "Done"
+end
+
+return "Fail"
+

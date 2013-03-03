@@ -1,0 +1,37 @@
+/*
+@name Prototype truth override
+@category Prototypes
+
+@output
+Prototype truth override for bases.
+I am Init!!
+Is zero true?: false
+Is one true?: true
+Done
+@endoutput
+*/
+
+> "Prototype truth override for bases."
+
+Proto = p{
+   number = nil
+   
+   _isBase = true   
+   _init = { value => 
+         > "I am Init!!"
+         self.number = value
+         return self
+      } 
+         
+   _meta = p{
+      __isTrue = { other =>
+         return self.number != 0
+      }
+   }  
+}
+
+p = Proto( 0 )
+> "Is zero true?: ", (p.number ? "true" : "false")
+p.number = 1
+> "Is one true?: ", (p.number ? "true" : "false")
+> "Done"

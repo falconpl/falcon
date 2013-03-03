@@ -137,7 +137,7 @@ TextIter::TextIter( const Falcon::CoreClass* gen, const GtkTextIter* iter )
 {
     if ( iter )
     {
-        GtkTextIter* m_iter = (GtkTextIter*) memAlloc( sizeof( GtkTextIter ) );
+        GtkTextIter* m_iter = (GtkTextIter*) malloc( sizeof( GtkTextIter ) );
         *m_iter = *iter;
         setUserData( m_iter );
     }
@@ -148,7 +148,7 @@ TextIter::~TextIter()
 {
     GtkTextIter* iter = (GtkTextIter*) getUserData();
     if ( iter )
-        memFree( iter );
+        free( iter );
 }
 
 

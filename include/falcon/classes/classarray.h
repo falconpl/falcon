@@ -1,0 +1,86 @@
+/*
+   FALCON - The Falcon Programming Language.
+   FILE: classarray.h
+
+   Standard language array object handler.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Wed, 27 Apr 2011 14:15:37 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2011: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+#ifndef _FALCON_CLASSARRAY_H_
+#define _FALCON_CLASSARRAY_H_
+
+#include <falcon/setup.h>
+#include <falcon/class.h>
+
+#include <falcon/pstep.h>
+#include <falcon/classes/classuser.h>
+#include <falcon/method.h>
+
+namespace Falcon
+{
+
+class ItemArray;
+
+/**
+ Class handling an array as an item in a falcon script.
+ */
+
+class FALCON_DYN_CLASS ClassArray: public ClassUser
+{
+public:
+
+   ClassArray();
+   virtual ~ClassArray();
+   
+   //=============================================================
+
+   virtual void dispose( void* self ) const;
+   virtual void* clone( void* source ) const;
+   virtual void* createInstance() const;
+   int64 occupiedMemory( void* instance ) const;
+   
+   virtual void store( VMContext* ctx, DataWriter* stream, void* instance ) const;
+   virtual void restore( VMContext* ctx, DataReader* stream ) const;
+   virtual void flatten( VMContext* ctx, ItemArray& subItems, void* instance ) const;
+   virtual void unflatten( VMContext* ctx, ItemArray& subItems, void* instance ) const;
+   
+   virtual void describe( void* instance, String& target, int maxDepth = 3, int maxLength = 60 ) const;
+
+   virtual void gcMarkInstance( void* self, uint32 mark ) const;
+   virtual void enumerateProperties( void* self, PropertyEnumerator& cb ) const;
+   virtual void enumeratePV( void* self, PVEnumerator& cb ) const;
+
+   //=============================================================
+
+   virtual bool op_init( VMContext* ctx, void* instance, int32 pcount ) const;
+   virtual void op_add( VMContext* ctx, void* self ) const;
+   virtual void op_aadd( VMContext* ctx, void* self ) const;
+   virtual void op_isTrue( VMContext* ctx, void* self ) const;
+   virtual void op_toString( VMContext* ctx, void* self ) const;
+   virtual void op_call( VMContext* ctx, int32 paramCount, void* instance ) const;
+
+   virtual void op_getIndex( VMContext* ctx, void* self ) const;
+   virtual void op_setIndex( VMContext* ctx, void* self ) const;
+
+   virtual void op_iter( VMContext* ctx, void* instance ) const;
+   virtual void op_next( VMContext* ctx, void* instance ) const;
+
+
+private:
+   
+   FALCON_DECLARE_STATIC_METHOD(alloc,"size:[N>1]");
+   FALCON_DECLARE_METHOD(reserve,"size:N>1");
+};
+
+}
+
+#endif /* _FALCON_CLASSARRAY_H_ */
+
+/* end of classarray.h */

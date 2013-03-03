@@ -1,0 +1,45 @@
+/*
+@name Prototype provides and in operators
+@category Prototypes
+
+@output
+Prototype provides and in operators.
+I am Init!!
+Providing 'alpha': false
+Providing 'beta' : true
+Having 'alpha'   : true
+having 'beta'    : false
+Done
+@endoutput
+*/
+
+> "Prototype provides and in operators."
+
+Proto = p{
+   number = nil
+   
+   _isBase = true   
+   _init = { value => 
+         > "I am Init!!"
+         self.number = value
+         return self
+      } 
+         
+   _meta = p{
+      __in = { other =>
+         return other[0] == "A"
+      }
+      __provides = { other =>
+         return other[0] == "B"
+      }
+      
+   }  
+}
+
+p = Proto( 0 )
+> "Providing 'alpha': ", (p provides Alpha)
+> "Providing 'beta' : ", (p provides Beta)
+> "Having 'alpha'   : ", ("Alpha" in p)
+> "having 'beta'    : ", ("Beta" in p)
+
+> "Done"

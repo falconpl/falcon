@@ -1,0 +1,30 @@
+/*
+@name "substitute" method
+@category Regex
+
+@output
+Testing RE.substitute
+R'a(.)c'.substitute('abcabc', '-\0-'): "-abc-"
+R'a(.)c'.substitute('abcabc', '-\1-'): "-b-"
+R'a(.)c'.substitute('aaaabc', '-\0-'): "-abc-"
+R'a(.)c'.substitute('aaaabc', '-\1-'): "-b-"
+R'a(.)c'.substitute('bbb', '-\0-'): Nil
+R'a(.)c'.substitute('bbb', '-\1-'): Nil
+R'a(.)c'.substitute('xxaccxaacx', '-\0-'): "-acc-"
+R'a(.)c'.substitute('xxaccxaacx', '-\1-'): "-c-"
+R'a(.)c'.substitute('AAA', '-\0-'): Nil
+R'a(.)c'.substitute('AAA', '-\1-'): Nil
+R'a(.)c'.substitute('ABC', '-\0-'): "-ABC-"
+R'a(.)c'.substitute('ABC', '-\1-'): "-B-"
+R'a(.)c'.substitute('xxABCxxABC', '-\0-'): "-ABC-"
+R'a(.)c'.substitute('xxABCxxABC', '-\1-'): "-B-"
+@endoutput
+*/
+
+> "Testing RE.substitute"
+regex = r'a(.)c'i
+
+for expr in .[ "abcabc" "aaaabc" "bbb" "xxaccxaacx" "AAA" "ABC" "xxABCxxABC" ]
+   > regex,".substitute('",expr,"', '-\\0-'): ", regex.substitute(expr, '-\0-').describe()
+   > regex,".substitute('",expr,"', '-\\1-'): ", regex.substitute(expr, '-\1-').describe()
+end

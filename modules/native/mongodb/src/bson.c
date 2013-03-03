@@ -610,7 +610,7 @@ bson_buffer * bson_append_finish_object( bson_buffer * b ){
 }
 
 void* bson_malloc(int size){
-    void* p = malloc(size);
+    void* p = memAlloc(size);
     bson_fatal_msg(!!p, "malloc() failed");
     return p;
 }

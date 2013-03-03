@@ -1,0 +1,31 @@
+/*
+@name Function int
+@category Core-module
+
+@output
+Core module test -- function int
+1 true
+123 true
+156 true
+Param error recognized
+Done
+@endoutput
+*/
+
+> "Core module test -- function int"
+
+x = int(1)
+> x, " ", x === 1
+x = int("123")
+> x, " ", x === 123
+
+x = int(156.432)
+> x, " ", x === 156
+try
+   x = int( "Hello world" )
+   > "Param error failed recognition: ", x
+catch ParamError
+   > "Param error recognized"
+end
+
+> "Done"

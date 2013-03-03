@@ -1,435 +1,344 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: flc_item.h
+   FILE: item.h
 
-   Basic Item Api.
+   Basic Item API.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
-   Begin: lun ott 4 2004
+   Begin: Thu, 06 Jan 2011 13:21:10 +0100
 
    -------------------------------------------------------------------
-   (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
+   (C) Copyright 2010: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
 */
 
-/** \file
-   Basic Item Api
-*/
 
-#ifndef flc_flc_item_H
-#define flc_flc_item_H
+#ifndef FLC_ITEM_H
+#define FLC_ITEM_H
 
-#include <stdlib.h>
 #include <falcon/types.h>
 #include <falcon/itemid.h>
-#include <falcon/garbageable.h>
-#include <falcon/basealloc.h>
 #include <falcon/string.h>
-#include <falcon/corerange.h>
+#include <falcon/class.h>
+#include <falcon/gctoken.h>
+#include <falcon/collector.h>
+#include <falcon/engine.h>
 
-#define OVERRIDE_OP_ADD       "__add"
-#define OVERRIDE_OP_SUB       "__sub"
-#define OVERRIDE_OP_MUL       "__mul"
-#define OVERRIDE_OP_DIV       "__div"
-#define OVERRIDE_OP_MOD       "__mod"
-#define OVERRIDE_OP_POW       "__pow"
-#define OVERRIDE_OP_NEG       "__neg"
-#define OVERRIDE_OP_INC       "__inc"
-#define OVERRIDE_OP_DEC       "__dec"
-#define OVERRIDE_OP_INCPOST   "__incpost"
-#define OVERRIDE_OP_DECPOST   "__decpost"
-#define OVERRIDE_OP_CALL      "__call"
-#define OVERRIDE_OP_GETINDEX  "__getIndex"
-#define OVERRIDE_OP_SETINDEX  "__setIndex"
+#include <falcon/atomic.h>
 
 namespace Falcon {
 
-class Symbol;
-class CoreString;
-class CoreObject;
-class CoreDict;
-class CoreArray;
-class CoreClass;
-class CallPoint;
-class CoreFunc;
-class GarbageItem;
-class VMachine;
-class Stream;
-class LiveModule;
-class MemBuf;
-class GarbagePointer;
-class FalconData;
-class CodeError;
-class DeepItem;
-
-
-typedef void** CommOpsTable;
-extern FALCON_DYN_SYM CommOpsTable CommOpsDict[];
-
+class Function;
+class ItemArray;
+class ItemDict;
 
 /** Basic item abstraction.*/
-class FALCON_DYN_CLASS Item: public BaseAlloc
+class FALCON_DYN_CLASS Item
 {
 public:
 
-   /** Common operations that can be performed on items.
-      Each item type has a function pointer table taking care of this
-      operations.
+  struct {
+     union {
+        int32 val32;
+        int64 val64;
+        numeric number;
 
-      Deep items operations is that of searching for overloadings
-      via the deep item common DeepItem::getProperty() method,
-      and then eventually calling the operator implementation.
+        struct {
+           void *pInst;
+           Class *pClass;
+        } ptr;
 
-      The operator implementation is called on the VM instance of the
-      deep item.
-   */
-   typedef enum {
-      co_add,
-      co_sub,
-      co_mul,
-      co_div,
-      co_mod,
-      co_pow,
+        struct {
+           void* pOpaque;
+           const char* pOpaqueName;
+        } opaque;
 
-      co_neg,
+     } data;
 
-      co_inc,
-      co_dec,
-      co_incpost,
-      co_decpost,
+     union {
+        Function *function;
+        Class *base;
+        Item* ref;
+        int32 ruleTop;
+     } mth;
 
-      co_compare,
+     union {
+        struct {
+           byte type;
+           byte flags;
+           byte oldType;
+           byte copied;
+        } bits;
+        uint16 half;
+        uint32 whole;
+     } base;
+  } content;
 
-      co_getIndex,
-      co_setIndex,
-      co_getProperty,
-      co_setProperty,
+  mutable atomic_int lockId;
 
-      co_call
-
-   } e_commops;
-
-   /** Serialization / deserialization error code.
-      This value is returned by serialization and deserialization
-      functions to communicate what went wrong.
-   */
-   typedef enum {
-      /** All was fine. */
-      sc_ok,
-      /** File error in serialization/deserialization */
-      sc_ferror,
-      /** Invalid format in deserialization */
-      sc_invformat,
-      /** Missing class in deserialization (object cannot be instantiated).*/
-      sc_missclass,
-      /** Missing symbol in deserialization (requested function not present in VM).*/
-      sc_misssym,
-      /** VM Error in serialization or de-serialization.
-         This is called if VM raised an error during the call of serialization() object
-         methods in case serialization is called, or if the VM raises an error during
-         init() or deserialization() of deserialized objects.
-      */
-      sc_vmerror,
-
-      /** Needed VM but missing.
-         This serialization or deserialization operation required a VM to be provided,
-         but it wasn't.
-      */
-      sc_missvm,
-      /** Hit EOF while de-serializing */
-      sc_eof
-   }
-   e_sercode;
-
-protected:
-  union {
-      struct {
-         union {
-            int32 val32;
-            int64 val64;
-            numeric number;
-            Garbageable *content;
-
-            struct {
-               void *voidp;
-               void *extra;
-            } ptr;
-
-         } data;
-
-         CallPoint *method;
-
-         union {
-            struct {
-               byte type;
-               byte flags;
-               byte oldType;
-               byte reserved;
-            } bits;
-            uint16 half;
-            uint32 whole;
-         } base;
-      } ctx;
-
-      struct {
-         uint64 low;
-         uint64 high;
-      } parts;
-   } all;
-
-
-   bool serialize_object( Stream *file, CoreObject *obj, bool bLive ) const;
-   bool serialize_symbol( Stream *file, const Symbol *sym ) const;
-   bool serialize_function( Stream *file, const CoreFunc *func, bool bLive ) const;
-   bool serialize_class( Stream *file, const CoreClass *cls ) const;
-
-   e_sercode deserialize_symbol( Stream *file, VMachine *vm, Symbol **tg_sym, LiveModule **modId );
-   e_sercode deserialize_function( Stream *file, VMachine *vm );
-   e_sercode deserialize_class( Stream *file, VMachine *vm );
 
 #ifdef _MSC_VER
 	#if _MSC_VER < 1299
-	#define flagIsMethodic 0x02
+	#define flagLiteral 0x01
+	#define flagIsGarbage 0x02
 	#define flagIsOob 0x04
-	#define flagLiteral 0x08
+	#define flagLast 0x08
+	#define flagContinue 0x10
+	#define flagBreak 0x20
 	#else
-	   static const byte flagIsMethodic = 0x02;
+	   static const byte flagLiteral = 0x01;
+	   static const byte flagIsGarbage = 0x02;
 	   static const byte flagIsOob = 0x04;
-	   static const byte flagLiteral = 0x08;
+	   static const byte flagDoubt = 0x08;
+	   static const byte flagContinue = 0x10;
+	   static const byte flagBreak = 0x20;
 	#endif
 #else
-   static const byte flagIsMethodic = 0x02;
+   static const byte flagLiteral = 0x01;
+   static const byte flagIsGarbage = 0x02;
    static const byte flagIsOob = 0x04;
-   static const byte flagLiteral = 0x08;
+   static const byte flagDoubt = 0x08;
+   static const byte flagContinue = 0x10;
+   static const byte flagBreak = 0x20;
 #endif
 
+   static Class* m_funcClass;
+   static Class* m_stringClass;
+   static Class* m_dictClass;
+   static Class* m_arrayClass;
+      
 public:
-   Item( byte t=FLC_ITEM_NIL )
+   /** Initializes the item system.
+    Called by the engine during startup.
+    */
+   static void init( Engine* eng );
+
+      
+   inline Item()
    {
-      type( t );
+      lockId = 0;
+      type( FLC_ITEM_NIL );
    }
 
-   Item( byte t, Garbageable *dt );
-
-
-   Item( CoreFunc* cf )
+   inline void setNil()
    {
-      setFunction( cf );
+      type( FLC_ITEM_NIL );
    }
 
-   void setNil() { type( FLC_ITEM_NIL ); }
-
-   void setUnbound() { type( FLC_ITEM_UNB ); }
-
-   Item( const Item &other ) {
+   inline Item( const Item &other )
+   {
+      lockId = 0;
+      other.lock();
+      other.copied(true);
       copy( other );
+      other.unlock();
    }
+
+   /** Creates a String item.
+    \param str A C string that is taken as-is and converted to a Falcon String.
+    
+    A Falcon String is created as static (the input \b str is considered to stay
+    valid throut the lifetime of the program), and then the String is sent to
+    the garbage collector.
+
+    In case the input data is transient, use the Item( const String& ) constructor
+    instead, throught the following idiom:
+
+    @code
+      char *cptr = ret_transient();
+      Item item( String( cptr, -1 ) );
+    @endcode
+
+    \note The operation is Encoding neuter.
+    */
+   Item( const char* str )
+   {
+      lockId = 0;
+      setString(str);
+   }
+
+   Item( const char* name, void* opaque )
+   {
+      lockId = 0;
+      setOpaque(name, opaque);
+   }
+
+   void setOpaque( const char* name, void* opaque ) {
+      type( FLC_ITEM_OPAQUE );
+      content.data.opaque.pOpaqueName = name;
+      content.data.opaque.pOpaque = opaque;
+   }
+
+   /** Creates a String item.
+    \param str A wchar_t string that is taken as-is and converted to a Falcon String.
+
+     A Falcon String is created as static (the input \b str is considered to stay
+    valid throut the lifetime of the program), and then the String is sent to
+    the garbage collector.
+
+    In case the input data is transient, use the Item( const String& ) constructor
+    instead, throught the following idiom:
+
+    @code
+      wchar_t *cptr = ret_transient();
+      Item item( String( cptr, -1 ) );
+    @endcode
+
+    \note The operation is Encoding neuter (the input is considered UDF).
+    */
+   Item( const wchar_t* str )
+   {
+      lockId = 0;
+      setString(str);
+   }
+
+   /** Creates a String item.
+    \param str A Falcon string that will be copied.
+
+    The deep contents of the string are copied only if the string is
+    buffered; static strings (strings created out of static char* or wchar_t*
+    data) are not deep-copied.
+
+    The created string is subject to garbage collecting.
+    */
+   Item( const String& str )
+   {
+      lockId = 0;
+      setString(str);
+   }
+
+   /** Sets this item to a String item.
+    \param str A C string that is taken as-is and converted to a Falcon String.
+    \see Item( char* )
+    */
+   Item& setString( const char* str );
+
+   /** Sets this item to a String item.
+    \param str A wchar_t string that is taken as-is and converted to a Falcon String.
+    \see Item( wchar_t* )
+    */
+   Item& setString( const wchar_t* str );
+
+   /** Sets this item to a String item.
+    \param str A Falcon string that will be copied.
+    \see Item( const String& )
+    */
+   Item& setString( const String& str );
 
    /** Creates a boolean item. */
+   explicit inline Item( bool b ) {
+      lockId = 0;
+      setBoolean( b );
+   }
 
    /** Sets this item as boolean */
-   void setBoolean( bool tof )
+   inline Item& setBoolean( bool tof )
    {
+      lockId = 0;
       type( FLC_ITEM_BOOL );
-      all.ctx.data.val32 = tof? 1: 0;
-   }
-
-   /** Creates an garbage pointer item */
-   Item( GarbagePointer* val )
-   {
-      setGCPointer( val );
+      content.data.val32 = tof? 1: 0;
+      return *this;
    }
 
    /** Creates an integer item */
-   Item( int16 val )
+   inline Item( int32 val )
    {
+      lockId = 0;
       setInteger( (int64) val );
    }
 
    /** Creates an integer item */
-   Item( uint16 val )
+   inline Item( int64 val )
    {
-      setInteger( (int64) val );
-   }
-
-   /** Creates an integer item */
-   Item( int32 val )
-   {
-      setInteger( (int64) val );
-   }
-
-   /** Creates an integer item */
-   Item( uint32 val )
-   {
-      setInteger( (int64) val );
-   }
-
-
-   /** Creates an integer item */
-   Item( int64 val )
-   {
+      lockId = 0;
       setInteger( val );
    }
 
-
-   /** Creates an integer item */
-   Item( uint64 val )
-   {
-      setInteger( (int64)val );
-   }
-
-   void setInteger( int64 val ) {
+   inline Item& setInteger( int64 val ) {
       type(FLC_ITEM_INT);
-      all.ctx.data.val64 = val;
+      content.data.val64 = val;
+      return *this;
    }
 
    /** Creates a numeric item */
-   Item( numeric val )
+   inline Item( numeric val )
    {
+      lockId = 0;
       setNumeric( val );
    }
 
-   void setNumeric( numeric val ) {
+   inline Item& setNumeric( numeric val ) {
       type( FLC_ITEM_NUM );
-      all.ctx.data.number = val;
+      content.data.number = val;
+      return *this;
    }
 
-   /** Creates a range item */
-   Item( CoreRange *r )
+   inline Item( Function* f )
    {
-      setRange( r );
+      lockId = 0;
+      setFunction(f);
    }
 
-   void setRange( CoreRange *r );
-
-   /** Creates a corestring.
-      The given string is copied and stored in the Garbage system.
-      It is also bufferized, as the most common usage of this constructor
-      is in patterns like Item( "a static string" );
-   */
-   Item( const String &str );
-
-   /** Creates a CoreString item */
-   Item( String *str )
+   inline Item& setFunction( Function* f )
    {
-      setString( str );
+      type( FLC_CLASS_ID_FUNC );
+      content.data.ptr.pInst = f;
+      content.data.ptr.pClass = Item::m_funcClass;
+      return *this;
    }
 
-   /* Creates a String item dependent from a module */
-   /*Item( String *str, LiveModule* lm )
-   {
-      setString( str, lm );
-   }*/
-
-   void setString( String *str );
-   //void setString( String *str, LiveModule* lm );
-
-   /** Creates an array item */
-   Item( CoreArray *array )
-   {
-      setArray( array );
+   inline Item( const Class* cls, void* inst ) {
+      lockId = 0;
+       setUser( cls, inst );
    }
 
-   void setArray( CoreArray *array );
 
-   /** Creates an object item */
-   Item( CoreObject *obj )
+   inline Item& setUser( const Class* cls, void* inst )
    {
-      setObject( obj );
+       type( (byte) cls->typeID() );
+       content.data.ptr.pInst = inst;
+       content.data.ptr.pClass = (Class*) cls;
+       content.base.bits.flags &= ~flagIsGarbage;
+       return *this;
    }
 
-   void setObject( CoreObject *obj );
-
-   /** Creates a dictionary item */
-   Item( CoreDict *obj )
+   inline Item( GCToken* token )
    {
-      setDict( obj );
+      lockId = 0;
+      setUser( token );
+   }
+   
+   inline Item& setUser( GCToken* token )
+   {
+       type( (byte) token->cls()->typeID() ); // normally
+       content.data.ptr.pClass = token->cls();
+       content.data.ptr.pInst = token->data();
+       content.base.bits.flags |= flagIsGarbage;
+       return *this;
    }
 
-   void setDict( CoreDict *dict );
 
-   /** Creates a memory buffer. */
-   Item( MemBuf *buf )
+   inline Item& methodize( Function* mthFunc )
    {
-      setMemBuf( buf );
+       content.mth.function = mthFunc;
+       content.base.bits.oldType = content.base.bits.type;
+       content.base.bits.type = FLC_ITEM_METHOD;
+       return *this;
    }
 
-   void setMemBuf( MemBuf *b );
-
-   Item( GarbageItem *ref )
+   inline void unmethodize()
    {
-      setReference( ref );
+       content.base.bits.type = content.base.bits.oldType;
    }
 
-   /** Creates a reference to another item. */
-   void setReference( GarbageItem *ref );
-
-   GarbageItem *asReference() const { return (GarbageItem *) all.ctx.data.ptr.voidp; }
-
-   /** Creates a function item */
-   void setFunction( CoreFunc* cf );
-
-   /** Creates a late binding item.
-      The late binding is just a CoreString in a live module which is
-      resolved into a value by referencing a item in the current
-      context (symbol tables) having the given name at runtime.
-
-      Thus, the CoreString representing the late binding symbol name
-      lives in the live module that generated this LBind. If
-      the module is unloaded, the LBind is invalidated.
-
-      \param lbind The name of the late binding symbol.
-      \param val If provided, a future value (future binding).
-   */
-   void setLBind( String *lbind, GarbageItem *val=0 );
-
-   /** Returns true if this item is a valid LBind.
-   */
-   bool isLBind() const { return type() == FLC_ITEM_LBIND; }
-   bool isFutureBind() const { return isLBind() && all.ctx.data.ptr.extra != 0; }
-
-   /** Return the binding name associate with this LBind item.
-   */
-   String *asLBind() const { return (String *) all.ctx.data.ptr.voidp; }
-   GarbageItem *asFBind() const { return (GarbageItem *) all.ctx.data.ptr.extra; }
-
-   bool isLitLBind() const { return isLBind() && asLBind()->getCharAt(0) == '.'; }
-
-
-   const Item &asFutureBind() const;
-   Item &asFutureBind();
-
-   /** Creates a method.
-      The method is able to remember if it was called with
-      a Function pointer or using an external function.
-   */
-   Item( const Item &data, CallPoint* func )
+   inline void getMethodItem( Item& tgt )
    {
-      setMethod( data, func );
+      tgt.content.base.bits.type = content.base.bits.oldType;
+      tgt.content.base.bits.flags = 0;
+      tgt.content.data.ptr.pInst = content.data.ptr.pInst;
+      tgt.content.data.ptr.pClass = content.data.ptr.pClass;
    }
-
-   Item( CoreObject *obj, CoreClass *cls )
-   {
-      setClassMethod( obj, cls );
-   }
-
-   /** Creates a method.
-      The method is able to remember if it was called with
-      a Function pointer or using an external function.
-   */
-   void setMethod( const Item &data, CallPoint *func );
-
-   void setClassMethod( CoreObject *obj, CoreClass *cls );
-
-   /** Creates a class item */
-   Item( CoreClass *cls )
-   {
-      setClass( cls );
-   }
-
-   void setClass( CoreClass *cls );
-
 
    /** Defines this item as a out of band data.
       Out of band data allow out-of-order sequencing in functional programming.
@@ -441,12 +350,17 @@ public:
       In example, returning an out of band NIL value from an xmap mapping
       function will cause xmap to discard the data.
    */
-   void setOob() { all.ctx.base.bits.flags |= flagIsOob; }
+   void setOob() { content.base.bits.flags |= flagIsOob; }
 
    /** Clear out of band status of this item.
       \see setOob()
    */
-   void resetOob() { all.ctx.base.bits.flags &= ~flagIsOob; }
+   void resetOob() { content.base.bits.flags &= ~flagIsOob; }
+
+   /** Toggle out of band status of this item.
+      \see setOob() resetOob()
+   */
+   void xorOob() { content.base.bits.flags ^= flagIsOob; }
 
    /** Sets or clears the out of band status status of this item.
       \param oob true to make this item out of band.
@@ -454,53 +368,77 @@ public:
    */
    void setOob( bool oob ) {
       if ( oob )
-         all.ctx.base.bits.flags |= flagIsOob;
+         content.base.bits.flags |= flagIsOob;
       else
-         all.ctx.base.bits.flags &= ~flagIsOob;
+         content.base.bits.flags &= ~flagIsOob;
    }
-
-   /** Set this item as a user-defined Garbage pointers.
-       VM provides GC-control over them.
-   */
-   void setGCPointer( FalconData *ptr );
-   void setGCPointer( GarbagePointer *shell );
-
-   FalconData *asGCPointer() const;
-   GarbagePointer *asGCPointerShell() const;
-
-   bool isGCPointer() const { return type() == FLC_ITEM_GCPTR; }
 
    /** Tells wether this item is out of band.
       \return true if out of band.
       \see oob()
    */
-   bool isOob() const { return (all.ctx.base.bits.flags & flagIsOob )== flagIsOob; }
-
-   /** Returns true if this item is an instance of some sort.
-      \return true if this is an object, blessed dictionary or bound array.
-   */
-   bool isComposed() const { return isObject() || isArray() || isDict(); }
+   bool isOob() const { return (content.base.bits.flags & flagIsOob )== flagIsOob; }
 
    /** Returns the item type*/
-   byte type() const { return all.ctx.base.bits.type; }
-
-   /** Returns the item type as string*/
-   void typeName( String &target ) const;
+   byte type() const { return content.base.bits.type; }
    
    /** Changes the item type.
    
       Flags are also reset. For example, if this item was OOB before,
       the OOB flag is cleared.
+
+      The copy marker is cleared as well.
    */
-   void type( byte nt ) { all.ctx.base.bits.flags = 0; all.ctx.base.bits.type = nt; }
-
-   /** Returns the content of the item */
-   Garbageable *content() const { return all.ctx.data.content; }
-
-   void content( Garbageable *dt ) {
-      all.ctx.data.content = dt;
+   void type( byte nt ) { 
+      content.base.bits.copied = false;
+      content.base.bits.flags = 0;
+      content.base.bits.type = nt;
    }
 
+   /**
+    * True if the instance in this item comes from the garbage collector.
+    *
+    * Meaningful only if the item is a user item (isUser() is true).
+    */
+   bool isGarbage() {
+      return (content.base.bits.flags & flagIsGarbage) != 0;
+   }
+
+   /**
+    * Use with caution.
+    */
+   void setGarbage() {
+      content.base.bits.flags |= flagIsGarbage;
+   }
+
+   /** Returns true if this item has the copy-marker.
+    \return true if copied.
+    */
+   bool copied() const { return content.base.bits.copied != 0; }
+
+   /** Sets the copy mode.
+      \note the method is marked "const" because it operates on
+      a "virtually mutable" copied marker.
+    */
+   void copied( bool bMode ) const {
+      const_cast<Item*>(this)->content.base.bits.copied = bMode;
+   }
+
+   /** Copies the full contents of another item.
+      \param other The copied item.
+
+    This performs a full flat copy of the original item.
+
+    \note This doesn't set the copy marker; the copy marker is meant to determine
+    if the VM has copied an item a script level while basic copy operations
+    may not have this semantic at lower level. For example, one may make a
+    temporary flat copy of a stack item without willing to notify that to the
+    VM.
+
+    The copy mark is actually copied as any other flag or value in the original
+    item. To explicitly declare the original item copied, use the assign()
+    method or used the explicit copied(bool) method.
+    */
    void copy( const Item &other )
    {
       #ifdef _SPARC32_ITEM_HACK
@@ -513,84 +451,82 @@ public:
       pthis[3]= pother[3];
 
       #else
-         all = other.all;
+         content = other.content;
       #endif
    }
 
-   /** Tells if this item is callable.
-      This function will turn this object into a nil
-      if the item referenced a dead module. As this is a pathological
-      situation, a const cast is forced.
-   */
-   bool isCallable() const;
-
-   /** Return true if this is a callable item that is turned into a method when found as property.*/
-   bool canBeMethod() const;
-
-   bool isOrdinal() const {
-      return type() == FLC_ITEM_INT || type() == FLC_ITEM_NUM;
-   }
-
-   bool asBoolean() const
+   /** Assign an item to this item.    
+    This operation resolves into marking the source item as copied, and then
+    applying the copy item.
+    */
+   void assign( const Item& other  )
    {
-      return all.ctx.data.val32 != 0;
+      Item temp;
+      other.lock();
+      other.copied(true);
+      temp.copy(other);
+      other.unlock();
+
+      lock();
+      copy(temp);
+      unlock();
    }
 
-   int64 asInteger() const { return all.ctx.data.val64; }
-
-   numeric asNumeric() const { return all.ctx.data.number; }
-
-   int64 asRangeStart() const { return static_cast<CoreRange*>(all.ctx.data.content)->start(); }
-   int64 asRangeEnd()  const { return static_cast<CoreRange*>(all.ctx.data.content)->end(); }
-   int64 asRangeStep()  const { return static_cast<CoreRange*>(all.ctx.data.content)->step(); }
-   bool asRangeIsOpen()  const { return static_cast<CoreRange*>(all.ctx.data.content)->isOpen(); }
-   CoreRange* asRange() const { return static_cast<CoreRange*>(all.ctx.data.content); }
-
-   String *asString() const { return (String *) all.ctx.data.ptr.voidp; }
-   LiveModule *asStringModule() const { return (LiveModule *) all.ctx.data.ptr.extra; }
-   CoreString *asCoreString() const { return (CoreString *) all.ctx.data.ptr.voidp; }
-
-   DeepItem *asDeepItem() const { return (DeepItem *) all.ctx.data.ptr.voidp; }
-
-   /** Provides a basic CoreString representation of the item.
-      Use Falcon::Format for a finer control of item representation.
-      \param target a CoreString where the item CoreString representation will be placed.
-   */
-   void toString( String &target ) const;
-   CoreArray *asArray() const { return (CoreArray *) all.ctx.data.ptr.voidp; }
-   CoreObject *asObject() const;
-   CoreObject *asObjectSafe() const { return (CoreObject *) all.ctx.data.ptr.voidp; }
-   CoreDict *asDict() const { return ( CoreDict *) all.ctx.data.ptr.voidp; }
-   MemBuf *asMemBuf() const { return ( MemBuf *) all.ctx.data.ptr.voidp; }
-
-   CoreClass* asClass() const { return (CoreClass *) all.ctx.data.ptr.extra; }
-   CoreFunc* asFunction() const { return (CoreFunc*) all.ctx.data.ptr.extra; }
-   CallPoint* asMethodFunc() const { return (CallPoint*) all.ctx.method; }
-
-   /** Gets the "self" in an item (return the item version). */
-   Item asMethodItem() const {
-      Item temp = *this;
-      temp.type( all.ctx.base.bits.oldType );
-      temp = *temp.dereference();
-      temp.flagsOn( flagIsMethodic );
-      return temp;
+   /**
+    * Assign without interlocking the other item.
+    * \param local The local item from which we do an unlocked copy.
+    *
+    * This method only locks this item; this is ok
+    * if the source is in the local context data stack.
+    */
+   void assignFromLocal( const Item& local  )
+   {
+      local.copied(true);
+      lock();
+      copy(local);
+      unlock();
    }
 
-   /** Gets the "self" in an item (pass byref version). */
-   void getMethodItem( Item &itm ) const {
-      itm = *this;
-      itm.type( all.ctx.base.bits.oldType );
-      itm = *itm.dereference();
-      itm.flagsOn( flagIsMethodic );
+   /**
+    * Perform an assignment from a remote locked item to a local copy.
+    * \param remote The remote, non local item from which we do locked copy.
+    *
+    * This method only locks this item; this is ok
+    * if the source is in the local context data stack.
+    */
+   void assignFromRemote( const Item& remote )
+   {
+      remote.lock();
+      remote.copied(true);
+      copy(remote);
+      remote.unlock();
    }
 
-   /** Turns a method item into its original "self". */
-   void deMethod() { type( all.ctx.base.bits.oldType ); }
 
-   CoreClass *asMethodClass() const { return (CoreClass*) all.ctx.data.ptr.extra; }
-   CoreObject *asMethodClassOwner() const { return (CoreObject*) all.ctx.data.ptr.voidp; }
+   /**
+    * Perform a non-assignment local copy.
+    * \param other The local item from which we do an unlocked copy.
+    *
+    * This method only locks this item; this is ok
+    * if the source is in the local context data stack.
+    */
+   void copyFromLocal( const Item& other )
+   {
+      lock();
+      copy(other);
+      unlock();
+   }
 
-   //LiveModule *asModule() const { return all.ctx.data.ptr.m_liveMod; }
+   bool asBoolean() const { return content.data.val32 != 0; }
+   int64 asInteger() const { return content.data.val64; }
+   numeric asNumeric() const { return content.data.number; }
+   Function* asFunction() const { return static_cast<Function*>(content.data.ptr.pInst); }
+
+   Function* asMethodFunction() const { return content.mth.function; }
+   Class* asMethodClass() const { return content.mth.base; }
+
+   void* asInst() const { return content.data.ptr.pInst; }
+   Class* asClass() const { return content.data.ptr.pClass; }
 
    /** Convert current object into an integer.
       This operations is usually done on integers, numeric and CoreStrings.
@@ -610,35 +546,84 @@ public:
       This operations is usually done on integers, numeric and CoreStrings.
       It will do nothing meaningfull on other types.
    */
-   numeric forceNumeric() const ;
-
-   /** Calculates the hash function for this item.
-   */
-   uint32 hash() const;
-
+   numeric forceNumeric() const ;  
+   
    bool isNil() const { return type() == FLC_ITEM_NIL; }
    bool isBoolean() const { return type() == FLC_ITEM_BOOL; }
    bool isInteger() const { return type() == FLC_ITEM_INT; }
    bool isNumeric() const { return type() == FLC_ITEM_NUM; }
-   bool isScalar() const { return type() == FLC_ITEM_INT || type() == FLC_ITEM_NUM; }
-   bool isRange() const { return type() == FLC_ITEM_RANGE; }
-   bool isString() const { return type() == FLC_ITEM_STRING; }
-   bool isArray() const { return type() == FLC_ITEM_ARRAY; }
-   bool isDict() const { return type() == FLC_ITEM_DICT; }
-   bool isMemBuf() const { return type() == FLC_ITEM_MEMBUF; }
-   bool isObject() const { return type() == FLC_ITEM_OBJECT; }
-   bool isReference() const { return type() == FLC_ITEM_REFERENCE; }
-   bool isFunction() const { return type() == FLC_ITEM_FUNC; }
+   bool isFunction() const { return type() == FLC_CLASS_ID_FUNC; }
    bool isMethod() const { return type() == FLC_ITEM_METHOD; }
-   bool isClassMethod() const { return type() == FLC_ITEM_CLSMETHOD; }
-   bool isClass() const { return type() == FLC_ITEM_CLASS; }
-   bool isUnbound() const { return type() == FLC_ITEM_UNB; }
-   bool isOfClass( const String &className ) const;
+   bool isOrdinal() const { return type() == FLC_ITEM_INT || type() == FLC_ITEM_NUM; }
+   bool isCallable() const;
+   bool isOpaque() const { return type() == FLC_ITEM_OPAQUE; }
+   
+   bool isUser() const { return type() >= FLC_ITEM_USER; }
+   bool isClass() const { return type() == FLC_CLASS_ID_CLASS; }
+   
+   /** A stub for now */
+   bool isMemBuf() const { return false; } 
+   bool isString() const {
+      return (type() == FLC_CLASS_ID_STRING);
+   }
 
-   bool isMethodic() const { return (flags() & flagIsMethodic) != 0; }
+   bool isRange() const {
+      return (type() == FLC_CLASS_ID_RANGE);
+   }
 
+   bool isArray() const {
+      return (type() == FLC_CLASS_ID_ARRAY);
+   }
+
+   bool isDict() const {
+      return (type() == FLC_CLASS_ID_DICT);
+   }
+
+   
    bool isTrue() const;
+   
+   /** Turns an item into its non-user class form.
+    \return True if the item can be de-usered.
+    
+    Suppose a flat item has been turned into a pair of user-data entities
+    through a forceClassInst() call. It's sometimes useful to perform the
+    reverse operation, re-obtaining a flat item out of this pair.
+    \note Can be called only on items that have been already tested as being
+    FLC_ITEM_USER.
+    */
+   bool deuser()
+   {
+      fassert2(type() >= FLC_ITEM_USER, 
+            "Item::deuser() must be called only on FLC_ITEM_USER items.");
+      int id = (int)asClass()->typeID();
+      if( id < FLC_ITEM_COUNT )
+      {
+         *this = *static_cast<Item*>(asInst());
+         return true;
+      }
+      else
+      {
+         return false;
+      }
+   }
+   
+   /** Turns the item into a string.
+    This method turns the item into a string for a minimal external representation.
 
+    In case the item is deep, it will use the Class::describe() member to obtain
+    a representation.
+    */
+   void describe( String& target, int depth = 3, int maxLen = 60 ) const;
+
+   String describe( int depth = 3, int maxLen = 60) const {
+      String t;
+      describe(t, depth, maxLen);
+      return t;
+   }
+
+   /** Operator version of copy.
+    \note This doesn't set the copy marker. Use assign() for that.
+    */
    Item &operator=( const Item &other ) { copy( other ); return *this; }
    bool operator==( const Item &other ) const { return compare(other) == 0; }
    bool operator!=( const Item &other ) const { return compare(other) != 0; }
@@ -648,81 +633,38 @@ public:
    bool operator>=(const Item &other) const { return compare( other ) >= 0; }
 
    bool exactlyEqual( const Item &other ) const;
-   
-   inline Item *dereference();
-   inline const Item *dereference() const;
-
-   /** Turns this item in a method of the given object.
-      This is meant to be used by external functions when accessing object properties.
-      VM always creates a method when accessor is used; in example, myObject.someFunc()
-      will create a method myObject.someFunc if there is some callable inside the given
-      property, and then will call it. In this way, a function may be assigned to that
-      property, and the VM will take care to create an item that will turn the function
-      in a method.
-
-      But when a non-vm program accesses an object "method", the calling program may
-      have assigned something different to it in the meanwhile, and what its returned
-      in CoreObject::getProperty() won't be a callable method, but just the assigned
-      object.
-
-      Methodize will turn such an item in a callable method of the object given as
-      parameter, if this is possible, else it will return false.
-      \note External methods (that is, methods calling external functions) won't be
-      methodized, as they often rely in external values carried inside their CoreObject
-      owners. However, the function will return true, as the object can be called, and
-      very probably it will do what expected by the user (as the external method would
-      have never used anything other than the VM generated self anyhow).
-      \note CoreObject::getMethod() is a shortcut to this function.
-
-      \param self the object that will be set as "self" for the method
-      \return true if the item can be called properly, false if it's not a callable.
-   */
-   bool methodize( const Item& self );
-   bool methodize( const CoreObject *co )
-   {
-      return methodize( Item(const_cast<CoreObject *>(co)) );
-   }
-
-
-   /** Serialize this item.
-      This method stores an item on a stream for later retrival.
-
-      The function can return true if the serialization succeded. It will return false if
-      the serialization failed; in that case, if there is an error on the stream, it can
-      be retreived form the stream variable. If the stream reports no error, then the
-      serialization failed because a VM was not provided while a serialized method should
-      have been called on the target object, or in any referenced object, or because the
-      VM received an error during the method call.
-
-      \param out the output stream
-      \param bLive true
-      \return an error code in case of error (\see e_sercode).
-   */
-   e_sercode serialize( Stream *out, bool bLive = false ) const;
-
-
-   /** Loads a serialized item from a stream.
-      This method restores an item previously stored on a stream for later retrival.
-      Providing a virtual
-      machine that is optional; if not provided, items requiring the VM for deserialization
-      won't be correctly restored. Objects deserialization requires a VM readied with
-      the class the object derives from.
-      \see serialize()
-
-      \param in the input stream
-      \param vm the virtual machine that can be used for object deserialization
-      \return an error code in case of error (\see e_sercode).
-   */
-   e_sercode deserialize( Stream *in, VMachine *vm = 0 );
+   int compare( const Item& other ) const;
 
    /** Flags, used for internal vm needs. */
-   byte flags() const { return all.ctx.base.bits.flags; }
-   void flags( byte b ) { all.ctx.base.bits.flags = b; }
-   void flagsOn( byte b ) { all.ctx.base.bits.flags |= b; }
-   void flagsOff( byte b ) { all.ctx.base.bits.flags &= ~b; }
+   byte flags() const { return content.base.bits.flags; }
+   void flags( byte b ) { content.base.bits.flags = b; }
+   void flagsOn( byte b ) { content.base.bits.flags |= b; }
+   void flagsOff( byte b ) { content.base.bits.flags &= ~b; }
 
+   bool isDoubt() const { return (content.base.bits.flags & flagDoubt ) != 0; }
+   bool isBreak() const { return (content.base.bits.flags & flagBreak ) != 0; }
+   bool isContinue() const { return (content.base.bits.flags & flagContinue ) != 0; }
 
-   /** Clone the item (with the help of a VM).
+   void setDoubt() { content.base.bits.flags |= flagDoubt; }
+   void clearDoubt() { content.base.bits.flags &= ~flagDoubt; }
+   void setBreak() { content.base.bits.flags |= flagBreak; }
+   void setContinue() { content.base.bits.flags |= flagContinue; }
+
+   /** GC Mark the item -- if necessary. 
+    Provided this is an item in need of GC marking, this method asks the
+    item class to mark the item. Otherwise, the operation is no-op.
+    
+    */
+   
+   void gcMark( uint32 mark ) const
+   {
+      if( isUser() )
+      {
+         asClass()->gcMarkInstance( asInst(), mark );
+      }
+   }
+
+   /** Clone the item.
       If the item is not cloneable, the method returns false. Is up to the caller to
       raise an appropriate error if that's the case.
       The VM parameter may be zero; in that case, returned items will not be stored in
@@ -733,301 +675,106 @@ public:
 
       Also, in that case, the returned item will be free of reference.
 
-      \param vm the virtual machine used for cloning.
       \param target the item where to stored the cloned instance of this item.
       \return true if the clone operation is possible
    */
    bool clone( Item &target ) const;
 
-   /** Return true if the item deep.
-      Deep items are the ones that are subject to garbage collecting.
-      \return true if the item is deep.
+
+   /** Gets the class and the instance from a deep item.
+    \param cls The class of this deep or user item.
+    \param udata The user data associated with this item.
+    \return false if the item is not deep or user.
+
+    This method simplifies the detection of deep items and the
+    extraction of their vital elements (user data and handling class).
+
+    This method fails if the object is flat. A more generic function is
+    forceClassInst() that will return the handler class also for simple items;
+    however forceClassInst() is slower.
+    */
+   bool asClassInst( Class*& cls, void*& udata ) const
+   {
+      if( isUser() )
+      {
+         cls = asClass();
+         udata = asInst();
+         return true;
+      }
+      return false;
+   }
+
+   ItemArray* asArray() const
+   {
+      return static_cast<ItemArray*>(asInst());
+   }
+   
+   String* asString() const
+   {      
+      return static_cast<String*>(asInst());
+   }
+   
+   ItemDict* asDict() const
+   {
+      return static_cast<ItemDict*>(asInst());
+   }
+   
+   Item* asReference() const
+   {
+      return content.mth.ref;
+   }
+
+   void* asOpaque() const {
+      return content.data.opaque.pOpaque;
+   }
+
+   const char* asOpaqueName() {
+      return content.data.opaque.pOpaqueName;
+   }
+
+   
+   /** Gets the class and instance from any item.
+     \param cls The class of this deep or user item.
+     \param udata The user data associated with this item or 0 if this item is flat.
+
+    In case of flat items, a slower call is made to identify the
+    base handler class, and that is returned. In that case, the udata*
+    is set to "this" pointer (items always start with the data, then
+    an optional method pointer, and finally the type and description portion,
+    so this is consistent even when the handler class is expecting a something
+    that's not necessarily an Item*).
    */
-   bool isDeep() const { return type() >= FLC_ITEM_FIRST_DEEP; }
-
-   //====================================================================//
-
-   void add( const Item &operand, Item &result ) const {
-      void (*addfunc)( const Item &first, const Item& second, Item &third) =
-         (void (*)( const Item &first, const Item& second, Item &third))
-         CommOpsDict[type()][co_add];
-      addfunc( *this, operand, result );
-   }
-
-   void sub( const Item &operand, Item &result ) const {
-      void (*func)( const Item &first, const Item& second, Item &third) =
-         (void (*)( const Item &first, const Item& second, Item &third))
-         CommOpsDict[type()][co_sub];
-      func( *this, operand, result );
-   }
-
-   void mul( const Item &operand, Item &result ) const {
-      void (*func)( const Item &first, const Item& second, Item &third) =
-         (void (*)( const Item &first, const Item& second, Item &third))
-         CommOpsDict[type()][co_mul];
-      func( *this, operand, result );
-   }
-
-   void div( const Item &operand, Item &result ) const {
-      void (*func)( const Item &first, const Item& second, Item &third) =
-         (void (*)( const Item &first, const Item& second, Item &third))
-         CommOpsDict[type()][co_div];
-      func( *this, operand, result );
-   }
-
-   void mod( const Item &operand, Item &result ) const {
-      void (*func)( const Item &first, const Item& second, Item &third) =
-         (void (*)( const Item &first, const Item& second, Item &third))
-         CommOpsDict[type()][co_mod];
-      func( *this, operand, result );
-   }
-
-   void pow( const Item &operand, Item &result ) const {
-      void (*func)( const Item &first, const Item& second, Item &third) =
-         (void (*)( const Item &first, const Item& second, Item &third))
-         CommOpsDict[type()][co_pow];
-      func( *this, operand, result );
-   }
-
-   void neg( Item& target ) const {
-      void (*func)( const Item &first, Item &tg ) =
-         (void (*)( const Item &first, Item &tg ))
-         CommOpsDict[type()][co_neg];
-      func( *this, target );
-   }
-
-   void inc( Item& target ) {
-      void (*func)( Item &first, Item &second ) =
-         (void (*)( Item &first, Item &second ))
-         CommOpsDict[type()][co_inc];
-      func( *this, target );
-   }
-
-   void dec( Item& target ) {
-      void (*func)( Item &first, Item &second ) =
-         (void (*)( Item &first, Item &second ))
-         CommOpsDict[type()][co_dec];
-      func( *this, target );
-   }
-
-   void incpost( Item& target ) {
-      void (*func)( Item &first, Item &tg ) =
-         (void (*)( Item &first, Item &tg ))
-         CommOpsDict[type()][co_incpost];
-      func( *this, target );
-   }
-
-   void decpost( Item& target ) {
-      void (*func)( Item &first, Item &tg ) =
-         (void (*)( Item &first, Item &tg ))
-         CommOpsDict[type()][co_decpost];
-      func( *this, target );
-   }
-
-   int compare( const Item &operand ) const {
-      int (*func)( const Item &first, const Item& second ) =
-         (int (*)( const Item &first, const Item& second ))
-         CommOpsDict[type()][co_compare];
-      return func( *this, operand );
-   }
-
-   void getIndex( const Item &idx, Item &result ) const {
-      void (*func)( const Item &first, const Item &idx, Item &third) =
-         (void (*)( const Item &first, const Item &idx, Item &third))
-         CommOpsDict[type()][co_getIndex];
-      func( *this, idx, result );
-   }
-
-   void setIndex( const Item &idx, const Item &result ) {
-      void (*func)( Item &first, const Item &name, const Item &third) =
-         (void (*)( Item &first, const Item &name, const Item &third))
-         CommOpsDict[type()][co_setIndex];
-      func( *this, idx, result );
-   }
-
-   void getProperty( const String &property, Item &result ) const {
-      void (*func)( const Item &first, const String &property, Item &third) =
-         (void (*)( const Item &first, const String &property, Item &third))
-         CommOpsDict[type()][co_getProperty];
-      func( *this, property, result );
-   }
-
-   void setProperty( const String &prop, const Item &result ) {
-      void (*func)( Item &first, const String &prop, const Item &third) =
-         (void (*)( Item &first, const String &prop, const Item &third))
-         CommOpsDict[type()][co_setProperty];
-      func( *this, prop, result );
-   }
-
-   /** Prepares a call frame that will be called at next VM loop.
-      \note You can use vm->execFrame() to execute the prepared frame
-      immediately instead of waiting for the loop to complete.
-   */
-   void readyFrame( VMachine *vm, uint32 paramCount ) const
+   void forceClassInst( Class*& cls, void*& udata ) const
    {
-      void (*func)( const Item &first, VMachine *vm, int paramCount ) =
-         (void (*)( const Item &first, VMachine *vm, int paramCount ))
-         CommOpsDict[type()][co_call];
-      func( *this, vm, paramCount );
+      if ( type() >= FLC_ITEM_USER )
+      {
+         cls = asClass();
+         udata = asInst();
+      }
+      else {         
+         cls = Engine::instance()->getTypeClass(type());
+         udata = (void*)this;
+      }
+   }
+  
+   //======================================================
+   // Utilities
+   //
+
+   int64 len() const;
+   void swap( Item& other ) { Item temp = *this; *this = other; other = temp; }
+
+   void lock() const {
+      while(!atomicCAS(lockId, 0, 1)) {}
    }
 
-};
-
-
-/** Creates a garbageable version of an item.
-   This class repeats the structure of an item holding an instance
-   of it, but it derives from Garbageable. This makes it a vessel
-   for item references.
-
-   It must be created by a MemPool with the MemPool::referenceItem()
-   method.
-*/
-class FALCON_DYN_CLASS GarbageItem: public Garbageable
-{
-   Item m_item;
-
-public:
-   GarbageItem( const Item &origin ):
-      Garbageable(),
-      m_item( origin )
-   {}
-
-   virtual ~GarbageItem() {};
-
-   /** Returns the item part stored in this garbage item.
-      \return the held item.
-   */
-   const Item &origin() const { return m_item; }
-
-   /** Returns the item part stored in this garbage item.
-      \return the held item.
-   */
-   Item &origin() { return m_item; }
-};
-
-inline Item *Item::dereference()
-{
-   if ( type() != FLC_ITEM_REFERENCE )
-      return this;
-   return &asReference()->origin();
-};
-
-inline const Item *Item::dereference() const
-{
-   if ( type() != FLC_ITEM_REFERENCE )
-      return this;
-   return &asReference()->origin();
-};
-
-
-class FALCON_DYN_CLASS SafeItem: public Item
-{
-public:
-   SafeItem( const SafeItem &other ) {
-      copy( other );
+   void unlock() const {
+      atomicSet(lockId, 0);
    }
 
-   SafeItem( const Item &other ) {
-      copy( other );
-   }
-
-   /** Creates a boolean SafeItem. */
-
-   /** Sets this SafeItem as boolean */
-   void setBoolean( bool tof )
-   {
-      type( FLC_ITEM_BOOL );
-      all.ctx.data.val32 = tof? 1: 0;
-   }
-
-   /** Creates an integer SafeItem */
-   SafeItem( int16 val )
-   {
-      setInteger( (int64) val );
-   }
-
-   /** Creates an integer SafeItem */
-   SafeItem( uint16 val )
-   {
-      setInteger( (int64) val );
-   }
-
-   /** Creates an integer SafeItem */
-   SafeItem( int32 val )
-   {
-      setInteger( (int64) val );
-   }
-
-   /** Creates an integer SafeItem */
-   SafeItem( uint32 val )
-   {
-      setInteger( (int64) val );
-   }
-
-
-   /** Creates an integer SafeItem */
-   SafeItem( int64 val )
-   {
-      setInteger( val );
-   }
-
-
-   /** Creates an integer SafeItem */
-   SafeItem( uint64 val )
-   {
-      setInteger( (int64)val );
-   }
-
-   void setInteger( int64 val ) {
-      type(FLC_ITEM_INT);
-      all.ctx.data.val64 = val;
-   }
-
-   /** Creates a numeric SafeItem */
-   SafeItem( numeric val )
-   {
-      setNumeric( val );
-   }
-
-   void setNumeric( numeric val ) {
-      type( FLC_ITEM_NUM );
-      all.ctx.data.number = val;
-   }
-
-   SafeItem( byte t, Garbageable *dt );
-
-   SafeItem( CoreRange *r ) { setRange( r ); }
-   SafeItem( String *str ) { setString( str ); }
-   SafeItem( CoreArray *array ) { setArray( array ); }
-   SafeItem( CoreObject *obj ) { setObject( obj ); }
-   SafeItem( CoreDict *dict ) { setDict( dict ); }
-   SafeItem( MemBuf *b ) { setMemBuf( b ); }
-   SafeItem( GarbageItem *r ) { setReference( r ); }
-   SafeItem( CoreFunc* cf ) { setFunction( cf ); }
-   SafeItem( String *lbind, GarbageItem *val ) { setLBind( lbind, val ); }
-   SafeItem( const Item &data, CallPoint *func ) { setMethod( data, func ); }
-   SafeItem( CoreObject *obj, CoreClass *cls ) { setClassMethod( obj, cls ); }
-   SafeItem( CoreClass *cls ) { setClass( cls ); }
-   SafeItem( FalconData *ptr ) { setGCPointer( ptr ); }
-   SafeItem( GarbagePointer *shell ) { setGCPointer( shell ); }
-
-   void setRange( CoreRange *r );
-   void setString( String *str );
-   void setArray( CoreArray *array );
-   void setObject( CoreObject *obj );
-   void setDict( CoreDict *dict );
-   void setMemBuf( MemBuf *b );
-   void setReference( GarbageItem *r );
-   void setFunction( CoreFunc* cf );
-   void setLBind( String *lbind, GarbageItem *val );
-   void setMethod( const Item &data, CallPoint *func );
-   void setClassMethod( CoreObject *obj, CoreClass *cls );
-   void setClass( CoreClass *cls );
-   void setGCPointer( FalconData *ptr );
-   void setGCPointer( GarbagePointer *shell );
 };
 
 }
 
 #endif
-/* end of flc_item.h */
+/* end of item.h */

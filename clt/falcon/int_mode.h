@@ -13,28 +13,26 @@
    See LICENSE file for licensing details.
 */
 
-/** \file
-   Options storage for falcon compiler.
-*/
-
 #ifndef FALCON_INT_MODE_H
 #define FALCON_INT_MODE_H
 
-#include "falcon.h"
+#include "app.h"
 
 namespace Falcon {
 
-class AppFalcon;
+class FalconApp;
 
 class IntMode
 {
-   void read_line(String &line, const char* prompt);
-   AppFalcon *m_owner;
-
 public:
-   IntMode( AppFalcon* owner );
-
+   IntMode( FalconApp* owner );
    void run();
+
+private:
+   bool read_line( const String& prompt, String &line );
+   FalconApp *m_owner;
+   
+   VMachine m_vm;
 };
 
 } // namespace Falcon

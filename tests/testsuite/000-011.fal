@@ -1,0 +1,13 @@
+/*
+@name Greater or equal exp nega
+@category Smoke
+
+@result Ok
+*/
+
+if 0 >= 1
+   return "False"
+end
+
+return "Ok"
+

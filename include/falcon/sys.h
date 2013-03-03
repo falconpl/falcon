@@ -1,6 +1,6 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: flc_sys.h
+   FILE: sys.h
 
    System related services.
    -------------------------------------------------------------------
@@ -17,12 +17,11 @@
    System related services.
 */
 
-#ifndef flc_flc_sys_H
-#define flc_flc_sys_H
+#ifndef _FALCON_SYS_H_
+#define _FALCON_SYS_H_
 
 #include <falcon/types.h>
-#include <falcon/dir_sys.h>
-#include <falcon/time_sys.h>
+
 
 namespace Falcon {
 
@@ -34,14 +33,14 @@ namespace Sys {
 /** Gives current second count from Epoch.
    The number of seconds is generally returned in GMT, if this
    feature is available in the system.
-   \return a float nubmer, where decimals are up to milliseconds.
+   \return a float number, where decimals are up to milliseconds.
 */
 FALCON_DYN_SYM numeric _seconds();
 
 /** Gives current second count from Epoch in localtime.
    The number of seconds is generally returned in localtime, if this
    feature is available in the system.
-   \return a float nubmer, where decimals are up to milliseconds.
+   \return a float number, where decimals are up to milliseconds.
 */
 FALCON_DYN_SYM numeric _localSeconds();
 
@@ -59,7 +58,7 @@ FALCON_DYN_SYM numeric _localSeconds();
 
    \return millisecond counter value.
 */
-FALCON_DYN_SYM uint32 _milliseconds();
+FALCON_DYN_SYM int64 _milliseconds();
 
 /** Returns a valid and possibly unique temporary file name.
    Just a haky test for now, final version must OPEN the stream and return it.
@@ -99,8 +98,16 @@ FALCON_DYN_SYM void _enumerateEnvironment( EnvStringCallback cb, void* cbData );
 /** Returns process ID of the current process. */
 FALCON_DYN_SYM int64 _getpid();
 
+/** Returns the number of CPU cores on the host machine. */
+FALCON_DYN_SYM int _getCores();
 
 FALCON_DYN_SYM void _dummy_ctrl_c_handler();
+
+/** Get the system page size. */
+FALCON_DYN_SYM long _getPageSize();
+
+/** Gets the current working directory. */
+FALCON_DYN_SYM bool _getCWD( String& name );
 
 #ifdef FALCON_SYSTEM_WIN
 }
@@ -117,4 +124,4 @@ namespace Sys {
 
 #endif
 
-/* end of flc_sys.h */
+/* end of sys.h */

@@ -1,0 +1,160 @@
+/*
+   FALCON - The Falcon Programming Language
+
+   Nest - Falcon web applcation engine
+
+   FILE: Form.fal
+
+   AJAX widgeting subsystem -- Form-like collection of widgets.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Wed, 28 Sep 2011 11:31:25 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2011: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+import Widget from nest.widgets.widget as Widget
+import Hidden from nest.widgets.Hidden as Hidden
+
+/*# Class presenting multiple widget for posting as a form.
+   @param id The ID of the form.
+   @param action The action of the form at submit.
+   @optparam method The method (GET or POST), defaults to "POST".
+
+   This class has support to route the input variables filling them
+   into its children. The children will receive setRenderValue
+   callbacks with the value the Form expects them to receive,
+   and may use this callback to check for correct values and eventually
+   prepare their @b fieldInfo property with an error message.
+*/
+class Form( id, action, method ) from Widget( id )
+   tag = "form"
+
+   init
+      if self.props == nil: self.props = [=>]
+      self.props["method"] = method ? method : "POST"
+      self.props["action"] = action
+      self.props["accept-charset"] = "UTF-8"
+   end
+
+   /*# Sets the "accept-charset" property.
+      @parm cs The charset.
+   */
+   function setCharset( cs )
+      self.props["accept-charset"] = cs
+   end
+
+   /*# Sets the "enctype" property to "multipart/form-data".
+
+      You'll want to call this when you have some file widget in the form.
+      "FileUpload" widgets call it automatically when they are added to a form.
+   */
+   function setSumbitData()
+      self.props["enctype"] = "multipart/form-data"
+   end
+
+   /*# Helper to add a confirmation callback on a form.
+      @param content The text that should be displayed in the confirm box.
+      
+      This will setup a simple confirm javascript on form submit.
+      To do more sophisticated things, just set the 'onsubmit' property
+      in Form.props to your preferred callback.
+   */
+   function setConfirmSubmit( content )
+      self.props['onsubmit'] = 'return confirm("' + htmlEscape(content) + '");'
+   end
+   
+   /*# Helper to add a reset callback on a form.
+      @param content The text that should be displayed in the confirm box.
+      
+      This will setup a simple confirm javascript on form reset.
+      To do more sophisticated things, just set the 'onreset' property
+      in Form.props to your preferred callback.
+   */
+   function setConfirmReset( content )
+      self.props['onreset'] = 'return confirm("' + htmlEscape(content) + '");'
+   end
+
+   /*# Adds an hidden value that is to be sent as variable.
+      @param name The name of the field
+      @param value The value to be assigned to the field.
+
+      This is a helper automatically adding hidden fields to this form.
+      
+      The value will automatically be transformed in a set of dictionary or array
+      values in case it's a dictionary or an array.
+   */
+   function addHidden( name, value )
+      select value
+         case ArrayType
+            for val in value
+               valstr = value.toString()
+               field = Hidden( name + "." + valstr, valstr )
+               field.addName = "[]"
+
+               self.addChild( field )
+            end
+            
+         case DictionaryType
+            for key, val in value
+               valstr = value.toString()
+               field = Hidden( name + "." + key, valstr )
+               field.addName = @"[$key]"
+
+               self.addChild( field )
+            end
+            
+         default
+            field = Hidden( name, value )
+            self.addChild( field )
+      end
+   end
+   
+   /*# Overrides the base widget render content.
+      This version calls:
+         - renderFormBegin before rendering each widget.
+         - renderChild for every child.
+         - renderFormEnd after rendering all the children.
+
+      Each method must return a string that is the rendered
+      representation of the element.
+   */
+   function renderContent()
+      rend = self.renderFormBegin()
+      for child in self.children
+         rend += child.renderInParent( self ) +"\n"
+      end
+      return rend + self.renderFormEnd()
+   end
+
+   /*# Called back in rendering each element of the form.
+      @param child A child widget of this form.
+
+      The base version just renders the prompt via child.renderPrompt() and then
+      renders the body via child.render().
+   */
+   function renderChild( child )
+      return child.renderPrompt() + child.render()
+   end
+
+   /*# Renders the start entry of the form elements.
+      @return A string that is used before rendering any element.
+      The base class returns an empty string.
+   */
+   function renderFormBegin()
+      return ""
+   end
+
+   /*# Renders the end entry of the form elements.
+      @return A string that is used before after rendering all the elements.
+   */
+   function renderFormEnd()
+      return ""
+   end
+
+end
+
+/* end of Form.fal */

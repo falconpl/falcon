@@ -35,7 +35,11 @@
 #if GTK_CHECK_VERSION( 2, 6, 0 )
 #include "gtk_AboutDialog.hpp"
 #endif
+#include "gtk_Accelerator.hpp"
+#include "gtk_AccelGroup.hpp"
+#include "gtk_AccelMap.hpp"
 #include "gtk_Action.hpp"
+#include "gtk_ActionGroup.hpp"
 #include "gtk_Adjustment.hpp"
 #include "gtk_Alignment.hpp"
 #include "gtk_Arrow.hpp"
@@ -165,10 +169,10 @@
 
 /*#
  @module gtk The Falcon GTK Binding module
- 
- This module is a pretty complete binding of the gdk/gtk widgent
+
+ This module is a pretty complete binding of the gdk/gtk widget
  libraries.
- 
+
  @beginmodule gtk
  */
 
@@ -176,28 +180,28 @@
 FALCON_MODULE_DECL
 {
 #define FALCON_DECLARE_MODULE self
-    
+
     Falcon::Module* self = new Falcon::Module();
     self->name( "gtk" );
     self->language( "en_US" );
     self->engineVersion( FALCON_VERSION_NUM );
     self->version( VERSION_MAJOR, VERSION_MINOR, VERSION_REVISION );
-    
+
 #include "modgtk_st.hpp"
-    
+
     /*
      *  load glib
      */
-    
+
     g_type_init();
-    
+
     Falcon::Glib::Object::modInit( self );
     Falcon::Glib::ParamSpec::modInit( self );
-    
+
     /*
      *  load gdk
      */
-    
+
     Falcon::Gdk::Color::modInit( self );
     Falcon::Gdk::Colormap::modInit( self );
     Falcon::Gdk::Cursor::modInit( self );
@@ -218,18 +222,19 @@ FALCON_MODULE_DECL
     Falcon::Gdk::Region::modInit( self );
     Falcon::Gdk::Screen::modInit( self );
     Falcon::Gdk::Visual::modInit( self );
-    
+
     /*
      *  load enums
      */
     Falcon::Gtk::Enums::modInit( self );
-    
+
     /*
      *  setup the classes
      */
-    
+
     // not GObject based //
-    
+
+    Falcon::Gtk::Accelerator::modInit( self );
     Falcon::Gtk::CellEditable::modInit( self );
     Falcon::Gtk::FileFilterInfo::modInit( self );
     Falcon::Gtk::Main::modInit( self );
@@ -244,9 +249,12 @@ FALCON_MODULE_DECL
 
     // GObject based //
 
+    Falcon::Gtk::AccelGroup::modInit( self );
+    Falcon::Gtk::AccelMap::modInit( self );
     Falcon::Gtk::Action::modInit( self );
         Falcon::Gtk::ToggleAction::modInit( self );
             Falcon::Gtk::RadioAction::modInit( self );
+    Falcon::Gtk::ActionGroup::modInit( self );
 #if GTK_VERSION_MINOR >= 18
     Falcon::Gtk::EntryBuffer::modInit( self );
 #endif
@@ -366,396 +374,396 @@ FALCON_MODULE_DECL
     Falcon::Gtk::TreeModelSort::modInit( self );
     Falcon::Gtk::TreeStore::modInit( self );
     Falcon::Gtk::WindowGroup::modInit( self );
-    
+
     return self;
 }
 
 
 namespace Falcon {
-    namespace Gtk {
-        
-        
-        FALCON_FUNC abstract_init( VMARG )
+namespace Gtk {
+
+
+FALCON_FUNC abstract_init( VMARG )
+{
+    MYSELF;
+    // check that a derived class has stuffed an object here
+    if ( self->getObject() == 0 )
+    {
+        throw_gtk_error( e_abstract_class, FAL_STR( gtk_e_abstract_class_ ) );
+    }
+}
+
+
+bool VoidObject::getProperty( const Falcon::String& s, Falcon::Item& it ) const
+{
+    return defaultProperty( s, it );
+}
+
+
+bool VoidObject::setProperty( const Falcon::String&, const Falcon::Item& )
+{
+    return false;
+}
+
+
+void VoidObject::retval( VMachine* vm,
+                         const GType type,
+                         void*& obj,
+                         const bool doFree )
+{
+    const gchar* tpname = g_type_name( type );
+
+    if ( !strcmp( tpname, "GdkColor" ) )
+    {
+        vm->retval( new Gdk::Color( vm->findWKI( "GdkColor" )->asClass(),
+                                    (GdkColor*) obj ) );
+        if ( doFree )
         {
-            MYSELF;
-            // check that a derived class has stuffed an object here
-            if ( self->getObject() == 0 )
+            gdk_color_free( (GdkColor*) obj );
+            obj = NULL;
+        }
+    }
+
+    else
+        return CoreGObject::retval( vm, type, obj, doFree );
+}
+
+
+CoreGObject::CoreGObject( const Falcon::CoreClass* cls, const GObject* gobj )
+    :
+    VoidObject( cls, (void*) gobj )
+{
+    incref();
+}
+
+
+CoreGObject::CoreGObject( const CoreGObject& other )
+    :
+    VoidObject( other )
+{
+    incref();
+}
+
+
+CoreGObject::~CoreGObject()
+{
+    decref();
+}
+
+
+void CoreGObject::setObject( const void* obj )
+{
+    VoidObject::setObject( obj );
+    incref();
+}
+
+
+void CoreGObject::incref() const
+{
+    if ( m_obj )
+        g_object_ref_sink( m_obj );
+}
+
+
+void CoreGObject::decref() const
+{
+    if ( m_obj )
+        g_object_unref( m_obj );
+}
+
+
+bool CoreGObject::getProperty( const Falcon::String& s, Falcon::Item& it ) const
+{
+    AutoCString cstr( s );
+    GarbageLock* lock = (GarbageLock*) g_object_get_data( (GObject*) m_obj, cstr.c_str() );
+    if ( lock )
+        it = lock->item();
+    else
+        return VoidObject::getProperty( s, it );
+    return true;
+}
+
+
+bool CoreGObject::setProperty( const Falcon::String& s, const Falcon::Item& it )
+{
+    AutoCString cstr( s );
+    g_object_set_data_full( (GObject*) m_obj, cstr.c_str(),
+                            new GarbageLock( it ), &CoreGObject::release_lock );
+    return true;
+}
+
+
+void CoreGObject::retval( VMachine* vm,
+                          const GType type,
+                          void*& obj,
+                          const bool doFree )
+{
+    assert( G_TYPE_FUNDAMENTAL( type ) == G_TYPE_OBJECT );
+
+    const gchar* tpname = g_type_name( type );
+
+    if ( !strcmp( tpname, "foo" ) )
+    {
+    }
+    else
+    {
+        if ( doFree )
+            g_object_unref( obj );
+
+        g_print( "type name %s\n"
+                 "GType %ld\n",
+                 tpname, type );
+
+        throw_inv_params( "not yet implemented..." );
+    }
+
+    if ( doFree )
+        g_object_unref( obj );
+}
+
+
+GObject* CoreGObject::add_slots( GObject* obj )
+{
+    if ( !g_object_get_data( obj, "__signals" ) )
+    {
+        g_object_set_data_full( obj, "__signals",
+                                (gpointer) new Falcon::CoreSlot( "" ),
+                                &CoreGObject::release_slots );
+    }
+    return obj;
+}
+
+
+void CoreGObject::release_slots( gpointer cs )
+{
+    ((Falcon::CoreSlot*)cs)->clear();
+    ((Falcon::CoreSlot*)cs)->decref();
+}
+
+
+void CoreGObject::get_signal( const char* signame, const void* cb, Falcon::VMachine* vm )
+{
+    CoreGObject* self = Falcon::dyncast<CoreGObject*>( vm->self().asObjectSafe() );
+
+    vm->retval( new Gtk::Signal( vm->findWKI( "GtkSignal" )->asClass(),
+                                 (GObject*) self->m_obj, signame, cb ) );
+}
+
+
+void CoreGObject::trigger_slot( GObject* obj, const char* signame,
+                                const char* cbname, Falcon::VMachine* vm )
+{
+    GET_SIGNALS( obj );
+    CoreSlot* cs = _signals->getChild( signame, false );
+
+    if ( !cs || cs->empty() )
+        return;
+
+    Iterator iter( cs );
+    Falcon::Item it;
+
+    do
+    {
+        it = iter.getCurrent();
+        if ( !it.isCallable() )
+        {
+            if ( !it.isComposed()
+                || !it.asObject()->getMethod( cbname, it ) )
             {
-                throw_gtk_error( e_abstract_class, FAL_STR( gtk_e_abstract_class_ ) );
-            }
-        }
-        
-        
-        bool VoidObject::getProperty( const Falcon::String& s, Falcon::Item& it ) const
-        {
-            return defaultProperty( s, it );
-        }
-        
-        
-        bool VoidObject::setProperty( const Falcon::String&, const Falcon::Item& )
-        {
-            return false;
-        }
-        
-        
-        void VoidObject::retval( VMachine* vm,
-                                const GType type,
-                                void*& obj,
-                                const bool doFree )
-        {
-            const gchar* tpname = g_type_name( type );
-            
-            if ( !strcmp( tpname, "GdkColor" ) )
-            {
-                vm->retval( new Gdk::Color( vm->findWKI( "GdkColor" )->asClass(),
-                                           (GdkColor*) obj ) );
-                if ( doFree )
-                {
-                    gdk_color_free( (GdkColor*) obj );
-                    obj = NULL;
-                }
-            }
-            
-            else
-                return CoreGObject::retval( vm, type, obj, doFree );
-        }
-        
-        
-        CoreGObject::CoreGObject( const Falcon::CoreClass* cls, const GObject* gobj )
-        :
-        VoidObject( cls, (void*) gobj )
-        {
-            incref();
-        }
-        
-        
-        CoreGObject::CoreGObject( const CoreGObject& other )
-        :
-        VoidObject( other )
-        {
-            incref();
-        }
-        
-        
-        CoreGObject::~CoreGObject()
-        {
-            decref();
-        }
-        
-        
-        void CoreGObject::setObject( const void* obj )
-        {
-            VoidObject::setObject( obj );
-            incref();
-        }
-        
-        
-        void CoreGObject::incref() const
-        {
-            if ( m_obj )
-                g_object_ref_sink( m_obj );
-        }
-        
-        
-        void CoreGObject::decref() const
-        {
-            if ( m_obj )
-                g_object_unref( m_obj );
-        }
-        
-        
-        bool CoreGObject::getProperty( const Falcon::String& s, Falcon::Item& it ) const
-        {
-            AutoCString cstr( s );
-            GarbageLock* lock = (GarbageLock*) g_object_get_data( (GObject*) m_obj, cstr.c_str() );
-            if ( lock )
-                it = lock->item();
-            else
-                return VoidObject::getProperty( s, it );
-            return true;
-        }
-        
-        
-        bool CoreGObject::setProperty( const Falcon::String& s, const Falcon::Item& it )
-        {
-            AutoCString cstr( s );
-            g_object_set_data_full( (GObject*) m_obj, cstr.c_str(),
-                                   new GarbageLock( it ), &CoreGObject::release_lock );
-            return true;
-        }
-        
-        
-        void CoreGObject::retval( VMachine* vm,
-                                 const GType type,
-                                 void*& obj,
-                                 const bool doFree )
-        {
-            assert( G_TYPE_FUNDAMENTAL( type ) == G_TYPE_OBJECT );
-            
-            const gchar* tpname = g_type_name( type );
-            
-            if ( !strcmp( tpname, "foo" ) )
-            {
-            }
-            else
-            {
-                if ( doFree )
-                    g_object_unref( obj );
-                
-                g_print( "type name %s\n"
-                        "GType %ld\n",
-                        tpname, type );
-                
-                throw_inv_params( "not yet implemented..." );
-            }
-            
-            if ( doFree )
-                g_object_unref( obj );
-        }
-        
-        
-        GObject* CoreGObject::add_slots( GObject* obj )
-        {
-            if ( !g_object_get_data( obj, "__signals" ) )
-            {
-                g_object_set_data_full( obj, "__signals",
-                                       (gpointer) new Falcon::CoreSlot( "" ), &CoreGObject::release_slots );
-            }
-            return obj;
-        }
-        
-        
-        void CoreGObject::release_slots( gpointer cs )
-        {
-            ((Falcon::CoreSlot*)cs)->clear();
-            ((Falcon::CoreSlot*)cs)->decref();
-        }
-        
-        
-        void CoreGObject::get_signal( const char* signame, const void* cb, Falcon::VMachine* vm )
-        {
-            CoreGObject* self = Falcon::dyncast<CoreGObject*>( vm->self().asObjectSafe() );
-            
-            vm->retval( new Gtk::Signal( vm->findWKI( "GtkSignal" )->asClass(),
-                                        (GObject*) self->m_obj, signame, cb ) );
-        }
-        
-        
-        void CoreGObject::trigger_slot( GObject* obj, const char* signame,
-                                       const char* cbname, Falcon::VMachine* vm )
-        {
-            GET_SIGNALS( obj );
-            CoreSlot* cs = _signals->getChild( signame, false );
-            
-            if ( !cs || cs->empty() )
+                printf( "[%s] invalid callback (expected callable)\n", cbname );
                 return;
-            
-            Iterator iter( cs );
-            Falcon::Item it;
-            
-            do
-            {
-                it = iter.getCurrent();
-                if ( !it.isCallable() )
-                {
-                    if ( !it.isComposed()
-                        || !it.asObject()->getMethod( cbname, it ) )
-                    {
-                        printf( "[%s] invalid callback (expected callable)\n", cbname );
-                        return;
-                    }
-                }
-                vm->callItem( it, 0 );
-                iter.next();
             }
-            while ( iter.hasCurrent() );
         }
-        
-        
-        GHashTable* CoreGObject::get_locks( GObject* obj )
-        {
-            GHashTable* tbl;
-            if ( !( tbl = (GHashTable*) g_object_get_data( obj, "__locks" ) ) )
-            {
-                tbl = g_hash_table_new_full(
-                                            NULL,
-                                            NULL,
-                                            NULL,
-                                            &CoreGObject::release_lock );
-                
-                g_object_set_data_full( obj, "__locks",
-                                       (gpointer) tbl,
-                                       &CoreGObject::release_locks );
-            }
-            return tbl;
-        }
-        
-        
-        void CoreGObject::release_lock( gpointer glock )
-        {
-            delete (GarbageLock*) glock;
-        }
-        
-        
-        void CoreGObject::release_locks( gpointer htbl )
-        {
-            g_hash_table_unref( (GHashTable*) htbl );
-        }
-        
-        
-        GarbageLock* CoreGObject::lockItem( GObject* obj, const Falcon::Item& it )
-        {
-            GarbageLock* lock = new Falcon::GarbageLock( it );
-            GHashTable* tbl = get_locks( obj );
-            g_hash_table_insert( tbl, (gpointer) &it, (gpointer) lock );
-            return lock;
-        }
-        
-        
-        Signal::Signal( const Falcon::CoreClass* cls,
-                       const GObject* gobj, const char* name, const void* cb )
-        :
-        Gtk::CoreGObject( cls, gobj ),
-        m_name( (char*) name ),
-        m_cb( (void*) cb )
-        {}
-        
-        
-        Signal::Signal( const Signal& other )
-        :
-        Gtk::CoreGObject( other ),
-        m_name( other.m_name ),
-        m_cb( other.m_cb )
-        {}
-        
-        
-        bool Signal::getProperty( const Falcon::String& s, Falcon::Item& it ) const
-        {
-            if ( s == "name" )
-                it = UTF8String( m_name );
-            else
-                return defaultProperty( s, it );
-            return true;
-        }
-        
-        
-        bool Signal::setProperty( const Falcon::String&, const Falcon::Item& )
-        {
-            return false;
-        }
-        
-        
-        Falcon::CoreObject* Signal::factory( const Falcon::CoreClass* cls, void* gobj, bool )
-        {
-            return new Signal( cls, (GObject*) gobj, NULL, NULL );
-        }
-        
-        
-        void Signal::modInit( Falcon::Module* mod )
-        {
-            Falcon::Symbol* c_Signal = mod->addClass( "GtkSignal", &Gtk::abstract_init );
-            // NB: must not be private otherwise can't get WKI!..
-            
-            c_Signal->setWKS( true );
-            //c_Signal->getClassDef()->factory( &Signal::factory );
-            
-            mod->addClassMethod( c_Signal, "connect", &Signal::connect );
-        }
-        
-        
-        FALCON_FUNC Signal::connect( VMARG )
-        {
-            Falcon::Item* cb = vm->param( 0 );
+        vm->callItem( it, 0 );
+        iter.next();
+    }
+    while ( iter.hasCurrent() );
+}
+
+
+GHashTable* CoreGObject::get_locks( GObject* obj )
+{
+    GHashTable* tbl;
+    if ( !( tbl = (GHashTable*) g_object_get_data( obj, "__locks" ) ) )
+    {
+        tbl = g_hash_table_new_full( NULL,
+                                     NULL,
+                                     NULL,
+                                     &CoreGObject::release_lock );
+
+        g_object_set_data_full( obj, "__locks",
+                                (gpointer) tbl,
+                                &CoreGObject::release_locks );
+    }
+    return tbl;
+}
+
+
+void CoreGObject::release_lock( gpointer glock )
+{
+    delete (GarbageLock*) glock;
+}
+
+
+void CoreGObject::release_locks( gpointer htbl )
+{
+    g_hash_table_unref( (GHashTable*) htbl );
+}
+
+
+GarbageLock* CoreGObject::lockItem( GObject* obj, const Falcon::Item& it )
+{
+    GarbageLock* lock = new Falcon::GarbageLock( it );
+    GHashTable* tbl = get_locks( obj );
+    g_hash_table_insert( tbl, (gpointer) &it, (gpointer) lock );
+    return lock;
+}
+
+
+Signal::Signal( const Falcon::CoreClass* cls,
+                const GObject* gobj, const char* name, const void* cb )
+    :
+    Gtk::CoreGObject( cls, gobj ),
+    m_name( (char*) name ),
+    m_cb( (void*) cb )
+{}
+
+
+Signal::Signal( const Signal& other )
+    :
+    Gtk::CoreGObject( other ),
+    m_name( other.m_name ),
+    m_cb( other.m_cb )
+{}
+
+
+bool Signal::getProperty( const Falcon::String& s, Falcon::Item& it ) const
+{
+    if ( s == "name" )
+        it = UTF8String( m_name );
+    else
+        return defaultProperty( s, it );
+    return true;
+}
+
+
+bool Signal::setProperty( const Falcon::String&, const Falcon::Item& )
+{
+    return false;
+}
+
+
+Falcon::CoreObject* Signal::factory( const Falcon::CoreClass* cls, void* gobj, bool )
+{
+    return new Signal( cls, (GObject*) gobj, NULL, NULL );
+}
+
+
+void Signal::modInit( Falcon::Module* mod )
+{
+    Falcon::Symbol* c_Signal = mod->addClass( "GtkSignal", &Gtk::abstract_init );
+    // NB: must not be private otherwise can't get WKI!..
+
+    c_Signal->setWKS( true );
+    //c_Signal->getClassDef()->factory( &Signal::factory );
+
+    mod->addClassMethod( c_Signal, "connect", &Signal::connect );
+}
+
+
+FALCON_FUNC Signal::connect( VMARG )
+{
+    Falcon::Item* cb = vm->param( 0 );
 #ifndef NO_PARAMETER_CHECK
-            if ( !cb || !( cb->isCallable() || cb->isComposed() ) )
-                throw_inv_params( "C" );
+    if ( !cb || !( cb->isCallable() || cb->isComposed() ) )
+        throw_inv_params( "C" );
 #endif
-            Signal* self = Falcon::dyncast<Signal*>( vm->self().asObjectSafe() );
-            GET_OBJ( self );
-            GET_SIGNALS( _obj );
-            
-            Falcon::CoreSlot* cs = _signals->getChild( self->m_name, true );
-            cs->append( *cb );
-            
-            CoreGObject::lockItem( _obj, *cb );
-            
-            g_signal_connect( G_OBJECT( _obj ), self->m_name,
-                             G_CALLBACK( self->m_cb ), vm );
-        }
-        
-        
-        uint32
-        getGCharArray( const Falcon::CoreArray* arr,
-                      gchar**& strings,
-                      Falcon::AutoCString*& temp )
-        {
-            const uint32 num = arr->length();
+    Signal* self = Falcon::dyncast<Signal*>( vm->self().asObjectSafe() );
+    GET_OBJ( self );
+    GET_SIGNALS( _obj );
 
-            if ( !num ) return 0;
+    Falcon::CoreSlot* cs = _signals->getChild( self->m_name, true );
+    cs->append( *cb );
 
-            strings = new gchar* [ num + 1 ];
-            strings[ num ] = NULL;
+    CoreGObject::lockItem( _obj, *cb );
 
-            temp = new AutoCString[ num ];
+    g_signal_connect( G_OBJECT( _obj ), self->m_name,
+                      G_CALLBACK( self->m_cb ), vm );
+}
 
-            Falcon::Item s;
-            uint32 i = 0;
-            for ( i=0 ; i < num; ++i )
-            {
-                s = arr->at( i );
+
+uint32
+getGCharArray( const Falcon::CoreArray* arr,
+               gchar**& strings,
+               Falcon::AutoCString*& temp )
+{
+    const uint32 num = arr->length();
+
+    if ( !num ) return 0;
+
+    strings = new gchar* [ num + 1 ];
+    strings[ num ] = NULL;
+
+    temp = new AutoCString[ num ];
+
+    Falcon::Item s;
+    uint32 i = 0;
+    for ( i=0 ; i < num; ++i )
+    {
+        s = arr->at( i );
 #ifndef NO_PARAMETER_CHECK
-                if ( !s.isString() )
-                {
-                    delete temp;
-                    delete strings;
-                    throw_inv_params( "S" );
-                }
-#endif
-                temp[i].set( *s.asString() );
-                strings[i] = (gchar*)( temp[i].c_str() );
-            }
-            
-            return num;
-        }
-        
-        
-        Falcon::String*
-        formatPath( Falcon::String* filepath )
+        if ( !s.isString() )
         {
-            Falcon::Path path( *filepath );
+            delete temp;
+            delete strings;
+            throw_inv_params( "S" );
+        }
+#endif
+        temp[i].set( *s.asString() );
+        strings[i] = (gchar*)( temp[i].c_str() );
+    }
+
+    return num;
+}
+
+
+Falcon::String*
+formatPath( Falcon::String* filepath )
+{
+    Falcon::Path path( *filepath );
 #ifdef FALCON_SYSTEM_WIN
-            filepath->size( 0 );
-            path.getWinFormat( *filepath );
+    filepath->size( 0 );
+    path.getWinFormat( *filepath );
 #else
-            filepath->copy( path.get() );
+    filepath->copy( path.get() );
 #endif
-            return filepath;
-        }
-        
-        
-        /*#
-         @class GtkError
-         @brief Error generated by falcon-gtk
-         @optparam code numeric error code
-         @optparam description textual description of the error code
-         @optparam extra descriptive message explaining the error conditions
-         @from Error code, description, extra
-         
-         See the Error class in the core module.
-         */
-        FALCON_FUNC GtkError_init( VMARG )
-        {
-            MYSELF;
-            
-            if ( !self->getUserData() )
-                self->setUserData( new Falcon::Gtk::GtkError );
-            
-            Falcon::core::Error_init( vm );
-        }
-        
-        
-    } // Gtk
+    return filepath;
+}
+
+
+/*#
+    @class GtkError
+    @brief Error generated by falcon-gtk
+    @optparam code numeric error code
+    @optparam description textual description of the error code
+    @optparam extra descriptive message explaining the error conditions
+    @from Error code, description, extra
+
+    See the Error class in the core module.
+ */
+FALCON_FUNC GtkError_init( VMARG )
+{
+    MYSELF;
+
+    if ( !self->getUserData() )
+        self->setUserData( new Falcon::Gtk::GtkError );
+
+    Falcon::core::Error_init( vm );
+}
+
+
+} // Gtk
 } // Falcon
 
-// vi: set ai et sw=4:
+// vi: set ai et sw=4 ts=4 sts=4:
 // kate: replace-tabs on; shift-width 4;

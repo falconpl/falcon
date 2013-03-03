@@ -19,25 +19,33 @@
 
 #include "regex_mod.h"
 #include <stdio.h>
-#include <falcon/memory.h>
 
 namespace Falcon {
 
-RegexCarrier::RegexCarrier( pcre *pattern ):
-   m_pattern( pattern ),
+RegexCarrier::RegexCarrier():
+   m_pattern( 0 ),
    m_extra( 0 ),
-   m_matches(0)
+   m_ovector(0),
+   m_ovectorSize(0),
+   m_matches(0),
+   m_mark(0)
 {
+   
+}
+
+void RegexCarrier::init( pcre *pattern)
+{
+   m_pattern = pattern;
    int retval;
    pcre_fullinfo( pattern, 0, PCRE_INFO_CAPTURECOUNT, &retval );
    m_ovectorSize = (retval + 2) * 3;
-   m_ovector = (int *) memAlloc( m_ovectorSize * sizeof( int ) );
+   m_ovector = (int *) malloc( m_ovectorSize * sizeof( int ) );
 }
 
 
 RegexCarrier::~RegexCarrier()
 {
-   memFree( m_ovector );
+free( m_ovector );
 
    pcre_free( m_pattern );
 

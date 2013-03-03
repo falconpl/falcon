@@ -1,0 +1,45 @@
+/*
+@name Deep recursion test
+@category Functions
+
+This test goes deep (1024 calls) to test for call stack 
+expansion (it starts at 256 or 512 elements, which translate
+to some 64 to 128 deep calls), and verify that 
+1) The values are kept correctly
+2) the machine doesn't crash.
+
+@output   
+Deep recursion test
+Reached end of recursion
+Traversed recursions: 1024
+Done
+@endoutput
+*/
+
+> "Deep recursion test"
+
+function recurse( param, seq )
+   if param < 1024
+      // create a local variable
+      value = param * 2
+      // modify a parameter with new GC data.
+      seq = seq + "A" 
+      // save it locally
+      localSeq = seq.clone()
+      
+      retval = recurse( param + 1, seq )
+      
+      if value != param * 2 or localSeq != seq
+         raise "Stack breakage detected at " + param
+      end
+      
+      return retval + 1
+   end
+   
+   > "Reached end of recursion"
+   return 0
+end
+
+val = recurse(0, "")
+> "Traversed recursions: ", val
+> "Done"

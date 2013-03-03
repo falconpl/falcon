@@ -277,7 +277,7 @@ bool PartHandler::getMemoryData( MemBuf& target )
    {
       int64 pos = m_str_stream->tell();
       byte* data = m_str_stream->closeToBuffer();
-      target.setData( data, (uint32) pos, memFree );
+      target.setData( data, (uint32) pos, free( );
 
       delete m_str_stream;
       m_str_stream = 0;
@@ -695,13 +695,13 @@ PartHandler::PartHandlerBuffer::PartHandlerBuffer( int64* imax ):
       m_nBufSize(0),
       m_nDataLeft( imax )
 {
-   m_buffer = (byte*) memAlloc( buffer_size );
+   m_buffer = (byte*) malloc( buffer_size );
 }
 
 
 PartHandler::PartHandlerBuffer::~PartHandlerBuffer()
 {
-   memFree( m_buffer );
+   free( m_buffer );
 }
 
 void PartHandler::PartHandlerBuffer::flush( Stream* output )

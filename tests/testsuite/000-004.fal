@@ -1,0 +1,13 @@
+/*
+@name Equality expression test, vital for other tests
+@category Smoke
+
+@result Ok
+*/
+
+if 0 == 0
+   return "Ok"
+end
+
+return "Fail"
+

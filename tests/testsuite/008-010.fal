@@ -1,0 +1,34 @@
+/*
+@name Smoke test for object
+@category Objects
+
+@output
+Smoke test for objects
+Self.prop = Hello
+Self.prop = 1
+Self.prop = Hello world
+Done
+@endoutput
+*/
+
+object Test
+   prop = "Hello"
+      
+   function tell()
+      > "Self.prop = ", self.prop
+   end
+   
+   function assign( value )
+      self.prop = value
+   end
+end
+
+> "Smoke test for objects"
+
+Test.tell()
+Test.assign( 1 )
+Test.tell()
+Test.assign( "Hello world" )
+Test.tell()
+
+> "Done"

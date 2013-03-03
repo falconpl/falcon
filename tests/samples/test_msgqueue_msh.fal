@@ -1,0 +1,163 @@
+/*
+ MessageQueue Marshal Test
+ 
+ Marshaling a message means automatically sending it
+ to an handler as it is received by its processor.
+ */
+
+// regoalte this for different outcomes
+generator_interval = 0.5
+
+// A generic mutex to do pretty output
+outputMutex = Mutex()
+
+// this will receive automatically our messages.
+class Marshal( id )
+   id = id
+   
+   function on_( item )
+      outputMutex.lock()
+      > "Agent ", self.id, " got simple message: ", item
+      outputMutex.unlock()
+   end
+   
+   function on_MouseXY(x,y)
+      outputMutex.lock()
+      > "Agent ", self.id, " received mouse movement at ", x, ", ", y
+      outputMutex.unlock()
+   end
+   
+   function on_MouseClick( evt )
+      outputMutex.lock()
+      > "Agent ", self.id, " Received mouse click ", evt
+      outputMutex.unlock()
+   end
+   
+   function on__default( evt )
+      outputMutex.lock()
+      > "Ignoring message \"", evt, "\""
+      outputMutex.unlock()
+   end
+end
+
+
+
+// our test encapsulation
+class Entity(count)
+   done = Barrier()
+   count = count
+   loops = 0   
+   
+   // theese are our agents.
+   function worker( id )
+   
+    outputMutex.locked( 
+      {() > "Worker -- entering ", ^~id, "."} )      
+      
+      receiver = Marshal(id)
+      // get the named queue "general" from the VM
+      queue = MessageQueue("general")
+      // the work is automatically marshalled by a waiter
+      waiter = Waiter()
+      // when the semaphore is signaled, we can work...
+      waiter.add( queue, queue.marshal(receiver) )
+      //... and we're done when the barrier is signaled.
+      waiter.add( self.done )
+
+      // this will keep us locked until a non-marshalled entity 
+      // is signaled. In our case, the "done" barrier.
+      // At that point, it returns the signaled entity (but we
+      // don't need it).
+      waiter.wait()
+            
+      outputMutex.locked( 
+         {() > "Worker ", ^~id, "-- terminating." }
+         )      
+   end
+   
+      
+   function control( time )
+      // using a traditional lock approach here.
+      outputMutex.locked(
+         {[] > "Entering control for ", ^~time, " seconds."})
+      
+      startedAt = seconds()
+      
+      // again, get the "general" VM queue
+      queue = MessageQueue("general")
+      outputMutex.locked( {()
+            > "Control -- Waiting for subscribers."} )
+      // this method generates a fence that will tell us
+      // when the receivers are ready
+      queue.subscribersFence( self.count ).wait()
+      // then we can start sending them some message
+      outputMutex.locked( {()
+            > "Control -- Subscribers have subscribed -- proceed."} )
+            
+      count = 0
+      while seconds() - startedAt < time
+         sleep(generator_interval)
+         
+         outputMutex.locked( {()
+            > "Control -- sending a new set of messages."} )
+        
+         // Send a standard message.
+         queue.send( "Standard message" )
+         // send a mouse event
+         queue.sendEvent("MouseXY", count*10, count*20)
+         // send a mouse event
+         queue.sendEvent("MouseClick", '"click"' )
+         // Send an unknown message
+         queue.sendEvent("Unknown", '""' )       
+         ++count
+      end
+      
+      >
+      > "Control agent terminated. Signaling the other agents."
+      
+      // open the barrier to terminate the others.
+      self.done.open()      
+   end
+
+
+   // This creates a parallel computation for our test to run.
+   function getReady( time )
+      comp = Parallel()
+      
+      // add all our methods using closures
+      this = self
+      for i = 0 to self.count-1
+         comp.add([{n=> this.worker(n) }, i])
+      end
+      
+      // add also the control method
+      comp.add( {=> this.control(time) } )
+      
+      return comp
+   end
+   
+end
+
+
+//===============================================================
+// The main program.
+//===============================================================
+
+> "Computation test"
+
+// creating five agents.
+instance = Entity(5)
+
+// for 10 seconds
+computation = instance.getReady(5)
+
+try
+   computation.launch()
+   >
+   > "Test complete."
+   
+catch in error
+   >
+   > "Caught a generic error:"
+   > error
+end

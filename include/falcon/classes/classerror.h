@@ -1,0 +1,126 @@
+/*
+   FALCON - The Falcon Programming Language.
+   FILE: classerror.h
+
+   Class for storing error in scripts.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Fri, 04 Feb 2011 18:39:36 +0100
+
+   -------------------------------------------------------------------
+   (C) Copyright 2011: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+
+#ifndef FALCON_CLASSERROR_H
+#define FALCON_CLASSERROR_H
+
+#include <falcon/setup.h>
+#include <falcon/error.h>
+#include <falcon/classes/classuser.h>
+
+#include <falcon/property.h>
+#include <falcon/method.h>
+
+namespace Falcon {
+
+class Stream;
+
+/*# The base class of all the error class hierarchy.
+ 
+   @prop code
+   @prop description
+   @prop extra
+
+   @prop mantra
+   @prop module
+   @prop path
+   @prop signature
+   @prop line
+   @prop chr
+
+   @prop heading
+   @prop trace
+   @prop errors
+   @prop raised
+ */
+class FALCON_DYN_SYM ClassError: public ClassUser
+{
+public:
+   virtual void dispose( void* self ) const;
+   virtual void* clone( void* source ) const;
+   virtual void* createInstance() const;
+      
+   /** Grant that subclasses are considered derived from the standard engine Error class.*/
+   virtual bool isDerivedFrom( const Class* cls ) const;
+
+   virtual void describe( void* instance, String& target, int depth = 3, int maxlen = 60 ) const;
+   
+   bool op_init( VMContext* ctx, void* instance, int32 pcount ) const;
+   void op_toString( VMContext* ctx, void* self ) const;
+   
+
+   ClassError( const String& name );
+
+protected:
+   virtual ~ClassError();
+
+   /** Turns the standard error parameters sent by scripts into an ErrorParam.
+    \param ctx The context where the parameters reside.
+    \param pcount Number of parameters in the stack.
+    \param params The ErrorParam initializer that will be filled.
+    \param bThrow If true, will Throw an error in case of wrong parameters.
+    \return false in case of parametetr errors if bThrow is not true.
+    
+    This method analyzes the parameters passed in the stack at error class or
+    subclass invocation by scripts, and then uses those parameters to initialize
+    an ErrorParam instance that, in turn, will initialize the C++ exception
+    related to the subclass.
+    
+    In short, this gets the first parameters of the script call, if given, 
+    and turns then into:
+    - The error code.
+    - The error description.
+    - The error extra message.
+    
+    All the parameters are optional and could be nil if skipped.
+    
+    Also, it fills the line, module and symbol parameters by analyzing the
+    current status of the context.
+    
+    \throws ParamError on invalid parameters.
+    */
+   bool invokeParams( VMContext* ctx, int pcount, ErrorParam& params, bool bThrow = true ) const;
+
+private:
+
+   FALCON_DECLARE_PROPERTY( code );
+   FALCON_DECLARE_PROPERTY( description );
+   FALCON_DECLARE_PROPERTY( extra );
+
+   FALCON_DECLARE_PROPERTY( mantra );
+   FALCON_DECLARE_PROPERTY( module );
+   FALCON_DECLARE_PROPERTY( path );
+   FALCON_DECLARE_PROPERTY( signature );
+   FALCON_DECLARE_PROPERTY( line );
+   FALCON_DECLARE_PROPERTY( chr );
+
+   FALCON_DECLARE_PROPERTY( heading );
+   FALCON_DECLARE_PROPERTY( trace );
+   FALCON_DECLARE_PROPERTY( errors );
+   FALCON_DECLARE_PROPERTY( raised );
+
+   /**
+    @method take Error
+    Takes the current trace and context and stores it in the error.
+    */
+   FALCON_DECLARE_METHOD( take, "" );
+};
+
+}
+
+#endif	/* FALCON_CLASSERROR_H */
+
+/* end of classerror.h */

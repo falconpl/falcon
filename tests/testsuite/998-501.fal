@@ -1,0 +1,101 @@
+/*
+998 series -- book samples
+
+@name Rules with init and cut
+@category Book
+
+@output
+A: 0; B: 0
+A: 0; B: 1
+A: 0; B: 2
+A: 1; B: 0
+A: 1; B: 1
+A: 1; B: 2
+A: 2; B: 0
+A: 2; B: 1
+A: 2; B: 2
+Values exausted
+A: 0; B: 0
+A: 1; B: 0
+A: 2; B: 0
+Values exausted
+A: 0; B: 0
+Values exausted
+
+@endoutput
+*/ 
+ 
+
+// The init object will assume the value we set prior to a redo.
+inc = function ( v )
+   // will be nil if this wasn't yet redone
+   var = init
+   if not var: var = 0
+   
+   if var < 2
+      // prepare the init for the next redo
+      init = var + 1
+      // we can set a doubtful value...
+      return? var
+   else
+      // ... or tell this is the last one.
+      return var
+   end
+end
+
+// This rule will cause all the possible values to be used.
+rule
+   a = inc()
+   b = inc()
+   > @"A: $a; B: $b" 
+   false
+   
+   // after the final failure, this branch will make the rule to succeed
+   or
+   > "Values exausted"
+end
+
+// In this rule, we say to accept the first value for b
+rule
+   a = inc()
+   ! b = inc()     // ignore the return? on the other side
+   > @"A: $a; B: $b" 
+   false   
+   or
+   > "Values exausted"
+end
+
+// In this rule, we decide to accept just the first values.
+rule
+   a = inc()
+   b = inc()     
+   !  // declare we accept dobutful values generated before.
+   > @"A: $a; B: $b" 
+   false   
+   or
+   > "Values exausted"
+end
+
+
+/*
+   If you're curious, the output of this program is 
+   
+A: 0; B: 0
+A: 0; B: 1
+A: 0; B: 2
+A: 1; B: 0
+A: 1; B: 1
+A: 1; B: 2
+A: 2; B: 0
+A: 2; B: 1
+A: 2; B: 2
+Values exausted
+A: 0; B: 0
+A: 1; B: 0
+A: 2; B: 0
+Values exausted
+A: 0; B: 0
+Values exausted
+
+*/
+

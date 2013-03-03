@@ -9,9 +9,11 @@
 #define FLC_ZLIB_EXT_H
 
 #include <falcon/setup.h>
-#include <falcon/module.h>
 #include <falcon/error.h>
+#include <falcon/errorclasses.h>
 #include <falcon/error_base.h>
+
+#include <falcon/function.h>
 
 #ifndef FALCON_ZLIB_ERROR_BASE
    #define FALCON_ZLIB_ERROR_BASE        1190
@@ -21,25 +23,42 @@
 namespace Falcon {
 namespace Ext {
 
-FALCON_FUNC ZLib_getVersion( ::Falcon::VMachine *vm );
-FALCON_FUNC ZLib_compress( ::Falcon::VMachine *vm );
-FALCON_FUNC ZLib_uncompress( ::Falcon::VMachine *vm );
-FALCON_FUNC ZLib_compressText( ::Falcon::VMachine *vm );
-FALCON_FUNC ZLib_uncompressText( ::Falcon::VMachine *vm );
+
+
+//====================================================
+// Functions.
+//
+
+
+FALCON_DECLARE_FUNCTION( getVersion, "" );
+FALCON_DECLARE_FUNCTION( compress, "buffer:M|S" );
+FALCON_DECLARE_FUNCTION( uncompress, "buffer:M|S" );
+FALCON_DECLARE_FUNCTION( compressText, "text:S" );
+FALCON_DECLARE_FUNCTION( uncompressText, "buffer:M|S" );
+
+
+class ClassZLibError: public ClassError
+      {
+      private:
+         static ClassZLibError* m_instance;
+      public:
+         inline ClassZLibError(): ClassError( "ZLibError" ) {} 
+         inline virtual ~ClassZLibError(){} 
+         virtual void* createInstance() const;
+         static ClassZLibError* singleton();
+      };
 
 class ZLibError: public ::Falcon::Error
 {
 public:
    ZLibError():
-      Error( "ZLibError" )
+      Error( ClassZLibError::singleton() )
    {}
 
    ZLibError( const ErrorParam &params  ):
-      Error( "ZLibError", params )
+      Error( ClassZLibError::singleton(), params )
       {}
 };
-
-FALCON_FUNC  ZLibError_init ( ::Falcon::VMachine *vm );
 
 }
 }

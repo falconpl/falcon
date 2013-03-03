@@ -1,0 +1,61 @@
+/*
+@name Semaphore with delay
+@category Parallel
+
+@long 110
+@checkpoint STEP
+
+@result OK
+*/
+
+load rnd
+
+randomSeed(123123)
+size = 10000
+size10 = size/10
+size100 = size/100
+data = []
+data.reserve(size)
+pos = 1
+
+evtGo = Semaphore()
+evtDone = Semaphore()
+barrier = Barrier()
+
+function process()
+   loop
+      res = Parallel.wait( evtGo, barrier )
+      if res == barrier: break
+            
+      pos++
+      data += pos
+      evtDone.post()
+   end
+end
+
+
+function control()
+   for i = 1 to size
+      evtGo.post()
+      if random(0,0,1)
+         rest( random(1,10) )
+      end
+      if i % size100 == 0: > "STEP"      
+      evtDone.wait()
+   end   
+   barrier.open()
+end
+
+
+> "Semaphore with delay"
+p = Parallel( process, process, control )
+p.launch()
+
+> "Check loop"
+for i = 1 to data.len - 1
+   if data[i] != data[i-1] + 1
+      return "Check failed"
+   end
+   if i % size10 == 0: > "STEP"
+end
+return "OK"

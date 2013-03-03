@@ -19,7 +19,6 @@
 
 #include <falcon/setup.h>
 #include <falcon/types.h>
-#include <falcon/basealloc.h>
 
 #ifdef FALCON_SYSTEM_WIN
 #include <falcon/mt_win.h>
@@ -42,7 +41,7 @@ public:
 };
 
 /** Thread creation parameters. */
-class FALCON_DYN_CLASS ThreadParams: public BaseAlloc
+class FALCON_DYN_CLASS ThreadParams
 {
    uint32 m_stackSize;
    bool m_bDetached;
@@ -83,7 +82,7 @@ struct SYSTH_DATA;
    requests at higher level, preventing - controlling blocking I/O.
    
 */
-class FALCON_DYN_CLASS SysThread: public BaseAlloc
+class FALCON_DYN_CLASS SysThread
 {
    struct SYSTH_DATA* m_sysdata;
    
@@ -178,6 +177,77 @@ public:
    /** Dispose of this object without modifying the underlying system data. */
    void disengage();
 };
+
+
+/**
+   An event on which the wait can be interrupted asynchronously.
+*/
+class FALCON_DYN_CLASS InterruptibleEvent
+{
+public:
+   /** Creates the interruptible event.
+      Will assert on failure.
+   */
+   InterruptibleEvent( bool bManualReset = false, bool initState = false );
+
+   /**
+      Destroys the event.
+
+      Will assert on failure.
+   */
+   ~InterruptibleEvent();
+
+   /**
+      Signals the event.
+   */
+   void set();
+
+   /**
+      Clears the set status.
+
+      Mostly useful for non-autoreset events. Should not be used
+      on auto-reset events as this might create race conditions and
+      lost signals.
+   */
+   void reset();
+
+   typedef enum {
+      wait_timedout,
+      wait_interrupted,
+      wait_success
+   } wait_result_t;
+
+   /**
+      Waits on the given event.
+
+      The wait is not interruptible. If a thread is blocked on this wait, the event must
+      be signaled somewhere else to allow it to proceed and check for closure request.
+
+      Falcon script level have better semantics, but this object is meant for fairly basic
+      and low-level system related activities.
+
+      If the event is auto-reset, only one waiting thread is waken up, and after the
+      wakeup the event is automatically reset.
+      \param to The timeout; set to < 0 for infinite timeout, 0 to check without blocking and
+         > 0 for a number of MSecs wait.
+      \return One of the wait_interrupted, wait_timedout or wait_success values.
+   */
+   wait_result_t wait( int32 to = -1 );
+
+   /** Interrupts the wait on the event.
+
+    Interrupt is lazy: will notify the wait being interrupted even if the wait
+    is entered after the interrupt is issued.
+
+    Also, it's sticky: once interrupted, any subsequent wait will fail with
+       wait_interrupted result.
+    */
+   void interrupt();
+
+private:
+   void* m_sysdata;
+};
+
 
 }
 

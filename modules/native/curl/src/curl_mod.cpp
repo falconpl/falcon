@@ -107,7 +107,7 @@ void CurlHandle::cleanup()
 
    if (m_pPostBuffer != 0 )
    {
-      memFree( m_pPostBuffer );
+      free( m_pPostBuffer );
       m_pPostBuffer = 0;
    }
 }
@@ -179,7 +179,6 @@ size_t CurlHandle::write_msg( void *ptr, size_t size, size_t nmemb, void *data)
 
    if( vm != 0 )
    {
-      printf( "Received... %ld\n", size * nmemb );
       CurlHandle* cs = (CurlHandle*) data;
       VMMessage* vmmsg = new VMMessage( cs->m_sSlot );
       vmmsg->addParam( cs );
@@ -399,9 +398,9 @@ struct curl_slist* CurlHandle::slistFromArray( CoreArray* ca )
 void CurlHandle::postData( const String& str )
 {
    if (m_pPostBuffer != 0 )
-      memFree( m_pPostBuffer );
+      free( m_pPostBuffer );
 
-   m_pPostBuffer = memAlloc( str.size() );
+   m_pPostBuffer = malloc( str.size() );
    memcpy(m_pPostBuffer, str.getRawStorage(), str.size() );
 
    curl_easy_setopt( handle(), CURLOPT_POSTFIELDS, m_pPostBuffer );

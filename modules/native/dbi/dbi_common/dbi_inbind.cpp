@@ -60,15 +60,15 @@ char* DBIStringConverter_UTF8::convertString( const String& str, char* target, i
    }
    else
    {
-      ret = (char *) memAlloc( maxlen );
+      ret = (char *) malloc( maxlen );
    }
 
    while( (bufsize = str.toCString( ret, maxlen )) < 0 )
    {
       maxlen *= 2;
       if ( ret != target )
-         memFree(ret);
-      ret = (char *) memAlloc( maxlen );
+         free(ret);
+      ret = (char *) malloc( maxlen );
    }
 
    return ret;
@@ -90,15 +90,15 @@ char* DBIStringConverter_WCHAR::convertString( const String& str, char* target, 
    }
    else
    {
-      ret = (wchar_t *) memAlloc( maxlen );
+      ret = (wchar_t *) malloc( maxlen );
    }
 
    while( (bufsize = str.toWideString( ret, maxlen )) < 0 )
    {
       maxlen *= 2;
       if ( ret != (wchar_t*) target )
-         memFree(ret);
-      ret = (wchar_t *) memAlloc( maxlen );
+         free(ret);
+      ret = (wchar_t *) malloc( maxlen );
    }
 
    return (char*) ret;
@@ -199,7 +199,7 @@ void DBIBindItem::clear()
    {
       if ( m_cdata.v_string != m_buffer )
       {
-         memFree( m_cdata.v_string );
+         free( m_cdata.v_string );
       }
       m_buflen = 0;
    }

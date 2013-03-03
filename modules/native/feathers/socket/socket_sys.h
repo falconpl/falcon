@@ -25,8 +25,18 @@
 #include <falcon/falcondata.h>
 #include <falcon/vm_sys.h>
 
+#if WITH_OPENSSL
+#include <openssl/bio.h>
+#include <openssl/err.h>
+#include <openssl/ssl.h>
+#endif // WITH_OPENSSL
+
 namespace Falcon {
 namespace Sys {
+
+//================================================
+// Generic system dependant
+//================================================
 
 /** Initializes the system.
    Some incredibly idiotic OS (guess) needs to initialize the socket layer.
@@ -36,11 +46,24 @@ namespace Sys {
 */
 bool init_system();
 
+#if WITH_OPENSSL
+/** Initialize SSL subsystem.
+ */
+void ssl_init();
+
+/** Terminate SSL subsystem (used when?).
+ */
+void ssl_fini();
+#endif // WITH_OPENSSL
+
 /** Retreives the host name for this machine */
 bool getHostName( String &name );
 
 bool getErrorDesc( int64 errorCode, String &desc );
 
+//================================================
+// Address
+//================================================
 class Address
 {
    void *m_systemData;
@@ -140,6 +163,9 @@ public:
    int64 lastError() const { return m_lastError; }
 };
 
+//================================================
+// Socket
+//================================================
 /** Base class for system dependant socket implementation. */
 class Socket: public Falcon::FalconData
 {
@@ -179,7 +205,7 @@ protected:
       m_refcount = (volatile int32*) memAlloc( sizeof(int32) );
       *m_refcount = 1;
    }
-      
+
    Socket( const Socket& other );
 
 public:
@@ -209,6 +235,9 @@ public:
    virtual FalconData *clone() const;
 };
 
+//===============================================
+// UDP Socket
+//===============================================
 class UDPSocket: public Socket
 {
 
@@ -221,21 +250,140 @@ public:
    int32 sendTo( byte *buffer, int32 size, Address &data );
 };
 
+
+//================================================
+// SSLData
+//================================================
+#if WITH_OPENSSL
+/** Class bearing all SSL related data.
+ */
+class SSLData
+{
+public:
+
+   /** Socket behavior.
+    *  True if socket behaves as a server-side socket, false if as client.
+    */
+   bool asServer;
+
+   /** Misc SSL errors codes.
+    */
+   typedef enum
+   {
+      no_error = 0,
+      // happen in TCPSocket::sslconfig() :
+      notready_error, /// Socket or SSL context not ready.
+      ctx_error,      /// Error creating ssl context.
+      cert_error,     /// Error setting certificate.
+      pkey_error,     /// Error setting private key.
+      ca_error,       /// Error setting cert authorities.
+      handle_error,   /// Error creating ssl handle.
+      fd_error,       /// Error attaching fd.
+      // happen in TCPSocket::sslconnect(), sslwrite() or sslread() :
+      already_error,       /// Connection attempt already done.
+      notconnected_error,  /// Socket is not connected.
+      handshake_failed,    /// Handshake has failed.
+      write_error,         /// Error during write operation.
+      read_error           /// Error during read operation.
+
+   } ssl_error_t;
+
+   /** Last SSL related error.
+    */
+   ssl_error_t lastSslError;
+
+   /** Last SSL subsystem error.
+    */
+   int64 lastSysError;
+
+   /** SSL protocols/versions.
+    */
+   typedef enum
+   {
+#ifndef OPENSSL_NO_SSL2
+      SSLv2,
+#endif
+      SSLv3,
+      SSLv23,
+      TLSv1,
+      DTLSv1
+
+   } sslVersion_t;
+
+   /** SSL version/method chosen (default SSLv3).
+    *  Change it before creation of context.
+    */
+   sslVersion_t sslVersion;
+
+   /** Handshake status.
+    */
+   typedef enum
+   {
+      handshake_todo,
+      handshake_bad,
+      handshake_ok
+
+   } handshake_t;
+
+   /** Wether handshake was done and how it resulted.
+    */
+   handshake_t handshakeState;
+
+   SSL*         sslHandle;
+   SSL_CTX*     sslContext;
+   SSL_METHOD*  sslMethod;
+
+   String   certFile; /// Certificate file.
+   String   keyFile;  /// Private key file.
+   String   caFile;   /// Certificate authorities file.
+
+   SSLData()
+      :
+      asServer( false ),
+      lastSslError( no_error ),
+      lastSysError( 1 ),
+      sslVersion( SSLv3 ),
+      handshakeState( handshake_todo ),
+      sslHandle( 0 ),
+      sslContext( 0 ),
+      sslMethod( 0 ),
+      certFile( "" ),
+      keyFile( "" ),
+      caFile( "" )
+   {}
+
+   ~SSLData();
+
+};
+#endif // WITH_OPENSSL
+
+//===============================================
+// TCP Socket
+//============================================
 class TCPSocket: public Socket
 {
    bool m_connected;
+   #if WITH_OPENSSL
+   SSLData* m_sslData;
+   #endif
 
 public:
    TCPSocket( bool ipv6 = false );
    TCPSocket( void *systemData, bool ipv6 = false):
       Socket( systemData, ipv6 ),
       m_connected( false )
+      #if WITH_OPENSSL
+      ,m_sslData( 0 )
+      #endif
    {}
-     
+
    TCPSocket( const TCPSocket& other );
    virtual ~TCPSocket();
 
    virtual FalconData* clone() const;
+#if WITH_OPENSSL
+   SSLData* ssl() const { return m_sslData; }
+#endif
 
    /** Receive a buffer on the socket.
       The function waits m_timeout milliseconds (or forever if timeout is -1);
@@ -257,12 +405,47 @@ public:
       Return false means error. Return true does not mean that
       connection is eshtablished. It is necessary to check for isConnected()
       to see if connection is ready. If timeout is zero, returns immediately,
-      else returns whe timeout expires or when connection is complete.
+      else returns when timeout expires or when connection is complete.
    */
    bool connect( Address &where );
+
+#if WITH_OPENSSL
+   /** Provide SSL capabilities to the socket.
+    *  \param asServer True if we want server behavior, false for client behavior.
+    *  \param sslVer Desired protocol
+    *  \param certFile Certificate file (or empty string for none)
+    *  \param pkeyFile Key file (or empty string for none)
+    *  \return 0 on success or an error code.
+    *  \note connect() must have been called before as we need a socket to attach.
+    *
+    *  Successful, that function leaves an SSLData instance as m_sslData.
+    */
+   SSLData::ssl_error_t sslConfig( bool asServer,
+                                   SSLData::sslVersion_t sslVer,
+                                   const char* certFile,
+                                   const char* pkeyFile,
+                                   const char* certAuthFile );
+
+   /** Manually destroy the SSL context.
+    *  Useful if you want to reuse/reconnect the socket.
+    */
+   void sslClear();
+
+   /** Proceed with SSL handshake.
+    */
+   SSLData::ssl_error_t sslConnect();
+
+protected:
+   /* These are called internally by send/recv
+    */
+   int32 sslWrite( const byte* buf, int32 sz );
+   int32 sslRead( byte* buf, int32 sz );
+#endif // WITH_OPENSSL
 };
 
-
+//================================================
+// Server
+//================================================
 class ServerSocket: public Socket
 {
    bool m_bListening;

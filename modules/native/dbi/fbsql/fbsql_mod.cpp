@@ -73,10 +73,10 @@ FBInBind::FBInBind( isc_db_handle dbh, isc_tr_handle tr, isc_stmt_handle stmt ):
 FBInBind::~FBInBind()
 {
    if( m_sqlInd != 0 )
-      memFree(m_sqlInd);
+      free(m_sqlInd);
 
    if( m_GIDS != 0 )
-      memFree( m_GIDS );
+      free( m_GIDS );
 }
 
 
@@ -88,7 +88,7 @@ void FBInBind::onFirstBinding( int size )
       throw new DBIError( ErrorParam( FALCON_DBI_ERROR_BIND_SIZE, __LINE__ )
             .extra( String("").N(size).A("!=").N(m_data.varCount())) );
    }
-   m_sqlInd = (ISC_SHORT*) memAlloc( size * sizeof(ISC_SHORT) );
+   m_sqlInd = (ISC_SHORT*) malloc( size * sizeof(ISC_SHORT) );
 }
 
 
@@ -142,7 +142,7 @@ void FBInBind::onItemChanged( int num )
          // Create the blob data
          if ( m_GIDS == 0 )
          {
-            m_GIDS = (ISC_QUAD*) memAlloc( sizeof( ISC_QUAD ) * m_size );
+            m_GIDS = (ISC_QUAD*) malloc( sizeof( ISC_QUAD ) * m_size );
          }
          m_GIDS[num] = createBlob( (byte*)item.asBuffer(), item.asStringLen() );
          var->sqltype = SQL_BLOB;
@@ -508,13 +508,13 @@ MemBuf* DBIRecordsetFB::fetchBlob( ISC_QUAD *bId )
       char data[4096];
    };
 
-   struct chunk* current = (struct chunk*) memAlloc( sizeof(struct chunk));
+   struct chunk* current = (struct chunk*) malloc( sizeof(struct chunk));
    struct chunk* first = current;
    while( (res = isc_get_segment(status, &handle, &len, 4096, current->data )) == 0 || status[1] == isc_segment ) {
       fullSize += len;
       current->size = len;
 
-      struct chunk* next = (struct chunk*) memAlloc( sizeof(struct chunk));
+      struct chunk* next = (struct chunk*) malloc( sizeof(struct chunk));
       current->next = next;
 
       current = next;
@@ -527,7 +527,7 @@ MemBuf* DBIRecordsetFB::fetchBlob( ISC_QUAD *bId )
       while( first != 0 )
       {
          current = first->next;
-         memFree( first );
+         free( first );
          first = current;
       }
 
@@ -542,7 +542,7 @@ MemBuf* DBIRecordsetFB::fetchBlob( ISC_QUAD *bId )
       while( first != 0 )
       {
          current = first->next;
-         memFree( first );
+         free( first );
          first = current;
       }
 
@@ -558,7 +558,7 @@ MemBuf* DBIRecordsetFB::fetchBlob( ISC_QUAD *bId )
       fullSize += first->size;
 
       current = first->next;
-      memFree( first );
+      free( first );
       first = current;
    }
 
@@ -716,7 +716,7 @@ FBSqlData::FBSqlData():
       m_indicators(0),
       m_bOwnBuffers( false )
 {
-   m_sqlda = (XSQLDA*) memAlloc( XSQLDA_LENGTH(5) );
+   m_sqlda = (XSQLDA*) malloc( XSQLDA_LENGTH(5) );
    m_sqlda->version = SQLDA_VERSION1;
    m_sqlda->sqln = 5;
    m_sqlda->sqld = 0;
@@ -735,12 +735,12 @@ void FBSqlData::release()
       {
          for( int i = 0; i < varCount(); ++i )
          {
-            memFree(var(i)->sqldata);
+            free(var(i)->sqldata);
          }
 
-         memFree( m_indicators );
+         free( m_indicators );
       }
-      memFree(m_sqlda);
+      free(m_sqlda);
       m_sqlda = 0;
       m_bOwnBuffers = false;
    }
@@ -759,8 +759,8 @@ void FBSqlData::describeIn( isc_stmt_handle stmt )
    if ( m_sqlda->sqld > m_sqlda->sqln )
    {
       int count = m_sqlda->sqld;
-      memFree( m_sqlda );
-      m_sqlda = (XSQLDA*) memAlloc( XSQLDA_LENGTH(count) );
+      free( m_sqlda );
+      m_sqlda = (XSQLDA*) malloc( XSQLDA_LENGTH(count) );
       m_sqlda->version = SQLDA_VERSION1;
       m_sqlda->sqln = count;
       m_sqlda->sqld = 0;
@@ -781,8 +781,8 @@ void FBSqlData::describeOut( isc_stmt_handle stmt )
    if ( m_sqlda->sqld > m_sqlda->sqln )
    {
       int count = m_sqlda->sqld;
-      memFree( m_sqlda );
-      m_sqlda = (XSQLDA*) memAlloc( XSQLDA_LENGTH(count) );
+      free( m_sqlda );
+      m_sqlda = (XSQLDA*) malloc( XSQLDA_LENGTH(count) );
       m_sqlda->version = SQLDA_VERSION1;
       m_sqlda->sqln = count;
       m_sqlda->sqld = 0;
@@ -794,12 +794,12 @@ void FBSqlData::describeOut( isc_stmt_handle stmt )
 void FBSqlData::allocOutput()
 {
    m_bOwnBuffers = true;
-   m_indicators = (ISC_SHORT*) memAlloc( sizeof(ISC_SHORT) * varCount() );
+   m_indicators = (ISC_SHORT*) malloc( sizeof(ISC_SHORT) * varCount() );
 
    for( int i = 0; i < varCount(); ++i )
    {
       XSQLVAR* v = var(i);
-      v->sqldata = (ISC_SCHAR*) memAlloc( v->sqllen );
+      v->sqldata = (ISC_SCHAR*) malloc( v->sqllen );
       v->sqlind = m_indicators + i;
       *v->sqlind = 0;
    }

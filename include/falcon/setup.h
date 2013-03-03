@@ -29,6 +29,10 @@ different systems.
 #ifndef FLC_SETUP_H
 #define FLC_SETUP_H
 
+#ifndef SRC
+#define SRC __FILE__
+#endif
+
 #include <falcon/config.h>
 
 //=================================
@@ -36,10 +40,14 @@ different systems.
 //
 
 #ifdef FALCON_SYSTEM_WIN
-   
+
    // Minimal specific.
    #if ! defined(_WIN32_WINNT)
    #define _WIN32_WINNT 0x0403
+   #endif
+
+   #ifndef NOMINMAX
+      #define NOMINMAX
    #endif
 
    //===============================
@@ -59,7 +67,7 @@ different systems.
 				#define FALCON_DYN_CLASS __declspec(dllexport)
 				#define FALCON_DYN_SYM __declspec(dllexport)
 				#define EXTERN_TEMPLATE
-            
+
             // Falcon export service is optional, but mandatory with engine exports.
             #ifndef FALCON_EXPORT_SERVICE
                #define FALCON_EXPORT_SERVICE
@@ -154,12 +162,12 @@ different systems.
 // Unix specific defines
 //
 #else
-   #define CDECL 
+   #define CDECL
    #define FALCON_FUNC \
       void
 
    #define FALCON_DYN_CLASS
-   #define FALCON_DYN_SYM 
+   #define FALCON_DYN_SYM
    #define EXTERN_TEMPLATE
    #define FALCON_SERVICE
 
@@ -187,6 +195,16 @@ different systems.
 
 #ifndef STR
    #define STR(x) _STR(x)
+#endif
+
+// Activate GC Trace in debug
+#ifndef NDEBUG
+   #undef FALCON_TRACE_GC
+   #define FALCON_TRACE_GC 1
+#endif
+
+#ifndef FALCON_UNUSED_PARAM
+#define FALCON_UNUSED_PARAM(x) {if(x) x = x;}
 #endif
 
 #endif

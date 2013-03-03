@@ -1,0 +1,43 @@
+/*
+@name Basic try/catch test
+@category Try
+
+This test creates a bit of traceback. It can be 
+checked by hand to see if the traceback is correct
+in terms of desired output and source lines.
+
+The automated test checks if the traceback has
+been properly generated only when requestsed.
+
+@output
+Basic try/catch test
+Testing empty try
+Testing try with just body
+All ok here
+Testing try with just body and an error
+All ok here
+Done
+@endoutput
+*/
+
+> "Basic try/catch test"
+
+> "Testing empty try"
+try
+end
+
+// basic try with success
+> "Testing try with just body"
+try
+   > "All ok here"
+end
+
+> "Testing try with just body and an error"
+v = 0
+try
+   > "All ok here"
+   > v + "a"         // discard this error
+   > "Should not see this"
+end
+
+> "Done"

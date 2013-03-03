@@ -1,0 +1,100 @@
+/*
+@name Prototype small sample
+@category Book
+
+@output
+Bruum!
+Flap Flap!
+Kaboom!
+Rolling on 3 wheels
+200
+A Boeing is rolling on 3 wheels
+A Cessna is rolling on 3 wheels
+A big Boeing is rolling on 3 wheels
+A small Cessna is rolling on 3 wheels
+@endoutput
+*/
+
+// Prototypes are meta-objects that describe other objects.
+// Falcon supports several flavors of prototype-based programming.
+// A falcon prototype is declared via the p{} constuct or as an
+// instance of the Prototype class.
+
+veichle = p{
+   wheels = 4
+   color = "red"
+   doors = 4
+   accelerate = {=> printl( "Bruum!" ) }
+}
+
+bird = p{
+   wingspan = 20
+   fly = {=> 
+      if self.wingspan > 20
+         printl( "Kaboom!")
+      else         
+         printl("Flap Flap!") 
+      end
+   }
+}
+
+// a prototype can have one or more basis
+// which are the foundation for that object:
+
+airplane = Prototype( bird, veichle )
+
+// or
+
+airplane = p{
+   doors = 1
+   _base = .[ bird veichle ]
+}
+ 
+airplane.wheels = 3
+airplane.accelerate()   // Bruum!
+airplane.fly()          // Flap Flap!?!
+airplane.wingspan = 200 
+airplane.fly()          // Kaboom! much better.
+
+// prototypes can declare new properties on the fly
+airplane.roll = {=> printl( "Rolling on ", self.wheels, " wheels" ) }
+airplane.roll()        // Rolling on 3 wheels.
+
+// and they inherit the properties of their basis dynamically:
+veichle.length = 200
+> airplane.length      // 200
+
+// Most interestingly, prototypes exposing an _isBase property, and
+// eventually an _init constructor function, are considered
+// "automatic bases", creating instances as they are called:
+
+airplane._isBase = true  // now we get serious
+airplane._init = {brand, wingspan => 
+      self.brand = brand
+      self.wingspan = wingspan
+      return self
+   }
+airplane.roll = {=> printl( @"A ${self.brand} is rolling on ${self.wheels} wheels" ) }
+
+   
+liner = airplane( "Boeing", 2000)
+flier = airplane( "Cessna", 125)
+
+liner.roll()
+flier.roll()
+
+// and most interestingly, they still share the base class prototyping.
+airplane.roll = {=> 
+   if self.wingspan < 200
+      size = "small"
+   else
+      size = "big"
+   end
+   
+   printl( @"A ${size} ${self.brand} is rolling on ${self.wheels} wheels" )
+}
+
+liner.roll()
+flier.roll()
+
+

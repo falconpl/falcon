@@ -77,12 +77,12 @@ static void StreamIOCtx_free(struct gdIOCtx *ctx)
    StreamCtx* sctx = (StreamCtx*) ctx;
    if ( sctx->okToDelete )
        delete sctx->stream;
-   Falcon::memFree( sctx );
+   Falcon::free( sctx );
 }
 
 static gdIOCtx* CreateStreamIOCtx( Falcon::Stream* stream, bool okToDelete )
 {
-   StreamCtx* sctx = (StreamCtx*) Falcon::memAlloc( sizeof( StreamCtx ) );
+   StreamCtx* sctx = (StreamCtx*) Falcon::malloc( sizeof( StreamCtx ) );
    sctx->ctx.getC = StreamIOCtx_getC;
    sctx->ctx.getBuf = StreamIOCtx_getBuf;
    sctx->ctx.putC = StreamIOCtx_putC;

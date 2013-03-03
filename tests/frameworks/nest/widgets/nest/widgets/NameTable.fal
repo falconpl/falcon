@@ -1,0 +1,91 @@
+import Table from nest.widgets.Table in widgets
+import from nest.widgets.action in action
+
+/* A function to create some random table data, which stays persistent in the server */
+function makeTableData()
+   names = [ "Ada", "Charles", "John", "Edda", "Mary", "Martin", "Steve", "Steven", "Dennis", "Dart", "Luke", "Daisy", "Anthony", "Adam", "Alan", "William", "Bill"]
+   snames = .[ "Smith" "Brown" "Lee" "York" "Gates" "Howlings" "Turing" "Lovelace" "Babbage" "Duke" "Martin" "Summers" "Gates" "Wall" "Jobs" "Saders" "Wellby"]
+
+   data = []
+   for i = 1 to 100
+      data += [
+         'id' => i,
+         'name'=> randomPick( names ),
+         'sname' => randomPick( snames ),
+         'age' => random( 20, 70 )
+         ]
+   end
+
+   while not Wopi.setAppData( data, "table-app" )
+   end
+
+   return data
+end
+
+/* Specialized table for Nest-widgets test site */
+
+class NameTable( id, itemsPerPage, itemCount, firstItem, orderColumn ) from \
+   widgets.Table( id, itemsPerPage, itemCount, firstItem, orderColumn )
+
+   function makeColumns()
+      self.addCheckboxColumn( "sel", "Select", ["id"], ["name","sname"] )
+      self.columsFromHeadings(
+         ["id|ID", "name|Name", "sname|Surname", "age|Age"]
+      )
+      self.addActionColumn( "Actions", ["id"], ["name","sname"], .[
+      action.ActionButton("Update", self, "upd" )
+      action.ActionLink("Delete", self, "del" )
+      ])
+   end
+   
+   function setDataView()
+      itemsPerPage = self.itemsPerPage
+      firstItem = self.firstItem
+      flt = self.filter
+
+      data = Wopi.getAppData( "table-app" )
+      if not data
+         data = makeTableData()
+      end
+
+      // filter table
+      if flt
+         if " " in flt
+            surname, name = map( {v=>strLower(v)}, flt.split( " ", 2 ))
+         else
+            surname = strLower(flt)
+         end
+         
+         data = filter( { val =>
+               if not strLower(val['sname']).startsWith(surname): return false
+               if name and not strLower(val['name']).startsWith( name ): return false
+               return true
+               }, data)
+      end
+      
+      // order the table.
+      if self.orderColumn != 0
+         orderCol = self.headers[ abs(self.orderColumn )-1 ]
+         fieldName = orderCol.fieldName
+         
+         funcSort = self.orderColumn > 0 ? \
+            { v1, v2 => v1[fieldName] > v2[fieldName] } : \
+            { v1, v2 => v1[fieldName] < v2[fieldName] }
+
+         arraySort( data, funcSort )
+      end
+
+      self.firstItem = firstItem      
+      self.itemCount = data.len()
+      
+      lastItem = self.sanitizeItemRange()
+      if self.firstItem == lastItem
+         self.data = []
+      else
+         self.data = data[self.firstItem : lastItem]
+      end
+      
+   end
+end
+
+

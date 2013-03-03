@@ -1,0 +1,20 @@
+/*
+@name Multiline string 2
+@category Smoke
+
+@output
+Multilne string test 2:
+   Hello 
+   world!
+
+---------------------
+@endoutput
+
+*/
+
+> "Multilne string test 2:"
+> '
+   Hello 
+   world!
+'
+> "---------------------"

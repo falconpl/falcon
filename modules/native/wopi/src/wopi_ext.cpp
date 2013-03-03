@@ -22,6 +22,7 @@
 #include <falcon/wopi/uploaded_ext.h>
 #include <falcon/wopi/utils.h>
 #include <falcon/wopi/wopi.h>
+#include <falcon/lineardict.h>
 
 #include <falcon/engine.h>
 #include <falcon/fstream.h>
@@ -459,6 +460,81 @@ static void Wopi_sendTemplate( Falcon::VMachine *vm )
 }
 
 /*#
+   @method parseQuery Wopi
+   @brief Explodes a query string into a dictionary.
+   @param qstring A string in query string format to be parsed.
+   @return A dictionary containing the keys and values in the query string.
+ 
+*/
+
+FALCON_FUNC Wopi_parseQuery( Falcon::VMachine *vm )
+{
+   Falcon::Item *i_qstring = vm->param(0);
+   Falcon::Item *i_output = vm->param(1);
+
+   // return an empty string if nil was given as parameter.
+   if ( i_qstring == 0 || ! i_qstring->isString() )
+   {
+       throw new Falcon::ParamError(
+         Falcon::ErrorParam( Falcon::e_inv_params, __LINE__ ).
+         extra( "S" ) );
+   }
+
+   LinearDict* dict = new LinearDict;
+   Utils::parseQuery( *i_qstring->asString(), *dict );
+   vm->retval(new CoreDict(dict));
+}
+
+/*#
+   @method makeQuery Wopi
+   @brief Implodes a dictionary of key/value pairs into a query string.
+   @param dict A dictionary containing the data to be transformed into query.
+   @return A valid query string.
+ 
+   @note The items in the dictionary are not stringified, they are just turned
+    into strings with the basic toString() method. Object.toString() overrides
+    won't be respected.
+*/
+FALCON_FUNC Wopi_makeQuery( Falcon::VMachine *vm )
+{
+   Falcon::Item *i_dict = vm->param(0);
+   
+   // return an empty string if nil was given as parameter.
+   if ( i_dict == 0 || ! i_dict->isDict() )
+   {
+       throw new Falcon::ParamError(
+         Falcon::ErrorParam( Falcon::e_inv_params, __LINE__ ).
+         extra( "D" ) );
+   }
+
+   CoreString* cs = new CoreString();
+   vm->retval( cs );
+   
+   CoreDict* dict = i_dict->asDict();
+   ItemDict& idict = dict->items();
+   Iterator iter(&idict);
+   bool bFilled = false;
+   while( iter.hasCurrent() )
+   {
+      if (bFilled )
+      {
+         cs->append('&');
+      }
+      const Item& key = iter.getCurrentKey();
+      const Item& value = iter.getCurrent();
+      String skey; key.toString( skey );
+      String svalue; value.toString( svalue );
+      
+      cs->append( URI::URLEncode( skey ) );
+      cs->append( '=' );
+      cs->append( URI::URLEncode( svalue ) );
+      
+      iter.next();
+      bFilled = true;
+   }
+}
+
+/*#
    @function htmlEscape
    @brief Escapes a string converting HTML special characters.
    @param string The string to be converted.
@@ -566,6 +642,10 @@ Falcon::Module * wopi_module_init( ObjectFactory rqf, ObjectFactory rpf,
       ->addParam( "id" )->addParam( "func" );
    self->addClassMethod( c_wopi, "sendTemplate", &Wopi_sendTemplate ).asSymbol()
       ->addParam( "stream" )->addParam( "tpd" )->addParam( "inMemory" );
+   self->addClassMethod( c_wopi, "parseQuery", &Wopi_parseQuery ).asSymbol()
+      ->addParam( "qstring" );
+   self->addClassMethod( c_wopi, "makeQuery", &Wopi_makeQuery ).asSymbol()
+      ->addParam( "dict" );
 
    // Generic functions.
    self->addExtFunc( "htmlEscape", htmlEscape )

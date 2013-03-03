@@ -1,0 +1,43 @@
+/*
+@name Ranges
+@category Types
+
+@output
+Elements in the range:
+2
+Nil
+0
+Lenght: 3
+Class: Range
+---- ----
+3
+-1
+0
+---- ----
+4
+10
+2
+---- Done ----
+@endoutput
+*/
+
+range = [2:]
+> "Elements in the range:"
+> range[0]
+> range[1]
+> range[2]
+> "Lenght: ", range.len
+> "Class: ", range.className
+> "---- ----"
+range = [3:-1]
+> range[0]
+> range[1]
+> range[2]
+> "---- ----"
+range = [4:10:2]
+> range[0]
+> range[1]
+> range[2]
+> "---- Done ----"
+
+

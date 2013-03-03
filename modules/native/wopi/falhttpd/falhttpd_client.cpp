@@ -47,7 +47,7 @@ FalhttpdClient::FalhttpdClient( const FalhttpOptions& options, LogArea* l, SOCKE
    m_options( options )
 {
    m_log->log( LOGLEVEL_INFO, "Incoming client from "+ m_sRemote );
-   m_cBuffer = (char*) memAlloc( DEFAULT_BUFFER_SIZE );
+   m_cBuffer = (char*) malloc( DEFAULT_BUFFER_SIZE );
    m_pSessionManager = options.m_pSessionManager;
 }
 

@@ -23,14 +23,18 @@
 #include <falcon/setup.h>
 
 #ifndef NDEBUG
-	#ifdef _MSC_VER
-		#ifdef __func__
-			# define fassert(expr) \
-			{if (!(expr)) _perform_FALCON_assert_func( #expr, __FILE__, __LINE__, __func__ );}
-		#else
-			# define fassert(expr) \
-				{if (!(expr)) _perform_FALCON_assert( #expr, __FILE__, __LINE__ );}
-		#endif
+     #ifdef _MSC_VER
+          #ifdef __func__
+                  # define fassert(expr) \
+                  {if (!(expr)) _perform_FALCON_assert_func( #expr, __FILE__, __LINE__, __func__ );}
+                  # define fassert2(expr, comment) \
+                  {if (!(expr)) _perform_FALCON_assert_func( comment " " #expr, __FILE__, __LINE__, __func__ );}
+          #else
+                  # define fassert(expr) \
+                          {if (!(expr)) _perform_FALCON_assert( #expr, __FILE__, __LINE__ );}
+                  # define fassert2(expr, comment ) \
+                          {if (!(expr)) _perform_FALCON_assert( comment " " #expr, __FILE__, __LINE__ );}
+          #endif
    #else
 
       // older versions of g++/mingw hadn't __STRING
@@ -38,16 +42,21 @@
       #define __STRING(x) #x
       #endif
 
-		#ifdef __func__
-			# define fassert(expr) \
-			{if (!(expr)) _perform_FALCON_assert_func( __STRING(expr), __FILE__, __LINE__, __func__ );}
-		#else
-			# define fassert(expr) \
-				{if (!(expr)) _perform_FALCON_assert( __STRING(expr), __FILE__, __LINE__ );}
-		#endif
+          #ifdef __func__
+                  # define fassert(expr) \
+                  {if (!(expr)) _perform_FALCON_assert_func( __STRING(expr), __FILE__, __LINE__, __func__ );}
+                  # define fassert2(expr, comment) \
+                  {if (!(expr)) _perform_FALCON_assert_func( comment " " __STRING(expr), __FILE__, __LINE__, __func__ );}
+          #else
+                  # define fassert(expr) \
+                          {if (!(expr)) _perform_FALCON_assert( __STRING(expr), __FILE__, __LINE__ );}
+                  # define fassert2(expr, comment) \
+                          {if (!(expr)) _perform_FALCON_assert( comment " " __STRING(expr), __FILE__, __LINE__ );}
+          #endif
    #endif
 #else
    # define fassert(expr)
+   # define fassert2(expr, comment)
 #endif
 
 extern "C" void FALCON_DYN_SYM _perform_FALCON_assert_func( const char *expr, const char *filename, int line, const char *assertFunc );

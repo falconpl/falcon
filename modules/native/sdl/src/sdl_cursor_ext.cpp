@@ -190,8 +190,8 @@ FALCON_FUNC sdl_MakeCursor( ::Falcon::VMachine *vm )
             extra( "Strings not modulo 8" ) ) ;
          if ( data != 0 )
          {
-            memFree( data );
-            memFree( mask );
+            free( data );
+            free( mask );
          }
          return;
       }
@@ -200,8 +200,8 @@ FALCON_FUNC sdl_MakeCursor( ::Falcon::VMachine *vm )
       {
          // calculate first width
          width = row.length();
-         data = (Uint8 *) memAlloc( width / 8 * height );
-         mask = (Uint8 *) memAlloc( width / 8 * height );
+         data = (Uint8 *) malloc( width / 8 * height );
+         mask = (Uint8 *) malloc( width / 8 * height );
          memset( data, 0, width / 8 * height );
          memset( mask, 0, width / 8 * height );
       }
@@ -240,8 +240,8 @@ FALCON_FUNC sdl_MakeCursor( ::Falcon::VMachine *vm )
 
             default:
                // error
-               memFree( data );
-               memFree( mask );
+               free( data );
+               free( mask );
                throw new ParamError( ErrorParam( e_inv_params, __LINE__ ).
                   extra( "Unrecognized char in string" ) );
                return;
@@ -255,8 +255,8 @@ FALCON_FUNC sdl_MakeCursor( ::Falcon::VMachine *vm )
    CoreObject *obj = cls->asClass()->createInstance();
    obj->setUserData( new SDLCursorCarrier( cursor, true ) );
 
-   memFree( data );
-   memFree( mask );
+   free( data );
+   free( mask );
 
    vm->retval( obj );
 }

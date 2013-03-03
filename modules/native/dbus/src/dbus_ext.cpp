@@ -68,13 +68,13 @@ public:
    ~VarParsStruct()
    {
       if ( m_pData != 0 )
-         memFree( m_pData );
+         free( m_pData );
 
       if ( m_strings > 0 )
       {
          for ( int32 i = 0; i < m_strings; ++i )
             delete m_vcs[i];
-         memFree( m_vcs );
+         free( m_vcs );
       }
    }
 
@@ -719,7 +719,7 @@ FALCON_FUNC  DBus_addFilter( VMachine *vm )
    }
 
    Mod::DBusWrapper *wp = static_cast< Mod::DBusWrapper* >( vm->self().asObject()->getUserData() );
-   Mod::DBusHandlerData *data = static_cast< Mod::DBusHandlerData* >(memAlloc( sizeof(Mod::DBusHandlerData ) ));
+   Mod::DBusHandlerData *data = static_cast< Mod::DBusHandlerData* >(malloc( sizeof(Mod::DBusHandlerData ) ));
 
    data->vm = vm;
    data->interface = i_interface->asString();
@@ -727,7 +727,7 @@ FALCON_FUNC  DBus_addFilter( VMachine *vm )
    data->handler = i_handler->asFunction();
    data->isSignal = (i_isSignal) ? i_isSignal->isTrue() : true;
 
-   dbus_connection_add_filter( wp->conn(), s_dbusHandler, (void *)data, memFree );
+   dbus_connection_add_filter( wp->conn(), s_dbusHandler, (void *)data, free( );
 }
 
 

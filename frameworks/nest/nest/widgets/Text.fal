@@ -1,0 +1,33 @@
+/*
+   FALCON - The Falcon Programming Language
+
+   Nest - Falcon web applcation engine
+
+   FILE: Text.fal
+
+   AJAX widgeting subsystem -- Simple text/label widget (span).
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Mon, 26 Sep 2011 11:55:58 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2011: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+import from nest.widgets.widget in widget
+
+class Text( id, deftext ) from widget.Widget( id )
+   tag = "span"
+   defText = deftext ? deftext : ""
+   
+   init
+      if self.props == nil: self.props = [=>]
+   end
+
+   function renderContent()
+      return self.defText
+   end
+end
+

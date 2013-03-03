@@ -69,6 +69,8 @@ inline void cv_broadcast( pthread_cond_t& cv )
    #endif
 }
 
+//#define FALCON_USE_POSIX_SPINLOCK
+
 /**
    Generic mutex class.
 
@@ -76,9 +78,14 @@ inline void cv_broadcast( pthread_cond_t& cv )
 
    The mutex must be considered as non-reentrant.
 */
+
 class Mutex
 {
+#ifdef FALCON_USE_POSIX_SPINLOCK
+   pthread_spinlock_t m_mtx;
+#else
    pthread_mutex_t m_mtx;
+#endif
 
 public:
    /** Creates the mutex.
@@ -86,12 +93,21 @@ public:
    */
    inline Mutex()
    {
+#ifdef FALCON_USE_POSIX_SPINLOCK
       #ifdef NDEBUG
-      pthread_mutex_init( &m_mtx, 0 );
+      pthread_spin_init( &m_mtx, 300 );
       #else
-      int result = pthread_mutex_init( &m_mtx, 0 );
+      int result = pthread_spin_init( &m_mtx, 300 );
       fassert( result == 0 );
       #endif
+#else
+   #ifdef NDEBUG
+   pthread_mutex_init( &m_mtx, NULL );
+   #else
+   int result = pthread_mutex_init( &m_mtx, NULL );
+   fassert( result == 0 );
+   #endif
+#endif
    }
 
    /**
@@ -100,12 +116,21 @@ public:
       Will assert on failure.
    */
    inline ~Mutex() {
+#ifdef FALCON_USE_POSIX_SPINLOCK
+      #ifdef NDEBUG
+      pthread_spin_destroy( &m_mtx );
+      #else
+      int result = pthread_spin_destroy( &m_mtx );
+      fassert( result == 0 );
+      #endif
+#else
       #ifdef NDEBUG
       pthread_mutex_destroy( &m_mtx );
       #else
       int result = pthread_mutex_destroy( &m_mtx );
       fassert( result == 0 );
       #endif
+#endif
    }
 
    /**
@@ -115,6 +140,15 @@ public:
    */
    inline void lock()
    {
+#ifdef FALCON_USE_POSIX_SPINLOCK
+      #ifdef NDEBUG
+      pthread_spin_lock( &m_mtx );
+      #else
+      int result = pthread_spin_lock( &m_mtx );
+      fassert( result != EINVAL );
+      fassert( result != EDEADLK );
+      #endif
+#else
       #ifdef NDEBUG
       pthread_mutex_lock( &m_mtx );
       #else
@@ -122,6 +156,7 @@ public:
       fassert( result != EINVAL );
       fassert( result != EDEADLK );
       #endif
+#endif
    }
 
    /**
@@ -131,12 +166,21 @@ public:
    */
    inline void unlock()
    {
+#ifdef FALCON_USE_POSIX_SPINLOCK
+      #ifdef NDEBUG
+      pthread_spin_unlock( &m_mtx );
+      #else
+      int result = pthread_spin_unlock( &m_mtx );
+      fassert( result == 0 );
+      #endif
+#else
       #ifdef NDEBUG
       pthread_mutex_unlock( &m_mtx );
       #else
       int result = pthread_mutex_unlock( &m_mtx );
       fassert( result == 0 );
       #endif
+#endif
    }
 
    /**
@@ -146,10 +190,15 @@ public:
    */
    inline bool trylock()
    {
+#ifdef FALCON_USE_POSIX_SPINLOCK
+      int result = pthread_spin_trylock( &m_mtx );
+      if ( result == EBUSY )
+         return false;
+#else
       int result = pthread_mutex_trylock( &m_mtx );
       if ( result == EBUSY )
          return false;
-
+#endif
       #ifndef NDEBUG
       fassert( result == 0 );
       #endif
@@ -186,9 +235,9 @@ public:
    /** Creates the mutex.
       Will assert on failure.
    */
-   inline Event( bool bAutoReset = true, bool initState = false ):
+   inline Event( bool bManualReset = false, bool initState = false ):
       m_bIsSet( initState ),
-      m_bAutoReset( bAutoReset )
+      m_bAutoReset( !bManualReset )
    {
       #ifdef NDEBUG
       pthread_mutex_init( &m_mtx, 0 );
@@ -262,7 +311,6 @@ public:
    bool wait( int32 to = -1 );
 };
 
-
 /**
    Thread Specific data.
 
@@ -319,12 +367,6 @@ struct SYSTH_DATA {
    
    int m_lastError;
 };
-
-/** Performs an atomic thread safe increment. */
-int32 atomicInc( volatile int32 &data );
-
-/** Performs an atomic thread safe decrement. */
-int32 atomicDec( volatile int32 &data );
 
 }
 

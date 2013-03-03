@@ -1,0 +1,55 @@
+import from nest.widgets.widget in wid
+import from hash in hash
+
+class HashInput from wid.Widget( "area" )
+   tag = "textarea"
+   isSelfClosing = false
+   props = ["rows"=>5, "cols"=>20, "name"=>"text" ]   
+end
+
+class HashButton from wid.Widget( "button" )
+   tag = "input"
+   props = ["type"=>"button", "value"=>"Calc SHA" ]
+   ajaxReqs = ["onClick"=>wid.AJAXRequest( ["../area/value"] ) ]
+   // a custom message handler
+   ajaxMessages = [ 'buttonChange' => '$(this)[''value'']=obj.value;' ]
+end
+
+class HashText from wid.Widget( "sha" )
+end
+
+
+class HashMaker( id ) from wid.Widget( id )
+   ta = HashInput()
+   tb = HashButton()
+   outputText = HashText()
+   init
+      self.addChild( self.ta )
+      self.addChild( self.tb )
+      self.addChild( self.outputText )
+   end
+
+   function AJAX( params )
+      value = params["infos"]["area.value"]
+      sha = hash.sha256( value )
+      return [
+         self.outputText.msgSetProperty( "innerHTML", sha ),
+         self.ta.msgSetProperty("value", value + "\n--Checked--" ),
+         // and a custom message
+         [ "message" => "buttonChange", "value" => "click again..." ]
+         ]
+   end
+
+   //# Renders the contents of this widget.
+   function renderContent()
+      
+      rend = '<table border="0">'
+      rend +='<tr><td><b>Enter text here:</b></td><td>' + self.ta.render() + "<td><tr>\n"
+      rend +='<tr><td><b>Click when done:</b></td><td>' + self.tb.render() + "<td><tr>\n"
+      rend +='<tr><td><b>See SHA hash:</b></td><td>' + self.outputText.render() + "<td><tr>\n"
+      rend += "</table>\n"
+
+      return rend
+   end
+end
+

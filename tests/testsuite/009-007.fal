@@ -1,0 +1,104 @@
+/*
+@name Prototype simple property override test
+@category Prototypes
+
+@output
+Prototype simple property override test
+Number in x: 3
+__neg: -3
+__add : 5
+__sub : 1
+__mul : 6
+__div : 1.5
+__mod : 1
+__pow : 9
+__shr : 1
+__shl : 6
+Value in X now: 3
+__aadd : 5
+__asub : 3
+__amul : 6
+__adiv : 3
+__amod : 1
+Resetting X to: 2
+__apow : 4
+__ashr : 2
+__ashl : 4
+X now: 4
+Resetting X: 2
+__inc : Now: 2 Act: 3 result: 3
+__dec : Now: 3 Act: 2 result: 2
+__incpost : Now: 2 Act: 2 result: 3
+__decpost : Now: 3 Act: 3 result: 2
+Done
+@endoutput
+*/
+
+> "Prototype simple property override test"
+Proto = p{
+   number = 3
+   _isBase = true
+   _meta = p{
+      __neg = {=> - self.number}
+
+      __add = {b=> self.number + b}
+      __sub = {b=> self.number - b}
+      __mul = {b=> self.number * b}
+      __div = {b=> self.number / b}
+      __mod = {b=> self.number % b}
+      __pow = {b=> self.number ** b} 
+      __shr = {b=> self.number >> b}
+      __shl = {b=> self.number << b}
+
+      __aadd = {b=> self.number += b}
+      __asub = {b=> self.number -= b}
+      __amul = {b=> self.number *= b}
+      __adiv = {b=> self.number /= b}
+      __amod = {b=> self.number %= b}
+      __apow = {b=> self.number **= b}
+      __ashr = {b=> self.number >>= b}
+      __ashl = {b=> self.number <<= b}
+
+      __inc = {=> ++self.number;}
+      __dec = {=> --self.number}
+      __incpost = {=> self.number++}
+      __decpost = {=> self.number--}
+   }
+}
+
+
+x = Proto()
+
+> "Number in x: ", x.number
+> "__neg: ", -x
+
+> "__add : ", x+2
+> "__sub : ", x-2
+> "__mul : ", x*2
+> "__div : ", x/2
+> "__mod : ", x%2
+> "__pow : ", x**2
+> "__shr : ", x >> 1
+> "__shl : ", x << 1
+
+> "Value in X now: ", x.number
+
+> "__aadd : ", x += 2
+> "__asub : ", x -= 2
+> "__amul : ", x *= 2
+> "__adiv : ", x /= 2
+> "__amod : ", x %= 2
+
+> "Resetting X to: ", (x.number=2)
+> "__apow : ", x.number **= 2
+> "__ashr : ", x >>= 1
+> "__ashl : ", x <<= 1
+> "X now: ", x.number
+> "Resetting X: ", (x.number= 2)
+
+> "__inc : ", "Now: ", x.number, " Act: ",++x, " result: ", x.number
+> "__dec : ", "Now: ", x.number, " Act: ",--x, " result: ", x.number
+> "__incpost : ", "Now: ", x.number, " Act: ", x++, " result: ", x.number
+> "__decpost : ", "Now: ", x.number, " Act: ", x--, " result: ", x.number
+
+> "Done"

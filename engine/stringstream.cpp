@@ -1,31 +1,54 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: file_StringStream.cpp
+   FILE: stringstream.cpp
 
    Implementation of StringStream oriented streams.
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
-   Begin: sab nov 13 2004
+   Begin: Sun, 17 Apr 2011 21:57:04 +0200
 
    -------------------------------------------------------------------
-   (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
+   (C) Copyright 2011: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
 */
 
-/** \file
-   Implementation of StringStream oriented streams.
-*/
+#undef SRC
+#define SRC "engine/stringstream.cpp"
 
 #include <falcon/stringstream.h>
-#include <falcon/memory.h>
-#include <falcon/mt.h>
+#include <falcon/selector.h>
+#include <falcon/stdhandlers.h>
+#include <falcon/stdstreamtraits.h>
+
 #include <cstring>
 #include <string.h>
 
 #include <stdio.h>
 
+#include <set>
+
+#define STRING_STREAM_STACK_SIZE (32*1024)
+
 namespace Falcon {
+
+
+class StringStream::MPX: public Multiplex
+{
+public:
+   MPX( const StreamTraits* generator, Selector* master );
+   virtual ~MPX();
+
+   virtual void addStream( Stream* stream, int mode );
+   virtual void removeStream( Stream* stream );
+
+   void onStringStreamReady( StringStream*ss );
+private:
+
+   FALCON_REFERENCECOUNT_DECLARE_INCDEC(MPX);
+};
+
+
 
 class StringStream::Buffer {
 public:
@@ -33,6 +56,9 @@ public:
    int32 m_refcount;
    Mutex m_mtx;
    
+   typedef std::set<StringStream::MPX*> WaiterSet;
+   WaiterSet m_waiters;
+
    Buffer():
       m_str( new String() ),
       m_refcount(1)
@@ -52,24 +78,25 @@ private:
    }
 };
 
+
 StringStream::StringStream( int32 size ):
-   Stream( t_membuf ),
-   m_b( new Buffer ),
-   m_lastError(0),
-   m_pos(0)
+   m_posRead(0),
+   m_posWrite(0),
+   m_bPipeMode(false),
+   m_b( new Buffer )
 {
-   m_pos = 0;
    if ( size <= 0 )
       size = 32;
 
    m_b->m_str->reserve(size);
 }
 
+
 StringStream::StringStream( const String &strbuf ):
-   Stream( t_membuf ),
-   m_b( new Buffer ),
-   m_lastError(0),
-   m_pos(0)
+   m_posRead(0),
+   m_posWrite(0),
+   m_bPipeMode(false),
+   m_b( new Buffer )
 {
    *m_b->m_str = strbuf;
    m_b->m_str->bufferize();
@@ -77,8 +104,9 @@ StringStream::StringStream( const String &strbuf ):
 
 StringStream::StringStream( const StringStream &strbuf ):
    Stream( strbuf ),
-   m_lastError(0),
-   m_pos( strbuf.m_pos )
+   m_posRead( strbuf.m_posRead ),
+   m_posWrite( strbuf.m_posWrite ),
+   m_bPipeMode(strbuf.m_bPipeMode)
 {
    strbuf.m_b->incref();
    m_b = strbuf.m_b;
@@ -93,7 +121,8 @@ StringStream::~StringStream()
 
 void StringStream::setBuffer( const String &source )
 {
-   m_pos = 0;
+   m_posRead = 0;
+   m_posWrite = 0;
    
    m_b->m_mtx.lock();
    if( m_b->m_str == 0 )
@@ -114,7 +143,9 @@ void StringStream::setBuffer( const String &source )
 void StringStream::setBuffer( const char* source, int size )
 {
    m_b->m_mtx.lock();
-   m_pos = 0;
+   m_posRead = 0;
+   m_posWrite = 0;
+
    if( m_b->m_str == 0 )
    {
       m_b->m_str = new String;
@@ -162,6 +193,12 @@ byte *StringStream::data() const
 }
 
 
+Class* StringStream::handler()
+{
+   return Engine::handlers()->stringStreamClass();
+}
+
+
 String *StringStream::closeToString()
 {
    m_b->m_mtx.lock();
@@ -171,39 +208,13 @@ String *StringStream::closeToString()
    return s;
 }
 
-
-CoreString *StringStream::closeToCoreString()
-{
-   CoreString *temp = new CoreString;
-   if (closeToString( *temp ))
-      return temp;
-   return 0; // CoreString is subject to GC
-}
-
-
-int64 StringStream::lastError() const
-{ 
-   return (int64) m_lastError;
-}
-
-
-void StringStream::transfer( StringStream &strbuf )
+void StringStream::transferFrom( StringStream &strbuf )
 {
    strbuf.m_b->incref();
    m_b->decref();
    m_b = strbuf.m_b;
 }
 
-bool StringStream::errorDescription( String &description ) const
-{
-   switch( m_lastError )
-   {
-      case 0:  description = "None"; return true;
-      case -1: description = "Out of Memory"; return true;
-   }
-
-   return false;
-}
 
 bool StringStream::close()
 {
@@ -214,7 +225,7 @@ bool StringStream::close()
    return false;
 }
 
-int32 StringStream::read( void *buffer, int32 size )
+size_t StringStream::read( void *buffer, size_t size )
 {
    m_b->m_mtx.lock();
    if ( m_b->m_str == 0 ) {
@@ -226,71 +237,29 @@ int32 StringStream::read( void *buffer, int32 size )
 
    uint32 bsize =  m_b->m_str->size();
 
-   if ( m_pos >= bsize ) {
+   if ( m_posRead >= bsize ) {
       m_status = m_status | t_eof;
       m_b->m_mtx.unlock();
       
       return 0;
    }
 
-   int sret = size + m_pos < bsize ? size : bsize - m_pos;
-   memcpy( buffer, m_b->m_str->getRawStorage() + m_pos, sret );
-   m_pos += sret;
-   m_lastMoved = sret;
+   int sret = (int)(size + m_posRead < bsize ? size : bsize - m_posRead);
+   memcpy( buffer, m_b->m_str->getRawStorage() + m_posRead, sret );
+   m_posRead += sret;
+
+   if(! m_bPipeMode )
+   {
+      m_posWrite = m_posRead;
+   }
+
    m_b->m_mtx.unlock();
 
    return sret;
 }
 
-bool StringStream::readString( String &target, uint32 size )
-{
-   uint32 chr;
-   target.size(0);
-   target.manipulator( &csh::handler_buffer );
 
-   while ( size > 0 && popBuffer(chr) )
-   {
-      target += chr;
-      --size;
-   }
-
-   if( size == 0 )
-   {
-      return true;
-   }
-
-   m_b->m_mtx.lock();
-   if ( m_b->m_str == 0 ) {
-      m_b->m_mtx.unlock();
-      m_status = t_error;
-      return false;
-   }
-
-   String* src = m_b->m_str;
-   int csize = src->manipulator()->charSize();
-   uint32 tglen = src->length();
-   uint32 start = (m_pos / csize);
-   if ( start >= tglen )
-   {
-      m_status = m_status | t_eof;
-      m_b->m_mtx.unlock();
-      return false;
-   }
-
-   uint32 end = start + size;
-   if ( end > tglen ) {
-      end = tglen;
-   }
-
-   target = src->subString(start,end);
-   m_pos = end * csize;
-
-   m_b->m_mtx.unlock();
-   return true;
-}
-
-
-int32 StringStream::write( const void *buffer, int32 size )
+size_t StringStream::write( const void *buffer, size_t size )
 {
    m_b->m_mtx.lock();
    if ( m_b->m_str == 0 ) {
@@ -300,134 +269,41 @@ int32 StringStream::write( const void *buffer, int32 size )
    }
    
    // be sure there is enough space to write
-   m_b->m_str->reserve(m_pos+size);
+   m_b->m_str->reserve((length_t) m_posWrite+size);
 
    // effectively write
-   memcpy( m_b->m_str->getRawStorage() + m_pos, buffer, size );
-   m_pos += size;
+   memcpy( m_b->m_str->getRawStorage() + m_posWrite, buffer, size );
+   m_posWrite += size;
 
    // are we writing at end? -- enlarge the string.
-   if( m_pos > m_b->m_str->size() )
+   if( m_posWrite > m_b->m_str->size() )
    {
-      m_b->m_str->size( m_pos );
+      m_b->m_str->size( (length_t) m_posWrite );
    }
 
-   m_lastMoved = size;
+   if(! m_bPipeMode )
+   {
+      m_posRead = m_posWrite;
+   }
+
+   if( m_posRead < m_b->m_str->size() )
+   {
+      // inform all the waiters
+      Buffer::WaiterSet::iterator iter = m_b->m_waiters.begin();
+      while( iter != m_b->m_waiters.end() )
+      {
+         MPX* mpx = *iter;
+         mpx->onStringStreamReady(this);
+         ++iter;
+      }
+      m_b->m_waiters.clear();
+   }
+
    m_b->m_mtx.unlock();
 
    return size;
 }
 
-bool StringStream::writeString( const String &source, uint32 begin, uint32 end )
-{
-   if( begin != 0 || ( end != -1 && end < source.length() ) )
-   {
-      return StringStream::subWriteString( source.subString(begin, end) );
-   }
-   else
-   {
-      return StringStream::subWriteString( source );
-   }
-}
-
-
-bool StringStream::subWriteString( const String &source )
-{
-   m_b->m_mtx.lock();
-   if ( m_b->m_str == 0 ) {
-      m_b->m_mtx.unlock();
-      m_status = t_error;
-      return false;
-   }
-
-   // writing at end?
-   if ( m_pos >= m_b->m_str->size() )
-   {
-      // easy
-      *m_b->m_str += source;
-      m_pos = m_b->m_str->size();
-   }
-   else {
-      // less easy
-      int32 origCharSize = m_b->m_str->manipulator()->charSize();
-      int32 startPos = m_pos / origCharSize;
-      if ( source.length() + startPos < m_b->m_str->length() )
-      {
-         m_b->m_str->size(m_pos);
-         *m_b->m_str += source;
-      }
-      else
-      {
-         // even less easy
-         String part2 = m_b->m_str->subString( source.length() + startPos );
-         m_b->m_str->size(m_pos);
-         *m_b->m_str += source + part2;
-      }
-
-      // the manipulator may have changed, so pos may have changed as well.
-      m_pos = (startPos + source.length()) * m_b->m_str->manipulator()->charSize();
-   }
-
-   m_b->m_mtx.unlock();
-   return true;
-}
-
-
-bool StringStream::put( uint32 chr )
-{
-   m_b->m_mtx.lock();
-   if ( m_b->m_str == 0 ) {
-      m_b->m_mtx.unlock();
-      m_status = t_error;
-      return false;
-   }
-
-   if( m_pos == m_b->m_str->size() )
-   {
-      m_b->m_str->append(chr);
-      // manipulator may have changed.
-      m_pos = m_b->m_str->size();
-   }
-   else
-   {
-      int32 pos = m_pos / m_b->m_str->manipulator()->charSize();
-      m_b->m_str->setCharAt( pos , chr );
-      // manipulator may have changed.
-      m_pos = (pos+1) * m_b->m_str->manipulator()->charSize();
-   }
-   m_b->m_mtx.unlock();
-
-   return true;
-}
-
-bool StringStream::get( uint32 &chr )
-{
-   if( popBuffer( chr ) )
-      return true;
-
-   m_b->m_mtx.lock();
-   if ( m_b->m_str == 0 ) {
-      m_b->m_mtx.unlock();
-      m_status = t_error;
-      return false;
-   }
-
-   if( m_pos == m_b->m_str->size() )
-   {
-      m_status = m_status | t_eof;
-      m_b->m_mtx.unlock();
-      return false;
-   }
-   else
-   {
-      int32 cs = m_b->m_str->manipulator()->charSize();
-      chr = m_b->m_str->getCharAt( m_pos/cs );
-      // manipulator may have changed.
-      m_pos += cs;
-   }
-   m_b->m_mtx.unlock();
-   return true;
-}
 
 int64 StringStream::seek( int64 pos, Stream::e_whence w )
 {
@@ -440,25 +316,25 @@ int64 StringStream::seek( int64 pos, Stream::e_whence w )
    }
 
    switch( w ) {
-      case Stream::ew_begin: m_pos = (int32) pos; break;
-      case Stream::ew_cur: m_pos += (int32) pos; break;
-      case Stream::ew_end: m_pos = (int32) (m_b->m_str->size() + (pos-1)); break;
+      case Stream::ew_begin: m_posWrite = (int32) pos; break;
+      case Stream::ew_cur: m_posWrite += (int32) pos; m_posRead= m_posWrite; break;
+      case Stream::ew_end: m_posWrite = (int32) (m_b->m_str->size() + (pos-1)); break;
    }
 
-   if ( m_pos > m_b->m_str->size() )
+   if ( m_posWrite > m_b->m_str->size() )
    {
-      m_pos = m_b->m_str->size();
+      m_posWrite = m_b->m_str->size();
       m_status = t_eof;
    }
-   else if ( m_pos < 0 )
+   else if ( m_posWrite < 0LL )
    {
-      m_pos = 0;
+      m_posWrite = 0;
       m_status = t_none;
    }
    else
       m_status = t_none;
 
-   pos = m_pos;
+   pos = m_posRead = m_posWrite;
    m_b->m_mtx.unlock();
 
    return pos;
@@ -473,7 +349,7 @@ int64 StringStream::tell()
       return -1;
    }
    
-   int32 pos = m_pos;
+   int64 pos = m_posRead;
    m_b->m_mtx.unlock();
    return pos;
 }
@@ -494,16 +370,6 @@ bool StringStream::truncate( int64 pos )
 
    m_b->m_mtx.unlock();
    return true;
-}
-
-int32 StringStream::readAvailable( int32, const Sys::SystemData * )
-{
-   return 1;
-}
-
-int32 StringStream::writeAvailable( int32, const Sys::SystemData * )
-{
-   return 1;
 }
 
 void StringStream::getString( String &target ) const
@@ -538,6 +404,30 @@ bool StringStream::closeToString( String &target )
    return true;
 }
 
+
+
+void StringStream::setPipeMode( bool mode )
+{
+   m_b->m_mtx.lock();
+   m_bPipeMode = mode;
+   if( ! m_bPipeMode )
+   {
+      m_posWrite = m_posRead;
+   }
+   m_b->m_mtx.unlock();
+}
+
+
+bool StringStream::isPipeMode() const
+{
+   m_b->m_mtx.lock();
+   bool mode = m_bPipeMode;
+   m_b->m_mtx.unlock();
+
+   return mode;
+}
+
+
 byte * StringStream::closeToBuffer()
 {
    m_b->m_mtx.lock();
@@ -559,13 +449,98 @@ byte * StringStream::closeToBuffer()
    return retbuf;
 }
 
+
 StringStream *StringStream::clone() const
 {
    StringStream *sstr = new StringStream( *this );
    return sstr;
 }
 
+
+StreamTraits* StringStream::traits() const
+{
+   static StreamTraits* gen = Engine::streamTraits()->stringStreamTraits();
+   return gen;
 }
 
 
-/* end of file_StringStream.cpp */
+
+StringStream::Traits::~Traits()
+{}
+
+Multiplex* StringStream::Traits::multiplex( Selector* master ) const
+{
+   return new MPX(this, master);
+}
+
+
+//====================================================================================
+//
+//====================================================================================
+
+StringStream::MPX::MPX( const StreamTraits* generator, Selector* master ):
+         Multiplex( generator, master )
+{
+}
+
+StringStream::MPX::~MPX()
+{
+}
+
+
+void StringStream::MPX::addStream( Stream* stream, int mode )
+{
+   StringStream* ss = static_cast<StringStream*>(stream);
+
+   if( (mode & Selector::mode_write) != 0)
+   {
+      // always writeable
+      onReadyWrite(stream);
+   }
+
+   if( (mode & Selector::mode_read) != 0)
+   {
+      ss->m_b->m_mtx.lock();
+      uint32 bsize =  ss->m_b->m_str->size();
+      if ( bsize > ss->m_posRead )
+      {
+         ss->m_b->m_mtx.unlock();
+         onReadyRead( stream );
+         stream->decref();
+         return;
+      }
+
+      bool bNew = ss->m_b->m_waiters.insert( this ).second;
+      ss->m_b->m_mtx.unlock();
+
+      if( bNew )
+      {
+         incref();
+      }
+   }
+}
+
+
+void StringStream::MPX::removeStream( Stream* stream )
+{
+   StringStream* ss = static_cast<StringStream*>(stream);
+
+   ss->m_b->m_mtx.unlock();
+   bool bRemoved = ss->m_b->m_waiters.erase(this) > 0;
+   ss->m_b->m_mtx.unlock();
+
+   if( bRemoved )
+   {
+      decref();
+   }
+}
+
+void StringStream::MPX::onStringStreamReady( StringStream* ss )
+{
+   onReadyRead( ss );
+   decref();
+}
+
+}
+
+/* end of stringstream.cpp */

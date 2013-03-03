@@ -3,6 +3,8 @@
 
 #include "modgtk.hpp"
 
+#define GET_ACTION( item ) \
+        (((Gtk::Action*) (item).asObjectSafe() )->getObject())
 
 namespace Falcon {
 namespace Gtk {
@@ -21,6 +23,8 @@ public:
     static Falcon::CoreObject* factory( const Falcon::CoreClass*, void*, bool );
 
     static void modInit( Falcon::Module* );
+
+    GtkAction* getObject() const { return (GtkAction*) m_obj; }
 
     static FALCON_FUNC init( VMARG );
 
@@ -86,7 +90,7 @@ public:
 
     //static FALCON_FUNC get_accel_closure( VMARG );
 
-    //static FALCON_FUNC set_accel_group( VMARG );
+    static FALCON_FUNC set_accel_group( VMARG );
 
 #if GTK_CHECK_VERSION( 2, 16, 0 )
 
@@ -136,5 +140,5 @@ public:
 
 #endif // !GTK_ACTION_HPP
 
-// vi: set ai et sw=4:
+// vi: set ai et sw=4 ts=4 sts=4:
 // kate: replace-tabs on; shift-width 4;

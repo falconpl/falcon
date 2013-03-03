@@ -33,7 +33,7 @@ Requisition::Requisition( const Falcon::CoreClass* gen, const GtkRequisition* re
     :
     Falcon::CoreObject( gen )
 {
-    GtkRequisition* m_req = (GtkRequisition*) memAlloc( sizeof( GtkRequisition ) );
+    GtkRequisition* m_req = (GtkRequisition*) malloc( sizeof( GtkRequisition ) );
 
     if ( !req )
     {
@@ -54,7 +54,7 @@ Requisition::~Requisition()
 {
     GtkRequisition* req = (GtkRequisition*) getUserData();
     if ( req )
-        memFree( req );
+        free( req );
 }
 
 

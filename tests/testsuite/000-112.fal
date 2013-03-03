@@ -1,0 +1,43 @@
+/*
+@name Smoke tests - Indirect call access
+
+@output
+Indirect call access
+Hello World!
+P0: "Hello"
+P1: " "
+P2: "World!"
+Len: 3
+---- ----
+Changing 1
+Hello -- changed -- World!
+P0: "Hello"
+P1: " -- changed -- "
+P2: "World!"
+Len: 3
+---- Done ----
+@endoutput
+*/
+
+> "Indirect call access"
+x=^(
+"Hello",
+" "
+,"World!"
+)
+printl # x
+
+> "P0: ", x[0]
+> "P1: ", x[1]
+> "P2: ", x[2]
+> "Len: ", x.len
+
+> "---- ----"
+> "Changing 1"
+x[1] = " -- changed -- "
+printl # x
+> "P0: ", x[0]
+> "P1: ", x[1]
+> "P2: ", x[2]
+> "Len: ", x.len
+> "---- Done ----"

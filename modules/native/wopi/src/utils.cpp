@@ -160,6 +160,7 @@ void parseQuery( const String &query, ItemDict& dict )
 }
 
 
+
 void parseQueryEntry( const String &query, ItemDict& dict )
 {
    bool proceed = false;
@@ -191,35 +192,40 @@ void parseQueryEntry( const String &query, ItemDict& dict )
 
    if ( proceed )
    {
-      // is this a dictionary?
-      if( ! key.endsWith("[]") )
+      value.bufferize();
+      addQueryVariable( key, &value, dict );
+   }
+}
+
+
+void addQueryVariable( const String &key, const Item& value, ItemDict& dict )
+{
+   // is this a dictionary?
+   if( ! key.endsWith("[]") )
+   {
+      dict.put( new CoreString(key), value );
+   }
+   else
+   {
+      String short_key = key.subString(0, key.length()-2);
+      // else, create an array with the given keys.
+      Item *arr = dict.find( short_key );
+
+      if ( arr != 0 )
       {
-         value.bufferize();
-         value.trim();
-         dict.put( new CoreString(key), &value );
+         if ( ! arr->isArray() )
+         {
+            Item* temp = arr;
+            *arr = new CoreArray;
+            arr->asArray()->append( *temp );
+         }
+         arr->asArray()->append( value );
       }
       else
       {
-         key = key.subString(0, key.length()-2);
-         // else, create an array with the given keys.
-         Item *arr = dict.find( key );
-
-         if ( arr != 0 )
-         {
-            if ( ! arr->isArray() )
-            {
-               Item* temp = arr;
-               *arr = new CoreArray;
-               arr->asArray()->append( *temp );
-            }
-            arr->asArray()->append( &value );
-         }
-         else
-         {
-            CoreArray *carr = new CoreArray;
-            carr->append( &value );
-            dict.put( new CoreString( key ), carr );
-         }
+         CoreArray *carr = new CoreArray;
+         carr->append( value );
+         dict.put( new CoreString( short_key ), carr );
       }
    }
 }

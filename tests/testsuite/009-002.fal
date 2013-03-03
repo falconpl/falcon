@@ -1,0 +1,46 @@
+/*
+@name Dynamic prototypes
+@category Prototypes
+
+@output
+Dynamic prototypes
+Hello
+World
+Hello
+Override
+New
+New property in base
+Done
+@endoutput
+*/
+
+
+proto0 = p{
+   prop0 = "Hello"
+}
+
+proto1 = p{   
+   prop1 = "World"
+}
+
+proto = p{
+   _base = .[ proto0 proto1 ]
+}
+
+> "Dynamic prototypes"
+> proto.prop0
+> proto.prop1
+
+// new properties
+proto.prop1 = "Override"
+proto.prop2 = "New"
+
+> proto.prop0
+> proto.prop1
+> proto.prop2
+
+// new property in base
+proto0.propBaseNew = "New property in base"
+> proto.propBaseNew
+
+> "Done"

@@ -1,0 +1,12 @@
+/*
+@name And expr posi
+@category Smoke
+
+@result Ok
+*/
+
+if 1 and 1
+   return "Ok"
+end
+
+return "False"

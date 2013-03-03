@@ -1,0 +1,11 @@
+/*
+@name Garbage Collector smoke test
+@category GC
+
+@result true
+*/
+
+> "Garbage Collector smoke test"
+> "Enabled? ", GC.enabled
+
+return GC.enabled ? "true" : "false" 

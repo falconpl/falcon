@@ -916,7 +916,7 @@ FALCON_FUNC TreeModel::rows_reordered( VMARG )
         gtk_tree_model_rows_reordered( (GtkTreeModel*)_obj, path, iter, NULL );
     else
     {
-        gint* norder = (gint*) memAlloc( sizeof( gint ) * cnt );
+        gint* norder = (gint*) malloc( sizeof( gint ) * cnt );
         Item it;
         for ( int i = 0; i < cnt; ++i )
         {
@@ -924,14 +924,14 @@ FALCON_FUNC TreeModel::rows_reordered( VMARG )
 #ifndef NO_PARAMETER_CHECK
             if ( !it.isInteger() )
             {
-                memFree( norder );
+                free( norder );
                 throw_inv_params( "I" );
             }
 #endif
             norder[i] = it.asInteger();
         }
         gtk_tree_model_rows_reordered( (GtkTreeModel*)_obj, path, iter, norder );
-        memFree( norder );
+        free( norder );
     }
 }
 

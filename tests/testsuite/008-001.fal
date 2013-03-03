@@ -1,0 +1,31 @@
+/*
+@name Smoke test for methods
+@category Classes
+
+@output
+Smoke test for methods
+Self.prop = basic
+Self.prop = 1
+Self.prop = Hello world
+@endoutput
+*/
+
+class Test(name)
+   prop = name
+      
+   function tell()
+      > "Self.prop = ", self.prop
+   end
+   
+   function assign( value )
+      self.prop = value
+   end
+end
+
+> "Smoke test for methods"
+x = Test( "basic" )
+x.tell()
+x.assign( 1 )
+x.tell()
+x.assign( "Hello world" )
+x.tell()

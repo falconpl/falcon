@@ -8,6 +8,7 @@
 #include "gdk_Geometry.hpp"
 #include "gdk_Screen.hpp"
 
+#include "gtk_AccelGroup.hpp"
 #include "gtk_Widget.hpp"
 
 /*#
@@ -45,7 +46,7 @@ void Window::modInit( Falcon::Module* mod )
 #endif
     { "set_resizable",              &Window::set_resizable },
     { "get_resizable",              &Window::get_resizable },
-    //{ "add_accel_group",          &Window::add_accel_group },
+    { "add_accel_group",            &Window::add_accel_group },
     //{ "remove_accel_group",       &Window::remove_accel_group },
 #if 0 // deprecated
     { "position",                   &Window::position },
@@ -438,7 +439,21 @@ FALCON_FUNC Window::get_resizable( VMARG )
 }
 
 
-//FALCON_FUNC Window::add_accel_group( VMARG );
+/*#
+    @method add_accel_group GtkWindow
+    @brief Associate accel_group with window, such that calling gtk_accel_groups_activate() on window will activate accelerators in accel_group.
+    @param accel_group a GtkAccelGroup
+ */
+FALCON_FUNC Window::add_accel_group( VMARG )
+{
+    Item* i_grp = vm->param( 0 );
+#ifndef NO_PARAMETER_CHECK
+    if ( !i_grp || !i_grp->isObject() || !IS_DERIVED( i_grp, GtkAccelGroup ) )
+        throw_inv_params( "GtkAccelGroup" );
+#endif
+    gtk_window_add_accel_group( GET_WINDOW( vm->self() ), GET_ACCELGROUP( *i_grp ) );
+}
+
 
 //FALCON_FUNC Window::remove_accel_group( VMARG );
 

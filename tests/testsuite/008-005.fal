@@ -1,0 +1,191 @@
+/*
+@name Multiple inheritance with overrides
+@category Classes
+
+@output
+Multiple inheritance with overrides
+----------------------------------
+Child1 from Base1, Base2
+Init from Base2:
+self.propBase2 = assigned from child1
+self.propOver = 6000
+Init from Base1:
+self.propBase1 = assigned from child1
+self.propOver = 4000
+Init from Child1:
+self.propMine = 1000
+self.propOver = 2000
+fromChild from Child1:
+self.propMine = 1000
+From Child1:
+self.propBase1 = assigned from child1
+self.propOver = 2000
+From Child1:
+self.propBase2 = assigned from child1
+self.propOver = 2000
+Over from Child1:
+self.propMine = 1000
+self.propOver = 2000
+Over From Base1:
+self.propBase1 = assigned from child1
+self.propOver = 2000
+Over From Base2:
+self.propBase2 = assigned from child1
+self.propOver = 2000
+----------------------------------
+Child2 from Base2, Base1
+Init from Base1:
+self.propBase1 = assigned from child2
+self.propOver = 6000
+Init from Base2:
+self.propBase2 = assigned from child2
+self.propOver = 4000
+Init from Child2:
+self.propMine = 1000
+self.propOver = 2000
+fromChild from Child2:
+self.propMine = 1000
+From Child2:
+self.propBase1 = assigned from child2
+self.propOver = 2000
+From Child2:
+self.propBase2 = assigned from child2
+self.propOver = 2000
+Over from Child2:
+self.propMine = 1000
+self.propOver = 2000
+Over From Base1:
+self.propBase1 = assigned from child2
+self.propOver = 2000
+Over From Base2:
+self.propBase2 = assigned from child2
+self.propOver = 2000
+Done
+@endoutput
+*/
+
+class Base1( base, over )
+   propBase1 = base
+   propOver = over
+   
+   init
+      > @"Init from ${self.className}:"
+      > @"self.propBase1 = ${self.propBase1}" 
+      > @"self.propOver = ${self.propOver}" 
+   end
+   
+   function fromBase1()
+      > @"From ${self.className}:"
+      > @"self.propBase1 = ${self.propBase1}" 
+      > @"self.propOver = ${self.propOver}" 
+   end
+   
+   function over()
+      > @"Over From ${self.className}:"
+      > @"self.propBase1 = ${self.propBase1}" 
+      > @"self.propOver = ${self.propOver}" 
+   end
+   
+end
+
+class Base2( base, over )
+   propBase2 = base
+   propOver = over
+   
+   init
+      > @"Init from ${self.className}:"
+      > @"self.propBase2 = ${self.propBase2}" 
+      > @"self.propOver = ${self.propOver}" 
+   end
+   
+   function fromBase2()
+      > @"From ${self.className}:"
+      > @"self.propBase2 = ${self.propBase2}" 
+      > @"self.propOver = ${self.propOver}" 
+   end
+   
+   function over()
+      > @"Over From ${self.className}:"
+      > @"self.propBase2 = ${self.propBase2}" 
+      > @"self.propOver = ${self.propOver}" 
+   end
+   
+end
+
+class Child1( mine, over ) from \
+      Base1("assigned from child1", over*2), \
+      Base2("assigned from child1", over*3)
+      
+   propOver = over
+   propMine = mine
+   
+   init
+      > @"Init from ${self.className}:"
+      > @"self.propMine = ${self.propMine}" 
+      > @"self.propOver = ${self.propOver}" 
+   end
+   
+   function fromChild()
+      > @"fromChild from ${self.className}:"
+      > "self.propMine = ", self.propMine
+      self.fromBase1()
+      self.fromBase2()
+      
+   end
+   
+   function over()
+      > @"Over from ${self.className}:"
+      > @"self.propMine = ${self.propMine}" 
+      > @"self.propOver = ${self.propOver}" 
+      self.Base1.over()
+      self.Base2.over()
+   end
+end
+
+
+class Child2( mine, over ) from \
+      Base2("assigned from child2", over*2 ), \
+      Base1("assigned from child2", over*3 )
+      
+   propOver = over
+   propMine = mine
+   
+   init
+      > @"Init from ${self.className}:"
+      > @"self.propMine = ${self.propMine}" 
+      > @"self.propOver = ${self.propOver}" 
+   end
+   
+   function fromChild()
+      > @"fromChild from ${self.className}:"
+      > "self.propMine = ", self.propMine
+      self.fromBase1()
+      self.fromBase2()
+      
+   end
+   
+   function over()
+      > @"Over from ${self.className}:"
+      > @"self.propMine = ${self.propMine}" 
+      > @"self.propOver = ${self.propOver}" 
+      self.Base1.over()
+      self.Base2.over()
+   end
+end
+
+> "Multiple inheritance with overrides"
+> "----------------------------------"
+> "Child1 from Base1, Base2"
+x = Child1(1000, 2000)
+x.fromChild()
+x.over()
+
+> "----------------------------------"
+> "Child2 from Base2, Base1"
+x = Child2(1000, 2000)
+x.fromChild()
+x.over()
+
+> "Done"
+
+

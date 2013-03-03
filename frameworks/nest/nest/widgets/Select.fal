@@ -1,0 +1,80 @@
+/*
+   FALCON - The Falcon Programming Language
+
+   Nest - Falcon web applcation engine
+
+   FILE: Select.fal
+
+   AJAX widgeting subsystem -- select input field.
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Mon, 26 Sep 2011 11:55:58 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2011: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+import from nest.widgets.widget in widget
+import Option from nest.widgets.Option as Option
+
+/*# HTML Select widget.
+   @param id The ID of this widget.
+   @optparam options List of strings used as options.
+   @optparam prompt Label for this widget.
+   @optparam multisize If > 0, will set this as a multiple choice select and
+         set the number of options that are shown in a row. With -1,
+         it will set the size of shown options to the amount of options
+         in @b options parameter.
+
+   The option parameter is an array of strings in the format specified
+   in @a Widget.autoAddChildren.
+   
+   @note To set the size independently from multiple choice, or after
+   other options has been set, set the 'size' property in the Widget.props
+   dictionary.
+*/
+class Select( id, options, prompt, multisize ) from widget.Widget( id )
+   tag = "select"
+   isSelfClosing = false
+   label = prompt ? prompt : ""
+   value = nil
+   
+   init
+      if self.props == nil: self.props = [=>]
+      self.props['name'] = nil   // will be filled at render
+      if multisize
+         self.props["multiple"] = "multiple"
+         self.props["size"] = multisize
+         self.addName = "[]"
+      end
+
+      self.autoAddChildren( options )
+   end
+
+   function makeAutoChild( value, text, checked )
+      return Option( value, text, checked )
+   end
+
+   function setRenderValue( val )      
+      if "multiple" in self.props and val.typeId() == ArrayType
+         for item in val
+            if item in self.childrenById
+               child = self.childrenById[item]
+               if self.value == nil: self.value = []
+               self.value += child.id
+               child.props["selected"] = "selected"
+            end
+         end
+      elif val in self.childrenById
+         child = self.childrenById[val]
+         self.value = child.id
+         child.props["selected"] = "selected"
+      end
+   end
+
+   function getValue()
+      return self.value
+   end
+end

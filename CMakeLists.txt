@@ -13,7 +13,7 @@
 # FALCON_MOD_DIR    - Prefix for installation of modules. Defaults to
 #                     $FALCON_LIB_DIR/falcon on UNICES, and bin/ on windows.
 # FALCON_MAN_DIR    - Where manual pages are stored (below prefix)
-# FALCON_SHARE_DIR  - Where to install falco share files
+# FALCON_SHARE_DIR  - Where to install falcon share files
 # FALCON_CMAKE_DIR  - Where to install FalconConfig.cmake & c
 #
 ##  Options
@@ -38,6 +38,28 @@
 cmake_minimum_required(VERSION 2.6.2)
 project(Falcon)
 
+##################################################################
+# Setting standard flags and semantics
+
+#
+# SunOS specific definitions
+#
+if(${CMAKE_SYSTEM_NAME} STREQUAL "SunOS")
+   add_definitions( -D_POSIX_PTHREAD_SEMANTICS )
+endif()
+
+#
+# GCC requires extra flags to get the most nasty errors
+#
+if( CMAKE_COMPILER_IS_GNUCXX )
+   message( "Adding GNU g++ specific flags" )
+   add_definitions(-Wall -Wextra -Werror -Wno-error=uninitialized -lpthread)
+endif()
+
+if( CMAKE_CXX_COMPILER_ID STREQUAL "Clang" )
+   message( "Adding Clang specific flags" )
+   add_definitions(-Wall -Wextra -Werror)
+endif()
 
 ##################################################################
 # Falcon build environment setup
@@ -69,6 +91,7 @@ endif()
 ##################################################################
 # CMAKE environment setup
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules)
+add_subdirectory( devtools )
 
 #########################################################à
 # List of files to be installed as docs
@@ -99,8 +122,9 @@ install(
 #collect the include files in FALCON_HEADER
 add_subdirectory(include)
 #
-add_subdirectory(nengine)
-#add_subdirectory(clt)
+include_directories( include )
+add_subdirectory(clt)
+add_subdirectory(engine)
 #
 #add_subdirectory(devtools)
 

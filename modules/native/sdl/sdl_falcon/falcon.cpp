@@ -673,7 +673,7 @@ void AppFalcon::runModule()
 void AppFalcon::run()
 {
    // record the memory now -- we're gonna create the streams that will be handed to the VM
-   size_t memory = gcMemAllocated();
+   size_t memory = gcmallocated();
    int32 items = memPool->allocatedItems();
 
    // determine the operation mode
@@ -695,7 +695,7 @@ void AppFalcon::run()
    if ( m_options.check_memory )
    {
       // be sure we have reclaimed all what's possible to reclaim.
-      size_t mem2 = gcMemAllocated();
+      size_t mem2 = gcmallocated();
       int32 items2 = memPool->allocatedItems();
       cout << "===============================================================" << std::endl;
       cout << "                 M E M O R Y    R E P O R T" << std::endl;

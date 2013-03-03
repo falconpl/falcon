@@ -1,0 +1,27 @@
+/*
+@name Try/catch without in/as
+@category Try
+
+This test is mainly meant to check for grammar parsing
+of catch clauses without as/in
+
+@output
+Testing try with just body
+First test
+Done
+@endoutput
+*/
+
+// basic try with success
+> "Testing try with just body"
+try
+   > "First test"
+catch Integer, String
+   > "Multiple catch"
+catch Range
+   > "Range catch"
+catch 
+   > "Other catch"
+end
+
+> "Done"

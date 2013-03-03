@@ -1,0 +1,35 @@
+/*
+@name Function numeric
+@category Core-module
+
+@output
+Core module test -- function numeric
+1 true
+123 true
+123.2123 true
+156.432 true
+Param error recognized
+Done
+@endoutput
+*/
+
+> "Core module test -- function numeric"
+
+x = numeric(1)
+> x, " ", x === 1.0
+x = numeric("123")
+> x, " ", x === 123.0
+x = numeric("123.2123")
+> x, " ", x === 123.2123
+
+x = numeric(156.432)
+> x, " ", x === 156.432
+
+try
+   x = numeric( "Hello world" )
+   > "Param error failed recognition: ", x
+catch ParamError
+   > "Param error recognized"
+end
+
+> "Done"

@@ -1,0 +1,90 @@
+/*
+@name Message queue with delay
+@category Parallel
+
+@long 110
+@checkpoint STEP
+
+@result OK
+*/
+
+load rnd
+
+randomSeed(1231)
+size = 10000
+size10 = size/10
+size100 = size/100
+
+agents = 5
+data = []
+data.reserve(size)
+queue = MessageQueue() // fair
+
+mtx = Mutex()
+function process( id )
+   
+   sem = Semaphore()
+   waiter = Waiter( sem )   
+   waiter.add( queue, 
+      {=>
+         v = queue.get()
+                  
+         mtx.lock()
+         data[v] += id
+         // not needed, we're going to wait.
+         //mtx.unlock()
+         
+         if v+1 == size
+            sem.post()
+         end
+      })
+         
+   waiter.wait()
+end
+
+
+function control()
+   queue.subscribersFence(agents).wait()
+
+   for i = 0 to size -1
+      if random(0,0,1)
+         rest( random(1,10) )
+      end
+      
+      // ask the agents to post 
+      mtx.lock()
+      data += 0
+      mtx.unlock()
+      queue.send( data.len-1 )      
+            
+      if i % size100 == 0: > "STEP"      
+   end   
+end
+
+
+> "Message queue with delay"
+pfunc = [Parallel, control]
+for i = 1 to agents
+   pfunc += [[process, i]]
+end
+
+p = pfunc()
+p.launch()
+
+// check
+// we need the sum of the agents.
+count = 0
+for i = 1 to agents
+   count += i
+end
+
+
+for i = 0 to data.len-1
+   if data[i] != count
+      > "Check failed at step " + i + ": "+ data[i]
+      return "Failed"
+   end
+   if i % size10 == 0: > "STEP"
+end
+
+return "OK"

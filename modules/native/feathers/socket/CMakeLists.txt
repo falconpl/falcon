@@ -4,6 +4,15 @@
 # CMake configuration file for module Socket
 ####################################################################
 
+find_package( OpenSSL )
+if ( OPENSSL_FOUND )
+    add_definitions( -DWITH_OPENSSL=1 )
+    include_directories( BEFORE ${OPENSSL_INCLUDE_DIR} )
+else()
+    add_definitions( -DWITH_OPENSSL=0 )
+    set( OPENSSL_LIBRARIES "" )
+endif()
+
 if(UNIX OR MAC)
    set(SYS_SPECIFIC socket_sys_unix.cpp)
 
@@ -34,18 +43,20 @@ add_library(socket_fm MODULE
    socket_ext.cpp
    socket_srv.cpp
    socket_st.cpp
+   socket_sys_common.cpp
    ${SYS_SPECIFIC}
 )
 
 #Link
-target_link_libraries(socket_fm 
-  falcon_engine 
+target_link_libraries(socket_fm
+  falcon_engine
   ${SYS_SPECIFIC_LIBS}
+  ${OPENSSL_LIBRARIES}
 )
 if(WIN32)
    target_link_libraries(socket_fm ws2_32)
 endif(WIN32)
 
-falcon_install_module( socket_fm ) 
+falcon_install_module( socket_fm )
 
 set(_project_targets ${_project_targets} socket_fm PARENT_SCOPE)

@@ -14,157 +14,75 @@
 */
 
 #include "int_mode.h"
-#include <falcon/intcomp.h>
-#include <falcon/src_lexer.h>
-
-#include <stdio.h>
+#include <falcon/modloader.h>
+#include <falcon/module.h>
+#include <falcon/synfunc.h>
+#include <falcon/string.h>
+#include <falcon/trace.h>
+#include <falcon/psteps/pstep_compile.h>
+#include <falcon/psteps/stmtreturn.h>
 
 using namespace Falcon;
 
-IntMode::IntMode( AppFalcon* owner ):
+IntMode::IntMode( FalconApp* owner ):
    m_owner( owner )
-{}
-
+{
+}
 
 
 void IntMode::run()
 {
-   ModuleLoader ml;
-   m_owner->prepareLoader( ml );
-
-   VMachineWrapper intcomp_vm;
-   Module* core_module = core_module_init();
-   intcomp_vm->link( core_module );
-   core_module->decref();
-
-   Item* describe = intcomp_vm->findGlobalItem("describe");
-   fassert( describe != 0 );
-   GarbageLock gl(*describe);
-
-   InteractiveCompiler comp( &ml, intcomp_vm.vm() );
-   comp.setInteractive( true );
-
-   Stream *stdOut = m_owner->m_stdOut;
-   Stream *stdIn = m_owner->m_stdIn;
-
-   stdOut->writeString("\n===NOTICE===\n" );
-   stdOut->writeString("Interactive mode is currently UNDER DEVELOPMENT.\n" );
-#ifdef FALCON_WITH_GPL_READLINE
-   stdOut->writeString("Built with GPLed GNU-Readline. Refer to the README for alternatives.\n" );
+      // prepare to trace the GC.
+#if FALCON_TRACE_GC
+   Engine::instance()->collector()->trace( true );
 #endif
+
+   VMachine& vm = m_vm;
+   vm.textOut()->write( "Welcome to Falcon.\n" );
    
-   stdOut->writeString("\nWelcome to Falcon interactive mode.\n" );
-   stdOut->writeString("Write statements directly at the prompt; when finished press " );
-   #ifdef FALCON_SYSTEM_WIN
-      stdOut->writeString("CTRL+Z" );
-   #else
-      stdOut->writeString("CTRL+D" );
-   #endif
+   Process* process = vm.createProcess();
+   process->modSpace()->add(Engine::instance()->getCore());
 
-   stdOut->writeString(" to exit\n" );
-   stdOut->flush();
+   // add module and function
+   Module *mod = new Module("(interactive)");
+   SynFunc* mainfunc = new SynFunc("__main__");
+   mod->setMain(true);
+   mod->setMainFunction( mainfunc );
+   process->modSpace()->add(mod);
+   
+   // prepare the loader to fulfill dynamic load requests.
 
-   InteractiveCompiler::t_ret_type lastRet = InteractiveCompiler::e_nothing;
-   String line, pline, codeSlice;
-   int linenum = 1;
-   while( stdIn->good() && ! stdIn->eof() )
+   // do we have a load path?
+   ModLoader* loader = process->modSpace()->modLoader();
+   loader->setSearchPath(".");
+   if( m_owner->m_options.load_path.size() > 0 )
    {
-      const char *prompt = (
-            lastRet == InteractiveCompiler::e_more
-            ||lastRet == InteractiveCompiler::e_incomplete
-            )
-         ? "... " : ">>> ";
-
-      read_line(pline, prompt);
-      if ( pline.size() > 0 )
-      {
-         if( pline.getCharAt( pline.length() -1 ) == '\\' )
-         {
-            lastRet = InteractiveCompiler::e_more;
-            pline.setCharAt( pline.length() - 1, ' ');
-            line += pline;
-            continue;
-         }
-         else
-            line += pline;
-
-         InteractiveCompiler::t_ret_type lastRet1 = InteractiveCompiler::e_nothing;
-         
-         try
-         {
-            comp.lexer()->line( linenum );
-            lastRet1 = comp.compileNext( codeSlice + line + "\n" );
-         }
-         catch( Error *err )
-         {
-            String temp = err->toString();
-            err->decref();
-            stdOut->writeString( temp );
-            stdOut->flush();
-            // in case of error detected at context end, close it.
-            line.trim();
-            if( line == "end" || line.endsWith( "]" )
-            		  || line.endsWith( "}" ) || line.endsWith( ")" ) )
-            {
-            	codeSlice.size( 0 );
-            	lastRet = InteractiveCompiler::e_nothing;
-            	linenum = 1;
-            }
-            line.size(0);
-            continue;
-         }
-
-         switch( lastRet1 )
-         {
-            case InteractiveCompiler::e_more:
-               codeSlice += line + "\n";
-               break;
-
-            case InteractiveCompiler::e_incomplete:
-               // is it incomplete because of '\\' at end?
-               if ( line.getCharAt( line.length()-1 ) == '\\' )
-                  line.setCharAt( line.length()-1, ' ' );
-               codeSlice += line + "\n";
-               break;
-           
-            case InteractiveCompiler::e_terminated:
-               stdOut->writeString( "falcon: Terminated\n\n");
-               stdOut->flush();
-               return;
-               
-            case InteractiveCompiler::e_call:
-               if ( comp.vm()->regA().isNil() )
-               {
-                  codeSlice.size(0);
-                  break;
-               }
-               // fallthrough
-
-            case InteractiveCompiler::e_expression:
-               {
-                  comp.vm()->pushParameter( comp.vm()->regA() );
-                  comp.vm()->callItem( *describe, 1 );
-                  stdOut->writeString( ": " + *comp.vm()->regA().asString() + "\n" );
-                  stdOut->flush();
-               }
-               // fallthrough
-               
-            default:
-               codeSlice.size(0);
-               linenum = 0;
-         }
-         
-
-         // maintain previous status if having a compilation error.
-         lastRet = lastRet1;
-         line.size( 0 );
-         linenum++;
-      }
-      // else just continue.
+      // Is the load path totally substituting?
+      loader->addSearchPath(m_owner->m_options.load_path);
+   }
+   
+   if( ! m_owner->m_options.ignore_syspath )
+   {
+      loader->addFalconPath();
    }
 
-   stdOut->writeString( "\r     \n\n");
-   stdOut->flush();
+   // Start the process.
+   PStepCompile psc;
+
+   psc.setCompilerContext(mainfunc, mod, vm.textIn(), vm.textOut() );
+   mainfunc->syntree().append( new StmtReturn );
+
+   process->mainContext()->call( mainfunc );
+   process->mainContext()->pushCodeWithUnrollPoint(&psc);
+
+   process->start();
+   process->wait();
+
+#if FALCON_TRACE_GC
+   vm.textOut()->write("\nGarbage data history:\n");
+   Engine::instance()->collector()->dumpHistory( vm.textOut() );
+#endif
+
 }
 
 /* end of int_mode.cpp */

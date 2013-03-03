@@ -1,6 +1,9 @@
 .directory
 *.fam
 nbproject
+.cproject
+.project
+.settings
 
 # emacs
 .#*
@@ -21,7 +24,6 @@ lib
 
 # CMake-generated Makefiles
 Makefile
-*.cmake
 CMakeFiles
 CMakeCache.txt
 install_manifest.txt

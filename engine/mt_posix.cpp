@@ -18,9 +18,9 @@
 
 // this for gettimeofday on macosx
 #include <sys/time.h>
+#include <malloc.h>
 
 #include <falcon/mt.h>
-#include <falcon/memory.h>
 
 namespace Falcon
 {
@@ -62,23 +62,13 @@ void Event::set()
    #ifdef NDEBUG
    pthread_mutex_lock( &m_mtx );
    m_bIsSet = true;
-
-   if ( m_bAutoReset )
-      pthread_cond_signal( &m_cv );
-   else
-      pthread_cond_broadcast( &m_cv );
-
    pthread_mutex_unlock( &m_mtx );
+   pthread_cond_broadcast( &m_cv );
    #else
    int result = pthread_mutex_lock( &m_mtx );
    fassert( result == 0 );
    m_bIsSet = true;
-
-   if ( m_bAutoReset )
-      result = pthread_cond_signal( &m_cv );
-   else
-      result = pthread_cond_broadcast( &m_cv );
-
+   result = pthread_cond_broadcast( &m_cv );
    fassert( result == 0 );
    result = pthread_mutex_unlock( &m_mtx );
    fassert( result == 0 );
@@ -88,76 +78,45 @@ void Event::set()
 
 bool Event::wait( int32 to )
 {
-   pthread_mutex_lock( &m_mtx );
-
-   // are we lucky?
-   if( m_bIsSet )
+   if( to == 0 )
    {
-      if ( m_bAutoReset )
-         m_bIsSet = false;
-      pthread_mutex_unlock( &m_mtx );
-      return true;
+      pthread_mutex_lock( &m_mtx );
    }
-
-   // No? -- then are we unlucky?
-   if ( to == 0 )
+   else if( to < 0 )
    {
-      pthread_mutex_unlock( &m_mtx );
-      return false;
-   }
-
-   // neither? -- then let's wait. How much?
-   if ( to <  0 )
-   {
-      do {
+      pthread_mutex_lock( &m_mtx );
+      while( ! m_bIsSet ) {
          pthread_cond_wait( &m_cv, &m_mtx );
-
-      } while( ! m_bIsSet );
+      }
    }
-   else
-   {
-      // release the mutex for a while
-      pthread_mutex_unlock( &m_mtx );
-
+   else {
+      struct timeval tv;
       struct timespec ts;
-      #if _POSIX_TIMERS > 0
-         clock_gettime(CLOCK_REALTIME, &ts);
-      #else
-          struct timeval tv;
-          gettimeofday(&tv, NULL);
-          ts.tv_sec = tv.tv_sec;
-          ts.tv_nsec = tv.tv_usec*1000;
-      #endif
+      gettimeofday( &tv, NULL );
 
-      ts.tv_sec += to/1000;
-      ts.tv_nsec += (to%1000) * 1000000;
-      if( ts.tv_nsec >= 1000000000 )
-      {
-         ++ts.tv_sec;
+      ts.tv_nsec = (tv.tv_usec + ((to%1000)*1000))*1000;
+      ts.tv_sec = tv.tv_sec + (to/1000);
+      if( ts.tv_nsec >= 1000000000 ) {
+         ts.tv_sec++;
          ts.tv_nsec -= 1000000000;
       }
-
       pthread_mutex_lock( &m_mtx );
-      while( ! m_bIsSet )
-      {
-         int res;
-         if( (res = pthread_cond_timedwait( &m_cv, &m_mtx, &ts )) == ETIMEDOUT )
-         {
-            // wait failed
-            pthread_mutex_unlock( &m_mtx );
-            return false;
+
+      while( ! m_bIsSet ) {
+         int res = pthread_cond_timedwait( &m_cv, &m_mtx, &ts );
+         if( res == ETIMEDOUT ) {
+            break;
          }
-         // be sure that we haven't got other reasons to fail.
-         fassert( res == 0 );
       }
    }
 
-   // here, m_bIsSet is set...
-   if ( m_bAutoReset )
+   bool result = m_bIsSet;
+   if( m_bAutoReset ) {
       m_bIsSet = false;
+   }
    pthread_mutex_unlock( &m_mtx );
 
-   return true;
+   return result;
 }
 
 //==================================================================================
@@ -167,13 +126,13 @@ bool Event::wait( int32 to )
 SysThread::~SysThread()
 {
    pthread_mutex_destroy( &m_sysdata->m_mtxT );
-   memFree( m_sysdata );
+   free( m_sysdata );
 }
 
 SysThread::SysThread( Runnable* r ):
    m_runnable( r )
 {
-   m_sysdata = ( struct SYSTH_DATA* ) memAlloc( sizeof( struct SYSTH_DATA ) );
+   m_sysdata = ( struct SYSTH_DATA* ) malloc( sizeof( struct SYSTH_DATA ) );
    m_sysdata->m_bDetached = false;
    m_sysdata->m_bDone = false;
    m_sysdata->m_lastError = 0;
@@ -305,6 +264,133 @@ void *SysThread::run()
    }
    
    return data;
+}
+
+
+//==========================================================
+// Interruptible event
+//==========================================================
+
+struct int_evt
+{
+   pthread_cond_t cond;
+   pthread_mutex_t mtx;
+
+   bool autoReset;
+   bool isSet;
+   bool isInterrupted;
+
+};
+
+
+InterruptibleEvent::InterruptibleEvent( bool bManualReset, bool initState )
+{
+   struct int_evt* evt = new struct int_evt;
+   m_sysdata = evt;
+   evt->isInterrupted = false;
+   evt->isSet = initState;
+   evt->autoReset = !bManualReset;
+
+   pthread_cond_init( &evt->cond, 0);
+   pthread_mutex_init( &evt->mtx, 0);
+}
+
+
+InterruptibleEvent::~InterruptibleEvent()
+{
+   struct int_evt* evt = (struct int_evt*) m_sysdata;
+   pthread_cond_destroy(&evt->cond);
+   pthread_mutex_destroy(&evt->mtx);
+
+   delete evt;
+}
+
+
+void InterruptibleEvent::set()
+{
+   struct int_evt* evt = (struct int_evt*) m_sysdata;
+
+   pthread_mutex_lock( &evt->mtx );
+   evt->isSet = true;
+   pthread_mutex_unlock( &evt->mtx );
+   pthread_cond_broadcast( &evt->cond );
+}
+
+
+InterruptibleEvent::wait_result_t InterruptibleEvent::wait( int32 to )
+{
+   struct int_evt* evt = (struct int_evt*) m_sysdata;
+   wait_result_t result;
+
+   if( to == 0 )
+   {
+      pthread_mutex_lock( &evt->mtx );
+
+   }
+   else if( to < 0 )
+   {
+      pthread_mutex_lock( &evt->mtx );
+      while( !(evt->isInterrupted|| evt->isSet) ) {
+         pthread_cond_wait( &evt->cond, &evt->mtx );
+      }
+   }
+   else {
+      struct timeval tv;
+      struct timespec ts;
+      gettimeofday( &tv, NULL );
+
+      ts.tv_nsec = (tv.tv_usec + ((to%1000)*1000))*1000;
+      ts.tv_sec = tv.tv_sec + (to/1000);
+      if( ts.tv_nsec > 1000000000 )
+      {
+         ts.tv_nsec -= 1000000000;
+         ts.tv_sec += 1;
+      }
+      pthread_mutex_lock( &evt->mtx );
+
+      while( !(evt->isInterrupted|| evt->isSet) ) {
+         int res = pthread_cond_timedwait( &evt->cond, &evt->mtx, &ts );
+         if( res == ETIMEDOUT ) {
+            break;
+         }
+      }
+   }
+
+   if( evt->isInterrupted ) {
+      result = wait_interrupted;
+   }
+   else if( evt->isSet ) {
+      result = wait_success;
+      if( evt->autoReset ) {
+         evt->isSet = false;
+      }
+   }
+   else {
+      result = wait_timedout;
+   }
+   pthread_mutex_unlock( &evt->mtx );
+
+   return result;
+}
+
+
+void InterruptibleEvent::interrupt()
+{
+   struct int_evt* evt = (struct int_evt*) m_sysdata;
+
+   pthread_mutex_lock( &evt->mtx );
+   evt->isInterrupted = true;
+   pthread_mutex_unlock( &evt->mtx );
+   pthread_cond_broadcast( &evt->cond );
+}
+
+void InterruptibleEvent::reset()
+{
+   struct int_evt* evt = (struct int_evt*) m_sysdata;
+
+   pthread_mutex_lock( &evt->mtx );
+   evt->isInterrupted = false;
+   pthread_mutex_unlock( &evt->mtx );
 }
 
 }

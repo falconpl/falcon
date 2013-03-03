@@ -2,629 +2,955 @@
    FALCON - The Falcon Programming Language.
    FILE: module.cpp
 
-   Falcon module manager
+   Falcon code unit
    -------------------------------------------------------------------
    Author: Giancarlo Niccolai
-   Begin: 2004-08-01
+   Begin: Sat, 05 Feb 2011 14:37:57 +0100
 
    -------------------------------------------------------------------
-   (C) Copyright 2004: the FALCON developers (see list in AUTHORS file)
+   (C) Copyright 2011: the FALCON developers (see list in AUTHORS file)
 
    See LICENSE file for licensing details.
 */
 
+#undef SRC
+#define SRC "engine/module.cpp"
+
+#include <falcon/trace.h>
 #include <falcon/module.h>
-#include <falcon/memory.h>
-#include <falcon/symtab.h>
-#include <falcon/types.h>
-#include <cstring>
-#include <falcon/common.h>
-#include <falcon/stream.h>
-#include <falcon/string.h>
-#include <falcon/traits.h>
-#include <falcon/pcodes.h>
-#include <falcon/mt.h>
-#include <falcon/attribmap.h>
+#include <falcon/itemarray.h>
+#include <falcon/symbol.h>
+#include <falcon/extfunc.h>
+#include <falcon/item.h>
+#include <falcon/modspace.h>
+#include <falcon/modloader.h>
+#include <falcon/modrequest.h>
+#include <falcon/importdef.h>
+#include <falcon/requirement.h>
+#include <falcon/error.h>
+#include <falcon/falconclass.h>
+#include <falcon/hyperclass.h>
+#include <falcon/dynunloader.h>
 
-#include <string.h>
+#include <falcon/errors/codeerror.h>
+#include <falcon/errors/genericerror.h>
+#include <falcon/errors/linkerror.h>
+#include <falcon/classes/classrequirement.h>
 
-namespace Falcon {
+#include <stdexcept>
+#include <map>
+#include <deque>
+#include <list>
+#include <algorithm>
 
-const uint32 Module::c_noEntry = 0xFFffFFff;
+#include "module_private.h"
+
+namespace Falcon
+{
+
+class Module::FuncRequirement: public Requirement
+{
+public:
+   FuncRequirement( const String& symName, t_func_import_req& cbFunc ):
+      Requirement( symName ),
+      m_cbFunc( cbFunc )
+   {}
+
+   virtual ~FuncRequirement() {}
+
+   virtual void onResolved( const Module* sourceModule, const String& sourceName, Module* targetModule, const Item& value, const Variable* targetVar )
+   {
+      Error* err = m_cbFunc( sourceModule, sourceName, targetModule, value, targetVar );
+      if( err != 0 ) throw err;
+   }
+
+   // This applies only to native modules, which doesn't store requirementes.
+   virtual Class* cls() const { return 0; }
+
+private:
+   t_func_import_req m_cbFunc;
+};
+
+
+Error* Module::Private::Dependency::onResolved( Module* sourceMod, Module* hostMod, Item* source )
+{
+   Error* res = 0;
+
+   bool firstError = true;
+   Private::Dependency::WaitingList::iterator iter = m_waitings.begin();
+   while( m_waitings.end() != iter )
+   {
+      try
+      {
+         Requirement* req = *iter;
+         req->onResolved( sourceMod, m_sourceName, hostMod, *source, m_variable );
+      }
+      catch( Error * e )
+      {
+         if( res == 0 )
+         {
+            res = e;
+         }
+         else
+         {
+            if( firstError )
+            {
+               firstError = false;
+               Error* temp = res;
+               res = new LinkError( ErrorParam( e_link_error, 0, hostMod->uri())
+                  .extra( "Errors during symbol resolution")
+                  );
+               res->appendSubError(temp);
+               temp->decref();
+            }
+            res->appendSubError(e);
+            e->decref();
+         }
+      }
+      ++iter;
+   }
+
+   return res;
+}
+
+
+Module::Private::~Private()
+{
+   // destroy reqs and deps
+   DepList::iterator req_i = m_deplist.begin();
+   while( req_i != m_deplist.end() )
+   {
+      delete *req_i;
+      ++req_i;
+   }
+
+   ImportDefList::iterator id_i = m_importDefs.begin();
+   while( id_i != m_importDefs.end() )
+   {
+      //delete *id_i;
+      ++id_i;
+   }
+
+   ReqList::iterator rl_i = m_mrlist.begin();
+   while( rl_i != m_mrlist.end() )
+   {
+      delete *rl_i;
+      ++rl_i;
+   }
+
+   NSImportList::iterator nsi = m_nsimports.begin();
+   while( nsi != m_nsimports.end() )
+   {
+      Private::NSImport* ns = *nsi;
+      delete ns;
+      ++nsi;
+   }
+
+   MantraMap::iterator mi = m_mantras.begin();
+   while( mi != m_mantras.end() )
+   {
+      Mantra* mantra = mi->second;
+      delete mantra;
+      ++mi;
+   }
+}
+
+
+//=========================================================
+// Main module class
+//
 
 Module::Module():
-   m_refcount(1),
-   m_language( "C" ),
-   m_modVersion( 0 ),
-   m_engineVersion( 0 ),
-   m_lineInfo( 0 ),
-   m_loader(0),
-   m_serviceMap( &traits::t_string(), &traits::t_voidp() ),
-   m_attributes(0)
+   m_modSpace(0),
+   m_name( "$noname" ),
+   m_lastGCMark(0),
+   m_bExportAll( false ),
+   m_unloader( 0 ),
+   m_bMain( false ),
+   m_anonMantras(0),
+   m_mainFunc(0),
+   m_bNative( false ),
+   m_refcounter_Module(1)
 {
-   m_strTab = new StringTable;
-   m_bOwnStringTable = true;
+   TRACE("Creating internal module '%s'", m_name.c_ize() );
+   m_uri = "";
+   _p = new Private;
+}
+
+
+Module::Module( const String& name, bool bNative ):
+   m_modSpace(0),
+   m_name( name ),
+   m_lastGCMark(0),
+   m_bExportAll( false ),
+   m_unloader( 0 ),
+   m_bMain( false ),
+   m_anonMantras(0),
+   m_mainFunc(0),
+   m_bNative( bNative ),
+   m_refcounter_Module(1)
+{
+   TRACE("Creating internal module '%s'", name.c_ize() );
+   m_uri = "";
+   _p = new Private;
+}
+
+
+Module::Module( const String& name, const String& uri, bool bNative ):
+   m_modSpace(0),
+   m_name( name ),
+   m_uri(uri),
+   m_lastGCMark(0),
+   m_bExportAll( false ),
+   m_unloader( 0 ),
+   m_bMain( false ),
+   m_anonMantras(0),
+   m_mainFunc(0),
+   m_bNative( bNative ),
+   m_refcounter_Module(1)
+{
+   TRACE("Creating module '%s' from %s",
+      name.c_ize(), uri.c_ize() );
+
+   _p = new Private;
 }
 
 
 Module::~Module()
 {
-   // The depend table points to the string table
-   // so there is no need to check it.
-
-   // the services in the service table are usually static,
-   // ... in case they need to be dynamic, the subclass of
-   // ... the module will take care of them.
-
-   delete m_lineInfo;
-
-   delete m_attributes;
-
-   if ( m_bOwnStringTable )
-      delete m_strTab;
-}
-
-DllLoader &Module::dllLoader()
-{
-   if ( m_loader == 0 )
-      m_loader = new DllLoader;
-
-   return *m_loader;
-}
-
-void Module::addDepend( const String &name, const String &module, bool bPrivate, bool bFile )
-{
-   m_depend.addDependency( name, module, bPrivate, bFile );
-}
-
-void Module::addDepend( const String &name, bool bPrivate, bool bFile )
-{
-   m_depend.addDependency( name, name, bPrivate, bFile );
+   TRACE("Deleting module %s", m_name.c_ize() );
+   unload();
+   // this is doing to do a bit of stuff; see ~Private()
+   delete _p;
+   TRACE("Module '%s' deletion complete", m_name.c_ize() );
 }
 
 
-Symbol *Module::addGlobal( const String &name, bool exp )
+uint32 Module::depsCount() const
 {
-   if ( m_symtab.findByName( name ) != 0 )
-      return 0;
-
-   Symbol *sym = new Symbol( this, m_symbols.size(), name, exp );
-   sym->setGlobal( );
-   m_symbols.push( sym );
-
-   sym->itemId( m_symtab.size() );
-   m_symtab.add( sym );
-   return sym;
+   return _p->m_importDefs.size();
 }
 
-void Module::addSymbol( Symbol *sym )
+ImportDef* Module::getDep( uint32 n ) const
 {
-   sym->id( m_symbols.size() );
-   sym->module( this );
-   m_symbols.push( sym );
-}
-
-Symbol *Module::addSymbol()
-{
-   Symbol *sym = new Symbol( this );
-   sym->id( m_symbols.size() );
-   m_symbols.push( sym );
-   return sym;
-}
-
-Symbol *Module::addSymbol( const String &name )
-{
-   Symbol *sym = new Symbol( this, m_symbols.size(), name, false );
-   m_symbols.push( sym );
-   return sym;
-}
-
-Symbol *Module::addGlobalSymbol( Symbol *sym )
-{
-   if ( sym->id() >= m_symbols.size() || m_symbols.symbolAt( sym->id() ) != sym ) {
-      sym->id( m_symbols.size() );
-      m_symbols.push( sym );
-   }
-
-   sym->itemId( m_symtab.size() );
-   sym->module( this );
-   m_symtab.add( sym );
-   return sym;
-}
-
-void Module::adoptStringTable( StringTable *st, bool bOwn )
-{
-   if ( m_bOwnStringTable )
-      delete m_strTab;
-   m_strTab = st;
-   m_bOwnStringTable = bOwn;
+   return _p->m_importDefs[n];
 }
 
 
-Symbol *Module::addConstant( const String &name, int64 value, bool exp )
+void Module::gcMark( uint32 mark )
 {
-   Symbol *sym = new Symbol( this, name );
-   sym->exported( exp );
-   sym->setConst( new VarDef( value ) );
-   return addGlobalSymbol( sym );
-}
-
-Symbol *Module::addConstant( const String &name, numeric value, bool exp )
-{
-   Symbol *sym = new Symbol( this, name );
-   sym->exported( exp );
-   sym->setConst( new VarDef( value ) );
-   return addGlobalSymbol( sym );
-}
-
-Symbol *Module::addConstant( const String &name, const String &value, bool exp )
-{
-   Symbol *sym = new Symbol( this, name );
-   sym->exported( exp );
-   sym->setConst( new VarDef( addString( value ) ) );
-   return addGlobalSymbol( sym );
-}
-
-
-Symbol *Module::addExtFunc( const String &name, ext_func_t func, void *extra, bool exp )
-{
-   Symbol *sym = findGlobalSymbol( name );
-   if ( sym == 0 )
+   if( m_lastGCMark != mark )
    {
-      sym = addSymbol(name);
-      addGlobalSymbol( sym );
-   }
-   sym->setExtFunc( new ExtFuncDef( func, extra ) );
-   sym->exported( exp );
-   return sym;
-}
+      TRACE( "Module::gcMark -- marking %s", name().c_ize() );
 
-Symbol *Module::addFunction( const String &name, byte *code, uint32 size, bool exp )
-{
-   Symbol *sym = findGlobalSymbol( name );
-   if ( sym == 0 )
-   {
-      sym = addSymbol(name);
-      addGlobalSymbol( sym );
-   }
-   sym->setFunction( new FuncDef( code, size ) );
-   sym->exported( exp );
-   return sym;
-}
+      m_lastGCMark = mark;
+      if ( m_modSpace != 0 )
+      {
+         m_modSpace->gcMark( mark );
+      }
 
+      m_attributes.gcMark(mark);
 
-Symbol *Module::addClass( const String &name, Symbol *ctor_sym, bool exp )
-{
-   if ( m_symtab.findByName( name ) != 0 )
-      return 0;
+      m_globals.gcMark(mark);
+      /*
+      Private::MantraMap::iterator mi = _p->m_mantras.begin();
+      Private::MantraMap::iterator mi_end = _p->m_mantras.end();
 
-   Symbol *sym = new Symbol( this, m_symbols.size(), name, exp );
-   sym->setClass( new ClassDef( ctor_sym ) );
-   m_symbols.push( sym );
-
-   sym->itemId( m_symtab.size() );
-   m_symtab.add( sym );
-
-   return sym;
-}
-
-Symbol *Module::addSingleton( const String &name, Symbol *ctor_sym, bool exp )
-{
-   String clName = "%" + name;
-
-   // symbol or class symbol already present?
-   if ( m_symtab.findByName( name ) != 0 || m_symtab.findByName( clName ) != 0 )
-      return 0;
-
-   // create the class symbol (never exported)
-   Symbol *clSym = addClass( clName, ctor_sym, false );
-
-   // create a singleton instance of the class.
-   Symbol *objSym = new Symbol( this, name );
-   objSym->setInstance( clSym );
-   objSym->exported( exp );
-   addGlobalSymbol( objSym );
-
-   return objSym;
-}
-
-Symbol *Module::addSingleton( const String &name, ext_func_t ctor, bool exp )
-{
-   if( ctor != 0 )
-   {
-      String ctor_name = name + "._init";
-      Symbol *sym = addExtFunc( ctor_name, ctor, false );
-      if ( sym == 0 )
-         return 0;
-
-      return addSingleton( name, sym, exp );
-   }
-   else
-   {
-      return addSingleton( name, (Symbol*)0, exp );
+      while( mi != mi_end ) {
+         Mantra* m = mi->second;
+         m->gcMark(mark);
+         ++mi;
+      }
+      */
    }
 }
 
 
-Symbol *Module::addClass( const String &name, ext_func_t ctor, bool exp )
+bool Module::promoteExtern( Variable* ext, const Item& value, int32 redeclaredAt )
 {
-   String ctor_name = name + "._init";
-   Symbol *sym = addExtFunc( ctor_name, ctor, false );
-   if ( sym == 0 )
-      return 0;
-   return addClass( name, sym, exp );
-}
-
-VarDef& Module::addClassProperty( Symbol *cls, const String &prop )
-{
-   ClassDef *cd = cls->getClassDef();
-   VarDef *vd = new VarDef();
-   cd->addProperty( addString( prop ), vd );
-   return *vd;
-}
-
-VarDef& Module::addClassMethod( Symbol *cls, const String &prop, Symbol *method )
-{
-   ClassDef *cd = cls->getClassDef();
-   VarDef *vd = new VarDef( method );
-   cd->addProperty( addString( prop ), vd );
-   return *vd;
-}
-
-VarDef& Module::addClassMethod( Symbol *cls, const String &prop, ext_func_t method_func )
-{
-   String name = cls->name() + "." + prop;
-   Symbol *method = addExtFunc( name, method_func, false );
-   return addClassMethod( cls, prop, method );
-}
-
-String *Module::addCString( const char *pos, uint32 size )
-{
-   String *ret = stringTable().find( pos );
-   if ( ret == 0 ) {
-      char *mem = (char *)memAlloc(size+1);
-      memcpy( mem, pos, size );
-      mem[size] = 0;
-      ret = new String();
-      ret->adopt( mem, size, size + 1 );
-      stringTable().add( ret );
-   }
-   return ret;
-}
-
-String *Module::addString( const String &st )
-{
-   String *ret = stringTable().find( st );
-   if ( ret == 0 ) {
-      ret = new String( st );
-      ret->bufferize();
-      ret->exported( st.exported() );
-      stringTable().add( ret );
-   }
-   return ret;
-}
-
-String *Module::addString( const String &st, bool exported )
-{
-   String *ret = stringTable().find( st );
-   if ( ret == 0 ) {
-      ret = new String( st );
-      ret->exported( exported );
-      ret->bufferize();
-      stringTable().add( ret );
-   }
-   else {
-      ret->exported( exported );
-   }
-
-   return ret;
-}
-
-uint32 Module::addStringID( const String &st, bool exported )
-{
-   uint32 ret = stringTable().size();
-   String* s = new String( st );
-   s->exported( exported );
-   s->bufferize();
-   stringTable().add( s );
-
-   return ret;
-}
-
-bool Module::save( Stream *out, bool skipCode ) const
-{
-   // save header informations:
-   const char *sign = "FM";
-   out->write( sign, 2 );
-
-   char ver = pcodeVersion();
-   out->write( &ver, 1 );
-   ver = pcodeSubVersion();
-   out->write( &ver, 1 );
-
-   // serializing module and engine versions
-   uint32 iver = endianInt32( m_modVersion );
-   out->write( &iver, sizeof( iver ) );
-   iver = endianInt32( m_engineVersion );
-   out->write( &iver, sizeof( iver ) );
-
-   // serialize the module tables.
-   //NOTE: all the module tables are saved 32 bit alinged.
-
-   if ( ! stringTable().save( out ) )
-      return false;
-
-   if ( ! m_symbols.save( out ) )
-      return false;
-
-   if ( ! m_symtab.save( out ) )
-      return false;
-
-   if ( ! m_depend.save( out ) )
-      return false;
-
-
-   if( m_attributes != 0 )
-   {
-      iver = endianInt32(1);
-      out->write( &iver, sizeof( iver ) );
-
-      if ( ! m_attributes->save( this, out ) )
-         return false;
-   }
-   else {
-      iver = endianInt32(0);
-      out->write( &iver, sizeof( iver ) );
-   }
-
-   if ( m_lineInfo != 0 )
-   {
-      int32 infoInd = endianInt32( 1 );
-      out->write( &infoInd, sizeof( infoInd ) );
-
-      if (  ! m_lineInfo->save( out ) )
-         return false;
-   }
-   else {
-      int32 infoInd = endianInt32( 0 );
-      out->write( &infoInd, sizeof( infoInd ) );
-   }
-
-   return out->good();
-}
-
-bool Module::load( Stream *is, bool skipHeader )
-{
-   // verify module version informations.
-   if ( !  skipHeader )
-   {
-      char c;
-      is->read( &c, 1 );
-      if( c != 'F' )
-         return false;
-      is->read( &c, 1 );
-      if( c != 'M' )
-         return false;
-      is->read( &c, 1 );
-      if ( c != pcodeVersion() )
-         return false;
-      is->read( &c, 1 );
-      if ( c != pcodeSubVersion() )
-         return false;
-   }
-
-   // Load the module and engine version.
-   uint32 ver;
-   is->read( &ver, sizeof( ver ) );
-   m_modVersion = endianInt32( ver );
-   is->read( &ver, sizeof( ver ) );
-   m_engineVersion = endianInt32( ver );
-
-   /*TODO: see if there is a localized table around and use that instead.
-      If so, skip our internal strtable.
-   */
-   if ( ! stringTable().load( is ) )
-      return false;
-
-   if ( ! m_symbols.load( this, is ) )
-      return false;
-
-   if ( ! m_symtab.load( this, is ) )
-      return false;
-
-   if ( ! m_depend.load( this, is ) )
-      return false;
-
-   is->read( &ver, sizeof( ver ) );
-   if( ver != 0 )
-   {
-      m_attributes = new AttribMap;
-      if ( ! m_attributes->load( this, is ) )
-         return false;
-   }
-
-   // load lineinfo indicator.
-   int32 infoInd;
-   is->read( &infoInd, sizeof( infoInd ) );
-   infoInd = endianInt32( infoInd );
-   if( infoInd != 0 )
-   {
-      m_lineInfo = new LineMap;
-      if ( ! m_lineInfo->load( is ) )
-         return false;
-   }
-   else
-      m_lineInfo = 0;
-
-   return is->good();
-}
-
-
-uint32 Module::getLineAt( uint32 pc ) const
-{
-   if ( m_lineInfo == 0 || m_lineInfo->empty() )
-      return 0;
-
-   MapIterator iter;
-   if( m_lineInfo->find( &pc, iter ) )
-   {
-      return *(uint32 *) iter.currentValue();
-   }
-   else {
-      iter.prev();
-      if( iter.hasCurrent() )
-         return *(uint32 *) iter.currentValue();
-      return 0;
-   }
-}
-
-void Module::addLineInfo( uint32 pc, uint32 line )
-{
-   if ( m_lineInfo == 0 )
-      m_lineInfo = new LineMap;
-
-   m_lineInfo->addEntry( pc, line );
-}
-
-
-void Module::setLineInfo( LineMap *infos )
-{
-   delete m_lineInfo;
-   m_lineInfo = infos;
-}
-
-Service *Module::getService( const String &name ) const
-{
-   Service **srv = (Service **) m_serviceMap.find( &name );
-   if ( srv != 0 )
-   {
-      return *srv;
-   }
-   return 0;
-}
-
-bool Module::publishService( Service *sp )
-{
-   Service **srv = (Service **) m_serviceMap.find( &sp->getServiceName() );
-   if ( srv != 0 )
-   {
+   if( ! m_globals.promoteExtern(ext->id(), value, redeclaredAt) ) {
       return false;
    }
-   else {
-      m_serviceMap.insert( &sp->getServiceName(), sp );
+
+   // see if this covers a forward declaration.
+   VarDataMap::VarData* vd = m_globals.getGlobal(ext->id());
+   fassert( vd != 0 ); // promotion to extern would have failed.
+   if( ! checkWaitingFwdDef( vd->m_name, vd->m_data ) ) {
+      return false;
    }
+
    return true;
 }
 
 
-char Module::pcodeVersion() const
+bool Module::removeExtern( const String& name )
 {
-   return FALCON_PCODE_VERSION;
-}
+   m_globals.removeGlobal(name);
 
-char Module::pcodeSubVersion() const
-{
-   return FALCON_PCODE_MINOR;
-}
-
-void Module::getModuleVersion( int &major, int &minor, int &revision ) const
-{
-   major = (m_modVersion ) >> 16;
-   minor = (m_modVersion & 0xFF00 ) >> 8;
-   revision = m_modVersion & 0xFF;
-}
-
-void Module::getEngineVersion( int &major, int &minor, int &revision ) const
-{
-   major = (m_engineVersion ) >> 16;
-   minor = (m_engineVersion & 0xFF00 ) >> 8;
-   revision = m_engineVersion & 0xFF;
-}
-
-DllLoader *Module::detachLoader()
-{
-   DllLoader *ret = m_loader;
-   m_loader = 0;
-   return ret;
-}
-
-
-void Module::incref() const
-{
-   atomicInc( m_refcount );
-}
-
-void Module::decref() const
-{
-   if( atomicDec( m_refcount ) <= 0 )
+   Private::DepMap::iterator idep = _p->m_depsByName.find( name );
+   if( idep != _p->m_depsByName.end() )
    {
-      Module *deconst = const_cast<Module *>(this);
-      DllLoader *loader = deconst->detachLoader();
-      delete deconst;
-      delete loader;
+      Private::Dependency* dep = idep->second;
+
+      // remove from the list.
+      // start from the bottom, as we usually kill the last item added
+      Private::DepList::iterator il = _p->m_deplist.begin();
+      while( il != _p->m_deplist.end() ) {
+         if( *il == dep ) {
+            _p->m_deplist.erase(il);
+            break;
+         }
+         ++il;
+      }
+
+      _p->m_depsByName.erase(idep);
+      delete dep;
+      return true;
    }
-}
 
-bool Module::saveTableTemplate( Stream *stream, const String &encoding ) const
-{
-   stream->writeString( "<?xml version=\"1.0\" encoding=\"" );
-   stream->writeString( encoding );
-   stream->writeString( "\"?>\n" );
-   return stringTable().saveTemplate( stream, name(), language() );
+   return false;
 }
 
 
-String Module::absoluteName( const String &module_name, const String &parent_name )
+bool Module::resolveExternValue( const String& name, Module* source, Item* value )
 {
-   if ( module_name.getCharAt(0) == '.' )
+   // was a dependency waiting for this?
+   Private::DepMap::const_iterator diter = _p->m_depsByName.find( name );
+   if( diter != _p->m_depsByName.end() ) {
+      Error* err = diter->second->onResolved( source, this, value );
+      if( err != 0 ) throw err;
+   }
+
+   // check if we have a variable associated with this.
+   VarDataMap::VarData* vd = m_globals.getGlobal(name);
+   if( vd == 0 ) {
+      return false;
+   }
+
+   if( ! m_globals.promoteExtern(vd->m_var.id(), *value, 0) ) {
+      return false;
+   }
+
+   return true;
+}
+
+
+
+Variable* Module::importValue( const String& name, Module* source, Item* value, int line )
+{
+   bool bAlready = false;
+   Variable* var = addImplicitImport(name, line, bAlready );
+   if( var->type() == Variable::e_nt_extern )
    {
-      // notation .name
-      if ( parent_name.size() == 0 )
-         return module_name.subString( 1 );
-      else {
-         // remove last part of parent name
-         uint32 posDot = parent_name.rfind( "." );
-         // are there no dot? -- we're at root elements
-         if ( posDot == String::npos )
-            return module_name.subString( 1 );
-         else
-            return parent_name.subString( 0, posDot ) + module_name; // "." is included.
+      // ok, we have an extern variable.
+      // If it was already defined, there might be a dependency waiting for that.
+      if( bAlready )
+      {
+         // was a dependency waiting for this?
+         Private::DepMap::const_iterator diter = _p->m_depsByName.find( name );
+         if( diter != _p->m_depsByName.end() ) {
+            Error* err = diter->second->onResolved( source, this, value );
+            if( err != 0 ) throw err;
+         }
+      }
+
+      return var;
+   }
+
+   return 0;
+}
+
+
+void Module::addAnonMantra( Mantra* f )
+{
+   String name;
+   do
+   {
+      name = "_anon#";
+      name.N(m_anonMantras++);
+   } while( _p->m_mantras.find( name ) != _p->m_mantras.end() );
+
+   f->name( name );
+   _p->m_mantras[f->name()] = f;
+   f->module(this);
+
+}
+
+
+Variable* Module::addMantra( Mantra* f, bool bExport)
+{
+   TRACE(" Module::addMantra -- (%s(%p), %s, %d)",
+            f->name().size() == 0 ? "(anon)" : f->name().c_ize(),
+            f, bExport? "export" : "private", f->declaredAt() );
+
+   //static Engine* eng = Engine::instance();
+
+   VarDataMap::VarData* vd = m_globals.getGlobal( f->name() );
+   if( vd != 0 && vd->m_var.type() != Variable::e_nt_extern  )
+   {
+      // already defined.
+      TRACE1(" Module::addMantra -- %s(%p) already defined", f->name().c_ize(), f );
+      return 0;
+   }
+
+   // add to the function vector so that we can account it.
+   _p->m_mantras[f->name()] = f;
+   f->module(this);
+   Item value( f->handler(), f );
+
+   // then add the required global.
+   if( vd == 0 )
+   {
+      TRACE1(" Module::addMantra -- %s(%p) adding as new global", f->name().c_ize(), f );
+      vd = m_globals.addGlobal( f->name(), value, bExport );
+      fassert( vd != 0 );
+   }
+   else {
+      TRACE1(" Module::addMantra -- %s(%p) promoting from extern.", f->name().c_ize(), f );
+      if( ! promoteExtern( &vd->m_var, value, f->declaredAt() ) ) {
+         TRACE1(" Module::addMantra -- %s(%p) promotion failed.", f->name().c_ize(), f );
+         return NULL;
       }
    }
-   else if ( module_name.find( "self." ) == 0 )
+
+   vd->m_var.declaredAt( f->declaredAt() );
+   return &vd->m_var;
+}
+
+Variable* Module::addInitClass( Class* cls, bool bExport )
+{
+   Variable* var = addMantra( cls, false );
+   if( var != 0 )
    {
-      if ( parent_name.size() == 0 )
-         return module_name.subString( 5 );
-      else
-         return parent_name + "." + module_name.subString( 5 );
+      _p->m_initList.push_back(cls);
+      String name = cls->name().subString(1);
+      var = addGlobal(name, Item(), bExport );
+   }
+
+   return var;
+}
+
+
+Variable* Module::addObject( Class* cls, bool bExport )
+{
+   if( cls->name().getCharAt(0) != '%')
+   {
+      cls->name( "%" + cls->name() );
+   }
+   return addInitClass(cls, bExport);
+}
+
+
+
+int32 Module::getInitCount() const
+{
+   return (int32) _p->m_initList.size();
+}
+
+Class* Module::getInitClass( int32 val ) const
+{
+   return _p->m_initList[val];
+}
+
+
+Variable* Module::addFunction( const String &name, ext_func_t f, bool bExport )
+{
+   // check if the name is free.
+   VarDataMap::VarData* vd = m_globals.getGlobal( name );
+   if( vd == 0 )
+   {
+      return 0;
+   }
+
+   // ok, the name is free; add it
+   Function* extfunc = new ExtFunc( name, f, this );
+   return addMantra( extfunc, bExport );
+}
+
+
+Variable* Module::addSingleton( Class*, bool )
+{
+   // TODO
+   return 0;
+}
+
+
+Variable* Module::addConstant( const String& name, const Item& value, bool bExport )
+{
+   VarDataMap::VarData* vd = m_globals.addGlobal( name, value, bExport );
+   if( vd == 0 ) {
+      return 0;
+   }
+
+   vd->m_var.setConst(true);
+   return &vd->m_var;
+}
+
+
+Mantra* Module::getMantra( const String& name, Mantra::t_category cat ) const
+{
+   Private::MantraMap::const_iterator iter = _p->m_mantras.find(name);
+   if( iter != _p->m_mantras.end() )
+   {
+      Mantra* mantra = iter->second;
+      if( mantra->isCompatibleWith( cat ) )
+      {
+         return mantra;
+      }
+   }
+
+   return 0;
+}
+
+
+/** Enumerate all functions and classes in this module.
+*/
+void Module::enumerateMantras( Module::MantraEnumerator& rator ) const
+{
+   Private::MantraMap::const_iterator iter = _p->m_mantras.begin();
+   Private::MantraMap::const_iterator end = _p->m_mantras.end();
+
+   while( iter != end )
+   {
+      const Mantra* m = iter->second;
+      if( ! rator( *m, ++iter == end) )
+         break;
+   }
+}
+
+Error* Module::addModuleRequirement( ImportDef* def, ModRequest*& req )
+{
+   // first, check if there is a clash with already defined symbols.
+   int symcount = def->symbolCount();
+   for( int i = 0; i < symcount; ++ i )
+   {
+      String name;
+      def->targetSymbol(i, name );
+      if( name.size() == 0 ) continue; // a bit defensive.
+
+      if( name.getCharAt( name.length() -1 ) !=  '*' )
+      {
+         // it's a real symbol.
+         if ( m_globals.getGlobal( name ) != 0 )
+         {
+            return new CodeError( ErrorParam( e_import_already, def->sr().line(), this->uri() )
+               .origin( ErrorParam::e_orig_compiler )
+               .extra(name) );
+         }
+      }
+   }
+
+   Private::ReqMap::iterator pos = _p->m_mrmap.find( def->sourceModule() );
+   if( pos != _p->m_mrmap.end() )
+   {
+      req = pos->second;
+      // prevent double load requests -- or redefining already known modules.
+      if( def->isLoad() && req->isLoad() )
+      {
+         return new CodeError( ErrorParam( e_load_already, def->sr().line(), this->uri() )
+            .origin( ErrorParam::e_orig_compiler )
+            .extra( def->sourceModule() ) );
+      }
+
+      // update load status.
+      if( def->isLoad() )
+      {
+         req->promoteLoad();
+      }
+
+      // update logical name into physical if there is a clash.
+      // i.e. load test and load "test" will have "test" to prevail.
+      if( def->isUri() )
+      {
+         req->isUri(true);
+      }
    }
    else
-      return module_name;
-}
-
-
-void Module::addAttribute( const String &name, VarDef* vd )
-{
-   if( m_attributes == 0 )
-      m_attributes = new AttribMap;
-
-   m_attributes->insertAttrib( name, vd );
-}
-
-
-void Module::rollBackSymbols( uint32 nsize )
-{
-   uint32 size = symbols().size();
-
-   for (uint32 pos =  nsize; pos < size; pos ++ )
    {
-      Symbol *sym = symbols().symbolAt( pos );
-      symbolTable().remove( sym->name() );
-      delete sym;
+      // create a new entry
+      req = new ModRequest( def->sourceModule(), def->isUri(), def->isLoad() );
+      _p->m_mrmap[def->sourceModule()] = req;
+      _p->m_mrlist.push_back( req );
    }
 
-   symbols().resize(nsize);
+   def->modReq( req );
+   req->addImportDef( def );
+   return 0;
 }
 
+
+bool Module::removeModuleRequirement( ImportDef* def )
+{
+   bool found = false;
+
+   Private::ReqMap::iterator pos = _p->m_mrmap.find( def->sourceModule() );
+   if( pos != _p->m_mrmap.end() )
+   {
+      found = true;
+
+      // search the def backward
+      // -- (usually, we remove the last def because something went wrong)
+      ModRequest* req = pos->second;
+      req->removeImportDef( def );
+      if( req->importDefCount() == 0 )
+      {
+         // we don't have any reason to depend from this module anymore
+         _p->m_mrmap.erase(pos);
+
+         // remove also from the generic mods, in case it was a generic provider
+         Private::ReqList::iterator reqi =
+               std::find( _p->m_genericMods.begin(), _p->m_genericMods.end(), req );
+         if( reqi != _p->m_genericMods.end() )
+         {
+            _p->m_genericMods.erase( reqi );
+         }
+
+         // And anyhow from the global list.
+         reqi = std::find( _p->m_mrlist.begin(), _p->m_mrlist.end(), req );
+         if( reqi != _p->m_mrlist.end() )
+         {
+            _p->m_genericMods.erase( reqi );
+         }
+
+         // we own the request.
+         delete req;
+      }
+   }
+
+   return found;
 }
-/* end module.cpp */
+
+
+Error* Module::addImport( ImportDef* def )
+{
+   ModRequest* req;
+   Error* error = addModuleRequirement( def, req );
+   if( error != 0 )
+   {
+      return error;
+   }
+
+   // check that all the symbols are locally undefined.
+   int symcount = def->symbolCount();
+
+   // ok we can proceed -- record all the symbols as externs.
+   for( int i = 0; i < symcount; ++ i )
+   {
+      String name;
+      def->targetSymbol( i, name );
+      if( name.size() == 0 ) continue; // a bit defensive.
+
+      if( name.getCharAt( name.length() -1 ) != '*' )
+      {
+          addImplicitImport( name, def->sr().line() );
+          // get the just added dependency
+          Private::Dependency* dep = _p->m_depsByName[name];
+          dep->m_idef = def;
+          dep->m_sourceName = def->sourceSymbol(i);
+      }
+      else if( def->sourceModule().size() != 0 )
+      {
+         // get the from part.
+         String from;
+         name = def->sourceSymbol( i );
+         if ( name.length() > 2 )
+         {
+            from = name.subString(0, name.length()-2);
+         }
+
+         // we should just have added it in addModuleRequirement
+         _p->m_nsimports.push_back( new Private::NSImport( def, from, def->target() ) );
+      }
+   }
+
+   // save the definition
+   _p->m_importDefs.push_back( def );
+
+   // eventually, save the module as a generic provider.
+   if( def->isGeneric() )
+   {
+      _p->m_genericMods.push_back( req );
+   }
+
+   return 0;
+}
+
+
+void Module::removeImport( ImportDef* def )
+{
+   removeModuleRequirement( def);
+
+   // We know that all the symbols in this importdef were defined.
+   int symcount = def->symbolCount();
+   for( int i = 0; i < symcount; ++ i )
+   {
+      String name;
+      def->targetSymbol( i, name );
+      m_globals.removeGlobal( name );
+
+      Private::DepMap::iterator dp = _p->m_depsByName.find( name );
+      if ( dp != _p->m_depsByName.end() )
+      {
+         _p->m_depsByName.erase( dp );
+      }
+   }
+
+   // Remove all the related dependencies
+   Private::DepList::iterator depi = _p->m_deplist.begin();
+   while( depi != _p->m_deplist.end() )
+   {
+      Private::Dependency* dep = *depi;
+      if( dep->m_idef == def )
+      {
+         depi = _p->m_deplist.erase( depi );
+         delete dep;
+
+      }
+      else
+      {
+         ++depi;
+      }
+   }
+
+   // remove the definition
+   Private::ImportDefList::iterator dli =
+            std::find( _p->m_importDefs.begin(), _p->m_importDefs.end(), def );
+   if( dli != _p->m_importDefs.end() )
+   {
+      _p->m_importDefs.erase( dli );
+   }
+
+   // remove the nsImport, if any.
+   Private::NSImportList::iterator nsi = _p->m_nsimports.begin();
+   while( nsi != _p->m_nsimports.end() )
+   {
+      Private::NSImport* ns = *nsi;
+      if( ns->m_def == def )
+      {
+         nsi = _p->m_nsimports.erase( nsi );
+         delete ns;
+      }
+      else
+      {
+         ++nsi;
+      }
+   }
+
+   delete def;
+}
+
+
+Error* Module::addLoad( const String& name, bool bIsUri )
+{
+   ImportDef* id = new ImportDef;
+   id->setLoad( name, bIsUri );
+
+   ModRequest* req = 0;
+   Error* err = addModuleRequirement( id, req );
+   if (err != 0)
+   {
+      delete id;
+      return err;
+   }
+
+   _p->m_importDefs.push_back( id );
+   return 0;
+}
+
+void Module::addImportRequest( Requirement* req,
+               const String& sourceMod, bool bModIsPath )
+{
+   ImportDef* id = 0;
+
+   if( sourceMod != "" )
+   {
+      ImportDef* id = new ImportDef;
+      id->setDirect( req->name(), sourceMod, bModIsPath );
+      ModRequest* mr;
+      addModuleRequirement( id, mr );
+      _p->m_importDefs.push_back( id );
+   }
+
+   // add the dependency to the symbol.
+   Private::Dependency* dep = new Private::Dependency( req->name() );
+   dep->m_idef = id;
+   dep->m_defLine = req->sourceRef().line();
+   dep->m_waitings.push_back( req );
+   _p->m_deplist.push_back( dep );
+   _p->m_depsByName[req->name()] = dep;
+}
+
+
+void Module::addImportRequest( t_func_import_req cbFunc, const String& symName,
+         const String& sourceMod, bool bModIsPath )
+{
+   FuncRequirement* r = new FuncRequirement(symName, cbFunc);
+   addImportRequest( r, sourceMod, bModIsPath );
+}
+
+
+Variable* Module::addImplicitImport( const String& name, int line , bool& isNew)
+{
+   // We can't be called if the symbol is already declared elsewhere.
+   VarDataMap::VarData* vd = m_globals.getGlobal(name);
+   if( vd != 0 )
+   {
+      isNew = false;
+      return &vd->m_var;
+   }
+
+   isNew = true;
+
+   // store a space for an external value in the global values vector.
+   vd = m_globals.addExtern( name, 0 );
+
+   Private::Dependency* dep = new Private::Dependency(name, &vd->m_var,name );
+
+   _p->m_deplist.push_back(dep);
+   _p->m_depsByName[name] = dep;
+   dep->m_defLine = line;
+   return &vd->m_var;
+}
+
+
+Variable* Module::addRequirement( Requirement* cr )
+{
+   const String& symName = cr->name();
+
+   // we don't care if the symbol already exits; the method would just return 0.
+   Variable* imported = addImplicitImport( symName, cr->sourceRef().line() );
+
+   // is the symbol defined?
+   if( imported->type() != Variable::e_nt_extern )
+   {
+      try {
+         Item* value = m_globals.getGlobalValue(imported->id());
+         fassert( value != 0 );
+         cr->onResolved( this, symName, this, *value, imported );
+         delete cr;
+         return imported;
+      }
+      catch (...) {
+         delete cr;
+         throw;
+      }
+   }
+
+   // at this point, the dependency must be created by implicit import.
+   Private::Dependency* dep = _p->m_depsByName[symName];
+   if( dep == 0 )
+   {
+      // should not happen -- but if it happen, we can only search in global space
+      dep = new Private::Dependency( symName, imported, symName );
+      _p->m_depsByName[symName] = dep;
+      _p->m_deplist.push_back(dep);
+   }
+
+   // Record the fact that we have to save transform an unknown symbol...
+   dep->m_waitings.push_back( cr );
+   _p->m_reqslist.push_back( cr );
+
+   return imported;
+}
+
+
+void Module::unload()
+{
+   if( m_unloader != 0 )
+   {
+      DynUnloader* ul = m_unloader;
+      m_unloader = 0;
+      ul->unload();
+   }
+}
+
+
+void Module::forwardNS( Module* mod, const String& remoteNS, const String& localNS )
+{
+   m_globals.forwardNS( &mod->m_globals, remoteNS, localNS );
+}
+
+
+bool Module::checkWaitingFwdDef( const String& name, Item* value )
+{
+   Private::DepMap::iterator pos = _p->m_depsByName.find( name );
+   if( pos != _p->m_depsByName.end() )
+   {
+      // if the request covers an explicit import, this is an error.
+      Module::Private::Dependency* dep = pos->second;
+      if( dep->m_idef != 0 )
+      {
+         return false;
+      }
+      else
+      {
+         // a genuine forward definition;
+         // by setting the symbol as not extern anymore, we prevent an useless promotion
+         Error* err = dep->onResolved( this, this, value );
+
+         // remove the dependency (was just a forward marker)
+         _p->m_depsByName.erase( pos );
+         Private::DepList::iterator dli =
+            std::find( _p->m_deplist.begin(), _p->m_deplist.end(), dep );
+         if( dli != _p->m_deplist.end() )
+         {
+            _p->m_deplist.erase( dli );
+         }
+         delete dep;
+
+         // throw in case of errors
+         if( err != 0 )
+         {
+            throw err;
+         }
+      }
+   }
+
+   return true;
+}
+
+
+Function* Module::getMainFunction()
+{
+   return m_mainFunc;
+}
+
+
+void Module::setMainFunction( Function* mf )
+{
+   m_mainFunc = mf;
+   mf->module(this);
+   mf->name("__main__");
+   addMantra( mf, false );
+}
+
+//=====================================================================
+// Classes
+//=====================================================================
+
+void Module::completeClass(FalconClass* fcls)
+{
+   // Completely resolved!
+   if( !fcls->construct() )
+   {
+      // was not a full falcon class; we must change it into an hyper class.
+      HyperClass* hcls = fcls->hyperConstruct();
+      fassert2( hcls != 0, "called completeClass on an incomplete class");
+
+      _p->m_mantras[hcls->name()] = hcls;
+      // save the old falcon class under another name; we need to reference it.
+      _p->m_mantras["$" + fcls->name()] = fcls;
+
+      // anonymous classes cannot have a name in the global symbol table, so...
+      Item* clsItem = m_globals.getGlobalValue( hcls->name() );
+      if( clsItem != 0 )
+      {
+         clsItem->setUser( hcls->handler(), hcls );
+      }
+   }
+}
+
+
+}
+
+/* end of module.cpp */

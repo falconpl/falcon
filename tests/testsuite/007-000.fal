@@ -1,0 +1,20 @@
+/*
+@name Function smoke test
+@category Functions
+
+@output   
+Hello world
+No param
+@endoutput
+*/
+
+function hello( param )
+   if param
+      > "Hello ", param
+   else
+      > "No param"
+   end
+end
+
+hello( "world" )
+hello()

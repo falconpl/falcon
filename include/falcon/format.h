@@ -23,7 +23,7 @@
 #include <falcon/setup.h>
 #include <falcon/types.h>
 #include <falcon/string.h>
-#include <falcon/falcondata.h>
+#include <falcon/pstep.h>
 
 /* To be added to docs in the next version.
 convType
@@ -50,7 +50,7 @@ class Item;
 
 /** Item to string format class. */
 
-class Format: public FalconData
+class FALCON_DYN_CLASS Format
 {
 
 public:
@@ -153,59 +153,22 @@ public:
    }
    t_nilFormat;
 
-
-private:
-   t_convType m_convType;
-   t_convMismatch m_misAct;
-   uint16 m_size;
-
-   uint32 m_paddingChr;
-   uint32 m_thousandSep;
-   uint32 m_decimalSep;
-
-   uint8 m_grouping;
-   bool m_fixedSize;
-   t_nilFormat m_nilFormat;
-
-   bool m_rightAlign;
-   uint8 m_decimals;
-   t_negFormat m_negFormat;
-   t_numFormat m_numFormat;
-
-   String m_originalFormat;
-   uint32 m_posOfObjectFmt;
-
-   void formatInt( int64 number, String &target, bool bUseGroup );
-   void applyNeg( String &target, int64 number );
-   void applyPad( String &target, uint32 extraSize=0 );
-
-   /** Calculate needs of padding size. */
-   int negPadSize( int64 number );
-
-   /** Return true if negative format should be added before adding padding. */
-   bool negBeforePad();
-
-   /** Process a format mismatch. */
-   bool processMismatch( VMachine *vm, const Item &source, String &target );
-
-   /** Try a basic conversion into the desired item of this format. */
-   bool tryConvertAndFormat( VMachine *vm, const Item &source, String &target );
-
-   /** Procude a scientific string */
-   void formatScientific( numeric num, String &sBuffer );
-
-public:
-
-   Format() {
+   Format():
+      m_stepPostRender(this)
+   {
       reset();
    }
 
-   Format( const String &fmt )
+   Format( const String &fmt ):
+      m_stepPostRender(this)
    {
       reset();
       parse( fmt );
    }
 
+   virtual ~Format();
+
+   static Class* handler();
 
    /** Parses a format string.
       Transforms a format string into a setup for this format object.
@@ -222,7 +185,7 @@ public:
       not thought for the given format.
 
       Format elements:
-      - Size: The minimum field lengt; it can be just expressed by a number. if the formatted
+      - Size: The minimum field length; it can be just expressed by a number. if the formatted
             output is wide as or wider than the allocated size, the output will NOT be truncated,
             and the resulting string may be just too wide to be displayed where it was intented
             to be. The size can be mandatory by adding '*' after it. In this case, the function
@@ -264,7 +227,7 @@ public:
             displayed also for hexadecimal, octal and binary conversions. It is set using
             'g' followed by the separator character, it defaults to ','. Normally,
             it is not displayed; to activate it set also the integer grouping digit count;
-            normally is 3, but it's 4 in Jpanaese and Chinese localses, while it may be useful
+            normally is 3, but it's 4 in Japanese and Chinese locales, while it may be useful
             to set it to 2 or 4 for hexadecimal, 3 for octal and 4 or 8 for binary. For example
             'g4-' would group digits 4 by 4, grouping them with a "-". Zero would disable
             grouping.
@@ -291,13 +254,6 @@ public:
             will be wrapped around the formatted field, while if size is mandatory they will be
             wrapped around the whole field, included padding. For example "5[r" on -4 would render
             as "  (4)", while "5*[r" would render as "(  4)".
-
-      - Object specific format: Objects may accept an object specific formatting as parameter
-         of the standard "toString" method. A pipe separator '|' will cause all the following
-         format to be passed unparsed to the toString method of objects eventually being
-         formatted. If the object does not provides a toString method, or if it's not an
-         object at all, an error will be raised. The object is the sole responsible for
-         parsing and applying its specific format.
 
       - Nil format: How to represent a nil. It may be one of the following:
          - 'nn': nil is not represented (mute).
@@ -343,22 +299,14 @@ public:
    /** Checks if this format is valid. */
    bool isValid() const { return m_convType != e_tError; }
 
-
-   /** Formats given item into the target string.
-      This version doesn't require a VM, but will fail if source item
-      is an object.
-
-      Also, in case of failure there will be no report about the error
-      context, as that would be normally reported by raising an exception
-      in the VM.
-      \see bool format( VMachine *vm, const Item &source, String &target )
-      \param source the item to be formatted
-      \param target the string where to output the format.
-      \return true on success, false on error.
-   */
-   bool format( const Item &source, String &target ) {
-      return format( 0, source, target );
+   typedef enum
+   {
+      e_fr_ok,
+      e_fr_mismatch,
+      e_fr_deep,
+      e_fr_toolong
    }
+   t_format_result;
 
    /** Formats given item into the target string.
       The target string is not cleared before format occours; in other words,
@@ -375,7 +323,15 @@ public:
 
       \return true on success, false on error.
    */
-   bool format( VMachine *vm, const Item &source, String &target );
+   t_format_result format( const Item &source, String &target );
+
+   /** Formats an entity in the given VM context, eventually going deep if required.
+    *  \param ctx The target context where to go deep or place the formatted item.
+    *  \param source the source item to be formatted.
+    *  \return true if went deep, false if the formatted string is ready on top of the stack.
+    *
+    */
+   bool opFormat( VMContext* ctx, const Item& source );
 
    /** sets default values */
    void reset();
@@ -421,7 +377,50 @@ public:
    //=================================================
 
    virtual Format *clone() const;
-   virtual void gcMark( uint32 mark ) {}
+
+   void gcMark( uint32 mark ) { m_originalFormat.gcMark(mark); }
+   uint32 currentMark() const { return m_originalFormat.currentMark(); }
+
+private:
+   t_convType m_convType;
+   t_convMismatch m_misAct;
+   uint16 m_size;
+
+   uint32 m_paddingChr;
+   uint32 m_thousandSep;
+   uint32 m_decimalSep;
+
+   uint8 m_grouping;
+   bool m_fixedSize;
+   t_nilFormat m_nilFormat;
+
+   bool m_rightAlign;
+   uint8 m_decimals;
+   t_negFormat m_negFormat;
+   t_numFormat m_numFormat;
+
+   String m_originalFormat;
+
+   void formatInt( int64 number, String &target, bool bUseGroup );
+   void applyNeg( String &target, int64 number );
+   void applyPad( String &target, uint32 extraSize=0 );
+
+   /** Calculate needs of padding size. */
+   int negPadSize( int64 number );
+
+   /** Return true if negative format should be added before adding padding. */
+   bool negBeforePad();
+
+   /** Process a format mismatch. */
+   t_format_result processMismatch( const Item &source, String &target );
+
+   /** Try a basic conversion into the desired item of this format. */
+   t_format_result tryConvertAndFormat( const Item &source, String &target );
+
+   /** Procude a scientific string */
+   void formatScientific( numeric num, String &sBuffer );
+
+   FALCON_DECLARE_INTERNAL_PSTEP_OWNED( PostRender, Format )
 };
 
 }

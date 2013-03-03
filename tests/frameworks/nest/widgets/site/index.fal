@@ -1,0 +1,31 @@
+/*
+   FALCON - Nest
+   AJAX test site.
+*/
+load nest
+Nest.site_nest_dir = "../nest"
+
+// Uncomment to have debug infos.
+//Nest.debug = true
+//Nest.log_level = 3
+
+// Stylesheet
+// Nest.stylesheets += "some_style.css"
+
+// Scripts
+Nest.extscripts += "res/json2.js"
+Nest.extscripts += "res/nest.js"
+
+Nest.auth_level = Nest.AL.NONE
+// framing functions
+Nest.frame = .[include Nest.site_nest_dir + "/frame.ftd" ]
+
+/*
+Nest.onStartup = function()
+   // Login and language are usually checked here or in the frame.
+end
+*/
+
+// We can start processing Nest request
+Nest.route()
+         

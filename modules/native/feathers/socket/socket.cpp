@@ -24,6 +24,10 @@
 
 #include "version.h"
 
+#if WITH_OPENSSL
+#include <openssl/ssl.h> // check for OPENSSL_NO_SSL2
+#endif // WITH_OPENSSL
+
 /*#
    @module feathers.socket Low level IP networking.
    @brief Low level TCP/IP networking support.
@@ -118,7 +122,19 @@ FALCON_MODULE_DECL
       addParam("address");
    self->addExtFunc( "socketErrorDesc", Falcon::Ext::socketErrorDesc )->
       addParam("code");
+   self->addExtFunc( "haveSSL", Falcon::Ext::falcon_haveSSL );
 
+   #if WITH_OPENSSL
+   #ifndef OPENSSL_NO_SSL2
+   self->addConstant( "SSLv2", (Falcon::int64) Falcon::Sys::SSLData::SSLv2 );
+   #endif
+   self->addConstant( "SSLv3", (Falcon::int64) Falcon::Sys::SSLData::SSLv3 );
+   self->addConstant( "SSLv23", (Falcon::int64) Falcon::Sys::SSLData::SSLv23 );
+   self->addConstant( "TLSv1", (Falcon::int64) Falcon::Sys::SSLData::TLSv1 );
+   self->addConstant( "DTLSv1", (Falcon::int64) Falcon::Sys::SSLData::DTLSv1 );
+   #endif // WITH_OPENSSL
+
+   //====================================
    // private class socket.
    Falcon::Symbol *c_socket = self->addClass( "Socket", Falcon::Ext::Socket_init, false );
    self->addClassMethod( c_socket, "getTimeout", Falcon::Ext::Socket_getTimeout );
@@ -135,6 +151,8 @@ FALCON_MODULE_DECL
    self->addClassProperty( c_socket, "timedOut" );
    self->addClassProperty( c_socket, "lastError" );
 
+   //====================================
+   // TCP socket
    Falcon::Symbol *tcpsocket = self->addClass( "TCPSocket", Falcon::Ext::TCPSocket_init );
    tcpsocket->setWKS( true ); // needed by TCPServer
    tcpsocket->getClassDef()->addInheritance(  new Falcon::InheritDef( c_socket ) );
@@ -148,7 +166,14 @@ FALCON_MODULE_DECL
    self->addClassMethod( tcpsocket, "close", Falcon::Ext::TCPSocket_close );
    self->addClassMethod( tcpsocket, "closeRead", Falcon::Ext::TCPSocket_closeRead );
    self->addClassMethod( tcpsocket, "closeWrite", Falcon::Ext::TCPSocket_closeWrite );
+   #if WITH_OPENSSL
+   self->addClassMethod( tcpsocket, "sslConfig", Falcon::Ext::TCPSocket_sslConfig );
+   self->addClassMethod( tcpsocket, "sslClear", Falcon::Ext::TCPSocket_sslClear );
+   self->addClassMethod( tcpsocket, "sslConnect", Falcon::Ext::TCPSocket_sslConnect );
+   #endif
 
+   //====================================
+   // UDP socket
    Falcon::Symbol *udpsocket = self->addClass( "UDPSocket", Falcon::Ext::UDPSocket_init );
    udpsocket->getClassDef()->addInheritance(  new Falcon::InheritDef( c_socket ) );
    self->addClassMethod( udpsocket, "broadcast", Falcon::Ext::UDPSocket_broadcast );
@@ -159,6 +184,8 @@ FALCON_MODULE_DECL
    self->addClassProperty( udpsocket, "remote" );
    self->addClassProperty( udpsocket, "remoteService" );
 
+   //====================================
+   // TCP server
    Falcon::Symbol *tcpserver = self->addClass( "TCPServer", Falcon::Ext::TCPServer_init );
    self->addClassMethod( tcpserver, "dispose", Falcon::Ext::TCPServer_dispose );
    self->addClassMethod( tcpserver, "bind", Falcon::Ext::TCPServer_bind ).asSymbol()->
@@ -179,50 +206,5 @@ FALCON_MODULE_DECL
    return self;
 }
 
-namespace Falcon{
-namespace Sys{
-
-Socket::Socket( const Socket& other ):
-   m_address( other.m_address ),
-   d(other.d),
-   m_ipv6( other.m_ipv6 ),
-   m_lastError(other.m_lastError),
-   m_timeout(other.m_timeout),
-   m_boundFamily(other.m_boundFamily),
-   m_refcount(other.m_refcount)
-{
-   atomicInc( *other.m_refcount );
-}
-
-FalconData *Socket::clone() const
-{
-   return new Socket(*this);
-}
-
-Socket::~Socket()
-{
-   if( atomicDec( *m_refcount ) == 0 )
-   {      
-      // ungraceful close.
-      terminate();
-      memFree( (void*)m_refcount );
-   }
-}
-
-
-TCPSocket::TCPSocket( const TCPSocket& other ):
-   Socket( other ),
-   m_connected(other.m_connected)
-{
-}
-
-
-FalconData* TCPSocket::clone() const
-{
-   return new TCPSocket(*this);
-}
-}
-}
-
 /* end of socket.cpp */
-
+/* vim: set ai et sw=3 ts= sts=3: */

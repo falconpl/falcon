@@ -1,0 +1,21 @@
+/*
+@name Prototypes smoke tests
+@category Prototypes
+
+@output
+Prototypes smoke tests
+Hello
+World
+Done
+@endoutput
+*/
+
+proto = p{
+      prop = "Hello"
+}
+
+> "Prototypes smoke tests"
+> proto.prop
+proto.prop = "World"
+> proto.prop
+> "Done"

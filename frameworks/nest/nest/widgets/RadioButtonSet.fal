@@ -1,0 +1,67 @@
+/*
+   FALCON - The Falcon Programming Language
+
+   Nest - Falcon web applcation engine
+
+   FILE: RadioButtonSet.fal
+
+   AJAX widgeting subsystem -- Automated radio-button choice generator
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Sun, 02 Oct 2011 13:53:51 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2011: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+import Container from nest.widgets.Container as Container
+import RadioButton from nest.widgets.RadioButton as RadioButton
+
+/*# Automated radio-button choice generator
+   @param id The widget ID
+   @optparam choices An array of choices (strings).
+   @optparam tagtype Tag used for this container (defaults to fieldset).
+   @optparam tag_beg HTML code to be put before the first child (defaults to "").
+   @optparam tag_beg HTML code to be put in between children (defaults to "&nbsp;").
+   @optparam tag_beg HTML code to be put after the last child (defaults to "").
+
+   This is a widget that automatically creates a set of radio buttons and adds
+   them to the container.
+
+   Each element in choice is a string with the following format:
+   "value:text". If ':' is not in the choice string, then the whole text will
+   be used both as a submit value and as a text.
+
+   You can also add more children after the widget is created for better control
+   on the apparence of each choice.
+*/
+class RadioButtonSet( id, choices, tagtype, tag_beg, tag_sep, tag_end ) from \
+            Container( id, tagtype, tag_beg, tag_sep, tag_end )
+   //# Value of the radio button set (that is, the active radio button)
+   value = nil
+   
+   init
+      self.autoAddChildren( choices )
+   end
+   
+   function makeAutoChild( value, text, checked )
+      child = RadioButton( value, self.id, value, text )
+      if checked: child.props["checked"] = "checked"
+      return child
+   end
+
+   function setRenderValue( val )
+      if val in self.childrenById
+         self.value = val
+         self.childrenById[val].props["checked"] = "checked"
+      end
+   end
+
+   function getValue()
+      return self.value
+   end
+
+end
+

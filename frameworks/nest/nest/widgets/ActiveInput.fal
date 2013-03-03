@@ -1,0 +1,95 @@
+/*
+   FALCON - The Falcon Programming Language
+
+   Nest - Falcon web applcation engine
+
+   FILE: ActiveInput.fal
+
+   AJAX widgeting subsystem -- Text input Widget exciting msg and AJAX
+   -------------------------------------------------------------------
+   Author: Giancarlo Niccolai
+   Begin: Mon, 26 Sep 2011 11:55:58 +0200
+
+   -------------------------------------------------------------------
+   (C) Copyright 2011: the FALCON developers (see list in AUTHORS file)
+
+   See LICENSE file for licensing details.
+*/
+
+import InputText from nest.widgets.InputText as InputText
+
+/*# Class dispatching local messages and/or AJAX messages on text change.
+
+   Might be a text (default) or a textarea (if its tag is changed into
+   textarea) field that can send a 'change' message to local listeners
+   and to ajax listeners.
+*/
+class ActiveInput( id, prompt ) from InputText( id, prompt )
+
+   //# Timeout before starting to check updates
+   typeTimeout = 0
+
+   //# if true (default), sends a local message on change.
+   checkLocal = true
+
+   //# if true (default is false), sends an ajax message on change.
+   checkAjax = false
+
+   //# code used to prevent generating local messages.
+   localFilter = nil
+
+   //# code used to prevent generating ajax messages.
+   ajaxFilter = nil
+
+   onCreate = "this.activeCheck()"
+   
+   init
+      self.props += [
+         "onchange" => "this.onActiveChange();",
+         "onkeyup" => "this.onActiveChange();"
+         ]
+   end
+
+   function onRender()
+      
+      // create the onChange callback with preliminary check (if not changed, do nothing).
+      checkFunc = "function() { if(this.oldValue == this.value) {return;}\n"
+
+      if self.checkLocal
+         if self.localFilter
+            checkFunc += "if( " + self.localFilter + ") { return; }\n"
+         end
+         
+         // This is the message for the listener widgets.
+         checkFunc += self.makeMessage( 'change', 'this.value' ) + "\n"
+      end
+
+      if self.checkAjax
+         if self.ajaxFilter
+            checkFunc += "if( " + self.ajaxFilter + ") { return; }\n"
+         end
+
+         // This is the message for the listener widgets.
+         checkFunc += self.ajaxMsg( 'change', ['value'] ) + "\n"
+      end
+
+      checkFunc += "this.oldValue = this.value; }\n"
+
+      self.jsMethods = [
+         "activeCheck" => checkFunc
+      ]
+      
+      if self.typeTimeout
+         self.jsMethods[ "onActiveChange" ] = "
+            function() {
+               if( this.timeoutVar ) { clearTimeout( this.timeoutVar ); }
+               this.timeoutVar = setTimeout('document.getElementById(\"' +this.id + '\").activeCheck()', " +
+               self.typeTimeout + ");}"
+      else
+         self.jsMethods[ "onActiveChange" ] = "
+            function() { this.activeCheck(); }"
+      end
+   end
+end
+
+/* end of ActiveInput.fal */

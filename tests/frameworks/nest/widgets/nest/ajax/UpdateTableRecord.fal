@@ -1,0 +1,15 @@
+function UpdateTableRecord( req )
+   id = int(req["id"])
+   data = Wopi.getAppData("table-app")
+   number = arrayScan( data, { v => v["id"] == id} )
+   if number >= 0
+      record = data[number]
+      record["name"] = req["name"]
+      record["sname"] = req["sname"]
+      record["age"] = req["age"]
+      
+      Wopi.setAppData(data, "table-app")
+      return ["updated" => id]
+   end
+   return ["unknown" => id]
+end

@@ -40,6 +40,11 @@
 #define FALSOCK_ERR_BIND  (FALCON_SOCKET_ERROR_BASE + 7)
 #define FALSOCK_ERR_ACCEPT  (FALCON_SOCKET_ERROR_BASE + 8)
 
+#if WITH_OPENSSL
+#define FALSOCK_ERR_SSLCONFIG (FALCON_SOCKET_ERROR_BASE + 10)
+#define FALSOCK_ERR_SSLCONNECT (FALCON_SOCKET_ERROR_BASE + 11)
+#endif
+
 namespace Falcon {
 namespace Ext {
 
@@ -49,6 +54,7 @@ namespace Ext {
 FALCON_FUNC  falcon_getHostName( ::Falcon::VMachine *vm );
 FALCON_FUNC  resolveAddress( ::Falcon::VMachine *vm );
 FALCON_FUNC  socketErrorDesc( ::Falcon::VMachine *vm );
+FALCON_FUNC  falcon_haveSSL( ::Falcon::VMachine *vm );
 
 // ==============================================
 // Class Socket
@@ -74,6 +80,11 @@ FALCON_FUNC  TCPSocket_recv( ::Falcon::VMachine *vm );
 FALCON_FUNC  TCPSocket_closeRead( ::Falcon::VMachine *vm );
 FALCON_FUNC  TCPSocket_closeWrite( ::Falcon::VMachine *vm );
 FALCON_FUNC  TCPSocket_close( ::Falcon::VMachine *vm );
+#if WITH_OPENSSL
+FALCON_FUNC  TCPSocket_sslConfig( ::Falcon::VMachine *vm );
+FALCON_FUNC  TCPSocket_sslClear( ::Falcon::VMachine *vm );
+FALCON_FUNC  TCPSocket_sslConnect( ::Falcon::VMachine *vm );
+#endif
 
 // ==============================================
 // Class UDPSocket

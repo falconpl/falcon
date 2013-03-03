@@ -1,6 +1,6 @@
 /*
    FALCON - The Falcon Programming Language.
-   FILE: flc_itemid.h
+   FILE: itemid.h
 
    List of item ids
    -------------------------------------------------------------------
@@ -13,49 +13,42 @@
    See LICENSE file for licensing details.
 */
 
-/** \file
-   List if item ids.
-*/
+#ifndef FALCON_ITEMID_H
+#define FALCON_ITEMID_H
 
-#ifndef flc_flc_itemid_H
-#define flc_flc_itemid_H
-
+/* First, the flat items */
 
 #define FLC_ITEM_NIL          0
 #define FLC_ITEM_BOOL         1
 #define FLC_ITEM_INT          2
 #define FLC_ITEM_NUM          3
+#define FLC_ITEM_METHOD       4
+#define FLC_ITEM_COUNT        5
 
-/** From this point on, we have possibly deep items */
-#define FLC_ITEM_FIRST_DEEP   4
-#define FLC_ITEM_RANGE        4
+#define FLC_ITEM_OPAQUE       5
 
-#define FLC_ITEM_LBIND        5
-#define FLC_ITEM_FUNC         6
-/* Some shallow callable items. */
+/** Framing items are special markers in data stack for rules. */
+#define FLC_ITEM_FRAMING      6
 
-/** Used to store pointers in temporary local items by
-   two-step VM functions. */
-#define FLC_ITEM_GCPTR        7
+/** User items are non-standard items. */
+#define FLC_ITEM_USER         7
 
 
-#define FLC_ITEM_STRING       8
-#define FLC_ITEM_ARRAY        9
-#define FLC_ITEM_DICT         10
-#define FLC_ITEM_OBJECT       11
-#define FLC_ITEM_MEMBUF       12
+// Theese are the class IDs, used to get the typeID of this item.
+#define FLC_CLASS_ID_REF      8
+#define FLC_CLASS_ID_FUNC     9
+#define FLC_CLASS_ID_STRING   10
+#define FLC_CLASS_ID_ARRAY    11
+#define FLC_CLASS_ID_DICT     12
+#define FLC_CLASS_ID_RANGE    13
+#define FLC_CLASS_ID_CLASS    14
+#define FLC_CLASS_ID_PROTO    15
+#define FLC_CLASS_ID_TREESTEP 16
+#define FLC_CLASS_ID_RE       17
+#define FLC_CLASS_ID_CLOSURE  18
 
-#define FLC_ITEM_REFERENCE    13
-
-
-#define FLC_ITEM_CLSMETHOD    14
-#define FLC_ITEM_METHOD       15
-#define FLC_ITEM_CLASS        16
-#define FLC_ITEM_UNB          17
-
-#define FLC_ITEM_COUNT        18
 #define FLC_ITEM_INVALID      99
 
 #endif
 
-/* end of flc_itemid.h */
+/* end of itemid.h */
