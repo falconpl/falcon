@@ -250,7 +250,7 @@ FALCON_DEFINE_PROPERTY_SET_P0( ClassWaiter, len )
 //========================================================================
 
 
-void ClassWaiter::internal_wait( VMContext* ctx, numeric to )
+void ClassWaiter::internal_wait( VMContext* ctx, int64 to )
 {
    static Class* clsShared = Engine::handlers()->sharedClass();
    static PStep* stepInvoke = &Engine::instance()->stdSteps()->m_reinvoke;

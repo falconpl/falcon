@@ -188,7 +188,7 @@ FALCON_DEFINE_METHOD_P1( ClassTextReader, read )
    }
            
    TextReader* sc = static_cast<TextReader*>(ctx->self().asInst());
-   bool value = sc->read( *i_data->asString(), i_count->forceInteger() );
+   bool value = sc->read( *i_data->asString(), (length_t) i_count->forceInteger() );
    ctx->returnFrame( value );   
 }
 
@@ -211,7 +211,7 @@ FALCON_DEFINE_METHOD_P1( ClassTextReader, grab )
    {      
       TextReader* sc = static_cast<TextReader*>(ctx->self().asInst());
       try {
-         sc->read( *str, icount );
+         sc->read( *str, (length_t) icount );
       }
       catch( ... )
       {

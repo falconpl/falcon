@@ -46,6 +46,16 @@
 
 #include "math_ext.h"
 
+#ifdef _MSC_VER
+#define LOG2 0.30102999566398119521373889472449
+#define log2 _log2
+
+static double _log2( double value )
+{
+   return log(value) / LOG2;
+}
+#endif
+
 namespace Falcon { 
     namespace Ext {
 

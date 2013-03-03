@@ -203,7 +203,7 @@ FALCON_DEFINE_PROPERTY_SET_P( ClassTextWriter, buffer )
 FALCON_DEFINE_PROPERTY_GET_P( ClassTextWriter, buffer )
 {
    TextWriter* sc = static_cast<TextWriter*>(instance);
-   value.setBoolean(sc->bufferSize());
+   value.setInteger(sc->bufferSize());
 }
 
 //=================================================================

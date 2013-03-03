@@ -197,7 +197,7 @@ FALCON_DEFINE_METHOD( ClassVMContext, caller )(VMContext* ctx, int )
       if( ! i_depth->isOrdinal() ) {
          throw paramError(__LINE__, SRC);
       }
-      depth = i_depth->forceInteger();
+      depth = (int32) i_depth->forceInteger();
    }
 
    // we're not interested in this call

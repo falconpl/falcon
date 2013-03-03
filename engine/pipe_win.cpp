@@ -43,7 +43,7 @@ Pipe::Pipe()
 
 void Pipe::closeRead()
 {
-   if( m_readSide->hFile != INVALID_HANDLE_VALUE )
+   if( m_readSide != 0 && m_readSide->hFile != INVALID_HANDLE_VALUE )
    {
       BOOL result = ::CloseHandle( m_readSide->hFile );
       m_readSide->hFile = INVALID_HANDLE_VALUE;
@@ -59,7 +59,7 @@ void Pipe::closeRead()
 
 void Pipe::closeWrite()
 {
-   if( m_writeSide->hFile != INVALID_HANDLE_VALUE )
+   if( m_writeSide != 0 && m_writeSide->hFile != INVALID_HANDLE_VALUE )
    {
       BOOL result = ::CloseHandle( m_writeSide->hFile );
       m_writeSide->hFile = INVALID_HANDLE_VALUE;

@@ -92,7 +92,7 @@ public:
    virtual bool op_init( VMContext* ctx, void* instance, int pcount ) const;
    virtual void op_in( VMContext* ctx, void* instance ) const;
 
-   void internal_wait( VMContext* ctx, numeric to );
+   void internal_wait( VMContext* ctx, int64 to );
 
 private:
 

@@ -22,10 +22,10 @@
 #ifndef flc_regex_ext_H
 #define flc_regex_ext_H
 
+#define FALCON_ENGINE_STATIC
+
 #include <falcon/setup.h>
-
 #include <falcon/error.h>
-
 #include <falcon/classes/classerror.h>
 #include <falcon/classes/classuser.h>
 #include <falcon/method.h>

@@ -4,6 +4,9 @@
 # CMake configuration file for module Regex
 ####################################################################
 
+# Creates the proper module file name from the project name.
+falcon_define_module( CURRENT_MODULE regex )
+
 if( WIN32 OR APPLE )
    set(_pcre_default ON)
 else( WIN32 OR APPLE )
@@ -58,7 +61,7 @@ else()
    include_directories(${PCRE_INCLUDE_DIR}) 
 endif()
 
-add_library(regex_fm MODULE
+add_library(${CURRENT_MODULE} MODULE
   regex.cpp
   regex_ext.cpp
   regex_mod.cpp
@@ -66,11 +69,11 @@ add_library(regex_fm MODULE
   ${SYS_RC}
 )
 
-target_link_libraries(regex_fm 
+target_link_libraries(${CURRENT_MODULE} 
   falcon_engine 
   ${PCRE_LIBRARIES}
 )
 
-falcon_install_module( regex_fm )
+falcon_install_module( ${CURRENT_MODULE} )
  
-set(_project_targets ${_project_targets} regex_fm PARENT_SCOPE)
+set(_project_targets ${_project_targets} ${CURRENT_MODULE} PARENT_SCOPE)

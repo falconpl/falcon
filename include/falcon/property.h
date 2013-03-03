@@ -215,7 +215,7 @@ public:
 
 
 #define FALCON_DECLARE_PROPERTY(PROP_NAME) \
-   class FALCON_DYN_CLASS Property_ ## PROP_NAME: public ::Falcon::Property \
+   class Property_ ## PROP_NAME: public ::Falcon::Property \
    { \
    public: \
       Property_ ## PROP_NAME( ::Falcon::ClassUser* u ): \
@@ -227,7 +227,7 @@ public:
    } m_Property_ ## PROP_NAME;
 
 #define FALCON_DECLARE_PROPERTY_CONSTANT(PROP_NAME, value__ ) \
-   class FALCON_DYN_CLASS Property_ ## PROP_NAME: public ::Falcon::PropertyConstant \
+   class Property_ ## PROP_NAME: public ::Falcon::PropertyConstant \
    { \
    public: \
    Property_ ## PROP_NAME( ::Falcon::ClassUser* u ): \
@@ -238,7 +238,7 @@ public:
 
 
 #define FALCON_DECLARE_CPROPERTY(PROP_NAME) \
-   class FALCON_DYN_CLASS Property_ ## PROP_NAME: public ::Falcon::PropertyCarried \
+   class Property_ ## PROP_NAME: public ::Falcon::PropertyCarried \
    { \
    public: \
       Property_ ## PROP_NAME( ::Falcon::ClassUser* u ): \
@@ -264,7 +264,7 @@ public:
 
 
 #define FALCON_DECLARE_STRPROPERTY(PROP_NAME) \
-   class FALCON_DYN_CLASS Property_ ## PROP_NAME: public ::Falcon::PropertyString \
+   class Property_ ## PROP_NAME: public ::Falcon::PropertyString \
    { \
    public: \
       Property_ ## PROP_NAME( ::Falcon::ClassUser* u ): \
@@ -277,7 +277,7 @@ public:
 
 
 #define FALCON_DECLARE_DATAPROPERTY(PROP_NAME) \
-   class FALCON_DYN_CLASS Property_ ## PROP_NAME: public ::Falcon::PropertyData \
+   class Property_ ## PROP_NAME: public ::Falcon::PropertyData \
    { \
    public: \
       Property_ ## PROP_NAME( ::Falcon::ClassUser* u ): \

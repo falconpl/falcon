@@ -164,12 +164,12 @@ int ToStringWalker::PostVisit(Regexp* re, int parent_arg, int ,
       break;
 
     case kRegexpLiteral:
-      AppendLiteral(t_, re->rune(), re->parse_flags() & Regexp::FoldCase);
+      AppendLiteral(t_, re->rune(), (re->parse_flags() & Regexp::FoldCase) != 0);
       break;
 
     case kRegexpLiteralString:
       for (int i = 0; i < re->nrunes(); i++)
-        AppendLiteral(t_, re->runes()[i], re->parse_flags() & Regexp::FoldCase);
+        AppendLiteral(t_, re->runes()[i], (re->parse_flags() & Regexp::FoldCase) != 0);
       if (prec < PrecConcat)
         t_->append(")");
       break;

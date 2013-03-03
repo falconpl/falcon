@@ -217,7 +217,7 @@ FALCON_DEFINE_PROPERTY_SET( ClassFence, count )( void* instance, const Item& val
       throw FALCON_SIGN_XERROR( AccessError, e_inv_prop_value, .extra("N > 0") );
    }
 
-   int32 count = value.forceInteger();
+   int32 count = (int32) value.forceInteger();
    if( count <= 0 )
    {
       throw FALCON_SIGN_XERROR( AccessError, e_inv_prop_value, .extra("N > 0") );

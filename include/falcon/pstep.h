@@ -206,7 +206,7 @@ private:
 
 
 #define FALCON_DECLARE_INTERNAL_PSTEP( name ) \
-      class FALCON_DYN_CLASS PStep ## name : public PStep\
+      class PStep ## name : public PStep\
       {\
       public:\
          PStep ## name(){apply = apply_;}\
@@ -220,7 +220,7 @@ private:
       PStep ## name m_step ## name ;
 
 #define FALCON_DECLARE_INTERNAL_PSTEP_OWNED( name, ownerclass ) \
-      class FALCON_DYN_CLASS PStep ## name : public PStep\
+      class PStep ## name : public PStep\
       {\
       public:\
          PStep ## name( ownerclass* owner): m_owner(owner) {apply = apply_;}\

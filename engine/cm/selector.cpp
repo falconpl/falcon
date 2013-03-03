@@ -96,7 +96,7 @@ static void internal_selector_add( VMContext* ctx, int32, bool bAdd )
    }
    else
    {
-      mode = i_mode->forceInteger();
+      mode = (int32)i_mode->forceInteger();
       if( mode < 0 || mode > (Selector::mode_err | Selector::mode_write | Selector::mode_read) )
       {
          throw new ParamError(ErrorParam(e_param_range, __LINE__, SRC).extra( "select mode out of range") );

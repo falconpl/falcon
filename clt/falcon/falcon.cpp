@@ -295,6 +295,8 @@ void FalconApp::Logger::onMessage( int fac, int lvl, const String& message )
    Log::formatLog(fac, lvl, message, tgt );
    m_logfile->writeLine( tgt );
    m_logfile->flush();
+
+
 }
 
 
