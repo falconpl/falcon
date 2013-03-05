@@ -55,7 +55,7 @@ namespace Ext {
 
  */
 
-
+namespace CGC {
 /*#
  @method perform GC
  @brief Suggests or forces a full garbage collecting.
@@ -98,6 +98,70 @@ FALCON_DECLARE_FUNCTION( suggest, "all:[B]" );
  will be reset to 0.
  */
 FALCON_DECLARE_FUNCTION( reset, "all:[B]" );
+
+
+void Function_perform::invoke( VMContext* ctx, int32 )
+{
+   static Collector* coll = Engine::instance()->collector();
+
+   Item* i_full = ctx->param(0);
+   Item* i_wait = ctx->param(1);
+
+   bool full = i_full != 0 ? i_full->isTrue() : false;
+   bool wait = i_wait != 0 ? i_wait->isTrue() : false;
+
+   TRACE( "ClassGC::Method_perform %s, %s", (full? "Full" : "partial"), (wait?"wait": "no wait") );
+
+   if( full )
+   {
+      if( wait != 0 )
+      {
+         Shared* sh = new Shared(&ctx->vm()->contextManager());
+         coll->performGCOnShared( sh );
+         ctx->addWait(sh);
+         ctx->engageWait(-1);
+      }
+      else
+      {
+         coll->performGC(false);
+      }
+   }
+   else
+   {
+      ctx->setInspectEvent();
+   }
+
+   ctx->returnFrame();
+}
+
+
+
+void Function_suggest::invoke( VMContext* ctx, int32 )
+{
+   static Collector* coll = Engine::instance()->collector();
+
+   Item* i_all = ctx->param(0);
+
+   bool all = i_all != 0 ? i_all->isTrue() : false;
+
+   TRACE( "ClassGC::Method_suggest %s", (all? "Full" : "partial") );
+
+   coll->suggestGC(all);
+   ctx->returnFrame();
+}
+
+
+void Function_reset::invoke( VMContext* ctx, int32 )
+{
+   static Collector* coll = Engine::instance()->collector();
+   MESSAGE( "ClassGC::Method_reset");
+
+   coll->sweepLoops(true);
+   coll->markLoops(true);
+   ctx->returnFrame();
+}
+
+}
 
 //====================================================
 // Properties.
@@ -256,69 +320,9 @@ static void get_sweeps( const Class*, const String&, void*, Item& value )
    value = coll->sweepLoops(false);
 }
 
-
-
-void Function_perform::invoke( VMContext* ctx, int32 )
-{
-   static Collector* coll = Engine::instance()->collector();
-
-   Item* i_full = ctx->param(0);
-   Item* i_wait = ctx->param(1);
-
-   bool full = i_full != 0 ? i_full->isTrue() : false;
-   bool wait = i_wait != 0 ? i_wait->isTrue() : false;
-
-   TRACE( "ClassGC::Method_perform %s, %s", (full? "Full" : "partial"), (wait?"wait": "no wait") );
-
-   if( full )
-   {
-      if( wait != 0 )
-      {
-         Shared* sh = new Shared(&ctx->vm()->contextManager());
-         coll->performGCOnShared( sh );
-         ctx->addWait(sh);
-         ctx->engageWait(-1);
-      }
-      else
-      {
-         coll->performGC(false);
-      }
-   }
-   else
-   {
-      ctx->setInspectEvent();
-   }
-
-   ctx->returnFrame();
-}
-
-
-
-void Function_suggest::invoke( VMContext* ctx, int32 )
-{
-   static Collector* coll = Engine::instance()->collector();
-
-   Item* i_all = ctx->param(0);
-
-   bool all = i_all != 0 ? i_all->isTrue() : false;
-
-   TRACE( "ClassGC::Method_suggest %s", (all? "Full" : "partial") );
-
-   coll->suggestGC(all);
-   ctx->returnFrame();
-}
-
-
-void Function_reset::invoke( VMContext* ctx, int32 )
-{
-   static Collector* coll = Engine::instance()->collector();
-   MESSAGE( "ClassGC::Method_reset");
-
-   coll->sweepLoops(true);
-   coll->markLoops(true);
-   ctx->returnFrame();
-}
-
+//========================================================
+//
+//========================================================
 
 
 ClassGC::ClassGC():
@@ -347,9 +351,9 @@ ClassGC::ClassGC():
    addConstant( "LOOSE", FALCON_COLLECTOR_ALGORITHM_LOOSE );
    addConstant( "DEFAULT", FALCON_COLLECTOR_ALGORITHM_LOOSE );
 
-   addMethod( new Function_perform );
-   addMethod( new Function_suggest );
-   addMethod( new Function_reset );
+   addMethod( new CGC::Function_perform );
+   addMethod( new CGC::Function_suggest );
+   addMethod( new CGC::Function_reset );
 }
 
 ClassGC::~ClassGC()

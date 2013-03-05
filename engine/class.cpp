@@ -376,6 +376,9 @@ void Class::addMethod( Function* func, bool isStatic )
       delete prop.method;
       prop.set( 0, 0, isStatic, true, true, func, Item() );
    }
+   else {
+      _p->m_props[func->name()].set(0, 0, isStatic, true, true, func, Item() );
+   }
 
    if( func->methodOf() == 0 )
    {

@@ -146,7 +146,37 @@ class DFA {
   };
 
 #ifdef _MSC_VER
-  typedef unordered_set<State*, StateEqual> StateSet;
+  // understandard version for STL
+  struct StateLess {
+    bool operator()(const State* a, const State* b) const {
+       //return a < b;
+//#if 0
+      if (a == b)
+        return false;
+      if (a == NULL )
+        return true;
+      if( b == NULL ) 
+         return false;
+      if (a->flag_ < b->flag_)
+        return true;
+      if (a->flag_ > b->flag_)
+        return false;
+      if (a->ninst_ < b->ninst_)
+        return true;
+      if (a->ninst_ > b->ninst_)
+        return false;
+      for (int i = 0; i < a->ninst_; i++)
+        if (a->inst_[i] < b->inst_[i])
+          return true;
+        else if( a->inst_[i] > b->inst_[i] )
+           return false;
+      return false;  // they're equal
+//#endif
+    }
+  };
+#endif
+#ifdef _MSC_VER
+  typedef unordered_set<State*, StateLess> StateSet;
 #else
   typedef unordered_set<State*, StateHash, StateEqual> StateSet;
 #endif
